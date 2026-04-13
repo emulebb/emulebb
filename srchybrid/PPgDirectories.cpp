@@ -131,18 +131,22 @@ BOOL CPPgDirectories::OnApply()
 		// if the user chooses a non-default directory which already contains files,
 		// inform him that all those files will be shared
 		bool bExistingFile = false;
-		CFileFind ff;
-		for (BOOL bFound = ff.FindFile(strIncomingDir + _T('*')); bFound && !bExistingFile;) {
-			bFound = ff.FindNextFile();
-			if (ff.IsDirectory() || ff.IsSystem() || ff.IsTemporary() || ff.GetLength() == 0 || ff.GetLength() > MAX_EMULE_FILE_SIZE)
-				continue;
+		DWORD dwEnumerateError = ERROR_SUCCESS;
+		(void)PathHelpers::ForEachDirectoryEntry(strIncomingDir, [&](const WIN32_FIND_DATA &findData) -> bool {
+			if ((findData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_TEMPORARY)) != 0)
+				return true;
 
-			if (ShellUiHelpers::ShouldIgnoreShortcutFileName(ff.GetFileName()))
-				continue;
+			const ULONGLONG ullFoundFileSize = (static_cast<ULONGLONG>(findData.nFileSizeHigh) << 32) | findData.nFileSizeLow;
+			if (ullFoundFileSize == 0 || ullFoundFileSize > MAX_EMULE_FILE_SIZE)
+				return true;
+
+			if (ShellUiHelpers::ShouldIgnoreShortcutFileName(findData.cFileName))
+				return true;
 
 			// ignore real THUMBS.DB files -- seems that lot of ppl have 'thumbs.db' files without the 'System' file attribute
-			bExistingFile = (ff.GetFileName().CompareNoCase(_T("thumbs.db")) != 0);
-		}
+			bExistingFile = (CString(findData.cFileName).CompareNoCase(_T("thumbs.db")) != 0);
+			return !bExistingFile;
+		}, &dwEnumerateError);
 		if (bExistingFile && LocMessageBox(IDS_WRN_INCFILE_EXISTS, MB_OKCANCEL | MB_ICONINFORMATION, 0) == IDCANCEL)
 			return FALSE;
 	}

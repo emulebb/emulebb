@@ -1547,36 +1547,26 @@ void CSharedFilesCtrl::AddShareableFiles(const CString &strFromDir)
 		delete liTempShareableFilesInDir.RemoveHead();
 
 	ASSERT(strFromDir.Right(1) == _T("\\"));
-	CFileFind ff;
-	BOOL bFound = ff.FindFile(strFromDir + _T('*'));
-	if (!bFound) {
-		DWORD dwError = ::GetLastError();
-		if (dwError != ERROR_FILE_NOT_FOUND)
-			DebugLogError(_T("Failed to find files for SharedFilesListCtrl in %s, %s"), (LPCTSTR)strFromDir, (LPCTSTR)GetErrorMessage(dwError));
-		return;
-	}
-
+	DWORD dwEnumerateError = ERROR_SUCCESS;
 	SetRedraw(false);
-	do {
-		bFound = ff.FindNextFile();
-		if (ff.IsDirectory() || ff.IsSystem() || ff.IsTemporary() || ff.GetLength() == 0 || ff.GetLength() > MAX_EMULE_FILE_SIZE)
-			continue;
+	if (!PathHelpers::ForEachDirectoryEntry(strFromDir, [&](const WIN32_FIND_DATA &findData) -> bool {
+		if ((findData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_TEMPORARY)) != 0)
+			return true;
 
-		const CString &strFoundFileName(ff.GetFileName());
-		const CString &strFoundFilePath(ff.GetFilePath());
-		const CString &strFoundDirectory(strFoundFilePath.Left(ff.GetFilePath().ReverseFind(_T('\\')) + 1));
-		ULONGLONG ullFoundFileSize = ff.GetLength();
+		const ULONGLONG ullFoundFileSize = (static_cast<ULONGLONG>(findData.nFileSizeHigh) << 32) | findData.nFileSizeLow;
+		if (ullFoundFileSize == 0 || ullFoundFileSize > MAX_EMULE_FILE_SIZE)
+			return true;
 
-		FILETIME tFoundFileTime;
-		ff.GetLastWriteTime(&tFoundFileTime);
+		const CString strFoundFileName(findData.cFileName);
 		if (ShellUiHelpers::ShouldIgnoreShortcutFileName(strFoundFileName))
-			continue;
+			return true;
 
-		// ignore real(!) thumbs.db files -- seems that lot of ppl have 'thumbs.db' files without the 'System' file attribute
+		const CString strFoundDirectory(strFromDir);
+		const CString strFoundFilePath(PathHelpers::AppendPathComponent(strFoundDirectory, strFoundFileName));
 		if (IsThumbsDb(strFoundFilePath, strFoundFileName))
-			continue;
+			return true;
 
-		time_t fdate = (time_t)FileTimeToUnixTime(tFoundFileTime);
+		time_t fdate = (time_t)FileTimeToUnixTime(findData.ftLastWriteTime);
 		if (fdate == 0)
 			fdate = (time_t)-1;
 		if (fdate == (time_t)-1) {
@@ -1586,12 +1576,12 @@ void CSharedFilesCtrl::AddShareableFiles(const CString &strFromDir)
 			AdjustNTFSDaylightFileTime(fdate, strFoundFilePath);
 
 		CKnownFile *toadd = theApp.knownfiles->FindKnownFile(strFoundFileName, fdate, ullFoundFileSize);
-		if (toadd == NULL || theApp.sharedfiles->GetFileByID(toadd->GetFileHash()) == NULL) // check if already shared
-			if (toadd != NULL) { // for known
+		if (toadd == NULL || theApp.sharedfiles->GetFileByID(toadd->GetFileHash()) == NULL) {
+			if (toadd != NULL) {
 				toadd->SetFilePath(strFoundFilePath);
 				toadd->SetPath(strFoundDirectory);
-				AddFile(toadd); // known, could be on the list already
-			} else { // neither known nor shared, create
+				AddFile(toadd);
+			} else {
 				CShareableFile *pNewTempFile = new CShareableFile();
 				pNewTempFile->SetFilePath(strFoundFilePath);
 				pNewTempFile->SetAFileName(strFoundFileName);
@@ -1602,7 +1592,15 @@ void CSharedFilesCtrl::AddShareableFiles(const CString &strFromDir)
 				liTempShareableFilesInDir.AddTail(pNewTempFile);
 				AddFile(pNewTempFile);
 			}
-	} while (bFound);
+		}
+		return true;
+	}, &dwEnumerateError)) {
+		const DWORD dwError = dwEnumerateError;
+		SetRedraw(true);
+		if (dwError != ERROR_FILE_NOT_FOUND)
+			DebugLogError(_T("Failed to find files for SharedFilesListCtrl in %s, %s"), (LPCTSTR)strFromDir, (LPCTSTR)GetErrorMessage(dwError));
+		return;
+	}
 	SetRedraw(true);
 }
 

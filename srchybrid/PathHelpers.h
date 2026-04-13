@@ -473,6 +473,25 @@ inline bool IsPathWithinDirectory(const CString &rstrDirectoryPath, const CStrin
 }
 
 /**
+ * @brief Queries a single filesystem entry through the long-path-aware Win32 find APIs.
+ */
+inline bool TryGetPathEntryData(const CString &rstrPath, WIN32_FIND_DATA &rFindData, DWORD *pdwLastError = NULL)
+{
+	if (pdwLastError != NULL)
+		*pdwLastError = ERROR_SUCCESS;
+
+	const HANDLE hFind = LongPathSeams::FindFirstFile(CanonicalizePathForComparison(rstrPath), &rFindData);
+	if (hFind == INVALID_HANDLE_VALUE) {
+		if (pdwLastError != NULL)
+			*pdwLastError = ::GetLastError();
+		return false;
+	}
+
+	::FindClose(hFind);
+	return true;
+}
+
+/**
  * @brief Enumerates immediate filesystem entries for a directory through the long-path-aware Win32 find APIs.
  */
 template <typename EntryCallback>

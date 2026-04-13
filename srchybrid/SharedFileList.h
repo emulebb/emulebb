@@ -113,7 +113,6 @@ protected:
 	void	RemoveFromHashing(const CKnownFile *hashed);
 	void	LoadSingleSharedFilesList();
 
-	void	CheckAndAddSingleFile(const CFileFind &ff);
 	void	CheckAndAddSingleFile(const CString &strDirectory, const WIN32_FIND_DATA &findData);
 	bool	CheckAndAddSingleFile(const CString &rstrFilePath); // add specific files without editing sharing preferences
 
