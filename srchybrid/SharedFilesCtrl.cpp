@@ -53,6 +53,7 @@
 #include "MediaInfo.h"
 #include "Log.h"
 #include "KnownFileList.h"
+#include "PathHelpers.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -76,6 +77,23 @@ namespace
 		if (fLeft > fRight)
 			return 1;
 		return 0;
+	}
+
+	bool TryCanonicalizeDroppedSharedPath(const CString &rstrOriginalPath, CString &rstrCanonicalPath, DWORD &rdwCanonicalizeError)
+	{
+		const CString strNormalizedInput(PathHelpers::NormalizePathSeparators(rstrOriginalPath));
+		if (!LongPathSeams::PathExists(strNormalizedInput)) {
+			rdwCanonicalizeError = ERROR_FILE_NOT_FOUND;
+			rstrCanonicalPath.Empty();
+			return false;
+		}
+
+		if (!PathHelpers::TryCanonicalizeExistingPath(strNormalizedInput, rstrCanonicalPath, &rdwCanonicalizeError))
+			return false;
+
+		if (strNormalizedInput.CompareNoCase(rstrCanonicalPath) != 0)
+			DEBUG_ONLY(DebugLog(_T("Canonicalized dropped shared path: \"%s\" -> \"%s\""), (LPCTSTR)strNormalizedInput, (LPCTSTR)rstrCanonicalPath));
+		return true;
 	}
 }
 
@@ -431,7 +449,7 @@ void CSharedFilesCtrl::AddFile(const CShareableFile *file)
 	if (m_pDirectoryFilter != NULL && m_pDirectoryFilter->m_eItemType == SDI_UNSHAREDDIRECTORY && file->IsKindOf(RUNTIME_CLASS(CKnownFile)))
 		for (POSITION pos = liTempShareableFilesInDir.GetHeadPosition(); pos != NULL;) {
 			const CShareableFile *pFile = liTempShareableFilesInDir.GetNext(pos);
-			if (pFile->GetFilePath().CompareNoCase(file->GetFilePath()) == 0) {
+			if (PathHelpers::ArePathsEquivalent(pFile->GetFilePath(), file->GetFilePath())) {
 				int iOldFile = FindFile(pFile);
 				if (iOldFile >= 0) {
 					SetItemData(iOldFile, (LPARAM)file);
@@ -1737,10 +1755,21 @@ BOOL CSharedFilesCtrl::CShareDropTarget::OnDrop(CWnd*, COleDataObject *pDataObje
 				if (cchFilePath > 0) {
 					VERIFY(::DragQueryFile(hDrop, nFile, strFilePath.GetBuffer(cchFilePath + 1), cchFilePath + 1) == cchFilePath);
 					strFilePath.ReleaseBuffer(cchFilePath);
+					const CString strDroppedPath(PathHelpers::NormalizePathSeparators(strFilePath));
+					CString strCanonicalDropPath;
+					DWORD dwCanonicalizeError = ERROR_SUCCESS;
+					if (!TryCanonicalizeDroppedSharedPath(strDroppedPath, strCanonicalDropPath, dwCanonicalizeError)) {
+						if (dwCanonicalizeError == ERROR_FILE_NOT_FOUND || dwCanonicalizeError == ERROR_PATH_NOT_FOUND) {
+							DebugLogError(_T("Drag&Drop'ed shared File not found (%s)"), (LPCTSTR)strDroppedPath);
+						} else {
+							LogWarning(LOG_STATUSBAR, _T("Rejected dropped shared path \"%s\" because canonical long-path resolution failed (%s)."), (LPCTSTR)strDroppedPath, (LPCTSTR)GetErrorMessage(dwCanonicalizeError));
+						}
+						continue;
+					}
 
 					WIN32_FILE_ATTRIBUTE_DATA fileData = {};
-					if (LongPathSeams::GetFileAttributesEx(strFilePath, GetFileExInfoStandard, &fileData)) {
-						const CString strNormalizedPath(PathHelpers::NormalizePathSeparators(strFilePath));
+					if (LongPathSeams::GetFileAttributesEx(strCanonicalDropPath, GetFileExInfoStandard, &fileData)) {
+						const CString strNormalizedPath(strCanonicalDropPath);
 						const bool bIsDirectory = (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 						const CString ffpath(bIsDirectory ? PathHelpers::EnsureTrailingSeparator(strNormalizedPath) : strNormalizedPath);
 						const CString strLeafPath(PathHelpers::TrimTrailingSeparatorForLeaf(ffpath));
@@ -1772,12 +1801,12 @@ BOOL CSharedFilesCtrl::CShareDropTarget::OnDrop(CWnd*, COleDataObject *pDataObje
 							if (bFromSingleDirectory) {
 								if (strSingleDirectory.IsEmpty())
 									strSingleDirectory = strDisplayDirectory;
-								else if (strSingleDirectory.CompareNoCase(strDisplayDirectory) != NULL)
+								else if (!EqualPaths(strSingleDirectory, strDisplayDirectory))
 									bFromSingleDirectory = false;
 							}
 						}
 					} else
-						DebugLogError(_T("Drag&Drop'ed shared File not found (%s)"), (LPCTSTR)strFilePath);
+						DebugLogError(_T("Drag&Drop'ed shared File not found (%s)"), (LPCTSTR)strCanonicalDropPath);
 				} else {
 					ASSERT(0);
 				}
@@ -1786,8 +1815,9 @@ BOOL CSharedFilesCtrl::CShareDropTarget::OnDrop(CWnd*, COleDataObject *pDataObje
 			if (!liToAddFiles.IsEmpty() || !liToAddDirs.IsEmpty()) {
 				// add the directories first as this would invalidate addition of
 				// single files, contained in one of those dirs
+				bool bHaveDirectories = false;
 				for (POSITION pos = liToAddDirs.GetHeadPosition(); pos != NULL;)
-					VERIFY(theApp.sharedfiles->AddSingleSharedDirectory(liToAddDirs.GetNext(pos))); // should always succeed
+					bHaveDirectories |= theApp.sharedfiles->AddSingleSharedDirectory(liToAddDirs.GetNext(pos));
 
 				bool bHaveFiles = false;
 				while (!liToAddFiles.IsEmpty())
@@ -1804,7 +1834,7 @@ BOOL CSharedFilesCtrl::CShareDropTarget::OnDrop(CWnd*, COleDataObject *pDataObje
 					// if we added only files from the same directory, show and select this in the file system tree
 					ASSERT(!strSingleDirectory.IsEmpty());
 					VERIFY(theApp.emuledlg->sharedfileswnd->m_ctlSharedDirTree.ShowFileSystemDirectory(strSingleDirectory));
-				} else if (!liToAddDirs.IsEmpty() && !bHaveFiles) {
+				} else if (!liToAddDirs.IsEmpty() && !bHaveFiles && bHaveDirectories) {
 					// only directories added, if only one select the specific shared dir, otherwise the Shared Directories section
 					const CString &sShow(liToAddDirs.GetCount() == 1 ? liToAddDirs.GetHead() : _T(""));
 					theApp.emuledlg->sharedfileswnd->m_ctlSharedDirTree.ShowSharedDirectory(sShow);

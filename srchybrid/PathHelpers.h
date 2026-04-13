@@ -5,6 +5,7 @@
 #include <vector>
 #include <windows.h>
 #include <ShlObj_core.h>
+#include "LongPathSeams.h"
 
 namespace PathHelpers
 {
@@ -348,13 +349,127 @@ inline CString CanonicalizePath(const CString &rstrPath)
 }
 
 /**
+ * @brief Reports whether the normalized path text ends with a directory separator.
+ */
+inline bool HasTrailingSeparator(const CString &rstrPath)
+{
+	const CString strNormalized(NormalizePathSeparators(rstrPath));
+	return !strNormalized.IsEmpty() && IsPathSeparator(strNormalized[strNormalized.GetLength() - 1]);
+}
+
+/**
+ * @brief Returns true when the path can be resolved through the filesystem to a canonical long-name spelling.
+ */
+inline bool TryCanonicalizeExistingPath(const CString &rstrPath, CString &rstrCanonicalPath, DWORD *pdwLastError = NULL)
+{
+	rstrCanonicalPath.Empty();
+	if (pdwLastError != NULL)
+		*pdwLastError = ERROR_SUCCESS;
+
+	if (rstrPath.IsEmpty()) {
+		if (pdwLastError != NULL)
+			*pdwLastError = ERROR_INVALID_NAME;
+		return false;
+	}
+
+	const bool bHadTrailingSeparator = HasTrailingSeparator(rstrPath);
+	const CString strLexicalPath(CanonicalizePath(StripExtendedLengthPrefix(rstrPath)));
+	const ParsedPathRoot root(ParsePathRoot(strLexicalPath));
+	if (!root.bAbsolute || root.strPrefix.IsEmpty()) {
+		if (pdwLastError != NULL)
+			*pdwLastError = ERROR_INVALID_NAME;
+		return false;
+	}
+
+	CString strCurrent(root.strPrefix);
+	if (root.strRemainder.IsEmpty()) {
+		if (!LongPathSeams::PathExists(strCurrent)) {
+			if (pdwLastError != NULL)
+				*pdwLastError = ::GetLastError();
+			return false;
+		}
+		rstrCanonicalPath = bHadTrailingSeparator ? EnsureTrailingSeparator(strCurrent) : strCurrent;
+		return true;
+	}
+
+	int iIndex = 0;
+	CString strSegment;
+	while (ReadNextPathSegment(root.strRemainder, iIndex, strSegment)) {
+		const CString strCandidate(AppendPathComponent(strCurrent, strSegment));
+		WIN32_FIND_DATA findData = {};
+		const HANDLE hFind = LongPathSeams::FindFirstFile(strCandidate, &findData);
+		if (hFind == INVALID_HANDLE_VALUE) {
+			if (pdwLastError != NULL)
+				*pdwLastError = ::GetLastError();
+			return false;
+		}
+
+		::FindClose(hFind);
+		strCurrent = AppendPathComponent(strCurrent, findData.cFileName);
+	}
+
+	rstrCanonicalPath = bHadTrailingSeparator ? EnsureTrailingSeparator(strCurrent) : strCurrent;
+	return true;
+}
+
+/**
+ * @brief Canonicalizes a path lexically and expands existing entries to their long-name spelling when possible.
+ */
+inline CString CanonicalizePathForComparison(const CString &rstrPath, bool *pbResolvedExistingPath = NULL, DWORD *pdwLastError = NULL)
+{
+	if (pbResolvedExistingPath != NULL)
+		*pbResolvedExistingPath = false;
+	if (pdwLastError != NULL)
+		*pdwLastError = ERROR_SUCCESS;
+
+	if (rstrPath.IsEmpty())
+		return CString();
+
+	CString strCanonicalPath;
+	DWORD dwResolveError = ERROR_SUCCESS;
+	if (TryCanonicalizeExistingPath(rstrPath, strCanonicalPath, &dwResolveError)) {
+		if (pbResolvedExistingPath != NULL)
+			*pbResolvedExistingPath = true;
+		return strCanonicalPath;
+	}
+
+	if (pdwLastError != NULL)
+		*pdwLastError = dwResolveError;
+
+	const CString strLexicalPath(CanonicalizePath(StripExtendedLengthPrefix(rstrPath)));
+	return HasTrailingSeparator(rstrPath) ? EnsureTrailingSeparator(strLexicalPath) : strLexicalPath;
+}
+
+/**
  * @brief Canonicalizes a directory-valued path and preserves the trailing separator expected by callers.
  */
 inline CString CanonicalizeDirectoryPath(const CString &rstrPath)
 {
 	if (rstrPath.IsEmpty())
 		return rstrPath;
-	return EnsureTrailingSeparator(CanonicalizePath(rstrPath));
+	return EnsureTrailingSeparator(CanonicalizePathForComparison(rstrPath));
+}
+
+/**
+ * @brief Reports whether two filesystem paths refer to the same canonical location.
+ */
+inline bool ArePathsEquivalent(const CString &rstrLeft, const CString &rstrRight)
+{
+	CString strLeftCanonical(TrimTrailingSeparator(CanonicalizePathForComparison(rstrLeft)));
+	CString strRightCanonical(TrimTrailingSeparator(CanonicalizePathForComparison(rstrRight)));
+	return strLeftCanonical.GetLength() == strRightCanonical.GetLength()
+		&& strLeftCanonical.CompareNoCase(strRightCanonical) == 0;
+}
+
+/**
+ * @brief Reports whether a filesystem path lives inside the provided directory after semantic normalization.
+ */
+inline bool IsPathWithinDirectory(const CString &rstrDirectoryPath, const CString &rstrCandidatePath)
+{
+	const CString strDirectory(EnsureTrailingSeparator(CanonicalizePathForComparison(rstrDirectoryPath)));
+	const CString strCandidate(CanonicalizePathForComparison(rstrCandidatePath));
+	return strCandidate.GetLength() >= strDirectory.GetLength()
+		&& _tcsnicmp(strDirectory, strCandidate, strDirectory.GetLength()) == 0;
 }
 
 /**

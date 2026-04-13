@@ -2350,12 +2350,19 @@ CString RemoveFileExtension(const CString &rstrFilePath)
 
 bool EqualPaths(const CString &rstrDir1, const CString &rstrDir2)
 {
-	int i1 = rstrDir1.GetLength();
-	i1 -= static_cast<int>(i1 && rstrDir1[i1 - 1] == _T('\\'));
-	int i2 = rstrDir2.GetLength();
-	i2 -= static_cast<int>(i2 && rstrDir2[i2 - 1] == _T('\\'));
-	bool bRet = (i1 == i2);
-	return bRet ? _tcsnicmp(rstrDir1, rstrDir2, i1) == 0 : bRet;
+	bool bLeftResolved = false;
+	bool bRightResolved = false;
+	DWORD dwLeftError = ERROR_SUCCESS;
+	DWORD dwRightError = ERROR_SUCCESS;
+	const CString strLeftCanonical(PathHelpers::TrimTrailingSeparator(PathHelpers::CanonicalizePathForComparison(rstrDir1, &bLeftResolved, &dwLeftError)));
+	const CString strRightCanonical(PathHelpers::TrimTrailingSeparator(PathHelpers::CanonicalizePathForComparison(rstrDir2, &bRightResolved, &dwRightError)));
+	if (!bLeftResolved && dwLeftError != ERROR_SUCCESS && LongPathSeams::PathExists(PathHelpers::StripExtendedLengthPrefix(rstrDir1)))
+		DEBUG_ONLY(DebugLogWarning(_T("EqualPaths fallback to lexical compare for \"%s\" (%s)"), (LPCTSTR)rstrDir1, (LPCTSTR)GetErrorMessage(dwLeftError)));
+	if (!bRightResolved && dwRightError != ERROR_SUCCESS && LongPathSeams::PathExists(PathHelpers::StripExtendedLengthPrefix(rstrDir2)))
+		DEBUG_ONLY(DebugLogWarning(_T("EqualPaths fallback to lexical compare for \"%s\" (%s)"), (LPCTSTR)rstrDir2, (LPCTSTR)GetErrorMessage(dwRightError)));
+
+	return strLeftCanonical.GetLength() == strRightCanonical.GetLength()
+		&& strLeftCanonical.CompareNoCase(strRightCanonical) == 0;
 }
 
 bool IsGoodIP(uint32 nIP, bool forceCheck)

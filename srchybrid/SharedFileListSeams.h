@@ -1,6 +1,9 @@
 #pragma once
 
 #include "AtomicStateSeams.h"
+#include "PathHelpers.h"
+
+#define EMULE_TESTS_HAS_SHARED_FILE_LIST_PATH_SEAMS 1
 
 namespace SharedFileListSeams
 {
@@ -53,6 +56,22 @@ inline bool ShouldYieldAfterImportProgress(const bool bAppRunning, const bool bI
 inline bool CanAddSharedFile(const bool bIsPartFile, const bool bSharedByDirectory, const bool bSharedByExactPath)
 {
 	return bIsPartFile || bSharedByDirectory || bSharedByExactPath;
+}
+
+/**
+ * @brief Reports whether an explicitly shared file path still matches a candidate after canonical normalization.
+ */
+inline bool MatchesExplicitSharedFilePath(const CString &rstrSharedPath, const CString &rstrCandidatePath)
+{
+	return PathHelpers::ArePathsEquivalent(rstrSharedPath, rstrCandidatePath);
+}
+
+/**
+ * @brief Reports whether a single-shared file still belongs to the provided directory after canonical normalization.
+ */
+inline bool ContainsSharedChildPath(const CString &rstrDirectoryPath, const CString &rstrCandidatePath)
+{
+	return PathHelpers::IsPathWithinDirectory(rstrDirectoryPath, rstrCandidatePath);
 }
 
 /**

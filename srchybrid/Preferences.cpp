@@ -478,17 +478,35 @@ void CPreferences::ReplaceSharedDirectoryList(const CStringList &in)
 		return;
 	CSingleLock lock(&m_csSharedDirList, TRUE);
 	shareddir_list.RemoveAll();
-	shareddir_list.AddTail(const_cast<CStringList*>(&in));
+	for (POSITION pos = in.GetHeadPosition(); pos != NULL;) {
+		const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(in.GetNext(pos)));
+		bool bDuplicate = false;
+		for (POSITION posExisting = shareddir_list.GetHeadPosition(); posExisting != NULL;) {
+			if (EqualPaths(shareddir_list.GetNext(posExisting), strCanonicalDir)) {
+				bDuplicate = true;
+				break;
+			}
+		}
+		if (!bDuplicate)
+			shareddir_list.AddTail(strCanonicalDir);
+	}
 }
 
 bool CPreferences::AddSharedDirectoryIfAbsent(const CString &dir)
 {
+	const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(dir));
 	CSingleLock lock(&m_csSharedDirList, TRUE);
 	for (POSITION pos = shareddir_list.GetHeadPosition(); pos != NULL;) {
-		if (EqualPaths(shareddir_list.GetNext(pos), dir))
-			return false;
+		const POSITION posCurrent = pos;
+		const CString strExisting(shareddir_list.GetNext(pos));
+		if (!EqualPaths(strExisting, strCanonicalDir))
+			continue;
+		if (strExisting.CompareNoCase(strCanonicalDir) != 0) {
+			shareddir_list.SetAt(posCurrent, strCanonicalDir);
+		}
+		return false;
 	}
-	shareddir_list.AddTail(dir);
+	shareddir_list.AddTail(strCanonicalDir);
 	return true;
 }
 
@@ -617,8 +635,17 @@ void CPreferences::Init()
 					toadd = PathHelpers::CanonicalizeDirectoryPath(toadd);
 					// skip non-shareable directories
 					// maybe skip non-existing directories on fixed disks only
-					if (IsShareableDirectory(toadd) && (m_bKeepUnavailableFixedSharedDirs || DirAccsess(toadd)))
+					if (IsShareableDirectory(toadd) && (m_bKeepUnavailableFixedSharedDirs || DirAccsess(toadd))) {
+						bool bDuplicate = false;
+						for (POSITION pos = sharedDirs.GetHeadPosition(); pos != NULL;) {
+							if (EqualPaths(sharedDirs.GetNext(pos), toadd)) {
+								bDuplicate = true;
+								break;
+							}
+						}
+						if (!bDuplicate)
 						sharedDirs.AddTail(toadd);
+					}
 				}
 			}
 			ReplaceSharedDirectoryList(sharedDirs);
@@ -1962,7 +1989,7 @@ void CPreferences::LoadPreferences()
 		sTmp = PathHelpers::CanonicalizeDirectoryPath(sTmp);
 		bool bDup = false;
 		for (INT_PTR i = tempdir.GetCount(); --i >= 0;)	// avoid duplicate tempdirs
-			if (sTmp.CompareNoCase(GetTempDir(i)) == 0) {
+			if (EqualPaths(sTmp, GetTempDir(i))) {
 				bDup = true;
 				break;
 			}
