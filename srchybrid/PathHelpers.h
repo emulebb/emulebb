@@ -492,6 +492,52 @@ inline bool TryGetPathEntryData(const CString &rstrPath, WIN32_FIND_DATA &rFindD
 }
 
 /**
+ * @brief Enumerates wildcard matches through the long-path-aware Win32 find APIs.
+ */
+template <typename EntryCallback>
+inline bool ForEachMatchingEntry(const CString &rstrSearchPattern, EntryCallback entryCallback, DWORD *pdwLastError = NULL)
+{
+	if (pdwLastError != NULL)
+		*pdwLastError = ERROR_SUCCESS;
+
+	const CString strNormalizedPattern(NormalizePathSeparators(rstrSearchPattern));
+	const int iLastSlash = strNormalizedPattern.ReverseFind(_T('\\'));
+	const CString strSearchPath = (iLastSlash >= 0)
+		? AppendPathComponent(CanonicalizeDirectoryPath(strNormalizedPattern.Left(iLastSlash)), strNormalizedPattern.Mid(iLastSlash + 1))
+		: strNormalizedPattern;
+
+	WIN32_FIND_DATA findData = {};
+	const HANDLE hFind = LongPathSeams::FindFirstFile(strSearchPath, &findData);
+	if (hFind == INVALID_HANDLE_VALUE) {
+		if (pdwLastError != NULL)
+			*pdwLastError = ::GetLastError();
+		return false;
+	}
+
+	bool bStoppedEarly = false;
+	do {
+		if (_tcscmp(findData.cFileName, _T(".")) == 0 || _tcscmp(findData.cFileName, _T("..")) == 0)
+			continue;
+		if (!entryCallback(findData)) {
+			bStoppedEarly = true;
+			break;
+		}
+	} while (::FindNextFile(hFind, &findData));
+
+	const DWORD dwFindError = ::GetLastError();
+	::FindClose(hFind);
+	if (bStoppedEarly)
+		return true;
+	if (dwFindError != ERROR_NO_MORE_FILES) {
+		if (pdwLastError != NULL)
+			*pdwLastError = dwFindError;
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * @brief Enumerates immediate filesystem entries for a directory through the long-path-aware Win32 find APIs.
  */
 template <typename EntryCallback>
