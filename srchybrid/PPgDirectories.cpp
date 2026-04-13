@@ -127,7 +127,7 @@ BOOL CPPgDirectories::OnApply()
 	}
 
 	const CString &sOldIncoming(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
-	if (strIncomingDir.CompareNoCase(sOldIncoming) != 0 && strIncomingDir.CompareNoCase(thePrefs.GetDefaultDirectory(EMULE_INCOMINGDIR, false)) != 0) {
+	if (!EqualPaths(strIncomingDir, sOldIncoming) && !EqualPaths(strIncomingDir, thePrefs.GetDefaultDirectory(EMULE_INCOMINGDIR, false))) {
 		// if the user chooses a non-default directory which already contains files,
 		// inform him that all those files will be shared
 		bool bExistingFile = false;
@@ -175,7 +175,7 @@ BOOL CPPgDirectories::OnApply()
 
 		bool bDup = false;
 		for (INT_PTR i = temptempfolders.GetCount(); --i >= 0;)	// avoid duplicate tempdirs
-			if (atmp.CompareNoCase(temptempfolders[i]) == 0) {
+			if (EqualPaths(atmp, temptempfolders[i])) {
 				bDup = true;
 				break;
 			}
@@ -183,7 +183,7 @@ BOOL CPPgDirectories::OnApply()
 		if (!bDup) {
 			temptempfolders.Add(atmp);
 			if (thePrefs.GetTempDirCount() < temptempfolders.GetCount()
-				|| atmp.CompareNoCase(thePrefs.GetTempDir(temptempfolders.GetCount() - 1)) != 0)
+				|| !EqualPaths(atmp, thePrefs.GetTempDir(temptempfolders.GetCount() - 1)))
 			{
 				testtempdirchanged = true;
 			}
@@ -224,18 +224,21 @@ BOOL CPPgDirectories::OnApply()
 	thePrefs.ReplaceSharedDirectoryList(sharedDirs);
 
 	// on changing incoming dir, update directories for categories with the same path
-	if (sOldIncoming.CompareNoCase(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)) != 0) {
-		thePrefs.GetCategory(0)->strIncomingPath = thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR);
+	const CString strNewIncoming(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
+	if (!EqualPaths(sOldIncoming, strNewIncoming)) {
+		thePrefs.GetCategory(0)->strIncomingPath = strNewIncoming;
 		bool bAskedOnce = false;
+		const CString strOldIncomingCanonical(PathHelpers::CanonicalizeDirectoryPath(sOldIncoming));
+		const CString strNewIncomingCanonical(PathHelpers::CanonicalizeDirectoryPath(strNewIncoming));
 		for (INT_PTR cat = thePrefs.GetCatCount(); --cat > 0;) { //skip 0
-			const CString &oldpath(thePrefs.GetCatPath(cat));
-			if (oldpath.Left(sOldIncoming.GetLength()).CompareNoCase(sOldIncoming) == 0) {
+			const CString strOldPath(PathHelpers::CanonicalizeDirectoryPath(thePrefs.GetCatPath(cat)));
+			if (EqualPaths(strOldPath, strOldIncomingCanonical) || PathHelpers::IsPathWithinDirectory(strOldIncomingCanonical, strOldPath)) {
 				if (!bAskedOnce) {
 					bAskedOnce = true;
 					if (LocMessageBox(IDS_UPDATECATINCOMINGDIRS, MB_YESNO, 0) == IDNO)
 						break;
 				}
-				thePrefs.GetCategory(cat)->strIncomingPath = thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR) + oldpath.Mid(sOldIncoming.GetLength());
+				thePrefs.GetCategory(cat)->strIncomingPath = strNewIncomingCanonical + strOldPath.Mid(strOldIncomingCanonical.GetLength());
 			}
 		}
 		thePrefs.SaveCats();

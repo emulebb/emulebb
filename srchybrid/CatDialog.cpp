@@ -171,7 +171,7 @@ void CCatDialog::OnBnClickedOk()
 		return;
 	}
 
-	if (m_myCat->strIncomingPath.CompareNoCase(oldpath) != 0)
+	if (!EqualPaths(m_myCat->strIncomingPath, oldpath))
 		theApp.sharedfiles->Reload();
 
 	m_myCat->color = m_newcolor;

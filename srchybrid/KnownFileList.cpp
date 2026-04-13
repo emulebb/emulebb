@@ -29,6 +29,7 @@
 #include "Log.h"
 #include "packets.h"
 #include "MD5Sum.h"
+#include "PathHelpers.h"
 #include "SharedFilesWnd.h"
 #include "SharedFilesCtrl.h"
 
@@ -346,7 +347,7 @@ CKnownFile* CKnownFileList::FindKnownFile(LPCTSTR filename, time_t date, uint64 
 CKnownFile* CKnownFileList::FindKnownFileByPath(const CString &sFilePath) const
 {
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair))
-		if (pair->value->GetFilePath().CompareNoCase(sFilePath) == 0)
+		if (PathHelpers::ArePathsEquivalent(pair->value->GetFilePath(), sFilePath))
 			return pair->value;
 
 	return NULL;

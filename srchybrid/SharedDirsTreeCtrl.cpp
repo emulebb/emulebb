@@ -34,6 +34,18 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace
+{
+bool ListContainsEquivalentPath(const CStringList &rList, const CString &rstrPath)
+{
+	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
+		if (EqualPaths(rList.GetNext(pos), rstrPath))
+			return true;
+	}
+	return false;
+}
+}
+
 //**********************************************************************************
 // CDirectoryItem
 
@@ -331,8 +343,8 @@ void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 						if (pCatStruct != NULL) {
 							const CString &strCatIncomingPath(pCatStruct->strIncomingPath);
 							ASSERT(strCatIncomingPath.IsEmpty() || strCatIncomingPath.Right(1) == _T("\\"));
-							if (!strCatIncomingPath.IsEmpty() && strCatIncomingPath.CompareNoCase(strMainIncDir) != 0
-								&& m_strliCatIncomingDirs.Find(strCatIncomingPath) == NULL)
+							if (!strCatIncomingPath.IsEmpty() && !EqualPaths(strCatIncomingPath, strMainIncDir)
+								&& !ListContainsEquivalentPath(m_strliCatIncomingDirs, strCatIncomingPath))
 							{
 								m_strliCatIncomingDirs.AddTail(strCatIncomingPath);
 								bool bAccessible = LongPathSeams::PathExists(strCatIncomingPath);
@@ -779,12 +791,9 @@ bool CSharedDirsTreeCtrl::FileSystemTreeHasSubdirectories(const CString &strDir)
 
 bool CSharedDirsTreeCtrl::FileSystemTreeHasSharedSubdirectory(const CString &strDir, bool bOrFiles)
 {
-	int iLen = strDir.GetLength();
-	ASSERT(iLen > 0);
-	bool bSlosh = (strDir[iLen - 1] == _T('\\'));
 	for (POSITION pos = m_strliSharedDirs.GetHeadPosition(); pos != NULL;) {
 		const CString &sCurrent(m_strliSharedDirs.GetNext(pos));
-		if (_tcsnicmp(sCurrent, strDir, iLen) == 0 && iLen < sCurrent.GetLength() && (bSlosh || sCurrent[iLen] == _T('\\')))
+		if (!EqualPaths(sCurrent, strDir) && PathHelpers::IsPathWithinDirectory(strDir, sCurrent))
 			return true;
 	}
 	return bOrFiles && theApp.sharedfiles->ContainsSingleSharedFiles(strDir);
@@ -882,11 +891,11 @@ void CSharedDirsTreeCtrl::AddSharedDirectory(const CString &strDir, bool bSubDir
 
 void CSharedDirsTreeCtrl::RemoveSharedDirectory(const CString &strDir, bool bSubDirectories)
 {
-	int iLen = strDir.GetLength();
 	for (POSITION pos = m_strliSharedDirs.GetHeadPosition(); pos != NULL;) {
 		POSITION pos2 = pos;
 		const CString &str(m_strliSharedDirs.GetNext(pos));
-		if (_tcsnicmp(str, strDir, (bSubDirectories ? iLen : max(iLen, str.GetLength()))) == 0) {
+		const bool bMatches = bSubDirectories ? PathHelpers::IsPathWithinDirectory(strDir, str) : EqualPaths(str, strDir);
+		if (bMatches) {
 			m_strliSharedDirs.RemoveAt(pos2);
 			if (!bSubDirectories)
 				break;
@@ -976,7 +985,7 @@ void CSharedDirsTreeCtrl::Reload(bool bForce)
 			while (pos != NULL && pos2 != NULL) {
 				const CString &str(m_strliSharedDirs.GetNext(pos));
 				const CString &str2(sharedDirs.GetNext(pos2));
-				if (str.CompareNoCase(str2) != 0) {
+				if (!EqualPaths(str, str2)) {
 					bForce = true;
 					break;
 				}
@@ -992,10 +1001,10 @@ void CSharedDirsTreeCtrl::Reload(bool bForce)
 				if (pCatStruct != NULL) {
 					CString strCatIncomingPath(pCatStruct->strIncomingPath);
 
-					if (!strCatIncomingPath.IsEmpty() && strCatIncomingPath.CompareNoCase(strMainIncDir) != 0
-						&& strliFound.Find(strCatIncomingPath) == NULL)
+					if (!strCatIncomingPath.IsEmpty() && !EqualPaths(strCatIncomingPath, strMainIncDir)
+						&& !ListContainsEquivalentPath(strliFound, strCatIncomingPath))
 					{
-						if (m_strliCatIncomingDirs.Find(strCatIncomingPath) == NULL) {
+						if (!ListContainsEquivalentPath(m_strliCatIncomingDirs, strCatIncomingPath)) {
 							bForce = true;
 							break;
 						}
@@ -1202,7 +1211,7 @@ bool CSharedDirsTreeCtrl::ShowSharedDirectory(const CString &strDir)
 			// search for the fitting sub dir
 			for (POSITION pos2 = pTemp->liSubDirectories.GetHeadPosition(); pos2 != NULL;) {
 				CDirectoryItem *pTemp2 = pTemp->liSubDirectories.GetNext(pos2);
-				if (strDir.CompareNoCase(pTemp2->m_strFullPath) == 0) {
+				if (EqualPaths(strDir, pTemp2->m_strFullPath)) {
 					Select(pTemp2->m_htItem, TVGN_CARET);
 					EnsureVisible(pTemp2->m_htItem);
 					return true;

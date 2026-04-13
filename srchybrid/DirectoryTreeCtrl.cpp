@@ -335,12 +335,9 @@ bool CDirectoryTreeCtrl::AddUNCShare(const CString &strDir)
 
 bool CDirectoryTreeCtrl::HasSharedSubdirectory(const CString &strDir)
 {
-	int iLen = strDir.GetLength();
-	ASSERT(iLen > 0);
-	bool bSlosh = (strDir[iLen - 1] == _T('\\'));
 	for (POSITION pos = m_lstShared.GetHeadPosition(); pos != NULL;) {
 		const CString &sDir(m_lstShared.GetNext(pos));
-		if (_tcsnicmp(sDir, strDir, iLen) == 0 && iLen < sDir.GetLength() && (bSlosh || sDir[iLen] == _T('\\')))
+		if (!EqualPaths(sDir, strDir) && PathHelpers::IsPathWithinDirectory(strDir, sDir))
 			return true;
 	}
 	return false;
