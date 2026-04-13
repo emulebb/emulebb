@@ -33,19 +33,18 @@ private:
 	// returns true if strDir has at least one subdirectory
 	static bool HasSubdirectories(const CString &strDir);
 	// check status of an item has changed
-	void CheckChanged(HTREEITEM hItem, bool bChecked);
+	void CheckChanged(HTREEITEM hItem, bool bChecked, bool bRecurse = false);
 	// returns true if a subdirectory of strDir is shared
 	bool HasSharedSubdirectory(const CString &strDir);
 	// when sharing a directory, make all parent directories bold
 	void UpdateParentItems(HTREEITEM hChild);
 	void ShareSubDirTree(HTREEITEM hItem, BOOL bRecurse);
-
-	void AddDirectory(const CString &strDir);
+	void RebuildUNCShareRoots();
 
 	// share list access
 	bool IsShared(const CString &strDir);
-	void AddShare(const CString &strDir);
-	void RemShare(const CString &strDir);
+	void AddShare(const CString &strDir, bool bSubdirectories = false);
+	void RemShare(const CString &strDir, bool bSubdirectories = false);
 	void MarkChildren(HTREEITEM hChild, bool mark);
 
 	CImageList m_images;
