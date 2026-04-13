@@ -34,11 +34,32 @@ inline PathString NormalizeAbsolutePathSeparators(LPCTSTR pszPath)
 }
 
 /**
+ * @brief Returns true when the character is treated as a Win32 path separator.
+ */
+inline bool IsPathSeparator(const TCHAR ch)
+{
+	return ch == _T('\\') || ch == _T('/');
+}
+
+/**
  * @brief Detects whether the incoming Win32 path is already in extended-length form.
  */
 inline bool HasLongPathPrefix(LPCTSTR pszPath)
 {
 	return pszPath != NULL && _tcsnicmp(pszPath, _T("\\\\?\\"), 4) == 0;
+}
+
+/**
+ * @brief Removes an existing extended-length prefix so callers can inspect the logical DOS/UNC path text.
+ */
+inline PathString StripLongPathPrefix(LPCTSTR pszPath)
+{
+	const PathString normalized = NormalizeAbsolutePathSeparators(pszPath);
+	if (normalized.rfind(_T("\\\\?\\UNC\\"), 0) == 0)
+		return PathString(_T("\\\\")) + normalized.substr(8);
+	if (normalized.rfind(_T("\\\\?\\"), 0) == 0)
+		return normalized.substr(4);
+	return normalized;
 }
 
 /**
@@ -69,18 +90,54 @@ inline bool IsUncPath(LPCTSTR pszPath)
 }
 
 /**
- * @brief Applies the extended-length prefix only to fully qualified overlong DOS/UNC paths.
+ * @brief Returns true when any logical path component ends with a space or period and therefore requires namespace semantics.
+ */
+inline bool RequiresExtendedLengthPathForExactName(LPCTSTR pszPath)
+{
+	if (pszPath == NULL || pszPath[0] == _T('\0'))
+		return false;
+
+	const PathString logicalPath = StripLongPathPrefix(pszPath);
+	size_t iIndex = 0;
+	while (iIndex < logicalPath.size()) {
+		while (iIndex < logicalPath.size() && IsPathSeparator(logicalPath[iIndex]))
+			++iIndex;
+		if (iIndex >= logicalPath.size())
+			break;
+
+		const size_t iStart = iIndex;
+		while (iIndex < logicalPath.size() && !IsPathSeparator(logicalPath[iIndex]))
+			++iIndex;
+
+		const PathString segment = logicalPath.substr(iStart, iIndex - iStart);
+		if (!segment.empty()
+			&& segment != _T(".")
+			&& segment != _T("..")
+			&& (segment[segment.size() - 1] == _T(' ') || segment[segment.size() - 1] == _T('.')))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * @brief Applies the extended-length prefix to fully qualified overlong or exact-name DOS/UNC paths.
  */
 inline PathString PreparePathForLongPath(LPCTSTR pszPath)
 {
 	if (pszPath == NULL || pszPath[0] == _T('\0'))
 		return PathString();
 
-	const size_t nLength = _tcslen(pszPath);
-	if (nLength < MAX_PATH || HasLongPathPrefix(pszPath))
+	if (HasLongPathPrefix(pszPath))
 		return PathString(pszPath);
 
 	const PathString normalizedPath = NormalizeAbsolutePathSeparators(pszPath);
+	const size_t nLength = normalizedPath.size();
+	const bool bRequiresExactNamePrefix = RequiresExtendedLengthPathForExactName(normalizedPath.c_str());
+	if (nLength < MAX_PATH && !bRequiresExactNamePrefix)
+		return PathString(pszPath);
 	if (!IsDriveAbsolutePath(normalizedPath.c_str()) && !IsUncPath(normalizedPath.c_str()))
 		return PathString(pszPath);
 
@@ -96,7 +153,7 @@ inline PathString PreparePathForLongPath(LPCTSTR pszPath)
 }
 
 /**
- * @brief Prepares directory-create paths early enough to avoid the legacy `MAX_PATH - 12` limit.
+ * @brief Prepares directory-create paths early enough to avoid the legacy `MAX_PATH - 12` limit or preserve exact namespace-only names.
  */
 inline PathString PrepareDirectoryCreatePathForLongPath(LPCTSTR pszPath)
 {
@@ -106,11 +163,11 @@ inline PathString PrepareDirectoryCreatePathForLongPath(LPCTSTR pszPath)
 	if (HasLongPathPrefix(pszPath))
 		return PathString(pszPath);
 
-	const size_t nLength = _tcslen(pszPath);
-	if (nLength + kCreateDirectoryLegacyHeadroom < MAX_PATH)
-		return PathString(pszPath);
-
 	const PathString normalizedPath = NormalizeAbsolutePathSeparators(pszPath);
+	const size_t nLength = normalizedPath.size();
+	const bool bRequiresExactNamePrefix = RequiresExtendedLengthPathForExactName(normalizedPath.c_str());
+	if (nLength + kCreateDirectoryLegacyHeadroom < MAX_PATH && !bRequiresExactNamePrefix)
+		return PathString(pszPath);
 	if (!IsDriveAbsolutePath(normalizedPath.c_str()) && !IsUncPath(normalizedPath.c_str()))
 		return PathString(pszPath);
 

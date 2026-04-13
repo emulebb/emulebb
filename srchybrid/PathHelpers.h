@@ -53,6 +53,25 @@ inline CString StripExtendedLengthPrefix(const CString &rstrPath)
 }
 
 /**
+ * @brief Returns true when the logical path text needs extended-length namespace semantics to preserve its exact final component spelling.
+ */
+inline bool RequiresExtendedLengthPathForExactName(const CString &rstrPath)
+{
+	return LongPathSeams::RequiresExtendedLengthPathForExactName(NormalizePathSeparators(rstrPath));
+}
+
+/**
+ * @brief Returns true when a path can be handed to shell/path-parsing APIs without losing its exact spelling.
+ */
+inline bool IsShellSafePath(const CString &rstrPath)
+{
+	return !rstrPath.IsEmpty()
+		&& !HasExtendedLengthPrefix(rstrPath)
+		&& rstrPath.GetLength() < MAX_PATH
+		&& !RequiresExtendedLengthPathForExactName(rstrPath);
+}
+
+/**
  * @brief Grows the module-path buffer until `GetModuleFileName` returns the full path.
  */
 template <typename GetModuleFileNameFn>
