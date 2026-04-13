@@ -4083,13 +4083,18 @@ bool HasSubdirectories(const CString &strDir)
 	CString sDir(PathHelpers::EnsureTrailingSeparator(strDir)); //required for PathIsRoot
 	if (::PathIsRoot(sDir))
 		return true;
-	CFileFind finder;
-	for (BOOL bFound = finder.FindFile(sDir + _T('*')); bFound;) {
-		bFound = finder.FindNextFile();
-		if (finder.IsDirectory() && !finder.IsDots() && !finder.IsSystem())
-			return true;
-	}
-	return false;
+
+	bool bHasSubdirectories = false;
+	(void)PathHelpers::ForEachDirectoryEntry(sDir, [&](const WIN32_FIND_DATA &findData) -> bool {
+		if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
+			&& (findData.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) == 0)
+		{
+			bHasSubdirectories = true;
+			return false;
+		}
+		return true;
+	});
+	return bHasSubdirectories;
 }
 
 bool DirAccsess(const CString &strDir)

@@ -473,6 +473,46 @@ inline bool IsPathWithinDirectory(const CString &rstrDirectoryPath, const CStrin
 }
 
 /**
+ * @brief Enumerates immediate filesystem entries for a directory through the long-path-aware Win32 find APIs.
+ */
+template <typename EntryCallback>
+inline bool ForEachDirectoryEntry(const CString &rstrDirectoryPath, EntryCallback entryCallback, DWORD *pdwLastError = NULL)
+{
+	if (pdwLastError != NULL)
+		*pdwLastError = ERROR_SUCCESS;
+
+	const CString strDirectory(EnsureTrailingSeparator(CanonicalizePathForComparison(rstrDirectoryPath)));
+	WIN32_FIND_DATA findData = {};
+	const HANDLE hFind = LongPathSeams::FindFirstFile(AppendPathComponent(strDirectory, _T("*")), &findData);
+	if (hFind == INVALID_HANDLE_VALUE) {
+		if (pdwLastError != NULL)
+			*pdwLastError = ::GetLastError();
+		return false;
+	}
+
+	bool bStoppedEarly = false;
+	do {
+		if (_tcscmp(findData.cFileName, _T(".")) == 0 || _tcscmp(findData.cFileName, _T("..")) == 0)
+			continue;
+		if (!entryCallback(findData)) {
+			bStoppedEarly = true;
+			break;
+		}
+	} while (::FindNextFile(hFind, &findData));
+
+	const DWORD dwFindError = ::GetLastError();
+	::FindClose(hFind);
+	if (bStoppedEarly)
+		return true;
+	if (dwFindError != ERROR_NO_MORE_FILES) {
+		if (pdwLastError != NULL)
+			*pdwLastError = dwFindError;
+		return false;
+	}
+	return true;
+}
+
+/**
  * @brief Formats a `res://` URL from the current module path without truncating overlong paths.
  */
 template <typename GetModuleFileNameFn>

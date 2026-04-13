@@ -671,36 +671,13 @@ void CSharedFileList::AddFilesFromDirectory(const CString &rstrDirectory)
 	const CString strDirectory(NormalizeSharedDirectoryPath(rstrDirectory));
 	ASSERT(strDirectory.Right(1) == _T("\\"));
 
-	if (strDirectory.GetLength() >= MAX_PATH || strDirectory.Left(4).CompareNoCase(_T("\\\\?\\")) == 0) {
-		WIN32_FIND_DATA findData = {};
-		HANDLE hFind = LongPathSeams::FindFirstFile(strDirectory + _T('*'), &findData);
-		if (hFind == INVALID_HANDLE_VALUE) {
-			DWORD dwError = ::GetLastError();
-			if (dwError != ERROR_FILE_NOT_FOUND)
-				LogWarning(GetResString(IDS_ERR_SHARED_DIR), (LPCTSTR)strDirectory, (LPCTSTR)GetErrorMessage(dwError));
-			return;
-		}
-
-		do {
-			if (_tcscmp(findData.cFileName, _T(".")) != 0 && _tcscmp(findData.cFileName, _T("..")) != 0)
-				CheckAndAddSingleFile(strDirectory, findData);
-		} while (::FindNextFile(hFind, &findData));
-
-		::FindClose(hFind);
-		return;
-	}
-
-	CFileFind ff;
-	BOOL bFound = ff.FindFile(strDirectory + _T('*'));
-	if (bFound) {
-		do {
-			bFound = ff.FindNextFile();
-			CheckAndAddSingleFile(ff);
-		} while (bFound);
-	} else {
-		DWORD dwError = ::GetLastError();
-		if (dwError != ERROR_FILE_NOT_FOUND)
-			LogWarning(GetResString(IDS_ERR_SHARED_DIR), (LPCTSTR)strDirectory, (LPCTSTR)GetErrorMessage(dwError));
+	DWORD dwError = ERROR_SUCCESS;
+	if (!PathHelpers::ForEachDirectoryEntry(strDirectory, [&](const WIN32_FIND_DATA &findData) -> bool {
+		CheckAndAddSingleFile(strDirectory, findData);
+		return true;
+	}, &dwError) && dwError != ERROR_FILE_NOT_FOUND)
+	{
+		LogWarning(GetResString(IDS_ERR_SHARED_DIR), (LPCTSTR)strDirectory, (LPCTSTR)GetErrorMessage(dwError));
 	}
 }
 

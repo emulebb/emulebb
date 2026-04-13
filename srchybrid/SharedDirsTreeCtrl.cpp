@@ -44,6 +44,22 @@ bool ListContainsEquivalentPath(const CStringList &rList, const CString &rstrPat
 	}
 	return false;
 }
+
+bool EnumerateChildDirectories(const CString &rstrDirectory, CStringList &rChildNames)
+{
+	rChildNames.RemoveAll();
+	DWORD dwError = ERROR_SUCCESS;
+	const bool bEnumerated = PathHelpers::ForEachDirectoryEntry(rstrDirectory, [&](const WIN32_FIND_DATA &findData) -> bool {
+		if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
+			&& (findData.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) == 0)
+		{
+			rChildNames.AddTail(findData.cFileName);
+		}
+		return true;
+	}, &dwError);
+
+	return bEnumerated || dwError == ERROR_FILE_NOT_FOUND || dwError == ERROR_PATH_NOT_FOUND;
+}
 }
 
 //**********************************************************************************
@@ -802,15 +818,13 @@ bool CSharedDirsTreeCtrl::FileSystemTreeHasSharedSubdirectory(const CString &str
 void CSharedDirsTreeCtrl::FileSystemTreeAddSubdirectories(CDirectoryItem *pRoot)
 {
 	ASSERT(pRoot->m_strFullPath.Right(1) == _T("\\"));
-	CFileFind finder;
-	for (BOOL bFound = finder.FindFile(pRoot->m_strFullPath + _T("*.*")); bFound;) {
-		bFound = finder.FindNextFile();
-		if (finder.IsDirectory() && !finder.IsDots() && !finder.IsSystem()) {
-			CString strFilename(finder.GetFileName());
-			strFilename.Delete(0, strFilename.ReverseFind(_T('\\')) + 1);
-			FileSystemTreeAddChildItem(pRoot, strFilename, false);
-		}
-	}
+
+	CStringList childNames;
+	if (!EnumerateChildDirectories(pRoot->m_strFullPath, childNames))
+		return;
+
+	for (POSITION pos = childNames.GetHeadPosition(); pos != NULL;)
+		FileSystemTreeAddChildItem(pRoot, childNames.GetNext(pos), false);
 }
 
 int CSharedDirsTreeCtrl::AddSystemIcon(HICON hIcon, int nSystemListPos)
@@ -880,12 +894,12 @@ void CSharedDirsTreeCtrl::AddSharedDirectory(const CString &strDir, bool bSubDir
 		m_strliSharedDirs.AddTail(sDir);
 
 	if (bSubDirectories) {
-		CFileFind finder;
-		for (BOOL bFound = finder.FindFile(sDir + _T("*.*")); bFound;) {
-			bFound = finder.FindNextFile();
-			if (finder.IsDirectory() && !finder.IsDots() && !finder.IsSystem())
-				AddSharedDirectory(sDir + finder.GetFileName(), true); //no trailing backslash here
-		}
+		CStringList childNames;
+		if (!EnumerateChildDirectories(sDir, childNames))
+			return;
+
+		for (POSITION pos = childNames.GetHeadPosition(); pos != NULL;)
+			AddSharedDirectory(sDir + childNames.GetNext(pos), true); //no trailing backslash here
 	}
 }
 
