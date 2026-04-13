@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "emuleDlg.h"
 #include "SharedFilesWnd.h"
+#include "SharedFilesWndSeams.h"
 #include "OtherFunctions.h"
 #include "SharedFileList.h"
 #include "KnownFile.h"
@@ -31,11 +32,20 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#define	SPLITTER_RANGE_MIN		100
-#define	SPLITTER_RANGE_MAX		350
-
 #define	SPLITTER_MARGIN			0
-#define	SPLITTER_WIDTH			4
+
+namespace
+{
+int GetSharedFilesClientWidth(CWnd *pWnd)
+{
+	if (pWnd == NULL || pWnd->GetSafeHwnd() == NULL)
+		return 0;
+
+	CRect rectClient;
+	pWnd->GetClientRect(&rectClient);
+	return rectClient.Width();
+}
+}
 
 
 // CSharedFilesWnd dialog
@@ -109,21 +119,18 @@ BOOL CSharedFilesWnd::OnInitDialog()
 	AddAnchor(m_dlgDetails, BOTTOM_LEFT, BOTTOM_RIGHT);
 
 	rcSpl.left = rcSpl.right + SPLITTER_MARGIN;
-	rcSpl.right = rcSpl.left + SPLITTER_WIDTH;
+	rcSpl.right = rcSpl.left + SharedFilesWndSeams::kSplitterWidth;
 	m_wndSplitter.CreateWnd(WS_CHILD | WS_VISIBLE, rcSpl, this, IDC_SPLITTER_SHAREDFILES);
 
 	AddAnchor(m_ctlSharedDirTree, TOP_LEFT, BOTTOM_LEFT);
 	AddAnchor(IDC_RELOADSHAREDFILES, TOP_RIGHT);
 	AddAllOtherAnchors();
 
-	int iPosStatInit = rcSpl.left;
-	int iPosStatNew = thePrefs.GetSplitterbarPositionShared();
-	if (iPosStatNew > SPLITTER_RANGE_MAX)
-		iPosStatNew = SPLITTER_RANGE_MAX;
-	else if (iPosStatNew < SPLITTER_RANGE_MIN)
-		iPosStatNew = SPLITTER_RANGE_MIN;
+	const int iClientWidth = GetSharedFilesClientWidth(this);
+	const int iPosStatInit = rcSpl.left;
+	const int iPosStatNew = SharedFilesWndSeams::ClampSplitterPosition(thePrefs.GetSplitterbarPositionShared(), iClientWidth);
 	rcSpl.left = iPosStatNew;
-	rcSpl.right = iPosStatNew + SPLITTER_WIDTH;
+	rcSpl.right = iPosStatNew + SharedFilesWndSeams::kSplitterWidth;
 	m_wndSplitter.MoveWindow(&rcSpl);
 	DoResize(iPosStatNew - iPosStatInit);
 
@@ -178,10 +185,12 @@ void CSharedFilesWnd::DoResize(int iDelta)
 	AddAnchor(IDC_SF_FICON, BOTTOM_LEFT);
 	AddAnchor(IDC_SF_FNAME, BOTTOM_LEFT, BOTTOM_RIGHT);
 
-	RECT rcWnd;
-	GetWindowRect(&rcWnd);
-	ScreenToClient(&rcWnd);
-	m_wndSplitter.SetRange(rcWnd.left + SPLITTER_RANGE_MIN, rcWnd.left + SPLITTER_RANGE_MAX);
+	CRect rcWnd;
+	GetClientRect(&rcWnd);
+	const int iClientWidth = rcWnd.Width();
+	m_wndSplitter.SetRange(
+		rcWnd.left + SharedFilesWndSeams::kMinTreeWidth,
+		rcWnd.left + SharedFilesWndSeams::GetSplitterRangeMax(iClientWidth));
 
 	Invalidate();
 	UpdateWindow();
@@ -312,7 +321,7 @@ LRESULT CSharedFilesWnd::DefWindowProc(UINT message, WPARAM wParam, LPARAM lPara
 				m_ctlSharedDirTree.GetWindowRect(&rcSpl);
 				ScreenToClient(&rcSpl);
 				rcSpl.left = rcSpl.right + SPLITTER_MARGIN;
-				rcSpl.right = rcSpl.left + SPLITTER_WIDTH;
+				rcSpl.right = rcSpl.left + SharedFilesWndSeams::kSplitterWidth;
 
 				RECT rcFilter;
 				m_ctlFilter.GetWindowRect(&rcFilter);
@@ -330,10 +339,11 @@ LRESULT CSharedFilesWnd::DefWindowProc(UINT message, WPARAM wParam, LPARAM lPara
 		break;
 	case WM_SIZE:
 		if (m_wndSplitter) {
-			RECT rcWnd;
-			GetWindowRect(&rcWnd);
-			ScreenToClient(&rcWnd);
-			m_wndSplitter.SetRange(rcWnd.left + SPLITTER_RANGE_MIN, rcWnd.left + SPLITTER_RANGE_MAX);
+			CRect rcWnd;
+			GetClientRect(&rcWnd);
+			m_wndSplitter.SetRange(
+				rcWnd.left + SharedFilesWndSeams::kMinTreeWidth,
+				rcWnd.left + SharedFilesWndSeams::GetSplitterRangeMax(rcWnd.Width()));
 		}
 	}
 	return CResizableDialog::DefWindowProc(message, wParam, lParam);
