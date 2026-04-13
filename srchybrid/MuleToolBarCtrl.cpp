@@ -28,6 +28,7 @@
 #include "ServerWnd.h"
 #include "TransferDlg.h"
 #include "SharedFilesWnd.h"
+#include "PathHelpers.h"
 #include "ChatWnd.h"
 #include "IrcWnd.h"
 #include "StatisticsDlg.h"
@@ -335,14 +336,11 @@ void CMuleToolbarCtrl::OnNmRClick(LPNMHDR, LRESULT *pResult)
 	if (!thePrefs.GetMuleDirectory(EMULE_TOOLBARDIR).IsEmpty()) {
 		CStringArray astrToolbarFiles;
 		for (unsigned f = 0; f < _countof(s_apszTBFiles); ++f) {
-			WIN32_FIND_DATA FileData;
-			HANDLE hSearch = FindFirstFile(thePrefs.GetMuleDirectory(EMULE_TOOLBARDIR) + s_apszTBFiles[f], &FileData);
-			if (hSearch != INVALID_HANDLE_VALUE) {
-				do
-					astrToolbarFiles.Add(FileData.cFileName);
-				while (astrToolbarFiles.GetCount() < MAX_TOOLBAR_FILES && FindNextFile(hSearch, &FileData));
-				FindClose(hSearch);
-			}
+			(void)PathHelpers::ForEachMatchingEntry(thePrefs.GetMuleDirectory(EMULE_TOOLBARDIR) + s_apszTBFiles[f],
+				[&](const WIN32_FIND_DATA &findData) -> bool {
+				astrToolbarFiles.Add(findData.cFileName);
+				return astrToolbarFiles.GetCount() < MAX_TOOLBAR_FILES;
+			});
 		}
 
 		if (!astrToolbarFiles.IsEmpty()) {
@@ -393,14 +391,11 @@ void CMuleToolbarCtrl::OnNmRClick(LPNMHDR, LRESULT *pResult)
 	if (!thePrefs.GetMuleDirectory(EMULE_SKINDIR, false).IsEmpty()) {
 		CStringArray astrSkinFiles;
 		for (unsigned f = 0; f < _countof(s_apszSkinFiles); ++f) {
-			WIN32_FIND_DATA FileData;
-			HANDLE hSearch = FindFirstFile(thePrefs.GetMuleDirectory(EMULE_SKINDIR, false) + s_apszSkinFiles[f], &FileData);
-			if (hSearch != INVALID_HANDLE_VALUE) {
-				do
-					astrSkinFiles.Add(FileData.cFileName);
-				while (astrSkinFiles.GetCount() < MAX_SKIN_FILES && FindNextFile(hSearch, &FileData));
-				FindClose(hSearch);
-			}
+			(void)PathHelpers::ForEachMatchingEntry(thePrefs.GetMuleDirectory(EMULE_SKINDIR, false) + s_apszSkinFiles[f],
+				[&](const WIN32_FIND_DATA &findData) -> bool {
+				astrSkinFiles.Add(findData.cFileName);
+				return astrSkinFiles.GetCount() < MAX_SKIN_FILES;
+			});
 		}
 
 		if (!astrSkinFiles.IsEmpty()) {

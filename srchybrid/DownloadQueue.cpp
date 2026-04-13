@@ -38,6 +38,7 @@
 #include "MenuCmds.h"
 #include "Log.h"
 #include "DownloadQueueDiskSpaceSeams.h"
+#include "PathHelpers.h"
 #include "DownloadQueueOverviewSeams.h"
 
 #ifdef _DEBUG
@@ -144,25 +145,25 @@ void CDownloadQueue::AddPartFilesToShare()
 void CDownloadQueue::Init()
 {
 	// find all part files, read & hash them if needed and store into a list
-	CFileFind ff;
 	int count = 0;
 
-	CString searchPath;
 	for (INT_PTR i = 0; i < thePrefs.GetTempDirCount(); ++i) {
-		searchPath.Format(_T("%s*.part.met"), (LPCTSTR)thePrefs.GetTempDir(i));
+		const CString strTempDir(thePrefs.GetTempDir(i));
 
 		//check all part.met files
-		for (BOOL bFound = ff.FindFile(searchPath); bFound;) {
-			bFound = ff.FindNextFile();
-			if (ff.IsDirectory())
-				continue;
+		(void)PathHelpers::ForEachMatchingEntry(PathHelpers::AppendPathComponent(strTempDir, _T("*.part.met")),
+			[&](const WIN32_FIND_DATA &findData) -> bool {
+			if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+				return true;
+
 			CPartFile *toadd = new CPartFile();
-			EPartFileLoadResult eResult = toadd->LoadPartFile(thePrefs.GetTempDir(i), ff.GetFileName());
+			const CString strFileName(findData.cFileName);
+			EPartFileLoadResult eResult = toadd->LoadPartFile(strTempDir, strFileName);
 			if (eResult == PLR_FAILED_METFILE_CORRUPT) {
 				// .met file is corrupted, try to load the latest backup of this file
 				delete toadd;
 				toadd = new CPartFile();
-				eResult = toadd->LoadPartFile(thePrefs.GetTempDir(i), ff.GetFileName() + PARTMET_BAK_EXT);
+				eResult = toadd->LoadPartFile(strTempDir, strFileName + PARTMET_BAK_EXT);
 				if (eResult == PLR_LOADSUCCESS) {
 					toadd->SavePartFile(true); // don't override our just used .bak file yet
 					AddLogLine(false, GetResString(IDS_RECOVERED_PARTMET), (LPCTSTR)toadd->GetFileName());
@@ -177,16 +178,17 @@ void CDownloadQueue::Init()
 				theApp.emuledlg->transferwnd->GetDownloadList()->AddFile(toadd); // show in download window
 			} else
 				delete toadd;
-		}
+			return true;
+		});
 
 		//try recovering any part.met files
-		searchPath += _T(".backup");
-		for (BOOL bFound = ff.FindFile(searchPath); bFound;) {
-			bFound = ff.FindNextFile();
-			if (ff.IsDirectory())
-				continue;
+		(void)PathHelpers::ForEachMatchingEntry(PathHelpers::AppendPathComponent(strTempDir, _T("*.part.met.backup")),
+			[&](const WIN32_FIND_DATA &findData) -> bool {
+			if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+				return true;
+
 			CPartFile *toadd = new CPartFile();
-			if (toadd->LoadPartFile(thePrefs.GetTempDir(i), ff.GetFileName()) == PLR_LOADSUCCESS) {
+			if (toadd->LoadPartFile(strTempDir, findData.cFileName) == PLR_LOADSUCCESS) {
 				toadd->SavePartFile(true); // re-save backup, don't overwrite existing bak files yet
 				++count;
 				filelist.AddTail(toadd);			// to download queue
@@ -197,8 +199,8 @@ void CDownloadQueue::Init()
 				AddLogLine(false, GetResString(IDS_RECOVERED_PARTMET), (LPCTSTR)toadd->GetFileName());
 			} else
 				delete toadd;
-		}
-		ff.Close();
+			return true;
+		});
 	}
 	if (count == 0)
 		AddLogLine(false, GetResString(IDS_NOPARTSFOUND));

@@ -580,13 +580,12 @@ void CPreferences::Init()
 	///////////////////////////////////////////////////////////////////////////
 	// Move *.log files from application directory into 'log' directory
 	//
-	CFileFind ff;
-	for (BOOL bFound = ff.FindFile(GetMuleDirectory(EMULE_EXECUTABLEDIR) + _T("eMule*.log")); bFound;) {
-		bFound = ff.FindNextFile();
-		if (!ff.IsDirectory() && !ff.IsSystem() && !ff.IsHidden())
-			(void)LongPathSeams::MoveFile(ff.GetFilePath(), GetMuleDirectory(EMULE_LOGDIR) + ff.GetFileName());
-	}
-	ff.Close();
+	(void)PathHelpers::ForEachMatchingEntry(GetMuleDirectory(EMULE_EXECUTABLEDIR) + _T("eMule*.log"),
+		[&](const WIN32_FIND_DATA &findData) -> bool {
+		if ((findData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN)) == 0)
+			(void)LongPathSeams::MoveFile(GetMuleDirectory(EMULE_EXECUTABLEDIR) + findData.cFileName, GetMuleDirectory(EMULE_LOGDIR) + findData.cFileName);
+		return true;
+	});
 
 	///////////////////////////////////////////////////////////////////////////
 	// Move 'downloads.txt/bak' files from application and/or database directory
@@ -1245,13 +1244,12 @@ bool CPreferences::LoadStats(int loadBackUp)
 	// loadBackUp = 0: Load the stats normally like we used to do in LoadPreferences
 	// loadBackUp = 1: Load the stats from statbkup.ini and create a backup of the current stats.  Also, do not initialize session variables.
 	const CString &sConfDir(GetMuleDirectory(EMULE_CONFIGDIR));
-	CFileFind findBackUp;
 
 	CString sINI(sConfDir);
 	switch (loadBackUp) {
 	case 1:
 		sINI += _T("statbkup.ini");
-		if (!findBackUp.FindFile(sINI))
+		if (!LongPathSeams::PathExists(sINI))
 			return false;
 		SaveStats(2); // Save our temp backup of current values to statbkuptmp.ini, we will be renaming it at the end of this function.
 		break;
@@ -1392,7 +1390,7 @@ bool CPreferences::LoadStats(int loadBackUp)
 		// Check to make sure the backup of the values we just overwrote exists.  If so, rename it to the backup file.
 		// This allows us to undo a restore, so to speak, just in case we don't like the restored values...
 		CString sINIBackUp(sConfDir + _T("statbkuptmp.ini"));
-		if (findBackUp.FindFile(sINIBackUp)) {
+		if (LongPathSeams::PathExists(sINIBackUp)) {
 			(void)LongPathSeams::DeleteFile(sINI);				// Remove the backup that we just restored from
 			(void)LongPathSeams::MoveFile(sINIBackUp, sINI);	// Rename our temporary backup to the normal statbkup.ini filename.
 		}

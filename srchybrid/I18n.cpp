@@ -3,6 +3,7 @@
 #include "emule.h"
 #include "I18nSeams.h"
 #include "OtherFunctions.h"
+#include "PathHelpers.h"
 #include "Preferences.h"
 #include "langids.h"
 
@@ -144,25 +145,26 @@ static SLanguage s_aLanguages[] =
 
 static void InitLanguages(const CString &rstrLangDir1, const CString &rstrLangDir2)
 {
-	bool bSameDir = EqualPaths(rstrLangDir1, rstrLangDir2);
-	CFileFind ff;
-	for (BOOL bFound = ff.FindFile(rstrLangDir1 + _T("*.dll")); bFound;) {
-		bFound = ff.FindNextFile();
-		if (ff.IsDirectory())
-			continue;
-		const CString strLangDLLFileName = I18nSeams::ExtractLanguageDllBaseName(ff.GetFileName());
+	const auto markSupportedLanguages = [](const CString &rstrLangDir) {
+		(void)PathHelpers::ForEachMatchingEntry(rstrLangDir + _T("*.dll"),
+			[](const WIN32_FIND_DATA &findData) -> bool {
+			if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+				return true;
 
-		for (SLanguage *pLang = s_aLanguages; pLang->lid; ++pLang)
-			if (_tcsicmp(pLang->pszISOLocale, strLangDLLFileName) == 0) {
-				pLang->bSupported = true;
-				break;
+			const CString strLangDLLFileName = I18nSeams::ExtractLanguageDllBaseName(findData.cFileName);
+			for (SLanguage *pLang = s_aLanguages; pLang->lid; ++pLang) {
+				if (_tcsicmp(pLang->pszISOLocale, strLangDLLFileName) == 0) {
+					pLang->bSupported = true;
+					break;
+				}
 			}
+			return true;
+		});
+	};
 
-		if (!bFound && !bSameDir) {
-			bFound = ff.FindFile(rstrLangDir2 + _T("*.dll"));
-			bSameDir = true;
-		}
-	}
+	markSupportedLanguages(rstrLangDir1);
+	if (!EqualPaths(rstrLangDir1, rstrLangDir2))
+		markSupportedLanguages(rstrLangDir2);
 }
 
 static void FreeLangDLL()
