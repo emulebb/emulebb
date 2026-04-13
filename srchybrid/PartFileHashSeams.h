@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#define EMULE_TESTS_HAS_PART_FILE_HASH_LAYOUT_GENERATION 1
+
 /**
  * @brief Reports whether a completed hash worker result still matches the part file's theoretical hashset shape.
  */
