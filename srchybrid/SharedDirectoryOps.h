@@ -1,11 +1,22 @@
 #pragma once
 
+#include <afxtempl.h>
+
 #include "PathHelpers.h"
 
 bool EqualPaths(const CString &rstrDir1, const CString &rstrDir2);
 
 namespace SharedDirectoryOps
 {
+inline bool ContainsDirectoryIdentity(const std::vector<LongPathSeams::FileSystemObjectIdentity> &rVisitedDirectories, const LongPathSeams::FileSystemObjectIdentity &rIdentity)
+{
+	for (size_t i = 0; i < rVisitedDirectories.size(); ++i) {
+		if (rVisitedDirectories[i] == rIdentity)
+			return true;
+	}
+	return false;
+}
+
 inline bool ListContainsEquivalentPath(const CStringList &rList, const CString &rstrPath)
 {
 	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
@@ -18,6 +29,28 @@ inline bool ListContainsEquivalentPath(const CStringList &rList, const CString &
 inline bool IsSharedDirectoryListed(const CStringList &rList, const CString &rstrPath)
 {
 	return ListContainsEquivalentPath(rList, rstrPath);
+}
+
+inline bool ListContainsEquivalentDirectoryObject(const CStringList &rList, const CString &rstrPath, const LongPathSeams::FileSystemObjectIdentity *pIdentity = NULL)
+{
+	if (ListContainsEquivalentPath(rList, rstrPath))
+		return true;
+
+	LongPathSeams::FileSystemObjectIdentity targetIdentity = {};
+	if (pIdentity != NULL) {
+		targetIdentity = *pIdentity;
+	} else if (!LongPathSeams::TryGetResolvedDirectoryIdentity(rstrPath, targetIdentity)) {
+		return false;
+	}
+
+	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
+		const CString strCurrent(rList.GetNext(pos));
+		LongPathSeams::FileSystemObjectIdentity currentIdentity = {};
+		if (LongPathSeams::TryGetResolvedDirectoryIdentity(strCurrent, currentIdentity) && currentIdentity == targetIdentity)
+			return true;
+	}
+
+	return false;
 }
 
 inline bool HasSharedSubdirectory(const CStringList &rList, const CString &rstrDirectory)
@@ -47,12 +80,22 @@ inline bool EnumerateChildDirectories(const CString &rstrDirectory, CStringList 
 }
 
 template <typename IsShareableDirectoryFn>
-inline bool AddSharedDirectory(CStringList &rList, const CString &rstrDirectory, const bool bIncludeSubdirectories, IsShareableDirectoryFn isShareableDirectoryFn)
+inline bool AddSharedDirectoryImpl(CStringList &rList, const CString &rstrDirectory, const bool bIncludeSubdirectories, IsShareableDirectoryFn isShareableDirectoryFn, std::vector<LongPathSeams::FileSystemObjectIdentity> &rVisitedDirectories)
 {
 	const CString strCanonicalDirectory(PathHelpers::CanonicalizeDirectoryPath(rstrDirectory));
+	LongPathSeams::FileSystemObjectIdentity directoryIdentity = {};
+	const bool bHasDirectoryIdentity = LongPathSeams::TryGetResolvedDirectoryIdentity(strCanonicalDirectory, directoryIdentity);
+	if (bHasDirectoryIdentity) {
+		if (ContainsDirectoryIdentity(rVisitedDirectories, directoryIdentity))
+			return false;
+		rVisitedDirectories.push_back(directoryIdentity);
+	}
+
 	bool bChanged = false;
 
-	if (isShareableDirectoryFn(strCanonicalDirectory) && !ListContainsEquivalentPath(rList, strCanonicalDirectory)) {
+	if (isShareableDirectoryFn(strCanonicalDirectory)
+		&& !ListContainsEquivalentDirectoryObject(rList, strCanonicalDirectory, bHasDirectoryIdentity ? &directoryIdentity : NULL))
+	{
 		rList.AddTail(strCanonicalDirectory);
 		bChanged = true;
 	}
@@ -66,10 +109,17 @@ inline bool AddSharedDirectory(CStringList &rList, const CString &rstrDirectory,
 
 	for (POSITION pos = childNames.GetHeadPosition(); pos != NULL;) {
 		const CString strChildPath(PathHelpers::AppendPathComponent(strCanonicalDirectory, childNames.GetNext(pos)));
-		if (AddSharedDirectory(rList, strChildPath, true, isShareableDirectoryFn))
+		if (AddSharedDirectoryImpl(rList, strChildPath, true, isShareableDirectoryFn, rVisitedDirectories))
 			bChanged = true;
 	}
 	return bChanged;
+}
+
+template <typename IsShareableDirectoryFn>
+inline bool AddSharedDirectory(CStringList &rList, const CString &rstrDirectory, const bool bIncludeSubdirectories, IsShareableDirectoryFn isShareableDirectoryFn)
+{
+	std::vector<LongPathSeams::FileSystemObjectIdentity> visitedDirectories;
+	return AddSharedDirectoryImpl(rList, rstrDirectory, bIncludeSubdirectories, isShareableDirectoryFn, visitedDirectories);
 }
 
 inline bool RemoveSharedDirectory(CStringList &rList, const CString &rstrDirectory, const bool bIncludeSubdirectories)

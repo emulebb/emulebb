@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdio>
 #include <fcntl.h>
 #include <io.h>
@@ -19,6 +20,20 @@ namespace LongPathSeams
 {
 using PathString = std::basic_string<TCHAR>;
 constexpr size_t kCreateDirectoryLegacyHeadroom = 12u;
+
+struct FileSystemObjectIdentity
+{
+	ULONGLONG ullVolumeSerialNumber = 0;
+	std::array<BYTE, 16> fileId = {};
+	bool bHasExtendedFileId = false;
+};
+
+inline bool operator==(const FileSystemObjectIdentity &rLeft, const FileSystemObjectIdentity &rRight)
+{
+	return rLeft.ullVolumeSerialNumber == rRight.ullVolumeSerialNumber
+		&& rLeft.bHasExtendedFileId == rRight.bHasExtendedFileId
+		&& rLeft.fileId == rRight.fileId;
+}
 
 /**
  * @brief Normalizes forward slashes to backslashes before building extended-length DOS/UNC paths.
@@ -317,6 +332,77 @@ inline BOOL CreateDirectory(LPCTSTR pszPath, LPSECURITY_ATTRIBUTES pSecurityAttr
 inline BOOL RemoveDirectory(LPCTSTR pszPath)
 {
 	return ::RemoveDirectory(PreparePathForLongPath(pszPath).c_str());
+}
+
+/**
+ * @brief Queries the resolved filesystem identity for an existing directory.
+ */
+inline bool TryGetResolvedDirectoryIdentity(LPCTSTR pszPath, FileSystemObjectIdentity &rIdentity, DWORD *pdwLastError = NULL)
+{
+	rIdentity = FileSystemObjectIdentity{};
+	if (pdwLastError != NULL)
+		*pdwLastError = ERROR_SUCCESS;
+	if (pszPath == NULL || pszPath[0] == _T('\0')) {
+		if (pdwLastError != NULL)
+			*pdwLastError = ERROR_INVALID_PARAMETER;
+		return false;
+	}
+
+	HANDLE hDirectory = ::CreateFile(
+		PreparePathForLongPath(pszPath).c_str(),
+		0,
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+		NULL,
+		OPEN_EXISTING,
+		FILE_FLAG_BACKUP_SEMANTICS,
+		NULL);
+	if (hDirectory == INVALID_HANDLE_VALUE) {
+		if (pdwLastError != NULL)
+			*pdwLastError = ::GetLastError();
+		return false;
+	}
+
+	bool bOk = false;
+	DWORD dwError = ERROR_SUCCESS;
+
+	FILE_ID_INFO fileIdInfo = {};
+	if (::GetFileInformationByHandleEx(hDirectory, FileIdInfo, &fileIdInfo, sizeof(fileIdInfo)) != FALSE) {
+		rIdentity.ullVolumeSerialNumber = fileIdInfo.VolumeSerialNumber;
+		for (size_t i = 0; i < rIdentity.fileId.size(); ++i)
+			rIdentity.fileId[i] = fileIdInfo.FileId.Identifier[i];
+		rIdentity.bHasExtendedFileId = true;
+		bOk = true;
+	} else {
+		dwError = ::GetLastError();
+		BY_HANDLE_FILE_INFORMATION handleInfo = {};
+		if (::GetFileInformationByHandle(hDirectory, &handleInfo) != FALSE) {
+			rIdentity.ullVolumeSerialNumber = handleInfo.dwVolumeSerialNumber;
+			rIdentity.fileId[0] = static_cast<BYTE>(handleInfo.nFileIndexLow & 0xFFu);
+			rIdentity.fileId[1] = static_cast<BYTE>((handleInfo.nFileIndexLow >> 8) & 0xFFu);
+			rIdentity.fileId[2] = static_cast<BYTE>((handleInfo.nFileIndexLow >> 16) & 0xFFu);
+			rIdentity.fileId[3] = static_cast<BYTE>((handleInfo.nFileIndexLow >> 24) & 0xFFu);
+			rIdentity.fileId[4] = static_cast<BYTE>(handleInfo.nFileIndexHigh & 0xFFu);
+			rIdentity.fileId[5] = static_cast<BYTE>((handleInfo.nFileIndexHigh >> 8) & 0xFFu);
+			rIdentity.fileId[6] = static_cast<BYTE>((handleInfo.nFileIndexHigh >> 16) & 0xFFu);
+			rIdentity.fileId[7] = static_cast<BYTE>((handleInfo.nFileIndexHigh >> 24) & 0xFFu);
+			rIdentity.bHasExtendedFileId = false;
+			dwError = ERROR_SUCCESS;
+			bOk = true;
+		}
+	}
+
+	const DWORD dwCloseError = (::CloseHandle(hDirectory) != FALSE) ? ERROR_SUCCESS : ::GetLastError();
+	if (!bOk) {
+		if (pdwLastError != NULL)
+			*pdwLastError = dwError;
+		return false;
+	}
+	if (dwCloseError != ERROR_SUCCESS) {
+		if (pdwLastError != NULL)
+			*pdwLastError = dwCloseError;
+		return false;
+	}
+	return true;
 }
 
 /**
