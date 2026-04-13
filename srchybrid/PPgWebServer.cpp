@@ -302,7 +302,7 @@ BOOL CPPgWebServer::OnApply()
 				return FALSE;
 			}
 			if (!m_bNewCert)
-				m_bNewCert = !thePrefs.GetWebCertPath().CompareNoCase(sBuf);
+				m_bNewCert = EqualPaths(thePrefs.GetWebCertPath(), sBuf);
 		}
 		thePrefs.SetWebCertPath(sBuf);
 
@@ -313,7 +313,7 @@ BOOL CPPgWebServer::OnApply()
 				return FALSE;
 			}
 			if (!m_bNewCert)
-				m_bNewCert = !thePrefs.GetWebKeyPath().CompareNoCase(sBuf);
+				m_bNewCert = EqualPaths(thePrefs.GetWebKeyPath(), sBuf);
 		}
 		thePrefs.SetWebKeyPath(sBuf);
 
@@ -500,7 +500,7 @@ void CPPgWebServer::OnBnClickedCertbrowse()
 	buffer += _T(" (*.crt)|*.crt|All Files (*.*)|*.*||");
 	if (DialogBrowseFile(buffer, buffer, strCert))
 		SetDlgItemText(IDC_CERTPATH, buffer);
-	if (buffer.CompareNoCase(strCert) != 0)
+	if (!EqualPaths(buffer, strCert))
 		SetModified();
 }
 
@@ -512,7 +512,7 @@ void CPPgWebServer::OnBnClickedKeybrowse()
 	buffer += _T(" (*.key)|*.key|All Files (*.*)|*.*||");
 	if (DialogBrowseFile(buffer, buffer, strKey))
 		SetDlgItemText(IDC_KEYPATH, buffer);
-	if (buffer.CompareNoCase(strKey) != 0)
+	if (!EqualPaths(buffer, strKey))
 		SetModified();
 }
 
@@ -521,7 +521,7 @@ void CPPgWebServer::SetTmplButtonState()
 	CString buffer;
 	GetDlgItemText(IDC_TMPLPATH, buffer);
 
-	GetDlgItem(IDC_WSRELOADTMPL)->EnableWindow(IsDlgButtonChecked(IDC_WSENABLED) && (buffer.CompareNoCase(thePrefs.GetTemplate()) == 0));
+	GetDlgItem(IDC_WSRELOADTMPL)->EnableWindow(IsDlgButtonChecked(IDC_WSENABLED) && EqualPaths(buffer, thePrefs.GetTemplate()));
 }
 
 void CPPgWebServer::OnHelp()

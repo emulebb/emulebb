@@ -208,7 +208,7 @@ static bool LoadLangLib(const CString &rstrLangDir1, const CString &rstrLangDir2
 				if (s_hLangDLL)
 					return true;
 			}
-			if (rstrLangDir1.CompareNoCase(rstrLangDir2) != 0) {
+			if (!EqualPaths(rstrLangDir1, rstrLangDir2)) {
 				strLangDLL.Format(_T("%s%s.dll"), (LPCTSTR)rstrLangDir2, pLang->pszISOLocale);
 				if (CheckLangDLLVersion(strLangDLL)) {
 					s_hLangDLL = ::LoadLibrary(strLangDLL);

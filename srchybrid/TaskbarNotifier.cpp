@@ -137,7 +137,7 @@ bool CTaskbarNotifier::LoadConfiguration(LPCTSTR pszFilePath)
 	struct _stat64 st;
 	if (statUTC(pszFilePath, st))
 		st.st_mtime = -1; // '-1' = missing file
-	if (m_strConfigFilePath.CompareNoCase(pszFilePath) == 0 && st.st_mtime <= m_tConfigFileLastModified)
+	if (EqualPaths(m_strConfigFilePath, pszFilePath) && st.st_mtime <= m_tConfigFileLastModified)
 		return true;
 
 	Hide();

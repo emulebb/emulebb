@@ -90,7 +90,85 @@ inline bool IsUncPath(LPCTSTR pszPath)
 }
 
 /**
- * @brief Returns true when any logical path component ends with a space or period and therefore requires namespace semantics.
+ * @brief Returns true when the path root denotes a DOS drive or UNC share and the logical tail begins after that root.
+ */
+inline size_t GetLogicalPathComponentStart(LPCTSTR pszPath)
+{
+	if (pszPath == NULL || pszPath[0] == _T('\0'))
+		return 0u;
+
+	const PathString logicalPath = StripLongPathPrefix(pszPath);
+	if (logicalPath.size() >= 3u
+		&& ((logicalPath[0] >= _T('A') && logicalPath[0] <= _T('Z')) || (logicalPath[0] >= _T('a') && logicalPath[0] <= _T('z')))
+		&& logicalPath[1] == _T(':')
+		&& IsPathSeparator(logicalPath[2]))
+	{
+		return 3u;
+	}
+
+	if (logicalPath.size() >= 2u && logicalPath[0] == _T('\\') && logicalPath[1] == _T('\\')) {
+		size_t iIndex = 2u;
+		while (iIndex < logicalPath.size() && !IsPathSeparator(logicalPath[iIndex]))
+			++iIndex;
+		while (iIndex < logicalPath.size() && IsPathSeparator(logicalPath[iIndex]))
+			++iIndex;
+		while (iIndex < logicalPath.size() && !IsPathSeparator(logicalPath[iIndex]))
+			++iIndex;
+		while (iIndex < logicalPath.size() && IsPathSeparator(logicalPath[iIndex]))
+			++iIndex;
+		return iIndex;
+	}
+
+	return 0u;
+}
+
+/**
+ * @brief Returns true when a logical path component is a reserved Win32 device alias that requires namespace bypass.
+ */
+inline bool IsReservedWin32DeviceName(const PathString &rstrSegment)
+{
+	if (rstrSegment.empty())
+		return false;
+
+	PathString strCandidate(rstrSegment);
+	while (!strCandidate.empty() && (strCandidate[strCandidate.size() - 1] == _T(' ') || strCandidate[strCandidate.size() - 1] == _T('.')))
+		strCandidate.erase(strCandidate.size() - 1);
+	if (strCandidate.empty())
+		return false;
+
+	const size_t iDot = strCandidate.find(_T('.'));
+	if (iDot != PathString::npos)
+		strCandidate.erase(iDot);
+
+	PathString strUpper(strCandidate);
+	for (size_t i = 0; i < strUpper.size(); ++i)
+		strUpper[i] = static_cast<TCHAR>(_totupper(strUpper[i]));
+
+	if (strUpper == _T("CON")
+		|| strUpper == _T("PRN")
+		|| strUpper == _T("AUX")
+		|| strUpper == _T("NUL"))
+	{
+		return true;
+	}
+
+	const auto IsReservedPortName = [&](LPCTSTR pszPrefix) -> bool {
+		const size_t nPrefixLength = _tcslen(pszPrefix);
+		if (strUpper.compare(0u, nPrefixLength, pszPrefix) != 0 || strUpper.size() != nPrefixLength + 1u)
+			return false;
+
+		const TCHAR chDigit = strUpper[nPrefixLength];
+		return (chDigit >= _T('1') && chDigit <= _T('9'))
+			|| chDigit == static_cast<TCHAR>(0x00B9)
+			|| chDigit == static_cast<TCHAR>(0x00B2)
+			|| chDigit == static_cast<TCHAR>(0x00B3);
+	};
+
+	return IsReservedPortName(_T("COM")) || IsReservedPortName(_T("LPT"));
+}
+
+/**
+ * @brief Returns true when any logical path component needs namespace semantics to preserve its exact Win32 meaning.
  */
 inline bool RequiresExtendedLengthPathForExactName(LPCTSTR pszPath)
 {
@@ -98,7 +176,7 @@ inline bool RequiresExtendedLengthPathForExactName(LPCTSTR pszPath)
 		return false;
 
 	const PathString logicalPath = StripLongPathPrefix(pszPath);
-	size_t iIndex = 0;
+	size_t iIndex = GetLogicalPathComponentStart(logicalPath.c_str());
 	while (iIndex < logicalPath.size()) {
 		while (iIndex < logicalPath.size() && IsPathSeparator(logicalPath[iIndex]))
 			++iIndex;
@@ -113,7 +191,10 @@ inline bool RequiresExtendedLengthPathForExactName(LPCTSTR pszPath)
 		if (!segment.empty()
 			&& segment != _T(".")
 			&& segment != _T("..")
-			&& (segment[segment.size() - 1] == _T(' ') || segment[segment.size() - 1] == _T('.')))
+			&& (segment[0] == _T(' ')
+				|| segment[segment.size() - 1] == _T(' ')
+				|| segment[segment.size() - 1] == _T('.')
+				|| IsReservedWin32DeviceName(segment)))
 		{
 			return true;
 		}

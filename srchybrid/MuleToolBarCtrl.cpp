@@ -351,7 +351,7 @@ void CMuleToolbarCtrl::OnNmRClick(LPNMHDR, LRESULT *pResult)
 				int iBaseLen = pTbBaseExt ? (int)(pTbBaseExt - (LPCTSTR)bitmapFileName - 1) : bitmapFileName.GetLength();
 				menuBitmaps.AppendMenu(MF_STRING, MP_TOOLBARBITMAP + i, CString(bitmapFileName, iBaseLen));
 				m_astrToolbarPaths.Add(thePrefs.GetMuleDirectory(EMULE_TOOLBARDIR) + bitmapFileName);
-				if (!checked && currentBitmapSettings.CompareNoCase(m_astrToolbarPaths[i]) == 0) {
+				if (!checked && EqualPaths(currentBitmapSettings, m_astrToolbarPaths[i])) {
 					menuBitmaps.CheckMenuItem(MP_TOOLBARBITMAP + i, MF_CHECKED);
 					menuBitmaps.EnableMenuItem(MP_TOOLBARBITMAP + i, MF_DISABLED);
 					checked = true;
@@ -406,7 +406,7 @@ void CMuleToolbarCtrl::OnNmRClick(LPNMHDR, LRESULT *pResult)
 				int iBaseLen = pSkinBaseExt ? (int)(pSkinBaseExt - (LPCTSTR)skinFileName - 1) : skinFileName.GetLength();
 				menuSkins.AppendMenu(MF_STRING, MP_SKIN_PROFILE + i, CString(skinFileName, iBaseLen));
 				m_astrSkinPaths.Add(thePrefs.GetMuleDirectory(EMULE_SKINDIR, false) + skinFileName);
-				if (!checked && currentSkin.CompareNoCase(m_astrSkinPaths[i]) == 0) {
+				if (!checked && EqualPaths(currentSkin, m_astrSkinPaths[i])) {
 					menuSkins.CheckMenuItem(MP_SKIN_PROFILE + i, MF_CHECKED);
 					menuSkins.EnableMenuItem(MP_SKIN_PROFILE + i, MF_DISABLED);
 					checked = true;
@@ -655,12 +655,12 @@ BOOL CMuleToolbarCtrl::OnCommand(WPARAM wParam, LPARAM)
 		break;
 	default:
 		if (wParam >= MP_TOOLBARBITMAP && wParam < MP_TOOLBARBITMAP + MAX_TOOLBAR_FILES) {
-			if (thePrefs.GetToolbarBitmapSettings().CompareNoCase(m_astrToolbarPaths[wParam - MP_TOOLBARBITMAP]) != 0) {
+			if (!EqualPaths(thePrefs.GetToolbarBitmapSettings(), m_astrToolbarPaths[wParam - MP_TOOLBARBITMAP])) {
 				ChangeToolbarBitmap(m_astrToolbarPaths[wParam - MP_TOOLBARBITMAP], true);
 				thePrefs.SetToolbarBitmapSettings(m_astrToolbarPaths[wParam - MP_TOOLBARBITMAP]);
 			}
 		} else if (wParam >= MP_SKIN_PROFILE && wParam < MP_SKIN_PROFILE + MAX_SKIN_FILES) {
-			if (thePrefs.GetSkinProfile().CompareNoCase(m_astrSkinPaths[wParam - MP_SKIN_PROFILE]) != 0)
+			if (!EqualPaths(thePrefs.GetSkinProfile(), m_astrSkinPaths[wParam - MP_SKIN_PROFILE]))
 				theApp.ApplySkin(m_astrSkinPaths[wParam - MP_SKIN_PROFILE]);
 		}
 	}
