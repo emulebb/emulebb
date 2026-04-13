@@ -620,6 +620,8 @@ bool DeleteFileToRecycleBinIFileOperation(LPCTSTR pszFilePath, HWND hOwnerWindow
 		return false;
 
 	const CString strShellPath = PathHelpers::StripExtendedLengthPrefix(CString(pszFilePath));
+	if (!PathHelpers::IsShellSafePath(strShellPath))
+		return false;
 	const HRESULT hrCoInitialize = ::CoInitialize(NULL);
 	const bool bShouldUninitialize = SUCCEEDED(hrCoInitialize);
 	if (FAILED(hrCoInitialize) && hrCoInitialize != RPC_E_CHANGED_MODE)
@@ -1329,12 +1331,17 @@ void InitializeDialogPathSelection(IFileDialog &rDialog, const CString &rstrInit
 		CString strInitialFolder(selection.strInitialFolder);
 		if (bFolderMode)
 			strInitialFolder = ShellUiHelpers::PrepareFolderSelectionPathForShell(strInitialFolder);
-		else
+		else {
 			strInitialFolder = PathHelpers::StripExtendedLengthPrefix(strInitialFolder);
-		CComPtr<IShellItem> pFolder;
-		if (SUCCEEDED(::SHCreateItemFromParsingName(strInitialFolder, NULL, IID_PPV_ARGS(&pFolder)))) {
-			(void)rDialog.SetDefaultFolder(pFolder);
-			(void)rDialog.SetFolder(pFolder);
+			if (!PathHelpers::IsShellSafePath(strInitialFolder))
+				strInitialFolder.Empty();
+		}
+		if (!strInitialFolder.IsEmpty()) {
+			CComPtr<IShellItem> pFolder;
+			if (SUCCEEDED(::SHCreateItemFromParsingName(strInitialFolder, NULL, IID_PPV_ARGS(&pFolder)))) {
+				(void)rDialog.SetDefaultFolder(pFolder);
+				(void)rDialog.SetFolder(pFolder);
+			}
 		}
 	}
 

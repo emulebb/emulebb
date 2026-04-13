@@ -64,7 +64,7 @@ inline CString GetProfileString(const CString &rstrSection, const CString &rstrK
  */
 inline bool CanUseShellDisplayName(const CString &rstrPath)
 {
-	return !rstrPath.IsEmpty() && !PathHelpers::HasExtendedLengthPrefix(rstrPath) && rstrPath.GetLength() < MAX_PATH;
+	return PathHelpers::IsShellSafePath(rstrPath);
 }
 
 /**
@@ -174,7 +174,8 @@ inline CString FinalizeFolderSelection(const CString &rstrFolderPath)
  */
 inline CString PrepareFolderSelectionPathForShell(const CString &rstrFolderPath)
 {
-	return PathHelpers::StripExtendedLengthPrefix(PathHelpers::TrimTrailingSeparator(rstrFolderPath));
+	const CString strShellPath(PathHelpers::StripExtendedLengthPrefix(PathHelpers::TrimTrailingSeparator(rstrFolderPath)));
+	return PathHelpers::IsShellSafePath(strShellPath) ? strShellPath : CString();
 }
 
 /**
