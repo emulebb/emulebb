@@ -20,10 +20,10 @@
 #include "SharedFilesWnd.h"
 #include "PPgDirectories.h"
 #include "otherfunctions.h"
+#include "PathHelpers.h"
 #include "InputBox.h"
 #include "Preferences.h"
 #include "HelpIDs.h"
-#include "ShellUiHelpers.h"
 #include "UserMsgs.h"
 #include "opcodes.h"
 
@@ -140,11 +140,8 @@ BOOL CPPgDirectories::OnApply()
 			if (ullFoundFileSize == 0 || ullFoundFileSize > MAX_EMULE_FILE_SIZE)
 				return true;
 
-			if (ShellUiHelpers::ShouldIgnoreShortcutFileName(findData.cFileName))
-				return true;
-
-			// ignore real THUMBS.DB files -- seems that lot of ppl have 'thumbs.db' files without the 'System' file attribute
-			bExistingFile = (CString(findData.cFileName).CompareNoCase(_T("thumbs.db")) != 0);
+			const CString strFoundFilePath(PathHelpers::AppendPathComponent(strIncomingDir, findData.cFileName));
+			bExistingFile = !ShouldIgnoreSharedFileCandidate(strFoundFilePath, findData.cFileName);
 			return !bExistingFile;
 		}, &dwEnumerateError);
 		if (bExistingFile && LocMessageBox(IDS_WRN_INCFILE_EXISTS, MB_OKCANCEL | MB_ICONINFORMATION, 0) == IDCANCEL)

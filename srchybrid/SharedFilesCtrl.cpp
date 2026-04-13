@@ -32,8 +32,8 @@
 #include "SharedFileList.h"
 #include "MemDC.h"
 #include "PartFile.h"
+#include "SharedFileIntakePolicy.h"
 #include "MenuCmds.h"
-#include "ShellUiHelpers.h"
 #include "IrcWnd.h"
 #include "SharedFilesWnd.h"
 #include "Opcodes.h"
@@ -1558,12 +1558,9 @@ void CSharedFilesCtrl::AddShareableFiles(const CString &strFromDir)
 			return true;
 
 		const CString strFoundFileName(findData.cFileName);
-		if (ShellUiHelpers::ShouldIgnoreShortcutFileName(strFoundFileName))
-			return true;
-
 		const CString strFoundDirectory(strFromDir);
 		const CString strFoundFilePath(PathHelpers::AppendPathComponent(strFoundDirectory, strFoundFileName));
-		if (IsThumbsDb(strFoundFilePath, strFoundFileName))
+		if (ShouldIgnoreSharedFileCandidate(strFoundFilePath, strFoundFileName))
 			return true;
 
 		time_t fdate = (time_t)FileTimeToUnixTime(findData.ftLastWriteTime);
@@ -1784,7 +1781,8 @@ BOOL CSharedFilesCtrl::CShareDropTarget::OnDrop(CWnd*, COleDataObject *pDataObje
 
 						// just a quick pre-check, complete check is done later in the share function itself
 						if (bIsDots || bIsSystem || bIsTemporary
-							|| (!bIsDirectory && (fileSize.QuadPart == 0 || fileSize.QuadPart > MAX_EMULE_FILE_SIZE
+							|| (!bIsDirectory && (ShouldIgnoreSharedFileCandidate(ffpath, strFileName)
+								|| fileSize.QuadPart == 0 || fileSize.QuadPart > MAX_EMULE_FILE_SIZE
 								|| theApp.sharedfiles->ShouldBeShared(strParentDirectory, ffpath, false)))
 							|| (bIsDirectory && (!thePrefs.IsShareableDirectory(ffpath)
 								|| theApp.sharedfiles->ShouldBeShared(ffpath, NULL, false))))

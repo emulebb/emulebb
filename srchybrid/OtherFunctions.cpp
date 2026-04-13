@@ -3145,6 +3145,16 @@ bool IsThumbsDb(const CString &sFilePath, const CString &sFileName)
 	return false;
 }
 
+bool ShouldIgnoreSharedFileCandidate(const CString &sFilePath, const CString &sFileName)
+{
+	return SharedFileIntakePolicy::ShouldIgnoreCandidate(
+		sFilePath,
+		sFileName,
+		[](const CString &rstrFilePath, const CString &rstrFileName) -> bool {
+			return IsThumbsDb(rstrFilePath, rstrFileName);
+		});
+}
+
 static bool IsAutoDaylightTimeSetActive()
 {
 	CRegKey key;

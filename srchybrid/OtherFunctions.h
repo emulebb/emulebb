@@ -204,6 +204,7 @@ bool		DirAccsess(const CString &strDir);
 #define CompareLocaleStringNoCase	CompareLocaleStringNoCaseA
 #endif // !UNICODE
 #include "LongPathSeams.h"
+#include "SharedFileIntakePolicy.h"
 bool IsThumbsDb(const CString &sFilePath, const CString &sFileName);
 bool CheckFileOpen(LPCTSTR pszFilePath, LPCTSTR pszFileTitle = NULL);
 bool CFileOpen(CSafeFile &file, LPCTSTR lpszFileName, UINT nOpenFlags, LPCTSTR lpszMsg);

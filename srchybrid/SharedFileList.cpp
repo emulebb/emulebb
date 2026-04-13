@@ -26,6 +26,8 @@
 #include "DownloadQueue.h"
 #include "Statistics.h"
 #include "Preferences.h"
+#include "SharedFileIntakePolicy.h"
+#include "OtherFunctions.h"
 #include "ProtocolGuards.h"
 #include "UpDownClient.h"
 #include "ServerConnect.h"
@@ -38,7 +40,7 @@
 #include "ClientList.h"
 #include "Log.h"
 #include "Collection.h"
-#include "ShellUiHelpers.h"
+#include "PathHelpers.h"
 #include "kademlia/kademlia/UDPFirewallTester.h"
 #include "LongPathSeams.h"
 #include "ImportParts.h"
@@ -752,10 +754,7 @@ void CSharedFileList::CheckAndAddSingleFile(const CString &strDirectory, const W
 		if (PathHelpers::ArePathsEquivalent(strFoundFilePath, m_liSingleExcludedFiles.GetNext(pos)))
 			return;
 
-	if (ShellUiHelpers::ShouldIgnoreShortcutFileName(strFoundFileName))
-		return;
-
-	if (IsThumbsDb(strFoundFilePath, strFoundFileName)) {
+	if (ShouldIgnoreSharedFileCandidate(strFoundFilePath, strFoundFileName)) {
 		TRACE(_T("%hs: Did not share file \"%s\" - not supported file type\n"), __FUNCTION__, (LPCTSTR)strFoundFilePath);
 		return;
 	}
