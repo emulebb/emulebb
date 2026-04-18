@@ -75,6 +75,11 @@ CString LexicallyNormalizeSharedFilePath(const CString &rstrPath)
 	return PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrPath));
 }
 
+std::wstring MakeStartupCacheSnapshotKey(const CString &strDirectory)
+{
+	return std::wstring(LexicallyNormalizeSharedDirectoryPath(strDirectory));
+}
+
 bool UpdateEquivalentStoredPath(CStringList &rList, const CString &rstrCanonicalPath, LPCTSTR pszDebugReason)
 {
 	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
@@ -1911,11 +1916,14 @@ std::wstring CSharedFileList::MakeStartupCacheVolumeKey(const CString &strVolume
 
 void CSharedFileList::CollectSharedDirectories(CStringList &dirlist) const
 {
-	const auto addUniqueDirectory = [&dirlist](const CString &strDirectory) {
-		const CString strCanonical(NormalizeSharedDirectoryPath(strDirectory));
-		for (POSITION pos = dirlist.GetHeadPosition(); pos != NULL;)
-			if (EqualPaths(dirlist.GetNext(pos), strCanonical))
-				return;
+	dirlist.RemoveAll();
+	std::unordered_set<std::wstring> addedDirectoryKeys;
+	const auto addUniqueDirectory = [&dirlist, &addedDirectoryKeys](const CString &strDirectory) {
+		const CString strCanonical(LexicallyNormalizeSharedDirectoryPath(strDirectory));
+		if (strCanonical.IsEmpty())
+			return;
+		if (!addedDirectoryKeys.insert(std::wstring(strCanonical)).second)
+			return;
 		dirlist.AddTail(strCanonical);
 	};
 
@@ -2297,19 +2305,19 @@ bool CSharedFileList::CaptureStartupCacheSaveSnapshot(StartupCacheSaveSnapshot &
 	std::unordered_map<std::wstring, size_t> directoryIndex;
 	for (POSITION pos = sharedDirectories.GetHeadPosition(); pos != NULL;) {
 		StartupCacheSaveDirectorySnapshot directory = {};
-		directory.strDirectoryPath = NormalizeSharedDirectoryPath(sharedDirectories.GetNext(pos));
+		directory.strDirectoryPath = sharedDirectories.GetNext(pos);
 		const size_t uIndex = rSnapshot.directories.size();
-		directoryIndex[MakeStartupCacheKey(directory.strDirectoryPath)] = uIndex;
+		directoryIndex[MakeStartupCacheSnapshotKey(directory.strDirectoryPath)] = uIndex;
 		rSnapshot.directories.push_back(std::move(directory));
 	}
 
 	for (POSITION pos = waitingforhash_list.GetHeadPosition(); pos != NULL;) {
-		const auto it = directoryIndex.find(MakeStartupCacheKey(waitingforhash_list.GetNext(pos)->strDirectory));
+		const auto it = directoryIndex.find(MakeStartupCacheSnapshotKey(waitingforhash_list.GetNext(pos)->strDirectory));
 		if (it != directoryIndex.end())
 			rSnapshot.directories[it->second].bHasPendingHash = true;
 	}
 	for (POSITION pos = currentlyhashing_list.GetHeadPosition(); pos != NULL;) {
-		const auto it = directoryIndex.find(MakeStartupCacheKey(currentlyhashing_list.GetNext(pos)->strDirectory));
+		const auto it = directoryIndex.find(MakeStartupCacheSnapshotKey(currentlyhashing_list.GetNext(pos)->strDirectory));
 		if (it != directoryIndex.end())
 			rSnapshot.directories[it->second].bHasPendingHash = true;
 	}
@@ -2319,7 +2327,7 @@ bool CSharedFileList::CaptureStartupCacheSaveSnapshot(StartupCacheSaveSnapshot &
 		if (pFile == NULL || pFile->IsKindOf(RUNTIME_CLASS(CPartFile)))
 			continue;
 
-		const auto it = directoryIndex.find(MakeStartupCacheKey(pFile->GetPath()));
+		const auto it = directoryIndex.find(MakeStartupCacheSnapshotKey(pFile->GetPath()));
 		if (it == directoryIndex.end())
 			continue;
 
