@@ -1978,6 +1978,34 @@ public:
 };
 static CWmvCoreDLL theWmvCoreDLL;
 
+static bool IsWMUnsupportedFormatFailure(HRESULT hr)
+{
+	return hr == NS_E_UNRECOGNIZED_STREAM_TYPE	// general: unknown file type
+		|| hr == NS_E_INVALID_INPUT_FORMAT		// general: unknown file type
+		|| hr == NS_E_INVALID_DATA				// general: unknown file type
+		|| hr == NS_E_FILE_INIT_FAILED			// got for an SWF file?
+		|| hr == NS_E_FILE_READ;				// obviously if the file is too short
+}
+
+static bool ShouldRetryWMHeadersWithStream(HRESULT hr)
+{
+	return FAILED(hr) && !IsWMUnsupportedFormatFailure(hr);
+}
+
+static bool IsExpectedWMOpenFailure(HRESULT hr)
+{
+	return hr == S_OK
+		|| IsWMUnsupportedFormatFailure(hr)
+		|| hr == NS_E_FILE_OPEN_FAILED			// file vanished or is otherwise unavailable
+		|| hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)
+		|| hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)
+		|| hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME)
+		|| hr == HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE)
+		|| hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED)
+		|| hr == HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION)
+		|| hr == HRESULT_FROM_WIN32(ERROR_DELETE_PENDING);
+}
+
 
 bool GetWMHeaders(LPCTSTR pszFileName, SMediaInfo *mi, bool &rbIsWM, bool bFullInfo)
 {
@@ -2016,7 +2044,7 @@ bool GetWMHeaders(LPCTSTR pszFileName, SMediaInfo *mi, bool &rbIsWM, bool bFullI
 		// sense, because 'IWMSyncReader' does not know that we want to open the file for reading the meta data only.
 		// This error code could get used to indicate 'protected' files.
 		//
-		if (pIUnkReader == NULL && hr == NS_E_FILE_OPEN_FAILED) {
+		if (pIUnkReader == NULL && ShouldRetryWMHeadersWithStream(hr)) {
 			CComPtr<IWMSyncReader> pIWMSyncReader;
 			if (theWmvCoreDLL.m_pfnWMCreateSyncReader != NULL && (hr = (*theWmvCoreDLL.m_pfnWMCreateSyncReader)(NULL, 0, &pIWMSyncReader)) == S_OK) {
 				CComPtr<IStream> pIStream;
@@ -2026,13 +2054,7 @@ bool GetWMHeaders(LPCTSTR pszFileName, SMediaInfo *mi, bool &rbIsWM, bool bFullI
 				}
 			}
 		} else
-			ASSERT(hr == S_OK
-				|| hr == NS_E_UNRECOGNIZED_STREAM_TYPE	// general: unknown file type
-				|| hr == NS_E_INVALID_INPUT_FORMAT		// general: unknown file type
-				|| hr == NS_E_INVALID_DATA				// general: unknown file type
-				|| hr == NS_E_FILE_INIT_FAILED			// got for an SWF file?
-				|| hr == NS_E_FILE_READ					// obviously if the file is too short
-				);
+			ASSERT(IsExpectedWMOpenFailure(hr));
 
 		if (pIUnkReader) {
 			CComQIPtr<IWMHeaderInfo> pIWMHeaderInfo(pIUnkReader);
