@@ -20,6 +20,7 @@
 #include "QueueListCtrl.h"
 #include "ClientListCtrl.h"
 #include "DownloadClientsCtrl.h"
+#include "CachedClientsCtrl.h"
 #include "TransferWnd.h"
 #include "ToolbarWnd.h"
 
@@ -53,6 +54,7 @@ public:
 	CQueueListCtrl*			GetQueueList();
 	CClientListCtrl*		GetClientList();
 	CDownloadClientsCtrl*	GetDownloadClientsList();
+	CCachedClientsCtrl*		GetCachedClientsList();
 
 protected:
 	CToolbarWnd m_wndToolbar;

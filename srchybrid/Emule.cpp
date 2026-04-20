@@ -35,6 +35,7 @@
 #include "kademlia/kademlia/Prefs.h"
 #include "kademlia/utils/UInt128.h"
 #include "PerfLog.h"
+#include "RemoteBrowseManager.h"
 #include "UploadBandwidthThrottler.h"
 #include "ClientList.h"
 #include "FriendList.h"
@@ -1012,6 +1013,11 @@ BOOL CemuleApp::InitInstance()
 	searchlist = new CSearchList();
 #if EMULE_COMPILED_STARTUP_PROFILING
 	AppendStartupProfileLine(_T("Construct CSearchList"), GetStartupProfileElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupProfileTimestampUs();
+#endif
+	remoteBrowseManager = new CRemoteBrowseManager();
+#if EMULE_COMPILED_STARTUP_PROFILING
+	AppendStartupProfileLine(_T("Construct CRemoteBrowseManager"), GetStartupProfileElapsedUs(ullPhaseStart));
 	ullPhaseStart = GetStartupProfileTimestampUs();
 #endif
 	knownfiles = new CKnownFileList();

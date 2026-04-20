@@ -745,6 +745,7 @@
 #define IDS_FILTERSERVERBYIPFILTER      818
 #define IDS_FILTERCOMMENTSLABEL         819
 #define IDS_CLIENTLIST                  820
+#define IDS_CACHEDCLIENTS               2439
 #define IDS_FOLDER                      821
 #define IDS_CL_UPLOADSTATUS             822
 #define IDS_CL_TRANSFUP                 823
@@ -2234,6 +2235,7 @@
 #define IDC_CB_TBN_USESPEECH            2916
 #define IDC_TEST_NOTIFICATION           2917
 #define IDC_DOWNLOADCLIENTS             2918
+#define IDC_CACHEDCLIENTS               3059
 #define IDC_TXT_SMTPSERVER              2919
 #define IDC_TXT_RECEIVER                2920
 #define IDC_TXT_SENDER                  2921
@@ -2433,6 +2435,7 @@
 #define IDS_WEB_BIND_ADDR               1713
 #define IDS_WEB_INVALID_BINDADDR        1714
 #define IDS_ENABLE_PERFLOG              1715
+#define IDS_AUTOBROWSEREMOTESHARES      2440
 #define IDD_SHUTDOWNPROGRESS            3054
 #define IDC_ENABLE_GEOLOCATION          3049
 #define IDC_GEOLOCATION_CHECKDAYS_LBL   3050
@@ -2451,7 +2454,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        3055
 #define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         3059
-#define _APS_NEXT_SYMED_VALUE           1717
+#define _APS_NEXT_CONTROL_VALUE         3060
+#define _APS_NEXT_SYMED_VALUE           1719
 #endif
 #endif

@@ -23,6 +23,7 @@
 #include "QueueListCtrl.h"
 #include "ClientListCtrl.h"
 #include "DownloadClientsCtrl.h"
+#include "CachedClientsCtrl.h"
 #include "DropDownButton.h"
 
 class CTransferWnd : public CResizableFormView
@@ -41,7 +42,8 @@ class CTransferWnd : public CResizableFormView
 		w1iUploading,
 		w1iDownloading,
 		w1iOnQueue,
-		w1iClientsKnown
+		w1iClientsKnown,
+		w1iCachedClients
 	};
 
 	enum EWnd2Icon
@@ -49,7 +51,8 @@ class CTransferWnd : public CResizableFormView
 		w2iUploading = 0,
 		w2iDownloading,
 		w2iOnQueue,
-		w2iClientsKnown
+		w2iClientsKnown,
+		w2iCachedClients
 	};
 
 public:
@@ -58,7 +61,8 @@ public:
 		wnd2Downloading = 0,
 		wnd2Uploading = 1,
 		wnd2OnQueue = 2,
-		wnd2Clients = 3
+		wnd2Clients = 3,
+		wnd2CachedClients = 4
 	};
 	explicit CTransferWnd(CWnd *pParent = NULL);   // standard constructor
 	virtual	~CTransferWnd();
@@ -83,6 +87,7 @@ public:
 	CQueueListCtrl			queuelistctrl;
 	CClientListCtrl			clientlistctrl;
 	CDownloadClientsCtrl	downloadclientsctrl;
+	CCachedClientsCtrl		cachedclientsctrl;
 
 protected:
 	POINT		m_pLastMousePoint;

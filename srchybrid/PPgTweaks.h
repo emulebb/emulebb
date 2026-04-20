@@ -29,6 +29,7 @@ protected:
 
 	HTREEITEM m_htiA4AFSaveCpu;
 	HTREEITEM m_htiAutoArch;
+	HTREEITEM m_htiAutoBrowseRemoteShares;
 	HTREEITEM m_htiAutoTakeEd2kLinks;
 	HTREEITEM m_htiBroadband;
 	HTREEITEM m_htiBBMaxUploadClients;
@@ -163,6 +164,7 @@ protected:
 
 	bool m_bA4AFSaveCpu;
 	bool m_bAutoArchDisable;
+	bool m_bAutoBrowseRemoteShares;
 	bool m_bAutoTakeEd2kLinks;
 	bool m_bBBLowRatioBoost;
 	bool m_bAdjustNTFSDaylightFileTime;

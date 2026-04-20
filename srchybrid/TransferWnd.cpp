@@ -46,12 +46,12 @@ static char THIS_FILE[] = __FILE__;
 #define	WND1_BUTTON_YOFF	5
 #define	WND1_BUTTON_WIDTH	170
 #define	WND1_BUTTON_HEIGHT	22	// don't set the height to something different than 22 unless you know exactly what you are doing!
-#define	WND1_NUM_BUTTONS	6
+#define	WND1_NUM_BUTTONS	7
 
 //#define	WND2_BUTTON_XOFF	8 use .rc file
 #define	WND2_BUTTON_WIDTH	170
 #define	WND2_BUTTON_HEIGHT	22	// don't set the height to something different than 22 unless you know exactly what you are doing!
-#define	WND2_NUM_BUTTONS	4
+#define	WND2_NUM_BUTTONS	5
 
 // CTransferWnd dialog
 
@@ -114,6 +114,7 @@ void CTransferWnd::OnInitialUpdate()
 	queuelistctrl.Init();
 	clientlistctrl.Init();
 	downloadclientsctrl.Init();
+	cachedclientsctrl.Init();
 
 	m_uWnd2 = (EWnd2)thePrefs.GetTransferWnd2();
 	ShowWnd2(m_uWnd2);
@@ -123,20 +124,22 @@ void CTransferWnd::OnInitialUpdate()
 	AddAnchor(IDC_QUEUELIST, ANCHOR(0, thePrefs.GetSplitterbarPosition()), BOTTOM_RIGHT);
 	AddAnchor(IDC_CLIENTLIST, ANCHOR(0, thePrefs.GetSplitterbarPosition()), BOTTOM_RIGHT);
 	AddAnchor(IDC_DOWNLOADCLIENTS, ANCHOR(0, thePrefs.GetSplitterbarPosition()), BOTTOM_RIGHT);
+	AddAnchor(IDC_CACHEDCLIENTS, ANCHOR(0, thePrefs.GetSplitterbarPosition()), BOTTOM_RIGHT);
 	AddAnchor(IDC_QUEUECOUNT, BOTTOM_LEFT);
 	AddAnchor(IDC_QUEUECOUNT_LABEL, BOTTOM_LEFT);
 	AddAnchor(IDC_QUEUE_REFRESH_BUTTON, BOTTOM_RIGHT);
 	AddAnchor(IDC_DLTAB, TOP_RIGHT);
 
-	static const uint32 uLists[6] = {
+	static const uint32 uLists[7] = {
 		  IDC_DOWNLOADLIST + IDC_UPLOADLIST	//0
 		, IDC_DOWNLOADLIST					//1
 		, IDC_UPLOADLIST					//2
 		, IDC_QUEUELIST						//3
 		, IDC_DOWNLOADCLIENTS				//4
-		, IDC_CLIENTLIST};					//5
+		, IDC_CLIENTLIST					//5
+		, IDC_CACHEDCLIENTS};				//6
 	UINT uid = thePrefs.GetTransferWnd1();
-	m_dwShowListIDC = uLists[uid > 5 ? 0 : uid];
+	m_dwShowListIDC = uLists[uid > 6 ? 0 : uid];
 
 	//cats
 	m_rightclickindex = -1;
@@ -190,6 +193,7 @@ void CTransferWnd::DoDataExchange(CDataExchange *pDX)
 	DDX_Control(pDX, IDC_QUEUELIST, queuelistctrl);
 	DDX_Control(pDX, IDC_CLIENTLIST, clientlistctrl);
 	DDX_Control(pDX, IDC_DOWNLOADCLIENTS, downloadclientsctrl);
+	DDX_Control(pDX, IDC_CACHEDCLIENTS, cachedclientsctrl);
 }
 
 void CTransferWnd::DoResize(int delta)
@@ -199,6 +203,7 @@ void CTransferWnd::DoResize(int delta)
 	CSplitterControl::ChangeHeight(&queuelistctrl, -delta, CW_BOTTOMALIGN);
 	CSplitterControl::ChangeHeight(&clientlistctrl, -delta, CW_BOTTOMALIGN);
 	CSplitterControl::ChangeHeight(&downloadclientsctrl, -delta, CW_BOTTOMALIGN);
+	CSplitterControl::ChangeHeight(&cachedclientsctrl, -delta, CW_BOTTOMALIGN);
 	CSplitterControl::ChangePos(&m_btnWnd2, 0, delta);
 
 	UpdateSplitterRange();
@@ -227,6 +232,11 @@ void CTransferWnd::DoResize(int delta)
 			pHeaderUpdate = downloadclientsctrl.GetHeaderCtrl();
 			downloadclientsctrl.Invalidate();
 			downloadclientsctrl.UpdateWindow();
+			break;
+		case wnd2CachedClients:
+			pHeaderUpdate = cachedclientsctrl.GetHeaderCtrl();
+			cachedclientsctrl.Invalidate();
+			cachedclientsctrl.UpdateWindow();
 			break;
 		default:
 			ASSERT(0);
@@ -419,6 +429,10 @@ void CTransferWnd::UpdateListCount(EWnd2 listindex, int iCount /*=-1*/)
 			strBuffer.Format(_T("%s (%i)"), (LPCTSTR)GetResString(IDS_DOWNLOADING), (iCount < 0) ? downloadclientsctrl.GetItemCount() : iCount);
 			m_btnWnd2.SetWindowText(strBuffer);
 			break;
+		case wnd2CachedClients:
+			strBuffer.Format(_T("%s (%i)"), (LPCTSTR)GetResString(IDS_CACHEDCLIENTS), (iCount < 0) ? cachedclientsctrl.GetItemCount() : iCount);
+			m_btnWnd2.SetWindowText(strBuffer);
+			break;
 		default:
 			ASSERT(0);
 		}
@@ -453,6 +467,13 @@ void CTransferWnd::UpdateListCount(EWnd2 listindex, int iCount /*=-1*/)
 			strBuffer.Format(_T("%s (%i)"), (LPCTSTR)GetResString(IDS_DOWNLOADING), (iCount < 0) ? downloadclientsctrl.GetItemCount() : iCount);
 			m_btnWnd1.SetWindowText(strBuffer);
 		}
+		break;
+	case IDC_CACHEDCLIENTS:
+		if (listindex == wnd2CachedClients) {
+			strBuffer.Format(_T("%s (%i)"), (LPCTSTR)GetResString(IDS_CACHEDCLIENTS), (iCount < 0) ? cachedclientsctrl.GetItemCount() : iCount);
+			m_btnWnd1.SetWindowText(strBuffer);
+		}
+		break;
 	default:
 		/*ASSERT(0)*/;
 	}
@@ -460,95 +481,73 @@ void CTransferWnd::UpdateListCount(EWnd2 listindex, int iCount /*=-1*/)
 
 void CTransferWnd::SwitchUploadList()
 {
+	EWnd2 uNextWnd = wnd2Uploading;
 	switch (m_uWnd2) {
 	case wnd2Uploading:
-		SetWnd2(wnd2Downloading);
-		clientlistctrl.Hide();
-		queuelistctrl.Hide();
-		uploadlistctrl.Hide();
-		downloadclientsctrl.Show();
-		GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow(SW_HIDE);
-		m_btnWnd2.CheckButton(MP_VIEW2_DOWNLOADING);
-		SetWnd2Icon(w2iDownloading);
+		uNextWnd = wnd2Downloading;
 		break;
 	case wnd2Downloading:
-		if (!thePrefs.IsQueueListDisabled()) {
-			SetWnd2(wnd2OnQueue);
-			clientlistctrl.Hide();
-			downloadclientsctrl.Hide();
-			uploadlistctrl.Hide();
-			queuelistctrl.Show();
-			GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow(SW_SHOW);
-			m_btnWnd2.CheckButton(MP_VIEW2_ONQUEUE);
-			SetWnd2Icon(w2iOnQueue);
-			break;
-		}
+		uNextWnd = thePrefs.IsQueueListDisabled() ? wnd2Clients : wnd2OnQueue;
+		break;
 	case wnd2OnQueue:
-		if (!thePrefs.IsKnownClientListDisabled()) {
-			SetWnd2(wnd2Clients);
-			downloadclientsctrl.Hide();
-			queuelistctrl.Hide();
-			uploadlistctrl.Hide();
-			clientlistctrl.Show();
-			GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow(SW_HIDE);
-			m_btnWnd2.CheckButton(MP_VIEW2_CLIENTS);
-			SetWnd2Icon(w2iClientsKnown);
-			break;
-		}
+		uNextWnd = thePrefs.IsKnownClientListDisabled() ? wnd2CachedClients : wnd2Clients;
+		break;
 	case wnd2Clients:
-		SetWnd2(wnd2Uploading);
-		clientlistctrl.Hide();
-		downloadclientsctrl.Hide();
-		queuelistctrl.Hide();
-		uploadlistctrl.Show();
-		GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow(SW_HIDE);
-		m_btnWnd2.CheckButton(MP_VIEW2_UPLOADING);
-		SetWnd2Icon(w2iUploading);
+		uNextWnd = wnd2CachedClients;
+		break;
+	case wnd2CachedClients:
+		uNextWnd = wnd2Uploading;
 		break;
 	default:
 		ASSERT(0);
 	}
-	UpdateListCount(m_uWnd2);
+	ShowWnd2(uNextWnd);
 }
 
 void CTransferWnd::ShowWnd2(EWnd2 uWnd2)
 {
-	if (uWnd2 == wnd2Downloading) {
-		SetWnd2(uWnd2);
-		queuelistctrl.Hide();
-		clientlistctrl.Hide();
-		uploadlistctrl.Hide();
+	if (uWnd2 == wnd2OnQueue && thePrefs.IsQueueListDisabled())
+		uWnd2 = thePrefs.IsKnownClientListDisabled() ? wnd2CachedClients : wnd2Clients;
+	if (uWnd2 == wnd2Clients && thePrefs.IsKnownClientListDisabled())
+		uWnd2 = wnd2CachedClients;
+
+	SetWnd2(uWnd2);
+	uploadlistctrl.Hide();
+	queuelistctrl.Hide();
+	clientlistctrl.Hide();
+	downloadclientsctrl.Hide();
+	cachedclientsctrl.Hide();
+	GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow(SW_HIDE);
+
+	switch (m_uWnd2) {
+	case wnd2Downloading:
 		downloadclientsctrl.Show();
-		GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow(SW_HIDE);
 		m_btnWnd2.CheckButton(MP_VIEW2_DOWNLOADING);
 		SetWnd2Icon(w2iDownloading);
-	} else if (uWnd2 == wnd2OnQueue && !thePrefs.IsQueueListDisabled()) {
-		SetWnd2(uWnd2);
-		uploadlistctrl.Hide();
-		clientlistctrl.Hide();
-		downloadclientsctrl.Hide();
+		break;
+	case wnd2OnQueue:
 		queuelistctrl.Show();
 		GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow(SW_SHOW);
 		m_btnWnd2.CheckButton(MP_VIEW2_ONQUEUE);
 		SetWnd2Icon(w2iOnQueue);
-	} else if (uWnd2 == wnd2Clients && !thePrefs.IsKnownClientListDisabled()) {
-		SetWnd2(uWnd2);
-		uploadlistctrl.Hide();
-		queuelistctrl.Hide();
-		downloadclientsctrl.Hide();
+		break;
+	case wnd2Clients:
 		clientlistctrl.Show();
-		GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow(SW_HIDE);
 		m_btnWnd2.CheckButton(MP_VIEW2_CLIENTS);
 		SetWnd2Icon(w2iClientsKnown);
-	} else {
-		SetWnd2(wnd2Uploading);
-		queuelistctrl.Hide();
-		clientlistctrl.Hide();
-		downloadclientsctrl.Hide();
+		break;
+	case wnd2CachedClients:
+		cachedclientsctrl.Show();
+		cachedclientsctrl.Reload();
+		m_btnWnd2.CheckButton(MP_VIEW2_CACHEDCLIENTS);
+		SetWnd2Icon(w2iCachedClients);
+		break;
+	case wnd2Uploading:
+	default:
 		uploadlistctrl.Show();
-		GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow(SW_HIDE);
 		m_btnWnd2.CheckButton(MP_VIEW2_UPLOADING);
 		SetWnd2Icon(w2iUploading);
+		break;
 	}
 	UpdateListCount(m_uWnd2);
 }
@@ -591,6 +590,7 @@ void CTransferWnd::SetWnd1Icons()
 	iml.Add(CTempIconLoader(_T("Download")));
 	iml.Add(CTempIconLoader(_T("ClientsOnQueue")));
 	iml.Add(CTempIconLoader(_T("ClientsKnown")));
+	iml.Add(CTempIconLoader(_T("ViewFiles")));
 	CImageList *pImlOld = m_btnWnd1.SetImageList(&iml);
 	iml.Detach();
 	if (pImlOld)
@@ -605,6 +605,7 @@ void CTransferWnd::SetWnd2Icons()
 	iml.Add(CTempIconLoader(_T("Download")));
 	iml.Add(CTempIconLoader(_T("ClientsOnQueue")));
 	iml.Add(CTempIconLoader(_T("ClientsKnown")));
+	iml.Add(CTempIconLoader(_T("ViewFiles")));
 	CImageList *pImlOld = m_btnWnd2.SetImageList(&iml);
 	iml.Detach();
 	if (pImlOld)
@@ -622,6 +623,7 @@ void CTransferWnd::Localize()
 	downloadlistctrl.Localize();
 	clientlistctrl.Localize();
 	downloadclientsctrl.Localize();
+	cachedclientsctrl.Localize();
 
 	if (m_dwShowListIDC == IDC_DOWNLOADLIST + IDC_UPLOADLIST)
 		ShowSplitWindow();
@@ -639,11 +641,13 @@ void CTransferWnd::LocalizeToolbars()
 	m_btnWnd1.SetBtnText(MP_VIEW1_DOWNLOADING, GetResString(IDS_DOWNLOADING));
 	m_btnWnd1.SetBtnText(MP_VIEW1_ONQUEUE, GetResString(IDS_ONQUEUE));
 	m_btnWnd1.SetBtnText(MP_VIEW1_CLIENTS, GetResString(IDS_CLIENTLIST));
+	m_btnWnd1.SetBtnText(MP_VIEW1_CACHEDCLIENTS, GetResString(IDS_CACHEDCLIENTS));
 	m_btnWnd2.SetWindowText(GetResString(IDS_UPLOADING));
 	m_btnWnd2.SetBtnText(MP_VIEW2_UPLOADING, GetResString(IDS_UPLOADING));
 	m_btnWnd2.SetBtnText(MP_VIEW2_DOWNLOADING, GetResString(IDS_DOWNLOADING));
 	m_btnWnd2.SetBtnText(MP_VIEW2_ONQUEUE, GetResString(IDS_ONQUEUE));
 	m_btnWnd2.SetBtnText(MP_VIEW2_CLIENTS, GetResString(IDS_CLIENTLIST));
+	m_btnWnd2.SetBtnText(MP_VIEW2_CACHEDCLIENTS, GetResString(IDS_CACHEDCLIENTS));
 }
 
 void CTransferWnd::OnBnClickedQueueRefreshButton()
@@ -987,6 +991,9 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM)
 	case MP_VIEW2_CLIENTS:
 		ShowWnd2(wnd2Clients);
 		break;
+	case MP_VIEW2_CACHEDCLIENTS:
+		ShowWnd2(wnd2CachedClients);
+		break;
 	case IDC_QUEUE_REFRESH_BUTTON:
 		OnBnClickedQueueRefreshButton();
 		break;
@@ -1011,6 +1018,9 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM)
 		break;
 	case MP_VIEW1_CLIENTS:
 		ShowList(IDC_CLIENTLIST);
+		break;
+	case MP_VIEW1_CACHEDCLIENTS:
+		ShowList(IDC_CACHEDCLIENTS);
 		break;
 
 	case MP_HM_OPENINC:
@@ -1354,6 +1364,9 @@ void CTransferWnd::OnBnClickedChangeView()
 			break;
 		}
 	case IDC_CLIENTLIST:
+		ShowList(IDC_CACHEDCLIENTS);
+		break;
+	case IDC_CACHEDCLIENTS:
 		ShowSplitWindow();
 		break;
 	case IDC_UPLOADLIST + IDC_DOWNLOADLIST:
@@ -1399,6 +1412,7 @@ void CTransferWnd::ShowList(uint32 dwListIDC)
 	queuelistctrl.ShowWindow((m_dwShowListIDC == IDC_QUEUELIST) ? SW_SHOW : SW_HIDE);
 	downloadclientsctrl.ShowWindow((m_dwShowListIDC == IDC_DOWNLOADCLIENTS) ? SW_SHOW : SW_HIDE);
 	clientlistctrl.ShowWindow((m_dwShowListIDC == IDC_CLIENTLIST) ? SW_SHOW : SW_HIDE);
+	cachedclientsctrl.ShowWindow((m_dwShowListIDC == IDC_CACHEDCLIENTS) ? SW_SHOW : SW_HIDE);
 	downloadlistctrl.ShowWindow((m_dwShowListIDC == IDC_DOWNLOADLIST) ? SW_SHOW : SW_HIDE);
 	m_dlTab.ShowWindow((m_dwShowListIDC == IDC_DOWNLOADLIST) ? SW_SHOW : SW_HIDE);
 	theApp.emuledlg->transferwnd->ShowToolbar(m_dwShowListIDC == IDC_DOWNLOADLIST);
@@ -1439,6 +1453,14 @@ void CTransferWnd::ShowList(uint32 dwListIDC)
 		m_btnWnd1.CheckButton(MP_VIEW1_CLIENTS);
 		SetWnd1Icon(w1iClientsKnown);
 		thePrefs.SetTransferWnd1(5);
+		break;
+	case IDC_CACHEDCLIENTS:
+		cachedclientsctrl.MoveWindow(&rcDown);
+		cachedclientsctrl.Reload();
+		UpdateListCount(wnd2CachedClients);
+		m_btnWnd1.CheckButton(MP_VIEW1_CACHEDCLIENTS);
+		SetWnd1Icon(w1iCachedClients);
+		thePrefs.SetTransferWnd1(6);
 		break;
 	default:
 		ASSERT(0);
@@ -1483,6 +1505,7 @@ void CTransferWnd::ShowSplitWindow(bool bReDraw)
 	queuelistctrl.MoveWindow(&rcDown);
 	clientlistctrl.MoveWindow(&rcDown);
 	downloadclientsctrl.MoveWindow(&rcDown);
+	cachedclientsctrl.MoveWindow(&rcDown);
 
 	CRect rcBtn2;
 	m_btnWnd2.GetWindowRect(rcBtn2);
@@ -1511,6 +1534,7 @@ void CTransferWnd::ShowSplitWindow(bool bReDraw)
 	RemoveAnchor(IDC_QUEUELIST);
 	RemoveAnchor(IDC_DOWNLOADCLIENTS);
 	RemoveAnchor(IDC_CLIENTLIST);
+	RemoveAnchor(IDC_CACHEDCLIENTS);
 
 	AddAnchor(m_btnWnd2, ANCHOR(0, thePrefs.GetSplitterbarPosition()));
 	AddAnchor(IDC_DOWNLOADLIST, TOP_LEFT, ANCHOR(100, thePrefs.GetSplitterbarPosition()));
@@ -1518,6 +1542,7 @@ void CTransferWnd::ShowSplitWindow(bool bReDraw)
 	AddAnchor(IDC_QUEUELIST, ANCHOR(0, thePrefs.GetSplitterbarPosition()), BOTTOM_RIGHT);
 	AddAnchor(IDC_CLIENTLIST, ANCHOR(0, thePrefs.GetSplitterbarPosition()), BOTTOM_RIGHT);
 	AddAnchor(IDC_DOWNLOADCLIENTS, ANCHOR(0, thePrefs.GetSplitterbarPosition()), BOTTOM_RIGHT);
+	AddAnchor(IDC_CACHEDCLIENTS, ANCHOR(0, thePrefs.GetSplitterbarPosition()), BOTTOM_RIGHT);
 	VerifyCatTabSize(); //properly position tab control
 
 	downloadlistctrl.ShowWindow(SW_SHOW);
@@ -1525,6 +1550,7 @@ void CTransferWnd::ShowSplitWindow(bool bReDraw)
 	queuelistctrl.ShowWindow((m_uWnd2 == wnd2OnQueue) ? SW_SHOW : SW_HIDE);
 	downloadclientsctrl.ShowWindow((m_uWnd2 == wnd2Downloading) ? SW_SHOW : SW_HIDE);
 	clientlistctrl.ShowWindow((m_uWnd2 == wnd2Clients) ? SW_SHOW : SW_HIDE);
+	cachedclientsctrl.ShowWindow((m_uWnd2 == wnd2CachedClients) ? SW_SHOW : SW_HIDE);
 
 	GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow((m_uWnd2 == wnd2OnQueue) ? SW_SHOW : SW_HIDE);
 
@@ -1563,6 +1589,7 @@ void CTransferWnd::OnWnd1BtnDropDown(LPNMHDR, LRESULT*)
 		menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_QUEUELIST ? MF_GRAYED : 0), MP_VIEW1_ONQUEUE, GetResString(IDS_ONQUEUE), _T("ClientsOnQueue"));
 	if (!thePrefs.IsKnownClientListDisabled())
 		menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_CLIENTLIST ? MF_GRAYED : 0), MP_VIEW1_CLIENTS, GetResString(IDS_CLIENTLIST), _T("ClientsKnown"));
+	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_CACHEDCLIENTS ? MF_GRAYED : 0), MP_VIEW1_CACHEDCLIENTS, GetResString(IDS_CACHEDCLIENTS), _T("ViewFiles"));
 
 	RECT rcBtn1;
 	m_btnWnd1.GetWindowRect(&rcBtn1);
@@ -1581,6 +1608,7 @@ void CTransferWnd::OnWnd2BtnDropDown(LPNMHDR, LRESULT*)
 		menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2OnQueue ? MF_GRAYED : 0), MP_VIEW2_ONQUEUE, GetResString(IDS_ONQUEUE), _T("ClientsOnQueue"));
 	if (!thePrefs.IsKnownClientListDisabled())
 		menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2Clients ? MF_GRAYED : 0), MP_VIEW2_CLIENTS, GetResString(IDS_CLIENTLIST), _T("ClientsKnown"));
+	menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2CachedClients ? MF_GRAYED : 0), MP_VIEW2_CACHEDCLIENTS, GetResString(IDS_CACHEDCLIENTS), _T("ViewFiles"));
 
 	RECT rcBtn2;
 	m_btnWnd2.GetWindowRect(&rcBtn2);
@@ -1662,6 +1690,11 @@ void CTransferWnd::ResetTransToolbar(bool bShowToolbar, bool bResetLists)
 		atb1[6].fsState = thePrefs.IsKnownClientListDisabled() ? 0 : TBSTATE_ENABLED;
 		atb1[6].fsStyle = BTNS_BUTTON | BTNS_CHECKGROUP | BTNS_AUTOSIZE;
 		atb1[6].iString = -1;
+		atb1[7].iBitmap = w1iCachedClients;
+		atb1[7].idCommand = MP_VIEW1_CACHEDCLIENTS;
+		atb1[7].fsState = TBSTATE_ENABLED;
+		atb1[7].fsStyle = BTNS_BUTTON | BTNS_CHECKGROUP | BTNS_AUTOSIZE;
+		atb1[7].iString = -1;
 		m_btnWnd1.AddButtons(_countof(atb1), atb1);
 
 		TBBUTTONINFO tbbi = {};
@@ -1720,6 +1753,11 @@ void CTransferWnd::ResetTransToolbar(bool bShowToolbar, bool bResetLists)
 		atb2[4].fsState = thePrefs.IsKnownClientListDisabled() ? 0 : TBSTATE_ENABLED;
 		atb2[4].fsStyle = BTNS_BUTTON | BTNS_CHECKGROUP | BTNS_AUTOSIZE;
 		atb2[4].iString = -1;
+		atb2[5].iBitmap = w2iCachedClients;
+		atb2[5].idCommand = MP_VIEW2_CACHEDCLIENTS;
+		atb2[5].fsState = TBSTATE_ENABLED;
+		atb2[5].fsStyle = BTNS_BUTTON | BTNS_CHECKGROUP | BTNS_AUTOSIZE;
+		atb2[5].iString = -1;
 		m_btnWnd2.AddButtons(_countof(atb2), atb2);
 
 		memset(&tbbi, 0, sizeof tbbi);

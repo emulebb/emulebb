@@ -31,6 +31,7 @@
 #include "ChatWnd.h"
 #include "TransferDlg.h"
 #include "Kademlia/Kademlia/Kademlia.h"
+#include "RemoteBrowseManager.h"
 #include "WebServices.h"
 #include "Preview.h"
 #include "StringConversion.h"
@@ -1550,7 +1551,7 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 
 			switch (wParam) {
 			case MP_SHOWLIST:
-				client->RequestSharedFileList();
+				theApp.remoteBrowseManager->StartManualBrowse(client);
 				break;
 			case MP_MESSAGE:
 				theApp.emuledlg->chatwnd->StartSession(client);

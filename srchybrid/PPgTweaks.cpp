@@ -193,6 +193,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_rcTree()
 	, m_htiA4AFSaveCpu()
 	, m_htiAutoArch()
+	, m_htiAutoBrowseRemoteShares()
 	, m_htiAutoTakeEd2kLinks()
 	, m_htiBroadband()
 	, m_htiBBMaxUploadClients()
@@ -323,6 +324,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_sBBLowRatioThreshold()
 	, m_bA4AFSaveCpu()
 	, m_bAutoArchDisable(true)
+	, m_bAutoBrowseRemoteShares()
 	, m_bAutoTakeEd2kLinks()
 	, m_bBBLowRatioBoost()
 	, m_bAdjustNTFSDaylightFileTime()
@@ -483,6 +485,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		// Miscellaneous group
 		//
 		m_htiAutoTakeEd2kLinks = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_AUTOTAKEED2KLINKS), TVI_ROOT, m_bAutoTakeEd2kLinks);
+		m_htiAutoBrowseRemoteShares = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_AUTOBROWSEREMOTESHARES), TVI_ROOT, m_bAutoBrowseRemoteShares);
 		m_htiCreditSystem = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_USECREDITSYSTEM), TVI_ROOT, m_bCreditSystem);
 		m_htiFilterLANIPs = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_PW_FILTER), TVI_ROOT, m_bFilterLANIPs);
 		m_htiExtControls = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_SHOWEXTSETTINGS), TVI_ROOT, m_bExtControls);
@@ -774,6 +777,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 	//
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiLog2Disk, m_bLog2Disk);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiPerfLog, m_bPerfLogEnabled);
+	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiAutoBrowseRemoteShares, m_bAutoBrowseRemoteShares);
 	if (m_htiLogLevel) {
 		DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiLogLevel, m_iLogLevel);
 		DDV_MinMaxInt(pDX, m_iLogLevel, 1, 5);
@@ -836,6 +840,7 @@ BOOL CPPgTweaks::OnInitDialog()
 	m_iMaxHalfOpen = thePrefs.GetMaxHalfConnections();
 	m_bConditionalTCPAccept = thePrefs.GetConditionalTCPAccept();
 	m_bAutoTakeEd2kLinks = thePrefs.AutoTakeED2KLinks();
+	m_bAutoBrowseRemoteShares = thePrefs.GetAutoBrowseRemoteShares();
 	if (thePrefs.GetEnableVerboseOptions()) {
 		m_bVerbose = thePrefs.m_bVerbose;
 		m_bDebug2Disk = thePrefs.debug2disk;							// do *not* use the corresponding 'Get...' function here!
@@ -1019,6 +1024,7 @@ BOOL CPPgTweaks::OnApply()
 		else
 			RevertReg();
 	}
+	thePrefs.SetAutoBrowseRemoteShares(m_bAutoBrowseRemoteShares);
 
 	if (!thePrefs.log2disk && m_bLog2Disk)
 		theLog.Open();
@@ -1186,6 +1192,7 @@ void CPPgTweaks::Localize()
 		LocalizeEditLabel(m_htiYourHostname, IDS_YOURHOSTNAME);	// itsonlyme: hostnameSource
 		LocalizeItemText(m_htiA4AFSaveCpu, IDS_A4AF_SAVE_CPU);
 		LocalizeItemText(m_htiAutoArch, IDS_DISABLE_AUTOARCHPREV);
+		LocalizeItemText(m_htiAutoBrowseRemoteShares, IDS_AUTOBROWSEREMOTESHARES);
 		LocalizeItemText(m_htiAutoTakeEd2kLinks, IDS_AUTOTAKEED2KLINKS);
 		LocalizeItemText(m_htiCheckDiskspace, IDS_CHECKDISKSPACE);
 		LocalizeItemText(m_htiCloseUPnPPorts, IDS_UPNPCLOSEONEXIT);
@@ -1360,6 +1367,7 @@ void CPPgTweaks::OnDestroy()
 	m_htiExtractMetaDataNever = NULL;
 	m_htiExtractMetaDataID3Lib = NULL;
 	m_htiAutoArch = NULL;
+	m_htiAutoBrowseRemoteShares = NULL;
 	m_htiUPnP = NULL;
 	m_htiCloseUPnPPorts = NULL;
 	m_htiSkipWANIPSetup = NULL;

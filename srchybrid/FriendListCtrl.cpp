@@ -27,6 +27,7 @@
 #include "ListenSocket.h"
 #include "MenuCmds.h"
 #include "ChatWnd.h"
+#include "RemoteBrowseManager.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -206,12 +207,12 @@ BOOL CFriendListCtrl::OnCommand(WPARAM wParam, LPARAM)
 	case MP_SHOWLIST:
 		if (cur_friend) {
 			if (cur_friend->GetLinkedClient(true))
-				cur_friend->GetLinkedClient()->RequestSharedFileList();
+				theApp.remoteBrowseManager->StartManualBrowse(cur_friend->GetLinkedClient());
 			else {
 				CUpDownClient *newclient = new CUpDownClient(0, cur_friend->m_nLastUsedPort, cur_friend->m_dwLastUsedIP, 0, 0, true);
 				newclient->SetUserName(cur_friend->m_strName);
 				theApp.clientlist->AddClient(newclient);
-				newclient->RequestSharedFileList();
+				theApp.remoteBrowseManager->StartManualBrowse(newclient);
 			}
 		}
 		break;

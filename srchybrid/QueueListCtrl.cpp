@@ -21,6 +21,7 @@
 #include "MenuCmds.h"
 #include "ClientDetailDialog.h"
 #include "Exceptions.h"
+#include "RemoteBrowseManager.h"
 #include "emuledlg.h"
 #include "FriendList.h"
 #include "UploadQueue.h"
@@ -641,7 +642,7 @@ BOOL CQueueListCtrl::OnCommand(WPARAM wParam, LPARAM)
 		CUpDownClient *client = reinterpret_cast<CUpDownClient*>(GetItemData(iSel));
 		switch (wParam) {
 		case MP_SHOWLIST:
-			client->RequestSharedFileList();
+			theApp.remoteBrowseManager->StartManualBrowse(client);
 			break;
 		case MP_MESSAGE:
 			theApp.emuledlg->chatwnd->StartSession(client);

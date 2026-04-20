@@ -38,6 +38,7 @@
 #include "ServerWnd.h"
 #include "KademliaWnd.h"
 #include "GeoLocation.h"
+#include "RemoteBrowseManager.h"
 #include "DownloadListCtrl.h"
 #include "TransferDlg.h"
 #include "SearchDlg.h"
@@ -1982,6 +1983,7 @@ void CemuleDlg::OnClose()
 	transferwnd->GetClientList()->DeleteAllItems();
 	transferwnd->GetUploadList()->DeleteAllItems();
 	transferwnd->GetDownloadClientsList()->DeleteAllItems();
+	transferwnd->GetCachedClientsList()->DeleteAllItems();
 	serverwnd->serverlistctrl.DeleteAllItems();
 
 	CPartFileConvert::CloseGUI();
@@ -2005,6 +2007,7 @@ void CemuleDlg::OnClose()
 	delete theApp.serverlist;				theApp.serverlist = NULL;		// CServerList::SaveServermetToFile
 	delete theApp.knownfiles;				theApp.knownfiles = NULL;
 	delete theApp.searchlist;				theApp.searchlist = NULL;
+	delete theApp.remoteBrowseManager;		theApp.remoteBrowseManager = NULL;
 	delete theApp.clientcredits;			theApp.clientcredits = NULL;	// CClientCreditsList::SaveList
 	delete theApp.downloadqueue;			theApp.downloadqueue = NULL;	// N * (CPartFile::FlushBuffer + CPartFile::SavePartFile)
 	delete theApp.uploadqueue;				theApp.uploadqueue = NULL;

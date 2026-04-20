@@ -510,6 +510,7 @@ bool	CPreferences::m_bShowWin7TaskbarGoodies;
 bool	CPreferences::m_bForceSpeedsToKB;
 bool	CPreferences::m_bAutoShowLookups;
 bool	CPreferences::m_bExtraPreviewWithMenu;
+bool	CPreferences::m_bAutoBrowseRemoteShares;
 
 // ZZ:DownloadManager -->
 bool    CPreferences::m_bA4AFSaveCpu;
@@ -862,6 +863,7 @@ void CPreferences::SetStandardValues()
 	defaultWPM.showCmd = 0;
 	EmuleWindowPlacement = defaultWPM;
 	versioncheckLastAutomatic = 0;
+	m_bAutoBrowseRemoteShares = false;
 }
 
 #pragma warning(push)
@@ -1923,6 +1925,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("RestoreLastLogPane"), m_bRestoreLastLogPane);
 	ini.WriteInt(_T("FileBufferTimeLimit"), static_cast<int>(m_uFileBufferTimeLimit / SEC2MS(1)));
 	ini.WriteString(_T("DateTimeFormat4Lists"), m_strDateTimeFormat4Lists);
+	ini.WriteBool(_T("AutoBrowseRemoteShares"), m_bAutoBrowseRemoteShares);
 	ini.WriteBool(_T("PreviewCopiedArchives"), m_bPreviewCopiedArchives);
 	ini.WriteInt(_T("InspectAllFileTypes"), m_iInspectAllFileTypes);
 	ini.WriteBool(_T("PreviewOnIconDblClk"), m_bPreviewOnIconDblClk);
@@ -2410,6 +2413,7 @@ void CPreferences::LoadPreferences()
 	m_bShowWin7TaskbarGoodies = ini.GetBool(_T("ShowWin7TaskbarGoodies"), true);
 	m_bForceSpeedsToKB = ini.GetBool(_T("ForceSpeedsToKB"), false);
 	m_bExtraPreviewWithMenu = ini.GetBool(_T("ExtraPreviewWithMenu"), false);
+	m_bAutoBrowseRemoteShares = ini.GetBool(_T("AutoBrowseRemoteShares"), false);
 
 	// Get file buffer size.
 	SetFileBufferSize(static_cast<UINT>(max(0, ini.GetInt(_T("FileBufferSize"), static_cast<int>(GetDefaultFileBufferSizeBytes())))));

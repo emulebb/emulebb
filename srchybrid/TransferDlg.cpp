@@ -259,4 +259,9 @@ CDownloadClientsCtrl* CTransferDlg::GetDownloadClientsList()
 {
 	return &m_pwndTransfer->downloadclientsctrl;
 }
+
+CCachedClientsCtrl* CTransferDlg::GetCachedClientsList()
+{
+	return &m_pwndTransfer->cachedclientsctrl;
+}
 //////////////////////////////////////////////////////////////////

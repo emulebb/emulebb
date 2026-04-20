@@ -542,6 +542,7 @@ public:
 	static bool		m_bForceSpeedsToKB;
 	static bool		m_bAutoShowLookups;
 	static bool		m_bExtraPreviewWithMenu;
+	static bool		m_bAutoBrowseRemoteShares;
 
 	// Web Server [kuchin]
 	static CString	m_strWebPassword;
@@ -1406,6 +1407,8 @@ public:
 	static void		SetAutoShowLookups(bool bIn)		{ m_bAutoShowLookups = bIn; }
 	static bool		GetForceSpeedsToKB()				{ return m_bForceSpeedsToKB; }
 	static bool		GetExtraPreviewWithMenu()			{ return m_bExtraPreviewWithMenu; }
+	static bool		GetAutoBrowseRemoteShares()			{ return m_bAutoBrowseRemoteShares; }
+	static void		SetAutoBrowseRemoteShares(bool bIn)	{ m_bAutoBrowseRemoteShares = bIn; }
 
 	//Toolbar
 	static const CString& GetToolbarSettings()			{ return m_sToolbarSettings; }

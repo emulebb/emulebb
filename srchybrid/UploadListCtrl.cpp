@@ -22,6 +22,7 @@
 #include "UpDownClient.h"
 #include "MenuCmds.h"
 #include "ClientDetailDialog.h"
+#include "RemoteBrowseManager.h"
 #include "emuledlg.h"
 #include "friendlist.h"
 #include "MemDC.h"
@@ -698,7 +699,7 @@ BOOL CUploadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 		CUpDownClient *client = reinterpret_cast<CUpDownClient*>(GetItemData(iSel));
 		switch (wParam) {
 		case MP_SHOWLIST:
-			client->RequestSharedFileList();
+			theApp.remoteBrowseManager->StartManualBrowse(client);
 			break;
 		case MP_MESSAGE:
 			theApp.emuledlg->chatwnd->StartSession(client);

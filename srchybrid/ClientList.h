@@ -80,6 +80,7 @@ typedef CMap<uint32, uint32, uint32, uint32> CClientVersionMap;
 class CClientList
 {
 	friend class CClientListCtrl;
+	friend class CRemoteBrowseManager;
 
 public:
 	CClientList();

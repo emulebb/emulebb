@@ -95,6 +95,7 @@ BEGIN
     LTEXT           "0",IDC_QUEUECOUNT,99,180,78,8
     PUSHBUTTON      "Refresh",IDC_QUEUE_REFRESH_BUTTON,187,179,68,11,NOT WS_VISIBLE
     CONTROL         "",IDC_DOWNLOADCLIENTS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHAREIMAGELISTS | LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | NOT WS_VISIBLE | WS_BORDER | WS_TABSTOP,5,119,251,36
+    CONTROL         "",IDC_CACHEDCLIENTS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | NOT WS_VISIBLE | WS_BORDER | WS_TABSTOP,5,119,251,36
 END
 
 IDD_SERVER DIALOGEX 0, 35, 511, 289
@@ -3214,6 +3215,7 @@ BEGIN
     IDS_FILTERSERVERBYIPFILTER "Filter servers too"
     IDS_FILTERCOMMENTSLABEL "Ignore comments containing: (Separator | )"
     IDS_CLIENTLIST          "Known Clients"
+    IDS_CACHEDCLIENTS       "Cached Clients"
     IDS_FOLDER              "Folder"
     IDS_CL_UPLOADSTATUS     "Upload Status"
     IDS_CL_TRANSFUP         "Transferred Up"
@@ -3257,6 +3259,8 @@ BEGIN
                             "Keyword too short.\r\n\r\nThe keyword(s) used in a Kad search expression must have a minimum length of 3 characters."
     IDS_LOG2DISK            "Save log to disk"
     IDS_ENABLE_PERFLOG      "Enable performance bandwidth log"
+    IDS_AUTOBROWSEREMOTESHARES
+                            "Automatically browse compatible clients and cache their shared files"
     IDS_KAD_SEARCH_KEYWORD_ALREADY_SEARCHING
                             "There is already a Kad search ongoing for the keyword ""%s"".\r\n\r\nTo search again for that keyword, either wait until this keyword search is finished or close the according search results pane."
     IDS_KAD_SEARCH_KEYWORD_INVALID

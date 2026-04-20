@@ -35,6 +35,7 @@
 #include "TransferDlg.h"
 #include "ClientListCtrl.h"
 #include "Exceptions.h"
+#include "RemoteBrowseManager.h"
 #include "Kademlia/Utils/uint128.h"
 #include "Kademlia/Kademlia/kademlia.h"
 #include "Kademlia/Kademlia/prefs.h"
@@ -795,11 +796,17 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 			theStats.AddDownDataOverheadOther(size);
 			if (client->GetFileListRequested() == 1) {
 				CSafeMemFile data(packet, size);
-				uint32 uDirs = data.ReadUInt32();
-				for (uint32 i = uDirs; i > 0; --i) {
+				const uint32 uDirCount = data.ReadUInt32();
+				uint32 uRequestedDirs = 0;
+				for (uint32 i = uDirCount; i > 0; --i) {
 					const CString &strDir(data.ReadString(client->GetUnicodeSupport() != UTF8strNone));
 					// Better send the received and untouched directory string back to that client
 					AddLogLine(true, GetResString(IDS_SHAREDANSW), client->GetUserName(), client->GetUserIDHybrid(), (LPCTSTR)strDir);
+					if (theApp.remoteBrowseManager != NULL
+						&& !theApp.remoteBrowseManager->ShouldRequestDirectory(*client, strDir))
+					{
+						continue;
+					}
 
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugSend("OP_AskSharedFilesInDirectory", client);
@@ -809,9 +816,12 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 					replypacket->opcode = OP_ASKSHAREDFILESDIR;
 					theStats.AddUpDataOverheadOther(replypacket->size);
 					SendPacket(replypacket, true);
+					++uRequestedDirs;
 				}
 				ASSERT(data.GetPosition() == data.GetLength());
-				client->SetFileListRequested(uDirs);
+				client->SetFileListRequested(uRequestedDirs);
+				if (uRequestedDirs == 0 && theApp.remoteBrowseManager != NULL)
+					theApp.remoteBrowseManager->NotifyDirectoryEnumerationComplete(*client);
 			} else
 				AddLogLine(true, GetResString(IDS_SHAREDANSW2), client->GetUserName(), client->GetUserIDHybrid());
 		}
@@ -841,6 +851,8 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 
 		AddLogLine(true, GetResString(IDS_SHAREDREQDENIED), client->GetUserName(), client->GetUserIDHybrid());
 		client->SetFileListRequested(0);
+		if (theApp.remoteBrowseManager != NULL)
+			theApp.remoteBrowseManager->HandleBrowseDenied(client);
 		return;
 	default:
 		theStats.AddDownDataOverheadOther(size);

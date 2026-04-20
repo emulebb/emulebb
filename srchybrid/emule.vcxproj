@@ -143,6 +143,7 @@
     <ClCompile Include="BuddyButton.cpp" />
     <ClCompile Include="ButtonsTabCtrl.cpp" />
     <ClCompile Include="CaptchaGenerator.cpp" />
+    <ClCompile Include="CachedClientsCtrl.cpp" />
     <ClCompile Include="CatDialog.cpp" />
     <ClCompile Include="ChatSelector.cpp" />
     <ClCompile Include="ChatWnd.cpp" />
@@ -303,6 +304,7 @@
     <ClCompile Include="Quantize.cpp" />
     <ClCompile Include="QueueListCtrl.cpp" />
     <ClCompile Include="RARFile.cpp" />
+    <ClCompile Include="RemoteBrowseManager.cpp" />
     <ClCompile Include="RichEditCtrlX.cpp" />
     <ClCompile Include="RichEditStream.cpp" />
     <ClCompile Include="SafeFile.cpp" />
@@ -414,6 +416,7 @@
     <ClInclude Include="BarShader.h" />
     <ClInclude Include="ButtonsTabCtrl.h" />
     <ClInclude Include="CaptchaGenerator.h" />
+    <ClInclude Include="CachedClientsCtrl.h" />
     <ClInclude Include="CatDialog.h" />
     <ClInclude Include="ChatSelector.h" />
     <ClInclude Include="ChatWnd.h" />
@@ -591,6 +594,7 @@
     <ClInclude Include="Quantize.h" />
     <ClInclude Include="QueueListCtrl.h" />
     <ClInclude Include="RARFile.h" />
+    <ClInclude Include="RemoteBrowseManager.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RichEditCtrlX.h" />
     <ClInclude Include="RichEditStream.h" />

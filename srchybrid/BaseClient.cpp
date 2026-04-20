@@ -38,6 +38,7 @@
 #include "DownloadQueue.h"
 #include "UploadQueue.h"
 #include "SearchFile.h"
+#include "RemoteBrowseManager.h"
 #include "SearchList.h"
 #include "SharedFileList.h"
 #include "Kademlia/Kademlia/Kademlia.h"
@@ -1160,6 +1161,8 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 	}
 	if (m_iFileListRequested) {
 		m_iFileListRequested = 0;
+		if (theApp.remoteBrowseManager != NULL)
+			theApp.remoteBrowseManager->HandleBrowseTransportFailure(this);
 		LogWarning(LOG_STATUSBAR, GetResString(IDS_SHAREDFILES_FAILED), GetUserName());
 	}
 
@@ -1788,6 +1791,11 @@ void CUpDownClient::ProcessSharedFileList(const uchar *pachPacket, uint32 nSize,
 {
 	if (m_iFileListRequested > 0) {
 		--m_iFileListRequested;
+		if (theApp.remoteBrowseManager != NULL
+			&& theApp.remoteBrowseManager->HandleSharedFileListPacket(*this, pachPacket, nSize, pszDirectory))
+		{
+			return;
+		}
 		theApp.searchlist->ProcessSearchAnswer(pachPacket, nSize, *this, NULL, pszDirectory);
 	}
 }

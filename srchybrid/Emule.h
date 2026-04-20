@@ -56,6 +56,7 @@ class CUPnPImplWrapper;
 class CUploadDiskIOThread;
 class CPartFileWriteThread;
 class CGeoLocation;
+class CRemoteBrowseManager;
 
 struct SLogItem;
 
@@ -157,6 +158,7 @@ public:
 	CUploadDiskIOThread	*m_pUploadDiskIOThread;
 	CPartFileWriteThread *m_pPartFileWriteThread;
 	CGeoLocation		*geolocation;
+	CRemoteBrowseManager *remoteBrowseManager;
 
 
 	static const UINT	m_nVersionMjr;

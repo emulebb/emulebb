@@ -28,6 +28,7 @@
 #include "UpDownClient.h"
 #include "UploadQueue.h"
 #include "DownloadQueue.h"
+#include "RemoteBrowseManager.h"
 #include "ClientSocketLifetimeSeams.h"
 #include "ClientCredits.h"
 #include "ListenSocket.h"
@@ -166,6 +167,8 @@ void CClientList::RemoveClient(CUpDownClient *toremove, LPCTSTR pszReason)
 		theApp.uploadqueue->RemoveFromUploadQueue(toremove, CString(_T("CClientList::RemoveClient: ")) + pszReason);
 		theApp.uploadqueue->RemoveFromWaitingQueue(toremove);
 		theApp.downloadqueue->RemoveSource(toremove);
+		if (theApp.remoteBrowseManager != NULL)
+			theApp.remoteBrowseManager->OnClientRemoved(toremove);
 		theApp.emuledlg->transferwnd->GetClientList()->RemoveClient(toremove);
 		list.RemoveAt(pos);
 	}
@@ -470,6 +473,9 @@ void CClientList::RemoveAllTrackedClients()
 
 void CClientList::Process()
 {
+	if (theApp.remoteBrowseManager != NULL)
+		theApp.remoteBrowseManager->Process();
+
 	///////////////////////////////////////////////////////////////////////////
 	// Cleanup banned client list
 	//
