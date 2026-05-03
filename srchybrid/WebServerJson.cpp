@@ -940,9 +940,9 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 
 	if (rPrefs.contains("uploadLimitKiBps")) {
 		uint64_t ullValue = 0;
-		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["uploadLimitKiBps"], ullValue) || ullValue > UINT_MAX) {
+		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["uploadLimitKiBps"], ullValue) || !WebApiSurfaceSeams::IsFiniteKiBpsPreferenceValue(ullValue)) {
 			rError.strCode = "INVALID_ARGUMENT";
-			rError.strMessage = _T("uploadLimitKiBps must be an unsigned number");
+			rError.strMessage = _T("uploadLimitKiBps must be an unsigned number in the range 1..4294967294");
 			return false;
 		}
 		thePrefs.SetMaxUpload(static_cast<uint32>(ullValue));
@@ -950,9 +950,9 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 
 	if (rPrefs.contains("downloadLimitKiBps")) {
 		uint64_t ullValue = 0;
-		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["downloadLimitKiBps"], ullValue) || ullValue > UINT_MAX) {
+		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["downloadLimitKiBps"], ullValue) || !WebApiSurfaceSeams::IsFiniteKiBpsPreferenceValue(ullValue)) {
 			rError.strCode = "INVALID_ARGUMENT";
-			rError.strMessage = _T("downloadLimitKiBps must be an unsigned number");
+			rError.strMessage = _T("downloadLimitKiBps must be an unsigned number in the range 1..4294967294");
 			return false;
 		}
 		thePrefs.SetMaxDownload(static_cast<uint32>(ullValue));
@@ -960,9 +960,9 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 
 	if (rPrefs.contains("maxConnections")) {
 		uint64_t ullValue = 0;
-		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["maxConnections"], ullValue) || ullValue > UINT_MAX) {
+		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["maxConnections"], ullValue) || !WebApiSurfaceSeams::IsPositiveSignedIntPreferenceValue(ullValue)) {
 			rError.strCode = "INVALID_ARGUMENT";
-			rError.strMessage = _T("maxConnections must be an unsigned number");
+			rError.strMessage = _T("maxConnections must be an unsigned number in the range 1..2147483647");
 			return false;
 		}
 		thePrefs.SetMaxConnections(static_cast<UINT>(ullValue));
@@ -970,9 +970,9 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 
 	if (rPrefs.contains("maxConnectionsPerFiveSeconds")) {
 		uint64_t ullValue = 0;
-		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["maxConnectionsPerFiveSeconds"], ullValue) || ullValue > UINT_MAX) {
+		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["maxConnectionsPerFiveSeconds"], ullValue) || !WebApiSurfaceSeams::IsPositiveSignedIntPreferenceValue(ullValue)) {
 			rError.strCode = "INVALID_ARGUMENT";
-			rError.strMessage = _T("maxConnectionsPerFiveSeconds must be an unsigned number");
+			rError.strMessage = _T("maxConnectionsPerFiveSeconds must be an unsigned number in the range 1..2147483647");
 			return false;
 		}
 		thePrefs.SetMaxConsPerFive(static_cast<UINT>(ullValue));
@@ -980,9 +980,9 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 
 	if (rPrefs.contains("maxSourcesPerFile")) {
 		uint64_t ullValue = 0;
-		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["maxSourcesPerFile"], ullValue) || ullValue > UINT_MAX) {
+		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["maxSourcesPerFile"], ullValue) || !WebApiSurfaceSeams::IsPositiveSignedIntPreferenceValue(ullValue)) {
 			rError.strCode = "INVALID_ARGUMENT";
-			rError.strMessage = _T("maxSourcesPerFile must be an unsigned number");
+			rError.strMessage = _T("maxSourcesPerFile must be an unsigned number in the range 1..2147483647");
 			return false;
 		}
 		thePrefs.SetMaxSourcesPerFile(static_cast<UINT>(ullValue));
@@ -1004,7 +1004,7 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 
 	if (rPrefs.contains("maxUploadSlots")) {
 		uint64_t ullRequestedSlots = 0;
-		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["maxUploadSlots"], ullRequestedSlots) || ullRequestedSlots == 0 || ullRequestedSlots > 32u) {
+		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["maxUploadSlots"], ullRequestedSlots) || !WebApiSurfaceSeams::IsUploadSlotPreferenceValue(ullRequestedSlots)) {
 			rError.strCode = "INVALID_ARGUMENT";
 			rError.strMessage = _T("maxUploadSlots must be an unsigned number in the range 1..32");
 			return false;
@@ -1014,9 +1014,9 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 
 	if (rPrefs.contains("queueSize")) {
 		uint64_t ullValue = 0;
-		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["queueSize"], ullValue) || ullValue > static_cast<uint64_t>(INT_MAX)) {
+		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["queueSize"], ullValue) || !WebApiSurfaceSeams::IsQueueSizePreferenceValue(ullValue)) {
 			rError.strCode = "INVALID_ARGUMENT";
-			rError.strMessage = _T("queueSize must be an unsigned number");
+			rError.strMessage = _T("queueSize must be an unsigned number in the range 2000..10000");
 			return false;
 		}
 		thePrefs.SetQueueSize(static_cast<INT_PTR>(ullValue));

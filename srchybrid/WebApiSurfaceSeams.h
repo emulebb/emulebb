@@ -1,5 +1,6 @@
 #pragma once
 
+#include <climits>
 #include <cstring>
 #include <cstdint>
 
@@ -35,6 +36,47 @@ enum class EMutablePreference : uint8_t
 	NetworkKademlia,
 	NetworkEd2K
 };
+
+inline constexpr uint64_t kMutablePreferenceMaxSignedInt = static_cast<uint64_t>(INT_MAX);
+inline constexpr uint64_t kMutablePreferenceUnlimitedSentinel = UINT32_MAX;
+inline constexpr uint64_t kMutablePreferenceMaxFiniteKiBps = kMutablePreferenceUnlimitedSentinel - 1u;
+inline constexpr uint64_t kMutablePreferenceMinQueueSize = 2000u;
+inline constexpr uint64_t kMutablePreferenceMaxQueueSize = 10000u;
+inline constexpr uint64_t kMutablePreferenceMinUploadSlots = 1u;
+inline constexpr uint64_t kMutablePreferenceMaxUploadSlots = 32u;
+
+/**
+ * Reports whether one REST bandwidth preference is a finite configured limit.
+ */
+inline bool IsFiniteKiBpsPreferenceValue(const uint64_t ullValue)
+{
+	return ullValue >= 1u && ullValue <= kMutablePreferenceMaxFiniteKiBps;
+}
+
+/**
+ * Reports whether one REST integer preference can round-trip through the UI
+ * and INI integer persistence without falling back to a default.
+ */
+inline bool IsPositiveSignedIntPreferenceValue(const uint64_t ullValue)
+{
+	return ullValue >= 1u && ullValue <= kMutablePreferenceMaxSignedInt;
+}
+
+/**
+ * Reports whether one REST queue-size preference matches the UI/storage range.
+ */
+inline bool IsQueueSizePreferenceValue(const uint64_t ullValue)
+{
+	return ullValue >= kMutablePreferenceMinQueueSize && ullValue <= kMutablePreferenceMaxQueueSize;
+}
+
+/**
+ * Reports whether one REST upload-slot preference matches the broadband range.
+ */
+inline bool IsUploadSlotPreferenceValue(const uint64_t ullValue)
+{
+	return ullValue >= kMutablePreferenceMinUploadSlots && ullValue <= kMutablePreferenceMaxUploadSlots;
+}
 
 /**
  * Maps the persisted eD2K server priority to the public API string.
