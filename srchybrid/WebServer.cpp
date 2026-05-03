@@ -9,6 +9,7 @@
 #include "WebServerAuthStateSeams.h"
 #include "WebServerJson.h"
 #include "WebServerLegacySeams.h"
+#include "WebServerQBitCompat.h"
 #include "WebServerStaticFileSeams.h"
 #include "ClientCredits.h"
 #include "ClientList.h"
@@ -376,6 +377,12 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 #endif
 		if (WebServerArrCompat::IsCompatRequest(Data)) {
 			WebServerArrCompat::ProcessRequest(Data);
+			::CoUninitialize();
+			return;
+		}
+
+		if (WebServerQBitCompat::IsCompatRequest(Data)) {
+			WebServerQBitCompat::ProcessRequest(Data);
 			::CoUninitialize();
 			return;
 		}

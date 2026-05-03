@@ -391,6 +391,7 @@
     <ClCompile Include="WebServer.cpp" />
     <ClCompile Include="WebServerArrCompat.cpp" />
     <ClCompile Include="WebServerJson.cpp" />
+    <ClCompile Include="WebServerQBitCompat.cpp" />
     <ClCompile Include="WebSocket.cpp" />
     <ClCompile Include="Wizard.cpp" />
     <ClCompile Include="ZIPFile.cpp" />
@@ -689,6 +690,8 @@
     <ClInclude Include="WebServerArrCompat.h" />
     <ClInclude Include="WebServerArrCompatSeams.h" />
     <ClInclude Include="WebServerJson.h" />
+    <ClInclude Include="WebServerQBitCompat.h" />
+    <ClInclude Include="WebServerQBitCompatSeams.h" />
     <ClInclude Include="WebServices.h" />
     <ClInclude Include="WebSocket.h" />
     <ClInclude Include="Wizard.h" />
