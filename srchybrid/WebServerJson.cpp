@@ -899,7 +899,7 @@ json BuildTransfersListJson(const json &rParams, SPipeApiError &rError)
 	const CString strFilter(CStringFromStdUtf8(request.strFilterLower));
 	json result = json::array();
 	POSITION pos = NULL;
-	while (true) {
+	for (INT_PTR i = 0, iCount = theApp.downloadqueue->GetFileCount(); i < iCount; ++i) {
 		CPartFile *pPartFile = theApp.downloadqueue->GetFileNext(pos);
 		if (pPartFile == NULL)
 			break;

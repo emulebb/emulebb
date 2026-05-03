@@ -22,7 +22,12 @@
 #include <string>
 #include <vector>
 
+#include "Emule.h"
+#include "Opcodes.h"
 #include "Log.h"
+#include "OtherFunctions.h"
+#include "DownloadQueue.h"
+#include "PartFile.h"
 #include "Preferences.h"
 #include "StringConversion.h"
 #include "WebServerJson.h"
@@ -227,20 +232,60 @@ json BuildQBitTorrentJson(const json &rTransfer)
 	};
 }
 
+CString GetPartFileCategoryName(const UINT uCategory)
+{
+	const Category_Struct *const pCategory = thePrefs.GetCategory(static_cast<INT_PTR>(uCategory));
+	return pCategory != NULL ? pCategory->strTitle : CString();
+}
+
+json BuildQBitTorrentJson(const CPartFile &rPartFile)
+{
+	const CString strName(rPartFile.GetFileName());
+	const CString strCategory(GetPartFileCategoryName(const_cast<CPartFile&>(rPartFile).GetCategory()));
+	const uint64 uSize = static_cast<uint64>(rPartFile.GetFileSize());
+	const uint64 uCompleted = static_cast<uint64>(rPartFile.GetCompletedSize());
+	const std::string strState = rPartFile.GetStatus() == PS_PAUSED || rPartFile.IsStopped() ? "pausedDL" : "downloading";
+	return json{
+		{"hash", HexEncode(rPartFile.GetFileHash(), MDX_DIGEST_SIZE)},
+		{"name", StdUtf8FromCString(strName)},
+		{"size", uSize},
+		{"progress", uSize > 0 ? static_cast<double>(uCompleted) / static_cast<double>(uSize) : 0.0},
+		{"eta", -1},
+		{"state", strState},
+		{"label", StdUtf8FromCString(strCategory)},
+		{"category", StdUtf8FromCString(strCategory)},
+		{"save_path", ""},
+		{"content_path", StdUtf8FromCString(strName)},
+		{"ratio", 0},
+		{"ratio_limit", 0},
+		{"seeding_time", 0},
+		{"seeding_time_limit", 0},
+		{"inactive_seeding_time_limit", 0},
+		{"downloaded", uCompleted},
+		{"completed", uCompleted},
+		{"dlspeed", rPartFile.GetDatarate()},
+		{"upspeed", 0},
+		{"num_leechs", rPartFile.GetSourceCount()},
+		{"num_incomplete", rPartFile.GetSourceCount()},
+		{"num_seeds", 0},
+		{"num_complete", 0}
+	};
+}
+
 json BuildQBitTorrentsJson(const std::string &rCategory)
 {
-	json transfers;
-	CString strErrorMessage;
-	if (!ExecuteBridgeCommand(BuildCommand("transfers/list", json::object()), transfers, strErrorMessage) || !transfers.is_array())
+	if (theApp.downloadqueue == NULL)
 		return json::array();
 
 	json torrents = json::array();
-	for (const json &rTransfer : transfers) {
-		if (!rTransfer.is_object())
+	POSITION pos = NULL;
+	for (INT_PTR i = 0, iCount = theApp.downloadqueue->GetFileCount(); i < iCount; ++i) {
+		CPartFile *const pPartFile = theApp.downloadqueue->GetFileNext(pos);
+		if (pPartFile == NULL)
+			break;
+		if (!rCategory.empty() && StdUtf8FromCString(GetPartFileCategoryName(pPartFile->GetCategory())) != rCategory)
 			continue;
-		if (!rCategory.empty() && rTransfer.value("categoryName", std::string()) != rCategory)
-			continue;
-		torrents.push_back(BuildQBitTorrentJson(rTransfer));
+		torrents.push_back(BuildQBitTorrentJson(*pPartFile));
 	}
 	return torrents;
 }
