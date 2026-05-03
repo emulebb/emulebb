@@ -42,6 +42,7 @@
 #include "MuleToolbarCtrl.h"
 #include "PreferenceIniMap.h"
 #include "PreferenceUiSeams.h"
+#include "SearchParamsPolicy.h"
 #include "VistaDefines.h"
 #include <osrng.h>
 
@@ -3017,7 +3018,7 @@ void CPreferences::LoadPreferences()
 	m_bCheckFileOpen = ini.GetBool(_T("CheckFileOpen"), true);
 	indicateratings = ini.GetBool(_T("IndicateRatings"), true);
 	watchclipboard = ini.GetBool(_T("WatchClipboard4ED2kFilelinks"), false);
-	m_iSearchMethod = ini.GetInt(_T("SearchMethod"), 0);
+	m_iSearchMethod = SearchParamsPolicy::NormalizeStoredSearchType(ini.GetInt(_T("SearchMethod"), 0));
 
 	showCatTabInfos = ini.GetBool(_T("ShowInfoOnCatTabs"), false);
 	//resumeSameCat = ini.GetBool(_T("ResumeNextFromSameCat"), false);
