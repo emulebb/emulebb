@@ -66,6 +66,7 @@ void SendTextResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReas
 		"HTTP/1.1 %d %s\r\n"
 		"Content-Type: text/plain; charset=utf-8\r\n"
 		"Cache-Control: no-store\r\n"
+		"Connection: close\r\n"
 		"%s"
 		"Content-Length: %u\r\n\r\n",
 		iStatusCode,
@@ -88,6 +89,7 @@ void SendJsonResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReas
 		"HTTP/1.1 %d %s\r\n"
 		"Content-Type: application/json; charset=utf-8\r\n"
 		"Cache-Control: no-store\r\n"
+		"Connection: close\r\n"
 		"Content-Length: %u\r\n\r\n",
 		iStatusCode,
 		pszReason != NULL ? pszReason : "OK",
