@@ -186,24 +186,29 @@ inline ETorznabFamily ResolveFamily(const std::string &rType, const std::string 
 		if (!WebServerJsonSeams::IsValidUnsignedDecimal(rToken))
 			return ETorznabFamily::Unknown;
 		const int iCategory = std::atoi(rToken.c_str());
+		ETorznabFamily eTokenFamily = ETorznabFamily::Unknown;
 		if (IsTorznabCategoryInRange(iCategory, 2000)) {
 			bSawKnown = true;
-			eFamily = eFamily == ETorznabFamily::Unknown ? ETorznabFamily::Movie : eFamily;
+			eTokenFamily = ETorznabFamily::Movie;
 		} else if (IsTorznabCategoryInRange(iCategory, 5000)) {
 			bSawKnown = true;
-			eFamily = eFamily == ETorznabFamily::Unknown ? ETorznabFamily::Tv : eFamily;
+			eTokenFamily = ETorznabFamily::Tv;
 		} else if (IsTorznabCategoryInRange(iCategory, 3000)) {
 			bSawKnown = true;
-			eFamily = eFamily == ETorznabFamily::Unknown ? ETorznabFamily::Audio : eFamily;
+			eTokenFamily = ETorznabFamily::Audio;
 		} else if (IsTorznabCategoryInRange(iCategory, 7000)) {
 			bSawKnown = true;
-			eFamily = eFamily == ETorznabFamily::Unknown ? ETorznabFamily::Book : eFamily;
+			eTokenFamily = ETorznabFamily::Book;
 		} else if (IsTorznabCategoryInRange(iCategory, 8000) || IsTorznabCategoryInRange(iCategory, 4000)) {
 			bSawKnown = true;
-			eFamily = eFamily == ETorznabFamily::Unknown ? ETorznabFamily::Other : eFamily;
+			eTokenFamily = ETorznabFamily::Other;
 		} else {
 			return ETorznabFamily::Unknown;
 		}
+		if (eFamily == ETorznabFamily::Unknown)
+			eFamily = eTokenFamily;
+		else if (eFamily != eTokenFamily)
+			eFamily = ETorznabFamily::Any;
 	}
 
 	if (!bSawKnown)
@@ -249,6 +254,13 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 	rRequest.strEpisode = episodeIt == normalized.end() ? std::string() : TrimAscii(episodeIt->second);
 	rRequest.strYear = yearIt == normalized.end() ? std::string() : TrimAscii(yearIt->second);
 	rRequest.strCategories = catIt == normalized.end() ? std::string() : TrimAscii(catIt->second);
+	if ((!rRequest.strSeason.empty() && !WebServerJsonSeams::IsValidUnsignedDecimal(rRequest.strSeason))
+		|| (!rRequest.strEpisode.empty() && !WebServerJsonSeams::IsValidUnsignedDecimal(rRequest.strEpisode))
+		|| (!rRequest.strYear.empty() && !WebServerJsonSeams::IsValidUnsignedDecimal(rRequest.strYear)))
+	{
+		rErrorMessage = "season, ep, and year must be unsigned decimal values";
+		return false;
+	}
 	rRequest.eFamily = ResolveFamily(rRequest.strType, rRequest.strCategories);
 	return true;
 }
@@ -350,8 +362,10 @@ inline std::vector<std::string> BuildNativeQueries(const STorznabRequest &rReque
 {
 	std::vector<std::string> queries;
 	const std::string strType(WebServerJsonSeams::ToLowerAscii(rRequest.strType));
-	if (rRequest.strQuery.empty())
+	if (rRequest.strQuery.empty()) {
+		queries.push_back("linux");
 		return queries;
+	}
 
 	if (strType == "tvsearch") {
 		if (!rRequest.strSeason.empty() && !rRequest.strEpisode.empty()) {

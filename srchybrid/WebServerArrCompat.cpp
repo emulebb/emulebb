@@ -36,9 +36,8 @@ using json = nlohmann::json;
 namespace
 {
 constexpr ULONGLONG ARR_COMPAT_CACHE_TTL_MS = 10ULL * 60ULL * 1000ULL;
-constexpr ULONGLONG ARR_COMPAT_RATE_LIMIT_MS = 10ULL * 1000ULL;
-constexpr ULONGLONG ARR_COMPAT_SEARCH_TIMEOUT_MS = 30ULL * 1000ULL;
-constexpr DWORD ARR_COMPAT_POLL_SLEEP_MS = 1500;
+constexpr ULONGLONG ARR_COMPAT_SEARCH_TIMEOUT_MS = 12ULL * 1000ULL;
+constexpr DWORD ARR_COMPAT_POLL_SLEEP_MS = 750;
 
 struct SArrCompatResult
 {
@@ -59,9 +58,31 @@ struct SArrCompatCacheEntry
 };
 
 CCriticalSection g_arrCompatCacheLock;
-CCriticalSection g_arrCompatSearchLock;
 std::map<std::string, SArrCompatCacheEntry> g_arrCompatCache;
-ULONGLONG g_ullLastArrCompatSearchTick = 0;
+volatile LONG g_lArrCompatSearchInFlight = 0;
+
+class CArrCompatSearchReservation
+{
+public:
+	CArrCompatSearchReservation()
+		: m_bAcquired(::InterlockedCompareExchange(&g_lArrCompatSearchInFlight, 1, 0) == 0)
+	{
+	}
+
+	~CArrCompatSearchReservation()
+	{
+		if (m_bAcquired)
+			::InterlockedExchange(&g_lArrCompatSearchInFlight, 0);
+	}
+
+	bool IsAcquired() const
+	{
+		return m_bAcquired;
+	}
+
+private:
+	bool m_bAcquired;
+};
 
 std::string StdStringFromCStringA(const CStringA &rText)
 {
@@ -167,13 +188,22 @@ std::string BuildFeedXml(const WebServerArrCompatSeams::STorznabRequest &rReques
 			<< "      <title>" << WebServerArrCompatSeams::XmlEscape(rResult.strName) << "</title>\n"
 			<< "      <guid isPermaLink=\"false\">ed2k:" << WebServerArrCompatSeams::XmlEscape(rResult.strHash) << "</guid>\n"
 			<< "      <pubDate>" << strPubDate << "</pubDate>\n"
+			<< "      <category>" << iCategory << "</category>\n"
+			<< "      <comments>ed2k:" << WebServerArrCompatSeams::XmlEscape(rResult.strHash) << "</comments>\n"
+			<< "      <description>" << WebServerArrCompatSeams::XmlEscape(rResult.strName) << "</description>\n"
 			<< "      <link>" << WebServerArrCompatSeams::XmlEscape(rResult.strMagnet) << "</link>\n"
-			<< "      <enclosure url=\"" << WebServerArrCompatSeams::XmlEscape(rResult.strMagnet) << "\" length=\"" << rResult.ullSize << "\" type=\"application/x-bittorrent\" />\n"
+			<< "      <enclosure url=\"" << WebServerArrCompatSeams::XmlEscape(rResult.strMagnet) << "\" length=\"" << rResult.ullSize << "\" type=\"application/x-bittorrent;x-scheme-handler/magnet\" />\n"
 			<< "      <torznab:attr name=\"size\" value=\"" << rResult.ullSize << "\" />\n"
 			<< "      <torznab:attr name=\"seeders\" value=\"" << rResult.ullSeeders << "\" />\n"
 			<< "      <torznab:attr name=\"peers\" value=\"" << rResult.ullPeers << "\" />\n"
 			<< "      <torznab:attr name=\"grabs\" value=\"" << rResult.ullGrabs << "\" />\n"
 			<< "      <torznab:attr name=\"category\" value=\"" << iCategory << "\" />\n"
+			<< "      <torznab:attr name=\"magneturl\" value=\"" << WebServerArrCompatSeams::XmlEscape(rResult.strMagnet) << "\" />\n"
+			<< "      <torznab:attr name=\"infohash\" value=\"" << WebServerArrCompatSeams::XmlEscape(WebServerArrCompatSeams::BuildFakeBtihHash(rResult.strHash)) << "\" />\n"
+			<< "      <torznab:attr name=\"minimumratio\" value=\"0\" />\n"
+			<< "      <torznab:attr name=\"minimumseedtime\" value=\"0\" />\n"
+			<< "      <torznab:attr name=\"downloadvolumefactor\" value=\"0\" />\n"
+			<< "      <torznab:attr name=\"uploadvolumefactor\" value=\"1\" />\n"
 			<< "    </item>\n";
 	}
 
@@ -202,16 +232,6 @@ void StoreCachedResults(const std::string &rCacheKey, const std::vector<SArrComp
 	SArrCompatCacheEntry &rEntry = g_arrCompatCache[rCacheKey];
 	rEntry.ullTick = ::GetTickCount64();
 	rEntry.results = rResults;
-}
-
-bool IsRateLimited()
-{
-	CSingleLock lock(&g_arrCompatCacheLock, TRUE);
-	const ULONGLONG ullNow = ::GetTickCount64();
-	if (g_ullLastArrCompatSearchTick != 0 && ullNow - g_ullLastArrCompatSearchTick < ARR_COMPAT_RATE_LIMIT_MS)
-		return true;
-	g_ullLastArrCompatSearchTick = ullNow;
-	return false;
 }
 
 json BuildCommand(const char *pszCommand, const json &rParams)
@@ -298,17 +318,24 @@ std::vector<SArrCompatResult> RunOneNativeSearch(const std::string &rQuery, cons
 	if (::GetTickCount64() >= ullDeadline)
 		return results;
 
-	json startResult;
-	if (!ExecuteBridgeCommand(
-			BuildCommand("search/start", json{
-				{"query", rQuery},
-				{"method", "automatic"},
-				{"type", WebServerArrCompatSeams::GetNativeSearchType(eFamily)},
-				{"clearExisting", false}
-			}),
-			startResult))
-		return results;
+	static const char *const s_arrSearchMethods[] = {"kad"};
 
+	json startResult;
+	for (const char *const pszMethod : s_arrSearchMethods) {
+		if (ExecuteBridgeCommand(
+				BuildCommand("search/start", json{
+					{"query", rQuery},
+					{"method", pszMethod},
+					{"type", WebServerArrCompatSeams::GetNativeSearchType(eFamily)},
+					{"clearExisting", false}
+				}),
+				startResult))
+		{
+			break;
+		}
+		if (::GetTickCount64() >= ullDeadline)
+			return results;
+	}
 	if (!startResult.contains("id") || !startResult["id"].is_string())
 		return results;
 
@@ -399,7 +426,7 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 	}
 
 	std::vector<SArrCompatResult> results;
-	if (request.strQuery.empty() || request.eFamily == WebServerArrCompatSeams::ETorznabFamily::Unknown) {
+	if (request.eFamily == WebServerArrCompatSeams::ETorznabFamily::Unknown) {
 		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
 		return;
 	}
@@ -410,12 +437,12 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 		return;
 	}
 
-	CSingleLock bridgeLock(&g_arrCompatSearchLock, TRUE);
-	if (TryGetCachedResults(strCacheKey, results)) {
+	CArrCompatSearchReservation searchReservation;
+	if (!searchReservation.IsAcquired()) {
 		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
 		return;
 	}
-	if (IsRateLimited()) {
+	if (TryGetCachedResults(strCacheKey, results)) {
 		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
 		return;
 	}
