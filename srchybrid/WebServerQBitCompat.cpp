@@ -20,6 +20,7 @@
 #include <bcrypt.h>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "Log.h"
 #include "Preferences.h"
@@ -131,7 +132,7 @@ bool HasValidSessionCookie(const CStringA &rCookie)
 	return strCookie == strNeedle
 		|| strCookie.rfind(strNeedle + ";", 0) == 0
 		|| strCookie.find("; " + strNeedle + ";") != std::string::npos
-		|| strCookie.size() >= strNeedle.size() + 2 && strCookie.compare(strCookie.size() - strNeedle.size(), strNeedle.size(), strNeedle) == 0;
+		|| (strCookie.size() >= strNeedle.size() + 2 && strCookie.compare(strCookie.size() - strNeedle.size(), strNeedle.size(), strNeedle) == 0);
 }
 
 bool ExecuteBridgeCommand(const json &rCommand, json &rResult, CString &rErrorMessage)
@@ -323,6 +324,73 @@ void HandleTorrentAdd(const ThreadData &rData)
 
 	SendTextResponse(rData.pSocket, 200, "OK", "Ok.");
 }
+
+bool ExecuteHashBulkCommand(const char *pszCommand, const std::vector<std::string> &rHashes, const json &rExtraParams, CString &rErrorMessage)
+{
+	json params = rExtraParams;
+	params["hashes"] = rHashes;
+	json result;
+	return ExecuteBridgeCommand(BuildCommand(pszCommand, params), result, rErrorMessage);
+}
+
+void HandleTorrentDelete(const ThreadData &rData)
+{
+	WebServerQBitCompatSeams::SQBitHashMutationRequest request;
+	std::string strError;
+	if (!WebServerQBitCompatSeams::TryParseDeleteRequest(StdStringFromCStringA(rData.strRequestBody), request, strError)) {
+		SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
+		return;
+	}
+
+	CString strErrorMessage;
+	if (!ExecuteHashBulkCommand("transfers/delete", request.hashes, json{{"deleteFiles", request.bDeleteFiles}}, strErrorMessage)) {
+		SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
+		return;
+	}
+	SendTextResponse(rData.pSocket, 200, "OK", "Ok.");
+}
+
+void HandleTorrentSetCategory(const ThreadData &rData)
+{
+	WebServerQBitCompatSeams::SQBitHashMutationRequest request;
+	std::string strError;
+	if (!WebServerQBitCompatSeams::TryParseSetCategoryRequest(StdStringFromCStringA(rData.strRequestBody), request, strError)) {
+		SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
+		return;
+	}
+
+	CString strErrorMessage;
+	if (!EnsureCategoryExists(request.strCategory, strErrorMessage)) {
+		SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
+		return;
+	}
+
+	for (const std::string &rHash : request.hashes) {
+		json ignored;
+		if (!ExecuteBridgeCommand(BuildCommand("transfers/set_category", json{{"hash", rHash}, {"categoryName", request.strCategory}}), ignored, strErrorMessage)) {
+			SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
+			return;
+		}
+	}
+	SendTextResponse(rData.pSocket, 200, "OK", "Ok.");
+}
+
+void HandleTorrentStateMutation(const ThreadData &rData, const char *pszCommand)
+{
+	WebServerQBitCompatSeams::SQBitHashMutationRequest request;
+	std::string strError;
+	if (!WebServerQBitCompatSeams::TryParseHashesOnlyRequest(StdStringFromCStringA(rData.strRequestBody), request, strError)) {
+		SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
+		return;
+	}
+
+	CString strErrorMessage;
+	if (!ExecuteHashBulkCommand(pszCommand, request.hashes, json::object(), strErrorMessage)) {
+		SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
+		return;
+	}
+	SendTextResponse(rData.pSocket, 200, "OK", "Ok.");
+}
 }
 
 bool WebServerQBitCompat::IsCompatRequest(const ThreadData &rData)
@@ -446,6 +514,26 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 
 	if (strPath == "/api/v2/torrents/add" && strMethod == "post") {
 		HandleTorrentAdd(rData);
+		return;
+	}
+
+	if (strPath == "/api/v2/torrents/delete" && strMethod == "post") {
+		HandleTorrentDelete(rData);
+		return;
+	}
+
+	if (strPath == "/api/v2/torrents/setcategory" && strMethod == "post") {
+		HandleTorrentSetCategory(rData);
+		return;
+	}
+
+	if ((strPath == "/api/v2/torrents/pause" || strPath == "/api/v2/torrents/stop") && strMethod == "post") {
+		HandleTorrentStateMutation(rData, "transfers/pause");
+		return;
+	}
+
+	if ((strPath == "/api/v2/torrents/resume" || strPath == "/api/v2/torrents/start") && strMethod == "post") {
+		HandleTorrentStateMutation(rData, "transfers/resume");
 		return;
 	}
 

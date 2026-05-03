@@ -5,6 +5,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "WebServerJsonSeams.h"
 
@@ -24,6 +25,21 @@ struct SQBitTorrentAddRequest
 
 	SQBitTorrentAddRequest()
 		: bPaused(false)
+	{
+	}
+};
+
+/**
+ * @brief Carries a qBittorrent hash-list mutation request.
+ */
+struct SQBitHashMutationRequest
+{
+	std::vector<std::string> hashes;
+	bool bDeleteFiles;
+	std::string strCategory;
+
+	SQBitHashMutationRequest()
+		: bDeleteFiles(false)
 	{
 	}
 };
@@ -108,6 +124,11 @@ inline bool IsMd4Hex(const std::string &rValue)
 			return false;
 	}
 	return true;
+}
+
+inline bool IsNativeMd4Hash(const std::string &rValue)
+{
+	return rValue.size() == 32 && WebServerJsonSeams::IsLowercaseMd4HexString(rValue);
 }
 
 inline bool IsQBitWrappedEd2kBtih(const std::string &rBtih)
@@ -201,5 +222,93 @@ inline bool TryParseTorrentAddRequest(const std::string &rBody, SQBitTorrentAddR
 	rRequest.bPaused = (stoppedIt != form.end() && IsTruthyFormValue(stoppedIt->second))
 		|| (pausedIt != form.end() && IsTruthyFormValue(pausedIt->second));
 	return true;
+}
+
+/**
+ * @brief Parses qBittorrent's pipe-delimited hashes form field into native MD4
+ * hashes.
+ */
+inline bool TryParseHashesFormField(const std::map<std::string, std::string> &rForm, std::vector<std::string> &rHashes, std::string &rErrorMessage)
+{
+	rHashes.clear();
+	const auto hashesIt = rForm.find("hashes");
+	if (hashesIt == rForm.end() || hashesIt->second.empty()) {
+		rErrorMessage = "hashes form field is required";
+		return false;
+	}
+	if (hashesIt->second == "all") {
+		rErrorMessage = "hashes=all is not supported";
+		return false;
+	}
+
+	size_t uPos = 0;
+	while (uPos <= hashesIt->second.size()) {
+		const std::string::size_type uPipe = hashesIt->second.find('|', uPos);
+		const std::string token = WebServerJsonSeams::ToLowerAscii(hashesIt->second.substr(
+			uPos,
+			uPipe == std::string::npos ? std::string::npos : (uPipe - uPos)));
+		if (token.empty() || !IsNativeMd4Hash(token)) {
+			rErrorMessage = "hashes must contain only 32-character eD2K hashes";
+			return false;
+		}
+		rHashes.push_back(token);
+		if (uPipe == std::string::npos)
+			break;
+		uPos = uPipe + 1;
+	}
+
+	if (rHashes.empty()) {
+		rErrorMessage = "hashes form field is required";
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Parses a qBittorrent delete request body.
+ */
+inline bool TryParseDeleteRequest(const std::string &rBody, SQBitHashMutationRequest &rRequest, std::string &rErrorMessage)
+{
+	rRequest = SQBitHashMutationRequest();
+	std::map<std::string, std::string> form;
+	if (!TryParseFormBody(rBody, form, rErrorMessage))
+		return false;
+	if (!TryParseHashesFormField(form, rRequest.hashes, rErrorMessage))
+		return false;
+	const auto deleteIt = form.find("deleteFiles");
+	rRequest.bDeleteFiles = deleteIt != form.end() && IsTruthyFormValue(deleteIt->second);
+	return true;
+}
+
+/**
+ * @brief Parses a qBittorrent category-assignment request body.
+ */
+inline bool TryParseSetCategoryRequest(const std::string &rBody, SQBitHashMutationRequest &rRequest, std::string &rErrorMessage)
+{
+	rRequest = SQBitHashMutationRequest();
+	std::map<std::string, std::string> form;
+	if (!TryParseFormBody(rBody, form, rErrorMessage))
+		return false;
+	if (!TryParseHashesFormField(form, rRequest.hashes, rErrorMessage))
+		return false;
+	const auto categoryIt = form.find("category");
+	if (categoryIt == form.end()) {
+		rErrorMessage = "category form field is required";
+		return false;
+	}
+	rRequest.strCategory = categoryIt->second;
+	return true;
+}
+
+/**
+ * @brief Parses a qBittorrent pause/resume/stop/start request body.
+ */
+inline bool TryParseHashesOnlyRequest(const std::string &rBody, SQBitHashMutationRequest &rRequest, std::string &rErrorMessage)
+{
+	rRequest = SQBitHashMutationRequest();
+	std::map<std::string, std::string> form;
+	if (!TryParseFormBody(rBody, form, rErrorMessage))
+		return false;
+	return TryParseHashesFormField(form, rRequest.hashes, rErrorMessage);
 }
 }
