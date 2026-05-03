@@ -1054,6 +1054,27 @@ void CPreferences::SetIPFilterUpdatePeriodDays(UINT uDays)
 	m_uIPFilterUpdatePeriodDays = NormalizeIPFilterUpdatePeriodDays(uDays);
 }
 
+EBBSessionTransferMode CPreferences::NormalizeBBSessionTransferMode(EBBSessionTransferMode eMode)
+{
+	return static_cast<EBBSessionTransferMode>(PreferenceUiSeams::NormalizeBBSessionTransferMode(static_cast<int>(eMode)));
+}
+
+UINT CPreferences::NormalizeBBSessionTransferValue(EBBSessionTransferMode eMode, UINT uVal)
+{
+	return PreferenceUiSeams::NormalizeBBSessionTransferValue(static_cast<int>(NormalizeBBSessionTransferMode(eMode)), uVal);
+}
+
+void CPreferences::SetBBSessionTransferMode(EBBSessionTransferMode eMode)
+{
+	m_eBBSessionTransferMode = NormalizeBBSessionTransferMode(eMode);
+	m_uBBSessionTransferValue = NormalizeBBSessionTransferValue(m_eBBSessionTransferMode, m_uBBSessionTransferValue);
+}
+
+void CPreferences::SetBBSessionTransferValue(UINT uVal)
+{
+	m_uBBSessionTransferValue = NormalizeBBSessionTransferValue(m_eBBSessionTransferMode, uVal);
+}
+
 UINT CPreferences::NormalizeTrafficOMeterInterval(UINT in)
 {
 	return min(GetMaxTrafficOMeterInterval(), in);
@@ -1072,6 +1093,11 @@ UINT CPreferences::NormalizeStatsInterval(UINT in)
 void CPreferences::SetStatsInterval(UINT in)
 {
 	statsInterval = NormalizeStatsInterval(in);
+}
+
+void CPreferences::SetMaxConsPerFive(UINT in)
+{
+	MaxConperFive = NormalizePositivePreference(in, GetDefaultMaxConperFive());
 }
 
 UINT CPreferences::NormalizeStatsMax(UINT in)
@@ -2782,7 +2808,7 @@ void CPreferences::LoadPreferences()
 
 	SetStatsMax(NormalizePositivePreferenceOrDefault(ini.GetInt(_T("VariousStatisticsMaxValue"), static_cast<int>(GetDefaultStatsMax())), GetDefaultStatsMax()));
 	SetStatsAverageMinutes(NormalizePositivePreferenceOrDefault(ini.GetInt(_T("StatsAverageMinutes"), static_cast<int>(GetDefaultStatsAverageMinutes())), GetDefaultStatsAverageMinutes()));
-	MaxConperFive = NormalizePositivePreferenceOrDefault(ini.GetInt(_T("MaxConnectionsPerFiveSeconds"), GetDefaultMaxConperFive()), GetDefaultMaxConperFive());
+	SetMaxConsPerFive(NormalizePositivePreferenceOrDefault(ini.GetInt(_T("MaxConnectionsPerFiveSeconds"), GetDefaultMaxConperFive()), GetDefaultMaxConperFive()));
 
 	reconnect = ini.GetBool(_T("Reconnect"), true);
 	m_bUseServerPriorities = ini.GetBool(_T("Scoresystem"), true);
@@ -2842,14 +2868,8 @@ void CPreferences::LoadPreferences()
 	SetBBLowRatioThreshold(ini.GetFloat(prefini::UploadPolicyKeys::LowRatioThreshold, 0.5f, prefini::Sections::UploadPolicy));
 	SetBBLowRatioBonus((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::LowRatioScoreBonus, 50, prefini::Sections::UploadPolicy)));
 	SetBBLowIDDivisor((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::LowIDScoreDivisor, 2, prefini::Sections::UploadPolicy)));
-	m_eBBSessionTransferMode = (EBBSessionTransferMode)ini.GetInt(prefini::UploadPolicyKeys::SessionTransferLimitMode, BBSTM_PERCENT_OF_FILE, prefini::Sections::UploadPolicy);
-	if (m_eBBSessionTransferMode != BBSTM_DISABLED && m_eBBSessionTransferMode != BBSTM_PERCENT_OF_FILE && m_eBBSessionTransferMode != BBSTM_ABSOLUTE_MIB)
-		m_eBBSessionTransferMode = BBSTM_PERCENT_OF_FILE;
-	SetBBSessionTransferValue((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SessionTransferLimitValue, 55, prefini::Sections::UploadPolicy)));
-	if (m_eBBSessionTransferMode == BBSTM_PERCENT_OF_FILE)
-		m_uBBSessionTransferValue = min(100u, max(1u, m_uBBSessionTransferValue));
-	else if (m_eBBSessionTransferMode == BBSTM_ABSOLUTE_MIB)
-		m_uBBSessionTransferValue = min(4096u, max(1u, m_uBBSessionTransferValue));
+	SetBBSessionTransferMode((EBBSessionTransferMode)ini.GetInt(prefini::UploadPolicyKeys::SessionTransferLimitMode, BBSTM_PERCENT_OF_FILE, prefini::Sections::UploadPolicy));
+	SetBBSessionTransferValue((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SessionTransferLimitValue, PreferenceUiSeams::kDefaultBBSessionTransferPercent, prefini::Sections::UploadPolicy)));
 	SetBBSessionTimeLimitSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SessionTimeLimitSeconds, 3600, prefini::Sections::UploadPolicy)));
 	ini.SetSection(prefini::Sections::eMule);
 	SetMinFreeDiskSpaceConfig(ini.GetUInt64(_T("MinFreeDiskSpaceConfig"), GetMinFreeDiskSpaceConfigFloor()));

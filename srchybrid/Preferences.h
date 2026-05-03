@@ -1259,7 +1259,7 @@ public:
 	static void		ResetStatsColor(int index);
 	static bool		HasCustomTaskIconColor()			{ return m_bHasCustomTaskIconColor; }
 
-	static void		SetMaxConsPerFive(UINT in)			{ MaxConperFive = in; }
+	static void		SetMaxConsPerFive(UINT in);
 	static LPLOGFONT GetHyperTextLogFont()				{ return &m_lfHyperText; }
 	static void		SetHyperTextFont(LPLOGFONT plf)		{ m_lfHyperText = *plf; }
 	static LPLOGFONT GetLogFont()						{ return &m_lfLogText; }
@@ -1492,9 +1492,11 @@ public:
 	static UINT		GetBBLowIDDivisor()					{ return m_uBBLowIDDivisor; }
 	static void		SetBBLowIDDivisor(UINT uVal)		{ m_uBBLowIDDivisor = min(8u, max(1u, uVal)); }
 	static EBBSessionTransferMode GetBBSessionTransferMode() { return m_eBBSessionTransferMode; }
-	static void		SetBBSessionTransferMode(EBBSessionTransferMode eMode) { m_eBBSessionTransferMode = eMode; }
+	static EBBSessionTransferMode NormalizeBBSessionTransferMode(EBBSessionTransferMode eMode);
+	static UINT		NormalizeBBSessionTransferValue(EBBSessionTransferMode eMode, UINT uVal);
+	static void		SetBBSessionTransferMode(EBBSessionTransferMode eMode);
 	static UINT		GetBBSessionTransferValue()			{ return m_uBBSessionTransferValue; }
-	static void		SetBBSessionTransferValue(UINT uVal) { m_uBBSessionTransferValue = min(4096u, uVal); }
+	static void		SetBBSessionTransferValue(UINT uVal);
 	static UINT		GetBBSessionTimeLimitSeconds()		{ return m_uBBSessionTimeLimitSeconds; }
 	static void		SetBBSessionTimeLimitSeconds(UINT uVal) { m_uBBSessionTimeLimitSeconds = min(86400u, uVal); }
 	static int		GetMaxLogBuff()						{ return iMaxLogBuff; }

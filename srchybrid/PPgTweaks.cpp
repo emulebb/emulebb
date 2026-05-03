@@ -1151,10 +1151,12 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		if (m_iBBLowIdDivisor < 1 || m_iBBLowIdDivisor > 8)
 			FailTreeValidation(pDX, AFX_IDP_PARSE_INT, m_htiBBLowIdDivisor);
 		if (m_iBBSessionTransferMode == BBSTM_PERCENT_OF_FILE
-			&& (m_iBBSessionTransferPercent < 1 || m_iBBSessionTransferPercent > 100))
+			&& (m_iBBSessionTransferPercent < static_cast<int>(PreferenceUiSeams::kMinBBSessionTransferPercent)
+				|| m_iBBSessionTransferPercent > static_cast<int>(PreferenceUiSeams::kMaxBBSessionTransferPercent)))
 			FailTreeValidation(pDX, AFX_IDP_PARSE_INT, m_htiBBSessionTransferPercentValue);
 		if (m_iBBSessionTransferMode == BBSTM_ABSOLUTE_MIB
-			&& (m_iBBSessionTransferMiB < 1 || m_iBBSessionTransferMiB > 4096))
+			&& (m_iBBSessionTransferMiB < static_cast<int>(PreferenceUiSeams::kMinBBSessionTransferMiB)
+				|| m_iBBSessionTransferMiB > static_cast<int>(PreferenceUiSeams::kMaxBBSessionTransferMiB)))
 			FailTreeValidation(pDX, AFX_IDP_PARSE_INT, m_htiBBSessionTransferMiBValue);
 		if (m_iBBSessionTimeLimitSeconds < 0 || m_iBBSessionTimeLimitSeconds > 86400)
 			FailTreeValidation(pDX, AFX_IDP_PARSE_INT, m_htiBBSessionTimeLimit);
@@ -1453,7 +1455,7 @@ BOOL CPPgTweaks::OnInitDialog()
 	m_iBBLowRatioBonus = static_cast<int>(thePrefs.GetBBLowRatioBonus());
 	m_iBBLowIdDivisor = static_cast<int>(thePrefs.GetBBLowIDDivisor());
 	m_iBBSessionTransferMode = thePrefs.GetBBSessionTransferMode();
-	m_iBBSessionTransferPercent = static_cast<int>(thePrefs.GetBBSessionTransferMode() == BBSTM_PERCENT_OF_FILE ? thePrefs.GetBBSessionTransferValue() : 55);
+	m_iBBSessionTransferPercent = static_cast<int>(thePrefs.GetBBSessionTransferMode() == BBSTM_PERCENT_OF_FILE ? thePrefs.GetBBSessionTransferValue() : PreferenceUiSeams::kDefaultBBSessionTransferPercent);
 	m_iBBSessionTransferMiB = static_cast<int>(thePrefs.GetBBSessionTransferMode() == BBSTM_ABSOLUTE_MIB ? thePrefs.GetBBSessionTransferValue() : 0);
 	m_iBBSessionTimeLimitSeconds = static_cast<int>(thePrefs.GetBBSessionTimeLimitSeconds());
 	m_uFileBufferTimeLimitSeconds = max(1u, thePrefs.GetFileBufferTimeLimit() / SEC2MS(1));

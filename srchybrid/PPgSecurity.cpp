@@ -188,8 +188,22 @@ BOOL CPPgSecurity::OnApply()
 	thePrefs.SetAutoIPFilterUpdate(m_bAutoUpdate);
 	BOOL bTranslated = FALSE;
 	m_uPeriodDays = GetDlgItemInt(IDC_IPFILTERPERIOD, &bTranslated, FALSE);
-	if (!bTranslated)
-		m_uPeriodDays = thePrefs.GetDefaultIPFilterUpdatePeriodDays();
+	if (!bTranslated
+		|| m_uPeriodDays < thePrefs.GetMinIPFilterUpdatePeriodDays()
+		|| m_uPeriodDays > thePrefs.GetMaxIPFilterUpdatePeriodDays())
+	{
+		CString strDetail;
+		strDetail.Format(GetResString(IDS_TWEAKS_VALIDATION_INT_RANGE_FMT),
+			static_cast<int>(thePrefs.GetMinIPFilterUpdatePeriodDays()),
+			static_cast<int>(thePrefs.GetMaxIPFilterUpdatePeriodDays()));
+		CString strMessage;
+		strMessage.Format(GetResString(IDS_TWEAKS_VALIDATION_INVALID_VALUE_FMT),
+			static_cast<LPCTSTR>(GetResString(IDS_IPFILTER_UPDATE_DAYS)),
+			static_cast<LPCTSTR>(strDetail));
+		AfxMessageBox(strMessage, MB_OK | MB_ICONWARNING);
+		GetDlgItem(IDC_IPFILTERPERIOD)->SetFocus();
+		return FALSE;
+	}
 	thePrefs.SetIPFilterUpdatePeriodDays(m_uPeriodDays);
 
 	if (theApp.ipfilterUpdater != NULL
