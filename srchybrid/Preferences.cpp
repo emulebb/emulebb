@@ -1954,12 +1954,12 @@ bool CPreferences::LoadStats(int loadBackUp)
 	cumDownOverheadKadPackets = ini.GetUInt64(_T("DownOverheadKadPackets"));
 
 	// Load stats for cumulative upline overhead
-	cumUpOverheadTotal = ini.GetUInt64(_T("UpOverHeadTotal"));
+	cumUpOverheadTotal = ini.GetUInt64(_T("UpOverheadTotal"));
 	cumUpOverheadFileReq = ini.GetUInt64(_T("UpOverheadFileReq"));
 	cumUpOverheadSrcEx = ini.GetUInt64(_T("UpOverheadSrcEx"));
 	cumUpOverheadServer = ini.GetUInt64(_T("UpOverheadServer"));
 	cumUpOverheadKad = ini.GetUInt64(_T("UpOverheadKad"));
-	cumUpOverheadTotalPackets = ini.GetUInt64(_T("UpOverHeadTotalPackets"));
+	cumUpOverheadTotalPackets = ini.GetUInt64(_T("UpOverheadTotalPackets"));
 	cumUpOverheadFileReqPackets = ini.GetUInt64(_T("UpOverheadFileReqPackets"));
 	cumUpOverheadSrcExPackets = ini.GetUInt64(_T("UpOverheadSrcExPackets"));
 	cumUpOverheadServerPackets = ini.GetUInt64(_T("UpOverheadServerPackets"));
@@ -2463,7 +2463,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("NetworkED2K"), networked2k);
 	ini.WriteBool(_T("AutoClearCompleted"), m_bRemoveFinishedDownloads);
 	ini.WriteBool(_T("TransflstRemainOrder"), m_bTransflstRemain);
-	ini.WriteBool(_T("UseSimpleTimeRemainingcomputation"), m_bUseOldTimeRemaining);
+	ini.WriteBool(_T("UseSimpleTimeRemainingComputation"), m_bUseOldTimeRemaining);
 	ini.WriteBool(_T("AllocateFullFile"), m_bAllocFull);
 	ini.WriteBool(_T("ShowSharedFilesDetails"), m_bShowSharedFilesDetails);
 	ini.WriteBool(_T("AutoShowLookups"), m_bAutoShowLookups);
@@ -2772,7 +2772,7 @@ void CPreferences::LoadPreferences()
 	m_iSeeShares = (EViewSharedFilesAccess)ini.GetInt(_T("SeeShare"), vsfaNobody);
 	SetToolTipDelay(NormalizeNonNegativePreference(ini.GetInt(_T("ToolTipDelay"), static_cast<int>(GetDefaultToolTipDelaySeconds())), GetDefaultToolTipDelaySeconds()));
 	SetTrafficOMeterInterval(NormalizeNonNegativePreference(ini.GetInt(_T("StatGraphsInterval"), static_cast<int>(GetDefaultTrafficOMeterInterval())), GetDefaultTrafficOMeterInterval()));
-	SetStatsInterval(NormalizeNonNegativePreference(ini.GetInt(_T("statsInterval"), static_cast<int>(GetDefaultStatsInterval())), GetDefaultStatsInterval()));
+	SetStatsInterval(NormalizeNonNegativePreference(ini.GetInt(_T("StatsInterval"), static_cast<int>(GetDefaultStatsInterval())), GetDefaultStatsInterval()));
 	m_bFillGraphs = ini.GetBool(_T("StatsFillGraphs"));
 	m_uDeadServerRetries = NormalizeRetryCount(NormalizePositivePreferenceOrDefault(ini.GetInt(_T("DeadServerRetry"), 1), 1), 1, 1, MAX_SERVERFAILCOUNT);
 	SetServerKeepAliveTimeoutMilliseconds(static_cast<DWORD>(NormalizeNonNegativePreference(ini.GetInt(_T("ServerKeepAliveTimeout"), 0), 0)));
@@ -3076,7 +3076,7 @@ void CPreferences::LoadPreferences()
 	m_bUseSecureIdent = ini.GetBool(_T("SecureIdent"), true);
 	m_bAdvancedSpamfilter = ini.GetBool(_T("AdvancedSpamFilter"), true);
 	m_bRemoveFinishedDownloads = ini.GetBool(_T("AutoClearCompleted"), false);
-	m_bUseOldTimeRemaining = ini.GetBool(_T("UseSimpleTimeRemainingcomputation"), false);
+	m_bUseOldTimeRemaining = ini.GetBool(_T("UseSimpleTimeRemainingComputation"), false);
 
 	// Toolbar
 	m_sToolbarSettings = ini.GetString(_T("ToolbarSetting"), strDefaultToolbar);
@@ -3359,7 +3359,7 @@ void CPreferences::LoadCats()
 		newcat->ac_regexpeval = ini.GetBool(_T("AutoCatAsRegularExpression"), FALSE);
 		newcat->care4all = ini.GetBool(_T("Care4All"), FALSE);
 		newcat->regexp = ini.GetString(_T("RegularExpression"));
-		newcat->autocat = ini.GetString(_T("Autocat"));
+		newcat->autocat = ini.GetString(_T("AutoCat"));
 		newcat->downloadInAlphabeticalOrder = ini.GetBool(_T("downloadInAlphabeticalOrder"), FALSE); // ZZ:DownloadManager
 		newcat->color = (COLORREF)ini.GetInt(_T("Color"), -1);
 		AddCat(newcat);
