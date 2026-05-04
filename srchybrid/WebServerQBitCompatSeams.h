@@ -178,6 +178,47 @@ inline bool TryGetRequiredNonEmptyFormField(const std::map<std::string, std::str
 	return true;
 }
 
+inline std::string TrimCookieToken(const std::string &rValue)
+{
+	size_t uBegin = 0;
+	while (uBegin < rValue.size() && std::isspace(static_cast<unsigned char>(rValue[uBegin])) != 0)
+		++uBegin;
+
+	size_t uEnd = rValue.size();
+	while (uEnd > uBegin && std::isspace(static_cast<unsigned char>(rValue[uEnd - 1])) != 0)
+		--uEnd;
+
+	return rValue.substr(uBegin, uEnd - uBegin);
+}
+
+/**
+ * @brief Finds one exact cookie name/value pair in a Cookie header.
+ */
+inline bool HasCookiePair(const std::string &rCookieHeader, const std::string &rName, const std::string &rValue)
+{
+	if (rName.empty())
+		return false;
+
+	size_t uPos = 0;
+	while (uPos <= rCookieHeader.size()) {
+		const std::string::size_type uSemi = rCookieHeader.find(';', uPos);
+		const std::string token = TrimCookieToken(rCookieHeader.substr(
+			uPos,
+			uSemi == std::string::npos ? std::string::npos : (uSemi - uPos)));
+		const std::string::size_type uEquals = token.find('=');
+		if (uEquals != std::string::npos
+			&& token.substr(0, uEquals) == rName
+			&& token.substr(uEquals + 1) == rValue)
+		{
+			return true;
+		}
+		if (uSemi == std::string::npos)
+			break;
+		uPos = uSemi + 1;
+	}
+	return false;
+}
+
 inline bool IsTruthyFormValue(const std::string &rValue)
 {
 	const std::string strValue(WebServerJsonSeams::ToLowerAscii(rValue));
