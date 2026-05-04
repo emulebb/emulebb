@@ -1,8 +1,9 @@
 # Rules
 
-- this repo is the canonical app source for the rebuilt v0.72a line
+- this repo is the canonical app source for eMule BB, the compact app/mod name
+  for eMule broadband edition
 - the authoritative workspace policy lives in `EMULE_WORKSPACE_ROOT\repos\eMule-tooling\docs\WORKSPACE_POLICY.md`; follow it over local habit or stale branch names
-- `community/v0.72a` is the imported baseline and `main` is the maintained integration branch
+- `community/v0.72a` is the imported baseline and `main` is the maintained eMule BB integration branch
 - the first post-community commit must remain the global source-encoding normalization commit
 - always honor repo `.editorconfig` and `.gitattributes` when editing tracked
   files; do not restate line-ending rules here

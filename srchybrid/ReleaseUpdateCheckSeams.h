@@ -61,7 +61,7 @@ namespace ReleaseUpdateCheckSeams
 	};
 
 	inline constexpr const char *kModReleaseTagPrefix = "emule-bb-v";
-	inline constexpr const char *kModReleaseAssetPrefix = "eMule-BB-";
+	inline constexpr const char *kModReleaseAssetPrefix = "eMule-broadband-";
 
 	/**
 	 * @brief Returns the asset platform token for the current binary.
