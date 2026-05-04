@@ -114,8 +114,12 @@ inline bool TryParseFormBody(const std::string &rBody, std::map<std::string, std
 			uAmp == std::string::npos ? std::string::npos : (uAmp - uPos));
 		if (!token.empty()) {
 			const std::string::size_type uEquals = token.find('=');
-			const std::string strName(WebServerJsonSeams::UrlDecodeUtf8(token.substr(0, uEquals)));
-			const std::string strValue(uEquals == std::string::npos ? std::string() : WebServerJsonSeams::UrlDecodeUtf8(token.substr(uEquals + 1)));
+			std::string strName;
+			std::string strValue;
+			if (!WebServerJsonSeams::TryUrlDecodeUtf8(token.substr(0, uEquals), strName, rErrorMessage))
+				return false;
+			if (uEquals != std::string::npos && !WebServerJsonSeams::TryUrlDecodeUtf8(token.substr(uEquals + 1), strValue, rErrorMessage))
+				return false;
 			if (strName.empty()) {
 				rErrorMessage = "form field name must not be empty";
 				return false;

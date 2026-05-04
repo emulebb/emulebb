@@ -201,29 +201,44 @@ inline std::string UrlEncodeUtf8(const std::string &rValue)
 /**
  * @brief Decodes one URL-encoded UTF-8 token for REST path and query parsing.
  */
-inline std::string UrlDecodeUtf8(const std::string &rValue)
+inline bool TryUrlDecodeUtf8(const std::string &rValue, std::string &rDecoded, std::string &rErrorMessage)
 {
-	std::string decoded;
-	decoded.reserve(rValue.size());
+	rDecoded.clear();
+	rDecoded.reserve(rValue.size());
 	for (size_t i = 0; i < rValue.size(); ++i) {
 		const char ch = rValue[i];
 		if (ch == '+' ) {
-			decoded.push_back(' ');
+			rDecoded.push_back(' ');
 			continue;
 		}
 
-		if (ch == '%' && i + 2 < rValue.size()) {
+		if (ch == '%') {
+			if (i + 2 >= rValue.size()) {
+				rErrorMessage = "malformed percent escape";
+				return false;
+			}
 			const int high = HexNibble(rValue[i + 1]);
 			const int low = HexNibble(rValue[i + 2]);
-			if (high >= 0 && low >= 0) {
-				decoded.push_back(static_cast<char>((high << 4) | low));
-				i += 2;
-				continue;
+			if (high < 0 || low < 0) {
+				rErrorMessage = "malformed percent escape";
+				return false;
 			}
+			rDecoded.push_back(static_cast<char>((high << 4) | low));
+			i += 2;
+			continue;
 		}
 
-		decoded.push_back(ch);
+		rDecoded.push_back(ch);
 	}
+	return true;
+}
+
+inline std::string UrlDecodeUtf8(const std::string &rValue)
+{
+	std::string decoded;
+	std::string ignored;
+	if (!TryUrlDecodeUtf8(rValue, decoded, ignored))
+		return std::string();
 	return decoded;
 }
 
@@ -264,8 +279,12 @@ inline bool TryParseQueryString(const std::string &rRequestTarget, std::map<std:
 			uAmp == std::string::npos ? std::string::npos : (uAmp - uPos));
 		if (!token.empty()) {
 			const std::string::size_type uEquals = token.find('=');
-			const std::string strName = UrlDecodeUtf8(token.substr(0, uEquals));
-			const std::string strValue = uEquals == std::string::npos ? std::string() : UrlDecodeUtf8(token.substr(uEquals + 1));
+			std::string strName;
+			std::string strValue;
+			if (!TryUrlDecodeUtf8(token.substr(0, uEquals), strName, rErrorMessage))
+				return false;
+			if (uEquals != std::string::npos && !TryUrlDecodeUtf8(token.substr(uEquals + 1), strValue, rErrorMessage))
+				return false;
 			if (rQuery.find(strName) != rQuery.end()) {
 				rErrorMessage = "duplicate query parameter: " + strName;
 				return false;
@@ -323,6 +342,30 @@ inline std::vector<std::string> SplitPathSegments(const std::string &rPath)
 	}
 
 	return segments;
+}
+
+inline bool TrySplitPathSegments(const std::string &rPath, std::vector<std::string> &rSegments, std::string &rErrorMessage)
+{
+	rSegments.clear();
+	size_t uPos = 0;
+	while (uPos <= rPath.size()) {
+		const std::string::size_type uSlash = rPath.find('/', uPos);
+		const std::string token = rPath.substr(
+			uPos,
+			uSlash == std::string::npos ? std::string::npos : (uSlash - uPos));
+		if (!token.empty()) {
+			std::string decoded;
+			if (!TryUrlDecodeUtf8(token, decoded, rErrorMessage))
+				return false;
+			rSegments.push_back(decoded);
+		}
+
+		if (uSlash == std::string::npos)
+			break;
+		uPos = uSlash + 1;
+	}
+
+	return true;
 }
 
 inline bool IsValidUnsignedDecimal(const std::string &rValue)
@@ -789,7 +832,11 @@ inline bool TryBuildRoute(
 	rErrorMessage.clear();
 
 	const std::string strPath(GetRequestPath(rRequestTarget));
-	const std::vector<std::string> segments = SplitPathSegments(strPath);
+	std::vector<std::string> segments;
+	if (!TrySplitPathSegments(strPath, segments, rErrorMessage)) {
+		rErrorCode = "INVALID_ARGUMENT";
+		return false;
+	}
 	if (segments.size() < 2 || ToLowerAscii(segments[0]) != "api" || ToLowerAscii(segments[1]) != "v1") {
 		rErrorCode = "NOT_FOUND";
 		rErrorMessage = "API route not found";
