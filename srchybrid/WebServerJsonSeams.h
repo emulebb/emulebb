@@ -61,6 +61,30 @@ inline int HexNibble(const char ch)
 	return -1;
 }
 
+inline char HexDigit(const unsigned char value)
+{
+	return static_cast<char>(value < 10 ? ('0' + value) : ('A' + (value - 10)));
+}
+
+/**
+ * @brief URL-encodes UTF-8 text for REST-adjacent compatibility links.
+ */
+inline std::string UrlEncodeUtf8(const std::string &rValue)
+{
+	std::string encoded;
+	encoded.reserve(rValue.size());
+	for (const unsigned char ch : rValue) {
+		if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-' || ch == '_' || ch == '.' || ch == '~') {
+			encoded.push_back(static_cast<char>(ch));
+		} else {
+			encoded.push_back('%');
+			encoded.push_back(HexDigit(static_cast<unsigned char>(ch >> 4)));
+			encoded.push_back(HexDigit(static_cast<unsigned char>(ch & 0x0F)));
+		}
+	}
+	return encoded;
+}
+
 /**
  * @brief Decodes one URL-encoded UTF-8 token for REST path and query parsing.
  */

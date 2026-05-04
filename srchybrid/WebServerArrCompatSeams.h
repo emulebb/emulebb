@@ -145,30 +145,6 @@ inline bool IsTorznabCategoryInRange(const int iCategory, const int iBase)
 	return iCategory == iBase || (iCategory > iBase && iCategory < iBase + 1000);
 }
 
-inline char HexDigit(const unsigned char value)
-{
-	return static_cast<char>(value < 10 ? ('0' + value) : ('A' + (value - 10)));
-}
-
-/**
- * @brief URL-encodes UTF-8 query parameter content for generated magnet links.
- */
-inline std::string UrlEncodeUtf8(const std::string &rValue)
-{
-	std::string encoded;
-	encoded.reserve(rValue.size());
-	for (const unsigned char ch : rValue) {
-		if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-' || ch == '_' || ch == '.' || ch == '~') {
-			encoded.push_back(static_cast<char>(ch));
-		} else {
-			encoded.push_back('%');
-			encoded.push_back(HexDigit(static_cast<unsigned char>(ch >> 4)));
-			encoded.push_back(HexDigit(static_cast<unsigned char>(ch & 0x0F)));
-		}
-	}
-	return encoded;
-}
-
 /**
  * @brief Maps Torznab categories onto the native eMule search file families.
  */
@@ -289,7 +265,7 @@ inline std::string BuildMagnetFromEd2k(const std::string &rEd2kHash, const std::
 	if (strBtih.empty())
 		return std::string();
 	std::ostringstream link;
-	link << "magnet:?xt=urn:btih:" << strBtih << "&dn=" << UrlEncodeUtf8(rName) << "&xl=" << ullSize;
+	link << "magnet:?xt=urn:btih:" << strBtih << "&dn=" << WebServerJsonSeams::UrlEncodeUtf8(rName) << "&xl=" << ullSize;
 	return link.str();
 }
 
