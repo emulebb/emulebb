@@ -95,34 +95,34 @@ inline bool TryGetOptionalCategoryQueryParam(
 inline const std::vector<SQBitRouteSpec> &GetQBitRouteSpecs()
 {
 	static const std::vector<SQBitRouteSpec> specs = {
-		{"get", "/api/v2/app/webapiversion", false},
-		{"post", "/api/v2/auth/login", false},
-		{"get", "/api/v2/app/version", true},
-		{"get", "/api/v2/app/preferences", true},
-		{"get", "/api/v2/torrents/categories", true},
-		{"post", "/api/v2/torrents/createcategory", true},
-		{"get", "/api/v2/torrents/info", true},
-		{"get", "/api/v2/torrents/properties", true},
-		{"get", "/api/v2/torrents/files", true},
-		{"post", "/api/v2/torrents/add", true},
-		{"post", "/api/v2/torrents/delete", true},
-		{"post", "/api/v2/torrents/setcategory", true},
-		{"post", "/api/v2/torrents/pause", true},
-		{"post", "/api/v2/torrents/stop", true},
-		{"post", "/api/v2/torrents/resume", true},
-		{"post", "/api/v2/torrents/start", true},
-		{"post", "/api/v2/torrents/setsharelimits", true},
-		{"post", "/api/v2/torrents/topprio", true},
-		{"post", "/api/v2/torrents/setforcestart", true},
+		{"GET", "/api/v2/app/webapiversion", false},
+		{"POST", "/api/v2/auth/login", false},
+		{"GET", "/api/v2/app/version", true},
+		{"GET", "/api/v2/app/preferences", true},
+		{"GET", "/api/v2/torrents/categories", true},
+		{"POST", "/api/v2/torrents/createcategory", true},
+		{"GET", "/api/v2/torrents/info", true},
+		{"GET", "/api/v2/torrents/properties", true},
+		{"GET", "/api/v2/torrents/files", true},
+		{"POST", "/api/v2/torrents/add", true},
+		{"POST", "/api/v2/torrents/delete", true},
+		{"POST", "/api/v2/torrents/setcategory", true},
+		{"POST", "/api/v2/torrents/pause", true},
+		{"POST", "/api/v2/torrents/stop", true},
+		{"POST", "/api/v2/torrents/resume", true},
+		{"POST", "/api/v2/torrents/start", true},
+		{"POST", "/api/v2/torrents/setsharelimits", true},
+		{"POST", "/api/v2/torrents/topprio", true},
+		{"POST", "/api/v2/torrents/setforcestart", true},
 	};
 	return specs;
 }
 
-inline const SQBitRouteSpec *FindQBitRouteSpec(const std::string &rMethodLower, const std::string &rPathLower)
+inline const SQBitRouteSpec *FindQBitRouteSpec(const std::string &rMethod, const std::string &rPathLower)
 {
 	const std::vector<SQBitRouteSpec> &specs = GetQBitRouteSpecs();
 	for (size_t i = 0; i < specs.size(); ++i) {
-		if (rMethodLower == specs[i].pszMethod && rPathLower == specs[i].pszPath)
+		if (rMethod == specs[i].pszMethod && rPathLower == specs[i].pszPath)
 			return &specs[i];
 	}
 	return NULL;

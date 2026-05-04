@@ -443,8 +443,7 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		SendTextResponse(rData.pSocket, 404, "Not Found", "Not found");
 		return;
 	}
-	const std::string strMethod(WebServerJsonSeams::ToLowerAscii(strMethodRaw));
-	const WebServerQBitCompatSeams::SQBitRouteSpec *const pRouteSpec = WebServerQBitCompatSeams::FindQBitRouteSpec(strMethod, strPath);
+	const WebServerQBitCompatSeams::SQBitRouteSpec *const pRouteSpec = WebServerQBitCompatSeams::FindQBitRouteSpec(strMethodRaw, strPath);
 	if (pRouteSpec == NULL) {
 		SendTextResponse(rData.pSocket, 404, "Not Found", "Not found");
 		return;
@@ -460,12 +459,12 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		return;
 	}
 
-	if (thePrefs.GetWSApiKey().IsEmpty()) {
+	if (pRouteSpec->bRequiresAuth && thePrefs.GetWSApiKey().IsEmpty()) {
 		SendTextResponse(rData.pSocket, 503, "Service Unavailable", "eMule REST API key is not configured");
 		return;
 	}
 
-	if (!HasValidSessionCookie(rData.strCookie)) {
+	if (pRouteSpec->bRequiresAuth && !HasValidSessionCookie(rData.strCookie)) {
 		SendTextResponse(rData.pSocket, 403, "Forbidden", "Forbidden");
 		return;
 	}
