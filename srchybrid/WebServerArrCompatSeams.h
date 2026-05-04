@@ -55,39 +55,6 @@ struct STorznabRequest
 	}
 };
 
-inline std::string TrimAscii(const std::string &rValue)
-{
-	size_t uBegin = 0;
-	while (uBegin < rValue.size() && std::isspace(static_cast<unsigned char>(rValue[uBegin])) != 0)
-		++uBegin;
-
-	size_t uEnd = rValue.size();
-	while (uEnd > uBegin && std::isspace(static_cast<unsigned char>(rValue[uEnd - 1])) != 0)
-		--uEnd;
-
-	return rValue.substr(uBegin, uEnd - uBegin);
-}
-
-inline std::string NormalizeSpace(const std::string &rValue)
-{
-	std::string result;
-	result.reserve(rValue.size());
-	bool bPreviousSpace = true;
-	for (const char ch : rValue) {
-		if (std::isspace(static_cast<unsigned char>(ch)) != 0) {
-			if (!bPreviousSpace)
-				result.push_back(' ');
-			bPreviousSpace = true;
-		} else {
-			result.push_back(ch);
-			bPreviousSpace = false;
-		}
-	}
-	if (!result.empty() && result[result.size() - 1] == ' ')
-		result.erase(result.size() - 1);
-	return result;
-}
-
 /**
  * @brief Escapes text for XML element and attribute content.
  */
@@ -135,7 +102,7 @@ inline std::vector<std::string> SplitCommaList(const std::string &rValue)
 	size_t uPos = 0;
 	while (uPos <= rValue.size()) {
 		const std::string::size_type uComma = rValue.find(',', uPos);
-		const std::string token = TrimAscii(rValue.substr(
+		const std::string token = WebServerJsonSeams::TrimAsciiWhitespace(rValue.substr(
 			uPos,
 			uComma == std::string::npos ? std::string::npos : (uComma - uPos)));
 		if (!token.empty())
@@ -251,7 +218,7 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 		return false;
 
 	const auto typeIt = normalized.find("t");
-	parsed.strType = typeIt == normalized.end() ? "search" : WebServerJsonSeams::ToLowerAscii(TrimAscii(typeIt->second));
+	parsed.strType = typeIt == normalized.end() ? "search" : WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::TrimAsciiWhitespace(typeIt->second));
 	if (parsed.strType.empty())
 		parsed.strType = "search";
 	if (parsed.strType != "caps" && parsed.strType != "search" && parsed.strType != "tvsearch" && parsed.strType != "movie") {
@@ -273,10 +240,10 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 	{
 		return false;
 	}
-	parsed.strSeason = seasonIt == normalized.end() ? std::string() : TrimAscii(seasonIt->second);
-	parsed.strEpisode = episodeIt == normalized.end() ? std::string() : TrimAscii(episodeIt->second);
-	parsed.strYear = yearIt == normalized.end() ? std::string() : TrimAscii(yearIt->second);
-	parsed.strCategories = catIt == normalized.end() ? std::string() : TrimAscii(catIt->second);
+	parsed.strSeason = seasonIt == normalized.end() ? std::string() : WebServerJsonSeams::TrimAsciiWhitespace(seasonIt->second);
+	parsed.strEpisode = episodeIt == normalized.end() ? std::string() : WebServerJsonSeams::TrimAsciiWhitespace(episodeIt->second);
+	parsed.strYear = yearIt == normalized.end() ? std::string() : WebServerJsonSeams::TrimAsciiWhitespace(yearIt->second);
+	parsed.strCategories = catIt == normalized.end() ? std::string() : WebServerJsonSeams::TrimAsciiWhitespace(catIt->second);
 	unsigned uIgnored = 0;
 	if (!parsed.strSeason.empty() && !TryParseBoundedUnsigned(parsed.strSeason, kMaxTorznabSeason, uIgnored)) {
 		rErrorMessage = "season must be an unsigned decimal value in the range 0..9999";
@@ -407,26 +374,26 @@ inline std::vector<std::string> BuildNativeQueries(const STorznabRequest &rReque
 			if (rRequest.strEpisode.size() == 1)
 				sxxeyy << '0';
 			sxxeyy << rRequest.strEpisode;
-			queries.push_back(NormalizeSpace(sxxeyy.str()));
+			queries.push_back(WebServerJsonSeams::NormalizeAsciiWhitespace(sxxeyy.str()));
 
 			std::ostringstream xFormat;
 			xFormat << rRequest.strQuery << ' ' << rRequest.strSeason << 'x';
 			if (rRequest.strEpisode.size() == 1)
 				xFormat << '0';
 			xFormat << rRequest.strEpisode;
-			queries.push_back(NormalizeSpace(xFormat.str()));
+			queries.push_back(WebServerJsonSeams::NormalizeAsciiWhitespace(xFormat.str()));
 		} else if (!rRequest.strSeason.empty()) {
 			std::ostringstream season;
 			season << rRequest.strQuery << " S";
 			if (rRequest.strSeason.size() == 1)
 				season << '0';
 			season << rRequest.strSeason;
-			queries.push_back(NormalizeSpace(season.str()));
+			queries.push_back(WebServerJsonSeams::NormalizeAsciiWhitespace(season.str()));
 		}
 	}
 
 	if (strType == "movie" && !rRequest.strYear.empty()) {
-		queries.push_back(NormalizeSpace(rRequest.strQuery + " " + rRequest.strYear));
+		queries.push_back(WebServerJsonSeams::NormalizeAsciiWhitespace(rRequest.strQuery + " " + rRequest.strYear));
 		queries.push_back(rRequest.strQuery);
 	}
 
