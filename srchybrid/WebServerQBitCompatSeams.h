@@ -46,10 +46,57 @@ struct SQBitHashMutationRequest
 
 static const size_t kMaxHashMutationCount = 100;
 
+/**
+ * @brief Declares the intentionally supported qBittorrent-compatible REST
+ * surface used by Radarr and Sonarr.
+ */
+struct SQBitRouteSpec
+{
+	const char *pszMethod;
+	const char *pszPath;
+	bool bRequiresAuth;
+};
+
 inline bool IsQBitRequestTarget(const std::string &rRequestTarget)
 {
 	const std::string strPathLower(WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::GetRequestPath(rRequestTarget)));
 	return strPathLower == "/api/v2" || strPathLower.rfind("/api/v2/", 0) == 0;
+}
+
+inline const std::vector<SQBitRouteSpec> &GetQBitRouteSpecs()
+{
+	static const std::vector<SQBitRouteSpec> specs = {
+		{"get", "/api/v2/app/webapiversion", false},
+		{"post", "/api/v2/auth/login", false},
+		{"get", "/api/v2/app/version", true},
+		{"get", "/api/v2/app/preferences", true},
+		{"get", "/api/v2/torrents/categories", true},
+		{"post", "/api/v2/torrents/createcategory", true},
+		{"get", "/api/v2/torrents/info", true},
+		{"get", "/api/v2/torrents/properties", true},
+		{"get", "/api/v2/torrents/files", true},
+		{"post", "/api/v2/torrents/add", true},
+		{"post", "/api/v2/torrents/delete", true},
+		{"post", "/api/v2/torrents/setcategory", true},
+		{"post", "/api/v2/torrents/pause", true},
+		{"post", "/api/v2/torrents/stop", true},
+		{"post", "/api/v2/torrents/resume", true},
+		{"post", "/api/v2/torrents/start", true},
+		{"post", "/api/v2/torrents/setsharelimits", true},
+		{"post", "/api/v2/torrents/topprio", true},
+		{"post", "/api/v2/torrents/setforcestart", true},
+	};
+	return specs;
+}
+
+inline const SQBitRouteSpec *FindQBitRouteSpec(const std::string &rMethodLower, const std::string &rPathLower)
+{
+	const std::vector<SQBitRouteSpec> &specs = GetQBitRouteSpecs();
+	for (size_t i = 0; i < specs.size(); ++i) {
+		if (rMethodLower == specs[i].pszMethod && rPathLower == specs[i].pszPath)
+			return &specs[i];
+	}
+	return NULL;
 }
 
 /**

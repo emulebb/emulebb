@@ -453,13 +453,18 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 	const std::string strRequestTarget(StdStringFromCStringA(rData.strRequestTarget));
 	const std::string strPath(WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::GetRequestPath(strRequestTarget)));
 	const std::string strMethod(WebServerJsonSeams::ToLowerAscii(StdStringFromCStringA(rData.strMethod)));
+	const WebServerQBitCompatSeams::SQBitRouteSpec *const pRouteSpec = WebServerQBitCompatSeams::FindQBitRouteSpec(strMethod, strPath);
+	if (pRouteSpec == NULL) {
+		SendTextResponse(rData.pSocket, 404, "Not Found", "Not found");
+		return;
+	}
 
 	if (strPath == "/api/v2/app/webapiversion") {
 		SendTextResponse(rData.pSocket, 200, "OK", "2.11.0");
 		return;
 	}
 
-	if (strPath == "/api/v2/auth/login" && strMethod == "post") {
+	if (strPath == "/api/v2/auth/login") {
 		HandleLogin(rData);
 		return;
 	}
@@ -500,7 +505,7 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		return;
 	}
 
-	if (strPath == "/api/v2/torrents/createcategory" && strMethod == "post") {
+	if (strPath == "/api/v2/torrents/createcategory") {
 		std::map<std::string, std::string> form;
 		std::string strError;
 		std::string strCategory;
@@ -561,32 +566,32 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		return;
 	}
 
-	if (strPath == "/api/v2/torrents/add" && strMethod == "post") {
+	if (strPath == "/api/v2/torrents/add") {
 		HandleTorrentAdd(rData);
 		return;
 	}
 
-	if (strPath == "/api/v2/torrents/delete" && strMethod == "post") {
+	if (strPath == "/api/v2/torrents/delete") {
 		HandleTorrentDelete(rData);
 		return;
 	}
 
-	if (strPath == "/api/v2/torrents/setcategory" && strMethod == "post") {
+	if (strPath == "/api/v2/torrents/setcategory") {
 		HandleTorrentSetCategory(rData);
 		return;
 	}
 
-	if ((strPath == "/api/v2/torrents/pause" || strPath == "/api/v2/torrents/stop") && strMethod == "post") {
+	if (strPath == "/api/v2/torrents/pause" || strPath == "/api/v2/torrents/stop") {
 		HandleTorrentStateMutation(rData, "transfers/pause");
 		return;
 	}
 
-	if ((strPath == "/api/v2/torrents/resume" || strPath == "/api/v2/torrents/start") && strMethod == "post") {
+	if (strPath == "/api/v2/torrents/resume" || strPath == "/api/v2/torrents/start") {
 		HandleTorrentStateMutation(rData, "transfers/resume");
 		return;
 	}
 
-	if ((strPath == "/api/v2/torrents/setsharelimits" || strPath == "/api/v2/torrents/topprio" || strPath == "/api/v2/torrents/setforcestart") && strMethod == "post") {
+	if (strPath == "/api/v2/torrents/setsharelimits" || strPath == "/api/v2/torrents/topprio" || strPath == "/api/v2/torrents/setforcestart") {
 		SendTextResponse(rData.pSocket, 200, "OK", "Ok.");
 		return;
 	}
