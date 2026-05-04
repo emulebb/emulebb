@@ -119,13 +119,16 @@ namespace
 		if (strValue.empty())
 			return CString();
 #ifdef _UNICODE
-		const int iWideChars = ::MultiByteToWideChar(CP_UTF8, 0, strValue.data(), static_cast<int>(strValue.size()), NULL, 0);
+		if (strValue.size() > static_cast<size_t>(INT_MAX))
+			return CString();
+
+		const int iWideChars = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, strValue.data(), static_cast<int>(strValue.size()), NULL, 0);
 		if (iWideChars <= 0)
-			return CString(strValue.c_str());
+			return CString();
 
 		CStringW strWide;
 		LPWSTR pszWide = strWide.GetBuffer(iWideChars);
-		const int iConverted = ::MultiByteToWideChar(CP_UTF8, 0, strValue.data(), static_cast<int>(strValue.size()), pszWide, iWideChars);
+		const int iConverted = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, strValue.data(), static_cast<int>(strValue.size()), pszWide, iWideChars);
 		strWide.ReleaseBuffer(iConverted > 0 ? iConverted : 0);
 		return CString(strWide);
 #else
