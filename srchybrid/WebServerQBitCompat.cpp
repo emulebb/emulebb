@@ -438,7 +438,12 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
 		return;
 	}
-	const std::string strMethod(WebServerJsonSeams::ToLowerAscii(StdStringFromCStringA(rData.strMethod)));
+	const std::string strMethodRaw(StdStringFromCStringA(rData.strMethod));
+	if (strMethodRaw != "GET" && strMethodRaw != "POST") {
+		SendTextResponse(rData.pSocket, 404, "Not Found", "Not found");
+		return;
+	}
+	const std::string strMethod(WebServerJsonSeams::ToLowerAscii(strMethodRaw));
 	const WebServerQBitCompatSeams::SQBitRouteSpec *const pRouteSpec = WebServerQBitCompatSeams::FindQBitRouteSpec(strMethod, strPath);
 	if (pRouteSpec == NULL) {
 		SendTextResponse(rData.pSocket, 404, "Not Found", "Not found");

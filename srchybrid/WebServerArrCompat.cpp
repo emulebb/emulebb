@@ -411,6 +411,10 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 		SendXmlResponse(rData.pSocket, 404, "Not Found", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
 		return;
 	}
+	if (StdStringFromCStringA(rData.strMethod) != "GET") {
+		SendXmlResponse(rData.pSocket, 404, "Not Found", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
+		return;
+	}
 
 	if (thePrefs.GetWSApiKey().IsEmpty()) {
 		SendXmlResponse(rData.pSocket, 503, "Service Unavailable", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));

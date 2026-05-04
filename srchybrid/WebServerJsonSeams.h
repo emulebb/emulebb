@@ -878,11 +878,10 @@ inline bool TryBuildRoute(
 		body = json::object();
 	}
 
-	const std::string strMethodLower(ToLowerAscii(rMethod));
-	const bool bGet = strMethodLower == "get";
-	const bool bPost = strMethodLower == "post";
-	const bool bPatch = strMethodLower == "patch";
-	const bool bDelete = strMethodLower == "delete";
+	const bool bGet = rMethod == "GET";
+	const bool bPost = rMethod == "POST";
+	const bool bPatch = rMethod == "PATCH";
+	const bool bDelete = rMethod == "DELETE";
 	if (!bGet && !bPost && !bPatch && !bDelete) {
 		rErrorCode = "INVALID_ARGUMENT";
 		rErrorMessage = "only GET, POST, PATCH, and DELETE are supported";
@@ -896,7 +895,7 @@ inline bool TryBuildRoute(
 	}
 
 	const std::string strApiPath(BuildRoutePathForSpec(route));
-	const SApiRouteSpec *const pRouteSpec = FindRouteSpec(ToUpperAscii(rMethod), strApiPath);
+	const SApiRouteSpec *const pRouteSpec = FindRouteSpec(rMethod, strApiPath);
 	if (pRouteSpec == NULL) {
 		rErrorCode = "NOT_FOUND";
 		rErrorMessage = "API route not found";

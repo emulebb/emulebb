@@ -100,25 +100,26 @@ void CWebSocket::OnRequestReceived(const char *pHeader, DWORD dwHeaderLen, const
 	CStringA sRequestTarget;
 	CStringA sURL;
 
-	if (strncmp(sHeader, "GET", 3) == 0) {
+	std::string strMethod;
+	std::string strRequestTarget;
+	if (WebSocketHttpSeams::TryParseRequestLine(std::string(pHeader, dwHeaderLen), strMethod, strRequestTarget)) {
+		sMethod = CStringA(strMethod.c_str(), static_cast<int>(strMethod.size()));
+		sRequestTarget = CStringA(strRequestTarget.c_str(), static_cast<int>(strRequestTarget.size()));
+	}
+
+	if (sMethod == "GET") {
 		sMethod = "GET";
 		sURL = sHeader.Trim();
-	} else if (strncmp(sHeader, "POST", 4) == 0) {
+	} else if (sMethod == "POST") {
 		sMethod = "POST";
 		CStringA sData(pData, dwDataLen);
 		sURL = '?' + sData.Trim();	// '?' to imitate GET syntax for ParseURL
-	} else if (strncmp(sHeader, "PATCH", 5) == 0) {
+	} else if (sMethod == "PATCH") {
 		sMethod = "PATCH";
 		sURL = sHeader.Trim();
-	} else if (strncmp(sHeader, "DELETE", 6) == 0) {
+	} else if (sMethod == "DELETE") {
 		sMethod = "DELETE";
 		sURL = sHeader.Trim();
-	}
-	int iFirstSpace = sHeader.Find(' ');
-	if (iFirstSpace >= 0) {
-		int iSecondSpace = sHeader.Find(' ', iFirstSpace + 1);
-		if (iSecondSpace > iFirstSpace)
-			sRequestTarget = sHeader.Mid(iFirstSpace + 1, iSecondSpace - iFirstSpace - 1);
 	}
 
 	sURL.Delete(0, sURL.Find(' ') + 1);
