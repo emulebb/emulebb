@@ -382,17 +382,26 @@ inline bool IsValidUnsignedDecimal(const std::string &rValue)
 	return errno == 0 && pEnd != NULL && *pEnd == '\0';
 }
 
+/**
+ * @brief Parses a strict unsigned decimal token without accepting signs,
+ * whitespace, or partial values.
+ */
+inline bool TryParseUnsignedDecimalValue(const std::string &rValue, uint64_t &ruValue)
+{
+	if (!IsValidUnsignedDecimal(rValue))
+		return false;
+
+	ruValue = static_cast<uint64_t>(std::strtoull(rValue.c_str(), NULL, 10));
+	return true;
+}
+
 inline bool TryParseUnsignedQueryValue(const std::map<std::string, std::string> &rQuery, const char *pszName, uint64_t &ruValue)
 {
 	const auto it = rQuery.find(pszName);
 	if (it == rQuery.end())
 		return false;
 
-	if (!IsValidUnsignedDecimal(it->second))
-		return false;
-
-	ruValue = static_cast<uint64_t>(std::strtoull(it->second.c_str(), NULL, 10));
-	return true;
+	return TryParseUnsignedDecimalValue(it->second, ruValue);
 }
 
 inline bool IsLowercaseMd4HexString(const std::string &rValue)

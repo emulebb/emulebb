@@ -127,25 +127,12 @@ struct SSharedFileRatingCommentRequest
 
 inline std::string ToLowerAscii(const std::string &rValue)
 {
-	std::string result(rValue);
-	std::transform(result.begin(), result.end(), result.begin(), [](unsigned char ch)
-	{
-		return static_cast<char>(std::tolower(ch));
-	});
-	return result;
+	return WebServerJsonSeams::ToLowerAscii(rValue);
 }
 
 inline std::string TrimAsciiWhitespace(const std::string &rValue)
 {
-	std::string::size_type uBegin = 0;
-	while (uBegin < rValue.size() && std::isspace(static_cast<unsigned char>(rValue[uBegin])) != 0)
-		++uBegin;
-
-	std::string::size_type uEnd = rValue.size();
-	while (uEnd > uBegin && std::isspace(static_cast<unsigned char>(rValue[uEnd - 1])) != 0)
-		--uEnd;
-
-	return rValue.substr(uBegin, uEnd - uBegin);
+	return WebServerJsonSeams::TrimAsciiWhitespace(rValue);
 }
 
 /**
@@ -153,13 +140,7 @@ inline std::string TrimAsciiWhitespace(const std::string &rValue)
  */
 inline bool IsUnsignedDecimalString(const std::string &rValue)
 {
-	if (rValue.empty())
-		return false;
-	for (const char ch : rValue) {
-		if (std::isdigit(static_cast<unsigned char>(ch)) == 0)
-			return false;
-	}
-	return true;
+	return WebServerJsonSeams::IsValidUnsignedDecimal(rValue);
 }
 
 /**
@@ -168,17 +149,7 @@ inline bool IsUnsignedDecimalString(const std::string &rValue)
  */
 inline bool TryParseUnsignedDecimalString(const std::string &rValue, uint64_t &ruValue)
 {
-	if (!IsUnsignedDecimalString(rValue))
-		return false;
-
-	char *pEnd = nullptr;
-	errno = 0;
-	const unsigned long long ullValue = std::strtoull(rValue.c_str(), &pEnd, 10);
-	if (errno != 0 || pEnd == nullptr || *pEnd != '\0')
-		return false;
-
-	ruValue = static_cast<uint64_t>(ullValue);
-	return true;
+	return WebServerJsonSeams::TryParseUnsignedDecimalValue(rValue, ruValue);
 }
 
 /**
@@ -187,13 +158,7 @@ inline bool TryParseUnsignedDecimalString(const std::string &rValue, uint64_t &r
  */
 inline bool IsLowercaseMd4HexString(const std::string &rValue)
 {
-	if (rValue.size() != 32)
-		return false;
-	for (const char ch : rValue) {
-		if (!((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')))
-			return false;
-	}
-	return true;
+	return WebServerJsonSeams::IsLowercaseMd4HexString(rValue);
 }
 
 /**
