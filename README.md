@@ -7,8 +7,9 @@ the independent eMule BB version line.
 
 ## Refs
 
-- `community/v0.72a`: imported community baseline
 - `main`: maintained eMule BB integration line
+- `release/v0.72a-community`: seam-enabled community baseline
+- `release/v0.72a-broadband`: downstream broadband stabilization line
 - accepted release refs are cut from reviewed commits on `main`
 
 ## Working Model
