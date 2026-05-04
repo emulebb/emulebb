@@ -15,7 +15,7 @@
  */
 namespace WebServerArrCompatSeams
 {
-static const size_t kMaxTorznabQueryLength = 160;
+static const size_t kMaxTorznabQueryLength = WebServerJsonSeams::kMaxSearchQueryLength;
 static const unsigned kMaxTorznabSeason = 9999;
 static const unsigned kMaxTorznabEpisode = 9999;
 static const unsigned kMaxTorznabYear = 9999;
@@ -243,15 +243,19 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 	const auto episodeIt = normalized.find("ep");
 	const auto yearIt = normalized.find("year");
 	const auto catIt = normalized.find("cat");
-	parsed.strQuery = queryIt == normalized.end() ? std::string() : NormalizeSpace(TrimAscii(queryIt->second));
+	if (!WebServerJsonSeams::TryNormalizeSearchText(
+			queryIt == normalized.end() ? std::string() : queryIt->second,
+			"q",
+			true,
+			parsed.strQuery,
+			rErrorMessage))
+	{
+		return false;
+	}
 	parsed.strSeason = seasonIt == normalized.end() ? std::string() : TrimAscii(seasonIt->second);
 	parsed.strEpisode = episodeIt == normalized.end() ? std::string() : TrimAscii(episodeIt->second);
 	parsed.strYear = yearIt == normalized.end() ? std::string() : TrimAscii(yearIt->second);
 	parsed.strCategories = catIt == normalized.end() ? std::string() : TrimAscii(catIt->second);
-	if (parsed.strQuery.size() > kMaxTorznabQueryLength) {
-		rErrorMessage = "q must be at most 160 characters";
-		return false;
-	}
 	unsigned uIgnored = 0;
 	if (!parsed.strSeason.empty() && !TryParseBoundedUnsigned(parsed.strSeason, kMaxTorznabSeason, uIgnored)) {
 		rErrorMessage = "season must be an unsigned decimal value in the range 0..9999";

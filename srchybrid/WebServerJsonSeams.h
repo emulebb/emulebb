@@ -9,11 +9,15 @@
 #include <string>
 #include <vector>
 
+#include <Windows.h>
+
 #include <nlohmann/json.hpp>
 
 namespace WebServerJsonSeams
 {
 using json = nlohmann::json;
+
+static const size_t kMaxSearchQueryLength = 160;
 
 /**
  * @brief Carries one parsed REST route command together with the normalized
@@ -48,6 +52,115 @@ inline std::string ToLowerAscii(const std::string &rValue)
 	for (char &rCh : result)
 		rCh = static_cast<char>(std::tolower(static_cast<unsigned char>(rCh)));
 	return result;
+}
+
+inline std::string TrimAsciiWhitespace(const std::string &rValue)
+{
+	std::string::size_type uBegin = 0;
+	while (uBegin < rValue.size() && std::isspace(static_cast<unsigned char>(rValue[uBegin])) != 0)
+		++uBegin;
+
+	std::string::size_type uEnd = rValue.size();
+	while (uEnd > uBegin && std::isspace(static_cast<unsigned char>(rValue[uEnd - 1])) != 0)
+		--uEnd;
+
+	return rValue.substr(uBegin, uEnd - uBegin);
+}
+
+/**
+ * @brief Collapses ASCII whitespace runs without changing UTF-8 payload bytes.
+ */
+inline std::string NormalizeAsciiWhitespace(const std::string &rValue)
+{
+	std::string result;
+	result.reserve(rValue.size());
+	bool bPreviousSpace = true;
+	for (const char ch : rValue) {
+		if (std::isspace(static_cast<unsigned char>(ch)) != 0) {
+			if (!bPreviousSpace)
+				result.push_back(' ');
+			bPreviousSpace = true;
+		} else {
+			result.push_back(ch);
+			bPreviousSpace = false;
+		}
+	}
+	if (!result.empty() && result[result.size() - 1] == ' ')
+		result.erase(result.size() - 1);
+	return result;
+}
+
+/**
+ * @brief Validates UTF-8 with the platform decoder and returns the UTF-16
+ * length used by the app's native UI layer.
+ */
+inline bool TryMeasureStrictUtf8AsUtf16(const std::string &rValue, size_t &ruWideCharacters)
+{
+	ruWideCharacters = 0;
+	if (rValue.empty())
+		return true;
+	if (rValue.size() > static_cast<size_t>(INT_MAX))
+		return false;
+
+	const int iWideChars = ::MultiByteToWideChar(
+		CP_UTF8,
+		MB_ERR_INVALID_CHARS,
+		rValue.data(),
+		static_cast<int>(rValue.size()),
+		NULL,
+		0);
+	if (iWideChars <= 0)
+		return false;
+
+	std::vector<WCHAR> wide(static_cast<size_t>(iWideChars));
+	const int iConverted = ::MultiByteToWideChar(
+		CP_UTF8,
+		MB_ERR_INVALID_CHARS,
+		rValue.data(),
+		static_cast<int>(rValue.size()),
+		wide.data(),
+		iWideChars);
+	if (iConverted != iWideChars)
+		return false;
+
+	for (const WCHAR ch : wide) {
+		if (ch < 0x20 && ch != L' ')
+			return false;
+	}
+	ruWideCharacters = static_cast<size_t>(iWideChars);
+	return true;
+}
+
+/**
+ * @brief Applies the shared public search-text rules used by native REST and
+ * *arr compatibility search requests.
+ */
+inline bool TryNormalizeSearchText(
+	const std::string &rValue,
+	const char *pszFieldName,
+	const bool bAllowEmpty,
+	std::string &rNormalized,
+	std::string &rErrorMessage)
+{
+	const std::string strFieldName(pszFieldName != NULL && pszFieldName[0] != '\0' ? pszFieldName : "query");
+	rNormalized = NormalizeAsciiWhitespace(TrimAsciiWhitespace(rValue));
+	if (rNormalized.empty()) {
+		if (bAllowEmpty)
+			return true;
+		rErrorMessage = strFieldName + " must not be empty";
+		return false;
+	}
+
+	size_t uWideCharacters = 0;
+	if (!TryMeasureStrictUtf8AsUtf16(rNormalized, uWideCharacters)) {
+		rErrorMessage = strFieldName + " must be valid UTF-8 without control characters";
+		return false;
+	}
+	if (uWideCharacters > kMaxSearchQueryLength) {
+		rErrorMessage = strFieldName + " must be at most 160 characters";
+		return false;
+	}
+	return true;
 }
 
 inline int HexNibble(const char ch)

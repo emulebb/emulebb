@@ -11,6 +11,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "WebServerJsonSeams.h"
+
 namespace WebApiCommandSeams
 {
 using json = nlohmann::json;
@@ -275,11 +277,8 @@ inline bool TryParseSearchStartRequest(const json &rParams, SSearchStartRequest 
 		return false;
 	}
 
-	rRequest.strQuery = TrimAsciiWhitespace(rParams["query"].get<std::string>());
-	if (rRequest.strQuery.empty()) {
-		rError = "query must not be empty";
+	if (!WebServerJsonSeams::TryNormalizeSearchText(rParams["query"].get<std::string>(), "query", false, rRequest.strQuery, rError))
 		return false;
-	}
 
 	rRequest.eMethod = ESearchMethod::Automatic;
 	if (rParams.contains("method")) {
