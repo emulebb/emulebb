@@ -416,7 +416,7 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 	WebServerArrCompatSeams::STorznabRequest request;
 	std::string strError;
 	if (!WebServerArrCompatSeams::TryParseTorznabRequest(strRequestTarget, request, strError)) {
-		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, std::vector<SArrCompatResult>()));
+		SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, "Bad Request", BuildFeedXml(request, std::vector<SArrCompatResult>()));
 		return;
 	}
 

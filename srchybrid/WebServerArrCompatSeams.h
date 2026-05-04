@@ -19,6 +19,7 @@ static const size_t kMaxTorznabQueryLength = WebServerJsonSeams::kMaxSearchQuery
 static const unsigned kMaxTorznabSeason = 9999;
 static const unsigned kMaxTorznabEpisode = 9999;
 static const unsigned kMaxTorznabYear = 9999;
+static const int kTorznabParseErrorHttpStatus = 400;
 
 /**
  * @brief Identifies the coarse media family used by the Torznab bridge.
