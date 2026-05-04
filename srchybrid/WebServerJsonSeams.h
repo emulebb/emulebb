@@ -579,15 +579,15 @@ inline bool TryCopyEndpointToken(const std::string &rValue, json &rParams)
 		return false;
 
 	const std::string strPort = rValue.substr(uColon + 1);
-	if (!IsValidUnsignedDecimal(strPort))
+	uint64_t ullPort = 0;
+	if (!TryParseUnsignedDecimalValue(strPort, ullPort))
 		return false;
 
-	const unsigned long ulPort = std::strtoul(strPort.c_str(), NULL, 10);
-	if (ulPort == 0 || ulPort > 0xFFFFul)
+	if (ullPort == 0 || ullPort > static_cast<uint64_t>(0xFFFF))
 		return false;
 
 	rParams["addr"] = rValue.substr(0, uColon);
-	rParams["port"] = static_cast<unsigned>(ulPort);
+	rParams["port"] = static_cast<unsigned>(ullPort);
 	return true;
 }
 
@@ -598,12 +598,12 @@ inline bool TryValidateBoundedUnsignedDecimal(
 	std::string &rErrorCode,
 	std::string &rErrorMessage)
 {
-	if (!IsValidUnsignedDecimal(rValue)) {
+	uint64_t uValue = 0;
+	if (!TryParseUnsignedDecimalValue(rValue, uValue)) {
 		SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszErrorFieldName) + " must be an unsigned decimal string");
 		return false;
 	}
 
-	const uint64_t uValue = static_cast<uint64_t>(std::strtoull(rValue.c_str(), NULL, 10));
 	if (uValue > uMaxValue) {
 		SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszErrorFieldName) + " is out of range");
 		return false;
@@ -622,11 +622,11 @@ inline bool TryParseBoundedQueryUInt(
 	std::string &rErrorCode,
 	std::string &rErrorMessage)
 {
-	if (!IsValidUnsignedDecimal(rValue)) {
+	uint64_t uValue = 0;
+	if (!TryParseUnsignedDecimalValue(rValue, uValue)) {
 		SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszFieldName) + " must be an unsigned number");
 		return false;
 	}
-	const uint64_t uValue = static_cast<uint64_t>(std::strtoull(rValue.c_str(), NULL, 10));
 	if (uValue < uMinValue || uValue > uMaxValue) {
 		SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszFieldName) + " is out of range");
 		return false;
