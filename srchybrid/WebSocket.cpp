@@ -2,6 +2,7 @@
 #include "OtherFunctions.h"
 #include "WebSocket.h"
 #include "WebServer.h"
+#include "WebSocketHttpSeams.h"
 #include "Preferences.h"
 #include "SafeFile.h"
 #include "StringConversion.h"
@@ -197,14 +198,15 @@ void CWebSocket::OnReceived(const void *pData, DWORD dwSize, const in_addr inad)
 						// Elandal: And thus now the pointer subtraction works as it should
 						DWORD dwNextPos = (DWORD)(pPtr - m_pBuf);
 
-						// check this header
-						static const char szMatch[] = "content-length";
-						if (!_strnicmp(&m_pBuf[dwPos], szMatch, sizeof szMatch - 1)) {
-							dwPos += sizeof szMatch - 1;
-							pPtr = (char*)memchr(&m_pBuf[dwPos], ':', m_dwHttpHeaderLen - dwPos);
-							if (pPtr)
-								m_dwHttpContentLen = atol(&pPtr[1]);
-
+						const std::string strHeaderLine(&m_pBuf[dwPos], dwNextPos - dwPos);
+						uint32_t uContentLength = 0;
+						const WebSocketHttpSeams::EContentLengthHeader eContentLength = WebSocketHttpSeams::ParseContentLengthHeaderLine(strHeaderLine, uContentLength);
+						if (eContentLength == WebSocketHttpSeams::EContentLengthHeader::Invalid) {
+							m_bValid = false;
+							return;
+						}
+						if (eContentLength == WebSocketHttpSeams::EContentLengthHeader::Valid) {
+							m_dwHttpContentLen = static_cast<DWORD>(uContentLength);
 							break;
 						}
 						dwPos = dwNextPos + 1;
