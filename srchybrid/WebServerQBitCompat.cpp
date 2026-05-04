@@ -503,12 +503,14 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 	if (strPath == "/api/v2/torrents/createcategory" && strMethod == "post") {
 		std::map<std::string, std::string> form;
 		std::string strError;
-		if (!WebServerQBitCompatSeams::TryParseFormBody(StdStringFromCStringA(rData.strRequestBody), form, strError) || form.find("category") == form.end()) {
+		std::string strCategory;
+		if (!WebServerQBitCompatSeams::TryParseFormBody(StdStringFromCStringA(rData.strRequestBody), form, strError)
+			|| !WebServerQBitCompatSeams::TryGetRequiredNonEmptyFormField(form, "category", strCategory, strError)) {
 			SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
 			return;
 		}
 		CString strErrorMessage;
-		if (!EnsureCategoryExists(form["category"], strErrorMessage)) {
+		if (!EnsureCategoryExists(strCategory, strErrorMessage)) {
 			SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
 			return;
 		}

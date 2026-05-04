@@ -44,6 +44,8 @@ struct SQBitHashMutationRequest
 	}
 };
 
+static const size_t kMaxHashMutationCount = 100;
+
 inline bool IsQBitRequestTarget(const std::string &rRequestTarget)
 {
 	const std::string strPathLower(WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::GetRequestPath(rRequestTarget)));
@@ -106,6 +108,17 @@ inline bool TryParseFormBody(const std::string &rBody, std::map<std::string, std
 			break;
 		uPos = uAmp + 1;
 	}
+	return true;
+}
+
+inline bool TryGetRequiredNonEmptyFormField(const std::map<std::string, std::string> &rForm, const char *pszFieldName, std::string &rValue, std::string &rErrorMessage)
+{
+	const auto it = rForm.find(pszFieldName);
+	if (it == rForm.end() || it->second.empty()) {
+		rErrorMessage = std::string(pszFieldName) + " form field is required";
+		return false;
+	}
+	rValue = it->second;
 	return true;
 }
 
@@ -205,13 +218,11 @@ inline bool TryParseTorrentAddRequest(const std::string &rBody, SQBitTorrentAddR
 	if (!TryParseFormBody(rBody, form, rErrorMessage))
 		return false;
 
-	const auto urlIt = form.find("urls");
-	if (urlIt == form.end() || urlIt->second.empty()) {
-		rErrorMessage = "urls form field is required";
+	std::string strMagnet;
+	if (!TryGetRequiredNonEmptyFormField(form, "urls", strMagnet, rErrorMessage))
 		return false;
-	}
 
-	if (!TryBuildEd2kLinkFromMagnet(urlIt->second, rRequest.strUrl, rErrorMessage))
+	if (!TryBuildEd2kLinkFromMagnet(strMagnet, rRequest.strUrl, rErrorMessage))
 		return false;
 
 	const auto categoryIt = form.find("category");
@@ -249,6 +260,16 @@ inline bool TryParseHashesFormField(const std::map<std::string, std::string> &rF
 			uPipe == std::string::npos ? std::string::npos : (uPipe - uPos)));
 		if (token.empty() || !IsNativeMd4Hash(token)) {
 			rErrorMessage = "hashes must contain only 32-character eD2K hashes";
+			return false;
+		}
+		for (const std::string &rHash : rHashes) {
+			if (rHash == token) {
+				rErrorMessage = "hashes must not contain duplicates";
+				return false;
+			}
+		}
+		if (rHashes.size() >= kMaxHashMutationCount) {
+			rErrorMessage = "hashes form field exceeds the supported item limit";
 			return false;
 		}
 		rHashes.push_back(token);
