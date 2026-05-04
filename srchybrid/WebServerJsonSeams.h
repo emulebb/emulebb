@@ -368,6 +368,12 @@ inline bool TrySplitPathSegments(const std::string &rPath, std::vector<std::stri
 	return true;
 }
 
+inline bool TryValidateRequestPathEscapes(const std::string &rRequestTarget, std::string &rErrorMessage)
+{
+	std::vector<std::string> ignored;
+	return TrySplitPathSegments(GetRequestPath(rRequestTarget), ignored, rErrorMessage);
+}
+
 inline bool IsValidUnsignedDecimal(const std::string &rValue)
 {
 	if (rValue.empty())

@@ -451,7 +451,12 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		return;
 
 	const std::string strRequestTarget(StdStringFromCStringA(rData.strRequestTarget));
-	const std::string strPath(WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::GetRequestPath(strRequestTarget)));
+	std::string strPath;
+	std::string strPathError;
+	if (!WebServerQBitCompatSeams::TryGetQBitRequestPathLower(strRequestTarget, strPath, strPathError)) {
+		SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
+		return;
+	}
 	const std::string strMethod(WebServerJsonSeams::ToLowerAscii(StdStringFromCStringA(rData.strMethod)));
 	const WebServerQBitCompatSeams::SQBitRouteSpec *const pRouteSpec = WebServerQBitCompatSeams::FindQBitRouteSpec(strMethod, strPath);
 	if (pRouteSpec == NULL) {
