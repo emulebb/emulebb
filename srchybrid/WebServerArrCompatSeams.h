@@ -15,6 +15,11 @@
  */
 namespace WebServerArrCompatSeams
 {
+static const size_t kMaxTorznabQueryLength = 160;
+static const unsigned kMaxTorznabSeason = 9999;
+static const unsigned kMaxTorznabEpisode = 9999;
+static const unsigned kMaxTorznabYear = 9999;
+
 /**
  * @brief Identifies the coarse media family used by the Torznab bridge.
  */
@@ -145,6 +150,17 @@ inline bool IsTorznabCategoryInRange(const int iCategory, const int iBase)
 	return iCategory == iBase || (iCategory > iBase && iCategory < iBase + 1000);
 }
 
+inline bool TryParseBoundedUnsigned(const std::string &rValue, const unsigned uMaxValue, unsigned &ruValue)
+{
+	if (!WebServerJsonSeams::IsValidUnsignedDecimal(rValue))
+		return false;
+	const unsigned long ulValue = std::strtoul(rValue.c_str(), NULL, 10);
+	if (ulValue > uMaxValue)
+		return false;
+	ruValue = static_cast<unsigned>(ulValue);
+	return true;
+}
+
 /**
  * @brief Maps Torznab categories onto the native eMule search file families.
  */
@@ -197,6 +213,8 @@ inline ETorznabFamily ResolveFamily(const std::string &rType, const std::string 
  */
 inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRequest &rRequest, std::string &rErrorMessage)
 {
+	rRequest = STorznabRequest();
+	STorznabRequest parsed;
 	std::map<std::string, std::string> query;
 	if (!WebServerJsonSeams::TryParseQueryString(rRequestTarget, query, rErrorMessage))
 		return false;
@@ -212,10 +230,10 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 	}
 
 	const auto typeIt = normalized.find("t");
-	rRequest.strType = typeIt == normalized.end() ? "search" : WebServerJsonSeams::ToLowerAscii(TrimAscii(typeIt->second));
-	if (rRequest.strType.empty())
-		rRequest.strType = "search";
-	if (rRequest.strType != "caps" && rRequest.strType != "search" && rRequest.strType != "tvsearch" && rRequest.strType != "movie") {
+	parsed.strType = typeIt == normalized.end() ? "search" : WebServerJsonSeams::ToLowerAscii(TrimAscii(typeIt->second));
+	if (parsed.strType.empty())
+		parsed.strType = "search";
+	if (parsed.strType != "caps" && parsed.strType != "search" && parsed.strType != "tvsearch" && parsed.strType != "movie") {
 		rErrorMessage = "unsupported Torznab request type";
 		return false;
 	}
@@ -225,19 +243,30 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 	const auto episodeIt = normalized.find("ep");
 	const auto yearIt = normalized.find("year");
 	const auto catIt = normalized.find("cat");
-	rRequest.strQuery = queryIt == normalized.end() ? std::string() : NormalizeSpace(TrimAscii(queryIt->second));
-	rRequest.strSeason = seasonIt == normalized.end() ? std::string() : TrimAscii(seasonIt->second);
-	rRequest.strEpisode = episodeIt == normalized.end() ? std::string() : TrimAscii(episodeIt->second);
-	rRequest.strYear = yearIt == normalized.end() ? std::string() : TrimAscii(yearIt->second);
-	rRequest.strCategories = catIt == normalized.end() ? std::string() : TrimAscii(catIt->second);
-	if ((!rRequest.strSeason.empty() && !WebServerJsonSeams::IsValidUnsignedDecimal(rRequest.strSeason))
-		|| (!rRequest.strEpisode.empty() && !WebServerJsonSeams::IsValidUnsignedDecimal(rRequest.strEpisode))
-		|| (!rRequest.strYear.empty() && !WebServerJsonSeams::IsValidUnsignedDecimal(rRequest.strYear)))
-	{
-		rErrorMessage = "season, ep, and year must be unsigned decimal values";
+	parsed.strQuery = queryIt == normalized.end() ? std::string() : NormalizeSpace(TrimAscii(queryIt->second));
+	parsed.strSeason = seasonIt == normalized.end() ? std::string() : TrimAscii(seasonIt->second);
+	parsed.strEpisode = episodeIt == normalized.end() ? std::string() : TrimAscii(episodeIt->second);
+	parsed.strYear = yearIt == normalized.end() ? std::string() : TrimAscii(yearIt->second);
+	parsed.strCategories = catIt == normalized.end() ? std::string() : TrimAscii(catIt->second);
+	if (parsed.strQuery.size() > kMaxTorznabQueryLength) {
+		rErrorMessage = "q must be at most 160 characters";
 		return false;
 	}
-	rRequest.eFamily = ResolveFamily(rRequest.strType, rRequest.strCategories);
+	unsigned uIgnored = 0;
+	if (!parsed.strSeason.empty() && !TryParseBoundedUnsigned(parsed.strSeason, kMaxTorznabSeason, uIgnored)) {
+		rErrorMessage = "season must be an unsigned decimal value in the range 0..9999";
+		return false;
+	}
+	if (!parsed.strEpisode.empty() && !TryParseBoundedUnsigned(parsed.strEpisode, kMaxTorznabEpisode, uIgnored)) {
+		rErrorMessage = "ep must be an unsigned decimal value in the range 0..9999";
+		return false;
+	}
+	if (!parsed.strYear.empty() && !TryParseBoundedUnsigned(parsed.strYear, kMaxTorznabYear, uIgnored)) {
+		rErrorMessage = "year must be an unsigned decimal value in the range 0..9999";
+		return false;
+	}
+	parsed.eFamily = ResolveFamily(parsed.strType, parsed.strCategories);
+	rRequest = parsed;
 	return true;
 }
 
