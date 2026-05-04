@@ -312,8 +312,7 @@ void HandleLogin(const ThreadData &rData)
 		return;
 	}
 
-	const auto passwordIt = form.find("password");
-	if (passwordIt == form.end() || CStringFromStdUtf8(passwordIt->second) != thePrefs.GetWSApiKey()) {
+	if (!WebServerQBitCompatSeams::IsValidLoginForm(form, "emule", StdUtf8FromCString(thePrefs.GetWSApiKey()))) {
 		SendTextResponse(rData.pSocket, 200, "OK", "Fails.");
 		return;
 	}

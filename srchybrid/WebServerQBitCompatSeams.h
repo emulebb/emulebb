@@ -178,6 +178,22 @@ inline bool TryGetRequiredNonEmptyFormField(const std::map<std::string, std::str
 	return true;
 }
 
+/**
+ * @brief Validates qBittorrent-compatible login form credentials.
+ */
+inline bool IsValidLoginForm(
+	const std::map<std::string, std::string> &rForm,
+	const std::string &rExpectedUsername,
+	const std::string &rExpectedPassword)
+{
+	const auto usernameIt = rForm.find("username");
+	const auto passwordIt = rForm.find("password");
+	return usernameIt != rForm.end()
+		&& passwordIt != rForm.end()
+		&& usernameIt->second == rExpectedUsername
+		&& passwordIt->second == rExpectedPassword;
+}
+
 inline std::string TrimCookieToken(const std::string &rValue)
 {
 	size_t uBegin = 0;
