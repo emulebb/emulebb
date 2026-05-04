@@ -210,25 +210,40 @@ inline ETorznabFamily ResolveFamily(const std::string &rType, const std::string 
 }
 
 /**
+ * @brief Parses Torznab query parameters with shared lower-case key normalization.
+ */
+inline bool TryParseTorznabQueryParameters(
+	const std::string &rRequestTarget,
+	std::map<std::string, std::string> &rNormalized,
+	std::string &rErrorMessage)
+{
+	rNormalized.clear();
+	std::map<std::string, std::string> query;
+	if (!WebServerJsonSeams::TryParseQueryString(rRequestTarget, query, rErrorMessage))
+		return false;
+
+	for (const auto &rPair : query) {
+		const std::string strName(WebServerJsonSeams::ToLowerAscii(rPair.first));
+		if (rNormalized.find(strName) != rNormalized.end()) {
+			rErrorMessage = "duplicate query parameter: " + strName;
+			rNormalized.clear();
+			return false;
+		}
+		rNormalized[strName] = rPair.second;
+	}
+	return true;
+}
+
+/**
  * @brief Parses and normalizes the Torznab query parameters accepted by Prowlarr.
  */
 inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRequest &rRequest, std::string &rErrorMessage)
 {
 	rRequest = STorznabRequest();
 	STorznabRequest parsed;
-	std::map<std::string, std::string> query;
-	if (!WebServerJsonSeams::TryParseQueryString(rRequestTarget, query, rErrorMessage))
-		return false;
-
 	std::map<std::string, std::string> normalized;
-	for (const auto &rPair : query) {
-		const std::string strName(WebServerJsonSeams::ToLowerAscii(rPair.first));
-		if (normalized.find(strName) != normalized.end()) {
-			rErrorMessage = "duplicate query parameter: " + strName;
-			return false;
-		}
-		normalized[strName] = rPair.second;
-	}
+	if (!TryParseTorznabQueryParameters(rRequestTarget, normalized, rErrorMessage))
+		return false;
 
 	const auto typeIt = normalized.find("t");
 	parsed.strType = typeIt == normalized.end() ? "search" : WebServerJsonSeams::ToLowerAscii(TrimAscii(typeIt->second));

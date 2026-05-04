@@ -375,19 +375,16 @@ std::vector<SArrCompatResult> RunNativeSearches(const WebServerArrCompatSeams::S
 	return results;
 }
 
-bool HasValidTorznabApiKey(const ThreadData &rData, const std::string &rRequestTarget)
+bool HasValidTorznabApiKey(
+	const ThreadData &rData,
+	const std::map<std::string, std::string> &rNormalizedQuery)
 {
 	if (thePrefs.GetWSApiKey().IsEmpty())
 		return false;
 
-	std::map<std::string, std::string> query;
-	std::string strError;
-	if (!WebServerJsonSeams::TryParseQueryString(rRequestTarget, query, strError))
-		return false;
-	for (const auto &rPair : query) {
-		if (WebServerJsonSeams::ToLowerAscii(rPair.first) == "apikey")
-			return rPair.second == StdUtf8FromCString(thePrefs.GetWSApiKey());
-	}
+	const auto apiKeyIt = rNormalizedQuery.find("apikey");
+	if (apiKeyIt != rNormalizedQuery.end())
+		return apiKeyIt->second == StdUtf8FromCString(thePrefs.GetWSApiKey());
 
 	return !rData.strApiKey.IsEmpty() && OptUtf8ToStr(rData.strApiKey) == thePrefs.GetWSApiKey();
 }
@@ -408,13 +405,19 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 		SendXmlResponse(rData.pSocket, 503, "Service Unavailable", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
 		return;
 	}
-	if (!HasValidTorznabApiKey(rData, strRequestTarget)) {
+
+	std::map<std::string, std::string> normalizedQuery;
+	std::string strError;
+	if (!WebServerArrCompatSeams::TryParseTorznabQueryParameters(strRequestTarget, normalizedQuery, strError)) {
+		SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, "Bad Request", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
+		return;
+	}
+	if (!HasValidTorznabApiKey(rData, normalizedQuery)) {
 		SendXmlResponse(rData.pSocket, 401, "Unauthorized", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
 		return;
 	}
 
 	WebServerArrCompatSeams::STorznabRequest request;
-	std::string strError;
 	if (!WebServerArrCompatSeams::TryParseTorznabRequest(strRequestTarget, request, strError)) {
 		SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, "Bad Request", BuildFeedXml(request, std::vector<SArrCompatResult>()));
 		return;
