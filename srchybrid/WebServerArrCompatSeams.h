@@ -93,7 +93,27 @@ inline std::string XmlEscape(const std::string &rValue)
 inline bool IsArrCompatRequestTarget(const std::string &rRequestTarget)
 {
 	const std::string strPathLower(WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::GetRequestPath(rRequestTarget)));
-	return strPathLower == "/indexer/emulebb/api" || strPathLower == "/indexer/emulebb/api/";
+	static const char *const pszEndpoint = "/indexer/emulebb/api";
+	return strPathLower == pszEndpoint
+		|| strPathLower == std::string(pszEndpoint) + "/"
+		|| strPathLower.rfind(std::string(pszEndpoint) + "%", 0) == 0;
+}
+
+/**
+ * @brief Validates the Torznab compatibility request path before auth and
+ * query parsing.
+ */
+inline bool TryGetArrCompatRequestPathLower(
+	const std::string &rRequestTarget,
+	std::string &rPathLower,
+	std::string &rErrorMessage)
+{
+	rPathLower.clear();
+	if (!WebServerJsonSeams::TryValidateRequestPathEscapes(rRequestTarget, rErrorMessage))
+		return false;
+
+	rPathLower = WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::GetRequestPath(rRequestTarget));
+	return true;
 }
 
 inline std::vector<std::string> SplitCommaList(const std::string &rValue)

@@ -401,13 +401,23 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 		return;
 
 	const std::string strRequestTarget(StdStringFromCStringA(rData.strRequestTarget));
+	std::string strPath;
+	std::string strError;
+	if (!WebServerArrCompatSeams::TryGetArrCompatRequestPathLower(strRequestTarget, strPath, strError)) {
+		SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, "Bad Request", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
+		return;
+	}
+	if (strPath != "/indexer/emulebb/api" && strPath != "/indexer/emulebb/api/") {
+		SendXmlResponse(rData.pSocket, 404, "Not Found", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
+		return;
+	}
+
 	if (thePrefs.GetWSApiKey().IsEmpty()) {
 		SendXmlResponse(rData.pSocket, 503, "Service Unavailable", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
 		return;
 	}
 
 	std::map<std::string, std::string> normalizedQuery;
-	std::string strError;
 	if (!WebServerArrCompatSeams::TryParseTorznabQueryParameters(strRequestTarget, normalizedQuery, strError)) {
 		SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, "Bad Request", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
 		return;
