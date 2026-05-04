@@ -2,7 +2,8 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstdlib>
+#include <cstdint>
+#include <limits>
 #include <map>
 #include <sstream>
 #include <string>
@@ -153,12 +154,12 @@ inline bool IsTorznabCategoryInRange(const int iCategory, const int iBase)
 
 inline bool TryParseBoundedUnsigned(const std::string &rValue, const unsigned uMaxValue, unsigned &ruValue)
 {
-	if (!WebServerJsonSeams::IsValidUnsignedDecimal(rValue))
+	uint64_t ullValue = 0;
+	if (!WebServerJsonSeams::TryParseUnsignedDecimalValue(rValue, ullValue))
 		return false;
-	const unsigned long ulValue = std::strtoul(rValue.c_str(), NULL, 10);
-	if (ulValue > uMaxValue)
+	if (ullValue > uMaxValue)
 		return false;
-	ruValue = static_cast<unsigned>(ulValue);
+	ruValue = static_cast<unsigned>(ullValue);
 	return true;
 }
 
@@ -176,9 +177,13 @@ inline ETorznabFamily ResolveFamily(const std::string &rType, const std::string 
 	bool bSawKnown = false;
 	ETorznabFamily eFamily = ETorznabFamily::Unknown;
 	for (const std::string &rToken : SplitCommaList(rCategories)) {
-		if (!WebServerJsonSeams::IsValidUnsignedDecimal(rToken))
+		uint64_t ullCategory = 0;
+		if (!WebServerJsonSeams::TryParseUnsignedDecimalValue(rToken, ullCategory)
+			|| ullCategory > static_cast<uint64_t>((std::numeric_limits<int>::max)()))
+		{
 			return ETorznabFamily::Unknown;
-		const int iCategory = std::atoi(rToken.c_str());
+		}
+		const int iCategory = static_cast<int>(ullCategory);
 		ETorznabFamily eTokenFamily = ETorznabFamily::Unknown;
 		if (IsTorznabCategoryInRange(iCategory, 2000)) {
 			bSawKnown = true;

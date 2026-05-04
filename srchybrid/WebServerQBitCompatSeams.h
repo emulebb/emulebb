@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cctype>
-#include <cstdlib>
 #include <map>
 #include <sstream>
 #include <string>
@@ -246,12 +245,12 @@ inline bool TryBuildEd2kLinkFromMagnet(const std::string &rMagnet, std::string &
 		rErrorMessage = "magnet display name must not be empty";
 		return false;
 	}
-	if (!WebServerJsonSeams::IsValidUnsignedDecimal(sizeIt->second)) {
+	uint64_t ullSize = 0;
+	if (!WebServerJsonSeams::TryParseUnsignedDecimalValue(sizeIt->second, ullSize)) {
 		rErrorMessage = "magnet size must be an unsigned decimal value";
 		return false;
 	}
 
-	const unsigned long long ullSize = std::strtoull(sizeIt->second.c_str(), NULL, 10);
 	if (ullSize == 0) {
 		rErrorMessage = "magnet size must be positive";
 		return false;
