@@ -27,75 +27,19 @@ static char THIS_FILE[] = __FILE__;
 
 int utf8towc(LPCSTR pcUtf8, UINT uUtf8Size, LPWSTR pwc, UINT uWideCharSize)
 {
-	LPWSTR pwc0 = pwc;
+	if (uUtf8Size == 0 || uWideCharSize == 0)
+		return 0;
+	if (pcUtf8 == NULL || pwc == NULL || uUtf8Size > static_cast<UINT>(INT_MAX) || uWideCharSize > static_cast<UINT>(INT_MAX))
+		return -1;
 
-	while (uUtf8Size && uWideCharSize) {
-		BYTE ucChar = *pcUtf8++;
-		if (ucChar < 0x80) {
-			--uUtf8Size;
-			--uWideCharSize;
-			*pwc++ = ucChar;
-		} else {
-			if ((ucChar & 0xC0) != 0xC0)
-				return -1; // Invalid UTF-8 string.
-			BYTE ucMask = 0xE0;
-			UINT uExpectedBytes = 1;
-			while ((ucChar & ucMask) == ucMask) {
-				ucMask |= ucMask >> 1;
-				if (++uExpectedBytes > 3)
-					return -1; // Invalid UTF-8 string.
-			}
-
-			if (uUtf8Size <= uExpectedBytes)
-				return -1; // Invalid UTF-8 string.
-
-			UINT uProcessedBytes = 1 + uExpectedBytes;
-			UINT uWideChar = (UINT)(ucChar & ~ucMask);
-			if (uExpectedBytes == 1) {
-				if ((uWideChar & 0x1E) == 0)
-					return -1; // Invalid UTF-8 string.
-			} else {
-				if (uWideChar == 0 && (*pcUtf8 & 0x3F & (ucMask << 1)) == 0)
-					return -1; // Invalid UTF-8 string.
-
-				if (uExpectedBytes == 2) {
-					//if (uWideChar == 0x0D && ((byte)*pcUtf8 & 0x20))
-					//    return -1;
-				} else if (uExpectedBytes == 3) {
-					if (uWideChar > 4)
-						return -1; // Invalid UTF-8 string.
-					if (uWideChar == 4 && *pcUtf8 & 0x30)
-						return -1; // Invalid UTF-8 string.
-				}
-			}
-
-			if (uWideCharSize < (UINT)(uExpectedBytes > 2) + 1)
-				break; // buffer full
-
-			while (uExpectedBytes--) {
-				ucChar = *pcUtf8++;
-				if ((ucChar & 0xC0) != 0x80)
-					return -1; // Invalid UTF-8 string.
-				uWideChar <<= 6;
-				uWideChar |= (ucChar & 0x3F);
-			}
-			uUtf8Size -= uProcessedBytes;
-
-			if (uWideChar < 0x10000) {
-				if (uWideChar >= 0xD800 && uWideChar <= 0xDFFF)
-					return -1; // Invalid UTF-8 string.
-				--uWideCharSize;
-				*pwc++ = (WCHAR)uWideChar;
-			} else {
-				uWideCharSize -= 2;
-				uWideChar -= 0x10000;
-				*pwc++ = (WCHAR)(0xD800 | (uWideChar >> 10));
-				*pwc++ = (WCHAR)(0xDC00 | (uWideChar & 0x03FF));
-			}
-		}
-	}
-
-	return (int)(pwc - pwc0);
+	const int iConverted = ::MultiByteToWideChar(
+		CP_UTF8,
+		MB_ERR_INVALID_CHARS,
+		pcUtf8,
+		static_cast<int>(uUtf8Size),
+		pwc,
+		static_cast<int>(uWideCharSize));
+	return iConverted > 0 ? iConverted : -1;
 }
 
 int ByteStreamToWideChar(LPCSTR pcUtf8, UINT uUtf8Size, LPWSTR pwc, UINT uWideCharSize)
