@@ -58,10 +58,6 @@ struct SQBitRouteSpec
 
 inline bool IsQBitRequestTarget(const std::string &rRequestTarget)
 {
-	std::string strError;
-	if (!WebServerJsonSeams::TryValidateRequestPathEscapes(rRequestTarget, strError))
-		return false;
-
 	const std::string strPathLower(WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::GetRequestPath(rRequestTarget)));
 	return strPathLower == "/api/v2" || strPathLower.rfind("/api/v2/", 0) == 0;
 }
