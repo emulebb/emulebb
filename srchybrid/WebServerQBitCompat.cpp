@@ -303,19 +303,6 @@ bool TryGetHashQueryParam(const std::string &rRequestTarget, std::string &rHash)
 	return WebServerJsonSeams::IsLowercaseMd4HexString(rHash);
 }
 
-bool TryGetCategoryQueryParam(const std::string &rRequestTarget, std::string &rCategory)
-{
-	std::map<std::string, std::string> query;
-	std::string strError;
-	if (!WebServerJsonSeams::TryParseQueryString(rRequestTarget, query, strError))
-		return false;
-	const auto it = query.find("category");
-	if (it == query.end())
-		return false;
-	rCategory = it->second;
-	return true;
-}
-
 void HandleLogin(const ThreadData &rData)
 {
 	if (thePrefs.GetWSApiKey().IsEmpty()) {
@@ -530,7 +517,11 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 
 	if (strPath == "/api/v2/torrents/info") {
 		std::string strCategory;
-		(void)TryGetCategoryQueryParam(strRequestTarget, strCategory);
+		std::string strError;
+		if (!WebServerQBitCompatSeams::TryGetOptionalCategoryQueryParam(strRequestTarget, strCategory, strError)) {
+			SendTextResponse(rData.pSocket, 400, "Bad Request", "Fails.");
+			return;
+		}
 		SendJsonResponse(rData.pSocket, 200, "OK", BuildQBitTorrentsJson(strCategory));
 		return;
 	}

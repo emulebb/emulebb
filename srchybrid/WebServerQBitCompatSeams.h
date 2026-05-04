@@ -77,6 +77,26 @@ inline bool TryGetQBitRequestPathLower(const std::string &rRequestTarget, std::s
 	return true;
 }
 
+/**
+ * @brief Parses the optional qBittorrent category filter without widening
+ * malformed requests to an unfiltered transfer list.
+ */
+inline bool TryGetOptionalCategoryQueryParam(
+	const std::string &rRequestTarget,
+	std::string &rCategory,
+	std::string &rErrorMessage)
+{
+	rCategory.clear();
+	std::map<std::string, std::string> query;
+	if (!WebServerJsonSeams::TryParseQueryString(rRequestTarget, query, rErrorMessage))
+		return false;
+	const auto it = query.find("category");
+	if (it == query.end())
+		return true;
+	rCategory = it->second;
+	return true;
+}
+
 inline const std::vector<SQBitRouteSpec> &GetQBitRouteSpecs()
 {
 	static const std::vector<SQBitRouteSpec> specs = {
