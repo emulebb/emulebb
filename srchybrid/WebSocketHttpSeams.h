@@ -162,4 +162,21 @@ inline bool TryParseContentLengthHeaders(
 
 	return true;
 }
+
+/**
+ * @brief Reports whether the buffered bytes contain the complete request body
+ * promised by the already-parsed header.
+ */
+inline bool IsCompleteHttpRequestBuffered(
+	const size_t nBufferedBytes,
+	const uint32_t uHeaderLength,
+	const uint32_t uContentLength)
+{
+	if (uHeaderLength == 0 || nBufferedBytes < uHeaderLength)
+		return false;
+	if (uContentLength == 0)
+		return true;
+
+	return static_cast<uint64_t>(uHeaderLength) + static_cast<uint64_t>(uContentLength) <= nBufferedBytes;
+}
 }

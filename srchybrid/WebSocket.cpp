@@ -208,7 +208,7 @@ void CWebSocket::OnReceived(const void *pData, DWORD dwSize, const in_addr inad)
 	if (m_dwHttpHeaderLen && !m_bCanRecv && !m_dwHttpContentLen)
 		m_dwHttpContentLen = m_dwRecv - m_dwHttpHeaderLen; // of course
 
-	if (m_dwHttpHeaderLen && m_dwHttpContentLen < m_dwRecv && (!m_dwHttpContentLen || (m_dwHttpHeaderLen + m_dwHttpContentLen <= m_dwRecv))) {
+	if (WebSocketHttpSeams::IsCompleteHttpRequestBuffered(m_dwRecv, m_dwHttpHeaderLen, m_dwHttpContentLen)) {
 		OnRequestReceived(m_pBuf, m_dwHttpHeaderLen, m_pBuf + m_dwHttpHeaderLen, m_dwHttpContentLen, inad);
 
 		if (m_bCanRecv && (m_dwRecv > m_dwHttpHeaderLen + m_dwHttpContentLen)) {
