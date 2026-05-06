@@ -103,11 +103,12 @@ void SendXmlResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReaso
 	CStringA strHeader;
 	strHeader.Format(
 		"HTTP/1.1 %d %s\r\n"
-		"Content-Type: application/xml; charset=utf-8\r\n"
+		"%s"
 		"Cache-Control: no-store\r\n"
 		"Content-Length: %u\r\n\r\n",
 		iStatusCode,
 		pszReason != NULL ? pszReason : "OK",
+		WebServerArrCompatSeams::kTorznabXmlContentTypeHeader,
 		static_cast<UINT>(rBody.size()));
 	pSocket->SendData(strHeader, strHeader.GetLength());
 	if (!rBody.empty())

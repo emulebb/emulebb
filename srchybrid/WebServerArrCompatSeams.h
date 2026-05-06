@@ -21,6 +21,7 @@ static const unsigned kMaxTorznabSeason = 9999;
 static const unsigned kMaxTorznabEpisode = 9999;
 static const unsigned kMaxTorznabYear = 9999;
 static const int kTorznabParseErrorHttpStatus = 400;
+static const char kTorznabXmlContentTypeHeader[] = "Content-Type: application/xml; charset=utf-8\r\n";
 
 /**
  * @brief Identifies the coarse media family used by the Torznab bridge.

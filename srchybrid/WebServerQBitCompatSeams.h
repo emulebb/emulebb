@@ -13,6 +13,12 @@
  */
 namespace WebServerQBitCompatSeams
 {
+static const char kQBitTextContentTypeHeader[] = "Content-Type: text/plain; charset=utf-8\r\n";
+static const char kQBitJsonContentTypeHeader[] = "Content-Type: application/json; charset=utf-8\r\n";
+static const char kQBitSuccessBody[] = "Ok.";
+static const char kQBitFailureBody[] = "Fails.";
+static const char kQBitNotFoundBody[] = "Not found";
+
 /**
  * @brief Carries the parsed qBittorrent torrent-add request fields.
  */
