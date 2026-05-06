@@ -262,19 +262,21 @@ inline bool IsApiRequestTarget(const std::string &rRequestTarget)
 }
 
 /**
- * @brief Parses a query string into unique decoded parameters.
+ * @brief Parses URL-encoded key/value pairs into unique decoded parameters.
  */
-inline bool TryParseQueryString(const std::string &rRequestTarget, std::map<std::string, std::string> &rQuery, std::string &rErrorMessage)
+inline bool TryParseUrlEncodedFields(
+	const std::string &rFields,
+	std::map<std::string, std::string> &rFieldsOut,
+	std::string &rErrorMessage,
+	const char *pszDuplicatePrefix,
+	const char *pszEmptyNameMessage = NULL)
 {
-	rQuery.clear();
-	const std::string::size_type uQuery = rRequestTarget.find('?');
-	if (uQuery == std::string::npos || uQuery + 1 >= rRequestTarget.size())
-		return true;
+	rFieldsOut.clear();
 
-	size_t uPos = uQuery + 1;
-	while (uPos <= rRequestTarget.size()) {
-		const std::string::size_type uAmp = rRequestTarget.find('&', uPos);
-		const std::string token = rRequestTarget.substr(
+	size_t uPos = 0;
+	while (uPos <= rFields.size()) {
+		const std::string::size_type uAmp = rFields.find('&', uPos);
+		const std::string token = rFields.substr(
 			uPos,
 			uAmp == std::string::npos ? std::string::npos : (uAmp - uPos));
 		if (!token.empty()) {
@@ -285,11 +287,15 @@ inline bool TryParseQueryString(const std::string &rRequestTarget, std::map<std:
 				return false;
 			if (uEquals != std::string::npos && !TryUrlDecodeUtf8(token.substr(uEquals + 1), strValue, rErrorMessage))
 				return false;
-			if (rQuery.find(strName) != rQuery.end()) {
-				rErrorMessage = "duplicate query parameter: " + strName;
+			if (strName.empty() && pszEmptyNameMessage != NULL) {
+				rErrorMessage = pszEmptyNameMessage;
 				return false;
 			}
-			rQuery[strName] = strValue;
+			if (rFieldsOut.find(strName) != rFieldsOut.end()) {
+				rErrorMessage = std::string(pszDuplicatePrefix != NULL ? pszDuplicatePrefix : "duplicate field: ") + strName;
+				return false;
+			}
+			rFieldsOut[strName] = strValue;
 		}
 
 		if (uAmp == std::string::npos)
@@ -298,6 +304,23 @@ inline bool TryParseQueryString(const std::string &rRequestTarget, std::map<std:
 	}
 
 	return true;
+}
+
+/**
+ * @brief Parses a query string into unique decoded parameters.
+ */
+inline bool TryParseQueryString(const std::string &rRequestTarget, std::map<std::string, std::string> &rQuery, std::string &rErrorMessage)
+{
+	rQuery.clear();
+	const std::string::size_type uQuery = rRequestTarget.find('?');
+	if (uQuery == std::string::npos || uQuery + 1 >= rRequestTarget.size())
+		return true;
+
+	return TryParseUrlEncodedFields(
+		rRequestTarget.substr(uQuery + 1),
+		rQuery,
+		rErrorMessage,
+		"duplicate query parameter: ");
 }
 
 /**

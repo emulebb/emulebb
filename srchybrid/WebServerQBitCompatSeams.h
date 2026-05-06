@@ -134,37 +134,12 @@ inline const SQBitRouteSpec *FindQBitRouteSpec(const std::string &rMethod, const
  */
 inline bool TryParseFormBody(const std::string &rBody, std::map<std::string, std::string> &rForm, std::string &rErrorMessage)
 {
-	rForm.clear();
-	size_t uPos = 0;
-	while (uPos <= rBody.size()) {
-		const std::string::size_type uAmp = rBody.find('&', uPos);
-		const std::string token = rBody.substr(
-			uPos,
-			uAmp == std::string::npos ? std::string::npos : (uAmp - uPos));
-		if (!token.empty()) {
-			const std::string::size_type uEquals = token.find('=');
-			std::string strName;
-			std::string strValue;
-			if (!WebServerJsonSeams::TryUrlDecodeUtf8(token.substr(0, uEquals), strName, rErrorMessage))
-				return false;
-			if (uEquals != std::string::npos && !WebServerJsonSeams::TryUrlDecodeUtf8(token.substr(uEquals + 1), strValue, rErrorMessage))
-				return false;
-			if (strName.empty()) {
-				rErrorMessage = "form field name must not be empty";
-				return false;
-			}
-			if (rForm.find(strName) != rForm.end()) {
-				rErrorMessage = "duplicate form field: " + strName;
-				return false;
-			}
-			rForm[strName] = strValue;
-		}
-
-		if (uAmp == std::string::npos)
-			break;
-		uPos = uAmp + 1;
-	}
-	return true;
+	return WebServerJsonSeams::TryParseUrlEncodedFields(
+		rBody,
+		rForm,
+		rErrorMessage,
+		"duplicate form field: ",
+		"form field name must not be empty");
 }
 
 inline bool TryGetRequiredNonEmptyFormField(const std::map<std::string, std::string> &rForm, const char *pszFieldName, std::string &rValue, std::string &rErrorMessage)
