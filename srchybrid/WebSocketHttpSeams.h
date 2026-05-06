@@ -91,4 +91,39 @@ inline EContentLengthHeader ParseContentLengthHeaderLine(const std::string &rLin
 		? EContentLengthHeader::Valid
 		: EContentLengthHeader::Invalid;
 }
+
+/**
+ * @brief Scans one complete HTTP header block for a single valid
+ * Content-Length field.
+ */
+inline bool TryParseContentLengthHeaders(
+	const std::string &rHeader,
+	bool &rbHasContentLength,
+	uint32_t &ruContentLength)
+{
+	rbHasContentLength = false;
+	ruContentLength = 0;
+
+	for (std::string::size_type uPos = 0; uPos < rHeader.size();) {
+		const std::string::size_type uLineEnd = rHeader.find('\n', uPos);
+		const std::string strLine(rHeader.substr(uPos, uLineEnd == std::string::npos ? std::string::npos : uLineEnd - uPos));
+
+		uint32_t uParsedContentLength = 0;
+		const EContentLengthHeader eContentLength = ParseContentLengthHeaderLine(strLine, uParsedContentLength);
+		if (eContentLength == EContentLengthHeader::Invalid)
+			return false;
+		if (eContentLength == EContentLengthHeader::Valid) {
+			if (rbHasContentLength)
+				return false;
+			rbHasContentLength = true;
+			ruContentLength = uParsedContentLength;
+		}
+
+		if (uLineEnd == std::string::npos)
+			break;
+		uPos = uLineEnd + 1;
+	}
+
+	return true;
+}
 }

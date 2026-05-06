@@ -191,28 +191,17 @@ void CWebSocket::OnReceived(const void *pData, DWORD dwSize, const in_addr inad)
 					// Now write the message's position into two first DWORDs of the buffer
 					m_dwHttpHeaderLen = dwPos + 1;
 
-					// try to find now the 'Content-Length' header
-					for (dwPos = 0; dwPos < m_dwHttpHeaderLen;) {
-						// Elandal: pPtr is actually a char*, not a void*
-						const char *pPtr = (char*)memchr(&m_pBuf[dwPos], '\n', m_dwHttpHeaderLen - dwPos);
-						if (!pPtr)
-							break;
-						// Elandal: And thus now the pointer subtraction works as it should
-						DWORD dwNextPos = (DWORD)(pPtr - m_pBuf);
-
-						const std::string strHeaderLine(&m_pBuf[dwPos], dwNextPos - dwPos);
-						uint32_t uContentLength = 0;
-						const WebSocketHttpSeams::EContentLengthHeader eContentLength = WebSocketHttpSeams::ParseContentLengthHeaderLine(strHeaderLine, uContentLength);
-						if (eContentLength == WebSocketHttpSeams::EContentLengthHeader::Invalid) {
-							m_bValid = false;
-							return;
-						}
-						if (eContentLength == WebSocketHttpSeams::EContentLengthHeader::Valid) {
-							m_dwHttpContentLen = static_cast<DWORD>(uContentLength);
-							break;
-						}
-						dwPos = dwNextPos + 1;
+					bool bHasContentLength = false;
+					uint32_t uContentLength = 0;
+					if (!WebSocketHttpSeams::TryParseContentLengthHeaders(
+							std::string(m_pBuf, m_dwHttpHeaderLen),
+							bHasContentLength,
+							uContentLength)) {
+						m_bValid = false;
+						return;
 					}
+					if (bHasContentLength)
+						m_dwHttpContentLen = static_cast<DWORD>(uContentLength);
 
 					break;
 				}
