@@ -614,6 +614,19 @@ inline const SApiRouteSpec *FindRouteSpec(const std::string &rMethodUpper, const
 	return NULL;
 }
 
+/**
+ * @brief Finds a route by path without considering its HTTP method.
+ */
+inline const SApiRouteSpec *FindRouteSpecForAnyMethod(const std::string &rApiPath)
+{
+	const std::vector<SApiRouteSpec> &specs = GetApiRouteSpecs();
+	for (size_t i = 0; i < specs.size(); ++i) {
+		if (DoesPathMatchTemplate(rApiPath, specs[i].pszPathTemplate))
+			return &specs[i];
+	}
+	return NULL;
+}
+
 inline std::string ToUpperAscii(const std::string &rValue)
 {
 	std::string result(rValue);
@@ -926,6 +939,8 @@ inline int GetHttpStatusForError(const std::string &rCode)
 		return 400;
 	if (rCode == "UNAUTHORIZED")
 		return 401;
+	if (rCode == "METHOD_NOT_ALLOWED")
+		return 405;
 	if (rCode == "NOT_FOUND")
 		return 404;
 	if (rCode == "INVALID_STATE")
@@ -1022,6 +1037,11 @@ inline bool TryBuildRoute(
 	const std::string strApiPath(BuildRoutePathForSpec(route));
 	const SApiRouteSpec *const pRouteSpec = FindRouteSpec(rMethod, strApiPath);
 	if (pRouteSpec == NULL) {
+		if (FindRouteSpecForAnyMethod(strApiPath) != NULL) {
+			rErrorCode = "METHOD_NOT_ALLOWED";
+			rErrorMessage = "HTTP method is not allowed for this API route";
+			return false;
+		}
 		rErrorCode = "NOT_FOUND";
 		rErrorMessage = "API route not found";
 		return false;
