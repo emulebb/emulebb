@@ -182,32 +182,27 @@ void CWebSocket::OnReceived(const void *pData, DWORD dwSize, const in_addr inad)
 	}
 	// check if we have all that we want
 	if (!m_dwHttpHeaderLen) {
-		// try to find it
-		bool bPrevEndl = false;
-		for (DWORD dwPos = 0; dwPos < m_dwRecv; ++dwPos)
-			if ('\n' == m_pBuf[dwPos]) {
-				if (bPrevEndl) {
-					// We just found the end of the http header
-					// Now write the message's position into two first DWORDs of the buffer
-					m_dwHttpHeaderLen = dwPos + 1;
+		uint32_t uHttpHeaderLen = 0;
+		const WebSocketHttpSeams::EHttpHeaderScanResult eHeaderScan = WebSocketHttpSeams::ScanHttpHeaderLength(m_pBuf, m_dwRecv, uHttpHeaderLen);
+		if (eHeaderScan == WebSocketHttpSeams::EHttpHeaderScanResult::TooLarge) {
+			m_bValid = false;
+			return;
+		}
+		if (eHeaderScan == WebSocketHttpSeams::EHttpHeaderScanResult::Complete) {
+			m_dwHttpHeaderLen = static_cast<DWORD>(uHttpHeaderLen);
 
-					bool bHasContentLength = false;
-					uint32_t uContentLength = 0;
-					if (!WebSocketHttpSeams::TryParseContentLengthHeaders(
-							std::string(m_pBuf, m_dwHttpHeaderLen),
-							bHasContentLength,
-							uContentLength)) {
-						m_bValid = false;
-						return;
-					}
-					if (bHasContentLength)
-						m_dwHttpContentLen = static_cast<DWORD>(uContentLength);
-
-					break;
-				}
-				bPrevEndl = true;
-			} else if ('\r' != m_pBuf[dwPos])
-				bPrevEndl = false;
+			bool bHasContentLength = false;
+			uint32_t uContentLength = 0;
+			if (!WebSocketHttpSeams::TryParseContentLengthHeaders(
+					std::string(m_pBuf, m_dwHttpHeaderLen),
+					bHasContentLength,
+					uContentLength)) {
+				m_bValid = false;
+				return;
+			}
+			if (bHasContentLength)
+				m_dwHttpContentLen = static_cast<DWORD>(uContentLength);
+		}
 
 	}
 	if (m_dwHttpHeaderLen && !m_bCanRecv && !m_dwHttpContentLen)

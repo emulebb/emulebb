@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 #include <string>
 
 #include "WebServerJsonSeams.h"
@@ -12,6 +13,14 @@
 namespace WebSocketHttpSeams
 {
 static const uint64_t kMaxHttpContentLength = 16ui64 * 1024ui64 * 1024ui64;
+static const uint64_t kMaxHttpHeaderLength = 64ui64 * 1024ui64;
+
+enum class EHttpHeaderScanResult
+{
+	Incomplete,
+	Complete,
+	TooLarge
+};
 
 enum class EContentLengthHeader
 {
@@ -52,6 +61,33 @@ inline bool TryParseRequestLine(const std::string &rHeader, std::string &rMethod
 	rMethod = strLine.substr(0, uFirstSpace);
 	rRequestTarget = strLine.substr(uFirstSpace + 1, uSecondSpace - uFirstSpace - 1);
 	return !rMethod.empty() && !rRequestTarget.empty();
+}
+
+/**
+ * @brief Scans the receive buffer for one complete HTTP header without
+ * allowing unbounded pre-header growth.
+ */
+inline EHttpHeaderScanResult ScanHttpHeaderLength(const char *pBuffer, const size_t nBufferSize, uint32_t &ruHeaderLength)
+{
+	ruHeaderLength = 0;
+	if (pBuffer == NULL)
+		return nBufferSize == 0 ? EHttpHeaderScanResult::Incomplete : EHttpHeaderScanResult::TooLarge;
+
+	bool bPrevEndl = false;
+	for (size_t uPos = 0; uPos < nBufferSize; ++uPos) {
+		if ('\n' == pBuffer[uPos]) {
+			if (bPrevEndl) {
+				ruHeaderLength = static_cast<uint32_t>(uPos + 1);
+				return EHttpHeaderScanResult::Complete;
+			}
+			bPrevEndl = true;
+		} else if ('\r' != pBuffer[uPos])
+			bPrevEndl = false;
+	}
+
+	return nBufferSize > kMaxHttpHeaderLength
+		? EHttpHeaderScanResult::TooLarge
+		: EHttpHeaderScanResult::Incomplete;
 }
 
 /**
