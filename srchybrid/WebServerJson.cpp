@@ -2318,6 +2318,13 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		CString strFilePath;
 		if (!TryGetPathParam(params.contains("path") ? params["path"] : json(), "path", strFilePath, rError))
 			return json();
+		strFilePath = PathHelpers::CanonicalizePath(strFilePath);
+		const PathHelpers::ParsedPathRoot fileRoot(PathHelpers::ParsePathRoot(strFilePath));
+		if (!fileRoot.bAbsolute) {
+			rError.strCode = "INVALID_ARGUMENT";
+			rError.strMessage = _T("path must point to a file inside a shareable directory");
+			return json();
+		}
 
 		const int iSlash = strFilePath.ReverseFind(_T('\\'));
 		const CString strDirectory = iSlash >= 0 ? strFilePath.Left(iSlash) : CString();
