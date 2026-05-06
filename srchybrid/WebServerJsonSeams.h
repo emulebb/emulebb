@@ -335,7 +335,9 @@ inline std::string GetRequestPath(const std::string &rRequestTarget)
 inline bool IsApiRequestTarget(const std::string &rRequestTarget)
 {
 	const std::string strPathLower(ToLowerAscii(GetRequestPath(rRequestTarget)));
-	return strPathLower == "/api/v1" || strPathLower.rfind("/api/v1/", 0) == 0;
+	return strPathLower == "/api/v1"
+		|| strPathLower.rfind("/api/v1/", 0) == 0
+		|| strPathLower.rfind("/api/v1%", 0) == 0;
 }
 
 /**
@@ -457,6 +459,10 @@ inline bool TrySplitPathSegments(const std::string &rPath, std::vector<std::stri
 			std::string decoded;
 			if (!TryUrlDecodeUtf8(token, decoded, rErrorMessage))
 				return false;
+			if (decoded.find('/') != std::string::npos || decoded.find('\\') != std::string::npos) {
+				rErrorMessage = "path segment must not contain encoded slash";
+				return false;
+			}
 			rSegments.push_back(decoded);
 		}
 
