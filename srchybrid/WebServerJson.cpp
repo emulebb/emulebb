@@ -3401,6 +3401,21 @@ json ExecuteUiThreadCommand(const json &rRequest, SPipeApiError &rError)
 }
 }
 
+std::string WebServerJson::ToStdString(const CStringA &rText)
+{
+	return StdStringFromCStringA(rText);
+}
+
+std::string WebServerJson::ToStdUtf8(const CString &rText)
+{
+	return StdUtf8FromCString(rText);
+}
+
+CString WebServerJson::FromStdUtf8(const std::string &rText)
+{
+	return CStringFromStdUtf8(rText);
+}
+
 void WebServerJson::RunDispatchedCommand(void *pContext)
 {
 	SRestDispatchContext *const pDispatch = reinterpret_cast<SRestDispatchContext*>(pContext);

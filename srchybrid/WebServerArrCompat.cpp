@@ -26,7 +26,6 @@
 
 #include "Log.h"
 #include "Preferences.h"
-#include "StringConversion.h"
 #include "WebServerArrCompatSeams.h"
 #include "WebServerJson.h"
 #include "WebSocket.h"
@@ -83,17 +82,6 @@ public:
 private:
 	bool m_bAcquired;
 };
-
-std::string StdStringFromCStringA(const CStringA &rText)
-{
-	return std::string((LPCSTR)rText, rText.GetLength());
-}
-
-std::string StdUtf8FromCString(const CString &rText)
-{
-	const CStringA utf8(StrToUtf8(rText));
-	return std::string((LPCSTR)utf8, utf8.GetLength());
-}
 
 void SendXmlResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, const std::string &rBody)
 {
@@ -385,15 +373,15 @@ bool HasValidTorznabApiKey(
 
 	const auto apiKeyIt = rNormalizedQuery.find("apikey");
 	if (apiKeyIt != rNormalizedQuery.end())
-		return apiKeyIt->second == StdUtf8FromCString(thePrefs.GetWSApiKey());
+		return apiKeyIt->second == WebServerJson::ToStdUtf8(thePrefs.GetWSApiKey());
 
-	return !rData.strApiKey.IsEmpty() && OptUtf8ToStr(rData.strApiKey) == thePrefs.GetWSApiKey();
+	return !rData.strApiKey.IsEmpty() && WebServerJson::FromStdUtf8(WebServerJson::ToStdString(rData.strApiKey)) == thePrefs.GetWSApiKey();
 }
 }
 
 bool WebServerArrCompat::IsCompatRequest(const ThreadData &rData)
 {
-	return WebServerArrCompatSeams::IsArrCompatRequestTarget(StdStringFromCStringA(rData.strRequestTarget));
+	return WebServerArrCompatSeams::IsArrCompatRequestTarget(WebServerJson::ToStdString(rData.strRequestTarget));
 }
 
 void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
@@ -401,7 +389,7 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 	if (rData.pSocket == NULL)
 		return;
 
-	const std::string strRequestTarget(StdStringFromCStringA(rData.strRequestTarget));
+	const std::string strRequestTarget(WebServerJson::ToStdString(rData.strRequestTarget));
 	std::string strPath;
 	std::string strError;
 	if (!WebServerArrCompatSeams::TryGetArrCompatRequestPathLower(strRequestTarget, strPath, strError)) {
@@ -412,7 +400,7 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 		SendXmlResponse(rData.pSocket, 404, "Not Found", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
 		return;
 	}
-	if (StdStringFromCStringA(rData.strMethod) != "GET") {
+	if (WebServerJson::ToStdString(rData.strMethod) != "GET") {
 		SendXmlResponse(rData.pSocket, 404, "Not Found", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
 		return;
 	}

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "WebServer.h"
 
 #pragma warning(push, 0)
@@ -8,6 +10,21 @@
 
 namespace WebServerJson
 {
+/**
+ * @brief Converts a narrow CString into a std::string without re-encoding.
+ */
+std::string ToStdString(const CStringA &rText);
+
+/**
+ * @brief Converts CString text to UTF-8 for REST and compatibility payloads.
+ */
+std::string ToStdUtf8(const CString &rText);
+
+/**
+ * @brief Converts UTF-8 REST or compatibility text into a Unicode CString.
+ */
+CString FromStdUtf8(const std::string &rText);
+
 /**
  * @brief Reports whether the current request target belongs to the REST surface.
  */

@@ -29,7 +29,6 @@
 #include "DownloadQueue.h"
 #include "PartFile.h"
 #include "Preferences.h"
-#include "StringConversion.h"
 #include "WebServerJson.h"
 #include "WebServerJsonSeams.h"
 #include "WebServerQBitCompatSeams.h"
@@ -39,17 +38,6 @@ using json = nlohmann::json;
 
 namespace
 {
-std::string StdStringFromCStringA(const CStringA &rText)
-{
-	return std::string((LPCSTR)rText, rText.GetLength());
-}
-
-std::string StdUtf8FromCString(const CString &rText)
-{
-	const CStringA utf8(StrToUtf8(rText));
-	return std::string((LPCSTR)utf8, utf8.GetLength());
-}
-
 CStringA JsonDump(const json &rPayload)
 {
 	const std::string text(rPayload.dump());
@@ -131,7 +119,7 @@ std::string GetSessionId()
 
 bool HasValidSessionCookie(const CStringA &rCookie)
 {
-	return WebServerQBitCompatSeams::HasCookiePair(StdStringFromCStringA(rCookie), "SID", GetSessionId());
+	return WebServerQBitCompatSeams::HasCookiePair(WebServerJson::ToStdString(rCookie), "SID", GetSessionId());
 }
 
 bool ExecuteBridgeCommand(const json &rCommand, json &rResult, CString &rErrorMessage)
@@ -210,15 +198,15 @@ json BuildQBitTorrentJson(const CPartFile &rPartFile)
 	const std::string strState = rPartFile.GetStatus() == PS_PAUSED || rPartFile.IsStopped() ? "pausedDL" : "downloading";
 	return json{
 		{"hash", HexEncode(rPartFile.GetFileHash(), MDX_DIGEST_SIZE)},
-		{"name", StdUtf8FromCString(strName)},
+		{"name", WebServerJson::ToStdUtf8(strName)},
 		{"size", uSize},
 		{"progress", uSize > 0 ? static_cast<double>(uCompleted) / static_cast<double>(uSize) : 0.0},
 		{"eta", -1},
 		{"state", strState},
-		{"label", StdUtf8FromCString(strCategory)},
-		{"category", StdUtf8FromCString(strCategory)},
+		{"label", WebServerJson::ToStdUtf8(strCategory)},
+		{"category", WebServerJson::ToStdUtf8(strCategory)},
 		{"save_path", ""},
-		{"content_path", StdUtf8FromCString(strName)},
+		{"content_path", WebServerJson::ToStdUtf8(strName)},
 		{"ratio", 0},
 		{"ratio_limit", 0},
 		{"seeding_time", 0},
@@ -246,7 +234,7 @@ json BuildQBitTorrentsJson(const std::string &rCategory)
 		CPartFile *const pPartFile = theApp.downloadqueue->GetFileNext(pos);
 		if (pPartFile == NULL)
 			break;
-		if (!rCategory.empty() && StdUtf8FromCString(GetPartFileCategoryName(pPartFile->GetCategory())) != rCategory)
+		if (!rCategory.empty() && WebServerJson::ToStdUtf8(GetPartFileCategoryName(pPartFile->GetCategory())) != rCategory)
 			continue;
 		torrents.push_back(BuildQBitTorrentJson(*pPartFile));
 	}
@@ -275,12 +263,12 @@ void HandleLogin(const ThreadData &rData)
 
 	std::map<std::string, std::string> form;
 	std::string strError;
-	if (!WebServerQBitCompatSeams::TryParseFormBody(StdStringFromCStringA(rData.strRequestBody), form, strError)) {
+	if (!WebServerQBitCompatSeams::TryParseFormBody(WebServerJson::ToStdString(rData.strRequestBody), form, strError)) {
 		SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 		return;
 	}
 
-	if (!WebServerQBitCompatSeams::IsValidLoginForm(form, "emule", StdUtf8FromCString(thePrefs.GetWSApiKey()))) {
+	if (!WebServerQBitCompatSeams::IsValidLoginForm(form, "emule", WebServerJson::ToStdUtf8(thePrefs.GetWSApiKey()))) {
 		SendTextResponse(rData.pSocket, 200, "OK", WebServerQBitCompatSeams::kQBitFailureBody);
 		return;
 	}
@@ -294,7 +282,7 @@ void HandleTorrentAdd(const ThreadData &rData)
 {
 	WebServerQBitCompatSeams::SQBitTorrentAddRequest request;
 	std::string strError;
-	if (!WebServerQBitCompatSeams::TryParseTorrentAddRequest(StdStringFromCStringA(rData.strRequestBody), request, strError)) {
+	if (!WebServerQBitCompatSeams::TryParseTorrentAddRequest(WebServerJson::ToStdString(rData.strRequestBody), request, strError)) {
 		SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 		return;
 	}
@@ -333,7 +321,7 @@ void HandleTorrentDelete(const ThreadData &rData)
 {
 	WebServerQBitCompatSeams::SQBitHashMutationRequest request;
 	std::string strError;
-	if (!WebServerQBitCompatSeams::TryParseDeleteRequest(StdStringFromCStringA(rData.strRequestBody), request, strError)) {
+	if (!WebServerQBitCompatSeams::TryParseDeleteRequest(WebServerJson::ToStdString(rData.strRequestBody), request, strError)) {
 		SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 		return;
 	}
@@ -350,7 +338,7 @@ void HandleTorrentSetCategory(const ThreadData &rData)
 {
 	WebServerQBitCompatSeams::SQBitHashMutationRequest request;
 	std::string strError;
-	if (!WebServerQBitCompatSeams::TryParseSetCategoryRequest(StdStringFromCStringA(rData.strRequestBody), request, strError)) {
+	if (!WebServerQBitCompatSeams::TryParseSetCategoryRequest(WebServerJson::ToStdString(rData.strRequestBody), request, strError)) {
 		SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 		return;
 	}
@@ -375,7 +363,7 @@ void HandleTorrentStateMutation(const ThreadData &rData, const char *pszCommand)
 {
 	WebServerQBitCompatSeams::SQBitHashMutationRequest request;
 	std::string strError;
-	if (!WebServerQBitCompatSeams::TryParseHashesOnlyRequest(StdStringFromCStringA(rData.strRequestBody), request, strError)) {
+	if (!WebServerQBitCompatSeams::TryParseHashesOnlyRequest(WebServerJson::ToStdString(rData.strRequestBody), request, strError)) {
 		SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 		return;
 	}
@@ -391,7 +379,7 @@ void HandleTorrentStateMutation(const ThreadData &rData, const char *pszCommand)
 
 bool WebServerQBitCompat::IsCompatRequest(const ThreadData &rData)
 {
-	return WebServerQBitCompatSeams::IsQBitRequestTarget(StdStringFromCStringA(rData.strRequestTarget));
+	return WebServerQBitCompatSeams::IsQBitRequestTarget(WebServerJson::ToStdString(rData.strRequestTarget));
 }
 
 void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
@@ -399,14 +387,14 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 	if (rData.pSocket == NULL)
 		return;
 
-	const std::string strRequestTarget(StdStringFromCStringA(rData.strRequestTarget));
+	const std::string strRequestTarget(WebServerJson::ToStdString(rData.strRequestTarget));
 	std::string strPath;
 	std::string strPathError;
 	if (!WebServerQBitCompatSeams::TryGetQBitRequestPathLower(strRequestTarget, strPath, strPathError)) {
 		SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 		return;
 	}
-	const std::string strMethodRaw(StdStringFromCStringA(rData.strMethod));
+	const std::string strMethodRaw(WebServerJson::ToStdString(rData.strMethod));
 	if (strMethodRaw != "GET" && strMethodRaw != "POST") {
 		SendTextResponse(rData.pSocket, 404, "Not Found", WebServerQBitCompatSeams::kQBitNotFoundBody);
 		return;
@@ -467,7 +455,7 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		std::map<std::string, std::string> form;
 		std::string strError;
 		std::string strCategory;
-		if (!WebServerQBitCompatSeams::TryParseFormBody(StdStringFromCStringA(rData.strRequestBody), form, strError)
+		if (!WebServerQBitCompatSeams::TryParseFormBody(WebServerJson::ToStdString(rData.strRequestBody), form, strError)
 			|| !WebServerQBitCompatSeams::TryGetRequiredNonEmptyFormField(form, "category", strCategory, strError)) {
 			SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 			return;
