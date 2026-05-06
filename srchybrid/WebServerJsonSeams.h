@@ -46,6 +46,22 @@ struct SApiRouteSpec
 	const char *pszQueryFields;
 };
 
+/**
+ * @brief Carries the native REST API-key authorization decision and stable
+ * error payload fields when authorization fails.
+ */
+struct SApiAuthResult
+{
+	bool bAllowed;
+	std::string strErrorCode;
+	std::string strErrorMessage;
+
+	SApiAuthResult()
+		: bAllowed(false)
+	{
+	}
+};
+
 inline std::string ToLowerAscii(const std::string &rValue)
 {
 	std::string result(rValue);
@@ -948,6 +964,29 @@ inline int GetHttpStatusForError(const std::string &rCode)
 	if (rCode == "EMULE_UNAVAILABLE")
 		return 503;
 	return 500;
+}
+
+/**
+ * @brief Validates the native REST API key without exposing whether a supplied
+ * non-empty key was merely wrong.
+ */
+inline SApiAuthResult ValidateApiKey(const std::string &rConfiguredApiKey, const std::string &rPresentedApiKey)
+{
+	SApiAuthResult result;
+	if (rConfiguredApiKey.empty()) {
+		result.strErrorCode = "EMULE_UNAVAILABLE";
+		result.strErrorMessage = "REST API key is not configured";
+		return result;
+	}
+
+	if (rPresentedApiKey.empty() || rPresentedApiKey != rConfiguredApiKey) {
+		result.strErrorCode = "UNAUTHORIZED";
+		result.strErrorMessage = "missing or invalid X-API-Key";
+		return result;
+	}
+
+	result.bAllowed = true;
+	return result;
 }
 
 /**

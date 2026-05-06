@@ -3314,13 +3314,6 @@ json BuildErrorEnvelope(LPCSTR pszCode, const CString &strMessage)
 		StdUtf8FromCString(strMessage));
 }
 
-bool HasValidApiKey(const ThreadData &rData)
-{
-	if (thePrefs.GetWSApiKey().IsEmpty() || rData.strApiKey.IsEmpty())
-		return false;
-	return OptUtf8ToStr(rData.strApiKey) == thePrefs.GetWSApiKey();
-}
-
 void SendJsonResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, const json &rPayload)
 {
 	if (pSocket == NULL)
@@ -3471,13 +3464,17 @@ void WebServerJson::ProcessRequest(const ThreadData &rData)
 	if (rData.pSocket == NULL)
 		return;
 
-	if (thePrefs.GetWSApiKey().IsEmpty()) {
-		SendJsonError(rData.pSocket, 503, "Service Unavailable", "EMULE_UNAVAILABLE", _T("REST API key is not configured"));
-		return;
-	}
-
-	if (!HasValidApiKey(rData)) {
-		SendJsonError(rData.pSocket, 401, "Unauthorized", "UNAUTHORIZED", _T("missing or invalid X-API-Key"));
+	const WebServerJsonSeams::SApiAuthResult auth = WebServerJsonSeams::ValidateApiKey(
+		StdUtf8FromCString(thePrefs.GetWSApiKey()),
+		StdStringFromCStringA(rData.strApiKey));
+	if (!auth.bAllowed) {
+		const int iStatus = WebServerJsonSeams::GetHttpStatusForError(auth.strErrorCode);
+		SendJsonError(
+			rData.pSocket,
+			iStatus,
+			GetHttpReasonPhrase(iStatus),
+			auth.strErrorCode.c_str(),
+			CStringFromStdUtf8(auth.strErrorMessage));
 		return;
 	}
 
