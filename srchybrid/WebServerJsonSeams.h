@@ -428,6 +428,36 @@ inline void SetInvalidArgument(std::string &rErrorCode, std::string &rErrorMessa
 }
 
 /**
+ * @brief Reports whether a native REST request body is declared as JSON.
+ */
+inline bool IsJsonContentType(const std::string &rContentType)
+{
+	const std::string strContentType(ToLowerAscii(TrimAsciiWhitespace(rContentType)));
+	if (strContentType.empty())
+		return false;
+
+	const std::string::size_type uSemicolon = strContentType.find(';');
+	const std::string strMediaType(TrimAsciiWhitespace(strContentType.substr(0, uSemicolon)));
+	return strMediaType == "application/json";
+}
+
+/**
+ * @brief Validates HTTP metadata before the body is parsed as native REST JSON.
+ */
+inline bool TryValidateRequestMetadata(
+	const std::string &rRequestBody,
+	const std::string &rContentType,
+	std::string &rErrorCode,
+	std::string &rErrorMessage)
+{
+	if (!rRequestBody.empty() && !IsJsonContentType(rContentType)) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "Content-Type must be application/json for JSON request bodies");
+		return false;
+	}
+	return true;
+}
+
+/**
  * @brief Returns the strict route table used before legacy command dispatch.
  */
 inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
@@ -436,7 +466,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"GET", "/app", "", ""},
 		{"GET", "/app/preferences", "", ""},
 		{"PATCH", "/app/preferences", "uploadLimitKiBps,downloadLimitKiBps,maxConnections,maxConnectionsPerFiveSeconds,maxSourcesPerFile,uploadClientDataRate,maxUploadSlots,queueSize,autoConnect,newAutoUp,newAutoDown,creditSystem,safeServerConnect,networkKademlia,networkEd2k", ""},
-		{"POST", "/app/shutdown", "", ""},
+		{"POST", "/app/shutdown", "confirmShutdown", ""},
 		{"GET", "/status", "", ""},
 		{"GET", "/stats", "", ""},
 		{"GET", "/snapshot", "", "limit"},
@@ -447,7 +477,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"DELETE", "/categories/{categoryId}", "", ""},
 		{"GET", "/transfers", "", "state,categoryId,offset,limit"},
 		{"POST", "/transfers", "link,links,categoryId,categoryName,paused", ""},
-		{"POST", "/transfers/operations/clear-completed", "", ""},
+		{"POST", "/transfers/operations/clear-completed", "confirmClearCompleted", ""},
 		{"GET", "/transfers/{hash}", "", ""},
 		{"PATCH", "/transfers/{hash}", "name,priority,categoryId,categoryName", ""},
 		{"DELETE", "/transfers/{hash}", "deleteFiles", ""},
@@ -506,7 +536,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/kad/operations/bootstrap", "address,port", ""},
 		{"POST", "/kad/operations/recheck-firewall", "", ""},
 		{"POST", "/searches", "query,method,type,minSizeBytes,maxSizeBytes,minAvailability,extension,clearExisting", ""},
-		{"DELETE", "/searches", "", ""},
+		{"DELETE", "/searches", "confirmDeleteAllSearches", ""},
 		{"GET", "/searches/{searchId}", "", ""},
 		{"DELETE", "/searches/{searchId}", "", ""},
 		{"POST", "/searches/{searchId}/results/{hash}/operations/download", "categoryId,categoryName,paused", ""},
@@ -646,6 +676,56 @@ inline bool ValidateCategorySelectorBody(const json &rBody, std::string &rErrorC
 	return true;
 }
 
+inline bool RequireBooleanField(
+	const json &rBody,
+	const char *pszFieldName,
+	const char *pszExpectedMessage,
+	std::string &rErrorCode,
+	std::string &rErrorMessage)
+{
+	if (pszFieldName == NULL || pszFieldName[0] == '\0')
+		return true;
+	if (!rBody.contains(pszFieldName) || !rBody[pszFieldName].is_boolean()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, pszExpectedMessage != NULL ? pszExpectedMessage : std::string(pszFieldName) + " must be a boolean");
+		return false;
+	}
+	return true;
+}
+
+inline bool RequireBooleanFieldTrue(
+	const json &rBody,
+	const char *pszFieldName,
+	const char *pszExpectedMessage,
+	std::string &rErrorCode,
+	std::string &rErrorMessage)
+{
+	if (!RequireBooleanField(rBody, pszFieldName, pszExpectedMessage, rErrorCode, rErrorMessage))
+		return false;
+	if (!rBody[pszFieldName].get<bool>()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, pszExpectedMessage != NULL ? pszExpectedMessage : std::string(pszFieldName) + " must be true");
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Applies explicit confirmation rules for destructive native REST routes.
+ */
+inline bool ValidateDestructiveConfirmationBody(const json &rBody, const SApiRouteSpec &rSpec, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	const std::string strMethod(rSpec.pszMethod != NULL ? rSpec.pszMethod : "");
+	const std::string strPath(rSpec.pszPathTemplate != NULL ? rSpec.pszPathTemplate : "");
+	if (strMethod == "DELETE" && (strPath == "/transfers/{hash}" || strPath == "/shared-files/{hash}"))
+		return RequireBooleanField(rBody, "deleteFiles", "deleteFiles must be an explicit boolean", rErrorCode, rErrorMessage);
+	if (strMethod == "POST" && strPath == "/app/shutdown")
+		return RequireBooleanFieldTrue(rBody, "confirmShutdown", "confirmShutdown must be true", rErrorCode, rErrorMessage);
+	if (strMethod == "POST" && strPath == "/transfers/operations/clear-completed")
+		return RequireBooleanFieldTrue(rBody, "confirmClearCompleted", "confirmClearCompleted must be true", rErrorCode, rErrorMessage);
+	if (strMethod == "DELETE" && strPath == "/searches")
+		return RequireBooleanFieldTrue(rBody, "confirmDeleteAllSearches", "confirmDeleteAllSearches must be true", rErrorCode, rErrorMessage);
+	return true;
+}
+
 inline bool ValidateTemplateParameter(
 	const std::string &rTemplateSegment,
 	const std::string &rValue,
@@ -714,6 +794,8 @@ inline bool ValidateRequestBodyFields(const json &rBody, const SApiRouteSpec &rS
 		|| std::string(rSpec.pszPathTemplate) == "/transfers/{hash}"
 		|| std::string(rSpec.pszPathTemplate) == "/searches/{searchId}/results/{hash}/operations/download"))
 		&& !ValidateCategorySelectorBody(rBody, rErrorCode, rErrorMessage))
+		return false;
+	if (!ValidateDestructiveConfirmationBody(rBody, rSpec, rErrorCode, rErrorMessage))
 		return false;
 	return true;
 }
@@ -840,7 +922,8 @@ inline bool TryBuildRoute(
 	const std::string &rRequestBody,
 	SApiRoute &rRoute,
 	std::string &rErrorCode,
-	std::string &rErrorMessage)
+	std::string &rErrorMessage,
+	const std::string &rContentType = "application/json")
 {
 	rRoute.params = json::object();
 	rErrorCode.clear();
@@ -864,6 +947,8 @@ inline bool TryBuildRoute(
 		rErrorCode = "INVALID_ARGUMENT";
 		return false;
 	}
+	if (!TryValidateRequestMetadata(rRequestBody, rContentType, rErrorCode, rErrorMessage))
+		return false;
 	json body;
 	if (!TryParseRequestBody(rRequestBody, body, rErrorMessage)) {
 		rErrorCode = "INVALID_ARGUMENT";

@@ -3492,7 +3492,8 @@ void WebServerJson::ProcessRequest(const ThreadData &rData)
 		StdStringFromCStringA(rData.strRequestBody),
 		route,
 		strRouteErrorCode,
-		strRouteErrorMessage))
+		strRouteErrorMessage,
+		StdStringFromCStringA(rData.strContentType)))
 	{
 		const int iStatus = WebServerJsonSeams::GetHttpStatusForError(strRouteErrorCode);
 		SendJsonError(

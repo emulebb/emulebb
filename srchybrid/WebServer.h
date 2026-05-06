@@ -244,6 +244,7 @@ typedef struct
 	CStringA		strMethod;
 	CStringA		strRequestTarget;
 	CStringA		strRequestBody;
+	CStringA		strContentType;
 	CStringA		strApiKey;
 	CStringA		strCookie;
 	void			*pThis;
