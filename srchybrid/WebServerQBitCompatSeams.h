@@ -285,15 +285,13 @@ inline bool TryBuildEd2kLinkFromMagnet(const std::string &rMagnet, std::string &
 		rErrorMessage = "magnet must contain xt, dn, and xl";
 		return false;
 	}
+	if (!WebServerJsonSeams::TryValidatePublicFileNameText(nameIt->second, "magnet display name", rErrorMessage))
+		return false;
 
 	const std::string strXtLower(WebServerJsonSeams::ToLowerAscii(xtIt->second));
 	const std::string strBtihPrefix("urn:btih:");
 	if (strXtLower.rfind(strBtihPrefix, 0) != 0 || !IsQBitWrappedEd2kBtih(strXtLower.substr(strBtihPrefix.size()))) {
 		rErrorMessage = "magnet btih does not carry an eD2K hash";
-		return false;
-	}
-	if (nameIt->second.empty()) {
-		rErrorMessage = "magnet display name must not be empty";
 		return false;
 	}
 	uint64_t ullSize = 0;

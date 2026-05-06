@@ -305,6 +305,11 @@ inline std::string BuildMagnetFromEd2k(const std::string &rEd2kHash, const std::
 	const std::string strBtih(BuildFakeBtihHash(rEd2kHash));
 	if (strBtih.empty())
 		return std::string();
+	if (ullSize == 0)
+		return std::string();
+	std::string strError;
+	if (!WebServerJsonSeams::TryValidatePublicFileNameText(rName, "name", strError))
+		return std::string();
 	std::ostringstream link;
 	link << "magnet:?xt=urn:btih:" << strBtih << "&dn=" << WebServerJsonSeams::UrlEncodeUtf8(rName) << "&xl=" << ullSize;
 	return link.str();

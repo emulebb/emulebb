@@ -19,6 +19,7 @@ using json = nlohmann::json;
 
 static const size_t kMaxSearchQueryLength = 160;
 static const size_t kMaxCategoryNameLength = 128;
+static const size_t kMaxPublicFileNameLength = 255;
 
 /**
  * @brief Carries one parsed REST route command together with the normalized
@@ -207,6 +208,33 @@ inline bool TryNormalizeCategoryNameText(
 	}
 	if (uWideCharacters > kMaxCategoryNameLength) {
 		rErrorMessage = strFieldName + " must be at most 128 characters";
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Validates a public file/display name before REST-adjacent link
+ * conversion emits it into an eD2K or magnet URL.
+ */
+inline bool TryValidatePublicFileNameText(
+	const std::string &rValue,
+	const char *pszFieldName,
+	std::string &rErrorMessage)
+{
+	const std::string strFieldName(pszFieldName != NULL && pszFieldName[0] != '\0' ? pszFieldName : "name");
+	if (rValue.empty()) {
+		rErrorMessage = strFieldName + " must not be empty";
+		return false;
+	}
+
+	size_t uWideCharacters = 0;
+	if (!TryMeasureStrictUtf8AsUtf16(rValue, uWideCharacters)) {
+		rErrorMessage = strFieldName + " must be valid UTF-8 without control characters";
+		return false;
+	}
+	if (uWideCharacters > kMaxPublicFileNameLength) {
+		rErrorMessage = strFieldName + " must be at most 255 characters";
 		return false;
 	}
 	return true;
