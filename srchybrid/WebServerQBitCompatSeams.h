@@ -154,6 +154,29 @@ inline bool TryGetRequiredNonEmptyFormField(const std::map<std::string, std::str
 }
 
 /**
+ * @brief Normalizes one qBittorrent category form field using the same
+ * category-name rules as native REST.
+ */
+inline bool TryNormalizeCategoryFormField(
+	const std::map<std::string, std::string> &rForm,
+	const char *pszFieldName,
+	const bool bRequired,
+	std::string &rCategory,
+	std::string &rErrorMessage)
+{
+	rCategory.clear();
+	const auto it = rForm.find(pszFieldName);
+	if (it == rForm.end()) {
+		if (!bRequired)
+			return true;
+		rErrorMessage = std::string(pszFieldName) + " form field is required";
+		return false;
+	}
+
+	return WebServerJsonSeams::TryNormalizeCategoryNameText(it->second, pszFieldName, !bRequired, rCategory, rErrorMessage);
+}
+
+/**
  * @brief Validates qBittorrent-compatible login form credentials.
  */
 inline bool IsValidLoginForm(
@@ -313,8 +336,8 @@ inline bool TryParseTorrentAddRequest(const std::string &rBody, SQBitTorrentAddR
 	if (!TryBuildEd2kLinkFromMagnet(strMagnet, rRequest.strUrl, rErrorMessage))
 		return false;
 
-	const auto categoryIt = form.find("category");
-	rRequest.strCategory = categoryIt == form.end() ? std::string() : categoryIt->second;
+	if (!TryNormalizeCategoryFormField(form, "category", false, rRequest.strCategory, rErrorMessage))
+		return false;
 
 	const auto stoppedIt = form.find("stopped");
 	const auto pausedIt = form.find("paused");
@@ -400,12 +423,8 @@ inline bool TryParseSetCategoryRequest(const std::string &rBody, SQBitHashMutati
 		return false;
 	if (!TryParseHashesFormField(form, rRequest.hashes, rErrorMessage))
 		return false;
-	const auto categoryIt = form.find("category");
-	if (categoryIt == form.end()) {
-		rErrorMessage = "category form field is required";
+	if (!TryNormalizeCategoryFormField(form, "category", true, rRequest.strCategory, rErrorMessage))
 		return false;
-	}
-	rRequest.strCategory = categoryIt->second;
 	return true;
 }
 

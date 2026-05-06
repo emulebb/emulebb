@@ -18,6 +18,7 @@ namespace WebServerJsonSeams
 using json = nlohmann::json;
 
 static const size_t kMaxSearchQueryLength = 160;
+static const size_t kMaxCategoryNameLength = 128;
 
 /**
  * @brief Carries one parsed REST route command together with the normalized
@@ -174,6 +175,38 @@ inline bool TryNormalizeSearchText(
 	}
 	if (uWideCharacters > kMaxSearchQueryLength) {
 		rErrorMessage = strFieldName + " must be at most 160 characters";
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Applies shared public category-name rules used by native REST and
+ * qBittorrent-compatible category selectors.
+ */
+inline bool TryNormalizeCategoryNameText(
+	const std::string &rValue,
+	const char *pszFieldName,
+	const bool bAllowEmpty,
+	std::string &rNormalized,
+	std::string &rErrorMessage)
+{
+	const std::string strFieldName(pszFieldName != NULL && pszFieldName[0] != '\0' ? pszFieldName : "categoryName");
+	rNormalized = TrimAsciiWhitespace(rValue);
+	if (rNormalized.empty()) {
+		if (bAllowEmpty)
+			return true;
+		rErrorMessage = strFieldName + " must not be empty";
+		return false;
+	}
+
+	size_t uWideCharacters = 0;
+	if (!TryMeasureStrictUtf8AsUtf16(rNormalized, uWideCharacters)) {
+		rErrorMessage = strFieldName + " must be valid UTF-8 without control characters";
+		return false;
+	}
+	if (uWideCharacters > kMaxCategoryNameLength) {
+		rErrorMessage = strFieldName + " must be at most 128 characters";
 		return false;
 	}
 	return true;
@@ -719,11 +752,24 @@ inline bool TryParseBoundedQueryUInt(
 /**
  * @brief Rejects ambiguous category selectors before command dispatch.
  */
-inline bool ValidateCategorySelectorBody(const json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+inline bool ValidateCategorySelectorBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
 {
 	if (rBody.contains("categoryId") && rBody.contains("categoryName")) {
 		SetInvalidArgument(rErrorCode, rErrorMessage, "categoryId and categoryName are mutually exclusive");
 		return false;
+	}
+	if (rBody.contains("categoryName")) {
+		if (!rBody["categoryName"].is_string()) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "categoryName must be a string");
+			return false;
+		}
+		std::string strCategoryName;
+		std::string strError;
+		if (!TryNormalizeCategoryNameText(rBody["categoryName"].get<std::string>(), "categoryName", false, strCategoryName, strError)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, strError);
+			return false;
+		}
+		rBody["categoryName"] = strCategoryName;
 	}
 	return true;
 }
@@ -833,7 +879,7 @@ inline bool ValidatePathParameters(const std::string &rApiPath, const SApiRouteS
 	return true;
 }
 
-inline bool ValidateRequestBodyFields(const json &rBody, const SApiRouteSpec &rSpec, std::string &rErrorCode, std::string &rErrorMessage)
+inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, std::string &rErrorCode, std::string &rErrorMessage)
 {
 	for (json::const_iterator it = rBody.begin(); it != rBody.end(); ++it) {
 		if (!HasToken(rSpec.pszBodyFields, it.key())) {
