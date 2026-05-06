@@ -38,6 +38,8 @@ using json = nlohmann::json;
 
 namespace
 {
+CCriticalSection g_qbitSessionIdLock;
+
 void SendTextResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, const CStringA &rBody, LPCSTR pszExtraHeaders = NULL)
 {
 	if (pSocket == NULL)
@@ -97,6 +99,7 @@ std::string HexEncode(const BYTE *pData, const size_t uSize)
 
 std::string GetSessionId()
 {
+	CSingleLock lock(&g_qbitSessionIdLock, TRUE);
 	static std::string s_strSessionId;
 	if (s_strSessionId.empty()) {
 		BYTE random[16] = {};
