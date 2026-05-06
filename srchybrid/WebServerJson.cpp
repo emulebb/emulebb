@@ -3309,13 +3309,9 @@ json BuildSuccessEnvelope(const json &rPayload)
 
 json BuildErrorEnvelope(LPCSTR pszCode, const CString &strMessage)
 {
-	return json{
-		{"error", json{
-			{"code", pszCode != NULL ? pszCode : "EMULE_ERROR"},
-			{"message", StdUtf8FromCString(strMessage)},
-			{"details", json::object()}
-		}}
-	};
+	return WebServerJsonSeams::BuildErrorEnvelopeJson(
+		pszCode != NULL ? pszCode : "",
+		StdUtf8FromCString(strMessage));
 }
 
 bool HasValidApiKey(const ThreadData &rData)

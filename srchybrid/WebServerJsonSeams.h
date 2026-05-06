@@ -936,6 +936,23 @@ inline int GetHttpStatusForError(const std::string &rCode)
 }
 
 /**
+ * @brief Builds the stable native REST JSON error envelope.
+ */
+inline json BuildErrorEnvelopeJson(
+	const std::string &rCode,
+	const std::string &rMessage,
+	const json &rDetails = json::object())
+{
+	return json{
+		{"error", json{
+			{"code", rCode.empty() ? "EMULE_ERROR" : rCode},
+			{"message", rMessage},
+			{"details", rDetails.is_object() ? rDetails : json::object()}
+		}}
+	};
+}
+
+/**
  * @brief Builds one normalized REST route command from the raw HTTP method,
  * target, and body.
  */
