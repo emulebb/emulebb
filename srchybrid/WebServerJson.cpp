@@ -3293,12 +3293,6 @@ rError.strCode = "INVALID_ARGUMENT";
 
 namespace
 {
-CStringA JsonDump(const json &rJson)
-{
-	const std::string strSerialized = rJson.dump(-1, ' ', false, json::error_handler_t::replace);
-	return CStringA(strSerialized.c_str(), static_cast<int>(strSerialized.size()));
-}
-
 json BuildResponseMetaJson()
 {
 	return json{
@@ -3326,7 +3320,7 @@ void SendJsonResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReas
 	if (pSocket == NULL)
 		return;
 
-	const CStringA strBody(JsonDump(BuildSuccessEnvelope(rPayload)));
+	const CStringA strBody(WebServerJson::SerializeJsonUtf8(BuildSuccessEnvelope(rPayload)));
 	CStringA strHeader;
 	strHeader.Format(
 		"HTTP/1.1 %d %s\r\n"
@@ -3347,7 +3341,7 @@ void SendJsonError(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason,
 	if (pSocket == NULL)
 		return;
 
-	const CStringA strBody(JsonDump(BuildErrorEnvelope(pszCode, strMessage)));
+	const CStringA strBody(WebServerJson::SerializeJsonUtf8(BuildErrorEnvelope(pszCode, strMessage)));
 	CStringA strHeader;
 	strHeader.Format(
 		"HTTP/1.1 %d %s\r\n"
@@ -3421,6 +3415,12 @@ std::string WebServerJson::ToStdUtf8(const CString &rText)
 CString WebServerJson::FromStdUtf8(const std::string &rText)
 {
 	return CStringFromStdUtf8(rText);
+}
+
+CStringA WebServerJson::SerializeJsonUtf8(const nlohmann::json &rPayload)
+{
+	const std::string strSerialized = rPayload.dump(-1, ' ', false, json::error_handler_t::replace);
+	return CStringA(strSerialized.c_str(), static_cast<int>(strSerialized.size()));
 }
 
 void WebServerJson::RunDispatchedCommand(void *pContext)

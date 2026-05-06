@@ -26,6 +26,11 @@ std::string ToStdUtf8(const CString &rText);
 CString FromStdUtf8(const std::string &rText);
 
 /**
+ * @brief Serializes a JSON payload as UTF-8 using the native REST error policy.
+ */
+CStringA SerializeJsonUtf8(const nlohmann::json &rPayload);
+
+/**
  * @brief Reports whether the current request target belongs to the REST surface.
  */
 bool IsApiRequest(const ThreadData &rData);

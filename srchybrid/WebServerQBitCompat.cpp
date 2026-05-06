@@ -38,12 +38,6 @@ using json = nlohmann::json;
 
 namespace
 {
-CStringA JsonDump(const json &rPayload)
-{
-	const std::string text(rPayload.dump());
-	return CStringA(text.c_str(), static_cast<int>(text.size()));
-}
-
 void SendTextResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, const CStringA &rBody, LPCSTR pszExtraHeaders = NULL)
 {
 	if (pSocket == NULL)
@@ -72,7 +66,7 @@ void SendJsonResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReas
 	if (pSocket == NULL)
 		return;
 
-	const CStringA strBody(JsonDump(rPayload));
+	const CStringA strBody(WebServerJson::SerializeJsonUtf8(rPayload));
 	CStringA strHeader;
 	strHeader.Format(
 		"HTTP/1.1 %d %s\r\n"
