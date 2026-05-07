@@ -352,7 +352,7 @@ CString CQueueListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSub
 		sText = UploadScoreSeams::FormatUploadScoreModifiers(
 			client->GetScoreBreakdown(false, false, false),
 			GetResString(IDS_LOW_RATIO_BONUS),
-			GetResString(IDS_BB_LOWID_DIVISOR),
+			GetResString(IDS_UPLOAD_POLICY_LOWID_DIVISOR),
 			GetResString(IDS_COOLDOWN));
 		break;
 	case 6:

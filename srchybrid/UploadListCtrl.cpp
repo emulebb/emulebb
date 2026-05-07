@@ -91,7 +91,7 @@ namespace
 		return UploadScoreSeams::FormatUploadScoreCompact(
 			client->GetScoreBreakdown(false, client->IsDownloading(), false),
 			GetResString(IDS_LOW_RATIO_BONUS),
-			GetResString(IDS_BB_LOWID_DIVISOR),
+			GetResString(IDS_UPLOAD_POLICY_LOWID_DIVISOR),
 			GetResString(IDS_COOLDOWN),
 			GetResString(IDS_FRIENDDETAIL),
 			_T("-"));

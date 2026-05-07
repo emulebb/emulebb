@@ -240,7 +240,7 @@ void CClientDetailPage::Localize()
 	SetDlgItemText(IDC_STATIC52, GetResString(IDS_BASE_SCORE) + _T(':'));
 	SetDlgItemText(IDC_STATIC53, GetResString(IDS_EFFECTIVE_SCORE) + _T(':'));
 	SetDlgItemText(IDC_STATIC_SCORE_LOWRATIO, GetResString(IDS_LOW_RATIO_BONUS) + _T(':'));
-	SetDlgItemText(IDC_STATIC_SCORE_LOWID, GetResString(IDS_BB_LOWID_DIVISOR) + _T(':'));
+	SetDlgItemText(IDC_STATIC_SCORE_LOWID, GetResString(IDS_UPLOAD_POLICY_LOWID_DIVISOR) + _T(':'));
 	SetDlgItemText(IDC_STATIC_SCORE_COOLDOWN, GetResString(IDS_COOLDOWN) + _T(':'));
 	SetDlgItemText(IDC_STATIC133x, GetResString(IDS_CD_IDENT));
 	SetDlgItemText(IDC_CLIENTDETAIL_KAD, GetResString(IDS_KADEMLIA) + _T(':'));
