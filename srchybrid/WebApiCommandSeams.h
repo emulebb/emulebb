@@ -167,18 +167,7 @@ inline bool IsLowercaseMd4HexString(const std::string &rValue)
  */
 inline bool TryParseNonNegativeUInt64(const json &rValue, uint64_t &ruValue)
 {
-	if (rValue.is_number_unsigned()) {
-		ruValue = rValue.get<uint64_t>();
-		return true;
-	}
-	if (rValue.is_number_integer()) {
-		const int64_t iValue = rValue.get<int64_t>();
-		if (iValue < 0)
-			return false;
-		ruValue = static_cast<uint64_t>(iValue);
-		return true;
-	}
-	return false;
+	return WebServerJsonSeams::TryParseJsonUInt64(rValue, ruValue);
 }
 
 /**

@@ -243,19 +243,8 @@ uint64_t JsonUInt64Value(const json &rObject, const char *pszName)
 {
 	if (!rObject.contains(pszName))
 		return 0;
-	const json &rValue = rObject[pszName];
-	if (rValue.is_number_unsigned())
-		return rValue.get<uint64_t>();
-	if (rValue.is_number_integer()) {
-		const int64_t iValue = rValue.get<int64_t>();
-		return iValue < 0 ? 0 : static_cast<uint64_t>(iValue);
-	}
-	if (rValue.is_string()) {
-		const std::string strValue(rValue.get<std::string>());
-		if (WebServerJsonSeams::IsValidUnsignedDecimal(strValue))
-			return static_cast<uint64_t>(_strtoui64(strValue.c_str(), NULL, 10));
-	}
-	return 0;
+	uint64_t ullValue = 0;
+	return WebServerJsonSeams::TryParseJsonUInt64(rObject[pszName], ullValue, true) ? ullValue : 0;
 }
 
 void AppendResultsFromJson(const json &rResultPayload, const WebServerArrCompatSeams::ETorznabFamily eFamily, std::vector<SArrCompatResult> &rResults, std::set<std::string> &rSeenHashes)

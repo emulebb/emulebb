@@ -507,6 +507,28 @@ inline bool TryParseUnsignedDecimalValue(const std::string &rValue, uint64_t &ru
 	return true;
 }
 
+/**
+ * @brief Parses one JSON value as a non-negative uint64 using the same overflow
+ * and sign rules as strict REST decimal tokens.
+ */
+inline bool TryParseJsonUInt64(const json &rValue, uint64_t &ruValue, const bool bAllowString = false)
+{
+	if (rValue.is_number_unsigned()) {
+		ruValue = rValue.get<uint64_t>();
+		return true;
+	}
+	if (rValue.is_number_integer()) {
+		const int64_t iValue = rValue.get<int64_t>();
+		if (iValue < 0)
+			return false;
+		ruValue = static_cast<uint64_t>(iValue);
+		return true;
+	}
+	if (bAllowString && rValue.is_string())
+		return TryParseUnsignedDecimalValue(rValue.get_ref<const std::string&>(), ruValue);
+	return false;
+}
+
 inline bool TryParseUnsignedQueryValue(const std::map<std::string, std::string> &rQuery, const char *pszName, uint64_t &ruValue)
 {
 	const auto it = rQuery.find(pszName);
