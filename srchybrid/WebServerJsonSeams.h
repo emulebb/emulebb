@@ -13,6 +13,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "WebApiSurfaceSeams.h"
+
 namespace WebServerJsonSeams
 {
 using json = nlohmann::json;
@@ -1214,6 +1216,74 @@ inline bool ValidateKadBootstrapBody(json &rBody, std::string &rErrorCode, std::
 		&& ValidatePortBodyField(rBody, "port", rErrorCode, rErrorMessage);
 }
 
+inline bool ValidateUnsignedPreferenceField(
+	json &rBody,
+	const char *pszFieldName,
+	const char *pszErrorMessage,
+	bool (*pfnIsValidValue)(uint64_t),
+	std::string &rErrorCode,
+	std::string &rErrorMessage)
+{
+	if (!rBody.contains(pszFieldName))
+		return true;
+
+	uint64_t ullValue = 0;
+	if (!TryParseJsonUInt64(rBody[pszFieldName], ullValue) || (pfnIsValidValue != NULL && !pfnIsValidValue(ullValue))) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, pszErrorMessage);
+		return false;
+	}
+	rBody[pszFieldName] = ullValue;
+	return true;
+}
+
+inline bool IsUploadClientDataRatePreferenceValue(const uint64_t ullValue)
+{
+	return ullValue >= 1 && ullValue <= UINT_MAX;
+}
+
+inline bool ValidateBooleanPreferenceField(json &rBody, const char *pszFieldName, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (rBody.contains(pszFieldName) && !rBody[pszFieldName].is_boolean()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszFieldName) + " must be a boolean");
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Validates native app preferences PATCH body shape before dispatch.
+ */
+inline bool ValidatePreferencesPatchBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (rBody.empty()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "preferences PATCH requires at least one preference");
+		return false;
+	}
+
+	for (json::const_iterator it = rBody.begin(); it != rBody.end(); ++it) {
+		if (WebApiSurfaceSeams::ParseMutablePreferenceName(it.key().c_str()) == WebApiSurfaceSeams::EMutablePreference::Invalid) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "unsupported preference key: " + it.key());
+			return false;
+		}
+	}
+
+	return ValidateUnsignedPreferenceField(rBody, "uploadLimitKiBps", "uploadLimitKiBps must be an unsigned number in the range 1..4294967294", WebApiSurfaceSeams::IsFiniteKiBpsPreferenceValue, rErrorCode, rErrorMessage)
+		&& ValidateUnsignedPreferenceField(rBody, "downloadLimitKiBps", "downloadLimitKiBps must be an unsigned number in the range 1..4294967294", WebApiSurfaceSeams::IsFiniteKiBpsPreferenceValue, rErrorCode, rErrorMessage)
+		&& ValidateUnsignedPreferenceField(rBody, "maxConnections", "maxConnections must be an unsigned number in the range 1..2147483647", WebApiSurfaceSeams::IsPositiveSignedIntPreferenceValue, rErrorCode, rErrorMessage)
+		&& ValidateUnsignedPreferenceField(rBody, "maxConnectionsPerFiveSeconds", "maxConnectionsPerFiveSeconds must be an unsigned number in the range 1..2147483647", WebApiSurfaceSeams::IsPositiveSignedIntPreferenceValue, rErrorCode, rErrorMessage)
+		&& ValidateUnsignedPreferenceField(rBody, "maxSourcesPerFile", "maxSourcesPerFile must be an unsigned number in the range 1..2147483647", WebApiSurfaceSeams::IsPositiveSignedIntPreferenceValue, rErrorCode, rErrorMessage)
+		&& ValidateUnsignedPreferenceField(rBody, "uploadClientDataRate", "uploadClientDataRate must be an unsigned number in the range 1..4294967295", IsUploadClientDataRatePreferenceValue, rErrorCode, rErrorMessage)
+		&& ValidateUnsignedPreferenceField(rBody, "maxUploadSlots", "maxUploadSlots must be an unsigned number in the range 1..32", WebApiSurfaceSeams::IsUploadSlotPreferenceValue, rErrorCode, rErrorMessage)
+		&& ValidateUnsignedPreferenceField(rBody, "queueSize", "queueSize must be an unsigned number in the range 2000..10000", WebApiSurfaceSeams::IsQueueSizePreferenceValue, rErrorCode, rErrorMessage)
+		&& ValidateBooleanPreferenceField(rBody, "autoConnect", rErrorCode, rErrorMessage)
+		&& ValidateBooleanPreferenceField(rBody, "newAutoUp", rErrorCode, rErrorMessage)
+		&& ValidateBooleanPreferenceField(rBody, "newAutoDown", rErrorCode, rErrorMessage)
+		&& ValidateBooleanPreferenceField(rBody, "creditSystem", rErrorCode, rErrorMessage)
+		&& ValidateBooleanPreferenceField(rBody, "safeServerConnect", rErrorCode, rErrorMessage)
+		&& ValidateBooleanPreferenceField(rBody, "networkKademlia", rErrorCode, rErrorMessage)
+		&& ValidateBooleanPreferenceField(rBody, "networkEd2k", rErrorCode, rErrorMessage);
+}
+
 inline bool RequireBooleanField(
 	const json &rBody,
 	const char *pszFieldName,
@@ -1418,6 +1488,14 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 		&& std::string(rSpec.pszMethod) == "POST"
 		&& std::string(rSpec.pszPathTemplate) == "/kad/operations/bootstrap"
 		&& !ValidateKadBootstrapBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "PATCH"
+		&& std::string(rSpec.pszPathTemplate) == "/app/preferences"
+		&& !ValidatePreferencesPatchBody(rBody, rErrorCode, rErrorMessage))
 	{
 		return false;
 	}
