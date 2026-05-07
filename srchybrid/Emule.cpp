@@ -655,6 +655,8 @@ std::string BuildStartupTraceEventJson(const SStartupProfileTraceEvent &rEvent, 
 class CEmuleCommandLineInfo : public CCommandLineInfo
 {
 public:
+	using CCommandLineInfo::ParseParam;
+
 	void ParseParam(const TCHAR *pszParam, BOOL bFlag, BOOL bLast) override
 	{
 		if (m_bSkipNextParam) {
