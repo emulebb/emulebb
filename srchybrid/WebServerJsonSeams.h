@@ -870,7 +870,16 @@ inline bool ValidateDestructiveConfirmationBody(const json &rBody, const SApiRou
 {
 	const std::string strMethod(rSpec.pszMethod != NULL ? rSpec.pszMethod : "");
 	const std::string strPath(rSpec.pszPathTemplate != NULL ? rSpec.pszPathTemplate : "");
-	if (strMethod == "DELETE" && (strPath == "/transfers/{hash}" || strPath == "/shared-files/{hash}"))
+	if (strMethod == "DELETE" && strPath == "/transfers/{hash}") {
+		if (!RequireBooleanField(rBody, "deleteFiles", "deleteFiles must be an explicit boolean", rErrorCode, rErrorMessage))
+			return false;
+		if (!rBody["deleteFiles"].get<bool>()) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "deleteFiles must be true for transfer deletes");
+			return false;
+		}
+		return true;
+	}
+	if (strMethod == "DELETE" && strPath == "/shared-files/{hash}")
 		return RequireBooleanField(rBody, "deleteFiles", "deleteFiles must be an explicit boolean", rErrorCode, rErrorMessage);
 	if (strMethod == "POST" && strPath == "/app/shutdown")
 		return RequireBooleanFieldTrue(rBody, "confirmShutdown", "confirmShutdown must be true", rErrorCode, rErrorMessage);
