@@ -1945,7 +1945,7 @@ int CTreeOptionsFontNameCombo::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	return 0;
 }
 
-int CTreeOptionsFontNameCombo::EnumFontProc(CONST LOGFONT *lplf, CONST TEXTMETRIC*,	DWORD)
+int CTreeOptionsFontNameCombo::EnumFontProc(CONST LOGFONT *lplf, CONST TEXTMETRIC*,	DWORD) noexcept
 {
 	//Add the font name to the combo box
 	AddString(lplf->lfFaceName);
@@ -1954,7 +1954,7 @@ int CTreeOptionsFontNameCombo::EnumFontProc(CONST LOGFONT *lplf, CONST TEXTMETRI
 }
 
 int CALLBACK CTreeOptionsFontNameCombo::_EnumFontProc(CONST LOGFONT* lplf, CONST TEXTMETRIC* lptm
-	, DWORD dwType, LPARAM lpData)
+	, DWORD dwType, LPARAM lpData) noexcept
 {
 	//Convert from the SDK world to the C++ world
 	CTreeOptionsFontNameCombo *pThis = reinterpret_cast<CTreeOptionsFontNameCombo*>(lpData);
