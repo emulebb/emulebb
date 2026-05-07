@@ -39,6 +39,7 @@
 #include "shahashset.h"
 #include "collection.h"
 #include "FilenameNormalizationPolicy.h"
+#include "FormatSafetySeams.h"
 #include "LongPathSeams.h"
 #include "OtherFunctionsSeams.h"
 #include "PathHelpers.h"
@@ -2831,19 +2832,17 @@ void DebugSend(LPCSTR pszMsg, const CUpDownClient *client, const uchar *packet)
 
 void DebugSend(LPCSTR pszOpcode, uint32 ip, uint16 port)
 {
-	TCHAR szIPPort[22];
-	_stprintf(szIPPort, _T("%s:%u"), (LPCTSTR)ipstr(htonl(ip)), port);
-	Debug(_T(">>> %-20hs to   %-21s\n"), pszOpcode, szIPPort);
+	const CString strIPPort(FormatSafetySeams::FormatStoredIPv4Endpoint(htonl(ip), port));
+	Debug(_T(">>> %-20hs to   %-21s\n"), pszOpcode, (LPCTSTR)strIPPort);
 }
 
 void DebugSendF(LPCSTR pszOpcode, uint32 ip, uint16 port, LPCTSTR pszMsg, ...)
 {
 	va_list args;
 	va_start(args, pszMsg);
-	TCHAR szIPPort[22];
-	_stprintf(szIPPort, _T("%s:%u"), (LPCTSTR)ipstr(htonl(ip)), port);
+	const CString strIPPort(FormatSafetySeams::FormatStoredIPv4Endpoint(htonl(ip), port));
 	CString str;
-	str.Format(_T(">>> %-20hs to   %-21s; "), pszOpcode, szIPPort);
+	str.Format(_T(">>> %-20hs to   %-21s; "), pszOpcode, (LPCTSTR)strIPPort);
 	str.AppendFormatV(pszMsg, args);
 	va_end(args);
 	Debug(_T("%s\n"), (LPCTSTR)str);
@@ -2851,9 +2850,8 @@ void DebugSendF(LPCSTR pszOpcode, uint32 ip, uint16 port, LPCTSTR pszMsg, ...)
 
 void DebugRecv(LPCSTR pszOpcode, uint32 ip, uint16 port)
 {
-	TCHAR szIPPort[22];
-	_stprintf(szIPPort, _T("%s:%u"), (LPCTSTR)ipstr(htonl(ip)), port);
-	Debug(_T("%-24hs from %-21s\n"), pszOpcode, szIPPort);
+	const CString strIPPort(FormatSafetySeams::FormatStoredIPv4Endpoint(htonl(ip), port));
+	Debug(_T("%-24hs from %-21s\n"), pszOpcode, (LPCTSTR)strIPPort);
 }
 
 void DebugHttpHeaders(const CStringAArray &astrHeaders)
@@ -3161,7 +3159,7 @@ uint16 GetRandomUInt16()
 	ASSERT(uRand0 != 41 || uRand1 != 18467);
 
 	uRand0 |= (uRand1 & 0x4000) << 1;
-	srand(::GetTickCount64() ^ (uRand0 << 16));
+	srand(static_cast<unsigned int>(::GetTickCount64() ^ (uRand0 << 16)));
 	return (uint16)uRand0;
 #else
 #error "Implement it!"
@@ -3179,7 +3177,7 @@ uint32 GetRandomUInt32()
 
 	uRand0 = (uRand0 << 15) | (uRand1 & 0x6000);
 	uRand0 = (uRand0 << 2) | rand();
-	srand(::GetTickCount64() ^ uRand0);
+	srand(static_cast<unsigned int>(::GetTickCount64() ^ uRand0));
 	return uRand0;
 #else
 #error "Implement it!"
@@ -3353,32 +3351,32 @@ int CompareLocaleString(LPCTSTR psz1, LPCTSTR psz2)
 	return iResult ? iResult - CSTR_EQUAL : 0;
 }
 
-int __cdecl CompareCStringPtrLocaleStringNoCase(const void *p1, const void *p2)
+int __cdecl CompareCStringPtrLocaleStringNoCase(const void *p1, const void *p2) noexcept
 {
 	return CompareLocaleStringNoCase(*(CString*)p1, *(CString*)p2);
 }
 
-int __cdecl CompareCStringPtrLocaleString(const void *p1, const void *p2)
+int __cdecl CompareCStringPtrLocaleString(const void *p1, const void *p2) noexcept
 {
 	return CompareLocaleString(*(CString*)p1, *(CString*)p2);
 }
 
-void Sort(CStringArray &astr, int(__cdecl *pfnCompare)(const void*, const void*))
+void Sort(CStringArray &astr, int(__cdecl *pfnCompare)(const void*, const void*) noexcept)
 {
 	qsort(astr.GetData(), astr.GetCount(), sizeof(CString*), pfnCompare);
 }
 
-int __cdecl CompareCStringPtrPtrLocaleStringNoCase(const void *p1, const void *p2)
+int __cdecl CompareCStringPtrPtrLocaleStringNoCase(const void *p1, const void *p2) noexcept
 {
 	return CompareLocaleStringNoCase(**(CString**)p1, **(CString**)p2);
 }
 
-int __cdecl CompareCStringPtrPtrLocaleString(const void *p1, const void *p2)
+int __cdecl CompareCStringPtrPtrLocaleString(const void *p1, const void *p2) noexcept
 {
 	return CompareLocaleString(**(CString**)p1, **(CString**)p2);
 }
 
-void Sort(CSimpleArray<const CString*> &apstr, int(__cdecl *pfnCompare)(const void*, const void*))
+void Sort(CSimpleArray<const CString*> &apstr, int(__cdecl *pfnCompare)(const void*, const void*) noexcept)
 {
 	qsort(apstr.GetData(), apstr.GetSize(), sizeof(CString*), pfnCompare);
 }
