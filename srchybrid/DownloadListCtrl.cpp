@@ -2237,7 +2237,7 @@ float CDownloadListCtrl::GetFinishedSize()
 		if (cur_item->type == FILE_TYPE) {
 			const CPartFile *file = static_cast<CPartFile*>(cur_item->value);
 			if (file->GetStatus() == PS_COMPLETE)
-				fsize += (uint64)file->GetFileSize();
+				fsize += static_cast<float>(static_cast<uint64>(file->GetFileSize()));
 		}
 	}
 	return fsize;
