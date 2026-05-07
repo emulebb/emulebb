@@ -319,16 +319,17 @@ inline std::string UrlEncodeUtf8(const std::string &rValue)
 	return encoded;
 }
 
-/**
- * @brief Decodes one URL-encoded UTF-8 token for REST path and query parsing.
- */
-inline bool TryUrlDecodeUtf8(const std::string &rValue, std::string &rDecoded, std::string &rErrorMessage)
+inline bool TryUrlDecodeUtf8WithPlusPolicy(
+	const std::string &rValue,
+	const bool bDecodePlusAsSpace,
+	std::string &rDecoded,
+	std::string &rErrorMessage)
 {
 	rDecoded.clear();
 	rDecoded.reserve(rValue.size());
 	for (size_t i = 0; i < rValue.size(); ++i) {
 		const char ch = rValue[i];
-		if (ch == '+' ) {
+		if (ch == '+' && bDecodePlusAsSpace) {
 			rDecoded.push_back(' ');
 			continue;
 		}
@@ -352,6 +353,24 @@ inline bool TryUrlDecodeUtf8(const std::string &rValue, std::string &rDecoded, s
 		rDecoded.push_back(ch);
 	}
 	return true;
+}
+
+/**
+ * @brief Decodes one URL-encoded UTF-8 token for form/query parsing, where
+ * plus signs are spaces by application/x-www-form-urlencoded convention.
+ */
+inline bool TryUrlDecodeUtf8(const std::string &rValue, std::string &rDecoded, std::string &rErrorMessage)
+{
+	return TryUrlDecodeUtf8WithPlusPolicy(rValue, true, rDecoded, rErrorMessage);
+}
+
+/**
+ * @brief Decodes one URL path segment. A raw plus is a literal path byte, not
+ * a space; callers still reject malformed escapes and encoded separators.
+ */
+inline bool TryUrlDecodePathSegmentUtf8(const std::string &rValue, std::string &rDecoded, std::string &rErrorMessage)
+{
+	return TryUrlDecodeUtf8WithPlusPolicy(rValue, false, rDecoded, rErrorMessage);
 }
 
 inline std::string UrlDecodeUtf8(const std::string &rValue)
@@ -479,8 +498,13 @@ inline std::vector<std::string> SplitPathSegments(const std::string &rPath)
 		const std::string token = rPath.substr(
 			uPos,
 			uSlash == std::string::npos ? std::string::npos : (uSlash - uPos));
-		if (!token.empty())
-			segments.push_back(UrlDecodeUtf8(token));
+		if (!token.empty()) {
+			std::string decoded;
+			std::string ignored;
+			if (!TryUrlDecodePathSegmentUtf8(token, decoded, ignored))
+				decoded.clear();
+			segments.push_back(decoded);
+		}
 
 		if (uSlash == std::string::npos)
 			break;
@@ -501,7 +525,7 @@ inline bool TrySplitPathSegments(const std::string &rPath, std::vector<std::stri
 			uSlash == std::string::npos ? std::string::npos : (uSlash - uPos));
 		if (!token.empty()) {
 			std::string decoded;
-			if (!TryUrlDecodeUtf8(token, decoded, rErrorMessage))
+			if (!TryUrlDecodePathSegmentUtf8(token, decoded, rErrorMessage))
 				return false;
 			if (decoded.find('/') != std::string::npos || decoded.find('\\') != std::string::npos) {
 				rErrorMessage = "path segment must not contain encoded slash";
