@@ -22,14 +22,9 @@
 #include <string>
 #include <vector>
 
-#include "Emule.h"
-#include "Opcodes.h"
 #include "Log.h"
 #include "OtherFunctions.h"
-#include "DownloadQueue.h"
-#include "PartFile.h"
 #include "Preferences.h"
-#include "WebApiSurfaceSeams.h"
 #include "WebServerJson.h"
 #include "WebServerJsonSeams.h"
 #include "WebServerQBitCompatSeams.h"
@@ -167,62 +162,89 @@ bool EnsureCategoryExists(const std::string &rCategory, CString &rErrorMessage)
 	return ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("categories/create", json{{"name", rCategory}}), ignored, rErrorMessage);
 }
 
-CString GetPartFileCategoryName(const UINT uCategory)
+std::string JsonStringValue(const json &rObject, const char *pszName)
 {
-	const Category_Struct *const pCategory = thePrefs.GetCategory(static_cast<INT_PTR>(uCategory));
-	return pCategory != NULL ? pCategory->strTitle : CString();
+	if (!rObject.contains(pszName) || !rObject[pszName].is_string())
+		return std::string();
+	return rObject[pszName].get<std::string>();
 }
 
-json BuildQBitTorrentJson(const CPartFile &rPartFile)
+uint64_t JsonUInt64Value(const json &rObject, const char *pszName)
 {
-	const CString strName(rPartFile.GetFileName());
-	const CString strCategory(GetPartFileCategoryName(const_cast<CPartFile&>(rPartFile).GetCategory()));
-	const uint64 uSize = static_cast<uint64>(rPartFile.GetFileSize());
-	const uint64 uCompleted = static_cast<uint64>(rPartFile.GetCompletedSize());
-	const std::string strState = rPartFile.GetStatus() == PS_PAUSED || rPartFile.IsStopped() ? "pausedDL" : "downloading";
+	if (!rObject.contains(pszName))
+		return 0;
+	uint64_t ullValue = 0;
+	return WebServerJsonSeams::TryParseJsonUInt64(rObject[pszName], ullValue, true) ? ullValue : 0;
+}
+
+double JsonDoubleValue(const json &rObject, const char *pszName)
+{
+	if (!rObject.contains(pszName) || !rObject[pszName].is_number())
+		return 0.0;
+	return rObject[pszName].get<double>();
+}
+
+std::string BuildQBitStateFromNativeTransfer(const json &rTransfer)
+{
+	const std::string strState(WebServerJsonSeams::ToLowerAscii(JsonStringValue(rTransfer, "state")));
+	if (strState == "completed")
+		return "pausedUP";
+	if (strState == "checking")
+		return "checkingDL";
+	if (strState == "paused" || (rTransfer.contains("stopped") && rTransfer["stopped"].is_boolean() && rTransfer["stopped"].get<bool>()))
+		return "pausedDL";
+	return "downloading";
+}
+
+json BuildQBitTorrentJsonFromNativeTransfer(const json &rTransfer)
+{
+	const std::string strName(JsonStringValue(rTransfer, "name"));
+	const std::string strCategory(JsonStringValue(rTransfer, "categoryName"));
+	const uint64_t ullSize = JsonUInt64Value(rTransfer, "sizeBytes");
+	const uint64_t ullCompleted = JsonUInt64Value(rTransfer, "completedBytes");
+	const uint64_t ullSources = JsonUInt64Value(rTransfer, "sources");
 	return json{
-		{"hash", LowerBase16(rPartFile.GetFileHash(), MDX_DIGEST_SIZE)},
-		{"name", WebServerJson::ToStdUtf8(strName)},
-		{"size", uSize},
-		{"progress", WebApiSurfaceSeams::BuildTransferProgressRatio(uCompleted, uSize)},
+		{"hash", JsonStringValue(rTransfer, "hash")},
+		{"name", strName},
+		{"size", ullSize},
+		{"progress", JsonDoubleValue(rTransfer, "progress")},
 		{"eta", -1},
-		{"state", strState},
-		{"label", WebServerJson::ToStdUtf8(strCategory)},
-		{"category", WebServerJson::ToStdUtf8(strCategory)},
+		{"state", BuildQBitStateFromNativeTransfer(rTransfer)},
+		{"label", strCategory},
+		{"category", strCategory},
 		{"save_path", ""},
-		{"content_path", WebServerJson::ToStdUtf8(strName)},
+		{"content_path", strName},
 		{"ratio", 0},
 		{"ratio_limit", 0},
 		{"seeding_time", 0},
 		{"seeding_time_limit", 0},
 		{"inactive_seeding_time_limit", 0},
-		{"downloaded", uCompleted},
-		{"completed", uCompleted},
-		{"dlspeed", rPartFile.GetDatarate()},
+		{"downloaded", ullCompleted},
+		{"completed", ullCompleted},
+		{"dlspeed", static_cast<uint64_t>(JsonDoubleValue(rTransfer, "downloadSpeedKiBps") * 1024.0)},
 		{"upspeed", 0},
-		{"num_leechs", rPartFile.GetSourceCount()},
-		{"num_incomplete", rPartFile.GetSourceCount()},
+		{"num_leechs", ullSources},
+		{"num_incomplete", ullSources},
 		{"num_seeds", 0},
 		{"num_complete", 0}
 	};
 }
 
-json BuildQBitTorrentsJson(const std::string &rCategory)
+bool BuildQBitTorrentsJson(const std::string &rCategory, json &rTorrents, CString &rErrorMessage)
 {
-	if (theApp.downloadqueue == NULL)
-		return json::array();
+	json nativeTransfers;
+	if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("transfers/list", json::object()), nativeTransfers, rErrorMessage) || !nativeTransfers.is_array())
+		return false;
 
-	json torrents = json::array();
-	POSITION pos = NULL;
-	for (INT_PTR i = 0, iCount = theApp.downloadqueue->GetFileCount(); i < iCount; ++i) {
-		CPartFile *const pPartFile = theApp.downloadqueue->GetFileNext(pos);
-		if (pPartFile == NULL)
-			break;
-		if (!rCategory.empty() && WebServerJson::ToStdUtf8(GetPartFileCategoryName(pPartFile->GetCategory())) != rCategory)
+	rTorrents = json::array();
+	for (const json &rTransfer : nativeTransfers) {
+		if (!rTransfer.is_object())
 			continue;
-		torrents.push_back(BuildQBitTorrentJson(*pPartFile));
+		if (!rCategory.empty() && JsonStringValue(rTransfer, "categoryName") != rCategory)
+			continue;
+		rTorrents.push_back(BuildQBitTorrentJsonFromNativeTransfer(rTransfer));
 	}
-	return torrents;
+	return true;
 }
 
 void HandleLogin(const ThreadData &rData)
@@ -477,7 +499,13 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 			SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 			return;
 		}
-		SendJsonResponse(rData.pSocket, 200, "OK", BuildQBitTorrentsJson(strCategory));
+		json torrents;
+		CString strErrorMessage;
+		if (!BuildQBitTorrentsJson(strCategory, torrents, strErrorMessage)) {
+			SendTextResponse(rData.pSocket, 503, "Service Unavailable", WebServerQBitCompatSeams::kQBitFailureBody);
+			return;
+		}
+		SendJsonResponse(rData.pSocket, 200, "OK", torrents);
 		return;
 	}
 
