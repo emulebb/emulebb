@@ -373,6 +373,17 @@ void HandleTorrentStateMutation(const ThreadData &rData, const char *pszCommand)
 	}
 	SendTextResponse(rData.pSocket, 200, "OK", WebServerQBitCompatSeams::kQBitSuccessBody);
 }
+
+void HandleAcceptedTorrentNoopMutation(const ThreadData &rData)
+{
+	WebServerQBitCompatSeams::SQBitHashMutationRequest request;
+	std::string strError;
+	if (!WebServerQBitCompatSeams::TryParseHashesOnlyRequest(WebServerJson::ToStdString(rData.strRequestBody), request, strError)) {
+		SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
+		return;
+	}
+	SendTextResponse(rData.pSocket, 200, "OK", WebServerQBitCompatSeams::kQBitSuccessBody);
+}
 }
 
 bool WebServerQBitCompat::IsCompatRequest(const ThreadData &rData)
@@ -549,7 +560,7 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 	}
 
 	if (strPath == "/api/v2/torrents/setsharelimits" || strPath == "/api/v2/torrents/topprio" || strPath == "/api/v2/torrents/setforcestart") {
-		SendTextResponse(rData.pSocket, 200, "OK", WebServerQBitCompatSeams::kQBitSuccessBody);
+		HandleAcceptedTorrentNoopMutation(rData);
 		return;
 	}
 
