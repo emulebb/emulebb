@@ -44,33 +44,13 @@ namespace
 		if (pszHeaderName == NULL)
 			return CStringA();
 
-		const CStringA strHeaderName(pszHeaderName);
-		int iPos = 0;
-		while (iPos >= 0 && iPos < strHeader.GetLength()) {
-			const int iLineEnd = strHeader.Find('\n', iPos);
-			const int iLineLength = (iLineEnd >= 0 ? iLineEnd : strHeader.GetLength()) - iPos;
-			CStringA strLine(strHeader.Mid(iPos, iLineLength));
-			strLine.Trim("\r");
-			if (strLine.IsEmpty())
-				break;
-
-			const int iColon = strLine.Find(':');
-			if (iColon > 0) {
-				CStringA strName(strLine.Left(iColon));
-				strName.Trim();
-				if (strName.CompareNoCase(strHeaderName) == 0) {
-					CStringA strValue(strLine.Mid(iColon + 1));
-					strValue.Trim();
-					return strValue;
-				}
-			}
-
-			if (iLineEnd < 0)
-				break;
-			iPos = iLineEnd + 1;
-		}
-
-		return CStringA();
+		std::string strValue;
+		return WebSocketHttpSeams::GetSingleHeaderValue(
+			std::string(strHeader, strHeader.GetLength()),
+			pszHeaderName,
+			strValue) == WebSocketHttpSeams::EHeaderValueResult::Found
+				? CStringA(strValue.c_str(), static_cast<int>(strValue.size()))
+				: CStringA();
 	}
 
 	bool TryResolveWebBindAddr(in_addr *pAddr)

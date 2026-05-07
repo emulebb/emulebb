@@ -29,6 +29,13 @@ enum class EContentLengthHeader
 	Invalid
 };
 
+enum class EHeaderValueResult
+{
+	Missing,
+	Found,
+	Duplicate
+};
+
 /**
  * @brief Reports whether one HTTP method token is supported by the web
  * dispatcher.
@@ -161,6 +168,51 @@ inline bool TryParseContentLengthHeaders(
 	}
 
 	return true;
+}
+
+/**
+ * @brief Reads one case-insensitive HTTP header value and rejects duplicate
+ * sensitive header fields.
+ */
+inline EHeaderValueResult GetSingleHeaderValue(
+	const std::string &rHeader,
+	const std::string &rHeaderName,
+	std::string &rValue)
+{
+	rValue.clear();
+	const std::string strHeaderName(WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::TrimAsciiWhitespace(rHeaderName)));
+	if (strHeaderName.empty())
+		return EHeaderValueResult::Missing;
+
+	bool bFound = false;
+	for (std::string::size_type uPos = 0; uPos < rHeader.size();) {
+		const std::string::size_type uLineEnd = rHeader.find('\n', uPos);
+		std::string strLine(rHeader.substr(uPos, uLineEnd == std::string::npos ? std::string::npos : uLineEnd - uPos));
+		while (!strLine.empty() && (strLine[strLine.size() - 1] == '\r' || strLine[strLine.size() - 1] == '\n'))
+			strLine.erase(strLine.size() - 1);
+
+		if (strLine.empty())
+			break;
+
+		const std::string::size_type uColon = strLine.find(':');
+		if (uColon != std::string::npos && uColon > 0) {
+			const std::string strName(WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::TrimAsciiWhitespace(strLine.substr(0, uColon))));
+			if (strName == strHeaderName) {
+				if (bFound) {
+					rValue.clear();
+					return EHeaderValueResult::Duplicate;
+				}
+				bFound = true;
+				rValue = WebServerJsonSeams::TrimAsciiWhitespace(strLine.substr(uColon + 1));
+			}
+		}
+
+		if (uLineEnd == std::string::npos)
+			break;
+		uPos = uLineEnd + 1;
+	}
+
+	return bFound ? EHeaderValueResult::Found : EHeaderValueResult::Missing;
 }
 
 /**

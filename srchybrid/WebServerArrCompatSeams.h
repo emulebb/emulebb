@@ -261,9 +261,9 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 	{
 		return false;
 	}
-	parsed.strSeason = seasonIt == normalized.end() ? std::string() : WebServerJsonSeams::TrimAsciiWhitespace(seasonIt->second);
-	parsed.strEpisode = episodeIt == normalized.end() ? std::string() : WebServerJsonSeams::TrimAsciiWhitespace(episodeIt->second);
-	parsed.strYear = yearIt == normalized.end() ? std::string() : WebServerJsonSeams::TrimAsciiWhitespace(yearIt->second);
+	parsed.strSeason = seasonIt == normalized.end() ? std::string() : seasonIt->second;
+	parsed.strEpisode = episodeIt == normalized.end() ? std::string() : episodeIt->second;
+	parsed.strYear = yearIt == normalized.end() ? std::string() : yearIt->second;
 	parsed.strCategories = catIt == normalized.end() ? std::string() : WebServerJsonSeams::TrimAsciiWhitespace(catIt->second);
 	unsigned uIgnored = 0;
 	if (!parsed.strSeason.empty() && !TryParseBoundedUnsigned(parsed.strSeason, kMaxTorznabSeason, uIgnored)) {
