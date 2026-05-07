@@ -2122,7 +2122,8 @@ void CPartFile::UpdateCompletedInfos(uint64 uTotalGaps)
 	} else {
 		// 'm_percentcompleted' is only used in GUI, round down to avoid showing "100%" in case
 		// we actually have only "99.9%"
-		m_percentcompleted = (float)(floor((1.0 - (double)uTotalGaps / (uint64)m_nFileSize) * 1000.0) / 10.0);
+		const double completedFraction = 1.0 - static_cast<double>(uTotalGaps) / static_cast<double>((uint64)m_nFileSize);
+		m_percentcompleted = static_cast<float>(floor(completedFraction * 1000.0) / 10.0);
 		m_completedsize = (uint64)m_nFileSize - uTotalGaps;
 	}
 }
@@ -2275,8 +2276,8 @@ void CPartFile::DrawStatusBar(CDC &dc, const CRect &rect, bool bFlat) /*const*/
 		s_ChunkBar.Draw(dc, rect.left, rect.top, bFlat);
 
 		// green progress
-		float blockpixel = (float)rect.Width() / (uint64)m_nFileSize;
-		float width = ((uint64)m_nFileSize - allgaps) * blockpixel + 0.5f;
+		const float blockpixel = static_cast<float>(rect.Width()) / static_cast<float>((uint64)m_nFileSize);
+		const float width = static_cast<float>((uint64)m_nFileSize - allgaps) * blockpixel + 0.5f;
 		if (!bFlat) {
 			s_LoadBar.SetWidth((int)width);
 			s_LoadBar.Fill(crProgress);
@@ -2296,7 +2297,7 @@ void CPartFile::DrawStatusBar(CDC &dc, const CRect &rect, bool bFlat) /*const*/
 	// additionally show any file op progress (needed for PS_COMPLETING and PS_WAITINGFORHASH)
 	if (GetFileOp() != PFOP_NONE) {
 		CRect rcFileOpProgress(rect);
-		LONG width = (LONG)(GetFileOpProgress() * rcFileOpProgress.Width() / 100.0F + 0.5F);
+		const LONG width = (LONG)(static_cast<float>(GetFileOpProgress()) * static_cast<float>(rcFileOpProgress.Width()) / 100.0F + 0.5F);
 		rcFileOpProgress.bottom = rcFileOpProgress.top + PROGRESS_HEIGHT;
 		if (!bFlat) {
 			s_LoadBar.SetWidth((int)width);
@@ -3750,8 +3751,12 @@ time_t CPartFile::getTimeRemaining() const
 	if (thePrefs.UseSimpleTimeRemainingComputation())
 		return simple;
 	time_t tActive = GetDlActiveTime();
-	time_t estimate = (time_t)((tActive && completesize >= 512000)
-		? ((uint64)m_nFileSize - completesize) / ((double)completesize / tActive) : -1);
+	time_t estimate = (time_t)-1;
+	if (tActive && completesize >= 512000) {
+		const double remainingBytes = static_cast<double>((uint64)m_nFileSize - completesize);
+		const double activeRate = static_cast<double>(completesize) / static_cast<double>(tActive);
+		estimate = (time_t)(remainingBytes / activeRate);
+	}
 
 	if (estimate == (time_t)-1 || (simple > 0 && simple < estimate))
 		return simple; //not enough data to guess; no matter if we are transferring or not
@@ -4619,7 +4624,7 @@ void CPartFile::UpdateFileRatingCommentAvail(bool bForceUpdate)
 		}
 	}
 
-	m_uUserRating = uRatings ? (uint32)ROUND(uUserRatings / (float)uRatings) : 0;
+	m_uUserRating = uRatings ? (uint32)ROUND(static_cast<float>(uUserRatings) / static_cast<float>(uRatings)) : 0;
 
 	if (bOldHasComment != m_bHasComment || uOldUserRatings != m_uUserRating || bForceUpdate)
 		UpdateDisplayedInfo(true);
@@ -4694,10 +4699,13 @@ const CStringA CPartFile::GetProgressString(uint16 size) const
 
 	CStringA my_ChunkBar(crHave, size + 2); // two more for safety
 
-	float unit = (float)size / (uint64)m_nFileSize;
+	const float unit = static_cast<float>(size) / static_cast<float>((uint64)m_nFileSize);
+	const auto toChunkBarUnit = [unit](uint64 value) {
+		return static_cast<uint32>(static_cast<float>(value) * unit);
+	};
 
 	if (inSet(GetStatus(), PS_COMPLETE, PS_COMPLETING))
-		CharFillRange(my_ChunkBar, 0, (uint32)((uint64)m_nFileSize * unit), crProgress);
+		CharFillRange(my_ChunkBar, 0, toChunkBarUnit((uint64)m_nFileSize), crProgress);
 	else {
 		// red gaps
 		UINT i = 0;
@@ -4718,7 +4726,7 @@ const CStringA CPartFile::GetProgressString(uint16 size) const
 						color = crSources[min((m_SrcPartFrequency[i] + 1) / 2, (int)sizeof crSources - 1)];
 					else
 						color = crSources[0]; //crMissing
-					CharFillRange(my_ChunkBar, (uint32)(start * unit), (uint32)(end * unit + 1), color);
+					CharFillRange(my_ChunkBar, toChunkBarUnit(start), toChunkBarUnit(end) + 1, color);
 
 					if (gapdone) // finished?
 						break;
@@ -4733,7 +4741,7 @@ const CStringA CPartFile::GetProgressString(uint16 size) const
 	// yellow pending parts
 	for (POSITION pos = requestedblocks_list.GetHeadPosition(); pos != NULL;) {
 		const Requested_Block_Struct *block = requestedblocks_list.GetNext(pos);
-		CharFillRange(my_ChunkBar, (uint32)((block->StartOffset + block->transferred) * unit), (uint32)(block->EndOffset * unit), crPending);
+		CharFillRange(my_ChunkBar, toChunkBarUnit(block->StartOffset + block->transferred), toChunkBarUnit(block->EndOffset), crPending);
 	}
 
 	return my_ChunkBar;
@@ -5142,7 +5150,7 @@ CString CPartFile::GetInfoSummary(bool bNoFormatCommands) const
 
 	const CString &lsc((lastseencomplete > 0) ? lastseencomplete.Format(thePrefs.GetDateTimeFormat()) : GetResString(IDS_NEVER));
 
-	float availability = (GetPartCount() > 0) ? GetAvailablePartCount() * 100.0f / GetPartCount() : 0.0f;
+	float availability = (GetPartCount() > 0) ? static_cast<float>(GetAvailablePartCount()) * 100.0f / static_cast<float>(GetPartCount()) : 0.0f;
 
 	CString avail;
 	avail.Format(GetResString(IDS_AVAIL), GetPartCount(), GetAvailablePartCount(), availability);
