@@ -4027,6 +4027,9 @@ LRESULT CemuleDlg::OnWebGUIInteraction(WPARAM wParam, LPARAM lParam)
 	case WEBGUIIA_UPDATESERVERMETFROMURL:
 		theApp.emuledlg->serverwnd->UpdateServerMetFromURL((TCHAR*)lParam);
 		break;
+	case WEBGUIIA_UPDATENODESDATFROMURL:
+		theApp.emuledlg->kademliawnd->UpdateNodesDatFromURL((TCHAR*)lParam);
+		break;
 	case WEBGUIIA_SHOWSTATISTICS:
 		theApp.emuledlg->statisticswnd->ShowStatistics(lParam != 0);
 		break;

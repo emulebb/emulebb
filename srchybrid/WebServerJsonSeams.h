@@ -637,6 +637,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"DELETE", "/servers/{serverId}", "", ""},
 		{"POST", "/servers/{serverId}/operations/connect", "", ""},
 		{"GET", "/kad", "", ""},
+		{"POST", "/kad/nodes-url-imports", "url", ""},
 		{"POST", "/kad/operations/start", "", ""},
 		{"POST", "/kad/operations/stop", "", ""},
 		{"POST", "/kad/operations/bootstrap", "address,port", ""},
@@ -1483,6 +1484,11 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 1 && route[0] == "kad" && bGet) {
 		rRoute.strCommand = "kad/status";
+		return true;
+	}
+	if (route.size() == 2 && route[0] == "kad" && route[1] == "nodes-url-imports" && bPost) {
+		rRoute.strCommand = "kad/import_nodes_url";
+		rRoute.params = body;
 		return true;
 	}
 	if (route.size() == 3 && route[0] == "kad" && route[1] == "operations" && bPost) {

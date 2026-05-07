@@ -2272,6 +2272,22 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		return BuildKadStatusJson();
 	}
 
+	if (strCommand == "kad/import_nodes_url") {
+		if (!params.contains("url") || !params["url"].is_string()) {
+			rError.strCode = "INVALID_ARGUMENT";
+			rError.strMessage = _T("url must be a string");
+			return json();
+		}
+		const CString strURL(CStringFromStdUtf8(params["url"].get<std::string>()));
+		if (theApp.emuledlg == NULL || theApp.emuledlg->kademliawnd == NULL) {
+			rError.strCode = "EMULE_ERROR";
+			rError.strMessage = _T("failed to update nodes.dat from URL");
+			return json();
+		}
+		InvokeWebGuiInteraction(WEBGUIIA_UPDATENODESDATFROMURL, reinterpret_cast<LPARAM>(static_cast<LPCTSTR>(strURL)));
+		return json{{"ok", true}};
+	}
+
 	if (strCommand == "kad/bootstrap") {
 		if (params.contains("address") || params.contains("port")) {
 			if (!params.contains("address") || !params["address"].is_string() || !params.contains("port") || !params["port"].is_number_unsigned()) {
