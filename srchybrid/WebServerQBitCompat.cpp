@@ -104,12 +104,8 @@ std::string GetSessionId()
 	static std::string s_strSessionId;
 	if (s_strSessionId.empty()) {
 		BYTE random[16] = {};
-		if (::BCryptGenRandom(NULL, random, sizeof(random), BCRYPT_USE_SYSTEM_PREFERRED_RNG) != 0) {
-			const ULONGLONG ullFallback = ::GetTickCount64();
-			memcpy(random, &ullFallback, min(sizeof(random), sizeof(ullFallback)));
-			const DWORD dwThreadId = ::GetCurrentThreadId();
-			memcpy(random + 8, &dwThreadId, min(sizeof(random) - 8, sizeof(dwThreadId)));
-		}
+		if (::BCryptGenRandom(NULL, random, sizeof(random), BCRYPT_USE_SYSTEM_PREFERRED_RNG) != 0)
+			return std::string();
 		s_strSessionId = HexEncode(random, sizeof(random));
 	}
 	return s_strSessionId;
@@ -258,8 +254,14 @@ void HandleLogin(const ThreadData &rData)
 		return;
 	}
 
+	const std::string strSessionId(GetSessionId());
+	if (strSessionId.empty()) {
+		SendTextResponse(rData.pSocket, 503, "Service Unavailable", WebServerQBitCompatSeams::kQBitFailureBody);
+		return;
+	}
+
 	CStringA strCookieHeader;
-	strCookieHeader.Format("Set-Cookie: SID=%s; Path=/; HttpOnly\r\n", GetSessionId().c_str());
+	strCookieHeader.Format("Set-Cookie: SID=%s; Path=/; HttpOnly\r\n", strSessionId.c_str());
 	SendTextResponse(rData.pSocket, 200, "OK", WebServerQBitCompatSeams::kQBitSuccessBody, strCookieHeader);
 }
 
