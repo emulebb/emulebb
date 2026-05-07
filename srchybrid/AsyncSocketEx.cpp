@@ -65,6 +65,8 @@ to tim.kosse@filezilla-project.org
 #include "AsyncSocketEx.h"
 
 #include "AsyncSocketExLayer.h"
+#include "AsyncSocketExRuntimeSeams.h"
+#include "Log.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -831,6 +833,8 @@ bool CAsyncSocketEx::InitAsyncSocketExInstance()
 					delete thread_local_data;
 					thread_local_data = NULL;
 				}
+				if (AsyncSocketExRuntimeSeams::ShouldLogThreadDataInitFailure())
+					DebugLogError(_T("Failed to initialize AsyncSocketEx helper thread data"));
 				return false;
 			}
 		}
