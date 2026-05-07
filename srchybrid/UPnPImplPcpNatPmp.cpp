@@ -245,7 +245,8 @@ void CUPnPImplPcpNatPmp::CloseFlow(pcp_flow_t *&pFlow, LPCTSTR pszLabel)
 		if (state == pcp_state_succeeded || state == pcp_state_partial_result) {
 			DebugLog(_T("Successfully removed PCP/NAT-PMP mapping for %s"), pszLabel);
 		} else {
-			DebugLogWarning(_T("PCP/NAT-PMP removal for %s finished with state '%s'"), pszLabel, GetPcpStateText(state));
+			const CString strState(GetPcpStateText(state));
+			DebugLogWarning(_T("PCP/NAT-PMP removal for %s finished with state '%s'"), pszLabel, (LPCTSTR)strState);
 		}
 	}
 
@@ -274,7 +275,8 @@ bool CUPnPImplPcpNatPmp::EnsureMappedPort(uint16 nPort, bool bTCP, pcp_flow_t *&
 	}
 
 	if (pFlow == NULL) {
-		pFlow = pcp_new_flow(m_pContext, reinterpret_cast<sockaddr*>(&source), NULL, NULL, (bTCP ? IPPROTO_TCP : IPPROTO_UDP), kPcpMappingLifetimeSeconds, NULL);
+		const uint8_t protocol = static_cast<uint8_t>(bTCP ? IPPROTO_TCP : IPPROTO_UDP);
+		pFlow = pcp_new_flow(m_pContext, reinterpret_cast<sockaddr*>(&source), NULL, NULL, protocol, kPcpMappingLifetimeSeconds, NULL);
 		if (pFlow == NULL) {
 			DebugLogWarning(_T("PCP/NAT-PMP failed to create a %s mapping flow for port %hu"), bTCP ? _T("TCP") : _T("UDP"), nPort);
 			return false;
@@ -302,10 +304,11 @@ bool CUPnPImplPcpNatPmp::EnsureMappedPort(uint16 nPort, bool bTCP, pcp_flow_t *&
 		return true;
 	}
 
+	const CString strState(GetPcpStateText(state));
 	if (bOptional)
-		DebugLogWarning(_T("PCP/NAT-PMP could not refresh optional %s port %hu (state: %s)"), bTCP ? _T("TCP") : _T("UDP"), nPort, GetPcpStateText(state));
+		DebugLogWarning(_T("PCP/NAT-PMP could not refresh optional %s port %hu (state: %s)"), bTCP ? _T("TCP") : _T("UDP"), nPort, (LPCTSTR)strState);
 	else
-		DebugLogWarning(_T("PCP/NAT-PMP failed to map %s port %hu (state: %s)"), bTCP ? _T("TCP") : _T("UDP"), nPort, GetPcpStateText(state));
+		DebugLogWarning(_T("PCP/NAT-PMP failed to map %s port %hu (state: %s)"), bTCP ? _T("TCP") : _T("UDP"), nPort, (LPCTSTR)strState);
 	pcp_delete_flow(pFlow);
 	pFlow = NULL;
 	return false;
