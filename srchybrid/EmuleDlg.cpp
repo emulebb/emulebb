@@ -203,12 +203,12 @@ namespace
 			(void)::PostMessage(hWnd, UM_BIND_INTERFACE_CHANGED, 0, 0);
 	}
 
-	static VOID CALLBACK BindLossIpInterfaceChangeCallback(PVOID pContext, PMIB_IPINTERFACE_ROW, MIB_NOTIFICATION_TYPE)
+	static VOID CALLBACK BindLossIpInterfaceChangeCallback(PVOID pContext, PMIB_IPINTERFACE_ROW, MIB_NOTIFICATION_TYPE) noexcept
 	{
 		PostBindInterfaceChanged(pContext);
 	}
 
-	static VOID CALLBACK BindLossUnicastAddressChangeCallback(PVOID pContext, PMIB_UNICASTIPADDRESS_ROW, MIB_NOTIFICATION_TYPE)
+	static VOID CALLBACK BindLossUnicastAddressChangeCallback(PVOID pContext, PMIB_UNICASTIPADDRESS_ROW, MIB_NOTIFICATION_TYPE) noexcept
 	{
 		PostBindInterfaceChanged(pContext);
 	}
@@ -3520,13 +3520,13 @@ BOOL CemuleApp::IsIdleMessage(MSG *pMsg)
 	// only chance to trigger some idle processing. So, we must use at last some of those
 	// messages because otherwise we would not do any idle processing at all in some cases.
 
-	static DWORD s_dwLastIdleMessage;
+	static ULONGLONG s_ullLastIdleMessage;
 	if (pMsg->message == WM_TIMER) {
 		// Allow this WM_TIMER message to trigger idle processing only if we did not do so
 		// since some seconds.
 		const ULONGLONG curTick = ::GetTickCount64();
-		if (curTick >= s_dwLastIdleMessage + SEC2MS(5)) {
-			s_dwLastIdleMessage = curTick;
+		if (curTick >= s_ullLastIdleMessage + SEC2MS(5)) {
+			s_ullLastIdleMessage = curTick;
 			return TRUE;// Request idle processing (will send a WM_KICKIDLE)
 		}
 		return FALSE;	// No idle processing
@@ -3535,7 +3535,7 @@ BOOL CemuleApp::IsIdleMessage(MSG *pMsg)
 	if (!CWinApp::IsIdleMessage(pMsg))
 		return FALSE;	// No idle processing
 
-	s_dwLastIdleMessage = ::GetTickCount64();
+	s_ullLastIdleMessage = ::GetTickCount64();
 	return TRUE;		// Request idle processing (will send a WM_KICKIDLE)
 }
 
