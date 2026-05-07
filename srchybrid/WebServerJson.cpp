@@ -1864,11 +1864,11 @@ bool ApplyServerPatchParams(CServer &rServer, const json &rParams, SPipeApiError
  * Marshals one legacy web action onto the main UI thread before it mutates
  * connection state owned by the dialog and socket layers.
  */
-void InvokeWebGuiInteraction(const WPARAM wAction, const LPARAM lParam = 0)
+LRESULT InvokeWebGuiInteraction(const WPARAM wAction, const LPARAM lParam = 0)
 {
 	if (theApp.emuledlg == NULL || theApp.emuledlg->GetSafeHwnd() == NULL)
-		return;
-	::SendMessage(theApp.emuledlg->m_hWnd, WEB_GUI_INTERACTION, wAction, lParam);
+		return 0;
+	return ::SendMessage(theApp.emuledlg->m_hWnd, WEB_GUI_INTERACTION, wAction, lParam);
 }
 
 /**
@@ -2237,8 +2237,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			rError.strMessage = _T("failed to update server.met from URL");
 			return json();
 		}
-		InvokeWebGuiInteraction(WEBGUIIA_UPDATESERVERMETFROMURL, reinterpret_cast<LPARAM>(static_cast<LPCTSTR>(strURL)));
-		return json{{"ok", true}};
+		const bool bImported = InvokeWebGuiInteraction(WEBGUIIA_UPDATESERVERMETFROMURL, reinterpret_cast<LPARAM>(static_cast<LPCTSTR>(strURL))) != 0;
+		return json{{"ok", bImported}, {"imported", bImported}};
 	}
 
 	if (strCommand == "servers/remove") {
@@ -2284,8 +2284,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			rError.strMessage = _T("failed to update nodes.dat from URL");
 			return json();
 		}
-		InvokeWebGuiInteraction(WEBGUIIA_UPDATENODESDATFROMURL, reinterpret_cast<LPARAM>(static_cast<LPCTSTR>(strURL)));
-		return json{{"ok", true}};
+		const bool bImported = InvokeWebGuiInteraction(WEBGUIIA_UPDATENODESDATFROMURL, reinterpret_cast<LPARAM>(static_cast<LPCTSTR>(strURL))) != 0;
+		return json{{"ok", bImported}, {"imported", bImported}};
 	}
 
 	if (strCommand == "kad/bootstrap") {

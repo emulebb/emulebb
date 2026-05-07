@@ -445,13 +445,17 @@ void CKademliaWnd::ContactRef(const Kademlia::CContact *contact)
 		m_contactListCtrl->ContactRef(contact);
 }
 
-void CKademliaWnd::UpdateNodesDatFromURL(const CString &strURL)
+bool CKademliaWnd::UpdateNodesDatFromURL(const CString &strURL)
 {
 	CString strTempFilename(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
 	strTempFilename.AppendFormat(_T("temp-%I64u-nodes.dat"), ::GetTickCount64());
 	CString strTrimmedUrl(strURL);
 	strTrimmedUrl.Trim();
 	const CString strTargetFilename(GetNodesDatFilename());
+	if (strTrimmedUrl.IsEmpty() || strTrimmedUrl.Find(_T("://")) < 0) {
+		LogError(LOG_STATUSBAR, GetResString(IDS_INVALIDURL));
+		return false;
+	}
 
 	// try to download nodes.dat
 	Log(GetResString(IDS_DOWNLOADING_NODESDAT_FROM), (LPCTSTR)strTrimmedUrl);
@@ -462,21 +466,21 @@ void CKademliaWnd::UpdateNodesDatFromURL(const CString &strURL)
 	if (dlgDownload.DoModal() != IDOK) {
 		(void)LongPathSeams::DeleteFileIfExists(strTempFilename);
 		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDDOWNLOADNODES), (LPCTSTR)strTrimmedUrl);
-		return;
+		return false;
 	}
 
 	Kademlia::NodesDatFileInfo fileInfo;
 	if (!Kademlia::InspectNodesDatFile(strTempFilename, fileInfo) || fileInfo.m_uUsableContacts == 0) {
 		(void)LongPathSeams::DeleteFileIfExists(strTempFilename);
 		LogError(LOG_STATUSBAR, _T("Downloaded nodes.dat from %s is invalid"), (LPCTSTR)strTrimmedUrl);
-		return;
+		return false;
 	}
 
 	if (!Kademlia::ReplaceNodesDatFile(strTempFilename, strTargetFilename)) {
 		const DWORD dwError = ::GetLastError();
 		(void)LongPathSeams::DeleteFileIfExists(strTempFilename);
 		LogError(LOG_STATUSBAR, _T("Failed to store nodes.dat from %s: %s"), (LPCTSTR)strTrimmedUrl, (LPCTSTR)GetErrorMessage(dwError));
-		return;
+		return false;
 	}
 
 	const bool bKadWasRunning = Kademlia::CKademlia::IsRunning();
@@ -491,6 +495,7 @@ void CKademliaWnd::UpdateNodesDatFromURL(const CString &strURL)
 
 	Log(_T("Updated nodes.dat from %s with %u usable contact%s"), (LPCTSTR)strTrimmedUrl, fileInfo.m_uUsableContacts
 		, fileInfo.m_uUsableContacts == 1 ? _T("") : _T("s"));
+	return true;
 }
 
 BOOL CKademliaWnd::OnHelpInfo(HELPINFO*)

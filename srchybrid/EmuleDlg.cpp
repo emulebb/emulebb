@@ -4025,11 +4025,9 @@ LRESULT CemuleDlg::OnWebGUIInteraction(WPARAM wParam, LPARAM lParam)
 		serverwnd->serverlistctrl.StaticServerFileRemove(reinterpret_cast<CServer*>(lParam));
 		break;
 	case WEBGUIIA_UPDATESERVERMETFROMURL:
-		theApp.emuledlg->serverwnd->UpdateServerMetFromURL((TCHAR*)lParam);
-		break;
+		return theApp.emuledlg->serverwnd->UpdateServerMetFromURL((TCHAR*)lParam);
 	case WEBGUIIA_UPDATENODESDATFROMURL:
-		theApp.emuledlg->kademliawnd->UpdateNodesDatFromURL((TCHAR*)lParam);
-		break;
+		return theApp.emuledlg->kademliawnd->UpdateNodesDatFromURL((TCHAR*)lParam);
 	case WEBGUIIA_SHOWSTATISTICS:
 		theApp.emuledlg->statisticswnd->ShowStatistics(lParam != 0);
 		break;
