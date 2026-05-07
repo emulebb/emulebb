@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <string>
 #include <tchar.h>
 #include <windows.h>
 
@@ -19,6 +21,66 @@ constexpr uint64_t kMinIncomingFreeBytes = kMinIncomingDiskSpaceFloorGiB * kDisk
 constexpr uint64_t kMaxDownloadFreeBytes = kMaxDiskSpaceFloorGiB * kDiskSpaceFloorUnitBytes;
 constexpr uint64_t kMinPartMetWriteFreeBytes = kMinDownloadFreeBytes;
 constexpr uint64_t kMaxInsufficientResumeHeadroomBytes = 1ull * kDiskSpaceFloorUnitBytes;
+
+constexpr TCHAR kPartMetBackupSuffix[] = _T(".bak");
+constexpr TCHAR kPartMetTemporarySuffix[] = _T(".backup");
+
+using PartFilePathString = std::basic_string<TCHAR>;
+
+/**
+ * Names the file-system targets touched by CPartFile metadata cleanup and deletion.
+ */
+enum class PartFileDeletePathRole
+{
+	Metadata,
+	Data,
+	Backup,
+	Temporary
+};
+
+/**
+ * Mirrors the legacy RemoveFileExtension helper used by CPartFile deletion.
+ */
+inline PartFilePathString RemoveFinalExtensionForPartDataPath(const PartFilePathString &rPartMetPath)
+{
+	const PartFilePathString::size_type nDot = rPartMetPath.find_last_of(_T('.'));
+	return nDot == PartFilePathString::npos ? rPartMetPath : rPartMetPath.substr(0u, nDot);
+}
+
+/**
+ * Builds the companion path selected by the CPartFile delete/remove flows.
+ */
+inline PartFilePathString BuildPartFileDeletePath(const PartFilePathString &rPartMetPath, const PartFileDeletePathRole eRole)
+{
+	switch (eRole) {
+		case PartFileDeletePathRole::Metadata:
+			return rPartMetPath;
+		case PartFileDeletePathRole::Data:
+			return RemoveFinalExtensionForPartDataPath(rPartMetPath);
+		case PartFileDeletePathRole::Backup:
+			return rPartMetPath + kPartMetBackupSuffix;
+		case PartFileDeletePathRole::Temporary:
+			return rPartMetPath + kPartMetTemporarySuffix;
+		default:
+			return PartFilePathString();
+	}
+}
+
+/**
+ * Identifies which delete targets are active for metadata cleanup vs full removal.
+ */
+inline bool IsPartFileDeletePathActive(const PartFileDeletePathRole eRole, const bool bDeletePartDataFile)
+{
+	return eRole != PartFileDeletePathRole::Data || bDeletePartDataFile;
+}
+
+/**
+ * Returns the number of paths the current CPartFile flow attempts to delete.
+ */
+inline std::size_t GetPartFileDeletePathCount(const bool bDeletePartDataFile)
+{
+	return bDeletePartDataFile ? 4u : 3u;
+}
 
 inline uint64_t ConvertDiskSpaceFloorGiBToBytes(const uint64_t nGiB)
 {
@@ -234,3 +296,4 @@ inline bool TryCopyFileToTempAndReplace(const LPCTSTR pszSrc, const LPCTSTR pszD
 
 #define EMULE_TEST_HAVE_PART_FILE_PERSISTENCE_SEAMS 1
 #define EMULE_TEST_HAVE_PART_FILE_DISKSPACE_FLOOR_SEAMS 1
+#define EMULE_TEST_HAVE_PART_FILE_DELETE_PLAN_SEAMS 1
