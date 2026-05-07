@@ -2195,7 +2195,7 @@ int CemuleApp::GetFileTypeSystemImageIdx(LPCTSTR pszFilePath, int iLength /* = -
 			m_hBigSystemImageList = hResult;
 
 			// Store icon index in local cache
-			m_aBigExtToSysImgIdx[pszCacheExt] = (LPVOID)sfi.iIcon;
+			m_aBigExtToSysImgIdx[pszCacheExt] = LongToPtr(sfi.iIcon);
 			return sfi.iIcon;
 		}
 	} else if (!m_aExtToSysImgIdx.Lookup(pszCacheExt, vData)) {
@@ -2209,12 +2209,12 @@ int CemuleApp::GetFileTypeSystemImageIdx(LPCTSTR pszFilePath, int iLength /* = -
 		m_hSystemImageList = hResult;
 
 		// Store icon index in local cache
-		m_aExtToSysImgIdx[pszCacheExt] = (LPVOID)sfi.iIcon;
+		m_aExtToSysImgIdx[pszCacheExt] = LongToPtr(sfi.iIcon);
 		return sfi.iIcon;
 	}
 
 	// Return already cached value
-	return reinterpret_cast<int>(vData);
+	return PtrToLong(vData);
 }
 
 bool CemuleApp::IsConnected(bool bIgnoreEd2k, bool bIgnoreKad)
