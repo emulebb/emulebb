@@ -1285,7 +1285,7 @@ uint32 CUpDownClient::CalculateDownloadRate()
 
 void CUpDownClient::CheckDownloadTimeout()
 {
-	if (::GetTickCount64() >= m_dwLastBlockReceived + thePrefs.GetDownloadTimeout()) {
+	if (::GetTickCount64() - m_dwLastBlockReceived >= thePrefs.GetDownloadTimeout()) {
 		if (socket != NULL && !socket->IsRawDataMode())
 			SendCancelTransfer();
 		else

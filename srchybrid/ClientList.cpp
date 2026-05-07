@@ -341,7 +341,7 @@ void CClientList::AddBannedClient(uint32 dwIP)
 bool CClientList::IsBannedClient(uint32 dwIP) const
 {
 	ULONGLONG dwBantime;
-	return m_bannedList.Lookup(dwIP, dwBantime) && (::GetTickCount64() < dwBantime + CLIENTBANTIME);
+	return m_bannedList.Lookup(dwIP, dwBantime) && (::GetTickCount64() - dwBantime < CLIENTBANTIME);
 }
 
 void CClientList::RemoveBannedClient(uint32 dwIP)
@@ -474,14 +474,14 @@ void CClientList::Process()
 	// Cleanup banned client list
 	//
 	const ULONGLONG curTick = ::GetTickCount64();
-	if (curTick >= m_dwLastBanCleanUp + BAN_CLEANUP_TIME) {
+	if (curTick - m_dwLastBanCleanUp >= BAN_CLEANUP_TIME) {
 		m_dwLastBanCleanUp = curTick;
 
 		for (POSITION pos = m_bannedList.GetStartPosition(); pos != NULL;) {
 			uint32 nKey;
 			ULONGLONG dwBantime;
 			m_bannedList.GetNextAssoc(pos, nKey, dwBantime);
-			if (curTick >= dwBantime + CLIENTBANTIME)
+			if (curTick - dwBantime >= CLIENTBANTIME)
 				RemoveBannedClient(nKey);
 		}
 
