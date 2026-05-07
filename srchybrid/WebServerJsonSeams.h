@@ -676,7 +676,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"GET", "/shared-files/{hash}/ed2k-link", "", ""},
 		{"GET", "/shared-files/{hash}/comments", "", "offset,limit"},
 		{"GET", "/shared-directories", "", ""},
-		{"PATCH", "/shared-directories", "roots", ""},
+		{"PATCH", "/shared-directories", "roots,confirmReplaceRoots", ""},
 		{"POST", "/shared-directories/operations/reload", "", ""},
 		{"GET", "/uploads", "", "offset,limit"},
 		{"DELETE", "/uploads/{clientId}", "", ""},
@@ -1595,6 +1595,8 @@ inline bool ValidateDestructiveConfirmationBody(const json &rBody, const SApiRou
 		return RequireBooleanFieldTrue(rBody, "confirmClearCompleted", "confirmClearCompleted must be true", rErrorCode, rErrorMessage);
 	if (strMethod == "DELETE" && strPath == "/searches")
 		return RequireBooleanFieldTrue(rBody, "confirmDeleteAllSearches", "confirmDeleteAllSearches must be true", rErrorCode, rErrorMessage);
+	if (strMethod == "PATCH" && strPath == "/shared-directories")
+		return RequireBooleanFieldTrue(rBody, "confirmReplaceRoots", "confirmReplaceRoots must be true", rErrorCode, rErrorMessage);
 	return true;
 }
 
