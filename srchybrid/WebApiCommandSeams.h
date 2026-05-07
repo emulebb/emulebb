@@ -171,6 +171,15 @@ inline bool TryParseNonNegativeUInt64(const json &rValue, uint64_t &ruValue)
 }
 
 /**
+ * @brief Returns the native search method token adapters should use when the
+ * caller has not requested a transport-specific search.
+ */
+inline const char *GetDefaultSearchMethodName()
+{
+	return "automatic";
+}
+
+/**
  * @brief Parses the public search method vocabulary used by search/start.
  */
 inline ESearchMethod ParseSearchMethodName(const char *pszMethod)
@@ -179,7 +188,7 @@ inline ESearchMethod ParseSearchMethodName(const char *pszMethod)
 		return ESearchMethod::Invalid;
 
 	const std::string strMethod(ToLowerAscii(pszMethod));
-	if (strMethod == "automatic")
+	if (strMethod == GetDefaultSearchMethodName())
 		return ESearchMethod::Automatic;
 	if (strMethod == "server")
 		return ESearchMethod::Server;

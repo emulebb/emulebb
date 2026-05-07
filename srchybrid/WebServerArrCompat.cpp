@@ -26,6 +26,7 @@
 
 #include "Log.h"
 #include "Preferences.h"
+#include "WebApiCommandSeams.h"
 #include "WebServerArrCompatSeams.h"
 #include "WebServerJson.h"
 #include "WebSocket.h"
@@ -296,7 +297,7 @@ std::vector<SArrCompatResult> RunOneNativeSearch(const std::string &rQuery, cons
 	if (::GetTickCount64() >= ullDeadline)
 		return results;
 
-	static const char *const s_arrSearchMethods[] = {"kad"};
+	static const char *const s_arrSearchMethods[] = {WebApiCommandSeams::GetDefaultSearchMethodName()};
 
 	json startResult;
 	for (const char *const pszMethod : s_arrSearchMethods) {
