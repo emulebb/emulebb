@@ -126,15 +126,6 @@ SMonitoredSharedRootJournalState* FindMonitoredSharedRootJournalState(std::vecto
 	return NULL;
 }
 
-const SMonitoredSharedRootJournalState* FindMonitoredSharedRootJournalState(const std::vector<SMonitoredSharedRootJournalState> &rStates, const CString &rRootPath)
-{
-	for (size_t i = 0; i < rStates.size(); ++i) {
-		if (EqualPaths(rStates[i].strRootPath, rRootPath))
-			return &rStates[i];
-	}
-	return NULL;
-}
-
 bool RemoveMonitoredSharedRootJournalState(std::vector<SMonitoredSharedRootJournalState> &rStates, const CString &rRootPath)
 {
 	for (std::vector<SMonitoredSharedRootJournalState>::iterator it = rStates.begin(); it != rStates.end(); ++it) {
