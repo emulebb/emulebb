@@ -304,10 +304,32 @@ inline bool HasCookiePair(const std::string &rCookieHeader, const std::string &r
 	return false;
 }
 
-inline bool IsTruthyFormValue(const std::string &rValue)
+/**
+ * @brief Parses one optional qBittorrent-compatible boolean form value.
+ */
+inline bool TryParseOptionalBooleanFormField(
+	const std::map<std::string, std::string> &rForm,
+	const char *pszFieldName,
+	bool &rbValue,
+	std::string &rErrorMessage)
 {
-	const std::string strValue(WebServerJsonSeams::ToLowerAscii(rValue));
-	return strValue == "1" || strValue == "true" || strValue == "yes";
+	rbValue = false;
+	const auto it = rForm.find(pszFieldName);
+	if (it == rForm.end())
+		return true;
+
+	const std::string strValue(WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::TrimAsciiWhitespace(it->second)));
+	if (strValue == "1" || strValue == "true" || strValue == "yes") {
+		rbValue = true;
+		return true;
+	}
+	if (strValue == "0" || strValue == "false" || strValue == "no") {
+		rbValue = false;
+		return true;
+	}
+
+	rErrorMessage = std::string(pszFieldName) + " must be a boolean form value";
+	return false;
 }
 
 inline bool IsMd4Hex(const std::string &rValue)
@@ -408,10 +430,13 @@ inline bool TryParseTorrentAddRequest(const std::string &rBody, SQBitTorrentAddR
 	if (!TryNormalizeCategoryFormField(form, "category", false, rRequest.strCategory, rErrorMessage))
 		return false;
 
-	const auto stoppedIt = form.find("stopped");
-	const auto pausedIt = form.find("paused");
-	rRequest.bPaused = (stoppedIt != form.end() && IsTruthyFormValue(stoppedIt->second))
-		|| (pausedIt != form.end() && IsTruthyFormValue(pausedIt->second));
+	bool bStopped = false;
+	bool bPaused = false;
+	if (!TryParseOptionalBooleanFormField(form, "stopped", bStopped, rErrorMessage))
+		return false;
+	if (!TryParseOptionalBooleanFormField(form, "paused", bPaused, rErrorMessage))
+		return false;
+	rRequest.bPaused = bStopped || bPaused;
 	return true;
 }
 
@@ -475,6 +500,9 @@ inline bool TryParseDeleteRequest(const std::string &rBody, SQBitHashMutationReq
 	if (!TryParseFormBody(rBody, form, rErrorMessage))
 		return false;
 	if (!TryParseHashesFormField(form, rRequest.hashes, rErrorMessage))
+		return false;
+	bool bIgnoredDeleteFiles = false;
+	if (!TryParseOptionalBooleanFormField(form, "deleteFiles", bIgnoredDeleteFiles, rErrorMessage))
 		return false;
 	// Native eMule transfer cancel cannot preserve partial .part state; qBit
 	// compatibility adapts delete requests to the native destructive contract.
