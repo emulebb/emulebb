@@ -384,7 +384,7 @@ void CServerConnect::ConnectionFailed(CServerSocket *sender)
 		}
 
 		for (POSITION pos = connectionattempts.GetStartPosition(); pos != NULL;) {
-			DWORD tmpkey;
+			ULONGLONG tmpkey;
 			CServerSocket *tmpsock;
 			connectionattempts.GetNextAssoc(pos, tmpkey, tmpsock);
 			if (tmpsock == sender) {
@@ -424,7 +424,7 @@ void CServerConnect::CheckForTimeout()
 
 	const ULONGLONG curTick = ::GetTickCount64();
 	for (POSITION pos = connectionattempts.GetStartPosition(); pos != NULL;) {
-		DWORD tmpkey;
+		ULONGLONG tmpkey;
 		CServerSocket *tmpsock;
 		connectionattempts.GetNextAssoc(pos, tmpkey, tmpsock);
 		if (!tmpsock) {

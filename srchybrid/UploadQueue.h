@@ -181,7 +181,7 @@ private:
 	uint32	failedupcount;
 	uint32	totaluploadtime;
 	ULONGLONG m_nLastStartUpload;
-	uint32	m_dwRemovedClientByScore;
+	ULONGLONG m_dwRemovedClientByScore;
 	uint32	m_imaxscore;
 
 	ULONGLONG m_dwLastCalculatedAverageCombinedFilePrioAndCredit;

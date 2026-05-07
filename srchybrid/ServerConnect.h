@@ -79,7 +79,7 @@ public:
 	uint32	m_curuser;
 
 private:
-	typedef CMap<ULONG, ULONG, CServerSocket*, CServerSocket*> CServerSocketMap;
+	typedef CMap<ULONGLONG, ULONGLONG, CServerSocket*, CServerSocket*> CServerSocketMap;
 	CServerSocketMap connectionattempts;
 	CPtrList m_lstOpenSockets;	// list of currently opened sockets
 	CServerSocket *connectedsocket;
