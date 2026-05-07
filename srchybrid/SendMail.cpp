@@ -374,7 +374,6 @@ void CNotifierMailThread::sendmail()
 
 	size_t n;
 	unsigned char base[1024];
-	n = sprintf((char*)base, "%s\n", mbedtls_ssl_get_ciphersuite(&ssl));
 
 	switch (m_mail.uAuth) {
 	case AUTH_PLAIN:

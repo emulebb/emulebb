@@ -3502,7 +3502,6 @@ CString CWebServer::_GetLoginScreen(const ThreadData &Data)
 // in order to use gzip in web pages
 int CWebServer::_GzipCompress(Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen, int level)
 {
-	static const int gz_magic[2] = {0x1f, 0x8b}; // gzip magic header
 	z_stream stream = {};
 	stream.zalloc = (alloc_func)NULL;
 	stream.zfree = (free_func)NULL;
@@ -3514,8 +3513,10 @@ int CWebServer::_GzipCompress(Bytef *dest, uLongf *destLen, const Bytef *source,
 	if (err != Z_OK)
 		return err;
 
-	sprintf((char*)dest, "%c%c%c%c%c%c%c%c%c%c", gz_magic[0], gz_magic[1]
-		, Z_DEFLATED, 0 /*flags*/, 0, 0, 0, 0 /*time*/, 0 /*xflags*/, 255);
+	static const Bytef gzipHeader[10] = {
+		0x1f, 0x8b, Z_DEFLATED, 0 /*flags*/, 0, 0, 0, 0 /*time*/, 0 /*xflags*/, 255
+	};
+	memcpy(dest, gzipHeader, sizeof(gzipHeader));
 	// wire buffers
 	stream.next_in = (Bytef*)source;
 	stream.avail_in = (uInt)sourceLen;
