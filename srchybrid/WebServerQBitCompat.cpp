@@ -402,6 +402,17 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		SendTextResponse(rData.pSocket, 404, "Not Found", WebServerQBitCompatSeams::kQBitNotFoundBody);
 		return;
 	}
+	if (strMethodRaw == "POST") {
+		std::string strMetadataError;
+		if (!WebServerQBitCompatSeams::TryValidateFormRequestMetadata(
+			WebServerJson::ToStdString(rData.strRequestBody),
+			WebServerJson::ToStdString(rData.strContentType),
+			strMetadataError))
+		{
+			SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
+			return;
+		}
+	}
 
 	if (strPath == "/api/v2/app/webapiversion") {
 		SendTextResponse(rData.pSocket, 200, "OK", "2.11.0");

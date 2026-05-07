@@ -148,6 +148,33 @@ inline bool TryParseFormBody(const std::string &rBody, std::map<std::string, std
 		"form field name must not be empty");
 }
 
+/**
+ * @brief Reports whether a qBittorrent-compatible POST body is declared as
+ * application/x-www-form-urlencoded.
+ */
+inline bool IsFormContentType(const std::string &rContentType)
+{
+	const std::string strContentType(WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::TrimAsciiWhitespace(rContentType)));
+	if (strContentType.empty())
+		return false;
+
+	const std::string::size_type uSemicolon = strContentType.find(';');
+	const std::string strMediaType(WebServerJsonSeams::TrimAsciiWhitespace(strContentType.substr(0, uSemicolon)));
+	return strMediaType == "application/x-www-form-urlencoded";
+}
+
+/**
+ * @brief Validates qBittorrent-compatible request metadata before form parsing.
+ */
+inline bool TryValidateFormRequestMetadata(const std::string &rRequestBody, const std::string &rContentType, std::string &rErrorMessage)
+{
+	if (!rRequestBody.empty() && !IsFormContentType(rContentType)) {
+		rErrorMessage = "Content-Type must be application/x-www-form-urlencoded for form request bodies";
+		return false;
+	}
+	return true;
+}
+
 inline bool TryGetRequiredNonEmptyFormField(const std::map<std::string, std::string> &rForm, const char *pszFieldName, std::string &rValue, std::string &rErrorMessage)
 {
 	const auto it = rForm.find(pszFieldName);
