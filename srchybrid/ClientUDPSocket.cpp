@@ -435,9 +435,9 @@ void CClientUDPSocket::OnSend(int nErrorCode)
 SocketSentBytes CClientUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend, uint32 /*minFragSize*/)
 {
 // ZZ:UploadBandWithThrottler (UDP) -->
-// NOTE: *** This function is invoked from a *different* thread!
+	// NOTE: *** This function is invoked from a *different* thread!
 	uint32 sentBytes = 0;
-	DWORD curTick;
+	ULONGLONG curTick;
 
 	sendLocker.Lock();
 // <-- ZZ:UploadBandWithThrottler (UDP)
