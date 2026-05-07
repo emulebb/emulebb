@@ -438,7 +438,9 @@ json BuildTransferJson(const CPartFile &rPartFile)
 		{"name", StdUtf8FromCString(rPartFile.GetFileName())},
 		{"sizeBytes", static_cast<uint64>(rPartFile.GetFileSize())},
 		{"completedBytes", static_cast<uint64>(rPartFile.GetCompletedSize())},
-		{"progress", rPartFile.GetPercentCompleted() / 100.0},
+		{"progress", WebApiSurfaceSeams::BuildTransferProgressRatio(
+			static_cast<uint64_t>(rPartFile.GetCompletedSize()),
+			static_cast<uint64_t>(rPartFile.GetFileSize()))},
 		{"state", StdUtf8FromCString(GetTransferStateName(rPartFile))},
 		{"priority", StdUtf8FromCString(GetTransferPriorityName(rPartFile))},
 		{"autoPriority", rPartFile.IsAutoDownPriority()},

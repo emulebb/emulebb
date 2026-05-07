@@ -29,6 +29,7 @@
 #include "DownloadQueue.h"
 #include "PartFile.h"
 #include "Preferences.h"
+#include "WebApiSurfaceSeams.h"
 #include "WebServerJson.h"
 #include "WebServerJsonSeams.h"
 #include "WebServerQBitCompatSeams.h"
@@ -197,7 +198,7 @@ json BuildQBitTorrentJson(const CPartFile &rPartFile)
 		{"hash", HexEncode(rPartFile.GetFileHash(), MDX_DIGEST_SIZE)},
 		{"name", WebServerJson::ToStdUtf8(strName)},
 		{"size", uSize},
-		{"progress", uSize > 0 ? static_cast<double>(uCompleted) / static_cast<double>(uSize) : 0.0},
+		{"progress", WebApiSurfaceSeams::BuildTransferProgressRatio(uCompleted, uSize)},
 		{"eta", -1},
 		{"state", strState},
 		{"label", WebServerJson::ToStdUtf8(strCategory)},

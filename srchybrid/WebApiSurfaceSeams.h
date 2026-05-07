@@ -44,6 +44,7 @@ inline constexpr uint64_t kMutablePreferenceMinQueueSize = 2000u;
 inline constexpr uint64_t kMutablePreferenceMaxQueueSize = 10000u;
 inline constexpr uint64_t kMutablePreferenceMinUploadSlots = 1u;
 inline constexpr uint64_t kMutablePreferenceMaxUploadSlots = 32u;
+inline constexpr uint64_t kTransferProgressRatioScale = 10000u;
 
 /**
  * Reports whether one REST bandwidth preference is a finite configured limit.
@@ -76,6 +77,21 @@ inline bool IsQueueSizePreferenceValue(const uint64_t ullValue)
 inline bool IsUploadSlotPreferenceValue(const uint64_t ullValue)
 {
 	return ullValue >= kMutablePreferenceMinUploadSlots && ullValue <= kMutablePreferenceMaxUploadSlots;
+}
+
+/**
+ * Builds the stable REST transfer progress ratio shared by native and adapter APIs.
+ */
+inline double BuildTransferProgressRatio(const uint64_t ullCompletedBytes, const uint64_t ullTotalBytes)
+{
+	if (ullTotalBytes == 0u)
+		return 0.0;
+	if (ullCompletedBytes >= ullTotalBytes)
+		return 1.0;
+
+	const long double progress = static_cast<long double>(ullCompletedBytes) / static_cast<long double>(ullTotalBytes);
+	const uint64_t ullScaled = static_cast<uint64_t>((progress * static_cast<long double>(kTransferProgressRatioScale)) + 0.5L);
+	return static_cast<double>(ullScaled) / static_cast<double>(kTransferProgressRatioScale);
 }
 
 /**
