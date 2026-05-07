@@ -1514,7 +1514,7 @@ void CDownloadQueue::ProcessLocalRequests()
 		int iFiles = 0;
 		while (!m_localServerReqQueue.IsEmpty() && iFiles < iMaxFilesPerTcpFrame) {
 			// find the file with the longest waiting time
-			DWORD dwBestWaitTime = _UI32_MAX;
+			ULONGLONG ullBestWaitTime = _UI64_MAX;
 			POSITION posNextRequest = NULL;
 			for (POSITION pos = m_localServerReqQueue.GetHeadPosition(); pos != NULL;) {
 				POSITION pos2 = pos;
@@ -1526,8 +1526,9 @@ void CDownloadQueue::ProcessLocalRequests()
 						nPriority = PR_HIGH;
 					}
 
-					if (cur_file->m_LastSearchTime + (PR_HIGH - nPriority) < dwBestWaitTime) {
-						dwBestWaitTime = cur_file->m_LastSearchTime + (PR_HIGH - nPriority);
+					const ULONGLONG ullWaitTime = cur_file->m_LastSearchTime + (PR_HIGH - nPriority);
+					if (ullWaitTime < ullBestWaitTime) {
+						ullBestWaitTime = ullWaitTime;
 						posNextRequest = pos2;
 					}
 				} else {
