@@ -183,6 +183,18 @@ inline bool TryNormalizeCategoryFormField(
 }
 
 /**
+ * @brief Parses the qBittorrent category-create body through the native
+ * category-name policy.
+ */
+inline bool TryParseCreateCategoryRequest(const std::string &rBody, std::string &rCategory, std::string &rErrorMessage)
+{
+	rCategory.clear();
+	std::map<std::string, std::string> form;
+	return TryParseFormBody(rBody, form, rErrorMessage)
+		&& TryNormalizeCategoryFormField(form, "category", true, rCategory, rErrorMessage);
+}
+
+/**
  * @brief Validates qBittorrent-compatible login form credentials.
  */
 inline bool IsValidLoginForm(
