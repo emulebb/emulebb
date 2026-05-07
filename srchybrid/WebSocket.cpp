@@ -3,8 +3,8 @@
 #include "WebSocket.h"
 #include "WebServer.h"
 #include "WebSocketHttpSeams.h"
+#include "WebSocketTlsSeams.h"
 #include "Preferences.h"
-#include "SafeFile.h"
 #include "StringConversion.h"
 #include "Log.h"
 
@@ -551,30 +551,17 @@ int StartSSL()
 	mbedtls_ssl_ticket_init(&ticket_ctx);
 	int ret = (int)psa_crypto_init();
 	if (!ret) { // PSA_SUCCESS is 0
-		// Load certificate via CFile so non-ASCII Windows paths are preserved.
-		{
-			CSafeFile certFile;
-			if (!LongPathSeams::OpenFile(certFile, thePrefs.GetWebCertPath(), CFile::modeRead | CFile::shareDenyWrite)) {
-				ret = MBEDTLS_ERR_X509_FILE_IO_ERROR;
-			} else {
-				const ULONGLONG fileLen = certFile.GetLength();
-				std::vector<unsigned char> buf(static_cast<size_t>(fileLen) + 1, 0);
-				certFile.Read(buf.data(), static_cast<UINT>(fileLen));
-				certFile.Close();
-				ret = mbedtls_x509_crt_parse(&srvcert, buf.data(), buf.size());
-			}
-		}
+		std::vector<unsigned char> buf;
+		if (!WebSocketTlsSeams::TryLoadPemFileForMbedTls(thePrefs.GetWebCertPath(), buf))
+			ret = MBEDTLS_ERR_X509_FILE_IO_ERROR;
+		else
+			ret = mbedtls_x509_crt_parse(&srvcert, buf.data(), buf.size());
 		if (!ret) {
-			CSafeFile keyFile;
-			if (!LongPathSeams::OpenFile(keyFile, thePrefs.GetWebKeyPath(), CFile::modeRead | CFile::shareDenyWrite)) {
+			buf.clear();
+			if (!WebSocketTlsSeams::TryLoadPemFileForMbedTls(thePrefs.GetWebKeyPath(), buf))
 				ret = MBEDTLS_ERR_PK_FILE_IO_ERROR;
-			} else {
-				const ULONGLONG fileLen = keyFile.GetLength();
-				std::vector<unsigned char> buf(static_cast<size_t>(fileLen) + 1, 0);
-				keyFile.Read(buf.data(), static_cast<UINT>(fileLen));
-				keyFile.Close();
+			else
 				ret = mbedtls_pk_parse_key(&pkey, buf.data(), buf.size(), NULL, 0);
-			}
 			if (!ret) {
 				ret = mbedtls_ssl_config_defaults(&conf, MBEDTLS_SSL_IS_SERVER, MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
 				if (!ret) {

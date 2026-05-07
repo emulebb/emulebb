@@ -694,6 +694,7 @@
     <ClInclude Include="WebServerQBitCompatSeams.h" />
     <ClInclude Include="WebServices.h" />
     <ClInclude Include="WebSocket.h" />
+    <ClInclude Include="WebSocketTlsSeams.h" />
     <ClInclude Include="Wizard.h" />
     <ClInclude Include="ZIPFile.h" />
   </ItemGroup>
