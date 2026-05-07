@@ -230,7 +230,7 @@ UploadScoreSeams::UploadScoreBreakdown CUpDownClient::GetScoreBreakdown(bool sys
 	}
 
 	const bool bApplyOldClientPenalty = (IsEmuleClient() || GetClientSoft() < 10) && m_byEmuleVersion <= 0x19;
-	const UINT uLowIdDivisor = max(1u, thePrefs.GetBBLowIDDivisor());
+	const UINT uLowIdDivisor = max(1u, thePrefs.GetLowIDDivisor());
 
 	UploadScoreSeams::UploadScoreInputs inputs = {};
 	inputs.uBaseValueMs = ullBaseValue;
@@ -239,9 +239,9 @@ UploadScoreSeams::UploadScoreBreakdown CUpDownClient::GetScoreBreakdown(bool sys
 	inputs.bUseCreditSystem = thePrefs.UseCreditSystem();
 	inputs.bApplyPriority = !onlybasevalue;
 	inputs.bApplyLowRatioBonus = !onlybasevalue
-		&& thePrefs.IsBBLowRatioBoostEnabled()
-		&& pRequestedFile->GetAllTimeUploadRatio() < thePrefs.GetBBLowRatioThreshold();
-	inputs.uLowRatioBonus = thePrefs.GetBBLowRatioBonus();
+		&& thePrefs.IsLowRatioBoostEnabled()
+		&& pRequestedFile->GetAllTimeUploadRatio() < thePrefs.GetLowRatioThreshold();
+	inputs.uLowRatioBonus = thePrefs.GetLowRatioBonus();
 	inputs.bApplyLowIdDivisor = !onlybasevalue && HasLowID() && uLowIdDivisor > 1;
 	inputs.uLowIdDivisor = uLowIdDivisor;
 	inputs.bApplyOldClientPenalty = bApplyOldClientPenalty;

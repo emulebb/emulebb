@@ -848,19 +848,19 @@ bool	CPreferences::m_bPartiallyPurgeOldKnownFiles;
 bool	CPreferences::m_bFollowMajorityFilenameForNewDownloads;
 UINT	CPreferences::m_uFollowMajorityFilenameRequiredPercent;
 UINT	CPreferences::m_uFollowMajorityFilenameMinimumVotes;
-UINT	CPreferences::m_uBBMaxUploadClientsAllowed;
-float	CPreferences::m_fBBSlowUploadThresholdFactor;
-UINT	CPreferences::m_uBBSlowUploadGraceSeconds;
-UINT	CPreferences::m_uBBSlowUploadWarmupSeconds;
-UINT	CPreferences::m_uBBZeroRateGraceSeconds;
-UINT	CPreferences::m_uBBSlowUploadCooldownSeconds;
-bool	CPreferences::m_bBBLowRatioBoostEnabled;
-float	CPreferences::m_fBBLowRatioThreshold;
-UINT	CPreferences::m_uBBLowRatioBonus;
-UINT	CPreferences::m_uBBLowIDDivisor;
-EBBSessionTransferMode CPreferences::m_eBBSessionTransferMode = BBSTM_DISABLED;
-UINT	CPreferences::m_uBBSessionTransferValue;
-UINT	CPreferences::m_uBBSessionTimeLimitSeconds;
+UINT	CPreferences::m_uMaxUploadClientsAllowed;
+float	CPreferences::m_fSlowUploadThresholdFactor;
+UINT	CPreferences::m_uSlowUploadGraceSeconds;
+UINT	CPreferences::m_uSlowUploadWarmupSeconds;
+UINT	CPreferences::m_uZeroUploadRateGraceSeconds;
+UINT	CPreferences::m_uSlowUploadCooldownSeconds;
+bool	CPreferences::m_bLowRatioBoostEnabled;
+float	CPreferences::m_fLowRatioThreshold;
+UINT	CPreferences::m_uLowRatioBonus;
+UINT	CPreferences::m_uLowIDDivisor;
+ESessionTransferLimitMode CPreferences::m_eSessionTransferLimitMode = ESessionTransferLimitMode::Disabled;
+UINT	CPreferences::m_uSessionTransferLimitValue;
+UINT	CPreferences::m_uSessionTimeLimitSeconds;
 
 EmailSettings CPreferences::m_email;
 
@@ -1055,25 +1055,25 @@ void CPreferences::SetIPFilterUpdatePeriodDays(UINT uDays)
 	m_uIPFilterUpdatePeriodDays = NormalizeIPFilterUpdatePeriodDays(uDays);
 }
 
-EBBSessionTransferMode CPreferences::NormalizeBBSessionTransferMode(EBBSessionTransferMode eMode)
+ESessionTransferLimitMode CPreferences::NormalizeSessionTransferLimitMode(ESessionTransferLimitMode eMode)
 {
-	return static_cast<EBBSessionTransferMode>(PreferenceUiSeams::NormalizeBBSessionTransferMode(static_cast<int>(eMode)));
+	return static_cast<ESessionTransferLimitMode>(PreferenceUiSeams::NormalizeSessionTransferLimitMode(static_cast<int>(eMode)));
 }
 
-UINT CPreferences::NormalizeBBSessionTransferValue(EBBSessionTransferMode eMode, UINT uVal)
+UINT CPreferences::NormalizeSessionTransferLimitValue(ESessionTransferLimitMode eMode, UINT uVal)
 {
-	return PreferenceUiSeams::NormalizeBBSessionTransferValue(static_cast<int>(NormalizeBBSessionTransferMode(eMode)), uVal);
+	return PreferenceUiSeams::NormalizeSessionTransferLimitValue(static_cast<int>(NormalizeSessionTransferLimitMode(eMode)), uVal);
 }
 
-void CPreferences::SetBBSessionTransferMode(EBBSessionTransferMode eMode)
+void CPreferences::SetSessionTransferLimitMode(ESessionTransferLimitMode eMode)
 {
-	m_eBBSessionTransferMode = NormalizeBBSessionTransferMode(eMode);
-	m_uBBSessionTransferValue = NormalizeBBSessionTransferValue(m_eBBSessionTransferMode, m_uBBSessionTransferValue);
+	m_eSessionTransferLimitMode = NormalizeSessionTransferLimitMode(eMode);
+	m_uSessionTransferLimitValue = NormalizeSessionTransferLimitValue(m_eSessionTransferLimitMode, m_uSessionTransferLimitValue);
 }
 
-void CPreferences::SetBBSessionTransferValue(UINT uVal)
+void CPreferences::SetSessionTransferLimitValue(UINT uVal)
 {
-	m_uBBSessionTransferValue = NormalizeBBSessionTransferValue(m_eBBSessionTransferMode, uVal);
+	m_uSessionTransferLimitValue = NormalizeSessionTransferLimitValue(m_eSessionTransferLimitMode, uVal);
 }
 
 UINT CPreferences::NormalizeTrafficOMeterInterval(UINT in)
@@ -2500,19 +2500,19 @@ void CPreferences::SavePreferences()
 	ini.WriteInt(_T("MaxChatHistoryLines"), (int)m_iMaxChatHistory);
 	ini.WriteInt(_T("MaxMessageSessions"), maxmsgsessions);
 	ini.WriteBool(_T("RearrangeKadSearchKeywords"), m_bRearrangeKadSearchKeywords);
-	ini.WriteInt(prefini::UploadPolicyKeys::MaxUploadClientsAllowed, m_uBBMaxUploadClientsAllowed, prefini::Sections::UploadPolicy);
-	ini.WriteFloat(prefini::UploadPolicyKeys::SlowUploadThresholdFactor, m_fBBSlowUploadThresholdFactor, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadGraceSeconds, m_uBBSlowUploadGraceSeconds, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadWarmupSeconds, m_uBBSlowUploadWarmupSeconds, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::ZeroUploadRateGraceSeconds, m_uBBZeroRateGraceSeconds, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadCooldownSeconds, m_uBBSlowUploadCooldownSeconds, prefini::Sections::UploadPolicy);
-	ini.WriteBool(prefini::UploadPolicyKeys::LowRatioBoostEnabled, m_bBBLowRatioBoostEnabled, prefini::Sections::UploadPolicy);
-	ini.WriteFloat(prefini::UploadPolicyKeys::LowRatioThreshold, m_fBBLowRatioThreshold, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::LowRatioScoreBonus, m_uBBLowRatioBonus, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::LowIDScoreDivisor, m_uBBLowIDDivisor, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::SessionTransferLimitMode, (int)m_eBBSessionTransferMode, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::SessionTransferLimitValue, m_uBBSessionTransferValue, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::SessionTimeLimitSeconds, m_uBBSessionTimeLimitSeconds, prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::MaxUploadClientsAllowed, m_uMaxUploadClientsAllowed, prefini::Sections::UploadPolicy);
+	ini.WriteFloat(prefini::UploadPolicyKeys::SlowUploadThresholdFactor, m_fSlowUploadThresholdFactor, prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadGraceSeconds, m_uSlowUploadGraceSeconds, prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadWarmupSeconds, m_uSlowUploadWarmupSeconds, prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::ZeroUploadRateGraceSeconds, m_uZeroUploadRateGraceSeconds, prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadCooldownSeconds, m_uSlowUploadCooldownSeconds, prefini::Sections::UploadPolicy);
+	ini.WriteBool(prefini::UploadPolicyKeys::LowRatioBoostEnabled, m_bLowRatioBoostEnabled, prefini::Sections::UploadPolicy);
+	ini.WriteFloat(prefini::UploadPolicyKeys::LowRatioThreshold, m_fLowRatioThreshold, prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::LowRatioScoreBonus, m_uLowRatioBonus, prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::LowIDScoreDivisor, m_uLowIDDivisor, prefini::Sections::UploadPolicy);
+		ini.WriteInt(prefini::UploadPolicyKeys::SessionTransferLimitMode, static_cast<int>(m_eSessionTransferLimitMode), prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::SessionTransferLimitValue, m_uSessionTransferLimitValue, prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::SessionTimeLimitSeconds, m_uSessionTimeLimitSeconds, prefini::Sections::UploadPolicy);
 	ini.SetSection(prefini::Sections::eMule);
 
 	// Toolbar
@@ -2859,19 +2859,19 @@ void CPreferences::LoadPreferences()
 	m_bTransflstRemain = ini.GetBool(_T("TransflstRemainOrder"), false);
 	filterserverbyip = ini.GetBool(_T("FilterServersByIP"), false);
 	filterlevel = ini.GetInt(_T("FilterLevel"), 127);
-	SetBBMaxUploadClientsAllowed((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::MaxUploadClientsAllowed, 8, prefini::Sections::UploadPolicy)));
-	SetBBSlowUploadThresholdFactor(ini.GetFloat(prefini::UploadPolicyKeys::SlowUploadThresholdFactor, 0.33f, prefini::Sections::UploadPolicy));
-	SetBBSlowUploadGraceSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SlowUploadGraceSeconds, 30, prefini::Sections::UploadPolicy)));
-	SetBBSlowUploadWarmupSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SlowUploadWarmupSeconds, 60, prefini::Sections::UploadPolicy)));
-	SetBBZeroRateGraceSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::ZeroUploadRateGraceSeconds, 10, prefini::Sections::UploadPolicy)));
-	SetBBSlowUploadCooldownSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SlowUploadCooldownSeconds, 120, prefini::Sections::UploadPolicy)));
-	m_bBBLowRatioBoostEnabled = ini.GetBool(prefini::UploadPolicyKeys::LowRatioBoostEnabled, true, prefini::Sections::UploadPolicy);
-	SetBBLowRatioThreshold(ini.GetFloat(prefini::UploadPolicyKeys::LowRatioThreshold, 0.5f, prefini::Sections::UploadPolicy));
-	SetBBLowRatioBonus((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::LowRatioScoreBonus, 50, prefini::Sections::UploadPolicy)));
-	SetBBLowIDDivisor((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::LowIDScoreDivisor, 2, prefini::Sections::UploadPolicy)));
-	SetBBSessionTransferMode((EBBSessionTransferMode)ini.GetInt(prefini::UploadPolicyKeys::SessionTransferLimitMode, BBSTM_PERCENT_OF_FILE, prefini::Sections::UploadPolicy));
-	SetBBSessionTransferValue((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SessionTransferLimitValue, PreferenceUiSeams::kDefaultBBSessionTransferPercent, prefini::Sections::UploadPolicy)));
-	SetBBSessionTimeLimitSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SessionTimeLimitSeconds, 3600, prefini::Sections::UploadPolicy)));
+	SetMaxUploadClientsAllowed((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::MaxUploadClientsAllowed, 8, prefini::Sections::UploadPolicy)));
+	SetSlowUploadThresholdFactor(ini.GetFloat(prefini::UploadPolicyKeys::SlowUploadThresholdFactor, 0.33f, prefini::Sections::UploadPolicy));
+	SetSlowUploadGraceSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SlowUploadGraceSeconds, 30, prefini::Sections::UploadPolicy)));
+	SetSlowUploadWarmupSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SlowUploadWarmupSeconds, 60, prefini::Sections::UploadPolicy)));
+	SetZeroUploadRateGraceSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::ZeroUploadRateGraceSeconds, 10, prefini::Sections::UploadPolicy)));
+	SetSlowUploadCooldownSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SlowUploadCooldownSeconds, 120, prefini::Sections::UploadPolicy)));
+	m_bLowRatioBoostEnabled = ini.GetBool(prefini::UploadPolicyKeys::LowRatioBoostEnabled, true, prefini::Sections::UploadPolicy);
+	SetLowRatioThreshold(ini.GetFloat(prefini::UploadPolicyKeys::LowRatioThreshold, 0.5f, prefini::Sections::UploadPolicy));
+	SetLowRatioBonus((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::LowRatioScoreBonus, 50, prefini::Sections::UploadPolicy)));
+	SetLowIDDivisor((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::LowIDScoreDivisor, 2, prefini::Sections::UploadPolicy)));
+	SetSessionTransferLimitMode(static_cast<ESessionTransferLimitMode>(ini.GetInt(prefini::UploadPolicyKeys::SessionTransferLimitMode, static_cast<int>(ESessionTransferLimitMode::PercentOfFile), prefini::Sections::UploadPolicy)));
+	SetSessionTransferLimitValue((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SessionTransferLimitValue, PreferenceUiSeams::kDefaultSessionTransferPercent, prefini::Sections::UploadPolicy)));
+	SetSessionTimeLimitSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SessionTimeLimitSeconds, 3600, prefini::Sections::UploadPolicy)));
 	ini.SetSection(prefini::Sections::eMule);
 	SetMinFreeDiskSpaceConfig(ini.GetUInt64(_T("MinFreeDiskSpaceConfig"), GetMinFreeDiskSpaceConfigFloor()));
 	SetMinFreeDiskSpaceTemp(ini.GetUInt64(_T("MinFreeDiskSpaceTemp"), GetMinFreeDiskSpaceTempFloor()));

@@ -15,14 +15,14 @@ constexpr UINT kDefaultLogBufferKiB = 256u;
 constexpr UINT kMaxChatHistoryLines = 10000u;
 constexpr UINT kMaxMessageSessions = 10000u;
 constexpr UINT kMaxPerfLogIntervalMinutes = 1440u;
-constexpr int kBBSessionTransferModeDisabled = 0;
-constexpr int kBBSessionTransferModePercentOfFile = 1;
-constexpr int kBBSessionTransferModeAbsoluteMiB = 2;
-constexpr UINT kDefaultBBSessionTransferPercent = 55u;
-constexpr UINT kMinBBSessionTransferPercent = 1u;
-constexpr UINT kMaxBBSessionTransferPercent = 100u;
-constexpr UINT kMinBBSessionTransferMiB = 1u;
-constexpr UINT kMaxBBSessionTransferMiB = 4096u;
+constexpr int kSessionTransferModeDisabled = 0;
+constexpr int kSessionTransferModePercentOfFile = 1;
+constexpr int kSessionTransferModeAbsoluteMiB = 2;
+constexpr UINT kDefaultSessionTransferPercent = 55u;
+constexpr UINT kMinSessionTransferPercent = 1u;
+constexpr UINT kMaxSessionTransferPercent = 100u;
+constexpr UINT kMinSessionTransferMiB = 1u;
+constexpr UINT kMaxSessionTransferMiB = 4096u;
 
 inline bool IsLogFileSizeKiBAllowed(UINT uValue)
 {
@@ -96,36 +96,36 @@ inline UINT NormalizePerfLogIntervalMinutes(UINT uValue)
 	return (uValue >= 1u && uValue <= kMaxPerfLogIntervalMinutes) ? uValue : 5u;
 }
 
-inline int NormalizeBBSessionTransferMode(int iValue)
+inline int NormalizeSessionTransferLimitMode(int iValue)
 {
 	switch (iValue) {
-	case kBBSessionTransferModeDisabled:
-	case kBBSessionTransferModePercentOfFile:
-	case kBBSessionTransferModeAbsoluteMiB:
+	case kSessionTransferModeDisabled:
+	case kSessionTransferModePercentOfFile:
+	case kSessionTransferModeAbsoluteMiB:
 		return iValue;
 	default:
-		return kBBSessionTransferModePercentOfFile;
+		return kSessionTransferModePercentOfFile;
 	}
 }
 
-inline UINT NormalizeBBSessionTransferValue(int iMode, UINT uValue)
+inline UINT NormalizeSessionTransferLimitValue(int iMode, UINT uValue)
 {
-	const int iNormalizedMode = NormalizeBBSessionTransferMode(iMode);
-	if (iNormalizedMode == kBBSessionTransferModePercentOfFile) {
-		if (uValue < kMinBBSessionTransferPercent)
-			return kMinBBSessionTransferPercent;
-		if (uValue > kMaxBBSessionTransferPercent)
-			return kMaxBBSessionTransferPercent;
+	const int iNormalizedMode = NormalizeSessionTransferLimitMode(iMode);
+	if (iNormalizedMode == kSessionTransferModePercentOfFile) {
+		if (uValue < kMinSessionTransferPercent)
+			return kMinSessionTransferPercent;
+		if (uValue > kMaxSessionTransferPercent)
+			return kMaxSessionTransferPercent;
 		return uValue;
 	}
-	if (iNormalizedMode == kBBSessionTransferModeAbsoluteMiB) {
-		if (uValue < kMinBBSessionTransferMiB)
-			return kMinBBSessionTransferMiB;
-		if (uValue > kMaxBBSessionTransferMiB)
-			return kMaxBBSessionTransferMiB;
+	if (iNormalizedMode == kSessionTransferModeAbsoluteMiB) {
+		if (uValue < kMinSessionTransferMiB)
+			return kMinSessionTransferMiB;
+		if (uValue > kMaxSessionTransferMiB)
+			return kMaxSessionTransferMiB;
 		return uValue;
 	}
-	return uValue > kMaxBBSessionTransferMiB ? kMaxBBSessionTransferMiB : uValue;
+	return uValue > kMaxSessionTransferMiB ? kMaxSessionTransferMiB : uValue;
 }
 
 inline bool IsPositiveBounded(UINT uValue, UINT uMax)

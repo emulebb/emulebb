@@ -63,11 +63,11 @@ enum SMTPauth: byte
 	AUTH_OAUTH2 */
 };
 
-enum EBBSessionTransferMode : uint8
+enum class ESessionTransferLimitMode : uint8
 {
-	BBSTM_DISABLED = 0,
-	BBSTM_PERCENT_OF_FILE = 1,
-	BBSTM_ABSOLUTE_MIB = 2
+	Disabled = 0,
+	PercentOfFile = 1,
+	AbsoluteMiB = 2
 };
 
 /**
@@ -654,19 +654,19 @@ public:
 	static bool		m_bFollowMajorityFilenameForNewDownloads;
 	static UINT		m_uFollowMajorityFilenameRequiredPercent;
 	static UINT		m_uFollowMajorityFilenameMinimumVotes;
-	static UINT		m_uBBMaxUploadClientsAllowed;
-	static float	m_fBBSlowUploadThresholdFactor;
-	static UINT		m_uBBSlowUploadGraceSeconds;
-	static UINT		m_uBBSlowUploadWarmupSeconds;
-	static UINT		m_uBBZeroRateGraceSeconds;
-	static UINT		m_uBBSlowUploadCooldownSeconds;
-	static bool		m_bBBLowRatioBoostEnabled;
-	static float	m_fBBLowRatioThreshold;
-	static UINT		m_uBBLowRatioBonus;
-	static UINT		m_uBBLowIDDivisor;
-	static EBBSessionTransferMode m_eBBSessionTransferMode;
-	static UINT		m_uBBSessionTransferValue;
-	static UINT		m_uBBSessionTimeLimitSeconds;
+	static UINT		m_uMaxUploadClientsAllowed;
+	static float	m_fSlowUploadThresholdFactor;
+	static UINT		m_uSlowUploadGraceSeconds;
+	static UINT		m_uSlowUploadWarmupSeconds;
+	static UINT		m_uZeroUploadRateGraceSeconds;
+	static UINT		m_uSlowUploadCooldownSeconds;
+	static bool		m_bLowRatioBoostEnabled;
+	static float	m_fLowRatioThreshold;
+	static UINT		m_uLowRatioBonus;
+	static UINT		m_uLowIDDivisor;
+	static ESessionTransferLimitMode m_eSessionTransferLimitMode;
+	static UINT		m_uSessionTransferLimitValue;
+	static UINT		m_uSessionTimeLimitSeconds;
 
 	//email notifier
 	static EmailSettings m_email;
@@ -1471,34 +1471,34 @@ public:
 
 	static bool		GetLog2Disk()						{ return log2disk; }
 	static bool		GetDebug2Disk()						{ return m_bVerbose && debug2disk; }
-	static UINT		GetBBMaxUploadClientsAllowed()		{ return m_uBBMaxUploadClientsAllowed; }
-	static void		SetBBMaxUploadClientsAllowed(UINT uVal) { m_uBBMaxUploadClientsAllowed = min(32u, max(1u, uVal)); }
-	static float	GetBBSlowUploadThresholdFactor()	{ return m_fBBSlowUploadThresholdFactor; }
-	static void		SetBBSlowUploadThresholdFactor(float fVal) { m_fBBSlowUploadThresholdFactor = min(1.0f, max(0.10f, fVal)); }
-	static UINT		GetBBSlowUploadGraceSeconds()		{ return m_uBBSlowUploadGraceSeconds; }
-	static void		SetBBSlowUploadGraceSeconds(UINT uVal) { m_uBBSlowUploadGraceSeconds = min(300u, max(5u, uVal)); }
-	static UINT		GetBBSlowUploadWarmupSeconds()		{ return m_uBBSlowUploadWarmupSeconds; }
-	static void		SetBBSlowUploadWarmupSeconds(UINT uVal) { m_uBBSlowUploadWarmupSeconds = min(uVal, 3600u); }
-	static UINT		GetBBZeroRateGraceSeconds()			{ return m_uBBZeroRateGraceSeconds; }
-	static void		SetBBZeroRateGraceSeconds(UINT uVal) { m_uBBZeroRateGraceSeconds = min(120u, max(3u, uVal)); }
-	static UINT		GetBBSlowUploadCooldownSeconds()	{ return m_uBBSlowUploadCooldownSeconds; }
-	static void		SetBBSlowUploadCooldownSeconds(UINT uVal) { m_uBBSlowUploadCooldownSeconds = min(3600u, max(10u, uVal)); }
-	static bool		IsBBLowRatioBoostEnabled()			{ return m_bBBLowRatioBoostEnabled; }
-	static void		SetBBLowRatioBoostEnabled(bool bVal) { m_bBBLowRatioBoostEnabled = bVal; }
-	static float	GetBBLowRatioThreshold()			{ return m_fBBLowRatioThreshold; }
-	static void		SetBBLowRatioThreshold(float fVal) { m_fBBLowRatioThreshold = min(2.0f, max(0.0f, fVal)); }
-	static UINT		GetBBLowRatioBonus()				{ return m_uBBLowRatioBonus; }
-	static void		SetBBLowRatioBonus(UINT uVal)		{ m_uBBLowRatioBonus = min(500u, uVal); }
-	static UINT		GetBBLowIDDivisor()					{ return m_uBBLowIDDivisor; }
-	static void		SetBBLowIDDivisor(UINT uVal)		{ m_uBBLowIDDivisor = min(8u, max(1u, uVal)); }
-	static EBBSessionTransferMode GetBBSessionTransferMode() { return m_eBBSessionTransferMode; }
-	static EBBSessionTransferMode NormalizeBBSessionTransferMode(EBBSessionTransferMode eMode);
-	static UINT		NormalizeBBSessionTransferValue(EBBSessionTransferMode eMode, UINT uVal);
-	static void		SetBBSessionTransferMode(EBBSessionTransferMode eMode);
-	static UINT		GetBBSessionTransferValue()			{ return m_uBBSessionTransferValue; }
-	static void		SetBBSessionTransferValue(UINT uVal);
-	static UINT		GetBBSessionTimeLimitSeconds()		{ return m_uBBSessionTimeLimitSeconds; }
-	static void		SetBBSessionTimeLimitSeconds(UINT uVal) { m_uBBSessionTimeLimitSeconds = min(86400u, uVal); }
+	static UINT		GetMaxUploadClientsAllowed()		{ return m_uMaxUploadClientsAllowed; }
+	static void		SetMaxUploadClientsAllowed(UINT uVal) { m_uMaxUploadClientsAllowed = min(32u, max(1u, uVal)); }
+	static float	GetSlowUploadThresholdFactor()	{ return m_fSlowUploadThresholdFactor; }
+	static void		SetSlowUploadThresholdFactor(float fVal) { m_fSlowUploadThresholdFactor = min(1.0f, max(0.10f, fVal)); }
+	static UINT		GetSlowUploadGraceSeconds()		{ return m_uSlowUploadGraceSeconds; }
+	static void		SetSlowUploadGraceSeconds(UINT uVal) { m_uSlowUploadGraceSeconds = min(300u, max(5u, uVal)); }
+	static UINT		GetSlowUploadWarmupSeconds()		{ return m_uSlowUploadWarmupSeconds; }
+	static void		SetSlowUploadWarmupSeconds(UINT uVal) { m_uSlowUploadWarmupSeconds = min(uVal, 3600u); }
+	static UINT		GetZeroUploadRateGraceSeconds()			{ return m_uZeroUploadRateGraceSeconds; }
+	static void		SetZeroUploadRateGraceSeconds(UINT uVal) { m_uZeroUploadRateGraceSeconds = min(120u, max(3u, uVal)); }
+	static UINT		GetSlowUploadCooldownSeconds()	{ return m_uSlowUploadCooldownSeconds; }
+	static void		SetSlowUploadCooldownSeconds(UINT uVal) { m_uSlowUploadCooldownSeconds = min(3600u, max(10u, uVal)); }
+	static bool		IsLowRatioBoostEnabled()			{ return m_bLowRatioBoostEnabled; }
+	static void		SetLowRatioBoostEnabled(bool bVal) { m_bLowRatioBoostEnabled = bVal; }
+	static float	GetLowRatioThreshold()			{ return m_fLowRatioThreshold; }
+	static void		SetLowRatioThreshold(float fVal) { m_fLowRatioThreshold = min(2.0f, max(0.0f, fVal)); }
+	static UINT		GetLowRatioBonus()				{ return m_uLowRatioBonus; }
+	static void		SetLowRatioBonus(UINT uVal)		{ m_uLowRatioBonus = min(500u, uVal); }
+	static UINT		GetLowIDDivisor()					{ return m_uLowIDDivisor; }
+	static void		SetLowIDDivisor(UINT uVal)		{ m_uLowIDDivisor = min(8u, max(1u, uVal)); }
+	static ESessionTransferLimitMode GetSessionTransferLimitMode() { return m_eSessionTransferLimitMode; }
+	static ESessionTransferLimitMode NormalizeSessionTransferLimitMode(ESessionTransferLimitMode eMode);
+	static UINT		NormalizeSessionTransferLimitValue(ESessionTransferLimitMode eMode, UINT uVal);
+	static void		SetSessionTransferLimitMode(ESessionTransferLimitMode eMode);
+	static UINT		GetSessionTransferLimitValue()			{ return m_uSessionTransferLimitValue; }
+	static void		SetSessionTransferLimitValue(UINT uVal);
+	static UINT		GetSessionTimeLimitSeconds()		{ return m_uSessionTimeLimitSeconds; }
+	static void		SetSessionTimeLimitSeconds(UINT uVal) { m_uSessionTimeLimitSeconds = min(86400u, uVal); }
 	static int		GetMaxLogBuff()						{ return iMaxLogBuff; }
 	static UINT		GetMaxLogFileSize()					{ return uMaxLogFileSize; }
 	static ELogFileFormat GetLogFileFormat()			{ return m_iLogFileFormat; }

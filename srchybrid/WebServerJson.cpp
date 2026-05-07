@@ -648,7 +648,7 @@ json BuildPreferencesJson()
 		{"maxConnectionsPerFiveSeconds", thePrefs.GetMaxConperFive()},
 		{"maxSourcesPerFile", thePrefs.GetConfiguredMaxSourcesPerFile()},
 		{"uploadClientDataRate", theApp.uploadqueue->GetTargetClientDataRateBroadband()},
-		{"maxUploadSlots", thePrefs.GetBBMaxUploadClientsAllowed()},
+		{"maxUploadSlots", thePrefs.GetMaxUploadClientsAllowed()},
 		{"queueSize", static_cast<int64_t>(thePrefs.GetQueueSize())},
 		{"autoConnect", thePrefs.DoAutoConnect()},
 		{"newAutoUp", thePrefs.GetNewAutoUp()},
@@ -999,7 +999,7 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 		const uint32 uBudgetBytesPerSec = max(3u * 1024u, thePrefs.GetMaxUpload() * 1024u);
 		const uint32 uRequestedRate = static_cast<uint32>(ullRequestedRate);
 		const uint32 uDerivedSlots = max(1u, min(32u, uBudgetBytesPerSec / max(1u, uRequestedRate)));
-		thePrefs.SetBBMaxUploadClientsAllowed(uDerivedSlots);
+		thePrefs.SetMaxUploadClientsAllowed(uDerivedSlots);
 	}
 
 	if (rPrefs.contains("maxUploadSlots")) {
@@ -1009,7 +1009,7 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 			rError.strMessage = _T("maxUploadSlots must be an unsigned number in the range 1..32");
 			return false;
 		}
-		thePrefs.SetBBMaxUploadClientsAllowed(static_cast<UINT>(ullRequestedSlots));
+		thePrefs.SetMaxUploadClientsAllowed(static_cast<UINT>(ullRequestedSlots));
 	}
 
 	if (rPrefs.contains("queueSize")) {

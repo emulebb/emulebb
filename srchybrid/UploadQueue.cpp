@@ -61,15 +61,15 @@ static uint32 igraph, istats;
 
 namespace
 {
-	uint64 ResolveBBSessionTransferLimitBytes(const CKnownFile *pUploadingFile)
+	uint64 ResolveSessionTransferLimitBytes(const CKnownFile *pUploadingFile)
 	{
-		switch (thePrefs.GetBBSessionTransferMode()) {
-		case BBSTM_PERCENT_OF_FILE:
+		switch (thePrefs.GetSessionTransferLimitMode()) {
+		case ESessionTransferLimitMode::PercentOfFile:
 			if (pUploadingFile == NULL)
 				return 0;
-			return ((uint64)pUploadingFile->GetFileSize() * thePrefs.GetBBSessionTransferValue() + 99u) / 100u;
-		case BBSTM_ABSOLUTE_MIB:
-			return (uint64)thePrefs.GetBBSessionTransferValue() * 1024ui64 * 1024ui64;
+			return ((uint64)pUploadingFile->GetFileSize() * thePrefs.GetSessionTransferLimitValue() + 99u) / 100u;
+		case ESessionTransferLimitMode::AbsoluteMiB:
+			return (uint64)thePrefs.GetSessionTransferLimitValue() * 1024ui64 * 1024ui64;
 		default:
 			return 0;
 		}
@@ -421,7 +421,7 @@ uint32 CUploadQueue::GetConfiguredUploadBudgetBytesPerSec() const
 
 INT_PTR CUploadQueue::GetSoftMaxUploadSlots() const
 {
-	return (INT_PTR)max((INT_PTR)MIN_UP_CLIENTS_ALLOWED, (INT_PTR)thePrefs.GetBBMaxUploadClientsAllowed());
+	return (INT_PTR)max((INT_PTR)MIN_UP_CLIENTS_ALLOWED, (INT_PTR)thePrefs.GetMaxUploadClientsAllowed());
 }
 
 uint32 CUploadQueue::GetTargetClientDataRateBroadband() const
@@ -472,7 +472,7 @@ bool CUploadQueue::HasCompletedSlowUploadWarmup(const CUpDownClient *client) con
 
 	// Warm-up protects fresh slots from being judged on startup noise; callers
 	// reset the accumulated slow counters until this window has elapsed.
-	const UINT uWarmupSeconds = thePrefs.GetBBSlowUploadWarmupSeconds();
+	const UINT uWarmupSeconds = thePrefs.GetSlowUploadWarmupSeconds();
 	return uWarmupSeconds == 0 || client->GetUpStartTimeDelay() >= SEC2MS(uWarmupSeconds);
 }
 
@@ -482,7 +482,7 @@ uint32 CUploadQueue::GetSlowUploadRateThreshold() const
 	if (uTargetPerSlot == 0)
 		return 3 * 1024;
 
-	const float fFactor = max(0.05f, thePrefs.GetBBSlowUploadThresholdFactor());
+	const float fFactor = max(0.05f, thePrefs.GetSlowUploadThresholdFactor());
 	return max(1024u, static_cast<uint32>(uTargetPerSlot * fFactor));
 }
 
@@ -903,16 +903,16 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 		client->UpdateSlowUploadTracking(curTick, GetSlowUploadRateThreshold());
 		if (!HasCompletedSlowUploadWarmup(client)) {
 			client->ResetSlowUploadTracking();
-		} else if (client->ShouldRecycleSlowUpload(SEC2MS(thePrefs.GetBBSlowUploadGraceSeconds()), SEC2MS(thePrefs.GetBBZeroRateGraceSeconds()))) {
-			client->SetSlowUploadCooldownUntil(::GetTickCount64() + SEC2MS(thePrefs.GetBBSlowUploadCooldownSeconds()));
+		} else if (client->ShouldRecycleSlowUpload(SEC2MS(thePrefs.GetSlowUploadGraceSeconds()), SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()))) {
+			client->SetSlowUploadCooldownUntil(::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds()));
 			if (thePrefs.GetLogUlDlEvents()) {
-				if (client->GetAccumulatedZeroUploadMs() >= SEC2MS(thePrefs.GetBBZeroRateGraceSeconds()))
+				if (client->GetAccumulatedZeroUploadMs() >= SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()))
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled due to zero upload during broadband underfill."), client->GetUserName());
 				else
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled due to slow upload during broadband underfill."), client->GetUserName());
 			}
 			if (pstrReason != NULL) {
-				*pstrReason = (client->GetAccumulatedZeroUploadMs() >= SEC2MS(thePrefs.GetBBZeroRateGraceSeconds()))
+				*pstrReason = (client->GetAccumulatedZeroUploadMs() >= SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()))
 					? _T("Broadband zero-rate recycle")
 					: _T("Broadband slow-rate recycle");
 			}
@@ -924,7 +924,7 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 	}
 
 	const CKnownFile *pUploadingFile = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
-	const uint64 uSessionTransferLimit = ResolveBBSessionTransferLimitBytes(pUploadingFile);
+	const uint64 uSessionTransferLimit = ResolveSessionTransferLimitBytes(pUploadingFile);
 	if (uSessionTransferLimit > 0) {
 		// Allow the client to download a specified amount per session, but only rotate when another slot is needed.
 		if (client->GetQueueSessionPayloadUp() > uSessionTransferLimit) {
@@ -941,7 +941,7 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 		}
 	}
 
-	const UINT uSessionTimeLimitSeconds = thePrefs.GetBBSessionTimeLimitSeconds();
+	const UINT uSessionTimeLimitSeconds = thePrefs.GetSessionTimeLimitSeconds();
 	if (uSessionTimeLimitSeconds > 0 && client->GetUpStartTimeDelay() > SEC2MS(uSessionTimeLimitSeconds)) {
 		const bool bNeedsReplacement = ForceNewClient();
 		if (bNeedsReplacement) {
