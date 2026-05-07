@@ -28,6 +28,7 @@
 #include "CompressionBufferSeams.h"
 #include "ProtocolGuards.h"
 #include "ClientList.h"
+#include "ClientUDPSocketSeams.h"
 #include "EncryptedDatagramSocket.h"
 #include "IPFilter.h"
 #include "Listensocket.h"
@@ -85,6 +86,7 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 	int nPacketLen = DecryptReceivedClient(buffer, nRealLen, &pBuffer, sockAddr.sin_addr.s_addr, &nReceiverVerifyKey, &nSenderVerifyKey);
 	if (nPacketLen > 0) {
 		CString strError;
+		bool bUnexpectedPacketException = false;
 		try {
 			switch (pBuffer[0]) {
 			case OP_EMULEPROT:
@@ -156,10 +158,13 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 #ifndef _DEBUG
 		} catch (...) {
 			strError = _T("Unknown exception");
+			bUnexpectedPacketException = true;
 			ASSERT(0);
 #endif
 		}
-		if (thePrefs.GetVerbose() && !strError.IsEmpty()) {
+		const ClientUDPSocketSeams::EUdpPacketFailureLogPolicy eLogPolicy =
+			ClientUDPSocketSeams::GetPacketFailureLogPolicy(bUnexpectedPacketException);
+		if (ClientUDPSocketSeams::ShouldLogPacketFailure(thePrefs.GetVerbose(), eLogPolicy) && !strError.IsEmpty()) {
 			CString strClientInfo;
 			CUpDownClient *client;
 			if (pBuffer[0] == OP_EMULEPROT)
