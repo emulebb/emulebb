@@ -1109,6 +1109,111 @@ inline bool ValidateSharedDirectoriesPatchBody(json &rBody, std::string &rErrorC
 	return true;
 }
 
+/**
+ * @brief Validates and trims one public non-empty string token.
+ */
+inline bool TryParseNonEmptyTextField(json &rBody, const char *pszFieldName, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (!rBody.contains(pszFieldName) || !rBody[pszFieldName].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszFieldName) + " must be a non-empty string");
+		return false;
+	}
+	const std::string strValue(TrimAsciiWhitespace(rBody[pszFieldName].get<std::string>()));
+	if (strValue.empty()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszFieldName) + " must not be empty");
+		return false;
+	}
+	rBody[pszFieldName] = strValue;
+	return true;
+}
+
+/**
+ * @brief Validates one public TCP port body field.
+ */
+inline bool ValidatePortBodyField(json &rBody, const char *pszFieldName, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	uint64_t uPort = 0;
+	if (!rBody.contains(pszFieldName) || !TryParseJsonUInt64(rBody[pszFieldName], uPort) || uPort == 0 || uPort > 0xFFFFui64) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszFieldName) + " must be in the range 1..65535");
+		return false;
+	}
+	rBody[pszFieldName] = uPort;
+	return true;
+}
+
+/**
+ * @brief Validates native server-create body shape before command dispatch.
+ */
+inline bool ValidateServerCreateBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (rBody.contains("addr")) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "server create uses address, not addr");
+		return false;
+	}
+	if (!TryParseNonEmptyTextField(rBody, "address", rErrorCode, rErrorMessage))
+		return false;
+	if (!ValidatePortBodyField(rBody, "port", rErrorCode, rErrorMessage))
+		return false;
+	if (rBody.contains("name") && !rBody["name"].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "name must be a string when provided");
+		return false;
+	}
+	if (rBody.contains("priority") && !rBody["priority"].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be a string");
+		return false;
+	}
+	if (rBody.contains("static") && !rBody["static"].is_boolean()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "static must be a boolean");
+		return false;
+	}
+	if (rBody.contains("connect") && !rBody["connect"].is_boolean()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "connect must be a boolean");
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Validates native server PATCH body shape before command dispatch.
+ */
+inline bool ValidateServerPatchBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (!rBody.contains("name") && !rBody.contains("priority") && !rBody.contains("static")) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "server PATCH requires name, priority, or static");
+		return false;
+	}
+	if (rBody.contains("name") && !rBody["name"].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "name must be a string when provided");
+		return false;
+	}
+	if (rBody.contains("priority") && !rBody["priority"].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be a string");
+		return false;
+	}
+	if (rBody.contains("static") && !rBody["static"].is_boolean()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "static must be a boolean");
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Validates native URL-import body shape before command dispatch.
+ */
+inline bool ValidateUrlImportBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	return TryParseNonEmptyTextField(rBody, "url", rErrorCode, rErrorMessage);
+}
+
+/**
+ * @brief Validates native Kad bootstrap body shape before command dispatch.
+ */
+inline bool ValidateKadBootstrapBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	return TryParseNonEmptyTextField(rBody, "address", rErrorCode, rErrorMessage)
+		&& ValidatePortBodyField(rBody, "port", rErrorCode, rErrorMessage);
+}
+
 inline bool RequireBooleanField(
 	const json &rBody,
 	const char *pszFieldName,
@@ -1280,6 +1385,39 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 		&& std::string(rSpec.pszMethod) == "PATCH"
 		&& std::string(rSpec.pszPathTemplate) == "/shared-directories"
 		&& !ValidateSharedDirectoriesPatchBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "POST"
+		&& std::string(rSpec.pszPathTemplate) == "/servers"
+		&& !ValidateServerCreateBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "PATCH"
+		&& std::string(rSpec.pszPathTemplate) == "/servers/{serverId}"
+		&& !ValidateServerPatchBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "POST"
+		&& (std::string(rSpec.pszPathTemplate) == "/servers/met-url-imports"
+			|| std::string(rSpec.pszPathTemplate) == "/kad/nodes-url-imports")
+		&& !ValidateUrlImportBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "POST"
+		&& std::string(rSpec.pszPathTemplate) == "/kad/operations/bootstrap"
+		&& !ValidateKadBootstrapBody(rBody, rErrorCode, rErrorMessage))
 	{
 		return false;
 	}
