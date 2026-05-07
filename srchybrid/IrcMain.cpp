@@ -503,7 +503,7 @@ void CIrcMain::ParseMessage(const CString &sRawMessage)
 					m_pIRCSocket->SendString(strCommand);
 				}
 				ParsePerform();
-				/* fall through */
+				[[fallthrough]];
 			case 2:
 			case 3:
 			case 4:
