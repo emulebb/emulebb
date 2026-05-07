@@ -134,21 +134,23 @@ float CClientCredits::GetScoreRatio(uint32 dwForIP) const
 			return 1.0f;
 	}
 
-	if (GetDownloadedTotal() < 1048576)
+	const uint64 downloadedTotal = GetDownloadedTotal();
+	if (downloadedTotal < 1048576)
 		return 1.0f;
 	float result;
-	if (GetUploadedTotal())
-		result = (GetDownloadedTotal() * 2) / (float)GetUploadedTotal();
+	const uint64 uploadedTotal = GetUploadedTotal();
+	if (uploadedTotal)
+		result = static_cast<float>(downloadedTotal * 2) / static_cast<float>(uploadedTotal);
 	else
 		result = 10.0f;
 
 	// exponential calculation of the max multiplicator based on uploaded data (9.2MB = 3.34, 100MB = 10.0)
-	float result2 = sqrt(GetDownloadedTotal() / 1048576.0f + 2.0f);
+	float result2 = static_cast<float>(sqrt(static_cast<float>(downloadedTotal) / 1048576.0f + 2.0f));
 
 	// linear calculation of the max multiplicator based on uploaded data for the first chunk (1MB = 1.01, 9.2MB = 3.34)
 	float result3;
-	if (GetDownloadedTotal() < 9646899)
-		result3 = (GetDownloadedTotal() - 1048576) / 8598323.0f * 2.34f + 1.0f;
+	if (downloadedTotal < 9646899)
+		result3 = static_cast<float>(downloadedTotal - 1048576) / 8598323.0f * 2.34f + 1.0f;
 	else
 		result3 = 10.0f;
 
