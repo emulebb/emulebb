@@ -94,8 +94,7 @@ inline bool TryGetOptionalCategoryQueryParam(
 	const auto it = query.find("category");
 	if (it == query.end())
 		return true;
-	rCategory = it->second;
-	return true;
+	return WebServerJsonSeams::TryNormalizeCategoryNameText(it->second, "category", true, rCategory, rErrorMessage);
 }
 
 inline const std::vector<SQBitRouteSpec> &GetQBitRouteSpecs()
