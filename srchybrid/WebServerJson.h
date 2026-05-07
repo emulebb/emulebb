@@ -47,6 +47,12 @@ void ProcessRequest(const ThreadData &rData);
 bool ExecuteInternalCommand(const nlohmann::json &rRequest, nlohmann::json &rResult, CStringA &rErrorCode, CString &rErrorMessage);
 
 /**
+ * @brief Builds the common internal command envelope consumed by the native
+ * REST UI command pipeline.
+ */
+nlohmann::json BuildInternalCommand(const char *pszCommand, const nlohmann::json &rParams);
+
+/**
  * @brief Executes one synchronous REST command dispatch context on the UI
  * thread.
  */

@@ -3512,6 +3512,11 @@ bool WebServerJson::ExecuteInternalCommand(const nlohmann::json &rRequest, nlohm
 	return false;
 }
 
+nlohmann::json WebServerJson::BuildInternalCommand(const char *pszCommand, const nlohmann::json &rParams)
+{
+	return json{{"cmd", pszCommand != NULL ? pszCommand : ""}, {"params", rParams}};
+}
+
 bool WebServerJson::IsApiRequest(const ThreadData &rData)
 {
 	return WebServerJsonSeams::IsApiRequestTarget(StdStringFromCStringA(rData.strRequestTarget));

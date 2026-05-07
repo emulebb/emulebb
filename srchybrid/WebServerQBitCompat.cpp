@@ -126,15 +126,10 @@ bool ExecuteBridgeCommand(const json &rCommand, json &rResult, CString &rErrorMe
 	return false;
 }
 
-json BuildCommand(const char *pszCommand, const json &rParams)
-{
-	return json{{"cmd", pszCommand}, {"params", rParams}};
-}
-
 bool TryGetConfiguredCategories(json &rCategories)
 {
 	CString strErrorMessage;
-	return ExecuteBridgeCommand(BuildCommand("categories/list", json::object()), rCategories, strErrorMessage) && rCategories.is_array();
+	return ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("categories/list", json::object()), rCategories, strErrorMessage) && rCategories.is_array();
 }
 
 json BuildQBitCategoriesJson()
@@ -174,7 +169,7 @@ bool EnsureCategoryExists(const std::string &rCategory, CString &rErrorMessage)
 	}
 
 	json ignored;
-	return ExecuteBridgeCommand(BuildCommand("categories/create", json{{"name", rCategory}}), ignored, rErrorMessage);
+	return ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("categories/create", json{{"name", rCategory}}), ignored, rErrorMessage);
 }
 
 CString GetPartFileCategoryName(const UINT uCategory)
@@ -288,7 +283,7 @@ void HandleTorrentAdd(const ThreadData &rData)
 		params["categoryName"] = request.strCategory;
 
 	json result;
-	if (!ExecuteBridgeCommand(BuildCommand("transfers/add", params), result, strErrorMessage)) {
+	if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("transfers/add", params), result, strErrorMessage)) {
 		SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 		return;
 	}
@@ -301,7 +296,7 @@ bool ExecuteHashBulkCommand(const char *pszCommand, const std::vector<std::strin
 	json params = rExtraParams;
 	params["hashes"] = rHashes;
 	json result;
-	return ExecuteBridgeCommand(BuildCommand(pszCommand, params), result, rErrorMessage);
+	return ExecuteBridgeCommand(WebServerJson::BuildInternalCommand(pszCommand, params), result, rErrorMessage);
 }
 
 void HandleTorrentDelete(const ThreadData &rData)
@@ -338,7 +333,7 @@ void HandleTorrentSetCategory(const ThreadData &rData)
 
 	for (const std::string &rHash : request.hashes) {
 		json ignored;
-		if (!ExecuteBridgeCommand(BuildCommand("transfers/set_category", json{{"hash", rHash}, {"categoryName", request.strCategory}}), ignored, strErrorMessage)) {
+		if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("transfers/set_category", json{{"hash", rHash}, {"categoryName", request.strCategory}}), ignored, strErrorMessage)) {
 			SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 			return;
 		}
@@ -500,7 +495,7 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		}
 		json transfer;
 		CString strErrorMessage;
-		if (!ExecuteBridgeCommand(BuildCommand("transfers/get", json{{"hash", strHash}}), transfer, strErrorMessage) || !transfer.is_object()) {
+		if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("transfers/get", json{{"hash", strHash}}), transfer, strErrorMessage) || !transfer.is_object()) {
 			SendTextResponse(rData.pSocket, 404, "Not Found", WebServerQBitCompatSeams::kQBitNotFoundBody);
 			return;
 		}
@@ -521,7 +516,7 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		}
 		json transfer;
 		CString strErrorMessage;
-		if (!ExecuteBridgeCommand(BuildCommand("transfers/get", json{{"hash", strHash}}), transfer, strErrorMessage) || !transfer.is_object()) {
+		if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("transfers/get", json{{"hash", strHash}}), transfer, strErrorMessage) || !transfer.is_object()) {
 			SendTextResponse(rData.pSocket, 404, "Not Found", WebServerQBitCompatSeams::kQBitNotFoundBody);
 			return;
 		}

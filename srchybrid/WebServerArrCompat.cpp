@@ -224,11 +224,6 @@ void StoreCachedResults(const std::string &rCacheKey, const std::vector<SArrComp
 	rEntry.results = rResults;
 }
 
-json BuildCommand(const char *pszCommand, const json &rParams)
-{
-	return json{{"cmd", pszCommand}, {"params", rParams}};
-}
-
 bool ExecuteBridgeCommand(const json &rCommand, json &rResult)
 {
 	CStringA strErrorCode;
@@ -288,7 +283,7 @@ void StopNativeSearch(const std::string &rSearchId)
 	if (rSearchId.empty())
 		return;
 	json ignored;
-	(void)ExecuteBridgeCommand(BuildCommand("search/stop", json{{"searchId", rSearchId}}), ignored);
+	(void)ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("search/stop", json{{"searchId", rSearchId}}), ignored);
 }
 
 std::vector<SArrCompatResult> RunOneNativeSearch(const std::string &rQuery, const WebServerArrCompatSeams::ETorznabFamily eFamily, const ULONGLONG ullDeadline, std::set<std::string> &rSeenHashes)
@@ -302,7 +297,7 @@ std::vector<SArrCompatResult> RunOneNativeSearch(const std::string &rQuery, cons
 	json startResult;
 	for (const char *const pszMethod : s_arrSearchMethods) {
 		if (ExecuteBridgeCommand(
-				BuildCommand("search/start", json{
+				WebServerJson::BuildInternalCommand("search/start", json{
 					{"query", rQuery},
 					{"method", pszMethod},
 					{"type", WebServerArrCompatSeams::GetNativeSearchType(eFamily)},
@@ -321,7 +316,7 @@ std::vector<SArrCompatResult> RunOneNativeSearch(const std::string &rQuery, cons
 	const std::string strSearchId(startResult["id"].get<std::string>());
 	while (::GetTickCount64() < ullDeadline) {
 		json pollResult;
-		if (!ExecuteBridgeCommand(BuildCommand("search/results", json{{"searchId", strSearchId}}), pollResult))
+		if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("search/results", json{{"searchId", strSearchId}}), pollResult))
 			break;
 		AppendResultsFromJson(pollResult, eFamily, results, rSeenHashes);
 		if (pollResult.contains("status") && pollResult["status"].is_string() && pollResult["status"].get<std::string>() == "complete")
