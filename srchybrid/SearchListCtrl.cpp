@@ -808,7 +808,7 @@ BOOL CSearchListCtrl::OnCommand(WPARAM wParam, LPARAM)
 					} else {
 						std::vector<ProUserMenuCopySeams::NamedField> fields;
 						CString size;
-						size.Format(_T("%I64u"), file->GetFileSize());
+						size.Format(_T("%I64u"), static_cast<uint64>(file->GetFileSize()));
 						ProUserMenuCopySeams::AppendField(fields, _T("name"), file->GetFileName());
 						ProUserMenuCopySeams::AppendField(fields, _T("hash"), md4str(file->GetFileHash()));
 						ProUserMenuCopySeams::AppendField(fields, _T("size"), size);
