@@ -1002,6 +1002,7 @@ int CEMSocket::OnLayerCallback(std::vector<t_callbackMsg> &callbacks)
 				case PROXYERROR_NOCONN:
 					// We failed to connect to the proxy.
 					m_bProxyConnectFailed = true;
+					[[fallthrough]];
 				case PROXYERROR_REQUESTFAILED:
 					// We are connected to the proxy but it failed to connect to the peer.
 					if (thePrefs.GetVerbose() && iter->str && iter->str[0] != '\0')
