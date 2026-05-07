@@ -1528,14 +1528,14 @@ void CSearchListCtrl::SetHighlightColors()
 
 	// precalculate sources shades
 	COLORREF normFGC = GetTextColor();
-	float rdelta = (GetRValue(crSearchResultAvblyBase) - GetRValue(normFGC)) / (float)AVBLYSHADECOUNT;
-	float gdelta = (GetGValue(crSearchResultAvblyBase) - GetGValue(normFGC)) / (float)AVBLYSHADECOUNT;
-	float bdelta = (GetBValue(crSearchResultAvblyBase) - GetBValue(normFGC)) / (float)AVBLYSHADECOUNT;
+	float rdelta = static_cast<float>(GetRValue(crSearchResultAvblyBase) - GetRValue(normFGC)) / static_cast<float>(AVBLYSHADECOUNT);
+	float gdelta = static_cast<float>(GetGValue(crSearchResultAvblyBase) - GetGValue(normFGC)) / static_cast<float>(AVBLYSHADECOUNT);
+	float bdelta = static_cast<float>(GetBValue(crSearchResultAvblyBase) - GetBValue(normFGC)) / static_cast<float>(AVBLYSHADECOUNT);
 
 	for (int shades = 0; shades < AVBLYSHADECOUNT; ++shades)
-		m_crShades[shades] = RGB(GetRValue(normFGC) + (rdelta * shades)
-			, GetGValue(normFGC) + (gdelta * shades)
-			, GetBValue(normFGC) + (bdelta * shades));
+		m_crShades[shades] = RGB(static_cast<int>(GetRValue(normFGC) + rdelta * static_cast<float>(shades))
+			, static_cast<int>(GetGValue(normFGC) + gdelta * static_cast<float>(shades))
+			, static_cast<int>(GetBValue(normFGC) + bdelta * static_cast<float>(shades)));
 }
 
 void CSearchListCtrl::OnSysColorChange()
@@ -1604,7 +1604,7 @@ CString CSearchListCtrl::GetItemDisplayText(const CSearchFile *src, int iSubItem
 				sText.AppendFormat(_T(" | Names:%u, Pubs:%u, Trust:%0.2f")
 					, (src->GetKadPublishInfo() >> 24) & 0xffu
 					, (src->GetKadPublishInfo() >> 16) & 0xffu
-					, (src->GetKadPublishInfo() & 0xffffu) / 100.0f);
+					, static_cast<double>(src->GetKadPublishInfo() & 0xffffu) / 100.0);
 #endif
 		} else
 			sText.Format(_T("%u"), src->GetListChildCount());
@@ -1719,7 +1719,7 @@ CString CSearchListCtrl::FormatFileSize(ULONGLONG ullFileSize) const
 
 	if (m_eFileSizeFormat == fsizeMByte) {
 		//return GetFormatedUInt64((ullFileSize + 1024 * 1024 - 1) / (1024 * 1024)) + _T(' ') + GetResString(IDS_MBYTES);
-		double fFileSize = ullFileSize / (1024.0 * 1024.0);
+		double fFileSize = static_cast<double>(ullFileSize) / (1024.0 * 1024.0);
 		if (fFileSize < 0.01)
 			fFileSize = 0.01;
 
