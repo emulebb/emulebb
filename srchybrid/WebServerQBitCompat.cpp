@@ -239,19 +239,6 @@ json BuildQBitTorrentsJson(const std::string &rCategory)
 	return torrents;
 }
 
-bool TryGetHashQueryParam(const std::string &rRequestTarget, std::string &rHash)
-{
-	std::map<std::string, std::string> query;
-	std::string strError;
-	if (!WebServerJsonSeams::TryParseQueryString(rRequestTarget, query, strError))
-		return false;
-	const auto it = query.find("hash");
-	if (it == query.end())
-		return false;
-	rHash = WebServerJsonSeams::ToLowerAscii(it->second);
-	return WebServerJsonSeams::IsLowercaseMd4HexString(rHash);
-}
-
 void HandleLogin(const ThreadData &rData)
 {
 	if (thePrefs.GetWSApiKey().IsEmpty()) {
@@ -500,7 +487,8 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 
 	if (strPath == "/api/v2/torrents/properties") {
 		std::string strHash;
-		if (!TryGetHashQueryParam(strRequestTarget, strHash)) {
+		std::string strError;
+		if (!WebServerQBitCompatSeams::TryGetRequiredHashQueryParam(strRequestTarget, strHash, strError)) {
 			SendTextResponse(rData.pSocket, 400, "Bad Request", "hash is required");
 			return;
 		}
@@ -520,7 +508,8 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 
 	if (strPath == "/api/v2/torrents/files") {
 		std::string strHash;
-		if (!TryGetHashQueryParam(strRequestTarget, strHash)) {
+		std::string strError;
+		if (!WebServerQBitCompatSeams::TryGetRequiredHashQueryParam(strRequestTarget, strHash, strError)) {
 			SendTextResponse(rData.pSocket, 400, "Bad Request", "hash is required");
 			return;
 		}

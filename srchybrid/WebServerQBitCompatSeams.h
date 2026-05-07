@@ -97,6 +97,33 @@ inline bool TryGetOptionalCategoryQueryParam(
 	return WebServerJsonSeams::TryNormalizeCategoryNameText(it->second, "category", true, rCategory, rErrorMessage);
 }
 
+/**
+ * @brief Parses the required qBittorrent hash query field used by properties
+ * and files endpoints.
+ */
+inline bool TryGetRequiredHashQueryParam(
+	const std::string &rRequestTarget,
+	std::string &rHash,
+	std::string &rErrorMessage)
+{
+	rHash.clear();
+	std::map<std::string, std::string> query;
+	if (!WebServerJsonSeams::TryParseQueryString(rRequestTarget, query, rErrorMessage))
+		return false;
+	const auto it = query.find("hash");
+	if (it == query.end() || it->second.empty()) {
+		rErrorMessage = "hash query parameter is required";
+		return false;
+	}
+	rHash = WebServerJsonSeams::ToLowerAscii(it->second);
+	if (!WebServerJsonSeams::IsLowercaseMd4HexString(rHash)) {
+		rErrorMessage = "hash must be a 32-character eD2K hash";
+		rHash.clear();
+		return false;
+	}
+	return true;
+}
+
 inline const std::vector<SQBitRouteSpec> &GetQBitRouteSpecs()
 {
 	static const std::vector<SQBitRouteSpec> specs = {
