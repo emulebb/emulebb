@@ -140,6 +140,39 @@ inline bool IsTorznabCategoryInRange(const int iCategory, const int iBase)
 	return iCategory == iBase || (iCategory > iBase && iCategory < iBase + 1000);
 }
 
+/**
+ * @brief Parses a Torznab comma-separated category list with strict unsigned
+ * decimal tokens.
+ */
+inline bool TryParseTorznabCategoryList(const std::string &rCategories, std::vector<int> &rCategoriesOut, std::string &rErrorMessage)
+{
+	rCategoriesOut.clear();
+	if (rCategories.empty())
+		return true;
+
+	size_t uPos = 0;
+	while (uPos <= rCategories.size()) {
+		const std::string::size_type uComma = rCategories.find(',', uPos);
+		const std::string token = WebServerJsonSeams::TrimAsciiWhitespace(rCategories.substr(
+			uPos,
+			uComma == std::string::npos ? std::string::npos : (uComma - uPos)));
+		uint64_t ullCategory = 0;
+		if (token.empty()
+			|| !WebServerJsonSeams::TryParseUnsignedDecimalValue(token, ullCategory)
+			|| ullCategory > static_cast<uint64_t>((std::numeric_limits<int>::max)()))
+		{
+			rErrorMessage = "cat must contain unsigned decimal Torznab category IDs";
+			rCategoriesOut.clear();
+			return false;
+		}
+		rCategoriesOut.push_back(static_cast<int>(ullCategory));
+		if (uComma == std::string::npos)
+			break;
+		uPos = uComma + 1;
+	}
+	return true;
+}
+
 inline bool TryParseBoundedUnsigned(const std::string &rValue, const unsigned uMaxValue, unsigned &ruValue)
 {
 	uint64_t ullValue = 0;
@@ -154,24 +187,26 @@ inline bool TryParseBoundedUnsigned(const std::string &rValue, const unsigned uM
 /**
  * @brief Maps Torznab categories onto the native eMule search file families.
  */
-inline ETorznabFamily ResolveFamily(const std::string &rType, const std::string &rCategories)
+inline bool TryResolveFamily(const std::string &rType, const std::string &rCategories, ETorznabFamily &reFamily, std::string &rErrorMessage)
 {
+	reFamily = ETorznabFamily::Any;
+	std::vector<int> categories;
+	if (!TryParseTorznabCategoryList(rCategories, categories, rErrorMessage))
+		return false;
+
 	const std::string strType(WebServerJsonSeams::ToLowerAscii(rType));
-	if (strType == "movie")
-		return ETorznabFamily::Movie;
-	if (strType == "tvsearch")
-		return ETorznabFamily::Tv;
+	if (strType == "movie") {
+		reFamily = ETorznabFamily::Movie;
+		return true;
+	}
+	if (strType == "tvsearch") {
+		reFamily = ETorznabFamily::Tv;
+		return true;
+	}
 
 	bool bSawKnown = false;
 	ETorznabFamily eFamily = ETorznabFamily::Unknown;
-	for (const std::string &rToken : SplitCommaList(rCategories)) {
-		uint64_t ullCategory = 0;
-		if (!WebServerJsonSeams::TryParseUnsignedDecimalValue(rToken, ullCategory)
-			|| ullCategory > static_cast<uint64_t>((std::numeric_limits<int>::max)()))
-		{
-			return ETorznabFamily::Unknown;
-		}
-		const int iCategory = static_cast<int>(ullCategory);
+	for (const int iCategory : categories) {
 		ETorznabFamily eTokenFamily = ETorznabFamily::Unknown;
 		if (IsTorznabCategoryInRange(iCategory, 2000)) {
 			bSawKnown = true;
@@ -189,7 +224,8 @@ inline ETorznabFamily ResolveFamily(const std::string &rType, const std::string 
 			bSawKnown = true;
 			eTokenFamily = ETorznabFamily::Other;
 		} else {
-			return ETorznabFamily::Unknown;
+			reFamily = ETorznabFamily::Unknown;
+			return true;
 		}
 		if (eFamily == ETorznabFamily::Unknown)
 			eFamily = eTokenFamily;
@@ -197,9 +233,8 @@ inline ETorznabFamily ResolveFamily(const std::string &rType, const std::string 
 			eFamily = ETorznabFamily::Any;
 	}
 
-	if (!bSawKnown)
-		return ETorznabFamily::Any;
-	return eFamily;
+	reFamily = bSawKnown ? eFamily : ETorznabFamily::Any;
+	return true;
 }
 
 /**
@@ -278,7 +313,8 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 		rErrorMessage = "year must be an unsigned decimal value in the range 0..9999";
 		return false;
 	}
-	parsed.eFamily = ResolveFamily(parsed.strType, parsed.strCategories);
+	if (!TryResolveFamily(parsed.strType, parsed.strCategories, parsed.eFamily, rErrorMessage))
+		return false;
 	rRequest = parsed;
 	return true;
 }
