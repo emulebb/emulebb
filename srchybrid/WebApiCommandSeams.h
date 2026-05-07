@@ -176,7 +176,7 @@ inline bool TryParseNonNegativeUInt64(const json &rValue, uint64_t &ruValue)
  */
 inline const char *GetDefaultSearchMethodName()
 {
-	return "automatic";
+	return WebServerJsonSeams::GetDefaultSearchMethodName();
 }
 
 /**
@@ -188,6 +188,8 @@ inline ESearchMethod ParseSearchMethodName(const char *pszMethod)
 		return ESearchMethod::Invalid;
 
 	const std::string strMethod(ToLowerAscii(pszMethod));
+	if (!WebServerJsonSeams::IsSearchMethodName(strMethod))
+		return ESearchMethod::Invalid;
 	if (strMethod == GetDefaultSearchMethodName())
 		return ESearchMethod::Automatic;
 	if (strMethod == "server")
@@ -208,6 +210,8 @@ inline ESearchFileType ParseSearchFileTypeName(const char *pszType)
 		return ESearchFileType::Invalid;
 
 	const std::string strType(ToLowerAscii(pszType));
+	if (!WebServerJsonSeams::IsSearchFileTypeName(strType))
+		return ESearchFileType::Invalid;
 	if (strType.empty() || strType == "any")
 		return ESearchFileType::Any;
 	if (strType == "archive")

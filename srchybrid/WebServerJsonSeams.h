@@ -88,6 +88,48 @@ inline std::string TrimAsciiWhitespace(const std::string &rValue)
 }
 
 /**
+ * @brief Returns the native search method token adapters should use when the
+ * caller has not requested a transport-specific search.
+ */
+inline const char *GetDefaultSearchMethodName()
+{
+	return "automatic";
+}
+
+/**
+ * @brief Reports whether a token is in the public native search-method
+ * vocabulary.
+ */
+inline bool IsSearchMethodName(const std::string &rValue)
+{
+	const std::string strMethod(ToLowerAscii(rValue));
+	return strMethod == GetDefaultSearchMethodName()
+		|| strMethod == "server"
+		|| strMethod == "global"
+		|| strMethod == "kad";
+}
+
+/**
+ * @brief Reports whether a token is in the public native search-file-type
+ * vocabulary.
+ */
+inline bool IsSearchFileTypeName(const std::string &rValue)
+{
+	const std::string strType(ToLowerAscii(rValue));
+	return strType.empty()
+		|| strType == "any"
+		|| strType == "archive"
+		|| strType == "audio"
+		|| strType == "cdimage"
+		|| strType == "iso"
+		|| strType == "image"
+		|| strType == "program"
+		|| strType == "video"
+		|| strType == "document"
+		|| strType == "emulecollection";
+}
+
+/**
  * @brief Collapses ASCII whitespace runs without changing UTF-8 payload bytes.
  */
 inline std::string NormalizeAsciiWhitespace(const std::string &rValue)
@@ -1216,6 +1258,93 @@ inline bool ValidateKadBootstrapBody(json &rBody, std::string &rErrorCode, std::
 		&& ValidatePortBodyField(rBody, "port", rErrorCode, rErrorMessage);
 }
 
+/**
+ * @brief Validates native search-start body shape before command dispatch.
+ */
+inline bool ValidateSearchStartBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (!rBody.contains("query") || !rBody["query"].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "query must be a string");
+		return false;
+	}
+
+	std::string strQuery;
+	std::string strError;
+	if (!TryNormalizeSearchText(rBody["query"].get<std::string>(), "query", false, strQuery, strError)) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, strError);
+		return false;
+	}
+	rBody["query"] = strQuery;
+
+	if (rBody.contains("method")) {
+		if (!rBody["method"].is_string()) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "method must be a string");
+			return false;
+		}
+		if (!IsSearchMethodName(rBody["method"].get_ref<const std::string&>())) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "method must be one of automatic, server, global, kad");
+			return false;
+		}
+	}
+
+	if (rBody.contains("type")) {
+		if (!rBody["type"].is_string()) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "type must be a string");
+			return false;
+		}
+		if (!IsSearchFileTypeName(rBody["type"].get_ref<const std::string&>())) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "type is not supported");
+			return false;
+		}
+	}
+
+	if (rBody.contains("extension") && !rBody["extension"].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "extension must be a string");
+		return false;
+	}
+
+	uint64_t ullMinSize = 0;
+	const bool bHasMinSize = rBody.contains("minSizeBytes");
+	if (bHasMinSize) {
+		if (!TryParseJsonUInt64(rBody["minSizeBytes"], ullMinSize)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "minSizeBytes must be an unsigned number");
+			return false;
+		}
+		rBody["minSizeBytes"] = ullMinSize;
+	}
+
+	uint64_t ullMaxSize = 0;
+	const bool bHasMaxSize = rBody.contains("maxSizeBytes");
+	if (bHasMaxSize) {
+		if (!TryParseJsonUInt64(rBody["maxSizeBytes"], ullMaxSize)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "maxSizeBytes must be an unsigned number");
+			return false;
+		}
+		rBody["maxSizeBytes"] = ullMaxSize;
+	}
+
+	if (bHasMinSize && bHasMaxSize && ullMaxSize < ullMinSize) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "maxSizeBytes must be greater than or equal to minSizeBytes");
+		return false;
+	}
+
+	if (rBody.contains("minAvailability")) {
+		uint64_t ullMinAvailability = 0;
+		if (!TryParseJsonUInt64(rBody["minAvailability"], ullMinAvailability) || ullMinAvailability > 1000000ui64) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "minAvailability must be an unsigned number in the range 0..1000000");
+			return false;
+		}
+		rBody["minAvailability"] = ullMinAvailability;
+	}
+
+	if (rBody.contains("clearExisting") && !rBody["clearExisting"].is_boolean()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "clearExisting must be a boolean");
+		return false;
+	}
+
+	return true;
+}
+
 inline bool ValidateUnsignedPreferenceField(
 	json &rBody,
 	const char *pszFieldName,
@@ -1480,6 +1609,14 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 		&& (std::string(rSpec.pszPathTemplate) == "/servers/met-url-imports"
 			|| std::string(rSpec.pszPathTemplate) == "/kad/nodes-url-imports")
 		&& !ValidateUrlImportBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "POST"
+		&& std::string(rSpec.pszPathTemplate) == "/searches"
+		&& !ValidateSearchStartBody(rBody, rErrorCode, rErrorMessage))
 	{
 		return false;
 	}
