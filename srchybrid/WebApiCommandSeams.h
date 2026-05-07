@@ -364,18 +364,7 @@ inline bool TryParseTransfersListRequest(const json &rParams, STransfersListRequ
  */
 inline bool TryParseTransferAddLink(const json &rParams, std::string &rLink, std::string &rError)
 {
-	if (!rParams.contains("link") || !rParams["link"].is_string()) {
-		rError = "link must be a string";
-		return false;
-	}
-
-	rLink = TrimAsciiWhitespace(rParams["link"].get<std::string>());
-	if (rLink.empty()) {
-		rError = "link must not be empty";
-		return false;
-	}
-
-	return true;
+	return WebServerJsonSeams::TryParseTransferAddLink(rParams, rLink, rError);
 }
 
 /**

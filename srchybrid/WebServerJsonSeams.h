@@ -831,6 +831,80 @@ inline bool ValidateCategorySelectorBody(json &rBody, std::string &rErrorCode, s
 	return true;
 }
 
+/**
+ * @brief Validates and trims one public transfer-add eD2K link token.
+ */
+inline bool TryParseTransferAddLink(const json &rParams, std::string &rLink, std::string &rError)
+{
+	if (!rParams.contains("link") || !rParams["link"].is_string()) {
+		rError = "link must be a string";
+		return false;
+	}
+
+	rLink = TrimAsciiWhitespace(rParams["link"].get<std::string>());
+	if (rLink.empty()) {
+		rError = "link must not be empty";
+		return false;
+	}
+
+	return true;
+}
+
+inline bool ValidateOptionalPausedField(const json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (rBody.contains("paused") && !rBody["paused"].is_boolean()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "paused must be a boolean");
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Validates native transfer-add body shape before command dispatch.
+ */
+inline bool ValidateTransferAddBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (rBody.contains("link") && rBody.contains("links")) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "link and links are mutually exclusive");
+		return false;
+	}
+	if (!rBody.contains("link") && !rBody.contains("links")) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "link or links is required");
+		return false;
+	}
+	if (!ValidateOptionalPausedField(rBody, rErrorCode, rErrorMessage))
+		return false;
+	if (rBody.contains("link")) {
+		std::string strLink;
+		std::string strError;
+		if (!TryParseTransferAddLink(rBody, strLink, strError)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, strError);
+			return false;
+		}
+		rBody["link"] = strLink;
+	}
+	if (rBody.contains("links")) {
+		if (!rBody["links"].is_array()) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "links must be a string array");
+			return false;
+		}
+		if (rBody["links"].empty()) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "links must not be empty");
+			return false;
+		}
+		for (json &rLinkValue : rBody["links"]) {
+			std::string strLink;
+			std::string strError;
+			if (!TryParseTransferAddLink(json{{"link", rLinkValue}}, strLink, strError)) {
+				SetInvalidArgument(rErrorCode, rErrorMessage, "links must be a non-empty string array");
+				return false;
+			}
+			rLinkValue = strLink;
+		}
+	}
+	return true;
+}
+
 inline bool RequireBooleanField(
 	const json &rBody,
 	const char *pszFieldName,
@@ -959,6 +1033,20 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 		|| std::string(rSpec.pszPathTemplate) == "/searches/{searchId}/results/{hash}/operations/download"))
 		&& !ValidateCategorySelectorBody(rBody, rErrorCode, rErrorMessage))
 		return false;
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "POST"
+		&& std::string(rSpec.pszPathTemplate) == "/transfers"
+		&& !ValidateTransferAddBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszPathTemplate) == "/searches/{searchId}/results/{hash}/operations/download"
+		&& !ValidateOptionalPausedField(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
 	if (!ValidateDestructiveConfirmationBody(rBody, rSpec, rErrorCode, rErrorMessage))
 		return false;
 	return true;
