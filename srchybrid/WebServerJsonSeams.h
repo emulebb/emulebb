@@ -973,6 +973,56 @@ inline bool ValidateTransferPatchBody(json &rBody, std::string &rErrorCode, std:
 	return true;
 }
 
+/**
+ * @brief Validates public shared-file comment/rating fields.
+ */
+inline bool TryParseSharedFileRatingCommentFields(const json &rParams, std::string &rComment, int &riRating, std::string &rError)
+{
+	if (!rParams.contains("comment") || !rParams["comment"].is_string()) {
+		rError = "comment must be a string";
+		return false;
+	}
+	if (!rParams.contains("rating") || !rParams["rating"].is_number_integer()) {
+		rError = "rating must be an integer between 0 and 5";
+		return false;
+	}
+
+	const int iRating = rParams["rating"].get<int>();
+	if (iRating < 0 || iRating > 5) {
+		rError = "rating must be an integer between 0 and 5";
+		return false;
+	}
+
+	rComment = rParams["comment"].get<std::string>();
+	riRating = iRating;
+	return true;
+}
+
+/**
+ * @brief Validates native shared-file PATCH body shape before command dispatch.
+ */
+inline bool ValidateSharedFilePatchBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (!rBody.contains("priority") && !rBody.contains("comment") && !rBody.contains("rating")) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "shared-file PATCH requires priority, comment, or rating");
+		return false;
+	}
+	if (rBody.contains("priority") && !rBody["priority"].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be a string");
+		return false;
+	}
+	if (rBody.contains("comment") || rBody.contains("rating")) {
+		std::string strComment;
+		int iRating = 0;
+		std::string strError;
+		if (!TryParseSharedFileRatingCommentFields(rBody, strComment, iRating, strError)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, strError);
+			return false;
+		}
+	}
+	return true;
+}
+
 inline bool RequireBooleanField(
 	const json &rBody,
 	const char *pszFieldName,
@@ -1120,6 +1170,14 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 		&& std::string(rSpec.pszMethod) == "PATCH"
 		&& std::string(rSpec.pszPathTemplate) == "/transfers/{hash}"
 		&& !ValidateTransferPatchBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "PATCH"
+		&& std::string(rSpec.pszPathTemplate) == "/shared-files/{hash}"
+		&& !ValidateSharedFilePatchBody(rBody, rErrorCode, rErrorMessage))
 	{
 		return false;
 	}

@@ -414,22 +414,12 @@ inline bool TryParseTransferRenameRequest(const json &rParams, STransferRenameRe
  */
 inline bool TryParseSharedFileRatingCommentRequest(const json &rParams, SSharedFileRatingCommentRequest &rRequest, std::string &rError)
 {
-	if (!rParams.contains("comment") || !rParams["comment"].is_string()) {
-		rError = "comment must be a string";
+	std::string strComment;
+	int iRating = 0;
+	if (!WebServerJsonSeams::TryParseSharedFileRatingCommentFields(rParams, strComment, iRating, rError))
 		return false;
-	}
-	if (!rParams.contains("rating") || !rParams["rating"].is_number_integer()) {
-		rError = "rating must be an integer between 0 and 5";
-		return false;
-	}
 
-	const int iRating = rParams["rating"].get<int>();
-	if (iRating < 0 || iRating > 5) {
-		rError = "rating must be an integer between 0 and 5";
-		return false;
-	}
-
-	rRequest.strComment = rParams["comment"].get<std::string>();
+	rRequest.strComment = strComment;
 	rRequest.iRating = iRating;
 	return true;
 }
