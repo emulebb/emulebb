@@ -1374,20 +1374,15 @@ CPartFile* FindPartFileByHash(const json &rValue, SPipeApiError &rError)
  */
 bool TryGetPathParam(const json &rValue, const char *pszFieldName, CString &rPath, SPipeApiError &rError)
 {
-	if (!rValue.is_string()) {
+	std::string strPath;
+	std::string strError;
+	if (!WebServerJsonSeams::TryParsePathText(rValue, pszFieldName, strPath, strError)) {
 		rError.strCode = "INVALID_ARGUMENT";
-		rError.strMessage.Format(_T("%hs must be a non-empty string path"), pszFieldName);
+		rError.strMessage = CStringFromStdUtf8(strError);
 		return false;
 	}
 
-	rPath = CStringFromStdUtf8(rValue.get<std::string>());
-	rPath.Trim();
-	if (rPath.IsEmpty()) {
-		rError.strCode = "INVALID_ARGUMENT";
-		rError.strMessage.Format(_T("%hs must not be empty"), pszFieldName);
-		return false;
-	}
-
+	rPath = CStringFromStdUtf8(strPath);
 	return true;
 }
 

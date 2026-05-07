@@ -1023,6 +1023,92 @@ inline bool ValidateSharedFilePatchBody(json &rBody, std::string &rErrorCode, st
 	return true;
 }
 
+/**
+ * @brief Validates and trims one public filesystem path token.
+ */
+inline bool TryParsePathText(const json &rValue, const char *pszFieldName, std::string &rPath, std::string &rError)
+{
+	if (!rValue.is_string()) {
+		rError = std::string(pszFieldName) + " must be a non-empty string path";
+		return false;
+	}
+
+	rPath = TrimAsciiWhitespace(rValue.get<std::string>());
+	if (rPath.empty()) {
+		rError = std::string(pszFieldName) + " must not be empty";
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Validates native shared-file add body shape before command dispatch.
+ */
+inline bool ValidateSharedFileAddBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	std::string strPath;
+	std::string strError;
+	if (!TryParsePathText(rBody.contains("path") ? rBody["path"] : json(), "path", strPath, strError)) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, strError);
+		return false;
+	}
+	rBody["path"] = strPath;
+	return true;
+}
+
+/**
+ * @brief Validates one shared-directory root descriptor shape.
+ */
+inline bool ValidateSharedDirectoryRootBody(json &rRoot, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	json *pPathValue = &rRoot;
+	if (rRoot.is_object()) {
+		for (json::iterator it = rRoot.begin(); it != rRoot.end(); ++it) {
+			if (it.key() != "path" && it.key() != "recursive") {
+				SetInvalidArgument(rErrorCode, rErrorMessage, "unknown shared-directory root field: " + it.key());
+				return false;
+			}
+		}
+		if (!rRoot.contains("path")) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "path must be a non-empty string path");
+			return false;
+		}
+		if (rRoot.contains("recursive") && !rRoot["recursive"].is_boolean()) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "recursive must be a boolean");
+			return false;
+		}
+		pPathValue = &rRoot["path"];
+	}
+
+	std::string strPath;
+	std::string strError;
+	if (!TryParsePathText(*pPathValue, "path", strPath, strError)) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, strError);
+		return false;
+	}
+	if (rRoot.is_object())
+		rRoot["path"] = strPath;
+	else
+		rRoot = strPath;
+	return true;
+}
+
+/**
+ * @brief Validates native shared-directory replacement body shape.
+ */
+inline bool ValidateSharedDirectoriesPatchBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (!rBody.contains("roots") || !rBody["roots"].is_array()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "roots must be an array");
+		return false;
+	}
+	for (json &rRoot : rBody["roots"]) {
+		if (!ValidateSharedDirectoryRootBody(rRoot, rErrorCode, rErrorMessage))
+			return false;
+	}
+	return true;
+}
+
 inline bool RequireBooleanField(
 	const json &rBody,
 	const char *pszFieldName,
@@ -1178,6 +1264,22 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 		&& std::string(rSpec.pszMethod) == "PATCH"
 		&& std::string(rSpec.pszPathTemplate) == "/shared-files/{hash}"
 		&& !ValidateSharedFilePatchBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "POST"
+		&& std::string(rSpec.pszPathTemplate) == "/shared-files"
+		&& !ValidateSharedFileAddBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "PATCH"
+		&& std::string(rSpec.pszPathTemplate) == "/shared-directories"
+		&& !ValidateSharedDirectoriesPatchBody(rBody, rErrorCode, rErrorMessage))
 	{
 		return false;
 	}
