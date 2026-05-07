@@ -411,8 +411,9 @@ inline bool TryParseDeleteRequest(const std::string &rBody, SQBitHashMutationReq
 		return false;
 	if (!TryParseHashesFormField(form, rRequest.hashes, rErrorMessage))
 		return false;
-	const auto deleteIt = form.find("deleteFiles");
-	rRequest.bDeleteFiles = deleteIt != form.end() && IsTruthyFormValue(deleteIt->second);
+	// Native eMule transfer cancel cannot preserve partial .part state; qBit
+	// compatibility adapts delete requests to the native destructive contract.
+	rRequest.bDeleteFiles = true;
 	return true;
 }
 
