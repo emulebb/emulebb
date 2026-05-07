@@ -2563,6 +2563,7 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 				if (theApp.IsConnected() && cur_src->GetTimeUntilReask() < MIN2MS(2) && cur_src->GetTimeUntilReask() > SEC2MS(1) && curTick >= cur_src->GetLastTriedToConnectTime() + MIN2MS(20)) // ZZ:DownloadManager (one re-ask timestamp for each file)
 					cur_src->UDPReaskForDownload();
 
+				[[fallthrough]];
 			case DS_CONNECTING:
 			case DS_TOOMANYCONNS:
 			case DS_TOOMANYCONNSKAD:
@@ -4353,6 +4354,7 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 			switch (item->flushed) {
 			case PB_READY:
 				ASSERT(!pThread || !pThread->IsRunning());
+				[[fallthrough]];
 			case PB_PENDING:
 				continue;
 			case PB_ERROR:
