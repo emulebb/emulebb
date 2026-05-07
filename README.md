@@ -8,8 +8,11 @@ the independent eMule BB version line.
 ## Refs
 
 - `main`: maintained eMule BB integration line
-- `release/v0.72a-community`: seam-enabled community baseline
-- `release/v0.72a-broadband`: downstream broadband stabilization line
+- `release/v0.72a-community`: seam-enabled parity and regression baseline,
+  test-only
+- `release/v0.72a-broadband`: broadband pre-release stabilization line; the
+  only release-intent branch, not ready for an official release until the
+  Release 1.0 gates and operator steps are complete
 - accepted release refs are cut from reviewed commits on `main`
 
 ## Working Model

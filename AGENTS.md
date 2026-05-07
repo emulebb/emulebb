@@ -9,7 +9,7 @@
 - the first post-community commit must remain the global source-encoding normalization commit
 - always honor repo `.editorconfig` and `.gitattributes` when editing tracked
   files; do not restate line-ending rules here
-- place changes at the earliest layer where they are true, then let later milestones inherit them
-- keep commits isolated by behavior and avoid mixing baseline, seam, and bugfix work
+- place changes at the earliest layer where they are true
+- keep commits isolated by behavior and avoid mixing unrelated app work
 - for app-source changes, rebuild both `Debug|x64` and `Release|x64` before handoff unless the user explicitly narrows validation
 - do not reintroduce workspace orchestration or dependency policy into this repo root
