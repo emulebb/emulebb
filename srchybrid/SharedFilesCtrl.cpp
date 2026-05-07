@@ -1198,6 +1198,7 @@ void CSharedFilesCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 					}
 					rcItem.left -= sm_iSubItemInset;
 				}
+				[[fallthrough]];
 			default: //any text column
 				rcItem.left += sm_iSubItemInset;
 				rcItem.right -= sm_iSubItemInset;
