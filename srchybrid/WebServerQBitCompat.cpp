@@ -86,16 +86,11 @@ void SendJsonResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReas
 		pSocket->SendData(strBody, strBody.GetLength());
 }
 
-std::string HexEncode(const BYTE *pData, const size_t uSize)
+std::string LowerBase16(const BYTE *pData, const size_t uSize)
 {
-	static const char s_hex[] = "0123456789abcdef";
-	std::string result;
-	result.reserve(uSize * 2);
-	for (size_t i = 0; i < uSize; ++i) {
-		result.push_back(s_hex[(pData[i] >> 4) & 0x0F]);
-		result.push_back(s_hex[pData[i] & 0x0F]);
-	}
-	return result;
+	CString strHex(EncodeBase16(pData, static_cast<unsigned int>(uSize)));
+	strHex.MakeLower();
+	return WebServerJson::ToStdUtf8(strHex);
 }
 
 std::string GetSessionId()
@@ -106,7 +101,7 @@ std::string GetSessionId()
 		BYTE random[16] = {};
 		if (::BCryptGenRandom(NULL, random, sizeof(random), BCRYPT_USE_SYSTEM_PREFERRED_RNG) != 0)
 			return std::string();
-		s_strSessionId = HexEncode(random, sizeof(random));
+		s_strSessionId = LowerBase16(random, sizeof(random));
 	}
 	return s_strSessionId;
 }
@@ -186,7 +181,7 @@ json BuildQBitTorrentJson(const CPartFile &rPartFile)
 	const uint64 uCompleted = static_cast<uint64>(rPartFile.GetCompletedSize());
 	const std::string strState = rPartFile.GetStatus() == PS_PAUSED || rPartFile.IsStopped() ? "pausedDL" : "downloading";
 	return json{
-		{"hash", HexEncode(rPartFile.GetFileHash(), MDX_DIGEST_SIZE)},
+		{"hash", LowerBase16(rPartFile.GetFileHash(), MDX_DIGEST_SIZE)},
 		{"name", WebServerJson::ToStdUtf8(strName)},
 		{"size", uSize},
 		{"progress", WebApiSurfaceSeams::BuildTransferProgressRatio(uCompleted, uSize)},
