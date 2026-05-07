@@ -1259,6 +1259,132 @@ inline bool ValidateKadBootstrapBody(json &rBody, std::string &rErrorCode, std::
 }
 
 /**
+ * @brief Validates the category priority payload shape accepted by native
+ * category create/update requests.
+ */
+inline bool ValidateCategoryPriorityField(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (!rBody.contains("priority"))
+		return true;
+
+	if (rBody["priority"].is_number_unsigned() || rBody["priority"].is_number_integer()) {
+		uint64_t ullPriority = 0;
+		if (!TryParseJsonUInt64(rBody["priority"], ullPriority) || ullPriority > UINT_MAX) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be a supported priority value");
+			return false;
+		}
+		rBody["priority"] = ullPriority;
+		return true;
+	}
+
+	if (!rBody["priority"].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be a string or number");
+		return false;
+	}
+
+	switch (WebApiSurfaceSeams::ParseTransferPriorityName(rBody["priority"].get_ref<const std::string&>().c_str())) {
+	case WebApiSurfaceSeams::ETransferPriority::VeryLow:
+	case WebApiSurfaceSeams::ETransferPriority::Low:
+	case WebApiSurfaceSeams::ETransferPriority::Normal:
+	case WebApiSurfaceSeams::ETransferPriority::High:
+	case WebApiSurfaceSeams::ETransferPriority::VeryHigh:
+		return true;
+	case WebApiSurfaceSeams::ETransferPriority::Auto:
+	case WebApiSurfaceSeams::ETransferPriority::Invalid:
+	default:
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of veryLow, low, normal, high, veryHigh");
+		return false;
+	}
+}
+
+/**
+ * @brief Validates the shared category create/update body shape before live
+ * category command handling applies filesystem policy.
+ */
+inline bool ValidateCategoryCoreBody(json &rBody, const bool bRequireName, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (bRequireName || rBody.contains("name")) {
+		if (!TryParseNonEmptyTextField(rBody, "name", rErrorCode, rErrorMessage))
+			return false;
+	}
+
+	if (rBody.contains("path") && !rBody["path"].is_null()) {
+		std::string strPath;
+		std::string strError;
+		if (!TryParsePathText(rBody["path"], "path", strPath, strError)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, strError);
+			return false;
+		}
+		rBody["path"] = strPath;
+	}
+
+	if (rBody.contains("comment") && !rBody["comment"].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "comment must be a string");
+		return false;
+	}
+
+	if (rBody.contains("color") && !rBody["color"].is_null()) {
+		uint64_t ullColor = 0;
+		if (!TryParseJsonUInt64(rBody["color"], ullColor) || ullColor > 0x00FFFFFFui64) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "color must be null or an RGB integer");
+			return false;
+		}
+		rBody["color"] = ullColor;
+	}
+
+	return ValidateCategoryPriorityField(rBody, rErrorCode, rErrorMessage);
+}
+
+/**
+ * @brief Validates native category-create body shape before command dispatch.
+ */
+inline bool ValidateCategoryCreateBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	return ValidateCategoryCoreBody(rBody, true, rErrorCode, rErrorMessage);
+}
+
+/**
+ * @brief Validates native category-update body shape before command dispatch.
+ */
+inline bool ValidateCategoryPatchBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (rBody.empty()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "category PATCH requires at least one field");
+		return false;
+	}
+	return ValidateCategoryCoreBody(rBody, false, rErrorCode, rErrorMessage);
+}
+
+/**
+ * @brief Validates native friend-create body shape before command dispatch.
+ */
+inline bool ValidateFriendCreateBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	if (!rBody.contains("userHash") || !rBody["userHash"].is_string() || !IsLowercaseMd4HexString(rBody["userHash"].get_ref<const std::string&>())) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "userHash must be a 32-character lowercase hex string");
+		return false;
+	}
+
+	if (rBody.contains("name")) {
+		if (!rBody["name"].is_string()) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "name must be a string");
+			return false;
+		}
+		size_t uWideCharacters = 0;
+		if (!TryMeasureStrictUtf8AsUtf16(rBody["name"].get_ref<const std::string&>(), uWideCharacters)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "name must be valid UTF-8 without control characters");
+			return false;
+		}
+		if (uWideCharacters > kMaxCategoryNameLength) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "name must be at most 128 characters");
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
  * @brief Validates native search-start body shape before command dispatch.
  */
 inline bool ValidateSearchStartBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
@@ -1544,6 +1670,22 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 	if (rSpec.pszMethod != NULL
 		&& rSpec.pszPathTemplate != NULL
 		&& std::string(rSpec.pszMethod) == "POST"
+		&& std::string(rSpec.pszPathTemplate) == "/categories"
+		&& !ValidateCategoryCreateBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "PATCH"
+		&& std::string(rSpec.pszPathTemplate) == "/categories/{categoryId}"
+		&& !ValidateCategoryPatchBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "POST"
 		&& std::string(rSpec.pszPathTemplate) == "/transfers"
 		&& !ValidateTransferAddBody(rBody, rErrorCode, rErrorMessage))
 	{
@@ -1633,6 +1775,14 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 		&& std::string(rSpec.pszMethod) == "PATCH"
 		&& std::string(rSpec.pszPathTemplate) == "/app/preferences"
 		&& !ValidatePreferencesPatchBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "POST"
+		&& std::string(rSpec.pszPathTemplate) == "/friends"
+		&& !ValidateFriendCreateBody(rBody, rErrorCode, rErrorMessage))
 	{
 		return false;
 	}
