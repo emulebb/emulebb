@@ -42,6 +42,27 @@ CString GetFolderLabel(const CString &strFolderPath, bool bTopFolder, bool bAcce
 
 namespace
 {
+int FindSubMenuItemPosition(CMenu &menu, HMENU hSubMenu)
+{
+	const int itemCount = menu.GetMenuItemCount();
+	for (int i = 0; i < itemCount; ++i) {
+		MENUITEMINFO mii = {};
+		mii.cbSize = sizeof(mii);
+		mii.fMask = MIIM_SUBMENU;
+		if (menu.GetMenuItemInfo(static_cast<UINT>(i), &mii, TRUE) && mii.hSubMenu == hSubMenu)
+			return i;
+	}
+	return -1;
+}
+
+bool EnableSubMenuItem(CMenu &menu, HMENU hSubMenu, UINT state)
+{
+	const int position = FindSubMenuItemPosition(menu, hSubMenu);
+	if (position < 0)
+		return false;
+	return menu.EnableMenuItem(static_cast<UINT>(position), MF_BYPOSITION | state) != static_cast<UINT>(-1);
+}
+
 bool ListContainsEquivalentPath(const CStringList &rList, const CString &rstrPath)
 {
 	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
@@ -878,7 +899,7 @@ void CSharedDirsTreeCtrl::OnContextMenu(CWnd*, CPoint point)
 		// - even if it can be done in other ways if the user really wants to do it
 		bool bWideRangeSelection = (pSelectedDir->m_nCatFilter == -1 && pSelectedDir->m_eItemType != SDI_NO);
 
-		m_SharedFilesMenu.EnableMenuItem((UINT)m_PrioMenu.m_hMenu, iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED);
+		EnableSubMenuItem(m_SharedFilesMenu, m_PrioMenu.m_hMenu, iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED);
 		m_PrioMenu.CheckMenuRadioItem(MP_PRIOVERYLOW, MP_PRIOAUTO, uPrioMenuItem, 0);
 
 		m_SharedFilesMenu.EnableMenuItem(MP_OPENFOLDER, !pSelectedDir->m_strFullPath.IsEmpty() || pSelectedDir->m_eItemType == SDI_INCOMING || pSelectedDir->m_eItemType == SDI_TEMP || pSelectedDir->m_eItemType == SDI_CATINCOMING ? MF_ENABLED : MF_GRAYED);

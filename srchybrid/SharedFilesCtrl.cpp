@@ -70,6 +70,27 @@ namespace
 	constexpr UINT_PTR kStartupDeferredReloadTimerId = 0x5346;
 	constexpr UINT kStartupDeferredReloadDelayMs = 500;
 
+	int FindSubMenuItemPosition(CMenu &menu, HMENU hSubMenu)
+	{
+		const int itemCount = menu.GetMenuItemCount();
+		for (int i = 0; i < itemCount; ++i) {
+			MENUITEMINFO mii = {};
+			mii.cbSize = sizeof(mii);
+			mii.fMask = MIIM_SUBMENU;
+			if (menu.GetMenuItemInfo(static_cast<UINT>(i), &mii, TRUE) && mii.hSubMenu == hSubMenu)
+				return i;
+		}
+		return -1;
+	}
+
+	bool EnableSubMenuItem(CMenu &menu, HMENU hSubMenu, UINT state)
+	{
+		const int position = FindSubMenuItemPosition(menu, hSubMenu);
+		if (position < 0)
+			return false;
+		return menu.EnableMenuItem(static_cast<UINT>(position), MF_BYPOSITION | state) != static_cast<UINT>(-1);
+	}
+
 	CString FormatUploadRatio(float fRatio)
 	{
 		CString str;
@@ -1355,7 +1376,7 @@ void CSharedFilesCtrl::OnContextMenu(CWnd*, CPoint point)
 		bFirstItem = false;
 	}
 
-	m_SharedFilesMenu.EnableMenuItem((UINT)m_PrioMenu.m_hMenu, (!bContainsShareableFiles && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED);
+	EnableSubMenuItem(m_SharedFilesMenu, m_PrioMenu.m_hMenu, (!bContainsShareableFiles && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED);
 	m_PrioMenu.CheckMenuRadioItem(MP_PRIOVERYLOW, MP_PRIOAUTO, uPrioMenuItem, 0);
 
 	bool bSingleCompleteFileSelected = (iSelectedItems == 1 && (iCompleteFileSelected == 1 || bContainsOnlyShareableFile));
