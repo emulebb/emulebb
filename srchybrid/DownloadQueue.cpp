@@ -572,8 +572,8 @@ void CDownloadQueue::Process()
 		CPartFile *cur_file = filelist.GetNext(pos);
 
 		// maintain global download stats
-		theStats.m_fGlobalDone += (uint64)cur_file->GetCompletedSize();
-		theStats.m_fGlobalSize += (uint64)cur_file->GetFileSize();
+		theStats.m_fGlobalDone += static_cast<float>(static_cast<uint64>(cur_file->GetCompletedSize()));
+		theStats.m_fGlobalSize += static_cast<float>(static_cast<uint64>(cur_file->GetFileSize()));
 
 		if (cur_file->GetTransferringSrcCount() > 0)
 			theStats.m_dwOverallStatus |= STATE_DOWNLOADING;
