@@ -184,20 +184,6 @@ CString GetSharedTreeParentPath(const CString &rstrPath)
 	return strParent;
 }
 
-CDirectoryItem* FindNearestSharedTreeParentItem(const CString &rstrPath, CDirectoryItem *pRootItem, CMapStringToPtr &rmapInsertedItems)
-{
-	CString strParent = GetSharedTreeParentPath(rstrPath);
-	while (!strParent.IsEmpty()) {
-		void *pvItem = NULL;
-		if (rmapInsertedItems.Lookup(BuildSharedTreePathKey(strParent), pvItem))
-			return static_cast<CDirectoryItem*>(pvItem);
-
-		strParent = GetSharedTreeParentPath(strParent);
-	}
-
-	return pRootItem;
-}
-
 void BuildSharedDirectoryTree(CSharedDirsTreeCtrl *pTreeCtrl, CDirectoryItem *pRootItem, const CStringList &rliDirs, bool &rbShowWarning)
 {
 #if EMULE_COMPILED_STARTUP_PROFILING
