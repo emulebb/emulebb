@@ -53,7 +53,7 @@ public:
 	void			*value; // could be either CPartFile or CUpDownClient
 	CtrlItem_Struct	*parent;
 	CBitmap			status;
-	DWORD			dwUpdated;
+	ULONGLONG		dwUpdated;
 	ItemType		type;
 };
 
@@ -133,7 +133,7 @@ protected:
 	CFont		m_fontBold; // may contain a locally created bold font
 	CFont		*m_pFontBold;// points to the bold font which is to be used (may be the locally created or the default bold font)
 	CToolTipCtrlX m_tooltip;
-	DWORD		m_dwLastAvailableCommandsCheck;
+	ULONGLONG	m_dwLastAvailableCommandsCheck;
 	bool		m_bRemainSort;
 	bool		m_availableCommandsDirty;
 
