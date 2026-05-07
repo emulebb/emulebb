@@ -81,6 +81,35 @@ namespace
 	{
 		return theApp.clientlist != NULL && theApp.clientlist->ContainsClientPointer(client);
 	}
+
+	int FindSubMenuItemPosition(CMenu &menu, HMENU hSubMenu)
+	{
+		const int itemCount = menu.GetMenuItemCount();
+		for (int i = 0; i < itemCount; ++i) {
+			MENUITEMINFO mii = {};
+			mii.cbSize = sizeof(mii);
+			mii.fMask = MIIM_SUBMENU;
+			if (menu.GetMenuItemInfo(static_cast<UINT>(i), &mii, TRUE) && mii.hSubMenu == hSubMenu)
+				return i;
+		}
+		return -1;
+	}
+
+	bool EnableSubMenuItem(CMenu &menu, HMENU hSubMenu, UINT state)
+	{
+		const int position = FindSubMenuItemPosition(menu, hSubMenu);
+		if (position < 0)
+			return false;
+		return menu.EnableMenuItem(static_cast<UINT>(position), MF_BYPOSITION | state) != static_cast<UINT>(-1);
+	}
+
+	bool RemoveSubMenuItem(CMenu &menu, HMENU hSubMenu)
+	{
+		const int position = FindSubMenuItemPosition(menu, hSubMenu);
+		if (position < 0)
+			return false;
+		return menu.RemoveMenu(static_cast<UINT>(position), MF_BYPOSITION) != FALSE;
+	}
 }
 
 
@@ -1076,7 +1105,7 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 					uPrioMenuItem = 0;
 			}
 
-			m_FileMenu.EnableMenuItem((UINT)m_PrioMenu.m_hMenu, iFilesNotDone > 0 ? MF_ENABLED : MF_GRAYED);
+			EnableSubMenuItem(m_FileMenu, m_PrioMenu.m_hMenu, iFilesNotDone > 0 ? MF_ENABLED : MF_GRAYED);
 			m_PrioMenu.CheckMenuRadioItem(MP_PRIOLOW, MP_PRIOAUTO, uPrioMenuItem, 0);
 
 			// enable commands if there is at least one item which can be used for the action
@@ -1098,7 +1127,7 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			m_PreviewMenu.EnableMenuItem(MP_PREVIEW, (iSelectedItems == 1 && iFilesToPreview == 1) ? MF_ENABLED : MF_GRAYED);
 			m_PreviewMenu.EnableMenuItem(MP_PAUSEONPREVIEW, iFilesCanPauseOnPreview > 0 ? MF_ENABLED : MF_GRAYED);
 			m_PreviewMenu.CheckMenuItem(MP_PAUSEONPREVIEW, (iSelectedItems > 0 && iFilesDoPauseOnPreview == iSelectedItems) ? MF_CHECKED : MF_UNCHECKED);
-			m_FileMenu.EnableMenuItem((UINT)m_PreviewMenu.m_hMenu, m_PreviewMenu.HasEnabledItems() ? MF_ENABLED : MF_GRAYED);
+			EnableSubMenuItem(m_FileMenu, m_PreviewMenu.m_hMenu, m_PreviewMenu.HasEnabledItems() ? MF_ENABLED : MF_GRAYED);
 
 			if (iPreviewMenuEntries > 0) {
 				if (thePrefs.GetExtraPreviewWithMenu())
@@ -1120,7 +1149,7 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			m_FileMenu.CheckMenuItem(MP_FOLLOWMAJORITYFILENAME, MF_BYCOMMAND | ((iFilesFollowMajorityApplicable > 0 && iFilesFollowMajority == iFilesFollowMajorityApplicable) ? MF_CHECKED : MF_UNCHECKED));
 			int total;
 			m_FileMenu.EnableMenuItem(MP_CLEARCOMPLETED, GetCompleteDownloads(m_curTab, total) > 0 ? MF_ENABLED : MF_GRAYED);
-			m_FileMenu.EnableMenuItem((UINT)m_SourcesMenu.m_hMenu, MF_ENABLED);
+			EnableSubMenuItem(m_FileMenu, m_SourcesMenu.m_hMenu, MF_ENABLED);
 			m_SourcesMenu.EnableMenuItem(MP_ADDSOURCE, (iSelectedItems == 1 && iFilesToStop == 1) ? MF_ENABLED : MF_GRAYED);
 			m_SourcesMenu.EnableMenuItem(MP_SETSOURCELIMIT, (iFilesNotDone == iSelectedItems) ? MF_ENABLED : MF_GRAYED);
 
@@ -1169,9 +1198,9 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			VERIFY(m_FileMenu.RemoveMenu(m_FileMenu.GetMenuItemCount() - 1, MF_BYPOSITION));
 			if (iPreviewMenuEntries)
 				if (!thePrefs.GetExtraPreviewWithMenu())
-					VERIFY(m_PreviewMenu.RemoveMenu((UINT)PreviewWithMenu.m_hMenu, MF_BYCOMMAND));
+					VERIFY(RemoveSubMenuItem(m_PreviewMenu, PreviewWithMenu.m_hMenu));
 				else
-					VERIFY(m_FileMenu.RemoveMenu((UINT)PreviewWithMenu.m_hMenu, MF_BYCOMMAND));
+					VERIFY(RemoveSubMenuItem(m_FileMenu, PreviewWithMenu.m_hMenu));
 
 			VERIFY(WebMenu.DestroyMenu());
 			VERIFY(CopyMenu.DestroyMenu());
@@ -1226,14 +1255,14 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 		}
 	} else { // nothing selected
 		int total;
-		m_FileMenu.EnableMenuItem((UINT)m_PrioMenu.m_hMenu, MF_GRAYED);
+		EnableSubMenuItem(m_FileMenu, m_PrioMenu.m_hMenu, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_CANCEL, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_PAUSE, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_STOP, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_RESUME, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_OPEN, MF_GRAYED);
 
-		m_FileMenu.EnableMenuItem((UINT)m_PreviewMenu.m_hMenu, MF_GRAYED);
+		EnableSubMenuItem(m_FileMenu, m_PreviewMenu.m_hMenu, MF_GRAYED);
 		if (!thePrefs.GetPreviewPrio()) {
 			m_PreviewMenu.EnableMenuItem(MP_TRY_TO_GET_PREVIEW_PARTS, MF_GRAYED);
 			m_PreviewMenu.CheckMenuItem(MP_TRY_TO_GET_PREVIEW_PARTS, MF_UNCHECKED);
@@ -1250,7 +1279,7 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 		m_FileMenu.EnableMenuItem(MP_PASTE, theApp.IsEd2kFileLinkInClipboard() ? MF_ENABLED : MF_GRAYED);
 		m_FileMenu.SetDefaultItem(UINT_MAX);
 		if (m_SourcesMenu)
-			m_FileMenu.EnableMenuItem((UINT)m_SourcesMenu.m_hMenu, MF_GRAYED);
+			EnableSubMenuItem(m_FileMenu, m_SourcesMenu.m_hMenu, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_SEARCHRELATED, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_FIND, GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED);
 
