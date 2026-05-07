@@ -1141,12 +1141,30 @@ CString GetSearchKnownTypeName(const CSearchFile &rSearchFile)
 }
 
 /**
+ * Formats the resolved native search transport for REST clients.
+ */
+const char* GetSearchMethodName(const ESearchType eType)
+{
+	switch (eType) {
+	case SearchTypeEd2kServer:
+		return "server";
+	case SearchTypeEd2kGlobal:
+		return "global";
+	case SearchTypeKademlia:
+		return "kad";
+	case SearchTypeAutomatic:
+	default:
+		return "automatic";
+	}
+}
+
+/**
  * Serializes one top-level search result entry into the pipe payload shape.
  */
-json BuildSearchResultJson(const CSearchFile &rSearchFile)
+json BuildSearchResultJson(const CSearchFile &rSearchFile, const SSearchParams *const pSearchParams = NULL)
 {
 	const int iComplete = rSearchFile.IsComplete();
-	return json{
+	json result = json{
 		{"searchId", StdUtf8FromCString(FormatSearchId(rSearchFile.GetSearchID()))},
 		{"hash", StdUtf8FromCString(HashToHex(rSearchFile.GetFileHash()))},
 		{"name", StdUtf8FromCString(rSearchFile.GetFileName())},
@@ -1168,6 +1186,9 @@ json BuildSearchResultJson(const CSearchFile &rSearchFile)
 		{"hasComment", rSearchFile.HasComment()},
 		{"spam", rSearchFile.IsConsideredSpam()}
 	};
+	if (pSearchParams != NULL)
+		result["method"] = GetSearchMethodName(pSearchParams->eType);
+	return result;
 }
 
 /**
@@ -3126,6 +3147,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		return json{
 			{"id", StdUtf8FromCString(FormatSearchId(pSearchParams->dwSearchID))},
 			{"query", StdUtf8FromCString(pSearchParams->strExpression)},
+			{"method", GetSearchMethodName(pSearchParams->eType)},
 			{"status", "running"},
 			{"results", json::array()}
 		};
@@ -3157,11 +3179,12 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 
 		json results = json::array();
 		for (INT_PTR i = 0; i < aResults.GetCount(); ++i)
-			results.push_back(BuildSearchResultJson(*aResults[i]));
+			results.push_back(BuildSearchResultJson(*aResults[i], pSearchParams));
 
 		return json{
 			{"id", StdUtf8FromCString(FormatSearchId(uSearchID))},
 			{"query", StdUtf8FromCString(pSearchParams->strExpression)},
+			{"method", GetSearchMethodName(pSearchParams->eType)},
 			{"status", theApp.emuledlg->searchwnd->m_pwndResults->IsSearchRunning(uSearchID) ? "running" : "complete"},
 			{"results", results}
 		};
