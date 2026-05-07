@@ -3563,12 +3563,6 @@ LRESULT CemuleDlg::OnKickIdle(WPARAM, LPARAM lIdleCount)
 
 	if (searchwnd && searchwnd->m_hWnd) {
 		if (!theApp.IsClosing()) {
-//#ifdef _DEBUG
-//			TCHAR szDbg[80];
-//			wsprintf(szDbg, L"%10u: lIdleCount=%d, %s", ::GetTickCount64(), lIdleCount, (lIdleCount > 0) ? L"FreeTempMaps" : L"");
-//			SetWindowText(szDbg);
-//			TRACE(_T("%s\n"), szDbg);
-//#endif
 			// NOTE: See also 'CemuleApp::IsIdleMessage'. If 'CemuleApp::IsIdleMessage'
 			// would not filter most of the WM_TIMER messages we might get a performance
 			// problem here because the idle processing would be performed very, very often.

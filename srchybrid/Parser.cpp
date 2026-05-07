@@ -1144,7 +1144,7 @@ yysyntax_error(char *yyresult, int yystate, int yychar)
 			return YYSIZE_MAXIMUM;
 
 		if (yyresult) {
-		/* Avoid sprintf, as that infringes on the user's name space.
+		/* Avoid formatted CRT writes, as that infringes on the user's name space.
 		   Don't have undefined behavior even if the translation
 		   produced a string with the wrong number of "%s"s.  */
 			char *yyp = yyresult;
