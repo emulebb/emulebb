@@ -886,21 +886,21 @@ CString CWebServer::_GetHeader(const ThreadData &Data, long lSession)
 	}
 	Out.Replace(_T("[KadConText]"), HTTPConText);
 
-	TCHAR HTTPHeader[100];
+	CString HTTPHeader;
 	//100/1024 equals to 1/10.24
-	_stprintf(HTTPHeader, _T("%.0f"), theApp.downloadqueue->GetDatarate() / 10.24 / thePrefs.GetMaxDownload());
+	HTTPHeader.Format(_T("%.0f"), theApp.downloadqueue->GetDatarate() / 10.24 / thePrefs.GetMaxDownload());
 	Out.Replace(_T("[DownloadValue]"), HTTPHeader);
 
-	_stprintf(HTTPHeader, _T("%.0f"), theApp.uploadqueue->GetDatarate() / 10.24 / thePrefs.GetMaxUpload());
+	HTTPHeader.Format(_T("%.0f"), theApp.uploadqueue->GetDatarate() / 10.24 / thePrefs.GetMaxUpload());
 	Out.Replace(_T("[UploadValue]"), HTTPHeader);
 
-	_stprintf(HTTPHeader, _T("%.0f"), (100.0 * theApp.listensocket->GetOpenSockets()) / thePrefs.GetMaxConnections());
+	HTTPHeader.Format(_T("%.0f"), (100.0 * theApp.listensocket->GetOpenSockets()) / thePrefs.GetMaxConnections());
 	Out.Replace(_T("[ConnectionValue]"), HTTPHeader);
-	_stprintf(HTTPHeader, _T("%.1f"), theApp.uploadqueue->GetDatarate() / 1024.0);
+	HTTPHeader.Format(_T("%.1f"), theApp.uploadqueue->GetDatarate() / 1024.0);
 	Out.Replace(_T("[CurUpload]"), HTTPHeader);
-	_stprintf(HTTPHeader, _T("%.1f"), theApp.downloadqueue->GetDatarate() / 1024.0);
+	HTTPHeader.Format(_T("%.1f"), theApp.downloadqueue->GetDatarate() / 1024.0);
 	Out.Replace(_T("[CurDownload]"), HTTPHeader);
-	_stprintf(HTTPHeader, _T("%u.0"), theApp.listensocket->GetOpenSockets());
+	HTTPHeader.Format(_T("%u.0"), theApp.listensocket->GetOpenSockets());
 	Out.Replace(_T("[CurConnection]"), HTTPHeader);
 
 	uint32 dwMax = thePrefs.GetMaxUpload();
@@ -2144,7 +2144,9 @@ void CWebServer::_MakeTransferList(CString &Out, CWebServer *pThis, const Thread
 	CString HTTPProcessData;
 	CString sDownList, HTTPTemp;
 	LPCTSTR pcTmp;
-	double fTotalSize = 0, fTotalTransferred = 0, fTotalSpeed = 0;
+	uint64 fTotalSize = 0;
+	uint64 fTotalTransferred = 0;
+	double fTotalSpeed = 0;
 
 	CString OutE(pThis->m_Templates.sTransferDownLine);
 	for (INT_PTR i = 0; i < FilesArray->GetCount(); ++i) {
@@ -2322,7 +2324,9 @@ void CWebServer::_MakeTransferList(CString &Out, CWebServer *pThis, const Thread
 	HTTPTemp.Format(_T("%i"), pThis->m_Templates.iProgressbarWidth);
 	Out.Replace(_T("[PROGRESSBARWIDTHVAL]"), HTTPTemp);
 
-	fTotalSize = fTotalTransferred = fTotalSpeed = 0;
+	fTotalSize = 0;
+	fTotalTransferred = 0;
+	fTotalSpeed = 0;
 
 	OutE = pThis->m_Templates.sTransferUpLine;
 	OutE.Replace(_T("[admin]"), bAdmin ? _T("admin") : _T(""));
@@ -2395,11 +2399,11 @@ void CWebServer::_MakeTransferList(CString &Out, CWebServer *pThis, const Thread
 				pcTmp = WSqueueColumnHidden[2] ? _T("") : (LPCTSTR)QueueArray[i].sFileName;
 				HTTPProcessData.Replace(_T("[FileName]"), pcTmp);
 
-				TCHAR HTTPTempC[20];
+				CString HTTPTempC;
 				if (WSqueueColumnHidden[3])
-					*HTTPTempC = _T('\0');
+					HTTPTempC.Empty();
 				else
-					_stprintf(HTTPTempC, _T("%i"), QueueArray[i].nScore);
+					HTTPTempC.Format(_T("%i"), QueueArray[i].nScore);
 				HTTPProcessData.Replace(_T("[Score]"), HTTPTempC);
 				HTTPProcessData.Replace(_T("[ClientState]"), QueueArray[i].sClientState);
 				HTTPProcessData.Replace(_T("[ClientStateSpecial]"), QueueArray[i].sClientStateSpecial);
@@ -2433,11 +2437,11 @@ void CWebServer::_MakeTransferList(CString &Out, CWebServer *pThis, const Thread
 				pcTmp = WSqueueColumnHidden[2] ? _T("") : (LPCTSTR)QueueArray[i].sFileName;
 				HTTPProcessData.Replace(_T("[FileName]"), pcTmp);
 
-				TCHAR HTTPTempC[20];
+				CString HTTPTempC;
 				if (WSqueueColumnHidden[3])
-					*HTTPTempC = _T('\0');
+					HTTPTempC.Empty();
 				else
-					_stprintf(HTTPTempC, _T("%i"), QueueArray[i].nScore);
+					HTTPTempC.Format(_T("%i"), QueueArray[i].nScore);
 				HTTPProcessData.Replace(_T("[Score]"), HTTPTempC);
 
 				HTTPProcessData.Replace(_T("[ClientState]"), QueueArray[i].sClientState);
@@ -2472,11 +2476,11 @@ void CWebServer::_MakeTransferList(CString &Out, CWebServer *pThis, const Thread
 				pcTmp = WSqueueColumnHidden[2] ? _T("") : (LPCTSTR)QueueArray[i].sFileName;
 				HTTPProcessData.Replace(_T("[FileName]"), pcTmp);
 
-				TCHAR HTTPTempC[20];
+				CString HTTPTempC;
 				if (WSqueueColumnHidden[3])
-					*HTTPTempC = _T('\0');
+					HTTPTempC.Empty();
 				else
-					_stprintf(HTTPTempC, _T("%i"), QueueArray[i].nScore);
+					HTTPTempC.Format(_T("%i"), QueueArray[i].nScore);
 				HTTPProcessData.Replace(_T("[Score]"), HTTPTempC);
 
 				HTTPProcessData.Replace(_T("[ClientState]"), QueueArray[i].sClientState);
@@ -3018,7 +3022,7 @@ CString CWebServer::_GetSharedFilesList(const ThreadData &Data)
 		HTTPProcessData.Replace(_T("[IFDOWNLOADABLE]"), downloadable ? _T("") : _T("<!--"));
 		HTTPProcessData.Replace(_T("[/IFDOWNLOADABLE]"), downloadable ? _T("") : _T("-->"));
 
-		TCHAR HTTPTempC[100];
+		CString HTTPTempC;
 		//0
 		if (WSsharedColumnHidden[0])
 			HTTPProcessData.Replace(_T("[ShortFileName]"), _T(""));
@@ -3029,27 +3033,27 @@ CString CWebServer::_GetSharedFilesList(const ThreadData &Data)
 		//1
 		HTTPProcessData.Replace(_T("[FileTransferred]"), WSsharedColumnHidden[1] ? _T("") : (LPCTSTR)CastItoXBytes(SharedArray[i].nFileTransferred));
 		if (WSsharedColumnHidden[1])
-			*HTTPTempC = _T('\0');
+			HTTPTempC.Empty();
 		else
-			_stprintf(HTTPTempC, _T(" (%s)"), (LPCTSTR)CastItoXBytes(SharedArray[i].nFileAllTimeTransferred));
+			HTTPTempC.Format(_T(" (%s)"), (LPCTSTR)CastItoXBytes(SharedArray[i].nFileAllTimeTransferred));
 		HTTPProcessData.Replace(_T("[FileAllTimeTransferred]"), HTTPTempC);
 		//2
 		if (WSsharedColumnHidden[2])
-			*HTTPTempC = _T('\0');
+			HTTPTempC.Empty();
 		else
-			_stprintf(HTTPTempC, _T("%i"), SharedArray[i].nFileRequests);
+			HTTPTempC.Format(_T("%i"), SharedArray[i].nFileRequests);
 		HTTPProcessData.Replace(_T("[FileRequests]"), HTTPTempC);
 		if (!WSsharedColumnHidden[2])
-			_stprintf(HTTPTempC, _T(" (%i)"), SharedArray[i].nFileAllTimeRequests);
+			HTTPTempC.Format(_T(" (%i)"), SharedArray[i].nFileAllTimeRequests);
 		HTTPProcessData.Replace(_T("[FileAllTimeRequests]"), HTTPTempC);
 		//3
 		if (WSsharedColumnHidden[3])
-			*HTTPTempC = _T('\0');
+			HTTPTempC.Empty();
 		else
-			_stprintf(HTTPTempC, _T("%i"), SharedArray[i].nFileAccepts);
+			HTTPTempC.Format(_T("%i"), SharedArray[i].nFileAccepts);
 		HTTPProcessData.Replace(_T("[FileAccepts]"), HTTPTempC);
 		if (!WSsharedColumnHidden[3])
-			_stprintf(HTTPTempC, _T(" (%i)"), SharedArray[i].nFileAllTimeAccepts);
+			HTTPTempC.Format(_T(" (%i)"), SharedArray[i].nFileAllTimeAccepts);
 		HTTPProcessData.Replace(_T("[FileAllTimeAccepts]"), HTTPTempC);
 		//4..6
 		if (WSsharedColumnHidden[4])
