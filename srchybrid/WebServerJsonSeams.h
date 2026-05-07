@@ -917,6 +917,62 @@ inline bool ValidateTransferAddBody(json &rBody, std::string &rErrorCode, std::s
 	return true;
 }
 
+/**
+ * @brief Validates and trims one public transfer rename token.
+ */
+inline bool TryParseTransferRenameText(const json &rParams, std::string &rName, std::string &rError)
+{
+	if (!rParams.contains("name") || !rParams["name"].is_string()) {
+		rError = "name must be a string";
+		return false;
+	}
+
+	rName = TrimAsciiWhitespace(rParams["name"].get<std::string>());
+	if (rName.empty()) {
+		rError = "name must not be empty";
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * @brief Validates native transfer PATCH body shape before command dispatch.
+ */
+inline bool ValidateTransferPatchBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
+{
+	int iMutationFamilyCount = 0;
+	if (rBody.contains("priority"))
+		++iMutationFamilyCount;
+	if (rBody.contains("categoryId") || rBody.contains("categoryName"))
+		++iMutationFamilyCount;
+	if (rBody.contains("name"))
+		++iMutationFamilyCount;
+
+	if (iMutationFamilyCount == 0) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "transfer PATCH requires priority, categoryId, categoryName, or name");
+		return false;
+	}
+	if (iMutationFamilyCount > 1) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "transfer PATCH accepts only one mutation family");
+		return false;
+	}
+	if (rBody.contains("priority") && !rBody["priority"].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be a string");
+		return false;
+	}
+	if (rBody.contains("name")) {
+		std::string strName;
+		std::string strError;
+		if (!TryParseTransferRenameText(rBody, strName, strError)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, strError);
+			return false;
+		}
+		rBody["name"] = strName;
+	}
+	return true;
+}
+
 inline bool RequireBooleanField(
 	const json &rBody,
 	const char *pszFieldName,
@@ -1056,6 +1112,14 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 	if (rSpec.pszPathTemplate != NULL
 		&& std::string(rSpec.pszPathTemplate) == "/searches/{searchId}/results/{hash}/operations/download"
 		&& !ValidateOptionalPausedField(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == "PATCH"
+		&& std::string(rSpec.pszPathTemplate) == "/transfers/{hash}"
+		&& !ValidateTransferPatchBody(rBody, rErrorCode, rErrorMessage))
 	{
 		return false;
 	}

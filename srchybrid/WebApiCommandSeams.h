@@ -400,16 +400,9 @@ inline bool TryParseTransferBulkMutationRequest(const json &rParams, STransferBu
  */
 inline bool TryParseTransferRenameRequest(const json &rParams, STransferRenameRequest &rRequest, std::string &rError)
 {
-	if (!rParams.contains("name") || !rParams["name"].is_string()) {
-		rError = "name must be a string";
+	std::string strName;
+	if (!WebServerJsonSeams::TryParseTransferRenameText(rParams, strName, rError))
 		return false;
-	}
-
-	const std::string strName = TrimAsciiWhitespace(rParams["name"].get<std::string>());
-	if (strName.empty()) {
-		rError = "name must not be empty";
-		return false;
-	}
 
 	rRequest.strName = strName;
 	return true;
