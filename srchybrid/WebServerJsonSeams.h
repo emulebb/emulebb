@@ -815,6 +815,18 @@ inline bool ValidateCategorySelectorBody(json &rBody, std::string &rErrorCode, s
 		SetInvalidArgument(rErrorCode, rErrorMessage, "categoryId and categoryName are mutually exclusive");
 		return false;
 	}
+	if (rBody.contains("categoryId")) {
+		uint64_t uCategoryId = 0;
+		if (!TryParseJsonUInt64(rBody["categoryId"], uCategoryId)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "categoryId must be an unsigned number");
+			return false;
+		}
+		if (uCategoryId > UINT_MAX) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "categoryId is out of range");
+			return false;
+		}
+		rBody["categoryId"] = uCategoryId;
+	}
 	if (rBody.contains("categoryName")) {
 		if (!rBody["categoryName"].is_string()) {
 			SetInvalidArgument(rErrorCode, rErrorMessage, "categoryName must be a string");
