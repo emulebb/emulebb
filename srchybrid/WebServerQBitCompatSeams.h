@@ -537,4 +537,20 @@ inline bool TryParseHashesOnlyRequest(const std::string &rBody, SQBitHashMutatio
 		return false;
 	return TryParseHashesFormField(form, rRequest.hashes, rErrorMessage);
 }
+
+/**
+ * @brief Parses a qBittorrent force-start no-op request while validating its
+ * public boolean control field.
+ */
+inline bool TryParseForceStartRequest(const std::string &rBody, SQBitHashMutationRequest &rRequest, std::string &rErrorMessage)
+{
+	rRequest = SQBitHashMutationRequest();
+	std::map<std::string, std::string> form;
+	if (!TryParseFormBody(rBody, form, rErrorMessage))
+		return false;
+	if (!TryParseHashesFormField(form, rRequest.hashes, rErrorMessage))
+		return false;
+	bool bIgnoredValue = false;
+	return TryParseOptionalBooleanFormField(form, "value", bIgnoredValue, rErrorMessage);
+}
 }
