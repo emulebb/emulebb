@@ -35,6 +35,7 @@
 #include "LockScopeSeams.h"
 #include "Log.h"
 #include "ServerConnect.h"
+#include "UDPSocketSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -541,16 +542,18 @@ bool CUDPSocket::ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint3
 		//ASSERT(0);
 #ifndef _DEBUG
 	} catch (...) {
-		ProcessPacketError(size, opcode, nIP, nUDPPort, _T("Unknown exception"));
+		ProcessPacketError(size, opcode, nIP, nUDPPort, _T("Unknown exception"), true);
 		ASSERT(0);
 #endif
 	}
 	return false;
 }
 
-void CUDPSocket::ProcessPacketError(UINT size, UINT opcode, uint32 nIP, uint16 nUDPPort, LPCTSTR pszError)
+void CUDPSocket::ProcessPacketError(UINT size, UINT opcode, uint32 nIP, uint16 nUDPPort, LPCTSTR pszError, bool bUnexpectedException)
 {
-	if (thePrefs.GetVerbose()) {
+	const UDPSocketSeams::EServerUdpPacketFailureLogPolicy eLogPolicy =
+		UDPSocketSeams::GetPacketFailureLogPolicy(bUnexpectedException);
+	if (UDPSocketSeams::ShouldLogPacketFailure(thePrefs.GetVerbose(), eLogPolicy)) {
 		CString strName;
 		CServer *pServer = theApp.serverlist->GetServerByIPUDP(nIP, nUDPPort);
 		if (pServer)
