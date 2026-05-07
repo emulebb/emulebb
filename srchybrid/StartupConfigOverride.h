@@ -2,6 +2,7 @@
 
 #include <atlstr.h>
 #include <tchar.h>
+#include <windows.h>
 
 namespace StartupConfigOverride
 {
@@ -13,6 +14,40 @@ namespace StartupConfigOverride
 		return pszArgument != NULL && (_tcsicmp(pszArgument, _T("-c")) == 0 || _tcsicmp(pszArgument, _T("/c")) == 0);
 	}
 
+	inline bool IsDriveRootedPath(const CString &strPath)
+	{
+		return strPath.GetLength() >= 3
+			&& ((strPath[0] >= _T('A') && strPath[0] <= _T('Z')) || (strPath[0] >= _T('a') && strPath[0] <= _T('z')))
+			&& strPath[1] == _T(':')
+			&& strPath[2] == _T('\\');
+	}
+
+	inline CString TrimTrailingBaseDirSeparator(const CString &strPath)
+	{
+		CString strTrimmed(strPath);
+		while (strTrimmed.GetLength() > 3 && strTrimmed.Right(1) == _T("\\"))
+			strTrimmed.Truncate(strTrimmed.GetLength() - 1);
+		return strTrimmed;
+	}
+
+	inline bool TryGetFullPathName(const CString &strPath, CString &rstrFullPath)
+	{
+		rstrFullPath.Empty();
+		const DWORD dwRequired = ::GetFullPathName(strPath, 0, NULL, NULL);
+		if (dwRequired == 0)
+			return false;
+
+		LPTSTR pszBuffer = rstrFullPath.GetBuffer(dwRequired);
+		const DWORD dwLength = ::GetFullPathName(strPath, dwRequired, pszBuffer, NULL);
+		if (dwLength == 0 || dwLength >= dwRequired) {
+			rstrFullPath.ReleaseBuffer(0);
+			return false;
+		}
+
+		rstrFullPath.ReleaseBuffer(dwLength);
+		return true;
+	}
+
 	/**
 	 * @brief Reports whether the supplied path is a canonical absolute Win32 drive path.
 	 */
@@ -21,27 +56,13 @@ namespace StartupConfigOverride
 		if (strPath.Find(_T('/')) >= 0)
 			return false;
 
-		if (strPath.GetLength() < 3
-				|| !((strPath[0] >= _T('A') && strPath[0] <= _T('Z')) || (strPath[0] >= _T('a') && strPath[0] <= _T('z')))
-				|| strPath[1] != _T(':')
-				|| strPath[2] != _T('\\'))
+		if (!IsDriveRootedPath(strPath))
 			return false;
 
-		int iSegmentStart = 3;
-		while (iSegmentStart < strPath.GetLength()) {
-			const int iSegmentEnd = strPath.Find(_T('\\'), iSegmentStart);
-			const int iCurrentEnd = iSegmentEnd >= 0 ? iSegmentEnd : strPath.GetLength();
-			if (iCurrentEnd == iSegmentStart)
-				return false;
-
-			const CString strSegment(strPath.Mid(iSegmentStart, iCurrentEnd - iSegmentStart));
-			if (strSegment == _T(".") || strSegment == _T(".."))
-				return false;
-
-			iSegmentStart = iCurrentEnd + 1;
-		}
-
-		return true;
+		CString strFullPath;
+		return TryGetFullPathName(strPath, strFullPath)
+			&& IsDriveRootedPath(strFullPath)
+			&& TrimTrailingBaseDirSeparator(strFullPath) == TrimTrailingBaseDirSeparator(strPath);
 	}
 
 	/**
