@@ -602,8 +602,10 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 						EMFileSize filesize = kf->GetFileSize();
 
 #define SENDFILEBUFSIZE 2048
-						char *buffer = (char*)malloc(SENDFILEBUFSIZE);
-						if (!buffer) {
+						std::vector<char> buffer;
+						try {
+							buffer.resize(SENDFILEBUFSIZE);
+						} catch (...) {
 							Data.pSocket->SendReply("HTTP/1.1 500 Internal Server Error\r\n");
 							::CoUninitialize();
 							return;
@@ -622,13 +624,11 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 
 						for (UINT r = 1; (uint64)filesize > 0 && r;) {
 							const UINT uToRead = static_cast<UINT>(std::min<uint64>(SENDFILEBUFSIZE, static_cast<uint64>(filesize)));
-							r = file.Read(buffer, uToRead);
+							r = file.Read(buffer.data(), uToRead);
 							filesize -= static_cast<uint64>(r);
-							Data.pSocket->SendData(buffer, r);
+							Data.pSocket->SendData(buffer.data(), r);
 						}
 						file.Close();
-
-						free(buffer);
 					} else
 						Data.pSocket->SendReply("HTTP/1.1 404 File not found\r\n");
 					::CoUninitialize();
