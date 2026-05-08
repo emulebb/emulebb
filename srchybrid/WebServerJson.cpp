@@ -22,6 +22,7 @@
 #include <climits>
 #include <cstdlib>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -2780,14 +2781,14 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 
 		auto addOneLink = [&](const std::string &rLinkUtf8, CString &rLinkError) -> json
 		{
-			CED2KLink *pLink = NULL;
+			std::unique_ptr<CED2KLink> pLink;
 			try {
 				CString strLink(CStringFromStdUtf8(rLinkUtf8));
 				if (strLink.IsEmpty())
 					throw CString(_T("invalid ed2k link"));
 				const bool bSlash = (strLink[strLink.GetLength() - 1] == _T('/'));
 				const CString strNormalizedLink(bSlash ? strLink : strLink + _T('/'));
-				pLink = CED2KLink::CreateLinkFromUrl(strNormalizedLink);
+				pLink.reset(CED2KLink::CreateLinkFromUrl(strNormalizedLink));
 				if (pLink == NULL || pLink->GetKind() != CED2KLink::kFile)
 					throw CString(_T("invalid ed2k link"));
 
@@ -2797,10 +2798,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 					{"hash", StdUtf8FromCString(HashToHex(pFileLink->GetHashKey()))},
 					{"name", StdUtf8FromCString(pFileLink->GetName())}
 				};
-				delete pLink;
 				return result;
 			} catch (const CString &rCaughtError) {
-				delete pLink;
 				rLinkError = rCaughtError;
 				return json();
 			}
@@ -3296,15 +3295,13 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 
-		CED2KLink *pLink = NULL;
+		std::unique_ptr<CED2KLink> pLink;
 		try {
-			pLink = CED2KLink::CreateLinkFromUrl(pSearchFile->GetED2kLink());
+			pLink.reset(CED2KLink::CreateLinkFromUrl(pSearchFile->GetED2kLink()));
 			if (pLink == NULL || pLink->GetKind() != CED2KLink::kFile)
 				throw CString(_T("invalid search-result ed2k link"));
 			theApp.downloadqueue->AddFileLinkToDownload(*pLink->GetFileLink(), static_cast<int>(uCategory), uPaused);
-			delete pLink;
 		} catch (const CString &rCaughtError) {
-			delete pLink;
 			rError.strCode = "INVALID_STATE";
 			rError.strMessage = rCaughtError;
 			return json();
