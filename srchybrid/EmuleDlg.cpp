@@ -3843,8 +3843,10 @@ LRESULT CemuleDlg::OnWebAddDownloads(WPARAM wParam, LPARAM lParam)
 	const CString link((LPCTSTR)wParam);
 	if (link.GetLength() == 32 && _tcsnicmp(link, _T("ed2k"), 4) != 0) {
 		uchar fileid[MDX_DIGEST_SIZE];
-		DecodeBase16(link, link.GetLength(), fileid, _countof(fileid));
-		theApp.searchlist->AddFileToDownloadByHash(fileid, (uint8)lParam);
+		if (DecodeBase16(link, link.GetLength(), fileid, _countof(fileid)))
+			theApp.searchlist->AddFileToDownloadByHash(fileid, (uint8)lParam);
+		else
+			DebugLogWarning(_T("Web Interface ignored invalid remote download hash '%s'"), (LPCTSTR)link.Left(64));
 	} else
 		theApp.AddEd2kLinksToDownload(link, (int)lParam);
 
