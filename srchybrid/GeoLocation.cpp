@@ -69,15 +69,9 @@ namespace
 			return;
 
 		const DWORD dwPostError = ::GetLastError();
-		if (hNotifyWnd != NULL && ::IsWindow(hNotifyWnd)) {
-			(void)::SendMessage(hNotifyWnd, uMessage, bUpdated ? 1u : 0u, 0);
-			AddDebugLogLine(false, _T("%s: delivered background refresh completion synchronously after PostMessage failed (%u)."), pszComponentName, dwPostError);
-			return;
-		}
-
 		if (pRefreshState)
 			(void)::InterlockedExchange(&pRefreshState->lQueued, 0);
-		AddDebugLogLine(false, _T("%s: dropped background refresh completion because the notify window is unavailable (%u)."), pszComponentName, dwPostError);
+		AddDebugLogLine(false, _T("%s: dropped background refresh completion because PostMessage failed (%u)."), pszComponentName, dwPostError);
 	}
 
 	enum MMDBDataType
