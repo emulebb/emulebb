@@ -570,7 +570,7 @@ json BuildSharedFileJson(const CKnownFile &rKnownFile)
 		{"hasComment", rKnownFile.HasComment()},
 		{"userRating", rKnownFile.UserRating()},
 		{"publishedEd2k", rKnownFile.GetPublishedED2K()},
-		{"sharedByRule", theApp.sharedfiles->ShouldBeShared(rKnownFile.GetPath(), rKnownFile.GetFilePath(), false)}
+		{"sharedByRule", true}
 	};
 }
 
