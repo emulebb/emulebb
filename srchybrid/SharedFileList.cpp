@@ -115,6 +115,13 @@ CString MakeSharedHashFilePathKey(const CKnownFile &file)
 	return LexicallyNormalizeSharedFilePath(file.GetFilePath());
 }
 
+std::wstring MakeSharedHashInFlightLookupKey(const CString &strFilePathKey)
+{
+	CString strLookupKey(strFilePathKey);
+	strLookupKey.MakeLower();
+	return std::wstring(strLookupKey);
+}
+
 std::wstring MakeStartupCacheSnapshotKey(const CString &strDirectory)
 {
 	return std::wstring(LexicallyNormalizeSharedDirectoryPath(strDirectory));
@@ -588,6 +595,7 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	, m_pSharedHashThread()
 	, m_sharedHashQueue()
 	, m_sharedHashPendingCompletions()
+	, m_sharedHashInFlightKeys()
 	, m_sharedHashActiveJob()
 	, m_bSharedHashDrainPosted(false)
 	, m_bSharedHashWorkerCanHash(false)
@@ -693,6 +701,8 @@ void CSharedFileList::QueueSharedFileForHash(const CString &strDirectory, const 
 	{
 		CSingleLock lock(&m_mutSharedHashQueue, TRUE);
 		if (m_bSharedHashWorkerExitRequested)
+			return;
+		if (!m_sharedHashInFlightKeys.insert(MakeSharedHashInFlightLookupKey(job.strFilePathKey)).second)
 			return;
 		m_sharedHashQueue.push_back(job);
 	}
@@ -826,6 +836,7 @@ void CSharedFileList::CompleteSharedHashCompletion(const CString &strFilePathKey
 			break;
 		}
 	}
+	m_sharedHashInFlightKeys.erase(MakeSharedHashInFlightLookupKey(strFilePathKey));
 }
 
 bool CSharedFileList::QueueDeferredSharedHashResult(CSharedFileHashResult *pResult)
@@ -967,15 +978,7 @@ bool CSharedFileList::IsSharedHashInFlight(const CString &strDirectory, const CS
 {
 	const CString strFilePathKey(MakeSharedHashFilePathKey(strDirectory, strName));
 	CSingleLock lock(&m_mutSharedHashQueue, TRUE);
-	for (const SharedHashJob &job : m_sharedHashQueue)
-		if (job.strFilePathKey.CompareNoCase(strFilePathKey) == 0)
-			return true;
-	if (m_bSharedHashActive && m_sharedHashActiveJob.strFilePathKey.CompareNoCase(strFilePathKey) == 0)
-		return true;
-	for (const SharedHashJob &job : m_sharedHashPendingCompletions)
-		if (job.strFilePathKey.CompareNoCase(strFilePathKey) == 0)
-			return true;
-	return false;
+	return m_sharedHashInFlightKeys.find(MakeSharedHashInFlightLookupKey(strFilePathKey)) != m_sharedHashInFlightKeys.end();
 }
 
 void CSharedFileList::SignalSharedHashWorkerShutdown()
@@ -997,6 +1000,7 @@ void CSharedFileList::SignalSharedHashWorkerShutdown()
 		m_bSharedHashWorkerCanHash = true;
 		m_sharedHashQueue.clear();
 		m_sharedHashPendingCompletions.clear();
+		m_sharedHashInFlightKeys.clear();
 		deferredResults.swap(m_sharedHashDeferredResults);
 	}
 	for (CSharedFileHashResult *pResult : deferredResults) {

@@ -511,6 +511,7 @@ private:
 	std::deque<SharedHashJob> m_sharedHashQueue;
 	std::deque<SharedHashJob> m_sharedHashPendingCompletions;
 	std::deque<CSharedFileHashResult*> m_sharedHashDeferredResults;
+	std::unordered_set<std::wstring> m_sharedHashInFlightKeys;
 	SharedHashJob m_sharedHashActiveJob;
 	bool m_bSharedHashDrainPosted;
 	bool m_bSharedHashWorkerCanHash;
