@@ -40,7 +40,7 @@ public:
 	/**
 	 * @brief Returns whether an automatic IP-filter update worker is currently queued or running.
 	 */
-	bool IsRefreshQueued() const						{ return m_bBackgroundRefreshQueued; }
+	bool IsRefreshQueued() const						{ return m_lBackgroundRefreshQueued != 0; }
 	/**
 	 * @brief Returns whether the automatic IP-filter update interval is due at the supplied time.
 	 */
@@ -51,5 +51,5 @@ private:
 
 	static UINT AFX_CDECL BackgroundRefreshThread(LPVOID pParam);
 
-	bool m_bBackgroundRefreshQueued;
+	volatile LONG m_lBackgroundRefreshQueued;
 };

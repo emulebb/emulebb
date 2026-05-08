@@ -91,7 +91,7 @@ public:
 	/**
 	 * @brief Returns whether a background refresh worker is already running.
 	 */
-	bool IsRefreshQueued() const						{ return m_bBackgroundRefreshQueued; }
+	bool IsRefreshQueued() const						{ return m_lBackgroundRefreshQueued != 0; }
 
 private:
 	struct CStringLess
@@ -111,6 +111,7 @@ private:
 		CString strDatabaseTempPath;
 		CString strInstallPath;
 		HWND hNotifyWnd;
+		volatile LONG *pRefreshQueuedFlag;
 		bool bProxyEnabled;
 	};
 
@@ -138,5 +139,5 @@ private:
 	mutable SGeoLocationRecord m_defaultRecord;
 	mutable std::map<uint32, SGeoLocationRecord> m_cacheByIp;
 	std::map<CString, int, CStringLess> m_flagIndexByCode;
-	bool m_bBackgroundRefreshQueued;
+	volatile LONG m_lBackgroundRefreshQueued;
 };
