@@ -133,7 +133,10 @@ bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CStr
 		}
 	} while (dwBytesRead != 0);
 
-	_close(fdOut);
+	if (_close(fdOut) != 0 && bSuccess) {
+		strError.Format(_T("Close failed for %s (%u)"), (LPCTSTR)strTargetPath, errno);
+		bSuccess = false;
+	}
 
 	if (!bSuccess)
 		(void)LongPathSeams::DeleteFileIfExists(strTargetPath);
