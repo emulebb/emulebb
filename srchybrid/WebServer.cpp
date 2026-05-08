@@ -100,6 +100,23 @@ static bool IsWebColumnIndexValid(int iColumn, size_t uColumnCount, LPCTSTR pszC
 	return false;
 }
 
+static UINT ParseWebPreferenceUInt(const CString &strValue)
+{
+	CString strTrimmed(strValue);
+	strTrimmed.Trim();
+	if (strTrimmed.IsEmpty())
+		return 0;
+
+	TCHAR *pszEnd = NULL;
+	errno = 0;
+	const __int64 iValue = _tcstoi64(strTrimmed, &pszEnd, 10);
+	if (pszEnd == static_cast<LPCTSTR>(strTrimmed) || errno == ERANGE || iValue < 0)
+		return 0;
+	if (iValue > UINT_MAX)
+		return UINT_MAX;
+	return static_cast<UINT>(iValue);
+}
+
 CWebServer::CWebServer()
 	: m_Templates()
 	, m_uCurIP()
@@ -3416,26 +3433,30 @@ CString CWebServer::_GetPreferences(const ThreadData &Data)
 		else if (strTmp == _T("false") || strTmp.IsEmpty())
 			thePrefs.SetWebUseGzip(false);
 
-		if (!_ParseURL(Data.sURL, _T("refresh")).IsEmpty())
-			thePrefs.SetWebPageRefresh(_tstoi(_ParseURL(Data.sURL, _T("refresh"))));
+		strTmp = _ParseURL(Data.sURL, _T("refresh"));
+		if (!strTmp.IsEmpty())
+			thePrefs.SetWebPageRefresh(ParseWebPreferenceUInt(strTmp));
 
 		strTmp = _ParseURL(Data.sURL, _T("maxdown"));
 		if (!strTmp.IsEmpty()) {
-			uint32 dwSpeed = _tstoi(strTmp);
+			uint32 dwSpeed = ParseWebPreferenceUInt(strTmp);
 			thePrefs.SetMaxDownload(dwSpeed);
 		}
 		strTmp = _ParseURL(Data.sURL, _T("maxup"));
 		if (!strTmp.IsEmpty()) {
-			uint32 dwSpeed = _tstoi(strTmp);
+			uint32 dwSpeed = ParseWebPreferenceUInt(strTmp);
 			thePrefs.SetMaxUpload(dwSpeed);
 		}
 
-		if (!_ParseURL(Data.sURL, _T("maxsources")).IsEmpty())
-			thePrefs.SetMaxSourcesPerFile(_tstoi(_ParseURL(Data.sURL, _T("maxsources"))));
-		if (!_ParseURL(Data.sURL, _T("maxconnections")).IsEmpty())
-			thePrefs.SetMaxConnections(_tstoi(_ParseURL(Data.sURL, _T("maxconnections"))));
-		if (!_ParseURL(Data.sURL, _T("maxconnectionsperfive")).IsEmpty())
-			thePrefs.SetMaxConsPerFive(_tstoi(_ParseURL(Data.sURL, _T("maxconnectionsperfive"))));
+		strTmp = _ParseURL(Data.sURL, _T("maxsources"));
+		if (!strTmp.IsEmpty())
+			thePrefs.SetMaxSourcesPerFile(ParseWebPreferenceUInt(strTmp));
+		strTmp = _ParseURL(Data.sURL, _T("maxconnections"));
+		if (!strTmp.IsEmpty())
+			thePrefs.SetMaxConnections(ParseWebPreferenceUInt(strTmp));
+		strTmp = _ParseURL(Data.sURL, _T("maxconnectionsperfive"));
+		if (!strTmp.IsEmpty())
+			thePrefs.SetMaxConsPerFive(ParseWebPreferenceUInt(strTmp));
 	}
 
 	// Fill form
