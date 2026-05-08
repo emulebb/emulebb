@@ -59,6 +59,9 @@ typedef struct
 
 void CArchiveRecovery::recover(CPartFile *partFile, bool preview, bool bCreatePartFileCopy)
 {
+	// Deprecated/frozen feature: archive recovery is retained only for legacy
+	// compatibility. Known bugs in this path are Wont-Fix unless the feature is
+	// explicitly unfrozen by product decision.
 	if (partFile->m_bPreviewing || partFile->m_bRecoveringArchive)
 		return;
 	partFile->m_bRecoveringArchive = true;
