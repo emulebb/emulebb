@@ -26,7 +26,7 @@ namespace DirectDownload
 	 */
 	bool CreateTempPathInDirectory(const CString& strDirectory, LPCTSTR pszPrefix, CString& strTempPath, CString& strError);
 	/**
-	 * @brief Downloads a URL directly to a file without showing UI or using proxy settings.
+	 * @brief Downloads a URL directly to a file with bounded background timeouts and no proxy UI.
 	 */
 	bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CString& strError);
 }

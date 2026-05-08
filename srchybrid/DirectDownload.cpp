@@ -30,6 +30,34 @@ static char THIS_FILE[] = __FILE__;
 
 namespace DirectDownload
 {
+namespace
+{
+	const DWORD DIRECT_DOWNLOAD_CONNECT_TIMEOUT_MS = 30000;
+	const DWORD DIRECT_DOWNLOAD_SEND_TIMEOUT_MS = 30000;
+	const DWORD DIRECT_DOWNLOAD_RECEIVE_TIMEOUT_MS = 30000;
+	const ULONGLONG DIRECT_DOWNLOAD_TOTAL_TIMEOUT_MS = 5ull * 60ull * 1000ull;
+
+	/**
+	 * @brief Applies one WinInet timeout and reports failure through the download error string.
+	 */
+	bool SetInternetTimeout(HINTERNET hInternet, DWORD dwOption, DWORD dwTimeoutMs, CString& strError)
+	{
+		if (::InternetSetOption(hInternet, dwOption, &dwTimeoutMs, sizeof(dwTimeoutMs)))
+			return true;
+
+		strError.Format(_T("InternetSetOption(%u) failed (%u)"), static_cast<unsigned>(dwOption), ::GetLastError());
+		return false;
+	}
+
+	/**
+	 * @brief Checks the total background download deadline across repeated reads.
+	 */
+	bool HasDownloadDeadlineExpired(ULONGLONG ullStartTick)
+	{
+		return ::GetTickCount64() - ullStartTick >= DIRECT_DOWNLOAD_TOTAL_TIMEOUT_MS;
+	}
+}
+
 bool CreateTempPathInDirectory(const CString& strDirectory, LPCTSTR pszPrefix, CString& strTempPath, CString& strError)
 {
 	LongPathSeams::PathString strTempPathLong;
@@ -51,6 +79,8 @@ bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CStr
 		strError.Format(_T("InternetOpen failed (%u)"), ::GetLastError());
 		return false;
 	}
+	if (!SetInternetTimeout(hInternetSession.Get(), INTERNET_OPTION_CONNECT_TIMEOUT, DIRECT_DOWNLOAD_CONNECT_TIMEOUT_MS, strError))
+		return false;
 
 	TCHAR szHostName[INTERNET_MAX_HOST_NAME_LENGTH] = {};
 	TCHAR szUrlPath[2048] = {};
@@ -94,8 +124,12 @@ bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CStr
 		strError.Format(_T("HttpOpenRequest failed (%u)"), ::GetLastError());
 		return false;
 	}
+	if (!SetInternetTimeout(hHttpFile.Get(), INTERNET_OPTION_SEND_TIMEOUT, DIRECT_DOWNLOAD_SEND_TIMEOUT_MS, strError)
+		|| !SetInternetTimeout(hHttpFile.Get(), INTERNET_OPTION_RECEIVE_TIMEOUT, DIRECT_DOWNLOAD_RECEIVE_TIMEOUT_MS, strError))
+		return false;
 
 	::HttpAddRequestHeaders(hHttpFile.Get(), _T("Accept-Encoding: identity\r\n"), _UI32_MAX, HTTP_ADDREQ_FLAG_ADD);
+	const ULONGLONG ullDownloadStartTick = ::GetTickCount64();
 	if (!::HttpSendRequest(hHttpFile.Get(), NULL, 0, NULL, 0)) {
 		strError.Format(_T("HttpSendRequest failed (%u)"), ::GetLastError());
 		return false;
@@ -118,6 +152,11 @@ bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CStr
 	DWORD dwBytesRead = 0;
 	bool bSuccess = true;
 	do {
+		if (HasDownloadDeadlineExpired(ullDownloadStartTick)) {
+			strError.Format(_T("Download timed out after %u seconds"), static_cast<unsigned>(DIRECT_DOWNLOAD_TOTAL_TIMEOUT_MS / 1000ull));
+			bSuccess = false;
+			break;
+		}
 		if (!::InternetReadFile(hHttpFile.Get(), buffer, sizeof(buffer), &dwBytesRead)) {
 			strError.Format(_T("InternetReadFile failed (%u)"), ::GetLastError());
 			bSuccess = false;
