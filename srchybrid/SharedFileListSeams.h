@@ -104,6 +104,21 @@ struct SharedHashCompletionDeliveryState
 	bool bDirectPostSucceeded;
 };
 
+enum class SharedHashDrainContinuationAction : unsigned char
+{
+	Complete,
+	WaitForPostedDrain,
+	DrainInlineFallback
+};
+
+struct SharedHashDrainContinuationState
+{
+	bool bDeferredResultsAvailable;
+	bool bWorkerExitRequested;
+	bool bAppClosing;
+	bool bPostSucceeded;
+};
+
 /**
  * @brief Stable snapshot of the shared-hash worker state captured when shutdown begins.
  */
@@ -205,6 +220,19 @@ inline SharedHashCompletionDeliveryAction GetSharedHashCompletionDeliveryAction(
 	if (rState.bWorkerExitRequested || rState.bAppClosing)
 		return SharedHashCompletionDeliveryAction::DropResult;
 	return SharedHashCompletionDeliveryAction::QueueForUiRetry;
+}
+
+/**
+ * @brief Classifies how the UI should continue a shared-hash completion drain
+ * after one bounded batch has finished.
+ */
+inline SharedHashDrainContinuationAction GetSharedHashDrainContinuationAction(const SharedHashDrainContinuationState &rState)
+{
+	if (!rState.bDeferredResultsAvailable || rState.bWorkerExitRequested || rState.bAppClosing)
+		return SharedHashDrainContinuationAction::Complete;
+	if (rState.bPostSucceeded)
+		return SharedHashDrainContinuationAction::WaitForPostedDrain;
+	return SharedHashDrainContinuationAction::DrainInlineFallback;
 }
 
 /**

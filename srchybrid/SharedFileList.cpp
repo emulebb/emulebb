@@ -915,42 +915,60 @@ bool CSharedFileList::PostSharedHashResultsDrain()
 
 void CSharedFileList::DrainDeferredSharedHashResults()
 {
-	const ULONGLONG ullDrainStart = ::GetTickCount64();
-	unsigned int uProcessed = 0;
-	CSharedFileHashResult *pResult = NULL;
-	while (TakeDeferredSharedHashResult(pResult)) {
-		if (pResult == NULL)
-			continue;
+	for (;;) {
+		const ULONGLONG ullDrainStart = ::GetTickCount64();
+		unsigned int uProcessed = 0;
+		CSharedFileHashResult *pResult = NULL;
+		while (TakeDeferredSharedHashResult(pResult)) {
+			if (pResult == NULL)
+				continue;
 
-		const bool bCanConsume = !theApp.IsClosing()
-			&& theApp.sharedfiles != NULL
-			&& pResult->pOwner == theApp.sharedfiles
-			&& !IsSharedHashWorkerShuttingDown();
-		if (pResult->bSuccess) {
-			if (bCanConsume)
-				FileHashingFinished(pResult);
-			else
+			const bool bCanConsume = !theApp.IsClosing()
+				&& theApp.sharedfiles != NULL
+				&& pResult->pOwner == theApp.sharedfiles
+				&& !IsSharedHashWorkerShuttingDown();
+			if (pResult->bSuccess) {
+				if (bCanConsume)
+					FileHashingFinished(pResult);
+				else
+					delete pResult->pKnownFile;
+			} else {
+				if (bCanConsume)
+					HashFailed(pResult);
 				delete pResult->pKnownFile;
-		} else {
-			if (bCanConsume)
-				HashFailed(pResult);
-			delete pResult->pKnownFile;
+			}
+			delete pResult;
+			++uProcessed;
+			if (uProcessed >= kSharedHashUiDrainBatchMax || (::GetTickCount64() - ullDrainStart) >= kSharedHashUiDrainBudgetMs)
+				break;
 		}
-		delete pResult;
-		++uProcessed;
-		if (uProcessed >= kSharedHashUiDrainBatchMax || (::GetTickCount64() - ullDrainStart) >= kSharedHashUiDrainBudgetMs)
-			break;
-	}
 
-	bool bNeedsRepost = false;
-	{
-		CSingleLock lock(&m_mutSharedHashQueue, TRUE);
-		bNeedsRepost = !m_sharedHashDeferredResults.empty() && !m_bSharedHashWorkerExitRequested && !theApp.IsClosing();
+		bool bNeedsRepost = false;
+		{
+			CSingleLock lock(&m_mutSharedHashQueue, TRUE);
+			bNeedsRepost = !m_sharedHashDeferredResults.empty() && !m_bSharedHashWorkerExitRequested && !theApp.IsClosing();
+			if (!bNeedsRepost)
+				m_bSharedHashDrainPosted = false;
+		}
+
 		if (!bNeedsRepost)
-			m_bSharedHashDrainPosted = false;
+			break;
+
+		const bool bPostSucceeded = PostSharedHashResultsDrain();
+		const SharedFileListSeams::SharedHashDrainContinuationAction eContinuationAction =
+			SharedFileListSeams::GetSharedHashDrainContinuationAction({
+				true,
+				IsSharedHashWorkerShuttingDown(),
+				theApp.IsClosing(),
+				bPostSucceeded
+			});
+		if (eContinuationAction == SharedFileListSeams::SharedHashDrainContinuationAction::WaitForPostedDrain)
+			break;
+		if (eContinuationAction == SharedFileListSeams::SharedHashDrainContinuationAction::Complete)
+			break;
+
+		DebugLog(_T("Failed to re-post shared-file hash completion drain; draining the next batch inline."));
 	}
-	if (bNeedsRepost && !PostSharedHashResultsDrain())
-		DebugLog(_T("Failed to re-post shared-file hash completion drain."));
 }
 
 void CSharedFileList::OnSharedHashQueuePossiblyDrained()
