@@ -59,6 +59,8 @@ constexpr int kSharedHashCompletionPostRetries = 20;
 constexpr DWORD kSharedHashCompletionPostRetryDelayMs = 25;
 constexpr ULONGLONG kStartupHashProfileInitialSamples = 8;
 constexpr ULONGLONG kStartupHashProfileSampleInterval = 256;
+constexpr unsigned int kSharedHashUiDrainBatchMax = 100;
+constexpr ULONGLONG kSharedHashUiDrainBudgetMs = 25;
 
 bool ShouldEmitStartupHashProfileSample(const ULONGLONG ullCompletedFiles, const ULONGLONG ullFailedFiles, const INT_PTR iPendingFiles)
 {
@@ -66,6 +68,12 @@ bool ShouldEmitStartupHashProfileSample(const ULONGLONG ullCompletedFiles, const
 	return ullObservedFiles < kStartupHashProfileInitialSamples
 		|| (ullObservedFiles % kStartupHashProfileSampleInterval) == 0
 		|| iPendingFiles == 0;
+}
+
+bool ShouldLogStartupHashFile(const ULONGLONG ullCompletedFiles, const ULONGLONG ullFailedFiles, const bool bStartupDeferredHashingActive)
+{
+	return !bStartupDeferredHashingActive
+		|| ShouldEmitStartupHashProfileSample(ullCompletedFiles, ullFailedFiles, 1);
 }
 
 CString NormalizeSharedFilePath(const CString &rstrPath)
@@ -581,6 +589,7 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	, m_sharedHashQueue()
 	, m_sharedHashPendingCompletions()
 	, m_sharedHashActiveJob()
+	, m_bSharedHashDrainPosted(false)
 	, m_bSharedHashWorkerCanHash(false)
 	, m_bSharedHashWorkerExitRequested(false)
 	, m_bSharedHashActive(false)
@@ -747,8 +756,11 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 
 	DbgSetThreadName("Shared hashing %s", (LPCTSTR)rJob.strName);
 	CSingleLock hashingLock(&theApp.hashing_mut, TRUE);
-	if (!theApp.IsClosing())
+	if (!theApp.IsClosing()
+		&& ShouldLogStartupHashFile(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, IsStartupDeferredHashingActive()))
+	{
 		Log(_T("%s \"%s\""), (LPCTSTR)GetResString(IDS_HASHINGFILE), (LPCTSTR)strFilePath);
+	}
 
 	CKnownFile *pKnownFile = NULL;
 	bool bSuccess = false;
@@ -783,38 +795,8 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 	pResult->strFilePathKey = rJob.strFilePathKey;
 	pResult->ullQueuedTimestampUs = rJob.ullQueuedTimestampUs;
 
-	bool bPosted = false;
-	const UINT uMessage = bSuccess ? TM_SHAREDFILEHASHED : TM_SHAREDFILEHASHFAILED;
-	for (int iRetry = 0; iRetry < kSharedHashCompletionPostRetries; ++iRetry) {
-		HWND hTargetWnd = NULL;
-		{
-			CSingleLock lock(&m_mutSharedHashQueue, TRUE);
-			if (m_bSharedHashWorkerExitRequested || theApp.IsClosing() || theApp.emuledlg == NULL || !::IsWindow(theApp.emuledlg->m_hWnd))
-				break;
-			hTargetWnd = theApp.emuledlg->m_hWnd;
-		}
-		if (::PostMessage(hTargetWnd, uMessage, 0, reinterpret_cast<LPARAM>(pResult)) != FALSE) {
-			bPosted = true;
-			break;
-		}
-		::Sleep(kSharedHashCompletionPostRetryDelayMs);
-	}
-
-	const SharedFileListSeams::SharedHashCompletionDeliveryAction eDeliveryAction =
-		SharedFileListSeams::GetSharedHashCompletionDeliveryAction({
-			IsSharedHashWorkerShuttingDown(),
-			theApp.IsClosing(),
-			bPosted
-		});
-
-	if (eDeliveryAction == SharedFileListSeams::SharedHashCompletionDeliveryAction::PostDirect)
+	if (QueueDeferredSharedHashResult(pResult))
 		return;
-
-	if (eDeliveryAction == SharedFileListSeams::SharedHashCompletionDeliveryAction::QueueForUiRetry) {
-		DebugLog(_T("Failed to post shared-file hash completion for \"%s\"; queuing UI-thread retry."), (LPCTSTR)strFilePath);
-		QueueDeferredSharedHashResult(pResult);
-		return;
-	}
 
 	if (!theApp.IsClosing())
 		DebugLog(_T("Failed to deliver shared-file hash completion for \"%s\" during shutdown; discarding result."), (LPCTSTR)strFilePath);
@@ -846,13 +828,36 @@ void CSharedFileList::CompleteSharedHashCompletion(const CString &strFilePathKey
 	}
 }
 
-void CSharedFileList::QueueDeferredSharedHashResult(CSharedFileHashResult *pResult)
+bool CSharedFileList::QueueDeferredSharedHashResult(CSharedFileHashResult *pResult)
 {
 	if (pResult == NULL)
-		return;
+		return false;
+
+	bool bShouldPost = false;
+	{
+		CSingleLock lock(&m_mutSharedHashQueue, TRUE);
+		if (m_bSharedHashWorkerExitRequested)
+			return false;
+		m_sharedHashDeferredResults.push_back(pResult);
+		if (!m_bSharedHashDrainPosted) {
+			m_bSharedHashDrainPosted = true;
+			bShouldPost = true;
+		}
+	}
+
+	if (!bShouldPost || PostSharedHashResultsDrain())
+		return true;
 
 	CSingleLock lock(&m_mutSharedHashQueue, TRUE);
-	m_sharedHashDeferredResults.push_back(pResult);
+	for (auto it = m_sharedHashDeferredResults.begin(); it != m_sharedHashDeferredResults.end(); ++it) {
+		if (*it == pResult) {
+			m_sharedHashDeferredResults.erase(it);
+			break;
+		}
+	}
+	if (m_sharedHashDeferredResults.empty())
+		m_bSharedHashDrainPosted = false;
+	return false;
 }
 
 bool CSharedFileList::TakeDeferredSharedHashResult(CSharedFileHashResult *&rpResult)
@@ -868,8 +873,32 @@ bool CSharedFileList::TakeDeferredSharedHashResult(CSharedFileHashResult *&rpRes
 	return true;
 }
 
+bool CSharedFileList::PostSharedHashResultsDrain()
+{
+	for (int iRetry = 0; iRetry < kSharedHashCompletionPostRetries; ++iRetry) {
+		HWND hTargetWnd = NULL;
+		{
+			CSingleLock lock(&m_mutSharedHashQueue, TRUE);
+			if (m_bSharedHashWorkerExitRequested || theApp.IsClosing() || theApp.emuledlg == NULL || !::IsWindow(theApp.emuledlg->m_hWnd)) {
+				m_bSharedHashDrainPosted = false;
+				return false;
+			}
+			hTargetWnd = theApp.emuledlg->m_hWnd;
+		}
+		if (::PostMessage(hTargetWnd, TM_SHAREDHASHRESULTSAVAILABLE, 0, 0) != FALSE)
+			return true;
+		::Sleep(kSharedHashCompletionPostRetryDelayMs);
+	}
+
+	CSingleLock lock(&m_mutSharedHashQueue, TRUE);
+	m_bSharedHashDrainPosted = false;
+	return false;
+}
+
 void CSharedFileList::DrainDeferredSharedHashResults()
 {
+	const ULONGLONG ullDrainStart = ::GetTickCount64();
+	unsigned int uProcessed = 0;
 	CSharedFileHashResult *pResult = NULL;
 	while (TakeDeferredSharedHashResult(pResult)) {
 		if (pResult == NULL)
@@ -890,7 +919,20 @@ void CSharedFileList::DrainDeferredSharedHashResults()
 			delete pResult->pKnownFile;
 		}
 		delete pResult;
+		++uProcessed;
+		if (uProcessed >= kSharedHashUiDrainBatchMax || (::GetTickCount64() - ullDrainStart) >= kSharedHashUiDrainBudgetMs)
+			break;
 	}
+
+	bool bNeedsRepost = false;
+	{
+		CSingleLock lock(&m_mutSharedHashQueue, TRUE);
+		bNeedsRepost = !m_sharedHashDeferredResults.empty() && !m_bSharedHashWorkerExitRequested && !theApp.IsClosing();
+		if (!bNeedsRepost)
+			m_bSharedHashDrainPosted = false;
+	}
+	if (bNeedsRepost && !PostSharedHashResultsDrain())
+		DebugLog(_T("Failed to re-post shared-file hash completion drain."));
 }
 
 void CSharedFileList::OnSharedHashQueuePossiblyDrained()

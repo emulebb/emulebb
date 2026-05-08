@@ -307,6 +307,7 @@ protected:
 	afx_msg LRESULT OnHashFailed(WPARAM, LPARAM lParam);
 	afx_msg LRESULT OnSharedFileHashed(WPARAM, LPARAM lParam);
 	afx_msg LRESULT OnSharedHashFailed(WPARAM, LPARAM lParam);
+	afx_msg LRESULT OnSharedHashResultsAvailable(WPARAM, LPARAM);
 	afx_msg LRESULT OnFileAllocExc(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnFileCompleted(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnFileOpProgress(WPARAM wParam, LPARAM lParam);
@@ -358,6 +359,7 @@ enum EEMuleAppMsgs
 	TM_HASHFAILED,
 	TM_SHAREDFILEHASHED,
 	TM_SHAREDFILEHASHFAILED,
+	TM_SHAREDHASHRESULTSAVAILABLE,
 	TM_FRAMEGRABFINISHED,
 	TM_FILEALLOCEXC,
 	TM_FILECOMPLETED,

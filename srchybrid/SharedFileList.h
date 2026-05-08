@@ -126,6 +126,10 @@ public:
 	 */
 	bool	ShutdownSharedHashWorkerStep(DWORD dwWaitMilliseconds);
 	/**
+	 * @brief Replays retained hash completions on the UI thread in bounded batches.
+	 */
+	void	DrainDeferredSharedHashResults();
+	/**
 	 * @brief Reports whether shared-hash shutdown has been signaled and queued completions should be ignored.
 	 */
 	bool	IsSharedHashWorkerShuttingDown() const;
@@ -443,17 +447,17 @@ private:
 	 */
 	void	CompleteSharedHashCompletion(const CString &strFilePathKey);
 	/**
-	 * @brief Retains one hash completion for later UI-thread delivery after direct message posting failed.
+	 * @brief Retains one hash completion for bounded batched UI-thread delivery.
 	 */
-	void	QueueDeferredSharedHashResult(CSharedFileHashResult *pResult);
+	bool	QueueDeferredSharedHashResult(CSharedFileHashResult *pResult);
 	/**
 	 * @brief Pops the next retained hash completion for UI-thread delivery.
 	 */
 	bool	TakeDeferredSharedHashResult(CSharedFileHashResult *&rpResult);
 	/**
-	 * @brief Replays retained hash completions on the UI thread when message posting previously failed.
+	 * @brief Posts or re-posts the bounded UI-thread drain for queued shared hash completions.
 	 */
-	void	DrainDeferredSharedHashResults();
+	bool	PostSharedHashResultsDrain();
 	/**
 	 * @brief Handles shared hash queue drain side effects on the UI thread.
 	 */
@@ -508,6 +512,7 @@ private:
 	std::deque<SharedHashJob> m_sharedHashPendingCompletions;
 	std::deque<CSharedFileHashResult*> m_sharedHashDeferredResults;
 	SharedHashJob m_sharedHashActiveJob;
+	bool m_bSharedHashDrainPosted;
 	bool m_bSharedHashWorkerCanHash;
 	bool m_bSharedHashWorkerExitRequested;
 	bool m_bSharedHashActive;

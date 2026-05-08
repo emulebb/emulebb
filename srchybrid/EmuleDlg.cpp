@@ -427,6 +427,7 @@ BEGIN_MESSAGE_MAP(CemuleDlg, CTrayDialog)
 	ON_MESSAGE(TM_HASHFAILED, OnHashFailed)
 	ON_MESSAGE(TM_SHAREDFILEHASHED, OnSharedFileHashed)
 	ON_MESSAGE(TM_SHAREDFILEHASHFAILED, OnSharedHashFailed)
+	ON_MESSAGE(TM_SHAREDHASHRESULTSAVAILABLE, OnSharedHashResultsAvailable)
 	ON_MESSAGE(TM_FRAMEGRABFINISHED, OnFrameGrabFinished)
 	ON_MESSAGE(TM_FILEALLOCEXC, OnFileAllocExc)
 	ON_MESSAGE(TM_FILECOMPLETED, OnFileCompleted)
@@ -2020,6 +2021,13 @@ LRESULT CemuleDlg::OnSharedHashFailed(WPARAM, LPARAM lParam)
 		theApp.sharedfiles->HashFailed(pResult);
 	delete pResult->pKnownFile;
 	delete pResult;
+	return TRUE;
+}
+
+LRESULT CemuleDlg::OnSharedHashResultsAvailable(WPARAM, LPARAM)
+{
+	if (!theApp.IsClosing() && theApp.sharedfiles != NULL)
+		theApp.sharedfiles->DrainDeferredSharedHashResults();
 	return TRUE;
 }
 

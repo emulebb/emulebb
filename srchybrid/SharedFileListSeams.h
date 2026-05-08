@@ -118,7 +118,7 @@ struct SharedHashShutdownCacheState
  * @brief Returns the bounded delay used to yield after queuing one full imported part for async write.
  */
 constexpr DWORD kImportPartProgressYieldMs = 100;
-constexpr unsigned int kSharedHashPendingCompletionBacklogMax = 4u;
+constexpr unsigned int kSharedHashPendingCompletionBacklogMax = 256u;
 constexpr ULONGLONG kStartupCacheSaveDelayIdleMs = 15000ui64;
 
 /**
