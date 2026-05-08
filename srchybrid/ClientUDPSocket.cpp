@@ -41,12 +41,27 @@
 #include "kademlia/utils/KadUDPKey.h"
 #include "zlib.h"
 
+#include <memory>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace
+{
+struct UdpPackDeleter
+{
+	void operator()(UDPPack *pPack) const
+	{
+		if (pPack != NULL) {
+			delete pPack->packet;
+			delete pPack;
+		}
+	}
+};
+}
 
 // CClientUDPSocket
 
@@ -443,48 +458,52 @@ SocketSentBytes CClientUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend,
 	uint32 sentBytes = 0;
 	ULONGLONG curTick;
 
-	sendLocker.Lock();
+	CSingleLock sendLock(&sendLocker, TRUE);
 // <-- ZZ:UploadBandWithThrottler (UDP)
 	curTick = ::GetTickCount64();
-	while (!controlpacket_queue.IsEmpty() && !IsBusy() && sentBytes < maxNumberOfBytesToSend) { // ZZ:UploadBandWithThrottler (UDP)
-		UDPPack *cur_packet = controlpacket_queue.RemoveHead();
-		if (curTick < cur_packet->dwTime + UDPMAXQUEUETIME) {
-			int nLen = (int)cur_packet->packet->size + 2;
-			int iLen = ClientUDPSocketSeams::ShouldApplyOutgoingClientUdpEncryptionOverhead(
-				cur_packet->bEncrypt,
-				thePrefs.IsCryptLayerEnabled(),
-				theApp.GetPublicIP() > 0,
-				cur_packet->bKad)
-				? EncryptOverheadSize(cur_packet->bKad) : 0;
-			uchar *sendbuffer = new uchar[nLen + iLen];
-			memcpy(&sendbuffer[iLen], cur_packet->packet->GetUDPHeader(), 2);
-			memcpy(&sendbuffer[iLen + 2], cur_packet->packet->pBuffer, cur_packet->packet->size);
+	try {
+		while (!controlpacket_queue.IsEmpty() && !IsBusy() && sentBytes < maxNumberOfBytesToSend) { // ZZ:UploadBandWithThrottler (UDP)
+			std::unique_ptr<UDPPack, UdpPackDeleter> cur_packet(controlpacket_queue.RemoveHead());
+			if (curTick < cur_packet->dwTime + UDPMAXQUEUETIME) {
+				int nLen = (int)cur_packet->packet->size + 2;
+				int iLen = ClientUDPSocketSeams::ShouldApplyOutgoingClientUdpEncryptionOverhead(
+					cur_packet->bEncrypt,
+					thePrefs.IsCryptLayerEnabled(),
+					theApp.GetPublicIP() > 0,
+					cur_packet->bKad)
+					? EncryptOverheadSize(cur_packet->bKad) : 0;
+				std::unique_ptr<uchar[]> sendbuffer(new uchar[nLen + iLen]);
+				memcpy(&sendbuffer[iLen], cur_packet->packet->GetUDPHeader(), 2);
+				memcpy(&sendbuffer[iLen + 2], cur_packet->packet->pBuffer, cur_packet->packet->size);
 
-			if (iLen) {
-				nLen = EncryptSendClient(sendbuffer, nLen, cur_packet->pachTargetClientHashORKadID, cur_packet->bKad, cur_packet->nReceiverVerifyKey, (cur_packet->bKad ? Kademlia::CPrefs::GetUDPVerifyKey(cur_packet->dwIP) : 0u));
-				//DEBUG_ONLY(  AddDebugLogLine(DLP_VERYLOW, false, _T("Sent obfuscated UDP packet to clientIP: %s, Kad: %s, ReceiverKey: %u"), (LPCTSTR)ipstr(cur_packet->dwIP), cur_packet->bKad ? _T("Yes") : _T("No"), cur_packet->nReceiverVerifyKey) );
+				if (iLen) {
+					nLen = EncryptSendClient(sendbuffer.get(), nLen, cur_packet->pachTargetClientHashORKadID, cur_packet->bKad, cur_packet->nReceiverVerifyKey, (cur_packet->bKad ? Kademlia::CPrefs::GetUDPVerifyKey(cur_packet->dwIP) : 0u));
+					//DEBUG_ONLY(  AddDebugLogLine(DLP_VERYLOW, false, _T("Sent obfuscated UDP packet to clientIP: %s, Kad: %s, ReceiverKey: %u"), (LPCTSTR)ipstr(cur_packet->dwIP), cur_packet->bKad ? _T("Yes") : _T("No"), cur_packet->nReceiverVerifyKey) );
+				}
+				iLen = SendTo(sendbuffer.get(), nLen, cur_packet->dwIP, cur_packet->nPort);
+				if (iLen >= 0) {
+					sentBytes += iLen; // ZZ:UploadBandWithThrottler (UDP)
+					cur_packet.reset();
+				} else {
+					controlpacket_queue.AddHead(cur_packet.get()); //try to resend
+					(void)cur_packet.release();
+					::Sleep(20);
+					curTick = ::GetTickCount64();
+				}
 			}
-			iLen = SendTo(sendbuffer, nLen, cur_packet->dwIP, cur_packet->nPort);
-			if (iLen >= 0) {
-				sentBytes += iLen; // ZZ:UploadBandWithThrottler (UDP)
-				delete cur_packet->packet;
-				delete cur_packet;
-			} else {
-				controlpacket_queue.AddHead(cur_packet); //try to resend
-				::Sleep(20);
-				curTick = ::GetTickCount64();
-			}
-			delete[] sendbuffer;
-		} else {
-			delete cur_packet->packet;
-			delete cur_packet;
 		}
+	} catch (CException *pException) {
+		if (pException != NULL)
+			pException->Delete();
+		DebugLogError(_T("Client UDP socket: control send aborted by MFC exception"));
+	} catch (...) {
+		DebugLogError(_T("Client UDP socket: control send aborted by unexpected exception"));
 	}
 
 // ZZ:UploadBandWithThrottler (UDP) -->
 	const UdpControlQueueSignalAction eSignalAction = ClassifyUdpControlQueueSignal(m_bWouldBlock, controlpacket_queue.IsEmpty());
 
-	sendLocker.Unlock();
+	sendLock.Unlock();
 
 	if (eSignalAction == udpControlQueueSignalAfterUnlock)
 		theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this);
