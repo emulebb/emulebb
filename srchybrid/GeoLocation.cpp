@@ -51,6 +51,7 @@ struct SGeoLocationBackgroundRefreshState
 	}
 
 	volatile LONG lQueued;
+	std::shared_ptr<DirectDownload::CDownloadCancellation> pCancellation;
 };
 
 namespace
@@ -740,6 +741,8 @@ void CGeoLocation::Load()
 
 void CGeoLocation::Unload()
 {
+	if (m_pBackgroundRefreshState->pCancellation)
+		m_pBackgroundRefreshState->pCancellation->Cancel();
 	delete m_pDatabase;
 	m_pDatabase = NULL;
 	m_tBuildEpoch = 0;
@@ -793,12 +796,14 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 	}
 
 	std::unique_ptr<SBackgroundRefreshContext> pContext(new SBackgroundRefreshContext);
+	std::shared_ptr<DirectDownload::CDownloadCancellation> pCancellation(std::make_shared<DirectDownload::CDownloadCancellation>());
 	pContext->strDownloadUrl = ExpandConfiguredUpdateUrlTemplate();
 	pContext->strArchiveTempPath = strArchiveTempPath + _T(".gz");
 	pContext->strDatabaseTempPath = strDatabaseTempPath;
 	pContext->strInstallPath = strDatabasePath;
 	pContext->hNotifyWnd = hNotifyWnd;
 	pContext->pRefreshState = m_pBackgroundRefreshState;
+	pContext->pCancellation = pCancellation;
 	pContext->bProxyEnabled = thePrefs.GetProxySettings().bUseProxy;
 
 	(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
@@ -810,9 +815,11 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 			AddLogLine(false, _T("GeoLocation: refresh already in progress."));
 		return false;
 	}
+	m_pBackgroundRefreshState->pCancellation = pCancellation;
 	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED, NULL);
 	if (pThread == NULL) {
 		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
+		m_pBackgroundRefreshState->pCancellation.reset();
 		(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
 		(void)LongPathSeams::DeleteFileIfExists(pContext->strDatabaseTempPath);
 		AddDebugLogLine(false, _T("GeoLocation: failed to start background refresh thread."));
@@ -829,6 +836,7 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 		std::unique_ptr<SBackgroundRefreshContext> pCleanupContext(pThreadContext);
 		DeleteNeverResumedRefreshThread(pThread, _T("GeoLocation"));
 		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
+		m_pBackgroundRefreshState->pCancellation.reset();
 		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strArchiveTempPath);
 		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strDatabaseTempPath);
 		AddDebugLogLine(false, _T("GeoLocation: failed to resume background refresh thread (%u)."), dwResumeError);
@@ -1053,7 +1061,7 @@ UINT AFX_CDECL CGeoLocation::BackgroundRefreshThread(LPVOID pParam)
 	}
 
 	CString strError;
-	if (!DirectDownload::DownloadUrlToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, strError)) {
+	if (!DirectDownload::DownloadUrlToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, strError, pContext->pCancellation)) {
 		AddDebugLogLine(false, _T("GeoLocation: download failed from %s (%s)"), (LPCTSTR)pContext->strDownloadUrl, (LPCTSTR)strError);
 		goto cleanup;
 	}

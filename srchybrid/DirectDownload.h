@@ -16,11 +16,50 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+#include <afxmt.h>
+#include <cstddef>
+#include <memory>
+#include <wininet.h>
+
 /**
  * @brief Shared helpers for noninteractive direct HTTP(S) downloads used by background data refreshers.
  */
 namespace DirectDownload
 {
+	class CRegisteredInternetHandle;
+
+	/**
+	 * @brief Lets an owner abort an in-flight direct WinInet download by closing its active handles.
+	 */
+	class CDownloadCancellation
+	{
+	public:
+		CDownloadCancellation() noexcept;
+		CDownloadCancellation(const CDownloadCancellation&) = delete;
+		CDownloadCancellation& operator=(const CDownloadCancellation&) = delete;
+
+		void Cancel() noexcept;
+		bool IsCancelled() const noexcept;
+
+		enum class InternetHandleSlot : unsigned char
+		{
+			Session = 0,
+			Connection,
+			Request,
+			Count
+		};
+
+	private:
+		friend class CRegisteredInternetHandle;
+
+		bool RegisterHandle(InternetHandleSlot eSlot, HINTERNET hInternet) noexcept;
+		bool ReleaseHandle(InternetHandleSlot eSlot, HINTERNET hInternet) noexcept;
+
+		mutable CCriticalSection m_lock;
+		HINTERNET m_hInternet[static_cast<size_t>(InternetHandleSlot::Count)];
+		bool m_bCancelled;
+	};
+
 	/**
 	 * @brief Reserves one unique temporary path inside a directory.
 	 */
@@ -29,4 +68,8 @@ namespace DirectDownload
 	 * @brief Downloads a URL directly to a file with bounded background timeouts and no proxy UI.
 	 */
 	bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CString& strError);
+	/**
+	 * @brief Downloads a URL directly to a file and lets the owner close active WinInet handles for hard cancellation.
+	 */
+	bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CString& strError, const std::shared_ptr<CDownloadCancellation>& pCancellation);
 }

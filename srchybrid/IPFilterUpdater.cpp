@@ -52,6 +52,7 @@ struct SIPFilterBackgroundRefreshState
 	}
 
 	volatile LONG lQueued;
+	std::shared_ptr<DirectDownload::CDownloadCancellation> pCancellation;
 };
 
 bool GetMimeType(LPCTSTR pszFilePath, CString &rstrMimeType);
@@ -63,6 +64,7 @@ struct CIPFilterUpdater::SBackgroundRefreshContext
 	CString strInstallPath;
 	HWND hNotifyWnd;
 	std::shared_ptr<SIPFilterBackgroundRefreshState> pRefreshState;
+	std::shared_ptr<DirectDownload::CDownloadCancellation> pCancellation;
 	bool bProxyEnabled;
 };
 
@@ -320,6 +322,8 @@ CIPFilterUpdater::CIPFilterUpdater()
 
 CIPFilterUpdater::~CIPFilterUpdater()
 {
+	if (m_pBackgroundRefreshState->pCancellation)
+		m_pBackgroundRefreshState->pCancellation->Cancel();
 	(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 }
 
@@ -402,20 +406,24 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 	}
 
 	std::unique_ptr<SBackgroundRefreshContext> pContext(new SBackgroundRefreshContext);
+	std::shared_ptr<DirectDownload::CDownloadCancellation> pCancellation(std::make_shared<DirectDownload::CDownloadCancellation>());
 	pContext->strDownloadUrl = strUpdateUrl;
 	pContext->strArchiveTempPath = strArchiveTempPath;
 	pContext->strInstallPath = CIPFilter::GetDefaultFilePath();
 	pContext->hNotifyWnd = hNotifyWnd;
 	pContext->pRefreshState = m_pBackgroundRefreshState;
+	pContext->pCancellation = pCancellation;
 	pContext->bProxyEnabled = thePrefs.GetProxySettings().bUseProxy;
 
 	if (::InterlockedCompareExchange(&m_pBackgroundRefreshState->lQueued, 1, 0) != 0) {
 		(void)LongPathSeams::DeleteFileIfExists(strArchiveTempPath);
 		return false;
 	}
+	m_pBackgroundRefreshState->pCancellation = pCancellation;
 	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED, NULL);
 	if (pThread == NULL) {
 		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
+		m_pBackgroundRefreshState->pCancellation.reset();
 		(void)LongPathSeams::DeleteFileIfExists(strArchiveTempPath);
 		AddDebugLogLine(false, _T("IPFilter: failed to start background update thread."));
 		return false;
@@ -430,6 +438,7 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 		std::unique_ptr<SBackgroundRefreshContext> pCleanupContext(pThreadContext);
 		DeleteNeverResumedRefreshThread(pThread, _T("IPFilter"));
 		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
+		m_pBackgroundRefreshState->pCancellation.reset();
 		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strArchiveTempPath);
 		AddDebugLogLine(false, _T("IPFilter: failed to resume background update thread (%u)."), dwResumeError);
 		return false;
@@ -465,7 +474,7 @@ UINT AFX_CDECL CIPFilterUpdater::BackgroundRefreshThread(LPVOID pParam)
 		theApp.QueueLogLine(false, _T("IPFilter: proxy-backed automatic refresh is ignored; use the manual updater or a VPN for network privacy."));
 
 	CString strError;
-	if (!DirectDownload::DownloadUrlToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, strError)) {
+	if (!DirectDownload::DownloadUrlToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, strError, pContext->pCancellation)) {
 		CString strDownloadError;
 		strDownloadError.Format(_T("%s (%s)"), (LPCTSTR)pContext->strDownloadUrl, (LPCTSTR)strError);
 		ReportIPFilterUpdateError(strDownloadError, false);

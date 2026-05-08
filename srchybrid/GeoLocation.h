@@ -23,6 +23,11 @@ class CDC;
 class CImageList;
 struct SGeoLocationBackgroundRefreshState;
 
+namespace DirectDownload
+{
+	class CDownloadCancellation;
+}
+
 /**
  * @brief One cached geolocation lookup result derived from the MMDB database.
  */
@@ -114,6 +119,7 @@ private:
 		CString strInstallPath;
 		HWND hNotifyWnd;
 		std::shared_ptr<SGeoLocationBackgroundRefreshState> pRefreshState;
+		std::shared_ptr<DirectDownload::CDownloadCancellation> pCancellation;
 		bool bProxyEnabled;
 	};
 

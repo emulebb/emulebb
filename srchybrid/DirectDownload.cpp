@@ -20,7 +20,6 @@
 #include "DirectDownload.h"
 #include "emule.h"
 #include "LongPathSeams.h"
-#include "WinInetHandle.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -30,6 +29,73 @@ static char THIS_FILE[] = __FILE__;
 
 namespace DirectDownload
 {
+/**
+ * @brief Owns one WinInet handle while coordinating close ownership with an optional cancellation token.
+ */
+class CRegisteredInternetHandle
+{
+public:
+	CRegisteredInternetHandle(CDownloadCancellation::InternetHandleSlot eSlot, const std::shared_ptr<CDownloadCancellation>& pCancellation) noexcept
+		: m_eSlot(eSlot)
+		, m_pCancellation(pCancellation)
+		, m_hInternet(NULL)
+	{
+	}
+
+	CRegisteredInternetHandle(const CRegisteredInternetHandle&) = delete;
+	CRegisteredInternetHandle& operator=(const CRegisteredInternetHandle&) = delete;
+
+	~CRegisteredInternetHandle()
+	{
+		Reset();
+	}
+
+	/**
+	 * @brief Returns true when this object currently owns a non-null handle.
+	 */
+	explicit operator bool() const noexcept
+	{
+		return m_hInternet != NULL;
+	}
+
+	/**
+	 * @brief Returns the wrapped raw WinInet handle for API calls.
+	 */
+	HINTERNET Get() const noexcept
+	{
+		return m_hInternet;
+	}
+
+	/**
+	 * @brief Replaces the wrapped handle and closes the previous handle unless cancellation already consumed it.
+	 */
+	void Reset(HINTERNET hInternet = NULL) noexcept
+	{
+		if (m_hInternet != NULL && m_hInternet != hInternet) {
+			bool bCloseHandle = true;
+			if (m_pCancellation)
+				bCloseHandle = m_pCancellation->ReleaseHandle(m_eSlot, m_hInternet);
+			if (bCloseHandle)
+				::InternetCloseHandle(m_hInternet);
+		}
+
+		m_hInternet = NULL;
+		if (hInternet == NULL)
+			return;
+
+		if (m_pCancellation && !m_pCancellation->RegisterHandle(m_eSlot, hInternet)) {
+			::InternetCloseHandle(hInternet);
+			return;
+		}
+		m_hInternet = hInternet;
+	}
+
+private:
+	CDownloadCancellation::InternetHandleSlot m_eSlot;
+	std::shared_ptr<CDownloadCancellation> m_pCancellation;
+	HINTERNET m_hInternet;
+};
+
 namespace
 {
 	const DWORD DIRECT_DOWNLOAD_CONNECT_TIMEOUT_MS = 30000;
@@ -56,6 +122,81 @@ namespace
 	{
 		return ::GetTickCount64() - ullStartTick >= DIRECT_DOWNLOAD_TOTAL_TIMEOUT_MS;
 	}
+
+	/**
+	 * @brief Reports whether an owner has requested cancellation.
+	 */
+	bool IsDownloadCancelled(const std::shared_ptr<CDownloadCancellation>& pCancellation, CString& strError)
+	{
+		if (!pCancellation || !pCancellation->IsCancelled())
+			return false;
+
+		strError = _T("Download cancelled");
+		return true;
+	}
+}
+
+CDownloadCancellation::CDownloadCancellation() noexcept
+	: m_hInternet{}
+	, m_bCancelled(false)
+{
+}
+
+void CDownloadCancellation::Cancel() noexcept
+{
+	HINTERNET ahInternet[static_cast<size_t>(InternetHandleSlot::Count)] = {};
+
+	{
+		CSingleLock lock(&m_lock, TRUE);
+		m_bCancelled = true;
+		for (size_t uIndex = 0; uIndex < static_cast<size_t>(InternetHandleSlot::Count); ++uIndex) {
+			ahInternet[uIndex] = m_hInternet[uIndex];
+			m_hInternet[uIndex] = NULL;
+		}
+	}
+
+	for (size_t uIndex = static_cast<size_t>(InternetHandleSlot::Count); uIndex > 0; --uIndex) {
+		HINTERNET hInternet = ahInternet[uIndex - 1];
+		if (hInternet != NULL)
+			::InternetCloseHandle(hInternet);
+	}
+}
+
+bool CDownloadCancellation::IsCancelled() const noexcept
+{
+	CSingleLock lock(&m_lock, TRUE);
+	return m_bCancelled;
+}
+
+bool CDownloadCancellation::RegisterHandle(InternetHandleSlot eSlot, HINTERNET hInternet) noexcept
+{
+	if (hInternet == NULL)
+		return false;
+
+	CSingleLock lock(&m_lock, TRUE);
+	if (m_bCancelled)
+		return false;
+
+	const size_t uSlot = static_cast<size_t>(eSlot);
+	ASSERT(uSlot < static_cast<size_t>(InternetHandleSlot::Count));
+	ASSERT(m_hInternet[uSlot] == NULL);
+	m_hInternet[uSlot] = hInternet;
+	return true;
+}
+
+bool CDownloadCancellation::ReleaseHandle(InternetHandleSlot eSlot, HINTERNET hInternet) noexcept
+{
+	if (hInternet == NULL)
+		return false;
+
+	CSingleLock lock(&m_lock, TRUE);
+	const size_t uSlot = static_cast<size_t>(eSlot);
+	ASSERT(uSlot < static_cast<size_t>(InternetHandleSlot::Count));
+	if (m_hInternet[uSlot] != hInternet)
+		return false;
+
+	m_hInternet[uSlot] = NULL;
+	return true;
 }
 
 bool CreateTempPathInDirectory(const CString& strDirectory, LPCTSTR pszPrefix, CString& strTempPath, CString& strError)
@@ -72,13 +213,25 @@ bool CreateTempPathInDirectory(const CString& strDirectory, LPCTSTR pszPrefix, C
 
 bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CString& strError)
 {
+	return DownloadUrlToFile(strUrl, strTargetPath, strError, std::shared_ptr<CDownloadCancellation>());
+}
+
+bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CString& strError, const std::shared_ptr<CDownloadCancellation>& pCancellation)
+{
 	strError.Empty();
 
-	WinInetUtil::CInternetHandle hInternetSession(::InternetOpen(AfxGetAppName(), INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0));
+	if (IsDownloadCancelled(pCancellation, strError))
+		return false;
+
+	CRegisteredInternetHandle hInternetSession(CDownloadCancellation::InternetHandleSlot::Session, pCancellation);
+	hInternetSession.Reset(::InternetOpen(AfxGetAppName(), INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0));
 	if (!hInternetSession) {
-		strError.Format(_T("InternetOpen failed (%u)"), ::GetLastError());
+		if (!IsDownloadCancelled(pCancellation, strError))
+			strError.Format(_T("InternetOpen failed (%u)"), ::GetLastError());
 		return false;
 	}
+	if (IsDownloadCancelled(pCancellation, strError))
+		return false;
 	if (!SetInternetTimeout(hInternetSession.Get(), INTERNET_OPTION_CONNECT_TIMEOUT, DIRECT_DOWNLOAD_CONNECT_TIMEOUT_MS, strError))
 		return false;
 
@@ -101,7 +254,10 @@ bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CStr
 	CString strObject(components.lpszUrlPath, components.dwUrlPathLength);
 	strObject.Append(CString(components.lpszExtraInfo, components.dwExtraInfoLength));
 	const DWORD dwServiceType = INTERNET_SERVICE_HTTP;
-	WinInetUtil::CInternetHandle hHttpConnection(::InternetConnect(hInternetSession.Get(),
+	if (IsDownloadCancelled(pCancellation, strError))
+		return false;
+	CRegisteredInternetHandle hHttpConnection(CDownloadCancellation::InternetHandleSlot::Connection, pCancellation);
+	hHttpConnection.Reset(::InternetConnect(hInternetSession.Get(),
 		CString(components.lpszHostName, components.dwHostNameLength),
 		components.nPort,
 		NULL,
@@ -110,30 +266,42 @@ bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CStr
 		0,
 		0));
 	if (!hHttpConnection) {
-		strError.Format(_T("InternetConnect failed (%u)"), ::GetLastError());
+		if (!IsDownloadCancelled(pCancellation, strError))
+			strError.Format(_T("InternetConnect failed (%u)"), ::GetLastError());
 		return false;
 	}
+	if (IsDownloadCancelled(pCancellation, strError))
+		return false;
 
 	LPCTSTR pszAcceptTypes[] = { _T("*/*"), NULL };
 	DWORD dwFlags = INTERNET_FLAG_RELOAD | INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_KEEP_CONNECTION;
 	if (components.nScheme == INTERNET_SCHEME_HTTPS)
 		dwFlags |= INTERNET_FLAG_SECURE;
 
-	WinInetUtil::CInternetHandle hHttpFile(::HttpOpenRequest(hHttpConnection.Get(), _T("GET"), strObject, NULL, NULL, pszAcceptTypes, dwFlags, 0));
+	CRegisteredInternetHandle hHttpFile(CDownloadCancellation::InternetHandleSlot::Request, pCancellation);
+	hHttpFile.Reset(::HttpOpenRequest(hHttpConnection.Get(), _T("GET"), strObject, NULL, NULL, pszAcceptTypes, dwFlags, 0));
 	if (!hHttpFile) {
-		strError.Format(_T("HttpOpenRequest failed (%u)"), ::GetLastError());
+		if (!IsDownloadCancelled(pCancellation, strError))
+			strError.Format(_T("HttpOpenRequest failed (%u)"), ::GetLastError());
 		return false;
 	}
+	if (IsDownloadCancelled(pCancellation, strError))
+		return false;
 	if (!SetInternetTimeout(hHttpFile.Get(), INTERNET_OPTION_SEND_TIMEOUT, DIRECT_DOWNLOAD_SEND_TIMEOUT_MS, strError)
 		|| !SetInternetTimeout(hHttpFile.Get(), INTERNET_OPTION_RECEIVE_TIMEOUT, DIRECT_DOWNLOAD_RECEIVE_TIMEOUT_MS, strError))
 		return false;
 
 	::HttpAddRequestHeaders(hHttpFile.Get(), _T("Accept-Encoding: identity\r\n"), _UI32_MAX, HTTP_ADDREQ_FLAG_ADD);
 	const ULONGLONG ullDownloadStartTick = ::GetTickCount64();
+	if (IsDownloadCancelled(pCancellation, strError))
+		return false;
 	if (!::HttpSendRequest(hHttpFile.Get(), NULL, 0, NULL, 0)) {
-		strError.Format(_T("HttpSendRequest failed (%u)"), ::GetLastError());
+		if (!IsDownloadCancelled(pCancellation, strError))
+			strError.Format(_T("HttpSendRequest failed (%u)"), ::GetLastError());
 		return false;
 	}
+	if (IsDownloadCancelled(pCancellation, strError))
+		return false;
 
 	DWORD dwStatusCode = 0;
 	DWORD dwStatusLength = sizeof(dwStatusCode);
@@ -152,13 +320,18 @@ bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CStr
 	DWORD dwBytesRead = 0;
 	bool bSuccess = true;
 	do {
+		if (IsDownloadCancelled(pCancellation, strError)) {
+			bSuccess = false;
+			break;
+		}
 		if (HasDownloadDeadlineExpired(ullDownloadStartTick)) {
 			strError.Format(_T("Download timed out after %u seconds"), static_cast<unsigned>(DIRECT_DOWNLOAD_TOTAL_TIMEOUT_MS / 1000ull));
 			bSuccess = false;
 			break;
 		}
 		if (!::InternetReadFile(hHttpFile.Get(), buffer, sizeof(buffer), &dwBytesRead)) {
-			strError.Format(_T("InternetReadFile failed (%u)"), ::GetLastError());
+			if (!IsDownloadCancelled(pCancellation, strError))
+				strError.Format(_T("InternetReadFile failed (%u)"), ::GetLastError());
 			bSuccess = false;
 			break;
 		}
