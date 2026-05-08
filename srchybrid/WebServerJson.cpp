@@ -711,6 +711,7 @@ json BuildAppJson(const char *pszBuildFlavor)
 			{"categoryAssignment", true},
 			{"categoryCrud", true},
 			{"renameFile", true},
+			{"transferDetails", true},
 			{"fileRatingComment", true},
 			{"friends", true},
 			{"peerControls", true}

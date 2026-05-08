@@ -153,9 +153,9 @@ inline bool TryParseTorznabCategoryList(const std::string &rCategories, std::vec
 	size_t uPos = 0;
 	while (uPos <= rCategories.size()) {
 		const std::string::size_type uComma = rCategories.find(',', uPos);
-		const std::string token = WebServerJsonSeams::TrimAsciiWhitespace(rCategories.substr(
+		const std::string token = rCategories.substr(
 			uPos,
-			uComma == std::string::npos ? std::string::npos : (uComma - uPos)));
+			uComma == std::string::npos ? std::string::npos : (uComma - uPos));
 		uint64_t ullCategory = 0;
 		if (token.empty()
 			|| !WebServerJsonSeams::TryParseUnsignedDecimalValue(token, ullCategory)
@@ -299,7 +299,7 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 	parsed.strSeason = seasonIt == normalized.end() ? std::string() : seasonIt->second;
 	parsed.strEpisode = episodeIt == normalized.end() ? std::string() : episodeIt->second;
 	parsed.strYear = yearIt == normalized.end() ? std::string() : yearIt->second;
-	parsed.strCategories = catIt == normalized.end() ? std::string() : WebServerJsonSeams::TrimAsciiWhitespace(catIt->second);
+	parsed.strCategories = catIt == normalized.end() ? std::string() : catIt->second;
 	unsigned uIgnored = 0;
 	if (!parsed.strSeason.empty() && !TryParseBoundedUnsigned(parsed.strSeason, kMaxTorznabSeason, uIgnored)) {
 		rErrorMessage = "season must be an unsigned decimal value in the range 0..9999";

@@ -94,7 +94,11 @@ inline bool TryGetOptionalCategoryQueryParam(
 	const auto it = query.find("category");
 	if (it == query.end())
 		return true;
-	return WebServerJsonSeams::TryNormalizeCategoryNameText(it->second, "category", true, rCategory, rErrorMessage);
+	std::string strCategory;
+	if (!WebServerJsonSeams::TryNormalizeCategoryNameText(it->second, "category", true, strCategory, rErrorMessage))
+		return false;
+	rCategory = strCategory;
+	return true;
 }
 
 /**
