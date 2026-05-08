@@ -16,6 +16,9 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+#include <string>
+#include <unordered_set>
+
 #include "BindAddressResolver.h"
 #include "PartFilePersistenceSeams.h"
 #include "Opcodes.h"
@@ -639,6 +642,9 @@ public:
 	static CStringList shareddir_list;
 	static CStringList monitored_shareddir_list;
 	static CStringList monitor_owned_shareddir_list;
+	static std::unordered_set<std::wstring> shareddir_lookup_keys;
+	static std::unordered_set<std::wstring> monitored_shareddir_lookup_keys;
+	static std::unordered_set<std::wstring> monitor_owned_shareddir_lookup_keys;
 	static CStringList addresses_list;
 	static bool		m_bKeepUnavailableFixedSharedDirs;
 

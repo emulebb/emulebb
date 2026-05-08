@@ -209,24 +209,42 @@ bool SavePathListToFile(const CString &rstrFullPath, const CStringList &rPaths)
 std::wstring MakeDirectoryListLookupKey(const CString &rstrDirectory)
 {
 	CString strKey(rstrDirectory);
+	strKey = PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(strKey)));
 	strKey.MakeLower();
 	return std::wstring(strKey);
 }
 
-void ReplaceCanonicalDirectoryListLocked(CStringList &rTargetList, const CStringList &rInputList)
+void RebuildDirectoryLookupKeysLocked(const CStringList &rTargetList, std::unordered_set<std::wstring> &rLookupKeys)
+{
+	rLookupKeys.clear();
+	for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;)
+		rLookupKeys.insert(MakeDirectoryListLookupKey(rTargetList.GetNext(pos)));
+}
+
+void ReplaceCanonicalDirectoryListLocked(CStringList &rTargetList, std::unordered_set<std::wstring> &rLookupKeys, const CStringList &rInputList)
 {
 	rTargetList.RemoveAll();
-	std::unordered_set<std::wstring> addedDirectoryKeys;
+	rLookupKeys.clear();
 	for (POSITION pos = rInputList.GetHeadPosition(); pos != NULL;) {
 		const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(rInputList.GetNext(pos)));
-		if (addedDirectoryKeys.insert(MakeDirectoryListLookupKey(strCanonicalDir)).second)
+		if (rLookupKeys.insert(MakeDirectoryListLookupKey(strCanonicalDir)).second)
 			rTargetList.AddTail(strCanonicalDir);
 	}
 }
 
-bool AddCanonicalDirectoryIfAbsentLocked(CStringList &rTargetList, const CString &rstrDirectory)
+bool AddCanonicalDirectoryIfAbsentLocked(CStringList &rTargetList, std::unordered_set<std::wstring> &rLookupKeys, const CString &rstrDirectory)
 {
 	const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(rstrDirectory));
+	const std::wstring strLookupKey(MakeDirectoryListLookupKey(strCanonicalDir));
+	if (rLookupKeys.find(strLookupKey) != rLookupKeys.end()) {
+		for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;) {
+			const POSITION posCurrent = pos;
+			const CString strExisting(rTargetList.GetNext(pos));
+			if (MakeDirectoryListLookupKey(strExisting) == strLookupKey && strExisting.CompareNoCase(strCanonicalDir) != 0)
+				rTargetList.SetAt(posCurrent, strCanonicalDir);
+		}
+		return false;
+	}
 	for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
 		const CString strExisting(rTargetList.GetNext(pos));
@@ -234,13 +252,15 @@ bool AddCanonicalDirectoryIfAbsentLocked(CStringList &rTargetList, const CString
 			continue;
 		if (strExisting.CompareNoCase(strCanonicalDir) != 0)
 			rTargetList.SetAt(posCurrent, strCanonicalDir);
+		rLookupKeys.insert(strLookupKey);
 		return false;
 	}
 	rTargetList.AddTail(strCanonicalDir);
+	rLookupKeys.insert(strLookupKey);
 	return true;
 }
 
-bool RemoveCanonicalDirectoryLocked(CStringList &rTargetList, const CString &rstrDirectory)
+bool RemoveCanonicalDirectoryLocked(CStringList &rTargetList, std::unordered_set<std::wstring> &rLookupKeys, const CString &rstrDirectory)
 {
 	const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(rstrDirectory));
 	for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;) {
@@ -248,12 +268,13 @@ bool RemoveCanonicalDirectoryLocked(CStringList &rTargetList, const CString &rst
 		if (!EqualPaths(rTargetList.GetNext(pos), strCanonicalDir))
 			continue;
 		rTargetList.RemoveAt(posCurrent);
+		RebuildDirectoryLookupKeysLocked(rTargetList, rLookupKeys);
 		return true;
 	}
 	return false;
 }
 
-bool RemoveCanonicalDirectoriesUnderRootLocked(CStringList &rTargetList, const CString &rstrDirectory, bool bIncludeRoot)
+bool RemoveCanonicalDirectoriesUnderRootLocked(CStringList &rTargetList, std::unordered_set<std::wstring> &rLookupKeys, const CString &rstrDirectory, bool bIncludeRoot)
 {
 	const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(rstrDirectory));
 	bool bChanged = false;
@@ -268,11 +289,16 @@ bool RemoveCanonicalDirectoriesUnderRootLocked(CStringList &rTargetList, const C
 		rTargetList.RemoveAt(posCurrent);
 		bChanged = true;
 	}
+	if (bChanged)
+		RebuildDirectoryLookupKeysLocked(rTargetList, rLookupKeys);
 	return bChanged;
 }
 
-bool ListContainsEquivalentDirectoryLocked(const CStringList &rTargetList, const CString &rstrDirectory)
+bool ListContainsEquivalentDirectoryLocked(const CStringList &rTargetList, const std::unordered_set<std::wstring> &rLookupKeys, const CString &rstrDirectory)
 {
+	if (rLookupKeys.find(MakeDirectoryListLookupKey(rstrDirectory)) != rLookupKeys.end())
+		return true;
+
 	for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;) {
 		if (EqualPaths(rTargetList.GetNext(pos), rstrDirectory))
 			return true;
@@ -280,18 +306,18 @@ bool ListContainsEquivalentDirectoryLocked(const CStringList &rTargetList, const
 	return false;
 }
 
-void FilterMonitoredDirectoryStateAgainstSharedListLocked(CStringList &rMonitoredRoots, CStringList &rMonitorOwnedDirs, const CStringList &rSharedDirs)
+void FilterMonitoredDirectoryStateAgainstSharedListLocked(CStringList &rMonitoredRoots, CStringList &rMonitorOwnedDirs, const CStringList &rSharedDirs, const std::unordered_set<std::wstring> &rSharedLookupKeys)
 {
 	for (POSITION pos = rMonitoredRoots.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
-		if (!ListContainsEquivalentDirectoryLocked(rSharedDirs, rMonitoredRoots.GetNext(pos)))
+		if (!ListContainsEquivalentDirectoryLocked(rSharedDirs, rSharedLookupKeys, rMonitoredRoots.GetNext(pos)))
 			rMonitoredRoots.RemoveAt(posCurrent);
 	}
 
 	for (POSITION pos = rMonitorOwnedDirs.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
 		const CString strCurrent(rMonitorOwnedDirs.GetNext(pos));
-		bool bKeep = ListContainsEquivalentDirectoryLocked(rSharedDirs, strCurrent);
+		bool bKeep = ListContainsEquivalentDirectoryLocked(rSharedDirs, rSharedLookupKeys, strCurrent);
 		if (bKeep) {
 			bKeep = false;
 			for (POSITION posRoot = rMonitoredRoots.GetHeadPosition(); posRoot != NULL;) {
@@ -837,6 +863,9 @@ CCriticalSection CPreferences::m_csSharedDirList;
 CStringList CPreferences::shareddir_list;
 CStringList CPreferences::monitored_shareddir_list;
 CStringList CPreferences::monitor_owned_shareddir_list;
+std::unordered_set<std::wstring> CPreferences::shareddir_lookup_keys;
+std::unordered_set<std::wstring> CPreferences::monitored_shareddir_lookup_keys;
+std::unordered_set<std::wstring> CPreferences::monitor_owned_shareddir_lookup_keys;
 CStringList CPreferences::addresses_list;
 CString CPreferences::m_strFileCommentsFilePath;
 Preferences_Ext_Struct *CPreferences::prefsExt;
@@ -881,25 +910,25 @@ void CPreferences::ReplaceSharedDirectoryList(const CStringList &in)
 	if (&in == &shareddir_list)
 		return;
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	ReplaceCanonicalDirectoryListLocked(shareddir_list, in);
+	ReplaceCanonicalDirectoryListLocked(shareddir_list, shareddir_lookup_keys, in);
 }
 
 bool CPreferences::AddSharedDirectoryIfAbsent(const CString &dir)
 {
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	return AddCanonicalDirectoryIfAbsentLocked(shareddir_list, dir);
+	return AddCanonicalDirectoryIfAbsentLocked(shareddir_list, shareddir_lookup_keys, dir);
 }
 
 bool CPreferences::RemoveSharedDirectory(const CString &dir)
 {
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	return RemoveCanonicalDirectoryLocked(shareddir_list, dir);
+	return RemoveCanonicalDirectoryLocked(shareddir_list, shareddir_lookup_keys, dir);
 }
 
 bool CPreferences::IsSharedDirectoryListed(const CString &dir)
 {
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	return ListContainsEquivalentDirectoryLocked(shareddir_list, dir);
+	return ListContainsEquivalentDirectoryLocked(shareddir_list, shareddir_lookup_keys, dir);
 }
 
 void CPreferences::CopyMonitoredSharedRootList(CStringList &out)
@@ -917,25 +946,25 @@ void CPreferences::ReplaceMonitoredSharedRootList(const CStringList &in)
 	if (&in == &monitored_shareddir_list)
 		return;
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	ReplaceCanonicalDirectoryListLocked(monitored_shareddir_list, in);
+	ReplaceCanonicalDirectoryListLocked(monitored_shareddir_list, monitored_shareddir_lookup_keys, in);
 }
 
 bool CPreferences::AddMonitoredSharedRootIfAbsent(const CString &dir)
 {
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	return AddCanonicalDirectoryIfAbsentLocked(monitored_shareddir_list, dir);
+	return AddCanonicalDirectoryIfAbsentLocked(monitored_shareddir_list, monitored_shareddir_lookup_keys, dir);
 }
 
 bool CPreferences::RemoveMonitoredSharedRoot(const CString &dir)
 {
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	return RemoveCanonicalDirectoryLocked(monitored_shareddir_list, dir);
+	return RemoveCanonicalDirectoryLocked(monitored_shareddir_list, monitored_shareddir_lookup_keys, dir);
 }
 
 bool CPreferences::IsMonitoredSharedRootListed(const CString &dir)
 {
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	return ListContainsEquivalentDirectoryLocked(monitored_shareddir_list, dir);
+	return ListContainsEquivalentDirectoryLocked(monitored_shareddir_list, monitored_shareddir_lookup_keys, dir);
 }
 
 void CPreferences::CopyMonitorOwnedDirectoryList(CStringList &out)
@@ -953,31 +982,31 @@ void CPreferences::ReplaceMonitorOwnedDirectoryList(const CStringList &in)
 	if (&in == &monitor_owned_shareddir_list)
 		return;
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	ReplaceCanonicalDirectoryListLocked(monitor_owned_shareddir_list, in);
+	ReplaceCanonicalDirectoryListLocked(monitor_owned_shareddir_list, monitor_owned_shareddir_lookup_keys, in);
 }
 
 bool CPreferences::AddMonitorOwnedDirectoryIfAbsent(const CString &dir)
 {
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	return AddCanonicalDirectoryIfAbsentLocked(monitor_owned_shareddir_list, dir);
+	return AddCanonicalDirectoryIfAbsentLocked(monitor_owned_shareddir_list, monitor_owned_shareddir_lookup_keys, dir);
 }
 
 bool CPreferences::RemoveMonitorOwnedDirectory(const CString &dir)
 {
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	return RemoveCanonicalDirectoryLocked(monitor_owned_shareddir_list, dir);
+	return RemoveCanonicalDirectoryLocked(monitor_owned_shareddir_list, monitor_owned_shareddir_lookup_keys, dir);
 }
 
 bool CPreferences::RemoveMonitorOwnedDirectoriesUnderRoot(const CString &dir)
 {
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	return RemoveCanonicalDirectoriesUnderRootLocked(monitor_owned_shareddir_list, dir, false);
+	return RemoveCanonicalDirectoriesUnderRootLocked(monitor_owned_shareddir_list, monitor_owned_shareddir_lookup_keys, dir, false);
 }
 
 bool CPreferences::IsMonitorOwnedDirectoryListed(const CString &dir)
 {
 	CSingleLock lock(&m_csSharedDirList, TRUE);
-	return ListContainsEquivalentDirectoryLocked(monitor_owned_shareddir_list, dir);
+	return ListContainsEquivalentDirectoryLocked(monitor_owned_shareddir_list, monitor_owned_shareddir_lookup_keys, dir);
 }
 
 bool	CPreferences::m_bWinaTransToolbar;
@@ -1328,7 +1357,9 @@ void CPreferences::Init()
 
 	{
 		CSingleLock lock(&m_csSharedDirList, TRUE);
-		FilterMonitoredDirectoryStateAgainstSharedListLocked(monitored_shareddir_list, monitor_owned_shareddir_list, shareddir_list);
+		FilterMonitoredDirectoryStateAgainstSharedListLocked(monitored_shareddir_list, monitor_owned_shareddir_list, shareddir_list, shareddir_lookup_keys);
+		RebuildDirectoryLookupKeysLocked(monitored_shareddir_list, monitored_shareddir_lookup_keys);
+		RebuildDirectoryLookupKeysLocked(monitor_owned_shareddir_list, monitor_owned_shareddir_lookup_keys);
 	}
 
 	// server list addresses
@@ -2174,7 +2205,9 @@ bool CPreferences::Save()
 	CStringList monitorOwnedDirs;
 	{
 		CSingleLock lock(&m_csSharedDirList, TRUE);
-		FilterMonitoredDirectoryStateAgainstSharedListLocked(monitored_shareddir_list, monitor_owned_shareddir_list, shareddir_list);
+		FilterMonitoredDirectoryStateAgainstSharedListLocked(monitored_shareddir_list, monitor_owned_shareddir_list, shareddir_list, shareddir_lookup_keys);
+		RebuildDirectoryLookupKeysLocked(monitored_shareddir_list, monitored_shareddir_lookup_keys);
+		RebuildDirectoryLookupKeysLocked(monitor_owned_shareddir_list, monitor_owned_shareddir_lookup_keys);
 		for (POSITION pos = shareddir_list.GetHeadPosition(); pos != NULL;)
 			sharedDirs.AddTail(shareddir_list.GetNext(pos));
 		for (POSITION pos = monitored_shareddir_list.GetHeadPosition(); pos != NULL;)

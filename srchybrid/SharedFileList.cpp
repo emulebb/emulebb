@@ -127,6 +127,13 @@ std::wstring MakeStartupCacheSnapshotKey(const CString &strDirectory)
 	return std::wstring(LexicallyNormalizeSharedDirectoryPath(strDirectory));
 }
 
+bool HasSameDirectoryTextFast(const CString &strLeft, const CString &strRight)
+{
+	CString strLeftKey(LexicallyNormalizeSharedDirectoryPath(strLeft));
+	CString strRightKey(LexicallyNormalizeSharedDirectoryPath(strRight));
+	return strLeftKey.CompareNoCase(strRightKey) == 0;
+}
+
 bool UpdateEquivalentStoredPath(CStringList &rList, const CString &rstrCanonicalPath, LPCTSTR pszDebugReason)
 {
 	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
@@ -2196,6 +2203,23 @@ void CSharedFileList::RebuildMetaData()
 bool CSharedFileList::ShouldBeShared(const CString &sDirPath, LPCTSTR const pFilePath, bool bMustBeShared) const
 {
 	// see if a directory/file should be shared based on our preferences
+	if (HasSameDirectoryTextFast(sDirPath, thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)))
+		return true;
+
+	for (INT_PTR i = thePrefs.GetCatCount(); --i > 0;) //down to 1
+		if (HasSameDirectoryTextFast(sDirPath, thePrefs.GetCatPath(i)))
+			return true;
+
+	if (!bMustBeShared && thePrefs.IsSharedDirectoryListed(sDirPath)) {
+		// check if this file is explicitly unshared
+		if (pFilePath != NULL) {
+			for (POSITION pos = m_liSingleExcludedFiles.GetHeadPosition(); pos != NULL;)
+				if (PathHelpers::ArePathsEquivalent(m_liSingleExcludedFiles.GetNext(pos), pFilePath))
+					return false;
+		}
+		return true;
+	}
+
 	if (EqualPaths(sDirPath, thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)))
 		return true;
 
@@ -2211,15 +2235,11 @@ bool CSharedFileList::ShouldBeShared(const CString &sDirPath, LPCTSTR const pFil
 		for (POSITION pos = m_liSingleExcludedFiles.GetHeadPosition(); pos != NULL;)
 			if (PathHelpers::ArePathsEquivalent(m_liSingleExcludedFiles.GetNext(pos), pFilePath))
 				return false;
-
 		// check if this file is explicitly shared (as single file)
 		for (POSITION pos = m_liSingleSharedFiles.GetHeadPosition(); pos != NULL;)
 			if (PathHelpers::ArePathsEquivalent(m_liSingleSharedFiles.GetNext(pos), pFilePath))
 				return true;
 	}
-
-	if (thePrefs.IsSharedDirectoryListed(sDirPath))
-		return true;
 
 	return false;
 }
