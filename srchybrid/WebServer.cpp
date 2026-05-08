@@ -3875,17 +3875,20 @@ CString CWebServer::_GetSearch(const ThreadData &Data)
 	SearchFileArray.QuickSort(pThis->m_bSearchAsc);
 
 	for (INT_PTR i = 0; i < SearchFileArray.GetCount(); ++i) {
-		uchar aFileHash[MDX_DIGEST_SIZE];
+		uchar aFileHash[MDX_DIGEST_SIZE] = {0};
 		SearchFileStruct structFile = SearchFileArray[i];
-		DecodeBase16(structFile.m_strFileHash, 32, aFileHash, _countof(aFileHash));
+		const bool bHashDecoded = structFile.m_strFileHash.GetLength() == 32
+			&& DecodeBase16(structFile.m_strFileHash, 32, aFileHash, _countof(aFileHash));
+		if (!bHashDecoded)
+			DebugLogWarning(_T("Web Interface ignored malformed search-result hash '%s'"), (LPCTSTR)structFile.m_strFileHash.Left(64));
 
 		LPCTSTR strOverlayImage = _T("none");
 		uchar nRed, nGreen, nBlue;
 		nRed = nGreen = nBlue = 255;
-		if (theApp.downloadqueue->GetFileByID(aFileHash) != NULL) {
+		if (bHashDecoded && theApp.downloadqueue->GetFileByID(aFileHash) != NULL) {
 			nBlue = 128;
 			nGreen = 128;
-		} else {
+		} else if (bHashDecoded) {
 			CKnownFile *sameFile = theApp.sharedfiles->GetFileByID(aFileHash);
 			if (sameFile == NULL)
 				sameFile = theApp.knownfiles->FindKnownFileByID(aFileHash);
