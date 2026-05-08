@@ -65,7 +65,7 @@ namespace
 		return uSize > static_cast<size_t>(INT_MAX) ? INT_MAX : static_cast<int>(uSize);
 	}
 
-	int SendMbedTlsSocket(void *pContext, const unsigned char *pBuffer, size_t uSize)
+	int SendMbedTlsSocket(void *pContext, const unsigned char *pBuffer, size_t uSize) noexcept
 	{
 		TlsSocketContext *const pSocketContext = reinterpret_cast<TlsSocketContext*>(pContext);
 		if (pSocketContext == NULL || pSocketContext->hSocket == INVALID_SOCKET)
@@ -83,7 +83,7 @@ namespace
 		return MBEDTLS_ERR_NET_SEND_FAILED;
 	}
 
-	int RecvMbedTlsSocket(void *pContext, unsigned char *pBuffer, size_t uSize)
+	int RecvMbedTlsSocket(void *pContext, unsigned char *pBuffer, size_t uSize) noexcept
 	{
 		TlsSocketContext *const pSocketContext = reinterpret_cast<TlsSocketContext*>(pContext);
 		if (pSocketContext == NULL || pSocketContext->hSocket == INVALID_SOCKET)
@@ -181,15 +181,27 @@ namespace
 		return s_acceptedThreads.size();
 	}
 
-	void TrackAcceptedThread(CWinThread *pThread)
+	/**
+	 * @brief Tracks an accepted-client worker before starting it so it cannot run untracked.
+	 */
+	bool StartTrackedAcceptedThread(CWinThread *pThread)
 	{
 		ASSERT(pThread != NULL);
-		if (pThread == NULL || pThread->m_hThread == NULL)
-			return;
+		if (pThread == NULL)
+			return false;
 
 		CSingleLock lock(&s_acceptedThreadLock, TRUE);
 		AcceptedThreadState state = {pThread};
 		s_acceptedThreads.push_back(state);
+		try {
+			if (pThread->CreateThread())
+				return true;
+			s_acceptedThreads.pop_back();
+		} catch (...) {
+			s_acceptedThreads.pop_back();
+			throw;
+		}
+		return false;
 	}
 
 	bool WaitForAcceptedThreadHandles(const DWORD dwTimeoutMs)
@@ -740,12 +752,20 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 									break;
 								}
 								pAcceptThread->m_bAutoDelete = FALSE;
-								if (!pAcceptThread->CreateThread()) {
+								bool bAcceptedThreadStarted = false;
+								try {
+									bAcceptedThreadStarted = StartTrackedAcceptedThread(pAcceptThread);
+								} catch (...) {
 									delete pAcceptThread;
 									delete pData;
 									VERIFY(!closesocket(hAccepted));
-								} else
-									TrackAcceptedThread(pAcceptThread);
+									break;
+								}
+								if (!bAcceptedThreadStarted) {
+									delete pAcceptThread;
+									delete pData;
+									VERIFY(!closesocket(hAccepted));
+								}
 							} else
 								VERIFY(!closesocket(hAccepted));
 						}
