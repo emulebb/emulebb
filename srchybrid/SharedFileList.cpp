@@ -579,6 +579,7 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	, m_bStartupCacheSaveShutdownAbandoned(false)
 	, m_bStartupCacheSaveRunning(false)
 	, m_bStartupCacheSaveRunAfterCurrent(false)
+	, m_pStartupCacheSaveOperation()
 	, m_eStartupCacheSavePhase(StartupCacheSavePhase::Idle)
 	, m_uStartupCacheSaveDirectoriesDone()
 	, m_uStartupCacheSaveDirectoriesTotal()
@@ -606,6 +607,8 @@ CSharedFileList::~CSharedFileList()
 {
 	while (!ShutdownSharedHashWorkerStep(INFINITE)) {
 	}
+	if (HasPendingStartupCacheSaveWork())
+		(void)AbandonStartupCacheSaveForShutdown();
 	ASSERT(!HasPendingStartupCacheSaveWork());
 	if (m_hSharedHashQueueEvent != NULL) {
 		VERIFY(::CloseHandle(m_hSharedHashQueueEvent));
@@ -2232,9 +2235,21 @@ bool CSharedFileList::RequestStartupCacheSave(bool /*bImmediate*/)
 		return false;
 	}
 
-	UpdateStartupCacheSaveProgress(StartupCacheSavePhase::BuildingRecords, 0, static_cast<ULONGLONG>(snapshot.directories.size()));
+	std::shared_ptr<StartupCacheSaveOperation> pOperation(new StartupCacheSaveOperation{});
+	pOperation->strCachePath = snapshot.strCachePath;
+	pOperation->strDuplicatePathCachePath = snapshot.strDuplicatePathCachePath;
+	UpdateStartupCacheSaveOperationProgress(pOperation, StartupCacheSavePhase::BuildingRecords, 0, static_cast<ULONGLONG>(snapshot.directories.size()));
+	{
+		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+		m_pStartupCacheSaveOperation = pOperation;
+		m_eStartupCacheSavePhase = StartupCacheSavePhase::BuildingRecords;
+		m_uStartupCacheSaveDirectoriesDone = 0;
+		m_uStartupCacheSaveDirectoriesTotal = static_cast<ULONGLONG>(snapshot.directories.size());
+	}
+
 	StartupCacheSaveThreadRequest *pRequest = new StartupCacheSaveThreadRequest{};
-	pRequest->pOwner = this;
+	pRequest->hNotifyWnd = (theApp.emuledlg != NULL) ? theApp.emuledlg->GetSafeHwnd() : NULL;
+	pRequest->pOperation = pOperation;
 	pRequest->snapshot = std::move(snapshot);
 
 	CWinThread *pThread = AfxBeginThread(&CSharedFileList::StartupCacheSaveThreadProc, pRequest, THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
@@ -2243,6 +2258,7 @@ bool CSharedFileList::RequestStartupCacheSave(bool /*bImmediate*/)
 		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
 		m_bStartupCacheSaveRunning = false;
 		m_eStartupCacheSavePhase = StartupCacheSavePhase::Idle;
+		m_pStartupCacheSaveOperation.reset();
 		m_nStartupCacheDirtyTick = ::GetTickCount64();
 		return false;
 	}
@@ -2252,16 +2268,16 @@ bool CSharedFileList::RequestStartupCacheSave(bool /*bImmediate*/)
 bool CSharedFileList::AbandonStartupCacheSaveForShutdown()
 {
 	CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
-	const bool bKeepOwnerAlive = m_bStartupCacheSaveRunning;
 	m_bStartupCacheSaveShutdownAbandoned = true;
 	m_bStartupCacheDirty = false;
+	m_bStartupCacheSaveRunning = false;
 	m_bStartupCacheSaveRunAfterCurrent = false;
-	if (!m_bStartupCacheSaveRunning) {
-		m_eStartupCacheSavePhase = StartupCacheSavePhase::Idle;
-		m_uStartupCacheSaveDirectoriesDone = 0;
-		m_uStartupCacheSaveDirectoriesTotal = 0;
-	}
-	return bKeepOwnerAlive;
+	UpdateStartupCacheSaveOperationProgress(m_pStartupCacheSaveOperation, StartupCacheSavePhase::Idle, 0, 0);
+	m_pStartupCacheSaveOperation.reset();
+	m_eStartupCacheSavePhase = StartupCacheSavePhase::Idle;
+	m_uStartupCacheSaveDirectoriesDone = 0;
+	m_uStartupCacheSaveDirectoriesTotal = 0;
+	return false;
 }
 
 bool CSharedFileList::HasPendingStartupCacheSaveWork() const
@@ -2285,6 +2301,14 @@ void CSharedFileList::GetStartupCacheSaveProgress(StartupCacheSaveProgress &rPro
 	rProgress.bRunning = m_bStartupCacheSaveRunning;
 	rProgress.bDirty = m_bStartupCacheDirty;
 	rProgress.bWaitingForFollowUp = m_bStartupCacheSaveRunAfterCurrent;
+	const std::shared_ptr<StartupCacheSaveOperation> pOperation = m_pStartupCacheSaveOperation;
+	stateLock.Unlock();
+	if (pOperation) {
+		CSingleLock progressLock(&pOperation->mutProgress, TRUE);
+		rProgress.ePhase = pOperation->ePhase;
+		rProgress.uCompletedDirectories = pOperation->uCompletedDirectories;
+		rProgress.uTotalDirectories = pOperation->uTotalDirectories;
+	}
 }
 
 CString CSharedFileList::GetStartupCachePath()
@@ -2362,7 +2386,7 @@ void CSharedFileList::WriteStartupCacheString(CSafeBufferedFile &file, const CSt
 		file.Write(static_cast<LPCWSTR>(strWide), strWide.GetLength() * sizeof(WCHAR));
 }
 
-bool CSharedFileList::GetDirectoryStartupState(const CString &strDirectory, DirectoryStartupState &rState) const
+bool CSharedFileList::GetDirectoryStartupState(const CString &strDirectory, DirectoryStartupState &rState)
 {
 	rState = DirectoryStartupState{};
 	const CString strCanonicalDirectory(LexicallyNormalizeSharedDirectoryPath(strDirectory));
@@ -2399,7 +2423,7 @@ bool CSharedFileList::GetDirectoryStartupState(const CString &strDirectory, Dire
 	return true;
 }
 
-bool CSharedFileList::GetFileStartupState(const CString &strFilePath, LONGLONG &rUtcFileDate, ULONGLONG &rullFileSize) const
+bool CSharedFileList::GetFileStartupState(const CString &strFilePath, LONGLONG &rUtcFileDate, ULONGLONG &rullFileSize)
 {
 	const CString strCanonicalFilePath(LexicallyNormalizeSharedFilePath(strFilePath));
 	WIN32_FIND_DATA findData = {};
@@ -2883,7 +2907,7 @@ bool CSharedFileList::TryReuseRememberedDuplicateSharedPath(const CString &strFi
 	return true;
 }
 
-bool CSharedFileList::BuildStartupCacheRecordFromSnapshot(const StartupCacheSaveDirectorySnapshot &rDirectory, SharedStartupCachePolicy::DirectoryRecord &rRecord, SharedStartupCacheVolumeRecordMap &rVolumeRecords) const
+bool CSharedFileList::BuildStartupCacheRecordFromSnapshot(const StartupCacheSaveDirectorySnapshot &rDirectory, SharedStartupCachePolicy::DirectoryRecord &rRecord, SharedStartupCacheVolumeRecordMap &rVolumeRecords)
 {
 	const CString strCanonicalDirectory(NormalizeSharedDirectoryPath(rDirectory.strDirectoryPath));
 	if (!SharedStartupCachePolicy::CanPersistDirectorySnapshot(rDirectory.bHasPendingHash))
@@ -2924,6 +2948,16 @@ void CSharedFileList::UpdateStartupCacheSaveProgress(StartupCacheSavePhase ePhas
 	m_eStartupCacheSavePhase = ePhase;
 	m_uStartupCacheSaveDirectoriesDone = uCompletedDirectories;
 	m_uStartupCacheSaveDirectoriesTotal = uTotalDirectories;
+}
+
+void CSharedFileList::UpdateStartupCacheSaveOperationProgress(const std::shared_ptr<StartupCacheSaveOperation> &pOperation, StartupCacheSavePhase ePhase, ULONGLONG uCompletedDirectories, ULONGLONG uTotalDirectories)
+{
+	if (!pOperation)
+		return;
+	CSingleLock progressLock(&pOperation->mutProgress, TRUE);
+	pOperation->ePhase = ePhase;
+	pOperation->uCompletedDirectories = uCompletedDirectories;
+	pOperation->uTotalDirectories = uTotalDirectories;
 }
 
 bool CSharedFileList::WriteStartupCacheFile(const CString &strFullPath, const SharedStartupCacheVolumeRecordMap &rVolumeRecords, const std::vector<SharedStartupCachePolicy::DirectoryRecord> &rRecords)
@@ -3005,17 +3039,17 @@ bool CSharedFileList::WriteDuplicatePathCacheFile(const CString &strFullPath, co
 	return false;
 }
 
-void CSharedFileList::RunStartupCacheSaveWorker(const StartupCacheSaveSnapshot &rSnapshot, StartupCacheSaveResult &rResult)
+void CSharedFileList::RunStartupCacheSaveWorker(const StartupCacheSaveSnapshot &rSnapshot, const std::shared_ptr<StartupCacheSaveOperation> &pOperation, StartupCacheSaveResult &rResult)
 {
 	std::vector<SharedStartupCachePolicy::DirectoryRecord> records;
 	SharedStartupCacheVolumeRecordMap volumeRecords;
 	records.reserve(rSnapshot.directories.size());
-	UpdateStartupCacheSaveProgress(StartupCacheSavePhase::BuildingRecords, 0, static_cast<ULONGLONG>(rSnapshot.directories.size()));
+	UpdateStartupCacheSaveOperationProgress(pOperation, StartupCacheSavePhase::BuildingRecords, 0, static_cast<ULONGLONG>(rSnapshot.directories.size()));
 	for (size_t i = 0; i < rSnapshot.directories.size(); ++i) {
 		SharedStartupCachePolicy::DirectoryRecord record = {};
 		if (BuildStartupCacheRecordFromSnapshot(rSnapshot.directories[i], record, volumeRecords))
 			records.push_back(record);
-		UpdateStartupCacheSaveProgress(StartupCacheSavePhase::BuildingRecords, static_cast<ULONGLONG>(i + 1), static_cast<ULONGLONG>(rSnapshot.directories.size()));
+		UpdateStartupCacheSaveOperationProgress(pOperation, StartupCacheSavePhase::BuildingRecords, static_cast<ULONGLONG>(i + 1), static_cast<ULONGLONG>(rSnapshot.directories.size()));
 	}
 	for (SharedStartupCachePolicy::DirectoryRecord &record : records) {
 		if (!SharedStartupCachePolicy::UsesTrustedNtfsFastPath(record))
@@ -3025,7 +3059,7 @@ void CSharedFileList::RunStartupCacheSaveWorker(const StartupCacheSaveSnapshot &
 			record.volumeRecord = itVolume->second;
 	}
 
-	UpdateStartupCacheSaveProgress(StartupCacheSavePhase::WritingFile, static_cast<ULONGLONG>(rSnapshot.directories.size()), static_cast<ULONGLONG>(rSnapshot.directories.size()));
+	UpdateStartupCacheSaveOperationProgress(pOperation, StartupCacheSavePhase::WritingFile, static_cast<ULONGLONG>(rSnapshot.directories.size()), static_cast<ULONGLONG>(rSnapshot.directories.size()));
 	if (!WriteStartupCacheFile(rSnapshot.strCachePath, volumeRecords, records))
 		return;
 	rResult.bWriteSucceeded = true;
@@ -3044,62 +3078,50 @@ void CSharedFileList::RunStartupCacheSaveWorker(const StartupCacheSaveSnapshot &
 
 UINT AFX_CDECL CSharedFileList::StartupCacheSaveThreadProc(LPVOID pParam)
 {
-	StartupCacheSaveThreadRequest *pRequest = static_cast<StartupCacheSaveThreadRequest*>(pParam);
-	StartupCacheSaveResult *pResult = new StartupCacheSaveResult{};
-	if (pRequest != NULL && pRequest->pOwner != NULL)
-		pRequest->pOwner->RunStartupCacheSaveWorker(pRequest->snapshot, *pResult);
+	std::unique_ptr<StartupCacheSaveThreadRequest> pRequest(static_cast<StartupCacheSaveThreadRequest*>(pParam));
+	std::unique_ptr<StartupCacheSaveResult> pResult(new StartupCacheSaveResult{});
+	if (pRequest)
+		RunStartupCacheSaveWorker(pRequest->snapshot, pRequest->pOperation, *pResult);
 
 	bool bPosted = false;
-	if (pRequest != NULL && pRequest->pOwner != NULL && theApp.emuledlg != NULL && ::IsWindow(theApp.emuledlg->GetSafeHwnd()))
-		bPosted = (theApp.emuledlg->PostMessage(UM_STARTUP_CACHE_SAVE_COMPLETE, reinterpret_cast<WPARAM>(pRequest->pOwner), reinterpret_cast<LPARAM>(pResult)) != FALSE);
+	std::unique_ptr<StartupCacheSaveThreadCompletion> pCompletion(new StartupCacheSaveThreadCompletion{});
+	pCompletion->pOperation = pRequest ? pRequest->pOperation : std::shared_ptr<StartupCacheSaveOperation>();
+	pCompletion->pResult = pResult.release();
+	const HWND hNotifyWnd = pRequest ? pRequest->hNotifyWnd : NULL;
+	if (hNotifyWnd != NULL && ::IsWindow(hNotifyWnd))
+		bPosted = (::PostMessage(hNotifyWnd, UM_STARTUP_CACHE_SAVE_COMPLETE, 0, reinterpret_cast<LPARAM>(pCompletion.get())) != FALSE);
 
 	if (!bPosted) {
-		if (pRequest != NULL && pRequest->pOwner != NULL) {
-			CSingleLock stateLock(&pRequest->pOwner->m_mutStartupCacheSave, TRUE);
-			const bool bStartupCacheInvalidated = pRequest->pOwner->m_bStartupCacheInvalidatedByInterruptedHashing;
-			const bool bStartupCacheSaveShutdownAbandoned = pRequest->pOwner->m_bStartupCacheSaveShutdownAbandoned;
-			const SharedFileListSeams::StartupCacheSavePostFailureAction ePostFailureAction =
-				SharedFileListSeams::GetStartupCacheSavePostFailureAction({
-					bStartupCacheInvalidated,
-					bStartupCacheSaveShutdownAbandoned
-				});
-			pRequest->pOwner->m_bStartupCacheSaveRunning = false;
-			pRequest->pOwner->m_bStartupCacheSaveRunAfterCurrent = false;
-			pRequest->pOwner->m_eStartupCacheSavePhase = StartupCacheSavePhase::Idle;
-			pRequest->pOwner->m_uStartupCacheSaveDirectoriesDone = 0;
-			pRequest->pOwner->m_uStartupCacheSaveDirectoriesTotal = 0;
-			if (ePostFailureAction == SharedFileListSeams::StartupCacheSavePostFailureAction::DiscardPersistedResultAndClearDirty) {
-				pRequest->pOwner->m_bStartupCacheDirty = false;
-			} else {
-				pRequest->pOwner->m_bStartupCacheDirty = true;
-				pRequest->pOwner->m_nStartupCacheDirtyTick = ::GetTickCount64();
-			}
-			stateLock.Unlock();
-			if (ePostFailureAction == SharedFileListSeams::StartupCacheSavePostFailureAction::DiscardPersistedResultAndClearDirty) {
-				if (pResult->bWriteSucceeded)
-					(void)LongPathSeams::DeleteFileIfExists(pRequest->pOwner->GetStartupCachePath());
-				if (pResult->bDuplicatePathWriteSucceeded)
-					(void)LongPathSeams::DeleteFileIfExists(pRequest->pOwner->GetDuplicatePathCachePath());
-			}
-		}
-		delete pResult;
+		DiscardStartupCacheSaveCompletion(pCompletion.release());
+	} else {
+		(void)pCompletion.release();
 	}
 
-	delete pRequest;
 	return 0;
 }
 
 void CSharedFileList::HandleStartupCacheSaveCompletion(void *pResultVoid)
 {
-	StartupCacheSaveResult *pResult = static_cast<StartupCacheSaveResult*>(pResultVoid);
+	std::unique_ptr<StartupCacheSaveThreadCompletion> pCompletion(static_cast<StartupCacheSaveThreadCompletion*>(pResultVoid));
+	if (pCompletion == NULL)
+		return;
+	StartupCacheSaveResult *pResult = pCompletion->pResult;
 	if (pResult == NULL)
 		return;
+	pCompletion->pResult = NULL;
+	std::unique_ptr<StartupCacheSaveResult> resultGuard(pResult);
 
 	bool bStartupCacheInvalidated = false;
 	bool bStartupCacheSaveShutdownAbandoned = false;
 	bool bRunAfterCurrent = false;
 	{
 		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+		if (pCompletion->pOperation != m_pStartupCacheSaveOperation) {
+			stateLock.Unlock();
+			pCompletion->pResult = resultGuard.release();
+			DiscardStartupCacheSaveCompletion(pCompletion.release());
+			return;
+		}
 		bStartupCacheInvalidated = m_bStartupCacheInvalidatedByInterruptedHashing;
 		bStartupCacheSaveShutdownAbandoned = m_bStartupCacheSaveShutdownAbandoned;
 		bRunAfterCurrent = m_bStartupCacheSaveRunAfterCurrent;
@@ -3121,12 +3143,12 @@ void CSharedFileList::HandleStartupCacheSaveCompletion(void *pResultVoid)
 			CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
 			m_bStartupCacheSaveRunning = false;
 			m_bStartupCacheSaveRunAfterCurrent = false;
+			m_pStartupCacheSaveOperation.reset();
 			m_eStartupCacheSavePhase = StartupCacheSavePhase::Idle;
 			m_uStartupCacheSaveDirectoriesDone = 0;
 			m_uStartupCacheSaveDirectoriesTotal = 0;
 			m_bStartupCacheDirty = false;
 		}
-		delete pResult;
 		return;
 	}
 
@@ -3145,6 +3167,7 @@ void CSharedFileList::HandleStartupCacheSaveCompletion(void *pResultVoid)
 			m_nLastStartupCacheSave = pResult->ullCompletedTick;
 		m_bStartupCacheSaveRunning = false;
 		m_bStartupCacheSaveRunAfterCurrent = false;
+		m_pStartupCacheSaveOperation.reset();
 		m_eStartupCacheSavePhase = StartupCacheSavePhase::Idle;
 		m_uStartupCacheSaveDirectoriesDone = 0;
 		m_uStartupCacheSaveDirectoriesTotal = 0;
@@ -3155,8 +3178,22 @@ void CSharedFileList::HandleStartupCacheSaveCompletion(void *pResultVoid)
 			m_nStartupCacheDirtyTick = ::GetTickCount64();
 		}
 	}
+}
 
-	delete pResult;
+void CSharedFileList::DiscardStartupCacheSaveCompletion(void *pCompletionVoid)
+{
+	std::unique_ptr<StartupCacheSaveThreadCompletion> pCompletion(static_cast<StartupCacheSaveThreadCompletion*>(pCompletionVoid));
+	if (pCompletion == NULL)
+		return;
+	std::unique_ptr<StartupCacheSaveResult> pResult(pCompletion->pResult);
+	pCompletion->pResult = NULL;
+	if (pResult != NULL && pCompletion->pOperation) {
+		if (pResult->bWriteSucceeded)
+			(void)LongPathSeams::DeleteFileIfExists(pCompletion->pOperation->strCachePath);
+		if (pResult->bDuplicatePathWriteSucceeded)
+			(void)LongPathSeams::DeleteFileIfExists(pCompletion->pOperation->strDuplicatePathCachePath);
+		UpdateStartupCacheSaveOperationProgress(pCompletion->pOperation, StartupCacheSavePhase::Idle, 0, 0);
+	}
 }
 
 void CSharedFileList::Save() const

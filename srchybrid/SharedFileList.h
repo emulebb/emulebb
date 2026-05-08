@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 #include <deque>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
@@ -160,6 +161,10 @@ public:
 	 * @brief Applies one worker-produced startup-cache save result on the UI thread.
 	 */
 	void	HandleStartupCacheSaveCompletion(void *pResult);
+	/**
+	 * @brief Drops a worker-produced startup-cache save completion without applying it to an owner.
+	 */
+	static void	DiscardStartupCacheSaveCompletion(void *pCompletion);
 	/**
 	 * @brief Stops waiting for startup-cache persistence during shutdown and reports whether this object must stay alive.
 	 */
@@ -315,12 +320,35 @@ private:
 	};
 
 	/**
-	 * @brief Carries one owner pointer plus immutable snapshot into the background save worker.
+	 * @brief Holds owner-independent progress for one background startup-cache save.
+	 */
+	struct StartupCacheSaveOperation
+	{
+		mutable CCriticalSection mutProgress;
+		StartupCacheSavePhase ePhase = StartupCacheSavePhase::Idle;
+		ULONGLONG uCompletedDirectories = 0;
+		ULONGLONG uTotalDirectories = 0;
+		CString strCachePath;
+		CString strDuplicatePathCachePath;
+	};
+
+	/**
+	 * @brief Carries one immutable snapshot into the background save worker.
 	 */
 	struct StartupCacheSaveThreadRequest
 	{
-		CSharedFileList *pOwner = NULL;
+		HWND hNotifyWnd = NULL;
+		std::shared_ptr<StartupCacheSaveOperation> pOperation;
 		StartupCacheSaveSnapshot snapshot;
+	};
+
+	/**
+	 * @brief Transfers one owner-independent worker completion to the UI thread.
+	 */
+	struct StartupCacheSaveThreadCompletion
+	{
+		std::shared_ptr<StartupCacheSaveOperation> pOperation;
+		StartupCacheSaveResult *pResult = NULL;
 	};
 
 	void	AddDirectory(const CString &strDir, CStringList &dirlist, std::unordered_set<std::wstring> &rAddedDirectoryKeys, bool bAllowStartupCache);
@@ -336,8 +364,8 @@ private:
 	/**
 	 * @brief Resolves the current directory state used by both generic and NTFS startup-cache validation.
 	 */
-	bool	GetDirectoryStartupState(const CString &strDirectory, DirectoryStartupState &rState) const;
-	bool	GetFileStartupState(const CString &strFilePath, LONGLONG &rUtcFileDate, ULONGLONG &rullFileSize) const;
+	static bool	GetDirectoryStartupState(const CString &strDirectory, DirectoryStartupState &rState);
+	static bool	GetFileStartupState(const CString &strFilePath, LONGLONG &rUtcFileDate, ULONGLONG &rullFileSize);
 	/**
 	 * @brief Computes the one-scan-per-volume NTFS journal verdict for cached directories on the same local volume.
 	 */
@@ -365,14 +393,15 @@ private:
 	 * @brief Captures the currently valid duplicate shared-path records for sidecar persistence.
 	 */
 	bool	CaptureDuplicatePathCacheSnapshot(std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rSnapshot) const;
-	bool	BuildStartupCacheRecordFromSnapshot(const StartupCacheSaveDirectorySnapshot &rDirectory, SharedStartupCachePolicy::DirectoryRecord &rRecord, SharedStartupCacheVolumeRecordMap &rVolumeRecords) const;
-	void	RunStartupCacheSaveWorker(const StartupCacheSaveSnapshot &rSnapshot, StartupCacheSaveResult &rResult);
+	static bool	BuildStartupCacheRecordFromSnapshot(const StartupCacheSaveDirectorySnapshot &rDirectory, SharedStartupCachePolicy::DirectoryRecord &rRecord, SharedStartupCacheVolumeRecordMap &rVolumeRecords);
+	static void	RunStartupCacheSaveWorker(const StartupCacheSaveSnapshot &rSnapshot, const std::shared_ptr<StartupCacheSaveOperation> &pOperation, StartupCacheSaveResult &rResult);
 	static bool	WriteStartupCacheFile(const CString &strFullPath, const SharedStartupCacheVolumeRecordMap &rVolumeRecords, const std::vector<SharedStartupCachePolicy::DirectoryRecord> &rRecords);
 	/**
 	 * @brief Writes the duplicate shared-path sidecar atomically.
 	 */
 	static bool	WriteDuplicatePathCacheFile(const CString &strFullPath, const std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rRecords);
 	void	UpdateStartupCacheSaveProgress(StartupCacheSavePhase ePhase, ULONGLONG uCompletedDirectories, ULONGLONG uTotalDirectories);
+	static void	UpdateStartupCacheSaveOperationProgress(const std::shared_ptr<StartupCacheSaveOperation> &pOperation, StartupCacheSavePhase ePhase, ULONGLONG uCompletedDirectories, ULONGLONG uTotalDirectories);
 	/**
 	 * @brief Loads the duplicate shared-path sidecar if it is present and well-formed.
 	 */
@@ -493,6 +522,7 @@ private:
 	mutable CCriticalSection m_mutStartupCacheSave;
 	bool	m_bStartupCacheSaveRunning;
 	bool	m_bStartupCacheSaveRunAfterCurrent;
+	std::shared_ptr<StartupCacheSaveOperation> m_pStartupCacheSaveOperation;
 	StartupCacheSavePhase m_eStartupCacheSavePhase;
 	ULONGLONG m_uStartupCacheSaveDirectoriesDone;
 	ULONGLONG m_uStartupCacheSaveDirectoriesTotal;

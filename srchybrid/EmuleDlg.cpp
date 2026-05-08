@@ -3907,9 +3907,11 @@ LRESULT CemuleDlg::OnPartFileProgressUpdate(WPARAM wParam, LPARAM)
 
 LRESULT CemuleDlg::OnStartupCacheSaveComplete(WPARAM wParam, LPARAM lParam)
 {
-	CSharedFileList *pSharedFiles = reinterpret_cast<CSharedFileList*>(wParam);
-	if (pSharedFiles != NULL)
-		pSharedFiles->HandleStartupCacheSaveCompletion(reinterpret_cast<void*>(lParam));
+	UNREFERENCED_PARAMETER(wParam);
+	if (theApp.sharedfiles != NULL)
+		theApp.sharedfiles->HandleStartupCacheSaveCompletion(reinterpret_cast<void*>(lParam));
+	else
+		CSharedFileList::DiscardStartupCacheSaveCompletion(reinterpret_cast<void*>(lParam));
 	return 0;
 }
 
