@@ -1208,7 +1208,7 @@ void CSharedFileList::AddFilesFromDirectory(const CString &rstrDirectory)
 
 	DWORD dwError = ERROR_SUCCESS;
 	if (!PathHelpers::ForEachDirectoryEntry(strDirectory, [&](const WIN32_FIND_DATA &findData) -> bool {
-		CheckAndAddSingleFile(strDirectory, findData);
+		CheckAndAddSingleFileFromNormalizedDirectory(strDirectory, findData);
 		return true;
 	}, &dwError) && dwError != ERROR_FILE_NOT_FOUND)
 	{
@@ -1272,6 +1272,15 @@ bool CSharedFileList::CheckAndAddSingleFile(const CString &rstrFilePath)
 
 void CSharedFileList::CheckAndAddSingleFile(const CString &strDirectory, const WIN32_FIND_DATA &findData)
 {
+	CString strFoundDirectory(strDirectory);
+	if (!strFoundDirectory.IsEmpty() && strFoundDirectory.Right(1) != _T("\\"))
+		strFoundDirectory += _T("\\");
+	strFoundDirectory = NormalizeSharedDirectoryPath(strFoundDirectory);
+	CheckAndAddSingleFileFromNormalizedDirectory(strFoundDirectory, findData);
+}
+
+void CSharedFileList::CheckAndAddSingleFileFromNormalizedDirectory(const CString &strFoundDirectory, const WIN32_FIND_DATA &findData)
+{
 	if ((findData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_TEMPORARY)) != 0) {
 		++m_startupScanStats.uFilesIgnored;
 		return;
@@ -1283,10 +1292,7 @@ void CSharedFileList::CheckAndAddSingleFile(const CString &strDirectory, const W
 		return;
 	}
 
-	CString strFoundDirectory(strDirectory);
-	if (!strFoundDirectory.IsEmpty() && strFoundDirectory.Right(1) != _T("\\"))
-		strFoundDirectory += _T("\\");
-	strFoundDirectory = NormalizeSharedDirectoryPath(strFoundDirectory);
+	ASSERT(strFoundDirectory.IsEmpty() || strFoundDirectory.Right(1) == _T("\\"));
 
 	const CString strFoundFileName(findData.cFileName);
 	const CString strFoundFilePath(NormalizeSharedFilePath(strFoundDirectory + strFoundFileName));
