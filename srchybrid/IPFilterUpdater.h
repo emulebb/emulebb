@@ -16,6 +16,10 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+#include <memory>
+
+struct SIPFilterBackgroundRefreshState;
+
 /**
  * @brief Updates the local IP-filter file through shared safe download, promotion, and live reload paths.
  */
@@ -40,7 +44,7 @@ public:
 	/**
 	 * @brief Returns whether an automatic IP-filter update worker is currently queued or running.
 	 */
-	bool IsRefreshQueued() const						{ return m_lBackgroundRefreshQueued != 0; }
+	bool IsRefreshQueued() const;
 	/**
 	 * @brief Returns whether the automatic IP-filter update interval is due at the supplied time.
 	 */
@@ -51,5 +55,5 @@ private:
 
 	static UINT AFX_CDECL BackgroundRefreshThread(LPVOID pParam);
 
-	volatile LONG m_lBackgroundRefreshQueued;
+	std::shared_ptr<SIPFilterBackgroundRefreshState> m_pBackgroundRefreshState;
 };

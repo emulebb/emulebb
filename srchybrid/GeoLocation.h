@@ -17,9 +17,11 @@
 #pragma once
 
 #include <map>
+#include <memory>
 
 class CDC;
 class CImageList;
+struct SGeoLocationBackgroundRefreshState;
 
 /**
  * @brief One cached geolocation lookup result derived from the MMDB database.
@@ -91,7 +93,7 @@ public:
 	/**
 	 * @brief Returns whether a background refresh worker is already running.
 	 */
-	bool IsRefreshQueued() const						{ return m_lBackgroundRefreshQueued != 0; }
+	bool IsRefreshQueued() const;
 
 private:
 	struct CStringLess
@@ -111,7 +113,7 @@ private:
 		CString strDatabaseTempPath;
 		CString strInstallPath;
 		HWND hNotifyWnd;
-		volatile LONG *pRefreshQueuedFlag;
+		std::shared_ptr<SGeoLocationBackgroundRefreshState> pRefreshState;
 		bool bProxyEnabled;
 	};
 
@@ -139,5 +141,5 @@ private:
 	mutable SGeoLocationRecord m_defaultRecord;
 	mutable std::map<uint32, SGeoLocationRecord> m_cacheByIp;
 	std::map<CString, int, CStringLess> m_flagIndexByCode;
-	volatile LONG m_lBackgroundRefreshQueued;
+	std::shared_ptr<SGeoLocationBackgroundRefreshState> m_pBackgroundRefreshState;
 };

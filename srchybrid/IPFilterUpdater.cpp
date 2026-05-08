@@ -41,6 +41,19 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+/**
+ * @brief Heap-owned refresh state shared between the owner and worker context.
+ */
+struct SIPFilterBackgroundRefreshState
+{
+	SIPFilterBackgroundRefreshState()
+		: lQueued(0)
+	{
+	}
+
+	volatile LONG lQueued;
+};
+
 bool GetMimeType(LPCTSTR pszFilePath, CString &rstrMimeType);
 
 struct CIPFilterUpdater::SBackgroundRefreshContext
@@ -49,7 +62,7 @@ struct CIPFilterUpdater::SBackgroundRefreshContext
 	CString strArchiveTempPath;
 	CString strInstallPath;
 	HWND hNotifyWnd;
-	volatile LONG *pRefreshQueuedFlag;
+	std::shared_ptr<SIPFilterBackgroundRefreshState> pRefreshState;
 	bool bProxyEnabled;
 };
 
@@ -86,7 +99,7 @@ namespace
 		return DirectDownload::CreateTempPathInDirectory(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR), pszPrefix, strTempPath, strError);
 	}
 
-	void DeliverBackgroundRefreshCompletion(HWND hNotifyWnd, UINT uMessage, bool bUpdated, volatile LONG *pRefreshQueuedFlag, LPCTSTR pszComponentName)
+	void DeliverBackgroundRefreshCompletion(HWND hNotifyWnd, UINT uMessage, bool bUpdated, const std::shared_ptr<SIPFilterBackgroundRefreshState>& pRefreshState, LPCTSTR pszComponentName)
 	{
 		if (hNotifyWnd != NULL && ::PostMessage(hNotifyWnd, uMessage, bUpdated ? 1u : 0u, 0))
 			return;
@@ -98,8 +111,8 @@ namespace
 			return;
 		}
 
-		if (pRefreshQueuedFlag != NULL)
-			(void)::InterlockedExchange(pRefreshQueuedFlag, 0);
+		if (pRefreshState)
+			(void)::InterlockedExchange(&pRefreshState->lQueued, 0);
 		AddDebugLogLine(false, _T("%s: dropped background refresh completion because the notify window is unavailable (%u)."), pszComponentName, dwPostError);
 	}
 
@@ -289,12 +302,13 @@ namespace
 }
 
 CIPFilterUpdater::CIPFilterUpdater()
-	: m_lBackgroundRefreshQueued(0)
+	: m_pBackgroundRefreshState(std::make_shared<SIPFilterBackgroundRefreshState>())
 {
 }
 
 CIPFilterUpdater::~CIPFilterUpdater()
 {
+	(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 }
 
 bool CIPFilterUpdater::UpdateFromUrlInteractive(const CString& strUrl)
@@ -350,7 +364,7 @@ bool CIPFilterUpdater::IsAutomaticRefreshDue(const __time64_t tNow)
 
 bool CIPFilterUpdater::QueueBackgroundRefresh()
 {
-	if (!thePrefs.GetAutoIPFilterUpdate() || ::InterlockedCompareExchange(&m_lBackgroundRefreshQueued, 0, 0) != 0)
+	if (!thePrefs.GetAutoIPFilterUpdate() || ::InterlockedCompareExchange(&m_pBackgroundRefreshState->lQueued, 0, 0) != 0)
 		return false;
 
 	__time64_t tNow = 0;
@@ -380,16 +394,16 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 	pContext->strArchiveTempPath = strArchiveTempPath;
 	pContext->strInstallPath = CIPFilter::GetDefaultFilePath();
 	pContext->hNotifyWnd = hNotifyWnd;
-	pContext->pRefreshQueuedFlag = &m_lBackgroundRefreshQueued;
+	pContext->pRefreshState = m_pBackgroundRefreshState;
 	pContext->bProxyEnabled = thePrefs.GetProxySettings().bUseProxy;
 
-	if (::InterlockedCompareExchange(&m_lBackgroundRefreshQueued, 1, 0) != 0) {
+	if (::InterlockedCompareExchange(&m_pBackgroundRefreshState->lQueued, 1, 0) != 0) {
 		(void)LongPathSeams::DeleteFileIfExists(strArchiveTempPath);
 		return false;
 	}
 	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED, NULL);
 	if (pThread == NULL) {
-		(void)::InterlockedExchange(&m_lBackgroundRefreshQueued, 0);
+		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 		(void)LongPathSeams::DeleteFileIfExists(strArchiveTempPath);
 		AddDebugLogLine(false, _T("IPFilter: failed to start background update thread."));
 		return false;
@@ -401,7 +415,7 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 	SBackgroundRefreshContext *pThreadContext = pContext.release();
 	if (pThread->ResumeThread() == static_cast<DWORD>(-1)) {
 		std::unique_ptr<SBackgroundRefreshContext> pCleanupContext(pThreadContext);
-		(void)::InterlockedExchange(&m_lBackgroundRefreshQueued, 0);
+		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strArchiveTempPath);
 		AddDebugLogLine(false, _T("IPFilter: failed to resume background update thread (%u)."), ::GetLastError());
 		return false;
@@ -411,7 +425,7 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 
 void CIPFilterUpdater::HandleBackgroundRefreshResult(bool bUpdated)
 {
-	(void)::InterlockedExchange(&m_lBackgroundRefreshQueued, 0);
+	(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 	if (!bUpdated)
 		return;
 
@@ -419,6 +433,11 @@ void CIPFilterUpdater::HandleBackgroundRefreshResult(bool bUpdated)
 	AddLogLine(false, GetResString(IDS_IPFILTER_AUTO_UPDATE_DONE), static_cast<UINT>(nLoaded));
 	if (nLoaded == 0)
 		AddLogLine(false, GetResString(IDS_DWLIPFILTERFAILED));
+}
+
+bool CIPFilterUpdater::IsRefreshQueued() const
+{
+	return ::InterlockedCompareExchange(&m_pBackgroundRefreshState->lQueued, 0, 0) != 0;
 }
 
 UINT AFX_CDECL CIPFilterUpdater::BackgroundRefreshThread(LPVOID pParam)
@@ -448,6 +467,6 @@ UINT AFX_CDECL CIPFilterUpdater::BackgroundRefreshThread(LPVOID pParam)
 
 cleanup:
 	(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
-	DeliverBackgroundRefreshCompletion(pContext->hNotifyWnd, UM_IPFILTER_UPDATED, bUpdated, pContext->pRefreshQueuedFlag, _T("IPFilter"));
+	DeliverBackgroundRefreshCompletion(pContext->hNotifyWnd, UM_IPFILTER_UPDATED, bUpdated, pContext->pRefreshState, _T("IPFilter"));
 	return 0;
 }

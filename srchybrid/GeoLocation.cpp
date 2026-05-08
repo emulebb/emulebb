@@ -40,6 +40,19 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+/**
+ * @brief Heap-owned refresh state shared between the owner and worker context.
+ */
+struct SGeoLocationBackgroundRefreshState
+{
+	SGeoLocationBackgroundRefreshState()
+		: lQueued(0)
+	{
+	}
+
+	volatile LONG lQueued;
+};
+
 namespace
 {
 	const uint32 MAX_MMDB_FILE_SIZE = 256u * 1024u * 1024u;
@@ -50,7 +63,7 @@ namespace
 	const int FLAG_ICON_WIDTH = 18;
 	const int FLAG_ICON_HEIGHT = 16;
 
-	void DeliverBackgroundRefreshCompletion(HWND hNotifyWnd, UINT uMessage, bool bUpdated, volatile LONG *pRefreshQueuedFlag, LPCTSTR pszComponentName)
+	void DeliverBackgroundRefreshCompletion(HWND hNotifyWnd, UINT uMessage, bool bUpdated, const std::shared_ptr<SGeoLocationBackgroundRefreshState>& pRefreshState, LPCTSTR pszComponentName)
 	{
 		if (hNotifyWnd != NULL && ::PostMessage(hNotifyWnd, uMessage, bUpdated ? 1u : 0u, 0))
 			return;
@@ -62,8 +75,8 @@ namespace
 			return;
 		}
 
-		if (pRefreshQueuedFlag != NULL)
-			(void)::InterlockedExchange(pRefreshQueuedFlag, 0);
+		if (pRefreshState)
+			(void)::InterlockedExchange(&pRefreshState->lQueued, 0);
 		AddDebugLogLine(false, _T("%s: dropped background refresh completion because the notify window is unavailable (%u)."), pszComponentName, dwPostError);
 	}
 
@@ -676,7 +689,7 @@ CGeoLocation::CGeoLocation()
 	: m_pDatabase(NULL)
 	, m_tBuildEpoch(0)
 	, m_pFlagImageList(NULL)
-	, m_lBackgroundRefreshQueued(0)
+	, m_pBackgroundRefreshState(std::make_shared<SGeoLocationBackgroundRefreshState>())
 {
 	m_defaultRecord.strCountryCode = _T("N/A");
 	m_defaultRecord.strCountryName = _T("N/A");
@@ -718,7 +731,7 @@ void CGeoLocation::Unload()
 	delete m_pDatabase;
 	m_pDatabase = NULL;
 	m_tBuildEpoch = 0;
-	(void)::InterlockedExchange(&m_lBackgroundRefreshQueued, 0);
+	(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 	ClearCache();
 }
 
@@ -739,7 +752,7 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 			AddLogLine(false, _T("GeoLocation: manual download ignored because IP geolocation is disabled."));
 		return false;
 	}
-	if (::InterlockedCompareExchange(&m_lBackgroundRefreshQueued, 0, 0) != 0) {
+	if (::InterlockedCompareExchange(&m_pBackgroundRefreshState->lQueued, 0, 0) != 0) {
 		if (bUserInitiated)
 			AddLogLine(false, _T("GeoLocation: refresh already in progress."));
 		return false;
@@ -773,12 +786,12 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 	pContext->strDatabaseTempPath = strDatabaseTempPath;
 	pContext->strInstallPath = strDatabasePath;
 	pContext->hNotifyWnd = hNotifyWnd;
-	pContext->pRefreshQueuedFlag = &m_lBackgroundRefreshQueued;
+	pContext->pRefreshState = m_pBackgroundRefreshState;
 	pContext->bProxyEnabled = thePrefs.GetProxySettings().bUseProxy;
 
 	(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
 
-	if (::InterlockedCompareExchange(&m_lBackgroundRefreshQueued, 1, 0) != 0) {
+	if (::InterlockedCompareExchange(&m_pBackgroundRefreshState->lQueued, 1, 0) != 0) {
 		(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
 		(void)LongPathSeams::DeleteFileIfExists(pContext->strDatabaseTempPath);
 		if (bUserInitiated)
@@ -787,7 +800,7 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 	}
 	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED, NULL);
 	if (pThread == NULL) {
-		(void)::InterlockedExchange(&m_lBackgroundRefreshQueued, 0);
+		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 		(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
 		(void)LongPathSeams::DeleteFileIfExists(pContext->strDatabaseTempPath);
 		AddDebugLogLine(false, _T("GeoLocation: failed to start background refresh thread."));
@@ -801,7 +814,7 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 	SBackgroundRefreshContext *pThreadContext = pContext.release();
 	if (pThread->ResumeThread() == static_cast<DWORD>(-1)) {
 		std::unique_ptr<SBackgroundRefreshContext> pCleanupContext(pThreadContext);
-		(void)::InterlockedExchange(&m_lBackgroundRefreshQueued, 0);
+		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strArchiveTempPath);
 		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strDatabaseTempPath);
 		AddDebugLogLine(false, _T("GeoLocation: failed to resume background refresh thread (%u)."), ::GetLastError());
@@ -812,11 +825,16 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 
 void CGeoLocation::HandleBackgroundRefreshResult(bool bUpdated)
 {
-	(void)::InterlockedExchange(&m_lBackgroundRefreshQueued, 0);
+	(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 	if (bUpdated) {
 		Load();
 		RefreshVisibleWindows();
 	}
+}
+
+bool CGeoLocation::IsRefreshQueued() const
+{
+	return ::InterlockedCompareExchange(&m_pBackgroundRefreshState->lQueued, 0, 0) != 0;
 }
 
 const SGeoLocationRecord& CGeoLocation::Lookup(uint32 dwIP) const
@@ -1049,6 +1067,6 @@ UINT AFX_CDECL CGeoLocation::BackgroundRefreshThread(LPVOID pParam)
 cleanup:
 	(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
 	(void)LongPathSeams::DeleteFileIfExists(pContext->strDatabaseTempPath);
-	DeliverBackgroundRefreshCompletion(pContext->hNotifyWnd, UM_GEOLOCATION_UPDATED, bUpdated, pContext->pRefreshQueuedFlag, _T("GeoLocation"));
+	DeliverBackgroundRefreshCompletion(pContext->hNotifyWnd, UM_GEOLOCATION_UPDATED, bUpdated, pContext->pRefreshState, _T("GeoLocation"));
 	return 0;
 }
