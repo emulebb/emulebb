@@ -280,6 +280,20 @@ namespace
 		return s_hTerminate == NULL && s_pSocketThread == NULL && uAcceptedThreads == 0;
 	}
 
+	void CleanupFailedListenerStartup(const bool bSslStarted)
+	{
+		if (s_pSocketThread != NULL) {
+			::StopSockets();
+			return;
+		}
+		if (bSslStarted)
+			StopSSL();
+		if (s_hTerminate != NULL) {
+			VERIFY(::CloseHandle(s_hTerminate));
+			s_hTerminate = NULL;
+		}
+	}
+
 	bool WaitForSocketEventOrTerminate(const SOCKET hSocket, HANDLE hEvent)
 	{
 		HANDLE pWait[] = {hEvent, s_hTerminate};
@@ -856,20 +870,38 @@ void StartSockets(CWebServer *pThis)
 
 	s_hTerminate = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (s_hTerminate != NULL) {
-		if (StartSSL()) {
-			StopSSL();
-			VERIFY(::CloseHandle(s_hTerminate));
-			s_hTerminate = NULL;
-			return;
-		}
+		bool bSslStarted = false;
+		CWinThread *pNewSocketThread = NULL;
+		try {
+			if (StartSSL()) {
+				StopSSL();
+				VERIFY(::CloseHandle(s_hTerminate));
+				s_hTerminate = NULL;
+				return;
+			}
+			bSslStarted = true;
 
-		// - do NOT use Windows API 'CreateThread' to create a thread which uses MFC/CRT -> lot of mem leaks!
-		// - because we want to wait on the thread handle,
-		//   we have to disable 'CWinThread::m_AutoDelete' -> can't use 'AfxBeginThread'
-		s_pSocketThread = new CWinThread(WebSocketListeningFunc, (LPVOID)pThis);
-		s_pSocketThread->m_bAutoDelete = FALSE;
-		if (!s_pSocketThread->CreateThread())
-			StopSockets();
+			// - do NOT use Windows API 'CreateThread' to create a thread which uses MFC/CRT -> lot of mem leaks!
+			// - because we want to wait on the thread handle,
+			//   we have to disable 'CWinThread::m_AutoDelete' -> can't use 'AfxBeginThread'
+			pNewSocketThread = new CWinThread(WebSocketListeningFunc, (LPVOID)pThis);
+			pNewSocketThread->m_bAutoDelete = FALSE;
+			s_pSocketThread = pNewSocketThread;
+			pNewSocketThread = NULL;
+			if (!s_pSocketThread->CreateThread())
+				StopSockets();
+		} catch (CException *ex) {
+			if (pNewSocketThread != NULL)
+				delete pNewSocketThread;
+			CleanupFailedListenerStartup(bSslStarted);
+			DebugLogError(_T("Web Interface listener startup failed with %s"), (LPCTSTR)CExceptionStr(*ex));
+			ex->Delete();
+		} catch (...) {
+			if (pNewSocketThread != NULL)
+				delete pNewSocketThread;
+			CleanupFailedListenerStartup(bSslStarted);
+			DebugLogError(_T("Web Interface listener startup failed with an unexpected exception"));
+		}
 	}
 }
 
