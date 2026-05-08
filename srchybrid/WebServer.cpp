@@ -87,6 +87,19 @@ static BOOL	WSsharedColumnHidden[7];
 static BOOL	WSserverColumnHidden[10];
 static BOOL	WSsearchColumnHidden[4];
 
+static bool IsWebColumnIndexValid(int iColumn, size_t uColumnCount, LPCTSTR pszColumnGroup)
+{
+	if (iColumn >= 0 && static_cast<size_t>(iColumn) < uColumnCount)
+		return true;
+
+	DebugLogWarning(
+		_T("Web Interface ignored invalid %s column index %d (valid range 0-%u)"),
+		pszColumnGroup,
+		iColumn,
+		static_cast<unsigned int>(uColumnCount > 0 ? uColumnCount - 1 : 0));
+	return false;
+}
+
 CWebServer::CWebServer()
 	: m_Templates()
 	, m_uCurIP()
@@ -1006,8 +1019,10 @@ CString CWebServer::_GetServerList(const ThreadData &Data)
 	} else if (sCmd == _T("menu")) {
 		int iMenu = _tstol(_ParseURL(Data.sURL, _T("m")));
 		bool bValue = _ParseURL(Data.sURL, _T("v")) == _T("1");
-		WSserverColumnHidden[iMenu] = bValue;
-		_SaveWIConfigArray(WSserverColumnHidden, _countof(WSserverColumnHidden), _T("serverColumnHidden"));
+		if (IsWebColumnIndexValid(iMenu, _countof(WSserverColumnHidden), _T("server"))) {
+			WSserverColumnHidden[iMenu] = bValue;
+			_SaveWIConfigArray(WSserverColumnHidden, _countof(WSserverColumnHidden), _T("serverColumnHidden"));
+		}
 	}
 
 	CString strTmp(_ParseURL(Data.sURL, _T("sortreverse")));
@@ -1447,19 +1462,22 @@ CString CWebServer::_GetTransferList(const ThreadData &Data)
 
 	if (HTTPTemp == _T("menudown")) {
 		int iMenu = _tstol(_ParseURL(Data.sURL, _T("m")));
-		WSdownloadColumnHidden[iMenu] = (_tstol(_ParseURL(Data.sURL, _T("v"))) != 0);
-
-		CIni ini(thePrefs.GetConfigFile(), _T("WebServer"));
-
-		_SaveWIConfigArray(WSdownloadColumnHidden, _countof(WSdownloadColumnHidden), _T("downloadColumnHidden"));
+		if (IsWebColumnIndexValid(iMenu, _countof(WSdownloadColumnHidden), _T("download"))) {
+			WSdownloadColumnHidden[iMenu] = (_tstol(_ParseURL(Data.sURL, _T("v"))) != 0);
+			_SaveWIConfigArray(WSdownloadColumnHidden, _countof(WSdownloadColumnHidden), _T("downloadColumnHidden"));
+		}
 	} else if (HTTPTemp == _T("menuup")) {
 		int iMenu = _tstol(_ParseURL(Data.sURL, _T("m")));
-		WSuploadColumnHidden[iMenu] = (_tstol(_ParseURL(Data.sURL, _T("v"))) != 0);
-		_SaveWIConfigArray(WSuploadColumnHidden, _countof(WSuploadColumnHidden), _T("uploadColumnHidden"));
+		if (IsWebColumnIndexValid(iMenu, _countof(WSuploadColumnHidden), _T("upload"))) {
+			WSuploadColumnHidden[iMenu] = (_tstol(_ParseURL(Data.sURL, _T("v"))) != 0);
+			_SaveWIConfigArray(WSuploadColumnHidden, _countof(WSuploadColumnHidden), _T("uploadColumnHidden"));
+		}
 	} else if (HTTPTemp == _T("menuqueue")) {
 		int iMenu = _tstol(_ParseURL(Data.sURL, _T("m")));
-		WSqueueColumnHidden[iMenu] = (_tstol(_ParseURL(Data.sURL, _T("v"))) != 0);
-		_SaveWIConfigArray(WSqueueColumnHidden, _countof(WSqueueColumnHidden), _T("queueColumnHidden"));
+		if (IsWebColumnIndexValid(iMenu, _countof(WSqueueColumnHidden), _T("queue"))) {
+			WSqueueColumnHidden[iMenu] = (_tstol(_ParseURL(Data.sURL, _T("v"))) != 0);
+			_SaveWIConfigArray(WSqueueColumnHidden, _countof(WSqueueColumnHidden), _T("queueColumnHidden"));
+		}
 	} else if (HTTPTemp == _T("menuprio") && bAdmin) {
 		const CString &sPrio(_ParseURL(Data.sURL, _T("p")));
 		int prio;
@@ -2699,8 +2717,10 @@ CString CWebServer::_GetSharedFilesList(const ThreadData &Data)
 	if (_ParseURL(Data.sURL, _T("c")) == _T("menu")) {
 		int iMenu = _tstoi(_ParseURL(Data.sURL, _T("m")));
 		bool bValue = _tstoi(_ParseURL(Data.sURL, _T("v"))) != 0;
-		WSsharedColumnHidden[iMenu] = bValue;
-		_SaveWIConfigArray(WSsharedColumnHidden, _countof(WSsharedColumnHidden), _T("sharedColumnHidden"));
+		if (IsWebColumnIndexValid(iMenu, _countof(WSsharedColumnHidden), _T("shared"))) {
+			WSsharedColumnHidden[iMenu] = bValue;
+			_SaveWIConfigArray(WSsharedColumnHidden, _countof(WSsharedColumnHidden), _T("sharedColumnHidden"));
+		}
 	}
 	if (_ParseURL(Data.sURL, _T("reload")) == _T("true"))
 		SendMessage(theApp.emuledlg->m_hWnd, WEB_GUI_INTERACTION, WEBGUIIA_SHARED_FILES_RELOAD, 0);
@@ -3763,9 +3783,10 @@ CString CWebServer::_GetSearch(const ThreadData &Data)
 	if (_ParseURL(Data.sURL, _T("c")) == _T("menu")) {
 		int iMenu = _tstoi(_ParseURL(Data.sURL, _T("m")));
 		bool bValue = _tstoi(_ParseURL(Data.sURL, _T("v"))) != 0;
-		WSsearchColumnHidden[iMenu] = bValue;
-
-		_SaveWIConfigArray(WSsearchColumnHidden, _countof(WSsearchColumnHidden), _T("searchColumnHidden"));
+		if (IsWebColumnIndexValid(iMenu, _countof(WSsearchColumnHidden), _T("search"))) {
+			WSsearchColumnHidden[iMenu] = bValue;
+			_SaveWIConfigArray(WSsearchColumnHidden, _countof(WSsearchColumnHidden), _T("searchColumnHidden"));
+		}
 	}
 
 	if (!_ParseURL(Data.sURL, _T("tosearch")).IsEmpty() && bSessionAdmin) {
