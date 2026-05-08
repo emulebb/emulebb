@@ -548,6 +548,9 @@ json BuildTransferDetailsJson(CPartFile &rPartFile)
  */
 json BuildSharedFileJson(const CKnownFile &rKnownFile)
 {
+	const bool bSharedByRule = theApp.sharedfiles != NULL
+		&& WebServerJsonSeams::BuildSharedByRuleFlag(theApp.sharedfiles->ShouldBeShared(rKnownFile.GetSharedDirectory(), NULL, false));
+
 	return json{
 		{"hash", StdUtf8FromCString(HashToHex(rKnownFile.GetFileHash()))},
 		{"name", StdUtf8FromCString(rKnownFile.GetFileName())},
@@ -570,7 +573,7 @@ json BuildSharedFileJson(const CKnownFile &rKnownFile)
 		{"hasComment", rKnownFile.HasComment()},
 		{"userRating", rKnownFile.UserRating()},
 		{"publishedEd2k", rKnownFile.GetPublishedED2K()},
-		{"sharedByRule", true}
+		{"sharedByRule", bSharedByRule}
 	};
 }
 

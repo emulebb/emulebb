@@ -66,6 +66,15 @@ struct SApiAuthResult
 	}
 };
 
+/**
+ * @brief Converts the native directory-rule lookup into the public shared-file
+ * metadata flag. Single-file shares do not count as rule-backed shares.
+ */
+inline bool BuildSharedByRuleFlag(const bool bDirectoryRuleMatched)
+{
+	return bDirectoryRuleMatched;
+}
+
 inline std::string ToLowerAscii(const std::string &rValue)
 {
 	std::string result(rValue);
