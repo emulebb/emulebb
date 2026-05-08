@@ -43,4 +43,36 @@ inline bool TryGetPacketOpcodeForLog(const unsigned char *pBuffer, const int nPa
 	rOpcode = pBuffer[1];
 	return true;
 }
+
+/**
+ * @brief Release 1 outgoing client UDP encryption policy.
+ *
+ * Client UDP obfuscation follows the global crypt-layer preference for both
+ * ED2K peer UDP and Kad UDP sends. Inbound encrypted datagrams remain accepted
+ * by the encrypted datagram framing path, but disabling the global crypt layer
+ * keeps new outgoing client UDP sends plain.
+ */
+inline bool ShouldQueueOutgoingClientUdpEncryption(
+	const bool bCryptLayerEnabled,
+	const bool bEncryptionRequested,
+	const bool bHasTargetClientHash,
+	const bool bKad,
+	const unsigned int uReceiverVerifyKey)
+{
+	return bCryptLayerEnabled
+		&& bEncryptionRequested
+		&& (bHasTargetClientHash || (bKad && uReceiverVerifyKey != 0u));
+}
+
+/**
+ * @brief Reports whether a queued UDP packet should reserve/apply encryption overhead.
+ */
+inline bool ShouldApplyOutgoingClientUdpEncryptionOverhead(
+	const bool bQueuedForEncryption,
+	const bool bCryptLayerEnabled,
+	const bool bHasPublicIP,
+	const bool bKad)
+{
+	return bQueuedForEncryption && bCryptLayerEnabled && (bHasPublicIP || bKad);
+}
 }
