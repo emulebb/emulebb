@@ -176,7 +176,11 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 			else
 				strClientInfo.Format(_T("%s:%hu"), (LPCTSTR)ipstr(sockAddr.sin_addr), ntohs(sockAddr.sin_port));
 
-			DebugLogWarning(_T("Client UDP socket: prot=0x%02x  opcode=0x%02x  sizeaftercrypt=%u realsize=%u  %s: %s"), pBuffer[0], pBuffer[1], nPacketLen, nRealLen, (LPCTSTR)strError, (LPCTSTR)strClientInfo);
+			unsigned char byOpcode = 0;
+			if (ClientUDPSocketSeams::TryGetPacketOpcodeForLog(pBuffer, nPacketLen, byOpcode))
+				DebugLogWarning(_T("Client UDP socket: prot=0x%02x  opcode=0x%02x  sizeaftercrypt=%u realsize=%u  %s: %s"), pBuffer[0], byOpcode, nPacketLen, nRealLen, (LPCTSTR)strError, (LPCTSTR)strClientInfo);
+			else
+				DebugLogWarning(_T("Client UDP socket: prot=0x%02x  opcode=<missing>  sizeaftercrypt=%u realsize=%u  %s: %s"), pBuffer[0], nPacketLen, nRealLen, (LPCTSTR)strError, (LPCTSTR)strClientInfo);
 		}
 	} else if (nPacketLen == SOCKET_ERROR) {
 		DWORD dwError = WSAGetLastError();
