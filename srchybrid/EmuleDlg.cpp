@@ -3929,9 +3929,9 @@ LRESULT CemuleDlg::OnWebServerClearCompleted(WPARAM wParam, LPARAM lParam)
 {
 	if (wParam) {
 		uchar *pFileHash = reinterpret_cast<uchar*>(lParam);
-		CKnownFile *file = theApp.knownfiles->FindKnownFileByID(pFileHash);
+		CPartFile *file = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetFileByID(pFileHash) : NULL;
 		if (file)
-			transferwnd->GetDownloadList()->RemoveFile(static_cast<CPartFile*>(file));
+			transferwnd->GetDownloadList()->RemoveFile(file);
 		delete[] pFileHash;
 	} else
 		transferwnd->GetDownloadList()->ClearCompleted(static_cast<int>(lParam));
