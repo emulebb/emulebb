@@ -621,7 +621,8 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 						Data.pSocket->SendData(szBuf, szBuf.GetLength());
 
 						for (UINT r = 1; (uint64)filesize > 0 && r;) {
-							r = file.Read(buffer, SENDFILEBUFSIZE);
+							const UINT uToRead = static_cast<UINT>(std::min<uint64>(SENDFILEBUFSIZE, static_cast<uint64>(filesize)));
+							r = file.Read(buffer, uToRead);
 							filesize -= static_cast<uint64>(r);
 							Data.pSocket->SendData(buffer, r);
 						}
