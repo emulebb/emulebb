@@ -99,6 +99,60 @@ namespace
 		return MBEDTLS_ERR_NET_RECV_FAILED;
 	}
 
+	bool DrainWebSocketSendQueue(CWebSocket &rWebSocket, const SOCKET hSocket, const bool bUseHttps)
+	{
+		while (rWebSocket.m_pHead) {
+			if (rWebSocket.m_pHead->m_pToSend) {
+				if (bUseHttps) {
+					bool bWouldBlock = false;
+					for (;;) {
+						int nRes = mbedtls_ssl_write(
+							reinterpret_cast<mbedtls_ssl_context*>(rWebSocket.m_ssl),
+							reinterpret_cast<unsigned char*>(rWebSocket.m_pHead->m_pToSend),
+							rWebSocket.m_pHead->m_dwSize);
+						if (nRes > 0) {
+							rWebSocket.m_pHead->m_pToSend += nRes;
+							rWebSocket.m_pHead->m_dwSize -= nRes;
+							if (rWebSocket.m_pHead->m_dwSize)
+								continue;
+						}
+						if (!rWebSocket.m_pHead->m_dwSize)
+							break;
+						if (IsTlsWant(nRes)) {
+							bWouldBlock = true;
+							break;
+						}
+						return false;
+					}
+					if (bWouldBlock)
+						break;
+				} else {
+					int nRes = send(hSocket, rWebSocket.m_pHead->m_pToSend, rWebSocket.m_pHead->m_dwSize, 0);
+					if (nRes != static_cast<int>(rWebSocket.m_pHead->m_dwSize)) {
+						if (nRes) {
+							if ((nRes > 0) && (nRes < static_cast<int>(rWebSocket.m_pHead->m_dwSize))) {
+								rWebSocket.m_pHead->m_pToSend += nRes;
+								rWebSocket.m_pHead->m_dwSize -= nRes;
+							} else if (WSAEWOULDBLOCK != WSAGetLastError())
+								rWebSocket.m_bValid = false;
+						}
+						break;
+					}
+				}
+			} else if (shutdown(hSocket, SD_SEND)) {
+				rWebSocket.m_bValid = false;
+				break;
+			}
+
+			CWebSocket::CChunk *pNext = rWebSocket.m_pHead->m_pNext;
+			delete rWebSocket.m_pHead;
+			rWebSocket.m_pHead = pNext;
+			if (rWebSocket.m_pHead == NULL)
+				rWebSocket.m_pTail = NULL;
+		}
+		return true;
+	}
+
 	void CloseTrackedThread(std::vector<AcceptedThreadState>::iterator &rIt)
 	{
 		delete rIt->pThread;
@@ -517,7 +571,7 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 						if (!stEvents.lNetworkEvents)
 							break; //no more events till now
 
-						if (FD_READ & stEvents.lNetworkEvents)
+						if (FD_READ & stEvents.lNetworkEvents) {
 							for (;;) {
 								char pBuf[0x1000];
 								int nRes;
@@ -537,60 +591,16 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 								}
 								stWebSocket.OnReceived(pBuf, nRes, ad);
 							}
+							if (thePrefs.GetWebUseHttps() && stWebSocket.m_bValid && stWebSocket.m_pHead && !DrainWebSocketSendQueue(stWebSocket, hSocket, true))
+								goto thread_exit;
+						}
 
 						if (FD_CLOSE & stEvents.lNetworkEvents)
 							stWebSocket.m_bCanRecv = false;
 
 						if (FD_WRITE & stEvents.lNetworkEvents)
-							// send what is left in our tails
-							while (stWebSocket.m_pHead) {
-								if (stWebSocket.m_pHead->m_pToSend) {
-									if (thePrefs.GetWebUseHttps()) {
-										bool bWouldBlock = false;
-										for (;;) {
-											int nRes = mbedtls_ssl_write((mbedtls_ssl_context*)stWebSocket.m_ssl, (unsigned char*)stWebSocket.m_pHead->m_pToSend, stWebSocket.m_pHead->m_dwSize);
-											if (nRes > 0) {
-												stWebSocket.m_pHead->m_pToSend += nRes;
-												stWebSocket.m_pHead->m_dwSize -= nRes;
-												if (stWebSocket.m_pHead->m_dwSize)
-													continue;
-											}
-											if (!stWebSocket.m_pHead->m_dwSize)
-												break;
-											if (IsTlsWant(nRes)) {
-												bWouldBlock = true;
-												break;
-											}
-											if (nRes == MBEDTLS_ERR_NET_CONN_RESET || !IsTlsWant(nRes))
-												goto thread_exit;
-										};
-										if (bWouldBlock)
-											break;
-									} else {
-										int nRes = send(hSocket, stWebSocket.m_pHead->m_pToSend, stWebSocket.m_pHead->m_dwSize, 0);
-										if (nRes != (int)stWebSocket.m_pHead->m_dwSize) {
-											if (nRes)
-												if ((nRes > 0) && (nRes < (int)stWebSocket.m_pHead->m_dwSize)) {
-													stWebSocket.m_pHead->m_pToSend += nRes;
-													stWebSocket.m_pHead->m_dwSize -= nRes;
-
-												} else if (WSAEWOULDBLOCK != WSAGetLastError())
-													stWebSocket.m_bValid = false;
-												break;
-										}
-									}
-								} else if (shutdown(hSocket, SD_SEND)) {
-									stWebSocket.m_bValid = false;
-									break;
-								}
-
-								// erase this chunk
-								CWebSocket::CChunk *pNext = stWebSocket.m_pHead->m_pNext;
-								delete stWebSocket.m_pHead;
-								stWebSocket.m_pHead = pNext;
-								if (stWebSocket.m_pHead == NULL)
-									stWebSocket.m_pTail = NULL;
-							}
+							if (!DrainWebSocketSendQueue(stWebSocket, hSocket, thePrefs.GetWebUseHttps()))
+								goto thread_exit;
 					}
 				}
 
