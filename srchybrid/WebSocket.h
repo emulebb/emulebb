@@ -14,6 +14,14 @@ public:
 	class CChunk
 	{
 	public:
+		CChunk()
+			: m_pData(NULL)
+			, m_pToSend(NULL)
+			, m_pNext(NULL)
+			, m_dwSize(0)
+		{
+		}
+
 		char *m_pData;
 		char *m_pToSend;
 		CChunk *m_pNext;
