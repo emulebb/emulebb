@@ -22,6 +22,14 @@ static char THIS_FILE[] = __FILE__;
 
 static HANDLE s_hTerminate = NULL;
 static CWinThread *s_pSocketThread = NULL;
+static CCriticalSection s_acceptedThreadLock;
+
+struct AcceptedThreadState
+{
+	CWinThread *pThread;
+};
+
+static std::vector<AcceptedThreadState> s_acceptedThreads;
 
 mbedtls_ssl_config conf;
 mbedtls_x509_crt srvcert;
@@ -38,6 +46,97 @@ typedef struct
 
 namespace
 {
+	const DWORD kWebSocketThreadShutdownTimeoutMs = 10000;
+
+	bool IsTlsWant(const int nResult)
+	{
+		return nResult == MBEDTLS_ERR_SSL_WANT_READ || nResult == MBEDTLS_ERR_SSL_WANT_WRITE;
+	}
+
+	void CloseTrackedThread(std::vector<AcceptedThreadState>::iterator &rIt)
+	{
+		delete rIt->pThread;
+		rIt = s_acceptedThreads.erase(rIt);
+	}
+
+	void ReapAcceptedThreadHandles()
+	{
+		CSingleLock lock(&s_acceptedThreadLock, TRUE);
+		for (std::vector<AcceptedThreadState>::iterator it = s_acceptedThreads.begin(); it != s_acceptedThreads.end();) {
+			const DWORD dwWaitResult = ::WaitForSingleObject(it->pThread->m_hThread, 0);
+			if (dwWaitResult == WAIT_OBJECT_0 || dwWaitResult == WAIT_FAILED) {
+				if (dwWaitResult == WAIT_FAILED)
+					DebugLogWarning(_T("Web Interface accepted-client thread wait failed while reaping finished threads: %lu"), ::GetLastError());
+				CloseTrackedThread(it);
+			} else
+				++it;
+		}
+	}
+
+	void TrackAcceptedThread(CWinThread *pThread)
+	{
+		ASSERT(pThread != NULL);
+		if (pThread == NULL || pThread->m_hThread == NULL)
+			return;
+
+		CSingleLock lock(&s_acceptedThreadLock, TRUE);
+		AcceptedThreadState state = {pThread};
+		s_acceptedThreads.push_back(state);
+	}
+
+	bool WaitForAcceptedThreadHandles(const DWORD dwTimeoutMs)
+	{
+		const ULONGLONG ullStart = ::GetTickCount64();
+
+		for (;;) {
+			HANDLE hThread = NULL;
+			{
+				CSingleLock lock(&s_acceptedThreadLock, TRUE);
+				if (s_acceptedThreads.empty())
+					return true;
+				hThread = s_acceptedThreads.front().pThread->m_hThread;
+			}
+
+			DWORD dwWaitMs = INFINITE;
+			if (dwTimeoutMs != INFINITE) {
+				const ULONGLONG ullElapsed = ::GetTickCount64() - ullStart;
+				if (ullElapsed >= dwTimeoutMs)
+					dwWaitMs = 0;
+				else
+					dwWaitMs = static_cast<DWORD>(dwTimeoutMs - ullElapsed);
+			}
+
+			const DWORD dwWaitResult = ::WaitForSingleObject(hThread, dwWaitMs);
+			if (dwWaitResult == WAIT_TIMEOUT) {
+				CSingleLock lock(&s_acceptedThreadLock, TRUE);
+				DebugLogError(_T("Web Interface shutdown timed out with %u accepted-client thread(s) still running"), static_cast<unsigned int>(s_acceptedThreads.size()));
+				return false;
+			}
+			if (dwWaitResult == WAIT_FAILED)
+				DebugLogWarning(_T("Web Interface accepted-client thread wait failed during shutdown: %lu"), ::GetLastError());
+
+			CSingleLock lock(&s_acceptedThreadLock, TRUE);
+			for (std::vector<AcceptedThreadState>::iterator it = s_acceptedThreads.begin(); it != s_acceptedThreads.end(); ++it) {
+				if (it->pThread->m_hThread == hThread) {
+					CloseTrackedThread(it);
+					break;
+				}
+			}
+		}
+	}
+
+	bool WaitForSocketEventOrTerminate(const SOCKET hSocket, HANDLE hEvent)
+	{
+		HANDLE pWait[] = {hEvent, s_hTerminate};
+		const DWORD dwWaitResult = ::WaitForMultipleObjects(DWORD(_countof(pWait)), pWait, FALSE, INFINITE);
+		if (dwWaitResult != WAIT_OBJECT_0)
+			return false;
+
+		WSANETWORKEVENTS stEvents;
+		return !WSAEnumNetworkEvents(hSocket, hEvent, &stEvents)
+			&& !(stEvents.lNetworkEvents & FD_CLOSE);
+	}
+
 	CStringA GetHttpHeaderValue(const CStringA &strHeader, LPCSTR pszHeaderName)
 	{
 		ASSERT(pszHeaderName != NULL);
@@ -219,10 +318,10 @@ void CWebSocket::SendData(const void *pData, DWORD dwDataSize)
 					}
 					if (!dwDataSize)
 						break;
-					if (nRes == MBEDTLS_ERR_NET_CONN_RESET || !inSet(nRes, MBEDTLS_ERR_SSL_WANT_READ, MBEDTLS_ERR_SSL_WANT_WRITE)) {
-						m_bValid = false;
+					if (IsTlsWant(nRes))
 						break;
-					}
+					m_bValid = false;
+					break;
 				}
 			} else {
 				// try to send it directly
@@ -351,18 +450,21 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 				if (ret)
 					goto thread_exit;
 				mbedtls_ssl_set_bio(&ssl, (void*)&hSocket, mbedtls_net_send, mbedtls_net_recv, NULL);
-				while ((ret = mbedtls_ssl_handshake(&ssl)) != 0)
-					if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
+				while ((ret = mbedtls_ssl_handshake(&ssl)) != 0) {
+					if (!IsTlsWant(ret)) {
 						DebugLogWarning(_T("Web Interface handshake failed: %s"), (LPCTSTR)SSLerror(ret));
 						goto thread_exit;
 					}
+					if (!WaitForSocketEventOrTerminate(hSocket, hEvent))
+						goto thread_exit;
+				}
 			}
 			HANDLE pWait[] = {hEvent, s_hTerminate};
 
 			while (WAIT_OBJECT_0 == ::WaitForMultipleObjects(DWORD(_countof(pWait)), pWait, FALSE, INFINITE)) {
 				while (stWebSocket.m_bValid) {
 					WSANETWORKEVENTS stEvents;
-					if (WSAEnumNetworkEvents(hSocket, NULL, &stEvents))
+					if (WSAEnumNetworkEvents(hSocket, hEvent, &stEvents))
 						stWebSocket.m_bValid = false;
 					else {
 						if (!stEvents.lNetworkEvents)
@@ -376,13 +478,13 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 									nRes = mbedtls_ssl_read((mbedtls_ssl_context*)stWebSocket.m_ssl, (unsigned char*)pBuf, sizeof pBuf);
 								else
 									nRes = recv(hSocket, pBuf, sizeof pBuf, 0);
-								if (nRes == MBEDTLS_ERR_SSL_WANT_READ || nRes == MBEDTLS_ERR_SSL_WANT_WRITE)
-									continue;
+								if (thePrefs.GetWebUseHttps() && IsTlsWant(nRes))
+									break;
 								if (nRes <= 0) {
 									if (!nRes) {
 										stWebSocket.m_bCanRecv = false;
 										stWebSocket.OnReceived(NULL, 0, ad);
-									} else if (WSAEWOULDBLOCK != WSAGetLastError())
+									} else if (thePrefs.GetWebUseHttps() || WSAEWOULDBLOCK != WSAGetLastError())
 										stWebSocket.m_bValid = false;
 									break;
 								}
@@ -397,6 +499,7 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 							while (stWebSocket.m_pHead) {
 								if (stWebSocket.m_pHead->m_pToSend) {
 									if (thePrefs.GetWebUseHttps()) {
+										bool bWouldBlock = false;
 										for (;;) {
 											int nRes = mbedtls_ssl_write((mbedtls_ssl_context*)stWebSocket.m_ssl, (unsigned char*)stWebSocket.m_pHead->m_pToSend, stWebSocket.m_pHead->m_dwSize);
 											if (nRes > 0) {
@@ -407,9 +510,15 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 											}
 											if (!stWebSocket.m_pHead->m_dwSize)
 												break;
-											if (nRes == MBEDTLS_ERR_NET_CONN_RESET || (nRes != MBEDTLS_ERR_SSL_WANT_READ && nRes != MBEDTLS_ERR_SSL_WANT_WRITE))
+											if (IsTlsWant(nRes)) {
+												bWouldBlock = true;
+												break;
+											}
+											if (nRes == MBEDTLS_ERR_NET_CONN_RESET || !IsTlsWant(nRes))
 												goto thread_exit;
 										};
+										if (bWouldBlock)
+											break;
 									} else {
 										int nRes = send(hSocket, stWebSocket.m_pHead->m_pToSend, stWebSocket.m_pHead->m_dwSize, 0);
 										if (nRes != (int)stWebSocket.m_pHead->m_dwSize) {
@@ -452,8 +561,7 @@ thread_exit:
 			if (thePrefs.GetWebUseHttps()) {
 				int ret;
 				while ((ret = mbedtls_ssl_close_notify((mbedtls_ssl_context*)stWebSocket.m_ssl)) < 0)
-					if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE)
-						break;
+					break;
 				mbedtls_ssl_free((mbedtls_ssl_context*)stWebSocket.m_ssl);
 			}
 		}
@@ -489,6 +597,7 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 				if (!WSAEventSelect(hSocket, hEvent, FD_ACCEPT)) {
 					HANDLE pWait[] = {hEvent, s_hTerminate};
 					while (WAIT_OBJECT_0 == ::WaitForMultipleObjects(2, pWait, FALSE, INFINITE)) {
+						ReapAcceptedThreadHandles();
 						for (;;) {
 							SOCKADDR_IN their_addr;
 							int sin_size = (int)sizeof(SOCKADDR_IN);
@@ -513,17 +622,33 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 							}
 
 							if (thePrefs.GetWSIsEnabled()) {
-								SocketData *pData = new SocketData;
+								SocketData *pData = NULL;
+								try {
+									pData = new SocketData;
+								} catch (...) {
+									VERIFY(!closesocket(hAccepted));
+									break;
+								}
 								pData->pThis = pThis;
 								pData->hSocket = hAccepted;
 								pData->incomingaddr = their_addr.sin_addr;
 								// - do NOT use Windows API 'CreateThread' to create a thread which uses MFC/CRT -> lot of mem leaks!
 								// - 'AfxBeginThread' is excessive for our needs.
-								CWinThread *pAcceptThread = new CWinThread(WebSocketAcceptedFunc, (LPVOID)pData);
+								CWinThread *pAcceptThread = NULL;
+								try {
+									pAcceptThread = new CWinThread(WebSocketAcceptedFunc, (LPVOID)pData);
+								} catch (...) {
+									delete pData;
+									VERIFY(!closesocket(hAccepted));
+									break;
+								}
+								pAcceptThread->m_bAutoDelete = FALSE;
 								if (!pAcceptThread->CreateThread()) {
 									delete pAcceptThread;
+									delete pData;
 									VERIFY(!closesocket(hAccepted));
-								}
+								} else
+									TrackAcceptedThread(pAcceptThread);
 							} else
 								VERIFY(!closesocket(hAccepted));
 						}
@@ -606,43 +731,62 @@ void StartSockets(CWebServer *pThis)
 	ASSERT(s_pSocketThread == NULL);
 	s_hTerminate = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (s_hTerminate != NULL) {
+		if (StartSSL()) {
+			StopSSL();
+			VERIFY(::CloseHandle(s_hTerminate));
+			s_hTerminate = NULL;
+			return;
+		}
+
 		// - do NOT use Windows API 'CreateThread' to create a thread which uses MFC/CRT -> lot of mem leaks!
 		// - because we want to wait on the thread handle,
 		//   we have to disable 'CWinThread::m_AutoDelete' -> can't use 'AfxBeginThread'
 		s_pSocketThread = new CWinThread(WebSocketListeningFunc, (LPVOID)pThis);
 		s_pSocketThread->m_bAutoDelete = FALSE;
-		if (!s_pSocketThread->CreateThread() || StartSSL())
+		if (!s_pSocketThread->CreateThread())
 			StopSockets();
 	}
 }
 
 void StopSockets()
 {
-	StopSSL();
-	if (s_pSocketThread) {
+	bool bCanCloseTerminate = true;
+	if (s_hTerminate)
 		VERIFY(::SetEvent(s_hTerminate));
 
+	if (s_pSocketThread) {
 		if (s_pSocketThread->m_hThread) {
 			// because we want to wait on the thread handle we must not use 'CWinThread::m_AutoDelete'.
 			// otherwise we may run into the situation that the CWinThread was already auto-deleted and
 			// the CWinThread::m_hThread is invalid.
 			ASSERT(!s_pSocketThread->m_bAutoDelete);
 
-			DWORD dwWaitRes = ::WaitForSingleObject(s_pSocketThread->m_hThread, 1300);
+			DWORD dwWaitRes = ::WaitForSingleObject(s_pSocketThread->m_hThread, kWebSocketThreadShutdownTimeoutMs);
 			if (dwWaitRes == WAIT_TIMEOUT) {
 				TRACE("*** Failed to wait for websocket thread termination - Timeout\n");
-				VERIFY(::TerminateThread(s_pSocketThread->m_hThread, _UI32_MAX));
-				VERIFY(::CloseHandle(s_pSocketThread->m_hThread));
+				DebugLogError(_T("Web Interface listener thread did not exit within %lu ms"), kWebSocketThreadShutdownTimeoutMs);
+				bCanCloseTerminate = false;
 			} else if (dwWaitRes == WAIT_FAILED) {
 				TRACE("*** Failed to wait for websocket thread termination - Error %d\n", CAsyncSocket::GetLastError());
-				ASSERT(0); // probably invalid thread handle
+				DebugLogError(_T("Web Interface listener thread wait failed: %lu"), ::GetLastError());
+				bCanCloseTerminate = false;
 			}
 		}
-		delete s_pSocketThread;
-		s_pSocketThread = NULL;
+		if (bCanCloseTerminate) {
+			delete s_pSocketThread;
+			s_pSocketThread = NULL;
+		}
 	}
-	if (s_hTerminate) {
+
+	if (!WaitForAcceptedThreadHandles(kWebSocketThreadShutdownTimeoutMs))
+		bCanCloseTerminate = false;
+
+	if (bCanCloseTerminate && s_hTerminate) {
 		VERIFY(::CloseHandle(s_hTerminate));
 		s_hTerminate = NULL;
-	}
+		StopSSL();
+	} else if (!bCanCloseTerminate)
+		DebugLogError(_T("Web Interface termination handle kept open because socket threads are still running"));
+	else
+		StopSSL();
 }
