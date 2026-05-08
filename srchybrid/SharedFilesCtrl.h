@@ -134,7 +134,7 @@ protected:
 	bool ShouldPreserveVirtualListState() const;
 	bool ShouldDisplayFile(const CShareableFile *file) const;
 	void SortVisibleFiles();
-	void AppendVisibleFile(CShareableFile *file);
+	void AppendVisibleFile(CShareableFile *file, bool bUpdateIndex = true);
 	bool HasActiveSortOrder() const;
 	bool NeedsSortReposition(int iIndex) const;
 	bool RepositionFileByCurrentSort(CShareableFile *file, int iIndex);

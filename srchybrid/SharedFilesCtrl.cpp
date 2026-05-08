@@ -808,17 +808,18 @@ bool CSharedFilesCtrl::RepositionFileByCurrentSort(CShareableFile *file, int iIn
 	return true;
 }
 
-void CSharedFilesCtrl::AppendVisibleFile(CShareableFile *file)
+void CSharedFilesCtrl::AppendVisibleFile(CShareableFile *file, const bool bUpdateIndex)
 {
 	if (file == NULL || !ShouldDisplayFile(file))
 		return;
 
 	int iExistingIndex = -1;
-	if (m_mapVisibleFileIndex.Lookup(file, iExistingIndex) && iExistingIndex >= 0)
+	if (bUpdateIndex && m_mapVisibleFileIndex.Lookup(file, iExistingIndex) && iExistingIndex >= 0)
 		return;
 
 	m_aVisibleFiles.push_back(file);
-	m_mapVisibleFileIndex.SetAt(file, static_cast<int>(m_aVisibleFiles.size() - 1));
+	if (bUpdateIndex)
+		m_mapVisibleFileIndex.SetAt(file, static_cast<int>(m_aVisibleFiles.size() - 1));
 }
 
 void CSharedFilesCtrl::AddFile(const CShareableFile *file)
@@ -1026,11 +1027,12 @@ void CSharedFilesCtrl::ReloadFileList()
 	if (bPreserveState)
 		CaptureSharedFilesRepositionState(*this, savedState);
 	ClearVisibleFiles();
+	m_aVisibleFiles.reserve(static_cast<size_t>(theApp.sharedfiles->GetCount()));
 	ApplyVisibleFileCount();
 	theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails();
 
 	for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair))
-		AppendVisibleFile(pair->value);
+		AppendVisibleFile(pair->value, false);
 #if EMULE_COMPILED_STARTUP_PROFILING
 	{
 		CString strPhase;
