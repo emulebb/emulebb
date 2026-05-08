@@ -37,6 +37,8 @@ mbedtls_pk_context pkey;
 mbedtls_ssl_cache_context cache;
 mbedtls_ssl_ticket_context ticket_ctx;
 
+void StopSSL();
+
 typedef struct
 {
 	void	*pThis;
@@ -173,6 +175,12 @@ namespace
 		}
 	}
 
+	size_t GetTrackedAcceptedThreadCount()
+	{
+		CSingleLock lock(&s_acceptedThreadLock, TRUE);
+		return s_acceptedThreads.size();
+	}
+
 	void TrackAcceptedThread(CWinThread *pThread)
 	{
 		ASSERT(pThread != NULL);
@@ -223,6 +231,41 @@ namespace
 				}
 			}
 		}
+	}
+
+	bool TryCompleteDeferredWebSocketShutdown()
+	{
+		bool bCanCloseTerminate = true;
+		if (s_pSocketThread != NULL) {
+			if (s_pSocketThread->m_hThread != NULL) {
+				const DWORD dwWaitRes = ::WaitForSingleObject(s_pSocketThread->m_hThread, 0);
+				if (dwWaitRes == WAIT_OBJECT_0) {
+					delete s_pSocketThread;
+					s_pSocketThread = NULL;
+				} else {
+					if (dwWaitRes == WAIT_FAILED)
+						DebugLogWarning(_T("Web Interface listener thread wait failed while completing deferred shutdown: %lu"), ::GetLastError());
+					bCanCloseTerminate = false;
+				}
+			} else {
+				delete s_pSocketThread;
+				s_pSocketThread = NULL;
+			}
+		}
+
+		ReapAcceptedThreadHandles();
+		const size_t uAcceptedThreads = GetTrackedAcceptedThreadCount();
+		if (uAcceptedThreads != 0)
+			bCanCloseTerminate = false;
+
+		if (bCanCloseTerminate && s_hTerminate != NULL) {
+			VERIFY(::CloseHandle(s_hTerminate));
+			s_hTerminate = NULL;
+			StopSSL();
+			DebugLogWarning(_T("Web Interface completed deferred socket shutdown before restart"));
+		}
+
+		return s_hTerminate == NULL && s_pSocketThread == NULL && uAcceptedThreads == 0;
 	}
 
 	bool WaitForSocketEventOrTerminate(const SOCKET hSocket, HANDLE hEvent)
@@ -783,6 +826,14 @@ void StartSockets(CWebServer *pThis)
 {
 	ASSERT(s_hTerminate == NULL);
 	ASSERT(s_pSocketThread == NULL);
+	if (!TryCompleteDeferredWebSocketShutdown()) {
+		DebugLogError(_T("Web Interface cannot start because previous socket shutdown is still active (listener=%u, accepted=%u, terminate=%u)"),
+			s_pSocketThread != NULL ? 1u : 0u,
+			static_cast<unsigned>(GetTrackedAcceptedThreadCount()),
+			s_hTerminate != NULL ? 1u : 0u);
+		return;
+	}
+
 	s_hTerminate = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (s_hTerminate != NULL) {
 		if (StartSSL()) {
