@@ -501,12 +501,11 @@ void CWebSocket::SendData(const void *pData, DWORD dwDataSize)
 				//-- remember: "nRes" could be "-1" after "send" call
 				int nRes = send(m_hSocket, (char*)pData, dwDataSize, 0);
 
-				if (nRes < (int)dwDataSize && WSAEWOULDBLOCK != WSAGetLastError())
-					m_bValid = false;
-
 				if (nRes > 0) {
 					reinterpret_cast<const char*&>(pData) += nRes;
 					dwDataSize -= nRes;
+				} else if (nRes == SOCKET_ERROR && WSAEWOULDBLOCK != WSAGetLastError()) {
+					m_bValid = false;
 				}
 			}
 		}
