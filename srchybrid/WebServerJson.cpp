@@ -87,9 +87,41 @@ struct SPipeApiError
 
 struct SRestDispatchContext
 {
-	const json *pRequest = NULL;
-	json *pResult = NULL;
-	SPipeApiError *pError = NULL;
+	explicit SRestDispatchContext(const json &rRequest)
+		: request(rRequest)
+		, hComplete(::CreateEvent(NULL, TRUE, FALSE, NULL))
+		, lRefCount(1)
+		, lAbandoned(0)
+	{
+	}
+
+	~SRestDispatchContext()
+	{
+		if (hComplete != NULL)
+			VERIFY(::CloseHandle(hComplete));
+	}
+
+	void AddRef()
+	{
+		::InterlockedIncrement(&lRefCount);
+	}
+
+	void Release()
+	{
+		if (::InterlockedDecrement(&lRefCount) == 0)
+			delete this;
+	}
+
+	json request;
+	json result;
+	SPipeApiError error;
+	HANDLE hComplete;
+	volatile LONG lRefCount;
+	volatile LONG lAbandoned;
+
+private:
+	SRestDispatchContext(const SRestDispatchContext&);
+	SRestDispatchContext& operator=(const SRestDispatchContext&);
 };
 
 bool TryDecodeHash(const json &rValue, uchar *pOutHash, SPipeApiError &rError);
@@ -3432,21 +3464,42 @@ json ExecuteUiThreadCommand(const json &rRequest, SPipeApiError &rError)
 	if (::GetCurrentThreadId() == g_uMainThreadId)
 		return HandleUiCommand(rRequest, rError);
 
-	json result;
-	SRestDispatchContext context;
-	context.pRequest = &rRequest;
-	context.pResult = &result;
-	context.pError = &rError;
-	DWORD_PTR dwDispatchResult = 0;
-	const LRESULT lDispatched = ::SendMessageTimeout(
-		theApp.emuledlg->m_hWnd,
-		WEB_REST_API_COMMAND,
-		0,
-		reinterpret_cast<LPARAM>(&context),
-		SMTO_ABORTIFHUNG | SMTO_BLOCK,
-		static_cast<UINT>(WebServerJsonSeams::kRestUiDispatchTimeoutMs),
-		&dwDispatchResult);
-	if (!WebServerJsonSeams::DidRestUiDispatchComplete(lDispatched)) {
+	SRestDispatchContext *pContext = NULL;
+	try {
+		pContext = new SRestDispatchContext(rRequest);
+	} catch (...) {
+		rError.strCode = "EMULE_ERROR";
+		rError.strMessage = _T("unable to allocate REST dispatch context");
+		return json();
+	}
+
+	if (pContext->hComplete == NULL) {
+		pContext->Release();
+		rError.strCode = "EMULE_ERROR";
+		rError.strMessage = _T("unable to create REST dispatch completion event");
+		return json();
+	}
+
+	pContext->AddRef(); // posted message ownership
+	if (!::PostMessage(theApp.emuledlg->m_hWnd, WEB_REST_API_COMMAND, 0, reinterpret_cast<LPARAM>(pContext))) {
+		pContext->Release();
+		pContext->Release();
+		rError.strCode = "EMULE_UNAVAILABLE";
+		rError.strMessage = _T("main window did not accept REST command");
+		return json();
+	}
+
+	const DWORD dwWait = ::WaitForSingleObject(pContext->hComplete, static_cast<DWORD>(WebServerJsonSeams::kRestUiDispatchTimeoutMs));
+	if (dwWait == WAIT_OBJECT_0) {
+		json result(pContext->result);
+		rError = pContext->error;
+		pContext->Release();
+		return result;
+	}
+
+	::InterlockedExchange(&pContext->lAbandoned, 1);
+	pContext->Release();
+	if (dwWait == WAIT_TIMEOUT) {
 		rError.strCode = "EMULE_UNAVAILABLE";
 		rError.strMessage.Format(
 			_T("main window did not process REST command within %u ms"),
@@ -3454,7 +3507,10 @@ json ExecuteUiThreadCommand(const json &rRequest, SPipeApiError &rError)
 		DebugLogWarning(_T("REST API UI dispatch timed out after %u ms"), static_cast<unsigned int>(WebServerJsonSeams::kRestUiDispatchTimeoutMs));
 		return json();
 	}
-	return result;
+
+	rError.strCode = "EMULE_UNAVAILABLE";
+	rError.strMessage.Format(_T("failed to wait for REST UI dispatch completion - Error %lu"), ::GetLastError());
+	return json();
 }
 }
 
@@ -3482,25 +3538,31 @@ CStringA WebServerJson::SerializeJsonUtf8(const nlohmann::json &rPayload)
 void WebServerJson::RunDispatchedCommand(void *pContext)
 {
 	SRestDispatchContext *const pDispatch = reinterpret_cast<SRestDispatchContext*>(pContext);
-	if (pDispatch == NULL || pDispatch->pRequest == NULL || pDispatch->pResult == NULL || pDispatch->pError == NULL)
+	if (pDispatch == NULL)
 		return;
-	try {
-		*pDispatch->pResult = HandleUiCommand(*pDispatch->pRequest, *pDispatch->pError);
-	} catch (const json::exception &rJsonError) {
-		pDispatch->pError->strCode = "EMULE_ERROR";
-		pDispatch->pError->strMessage.Format(_T("JSON serialization failure: %hs"), rJsonError.what());
-	} catch (CException *pException) {
-		TCHAR szError[512] = {0};
-		if (pException != NULL) {
-			pException->GetErrorMessage(szError, _countof(szError));
-			pException->Delete();
+
+	if (::InterlockedCompareExchange(&pDispatch->lAbandoned, 0, 0) == 0) {
+		try {
+			pDispatch->result = HandleUiCommand(pDispatch->request, pDispatch->error);
+		} catch (const json::exception &rJsonError) {
+			pDispatch->error.strCode = "EMULE_ERROR";
+			pDispatch->error.strMessage.Format(_T("JSON serialization failure: %hs"), rJsonError.what());
+		} catch (CException *pException) {
+			TCHAR szError[512] = {0};
+			if (pException != NULL) {
+				pException->GetErrorMessage(szError, _countof(szError));
+				pException->Delete();
+			}
+			pDispatch->error.strCode = "EMULE_ERROR";
+			pDispatch->error.strMessage = szError[0] != _T('\0') ? CString(szError) : CString(_T("REST UI command failed"));
+		} catch (...) {
+			pDispatch->error.strCode = "EMULE_ERROR";
+			pDispatch->error.strMessage = _T("REST UI command failed");
 		}
-		pDispatch->pError->strCode = "EMULE_ERROR";
-		pDispatch->pError->strMessage = szError[0] != _T('\0') ? CString(szError) : CString(_T("REST UI command failed"));
-	} catch (...) {
-		pDispatch->pError->strCode = "EMULE_ERROR";
-		pDispatch->pError->strMessage = _T("REST UI command failed");
 	}
+	if (pDispatch->hComplete != NULL)
+		VERIFY(::SetEvent(pDispatch->hComplete));
+	pDispatch->Release();
 }
 
 bool WebServerJson::ExecuteInternalCommand(const nlohmann::json &rRequest, nlohmann::json &rResult, CStringA &rErrorCode, CString &rErrorMessage)
