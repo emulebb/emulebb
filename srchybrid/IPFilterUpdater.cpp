@@ -364,18 +364,20 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 	pContext->hNotifyWnd = hNotifyWnd;
 	pContext->bProxyEnabled = thePrefs.GetProxySettings().bUseProxy;
 
-	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
+	m_bBackgroundRefreshQueued = true;
+	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED, NULL);
 	if (pThread == NULL) {
+		m_bBackgroundRefreshQueued = false;
 		(void)LongPathSeams::DeleteFileIfExists(strArchiveTempPath);
 		AddDebugLogLine(false, _T("IPFilter: failed to start background update thread."));
 		return false;
 	}
 
 	pThread->m_bAutoDelete = TRUE;
-	m_bBackgroundRefreshQueued = true;
 	thePrefs.SetIPFilterLastUpdateTime(tNow, true);
 	AddLogLine(false, GetResString(IDS_IPFILTER_AUTO_UPDATE_STARTED), (LPCTSTR)strUpdateUrl);
 	(void)pContext.release();
+	pThread->ResumeThread();
 	return true;
 }
 

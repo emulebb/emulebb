@@ -760,8 +760,10 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 
 	(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
 
-	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
+	m_bBackgroundRefreshQueued = true;
+	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED, NULL);
 	if (pThread == NULL) {
+		m_bBackgroundRefreshQueued = false;
 		(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
 		(void)LongPathSeams::DeleteFileIfExists(pContext->strDatabaseTempPath);
 		AddDebugLogLine(false, _T("GeoLocation: failed to start background refresh thread."));
@@ -769,11 +771,11 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 	}
 
 	pThread->m_bAutoDelete = TRUE;
-	m_bBackgroundRefreshQueued = true;
 	__time64_t tNow = 0;
 	_time64(&tNow);
 	thePrefs.SetGeoLocationLastCheckTime(tNow, true);
 	(void)pContext.release();
+	pThread->ResumeThread();
 	return true;
 }
 
