@@ -327,6 +327,7 @@ void CWebServer::_RemoveFromStatic(const CString &sIP, int nPort)
 
 void CWebServer::AddStatsLine(const UpDown &line)
 {
+	CSingleLock lock(&m_WebStateLock, TRUE);
 	m_Params.PointsForWeb.Add(line);
 	if (m_Params.PointsForWeb.GetCount() > WEB_GRAPH_WIDTH)
 		m_Params.PointsForWeb.RemoveAt(0);
@@ -3083,16 +3084,19 @@ CString CWebServer::_GetGraphs(const ThreadData &Data)
 
 	CString strGraphDownload, strGraphUpload, strGraphCons;
 	LPCTSTR pszFmt = _T("%u");
-	INT_PTR cnt = min(WEB_GRAPH_WIDTH, pThis->m_Params.PointsForWeb.GetCount());
-	for (INT_PTR i = 0; i < cnt; ++i) {
-		const UpDown &pt = pThis->m_Params.PointsForWeb[i];
-		// download
-		strGraphDownload.AppendFormat(pszFmt, (uint32)(pt.download * 1024));
-		// upload
-		strGraphUpload.AppendFormat(pszFmt, (uint32)(pt.upload * 1024));
-		// connections
-		strGraphCons.AppendFormat(pszFmt, (uint32)(pt.connections));
-		pszFmt = _T(",%u");
+	{
+		CSingleLock lock(&pThis->m_WebStateLock, TRUE);
+		INT_PTR cnt = min(WEB_GRAPH_WIDTH, pThis->m_Params.PointsForWeb.GetCount());
+		for (INT_PTR i = 0; i < cnt; ++i) {
+			const UpDown &pt = pThis->m_Params.PointsForWeb[i];
+			// download
+			strGraphDownload.AppendFormat(pszFmt, (uint32)(pt.download * 1024));
+			// upload
+			strGraphUpload.AppendFormat(pszFmt, (uint32)(pt.upload * 1024));
+			// connections
+			strGraphCons.AppendFormat(pszFmt, (uint32)(pt.connections));
+			pszFmt = _T(",%u");
+		}
 	}
 
 	Out.Replace(_T("[GraphDownload]"), strGraphDownload);
