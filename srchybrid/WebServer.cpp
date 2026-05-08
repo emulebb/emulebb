@@ -2875,8 +2875,10 @@ CString CWebServer::_GetSharedFilesList(const ThreadData &Data)
 	CArray<SharedFiles> SharedArray;
 
 	// Populating array
-	for (POSITION pos = BEFORE_START_POSITION; pos != NULL;) {
-		CKnownFile *pFile = theApp.sharedfiles->GetFileNext(pos);
+	CKnownFilesMap sharedFilesSnapshot;
+	theApp.sharedfiles->CopySharedFileMap(sharedFilesSnapshot);
+	for (const CKnownFilesMap::CPair *pair = sharedFilesSnapshot.PGetFirstAssoc(); pair != NULL; pair = sharedFilesSnapshot.PGetNextAssoc(pair)) {
+		CKnownFile *pFile = pair->value;
 		if (pFile != NULL) {
 			bool bPartFile = pFile->IsPartFile();
 
@@ -2995,17 +2997,10 @@ CString CWebServer::_GetSharedFilesList(const ThreadData &Data)
 		CString fname(SharedArray[i].sFileName);	//filename
 		fname.Replace(_T("'"), _T("&#8217;"));
 
-		bool downloadable = false;
-		uchar fileid[MDX_DIGEST_SIZE];
-		if (hash.GetLength() == 32 && DecodeBase16(hash, hash.GetLength(), fileid, _countof(fileid))) {
-			HTTPProcessData.Replace(_T("[hash]"), hash);
-			const CKnownFile *cur_file = theApp.sharedfiles->GetFileByID(fileid);
-			if (cur_file != NULL) {
-				HTTPProcessData.Replace(_T("[FileIsPriority]")
-					, (cur_file->GetUpPriority() == PR_VERYHIGH) ? _T("release") : _T("none"));
-				downloadable = !cur_file->IsPartFile() && (thePrefs.GetMaxWebUploadFileSizeMB() == 0 || SharedArray[i].m_qwFileSize < ((uint64)thePrefs.GetMaxWebUploadFileSizeMB()) * 1024 * 1024);
-			}
-		}
+		HTTPProcessData.Replace(_T("[hash]"), hash);
+		HTTPProcessData.Replace(_T("[FileIsPriority]"), (SharedArray[i].nFilePriority == PR_VERYHIGH) ? _T("release") : _T("none"));
+		const bool downloadable = !SharedArray[i].bIsPartFile
+			&& (thePrefs.GetMaxWebUploadFileSizeMB() == 0 || SharedArray[i].m_qwFileSize < ((uint64)thePrefs.GetMaxWebUploadFileSizeMB()) * 1024 * 1024);
 
 		HTTPProcessData.Replace(_T("[admin]"), bAdmin ? _T("admin") : _T(""));
 		HTTPProcessData.Replace(_T("[ed2k]"), _SpecialChars(ed2k));

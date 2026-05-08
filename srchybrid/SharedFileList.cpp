@@ -655,6 +655,8 @@ CSharedFileList::~CSharedFileList()
 
 void CSharedFileList::CopySharedFileMap(CKnownFilesMap &Files_Map)
 {
+	Files_Map.RemoveAll();
+	CSingleLock listlock(&m_mutWriteList, TRUE);
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair))
 		Files_Map[pair->key] = pair->value;
 }
