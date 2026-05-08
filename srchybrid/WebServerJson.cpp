@@ -3437,7 +3437,23 @@ json ExecuteUiThreadCommand(const json &rRequest, SPipeApiError &rError)
 	context.pRequest = &rRequest;
 	context.pResult = &result;
 	context.pError = &rError;
-	::SendMessage(theApp.emuledlg->m_hWnd, WEB_REST_API_COMMAND, 0, reinterpret_cast<LPARAM>(&context));
+	DWORD_PTR dwDispatchResult = 0;
+	const LRESULT lDispatched = ::SendMessageTimeout(
+		theApp.emuledlg->m_hWnd,
+		WEB_REST_API_COMMAND,
+		0,
+		reinterpret_cast<LPARAM>(&context),
+		SMTO_ABORTIFHUNG | SMTO_BLOCK,
+		static_cast<UINT>(WebServerJsonSeams::kRestUiDispatchTimeoutMs),
+		&dwDispatchResult);
+	if (!WebServerJsonSeams::DidRestUiDispatchComplete(lDispatched)) {
+		rError.strCode = "EMULE_UNAVAILABLE";
+		rError.strMessage.Format(
+			_T("main window did not process REST command within %u ms"),
+			static_cast<unsigned int>(WebServerJsonSeams::kRestUiDispatchTimeoutMs));
+		DebugLogWarning(_T("REST API UI dispatch timed out after %u ms"), static_cast<unsigned int>(WebServerJsonSeams::kRestUiDispatchTimeoutMs));
+		return json();
+	}
 	return result;
 }
 }

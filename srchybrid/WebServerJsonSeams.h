@@ -22,6 +22,7 @@ using json = nlohmann::json;
 static const size_t kMaxSearchQueryLength = 160;
 static const size_t kMaxCategoryNameLength = 128;
 static const size_t kMaxPublicFileNameLength = 255;
+static const UINT kRestUiDispatchTimeoutMs = 15000u;
 
 /**
  * @brief Carries one parsed REST route command together with the normalized
@@ -73,6 +74,14 @@ struct SApiAuthResult
 inline bool BuildSharedByRuleFlag(const bool bDirectoryRuleMatched)
 {
 	return bDirectoryRuleMatched;
+}
+
+/**
+ * @brief Normalizes the Win32 SendMessageTimeout result used by REST dispatch.
+ */
+inline bool DidRestUiDispatchComplete(const LRESULT lSendMessageTimeoutResult)
+{
+	return lSendMessageTimeoutResult != 0;
 }
 
 inline std::string ToLowerAscii(const std::string &rValue)
