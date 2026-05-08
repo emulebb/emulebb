@@ -161,10 +161,13 @@ bool CWebServer::ReloadTemplates()
 	//Last-Modified: <day-name>, <day> <month-name> <year> <hour>:<minute>:<second> GMT
 	//Day and month names must be 3 English letters, 30 characters total.
 	_locale_t locale = _tcreate_locale(LC_TIME, _T("en-US"));
-	TCHAR szTime[32];
+	TCHAR szTime[32] = {0};
 	time_t t = time(NULL);
-	if (!_tcsftime_l(szTime, _countof(szTime), _T("%a, %d %b %Y %H:%M:%S GMT"), gmtime(&t), locale))
+	tm *pGmt = (t != (time_t)-1) ? gmtime(&t) : NULL;
+	if (locale == NULL || pGmt == NULL || !_tcsftime_l(szTime, _countof(szTime), _T("%a, %d %b %Y %H:%M:%S GMT"), pGmt, locale))
 		*szTime = _T('\0');
+	if (locale != NULL)
+		_free_locale(locale);
 	m_Params.sLastModified = szTime;
 	m_Params.sETag = MD5Sum(m_Params.sLastModified).GetHashString();
 
