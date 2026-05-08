@@ -103,7 +103,9 @@ std::string GetSessionId()
 
 bool HasValidSessionCookie(const CStringA &rCookie)
 {
-	return WebServerQBitCompatSeams::HasCookiePair(WebServerJson::ToStdString(rCookie), "SID", GetSessionId());
+	const std::string strSessionId(GetSessionId());
+	return !strSessionId.empty()
+		&& WebServerQBitCompatSeams::HasCookiePair(WebServerJson::ToStdString(rCookie), "SID", strSessionId);
 }
 
 bool ExecuteBridgeCommand(const json &rCommand, json &rResult, CString &rErrorMessage)

@@ -285,9 +285,10 @@ inline std::string TrimCookieToken(const std::string &rValue)
  */
 inline bool HasCookiePair(const std::string &rCookieHeader, const std::string &rName, const std::string &rValue)
 {
-	if (rName.empty())
+	if (rName.empty() || rValue.empty())
 		return false;
 
+	bool bFound = false;
 	size_t uPos = 0;
 	while (uPos <= rCookieHeader.size()) {
 		const std::string::size_type uSemi = rCookieHeader.find(';', uPos);
@@ -296,16 +297,19 @@ inline bool HasCookiePair(const std::string &rCookieHeader, const std::string &r
 			uSemi == std::string::npos ? std::string::npos : (uSemi - uPos)));
 		const std::string::size_type uEquals = token.find('=');
 		if (uEquals != std::string::npos
-			&& token.substr(0, uEquals) == rName
-			&& token.substr(uEquals + 1) == rValue)
+			&& token.substr(0, uEquals) == rName)
 		{
-			return true;
+			if (bFound)
+				return false;
+			if (token.substr(uEquals + 1) != rValue)
+				return false;
+			bFound = true;
 		}
 		if (uSemi == std::string::npos)
 			break;
 		uPos = uSemi + 1;
 	}
-	return false;
+	return bFound;
 }
 
 /**
