@@ -294,10 +294,14 @@ namespace
 		}
 	}
 
-	bool WaitForSocketEventOrTerminate(const SOCKET hSocket, HANDLE hEvent)
+	bool WaitForSocketEventOrTerminate(const SOCKET hSocket, HANDLE hEvent, const DWORD dwTimeoutMs)
 	{
 		HANDLE pWait[] = {hEvent, s_hTerminate};
-		const DWORD dwWaitResult = ::WaitForMultipleObjects(DWORD(_countof(pWait)), pWait, FALSE, INFINITE);
+		const DWORD dwWaitResult = ::WaitForMultipleObjects(DWORD(_countof(pWait)), pWait, FALSE, dwTimeoutMs);
+		if (dwWaitResult == WAIT_TIMEOUT) {
+			DebugLogWarning(_T("Web Interface accepted-client socket timed out after %lu ms"), dwTimeoutMs);
+			return false;
+		}
 		if (dwWaitResult != WAIT_OBJECT_0)
 			return false;
 
@@ -625,13 +629,20 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 						DebugLogWarning(_T("Web Interface handshake failed: %s"), (LPCTSTR)SSLerror(ret));
 						goto thread_exit;
 					}
-					if (!WaitForSocketEventOrTerminate(hSocket, hEvent))
+					if (!WaitForSocketEventOrTerminate(hSocket, hEvent, WebSocketHttpSeams::kAcceptedClientIoTimeoutMs))
 						goto thread_exit;
 				}
 			}
 			HANDLE pWait[] = {hEvent, s_hTerminate};
 
-			while (WAIT_OBJECT_0 == ::WaitForMultipleObjects(DWORD(_countof(pWait)), pWait, FALSE, INFINITE)) {
+			for (;;) {
+				const DWORD dwWaitResult = ::WaitForMultipleObjects(DWORD(_countof(pWait)), pWait, FALSE, static_cast<DWORD>(WebSocketHttpSeams::kAcceptedClientIoTimeoutMs));
+				if (dwWaitResult == WAIT_TIMEOUT) {
+					DebugLogWarning(_T("Web Interface accepted-client socket timed out after %lu ms"), static_cast<DWORD>(WebSocketHttpSeams::kAcceptedClientIoTimeoutMs));
+					break;
+				}
+				if (dwWaitResult != WAIT_OBJECT_0)
+					break;
 				while (stWebSocket.m_bValid) {
 					WSANETWORKEVENTS stEvents;
 					if (WSAEnumNetworkEvents(hSocket, hEvent, &stEvents))
@@ -745,6 +756,13 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 							}
 
 							if (thePrefs.GetWSIsEnabled()) {
+								const size_t uAcceptedThreads = GetTrackedAcceptedThreadCount();
+								if (!WebSocketHttpSeams::CanStartAcceptedClientThread(uAcceptedThreads)) {
+									DebugLogWarning(_T("Web Interface rejected connection from %s because %u accepted-client thread(s) are already active"), (LPCTSTR)ipstr(their_addr.sin_addr.s_addr), static_cast<unsigned int>(uAcceptedThreads));
+									VERIFY(!closesocket(hAccepted));
+									continue;
+								}
+
 								SocketData *pData = NULL;
 								try {
 									pData = new SocketData;

@@ -14,6 +14,8 @@ namespace WebSocketHttpSeams
 {
 static const uint64_t kMaxHttpContentLength = 16ui64 * 1024ui64 * 1024ui64;
 static const uint64_t kMaxHttpHeaderLength = 64ui64 * 1024ui64;
+static const uint32_t kAcceptedClientIoTimeoutMs = 30000u;
+static const size_t kMaxAcceptedClientThreads = 64u;
 
 enum class EHttpHeaderScanResult
 {
@@ -43,6 +45,15 @@ enum class EHeaderValueResult
 inline bool IsSupportedDispatchMethod(const std::string &rMethod)
 {
 	return rMethod == "GET" || rMethod == "POST" || rMethod == "PATCH" || rMethod == "DELETE";
+}
+
+/**
+ * @brief Reports whether another accepted WebServer client thread may be
+ * started without exceeding the R1 resource budget.
+ */
+inline bool CanStartAcceptedClientThread(const size_t uCurrentAcceptedThreads)
+{
+	return uCurrentAcceptedThreads < kMaxAcceptedClientThreads;
 }
 
 /**
