@@ -57,6 +57,16 @@ namespace
 {
 constexpr int kSharedHashCompletionPostRetries = 20;
 constexpr DWORD kSharedHashCompletionPostRetryDelayMs = 25;
+constexpr ULONGLONG kStartupHashProfileInitialSamples = 8;
+constexpr ULONGLONG kStartupHashProfileSampleInterval = 256;
+
+bool ShouldEmitStartupHashProfileSample(const ULONGLONG ullCompletedFiles, const ULONGLONG ullFailedFiles, const INT_PTR iPendingFiles)
+{
+	const ULONGLONG ullObservedFiles = ullCompletedFiles + ullFailedFiles;
+	return ullObservedFiles < kStartupHashProfileInitialSamples
+		|| (ullObservedFiles % kStartupHashProfileSampleInterval) == 0
+		|| iPendingFiles == 0;
+}
 
 CString NormalizeSharedFilePath(const CString &rstrPath)
 {
@@ -698,7 +708,10 @@ bool CSharedFileList::WaitForSharedHashJob(SharedHashJob &rJob)
 				m_sharedHashActiveJob = rJob;
 				m_bSharedHashActive = true;
 #if EMULE_COMPILED_STARTUP_PROFILING
-				if (theApp.IsStartupProfilingEnabled()) {
+				const INT_PTR iPendingHashFiles = static_cast<INT_PTR>(m_sharedHashQueue.size() + m_sharedHashPendingCompletions.size() + 1);
+				if (theApp.IsStartupProfilingEnabled()
+					&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iPendingHashFiles))
+				{
 					theApp.AppendStartupProfileCounter(_T("shared.hash.queue_depth_before_start"), static_cast<ULONGLONG>(m_sharedHashQueue.size() + 1), _T("files"));
 					theApp.AppendStartupProfileCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(m_sharedHashQueue.size()), _T("files"));
 					theApp.AppendStartupProfileCounter(_T("shared.hash.currently_hashing"), 1, _T("files"));
@@ -718,7 +731,9 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 {
 	CString strFilePath(BuildSharedHashFilePath(rJob.strDirectory, rJob.strName));
 #if EMULE_COMPILED_STARTUP_PROFILING
-	if (theApp.IsStartupProfilingEnabled() && rJob.ullQueuedTimestampUs != 0) {
+	const bool bEmitStartupHashProfileSample = theApp.IsStartupProfilingEnabled()
+		&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, GetHashingCount());
+	if (bEmitStartupHashProfileSample && rJob.ullQueuedTimestampUs != 0) {
 		const ULONGLONG ullHashStartUs = theApp.GetStartupProfileTimestampUs();
 		CString strPhase;
 		strPhase.Format(_T("shared.hash.file.queue_wait (%s)"), (LPCTSTR)strFilePath);
@@ -748,7 +763,7 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 		}
 	}
 #if EMULE_COMPILED_STARTUP_PROFILING
-	if (theApp.IsStartupProfilingEnabled()) {
+	if (bEmitStartupHashProfileSample) {
 		CString strPhase;
 		strPhase.Format(_T("shared.hash.file.run (%s)"), (LPCTSTR)strFilePath);
 		theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullHashStartUs), ullHashStartUs);
@@ -1456,10 +1471,13 @@ void CSharedFileList::FileHashingFinished(CKnownFile *file)
 
 	++m_uStartupHashCompletedFiles;
 #if EMULE_COMPILED_STARTUP_PROFILING
-	if (theApp.IsStartupProfilingEnabled()) {
+	const INT_PTR iHashingCount = GetHashingCount();
+	if (theApp.IsStartupProfilingEnabled()
+		&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iHashingCount))
+	{
 		theApp.AppendStartupProfileCounter(_T("shared.hash.completed_files"), m_uStartupHashCompletedFiles, _T("files"));
 		theApp.AppendStartupProfileCounter(_T("shared.hash.failed_files"), m_uStartupHashFailedFiles, _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(GetHashingCount()), _T("files"));
+		theApp.AppendStartupProfileCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(iHashingCount), _T("files"));
 		theApp.AppendStartupProfileCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
 	}
 #endif
@@ -1917,10 +1935,13 @@ void CSharedFileList::HashFailed(UnknownFile_Struct *hashed)
 	MarkStartupCacheDirty();
 	++m_uStartupHashFailedFiles;
 #if EMULE_COMPILED_STARTUP_PROFILING
-	if (theApp.IsStartupProfilingEnabled()) {
+	const INT_PTR iHashingCount = GetHashingCount();
+	if (theApp.IsStartupProfilingEnabled()
+		&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iHashingCount))
+	{
 		theApp.AppendStartupProfileCounter(_T("shared.hash.completed_files"), m_uStartupHashCompletedFiles, _T("files"));
 		theApp.AppendStartupProfileCounter(_T("shared.hash.failed_files"), m_uStartupHashFailedFiles, _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(GetHashingCount()), _T("files"));
+		theApp.AppendStartupProfileCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(iHashingCount), _T("files"));
 		theApp.AppendStartupProfileCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
 	}
 #endif
@@ -1937,10 +1958,13 @@ void CSharedFileList::HashFailed(CSharedFileHashResult *pResult)
 	MarkStartupCacheDirty();
 	++m_uStartupHashFailedFiles;
 #if EMULE_COMPILED_STARTUP_PROFILING
-	if (theApp.IsStartupProfilingEnabled()) {
+	const INT_PTR iHashingCount = GetHashingCount();
+	if (theApp.IsStartupProfilingEnabled()
+		&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iHashingCount))
+	{
 		theApp.AppendStartupProfileCounter(_T("shared.hash.completed_files"), m_uStartupHashCompletedFiles, _T("files"));
 		theApp.AppendStartupProfileCounter(_T("shared.hash.failed_files"), m_uStartupHashFailedFiles, _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(GetHashingCount()), _T("files"));
+		theApp.AppendStartupProfileCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(iHashingCount), _T("files"));
 		theApp.AppendStartupProfileCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
 	}
 #endif
