@@ -53,6 +53,52 @@ namespace
 		return nResult == MBEDTLS_ERR_SSL_WANT_READ || nResult == MBEDTLS_ERR_SSL_WANT_WRITE;
 	}
 
+	struct TlsSocketContext
+	{
+		SOCKET hSocket;
+	};
+
+	int GetMbedTlsSocketTransferSize(const size_t uSize)
+	{
+		return uSize > static_cast<size_t>(INT_MAX) ? INT_MAX : static_cast<int>(uSize);
+	}
+
+	int SendMbedTlsSocket(void *pContext, const unsigned char *pBuffer, size_t uSize)
+	{
+		TlsSocketContext *const pSocketContext = reinterpret_cast<TlsSocketContext*>(pContext);
+		if (pSocketContext == NULL || pSocketContext->hSocket == INVALID_SOCKET)
+			return MBEDTLS_ERR_NET_INVALID_CONTEXT;
+
+		const int nResult = send(pSocketContext->hSocket, reinterpret_cast<const char*>(pBuffer), GetMbedTlsSocketTransferSize(uSize), 0);
+		if (nResult != SOCKET_ERROR)
+			return nResult;
+
+		const int nError = WSAGetLastError();
+		if (nError == WSAEWOULDBLOCK || nError == WSAEINTR)
+			return MBEDTLS_ERR_SSL_WANT_WRITE;
+		if (nError == WSAECONNRESET)
+			return MBEDTLS_ERR_NET_CONN_RESET;
+		return MBEDTLS_ERR_NET_SEND_FAILED;
+	}
+
+	int RecvMbedTlsSocket(void *pContext, unsigned char *pBuffer, size_t uSize)
+	{
+		TlsSocketContext *const pSocketContext = reinterpret_cast<TlsSocketContext*>(pContext);
+		if (pSocketContext == NULL || pSocketContext->hSocket == INVALID_SOCKET)
+			return MBEDTLS_ERR_NET_INVALID_CONTEXT;
+
+		const int nResult = recv(pSocketContext->hSocket, reinterpret_cast<char*>(pBuffer), GetMbedTlsSocketTransferSize(uSize), 0);
+		if (nResult != SOCKET_ERROR)
+			return nResult;
+
+		const int nError = WSAGetLastError();
+		if (nError == WSAEWOULDBLOCK || nError == WSAEINTR)
+			return MBEDTLS_ERR_SSL_WANT_READ;
+		if (nError == WSAECONNRESET)
+			return MBEDTLS_ERR_NET_CONN_RESET;
+		return MBEDTLS_ERR_NET_RECV_FAILED;
+	}
+
 	void CloseTrackedThread(std::vector<AcceptedThreadState>::iterator &rIt)
 	{
 		delete rIt->pThread;
@@ -429,6 +475,7 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 	if (hEvent) {
 		if (!WSAEventSelect(hSocket, hEvent, FD_READ | FD_CLOSE | FD_WRITE)) {
 			mbedtls_ssl_context ssl;
+			TlsSocketContext tlsSocketContext = {hSocket};
 			CWebSocket stWebSocket;
 			stWebSocket.SetParent(pThis);
 			stWebSocket.m_pHead = NULL;
@@ -449,7 +496,7 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 				int ret = mbedtls_ssl_setup(&ssl, &conf);
 				if (ret)
 					goto thread_exit;
-				mbedtls_ssl_set_bio(&ssl, (void*)&hSocket, mbedtls_net_send, mbedtls_net_recv, NULL);
+				mbedtls_ssl_set_bio(&ssl, &tlsSocketContext, SendMbedTlsSocket, RecvMbedTlsSocket, NULL);
 				while ((ret = mbedtls_ssl_handshake(&ssl)) != 0) {
 					if (!IsTlsWant(ret)) {
 						DebugLogWarning(_T("Web Interface handshake failed: %s"), (LPCTSTR)SSLerror(ret));
@@ -567,10 +614,7 @@ thread_exit:
 		}
 		VERIFY(::CloseHandle(hEvent));
 	}
-	if (thePrefs.GetWebUseHttps())
-		mbedtls_net_free((mbedtls_net_context*)&hSocket);
-	else
-		VERIFY(!closesocket(hSocket));
+	VERIFY(!closesocket(hSocket));
 	return 0;
 }
 
