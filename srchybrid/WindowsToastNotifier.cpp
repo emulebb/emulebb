@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "WindowsToastNotifier.h"
+#include "Log.h"
 #include "UserMsgs.h"
 #include <map>
 #include <propkey.h>
@@ -33,6 +34,17 @@ namespace
 	constexpr PCWSTR kToastAppId = L"eMule.BB";
 	constexpr PCWSTR kToastShortcutName = L"eMule BB.lnk";
 	constexpr UINT kMaxTrackedToasts = 64;
+
+	void LogToastFailure(LPCTSTR pszContext, const winrt::hresult_error& error)
+	{
+		const CString strMessage(error.message().c_str());
+		DebugLogError(_T("Windows toast: %s failed (0x%08X: %s)"), pszContext, static_cast<DWORD>(static_cast<HRESULT>(error.code())), (LPCTSTR)strMessage);
+	}
+
+	void LogToastFailure(LPCTSTR pszContext)
+	{
+		DebugLogError(_T("Windows toast: %s failed with an unexpected exception."), pszContext);
+	}
 
 	struct ToastPayload
 	{
@@ -253,7 +265,14 @@ struct CWindowsToastNotifier::Impl
 		try {
 			notifier = winrt::Windows::UI::Notifications::ToastNotificationManager::CreateToastNotifier(kToastAppId);
 			bInitialized = true;
+		} catch (const winrt::hresult_error& error) {
+			LogToastFailure(_T("CreateToastNotifier"), error);
+			if (bRoInitialized) {
+				::RoUninitialize();
+				bRoInitialized = false;
+			}
 		} catch (...) {
+			LogToastFailure(_T("CreateToastNotifier"));
 			if (bRoInitialized) {
 				::RoUninitialize();
 				bRoInitialized = false;
@@ -305,7 +324,12 @@ bool CWindowsToastNotifier::Show(HWND hWndNotify, LPCTSTR pszText, TbnMsg nMsgTy
 		while (m_impl->activeToasts.size() > kMaxTrackedToasts)
 			m_impl->activeToasts.erase(m_impl->activeToasts.begin());
 		return true;
+	} catch (const winrt::hresult_error& error) {
+		LogToastFailure(_T("Show"), error);
+		CSingleLock lock(&m_impl->state->lock, TRUE);
+		m_impl->state->payloads.erase(uToastId);
 	} catch (...) {
+		LogToastFailure(_T("Show"));
 		CSingleLock lock(&m_impl->state->lock, TRUE);
 		m_impl->state->payloads.erase(uToastId);
 	}
