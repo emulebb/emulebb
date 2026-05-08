@@ -20,6 +20,9 @@
 #include "SharedFileList.h"
 #include "SharedFileListSeams.h"
 #include "Packets.h"
+#ifndef CRYPTOPP_ENABLE_NAMESPACE_WEAK
+#define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
+#endif
 #include "Kademlia/Kademlia/Kademlia.h"
 #include "kademlia/kademlia/search.h"
 #include "kademlia/kademlia/SearchManager.h"
@@ -134,22 +137,6 @@ bool HasSameDirectoryTextFast(const CString &strLeft, const CString &strRight)
 	return strLeftKey.CompareNoCase(strRightKey) == 0;
 }
 
-bool UpdateEquivalentStoredPath(CStringList &rList, const CString &rstrCanonicalPath, LPCTSTR pszDebugReason)
-{
-	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
-		const POSITION posCurrent = pos;
-		const CString strExisting(rList.GetNext(pos));
-		if (!PathHelpers::ArePathsEquivalent(strExisting, rstrCanonicalPath))
-			continue;
-		if (strExisting.CompareNoCase(rstrCanonicalPath) != 0) {
-			rList.SetAt(posCurrent, rstrCanonicalPath);
-			DEBUG_ONLY(DebugLog(_T("%s: \"%s\" -> \"%s\""), pszDebugReason, (LPCTSTR)strExisting, (LPCTSTR)rstrCanonicalPath));
-		}
-		return true;
-	}
-	return false;
-}
-
 CKnownFileProgressTargetSnapshot MakePartFileProgressTargetSnapshot(const CPartFile &partFile)
 {
 	CKnownFileProgressTargetSnapshot snapshot{};
@@ -157,22 +144,6 @@ CKnownFileProgressTargetSnapshot MakePartFileProgressTargetSnapshot(const CPartF
 	snapshot.fileSize = static_cast<uint64>(partFile.GetFileSize());
 	snapshot.isPartFile = true;
 	return snapshot;
-}
-
-bool QueuePartFileProgressUpdate(const CKnownFileProgressTargetSnapshot &progressTarget, uint32 uProgress)
-{
-	if (!progressTarget.isPartFile || theApp.emuledlg == NULL)
-		return false;
-
-	CPartFileProgressUpdateRequest *pRequest = new CPartFileProgressUpdateRequest{};
-	memcpy(pRequest->fileHash, progressTarget.fileHash, sizeof pRequest->fileHash);
-	pRequest->fileSize = progressTarget.fileSize;
-	pRequest->progress = uProgress;
-	if (!theApp.emuledlg->PostMessage(UM_PARTFILE_PROGRESS_UPDATE, reinterpret_cast<WPARAM>(pRequest), 0)) {
-		delete pRequest;
-		return false;
-	}
-	return true;
 }
 
 void NotifyStartupSharedFilesModelChanged()
@@ -629,11 +600,35 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	const MD5Sum md5(m_strBetaFileName + CemuleApp::m_sPlatform);
 	m_strBetaFileName.AppendFormat(_T("%s.txt"), (LPCTSTR)md5.GetHashString().Left(6));
 #endif
+#if EMULE_COMPILED_STARTUP_PROFILING
+	const ULONGLONG ullSingleSharedLoadStartUs = theApp.IsStartupProfilingEnabled() ? theApp.GetStartupProfileTimestampUs() : 0ui64;
+#endif
 	LoadSingleSharedFilesList();
+#if EMULE_COMPILED_STARTUP_PROFILING
+	if (theApp.IsStartupProfilingEnabled()) {
+		theApp.AppendStartupProfileCounter(_T("shared.single_file_rules.loaded"), static_cast<ULONGLONG>(m_liSingleSharedFiles.GetCount()), _T("files"));
+		theApp.AppendStartupProfileCounter(_T("shared.single_file_excludes.loaded"), static_cast<ULONGLONG>(m_liSingleExcludedFiles.GetCount()), _T("files"));
+		theApp.AppendStartupProfileLine(_T("shared.single_file_rules.load"), theApp.GetStartupProfileElapsedUs(ullSingleSharedLoadStartUs), ullSingleSharedLoadStartUs);
+	}
+#endif
+#if EMULE_COMPILED_STARTUP_PROFILING
+	const ULONGLONG ullStartupCacheLoadStartUs = theApp.IsStartupProfilingEnabled() ? theApp.GetStartupProfileTimestampUs() : 0ui64;
+#endif
 	(void)TryLoadStartupCache();
 	(void)TryLoadDuplicatePathCache();
+#if EMULE_COMPILED_STARTUP_PROFILING
+	if (theApp.IsStartupProfilingEnabled())
+		theApp.AppendStartupProfileLine(_T("shared.startup_caches.load"), theApp.GetStartupProfileElapsedUs(ullStartupCacheLoadStartUs), ullStartupCacheLoadStartUs);
+#endif
 	m_nLastStartupCacheSave = ::GetTickCount64();
+#if EMULE_COMPILED_STARTUP_PROFILING
+	const ULONGLONG ullInitialScanStartUs = theApp.IsStartupProfilingEnabled() ? theApp.GetStartupProfileTimestampUs() : 0ui64;
+#endif
 	FindSharedFiles(true);
+#if EMULE_COMPILED_STARTUP_PROFILING
+	if (theApp.IsStartupProfilingEnabled())
+		theApp.AppendStartupProfileLine(_T("shared.scan.initial_total"), theApp.GetStartupProfileElapsedUs(ullInitialScanStartUs), ullInitialScanStartUs);
+#endif
 	(void)EnsureSharedHashWorkerStarted();
 }
 
