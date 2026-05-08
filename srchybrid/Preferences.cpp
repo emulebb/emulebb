@@ -18,6 +18,7 @@
 #include <ShlObj.h>
 #include <share.h>
 #include <iphlpapi.h>
+#include <unordered_set>
 #include "emule.h"
 #include "Preferences.h"
 #include "Opcodes.h"
@@ -205,19 +206,20 @@ bool SavePathListToFile(const CString &rstrFullPath, const CStringList &rPaths)
 	return false;
 }
 
+std::wstring MakeDirectoryListLookupKey(const CString &rstrDirectory)
+{
+	CString strKey(rstrDirectory);
+	strKey.MakeLower();
+	return std::wstring(strKey);
+}
+
 void ReplaceCanonicalDirectoryListLocked(CStringList &rTargetList, const CStringList &rInputList)
 {
 	rTargetList.RemoveAll();
+	std::unordered_set<std::wstring> addedDirectoryKeys;
 	for (POSITION pos = rInputList.GetHeadPosition(); pos != NULL;) {
 		const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(rInputList.GetNext(pos)));
-		bool bDuplicate = false;
-		for (POSITION posExisting = rTargetList.GetHeadPosition(); posExisting != NULL;) {
-			if (EqualPaths(rTargetList.GetNext(posExisting), strCanonicalDir)) {
-				bDuplicate = true;
-				break;
-			}
-		}
-		if (!bDuplicate)
+		if (addedDirectoryKeys.insert(MakeDirectoryListLookupKey(strCanonicalDir)).second)
 			rTargetList.AddTail(strCanonicalDir);
 	}
 }
