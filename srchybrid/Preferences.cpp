@@ -1410,17 +1410,6 @@ void CPreferences::SetStandardValues()
 #pragma warning(disable:4774)
 bool CPreferences::IsTempFile(const CString &rstrDirectory, const CString &rstrName)
 {
-	bool bFound = false;
-	for (INT_PTR i = tempdir.GetCount(); --i >= 0;)
-		if (EqualPaths(rstrDirectory, GetTempDir(i))) {
-			bFound = true; //OK, found a directory
-			break;
-		}
-
-	if (!bFound) //not found - not a tempfile...
-		return false;
-
-	// do not share a file from the temp directory, if it matches one of the following patterns
 	CString strNameLower(rstrName);
 	strNameLower.MakeLower();
 	strNameLower += _T('|'); // append an EOS character which we can query for
@@ -1430,13 +1419,22 @@ bool CPreferences::IsTempFile(const CString &rstrDirectory, const CString &rstrN
 		_T("%u.part.met") PARTMET_BAK_EXT _T("%c"),
 		_T("%u.part.met") PARTMET_TMP_EXT _T("%c")
 	};
+	bool bLooksLikeTempFile = false;
 	for (unsigned i = 0; i < _countof(_apszNotSharedExts); ++i) {
 		UINT uNum;
 		TCHAR iChar;
 		// "misuse" the 'scanf' function for a very simple pattern scanning.
-		if (_stscanf(strNameLower, _apszNotSharedExts[i], &uNum, &iChar) == 2 && iChar == _T('|'))
-			return true;
+		if (_stscanf(strNameLower, _apszNotSharedExts[i], &uNum, &iChar) == 2 && iChar == _T('|')) {
+			bLooksLikeTempFile = true;
+			break;
+		}
 	}
+	if (!bLooksLikeTempFile)
+		return false;
+
+	for (INT_PTR i = tempdir.GetCount(); --i >= 0;)
+		if (EqualPaths(rstrDirectory, GetTempDir(i)))
+			return true; //OK, found a directory
 
 	return false;
 }
