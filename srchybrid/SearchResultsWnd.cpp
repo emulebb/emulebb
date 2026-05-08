@@ -295,6 +295,7 @@ bool CSearchResultsWnd::StartSearchFromApi(SSearchParams *pParams, CString &rErr
 	} catch (CMsgBoxException *pException) {
 		rError = pException->m_strMsg;
 		pException->Delete();
+		delete pParams;
 		return false;
 	}
 }
