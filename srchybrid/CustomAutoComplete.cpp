@@ -35,6 +35,7 @@
 #include "stdafx.h"
 #include <share.h>
 #include "CustomAutoComplete.h"
+#include "CustomAutoCompleteSeams.h"
 #include "OtherFunctions.h"
 
 #ifdef _DEBUG
@@ -226,10 +227,9 @@ STDMETHODIMP CCustomAutoComplete::Next(ULONG celt, LPOLESTR *rgelt, ULONG *pcelt
 		if (m_nCurrentElement >= (ULONG)m_asList.GetCount())
 			break;
 
-		rgelt[i] = (LPWSTR)::CoTaskMemAlloc(sizeof(WCHAR) * ((SIZE_T)m_asList[m_nCurrentElement].GetLength() + 1));
-		if (rgelt[i] == NULL)
-			return E_OUTOFMEMORY;
-		wcscpy(rgelt[i], (CStringW)m_asList[m_nCurrentElement]);
+		const HRESULT hrCopy = CustomAutoCompleteSeams::CopyEnumString(m_asList[m_nCurrentElement], rgelt[i]);
+		if (FAILED(hrCopy))
+			return hrCopy;
 
 		if (pceltFetched)
 			++(*pceltFetched);

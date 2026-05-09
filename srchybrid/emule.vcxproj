@@ -458,6 +458,7 @@
     <ClInclude Include="CreditsDlg.h" />
     <ClInclude Include="CreditsThread.h" />
     <ClInclude Include="CustomAutoComplete.h" />
+    <ClInclude Include="CustomAutoCompleteSeams.h" />
     <ClInclude Include="DeadSourceList.h" />
     <ClInclude Include="Debug_FileSize.h" />
     <ClInclude Include="DebugHelpers.h" />
