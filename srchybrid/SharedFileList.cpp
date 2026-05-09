@@ -2346,34 +2346,47 @@ bool CSharedFileList::RequestStartupCacheSave(bool /*bImmediate*/)
 		return false;
 	}
 
-	std::shared_ptr<StartupCacheSaveOperation> pOperation(new StartupCacheSaveOperation{});
-	pOperation->strCachePath = snapshot.strCachePath;
-	pOperation->strDuplicatePathCachePath = snapshot.strDuplicatePathCachePath;
-	UpdateStartupCacheSaveOperationProgress(pOperation, StartupCacheSavePhase::BuildingRecords, 0, static_cast<ULONGLONG>(snapshot.directories.size()));
-	{
-		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
-		m_pStartupCacheSaveOperation = pOperation;
-		m_eStartupCacheSavePhase = StartupCacheSavePhase::BuildingRecords;
-		m_uStartupCacheSaveDirectoriesDone = 0;
-		m_uStartupCacheSaveDirectoriesTotal = static_cast<ULONGLONG>(snapshot.directories.size());
+	try {
+		std::shared_ptr<StartupCacheSaveOperation> pOperation(new StartupCacheSaveOperation{});
+		pOperation->strCachePath = snapshot.strCachePath;
+		pOperation->strDuplicatePathCachePath = snapshot.strDuplicatePathCachePath;
+		UpdateStartupCacheSaveOperationProgress(pOperation, StartupCacheSavePhase::BuildingRecords, 0, static_cast<ULONGLONG>(snapshot.directories.size()));
+		{
+			CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+			m_pStartupCacheSaveOperation = pOperation;
+			m_eStartupCacheSavePhase = StartupCacheSavePhase::BuildingRecords;
+			m_uStartupCacheSaveDirectoriesDone = 0;
+			m_uStartupCacheSaveDirectoriesTotal = static_cast<ULONGLONG>(snapshot.directories.size());
+		}
+
+		std::unique_ptr<StartupCacheSaveThreadRequest> pRequest(new StartupCacheSaveThreadRequest{});
+		pRequest->hNotifyWnd = (theApp.emuledlg != NULL) ? theApp.emuledlg->GetSafeHwnd() : NULL;
+		pRequest->pOperation = pOperation;
+		pRequest->snapshot = std::move(snapshot);
+
+		CWinThread *pThread = AfxBeginThread(&CSharedFileList::StartupCacheSaveThreadProc, pRequest.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
+		if (pThread != NULL) {
+			(void)pRequest.release();
+			return true;
+		}
+	} catch (CMemoryException *ex) {
+		ex->Delete();
+		DebugLogError(_T("Failed to start startup cache save worker after a memory exception"));
+	} catch (CException *ex) {
+		ex->Delete();
+		DebugLogError(_T("Failed to start startup cache save worker after an MFC exception"));
+	} catch (...) {
+		DebugLogError(_T("Failed to start startup cache save worker after an unknown exception"));
 	}
 
-	StartupCacheSaveThreadRequest *pRequest = new StartupCacheSaveThreadRequest{};
-	pRequest->hNotifyWnd = (theApp.emuledlg != NULL) ? theApp.emuledlg->GetSafeHwnd() : NULL;
-	pRequest->pOperation = pOperation;
-	pRequest->snapshot = std::move(snapshot);
-
-	CWinThread *pThread = AfxBeginThread(&CSharedFileList::StartupCacheSaveThreadProc, pRequest, THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
-	if (pThread == NULL) {
-		delete pRequest;
+	{
 		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
 		m_bStartupCacheSaveRunning = false;
 		m_eStartupCacheSavePhase = StartupCacheSavePhase::Idle;
 		m_pStartupCacheSaveOperation.reset();
 		m_nStartupCacheDirtyTick = ::GetTickCount64();
-		return false;
 	}
-	return true;
+	return false;
 }
 
 bool CSharedFileList::AbandonStartupCacheSaveForShutdown()
@@ -3191,8 +3204,19 @@ UINT AFX_CDECL CSharedFileList::StartupCacheSaveThreadProc(LPVOID pParam)
 {
 	std::unique_ptr<StartupCacheSaveThreadRequest> pRequest(static_cast<StartupCacheSaveThreadRequest*>(pParam));
 	std::unique_ptr<StartupCacheSaveResult> pResult(new StartupCacheSaveResult{});
-	if (pRequest)
-		RunStartupCacheSaveWorker(pRequest->snapshot, pRequest->pOperation, *pResult);
+	if (pRequest) {
+		try {
+			RunStartupCacheSaveWorker(pRequest->snapshot, pRequest->pOperation, *pResult);
+		} catch (CMemoryException *ex) {
+			ex->Delete();
+			DebugLogError(_T("Startup cache save worker aborted after a memory exception"));
+		} catch (CException *ex) {
+			ex->Delete();
+			DebugLogError(_T("Startup cache save worker aborted after an MFC exception"));
+		} catch (...) {
+			DebugLogError(_T("Startup cache save worker aborted after an unknown exception"));
+		}
+	}
 
 	bool bPosted = false;
 	std::unique_ptr<StartupCacheSaveThreadCompletion> pCompletion(new StartupCacheSaveThreadCompletion{});
