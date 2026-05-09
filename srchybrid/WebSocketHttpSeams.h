@@ -17,6 +17,8 @@ static const uint64_t kMaxHttpHeaderLength = 64ui64 * 1024ui64;
 static const uint32_t kAcceptedClientIoTimeoutMs = 30000u;
 static const size_t kMaxAcceptedClientThreads = 128u;
 
+#define EMULE_WEBSOCKET_HTTP_SEAMS_HAS_REJECTED_IP_ACTION 1
+
 enum class EHttpHeaderScanResult
 {
 	Incomplete,
@@ -38,6 +40,12 @@ enum class EHeaderValueResult
 	Duplicate
 };
 
+enum class ERejectedRemoteAccessIpAction
+{
+	ContinueAcceptDrain,
+	StopAcceptDrain
+};
+
 /**
  * @brief Reports whether one HTTP method token is supported by the web
  * dispatcher.
@@ -54,6 +62,15 @@ inline bool IsSupportedDispatchMethod(const std::string &rMethod)
 inline bool CanStartAcceptedClientThread(const size_t uCurrentAcceptedThreads)
 {
 	return uCurrentAcceptedThreads < kMaxAcceptedClientThreads;
+}
+
+/**
+ * @brief Keeps the listener draining already-pending accepts after rejecting
+ * one disallowed remote IP address.
+ */
+inline ERejectedRemoteAccessIpAction GetRejectedRemoteAccessIpAction()
+{
+	return ERejectedRemoteAccessIpAction::ContinueAcceptDrain;
 }
 
 /**

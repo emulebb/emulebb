@@ -750,7 +750,9 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 								if (!bAllowedIP) {
 									LogWarning(_T("Web Interface: Rejected connection attempt from %s"), (LPCTSTR)ipstr(their_addr.sin_addr.s_addr));
 									VERIFY(!closesocket(hAccepted));
-									continue;
+									if (WebSocketHttpSeams::GetRejectedRemoteAccessIpAction() == WebSocketHttpSeams::ERejectedRemoteAccessIpAction::ContinueAcceptDrain)
+										continue;
+									break;
 								}
 							}
 
