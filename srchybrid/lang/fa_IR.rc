@@ -1831,7 +1831,6 @@ BEGIN
     IDS_UNVERIFIED          "Unverified تاييد نشده"
     IDS_INVALIDFILEEXT      "پسوند فايل نادرست است"
     IDS_UNKNOWNFILEEXT      "پسوند فايل ناشناخته است"
-    IDS_ENABLEMINIMULE      "فعال کردن ايمول کوچک"
     IDS_DISABLE_AUTOARCHPREV
                             "غير فعال کردن شروع پيش نمايش خودکار آرشيو در پنجره جزئيات فايل"
     IDS_US_STALLEDW4BR      "متوقف شد!در انتظار در خواست قسمت از فايل"

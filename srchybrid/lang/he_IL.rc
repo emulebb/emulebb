@@ -1855,7 +1855,6 @@ BEGIN
     IDS_UNVERIFIED          "ללא אישור"
     IDS_INVALIDFILEEXT      "סיומת קובץ לא תקינה"
     IDS_UNKNOWNFILEEXT      "סיומת קובץ לא ידועה"
-    IDS_ENABLEMINIMULE      "הפעל את מינימיול"
     IDS_DISABLE_AUTOARCHPREV
                             "בטל תצוגה מקדימה אוטומטית של קבצי ארכיון בפרטי קובץ"
     IDS_US_STALLEDW4BR      "מעכב! ממתין לבקשת בלוק."

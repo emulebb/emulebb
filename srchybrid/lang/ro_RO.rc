@@ -1868,7 +1868,6 @@ BEGIN
     IDS_UNVERIFIED          "neverificat"
     IDS_INVALIDFILEEXT      "Extensie fişier invalidă"
     IDS_UNKNOWNFILEEXT      "Extensie fişier necunoscută"
-    IDS_ENABLEMINIMULE      "Activare MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Nu porni automat previzualizarea arhivei în detalii fişier"
     IDS_US_STALLEDW4BR      "Blocat! Aştept cerere bloc."

@@ -1840,7 +1840,6 @@ BEGIN
     IDS_UNVERIFIED          "未经验证的" //"Unverified"
     IDS_INVALIDFILEEXT      "无效的文件扩展名" // "Invalid file extension"
     IDS_UNKNOWNFILEEXT      "未知的文件扩展名" //"Unknown file extension"
-    IDS_ENABLEMINIMULE      "启用 MiniMule" //"Enable MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "关闭在文件详细信息里自动预览压缩文件内容" //"Disable automatic archive preview start in file details"
     IDS_US_STALLEDW4BR      "失速! 等待区块请求." //"Stalled! Waiting for block request."

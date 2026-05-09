@@ -1859,7 +1859,6 @@ BEGIN
     IDS_UNVERIFIED          "i paverifikuar"
     IDS_INVALIDFILEEXT      "Shtojcë skede invalide"
     IDS_UNKNOWNFILEEXT      "Shtojcë skede e panjohur"
-    IDS_ENABLEMINIMULE      "Lejo MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Çaktivizo nisjen e parashikimit automatik në detajet e skedës"
     IDS_US_STALLEDW4BR      "Veçohet! Pritje e kërkesës së bllokut."

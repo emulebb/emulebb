@@ -1857,7 +1857,6 @@ BEGIN
     IDS_UNVERIFIED          "غير مفعل"
     IDS_INVALIDFILEEXT      "امتداد ملف غير مقبول"
     IDS_UNKNOWNFILEEXT      "امتداد ملف غير معروف"
-    IDS_ENABLEMINIMULE      "فعل ايمول بالشكل المصغر"
     IDS_DISABLE_AUTOARCHPREV
                             "عدم تفعيل أظهار الارشيف تلاقائيا بمعلومات الملف"
     IDS_US_STALLEDW4BR      "بأنتظار طلب البلوك"

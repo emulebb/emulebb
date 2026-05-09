@@ -1342,7 +1342,6 @@
 #define IDS_SMTPSERVER                  1409
 #define IDS_PW_SENDERADDRESS            1410
 #define IDS_AVAILABLEPARTS              1411
-#define IDD_MINIMULE                    1412
 #define IDS_NOSOUND                     1412
 #define IDS_PW_RECEIVERADDRESS          1413
 #define IDS_PW_ENABLEEMAIL              1414
@@ -1408,7 +1407,6 @@
 #define IDS_ARCHTYPE                    1478
 #define IDS_ATTRIBUTES                  1479
 #define IDS_LASTMODIFIED                1480
-#define IDR_HTML_MINIMULE               1481
 #define IDR_LISTVIEW                    1481
 #define IDS_RARFULLENCR                 1481
 #define IDS_ARCPARSED                   1482
@@ -2795,7 +2793,6 @@
 #define IDS_ALWAYS_SHOW_TRAY_ICON              2111
 #define IDS_TWEAKS_TT_ALWAYS_SHOW_TRAY_ICON    2112
 #define IDS_COMCTRL32_DLL_TOOOLD               2113
-#define IDS_ENABLEMINIMULE                     2114
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025

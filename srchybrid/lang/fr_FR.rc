@@ -1864,7 +1864,6 @@ BEGIN
     IDS_UNVERIFIED          "non vérifié"
     IDS_INVALIDFILEEXT      "Extension de fichier non valide"
     IDS_UNKNOWNFILEEXT      "Extension de fichier inconnue"
-    IDS_ENABLEMINIMULE      "Activer la MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Désactiver la prévisualisation automatique des archives dans le détail des fichiers"
     IDS_US_STALLEDW4BR      "Blocage ! En attente d'une demande de bloc."

@@ -1869,7 +1869,6 @@ BEGIN
     IDS_UNVERIFIED          "No verificat"
     IDS_INVALIDFILEEXT      "L'extensió de fitxer no és vàlida"
     IDS_UNKNOWNFILEEXT      "extensió de fitxer desconeguda"
-    IDS_ENABLEMINIMULE      "Activa el MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Inhabilita l'inici automàtic de previsualització de fitxers als detalls del fitxer"
     IDS_US_STALLEDW4BR      "Blocat. S'està esperant la sol·licitud de blocatge."

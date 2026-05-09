@@ -1841,7 +1841,6 @@ BEGIN
     IDS_UNVERIFIED          "unbestätigt"
     IDS_INVALIDFILEEXT      "ungültige Dateiendung"
     IDS_UNKNOWNFILEEXT      "unbekanne Dateiendung"
-    IDS_ENABLEMINIMULE      "MiniMule aktivieren"
     IDS_DISABLE_AUTOARCHPREV
                             "deaktiviere automatische Archivvorschau in den Dateidetails"
     IDS_US_STALLEDW4BR      "Wartet auf Blockanfrage."

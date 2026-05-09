@@ -1860,7 +1860,6 @@ BEGIN
     IDS_UNVERIFIED          "chưa kiểm tra"
     IDS_INVALIDFILEEXT      "phần mở rộng tập tin không hợp lệ"
     IDS_UNKNOWNFILEEXT      "phần mở rộng tập tin chưa biết"
-    IDS_ENABLEMINIMULE      "Kích hoạt MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Hủy kích hoạt tự động xem thử tập tin lưu trữ-nén khi xem chi tiết"
     IDS_US_STALLEDW4BR      "Đã bị ngừng! Đang đợi yêu cầu khối."

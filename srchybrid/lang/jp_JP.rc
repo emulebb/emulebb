@@ -1869,7 +1869,6 @@ BEGIN
     IDS_UNVERIFIED          "未検証"
     IDS_INVALIDFILEEXT      "無効なファイル拡張子"
     IDS_UNKNOWNFILEEXT      "未知のファイル拡張子"
-    IDS_ENABLEMINIMULE      "MiniMuleを有効にする"
     IDS_DISABLE_AUTOARCHPREV
                             "ファイルの詳細の表示時に圧縮ファイルのプレビューを無効にする"
     IDS_US_STALLEDW4BR      "待機中! ブロック要求を待機しています"

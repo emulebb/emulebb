@@ -1873,7 +1873,6 @@ BEGIN
     IDS_UNVERIFIED          "uverificeret"
     IDS_INVALIDFILEEXT      "ugyldig filendelse"
     IDS_UNKNOWNFILEEXT      "ukendt filendelse"
-    IDS_ENABLEMINIMULE      "Aktiver MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Deaktiver automatisk arkiv preview start i fildetaljerne"
     IDS_US_STALLEDW4BR      "Afventer! Venter på blokforespørgsel."

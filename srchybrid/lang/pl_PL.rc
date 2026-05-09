@@ -1836,7 +1836,6 @@ BEGIN
     IDS_UNVERIFIED          "Niezweryfikowany"
     IDS_INVALIDFILEEXT      "Niepoprawny rozmiar pliku"
     IDS_UNKNOWNFILEEXT      "Nieznany rozmiar pliku"
-    IDS_ENABLEMINIMULE      "Włącz MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Wyłącz automatyczny podgląd zawartości archiwów"
     IDS_US_STALLEDW4BR      "Zatrzymany! Oczekiwanie na zapytanie o blok."

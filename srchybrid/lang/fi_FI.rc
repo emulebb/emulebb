@@ -1832,7 +1832,6 @@ BEGIN
     IDS_UNVERIFIED          "Vahvistamaton"
     IDS_INVALIDFILEEXT      "Epäkelpo tiedostopääte"
     IDS_UNKNOWNFILEEXT      "Tuntematon tiedostopääte"
-    IDS_ENABLEMINIMULE      "Käytä MiniMulea"
     IDS_DISABLE_AUTOARCHPREV
                             "Älä käytä automaattista arkistotiedoston esikatselua tiedoston ominaisuuksissa"
     IDS_US_STALLEDW4BR      "Keskeytynyt! Odottaa blokkipyyntöä."

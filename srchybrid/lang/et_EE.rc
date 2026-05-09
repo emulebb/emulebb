@@ -1859,7 +1859,6 @@ BEGIN
     IDS_UNVERIFIED          "Vähe tõestatud"
     IDS_INVALIDFILEEXT      "Vigane faili laiend"
     IDS_UNKNOWNFILEEXT      "Tundmatu faili laiend"
-    IDS_ENABLEMINIMULE      "Luba MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Blokeeri automaatne arhiivi faili detailide eelvaatluse käivitumine"
     IDS_US_STALLEDW4BR      "Stalled! Ootan ploki päringuid."

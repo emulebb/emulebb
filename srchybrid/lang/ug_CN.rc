@@ -1830,7 +1830,6 @@ BEGIN
     IDS_UNVERIFIED          "دەلىللەنمىگەن"
     IDS_INVALIDFILEEXT      "ئىناۋەتسىز كېڭەيتىلگەن نام"
     IDS_UNKNOWNFILEEXT      "نامەلۇم كېڭەيتىلگەن نام"
-    IDS_ENABLEMINIMULE      "‫MiniMule قوزغات‬"
     IDS_DISABLE_AUTOARCHPREV
                             "ھۆججەت تەپسىلىي ئۇچۇرىدا پرىس ھۆججىتىنى ئۆزلۈكىدىن ئالدىن كۆزىتىشنى چەكلە"
     IDS_US_STALLEDW4BR      "توختاڭ! بۆلەك ئىلتىماسىنى كۈتۈۋاتىدۇ"
