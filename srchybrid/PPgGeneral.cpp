@@ -166,9 +166,14 @@ void CPPgGeneral::UpdateToolTips()
 	if (!m_toolTip.Init(this))
 		return;
 
+	m_toolTip.SetTool(this, IDC_NICK, GetResString(IDS_PPG_GENERAL_TT_NICK));
+	m_toolTip.SetTool(this, IDC_LANGS, GetResString(IDS_PPG_GENERAL_TT_LANGS));
 	m_toolTip.SetTool(this, IDC_ONLINESIG, GetResString(IDS_PPG_GENERAL_TT_ONLINESIG));
 	m_toolTip.SetTool(this, IDC_BRINGTOFOREGROUND, GetResString(IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND));
+	m_toolTip.SetTool(this, IDC_EXIT, GetResString(IDS_PPG_GENERAL_TT_EXIT));
 	m_toolTip.SetTool(this, IDC_CHECK4UPDATE, GetResString(IDS_PPG_GENERAL_TT_CHECK4_UPDATE));
+	m_toolTip.SetTool(this, IDC_CHECKDAYS, GetResString(IDS_PPG_GENERAL_TT_CHECKDAYS));
+	m_toolTip.SetTool(this, IDC_SPLASHON, GetResString(IDS_PPG_GENERAL_TT_SPLASHON));
 	m_toolTip.SetTool(this, IDC_PREVENTSTANDBY, GetResString(IDS_PPG_GENERAL_TT_PREVENTSTANDBY));
 	m_toolTip.SetTool(this, IDC_WEBSVEDIT, GetResString(IDS_PPG_GENERAL_TT_WEBSVEDIT));
 	m_toolTip.SetTool(this, IDC_ED2KFIX, GetResString(IDS_PPG_GENERAL_TT_ED2_KFIX));

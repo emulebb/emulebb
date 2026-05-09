@@ -87,8 +87,12 @@ void CPPgDirectories::UpdateToolTips()
 		return;
 
 	m_toolTip.SetTool(this, IDC_INCFILES, GetResString(IDS_PPG_DIRECTORIES_TT_INCFILES));
+	m_toolTip.SetTool(this, IDC_SELINCDIR, GetResString(IDS_PPG_DIRECTORIES_TT_SELINCDIR));
 	m_toolTip.SetTool(this, IDC_TEMPFILES, GetResString(IDS_PPG_DIRECTORIES_TT_TEMPFILES));
+	m_toolTip.SetTool(this, IDC_SELTEMPDIR, GetResString(IDS_PPG_DIRECTORIES_TT_SELTEMPDIR));
+	m_toolTip.SetTool(this, IDC_SELTEMPDIRADD, GetResString(IDS_PPG_DIRECTORIES_TT_SELTEMPDIRADD));
 	m_toolTip.SetTool(this, IDC_SHARESELECTOR, GetResString(IDS_PPG_DIRECTORIES_TT_SHARESELECTOR));
+	m_toolTip.SetTool(this, IDC_UNCADD, GetResString(IDS_PPG_DIRECTORIES_TT_UNCADD));
 }
 
 void CPPgDirectories::LoadSettings()

@@ -36,6 +36,7 @@ IMPLEMENT_DYNAMIC(CPPgDebug, CPropertyPage)
 BEGIN_MESSAGE_MAP(CPPgDebug, CPropertyPage)
 	ON_WM_DESTROY()
 	ON_MESSAGE(UM_TREEOPTSCTRL_NOTIFY, OnTreeOptsCtrlNotify)
+	ON_NOTIFY(TVN_GETINFOTIP, IDC_DEBUG_OPTS, OnTvnGetInfoTip)
 	ON_WM_HELPINFO()
 END_MESSAGE_MAP()
 
@@ -57,6 +58,7 @@ void CPPgDebug::ClearAllMembers()
 	memset(m_levels, 0, sizeof m_levels);
 	memset(m_htiInteger, 0, sizeof m_htiInteger);
 	memset(m_iValInteger, 0, sizeof m_iValInteger);
+	m_treeToolTips.clear();
 }
 
 void CPPgDebug::DoDataExchange(CDataExchange *pDX)
@@ -85,17 +87,25 @@ void CPPgDebug::DoDataExchange(CDataExchange *pDX)
 		m_ctrlTreeOptions.AddEditBox(m_htiInteger[idx], RUNTIME_CLASS(CNumTreeOptionsEdit))
 
 		m_htiServer = m_ctrlTreeOptions.InsertCheckBox(_T("Server"), TVI_ROOT, FALSE);
+		SetTreeToolTip(m_htiServer, IDS_PPG_DEBUG_TT_SERVER);
 		ADD_DETAIL_ITEM(0, _T("TCP"), m_htiServer);
 		ADD_DETAIL_ITEM(1, _T("UDP"), m_htiServer);
 		ADD_DETAIL_ITEM(2, _T("Sources"), m_htiServer);
 		ADD_DETAIL_ITEM(3, _T("Searches"), m_htiServer);
 
 		m_htiClient = m_ctrlTreeOptions.InsertCheckBox(_T("Client"), TVI_ROOT, FALSE);
+		SetTreeToolTip(m_htiClient, IDS_PPG_DEBUG_TT_CLIENT);
 		ADD_DETAIL_ITEM(4, _T("TCP"), m_htiClient);
 		ADD_DETAIL_ITEM(5, _T("UDP (eD2K)"), m_htiClient);
 		ADD_DETAIL_ITEM(6, _T("UDP (Kad)"), m_htiClient);
 
 		ADD_INTEGER_ITEM(0, _T("Memory corruption check level"), TVI_ROOT);
+		SetTreeToolTip(m_htiInteger[0], IDS_PPG_DEBUG_TT_HEAP_LEVEL);
+
+		for (unsigned i = 0; i < _countof(m_cb); ++i) {
+			SetTreeToolTip(m_cb[i], IDS_PPG_DEBUG_TT_DETAIL);
+			SetTreeToolTip(m_lv[i], IDS_PPG_DEBUG_TT_DETAIL_LEVEL);
+		}
 
 #undef ADD_DETAIL_ITEM
 #undef ADD_INTEGER_ITEM
@@ -222,4 +232,23 @@ BOOL CPPgDebug::OnHelpInfo(HELPINFO*)
 {
 	OnHelp();
 	return TRUE;
+}
+
+void CPPgDebug::SetTreeToolTip(HTREEITEM item, UINT strid)
+{
+	if (item)
+		m_treeToolTips[item] = GetResString(strid);
+}
+
+void CPPgDebug::OnTvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMTVGETINFOTIP pGetInfoTip = reinterpret_cast<LPNMTVGETINFOTIP>(pNMHDR);
+	if (pGetInfoTip != NULL && pGetInfoTip->pszText != NULL && pGetInfoTip->cchTextMax > 0) {
+		const std::map<HTREEITEM, CString>::const_iterator it = m_treeToolTips.find(pGetInfoTip->hItem);
+		if (it != m_treeToolTips.end()) {
+			_tcsncpy(pGetInfoTip->pszText, it->second, pGetInfoTip->cchTextMax);
+			pGetInfoTip->pszText[pGetInfoTip->cchTextMax - 1] = _T('\0');
+		}
+	}
+	*pResult = 0;
 }

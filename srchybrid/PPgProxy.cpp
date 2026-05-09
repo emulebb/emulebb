@@ -78,6 +78,7 @@ void CPPgProxy::UpdateToolTips()
 	m_toolTip.SetTool(this, IDC_PROXYPORT, GetResString(IDS_PPG_PROXY_TT_PROXYPORT));
 	m_toolTip.SetTool(this, IDC_ENABLEAUTH, GetResString(IDS_PPG_PROXY_TT_ENABLEAUTH));
 	m_toolTip.SetTool(this, IDC_USERNAME_A, GetResString(IDS_PPG_PROXY_TT_USERNAME_A));
+	m_toolTip.SetTool(this, IDC_PASSWORD, GetResString(IDS_PPG_PROXY_TT_PASSWORD));
 }
 
 BOOL CPPgProxy::OnApply()

@@ -183,10 +183,13 @@ void CPPgIRC::UpdateToolTips()
 	if (!m_toolTip.Init(this))
 		return;
 
+	m_toolTip.SetTool(this, IDC_IRC_SERVER_BOX, GetResString(IDS_PPG_IRC_TT_IRC_SERVER_BOX));
+	m_toolTip.SetTool(this, IDC_IRC_NICK_BOX, GetResString(IDS_PPG_IRC_TT_IRC_NICK_BOX));
 	m_toolTip.SetTool(this, IDC_IRC_USECHANFILTER, GetResString(IDS_PPG_IRC_TT_IRC_USECHANFILTER));
 	m_toolTip.SetTool(this, IDC_IRC_USEPERFORM, GetResString(IDS_PPG_IRC_TT_IRC_USEPERFORM));
 	m_toolTip.SetTool(this, IDC_IRC_NAME_BOX, GetResString(IDS_PPG_IRC_TT_IRC_NAME_BOX));
 	m_toolTip.SetTool(this, IDC_IRC_MINUSER_BOX, GetResString(IDS_PPG_IRC_TT_IRC_MINUSER_BOX));
+	m_toolTip.SetTool(this, IDC_IRC_PERFORM_BOX, GetResString(IDS_PPG_IRC_TT_IRC_PERFORM_BOX));
 }
 
 BOOL CPPgIRC::OnKillActive()

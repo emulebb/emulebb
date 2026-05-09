@@ -76,6 +76,7 @@ void CPPgServer::UpdateToolTips()
 		return;
 
 	m_toolTip.SetTool(this, IDC_AUTOSERVER, GetResString(IDS_PPG_SERVER_TT_AUTOSERVER));
+	m_toolTip.SetTool(this, IDC_EDITADR, GetResString(IDS_PPG_SERVER_TT_EDITADR));
 	m_toolTip.SetTool(this, IDC_UPDATESERVERCONNECT, GetResString(IDS_PPG_SERVER_TT_UPDATESERVERCONNECT));
 	m_toolTip.SetTool(this, IDC_UPDATESERVERCLIENT, GetResString(IDS_PPG_SERVER_TT_UPDATESERVERCLIENT));
 	m_toolTip.SetTool(this, IDC_SAFESERVERCONNECT, GetResString(IDS_PPG_SERVER_TT_SAFESERVERCONNECT));

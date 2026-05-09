@@ -86,10 +86,13 @@ void CPPgMessages::UpdateToolTips()
 	if (!m_toolTip.Init(this))
 		return;
 
+	m_toolTip.SetTool(this, IDC_FILTER, GetResString(IDS_PPG_MESSAGES_TT_FILTER));
 	m_toolTip.SetTool(this, IDC_MSGONLYFRIENDS, GetResString(IDS_PPG_MESSAGES_TT_MSGONLYFRIENDS));
 	m_toolTip.SetTool(this, IDC_ADVSPAMFILTER, GetResString(IDS_PPG_MESSAGES_TT_ADVSPAMFILTER));
 	m_toolTip.SetTool(this, IDC_USECAPTCHAS, GetResString(IDS_PPG_MESSAGES_TT_USECAPTCHAS));
 	m_toolTip.SetTool(this, IDC_COMMENTFILTER, GetResString(IDS_PPG_MESSAGES_TT_COMMENTFILTER));
+	m_toolTip.SetTool(this, IDC_INDICATERATINGS, GetResString(IDS_PPG_MESSAGES_TT_INDICATERATINGS));
+	m_toolTip.SetTool(this, IDC_MSHOWSMILEYS, GetResString(IDS_PPG_MESSAGES_TT_MSHOWSMILEYS));
 }
 
 BOOL CPPgMessages::OnApply()

@@ -292,7 +292,14 @@ void CPPgWebServer::UpdateToolTips()
 	if (!m_toolTip.Init(this))
 		return;
 
+	m_toolTip.SetTool(this, IDC_WSENABLED, GetResString(IDS_WEBSERVER_TT_WSENABLED));
+	m_toolTip.SetTool(this, IDC_WS_GZIP, GetResString(IDS_WEBSERVER_TT_WS_GZIP));
 	m_toolTip.SetTool(this, IDC_WEBBINDADDR, GetResString(IDS_WEBSERVER_TT_WEBBINDADDR));
+	m_toolTip.SetTool(this, IDC_WSPORT, GetResString(IDS_WEBSERVER_TT_WSPORT));
+	m_toolTip.SetTool(this, IDC_TMPLPATH, GetResString(IDS_WEBSERVER_TT_TMPLPATH));
+	m_toolTip.SetTool(this, IDC_TMPLBROWSE, GetResString(IDS_WEBSERVER_TT_TMPLBROWSE));
+	m_toolTip.SetTool(this, IDC_WSRELOADTMPL, GetResString(IDS_WEBSERVER_TT_WSRELOADTMPL));
+	m_toolTip.SetTool(this, IDC_WSTIMEOUT, GetResString(IDS_WEBSERVER_TT_WSTIMEOUT));
 	m_toolTip.SetTool(this, IDC_WSAPIKEY, GetResString(IDS_WEBSERVER_TT_WSAPIKEY));
 	m_toolTip.SetTool(this, IDC_WSUPNP, GetResString(IDS_WEBSERVER_TT_WSUPNP));
 	m_toolTip.SetTool(this, IDC_WS_MAXFILEUPLOAD, GetResString(IDS_WEBSERVER_TT_WS_MAXFILEUPLOAD));
@@ -301,6 +308,14 @@ void CPPgWebServer::UpdateToolTips()
 	m_toolTip.SetTool(this, IDC_WS_ALLOWEDIPS_LBL, GetResString(IDS_WEBSERVER_TT_WS_ALLOWEDIPS_LBL));
 	m_toolTip.SetTool(this, IDC_WS_ALLOWHILEVFUNC, GetResString(IDS_WEBSERVER_TT_WS_ALLOWHILEVFUNC));
 	m_toolTip.SetTool(this, IDC_WEB_HTTPS, GetResString(IDS_WEBSERVER_TT_WEB_HTTPS));
+	m_toolTip.SetTool(this, IDC_WEB_GENERATE, GetResString(IDS_WEBSERVER_TT_WEB_GENERATE));
+	m_toolTip.SetTool(this, IDC_CERTPATH, GetResString(IDS_WEBSERVER_TT_CERTPATH));
+	m_toolTip.SetTool(this, IDC_CERTBROWSE, GetResString(IDS_WEBSERVER_TT_CERTBROWSE));
+	m_toolTip.SetTool(this, IDC_KEYPATH, GetResString(IDS_WEBSERVER_TT_KEYPATH));
+	m_toolTip.SetTool(this, IDC_KEYBROWSE, GetResString(IDS_WEBSERVER_TT_KEYBROWSE));
+	m_toolTip.SetTool(this, IDC_WSPASS, GetResString(IDS_WEBSERVER_TT_WSPASS));
+	m_toolTip.SetTool(this, IDC_WSENABLEDLOW, GetResString(IDS_WEBSERVER_TT_WSENABLEDLOW));
+	m_toolTip.SetTool(this, IDC_WSPASSLOW, GetResString(IDS_WEBSERVER_TT_WSPASSLOW));
 }
 
 void CPPgWebServer::LoadSettings()

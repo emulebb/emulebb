@@ -93,7 +93,16 @@ void CPPgScheduler::UpdateToolTips()
 		return;
 
 	m_toolTip.SetTool(this, IDC_ENABLE, GetResString(IDS_PPG_SCHEDULER_TT_ENABLE));
+	m_toolTip.SetTool(this, IDC_REMOVE, GetResString(IDS_PPG_SCHEDULER_TT_REMOVE));
+	m_toolTip.SetTool(this, IDC_NEW, GetResString(IDS_PPG_SCHEDULER_TT_NEW));
+	m_toolTip.SetTool(this, IDC_SCHEDLIST, GetResString(IDS_PPG_SCHEDULER_TT_SCHEDLIST));
+	m_toolTip.SetTool(this, IDC_S_ENABLE, GetResString(IDS_PPG_SCHEDULER_TT_S_ENABLE));
+	m_toolTip.SetTool(this, IDC_S_TITLE, GetResString(IDS_PPG_SCHEDULER_TT_S_TITLE));
+	m_toolTip.SetTool(this, IDC_TIMESEL, GetResString(IDS_PPG_SCHEDULER_TT_TIMESEL));
+	m_toolTip.SetTool(this, IDC_DATETIMEPICKER1, GetResString(IDS_PPG_SCHEDULER_TT_DATETIMEPICKER1));
+	m_toolTip.SetTool(this, IDC_DATETIMEPICKER2, GetResString(IDS_PPG_SCHEDULER_TT_DATETIMEPICKER2));
 	m_toolTip.SetTool(this, IDC_CHECKNOENDTIME, GetResString(IDS_PPG_SCHEDULER_TT_CHECKNOENDTIME));
+	m_toolTip.SetTool(this, IDC_SCHEDACTION, GetResString(IDS_PPG_SCHEDULER_TT_SCHEDACTION));
 	m_toolTip.SetTool(this, IDC_APPLY, GetResString(IDS_PPG_SCHEDULER_TT_APPLY));
 }
 

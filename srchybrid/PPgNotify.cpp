@@ -125,12 +125,24 @@ void CPPgNotify::UpdateToolTips()
 	if (!m_toolTip.Init(this))
 		return;
 
+	m_toolTip.SetTool(this, IDC_CB_TBN_NOSOUND, GetResString(IDS_NOTIFY_TT_CB_TBN_NOSOUND));
 	m_toolTip.SetTool(this, IDC_CB_TBN_USESOUND, GetResString(IDS_NOTIFY_TT_CB_TBN_USESOUND));
 	m_toolTip.SetTool(this, IDC_CB_TBN_USESPEECH, GetResString(IDS_NOTIFY_TT_CB_TBN_USESPEECH));
+	m_toolTip.SetTool(this, IDC_EDIT_TBN_WAVFILE, GetResString(IDS_NOTIFY_TT_EDIT_TBN_WAVFILE));
+	m_toolTip.SetTool(this, IDC_BTN_BROWSE_WAV, GetResString(IDS_NOTIFY_TT_BTN_BROWSE_WAV));
+	m_toolTip.SetTool(this, IDC_CB_TBN_ONLOG, GetResString(IDS_NOTIFY_TT_CB_TBN_ONLOG));
+	m_toolTip.SetTool(this, IDC_CB_TBN_ONCHAT, GetResString(IDS_NOTIFY_TT_CB_TBN_ONCHAT));
 	m_toolTip.SetTool(this, IDC_CB_TBN_POP_ALWAYS, GetResString(IDS_NOTIFY_TT_CB_TBN_POP_ALWAYS));
+	m_toolTip.SetTool(this, IDC_CB_TBN_ONNEWDOWNLOAD, GetResString(IDS_NOTIFY_TT_CB_TBN_ONNEWDOWNLOAD));
+	m_toolTip.SetTool(this, IDC_CB_TBN_ONDOWNLOAD, GetResString(IDS_NOTIFY_TT_CB_TBN_ONDOWNLOAD));
+	m_toolTip.SetTool(this, IDC_CB_TBN_ONNEWVERSION, GetResString(IDS_NOTIFY_TT_CB_TBN_ONNEWVERSION));
+	m_toolTip.SetTool(this, IDC_CB_TBN_IMPORTATNT, GetResString(IDS_NOTIFY_TT_CB_TBN_IMPORTATNT));
 	m_toolTip.SetTool(this, IDC_TBN_DISPLAYMODE, GetResString(IDS_NOTIFY_TT_TBN_DISPLAYMODE));
 	m_toolTip.SetTool(this, IDC_CB_ENABLENOTIFICATIONS, GetResString(IDS_NOTIFY_TT_CB_ENABLENOTIFICATIONS));
 	m_toolTip.SetTool(this, IDC_SMTPSERVER, GetResString(IDS_NOTIFY_TT_SMTPSERVER));
+	m_toolTip.SetTool(this, IDC_EDIT_RECEIVER, GetResString(IDS_NOTIFY_TT_EDIT_RECEIVER));
+	m_toolTip.SetTool(this, IDC_EDIT_SENDER, GetResString(IDS_NOTIFY_TT_EDIT_SENDER));
+	m_toolTip.SetTool(this, IDC_TEST_NOTIFICATION, GetResString(IDS_NOTIFY_TT_TEST_NOTIFICATION));
 }
 
 void CPPgNotify::UpdateControls()

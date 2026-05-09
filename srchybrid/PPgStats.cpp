@@ -142,6 +142,7 @@ void CPPgStats::UpdateToolTips()
 	m_toolTip.SetTool(this, IDC_SLIDER2, GetResString(IDS_PPG_STATS_TT_SLIDER2));
 	m_toolTip.SetTool(this, IDC_SLIDER3, GetResString(IDS_PPG_STATS_TT_SLIDER3));
 	m_toolTip.SetTool(this, IDC_COLORSELECTOR, GetResString(IDS_PPG_STATS_TT_COLORSELECTOR));
+	m_toolTip.SetTool(this, IDC_COLOR_BUTTON, GetResString(IDS_PPG_STATS_TT_COLOR_BUTTON));
 	m_toolTip.SetTool(this, IDC_CGRAPHSCALE, GetResString(IDS_PPG_STATS_TT_CGRAPHSCALE));
 	m_toolTip.SetTool(this, IDC_CRATIO, GetResString(IDS_PPG_STATS_TT_CRATIO));
 }

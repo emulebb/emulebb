@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "TreeOptionsCtrlEx.h"
+#include <map>
 
 #define	MAX_DETAIL_ITEMS	7
 #define	MAX_INTEGER_ITEMS	1
@@ -34,8 +35,10 @@ protected:
 
 	CTreeOptionsCtrlEx m_ctrlTreeOptions;
 	bool m_bInitializedTreeOpts;
+	std::map<HTREEITEM, CString> m_treeToolTips;
 
 	void ClearAllMembers();
+	void SetTreeToolTip(HTREEITEM item, UINT strid);
 
 	virtual BOOL OnInitDialog();
 	virtual BOOL OnApply();
@@ -46,6 +49,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnDestroy();
 	afx_msg LRESULT OnTreeOptsCtrlNotify(WPARAM wParam, LPARAM);
+	afx_msg void OnTvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnHelp();
 	afx_msg BOOL OnHelpInfo(HELPINFO*);
 };
