@@ -673,6 +673,7 @@
     <ClInclude Include="TreePropSheet.h" />
     <ClInclude Include="TreePropSheetPgFrame.h" />
     <ClInclude Include="TreePropSheetPgFrameDef.h" />
+    <ClInclude Include="TrayNotificationSeams.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="UDPSocket.h" />
     <ClInclude Include="WindowsToastNotifier.h" />

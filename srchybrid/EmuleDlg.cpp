@@ -92,6 +92,7 @@
 #include "StringConversion.h"
 #include "BindStartupPolicy.h"
 #include "AppKeyboardShortcutsSeams.h"
+#include "TrayNotificationSeams.h"
 #include "aichsyncthread.h"
 #include "Log.h"
 #include "UserMsgs.h"
@@ -194,6 +195,19 @@ namespace
 	static DWORD GetTrayBalloonInfoFlags(TbnMsg nMsgType)
 	{
 		return nMsgType == TBN_IMPORTANTEVENT ? NIIF_WARNING : NIIF_INFO;
+	}
+
+	static TrayNotificationSeams::ENotifierDisplayMode MapTrayNotifierDisplayMode(ENotifierDisplayMode eDisplayMode)
+	{
+		switch (eDisplayMode) {
+		case ntfdmWindowsToast:
+			return TrayNotificationSeams::ENotifierDisplayMode::WindowsToast;
+		case ntfdmTrayBalloon:
+			return TrayNotificationSeams::ENotifierDisplayMode::TrayBalloon;
+		case ntfdmCustomPopup:
+		default:
+			return TrayNotificationSeams::ENotifierDisplayMode::CustomPopup;
+		}
 	}
 
 	static void PostBindInterfaceChanged(PVOID pContext)
@@ -2719,10 +2733,13 @@ void CemuleDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 
 bool CemuleDlg::ShouldTrayIconBeVisible()
 {
-	return thePrefs.IsAlwaysShowTrayIcon()
-		|| thePrefs.GetNotifierDisplayMode() == ntfdmTrayBalloon
-		|| (thePrefs.GetNotifierDisplayMode() == ntfdmWindowsToast && m_bTrayBalloonFallbackForSession)
-		|| (!IsWindowVisible() && thePrefs.GetMinToTray());
+	TrayNotificationSeams::CTrayVisibilityState state;
+	state.bAlwaysShowTrayIcon = thePrefs.IsAlwaysShowTrayIcon();
+	state.eNotifierDisplayMode = MapTrayNotifierDisplayMode(thePrefs.GetNotifierDisplayMode());
+	state.bTrayBalloonFallbackForSession = m_bTrayBalloonFallbackForSession;
+	state.bMainWindowVisible = IsWindowVisible() != FALSE;
+	state.bMinimizeToTray = thePrefs.GetMinToTray();
+	return TrayNotificationSeams::ShouldTrayIconBeVisible(state);
 }
 
 void CemuleDlg::UpdateTrayVisibility()
