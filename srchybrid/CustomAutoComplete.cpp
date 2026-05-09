@@ -227,6 +227,8 @@ STDMETHODIMP CCustomAutoComplete::Next(ULONG celt, LPOLESTR *rgelt, ULONG *pcelt
 			break;
 
 		rgelt[i] = (LPWSTR)::CoTaskMemAlloc(sizeof(WCHAR) * ((SIZE_T)m_asList[m_nCurrentElement].GetLength() + 1));
+		if (rgelt[i] == NULL)
+			return E_OUTOFMEMORY;
 		wcscpy(rgelt[i], (CStringW)m_asList[m_nCurrentElement]);
 
 		if (pceltFetched)
