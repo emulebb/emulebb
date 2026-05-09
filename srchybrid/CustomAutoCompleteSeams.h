@@ -24,7 +24,7 @@ inline HRESULT CopyEnumString(const CString &rValue, LPOLESTR &rpEnumString, Enu
 	if (pszCopy == NULL)
 		return E_OUTOFMEMORY;
 
-	wcscpy(pszCopy, strValue);
+	wcscpy_s(pszCopy, nChars, strValue);
 	rpEnumString = pszCopy;
 	return S_OK;
 }
