@@ -92,6 +92,26 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 	SOCKADDR_IN sockAddr = {};
 	int iSockAddrLen = sizeof sockAddr;
 	int nRealLen = ReceiveFrom(buffer, sizeof buffer, (LPSOCKADDR)&sockAddr, &iSockAddrLen);
+	if (nRealLen == SOCKET_ERROR) {
+		DWORD dwError = WSAGetLastError();
+		if (dwError == WSAECONNRESET) {
+			// Depending on local and remote OS and depending on used local (remote?) router we may receive
+			// WSAECONNRESET errors. According to some KB articles, this is a special way of winsock to report
+			// that a sent UDP packet was not received by the remote host because it was not listening on
+			// the specified port -> no eMule running there.
+			//
+			// TODO: So, actually we should do something with this information and drop the related Kad node
+			// or eMule client...
+			;
+		} else if (thePrefs.GetVerbose()) {
+			CString strClientInfo;
+			if (iSockAddrLen > 0 && sockAddr.sin_addr.s_addr != 0 && sockAddr.sin_addr.s_addr != INADDR_NONE)
+				strClientInfo.Format(_T(" from %s:%u"), (LPCTSTR)ipstr(sockAddr.sin_addr), ntohs(sockAddr.sin_port));
+			DebugLogError(_T("Error: Client UDP socket, failed to receive data%s: %s"), (LPCTSTR)strClientInfo, (LPCTSTR)GetErrorMessage(dwError, 1));
+		}
+		return;
+	}
+
 	if (theApp.ipfilter->IsFiltered(sockAddr.sin_addr.s_addr) || theApp.clientlist->IsBannedClient(sockAddr.sin_addr.s_addr) || !sockAddr.sin_port)
 		return;
 
@@ -196,23 +216,6 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 				DebugLogWarning(_T("Client UDP socket: prot=0x%02x  opcode=0x%02x  sizeaftercrypt=%u realsize=%u  %s: %s"), pBuffer[0], byOpcode, nPacketLen, nRealLen, (LPCTSTR)strError, (LPCTSTR)strClientInfo);
 			else
 				DebugLogWarning(_T("Client UDP socket: prot=0x%02x  opcode=<missing>  sizeaftercrypt=%u realsize=%u  %s: %s"), pBuffer[0], nPacketLen, nRealLen, (LPCTSTR)strError, (LPCTSTR)strClientInfo);
-		}
-	} else if (nPacketLen == SOCKET_ERROR) {
-		DWORD dwError = WSAGetLastError();
-		if (dwError == WSAECONNRESET) {
-			// Depending on local and remote OS and depending on used local (remote?) router we may receive
-			// WSAECONNRESET errors. According to some KB articles, this is a special way of winsock to report
-			// that a sent UDP packet was not received by the remote host because it was not listening on
-			// the specified port -> no eMule running there.
-			//
-			// TODO: So, actually we should do something with this information and drop the related Kad node
-			// or eMule client...
-			;
-		} else if (thePrefs.GetVerbose()) {
-			CString strClientInfo;
-			if (iSockAddrLen > 0 && sockAddr.sin_addr.s_addr != 0 && sockAddr.sin_addr.s_addr != INADDR_NONE)
-				strClientInfo.Format(_T(" from %s:%u"), (LPCTSTR)ipstr(sockAddr.sin_addr), ntohs(sockAddr.sin_port));
-			DebugLogError(_T("Error: Client UDP socket, failed to receive data%s: %s"), (LPCTSTR)strClientInfo, (LPCTSTR)GetErrorMessage(dwError, 1));
 		}
 	}
 }
