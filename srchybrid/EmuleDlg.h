@@ -143,6 +143,8 @@ public:
 	void SetToolTipsDelay(UINT uMilliseconds);
 	void StartUPnP(bool bReset = true, uint16 nForceTCPPort = 0, uint16 nForceUDPPort = 0);
 	void RefreshUPnP(bool bRequestAnswer = false);
+	/// Captures an operator-requested diagnostic dump for support triage.
+	void CaptureDiagnosticDump(bool bFullMemoryDump);
 	HBRUSH GetCtlColor(CDC*, CWnd*, UINT);
 
 	virtual void OnTrayRButtonUp(CPoint pt);

@@ -3603,6 +3603,16 @@ BEGIN
     IDS_SERVERKEEPALIVETIMEOUT "Server connection refresh interval [min.]"
     IDS_MORE                "&More"
     IDS_TOOLS               "Tools"
+    IDS_DIAG_CAPTURE_MINIDUMP "Capture &Mini Dump..."
+    IDS_DIAG_CAPTURE_FULLDUMP "Capture &Full Memory Dump..."
+    IDS_DIAG_DUMP_KIND_MINI "mini"
+    IDS_DIAG_DUMP_KIND_FULL "full memory"
+    IDS_DIAG_MINIDUMP_SUCCESS "Mini dump saved to ""%s"".\r\n\r\nAttach this file when reporting diagnostics."
+    IDS_DIAG_FULLDUMP_SUCCESS
+                            "Full memory dump saved to ""%s"".\r\n\r\nFull dumps may contain private data such as file paths, search text, network details, and memory contents. Share it only with people you trust."
+    IDS_DIAG_DUMP_FAILURE   "Failed to capture %s dump.\r\n\r\n%s"
+    IDS_DIAG_DUMP_LOG_SUCCESS "Diagnostic %s dump saved to ""%s""."
+    IDS_DIAG_DUMP_LOG_FAILURE "Diagnostic %s dump failed: %s"
     IDS_SEARCHPARAMS        "Search Parameters"
 END
 

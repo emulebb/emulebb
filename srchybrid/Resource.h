@@ -2884,6 +2884,15 @@
 #define IDS_PPG_DEBUG_TT_DETAIL                2203
 #define IDS_PPG_DEBUG_TT_DETAIL_LEVEL          2204
 #define IDS_PPG_DEBUG_TT_HEAP_LEVEL            2205
+#define IDS_DIAG_CAPTURE_MINIDUMP              2206
+#define IDS_DIAG_CAPTURE_FULLDUMP              2207
+#define IDS_DIAG_DUMP_KIND_MINI                2208
+#define IDS_DIAG_DUMP_KIND_FULL                2209
+#define IDS_DIAG_MINIDUMP_SUCCESS              2210
+#define IDS_DIAG_FULLDUMP_SUCCESS              2211
+#define IDS_DIAG_DUMP_FAILURE                  2212
+#define IDS_DIAG_DUMP_LOG_SUCCESS              2213
+#define IDS_DIAG_DUMP_LOG_FAILURE              2214
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025
@@ -2965,6 +2974,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        3055
 #define _APS_NEXT_COMMAND_VALUE         32773
 #define _APS_NEXT_CONTROL_VALUE         3084
-#define _APS_NEXT_SYMED_VALUE           2206
+#define _APS_NEXT_SYMED_VALUE           2215
 #endif
 #endif

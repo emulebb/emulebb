@@ -31,6 +31,46 @@ CMiniDumper theCrashDumper;
 CString CMiniDumper::m_strAppName;
 CString CMiniDumper::m_strDumpDir;
 
+namespace
+{
+	MINIDUMP_TYPE GetManualDumpType(bool bFullMemoryDump)
+	{
+		DWORD dwDumpType = static_cast<DWORD>(MiniDumpNormal)
+			| static_cast<DWORD>(MiniDumpWithThreadInfo)
+			| static_cast<DWORD>(MiniDumpWithUnloadedModules)
+			| static_cast<DWORD>(MiniDumpWithProcessThreadData);
+
+		if (bFullMemoryDump) {
+			dwDumpType |= static_cast<DWORD>(MiniDumpWithFullMemory)
+				| static_cast<DWORD>(MiniDumpWithHandleData)
+				| static_cast<DWORD>(MiniDumpWithFullMemoryInfo);
+		}
+
+		return static_cast<MINIDUMP_TYPE>(dwDumpType);
+	}
+
+	CString MakeManualDumpFileName(const SYSTEMTIME &rTime, DWORD dwProcessId, bool bFullMemoryDump, int iAttempt)
+	{
+		CString strFileName;
+		strFileName.Format(_T("emulebb-%04u%02u%02u-%02u%02u%02u-pid%lu-%s"),
+			rTime.wYear,
+			rTime.wMonth,
+			rTime.wDay,
+			rTime.wHour,
+			rTime.wMinute,
+			rTime.wSecond,
+			dwProcessId,
+			bFullMemoryDump ? _T("full") : _T("mini"));
+		if (iAttempt > 0) {
+			CString strSuffix;
+			strSuffix.Format(_T("-%02d"), iAttempt);
+			strFileName += strSuffix;
+		}
+		strFileName += _T(".dmp");
+		return strFileName;
+	}
+}
+
 void CMiniDumper::Enable(LPCTSTR pszAppName, bool bShowErrors, LPCTSTR pszDumpDir)
 {
 	// This assert fires if you have two instances of CMiniDumper which is not allowed
@@ -43,6 +83,47 @@ void CMiniDumper::Enable(LPCTSTR pszAppName, bool bShowErrors, LPCTSTR pszDumpDi
 
 	UNREFERENCED_PARAMETER(bShowErrors);
 	::SetUnhandledExceptionFilter(TopLevelFilter);
+}
+
+CMiniDumper::SManualDumpResult CMiniDumper::CreateManualDump(LPCTSTR, LPCTSTR pszDumpDir, bool bFullMemoryDump)
+{
+	SManualDumpResult result = {false, ERROR_SUCCESS, CString()};
+
+	const CString strRootDumpDir(PathHelpers::EnsureTrailingSeparator((pszDumpDir != NULL) ? CString(pszDumpDir) : CString()));
+	const CString strDumpDir(PathHelpers::AppendPathComponent(strRootDumpDir, _T("dumps")));
+	if (!LongPathSeams::PathExists(strDumpDir) && !LongPathSeams::CreateDirectory(strDumpDir, NULL) && ::GetLastError() != ERROR_ALREADY_EXISTS) {
+		result.dwError = ::GetLastError();
+		return result;
+	}
+
+	SYSTEMTIME timeNow;
+	::GetLocalTime(&timeNow);
+	const DWORD dwProcessId = ::GetCurrentProcessId();
+	const MINIDUMP_TYPE eDumpType = GetManualDumpType(bFullMemoryDump);
+
+	for (int iAttempt = 0; iAttempt < 100; ++iAttempt) {
+		const CString strDumpPath(PathHelpers::AppendPathComponent(strDumpDir, MakeManualDumpFileName(timeNow, dwProcessId, bFullMemoryDump, iAttempt)));
+		HANDLE hFile = LongPathSeams::CreateFile(strDumpPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hFile == INVALID_HANDLE_VALUE) {
+			const DWORD dwError = ::GetLastError();
+			if (dwError == ERROR_FILE_EXISTS)
+				continue;
+			result.dwError = dwError;
+			return result;
+		}
+
+		const BOOL bWritten = ::MiniDumpWriteDump(GetCurrentProcess(), dwProcessId, hFile, eDumpType, NULL, NULL, NULL);
+		const DWORD dwError = bWritten ? ERROR_SUCCESS : ::GetLastError();
+		::CloseHandle(hFile);
+
+		result.strDumpPath = strDumpPath;
+		result.dwError = dwError;
+		result.bSuccess = bWritten != FALSE;
+		return result;
+	}
+
+	result.dwError = ERROR_ALREADY_EXISTS;
+	return result;
 }
 
 #define CRASHTEXT _T("eMule crashed :-(\r\n\r\n") \

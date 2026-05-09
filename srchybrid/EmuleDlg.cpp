@@ -108,6 +108,7 @@
 #include "ReleaseUpdateCheck.h"
 #include "Version.h"
 #include "WebServerJson.h"
+#include "Mdump.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -3231,6 +3232,12 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_OPENLOGDIR:
 		ShellOpenFile(thePrefs.GetMuleDirectory(EMULE_LOGDIR));
 		break;
+	case MP_HM_CAPTURE_MINIDUMP:
+		CaptureDiagnosticDump(false);
+		break;
+	case MP_HM_CAPTURE_FULLDUMP:
+		CaptureDiagnosticDump(true);
+		break;
 	case TBBTN_HELP:
 	case MP_HM_HELP:
 		if (activewnd != NULL) {
@@ -3371,6 +3378,8 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 		if (!thePrefs.IsGeoLocationEnabled())
 			uGeoLocationMenuFlags |= MF_GRAYED;
 		menu.AppendMenu(uGeoLocationMenuFlags, MP_HM_GEOLOCATION_DOWNLOAD, GetResString(IDS_GEOLOCATION_DOWNLOAD_DB), _T("DOWNLOAD"));
+		menu.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("TOOLS"));
+		menu.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
 	}
 
 	menu.AppendMenu(MF_SEPARATOR);
@@ -3385,6 +3394,34 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 	VERIFY(Links.DestroyMenu());
 	VERIFY(scheduler.DestroyMenu());
 	VERIFY(menu.DestroyMenu());
+}
+
+
+void CemuleDlg::CaptureDiagnosticDump(bool bFullMemoryDump)
+{
+	const CString strDumpKind(GetResString(bFullMemoryDump ? IDS_DIAG_DUMP_KIND_FULL : IDS_DIAG_DUMP_KIND_MINI));
+	const CMiniDumper::SManualDumpResult result = CMiniDumper::CreateManualDump(
+		theApp.m_strCurVersionLongDbg,
+		thePrefs.GetMuleDirectory(EMULE_LOGDIR),
+		bFullMemoryDump);
+
+	if (result.bSuccess) {
+		AddLogLine(false, GetResString(IDS_DIAG_DUMP_LOG_SUCCESS), (LPCTSTR)strDumpKind, (LPCTSTR)result.strDumpPath);
+
+		CString strMessage;
+		strMessage.Format(
+			GetResString(bFullMemoryDump ? IDS_DIAG_FULLDUMP_SUCCESS : IDS_DIAG_MINIDUMP_SUCCESS),
+			(LPCTSTR)result.strDumpPath);
+		AfxMessageBox(strMessage, MB_ICONINFORMATION | MB_OK);
+		return;
+	}
+
+	const CString strError(GetErrorMessage(result.dwError, 1));
+	AddLogLine(false, GetResString(IDS_DIAG_DUMP_LOG_FAILURE), (LPCTSTR)strDumpKind, (LPCTSTR)strError);
+
+	CString strMessage;
+	strMessage.Format(GetResString(IDS_DIAG_DUMP_FAILURE), (LPCTSTR)strDumpKind, (LPCTSTR)strError);
+	AfxMessageBox(strMessage, MB_ICONERROR | MB_OK);
 }
 
 
