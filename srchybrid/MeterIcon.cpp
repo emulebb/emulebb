@@ -3,6 +3,7 @@
 /* This code is licensed under the GNU GPL.  See License.txt or (https://www.gnu.org/copyleft/gpl.html). */
 #include "stdafx.h"
 #include "MeterIcon.h"
+#include "ResourceOwnershipSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -10,6 +11,34 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace
+{
+class ScopedScreenDc
+{
+public:
+	explicit ScopedScreenDc(HDC hDC) noexcept
+		: m_hDC(hDC)
+	{
+	}
+
+	~ScopedScreenDc() noexcept
+	{
+		if (m_hDC != NULL)
+			::ReleaseDC(NULL, m_hDC);
+	}
+
+	ScopedScreenDc(const ScopedScreenDc&) = delete;
+	ScopedScreenDc& operator=(const ScopedScreenDc&) = delete;
+
+	HDC Get() const noexcept
+	{
+		return m_hDC;
+	}
+
+private:
+	HDC m_hDC;
+};
+}
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -50,66 +79,52 @@ COLORREF CMeterIcon::GetMeterColor(int nLevel) const
 HICON CMeterIcon::CreateMeterIcon(const int *pBarData)
 // the returned icon must be cleaned up using DestroyIcon()
 {// begin CreateMeterIcon
-	ICONINFO iiNewIcon = {};
-	iiNewIcon.fIcon = true;	// set that it is an icon
-
 	// create DCs
-	HDC hScreenDC = ::GetDC(HWND_DESKTOP);
-	HDC hIconDC = ::CreateCompatibleDC(hScreenDC);
-	HDC hMaskDC = ::CreateCompatibleDC(hScreenDC);
-
-	// begin error check
-	if (hScreenDC == NULL || hIconDC == NULL || hMaskDC == NULL)
+	ScopedScreenDc hScreenDC(::GetDC(NULL));
+	if (hScreenDC.Get() == NULL)
 		return NULL;
-	// end error check
+
+	ScopedDc hIconDC(::CreateCompatibleDC(hScreenDC.Get()));
+	ScopedDc hMaskDC(::CreateCompatibleDC(hScreenDC.Get()));
+	if (hIconDC.Get() == NULL || hMaskDC.Get() == NULL)
+		return NULL;
 
 	// load bitmaps
-	iiNewIcon.hbmColor = ::CreateCompatibleBitmap(hScreenDC, m_sDimensions.cx, m_sDimensions.cy);
-	if (iiNewIcon.hbmColor == NULL)
+	ScopedGdiObject hbmColor(::CreateCompatibleBitmap(hScreenDC.Get(), m_sDimensions.cx, m_sDimensions.cy));
+	ScopedGdiObject hbmMask(::CreateCompatibleBitmap(hScreenDC.Get(), m_sDimensions.cx, m_sDimensions.cy));
+	if (hbmColor.Get() == NULL || hbmMask.Get() == NULL)
 		return NULL;
 
-	if (!::ReleaseDC(NULL, hScreenDC))	// release this ASAP
-		return NULL; // DC not released
-	iiNewIcon.hbmMask = ::CreateCompatibleBitmap(hMaskDC, m_sDimensions.cx, m_sDimensions.cy);
-	if (iiNewIcon.hbmMask == NULL)
-		return NULL;
-
-	HGDIOBJ hOldIconDC = ::SelectObject(hIconDC, iiNewIcon.hbmColor);
-	if (hOldIconDC == NULL)
-		return NULL;
-
-	HGDIOBJ hOldMaskDC = ::SelectObject(hMaskDC, iiNewIcon.hbmMask);
-	if (hOldMaskDC == NULL)
+	ScopedSelectObject selectIconBitmap(hIconDC.Get(), hbmColor.Get());
+	ScopedSelectObject selectMaskBitmap(hMaskDC.Get(), hbmMask.Get());
+	if (!selectIconBitmap.IsValid() || !selectMaskBitmap.IsValid())
 		return NULL;
 
 	// initialize the bitmaps
-	if (!::BitBlt(hIconDC, 0, 0, m_sDimensions.cx, m_sDimensions.cy, NULL, 0, 0, BLACKNESS))
+	if (!::BitBlt(hIconDC.Get(), 0, 0, m_sDimensions.cx, m_sDimensions.cy, NULL, 0, 0, BLACKNESS))
 		return NULL; // BitBlt failed
 
-	if (!::BitBlt(hMaskDC, 0, 0, m_sDimensions.cx, m_sDimensions.cy, NULL, 0, 0, WHITENESS))
+	if (!::BitBlt(hMaskDC.Get(), 0, 0, m_sDimensions.cx, m_sDimensions.cy, NULL, 0, 0, WHITENESS))
 		return NULL; // BitBlt failed
 
 	// draw the meters
 	for (int i = 0; i < m_nNumBars; ++i)
-		if (!DrawIconMeter(hIconDC, hMaskDC, pBarData[i], i))
+		if (!DrawIconMeter(hIconDC.Get(), hMaskDC.Get(), pBarData[i], i))
 			return NULL;
 
-	if (!::DrawIconEx(hIconDC, 0, 0, m_hFrame, m_sDimensions.cx, m_sDimensions.cy, NULL, NULL, DI_NORMAL | DI_IMAGE))
+	if (!::DrawIconEx(hIconDC.Get(), 0, 0, m_hFrame, m_sDimensions.cx, m_sDimensions.cy, NULL, NULL, DI_NORMAL | DI_IMAGE))
 		return NULL;
 
-	if (!::DrawIconEx(hMaskDC, 0, 0, m_hFrame, m_sDimensions.cx, m_sDimensions.cy, NULL, NULL, DI_NORMAL | DI_MASK))
+	if (!::DrawIconEx(hMaskDC.Get(), 0, 0, m_hFrame, m_sDimensions.cx, m_sDimensions.cy, NULL, NULL, DI_NORMAL | DI_MASK))
 		return NULL;
 
 	// create icon
-	::SelectObject(hIconDC, hOldIconDC);
-	::SelectObject(hMaskDC, hOldMaskDC);
+	ICONINFO iiNewIcon = {};
+	iiNewIcon.fIcon = true;	// set that it is an icon
+	iiNewIcon.hbmColor = (HBITMAP)hbmColor.Get();
+	iiNewIcon.hbmMask = (HBITMAP)hbmMask.Get();
 	HICON hNewIcon = ::CreateIconIndirect(&iiNewIcon);
 
-	// cleanup
-	::DeleteObject(iiNewIcon.hbmColor);
-	::DeleteObject(iiNewIcon.hbmMask);
-	::DeleteDC(hMaskDC);
-	::DeleteDC(hIconDC);
 	return hNewIcon;
 
 }// end CreateMeterIcon
@@ -117,43 +132,37 @@ HICON CMeterIcon::CreateMeterIcon(const int *pBarData)
 bool CMeterIcon::DrawIconMeter(HDC hDestDC, HDC hDestDCMask, int nLevel, int nPos)
 {
 	// draw meter
-	HBRUSH hBrush = ::CreateSolidBrush(GetMeterColor(nLevel));
-	if (hBrush == NULL)
+	ScopedGdiObject hBrush(::CreateSolidBrush(GetMeterColor(nLevel)));
+	if (hBrush.Get() == NULL)
 		return false;
 
-	HGDIOBJ hOldBrush = ::SelectObject(hDestDC, hBrush);
-	if (hOldBrush == NULL)
+	ScopedSelectObject selectBrush(hDestDC, hBrush.Get());
+	if (!selectBrush.IsValid())
 		return false;
 
-	HPEN hPen = ::CreatePen(PS_SOLID, 1, m_crBorderColor);
-	if (hPen == NULL)
+	ScopedGdiObject hPen(::CreatePen(PS_SOLID, 1, m_crBorderColor));
+	if (hPen.Get() == NULL)
 		return false;
-	HGDIOBJ hOldPen = ::SelectObject(hDestDC, hPen);
-	if (hOldPen == NULL)
+	ScopedSelectObject selectPen(hDestDC, hPen.Get());
+	if (!selectPen.IsValid())
 		return false;
 	if (!::Rectangle(hDestDC, ((m_sDimensions.cx - 1) / m_nNumBars)*nPos + m_nSpacingWidth, m_sDimensions.cy - ((nLevel*(m_sDimensions.cy - 1) / m_nMaxVal) + 1), ((m_sDimensions.cx - 1) / m_nNumBars)*(nPos + 1) + 1, m_sDimensions.cy))
 		return false;
 
-	if (!::DeleteObject(::SelectObject(hDestDC, hOldPen)))
-		return false;
-
-	if (!::DeleteObject(::SelectObject(hDestDC, hOldBrush)))
-		return false;
-
 	// draw meter mask
-	HBRUSH hDestDCMaskBrush = ::CreateSolidBrush(RGB(0, 0, 0));
-	if (hDestDCMaskBrush == NULL)
+	ScopedGdiObject hDestDCMaskBrush(::CreateSolidBrush(RGB(0, 0, 0)));
+	if (hDestDCMaskBrush.Get() == NULL)
 		return false;
 
-	HGDIOBJ hOldDestDCMaskBrush = ::SelectObject(hDestDCMask, hDestDCMaskBrush);
-	if (hOldDestDCMaskBrush == NULL)
+	ScopedSelectObject selectMaskBrush(hDestDCMask, hDestDCMaskBrush.Get());
+	if (!selectMaskBrush.IsValid())
 		return false;
 
-	HPEN hMaskPen = ::CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-	if (hMaskPen == NULL)
+	ScopedGdiObject hMaskPen(::CreatePen(PS_SOLID, 1, RGB(0, 0, 0)));
+	if (hMaskPen.Get() == NULL)
 		return false;
-	HGDIOBJ hOldMaskPen = ::SelectObject(hDestDCMask, hMaskPen);
-	if (hOldMaskPen == NULL)
+	ScopedSelectObject selectMaskPen(hDestDCMask, hMaskPen.Get());
+	if (!selectMaskPen.IsValid())
 		return false;
 
 	if (nLevel > 0)
@@ -165,10 +174,8 @@ bool CMeterIcon::DrawIconMeter(HDC hDestDC, HDC hDestDCMask, int nLevel, int nPo
 		{
 			return false;
 		}
-	if (!::DeleteObject(::SelectObject(hDestDCMask, hOldMaskPen)))
-		return false;
 
-	return ::DeleteObject(::SelectObject(hDestDCMask, hOldDestDCMaskBrush));
+	return true;
 }// end DrawIconMeter
 
 
