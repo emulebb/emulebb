@@ -463,6 +463,7 @@
     <ClInclude Include="Debug_FileSize.h" />
     <ClInclude Include="DebugHelpers.h" />
     <ClInclude Include="DirectDownload.h" />
+    <ClInclude Include="DirectDownloadSeams.h" />
     <ClInclude Include="DialogMinTrayBtn.h" />
     <ClInclude Include="DirectDownloadDlg.h" />
     <ClInclude Include="DirectoryTreeCtrl.h" />
