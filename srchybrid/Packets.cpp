@@ -228,21 +228,25 @@ void Packet::PackPacket()
 bool Packet::UnPackPacket(UINT uMaxDecompressedSize)
 {
 	ASSERT(prot == OP_PACKEDPROT || prot == OP_KADEMLIAPACKEDPROT);
-	UINT nNewSize = size * 10 + 300;
-	if (nNewSize > uMaxDecompressedSize) {
-		//ASSERT(0);
-		nNewSize = uMaxDecompressedSize;
-	}
+	if (uMaxDecompressedSize == 0)
+		return false;
+
+	size_t uInitialSize = 0;
+	if (!TryMultiplyAddSize(size, 10u, 300u, &uInitialSize) || uInitialSize > uMaxDecompressedSize)
+		uInitialSize = uMaxDecompressedSize;
+	UINT nNewSize = static_cast<UINT>(uInitialSize);
 	Bytef *unpack = NULL;
 	uLongf unpackedsize = 0;
 	int result = Z_OK;
-	do {
+	for (;;) {
 		delete[] unpack;
 		unpack = new BYTE[nNewSize];
 		unpackedsize = nNewSize;
 		result = uncompress(unpack, &unpackedsize, (Bytef*)pBuffer, size);
-		nNewSize *= 2; // size for the next try if needed
-	} while (result == Z_BUF_ERROR && nNewSize < uMaxDecompressedSize);
+		if (result != Z_BUF_ERROR || nNewSize >= uMaxDecompressedSize)
+			break;
+		nNewSize = (nNewSize > uMaxDecompressedSize / 2u) ? uMaxDecompressedSize : nNewSize * 2u;
+	}
 
 	if (result == Z_OK) {
 		ASSERT(completebuffer == NULL);
