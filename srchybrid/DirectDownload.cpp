@@ -83,8 +83,18 @@ public:
 		if (hInternet == NULL)
 			return;
 
-		if (m_pCancellation && !m_pCancellation->RegisterHandle(m_eSlot, hInternet)) {
-			::InternetCloseHandle(hInternet);
+		if (m_pCancellation) {
+			CSingleLock lock(&m_pCancellation->m_lock, TRUE);
+			if (m_pCancellation->m_bCancelled) {
+				::InternetCloseHandle(hInternet);
+				return;
+			}
+
+			const size_t uSlot = static_cast<size_t>(m_eSlot);
+			ASSERT(uSlot < static_cast<size_t>(CDownloadCancellation::InternetHandleSlot::Count));
+			ASSERT(m_pCancellation->m_hInternet[uSlot] == NULL);
+			m_pCancellation->m_hInternet[uSlot] = hInternet;
+			m_hInternet = hInternet;
 			return;
 		}
 		m_hInternet = hInternet;
