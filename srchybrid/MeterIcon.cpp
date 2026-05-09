@@ -95,28 +95,30 @@ HICON CMeterIcon::CreateMeterIcon(const int *pBarData)
 	if (hbmColor.Get() == NULL || hbmMask.Get() == NULL)
 		return NULL;
 
-	ScopedSelectObject selectIconBitmap(hIconDC.Get(), hbmColor.Get());
-	ScopedSelectObject selectMaskBitmap(hMaskDC.Get(), hbmMask.Get());
-	if (!selectIconBitmap.IsValid() || !selectMaskBitmap.IsValid())
-		return NULL;
-
-	// initialize the bitmaps
-	if (!::BitBlt(hIconDC.Get(), 0, 0, m_sDimensions.cx, m_sDimensions.cy, NULL, 0, 0, BLACKNESS))
-		return NULL; // BitBlt failed
-
-	if (!::BitBlt(hMaskDC.Get(), 0, 0, m_sDimensions.cx, m_sDimensions.cy, NULL, 0, 0, WHITENESS))
-		return NULL; // BitBlt failed
-
-	// draw the meters
-	for (int i = 0; i < m_nNumBars; ++i)
-		if (!DrawIconMeter(hIconDC.Get(), hMaskDC.Get(), pBarData[i], i))
+	{
+		ScopedSelectObject selectIconBitmap(hIconDC.Get(), hbmColor.Get());
+		ScopedSelectObject selectMaskBitmap(hMaskDC.Get(), hbmMask.Get());
+		if (!selectIconBitmap.IsValid() || !selectMaskBitmap.IsValid())
 			return NULL;
 
-	if (!::DrawIconEx(hIconDC.Get(), 0, 0, m_hFrame, m_sDimensions.cx, m_sDimensions.cy, NULL, NULL, DI_NORMAL | DI_IMAGE))
-		return NULL;
+		// initialize the bitmaps
+		if (!::BitBlt(hIconDC.Get(), 0, 0, m_sDimensions.cx, m_sDimensions.cy, NULL, 0, 0, BLACKNESS))
+			return NULL; // BitBlt failed
 
-	if (!::DrawIconEx(hMaskDC.Get(), 0, 0, m_hFrame, m_sDimensions.cx, m_sDimensions.cy, NULL, NULL, DI_NORMAL | DI_MASK))
-		return NULL;
+		if (!::BitBlt(hMaskDC.Get(), 0, 0, m_sDimensions.cx, m_sDimensions.cy, NULL, 0, 0, WHITENESS))
+			return NULL; // BitBlt failed
+
+		// draw the meters
+		for (int i = 0; i < m_nNumBars; ++i)
+			if (!DrawIconMeter(hIconDC.Get(), hMaskDC.Get(), pBarData[i], i))
+				return NULL;
+
+		if (!::DrawIconEx(hIconDC.Get(), 0, 0, m_hFrame, m_sDimensions.cx, m_sDimensions.cy, NULL, NULL, DI_NORMAL | DI_IMAGE))
+			return NULL;
+
+		if (!::DrawIconEx(hMaskDC.Get(), 0, 0, m_hFrame, m_sDimensions.cx, m_sDimensions.cy, NULL, NULL, DI_NORMAL | DI_MASK))
+			return NULL;
+	}
 
 	// create icon
 	ICONINFO iiNewIcon = {};
