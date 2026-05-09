@@ -63,6 +63,8 @@ public:
 	~CSearchList();
 
 	void	Clear();
+	/** Creates an empty result bucket so queued searches can be visible before network dispatch. */
+	void	EnsureSearchResults(uint32 nSearchID);
 	void	NewSearch(CSearchListCtrl *pWnd, const CString &strResultFileType, SSearchParams *pParams);
 	UINT	ProcessSearchAnswer(const uchar *in_packet, uint32 size, CUpDownClient &sender, bool *pbMoreResultsAvailable, LPCTSTR pszDirectory = NULL);
 	UINT	ProcessSearchAnswer(const uchar *in_packet, uint32 size, bool bOptUTF8, uint32 nServerIP, uint16 nServerPort, bool *pbMoreResultsAvailable);

@@ -60,7 +60,8 @@ extern LPCTSTR g_aszInvKadKeywordChars;
 enum ESearchTimerID
 {
 	TimerServerTimeout = 1,
-	TimerGlobalSearch
+	TimerGlobalSearch,
+	TimerSearchQueue
 };
 
 enum ESearchResultImage
@@ -78,6 +79,7 @@ enum ESearchResultImage
 #define	SEARCH_LIST_MENU_BUTTON_YOFF	2
 #define	SEARCH_LIST_MENU_BUTTON_WIDTH	170
 #define	SEARCH_LIST_MENU_BUTTON_HEIGHT	22	// don't set the height do something different than 22 unless you know exactly what you are doing!
+#define	SEARCH_QUEUE_SLOT_MS			SEC2MS(5)
 
 // CSearchResultsWnd dialog
 
@@ -110,6 +112,8 @@ CSearchResultsWnd::CSearchResultsWnd(CWnd* /*pParent*/)
 	, m_searchpacket()
 	, global_search_timer()
 	, m_uTimerLocalServer()
+	, m_uTimerSearchQueue()
+	, m_nNextSearchID(0x80000000u)
 	, m_nEd2kSearchID(0x80000000u)
 	, m_nFilterColumn()
 	, m_servercount()
@@ -127,6 +131,7 @@ CSearchResultsWnd::~CSearchResultsWnd()
 	delete m_searchpacket;
 	if (m_uTimerLocalServer)
 		VERIFY(KillTimer(m_uTimerLocalServer));
+	DisarmSearchQueueTimer();
 }
 
 void CSearchResultsWnd::OnInitialUpdate()
@@ -211,20 +216,17 @@ void CSearchResultsWnd::DoDataExchange(CDataExchange *pDX)
 
 void CSearchResultsWnd::StartSearch(SSearchParams *pParams)
 {
-	switch (pParams->eType) {
-	case SearchTypeAutomatic:
-	case SearchTypeEd2kServer:
-	case SearchTypeEd2kGlobal:
-	case SearchTypeKademlia:
-		StartNewSearch(pParams);
-		return;
-	default:
-		ASSERT(0);
-		delete pParams;
-	}
+	CString strError;
+	if (!QueueSearch(pParams, strError) && !strError.IsEmpty())
+		AfxMessageBox(strError, MB_ICONWARNING);
 }
 
 bool CSearchResultsWnd::StartSearchFromApi(SSearchParams *pParams, CString &rError)
+{
+	return QueueSearch(pParams, rError);
+}
+
+bool CSearchResultsWnd::ResolveAutomaticSearchType(SSearchParams *pParams, CString &rError) const
 {
 	if (pParams == NULL) {
 		rError = _T("search parameters are required");
@@ -239,7 +241,6 @@ bool CSearchResultsWnd::StartSearchFromApi(SSearchParams *pParams, CString &rErr
 		else {
 			if (!theApp.serverconnect->IsConnected() && (!Kademlia::CKademlia::IsRunning() || !Kademlia::CKademlia::IsConnected())) {
 				rError = _T("not connected to eD2k or Kad");
-				delete pParams;
 				return false;
 			}
 
@@ -255,56 +256,136 @@ bool CSearchResultsWnd::StartSearchFromApi(SSearchParams *pParams, CString &rErr
 				: SearchTypeKademlia;
 		}
 	}
+	return true;
+}
 
+bool CSearchResultsWnd::QueueSearch(SSearchParams *pParams, CString &rError)
+{
+	if (!ResolveAutomaticSearchType(pParams, rError)) {
+		delete pParams;
+		return false;
+	}
+
+	if (pParams->eType != SearchTypeEd2kServer && pParams->eType != SearchTypeEd2kGlobal && pParams->eType != SearchTypeKademlia) {
+		rError = _T("unsupported search method");
+		delete pParams;
+		return false;
+	}
+
+	if (pParams->dwSearchID == _UI32_MAX)
+		pParams->dwSearchID = GetNextSearchID();
+
+	theApp.searchlist->EnsureSearchResults(pParams->dwSearchID);
+	if (!CreateNewTab(pParams, false)) {
+		rError = _T("failed to create search tab");
+		delete pParams;
+		return false;
+	}
+
+	m_queuedSearches.AddTail(pParams);
+	SearchStarted();
+	ArmSearchQueueTimer(1);
+	return true;
+}
+
+bool CSearchResultsWnd::StartQueuedSearch(SSearchParams *pParams, CString &rError)
+{
 	try {
 		switch (pParams->eType) {
 		case SearchTypeEd2kServer:
 		case SearchTypeEd2kGlobal:
 			if (!theApp.serverconnect->IsConnected()) {
 				rError = _T("not connected to an eD2k server");
-				delete pParams;
 				return false;
 			}
 			if (!DoNewEd2kSearch(pParams)) {
 				rError = _T("failed to start eD2k search");
-				delete pParams;
 				return false;
 			}
+			SetActiveSearchResultsIcon(pParams->dwSearchID);
 			SearchStarted();
 			return true;
 
 		case SearchTypeKademlia:
 			if (!Kademlia::CKademlia::IsRunning() || !Kademlia::CKademlia::IsConnected()) {
 				rError = _T("Kad is not connected");
-				delete pParams;
 				return false;
 			}
 			if (!DoNewKadSearch(pParams)) {
 				rError = _T("failed to start Kad search");
-				delete pParams;
 				return false;
 			}
+			SetActiveSearchResultsIcon(pParams->dwSearchID);
 			SearchStarted();
 			return true;
 
 		default:
 			rError = _T("unsupported search method");
-			delete pParams;
 			return false;
 		}
 	} catch (CMsgBoxException *pException) {
 		rError = pException->m_strMsg;
 		pException->Delete();
-		delete pParams;
 		return false;
 	}
+}
+
+bool CSearchResultsWnd::IsQueuedSearchStartBlocked(const SSearchParams *pParams) const
+{
+	if (pParams == NULL)
+		return false;
+
+	switch (pParams->eType) {
+	case SearchTypeEd2kServer:
+	case SearchTypeEd2kGlobal:
+		return m_uTimerLocalServer != 0 || global_search_timer != 0 || m_searchpacket != NULL;
+	default:
+		return false;
+	}
+}
+
+void CSearchResultsWnd::ArmSearchQueueTimer(UINT uDelayMS)
+{
+	if (m_queuedSearches.IsEmpty() || m_uTimerSearchQueue != 0)
+		return;
+	m_uTimerSearchQueue = SetTimer(TimerSearchQueue, uDelayMS, NULL);
+}
+
+void CSearchResultsWnd::DisarmSearchQueueTimer()
+{
+	if (m_uTimerSearchQueue != 0) {
+		VERIFY(KillTimer(m_uTimerSearchQueue));
+		m_uTimerSearchQueue = 0;
+	}
+}
+
+void CSearchResultsWnd::ProcessSearchQueue()
+{
+	DisarmSearchQueueTimer();
+	if (m_queuedSearches.IsEmpty())
+		return;
+
+	SSearchParams *const pParams = m_queuedSearches.GetHead();
+	if (IsQueuedSearchStartBlocked(pParams)) {
+		ArmSearchQueueTimer(SEC2MS(1));
+		return;
+	}
+
+	m_queuedSearches.RemoveHead();
+	CString strError;
+	if (!StartQueuedSearch(pParams, strError))
+		AddLogLine(false, _T("Queued search '%s' was not started: %s"), (LPCTSTR)pParams->strExpression, (LPCTSTR)strError);
+
+	ArmSearchQueueTimer(SEARCH_QUEUE_SLOT_MS);
 }
 
 void CSearchResultsWnd::OnTimer(UINT_PTR nIDEvent)
 {
 	CResizableFormView::OnTimer(nIDEvent);
 
-	if (m_uTimerLocalServer != 0 && nIDEvent == m_uTimerLocalServer) {
+	if (m_uTimerSearchQueue != 0 && nIDEvent == m_uTimerSearchQueue) {
+		ProcessSearchQueue();
+	} else if (m_uTimerLocalServer != 0 && nIDEvent == m_uTimerLocalServer) {
 		if (thePrefs.GetDebugServerSearchesLevel() > 0)
 			Debug(_T("Timeout waiting on search results of local server\n"));
 		// the local server did not answer within the timeout
@@ -437,6 +518,9 @@ SSearchParams* CSearchResultsWnd::GetSearchResultsParams(uint32 uSearchID) const
 
 bool CSearchResultsWnd::IsSearchRunning(uint32 uSearchID) const
 {
+	if (IsSearchQueued(uSearchID))
+		return true;
+
 	const SSearchParams *const pParams = GetSearchResultsParams(uSearchID);
 	if (pParams == NULL)
 		return false;
@@ -451,6 +535,37 @@ bool CSearchResultsWnd::IsSearchRunning(uint32 uSearchID) const
 	default:
 		return false;
 	}
+}
+
+bool CSearchResultsWnd::IsSearchQueued(uint32 uSearchID) const
+{
+	for (POSITION pos = m_queuedSearches.GetHeadPosition(); pos != NULL;) {
+		const SSearchParams *const pParams = m_queuedSearches.GetNext(pos);
+		if (pParams != NULL && pParams->dwSearchID == uSearchID)
+			return true;
+	}
+	return false;
+}
+
+bool CSearchResultsWnd::RemoveQueuedSearch(uint32 uSearchID)
+{
+	for (POSITION pos = m_queuedSearches.GetHeadPosition(); pos != NULL;) {
+		POSITION posCurrent = pos;
+		const SSearchParams *const pParams = m_queuedSearches.GetNext(pos);
+		if (pParams != NULL && pParams->dwSearchID == uSearchID) {
+			m_queuedSearches.RemoveAt(posCurrent);
+			if (m_queuedSearches.IsEmpty())
+				DisarmSearchQueueTimer();
+			return true;
+		}
+	}
+	return false;
+}
+
+void CSearchResultsWnd::ClearQueuedSearches()
+{
+	m_queuedSearches.RemoveAll();
+	DisarmSearchQueueTimer();
 }
 
 void CSearchResultsWnd::CancelSearch(uint32 uSearchID)
@@ -470,6 +585,11 @@ void CSearchResultsWnd::CancelSearch(uint32 uSearchID)
 	const SSearchParams *pParams = GetSearchResultsParams(uSearchID);
 	if (pParams == NULL)
 		return;
+
+	if (RemoveQueuedSearch(uSearchID)) {
+		SearchCancelled(uSearchID);
+		return;
+	}
 
 	switch (pParams->eType) {
 	case SearchTypeEd2kServer:
@@ -1293,7 +1413,9 @@ bool CSearchResultsWnd::DoNewEd2kSearch(SSearchParams *pParams)
 	if (strResultType == _T(ED2KFTSTR_PROGRAM))
 		strResultType.Empty();
 
-	pParams->dwSearchID = GetNextSearchID();
+	if (pParams->dwSearchID == _UI32_MAX)
+		pParams->dwSearchID = GetNextSearchID();
+	m_nEd2kSearchID = pParams->dwSearchID;
 	theApp.searchlist->NewSearch(&searchlistctrl, strResultType, pParams);
 	m_cancelled = false;
 
@@ -1391,7 +1513,11 @@ bool CSearchResultsWnd::DoNewKadSearch(SSearchParams *pParams)
 
 	Kademlia::CSearch *pSearch = NULL;
 	try {
-		pSearch = Kademlia::CSearchManager::PrepareFindKeywords(pParams->strKeyword, uSearchTermsSize, pSearchTermsData);
+		pSearch = Kademlia::CSearchManager::PrepareFindKeywords(
+			pParams->strKeyword,
+			uSearchTermsSize,
+			pSearchTermsData,
+			pParams->dwSearchID != _UI32_MAX ? pParams->dwSearchID : 0);
 		delete[] pSearchTermsData;
 		pSearchTermsData = NULL;
 		if (!pSearch) {
@@ -1479,6 +1605,7 @@ void CSearchResultsWnd::DetachActiveResultView(uint32 uSearchID)
 
 void CSearchResultsWnd::DeleteSearch(uint32 uSearchID)
 {
+	RemoveQueuedSearch(uSearchID);
 	Kademlia::CSearchManager::StopSearch(uSearchID, false);
 
 	TCITEM ti;
@@ -1532,6 +1659,7 @@ void CSearchResultsWnd::DeleteSearch(uint32 uSearchID)
 
 void CSearchResultsWnd::DeleteAllSearches()
 {
+	ClearQueuedSearches();
 	CancelEd2kSearch();
 
 	CTypedPtrList<CPtrList, SSearchParams*> listSearchParamsToDelete;
@@ -1582,11 +1710,11 @@ void CSearchResultsWnd::ShowResults(const SSearchParams *pParams)
 		m_pwndParams->SetParameters(pParams);
 
 	if (pParams->eType == SearchTypeEd2kServer)
-		m_pwndParams->m_ctlCancel.EnableWindow(pParams->dwSearchID == m_nEd2kSearchID && IsLocalEd2kSearchRunning());
+		m_pwndParams->m_ctlCancel.EnableWindow(IsSearchQueued(pParams->dwSearchID) || (pParams->dwSearchID == m_nEd2kSearchID && IsLocalEd2kSearchRunning()));
 	else if (pParams->eType == SearchTypeEd2kGlobal)
-		m_pwndParams->m_ctlCancel.EnableWindow(pParams->dwSearchID == m_nEd2kSearchID && (IsLocalEd2kSearchRunning() || IsGlobalEd2kSearchRunning()));
+		m_pwndParams->m_ctlCancel.EnableWindow(IsSearchQueued(pParams->dwSearchID) || (pParams->dwSearchID == m_nEd2kSearchID && (IsLocalEd2kSearchRunning() || IsGlobalEd2kSearchRunning())));
 	else if (pParams->eType == SearchTypeKademlia)
-		m_pwndParams->m_ctlCancel.EnableWindow(Kademlia::CSearchManager::IsSearching(pParams->dwSearchID));
+		m_pwndParams->m_ctlCancel.EnableWindow(IsSearchQueued(pParams->dwSearchID) || Kademlia::CSearchManager::IsSearching(pParams->dwSearchID));
 
 	searchlistctrl.ShowResults(pParams->dwSearchID);
 }

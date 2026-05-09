@@ -84,6 +84,8 @@ public:
 	bool	SearchMore();
 	void	CancelSearch(uint32 uSearchID = 0);
 	bool	IsSearchRunning(uint32 uSearchID) const;
+	/** Returns true while a visible search is waiting for its serialized network launch slot. */
+	bool	IsSearchQueued(uint32 uSearchID) const;
 
 	bool	DoNewEd2kSearch(SSearchParams *pParams);
 	void	CancelEd2kSearch();
@@ -91,8 +93,8 @@ public:
 	bool	IsGlobalEd2kSearchRunning() const	{ return global_search_timer != 0; }
 	void	LocalEd2kSearchEnd(UINT count, bool bMoreResultsAvailable);
 	void	AddEd2kSearchResults(UINT count);
-	void	SetNextSearchID(uint32 uNextID)		{ m_nEd2kSearchID = uNextID; }
-	uint32	GetNextSearchID()					{ return ++m_nEd2kSearchID; }
+	void	SetNextSearchID(uint32 uNextID)		{ m_nNextSearchID = uNextID; m_nEd2kSearchID = uNextID; }
+	uint32	GetNextSearchID()					{ return ++m_nNextSearchID; }
 
 	bool	DoNewKadSearch(SSearchParams *pParams);
 	void	CancelKadSearch(uint32 uSearchID)	{ SearchCancelled(uSearchID); }
@@ -128,6 +130,9 @@ protected:
 	Packet		*m_searchpacket;
 	UINT_PTR	global_search_timer;
 	UINT_PTR	m_uTimerLocalServer;
+	UINT_PTR	m_uTimerSearchQueue;
+	CTypedPtrList<CPtrList, SSearchParams*> m_queuedSearches;
+	uint32		m_nNextSearchID;
 	uint32		m_nEd2kSearchID;
 	uint32		m_nFilterColumn;
 	unsigned	m_servercount;
@@ -137,6 +142,20 @@ protected:
 	bool		m_cancelled;
 
 	bool StartNewSearch(SSearchParams *pParams);
+	/** Adds a search to the serialized launch queue and creates its visible result tab. */
+	bool QueueSearch(SSearchParams *pParams, CString &rError);
+	/** Starts the next queued search on the network without taking ownership from the result tab. */
+	bool StartQueuedSearch(SSearchParams *pParams, CString &rError);
+	/** Resolves automatic search selection against the currently connected networks. */
+	bool ResolveAutomaticSearchType(SSearchParams *pParams, CString &rError) const;
+	/** Returns true when the next queued request must wait for active eD2K state to drain. */
+	bool IsQueuedSearchStartBlocked(const SSearchParams *pParams) const;
+	/** Releases at most one queued search into the network layer. */
+	void ProcessSearchQueue();
+	void ArmSearchQueueTimer(UINT uDelayMS);
+	void DisarmSearchQueueTimer();
+	bool RemoveQueuedSearch(uint32 uSearchID);
+	void ClearQueuedSearches();
 	void SearchStarted();
 	void SearchCancelled(uint32 uSearchID);
 	void ShowResults(const SSearchParams *pParams);

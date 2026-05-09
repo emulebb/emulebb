@@ -3204,9 +3204,11 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 
 		CArray<const CSearchFile*, const CSearchFile*> aResults;
 		if (!theApp.searchlist->GetVisibleResults(uSearchID, aResults)) {
-			rError.strCode = "NOT_FOUND";
-			rError.strMessage = _T("search not found");
-			return json();
+			if (!theApp.emuledlg->searchwnd->m_pwndResults->IsSearchQueued(uSearchID)) {
+				rError.strCode = "NOT_FOUND";
+				rError.strMessage = _T("search not found");
+				return json();
+			}
 		}
 
 		json results = json::array();

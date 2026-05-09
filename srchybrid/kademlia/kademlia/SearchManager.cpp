@@ -138,7 +138,7 @@ bool CSearchManager::StartSearch(CSearch *pSearch)
 	return true;
 }
 
-CSearch* CSearchManager::PrepareFindKeywords(LPCWSTR szKeyword, UINT uSearchTermsSize, LPBYTE pucSearchTermsData)
+CSearch* CSearchManager::PrepareFindKeywords(LPCWSTR szKeyword, UINT uSearchTermsSize, LPBYTE pucSearchTermsData, uint32 uReservedSearchID)
 {
 	// Create a keyword search object.
 	CString strError;
@@ -162,8 +162,10 @@ CSearch* CSearchManager::PrepareFindKeywords(LPCWSTR szKeyword, UINT uSearchTerm
 			else {
 				pSearch->SetSearchTermData(uSearchTermsSize, pucSearchTermsData);
 				pSearch->SetGUIName(szKeyword);
-				// Inc our searchID
-				pSearch->m_uSearchID = ++m_uNextID;
+				// Use a UI/API reserved ID when a queued search was already made visible.
+				pSearch->m_uSearchID = uReservedSearchID != 0 ? uReservedSearchID : ++m_uNextID;
+				if (m_uNextID < pSearch->m_uSearchID)
+					m_uNextID = pSearch->m_uSearchID;
 				// Insert search into map.
 				m_mapSearches[pSearch->m_uTarget] = pSearch;
 				// Start search.

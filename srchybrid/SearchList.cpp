@@ -94,6 +94,15 @@ void CSearchList::RemoveResults(uint32 nSearchID)
 	}
 }
 
+void CSearchList::EnsureSearchResults(uint32 nSearchID)
+{
+	(void)GetSearchListForID(nSearchID);
+	m_foundFilesCount[nSearchID] = 0;
+	m_foundSourcesCount[nSearchID] = 0;
+	m_ReceivedUDPAnswersCount[nSearchID] = 0;
+	m_RequestedUDPAnswersCount[nSearchID] = 0;
+}
+
 void CSearchList::ShowResults(uint32 nSearchID)
 {
 	ASSERT(outputwnd);
@@ -139,10 +148,7 @@ void CSearchList::NewSearch(CSearchListCtrl *pWnd, const CString &strResultFileT
 		m_aCurED2KSentRequestsIPs.RemoveAll();
 		m_aCurED2KSentReceivedIPs.RemoveAll();
 	}
-	m_foundFilesCount[pParams->dwSearchID] = 0;
-	m_foundSourcesCount[pParams->dwSearchID] = 0;
-	m_ReceivedUDPAnswersCount[pParams->dwSearchID] = 0;
-	m_RequestedUDPAnswersCount[pParams->dwSearchID] = 0;
+	EnsureSearchResults(pParams->dwSearchID);
 
 	// convert the expression into an array of search keywords which the user has typed in
 	// this is used for the spam filter later and not at all semantically equal to

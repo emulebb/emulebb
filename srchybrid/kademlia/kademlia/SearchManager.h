@@ -56,7 +56,7 @@ namespace Kademlia
 		// Will return unique search id, returns zero if already searching for this file.
 		static CSearch* PrepareLookup(uint32 uType, bool bStart, const CUInt128 &uID);
 		// Will return unique search id, returns zero if already searching for this keyword.
-		static CSearch* PrepareFindKeywords(LPCWSTR szKeyword, UINT uSearchTermsSize, LPBYTE pucSearchTermsData);
+		static CSearch* PrepareFindKeywords(LPCWSTR szKeyword, UINT uSearchTermsSize, LPBYTE pucSearchTermsData, uint32 uReservedSearchID = 0);
 		static bool StartSearch(CSearch *pSearch);
 		static void ProcessResponse(const CUInt128 &uTarget, uint32 uFromIP, uint16 uFromPort, ContactArray &rlistResults);
 		static uint8 GetExpectedResponseContactCount(const CUInt128 &uTarget);
