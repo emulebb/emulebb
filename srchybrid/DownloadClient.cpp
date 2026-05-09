@@ -27,6 +27,7 @@
 #include "DownloadQueue.h"
 #include "ClientUDPSocket.h"
 #include "CompressionBufferSeams.h"
+#include "ProtocolGuards.h"
 #include "SourceExchangeSeams.h"
 #include "emuledlg.h"
 #include "UserMsgs.h"
@@ -36,6 +37,7 @@
 #include "SharedFileList.h"
 #include "Log.h"
 #include "zlib.h"
+#include <limits>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -669,7 +671,10 @@ void CUpDownClient::SetDownloadState(EDownloadState nNewState, LPCTSTR pszReason
 				thePrefs.Add2DownSuccessfulSessions(); // Increment our counters for successful sessions (Cumulative AND Session)
 			else
 				thePrefs.Add2DownFailedSessions(); // Increment our counters failed sessions (Cumulative AND Session)
-			thePrefs.Add2DownSAvgTime(GetDownTimeDifference() / SEC2MS(1));
+			const ULONGLONG uDownSeconds = GetDownTimeDifference() / SEC2MS(1);
+			thePrefs.Add2DownSAvgTime(uDownSeconds > static_cast<ULONGLONG>((std::numeric_limits<int>::max)())
+				? (std::numeric_limits<int>::max)()
+				: static_cast<int>(uDownSeconds));
 			// <-----khaos-
 
 			m_eDownloadState = nNewState;
@@ -925,6 +930,9 @@ void CUpDownClient::SendBlockRequests()
 */
 void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool packed, bool bI64Offsets)
 {
+	if (!HasDownloadBlockPacketHeader(size, packed, bI64Offsets))
+		throw GetResString(IDS_ERR_BADDATABLOCK) + _T(" (ProcessBlockPacket)");
+
 	if (!bI64Offsets) {
 		uint32 nDbgStartPos = *(uint32*)&packet[16];
 		if (thePrefs.GetDebugClientTCPLevel() > 1) {
@@ -1349,7 +1357,7 @@ void CUpDownClient::UDPReaskForDownload()
 		return;
 
 	//TODO: This should be changed to determine if the last 4 UDP packets failed, not the total one.
-	if (m_nTotalUDPPackets > 3 && (m_nFailedUDPPackets / (float)m_nTotalUDPPackets > .3))
+	if (m_nTotalUDPPackets > 3 && (static_cast<double>(m_nFailedUDPPackets) / static_cast<double>(m_nTotalUDPPackets) > 0.3))
 		return;
 
 	if (GetUDPPort() != 0 && GetUDPVersion() != 0 && thePrefs.GetUDPPort() != 0
