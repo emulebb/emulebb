@@ -1441,10 +1441,11 @@ bool CSearchResultsWnd::DoNewEd2kSearch(SSearchParams *pParams)
 		m_searchpacket = new Packet(*packet);
 	theApp.serverconnect->SendPacket(packet);
 
-	if (m_globsearch) {
-		// set timeout timer for local server
-		m_uTimerLocalServer = SetTimer(TimerServerTimeout, SEC2MS(50), NULL);
+	// Server search replies are associated with the current eD2K search id, so
+	// keep every server request active until the server answers or times out.
+	VERIFY((m_uTimerLocalServer = SetTimer(TimerServerTimeout, SEC2MS(50), NULL)) != 0);
 
+	if (m_globsearch) {
 		if (thePrefs.GetUseServerPriorities())
 			theApp.serverlist->ResetSearchServerPos();
 
