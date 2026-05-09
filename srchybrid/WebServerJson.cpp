@@ -3356,7 +3356,15 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		return ItemsEnvelopeIfRequested(params, BuildLogEntriesJson(maxEntries));
 	}
 
-rError.strCode = "INVALID_ARGUMENT";
+	if (strCommand == "log/clear") {
+		if (theApp.emuledlg != NULL) {
+			theApp.emuledlg->ResetLog();
+			theApp.emuledlg->ResetDebugLog();
+		}
+		return json{{"ok", true}};
+	}
+
+	rError.strCode = "INVALID_ARGUMENT";
 	rError.strMessage.Format(_T("unknown command: %hs"), strCommand.c_str());
 	return json();
 }

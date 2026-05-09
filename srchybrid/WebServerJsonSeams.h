@@ -759,6 +759,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/friends", "userHash,name", ""},
 		{"DELETE", "/friends/{userHash}", "", ""},
 		{"GET", "/logs", "", "offset,limit"},
+		{"POST", "/logs/operations/clear", "confirmClearLogs", ""},
 	};
 	return specs;
 }
@@ -1637,6 +1638,8 @@ inline bool ValidateDestructiveConfirmationBody(const json &rBody, const SApiRou
 		return RequireBooleanFieldTrue(rBody, "confirmClearCompleted", "confirmClearCompleted must be true", rErrorCode, rErrorMessage);
 	if (strMethod == "DELETE" && strPath == "/searches")
 		return RequireBooleanFieldTrue(rBody, "confirmDeleteAllSearches", "confirmDeleteAllSearches must be true", rErrorCode, rErrorMessage);
+	if (strMethod == "POST" && strPath == "/logs/operations/clear")
+		return RequireBooleanFieldTrue(rBody, "confirmClearLogs", "confirmClearLogs must be true", rErrorCode, rErrorMessage);
 	if (strMethod == "PATCH" && strPath == "/shared-directories")
 		return RequireBooleanFieldTrue(rBody, "confirmReplaceRoots", "confirmReplaceRoots must be true", rErrorCode, rErrorMessage);
 	return true;
@@ -2524,6 +2527,11 @@ inline bool TryBuildRoute(
 		CopyLogQueryParams(query, rRoute.params);
 		CopyPagingQueryParams(query, rRoute.params);
 		RequestItemsEnvelope(rRoute.params);
+		return true;
+	}
+	if (route.size() == 3 && route[0] == "logs" && route[1] == "operations" && route[2] == "clear" && bPost) {
+		rRoute.strCommand = "log/clear";
+		rRoute.params = body;
 		return true;
 	}
 
