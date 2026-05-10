@@ -591,7 +591,7 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 	const SocketData *pData = static_cast<SocketData*>(pD);
 	CWebServer *pThis = static_cast<CWebServer*>(pData->pThis);
 	SOCKET hSocket = pData->hSocket;
-	const in_addr &ad(pData->incomingaddr);
+	const in_addr ad = pData->incomingaddr;
 	pThis->SetIP(ad.s_addr);
 	delete pData;
 
