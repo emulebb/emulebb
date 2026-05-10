@@ -126,6 +126,26 @@ private:
 	SRestDispatchContext& operator=(const SRestDispatchContext&);
 };
 
+class CScopedDownloadQueueBulkAdd
+{
+public:
+	explicit CScopedDownloadQueueBulkAdd(CDownloadQueue *pDownloadQueue)
+		: m_pDownloadQueue(pDownloadQueue)
+	{
+		if (m_pDownloadQueue != NULL)
+			m_pDownloadQueue->BeginBulkAddDownloads();
+	}
+
+	~CScopedDownloadQueueBulkAdd()
+	{
+		if (m_pDownloadQueue != NULL)
+			m_pDownloadQueue->EndBulkAddDownloads();
+	}
+
+private:
+	CDownloadQueue *m_pDownloadQueue;
+};
+
 bool TryDecodeHash(const json &rValue, uchar *pOutHash, SPipeApiError &rError);
 
 struct SPipeApiServerEndpoint
@@ -2861,6 +2881,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			}
 
 			json results = json::array();
+			CScopedDownloadQueueBulkAdd bulkAdd(theApp.downloadqueue);
 			for (const json &linkValue : params["links"]) {
 				std::string strLinkUtf8;
 				std::string strError;

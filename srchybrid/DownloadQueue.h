@@ -75,6 +75,14 @@ public:
 	void	AddSearchToDownload(CSearchFile *toadd, uint8 paused = 2, int cat = 0);
 	void	AddSearchToDownload(const CString &link, uint8 paused = 2, int cat = 0);
 	void	AddFileLinkToDownload(const CED2KFileLink &Link, int cat = 0, uint8 paused = 2);
+	/**
+	 * @brief Defers per-file protected disk-space rescans while several downloads are added as one user action.
+	 */
+	void	BeginBulkAddDownloads();
+	/**
+	 * @brief Ends a bulk-add section and runs one deferred disk-space check if files were queued.
+	 */
+	void	EndBulkAddDownloads();
 	void	RemoveFile(CPartFile *toremove);
 	void	DeleteAll();
 
@@ -225,6 +233,8 @@ private:
 	uint32	m_nUDPFileReasks;
 	uint32	m_nFailedUDPFileReasks;
 	uint32	m_datarate;
+	UINT	m_uBulkAddDownloadsDepth;
+	bool	m_bBulkAddDownloadsNeedDiskspaceCheck;
 	bool	m_bProtectedDiskSpaceBlocked;
 	CString	m_strProtectedDiskSpaceBreachSignature;
 	mutable CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> m_aProtectedVolumeStatusSnapshot;

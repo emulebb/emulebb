@@ -103,6 +103,8 @@ CDownloadQueue::CDownloadQueue()
 	, m_nUDPFileReasks()
 	, m_nFailedUDPFileReasks()
 	, m_datarate()
+	, m_uBulkAddDownloadsDepth()
+	, m_bBulkAddDownloadsNeedDiskspaceCheck()
 	, m_bProtectedDiskSpaceBlocked()
 	, m_strProtectedDiskSpaceBreachSignature()
 	, m_aProtectedVolumeStatusSnapshot()
@@ -560,6 +562,25 @@ void CDownloadQueue::AddFileLinkToDownload(const CED2KFileLink &Link, int cat, u
 		}
 }
 
+void CDownloadQueue::BeginBulkAddDownloads()
+{
+	++m_uBulkAddDownloadsDepth;
+}
+
+void CDownloadQueue::EndBulkAddDownloads()
+{
+	if (m_uBulkAddDownloadsDepth == 0) {
+		ASSERT(FALSE);
+		return;
+	}
+
+	--m_uBulkAddDownloadsDepth;
+	if (m_uBulkAddDownloadsDepth == 0 && m_bBulkAddDownloadsNeedDiskspaceCheck) {
+		m_bBulkAddDownloadsNeedDiskspaceCheck = false;
+		CheckDiskspace();
+	}
+}
+
 void CDownloadQueue::AddToResolved(const CPartFile *pFile, SUnresolvedHostname *pUH)
 {
 	if (pFile && pUH)
@@ -576,7 +597,10 @@ void CDownloadQueue::AddDownload(CPartFile *newfile, bool paused)
 
 	filelist.AddTail(newfile);
 	SortByPriority();
-	CheckDiskspace();
+	if (m_uBulkAddDownloadsDepth > 0)
+		m_bBulkAddDownloadsNeedDiskspaceCheck = true;
+	else
+		CheckDiskspace();
 	theApp.emuledlg->transferwnd->GetDownloadList()->AddFile(newfile);
 	const CString strDisplayFileName(FormatDisplayFileName(newfile->GetFileName()));
 	AddLogLine(true, GetResString(IDS_NEWDOWNLOAD), (LPCTSTR)strDisplayFileName);
