@@ -106,6 +106,7 @@ CDownloadQueue::CDownloadQueue()
 	, m_bProtectedDiskSpaceBlocked()
 	, m_strProtectedDiskSpaceBreachSignature()
 	, m_aProtectedVolumeStatusSnapshot()
+	, m_aRequiredFreeDiskSpacePathCache()
 	, m_ullProtectedVolumeStatusSnapshotTick()
 	, m_bProtectedVolumeStatusSnapshotValid()
 	, m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft()
@@ -230,6 +231,8 @@ const CArray<CDownloadQueue::ProtectedVolumeStatus, const CDownloadQueue::Protec
 
 	if (bForceRefresh || !bSnapshotFresh) {
 		CollectProtectedVolumeStatuses(&m_aProtectedVolumeStatusSnapshot, bNotEnoughSpaceLeft);
+		if (!bNotEnoughSpaceLeft)
+			m_aRequiredFreeDiskSpacePathCache.RemoveAll();
 		m_ullProtectedVolumeStatusSnapshotTick = ullNow;
 		m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft = bNotEnoughSpaceLeft;
 		m_bProtectedVolumeStatusSnapshotValid = true;
@@ -268,17 +271,31 @@ ULONGLONG CDownloadQueue::GetRequiredFreeDiskSpaceForPath(LPCTSTR pszPath) const
 	if (pszPath == NULL || pszPath[0] == _T('\0'))
 		return 0;
 
+	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, false);
+	for (INT_PTR i = 0; i < m_aRequiredFreeDiskSpacePathCache.GetCount(); ++i) {
+		if (m_aRequiredFreeDiskSpacePathCache[i].Path == pszPath)
+			return m_aRequiredFreeDiskSpacePathCache[i].RequiredBytes;
+	}
+
 	CString strVolumeId;
 	if (!TryGetVolumeIdentityPath(pszPath, strVolumeId))
 		return 0;
 
-	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, false);
+	bool bMatchedProtectedVolume = false;
+	ULONGLONG ullRequiredBytes = 0;
 	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
-		if (aProtectedVolumes[i].VolumeId == strVolumeId)
-			return aProtectedVolumes[i].RequiredBytes;
+		if (aProtectedVolumes[i].VolumeId == strVolumeId) {
+			ullRequiredBytes = aProtectedVolumes[i].RequiredBytes;
+			bMatchedProtectedVolume = true;
+			break;
+		}
 	}
+	if (!bMatchedProtectedVolume)
+		ullRequiredBytes = thePrefs.GetEffectiveMinFreeDiskSpaceForPath(pszPath);
 
-	return thePrefs.GetEffectiveMinFreeDiskSpaceForPath(pszPath);
+	const RequiredFreeDiskSpacePathCacheEntry entry = { pszPath, ullRequiredBytes };
+	m_aRequiredFreeDiskSpacePathCache.Add(entry);
+	return ullRequiredBytes;
 }
 
 void CDownloadQueue::AddPartFilesToShare()

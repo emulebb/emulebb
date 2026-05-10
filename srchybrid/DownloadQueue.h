@@ -180,6 +180,15 @@ private:
 		UINT RoleMask;
 	};
 
+	/**
+	 * @brief Caches the required free bytes for paths already resolved against the current protected-volume snapshot.
+	 */
+	struct RequiredFreeDiskSpacePathCacheEntry
+	{
+		CString Path;
+		ULONGLONG RequiredBytes;
+	};
+
 	bool	CompareParts(POSITION pos1, POSITION pos2);
 	void	SwapParts(POSITION pos1, POSITION pos2);
 	void	HeapSort(UINT first, UINT last);
@@ -219,6 +228,7 @@ private:
 	bool	m_bProtectedDiskSpaceBlocked;
 	CString	m_strProtectedDiskSpaceBreachSignature;
 	mutable CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> m_aProtectedVolumeStatusSnapshot;
+	mutable CArray<RequiredFreeDiskSpacePathCacheEntry, const RequiredFreeDiskSpacePathCacheEntry&> m_aRequiredFreeDiskSpacePathCache;
 	mutable ULONGLONG m_ullProtectedVolumeStatusSnapshotTick;
 	mutable bool m_bProtectedVolumeStatusSnapshotValid;
 	mutable bool m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft;
