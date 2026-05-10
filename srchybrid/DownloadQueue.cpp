@@ -1951,7 +1951,7 @@ CString CDownloadQueue::GetOptimalTempDir(UINT nCat, EMFileSize nFileSize)
 {
 	const INT_PTR iTempDirCnt = thePrefs.GetTempDirCount();
 
-	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, true);
+	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, false);
 	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
 		if (aProtectedVolumes[i].FreeBytes < aProtectedVolumes[i].RequiredBytes)
 			return CString();
