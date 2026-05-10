@@ -728,7 +728,6 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/shared-directories/operations/reload", "", ""},
 		{"GET", "/uploads", "", ""},
 		{"GET", "/uploads/{clientId}", "", ""},
-		{"DELETE", "/uploads/{clientId}", "", ""},
 		{"POST", "/uploads/{clientId}/operations/remove", "", ""},
 		{"POST", "/uploads/{clientId}/operations/release-slot", "", ""},
 		{"POST", "/uploads/{clientId}/operations/add-friend", "", ""},
@@ -759,7 +758,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/kad/operations/bootstrap", "address,port", ""},
 		{"POST", "/kad/operations/recheck-firewall", "", ""},
 		{"GET", "/searches", "", ""},
-		{"POST", "/searches", "query,method,type,minSizeBytes,maxSizeBytes,minAvailability,extension,clearExisting", ""},
+		{"POST", "/searches", "query,method,type,minSizeBytes,maxSizeBytes,minAvailability,extension", ""},
 		{"DELETE", "/searches", "confirmDeleteAllSearches", ""},
 		{"GET", "/searches/{searchId}", "", ""},
 		{"DELETE", "/searches/{searchId}", "", ""},
@@ -1513,11 +1512,6 @@ inline bool ValidateSearchStartBody(json &rBody, std::string &rErrorCode, std::s
 			return false;
 		}
 		rBody["minAvailability"] = ullMinAvailability;
-	}
-
-	if (rBody.contains("clearExisting") && !rBody["clearExisting"].is_boolean()) {
-		SetInvalidArgument(rErrorCode, rErrorMessage, "clearExisting must be a boolean");
-		return false;
 	}
 
 	return true;
@@ -2279,12 +2273,6 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 2 && route[0] == "upload-queue" && bGet) {
 		rRoute.strCommand = "uploads/queue_get";
-		CopyClientIdToken(route[1], rRoute.params);
-		return true;
-	}
-	if (route.size() == 2 && route[0] == "uploads" && bDelete) {
-		rRoute.strCommand = "uploads/remove";
-		rRoute.params = body;
 		CopyClientIdToken(route[1], rRoute.params);
 		return true;
 	}

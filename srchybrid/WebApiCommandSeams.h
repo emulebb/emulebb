@@ -56,7 +56,6 @@ struct SSearchStartRequest
 	bool bHasMinSize;
 	bool bHasMaxSize;
 	bool bHasMinAvailability;
-	bool bClearExisting;
 
 	SSearchStartRequest()
 		: eMethod(ESearchMethod::Automatic)
@@ -67,7 +66,6 @@ struct SSearchStartRequest
 		, bHasMinSize(false)
 		, bHasMaxSize(false)
 		, bHasMinAvailability(false)
-		, bClearExisting(false)
 	{
 	}
 };
@@ -317,15 +315,6 @@ inline bool TryParseSearchStartRequest(const json &rParams, SSearchStartRequest 
 			return false;
 		}
 		rRequest.bHasMinAvailability = true;
-	}
-
-	rRequest.bClearExisting = false;
-	if (rParams.contains("clearExisting")) {
-		if (!rParams["clearExisting"].is_boolean()) {
-			rError = "clearExisting must be a boolean";
-			return false;
-		}
-		rRequest.bClearExisting = rParams["clearExisting"].get<bool>();
 	}
 
 	return true;

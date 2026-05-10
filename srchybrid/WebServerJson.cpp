@@ -3367,8 +3367,6 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			pSearchParams->uAvailability = static_cast<UINT>(request.ullMinAvailability);
 
 		CString strSearchError;
-		if (request.bClearExisting)
-			pSearchResults->DeleteAllSearches();
 		if (!pSearchResults->StartSearchFromApi(pSearchParams, strSearchError)) {
 			rError.strCode = "EMULE_ERROR";
 			rError.strMessage = strSearchError.IsEmpty() ? CString(_T("failed to start search")) : strSearchError;
