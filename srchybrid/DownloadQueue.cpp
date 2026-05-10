@@ -121,6 +121,34 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 
 	paStatuses->RemoveAll();
 
+	struct ResolvedVolumeIdentityPath
+	{
+		CString Path;
+		bool bResolved;
+		CString VolumeId;
+	};
+	CArray<ResolvedVolumeIdentityPath, const ResolvedVolumeIdentityPath&> aVolumeIdentityPathCache;
+
+	auto ResolveVolumeIdentityPath = [&](LPCTSTR pszPath, CString &rstrVolumeId) -> bool
+	{
+		rstrVolumeId.Empty();
+		if (pszPath == NULL || pszPath[0] == _T('\0'))
+			return false;
+
+		for (INT_PTR i = 0; i < aVolumeIdentityPathCache.GetCount(); ++i) {
+			if (aVolumeIdentityPathCache[i].Path.CompareNoCase(pszPath) == 0) {
+				if (aVolumeIdentityPathCache[i].bResolved)
+					rstrVolumeId = aVolumeIdentityPathCache[i].VolumeId;
+				return aVolumeIdentityPathCache[i].bResolved;
+			}
+		}
+
+		const bool bResolved = TryGetVolumeIdentityPath(pszPath, rstrVolumeId);
+		ResolvedVolumeIdentityPath entry = { pszPath, bResolved, rstrVolumeId };
+		aVolumeIdentityPathCache.Add(entry);
+		return entry.bResolved;
+	};
+
 	auto FindProtectedVolumeStatus = [&](const CString &strVolumeId) -> INT_PTR
 	{
 		for (INT_PTR i = 0; i < paStatuses->GetCount(); ++i) {
@@ -136,7 +164,7 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 			return -1;
 
 		CString strVolumeId;
-		if (!TryGetVolumeIdentityPath(pszPath, strVolumeId))
+		if (!ResolveVolumeIdentityPath(pszPath, strVolumeId))
 			return -1;
 
 		const INT_PTR iExisting = FindProtectedVolumeStatus(strVolumeId);
@@ -208,8 +236,8 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 		const CString strIncomingPath(GetPartFileIncomingPath(*pPartFile));
 		CString strTempVolumeId;
 		CString strIncomingVolumeId;
-		const bool bHaveTempVolume = TryGetVolumeIdentityPath(pPartFile->GetTmpPath(), strTempVolumeId);
-		const bool bHaveIncomingVolume = TryGetVolumeIdentityPath(strIncomingPath, strIncomingVolumeId);
+		const bool bHaveTempVolume = ResolveVolumeIdentityPath(pPartFile->GetTmpPath(), strTempVolumeId);
+		const bool bHaveIncomingVolume = ResolveVolumeIdentityPath(strIncomingPath, strIncomingVolumeId);
 		if (bHaveIncomingVolume && (!bHaveTempVolume || strIncomingVolumeId != strTempVolumeId))
 			AddProtectedVolumeCompletionDemand(strIncomingPath, static_cast<uint64>(pPartFile->GetFileSize()));
 	}
