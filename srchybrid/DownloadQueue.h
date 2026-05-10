@@ -83,6 +83,10 @@ public:
 	 * @brief Ends a bulk-add section and runs one deferred disk-space check if files were queued.
 	 */
 	void	EndBulkAddDownloads();
+	/**
+	 * @brief Returns the next available numeric part-file slot for a temp directory.
+	 */
+	int		GetNextAvailablePartFileIndex(LPCTSTR pszTempDir) const;
 	void	RemoveFile(CPartFile *toremove);
 	void	DeleteAll();
 
@@ -189,12 +193,40 @@ private:
 	};
 
 	/**
+	 * @brief Caches path-to-volume identity lookups within one queue operation.
+	 */
+	struct VolumeIdentityPathCacheEntry
+	{
+		CString Path;
+		bool bResolved;
+		CString VolumeId;
+	};
+
+	/**
+	 * @brief Resolves paths through the shared Windows volume identity helper without duplicating volume policy.
+	 */
+	struct VolumeIdentityPathCache
+	{
+		bool Resolve(LPCTSTR pszPath, CString &rstrVolumeId);
+
+		CArray<VolumeIdentityPathCacheEntry, const VolumeIdentityPathCacheEntry&> Entries;
+	};
+
+	/**
 	 * @brief Caches the required free bytes for paths already resolved against the current protected-volume snapshot.
 	 */
 	struct RequiredFreeDiskSpacePathCacheEntry
 	{
 		CString Path;
 		ULONGLONG RequiredBytes;
+	};
+	/**
+	 * @brief Tracks the next part-file number to probe for a temp directory during one bulk add.
+	 */
+	struct BulkPartFileNumberCacheEntry
+	{
+		CString TempDir;
+		int NextIndex;
 	};
 
 	bool	CompareParts(POSITION pos1, POSITION pos2);
@@ -244,6 +276,7 @@ private:
 	CString	m_strProtectedDiskSpaceBreachSignature;
 	mutable CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> m_aProtectedVolumeStatusSnapshot;
 	mutable CArray<RequiredFreeDiskSpacePathCacheEntry, const RequiredFreeDiskSpacePathCacheEntry&> m_aRequiredFreeDiskSpacePathCache;
+	mutable CArray<BulkPartFileNumberCacheEntry, const BulkPartFileNumberCacheEntry&> m_aBulkPartFileNumberCache;
 	mutable ULONGLONG m_ullProtectedVolumeStatusSnapshotTick;
 	mutable bool m_bProtectedVolumeStatusSnapshotValid;
 	mutable bool m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft;

@@ -110,11 +110,32 @@ CDownloadQueue::CDownloadQueue()
 	, m_strProtectedDiskSpaceBreachSignature()
 	, m_aProtectedVolumeStatusSnapshot()
 	, m_aRequiredFreeDiskSpacePathCache()
+	, m_aBulkPartFileNumberCache()
 	, m_ullProtectedVolumeStatusSnapshotTick()
 	, m_bProtectedVolumeStatusSnapshotValid()
 	, m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft()
 {
 	SetLastKademliaFileRequest();
+}
+
+bool CDownloadQueue::VolumeIdentityPathCache::Resolve(LPCTSTR pszPath, CString &rstrVolumeId)
+{
+	rstrVolumeId.Empty();
+	if (pszPath == NULL || pszPath[0] == _T('\0'))
+		return false;
+
+	for (INT_PTR i = 0; i < Entries.GetCount(); ++i) {
+		if (Entries[i].Path.CompareNoCase(pszPath) == 0) {
+			if (Entries[i].bResolved)
+				rstrVolumeId = Entries[i].VolumeId;
+			return Entries[i].bResolved;
+		}
+	}
+
+	const bool bResolved = TryGetVolumeIdentityPath(pszPath, rstrVolumeId);
+	VolumeIdentityPathCacheEntry entry = { pszPath, bResolved, rstrVolumeId };
+	Entries.Add(entry);
+	return entry.bResolved;
 }
 
 void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> *paStatuses, const bool bNotEnoughSpaceLeft) const
@@ -123,34 +144,7 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 		return;
 
 	paStatuses->RemoveAll();
-
-	struct ResolvedVolumeIdentityPath
-	{
-		CString Path;
-		bool bResolved;
-		CString VolumeId;
-	};
-	CArray<ResolvedVolumeIdentityPath, const ResolvedVolumeIdentityPath&> aVolumeIdentityPathCache;
-
-	auto ResolveVolumeIdentityPath = [&](LPCTSTR pszPath, CString &rstrVolumeId) -> bool
-	{
-		rstrVolumeId.Empty();
-		if (pszPath == NULL || pszPath[0] == _T('\0'))
-			return false;
-
-		for (INT_PTR i = 0; i < aVolumeIdentityPathCache.GetCount(); ++i) {
-			if (aVolumeIdentityPathCache[i].Path.CompareNoCase(pszPath) == 0) {
-				if (aVolumeIdentityPathCache[i].bResolved)
-					rstrVolumeId = aVolumeIdentityPathCache[i].VolumeId;
-				return aVolumeIdentityPathCache[i].bResolved;
-			}
-		}
-
-		const bool bResolved = TryGetVolumeIdentityPath(pszPath, rstrVolumeId);
-		ResolvedVolumeIdentityPath entry = { pszPath, bResolved, rstrVolumeId };
-		aVolumeIdentityPathCache.Add(entry);
-		return entry.bResolved;
-	};
+	VolumeIdentityPathCache volumeIdentityPathCache;
 
 	auto FindProtectedVolumeStatus = [&](const CString &strVolumeId) -> INT_PTR
 	{
@@ -167,7 +161,7 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 			return -1;
 
 		CString strVolumeId;
-		if (!ResolveVolumeIdentityPath(pszPath, strVolumeId))
+		if (!volumeIdentityPathCache.Resolve(pszPath, strVolumeId))
 			return -1;
 
 		const INT_PTR iExisting = FindProtectedVolumeStatus(strVolumeId);
@@ -239,8 +233,8 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 		const CString strIncomingPath(GetPartFileIncomingPath(*pPartFile));
 		CString strTempVolumeId;
 		CString strIncomingVolumeId;
-		const bool bHaveTempVolume = ResolveVolumeIdentityPath(pPartFile->GetTmpPath(), strTempVolumeId);
-		const bool bHaveIncomingVolume = ResolveVolumeIdentityPath(strIncomingPath, strIncomingVolumeId);
+		const bool bHaveTempVolume = volumeIdentityPathCache.Resolve(pPartFile->GetTmpPath(), strTempVolumeId);
+		const bool bHaveIncomingVolume = volumeIdentityPathCache.Resolve(strIncomingPath, strIncomingVolumeId);
 		if (bHaveIncomingVolume && (!bHaveTempVolume || strIncomingVolumeId != strTempVolumeId))
 			AddProtectedVolumeCompletionDemand(strIncomingPath, static_cast<uint64>(pPartFile->GetFileSize()));
 	}
@@ -278,12 +272,13 @@ void CDownloadQueue::ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempP
 	if (!m_bProtectedVolumeStatusSnapshotValid || m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft || nFileSize == 0)
 		return;
 
+	VolumeIdentityPathCache volumeIdentityPathCache;
 	CString strTempVolumeId;
-	if (!TryGetVolumeIdentityPath(pszTempPath, strTempVolumeId))
+	if (!volumeIdentityPathCache.Resolve(pszTempPath, strTempVolumeId))
 		return;
 
 	CString strIncomingVolumeId;
-	const bool bHaveIncomingVolume = TryGetVolumeIdentityPath(pszIncomingPath, strIncomingVolumeId);
+	const bool bHaveIncomingVolume = volumeIdentityPathCache.Resolve(pszIncomingPath, strIncomingVolumeId);
 	const uint64 uDemandBytes = static_cast<uint64>(nFileSize);
 
 	auto AddDemand = [&](const CString &strVolumeId) -> void
@@ -601,6 +596,7 @@ void CDownloadQueue::BeginBulkAddDownloads()
 	if (m_uBulkAddDownloadsDepth == 0) {
 		m_bProtectedVolumeStatusSnapshotValid = false;
 		m_aRequiredFreeDiskSpacePathCache.RemoveAll();
+		m_aBulkPartFileNumberCache.RemoveAll();
 	}
 	++m_uBulkAddDownloadsDepth;
 }
@@ -621,6 +617,40 @@ void CDownloadQueue::EndBulkAddDownloads()
 		m_bBulkAddDownloadsNeedOverviewExport = false;
 		ExportPartMetFilesOverview();
 	}
+	if (m_uBulkAddDownloadsDepth == 0)
+		m_aBulkPartFileNumberCache.RemoveAll();
+}
+
+int CDownloadQueue::GetNextAvailablePartFileIndex(LPCTSTR pszTempDir) const
+{
+	int iPartFileIndex = 1;
+	if (m_uBulkAddDownloadsDepth > 0) {
+		for (INT_PTR i = 0; i < m_aBulkPartFileNumberCache.GetCount(); ++i) {
+			if (m_aBulkPartFileNumberCache[i].TempDir.CompareNoCase(pszTempDir) == 0) {
+				iPartFileIndex = m_aBulkPartFileNumberCache[i].NextIndex;
+				break;
+			}
+		}
+	}
+
+	CString strPartFilePath;
+	do
+		strPartFilePath.Format(_T("%s%03i.part"), pszTempDir, iPartFileIndex++);
+	while (LongPathSeams::GetFileAttributes(strPartFilePath) != INVALID_FILE_ATTRIBUTES);
+
+	const int iAvailablePartFileIndex = iPartFileIndex - 1;
+	if (m_uBulkAddDownloadsDepth > 0) {
+		for (INT_PTR i = 0; i < m_aBulkPartFileNumberCache.GetCount(); ++i) {
+			if (m_aBulkPartFileNumberCache[i].TempDir.CompareNoCase(pszTempDir) == 0) {
+				m_aBulkPartFileNumberCache[i].NextIndex = iPartFileIndex;
+				return iAvailablePartFileIndex;
+			}
+		}
+
+		BulkPartFileNumberCacheEntry entry = { pszTempDir, iPartFileIndex };
+		m_aBulkPartFileNumberCache.Add(entry);
+	}
+	return iAvailablePartFileIndex;
 }
 
 void CDownloadQueue::AddToResolved(const CPartFile *pFile, SUnresolvedHostname *pUH)
@@ -2039,8 +2069,9 @@ CString CDownloadQueue::GetOptimalTempDir(UINT nCat, EMFileSize nFileSize)
 	const CString strIncomingPath((pCategory != NULL && LongPathSeams::PathExists(pCategory->strIncomingPath))
 		? pCategory->strIncomingPath
 		: thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
+	VolumeIdentityPathCache volumeIdentityPathCache;
 	CString strIncomingVolumeId;
-	(void)TryGetVolumeIdentityPath(strIncomingPath, strIncomingVolumeId);
+	(void)volumeIdentityPathCache.Resolve(strIncomingPath, strIncomingVolumeId);
 
 	auto SelectTempDir = [&](const INT_PTR iTempDir) -> CString
 	{
@@ -2071,7 +2102,7 @@ CString CDownloadQueue::GetOptimalTempDir(UINT nCat, EMFileSize nFileSize)
 	INT_PTR	nHighestFreeSpaceDrive = -1;
 	for (INT_PTR i = 0; i < iTempDirCnt; ++i) {
 		const CString &sDir(thePrefs.GetTempDir(i));
-		if (!TryGetVolumeIdentityPath(sDir, aDrive[i].sVolumeId))
+		if (!volumeIdentityPathCache.Resolve(sDir, aDrive[i].sVolumeId))
 			aDrive[i].sVolumeId = sDir;
 		// Free space is calculated per volume, but several temp directories may be on one volume.
 		INT_PTR j;

@@ -550,10 +550,8 @@ void CPartFile::CreatePartFile(UINT cat)
 
 	// use the lowest free part file number for a file name (InterCeptor)
 	CString filename;
-	int i = 0;
-	do
-		filename.Format(_T("%s%03i.part"), (LPCTSTR)tempdirtouse, ++i);
-	while (LongPathSeams::GetFileAttributes(filename) != INVALID_FILE_ATTRIBUTES);
+	const int i = theApp.downloadqueue->GetNextAvailablePartFileIndex(tempdirtouse);
+	filename.Format(_T("%s%03i.part"), (LPCTSTR)tempdirtouse, i);
 	SetPath(tempdirtouse);
 	m_partmetfilename.Format(_T("%03i.part.met"), i);
 	m_fullname.Format(_T("%s%s"), (LPCTSTR)tempdirtouse, (LPCTSTR)m_partmetfilename);
