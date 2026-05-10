@@ -202,9 +202,13 @@ private:
 	void	HeapSort(UINT first, UINT last);
 	void	CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> *paStatuses, bool bNotEnoughSpaceLeft) const;
 	/**
-	 * @brief Returns the current protected-volume disk-space snapshot, refreshing it at most once per download-queue tick unless forced.
+	 * @brief Returns the current protected-volume disk-space snapshot, refreshing it at most once per download-queue tick or bulk-add section unless forced.
 	 */
 	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&>& GetProtectedVolumeStatusSnapshot(bool bNotEnoughSpaceLeft, bool bForceRefresh) const;
+	/**
+	 * @brief Adds a newly admitted file's placement demand to the current protected-volume snapshot.
+	 */
+	void	ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempPath, LPCTSTR pszIncomingPath, EMFileSize nFileSize) const;
 	CString	BuildProtectedDiskSpaceBreachSignature(const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aStatuses) const;
 	void	ForceSaveAllPartMetFilesForDiskSpace();
 	void	StopAllDownloadsForDiskSpace();

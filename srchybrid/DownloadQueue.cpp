@@ -256,7 +256,8 @@ const CArray<CDownloadQueue::ProtectedVolumeStatus, const CDownloadQueue::Protec
 	const bool bSnapshotMatches = m_bProtectedVolumeStatusSnapshotValid
 		&& m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft == bNotEnoughSpaceLeft;
 	const bool bSnapshotFresh = bSnapshotMatches
-		&& ((m_bDownloadQueueProcessActive && m_ullDownloadQueueProcessTick != 0 && m_ullProtectedVolumeStatusSnapshotTick >= m_ullDownloadQueueProcessTick)
+		&& ((m_uBulkAddDownloadsDepth > 0)
+			|| (m_bDownloadQueueProcessActive && m_ullDownloadQueueProcessTick != 0 && m_ullProtectedVolumeStatusSnapshotTick >= m_ullDownloadQueueProcessTick)
 			|| (ullNow >= m_ullProtectedVolumeStatusSnapshotTick
 				&& ullNow - m_ullProtectedVolumeStatusSnapshotTick <= kProtectedVolumeStatusSnapshotMaxAgeMs));
 
@@ -270,6 +271,38 @@ const CArray<CDownloadQueue::ProtectedVolumeStatus, const CDownloadQueue::Protec
 	}
 
 	return m_aProtectedVolumeStatusSnapshot;
+}
+
+void CDownloadQueue::ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempPath, LPCTSTR pszIncomingPath, EMFileSize nFileSize) const
+{
+	if (!m_bProtectedVolumeStatusSnapshotValid || m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft || nFileSize == 0)
+		return;
+
+	CString strTempVolumeId;
+	if (!TryGetVolumeIdentityPath(pszTempPath, strTempVolumeId))
+		return;
+
+	CString strIncomingVolumeId;
+	const bool bHaveIncomingVolume = TryGetVolumeIdentityPath(pszIncomingPath, strIncomingVolumeId);
+	const uint64 uDemandBytes = static_cast<uint64>(nFileSize);
+
+	auto AddDemand = [&](const CString &strVolumeId) -> void
+	{
+		if (strVolumeId.IsEmpty())
+			return;
+
+		for (INT_PTR i = 0; i < m_aProtectedVolumeStatusSnapshot.GetCount(); ++i) {
+			if (m_aProtectedVolumeStatusSnapshot[i].VolumeId == strVolumeId) {
+				m_aProtectedVolumeStatusSnapshot[i].CompletionBytes += uDemandBytes;
+				m_aProtectedVolumeStatusSnapshot[i].RequiredBytes += uDemandBytes;
+				return;
+			}
+		}
+	};
+
+	AddDemand(strTempVolumeId);
+	if (bHaveIncomingVolume && strIncomingVolumeId != strTempVolumeId)
+		AddDemand(strIncomingVolumeId);
 }
 
 CString CDownloadQueue::BuildProtectedDiskSpaceBreachSignature(const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aStatuses) const
@@ -565,6 +598,10 @@ void CDownloadQueue::AddFileLinkToDownload(const CED2KFileLink &Link, int cat, u
 
 void CDownloadQueue::BeginBulkAddDownloads()
 {
+	if (m_uBulkAddDownloadsDepth == 0) {
+		m_bProtectedVolumeStatusSnapshotValid = false;
+		m_aRequiredFreeDiskSpacePathCache.RemoveAll();
+	}
 	++m_uBulkAddDownloadsDepth;
 }
 
@@ -2005,6 +2042,13 @@ CString CDownloadQueue::GetOptimalTempDir(UINT nCat, EMFileSize nFileSize)
 	CString strIncomingVolumeId;
 	(void)TryGetVolumeIdentityPath(strIncomingPath, strIncomingVolumeId);
 
+	auto SelectTempDir = [&](const INT_PTR iTempDir) -> CString
+	{
+		const CString strSelectedTempDir(thePrefs.GetTempDir(iTempDir));
+		ReserveProtectedVolumeStatusSnapshotDemand(strSelectedTempDir, strIncomingPath, nFileSize);
+		return strSelectedTempDir;
+	};
+
 	auto FindProtectedVolumeStatus = [&](const CString &strVolumeId) -> const ProtectedVolumeStatus*
 	{
 		for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
@@ -2072,7 +2116,7 @@ CString CDownloadQueue::GetOptimalTempDir(UINT nCat, EMFileSize nFileSize)
 				// condition 0
 				// needs to be the same volume and enough space
 				if (!strIncomingVolumeId.IsEmpty() && strIncomingVolumeId == aDrive[i].sVolumeId)
-					return thePrefs.GetTempDir(i);	//this one is perfect
+					return SelectTempDir(i);	//this one is perfect
 
 				// condition 1
 				// needs to have enough space for downloading
@@ -2089,10 +2133,10 @@ CString CDownloadQueue::GetOptimalTempDir(UINT nCat, EMFileSize nFileSize)
 	}
 
 	if (nHighestTotalSpaceDir >= 0) // condition 0 was apparently too strong, take 1
-		return thePrefs.GetTempDir(nHighestTotalSpaceDir);
+		return SelectTempDir(nHighestTotalSpaceDir);
 
 	if (nHighestFreeSpaceDir >= 0) // condition 1 could not be met too, take 2
-		return thePrefs.GetTempDir(nHighestFreeSpaceDir);
+		return SelectTempDir(nHighestFreeSpaceDir);
 
 	return CString();
 }
