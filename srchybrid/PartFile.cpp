@@ -3350,6 +3350,7 @@ void CPartFile::DeletePartFile()
 	LongPathSeams::ForgetPreparedPathMemoizationEntry(partfilename);
 	LongPathSeams::ForgetPreparedPathMemoizationEntry(BAKName);
 	LongPathSeams::ForgetPreparedPathMemoizationEntry(TMPName);
+	theApp.InvalidatePartMetWriteGuardCache(m_fullname);
 	delete this;
 }
 
