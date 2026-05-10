@@ -1239,10 +1239,10 @@ void CSearch::ProcessResultKeyword(const CUInt128 &uAnswer, TagList &rlistInfo, 
 		, TAGTYPE_STRING, TAG_MEDIA_ARTIST,		(LPCTSTR)sArtist
 		, TAGTYPE_STRING, TAG_MEDIA_ALBUM,		(LPCTSTR)sAlbum
 		, TAGTYPE_STRING, TAG_MEDIA_TITLE,		(LPCTSTR)sTitle
-		, TAGTYPE_UINT32, TAG_MEDIA_LENGTH,		(LPCTSTR)uLength		//uint32
-		, TAGTYPE_UINT32, TAG_MEDIA_BITRATE,	(LPCTSTR)uBitrate		//uint32
+		, TAGTYPE_UINT32, TAG_MEDIA_LENGTH,		reinterpret_cast<LPCTSTR>(static_cast<UINT_PTR>(uLength)) //uint32
+		, TAGTYPE_UINT32, TAG_MEDIA_BITRATE,	reinterpret_cast<LPCTSTR>(static_cast<UINT_PTR>(uBitrate)) //uint32
 		, TAGTYPE_STRING, TAG_MEDIA_CODEC,		(LPCTSTR)sCodec
-		, TAGTYPE_UINT32, TAG_SOURCES,			(LPCTSTR)uAvailability);//uint32
+		, TAGTYPE_UINT32, TAG_SOURCES,			reinterpret_cast<LPCTSTR>(static_cast<UINT_PTR>(uAvailability))); //uint32
 }
 
 void CSearch::SendFindValue(CContact *pContact, bool bReAskMore)
