@@ -72,6 +72,8 @@ static char THIS_FILE[] = __FILE__;
 namespace
 {
 	static const uint32 MAX_HELLO_PACKET_TAGS = 256;
+	static const UINT_PTR CLIENT_RATE_HISTORY_INITIAL_CAPACITY = 16;
+	static const UINT_PTR CLIENT_RATE_HISTORY_INCREMENT = 64;
 
 	/**
 	 * Rejects impossible or hostile tag counts before entering the per-tag parsing loop.
@@ -92,8 +94,8 @@ IMPLEMENT_DYNAMIC(CUpDownClient, CObject)
 CUpDownClient::CUpDownClient(CClientReqSocket *sender)
 	: socket(sender)
 	, m_reqfile()
-	, m_AverageUDR_hist(512, 512)
-	, m_AverageDDR_hist(512, 512)
+	, m_AverageUDR_hist(CLIENT_RATE_HISTORY_INITIAL_CAPACITY, CLIENT_RATE_HISTORY_INCREMENT)
+	, m_AverageDDR_hist(CLIENT_RATE_HISTORY_INITIAL_CAPACITY, CLIENT_RATE_HISTORY_INCREMENT)
 {
 	Init();
 }
@@ -101,8 +103,8 @@ CUpDownClient::CUpDownClient(CClientReqSocket *sender)
 CUpDownClient::CUpDownClient(CPartFile *in_reqfile, uint16 in_port, uint32 in_userid, uint32 in_serverip, uint16 in_serverport, bool ed2kID)
 	: socket()
 	, m_reqfile(in_reqfile)
-	, m_AverageUDR_hist(512, 512)
-	, m_AverageDDR_hist(512, 512)
+	, m_AverageUDR_hist(CLIENT_RATE_HISTORY_INITIAL_CAPACITY, CLIENT_RATE_HISTORY_INCREMENT)
+	, m_AverageDDR_hist(CLIENT_RATE_HISTORY_INITIAL_CAPACITY, CLIENT_RATE_HISTORY_INCREMENT)
 {
 	//Converting to the HybridID system. The ED2K system didn't take into account of IP address ending in 0.
 	//All IP addresses ending in 0 were assumed to be a low ID because of the calculations.
