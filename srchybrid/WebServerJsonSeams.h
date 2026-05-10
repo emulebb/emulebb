@@ -23,6 +23,8 @@ static const size_t kMaxSearchQueryLength = 160;
 static const size_t kMaxCategoryNameLength = 128;
 static const size_t kMaxPublicFileNameLength = 255;
 static const UINT kRestUiDispatchTimeoutMs = 15000u;
+static const char *const kRestRouteExecutionDirect = "direct";
+static const char *const kRestRouteExecutionUiThread = "ui-thread";
 
 /**
  * @brief Carries one parsed REST route command together with the normalized
@@ -49,6 +51,7 @@ struct SApiRouteSpec
 	const char *pszPathTemplate;
 	const char *pszBodyFields;
 	const char *pszQueryFields;
+	const char *pszExecutionModel = kRestRouteExecutionUiThread;
 };
 
 /**
@@ -677,7 +680,7 @@ inline bool TryValidateRequestMetadata(
 inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 {
 	static const std::vector<SApiRouteSpec> specs = {
-		{"GET", "/app", "", ""},
+		{"GET", "/app", "", "", kRestRouteExecutionDirect},
 		{"GET", "/app/preferences", "", ""},
 		{"PATCH", "/app/preferences", "uploadLimitKiBps,downloadLimitKiBps,maxConnections,maxConnectionsPerFiveSeconds,maxSourcesPerFile,uploadClientDataRate,maxUploadSlots,queueSize,autoConnect,newAutoUp,newAutoDown,creditSystem,safeServerConnect,networkKademlia,networkEd2k", ""},
 		{"POST", "/app/shutdown", "confirmShutdown", ""},
