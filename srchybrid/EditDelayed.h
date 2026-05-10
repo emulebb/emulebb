@@ -55,7 +55,7 @@ public:
 protected:
 	bool		m_bShuttingDown;
 	UINT_PTR	m_uTimerResult;
-	DWORD		m_dwLastModified;
+	ULONGLONG	m_dwLastModified;
 	CString		m_strLastEvaluatedContent;
 	CIconWnd	m_iwReset;
 	CIconWnd	m_iwColumn;
