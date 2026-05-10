@@ -727,6 +727,18 @@ json ItemsEnvelopeIfRequested(const json &rParams, const json &rItems)
 }
 
 /**
+ * Reports the compile-time build flavor for REST identity responses.
+ */
+const char *GetRestBuildFlavor()
+{
+#ifdef _DEBUG
+	return "debug";
+#else
+	return "release";
+#endif
+}
+
+/**
  * Serializes application identity and build metadata for the public API.
  */
 json BuildAppJson(const char *pszBuildFlavor)
@@ -1986,16 +1998,9 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 {
 	const std::string strCommand = rRequest.value("cmd", std::string());
 	const json params = rRequest.value("params", json::object());
-#ifdef _DEBUG
-	/** Reports the compile-time build flavor for the REST version response. */
-	const char *const pszBuildFlavor = "debug";
-#else
-	/** Reports the compile-time build flavor for the REST version response. */
-	const char *const pszBuildFlavor = "release";
-#endif
 
 	if (strCommand == "app/version") {
-		return BuildAppJson(pszBuildFlavor);
+		return BuildAppJson(GetRestBuildFlavor());
 	}
 
 	if (strCommand == "app/preferences/get")
@@ -2185,7 +2190,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 
 		const size_t maxEntries = static_cast<size_t>(max(1, params.value("limit", 200)));
 		return json{
-			{"app", BuildAppJson(pszBuildFlavor)},
+			{"app", BuildAppJson(GetRestBuildFlavor())},
 			{"status", json{{"stats", BuildGlobalStatsJson()}, {"servers", BuildServerStatusJson()}, {"kad", BuildKadStatusJson()}}},
 			{"transfers", transfers},
 			{"sharedFiles", BuildSharedFilesListJson()},
@@ -3437,6 +3442,21 @@ json BuildErrorEnvelope(LPCSTR pszCode, const CString &strMessage)
 		StdUtf8FromCString(strMessage));
 }
 
+/**
+ * Handles REST commands which do not need UI-thread-owned runtime state.
+ */
+bool TryExecuteDirectRestCommand(const json &rRequest, json &rResult, SPipeApiError &rError)
+{
+	const std::string strCommand = rRequest.value("cmd", std::string());
+	if (strCommand == "app/version") {
+		rResult = BuildAppJson(GetRestBuildFlavor());
+		rError.strCode.Empty();
+		rError.strMessage.Empty();
+		return true;
+	}
+	return false;
+}
+
 void SendJsonResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, const json &rPayload)
 {
 	if (pSocket == NULL)
@@ -3621,7 +3641,8 @@ bool WebServerJson::ExecuteInternalCommand(const nlohmann::json &rRequest, nlohm
 	rErrorMessage.Empty();
 	try {
 		SPipeApiError error;
-		rResult = ExecuteUiThreadCommand(rRequest, error);
+		if (!TryExecuteDirectRestCommand(rRequest, rResult, error))
+			rResult = ExecuteUiThreadCommand(rRequest, error);
 		if (error.strCode.IsEmpty())
 			return true;
 		rErrorCode = error.strCode;
@@ -3702,7 +3723,9 @@ void WebServerJson::ProcessRequest(const ThreadData &rData)
 	};
 
 	try {
-		const json result = ExecuteUiThreadCommand(request, error);
+		json result;
+		if (!TryExecuteDirectRestCommand(request, result, error))
+			result = ExecuteUiThreadCommand(request, error);
 		if (error.strCode.IsEmpty())
 			SendJsonResponse(rData.pSocket, 200, "OK", result);
 		else {
