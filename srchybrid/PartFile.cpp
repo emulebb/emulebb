@@ -1617,6 +1617,7 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak, bool bBypassDiskSpaceGuard)
 		// need to close the file before removing it.
 		file.Abort(); //Call 'Abort' instead of 'Close' to avoid ASSERT.
 		(void)LongPathSeams::DeleteFile(strTmpFile);
+		LongPathSeams::ForgetPreparedPathMemoizationEntry(strTmpFile);
 		theApp.InvalidatePartMetWriteGuardCache(m_fullname);
 		return false;
 	}
@@ -1628,6 +1629,7 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak, bool bBypassDiskSpaceGuard)
 	if (!CopyFileToTempAndReplace(m_fullname, strBakFile, strBakTmpFile, bDontOverrideBak, &dwBackupError)) {
 		if (!bDontOverrideBak) {
 			DebugLogError(_T("Failed to create backup of %s (%s) - %s"), (LPCTSTR)m_fullname, (LPCTSTR)GetFileName(), (LPCTSTR)GetErrorMessage(dwBackupError));
+			LongPathSeams::ForgetPreparedPathMemoizationEntry(strBakTmpFile);
 			theApp.InvalidatePartMetWriteGuardCache(m_fullname);
 		}
 	}
@@ -1642,10 +1644,13 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak, bool bBypassDiskSpaceGuard)
 		strError.Format(GetResString(IDS_ERR_SAVEMET), (LPCTSTR)m_partmetfilename, (LPCTSTR)FormatDisplayFileName(GetFileName()));
 		strError.AppendFormat(_T(" - %s"), (LPCTSTR)GetErrorMessage(dwReplaceError));
 		LogError(_T("%s"), (LPCTSTR)strError);
+		LongPathSeams::ForgetPreparedPathMemoizationEntry(strTmpFile);
 		theApp.InvalidatePartMetWriteGuardCache(m_fullname);
 		return false;
 	}
 
+	LongPathSeams::ForgetPreparedPathMemoizationEntry(strTmpFile);
+	LongPathSeams::ForgetPreparedPathMemoizationEntry(strBakTmpFile);
 	return true;
 }
 
@@ -3341,6 +3346,10 @@ void CPartFile::DeletePartFile()
 		LogError(LOG_STATUSBAR, sFmt, (LPCTSTR)TMPName);
 	}
 
+	LongPathSeams::ForgetPreparedPathMemoizationEntry(m_fullname);
+	LongPathSeams::ForgetPreparedPathMemoizationEntry(partfilename);
+	LongPathSeams::ForgetPreparedPathMemoizationEntry(BAKName);
+	LongPathSeams::ForgetPreparedPathMemoizationEntry(TMPName);
 	delete this;
 }
 

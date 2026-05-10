@@ -471,6 +471,19 @@ inline void ClearPreparedPathMemoizationCache()
 }
 
 /**
+ * @brief Removes one exact path entry from the reusable path-preparation memo cache.
+ */
+inline void ForgetPreparedPathMemoizationEntry(LPCTSTR pszPath)
+{
+	if (pszPath == NULL || pszPath[0] == _T('\0'))
+		return;
+
+	detail::PreparedPathMemoCache &cache = detail::GetPreparedPathMemoCache();
+	std::unique_lock<std::shared_mutex> writeLock(cache.mutex);
+	cache.entries.erase(PathString(pszPath));
+}
+
+/**
  * @brief Returns current path-preparation memoization counters for tests and profiling.
  */
 inline PreparedPathMemoStats GetPreparedPathMemoizationStats()
