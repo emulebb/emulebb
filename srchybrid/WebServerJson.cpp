@@ -1267,6 +1267,37 @@ json BuildSearchResultJson(const CSearchFile &rSearchFile, const SSearchParams *
 }
 
 /**
+ * Serializes one active search session without expanding its result rows.
+ */
+json BuildSearchSessionJson(const CSearchResultsWnd &rSearchResults, const SSearchParams &rSearchParams)
+{
+	CArray<const CSearchFile*, const CSearchFile*> aResults;
+	const bool bHasVisibleResults = theApp.searchlist != NULL && theApp.searchlist->GetVisibleResults(rSearchParams.dwSearchID, aResults);
+	return json{
+		{"id", StdUtf8FromCString(FormatSearchId(rSearchParams.dwSearchID))},
+		{"query", StdUtf8FromCString(rSearchParams.strExpression)},
+		{"method", GetSearchMethodName(rSearchParams.eType)},
+		{"status", rSearchResults.IsSearchRunning(rSearchParams.dwSearchID) ? "running" : "complete"},
+		{"resultCount", bHasVisibleResults ? static_cast<int64_t>(aResults.GetCount()) : 0}
+	};
+}
+
+/**
+ * Builds the active native search-session collection for controller discovery.
+ */
+json BuildSearchSessionsJson(CSearchResultsWnd &rSearchResults)
+{
+	json result = json::array();
+	TCITEM item = {};
+	item.mask = TCIF_PARAM;
+	for (int i = 0; i < rSearchResults.searchselect.GetItemCount(); ++i) {
+		if (rSearchResults.searchselect.GetItem(i, &item) && item.lParam != NULL)
+			result.push_back(BuildSearchSessionJson(rSearchResults, *reinterpret_cast<const SSearchParams*>(item.lParam)));
+	}
+	return result;
+}
+
+/**
  * Applies a validated rating/comment update to one shared file.
  */
 bool TryApplySharedFileRatingComment(CKnownFile &rKnownFile, const json &rParams, SPipeApiError &rError)
@@ -3255,6 +3286,16 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			{"status", "running"},
 			{"results", json::array()}
 		};
+	}
+
+	if (strCommand == "search/list") {
+		if (theApp.emuledlg->searchwnd == NULL || theApp.emuledlg->searchwnd->m_pwndResults == NULL) {
+			rError.strCode = "EMULE_UNAVAILABLE";
+			rError.strMessage = _T("search window is not available");
+			return json();
+		}
+
+		return ItemsEnvelopeIfRequested(params, BuildSearchSessionsJson(*theApp.emuledlg->searchwnd->m_pwndResults));
 	}
 
 	if (strCommand == "search/results") {

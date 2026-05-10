@@ -755,6 +755,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/kad/operations/stop", "", ""},
 		{"POST", "/kad/operations/bootstrap", "address,port", ""},
 		{"POST", "/kad/operations/recheck-firewall", "", ""},
+		{"GET", "/searches", "", ""},
 		{"POST", "/searches", "query,method,type,minSizeBytes,maxSizeBytes,minAvailability,extension,clearExisting", ""},
 		{"DELETE", "/searches", "confirmDeleteAllSearches", ""},
 		{"GET", "/searches/{searchId}", "", ""},
@@ -2503,6 +2504,11 @@ inline bool TryBuildRoute(
 	if (route.size() == 1 && route[0] == "searches" && bPost) {
 		rRoute.strCommand = "search/start";
 		rRoute.params = body;
+		return true;
+	}
+	if (route.size() == 1 && route[0] == "searches" && bGet) {
+		rRoute.strCommand = "search/list";
+		RequestItemsEnvelope(rRoute.params);
 		return true;
 	}
 	if (route.size() == 1 && route[0] == "searches" && bDelete) {
