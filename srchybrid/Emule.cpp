@@ -681,7 +681,9 @@ bool g_bLowColorDesktop = false;
 #ifdef _DEBUG
 static CMemoryState oldMemState, newMemState, diffMemState;
 
-_CRT_ALLOC_HOOK g_pfnPrevCrtAllocHook = NULL;
+using CrtAllocHookNoexcept = int (__cdecl *)(int, void*, size_t, int, long, const unsigned char*, int) noexcept;
+
+CrtAllocHookNoexcept g_pfnPrevCrtAllocHook = NULL;
 CMap<const unsigned char*, const unsigned char*, UINT, UINT> g_allocations;
 int eMuleAllocHook(int mode, void *pUserData, size_t nSize, int nBlockUse, long lRequest, const unsigned char *pszFileName, int nLine) noexcept;
 

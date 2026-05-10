@@ -26,7 +26,8 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 #ifdef _DEBUG
-extern _CRT_ALLOC_HOOK g_pfnPrevCrtAllocHook;
+using CrtAllocHookNoexcept = int (__cdecl *)(int, void*, size_t, int, long, const unsigned char*, int) noexcept;
+extern CrtAllocHookNoexcept g_pfnPrevCrtAllocHook;
 #endif
 
 #define MAXAVERAGETIME	SEC2MS(40)
