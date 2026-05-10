@@ -702,6 +702,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"DELETE", "/transfers/{hash}", "deleteFiles", ""},
 		{"GET", "/transfers/{hash}/details", "", ""},
 		{"GET", "/transfers/{hash}/sources", "", ""},
+		{"GET", "/transfers/{hash}/sources/{clientId}", "", ""},
 		{"POST", "/transfers/{hash}/sources/{clientId}/operations/browse", "", ""},
 		{"POST", "/transfers/{hash}/sources/{clientId}/operations/add-friend", "", ""},
 		{"POST", "/transfers/{hash}/sources/{clientId}/operations/remove-friend", "", ""},
@@ -726,6 +727,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"PATCH", "/shared-directories", "roots,confirmReplaceRoots", ""},
 		{"POST", "/shared-directories/operations/reload", "", ""},
 		{"GET", "/uploads", "", ""},
+		{"GET", "/uploads/{clientId}", "", ""},
 		{"DELETE", "/uploads/{clientId}", "", ""},
 		{"POST", "/uploads/{clientId}/operations/remove", "", ""},
 		{"POST", "/uploads/{clientId}/operations/release-slot", "", ""},
@@ -734,6 +736,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/uploads/{clientId}/operations/ban", "", ""},
 		{"POST", "/uploads/{clientId}/operations/unban", "", ""},
 		{"GET", "/upload-queue", "", "offset,limit"},
+		{"GET", "/upload-queue/{clientId}", "", ""},
 		{"POST", "/upload-queue/{clientId}/operations/remove", "", ""},
 		{"POST", "/upload-queue/{clientId}/operations/release-slot", "", ""},
 		{"POST", "/upload-queue/{clientId}/operations/add-friend", "", ""},
@@ -2240,6 +2243,12 @@ inline bool TryBuildRoute(
 		RequestItemsEnvelope(rRoute.params);
 		return true;
 	}
+	if (route.size() == 4 && route[0] == "transfers" && route[2] == "sources" && bGet) {
+		rRoute.strCommand = "transfers/source";
+		rRoute.params["hash"] = route[1];
+		CopyClientIdToken(route[3], rRoute.params);
+		return true;
+	}
 	if (route.size() == 3 && route[0] == "transfers" && route[2] == "details" && bGet) {
 		rRoute.strCommand = "transfers/details";
 		rRoute.params["hash"] = route[1];
@@ -2257,10 +2266,20 @@ inline bool TryBuildRoute(
 		RequestItemsEnvelope(rRoute.params);
 		return true;
 	}
+	if (route.size() == 2 && route[0] == "uploads" && bGet) {
+		rRoute.strCommand = "uploads/get";
+		CopyClientIdToken(route[1], rRoute.params);
+		return true;
+	}
 	if (route.size() == 1 && route[0] == "upload-queue" && bGet) {
 		rRoute.strCommand = "uploads/queue";
 		CopyPagingQueryParams(query, rRoute.params);
 		RequestPagedItemsEnvelope(rRoute.params);
+		return true;
+	}
+	if (route.size() == 2 && route[0] == "upload-queue" && bGet) {
+		rRoute.strCommand = "uploads/queue_get";
+		CopyClientIdToken(route[1], rRoute.params);
 		return true;
 	}
 	if (route.size() == 2 && route[0] == "uploads" && bDelete) {

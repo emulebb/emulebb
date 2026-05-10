@@ -632,9 +632,50 @@ json BuildSharedFileJson(const CKnownFile &rKnownFile)
 }
 
 /**
+ * Maps the upload-score seam availability enum to the REST detail vocabulary.
+ */
+const char* GetUploadScoreAvailabilityName(const UploadScoreSeams::UploadScoreAvailability eAvailability)
+{
+	switch (eAvailability) {
+	case UploadScoreSeams::uploadScoreAvailable:
+		return "available";
+	case UploadScoreSeams::uploadScoreFriendSlot:
+		return "friendSlot";
+	case UploadScoreSeams::uploadScoreCooldown:
+		return "cooldown";
+	case UploadScoreSeams::uploadScoreUnavailable:
+	default:
+		return "unavailable";
+	}
+}
+
+/**
+ * Serializes the existing upload-score seam for selected peer detail routes.
+ */
+json BuildUploadScoreBreakdownJson(const CUpDownClient &rClient)
+{
+	const UploadScoreSeams::UploadScoreBreakdown breakdown = rClient.GetScoreBreakdown(false, rClient.IsDownloading(), false);
+	return json{
+		{"availability", GetUploadScoreAvailabilityName(breakdown.eAvailability)},
+		{"baseScore", breakdown.uBaseScore},
+		{"effectiveScore", breakdown.uEffectiveScore},
+		{"coreScore", breakdown.fCoreScoreFloat},
+		{"effectiveScoreFloat", breakdown.fEffectiveScoreFloat},
+		{"creditRatio", breakdown.fCreditRatio},
+		{"filePriority", breakdown.iFilePrioNumber},
+		{"lowRatioApplied", breakdown.bLowRatioApplied},
+		{"lowRatioBonus", breakdown.uLowRatioBonus},
+		{"lowIdPenaltyApplied", breakdown.bLowIdPenaltyApplied},
+		{"lowIdDivisor", breakdown.uLowIdDivisor},
+		{"oldClientPenaltyApplied", breakdown.bOldClientPenaltyApplied},
+		{"cooldownRemainingMs", static_cast<uint64>(rClient.GetSlowUploadCooldownRemaining())}
+	};
+}
+
+/**
  * Serializes one upload or waiting-queue client together with its file hash.
  */
-json BuildUploadJson(const CUpDownClient &rClient, const bool bWaitingQueue)
+json BuildUploadJson(const CUpDownClient &rClient, const bool bWaitingQueue, const bool bIncludeScoreBreakdown = false)
 {
 	const CString strUserName(rClient.GetUserName() != NULL ? rClient.GetUserName() : _T(""));
 	const uchar *const pUploadFileHash = rClient.GetUploadFileID();
@@ -645,7 +686,7 @@ json BuildUploadJson(const CUpDownClient &rClient, const bool bWaitingQueue)
 		strClientId = HashToHex(rClient.GetUserHash());
 	else
 		strClientId.Format(_T("%s:%u"), static_cast<LPCTSTR>(strAddress), rClient.GetUserPort());
-	return json{
+	json result = json{
 		{"clientId", StdUtf8FromCString(strClientId)},
 		{"userName", StdUtf8FromCString(strUserName)},
 		{"userHash", JsonHashOrNull(rClient.HasValidHash() ? rClient.GetUserHash() : NULL)},
@@ -671,6 +712,9 @@ json BuildUploadJson(const CUpDownClient &rClient, const bool bWaitingQueue)
 		{"requestedFileName", pUploadFile != NULL ? json(StdUtf8FromCString(pUploadFile->GetFileName())) : json(nullptr)},
 		{"requestedFileSizeBytes", pUploadFile != NULL ? json(static_cast<uint64>(pUploadFile->GetFileSize())) : json(nullptr)}
 	};
+	if (bIncludeScoreBreakdown)
+		result["scoreBreakdown"] = BuildUploadScoreBreakdownJson(rClient);
+	return result;
 }
 
 /**
@@ -1859,6 +1903,32 @@ CUpDownClient* FindTransferSourceClient(CPartFile &rPartFile, const SPipeApiClie
 }
 
 /**
+ * Resolves a REST selector against either the active upload list or waiting queue.
+ */
+CUpDownClient* FindUploadClientByQueueState(const SPipeApiClientSelector &rSelector, const bool bWaitingQueue, SPipeApiError &rError)
+{
+	if (!bWaitingQueue) {
+		for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;) {
+			CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromUploadList(pos);
+			if (pClient != NULL && TransferSourceMatchesSelector(*pClient, rSelector))
+				return pClient;
+		}
+		rError.strCode = "NOT_FOUND";
+		rError.strMessage = _T("active upload client not found");
+		return NULL;
+	}
+
+	for (POSITION pos = theApp.uploadqueue->GetFirstFromWaitingList(); pos != NULL;) {
+		CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromWaitingList(pos);
+		if (pClient != NULL && TransferSourceMatchesSelector(*pClient, rSelector))
+			return pClient;
+	}
+	rError.strCode = "NOT_FOUND";
+	rError.strMessage = _T("upload queue client not found");
+	return NULL;
+}
+
+/**
  * Parses one optional { addr, port } server endpoint from a command payload.
  */
 bool TryGetServerEndpoint(const json &rParams, SPipeApiServerEndpoint &rEndpoint, bool &rbHasEndpoint, SPipeApiError &rError)
@@ -2676,6 +2746,16 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		return ItemsEnvelopeIfRequested(params, BuildUploadsListJson(bWaitingQueue));
 	}
 
+	if (strCommand == "uploads/get" || strCommand == "uploads/queue_get") {
+		SPipeApiClientSelector selector;
+		if (!TryGetUploadClientSelector(params, selector, rError))
+			return json();
+
+		const bool bWaitingQueue = strCommand == "uploads/queue_get";
+		CUpDownClient *const pClient = FindUploadClientByQueueState(selector, bWaitingQueue, rError);
+		return pClient != NULL ? BuildUploadJson(*pClient, bWaitingQueue, true) : json();
+	}
+
 	if (strCommand == "uploads/remove" || strCommand == "uploads/release_slot") {
 		SPipeApiClientSelector selector;
 		if (!TryGetUploadClientSelector(params, selector, rError))
@@ -2800,6 +2880,22 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 
 		return ItemsEnvelopeIfRequested(params, BuildTransferSourcesJson(*pPartFile));
+	}
+
+	if (strCommand == "transfers/source") {
+		CPartFile *pPartFile = FindPartFileByHash(params.contains("hash") ? params["hash"] : json(), rError);
+		if (pPartFile == NULL)
+			return json();
+
+		SPipeApiClientSelector selector;
+		if (!TryGetUploadClientSelector(params, selector, rError)) {
+			if (rError.strMessage == _T("userHash or ip and port are required"))
+				rError.strMessage = _T("source userHash or ip and port are required");
+			return json();
+		}
+
+		CUpDownClient *const pClient = FindTransferSourceClient(*pPartFile, selector, rError);
+		return pClient != NULL ? BuildSourceJson(*pClient) : json();
 	}
 
 	if (strCommand == "transfers/details") {
