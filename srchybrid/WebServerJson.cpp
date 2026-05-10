@@ -2011,6 +2011,17 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		return json{{"ok", true}};
 	}
 
+	if (strCommand == "app/crash_test") {
+		if (!thePrefs.GetWebCrashTestEndpointEnabled()) {
+			rError.strCode = "NOT_FOUND";
+			rError.strMessage = _T("API route not found");
+			return json();
+		}
+		volatile LONG *pCrash = reinterpret_cast<volatile LONG *>(0);
+		*pCrash = 1;
+		return json{{"ok", true}};
+	}
+
 	if (strCommand == "stats/global")
 		return BuildGlobalStatsJson();
 

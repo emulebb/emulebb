@@ -681,6 +681,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"GET", "/app/preferences", "", ""},
 		{"PATCH", "/app/preferences", "uploadLimitKiBps,downloadLimitKiBps,maxConnections,maxConnectionsPerFiveSeconds,maxSourcesPerFile,uploadClientDataRate,maxUploadSlots,queueSize,autoConnect,newAutoUp,newAutoDown,creditSystem,safeServerConnect,networkKademlia,networkEd2k", ""},
 		{"POST", "/app/shutdown", "confirmShutdown", ""},
+		{"POST", "/app/operations/crash-test", "confirmCrash", ""},
 		{"GET", "/status", "", ""},
 		{"GET", "/stats", "", ""},
 		{"GET", "/snapshot", "", "limit"},
@@ -1634,6 +1635,8 @@ inline bool ValidateDestructiveConfirmationBody(const json &rBody, const SApiRou
 		return RequireBooleanField(rBody, "deleteFiles", "deleteFiles must be an explicit boolean", rErrorCode, rErrorMessage);
 	if (strMethod == "POST" && strPath == "/app/shutdown")
 		return RequireBooleanFieldTrue(rBody, "confirmShutdown", "confirmShutdown must be true", rErrorCode, rErrorMessage);
+	if (strMethod == "POST" && strPath == "/app/operations/crash-test")
+		return RequireBooleanFieldTrue(rBody, "confirmCrash", "confirmCrash must be true", rErrorCode, rErrorMessage);
 	if (strMethod == "POST" && strPath == "/transfers/operations/clear-completed")
 		return RequireBooleanFieldTrue(rBody, "confirmClearCompleted", "confirmClearCompleted must be true", rErrorCode, rErrorMessage);
 	if (strMethod == "DELETE" && strPath == "/searches")
@@ -2096,6 +2099,10 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 2 && route[0] == "app" && route[1] == "shutdown" && bPost) {
 		rRoute.strCommand = "app/shutdown";
+		return true;
+	}
+	if (route.size() == 3 && route[0] == "app" && route[1] == "operations" && route[2] == "crash-test" && bPost) {
+		rRoute.strCommand = "app/crash_test";
 		return true;
 	}
 	if (route.size() == 1 && route[0] == "status" && bGet) {
