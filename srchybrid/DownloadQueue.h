@@ -235,6 +235,7 @@ private:
 	uint32	m_datarate;
 	UINT	m_uBulkAddDownloadsDepth;
 	bool	m_bBulkAddDownloadsNeedDiskspaceCheck;
+	bool	m_bBulkAddDownloadsNeedOverviewExport;
 	bool	m_bProtectedDiskSpaceBlocked;
 	CString	m_strProtectedDiskSpaceBreachSignature;
 	mutable CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> m_aProtectedVolumeStatusSnapshot;

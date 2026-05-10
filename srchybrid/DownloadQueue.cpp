@@ -105,6 +105,7 @@ CDownloadQueue::CDownloadQueue()
 	, m_datarate()
 	, m_uBulkAddDownloadsDepth()
 	, m_bBulkAddDownloadsNeedDiskspaceCheck()
+	, m_bBulkAddDownloadsNeedOverviewExport()
 	, m_bProtectedDiskSpaceBlocked()
 	, m_strProtectedDiskSpaceBreachSignature()
 	, m_aProtectedVolumeStatusSnapshot()
@@ -579,6 +580,10 @@ void CDownloadQueue::EndBulkAddDownloads()
 		m_bBulkAddDownloadsNeedDiskspaceCheck = false;
 		CheckDiskspace();
 	}
+	if (m_uBulkAddDownloadsDepth == 0 && m_bBulkAddDownloadsNeedOverviewExport) {
+		m_bBulkAddDownloadsNeedOverviewExport = false;
+		ExportPartMetFilesOverview();
+	}
 }
 
 void CDownloadQueue::AddToResolved(const CPartFile *pFile, SUnresolvedHostname *pUH)
@@ -608,7 +613,10 @@ void CDownloadQueue::AddDownload(CPartFile *newfile, bool paused)
 	msgTemp.Format(GetResString(IDS_NEWDOWNLOAD), (LPCTSTR)strDisplayFileName);
 	msgTemp += _T('\n');
 	theApp.emuledlg->ShowNotifier(msgTemp, TBN_DOWNLOADADDED);
-	ExportPartMetFilesOverview();
+	if (m_uBulkAddDownloadsDepth > 0)
+		m_bBulkAddDownloadsNeedOverviewExport = true;
+	else
+		ExportPartMetFilesOverview();
 }
 
 bool CDownloadQueue::IsFileExisting(const uchar *fileid, bool bLogWarnings) const
