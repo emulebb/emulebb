@@ -184,6 +184,10 @@ private:
 	void	SwapParts(POSITION pos1, POSITION pos2);
 	void	HeapSort(UINT first, UINT last);
 	void	CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> *paStatuses, bool bNotEnoughSpaceLeft) const;
+	/**
+	 * @brief Returns the current protected-volume disk-space snapshot, refreshing it at most once per download-queue tick unless forced.
+	 */
+	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&>& GetProtectedVolumeStatusSnapshot(bool bNotEnoughSpaceLeft, bool bForceRefresh) const;
 	CString	BuildProtectedDiskSpaceBreachSignature(const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aStatuses) const;
 	void	ForceSaveAllPartMetFilesForDiskSpace();
 	void	StopAllDownloadsForDiskSpace();
@@ -198,6 +202,8 @@ private:
 	uint64	m_datarateMS;
 	CPartFile *m_lastfile;
 	ULONGLONG m_dwLastA4AFtime; // ZZ:DownloadManager
+	ULONGLONG m_ullDownloadQueueProcessTick;
+	bool	m_bDownloadQueueProcessActive;
 	ULONGLONG m_lastcheckdiskspacetime;
 	ULONGLONG m_lastudpsearchtime;
 	ULONGLONG m_lastudpstattime;
@@ -212,4 +218,8 @@ private:
 	uint32	m_datarate;
 	bool	m_bProtectedDiskSpaceBlocked;
 	CString	m_strProtectedDiskSpaceBreachSignature;
+	mutable CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> m_aProtectedVolumeStatusSnapshot;
+	mutable ULONGLONG m_ullProtectedVolumeStatusSnapshotTick;
+	mutable bool m_bProtectedVolumeStatusSnapshotValid;
+	mutable bool m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft;
 };

@@ -49,6 +49,8 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
+	const ULONGLONG kProtectedVolumeStatusSnapshotMaxAgeMs = 100;
+
 	enum ProtectedDiskRoleMask : UINT
 	{
 		ProtectedDiskRoleConfig = 0x01,
@@ -89,6 +91,8 @@ CDownloadQueue::CDownloadQueue()
 	, m_datarateMS()
 	, m_lastfile()
 	, m_dwLastA4AFtime()
+	, m_ullDownloadQueueProcessTick()
+	, m_bDownloadQueueProcessActive()
 	, m_lastcheckdiskspacetime()
 	, m_lastudpsearchtime()
 	, m_lastudpstattime()
@@ -101,6 +105,10 @@ CDownloadQueue::CDownloadQueue()
 	, m_datarate()
 	, m_bProtectedDiskSpaceBlocked()
 	, m_strProtectedDiskSpaceBreachSignature()
+	, m_aProtectedVolumeStatusSnapshot()
+	, m_ullProtectedVolumeStatusSnapshotTick()
+	, m_bProtectedVolumeStatusSnapshotValid()
+	, m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft()
 {
 	SetLastKademliaFileRequest();
 }
@@ -209,6 +217,27 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 		(*paStatuses)[i].RequiredBytes = (*paStatuses)[i].FloorBytes + (*paStatuses)[i].CompletionBytes;
 }
 
+const CArray<CDownloadQueue::ProtectedVolumeStatus, const CDownloadQueue::ProtectedVolumeStatus&>& CDownloadQueue::GetProtectedVolumeStatusSnapshot(
+	const bool bNotEnoughSpaceLeft, const bool bForceRefresh) const
+{
+	const ULONGLONG ullNow = ::GetTickCount64();
+	const bool bSnapshotMatches = m_bProtectedVolumeStatusSnapshotValid
+		&& m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft == bNotEnoughSpaceLeft;
+	const bool bSnapshotFresh = bSnapshotMatches
+		&& ((m_bDownloadQueueProcessActive && m_ullDownloadQueueProcessTick != 0 && m_ullProtectedVolumeStatusSnapshotTick >= m_ullDownloadQueueProcessTick)
+			|| (ullNow >= m_ullProtectedVolumeStatusSnapshotTick
+				&& ullNow - m_ullProtectedVolumeStatusSnapshotTick <= kProtectedVolumeStatusSnapshotMaxAgeMs));
+
+	if (bForceRefresh || !bSnapshotFresh) {
+		CollectProtectedVolumeStatuses(&m_aProtectedVolumeStatusSnapshot, bNotEnoughSpaceLeft);
+		m_ullProtectedVolumeStatusSnapshotTick = ullNow;
+		m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft = bNotEnoughSpaceLeft;
+		m_bProtectedVolumeStatusSnapshotValid = true;
+	}
+
+	return m_aProtectedVolumeStatusSnapshot;
+}
+
 CString CDownloadQueue::BuildProtectedDiskSpaceBreachSignature(const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aStatuses) const
 {
 	CString strSignature;
@@ -226,8 +255,7 @@ CString CDownloadQueue::BuildProtectedDiskSpaceBreachSignature(const CArray<Prot
 
 bool CDownloadQueue::IsProtectedDiskSpaceBlocked() const
 {
-	CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> aProtectedVolumes;
-	CollectProtectedVolumeStatuses(&aProtectedVolumes, false);
+	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, false);
 	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
 		if (aProtectedVolumes[i].FreeBytes < aProtectedVolumes[i].RequiredBytes)
 			return true;
@@ -244,8 +272,7 @@ ULONGLONG CDownloadQueue::GetRequiredFreeDiskSpaceForPath(LPCTSTR pszPath) const
 	if (!TryGetVolumeIdentityPath(pszPath, strVolumeId))
 		return 0;
 
-	CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> aProtectedVolumes;
-	CollectProtectedVolumeStatuses(&aProtectedVolumes, false);
+	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, false);
 	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
 		if (aProtectedVolumes[i].VolumeId == strVolumeId)
 			return aProtectedVolumes[i].RequiredBytes;
@@ -538,6 +565,10 @@ bool CDownloadQueue::IsFileExisting(const uchar *fileid, bool bLogWarnings) cons
 //This method is called every 100 ms
 void CDownloadQueue::Process()
 {
+	const ULONGLONG curTick = ::GetTickCount64();
+	m_ullDownloadQueueProcessTick = curTick;
+	m_bDownloadQueueProcessActive = true;
+
 	ProcessLocalRequests(); // send src requests to local server
 
 	uint32 downspeed;
@@ -551,7 +582,6 @@ void CDownloadQueue::Process()
 	} else
 		downspeed = 0;
 
-	const ULONGLONG curTick = ::GetTickCount64();
 	while (!average_dr_hist.IsEmpty() && curTick >= average_dr_hist.Head().timestamp + SEC2MS(10)) {
 		m_datarateMS -= average_dr_hist.Head().datalen;
 		average_dr_hist.RemoveHead();
@@ -612,6 +642,7 @@ void CDownloadQueue::Process()
 		m_dwLastA4AFtime = curTick;
 	}
 	// <-- ZZ:DownloadManager
+	m_bDownloadQueueProcessActive = false;
 }
 
 CPartFile* CDownloadQueue::GetFileNext(POSITION &pos) const
@@ -1191,8 +1222,7 @@ void CDownloadQueue::CheckDiskspace(bool bNotEnoughSpaceLeft)
 {
 	m_lastcheckdiskspacetime = ::GetTickCount64();
 
-	CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> aProtectedVolumes;
-	CollectProtectedVolumeStatuses(&aProtectedVolumes, bNotEnoughSpaceLeft);
+	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(bNotEnoughSpaceLeft, true);
 	bool bHasBreach = false;
 	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
 		if (aProtectedVolumes[i].FreeBytes < aProtectedVolumes[i].RequiredBytes) {
@@ -1876,8 +1906,7 @@ CString CDownloadQueue::GetOptimalTempDir(UINT nCat, EMFileSize nFileSize)
 {
 	const INT_PTR iTempDirCnt = thePrefs.GetTempDirCount();
 
-	CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> aProtectedVolumes;
-	CollectProtectedVolumeStatuses(&aProtectedVolumes, false);
+	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, true);
 	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
 		if (aProtectedVolumes[i].FreeBytes < aProtectedVolumes[i].RequiredBytes)
 			return CString();
