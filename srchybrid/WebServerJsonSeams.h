@@ -2357,6 +2357,11 @@ inline bool TryBuildRoute(
 		return true;
 	}
 	if (route.size() == 3 && route[0] == "servers" && route[1] == "operations" && bPost) {
+		if (route[2] == "import-met-url") {
+			rRoute.strCommand = "servers/import_met_url";
+			rRoute.params = body;
+			return true;
+		}
 		if (route[2] == "connect" || route[2] == "disconnect") {
 			rRoute.strCommand = "servers/" + route[2];
 			rRoute.params = body;
@@ -2365,11 +2370,6 @@ inline bool TryBuildRoute(
 		rErrorCode = "NOT_FOUND";
 		rErrorMessage = "API route not found";
 		return false;
-	}
-	if (route.size() == 3 && route[0] == "servers" && route[1] == "operations" && route[2] == "import-met-url" && bPost) {
-		rRoute.strCommand = "servers/import_met_url";
-		rRoute.params = body;
-		return true;
 	}
 	if (route.size() == 4 && route[0] == "servers" && route[2] == "operations" && route[3] == "connect" && bPost) {
 		rRoute.strCommand = "servers/connect";
