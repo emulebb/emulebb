@@ -269,7 +269,7 @@ const CArray<CDownloadQueue::ProtectedVolumeStatus, const CDownloadQueue::Protec
 
 void CDownloadQueue::ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempPath, LPCTSTR pszIncomingPath, EMFileSize nFileSize) const
 {
-	if (!m_bProtectedVolumeStatusSnapshotValid || m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft || nFileSize == 0)
+	if (!m_bProtectedVolumeStatusSnapshotValid || m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft || static_cast<uint64>(nFileSize) == 0)
 		return;
 
 	VolumeIdentityPathCache volumeIdentityPathCache;
