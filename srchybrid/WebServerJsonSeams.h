@@ -689,19 +689,19 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"GET", "/status", "", ""},
 		{"GET", "/stats", "", ""},
 		{"GET", "/snapshot", "", "limit"},
-		{"GET", "/categories", "", "offset,limit"},
+		{"GET", "/categories", "", ""},
 		{"POST", "/categories", "name,path,comment,color,priority", ""},
 		{"GET", "/categories/{categoryId}", "", ""},
 		{"PATCH", "/categories/{categoryId}", "name,path,comment,color,priority", ""},
 		{"DELETE", "/categories/{categoryId}", "", ""},
-		{"GET", "/transfers", "", "state,categoryId,offset,limit"},
+		{"GET", "/transfers", "", "state,categoryId"},
 		{"POST", "/transfers", "link,links,categoryId,categoryName,paused", ""},
 		{"POST", "/transfers/operations/clear-completed", "confirmClearCompleted", ""},
 		{"GET", "/transfers/{hash}", "", ""},
 		{"PATCH", "/transfers/{hash}", "name,priority,categoryId,categoryName", ""},
 		{"DELETE", "/transfers/{hash}", "deleteFiles", ""},
 		{"GET", "/transfers/{hash}/details", "", ""},
-		{"GET", "/transfers/{hash}/sources", "", "offset,limit"},
+		{"GET", "/transfers/{hash}/sources", "", ""},
 		{"POST", "/transfers/{hash}/sources/{clientId}/operations/browse", "", ""},
 		{"POST", "/transfers/{hash}/sources/{clientId}/operations/add-friend", "", ""},
 		{"POST", "/transfers/{hash}/sources/{clientId}/operations/remove-friend", "", ""},
@@ -721,11 +721,11 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"PATCH", "/shared-files/{hash}", "priority,rating,comment", ""},
 		{"DELETE", "/shared-files/{hash}", "deleteFiles", ""},
 		{"GET", "/shared-files/{hash}/ed2k-link", "", ""},
-		{"GET", "/shared-files/{hash}/comments", "", "offset,limit"},
+		{"GET", "/shared-files/{hash}/comments", "", ""},
 		{"GET", "/shared-directories", "", ""},
 		{"PATCH", "/shared-directories", "roots,confirmReplaceRoots", ""},
 		{"POST", "/shared-directories/operations/reload", "", ""},
-		{"GET", "/uploads", "", "offset,limit"},
+		{"GET", "/uploads", "", ""},
 		{"DELETE", "/uploads/{clientId}", "", ""},
 		{"POST", "/uploads/{clientId}/operations/remove", "", ""},
 		{"POST", "/uploads/{clientId}/operations/release-slot", "", ""},
@@ -740,7 +740,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/upload-queue/{clientId}/operations/remove-friend", "", ""},
 		{"POST", "/upload-queue/{clientId}/operations/ban", "", ""},
 		{"POST", "/upload-queue/{clientId}/operations/unban", "", ""},
-		{"GET", "/servers", "", "offset,limit"},
+		{"GET", "/servers", "", ""},
 		{"POST", "/servers", "address,port,name,priority,static,connect", ""},
 		{"POST", "/servers/operations/connect", "", ""},
 		{"POST", "/servers/operations/disconnect", "", ""},
@@ -760,10 +760,10 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"GET", "/searches/{searchId}", "", ""},
 		{"DELETE", "/searches/{searchId}", "", ""},
 		{"POST", "/searches/{searchId}/results/{hash}/operations/download", "categoryId,categoryName,paused", ""},
-		{"GET", "/friends", "", "offset,limit"},
+		{"GET", "/friends", "", ""},
 		{"POST", "/friends", "userHash,name", ""},
 		{"DELETE", "/friends/{userHash}", "", ""},
-		{"GET", "/logs", "", "offset,limit"},
+		{"GET", "/logs", "", "limit"},
 		{"POST", "/logs/operations/clear", "confirmClearLogs", ""},
 	};
 	return specs;
@@ -1922,6 +1922,15 @@ inline void RequestItemsEnvelope(json &rParams)
 }
 
 /**
+ * @brief Marks list responses that should expose public offset/limit metadata.
+ */
+inline void RequestPagedItemsEnvelope(json &rParams)
+{
+	RequestItemsEnvelope(rParams);
+	rParams["_paged_items_envelope"] = true;
+}
+
+/**
  * @brief Parses one JSON request body and reports the stable REST error text
  * when parsing fails.
  */
@@ -2132,7 +2141,6 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 1 && route[0] == "categories" && bGet) {
 		rRoute.strCommand = "categories/list";
-		CopyPagingQueryParams(query, rRoute.params);
 		RequestItemsEnvelope(rRoute.params);
 		return true;
 	}
@@ -2160,7 +2168,6 @@ inline bool TryBuildRoute(
 	if (route.size() == 1 && route[0] == "transfers" && bGet) {
 		rRoute.strCommand = "transfers/list";
 		CopyTransferListQueryParams(query, rRoute.params);
-		CopyPagingQueryParams(query, rRoute.params);
 		RequestItemsEnvelope(rRoute.params);
 		return true;
 	}
@@ -2229,7 +2236,6 @@ inline bool TryBuildRoute(
 	if (route.size() == 3 && route[0] == "transfers" && route[2] == "sources" && bGet) {
 		rRoute.strCommand = "transfers/sources";
 		rRoute.params["hash"] = route[1];
-		CopyPagingQueryParams(query, rRoute.params);
 		RequestItemsEnvelope(rRoute.params);
 		return true;
 	}
@@ -2247,14 +2253,13 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 1 && route[0] == "uploads" && bGet) {
 		rRoute.strCommand = "uploads/list";
-		CopyPagingQueryParams(query, rRoute.params);
 		RequestItemsEnvelope(rRoute.params);
 		return true;
 	}
 	if (route.size() == 1 && route[0] == "upload-queue" && bGet) {
 		rRoute.strCommand = "uploads/queue";
 		CopyPagingQueryParams(query, rRoute.params);
-		RequestItemsEnvelope(rRoute.params);
+		RequestPagedItemsEnvelope(rRoute.params);
 		return true;
 	}
 	if (route.size() == 2 && route[0] == "uploads" && bDelete) {
@@ -2336,7 +2341,6 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 1 && route[0] == "servers" && bGet) {
 		rRoute.strCommand = "servers/list";
-		CopyPagingQueryParams(query, rRoute.params);
 		RequestItemsEnvelope(rRoute.params);
 		return true;
 	}
@@ -2456,7 +2460,7 @@ inline bool TryBuildRoute(
 	if (route.size() == 1 && route[0] == "shared-files" && bGet) {
 		rRoute.strCommand = "shared/list";
 		CopyPagingQueryParams(query, rRoute.params);
-		RequestItemsEnvelope(rRoute.params);
+		RequestPagedItemsEnvelope(rRoute.params);
 		return true;
 	}
 	if (route.size() == 1 && route[0] == "shared-files" && bPost) {
@@ -2482,7 +2486,6 @@ inline bool TryBuildRoute(
 	if (route.size() == 3 && route[0] == "shared-files" && route[2] == "comments" && bGet) {
 		rRoute.strCommand = "shared/comments";
 		rRoute.params["hash"] = route[1];
-		CopyPagingQueryParams(query, rRoute.params);
 		RequestItemsEnvelope(rRoute.params);
 		return true;
 	}
@@ -2527,7 +2530,6 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 1 && route[0] == "friends" && bGet) {
 		rRoute.strCommand = "friends/list";
-		CopyPagingQueryParams(query, rRoute.params);
 		RequestItemsEnvelope(rRoute.params);
 		return true;
 	}
@@ -2544,7 +2546,6 @@ inline bool TryBuildRoute(
 	if (route.size() == 1 && route[0] == "logs" && bGet) {
 		rRoute.strCommand = "log/get";
 		CopyLogQueryParams(query, rRoute.params);
-		CopyPagingQueryParams(query, rRoute.params);
 		RequestItemsEnvelope(rRoute.params);
 		return true;
 	}

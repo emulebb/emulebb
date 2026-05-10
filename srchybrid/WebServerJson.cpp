@@ -731,6 +731,9 @@ json ItemsEnvelopeIfRequested(const json &rParams, const json &rItems)
 	if (!rItems.is_array())
 		return json{{"items", rItems}};
 
+	if (!rParams.value("_paged_items_envelope", false))
+		return json{{"items", rItems}};
+
 	const int iTotal = static_cast<int>(rItems.size());
 	const int iOffset = max(0, rParams.value("_offset", 0));
 	const int iLimit = max(1, min(1000, rParams.value("_limit", 100)));
