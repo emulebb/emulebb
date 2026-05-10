@@ -126,6 +126,11 @@ public:
 	bool CanWritePartMetFiles(LPCTSTR pszPath, bool bForceRefresh = false, bool bBypassDiskSpaceFloor = false);
 	void InvalidatePartMetWriteGuardCache(LPCTSTR pszPath = NULL);
 	/**
+	 * @brief Resolves a part.met path to a stable volume identity using the
+	 *        write-guard cache to avoid repeated Win32 volume probes.
+	 */
+	bool TryResolvePartMetWriteGuardVolume(LPCTSTR pszPath, bool bForceRefresh, CString &rstrVolumeRoot);
+	/**
 	 * @brief Returns whether env-gated startup phase profiling is enabled for this process.
 	 */
 	bool IsStartupProfilingEnabled() const						{ return m_bStartupProfilingEnabled; }
@@ -327,6 +332,7 @@ protected:
 	// Elandal:ThreadSafeLogging <--
 	CCriticalSection m_partMetWriteGuardLock;
 	CMapStringToPtr m_aPartMetWriteGuardByVolume;
+	CMapStringToString m_aPartMetWriteGuardPathToVolume;
 
 	WSADATA		m_wsaData;
 	uint32		m_dwPublicIP;

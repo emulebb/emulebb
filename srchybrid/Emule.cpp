@@ -701,7 +701,7 @@ bool CemuleApp::CanWritePartMetFiles(LPCTSTR pszPath, const bool bForceRefresh, 
 		return true;
 
 	CString strVolumeRoot;
-	if (!TryGetVolumeIdentityPath(pszPath, strVolumeRoot))
+	if (!TryResolvePartMetWriteGuardVolume(pszPath, bForceRefresh, strVolumeRoot))
 		return true;
 
 	{
@@ -738,17 +738,58 @@ bool CemuleApp::CanWritePartMetFiles(LPCTSTR pszPath, const bool bForceRefresh, 
 	return bCanWrite;
 }
 
+bool CemuleApp::TryResolvePartMetWriteGuardVolume(LPCTSTR pszPath, const bool bForceRefresh, CString &rstrVolumeRoot)
+{
+	rstrVolumeRoot.Empty();
+	if (pszPath == NULL || pszPath[0] == _T('\0'))
+		return false;
+
+	CString strPathKey(pszPath);
+	strPathKey.MakeLower();
+
+	{
+		CSingleLock lock(&m_partMetWriteGuardLock, TRUE);
+		if (bForceRefresh)
+			m_aPartMetWriteGuardPathToVolume.RemoveKey(strPathKey);
+		else if (m_aPartMetWriteGuardPathToVolume.Lookup(strPathKey, rstrVolumeRoot) && !rstrVolumeRoot.IsEmpty())
+			return true;
+	}
+
+	CString strResolvedVolumeRoot;
+	if (!TryGetVolumeIdentityPath(pszPath, strResolvedVolumeRoot))
+		return false;
+
+	{
+		CSingleLock lock(&m_partMetWriteGuardLock, TRUE);
+		m_aPartMetWriteGuardPathToVolume.SetAt(strPathKey, strResolvedVolumeRoot);
+	}
+	rstrVolumeRoot = strResolvedVolumeRoot;
+	return true;
+}
+
 void CemuleApp::InvalidatePartMetWriteGuardCache(LPCTSTR pszPath)
 {
 	CSingleLock lock(&m_partMetWriteGuardLock, TRUE);
 	if (pszPath == NULL || pszPath[0] == _T('\0')) {
 		m_aPartMetWriteGuardByVolume.RemoveAll();
+		m_aPartMetWriteGuardPathToVolume.RemoveAll();
 		return;
 	}
 
 	CString strVolumeRoot;
-	if (TryGetVolumeIdentityPath(pszPath, strVolumeRoot))
+	CString strPathKey(pszPath);
+	strPathKey.MakeLower();
+	if (m_aPartMetWriteGuardPathToVolume.Lookup(strPathKey, strVolumeRoot)) {
+		m_aPartMetWriteGuardPathToVolume.RemoveKey(strPathKey);
 		m_aPartMetWriteGuardByVolume.RemoveKey(strVolumeRoot);
+		return;
+	}
+
+	lock.Unlock();
+	if (TryGetVolumeIdentityPath(pszPath, strVolumeRoot)) {
+		CSingleLock relock(&m_partMetWriteGuardLock, TRUE);
+		m_aPartMetWriteGuardByVolume.RemoveKey(strVolumeRoot);
+	}
 }
 
 
