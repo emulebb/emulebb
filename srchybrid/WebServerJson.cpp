@@ -2038,7 +2038,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 	if (strCommand == "app/crash_test") {
-		if (!thePrefs.GetWebCrashTestEndpointEnabled()) {
+		if (!thePrefs.GetDiagnosticRestEndpointsEnabled()) {
 			rError.strCode = "NOT_FOUND";
 			rError.strMessage = _T("API route not found");
 			return json();
@@ -2049,7 +2049,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 	if (strCommand == "app/capture_dump") {
-		if (!thePrefs.GetWebCrashTestEndpointEnabled()) {
+		if (!thePrefs.GetDiagnosticRestEndpointsEnabled()) {
 			rError.strCode = "NOT_FOUND";
 			rError.strMessage = _T("API route not found");
 			return json();

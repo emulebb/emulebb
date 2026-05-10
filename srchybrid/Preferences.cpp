@@ -809,7 +809,7 @@ bool	CPreferences::m_bWebLowEnabled;
 int		CPreferences::m_iWebTimeoutMins;
 int		CPreferences::m_iWebFileUploadSizeLimitMB;
 bool	CPreferences::m_bAllowAdminHiLevFunc;
-bool	CPreferences::m_bWebCrashTestEndpointEnabled;
+bool	CPreferences::m_bDiagnosticRestEndpointsEnabled;
 CString	CPreferences::m_strTemplateFile;
 bool	CPreferences::m_bWebUseHttps;
 CString	CPreferences::m_sWebHttpsCertificate;
@@ -2635,7 +2635,7 @@ void CPreferences::SavePreferences()
 	ini.WriteInt(_T("PageRefreshTime"), m_nWebPageRefresh, prefini::Sections::WebServer);
 	ini.WriteBool(_T("UseLowRightsUser"), m_bWebLowEnabled, prefini::Sections::WebServer);
 	ini.WriteBool(_T("AllowAdminHiLevelFunc"), m_bAllowAdminHiLevFunc, prefini::Sections::WebServer);
-	ini.WriteBool(_T("EnableCrashTestEndpoint"), m_bWebCrashTestEndpointEnabled, prefini::Sections::WebServer);
+	ini.WriteBool(_T("EnableDiagnosticRestEndpoints"), m_bDiagnosticRestEndpointsEnabled, prefini::Sections::WebServer);
 	ini.WriteInt(_T("WebTimeoutMins"), m_iWebTimeoutMins, prefini::Sections::WebServer);
 	ini.WriteInt(_T("MaxFileUploadSizeMB"), m_iWebFileUploadSizeLimitMB, prefini::Sections::WebServer);
 	ini.WriteString(_T("AllowedIPs"), GetAllowedRemoteAccessIPsString(), prefini::Sections::WebServer);
@@ -3236,7 +3236,7 @@ void CPreferences::LoadPreferences()
 	SetWebTimeoutMins(NormalizeNonNegativePreference(ini.GetInt(_T("WebTimeoutMins"), static_cast<int>(GetDefaultWebTimeoutMins()), prefini::Sections::WebServer), GetDefaultWebTimeoutMins()));
 	SetMaxWebUploadFileSizeMB(NormalizeNonNegativePreference(ini.GetInt(_T("MaxFileUploadSizeMB"), static_cast<int>(GetDefaultMaxWebUploadFileSizeMB()), prefini::Sections::WebServer), GetDefaultMaxWebUploadFileSizeMB()));
 	m_bAllowAdminHiLevFunc = ini.GetBool(_T("AllowAdminHiLevelFunc"), false, prefini::Sections::WebServer);
-	m_bWebCrashTestEndpointEnabled = ini.GetBool(_T("EnableCrashTestEndpoint"), false, prefini::Sections::WebServer);
+	m_bDiagnosticRestEndpointsEnabled = ini.GetBool(_T("EnableDiagnosticRestEndpoints"), false, prefini::Sections::WebServer);
 
 	m_aAllowedRemoteAccessIPs.RemoveAll();
 	buffer = ini.GetString(_T("AllowedIPs"), _T(""), prefini::Sections::WebServer);

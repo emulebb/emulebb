@@ -684,8 +684,8 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"GET", "/app/preferences", "", ""},
 		{"PATCH", "/app/preferences", "uploadLimitKiBps,downloadLimitKiBps,maxConnections,maxConnectionsPerFiveSeconds,maxSourcesPerFile,uploadClientDataRate,maxUploadSlots,queueSize,autoConnect,newAutoUp,newAutoDown,creditSystem,safeServerConnect,networkKademlia,networkEd2k", ""},
 		{"POST", "/app/shutdown", "confirmShutdown", ""},
-		{"POST", "/app/operations/capture-dump", "confirmDump,fullMemory", ""},
-		{"POST", "/app/operations/crash-test", "confirmCrash", ""},
+		{"POST", "/diagnostics/dumps", "confirmDump,fullMemory", ""},
+		{"POST", "/diagnostics/crash-tests", "confirmCrash", ""},
 		{"GET", "/status", "", ""},
 		{"GET", "/stats", "", ""},
 		{"GET", "/snapshot", "", "limit"},
@@ -744,13 +744,13 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/servers", "address,port,name,priority,static,connect", ""},
 		{"POST", "/servers/operations/connect", "", ""},
 		{"POST", "/servers/operations/disconnect", "", ""},
-		{"POST", "/servers/met-url-imports", "url", ""},
+		{"POST", "/servers/operations/import-met-url", "url", ""},
 		{"GET", "/servers/{serverId}", "", ""},
 		{"PATCH", "/servers/{serverId}", "name,priority,static", ""},
 		{"DELETE", "/servers/{serverId}", "", ""},
 		{"POST", "/servers/{serverId}/operations/connect", "", ""},
 		{"GET", "/kad", "", ""},
-		{"POST", "/kad/nodes-url-imports", "url", ""},
+		{"POST", "/kad/operations/import-nodes-url", "url", ""},
 		{"POST", "/kad/operations/start", "", ""},
 		{"POST", "/kad/operations/stop", "", ""},
 		{"POST", "/kad/operations/bootstrap", "address,port", ""},
@@ -1639,9 +1639,9 @@ inline bool ValidateDestructiveConfirmationBody(const json &rBody, const SApiRou
 		return RequireBooleanField(rBody, "deleteFiles", "deleteFiles must be an explicit boolean", rErrorCode, rErrorMessage);
 	if (strMethod == "POST" && strPath == "/app/shutdown")
 		return RequireBooleanFieldTrue(rBody, "confirmShutdown", "confirmShutdown must be true", rErrorCode, rErrorMessage);
-	if (strMethod == "POST" && strPath == "/app/operations/capture-dump")
+	if (strMethod == "POST" && strPath == "/diagnostics/dumps")
 		return RequireBooleanFieldTrue(rBody, "confirmDump", "confirmDump must be true", rErrorCode, rErrorMessage);
-	if (strMethod == "POST" && strPath == "/app/operations/crash-test")
+	if (strMethod == "POST" && strPath == "/diagnostics/crash-tests")
 		return RequireBooleanFieldTrue(rBody, "confirmCrash", "confirmCrash must be true", rErrorCode, rErrorMessage);
 	if (strMethod == "POST" && strPath == "/transfers/operations/clear-completed")
 		return RequireBooleanFieldTrue(rBody, "confirmClearCompleted", "confirmClearCompleted must be true", rErrorCode, rErrorMessage);
@@ -1804,8 +1804,8 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 	if (rSpec.pszMethod != NULL
 		&& rSpec.pszPathTemplate != NULL
 		&& std::string(rSpec.pszMethod) == "POST"
-		&& (std::string(rSpec.pszPathTemplate) == "/servers/met-url-imports"
-			|| std::string(rSpec.pszPathTemplate) == "/kad/nodes-url-imports")
+		&& (std::string(rSpec.pszPathTemplate) == "/servers/operations/import-met-url"
+			|| std::string(rSpec.pszPathTemplate) == "/kad/operations/import-nodes-url")
 		&& !ValidateUrlImportBody(rBody, rErrorCode, rErrorMessage))
 	{
 		return false;
@@ -2107,13 +2107,13 @@ inline bool TryBuildRoute(
 		rRoute.strCommand = "app/shutdown";
 		return true;
 	}
-	if (route.size() == 3 && route[0] == "app" && route[1] == "operations" && route[2] == "capture-dump" && bPost) {
+	if (route.size() == 2 && route[0] == "diagnostics" && route[1] == "dumps" && bPost) {
 		rRoute.strCommand = "app/capture_dump";
 		if (body.contains("fullMemory"))
 			rRoute.params["fullMemory"] = body["fullMemory"];
 		return true;
 	}
-	if (route.size() == 3 && route[0] == "app" && route[1] == "operations" && route[2] == "crash-test" && bPost) {
+	if (route.size() == 2 && route[0] == "diagnostics" && route[1] == "crash-tests" && bPost) {
 		rRoute.strCommand = "app/crash_test";
 		return true;
 	}
@@ -2362,7 +2362,7 @@ inline bool TryBuildRoute(
 		rErrorMessage = "API route not found";
 		return false;
 	}
-	if (route.size() == 2 && route[0] == "servers" && route[1] == "met-url-imports" && bPost) {
+	if (route.size() == 3 && route[0] == "servers" && route[1] == "operations" && route[2] == "import-met-url" && bPost) {
 		rRoute.strCommand = "servers/import_met_url";
 		rRoute.params = body;
 		return true;
@@ -2410,12 +2410,12 @@ inline bool TryBuildRoute(
 		rRoute.strCommand = "kad/status";
 		return true;
 	}
-	if (route.size() == 2 && route[0] == "kad" && route[1] == "nodes-url-imports" && bPost) {
-		rRoute.strCommand = "kad/import_nodes_url";
-		rRoute.params = body;
-		return true;
-	}
 	if (route.size() == 3 && route[0] == "kad" && route[1] == "operations" && bPost) {
+		if (route[2] == "import-nodes-url") {
+			rRoute.strCommand = "kad/import_nodes_url";
+			rRoute.params = body;
+			return true;
+		}
 		if (route[2] == "start") {
 			rRoute.strCommand = "kad/connect";
 			rRoute.params = body;

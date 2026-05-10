@@ -594,7 +594,7 @@ public:
 	static CString	m_strTemplateFile;
 	static ProxySettings proxy; // deadlake PROXYSUPPORT
 	static bool		m_bAllowAdminHiLevFunc;
-	static bool		m_bWebCrashTestEndpointEnabled;
+	static bool		m_bDiagnosticRestEndpointsEnabled;
 	static CUIntArray m_aAllowedRemoteAccessIPs;
 	static bool		m_bWebUseHttps;
 	static CString	m_sWebHttpsCertificate;
@@ -1545,7 +1545,7 @@ public:
 	static UINT		NormalizeWebTimeoutMins(UINT nTimeoutMins);
 	static void		SetWebTimeoutMins(UINT nTimeoutMins);
 	static bool		GetWebAdminAllowedHiLevFunc()		{ return m_bAllowAdminHiLevFunc; }
-	static bool		GetWebCrashTestEndpointEnabled()		{ return m_bWebCrashTestEndpointEnabled; }
+	static bool		GetDiagnosticRestEndpointsEnabled()	{ return m_bDiagnosticRestEndpointsEnabled; }
 	static void		SetWSLowPass(const CString &strNewPass);
 	static const CUIntArray& GetAllowedRemoteAccessIPs() { return m_aAllowedRemoteAccessIPs; }
 	static CString	GetAllowedRemoteAccessIPsString();
