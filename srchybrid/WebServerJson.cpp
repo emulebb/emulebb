@@ -35,6 +35,7 @@
 #include "Friend.h"
 #include "FriendList.h"
 #include "Log.h"
+#include "Mdump.h"
 #include "OtherFunctions.h"
 #include "PartFile.h"
 #include "WebApiCommandSeams.h"
@@ -2020,6 +2021,37 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		volatile LONG *pCrash = reinterpret_cast<volatile LONG *>(0);
 		*pCrash = 1;
 		return json{{"ok", true}};
+	}
+
+	if (strCommand == "app/capture_dump") {
+		if (!thePrefs.GetWebCrashTestEndpointEnabled()) {
+			rError.strCode = "NOT_FOUND";
+			rError.strMessage = _T("API route not found");
+			return json();
+		}
+		if (params.contains("fullMemory") && !params["fullMemory"].is_boolean()) {
+			rError.strCode = "INVALID_ARGUMENT";
+			rError.strMessage = _T("fullMemory must be a boolean");
+			return json();
+		}
+
+		const bool bFullMemoryDump = params.value("fullMemory", false);
+		const CMiniDumper::SManualDumpResult result = CMiniDumper::CreateManualDump(
+			theApp.m_strCurVersionLongDbg,
+			thePrefs.GetMuleDirectory(EMULE_LOGDIR),
+			bFullMemoryDump);
+		if (!result.bSuccess) {
+			const CString strError(GetErrorMessage(result.dwError, 1));
+			rError.strCode = "EMULE_ERROR";
+			rError.strMessage.Format(_T("failed to capture diagnostic dump: %s"), (LPCTSTR)strError);
+			return json();
+		}
+
+		return json{
+			{"ok", true},
+			{"path", StdUtf8FromCString(result.strDumpPath)},
+			{"fullMemory", bFullMemoryDump}
+		};
 	}
 
 	if (strCommand == "stats/global")
