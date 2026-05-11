@@ -255,6 +255,34 @@ uint64_t JsonUInt64Value(const json &rObject, const char *pszName)
 	return WebServerJsonSeams::TryParseJsonUInt64(rObject[pszName], ullValue, true) ? ullValue : 0;
 }
 
+bool JsonBoolValue(const json &rObject, const char *pszName)
+{
+	return rObject.contains(pszName) && rObject[pszName].is_boolean() && rObject[pszName].get<bool>();
+}
+
+bool IsNativeSearchMethodAvailable(const std::string &rMethod)
+{
+	if (!WebServerArrCompatSeams::IsConnectedNetworkSearchMethod(rMethod))
+		return true;
+
+	json statusResult;
+	if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("status/get", json::object()), statusResult))
+		return false;
+
+	const std::string strMethod(WebServerJsonSeams::ToLowerAscii(rMethod));
+	if (strMethod == "global") {
+		return statusResult.contains("servers")
+			&& statusResult["servers"].is_object()
+			&& JsonBoolValue(statusResult["servers"], "connected");
+	}
+	if (strMethod == "kad") {
+		return statusResult.contains("kad")
+			&& statusResult["kad"].is_object()
+			&& JsonBoolValue(statusResult["kad"], "connected");
+	}
+	return true;
+}
+
 void AppendResultsFromJson(const json &rResultPayload, const WebServerArrCompatSeams::ETorznabFamily eFamily, std::vector<SArrCompatResult> &rResults, std::set<std::string> &rSeenHashes)
 {
 	if (!rResultPayload.contains("results") || !rResultPayload["results"].is_array())
@@ -360,6 +388,8 @@ std::vector<SArrCompatResult> RunNativeSearches(const WebServerArrCompatSeams::S
 				const ULONGLONG ullMethodProbeTimeout = static_cast<ULONGLONG>(WebServerArrCompatSeams::GetNativeSearchMethodProbeTimeoutMilliseconds(rRequest.eFamily, uRemainingMethods));
 				const ULONGLONG ullProbeDeadline = (std::min)(ullDeadline, ullNow + ullMethodProbeTimeout);
 				const std::string &rMethod = methods[uMethodIndex];
+				if (!IsNativeSearchMethodAvailable(rMethod))
+					continue;
 				const std::vector<SArrCompatResult> queryResults(RunOneNativeSearch(rQuery, rRequest.eFamily, rMethod, rSearchType, ullProbeDeadline, seenHashes));
 				results.insert(results.end(), queryResults.begin(), queryResults.end());
 				if (results.size() >= 100)

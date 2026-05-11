@@ -442,13 +442,22 @@ inline std::vector<std::string> BuildNativeSearchMethodNames(const ETorznabFamil
 {
 	if (eFamily == ETorznabFamily::Movie || eFamily == ETorznabFamily::Tv) {
 		std::vector<std::string> methods;
-		methods.push_back("kad");
 		methods.push_back("global");
+		methods.push_back("kad");
 		return methods;
 	}
 	std::vector<std::string> methods;
 	methods.push_back("automatic");
 	return methods;
+}
+
+/**
+ * @brief Reports whether one native search method is network-specific.
+ */
+inline bool IsConnectedNetworkSearchMethod(const std::string &rMethod)
+{
+	const std::string strMethod(WebServerJsonSeams::ToLowerAscii(rMethod));
+	return strMethod == "global" || strMethod == "kad";
 }
 
 /**
