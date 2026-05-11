@@ -131,7 +131,8 @@ inline const char* GetUploadStateName(const uint8_t uUploadState)
 }
 
 /**
- * Parses the stable transfer-priority vocabulary used by the pipe API.
+ * Parses the stable lowercase compact transfer-priority vocabulary used by
+ * the REST and pipe APIs.
  */
 inline ETransferPriority ParseTransferPriorityName(const char *pszPriority)
 {
@@ -139,7 +140,7 @@ inline ETransferPriority ParseTransferPriorityName(const char *pszPriority)
 		return ETransferPriority::Invalid;
 	if (strcmp(pszPriority, "auto") == 0)
 		return ETransferPriority::Auto;
-	if (strcmp(pszPriority, "veryLow") == 0)
+	if (strcmp(pszPriority, "verylow") == 0)
 		return ETransferPriority::VeryLow;
 	if (strcmp(pszPriority, "low") == 0)
 		return ETransferPriority::Low;
@@ -147,7 +148,7 @@ inline ETransferPriority ParseTransferPriorityName(const char *pszPriority)
 		return ETransferPriority::Normal;
 	if (strcmp(pszPriority, "high") == 0)
 		return ETransferPriority::High;
-	if (strcmp(pszPriority, "veryHigh") == 0)
+	if (strcmp(pszPriority, "veryhigh") == 0)
 		return ETransferPriority::VeryHigh;
 	return ETransferPriority::Invalid;
 }

@@ -405,18 +405,19 @@ inline bool ShouldCacheTorznabResults(const size_t uResultCount)
 }
 
 /**
- * @brief Converts a Torznab media family to the native search type token.
+ * @brief Converts a Torznab media family to the REST search type token passed
+ * through the native command bridge.
  */
-inline const char *GetNativeSearchType(const ETorznabFamily eFamily)
+inline const char *GetRestSearchType(const ETorznabFamily eFamily)
 {
 	switch (eFamily) {
 	case ETorznabFamily::Movie:
 	case ETorznabFamily::Tv:
-		return "Video";
+		return "video";
 	case ETorznabFamily::Audio:
-		return "Audio";
+		return "audio";
 	case ETorznabFamily::Book:
-		return "Doc";
+		return "doc";
 	case ETorznabFamily::Other:
 	case ETorznabFamily::Any:
 	case ETorznabFamily::Unknown:
@@ -426,12 +427,12 @@ inline const char *GetNativeSearchType(const ETorznabFamily eFamily)
 }
 
 /**
- * @brief Returns native eMule search type probes for one Torznab family.
+ * @brief Returns REST search type probes for one Torznab family.
  */
-inline std::vector<std::string> BuildNativeSearchTypeNames(const ETorznabFamily eFamily)
+inline std::vector<std::string> BuildRestSearchTypeNames(const ETorznabFamily eFamily)
 {
 	std::vector<std::string> types;
-	types.push_back(GetNativeSearchType(eFamily));
+	types.push_back(GetRestSearchType(eFamily));
 	return types;
 }
 
@@ -589,7 +590,7 @@ inline std::string BuildCacheKey(const STorznabRequest &rRequest, const std::vec
 		<< "|ep=" << WebServerJsonSeams::ToLowerAscii(rRequest.strEpisode)
 		<< "|year=" << WebServerJsonSeams::ToLowerAscii(rRequest.strYear)
 		<< "|family=" << static_cast<int>(rRequest.eFamily)
-		<< "|type=" << GetNativeSearchType(rRequest.eFamily)
+		<< "|type=" << GetRestSearchType(rRequest.eFamily)
 		<< "|methods=" << BuildNativeSearchMethodsCacheToken(rMethods);
 	return key.str();
 }

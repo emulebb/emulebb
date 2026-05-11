@@ -119,45 +119,112 @@ inline const char *GetDefaultSearchMethodName()
 }
 
 /**
- * @brief Reports whether a token is in the public native search-method
- * vocabulary.
+ * @brief Reports whether a token is in the public lowercase compact
+ * search-method vocabulary.
  */
 inline bool IsSearchMethodName(const std::string &rValue)
 {
-	const std::string strMethod(ToLowerAscii(rValue));
-	return strMethod == GetDefaultSearchMethodName()
-		|| strMethod == "server"
-		|| strMethod == "global"
-		|| strMethod == "kad";
+	return rValue == GetDefaultSearchMethodName()
+		|| rValue == "server"
+		|| rValue == "global"
+		|| rValue == "kad";
 }
 
 /**
- * @brief Returns the exact native eMule search file-type tokens exposed by
- * REST v1.
+ * @brief Returns the exact lowercase compact search file-type tokens exposed
+ * by REST v1.
  */
-inline const std::vector<std::string>& GetNativeSearchFileTypeNames()
+inline const std::vector<std::string>& GetRestSearchFileTypeNames()
 {
 	static const std::vector<std::string> s_names = {
 		"",
-		"Arc",
-		"Audio",
-		"Iso",
-		"Image",
-		"Pro",
-		"Video",
-		"Doc",
-		"EmuleCollection"
+		"arc",
+		"audio",
+		"iso",
+		"image",
+		"pro",
+		"video",
+		"doc",
+		"emulecollection"
 	};
 	return s_names;
 }
 
 /**
- * @brief Reports whether a token is in the native search-file-type vocabulary.
+ * @brief Reports whether a token is in the REST search-file-type vocabulary.
  */
 inline bool IsSearchFileTypeName(const std::string &rValue)
 {
-	const std::vector<std::string> &rNames = GetNativeSearchFileTypeNames();
+	const std::vector<std::string> &rNames = GetRestSearchFileTypeNames();
 	return std::find(rNames.begin(), rNames.end(), rValue) != rNames.end();
+}
+
+/**
+ * @brief Converts one REST search type token to the native eMule token used by
+ * the search engine.
+ */
+inline const char* GetNativeSearchFileTypeName(const std::string &rValue)
+{
+	if (rValue.empty())
+		return "";
+	if (rValue == "arc")
+		return "Arc";
+	if (rValue == "audio")
+		return "Audio";
+	if (rValue == "iso")
+		return "Iso";
+	if (rValue == "image")
+		return "Image";
+	if (rValue == "pro")
+		return "Pro";
+	if (rValue == "video")
+		return "Video";
+	if (rValue == "doc")
+		return "Doc";
+	if (rValue == "emulecollection")
+		return "EmuleCollection";
+	return "";
+}
+
+/**
+ * @brief Converts one native eMule search type token to the REST v1 token.
+ */
+inline std::string GetRestSearchFileTypeName(const std::string &rValue)
+{
+	if (rValue.empty())
+		return "";
+	if (rValue == "Arc")
+		return "arc";
+	if (rValue == "Audio")
+		return "audio";
+	if (rValue == "Iso")
+		return "iso";
+	if (rValue == "Image")
+		return "image";
+	if (rValue == "Pro")
+		return "pro";
+	if (rValue == "Video")
+		return "video";
+	if (rValue == "Doc")
+		return "doc";
+	if (rValue == "EmuleCollection")
+		return "emulecollection";
+	return rValue;
+}
+
+/**
+ * @brief Reports whether a token is in the REST transfer-state vocabulary.
+ */
+inline bool IsTransferStateName(const std::string &rValue)
+{
+	return rValue == "downloading"
+		|| rValue == "paused"
+		|| rValue == "queued"
+		|| rValue == "checking"
+		|| rValue == "completing"
+		|| rValue == "completed"
+		|| rValue == "error"
+		|| rValue == "missingfiles";
 }
 
 /**
@@ -1353,7 +1420,7 @@ inline bool ValidateCategoryPriorityField(json &rBody, std::string &rErrorCode, 
 	case WebApiSurfaceSeams::ETransferPriority::Auto:
 	case WebApiSurfaceSeams::ETransferPriority::Invalid:
 	default:
-		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of veryLow, low, normal, high, veryHigh");
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of verylow, low, normal, high, veryhigh");
 		return false;
 	}
 }
@@ -1868,6 +1935,10 @@ inline bool ValidateQueryFields(const std::map<std::string, std::string> &rQuery
 			return false;
 		if (it->first == "categoryId" && !TryParseBoundedQueryUInt(it->second, 0, static_cast<uint64_t>(UINT_MAX), "categoryId", rErrorCode, rErrorMessage))
 			return false;
+		if (it->first == "state" && !IsTransferStateName(it->second)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "state must be one of downloading, paused, queued, checking, completing, completed, error, missingfiles");
+			return false;
+		}
 	}
 	return true;
 }
@@ -1879,7 +1950,7 @@ inline void CopyTransferListQueryParams(const std::map<std::string, std::string>
 {
 	const auto itState = rQuery.find("state");
 	if (itState != rQuery.end())
-		rParams["filter"] = itState->second;
+		rParams["state"] = itState->second;
 	uint64_t ullCategory = 0;
 	if (TryParseUnsignedQueryValue(rQuery, "categoryId", ullCategory))
 		rParams["categoryId"] = ullCategory;

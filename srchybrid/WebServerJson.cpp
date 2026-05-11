@@ -229,7 +229,7 @@ CString GetTransferStateName(const CPartFile &rPartFile)
 	case PS_ERROR:
 		return _T("error");
 	case PS_INSUFFICIENT:
-		return _T("missing_files");
+		return _T("missingfiles");
 	case PS_PAUSED:
 		return _T("paused");
 	case PS_COMPLETING:
@@ -255,13 +255,13 @@ CString GetTransferPriorityName(const CPartFile &rPartFile)
 
 	switch (rPartFile.GetDownPriority()) {
 	case PR_VERYLOW:
-		return _T("veryLow");
+		return _T("verylow");
 	case PR_LOW:
 		return _T("low");
 	case PR_HIGH:
 		return _T("high");
 	case PR_VERYHIGH:
-		return _T("veryHigh");
+		return _T("veryhigh");
 	case PR_NORMAL:
 	default:
 		return _T("normal");
@@ -378,13 +378,13 @@ CString GetUploadPriorityName(const CKnownFile &rKnownFile)
 
 	switch (rKnownFile.GetUpPriority()) {
 	case PR_VERYLOW:
-		return _T("veryLow");
+		return _T("verylow");
 	case PR_LOW:
 		return _T("low");
 	case PR_HIGH:
 		return _T("high");
 	case PR_VERYHIGH:
-		return _T("veryHigh");
+		return _T("veryhigh");
 	case PR_NORMAL:
 	default:
 		return _T("normal");
@@ -997,7 +997,7 @@ json BuildLogEntriesJson(const size_t maxEntries)
 }
 
 /**
- * Builds the transfer collection with the same filter semantics as the list
+ * Builds the transfer collection with the same selector semantics as the list
  * endpoint.
  */
 json BuildTransfersListJson(const json &rParams, SPipeApiError &rError)
@@ -1015,7 +1015,7 @@ json BuildTransfersListJson(const json &rParams, SPipeApiError &rError)
 		return json();
 	}
 
-	const CString strFilter(CStringFromStdUtf8(request.strFilterLower));
+	const CString strStateFilter(CStringFromStdUtf8(request.strState));
 	json result = json::array();
 	POSITION pos = NULL;
 	for (INT_PTR i = 0, iCount = theApp.downloadqueue->GetFileCount(); i < iCount; ++i) {
@@ -1024,12 +1024,9 @@ json BuildTransfersListJson(const json &rParams, SPipeApiError &rError)
 			break;
 		if (request.bHasCategory && pPartFile->GetCategory() != request.uCategory)
 			continue;
-		if (!strFilter.IsEmpty()) {
-			CString strName(pPartFile->GetFileName());
-			strName.MakeLower();
+		if (!strStateFilter.IsEmpty()) {
 			CString strState(GetTransferStateName(*pPartFile));
-			strState.MakeLower();
-			if (strName.Find(strFilter) < 0 && strState.Find(strFilter) < 0)
+			if (strState != strStateFilter)
 				continue;
 		}
 		result.push_back(BuildTransferJson(*pPartFile));
@@ -1282,7 +1279,7 @@ const char* GetSearchMethodName(const ESearchType eType)
  */
 std::string GetSearchTypeName(const CString &rFileType)
 {
-	return StdUtf8FromCString(rFileType);
+	return WebServerJsonSeams::GetRestSearchFileTypeName(StdUtf8FromCString(rFileType));
 }
 
 /**
@@ -1386,7 +1383,7 @@ bool TryGetSharedUploadPriorityParam(const json &rValue, uint8 &ruPriority, bool
 		return false;
 	}
 
-	const std::string strPriority = WebServerJsonSeams::ToLowerAscii(rValue.get<std::string>());
+	const std::string strPriority = rValue.get<std::string>();
 	if (strPriority == "auto") {
 		rbAuto = true;
 		ruPriority = PR_HIGH;
@@ -1415,7 +1412,7 @@ bool TryGetSharedUploadPriorityParam(const json &rValue, uint8 &ruPriority, bool
 	}
 
 	rError.strCode = "INVALID_ARGUMENT";
-	rError.strMessage = _T("priority must be one of auto, veryLow, low, normal, high, veryHigh, release");
+	rError.strMessage = _T("priority must be one of auto, verylow, low, normal, high, veryhigh, release");
 	return false;
 }
 
@@ -1678,7 +1675,7 @@ bool TryGetCategoryPriorityParam(const json &rValue, UINT &ruPriority, SPipeApiE
 	case WebApiSurfaceSeams::ETransferPriority::Invalid:
 	default:
 		rError.strCode = "INVALID_ARGUMENT";
-			rError.strMessage = _T("priority must be one of veryLow, low, normal, high, veryHigh");
+		rError.strMessage = _T("priority must be one of verylow, low, normal, high, veryhigh");
 		return false;
 	}
 }
@@ -1997,7 +1994,7 @@ bool TryGetServerPriorityParam(const json &rValue, UINT &ruPriority, SPipeApiErr
 		return false;
 	}
 
-	const std::string strPriority = WebServerJsonSeams::ToLowerAscii(rValue.get<std::string>());
+	const std::string strPriority = rValue.get<std::string>();
 	if (strPriority == "low") {
 		ruPriority = SRV_PR_LOW;
 		return true;
@@ -3213,7 +3210,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		case WebApiSurfaceSeams::ETransferPriority::Invalid:
 		default:
 			rError.strCode = "INVALID_ARGUMENT";
-			rError.strMessage = _T("priority must be one of auto, veryLow, low, normal, high, veryHigh");
+			rError.strMessage = _T("priority must be one of auto, verylow, low, normal, high, veryhigh");
 			return json();
 		}
 
@@ -3339,7 +3336,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			rError.strMessage = _T("type is not supported");
 			return json();
 		}
-		pSearchParams->strFileType = CStringFromStdUtf8(request.strFileType);
+		pSearchParams->strFileType = CStringFromStdUtf8(WebServerJsonSeams::GetNativeSearchFileTypeName(request.strFileType));
 
 		pSearchParams->strExtension = CStringFromStdUtf8(request.strExtension);
 		if (request.bHasMinSize)

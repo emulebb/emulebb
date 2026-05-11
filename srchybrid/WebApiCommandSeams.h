@@ -77,7 +77,7 @@ struct SSearchStartRequest
  */
 struct STransfersListRequest
 {
-	std::string strFilterLower;
+	std::string strState;
 	unsigned uCategory;
 	bool bHasCategory;
 
@@ -186,7 +186,7 @@ inline ESearchMethod ParseSearchMethodName(const char *pszMethod)
 	if (pszMethod == nullptr || pszMethod[0] == '\0')
 		return ESearchMethod::Invalid;
 
-	const std::string strMethod(ToLowerAscii(pszMethod));
+	const std::string strMethod(pszMethod);
 	if (!WebServerJsonSeams::IsSearchMethodName(strMethod))
 		return ESearchMethod::Invalid;
 	if (strMethod == GetDefaultSearchMethodName())
@@ -201,7 +201,7 @@ inline ESearchMethod ParseSearchMethodName(const char *pszMethod)
 }
 
 /**
- * @brief Parses the native eMule search type vocabulary used by search/start.
+ * @brief Parses the REST search type vocabulary used by search/start.
  */
 inline ESearchFileType ParseSearchFileTypeName(const std::string &rType)
 {
@@ -209,27 +209,27 @@ inline ESearchFileType ParseSearchFileTypeName(const std::string &rType)
 		return ESearchFileType::Invalid;
 	if (rType.empty())
 		return ESearchFileType::Any;
-	if (rType == "Arc")
+	if (rType == "arc")
 		return ESearchFileType::Archive;
-	if (rType == "Audio")
+	if (rType == "audio")
 		return ESearchFileType::Audio;
-	if (rType == "Iso")
+	if (rType == "iso")
 		return ESearchFileType::CdImage;
-	if (rType == "Image")
+	if (rType == "image")
 		return ESearchFileType::Image;
-	if (rType == "Pro")
+	if (rType == "pro")
 		return ESearchFileType::Program;
-	if (rType == "Video")
+	if (rType == "video")
 		return ESearchFileType::Video;
-	if (rType == "Doc")
+	if (rType == "doc")
 		return ESearchFileType::Document;
-	if (rType == "EmuleCollection")
+	if (rType == "emulecollection")
 		return ESearchFileType::EmuleCollection;
 	return ESearchFileType::Invalid;
 }
 
 /**
- * @brief Parses a nullable native eMule search type token.
+ * @brief Parses a nullable REST search type token.
  */
 inline ESearchFileType ParseSearchFileTypeName(const char *pszType)
 {
@@ -330,21 +330,25 @@ inline bool TryParseSearchStartRequest(const json &rParams, SSearchStartRequest 
 }
 
 /**
- * @brief Validates the transfers/list filter payload without touching the live
+ * @brief Validates the transfers/list selector payload without touching the live
  * transfer list.
  */
 inline bool TryParseTransfersListRequest(const json &rParams, STransfersListRequest &rRequest, std::string &rError)
 {
-	rRequest.strFilterLower.clear();
+	rRequest.strState.clear();
 	rRequest.uCategory = 0;
 	rRequest.bHasCategory = false;
 
-	if (rParams.contains("filter")) {
-		if (!rParams["filter"].is_string()) {
-			rError = "filter must be a string when provided";
+	if (rParams.contains("state")) {
+		if (!rParams["state"].is_string()) {
+			rError = "state must be a string when provided";
 			return false;
 		}
-		rRequest.strFilterLower = ToLowerAscii(rParams["filter"].get<std::string>());
+		rRequest.strState = rParams["state"].get<std::string>();
+		if (!WebServerJsonSeams::IsTransferStateName(rRequest.strState)) {
+			rError = "state must be one of downloading, paused, queued, checking, completing, completed, error, missingfiles";
+			return false;
+		}
 	}
 
 	if (rParams.contains("categoryId")) {

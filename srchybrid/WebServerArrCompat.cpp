@@ -391,7 +391,7 @@ std::vector<SArrCompatResult> RunNativeSearches(const WebServerArrCompatSeams::S
 
 	std::set<std::string> seenHashes;
 	const ULONGLONG ullDeadline = ::GetTickCount64() + static_cast<ULONGLONG>(WebServerArrCompatSeams::GetNativeSearchTimeoutMilliseconds(rRequest.eFamily));
-	const std::vector<std::string> searchTypes(WebServerArrCompatSeams::BuildNativeSearchTypeNames(rRequest.eFamily));
+	const std::vector<std::string> searchTypes(WebServerArrCompatSeams::BuildRestSearchTypeNames(rRequest.eFamily));
 	for (const std::string &rQuery : WebServerArrCompatSeams::BuildNativeQueries(rRequest)) {
 		for (const std::string &rSearchType : searchTypes) {
 			for (size_t uMethodIndex = 0; uMethodIndex < rMethods.size(); ++uMethodIndex) {
