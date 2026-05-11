@@ -2062,6 +2062,8 @@ inline int GetHttpStatusForError(const std::string &rCode)
 		return 404;
 	if (rCode == "INVALID_STATE")
 		return 409;
+	if (rCode == "SERVICE_BUSY")
+		return 503;
 	if (rCode == "EMULE_UNAVAILABLE")
 		return 503;
 	return 500;

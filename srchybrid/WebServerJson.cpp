@@ -726,10 +726,37 @@ json BuildUploadJson(const CUpDownClient &rClient, const bool bWaitingQueue, con
 }
 
 /**
+ * Returns the current shared-file hashing backlog without touching the shared
+ * file map.
+ */
+INT_PTR GetSharedHashingCount()
+{
+	return theApp.sharedfiles != NULL ? theApp.sharedfiles->GetHashingCount() : 0;
+}
+
+/**
+ * Rejects transfer snapshots while shared hashing is active so REST workers do
+ * not pile up behind a long shared-file scan.
+ */
+bool TryRejectSharedHashingBusy(SPipeApiError &rError)
+{
+	const INT_PTR iHashingCount = GetSharedHashingCount();
+	if (iHashingCount <= 0)
+		return false;
+
+	rError.strCode = "SERVICE_BUSY";
+	rError.strMessage.Format(
+		_T("shared file hashing is active (%lld files pending); retry when hashingCount is zero"),
+		static_cast<long long>(iHashingCount));
+	return true;
+}
+
+/**
  * Builds the shared global stats payload used by polling and push events.
  */
 json BuildGlobalStatsJson()
 {
+	const INT_PTR iSharedHashingCount = GetSharedHashingCount();
 	return json{
 		{"connected", theApp.IsConnected()},
 		{"downloadSpeedKiBps", theApp.downloadqueue->GetDatarate() / 1024.0},
@@ -743,7 +770,9 @@ json BuildGlobalStatsJson()
 		{"ed2kHighId", theApp.serverconnect->IsConnected() && !theApp.serverconnect->IsLowID()},
 		{"kadRunning", Kademlia::CKademlia::IsRunning()},
 		{"kadConnected", Kademlia::CKademlia::IsConnected()},
-		{"kadFirewalled", Kademlia::CKademlia::IsConnected() ? json(Kademlia::CKademlia::IsFirewalled()) : json(nullptr)}
+		{"kadFirewalled", Kademlia::CKademlia::IsConnected() ? json(Kademlia::CKademlia::IsFirewalled()) : json(nullptr)},
+		{"sharedHashingCount", static_cast<int64_t>(iSharedHashingCount)},
+		{"sharedHashingActive", iSharedHashingCount > 0}
 	};
 }
 
@@ -908,7 +937,7 @@ json BuildSharedDirectoriesJson()
 		{"roots", roots},
 		{"items", items},
 		{"monitorOwned", monitorOwned},
-		{"hashingCount", static_cast<int64_t>(theApp.sharedfiles->GetHashingCount())}
+		{"hashingCount", static_cast<int64_t>(GetSharedHashingCount())}
 	};
 }
 
@@ -1010,6 +1039,9 @@ json BuildLogEntriesJson(const size_t maxEntries)
  */
 json BuildTransfersListJson(const json &rParams, SPipeApiError &rError)
 {
+	if (TryRejectSharedHashingBusy(rError))
+		return json();
+
 	WebApiCommandSeams::STransfersListRequest request;
 	std::string strError;
 	if (!WebApiCommandSeams::TryParseTransfersListRequest(rParams, request, strError)) {
