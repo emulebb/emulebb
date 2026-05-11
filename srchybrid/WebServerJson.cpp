@@ -400,6 +400,14 @@ CString GetUploadStateName(const CUpDownClient &rClient)
 }
 
 /**
+ * Maps one source download state into the REST transfer-source vocabulary.
+ */
+CString GetDownloadStateName(const CUpDownClient &rClient)
+{
+	return CString(WebApiSurfaceSeams::GetDownloadStateName(static_cast<uint8_t>(rClient.GetDownloadState())));
+}
+
+/**
  * Returns a JSON timestamp or null when the source value is not available.
  */
 json JsonTimeOrNull(time_t value)
@@ -528,7 +536,7 @@ json BuildSourceJson(const CUpDownClient &rClient)
 		{"userName", StdUtf8FromCString(strUserName)},
 		{"userHash", StdUtf8FromCString(HashToHex(rClient.GetUserHash()))},
 		{"clientSoftware", StdUtf8FromCString(rClient.GetClientSoftVer())},
-		{"downloadState", StdUtf8FromCString(rClient.DbgGetDownloadState())},
+		{"downloadState", StdUtf8FromCString(GetDownloadStateName(rClient))},
 		{"downloadSpeedKiBps", rClient.GetDownloadDatarate() / 1024.0},
 		{"availableParts", rClient.GetAvailablePartCount()},
 		{"partCount", rClient.GetPartCount()},
@@ -1384,6 +1392,12 @@ bool TryGetSharedUploadPriorityParam(const json &rValue, uint8 &ruPriority, bool
 	}
 
 	const std::string strPriority = rValue.get<std::string>();
+	if (!WebApiSurfaceSeams::IsSharedUploadPriorityName(strPriority.c_str())) {
+		rError.strCode = "INVALID_ARGUMENT";
+		rError.strMessage = _T("priority must be one of auto, verylow, low, normal, high, veryhigh, release");
+		return false;
+	}
+
 	if (strPriority == "auto") {
 		rbAuto = true;
 		ruPriority = PR_HIGH;
@@ -1995,6 +2009,12 @@ bool TryGetServerPriorityParam(const json &rValue, UINT &ruPriority, SPipeApiErr
 	}
 
 	const std::string strPriority = rValue.get<std::string>();
+	if (!WebApiSurfaceSeams::IsServerPriorityName(strPriority.c_str())) {
+		rError.strCode = "INVALID_ARGUMENT";
+		rError.strMessage = _T("priority must be one of low, normal, high");
+		return false;
+	}
+
 	if (strPriority == "low") {
 		ruPriority = SRV_PR_LOW;
 		return true;

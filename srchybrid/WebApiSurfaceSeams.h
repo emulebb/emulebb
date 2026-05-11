@@ -131,6 +131,47 @@ inline const char* GetUploadStateName(const uint8_t uUploadState)
 }
 
 /**
+ * Maps the internal download source state enum to the stable REST token.
+ */
+inline const char* GetDownloadStateName(const uint8_t uDownloadState)
+{
+	switch (uDownloadState) {
+	case 0:
+		return "downloading";
+	case 1:
+		return "onqueue";
+	case 2:
+		return "connected";
+	case 3:
+		return "connecting";
+	case 4:
+		return "waitcallback";
+	case 5:
+		return "waitcallbackkad";
+	case 6:
+		return "reqhashset";
+	case 7:
+		return "noneededparts";
+	case 8:
+		return "toomanyconns";
+	case 9:
+		return "toomanyconnskad";
+	case 10:
+		return "lowtolowip";
+	case 11:
+		return "banned";
+	case 12:
+		return "error";
+	case 13:
+		return "none";
+	case 14:
+		return "remotequeuefull";
+	default:
+		return "unknown";
+	}
+}
+
+/**
  * Parses the stable lowercase compact transfer-priority vocabulary used by
  * the REST and pipe APIs.
  */
@@ -151,6 +192,54 @@ inline ETransferPriority ParseTransferPriorityName(const char *pszPriority)
 	if (strcmp(pszPriority, "veryhigh") == 0)
 		return ETransferPriority::VeryHigh;
 	return ETransferPriority::Invalid;
+}
+
+/**
+ * Reports whether a token is in the REST transfer-priority vocabulary.
+ */
+inline bool IsTransferPriorityName(const char *pszPriority)
+{
+	return ParseTransferPriorityName(pszPriority) != ETransferPriority::Invalid;
+}
+
+/**
+ * Reports whether a token is in the REST category-priority input vocabulary.
+ */
+inline bool IsCategoryPriorityName(const char *pszPriority)
+{
+	switch (ParseTransferPriorityName(pszPriority)) {
+	case ETransferPriority::VeryLow:
+	case ETransferPriority::Low:
+	case ETransferPriority::Normal:
+	case ETransferPriority::High:
+	case ETransferPriority::VeryHigh:
+		return true;
+	case ETransferPriority::Auto:
+	case ETransferPriority::Invalid:
+	default:
+		return false;
+	}
+}
+
+/**
+ * Reports whether a token is in the REST shared-file upload-priority vocabulary.
+ */
+inline bool IsSharedUploadPriorityName(const char *pszPriority)
+{
+	if (pszPriority != nullptr && strcmp(pszPriority, "release") == 0)
+		return true;
+	return IsTransferPriorityName(pszPriority);
+}
+
+/**
+ * Reports whether a token is in the REST server-priority vocabulary.
+ */
+inline bool IsServerPriorityName(const char *pszPriority)
+{
+	return pszPriority != nullptr
+		&& (strcmp(pszPriority, "low") == 0
+			|| strcmp(pszPriority, "normal") == 0
+			|| strcmp(pszPriority, "high") == 0);
 }
 
 /**

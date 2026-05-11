@@ -209,7 +209,7 @@ inline std::string GetRestSearchFileTypeName(const std::string &rValue)
 		return "doc";
 	if (rValue == "EmuleCollection")
 		return "emulecollection";
-	return rValue;
+	return "";
 }
 
 /**
@@ -1133,6 +1133,11 @@ inline bool ValidateTransferPatchBody(json &rBody, std::string &rErrorCode, std:
 		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be a string");
 		return false;
 	}
+	if (rBody.contains("priority")
+		&& !WebApiSurfaceSeams::IsTransferPriorityName(rBody["priority"].get_ref<const std::string&>().c_str())) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of auto, verylow, low, normal, high, veryhigh");
+		return false;
+	}
 	if (rBody.contains("name")) {
 		std::string strName;
 		std::string strError;
@@ -1181,6 +1186,11 @@ inline bool ValidateSharedFilePatchBody(json &rBody, std::string &rErrorCode, st
 	}
 	if (rBody.contains("priority") && !rBody["priority"].is_string()) {
 		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be a string");
+		return false;
+	}
+	if (rBody.contains("priority")
+		&& !WebApiSurfaceSeams::IsSharedUploadPriorityName(rBody["priority"].get_ref<const std::string&>().c_str())) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of auto, verylow, low, normal, high, veryhigh, release");
 		return false;
 	}
 	if (rBody.contains("comment") || rBody.contains("rating")) {
@@ -1334,6 +1344,11 @@ inline bool ValidateServerCreateBody(json &rBody, std::string &rErrorCode, std::
 		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be a string");
 		return false;
 	}
+	if (rBody.contains("priority")
+		&& !WebApiSurfaceSeams::IsServerPriorityName(rBody["priority"].get_ref<const std::string&>().c_str())) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of low, normal, high");
+		return false;
+	}
 	if (rBody.contains("static") && !rBody["static"].is_boolean()) {
 		SetInvalidArgument(rErrorCode, rErrorMessage, "static must be a boolean");
 		return false;
@@ -1360,6 +1375,11 @@ inline bool ValidateServerPatchBody(json &rBody, std::string &rErrorCode, std::s
 	}
 	if (rBody.contains("priority") && !rBody["priority"].is_string()) {
 		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be a string");
+		return false;
+	}
+	if (rBody.contains("priority")
+		&& !WebApiSurfaceSeams::IsServerPriorityName(rBody["priority"].get_ref<const std::string&>().c_str())) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of low, normal, high");
 		return false;
 	}
 	if (rBody.contains("static") && !rBody["static"].is_boolean()) {
@@ -1410,19 +1430,11 @@ inline bool ValidateCategoryPriorityField(json &rBody, std::string &rErrorCode, 
 		return false;
 	}
 
-	switch (WebApiSurfaceSeams::ParseTransferPriorityName(rBody["priority"].get_ref<const std::string&>().c_str())) {
-	case WebApiSurfaceSeams::ETransferPriority::VeryLow:
-	case WebApiSurfaceSeams::ETransferPriority::Low:
-	case WebApiSurfaceSeams::ETransferPriority::Normal:
-	case WebApiSurfaceSeams::ETransferPriority::High:
-	case WebApiSurfaceSeams::ETransferPriority::VeryHigh:
+	if (WebApiSurfaceSeams::IsCategoryPriorityName(rBody["priority"].get_ref<const std::string&>().c_str()))
 		return true;
-	case WebApiSurfaceSeams::ETransferPriority::Auto:
-	case WebApiSurfaceSeams::ETransferPriority::Invalid:
-	default:
-		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of verylow, low, normal, high, veryhigh");
-		return false;
-	}
+
+	SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of verylow, low, normal, high, veryhigh");
+	return false;
 }
 
 /**
