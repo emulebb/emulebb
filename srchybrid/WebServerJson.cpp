@@ -2839,7 +2839,12 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 				return json();
 			}
 			CFriend *const pFriend = pClient->GetFriend();
-			return pFriend != NULL ? BuildFriendJson(*pFriend) : json{{"ok", true}};
+			if (pFriend == NULL) {
+				rError.strCode = "EMULE_ERROR";
+				rError.strMessage = _T("friend was added but could not be resolved");
+				return json();
+			}
+			return BuildFriendJson(*pFriend);
 		}
 
 		if (strCommand == "peers/remove-friend") {
