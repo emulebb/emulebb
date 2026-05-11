@@ -1278,6 +1278,32 @@ const char* GetSearchMethodName(const ESearchType eType)
 }
 
 /**
+ * Formats the requested native search file type for REST clients.
+ */
+const char* GetSearchTypeName(const CString &rFileType)
+{
+	if (rFileType.IsEmpty() || rFileType == _T(ED2KFTSTR_ANY))
+		return "any";
+	if (rFileType == _T(ED2KFTSTR_ARCHIVE))
+		return "archive";
+	if (rFileType == _T(ED2KFTSTR_AUDIO))
+		return "audio";
+	if (rFileType == _T(ED2KFTSTR_CDIMAGE))
+		return "cdimage";
+	if (rFileType == _T(ED2KFTSTR_IMAGE))
+		return "image";
+	if (rFileType == _T(ED2KFTSTR_PROGRAM))
+		return "program";
+	if (rFileType == _T(ED2KFTSTR_VIDEO))
+		return "video";
+	if (rFileType == _T(ED2KFTSTR_DOCUMENT))
+		return "document";
+	if (rFileType == _T(ED2KFTSTR_EMULECOLLECTION))
+		return "emulecollection";
+	return "any";
+}
+
+/**
  * Serializes one top-level search result entry into the pipe payload shape.
  */
 json BuildSearchResultJson(const CSearchFile &rSearchFile, const SSearchParams *const pSearchParams = NULL)
@@ -1305,8 +1331,10 @@ json BuildSearchResultJson(const CSearchFile &rSearchFile, const SSearchParams *
 		{"hasComment", rSearchFile.HasComment()},
 		{"spam", rSearchFile.IsConsideredSpam()}
 	};
-	if (pSearchParams != NULL)
+	if (pSearchParams != NULL) {
 		result["method"] = GetSearchMethodName(pSearchParams->eType);
+		result["type"] = GetSearchTypeName(pSearchParams->strFileType);
+	}
 	return result;
 }
 
@@ -1321,6 +1349,7 @@ json BuildSearchSessionJson(const CSearchResultsWnd &rSearchResults, const SSear
 		{"id", StdUtf8FromCString(FormatSearchId(rSearchParams.dwSearchID))},
 		{"query", StdUtf8FromCString(rSearchParams.strExpression)},
 		{"method", GetSearchMethodName(rSearchParams.eType)},
+		{"type", GetSearchTypeName(rSearchParams.strFileType)},
 		{"status", rSearchResults.IsSearchRunning(rSearchParams.dwSearchID) ? "running" : "complete"},
 		{"resultCount", bHasVisibleResults ? static_cast<int64_t>(aResults.GetCount()) : 0}
 	};
@@ -3377,6 +3406,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			{"id", StdUtf8FromCString(FormatSearchId(pSearchParams->dwSearchID))},
 			{"query", StdUtf8FromCString(pSearchParams->strExpression)},
 			{"method", GetSearchMethodName(pSearchParams->eType)},
+			{"type", GetSearchTypeName(pSearchParams->strFileType)},
 			{"status", "running"},
 			{"results", json::array()}
 		};
@@ -3426,6 +3456,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			{"id", StdUtf8FromCString(FormatSearchId(uSearchID))},
 			{"query", StdUtf8FromCString(pSearchParams->strExpression)},
 			{"method", GetSearchMethodName(pSearchParams->eType)},
+			{"type", GetSearchTypeName(pSearchParams->strFileType)},
 			{"status", theApp.emuledlg->searchwnd->m_pwndResults->IsSearchRunning(uSearchID) ? "running" : "complete"},
 			{"results", results}
 		};
