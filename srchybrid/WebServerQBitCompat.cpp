@@ -147,6 +147,31 @@ json BuildQBitCategoriesJson()
 	return categories;
 }
 
+std::map<std::string, std::string> BuildQBitCategorySavePathMap()
+{
+	std::map<std::string, std::string> paths;
+	const json categories(BuildQBitCategoriesJson());
+	if (!categories.is_object())
+		return paths;
+
+	for (json::const_iterator it = categories.begin(); it != categories.end(); ++it) {
+		if (!it.value().is_object())
+			continue;
+		paths[it.key()] = it.value().value("savePath", std::string());
+	}
+	return paths;
+}
+
+std::string JoinQBitContentPath(const std::string &rSavePath, const std::string &rName)
+{
+	if (rSavePath.empty())
+		return rName;
+	const char chLast = rSavePath[rSavePath.size() - 1];
+	if (chLast == '\\' || chLast == '/')
+		return rSavePath + rName;
+	return rSavePath + "\\" + rName;
+}
+
 bool EnsureCategoryExists(const std::string &rCategory, CString &rErrorMessage)
 {
 	if (rCategory.empty())
@@ -198,10 +223,14 @@ std::string BuildQBitStateFromNativeTransfer(const json &rTransfer)
 	return "downloading";
 }
 
-json BuildQBitTorrentJsonFromNativeTransfer(const json &rTransfer)
+json BuildQBitTorrentJsonFromNativeTransfer(
+	const json &rTransfer,
+	const std::map<std::string, std::string> &rCategorySavePaths)
 {
 	const std::string strName(JsonStringValue(rTransfer, "name"));
 	const std::string strCategory(JsonStringValue(rTransfer, "categoryName"));
+	const auto pathIt = rCategorySavePaths.find(strCategory);
+	const std::string strSavePath(pathIt != rCategorySavePaths.end() ? pathIt->second : std::string());
 	const uint64_t ullSize = JsonUInt64Value(rTransfer, "sizeBytes");
 	const uint64_t ullCompleted = JsonUInt64Value(rTransfer, "completedBytes");
 	const uint64_t ullSources = JsonUInt64Value(rTransfer, "sources");
@@ -214,8 +243,8 @@ json BuildQBitTorrentJsonFromNativeTransfer(const json &rTransfer)
 		{"state", BuildQBitStateFromNativeTransfer(rTransfer)},
 		{"label", strCategory},
 		{"category", strCategory},
-		{"save_path", ""},
-		{"content_path", strName},
+		{"save_path", strSavePath},
+		{"content_path", JoinQBitContentPath(strSavePath, strName)},
 		{"ratio", 0},
 		{"ratio_limit", 0},
 		{"seeding_time", 0},
@@ -238,13 +267,14 @@ bool BuildQBitTorrentsJson(const std::string &rCategory, json &rTorrents, CStrin
 	if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("transfers/list", json::object()), nativeTransfers, rErrorMessage) || !nativeTransfers.is_array())
 		return false;
 
+	const std::map<std::string, std::string> categorySavePaths(BuildQBitCategorySavePathMap());
 	rTorrents = json::array();
 	for (const json &rTransfer : nativeTransfers) {
 		if (!rTransfer.is_object())
 			continue;
 		if (!rCategory.empty() && JsonStringValue(rTransfer, "categoryName") != rCategory)
 			continue;
-		rTorrents.push_back(BuildQBitTorrentJsonFromNativeTransfer(rTransfer));
+		rTorrents.push_back(BuildQBitTorrentJsonFromNativeTransfer(rTransfer, categorySavePaths));
 	}
 	return true;
 }
@@ -377,14 +407,16 @@ void HandleTorrentStateMutation(const ThreadData &rData, const char *pszCommand)
 	SendTextResponse(rData.pSocket, 200, "OK", WebServerQBitCompatSeams::kQBitSuccessBody);
 }
 
-void HandleAcceptedTorrentNoopMutation(const ThreadData &rData, const bool bValidateForceStartValue)
+void HandleAcceptedTorrentNoopMutation(const ThreadData &rData, const bool bValidateForceStartValue, const bool bValidateShareLimits)
 {
 	WebServerQBitCompatSeams::SQBitHashMutationRequest request;
 	std::string strError;
 	const std::string strRequestBody(WebServerJson::ToStdString(rData.strRequestBody));
 	const bool bParsed = bValidateForceStartValue
 		? WebServerQBitCompatSeams::TryParseForceStartRequest(strRequestBody, request, strError)
-		: WebServerQBitCompatSeams::TryParseHashesOnlyRequest(strRequestBody, request, strError);
+		: (bValidateShareLimits
+			? WebServerQBitCompatSeams::TryParseShareLimitsRequest(strRequestBody, request, strError)
+			: WebServerQBitCompatSeams::TryParseHashesOnlyRequest(strRequestBody, request, strError));
 	if (!bParsed) {
 		SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 		return;
@@ -524,9 +556,14 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 			SendTextResponse(rData.pSocket, 404, "Not Found", WebServerQBitCompatSeams::kQBitNotFoundBody);
 			return;
 		}
+		const std::map<std::string, std::string> categorySavePaths(BuildQBitCategorySavePathMap());
+		const json qbitTransfer(BuildQBitTorrentJsonFromNativeTransfer(transfer, categorySavePaths));
 		SendJsonResponse(rData.pSocket, 200, "OK", json{
 			{"hash", strHash},
-			{"save_path", ""},
+			{"save_path", qbitTransfer.value("save_path", std::string())},
+			{"content_path", qbitTransfer.value("content_path", std::string())},
+			{"total_size", qbitTransfer.value("size", static_cast<uint64_t>(0))},
+			{"total_downloaded", qbitTransfer.value("downloaded", static_cast<uint64_t>(0))},
 			{"seeding_time", 0}
 		});
 		return;
@@ -545,7 +582,11 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 			SendTextResponse(rData.pSocket, 404, "Not Found", WebServerQBitCompatSeams::kQBitNotFoundBody);
 			return;
 		}
-		SendJsonResponse(rData.pSocket, 200, "OK", json::array({json{{"name", transfer.value("name", std::string())}}}));
+		SendJsonResponse(rData.pSocket, 200, "OK", json::array({json{
+			{"name", transfer.value("name", std::string())},
+			{"size", JsonUInt64Value(transfer, "sizeBytes")},
+			{"progress", JsonDoubleValue(transfer, "progress")}
+		}}));
 		return;
 	}
 
@@ -575,12 +616,12 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 	}
 
 	if (strPath == "/api/v2/torrents/setsharelimits" || strPath == "/api/v2/torrents/topprio") {
-		HandleAcceptedTorrentNoopMutation(rData, false);
+		HandleAcceptedTorrentNoopMutation(rData, false, strPath == "/api/v2/torrents/setsharelimits");
 		return;
 	}
 
 	if (strPath == "/api/v2/torrents/setforcestart") {
-		HandleAcceptedTorrentNoopMutation(rData, true);
+		HandleAcceptedTorrentNoopMutation(rData, true, false);
 		return;
 	}
 

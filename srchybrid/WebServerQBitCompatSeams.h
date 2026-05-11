@@ -340,6 +340,98 @@ inline bool TryParseOptionalBooleanFormField(
 	return false;
 }
 
+/**
+ * Validates an optional signed decimal qBittorrent form field.
+ */
+inline bool TryParseOptionalSignedDecimalFormField(
+	const std::map<std::string, std::string> &rForm,
+	const char *pszFieldName,
+	std::string &rErrorMessage)
+{
+	const auto it = rForm.find(pszFieldName);
+	if (it == rForm.end())
+		return true;
+
+	const std::string strValue(WebServerJsonSeams::TrimAsciiWhitespace(it->second));
+	if (strValue.empty()) {
+		rErrorMessage = std::string(pszFieldName) + " must be a signed decimal value";
+		return false;
+	}
+
+	size_t uPos = 0;
+	if (strValue[uPos] == '+' || strValue[uPos] == '-')
+		++uPos;
+	if (uPos >= strValue.size()) {
+		rErrorMessage = std::string(pszFieldName) + " must be a signed decimal value";
+		return false;
+	}
+
+	bool bSawDigit = false;
+	bool bSawDot = false;
+	for (; uPos < strValue.size(); ++uPos) {
+		const char ch = strValue[uPos];
+		if (std::isdigit(static_cast<unsigned char>(ch)) != 0) {
+			bSawDigit = true;
+			continue;
+		}
+		if (ch == '.' && !bSawDot) {
+			bSawDot = true;
+			continue;
+		}
+		rErrorMessage = std::string(pszFieldName) + " must be a signed decimal value";
+		return false;
+	}
+	if (!bSawDigit) {
+		rErrorMessage = std::string(pszFieldName) + " must be a signed decimal value";
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Validates an optional signed integer qBittorrent form field.
+ */
+inline bool TryParseOptionalSignedIntegerFormField(
+	const std::map<std::string, std::string> &rForm,
+	const char *pszFieldName,
+	std::string &rErrorMessage)
+{
+	const auto it = rForm.find(pszFieldName);
+	if (it == rForm.end())
+		return true;
+
+	const std::string strValue(WebServerJsonSeams::TrimAsciiWhitespace(it->second));
+	if (strValue.empty()) {
+		rErrorMessage = std::string(pszFieldName) + " must be a signed integer value";
+		return false;
+	}
+
+	size_t uPos = 0;
+	if (strValue[uPos] == '+' || strValue[uPos] == '-')
+		++uPos;
+	if (uPos >= strValue.size()) {
+		rErrorMessage = std::string(pszFieldName) + " must be a signed integer value";
+		return false;
+	}
+	for (; uPos < strValue.size(); ++uPos) {
+		if (std::isdigit(static_cast<unsigned char>(strValue[uPos])) == 0) {
+			rErrorMessage = std::string(pszFieldName) + " must be a signed integer value";
+			return false;
+		}
+	}
+	return true;
+}
+
+/**
+ * Validates the qBittorrent share-limit fields sent by Arr clients.
+ */
+inline bool TryValidateShareLimitFormFields(const std::map<std::string, std::string> &rForm, std::string &rErrorMessage)
+{
+	return TryParseOptionalSignedDecimalFormField(rForm, "ratioLimit", rErrorMessage)
+		&& TryParseOptionalSignedIntegerFormField(rForm, "seedingTimeLimit", rErrorMessage)
+		&& TryParseOptionalSignedIntegerFormField(rForm, "inactiveSeedingTimeLimit", rErrorMessage);
+}
+
 inline bool IsMd4Hex(const std::string &rValue)
 {
 	if (rValue.size() != 32)
@@ -444,6 +536,8 @@ inline bool TryParseTorrentAddRequest(const std::string &rBody, SQBitTorrentAddR
 		return false;
 	if (!TryParseOptionalBooleanFormField(form, "paused", bPaused, rErrorMessage))
 		return false;
+	if (!TryValidateShareLimitFormFields(form, rErrorMessage))
+		return false;
 	rRequest.bPaused = bStopped || bPaused;
 	return true;
 }
@@ -544,6 +638,21 @@ inline bool TryParseHashesOnlyRequest(const std::string &rBody, SQBitHashMutatio
 	if (!TryParseFormBody(rBody, form, rErrorMessage))
 		return false;
 	return TryParseHashesFormField(form, rRequest.hashes, rErrorMessage);
+}
+
+/**
+ * @brief Parses qBittorrent share-limit no-op requests while validating the
+ * public limit controls that Arr may send.
+ */
+inline bool TryParseShareLimitsRequest(const std::string &rBody, SQBitHashMutationRequest &rRequest, std::string &rErrorMessage)
+{
+	rRequest = SQBitHashMutationRequest();
+	std::map<std::string, std::string> form;
+	if (!TryParseFormBody(rBody, form, rErrorMessage))
+		return false;
+	if (!TryParseHashesFormField(form, rRequest.hashes, rErrorMessage))
+		return false;
+	return TryValidateShareLimitFormFields(form, rErrorMessage);
 }
 
 /**
