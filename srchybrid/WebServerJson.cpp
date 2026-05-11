@@ -3075,7 +3075,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			rError.strMessage = strLinkError;
 			return json();
 		}
-		return result;
+		result["ok"] = true;
+		return json{{"items", json::array({result})}};
 	}
 
 	auto handleTransferBulkMutation = [&](LPCTSTR pszAction) -> json
@@ -3090,7 +3091,6 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 
 		bool bUpdateTabs = false;
 		json results = json::array();
-		json singleResource;
 		for (const json &hashValue : request.hashes) {
 			SPipeApiError itemError = rError;
 			CPartFile *pPartFile = FindPartFileByHash(hashValue, itemError);
@@ -3150,8 +3150,6 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 				}
 			}
 
-			if (request.hashes.size() == 1 && bOk && _tcscmp(pszAction, _T("delete")) != 0)
-				singleResource = BuildTransferJson(*pPartFile);
 			results.push_back(BuildMutationResult(strHash, bOk, bOk ? NULL : strErrorText));
 			(void)pPartFile;
 		}
@@ -3159,7 +3157,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		if (bUpdateTabs)
 			theApp.emuledlg->transferwnd->UpdateCatTabTitles();
 
-		return !singleResource.is_null() ? singleResource : json{{"items", results}};
+		return json{{"items", results}};
 	};
 
 	if (strCommand == "transfers/pause")
