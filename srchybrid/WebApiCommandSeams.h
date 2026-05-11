@@ -49,6 +49,7 @@ struct SSearchStartRequest
 	std::string strQuery;
 	ESearchMethod eMethod;
 	ESearchFileType eFileType;
+	std::string strFileType;
 	std::string strExtension;
 	uint64_t ullMinSize;
 	uint64_t ullMaxSize;
@@ -266,13 +267,15 @@ inline bool TryParseSearchStartRequest(const json &rParams, SSearchStartRequest 
 	}
 
 	rRequest.eFileType = ESearchFileType::Any;
+	rRequest.strFileType.clear();
 	if (rParams.contains("type")) {
 		if (!rParams["type"].is_string()) {
 			rError = "type must be a string";
 			return false;
 		}
 
-		rRequest.eFileType = ParseSearchFileTypeName(rParams["type"].get_ref<const std::string&>());
+		rRequest.strFileType = rParams["type"].get_ref<const std::string&>();
+		rRequest.eFileType = ParseSearchFileTypeName(rRequest.strFileType);
 		if (rRequest.eFileType == ESearchFileType::Invalid) {
 			rError = "type is not supported";
 			return false;

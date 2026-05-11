@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cerrno>
 #include <climits>
 #include <cctype>
@@ -131,20 +132,32 @@ inline bool IsSearchMethodName(const std::string &rValue)
 }
 
 /**
- * @brief Reports whether a token is in the public native search-file-type
- * vocabulary.
+ * @brief Returns the exact native eMule search file-type tokens exposed by
+ * REST v1.
+ */
+inline const std::vector<std::string>& GetNativeSearchFileTypeNames()
+{
+	static const std::vector<std::string> s_names = {
+		"",
+		"Arc",
+		"Audio",
+		"Iso",
+		"Image",
+		"Pro",
+		"Video",
+		"Doc",
+		"EmuleCollection"
+	};
+	return s_names;
+}
+
+/**
+ * @brief Reports whether a token is in the native search-file-type vocabulary.
  */
 inline bool IsSearchFileTypeName(const std::string &rValue)
 {
-	return rValue.empty()
-		|| rValue == "Arc"
-		|| rValue == "Audio"
-		|| rValue == "Iso"
-		|| rValue == "Image"
-		|| rValue == "Pro"
-		|| rValue == "Video"
-		|| rValue == "Doc"
-		|| rValue == "EmuleCollection";
+	const std::vector<std::string> &rNames = GetNativeSearchFileTypeNames();
+	return std::find(rNames.begin(), rNames.end(), rValue) != rNames.end();
 }
 
 /**

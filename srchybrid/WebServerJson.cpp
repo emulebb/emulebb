@@ -3333,41 +3333,13 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 
-		switch (request.eFileType) {
-		case WebApiCommandSeams::ESearchFileType::Any:
-			pSearchParams->strFileType = _T(ED2KFTSTR_ANY);
-			break;
-		case WebApiCommandSeams::ESearchFileType::Archive:
-			pSearchParams->strFileType = _T(ED2KFTSTR_ARCHIVE);
-			break;
-		case WebApiCommandSeams::ESearchFileType::Audio:
-			pSearchParams->strFileType = _T(ED2KFTSTR_AUDIO);
-			break;
-		case WebApiCommandSeams::ESearchFileType::CdImage:
-			pSearchParams->strFileType = _T(ED2KFTSTR_CDIMAGE);
-			break;
-		case WebApiCommandSeams::ESearchFileType::Image:
-			pSearchParams->strFileType = _T(ED2KFTSTR_IMAGE);
-			break;
-		case WebApiCommandSeams::ESearchFileType::Program:
-			pSearchParams->strFileType = _T(ED2KFTSTR_PROGRAM);
-			break;
-		case WebApiCommandSeams::ESearchFileType::Video:
-			pSearchParams->strFileType = _T(ED2KFTSTR_VIDEO);
-			break;
-		case WebApiCommandSeams::ESearchFileType::Document:
-			pSearchParams->strFileType = _T(ED2KFTSTR_DOCUMENT);
-			break;
-		case WebApiCommandSeams::ESearchFileType::EmuleCollection:
-			pSearchParams->strFileType = _T(ED2KFTSTR_EMULECOLLECTION);
-			break;
-		case WebApiCommandSeams::ESearchFileType::Invalid:
-		default:
+		if (request.eFileType == WebApiCommandSeams::ESearchFileType::Invalid || !WebServerJsonSeams::IsSearchFileTypeName(request.strFileType)) {
 			delete pSearchParams;
 			rError.strCode = "INVALID_ARGUMENT";
 			rError.strMessage = _T("type is not supported");
 			return json();
 		}
+		pSearchParams->strFileType = CStringFromStdUtf8(request.strFileType);
 
 		pSearchParams->strExtension = CStringFromStdUtf8(request.strExtension);
 		if (request.bHasMinSize)
