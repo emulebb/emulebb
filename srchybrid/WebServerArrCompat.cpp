@@ -39,6 +39,7 @@ constexpr ULONGLONG ARR_COMPAT_CACHE_TTL_MS = 10ULL * 60ULL * 1000ULL;
 constexpr ULONGLONG ARR_COMPAT_BUSY_WAIT_MS = 15ULL * 1000ULL;
 constexpr DWORD ARR_COMPAT_POLL_SLEEP_MS = 750;
 constexpr DWORD ARR_COMPAT_BUSY_POLL_SLEEP_MS = 250;
+constexpr size_t ARR_COMPAT_MAX_RETURNED_PAGE_ITEMS = 99U;
 
 struct SArrCompatResult
 {
@@ -173,10 +174,33 @@ int GetPrimaryTorznabCategory(const WebServerArrCompatSeams::ETorznabFamily eFam
 	}
 }
 
+/// Orders Arr-facing releases by native eMule availability before Torznab paging.
+bool IsMoreAvailableResult(const SArrCompatResult &rLeft, const SArrCompatResult &rRight)
+{
+	if (rLeft.ullSeeders != rRight.ullSeeders)
+		return rLeft.ullSeeders > rRight.ullSeeders;
+	if (rLeft.ullPeers != rRight.ullPeers)
+		return rLeft.ullPeers > rRight.ullPeers;
+	if (rLeft.ullSize != rRight.ullSize)
+		return rLeft.ullSize < rRight.ullSize;
+	return rLeft.strName < rRight.strName;
+}
+
+/// Sorts native search results so Arr sees the most available releases first.
+void SortResultsByAvailability(std::vector<SArrCompatResult> &rResults)
+{
+	std::stable_sort(rResults.begin(), rResults.end(), IsMoreAvailableResult);
+}
+
 std::string BuildFeedXml(const WebServerArrCompatSeams::STorznabRequest &rRequest, const std::vector<SArrCompatResult> &rResults)
 {
 	std::ostringstream xml;
 	const std::string strPubDate(FormatPubDate());
+	const size_t uTotal = rResults.size();
+	const size_t uStart = (std::min)(static_cast<size_t>(rRequest.uOffset), uTotal);
+	const size_t uLimit = (std::min)(static_cast<size_t>(rRequest.uLimit), ARR_COMPAT_MAX_RETURNED_PAGE_ITEMS);
+	const size_t uEnd = (std::min)(uTotal, uStart + uLimit);
+	const size_t uAdvertisedTotal = static_cast<size_t>(rRequest.uOffset) + (uEnd - uStart);
 	xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		<< "<rss version=\"2.0\" xmlns:torznab=\"http://torznab.com/schemas/2015/feed\">\n"
 		<< "  <channel>\n"
@@ -184,9 +208,10 @@ std::string BuildFeedXml(const WebServerArrCompatSeams::STorznabRequest &rReques
 		<< "    <description>Native eMule search results exposed as Torznab</description>\n"
 		<< "    <link>http://localhost/indexer/emulebb/api</link>\n"
 		<< "    <language>en-us</language>\n"
-		<< "    <torznab:response offset=\"0\" total=\"" << rResults.size() << "\" />\n";
+		<< "    <torznab:response offset=\"" << rRequest.uOffset << "\" total=\"" << uAdvertisedTotal << "\" />\n";
 
-	for (const SArrCompatResult &rResult : rResults) {
+	for (size_t uIndex = uStart; uIndex < uEnd; ++uIndex) {
+		const SArrCompatResult &rResult = rResults[uIndex];
 		const int iCategory = GetPrimaryTorznabCategory(rResult.eFamily == WebServerArrCompatSeams::ETorznabFamily::Any ? rRequest.eFamily : rResult.eFamily);
 		xml << "    <item>\n"
 			<< "      <title>" << WebServerArrCompatSeams::XmlEscape(rResult.strName) << "</title>\n"
@@ -492,6 +517,10 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
 		return;
 	}
+	if (request.uOffset > 0) {
+		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
+		return;
+	}
 
 	const std::vector<std::string> nativeSearchMethods(BuildAvailableNativeSearchMethods(request.eFamily));
 	const std::string strCacheKey(WebServerArrCompatSeams::BuildCacheKey(request, nativeSearchMethods));
@@ -519,6 +548,7 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 	}
 
 	results = RunNativeSearches(request, nativeSearchMethods);
+	SortResultsByAvailability(results);
 	StoreCachedResults(strCacheKey, results);
 	SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
 }

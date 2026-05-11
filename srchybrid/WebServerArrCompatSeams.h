@@ -22,6 +22,9 @@ static const unsigned kMaxTorznabEpisode = 9999;
 static const unsigned kMaxTorznabYear = 9999;
 static const int kTorznabParseErrorHttpStatus = 400;
 static const int kTorznabBusyHttpStatus = 503;
+static const unsigned kDefaultTorznabLimit = 100;
+static const unsigned kMaxTorznabLimit = 100;
+static const unsigned kMaxTorznabOffset = 1000000;
 static const unsigned long long kTorznabDefaultSearchTimeoutMs = 12ULL * 1000ULL;
 static const unsigned long long kTorznabMediaSearchTimeoutMs = 45ULL * 1000ULL;
 static const char kTorznabXmlContentTypeHeader[] = "Content-Type: application/xml; charset=utf-8\r\n";
@@ -51,10 +54,14 @@ struct STorznabRequest
 	std::string strEpisode;
 	std::string strYear;
 	std::string strCategories;
+	unsigned uOffset;
+	unsigned uLimit;
 	ETorznabFamily eFamily;
 
 	STorznabRequest()
-		: eFamily(ETorznabFamily::Any)
+		: uOffset(0)
+		, uLimit(kDefaultTorznabLimit)
+		, eFamily(ETorznabFamily::Any)
 	{
 	}
 };
@@ -290,6 +297,8 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 	const auto episodeIt = normalized.find("ep");
 	const auto yearIt = normalized.find("year");
 	const auto catIt = normalized.find("cat");
+	const auto offsetIt = normalized.find("offset");
+	const auto limitIt = normalized.find("limit");
 	if (!WebServerJsonSeams::TryNormalizeSearchText(
 			queryIt == normalized.end() ? std::string() : queryIt->second,
 			"q",
@@ -304,6 +313,18 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 	parsed.strYear = yearIt == normalized.end() ? std::string() : yearIt->second;
 	parsed.strCategories = catIt == normalized.end() ? std::string() : catIt->second;
 	unsigned uIgnored = 0;
+	if (offsetIt != normalized.end() && !TryParseBoundedUnsigned(offsetIt->second, kMaxTorznabOffset, parsed.uOffset)) {
+		rErrorMessage = "offset must be an unsigned decimal value in the range 0..1000000";
+		return false;
+	}
+	if (limitIt != normalized.end()) {
+		unsigned uParsedLimit = 0;
+		if (!TryParseBoundedUnsigned(limitIt->second, kMaxTorznabLimit, uParsedLimit)) {
+			rErrorMessage = "limit must be an unsigned decimal value in the range 0..100";
+			return false;
+		}
+		parsed.uLimit = uParsedLimit == 0 ? kDefaultTorznabLimit : uParsedLimit;
+	}
 	if (!parsed.strSeason.empty() && !TryParseBoundedUnsigned(parsed.strSeason, kMaxTorznabSeason, uIgnored)) {
 		rErrorMessage = "season must be an unsigned decimal value in the range 0..9999";
 		return false;
@@ -518,10 +539,8 @@ inline std::vector<std::string> BuildNativeQueries(const STorznabRequest &rReque
 			queries.push_back(rQuery);
 	};
 	const std::string strType(WebServerJsonSeams::ToLowerAscii(rRequest.strType));
-	if (rRequest.strQuery.empty()) {
-		queries.push_back("linux");
+	if (rRequest.strQuery.empty())
 		return queries;
-	}
 
 	if (strType == "tvsearch") {
 		if (!rRequest.strSeason.empty() && !rRequest.strEpisode.empty()) {
