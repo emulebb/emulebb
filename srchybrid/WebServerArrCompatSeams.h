@@ -21,6 +21,9 @@ static const unsigned kMaxTorznabSeason = 9999;
 static const unsigned kMaxTorznabEpisode = 9999;
 static const unsigned kMaxTorznabYear = 9999;
 static const int kTorznabParseErrorHttpStatus = 400;
+static const int kTorznabBusyHttpStatus = 503;
+static const unsigned long long kTorznabDefaultSearchTimeoutMs = 12ULL * 1000ULL;
+static const unsigned long long kTorznabMediaSearchTimeoutMs = 45ULL * 1000ULL;
 static const char kTorznabXmlContentTypeHeader[] = "Content-Type: application/xml; charset=utf-8\r\n";
 
 /**
@@ -394,6 +397,14 @@ inline bool DoesResultMatchFamily(const ETorznabFamily eFamily, const std::strin
 }
 
 /**
+ * @brief Reports whether a Torznab result set is stable enough to cache.
+ */
+inline bool ShouldCacheTorznabResults(const size_t uResultCount)
+{
+	return uResultCount > 0;
+}
+
+/**
  * @brief Converts a Torznab media family to the native search type token.
  */
 inline const char *GetNativeSearchType(const ETorznabFamily eFamily)
@@ -412,6 +423,53 @@ inline const char *GetNativeSearchType(const ETorznabFamily eFamily)
 	default:
 		return "any";
 	}
+}
+
+/**
+ * @brief Returns native eMule search type probes for one Torznab family.
+ */
+inline std::vector<std::string> BuildNativeSearchTypeNames(const ETorznabFamily eFamily)
+{
+	std::vector<std::string> types;
+	types.push_back(GetNativeSearchType(eFamily));
+	return types;
+}
+
+/**
+ * @brief Returns the native eMule search method order for one Torznab family.
+ */
+inline std::vector<std::string> BuildNativeSearchMethodNames(const ETorznabFamily eFamily)
+{
+	if (eFamily == ETorznabFamily::Movie || eFamily == ETorznabFamily::Tv) {
+		std::vector<std::string> methods;
+		methods.push_back("kad");
+		methods.push_back("global");
+		return methods;
+	}
+	std::vector<std::string> methods;
+	methods.push_back("automatic");
+	return methods;
+}
+
+/**
+ * @brief Returns the native search observation window for one Torznab family.
+ */
+inline unsigned long long GetNativeSearchTimeoutMilliseconds(const ETorznabFamily eFamily)
+{
+	return (eFamily == ETorznabFamily::Movie || eFamily == ETorznabFamily::Tv)
+		? kTorznabMediaSearchTimeoutMs
+		: kTorznabDefaultSearchTimeoutMs;
+}
+
+/**
+ * @brief Returns the bounded observation window for one native search method.
+ */
+inline unsigned long long GetNativeSearchMethodProbeTimeoutMilliseconds(const ETorznabFamily eFamily, const size_t uMethodCount)
+{
+	const unsigned long long ullTotal = GetNativeSearchTimeoutMilliseconds(eFamily);
+	if ((eFamily != ETorznabFamily::Movie && eFamily != ETorznabFamily::Tv) || uMethodCount <= 1)
+		return ullTotal;
+	return ullTotal / static_cast<unsigned long long>(uMethodCount);
 }
 
 /**

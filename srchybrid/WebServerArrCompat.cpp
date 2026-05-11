@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "WebServerArrCompat.h"
 
+#include <algorithm>
 #include <ctime>
 #include <map>
 #include <set>
@@ -26,7 +27,6 @@
 
 #include "Log.h"
 #include "Preferences.h"
-#include "WebApiCommandSeams.h"
 #include "WebServerArrCompatSeams.h"
 #include "WebServerJson.h"
 #include "WebSocket.h"
@@ -36,8 +36,9 @@ using json = nlohmann::json;
 namespace
 {
 constexpr ULONGLONG ARR_COMPAT_CACHE_TTL_MS = 10ULL * 60ULL * 1000ULL;
-constexpr ULONGLONG ARR_COMPAT_SEARCH_TIMEOUT_MS = 12ULL * 1000ULL;
+constexpr ULONGLONG ARR_COMPAT_BUSY_WAIT_MS = 15ULL * 1000ULL;
 constexpr DWORD ARR_COMPAT_POLL_SLEEP_MS = 750;
+constexpr DWORD ARR_COMPAT_BUSY_POLL_SLEEP_MS = 250;
 
 struct SArrCompatResult
 {
@@ -77,6 +78,13 @@ public:
 
 	bool IsAcquired() const
 	{
+		return m_bAcquired;
+	}
+
+	bool TryAcquire()
+	{
+		if (!m_bAcquired)
+			m_bAcquired = ::InterlockedCompareExchange(&g_lArrCompatSearchInFlight, 1, 0) == 0;
 		return m_bAcquired;
 	}
 
@@ -219,6 +227,10 @@ bool TryGetCachedResults(const std::string &rCacheKey, std::vector<SArrCompatRes
 void StoreCachedResults(const std::string &rCacheKey, const std::vector<SArrCompatResult> &rResults)
 {
 	CSingleLock lock(&g_arrCompatCacheLock, TRUE);
+	if (!WebServerArrCompatSeams::ShouldCacheTorznabResults(rResults.size())) {
+		g_arrCompatCache.erase(rCacheKey);
+		return;
+	}
 	SArrCompatCacheEntry &rEntry = g_arrCompatCache[rCacheKey];
 	rEntry.ullTick = ::GetTickCount64();
 	rEntry.results = rResults;
@@ -286,30 +298,28 @@ void StopNativeSearch(const std::string &rSearchId)
 	(void)ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("search/stop", json{{"searchId", rSearchId}}), ignored);
 }
 
-std::vector<SArrCompatResult> RunOneNativeSearch(const std::string &rQuery, const WebServerArrCompatSeams::ETorznabFamily eFamily, const ULONGLONG ullDeadline, std::set<std::string> &rSeenHashes)
+std::vector<SArrCompatResult> RunOneNativeSearch(
+	const std::string &rQuery,
+	const WebServerArrCompatSeams::ETorznabFamily eFamily,
+	const std::string &rMethod,
+	const std::string &rSearchType,
+	const ULONGLONG ullDeadline,
+	std::set<std::string> &rSeenHashes)
 {
 	std::vector<SArrCompatResult> results;
 	if (::GetTickCount64() >= ullDeadline)
 		return results;
 
-	static const char *const s_arrSearchMethods[] = {WebApiCommandSeams::GetDefaultSearchMethodName()};
-
 	json startResult;
-	for (const char *const pszMethod : s_arrSearchMethods) {
-		if (ExecuteBridgeCommand(
-				WebServerJson::BuildInternalCommand("search/start", json{
-					{"query", rQuery},
-					{"method", pszMethod},
-					{"type", WebServerArrCompatSeams::GetNativeSearchType(eFamily)},
-					{"clearExisting", false}
-				}),
-				startResult))
-		{
-			break;
-		}
-		if (::GetTickCount64() >= ullDeadline)
-			return results;
-	}
+	if (!ExecuteBridgeCommand(
+			WebServerJson::BuildInternalCommand("search/start", json{
+				{"query", rQuery},
+				{"method", rMethod},
+				{"type", rSearchType},
+				{"clearExisting", false}
+			}),
+			startResult))
+		return results;
 	if (!startResult.contains("id") || !startResult["id"].is_string())
 		return results;
 
@@ -337,10 +347,29 @@ std::vector<SArrCompatResult> RunNativeSearches(const WebServerArrCompatSeams::S
 		return results;
 
 	std::set<std::string> seenHashes;
-	const ULONGLONG ullDeadline = ::GetTickCount64() + ARR_COMPAT_SEARCH_TIMEOUT_MS;
+	const ULONGLONG ullDeadline = ::GetTickCount64() + static_cast<ULONGLONG>(WebServerArrCompatSeams::GetNativeSearchTimeoutMilliseconds(rRequest.eFamily));
+	const std::vector<std::string> methods(WebServerArrCompatSeams::BuildNativeSearchMethodNames(rRequest.eFamily));
+	const std::vector<std::string> searchTypes(WebServerArrCompatSeams::BuildNativeSearchTypeNames(rRequest.eFamily));
 	for (const std::string &rQuery : WebServerArrCompatSeams::BuildNativeQueries(rRequest)) {
-		const std::vector<SArrCompatResult> queryResults(RunOneNativeSearch(rQuery, rRequest.eFamily, ullDeadline, seenHashes));
-		results.insert(results.end(), queryResults.begin(), queryResults.end());
+		for (const std::string &rSearchType : searchTypes) {
+			for (size_t uMethodIndex = 0; uMethodIndex < methods.size(); ++uMethodIndex) {
+				const ULONGLONG ullNow = ::GetTickCount64();
+				if (ullNow >= ullDeadline)
+					break;
+				const size_t uRemainingMethods = methods.size() - uMethodIndex;
+				const ULONGLONG ullMethodProbeTimeout = static_cast<ULONGLONG>(WebServerArrCompatSeams::GetNativeSearchMethodProbeTimeoutMilliseconds(rRequest.eFamily, uRemainingMethods));
+				const ULONGLONG ullProbeDeadline = (std::min)(ullDeadline, ullNow + ullMethodProbeTimeout);
+				const std::string &rMethod = methods[uMethodIndex];
+				const std::vector<SArrCompatResult> queryResults(RunOneNativeSearch(rQuery, rRequest.eFamily, rMethod, rSearchType, ullProbeDeadline, seenHashes));
+				results.insert(results.end(), queryResults.begin(), queryResults.end());
+				if (results.size() >= 100)
+					break;
+			}
+			if (results.size() >= 100 || ::GetTickCount64() >= ullDeadline)
+				break;
+			if (!results.empty())
+				break;
+		}
 		if (results.size() >= 100 || ::GetTickCount64() >= ullDeadline)
 			break;
 	}
@@ -430,8 +459,16 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 
 	CArrCompatSearchReservation searchReservation;
 	if (!searchReservation.IsAcquired()) {
-		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
-		return;
+		const ULONGLONG ullBusyDeadline = ::GetTickCount64() + ARR_COMPAT_BUSY_WAIT_MS;
+		while (!searchReservation.TryAcquire() && ::GetTickCount64() < ullBusyDeadline)
+			::Sleep(ARR_COMPAT_BUSY_POLL_SLEEP_MS);
+		if (!searchReservation.IsAcquired()) {
+			if (TryGetCachedResults(strCacheKey, results))
+				SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
+			else
+				SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabBusyHttpStatus, "Service Unavailable", BuildFeedXml(request, results));
+			return;
+		}
 	}
 	if (TryGetCachedResults(strCacheKey, results)) {
 		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
