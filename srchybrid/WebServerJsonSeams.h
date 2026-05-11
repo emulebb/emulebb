@@ -26,6 +26,12 @@ static const size_t kMaxPublicFileNameLength = 255;
 static const UINT kRestUiDispatchTimeoutMs = 15000u;
 static const char *const kRestRouteExecutionDirect = "direct";
 static const char *const kRestRouteExecutionUiThread = "ui-thread";
+static const char *const kTransferPriorityError = "priority must be one of auto, verylow, low, normal, high, veryhigh";
+static const char *const kSharedUploadPriorityError = "priority must be one of auto, verylow, low, normal, high, release";
+static const char *const kCategoryPriorityError = "priority must be one of verylow, low, normal, high, veryhigh";
+static const char *const kServerPriorityError = "priority must be one of low, normal, high";
+static const char *const kSearchMethodError = "method must be one of automatic, server, global, kad";
+static const char *const kTransferStateError = "state must be one of downloading, paused, queued, checking, completing, completed, error, missingfiles";
 
 /**
  * @brief Carries one parsed REST route command together with the normalized
@@ -1135,7 +1141,7 @@ inline bool ValidateTransferPatchBody(json &rBody, std::string &rErrorCode, std:
 	}
 	if (rBody.contains("priority")
 		&& !WebApiSurfaceSeams::IsTransferPriorityName(rBody["priority"].get_ref<const std::string&>().c_str())) {
-		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of auto, verylow, low, normal, high, veryhigh");
+		SetInvalidArgument(rErrorCode, rErrorMessage, kTransferPriorityError);
 		return false;
 	}
 	if (rBody.contains("name")) {
@@ -1190,7 +1196,7 @@ inline bool ValidateSharedFilePatchBody(json &rBody, std::string &rErrorCode, st
 	}
 	if (rBody.contains("priority")
 		&& !WebApiSurfaceSeams::IsSharedUploadPriorityName(rBody["priority"].get_ref<const std::string&>().c_str())) {
-		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of auto, verylow, low, normal, high, release");
+		SetInvalidArgument(rErrorCode, rErrorMessage, kSharedUploadPriorityError);
 		return false;
 	}
 	if (rBody.contains("comment") || rBody.contains("rating")) {
@@ -1346,7 +1352,7 @@ inline bool ValidateServerCreateBody(json &rBody, std::string &rErrorCode, std::
 	}
 	if (rBody.contains("priority")
 		&& !WebApiSurfaceSeams::IsServerPriorityName(rBody["priority"].get_ref<const std::string&>().c_str())) {
-		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of low, normal, high");
+		SetInvalidArgument(rErrorCode, rErrorMessage, kServerPriorityError);
 		return false;
 	}
 	if (rBody.contains("static") && !rBody["static"].is_boolean()) {
@@ -1379,7 +1385,7 @@ inline bool ValidateServerPatchBody(json &rBody, std::string &rErrorCode, std::s
 	}
 	if (rBody.contains("priority")
 		&& !WebApiSurfaceSeams::IsServerPriorityName(rBody["priority"].get_ref<const std::string&>().c_str())) {
-		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of low, normal, high");
+		SetInvalidArgument(rErrorCode, rErrorMessage, kServerPriorityError);
 		return false;
 	}
 	if (rBody.contains("static") && !rBody["static"].is_boolean()) {
@@ -1433,7 +1439,7 @@ inline bool ValidateCategoryPriorityField(json &rBody, std::string &rErrorCode, 
 	if (WebApiSurfaceSeams::IsCategoryPriorityName(rBody["priority"].get_ref<const std::string&>().c_str()))
 		return true;
 
-	SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of verylow, low, normal, high, veryhigh");
+	SetInvalidArgument(rErrorCode, rErrorMessage, kCategoryPriorityError);
 	return false;
 }
 
@@ -1548,7 +1554,7 @@ inline bool ValidateSearchStartBody(json &rBody, std::string &rErrorCode, std::s
 			return false;
 		}
 		if (!IsSearchMethodName(rBody["method"].get_ref<const std::string&>())) {
-			SetInvalidArgument(rErrorCode, rErrorMessage, "method must be one of automatic, server, global, kad");
+			SetInvalidArgument(rErrorCode, rErrorMessage, kSearchMethodError);
 			return false;
 		}
 	}
@@ -1948,7 +1954,7 @@ inline bool ValidateQueryFields(const std::map<std::string, std::string> &rQuery
 		if (it->first == "categoryId" && !TryParseBoundedQueryUInt(it->second, 0, static_cast<uint64_t>(UINT_MAX), "categoryId", rErrorCode, rErrorMessage))
 			return false;
 		if (it->first == "state" && !IsTransferStateName(it->second)) {
-			SetInvalidArgument(rErrorCode, rErrorMessage, "state must be one of downloading, paused, queued, checking, completing, completed, error, missingfiles");
+			SetInvalidArgument(rErrorCode, rErrorMessage, kTransferStateError);
 			return false;
 		}
 	}
