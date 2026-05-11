@@ -58,6 +58,12 @@ struct SArrCompatCacheEntry
 	std::vector<SArrCompatResult> results;
 };
 
+struct SNativeSearchNetworkAvailability
+{
+	bool bGlobalConnected = false;
+	bool bKadConnected = false;
+};
+
 CCriticalSection g_arrCompatCacheLock;
 std::map<std::string, SArrCompatCacheEntry> g_arrCompatCache;
 volatile LONG g_lArrCompatSearchInFlight = 0;
@@ -260,27 +266,36 @@ bool JsonBoolValue(const json &rObject, const char *pszName)
 	return rObject.contains(pszName) && rObject[pszName].is_boolean() && rObject[pszName].get<bool>();
 }
 
-bool IsNativeSearchMethodAvailable(const std::string &rMethod)
+SNativeSearchNetworkAvailability ReadNativeSearchNetworkAvailability()
 {
-	if (!WebServerArrCompatSeams::IsConnectedNetworkSearchMethod(rMethod))
-		return true;
+	SNativeSearchNetworkAvailability availability;
 
 	json statusResult;
 	if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("status/get", json::object()), statusResult))
-		return false;
+		return availability;
 
-	const std::string strMethod(WebServerJsonSeams::ToLowerAscii(rMethod));
-	if (strMethod == "global") {
-		return statusResult.contains("servers")
-			&& statusResult["servers"].is_object()
-			&& JsonBoolValue(statusResult["servers"], "connected");
+	if (statusResult.contains("servers") && statusResult["servers"].is_object())
+		availability.bGlobalConnected = JsonBoolValue(statusResult["servers"], "connected");
+	if (statusResult.contains("kad") && statusResult["kad"].is_object())
+		availability.bKadConnected = JsonBoolValue(statusResult["kad"], "connected");
+	return availability;
+}
+
+std::vector<std::string> BuildAvailableNativeSearchMethods(const WebServerArrCompatSeams::ETorznabFamily eFamily)
+{
+	const std::vector<std::string> candidateMethods(WebServerArrCompatSeams::BuildNativeSearchMethodNames(eFamily));
+	bool bRequiresNetworkStatus = false;
+	for (const std::string &rMethod : candidateMethods) {
+		if (WebServerArrCompatSeams::IsConnectedNetworkSearchMethod(rMethod)) {
+			bRequiresNetworkStatus = true;
+			break;
+		}
 	}
-	if (strMethod == "kad") {
-		return statusResult.contains("kad")
-			&& statusResult["kad"].is_object()
-			&& JsonBoolValue(statusResult["kad"], "connected");
-	}
-	return true;
+	if (!bRequiresNetworkStatus)
+		return candidateMethods;
+
+	const SNativeSearchNetworkAvailability availability(ReadNativeSearchNetworkAvailability());
+	return WebServerArrCompatSeams::BuildAvailableNativeSearchMethodNames(eFamily, availability.bGlobalConnected, availability.bKadConnected);
 }
 
 void AppendResultsFromJson(const json &rResultPayload, const WebServerArrCompatSeams::ETorznabFamily eFamily, std::vector<SArrCompatResult> &rResults, std::set<std::string> &rSeenHashes)
@@ -368,28 +383,25 @@ std::vector<SArrCompatResult> RunOneNativeSearch(
 	return results;
 }
 
-std::vector<SArrCompatResult> RunNativeSearches(const WebServerArrCompatSeams::STorznabRequest &rRequest)
+std::vector<SArrCompatResult> RunNativeSearches(const WebServerArrCompatSeams::STorznabRequest &rRequest, const std::vector<std::string> &rMethods)
 {
 	std::vector<SArrCompatResult> results;
-	if (rRequest.eFamily == WebServerArrCompatSeams::ETorznabFamily::Unknown)
+	if (rRequest.eFamily == WebServerArrCompatSeams::ETorznabFamily::Unknown || rMethods.empty())
 		return results;
 
 	std::set<std::string> seenHashes;
 	const ULONGLONG ullDeadline = ::GetTickCount64() + static_cast<ULONGLONG>(WebServerArrCompatSeams::GetNativeSearchTimeoutMilliseconds(rRequest.eFamily));
-	const std::vector<std::string> methods(WebServerArrCompatSeams::BuildNativeSearchMethodNames(rRequest.eFamily));
 	const std::vector<std::string> searchTypes(WebServerArrCompatSeams::BuildNativeSearchTypeNames(rRequest.eFamily));
 	for (const std::string &rQuery : WebServerArrCompatSeams::BuildNativeQueries(rRequest)) {
 		for (const std::string &rSearchType : searchTypes) {
-			for (size_t uMethodIndex = 0; uMethodIndex < methods.size(); ++uMethodIndex) {
+			for (size_t uMethodIndex = 0; uMethodIndex < rMethods.size(); ++uMethodIndex) {
 				const ULONGLONG ullNow = ::GetTickCount64();
 				if (ullNow >= ullDeadline)
 					break;
-				const size_t uRemainingMethods = methods.size() - uMethodIndex;
+				const size_t uRemainingMethods = rMethods.size() - uMethodIndex;
 				const ULONGLONG ullMethodProbeTimeout = static_cast<ULONGLONG>(WebServerArrCompatSeams::GetNativeSearchMethodProbeTimeoutMilliseconds(rRequest.eFamily, uRemainingMethods));
 				const ULONGLONG ullProbeDeadline = (std::min)(ullDeadline, ullNow + ullMethodProbeTimeout);
-				const std::string &rMethod = methods[uMethodIndex];
-				if (!IsNativeSearchMethodAvailable(rMethod))
-					continue;
+				const std::string &rMethod = rMethods[uMethodIndex];
 				const std::vector<SArrCompatResult> queryResults(RunOneNativeSearch(rQuery, rRequest.eFamily, rMethod, rSearchType, ullProbeDeadline, seenHashes));
 				results.insert(results.end(), queryResults.begin(), queryResults.end());
 				if (results.size() >= 100)
@@ -481,7 +493,8 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 		return;
 	}
 
-	const std::string strCacheKey(WebServerArrCompatSeams::BuildCacheKey(request));
+	const std::vector<std::string> nativeSearchMethods(BuildAvailableNativeSearchMethods(request.eFamily));
+	const std::string strCacheKey(WebServerArrCompatSeams::BuildCacheKey(request, nativeSearchMethods));
 	if (TryGetCachedResults(strCacheKey, results)) {
 		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
 		return;
@@ -505,7 +518,7 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 		return;
 	}
 
-	results = RunNativeSearches(request);
+	results = RunNativeSearches(request, nativeSearchMethods);
 	StoreCachedResults(strCacheKey, results);
 	SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
 }

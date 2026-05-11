@@ -461,6 +461,31 @@ inline bool IsConnectedNetworkSearchMethod(const std::string &rMethod)
 }
 
 /**
+ * @brief Filters native search methods to the currently connected networks.
+ */
+inline std::vector<std::string> BuildAvailableNativeSearchMethodNames(
+	const ETorznabFamily eFamily,
+	const bool bGlobalConnected,
+	const bool bKadConnected)
+{
+	std::vector<std::string> methods;
+	const std::vector<std::string> candidates(BuildNativeSearchMethodNames(eFamily));
+	for (const std::string &rMethod : candidates) {
+		const std::string strMethod(WebServerJsonSeams::ToLowerAscii(rMethod));
+		if (strMethod == "global") {
+			if (bGlobalConnected)
+				methods.push_back(rMethod);
+		} else if (strMethod == "kad") {
+			if (bKadConnected)
+				methods.push_back(rMethod);
+		} else {
+			methods.push_back(rMethod);
+		}
+	}
+	return methods;
+}
+
+/**
  * @brief Returns the native search observation window for one Torznab family.
  */
 inline unsigned long long GetNativeSearchTimeoutMilliseconds(const ETorznabFamily eFamily)
@@ -487,6 +512,10 @@ inline unsigned long long GetNativeSearchMethodProbeTimeoutMilliseconds(const ET
 inline std::vector<std::string> BuildNativeQueries(const STorznabRequest &rRequest)
 {
 	std::vector<std::string> queries;
+	const auto appendUnique = [&queries](const std::string &rQuery) {
+		if (std::find(queries.begin(), queries.end(), rQuery) == queries.end())
+			queries.push_back(rQuery);
+	};
 	const std::string strType(WebServerJsonSeams::ToLowerAscii(rRequest.strType));
 	if (rRequest.strQuery.empty()) {
 		queries.push_back("linux");
@@ -503,39 +532,54 @@ inline std::vector<std::string> BuildNativeQueries(const STorznabRequest &rReque
 			if (rRequest.strEpisode.size() == 1)
 				sxxeyy << '0';
 			sxxeyy << rRequest.strEpisode;
-			queries.push_back(WebServerJsonSeams::NormalizeAsciiWhitespace(sxxeyy.str()));
+			appendUnique(WebServerJsonSeams::NormalizeAsciiWhitespace(sxxeyy.str()));
 
 			std::ostringstream xFormat;
 			xFormat << rRequest.strQuery << ' ' << rRequest.strSeason << 'x';
 			if (rRequest.strEpisode.size() == 1)
 				xFormat << '0';
 			xFormat << rRequest.strEpisode;
-			queries.push_back(WebServerJsonSeams::NormalizeAsciiWhitespace(xFormat.str()));
+			appendUnique(WebServerJsonSeams::NormalizeAsciiWhitespace(xFormat.str()));
 		} else if (!rRequest.strSeason.empty()) {
 			std::ostringstream season;
 			season << rRequest.strQuery << " S";
 			if (rRequest.strSeason.size() == 1)
 				season << '0';
 			season << rRequest.strSeason;
-			queries.push_back(WebServerJsonSeams::NormalizeAsciiWhitespace(season.str()));
+			appendUnique(WebServerJsonSeams::NormalizeAsciiWhitespace(season.str()));
 		}
 	}
 
 	if (strType == "movie" && !rRequest.strYear.empty()) {
-		queries.push_back(WebServerJsonSeams::NormalizeAsciiWhitespace(rRequest.strQuery + " " + rRequest.strYear));
-		queries.push_back(rRequest.strQuery);
+		appendUnique(WebServerJsonSeams::NormalizeAsciiWhitespace(rRequest.strQuery + " " + rRequest.strYear));
+		appendUnique(rRequest.strQuery);
 	}
 
-	queries.push_back(rRequest.strQuery);
-	std::sort(queries.begin(), queries.end());
-	queries.erase(std::unique(queries.begin(), queries.end()), queries.end());
+	appendUnique(rRequest.strQuery);
 	return queries;
+}
+
+/**
+ * @brief Builds the normalized cache token for a concrete native method set.
+ */
+inline std::string BuildNativeSearchMethodsCacheToken(const std::vector<std::string> &rMethods)
+{
+	if (rMethods.empty())
+		return "none";
+
+	std::ostringstream token;
+	for (size_t i = 0; i < rMethods.size(); ++i) {
+		if (i != 0)
+			token << ',';
+		token << WebServerJsonSeams::ToLowerAscii(rMethods[i]);
+	}
+	return token.str();
 }
 
 /**
  * @brief Builds the normalized cache key for one Torznab search request.
  */
-inline std::string BuildCacheKey(const STorznabRequest &rRequest)
+inline std::string BuildCacheKey(const STorznabRequest &rRequest, const std::vector<std::string> &rMethods)
 {
 	std::ostringstream key;
 	key << WebServerJsonSeams::ToLowerAscii(rRequest.strType)
@@ -545,7 +589,13 @@ inline std::string BuildCacheKey(const STorznabRequest &rRequest)
 		<< "|ep=" << WebServerJsonSeams::ToLowerAscii(rRequest.strEpisode)
 		<< "|year=" << WebServerJsonSeams::ToLowerAscii(rRequest.strYear)
 		<< "|family=" << static_cast<int>(rRequest.eFamily)
-		<< "|type=" << GetNativeSearchType(rRequest.eFamily);
+		<< "|type=" << GetNativeSearchType(rRequest.eFamily)
+		<< "|methods=" << BuildNativeSearchMethodsCacheToken(rMethods);
 	return key.str();
+}
+
+inline std::string BuildCacheKey(const STorznabRequest &rRequest)
+{
+	return BuildCacheKey(rRequest, BuildNativeSearchMethodNames(rRequest.eFamily));
 }
 }
