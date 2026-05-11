@@ -384,7 +384,7 @@ CString GetUploadPriorityName(const CKnownFile &rKnownFile)
 	case PR_HIGH:
 		return _T("high");
 	case PR_VERYHIGH:
-		return _T("veryhigh");
+		return _T("release");
 	case PR_NORMAL:
 	default:
 		return _T("normal");
@@ -1394,7 +1394,7 @@ bool TryGetSharedUploadPriorityParam(const json &rValue, uint8 &ruPriority, bool
 	const std::string strPriority = rValue.get<std::string>();
 	if (!WebApiSurfaceSeams::IsSharedUploadPriorityName(strPriority.c_str())) {
 		rError.strCode = "INVALID_ARGUMENT";
-		rError.strMessage = _T("priority must be one of auto, verylow, low, normal, high, veryhigh, release");
+		rError.strMessage = _T("priority must be one of auto, verylow, low, normal, high, release");
 		return false;
 	}
 
@@ -1420,13 +1420,13 @@ bool TryGetSharedUploadPriorityParam(const json &rValue, uint8 &ruPriority, bool
 		ruPriority = PR_HIGH;
 		return true;
 	}
-	if (strPriority == "veryhigh" || strPriority == "release") {
+	if (strPriority == "release") {
 		ruPriority = PR_VERYHIGH;
 		return true;
 	}
 
 	rError.strCode = "INVALID_ARGUMENT";
-	rError.strMessage = _T("priority must be one of auto, verylow, low, normal, high, veryhigh, release");
+	rError.strMessage = _T("priority must be one of auto, verylow, low, normal, high, release");
 	return false;
 }
 

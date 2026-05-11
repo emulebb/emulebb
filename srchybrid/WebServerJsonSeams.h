@@ -1190,7 +1190,7 @@ inline bool ValidateSharedFilePatchBody(json &rBody, std::string &rErrorCode, st
 	}
 	if (rBody.contains("priority")
 		&& !WebApiSurfaceSeams::IsSharedUploadPriorityName(rBody["priority"].get_ref<const std::string&>().c_str())) {
-		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of auto, verylow, low, normal, high, veryhigh, release");
+		SetInvalidArgument(rErrorCode, rErrorMessage, "priority must be one of auto, verylow, low, normal, high, release");
 		return false;
 	}
 	if (rBody.contains("comment") || rBody.contains("rating")) {

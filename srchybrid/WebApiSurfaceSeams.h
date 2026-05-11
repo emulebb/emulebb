@@ -226,9 +226,18 @@ inline bool IsCategoryPriorityName(const char *pszPriority)
  */
 inline bool IsSharedUploadPriorityName(const char *pszPriority)
 {
-	if (pszPriority != nullptr && strcmp(pszPriority, "release") == 0)
+	if (pszPriority == nullptr)
+		return false;
+	if (strcmp(pszPriority, "auto") == 0
+		|| strcmp(pszPriority, "verylow") == 0
+		|| strcmp(pszPriority, "low") == 0
+		|| strcmp(pszPriority, "normal") == 0
+		|| strcmp(pszPriority, "high") == 0
+		|| strcmp(pszPriority, "release") == 0)
+	{
 		return true;
-	return IsTransferPriorityName(pszPriority);
+	}
+	return false;
 }
 
 /**
