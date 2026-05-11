@@ -200,35 +200,41 @@ inline ESearchMethod ParseSearchMethodName(const char *pszMethod)
 }
 
 /**
- * @brief Parses the public search type vocabulary used by search/start.
+ * @brief Parses the native eMule search type vocabulary used by search/start.
+ */
+inline ESearchFileType ParseSearchFileTypeName(const std::string &rType)
+{
+	if (!WebServerJsonSeams::IsSearchFileTypeName(rType))
+		return ESearchFileType::Invalid;
+	if (rType.empty())
+		return ESearchFileType::Any;
+	if (rType == "Arc")
+		return ESearchFileType::Archive;
+	if (rType == "Audio")
+		return ESearchFileType::Audio;
+	if (rType == "Iso")
+		return ESearchFileType::CdImage;
+	if (rType == "Image")
+		return ESearchFileType::Image;
+	if (rType == "Pro")
+		return ESearchFileType::Program;
+	if (rType == "Video")
+		return ESearchFileType::Video;
+	if (rType == "Doc")
+		return ESearchFileType::Document;
+	if (rType == "EmuleCollection")
+		return ESearchFileType::EmuleCollection;
+	return ESearchFileType::Invalid;
+}
+
+/**
+ * @brief Parses a nullable native eMule search type token.
  */
 inline ESearchFileType ParseSearchFileTypeName(const char *pszType)
 {
 	if (pszType == nullptr)
 		return ESearchFileType::Invalid;
-
-	const std::string strType(pszType);
-	if (!WebServerJsonSeams::IsSearchFileTypeName(strType))
-		return ESearchFileType::Invalid;
-	if (strType.empty())
-		return ESearchFileType::Any;
-	if (strType == "Arc")
-		return ESearchFileType::Archive;
-	if (strType == "Audio")
-		return ESearchFileType::Audio;
-	if (strType == "Iso")
-		return ESearchFileType::CdImage;
-	if (strType == "Image")
-		return ESearchFileType::Image;
-	if (strType == "Pro")
-		return ESearchFileType::Program;
-	if (strType == "Video")
-		return ESearchFileType::Video;
-	if (strType == "Doc")
-		return ESearchFileType::Document;
-	if (strType == "EmuleCollection")
-		return ESearchFileType::EmuleCollection;
-	return ESearchFileType::Invalid;
+	return ParseSearchFileTypeName(std::string(pszType));
 }
 
 /**
@@ -266,7 +272,7 @@ inline bool TryParseSearchStartRequest(const json &rParams, SSearchStartRequest 
 			return false;
 		}
 
-		rRequest.eFileType = ParseSearchFileTypeName(rParams["type"].get_ref<const std::string&>().c_str());
+		rRequest.eFileType = ParseSearchFileTypeName(rParams["type"].get_ref<const std::string&>());
 		if (rRequest.eFileType == ESearchFileType::Invalid) {
 			rError = "type is not supported";
 			return false;
