@@ -412,16 +412,16 @@ inline const char *GetNativeSearchType(const ETorznabFamily eFamily)
 	switch (eFamily) {
 	case ETorznabFamily::Movie:
 	case ETorznabFamily::Tv:
-		return "video";
+		return "Video";
 	case ETorznabFamily::Audio:
-		return "audio";
+		return "Audio";
 	case ETorznabFamily::Book:
-		return "document";
+		return "Doc";
 	case ETorznabFamily::Other:
 	case ETorznabFamily::Any:
 	case ETorznabFamily::Unknown:
 	default:
-		return "any";
+		return "";
 	}
 }
 

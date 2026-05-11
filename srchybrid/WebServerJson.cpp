@@ -1278,29 +1278,11 @@ const char* GetSearchMethodName(const ESearchType eType)
 }
 
 /**
- * Formats the requested native search file type for REST clients.
+ * Returns the requested native eMule search file type for REST clients.
  */
-const char* GetSearchTypeName(const CString &rFileType)
+std::string GetSearchTypeName(const CString &rFileType)
 {
-	if (rFileType.IsEmpty() || rFileType == _T(ED2KFTSTR_ANY))
-		return "any";
-	if (rFileType == _T(ED2KFTSTR_ARCHIVE))
-		return "archive";
-	if (rFileType == _T(ED2KFTSTR_AUDIO))
-		return "audio";
-	if (rFileType == _T(ED2KFTSTR_CDIMAGE))
-		return "cdimage";
-	if (rFileType == _T(ED2KFTSTR_IMAGE))
-		return "image";
-	if (rFileType == _T(ED2KFTSTR_PROGRAM))
-		return "program";
-	if (rFileType == _T(ED2KFTSTR_VIDEO))
-		return "video";
-	if (rFileType == _T(ED2KFTSTR_DOCUMENT))
-		return "document";
-	if (rFileType == _T(ED2KFTSTR_EMULECOLLECTION))
-		return "emulecollection";
-	return "any";
+	return StdUtf8FromCString(rFileType);
 }
 
 /**

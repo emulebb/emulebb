@@ -207,26 +207,26 @@ inline ESearchFileType ParseSearchFileTypeName(const char *pszType)
 	if (pszType == nullptr)
 		return ESearchFileType::Invalid;
 
-	const std::string strType(ToLowerAscii(pszType));
+	const std::string strType(pszType);
 	if (!WebServerJsonSeams::IsSearchFileTypeName(strType))
 		return ESearchFileType::Invalid;
-	if (strType.empty() || strType == "any")
+	if (strType.empty())
 		return ESearchFileType::Any;
-	if (strType == "archive")
+	if (strType == "Arc")
 		return ESearchFileType::Archive;
-	if (strType == "audio")
+	if (strType == "Audio")
 		return ESearchFileType::Audio;
-	if (strType == "cdimage" || strType == "iso")
+	if (strType == "Iso")
 		return ESearchFileType::CdImage;
-	if (strType == "image")
+	if (strType == "Image")
 		return ESearchFileType::Image;
-	if (strType == "program")
+	if (strType == "Pro")
 		return ESearchFileType::Program;
-	if (strType == "video")
+	if (strType == "Video")
 		return ESearchFileType::Video;
-	if (strType == "document")
+	if (strType == "Doc")
 		return ESearchFileType::Document;
-	if (strType == "emulecollection")
+	if (strType == "EmuleCollection")
 		return ESearchFileType::EmuleCollection;
 	return ESearchFileType::Invalid;
 }

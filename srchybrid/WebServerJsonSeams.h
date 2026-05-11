@@ -136,18 +136,15 @@ inline bool IsSearchMethodName(const std::string &rValue)
  */
 inline bool IsSearchFileTypeName(const std::string &rValue)
 {
-	const std::string strType(ToLowerAscii(rValue));
-	return strType.empty()
-		|| strType == "any"
-		|| strType == "archive"
-		|| strType == "audio"
-		|| strType == "cdimage"
-		|| strType == "iso"
-		|| strType == "image"
-		|| strType == "program"
-		|| strType == "video"
-		|| strType == "document"
-		|| strType == "emulecollection";
+	return rValue.empty()
+		|| rValue == "Arc"
+		|| rValue == "Audio"
+		|| rValue == "Iso"
+		|| rValue == "Image"
+		|| rValue == "Pro"
+		|| rValue == "Video"
+		|| rValue == "Doc"
+		|| rValue == "EmuleCollection";
 }
 
 /**
