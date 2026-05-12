@@ -3646,7 +3646,7 @@ void CPreferences::SetMaxDownload(uint32 val)
 CString CPreferences::GetHomepageBaseURLForLevel(int nLevel)
 {
 	UNREFERENCED_PARAMETER(nLevel);
-	return _T("https://github.com/itlezy/eMule");
+	return _T("https://emulebb.github.io");
 }
 
 CString CPreferences::GetVersionCheckBaseURL()
