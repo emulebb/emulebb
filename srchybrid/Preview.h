@@ -15,6 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
+#include "PartFilePreviewSeams.h"
 
 class CPartFile;
 
@@ -28,6 +29,9 @@ struct VideoThumbnailResult_Struct
 	CString strFileHash;
 	CString strCachePath;
 	uint64 ullCompletedSize = 0;
+	PartFilePreviewSeams::EVideoThumbnailAttemptResult eResult = PartFilePreviewSeams::VTAR_NONE;
+	DWORD dwErrorCode = ERROR_SUCCESS;
+	DWORD dwVlcExitCode = 0;
 
 	~VideoThumbnailResult_Struct()
 	{

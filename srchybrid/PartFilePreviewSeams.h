@@ -6,11 +6,26 @@
 
 namespace PartFilePreviewSeams
 {
+enum EVideoThumbnailAttemptResult
+{
+	VTAR_NONE = 0,
+	VTAR_COPY_FAILED,
+	VTAR_VLC_BUSY,
+	VTAR_VLC_TIMEOUT,
+	VTAR_VLC_START_FAILED,
+	VTAR_VLC_FAILED,
+	VTAR_NO_THUMBNAIL,
+	VTAR_DECODE_FAILED,
+	VTAR_CACHE_WRITE_FAILED,
+	VTAR_SUCCESS,
+	VTAR_EXCEPTION
+};
+
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedPermille = 5;
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedBytes = 1ull * 1024ull * 1024ull;
 constexpr std::uint64_t kPartialVideoPreviewMaxCompletedBytes = 64ull * 1024ull * 1024ull;
-constexpr std::uint64_t kVideoThumbnailScanIntervalMs = 10ull * 1000ull;
-constexpr std::uint64_t kVideoThumbnailRetryIntervalMs = 15ull * 1000ull;
+constexpr std::uint64_t kVideoThumbnailScanIntervalMs = 90ull * 1000ull;
+constexpr std::uint64_t kVideoThumbnailRetryIntervalMs = 90ull * 1000ull;
 constexpr std::uint64_t kVideoThumbnailRefreshIntervalMs = kVideoThumbnailRetryIntervalMs;
 constexpr std::uint64_t kVideoThumbnailRefreshDeltaPermille = 50;
 constexpr std::uint64_t kVideoThumbnailRefreshMaxDeltaBytes = 128ull * 1024ull * 1024ull;
@@ -110,6 +125,14 @@ inline bool ShouldRefreshVideoThumbnail(std::uint64_t ullCachedCompletedSize, st
 inline bool IsVideoThumbnailAttemptDue(std::uint64_t ullCurrentTick, std::uint64_t ullLastAttemptTick, std::uint64_t ullIntervalMs = kVideoThumbnailRefreshIntervalMs)
 {
 	return ullLastAttemptTick == 0 || ullCurrentTick < ullLastAttemptTick || ullCurrentTick - ullLastAttemptTick >= ullIntervalMs;
+}
+
+/**
+ * Returns whether a user-hovered item should bypass the background retry interval.
+ */
+inline bool ShouldForceVideoThumbnailAttempt(bool bHighPriority, bool bHasCachedBitmap)
+{
+	return bHighPriority && !bHasCachedBitmap;
 }
 
 /**

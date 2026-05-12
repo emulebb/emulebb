@@ -220,23 +220,42 @@ BOOL CVideoThumbnailThread::Run()
 			DWORD dwExitCode = 0;
 			const uint32 uStartSecond = PartFilePreviewSeams::GetVideoThumbnailCaptureStartSecond(m_ullFileSize, m_ullCompletedSize);
 			const CString strCommandLine(PartFilePreviewSeams::BuildVlcThumbnailCommandLine(m_strCommand, strPreviewName, m_pPartfile->GetTmpPath(), strPrefix, uStartSecond));
-			if (RunVlcThumbnailCommand(strCommandLine, m_pPartfile->GetTmpPath(), dwExitCode)) {
+			if (!RunVlcThumbnailCommand(strCommandLine, m_pPartfile->GetTmpPath(), dwExitCode)) {
+				pResult->dwErrorCode = dwExitCode;
+				if (dwExitCode == ERROR_BUSY)
+					pResult->eResult = PartFilePreviewSeams::VTAR_VLC_BUSY;
+				else if (dwExitCode == WAIT_TIMEOUT)
+					pResult->eResult = PartFilePreviewSeams::VTAR_VLC_TIMEOUT;
+				else
+					pResult->eResult = PartFilePreviewSeams::VTAR_VLC_START_FAILED;
+			} else {
+				pResult->dwVlcExitCode = dwExitCode;
 				const CString strThumbnailPath(FindGeneratedThumbnail(m_pPartfile->GetTmpPath(), strPrefix));
 				HBITMAP hBitmap = NULL;
-				if (!strThumbnailPath.IsEmpty()
-					&& ReadVideoThumbnailBitmapFile(strThumbnailPath, hBitmap)
-					&& LongPathSeams::CopyFile(strThumbnailPath, m_strCachePath, FALSE))
-				{
+				if (dwExitCode != 0)
+					pResult->eResult = PartFilePreviewSeams::VTAR_VLC_FAILED;
+				else if (strThumbnailPath.IsEmpty())
+					pResult->eResult = PartFilePreviewSeams::VTAR_NO_THUMBNAIL;
+				else if (!ReadVideoThumbnailBitmapFile(strThumbnailPath, hBitmap))
+					pResult->eResult = PartFilePreviewSeams::VTAR_DECODE_FAILED;
+				else if (!LongPathSeams::CopyFile(strThumbnailPath, m_strCachePath, FALSE))
+					pResult->eResult = PartFilePreviewSeams::VTAR_CACHE_WRITE_FAILED;
+				else {
 					pResult->hBitmap = hBitmap;
 					hBitmap = NULL;
+					pResult->eResult = PartFilePreviewSeams::VTAR_SUCCESS;
 				}
 				if (hBitmap != NULL)
 					::DeleteObject(hBitmap);
 			}
-		}
+		} else
+			pResult->eResult = PartFilePreviewSeams::VTAR_COPY_FAILED;
 	} catch (CFileException *ex) {
+		pResult->eResult = PartFilePreviewSeams::VTAR_EXCEPTION;
+		pResult->dwErrorCode = static_cast<DWORD>(ex->m_lOsError);
 		ex->Delete();
 	} catch (...) {
+		pResult->eResult = PartFilePreviewSeams::VTAR_EXCEPTION;
 	}
 
 	m_pPartfile->m_bPreviewing = false;

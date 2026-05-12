@@ -106,6 +106,47 @@ namespace
 		return theApp.clientlist != NULL && theApp.clientlist->ContainsClientPointer(client);
 	}
 
+	LPCTSTR GetVideoThumbnailAttemptResultText(PartFilePreviewSeams::EVideoThumbnailAttemptResult eResult)
+	{
+		switch (eResult) {
+		case PartFilePreviewSeams::VTAR_COPY_FAILED:
+			return _T("copy failed");
+		case PartFilePreviewSeams::VTAR_VLC_BUSY:
+			return _T("VLC busy");
+		case PartFilePreviewSeams::VTAR_VLC_TIMEOUT:
+			return _T("VLC timeout");
+		case PartFilePreviewSeams::VTAR_VLC_START_FAILED:
+			return _T("VLC start failed");
+		case PartFilePreviewSeams::VTAR_VLC_FAILED:
+			return _T("VLC failed");
+		case PartFilePreviewSeams::VTAR_NO_THUMBNAIL:
+			return _T("no thumbnail output");
+		case PartFilePreviewSeams::VTAR_DECODE_FAILED:
+			return _T("bitmap decode failed");
+		case PartFilePreviewSeams::VTAR_CACHE_WRITE_FAILED:
+			return _T("cache write failed");
+		case PartFilePreviewSeams::VTAR_SUCCESS:
+			return _T("success");
+		case PartFilePreviewSeams::VTAR_EXCEPTION:
+			return _T("exception");
+		default:
+			return _T("none");
+		}
+	}
+
+	void LogVideoThumbnailVerbose(LPCTSTR pszFormat, ...)
+	{
+		if (!thePrefs.GetVerbose())
+			return;
+
+		va_list argptr;
+		va_start(argptr, pszFormat);
+		CString strMessage;
+		strMessage.FormatV(pszFormat, argptr);
+		va_end(argptr);
+		theApp.QueueDebugLogLine(false, _T("Video thumbnail: %s"), (LPCTSTR)strMessage);
+	}
+
 	int FindSubMenuItemPosition(CMenu &menu, HMENU hSubMenu)
 	{
 		const int itemCount = menu.GetMenuItemCount();
@@ -372,15 +413,18 @@ bool CDownloadListCtrl::IsVideoThumbnailCandidate(const CPartFile *pPartFile) co
 	return pPartFile != NULL && pPartFile->IsReadyForVideoThumbnail();
 }
 
-bool CDownloadListCtrl::IsVideoThumbnailAttemptDue(const VideoThumbnailCacheEntry *pEntry, const CPartFile *pPartFile, ULONGLONG ullCurrentTick) const
+bool CDownloadListCtrl::IsVideoThumbnailAttemptDue(const VideoThumbnailCacheEntry *pEntry, const CPartFile *pPartFile, ULONGLONG ullCurrentTick, bool bForceAttempt) const
 {
 	if (pEntry == NULL || pPartFile == NULL)
 		return false;
 
 	const uint64 ullCompletedSize = static_cast<uint64>(pPartFile->GetCompletedSize());
 	const uint64 ullFileSize = static_cast<uint64>(pPartFile->GetFileSize());
-	if (pEntry->hBitmap == NULL)
+	if (pEntry->hBitmap == NULL) {
+		if (bForceAttempt)
+			return true;
 		return PartFilePreviewSeams::IsVideoThumbnailAttemptDue(ullCurrentTick, pEntry->ullLastAttemptTick);
+	}
 	if (!PartFilePreviewSeams::ShouldRefreshVideoThumbnail(pEntry->ullCompletedSize, ullCompletedSize, ullFileSize))
 		return false;
 	if (pEntry->ullLastAttemptCompletedSize <= pEntry->ullCompletedSize)
@@ -392,17 +436,44 @@ bool CDownloadListCtrl::IsVideoThumbnailAttemptDue(const VideoThumbnailCacheEntr
 
 void CDownloadListCtrl::QueueVideoThumbnail(CPartFile *pPartFile, bool bHighPriority)
 {
-	if (!IsVideoThumbnailCandidate(pPartFile))
+	if (pPartFile == NULL)
 		return;
+	if (!pPartFile->IsMovie() || !thePrefs.UseVideoPreviewThumbnails() || !PartFilePreviewSeams::IsConfiguredVlcPreviewPlayer(thePrefs.GetVideoPlayer())) {
+		if (bHighPriority)
+			LogVideoThumbnailVerbose(_T("skip queue for \"%s\" because thumbnail prerequisites are not met"), (LPCTSTR)pPartFile->GetFileName());
+		return;
+	}
 
 	const CString strKey(GetVideoThumbnailCacheKey(pPartFile));
 	VideoThumbnailCacheEntry *pEntry = GetVideoThumbnailCacheEntry(strKey);
-	if (pEntry == NULL || pEntry->bInFlight)
+	if (pEntry == NULL)
 		return;
 
-	const ULONGLONG ullCurrentTick = ::GetTickCount64();
-	if (!IsVideoThumbnailAttemptDue(pEntry, pPartFile, ullCurrentTick))
+	const bool bForceAttempt = PartFilePreviewSeams::ShouldForceVideoThumbnailAttempt(bHighPriority, pEntry->hBitmap != NULL);
+	if (pEntry->bInFlight) {
+		if (bForceAttempt) {
+			pEntry->bForceAttempt = true;
+			if (!pEntry->bQueued) {
+				pEntry->bQueued = true;
+				m_videoThumbnailQueue.AddHead(strKey);
+				LogVideoThumbnailVerbose(_T("queued forced retry behind active worker for \"%s\""), pPartFile != NULL ? (LPCTSTR)pPartFile->GetFileName() : _T(""));
+			}
+		}
 		return;
+	}
+
+	if (!IsVideoThumbnailCandidate(pPartFile)) {
+		if (bHighPriority)
+			LogVideoThumbnailVerbose(_T("skip queue for \"%s\" because it is not eligible"), pPartFile != NULL ? (LPCTSTR)pPartFile->GetFileName() : _T(""));
+		return;
+	}
+
+	const ULONGLONG ullCurrentTick = ::GetTickCount64();
+	if (!IsVideoThumbnailAttemptDue(pEntry, pPartFile, ullCurrentTick, bForceAttempt))
+		return;
+
+	if (bForceAttempt)
+		pEntry->bForceAttempt = true;
 
 	if (pEntry->bQueued) {
 		if (bHighPriority) {
@@ -422,6 +493,7 @@ void CDownloadListCtrl::QueueVideoThumbnail(CPartFile *pPartFile, bool bHighPrio
 			m_videoThumbnailQueue.AddHead(strKey);
 		else
 			m_videoThumbnailQueue.AddTail(strKey);
+		LogVideoThumbnailVerbose(_T("queued %s request for \"%s\""), bHighPriority ? _T("hover") : _T("background"), (LPCTSTR)pPartFile->GetFileName());
 	}
 	StartNextVideoThumbnailWorker();
 }
@@ -450,13 +522,18 @@ void CDownloadListCtrl::StartNextVideoThumbnailWorker()
 		if (pEntry == NULL)
 			continue;
 		pEntry->bQueued = false;
+		const bool bForceAttempt = pEntry->bForceAttempt;
+		pEntry->bForceAttempt = false;
 
 		CPartFile *pPartFile = FindVideoThumbnailFileByKey(strKey);
-		if (!IsVideoThumbnailCandidate(pPartFile))
+		if (!IsVideoThumbnailCandidate(pPartFile)) {
+			if (bForceAttempt)
+				LogVideoThumbnailVerbose(_T("skip forced worker start for %s because it is no longer eligible"), (LPCTSTR)strKey);
 			continue;
+		}
 
 		const ULONGLONG ullCurrentTick = ::GetTickCount64();
-		if (!IsVideoThumbnailAttemptDue(pEntry, pPartFile, ullCurrentTick))
+		if (!IsVideoThumbnailAttemptDue(pEntry, pPartFile, ullCurrentTick, bForceAttempt))
 			continue;
 
 		pEntry->ullLastAttemptTick = ullCurrentTick;
@@ -464,12 +541,20 @@ void CDownloadListCtrl::StartNextVideoThumbnailWorker()
 		pEntry->bInFlight = true;
 		m_bVideoThumbnailWorkerActive = true;
 		pPartFile->m_bPreviewing = true;
+		LogVideoThumbnailVerbose(_T("starting %s worker for \"%s\" at %I64u/%I64u bytes")
+			, bForceAttempt ? _T("forced") : _T("background")
+			, (LPCTSTR)pPartFile->GetFileName()
+			, pEntry->ullLastAttemptCompletedSize
+			, static_cast<uint64>(pPartFile->GetFileSize()));
 
 		CVideoThumbnailThread *pThread = static_cast<CVideoThumbnailThread*>(AfxBeginThread(RUNTIME_CLASS(CVideoThumbnailThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
 		if (pThread == NULL) {
 			pPartFile->m_bPreviewing = false;
 			pEntry->bInFlight = false;
 			m_bVideoThumbnailWorkerActive = false;
+			pEntry->eLastResult = PartFilePreviewSeams::VTAR_EXCEPTION;
+			pEntry->dwLastErrorCode = ERROR_NOT_ENOUGH_MEMORY;
+			LogVideoThumbnailVerbose(_T("failed to start worker thread for \"%s\""), (LPCTSTR)pPartFile->GetFileName());
 			continue;
 		}
 		pThread->SetValues(pPartFile, thePrefs.GetVideoPlayer(), m_hWnd, pEntry->strCachePath);
@@ -569,6 +654,9 @@ LRESULT CDownloadListCtrl::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
 	if (pEntry != NULL) {
 		pEntry->bInFlight = false;
 		pEntry->strCachePath = pResult->strCachePath;
+		pEntry->eLastResult = pResult->eResult;
+		pEntry->dwLastErrorCode = pResult->dwErrorCode;
+		pEntry->dwLastVlcExitCode = pResult->dwVlcExitCode;
 	}
 	m_bVideoThumbnailWorkerActive = false;
 
@@ -576,6 +664,18 @@ LRESULT CDownloadListCtrl::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
 		&& pResult->pPartFile != NULL
 		&& theApp.downloadqueue->IsPartFile(pResult->pPartFile)
 		&& pResult->strFileHash.CompareNoCase(GetVideoThumbnailCacheKey(pResult->pPartFile)) == 0;
+	if (thePrefs.GetVerbose()) {
+		const CString strFileName(bFileStillCurrent ? pResult->pPartFile->GetFileName() : pResult->strFileHash);
+		if (pResult->eResult == PartFilePreviewSeams::VTAR_SUCCESS)
+			LogVideoThumbnailVerbose(_T("finished for \"%s\": success at %I64u bytes"), (LPCTSTR)strFileName, pResult->ullCompletedSize);
+		else
+			LogVideoThumbnailVerbose(_T("finished for \"%s\": %s (error=%lu, vlcExit=%lu, completed=%I64u)")
+				, (LPCTSTR)strFileName
+				, GetVideoThumbnailAttemptResultText(pResult->eResult)
+				, pResult->dwErrorCode
+				, pResult->dwVlcExitCode
+				, pResult->ullCompletedSize);
+	}
 	if (pEntry != NULL && bFileStillCurrent && pResult->hBitmap != NULL) {
 		if (pEntry->hBitmap != NULL)
 			::DeleteObject(pEntry->hBitmap);

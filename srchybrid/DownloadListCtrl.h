@@ -20,6 +20,7 @@
 #include "TitledMenu.h"
 #include "ListCtrlItemWalk.h"
 #include "ToolTipCtrlX.h"
+#include "PartFilePreviewSeams.h"
 
 #define COLLAPSE_ONLY	0
 #define EXPAND_ONLY		1
@@ -129,8 +130,12 @@ protected:
 		uint64 ullCompletedSize = 0;
 		uint64 ullLastAttemptCompletedSize = 0;
 		ULONGLONG ullLastAttemptTick = 0;
+		PartFilePreviewSeams::EVideoThumbnailAttemptResult eLastResult = PartFilePreviewSeams::VTAR_NONE;
+		DWORD dwLastErrorCode = ERROR_SUCCESS;
+		DWORD dwLastVlcExitCode = 0;
 		bool bInFlight = false;
 		bool bQueued = false;
+		bool bForceAttempt = false;
 
 		~VideoThumbnailCacheEntry()
 		{
@@ -192,7 +197,7 @@ protected:
 	/**
 	 * Returns whether a thumbnail attempt is due for the current file progress.
 	 */
-	bool IsVideoThumbnailAttemptDue(const VideoThumbnailCacheEntry *pEntry, const CPartFile *pPartFile, ULONGLONG ullCurrentTick) const;
+	bool IsVideoThumbnailAttemptDue(const VideoThumbnailCacheEntry *pEntry, const CPartFile *pPartFile, ULONGLONG ullCurrentTick, bool bForceAttempt) const;
 	void QueueVideoThumbnail(CPartFile *pPartFile, bool bHighPriority);
 	void QueueVideoThumbnailScan();
 	void StartNextVideoThumbnailWorker();
