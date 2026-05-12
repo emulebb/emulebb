@@ -165,7 +165,15 @@ protected:
 	void SetAllIcons();
 	void DrawFileItem(CDC &dc, int nColumn, LPCRECT lpRect, UINT uDrawTextAlignment, CtrlItem_Struct *pCtrlItem);
 	void DrawSourceItem(CDC &dc, int nColumn, LPCRECT lpRect, UINT uDrawTextAlignment, CtrlItem_Struct *pCtrlItem);
+	/**
+	 * Returns whether a file list item still points to an owned file object.
+	 */
+	bool IsLiveFileItem(const CtrlItem_Struct *pCtrlItem) const;
 	bool IsLiveSourceItem(const CtrlItem_Struct *pCtrlItem) const;
+	/**
+	 * Removes file/source rows whose backing file object is no longer owned.
+	 */
+	bool PruneStaleFileItems();
 	bool PruneStaleSourceItems();
 	int GetFilesCountInCurCat();
 	CString GetFileItemDisplayText(const CPartFile *lpPartFile, int iSubItem);
