@@ -23,6 +23,7 @@ using json = nlohmann::json;
 static const size_t kMaxSearchQueryLength = 160;
 static const size_t kMaxCategoryNameLength = 128;
 static const size_t kMaxPublicFileNameLength = 255;
+static const size_t kMaxUrlImportLength = 2048;
 static const UINT kRestUiDispatchTimeoutMs = 15000u;
 static const char *const kRestRouteExecutionDirect = "direct";
 static const char *const kRestRouteExecutionUiThread = "ui-thread";
@@ -383,6 +384,58 @@ inline bool TryValidatePublicFileNameText(
 	}
 	if (uWideCharacters > kMaxPublicFileNameLength) {
 		rErrorMessage = strFieldName + " must be at most 255 characters";
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @brief Validates and trims one public URL-import token before it reaches the
+ * modal downloader used by server.met and nodes.dat updates.
+ */
+inline bool TryValidateUrlImportText(
+	const std::string &rValue,
+	const char *pszFieldName,
+	std::string &rNormalized,
+	std::string &rErrorMessage)
+{
+	const std::string strFieldName(pszFieldName != NULL && pszFieldName[0] != '\0' ? pszFieldName : "url");
+	rNormalized = TrimAsciiWhitespace(rValue);
+	if (rNormalized.empty()) {
+		rErrorMessage = strFieldName + " must not be empty";
+		return false;
+	}
+
+	size_t uWideCharacters = 0;
+	if (!TryMeasureStrictUtf8AsUtf16(rNormalized, uWideCharacters)) {
+		rErrorMessage = strFieldName + " must be valid UTF-8 without control characters";
+		return false;
+	}
+	if (uWideCharacters > kMaxUrlImportLength) {
+		rErrorMessage = strFieldName + " must be at most 2048 characters";
+		return false;
+	}
+	for (const char ch : rNormalized) {
+		if (std::isspace(static_cast<unsigned char>(ch)) != 0) {
+			rErrorMessage = strFieldName + " must not contain whitespace";
+			return false;
+		}
+	}
+
+	const std::string strLower(ToLowerAscii(rNormalized));
+	const bool bHttp = strLower.find("http://") == 0;
+	const bool bHttps = strLower.find("https://") == 0;
+	if (!bHttp && !bHttps) {
+		rErrorMessage = strFieldName + " must start with http:// or https://";
+		return false;
+	}
+
+	const std::string::size_type uHostBegin = strLower.find("://") + 3;
+	if (uHostBegin >= rNormalized.size()
+		|| rNormalized[uHostBegin] == '/'
+		|| rNormalized[uHostBegin] == '?'
+		|| rNormalized[uHostBegin] == '#') {
+		rErrorMessage = strFieldName + " must include a host";
 		return false;
 	}
 	return true;
@@ -1111,7 +1164,7 @@ inline bool TryParseTransferRenameText(const json &rParams, std::string &rName, 
 		return false;
 	}
 
-	return true;
+	return TryValidatePublicFileNameText(rName, "name", rError);
 }
 
 /**
@@ -1400,7 +1453,19 @@ inline bool ValidateServerPatchBody(json &rBody, std::string &rErrorCode, std::s
  */
 inline bool ValidateUrlImportBody(json &rBody, std::string &rErrorCode, std::string &rErrorMessage)
 {
-	return TryParseNonEmptyTextField(rBody, "url", rErrorCode, rErrorMessage);
+	if (!rBody.contains("url") || !rBody["url"].is_string()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "url must be a non-empty string");
+		return false;
+	}
+
+	std::string strUrl;
+	std::string strError;
+	if (!TryValidateUrlImportText(rBody["url"].get<std::string>(), "url", strUrl, strError)) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, strError);
+		return false;
+	}
+	rBody["url"] = strUrl;
+	return true;
 }
 
 /**
