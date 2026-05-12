@@ -22,6 +22,13 @@
 #include "PartFile.h"
 #include "Preview.h"
 #include "MenuCmds.h"
+#include "FileCompletionCommandSeams.h"
+#include "LongPathSeams.h"
+#include "OtherFunctions.h"
+#include "PartFilePreviewSeams.h"
+#include "SafeFile.h"
+#include "emule.h"
+#include "emuledlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -31,6 +38,184 @@ static char THIS_FILE[] = __FILE__;
 
 
 CPreviewApps thePreviewApps;
+
+namespace
+{
+constexpr DWORD kVlcThumbnailTimeoutMs = 15000;
+constexpr ULONGLONG kMaxThumbnailBytes = 16ull * 1024ull * 1024ull;
+
+CString MakeVideoThumbnailPrefix(const CPartFile &partFile)
+{
+	CString strPrefix;
+	strPrefix.Format(_T("emulebb_thumb_%s_%I64u"), (LPCTSTR)md4str(partFile.GetFileHash()), ::GetTickCount64());
+	return strPrefix;
+}
+
+bool ReadBitmapFile(const CString &rstrPath, HBITMAP &rhBitmap)
+{
+	CSafeFile file;
+	if (!LongPathSeams::OpenFile(file, rstrPath, CFile::modeRead | CFile::shareDenyWrite | CFile::osSequentialScan))
+		return false;
+	const ULONGLONG ullLength = static_cast<ULONGLONG>(file.GetLength());
+	if (ullLength == 0 || ullLength > kMaxThumbnailBytes)
+		return false;
+	byte *pBuffer = new byte[static_cast<size_t>(ullLength)];
+	try {
+		if (file.Read(pBuffer, static_cast<UINT>(ullLength)) != ullLength) {
+			delete[] pBuffer;
+			return false;
+		}
+		rhBitmap = mem2bmp(pBuffer, static_cast<size_t>(ullLength));
+		delete[] pBuffer;
+		return rhBitmap != NULL;
+	} catch (...) {
+		delete[] pBuffer;
+		throw;
+	}
+}
+
+CString FindGeneratedThumbnail(const CString &rstrDirectory, const CString &rstrPrefix)
+{
+	CString strPattern(rstrDirectory);
+	strPattern.AppendFormat(_T("%s*.png"), (LPCTSTR)rstrPrefix);
+
+	WIN32_FIND_DATA findData = {};
+	HANDLE hFind = ::FindFirstFile(strPattern, &findData);
+	if (hFind == INVALID_HANDLE_VALUE)
+		return CString();
+
+	CString strFound;
+	do {
+		if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+			strFound = rstrDirectory + findData.cFileName;
+			break;
+		}
+	} while (::FindNextFile(hFind, &findData));
+	VERIFY(::FindClose(hFind));
+	return strFound;
+}
+
+void DeleteGeneratedThumbnails(const CString &rstrDirectory, const CString &rstrPrefix)
+{
+	CString strPattern(rstrDirectory);
+	strPattern.AppendFormat(_T("%s*.png"), (LPCTSTR)rstrPrefix);
+
+	WIN32_FIND_DATA findData = {};
+	HANDLE hFind = ::FindFirstFile(strPattern, &findData);
+	if (hFind == INVALID_HANDLE_VALUE)
+		return;
+	do {
+		if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+			(void)::DeleteFile(rstrDirectory + findData.cFileName);
+	} while (::FindNextFile(hFind, &findData));
+	VERIFY(::FindClose(hFind));
+}
+
+bool RunVlcThumbnailCommand(const CString &rstrCommand, const CString &rstrWorkingDirectory, DWORD &rdwExitCode)
+{
+	STARTUPINFO startupInfo = {};
+	startupInfo.cb = sizeof(startupInfo);
+	startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+	startupInfo.wShowWindow = SW_HIDE;
+
+	PROCESS_INFORMATION processInfo = {};
+	CString strCommand(rstrCommand);
+	LPTSTR pszCommand = strCommand.GetBuffer();
+	const BOOL bStarted = ::CreateProcess(NULL, pszCommand, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL
+		, rstrWorkingDirectory.IsEmpty() ? NULL : (LPCTSTR)rstrWorkingDirectory, &startupInfo, &processInfo);
+	const DWORD dwError = bStarted ? ERROR_SUCCESS : ::GetLastError();
+	strCommand.ReleaseBuffer();
+
+	if (!bStarted) {
+		rdwExitCode = dwError;
+		return false;
+	}
+
+	const DWORD dwWait = ::WaitForSingleObject(processInfo.hProcess, kVlcThumbnailTimeoutMs);
+	if (dwWait == WAIT_TIMEOUT) {
+		(void)::TerminateProcess(processInfo.hProcess, WAIT_TIMEOUT);
+		(void)::WaitForSingleObject(processInfo.hProcess, SEC2MS(2));
+		rdwExitCode = WAIT_TIMEOUT;
+	} else if (!::GetExitCodeProcess(processInfo.hProcess, &rdwExitCode))
+		rdwExitCode = ::GetLastError();
+
+	VERIFY(::CloseHandle(processInfo.hThread));
+	VERIFY(::CloseHandle(processInfo.hProcess));
+	return dwWait != WAIT_TIMEOUT;
+}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CVideoThumbnailThread
+
+IMPLEMENT_DYNCREATE(CVideoThumbnailThread, CWinThread)
+
+CVideoThumbnailThread::CVideoThumbnailThread()
+	: m_pPartfile()
+	, m_aFilled()
+	, m_strCommand()
+	, m_strTitle()
+{
+}
+
+BOOL CVideoThumbnailThread::InitInstance()
+{
+	DbgSetThreadName("VideoThumbnail");
+	InitThreadLocale();
+	return TRUE;
+}
+
+BOOL CVideoThumbnailThread::Run()
+{
+	VideoThumbnailResult_Struct *pResult = new VideoThumbnailResult_Struct;
+	pResult->pPartFile = m_pPartfile;
+	pResult->strTitle = m_strTitle;
+
+	const CString strPrefix(MakeVideoThumbnailPrefix(*m_pPartfile));
+	CString strPreviewName(m_pPartfile->GetTmpPath());
+	strPreviewName.AppendFormat(_T("%s_preview%s"), (LPCTSTR)strPrefix, ::PathFindExtension(m_strTitle));
+
+	try {
+		if (!m_pPartfile->CopyPartFile(m_aFilled, strPreviewName)) {
+			pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_FAILED);
+		} else {
+			DWORD dwExitCode = 0;
+			const CString strCommandLine(PartFilePreviewSeams::BuildVlcThumbnailCommandLine(m_strCommand, strPreviewName, m_pPartfile->GetTmpPath(), strPrefix));
+			if (!RunVlcThumbnailCommand(strCommandLine, m_pPartfile->GetTmpPath(), dwExitCode)) {
+				if (dwExitCode == WAIT_TIMEOUT)
+					pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_TIMEOUT);
+				else
+					pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_FAILED);
+			} else {
+				const CString strThumbnailPath(FindGeneratedThumbnail(m_pPartfile->GetTmpPath(), strPrefix));
+				if (strThumbnailPath.IsEmpty() || !ReadBitmapFile(strThumbnailPath, pResult->hBitmap))
+					pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_FAILED);
+			}
+		}
+	} catch (CFileException *ex) {
+		ex->Delete();
+		pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_FAILED);
+	} catch (...) {
+		pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_FAILED);
+	}
+
+	m_pPartfile->m_bPreviewing = false;
+	m_aFilled.RemoveAll();
+	DeleteGeneratedThumbnails(m_pPartfile->GetTmpPath(), strPrefix);
+	(void)::DeleteFile(strPreviewName);
+
+	if (!theApp.emuledlg->PostMessage(TM_VIDEOTHUMBNAILFINISHED, 0, reinterpret_cast<LPARAM>(pResult)))
+		delete pResult;
+	return TRUE;
+}
+
+void CVideoThumbnailThread::SetValues(CPartFile *pPartFile, LPCTSTR pszCommand)
+{
+	m_pPartfile = pPartFile;
+	pPartFile->GetFilledArray(m_aFilled);
+	m_strCommand = pszCommand;
+	m_strTitle = pPartFile->GetFileName();
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // CPreviewThread

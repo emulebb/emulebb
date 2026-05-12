@@ -3618,6 +3618,10 @@ BEGIN
     IDS_DIAG_DUMP_LOG_SUCCESS "Diagnostic %s dump saved to ""%s""."
     IDS_DIAG_DUMP_LOG_FAILURE "Diagnostic %s dump failed: %s"
     IDS_CHECK_OPEN_PORTS    "Check Open Ports"
+    IDS_DL_VIDEO_THUMBNAIL  "Video thumbnail"
+    IDS_VIDEO_THUMBNAIL_FAILED "Could not generate a video thumbnail. VLC may not be able to decode this partial file yet."
+    IDS_VIDEO_THUMBNAIL_TIMEOUT "Video thumbnail generation timed out."
+    IDS_VIDEO_THUMBNAIL_NOTREADY "This download is not ready for VLC thumbnail generation yet."
     IDS_SEARCHPARAMS        "Search Parameters"
 END
 

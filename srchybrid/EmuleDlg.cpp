@@ -63,6 +63,8 @@
 #include "SearchList.h"
 #include "HTRichEditCtrl.h"
 #include "FrameGrabThread.h"
+#include "Preview.h"
+#include "PreviewDlg.h"
 #include "kademlia/kademlia/kademlia.h"
 #include "PerfLog.h"
 #include "DropTarget.h"
@@ -444,6 +446,7 @@ BEGIN_MESSAGE_MAP(CemuleDlg, CTrayDialog)
 	ON_MESSAGE(TM_SHAREDFILEHASHFAILED, OnSharedHashFailed)
 	ON_MESSAGE(TM_SHAREDHASHRESULTSAVAILABLE, OnSharedHashResultsAvailable)
 	ON_MESSAGE(TM_FRAMEGRABFINISHED, OnFrameGrabFinished)
+	ON_MESSAGE(TM_VIDEOTHUMBNAILFINISHED, OnVideoThumbnailFinished)
 	ON_MESSAGE(TM_FILEALLOCEXC, OnFileAllocExc)
 	ON_MESSAGE(TM_FILECOMPLETED, OnFileCompleted)
 	ON_MESSAGE(TM_CONSOLETHREADEVENT, OnConsoleThreadEvent)
@@ -3461,6 +3464,23 @@ LRESULT CemuleDlg::OnFrameGrabFinished(WPARAM wParam, LPARAM lParam)
 		ASSERT(0);
 
 	delete result;
+	return 0;
+}
+
+LRESULT CemuleDlg::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
+{
+	VideoThumbnailResult_Struct *pResult = reinterpret_cast<VideoThumbnailResult_Struct*>(lParam);
+	if (pResult == NULL)
+		return 0;
+
+	if (pResult->hBitmap != NULL && theApp.downloadqueue->IsPartFile(pResult->pPartFile)) {
+		HBITMAP hBitmap = pResult->hBitmap;
+		pResult->hBitmap = NULL;
+		(new PreviewDlg())->SetLocalPreview(pResult->strTitle, hBitmap);
+	} else if (!pResult->strError.IsEmpty())
+		AfxMessageBox(pResult->strError, MB_ICONWARNING);
+
+	delete pResult;
 	return 0;
 }
 

@@ -316,6 +316,7 @@ protected:
 
 	//Frame grabbing
 	afx_msg LRESULT OnFrameGrabFinished(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnVideoThumbnailFinished(WPARAM wParam, LPARAM lParam);
 
 	afx_msg LRESULT OnAreYouEmule(WPARAM, LPARAM);
 
@@ -366,7 +367,8 @@ enum EEMuleAppMsgs
 	TM_FILEALLOCEXC,
 	TM_FILECOMPLETED,
 	TM_FILEOPPROGRESS,
-	TM_CONSOLETHREADEVENT
+	TM_CONSOLETHREADEVENT,
+	TM_VIDEOTHUMBNAILFINISHED
 };
 
 enum EWebinterfaceOrders

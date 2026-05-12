@@ -248,6 +248,7 @@ public:
 
 	bool	CanOpenFile() const;
 	bool	IsReadyForPreview() const;
+	bool	IsReadyForVideoThumbnail() const;
 	bool	CanStopFile() const;
 	bool	CanPauseFile() const;
 	bool	CanResumeFile() const;
@@ -255,6 +256,7 @@ public:
 
 	void	OpenFile() const;
 	void	PreviewFile();
+	void	GenerateVideoThumbnail();
 	void	DeletePartFile();
 	void	StopFile(bool bCancel = false, bool resort = true);
 	void	PauseFile(bool bInsufficient = false, bool resort = true);

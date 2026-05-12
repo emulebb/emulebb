@@ -38,6 +38,8 @@ END_MESSAGE_MAP()
 PreviewDlg::PreviewDlg(CWnd *pParent /*=NULL*/)
 	: CDialog(PreviewDlg::IDD, pParent)
 	, m_pFile()
+	, m_localFrames()
+	, m_strLocalTitle()
 	, m_nCurrentImage()
 	, m_icons()
 {
@@ -45,6 +47,9 @@ PreviewDlg::PreviewDlg(CWnd *pParent /*=NULL*/)
 
 PreviewDlg::~PreviewDlg()
 {
+	for (int i = m_localFrames.GetSize(); --i >= 0;)
+		if (m_localFrames[i])
+			::DeleteObject(m_localFrames[i]);
 	DestroyIconsArr(m_icons, _countof(m_icons));
 }
 
@@ -57,13 +62,13 @@ void PreviewDlg::DoDataExchange(CDataExchange *pDX)
 BOOL PreviewDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	if (m_pFile == NULL) {
+	if (m_pFile == NULL && m_localFrames.GetSize() == 0) {
 		ASSERT(0);
 		return FALSE;
 	}
 	InitWindowStyles(this);
 	CString title(GetResNoAmp(IDS_DL_PREVIEW));
-	title.AppendFormat(_T(": %s"), (LPCTSTR)m_pFile->GetFileName());
+	title.AppendFormat(_T(": %s"), (LPCTSTR)(m_pFile != NULL ? m_pFile->GetFileName() : m_strLocalTitle));
 	SetWindowText(title);
 
 	m_nCurrentImage = 0;
@@ -78,9 +83,26 @@ BOOL PreviewDlg::OnInitDialog()
 	return TRUE;
 }
 
+void PreviewDlg::SetLocalPreview(LPCTSTR pszTitle, HBITMAP hBitmap)
+{
+	m_strLocalTitle = pszTitle;
+	m_localFrames.Add(hBitmap);
+	Show();
+}
+
+int PreviewDlg::GetPreviewCount() const
+{
+	return m_pFile != NULL ? m_pFile->GetPreviews().GetSize() : m_localFrames.GetSize();
+}
+
+HBITMAP PreviewDlg::GetPreviewBitmap(int nNumber) const
+{
+	return m_pFile != NULL ? m_pFile->GetPreviews()[nNumber] : m_localFrames[nNumber];
+}
+
 void PreviewDlg::ShowImage(int nNumber)
 {
-	int nImageCount = m_pFile->GetPreviews().GetSize();
+	int nImageCount = GetPreviewCount();
 	if (nImageCount <= 0)
 		return;
 	if (nImageCount <= nNumber)
@@ -89,7 +111,7 @@ void PreviewDlg::ShowImage(int nNumber)
 		nNumber = nImageCount - 1;
 
 	m_nCurrentImage = nNumber;
-	m_ImageStatic.SetBitmap(m_pFile->GetPreviews()[nNumber]);
+	m_ImageStatic.SetBitmap(GetPreviewBitmap(nNumber));
 
 	CString strInfo;
 	strInfo.Format(_T("Image %i of %i"), nNumber + 1, nImageCount);
@@ -121,7 +143,7 @@ void PreviewDlg::OnBnClickedPvPrior()
 void PreviewDlg::OnClose()
 {
 	HBITMAP hbitmap = m_ImageStatic.SetBitmap(NULL);
-	if (hbitmap)
+	if (hbitmap && m_pFile != NULL)
 		::DeleteObject(hbitmap);
 	CDialog::OnClose();
 	delete this;

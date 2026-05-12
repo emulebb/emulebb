@@ -18,6 +18,47 @@
 
 class CPartFile;
 
+/**
+ * Owns the result payload passed from the VLC thumbnail worker back to the UI thread.
+ */
+struct VideoThumbnailResult_Struct
+{
+	CPartFile *pPartFile = NULL;
+	HBITMAP hBitmap = NULL;
+	CString strTitle;
+	CString strError;
+
+	~VideoThumbnailResult_Struct()
+	{
+		if (hBitmap)
+			::DeleteObject(hBitmap);
+	}
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// CVideoThumbnailThread
+
+/**
+ * Copies the currently available part-file data and asks VLC to render one preview thumbnail.
+ */
+class CVideoThumbnailThread : public CWinThread
+{
+	DECLARE_DYNCREATE(CVideoThumbnailThread)
+
+public:
+	virtual	BOOL	InitInstance();
+	virtual int		Run();
+	void	SetValues(CPartFile *pPartFile, LPCTSTR pszCommand);
+
+protected:
+	CVideoThumbnailThread();
+
+	CPartFile *m_pPartfile;
+	CArray<Gap_Struct> m_aFilled;
+	CString m_strCommand;
+	CString m_strTitle;
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 // CPreviewThread
 

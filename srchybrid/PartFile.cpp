@@ -3803,6 +3803,33 @@ void CPartFile::PreviewFile()
 		ExecutePartFile(this, thePrefs.GetVideoPlayer(), thePrefs.GetVideoPlayerArgs());
 }
 
+bool CPartFile::IsReadyForVideoThumbnail() const
+{
+	return thePrefs.UseVideoPreviewThumbnails()
+		&& PartFilePreviewSeams::IsConfiguredVlcPreviewPlayer(thePrefs.GetVideoPlayer())
+		&& IsMovie()
+		&& IsReadyForPreview();
+}
+
+void CPartFile::GenerateVideoThumbnail()
+{
+	if (!IsReadyForVideoThumbnail()) {
+		AfxMessageBox(GetResString(IDS_VIDEO_THUMBNAIL_NOTREADY), MB_ICONINFORMATION);
+		return;
+	}
+	if (!CheckFileOpen(GetFilePath(), GetFileName()))
+		return;
+	m_bPreviewing = true;
+	CVideoThumbnailThread *pThread = static_cast<CVideoThumbnailThread*>(AfxBeginThread(RUNTIME_CLASS(CVideoThumbnailThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
+	if (pThread == NULL) {
+		m_bPreviewing = false;
+		AfxMessageBox(GetResString(IDS_VIDEO_THUMBNAIL_FAILED), MB_ICONWARNING);
+		return;
+	}
+	pThread->SetValues(this, thePrefs.GetVideoPlayer());
+	pThread->ResumeThread();
+}
+
 bool CPartFile::IsReadyForPreview() const
 {
 	CPreviewApps::ECanPreviewRes ePreviewAppsRes = thePreviewApps.CanPreview(this);

@@ -2897,6 +2897,10 @@
 #define IDS_VIDEOTHUMBNAILS                    2216
 #define IDS_VIDEOTHUMBNAILS_INVALID            2217
 #define IDS_PPG_FILES_TT_VIDEOTHUMBNAILS       2218
+#define IDS_DL_VIDEO_THUMBNAIL                 2219
+#define IDS_VIDEO_THUMBNAIL_FAILED             2220
+#define IDS_VIDEO_THUMBNAIL_TIMEOUT            2221
+#define IDS_VIDEO_THUMBNAIL_NOTREADY           2222
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025
@@ -2979,6 +2983,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        3055
 #define _APS_NEXT_COMMAND_VALUE         32773
 #define _APS_NEXT_CONTROL_VALUE         3085
-#define _APS_NEXT_SYMED_VALUE           2219
+#define _APS_NEXT_SYMED_VALUE           2223
 #endif
 #endif

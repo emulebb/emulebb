@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atlstr.h>
+#include "FileCompletionCommandSeams.h"
 
 namespace PartFilePreviewSeams
 {
@@ -34,5 +35,23 @@ inline CString ExtractConfiguredVideoPlayerBaseName(const CString &rstrVideoPlay
 inline bool IsConfiguredVlcPreviewPlayer(const CString &rstrVideoPlayerPath)
 {
 	return ExtractConfiguredVideoPlayerBaseName(rstrVideoPlayerPath).CompareNoCase(_T("vlc")) == 0;
+}
+
+/**
+ * Builds a VLC command line that captures one thumbnail into the scene output directory.
+ */
+inline CString BuildVlcThumbnailCommandLine(const CString &rstrVlcPath, const CString &rstrInputPath, const CString &rstrOutputDirectory, const CString &rstrOutputPrefix)
+{
+	CString strCommandLine(FileCompletionCommandSeams::QuoteCommandLineArgument(rstrVlcPath));
+	strCommandLine += _T(" --intf dummy --dummy-quiet --no-audio --no-video-title-show --no-sub-autodetect-file");
+	strCommandLine += _T(" --video-filter=scene --scene-format=png --scene-ratio=1 --start-time=15 --stop-time=16 --run-time=1");
+	strCommandLine += _T(" ");
+	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(_T("--scene-prefix=") + rstrOutputPrefix);
+	strCommandLine += _T(" ");
+	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(_T("--scene-path=") + rstrOutputDirectory);
+	strCommandLine += _T(" ");
+	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(rstrInputPath);
+	strCommandLine += _T(" vlc://quit");
+	return strCommandLine;
 }
 }

@@ -1046,6 +1046,7 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			int iFilesGetPreviewParts = 0;
 			int iFilesPreviewType = 0;
 			int iFilesToPreview = 0;
+			int iFilesToThumbnail = 0;
 			int iFilesToCancel = 0;
 			int iFilesCanPauseOnPreview = 0;
 			int iFilesDoPauseOnPreview = 0;
@@ -1072,6 +1073,7 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 				iFilesGetPreviewParts += static_cast<int>(pFile->GetPreviewPrio());
 				iFilesPreviewType += static_cast<int>(pFile->IsPreviewableFileType());
 				iFilesToPreview += static_cast<int>(pFile->IsReadyForPreview());
+				iFilesToThumbnail += static_cast<int>(pFile->IsReadyForVideoThumbnail());
 				iFilesCanPauseOnPreview += static_cast<int>(pFile->IsPreviewableFileType() && !pFile->IsReadyForPreview() && pFile->CanPauseFile());
 				iFilesDoPauseOnPreview += static_cast<int>(pFile->IsPausingOnPreview());
 				iFilesInCats += static_cast<int>(!pFile->HasDefaultCategory());
@@ -1126,6 +1128,7 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 				m_PreviewMenu.CheckMenuItem(MP_TRY_TO_GET_PREVIEW_PARTS, (iSelectedItems == 1 && iFilesGetPreviewParts == 1) ? MF_CHECKED : MF_UNCHECKED);
 			}
 			m_PreviewMenu.EnableMenuItem(MP_PREVIEW, (iSelectedItems == 1 && iFilesToPreview == 1) ? MF_ENABLED : MF_GRAYED);
+			m_PreviewMenu.EnableMenuItem(MP_VIDEO_THUMBNAIL, (iSelectedItems == 1 && iFilesToThumbnail == 1) ? MF_ENABLED : MF_GRAYED);
 			m_PreviewMenu.EnableMenuItem(MP_PAUSEONPREVIEW, iFilesCanPauseOnPreview > 0 ? MF_ENABLED : MF_GRAYED);
 			m_PreviewMenu.CheckMenuItem(MP_PAUSEONPREVIEW, (iSelectedItems > 0 && iFilesDoPauseOnPreview == iSelectedItems) ? MF_CHECKED : MF_UNCHECKED);
 			EnableSubMenuItem(m_FileMenu, m_PreviewMenu.m_hMenu, m_PreviewMenu.HasEnabledItems() ? MF_ENABLED : MF_GRAYED);
@@ -1269,6 +1272,7 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			m_PreviewMenu.CheckMenuItem(MP_TRY_TO_GET_PREVIEW_PARTS, MF_UNCHECKED);
 		}
 		m_PreviewMenu.EnableMenuItem(MP_PREVIEW, MF_GRAYED);
+		m_PreviewMenu.EnableMenuItem(MP_VIDEO_THUMBNAIL, MF_GRAYED);
 		m_PreviewMenu.EnableMenuItem(MP_PAUSEONPREVIEW, MF_GRAYED);
 
 		m_FileMenu.EnableMenuItem(MP_METINFO, MF_GRAYED);
@@ -1641,6 +1645,10 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 			case MP_PREVIEW:
 				if (selectedCount == 1)
 					file->PreviewFile();
+				break;
+			case MP_VIDEO_THUMBNAIL:
+				if (selectedCount == 1)
+					file->GenerateVideoThumbnail();
 				break;
 			case MP_PAUSEONPREVIEW:
 				{
@@ -2173,6 +2181,7 @@ void CDownloadListCtrl::CreateMenus()
 	m_PreviewMenu.CreateMenu();
 	m_PreviewMenu.AddMenuTitle(NULL, true);
 	m_PreviewMenu.AppendMenu(MF_STRING, MP_PREVIEW, GetResString(IDS_DL_PREVIEW), _T("PREVIEW"));
+	m_PreviewMenu.AppendMenu(MF_STRING, MP_VIDEO_THUMBNAIL, GetResString(IDS_DL_VIDEO_THUMBNAIL), _T("Preview"));
 	m_PreviewMenu.AppendMenu(MF_STRING, MP_PAUSEONPREVIEW, GetResString(IDS_PAUSEONPREVIEW));
 	if (!thePrefs.GetPreviewPrio())
 		m_PreviewMenu.AppendMenu(MF_STRING, MP_TRY_TO_GET_PREVIEW_PARTS, GetResString(IDS_DL_TRY_TO_GET_PREVIEW_PARTS));
@@ -2844,6 +2853,7 @@ bool CDownloadListCtrl::ReportAvailableCommands(CList<int> &liAvailableCommands)
 			//int iFilesGetPreviewParts = 0;
 			//int iFilesPreviewType = 0;
 			int iFilesToPreview = 0;
+			int iFilesToThumbnail = 0;
 			int iFilesToCancel = 0;
 			for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;) {
 				const CtrlItem_Struct *pItemData = reinterpret_cast<CtrlItem_Struct*>(GetItemData(GetNextSelectedItem(pos)));
@@ -2861,6 +2871,7 @@ bool CDownloadListCtrl::ReportAvailableCommands(CList<int> &liAvailableCommands)
 				//iFilesGetPreviewParts += static_cast<int>(pFile->GetPreviewPrio());
 				//iFilesPreviewType += static_cast<int>(pFile->IsPreviewableFileType());
 				iFilesToPreview += static_cast<int>(pFile->IsReadyForPreview());
+				iFilesToThumbnail += static_cast<int>(pFile->IsReadyForVideoThumbnail());
 			}
 
 			// enable commands if there is at least one item which can be used for the action
@@ -2876,6 +2887,8 @@ bool CDownloadListCtrl::ReportAvailableCommands(CList<int> &liAvailableCommands)
 				liAvailableCommands.AddTail(MP_OPEN);
 			if (iSelectedItems == 1 && iFilesToPreview == 1)
 				liAvailableCommands.AddTail(MP_PREVIEW);
+			if (iSelectedItems == 1 && iFilesToThumbnail == 1)
+				liAvailableCommands.AddTail(MP_VIDEO_THUMBNAIL);
 			if (iSelectedItems == 1)
 				liAvailableCommands.AddTail(MP_OPENFOLDER);
 			if (iSelectedItems > 0) {
