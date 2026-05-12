@@ -289,8 +289,10 @@ void CSearchDlg::SearchRelatedFiles(CPtrList &listFiles)
 BOOL CSearchDlg::PreTranslateMessage(MSG *pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN && GetKeyState(VK_CONTROL) < 0) {
-		// Don't handle Ctrl+Tab in this window. It will be handled by main window.
 		if (pMsg->wParam == VK_TAB) {
+			if (m_pwndResults != NULL && m_pwndResults->SelectAdjacentSearchResultTab(GetKeyState(VK_SHIFT) < 0 ? -1 : 1))
+				return TRUE;
+			// Let the main window handle Ctrl+Tab when there is no local result tab to select.
 			// UGLY: Because this window is a 'CFrameWnd' (rather than a 'CDialog' like
 			// the other eMule main windows) we can not use MFC's message routing.
 			// Need to explicitly send that message to the main window.

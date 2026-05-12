@@ -1576,6 +1576,31 @@ bool CSearchResultsWnd::CreateNewTab(SSearchParams *pParams, bool bActiveIcon)
 	return true;
 }
 
+bool CSearchResultsWnd::SelectAdjacentSearchResultTab(int iDirection)
+{
+	const int iTabCount = searchselect.GetItemCount();
+	if (iTabCount < 2)
+		return false;
+
+	int iCurSel = searchselect.GetCurSel();
+	if (iCurSel < 0)
+		iCurSel = searchselect.GetCurFocus();
+	if (iCurSel < 0)
+		iCurSel = 0;
+
+	const int iStep = iDirection < 0 ? -1 : 1;
+	const int iNextSel = (iCurSel + iStep + iTabCount) % iTabCount;
+	if (iNextSel == iCurSel)
+		return false;
+
+	LRESULT lResult = 0;
+	OnSelChangingTab(NULL, &lResult);
+	searchselect.SetCurSel(iNextSel);
+	searchselect.SetCurFocus(iNextSel);
+	OnSelChangeTab(NULL, &lResult);
+	return true;
+}
+
 void CSearchResultsWnd::DeleteSelectedSearch()
 {
 	if (CanDeleteSearches()) {

@@ -111,6 +111,7 @@ public:
 	void	DeleteSelectedSearch();
 
 	bool	CreateNewTab(SSearchParams *pParams, bool bActiveIcon = true);
+	bool	SelectAdjacentSearchResultTab(int iDirection);
 	void	ShowSearchSelector(bool visible);
 	int		GetSelectedCat() const				{ return m_cattabs.GetCurSel(); }
 	void	UpdateCatTabs();
