@@ -3805,10 +3805,25 @@ void CPartFile::PreviewFile()
 
 bool CPartFile::IsReadyForVideoThumbnail() const
 {
+	const EPartFileStatus uStatus = GetStatus();
+	bool bPreviewableStatus = false;
+	switch (uStatus) {
+	case PS_READY:
+	case PS_EMPTY:
+	case PS_PAUSED:
+	case PS_INSUFFICIENT:
+		bPreviewableStatus = true;
+		break;
+	default:
+		break;
+	}
+
 	return thePrefs.UseVideoPreviewThumbnails()
 		&& PartFilePreviewSeams::IsConfiguredVlcPreviewPlayer(thePrefs.GetVideoPlayer())
 		&& IsMovie()
-		&& IsReadyForPreview();
+		&& !m_bPreviewing
+		&& bPreviewableStatus
+		&& PartFilePreviewSeams::HasEnoughCompletedDataForPartialVideoPreview(static_cast<uint64>(m_nFileSize), static_cast<uint64>(GetCompletedSize()));
 }
 
 void CPartFile::GenerateVideoThumbnail()
@@ -3864,6 +3879,23 @@ bool CPartFile::IsReadyForPreview() const
 
 	if (m_bPreviewing)
 		return false;
+
+	if (IsMovie()) {
+		switch (uStatus) {
+		case PS_READY:
+		case PS_EMPTY:
+		case PS_PAUSED:
+		case PS_INSUFFICIENT:
+			break;
+		default:
+			return false;
+		}
+		if (!PartFilePreviewSeams::HasEnoughCompletedDataForPartialVideoPreview(static_cast<uint64>(m_nFileSize), static_cast<uint64>(GetCompletedSize())))
+			return false;
+		if (thePrefs.IsMoviePreviewBackup() && static_cast<uint64>(m_nFileSize) >= GetFreeDiskSpaceX(GetTmpPath()) + 100000000)
+			return false;
+		return true;
+	}
 
 	if (thePrefs.IsMoviePreviewBackup())
 		return inSet(uStatus, PS_READY, PS_PAUSED)

@@ -1,10 +1,15 @@
 #pragma once
 
 #include <atlstr.h>
+#include <cstdint>
 #include "FileCompletionCommandSeams.h"
 
 namespace PartFilePreviewSeams
 {
+constexpr std::uint64_t kPartialVideoPreviewMinCompletedPermille = 5;
+constexpr std::uint64_t kPartialVideoPreviewMinCompletedBytes = 1ull * 1024ull * 1024ull;
+constexpr std::uint64_t kPartialVideoPreviewMaxCompletedBytes = 64ull * 1024ull * 1024ull;
+
 /**
  * Extracts the executable basename used by preview-player dependent features.
  */
@@ -35,6 +40,32 @@ inline CString ExtractConfiguredVideoPlayerBaseName(const CString &rstrVideoPlay
 inline bool IsConfiguredVlcPreviewPlayer(const CString &rstrVideoPlayerPath)
 {
 	return ExtractConfiguredVideoPlayerBaseName(rstrVideoPlayerPath).CompareNoCase(_T("vlc")) == 0;
+}
+
+/**
+ * Returns the completed-data threshold used before partial-video preview attempts.
+ */
+inline std::uint64_t GetPartialVideoPreviewRequiredCompletedBytes(std::uint64_t ullFileSize)
+{
+	if (ullFileSize == 0)
+		return kPartialVideoPreviewMinCompletedBytes;
+
+	const std::uint64_t ullWhole = (ullFileSize / 1000ull) * kPartialVideoPreviewMinCompletedPermille;
+	const std::uint64_t ullRemainder = ((ullFileSize % 1000ull) * kPartialVideoPreviewMinCompletedPermille + 999ull) / 1000ull;
+	std::uint64_t ullRequired = ullWhole + ullRemainder;
+	if (ullRequired < kPartialVideoPreviewMinCompletedBytes)
+		ullRequired = kPartialVideoPreviewMinCompletedBytes;
+	if (ullRequired > kPartialVideoPreviewMaxCompletedBytes)
+		ullRequired = kPartialVideoPreviewMaxCompletedBytes;
+	return ullRequired;
+}
+
+/**
+ * Allows partial-video preview once a small percentage of the file has arrived.
+ */
+inline bool HasEnoughCompletedDataForPartialVideoPreview(std::uint64_t ullFileSize, std::uint64_t ullCompletedSize)
+{
+	return ullFileSize > 0 && ullCompletedSize >= GetPartialVideoPreviewRequiredCompletedBytes(ullFileSize);
 }
 
 /**
