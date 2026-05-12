@@ -321,22 +321,24 @@ BEGIN
     CONTROL         "Remember downloaded files",IDC_REMEMBERDOWNLOADED,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,140,209,10
     CONTROL         "Remember cancelled files",IDC_REMEMBERCANCELLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,150,209,10
-    GROUPBOX        "Static",IDC_STATICVIDEOPLAYER,4,167,223,70
+    GROUPBOX        "Static",IDC_STATICVIDEOPLAYER,4,167,223,82
     LTEXT           "Command:",IDC_VIDEOPLAYER_CMD_LBL,10,176,151,8
     EDITTEXT        IDC_VIDEOPLAYER,10,185,211,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_BROWSEV,210,180,14,14
     LTEXT           "Arguments:",IDC_VIDEOPLAYER_ARGS_LBL,10,199,151,8
     EDITTEXT        IDC_VIDEOPLAYER_ARGS,10,208,211,12,ES_AUTOHSCROLL
     CONTROL         "Create file backup for preview",IDC_VIDEOBACKUP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,224,195,8
+    CONTROL         "Use VLC to generate video thumbnails",IDC_VIDEOTHUMBNAILS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,235,211,8
     GROUPBOX        "Static",IDC_LBL_MISC,4,60,223,104
-    GROUPBOX        "Run Program On Completion",IDC_FILECOMPLETE_GROUP,4,242,223,78
+    GROUPBOX        "Run Program On Completion",IDC_FILECOMPLETE_GROUP,4,254,223,78
     CONTROL         "Run program when a file completes",IDC_RUNONFILECOMPLETE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,253,209,10
-    LTEXT           "Command:",IDC_FILECOMPLETEPROGRAM_LBL,10,267,151,8
-    EDITTEXT        IDC_FILECOMPLETEPROGRAM,10,276,211,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_BROWSE_FILECOMPLETEPROGRAM,210,271,14,14
-    LTEXT           "Arguments:",IDC_FILECOMPLETEARGS_LBL,10,290,151,8
-    EDITTEXT        IDC_FILECOMPLETEARGS,10,299,211,12,ES_AUTOHSCROLL
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,265,209,10
+    LTEXT           "Command:",IDC_FILECOMPLETEPROGRAM_LBL,10,279,151,8
+    EDITTEXT        IDC_FILECOMPLETEPROGRAM,10,288,211,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BROWSE_FILECOMPLETEPROGRAM,210,283,14,14
+    LTEXT           "Arguments:",IDC_FILECOMPLETEARGS_LBL,10,302,151,8
+    EDITTEXT        IDC_FILECOMPLETEARGS,10,311,211,12,ES_AUTOHSCROLL
 END
 
 IDD_PPG_DIRECTORIES DIALOGEX 0, 0, 391, 381
@@ -2472,6 +2474,8 @@ BEGIN
     IDS_VISITVERSIONCHECK   "\n\nDo you want do visit the Information page now?"
     IDS_PW_VIDEOPLAYER      "Video Player"
     IDS_VIDEOBACKUP         "Create backup to preview"
+    IDS_VIDEOTHUMBNAILS     "Use VLC to generate video thumbnails"
+    IDS_VIDEOTHUMBNAILS_INVALID "Configure VLC as the video preview player before enabling video thumbnails."
     IDS_MYINFO              "My Info"
     IDS_ID                  "ID"
     IDS_IDLOW               "Low ID"
@@ -4647,6 +4651,7 @@ BEGIN
     IDS_PPG_FILES_TT_STARTNEXTFILECAT2     "When starting the next paused file, choose only from the same category as the completed file.\r\n\r\nUse it for strict per-category queue control."
     IDS_PPG_FILES_TT_UAP                   "Assigns auto priority to newly shared files.\r\n\r\nRecommended unless you deliberately tune shared-file priorities yourself."
     IDS_PPG_FILES_TT_VIDEOBACKUP           "Creates a backup copy before previewing a partially downloaded media file.\r\n\r\nSafer for fragile players, but uses extra disk space and time."
+    IDS_PPG_FILES_TT_VIDEOTHUMBNAILS       "Allows VLC-based thumbnail generation for downloading video files.\r\n\r\nSet the video player command to VLC before enabling this option."
     IDS_PPG_FILES_TT_VIDEOPLAYER           "External player used for media previews.\r\n\r\nLeave it empty to use the default association, or set a specific trusted player."
     IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS      "Arguments passed to the external preview player.\r\n\r\nUse this only if the player needs custom command-line options."
     IDS_PPG_GENERAL_TT_CHECKDAYS           "Number of days between startup update checks.\r\n\r\nHigher values reduce network checks; lower values find new published releases sooner."

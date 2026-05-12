@@ -743,6 +743,7 @@ bool	CPreferences::m_bRunCommandOnFileCompletion;
 CString CPreferences::m_strFileCompletionProgram;
 CString CPreferences::m_strFileCompletionArguments;
 bool	CPreferences::m_bMoviePreviewBackup;
+bool	CPreferences::m_bVideoPreviewThumbnails;
 int		CPreferences::m_iPreviewSmallBlocks;
 bool	CPreferences::m_bPreviewCopiedArchives;
 bool	CPreferences::m_bInspectAllFileTypes;
@@ -2469,6 +2470,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("FullChunkTransfers"), m_btransferfullchunks);
 	ini.WriteBool(_T("ShowOverhead"), m_bshowoverhead);
 	ini.WriteBool(_T("VideoPreviewBackupped"), m_bMoviePreviewBackup);
+	ini.WriteBool(_T("VideoPreviewThumbnails"), m_bVideoPreviewThumbnails);
 	ini.WriteInt(_T("PreviewSmallBlocks"), m_iPreviewSmallBlocks);
 	ini.WriteInt(_T("StartNextFile"), m_istartnextfile);
 
@@ -3025,6 +3027,7 @@ void CPreferences::LoadPreferences()
 	m_istartnextfile = ini.GetInt(_T("StartNextFile"), 0);
 	m_bshowoverhead = ini.GetBool(_T("ShowOverhead"), false);
 	m_bMoviePreviewBackup = ini.GetBool(_T("VideoPreviewBackupped"), false);
+	m_bVideoPreviewThumbnails = ini.GetBool(_T("VideoPreviewThumbnails"), false);
 	m_iPreviewSmallBlocks = PreferenceUiSeams::NormalizePreviewSmallBlocks(ini.GetInt(_T("PreviewSmallBlocks"), 0));
 	m_bPreviewCopiedArchives = ini.GetBool(_T("PreviewCopiedArchives"), false);
 	m_bInspectAllFileTypes = ini.GetBool(_T("InspectAllFileTypes"), false);

@@ -24,6 +24,7 @@
 #include "Preferences.h"
 #include "HelpIDs.h"
 #include "FileCompletionCommandSeams.h"
+#include "PartFilePreviewSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -50,6 +51,7 @@ BEGIN_MESSAGE_MAP(CPPgFiles, CPropertyPage)
 	ON_EN_CHANGE(IDC_VIDEOPLAYER, OnSettingsChange)
 	ON_EN_CHANGE(IDC_VIDEOPLAYER_ARGS, OnSettingsChange)
 	ON_BN_CLICKED(IDC_VIDEOBACKUP, OnSettingsChange)
+	ON_BN_CLICKED(IDC_VIDEOTHUMBNAILS, OnSettingsChange)
 	ON_BN_CLICKED(IDC_RUNONFILECOMPLETE, OnSettingsChange)
 	ON_EN_CHANGE(IDC_FILECOMPLETEPROGRAM, OnSettingsChange)
 	ON_EN_CHANGE(IDC_FILECOMPLETEARGS, OnSettingsChange)
@@ -113,6 +115,7 @@ void CPPgFiles::UpdateToolTips()
 	m_toolTip.SetTool(this, IDC_BROWSEV, GetResString(IDS_PPG_FILES_TT_BROWSEV));
 	m_toolTip.SetTool(this, IDC_VIDEOPLAYER_ARGS, GetResString(IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS));
 	m_toolTip.SetTool(this, IDC_VIDEOBACKUP, GetResString(IDS_PPG_FILES_TT_VIDEOBACKUP));
+	m_toolTip.SetTool(this, IDC_VIDEOTHUMBNAILS, GetResString(IDS_PPG_FILES_TT_VIDEOTHUMBNAILS));
 	m_toolTip.SetTool(this, IDC_RUNONFILECOMPLETE, GetResString(IDS_PPG_FILES_TT_RUNONFILECOMPLETE));
 	m_toolTip.SetTool(this, IDC_FILECOMPLETEPROGRAM, GetResString(IDS_PPG_FILES_TT_FILECOMPLETEPROGRAM));
 	m_toolTip.SetTool(this, IDC_BROWSE_FILECOMPLETEPROGRAM, GetResString(IDS_PPG_FILES_TT_BROWSE_FILECOMPLETEPROGRAM));
@@ -146,6 +149,7 @@ void CPPgFiles::LoadSettings()
 	SetDlgItemText(IDC_FILECOMPLETEARGS, thePrefs.GetFileCompletionArguments());
 
 	CheckDlgButton(IDC_VIDEOBACKUP, static_cast<UINT>(thePrefs.m_bMoviePreviewBackup));
+	CheckDlgButton(IDC_VIDEOTHUMBNAILS, static_cast<UINT>(thePrefs.m_bVideoPreviewThumbnails));
 	CheckDlgButton(IDC_FNCLEANUP, static_cast<UINT>(thePrefs.AutoFilenameCleanup()));
 	CheckDlgButton(IDC_WATCHCB, static_cast<UINT>(thePrefs.watchclipboard));
 	CheckDlgButton(IDC_REMEMBERDOWNLOADED, static_cast<UINT>(thePrefs.IsRememberingDownloadedFiles()));
@@ -200,7 +204,13 @@ BOOL CPPgFiles::OnApply()
 		AfxMessageBox(GetResString(IDS_COMPLETIONCOMMAND_INVALID), MB_ICONWARNING);
 		return FALSE;
 	}
+	const bool bVideoPreviewThumbnails = IsDlgButtonChecked(IDC_VIDEOTHUMBNAILS) != 0;
+	if (bVideoPreviewThumbnails && !PartFilePreviewSeams::IsConfiguredVlcPreviewPlayer(thePrefs.m_strVideoPlayer)) {
+		AfxMessageBox(GetResString(IDS_VIDEOTHUMBNAILS_INVALID), MB_ICONWARNING);
+		return FALSE;
+	}
 	thePrefs.m_bMoviePreviewBackup = IsDlgButtonChecked(IDC_VIDEOBACKUP) != 0;
+	thePrefs.m_bVideoPreviewThumbnails = bVideoPreviewThumbnails;
 
 	LoadSettings();
 	SetModified(FALSE);
@@ -229,6 +239,7 @@ void CPPgFiles::Localize()
 		SetDlgItemText(IDC_VIDEOPLAYER_CMD_LBL, GetResString(IDS_COMMAND));
 		SetDlgItemText(IDC_VIDEOPLAYER_ARGS_LBL, GetResString(IDS_ARGUMENTS));
 		SetDlgItemText(IDC_VIDEOBACKUP, GetResString(IDS_VIDEOBACKUP));
+		SetDlgItemText(IDC_VIDEOTHUMBNAILS, GetResString(IDS_VIDEOTHUMBNAILS));
 		SetDlgItemText(IDC_FILECOMPLETE_GROUP, GetResString(IDS_COMPLETIONCOMMAND));
 		SetDlgItemText(IDC_RUNONFILECOMPLETE, GetResString(IDS_RUNONFILECOMPLETE));
 		SetDlgItemText(IDC_FILECOMPLETEPROGRAM_LBL, GetResString(IDS_COMMAND));

@@ -516,6 +516,7 @@ public:
 	static CString	m_strFileCompletionProgram;
 	static CString	m_strFileCompletionArguments;
 	static bool		m_bMoviePreviewBackup;
+	static bool		m_bVideoPreviewThumbnails;
 	static int		m_iPreviewSmallBlocks;
 	static bool		m_bPreviewCopiedArchives;
 	static bool		m_bInspectAllFileTypes;
@@ -1313,6 +1314,7 @@ public:
 	static bool		IsSafeServerConnectEnabled()		{ return m_bSafeServerConnect; }
 	static void		SetSafeServerConnectEnabled(bool in) { m_bSafeServerConnect = in; }
 	static bool		IsMoviePreviewBackup()				{ return m_bMoviePreviewBackup; }
+	static bool		UseVideoPreviewThumbnails()			{ return m_bVideoPreviewThumbnails; }
 	static int		GetPreviewSmallBlocks()				{ return m_iPreviewSmallBlocks; }
 	static bool		GetPreviewCopiedArchives()			{ return m_bPreviewCopiedArchives; }
 	static bool		GetInspectAllFileTypes()			{ return m_bInspectAllFileTypes; }
