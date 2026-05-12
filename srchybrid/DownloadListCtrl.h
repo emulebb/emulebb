@@ -153,6 +153,7 @@ protected:
 	CMapStringToPtr m_videoThumbnailCache;
 	CList<CString, const CString&> m_videoThumbnailQueue;
 	CPartFile *m_pHoveredVideoThumbnailFile;
+	HBITMAP m_hHoveredVideoThumbnailBitmap;
 	bool		m_bVideoThumbnailWorkerActive;
 	bool		m_bVideoThumbnailCacheInitialized;
 	ULONGLONG	m_dwLastAvailableCommandsCheck;
