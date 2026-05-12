@@ -127,6 +127,7 @@ protected:
 		CString strCachePath;
 		HBITMAP hBitmap = NULL;
 		uint64 ullCompletedSize = 0;
+		uint64 ullLastAttemptCompletedSize = 0;
 		ULONGLONG ullLastAttemptTick = 0;
 		bool bInFlight = false;
 		bool bQueued = false;
@@ -187,6 +188,10 @@ protected:
 	CPartFile* FindVideoThumbnailFileByKey(const CString &rstrKey) const;
 	HBITMAP GetCachedVideoThumbnail(CPartFile *pPartFile);
 	bool IsVideoThumbnailCandidate(const CPartFile *pPartFile) const;
+	/**
+	 * Returns whether a thumbnail attempt is due for the current file progress.
+	 */
+	bool IsVideoThumbnailAttemptDue(const VideoThumbnailCacheEntry *pEntry, const CPartFile *pPartFile, ULONGLONG ullCurrentTick) const;
 	void QueueVideoThumbnail(CPartFile *pPartFile, bool bHighPriority);
 	void QueueVideoThumbnailScan();
 	void StartNextVideoThumbnailWorker();

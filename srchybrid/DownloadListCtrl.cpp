@@ -370,6 +370,24 @@ bool CDownloadListCtrl::IsVideoThumbnailCandidate(const CPartFile *pPartFile) co
 	return pPartFile != NULL && pPartFile->IsReadyForVideoThumbnail();
 }
 
+bool CDownloadListCtrl::IsVideoThumbnailAttemptDue(const VideoThumbnailCacheEntry *pEntry, const CPartFile *pPartFile, ULONGLONG ullCurrentTick) const
+{
+	if (pEntry == NULL || pPartFile == NULL)
+		return false;
+
+	const uint64 ullCompletedSize = static_cast<uint64>(pPartFile->GetCompletedSize());
+	const uint64 ullFileSize = static_cast<uint64>(pPartFile->GetFileSize());
+	if (pEntry->hBitmap == NULL)
+		return PartFilePreviewSeams::IsVideoThumbnailAttemptDue(ullCurrentTick, pEntry->ullLastAttemptTick);
+	if (!PartFilePreviewSeams::ShouldRefreshVideoThumbnail(pEntry->ullCompletedSize, ullCompletedSize, ullFileSize))
+		return false;
+	if (pEntry->ullLastAttemptCompletedSize <= pEntry->ullCompletedSize)
+		return true;
+	if (PartFilePreviewSeams::ShouldRefreshVideoThumbnail(pEntry->ullLastAttemptCompletedSize, ullCompletedSize, ullFileSize))
+		return true;
+	return PartFilePreviewSeams::IsVideoThumbnailAttemptDue(ullCurrentTick, pEntry->ullLastAttemptTick);
+}
+
 void CDownloadListCtrl::QueueVideoThumbnail(CPartFile *pPartFile, bool bHighPriority)
 {
 	if (!IsVideoThumbnailCandidate(pPartFile))
@@ -380,12 +398,8 @@ void CDownloadListCtrl::QueueVideoThumbnail(CPartFile *pPartFile, bool bHighPrio
 	if (pEntry == NULL || pEntry->bInFlight)
 		return;
 
-	const uint64 ullCompletedSize = static_cast<uint64>(pPartFile->GetCompletedSize());
-	if (pEntry->hBitmap != NULL && !PartFilePreviewSeams::ShouldRefreshVideoThumbnail(pEntry->ullCompletedSize, ullCompletedSize))
-		return;
-
 	const ULONGLONG ullCurrentTick = ::GetTickCount64();
-	if (!PartFilePreviewSeams::IsVideoThumbnailAttemptDue(ullCurrentTick, pEntry->ullLastAttemptTick))
+	if (!IsVideoThumbnailAttemptDue(pEntry, pPartFile, ullCurrentTick))
 		return;
 
 	if (pEntry->bQueued) {
@@ -439,15 +453,12 @@ void CDownloadListCtrl::StartNextVideoThumbnailWorker()
 		if (!IsVideoThumbnailCandidate(pPartFile))
 			continue;
 
-		const uint64 ullCompletedSize = static_cast<uint64>(pPartFile->GetCompletedSize());
-		if (pEntry->hBitmap != NULL && !PartFilePreviewSeams::ShouldRefreshVideoThumbnail(pEntry->ullCompletedSize, ullCompletedSize))
-			continue;
-
 		const ULONGLONG ullCurrentTick = ::GetTickCount64();
-		if (!PartFilePreviewSeams::IsVideoThumbnailAttemptDue(ullCurrentTick, pEntry->ullLastAttemptTick))
+		if (!IsVideoThumbnailAttemptDue(pEntry, pPartFile, ullCurrentTick))
 			continue;
 
 		pEntry->ullLastAttemptTick = ullCurrentTick;
+		pEntry->ullLastAttemptCompletedSize = static_cast<uint64>(pPartFile->GetCompletedSize());
 		pEntry->bInFlight = true;
 		m_bVideoThumbnailWorkerActive = true;
 		pPartFile->m_bPreviewing = true;
@@ -556,7 +567,7 @@ LRESULT CDownloadListCtrl::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
 		pEntry->ullCompletedSize = pResult->ullCompletedSize;
 		if (m_pHoveredVideoThumbnailFile == pResult->pPartFile) {
 			m_tooltip.SetPreviewBitmap(pEntry->hBitmap, PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth);
-			m_tooltip.Invalidate();
+			m_tooltip.RefreshCurrentTool();
 		}
 	}
 
@@ -2981,7 +2992,7 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 		const CtrlItem_Struct *content = reinterpret_cast<CtrlItem_Struct*>(GetItemData(pGetInfoTip->iItem));
 		if (content && pGetInfoTip->pszText && pGetInfoTip->cchTextMax > 0) {
 			CString info;
-			m_tooltip.SetPreviewBitmap(NULL, 0);
+			bool bPreviewBitmapHandled = false;
 
 			// build info text and display it
 			if (content->type == 1) { // for downloading files
@@ -2997,6 +3008,9 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 					HBITMAP hBitmap = GetCachedVideoThumbnail(pPartFile);
 					if (hBitmap != NULL)
 						m_tooltip.SetPreviewBitmap(hBitmap, PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth);
+					else
+						m_tooltip.SetPreviewBitmap(NULL, 0);
+					bPreviewBitmapHandled = true;
 				}
 				QueueVideoThumbnail(pPartFile, true);
 			}
@@ -3056,6 +3070,8 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 					info.Format(_T("URL: %s\nAvailable parts: %u"), client->GetUserName(), client->GetAvailablePartCount());
 			} else if (IsSourceCtrlItem(content))
 				PruneStaleSourceItems();
+			if (!bPreviewBitmapHandled)
+				m_tooltip.SetPreviewBitmap(NULL, 0);
 
 			info += TOOLTIP_AUTOFORMAT_SUFFIX_CH;
 			_tcsncpy(pGetInfoTip->pszText, info, pGetInfoTip->cchTextMax);

@@ -66,6 +66,7 @@ protected:
 	CString m_strFileHash;
 	CString m_strCachePath;
 	HWND m_hNotifyWnd;
+	uint64 m_ullFileSize;
 	uint64 m_ullCompletedSize;
 };
 

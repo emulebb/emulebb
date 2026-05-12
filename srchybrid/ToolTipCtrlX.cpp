@@ -66,6 +66,15 @@ void CToolTipCtrlX::SetPreviewBitmap(HBITMAP hBitmap, int iMaxWidth)
 	m_iPreviewMaxWidth = iMaxWidth;
 }
 
+void CToolTipCtrlX::RefreshCurrentTool()
+{
+	if (!::IsWindow(m_hWnd))
+		return;
+	SendMessage(TTM_UPDATE, 0, 0);
+	Invalidate();
+	UpdateWindow();
+}
+
 BOOL CToolTipCtrlX::SubclassWindow(HWND hWnd)
 {
 	BOOL bResult = __super::SubclassWindow(hWnd);

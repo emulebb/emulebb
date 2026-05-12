@@ -29,6 +29,10 @@ public:
 	void SetCol2DrawTextFlags(DWORD dwFlags);
 	void SetFileIconToolTip(bool bEnable)		{ m_bShowFileIcon = bEnable; }
 	void SetPreviewBitmap(HBITMAP hBitmap, int iMaxWidth);
+	/**
+	 * Requests the common-control tooltip to recalculate and repaint the active tool.
+	 */
+	void RefreshCurrentTool();
 	BOOL SubclassWindow(HWND hWnd);
 
 protected:

@@ -10,6 +10,8 @@ constexpr std::uint64_t kPartialVideoPreviewMinCompletedPermille = 5;
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedBytes = 1ull * 1024ull * 1024ull;
 constexpr std::uint64_t kPartialVideoPreviewMaxCompletedBytes = 64ull * 1024ull * 1024ull;
 constexpr std::uint64_t kVideoThumbnailRefreshIntervalMs = 90ull * 1000ull;
+constexpr std::uint64_t kVideoThumbnailRefreshDeltaPermille = 50;
+constexpr std::uint64_t kVideoThumbnailRefreshMaxDeltaBytes = 128ull * 1024ull * 1024ull;
 constexpr int kVideoThumbnailDisplayMaxWidth = 480;
 
 /**
@@ -71,11 +73,33 @@ inline bool HasEnoughCompletedDataForPartialVideoPreview(std::uint64_t ullFileSi
 }
 
 /**
- * Returns whether a cached thumbnail can be refreshed with newer completed data.
+ * Returns the completed-data delta needed before a cached thumbnail is stale.
  */
-inline bool ShouldRefreshVideoThumbnail(std::uint64_t ullCachedCompletedSize, std::uint64_t ullCurrentCompletedSize)
+inline std::uint64_t GetVideoThumbnailRefreshRequiredCompletedDelta(std::uint64_t ullFileSize)
 {
-	return ullCurrentCompletedSize > ullCachedCompletedSize;
+	if (ullFileSize == 0)
+		return kVideoThumbnailRefreshMaxDeltaBytes;
+
+	const std::uint64_t ullWhole = (ullFileSize / 1000ull) * kVideoThumbnailRefreshDeltaPermille;
+	const std::uint64_t ullRemainder = ((ullFileSize % 1000ull) * kVideoThumbnailRefreshDeltaPermille + 999ull) / 1000ull;
+	std::uint64_t ullRequired = ullWhole + ullRemainder;
+	if (ullRequired == 0)
+		ullRequired = 1;
+	if (ullRequired > kVideoThumbnailRefreshMaxDeltaBytes)
+		ullRequired = kVideoThumbnailRefreshMaxDeltaBytes;
+	return ullRequired;
+}
+
+/**
+ * Returns whether a cached thumbnail can be refreshed with meaningfully newer completed data.
+ */
+inline bool ShouldRefreshVideoThumbnail(std::uint64_t ullCachedCompletedSize, std::uint64_t ullCurrentCompletedSize, std::uint64_t ullFileSize)
+{
+	if (ullCurrentCompletedSize <= ullCachedCompletedSize)
+		return false;
+	if (ullFileSize > 0 && ullCurrentCompletedSize >= ullFileSize)
+		return true;
+	return ullCurrentCompletedSize - ullCachedCompletedSize >= GetVideoThumbnailRefreshRequiredCompletedDelta(ullFileSize);
 }
 
 /**
@@ -87,13 +111,48 @@ inline bool IsVideoThumbnailAttemptDue(std::uint64_t ullCurrentTick, std::uint64
 }
 
 /**
+ * Returns whether the current progress has reached a percentage threshold without overflowing large sizes.
+ */
+inline bool HasReachedCompletedPermille(std::uint64_t ullFileSize, std::uint64_t ullCompletedSize, std::uint64_t ullRequiredPermille)
+{
+	if (ullFileSize == 0)
+		return false;
+	if (ullCompletedSize >= ullFileSize)
+		return true;
+
+	const std::uint64_t ullWhole = (ullFileSize / 1000ull) * ullRequiredPermille;
+	const std::uint64_t ullRemainder = ((ullFileSize % 1000ull) * ullRequiredPermille + 999ull) / 1000ull;
+	return ullCompletedSize >= ullWhole + ullRemainder;
+}
+
+/**
+ * Selects a conservative scene timestamp that moves deeper as more of a video arrives.
+ */
+inline std::uint32_t GetVideoThumbnailCaptureStartSecond(std::uint64_t ullFileSize, std::uint64_t ullCompletedSize)
+{
+	if (HasReachedCompletedPermille(ullFileSize, ullCompletedSize, 950ull))
+		return 180;
+	if (HasReachedCompletedPermille(ullFileSize, ullCompletedSize, 500ull))
+		return 120;
+	if (HasReachedCompletedPermille(ullFileSize, ullCompletedSize, 250ull))
+		return 90;
+	if (HasReachedCompletedPermille(ullFileSize, ullCompletedSize, 100ull))
+		return 60;
+	if (HasReachedCompletedPermille(ullFileSize, ullCompletedSize, 50ull))
+		return 30;
+	return 15;
+}
+
+/**
  * Builds a VLC command line that captures one thumbnail into the scene output directory.
  */
-inline CString BuildVlcThumbnailCommandLine(const CString &rstrVlcPath, const CString &rstrInputPath, const CString &rstrOutputDirectory, const CString &rstrOutputPrefix)
+inline CString BuildVlcThumbnailCommandLine(const CString &rstrVlcPath, const CString &rstrInputPath, const CString &rstrOutputDirectory, const CString &rstrOutputPrefix, std::uint32_t uStartSecond)
 {
 	CString strCommandLine(FileCompletionCommandSeams::QuoteCommandLineArgument(rstrVlcPath));
-	strCommandLine += _T(" --intf dummy --dummy-quiet --no-audio --no-video-title-show --no-sub-autodetect-file");
-	strCommandLine += _T(" --video-filter=scene --scene-format=png --scene-ratio=1 --start-time=15 --stop-time=16 --run-time=1");
+	strCommandLine += _T(" --intf dummy --dummy-quiet --vout=dummy --no-embedded-video --no-video-deco --no-qt-error-dialogs");
+	strCommandLine += _T(" --no-audio --no-video-title-show --no-sub-autodetect-file");
+	strCommandLine += _T(" --video-filter=scene --scene-format=png --scene-ratio=1");
+	strCommandLine.AppendFormat(_T(" --start-time=%u --stop-time=%u --run-time=1"), uStartSecond, uStartSecond + 1);
 	strCommandLine += _T(" ");
 	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(_T("--scene-prefix=") + rstrOutputPrefix);
 	strCommandLine += _T(" ");

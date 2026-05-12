@@ -191,6 +191,7 @@ CVideoThumbnailThread::CVideoThumbnailThread()
 	, m_strFileHash()
 	, m_strCachePath()
 	, m_hNotifyWnd()
+	, m_ullFileSize()
 	, m_ullCompletedSize()
 {
 }
@@ -217,7 +218,8 @@ BOOL CVideoThumbnailThread::Run()
 	try {
 		if (m_pPartfile->CopyPartFile(m_aFilled, strPreviewName)) {
 			DWORD dwExitCode = 0;
-			const CString strCommandLine(PartFilePreviewSeams::BuildVlcThumbnailCommandLine(m_strCommand, strPreviewName, m_pPartfile->GetTmpPath(), strPrefix));
+			const uint32 uStartSecond = PartFilePreviewSeams::GetVideoThumbnailCaptureStartSecond(m_ullFileSize, m_ullCompletedSize);
+			const CString strCommandLine(PartFilePreviewSeams::BuildVlcThumbnailCommandLine(m_strCommand, strPreviewName, m_pPartfile->GetTmpPath(), strPrefix, uStartSecond));
 			if (RunVlcThumbnailCommand(strCommandLine, m_pPartfile->GetTmpPath(), dwExitCode)) {
 				const CString strThumbnailPath(FindGeneratedThumbnail(m_pPartfile->GetTmpPath(), strPrefix));
 				HBITMAP hBitmap = NULL;
@@ -256,6 +258,7 @@ void CVideoThumbnailThread::SetValues(CPartFile *pPartFile, LPCTSTR pszCommand, 
 	m_strFileHash = md4str(pPartFile->GetFileHash());
 	m_strCachePath = pszCachePath;
 	m_hNotifyWnd = hNotifyWnd;
+	m_ullFileSize = static_cast<uint64>(pPartFile->GetFileSize());
 	m_ullCompletedSize = static_cast<uint64>(pPartFile->GetCompletedSize());
 }
 
