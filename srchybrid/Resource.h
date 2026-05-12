@@ -2893,6 +2893,7 @@
 #define IDS_DIAG_DUMP_FAILURE                  2212
 #define IDS_DIAG_DUMP_LOG_SUCCESS              2213
 #define IDS_DIAG_DUMP_LOG_FAILURE              2214
+#define IDS_CHECK_OPEN_PORTS                   2215
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025
@@ -2974,6 +2975,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        3055
 #define _APS_NEXT_COMMAND_VALUE         32773
 #define _APS_NEXT_CONTROL_VALUE         3084
-#define _APS_NEXT_SYMED_VALUE           2215
+#define _APS_NEXT_SYMED_VALUE           2216
 #endif
 #endif

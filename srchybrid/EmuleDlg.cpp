@@ -3281,6 +3281,9 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 			dlg.DoModal();
 		}
 		break;
+	case MP_HM_CHECK_OPEN_PORTS:
+		TriggerPortTest(thePrefs.GetPort(), thePrefs.GetUDPPort());
+		break;
 	case MP_HM_GEOLOCATION_DOWNLOAD:
 		if (theApp.geolocation != NULL)
 			theApp.geolocation->QueueManualRefresh();
@@ -3377,6 +3380,7 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 		UINT uGeoLocationMenuFlags = MF_STRING;
 		if (!thePrefs.IsGeoLocationEnabled())
 			uGeoLocationMenuFlags |= MF_GRAYED;
+		menu.AppendMenu(MF_STRING, MP_HM_CHECK_OPEN_PORTS, GetResString(IDS_CHECK_OPEN_PORTS), _T("WEB"));
 		menu.AppendMenu(uGeoLocationMenuFlags, MP_HM_GEOLOCATION_DOWNLOAD, GetResString(IDS_GEOLOCATION_DOWNLOAD_DB), _T("DOWNLOAD"));
 		menu.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("TOOLS"));
 		menu.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
