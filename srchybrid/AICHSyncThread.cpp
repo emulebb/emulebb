@@ -57,7 +57,8 @@ namespace
 		if (theApp.downloadqueue == NULL)
 			return false;
 
-		for (POSITION pos = NULL; ; ) {
+		POSITION pos = NULL;
+		for (INT_PTR i = 0, iCount = theApp.downloadqueue->GetFileCount(); i < iCount; ++i) {
 			const CPartFile *pPartFile = theApp.downloadqueue->GetFileNext(pos);
 			if (pPartFile == NULL)
 				break;

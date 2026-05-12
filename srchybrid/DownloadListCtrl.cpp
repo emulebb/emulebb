@@ -322,13 +322,15 @@ CPartFile* CDownloadListCtrl::FindVideoThumbnailFileByKey(const CString &rstrKey
 {
 	if (theApp.downloadqueue == NULL || rstrKey.IsEmpty())
 		return NULL;
-	for (POSITION pos = NULL;;) {
+	POSITION pos = NULL;
+	for (INT_PTR i = 0, iCount = theApp.downloadqueue->GetFileCount(); i < iCount; ++i) {
 		CPartFile *pPartFile = theApp.downloadqueue->GetFileNext(pos);
 		if (pPartFile == NULL)
-			return NULL;
+			break;
 		if (rstrKey.CompareNoCase(md4str(pPartFile->GetFileHash())) == 0)
 			return pPartFile;
 	}
+	return NULL;
 }
 
 HBITMAP CDownloadListCtrl::GetCachedVideoThumbnail(CPartFile *pPartFile)
@@ -393,7 +395,8 @@ void CDownloadListCtrl::QueueVideoThumbnailScan()
 {
 	if (theApp.downloadqueue == NULL)
 		return;
-	for (POSITION pos = NULL;;) {
+	POSITION pos = NULL;
+	for (INT_PTR i = 0, iCount = theApp.downloadqueue->GetFileCount(); i < iCount; ++i) {
 		CPartFile *pPartFile = theApp.downloadqueue->GetFileNext(pos);
 		if (pPartFile == NULL)
 			break;
