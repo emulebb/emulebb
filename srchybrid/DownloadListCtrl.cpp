@@ -505,12 +505,15 @@ void CDownloadListCtrl::RemoveVideoThumbnailCache(const CPartFile *pPartFile)
 void CDownloadListCtrl::OnMouseMove(UINT nFlags, CPoint point)
 {
 	CPartFile *pHoveredFile = NULL;
+	bool bHoveringFileName = false;
 	LVHITTESTINFO hitTest = {};
 	hitTest.pt = point;
 	if (SubItemHitTest(&hitTest) >= 0) {
 		const CtrlItem_Struct *pCtrlItem = reinterpret_cast<CtrlItem_Struct*>(GetItemData(hitTest.iItem));
-		if (IsLiveFileItem(pCtrlItem))
+		if (IsLiveFileItem(pCtrlItem)) {
 			pHoveredFile = static_cast<CPartFile*>(pCtrlItem->value);
+			bHoveringFileName = hitTest.iSubItem == 0;
+		}
 		else if (pCtrlItem != NULL && pCtrlItem->type == FILE_TYPE)
 			PruneStaleFileItems();
 	}
@@ -520,8 +523,14 @@ void CDownloadListCtrl::OnMouseMove(UINT nFlags, CPoint point)
 		if (pHoveredFile == NULL)
 			m_tooltip.SetPreviewBitmap(NULL, 0);
 	}
-	if (pHoveredFile != NULL)
+	if (pHoveredFile != NULL && bHoveringFileName && pHoveredFile->IsMovie() && thePrefs.UseVideoPreviewThumbnails()) {
+		HBITMAP hBitmap = GetCachedVideoThumbnail(pHoveredFile);
+		m_tooltip.SetPreviewBitmap(hBitmap, hBitmap != NULL ? PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth : 0);
+		if (hBitmap != NULL && ::IsWindowVisible(m_tooltip.GetSafeHwnd()))
+			m_tooltip.RefreshCurrentTool();
 		QueueVideoThumbnail(pHoveredFile, true);
+	} else if (pHoveredFile == NULL || !bHoveringFileName)
+		m_tooltip.SetPreviewBitmap(NULL, 0);
 
 	CMuleListCtrl::OnMouseMove(nFlags, point);
 }
@@ -3006,8 +3015,10 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 				info = pPartFile->GetInfoSummary();
 				if (pPartFile->IsMovie() && thePrefs.UseVideoPreviewThumbnails()) {
 					HBITMAP hBitmap = GetCachedVideoThumbnail(pPartFile);
-					if (hBitmap != NULL)
+					if (hBitmap != NULL) {
 						m_tooltip.SetPreviewBitmap(hBitmap, PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth);
+						m_tooltip.RefreshCurrentTool();
+					}
 					else
 						m_tooltip.SetPreviewBitmap(NULL, 0);
 					bPreviewBitmapHandled = true;
