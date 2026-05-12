@@ -3434,7 +3434,6 @@ void CemuleDlg::ApplyHyperTextFont(LPLOGFONT pFont)
 	theApp.m_fontHyperText.DeleteObject();
 	if (theApp.m_fontHyperText.CreateFontIndirect(pFont)) {
 		thePrefs.SetHyperTextFont(pFont);
-		serverwnd->servermsgbox->SetFont(&theApp.m_fontHyperText);
 		chatwnd->chatselector.UpdateFonts(&theApp.m_fontHyperText);
 		ircwnd->UpdateFonts(&theApp.m_fontHyperText);
 	}
@@ -3445,6 +3444,7 @@ void CemuleDlg::ApplyLogFont(LPLOGFONT pFont)
 	theApp.m_fontLog.DeleteObject();
 	if (theApp.m_fontLog.CreateFontIndirect(pFont)) {
 		thePrefs.SetLogFont(pFont);
+		serverwnd->servermsgbox->SetFont(&theApp.m_fontLog);
 		serverwnd->logbox->SetFont(&theApp.m_fontLog);
 		serverwnd->debuglog->SetFont(&theApp.m_fontLog);
 	}

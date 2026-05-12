@@ -32,6 +32,7 @@
 #include "Log.h"
 #include "UserMsgs.h"
 #include "Version.h"
+#include "OtherFunctions.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -99,10 +100,7 @@ CServerWnd::~CServerWnd()
 BOOL CServerWnd::OnInitDialog()
 {
 	if (theApp.m_fontLog.m_hObject == NULL) {
-		CFont *pFont = GetDlgItem(IDC_SSTATIC)->GetFont();
-		LOGFONT lf;
-		pFont->GetObject(sizeof lf, &lf);
-		theApp.m_fontLog.CreateFontIndirect(&lf);
+		VERIFY(CreatePointFont(theApp.m_fontLog, 10 * 10, _T("Consolas")));
 	}
 
 	CResizableDialog::OnInitDialog();
@@ -120,7 +118,7 @@ BOOL CServerWnd::OnInitDialog()
 		servermsgbox->ModifyStyleEx(0, WS_EX_STATICEDGE, SWP_FRAMECHANGED);
 		servermsgbox->SendMessage(EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(3, 3));
 		servermsgbox->SetEventMask(servermsgbox->GetEventMask() | ENM_LINK);
-		servermsgbox->SetFont(&theApp.m_fontHyperText);
+		servermsgbox->SetFont(&theApp.m_fontLog);
 		servermsgbox->ApplySkin();
 		servermsgbox->SetTitle(GetResString(IDS_SV_SERVERINFO));
 

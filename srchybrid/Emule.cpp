@@ -2852,14 +2852,12 @@ void CemuleApp::CreateAllFonts()
 		CreatePointFont(m_fontHyperText, 10 * 10, lfDefault.lfFaceName);
 
 	///////////////////////////////////////////////////////////////////////////
-	// Verbose Log-font
+	// Server, log and verbose log font
 	//
-	// Why can't this font set via the font dialog??
-//	HFONT hFontMono = CreateFont(10, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, _T("Lucida Console"));
-//	m_fontLog.Attach(hFontMono);
-	LPLOGFONT plfLog = thePrefs.GetLogFont();
-	if (plfLog->lfFaceName[0])
-		m_fontLog.CreateFontIndirect(plfLog);
+	// Use one fixed-width font for all diagnostic text panes so aligned log
+	// output stays readable and consistent.
+	//
+	VERIFY(CreatePointFont(m_fontLog, 10 * 10, _T("Consolas")));
 
 	///////////////////////////////////////////////////////////////////////////
 	// Font used for Message and IRC edit control, default font, just a little
