@@ -3020,7 +3020,7 @@ void CPreferences::LoadPreferences()
 	m_iDebugSearchResultDetailLevel = 0;
 #endif
 
-	m_bpreviewprio = ini.GetBool(_T("PreviewPrio"), false);
+	m_bpreviewprio = ini.GetBool(_T("PreviewPrio"), true);
 	m_bupdatequeuelist = ini.GetBool(_T("UpdateQueueListPref"), false);
 	m_bManualAddedServersHighPriority = ini.GetBool(_T("ManualHighPrio"), false);
 	m_btransferfullchunks = ini.GetBool(_T("FullChunkTransfers"), true);

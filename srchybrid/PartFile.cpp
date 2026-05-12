@@ -3805,25 +3805,12 @@ void CPartFile::PreviewFile()
 
 bool CPartFile::IsReadyForVideoThumbnail() const
 {
-	const EPartFileStatus uStatus = GetStatus();
-	bool bPreviewableStatus = false;
-	switch (uStatus) {
-	case PS_READY:
-	case PS_EMPTY:
-	case PS_PAUSED:
-	case PS_INSUFFICIENT:
-		bPreviewableStatus = true;
-		break;
-	default:
-		break;
-	}
-
 	return thePrefs.UseVideoPreviewThumbnails()
 		&& PartFilePreviewSeams::IsConfiguredVlcPreviewPlayer(thePrefs.GetVideoPlayer())
 		&& IsMovie()
 		&& !m_bPreviewing
-		&& bPreviewableStatus
-		&& PartFilePreviewSeams::HasEnoughCompletedDataForPartialVideoPreview(static_cast<uint64>(m_nFileSize), static_cast<uint64>(GetCompletedSize()));
+		&& static_cast<uint64>(m_nFileSize) > 0
+		&& static_cast<uint64>(GetCompletedSize()) > 0;
 }
 
 bool CPartFile::IsReadyForPreview() const
@@ -5335,6 +5322,8 @@ bool CPartFile::CopyPartFile(CArray<Gap_Struct> &raFilled, const CString &tempFi
 {
 	const INT_PTR iLast = raFilled.GetCount() - 1;
 	ASSERT(iLast >= 0);
+	if (iLast < 0)
+		return false;
 	try {
 		// Create destination file and set length to the last filled end position
 		CSafeFile destFile;
@@ -5350,13 +5339,15 @@ bool CPartFile::CopyPartFile(CArray<Gap_Struct> &raFilled, const CString &tempFi
 				BYTE buffer[16384];
 				OVERLAPPED ovr{0, 0, {{LODWORD(uStart), HIDWORD(uStart)}}};
 				OVERLAPPED ovw = ovr;
-				DWORD lenData = (DWORD)min(uStart - fill.end, sizeof buffer);
+				DWORD lenData = static_cast<DWORD>(min(fill.end - uStart, static_cast<uint64>(sizeof buffer)));
 				DWORD dwRead;
 				if (!::ReadFile((HANDLE)m_hpartfile, buffer, lenData, &dwRead, &ovr))
 					CFileException::ThrowOsError((LONG)::GetLastError(), GetFileName());
+				if (dwRead == 0)
+					CFileException::ThrowOsError(ERROR_HANDLE_EOF, GetFileName());
 				if (!::WriteFile((HANDLE)destFile, buffer, dwRead, NULL, &ovw))
 					CFileException::ThrowOsError((LONG)::GetLastError(), tempFileName);
-				ASSERT(dwRead && dwRead < fill.end);
+				ASSERT(dwRead <= lenData);
 				uStart += dwRead;
 			}
 		}

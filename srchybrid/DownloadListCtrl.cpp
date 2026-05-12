@@ -255,7 +255,7 @@ void CDownloadListCtrl::Init()
 	}
 	SortItems(SortProc, MAKELONG(GetSortItem() + adder, !GetSortAscending()));
 	InitializeVideoThumbnailCache();
-	SetTimer(kVideoThumbnailTimerId, static_cast<UINT>(PartFilePreviewSeams::kVideoThumbnailRefreshIntervalMs), NULL);
+	SetTimer(kVideoThumbnailTimerId, static_cast<UINT>(PartFilePreviewSeams::kVideoThumbnailScanIntervalMs), NULL);
 	QueueVideoThumbnailScan();
 }
 

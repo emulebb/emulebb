@@ -9,7 +9,9 @@ namespace PartFilePreviewSeams
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedPermille = 5;
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedBytes = 1ull * 1024ull * 1024ull;
 constexpr std::uint64_t kPartialVideoPreviewMaxCompletedBytes = 64ull * 1024ull * 1024ull;
-constexpr std::uint64_t kVideoThumbnailRefreshIntervalMs = 90ull * 1000ull;
+constexpr std::uint64_t kVideoThumbnailScanIntervalMs = 10ull * 1000ull;
+constexpr std::uint64_t kVideoThumbnailRetryIntervalMs = 15ull * 1000ull;
+constexpr std::uint64_t kVideoThumbnailRefreshIntervalMs = kVideoThumbnailRetryIntervalMs;
 constexpr std::uint64_t kVideoThumbnailRefreshDeltaPermille = 50;
 constexpr std::uint64_t kVideoThumbnailRefreshMaxDeltaBytes = 128ull * 1024ull * 1024ull;
 constexpr int kVideoThumbnailDisplayMaxWidth = 480;
