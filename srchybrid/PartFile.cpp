@@ -4850,6 +4850,28 @@ struct Chunk
 };
 #pragma pack(pop)
 
+bool CPartFile::TryStealEndgameBlockForFastPeer(CUpDownClient *pFastPeer, bool bEndgame, ULONGLONG ullNow, uint16 *pCanceledPart)
+{
+	if (pCanceledPart != NULL)
+		*pCanceledPart = _UI16_MAX;
+	if (!bEndgame || pFastPeer == NULL || pFastPeer->GetDownloadState() != DS_DOWNLOADING)
+		return false;
+
+	for (POSITION pos = m_downloadingSourceList.GetHeadPosition(); pos != NULL;) {
+		CUpDownClient *pSlowPeer = m_downloadingSourceList.GetNext(pos);
+		if (pSlowPeer == NULL || pSlowPeer == pFastPeer || pSlowPeer->GetDownloadState() != DS_DOWNLOADING)
+			continue;
+
+		UINT uCanceledPart = (UINT)-1;
+		if (pSlowPeer->CancelEndgameReservationForFasterPeer(this, pFastPeer, bEndgame, ullNow, &uCanceledPart)) {
+			if (pCanceledPart != NULL && uCanceledPart <= _UI16_MAX)
+				*pCanceledPart = static_cast<uint16>(uCanceledPart);
+			return true;
+		}
+	}
+	return false;
+}
+
 bool CPartFile::GetNextRequestedBlock(CUpDownClient *sender, Requested_Block_Struct **newblocks
 	, int &iCount) /*const*/
 {
@@ -4904,6 +4926,9 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient *sender, Requested_Block_Str
 	const ULONGLONG nowTick = ::GetTickCount64();
 	if (!endgame)
 		m_ullEndgameFastPeerWaitStart = 0;
+	uint16 stolenPart = _UI16_MAX;
+	if (TryStealEndgameBlockForFastPeer(sender, endgame, nowTick, &stolenPart) && stolenPart != _UI16_MAX)
+		sender->m_lastPartAsked = stolenPart;
 
 	auto canFasterPeerServePart = [&](UINT uPart) {
 		if (!lateDownload)

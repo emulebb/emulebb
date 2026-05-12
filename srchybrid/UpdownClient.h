@@ -329,6 +329,10 @@ public:
 	virtual void	ProcessHttpBlockPacket(const BYTE *pucData, UINT uSize);
 	void			ClearPendingBlockRequest(const Pending_Block_Struct *pending);
 	void			ClearDownloadBlockRequests();
+	/**
+	 * @brief Cancels this client's endgame block reservation when a faster active peer can claim it.
+	 */
+	bool			CancelEndgameReservationForFasterPeer(const CPartFile *file, const CUpDownClient *fastPeer, bool bEndgame, ULONGLONG ullNow, UINT *pCanceledPart);
 	void			SendOutOfPartReqsAndAddToWaitingQueue();
 	UINT			CalculateDownloadRate();
 	uint16			GetAvailablePartCount() const;
@@ -635,6 +639,7 @@ protected:
 	CTypedPtrList<CPtrList, Pending_Block_Struct*> m_PendingBlocks_list;
 	typedef CMap<const CPartFile*, const CPartFile*, ULONGLONG, ULONGLONG> CFileReaskTimesMap;
 	CFileReaskTimesMap m_fileReaskTimes;	// ZZ:DownloadManager (one re-ask timestamp for each file)
+	CFileReaskTimesMap m_fileEndgameCancelTimes;
 	ULONGLONG lastSwapForSourceExchangeTick;	// ZZ:DownloadManaager
 	ULONGLONG m_dwLastTriedToConnect;			// ZZ:DownloadManager (one re-ask timestamp for each file)
 	ULONGLONG m_lastRefreshedDLDisplay;

@@ -47,6 +47,11 @@ constexpr uint64 kFastPeerWaitMs = 15u * 1000u;
  */
 constexpr uint32 kMeaningfullyFasterFactor = 5u;
 
+/**
+ * @brief Per-file cooldown after canceling a slow endgame owner for a faster peer.
+ */
+constexpr uint64 kEndgameStealCooldownMs = 60u * 1000u;
+
 enum class ReservationAction : uint8
 {
 	AllowFull,
@@ -111,6 +116,28 @@ inline bool IsMeaningfullyFasterPeer(const uint32 currentPeerRate, const uint32 
 		return true;
 
 	return candidatePeerRate / kMeaningfullyFasterFactor >= currentPeerRate;
+}
+
+/**
+ * @brief Returns true when the slow-owner steal cooldown has elapsed.
+ */
+inline bool IsEndgameStealCooldownExpired(const uint64 nowTick, const uint64 cooldownUntilTick)
+{
+	return cooldownUntilTick == 0 || nowTick >= cooldownUntilTick;
+}
+
+/**
+ * @brief Returns true when a slow final-block owner should be canceled for a faster active peer.
+ */
+inline bool ShouldStealEndgameReservation(const bool endgame, const bool fasterPeerCanServePart,
+	const uint32 slowPeerDatarate, const uint32 fastPeerDatarate, const uint64 nowTick,
+	const uint64 cooldownUntilTick, const uint64 transferredBytes)
+{
+	(void)transferredBytes;
+	return endgame
+		&& fasterPeerCanServePart
+		&& IsEndgameStealCooldownExpired(nowTick, cooldownUntilTick)
+		&& IsMeaningfullyFasterPeer(slowPeerDatarate, fastPeerDatarate);
 }
 
 /**

@@ -29,6 +29,7 @@
 #include "CompressionBufferSeams.h"
 #include "ProtocolGuards.h"
 #include "SourceExchangeSeams.h"
+#include "PartFileEndgameSeams.h"
 #include "emuledlg.h"
 #include "UserMsgs.h"
 #include "TransferDlg.h"
@@ -601,6 +602,47 @@ void CUpDownClient::ClearDownloadBlockRequests()
 {
 	while (!m_PendingBlocks_list.IsEmpty())
 		ClearPendingBlockRequest(m_PendingBlocks_list.RemoveHead());
+}
+
+bool CUpDownClient::CancelEndgameReservationForFasterPeer(const CPartFile *file, const CUpDownClient *fastPeer, bool bEndgame, ULONGLONG ullNow, UINT *pCanceledPart)
+{
+	if (pCanceledPart != NULL)
+		*pCanceledPart = (UINT)-1;
+	if (file == NULL || fastPeer == NULL || fastPeer == this || m_reqfile != file || GetDownloadState() != DS_DOWNLOADING)
+		return false;
+
+	ULONGLONG ullCooldownUntil = 0;
+	m_fileEndgameCancelTimes.Lookup(file, ullCooldownUntil);
+	for (POSITION pos = m_PendingBlocks_list.GetHeadPosition(); pos != NULL;) {
+		const Pending_Block_Struct *pending = m_PendingBlocks_list.GetNext(pos);
+		if (pending == NULL || pending->block == NULL)
+			continue;
+
+		const UINT uPart = (UINT)(pending->block->StartOffset / PARTSIZE);
+		if (!fastPeer->IsPartAvailable(uPart))
+			continue;
+
+		if (!PartFileEndgameSeams::ShouldStealEndgameReservation(
+			bEndgame,
+			true,
+			GetDownloadDatarate(),
+			fastPeer->GetDownloadDatarate(),
+			static_cast<uint64>(ullNow),
+			static_cast<uint64>(ullCooldownUntil),
+			pending->block->transferred))
+		{
+			continue;
+		}
+
+		m_fileEndgameCancelTimes.SetAt(file, ullNow + PartFileEndgameSeams::kEndgameStealCooldownMs);
+		if (pCanceledPart != NULL)
+			*pCanceledPart = uPart;
+		if (socket != NULL && IsEd2kClient())
+			SendCancelTransfer();
+		SetDownloadState(DS_ONQUEUE, _T("Endgame block reassigned to a faster source."));
+		return true;
+	}
+	return false;
 }
 
 void CUpDownClient::SetDownloadState(EDownloadState nNewState, LPCTSTR pszReason)

@@ -371,6 +371,7 @@ private:
 	bool	HasDirtyBufferedData() const;
 	bool	FlushBufferedDataForShutdown();
 	void	NoteHashLayoutChanged();
+	bool	TryStealEndgameBlockForFastPeer(CUpDownClient *pFastPeer, bool bEndgame, ULONGLONG ullNow, uint16 *pCanceledPart);
 	/**
 	 * @brief Returns whether an insufficient-space download may resume under the current per-volume disk-space floors.
 	 */
