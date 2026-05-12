@@ -44,6 +44,7 @@
 #include "PartFilePauseResumeSeams.h"
 #include "PartFilePreviewSeams.h"
 #include "PartFilePersistenceSeams.h"
+#include "PartFileEndgameSeams.h"
 #include "SafeFile.h"
 #include "StringConversion.h"
 #include "UserMsgs.h"
@@ -384,6 +385,7 @@ void CPartFile::Init()
 	availablePartsCount = 0;
 	m_ClientSrcAnswered = 0;
 	m_LastNoNeededCheck = 0;
+	m_ullEndgameFastPeerWaitStart = 0;
 	m_uPartsSavedDueICH = 0;
 	m_datarate = 0;
 	m_percentcompleted = 0;
@@ -1988,7 +1990,7 @@ uint64 CPartFile::GetTotalGapSizeInPart(UINT uPart) const
 	return GetTotalGapSizeInRange(uPart * PARTSIZE, uPart * PARTSIZE + PARTSIZE - 1);
 }
 
-bool CPartFile::GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct *pReqBlock) const
+bool CPartFile::GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct *pReqBlock, uint64 uMaxBlockBytes) const
 {
 	// Find start of this part
 	uint64 partStart = PARTSIZE * partNumber;
@@ -2025,6 +2027,7 @@ bool CPartFile::GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct 
 		uint64 blockLimit = partStart + ((start - partStart) / EMBLOCKSIZE + 1) * EMBLOCKSIZE - 1;
 		if (end > blockLimit)
 			end = blockLimit;
+		end = PartFileEndgameSeams::ClampReservationEnd(start, end, uMaxBlockBytes);
 
 		// If this gap has not already been requested, we have found a valid entry
 		if (!IsAlreadyRequested(start, end, true)) {
@@ -2041,6 +2044,7 @@ bool CPartFile::GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct 
 		uint64 tempStart = start;
 		uint64 tempEnd = end;
 		if (ShrinkToAvoidAlreadyRequested(tempStart, tempEnd)) {
+			tempEnd = PartFileEndgameSeams::ClampReservationEnd(tempStart, tempEnd, uMaxBlockBytes);
 			AddDebugLogLine(false, _T("Shrunk interval to prevent collision with already requested block: Old interval %I64u-%I64u. New interval: %I64u-%I64u. File %s."), start, end, tempStart, tempEnd, (LPCTSTR)GetFileName());
 
 			// Was this block to be returned
@@ -4886,6 +4890,51 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient *sender, Requested_Block_Str
 	// Define and create the list of the chunks to download
 	const UINT partCount = GetPartCount();
 	CList<Chunk> chunksList(partCount);
+	const uint64 fileSize = static_cast<uint64>(m_nFileSize);
+	const uint64 remainingBytes = fileSize > 0 ? GetTotalGapSizeInRange(0, fileSize - 1u) : 0u;
+	const uint64 completedBytes = fileSize > remainingBytes ? fileSize - remainingBytes : 0u;
+	const bool lateDownload = PartFileEndgameSeams::IsLateDownload(completedBytes, fileSize);
+	const bool endgame = PartFileEndgameSeams::IsEndgame(
+		completedBytes,
+		fileSize,
+		remainingBytes,
+		GetDatarate(),
+		static_cast<size_t>(requestedblocks_list.GetCount()));
+	const uint32 senderDatarate = sender->GetDownloadDatarate();
+	const ULONGLONG nowTick = ::GetTickCount64();
+	if (!endgame)
+		m_ullEndgameFastPeerWaitStart = 0;
+
+	auto canFasterPeerServePart = [&](UINT uPart) {
+		if (!lateDownload)
+			return false;
+
+		for (POSITION pos = m_downloadingSourceList.GetHeadPosition(); pos != NULL;) {
+			const CUpDownClient *source = m_downloadingSourceList.GetNext(pos);
+			if (source == NULL || source == sender || source->GetDownloadState() != DS_DOWNLOADING || !source->IsPartAvailable(uPart))
+				continue;
+			if (PartFileEndgameSeams::IsMeaningfullyFasterPeer(senderDatarate, source->GetDownloadDatarate()))
+				return true;
+		}
+		return false;
+	};
+
+	auto getReservationDecision = [&](UINT uPart) {
+		const bool fasterPeerCanServePart = canFasterPeerServePart(uPart);
+		bool fastPeerWaitExpired = true;
+		if (endgame && fasterPeerCanServePart) {
+			if (m_ullEndgameFastPeerWaitStart == 0)
+				m_ullEndgameFastPeerWaitStart = nowTick;
+			fastPeerWaitExpired = nowTick - m_ullEndgameFastPeerWaitStart >= PartFileEndgameSeams::kFastPeerWaitMs;
+		}
+		return PartFileEndgameSeams::DecideReservation(
+			lateDownload,
+			endgame,
+			fasterPeerCanServePart,
+			fastPeerWaitExpired,
+			senderDatarate,
+			EMBLOCKSIZE);
+	};
 
 	uint16 tempLastPartAsked = sender->m_lastPartAsked;
 	if (tempLastPartAsked != _UI16_MAX && (sender->GetClientSoft() != SO_EMULE || sender->GetVersion() < MAKE_CLIENT_VERSION(0, 43, 1)))
@@ -4896,8 +4945,11 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient *sender, Requested_Block_Str
 	while (newBlockCount < iCount) {
 		// Create a request block structure if a chunk has been previously selected
 		if (tempLastPartAsked != _UI16_MAX) {
-			Requested_Block_Struct *pBlock = new Requested_Block_Struct;
-			if (GetNextEmptyBlockInPart(tempLastPartAsked, pBlock)) {
+			const PartFileEndgameSeams::ReservationDecision decision = getReservationDecision(tempLastPartAsked);
+			Requested_Block_Struct *pBlock = decision.action == PartFileEndgameSeams::ReservationAction::Withhold
+				? NULL
+				: new Requested_Block_Struct;
+			if (pBlock != NULL && GetNextEmptyBlockInPart(tempLastPartAsked, pBlock, decision.maxBytes)) {
 				//AddDebugLogLine(false, _T("Got request block. Interval %i-%i. File %s. Client: %s"), pBlock->StartOffset, pBlock->EndOffset, (LPCTSTR)GetFileName(), (LPCTSTR)sender->DbgGetClientInfo());
 				// Keep track of all pending requested blocks
 				requestedblocks_list.AddTail(pBlock);
@@ -4907,7 +4959,8 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient *sender, Requested_Block_Str
 				continue;
 			}
 			// All blocks for this chunk have been already requested
-			delete pBlock;
+			if (pBlock != NULL)
+				delete pBlock;
 			// => Try to select another chunk
 			sender->m_lastPartAsked = tempLastPartAsked = _UI16_MAX;
 		}
@@ -4917,10 +4970,16 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient *sender, Requested_Block_Str
 		// This is done only one time and only if it is necessary (=> CPU load)
 		if (chunksList.IsEmpty()) {
 			// Identify the locally missing part(s) that this source has
-			for (UINT i = 0; i < partCount; ++i)
-				if (sender->IsPartAvailable(i) && GetNextEmptyBlockInPart(i, NULL))
+			for (UINT i = 0; i < partCount; ++i) {
+				const PartFileEndgameSeams::ReservationDecision decision = getReservationDecision(i);
+				if (decision.action != PartFileEndgameSeams::ReservationAction::Withhold
+					&& sender->IsPartAvailable(i)
+					&& GetNextEmptyBlockInPart(i, NULL, decision.maxBytes))
+				{
 					// Add to the list a new entry for this chunk
 					chunksList.AddTail(Chunk{(uint16)i, { m_SrcPartFrequency[i]}});
+				}
+			}
 
 			// Check if any blocks need to be downloaded
 			if (chunksList.IsEmpty())

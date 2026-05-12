@@ -357,7 +357,7 @@ public:
 	bool	m_bMD4HashsetNeeded;
 
 protected:
-	bool	GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct *pReqBlock) const;
+	bool	GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct *pReqBlock, uint64 uMaxBlockBytes = EMBLOCKSIZE) const;
 	void	CompleteFile(bool bIsHashingDone);
 	void	CreatePartFile(UINT cat = 0);
 	void	Init();
@@ -406,6 +406,7 @@ private:
 	volatile WPARAM m_uFileOpProgress;
 	ULONGLONG lastSwapForSourceExchangeTick; // ZZ:DownloadManaager
 	ULONGLONG m_lastRefreshedDLDisplay;
+	ULONGLONG m_ullEndgameFastPeerWaitStart;
 	ULONGLONG m_nLastBufferFlushTime;
 	ULONGLONG m_nNextMetFlushTime; //update .part.met file
 	ULONGLONG m_nFileFlushTime; //if file is idle long enough, flush new data to disk
