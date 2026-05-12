@@ -118,6 +118,14 @@ void CSearchDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 		//ShowControlBar(m_pwndParams, bShow, TRUE);
 		DockParametersWnd(); // Too much bug reports about vanished search parameters window. Force to dock.
 	}
+	if (bShow && m_pwndResults != NULL && ::IsWindow(m_pwndResults->GetSafeHwnd())) {
+		RecalcLayout();
+		m_pwndResults->SendMessage(WM_VSCROLL, SB_TOP);
+		m_pwndResults->SendMessage(WM_HSCROLL, SB_LEFT);
+		CRect rcResults;
+		m_pwndResults->GetClientRect(&rcResults);
+		m_pwndResults->SendMessage(WM_SIZE, SIZE_RESTORED, MAKELPARAM(rcResults.Width(), rcResults.Height()));
+	}
 }
 
 void CSearchDlg::OnSetFocus(CWnd *pOldWnd)
