@@ -185,9 +185,10 @@ IMPLEMENT_DYNCREATE(CVideoThumbnailThread, CWinThread)
 
 CVideoThumbnailThread::CVideoThumbnailThread()
 	: m_pPartfile()
-	, m_aFilled()
 	, m_strCommand()
 	, m_strTitle()
+	, m_strInputPath()
+	, m_strWorkingDirectory()
 	, m_strFileHash()
 	, m_strCachePath()
 	, m_hNotifyWnd()
@@ -212,15 +213,16 @@ BOOL CVideoThumbnailThread::Run()
 	pResult->ullCompletedSize = m_ullCompletedSize;
 
 	const CString strPrefix(MakeVideoThumbnailPrefix(*m_pPartfile));
-	CString strPreviewName(m_pPartfile->GetTmpPath());
-	strPreviewName.AppendFormat(_T("%s_preview%s"), (LPCTSTR)strPrefix, ::PathFindExtension(m_strTitle));
 
 	try {
-		if (m_pPartfile->CopyPartFile(m_aFilled, strPreviewName)) {
+		if (m_strInputPath.IsEmpty() || LongPathSeams::GetFileAttributes(m_strInputPath) == INVALID_FILE_ATTRIBUTES) {
+			pResult->eResult = PartFilePreviewSeams::VTAR_COPY_FAILED;
+			pResult->dwErrorCode = ::GetLastError();
+		} else {
 			DWORD dwExitCode = 0;
 			const uint32 uStartSecond = PartFilePreviewSeams::GetVideoThumbnailCaptureStartSecond(m_ullFileSize, m_ullCompletedSize);
-			const CString strCommandLine(PartFilePreviewSeams::BuildVlcThumbnailCommandLine(m_strCommand, strPreviewName, m_pPartfile->GetTmpPath(), strPrefix, uStartSecond));
-			if (!RunVlcThumbnailCommand(strCommandLine, m_pPartfile->GetTmpPath(), dwExitCode)) {
+			const CString strCommandLine(PartFilePreviewSeams::BuildVlcThumbnailCommandLine(m_strCommand, m_strInputPath, m_strWorkingDirectory, strPrefix, uStartSecond));
+			if (!RunVlcThumbnailCommand(strCommandLine, m_strWorkingDirectory, dwExitCode)) {
 				pResult->dwErrorCode = dwExitCode;
 				if (dwExitCode == ERROR_BUSY)
 					pResult->eResult = PartFilePreviewSeams::VTAR_VLC_BUSY;
@@ -248,8 +250,7 @@ BOOL CVideoThumbnailThread::Run()
 				if (hBitmap != NULL)
 					::DeleteObject(hBitmap);
 			}
-		} else
-			pResult->eResult = PartFilePreviewSeams::VTAR_COPY_FAILED;
+		}
 	} catch (CFileException *ex) {
 		pResult->eResult = PartFilePreviewSeams::VTAR_EXCEPTION;
 		pResult->dwErrorCode = static_cast<DWORD>(ex->m_lOsError);
@@ -259,9 +260,7 @@ BOOL CVideoThumbnailThread::Run()
 	}
 
 	m_pPartfile->m_bPreviewing = false;
-	m_aFilled.RemoveAll();
-	DeleteGeneratedThumbnails(m_pPartfile->GetTmpPath(), strPrefix);
-	(void)LongPathSeams::DeleteFile(strPreviewName);
+	DeleteGeneratedThumbnails(m_strWorkingDirectory, strPrefix);
 
 	if (!::IsWindow(m_hNotifyWnd) || !::PostMessage(m_hNotifyWnd, TM_VIDEOTHUMBNAILFINISHED, 0, reinterpret_cast<LPARAM>(pResult)))
 		delete pResult;
@@ -271,9 +270,10 @@ BOOL CVideoThumbnailThread::Run()
 void CVideoThumbnailThread::SetValues(CPartFile *pPartFile, LPCTSTR pszCommand, HWND hNotifyWnd, LPCTSTR pszCachePath)
 {
 	m_pPartfile = pPartFile;
-	pPartFile->GetFilledArray(m_aFilled);
 	m_strCommand = pszCommand;
 	m_strTitle = pPartFile->GetFileName();
+	m_strInputPath = pPartFile->GetFilePath();
+	m_strWorkingDirectory = pPartFile->GetTmpPath();
 	m_strFileHash = md4str(pPartFile->GetFileHash());
 	m_strCachePath = pszCachePath;
 	m_hNotifyWnd = hNotifyWnd;

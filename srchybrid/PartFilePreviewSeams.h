@@ -174,7 +174,7 @@ inline std::uint32_t GetVideoThumbnailCaptureStartSecond(std::uint64_t ullFileSi
 inline CString BuildVlcThumbnailCommandLine(const CString &rstrVlcPath, const CString &rstrInputPath, const CString &rstrOutputDirectory, const CString &rstrOutputPrefix, std::uint32_t uStartSecond)
 {
 	CString strCommandLine(FileCompletionCommandSeams::QuoteCommandLineArgument(rstrVlcPath));
-	strCommandLine += _T(" --intf dummy --dummy-quiet --vout=dummy --no-embedded-video --no-video-deco --no-qt-error-dialogs");
+	strCommandLine += _T(" --intf dummy --dummy-quiet --no-interact --no-crashdump --vout=dummy --no-embedded-video --no-video-deco --no-qt-error-dialogs");
 	strCommandLine += _T(" --no-audio --no-video-title-show --no-sub-autodetect-file");
 	strCommandLine += _T(" --video-filter=scene --scene-format=png --scene-ratio=1");
 	strCommandLine.AppendFormat(_T(" --start-time=%u --stop-time=%u --run-time=1"), uStartSecond, uStartSecond + 1);

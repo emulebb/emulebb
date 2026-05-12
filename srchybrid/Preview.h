@@ -49,7 +49,7 @@ bool ReadVideoThumbnailBitmapFile(const CString &rstrPath, HBITMAP &rhBitmap);
 // CVideoThumbnailThread
 
 /**
- * Copies the currently available part-file data and asks VLC to render one preview thumbnail.
+ * Asks VLC to render one preview thumbnail from the current part file.
  */
 class CVideoThumbnailThread : public CWinThread
 {
@@ -64,9 +64,10 @@ protected:
 	CVideoThumbnailThread();
 
 	CPartFile *m_pPartfile;
-	CArray<Gap_Struct> m_aFilled;
 	CString m_strCommand;
 	CString m_strTitle;
+	CString m_strInputPath;
+	CString m_strWorkingDirectory;
 	CString m_strFileHash;
 	CString m_strCachePath;
 	HWND m_hNotifyWnd;
