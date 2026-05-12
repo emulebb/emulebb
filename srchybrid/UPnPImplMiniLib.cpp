@@ -17,6 +17,7 @@
 #include "StdAfx.h"
 #include "preferences.h"
 #include "UPnPImplMiniLib.h"
+#include "UPnPImplMiniLibSeams.h"
 #include "FormatSafetySeams.h"
 #include "Log.h"
 #include "Otherfunctions.h"
@@ -341,7 +342,21 @@ bool CUPnPImplMiniLib::CStartDiscoveryThread::OpenPort(uint16 nPort, bool bTCP, 
 								, NULL, NULL);
 
 	if (nResult != UPNPCOMMAND_SUCCESS) {
-		DebugLog(_T("Adding PortMapping failed, Error Code %u"), nResult);
+		achOutIP[0] = 0;
+		achOutPort[0] = 0;
+		const int nMappingQueryResult = UPNP_GetSpecificPortMappingEntry(m_pOwner->m_pURLs->controlURL
+											 , m_pOwner->m_pIGDData->first.servicetype
+											 , strPort
+											 , (bTCP ? sTCPa : sUDPa)
+											 , NULL
+											 , achOutIP, achOutPort
+											 , NULL, NULL, NULL);
+		if (ShouldAcceptMiniUPnPExistingMappingAfterAddFailure(nMappingQueryResult == UPNPCOMMAND_SUCCESS, achOutIP, achOutPort, pachLANIP, nPort)) {
+			DebugLog(_T("PortMapping for port %hu (%s) already targets local IP %S:%S - considering as successful"), nPort, (bTCP ? sTCP : sUDP), achOutIP, achOutPort);
+			return true;
+		}
+
+		DebugLogWarning(_T("Adding PortMapping failed for port %hu (%s), Error Code %u"), nPort, (bTCP ? sTCP : sUDP), nResult);
 		return false;
 	}
 

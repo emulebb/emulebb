@@ -5,6 +5,7 @@
 #include <cstring>
 
 #define EMULE_TEST_HAVE_UPNP_MINILIB_SEAMS 1
+#define EMULE_TEST_HAVE_UPNP_MINILIB_ADD_FAILURE_SEAM 1
 
 /**
  * @brief Reports whether a queried MiniUPnP mapping already targets the requested LAN IP and internal port.
@@ -23,4 +24,17 @@ inline bool DoesMiniUPnPMappingMatchRequest(const char *pachMappedLanIp, const c
 		return false;
 
 	return strcmp(pachMappedInternalPort, achExpectedPort) == 0;
+}
+
+/**
+ * @brief Reports whether an add-mapping failure can be treated as success because the router already has the requested mapping.
+ */
+inline bool ShouldAcceptMiniUPnPExistingMappingAfterAddFailure(
+	bool bMappingQuerySucceeded,
+	const char *pachMappedLanIp,
+	const char *pachMappedInternalPort,
+	const char *pachExpectedLanIp,
+	uint16_t nExpectedPort)
+{
+	return bMappingQuerySucceeded && DoesMiniUPnPMappingMatchRequest(pachMappedLanIp, pachMappedInternalPort, pachExpectedLanIp, nExpectedPort);
 }
