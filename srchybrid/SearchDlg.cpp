@@ -291,6 +291,16 @@ void CSearchDlg::SearchRelatedFiles(CPtrList &listFiles)
 
 BOOL CSearchDlg::PreTranslateMessage(MSG *pMsg)
 {
+	if (AppKeyboardShortcutsSeams::ClassifySearchKeyMessage(
+			pMsg->message,
+			pMsg->wParam,
+			GetKeyState(VK_CONTROL) < 0,
+			GetKeyState(VK_MENU) < 0,
+			GetKeyState(VK_SHIFT) < 0,
+			false) == AppKeyboardShortcutsSeams::ESearchCommand::ToggleNameResults
+		&& ToggleSearchFocus())
+		return TRUE;
+
 	if (pMsg->message == WM_KEYDOWN && GetKeyState(VK_CONTROL) < 0) {
 		if (pMsg->wParam == VK_TAB) {
 			if (m_pwndResults != NULL && m_pwndResults->SelectAdjacentSearchResultTab(GetKeyState(VK_SHIFT) < 0 ? -1 : 1))
@@ -308,6 +318,29 @@ BOOL CSearchDlg::PreTranslateMessage(MSG *pMsg)
 		}
 	}
 	return CFrameWnd::PreTranslateMessage(pMsg);
+}
+
+bool CSearchDlg::ToggleSearchFocus()
+{
+	if (m_pwndResults == NULL)
+		return false;
+
+	const HWND hWndFocus = ::GetFocus();
+	const HWND hWndResultsList = m_pwndResults->searchlistctrl.GetSafeHwnd();
+	if (hWndFocus != NULL
+		&& hWndResultsList != NULL
+		&& (hWndFocus == hWndResultsList || ::IsChild(hWndResultsList, hWndFocus)))
+	{
+		if (!m_wndParams.IsWindowVisible())
+			OpenParametersWnd();
+		return m_wndParams.FocusSearchName();
+	}
+
+	if (m_pwndResults->FocusResultsList())
+		return true;
+	if (!m_wndParams.IsWindowVisible())
+		OpenParametersWnd();
+	return m_wndParams.FocusSearchName();
 }
 
 BOOL CSearchDlg::OnHelpInfo(HELPINFO*)

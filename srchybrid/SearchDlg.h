@@ -60,6 +60,8 @@ public:
 	void DockParametersWnd();
 
 	void UpdateSearch(CSearchFile *pSearchFile);
+	/** Toggles Search keyboard focus between the Name textbox and the results list. */
+	bool ToggleSearchFocus();
 
 protected:
 	CSearchParamsWnd	m_wndParams;

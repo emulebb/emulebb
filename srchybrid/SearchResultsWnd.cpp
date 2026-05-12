@@ -20,6 +20,7 @@
 #include "SearchDlg.h"
 #include "SearchResultsWnd.h"
 #include "SearchParamsWnd.h"
+#include "AppKeyboardShortcutsSeams.h"
 #include "SearchParams.h"
 #include "Packets.h"
 #include "SearchFile.h"
@@ -184,6 +185,18 @@ BOOL CSearchResultsWnd::PreTranslateMessage(MSG *pMsg)
 {
 	if (theApp.emuledlg->m_pSplashWnd)
 		return FALSE;
+	if (AppKeyboardShortcutsSeams::ClassifySearchKeyMessage(
+			pMsg->message,
+			pMsg->wParam,
+			GetKeyState(VK_CONTROL) < 0,
+			GetKeyState(VK_MENU) < 0,
+			GetKeyState(VK_SHIFT) < 0,
+			false) == AppKeyboardShortcutsSeams::ESearchCommand::ToggleNameResults
+		&& theApp.emuledlg != NULL
+		&& theApp.emuledlg->searchwnd != NULL
+		&& theApp.emuledlg->searchwnd->ToggleSearchFocus())
+		return TRUE;
+
 	if (pMsg->message == WM_KEYDOWN
 		&& pMsg->wParam == VK_TAB
 		&& GetKeyState(VK_SHIFT) < 0

@@ -51,7 +51,8 @@ namespace AppKeyboardShortcutsSeams
 		StartSearch,
 		SearchMore,
 		ResetSearch,
-		CancelSearch
+		CancelSearch,
+		ToggleNameResults
 	};
 
 	/** Returns `ch` normalized for ASCII accelerator comparisons. */
@@ -76,6 +77,21 @@ namespace AppKeyboardShortcutsSeams
 		UNREFERENCED_PARAMETER(bAltDown);
 		UNREFERENCED_PARAMETER(bModalContext);
 		return ECommand::None;
+	}
+
+	/**
+	 * Classifies ordinary Search-pane key messages into local navigation commands.
+	 *
+	 * F6 is scoped to Search so it can switch focus between the query entry and
+	 * results list without becoming a global shell shortcut.
+	 */
+	inline ESearchCommand ClassifySearchKeyMessage(UINT uMessage, WPARAM wParam, bool bCtrlDown, bool bAltDown, bool bShiftDown, bool bModalContext)
+	{
+		if (bModalContext || uMessage != WM_KEYDOWN || bCtrlDown || bAltDown || bShiftDown)
+			return ESearchCommand::None;
+		if (wParam == VK_F6)
+			return ESearchCommand::ToggleNameResults;
+		return ESearchCommand::None;
 	}
 
 	/**

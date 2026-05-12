@@ -49,6 +49,8 @@ public:
 	void SaveSettings()				{ SaveSearchStrings(); }
 	/** Handles one Search-local Alt mnemonic forwarded as `SC_KEYMENU`. */
 	bool HandleSearchKeyMenu(UINT nID, LPARAM lParam);
+	/** Moves focus to the Search Name textbox when it can accept keyboard input. */
+	bool FocusSearchName();
 	/** Moves focus to the last currently enabled tab stop in the search parameters bar. */
 	bool FocusLastTabStop();
 

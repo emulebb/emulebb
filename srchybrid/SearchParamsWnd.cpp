@@ -621,6 +621,18 @@ void CSearchParamsWnd::Localize()
 BOOL CSearchParamsWnd::PreTranslateMessage(MSG *pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN) {
+		if (AppKeyboardShortcutsSeams::ClassifySearchKeyMessage(
+				pMsg->message,
+				pMsg->wParam,
+				GetKeyState(VK_CONTROL) < 0,
+				GetKeyState(VK_MENU) < 0,
+				GetKeyState(VK_SHIFT) < 0,
+				false) == AppKeyboardShortcutsSeams::ESearchCommand::ToggleNameResults
+			&& theApp.emuledlg != NULL
+			&& theApp.emuledlg->searchwnd != NULL
+			&& theApp.emuledlg->searchwnd->ToggleSearchFocus())
+			return TRUE;
+
 		if (pMsg->wParam == VK_TAB && MoveFocusToResultsOnForwardTab())
 			return TRUE;
 
@@ -696,6 +708,15 @@ bool CSearchParamsWnd::FocusLastTabStop()
 		return false;
 
 	pLastTabStop->SetFocus();
+	return true;
+}
+
+bool CSearchParamsWnd::FocusSearchName()
+{
+	if (!IsWindowVisible() || m_ctlName.GetSafeHwnd() == NULL || !m_ctlName.IsWindowEnabled())
+		return false;
+
+	m_ctlName.SetFocus();
 	return true;
 }
 
@@ -806,6 +827,8 @@ bool CSearchParamsWnd::HandleSearchKeyMenu(UINT nID, LPARAM lParam)
 	case AppKeyboardShortcutsSeams::ESearchCommand::CancelSearch:
 		if (m_ctlCancel.GetSafeHwnd() != NULL && m_ctlCancel.IsWindowEnabled())
 			m_ctlCancel.SendMessage(BM_CLICK);
+		break;
+	case AppKeyboardShortcutsSeams::ESearchCommand::ToggleNameResults:
 		break;
 	case AppKeyboardShortcutsSeams::ESearchCommand::None:
 		break;
