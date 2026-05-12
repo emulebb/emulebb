@@ -20,7 +20,11 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#define	PREF_INI_SECTION	_T("NetworkInfoDlg")
+namespace
+{
+constexpr int kNetworkInfoDialogMinWidth = 800;
+constexpr int kNetworkInfoDialogMinHeight = 600;
+}
 
 IMPLEMENT_DYNAMIC(CNetworkInfoDlg, CDialog)
 
@@ -45,7 +49,9 @@ BOOL CNetworkInfoDlg::OnInitDialog()
 
 	AddAnchor(IDC_NETWORK_INFO, TOP_LEFT, BOTTOM_RIGHT);
 	AddAnchor(IDOK, BOTTOM_RIGHT);
-	EnableSaveRestore(PREF_INI_SECTION);
+	SetMinTrackSize(CSize(kNetworkInfoDialogMinWidth, kNetworkInfoDialogMinHeight));
+	SetWindowPos(NULL, 0, 0, kNetworkInfoDialogMinWidth, kNetworkInfoDialogMinHeight, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+	CenterWindow(GetParent());
 
 	SetWindowText(GetResString(IDS_NETWORK_INFO));
 	SetDlgItemText(IDOK, GetResString(IDS_TREEOPTIONS_OK));
