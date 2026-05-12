@@ -184,6 +184,18 @@ BOOL CSearchResultsWnd::PreTranslateMessage(MSG *pMsg)
 {
 	if (theApp.emuledlg->m_pSplashWnd)
 		return FALSE;
+	if (pMsg->message == WM_KEYDOWN
+		&& pMsg->wParam == VK_TAB
+		&& GetKeyState(VK_SHIFT) < 0
+		&& GetKeyState(VK_CONTROL) >= 0
+		&& GetKeyState(VK_MENU) >= 0) {
+		const HWND hWndFocus = ::GetFocus();
+		if (m_pwndParams != NULL
+			&& hWndFocus != NULL
+			&& (hWndFocus == searchlistctrl.GetSafeHwnd() || ::IsChild(searchlistctrl.GetSafeHwnd(), hWndFocus))
+			&& m_pwndParams->FocusLastTabStop())
+			return TRUE;
+	}
 	if (pMsg->message == WM_MBUTTONUP) {
 		CPoint point;
 		::GetCursorPos(&point);
@@ -200,6 +212,15 @@ BOOL CSearchResultsWnd::PreTranslateMessage(MSG *pMsg)
 	}
 
 	return CResizableFormView::PreTranslateMessage(pMsg);
+}
+
+bool CSearchResultsWnd::FocusResultsList()
+{
+	if (searchlistctrl.GetSafeHwnd() == NULL || !searchlistctrl.IsWindowVisible() || !searchlistctrl.IsWindowEnabled())
+		return false;
+
+	searchlistctrl.SetFocus();
+	return true;
 }
 
 void CSearchResultsWnd::DoDataExchange(CDataExchange *pDX)

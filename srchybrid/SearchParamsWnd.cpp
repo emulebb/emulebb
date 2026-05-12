@@ -26,6 +26,7 @@
 #include "HelpIDs.h"
 #include "Opcodes.h"
 #include "StringConversion.h"
+#include "MuleToolBarCtrl.h"
 #include <list>
 
 #ifdef _DEBUG
@@ -620,6 +621,9 @@ void CSearchParamsWnd::Localize()
 BOOL CSearchParamsWnd::PreTranslateMessage(MSG *pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN) {
+		if (pMsg->wParam == VK_TAB && MoveFocusToResultsOnForwardTab())
+			return TRUE;
+
 		if (pMsg->wParam == VK_ESCAPE)
 			return FALSE;
 
@@ -644,6 +648,55 @@ BOOL CSearchParamsWnd::PreTranslateMessage(MSG *pMsg)
 	}
 
 	return CDialogBar::PreTranslateMessage(pMsg);
+}
+
+bool CSearchParamsWnd::MoveFocusToResultsOnForwardTab()
+{
+	if (GetKeyState(VK_SHIFT) < 0 || GetKeyState(VK_CONTROL) < 0 || GetKeyState(VK_MENU) < 0)
+		return false;
+
+	CWnd *pLastTabStop = FindLastEnabledTabStop();
+	if (pLastTabStop == NULL || m_searchdlg == NULL)
+		return false;
+
+	const HWND hWndFocus = ::GetFocus();
+	if (hWndFocus == NULL)
+		return false;
+	if (hWndFocus != pLastTabStop->GetSafeHwnd() && !::IsChild(pLastTabStop->GetSafeHwnd(), hWndFocus))
+		return false;
+
+	return m_searchdlg->FocusResultsList();
+}
+
+CWnd* CSearchParamsWnd::FindLastEnabledTabStop()
+{
+	static const UINT s_auTabStops[] = {
+		IDC_SEARCHNAME,
+		IDC_TYPESEARCH,
+		IDC_COMBO1,
+		IDC_SEARCH_RESET,
+		IDC_SEARCH_OPTS,
+		IDC_STARTS,
+		IDC_MORE,
+		IDC_CANCELS
+	};
+
+	for (int i = _countof(s_auTabStops) - 1; i >= 0; --i) {
+		CWnd *pWnd = GetDlgItem(s_auTabStops[i]);
+		if (pWnd != NULL && pWnd->IsWindowVisible() && pWnd->IsWindowEnabled())
+			return pWnd;
+	}
+	return NULL;
+}
+
+bool CSearchParamsWnd::FocusLastTabStop()
+{
+	CWnd *pLastTabStop = FindLastEnabledTabStop();
+	if (pLastTabStop == NULL)
+		return false;
+
+	pLastTabStop->SetFocus();
+	return true;
 }
 
 void CSearchParamsWnd::OnBnClickedStart()
@@ -793,6 +846,8 @@ void CSearchParamsWnd::OnSysCommand(UINT nID, LPARAM lParam)
 			theApp.emuledlg->SendMessage(WM_COMMAND, IDC_EXIT);
 		else if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowHotMenu)
 			theApp.emuledlg->SendMessage(WM_COMMAND, IDC_HOTMENU);
+		else if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowToolsMenu)
+			theApp.emuledlg->SendMessage(WM_COMMAND, TBBTN_TOOLS);
 		else if (HandleSearchKeyMenu(nID, lParam))
 			return;
 		else

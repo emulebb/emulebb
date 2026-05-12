@@ -32,7 +32,8 @@ namespace AppKeyboardShortcutsSeams
 	{
 		None,
 		ExitApp,
-		ShowHotMenu
+		ShowHotMenu,
+		ShowToolsMenu
 	};
 
 	/**
@@ -81,7 +82,7 @@ namespace AppKeyboardShortcutsSeams
 	 * Classifies `SC_KEYMENU` events forwarded from modeless child panes.
 	 *
 	 * EMULE_KEYBOARD_SHORTCUT: Alt+X is reserved for app exit; Alt+U owns the
-	 * floating hotmenu.
+	 * floating hotmenu; Alt+T owns the Tools popup.
 	 */
 	inline ECommand ClassifySystemKeyMenu(UINT nID, LPARAM lParam, bool bModalContext)
 	{
@@ -93,6 +94,8 @@ namespace AppKeyboardShortcutsSeams
 			return ECommand::ExitApp;
 		if (ch == _T('u'))
 			return ECommand::ShowHotMenu;
+		if (ch == _T('t'))
+			return ECommand::ShowToolsMenu;
 		return ECommand::None;
 	}
 

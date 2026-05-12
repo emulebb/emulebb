@@ -32,6 +32,8 @@
 #include "SharedFilesWnd.h"
 #include "HelpIDs.h"
 #include "Log.h"
+#include "AppKeyboardShortcutsSeams.h"
+#include "MuleToolBarCtrl.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1878,10 +1880,16 @@ void CTransferWnd::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) != SC_KEYMENU)
 		__super::OnSysCommand(nID, lParam);
-	else if (lParam == EMULE_EXIT_ACCEL)
-		theApp.emuledlg->SendMessage(WM_COMMAND, IDC_EXIT);
-	else if (lParam == EMULE_HOTMENU_ACCEL)
-		theApp.emuledlg->SendMessage(WM_COMMAND, IDC_HOTMENU);
-	else
-		theApp.emuledlg->SendMessage(WM_SYSCOMMAND, nID, lParam);
+	else {
+		const AppKeyboardShortcutsSeams::ECommand eShortcutCommand =
+			AppKeyboardShortcutsSeams::ClassifySystemKeyMenu(nID, lParam, false);
+		if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ExitApp)
+			theApp.emuledlg->SendMessage(WM_COMMAND, IDC_EXIT);
+		else if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowHotMenu)
+			theApp.emuledlg->SendMessage(WM_COMMAND, IDC_HOTMENU);
+		else if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowToolsMenu)
+			theApp.emuledlg->SendMessage(WM_COMMAND, TBBTN_TOOLS);
+		else
+			theApp.emuledlg->SendMessage(WM_SYSCOMMAND, nID, lParam);
+	}
 }

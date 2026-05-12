@@ -49,6 +49,8 @@ public:
 	void SaveSettings()				{ SaveSearchStrings(); }
 	/** Handles one Search-local Alt mnemonic forwarded as `SC_KEYMENU`. */
 	bool HandleSearchKeyMenu(UINT nID, LPARAM lParam);
+	/** Moves focus to the last currently enabled tab stop in the search parameters bar. */
+	bool FocusLastTabStop();
 
 	SSearchParams* GetParameters();
 	void SetParameters(const SSearchParams *pParams);
@@ -83,6 +85,8 @@ protected:
 
 	void UpdateControls();
 	BOOL SaveSearchStrings();
+	bool MoveFocusToResultsOnForwardTab();
+	CWnd* FindLastEnabledTabStop();
 	void SetAllIcons();
 	void InitMethodsCtrl();
 	void InitFileTypesCtrl();

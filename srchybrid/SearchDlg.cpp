@@ -22,6 +22,7 @@
 #include "AppKeyboardShortcutsSeams.h"
 #include "OtherFunctions.h"
 #include "HelpIDs.h"
+#include "MuleToolBarCtrl.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -262,6 +263,8 @@ void CSearchDlg::OnSysCommand(UINT nID, LPARAM lParam)
 			theApp.emuledlg->SendMessage(WM_COMMAND, IDC_EXIT);
 		else if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowHotMenu)
 			theApp.emuledlg->SendMessage(WM_COMMAND, IDC_HOTMENU);
+		else if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowToolsMenu)
+			theApp.emuledlg->SendMessage(WM_COMMAND, TBBTN_TOOLS);
 		else if (m_wndParams.HandleSearchKeyMenu(nID, lParam))
 			return;
 		else

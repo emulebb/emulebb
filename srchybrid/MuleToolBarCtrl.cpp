@@ -126,7 +126,7 @@ void CMuleToolbarCtrl::Init()
 	size_t lLen = 0;
 	UINT uid = IDS_MAIN_BTN_CONNECT;
 	for (unsigned i = 0; ; ++i) {
-		const CString &str(GetResString(uid));
+		const CString &str(GetResNoAmp(uid));
 		int iLen = str.GetLength() + 1;
 		memcpy(cButtonStrings + lLen, (LPCTSTR)str, iLen * sizeof(TCHAR));
 		lLen += iLen;
@@ -202,7 +202,7 @@ void CMuleToolbarCtrl::SetAllButtonsStrings()
 		uid = IDS_MAIN_BTN_CONNECT;
 
 	for (unsigned i = 0; ; ++i) {
-		const CString &str(GetResString(uid));
+		const CString &str(GetResNoAmp(uid));
 		_tcsncpy_s(TBStrings[i], _countof(TBStrings[i]), str, _TRUNCATE);
 		tbbi.pszText = TBStrings[i];
 		SetButtonInfo(IDC_TOOLBARBUTTON + i, &tbbi);

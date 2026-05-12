@@ -112,6 +112,8 @@ public:
 
 	bool	CreateNewTab(SSearchParams *pParams, bool bActiveIcon = true);
 	bool	SelectAdjacentSearchResultTab(int iDirection);
+	/** Moves focus to the visible search results list when it can accept keyboard input. */
+	bool	FocusResultsList();
 	void	ShowSearchSelector(bool visible);
 	int		GetSelectedCat() const				{ return m_cattabs.GetCurSel(); }
 	void	UpdateCatTabs();

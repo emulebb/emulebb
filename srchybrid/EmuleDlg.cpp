@@ -1310,6 +1310,10 @@ void CemuleDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		OnBnClickedHotmenu();
 		return;
 	}
+	if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowToolsMenu) {
+		ShowToolPopup(true);
+		return;
+	}
 
 	// System menu - Speed selector
 	if (nID >= MP_QS_U10 && nID <= MP_QS_UP10) {
