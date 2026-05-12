@@ -30,6 +30,7 @@ constexpr std::uint64_t kVideoThumbnailRefreshIntervalMs = kVideoThumbnailRetryI
 constexpr std::uint64_t kVideoThumbnailRefreshDeltaPermille = 50;
 constexpr std::uint64_t kVideoThumbnailRefreshMaxDeltaBytes = 128ull * 1024ull * 1024ull;
 constexpr int kVideoThumbnailDisplayMaxWidth = 480;
+constexpr DWORD kVlcThumbnailTimeoutMs = 30u * 1000u;
 
 /**
  * Extracts the executable basename used by preview-player dependent features.

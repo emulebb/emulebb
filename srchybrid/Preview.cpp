@@ -41,7 +41,6 @@ CPreviewApps thePreviewApps;
 
 namespace
 {
-constexpr DWORD kVlcThumbnailTimeoutMs = 15000;
 constexpr ULONGLONG kMaxThumbnailBytes = 16ull * 1024ull * 1024ull;
 volatile LONG g_lVlcThumbnailProcessActive = 0;
 
@@ -141,7 +140,7 @@ bool RunVlcThumbnailCommand(const CString &rstrCommand, const CString &rstrWorki
 		return false;
 	}
 
-	const DWORD dwWait = ::WaitForSingleObject(processInfo.hProcess, kVlcThumbnailTimeoutMs);
+	const DWORD dwWait = ::WaitForSingleObject(processInfo.hProcess, PartFilePreviewSeams::kVlcThumbnailTimeoutMs);
 	if (dwWait == WAIT_TIMEOUT) {
 		(void)::TerminateProcess(processInfo.hProcess, WAIT_TIMEOUT);
 		(void)::WaitForSingleObject(processInfo.hProcess, SEC2MS(2));
