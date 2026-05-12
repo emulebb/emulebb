@@ -42,6 +42,8 @@ END_MESSAGE_MAP()
 
 CToolTipCtrlX::CToolTipCtrlX()
 	: m_bCol1Bold(true)
+	, m_hPreviewBitmap()
+	, m_iPreviewMaxWidth()
 	, m_bShowFileIcon()
 {
 	ResetSystemMetrics();
@@ -56,6 +58,12 @@ void CToolTipCtrlX::SetCol1DrawTextFlags(DWORD dwFlags)
 void CToolTipCtrlX::SetCol2DrawTextFlags(DWORD dwFlags)
 {
 	m_dwCol2DrawTextFlags = DFLT_DRAWTEXT_FLAGS | dwFlags;
+}
+
+void CToolTipCtrlX::SetPreviewBitmap(HBITMAP hBitmap, int iMaxWidth)
+{
+	m_hPreviewBitmap = hBitmap;
+	m_iPreviewMaxWidth = iMaxWidth;
 }
 
 BOOL CToolTipCtrlX::SubclassWindow(HWND hWnd)
@@ -335,6 +343,29 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 	iMaxSingleLineWidth = min(m_iScreenWidth4 * 3, iMaxSingleLineWidth);
 	sizText.cx = iMaxSingleLineWidth;
 
+	CSize sizPreview;
+	CSize sizPreviewSource;
+	if (m_hPreviewBitmap != NULL && m_iPreviewMaxWidth > 0) {
+		BITMAP bitmap = {};
+		if (::GetObject(m_hPreviewBitmap, sizeof(bitmap), &bitmap) != 0 && bitmap.bmWidth > 0 && bitmap.bmHeight > 0) {
+			sizPreviewSource.cx = bitmap.bmWidth;
+			sizPreviewSource.cy = bitmap.bmHeight;
+			const int iMaxPreviewWidth = max(1, min(m_iPreviewMaxWidth, m_iScreenWidth4 * 3));
+			if (bitmap.bmWidth > iMaxPreviewWidth) {
+				sizPreview.cx = iMaxPreviewWidth;
+				sizPreview.cy = max(1, MulDiv(bitmap.bmHeight, iMaxPreviewWidth, bitmap.bmWidth));
+			} else {
+				sizPreview.cx = bitmap.bmWidth;
+				sizPreview.cy = bitmap.bmHeight;
+			}
+		}
+	}
+	const int iPreviewTextGap = sizPreview.cy > 0 ? 6 : 0;
+	if (sizPreview.cy > 0) {
+		sizText.cx = max(sizText.cx, sizPreview.cx);
+		sizText.cy += sizPreview.cy + iPreviewTextGap;
+	}
+
 	if (pNMCD->uDrawFlags & DT_CALCRECT) {
 		pNMCD->nmcd.rc.left = rcWnd.left;
 		pNMCD->nmcd.rc.top = rcWnd.top;
@@ -371,6 +402,17 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 			iOldBkMode = pdc->SetBkMode(TRANSPARENT);
 
 		CPoint ptText(pNMCD->nmcd.rc.left, pNMCD->nmcd.rc.top);
+		if (sizPreview.cy > 0) {
+			CDC dcPreview;
+			dcPreview.CreateCompatibleDC(pdc);
+			HGDIOBJ hOldBitmap = ::SelectObject(dcPreview.m_hDC, m_hPreviewBitmap);
+			const int iPreviewX = ptText.x + max(0, (sizText.cx - sizPreview.cx) / 2);
+			pdc->SetStretchBltMode(HALFTONE);
+			(void)::SetBrushOrgEx(pdc->m_hDC, 0, 0, NULL);
+			pdc->StretchBlt(iPreviewX, ptText.y, sizPreview.cx, sizPreview.cy, &dcPreview, 0, 0, sizPreviewSource.cx, sizPreviewSource.cy, SRCCOPY);
+			::SelectObject(dcPreview.m_hDC, hOldBitmap);
+			ptText.y += sizPreview.cy + iPreviewTextGap;
+		}
 
 		for (int iPos = 0; iPos >= 0;) {
 			const CString &strLine(GetNextString(strText, _T('\n'), iPos));
@@ -432,7 +474,7 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 					pen.CreatePen(0, 1, m_crTooltipTextColor);
 					CPen *pOP = pdc->SelectObject(&pen);
 					if (bIsBrHeadLine)
-						ptText.y = iCaptionHeight;
+						ptText.y = sizPreview.cy + iPreviewTextGap + iCaptionHeight;
 					pdc->MoveTo(ptText.x, ptText.y + ((iTextHeight - 2) / 2));
 					pdc->LineTo(ptText.x + iMaxSingleLineWidth, ptText.y + ((iTextHeight - 2) / 2));
 					ptText.y += iTextHeight;

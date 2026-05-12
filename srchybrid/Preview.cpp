@@ -51,36 +51,13 @@ CString MakeVideoThumbnailPrefix(const CPartFile &partFile)
 	return strPrefix;
 }
 
-bool ReadBitmapFile(const CString &rstrPath, HBITMAP &rhBitmap)
-{
-	CSafeFile file;
-	if (!LongPathSeams::OpenFile(file, rstrPath, CFile::modeRead | CFile::shareDenyWrite | CFile::osSequentialScan))
-		return false;
-	const ULONGLONG ullLength = static_cast<ULONGLONG>(file.GetLength());
-	if (ullLength == 0 || ullLength > kMaxThumbnailBytes)
-		return false;
-	byte *pBuffer = new byte[static_cast<size_t>(ullLength)];
-	try {
-		if (file.Read(pBuffer, static_cast<UINT>(ullLength)) != ullLength) {
-			delete[] pBuffer;
-			return false;
-		}
-		rhBitmap = mem2bmp(pBuffer, static_cast<size_t>(ullLength));
-		delete[] pBuffer;
-		return rhBitmap != NULL;
-	} catch (...) {
-		delete[] pBuffer;
-		throw;
-	}
-}
-
 CString FindGeneratedThumbnail(const CString &rstrDirectory, const CString &rstrPrefix)
 {
 	CString strPattern(rstrDirectory);
 	strPattern.AppendFormat(_T("%s*.png"), (LPCTSTR)rstrPrefix);
 
 	WIN32_FIND_DATA findData = {};
-	HANDLE hFind = ::FindFirstFile(strPattern, &findData);
+	HANDLE hFind = LongPathSeams::FindFirstFile(strPattern, &findData);
 	if (hFind == INVALID_HANDLE_VALUE)
 		return CString();
 
@@ -101,12 +78,12 @@ void DeleteGeneratedThumbnails(const CString &rstrDirectory, const CString &rstr
 	strPattern.AppendFormat(_T("%s*.png"), (LPCTSTR)rstrPrefix);
 
 	WIN32_FIND_DATA findData = {};
-	HANDLE hFind = ::FindFirstFile(strPattern, &findData);
+	HANDLE hFind = LongPathSeams::FindFirstFile(strPattern, &findData);
 	if (hFind == INVALID_HANDLE_VALUE)
 		return;
 	do {
 		if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-			(void)::DeleteFile(rstrDirectory + findData.cFileName);
+			(void)LongPathSeams::DeleteFile(rstrDirectory + findData.cFileName);
 	} while (::FindNextFile(hFind, &findData));
 	VERIFY(::FindClose(hFind));
 }
@@ -145,6 +122,29 @@ bool RunVlcThumbnailCommand(const CString &rstrCommand, const CString &rstrWorki
 }
 }
 
+bool ReadVideoThumbnailBitmapFile(const CString &rstrPath, HBITMAP &rhBitmap)
+{
+	CSafeFile file;
+	if (!LongPathSeams::OpenFile(file, rstrPath, CFile::modeRead | CFile::shareDenyWrite | CFile::osSequentialScan))
+		return false;
+	const ULONGLONG ullLength = static_cast<ULONGLONG>(file.GetLength());
+	if (ullLength == 0 || ullLength > kMaxThumbnailBytes)
+		return false;
+	byte *pBuffer = new byte[static_cast<size_t>(ullLength)];
+	try {
+		if (file.Read(pBuffer, static_cast<UINT>(ullLength)) != ullLength) {
+			delete[] pBuffer;
+			return false;
+		}
+		rhBitmap = mem2bmp(pBuffer, static_cast<size_t>(ullLength));
+		delete[] pBuffer;
+		return rhBitmap != NULL;
+	} catch (...) {
+		delete[] pBuffer;
+		throw;
+	}
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // CVideoThumbnailThread
 
@@ -155,6 +155,10 @@ CVideoThumbnailThread::CVideoThumbnailThread()
 	, m_aFilled()
 	, m_strCommand()
 	, m_strTitle()
+	, m_strFileHash()
+	, m_strCachePath()
+	, m_hNotifyWnd()
+	, m_ullCompletedSize()
 {
 }
 
@@ -169,52 +173,57 @@ BOOL CVideoThumbnailThread::Run()
 {
 	VideoThumbnailResult_Struct *pResult = new VideoThumbnailResult_Struct;
 	pResult->pPartFile = m_pPartfile;
-	pResult->strTitle = m_strTitle;
+	pResult->strFileHash = m_strFileHash;
+	pResult->strCachePath = m_strCachePath;
+	pResult->ullCompletedSize = m_ullCompletedSize;
 
 	const CString strPrefix(MakeVideoThumbnailPrefix(*m_pPartfile));
 	CString strPreviewName(m_pPartfile->GetTmpPath());
 	strPreviewName.AppendFormat(_T("%s_preview%s"), (LPCTSTR)strPrefix, ::PathFindExtension(m_strTitle));
 
 	try {
-		if (!m_pPartfile->CopyPartFile(m_aFilled, strPreviewName)) {
-			pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_FAILED);
-		} else {
+		if (m_pPartfile->CopyPartFile(m_aFilled, strPreviewName)) {
 			DWORD dwExitCode = 0;
 			const CString strCommandLine(PartFilePreviewSeams::BuildVlcThumbnailCommandLine(m_strCommand, strPreviewName, m_pPartfile->GetTmpPath(), strPrefix));
-			if (!RunVlcThumbnailCommand(strCommandLine, m_pPartfile->GetTmpPath(), dwExitCode)) {
-				if (dwExitCode == WAIT_TIMEOUT)
-					pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_TIMEOUT);
-				else
-					pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_FAILED);
-			} else {
+			if (RunVlcThumbnailCommand(strCommandLine, m_pPartfile->GetTmpPath(), dwExitCode)) {
 				const CString strThumbnailPath(FindGeneratedThumbnail(m_pPartfile->GetTmpPath(), strPrefix));
-				if (strThumbnailPath.IsEmpty() || !ReadBitmapFile(strThumbnailPath, pResult->hBitmap))
-					pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_FAILED);
+				HBITMAP hBitmap = NULL;
+				if (!strThumbnailPath.IsEmpty()
+					&& ReadVideoThumbnailBitmapFile(strThumbnailPath, hBitmap)
+					&& LongPathSeams::CopyFile(strThumbnailPath, m_strCachePath, FALSE))
+				{
+					pResult->hBitmap = hBitmap;
+					hBitmap = NULL;
+				}
+				if (hBitmap != NULL)
+					::DeleteObject(hBitmap);
 			}
 		}
 	} catch (CFileException *ex) {
 		ex->Delete();
-		pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_FAILED);
 	} catch (...) {
-		pResult->strError = GetResString(IDS_VIDEO_THUMBNAIL_FAILED);
 	}
 
 	m_pPartfile->m_bPreviewing = false;
 	m_aFilled.RemoveAll();
 	DeleteGeneratedThumbnails(m_pPartfile->GetTmpPath(), strPrefix);
-	(void)::DeleteFile(strPreviewName);
+	(void)LongPathSeams::DeleteFile(strPreviewName);
 
-	if (!theApp.emuledlg->PostMessage(TM_VIDEOTHUMBNAILFINISHED, 0, reinterpret_cast<LPARAM>(pResult)))
+	if (!::IsWindow(m_hNotifyWnd) || !::PostMessage(m_hNotifyWnd, TM_VIDEOTHUMBNAILFINISHED, 0, reinterpret_cast<LPARAM>(pResult)))
 		delete pResult;
 	return TRUE;
 }
 
-void CVideoThumbnailThread::SetValues(CPartFile *pPartFile, LPCTSTR pszCommand)
+void CVideoThumbnailThread::SetValues(CPartFile *pPartFile, LPCTSTR pszCommand, HWND hNotifyWnd, LPCTSTR pszCachePath)
 {
 	m_pPartfile = pPartFile;
 	pPartFile->GetFilledArray(m_aFilled);
 	m_strCommand = pszCommand;
 	m_strTitle = pPartFile->GetFileName();
+	m_strFileHash = md4str(pPartFile->GetFileHash());
+	m_strCachePath = pszCachePath;
+	m_hNotifyWnd = hNotifyWnd;
+	m_ullCompletedSize = static_cast<uint64>(pPartFile->GetCompletedSize());
 }
 
 ///////////////////////////////////////////////////////////////////////////////

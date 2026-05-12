@@ -122,6 +122,22 @@ public:
 	bool	ReportAvailableCommands(CList<int> &liAvailableCommands);
 
 protected:
+	struct VideoThumbnailCacheEntry
+	{
+		CString strCachePath;
+		HBITMAP hBitmap = NULL;
+		uint64 ullCompletedSize = 0;
+		ULONGLONG ullLastAttemptTick = 0;
+		bool bInFlight = false;
+		bool bQueued = false;
+
+		~VideoThumbnailCacheEntry()
+		{
+			if (hBitmap != NULL)
+				::DeleteObject(hBitmap);
+		}
+	};
+
 	CImageList  m_ImageList;
 	CTitledMenu	m_PrioMenu;
 	CTitledMenu	m_FileMenu;
@@ -133,6 +149,11 @@ protected:
 	CFont		m_fontBold; // may contain a locally created bold font
 	CFont		*m_pFontBold;// points to the bold font which is to be used (may be the locally created or the default bold font)
 	CToolTipCtrlX m_tooltip;
+	CMapStringToPtr m_videoThumbnailCache;
+	CList<CString, const CString&> m_videoThumbnailQueue;
+	CPartFile *m_pHoveredVideoThumbnailFile;
+	bool		m_bVideoThumbnailWorkerActive;
+	bool		m_bVideoThumbnailCacheInitialized;
 	ULONGLONG	m_dwLastAvailableCommandsCheck;
 	bool		m_bRemainSort;
 	bool		m_availableCommandsDirty;
@@ -149,6 +170,19 @@ protected:
 	int GetFilesCountInCurCat();
 	CString GetFileItemDisplayText(const CPartFile *lpPartFile, int iSubItem);
 	CString GetSourceItemDisplayText(const CtrlItem_Struct *pCtrlItem, int iSubItem);
+	void InitializeVideoThumbnailCache();
+	void ClearVideoThumbnailCache();
+	CString GetVideoThumbnailCacheDirectory() const;
+	CString GetVideoThumbnailCacheKey(const CPartFile *pPartFile) const;
+	CString GetVideoThumbnailCachePath(const CString &rstrKey) const;
+	VideoThumbnailCacheEntry* GetVideoThumbnailCacheEntry(const CString &rstrKey);
+	CPartFile* FindVideoThumbnailFileByKey(const CString &rstrKey) const;
+	HBITMAP GetCachedVideoThumbnail(CPartFile *pPartFile);
+	bool IsVideoThumbnailCandidate(const CPartFile *pPartFile) const;
+	void QueueVideoThumbnail(CPartFile *pPartFile, bool bHighPriority);
+	void QueueVideoThumbnailScan();
+	void StartNextVideoThumbnailWorker();
+	void RemoveVideoThumbnailCache(const CPartFile *pPartFile);
 
 	static int CALLBACK SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	static int Compare(const CPartFile *file1, const CPartFile *file2, LPARAM lParamSort);
@@ -165,5 +199,9 @@ protected:
 	afx_msg void OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnItemActivate(LPNMHDR pNMHDR, LRESULT *pResult);
 	afx_msg void OnNmDblClk(LPNMHDR, LRESULT *pResult);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnSysColorChange();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnDestroy();
+	afx_msg LRESULT OnVideoThumbnailFinished(WPARAM wParam, LPARAM lParam);
 };

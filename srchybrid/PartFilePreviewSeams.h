@@ -9,6 +9,8 @@ namespace PartFilePreviewSeams
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedPermille = 5;
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedBytes = 1ull * 1024ull * 1024ull;
 constexpr std::uint64_t kPartialVideoPreviewMaxCompletedBytes = 64ull * 1024ull * 1024ull;
+constexpr std::uint64_t kVideoThumbnailRefreshIntervalMs = 90ull * 1000ull;
+constexpr int kVideoThumbnailDisplayMaxWidth = 480;
 
 /**
  * Extracts the executable basename used by preview-player dependent features.
@@ -66,6 +68,22 @@ inline std::uint64_t GetPartialVideoPreviewRequiredCompletedBytes(std::uint64_t 
 inline bool HasEnoughCompletedDataForPartialVideoPreview(std::uint64_t ullFileSize, std::uint64_t ullCompletedSize)
 {
 	return ullFileSize > 0 && ullCompletedSize >= GetPartialVideoPreviewRequiredCompletedBytes(ullFileSize);
+}
+
+/**
+ * Returns whether a cached thumbnail can be refreshed with newer completed data.
+ */
+inline bool ShouldRefreshVideoThumbnail(std::uint64_t ullCachedCompletedSize, std::uint64_t ullCurrentCompletedSize)
+{
+	return ullCurrentCompletedSize > ullCachedCompletedSize;
+}
+
+/**
+ * Returns whether enough time has elapsed to attempt another VLC thumbnail render.
+ */
+inline bool IsVideoThumbnailAttemptDue(std::uint64_t ullCurrentTick, std::uint64_t ullLastAttemptTick, std::uint64_t ullIntervalMs = kVideoThumbnailRefreshIntervalMs)
+{
+	return ullLastAttemptTick == 0 || ullCurrentTick < ullLastAttemptTick || ullCurrentTick - ullLastAttemptTick >= ullIntervalMs;
 }
 
 /**

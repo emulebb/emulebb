@@ -25,8 +25,9 @@ struct VideoThumbnailResult_Struct
 {
 	CPartFile *pPartFile = NULL;
 	HBITMAP hBitmap = NULL;
-	CString strTitle;
-	CString strError;
+	CString strFileHash;
+	CString strCachePath;
+	uint64 ullCompletedSize = 0;
 
 	~VideoThumbnailResult_Struct()
 	{
@@ -34,6 +35,11 @@ struct VideoThumbnailResult_Struct
 			::DeleteObject(hBitmap);
 	}
 };
+
+/**
+ * Loads a cached PNG thumbnail into a caller-owned bitmap handle.
+ */
+bool ReadVideoThumbnailBitmapFile(const CString &rstrPath, HBITMAP &rhBitmap);
 
 ///////////////////////////////////////////////////////////////////////////////
 // CVideoThumbnailThread
@@ -48,7 +54,7 @@ class CVideoThumbnailThread : public CWinThread
 public:
 	virtual	BOOL	InitInstance();
 	virtual int		Run();
-	void	SetValues(CPartFile *pPartFile, LPCTSTR pszCommand);
+	void	SetValues(CPartFile *pPartFile, LPCTSTR pszCommand, HWND hNotifyWnd, LPCTSTR pszCachePath);
 
 protected:
 	CVideoThumbnailThread();
@@ -57,6 +63,10 @@ protected:
 	CArray<Gap_Struct> m_aFilled;
 	CString m_strCommand;
 	CString m_strTitle;
+	CString m_strFileHash;
+	CString m_strCachePath;
+	HWND m_hNotifyWnd;
+	uint64 m_ullCompletedSize;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

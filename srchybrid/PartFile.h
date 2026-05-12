@@ -256,7 +256,6 @@ public:
 
 	void	OpenFile() const;
 	void	PreviewFile();
-	void	GenerateVideoThumbnail();
 	void	DeletePartFile();
 	void	StopFile(bool bCancel = false, bool resort = true);
 	void	PauseFile(bool bInsufficient = false, bool resort = true);

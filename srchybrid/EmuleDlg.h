@@ -316,7 +316,6 @@ protected:
 
 	//Frame grabbing
 	afx_msg LRESULT OnFrameGrabFinished(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnVideoThumbnailFinished(WPARAM wParam, LPARAM lParam);
 
 	afx_msg LRESULT OnAreYouEmule(WPARAM, LPARAM);
 

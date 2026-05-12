@@ -28,6 +28,7 @@ public:
 	void SetCol1DrawTextFlags(DWORD dwFlags);
 	void SetCol2DrawTextFlags(DWORD dwFlags);
 	void SetFileIconToolTip(bool bEnable)		{ m_bShowFileIcon = bEnable; }
+	void SetPreviewBitmap(HBITMAP hBitmap, int iMaxWidth);
 	BOOL SubclassWindow(HWND hWnd);
 
 protected:
@@ -40,6 +41,8 @@ protected:
 	DWORD m_dwCol1DrawTextFlags;
 	DWORD m_dwCol2DrawTextFlags;
 	int m_iScreenWidth4;
+	HBITMAP m_hPreviewBitmap;
+	int m_iPreviewMaxWidth;
 	bool m_bCol1Bold;
 	bool m_bShowFileIcon;
 

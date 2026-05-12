@@ -41,6 +41,8 @@
 #include "GeoLocation.h"
 #include "ClientList.h"
 #include "OtherFunctions.h"
+#include "LongPathSeams.h"
+#include "PartFilePreviewSeams.h"
 #include "ProUserMenuCopySeams.h"
 
 #ifdef _DEBUG
@@ -58,6 +60,9 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
+	const UINT_PTR kVideoThumbnailTimerId = 0xE072;
+	const TCHAR kVideoThumbnailCacheFolder[] = _T("VideoThumbnails\\");
+
 	uint32 GetClientGeoIP(const CUpDownClient* client)
 	{
 		if (client == NULL)
@@ -126,14 +131,21 @@ BEGIN_MESSAGE_MAP(CDownloadListCtrl, CMuleListCtrl)
 	ON_NOTIFY_REFLECT(LVN_ITEMACTIVATE, OnLvnItemActivate)
 	ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnListModified)
 	ON_NOTIFY_REFLECT(NM_DBLCLK, OnNmDblClk)
+	ON_MESSAGE(TM_VIDEOTHUMBNAILFINISHED, OnVideoThumbnailFinished)
 	ON_WM_CONTEXTMENU()
+	ON_WM_DESTROY()
+	ON_WM_MOUSEMOVE()
 	ON_WM_SYSCOLORCHANGE()
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 CDownloadListCtrl::CDownloadListCtrl()
 	: CDownloadListListCtrlItemWalk(this)
 	, m_curTab()
 	, m_pFontBold()
+	, m_pHoveredVideoThumbnailFile()
+	, m_bVideoThumbnailWorkerActive()
+	, m_bVideoThumbnailCacheInitialized()
 	, m_dwLastAvailableCommandsCheck()
 	, m_bRemainSort()
 	, m_availableCommandsDirty(true)
@@ -157,6 +169,7 @@ CDownloadListCtrl::~CDownloadListCtrl()
 		delete m_ListItems.begin()->second; // second = CtrlItem_Struct*
 		m_ListItems.erase(m_ListItems.begin());
 	}
+	ClearVideoThumbnailCache();
 }
 
 void CDownloadListCtrl::Init()
@@ -221,6 +234,9 @@ void CDownloadListCtrl::Init()
 		adder = 81; //9+81=90 - used in Compare(,,)
 	}
 	SortItems(SortProc, MAKELONG(GetSortItem() + adder, !GetSortAscending()));
+	InitializeVideoThumbnailCache();
+	SetTimer(kVideoThumbnailTimerId, static_cast<UINT>(PartFilePreviewSeams::kVideoThumbnailRefreshIntervalMs), NULL);
+	QueueVideoThumbnailScan();
 }
 
 void CDownloadListCtrl::OnSysColorChange()
@@ -228,6 +244,301 @@ void CDownloadListCtrl::OnSysColorChange()
 	CMuleListCtrl::OnSysColorChange();
 	SetAllIcons();
 	CreateMenus();
+}
+
+void CDownloadListCtrl::InitializeVideoThumbnailCache()
+{
+	if (m_bVideoThumbnailCacheInitialized)
+		return;
+	m_bVideoThumbnailCacheInitialized = true;
+
+	const CString strCacheDirectory(GetVideoThumbnailCacheDirectory());
+	if (!LongPathSeams::PathExists(strCacheDirectory))
+		(void)LongPathSeams::CreateDirectory(strCacheDirectory, NULL);
+
+	CString strPattern(strCacheDirectory);
+	strPattern += _T("*.png");
+	WIN32_FIND_DATA findData = {};
+	HANDLE hFind = LongPathSeams::FindFirstFile(strPattern, &findData);
+	if (hFind == INVALID_HANDLE_VALUE)
+		return;
+	do {
+		if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+			(void)LongPathSeams::DeleteFile(strCacheDirectory + findData.cFileName);
+	} while (::FindNextFile(hFind, &findData));
+	VERIFY(::FindClose(hFind));
+}
+
+void CDownloadListCtrl::ClearVideoThumbnailCache()
+{
+	m_tooltip.SetPreviewBitmap(NULL, 0);
+	for (POSITION pos = m_videoThumbnailCache.GetStartPosition(); pos != NULL;) {
+		CString strKey;
+		void *pEntry = NULL;
+		m_videoThumbnailCache.GetNextAssoc(pos, strKey, pEntry);
+		delete static_cast<VideoThumbnailCacheEntry*>(pEntry);
+	}
+	m_videoThumbnailCache.RemoveAll();
+	m_videoThumbnailQueue.RemoveAll();
+	m_pHoveredVideoThumbnailFile = NULL;
+}
+
+CString CDownloadListCtrl::GetVideoThumbnailCacheDirectory() const
+{
+	CString strDirectory(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
+	strDirectory += kVideoThumbnailCacheFolder;
+	return strDirectory;
+}
+
+CString CDownloadListCtrl::GetVideoThumbnailCacheKey(const CPartFile *pPartFile) const
+{
+	return pPartFile != NULL ? CString(md4str(pPartFile->GetFileHash())) : CString();
+}
+
+CString CDownloadListCtrl::GetVideoThumbnailCachePath(const CString &rstrKey) const
+{
+	CString strPath(GetVideoThumbnailCacheDirectory());
+	strPath.AppendFormat(_T("thumb_%s.png"), (LPCTSTR)rstrKey);
+	return strPath;
+}
+
+CDownloadListCtrl::VideoThumbnailCacheEntry* CDownloadListCtrl::GetVideoThumbnailCacheEntry(const CString &rstrKey)
+{
+	if (rstrKey.IsEmpty())
+		return NULL;
+	InitializeVideoThumbnailCache();
+
+	void *pEntry = NULL;
+	if (m_videoThumbnailCache.Lookup(rstrKey, pEntry))
+		return static_cast<VideoThumbnailCacheEntry*>(pEntry);
+
+	VideoThumbnailCacheEntry *pNewEntry = new VideoThumbnailCacheEntry;
+	pNewEntry->strCachePath = GetVideoThumbnailCachePath(rstrKey);
+	m_videoThumbnailCache.SetAt(rstrKey, pNewEntry);
+	return pNewEntry;
+}
+
+CPartFile* CDownloadListCtrl::FindVideoThumbnailFileByKey(const CString &rstrKey) const
+{
+	if (theApp.downloadqueue == NULL || rstrKey.IsEmpty())
+		return NULL;
+	for (POSITION pos = NULL;;) {
+		CPartFile *pPartFile = theApp.downloadqueue->GetFileNext(pos);
+		if (pPartFile == NULL)
+			return NULL;
+		if (rstrKey.CompareNoCase(md4str(pPartFile->GetFileHash())) == 0)
+			return pPartFile;
+	}
+}
+
+HBITMAP CDownloadListCtrl::GetCachedVideoThumbnail(CPartFile *pPartFile)
+{
+	VideoThumbnailCacheEntry *pEntry = GetVideoThumbnailCacheEntry(GetVideoThumbnailCacheKey(pPartFile));
+	if (pEntry == NULL)
+		return NULL;
+	if (pEntry->hBitmap == NULL && LongPathSeams::PathExists(pEntry->strCachePath)) {
+		HBITMAP hBitmap = NULL;
+		if (ReadVideoThumbnailBitmapFile(pEntry->strCachePath, hBitmap))
+			pEntry->hBitmap = hBitmap;
+	}
+	return pEntry->hBitmap;
+}
+
+bool CDownloadListCtrl::IsVideoThumbnailCandidate(const CPartFile *pPartFile) const
+{
+	return pPartFile != NULL && pPartFile->IsReadyForVideoThumbnail();
+}
+
+void CDownloadListCtrl::QueueVideoThumbnail(CPartFile *pPartFile, bool bHighPriority)
+{
+	if (!IsVideoThumbnailCandidate(pPartFile))
+		return;
+
+	const CString strKey(GetVideoThumbnailCacheKey(pPartFile));
+	VideoThumbnailCacheEntry *pEntry = GetVideoThumbnailCacheEntry(strKey);
+	if (pEntry == NULL || pEntry->bInFlight)
+		return;
+
+	const uint64 ullCompletedSize = static_cast<uint64>(pPartFile->GetCompletedSize());
+	if (pEntry->hBitmap != NULL && !PartFilePreviewSeams::ShouldRefreshVideoThumbnail(pEntry->ullCompletedSize, ullCompletedSize))
+		return;
+
+	const ULONGLONG ullCurrentTick = ::GetTickCount64();
+	if (!PartFilePreviewSeams::IsVideoThumbnailAttemptDue(ullCurrentTick, pEntry->ullLastAttemptTick))
+		return;
+
+	if (pEntry->bQueued) {
+		if (bHighPriority) {
+			for (POSITION pos = m_videoThumbnailQueue.GetHeadPosition(); pos != NULL;) {
+				POSITION posCurrent = pos;
+				const CString strQueuedKey(m_videoThumbnailQueue.GetNext(pos));
+				if (strQueuedKey.CompareNoCase(strKey) == 0) {
+					m_videoThumbnailQueue.RemoveAt(posCurrent);
+					m_videoThumbnailQueue.AddHead(strKey);
+					break;
+				}
+			}
+		}
+	} else {
+		pEntry->bQueued = true;
+		if (bHighPriority)
+			m_videoThumbnailQueue.AddHead(strKey);
+		else
+			m_videoThumbnailQueue.AddTail(strKey);
+	}
+	StartNextVideoThumbnailWorker();
+}
+
+void CDownloadListCtrl::QueueVideoThumbnailScan()
+{
+	if (theApp.downloadqueue == NULL)
+		return;
+	for (POSITION pos = NULL;;) {
+		CPartFile *pPartFile = theApp.downloadqueue->GetFileNext(pos);
+		if (pPartFile == NULL)
+			break;
+		QueueVideoThumbnail(pPartFile, false);
+	}
+}
+
+void CDownloadListCtrl::StartNextVideoThumbnailWorker()
+{
+	if (m_bVideoThumbnailWorkerActive || !::IsWindow(m_hWnd))
+		return;
+
+	while (!m_videoThumbnailQueue.IsEmpty()) {
+		const CString strKey(m_videoThumbnailQueue.RemoveHead());
+		VideoThumbnailCacheEntry *pEntry = GetVideoThumbnailCacheEntry(strKey);
+		if (pEntry == NULL)
+			continue;
+		pEntry->bQueued = false;
+
+		CPartFile *pPartFile = FindVideoThumbnailFileByKey(strKey);
+		if (!IsVideoThumbnailCandidate(pPartFile))
+			continue;
+
+		const uint64 ullCompletedSize = static_cast<uint64>(pPartFile->GetCompletedSize());
+		if (pEntry->hBitmap != NULL && !PartFilePreviewSeams::ShouldRefreshVideoThumbnail(pEntry->ullCompletedSize, ullCompletedSize))
+			continue;
+
+		const ULONGLONG ullCurrentTick = ::GetTickCount64();
+		if (!PartFilePreviewSeams::IsVideoThumbnailAttemptDue(ullCurrentTick, pEntry->ullLastAttemptTick))
+			continue;
+
+		pEntry->ullLastAttemptTick = ullCurrentTick;
+		pEntry->bInFlight = true;
+		m_bVideoThumbnailWorkerActive = true;
+		pPartFile->m_bPreviewing = true;
+
+		CVideoThumbnailThread *pThread = static_cast<CVideoThumbnailThread*>(AfxBeginThread(RUNTIME_CLASS(CVideoThumbnailThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
+		if (pThread == NULL) {
+			pPartFile->m_bPreviewing = false;
+			pEntry->bInFlight = false;
+			m_bVideoThumbnailWorkerActive = false;
+			continue;
+		}
+		pThread->SetValues(pPartFile, thePrefs.GetVideoPlayer(), m_hWnd, pEntry->strCachePath);
+		pThread->ResumeThread();
+		return;
+	}
+}
+
+void CDownloadListCtrl::RemoveVideoThumbnailCache(const CPartFile *pPartFile)
+{
+	const CString strKey(GetVideoThumbnailCacheKey(pPartFile));
+	if (strKey.IsEmpty())
+		return;
+
+	for (POSITION pos = m_videoThumbnailQueue.GetHeadPosition(); pos != NULL;) {
+		POSITION posCurrent = pos;
+		const CString strQueuedKey(m_videoThumbnailQueue.GetNext(pos));
+		if (strQueuedKey.CompareNoCase(strKey) == 0)
+			m_videoThumbnailQueue.RemoveAt(posCurrent);
+	}
+
+	void *pEntry = NULL;
+	if (m_videoThumbnailCache.Lookup(strKey, pEntry)) {
+		VideoThumbnailCacheEntry *pCacheEntry = static_cast<VideoThumbnailCacheEntry*>(pEntry);
+		(void)LongPathSeams::DeleteFile(pCacheEntry->strCachePath);
+		delete pCacheEntry;
+		m_videoThumbnailCache.RemoveKey(strKey);
+	}
+	if (m_pHoveredVideoThumbnailFile == pPartFile) {
+		m_pHoveredVideoThumbnailFile = NULL;
+		m_tooltip.SetPreviewBitmap(NULL, 0);
+	}
+}
+
+void CDownloadListCtrl::OnMouseMove(UINT nFlags, CPoint point)
+{
+	CPartFile *pHoveredFile = NULL;
+	LVHITTESTINFO hitTest = {};
+	hitTest.pt = point;
+	if (SubItemHitTest(&hitTest) >= 0) {
+		const CtrlItem_Struct *pCtrlItem = reinterpret_cast<CtrlItem_Struct*>(GetItemData(hitTest.iItem));
+		if (pCtrlItem != NULL && pCtrlItem->type == FILE_TYPE)
+			pHoveredFile = static_cast<CPartFile*>(pCtrlItem->value);
+	}
+
+	if (pHoveredFile != m_pHoveredVideoThumbnailFile) {
+		m_pHoveredVideoThumbnailFile = pHoveredFile;
+		if (pHoveredFile == NULL)
+			m_tooltip.SetPreviewBitmap(NULL, 0);
+	}
+	if (pHoveredFile != NULL)
+		QueueVideoThumbnail(pHoveredFile, true);
+
+	CMuleListCtrl::OnMouseMove(nFlags, point);
+}
+
+void CDownloadListCtrl::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == kVideoThumbnailTimerId) {
+		QueueVideoThumbnailScan();
+		return;
+	}
+	CMuleListCtrl::OnTimer(nIDEvent);
+}
+
+void CDownloadListCtrl::OnDestroy()
+{
+	KillTimer(kVideoThumbnailTimerId);
+	ClearVideoThumbnailCache();
+	CMuleListCtrl::OnDestroy();
+}
+
+LRESULT CDownloadListCtrl::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
+{
+	VideoThumbnailResult_Struct *pResult = reinterpret_cast<VideoThumbnailResult_Struct*>(lParam);
+	if (pResult == NULL)
+		return 0;
+
+	VideoThumbnailCacheEntry *pEntry = GetVideoThumbnailCacheEntry(pResult->strFileHash);
+	if (pEntry != NULL) {
+		pEntry->bInFlight = false;
+		pEntry->strCachePath = pResult->strCachePath;
+	}
+	m_bVideoThumbnailWorkerActive = false;
+
+	const bool bFileStillCurrent = theApp.downloadqueue != NULL
+		&& pResult->pPartFile != NULL
+		&& theApp.downloadqueue->IsPartFile(pResult->pPartFile)
+		&& pResult->strFileHash.CompareNoCase(GetVideoThumbnailCacheKey(pResult->pPartFile)) == 0;
+	if (pEntry != NULL && bFileStillCurrent && pResult->hBitmap != NULL) {
+		if (pEntry->hBitmap != NULL)
+			::DeleteObject(pEntry->hBitmap);
+		pEntry->hBitmap = pResult->hBitmap;
+		pResult->hBitmap = NULL;
+		pEntry->ullCompletedSize = pResult->ullCompletedSize;
+		if (m_pHoveredVideoThumbnailFile == pResult->pPartFile) {
+			m_tooltip.SetPreviewBitmap(pEntry->hBitmap, PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth);
+			m_tooltip.Invalidate();
+		}
+	}
+
+	delete pResult;
+	StartNextVideoThumbnailWorker();
+	return 0;
 }
 
 void CDownloadListCtrl::SetAllIcons()
@@ -436,6 +747,7 @@ bool CDownloadListCtrl::RemoveFile(const CPartFile *toremove)
 	bool bResult = false;
 	if (theApp.IsClosing())
 		return bResult;
+	RemoveVideoThumbnailCache(toremove);
 	// Retrieve all entries matching the File or linked to the file
 	// Remark: The 'asked another files' clients must be removed from here
 	ASSERT(toremove != NULL);
@@ -1046,7 +1358,6 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			int iFilesGetPreviewParts = 0;
 			int iFilesPreviewType = 0;
 			int iFilesToPreview = 0;
-			int iFilesToThumbnail = 0;
 			int iFilesToCancel = 0;
 			int iFilesCanPauseOnPreview = 0;
 			int iFilesDoPauseOnPreview = 0;
@@ -1073,7 +1384,6 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 				iFilesGetPreviewParts += static_cast<int>(pFile->GetPreviewPrio());
 				iFilesPreviewType += static_cast<int>(pFile->IsPreviewableFileType());
 				iFilesToPreview += static_cast<int>(pFile->IsReadyForPreview());
-				iFilesToThumbnail += static_cast<int>(pFile->IsReadyForVideoThumbnail());
 				iFilesCanPauseOnPreview += static_cast<int>(pFile->IsPreviewableFileType() && !pFile->IsReadyForPreview() && pFile->CanPauseFile());
 				iFilesDoPauseOnPreview += static_cast<int>(pFile->IsPausingOnPreview());
 				iFilesInCats += static_cast<int>(!pFile->HasDefaultCategory());
@@ -1128,7 +1438,6 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 				m_PreviewMenu.CheckMenuItem(MP_TRY_TO_GET_PREVIEW_PARTS, (iSelectedItems == 1 && iFilesGetPreviewParts == 1) ? MF_CHECKED : MF_UNCHECKED);
 			}
 			m_PreviewMenu.EnableMenuItem(MP_PREVIEW, (iSelectedItems == 1 && iFilesToPreview == 1) ? MF_ENABLED : MF_GRAYED);
-			m_PreviewMenu.EnableMenuItem(MP_VIDEO_THUMBNAIL, (iSelectedItems == 1 && iFilesToThumbnail == 1) ? MF_ENABLED : MF_GRAYED);
 			m_PreviewMenu.EnableMenuItem(MP_PAUSEONPREVIEW, iFilesCanPauseOnPreview > 0 ? MF_ENABLED : MF_GRAYED);
 			m_PreviewMenu.CheckMenuItem(MP_PAUSEONPREVIEW, (iSelectedItems > 0 && iFilesDoPauseOnPreview == iSelectedItems) ? MF_CHECKED : MF_UNCHECKED);
 			EnableSubMenuItem(m_FileMenu, m_PreviewMenu.m_hMenu, m_PreviewMenu.HasEnabledItems() ? MF_ENABLED : MF_GRAYED);
@@ -1272,7 +1581,6 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			m_PreviewMenu.CheckMenuItem(MP_TRY_TO_GET_PREVIEW_PARTS, MF_UNCHECKED);
 		}
 		m_PreviewMenu.EnableMenuItem(MP_PREVIEW, MF_GRAYED);
-		m_PreviewMenu.EnableMenuItem(MP_VIDEO_THUMBNAIL, MF_GRAYED);
 		m_PreviewMenu.EnableMenuItem(MP_PAUSEONPREVIEW, MF_GRAYED);
 
 		m_FileMenu.EnableMenuItem(MP_METINFO, MF_GRAYED);
@@ -1645,10 +1953,6 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 			case MP_PREVIEW:
 				if (selectedCount == 1)
 					file->PreviewFile();
-				break;
-			case MP_VIDEO_THUMBNAIL:
-				if (selectedCount == 1)
-					file->GenerateVideoThumbnail();
 				break;
 			case MP_PAUSEONPREVIEW:
 				{
@@ -2181,7 +2485,6 @@ void CDownloadListCtrl::CreateMenus()
 	m_PreviewMenu.CreateMenu();
 	m_PreviewMenu.AddMenuTitle(NULL, true);
 	m_PreviewMenu.AppendMenu(MF_STRING, MP_PREVIEW, GetResString(IDS_DL_PREVIEW), _T("PREVIEW"));
-	m_PreviewMenu.AppendMenu(MF_STRING, MP_VIDEO_THUMBNAIL, GetResString(IDS_DL_VIDEO_THUMBNAIL), _T("Preview"));
 	m_PreviewMenu.AppendMenu(MF_STRING, MP_PAUSEONPREVIEW, GetResString(IDS_PAUSEONPREVIEW));
 	if (!thePrefs.GetPreviewPrio())
 		m_PreviewMenu.AppendMenu(MF_STRING, MP_TRY_TO_GET_PREVIEW_PARTS, GetResString(IDS_DL_TRY_TO_GET_PREVIEW_PARTS));
@@ -2585,10 +2888,19 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 		const CtrlItem_Struct *content = reinterpret_cast<CtrlItem_Struct*>(GetItemData(pGetInfoTip->iItem));
 		if (content && pGetInfoTip->pszText && pGetInfoTip->cchTextMax > 0) {
 			CString info;
+			m_tooltip.SetPreviewBitmap(NULL, 0);
 
 			// build info text and display it
-			if (content->type == 1) // for downloading files
-				info = static_cast<CPartFile*>(content->value)->GetInfoSummary();
+			if (content->type == 1) { // for downloading files
+				CPartFile *pPartFile = static_cast<CPartFile*>(content->value);
+				info = pPartFile->GetInfoSummary();
+				if (pPartFile->IsMovie() && thePrefs.UseVideoPreviewThumbnails()) {
+					HBITMAP hBitmap = GetCachedVideoThumbnail(pPartFile);
+					if (hBitmap != NULL)
+						m_tooltip.SetPreviewBitmap(hBitmap, PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth);
+				}
+				QueueVideoThumbnail(pPartFile, true);
+			}
 			else if ((content->type == 3 || content->type == 2) && IsLiveSourceItem(content)) { // for sources
 				const CUpDownClient *client = static_cast<CUpDownClient*>(content->value);
 				if (client->IsEd2kClient()) {
@@ -2853,7 +3165,6 @@ bool CDownloadListCtrl::ReportAvailableCommands(CList<int> &liAvailableCommands)
 			//int iFilesGetPreviewParts = 0;
 			//int iFilesPreviewType = 0;
 			int iFilesToPreview = 0;
-			int iFilesToThumbnail = 0;
 			int iFilesToCancel = 0;
 			for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;) {
 				const CtrlItem_Struct *pItemData = reinterpret_cast<CtrlItem_Struct*>(GetItemData(GetNextSelectedItem(pos)));
@@ -2871,7 +3182,6 @@ bool CDownloadListCtrl::ReportAvailableCommands(CList<int> &liAvailableCommands)
 				//iFilesGetPreviewParts += static_cast<int>(pFile->GetPreviewPrio());
 				//iFilesPreviewType += static_cast<int>(pFile->IsPreviewableFileType());
 				iFilesToPreview += static_cast<int>(pFile->IsReadyForPreview());
-				iFilesToThumbnail += static_cast<int>(pFile->IsReadyForVideoThumbnail());
 			}
 
 			// enable commands if there is at least one item which can be used for the action
@@ -2887,8 +3197,6 @@ bool CDownloadListCtrl::ReportAvailableCommands(CList<int> &liAvailableCommands)
 				liAvailableCommands.AddTail(MP_OPEN);
 			if (iSelectedItems == 1 && iFilesToPreview == 1)
 				liAvailableCommands.AddTail(MP_PREVIEW);
-			if (iSelectedItems == 1 && iFilesToThumbnail == 1)
-				liAvailableCommands.AddTail(MP_VIDEO_THUMBNAIL);
 			if (iSelectedItems == 1)
 				liAvailableCommands.AddTail(MP_OPENFOLDER);
 			if (iSelectedItems > 0) {
