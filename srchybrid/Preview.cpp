@@ -43,6 +43,33 @@ namespace
 {
 constexpr DWORD kVlcThumbnailTimeoutMs = 15000;
 constexpr ULONGLONG kMaxThumbnailBytes = 16ull * 1024ull * 1024ull;
+volatile LONG g_lVlcThumbnailProcessActive = 0;
+
+class CScopedVlcThumbnailProcessSlot
+{
+public:
+	CScopedVlcThumbnailProcessSlot()
+		: m_bAcquired(::InterlockedCompareExchange(&g_lVlcThumbnailProcessActive, 1, 0) == 0)
+	{
+	}
+
+	~CScopedVlcThumbnailProcessSlot()
+	{
+		if (m_bAcquired)
+			(void)::InterlockedExchange(&g_lVlcThumbnailProcessActive, 0);
+	}
+
+	CScopedVlcThumbnailProcessSlot(const CScopedVlcThumbnailProcessSlot&) = delete;
+	CScopedVlcThumbnailProcessSlot& operator=(const CScopedVlcThumbnailProcessSlot&) = delete;
+
+	bool IsAcquired() const
+	{
+		return m_bAcquired;
+	}
+
+private:
+	bool m_bAcquired;
+};
 
 CString MakeVideoThumbnailPrefix(const CPartFile &partFile)
 {
@@ -90,6 +117,12 @@ void DeleteGeneratedThumbnails(const CString &rstrDirectory, const CString &rstr
 
 bool RunVlcThumbnailCommand(const CString &rstrCommand, const CString &rstrWorkingDirectory, DWORD &rdwExitCode)
 {
+	CScopedVlcThumbnailProcessSlot slot;
+	if (!slot.IsAcquired()) {
+		rdwExitCode = ERROR_BUSY;
+		return false;
+	}
+
 	STARTUPINFO startupInfo = {};
 	startupInfo.cb = sizeof(startupInfo);
 	startupInfo.dwFlags = STARTF_USESHOWWINDOW;
