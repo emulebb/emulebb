@@ -16,6 +16,7 @@
 #include "Preferences.h"
 #include "SafeFile.h"
 #include "SearchFile.h"
+#include "StringConversion.h"
 
 #include <map>
 
@@ -34,6 +35,7 @@ constexpr uint32 kRulesFingerprintSeed = 2166136261U;
 constexpr uint32 kRulesFingerprintPrime = 16777619U;
 constexpr uint32 kDetectorRulesVersion = 1;
 constexpr uint32 kMaxCachedReasons = 32;
+constexpr ULONGLONG kMaxRuleFileBytes = 1024 * 1024;
 
 struct SCacheRecord
 {
@@ -133,26 +135,55 @@ uint32 BuildRulesFingerprint(const FakeFileDetectorSeams::RuleSet &rRules)
 
 void WriteDefaultRuleFile(const CString &rstrPath)
 {
-	CStdioFile file;
+	CFile file;
 	CFileException ex;
-	if (!file.Open(rstrPath, CFile::modeCreate | CFile::modeWrite | CFile::typeText | CFile::shareDenyWrite, &ex)) {
+	if (!file.Open(rstrPath, CFile::modeCreate | CFile::modeWrite | CFile::typeBinary | CFile::shareDenyWrite, &ex)) {
 		DebugLogError(_T("Failed to create FakeFileFilter.dat%s"), (LPCTSTR)CExceptionStrDash(ex));
 		return;
 	}
-	file.WriteString(_T("# eMule BB fake-file bad-signal rules\n"));
-	file.WriteString(_T("# One rule per line. Lines starting with # or ; are ignored.\n\n"));
-	file.WriteString(_T("[tokens]\n"));
-	file.WriteString(_T("fake\n"));
-	file.WriteString(_T("corrupt\n"));
-	file.WriteString(_T("wrong file\n"));
-	file.WriteString(_T("password\n"));
-	file.WriteString(_T("virus\n"));
-	file.WriteString(_T("trojan\n"));
-	file.WriteString(_T("malware\n\n"));
-	file.WriteString(_T("[regex]\n"));
-	file.WriteString(_T("\\.mp4\\.exe$\n"));
-	file.WriteString(_T("\\.avi\\.scr$\n"));
+	const CString strDefaultRules(
+		_T("# eMule BB fake-file bad-signal rules\n")
+		_T("# UTF-8 text. One rule per line. Lines starting with # or ; are ignored.\n\n")
+		_T("[tokens]\n")
+		_T("fake\n")
+		_T("corrupt\n")
+		_T("wrong file\n")
+		_T("password\n")
+		_T("virus\n")
+		_T("trojan\n")
+		_T("malware\n\n")
+		_T("[regex]\n")
+		_T("\\.mp4\\.exe$\n")
+		_T("\\.avi\\.scr$\n"));
+	const CUnicodeToBOMUTF8 utf8(strDefaultRules);
+	file.Write(static_cast<LPCSTR>(utf8), utf8.GetLength());
 	file.Close();
+}
+
+bool ReadRuleFileText(const CString &rstrPath, CString &rstrText)
+{
+	rstrText.Empty();
+	CFile file;
+	CFileException ex;
+	if (!file.Open(rstrPath, CFile::modeRead | CFile::typeBinary | CFile::shareDenyWrite, &ex)) {
+		DebugLogError(_T("Failed to load FakeFileFilter.dat%s"), (LPCTSTR)CExceptionStrDash(ex));
+		return false;
+	}
+	const ULONGLONG ullLength = file.GetLength();
+	if (ullLength > kMaxRuleFileBytes) {
+		DebugLogError(_T("Failed to load FakeFileFilter.dat - file is too large"));
+		return false;
+	}
+	CStringA strBytes;
+	const UINT uLength = static_cast<UINT>(ullLength);
+	LPSTR pszBuffer = strBytes.GetBuffer(static_cast<int>(uLength));
+	const UINT uRead = file.Read(pszBuffer, uLength);
+	strBytes.ReleaseBuffer(static_cast<int>(uRead));
+	file.Close();
+	rstrText = OptUtf8ToStr(strBytes);
+	if (!rstrText.IsEmpty() && rstrText[0] == 0xFEFF)
+		rstrText.Delete(0);
+	return true;
 }
 
 void EnsureRulesLoaded()
@@ -389,17 +420,17 @@ bool FakeFileDetector::ReloadRules()
 	if (!PathFileExists(strPath))
 		WriteDefaultRuleFile(strPath);
 
-	CStdioFile file;
-	CFileException ex;
-	if (!file.Open(strPath, CFile::modeRead | CFile::typeText | CFile::shareDenyWrite, &ex)) {
-		DebugLogError(_T("Failed to load FakeFileFilter.dat%s"), (LPCTSTR)CExceptionStrDash(ex));
+	CString strRulesText;
+	if (!ReadRuleFileText(strPath, strRulesText)) {
 		g_uRulesFingerprint = BuildRulesFingerprint(g_rules);
 		return false;
 	}
 
 	CString strSection;
-	CString strLine;
-	while (file.ReadString(strLine)) {
+	int iPos = 0;
+	while (iPos >= 0) {
+		CString strLine(strRulesText.Tokenize(_T("\n"), iPos));
+		strLine.TrimRight(_T("\r"));
 		strLine.Trim();
 		if (strLine.IsEmpty() || strLine[0] == _T('#') || strLine[0] == _T(';'))
 			continue;
@@ -410,7 +441,6 @@ bool FakeFileDetector::ReloadRules()
 		}
 		AddRuleLine(strSection, strLine);
 	}
-	file.Close();
 	g_uRulesFingerprint = BuildRulesFingerprint(g_rules);
 	DebugLog(_T("Loaded fake-file filter rules. Tokens: %u, regexes: %u"), static_cast<unsigned>(g_rules.tokens.size()), static_cast<unsigned>(g_rules.regexes.size()));
 	return true;
