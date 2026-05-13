@@ -21,6 +21,7 @@
 #endif */
 #include <atlconv.h>
 #include <atlimage.h>
+#include <memory>
 #include <string>
 #include <sockimpl.h> //for *m_pfnSockTerm()
 #include <timeapi.h>
@@ -73,8 +74,10 @@
 #include "OtherFunctions.h"
 #include "PartFilePersistenceSeams.h"
 #include "SharedDirectoryOps.h"
+#include "SharedDirectoryMonitorSeams.h"
 #include "UserMsgs.h"
 #include "BindStartupPolicy.h"
+#include "WorkerUiMessageSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -302,9 +305,12 @@ bool LoadMonitoredSharedRootJournalStateFile(const CString &rstrFullPath, std::v
 bool SaveMonitoredSharedRootJournalStateFile(const CString &rstrFullPath, const std::vector<SMonitoredSharedRootJournalState> &rStates)
 {
 	const CString strTempPath(rstrFullPath + _T(".tmp"));
+	bool bTempFileCreated = false;
+	bool bSaveSucceeded = false;
 	CSafeBufferedFile file;
 	if (!LongPathSeams::OpenFile(file, strTempPath, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite | CFile::typeBinary))
 		return false;
+	bTempFileCreated = true;
 
 	try {
 		static const WORD wBOM = u'\xFEFF';
@@ -315,13 +321,16 @@ bool SaveMonitoredSharedRootJournalStateFile(const CString &rstrFullPath, const 
 			file.CStdioFile::WriteString(strLine);
 		}
 		file.Close();
-		return LongPathSeams::MoveFileEx(strTempPath, rstrFullPath, MOVEFILE_REPLACE_EXISTING) != 0;
+		bSaveSucceeded = LongPathSeams::MoveFileEx(strTempPath, rstrFullPath, SharedDirectoryMonitorSeams::GetJournalReplaceFlags()) != 0;
 	} catch (CFileException *ex) {
 		if (thePrefs.GetVerbose())
 			AddDebugLogLine(true, _T("Failed to save %s%s"), (LPCTSTR)rstrFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
+		file.Abort();
 	}
-	return false;
+	if (SharedDirectoryMonitorSeams::ShouldDeleteJournalTempFile(bTempFileCreated, bSaveSucceeded))
+		(void)LongPathSeams::DeleteFileIfExists(strTempPath);
+	return bSaveSucceeded;
 }
 }
 
@@ -1516,8 +1525,19 @@ void CemuleApp::StopSharedDirectoryMonitor()
 		::SetEvent(m_hSharedDirectoryMonitorStopEvent);
 	if (m_hSharedDirectoryMonitorWakeEvent != NULL)
 		::SetEvent(m_hSharedDirectoryMonitorWakeEvent);
+
+	SharedDirectoryMonitorSeams::StopWaitResult waitResult = {};
+	waitResult.bHadThread = m_pSharedDirectoryMonitorThread != NULL;
 	if (m_pSharedDirectoryMonitorThread != NULL) {
-		(void)::WaitForSingleObject(m_pSharedDirectoryMonitorThread->m_hThread, SEC2MS(30));
+		waitResult.dwWaitResult = ::WaitForSingleObject(m_pSharedDirectoryMonitorThread->m_hThread, SEC2MS(30));
+	}
+	if (SharedDirectoryMonitorSeams::ShouldLogAbandonedMonitorResources(waitResult)) {
+		const DWORD dwError = waitResult.dwWaitResult == WAIT_FAILED ? ::GetLastError() : ERROR_SUCCESS;
+		AddDebugLogLine(false, _T("Shared-directory monitor did not exit cleanly during shutdown (wait result %lu, error %lu); leaving live monitor resources owned by the process."), waitResult.dwWaitResult, dwError);
+	}
+	if (!SharedDirectoryMonitorSeams::ShouldReleaseMonitorResources(waitResult))
+		return;
+	if (m_pSharedDirectoryMonitorThread != NULL) {
 		delete m_pSharedDirectoryMonitorThread;
 		m_pSharedDirectoryMonitorThread = NULL;
 	}
@@ -1545,7 +1565,7 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 	CStringList liSuppressedRoots;
 
 	const auto postUpdate = [&](SMonitoredSharedDirectoryUpdate &rUpdate) -> void {
-		if (emuledlg == NULL || emuledlg->sharedfileswnd == NULL || !::IsWindow(emuledlg->sharedfileswnd->GetSafeHwnd()))
+		if (emuledlg == NULL || emuledlg->sharedfileswnd == NULL)
 			return;
 		if (!rUpdate.bReloadSharedFiles
 			&& !rUpdate.bForceTreeReload
@@ -1556,7 +1576,7 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 			return;
 		}
 
-		SMonitoredSharedDirectoryUpdate *pPostedUpdate = new SMonitoredSharedDirectoryUpdate;
+		std::unique_ptr<SMonitoredSharedDirectoryUpdate> pPostedUpdate(new SMonitoredSharedDirectoryUpdate);
 		for (POSITION pos = rUpdate.liNewDirectories.GetHeadPosition(); pos != NULL;)
 			pPostedUpdate->liNewDirectories.AddTail(rUpdate.liNewDirectories.GetNext(pos));
 		for (POSITION pos = rUpdate.liRemovedDirectories.GetHeadPosition(); pos != NULL;)
@@ -1565,8 +1585,12 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 			pPostedUpdate->liDowngradedRoots.AddTail(rUpdate.liDowngradedRoots.GetNext(pos));
 		pPostedUpdate->bForceTreeReload = rUpdate.bForceTreeReload;
 		pPostedUpdate->bReloadSharedFiles = rUpdate.bReloadSharedFiles;
-		if (!::PostMessage(emuledlg->sharedfileswnd->GetSafeHwnd(), UM_MONITORED_SHARED_DIR_UPDATE, reinterpret_cast<WPARAM>(pPostedUpdate), 0))
-			delete pPostedUpdate;
+		(void)TryPostWorkerUiPayloadMessage(
+			emuledlg->sharedfileswnd->GetSafeHwnd(),
+			emuledlg->sharedfileswnd->GetWorkerUiClosingFlag(),
+			emuledlg->sharedfileswnd->GetWorkerUiPayloadOwnerKey(),
+			UM_MONITORED_SHARED_DIR_UPDATE,
+			std::move(pPostedUpdate));
 	};
 
 	const auto appendDowngradedRoot = [&](SMonitoredSharedDirectoryUpdate &rUpdate, const CString &rRootPath) -> void {

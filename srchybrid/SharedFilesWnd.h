@@ -15,6 +15,8 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
+#include <atomic>
+
 #include "ResizableLib\ResizableDialog.h"
 #include "SharedFilesCtrl.h"
 #include "SharedDirsTreeCtrl.h"
@@ -86,6 +88,14 @@ public:
 	 */
 	void OnSharedHashingDrained();
 	/**
+	 * @brief Returns the teardown flag used to reject worker-thread UI posts while this window is closing.
+	 */
+	const std::atomic_bool *GetWorkerUiClosingFlag() const	{ return &m_bWorkerUiClosing; }
+	/**
+	 * @brief Returns the owner key for queued worker-thread payload cleanup.
+	 */
+	ULONG_PTR GetWorkerUiPayloadOwnerKey() const			{ return reinterpret_cast<ULONG_PTR>(this); }
+	/**
 	 * @brief Refreshes reload affordance text/tooltips from the current hash state.
 	 */
 	void UpdateReloadButtonState();
@@ -102,6 +112,7 @@ private:
 	CHeaderCtrl		m_ctlSharedListHeader;
 	CToolTipCtrl	m_reloadToolTip;
 	uint32			m_nFilterColumn;
+	std::atomic_bool m_bWorkerUiClosing;
 	bool			m_bDetailsVisible;
 	bool			m_bSharedTreeInitialized;
 	bool			m_bStartupSharedTreePopulatedReported;
@@ -150,6 +161,7 @@ protected:
 	afx_msg void OnSysColorChange();
 	afx_msg void OnTvnSelChangedSharedDirsTree(LPNMHDR, LRESULT *pResult);
 	afx_msg void OnShowWindow(BOOL bShow, UINT);
+	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedSfHideshowdetails();
 	afx_msg void OnLvnItemchangedSflist(LPNMHDR, LRESULT *pResult);
 	afx_msg LRESULT OnAICHHashingCountChanged(WPARAM, LPARAM);

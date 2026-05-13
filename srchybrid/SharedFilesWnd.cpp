@@ -19,6 +19,7 @@
 #include "emuleDlg.h"
 #include "SharedFilesWnd.h"
 #include "SharedFilesWndSeams.h"
+#include "WorkerUiMessageSeams.h"
 #include "OtherFunctions.h"
 #include "SharedFileList.h"
 #include "KnownFile.h"
@@ -66,6 +67,7 @@ BEGIN_MESSAGE_MAP(CSharedFilesWnd, CResizableDialog)
 	ON_BN_CLICKED(IDC_SF_HIDESHOWDETAILS, OnBnClickedSfHideshowdetails)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_SFLIST, OnLvnItemchangedSflist)
 	ON_WM_SHOWWINDOW()
+	ON_WM_DESTROY()
 	ON_MESSAGE(UM_AICH_HASHING_COUNT_CHANGED, OnAICHHashingCountChanged)
 	ON_MESSAGE(UM_MONITORED_SHARED_DIR_UPDATE, OnMonitoredSharedDirectoryUpdate)
 END_MESSAGE_MAP()
@@ -74,6 +76,7 @@ CSharedFilesWnd::CSharedFilesWnd(CWnd *pParent /*=NULL*/)
 	: CResizableDialog(CSharedFilesWnd::IDD, pParent)
 	, icon_files()
 	, m_nFilterColumn()
+	, m_bWorkerUiClosing(false)
 	, m_bDetailsVisible(true)
 	, m_bSharedTreeInitialized(false)
 	, m_bStartupSharedTreePopulatedReported(false)
@@ -88,6 +91,7 @@ CSharedFilesWnd::CSharedFilesWnd(CWnd *pParent /*=NULL*/)
 
 CSharedFilesWnd::~CSharedFilesWnd()
 {
+	DiscardPostedWorkerUiPayloadsForOwner(GetWorkerUiPayloadOwnerKey());
 	m_ctlSharedListHeader.Detach();
 	if (icon_files)
 		VERIFY(::DestroyIcon(icon_files));
@@ -187,6 +191,7 @@ BOOL CSharedFilesWnd::OnInitDialog()
 #endif
 
 	Localize();
+	m_bWorkerUiClosing.store(false, std::memory_order_release);
 #if EMULE_COMPILED_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("CSharedFilesWnd::OnInitDialog total"), theApp.GetStartupProfileElapsedUs(ullInitStart));
 #endif
@@ -435,8 +440,8 @@ LRESULT CSharedFilesWnd::OnAICHHashingCountChanged(WPARAM wParam, LPARAM)
 
 LRESULT CSharedFilesWnd::OnMonitoredSharedDirectoryUpdate(WPARAM wParam, LPARAM)
 {
-	SMonitoredSharedDirectoryUpdate *pUpdate = reinterpret_cast<SMonitoredSharedDirectoryUpdate*>(wParam);
-	if (pUpdate == NULL)
+	std::unique_ptr<SMonitoredSharedDirectoryUpdate> pUpdate = TakePostedWorkerUiPayload<SMonitoredSharedDirectoryUpdate>(wParam);
+	if (!pUpdate)
 		return 0;
 
 	bool bStateChanged = false;
@@ -470,9 +475,14 @@ LRESULT CSharedFilesWnd::OnMonitoredSharedDirectoryUpdate(WPARAM wParam, LPARAM)
 		else
 			theApp.sharedfiles->Reload();
 	}
-
-	delete pUpdate;
 	return 0;
+}
+
+void CSharedFilesWnd::OnDestroy()
+{
+	m_bWorkerUiClosing.store(true, std::memory_order_release);
+	DiscardPostedWorkerUiPayloadsForOwner(GetWorkerUiPayloadOwnerKey());
+	CResizableDialog::OnDestroy();
 }
 
 void CSharedFilesWnd::OnLvnItemActivateSharedFiles(LPNMHDR, LRESULT*)
