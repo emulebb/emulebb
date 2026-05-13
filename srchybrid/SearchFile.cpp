@@ -144,6 +144,8 @@ CSearchFile::CSearchFile(const CSearchFile *copyfrom)
 	m_flags = copyfrom->m_flags;
 	m_nSources = copyfrom->m_nSources;
 	m_nCompleteSources = copyfrom->m_nCompleteSources;
+	for (INT_PTR i = 0; i < copyfrom->m_astrObservedNames.GetCount(); ++i)
+		AddObservedName(copyfrom->m_astrObservedNames[i]);
 }
 
 CSearchFile::CSearchFile(CFileDataIO &in_data, bool bOptUTF8, uint32 nSearchID, uint32 nServerIP,
@@ -289,6 +291,7 @@ CSearchFile::CSearchFile(CFileDataIO &in_data, bool bOptUTF8, uint32 nSearchID, 
 			CSearchFile::SetFileType(strDetailFileType.IsEmpty() ? rstrFileType : strDetailFileType);
 		} else
 			CSearchFile::SetFileType(rstrFileType);
+	AddObservedName(GetFileName());
 }
 
 CSearchFile::~CSearchFile()
@@ -403,4 +406,17 @@ time_t CSearchFile::GetLastSeenComplete() const
 bool CSearchFile::IsConsideredSpam() const
 {
 	return GetSpamRating() >= SEARCH_SPAM_THRESHOLD;
+}
+
+void CSearchFile::AddObservedName(LPCTSTR pszName)
+{
+	CString strName(pszName != NULL ? pszName : _T(""));
+	strName.Trim();
+	if (strName.IsEmpty())
+		return;
+	for (INT_PTR i = 0; i < m_astrObservedNames.GetCount(); ++i) {
+		if (m_astrObservedNames[i].CompareNoCase(strName) == 0)
+			return;
+	}
+	m_astrObservedNames.Add(strName);
 }

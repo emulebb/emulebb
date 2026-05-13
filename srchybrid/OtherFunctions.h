@@ -27,6 +27,8 @@ class CSafeBufferedFile;
 class CSafeFile;
 class CShareableFile;
 
+#ifndef EMULE_EFILETYPE_DEFINED
+#define EMULE_EFILETYPE_DEFINED
 enum EFileType : uint8
 {
 	FILETYPE_UNKNOWN,
@@ -48,6 +50,7 @@ enum EFileType : uint8
 	PIC_GIF,
 	DOCUMENT_PDF
 };
+#endif
 
 extern LPCTSTR const sBadFileNameChar;
 extern LPCTSTR const sHiddenPassword;

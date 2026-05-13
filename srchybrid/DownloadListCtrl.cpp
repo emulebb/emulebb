@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "FakeFileDetector.h"
 #include "DownloadProgressBarSeams.h"
 #include "DownloadListCtrl.h"
 #include "updownclient.h"
@@ -2857,6 +2858,11 @@ CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, i
 		break;
 	case 8: //state
 		sText = lpPartFile->getPartfileStatus();
+		{
+			const SFakeFileReport fakeReport = FakeFileDetector::AnalyzePartFile(*const_cast<CPartFile*>(lpPartFile));
+			if (fakeReport.nScore > 0)
+				sText.AppendFormat(_T(" - Fake: %u%%"), fakeReport.nScore);
+		}
 		break;
 	case 9: //remaining time & size
 		if (lpPartFile->GetStatus() != PS_COMPLETING && lpPartFile->GetStatus() != PS_COMPLETE) {

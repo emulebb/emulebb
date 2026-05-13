@@ -430,6 +430,7 @@ bool CSearchList::AddToList(CSearchFile *toadd, bool bClientResponse, uint32 dwF
 	for (POSITION pos = list->GetHeadPosition(); pos != NULL;) {
 		CSearchFile *parent = list->GetNext(pos);
 		if (parent->GetListParent() == NULL && md4equ(parent->GetFileHash(), toadd->GetFileHash())) {
+			parent->AddObservedName(toadd->GetFileName());
 			// if this parent does not have any child entries yet, create one child entry
 			// which is equal to the current parent entry (needed for GUI when expanding the child list).
 			if (!parent->GetListChildCount()) {

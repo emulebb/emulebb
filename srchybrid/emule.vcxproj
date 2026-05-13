@@ -201,10 +201,12 @@
     <ClCompile Include="EncryptedDatagramSocket.cpp" />
     <ClCompile Include="EncryptedStreamSocket.cpp" />
     <ClCompile Include="ExitBox.cpp" />
+    <ClCompile Include="FakeFileDetector.cpp" />
     <ClCompile Include="FileDetailDialog.cpp" />
     <ClCompile Include="FileDetailDialogInfo.cpp" />
     <ClCompile Include="FileDetailDialogName.cpp" />
     <ClCompile Include="FileDetailDlgStatistics.cpp" />
+    <ClCompile Include="FileTypeClassifier.cpp" />
     <ClCompile Include="FileIdentifier.cpp" />
     <ClCompile Include="FileInfoDialog.cpp" />
     <ClCompile Include="FrameGrabThread.cpp" />
@@ -485,10 +487,13 @@
     <ClInclude Include="EncryptedStreamSocket.h" />
     <ClInclude Include="Exceptions.h" />
     <ClInclude Include="ExitBox.h" />
+    <ClInclude Include="FakeFileDetector.h" />
+    <ClInclude Include="FakeFileDetectorSeams.h" />
     <ClInclude Include="FileDetailDialog.h" />
     <ClInclude Include="FileDetailDialogInfo.h" />
     <ClInclude Include="FileDetailDialogName.h" />
     <ClInclude Include="FileDetailDlgStatistics.h" />
+    <ClInclude Include="FileTypeClassifierSeams.h" />
     <ClInclude Include="FileIdentifier.h" />
     <ClInclude Include="FileInfoDialog.h" />
     <ClInclude Include="FrameGrabThread.h" />

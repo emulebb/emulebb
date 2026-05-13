@@ -60,6 +60,7 @@
 #include "ED2KLink.h"
 #include "Splashscreen.h"
 #include "Exceptions.h"
+#include "FakeFileDetector.h"
 #include "SearchList.h"
 #include "HTRichEditCtrl.h"
 #include "FrameGrabThread.h"
@@ -2416,6 +2417,7 @@ void CemuleDlg::OnClose()
 	updateShutdownPhase(72, _T("Closing eMule"), _T("Saving preferences and tearing down service integrations."));
 	theApp.scheduler->RestoreOriginals();
 	theApp.searchlist->SaveSpamFilter();
+	FakeFileDetector::SaveCache();
 	if (thePrefs.IsStoringSearchesEnabled())
 		theApp.searchlist->StoreSearches();
 
@@ -3293,6 +3295,12 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_CHECK_OPEN_PORTS:
 		TriggerPortTest(thePrefs.GetPort(), thePrefs.GetUDPPort());
 		break;
+	case MP_HM_RELOAD_FAKEFILEFILTER:
+		if (FakeFileDetector::ReloadRules())
+			AddLogLine(false, _T("Reloaded fake-file filter rules."));
+		else
+			AddLogLine(false, _T("Failed to reload fake-file filter rules."));
+		break;
 	case MP_HM_GEOLOCATION_DOWNLOAD:
 		if (theApp.geolocation != NULL)
 			theApp.geolocation->QueueManualRefresh();
@@ -3391,6 +3399,7 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 			uGeoLocationMenuFlags |= MF_GRAYED;
 		menu.AppendMenu(MF_STRING, MP_HM_CHECK_OPEN_PORTS, GetResString(IDS_CHECK_OPEN_PORTS), _T("WEB"));
 		menu.AppendMenu(uGeoLocationMenuFlags, MP_HM_GEOLOCATION_DOWNLOAD, GetResString(IDS_GEOLOCATION_DOWNLOAD_DB), _T("DOWNLOAD"));
+		menu.AppendMenu(MF_STRING, MP_HM_RELOAD_FAKEFILEFILTER, GetResString(IDS_RELOADFAKEFILEFILTER), _T("TOOLS"));
 		menu.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("TOOLS"));
 		menu.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
 	}

@@ -32,6 +32,7 @@
 #include "ED2KLink.h"
 #include "Emule.h"
 #include "EmuleDlg.h"
+#include "FakeFileDetector.h"
 #include "Friend.h"
 #include "FriendList.h"
 #include "Log.h"
@@ -489,6 +490,38 @@ json BuildKadStatusJson()
 	};
 }
 
+json BuildStringArrayJson(const std::vector<CString> &rValues)
+{
+	json result = json::array();
+	for (const CString &rValue : rValues)
+		result.push_back(StdUtf8FromCString(rValue));
+	return result;
+}
+
+json FileTypeNameOrNull(const EFileType eType)
+{
+	return eType != FILETYPE_UNKNOWN ? json(StdUtf8FromCString(GetFileTypeName(eType))) : json(nullptr);
+}
+
+/**
+ * Serializes one local fake-file analysis report.
+ */
+json BuildFakeFileReportJson(const SFakeFileReport &rReport)
+{
+	return json{
+		{"score", rReport.nScore},
+		{"severity", FakeFileDetector::SeverityToToken(rReport.eSeverity)},
+		{"reasons", BuildStringArrayJson(rReport.astrReasons)},
+		{"pendingHeaderCheck", rReport.bPendingHeaderCheck},
+		{"observedNames", BuildStringArrayJson(rReport.astrObservedNames)},
+		{"observedExtensions", BuildStringArrayJson(rReport.astrObservedExtensions)},
+		{"claimedType", rReport.strClaimedType.IsEmpty() ? json(nullptr) : json(StdUtf8FromCString(rReport.strClaimedType))},
+		{"extensionType", FileTypeNameOrNull(rReport.eExtensionType)},
+		{"detectedHeaderType", FileTypeNameOrNull(rReport.eHeaderType)},
+		{"cached", rReport.bCached}
+	};
+}
+
 /**
  * Serializes one part file into the stable transfer payload.
  */
@@ -517,7 +550,8 @@ json BuildTransferJson(const CPartFile &rPartFile)
 		{"completedAt", JsonTimeOrNull(rPartFile.GetStatus() == PS_COMPLETE ? rPartFile.GetFileDate() : static_cast<time_t>(-1))},
 		{"partsTotal", rPartFile.GetPartCount()},
 		{"partsAvailable", rPartFile.GetAvailablePartCount()},
-		{"stopped", rPartFile.IsStopped()}
+		{"stopped", rPartFile.IsStopped()},
+		{"fakeFile", BuildFakeFileReportJson(FakeFileDetector::AnalyzePartFile(const_cast<CPartFile&>(rPartFile)))}
 	};
 }
 
@@ -1347,7 +1381,8 @@ json BuildSearchResultJson(const CSearchFile &rSearchFile, const SSearchParams *
 		{"kadPublishInfo", rSearchFile.GetKadPublishInfo()},
 		{"rating", rSearchFile.UserRating()},
 		{"hasComment", rSearchFile.HasComment()},
-		{"spam", rSearchFile.IsConsideredSpam()}
+		{"spam", rSearchFile.IsConsideredSpam()},
+		{"fakeFile", BuildFakeFileReportJson(FakeFileDetector::AnalyzeSearchFile(rSearchFile))}
 	};
 	if (pSearchParams != NULL) {
 		result["method"] = GetSearchMethodName(pSearchParams->eType);

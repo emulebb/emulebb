@@ -69,6 +69,9 @@ public:
 	uint32	GetSpamRating() const							{ return m_nSpamRating; }
 	void	SetSpamRating(uint32 nRating)					{ m_nSpamRating = nRating; }
 	bool	IsConsideredSpam() const;
+	void	AddObservedName(LPCTSTR pszName);
+	INT_PTR	GetObservedNameCount() const						{ return m_astrObservedNames.GetCount(); }
+	const CString& GetObservedNameAt(INT_PTR i) const			{ return m_astrObservedNames[i]; }
 
 	virtual void	UpdateFileRatingCommentAvail(bool bForceUpdate = false);
 
@@ -189,6 +192,7 @@ private:
 	// spam filter
 	CString	m_strNameWithoutKeywords;
 	uint32	m_nSpamRating;
+	CStringArray m_astrObservedNames;
 
 	// GUI helpers
 	UINT		m_list_childcount;
