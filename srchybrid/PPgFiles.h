@@ -21,6 +21,7 @@ protected:
 	CPreferenceToolTipHelper m_toolTip;
 
 	void LoadSettings();
+	void NormalizeThumbnailIntervalControl();
 	void OnSettingsChangeCat(uint8 index);
 	void UpdateCompletionCommandControls();
 	void UpdateToolTips();
@@ -37,6 +38,7 @@ protected:
 	afx_msg void BrowseThumbnailFfmpeg();
 	afx_msg void BrowseFileCompletionProgram();
 	afx_msg void OnSettingsChange();
+	afx_msg void OnThumbnailIntervalKillFocus();
 	afx_msg void OnSettingsChangeCat1()		{ OnSettingsChangeCat(1); }
 	afx_msg void OnSettingsChangeCat2()		{ OnSettingsChangeCat(2); }
 	afx_msg void OnHelp();

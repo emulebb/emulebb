@@ -63,6 +63,7 @@ BEGIN_MESSAGE_MAP(CPPgFiles, CPropertyPage)
 	ON_BN_CLICKED(IDC_VIDEOBACKUP, OnSettingsChange)
 	ON_EN_CHANGE(IDC_THUMBNAIL_FFMPEG, OnSettingsChange)
 	ON_EN_CHANGE(IDC_THUMBNAIL_INTERVAL, OnSettingsChange)
+	ON_EN_KILLFOCUS(IDC_THUMBNAIL_INTERVAL, OnThumbnailIntervalKillFocus)
 	ON_BN_CLICKED(IDC_RUNONFILECOMPLETE, OnSettingsChange)
 	ON_EN_CHANGE(IDC_FILECOMPLETEPROGRAM, OnSettingsChange)
 	ON_EN_CHANGE(IDC_FILECOMPLETEARGS, OnSettingsChange)
@@ -140,6 +141,16 @@ void CPPgFiles::UpdateToolTips()
 	m_toolTip.SetTool(this, IDC_FILECOMPLETEPROGRAM, GetResString(IDS_PPG_FILES_TT_FILECOMPLETEPROGRAM));
 	m_toolTip.SetTool(this, IDC_BROWSE_FILECOMPLETEPROGRAM, GetResString(IDS_PPG_FILES_TT_BROWSE_FILECOMPLETEPROGRAM));
 	m_toolTip.SetTool(this, IDC_FILECOMPLETEARGS, GetResString(IDS_PPG_FILES_TT_FILECOMPLETEARGS));
+}
+
+void CPPgFiles::NormalizeThumbnailIntervalControl()
+{
+	BOOL bTranslated = FALSE;
+	const UINT uIntervalSeconds = GetDlgItemInt(IDC_THUMBNAIL_INTERVAL, &bTranslated, FALSE);
+	const UINT uNormalizedIntervalSeconds = bTranslated
+		? PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(uIntervalSeconds)
+		: PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds;
+	SetDlgItemInt(IDC_THUMBNAIL_INTERVAL, uNormalizedIntervalSeconds, FALSE);
 }
 
 void CPPgFiles::LoadSettings()
@@ -329,6 +340,12 @@ void CPPgFiles::BrowseFileCompletionProgram()
 		SetDlgItemText(IDC_FILECOMPLETEPROGRAM, strProgramPath);
 		SetModified();
 	}
+}
+
+void CPPgFiles::OnThumbnailIntervalKillFocus()
+{
+	NormalizeThumbnailIntervalControl();
+	OnSettingsChange();
 }
 
 void CPPgFiles::OnHelp()

@@ -25,8 +25,9 @@ constexpr std::uint64_t kPartialVideoPreviewMinCompletedPermille = 5;
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedBytes = 1ull * 1024ull * 1024ull;
 constexpr std::uint64_t kPartialVideoPreviewMaxCompletedBytes = 64ull * 1024ull * 1024ull;
 constexpr UINT kVideoThumbnailDefaultIntervalSeconds = 0u;
+constexpr UINT kVideoThumbnailMinIntervalSeconds = 30u;
 constexpr UINT kVideoThumbnailRecommendedIntervalSeconds = 90u;
-constexpr UINT kVideoThumbnailMaxIntervalSeconds = 600u;
+constexpr UINT kVideoThumbnailMaxIntervalSeconds = 900u;
 constexpr std::uint64_t kVideoThumbnailRefreshDeltaPermille = 50;
 constexpr std::uint64_t kVideoThumbnailRefreshMaxDeltaBytes = 128ull * 1024ull * 1024ull;
 constexpr int kVideoThumbnailDisplayMaxWidth = 480;
@@ -80,7 +81,13 @@ inline bool IsValidConfiguredFfmpegPath(const CString &rstrFfmpegPath)
  */
 inline UINT NormalizeVideoThumbnailIntervalSeconds(UINT uIntervalSeconds)
 {
-	return uIntervalSeconds > kVideoThumbnailMaxIntervalSeconds ? kVideoThumbnailMaxIntervalSeconds : uIntervalSeconds;
+	if (uIntervalSeconds == 0)
+		return 0;
+	if (uIntervalSeconds < kVideoThumbnailMinIntervalSeconds)
+		return kVideoThumbnailMinIntervalSeconds;
+	if (uIntervalSeconds > kVideoThumbnailMaxIntervalSeconds)
+		return kVideoThumbnailMaxIntervalSeconds;
+	return uIntervalSeconds;
 }
 
 /**

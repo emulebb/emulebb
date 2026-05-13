@@ -4658,7 +4658,7 @@ BEGIN
     IDS_PPG_FILES_TT_STARTNEXTFILECAT2     "When starting the next paused file, choose only from the same category as the completed file.\r\n\r\nUse it for strict per-category queue control."
     IDS_PPG_FILES_TT_UAP                   "Assigns auto priority to newly shared files.\r\n\r\nRecommended unless you deliberately tune shared-file priorities yourself."
     IDS_PPG_FILES_TT_VIDEOBACKUP           "Creates a backup copy before previewing a partially downloaded media file.\r\n\r\nSafer for fragile players, but uses extra disk space and time."
-    IDS_PPG_FILES_TT_VIDEOTHUMBNAILS       "Controls how often eMule attempts video thumbnail generation for downloading video files.\r\n\r\nSet to 0 to disable thumbnail generation. Default recommended interval is 90 seconds."
+    IDS_PPG_FILES_TT_VIDEOTHUMBNAILS       "Controls how often eMule attempts video thumbnail generation for downloading video files.\r\n\r\nSet to 0 to disable thumbnail generation. Enabled intervals use 30..900 seconds. Default recommended interval is 90 seconds."
     IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG      "External FFmpeg executable used only for video thumbnail generation.\r\n\r\nFFmpeg must be installed separately. Select ffmpeg.exe with the browse button."
     IDS_PPG_FILES_TT_VIDEOPLAYER           "External player used for media previews.\r\n\r\nLeave it empty to use the default association, or set a specific trusted player."
     IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS      "Arguments passed to the external preview player.\r\n\r\nUse this only if the player needs custom command-line options."
