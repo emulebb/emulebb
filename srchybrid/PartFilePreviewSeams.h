@@ -3,6 +3,7 @@
 #include <atlstr.h>
 #include <cstdint>
 #include "FileCompletionCommandSeams.h"
+#include "PreferenceValidationSeams.h"
 
 namespace PartFilePreviewSeams
 {
@@ -24,10 +25,10 @@ enum EVideoThumbnailAttemptResult
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedPermille = 5;
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedBytes = 1ull * 1024ull * 1024ull;
 constexpr std::uint64_t kPartialVideoPreviewMaxCompletedBytes = 64ull * 1024ull * 1024ull;
-constexpr UINT kVideoThumbnailDefaultIntervalSeconds = 0u;
-constexpr UINT kVideoThumbnailMinIntervalSeconds = 30u;
-constexpr UINT kVideoThumbnailRecommendedIntervalSeconds = 90u;
-constexpr UINT kVideoThumbnailMaxIntervalSeconds = 900u;
+constexpr UINT kVideoThumbnailDefaultIntervalSeconds = PreferenceValidationSeams::kVideoThumbnailDefaultIntervalSeconds;
+constexpr UINT kVideoThumbnailMinIntervalSeconds = PreferenceValidationSeams::kVideoThumbnailMinIntervalSeconds;
+constexpr UINT kVideoThumbnailRecommendedIntervalSeconds = PreferenceValidationSeams::kVideoThumbnailRecommendedIntervalSeconds;
+constexpr UINT kVideoThumbnailMaxIntervalSeconds = PreferenceValidationSeams::kVideoThumbnailMaxIntervalSeconds;
 constexpr std::uint64_t kVideoThumbnailRefreshDeltaPermille = 50;
 constexpr std::uint64_t kVideoThumbnailRefreshMaxDeltaBytes = 128ull * 1024ull * 1024ull;
 constexpr int kVideoThumbnailDisplayMaxWidth = 480;
@@ -81,13 +82,7 @@ inline bool IsValidConfiguredFfmpegPath(const CString &rstrFfmpegPath)
  */
 inline UINT NormalizeVideoThumbnailIntervalSeconds(UINT uIntervalSeconds)
 {
-	if (uIntervalSeconds == 0)
-		return 0;
-	if (uIntervalSeconds < kVideoThumbnailMinIntervalSeconds)
-		return kVideoThumbnailMinIntervalSeconds;
-	if (uIntervalSeconds > kVideoThumbnailMaxIntervalSeconds)
-		return kVideoThumbnailMaxIntervalSeconds;
-	return uIntervalSeconds;
+	return PreferenceValidationSeams::NormalizeVideoThumbnailIntervalSeconds(uIntervalSeconds);
 }
 
 /**

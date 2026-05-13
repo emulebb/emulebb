@@ -21,6 +21,7 @@
 
 #include "BindAddressResolver.h"
 #include "PartFilePersistenceSeams.h"
+#include "PreferenceValidationSeams.h"
 #include "Opcodes.h"
 
 extern LPCTSTR const strDefaultToolbar;
@@ -1247,9 +1248,9 @@ public:
 	static void		SetFileBufferSize(UINT bytes)		{ m_uFileBufferSize = NormalizeFileBufferSizeBytes(bytes); }
 	static DWORD	GetFileBufferTimeLimit()			{ return m_uFileBufferTimeLimit; }
 	static INT_PTR	GetQueueSize()						{ return m_iQueueSize; }
-	static INT_PTR	GetDefaultQueueSize()				{ return 10000; }
-	static INT_PTR	GetMinQueueSize()					{ return 2000; }
-	static INT_PTR	GetMaxQueueSize()					{ return 10000; }
+	static INT_PTR	GetDefaultQueueSize()				{ return static_cast<INT_PTR>(PreferenceValidationSeams::kDefaultQueueSize); }
+	static INT_PTR	GetMinQueueSize()					{ return static_cast<INT_PTR>(PreferenceValidationSeams::kMinQueueSize); }
+	static INT_PTR	GetMaxQueueSize()					{ return static_cast<INT_PTR>(PreferenceValidationSeams::kMaxQueueSize); }
 	static INT_PTR	NormalizeQueueSize(INT_PTR size);
 	static void		SetQueueSize(INT_PTR size)			{ m_iQueueSize = NormalizeQueueSize(size); }
 	static int		GetCommitFiles()					{ return m_iCommitFiles; }
@@ -1487,7 +1488,7 @@ public:
 	static bool		GetLog2Disk()						{ return log2disk; }
 	static bool		GetDebug2Disk()						{ return m_bVerbose && debug2disk; }
 	static UINT		GetMaxUploadClientsAllowed()		{ return m_uMaxUploadClientsAllowed; }
-	static void		SetMaxUploadClientsAllowed(UINT uVal) { m_uMaxUploadClientsAllowed = min(32u, max(1u, uVal)); }
+	static void		SetMaxUploadClientsAllowed(UINT uVal) { m_uMaxUploadClientsAllowed = PreferenceValidationSeams::NormalizeUploadSlots(uVal); }
 	static float	GetSlowUploadThresholdFactor()	{ return m_fSlowUploadThresholdFactor; }
 	static void		SetSlowUploadThresholdFactor(float fVal) { m_fSlowUploadThresholdFactor = min(1.0f, max(0.10f, fVal)); }
 	static UINT		GetSlowUploadGraceSeconds()		{ return m_uSlowUploadGraceSeconds; }

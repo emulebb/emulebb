@@ -1699,7 +1699,7 @@ inline bool ValidateUnsignedPreferenceField(
 
 inline bool IsUploadClientDataRatePreferenceValue(const uint64_t ullValue)
 {
-	return ullValue >= 1 && ullValue <= UINT_MAX;
+	return PreferenceValidationSeams::IsPositiveUInt32Value(ullValue);
 }
 
 inline bool ValidateBooleanPreferenceField(json &rBody, const char *pszFieldName, std::string &rErrorCode, std::string &rErrorMessage)

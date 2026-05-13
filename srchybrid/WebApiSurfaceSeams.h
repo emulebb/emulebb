@@ -3,6 +3,7 @@
 #include <climits>
 #include <cstring>
 #include <cstdint>
+#include "PreferenceValidationSeams.h"
 
 namespace WebApiSurfaceSeams
 {
@@ -37,13 +38,13 @@ enum class EMutablePreference : uint8_t
 	NetworkEd2K
 };
 
-inline constexpr uint64_t kMutablePreferenceMaxSignedInt = static_cast<uint64_t>(INT_MAX);
-inline constexpr uint64_t kMutablePreferenceUnlimitedSentinel = UINT32_MAX;
-inline constexpr uint64_t kMutablePreferenceMaxFiniteKiBps = kMutablePreferenceUnlimitedSentinel - 1u;
-inline constexpr uint64_t kMutablePreferenceMinQueueSize = 2000u;
-inline constexpr uint64_t kMutablePreferenceMaxQueueSize = 10000u;
-inline constexpr uint64_t kMutablePreferenceMinUploadSlots = 1u;
-inline constexpr uint64_t kMutablePreferenceMaxUploadSlots = 32u;
+inline constexpr uint64_t kMutablePreferenceMaxSignedInt = PreferenceValidationSeams::kMaxSignedIntPreference;
+inline constexpr uint64_t kMutablePreferenceUnlimitedSentinel = PreferenceValidationSeams::kUnlimitedBandwidthSentinelKiB;
+inline constexpr uint64_t kMutablePreferenceMaxFiniteKiBps = PreferenceValidationSeams::kMaxFiniteBandwidthLimitKiB;
+inline constexpr uint64_t kMutablePreferenceMinQueueSize = PreferenceValidationSeams::kMinQueueSize;
+inline constexpr uint64_t kMutablePreferenceMaxQueueSize = PreferenceValidationSeams::kMaxQueueSize;
+inline constexpr uint64_t kMutablePreferenceMinUploadSlots = PreferenceValidationSeams::kMinUploadSlots;
+inline constexpr uint64_t kMutablePreferenceMaxUploadSlots = PreferenceValidationSeams::kMaxUploadSlots;
 inline constexpr uint64_t kTransferProgressRatioScale = 10000u;
 
 /**
@@ -51,7 +52,7 @@ inline constexpr uint64_t kTransferProgressRatioScale = 10000u;
  */
 inline bool IsFiniteKiBpsPreferenceValue(const uint64_t ullValue)
 {
-	return ullValue >= 1u && ullValue <= kMutablePreferenceMaxFiniteKiBps;
+	return PreferenceValidationSeams::IsFiniteBandwidthLimitKiB(ullValue);
 }
 
 /**
@@ -60,7 +61,7 @@ inline bool IsFiniteKiBpsPreferenceValue(const uint64_t ullValue)
  */
 inline bool IsPositiveSignedIntPreferenceValue(const uint64_t ullValue)
 {
-	return ullValue >= 1u && ullValue <= kMutablePreferenceMaxSignedInt;
+	return PreferenceValidationSeams::IsPositiveSignedIntValue(ullValue);
 }
 
 /**
@@ -68,7 +69,7 @@ inline bool IsPositiveSignedIntPreferenceValue(const uint64_t ullValue)
  */
 inline bool IsQueueSizePreferenceValue(const uint64_t ullValue)
 {
-	return ullValue >= kMutablePreferenceMinQueueSize && ullValue <= kMutablePreferenceMaxQueueSize;
+	return PreferenceValidationSeams::IsQueueSize(ullValue);
 }
 
 /**
@@ -76,7 +77,7 @@ inline bool IsQueueSizePreferenceValue(const uint64_t ullValue)
  */
 inline bool IsUploadSlotPreferenceValue(const uint64_t ullValue)
 {
-	return ullValue >= kMutablePreferenceMinUploadSlots && ullValue <= kMutablePreferenceMaxUploadSlots;
+	return PreferenceValidationSeams::IsUploadSlotCount(ullValue);
 }
 
 /**

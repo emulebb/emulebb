@@ -43,6 +43,7 @@
 #include "MuleToolbarCtrl.h"
 #include "PreferenceIniMap.h"
 #include "PreferenceUiSeams.h"
+#include "PreferenceValidationSeams.h"
 #include "PartFilePreviewSeams.h"
 #include "SearchParamsPolicy.h"
 #include "VistaDefines.h"
@@ -66,8 +67,6 @@ CPreferences thePrefs;
 
 namespace
 {
-constexpr uint32 kDefaultConfiguredUploadLimitKiB = 6100;
-constexpr uint32 kDefaultBroadbandDownloadLimitKiB = 12207;
 constexpr size_t kWebApiKeyBytes = 16;
 constexpr UINT kMaxServerKeepAliveTimeoutMinutes = 1440;
 constexpr UINT kMaxFileBufferTimeLimitSeconds = 86400;
@@ -339,35 +338,24 @@ struct ProtectedDiskVolumeThreshold
 	ULONGLONG RequiredBytes;
 };
 
-uint32 NormalizeConfiguredUploadLimitKiB(uint32 value)
-{
-	return (value == 0 || value >= UNLIMITED) ? kDefaultConfiguredUploadLimitKiB : value;
-}
-
 UINT NormalizeNonNegativePreference(int value, UINT uDefault)
 {
-	return value < 0 ? uDefault : static_cast<UINT>(value);
+	return PreferenceValidationSeams::NormalizeNonNegativeInt(value, uDefault);
 }
 
 UINT NormalizeBoundedPreference(int value, UINT uDefault, UINT uMin, UINT uMax)
 {
-	if (value < 0)
-		return uDefault;
-	return min(uMax, max(uMin, static_cast<UINT>(value)));
+	return PreferenceValidationSeams::NormalizeBoundedInt(value, uDefault, uMin, uMax);
 }
 
 UINT NormalizePositivePreferenceOrDefault(int value, UINT uDefault)
 {
-	return value <= 0 ? uDefault : static_cast<UINT>(value);
+	return PreferenceValidationSeams::NormalizePositiveIntOrDefault(value, uDefault);
 }
 
 uint16 NormalizePortPreferenceValue(int value, uint16 defaultPort, bool bAllowZero)
 {
-	if (value < 0 || value > _UI16_MAX)
-		return defaultPort;
-	if (value == 0 && !bAllowZero)
-		return defaultPort;
-	return static_cast<uint16>(value);
+	return PreferenceValidationSeams::NormalizePortValue(value, defaultPort, bAllowZero);
 }
 
 uint16 NormalizeProxyTypeValue(int value)
@@ -1190,11 +1178,7 @@ void CPreferences::SetStatsAverageMinutes(UINT in)
 
 INT_PTR CPreferences::NormalizeQueueSize(INT_PTR size)
 {
-	if (size < GetMinQueueSize())
-		return GetMinQueueSize();
-	if (size > GetMaxQueueSize())
-		return GetMaxQueueSize();
-	return size;
+	return static_cast<INT_PTR>(PreferenceValidationSeams::NormalizeQueueSize(static_cast<std::int64_t>(size)));
 }
 
 UINT CPreferences::GetMaxFileBufferSizeBytes()
@@ -2756,8 +2740,8 @@ void CPreferences::LoadPreferences()
 			tempdir.Add(sTmp);
 	}
 
-	SetMaxUpload((uint32)ini.GetInt(_T("MaxUpload"), kDefaultConfiguredUploadLimitKiB));
-	SetMaxDownload((uint32)ini.GetInt(_T("MaxDownload"), kDefaultBroadbandDownloadLimitKiB));
+	SetMaxUpload((uint32)ini.GetInt(_T("MaxUpload"), PreferenceValidationSeams::kDefaultConfiguredUploadLimitKiB));
+	SetMaxDownload((uint32)ini.GetInt(_T("MaxDownload"), PreferenceValidationSeams::kDefaultConfiguredDownloadLimitKiB));
 	SetMaxGraphDownloadRate(m_maxdownload);
 	SetMaxConnections(NormalizePositivePreferenceOrDefault(ini.GetInt(_T("MaxConnections"), GetRecommendedMaxConnections()), GetRecommendedMaxConnections()));
 	SetMaxHalfConnections(NormalizePositivePreferenceOrDefault(ini.GetInt(_T("MaxHalfConnections"), GetDefaultMaxHalfConnections()), GetDefaultMaxHalfConnections()));
@@ -3310,7 +3294,7 @@ UINT CPreferences::NormalizeRetryCount(UINT uValue, UINT uDefault, UINT uMin, UI
 
 UINT CPreferences::NormalizePositivePreference(UINT uValue, UINT uDefault)
 {
-	return uValue == 0 ? uDefault : uValue;
+	return PreferenceValidationSeams::NormalizePositiveUIntOrDefault(uValue, uDefault);
 }
 
 UINT CPreferences::NormalizeServerKeepAliveTimeoutMinutes(UINT in)
@@ -3645,12 +3629,12 @@ void CPreferences::SetMaxUpload(uint32 val)
 {
 	// Broadband stabilization treats upload as one finite configured budget.
 	// Missing or unlimited values are normalized back to the release default.
-	m_maxupload = NormalizeConfiguredUploadLimitKiB(val);
+	m_maxupload = PreferenceValidationSeams::NormalizeConfiguredUploadLimitKiB(val);
 }
 
 void CPreferences::SetMaxDownload(uint32 val)
 {
-	m_maxdownload = val ? val : 1u;
+	m_maxdownload = PreferenceValidationSeams::NormalizeConfiguredDownloadLimitKiB(val);
 	maxGraphDownloadRate = m_maxdownload;
 }
 

@@ -4,6 +4,7 @@
 #include <climits>
 #include <cstdint>
 #include <vector>
+#include "PreferenceValidationSeams.h"
 
 namespace PreferenceUiSeams
 {
@@ -64,11 +65,7 @@ inline UINT NormalizeLogBufferKiB(int iValue)
 
 inline UINT NormalizePositiveBounded(int iValue, UINT uDefault, UINT uMax)
 {
-	if (iValue <= 0)
-		return uDefault;
-
-	const UINT uValue = static_cast<UINT>(iValue);
-	return uValue <= uMax ? uValue : uDefault;
+	return PreferenceValidationSeams::NormalizePositiveBoundedIntOrDefault(iValue, uDefault, uMax);
 }
 
 inline int NormalizeCrashDumpMode(int iValue)
@@ -130,7 +127,7 @@ inline UINT NormalizeSessionTransferLimitValue(int iMode, UINT uValue)
 
 inline bool IsPositiveBounded(UINT uValue, UINT uMax)
 {
-	return uValue >= 1u && uValue <= uMax;
+	return PreferenceValidationSeams::IsPositiveBounded(uValue, uMax);
 }
 
 inline bool TryParseIPv4Address(const CString &strInput, uint32_t &uAddress)
