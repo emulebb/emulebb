@@ -306,23 +306,21 @@ bool HasCurrentCacheRecord(const uchar *pHash)
 	return it->second.uRulesFingerprint == g_uRulesFingerprint;
 }
 
-void MergeCurrentCacheForPendingHeader(const uchar *pHash, SFakeFileReport &rReport)
+bool TryApplyCachedHeaderEvidence(const uchar *pHash, FakeFileDetectorSeams::Evidence &rEvidence)
 {
-	if (!rReport.bPendingHeaderCheck)
-		return;
 	if (!g_bCacheLoaded)
-		return;
+		return false;
 	LoadCache();
 	const auto it = g_cache.find(md4str(pHash));
 	if (it == g_cache.end() || it->second.uRulesFingerprint != g_uRulesFingerprint)
-		return;
+		return false;
 	const SFakeFileReport &rCached = it->second.report;
-	if (rCached.eExtensionType != rReport.eExtensionType || rCached.eHeaderType == FILETYPE_UNKNOWN || rCached.nScore <= rReport.nScore)
-		return;
-	const bool bPendingHeaderCheck = rReport.bPendingHeaderCheck;
-	rReport = rCached;
-	rReport.bCached = true;
-	rReport.bPendingHeaderCheck = bPendingHeaderCheck;
+	if (rCached.eExtensionType != rEvidence.extensionType || rCached.eHeaderType == FILETYPE_UNKNOWN)
+		return false;
+	rEvidence.headerType = rCached.eHeaderType;
+	rEvidence.headerAvailable = true;
+	rEvidence.headerPending = false;
+	return true;
 }
 
 uint32 GetCurrentCacheRecordCount()
@@ -425,6 +423,8 @@ SFakeFileReport BuildPartFileReport(CPartFile &rPartFile, const bool bProbeHeade
 	} else if (rPartFile.GetVerifiedFileType() != FILETYPE_UNKNOWN) {
 		evidence.headerType = rPartFile.GetVerifiedFileType();
 	}
+	const bool bUsedCachedHeaderEvidence = !bProbeHeader && evidence.headerType == FILETYPE_UNKNOWN
+		&& TryApplyCachedHeaderEvidence(rPartFile.GetFileHash(), evidence);
 	const bool bHeaderProbeCovered = bProbeHeader ? bHeaderRangeAvailable : evidence.headerType != FILETYPE_UNKNOWN;
 	const bool bIsoProbeCovered = bProbeHeader ? bIsoRangeAvailable : evidence.headerType != FILETYPE_UNKNOWN;
 	const FileTypeClassifierSeams::HeaderProbeSummary headerSummary = FileTypeClassifierSeams::SummarizeHeaderProbe(
@@ -439,7 +439,7 @@ SFakeFileReport BuildPartFileReport(CPartFile &rPartFile, const bool bProbeHeade
 	if (bProbeHeader)
 		report.bCached = HasCurrentCacheRecord(rPartFile.GetFileHash());
 	else
-		MergeCurrentCacheForPendingHeader(rPartFile.GetFileHash(), report);
+		report.bCached = bUsedCachedHeaderEvidence;
 	if (bUpdateCache)
 		UpdateCache(rPartFile.GetFileHash(), report);
 	return report;
