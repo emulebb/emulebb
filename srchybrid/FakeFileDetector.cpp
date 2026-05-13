@@ -29,14 +29,20 @@ namespace
 {
 constexpr LPCTSTR kRuleFileName = _T("FakeFileFilter.dat");
 constexpr LPCTSTR kCacheFileName = _T("FakeFile.met");
-const BYTE kCacheHeader[] = { 'B', 'B', 'F', 'F', 'M', 'E', 'T', '1' };
+const BYTE kCacheHeader[] = { 'B', 'B', 'F', 'F', 'M', 'E', 'T', '2' };
+constexpr uint32 kRulesFingerprintSeed = 2166136261U;
+constexpr uint32 kRulesFingerprintPrime = 16777619U;
+constexpr uint32 kDetectorRulesVersion = 1;
+constexpr uint32 kMaxCachedReasons = 32;
 
 struct SCacheRecord
 {
+	uint32 uRulesFingerprint = 0;
 	SFakeFileReport report;
 };
 
 FakeFileDetectorSeams::RuleSet g_rules;
+uint32 g_uRulesFingerprint = 0;
 bool g_bRulesLoaded = false;
 bool g_bCacheLoaded = false;
 bool g_bCacheDirty = false;
@@ -92,6 +98,37 @@ CString GetRuleFilePath()
 CString GetCacheFilePath()
 {
 	return thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + kCacheFileName;
+}
+
+void HashByte(uint32 &ruHash, const BYTE uValue)
+{
+	ruHash ^= uValue;
+	ruHash *= kRulesFingerprintPrime;
+}
+
+void HashWideString(uint32 &ruHash, const std::wstring &rValue)
+{
+	for (const wchar_t ch : rValue) {
+		HashByte(ruHash, static_cast<BYTE>(ch & 0xFF));
+		HashByte(ruHash, static_cast<BYTE>((ch >> 8) & 0xFF));
+	}
+	HashByte(ruHash, 0);
+}
+
+uint32 BuildRulesFingerprint(const FakeFileDetectorSeams::RuleSet &rRules)
+{
+	uint32 uHash = kRulesFingerprintSeed;
+	HashByte(uHash, static_cast<BYTE>(kDetectorRulesVersion & 0xFF));
+	HashByte(uHash, static_cast<BYTE>((kDetectorRulesVersion >> 8) & 0xFF));
+	for (const std::wstring &rToken : rRules.tokens) {
+		HashByte(uHash, 'T');
+		HashWideString(uHash, rToken);
+	}
+	for (const std::wstring &rRegex : rRules.regexes) {
+		HashByte(uHash, 'R');
+		HashWideString(uHash, rRegex);
+	}
+	return uHash;
 }
 
 void WriteDefaultRuleFile(const CString &rstrPath)
@@ -179,10 +216,15 @@ void LoadCache()
 			record.report.eExtensionType = static_cast<EFileType>(file.ReadUInt8());
 			record.report.eHeaderType = static_cast<EFileType>(file.ReadUInt8());
 			record.report.bPendingHeaderCheck = file.ReadUInt8() != 0;
+			record.uRulesFingerprint = file.ReadUInt32();
 			const uint32 uReasonCount = file.ReadUInt32();
-			for (uint32 j = 0; j < uReasonCount && j < 32; ++j)
-				record.report.astrReasons.push_back(static_cast<CFileDataIO&>(file).ReadString(true));
-			g_cache[md4str(hash)] = record;
+			for (uint32 j = 0; j < uReasonCount; ++j) {
+				const CString strReason(static_cast<CFileDataIO&>(file).ReadString(true));
+				if (j < kMaxCachedReasons)
+					record.report.astrReasons.push_back(strReason);
+			}
+			if (record.uRulesFingerprint == g_uRulesFingerprint)
+				g_cache[md4str(hash)] = record;
 		}
 		file.Close();
 	} catch (CFileException *ex) {
@@ -192,33 +234,50 @@ void LoadCache()
 	}
 }
 
-void MergeCache(const uchar *pHash, SFakeFileReport &rReport)
+bool HasCurrentCacheRecord(const uchar *pHash)
 {
 	LoadCache();
 	const auto it = g_cache.find(md4str(pHash));
 	if (it == g_cache.end())
-		return;
-	if (it->second.report.nScore > rReport.nScore) {
-		const bool bPendingHeaderCheck = rReport.bPendingHeaderCheck;
-		rReport = it->second.report;
-		rReport.bCached = true;
-		rReport.bPendingHeaderCheck = bPendingHeaderCheck;
-	} else if (it->second.report.nScore > 0) {
-		rReport.bCached = true;
+		return false;
+	return it->second.uRulesFingerprint == g_uRulesFingerprint;
+}
+
+uint32 GetCurrentCacheRecordCount()
+{
+	uint32 uCount = 0;
+	for (const auto &rPair : g_cache) {
+		if (rPair.second.uRulesFingerprint == g_uRulesFingerprint)
+			++uCount;
 	}
+	return uCount;
 }
 
 void UpdateCache(const uchar *pHash, const SFakeFileReport &rReport)
 {
-	if (rReport.nScore == 0)
-		return;
 	LoadCache();
 	const CString strHash(md4str(pHash));
 	const auto it = g_cache.find(strHash);
-	if (it == g_cache.end() || rReport.nScore > it->second.report.nScore) {
-		SCacheRecord record;
-		record.report = rReport;
-		record.report.bCached = false;
+	if (rReport.nScore == 0) {
+		if (it != g_cache.end()) {
+			g_cache.erase(it);
+			g_bCacheDirty = true;
+		}
+		return;
+	}
+
+	SCacheRecord record;
+	record.uRulesFingerprint = g_uRulesFingerprint;
+	record.report = rReport;
+	record.report.bCached = false;
+	if (it == g_cache.end() || it->second.uRulesFingerprint != record.uRulesFingerprint
+		|| it->second.report.nScore != record.report.nScore
+		|| it->second.report.eSeverity != record.report.eSeverity
+		|| it->second.report.eExtensionType != record.report.eExtensionType
+		|| it->second.report.eHeaderType != record.report.eHeaderType
+		|| it->second.report.bPendingHeaderCheck != record.report.bPendingHeaderCheck
+		|| it->second.report.astrReasons != record.report.astrReasons)
+	{
 		g_cache[strHash] = record;
 		g_bCacheDirty = true;
 	}
@@ -256,6 +315,7 @@ void FillCommonEvidence(const CAbstractFile &rFile, FakeFileDetectorSeams::Evide
 bool FakeFileDetector::ReloadRules()
 {
 	g_rules = FakeFileDetectorSeams::RuleSet();
+	g_uRulesFingerprint = 0;
 	g_bRulesLoaded = true;
 
 	const CString strPath(GetRuleFilePath());
@@ -266,6 +326,7 @@ bool FakeFileDetector::ReloadRules()
 	CFileException ex;
 	if (!file.Open(strPath, CFile::modeRead | CFile::typeText | CFile::shareDenyWrite, &ex)) {
 		DebugLogError(_T("Failed to load FakeFileFilter.dat%s"), (LPCTSTR)CExceptionStrDash(ex));
+		g_uRulesFingerprint = BuildRulesFingerprint(g_rules);
 		return false;
 	}
 
@@ -283,6 +344,7 @@ bool FakeFileDetector::ReloadRules()
 		AddRuleLine(strSection, strLine);
 	}
 	file.Close();
+	g_uRulesFingerprint = BuildRulesFingerprint(g_rules);
 	DebugLog(_T("Loaded fake-file filter rules. Tokens: %u, regexes: %u"), static_cast<unsigned>(g_rules.tokens.size()), static_cast<unsigned>(g_rules.regexes.size()));
 	return true;
 }
@@ -297,8 +359,11 @@ void FakeFileDetector::SaveCache()
 		return;
 	try {
 		file.Write(kCacheHeader, sizeof kCacheHeader);
-		file.WriteUInt32(static_cast<uint32>(g_cache.size()));
+		const uint32 uCurrentRecordCount = GetCurrentCacheRecordCount();
+		file.WriteUInt32(uCurrentRecordCount);
 		for (const auto &rPair : g_cache) {
+			if (rPair.second.uRulesFingerprint != g_uRulesFingerprint)
+				continue;
 			uchar hash[16] = {};
 			if (!DecodeBase16(rPair.first, 32, hash, sizeof hash))
 				continue;
@@ -308,13 +373,14 @@ void FakeFileDetector::SaveCache()
 			file.WriteUInt8(static_cast<uint8>(rPair.second.report.eExtensionType));
 			file.WriteUInt8(static_cast<uint8>(rPair.second.report.eHeaderType));
 			file.WriteUInt8(static_cast<uint8>(rPair.second.report.bPendingHeaderCheck));
+			file.WriteUInt32(rPair.second.uRulesFingerprint);
 			file.WriteUInt32(static_cast<uint32>(rPair.second.report.astrReasons.size()));
 			for (const CString &rReason : rPair.second.report.astrReasons)
 				static_cast<CFileDataIO&>(file).WriteString(rReason, UTF8strRaw);
 		}
 		file.Close();
 		g_bCacheDirty = false;
-		DebugLog(_T("Stored FakeFile.met, wrote %u records"), static_cast<unsigned>(g_cache.size()));
+		DebugLog(_T("Stored FakeFile.met, wrote %u records"), static_cast<unsigned>(uCurrentRecordCount));
 	} catch (CFileException *ex) {
 		DebugLogError(_T("Failed to save FakeFile.met%s"), (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
@@ -332,7 +398,7 @@ SFakeFileReport FakeFileDetector::AnalyzeSearchFile(const CSearchFile &rSearchFi
 	evidence.consideredSpam = rSearchFile.IsConsideredSpam();
 	evidence.multipleAich = rSearchFile.HasFoundMultipleAICH();
 	SFakeFileReport report(ToAppReport(FakeFileDetectorSeams::Analyze(evidence, g_rules)));
-	MergeCache(rSearchFile.GetFileHash(), report);
+	report.bCached = HasCurrentCacheRecord(rSearchFile.GetFileHash());
 	UpdateCache(rSearchFile.GetFileHash(), report);
 	return report;
 }
@@ -350,7 +416,7 @@ SFakeFileReport FakeFileDetector::AnalyzePartFile(CPartFile &rPartFile)
 		evidence.headerType = GetFileTypeEx(&rPartFile, false, true);
 	}
 	SFakeFileReport report(ToAppReport(FakeFileDetectorSeams::Analyze(evidence, g_rules)));
-	MergeCache(rPartFile.GetFileHash(), report);
+	report.bCached = HasCurrentCacheRecord(rPartFile.GetFileHash());
 	UpdateCache(rPartFile.GetFileHash(), report);
 	return report;
 }
