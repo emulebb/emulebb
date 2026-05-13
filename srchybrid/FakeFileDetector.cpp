@@ -50,6 +50,7 @@ struct SPartHeaderProbeState
 };
 
 FakeFileDetectorSeams::RuleSet g_rules;
+std::vector<std::wregex> g_compiledRegexes;
 uint32 g_uRulesFingerprint = 0;
 bool g_bRulesLoaded = false;
 bool g_bCacheLoaded = false;
@@ -251,7 +252,9 @@ void AddRuleLine(const CString &rstrSection, const CString &rstrLine)
 			DebugLogWarning(_T("Ignoring invalid fake-file regex rule \"%s\""), (LPCTSTR)rstrLine);
 			return;
 		}
-		g_rules.regexes.push_back(ToWide(rstrLine));
+		const std::wstring strPattern(ToWide(rstrLine));
+		g_rules.regexes.push_back(strPattern);
+		g_compiledRegexes.push_back(std::wregex(strPattern, std::regex_constants::icase | std::regex_constants::ECMAScript));
 	}
 }
 
@@ -401,7 +404,7 @@ SFakeFileReport BuildSearchFileReport(const CSearchFile &rSearchFile, const bool
 	evidence.spamRating = rSearchFile.GetSpamRating();
 	evidence.consideredSpam = rSearchFile.IsConsideredSpam();
 	evidence.multipleAich = rSearchFile.HasFoundMultipleAICH();
-	SFakeFileReport report(ToAppReport(FakeFileDetectorSeams::Analyze(evidence, g_rules)));
+	SFakeFileReport report(ToAppReport(FakeFileDetectorSeams::Analyze(evidence, g_rules, &g_compiledRegexes)));
 	report.bCached = bUpdateCache && HasCurrentCacheRecord(rSearchFile.GetFileHash());
 	if (bUpdateCache)
 		UpdateCache(rSearchFile.GetFileHash(), report);
@@ -435,7 +438,7 @@ SFakeFileReport BuildPartFileReport(CPartFile &rPartFile, const bool bProbeHeade
 	evidence.headerAvailable = headerSummary.status == FileTypeClassifierSeams::HeaderProbeStatus::Detected
 		|| headerSummary.status == FileTypeClassifierSeams::HeaderProbeStatus::CheckedUnknown;
 	evidence.headerPending = headerSummary.status == FileTypeClassifierSeams::HeaderProbeStatus::Pending;
-	SFakeFileReport report(ToAppReport(FakeFileDetectorSeams::Analyze(evidence, g_rules)));
+	SFakeFileReport report(ToAppReport(FakeFileDetectorSeams::Analyze(evidence, g_rules, &g_compiledRegexes)));
 	if (bProbeHeader)
 		report.bCached = HasCurrentCacheRecord(rPartFile.GetFileHash());
 	else
@@ -449,6 +452,7 @@ SFakeFileReport BuildPartFileReport(CPartFile &rPartFile, const bool bProbeHeade
 bool FakeFileDetector::ReloadRules()
 {
 	g_rules = FakeFileDetectorSeams::RuleSet();
+	g_compiledRegexes.clear();
 	g_uRulesFingerprint = 0;
 	g_bRulesLoaded = true;
 

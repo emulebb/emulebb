@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cwctype>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -116,6 +117,17 @@ inline bool ContainsRegex(const std::wstring &rText, const std::wstring &rPatter
 	return RegexMatchSeams::Match(rText, rPattern, RegexMatchSeams::MatchMode::Search, std::regex_constants::icase | std::regex_constants::ECMAScript);
 }
 
+inline bool ContainsRegex(const std::wstring &rText, const std::wregex &rPattern)
+{
+	if (rText.empty() || rText.size() > 1024)
+		return false;
+	try {
+		return std::regex_search(rText, rPattern);
+	} catch (const std::regex_error&) {
+		return false;
+	}
+}
+
 inline void AddReason(Report &rReport, const char *pszReason, const uint32_t uScore)
 {
 	if (std::find(rReport.reasons.begin(), rReport.reasons.end(), pszReason) == rReport.reasons.end())
@@ -187,9 +199,9 @@ inline Severity SeverityFromScore(const uint32_t uScore)
 }
 
 /**
- * @brief Combines existing local evidence into a warning-only fake-file report.
- */
-inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules)
+	 * @brief Combines existing local evidence into a warning-only fake-file report.
+	 */
+inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules, const std::vector<std::wregex> *pCompiledRegexes)
 {
 	Report report;
 	report.observedNames = rEvidence.names;
@@ -214,15 +226,25 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules)
 		const std::wstring text = ToLower(rName);
 		for (const std::wstring &rToken : rRules.tokens)
 			bBadNameSignal = bBadNameSignal || ContainsToken(text, ToLower(rToken));
-		for (const std::wstring &rRegex : rRules.regexes)
-			bBadNameSignal = bBadNameSignal || ContainsRegex(rName, rRegex);
+		if (pCompiledRegexes != nullptr && pCompiledRegexes->size() == rRules.regexes.size()) {
+			for (const std::wregex &rRegex : *pCompiledRegexes)
+				bBadNameSignal = bBadNameSignal || ContainsRegex(rName, rRegex);
+		} else {
+			for (const std::wstring &rRegex : rRules.regexes)
+				bBadNameSignal = bBadNameSignal || ContainsRegex(rName, rRegex);
+		}
 	}
 	for (const std::wstring &rComment : rEvidence.comments) {
 		const std::wstring text = ToLower(rComment);
 		for (const std::wstring &rToken : rRules.tokens)
 			bBadCommentSignal = bBadCommentSignal || ContainsToken(text, ToLower(rToken));
-		for (const std::wstring &rRegex : rRules.regexes)
-			bBadCommentSignal = bBadCommentSignal || ContainsRegex(rComment, rRegex);
+		if (pCompiledRegexes != nullptr && pCompiledRegexes->size() == rRules.regexes.size()) {
+			for (const std::wregex &rRegex : *pCompiledRegexes)
+				bBadCommentSignal = bBadCommentSignal || ContainsRegex(rComment, rRegex);
+		} else {
+			for (const std::wstring &rRegex : rRules.regexes)
+				bBadCommentSignal = bBadCommentSignal || ContainsRegex(rComment, rRegex);
+		}
 	}
 	if (bBadNameSignal)
 		AddReason(report, "bad_signal_name", 25);
@@ -260,6 +282,11 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules)
 
 	report.severity = SeverityFromScore(report.score);
 	return report;
+}
+
+inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules)
+{
+	return Analyze(rEvidence, rRules, nullptr);
 }
 }
 
