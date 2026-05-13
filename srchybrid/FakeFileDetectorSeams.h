@@ -176,7 +176,7 @@ inline bool IsArchiveType(const EFileType eType)
  */
 inline bool HeaderMatchesExtensionType(const EFileType eHeaderType, const EFileType eExtensionType)
 {
-	return eHeaderType == eExtensionType || (eHeaderType == ARCHIVE_ZIP && eExtensionType == DOCUMENT_EPUB);
+	return eHeaderType == eExtensionType;
 }
 
 inline bool ClaimedTypeConflicts(const std::wstring &rClaimedType, const EFileType eObservedType)

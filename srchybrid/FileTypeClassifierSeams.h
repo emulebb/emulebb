@@ -167,6 +167,8 @@ inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHea
 {
 	static const BYTE FILEHEADER_7Z_ID[] =	{ 0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C };
 	static const BYTE FILEHEADER_ACE_ID[] =	{ 0x2A, 0x2A, 0x41, 0x43, 0x45, 0x2A, 0x2A };
+	static const BYTE FILEHEADER_EPUB_MEDIA_TYPE[] = { 0x61, 0x70, 0x70, 0x6C, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x2F, 0x65, 0x70, 0x75, 0x62, 0x2B, 0x7A, 0x69, 0x70 };
+	static const BYTE FILEHEADER_EPUB_MIMETYPE[] = { 0x6D, 0x69, 0x6D, 0x65, 0x74, 0x79, 0x70, 0x65 };
 	static const BYTE FILEHEADER_EXE_ID[] =	{ 0x4D, 0x5A };
 	static const BYTE FILEHEADER_FLAC_ID[] =	{ 0x66, 0x4C, 0x61, 0x43 };
 	static const BYTE FILEHEADER_GIF_ID[] =	{ 0x47, 0x49, 0x46, 0x38 };
@@ -188,6 +190,16 @@ inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHea
 
 	if (pHeader == NULL)
 		return FILETYPE_UNKNOWN;
+	if (uHeaderSize >= 30 + sizeof FILEHEADER_EPUB_MIMETYPE + sizeof FILEHEADER_EPUB_MEDIA_TYPE
+		&& memcmp(pHeader, FILEHEADER_ZIP_ID, sizeof FILEHEADER_ZIP_ID) == 0
+		&& pHeader[8] == 0x00 && pHeader[9] == 0x00
+		&& pHeader[26] == sizeof FILEHEADER_EPUB_MIMETYPE && pHeader[27] == 0x00
+		&& pHeader[28] == 0x00 && pHeader[29] == 0x00
+		&& memcmp(pHeader + 30, FILEHEADER_EPUB_MIMETYPE, sizeof FILEHEADER_EPUB_MIMETYPE) == 0
+		&& memcmp(pHeader + 30 + sizeof FILEHEADER_EPUB_MIMETYPE, FILEHEADER_EPUB_MEDIA_TYPE, sizeof FILEHEADER_EPUB_MEDIA_TYPE) == 0)
+	{
+		return DOCUMENT_EPUB;
+	}
 	if (uHeaderSize >= sizeof FILEHEADER_ZIP_ID && memcmp(pHeader, FILEHEADER_ZIP_ID, sizeof FILEHEADER_ZIP_ID) == 0)
 		return ARCHIVE_ZIP;
 	if (uHeaderSize >= sizeof FILEHEADER_RAR_ID && memcmp(pHeader, FILEHEADER_RAR_ID, sizeof FILEHEADER_RAR_ID) == 0)
