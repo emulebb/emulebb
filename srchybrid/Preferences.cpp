@@ -1081,12 +1081,12 @@ void CPreferences::SetIPFilterUpdatePeriodDays(UINT uDays)
 
 ESessionTransferLimitMode CPreferences::NormalizeSessionTransferLimitMode(ESessionTransferLimitMode eMode)
 {
-	return static_cast<ESessionTransferLimitMode>(PreferenceUiSeams::NormalizeSessionTransferLimitMode(static_cast<int>(eMode)));
+	return static_cast<ESessionTransferLimitMode>(PreferenceValidationSeams::NormalizeSessionTransferLimitMode(static_cast<int>(eMode)));
 }
 
 UINT CPreferences::NormalizeSessionTransferLimitValue(ESessionTransferLimitMode eMode, UINT uVal)
 {
-	return PreferenceUiSeams::NormalizeSessionTransferLimitValue(static_cast<int>(NormalizeSessionTransferLimitMode(eMode)), uVal);
+	return PreferenceValidationSeams::NormalizeSessionTransferLimitValue(static_cast<int>(NormalizeSessionTransferLimitMode(eMode)), uVal);
 }
 
 void CPreferences::SetSessionTransferLimitMode(ESessionTransferLimitMode eMode)
@@ -2389,8 +2389,8 @@ void CPreferences::SavePreferences()
 	ini.WriteString(_T("TxtEditor"), m_strTxtEditor);
 	ini.WriteString(_T("VideoPlayer"), m_strVideoPlayer);
 	ini.WriteString(_T("VideoPlayerArgs"), m_strVideoPlayerArgs);
-	ini.WriteString(_T("VideoThumbnailFfmpegPath"), m_strVideoThumbnailFfmpegPath);
-	ini.WriteInt(_T("VideoThumbnailIntervalSeconds"), static_cast<int>(PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(m_uVideoThumbnailIntervalSeconds)));
+	ini.WriteString(prefini::VideoThumbnailKeys::FfmpegPath, m_strVideoThumbnailFfmpegPath);
+	ini.WriteInt(prefini::VideoThumbnailKeys::IntervalSeconds, static_cast<int>(PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(m_uVideoThumbnailIntervalSeconds)));
 	ini.WriteBool(prefini::FileCompletionKeys::RunCommandOnFileCompletion, m_bRunCommandOnFileCompletion, prefini::Sections::FileCompletion);
 	ini.WriteString(prefini::FileCompletionKeys::Program, m_strFileCompletionProgram, prefini::Sections::FileCompletion);
 	ini.WriteString(prefini::FileCompletionKeys::Arguments, m_strFileCompletionArguments, prefini::Sections::FileCompletion);
@@ -2525,19 +2525,19 @@ void CPreferences::SavePreferences()
 	ini.WriteInt(_T("MaxChatHistoryLines"), (int)m_iMaxChatHistory);
 	ini.WriteInt(_T("MaxMessageSessions"), maxmsgsessions);
 	ini.WriteBool(_T("RearrangeKadSearchKeywords"), m_bRearrangeKadSearchKeywords);
-	ini.WriteInt(prefini::UploadPolicyKeys::MaxUploadClientsAllowed, m_uMaxUploadClientsAllowed, prefini::Sections::UploadPolicy);
-	ini.WriteFloat(prefini::UploadPolicyKeys::SlowUploadThresholdFactor, m_fSlowUploadThresholdFactor, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadGraceSeconds, m_uSlowUploadGraceSeconds, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadWarmupSeconds, m_uSlowUploadWarmupSeconds, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::ZeroUploadRateGraceSeconds, m_uZeroUploadRateGraceSeconds, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadCooldownSeconds, m_uSlowUploadCooldownSeconds, prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::MaxUploadClientsAllowed, PreferenceValidationSeams::NormalizeUploadSlots(m_uMaxUploadClientsAllowed), prefini::Sections::UploadPolicy);
+	ini.WriteFloat(prefini::UploadPolicyKeys::SlowUploadThresholdFactor, PreferenceValidationSeams::NormalizeSlowUploadThresholdFactor(m_fSlowUploadThresholdFactor), prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadGraceSeconds, PreferenceValidationSeams::NormalizeSlowUploadGraceSeconds(m_uSlowUploadGraceSeconds), prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadWarmupSeconds, PreferenceValidationSeams::NormalizeSlowUploadWarmupSeconds(m_uSlowUploadWarmupSeconds), prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::ZeroUploadRateGraceSeconds, PreferenceValidationSeams::NormalizeZeroUploadRateGraceSeconds(m_uZeroUploadRateGraceSeconds), prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadCooldownSeconds, PreferenceValidationSeams::NormalizeSlowUploadCooldownSeconds(m_uSlowUploadCooldownSeconds), prefini::Sections::UploadPolicy);
 	ini.WriteBool(prefini::UploadPolicyKeys::LowRatioBoostEnabled, m_bLowRatioBoostEnabled, prefini::Sections::UploadPolicy);
-	ini.WriteFloat(prefini::UploadPolicyKeys::LowRatioThreshold, m_fLowRatioThreshold, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::LowRatioScoreBonus, m_uLowRatioBonus, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::LowIDScoreDivisor, m_uLowIDDivisor, prefini::Sections::UploadPolicy);
-		ini.WriteInt(prefini::UploadPolicyKeys::SessionTransferLimitMode, static_cast<int>(m_eSessionTransferLimitMode), prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::SessionTransferLimitValue, m_uSessionTransferLimitValue, prefini::Sections::UploadPolicy);
-	ini.WriteInt(prefini::UploadPolicyKeys::SessionTimeLimitSeconds, m_uSessionTimeLimitSeconds, prefini::Sections::UploadPolicy);
+	ini.WriteFloat(prefini::UploadPolicyKeys::LowRatioThreshold, PreferenceValidationSeams::NormalizeLowRatioThreshold(m_fLowRatioThreshold), prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::LowRatioScoreBonus, PreferenceValidationSeams::NormalizeLowRatioBonus(m_uLowRatioBonus), prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::LowIDScoreDivisor, PreferenceValidationSeams::NormalizeLowIDDivisor(m_uLowIDDivisor), prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::SessionTransferLimitMode, PreferenceValidationSeams::NormalizeSessionTransferLimitMode(static_cast<int>(m_eSessionTransferLimitMode)), prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::SessionTransferLimitValue, PreferenceValidationSeams::NormalizeSessionTransferLimitValue(static_cast<int>(m_eSessionTransferLimitMode), m_uSessionTransferLimitValue), prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::SessionTimeLimitSeconds, PreferenceValidationSeams::NormalizeSessionTimeLimitSeconds(m_uSessionTimeLimitSeconds), prefini::Sections::UploadPolicy);
 	ini.SetSection(prefini::Sections::eMule);
 
 	// Toolbar
@@ -2885,19 +2885,19 @@ void CPreferences::LoadPreferences()
 	m_bTransflstRemain = ini.GetBool(_T("TransflstRemainOrder"), false);
 	filterserverbyip = ini.GetBool(_T("FilterServersByIP"), false);
 	filterlevel = ini.GetInt(_T("FilterLevel"), 127);
-	SetMaxUploadClientsAllowed((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::MaxUploadClientsAllowed, 8, prefini::Sections::UploadPolicy)));
-	SetSlowUploadThresholdFactor(ini.GetFloat(prefini::UploadPolicyKeys::SlowUploadThresholdFactor, 0.33f, prefini::Sections::UploadPolicy));
-	SetSlowUploadGraceSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SlowUploadGraceSeconds, 30, prefini::Sections::UploadPolicy)));
-	SetSlowUploadWarmupSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SlowUploadWarmupSeconds, 60, prefini::Sections::UploadPolicy)));
-	SetZeroUploadRateGraceSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::ZeroUploadRateGraceSeconds, 10, prefini::Sections::UploadPolicy)));
-	SetSlowUploadCooldownSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SlowUploadCooldownSeconds, 120, prefini::Sections::UploadPolicy)));
+	SetMaxUploadClientsAllowed(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::MaxUploadClientsAllowed, PreferenceValidationSeams::kDefaultMaxUploadSlots, prefini::Sections::UploadPolicy), 0));
+	SetSlowUploadThresholdFactor(ini.GetFloat(prefini::UploadPolicyKeys::SlowUploadThresholdFactor, PreferenceValidationSeams::kDefaultSlowUploadThresholdFactor, prefini::Sections::UploadPolicy));
+	SetSlowUploadGraceSeconds(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::SlowUploadGraceSeconds, PreferenceValidationSeams::kDefaultSlowUploadGraceSeconds, prefini::Sections::UploadPolicy), 0));
+	SetSlowUploadWarmupSeconds(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::SlowUploadWarmupSeconds, PreferenceValidationSeams::kDefaultSlowUploadWarmupSeconds, prefini::Sections::UploadPolicy), 0));
+	SetZeroUploadRateGraceSeconds(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::ZeroUploadRateGraceSeconds, PreferenceValidationSeams::kDefaultZeroUploadRateGraceSeconds, prefini::Sections::UploadPolicy), 0));
+	SetSlowUploadCooldownSeconds(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::SlowUploadCooldownSeconds, PreferenceValidationSeams::kDefaultSlowUploadCooldownSeconds, prefini::Sections::UploadPolicy), 0));
 	m_bLowRatioBoostEnabled = ini.GetBool(prefini::UploadPolicyKeys::LowRatioBoostEnabled, true, prefini::Sections::UploadPolicy);
-	SetLowRatioThreshold(ini.GetFloat(prefini::UploadPolicyKeys::LowRatioThreshold, 0.5f, prefini::Sections::UploadPolicy));
-	SetLowRatioBonus((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::LowRatioScoreBonus, 50, prefini::Sections::UploadPolicy)));
-	SetLowIDDivisor((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::LowIDScoreDivisor, 2, prefini::Sections::UploadPolicy)));
+	SetLowRatioThreshold(ini.GetFloat(prefini::UploadPolicyKeys::LowRatioThreshold, PreferenceValidationSeams::kDefaultLowRatioThreshold, prefini::Sections::UploadPolicy));
+	SetLowRatioBonus(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::LowRatioScoreBonus, PreferenceValidationSeams::kDefaultLowRatioBonus, prefini::Sections::UploadPolicy), 0));
+	SetLowIDDivisor(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::LowIDScoreDivisor, PreferenceValidationSeams::kDefaultLowIDDivisor, prefini::Sections::UploadPolicy), 0));
 	SetSessionTransferLimitMode(static_cast<ESessionTransferLimitMode>(ini.GetInt(prefini::UploadPolicyKeys::SessionTransferLimitMode, static_cast<int>(ESessionTransferLimitMode::PercentOfFile), prefini::Sections::UploadPolicy)));
-	SetSessionTransferLimitValue((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SessionTransferLimitValue, PreferenceUiSeams::kDefaultSessionTransferPercent, prefini::Sections::UploadPolicy)));
-	SetSessionTimeLimitSeconds((UINT)max(0, ini.GetInt(prefini::UploadPolicyKeys::SessionTimeLimitSeconds, 3600, prefini::Sections::UploadPolicy)));
+	SetSessionTransferLimitValue(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::SessionTransferLimitValue, PreferenceValidationSeams::kDefaultSessionTransferPercent, prefini::Sections::UploadPolicy), 0));
+	SetSessionTimeLimitSeconds(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::SessionTimeLimitSeconds, PreferenceValidationSeams::kDefaultSessionTimeLimitSeconds, prefini::Sections::UploadPolicy), 0));
 	ini.SetSection(prefini::Sections::eMule);
 	SetMinFreeDiskSpaceConfig(ini.GetUInt64(_T("MinFreeDiskSpaceConfig"), GetMinFreeDiskSpaceConfigFloor()));
 	SetMinFreeDiskSpaceTemp(ini.GetUInt64(_T("MinFreeDiskSpaceTemp"), GetMinFreeDiskSpaceTempFloor()));
@@ -3080,9 +3080,9 @@ void CPreferences::LoadPreferences()
 	m_strTxtEditor = ini.GetString(_T("TxtEditor"), _T("notepad.exe"));
 	m_strVideoPlayer = ini.GetString(_T("VideoPlayer"), _T(""));
 	m_strVideoPlayerArgs = ini.GetString(_T("VideoPlayerArgs"), _T(""));
-	m_strVideoThumbnailFfmpegPath = ini.GetString(_T("VideoThumbnailFfmpegPath"), _T(""));
+	m_strVideoThumbnailFfmpegPath = ini.GetString(prefini::VideoThumbnailKeys::FfmpegPath, _T(""));
 	m_uVideoThumbnailIntervalSeconds = PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(
-		NormalizeNonNegativePreference(ini.GetInt(_T("VideoThumbnailIntervalSeconds"), static_cast<int>(PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds)), PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds));
+		NormalizeNonNegativePreference(ini.GetInt(prefini::VideoThumbnailKeys::IntervalSeconds, static_cast<int>(PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds)), PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds));
 	m_bRunCommandOnFileCompletion = ini.GetBool(prefini::FileCompletionKeys::RunCommandOnFileCompletion, false, prefini::Sections::FileCompletion);
 	m_strFileCompletionProgram = ini.GetString(prefini::FileCompletionKeys::Program, _T(""), prefini::Sections::FileCompletion);
 	m_strFileCompletionArguments = ini.GetString(prefini::FileCompletionKeys::Arguments, _T(""), prefini::Sections::FileCompletion);

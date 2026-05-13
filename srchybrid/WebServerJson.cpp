@@ -1152,9 +1152,8 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 			return false;
 		}
 
-		const uint32 uBudgetBytesPerSec = max(3u * 1024u, thePrefs.GetMaxUpload() * 1024u);
 		const uint32 uRequestedRate = static_cast<uint32>(ullRequestedRate);
-		const uint32 uDerivedSlots = max(1u, min(32u, uBudgetBytesPerSec / max(1u, uRequestedRate)));
+		const uint32 uDerivedSlots = PreferenceValidationSeams::DeriveUploadSlotsForClientDataRate(thePrefs.GetMaxUpload(), uRequestedRate);
 		thePrefs.SetMaxUploadClientsAllowed(uDerivedSlots);
 	}
 

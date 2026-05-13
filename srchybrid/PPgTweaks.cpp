@@ -1144,9 +1144,11 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 			FailTreeValidation(pDX, AFX_IDP_PARSE_INT, m_htiZeroUploadRateGrace);
 		if (m_iSlowUploadCooldownSeconds < 10 || m_iSlowUploadCooldownSeconds > 3600)
 			FailTreeValidation(pDX, AFX_IDP_PARSE_INT, m_htiSlowUploadCooldown);
-		if (!TryParseTreeFloat(m_sLowRatioThreshold, fParsedValue) || fParsedValue < 0.0f || fParsedValue > 2.0f)
+		if (!TryParseTreeFloat(m_sLowRatioThreshold, fParsedValue)
+			|| fParsedValue < PreferenceUiSeams::kMinLowRatioThreshold
+			|| fParsedValue > PreferenceUiSeams::kMaxLowRatioThreshold)
 			FailTreeValidation(pDX, AFX_IDP_PARSE_REAL, m_htiLowRatioThreshold);
-		if (m_iLowRatioBonus < 0 || m_iLowRatioBonus > 500)
+		if (m_iLowRatioBonus < 0 || m_iLowRatioBonus > static_cast<int>(PreferenceUiSeams::kMaxLowRatioBonus))
 			FailTreeValidation(pDX, AFX_IDP_PARSE_INT, m_htiLowRatioBonus);
 		if (m_iLowIDDivisor < 1 || m_iLowIDDivisor > 8)
 			FailTreeValidation(pDX, AFX_IDP_PARSE_INT, m_htiLowIDDivisor);

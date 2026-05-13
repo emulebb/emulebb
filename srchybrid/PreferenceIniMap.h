@@ -27,6 +27,12 @@ inline constexpr const TCHAR* Program = _T("FileCompletionProgram");
 inline constexpr const TCHAR* Arguments = _T("FileCompletionArguments");
 }
 
+namespace VideoThumbnailKeys
+{
+inline constexpr const TCHAR* FfmpegPath = _T("VideoThumbnailFfmpegPath");
+inline constexpr const TCHAR* IntervalSeconds = _T("VideoThumbnailIntervalSeconds");
+}
+
 namespace GeoLocationKeys
 {
 inline constexpr const TCHAR* LookupEnabled = _T("GeoLocationLookupEnabled");

@@ -16,14 +16,17 @@ constexpr UINT kDefaultLogBufferKiB = 256u;
 constexpr UINT kMaxChatHistoryLines = 10000u;
 constexpr UINT kMaxMessageSessions = 10000u;
 constexpr UINT kMaxPerfLogIntervalMinutes = 1440u;
-constexpr int kSessionTransferModeDisabled = 0;
-constexpr int kSessionTransferModePercentOfFile = 1;
-constexpr int kSessionTransferModeAbsoluteMiB = 2;
-constexpr UINT kDefaultSessionTransferPercent = 55u;
-constexpr UINT kMinSessionTransferPercent = 1u;
-constexpr UINT kMaxSessionTransferPercent = 100u;
-constexpr UINT kMinSessionTransferMiB = 1u;
-constexpr UINT kMaxSessionTransferMiB = 4096u;
+constexpr int kSessionTransferModeDisabled = PreferenceValidationSeams::kSessionTransferModeDisabled;
+constexpr int kSessionTransferModePercentOfFile = PreferenceValidationSeams::kSessionTransferModePercentOfFile;
+constexpr int kSessionTransferModeAbsoluteMiB = PreferenceValidationSeams::kSessionTransferModeAbsoluteMiB;
+constexpr UINT kDefaultSessionTransferPercent = PreferenceValidationSeams::kDefaultSessionTransferPercent;
+constexpr UINT kMinSessionTransferPercent = PreferenceValidationSeams::kMinSessionTransferPercent;
+constexpr UINT kMaxSessionTransferPercent = PreferenceValidationSeams::kMaxSessionTransferPercent;
+constexpr UINT kMinSessionTransferMiB = PreferenceValidationSeams::kMinSessionTransferMiB;
+constexpr UINT kMaxSessionTransferMiB = PreferenceValidationSeams::kMaxSessionTransferMiB;
+constexpr float kMinLowRatioThreshold = PreferenceValidationSeams::kMinLowRatioThreshold;
+constexpr float kMaxLowRatioThreshold = PreferenceValidationSeams::kMaxLowRatioThreshold;
+constexpr UINT kMaxLowRatioBonus = PreferenceValidationSeams::kMaxLowRatioBonus;
 
 inline bool IsLogFileSizeKiBAllowed(UINT uValue)
 {
@@ -95,34 +98,12 @@ inline UINT NormalizePerfLogIntervalMinutes(UINT uValue)
 
 inline int NormalizeSessionTransferLimitMode(int iValue)
 {
-	switch (iValue) {
-	case kSessionTransferModeDisabled:
-	case kSessionTransferModePercentOfFile:
-	case kSessionTransferModeAbsoluteMiB:
-		return iValue;
-	default:
-		return kSessionTransferModePercentOfFile;
-	}
+	return PreferenceValidationSeams::NormalizeSessionTransferLimitMode(iValue);
 }
 
 inline UINT NormalizeSessionTransferLimitValue(int iMode, UINT uValue)
 {
-	const int iNormalizedMode = NormalizeSessionTransferLimitMode(iMode);
-	if (iNormalizedMode == kSessionTransferModePercentOfFile) {
-		if (uValue < kMinSessionTransferPercent)
-			return kMinSessionTransferPercent;
-		if (uValue > kMaxSessionTransferPercent)
-			return kMaxSessionTransferPercent;
-		return uValue;
-	}
-	if (iNormalizedMode == kSessionTransferModeAbsoluteMiB) {
-		if (uValue < kMinSessionTransferMiB)
-			return kMinSessionTransferMiB;
-		if (uValue > kMaxSessionTransferMiB)
-			return kMaxSessionTransferMiB;
-		return uValue;
-	}
-	return uValue > kMaxSessionTransferMiB ? kMaxSessionTransferMiB : uValue;
+	return PreferenceValidationSeams::NormalizeSessionTransferLimitValue(iMode, uValue);
 }
 
 inline bool IsPositiveBounded(UINT uValue, UINT uMax)

@@ -1490,23 +1490,23 @@ public:
 	static UINT		GetMaxUploadClientsAllowed()		{ return m_uMaxUploadClientsAllowed; }
 	static void		SetMaxUploadClientsAllowed(UINT uVal) { m_uMaxUploadClientsAllowed = PreferenceValidationSeams::NormalizeUploadSlots(uVal); }
 	static float	GetSlowUploadThresholdFactor()	{ return m_fSlowUploadThresholdFactor; }
-	static void		SetSlowUploadThresholdFactor(float fVal) { m_fSlowUploadThresholdFactor = min(1.0f, max(0.10f, fVal)); }
+	static void		SetSlowUploadThresholdFactor(float fVal) { m_fSlowUploadThresholdFactor = PreferenceValidationSeams::NormalizeSlowUploadThresholdFactor(fVal); }
 	static UINT		GetSlowUploadGraceSeconds()		{ return m_uSlowUploadGraceSeconds; }
-	static void		SetSlowUploadGraceSeconds(UINT uVal) { m_uSlowUploadGraceSeconds = min(300u, max(5u, uVal)); }
+	static void		SetSlowUploadGraceSeconds(UINT uVal) { m_uSlowUploadGraceSeconds = PreferenceValidationSeams::NormalizeSlowUploadGraceSeconds(uVal); }
 	static UINT		GetSlowUploadWarmupSeconds()		{ return m_uSlowUploadWarmupSeconds; }
-	static void		SetSlowUploadWarmupSeconds(UINT uVal) { m_uSlowUploadWarmupSeconds = min(uVal, 3600u); }
+	static void		SetSlowUploadWarmupSeconds(UINT uVal) { m_uSlowUploadWarmupSeconds = PreferenceValidationSeams::NormalizeSlowUploadWarmupSeconds(uVal); }
 	static UINT		GetZeroUploadRateGraceSeconds()			{ return m_uZeroUploadRateGraceSeconds; }
-	static void		SetZeroUploadRateGraceSeconds(UINT uVal) { m_uZeroUploadRateGraceSeconds = min(120u, max(3u, uVal)); }
+	static void		SetZeroUploadRateGraceSeconds(UINT uVal) { m_uZeroUploadRateGraceSeconds = PreferenceValidationSeams::NormalizeZeroUploadRateGraceSeconds(uVal); }
 	static UINT		GetSlowUploadCooldownSeconds()	{ return m_uSlowUploadCooldownSeconds; }
-	static void		SetSlowUploadCooldownSeconds(UINT uVal) { m_uSlowUploadCooldownSeconds = min(3600u, max(10u, uVal)); }
+	static void		SetSlowUploadCooldownSeconds(UINT uVal) { m_uSlowUploadCooldownSeconds = PreferenceValidationSeams::NormalizeSlowUploadCooldownSeconds(uVal); }
 	static bool		IsLowRatioBoostEnabled()			{ return m_bLowRatioBoostEnabled; }
 	static void		SetLowRatioBoostEnabled(bool bVal) { m_bLowRatioBoostEnabled = bVal; }
 	static float	GetLowRatioThreshold()			{ return m_fLowRatioThreshold; }
-	static void		SetLowRatioThreshold(float fVal) { m_fLowRatioThreshold = min(2.0f, max(0.0f, fVal)); }
+	static void		SetLowRatioThreshold(float fVal) { m_fLowRatioThreshold = PreferenceValidationSeams::NormalizeLowRatioThreshold(fVal); }
 	static UINT		GetLowRatioBonus()				{ return m_uLowRatioBonus; }
-	static void		SetLowRatioBonus(UINT uVal)		{ m_uLowRatioBonus = min(500u, uVal); }
+	static void		SetLowRatioBonus(UINT uVal)		{ m_uLowRatioBonus = PreferenceValidationSeams::NormalizeLowRatioBonus(uVal); }
 	static UINT		GetLowIDDivisor()					{ return m_uLowIDDivisor; }
-	static void		SetLowIDDivisor(UINT uVal)		{ m_uLowIDDivisor = min(8u, max(1u, uVal)); }
+	static void		SetLowIDDivisor(UINT uVal)		{ m_uLowIDDivisor = PreferenceValidationSeams::NormalizeLowIDDivisor(uVal); }
 	static ESessionTransferLimitMode GetSessionTransferLimitMode() { return m_eSessionTransferLimitMode; }
 	static ESessionTransferLimitMode NormalizeSessionTransferLimitMode(ESessionTransferLimitMode eMode);
 	static UINT		NormalizeSessionTransferLimitValue(ESessionTransferLimitMode eMode, UINT uVal);
@@ -1514,7 +1514,7 @@ public:
 	static UINT		GetSessionTransferLimitValue()			{ return m_uSessionTransferLimitValue; }
 	static void		SetSessionTransferLimitValue(UINT uVal);
 	static UINT		GetSessionTimeLimitSeconds()		{ return m_uSessionTimeLimitSeconds; }
-	static void		SetSessionTimeLimitSeconds(UINT uVal) { m_uSessionTimeLimitSeconds = min(86400u, uVal); }
+	static void		SetSessionTimeLimitSeconds(UINT uVal) { m_uSessionTimeLimitSeconds = PreferenceValidationSeams::NormalizeSessionTimeLimitSeconds(uVal); }
 	static int		GetMaxLogBuff()						{ return iMaxLogBuff; }
 	static UINT		GetMaxLogFileSize()					{ return uMaxLogFileSize; }
 	static ELogFileFormat GetLogFileFormat()			{ return m_iLogFileFormat; }
