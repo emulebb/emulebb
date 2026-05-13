@@ -620,6 +620,7 @@
     <ClInclude Include="QueueListCtrl.h" />
     <ClInclude Include="RARFile.h" />
     <ClInclude Include="RARFileSeams.h" />
+    <ClInclude Include="RegexMatchSeams.h" />
     <ClInclude Include="ReleaseUpdateCheck.h" />
     <ClInclude Include="ReleaseUpdateCheckSeams.h" />
     <ClInclude Include="Resource.h" />

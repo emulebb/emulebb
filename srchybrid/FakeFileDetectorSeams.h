@@ -2,11 +2,11 @@
 
 #include "FileTypeClassifierSeams.h"
 #include "Opcodes.h"
+#include "RegexMatchSeams.h"
 
 #include <algorithm>
 #include <cstdint>
 #include <cwctype>
-#include <regex>
 #include <string>
 #include <vector>
 
@@ -113,12 +113,7 @@ inline bool ContainsRegex(const std::wstring &rText, const std::wstring &rPatter
 {
 	if (rText.empty() || rPattern.empty() || rPattern.size() > 256 || rText.size() > 1024)
 		return false;
-	try {
-		const std::wregex rePattern(rPattern, std::regex_constants::icase | std::regex_constants::ECMAScript);
-		return std::regex_search(rText, rePattern);
-	} catch (const std::regex_error&) {
-		return false;
-	}
+	return RegexMatchSeams::Match(rText, rPattern, RegexMatchSeams::MatchMode::Search, std::regex_constants::icase | std::regex_constants::ECMAScript);
 }
 
 inline void AddReason(Report &rReport, const char *pszReason, const uint32_t uScore)

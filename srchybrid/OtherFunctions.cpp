@@ -18,7 +18,6 @@
 #include <atlimage.h>
 #include <fcntl.h>
 #include <io.h>
-#include <regex>
 #include <share.h>
 #include <ShObjIdl_core.h>
 #include <ShlObj_core.h>
@@ -27,6 +26,7 @@
 #include "UpDownClient.h"
 #include "DownloadQueue.h"
 #include "Preferences.h"
+#include "RegexMatchSeams.h"
 #include "PartFile.h"
 #include "SharedFileList.h"
 #include "KnownFileList.h"
@@ -3521,27 +3521,15 @@ bool IsUnicodeFile(LPCTSTR pszFilePath)
 
 bool IsRegExpValid(const CString &regexpr)
 {
-	try {
-		std::basic_regex<TCHAR> reFN(regexpr);
-	} catch (const std::regex_error&) {
-		return false;
-	}
-	return true;
+	return RegexMatchSeams::IsValidPattern(std::basic_string<TCHAR>((LPCTSTR)regexpr, regexpr.GetLength()));
 }
 
 bool RegularExpressionMatch(const CString &regexpr, const CString &teststring)
 {
-	try {
-		std::basic_regex<TCHAR> reFN(regexpr);
-#ifdef UNICODE
-		std::wcmatch mcUrl;
-#else
-		std::cmatch mcUrl;
-#endif
-		return std::regex_match((LPCTSTR)teststring, mcUrl, reFN);
-	} catch (const std::regex_error&) {
-		return false;
-	}
+	return RegexMatchSeams::Match(
+		std::basic_string<TCHAR>((LPCTSTR)teststring, teststring.GetLength()),
+		std::basic_string<TCHAR>((LPCTSTR)regexpr, regexpr.GetLength()),
+		RegexMatchSeams::MatchMode::Full);
 }
 
 ULONGLONG GetModuleVersion(LPCTSTR pszFilePath)

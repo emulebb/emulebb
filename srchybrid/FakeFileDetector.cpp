@@ -164,13 +164,7 @@ void EnsureRulesLoaded()
 
 bool IsValidRegex(const CString &rstrPattern)
 {
-	try {
-		const std::wregex rePattern(ToWide(rstrPattern), std::regex_constants::icase | std::regex_constants::ECMAScript);
-		(void)rePattern;
-		return true;
-	} catch (const std::regex_error&) {
-		return false;
-	}
+	return RegexMatchSeams::IsValidPattern(ToWide(rstrPattern), std::regex_constants::icase | std::regex_constants::ECMAScript);
 }
 
 void AddRuleLine(const CString &rstrSection, const CString &rstrLine)
