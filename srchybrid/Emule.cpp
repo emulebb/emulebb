@@ -85,7 +85,7 @@ static char THIS_FILE[] = __FILE__;
 namespace
 {
 LPCTSTR const MONITOREDSHAREDJOURNALSTATE = _T("shareddir.monitor-journal.dat");
-LPCTSTR const ONLINEHELPURL = _T("https://github.com/itlezy/eMule-tooling/blob/main/docs/HELP.md");
+LPCTSTR const ONLINEHELPURL = _T("https://github.com/eMulebb/eMule-tooling/blob/main/docs/HELP.md");
 constexpr DWORD kMonitoredSharedFileWatchMask = FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE;
 constexpr DWORD kMonitoredSharedDirectoryWatchMask = FILE_NOTIFY_CHANGE_DIR_NAME;
 

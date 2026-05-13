@@ -3646,12 +3646,12 @@ CString CPreferences::GetHomepageBaseURLForLevel(int nLevel)
 
 CString CPreferences::GetVersionCheckBaseURL()
 {
-	return _T("https://github.com/itlezy/eMule/releases");
+	return _T("https://github.com/eMulebb/eMule/releases");
 }
 
 CString CPreferences::GetVersionCheckApiURL()
 {
-	return _T("https://api.github.com/repos/itlezy/eMule/releases/latest");
+	return _T("https://api.github.com/repos/eMulebb/eMule/releases/latest");
 }
 
 CString CPreferences::GetVersionCheckURL()
