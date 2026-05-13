@@ -15,6 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
+#include "MediaInfoDllSeams.h"
 #include "RichEditStream.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -210,7 +211,7 @@ bool GetDRM(LPCTSTR pszFilePath);
 /**
  * @brief Extracts audio/video metadata through the optional MediaInfo DLL when it is available.
  */
-bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo *mi, bool bFullInfo = false, bool bSingleFile = true, bool *pbLibraryAvailable = NULL);
+bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo *mi, bool bFullInfo = false, bool bSingleFile = true, bool *pbLibraryAvailable = NULL, MediaInfoDllSeams::EMediaInfoDllStatus *peLibraryStatus = NULL);
 bool GetRIFFHeaders(LPCTSTR pszFileName, SMediaInfo *mi, bool &rbIsAVI, bool bFullInfo = false);
 bool GetRMHeaders(LPCTSTR pszFileName, SMediaInfo *mi, bool &rbIsRM, bool bFullInfo = false);
 #ifdef HAVE_WMSDK_H

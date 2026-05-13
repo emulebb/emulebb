@@ -50,6 +50,31 @@ struct SMediaInfoThreadResult
 	CStringA strInfo;
 };
 
+static CString BuildMediaInfoDllHint(MediaInfoDllSeams::EMediaInfoDllStatus eStatus)
+{
+	CString strInstFolder(PathHelpers::GetDirectoryPath(PathHelpers::GetModuleFilePath(theApp.m_hInstance)));
+	CString strHint;
+	strHint.Format(GetResString(IDS_MEDIAINFO_DLLMISSING), (LPCTSTR)strInstFolder);
+
+	switch (eStatus) {
+	case MediaInfoDllSeams::MediaInfoDll_Incompatible:
+		strHint += _T("\r\nMediaInfo.dll was found, but eMule BB requires version 26.01 or newer.");
+		break;
+	case MediaInfoDllSeams::MediaInfoDll_BadExports:
+		strHint += _T("\r\nA MediaInfo.dll candidate was found, but it does not expose the required MediaInfo API exports.");
+		break;
+	case MediaInfoDllSeams::MediaInfoDll_LoadFailed:
+		strHint += _T("\r\nA MediaInfo.dll candidate was found, but Windows could not load it or one of its dependencies.");
+		break;
+	case MediaInfoDllSeams::MediaInfoDll_Missing:
+		strHint += _T("\r\nLookup also checks the configured MediaInfo_MediaInfoDllPath, MediaInfo registry install paths, and %ProgramFiles%\\MediaInfo\\MEDIAINFO.DLL.");
+		break;
+	default:
+		break;
+	}
+	return strHint;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CGetMediaInfoThread
 
@@ -613,12 +638,12 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 	const bool bShouldInspectWithMediaInfo = thePrefs.GetInspectAllFileTypes()
 		|| eFileType == ED2KFT_AUDIO
 		|| eFileType == ED2KFT_VIDEO;
-	bool bMediaInfoAvailable = false;
+	MediaInfoDllSeams::EMediaInfoDllStatus eMediaInfoStatus = MediaInfoDllSeams::MediaInfoDll_NotInitialized;
 	bool bGiveMediaInfoLibHint = false;
 
 	if (bShouldInspectWithMediaInfo) {
 		try {
-			bFoundHeader = GetMediaInfoDllInfo(pFile->GetFilePath(), pFile->GetFileSize(), mi, true, bSingleFile, &bMediaInfoAvailable);
+			bFoundHeader = GetMediaInfoDllInfo(pFile->GetFilePath(), pFile->GetFileSize(), mi, true, bSingleFile, NULL, &eMediaInfoStatus);
 		} catch (...) {
 			ASSERT(0);
 		}
@@ -629,7 +654,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 		if (bFoundHeader)
 			return true;
 
-		bGiveMediaInfoLibHint = !bMediaInfoAvailable;
+		bGiveMediaInfoLibHint = MediaInfoDllSeams::ShouldShowInstallHint(eMediaInfoStatus);
 	}
 
 	////////////////////////////////////////////////////////////////////////////
@@ -1321,9 +1346,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 	}
 
 	if (!bFoundHeader && bGiveMediaInfoLibHint) {
-		CString strInstFolder(PathHelpers::GetDirectoryPath(PathHelpers::GetModuleFilePath(theApp.m_hInstance)));
-		CString strHint;
-		strHint.Format(GetResString(IDS_MEDIAINFO_DLLMISSING), (LPCTSTR)strInstFolder);
+		const CString strHint(BuildMediaInfoDllHint(eMediaInfoStatus));
 		if (!mi->strInfo.IsEmpty())
 			mi->strInfo << _T("\r\n");
 		mi->strInfo << strHint;

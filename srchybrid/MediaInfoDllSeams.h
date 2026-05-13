@@ -2,10 +2,25 @@
 
 #include <afxcoll.h>
 #include <atlstr.h>
+#include <climits>
 #include <shlwapi.h>
 
 namespace MediaInfoDllSeams
 {
+/**
+ * @brief Classifies the optional MediaInfo DLL loader state.
+ */
+enum EMediaInfoDllStatus
+{
+	MediaInfoDll_NotInitialized,
+	MediaInfoDll_Loaded,
+	MediaInfoDll_Disabled,
+	MediaInfoDll_Missing,
+	MediaInfoDll_Incompatible,
+	MediaInfoDll_BadExports,
+	MediaInfoDll_LoadFailed
+};
+
 /**
  * @brief Returns the minimum MediaInfo DLL version accepted by the runtime loader.
  */
@@ -36,6 +51,46 @@ inline bool IsCompatibleVersion(const ULONGLONG ullVersion)
 inline bool IsOpenSucceeded(const int iOpenResult)
 {
 	return iOpenResult != 0;
+}
+
+/**
+ * @brief Returns whether File Info should display an install/configuration hint.
+ */
+inline bool ShouldShowInstallHint(const EMediaInfoDllStatus eStatus)
+{
+	return eStatus == MediaInfoDll_Missing
+		|| eStatus == MediaInfoDll_Incompatible
+		|| eStatus == MediaInfoDll_BadExports
+		|| eStatus == MediaInfoDll_LoadFailed;
+}
+
+/**
+ * @brief Clamps suspicious MediaInfo stream counts before loop bounds use them.
+ */
+inline int NormalizeReportedCount(const int iValue, const int iMaxValue)
+{
+	if (iValue <= 0 || iMaxValue <= 0)
+		return 0;
+	return iValue > iMaxValue ? iMaxValue : iValue;
+}
+
+/**
+ * @brief Clamps a MediaInfo chapter end offset to a bounded span after begin.
+ */
+inline int NormalizeChapterEnd(const int iBegin, const int iEnd, const int iMaxChapterCount)
+{
+	if (iEnd <= iBegin || iMaxChapterCount <= 0)
+		return iBegin;
+	const int iMaxEnd = iBegin > INT_MAX - iMaxChapterCount ? INT_MAX : iBegin + iMaxChapterCount;
+	return iEnd > iMaxEnd ? iMaxEnd : iEnd;
+}
+
+/**
+ * @brief Returns whether a MediaInfo codec string has enough bytes for FOURCC extraction.
+ */
+inline bool CanReadFourCc(const CStringA &rstrCodec)
+{
+	return rstrCodec.GetLength() >= 4;
 }
 
 /**

@@ -71,6 +71,8 @@ public:
 		, m_hLib()
 		, m_bInitialized()
 		, m_initLock()
+		, m_eStatus(MediaInfoDllSeams::MediaInfoDll_NotInitialized)
+		, m_strStatusReason()
 		, m_strLoadedPath()
 		, m_pfnMediaInfo_New()
 		, m_pfnMediaInfo_Open()
@@ -94,10 +96,13 @@ public:
 			m_bInitialized = true;
 			ResetLoadedLibrary();
 			CString strSummaryReason(_T("no compatible version 26.01 or newer was found"));
+			MediaInfoDllSeams::EMediaInfoDllStatus eSummaryStatus = MediaInfoDllSeams::MediaInfoDll_Missing;
 
 			const CString strConfiguredPath(theApp.GetProfileString(_T("eMule"), _T("MediaInfo_MediaInfoDllPath"), _T("MEDIAINFO.DLL")));
 			if (MediaInfoDllSeams::IsLoadingDisabled(strConfiguredPath)) {
 				strSummaryReason = _T("loading disabled by configuration");
+				m_eStatus = MediaInfoDllSeams::MediaInfoDll_Disabled;
+				m_strStatusReason = strSummaryReason;
 				AddLogLine(false, _T("MediaInfo.dll not loaded: %s"), (LPCTSTR)strSummaryReason);
 				return false;
 			}
@@ -106,13 +111,14 @@ public:
 				CString strResolvedPath(strConfiguredPath);
 				canonical(strResolvedPath);
 				CString strReason;
+				MediaInfoDllSeams::EMediaInfoDllStatus eStatus = MediaInfoDllSeams::MediaInfoDll_NotInitialized;
 				ULONGLONG ullVersion = 0;
-				HMODULE hConfiguredLib = LoadCompatibleLibrary(strResolvedPath, ullVersion, strReason);
+				HMODULE hConfiguredLib = LoadCompatibleLibrary(strResolvedPath, ullVersion, strReason, eStatus);
 				if (hConfiguredLib != NULL) {
 					BindLoadedLibrary(hConfiguredLib, ullVersion, strResolvedPath);
 					LogCandidate(strResolvedPath, _T("selected configured path"), ullVersion);
 				} else {
-					strSummaryReason = strReason;
+					RecordCandidateFailure(eSummaryStatus, strSummaryReason, eStatus, strReason);
 					LogCandidate(strResolvedPath, strReason, ullVersion);
 				}
 			}
@@ -123,10 +129,11 @@ public:
 				for (INT_PTR i = 0; i < aCandidatePaths.GetCount(); ++i) {
 					const CString &strCandidatePath = aCandidatePaths[i];
 					CString strReason;
+					MediaInfoDllSeams::EMediaInfoDllStatus eStatus = MediaInfoDllSeams::MediaInfoDll_NotInitialized;
 					ULONGLONG ullVersion = 0;
-					HMODULE hCandidateLib = LoadCompatibleLibrary(strCandidatePath, ullVersion, strReason);
+					HMODULE hCandidateLib = LoadCompatibleLibrary(strCandidatePath, ullVersion, strReason, eStatus);
 					if (hCandidateLib == NULL) {
-						strSummaryReason = strReason;
+						RecordCandidateFailure(eSummaryStatus, strSummaryReason, eStatus, strReason);
 						LogCandidate(strCandidatePath, strReason, ullVersion);
 						continue;
 					}
@@ -137,12 +144,21 @@ public:
 			}
 
 			if (m_hLib != NULL) {
+				m_eStatus = MediaInfoDllSeams::MediaInfoDll_Loaded;
+				m_strStatusReason.Empty();
 				AddLogLine(false, _T("MediaInfo.dll loaded: %s (version %s)"), (LPCTSTR)m_strLoadedPath, (LPCTSTR)FormatVersionString(m_ullVersion));
 			} else {
+				m_eStatus = eSummaryStatus;
+				m_strStatusReason = strSummaryReason;
 				AddLogLine(false, _T("MediaInfo.dll not loaded: %s"), (LPCTSTR)strSummaryReason);
 			}
 		}
 		return m_hLib != NULL;
+	}
+
+	MediaInfoDllSeams::EMediaInfoDllStatus GetStatus() const
+	{
+		return m_eStatus;
 	}
 
 	void* Open(LPCTSTR pszFilePath)
@@ -211,6 +227,30 @@ protected:
 		return MediaInfoDllSeams::IsCompatibleVersion(ullVersion);
 	}
 
+	static int GetFailureRank(MediaInfoDllSeams::EMediaInfoDllStatus eStatus)
+	{
+		switch (eStatus) {
+		case MediaInfoDllSeams::MediaInfoDll_LoadFailed:
+			return 4;
+		case MediaInfoDllSeams::MediaInfoDll_BadExports:
+			return 3;
+		case MediaInfoDllSeams::MediaInfoDll_Incompatible:
+			return 2;
+		case MediaInfoDllSeams::MediaInfoDll_Missing:
+			return 1;
+		default:
+			return 0;
+		}
+	}
+
+	static void RecordCandidateFailure(MediaInfoDllSeams::EMediaInfoDllStatus &reSummaryStatus, CString &rstrSummaryReason, MediaInfoDllSeams::EMediaInfoDllStatus eCandidateStatus, const CString &rstrCandidateReason)
+	{
+		if (GetFailureRank(eCandidateStatus) >= GetFailureRank(reSummaryStatus)) {
+			reSummaryStatus = eCandidateStatus;
+			rstrSummaryReason = rstrCandidateReason;
+		}
+	}
+
 	void AddCandidatePath(CStringArray &raCandidatePaths, const CString &strCandidatePath)
 	{
 		if (strCandidatePath.IsEmpty())
@@ -247,9 +287,10 @@ protected:
 			AddCandidatePath(raCandidatePaths, CombinePath(strProgramFiles, _T("MediaInfo\\MEDIAINFO.DLL")));
 	}
 
-	HMODULE LoadCompatibleLibrary(const CString &strPath, ULONGLONG &rullVersion, CString &rstrReason)
+	HMODULE LoadCompatibleLibrary(const CString &strPath, ULONGLONG &rullVersion, CString &rstrReason, MediaInfoDllSeams::EMediaInfoDllStatus &reStatus)
 	{
 		rullVersion = 0;
+		reStatus = MediaInfoDllSeams::MediaInfoDll_Missing;
 		if (!LongPathSeams::PathExists(strPath)) {
 			rstrReason = _T("candidate path missing");
 			return NULL;
@@ -261,6 +302,7 @@ protected:
 				rstrReason.Format(_T("candidate version %s is below required 26.01"), (LPCTSTR)FormatVersionString(rullVersion));
 			else
 				rstrReason = _T("candidate version could not be determined");
+			reStatus = MediaInfoDllSeams::MediaInfoDll_Incompatible;
 			return NULL;
 		}
 
@@ -268,6 +310,7 @@ protected:
 		HMODULE hCandidateLib = ::LoadLibraryEx(strLoadPath, NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 		if (hCandidateLib == NULL) {
 			rstrReason.Format(_T("LoadLibraryEx failed: %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
+			reStatus = MediaInfoDllSeams::MediaInfoDll_LoadFailed;
 			return NULL;
 		}
 
@@ -279,10 +322,12 @@ protected:
 		{
 			rstrReason = _T("required MediaInfo exports are missing");
 			::FreeLibrary(hCandidateLib);
+			reStatus = MediaInfoDllSeams::MediaInfoDll_BadExports;
 			return NULL;
 		}
 
 		rstrReason = _T("candidate accepted");
+		reStatus = MediaInfoDllSeams::MediaInfoDll_Loaded;
 		return hCandidateLib;
 	}
 
@@ -290,6 +335,8 @@ protected:
 	{
 		m_ullVersion = 0;
 		m_hLib = NULL;
+		m_eStatus = MediaInfoDllSeams::MediaInfoDll_NotInitialized;
+		m_strStatusReason.Empty();
 		m_strLoadedPath.Empty();
 		m_pfnMediaInfo_New = NULL;
 		m_pfnMediaInfo_Open = NULL;
@@ -328,6 +375,8 @@ protected:
 	HINSTANCE m_hLib;
 	bool m_bInitialized;
 	CCriticalSection m_initLock;
+	MediaInfoDllSeams::EMediaInfoDllStatus m_eStatus;
+	CString m_strStatusReason;
 	CString m_strLoadedPath;
 
 	void* (__stdcall *m_pfnMediaInfo_New)();
@@ -387,23 +436,37 @@ static CString InfoGetI(void *Handle, MediaInfo_stream_C StreamKind, int StreamN
 	return theMediaInfoDLL.GetI(Handle, StreamKind, StreamNumber, iParameter, KindOfInfo);
 }
 
+static int InfoGetBoundedCount(void *Handle, MediaInfo_stream_C StreamKind, int StreamNumber, LPCTSTR pszParameter, int iMaxValue)
+{
+	return MediaInfoDllSeams::NormalizeReportedCount(_tstoi(InfoGet(Handle, StreamKind, StreamNumber, pszParameter)), iMaxValue);
+}
+
 }
 
 /** @brief Extracts audio/video metadata through the optional MediaInfo.dll runtime. */
 /**
  * @brief Populates `SMediaInfo` from the optional MediaInfo DLL and reports whether the DLL was usable.
  */
-bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo *mi, bool bFullInfo, bool bSingleFile, bool *pbLibraryAvailable)
+bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo *mi, bool bFullInfo, bool bSingleFile, bool *pbLibraryAvailable, MediaInfoDllSeams::EMediaInfoDllStatus *peLibraryStatus)
 {
+	(void)bSingleFile;
+
 	if (pbLibraryAvailable != NULL)
 		*pbLibraryAvailable = false;
+	if (peLibraryStatus != NULL)
+		*peLibraryStatus = MediaInfoDllSeams::MediaInfoDll_NotInitialized;
 	if (mi == NULL || pszFilePath == NULL || *pszFilePath == _T('\0'))
 		return false;
 
-	if (!theMediaInfoDLL.Initialize())
+	if (!theMediaInfoDLL.Initialize()) {
+		if (peLibraryStatus != NULL)
+			*peLibraryStatus = theMediaInfoDLL.GetStatus();
 		return false;
+	}
 	if (pbLibraryAvailable != NULL)
 		*pbLibraryAvailable = true;
+	if (peLibraryStatus != NULL)
+		*peLibraryStatus = MediaInfoDllSeams::MediaInfoDll_Loaded;
 
 	const CString strPreparedPath(PreparePathForLongPath(CString(pszFilePath)));
 	CScopedMediaInfoHandle mediaInfoHandle(theMediaInfoDLL.Open(strPreparedPath));
@@ -488,8 +551,7 @@ bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo
 		double fFileLengthSec = _tstoi(str) / SEC2MS(1.0);
 		UINT uAllBitrates = 0;
 
-		str = InfoGet(Handle, MediaInfo_Stream_General, 0, _T("VideoCount"));
-		int iVideoStreams = _tstoi(str);
+		int iVideoStreams = InfoGetBoundedCount(Handle, MediaInfo_Stream_General, 0, _T("VideoCount"), 64);
 		if (iVideoStreams > 0) {
 			mi->iVideoStreams = iVideoStreams;
 			mi->fVideoLengthSec = fFileLengthSec;
@@ -498,7 +560,7 @@ bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo
 			mi->strVideoFormat = str;
 			if (!str.IsEmpty()) {
 				CStringA strCodecA(str);
-				if (!strCodecA.IsEmpty())
+				if (MediaInfoDllSeams::CanReadFourCc(strCodecA))
 					mi->video.bmiHeader.biCompression = *(LPDWORD)(LPCSTR)strCodecA;
 			}
 			str = InfoGet(Handle, MediaInfo_Stream_Video, 0, pCodecString);
@@ -583,8 +645,7 @@ bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo
 			}
 		}
 
-		str = InfoGet(Handle, MediaInfo_Stream_General, 0, _T("AudioCount"));
-		int iAudioStreams = _tstoi(str);
+		int iAudioStreams = InfoGetBoundedCount(Handle, MediaInfo_Stream_General, 0, _T("AudioCount"), 64);
 		if (iAudioStreams > 0) {
 			mi->iAudioStreams = iAudioStreams;
 			mi->fAudioLengthSec = fFileLengthSec;
@@ -699,8 +760,7 @@ bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo
 		}
 
 		if (bFullInfo) {
-			str = InfoGet(Handle, MediaInfo_Stream_General, 0, _T("TextCount"));
-			int iTextStreams = _tstoi(str);
+			int iTextStreams = InfoGetBoundedCount(Handle, MediaInfo_Stream_General, 0, _T("TextCount"), 64);
 			for (int iStream = 0; iStream < iTextStreams; ++iStream) {
 				if (!mi->strInfo.IsEmpty())
 					mi->strInfo << _T("\n");
@@ -723,8 +783,7 @@ bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo
 					mi->strInfo << _T("   ") << GetResString(IDS_PW_LANG) << _T(":\t") << str << _T("\n");
 			}
 
-			str = InfoGet(Handle, MediaInfo_Stream_General, 0, _T("MenuCount"));
-			int iMenuStreams = _tstoi(str);
+			int iMenuStreams = InfoGetBoundedCount(Handle, MediaInfo_Stream_General, 0, _T("MenuCount"), 32);
 			for (int iMenu = 0; iMenu < iMenuStreams; ++iMenu) {
 				if (!mi->strInfo.IsEmpty())
 					mi->strInfo << _T("\n");
@@ -735,7 +794,7 @@ bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo
 				str = InfoGet(Handle, MediaInfo_Stream_Menu, iMenu, _T("Chapters_Pos_Begin"));
 				int iBegin = _tstoi(str);
 				str = InfoGet(Handle, MediaInfo_Stream_Menu, iMenu, _T("Chapters_Pos_End"));
-				int iEnd = _tstoi(str);
+				int iEnd = MediaInfoDllSeams::NormalizeChapterEnd(iBegin, _tstoi(str), 512);
 				for (int iChapter = iBegin; iChapter < iEnd; ++iChapter) {
 					if (!mi->strInfo.IsEmpty())
 						mi->strInfo << _T("\n");
@@ -752,11 +811,14 @@ bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo
 
 		if (mi->strFileFormat.Find(_T("MPEG")) == 0) {
 			if (uAllBitrates != 0 && uAllBitrates != _UI32_MAX) {
-				fFileLengthSec = (uint64)ullFileSize * 8.0 / uAllBitrates;
+				const uint64 uFileSize = static_cast<uint64>(ullFileSize);
+				fFileLengthSec = static_cast<double>(uFileSize) * 8.0 / uAllBitrates;
 				if (mi->iVideoStreams > 0) {
 					if (mi->fVideoFrameRate > 0) {
 						ULONGLONG uFrames = (ULONGLONG)(fFileLengthSec * mi->fVideoFrameRate);
-						fFileLengthSec = ((uint64)ullFileSize - uFrames * 24) * 8.0 / uAllBitrates;
+						const uint64 uFrameOverhead = uFrames <= uFileSize / 24 ? static_cast<uint64>(uFrames * 24) : uFileSize;
+						const uint64 uPayloadBytes = uFileSize - uFrameOverhead;
+						fFileLengthSec = static_cast<double>(uPayloadBytes) * 8.0 / uAllBitrates;
 					}
 					mi->fVideoLengthSec = fFileLengthSec;
 				}
