@@ -1679,7 +1679,7 @@ CString CSearchListCtrl::GetItemDisplayText(const CSearchFile *src, int iSubItem
 #ifdef _DEBUG
 			sText.AppendFormat(&_T(" SR: %u%%")[static_cast<size_t>(sText.IsEmpty())], src->GetSpamRating());
 #endif
-			const SFakeFileReport fakeReport = FakeFileDetector::AnalyzeSearchFile(*src);
+			const SFakeFileReport fakeReport = FakeFileDetector::GetSearchFileReportSnapshot(*src);
 			if (fakeReport.nScore > 0)
 				sText.AppendFormat(_T("%sFake: %u%%"), sText.IsEmpty() ? _T("") : _T(" "), fakeReport.nScore);
 		}

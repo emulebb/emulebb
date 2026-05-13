@@ -243,6 +243,25 @@ bool HasCurrentCacheRecord(const uchar *pHash)
 	return it->second.uRulesFingerprint == g_uRulesFingerprint;
 }
 
+void MergeCurrentCacheForPendingHeader(const uchar *pHash, SFakeFileReport &rReport)
+{
+	if (!rReport.bPendingHeaderCheck)
+		return;
+	if (!g_bCacheLoaded)
+		return;
+	LoadCache();
+	const auto it = g_cache.find(md4str(pHash));
+	if (it == g_cache.end() || it->second.uRulesFingerprint != g_uRulesFingerprint)
+		return;
+	const SFakeFileReport &rCached = it->second.report;
+	if (rCached.eExtensionType != rReport.eExtensionType || rCached.eHeaderType == FILETYPE_UNKNOWN || rCached.nScore <= rReport.nScore)
+		return;
+	const bool bPendingHeaderCheck = rReport.bPendingHeaderCheck;
+	rReport = rCached;
+	rReport.bCached = true;
+	rReport.bPendingHeaderCheck = bPendingHeaderCheck;
+}
+
 uint32 GetCurrentCacheRecordCount()
 {
 	uint32 uCount = 0;
@@ -309,6 +328,53 @@ void FillCommonEvidence(const CAbstractFile &rFile, FakeFileDetectorSeams::Evide
 	rEvidence.badRating = rEvidence.badRating || rFile.HasBadRating();
 	rEvidence.fakeRating = rEvidence.fakeRating || (rFile.HasRating() && rFile.UserRating() == 1);
 	AddKadComments(rFile, rEvidence);
+}
+
+SFakeFileReport BuildSearchFileReport(const CSearchFile &rSearchFile, const bool bUpdateCache)
+{
+	EnsureRulesLoaded();
+	FakeFileDetectorSeams::Evidence evidence;
+	FillCommonEvidence(rSearchFile, evidence);
+	for (INT_PTR i = 0; i < rSearchFile.GetObservedNameCount(); ++i)
+		evidence.names.push_back(ToWide(rSearchFile.GetObservedNameAt(i)));
+	evidence.spamRating = rSearchFile.GetSpamRating();
+	evidence.consideredSpam = rSearchFile.IsConsideredSpam();
+	evidence.multipleAich = rSearchFile.HasFoundMultipleAICH();
+	SFakeFileReport report(ToAppReport(FakeFileDetectorSeams::Analyze(evidence, g_rules)));
+	report.bCached = bUpdateCache && HasCurrentCacheRecord(rSearchFile.GetFileHash());
+	if (bUpdateCache)
+		UpdateCache(rSearchFile.GetFileHash(), report);
+	return report;
+}
+
+SFakeFileReport BuildPartFileReport(CPartFile &rPartFile, const bool bProbeHeader, const bool bUpdateCache)
+{
+	EnsureRulesLoaded();
+	FakeFileDetectorSeams::Evidence evidence;
+	FillCommonEvidence(rPartFile, evidence);
+	evidence.headerPending = true;
+	evidence.headerAvailable = false;
+	if (bProbeHeader) {
+		if (!rPartFile.IsPartFile() || rPartFile.IsCompleteBDSafe(0, FileTypeClassifierSeams::kHeaderCheckSize)) {
+			evidence.headerPending = false;
+			evidence.headerAvailable = true;
+			evidence.headerType = GetFileTypeEx(&rPartFile, false, true);
+		}
+	} else if (rPartFile.GetVerifiedFileType() != FILETYPE_UNKNOWN) {
+		evidence.headerPending = false;
+		evidence.headerAvailable = true;
+		evidence.headerType = rPartFile.GetVerifiedFileType();
+	} else if (!rPartFile.IsPartFile()) {
+		evidence.headerPending = false;
+	}
+	SFakeFileReport report(ToAppReport(FakeFileDetectorSeams::Analyze(evidence, g_rules)));
+	if (bProbeHeader)
+		report.bCached = HasCurrentCacheRecord(rPartFile.GetFileHash());
+	else
+		MergeCurrentCacheForPendingHeader(rPartFile.GetFileHash(), report);
+	if (bUpdateCache)
+		UpdateCache(rPartFile.GetFileHash(), report);
+	return report;
 }
 }
 
@@ -389,36 +455,22 @@ void FakeFileDetector::SaveCache()
 
 SFakeFileReport FakeFileDetector::AnalyzeSearchFile(const CSearchFile &rSearchFile)
 {
-	EnsureRulesLoaded();
-	FakeFileDetectorSeams::Evidence evidence;
-	FillCommonEvidence(rSearchFile, evidence);
-	for (INT_PTR i = 0; i < rSearchFile.GetObservedNameCount(); ++i)
-		evidence.names.push_back(ToWide(rSearchFile.GetObservedNameAt(i)));
-	evidence.spamRating = rSearchFile.GetSpamRating();
-	evidence.consideredSpam = rSearchFile.IsConsideredSpam();
-	evidence.multipleAich = rSearchFile.HasFoundMultipleAICH();
-	SFakeFileReport report(ToAppReport(FakeFileDetectorSeams::Analyze(evidence, g_rules)));
-	report.bCached = HasCurrentCacheRecord(rSearchFile.GetFileHash());
-	UpdateCache(rSearchFile.GetFileHash(), report);
-	return report;
+	return BuildSearchFileReport(rSearchFile, true);
 }
 
 SFakeFileReport FakeFileDetector::AnalyzePartFile(CPartFile &rPartFile)
 {
-	EnsureRulesLoaded();
-	FakeFileDetectorSeams::Evidence evidence;
-	FillCommonEvidence(rPartFile, evidence);
-	evidence.headerPending = true;
-	evidence.headerAvailable = false;
-	if (!rPartFile.IsPartFile() || rPartFile.IsCompleteBDSafe(0, FileTypeClassifierSeams::kHeaderCheckSize)) {
-		evidence.headerPending = false;
-		evidence.headerAvailable = true;
-		evidence.headerType = GetFileTypeEx(&rPartFile, false, true);
-	}
-	SFakeFileReport report(ToAppReport(FakeFileDetectorSeams::Analyze(evidence, g_rules)));
-	report.bCached = HasCurrentCacheRecord(rPartFile.GetFileHash());
-	UpdateCache(rPartFile.GetFileHash(), report);
-	return report;
+	return BuildPartFileReport(rPartFile, true, true);
+}
+
+SFakeFileReport FakeFileDetector::GetSearchFileReportSnapshot(const CSearchFile &rSearchFile)
+{
+	return BuildSearchFileReport(rSearchFile, false);
+}
+
+SFakeFileReport FakeFileDetector::GetPartFileReportSnapshot(CPartFile &rPartFile)
+{
+	return BuildPartFileReport(rPartFile, false, false);
 }
 
 CString FakeFileDetector::FormatReportSummary(const SFakeFileReport &rReport)

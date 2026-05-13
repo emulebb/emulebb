@@ -895,6 +895,8 @@ BOOL CemuleDlg::OnInitDialog()
 	}
 	SetWindowPlacement(&wp);
 
+	(void)FakeFileDetector::ReloadRules();
+
 	if (thePrefs.GetWSIsEnabled())
 		theApp.webserver->StartServer();
 

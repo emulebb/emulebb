@@ -56,6 +56,17 @@ SFakeFileReport AnalyzeSearchFile(const CSearchFile &rSearchFile);
 SFakeFileReport AnalyzePartFile(CPartFile &rPartFile);
 
 /**
+ * @brief Produces a render-safe search report without updating FakeFile.met.
+ */
+SFakeFileReport GetSearchFileReportSnapshot(const CSearchFile &rSearchFile);
+
+/**
+ * @brief Produces a render-safe download report without opening the part file
+ * or updating FakeFile.met.
+ */
+SFakeFileReport GetPartFileReportSnapshot(CPartFile &rPartFile);
+
+/**
  * @brief Returns a compact English summary suitable for existing tooltip/status
  * surfaces.
  */

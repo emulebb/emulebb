@@ -2859,7 +2859,7 @@ CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, i
 	case 8: //state
 		sText = lpPartFile->getPartfileStatus();
 		{
-			const SFakeFileReport fakeReport = FakeFileDetector::AnalyzePartFile(*const_cast<CPartFile*>(lpPartFile));
+			const SFakeFileReport fakeReport = FakeFileDetector::GetPartFileReportSnapshot(*const_cast<CPartFile*>(lpPartFile));
 			if (fakeReport.nScore > 0)
 				sText.AppendFormat(_T(" - Fake: %u%%"), fakeReport.nScore);
 		}

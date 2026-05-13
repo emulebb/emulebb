@@ -34,6 +34,7 @@
 #include "kademlia/kademlia/SearchManager.h"
 #include "kademlia/kademlia/Entry.h"
 #include "DownloadQueue.h"
+#include "FakeFileDetector.h"
 #include "IPFilter.h"
 #include "Packets.h"
 #include "PathHelpers.h"
@@ -3210,6 +3211,7 @@ void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 		m_tCompleteSourcesTime = 0; //force update in Shared Files
 
 		SetStatus(PS_COMPLETE); // (set status and) update status-related modification of GUI elements
+		(void)FakeFileDetector::AnalyzePartFile(*this);
 		const UINT nCompletedCategory = GetCategory();
 		const CString strCompletedFileName(GetFileName());
 		const bool bKnownFileAdded = theApp.knownfiles->SafeAddKFile(this);

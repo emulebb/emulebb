@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "FakeFileDetector.h"
 #include "SearchFile.h"
 #include "SearchList.h"
 #include "SearchParams.h"
@@ -593,6 +594,7 @@ bool CSearchList::AddToList(CSearchFile *toadd, bool bClientResponse, uint32 dwF
 			}
 			// recalculate spam rating
 			DoSpamRating(parent, bClientResponse, false, false, false, dwFromUDPServerIP);
+			(void)FakeFileDetector::AnalyzeSearchFile(*parent);
 
 			// add the 'Availability' of the new search result entry to the total search result count for this search
 			AddResultCount(parent->GetSearchID(), parent->GetFileHash(), uAvail, parent->IsConsideredSpam());
@@ -630,6 +632,7 @@ bool CSearchList::AddToList(CSearchFile *toadd, bool bClientResponse, uint32 dwF
 
 	// calculate spam rating
 	DoSpamRating(toadd, bClientResponse, false, false, false, dwFromUDPServerIP);
+	(void)FakeFileDetector::AnalyzeSearchFile(*toadd);
 
 	// add the 'Availability' of this new search result entry to the total search result count for this search
 	AddResultCount(toadd->GetSearchID(), toadd->GetFileHash(), uAvail, toadd->IsConsideredSpam());

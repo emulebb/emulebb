@@ -551,7 +551,7 @@ json BuildTransferJson(const CPartFile &rPartFile)
 		{"partsTotal", rPartFile.GetPartCount()},
 		{"partsAvailable", rPartFile.GetAvailablePartCount()},
 		{"stopped", rPartFile.IsStopped()},
-		{"fakeFile", BuildFakeFileReportJson(FakeFileDetector::AnalyzePartFile(const_cast<CPartFile&>(rPartFile)))}
+		{"fakeFile", BuildFakeFileReportJson(FakeFileDetector::GetPartFileReportSnapshot(const_cast<CPartFile&>(rPartFile)))}
 	};
 }
 
@@ -1382,7 +1382,7 @@ json BuildSearchResultJson(const CSearchFile &rSearchFile, const SSearchParams *
 		{"rating", rSearchFile.UserRating()},
 		{"hasComment", rSearchFile.HasComment()},
 		{"spam", rSearchFile.IsConsideredSpam()},
-		{"fakeFile", BuildFakeFileReportJson(FakeFileDetector::AnalyzeSearchFile(rSearchFile))}
+		{"fakeFile", BuildFakeFileReportJson(FakeFileDetector::GetSearchFileReportSnapshot(rSearchFile))}
 	};
 	if (pSearchParams != NULL) {
 		result["method"] = GetSearchMethodName(pSearchParams->eType);
