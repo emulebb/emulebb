@@ -1680,8 +1680,11 @@ CString CSearchListCtrl::GetItemDisplayText(const CSearchFile *src, int iSubItem
 			sText.AppendFormat(&_T(" SR: %u%%")[static_cast<size_t>(sText.IsEmpty())], src->GetSpamRating());
 #endif
 			const SFakeFileReport fakeReport = FakeFileDetector::GetSearchFileReportSnapshot(*src);
-			if (fakeReport.nScore > 0)
-				sText.AppendFormat(_T("%sFake: %u%%"), sText.IsEmpty() ? _T("") : _T(" "), fakeReport.nScore);
+			if (fakeReport.nScore > 0) {
+				if (!sText.IsEmpty())
+					sText += _T(' ');
+				sText.AppendFormat(GetResString(IDS_FAKEFILESCORE), fakeReport.nScore);
+			}
 		}
 		break;
 	case 14: //AICH hash

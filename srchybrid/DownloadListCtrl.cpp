@@ -2860,8 +2860,10 @@ CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, i
 		sText = lpPartFile->getPartfileStatus();
 		{
 			const SFakeFileReport fakeReport = FakeFileDetector::GetPartFileReportSnapshot(*const_cast<CPartFile*>(lpPartFile));
-			if (fakeReport.nScore > 0)
-				sText.AppendFormat(_T(" - Fake: %u%%"), fakeReport.nScore);
+			if (fakeReport.nScore > 0) {
+				sText += _T(" - ");
+				sText.AppendFormat(GetResString(IDS_FAKEFILESCORE), fakeReport.nScore);
+			}
 		}
 		break;
 	case 9: //remaining time & size

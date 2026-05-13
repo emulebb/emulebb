@@ -3626,6 +3626,7 @@ BEGIN
     IDS_DIAG_DUMP_LOG_FAILURE "Diagnostic %s dump failed: %s"
     IDS_CHECK_OPEN_PORTS    "Check Open Ports"
     IDS_RELOADFAKEFILEFILTER "Reload Fake-File Filter"
+    IDS_FAKEFILESCORE       "Fake: %u%%"
     IDS_SEARCHPARAMS        "Search Parameters"
 END
 
