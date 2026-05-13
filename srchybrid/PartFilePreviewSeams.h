@@ -10,10 +10,10 @@ enum EVideoThumbnailAttemptResult
 {
 	VTAR_NONE = 0,
 	VTAR_COPY_FAILED,
-	VTAR_VLC_BUSY,
-	VTAR_VLC_TIMEOUT,
-	VTAR_VLC_START_FAILED,
-	VTAR_VLC_FAILED,
+	VTAR_FFMPEG_BUSY,
+	VTAR_FFMPEG_TIMEOUT,
+	VTAR_FFMPEG_START_FAILED,
+	VTAR_FFMPEG_FAILED,
 	VTAR_NO_THUMBNAIL,
 	VTAR_DECODE_FAILED,
 	VTAR_CACHE_WRITE_FAILED,
@@ -24,13 +24,13 @@ enum EVideoThumbnailAttemptResult
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedPermille = 5;
 constexpr std::uint64_t kPartialVideoPreviewMinCompletedBytes = 1ull * 1024ull * 1024ull;
 constexpr std::uint64_t kPartialVideoPreviewMaxCompletedBytes = 64ull * 1024ull * 1024ull;
-constexpr std::uint64_t kVideoThumbnailScanIntervalMs = 90ull * 1000ull;
-constexpr std::uint64_t kVideoThumbnailRetryIntervalMs = 90ull * 1000ull;
-constexpr std::uint64_t kVideoThumbnailRefreshIntervalMs = kVideoThumbnailRetryIntervalMs;
+constexpr UINT kVideoThumbnailDefaultIntervalSeconds = 0u;
+constexpr UINT kVideoThumbnailRecommendedIntervalSeconds = 90u;
+constexpr UINT kVideoThumbnailMaxIntervalSeconds = 600u;
 constexpr std::uint64_t kVideoThumbnailRefreshDeltaPermille = 50;
 constexpr std::uint64_t kVideoThumbnailRefreshMaxDeltaBytes = 128ull * 1024ull * 1024ull;
 constexpr int kVideoThumbnailDisplayMaxWidth = 480;
-constexpr DWORD kVlcThumbnailTimeoutMs = 30u * 1000u;
+constexpr DWORD kFfmpegThumbnailTimeoutMs = 30u * 1000u;
 
 /**
  * Extracts the executable basename used by preview-player dependent features.
@@ -62,6 +62,33 @@ inline CString ExtractConfiguredVideoPlayerBaseName(const CString &rstrVideoPlay
 inline bool IsConfiguredVlcPreviewPlayer(const CString &rstrVideoPlayerPath)
 {
 	return ExtractConfiguredVideoPlayerBaseName(rstrVideoPlayerPath).CompareNoCase(_T("vlc")) == 0;
+}
+
+/**
+ * Returns whether the configured thumbnail helper is an existing FFmpeg executable.
+ */
+inline bool IsValidConfiguredFfmpegPath(const CString &rstrFfmpegPath)
+{
+	CString strFfmpegPath(rstrFfmpegPath);
+	strFfmpegPath.Trim();
+	const LPCTSTR pszExt = ::PathFindExtension(strFfmpegPath);
+	return !strFfmpegPath.IsEmpty() && pszExt != NULL && _tcsicmp(pszExt, _T(".exe")) == 0 && ::PathFileExists(strFfmpegPath) != FALSE;
+}
+
+/**
+ * Bounds the thumbnail scan/retry interval; zero intentionally disables thumbnail generation.
+ */
+inline UINT NormalizeVideoThumbnailIntervalSeconds(UINT uIntervalSeconds)
+{
+	return uIntervalSeconds > kVideoThumbnailMaxIntervalSeconds ? kVideoThumbnailMaxIntervalSeconds : uIntervalSeconds;
+}
+
+/**
+ * Returns whether the configured thumbnail interval enables generation.
+ */
+inline bool IsVideoThumbnailIntervalEnabled(UINT uIntervalSeconds)
+{
+	return NormalizeVideoThumbnailIntervalSeconds(uIntervalSeconds) > 0;
 }
 
 /**
@@ -121,9 +148,9 @@ inline bool ShouldRefreshVideoThumbnail(std::uint64_t ullCachedCompletedSize, st
 }
 
 /**
- * Returns whether enough time has elapsed to attempt another VLC thumbnail render.
+ * Returns whether enough time has elapsed to attempt another thumbnail render.
  */
-inline bool IsVideoThumbnailAttemptDue(std::uint64_t ullCurrentTick, std::uint64_t ullLastAttemptTick, std::uint64_t ullIntervalMs = kVideoThumbnailRefreshIntervalMs)
+inline bool IsVideoThumbnailAttemptDue(std::uint64_t ullCurrentTick, std::uint64_t ullLastAttemptTick, std::uint64_t ullIntervalMs)
 {
 	return ullLastAttemptTick == 0 || ullCurrentTick < ullLastAttemptTick || ullCurrentTick - ullLastAttemptTick >= ullIntervalMs;
 }
@@ -170,22 +197,19 @@ inline std::uint32_t GetVideoThumbnailCaptureStartSecond(std::uint64_t ullFileSi
 }
 
 /**
- * Builds a VLC command line that captures one thumbnail into the scene output directory.
+ * Builds an FFmpeg command line that captures one thumbnail into the exact output path.
  */
-inline CString BuildVlcThumbnailCommandLine(const CString &rstrVlcPath, const CString &rstrInputPath, const CString &rstrOutputDirectory, const CString &rstrOutputPrefix, std::uint32_t uStartSecond)
+inline CString BuildFfmpegThumbnailCommandLine(const CString &rstrFfmpegPath, const CString &rstrInputPath, const CString &rstrOutputPath, std::uint32_t uStartSecond)
 {
-	CString strCommandLine(FileCompletionCommandSeams::QuoteCommandLineArgument(rstrVlcPath));
-	strCommandLine += _T(" --intf dummy --dummy-quiet --no-interact --no-crashdump --vout=dummy --no-embedded-video --no-video-deco --no-qt-error-dialogs");
-	strCommandLine += _T(" --no-audio --no-video-title-show --no-sub-autodetect-file");
-	strCommandLine += _T(" --video-filter=scene --scene-format=png --scene-ratio=1");
-	strCommandLine.AppendFormat(_T(" --start-time=%u --stop-time=%u --run-time=1"), uStartSecond, uStartSecond + 1);
-	strCommandLine += _T(" ");
-	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(_T("--scene-prefix=") + rstrOutputPrefix);
-	strCommandLine += _T(" ");
-	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(_T("--scene-path=") + rstrOutputDirectory);
-	strCommandLine += _T(" ");
+	CString strCommandLine(FileCompletionCommandSeams::QuoteCommandLineArgument(rstrFfmpegPath));
+	strCommandLine += _T(" -hide_banner -loglevel error -y");
+	strCommandLine.AppendFormat(_T(" -ss %u"), uStartSecond);
+	strCommandLine += _T(" -fflags +genpts+discardcorrupt -err_detect ignore_err -analyzeduration 5M -probesize 5M -i ");
 	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(rstrInputPath);
-	strCommandLine += _T(" vlc://quit");
+	strCommandLine += _T(" -an -frames:v 1 -vf ");
+	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(_T("scale=480:-2:force_original_aspect_ratio=decrease"));
+	strCommandLine += _T(" ");
+	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(rstrOutputPath);
 	return strCommandLine;
 }
 }

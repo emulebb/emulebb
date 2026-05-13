@@ -42,24 +42,24 @@ CPreviewApps thePreviewApps;
 namespace
 {
 constexpr ULONGLONG kMaxThumbnailBytes = 16ull * 1024ull * 1024ull;
-volatile LONG g_lVlcThumbnailProcessActive = 0;
+volatile LONG g_lVideoThumbnailProcessActive = 0;
 
-class CScopedVlcThumbnailProcessSlot
+class CScopedVideoThumbnailProcessSlot
 {
 public:
-	CScopedVlcThumbnailProcessSlot()
-		: m_bAcquired(::InterlockedCompareExchange(&g_lVlcThumbnailProcessActive, 1, 0) == 0)
+	CScopedVideoThumbnailProcessSlot()
+		: m_bAcquired(::InterlockedCompareExchange(&g_lVideoThumbnailProcessActive, 1, 0) == 0)
 	{
 	}
 
-	~CScopedVlcThumbnailProcessSlot()
+	~CScopedVideoThumbnailProcessSlot()
 	{
 		if (m_bAcquired)
-			(void)::InterlockedExchange(&g_lVlcThumbnailProcessActive, 0);
+			(void)::InterlockedExchange(&g_lVideoThumbnailProcessActive, 0);
 	}
 
-	CScopedVlcThumbnailProcessSlot(const CScopedVlcThumbnailProcessSlot&) = delete;
-	CScopedVlcThumbnailProcessSlot& operator=(const CScopedVlcThumbnailProcessSlot&) = delete;
+	CScopedVideoThumbnailProcessSlot(const CScopedVideoThumbnailProcessSlot&) = delete;
+	CScopedVideoThumbnailProcessSlot& operator=(const CScopedVideoThumbnailProcessSlot&) = delete;
 
 	bool IsAcquired() const
 	{
@@ -70,53 +70,9 @@ private:
 	bool m_bAcquired;
 };
 
-CString MakeVideoThumbnailPrefix(const CPartFile &partFile)
+bool RunVideoThumbnailCommand(const CString &rstrCommand, const CString &rstrWorkingDirectory, DWORD &rdwExitCode)
 {
-	CString strPrefix;
-	strPrefix.Format(_T("emulebb_thumb_%s_%I64u"), (LPCTSTR)md4str(partFile.GetFileHash()), ::GetTickCount64());
-	return strPrefix;
-}
-
-CString FindGeneratedThumbnail(const CString &rstrDirectory, const CString &rstrPrefix)
-{
-	CString strPattern(rstrDirectory);
-	strPattern.AppendFormat(_T("%s*.png"), (LPCTSTR)rstrPrefix);
-
-	WIN32_FIND_DATA findData = {};
-	HANDLE hFind = LongPathSeams::FindFirstFile(strPattern, &findData);
-	if (hFind == INVALID_HANDLE_VALUE)
-		return CString();
-
-	CString strFound;
-	do {
-		if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
-			strFound = rstrDirectory + findData.cFileName;
-			break;
-		}
-	} while (::FindNextFile(hFind, &findData));
-	VERIFY(::FindClose(hFind));
-	return strFound;
-}
-
-void DeleteGeneratedThumbnails(const CString &rstrDirectory, const CString &rstrPrefix)
-{
-	CString strPattern(rstrDirectory);
-	strPattern.AppendFormat(_T("%s*.png"), (LPCTSTR)rstrPrefix);
-
-	WIN32_FIND_DATA findData = {};
-	HANDLE hFind = LongPathSeams::FindFirstFile(strPattern, &findData);
-	if (hFind == INVALID_HANDLE_VALUE)
-		return;
-	do {
-		if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-			(void)LongPathSeams::DeleteFile(rstrDirectory + findData.cFileName);
-	} while (::FindNextFile(hFind, &findData));
-	VERIFY(::FindClose(hFind));
-}
-
-bool RunVlcThumbnailCommand(const CString &rstrCommand, const CString &rstrWorkingDirectory, DWORD &rdwExitCode)
-{
-	CScopedVlcThumbnailProcessSlot slot;
+	CScopedVideoThumbnailProcessSlot slot;
 	if (!slot.IsAcquired()) {
 		rdwExitCode = ERROR_BUSY;
 		return false;
@@ -140,7 +96,7 @@ bool RunVlcThumbnailCommand(const CString &rstrCommand, const CString &rstrWorki
 		return false;
 	}
 
-	const DWORD dwWait = ::WaitForSingleObject(processInfo.hProcess, PartFilePreviewSeams::kVlcThumbnailTimeoutMs);
+	const DWORD dwWait = ::WaitForSingleObject(processInfo.hProcess, PartFilePreviewSeams::kFfmpegThumbnailTimeoutMs);
 	if (dwWait == WAIT_TIMEOUT) {
 		(void)::TerminateProcess(processInfo.hProcess, WAIT_TIMEOUT);
 		(void)::WaitForSingleObject(processInfo.hProcess, SEC2MS(2));
@@ -184,7 +140,7 @@ IMPLEMENT_DYNCREATE(CVideoThumbnailThread, CWinThread)
 
 CVideoThumbnailThread::CVideoThumbnailThread()
 	: m_pPartfile()
-	, m_strCommand()
+	, m_strFfmpegPath()
 	, m_strTitle()
 	, m_strInputPath()
 	, m_strWorkingDirectory()
@@ -211,8 +167,6 @@ BOOL CVideoThumbnailThread::Run()
 	pResult->strCachePath = m_strCachePath;
 	pResult->ullCompletedSize = m_ullCompletedSize;
 
-	const CString strPrefix(MakeVideoThumbnailPrefix(*m_pPartfile));
-
 	try {
 		if (m_strInputPath.IsEmpty() || LongPathSeams::GetFileAttributes(m_strInputPath) == INVALID_FILE_ATTRIBUTES) {
 			pResult->eResult = PartFilePreviewSeams::VTAR_COPY_FAILED;
@@ -220,34 +174,36 @@ BOOL CVideoThumbnailThread::Run()
 		} else {
 			DWORD dwExitCode = 0;
 			const uint32 uStartSecond = PartFilePreviewSeams::GetVideoThumbnailCaptureStartSecond(m_ullFileSize, m_ullCompletedSize);
-			const CString strCommandLine(PartFilePreviewSeams::BuildVlcThumbnailCommandLine(m_strCommand, m_strInputPath, m_strWorkingDirectory, strPrefix, uStartSecond));
-			if (!RunVlcThumbnailCommand(strCommandLine, m_strWorkingDirectory, dwExitCode)) {
-				pResult->dwErrorCode = dwExitCode;
-				if (dwExitCode == ERROR_BUSY)
-					pResult->eResult = PartFilePreviewSeams::VTAR_VLC_BUSY;
-				else if (dwExitCode == WAIT_TIMEOUT)
-					pResult->eResult = PartFilePreviewSeams::VTAR_VLC_TIMEOUT;
-				else
-					pResult->eResult = PartFilePreviewSeams::VTAR_VLC_START_FAILED;
+			if (LongPathSeams::GetFileAttributes(m_strCachePath) != INVALID_FILE_ATTRIBUTES && !LongPathSeams::DeleteFile(m_strCachePath)) {
+				pResult->eResult = PartFilePreviewSeams::VTAR_CACHE_WRITE_FAILED;
+				pResult->dwErrorCode = ::GetLastError();
 			} else {
-				pResult->dwVlcExitCode = dwExitCode;
-				const CString strThumbnailPath(FindGeneratedThumbnail(m_pPartfile->GetTmpPath(), strPrefix));
-				HBITMAP hBitmap = NULL;
-				if (dwExitCode != 0)
-					pResult->eResult = PartFilePreviewSeams::VTAR_VLC_FAILED;
-				else if (strThumbnailPath.IsEmpty())
-					pResult->eResult = PartFilePreviewSeams::VTAR_NO_THUMBNAIL;
-				else if (!ReadVideoThumbnailBitmapFile(strThumbnailPath, hBitmap))
-					pResult->eResult = PartFilePreviewSeams::VTAR_DECODE_FAILED;
-				else if (!LongPathSeams::CopyFile(strThumbnailPath, m_strCachePath, FALSE))
-					pResult->eResult = PartFilePreviewSeams::VTAR_CACHE_WRITE_FAILED;
-				else {
-					pResult->hBitmap = hBitmap;
-					hBitmap = NULL;
-					pResult->eResult = PartFilePreviewSeams::VTAR_SUCCESS;
+				const CString strCommandLine(PartFilePreviewSeams::BuildFfmpegThumbnailCommandLine(m_strFfmpegPath, m_strInputPath, m_strCachePath, uStartSecond));
+				if (!RunVideoThumbnailCommand(strCommandLine, m_strWorkingDirectory, dwExitCode)) {
+					pResult->dwErrorCode = dwExitCode;
+					if (dwExitCode == ERROR_BUSY)
+						pResult->eResult = PartFilePreviewSeams::VTAR_FFMPEG_BUSY;
+					else if (dwExitCode == WAIT_TIMEOUT)
+						pResult->eResult = PartFilePreviewSeams::VTAR_FFMPEG_TIMEOUT;
+					else
+						pResult->eResult = PartFilePreviewSeams::VTAR_FFMPEG_START_FAILED;
+				} else {
+					pResult->dwProcessExitCode = dwExitCode;
+					HBITMAP hBitmap = NULL;
+					if (dwExitCode != 0)
+						pResult->eResult = PartFilePreviewSeams::VTAR_FFMPEG_FAILED;
+					else if (LongPathSeams::GetFileAttributes(m_strCachePath) == INVALID_FILE_ATTRIBUTES)
+						pResult->eResult = PartFilePreviewSeams::VTAR_NO_THUMBNAIL;
+					else if (!ReadVideoThumbnailBitmapFile(m_strCachePath, hBitmap))
+						pResult->eResult = PartFilePreviewSeams::VTAR_DECODE_FAILED;
+					else {
+						pResult->hBitmap = hBitmap;
+						hBitmap = NULL;
+						pResult->eResult = PartFilePreviewSeams::VTAR_SUCCESS;
+					}
+					if (hBitmap != NULL)
+						::DeleteObject(hBitmap);
 				}
-				if (hBitmap != NULL)
-					::DeleteObject(hBitmap);
 			}
 		}
 	} catch (CFileException *ex) {
@@ -259,17 +215,16 @@ BOOL CVideoThumbnailThread::Run()
 	}
 
 	m_pPartfile->m_bPreviewing = false;
-	DeleteGeneratedThumbnails(m_strWorkingDirectory, strPrefix);
 
 	if (!::IsWindow(m_hNotifyWnd) || !::PostMessage(m_hNotifyWnd, TM_VIDEOTHUMBNAILFINISHED, 0, reinterpret_cast<LPARAM>(pResult)))
 		delete pResult;
 	return TRUE;
 }
 
-void CVideoThumbnailThread::SetValues(CPartFile *pPartFile, LPCTSTR pszCommand, HWND hNotifyWnd, LPCTSTR pszCachePath)
+void CVideoThumbnailThread::SetValues(CPartFile *pPartFile, LPCTSTR pszFfmpegPath, HWND hNotifyWnd, LPCTSTR pszCachePath)
 {
 	m_pPartfile = pPartFile;
-	m_strCommand = pszCommand;
+	m_strFfmpegPath = pszFfmpegPath;
 	m_strTitle = pPartFile->GetFileName();
 	m_strInputPath = pPartFile->GetFilePath();
 	m_strWorkingDirectory = pPartFile->GetTmpPath();

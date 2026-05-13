@@ -51,13 +51,15 @@ BEGIN_MESSAGE_MAP(CPPgFiles, CPropertyPage)
 	ON_EN_CHANGE(IDC_VIDEOPLAYER, OnSettingsChange)
 	ON_EN_CHANGE(IDC_VIDEOPLAYER_ARGS, OnSettingsChange)
 	ON_BN_CLICKED(IDC_VIDEOBACKUP, OnSettingsChange)
-	ON_BN_CLICKED(IDC_VIDEOTHUMBNAILS, OnSettingsChange)
+	ON_EN_CHANGE(IDC_THUMBNAIL_FFMPEG, OnSettingsChange)
+	ON_EN_CHANGE(IDC_THUMBNAIL_INTERVAL, OnSettingsChange)
 	ON_BN_CLICKED(IDC_RUNONFILECOMPLETE, OnSettingsChange)
 	ON_EN_CHANGE(IDC_FILECOMPLETEPROGRAM, OnSettingsChange)
 	ON_EN_CHANGE(IDC_FILECOMPLETEARGS, OnSettingsChange)
 	ON_BN_CLICKED(IDC_REMEMBERDOWNLOADED, OnSettingsChange)
 	ON_BN_CLICKED(IDC_REMEMBERCANCELLED, OnSettingsChange)
 	ON_BN_CLICKED(IDC_BROWSEV, BrowseVideoplayer)
+	ON_BN_CLICKED(IDC_BROWSE_THUMBNAIL_FFMPEG, BrowseThumbnailFfmpeg)
 	ON_BN_CLICKED(IDC_BROWSE_FILECOMPLETEPROGRAM, BrowseFileCompletionProgram)
 	ON_WM_HELPINFO()
 	ON_WM_DESTROY()
@@ -81,8 +83,14 @@ BOOL CPPgFiles::OnInitDialog()
 
 	AddBuddyButton(GetDlgItem(IDC_VIDEOPLAYER)->m_hWnd, ::GetDlgItem(m_hWnd, IDC_BROWSEV));
 	InitAttachedBrowseButton(::GetDlgItem(m_hWnd, IDC_BROWSEV), m_icoBrowse);
+	AddBuddyButton(GetDlgItem(IDC_THUMBNAIL_FFMPEG)->m_hWnd, ::GetDlgItem(m_hWnd, IDC_BROWSE_THUMBNAIL_FFMPEG));
+	InitAttachedBrowseButton(::GetDlgItem(m_hWnd, IDC_BROWSE_THUMBNAIL_FFMPEG), m_icoBrowse);
 	AddBuddyButton(GetDlgItem(IDC_FILECOMPLETEPROGRAM)->m_hWnd, ::GetDlgItem(m_hWnd, IDC_BROWSE_FILECOMPLETEPROGRAM));
 	InitAttachedBrowseButton(::GetDlgItem(m_hWnd, IDC_BROWSE_FILECOMPLETEPROGRAM), m_icoBrowse);
+
+	CSpinButtonCtrl *pThumbnailIntervalSpin = static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_THUMBNAIL_INTERVAL_SPIN));
+	if (pThumbnailIntervalSpin)
+		pThumbnailIntervalSpin->SetRange(0, PartFilePreviewSeams::kVideoThumbnailMaxIntervalSeconds);
 
 	LoadSettings();
 	Localize();
@@ -115,7 +123,9 @@ void CPPgFiles::UpdateToolTips()
 	m_toolTip.SetTool(this, IDC_BROWSEV, GetResString(IDS_PPG_FILES_TT_BROWSEV));
 	m_toolTip.SetTool(this, IDC_VIDEOPLAYER_ARGS, GetResString(IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS));
 	m_toolTip.SetTool(this, IDC_VIDEOBACKUP, GetResString(IDS_PPG_FILES_TT_VIDEOBACKUP));
-	m_toolTip.SetTool(this, IDC_VIDEOTHUMBNAILS, GetResString(IDS_PPG_FILES_TT_VIDEOTHUMBNAILS));
+	m_toolTip.SetTool(this, IDC_THUMBNAIL_FFMPEG, GetResString(IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG));
+	m_toolTip.SetTool(this, IDC_BROWSE_THUMBNAIL_FFMPEG, GetResString(IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG));
+	m_toolTip.SetTool(this, IDC_THUMBNAIL_INTERVAL, GetResString(IDS_PPG_FILES_TT_VIDEOTHUMBNAILS));
 	m_toolTip.SetTool(this, IDC_RUNONFILECOMPLETE, GetResString(IDS_PPG_FILES_TT_RUNONFILECOMPLETE));
 	m_toolTip.SetTool(this, IDC_FILECOMPLETEPROGRAM, GetResString(IDS_PPG_FILES_TT_FILECOMPLETEPROGRAM));
 	m_toolTip.SetTool(this, IDC_BROWSE_FILECOMPLETEPROGRAM, GetResString(IDS_PPG_FILES_TT_BROWSE_FILECOMPLETEPROGRAM));
@@ -144,12 +154,13 @@ void CPPgFiles::LoadSettings()
 
 	SetDlgItemText(IDC_VIDEOPLAYER, thePrefs.m_strVideoPlayer);
 	SetDlgItemText(IDC_VIDEOPLAYER_ARGS, thePrefs.m_strVideoPlayerArgs);
+	SetDlgItemText(IDC_THUMBNAIL_FFMPEG, thePrefs.m_strVideoThumbnailFfmpegPath);
+	SetDlgItemInt(IDC_THUMBNAIL_INTERVAL, thePrefs.m_uVideoThumbnailIntervalSeconds, FALSE);
 	CheckDlgButton(IDC_RUNONFILECOMPLETE, static_cast<UINT>(thePrefs.GetRunCommandOnFileCompletion()));
 	SetDlgItemText(IDC_FILECOMPLETEPROGRAM, thePrefs.GetFileCompletionProgram());
 	SetDlgItemText(IDC_FILECOMPLETEARGS, thePrefs.GetFileCompletionArguments());
 
 	CheckDlgButton(IDC_VIDEOBACKUP, static_cast<UINT>(thePrefs.m_bMoviePreviewBackup));
-	CheckDlgButton(IDC_VIDEOTHUMBNAILS, static_cast<UINT>(thePrefs.m_bVideoPreviewThumbnails));
 	CheckDlgButton(IDC_FNCLEANUP, static_cast<UINT>(thePrefs.AutoFilenameCleanup()));
 	CheckDlgButton(IDC_WATCHCB, static_cast<UINT>(thePrefs.watchclipboard));
 	CheckDlgButton(IDC_REMEMBERDOWNLOADED, static_cast<UINT>(thePrefs.IsRememberingDownloadedFiles()));
@@ -161,6 +172,8 @@ void CPPgFiles::LoadSettings()
 
 BOOL CPPgFiles::OnApply()
 {
+	const CString strOldVideoThumbnailFfmpegPath(thePrefs.m_strVideoThumbnailFfmpegPath);
+	const UINT uOldVideoThumbnailIntervalSeconds = thePrefs.m_uVideoThumbnailIntervalSeconds;
 	bool bOldPreviewPrio = thePrefs.m_bpreviewprio;
 	thePrefs.m_bpreviewprio = IsDlgButtonChecked(IDC_PREVIEWPRIO) != 0;
 	if (bOldPreviewPrio != thePrefs.m_bpreviewprio)
@@ -195,6 +208,11 @@ BOOL CPPgFiles::OnApply()
 	thePrefs.m_strVideoPlayer.Trim();
 	GetDlgItemText(IDC_VIDEOPLAYER_ARGS, thePrefs.m_strVideoPlayerArgs);
 	thePrefs.m_strVideoPlayerArgs.Trim();
+	GetDlgItemText(IDC_THUMBNAIL_FFMPEG, thePrefs.m_strVideoThumbnailFfmpegPath);
+	thePrefs.m_strVideoThumbnailFfmpegPath.Trim();
+	BOOL bThumbnailIntervalTranslated = FALSE;
+	const UINT uVideoThumbnailIntervalSeconds = PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(GetDlgItemInt(IDC_THUMBNAIL_INTERVAL, &bThumbnailIntervalTranslated, FALSE));
+	thePrefs.m_uVideoThumbnailIntervalSeconds = bThumbnailIntervalTranslated ? uVideoThumbnailIntervalSeconds : PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds;
 	thePrefs.m_bRunCommandOnFileCompletion = IsDlgButtonChecked(IDC_RUNONFILECOMPLETE) != 0;
 	GetDlgItemText(IDC_FILECOMPLETEPROGRAM, thePrefs.m_strFileCompletionProgram);
 	thePrefs.m_strFileCompletionProgram.Trim();
@@ -204,13 +222,16 @@ BOOL CPPgFiles::OnApply()
 		AfxMessageBox(GetResString(IDS_COMPLETIONCOMMAND_INVALID), MB_ICONWARNING);
 		return FALSE;
 	}
-	const bool bVideoPreviewThumbnails = IsDlgButtonChecked(IDC_VIDEOTHUMBNAILS) != 0;
-	if (bVideoPreviewThumbnails && !PartFilePreviewSeams::IsConfiguredVlcPreviewPlayer(thePrefs.m_strVideoPlayer)) {
+	if (thePrefs.m_uVideoThumbnailIntervalSeconds > 0 && !PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.m_strVideoThumbnailFfmpegPath)) {
+		thePrefs.m_strVideoThumbnailFfmpegPath = strOldVideoThumbnailFfmpegPath;
+		thePrefs.m_uVideoThumbnailIntervalSeconds = uOldVideoThumbnailIntervalSeconds;
 		AfxMessageBox(GetResString(IDS_VIDEOTHUMBNAILS_INVALID), MB_ICONWARNING);
 		return FALSE;
 	}
 	thePrefs.m_bMoviePreviewBackup = IsDlgButtonChecked(IDC_VIDEOBACKUP) != 0;
-	thePrefs.m_bVideoPreviewThumbnails = bVideoPreviewThumbnails;
+	thePrefs.m_bVideoPreviewThumbnails = false;
+	if (theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
+		theApp.emuledlg->transferwnd->GetDownloadList()->UpdateVideoThumbnailTimer();
 
 	LoadSettings();
 	SetModified(FALSE);
@@ -239,7 +260,9 @@ void CPPgFiles::Localize()
 		SetDlgItemText(IDC_VIDEOPLAYER_CMD_LBL, GetResString(IDS_COMMAND));
 		SetDlgItemText(IDC_VIDEOPLAYER_ARGS_LBL, GetResString(IDS_ARGUMENTS));
 		SetDlgItemText(IDC_VIDEOBACKUP, GetResString(IDS_VIDEOBACKUP));
-		SetDlgItemText(IDC_VIDEOTHUMBNAILS, GetResString(IDS_VIDEOTHUMBNAILS));
+		SetDlgItemText(IDC_VIDEOTHUMBNAILS_GROUP, GetResString(IDS_VIDEOTHUMBNAILS));
+		SetDlgItemText(IDC_THUMBNAIL_FFMPEG_LBL, GetResString(IDS_THUMBNAIL_FFMPEG));
+		SetDlgItemText(IDC_THUMBNAIL_INTERVAL_LBL, GetResString(IDS_THUMBNAIL_INTERVAL_SECONDS));
 		SetDlgItemText(IDC_FILECOMPLETE_GROUP, GetResString(IDS_COMPLETIONCOMMAND));
 		SetDlgItemText(IDC_RUNONFILECOMPLETE, GetResString(IDS_RUNONFILECOMPLETE));
 		SetDlgItemText(IDC_FILECOMPLETEPROGRAM_LBL, GetResString(IDS_COMMAND));
@@ -274,6 +297,16 @@ void CPPgFiles::BrowseVideoplayer()
 	GetDlgItemText(IDC_VIDEOPLAYER, strPlayerPath);
 	if (DialogBrowseFile(strPlayerPath, _T("Executable (*.exe)|*.exe||"), (strPlayerPath.IsEmpty() ? NULL : strPlayerPath), OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY, true, GetSafeHwnd(), NULL, _T("exe"))) {
 		SetDlgItemText(IDC_VIDEOPLAYER, strPlayerPath);
+		SetModified();
+	}
+}
+
+void CPPgFiles::BrowseThumbnailFfmpeg()
+{
+	CString strFfmpegPath;
+	GetDlgItemText(IDC_THUMBNAIL_FFMPEG, strFfmpegPath);
+	if (DialogBrowseFile(strFfmpegPath, _T("FFmpeg executable (ffmpeg.exe)|ffmpeg.exe|Executable (*.exe)|*.exe||"), (strFfmpegPath.IsEmpty() ? NULL : strFfmpegPath), OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY, true, GetSafeHwnd(), NULL, _T("exe"))) {
+		SetDlgItemText(IDC_THUMBNAIL_FFMPEG, strFfmpegPath);
 		SetModified();
 	}
 }

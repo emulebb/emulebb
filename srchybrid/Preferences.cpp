@@ -43,6 +43,7 @@
 #include "MuleToolbarCtrl.h"
 #include "PreferenceIniMap.h"
 #include "PreferenceUiSeams.h"
+#include "PartFilePreviewSeams.h"
 #include "SearchParamsPolicy.h"
 #include "VistaDefines.h"
 #include <osrng.h>
@@ -739,6 +740,8 @@ bool	CPreferences::showRatesInTitle;
 CString	CPreferences::m_strTxtEditor;
 CString	CPreferences::m_strVideoPlayer;
 CString CPreferences::m_strVideoPlayerArgs;
+CString CPreferences::m_strVideoThumbnailFfmpegPath;
+UINT CPreferences::m_uVideoThumbnailIntervalSeconds;
 bool	CPreferences::m_bRunCommandOnFileCompletion;
 CString CPreferences::m_strFileCompletionProgram;
 CString CPreferences::m_strFileCompletionArguments;
@@ -2402,6 +2405,8 @@ void CPreferences::SavePreferences()
 	ini.WriteString(_T("TxtEditor"), m_strTxtEditor);
 	ini.WriteString(_T("VideoPlayer"), m_strVideoPlayer);
 	ini.WriteString(_T("VideoPlayerArgs"), m_strVideoPlayerArgs);
+	ini.WriteString(_T("VideoThumbnailFfmpegPath"), m_strVideoThumbnailFfmpegPath);
+	ini.WriteInt(_T("VideoThumbnailIntervalSeconds"), static_cast<int>(PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(m_uVideoThumbnailIntervalSeconds)));
 	ini.WriteBool(prefini::FileCompletionKeys::RunCommandOnFileCompletion, m_bRunCommandOnFileCompletion, prefini::Sections::FileCompletion);
 	ini.WriteString(prefini::FileCompletionKeys::Program, m_strFileCompletionProgram, prefini::Sections::FileCompletion);
 	ini.WriteString(prefini::FileCompletionKeys::Arguments, m_strFileCompletionArguments, prefini::Sections::FileCompletion);
@@ -2470,7 +2475,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("FullChunkTransfers"), m_btransferfullchunks);
 	ini.WriteBool(_T("ShowOverhead"), m_bshowoverhead);
 	ini.WriteBool(_T("VideoPreviewBackupped"), m_bMoviePreviewBackup);
-	ini.WriteBool(_T("VideoPreviewThumbnails"), m_bVideoPreviewThumbnails);
+	ini.WriteBool(_T("VideoPreviewThumbnails"), false);
 	ini.WriteInt(_T("PreviewSmallBlocks"), m_iPreviewSmallBlocks);
 	ini.WriteInt(_T("StartNextFile"), m_istartnextfile);
 
@@ -3027,7 +3032,7 @@ void CPreferences::LoadPreferences()
 	m_istartnextfile = ini.GetInt(_T("StartNextFile"), 0);
 	m_bshowoverhead = ini.GetBool(_T("ShowOverhead"), false);
 	m_bMoviePreviewBackup = ini.GetBool(_T("VideoPreviewBackupped"), false);
-	m_bVideoPreviewThumbnails = ini.GetBool(_T("VideoPreviewThumbnails"), false);
+	m_bVideoPreviewThumbnails = false;
 	m_iPreviewSmallBlocks = PreferenceUiSeams::NormalizePreviewSmallBlocks(ini.GetInt(_T("PreviewSmallBlocks"), 0));
 	m_bPreviewCopiedArchives = ini.GetBool(_T("PreviewCopiedArchives"), false);
 	m_bInspectAllFileTypes = ini.GetBool(_T("InspectAllFileTypes"), false);
@@ -3091,6 +3096,9 @@ void CPreferences::LoadPreferences()
 	m_strTxtEditor = ini.GetString(_T("TxtEditor"), _T("notepad.exe"));
 	m_strVideoPlayer = ini.GetString(_T("VideoPlayer"), _T(""));
 	m_strVideoPlayerArgs = ini.GetString(_T("VideoPlayerArgs"), _T(""));
+	m_strVideoThumbnailFfmpegPath = ini.GetString(_T("VideoThumbnailFfmpegPath"), _T(""));
+	m_uVideoThumbnailIntervalSeconds = PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(
+		NormalizeNonNegativePreference(ini.GetInt(_T("VideoThumbnailIntervalSeconds"), static_cast<int>(PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds)), PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds));
 	m_bRunCommandOnFileCompletion = ini.GetBool(prefini::FileCompletionKeys::RunCommandOnFileCompletion, false, prefini::Sections::FileCompletion);
 	m_strFileCompletionProgram = ini.GetString(prefini::FileCompletionKeys::Program, _T(""), prefini::Sections::FileCompletion);
 	m_strFileCompletionArguments = ini.GetString(prefini::FileCompletionKeys::Arguments, _T(""), prefini::Sections::FileCompletion);

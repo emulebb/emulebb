@@ -20,7 +20,7 @@
 class CPartFile;
 
 /**
- * Owns the result payload passed from the VLC thumbnail worker back to the UI thread.
+ * Owns the result payload passed from the thumbnail worker back to the UI thread.
  */
 struct VideoThumbnailResult_Struct
 {
@@ -31,7 +31,7 @@ struct VideoThumbnailResult_Struct
 	uint64 ullCompletedSize = 0;
 	PartFilePreviewSeams::EVideoThumbnailAttemptResult eResult = PartFilePreviewSeams::VTAR_NONE;
 	DWORD dwErrorCode = ERROR_SUCCESS;
-	DWORD dwVlcExitCode = 0;
+	DWORD dwProcessExitCode = 0;
 
 	~VideoThumbnailResult_Struct()
 	{
@@ -49,7 +49,7 @@ bool ReadVideoThumbnailBitmapFile(const CString &rstrPath, HBITMAP &rhBitmap);
 // CVideoThumbnailThread
 
 /**
- * Asks VLC to render one preview thumbnail from the current part file.
+ * Asks FFmpeg to render one preview thumbnail from the current part file.
  */
 class CVideoThumbnailThread : public CWinThread
 {
@@ -58,13 +58,13 @@ class CVideoThumbnailThread : public CWinThread
 public:
 	virtual	BOOL	InitInstance();
 	virtual int		Run();
-	void	SetValues(CPartFile *pPartFile, LPCTSTR pszCommand, HWND hNotifyWnd, LPCTSTR pszCachePath);
+	void	SetValues(CPartFile *pPartFile, LPCTSTR pszFfmpegPath, HWND hNotifyWnd, LPCTSTR pszCachePath);
 
 protected:
 	CVideoThumbnailThread();
 
 	CPartFile *m_pPartfile;
-	CString m_strCommand;
+	CString m_strFfmpegPath;
 	CString m_strTitle;
 	CString m_strInputPath;
 	CString m_strWorkingDirectory;

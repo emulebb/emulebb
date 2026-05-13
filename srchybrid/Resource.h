@@ -2897,6 +2897,9 @@
 #define IDS_VIDEOTHUMBNAILS                    2216
 #define IDS_VIDEOTHUMBNAILS_INVALID            2217
 #define IDS_PPG_FILES_TT_VIDEOTHUMBNAILS       2218
+#define IDS_THUMBNAIL_FFMPEG                   2219
+#define IDS_THUMBNAIL_INTERVAL_SECONDS         2220
+#define IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG      2221
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025
@@ -2970,6 +2973,13 @@
 #define IDC_EXIT_ON_BIND_LOSS           3082
 #define IDC_TBN_DISPLAYMODE_LABEL       3083
 #define IDC_VIDEOTHUMBNAILS             3084
+#define IDC_VIDEOTHUMBNAILS_GROUP       3085
+#define IDC_THUMBNAIL_FFMPEG_LBL        3086
+#define IDC_THUMBNAIL_FFMPEG            3087
+#define IDC_BROWSE_THUMBNAIL_FFMPEG     3088
+#define IDC_THUMBNAIL_INTERVAL_LBL      3089
+#define IDC_THUMBNAIL_INTERVAL          3090
+#define IDC_THUMBNAIL_INTERVAL_SPIN     3091
 #define IDA_ENTER                       32771
 
 // Next default values for new objects
@@ -2978,7 +2988,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        3055
 #define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         3085
-#define _APS_NEXT_SYMED_VALUE           2223
+#define _APS_NEXT_CONTROL_VALUE         3092
+#define _APS_NEXT_SYMED_VALUE           2227
 #endif
 #endif

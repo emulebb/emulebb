@@ -111,14 +111,14 @@ namespace
 		switch (eResult) {
 		case PartFilePreviewSeams::VTAR_COPY_FAILED:
 			return _T("copy failed");
-		case PartFilePreviewSeams::VTAR_VLC_BUSY:
-			return _T("VLC busy");
-		case PartFilePreviewSeams::VTAR_VLC_TIMEOUT:
-			return _T("VLC timeout");
-		case PartFilePreviewSeams::VTAR_VLC_START_FAILED:
-			return _T("VLC start failed");
-		case PartFilePreviewSeams::VTAR_VLC_FAILED:
-			return _T("VLC failed");
+		case PartFilePreviewSeams::VTAR_FFMPEG_BUSY:
+			return _T("FFmpeg busy");
+		case PartFilePreviewSeams::VTAR_FFMPEG_TIMEOUT:
+			return _T("FFmpeg timeout");
+		case PartFilePreviewSeams::VTAR_FFMPEG_START_FAILED:
+			return _T("FFmpeg start failed");
+		case PartFilePreviewSeams::VTAR_FFMPEG_FAILED:
+			return _T("FFmpeg failed");
 		case PartFilePreviewSeams::VTAR_NO_THUMBNAIL:
 			return _T("no thumbnail output");
 		case PartFilePreviewSeams::VTAR_DECODE_FAILED:
@@ -296,8 +296,7 @@ void CDownloadListCtrl::Init()
 	}
 	SortItems(SortProc, MAKELONG(GetSortItem() + adder, !GetSortAscending()));
 	InitializeVideoThumbnailCache();
-	SetTimer(kVideoThumbnailTimerId, static_cast<UINT>(PartFilePreviewSeams::kVideoThumbnailScanIntervalMs), NULL);
-	QueueVideoThumbnailScan();
+	UpdateVideoThumbnailTimer();
 }
 
 void CDownloadListCtrl::OnSysColorChange()
@@ -423,7 +422,7 @@ bool CDownloadListCtrl::IsVideoThumbnailAttemptDue(const VideoThumbnailCacheEntr
 	if (pEntry->hBitmap == NULL) {
 		if (bForceAttempt)
 			return true;
-		return PartFilePreviewSeams::IsVideoThumbnailAttemptDue(ullCurrentTick, pEntry->ullLastAttemptTick);
+		return PartFilePreviewSeams::IsVideoThumbnailAttemptDue(ullCurrentTick, pEntry->ullLastAttemptTick, thePrefs.GetVideoThumbnailIntervalMs());
 	}
 	if (!PartFilePreviewSeams::ShouldRefreshVideoThumbnail(pEntry->ullCompletedSize, ullCompletedSize, ullFileSize))
 		return false;
@@ -431,14 +430,14 @@ bool CDownloadListCtrl::IsVideoThumbnailAttemptDue(const VideoThumbnailCacheEntr
 		return true;
 	if (PartFilePreviewSeams::ShouldRefreshVideoThumbnail(pEntry->ullLastAttemptCompletedSize, ullCompletedSize, ullFileSize))
 		return true;
-	return PartFilePreviewSeams::IsVideoThumbnailAttemptDue(ullCurrentTick, pEntry->ullLastAttemptTick);
+	return PartFilePreviewSeams::IsVideoThumbnailAttemptDue(ullCurrentTick, pEntry->ullLastAttemptTick, thePrefs.GetVideoThumbnailIntervalMs());
 }
 
 void CDownloadListCtrl::QueueVideoThumbnail(CPartFile *pPartFile, bool bHighPriority)
 {
 	if (pPartFile == NULL)
 		return;
-	if (!pPartFile->IsMovie() || !thePrefs.UseVideoPreviewThumbnails() || !PartFilePreviewSeams::IsConfiguredVlcPreviewPlayer(thePrefs.GetVideoPlayer())) {
+	if (!pPartFile->IsMovie() || !thePrefs.IsVideoThumbnailGenerationEnabled() || !PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.GetVideoThumbnailFfmpegPath())) {
 		if (bHighPriority)
 			LogVideoThumbnailVerbose(_T("skip queue for \"%s\" because thumbnail prerequisites are not met"), (LPCTSTR)pPartFile->GetFileName());
 		return;
@@ -557,10 +556,25 @@ void CDownloadListCtrl::StartNextVideoThumbnailWorker()
 			LogVideoThumbnailVerbose(_T("failed to start worker thread for \"%s\""), (LPCTSTR)pPartFile->GetFileName());
 			continue;
 		}
-		pThread->SetValues(pPartFile, thePrefs.GetVideoPlayer(), m_hWnd, pEntry->strCachePath);
+		pThread->SetValues(pPartFile, thePrefs.GetVideoThumbnailFfmpegPath(), m_hWnd, pEntry->strCachePath);
 		pThread->ResumeThread();
 		return;
 	}
+}
+
+void CDownloadListCtrl::UpdateVideoThumbnailTimer()
+{
+	KillTimer(kVideoThumbnailTimerId);
+	if (!thePrefs.IsVideoThumbnailGenerationEnabled() || !PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.GetVideoThumbnailFfmpegPath())) {
+		m_videoThumbnailQueue.RemoveAll();
+		ClearVideoThumbnailCache();
+		m_hHoveredVideoThumbnailBitmap = NULL;
+		m_tooltip.SetPreviewBitmap(NULL, 0);
+		return;
+	}
+
+	SetTimer(kVideoThumbnailTimerId, static_cast<UINT>(thePrefs.GetVideoThumbnailIntervalMs()), NULL);
+	QueueVideoThumbnailScan();
 }
 
 void CDownloadListCtrl::RemoveVideoThumbnailCache(const CPartFile *pPartFile)
@@ -612,7 +626,8 @@ void CDownloadListCtrl::OnMouseMove(UINT nFlags, CPoint point)
 		if (pHoveredFile == NULL)
 			m_tooltip.SetPreviewBitmap(NULL, 0);
 	}
-	if (pHoveredFile != NULL && bHoveringFileName && pHoveredFile->IsMovie() && thePrefs.UseVideoPreviewThumbnails()) {
+	if (pHoveredFile != NULL && bHoveringFileName && pHoveredFile->IsMovie() && thePrefs.IsVideoThumbnailGenerationEnabled()
+		&& PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.GetVideoThumbnailFfmpegPath())) {
 		HBITMAP hBitmap = GetCachedVideoThumbnail(pHoveredFile);
 		const bool bBitmapChanged = hBitmap != m_hHoveredVideoThumbnailBitmap;
 		m_hHoveredVideoThumbnailBitmap = hBitmap;
@@ -656,7 +671,7 @@ LRESULT CDownloadListCtrl::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
 		pEntry->strCachePath = pResult->strCachePath;
 		pEntry->eLastResult = pResult->eResult;
 		pEntry->dwLastErrorCode = pResult->dwErrorCode;
-		pEntry->dwLastVlcExitCode = pResult->dwVlcExitCode;
+		pEntry->dwLastProcessExitCode = pResult->dwProcessExitCode;
 	}
 	m_bVideoThumbnailWorkerActive = false;
 
@@ -669,11 +684,11 @@ LRESULT CDownloadListCtrl::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
 		if (pResult->eResult == PartFilePreviewSeams::VTAR_SUCCESS)
 			LogVideoThumbnailVerbose(_T("finished for \"%s\": success at %I64u bytes"), (LPCTSTR)strFileName, pResult->ullCompletedSize);
 		else
-			LogVideoThumbnailVerbose(_T("finished for \"%s\": %s (error=%lu, vlcExit=%lu, completed=%I64u)")
+			LogVideoThumbnailVerbose(_T("finished for \"%s\": %s (error=%lu, processExit=%lu, completed=%I64u)")
 				, (LPCTSTR)strFileName
 				, GetVideoThumbnailAttemptResultText(pResult->eResult)
 				, pResult->dwErrorCode
-				, pResult->dwVlcExitCode
+				, pResult->dwProcessExitCode
 				, pResult->ullCompletedSize);
 	}
 	if (pEntry != NULL && bFileStillCurrent && pResult->hBitmap != NULL) {
@@ -3122,7 +3137,8 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 				}
 				CPartFile *pPartFile = static_cast<CPartFile*>(content->value);
 				info = pPartFile->GetInfoSummary();
-				if (pPartFile->IsMovie() && thePrefs.UseVideoPreviewThumbnails()) {
+				if (pPartFile->IsMovie() && thePrefs.IsVideoThumbnailGenerationEnabled()
+					&& PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.GetVideoThumbnailFfmpegPath())) {
 					HBITMAP hBitmap = GetCachedVideoThumbnail(pPartFile);
 					if (hBitmap != NULL)
 						m_tooltip.SetPreviewBitmap(hBitmap, PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth);

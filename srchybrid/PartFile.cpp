@@ -3805,8 +3805,8 @@ void CPartFile::PreviewFile()
 
 bool CPartFile::IsReadyForVideoThumbnail() const
 {
-	return thePrefs.UseVideoPreviewThumbnails()
-		&& PartFilePreviewSeams::IsConfiguredVlcPreviewPlayer(thePrefs.GetVideoPlayer())
+	return thePrefs.IsVideoThumbnailGenerationEnabled()
+		&& PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.GetVideoThumbnailFfmpegPath())
 		&& IsMovie()
 		&& !m_bPreviewing
 		&& static_cast<uint64>(m_nFileSize) > 0

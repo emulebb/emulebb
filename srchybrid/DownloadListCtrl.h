@@ -121,6 +121,7 @@ public:
 	CTitledMenu* GetPrioMenu();
 	float	GetFinishedSize();
 	bool	ReportAvailableCommands(CList<int> &liAvailableCommands);
+	void	UpdateVideoThumbnailTimer();
 
 protected:
 	struct VideoThumbnailCacheEntry
@@ -132,7 +133,7 @@ protected:
 		ULONGLONG ullLastAttemptTick = 0;
 		PartFilePreviewSeams::EVideoThumbnailAttemptResult eLastResult = PartFilePreviewSeams::VTAR_NONE;
 		DWORD dwLastErrorCode = ERROR_SUCCESS;
-		DWORD dwLastVlcExitCode = 0;
+		DWORD dwLastProcessExitCode = 0;
 		bool bInFlight = false;
 		bool bQueued = false;
 		bool bForceAttempt = false;
