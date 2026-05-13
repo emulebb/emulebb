@@ -43,12 +43,22 @@ struct SCacheRecord
 	SFakeFileReport report;
 };
 
+struct SPartHeaderProbeState
+{
+	uint8 uProbeMask = 0;
+	EFileType eExtensionType = FILETYPE_UNKNOWN;
+};
+
 FakeFileDetectorSeams::RuleSet g_rules;
 uint32 g_uRulesFingerprint = 0;
 bool g_bRulesLoaded = false;
 bool g_bCacheLoaded = false;
 bool g_bCacheDirty = false;
 std::map<CString, SCacheRecord> g_cache;
+std::map<CString, SPartHeaderProbeState> g_partHeaderProbeState;
+
+constexpr uint8 kHeaderProbeStartMask = 0x01;
+constexpr uint8 kHeaderProbeIsoMask = 0x02;
 
 std::wstring ToWide(const CString &rstr)
 {
@@ -196,6 +206,34 @@ void EnsureRulesLoaded()
 bool IsValidRegex(const CString &rstrPattern)
 {
 	return RegexMatchSeams::IsValidPattern(ToWide(rstrPattern), std::regex_constants::icase | std::regex_constants::ECMAScript);
+}
+
+uint64 GetIsoHeaderRangeEnd()
+{
+	return FileTypeClassifierSeams::kIsoHeaderOffset + FileTypeClassifierSeams::kHeaderCheckSize - 1;
+}
+
+bool IsIsoHeaderRangeAvailable(CPartFile &rPartFile)
+{
+	const uint64 uIsoRangeEnd = GetIsoHeaderRangeEnd();
+	return !rPartFile.IsPartFile()
+		|| (static_cast<uint64>(rPartFile.GetCompletedSize()) >= uIsoRangeEnd + 1
+			&& rPartFile.IsCompleteBD(FileTypeClassifierSeams::kIsoHeaderOffset, uIsoRangeEnd));
+}
+
+bool IsStartHeaderRangeAvailable(CPartFile &rPartFile)
+{
+	return !rPartFile.IsPartFile() || rPartFile.IsCompleteBDSafe(0, FileTypeClassifierSeams::kHeaderCheckSize);
+}
+
+uint8 GetAvailableHeaderProbeMask(CPartFile &rPartFile)
+{
+	uint8 uMask = 0;
+	if (IsStartHeaderRangeAvailable(rPartFile))
+		uMask |= kHeaderProbeStartMask;
+	if (IsIsoHeaderRangeAvailable(rPartFile))
+		uMask |= kHeaderProbeIsoMask;
+	return uMask;
 }
 
 void AddRuleLine(const CString &rstrSection, const CString &rstrLine)
@@ -379,10 +417,8 @@ SFakeFileReport BuildPartFileReport(CPartFile &rPartFile, const bool bProbeHeade
 	FillCommonEvidence(rPartFile, evidence);
 	evidence.headerPending = true;
 	evidence.headerAvailable = false;
-	const bool bHeaderRangeAvailable = !rPartFile.IsPartFile() || rPartFile.IsCompleteBDSafe(0, FileTypeClassifierSeams::kHeaderCheckSize);
-	const bool bIsoRangeAvailable = !rPartFile.IsPartFile()
-		|| (static_cast<uint64>(rPartFile.GetCompletedSize()) > FileTypeClassifierSeams::kIsoHeaderOffset + FileTypeClassifierSeams::kHeaderCheckSize
-			&& rPartFile.IsCompleteBD(FileTypeClassifierSeams::kIsoHeaderOffset, FileTypeClassifierSeams::kIsoHeaderOffset + FileTypeClassifierSeams::kHeaderCheckSize));
+	const bool bHeaderRangeAvailable = IsStartHeaderRangeAvailable(rPartFile);
+	const bool bIsoRangeAvailable = IsIsoHeaderRangeAvailable(rPartFile);
 	if (bProbeHeader) {
 		if (bHeaderRangeAvailable || bIsoRangeAvailable)
 			evidence.headerType = GetFileTypeEx(&rPartFile, false, true);
@@ -502,6 +538,28 @@ SFakeFileReport FakeFileDetector::GetSearchFileReportSnapshot(const CSearchFile 
 SFakeFileReport FakeFileDetector::GetPartFileReportSnapshot(CPartFile &rPartFile)
 {
 	return BuildPartFileReport(rPartFile, false, false);
+}
+
+bool FakeFileDetector::RefreshPartFileHeaderIfAvailable(CPartFile &rPartFile)
+{
+	const EFileType eExtensionType = FileTypeClassifierSeams::GetFileTypeFromExtension(rPartFile.GetFileName());
+	const uint8 uAvailableProbeMask = GetAvailableHeaderProbeMask(rPartFile);
+	if (uAvailableProbeMask == 0)
+		return false;
+
+	const CString strHash(md4str(rPartFile.GetFileHash()));
+	const auto it = g_partHeaderProbeState.find(strHash);
+	if (it != g_partHeaderProbeState.end() && it->second.eExtensionType == eExtensionType
+		&& (it->second.uProbeMask & uAvailableProbeMask) == uAvailableProbeMask)
+	{
+		return false;
+	}
+
+	(void)AnalyzePartFile(rPartFile);
+	SPartHeaderProbeState &rState = g_partHeaderProbeState[strHash];
+	rState.eExtensionType = eExtensionType;
+	rState.uProbeMask |= uAvailableProbeMask;
+	return true;
 }
 
 CString FakeFileDetector::FormatReportSummary(const SFakeFileReport &rReport)

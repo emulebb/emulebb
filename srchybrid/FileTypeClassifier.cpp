@@ -35,9 +35,10 @@ EFileType GetFileTypeEx(CShareableFile *kfile, bool checkextention, bool checkfi
 	CPartFile *pPartFile = static_cast<CPartFile*>(kfile);
 	const size_t uHeaderCheckSize = FileTypeClassifierSeams::kHeaderCheckSize;
 
+	const uint64 uIsoRangeEnd = FileTypeClassifierSeams::kIsoHeaderOffset + uHeaderCheckSize - 1;
 	const bool bTestIso = !kfile->IsPartFile()
-		|| (static_cast<uint64>(pPartFile->GetCompletedSize()) > FileTypeClassifierSeams::kIsoHeaderOffset + uHeaderCheckSize
-			&& pPartFile->IsCompleteBD(FileTypeClassifierSeams::kIsoHeaderOffset, FileTypeClassifierSeams::kIsoHeaderOffset + uHeaderCheckSize));
+		|| (static_cast<uint64>(pPartFile->GetCompletedSize()) >= uIsoRangeEnd + 1
+			&& pPartFile->IsCompleteBD(FileTypeClassifierSeams::kIsoHeaderOffset, uIsoRangeEnd));
 	if (checkfileheader && (!kfile->IsPartFile() || pPartFile->IsCompleteBDSafe(0, uHeaderCheckSize) || bTestIso)) {
 		try {
 			CSafeFile inFile;

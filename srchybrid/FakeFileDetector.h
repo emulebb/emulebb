@@ -67,6 +67,11 @@ SFakeFileReport GetSearchFileReportSnapshot(const CSearchFile &rSearchFile);
 SFakeFileReport GetPartFileReportSnapshot(CPartFile &rPartFile);
 
 /**
+ * @brief Probes newly available part-file header ranges outside render paths.
+ */
+bool RefreshPartFileHeaderIfAvailable(CPartFile &rPartFile);
+
+/**
  * @brief Returns a compact English summary suitable for existing tooltip/status
  * surfaces.
  */

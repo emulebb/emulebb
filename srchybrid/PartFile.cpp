@@ -4507,6 +4507,8 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 			m_bUpdateMet = (m_nTotalBufferData > 0);
 
 		if (!theApp.IsClosing()) { // may be called during shutdown!
+			(void)FakeFileDetector::RefreshPartFileHeaderIfAvailable(*this);
+
 			// Is this file finished?
 			if (m_gaplist.IsEmpty()) {
 				if (m_iWrites <= 0 && m_BufferedData_list.IsEmpty() && GetStatus() != PS_COMPLETING)
