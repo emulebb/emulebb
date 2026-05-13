@@ -40,14 +40,16 @@ enum EFileType : unsigned char
 namespace FileTypeClassifierSeams
 {
 /**
- * @brief Number of leading bytes needed by the built-in file signature table.
+ * @brief Number of leading bytes needed by the primary file signature table.
  */
-constexpr size_t kHeaderCheckSize = 68;
+constexpr size_t kHeaderCheckSize = 16;
+constexpr size_t kDeepHeaderCheckSize = 68;
+constexpr size_t kIsoHeaderCheckSize = 6;
 constexpr uint64_t kIsoHeaderOffset = 0x8000;
 
-inline uint64_t GetHeaderRangeEnd(const uint64_t uOffset)
+inline uint64_t GetHeaderRangeEnd(const uint64_t uOffset, const size_t uSize = kHeaderCheckSize)
 {
-	return uOffset + kHeaderCheckSize - 1;
+	return uOffset + uSize - 1;
 }
 
 enum class HeaderProbeStatus
@@ -184,53 +186,58 @@ inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHea
 	static const BYTE FILEHEADER_WM_ID[] =	{ 0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11, 0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C };
 	static const BYTE FILEHEADER_ZIP_ID[] =	{ 0x50, 0x4B, 0x03, 0x04 };
 
-	if (pHeader == NULL || uHeaderSize < kHeaderCheckSize)
+	if (pHeader == NULL)
 		return FILETYPE_UNKNOWN;
-	if (memcmp(pHeader, FILEHEADER_ZIP_ID, sizeof FILEHEADER_ZIP_ID) == 0)
+	if (uHeaderSize >= sizeof FILEHEADER_ZIP_ID && memcmp(pHeader, FILEHEADER_ZIP_ID, sizeof FILEHEADER_ZIP_ID) == 0)
 		return ARCHIVE_ZIP;
-	if (memcmp(pHeader, FILEHEADER_RAR_ID, sizeof FILEHEADER_RAR_ID) == 0)
+	if (uHeaderSize >= sizeof FILEHEADER_RAR_ID && memcmp(pHeader, FILEHEADER_RAR_ID, sizeof FILEHEADER_RAR_ID) == 0)
 		return ARCHIVE_RAR;
-	if (memcmp(pHeader + 7, FILEHEADER_ACE_ID, sizeof FILEHEADER_ACE_ID) == 0)
+	if (uHeaderSize >= 7 + sizeof FILEHEADER_ACE_ID && memcmp(pHeader + 7, FILEHEADER_ACE_ID, sizeof FILEHEADER_ACE_ID) == 0)
 		return ARCHIVE_ACE;
-	if (memcmp(pHeader, FILEHEADER_7Z_ID, sizeof FILEHEADER_7Z_ID) == 0)
+	if (uHeaderSize >= sizeof FILEHEADER_7Z_ID && memcmp(pHeader, FILEHEADER_7Z_ID, sizeof FILEHEADER_7Z_ID) == 0)
 		return ARCHIVE_7Z;
-	if (memcmp(pHeader, FILEHEADER_GZ_ID, sizeof FILEHEADER_GZ_ID) == 0)
+	if (uHeaderSize >= sizeof FILEHEADER_GZ_ID && memcmp(pHeader, FILEHEADER_GZ_ID, sizeof FILEHEADER_GZ_ID) == 0)
 		return ARCHIVE_GZ;
-	if (memcmp(pHeader, FILEHEADER_WM_ID, sizeof FILEHEADER_WM_ID) == 0)
+	if (uHeaderSize >= sizeof FILEHEADER_WM_ID && memcmp(pHeader, FILEHEADER_WM_ID, sizeof FILEHEADER_WM_ID) == 0)
 		return WM;
-	if (memcmp(pHeader, FILEHEADER_RIFF_ID, sizeof FILEHEADER_RIFF_ID) == 0 && strncmp(reinterpret_cast<const char*>(pHeader) + 8, "AVI", 3) == 0)
+	if (uHeaderSize >= 11 && memcmp(pHeader, FILEHEADER_RIFF_ID, sizeof FILEHEADER_RIFF_ID) == 0 && strncmp(reinterpret_cast<const char*>(pHeader) + 8, "AVI", 3) == 0)
 		return VIDEO_AVI;
-	if (memcmp(pHeader, FILEHEADER_RIFF_ID, sizeof FILEHEADER_RIFF_ID) == 0 && strncmp(reinterpret_cast<const char*>(pHeader) + 8, "WAVE", 4) == 0)
+	if (uHeaderSize >= 12 && memcmp(pHeader, FILEHEADER_RIFF_ID, sizeof FILEHEADER_RIFF_ID) == 0 && strncmp(reinterpret_cast<const char*>(pHeader) + 8, "WAVE", 4) == 0)
 		return AUDIO_WAV;
-	if (memcmp(pHeader, FILEHEADER_MP3_ID, sizeof FILEHEADER_MP3_ID) == 0 || memcmp(pHeader, FILEHEADER_MP3_ID2, sizeof FILEHEADER_MP3_ID2) == 0)
+	if ((uHeaderSize >= sizeof FILEHEADER_MP3_ID && memcmp(pHeader, FILEHEADER_MP3_ID, sizeof FILEHEADER_MP3_ID) == 0)
+		|| (uHeaderSize >= sizeof FILEHEADER_MP3_ID2 && memcmp(pHeader, FILEHEADER_MP3_ID2, sizeof FILEHEADER_MP3_ID2) == 0))
+	{
 		return AUDIO_MPEG;
-	if (memcmp(pHeader, FILEHEADER_FLAC_ID, sizeof FILEHEADER_FLAC_ID) == 0)
+	}
+	if (uHeaderSize >= sizeof FILEHEADER_FLAC_ID && memcmp(pHeader, FILEHEADER_FLAC_ID, sizeof FILEHEADER_FLAC_ID) == 0)
 		return AUDIO_FLAC;
-	if (memcmp(pHeader, FILEHEADER_MPG_ID, sizeof FILEHEADER_MPG_ID) == 0)
+	if (uHeaderSize >= sizeof FILEHEADER_MPG_ID && memcmp(pHeader, FILEHEADER_MPG_ID, sizeof FILEHEADER_MPG_ID) == 0)
 		return VIDEO_MPG;
-	if (memcmp(pHeader + 4, FILEHEADER_MP4_ID, sizeof FILEHEADER_MP4_ID) == 0)
+	if (uHeaderSize >= 4 + sizeof FILEHEADER_MP4_ID && memcmp(pHeader + 4, FILEHEADER_MP4_ID, sizeof FILEHEADER_MP4_ID) == 0)
 		return VIDEO_MP4;
-	if (memcmp(pHeader, FILEHEADER_MKV_ID, sizeof FILEHEADER_MKV_ID) == 0)
+	if (uHeaderSize >= sizeof FILEHEADER_MKV_ID && memcmp(pHeader, FILEHEADER_MKV_ID, sizeof FILEHEADER_MKV_ID) == 0)
 		return VIDEO_MKV;
-	if (memcmp(pHeader, FILEHEADER_OGG_ID, sizeof FILEHEADER_OGG_ID) == 0)
+	if (uHeaderSize >= sizeof FILEHEADER_OGG_ID && memcmp(pHeader, FILEHEADER_OGG_ID, sizeof FILEHEADER_OGG_ID) == 0)
 		return VIDEO_OGG;
-	if (memcmp(pHeader, FILEHEADER_PDF_ID, sizeof FILEHEADER_PDF_ID) == 0)
+	if (uHeaderSize >= sizeof FILEHEADER_PDF_ID && memcmp(pHeader, FILEHEADER_PDF_ID, sizeof FILEHEADER_PDF_ID) == 0)
 		return DOCUMENT_PDF;
-	if (memcmp(pHeader + 60, FILEHEADER_MOBI_ID, sizeof FILEHEADER_MOBI_ID) == 0)
+	if (uHeaderSize >= 60 + sizeof FILEHEADER_MOBI_ID && memcmp(pHeader + 60, FILEHEADER_MOBI_ID, sizeof FILEHEADER_MOBI_ID) == 0)
 		return DOCUMENT_MOBI;
-	if (memcmp(pHeader, FILEHEADER_PNG_ID, sizeof FILEHEADER_PNG_ID) == 0)
+	if (uHeaderSize >= sizeof FILEHEADER_PNG_ID && memcmp(pHeader, FILEHEADER_PNG_ID, sizeof FILEHEADER_PNG_ID) == 0)
 		return PIC_PNG;
-	if (memcmp(pHeader, FILEHEADER_JPG_ID, sizeof FILEHEADER_JPG_ID) == 0 && (pHeader[3] == 0xE1 || pHeader[3] == 0xE0))
+	if (uHeaderSize >= 4 && memcmp(pHeader, FILEHEADER_JPG_ID, sizeof FILEHEADER_JPG_ID) == 0 && (pHeader[3] == 0xE1 || pHeader[3] == 0xE0))
 		return PIC_JPG;
-	if (memcmp(pHeader, FILEHEADER_GIF_ID, sizeof FILEHEADER_GIF_ID) == 0 && pHeader[5] == 0x61 && (pHeader[4] == 0x37 || pHeader[4] == 0x39))
+	if (uHeaderSize >= 6 && memcmp(pHeader, FILEHEADER_GIF_ID, sizeof FILEHEADER_GIF_ID) == 0 && pHeader[5] == 0x61 && (pHeader[4] == 0x37 || pHeader[4] == 0x39))
 		return PIC_GIF;
-	const LPCTSTR pszExtension = ::PathFindExtension(pszFileName);
-	if (memcmp(pHeader, FILEHEADER_EXE_ID, sizeof FILEHEADER_EXE_ID) == 0)
+	const LPCTSTR pszExtension = ::PathFindExtension(pszFileName != NULL ? pszFileName : _T(""));
+	if (uHeaderSize >= sizeof FILEHEADER_EXE_ID && memcmp(pHeader, FILEHEADER_EXE_ID, sizeof FILEHEADER_EXE_ID) == 0)
 		return _tcsicmp(pszExtension, _T(".rar")) == 0 || _tcsicmp(pszExtension, _T(".cbr")) == 0 ? FILETYPE_UNKNOWN : FILETYPE_EXECUTABLE;
-	if (pHeader[0] == 0xFF && (pHeader[1] & 0xF0) == 0xF0 && (pHeader[1] & 0x06) == 0
+	if (uHeaderSize >= 2 && pHeader[0] == 0xFF && (pHeader[1] & 0xF0) == 0xF0 && (pHeader[1] & 0x06) == 0
 		&& _tcsicmp(pszExtension, _T(".aac")) == 0)
+	{
 		return AUDIO_AAC;
-	if ((pHeader[0] & 0xFF) == 0xFF && (pHeader[1] & 0xE0) == 0xE0)
+	}
+	if (uHeaderSize >= 2 && (pHeader[0] & 0xFF) == 0xFF && (pHeader[1] & 0xE0) == 0xE0)
 		return AUDIO_MPEG;
 	return FILETYPE_UNKNOWN;
 }
@@ -241,7 +248,7 @@ inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHea
 inline EFileType DetectIsoTypeFromOffsetHeader(const BYTE *pHeader, const size_t uHeaderSize)
 {
 	static const BYTE FILEHEADER_ISO_ID[] = { 0x01, 0x43, 0x44, 0x30, 0x30, 0x31 };
-	if (pHeader != NULL && uHeaderSize >= kHeaderCheckSize && memcmp(pHeader, FILEHEADER_ISO_ID, sizeof FILEHEADER_ISO_ID) == 0)
+	if (pHeader != NULL && uHeaderSize >= sizeof FILEHEADER_ISO_ID && memcmp(pHeader, FILEHEADER_ISO_ID, sizeof FILEHEADER_ISO_ID) == 0)
 		return IMAGE_ISO;
 	return FILETYPE_UNKNOWN;
 }

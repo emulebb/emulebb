@@ -34,26 +34,31 @@ EFileType GetFileTypeEx(CShareableFile *kfile, bool checkextention, bool checkfi
 	EFileType eResult = FILETYPE_UNKNOWN;
 	CPartFile *pPartFile = static_cast<CPartFile*>(kfile);
 	const size_t uHeaderCheckSize = FileTypeClassifierSeams::kHeaderCheckSize;
+	const size_t uDeepHeaderCheckSize = FileTypeClassifierSeams::kDeepHeaderCheckSize;
+	const size_t uIsoHeaderCheckSize = FileTypeClassifierSeams::kIsoHeaderCheckSize;
 
-	const uint64 uIsoRangeEnd = FileTypeClassifierSeams::GetHeaderRangeEnd(FileTypeClassifierSeams::kIsoHeaderOffset);
+	const uint64 uIsoRangeEnd = FileTypeClassifierSeams::GetHeaderRangeEnd(FileTypeClassifierSeams::kIsoHeaderOffset, uIsoHeaderCheckSize);
 	const bool bTestIso = !kfile->IsPartFile()
 		|| (static_cast<uint64>(pPartFile->GetCompletedSize()) >= uIsoRangeEnd + 1
 			&& pPartFile->IsCompleteBD(FileTypeClassifierSeams::kIsoHeaderOffset, uIsoRangeEnd));
-	if (checkfileheader && (!kfile->IsPartFile() || pPartFile->IsCompleteBDSafe(0, uHeaderCheckSize) || bTestIso)) {
+	const bool bPrimaryHeaderAvailable = !kfile->IsPartFile() || pPartFile->IsCompleteBDSafe(0, uHeaderCheckSize);
+	const bool bDeepHeaderAvailable = !kfile->IsPartFile() || pPartFile->IsCompleteBDSafe(0, uDeepHeaderCheckSize);
+	if (checkfileheader && (bPrimaryHeaderAvailable || bTestIso)) {
 		try {
 			CSafeFile inFile;
 			if (LongPathSeams::OpenFile(inFile, kfile->GetFilePath(), CFile::modeRead | CFile::shareDenyNone)) {
-				BYTE aucHeader[FileTypeClassifierSeams::kHeaderCheckSize] = {};
-				if (!kfile->IsPartFile() || pPartFile->IsCompleteBDSafe(0, uHeaderCheckSize)) {
-					const int iRead = inFile.Read(aucHeader, static_cast<UINT>(uHeaderCheckSize));
-					if (static_cast<size_t>(iRead) == uHeaderCheckSize)
-						eResult = FileTypeClassifierSeams::DetectFileTypeFromHeader(aucHeader, uHeaderCheckSize, kfile->GetFileName());
+				BYTE aucHeader[FileTypeClassifierSeams::kDeepHeaderCheckSize] = {};
+				if (bPrimaryHeaderAvailable) {
+					const size_t uReadSize = bDeepHeaderAvailable ? uDeepHeaderCheckSize : uHeaderCheckSize;
+					const int iRead = inFile.Read(aucHeader, static_cast<UINT>(uReadSize));
+					if (iRead > 0)
+						eResult = FileTypeClassifierSeams::DetectFileTypeFromHeader(aucHeader, static_cast<size_t>(iRead), kfile->GetFileName());
 				}
 				if (eResult == FILETYPE_UNKNOWN && bTestIso) {
 					inFile.Seek(FileTypeClassifierSeams::kIsoHeaderOffset, CFile::begin);
-					const int iRead = inFile.Read(aucHeader, static_cast<UINT>(uHeaderCheckSize));
-					if (static_cast<size_t>(iRead) == uHeaderCheckSize)
-						eResult = FileTypeClassifierSeams::DetectIsoTypeFromOffsetHeader(aucHeader, uHeaderCheckSize);
+					const int iRead = inFile.Read(aucHeader, static_cast<UINT>(uIsoHeaderCheckSize));
+					if (iRead > 0)
+						eResult = FileTypeClassifierSeams::DetectIsoTypeFromOffsetHeader(aucHeader, static_cast<size_t>(iRead));
 				}
 				inFile.Close();
 			}

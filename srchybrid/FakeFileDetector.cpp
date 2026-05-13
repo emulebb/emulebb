@@ -60,6 +60,7 @@ std::map<CString, SPartHeaderProbeState> g_partHeaderProbeState;
 
 constexpr uint8 kHeaderProbeStartMask = 0x01;
 constexpr uint8 kHeaderProbeIsoMask = 0x02;
+constexpr uint8 kHeaderProbeDeepStartMask = 0x04;
 
 std::wstring ToWide(const CString &rstr)
 {
@@ -211,7 +212,7 @@ bool IsValidRegex(const CString &rstrPattern)
 
 uint64 GetIsoHeaderRangeEnd()
 {
-	return FileTypeClassifierSeams::GetHeaderRangeEnd(FileTypeClassifierSeams::kIsoHeaderOffset);
+	return FileTypeClassifierSeams::GetHeaderRangeEnd(FileTypeClassifierSeams::kIsoHeaderOffset, FileTypeClassifierSeams::kIsoHeaderCheckSize);
 }
 
 bool IsIsoHeaderRangeAvailable(CPartFile &rPartFile)
@@ -227,11 +228,18 @@ bool IsStartHeaderRangeAvailable(CPartFile &rPartFile)
 	return !rPartFile.IsPartFile() || rPartFile.IsCompleteBDSafe(0, FileTypeClassifierSeams::kHeaderCheckSize);
 }
 
+bool IsDeepStartHeaderRangeAvailable(CPartFile &rPartFile)
+{
+	return !rPartFile.IsPartFile() || rPartFile.IsCompleteBDSafe(0, FileTypeClassifierSeams::kDeepHeaderCheckSize);
+}
+
 uint8 GetAvailableHeaderProbeMask(CPartFile &rPartFile)
 {
 	uint8 uMask = 0;
 	if (IsStartHeaderRangeAvailable(rPartFile))
 		uMask |= kHeaderProbeStartMask;
+	if (IsDeepStartHeaderRangeAvailable(rPartFile))
+		uMask |= kHeaderProbeDeepStartMask;
 	if (IsIsoHeaderRangeAvailable(rPartFile))
 		uMask |= kHeaderProbeIsoMask;
 	return uMask;
@@ -419,6 +427,7 @@ SFakeFileReport BuildPartFileReport(CPartFile &rPartFile, const bool bProbeHeade
 	evidence.headerPending = true;
 	evidence.headerAvailable = false;
 	const bool bHeaderRangeAvailable = IsStartHeaderRangeAvailable(rPartFile);
+	const bool bDeepHeaderRangeAvailable = IsDeepStartHeaderRangeAvailable(rPartFile);
 	const bool bIsoRangeAvailable = IsIsoHeaderRangeAvailable(rPartFile);
 	if (bProbeHeader) {
 		if (bHeaderRangeAvailable || bIsoRangeAvailable)
@@ -428,7 +437,7 @@ SFakeFileReport BuildPartFileReport(CPartFile &rPartFile, const bool bProbeHeade
 	}
 	const bool bUsedCachedHeaderEvidence = !bProbeHeader && evidence.headerType == FILETYPE_UNKNOWN
 		&& TryApplyCachedHeaderEvidence(rPartFile.GetFileHash(), evidence);
-	const bool bHeaderProbeCovered = bProbeHeader ? bHeaderRangeAvailable : evidence.headerType != FILETYPE_UNKNOWN;
+	const bool bHeaderProbeCovered = bProbeHeader ? bDeepHeaderRangeAvailable : evidence.headerType != FILETYPE_UNKNOWN;
 	const bool bIsoProbeCovered = bProbeHeader ? bIsoRangeAvailable : evidence.headerType != FILETYPE_UNKNOWN;
 	const FileTypeClassifierSeams::HeaderProbeSummary headerSummary = FileTypeClassifierSeams::SummarizeHeaderProbe(
 		evidence.headerType,
