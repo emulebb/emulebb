@@ -453,6 +453,7 @@ bool FakeFileDetector::ReloadRules()
 {
 	g_rules = FakeFileDetectorSeams::RuleSet();
 	g_compiledRegexes.clear();
+	g_partHeaderProbeState.clear();
 	g_uRulesFingerprint = 0;
 	g_bRulesLoaded = true;
 
