@@ -160,12 +160,23 @@ inline void AddUnique(std::vector<std::wstring> &rValues, std::wstring value)
 inline bool IsMediaType(const EFileType eType)
 {
 	return eType == AUDIO_MPEG || eType == VIDEO_AVI || eType == VIDEO_MPG || eType == VIDEO_MP4
-		|| eType == VIDEO_MKV || eType == VIDEO_OGG || eType == WM;
+		|| eType == VIDEO_MKV || eType == VIDEO_OGG || eType == WM || eType == AUDIO_FLAC
+		|| eType == AUDIO_WAV || eType == AUDIO_AAC;
 }
 
 inline bool IsArchiveType(const EFileType eType)
 {
-	return eType == ARCHIVE_ZIP || eType == ARCHIVE_RAR || eType == ARCHIVE_ACE || eType == ARCHIVE_7Z;
+	return eType == ARCHIVE_ZIP || eType == ARCHIVE_RAR || eType == ARCHIVE_ACE || eType == ARCHIVE_7Z
+		|| eType == ARCHIVE_GZ;
+}
+
+/**
+ * @brief Reports whether a container signature is valid for a more specific
+ * extension class.
+ */
+inline bool HeaderMatchesExtensionType(const EFileType eHeaderType, const EFileType eExtensionType)
+{
+	return eHeaderType == eExtensionType || (eHeaderType == ARCHIVE_ZIP && eExtensionType == DOCUMENT_EPUB);
 }
 
 inline bool ClaimedTypeConflicts(const std::wstring &rClaimedType, const EFileType eObservedType)
@@ -252,7 +263,7 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules, const st
 		AddReason(report, "bad_signal_comment", 15);
 
 	if (rEvidence.headerAvailable && rEvidence.headerType != FILETYPE_UNKNOWN && rEvidence.extensionType != FILETYPE_UNKNOWN
-		&& rEvidence.headerType != rEvidence.extensionType)
+		&& !HeaderMatchesExtensionType(rEvidence.headerType, rEvidence.extensionType))
 	{
 		AddReason(report, "header_extension_mismatch", 45);
 		if (rEvidence.headerType == FILETYPE_EXECUTABLE && IsMediaType(rEvidence.extensionType))

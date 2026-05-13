@@ -27,7 +27,13 @@ enum EFileType : unsigned char
 	PIC_JPG,
 	PIC_PNG,
 	PIC_GIF,
-	DOCUMENT_PDF
+	DOCUMENT_PDF,
+	DOCUMENT_EPUB,
+	DOCUMENT_MOBI,
+	ARCHIVE_GZ,
+	AUDIO_FLAC,
+	AUDIO_WAV,
+	AUDIO_AAC
 };
 #endif
 
@@ -36,7 +42,7 @@ namespace FileTypeClassifierSeams
 /**
  * @brief Number of leading bytes needed by the built-in file signature table.
  */
-constexpr size_t kHeaderCheckSize = 16;
+constexpr size_t kHeaderCheckSize = 68;
 constexpr uint64_t kIsoHeaderOffset = 0x8000;
 
 inline uint64_t GetHeaderRangeEnd(const uint64_t uOffset)
@@ -80,7 +86,11 @@ inline const SFileTypeExtension* GetFileTypeExtensions()
 		{ ARCHIVE_RAR,			_T("RAR"),			_T("|RAR|CBR|") },
 		{ ARCHIVE_ACE,			_T("ACE"),			_T("|ACE|") },
 		{ ARCHIVE_7Z,			_T("7Z"),			_T("|7Z|") },
+		{ ARCHIVE_GZ,			_T("GZip"),			_T("|GZ|TGZ|") },
 		{ AUDIO_MPEG,			_T("MPEG Audio"),	_T("|MP2|MP3|") },
+		{ AUDIO_FLAC,			_T("FLAC"),			_T("|FLAC|") },
+		{ AUDIO_WAV,			_T("WAV"),			_T("|WAV|") },
+		{ AUDIO_AAC,			_T("AAC"),			_T("|AAC|") },
 		{ IMAGE_ISO,			_T("ISO/NRG"),		_T("|ISO|NRG|") },
 		{ VIDEO_MPG,			_T("MPEG Video"),	_T("|MPG|MPEG|") },
 		{ VIDEO_AVI,			_T("AVI"),			_T("|AVI|DIVX|") },
@@ -92,6 +102,8 @@ inline const SFileTypeExtension* GetFileTypeExtensions()
 		{ PIC_PNG,				_T("PNG"),			_T("|PNG|") },
 		{ PIC_GIF,				_T("GIF"),			_T("|GIF|") },
 		{ DOCUMENT_PDF,			_T("PDF"),			_T("|PDF|") },
+		{ DOCUMENT_EPUB,		_T("EPUB"),			_T("|EPUB|") },
+		{ DOCUMENT_MOBI,		_T("MOBI"),			_T("|MOBI|AZW|AZW3|") },
 		{ FILETYPE_EXECUTABLE,	_T("WIN/DOS EXE"),	_T("|EXE|COM|DLL|SYS|CPL|FON|OCX|SCR|VBX|") },
 		{ FILETYPE_UNKNOWN,		_T(""),				_T("") }
 	};
@@ -153,11 +165,13 @@ inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHea
 {
 	static const BYTE FILEHEADER_7Z_ID[] =	{ 0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C };
 	static const BYTE FILEHEADER_ACE_ID[] =	{ 0x2A, 0x2A, 0x41, 0x43, 0x45, 0x2A, 0x2A };
-	static const BYTE FILEHEADER_AVI_ID[] =	{ 0x52, 0x49, 0x46, 0x46 };
 	static const BYTE FILEHEADER_EXE_ID[] =	{ 0x4D, 0x5A };
+	static const BYTE FILEHEADER_FLAC_ID[] =	{ 0x66, 0x4C, 0x61, 0x43 };
 	static const BYTE FILEHEADER_GIF_ID[] =	{ 0x47, 0x49, 0x46, 0x38 };
+	static const BYTE FILEHEADER_GZ_ID[] =	{ 0x1F, 0x8B, 0x08 };
 	static const BYTE FILEHEADER_JPG_ID[] =	{ 0xFF, 0xD8, 0xFF };
 	static const BYTE FILEHEADER_MKV_ID[] =	{ 0x1A, 0x45, 0xDF, 0xA3 };
+	static const BYTE FILEHEADER_MOBI_ID[] =	{ 0x42, 0x4F, 0x4F, 0x4B, 0x4D, 0x4F, 0x42, 0x49 };
 	static const BYTE FILEHEADER_MP3_ID[] =	{ 0x49, 0x44, 0x33, 0x03 };
 	static const BYTE FILEHEADER_MP3_ID2[] =	{ 0xFE, 0xFB };
 	static const BYTE FILEHEADER_MP4_ID[] =	{ 0x66, 0x74, 0x79, 0x70 };
@@ -166,6 +180,7 @@ inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHea
 	static const BYTE FILEHEADER_PDF_ID[] =	{ 0x25, 0x50, 0x44, 0x46 };
 	static const BYTE FILEHEADER_PNG_ID[] =	{ 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 	static const BYTE FILEHEADER_RAR_ID[] =	{ 0x52, 0x61, 0x72, 0x21 };
+	static const BYTE FILEHEADER_RIFF_ID[] =	{ 0x52, 0x49, 0x46, 0x46 };
 	static const BYTE FILEHEADER_WM_ID[] =	{ 0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11, 0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C };
 	static const BYTE FILEHEADER_ZIP_ID[] =	{ 0x50, 0x4B, 0x03, 0x04 };
 
@@ -179,12 +194,18 @@ inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHea
 		return ARCHIVE_ACE;
 	if (memcmp(pHeader, FILEHEADER_7Z_ID, sizeof FILEHEADER_7Z_ID) == 0)
 		return ARCHIVE_7Z;
+	if (memcmp(pHeader, FILEHEADER_GZ_ID, sizeof FILEHEADER_GZ_ID) == 0)
+		return ARCHIVE_GZ;
 	if (memcmp(pHeader, FILEHEADER_WM_ID, sizeof FILEHEADER_WM_ID) == 0)
 		return WM;
-	if (memcmp(pHeader, FILEHEADER_AVI_ID, sizeof FILEHEADER_AVI_ID) == 0 && strncmp(reinterpret_cast<const char*>(pHeader) + 8, "AVI", 3) == 0)
+	if (memcmp(pHeader, FILEHEADER_RIFF_ID, sizeof FILEHEADER_RIFF_ID) == 0 && strncmp(reinterpret_cast<const char*>(pHeader) + 8, "AVI", 3) == 0)
 		return VIDEO_AVI;
+	if (memcmp(pHeader, FILEHEADER_RIFF_ID, sizeof FILEHEADER_RIFF_ID) == 0 && strncmp(reinterpret_cast<const char*>(pHeader) + 8, "WAVE", 4) == 0)
+		return AUDIO_WAV;
 	if (memcmp(pHeader, FILEHEADER_MP3_ID, sizeof FILEHEADER_MP3_ID) == 0 || memcmp(pHeader, FILEHEADER_MP3_ID2, sizeof FILEHEADER_MP3_ID2) == 0)
 		return AUDIO_MPEG;
+	if (memcmp(pHeader, FILEHEADER_FLAC_ID, sizeof FILEHEADER_FLAC_ID) == 0)
+		return AUDIO_FLAC;
 	if (memcmp(pHeader, FILEHEADER_MPG_ID, sizeof FILEHEADER_MPG_ID) == 0)
 		return VIDEO_MPG;
 	if (memcmp(pHeader + 4, FILEHEADER_MP4_ID, sizeof FILEHEADER_MP4_ID) == 0)
@@ -195,14 +216,20 @@ inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHea
 		return VIDEO_OGG;
 	if (memcmp(pHeader, FILEHEADER_PDF_ID, sizeof FILEHEADER_PDF_ID) == 0)
 		return DOCUMENT_PDF;
+	if (memcmp(pHeader + 60, FILEHEADER_MOBI_ID, sizeof FILEHEADER_MOBI_ID) == 0)
+		return DOCUMENT_MOBI;
 	if (memcmp(pHeader, FILEHEADER_PNG_ID, sizeof FILEHEADER_PNG_ID) == 0)
 		return PIC_PNG;
 	if (memcmp(pHeader, FILEHEADER_JPG_ID, sizeof FILEHEADER_JPG_ID) == 0 && (pHeader[3] == 0xE1 || pHeader[3] == 0xE0))
 		return PIC_JPG;
 	if (memcmp(pHeader, FILEHEADER_GIF_ID, sizeof FILEHEADER_GIF_ID) == 0 && pHeader[5] == 0x61 && (pHeader[4] == 0x37 || pHeader[4] == 0x39))
 		return PIC_GIF;
+	const LPCTSTR pszExtension = ::PathFindExtension(pszFileName);
 	if (memcmp(pHeader, FILEHEADER_EXE_ID, sizeof FILEHEADER_EXE_ID) == 0)
-		return _tcsicmp(::PathFindExtension(pszFileName), _T(".rar")) == 0 ? FILETYPE_UNKNOWN : FILETYPE_EXECUTABLE;
+		return _tcsicmp(pszExtension, _T(".rar")) == 0 || _tcsicmp(pszExtension, _T(".cbr")) == 0 ? FILETYPE_UNKNOWN : FILETYPE_EXECUTABLE;
+	if (pHeader[0] == 0xFF && (pHeader[1] & 0xF0) == 0xF0 && (pHeader[1] & 0x06) == 0
+		&& _tcsicmp(pszExtension, _T(".aac")) == 0)
+		return AUDIO_AAC;
 	if ((pHeader[0] & 0xFF) == 0xFF && (pHeader[1] & 0xE0) == 0xE0)
 		return AUDIO_MPEG;
 	return FILETYPE_UNKNOWN;
