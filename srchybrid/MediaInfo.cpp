@@ -800,7 +800,7 @@ bool GetRIFFHeaders(LPCTSTR pszFileName, SMediaInfo *mi, bool &rbIsAVI, bool bFu
 										mi->strInfo << _T("   ") << GetResString(IDS_CODEC) << _T(":\t") << GetVideoFormatName(strmhdr.fmt.bmi->biCompression) << _T("\n");
 										if (strmhdr.fmt.bmi->biWidth && strmhdr.fmt.bmi->biHeight) {
 											mi->strInfo << _T("   ") << GetResString(IDS_WIDTH) << _T(" x ") << GetResString(IDS_HEIGHT) << _T(":\t") << abs(strmhdr.fmt.bmi->biWidth) << _T(" x ") << abs(strmhdr.fmt.bmi->biHeight) << _T("\n");
-											float fAspectRatio = fabsf(strmhdr.fmt.bmi->biWidth / (float)strmhdr.fmt.bmi->biHeight);
+											float fAspectRatio = fabsf(static_cast<float>(strmhdr.fmt.bmi->biWidth) / static_cast<float>(strmhdr.fmt.bmi->biHeight));
 											mi->strInfo << _T("   ") << GetResString(IDS_ASPECTRATIO) << _T(":\t") << fAspectRatio << _T("  (") << GetKnownAspectRatioDisplayString(fAspectRatio) << _T(")\n");
 										}
 									}
@@ -1962,7 +1962,7 @@ public:
 			// If WMP64 is installed, WMVCORE.DLL is not available.
 			// If WMP9+ is installed, WMVCORE.DLL is available.
 			//
-			m_hLib = ::LoadLibrary(_T("wmvcore.dll"));
+			m_hLib = ::LoadLibraryEx(_T("wmvcore.dll"), NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
 			if (m_hLib != NULL) {
 				(FARPROC &)m_pfnWMCreateEditor = ::GetProcAddress(m_hLib, "WMCreateEditor");
 				(FARPROC &)m_pfnWMCreateSyncReader = ::GetProcAddress(m_hLib, "WMCreateSyncReader");
@@ -2130,7 +2130,7 @@ bool GetWMHeaders(LPCTSTR pszFileName, SMediaInfo *mi, bool &rbIsWM, bool bFullI
 
 				QWORD qwDuration = 0;
 				if (GetAttribute(pIWMHeaderInfo, wStream, g_wszWMDuration, qwDuration))
-					mi->fFileLengthSec = max(qwDuration / 10000000.0, 1.0);
+					mi->fFileLengthSec = max(static_cast<double>(qwDuration) / 10000000.0, 1.0);
 				else
 					ASSERT(0);
 
@@ -2263,7 +2263,7 @@ bool GetWMHeaders(LPCTSTR pszFileName, SMediaInfo *mi, bool &rbIsWM, bool bFullI
 												}
 											}
 											if (mi->fVideoFrameRate == 0.0 && mi->video.AvgTimePerFrame)
-												mi->fVideoFrameRate = 1.0 / (mi->video.AvgTimePerFrame / 10000000.0);
+												mi->fVideoFrameRate = 1.0 / (static_cast<double>(mi->video.AvgTimePerFrame) / 10000000.0);
 										} else if (bFullInfo && mi->strInfo.m_hWnd) {
 											mi->OutputFileName();
 											if (!mi->strInfo.IsEmpty())
@@ -2275,11 +2275,11 @@ bool GetWMHeaders(LPCTSTR pszFileName, SMediaInfo *mi, bool &rbIsWM, bool bFullI
 											if (pVideoInfo->dwBitRate)
 												mi->strInfo << _T("   ") << GetResString(IDS_BITRATE) << _T(":\t") << (UINT)((pVideoInfo->dwBitRate + 500) / 1000) << _T(" kbit/s\n");
 											mi->strInfo << _T("   ") << GetResString(IDS_WIDTH) << _T(" x ") << GetResString(IDS_HEIGHT) << _T(":\t") << abs(pVideoInfo->bmiHeader.biWidth) << _T(" x ") << abs(pVideoInfo->bmiHeader.biHeight) << _T("\n");
-											float fAspectRatio = fabsf(pVideoInfo->bmiHeader.biWidth / (float)pVideoInfo->bmiHeader.biHeight);
+											float fAspectRatio = fabsf(static_cast<float>(pVideoInfo->bmiHeader.biWidth) / static_cast<float>(pVideoInfo->bmiHeader.biHeight));
 											mi->strInfo << _T("   ") << GetResString(IDS_ASPECTRATIO) << _T(":\t") << fAspectRatio << _T("  (") << GetKnownAspectRatioDisplayString(fAspectRatio) << _T(")\n");
 
 											if (pVideoInfo->AvgTimePerFrame) {
-												float fFrameRate = 1.0f / (pVideoInfo->AvgTimePerFrame / 10000000.0f);
+												float fFrameRate = 1.0f / (static_cast<float>(pVideoInfo->AvgTimePerFrame) / 10000000.0f);
 												mi->strInfo << _T("   ") << GetResString(IDS_FPS) << _T(":\t") << fFrameRate << ("\n");
 											}
 										}

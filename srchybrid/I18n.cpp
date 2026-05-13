@@ -204,14 +204,14 @@ static bool LoadLangLib(const CString &rstrLangDir1, const CString &rstrLangDir2
 			CString strLangDLL;
 			strLangDLL.Format(_T("%s%s.dll"), (LPCTSTR)rstrLangDir1, pLang->pszISOLocale);
 			if (CheckLangDLLVersion(strLangDLL)) {
-				s_hLangDLL = ::LoadLibrary(strLangDLL);
+				s_hLangDLL = ::LoadLibraryEx(PreparePathForLongPath(strLangDLL), NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 				if (s_hLangDLL)
 					return true;
 			}
 			if (!EqualPaths(rstrLangDir1, rstrLangDir2)) {
 				strLangDLL.Format(_T("%s%s.dll"), (LPCTSTR)rstrLangDir2, pLang->pszISOLocale);
 				if (CheckLangDLLVersion(strLangDLL)) {
-					s_hLangDLL = ::LoadLibrary(strLangDLL);
+					s_hLangDLL = ::LoadLibraryEx(PreparePathForLongPath(strLangDLL), NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 					if (s_hLangDLL)
 						return true;
 				}
