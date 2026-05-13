@@ -34,6 +34,7 @@ const BYTE kCacheHeader[] = { 'B', 'B', 'F', 'F', 'M', 'E', 'T', '2' };
 constexpr uint32 kRulesFingerprintSeed = 2166136261U;
 constexpr uint32 kRulesFingerprintPrime = 16777619U;
 constexpr uint32 kDetectorRulesVersion = 1;
+constexpr uint32 kDetectorClassifierVersion = 2;
 constexpr uint32 kMaxCachedReasons = 32;
 constexpr ULONGLONG kMaxRuleFileBytes = 1024 * 1024;
 
@@ -134,6 +135,8 @@ uint32 BuildRulesFingerprint(const FakeFileDetectorSeams::RuleSet &rRules)
 	uint32 uHash = kRulesFingerprintSeed;
 	HashByte(uHash, static_cast<BYTE>(kDetectorRulesVersion & 0xFF));
 	HashByte(uHash, static_cast<BYTE>((kDetectorRulesVersion >> 8) & 0xFF));
+	HashByte(uHash, static_cast<BYTE>(kDetectorClassifierVersion & 0xFF));
+	HashByte(uHash, static_cast<BYTE>((kDetectorClassifierVersion >> 8) & 0xFF));
 	for (const std::wstring &rToken : rRules.tokens) {
 		HashByte(uHash, 'T');
 		HashWideString(uHash, rToken);
