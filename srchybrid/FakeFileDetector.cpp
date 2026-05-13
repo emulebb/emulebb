@@ -354,19 +354,26 @@ SFakeFileReport BuildPartFileReport(CPartFile &rPartFile, const bool bProbeHeade
 	FillCommonEvidence(rPartFile, evidence);
 	evidence.headerPending = true;
 	evidence.headerAvailable = false;
+	const bool bHeaderRangeAvailable = !rPartFile.IsPartFile() || rPartFile.IsCompleteBDSafe(0, FileTypeClassifierSeams::kHeaderCheckSize);
+	const bool bIsoRangeAvailable = !rPartFile.IsPartFile()
+		|| (static_cast<uint64>(rPartFile.GetCompletedSize()) > FileTypeClassifierSeams::kIsoHeaderOffset + FileTypeClassifierSeams::kHeaderCheckSize
+			&& rPartFile.IsCompleteBD(FileTypeClassifierSeams::kIsoHeaderOffset, FileTypeClassifierSeams::kIsoHeaderOffset + FileTypeClassifierSeams::kHeaderCheckSize));
 	if (bProbeHeader) {
-		if (!rPartFile.IsPartFile() || rPartFile.IsCompleteBDSafe(0, FileTypeClassifierSeams::kHeaderCheckSize)) {
-			evidence.headerPending = false;
-			evidence.headerAvailable = true;
+		if (bHeaderRangeAvailable || bIsoRangeAvailable)
 			evidence.headerType = GetFileTypeEx(&rPartFile, false, true);
-		}
 	} else if (rPartFile.GetVerifiedFileType() != FILETYPE_UNKNOWN) {
-		evidence.headerPending = false;
-		evidence.headerAvailable = true;
 		evidence.headerType = rPartFile.GetVerifiedFileType();
-	} else if (!rPartFile.IsPartFile()) {
-		evidence.headerPending = false;
 	}
+	const bool bHeaderProbeCovered = bProbeHeader ? bHeaderRangeAvailable : evidence.headerType != FILETYPE_UNKNOWN;
+	const bool bIsoProbeCovered = bProbeHeader ? bIsoRangeAvailable : evidence.headerType != FILETYPE_UNKNOWN;
+	const FileTypeClassifierSeams::HeaderProbeSummary headerSummary = FileTypeClassifierSeams::SummarizeHeaderProbe(
+		evidence.headerType,
+		evidence.extensionType,
+		bHeaderProbeCovered,
+		bIsoProbeCovered);
+	evidence.headerAvailable = headerSummary.status == FileTypeClassifierSeams::HeaderProbeStatus::Detected
+		|| headerSummary.status == FileTypeClassifierSeams::HeaderProbeStatus::CheckedUnknown;
+	evidence.headerPending = headerSummary.status == FileTypeClassifierSeams::HeaderProbeStatus::Pending;
 	SFakeFileReport report(ToAppReport(FakeFileDetectorSeams::Analyze(evidence, g_rules)));
 	if (bProbeHeader)
 		report.bCached = HasCurrentCacheRecord(rPartFile.GetFileHash());

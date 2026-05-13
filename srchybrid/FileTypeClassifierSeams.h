@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atlstr.h>
+#include <cstdint>
 #include <cstring>
 #include <Shlwapi.h>
 #include <tchar.h>
@@ -36,6 +37,20 @@ namespace FileTypeClassifierSeams
  * @brief Number of leading bytes needed by the built-in file signature table.
  */
 constexpr size_t kHeaderCheckSize = 16;
+constexpr uint64_t kIsoHeaderOffset = 0x8000;
+
+enum class HeaderProbeStatus
+{
+	Pending,
+	CheckedUnknown,
+	Detected
+};
+
+struct HeaderProbeSummary
+{
+	HeaderProbeStatus status = HeaderProbeStatus::Pending;
+	EFileType type = FILETYPE_UNKNOWN;
+};
 
 /**
  * @brief Maps one detected file type to its display label and accepted
@@ -197,6 +212,27 @@ inline EFileType DetectIsoTypeFromOffsetHeader(const BYTE *pHeader, const size_t
 	if (pHeader != NULL && uHeaderSize >= kHeaderCheckSize && memcmp(pHeader, FILEHEADER_ISO_ID, sizeof FILEHEADER_ISO_ID) == 0)
 		return IMAGE_ISO;
 	return FILETYPE_UNKNOWN;
+}
+
+inline bool NeedsIsoOffsetProbe(const EFileType eExtensionType)
+{
+	return eExtensionType == IMAGE_ISO;
+}
+
+inline HeaderProbeSummary SummarizeHeaderProbe(const EFileType eDetectedType, const EFileType eExtensionType, const bool bHeaderRangeAvailable, const bool bIsoRangeAvailable)
+{
+	HeaderProbeSummary summary;
+	summary.type = eDetectedType;
+	if (eDetectedType != FILETYPE_UNKNOWN) {
+		summary.status = HeaderProbeStatus::Detected;
+		return summary;
+	}
+	if (!bHeaderRangeAvailable || (NeedsIsoOffsetProbe(eExtensionType) && !bIsoRangeAvailable)) {
+		summary.status = HeaderProbeStatus::Pending;
+		return summary;
+	}
+	summary.status = HeaderProbeStatus::CheckedUnknown;
+	return summary;
 }
 }
 
