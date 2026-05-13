@@ -28,9 +28,14 @@
 #define ERAR_EWRITE			19
 #define ERAR_SMALL_BUF		20
 #define ERAR_UNKNOWN		21
+#define ERAR_MISSING_PASSWORD	22
+#define ERAR_EREFERENCE		23
+#define ERAR_BAD_PASSWORD	24
+#define ERAR_LARGE_DICT		25
 
 #define RAR_OM_LIST			0
 #define RAR_OM_EXTRACT		1
+#define RAR_OM_LIST_INCSPLIT	2
 
 #define RAR_SKIP			0
 #define RAR_TEST			1
@@ -39,13 +44,39 @@
 #define RAR_VOL_ASK			0
 #define RAR_VOL_NOTIFY		1
 
-#define RAR_DLL_VERSION		4
+#define RAR_DLL_VERSION		9
+
+#define RAR_HASH_NONE		0
+#define RAR_HASH_CRC32		1
+#define RAR_HASH_BLAKE2		2
+
+#define RHDF_SPLITBEFORE	0x01
+#define RHDF_SPLITAFTER		0x02
+#define RHDF_ENCRYPTED		0x04
+#define RHDF_SOLID			0x10
+#define RHDF_DIRECTORY		0x20
+
+#define ROADF_VOLUME		0x0001
+#define ROADF_COMMENT		0x0002
+#define ROADF_LOCK			0x0004
+#define ROADF_SOLID			0x0008
+#define ROADF_NEWNUMBERING	0x0010
+#define ROADF_SIGNED		0x0020
+#define ROADF_RECOVERY		0x0040
+#define ROADF_ENCHEADERS	0x0080
+#define ROADF_FIRSTVOLUME	0x0100
+
+#define ROADOF_KEEPBROKEN	0x0001
 
 #ifdef _WIN64
-#define UNRAR_DLL_NAME		_T("unrar64.dll")
+#define UNRAR_DLL_NAME		_T("UnRAR64.dll")
+#define UNRAR_DLL_INSTALL_HINT	_T("%ProgramFiles(x86)%\\UnrarDLL\\x64\\UnRAR64.dll")
 #else
-#define UNRAR_DLL_NAME		_T("unrar.dll")
+#define UNRAR_DLL_NAME		_T("UnRAR.dll")
+#define UNRAR_DLL_INSTALL_HINT	_T("%ProgramFiles(x86)%\\UnrarDLL\\UnRAR.dll")
 #endif
+
+typedef int (CALLBACK *UNRARCALLBACK)(UINT msg, LPARAM UserData, LPARAM P1, LPARAM P2);
 
 #pragma pack(push, 1)
 struct RAROpenArchiveDataEx
@@ -59,7 +90,12 @@ struct RAROpenArchiveDataEx
 	DWORD	CmtSize;
 	DWORD	CmtState;
 	DWORD	Flags;
-	DWORD	Reserved[32];
+	UNRARCALLBACK Callback;
+	LPARAM	UserData;
+	DWORD	OpFlags;
+	WCHAR	*CmtBufW;
+	WCHAR	*MarkOfTheWeb;
+	DWORD	Reserved[23];
 };
 #pragma pack(pop)
 
@@ -85,7 +121,24 @@ struct RARHeaderDataEx
 	DWORD	CmtBufSize;
 	DWORD	CmtSize;
 	DWORD	CmtState;
-	DWORD	Reserved[1024];
+	DWORD	DictSize;
+	DWORD	HashType;
+	char	Hash[32];
+	DWORD	RedirType;
+	WCHAR	*RedirName;
+	DWORD	RedirNameSize;
+	DWORD	DirTarget;
+	DWORD	MtimeLow;
+	DWORD	MtimeHigh;
+	DWORD	CtimeLow;
+	DWORD	CtimeHigh;
+	DWORD	AtimeLow;
+	DWORD	AtimeHigh;
+	WCHAR	*ArcNameEx;
+	DWORD	ArcNameExSize;
+	WCHAR	*FileNameEx;
+	DWORD	FileNameExSize;
+	DWORD	Reserved[982];
 };
 #pragma pack(pop)
 
@@ -113,4 +166,5 @@ protected:
 	int (WINAPI *m_pfnRARCloseArchive)(HANDLE hArcData) noexcept(false);
 	int (WINAPI *m_pfnRARReadHeaderEx)(HANDLE hArcData, struct RARHeaderDataEx *HeaderData) noexcept(false);
 	int (WINAPI *m_pfnRARProcessFileW)(HANDLE hArcData, int iOperation, const WCHAR *pszDestFolder, const WCHAR *pszDestName) noexcept(false);
+	int (WINAPI *m_pfnRARGetDllVersion)() noexcept(false);
 };
