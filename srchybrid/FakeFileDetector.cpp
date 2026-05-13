@@ -211,7 +211,7 @@ bool IsValidRegex(const CString &rstrPattern)
 
 uint64 GetIsoHeaderRangeEnd()
 {
-	return FileTypeClassifierSeams::kIsoHeaderOffset + FileTypeClassifierSeams::kHeaderCheckSize - 1;
+	return FileTypeClassifierSeams::GetHeaderRangeEnd(FileTypeClassifierSeams::kIsoHeaderOffset);
 }
 
 bool IsIsoHeaderRangeAvailable(CPartFile &rPartFile)

@@ -39,6 +39,11 @@ namespace FileTypeClassifierSeams
 constexpr size_t kHeaderCheckSize = 16;
 constexpr uint64_t kIsoHeaderOffset = 0x8000;
 
+inline uint64_t GetHeaderRangeEnd(const uint64_t uOffset)
+{
+	return uOffset + kHeaderCheckSize - 1;
+}
+
 enum class HeaderProbeStatus
 {
 	Pending,
