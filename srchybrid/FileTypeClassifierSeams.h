@@ -243,7 +243,7 @@ inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHea
 		return PIC_GIF;
 	const LPCTSTR pszExtension = ::PathFindExtension(pszFileName != NULL ? pszFileName : _T(""));
 	if (uHeaderSize >= sizeof FILEHEADER_EXE_ID && memcmp(pHeader, FILEHEADER_EXE_ID, sizeof FILEHEADER_EXE_ID) == 0)
-		return _tcsicmp(pszExtension, _T(".rar")) == 0 || _tcsicmp(pszExtension, _T(".cbr")) == 0 ? FILETYPE_UNKNOWN : FILETYPE_EXECUTABLE;
+		return _tcsicmp(pszExtension, _T(".rar")) == 0 ? FILETYPE_UNKNOWN : FILETYPE_EXECUTABLE;
 	if (uHeaderSize >= 2 && pHeader[0] == 0xFF && (pHeader[1] & 0xF0) == 0xF0 && (pHeader[1] & 0x06) == 0
 		&& _tcsicmp(pszExtension, _T(".aac")) == 0)
 	{
