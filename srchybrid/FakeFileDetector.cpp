@@ -549,11 +549,16 @@ bool FakeFileDetector::RefreshPartFileHeaderIfAvailable(CPartFile &rPartFile)
 {
 	const EFileType eExtensionType = FileTypeClassifierSeams::GetFileTypeFromExtension(rPartFile.GetFileName());
 	const uint8 uAvailableProbeMask = GetAvailableHeaderProbeMask(rPartFile);
-	if (uAvailableProbeMask == 0)
-		return false;
-
 	const CString strHash(md4str(rPartFile.GetFileHash()));
-	const auto it = g_partHeaderProbeState.find(strHash);
+	auto it = g_partHeaderProbeState.find(strHash);
+	if (uAvailableProbeMask == 0) {
+		if (it != g_partHeaderProbeState.end())
+			g_partHeaderProbeState.erase(it);
+		return false;
+	}
+
+	if (it != g_partHeaderProbeState.end())
+		it->second.uProbeMask &= uAvailableProbeMask;
 	if (it != g_partHeaderProbeState.end() && it->second.eExtensionType == eExtensionType
 		&& (it->second.uProbeMask & uAvailableProbeMask) == uAvailableProbeMask)
 	{
