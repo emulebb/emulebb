@@ -171,8 +171,8 @@ inline bool IsArchiveType(const EFileType eType)
 }
 
 /**
- * @brief Reports whether a container signature is valid for a more specific
- * extension class.
+ * @brief Reports whether observed header evidence is compatible with the
+ * extension classifier.
  */
 inline bool HeaderMatchesExtensionType(const EFileType eHeaderType, const EFileType eExtensionType)
 {

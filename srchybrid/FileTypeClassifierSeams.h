@@ -165,6 +165,11 @@ inline int IsExtensionTypeOf(const EFileType eType, LPCTSTR const pszExt)
  */
 inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHeaderSize, LPCTSTR pszFileName)
 {
+	constexpr size_t kMobiMagicOffset = 60;
+	constexpr size_t kZipCompressionMethodOffset = 8;
+	constexpr size_t kZipFileNameLengthOffset = 26;
+	constexpr size_t kZipExtraLengthOffset = 28;
+	constexpr size_t kZipFileNameOffset = 30;
 	static const BYTE FILEHEADER_7Z_ID[] =	{ 0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C };
 	static const BYTE FILEHEADER_ACE_ID[] =	{ 0x2A, 0x2A, 0x41, 0x43, 0x45, 0x2A, 0x2A };
 	static const BYTE FILEHEADER_EPUB_MEDIA_TYPE[] = { 0x61, 0x70, 0x70, 0x6C, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x2F, 0x65, 0x70, 0x75, 0x62, 0x2B, 0x7A, 0x69, 0x70 };
@@ -190,13 +195,13 @@ inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHea
 
 	if (pHeader == NULL)
 		return FILETYPE_UNKNOWN;
-	if (uHeaderSize >= 30 + sizeof FILEHEADER_EPUB_MIMETYPE + sizeof FILEHEADER_EPUB_MEDIA_TYPE
+	if (uHeaderSize >= kZipFileNameOffset + sizeof FILEHEADER_EPUB_MIMETYPE + sizeof FILEHEADER_EPUB_MEDIA_TYPE
 		&& memcmp(pHeader, FILEHEADER_ZIP_ID, sizeof FILEHEADER_ZIP_ID) == 0
-		&& pHeader[8] == 0x00 && pHeader[9] == 0x00
-		&& pHeader[26] == sizeof FILEHEADER_EPUB_MIMETYPE && pHeader[27] == 0x00
-		&& pHeader[28] == 0x00 && pHeader[29] == 0x00
-		&& memcmp(pHeader + 30, FILEHEADER_EPUB_MIMETYPE, sizeof FILEHEADER_EPUB_MIMETYPE) == 0
-		&& memcmp(pHeader + 30 + sizeof FILEHEADER_EPUB_MIMETYPE, FILEHEADER_EPUB_MEDIA_TYPE, sizeof FILEHEADER_EPUB_MEDIA_TYPE) == 0)
+		&& pHeader[kZipCompressionMethodOffset] == 0x00 && pHeader[kZipCompressionMethodOffset + 1] == 0x00
+		&& pHeader[kZipFileNameLengthOffset] == sizeof FILEHEADER_EPUB_MIMETYPE && pHeader[kZipFileNameLengthOffset + 1] == 0x00
+		&& pHeader[kZipExtraLengthOffset] == 0x00 && pHeader[kZipExtraLengthOffset + 1] == 0x00
+		&& memcmp(pHeader + kZipFileNameOffset, FILEHEADER_EPUB_MIMETYPE, sizeof FILEHEADER_EPUB_MIMETYPE) == 0
+		&& memcmp(pHeader + kZipFileNameOffset + sizeof FILEHEADER_EPUB_MIMETYPE, FILEHEADER_EPUB_MEDIA_TYPE, sizeof FILEHEADER_EPUB_MEDIA_TYPE) == 0)
 	{
 		return DOCUMENT_EPUB;
 	}
@@ -233,7 +238,7 @@ inline EFileType DetectFileTypeFromHeader(const BYTE *pHeader, const size_t uHea
 		return VIDEO_OGG;
 	if (uHeaderSize >= sizeof FILEHEADER_PDF_ID && memcmp(pHeader, FILEHEADER_PDF_ID, sizeof FILEHEADER_PDF_ID) == 0)
 		return DOCUMENT_PDF;
-	if (uHeaderSize >= 60 + sizeof FILEHEADER_MOBI_ID && memcmp(pHeader + 60, FILEHEADER_MOBI_ID, sizeof FILEHEADER_MOBI_ID) == 0)
+	if (uHeaderSize >= kMobiMagicOffset + sizeof FILEHEADER_MOBI_ID && memcmp(pHeader + kMobiMagicOffset, FILEHEADER_MOBI_ID, sizeof FILEHEADER_MOBI_ID) == 0)
 		return DOCUMENT_MOBI;
 	if (uHeaderSize >= sizeof FILEHEADER_PNG_ID && memcmp(pHeader, FILEHEADER_PNG_ID, sizeof FILEHEADER_PNG_ID) == 0)
 		return PIC_PNG;
