@@ -21,6 +21,7 @@
 #include "Log.h"
 #include "OtherFunctions.h"
 #include "MediaInfo.h"
+#include "MediaInfoDllSeams.h"
 #include "PathHelpers.h"
 #include "Preferences.h"
 
@@ -69,6 +70,7 @@ public:
 		: m_ullVersion()
 		, m_hLib()
 		, m_bInitialized()
+		, m_initLock()
 		, m_strLoadedPath()
 		, m_pfnMediaInfo_New()
 		, m_pfnMediaInfo_Open()
@@ -87,13 +89,14 @@ public:
 
 	bool Initialize()
 	{
+		CSingleLock initLock(&m_initLock, TRUE);
 		if (!m_bInitialized) {
 			m_bInitialized = true;
 			ResetLoadedLibrary();
 			CString strSummaryReason(_T("no compatible version 26.01 or newer was found"));
 
 			const CString strConfiguredPath(theApp.GetProfileString(_T("eMule"), _T("MediaInfo_MediaInfoDllPath"), _T("MEDIAINFO.DLL")));
-			if (strConfiguredPath.CompareNoCase(_T("<noload>")) == 0) {
+			if (MediaInfoDllSeams::IsLoadingDisabled(strConfiguredPath)) {
 				strSummaryReason = _T("loading disabled by configuration");
 				AddLogLine(false, _T("MediaInfo.dll not loaded: %s"), (LPCTSTR)strSummaryReason);
 				return false;
@@ -147,13 +150,17 @@ public:
 		if (!m_pfnMediaInfo_New)
 			return NULL;
 		void *Handle = (*m_pfnMediaInfo_New)();
-		if (Handle != NULL)
-			(*m_pfnMediaInfo_Open)(Handle, pszFilePath);
+		if (Handle != NULL && !MediaInfoDllSeams::IsOpenSucceeded((*m_pfnMediaInfo_Open)(Handle, pszFilePath))) {
+			Close(Handle);
+			Handle = NULL;
+		}
 		return Handle;
 	}
 
 	void Close(void *Handle)
 	{
+		if (Handle == NULL)
+			return;
 		if (m_pfnMediaInfo_Delete)
 			(*m_pfnMediaInfo_Delete)(Handle);
 		else if (m_pfnMediaInfo_Close)
@@ -164,14 +171,16 @@ public:
 	{
 		if (!m_pfnMediaInfo_Get)
 			return CString();
-		return (*m_pfnMediaInfo_Get)(Handle, StreamKind, StreamNumber, pszParameter, KindOfInfo, KindOfSearch);
+		const wchar_t *pszValue = (*m_pfnMediaInfo_Get)(Handle, StreamKind, StreamNumber, pszParameter, KindOfInfo, KindOfSearch);
+		return pszValue != NULL ? CString(pszValue) : CString();
 	}
 
 	CString GetI(void *Handle, MediaInfo_stream_C StreamKind, size_t StreamNumber, size_t iParameter, MediaInfo_info_C KindOfInfo)
 	{
 		if (!m_pfnMediaInfo_GetI)
 			return CString();
-		return CString((*m_pfnMediaInfo_GetI)(Handle, StreamKind, StreamNumber, iParameter, KindOfInfo));
+		const wchar_t *pszValue = (*m_pfnMediaInfo_GetI)(Handle, StreamKind, StreamNumber, iParameter, KindOfInfo);
+		return pszValue != NULL ? CString(pszValue) : CString();
 	}
 
 protected:
@@ -199,7 +208,7 @@ protected:
 
 	static bool IsCompatibleVersion(ULONGLONG ullVersion)
 	{
-		return ullVersion >= MAKEDLLVERULL(26, 1, 0, 0);
+		return MediaInfoDllSeams::IsCompatibleVersion(ullVersion);
 	}
 
 	void AddCandidatePath(CStringArray &raCandidatePaths, const CString &strCandidatePath)
@@ -208,13 +217,7 @@ protected:
 			return;
 		CString strNormalizedPath(strCandidatePath);
 		canonical(strNormalizedPath);
-		if (strNormalizedPath.IsEmpty() || ::PathIsRelative(strNormalizedPath))
-			return;
-		for (INT_PTR i = 0; i < raCandidatePaths.GetCount(); ++i) {
-			if (raCandidatePaths[i].CompareNoCase(strNormalizedPath) == 0)
-				return;
-		}
-		raCandidatePaths.Add(strNormalizedPath);
+		MediaInfoDllSeams::AddAbsoluteCandidatePath(raCandidatePaths, strNormalizedPath);
 	}
 
 	void AddRegistryInstallCandidate(HKEY hRootKey, CStringArray &raCandidatePaths)
@@ -261,9 +264,10 @@ protected:
 			return NULL;
 		}
 
-		HMODULE hCandidateLib = ::LoadLibrary(strPath);
+		const CString strLoadPath(PreparePathForLongPath(strPath));
+		HMODULE hCandidateLib = ::LoadLibraryEx(strLoadPath, NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 		if (hCandidateLib == NULL) {
-			rstrReason.Format(_T("LoadLibrary failed: %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
+			rstrReason.Format(_T("LoadLibraryEx failed: %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
 			return NULL;
 		}
 
@@ -323,6 +327,7 @@ protected:
 	ULONGLONG m_ullVersion;
 	HINSTANCE m_hLib;
 	bool m_bInitialized;
+	CCriticalSection m_initLock;
 	CString m_strLoadedPath;
 
 	void* (__stdcall *m_pfnMediaInfo_New)();
@@ -334,6 +339,34 @@ protected:
 };
 
 CMediaInfoDLL theMediaInfoDLL;
+
+/**
+ * @brief RAII wrapper for one MediaInfo DLL parser handle.
+ */
+class CScopedMediaInfoHandle
+{
+public:
+	explicit CScopedMediaInfoHandle(void *pHandle)
+		: m_pHandle(pHandle)
+	{
+	}
+
+	~CScopedMediaInfoHandle()
+	{
+		theMediaInfoDLL.Close(m_pHandle);
+	}
+
+	void* Get() const
+	{
+		return m_pHandle;
+	}
+
+private:
+	CScopedMediaInfoHandle(const CScopedMediaInfoHandle &);
+	CScopedMediaInfoHandle& operator=(const CScopedMediaInfoHandle &);
+
+	void *m_pHandle;
+};
 
 static void WarnAboutWrongFileExtension(SMediaInfo *mi, LPCTSTR pszFileName, LPCTSTR pszExtensions)
 {
@@ -373,12 +406,13 @@ bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo
 		*pbLibraryAvailable = true;
 
 	const CString strPreparedPath(PreparePathForLongPath(CString(pszFilePath)));
-	void *Handle = theMediaInfoDLL.Open(strPreparedPath);
+	CScopedMediaInfoHandle mediaInfoHandle(theMediaInfoDLL.Open(strPreparedPath));
+	void *Handle = mediaInfoHandle.Get();
 	if (Handle == NULL)
 		return false;
 
 	bool bFoundHeader = false;
-	try {
+	{
 		const LPCTSTR pCodec = _T("Format");
 		const LPCTSTR pCodecInfo = _T("Format/Info");
 		const LPCTSTR pCodecString = _T("Format/String");
@@ -732,12 +766,8 @@ bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo
 			mi->bVideoLengthEstimated |= (mi->iVideoStreams > 0);
 			mi->bAudioLengthEstimated |= (mi->iAudioStreams > 0);
 		}
-	} catch (...) {
-		theMediaInfoDLL.Close(Handle);
-		throw;
 	}
 
-	theMediaInfoDLL.Close(Handle);
 	mi->InitFileLength();
 	return bFoundHeader
 		|| mi->fFileLengthSec > 0

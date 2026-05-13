@@ -569,6 +569,7 @@
     <ClInclude Include="MD5Sum.h" />
     <ClInclude Include="Mdump.h" />
     <ClInclude Include="MediaInfo.h" />
+    <ClInclude Include="MediaInfoDllSeams.h" />
     <ClInclude Include="MemDC.h" />
     <ClInclude Include="MenuCmds.h" />
     <ClInclude Include="MetaDataDlg.h" />
