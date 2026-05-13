@@ -32,6 +32,16 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace
+{
+void EnableDlgItemIfPresent(CWnd &wndParent, int iControlId, BOOL bEnabled)
+{
+	CWnd *pControl = wndParent.GetDlgItem(iControlId);
+	if (pControl != NULL)
+		pControl->EnableWindow(bEnabled);
+}
+}
+
 
 IMPLEMENT_DYNAMIC(CPPgFiles, CPropertyPage)
 
@@ -284,11 +294,11 @@ void CPPgFiles::OnSetCleanupFilter()
 void CPPgFiles::UpdateCompletionCommandControls()
 {
 	const BOOL bEnabled = IsDlgButtonChecked(IDC_RUNONFILECOMPLETE) != 0;
-	GetDlgItem(IDC_FILECOMPLETEPROGRAM_LBL)->EnableWindow(bEnabled);
-	GetDlgItem(IDC_FILECOMPLETEPROGRAM)->EnableWindow(bEnabled);
-	GetDlgItem(IDC_BROWSE_FILECOMPLETEPROGRAM)->EnableWindow(bEnabled);
-	GetDlgItem(IDC_FILECOMPLETEARGS_LBL)->EnableWindow(bEnabled);
-	GetDlgItem(IDC_FILECOMPLETEARGS)->EnableWindow(bEnabled);
+	EnableDlgItemIfPresent(*this, IDC_FILECOMPLETEPROGRAM_LBL, bEnabled);
+	EnableDlgItemIfPresent(*this, IDC_FILECOMPLETEPROGRAM, bEnabled);
+	EnableDlgItemIfPresent(*this, IDC_BROWSE_FILECOMPLETEPROGRAM, bEnabled);
+	EnableDlgItemIfPresent(*this, IDC_FILECOMPLETEARGS_LBL, bEnabled);
+	EnableDlgItemIfPresent(*this, IDC_FILECOMPLETEARGS, bEnabled);
 }
 
 void CPPgFiles::BrowseVideoplayer()
@@ -346,8 +356,8 @@ BOOL CPPgFiles::PreTranslateMessage(MSG *pMsg)
 void CPPgFiles::OnSettingsChange()
 {
 	SetModified();
-	GetDlgItem(IDC_STARTNEXTFILECAT)->EnableWindow(IsDlgButtonChecked(IDC_STARTNEXTFILE));
-	GetDlgItem(IDC_STARTNEXTFILECAT2)->EnableWindow(IsDlgButtonChecked(IDC_STARTNEXTFILE));
+	EnableDlgItemIfPresent(*this, IDC_STARTNEXTFILECAT, IsDlgButtonChecked(IDC_STARTNEXTFILE));
+	EnableDlgItemIfPresent(*this, IDC_STARTNEXTFILECAT2, IsDlgButtonChecked(IDC_STARTNEXTFILE));
 	UpdateCompletionCommandControls();
 }
 
