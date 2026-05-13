@@ -409,7 +409,7 @@ BEGIN
     EDITTEXT        IDC_BIND_ADDRESS,11,269,114,12,ES_AUTOHSCROLL
     CONTROL         "Keep networking offline if the bind target is unavailable at startup",IDC_STARTUP_BIND_BLOCK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,286,370,18
-    CONTROL         "Exit eMule if the bound interface is lost",IDC_EXIT_ON_BIND_LOSS,
+    CONTROL         "Exit eMule if the selected bind/VPN interface is lost",IDC_EXIT_ON_BIND_LOSS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,306,370,18
     LTEXT           "",IDC_BIND_STATUS,11,326,370,16
     LTEXT           "",IDC_BIND_RESTART_NOTE,11,344,370,28
@@ -4256,7 +4256,7 @@ BEGIN
     IDS_UNIT_KIB_PER_SEC                   "KiB/s"
     IDS_RANDOMIZE_PORTS_ON_STARTUP         "Randomize listen ports on startup"
     IDS_STARTUP_BIND_BLOCK                 "Keep networking offline if the bind target is unavailable at startup"
-    IDS_EXIT_ON_BIND_LOSS                  "Exit eMule if the bound interface is lost"
+    IDS_EXIT_ON_BIND_LOSS                  "Exit eMule if the selected bind/VPN interface is lost"
     IDS_SPEED_MIB_PER_SEC_FMT              "%.2f MiB/s"
     IDS_WEB_MAX_UPLOAD_MIB_LABEL           "Max upload MiB:"
     IDS_WEB_ALLOWED_IPS_LABEL              "Allowed IPs:"
@@ -4493,7 +4493,7 @@ BEGIN
     IDS_CONNECTION_TT_BIND_INTERFACE       "Optional Windows network interface name used for P2P socket binding.\r\n\r\nMatch is by friendly interface name, not adapter number. Changes take effect after restart."
     IDS_CONNECTION_TT_BIND_ADDRESS         "Optional IPv4 address used for P2P socket binding.\r\n\r\nLeave it empty to use the first IPv4 on the selected interface, or the default routing choice when no interface is selected."
     IDS_CONNECTION_TT_STARTUP_BIND_BLOCK   "Keeps P2P networking offline for the session if the configured bind target cannot be resolved at startup.\r\n\r\nAvailable only when a bind interface is selected. Recommended when you explicitly bind to a named interface and do not want silent fallback."
-    IDS_CONNECTION_TT_EXIT_ON_BIND_LOSS    "Exits eMule if the selected bind interface disappears after startup.\r\n\r\nAvailable only when a bind interface is selected. Use this as VPN protection when P2P networking is bound to a VPN adapter."
+    IDS_CONNECTION_TT_EXIT_ON_BIND_LOSS    "Exits eMule if the selected bind/VPN interface disappears after startup.\r\n\r\nAvailable only when a bind interface is selected. Use this as VPN protection so P2P networking never silently falls back to a non-VPN route."
     IDS_WEBSERVER_TT_WEBBINDADDR           "Local bind address for the built-in WebServer and REST API.\r\n\r\nLeave it empty or as 0.0.0.0 to listen on all interfaces. Set a specific IPv4 only if you deliberately want to restrict where the service listens."
     IDS_WEBSERVER_TT_WSAPIKEY              "Plaintext REST API key used by clients in the X-API-Key header.\r\n\r\nRecommended: keep the generated random value unless you need a specific token. Anyone with this key has full API access."
 END

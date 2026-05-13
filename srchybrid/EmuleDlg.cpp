@@ -91,6 +91,7 @@
 #include "DirectDownloadDlg.h"
 #include "StringConversion.h"
 #include "BindStartupPolicy.h"
+#include "BindRuntimeLossPolicy.h"
 #include "AppKeyboardShortcutsSeams.h"
 #include "TrayNotificationSeams.h"
 #include "aichsyncthread.h"
@@ -146,6 +147,17 @@ namespace
 		text.strInterfaceHasNoAddressFormat = GetResString(IDS_BIND_STARTUP_INTERFACE_NO_ADDRESS_FMT);
 		text.strAddressNotFoundOnInterfaceFormat = GetResString(IDS_BIND_STARTUP_INTERFACE_ADDRESS_MISSING_FMT);
 		text.strAddressNotFoundFormat = GetResString(IDS_BIND_STARTUP_ADDRESS_MISSING_FMT);
+		return text;
+	}
+
+	static BindRuntimeLossPolicy::CBindRuntimeLossPolicyText GetBindRuntimeLossPolicyText()
+	{
+		BindRuntimeLossPolicy::CBindRuntimeLossPolicyText text;
+		text.startupText = GetBindStartupPolicyText();
+		text.strInterfaceChangedFormat = GetResString(IDS_BIND_EXIT_INTERFACE_CHANGED_FMT);
+		text.strInterfaceUnavailable = GetResString(IDS_BIND_EXIT_INTERFACE_UNAVAILABLE);
+		text.strStartupDisabledPrefix = GetResString(IDS_BIND_STARTUP_DISABLED_PREFIX);
+		text.strRuntimeExitPrefix = GetResString(IDS_BIND_EXIT_PREFIX);
 		return text;
 	}
 
@@ -1240,24 +1252,17 @@ void CemuleDlg::CheckBindLossMonitor()
 	if (thePrefs.GetBindAddr() != NULL)
 		strActiveBindAddress = thePrefs.GetBindAddr();
 
-	if (eResult == BARR_Resolved && !strResolvedAddress.CompareNoCase(strActiveBindAddress))
+	if (!BindRuntimeLossPolicy::ShouldExitForRuntimeBindLoss(true, eResult, strResolvedAddress, strActiveBindAddress))
 		return;
 
-	CString strReason;
-	if (eResult == BARR_Resolved) {
-		strReason.Format(GetResString(IDS_BIND_EXIT_INTERFACE_CHANGED_FMT)
-			, (LPCTSTR)strActiveBindAddress
-			, (LPCTSTR)strResolvedAddress
-			, (LPCTSTR)BindStartupPolicy::FormatConfiguredBindTarget(thePrefs.GetActiveBindInterfaceName()
-				, thePrefs.GetActiveBindInterface(), thePrefs.GetActiveConfiguredBindAddr(), GetResString(IDS_BIND_ANY_INTERFACE)));
-	} else {
-		strReason = BindStartupPolicy::FormatStartupBlockReason(strResolvedInterfaceName
-			, thePrefs.GetActiveBindInterface(), thePrefs.GetActiveConfiguredBindAddr(), eResult, GetBindStartupPolicyText());
-		if (strReason.IsEmpty())
-			strReason = GetResString(IDS_BIND_EXIT_INTERFACE_UNAVAILABLE);
-		else
-			strReason.Replace(GetResString(IDS_BIND_STARTUP_DISABLED_PREFIX), GetResString(IDS_BIND_EXIT_PREFIX));
-	}
+	const CString strReason = BindRuntimeLossPolicy::FormatRuntimeBindLossReason(strResolvedInterfaceName
+		, thePrefs.GetActiveBindInterfaceName()
+		, thePrefs.GetActiveBindInterface()
+		, thePrefs.GetActiveConfiguredBindAddr()
+		, eResult
+		, strResolvedAddress
+		, strActiveBindAddress
+		, GetBindRuntimeLossPolicyText());
 	ExitForBindLoss(strReason);
 }
 
