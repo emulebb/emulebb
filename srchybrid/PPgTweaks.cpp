@@ -31,6 +31,7 @@
 #include "GeoLocation.h"
 #include "HelpIDs.h"
 #include "Log.h"
+#include "MediaInfo.h"
 #include "PerfLog.h"
 #include "PreferenceUiSeams.h"
 #include "UserMsgs.h"
@@ -44,7 +45,6 @@ static char THIS_FILE[] = __FILE__;
 namespace
 {
 	static const LPCTSTR kMediaInfoDllPathProfileKey = _T("MediaInfo_MediaInfoDllPath");
-	static const LPCTSTR kMediaInfoDllPathDefault = _T("MEDIAINFO.DLL");
 
 	static void FailTreeValidation(CDataExchange *pDX, UINT uMessageId, HTREEITEM hItem)
 	{
@@ -333,7 +333,7 @@ namespace
 
 	static CString GetMediaInfoDllPathToolTip()
 	{
-		return _T("Optional MediaInfo.dll lookup path.\r\n\r\nDefault: MEDIAINFO.DLL. Relative paths are resolved from the eMule program folder. Use <noload> to disable MediaInfo.dll loading while keeping built-in metadata fallbacks. Compatible MediaInfo.dll versions must be 26.01 or newer. Restart eMule after changing this if MediaInfo.dll was already probed in this session.");
+		return _T("Optional MediaInfo.dll lookup path.\r\n\r\nDefault auto-discovery prefers an installed MediaInfo.dll, then falls back to MEDIAINFO.DLL in the eMule program folder. Use <noload> to disable MediaInfo.dll loading while keeping built-in metadata fallbacks. Compatible MediaInfo.dll versions must be 26.01 or newer. Restart eMule after changing this if MediaInfo.dll was already probed in this session.");
 	}
 
 	static CString GetMaxChatHistoryLinesLabel()
@@ -1504,7 +1504,7 @@ BOOL CPPgTweaks::OnInitDialog()
 	m_sDateTimeFormat4Lists = thePrefs.GetDateTimeFormat4Lists();
 	m_sDateTimeFormat = thePrefs.GetDateTimeFormat();
 	m_sDateTimeFormat4Log = thePrefs.GetDateTimeFormat4Log();
-	m_sMediaInfoDllPath = theApp.GetProfileString(_T("eMule"), kMediaInfoDllPathProfileKey, kMediaInfoDllPathDefault);
+	m_sMediaInfoDllPath = ResolveMediaInfoDllPreferencePath(theApp.GetProfileString(_T("eMule"), kMediaInfoDllPathProfileKey, MediaInfoDllSeams::GetDefaultConfiguredPath()));
 	m_bPreviewCopiedArchives = thePrefs.GetPreviewCopiedArchives();
 	m_bInspectAllFileTypes = thePrefs.GetInspectAllFileTypes();
 	m_bPreviewOnIconDblClk = thePrefs.GetPreviewOnIconDblClk();
@@ -1690,6 +1690,8 @@ BOOL CPPgTweaks::OnApply()
 	thePrefs.m_strDateTimeFormat = m_sDateTimeFormat;
 	thePrefs.m_strDateTimeFormat4Log = m_sDateTimeFormat4Log;
 	thePrefs.m_strDateTimeFormat4Lists = m_sDateTimeFormat4Lists;
+	m_sMediaInfoDllPath.Trim();
+	m_sMediaInfoDllPath = ResolveMediaInfoDllPreferencePath(m_sMediaInfoDllPath);
 	theApp.WriteProfileString(_T("eMule"), kMediaInfoDllPathProfileKey, m_sMediaInfoDllPath);
 	thePrefs.m_iMaxChatHistory = static_cast<INT_PTR>(m_uMaxChatHistoryLines);
 	thePrefs.SetMsgSessionsMax(m_uMaxMessageSessions);

@@ -30,11 +30,31 @@ inline ULONGLONG GetMinimumCompatibleVersion()
 }
 
 /**
+ * @brief Returns the persisted path token that requests normal MediaInfo DLL auto-discovery.
+ */
+inline LPCTSTR GetDefaultConfiguredPath()
+{
+	return _T("MEDIAINFO.DLL");
+}
+
+/**
  * @brief Returns whether the persisted MediaInfo path disables runtime loading.
  */
 inline bool IsLoadingDisabled(const CString &rstrConfiguredPath)
 {
-	return rstrConfiguredPath.CompareNoCase(_T("<noload>")) == 0;
+	CString strPath(rstrConfiguredPath);
+	strPath.Trim();
+	return strPath.CompareNoCase(_T("<noload>")) == 0;
+}
+
+/**
+ * @brief Returns whether a persisted MediaInfo path should use default auto-discovery.
+ */
+inline bool IsAutoDiscoveryPath(const CString &rstrConfiguredPath)
+{
+	CString strPath(rstrConfiguredPath);
+	strPath.Trim();
+	return strPath.IsEmpty() || strPath.CompareNoCase(GetDefaultConfiguredPath()) == 0;
 }
 
 /**

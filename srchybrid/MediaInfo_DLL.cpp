@@ -98,7 +98,7 @@ public:
 			CString strSummaryReason(_T("no compatible version 26.01 or newer was found"));
 			MediaInfoDllSeams::EMediaInfoDllStatus eSummaryStatus = MediaInfoDllSeams::MediaInfoDll_Missing;
 
-			const CString strConfiguredPath(theApp.GetProfileString(_T("eMule"), _T("MediaInfo_MediaInfoDllPath"), _T("MEDIAINFO.DLL")));
+			const CString strConfiguredPath(theApp.GetProfileString(_T("eMule"), _T("MediaInfo_MediaInfoDllPath"), MediaInfoDllSeams::GetDefaultConfiguredPath()));
 			if (MediaInfoDllSeams::IsLoadingDisabled(strConfiguredPath)) {
 				strSummaryReason = _T("loading disabled by configuration");
 				m_eStatus = MediaInfoDllSeams::MediaInfoDll_Disabled;
@@ -154,6 +154,21 @@ public:
 			}
 		}
 		return m_hLib != NULL;
+	}
+
+	CString ResolvePreferencePath(const CString &strConfiguredPath)
+	{
+		if (MediaInfoDllSeams::IsLoadingDisabled(strConfiguredPath) || !MediaInfoDllSeams::IsAutoDiscoveryPath(strConfiguredPath))
+			return strConfiguredPath;
+
+		CStringArray aCandidatePaths;
+		CollectInstalledCandidatePaths(aCandidatePaths);
+		for (INT_PTR i = 0; i < aCandidatePaths.GetCount(); ++i) {
+			if (IsCompatibleCandidatePath(aCandidatePaths[i]))
+				return aCandidatePaths[i];
+		}
+
+		return MediaInfoDllSeams::GetDefaultConfiguredPath();
 	}
 
 	MediaInfoDllSeams::EMediaInfoDllStatus GetStatus() const
@@ -273,18 +288,36 @@ protected:
 		AddCandidatePath(raCandidatePaths, CombinePath(aInstallPath.data(), _T("MEDIAINFO.DLL")));
 	}
 
-	void CollectCandidatePaths(const CString &strConfiguredPath, CStringArray &raCandidatePaths)
+	void CollectInstalledCandidatePaths(CStringArray &raCandidatePaths)
 	{
-		if (!strConfiguredPath.IsEmpty() && ::PathIsRelative(strConfiguredPath)) {
-			const CString strAppFolder(GetAppFolder());
-			if (!strAppFolder.IsEmpty())
-				AddCandidatePath(raCandidatePaths, CombinePath(strAppFolder, strConfiguredPath));
-		}
 		AddRegistryInstallCandidate(HKEY_CURRENT_USER, raCandidatePaths);
 		AddRegistryInstallCandidate(HKEY_LOCAL_MACHINE, raCandidatePaths);
 		const CString strProgramFiles(ShellGetFolderPath(CSIDL_PROGRAM_FILES));
 		if (!strProgramFiles.IsEmpty())
 			AddCandidatePath(raCandidatePaths, CombinePath(strProgramFiles, _T("MediaInfo\\MEDIAINFO.DLL")));
+	}
+
+	void CollectCandidatePaths(const CString &strConfiguredPath, CStringArray &raCandidatePaths)
+	{
+		const bool bAutoDiscoveryPath = MediaInfoDllSeams::IsAutoDiscoveryPath(strConfiguredPath);
+		if (!bAutoDiscoveryPath && !strConfiguredPath.IsEmpty() && ::PathIsRelative(strConfiguredPath)) {
+			const CString strAppFolder(GetAppFolder());
+			if (!strAppFolder.IsEmpty())
+				AddCandidatePath(raCandidatePaths, CombinePath(strAppFolder, strConfiguredPath));
+		}
+		CollectInstalledCandidatePaths(raCandidatePaths);
+		if (bAutoDiscoveryPath) {
+			const CString strAppFolder(GetAppFolder());
+			if (!strAppFolder.IsEmpty())
+				AddCandidatePath(raCandidatePaths, CombinePath(strAppFolder, MediaInfoDllSeams::GetDefaultConfiguredPath()));
+		}
+	}
+
+	bool IsCompatibleCandidatePath(const CString &strPath)
+	{
+		if (!LongPathSeams::PathExists(strPath))
+			return false;
+		return IsCompatibleVersion(GetModuleVersion((LPCTSTR)strPath));
 	}
 
 	HMODULE LoadCompatibleLibrary(const CString &strPath, ULONGLONG &rullVersion, CString &rstrReason, MediaInfoDllSeams::EMediaInfoDllStatus &reStatus)
@@ -441,6 +474,11 @@ static int InfoGetBoundedCount(void *Handle, MediaInfo_stream_C StreamKind, int 
 	return MediaInfoDllSeams::NormalizeReportedCount(_tstoi(InfoGet(Handle, StreamKind, StreamNumber, pszParameter)), iMaxValue);
 }
 
+}
+
+CString ResolveMediaInfoDllPreferencePath(const CString &strConfiguredPath)
+{
+	return theMediaInfoDLL.ResolvePreferencePath(strConfiguredPath);
 }
 
 /** @brief Extracts audio/video metadata through the optional MediaInfo.dll runtime. */
