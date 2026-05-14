@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <climits>
 #include <cstring>
 #include <cstdint>
@@ -38,6 +39,21 @@ enum class EMutablePreference : uint8_t
 	NetworkEd2K
 };
 
+enum class EMutablePreferenceValueKind : uint8_t
+{
+	Unsigned,
+	Boolean
+};
+
+struct SMutablePreferenceSpec
+{
+	const char *pszName;
+	EMutablePreference ePreference;
+	EMutablePreferenceValueKind eKind;
+	const char *pszErrorMessage;
+	bool (*pfnIsValidValue)(uint64_t);
+};
+
 inline constexpr uint64_t kMutablePreferenceMaxSignedInt = PreferenceValidationSeams::kMaxSignedIntPreference;
 inline constexpr uint64_t kMutablePreferenceUnlimitedSentinel = PreferenceValidationSeams::kUnlimitedBandwidthSentinelKiB;
 inline constexpr uint64_t kMutablePreferenceMaxFiniteKiBps = PreferenceValidationSeams::kMaxFiniteBandwidthLimitKiB;
@@ -46,6 +62,14 @@ inline constexpr uint64_t kMutablePreferenceMaxQueueSize = PreferenceValidationS
 inline constexpr uint64_t kMutablePreferenceMinUploadSlots = PreferenceValidationSeams::kMinUploadSlots;
 inline constexpr uint64_t kMutablePreferenceMaxUploadSlots = PreferenceValidationSeams::kMaxUploadSlots;
 inline constexpr uint64_t kTransferProgressRatioScale = 10000u;
+
+/**
+ * Reports whether one REST unsigned 32-bit preference is positive.
+ */
+inline bool IsPositiveUInt32PreferenceValue(const uint64_t ullValue)
+{
+	return PreferenceValidationSeams::IsPositiveUInt32Value(ullValue);
+}
 
 /**
  * Reports whether one REST bandwidth preference is a finite configured limit.
@@ -78,6 +102,50 @@ inline bool IsQueueSizePreferenceValue(const uint64_t ullValue)
 inline bool IsUploadSlotPreferenceValue(const uint64_t ullValue)
 {
 	return PreferenceValidationSeams::IsUploadSlotCount(ullValue);
+}
+
+inline constexpr const char *kMutablePreferenceFieldListCsv =
+	"uploadLimitKiBps,downloadLimitKiBps,maxConnections,maxConnectionsPerFiveSeconds,maxSourcesPerFile,"
+	"uploadClientDataRate,maxUploadSlots,queueSize,autoConnect,newAutoUp,newAutoDown,creditSystem,"
+	"safeServerConnect,networkKademlia,networkEd2k";
+
+/**
+ * Returns the canonical metadata for the native REST mutable preferences.
+ */
+inline const std::array<SMutablePreferenceSpec, 15> &GetMutablePreferenceSpecs()
+{
+	static const std::array<SMutablePreferenceSpec, 15> specs = {{
+		{"uploadLimitKiBps", EMutablePreference::MaxUploadKiB, EMutablePreferenceValueKind::Unsigned, "uploadLimitKiBps must be an unsigned number in the range 1..4294967294", IsFiniteKiBpsPreferenceValue},
+		{"downloadLimitKiBps", EMutablePreference::MaxDownloadKiB, EMutablePreferenceValueKind::Unsigned, "downloadLimitKiBps must be an unsigned number in the range 1..4294967294", IsFiniteKiBpsPreferenceValue},
+		{"maxConnections", EMutablePreference::MaxConnections, EMutablePreferenceValueKind::Unsigned, "maxConnections must be an unsigned number in the range 1..2147483647", IsPositiveSignedIntPreferenceValue},
+		{"maxConnectionsPerFiveSeconds", EMutablePreference::MaxConPerFive, EMutablePreferenceValueKind::Unsigned, "maxConnectionsPerFiveSeconds must be an unsigned number in the range 1..2147483647", IsPositiveSignedIntPreferenceValue},
+		{"maxSourcesPerFile", EMutablePreference::MaxSourcesPerFile, EMutablePreferenceValueKind::Unsigned, "maxSourcesPerFile must be an unsigned number in the range 1..2147483647", IsPositiveSignedIntPreferenceValue},
+		{"uploadClientDataRate", EMutablePreference::UploadClientDataRate, EMutablePreferenceValueKind::Unsigned, "uploadClientDataRate must be an unsigned number in the range 1..4294967295", IsPositiveUInt32PreferenceValue},
+		{"maxUploadSlots", EMutablePreference::MaxUploadSlots, EMutablePreferenceValueKind::Unsigned, "maxUploadSlots must be an unsigned number in the range 1..32", IsUploadSlotPreferenceValue},
+		{"queueSize", EMutablePreference::QueueSize, EMutablePreferenceValueKind::Unsigned, "queueSize must be an unsigned number in the range 2000..10000", IsQueueSizePreferenceValue},
+		{"autoConnect", EMutablePreference::AutoConnect, EMutablePreferenceValueKind::Boolean, "autoConnect must be a boolean", NULL},
+		{"newAutoUp", EMutablePreference::NewAutoUp, EMutablePreferenceValueKind::Boolean, "newAutoUp must be a boolean", NULL},
+		{"newAutoDown", EMutablePreference::NewAutoDown, EMutablePreferenceValueKind::Boolean, "newAutoDown must be a boolean", NULL},
+		{"creditSystem", EMutablePreference::CreditSystem, EMutablePreferenceValueKind::Boolean, "creditSystem must be a boolean", NULL},
+		{"safeServerConnect", EMutablePreference::SafeServerConnect, EMutablePreferenceValueKind::Boolean, "safeServerConnect must be a boolean", NULL},
+		{"networkKademlia", EMutablePreference::NetworkKademlia, EMutablePreferenceValueKind::Boolean, "networkKademlia must be a boolean", NULL},
+		{"networkEd2k", EMutablePreference::NetworkEd2K, EMutablePreferenceValueKind::Boolean, "networkEd2k must be a boolean", NULL}
+	}};
+	return specs;
+}
+
+/**
+ * Finds the canonical metadata for one mutable preference name.
+ */
+inline const SMutablePreferenceSpec *FindMutablePreferenceSpec(const char *pszPreferenceName)
+{
+	if (pszPreferenceName == nullptr || pszPreferenceName[0] == '\0')
+		return NULL;
+	for (const SMutablePreferenceSpec &spec : GetMutablePreferenceSpecs()) {
+		if (strcmp(pszPreferenceName, spec.pszName) == 0)
+			return &spec;
+	}
+	return NULL;
 }
 
 /**
@@ -257,39 +325,8 @@ inline bool IsServerPriorityName(const char *pszPriority)
  */
 inline EMutablePreference ParseMutablePreferenceName(const char *pszPreferenceName)
 {
-	if (pszPreferenceName == nullptr || pszPreferenceName[0] == '\0')
-		return EMutablePreference::Invalid;
-	if (strcmp(pszPreferenceName, "uploadLimitKiBps") == 0)
-		return EMutablePreference::MaxUploadKiB;
-	if (strcmp(pszPreferenceName, "downloadLimitKiBps") == 0)
-		return EMutablePreference::MaxDownloadKiB;
-	if (strcmp(pszPreferenceName, "maxConnections") == 0)
-		return EMutablePreference::MaxConnections;
-	if (strcmp(pszPreferenceName, "maxConnectionsPerFiveSeconds") == 0)
-		return EMutablePreference::MaxConPerFive;
-	if (strcmp(pszPreferenceName, "maxSourcesPerFile") == 0)
-		return EMutablePreference::MaxSourcesPerFile;
-	if (strcmp(pszPreferenceName, "uploadClientDataRate") == 0)
-		return EMutablePreference::UploadClientDataRate;
-	if (strcmp(pszPreferenceName, "maxUploadSlots") == 0)
-		return EMutablePreference::MaxUploadSlots;
-	if (strcmp(pszPreferenceName, "queueSize") == 0)
-		return EMutablePreference::QueueSize;
-	if (strcmp(pszPreferenceName, "autoConnect") == 0)
-		return EMutablePreference::AutoConnect;
-	if (strcmp(pszPreferenceName, "newAutoUp") == 0)
-		return EMutablePreference::NewAutoUp;
-	if (strcmp(pszPreferenceName, "newAutoDown") == 0)
-		return EMutablePreference::NewAutoDown;
-	if (strcmp(pszPreferenceName, "creditSystem") == 0)
-		return EMutablePreference::CreditSystem;
-	if (strcmp(pszPreferenceName, "safeServerConnect") == 0)
-		return EMutablePreference::SafeServerConnect;
-	if (strcmp(pszPreferenceName, "networkKademlia") == 0)
-		return EMutablePreference::NetworkKademlia;
-	if (strcmp(pszPreferenceName, "networkEd2k") == 0)
-		return EMutablePreference::NetworkEd2K;
-	return EMutablePreference::Invalid;
+	const SMutablePreferenceSpec *const pSpec = FindMutablePreferenceSpec(pszPreferenceName);
+	return pSpec != NULL ? pSpec->ePreference : EMutablePreference::Invalid;
 }
 
 /**

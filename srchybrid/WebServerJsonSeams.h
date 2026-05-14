@@ -818,7 +818,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 	static const std::vector<SApiRouteSpec> specs = {
 		{"GET", "/app", "", "", kRestRouteExecutionDirect},
 		{"GET", "/app/preferences", "", ""},
-		{"PATCH", "/app/preferences", "uploadLimitKiBps,downloadLimitKiBps,maxConnections,maxConnectionsPerFiveSeconds,maxSourcesPerFile,uploadClientDataRate,maxUploadSlots,queueSize,autoConnect,newAutoUp,newAutoDown,creditSystem,safeServerConnect,networkKademlia,networkEd2k", ""},
+		{"PATCH", "/app/preferences", WebApiSurfaceSeams::kMutablePreferenceFieldListCsv, ""},
 		{"POST", "/app/shutdown", "confirmShutdown", ""},
 		{"POST", "/diagnostics/dumps", "confirmDump,fullMemory", ""},
 		{"POST", "/diagnostics/crash-tests", "confirmCrash", ""},
@@ -1697,11 +1697,6 @@ inline bool ValidateUnsignedPreferenceField(
 	return true;
 }
 
-inline bool IsUploadClientDataRatePreferenceValue(const uint64_t ullValue)
-{
-	return PreferenceValidationSeams::IsPositiveUInt32Value(ullValue);
-}
-
 inline bool ValidateBooleanPreferenceField(json &rBody, const char *pszFieldName, std::string &rErrorCode, std::string &rErrorMessage)
 {
 	if (rBody.contains(pszFieldName) && !rBody[pszFieldName].is_boolean()) {
@@ -1728,21 +1723,15 @@ inline bool ValidatePreferencesPatchBody(json &rBody, std::string &rErrorCode, s
 		}
 	}
 
-	return ValidateUnsignedPreferenceField(rBody, "uploadLimitKiBps", "uploadLimitKiBps must be an unsigned number in the range 1..4294967294", WebApiSurfaceSeams::IsFiniteKiBpsPreferenceValue, rErrorCode, rErrorMessage)
-		&& ValidateUnsignedPreferenceField(rBody, "downloadLimitKiBps", "downloadLimitKiBps must be an unsigned number in the range 1..4294967294", WebApiSurfaceSeams::IsFiniteKiBpsPreferenceValue, rErrorCode, rErrorMessage)
-		&& ValidateUnsignedPreferenceField(rBody, "maxConnections", "maxConnections must be an unsigned number in the range 1..2147483647", WebApiSurfaceSeams::IsPositiveSignedIntPreferenceValue, rErrorCode, rErrorMessage)
-		&& ValidateUnsignedPreferenceField(rBody, "maxConnectionsPerFiveSeconds", "maxConnectionsPerFiveSeconds must be an unsigned number in the range 1..2147483647", WebApiSurfaceSeams::IsPositiveSignedIntPreferenceValue, rErrorCode, rErrorMessage)
-		&& ValidateUnsignedPreferenceField(rBody, "maxSourcesPerFile", "maxSourcesPerFile must be an unsigned number in the range 1..2147483647", WebApiSurfaceSeams::IsPositiveSignedIntPreferenceValue, rErrorCode, rErrorMessage)
-		&& ValidateUnsignedPreferenceField(rBody, "uploadClientDataRate", "uploadClientDataRate must be an unsigned number in the range 1..4294967295", IsUploadClientDataRatePreferenceValue, rErrorCode, rErrorMessage)
-		&& ValidateUnsignedPreferenceField(rBody, "maxUploadSlots", "maxUploadSlots must be an unsigned number in the range 1..32", WebApiSurfaceSeams::IsUploadSlotPreferenceValue, rErrorCode, rErrorMessage)
-		&& ValidateUnsignedPreferenceField(rBody, "queueSize", "queueSize must be an unsigned number in the range 2000..10000", WebApiSurfaceSeams::IsQueueSizePreferenceValue, rErrorCode, rErrorMessage)
-		&& ValidateBooleanPreferenceField(rBody, "autoConnect", rErrorCode, rErrorMessage)
-		&& ValidateBooleanPreferenceField(rBody, "newAutoUp", rErrorCode, rErrorMessage)
-		&& ValidateBooleanPreferenceField(rBody, "newAutoDown", rErrorCode, rErrorMessage)
-		&& ValidateBooleanPreferenceField(rBody, "creditSystem", rErrorCode, rErrorMessage)
-		&& ValidateBooleanPreferenceField(rBody, "safeServerConnect", rErrorCode, rErrorMessage)
-		&& ValidateBooleanPreferenceField(rBody, "networkKademlia", rErrorCode, rErrorMessage)
-		&& ValidateBooleanPreferenceField(rBody, "networkEd2k", rErrorCode, rErrorMessage);
+	for (const WebApiSurfaceSeams::SMutablePreferenceSpec &spec : WebApiSurfaceSeams::GetMutablePreferenceSpecs()) {
+		if (spec.eKind == WebApiSurfaceSeams::EMutablePreferenceValueKind::Unsigned) {
+			if (!ValidateUnsignedPreferenceField(rBody, spec.pszName, spec.pszErrorMessage, spec.pfnIsValidValue, rErrorCode, rErrorMessage))
+				return false;
+		} else if (!ValidateBooleanPreferenceField(rBody, spec.pszName, rErrorCode, rErrorMessage))
+			return false;
+	}
+
+	return true;
 }
 
 inline bool RequireBooleanField(
