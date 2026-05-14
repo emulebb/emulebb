@@ -73,6 +73,7 @@ namespace WindowsFirewallRepairSeams
 	{
 		CString strScript;
 		strScript += _T("$ErrorActionPreference = 'Stop'\r\n");
+		strScript += _T("$Host.UI.RawUI.WindowTitle = 'eMule BB Windows Firewall Repair'\r\n");
 		strScript.AppendFormat(_T("$ProgramPath = %s\r\n"), (LPCTSTR)QuotePowerShellSingleQuotedLiteral(rstrProgramPath));
 		strScript.AppendFormat(_T("$ResultPath = %s\r\n"), (LPCTSTR)QuotePowerShellSingleQuotedLiteral(rstrResultPath));
 		strScript += _T("$Rules = @(\r\n");
@@ -84,14 +85,23 @@ namespace WindowsFirewallRepairSeams
 				rule.uPort);
 		}
 		strScript += _T(")\r\n");
+		strScript += _T("Write-Host ''\r\n");
+		strScript += _T("Write-Host 'eMule BB Windows Firewall Repair' -ForegroundColor Cyan\r\n");
+		strScript += _T("Write-Host ('Program: {0}' -f $ProgramPath)\r\n");
+		strScript += _T("Write-Host 'Profiles: Domain, Private, Public'\r\n");
+		strScript += _T("Write-Host ('Rules requested: {0}' -f $Rules.Count)\r\n");
+		strScript += _T("Write-Host ''\r\n");
 		strScript += _T("function Repair-EmuleFirewallRule([string]$Name, [string]$Protocol, [int]$Port) {\r\n");
+		strScript += _T("    Write-Host ('Repairing {0}: {1}/{2}' -f $Name, $Protocol, $Port)\r\n");
 		strScript += _T("    $existing = @(Get-NetFirewallRule -DisplayName $Name -ErrorAction SilentlyContinue)\r\n");
 		strScript += _T("    $action = 'created'\r\n");
 		strScript += _T("    if ($existing.Count -gt 0) {\r\n");
+		strScript += _T("        Write-Host ('  Existing rule count: {0}; replacing eMule BB-owned rule.' -f $existing.Count) -ForegroundColor Yellow\r\n");
 		strScript += _T("        $existing | Remove-NetFirewallRule -ErrorAction Stop\r\n");
 		strScript += _T("        $action = 'updated'\r\n");
 		strScript += _T("    }\r\n");
 		strScript += _T("    New-NetFirewallRule -DisplayName $Name -Direction Inbound -Action Allow -Enabled True -Profile Domain,Private,Public -Program $ProgramPath -Protocol $Protocol -LocalPort $Port | Out-Null\r\n");
+		strScript += _T("    Write-Host ('  OK: {0} {1}/{2} ({3})' -f $Name, $Protocol, $Port, $action) -ForegroundColor Green\r\n");
 		strScript += _T("    [ordered]@{ name = $Name; protocol = $Protocol; port = $Port; action = $action }\r\n");
 		strScript += _T("}\r\n");
 		strScript += _T("$result = [ordered]@{ schema = 'emulebb.firewallRepairResult.v1'; success = $false; programPath = $ProgramPath; rules = @(); errors = @() }\r\n");
@@ -99,12 +109,21 @@ namespace WindowsFirewallRepairSeams
 		strScript += _T("    try {\r\n");
 		strScript += _T("        $result.rules += Repair-EmuleFirewallRule -Name $rule.Name -Protocol $rule.Protocol -Port $rule.Port\r\n");
 		strScript += _T("    } catch {\r\n");
+		strScript += _T("        Write-Host ('  FAILED: {0}' -f $_.Exception.Message) -ForegroundColor Red\r\n");
 		strScript += _T("        $result.errors += [ordered]@{ name = $rule.Name; protocol = $rule.Protocol; port = $rule.Port; message = $_.Exception.Message }\r\n");
 		strScript += _T("    }\r\n");
 		strScript += _T("}\r\n");
 		strScript += _T("$result.success = ($result.errors.Count -eq 0)\r\n");
 		strScript += _T("$result | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $ResultPath -Encoding UTF8\r\n");
-		strScript += _T("if ($result.success) { exit 0 }\r\n");
+		strScript += _T("Write-Host ''\r\n");
+		strScript += _T("Write-Host ('Result JSON: {0}' -f $ResultPath)\r\n");
+		strScript += _T("if ($result.success) {\r\n");
+		strScript += _T("    Write-Host 'Windows Firewall repair completed successfully.' -ForegroundColor Green\r\n");
+		strScript += _T("    Read-Host 'Press Enter to close this window' | Out-Null\r\n");
+		strScript += _T("    exit 0\r\n");
+		strScript += _T("}\r\n");
+		strScript += _T("Write-Host 'Windows Firewall repair completed with errors.' -ForegroundColor Red\r\n");
+		strScript += _T("Read-Host 'Press Enter to close this window' | Out-Null\r\n");
 		strScript += _T("exit 1\r\n");
 		return strScript;
 	}

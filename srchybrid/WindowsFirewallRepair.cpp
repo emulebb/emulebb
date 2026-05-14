@@ -253,7 +253,7 @@ bool WindowsFirewallRepair::RunElevatedRepair(const CString &rstrProgramPath, co
 	sei.lpFile = GetPowerShellPath();
 	sei.lpParameters = strParameters;
 	sei.lpDirectory = rResult.strTempDir;
-	sei.nShow = SW_HIDE;
+	sei.nShow = SW_SHOWNORMAL;
 	if (::ShellExecuteEx(&sei) == FALSE) {
 		rResult.dwLastError = ::GetLastError();
 		rResult.bCancelled = rResult.dwLastError == ERROR_CANCELLED;
