@@ -604,6 +604,8 @@ int		CPreferences::m_nCurrentUserDirMode = -1;
 int		CPreferences::m_iDbgHeap;
 uint32	CPreferences::m_maxupload;
 uint32	CPreferences::m_maxdownload;
+uint32	CPreferences::m_uSessionMaxUpload;
+uint32	CPreferences::m_uSessionMaxDownload;
 CString	CPreferences::m_strConfiguredBindAddr;
 CString	CPreferences::m_strBindInterface;
 CString	CPreferences::m_strBindInterfaceName;
@@ -1605,7 +1607,7 @@ uint32 CPreferences::GetMaxDownload()
 uint64 CPreferences::GetMaxDownloadInBytesPerSec(bool dynamic)
 {
 	(void)dynamic;
-	return m_maxdownload * 1024ull;
+	return (m_uSessionMaxDownload != 0 ? m_uSessionMaxDownload : m_maxdownload) * 1024ull;
 }
 
 // -khaos--+++> A whole bunch of methods! Keep going until you reach the end tag.
@@ -3777,12 +3779,40 @@ void CPreferences::SetMaxUpload(uint32 val)
 	// Broadband stabilization treats upload as one finite configured budget.
 	// Missing or unlimited values are normalized back to the release default.
 	m_maxupload = PreferenceValidationSeams::NormalizeConfiguredUploadLimitKiB(val);
+	m_uSessionMaxUpload = 0;
 }
 
 void CPreferences::SetMaxDownload(uint32 val)
 {
 	m_maxdownload = PreferenceValidationSeams::NormalizeConfiguredDownloadLimitKiB(val);
 	maxGraphDownloadRate = m_maxdownload;
+	m_uSessionMaxDownload = 0;
+}
+
+void CPreferences::SetSessionMaxUpload(uint32 val)
+{
+	m_uSessionMaxUpload = PreferenceValidationSeams::NormalizeConfiguredUploadLimitKiB(val);
+}
+
+void CPreferences::SetSessionMaxDownload(uint32 val)
+{
+	m_uSessionMaxDownload = PreferenceValidationSeams::NormalizeConfiguredDownloadLimitKiB(val);
+}
+
+void CPreferences::ClearSessionMaxUpload()
+{
+	m_uSessionMaxUpload = 0;
+}
+
+void CPreferences::ClearSessionMaxDownload()
+{
+	m_uSessionMaxDownload = 0;
+}
+
+void CPreferences::ClearSessionMaxLimits()
+{
+	ClearSessionMaxUpload();
+	ClearSessionMaxDownload();
 }
 
 CString CPreferences::GetHomepageBaseURLForLevel(int nLevel)

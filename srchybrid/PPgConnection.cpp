@@ -427,8 +427,8 @@ void CPPgConnection::LoadSettings()
 		CheckDlgButton(IDC_UDPDISABLE, !m_lastudp); //before the port number!
 		SetDlgItemInt(IDC_UDPPORT, m_lastudp, FALSE);
 
-		const uint32 downloadLimit = thePrefs.GetMaxDownload();
-		const uint32 uploadLimit = thePrefs.GetMaxUpload();
+		const uint32 downloadLimit = thePrefs.GetConfiguredMaxDownload();
+		const uint32 uploadLimit = thePrefs.GetConfiguredMaxUpload();
 
 		SetDlgItemInt(IDC_DOWNLOAD_CAP, downloadLimit);
 		SetDlgItemInt(IDC_UPLOAD_CAP, uploadLimit);
@@ -472,15 +472,15 @@ BOOL CPPgConnection::OnApply()
 		return FALSE;
 	}
 
-	uint32 lastmaxgu = thePrefs.GetMaxUpload(); // save the values
+	uint32 lastmaxgu = thePrefs.GetConfiguredMaxUpload(); // save the values
 	uint32 lastmaxgd = thePrefs.maxGraphDownloadRate;
 	bool bBindRestartRequired = false;
 
 	thePrefs.SetMaxDownload(v);
-	SetDlgItemInt(IDC_DOWNLOAD_CAP, thePrefs.GetMaxDownload(), FALSE);
+	SetDlgItemInt(IDC_DOWNLOAD_CAP, thePrefs.GetConfiguredMaxDownload(), FALSE);
 
 	thePrefs.SetMaxUpload(u);
-	SetDlgItemInt(IDC_UPLOAD_CAP, thePrefs.GetMaxUpload(), FALSE);
+	SetDlgItemInt(IDC_UPLOAD_CAP, thePrefs.GetConfiguredMaxUpload(), FALSE);
 
 	u = GetDlgItemInt(IDC_MAXSOURCEPERFILE, NULL, FALSE);
 	thePrefs.SetMaxSourcesPerFile((u > INT_MAX) ? CPreferences::GetDefaultMaxSourcesPerFile() : u);
@@ -548,8 +548,8 @@ BOOL CPPgConnection::OnApply()
 	thePrefs.reconnect = IsDlgButtonChecked(IDC_RECONN) != 0;
 	thePrefs.SetPortRandomizationOnStartupEnabled(IsDlgButtonChecked(IDC_RANDOMIZE_PORTS_ON_STARTUP) != 0);
 
-	if (lastmaxgu != thePrefs.GetMaxUpload())
-		theApp.emuledlg->statisticswnd->SetARange(false, thePrefs.GetMaxUpload());
+	if (lastmaxgu != thePrefs.GetConfiguredMaxUpload())
+		theApp.emuledlg->statisticswnd->SetARange(false, thePrefs.GetConfiguredMaxUpload());
 	if (lastmaxgd != thePrefs.maxGraphDownloadRate)
 		theApp.emuledlg->statisticswnd->SetARange(true, thePrefs.maxGraphDownloadRate);
 

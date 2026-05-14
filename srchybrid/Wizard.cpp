@@ -186,8 +186,8 @@ BOOL CConnectionWizardDlg::OnInitDialog()
 	GetDlgItem(IDC_KBITS)->ShowWindow(SW_HIDE);
 	GetDlgItem(IDC_KBYTES)->ShowWindow(SW_HIDE);
 
-	SetDlgItemInt(IDC_WIZ_TRUEDOWNLOAD_BOX, thePrefs.GetMaxDownload(), FALSE);
-	SetDlgItemInt(IDC_WIZ_TRUEUPLOAD_BOX, thePrefs.GetMaxUpload(), FALSE);
+	SetDlgItemInt(IDC_WIZ_TRUEDOWNLOAD_BOX, thePrefs.GetConfiguredMaxDownload(), FALSE);
+	SetDlgItemInt(IDC_WIZ_TRUEUPLOAD_BOX, thePrefs.GetConfiguredMaxUpload(), FALSE);
 
 	m_provider.InsertColumn(0, GetResString(IDS_TYPE), LVCFMT_LEFT, 150);
 	m_provider.InsertColumn(1, GetResString(IDS_WIZ_DOWN), LVCFMT_LEFT, 85);
@@ -226,8 +226,8 @@ void CConnectionWizardDlg::OnNmClickProviders(LPNMHDR, LRESULT *pResult)
 		SetDlgItemInt(IDC_WIZ_TRUEDOWNLOAD_BOX, kBroadbandPresets[iPreset].downloadLimitKiB, FALSE);
 		SetDlgItemInt(IDC_WIZ_TRUEUPLOAD_BOX, kBroadbandPresets[iPreset].uploadLimitKiB, FALSE);
 	} else {
-		SetDlgItemInt(IDC_WIZ_TRUEDOWNLOAD_BOX, thePrefs.GetMaxDownload(), FALSE);
-		SetDlgItemInt(IDC_WIZ_TRUEUPLOAD_BOX, thePrefs.GetMaxUpload(), FALSE);
+		SetDlgItemInt(IDC_WIZ_TRUEDOWNLOAD_BOX, thePrefs.GetConfiguredMaxDownload(), FALSE);
+		SetDlgItemInt(IDC_WIZ_TRUEUPLOAD_BOX, thePrefs.GetConfiguredMaxUpload(), FALSE);
 	}
 	if (pResult)
 		*pResult = 0;

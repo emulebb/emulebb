@@ -3505,10 +3505,10 @@ CString CWebServer::_GetPreferences(const ThreadData &Data)
 
 
 	CString sT;
-	sT.Format(_T("%u"), thePrefs.GetMaxDownload());
+	sT.Format(_T("%u"), thePrefs.GetConfiguredMaxDownload());
 	Out.Replace(_T("[MaxDownVal]"), sT);
 
-	sT.Format(_T("%u"), thePrefs.GetMaxUpload());
+	sT.Format(_T("%u"), thePrefs.GetConfiguredMaxUpload());
 	Out.Replace(_T("[MaxUpVal]"), sT);
 
 	return Out;

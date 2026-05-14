@@ -183,6 +183,8 @@ public:
 	static CString	strNick;
 	static uint32	m_maxupload;
 	static uint32	m_maxdownload;
+	static uint32	m_uSessionMaxUpload;
+	static uint32	m_uSessionMaxDownload;
 	static CString	m_strConfiguredBindAddr;
 	static CString	m_strBindInterface;
 	static CString	m_strBindInterfaceName;
@@ -821,7 +823,10 @@ public:
 	static uint16	GetUDPPort()						{ return udpport; }
 	static uint16	GetServerUDPPort()					{ return nServerUDPPort; }
 	static uchar*	GetUserHash()						{ return userhash; }
-	static uint32	GetMaxUpload()						{ return m_maxupload; }
+	static uint32	GetConfiguredMaxUpload()			{ return m_maxupload; }
+	static uint32	GetSessionMaxUpload()				{ return m_uSessionMaxUpload; }
+	static bool		HasSessionMaxUpload()				{ return m_uSessionMaxUpload != 0; }
+	static uint32	GetMaxUpload()						{ return m_uSessionMaxUpload != 0 ? m_uSessionMaxUpload : m_maxupload; }
 	static bool		IsICHEnabled()						{ return ICH; }
 	static bool		GetAutoUpdateServerList()			{ return m_bAutoUpdateServerList; }
 	static bool		UpdateNotify()						{ return updatenotify; }
@@ -1081,6 +1086,9 @@ public:
 	static uint32	GetMaxGraphDownloadRate()			{ return maxGraphDownloadRate; }
 	static void		SetMaxGraphDownloadRate(uint32 in);
 
+	static uint32	GetConfiguredMaxDownload()			{ return m_maxdownload; }
+	static uint32	GetSessionMaxDownload()				{ return m_uSessionMaxDownload; }
+	static bool		HasSessionMaxDownload()				{ return m_uSessionMaxDownload != 0; }
 	static uint32	GetMaxDownload();
 	static uint64	GetMaxDownloadInBytesPerSec(bool dynamic = false);
 	static UINT		GetMaxConnections()					{ return maxconnections; }
@@ -1367,6 +1375,16 @@ public:
 
 	static void		SetMaxUpload(uint32 val);
 	static void		SetMaxDownload(uint32 val);
+	/// Applies a temporary upload cap for this process without changing persisted preferences.
+	static void		SetSessionMaxUpload(uint32 val);
+	/// Applies a temporary download cap for this process without changing persisted preferences.
+	static void		SetSessionMaxDownload(uint32 val);
+	/// Clears the temporary upload quick-speed cap.
+	static void		ClearSessionMaxUpload();
+	/// Clears the temporary download quick-speed cap.
+	static void		ClearSessionMaxDownload();
+	/// Clears temporary upload/download quick-speed caps.
+	static void		ClearSessionMaxLimits();
 
 	static WINDOWPLACEMENT GetEmuleWindowPlacement()	{ return EmuleWindowPlacement; }
 	static void		SetWindowLayout(const WINDOWPLACEMENT &in) { EmuleWindowPlacement = in; }

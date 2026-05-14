@@ -87,6 +87,7 @@
 #include "Scheduler.h"
 #include "MenuCmds.h"
 #include "MuleSystrayDlg.h"
+#include "SpeedQuickActionsSeams.h"
 #include "IPFilterDlg.h"
 #include "WebServices.h"
 #include "DirectDownloadDlg.h"
@@ -2629,44 +2630,7 @@ void CemuleDlg::OnTrayRButtonUp(CPoint pt)
 		return;
 	}
 
-	if (m_pSystrayDlg) {
-		m_pSystrayDlg->BringWindowToTop();
-		return;
-	}
-
-	try {
-		m_pSystrayDlg = new CMuleSystrayDlg(this, pt
-			, thePrefs.GetMaxUpload(), thePrefs.GetMaxGraphDownloadRate()
-			, thePrefs.GetMaxUpload(), thePrefs.GetMaxDownload());
-	} catch (...) {
-		return;
-	}
-
-	INT_PTR nResult = m_pSystrayDlg->DoModal();
-	delete m_pSystrayDlg;
-	m_pSystrayDlg = NULL;
-	switch (nResult) {
-	case IDC_TOMAX:
-		QuickSpeedOther(MP_QS_UA);
-		break;
-	case IDC_TOMIN:
-		QuickSpeedOther(MP_QS_PA);
-		break;
-	case IDC_RESTORE:
-		RestoreWindow();
-		break;
-	case IDC_CONNECT:
-		StartConnection();
-		break;
-	case IDC_DISCONNECT:
-		CloseConnection();
-		break;
-	case IDC_EXIT:
-		OnClose();
-		break;
-	case IDC_PREFERENCES:
-		ShowPreferences();
-	}
+	ShowTrayToolPopup(pt);
 }
 
 void CemuleDlg::AddSpeedSelectorMenus(CMenu *addToMenu)
@@ -2676,17 +2640,14 @@ void CemuleDlg::AddSpeedSelectorMenus(CMenu *addToMenu)
 	ASSERT(m_menuUploadCtrl.m_hMenu == NULL);
 	CString text;
 	if (m_menuUploadCtrl.CreateMenu()) {
-		int rate = thePrefs.GetMaxUpload();
-		text.Format(_T("20%%\t%i %s"), max(rate * 1 / 5, 1), (LPCTSTR)kbyps);
-		m_menuUploadCtrl.AppendMenu(MF_STRING, MP_QS_U20, text);
-		text.Format(_T("40%%\t%i %s"), max(rate * 2 / 5, 1), (LPCTSTR)kbyps);
-		m_menuUploadCtrl.AppendMenu(MF_STRING, MP_QS_U40, text);
-		text.Format(_T("60%%\t%i %s"), max(rate * 3 / 5, 1), (LPCTSTR)kbyps);
-		m_menuUploadCtrl.AppendMenu(MF_STRING, MP_QS_U60, text);
-		text.Format(_T("80%%\t%i %s"), max(rate * 4 / 5, 1), (LPCTSTR)kbyps);
-		m_menuUploadCtrl.AppendMenu(MF_STRING, MP_QS_U80, text);
-		text.Format(_T("100%%\t%i %s"), rate, (LPCTSTR)kbyps);
-		m_menuUploadCtrl.AppendMenu(MF_STRING, MP_QS_U100, text);
+		for (const SpeedQuickActionsSeams::CQuickSpeedPercentAction &action : SpeedQuickActionsSeams::kUploadPercentActions) {
+			text.Format(
+				_T("Limit: Upload %u%%\t%u %s"),
+				action.uPercent,
+				SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxUpload(), action.uPercent),
+				(LPCTSTR)kbyps);
+			m_menuUploadCtrl.AppendMenu(MF_STRING, action.uCommandId, text);
+		}
 		m_menuUploadCtrl.AppendMenu(MF_SEPARATOR);
 
 		if (GetRecMaxUpload() > 0) {
@@ -2701,24 +2662,22 @@ void CemuleDlg::AddSpeedSelectorMenus(CMenu *addToMenu)
 	// Create DownloadPopup Menu
 	ASSERT(m_menuDownloadCtrl.m_hMenu == NULL);
 	if (m_menuDownloadCtrl.CreateMenu()) {
-		int rate = thePrefs.GetMaxGraphDownloadRate();
-		text.Format(_T("20%%\t%i %s"), (int)(rate * 0.2), (LPCTSTR)kbyps);
-		m_menuDownloadCtrl.AppendMenu(MF_STRING | MF_POPUP, MP_QS_D20, text);
-		text.Format(_T("40%%\t%i %s"), (int)(rate * 0.4), (LPCTSTR)kbyps);
-		m_menuDownloadCtrl.AppendMenu(MF_STRING | MF_POPUP, MP_QS_D40, text);
-		text.Format(_T("60%%\t%i %s"), (int)(rate * 0.6), (LPCTSTR)kbyps);
-		m_menuDownloadCtrl.AppendMenu(MF_STRING | MF_POPUP, MP_QS_D60, text);
-		text.Format(_T("80%%\t%i %s"), (int)(rate * 0.8), (LPCTSTR)kbyps);
-		m_menuDownloadCtrl.AppendMenu(MF_STRING | MF_POPUP, MP_QS_D80, text);
-		text.Format(_T("100%%\t%i %s"), rate, (LPCTSTR)kbyps);
-		m_menuDownloadCtrl.AppendMenu(MF_STRING | MF_POPUP, MP_QS_D100, text);
+		for (const SpeedQuickActionsSeams::CQuickSpeedPercentAction &action : SpeedQuickActionsSeams::kDownloadPercentActions) {
+			text.Format(
+				_T("Limit: Download %u%%\t%u %s"),
+				action.uPercent,
+				SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxDownload(), action.uPercent),
+				(LPCTSTR)kbyps);
+			m_menuDownloadCtrl.AppendMenu(MF_STRING, action.uCommandId, text);
+		}
 
 		text = GetResString(IDS_PW_DOWNL) + _T(':');
 		addToMenu->AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)m_menuDownloadCtrl.m_hMenu, text);
 	}
 
 	addToMenu->AppendMenu(MF_SEPARATOR);
-	addToMenu->AppendMenu(MF_STRING | MF_GRAYED, MP_CONNECT, GetResString(IDS_MAIN_BTN_CONNECT));
+	addToMenu->AppendMenu(MF_STRING, MP_QS_PA, _T("All to Min"));
+	addToMenu->AppendMenu(MF_STRING, MP_QS_UA, _T("All to Max"));
 }
 
 void CemuleDlg::StartConnection()
@@ -3189,103 +3148,75 @@ void CemuleDlg::ShowUserStateIcon()
 void CemuleDlg::QuickSpeedOther(UINT nID)
 {
 	if (nID == MP_QS_PA) {
-		thePrefs.SetMaxUpload(1);
-		thePrefs.SetMaxDownload(1);
+		thePrefs.SetSessionMaxUpload(1);
+		thePrefs.SetSessionMaxDownload(1);
+		AddLogLine(false, _T("Temporary session upload and download limits set to minimum."));
 	} else if (nID == MP_QS_UA) {
-		thePrefs.SetMaxUpload(thePrefs.GetMaxUpload());
-		thePrefs.SetMaxDownload(thePrefs.GetMaxGraphDownloadRate());
+		thePrefs.ClearSessionMaxLimits();
+		AddLogLine(false, _T("Temporary session speed limits cleared; configured limits restored."));
 	}
 }
 
 
 void CemuleDlg::QuickSpeedUpload(UINT nID)
 {
+	const unsigned int uPercent = SpeedQuickActionsSeams::GetPercentForCommand(nID);
+	if (uPercent != 0) {
+		const uint32 uLimit = SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxUpload(), uPercent);
+		const CString strKiBps(GetResString(IDS_KBYTESPERSEC));
+		thePrefs.SetSessionMaxUpload(uLimit);
+		AddLogLine(false, _T("Temporary session upload limit set to %u%% (%u %s)."), uPercent, uLimit, (LPCTSTR)strKiBps);
+		return;
+	}
+
 	switch (nID) {
-	case MP_QS_U10:
-		nID = 1;
-		break;
-	case MP_QS_U20:
-		nID = 2;
-		break;
-	case MP_QS_U30:
-		nID = 3;
-		break;
-	case MP_QS_U40:
-		nID = 4;
-		break;
-	case MP_QS_U50:
-		nID = 5;
-		break;
-	case MP_QS_U60:
-		nID = 6;
-		break;
-	case MP_QS_U70:
-		nID = 7;
-		break;
-	case MP_QS_U80:
-		nID = 8;
-		break;
-	case MP_QS_U90:
-		nID = 9;
-		break;
 	case MP_QS_U100:
-		nID = 10;
+		thePrefs.ClearSessionMaxUpload();
+		AddLogLine(false, _T("Temporary session upload limit cleared; configured upload limit restored."));
 		return;
 	case MP_QS_UPC:
 	default:
 		return;
 	case MP_QS_UP10:
-		thePrefs.SetMaxUpload(GetRecMaxUpload());
+		{
+			const uint32 uLimit = GetRecMaxUpload();
+			if (uLimit == 0)
+				return;
+			const CString strKiBps(GetResString(IDS_KBYTESPERSEC));
+			thePrefs.SetSessionMaxUpload(uLimit);
+			AddLogLine(false, _T("Temporary session upload limit set to recommended minimum (%u %s)."), uLimit, (LPCTSTR)strKiBps);
+		}
 		return;
 	}
-	thePrefs.SetMaxUpload((uint32)(thePrefs.GetMaxUpload() * 0.1 * nID));
 }
 
 void CemuleDlg::QuickSpeedDownload(UINT nID)
 {
+	const unsigned int uPercent = SpeedQuickActionsSeams::GetPercentForCommand(nID);
+	if (uPercent != 0) {
+		const uint32 uLimit = SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxDownload(), uPercent);
+		const CString strKiBps(GetResString(IDS_KBYTESPERSEC));
+		thePrefs.SetSessionMaxDownload(uLimit);
+		AddLogLine(false, _T("Temporary session download limit set to %u%% (%u %s)."), uPercent, uLimit, (LPCTSTR)strKiBps);
+		return;
+	}
+
 	switch (nID) {
-	case MP_QS_D10:
-		nID = 1;
-		break;
-	case MP_QS_D20:
-		nID = 2;
-		break;
-	case MP_QS_D30:
-		nID = 3;
-		break;
-	case MP_QS_D40:
-		nID = 4;
-		break;
-	case MP_QS_D50:
-		nID = 5;
-		break;
-	case MP_QS_D60:
-		nID = 6;
-		break;
-	case MP_QS_D70:
-		nID = 7;
-		break;
-	case MP_QS_D80:
-		nID = 8;
-		break;
-	case MP_QS_D90:
-		nID = 9;
-		break;
 	case MP_QS_D100:
-		nID = 10;
+		thePrefs.ClearSessionMaxDownload();
+		AddLogLine(false, _T("Temporary session download limit cleared; configured download limit restored."));
 		return;
 	case MP_QS_DC:
 //		thePrefs.SetMaxDownload(UNLIMITED);
 	default:
 		return;
 	}
-	thePrefs.SetMaxDownload((UINT)(thePrefs.GetMaxGraphDownloadRate() * 0.1 * nID));
 }
 
 // quick-speed changer -- based on xrmb
 int CemuleDlg::GetRecMaxUpload()
 {
-	int rate = thePrefs.GetMaxUpload();
+	int rate = thePrefs.GetConfiguredMaxUpload();
 	if (rate < 7)
 		return 0;
 	if (rate < 15)
@@ -3556,7 +3487,16 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 {
 	POINT point{};
 	::GetCursorPos(&point);
+	ShowToolPopupAt(toolsonly, CPoint(point), false);
+}
 
+void CemuleDlg::ShowTrayToolPopup(CPoint pt)
+{
+	ShowToolPopupAt(true, pt, true);
+}
+
+void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
+{
 	CTitledMenu menu;
 	menu.CreatePopupMenu();
 	menu.AddMenuTitle(GetResString(toolsonly ? IDS_TOOLS : IDS_HOTMENU), true);
@@ -3631,13 +3571,32 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 	diagnostics.CreateMenu();
 	diagnostics.AddMenuTitle(NULL, true);
 
+	CTitledMenu speedQuickActions;
+	speedQuickActions.CreateMenu();
+	speedQuickActions.AddMenuTitle(NULL, true);
+
+	CTitledMenu speedUpload;
+	speedUpload.CreateMenu();
+	speedUpload.AddMenuTitle(NULL, true);
+
+	CTitledMenu speedDownload;
+	speedDownload.CreateMenu();
+	speedDownload.AddMenuTitle(NULL, true);
+
 	if (toolsonly) {
 		UINT uGeoLocationMenuFlags = MF_STRING;
 		if (!thePrefs.IsGeoLocationEnabled())
 			uGeoLocationMenuFlags |= MF_GRAYED;
 
-		appendConnectionItem(session);
-		session.AppendMenu(MF_SEPARATOR);
+		if (bTrayMenu) {
+			menu.AppendMenu(MF_STRING, MP_RESTORE, GetResString(IDS_MAIN_POPUP_RESTORE), _T("RESTORE"));
+			menu.AppendMenu(MF_STRING, MP_MINIMIZETOTRAY, GetResString(IDS_PW_TRAY), _T("TOOLS"));
+			appendConnectionItem(menu);
+			menu.AppendMenu(MF_SEPARATOR);
+		} else {
+			appendConnectionItem(session);
+			session.AppendMenu(MF_SEPARATOR);
+		}
 		session.AppendMenu(MF_STRING, MP_HM_SRVR, GetResString(IDS_EM_SERVER), _T("SERVER"));
 		session.AppendMenu(MF_STRING, MP_HM_TRANSFER, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
 		session.AppendMenu(MF_STRING, MP_HM_SEARCH, GetResString(IDS_EM_SEARCH), _T("SEARCH"));
@@ -3646,8 +3605,34 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 		session.AppendMenu(MF_STRING, MP_HM_IRC, GetResString(IDS_IRC), _T("IRC"));
 		session.AppendMenu(MF_STRING, MP_HM_STATS, GetResString(IDS_EM_STATISTIC), _T("STATISTICS"));
 		session.AppendMenu(MF_STRING, MP_HM_PREFS, GetResString(IDS_EM_PREFS), _T("PREFERENCES"));
-		session.AppendMenu(MF_SEPARATOR);
-		session.AppendMenu(MF_STRING, MP_MINIMIZETOTRAY, GetResString(IDS_PW_TRAY), _T("TOOLS"));
+		if (!bTrayMenu) {
+			session.AppendMenu(MF_SEPARATOR);
+			session.AppendMenu(MF_STRING, MP_MINIMIZETOTRAY, GetResString(IDS_PW_TRAY), _T("TOOLS"));
+		}
+
+		const CString &kbyps(GetResString(IDS_KBYTESPERSEC));
+		CString text;
+		for (const SpeedQuickActionsSeams::CQuickSpeedPercentAction &action : SpeedQuickActionsSeams::kUploadPercentActions) {
+			text.Format(
+				_T("Limit: Upload %u%%\t%u %s"),
+				action.uPercent,
+				SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxUpload(), action.uPercent),
+				(LPCTSTR)kbyps);
+			speedUpload.AppendMenu(MF_STRING, action.uCommandId, text);
+		}
+		for (const SpeedQuickActionsSeams::CQuickSpeedPercentAction &action : SpeedQuickActionsSeams::kDownloadPercentActions) {
+			text.Format(
+				_T("Limit: Download %u%%\t%u %s"),
+				action.uPercent,
+				SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxDownload(), action.uPercent),
+				(LPCTSTR)kbyps);
+			speedDownload.AppendMenu(MF_STRING, action.uCommandId, text);
+		}
+		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedUpload.m_hMenu, _T("&Upload"), _T("UPLOAD"));
+		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedDownload.m_hMenu, _T("&Download"), _T("DOWNLOAD"));
+		speedQuickActions.AppendMenu(MF_SEPARATOR);
+		speedQuickActions.AppendMenu(MF_STRING, MP_QS_PA, _T("All to &Min"), _T("STOP"));
+		speedQuickActions.AppendMenu(MF_STRING, MP_QS_UA, _T("All to Ma&x"), _T("CONNECT"));
 
 		folders.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
 		folders.AppendMenu(MF_STRING, MP_HM_OPEN_TEMPDIR, GetResString(IDS_OPEN_TEMP_DIR) + _T("..."), _T("OPENFOLDER"));
@@ -3698,8 +3683,9 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("TOOLS"));
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
 
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, GetResString(IDS_TOOLS_SESSION), _T("CONNECT"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, GetResString(IDS_TOOLS_FOLDERS), _T("OPENFOLDER"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, _T("&") + GetResString(IDS_TOOLS_SESSION), _T("CONNECT"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, _T("S&peed Quick Actions"), _T("SPEED"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, _T("&") + GetResString(IDS_TOOLS_FOLDERS), _T("OPENFOLDER"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T("PREFERENCES"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, GetResString(IDS_TOOLS_NETWORK_UPDATES), _T("WEB"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)maintenance.m_hMenu, GetResString(IDS_TOOLS_MAINTENANCE), _T("TOOLS"));
@@ -3719,13 +3705,20 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 
 	menu.AppendMenu(MF_SEPARATOR);
 	menu.AppendMenu(MF_STRING, MP_HM_EXIT, GetResString(IDS_EXIT) + _T("\tAlt+X"), _T("EXIT"));
-	menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+	if (bTrayMenu)
+		SetForegroundWindow();
+	menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, this);
+	if (bTrayMenu)
+		PostMessage(WM_NULL, 0, 0);
 	VERIFY(session.DestroyMenu());
 	VERIFY(folders.DestroyMenu());
 	VERIFY(editConfigFiles.DestroyMenu());
 	VERIFY(networkUpdates.DestroyMenu());
 	VERIFY(maintenance.DestroyMenu());
 	VERIFY(diagnostics.DestroyMenu());
+	VERIFY(speedQuickActions.DestroyMenu());
+	VERIFY(speedUpload.DestroyMenu());
+	VERIFY(speedDownload.DestroyMenu());
 	VERIFY(Links.DestroyMenu());
 	VERIFY(scheduler.DestroyMenu());
 	VERIFY(menu.DestroyMenu());

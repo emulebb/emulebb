@@ -181,8 +181,8 @@ int CScheduler::Check(bool forcecheck)
 
 void CScheduler::SaveOriginals()
 {
-	original_upload = thePrefs.GetMaxUpload();
-	original_download = thePrefs.GetMaxDownload();
+	original_upload = thePrefs.GetConfiguredMaxUpload();
+	original_download = thePrefs.GetConfiguredMaxDownload();
 	original_connections = thePrefs.GetMaxConnections();
 	original_cons5s = thePrefs.GetMaxConperFive();
 	original_sources = thePrefs.GetConfiguredMaxSourcesPerFile();

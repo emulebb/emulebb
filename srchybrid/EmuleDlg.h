@@ -251,6 +251,8 @@ protected:
 	void ForceTrayBalloonFallbackForSession();
 	bool notifierenabled;
 	void ShowToolPopup(bool toolsonly = false);
+	void ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu);
+	void ShowTrayToolPopup(CPoint pt);
 	void SetAllIcons();
 	bool CanClose();
 	int MapWindowToToolbarButton(CWnd *pWnd) const;

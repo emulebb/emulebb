@@ -816,8 +816,8 @@ json BuildGlobalStatsJson()
 json BuildPreferencesJson()
 {
 	return json{
-		{"uploadLimitKiBps", thePrefs.GetMaxUpload()},
-		{"downloadLimitKiBps", thePrefs.GetMaxDownload()},
+		{"uploadLimitKiBps", thePrefs.GetConfiguredMaxUpload()},
+		{"downloadLimitKiBps", thePrefs.GetConfiguredMaxDownload()},
 		{"maxConnections", thePrefs.GetMaxConnections()},
 		{"maxConnectionsPerFiveSeconds", thePrefs.GetMaxConperFive()},
 		{"maxSourcesPerFile", thePrefs.GetConfiguredMaxSourcesPerFile()},
@@ -1187,7 +1187,7 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 		}
 
 		const uint32 uRequestedRate = static_cast<uint32>(ullRequestedRate);
-		const uint32 uDerivedSlots = PreferenceValidationSeams::DeriveUploadSlotsForClientDataRate(thePrefs.GetMaxUpload(), uRequestedRate);
+		const uint32 uDerivedSlots = PreferenceValidationSeams::DeriveUploadSlotsForClientDataRate(thePrefs.GetConfiguredMaxUpload(), uRequestedRate);
 		thePrefs.SetMaxUploadClientsAllowed(uDerivedSlots);
 	}
 
