@@ -307,7 +307,7 @@ BOOL CPreviewThread::Run()
 			::WaitForSingleObject(SE.hProcess, INFINITE);
 			::CloseHandle(SE.hProcess);
 		}
-		CFile::Remove(strPreviewName);
+		(void)LongPathSeams::DeleteFileIfExists(strPreviewName);
 	} catch (CFileException *ex) {
 		m_pPartfile->m_bPreviewing = false;
 		ex->Delete();

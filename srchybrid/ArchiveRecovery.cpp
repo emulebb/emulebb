@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "ArchiveRecovery.h"
+#include "LongPathSeams.h"
 #include "PathHelpers.h"
 #include "Log.h"
 #include "PartFile.h"
@@ -178,7 +179,7 @@ bool CArchiveRecovery::performRecovery(CPartFile *partFile, CArray<Gap_Struct> *
 
 		// Remove temp file
 		if (!tempFileName.IsEmpty())
-			CFile::Remove(tempFileName);
+			(void)LongPathSeams::DeleteFileIfExists(tempFileName);
 
 		// Report success
 		if (success) {
@@ -198,10 +199,10 @@ bool CArchiveRecovery::performRecovery(CPartFile *partFile, CArray<Gap_Struct> *
 					::WaitForSingleObject(SE.hProcess, INFINITE);
 					::CloseHandle(SE.hProcess);
 				}
-				CFile::Remove(outputFileName);
+				(void)LongPathSeams::DeleteFileIfExists(outputFileName);
 			}
 		} else
-			CFile::Remove(outputFileName);
+			(void)LongPathSeams::DeleteFileIfExists(outputFileName);
 	} catch (CFileException *ex) {
 		ex->Delete();
 	} catch (...) {
