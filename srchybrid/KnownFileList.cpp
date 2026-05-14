@@ -101,6 +101,13 @@ namespace
 			&& theApp.downloadqueue->IsPartFile(pFile);
 	}
 
+	CString MakeKnownFilePathLookupKey(const CString &rstrPath)
+	{
+		CString strKey(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrPath)));
+		strKey.MakeLower();
+		return strKey;
+	}
+
 	void MergeCompatibleKnownFileStats(CKnownFile *pKeep, const CKnownFile *pDiscard)
 	{
 		ASSERT(pKeep != NULL);
@@ -115,7 +122,7 @@ namespace
 		if (pKeep == NULL || pIncoming == NULL)
 			return;
 
-		if (PathHelpers::ArePathsEquivalent(pKeep->GetFilePath(), pIncoming->GetFilePath())
+		if (MakeKnownFilePathLookupKey(pKeep->GetFilePath()) == MakeKnownFilePathLookupKey(pIncoming->GetFilePath())
 			&& pKeep->GetFilePath().CompareNoCase(pIncoming->GetFilePath()) != 0)
 		{
 			pKeep->SetPath(pIncoming->GetPath());
@@ -442,8 +449,9 @@ CKnownFile* CKnownFileList::FindKnownFile(LPCTSTR filename, time_t date, uint64 
 
 CKnownFile* CKnownFileList::FindKnownFileByPath(const CString &sFilePath) const
 {
+	const CString strLookupKey(MakeKnownFilePathLookupKey(sFilePath));
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair))
-		if (PathHelpers::ArePathsEquivalent(pair->value->GetFilePath(), sFilePath))
+		if (MakeKnownFilePathLookupKey(pair->value->GetFilePath()) == strLookupKey)
 			return pair->value;
 
 	return NULL;
