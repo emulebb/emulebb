@@ -75,13 +75,14 @@ inline SAppLifecycleStatus BuildAppLifecycleStatus(
 {
 	const bool bRunning = IsAppStateRunning(eAppState);
 	const bool bClosing = IsAppStateClosing(eAppState);
+	const bool bStartupReady = bRunning && bStartupComplete;
 	return SAppLifecycleStatus{
-		GetAppLifecycleStateName(eAppState),
+		bRunning && !bStartupComplete ? "starting" : GetAppLifecycleStateName(eAppState),
 		bStartupComplete,
 		bRunning,
 		bSharedFilesReady,
 		!bClosing,
-		bRunning,
+		bStartupReady,
 		bClosing
 	};
 }
