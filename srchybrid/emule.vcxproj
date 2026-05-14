@@ -472,6 +472,7 @@
     <ClInclude Include="DownloadClientsCtrl.h" />
     <ClInclude Include="DownloadListCtrl.h" />
     <ClInclude Include="DownloadListKeyboardShortcutsSeams.h" />
+    <ClInclude Include="DownloadPriorityShortcutsSeams.h" />
     <ClInclude Include="DownloadQueue.h" />
     <ClInclude Include="DownloadQueueAutoCatSeams.h" />
     <ClInclude Include="Drawgdix.h" />

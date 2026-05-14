@@ -33,7 +33,8 @@ namespace AppKeyboardShortcutsSeams
 		None,
 		ExitApp,
 		ShowHotMenu,
-		ShowToolsMenu
+		ShowToolsMenu,
+		ShowOptions
 	};
 
 	/**
@@ -112,6 +113,8 @@ namespace AppKeyboardShortcutsSeams
 			return ECommand::ShowHotMenu;
 		if (ch == _T('t'))
 			return ECommand::ShowToolsMenu;
+		if (ch == _T('o'))
+			return ECommand::ShowOptions;
 		return ECommand::None;
 	}
 

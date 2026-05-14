@@ -149,6 +149,7 @@ protected:
 	CTitledMenu	m_PrioMenu;
 	CTitledMenu	m_FileMenu;
 	CTitledMenu	m_PreviewMenu;
+	CTitledMenu	m_BatchMenu;
 	CMenu		m_SourcesMenu;
 	typedef std::pair<void*, CtrlItem_Struct*> ListItemsPair;
 	typedef std::multimap<void*, CtrlItem_Struct*> ListItems;
@@ -184,6 +185,7 @@ protected:
 	bool PruneStaleFileItems();
 	bool PruneStaleSourceItems();
 	int GetFilesCountInCurCat();
+	void CountBatchCommandsInCurCat(int &riFilesToPause, int &riFilesToResume, int &riFilesToStop) const;
 	CString GetFileItemDisplayText(const CPartFile *lpPartFile, int iSubItem);
 	CString GetSourceItemDisplayText(const CtrlItem_Struct *pCtrlItem, int iSubItem);
 	void InitializeVideoThumbnailCache();

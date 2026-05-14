@@ -4836,6 +4836,12 @@ BEGIN
     IDS_TREEOPTIONS_BROWSE_FOLDER_CAPTION  "Please specify a folder"
     IDS_TREEOPTIONS_BROWSE_FILE_CAPTION    "Please specify a file"
     IDS_TREEOPTIONS_ALL_FILES_FILTER       "All Files (*.*)|*.*||"
+    IDS_DL_BATCH                           "&Batch"
+    IDS_DL_PAUSE_CATEGORY                  "Pause All in This Category"
+    IDS_DL_STOP_CATEGORY                   "Stop All in This Category"
+    IDS_DL_RESUME_CATEGORY                 "Resume All in This Category"
+    IDS_PRIO_INCREASE                      "Increase Priority"
+    IDS_PRIO_DECREASE                      "Decrease Priority"
 END
 
 #endif    // English (United States) resources

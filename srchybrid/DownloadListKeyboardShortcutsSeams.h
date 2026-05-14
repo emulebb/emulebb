@@ -25,6 +25,18 @@
 /** Testable keyboard shortcut policy for the Downloads file list. */
 namespace DownloadListKeyboardShortcutsSeams
 {
+	/** Returns true when `wParam` is one of the plus keys used for priority-up. */
+	inline bool IsPriorityUpKey(WPARAM wParam)
+	{
+		return wParam == VK_OEM_PLUS || wParam == VK_ADD;
+	}
+
+	/** Returns true when `wParam` is one of the minus keys used for priority-down. */
+	inline bool IsPriorityDownKey(WPARAM wParam)
+	{
+		return wParam == VK_OEM_MINUS || wParam == VK_SUBTRACT;
+	}
+
 	/**
 	 * Classifies local Downloads list key messages into existing file commands.
 	 *
@@ -35,6 +47,24 @@ namespace DownloadListKeyboardShortcutsSeams
 	{
 		if (uMessage == WM_KEYDOWN && wParam == VK_DELETE && !bCtrlDown && !bAltDown)
 			return bShiftDown ? MP_CANCEL_NO_CONFIRM : 0;
+
+		if (uMessage == WM_KEYDOWN && bCtrlDown && !bAltDown) {
+			if (bShiftDown) {
+				if (wParam == _T('P'))
+					return MP_PAUSE_CATEGORY;
+				if (wParam == _T('S'))
+					return MP_RESUME_CATEGORY;
+				if (IsPriorityUpKey(wParam))
+					return MP_PRIOHIGH;
+				if (IsPriorityDownKey(wParam))
+					return MP_PRIOLOW;
+			} else {
+				if (IsPriorityUpKey(wParam))
+					return MP_PRIOUP;
+				if (IsPriorityDownKey(wParam))
+					return MP_PRIODOWN;
+			}
+		}
 
 		return FileListKeyboardShortcutsSeams::ClassifyKeyMessage(
 			FileListKeyboardShortcutsSeams::EContext::Downloads,

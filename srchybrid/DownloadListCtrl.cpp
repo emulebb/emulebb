@@ -19,6 +19,7 @@
 #include "FakeFileDetector.h"
 #include "DownloadProgressBarSeams.h"
 #include "DownloadListKeyboardShortcutsSeams.h"
+#include "DownloadPriorityShortcutsSeams.h"
 #include "DownloadListCtrl.h"
 #include "updownclient.h"
 #include "MenuCmds.h"
@@ -1646,6 +1647,14 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 
 			EnableSubMenuItem(m_FileMenu, m_PrioMenu.m_hMenu, iFilesNotDone > 0 ? MF_ENABLED : MF_GRAYED);
 			m_PrioMenu.CheckMenuRadioItem(MP_PRIOLOW, MP_PRIOAUTO, uPrioMenuItem, 0);
+			int iBatchFilesToPause = 0;
+			int iBatchFilesToResume = 0;
+			int iBatchFilesToStop = 0;
+			CountBatchCommandsInCurCat(iBatchFilesToPause, iBatchFilesToResume, iBatchFilesToStop);
+			EnableSubMenuItem(m_FileMenu, m_BatchMenu.m_hMenu, (iBatchFilesToPause > 0 || iBatchFilesToResume > 0 || iBatchFilesToStop > 0) ? MF_ENABLED : MF_GRAYED);
+			m_BatchMenu.EnableMenuItem(MP_PAUSE_CATEGORY, iBatchFilesToPause > 0 ? MF_ENABLED : MF_GRAYED);
+			m_BatchMenu.EnableMenuItem(MP_STOP_CATEGORY, iBatchFilesToStop > 0 ? MF_ENABLED : MF_GRAYED);
+			m_BatchMenu.EnableMenuItem(MP_RESUME_CATEGORY, iBatchFilesToResume > 0 ? MF_ENABLED : MF_GRAYED);
 
 			// enable commands if there is at least one item which can be used for the action
 			m_FileMenu.EnableMenuItem(MP_CANCEL, iFilesToCancel > 0 ? MF_ENABLED : MF_GRAYED);
@@ -1802,6 +1811,14 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 	} else { // nothing selected
 		int total;
 		EnableSubMenuItem(m_FileMenu, m_PrioMenu.m_hMenu, MF_GRAYED);
+		int iBatchFilesToPause = 0;
+		int iBatchFilesToResume = 0;
+		int iBatchFilesToStop = 0;
+		CountBatchCommandsInCurCat(iBatchFilesToPause, iBatchFilesToResume, iBatchFilesToStop);
+		EnableSubMenuItem(m_FileMenu, m_BatchMenu.m_hMenu, (iBatchFilesToPause > 0 || iBatchFilesToResume > 0 || iBatchFilesToStop > 0) ? MF_ENABLED : MF_GRAYED);
+		m_BatchMenu.EnableMenuItem(MP_PAUSE_CATEGORY, iBatchFilesToPause > 0 ? MF_ENABLED : MF_GRAYED);
+		m_BatchMenu.EnableMenuItem(MP_STOP_CATEGORY, iBatchFilesToStop > 0 ? MF_ENABLED : MF_GRAYED);
+		m_BatchMenu.EnableMenuItem(MP_RESUME_CATEGORY, iBatchFilesToResume > 0 ? MF_ENABLED : MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_CANCEL, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_PAUSE, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_STOP, MF_GRAYED);
@@ -1940,6 +1957,14 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 	case MP_FIND:
 		OnFindStart();
 		return TRUE;
+	case MP_PAUSE_CATEGORY:
+	case MP_RESUME_CATEGORY:
+	case MP_STOP_CATEGORY:
+		theApp.downloadqueue->SetCatStatus(m_curTab, wParam == MP_PAUSE_CATEGORY ? MP_PAUSE : (wParam == MP_RESUME_CATEGORY ? MP_RESUME : MP_STOP));
+		theApp.emuledlg->transferwnd->UpdateCatTabTitles();
+		m_availableCommandsDirty = true;
+		Invalidate();
+		return TRUE;
 	case MP_TOGGLEDTOOLBAR:
 		thePrefs.SetDownloadToolbar(true);
 		theApp.emuledlg->transferwnd->ShowToolbar(true);
@@ -2038,6 +2063,8 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 			case MP_PRIONORMAL:
 			case MP_PRIOHIGH:
 			case MP_PRIOAUTO:
+			case MP_PRIOUP:
+			case MP_PRIODOWN:
 				{
 					bool bAuto = (wParam == MP_PRIOAUTO);
 					uint8 pr;
@@ -2055,6 +2082,8 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 					while (!selectedList.IsEmpty()) {
 						CPartFile *partfile = selectedList.RemoveHead();
 						partfile->SetAutoDownPriority(bAuto);
+						if (wParam == MP_PRIOUP || wParam == MP_PRIODOWN)
+							pr = DownloadPriorityShortcutsSeams::StepManualDownloadPriority(partfile->GetDownPriority(), wParam == MP_PRIOUP);
 						partfile->SetDownPriority(pr);
 					}
 					SetRedraw(true);
@@ -2729,6 +2758,8 @@ void CDownloadListCtrl::CreateMenus()
 		VERIFY(m_PrioMenu.DestroyMenu());
 	if (m_SourcesMenu)
 		VERIFY(m_SourcesMenu.DestroyMenu());
+	if (m_BatchMenu)
+		VERIFY(m_BatchMenu.DestroyMenu());
 	if (m_FileMenu)
 		VERIFY(m_FileMenu.DestroyMenu());
 
@@ -2739,9 +2770,12 @@ void CDownloadListCtrl::CreateMenus()
 	//
 	m_PrioMenu.CreateMenu();
 	m_PrioMenu.AddMenuTitle(NULL, true);
-	m_PrioMenu.AppendMenu(MF_STRING, MP_PRIOLOW, GetResString(IDS_PRIOLOW));
+	m_PrioMenu.AppendMenu(MF_STRING, MP_PRIOUP, AddMenuShortcutLabel(GetResString(IDS_PRIO_INCREASE), _T("Ctrl++")));
+	m_PrioMenu.AppendMenu(MF_STRING, MP_PRIODOWN, AddMenuShortcutLabel(GetResString(IDS_PRIO_DECREASE), _T("Ctrl+-")));
+	m_PrioMenu.AppendMenu(MF_SEPARATOR);
+	m_PrioMenu.AppendMenu(MF_STRING, MP_PRIOLOW, AddMenuShortcutLabel(GetResString(IDS_PRIOLOW), _T("Ctrl+Shift+-")));
 	m_PrioMenu.AppendMenu(MF_STRING, MP_PRIONORMAL, GetResString(IDS_PRIONORMAL));
-	m_PrioMenu.AppendMenu(MF_STRING, MP_PRIOHIGH, GetResString(IDS_PRIOHIGH));
+	m_PrioMenu.AppendMenu(MF_STRING, MP_PRIOHIGH, AddMenuShortcutLabel(GetResString(IDS_PRIOHIGH), _T("Ctrl+Shift++")));
 	m_PrioMenu.AppendMenu(MF_STRING, MP_PRIOAUTO, GetResString(IDS_PRIOAUTO));
 
 	CString sPrio;
@@ -2753,7 +2787,13 @@ void CDownloadListCtrl::CreateMenus()
 	m_FileMenu.AppendMenu(MF_STRING, MP_PAUSE, AddMenuShortcutLabel(GetResString(IDS_DL_PAUSE), _T("Ctrl+P")), _T("PAUSE"));
 	m_FileMenu.AppendMenu(MF_STRING, MP_STOP, AddMenuShortcutLabel(GetResString(IDS_DL_STOP), _T("Ctrl+T")), _T("STOP"));
 	m_FileMenu.AppendMenu(MF_STRING, MP_RESUME, AddMenuShortcutLabel(GetResString(IDS_DL_RESUME), _T("Ctrl+S")), _T("RESUME"));
-	m_FileMenu.AppendMenu(MF_STRING, MP_CANCEL, GetResString(IDS_MAIN_BTN_CANCEL), _T("DELETE"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_CANCEL, AddMenuShortcutLabel(GetResString(IDS_MAIN_BTN_CANCEL), _T("Delete")), _T("DELETE"));
+	m_BatchMenu.CreateMenu();
+	m_BatchMenu.AddMenuTitle(NULL, true);
+	m_BatchMenu.AppendMenu(MF_STRING, MP_PAUSE_CATEGORY, AddMenuShortcutLabel(GetResString(IDS_DL_PAUSE_CATEGORY), _T("Ctrl+Shift+P")));
+	m_BatchMenu.AppendMenu(MF_STRING, MP_STOP_CATEGORY, GetResString(IDS_DL_STOP_CATEGORY));
+	m_BatchMenu.AppendMenu(MF_STRING, MP_RESUME_CATEGORY, AddMenuShortcutLabel(GetResString(IDS_DL_RESUME_CATEGORY), _T("Ctrl+Shift+S")));
+	m_FileMenu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)m_BatchMenu.m_hMenu, GetResString(IDS_DL_BATCH));
 	m_FileMenu.AppendMenu(MF_SEPARATOR);
 
 	m_FileMenu.AppendMenu(MF_STRING, MP_OPEN, AddMenuShortcutLabel(GetResString(IDS_DL_OPEN), _T("Ctrl+O")), _T("OPENFILE"));
@@ -2793,7 +2833,7 @@ void CDownloadListCtrl::CreateMenus()
 
 	// Search commands
 	//
-	m_FileMenu.AppendMenu(MF_STRING, MP_FIND, GetResString(IDS_FIND), _T("Search"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_FIND, AddMenuShortcutLabel(GetResString(IDS_FIND), _T("Ctrl+F")), _T("Search"));
 	m_FileMenu.AppendMenu(MF_STRING, MP_SEARCHRELATED, GetResString(IDS_SEARCHRELATED), _T("KadFileSearch"));
 	// Web-services and categories will be added on-the-fly.
 }
@@ -2843,6 +2883,25 @@ int CDownloadListCtrl::GetFilesCountInCurCat()
 		}
 	}
 	return iCount;
+}
+
+void CDownloadListCtrl::CountBatchCommandsInCurCat(int &riFilesToPause, int &riFilesToResume, int &riFilesToStop) const
+{
+	riFilesToPause = 0;
+	riFilesToResume = 0;
+	riFilesToStop = 0;
+
+	for (ListItems::const_iterator it = m_ListItems.begin(); it != m_ListItems.end(); ++it) {
+		const CtrlItem_Struct *cur_item = it->second;
+		if (IsLiveFileItem(cur_item)) {
+			CPartFile *file = static_cast<CPartFile*>(cur_item->value);
+			if (file->CheckShowItemInGivenCat(m_curTab)) {
+				riFilesToPause += static_cast<int>(file->CanPauseFile());
+				riFilesToResume += static_cast<int>(file->CanResumeFile());
+				riFilesToStop += static_cast<int>(file->CanStopFile());
+			}
+		}
+	}
 }
 
 CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, int iSubItem)
@@ -3548,6 +3607,16 @@ bool CDownloadListCtrl::ReportAvailableCommands(CList<int> &liAvailableCommands)
 	int total;
 	if (GetCompleteDownloads(m_curTab, total) > 0)
 		liAvailableCommands.AddTail(MP_CLEARCOMPLETED);
+	int iBatchFilesToPause = 0;
+	int iBatchFilesToResume = 0;
+	int iBatchFilesToStop = 0;
+	CountBatchCommandsInCurCat(iBatchFilesToPause, iBatchFilesToResume, iBatchFilesToStop);
+	if (iBatchFilesToPause > 0)
+		liAvailableCommands.AddTail(MP_PAUSE_CATEGORY);
+	if (iBatchFilesToResume > 0)
+		liAvailableCommands.AddTail(MP_RESUME_CATEGORY);
+	if (iBatchFilesToStop > 0)
+		liAvailableCommands.AddTail(MP_STOP_CATEGORY);
 	if (GetItemCount() > 0)
 		liAvailableCommands.AddTail(MP_FIND);
 	return true;

@@ -2984,6 +2984,12 @@
 #define IDS_WS_ENABLE_REST_API                 3156
 #define IDS_WS_ENABLE_LEGACY_WEBUI             3157
 #define IDS_WEBSERVER_TT_WSLEGACYUI            3158
+#define IDS_DL_BATCH                           3159
+#define IDS_DL_PAUSE_CATEGORY                  3160
+#define IDS_DL_STOP_CATEGORY                   3161
+#define IDS_DL_RESUME_CATEGORY                 3162
+#define IDS_PRIO_INCREASE                      3163
+#define IDS_PRIO_DECREASE                      3164
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025
@@ -3073,6 +3079,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        3055
 #define _APS_NEXT_COMMAND_VALUE         32773
 #define _APS_NEXT_CONTROL_VALUE         3092
-#define _APS_NEXT_SYMED_VALUE           3148
+#define _APS_NEXT_SYMED_VALUE           3165
 #endif
 #endif
