@@ -7,6 +7,7 @@
 //version 2 of the License, or (at your option) any later version.
 #include "stdafx.h"
 #include "FakeFileDetector.h"
+#include "ConfigDefaultFilesSeams.h"
 #include "emule.h"
 #include "FileTypeClassifierSeams.h"
 #include "Kademlia/Kademlia/Entry.h"
@@ -156,20 +157,7 @@ void WriteDefaultRuleFile(const CString &rstrPath)
 		DebugLogError(_T("Failed to create FakeFileFilter.dat%s"), (LPCTSTR)CExceptionStrDash(ex));
 		return;
 	}
-	const CString strDefaultRules(
-		_T("# eMule BB fake-file bad-signal rules\n")
-		_T("# UTF-8 text. One rule per line. Lines starting with # or ; are ignored.\n\n")
-		_T("[tokens]\n")
-		_T("fake\n")
-		_T("corrupt\n")
-		_T("wrong file\n")
-		_T("password\n")
-		_T("virus\n")
-		_T("trojan\n")
-		_T("malware\n\n")
-		_T("[regex]\n")
-		_T("\\.mp4\\.exe$\n")
-		_T("\\.avi\\.scr$\n"));
+	const CString strDefaultRules(ConfigDefaultFilesSeams::GetFakeFileFilterDefaultText());
 	const CUnicodeToBOMUTF8 utf8(strDefaultRules);
 	file.Write(static_cast<LPCSTR>(utf8), utf8.GetLength());
 	file.Close();
@@ -470,7 +458,8 @@ bool FakeFileDetector::ReloadRules()
 	g_bRulesLoaded = true;
 
 	const CString strPath(BuildRuleFilePath());
-	if (!PathFileExists(strPath))
+	CFileStatus fileStatus;
+	if (!PathFileExists(strPath) || (CFile::GetStatus(strPath, fileStatus) && fileStatus.m_size == 0))
 		WriteDefaultRuleFile(strPath);
 
 	CString strRulesText;

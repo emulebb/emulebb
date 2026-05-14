@@ -19,6 +19,8 @@
 #include <share.h>
 #include <iphlpapi.h>
 #include <unordered_set>
+#include <vector>
+#include "ConfigDefaultFilesSeams.h"
 #include "emule.h"
 #include "Preferences.h"
 #include "Opcodes.h"
@@ -46,6 +48,7 @@
 #include "PreferenceValidationSeams.h"
 #include "PartFilePreviewSeams.h"
 #include "SearchParamsPolicy.h"
+#include "StringConversion.h"
 #include "VistaDefines.h"
 #include <osrng.h>
 
@@ -156,6 +159,72 @@ static EBindAddressResolveResult ResolveConfiguredBinding(LPCTSTR pszBindingName
 	return eResult;
 }
 
+bool IsConfigDefaultCommentLine(const CString &rstrLine)
+{
+	CString strLine(rstrLine);
+	strLine.Trim(_T(" \t\r\n"));
+	return !strLine.IsEmpty() && (strLine[0] == _T('#') || strLine[0] == _T(';'));
+}
+
+bool TryReadSmallConfigFileBytes(const CString &rstrFullPath, std::vector<unsigned char> &rBytes)
+{
+	rBytes.clear();
+	CSafeFile file;
+	if (!LongPathSeams::OpenFile(file, rstrFullPath, CFile::modeRead | CFile::typeBinary | CFile::shareDenyWrite))
+		return false;
+
+	const ULONGLONG ullLength = file.GetLength();
+	if (ullLength > 64u * 1024u)
+		return false;
+
+	rBytes.resize(static_cast<size_t>(ullLength));
+	if (!rBytes.empty())
+		file.Read(rBytes.data(), static_cast<UINT>(rBytes.size()));
+	file.Close();
+	return true;
+}
+
+bool WriteDefaultConfigTemplateFile(const CString &rstrFullPath, LPCTSTR pszTemplateText)
+{
+	const CString strTempPath(rstrFullPath + _T(".tmp"));
+	CSafeFile file;
+	if (!LongPathSeams::OpenFile(file, strTempPath, CFile::modeCreate | CFile::modeWrite | CFile::typeBinary | CFile::shareDenyWrite))
+		return false;
+
+	try {
+		const CUnicodeToUTF8 utf8{ CString(pszTemplateText) };
+		file.Write(static_cast<LPCSTR>(utf8), utf8.GetLength());
+		file.Close();
+		return LongPathSeams::MoveFileEx(strTempPath, rstrFullPath, MOVEFILE_REPLACE_EXISTING) != 0;
+	} catch (CFileException *ex) {
+		if (thePrefs.GetVerbose())
+			AddDebugLogLine(true, _T("Failed to create default config file %s%s"), (LPCTSTR)rstrFullPath, (LPCTSTR)CExceptionStrDash(*ex));
+		ex->Delete();
+	}
+	return false;
+}
+
+void EnsureDefaultConfigTextFiles(const CString &rstrConfigDirectory)
+{
+	size_t uSpecCount = 0;
+	const ConfigDefaultFilesSeams::DefaultFileSpec *pSpecs = ConfigDefaultFilesSeams::GetKnownDefaultFileSpecs(uSpecCount);
+	for (size_t i = 0; i < uSpecCount; ++i) {
+		const ConfigDefaultFilesSeams::DefaultFileSpec &rSpec = pSpecs[i];
+		if (!ConfigDefaultFilesSeams::IsTemplateAction(rSpec.eAction) || rSpec.pszTemplateText == NULL)
+			continue;
+
+		const CString strFullPath(rstrConfigDirectory + rSpec.pszFileName);
+		const bool bFileExists = LongPathSeams::PathExists(strFullPath) != FALSE;
+		std::vector<unsigned char> existingBytes;
+		if (bFileExists && !TryReadSmallConfigFileBytes(strFullPath, existingBytes))
+			continue;
+		if (!ConfigDefaultFilesSeams::ShouldCreateDefaultFile(&rSpec, bFileExists, existingBytes))
+			continue;
+		if (!WriteDefaultConfigTemplateFile(strFullPath, rSpec.pszTemplateText) && thePrefs.GetVerbose())
+			AddDebugLogLine(true, _T("Failed to create default config file %s"), (LPCTSTR)strFullPath);
+	}
+}
+
 bool LoadPathListFromFile(const CString &rstrFullPath, CStringList &rOutList)
 {
 	rOutList.RemoveAll();
@@ -171,7 +240,7 @@ bool LoadPathListFromFile(const CString &rstrFullPath, CStringList &rOutList)
 		CString strPath;
 		while (sdirfile.CStdioFile::ReadString(strPath)) {
 			strPath.Trim(_T(" \t\r\n"));
-			if (!strPath.IsEmpty())
+			if (!strPath.IsEmpty() && !IsConfigDefaultCommentLine(strPath))
 				rOutList.AddTail(PathHelpers::CanonicalizeDirectoryPath(strPath));
 		}
 	} catch (CFileException *ex) {
@@ -511,6 +580,8 @@ void LoadSharedIgnoreRules(const CString &rstrConfigDirectory)
 		CString strRuleLine;
 		while (ignoreFile.CStdioFile::ReadString(strRuleLine)) {
 			strRuleLine.Trim(_T("\r\n"));
+			if (IsConfigDefaultCommentLine(strRuleLine))
+				continue;
 			SharedFileIntakePolicy::IgnoreRule rule = {};
 			if (SharedFileIntakePolicy::TryParseUserRule(strRuleLine, rule))
 				userRules.push_back(rule);
@@ -1328,6 +1399,7 @@ void CPreferences::Init()
 
 	const CString &sConfDir(GetMuleDirectory(EMULE_CONFIGDIR));
 	m_strFileCommentsFilePath.Format(_T("%sfileinfo.ini"), (LPCTSTR)sConfDir);
+	EnsureDefaultConfigTextFiles(sConfDir);
 	LoadSharedIgnoreRules(sConfDir);
 
 	///////////////////////////////////////////////////////////////////////////
@@ -1383,7 +1455,7 @@ void CPreferences::Init()
 			CString toadd;
 			while (sdirfile.CStdioFile::ReadString(toadd)) {
 				toadd.Trim(_T(" \t\r\n")); // need to trim '\r' in binary mode
-				if (!toadd.IsEmpty()) {
+				if (!toadd.IsEmpty() && !IsConfigDefaultCommentLine(toadd)) {
 					toadd = PathHelpers::CanonicalizeDirectoryPath(toadd);
 					// skip non-shareable directories
 					// maybe skip non-existing directories on fixed disks only
