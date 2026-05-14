@@ -366,6 +366,12 @@ std::wstring MakeDirectoryListLookupKey(const CString &rstrDirectory)
 	return std::wstring(strKey);
 }
 
+bool IsDirectoryLookupKeyWithin(const std::wstring &rstrDirectoryKey, const std::wstring &rstrCandidateKey)
+{
+	return rstrCandidateKey.length() > rstrDirectoryKey.length()
+		&& rstrCandidateKey.compare(0, rstrDirectoryKey.length(), rstrDirectoryKey) == 0;
+}
+
 void RebuildDirectoryLookupKeysLocked(const CStringList &rTargetList, std::unordered_set<std::wstring> &rLookupKeys)
 {
 	rLookupKeys.clear();
@@ -400,7 +406,7 @@ bool AddCanonicalDirectoryIfAbsentLocked(CStringList &rTargetList, std::unordere
 	for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
 		const CString strExisting(rTargetList.GetNext(pos));
-		if (!EqualPaths(strExisting, strCanonicalDir))
+		if (MakeDirectoryListLookupKey(strExisting) != strLookupKey)
 			continue;
 		if (strExisting.CompareNoCase(strCanonicalDir) != 0)
 			rTargetList.SetAt(posCurrent, strCanonicalDir);
@@ -415,9 +421,10 @@ bool AddCanonicalDirectoryIfAbsentLocked(CStringList &rTargetList, std::unordere
 bool RemoveCanonicalDirectoryLocked(CStringList &rTargetList, std::unordered_set<std::wstring> &rLookupKeys, const CString &rstrDirectory)
 {
 	const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(rstrDirectory));
+	const std::wstring strLookupKey(MakeDirectoryListLookupKey(strCanonicalDir));
 	for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
-		if (!EqualPaths(rTargetList.GetNext(pos), strCanonicalDir))
+		if (MakeDirectoryListLookupKey(rTargetList.GetNext(pos)) != strLookupKey)
 			continue;
 		rTargetList.RemoveAt(posCurrent);
 		RebuildDirectoryLookupKeysLocked(rTargetList, rLookupKeys);
@@ -429,12 +436,15 @@ bool RemoveCanonicalDirectoryLocked(CStringList &rTargetList, std::unordered_set
 bool RemoveCanonicalDirectoriesUnderRootLocked(CStringList &rTargetList, std::unordered_set<std::wstring> &rLookupKeys, const CString &rstrDirectory, bool bIncludeRoot)
 {
 	const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(rstrDirectory));
+	const std::wstring strLookupKey(MakeDirectoryListLookupKey(strCanonicalDir));
 	bool bChanged = false;
 	for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
 		const CString strCurrent(rTargetList.GetNext(pos));
-		if ((!bIncludeRoot && EqualPaths(strCurrent, strCanonicalDir))
-			|| !PathHelpers::IsPathWithinDirectory(strCanonicalDir, strCurrent))
+		const std::wstring strCurrentKey(MakeDirectoryListLookupKey(strCurrent));
+		const bool bSamePath = strCurrentKey == strLookupKey;
+		if ((!bIncludeRoot && bSamePath)
+			|| (!bSamePath && !IsDirectoryLookupKeyWithin(strLookupKey, strCurrentKey)))
 		{
 			continue;
 		}
@@ -448,11 +458,12 @@ bool RemoveCanonicalDirectoriesUnderRootLocked(CStringList &rTargetList, std::un
 
 bool ListContainsEquivalentDirectoryLocked(const CStringList &rTargetList, const std::unordered_set<std::wstring> &rLookupKeys, const CString &rstrDirectory)
 {
-	if (rLookupKeys.find(MakeDirectoryListLookupKey(rstrDirectory)) != rLookupKeys.end())
+	const std::wstring strLookupKey(MakeDirectoryListLookupKey(rstrDirectory));
+	if (rLookupKeys.find(strLookupKey) != rLookupKeys.end())
 		return true;
 
 	for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;) {
-		if (EqualPaths(rTargetList.GetNext(pos), rstrDirectory))
+		if (MakeDirectoryListLookupKey(rTargetList.GetNext(pos)) == strLookupKey)
 			return true;
 	}
 	return false;
@@ -472,8 +483,10 @@ void FilterMonitoredDirectoryStateAgainstSharedListLocked(CStringList &rMonitore
 		bool bKeep = ListContainsEquivalentDirectoryLocked(rSharedDirs, rSharedLookupKeys, strCurrent);
 		if (bKeep) {
 			bKeep = false;
+			const std::wstring strCurrentKey(MakeDirectoryListLookupKey(strCurrent));
 			for (POSITION posRoot = rMonitoredRoots.GetHeadPosition(); posRoot != NULL;) {
-				if (PathHelpers::IsPathWithinDirectory(rMonitoredRoots.GetNext(posRoot), strCurrent)) {
+				const std::wstring strRootKey(MakeDirectoryListLookupKey(rMonitoredRoots.GetNext(posRoot)));
+				if (strRootKey == strCurrentKey || IsDirectoryLookupKeyWithin(strRootKey, strCurrentKey)) {
 					bKeep = true;
 					break;
 				}
