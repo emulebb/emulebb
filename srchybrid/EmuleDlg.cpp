@@ -167,11 +167,29 @@ namespace
 		return thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + pszLeafName;
 	}
 
+	static UINT GetExistingFileMenuFlags(const CString &rstrPath)
+	{
+		return MF_STRING | (LongPathSeams::PathExists(rstrPath) ? 0 : MF_GRAYED);
+	}
+
 	static void EditTextFile(const CString &rstrPath)
 	{
 		CString strQuotedPath;
 		strQuotedPath.Format(_T("\"%s\""), (LPCTSTR)rstrPath);
 		ShellOpen(thePrefs.GetTxtEditor(), strQuotedPath);
+	}
+
+	static void UpdateServerMetFromConfiguredAddresses(CServerWnd *pServerWnd)
+	{
+		if (pServerWnd == NULL)
+			return;
+		if (thePrefs.addresses_list.IsEmpty()) {
+			AddLogLine(true, GetResString(IDS_SRV_NOURLAV));
+			return;
+		}
+		for (POSITION pos = thePrefs.addresses_list.GetHeadPosition(); pos != NULL;)
+			if (pServerWnd->UpdateServerMetFromURL(thePrefs.addresses_list.GetNext(pos)))
+				break;
 	}
 
 	static UINT GetToolsMenuStatusStringID(UINT nItemID)
@@ -191,6 +209,36 @@ namespace
 			return IDS_TOOLS_STATUS_EDIT_ADDRESSES_DAT;
 		case MP_HM_EDIT_WEBSERVICES_DAT:
 			return IDS_TOOLS_STATUS_EDIT_WEBSERVICES_DAT;
+		case MP_HM_EDIT_STATIC_SERVERS_DAT:
+			return IDS_TOOLS_STATUS_EDIT_STATIC_SERVERS_DAT;
+		case MP_HM_EDIT_SHAREDDIR_DAT:
+			return IDS_TOOLS_STATUS_EDIT_SHAREDDIR_DAT;
+		case MP_HM_EDIT_MONITORED_SHAREDDIR_DAT:
+			return IDS_TOOLS_STATUS_EDIT_MONITORED_SHAREDDIR_DAT;
+		case MP_HM_EDIT_MONITOR_OWNED_SHAREDDIR_DAT:
+			return IDS_TOOLS_STATUS_EDIT_MONITOR_OWNED_SHAREDDIR_DAT;
+		case MP_HM_EDIT_SHAREIGNORE_DAT:
+			return IDS_TOOLS_STATUS_EDIT_SHAREIGNORE_DAT;
+		case MP_HM_EDIT_CATEGORY_INI:
+			return IDS_TOOLS_STATUS_EDIT_CATEGORY_INI;
+		case MP_HM_EDIT_NOTIFIER_INI:
+			return IDS_TOOLS_STATUS_EDIT_NOTIFIER_INI;
+		case MP_HM_EDIT_FILEINFO_INI:
+			return IDS_TOOLS_STATUS_EDIT_FILEINFO_INI;
+		case MP_HM_EDIT_STATISTICS_INI:
+			return IDS_TOOLS_STATUS_EDIT_STATISTICS_INI;
+		case MP_HM_RELOAD_SHAREIGNORE_DAT:
+			return IDS_TOOLS_STATUS_RELOAD_SHAREIGNORE_DAT;
+		case MP_HM_RESCAN_SHARED_FILES:
+			return IDS_TOOLS_STATUS_RESCAN_SHARED_FILES;
+		case MP_HM_SAVE_PREFERENCES_NOW:
+			return IDS_TOOLS_STATUS_SAVE_PREFERENCES_NOW;
+		case MP_HM_UPDATE_SERVERMET_FROM_ADDRESSES:
+			return IDS_TOOLS_STATUS_UPDATE_SERVERMET_FROM_ADDRESSES;
+		case MP_HM_OPEN_EMULE_LOG:
+			return IDS_TOOLS_STATUS_OPEN_EMULE_LOG;
+		case MP_HM_OPEN_VERBOSE_LOG:
+			return IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG;
 		default:
 			return 0;
 		}
@@ -3274,11 +3322,26 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_OPENINC:
 		ShellOpenFile(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
 		break;
+	case MP_HM_OPEN_TEMPDIR:
+		ShellOpenFile(thePrefs.GetMuleDirectory(EMULE_TEMPDIR));
+		break;
 	case MP_HM_OPENCONFIGDIR:
 		ShellOpenFile(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
 		break;
 	case MP_HM_OPENLOGDIR:
 		ShellOpenFile(thePrefs.GetMuleDirectory(EMULE_LOGDIR));
+		break;
+	case MP_HM_OPEN_WEBSERVERDIR:
+		ShellOpenFile(thePrefs.GetMuleDirectory(EMULE_WEBSERVERDIR));
+		break;
+	case MP_HM_OPEN_SKINDIR:
+		ShellOpenFile(thePrefs.GetMuleDirectory(EMULE_SKINDIR));
+		break;
+	case MP_HM_OPEN_TOOLBARDIR:
+		ShellOpenFile(thePrefs.GetMuleDirectory(EMULE_TOOLBARDIR));
+		break;
+	case MP_HM_OPEN_EXECUTABLEDIR:
+		ShellOpenFile(thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));
 		break;
 	case MP_HM_EDIT_PREFERENCES_INI:
 		EditTextFile(GetConfigFilePath(_T("preferences.ini")));
@@ -3303,11 +3366,44 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_EDIT_WEBSERVICES_DAT:
 		EditTextFile(theWebServices.GetDefaultServicesFile());
 		break;
+	case MP_HM_EDIT_STATIC_SERVERS_DAT:
+		EditTextFile(GetConfigFilePath(_T("staticservers.dat")));
+		break;
+	case MP_HM_EDIT_SHAREDDIR_DAT:
+		EditTextFile(GetConfigFilePath(_T("shareddir.dat")));
+		break;
+	case MP_HM_EDIT_MONITORED_SHAREDDIR_DAT:
+		EditTextFile(GetConfigFilePath(_T("shareddir.monitored.dat")));
+		break;
+	case MP_HM_EDIT_MONITOR_OWNED_SHAREDDIR_DAT:
+		EditTextFile(GetConfigFilePath(_T("shareddir.monitor-owned.dat")));
+		break;
+	case MP_HM_EDIT_SHAREIGNORE_DAT:
+		EditTextFile(GetConfigFilePath(_T("shareignore.dat")));
+		break;
+	case MP_HM_EDIT_CATEGORY_INI:
+		EditTextFile(GetConfigFilePath(_T("Category.ini")));
+		break;
+	case MP_HM_EDIT_NOTIFIER_INI:
+		EditTextFile(GetConfigFilePath(_T("Notifier.ini")));
+		break;
+	case MP_HM_EDIT_FILEINFO_INI:
+		EditTextFile(thePrefs.GetFileCommentsFilePath());
+		break;
+	case MP_HM_EDIT_STATISTICS_INI:
+		EditTextFile(GetConfigFilePath(_T("statistics.ini")));
+		break;
 	case MP_HM_CAPTURE_MINIDUMP:
 		CaptureDiagnosticDump(false);
 		break;
 	case MP_HM_CAPTURE_FULLDUMP:
 		CaptureDiagnosticDump(true);
+		break;
+	case MP_HM_OPEN_EMULE_LOG:
+		ShellOpenFile(theLog.GetFilePath());
+		break;
+	case MP_HM_OPEN_VERBOSE_LOG:
+		ShellOpenFile(theVerboseLog.GetFilePath());
 		break;
 	case TBBTN_HELP:
 	case MP_HM_HELP:
@@ -3360,6 +3456,29 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 			AddLogLine(false, _T("Reloaded fake-file filter rules."));
 		else
 			AddLogLine(false, _T("Failed to reload fake-file filter rules."));
+		break;
+	case MP_HM_RELOAD_SHAREIGNORE_DAT:
+		thePrefs.ReloadSharedIgnoreRules();
+		AddLogLine(false, _T("Reloaded shared-file ignore rules."));
+		break;
+	case MP_HM_RESCAN_SHARED_FILES:
+		{
+			CWaitCursor curWait;
+			if (sharedfileswnd != NULL)
+				(void)sharedfileswnd->Reload(true);
+			else if (theApp.sharedfiles != NULL)
+				theApp.sharedfiles->Reload();
+		}
+		break;
+	case MP_HM_SAVE_PREFERENCES_NOW:
+		if (thePrefs.Save())
+			AddLogLine(false, _T("Failed to save preferences and config files."));
+		else
+			AddLogLine(false, _T("Saved preferences and config files."));
+		break;
+	case MP_HM_UPDATE_SERVERMET_FROM_ADDRESSES:
+		thePrefs.ReloadServerMetAddressList();
+		UpdateServerMetFromConfiguredAddresses(serverwnd);
 		break;
 	case MP_HM_GEOLOCATION_DOWNLOAD:
 		if (theApp.geolocation != NULL)
@@ -3471,6 +3590,10 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 	networkUpdates.CreateMenu();
 	networkUpdates.AddMenuTitle(NULL, true);
 
+	CTitledMenu maintenance;
+	maintenance.CreateMenu();
+	maintenance.AddMenuTitle(NULL, true);
+
 	CTitledMenu diagnostics;
 	diagnostics.CreateMenu();
 	diagnostics.AddMenuTitle(NULL, true);
@@ -3481,33 +3604,58 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 			uGeoLocationMenuFlags |= MF_GRAYED;
 
 		folders.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
+		folders.AppendMenu(MF_STRING, MP_HM_OPEN_TEMPDIR, GetResString(IDS_OPEN_TEMP_DIR) + _T("..."), _T("OPENFOLDER"));
 		folders.AppendMenu(MF_STRING, MP_HM_OPENCONFIGDIR, GetResString(IDS_OPENCONFIGDIR) + _T("..."), _T("OPENFOLDER"));
 		folders.AppendMenu(MF_STRING, MP_HM_OPENLOGDIR, GetResString(IDS_OPENLOGDIR) + _T("..."), _T("OPENFOLDER"));
+		folders.AppendMenu(MF_SEPARATOR);
+		folders.AppendMenu(MF_STRING, MP_HM_OPEN_WEBSERVERDIR, GetResString(IDS_OPEN_WEBSERVER_DIR) + _T("..."), _T("OPENFOLDER"));
+		folders.AppendMenu(MF_STRING, MP_HM_OPEN_SKINDIR, GetResString(IDS_OPEN_SKINS_DIR) + _T("..."), _T("OPENFOLDER"));
+		folders.AppendMenu(MF_STRING, MP_HM_OPEN_TOOLBARDIR, GetResString(IDS_OPEN_TOOLBAR_DIR) + _T("..."), _T("OPENFOLDER"));
+		folders.AppendMenu(MF_STRING, MP_HM_OPEN_EXECUTABLEDIR, GetResString(IDS_OPEN_EXECUTABLE_DIR) + _T("..."), _T("OPENFOLDER"));
 
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_PREFERENCES_INI, GetResString(IDS_EDIT_PREFERENCES_INI), _T("PREFERENCES"));
 		editConfigFiles.AppendMenu(MF_SEPARATOR);
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_IPFILTER_DAT, GetResString(IDS_EDIT_IPFILTER_DAT), _T("IPFILTER"));
-		editConfigFiles.AppendMenu(MF_STRING, MP_HM_RELOAD_IPFILTER_DAT, GetResString(IDS_RELOAD_IPFILTER_DAT), _T("IPFILTER"));
-		editConfigFiles.AppendMenu(MF_SEPARATOR);
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_FAKEFILEFILTER_DAT, GetResString(IDS_EDIT_FAKEFILEFILTER_DAT), _T("TOOLS"));
-		editConfigFiles.AppendMenu(MF_STRING, MP_HM_RELOAD_FAKEFILEFILTER, GetResString(IDS_RELOADFAKEFILEFILTER), _T("TOOLS"));
-		editConfigFiles.AppendMenu(MF_SEPARATOR);
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_SHAREIGNORE_DAT, GetResString(IDS_EDIT_SHAREIGNORE_DAT), _T("TOOLS"));
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_ADDRESSES_DAT, GetResString(IDS_EDIT_ADDRESSES_DAT), _T("SERVER"));
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_STATIC_SERVERS_DAT, GetResString(IDS_EDIT_STATIC_SERVERS_DAT), _T("SERVER"));
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_WEBSERVICES_DAT, GetResString(IDS_EDIT_WEBSERVICES_DAT), _T("WEB"));
+		editConfigFiles.AppendMenu(MF_SEPARATOR);
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_SHAREDDIR_DAT, GetResString(IDS_EDIT_SHAREDDIR_DAT), _T("OPENFOLDER"));
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_MONITORED_SHAREDDIR_DAT, GetResString(IDS_EDIT_MONITORED_SHAREDDIR_DAT), _T("OPENFOLDER"));
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_MONITOR_OWNED_SHAREDDIR_DAT, GetResString(IDS_EDIT_MONITOR_OWNED_SHAREDDIR_DAT), _T("OPENFOLDER"));
+		editConfigFiles.AppendMenu(MF_SEPARATOR);
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_CATEGORY_INI, GetResString(IDS_EDIT_CATEGORY_INI), _T("CATEGORY"));
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_NOTIFIER_INI, GetResString(IDS_EDIT_NOTIFIER_INI), _T("TOOLS"));
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_FILEINFO_INI, GetResString(IDS_EDIT_FILEINFO_INI), _T("FILECOMMENTS"));
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_STATISTICS_INI, GetResString(IDS_EDIT_STATISTICS_INI), _T("STATISTICS"));
 
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
 		networkUpdates.AppendMenu(MF_SEPARATOR);
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_UPDATE_SERVERMET_FROM_ADDRESSES, GetResString(IDS_UPDATE_SERVERMET_FROM_ADDRESSES), _T("SERVER"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_CHECK_OPEN_PORTS, GetResString(IDS_CHECK_OPEN_PORTS), _T("WEB"));
 		networkUpdates.AppendMenu(uGeoLocationMenuFlags, MP_HM_GEOLOCATION_DOWNLOAD, GetResString(IDS_GEOLOCATION_DOWNLOAD_DB), _T("DOWNLOAD"));
 
+		maintenance.AppendMenu(MF_STRING, MP_HM_RELOAD_IPFILTER_DAT, GetResString(IDS_RELOAD_IPFILTER_DAT), _T("IPFILTER"));
+		maintenance.AppendMenu(MF_STRING, MP_HM_RELOAD_FAKEFILEFILTER, GetResString(IDS_RELOADFAKEFILEFILTER), _T("TOOLS"));
+		maintenance.AppendMenu(MF_STRING, MP_HM_RELOAD_SHAREIGNORE_DAT, GetResString(IDS_RELOAD_SHAREIGNORE_DAT), _T("TOOLS"));
+		maintenance.AppendMenu(MF_SEPARATOR);
+		maintenance.AppendMenu(MF_STRING, MP_HM_RESCAN_SHARED_FILES, GetResString(IDS_RESCAN_SHARED_FILES), _T("SharedFiles"));
+		maintenance.AppendMenu(MF_STRING, MP_HM_SAVE_PREFERENCES_NOW, GetResString(IDS_SAVE_PREFERENCES_NOW), _T("PREFERENCES"));
+
+		diagnostics.AppendMenu(GetExistingFileMenuFlags(theLog.GetFilePath()), MP_HM_OPEN_EMULE_LOG, GetResString(IDS_OPEN_EMULE_LOG), _T("LOG"));
+		diagnostics.AppendMenu(GetExistingFileMenuFlags(theVerboseLog.GetFilePath()), MP_HM_OPEN_VERBOSE_LOG, GetResString(IDS_OPEN_VERBOSE_LOG), _T("LOG"));
+		diagnostics.AppendMenu(MF_SEPARATOR);
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("TOOLS"));
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
 
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, GetResString(IDS_TOOLS_FOLDERS), _T("OPENFOLDER"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T("PREFERENCES"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, GetResString(IDS_TOOLS_NETWORK_UPDATES), _T("WEB"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)maintenance.m_hMenu, GetResString(IDS_TOOLS_MAINTENANCE), _T("TOOLS"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)diagnostics.m_hMenu, GetResString(IDS_TOOLS_DIAGNOSTICS), _T("TOOLS"));
 	} else {
 		menu.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
@@ -3530,6 +3678,7 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 	VERIFY(folders.DestroyMenu());
 	VERIFY(editConfigFiles.DestroyMenu());
 	VERIFY(networkUpdates.DestroyMenu());
+	VERIFY(maintenance.DestroyMenu());
 	VERIFY(diagnostics.DestroyMenu());
 	VERIFY(Links.DestroyMenu());
 	VERIFY(scheduler.DestroyMenu());

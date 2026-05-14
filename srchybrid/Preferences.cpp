@@ -2279,6 +2279,16 @@ bool CPreferences::Save()
 	return error;
 }
 
+void CPreferences::ReloadSharedIgnoreRules()
+{
+	LoadSharedIgnoreRules(GetMuleDirectory(EMULE_CONFIGDIR));
+}
+
+void CPreferences::ReloadServerMetAddressList()
+{
+	LoadServerMetAddressList(GetMuleDirectory(EMULE_CONFIGDIR) + _T("addresses.dat"), addresses_list);
+}
+
 void CPreferences::CreateUserHash()
 {
 	while (isbadhash(userhash)) {

@@ -778,6 +778,14 @@ public:
 
 	static bool		Save();
 	static void		SaveCats();
+	/**
+	 * @brief Reloads user-authored shared-file ignore rules from shareignore.dat.
+	 */
+	static void		ReloadSharedIgnoreRules();
+	/**
+	 * @brief Reloads startup server.met update URLs from addresses.dat.
+	 */
+	static void		ReloadServerMetAddressList();
 
 	static bool		GetUseServerPriorities()			{ return m_bUseServerPriorities; }
 	static bool		GetUseUserSortedServerList()		{ return m_bUseUserSortedServerList; }

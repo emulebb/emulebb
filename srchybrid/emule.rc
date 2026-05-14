@@ -3631,12 +3631,33 @@ BEGIN
     IDS_TOOLS_EDIT_CONFIG_FILES "Edit Config Files"
     IDS_TOOLS_NETWORK_UPDATES "Network && Updates"
     IDS_TOOLS_DIAGNOSTICS   "Diagnostics"
+    IDS_TOOLS_MAINTENANCE   "Maintenance"
     IDS_EDIT_PREFERENCES_INI "Edit preferences.ini"
     IDS_EDIT_IPFILTER_DAT   "Edit ipfilter.dat"
     IDS_RELOAD_IPFILTER_DAT "Reload ipfilter.dat"
     IDS_EDIT_FAKEFILEFILTER_DAT "Edit FakeFileFilter.dat"
     IDS_EDIT_ADDRESSES_DAT  "Edit addresses.dat"
     IDS_EDIT_WEBSERVICES_DAT "Edit webservices.dat"
+    IDS_OPEN_TEMP_DIR       "Open Temp Folder"
+    IDS_OPEN_WEBSERVER_DIR  "Open Webserver Assets"
+    IDS_OPEN_SKINS_DIR      "Open Skins Folder"
+    IDS_OPEN_TOOLBAR_DIR    "Open Toolbar Assets"
+    IDS_OPEN_EXECUTABLE_DIR "Open Executable Folder"
+    IDS_EDIT_STATIC_SERVERS_DAT "Edit staticservers.dat"
+    IDS_EDIT_SHAREDDIR_DAT  "Edit shareddir.dat"
+    IDS_EDIT_MONITORED_SHAREDDIR_DAT "Edit shareddir.monitored.dat"
+    IDS_EDIT_MONITOR_OWNED_SHAREDDIR_DAT "Edit shareddir.monitor-owned.dat"
+    IDS_EDIT_SHAREIGNORE_DAT "Edit shareignore.dat"
+    IDS_EDIT_CATEGORY_INI   "Edit Category.ini"
+    IDS_EDIT_NOTIFIER_INI   "Edit Notifier.ini"
+    IDS_EDIT_FILEINFO_INI   "Edit fileinfo.ini"
+    IDS_EDIT_STATISTICS_INI "Edit statistics.ini"
+    IDS_RELOAD_SHAREIGNORE_DAT "Reload shareignore.dat"
+    IDS_RESCAN_SHARED_FILES "Rescan Shared Files"
+    IDS_SAVE_PREFERENCES_NOW "Save Preferences Now"
+    IDS_UPDATE_SERVERMET_FROM_ADDRESSES "Update server.met from addresses.dat"
+    IDS_OPEN_EMULE_LOG      "Open eMule.log"
+    IDS_OPEN_VERBOSE_LOG    "Open eMule_Verbose.log"
     IDS_TOOLS_STATUS_EDIT_PREFERENCES_INI
                             "Opens preferences.ini in the configured text editor. Edit carefully; some changes need an eMule restart."
     IDS_TOOLS_STATUS_EDIT_IPFILTER_DAT
@@ -3651,6 +3672,36 @@ BEGIN
                             "Opens addresses.dat, the startup server.met update URL list, in the configured text editor."
     IDS_TOOLS_STATUS_EDIT_WEBSERVICES_DAT
                             "Opens webservices.dat, the external lookup/action list, in the configured text editor."
+    IDS_TOOLS_STATUS_EDIT_STATIC_SERVERS_DAT
+                            "Opens staticservers.dat in the configured text editor. Changes are picked up by the next server-list startup/import path."
+    IDS_TOOLS_STATUS_EDIT_SHAREDDIR_DAT
+                            "Opens shareddir.dat in the configured text editor. The running app may overwrite this file when preferences are saved."
+    IDS_TOOLS_STATUS_EDIT_MONITORED_SHAREDDIR_DAT
+                            "Opens shareddir.monitored.dat in the configured text editor. The running app may overwrite this file when shared-directory settings are saved."
+    IDS_TOOLS_STATUS_EDIT_MONITOR_OWNED_SHAREDDIR_DAT
+                            "Opens shareddir.monitor-owned.dat in the configured text editor. The running app may overwrite this derived monitor state."
+    IDS_TOOLS_STATUS_EDIT_SHAREIGNORE_DAT
+                            "Opens shareignore.dat in the configured text editor. Save changes, then reload shareignore.dat to apply them."
+    IDS_TOOLS_STATUS_EDIT_CATEGORY_INI
+                            "Opens Category.ini in the configured text editor. Category changes are safest while eMule is closed."
+    IDS_TOOLS_STATUS_EDIT_NOTIFIER_INI
+                            "Opens Notifier.ini in the configured text editor. Some notifier changes may need an eMule restart."
+    IDS_TOOLS_STATUS_EDIT_FILEINFO_INI
+                            "Opens fileinfo.ini in the configured text editor. This file stores shared-file comments."
+    IDS_TOOLS_STATUS_EDIT_STATISTICS_INI
+                            "Opens statistics.ini in the configured text editor. The running app may overwrite this file when statistics are saved."
+    IDS_TOOLS_STATUS_RELOAD_SHAREIGNORE_DAT
+                            "Reloads shareignore.dat from disk for future shared-file scans."
+    IDS_TOOLS_STATUS_RESCAN_SHARED_FILES
+                            "Rescans shared directories and refreshes the Shared Files view."
+    IDS_TOOLS_STATUS_SAVE_PREFERENCES_NOW
+                            "Writes current preferences and text-backed shared-directory lists to disk."
+    IDS_TOOLS_STATUS_UPDATE_SERVERMET_FROM_ADDRESSES
+                            "Downloads and imports server.met from the first working URL listed in addresses.dat."
+    IDS_TOOLS_STATUS_OPEN_EMULE_LOG
+                            "Opens the current eMule.log file if it exists."
+    IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG
+                            "Opens the current eMule_Verbose.log file if it exists."
     IDS_SEARCHPARAMS        "Search Parameters"
 END
 
