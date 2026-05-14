@@ -55,24 +55,29 @@ inline bool ListContainsEquivalentDirectoryObject(const CStringList &rList, cons
 }
 
 /**
- * @brief Returns true when a candidate resolves under an already canonicalized directory, excluding the directory itself.
+ * @brief Builds a case-insensitive lexical key for UI-only shared-directory ancestry checks.
  */
-inline bool IsCanonicalParentOfPath(const CString &rstrCanonicalDirectory, const CString &rstrCandidatePath)
+inline CString MakeSharedDirectoryLookupKey(const CString &rstrDirectory)
 {
-	const CString strDirectory(PathHelpers::EnsureTrailingSeparator(rstrCanonicalDirectory));
-	const CString strCandidate(PathHelpers::CanonicalizePathForComparison(rstrCandidatePath));
-	const CString strDirectoryWithoutSlash(PathHelpers::TrimTrailingSeparator(strDirectory));
-	const CString strCandidateWithoutSlash(PathHelpers::TrimTrailingSeparator(strCandidate));
-	return strCandidateWithoutSlash.CompareNoCase(strDirectoryWithoutSlash) != 0
-		&& strCandidate.GetLength() >= strDirectory.GetLength()
-		&& _tcsnicmp(strDirectory, strCandidate, strDirectory.GetLength()) == 0;
+	CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
+	strKey.MakeLower();
+	return strKey;
+}
+
+/**
+ * @brief Returns true when a candidate key is below the directory key, excluding the directory itself.
+ */
+inline bool IsDirectoryKeyParentOfCandidate(const CString &rstrDirectoryKey, const CString &rstrCandidateKey)
+{
+	return rstrCandidateKey.GetLength() > rstrDirectoryKey.GetLength()
+		&& _tcsncmp(rstrDirectoryKey, rstrCandidateKey, rstrDirectoryKey.GetLength()) == 0;
 }
 
 inline bool HasSharedSubdirectory(const CStringList &rList, const CString &rstrDirectory)
 {
-	const CString strCanonicalDirectory(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePathForComparison(rstrDirectory)));
+	const CString strDirectoryKey(MakeSharedDirectoryLookupKey(rstrDirectory));
 	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
-		if (IsCanonicalParentOfPath(strCanonicalDirectory, rList.GetNext(pos)))
+		if (IsDirectoryKeyParentOfCandidate(strDirectoryKey, MakeSharedDirectoryLookupKey(rList.GetNext(pos))))
 			return true;
 	}
 	return false;
