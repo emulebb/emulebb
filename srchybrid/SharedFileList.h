@@ -253,7 +253,7 @@ public:
 	CKnownFile*	GetFileNext(POSITION &pos) const;
 	CKnownFile*	GetFileByAICH(const CAICHHash &rHash) const; // slow
 
-	bool	IsFilePtrInList(const CKnownFile *file) const; // slow
+	bool	IsFilePtrInList(const CKnownFile *file) const;
 	bool	IsUnsharedFile(const uchar *auFileHash) const;
 	bool	ShouldBeShared(const CString &sDirPath, LPCTSTR const pFilePath, bool bMustBeShared) const;
 	bool	ContainsSingleSharedFiles(const CString &strDirectory) const; // includes subdirs

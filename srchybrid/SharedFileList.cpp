@@ -2031,12 +2031,7 @@ CKnownFile* CSharedFileList::GetFileByAICH(const CAICHHash &rHash) const // slow
 
 bool CSharedFileList::IsFilePtrInList(const CKnownFile *file) const
 {
-	if (file)
-		for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair))
-			if (file == pair->value)
-				return true;
-
-	return false;
+	return file != NULL && GetFileByID(file->GetFileHash()) == file;
 }
 
 void CSharedFileList::HashNextFile()

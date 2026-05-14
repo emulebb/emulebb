@@ -474,12 +474,7 @@ bool CKnownFileList::IsKnownFile(const CKnownFile *file) const
 
 bool CKnownFileList::IsFilePtrInList(const CKnownFile *file) const
 {
-	if (file)
-		for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair))
-			if (file == pair->value)
-				return true;
-
-	return false;
+	return file != NULL && FindKnownFileByID(file->GetFileHash()) == file;
 }
 
 void CKnownFileList::AddCancelledFileID(const uchar *hash)
