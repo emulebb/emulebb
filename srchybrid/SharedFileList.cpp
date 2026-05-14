@@ -1429,7 +1429,7 @@ bool CSharedFileList::AddKnownSharedFile(CKnownFile *pFile, const CString &strFo
 		TRACE(_T("%hs: File already in shared file list: %s \"%s\"\n"), __FUNCTION__, (LPCTSTR)md4str(pFileInMap->GetFileHash()), (LPCTSTR)pFileInMap->GetFilePath());
 		TRACE(_T("%hs: File to add:                      %s \"%s\"\n"), __FUNCTION__, (LPCTSTR)md4str(pFile->GetFileHash()), (LPCTSTR)strFoundFilePath);
 		if (!pFileInMap->IsKindOf(RUNTIME_CLASS(CPartFile)) || theApp.downloadqueue->IsPartFile(pFileInMap)) {
-			if (!PathHelpers::ArePathsEquivalent(strFoundFilePath, pFileInMap->GetFilePath())) {
+			if (MakeSharedFileLookupKey(strFoundFilePath) != MakeSharedFileLookupKey(pFileInMap->GetFilePath())) {
 				ReportDuplicateSharedFileWarning(pFileInMap->GetFilePath(), strFoundFilePath);
 				LONGLONG utcCurrentFileDate = -1;
 				ULONGLONG ullCurrentFileSize = 0;
@@ -1489,7 +1489,9 @@ bool CSharedFileList::AddFile(CKnownFile *pFile)
 	if (m_Files_map.Lookup(key, pFileInMap)) {
 		TRACE(_T("%hs: File already in shared file list: %s \"%s\" \"%s\"\n"), __FUNCTION__, (LPCTSTR)md4str(pFileInMap->GetFileHash()), (LPCTSTR)pFileInMap->GetFileName(), (LPCTSTR)pFileInMap->GetFilePath());
 		TRACE(_T("%hs: File to add:                      %s \"%s\" \"%s\"\n"), __FUNCTION__, (LPCTSTR)md4str(pFile->GetFileHash()), (LPCTSTR)pFile->GetFileName(), (LPCTSTR)pFile->GetFilePath());
-		if (PathHelpers::ArePathsEquivalent(pFileInMap->GetFilePath(), pFile->GetFilePath())
+		const CString strExistingFileKey(MakeSharedFileLookupKey(pFileInMap->GetFilePath()));
+		const CString strIncomingFileKey(MakeSharedFileLookupKey(pFile->GetFilePath()));
+		if (strExistingFileKey == strIncomingFileKey
 			&& pFileInMap->GetFilePath().CompareNoCase(pFile->GetFilePath()) != 0)
 		{
 			const CString strOldFilePath(pFileInMap->GetFilePath());
@@ -1498,7 +1500,7 @@ bool CSharedFileList::AddFile(CKnownFile *pFile)
 			DEBUG_ONLY(DebugLog(_T("Upgraded duplicate shared-file spelling: \"%s\" -> \"%s\""), (LPCTSTR)strOldFilePath, (LPCTSTR)pFileInMap->GetFilePath()));
 		}
 		if ((!pFileInMap->IsKindOf(RUNTIME_CLASS(CPartFile)) || theApp.downloadqueue->IsPartFile(pFileInMap))
-			&& !PathHelpers::ArePathsEquivalent(pFileInMap->GetFilePath(), pFile->GetFilePath()))
+			&& strExistingFileKey != strIncomingFileKey)
 		{
 			ReportDuplicateSharedFileWarning(pFileInMap->GetFilePath(), pFile->GetFilePath());
 			RememberDuplicateSharedPath(pFile->GetFilePath(), pFileInMap->GetFileHash(), static_cast<LONGLONG>(pFile->GetUtcFileDate()), static_cast<ULONGLONG>(pFile->GetFileSize()));
@@ -2323,12 +2325,13 @@ bool CSharedFileList::ContainsSingleSharedFiles(const CString &strDirectory) con
 bool CSharedFileList::ExcludeFile(const CString &strFilePath)
 {
 	const CString strCanonicalFilePath(NormalizeSharedFilePath(strFilePath));
+	const CString strCanonicalFilePathKey(MakeSharedFileLookupKey(strCanonicalFilePath));
 	bool bShared = false;
 	// first remove from explicitly shared files
 	for (POSITION pos = m_liSingleSharedFiles.GetHeadPosition(); pos != NULL;) {
 		POSITION pos2 = pos;
 		const CString strExisting(m_liSingleSharedFiles.GetNext(pos));
-		if (PathHelpers::ArePathsEquivalent(strCanonicalFilePath, strExisting)) {
+		if (strCanonicalFilePathKey == MakeSharedFileLookupKey(strExisting)) {
 			bShared = true;
 			if (strExisting.CompareNoCase(strCanonicalFilePath) != 0) {
 				m_liSingleSharedFiles.SetAt(pos2, strCanonicalFilePath);
@@ -2356,7 +2359,7 @@ bool CSharedFileList::ExcludeFile(const CString &strFilePath)
 
 	// check if the file is in the shared list (doesn't have to; for example, if it is hashing or not loaded yet) and remove
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair))
-		if (PathHelpers::ArePathsEquivalent(strCanonicalFilePath, pair->value->GetFilePath())) {
+		if (strCanonicalFilePathKey == MakeSharedFileLookupKey(pair->value->GetFilePath())) {
 			RemoveFile(pair->value);
 			break;
 		}
@@ -3572,9 +3575,10 @@ CString CSharedFileList::GetPseudoDirName(const CString &strDirectoryName)
 	}
 	// does the name already exist?
 	CString strTmpPseudo, strTmpPath;
+	const CString strDirectoryKey(MakeSharedDirectoryLookupKey(strDirectoryName));
 	for (POSITION pos = m_mapPseudoDirNames.GetStartPosition(); pos != NULL;) {
 		m_mapPseudoDirNames.GetNextAssoc(pos, strTmpPseudo, strTmpPath);
-		if (EqualPaths(strTmpPath, strDirectoryName))
+		if (MakeSharedDirectoryLookupKey(strTmpPath) == strDirectoryKey)
 			return CString();	// not sending the same directory again
 	}
 
