@@ -29,6 +29,14 @@
 #include "FileInfoDialog.h"
 #include "MetaDataDlg.h"
 
+#ifndef EMULE_COMPILED_STARTUP_PROFILING
+	#if defined(_DEBUG) || defined(EMULE_ENABLE_STARTUP_PROFILING)
+	#define EMULE_COMPILED_STARTUP_PROFILING 1
+	#else
+	#define EMULE_COMPILED_STARTUP_PROFILING 0
+	#endif
+#endif
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 // CSharedFileDetailsModelessSheet
 class CSharedFileDetailsModelessSheet : public CListViewPropertySheet
@@ -81,8 +89,10 @@ public:
 	void OnSingleFileShareStatusChanged();
 	void ShowSelectedFilesDetails(bool bForce = false);
 	void ShowDetailsPanel(bool bShow);
+#if EMULE_COMPILED_STARTUP_PROFILING
 	void OnStartupSharedFilesModelChanged();
 	void OnStartupProfileStartupComplete();
+#endif
 	/**
 	 * @brief Runs any full reload deferred while the shared-file hash worker was active.
 	 */
@@ -115,10 +125,12 @@ private:
 	std::atomic_bool m_bWorkerUiClosing;
 	bool			m_bDetailsVisible;
 	bool			m_bSharedTreeInitialized;
+#if EMULE_COMPILED_STARTUP_PROFILING
 	bool			m_bStartupSharedTreePopulatedReported;
 	bool			m_bStartupSharedModelPopulatedReported;
 	bool			m_bStartupSharedFilesReadyReported;
 	bool			m_bStartupSharedFilesHashingDoneReported;
+#endif
 	bool			m_bReloadToolTipCreated;
 	bool			m_bDeferredFullReloadAfterHash;
 	bool			m_bDeferredSharedFilesReloadAfterHash;
@@ -128,7 +140,9 @@ protected:
 	void SetAllIcons();
 	void DoResize(int iDelta);
 	void EnsureSharedTreeInitialized();
+#if EMULE_COMPILED_STARTUP_PROFILING
 	void ReportStartupSharedFilesReadinessIfReady();
+#endif
 	/**
 	 * @brief Reports whether a full shared-files reload would conflict with active shared hashing.
 	 */

@@ -340,7 +340,7 @@ void CKnownFile::UpdatePartsInfo()
 		}
 		m_tCompleteSourcesTime = tNow + MIN2S(1);
 	}
-	if (theApp.emuledlg->sharedfileswnd->m_hWnd)
+	if (theApp.emuledlg->sharedfileswnd->m_hWnd && ::GetCurrentThreadId() == g_uMainThreadId)
 		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.UpdateFile(this);
 }
 

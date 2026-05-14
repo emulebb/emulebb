@@ -710,7 +710,9 @@ void CSharedFileList::QueueSharedFileForHash(const CString &strDirectory, const 
 	job.strName = strName;
 	job.strSharedDirectory = strSharedDirectory;
 	job.strFilePathKey = MakeSharedHashFilePathKey(strDirectory, strName);
+#if EMULE_COMPILED_STARTUP_PROFILING
 	job.ullQueuedTimestampUs = theApp.IsStartupProfilingEnabled() ? theApp.GetStartupProfileTimestampUs() : 0ui64;
+#endif
 
 	{
 		CSingleLock lock(&m_mutSharedHashQueue, TRUE);
@@ -817,7 +819,9 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 	pResult->strDirectory = rJob.strDirectory;
 	pResult->strSharedDirectory = rJob.strSharedDirectory;
 	pResult->strFilePathKey = rJob.strFilePathKey;
+#if EMULE_COMPILED_STARTUP_PROFILING
 	pResult->ullQueuedTimestampUs = rJob.ullQueuedTimestampUs;
+#endif
 
 	if (QueueDeferredSharedHashResult(pResult))
 		return;

@@ -376,6 +376,7 @@ CString GetSkinProfileResourcePath(const CString &rstrSkinProfile, LPCTSTR pszSe
 	return ShellUiHelpers::ResolveSkinResourcePath(rstrSkinProfile, strSkinResource);
 }
 
+#if EMULE_COMPILED_STARTUP_PROFILING
 constexpr ULONGLONG kStartupTraceMicrosPerSecond = 1000000ui64;
 constexpr LPCTSTR kStartupProfileTraceFileName = _T("startup-profile.trace.json");
 
@@ -676,6 +677,7 @@ std::string BuildStartupTraceEventJson(const SStartupProfileTraceEvent &rEvent, 
 
 	return strJson;
 }
+#endif
 
 /**
  * @brief Command-line parser which skips the `-c <base-dir>` pair before handing the rest to MFC.
@@ -908,11 +910,13 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	, m_bStartupBindBlocked()
 	, m_bStartupComplete()
 	, m_bStandbyOff()
-	, m_bStartupProfilingEnabled(EMULE_COMPILED_STARTUP_PROFILING != 0 && ::GetEnvironmentVariable(_T("EMULE_STARTUP_PROFILE"), NULL, 0) > 0)
+#if EMULE_COMPILED_STARTUP_PROFILING
+	, m_bStartupProfilingEnabled(::GetEnvironmentVariable(_T("EMULE_STARTUP_PROFILE"), NULL, 0) > 0)
 	, m_bStartupProfileStartupComplete()
 	, m_bStartupProfileCompleted()
 	, m_ullStartupProfileBeginQpc()
 	, m_ullStartupProfileFrequency()
+#endif
 	, m_pSharedDirectoryMonitorThread(NULL)
 	, m_hSharedDirectoryMonitorStopEvent(NULL)
 	, m_hSharedDirectoryMonitorWakeEvent(NULL)
@@ -962,11 +966,9 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 
 }
 
+#if EMULE_COMPILED_STARTUP_PROFILING
 void CemuleApp::ResetStartupProfile()
 {
-#if !EMULE_COMPILED_STARTUP_PROFILING
-	return;
-#else
 	if (!m_bStartupProfilingEnabled)
 		return;
 
@@ -978,14 +980,10 @@ void CemuleApp::ResetStartupProfile()
 	m_ullStartupProfileBeginQpc = QueryPerformanceCounterValue();
 	m_strStartupProfilePath = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + kStartupProfileTraceFileName;
 	(void)LongPathSeams::DeleteFile(m_strStartupProfilePath);
-#endif
 }
 
 ULONGLONG CemuleApp::GetStartupProfileTimestampUs() const
 {
-#if !EMULE_COMPILED_STARTUP_PROFILING
-	return 0;
-#else
 	if (!m_bStartupProfilingEnabled || m_ullStartupProfileFrequency == 0 || m_ullStartupProfileBeginQpc == 0)
 		return 0;
 
@@ -994,52 +992,35 @@ ULONGLONG CemuleApp::GetStartupProfileTimestampUs() const
 		return 0;
 
 	return ConvertQpcTicksToMicroseconds(ullNowQpc - m_ullStartupProfileBeginQpc, m_ullStartupProfileFrequency);
-#endif
 }
 
 ULONGLONG CemuleApp::GetStartupProfileElapsedUs(const ULONGLONG ullStartTimestampUs) const
 {
-#if !EMULE_COMPILED_STARTUP_PROFILING
-	UNREFERENCED_PARAMETER(ullStartTimestampUs);
-	return 0;
-#else
 	const ULONGLONG ullNowUs = GetStartupProfileTimestampUs();
 	return (ullNowUs >= ullStartTimestampUs) ? (ullNowUs - ullStartTimestampUs) : 0;
-#endif
 }
 
 void CemuleApp::FinalizeStartupProfileTrace()
 {
-#if !EMULE_COMPILED_STARTUP_PROFILING
-	return;
-#else
 	if (!m_bStartupProfilingEnabled)
 		return;
 
 	CSingleLock lock(&m_startupProfileLock, TRUE);
 	m_bStartupProfileCompleted = true;
 	(void)WriteStartupProfileTrace();
-#endif
 }
 
 void CemuleApp::FlushStartupProfileTrace()
 {
-#if !EMULE_COMPILED_STARTUP_PROFILING
-	return;
-#else
 	if (!m_bStartupProfilingEnabled)
 		return;
 
 	CSingleLock lock(&m_startupProfileLock, TRUE);
 	(void)WriteStartupProfileTrace();
-#endif
 }
 
 bool CemuleApp::WriteStartupProfileTrace() const
 {
-#if !EMULE_COMPILED_STARTUP_PROFILING
-	return false;
-#else
 	if (m_strStartupProfilePath.IsEmpty())
 		return false;
 
@@ -1062,17 +1043,10 @@ bool CemuleApp::WriteStartupProfileTrace() const
 	const size_t uWritten = fwrite(strJson.data(), 1, strJson.size(), fp);
 	fclose(fp);
 	return uWritten == strJson.size();
-#endif
 }
 
 void CemuleApp::AppendStartupProfileLine(LPCTSTR pszPhase, const ULONGLONG ullDurationUs, ULONGLONG ullAbsoluteUs)
 {
-#if !EMULE_COMPILED_STARTUP_PROFILING
-	UNREFERENCED_PARAMETER(pszPhase);
-	UNREFERENCED_PARAMETER(ullDurationUs);
-	UNREFERENCED_PARAMETER(ullAbsoluteUs);
-	return;
-#else
 	if (!m_bStartupProfilingEnabled || pszPhase == NULL || pszPhase[0] == _T('\0'))
 		return;
 
@@ -1095,17 +1069,10 @@ void CemuleApp::AppendStartupProfileLine(LPCTSTR pszPhase, const ULONGLONG ullDu
 
 	if (descriptor.bFinalizeTrace)
 		FinalizeStartupProfileTrace();
-#endif
 }
 
 void CemuleApp::AppendStartupProfileCounter(LPCTSTR pszCounterName, const ULONGLONG ullValue, LPCTSTR pszValueKey)
 {
-#if !EMULE_COMPILED_STARTUP_PROFILING
-	UNREFERENCED_PARAMETER(pszCounterName);
-	UNREFERENCED_PARAMETER(ullValue);
-	UNREFERENCED_PARAMETER(pszValueKey);
-	return;
-#else
 	if (!m_bStartupProfilingEnabled || pszCounterName == NULL || pszCounterName[0] == _T('\0'))
 		return;
 
@@ -1124,8 +1091,8 @@ void CemuleApp::AppendStartupProfileCounter(LPCTSTR pszCounterName, const ULONGL
 
 	if (bFlushTrace)
 		FlushStartupProfileTrace();
-#endif
 }
+#endif
 
 
 CemuleApp theApp(_T("eMule"));

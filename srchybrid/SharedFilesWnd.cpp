@@ -79,10 +79,12 @@ CSharedFilesWnd::CSharedFilesWnd(CWnd *pParent /*=NULL*/)
 	, m_bWorkerUiClosing(false)
 	, m_bDetailsVisible(true)
 	, m_bSharedTreeInitialized(false)
+#if EMULE_COMPILED_STARTUP_PROFILING
 	, m_bStartupSharedTreePopulatedReported(false)
 	, m_bStartupSharedModelPopulatedReported(false)
 	, m_bStartupSharedFilesReadyReported(false)
 	, m_bStartupSharedFilesHashingDoneReported(false)
+#endif
 	, m_bReloadToolTipCreated(false)
 	, m_bDeferredFullReloadAfterHash(false)
 	, m_bDeferredSharedFilesReloadAfterHash(false)
@@ -233,9 +235,12 @@ void CSharedFilesWnd::EnsureSharedTreeInitialized()
 		m_bStartupSharedTreePopulatedReported = true;
 	}
 #endif
+#if EMULE_COMPILED_STARTUP_PROFILING
 	ReportStartupSharedFilesReadinessIfReady();
+#endif
 }
 
+#if EMULE_COMPILED_STARTUP_PROFILING
 void CSharedFilesWnd::OnStartupSharedFilesModelChanged()
 {
 	ReportStartupSharedFilesReadinessIfReady();
@@ -248,9 +253,6 @@ void CSharedFilesWnd::OnStartupProfileStartupComplete()
 
 void CSharedFilesWnd::ReportStartupSharedFilesReadinessIfReady()
 {
-#if !EMULE_COMPILED_STARTUP_PROFILING
-	return;
-#else
 	if (!theApp.IsStartupProfilingEnabled() || (m_bStartupSharedFilesReadyReported && m_bStartupSharedFilesHashingDoneReported))
 		return;
 	if (!theApp.HasStartupProfileReachedStartupComplete())
@@ -287,8 +289,8 @@ void CSharedFilesWnd::ReportStartupSharedFilesReadinessIfReady()
 		theApp.AppendStartupProfileLine(_T("ui.shared_files_hashing_done"), 0);
 		m_bStartupSharedFilesHashingDoneReported = true;
 	}
-#endif
 }
+#endif
 
 void CSharedFilesWnd::DoResize(int iDelta)
 {
@@ -383,7 +385,9 @@ void CSharedFilesWnd::RunDeferredReloadAfterHash()
 		theApp.sharedfiles->Reload();
 		sharedfilesctrl.ReloadFileList();
 		ShowSelectedFilesDetails();
+#if EMULE_COMPILED_STARTUP_PROFILING
 		ReportStartupSharedFilesReadinessIfReady();
+#endif
 	}
 }
 
@@ -391,7 +395,9 @@ void CSharedFilesWnd::OnSharedHashingDrained()
 {
 	RunDeferredReloadAfterHash();
 	UpdateReloadButtonState();
+#if EMULE_COMPILED_STARTUP_PROFILING
 	ReportStartupSharedFilesReadinessIfReady();
+#endif
 }
 
 bool CSharedFilesWnd::Reload(bool bForceTreeReload)
@@ -409,7 +415,9 @@ bool CSharedFilesWnd::Reload(bool bForceTreeReload)
 	theApp.sharedfiles->Reload();
 
 	ShowSelectedFilesDetails();
+#if EMULE_COMPILED_STARTUP_PROFILING
 	ReportStartupSharedFilesReadinessIfReady();
+#endif
 	return true;
 }
 
@@ -773,7 +781,9 @@ void CSharedFilesWnd::OnShowWindow(BOOL bShow, UINT)
 		theApp.AppendStartupProfileLine(strPhase, 0);
 #endif
 		ShowSelectedFilesDetails(true);
+#if EMULE_COMPILED_STARTUP_PROFILING
 		ReportStartupSharedFilesReadinessIfReady();
+#endif
 	}
 }
 

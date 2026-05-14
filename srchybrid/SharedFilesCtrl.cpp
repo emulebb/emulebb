@@ -639,17 +639,17 @@ bool CSharedFilesCtrl::IsLiveVisibleFilePointer(const CShareableFile *file) cons
 	if (file == NULL)
 		return false;
 
-	if (theApp.sharedfiles != NULL) {
-		for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair)) {
-			if (static_cast<const CShareableFile*>(pair->value) == file)
+	if (file->IsKindOf(RUNTIME_CLASS(CKnownFile))) {
+		const CKnownFile *pKnownFile = static_cast<const CKnownFile*>(file);
+		if (theApp.sharedfiles != NULL) {
+			const CKnownFile *pLiveSharedFile = theApp.sharedfiles->GetFileByID(pKnownFile->GetFileHash());
+			if (pLiveSharedFile == pKnownFile)
 				return true;
 		}
-	}
 
-	if (theApp.knownfiles != NULL) {
-		const CKnownFilesMap &knownFiles = theApp.knownfiles->GetKnownFiles();
-		for (const CKnownFilesMap::CPair *pair = knownFiles.PGetFirstAssoc(); pair != NULL; pair = knownFiles.PGetNextAssoc(pair)) {
-			if (static_cast<const CShareableFile*>(pair->value) == file)
+		if (theApp.knownfiles != NULL) {
+			const CKnownFile *pLiveKnownFile = theApp.knownfiles->FindKnownFileByID(pKnownFile->GetFileHash());
+			if (pLiveKnownFile == pKnownFile)
 				return true;
 		}
 	}
@@ -664,13 +664,30 @@ bool CSharedFilesCtrl::IsLiveVisibleFilePointer(const CShareableFile *file) cons
 
 bool CSharedFilesCtrl::PruneStaleVisibleFiles()
 {
+	CMap<const CShareableFile*, const CShareableFile*, bool, bool> mapLiveFiles;
+	if (theApp.sharedfiles != NULL) {
+		for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair))
+			mapLiveFiles.SetAt(static_cast<const CShareableFile*>(pair->value), true);
+	}
+
+	if (theApp.knownfiles != NULL) {
+		const CKnownFilesMap &knownFiles = theApp.knownfiles->GetKnownFiles();
+		for (const CKnownFilesMap::CPair *pair = knownFiles.PGetFirstAssoc(); pair != NULL; pair = knownFiles.PGetNextAssoc(pair))
+			mapLiveFiles.SetAt(static_cast<const CShareableFile*>(pair->value), true);
+	}
+
+	for (POSITION pos = liTempShareableFilesInDir.GetHeadPosition(); pos != NULL;)
+		mapLiveFiles.SetAt(liTempShareableFilesInDir.GetNext(pos), true);
+
 	const size_t uOldSize = m_aVisibleFiles.size();
 	m_aVisibleFiles.erase(std::remove_if(m_aVisibleFiles.begin(), m_aVisibleFiles.end(),
-		[this](const CShareableFile *file) {
-			return !IsLiveVisibleFilePointer(file);
+		[&mapLiveFiles](const CShareableFile *file) {
+			bool bLive = false;
+			return file == NULL || !mapLiveFiles.Lookup(file, bLive);
 		}), m_aVisibleFiles.end());
 
-	if (m_pHighlightedItem != NULL && !IsLiveVisibleFilePointer(m_pHighlightedItem))
+	bool bHighlightedLive = false;
+	if (m_pHighlightedItem != NULL && !mapLiveFiles.Lookup(m_pHighlightedItem, bHighlightedLive))
 		m_pHighlightedItem = NULL;
 
 	if (m_aVisibleFiles.size() == uOldSize)
@@ -931,8 +948,6 @@ void CSharedFilesCtrl::UpdateFile(const CShareableFile *file, bool bUpdateFileSu
 		return;
 	if (theApp.IsClosing())
 		return;
-	if (PruneStaleVisibleFiles())
-		Invalidate(FALSE);
 	if (IsLiveVisibleFilePointer(file)) {
 		int iItem = FindFile(file);
 		if (!ShouldDisplayFile(file)) {

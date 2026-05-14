@@ -26,6 +26,14 @@
 #include "MapKey.h"
 #include "FileIdentifier.h"
 
+#ifndef EMULE_COMPILED_STARTUP_PROFILING
+	#if defined(_DEBUG) || defined(EMULE_ENABLE_STARTUP_PROFILING)
+	#define EMULE_COMPILED_STARTUP_PROFILING 1
+	#else
+	#define EMULE_COMPILED_STARTUP_PROFILING 0
+	#endif
+#endif
+
 class CKnownFileList;
 class CServerConnect;
 class CPartFile;
@@ -43,7 +51,9 @@ struct UnknownFile_Struct
 	CString strName;
 	CString strDirectory;
 	CString strSharedDirectory;
+#if EMULE_COMPILED_STARTUP_PROFILING
 	ULONGLONG ullQueuedTimestampUs = 0;
+#endif
 };
 
 /**
@@ -58,7 +68,9 @@ struct CSharedFileHashResult
 	CString strDirectory;
 	CString strSharedDirectory;
 	CString strFilePathKey;
+#if EMULE_COMPILED_STARTUP_PROFILING
 	ULONGLONG ullQueuedTimestampUs = 0;
+#endif
 };
 
 class CSharedFileList
@@ -293,7 +305,9 @@ private:
 		CString strDirectory;
 		CString strSharedDirectory;
 		CString strFilePathKey;
+#if EMULE_COMPILED_STARTUP_PROFILING
 		ULONGLONG ullQueuedTimestampUs = 0;
+#endif
 	};
 
 	/**
