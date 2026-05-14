@@ -145,6 +145,8 @@ public:
 	void RefreshUPnP(bool bRequestAnswer = false);
 	/// Captures an operator-requested diagnostic dump for support triage.
 	void CaptureDiagnosticDump(bool bFullMemoryDump);
+	/// Copies a diagnostic JSON snapshot to the clipboard for local or shareable triage.
+	void CopyDiagnosticSnapshotToClipboard(bool bRedacted);
 	HBRUSH GetCtlColor(CDC*, CWnd*, UINT);
 
 	virtual void OnTrayRButtonUp(CPoint pt);

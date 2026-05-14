@@ -32,8 +32,11 @@
 #include <dwmapi.h>
 #include <iphlpapi.h>
 #include <netioapi.h>
+#include <TlHelp32.h>
+#include <Ws2tcpip.h>
 #include <uxtheme.h>
 #include <memory>
+#include <vector>
 #include "emule.h"
 #include "emuleDlg.h"
 #include "otherfunctions.h"
@@ -95,6 +98,7 @@
 #include "BindStartupPolicy.h"
 #include "BindRuntimeLossPolicy.h"
 #include "AppKeyboardShortcutsSeams.h"
+#include "DiagnosticSnapshotSeams.h"
 #include "TrayNotificationSeams.h"
 #include "aichsyncthread.h"
 #include "Log.h"
@@ -171,6 +175,358 @@ namespace
 	static UINT GetExistingFileMenuFlags(const CString &rstrPath)
 	{
 		return MF_STRING | (LongPathSeams::PathExists(rstrPath) ? 0 : MF_GRAYED);
+	}
+
+	static std::string JsonString(const CString &rstrText)
+	{
+		return WebServerJson::ToStdUtf8(rstrText);
+	}
+
+	static std::string JsonNetworkAddress(const CString &rstrAddress, DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		return JsonString(DiagnosticSnapshotSeams::IsRedacted(ePrivacyMode) ? DiagnosticSnapshotSeams::RedactNetworkAddress(rstrAddress) : rstrAddress);
+	}
+
+	static std::string JsonPath(const CString &rstrPath, DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		return JsonString(DiagnosticSnapshotSeams::IsRedacted(ePrivacyMode) ? DiagnosticSnapshotSeams::RedactPath(rstrPath) : rstrPath);
+	}
+
+	static uint64 FileTimeToUInt64(const FILETIME &rFileTime)
+	{
+		ULARGE_INTEGER value;
+		value.LowPart = rFileTime.dwLowDateTime;
+		value.HighPart = rFileTime.dwHighDateTime;
+		return value.QuadPart;
+	}
+
+	static CString GetModulePath()
+	{
+		CString strPath;
+		LPTSTR pszPath = strPath.GetBuffer(MAX_PATH);
+		const DWORD dwLength = ::GetModuleFileName(NULL, pszPath, MAX_PATH);
+		strPath.ReleaseBuffer(dwLength);
+		return strPath;
+	}
+
+	static CString GetCurrentDirectoryPath()
+	{
+		CString strPath;
+		LPTSTR pszPath = strPath.GetBuffer(MAX_PATH);
+		const DWORD dwLength = ::GetCurrentDirectory(MAX_PATH, pszPath);
+		strPath.ReleaseBuffer(dwLength <= MAX_PATH ? dwLength : 0);
+		return strPath;
+	}
+
+	static nlohmann::json BuildProcessInfoJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		FILETIME creationTime = {};
+		FILETIME exitTime = {};
+		FILETIME kernelTime = {};
+		FILETIME userTime = {};
+		const bool bHasTimes = ::GetProcessTimes(::GetCurrentProcess(), &creationTime, &exitTime, &kernelTime, &userTime) != FALSE;
+
+		return nlohmann::json{
+			{"pid", ::GetCurrentProcessId()},
+			{"mainThreadId", g_uMainThreadId},
+			{"executablePath", JsonPath(GetModulePath(), ePrivacyMode)},
+			{"currentDirectory", JsonPath(GetCurrentDirectoryPath(), ePrivacyMode)},
+			{"commandLine", DiagnosticSnapshotSeams::IsRedacted(ePrivacyMode) ? std::string("[redacted]") : JsonString(::GetCommandLine())},
+			{"tickCount64Ms", static_cast<uint64>(::GetTickCount64())},
+			{"creationTimeFileTime", bHasTimes ? nlohmann::json(FileTimeToUInt64(creationTime)) : nlohmann::json(nullptr)},
+			{"kernelTime100ns", bHasTimes ? nlohmann::json(FileTimeToUInt64(kernelTime)) : nlohmann::json(nullptr)},
+			{"userTime100ns", bHasTimes ? nlohmann::json(FileTimeToUInt64(userTime)) : nlohmann::json(nullptr)}
+		};
+	}
+
+	static nlohmann::json BuildPathsJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		return nlohmann::json{
+			{"executableDir", JsonPath(thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR), ePrivacyMode)},
+			{"configDir", JsonPath(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR), ePrivacyMode)},
+			{"tempDir", JsonPath(thePrefs.GetMuleDirectory(EMULE_TEMPDIR), ePrivacyMode)},
+			{"incomingDir", JsonPath(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR), ePrivacyMode)},
+			{"logDir", JsonPath(thePrefs.GetMuleDirectory(EMULE_LOGDIR), ePrivacyMode)},
+			{"webserverDir", JsonPath(thePrefs.GetMuleDirectory(EMULE_WEBSERVERDIR), ePrivacyMode)},
+			{"skinDir", JsonPath(thePrefs.GetMuleDirectory(EMULE_SKINDIR), ePrivacyMode)},
+			{"toolbarDir", JsonPath(thePrefs.GetMuleDirectory(EMULE_TOOLBARDIR), ePrivacyMode)},
+			{"emuleLog", JsonPath(theLog.GetFilePath(), ePrivacyMode)},
+			{"verboseLog", JsonPath(theVerboseLog.GetFilePath(), ePrivacyMode)},
+			{"addressesDat", JsonPath(GetConfigFilePath(_T("addresses.dat")), ePrivacyMode)},
+			{"webservicesDat", JsonPath(theWebServices.GetDefaultServicesFile(), ePrivacyMode)}
+		};
+	}
+
+	static CString SocketAddressToHostString(const SOCKET_ADDRESS &rAddress)
+	{
+		TCHAR szHost[NI_MAXHOST] = {};
+		if (rAddress.lpSockaddr == NULL || ::GetNameInfo(rAddress.lpSockaddr, rAddress.iSockaddrLength, szHost, _countof(szHost), NULL, 0, NI_NUMERICHOST) != 0)
+			return CString();
+		return CString(szHost);
+	}
+
+	static nlohmann::json BuildAdaptersJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		ULONG ulSize = 15 * 1024;
+		std::vector<BYTE> buffer(ulSize);
+		ULONG ulResult = ::GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER, NULL, reinterpret_cast<PIP_ADAPTER_ADDRESSES>(buffer.data()), &ulSize);
+		if (ulResult == ERROR_BUFFER_OVERFLOW) {
+			buffer.resize(ulSize);
+			ulResult = ::GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER, NULL, reinterpret_cast<PIP_ADAPTER_ADDRESSES>(buffer.data()), &ulSize);
+		}
+
+		nlohmann::json adapters = nlohmann::json::array();
+		if (ulResult != NO_ERROR)
+			return adapters;
+
+		for (PIP_ADAPTER_ADDRESSES pAdapter = reinterpret_cast<PIP_ADAPTER_ADDRESSES>(buffer.data()); pAdapter != NULL; pAdapter = pAdapter->Next) {
+			nlohmann::json addresses = nlohmann::json::array();
+			for (PIP_ADAPTER_UNICAST_ADDRESS pUnicast = pAdapter->FirstUnicastAddress; pUnicast != NULL; pUnicast = pUnicast->Next) {
+				const CString strHost(SocketAddressToHostString(pUnicast->Address));
+				if (!strHost.IsEmpty())
+					addresses.push_back(JsonNetworkAddress(strHost, ePrivacyMode));
+			}
+
+			adapters.push_back(nlohmann::json{
+				{"name", JsonString(CString(pAdapter->AdapterName))},
+				{"friendlyName", JsonString(CString(pAdapter->FriendlyName != NULL ? pAdapter->FriendlyName : L""))},
+				{"description", JsonString(CString(pAdapter->Description != NULL ? pAdapter->Description : L""))},
+				{"ifType", pAdapter->IfType},
+				{"operStatus", pAdapter->OperStatus},
+				{"mtu", pAdapter->Mtu},
+				{"addresses", addresses}
+			});
+		}
+		return adapters;
+	}
+
+	static const char *TcpStateName(DWORD dwState)
+	{
+		switch (dwState) {
+		case MIB_TCP_STATE_CLOSED:
+			return "closed";
+		case MIB_TCP_STATE_LISTEN:
+			return "listen";
+		case MIB_TCP_STATE_SYN_SENT:
+			return "synSent";
+		case MIB_TCP_STATE_SYN_RCVD:
+			return "synReceived";
+		case MIB_TCP_STATE_ESTAB:
+			return "established";
+		case MIB_TCP_STATE_FIN_WAIT1:
+			return "finWait1";
+		case MIB_TCP_STATE_FIN_WAIT2:
+			return "finWait2";
+		case MIB_TCP_STATE_CLOSE_WAIT:
+			return "closeWait";
+		case MIB_TCP_STATE_CLOSING:
+			return "closing";
+		case MIB_TCP_STATE_LAST_ACK:
+			return "lastAck";
+		case MIB_TCP_STATE_TIME_WAIT:
+			return "timeWait";
+		case MIB_TCP_STATE_DELETE_TCB:
+			return "deleteTcb";
+		default:
+			return "unknown";
+		}
+	}
+
+	static uint16 NetworkPortFromDword(DWORD dwPort)
+	{
+		return ntohs(static_cast<u_short>(dwPort));
+	}
+
+	static nlohmann::json BuildProcessTcpSocketsJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		DWORD dwSize = 0;
+		(void)::GetExtendedTcpTable(NULL, &dwSize, FALSE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0);
+		std::vector<BYTE> buffer(dwSize);
+		if (dwSize == 0 || ::GetExtendedTcpTable(buffer.data(), &dwSize, FALSE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0) != NO_ERROR)
+			return nlohmann::json::array();
+
+		const DWORD dwPid = ::GetCurrentProcessId();
+		nlohmann::json sockets = nlohmann::json::array();
+		const PMIB_TCPTABLE_OWNER_PID pTable = reinterpret_cast<PMIB_TCPTABLE_OWNER_PID>(buffer.data());
+		for (DWORD i = 0; i < pTable->dwNumEntries; ++i) {
+			const MIB_TCPROW_OWNER_PID &row = pTable->table[i];
+			if (row.dwOwningPid != dwPid)
+				continue;
+
+			sockets.push_back(nlohmann::json{
+				{"state", TcpStateName(row.dwState)},
+				{"localAddress", JsonNetworkAddress(ipstr(row.dwLocalAddr), ePrivacyMode)},
+				{"localPort", NetworkPortFromDword(row.dwLocalPort)},
+				{"remoteAddress", JsonNetworkAddress(ipstr(row.dwRemoteAddr), ePrivacyMode)},
+				{"remotePort", NetworkPortFromDword(row.dwRemotePort)}
+			});
+		}
+		return sockets;
+	}
+
+	static nlohmann::json BuildProcessUdpSocketsJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		DWORD dwSize = 0;
+		(void)::GetExtendedUdpTable(NULL, &dwSize, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0);
+		std::vector<BYTE> buffer(dwSize);
+		if (dwSize == 0 || ::GetExtendedUdpTable(buffer.data(), &dwSize, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0) != NO_ERROR)
+			return nlohmann::json::array();
+
+		const DWORD dwPid = ::GetCurrentProcessId();
+		nlohmann::json sockets = nlohmann::json::array();
+		const PMIB_UDPTABLE_OWNER_PID pTable = reinterpret_cast<PMIB_UDPTABLE_OWNER_PID>(buffer.data());
+		for (DWORD i = 0; i < pTable->dwNumEntries; ++i) {
+			const MIB_UDPROW_OWNER_PID &row = pTable->table[i];
+			if (row.dwOwningPid != dwPid)
+				continue;
+
+			sockets.push_back(nlohmann::json{
+				{"localAddress", JsonNetworkAddress(ipstr(row.dwLocalAddr), ePrivacyMode)},
+				{"localPort", NetworkPortFromDword(row.dwLocalPort)}
+			});
+		}
+		return sockets;
+	}
+
+	static nlohmann::json BuildModulesJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		nlohmann::json modules = nlohmann::json::array();
+		const DWORD dwPid = ::GetCurrentProcessId();
+		HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, dwPid);
+		if (hSnapshot == INVALID_HANDLE_VALUE)
+			return modules;
+
+		MODULEENTRY32 module = {};
+		module.dwSize = sizeof(module);
+		if (::Module32First(hSnapshot, &module)) {
+			do {
+				modules.push_back(nlohmann::json{
+					{"name", JsonString(CString(module.szModule))},
+					{"path", JsonPath(CString(module.szExePath), ePrivacyMode)},
+					{"baseAddress", static_cast<uint64>(reinterpret_cast<uintptr_t>(module.modBaseAddr))},
+					{"sizeBytes", module.modBaseSize}
+				});
+			} while (::Module32Next(hSnapshot, &module));
+		}
+		::CloseHandle(hSnapshot);
+		return modules;
+	}
+
+	static nlohmann::json BuildCurrentServerJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		CServer *const pCurrentServer = theApp.serverconnect != NULL ? theApp.serverconnect->GetCurrentServer() : NULL;
+		if (pCurrentServer == NULL)
+			return nullptr;
+
+		return nlohmann::json{
+			{"name", JsonString(pCurrentServer->GetListName())},
+			{"address", JsonNetworkAddress(pCurrentServer->GetAddress(), ePrivacyMode)},
+			{"ip", pCurrentServer->GetIP() != 0 ? nlohmann::json(JsonNetworkAddress(ipstr(pCurrentServer->GetIP()), ePrivacyMode)) : nlohmann::json(nullptr)},
+			{"dynIp", JsonNetworkAddress(pCurrentServer->GetDynIP(), ePrivacyMode)},
+			{"port", pCurrentServer->GetPort()},
+			{"description", JsonString(pCurrentServer->GetDescription())},
+			{"version", JsonString(pCurrentServer->GetVersion())}
+		};
+	}
+
+	static nlohmann::json BuildNetworkJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		const uint32 dwPublicIP = theApp.GetPublicIP();
+		return nlohmann::json{
+			{"connected", theApp.IsConnected()},
+			{"firewalled", theApp.IsFirewalled()},
+			{"publicIp", dwPublicIP != 0 ? nlohmann::json(JsonNetworkAddress(ipstr(dwPublicIP), ePrivacyMode)) : nlohmann::json(nullptr)},
+			{"ports", nlohmann::json{
+				{"tcp", thePrefs.GetPort()},
+				{"udp", thePrefs.GetUDPPort()},
+				{"serverUdp", thePrefs.GetServerUDPPort()}
+			}},
+			{"upnpEnabled", thePrefs.IsUPnPEnabled()},
+			{"binding", nlohmann::json{
+				{"configuredAddress", JsonNetworkAddress(thePrefs.GetConfiguredBindAddr(), ePrivacyMode)},
+				{"configuredInterfaceId", JsonString(thePrefs.GetBindInterface())},
+				{"configuredInterfaceName", JsonString(thePrefs.GetBindInterfaceName())},
+				{"activeConfiguredAddress", JsonNetworkAddress(thePrefs.GetActiveConfiguredBindAddr(), ePrivacyMode)},
+				{"activeInterfaceId", JsonString(thePrefs.GetActiveBindInterface())},
+				{"activeInterfaceName", JsonString(thePrefs.GetActiveBindInterfaceName())},
+				{"startupBlockEnabled", thePrefs.IsStartupBindBlockEnabled()},
+				{"activeStartupBlockEnabled", thePrefs.IsActiveStartupBindBlockEnabled()},
+				{"exitOnInterfaceLoss", thePrefs.IsExitOnBindInterfaceLossEnabled()},
+				{"resolveResult", static_cast<int>(thePrefs.GetActiveBindAddressResolveResult())}
+			}},
+			{"ed2k", nlohmann::json{
+				{"connected", theApp.serverconnect != NULL && theApp.serverconnect->IsConnected()},
+				{"connecting", theApp.serverconnect != NULL && theApp.serverconnect->IsConnecting()},
+				{"lowId", theApp.serverconnect != NULL && theApp.serverconnect->IsConnected() ? nlohmann::json(theApp.serverconnect->IsLowID()) : nlohmann::json(nullptr)},
+				{"currentServer", BuildCurrentServerJson(ePrivacyMode)}
+			}},
+			{"kad", nlohmann::json{
+				{"running", Kademlia::CKademlia::IsRunning()},
+				{"connected", Kademlia::CKademlia::IsConnected()},
+				{"firewalled", Kademlia::CKademlia::IsConnected() ? nlohmann::json(Kademlia::CKademlia::IsFirewalled()) : nlohmann::json(nullptr)},
+				{"users", Kademlia::CKademlia::IsConnected() ? nlohmann::json(Kademlia::CKademlia::GetKademliaUsers()) : nlohmann::json(nullptr)},
+				{"files", Kademlia::CKademlia::IsConnected() ? nlohmann::json(Kademlia::CKademlia::GetKademliaFiles()) : nlohmann::json(nullptr)}
+			}},
+			{"adapters", BuildAdaptersJson(ePrivacyMode)},
+			{"processTcpSockets", BuildProcessTcpSocketsJson(ePrivacyMode)},
+			{"processUdpSockets", BuildProcessUdpSocketsJson(ePrivacyMode)}
+		};
+	}
+
+	static nlohmann::json BuildTransfersJson()
+	{
+		return nlohmann::json{
+			{"downloadSpeedBytesPerSec", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetDatarate()) : nlohmann::json(nullptr)},
+			{"uploadSpeedBytesPerSec", theApp.uploadqueue != NULL ? nlohmann::json(theApp.uploadqueue->GetDatarate()) : nlohmann::json(nullptr)},
+			{"sessionDownloadedBytes", theStats.sessionReceivedBytes},
+			{"sessionUploadedBytes", theStats.sessionSentBytes},
+			{"downloadCount", theApp.downloadqueue != NULL ? nlohmann::json(static_cast<int64_t>(theApp.downloadqueue->GetFileCount())) : nlohmann::json(nullptr)},
+			{"activeUploads", theApp.uploadqueue != NULL ? nlohmann::json(static_cast<int64_t>(theApp.uploadqueue->GetActiveUploadsCount())) : nlohmann::json(nullptr)},
+			{"waitingUploads", theApp.uploadqueue != NULL ? nlohmann::json(static_cast<int64_t>(theApp.uploadqueue->GetWaitingUserCount())) : nlohmann::json(nullptr)}
+		};
+	}
+
+	static nlohmann::json BuildSystemJson()
+	{
+		MEMORYSTATUSEX memory = {};
+		memory.dwLength = sizeof(memory);
+		const bool bHasMemory = ::GlobalMemoryStatusEx(&memory) != FALSE;
+		return nlohmann::json{
+			{"processorArchitecture",
+#if defined(_M_ARM64)
+				"arm64"
+#elif defined(_M_X64)
+				"x64"
+#else
+				"unknown"
+#endif
+			},
+			{"numberOfProcessors", static_cast<uint32>(::GetActiveProcessorCount(ALL_PROCESSOR_GROUPS))},
+			{"memoryLoadPercent", bHasMemory ? nlohmann::json(memory.dwMemoryLoad) : nlohmann::json(nullptr)},
+			{"totalPhysBytes", bHasMemory ? nlohmann::json(memory.ullTotalPhys) : nlohmann::json(nullptr)},
+			{"availPhysBytes", bHasMemory ? nlohmann::json(memory.ullAvailPhys) : nlohmann::json(nullptr)}
+		};
+	}
+
+	static nlohmann::json BuildDiagnosticSnapshotJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		const CTime capturedAt = CTime::GetCurrentTime();
+		return nlohmann::json{
+			{"schema", "emulebb.diagnosticSnapshot.v1"},
+			{"redacted", DiagnosticSnapshotSeams::IsRedacted(ePrivacyMode)},
+			{"capturedAtLocal", JsonString(capturedAt.Format(_T("%Y-%m-%dT%H:%M:%S%z")))},
+			{"app", nlohmann::json{
+				{"productName", JsonString(CString(MOD_RELEASE_PRODUCT_NAME))},
+				{"version", JsonString(theApp.m_strCurVersionLong)},
+				{"debugVersion", JsonString(theApp.m_strCurVersionLongDbg)}
+			}},
+			{"system", BuildSystemJson()},
+			{"process", BuildProcessInfoJson(ePrivacyMode)},
+			{"paths", BuildPathsJson(ePrivacyMode)},
+			{"network", BuildNetworkJson(ePrivacyMode)},
+			{"transfers", BuildTransfersJson()},
+			{"modules", BuildModulesJson(ePrivacyMode)}
+		};
 	}
 
 	static void EditTextFile(const CString &rstrPath)
@@ -262,6 +618,10 @@ namespace
 			return IDS_TOOLS_STATUS_OPEN_EMULE_LOG;
 		case MP_HM_OPEN_VERBOSE_LOG:
 			return IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG;
+		case MP_HM_COPY_DIAGNOSTIC_SNAPSHOT_JSON:
+			return IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON;
+		case MP_HM_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON:
+			return IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON;
 		default:
 			return 0;
 		}
@@ -3398,6 +3758,12 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_CAPTURE_FULLDUMP:
 		CaptureDiagnosticDump(true);
 		break;
+	case MP_HM_COPY_DIAGNOSTIC_SNAPSHOT_JSON:
+		CopyDiagnosticSnapshotToClipboard(false);
+		break;
+	case MP_HM_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON:
+		CopyDiagnosticSnapshotToClipboard(true);
+		break;
 	case MP_HM_OPEN_EMULE_LOG:
 		ShellOpenFile(theLog.GetFilePath());
 		break;
@@ -3738,6 +4104,9 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		diagnostics.AppendMenu(GetExistingFileMenuFlags(theLog.GetFilePath()), MP_HM_OPEN_EMULE_LOG, GetResString(IDS_OPEN_EMULE_LOG), _T("LOG"));
 		diagnostics.AppendMenu(GetExistingFileMenuFlags(theVerboseLog.GetFilePath()), MP_HM_OPEN_VERBOSE_LOG, GetResString(IDS_OPEN_VERBOSE_LOG), _T("LOG"));
 		diagnostics.AppendMenu(MF_SEPARATOR);
+		diagnostics.AppendMenu(MF_STRING, MP_HM_COPY_DIAGNOSTIC_SNAPSHOT_JSON, GetResString(IDS_DIAG_COPY_SNAPSHOT_JSON), _T("COPY"));
+		diagnostics.AppendMenu(MF_STRING, MP_HM_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON, GetResString(IDS_DIAG_COPY_REDACTED_SNAPSHOT_JSON), _T("COPY"));
+		diagnostics.AppendMenu(MF_SEPARATOR);
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("TOOLS"));
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
 
@@ -3809,6 +4178,25 @@ void CemuleDlg::CaptureDiagnosticDump(bool bFullMemoryDump)
 	CString strMessage;
 	strMessage.Format(GetResString(IDS_DIAG_DUMP_FAILURE), (LPCTSTR)strDumpKind, (LPCTSTR)strError);
 	AfxMessageBox(strMessage, MB_ICONERROR | MB_OK);
+}
+
+
+void CemuleDlg::CopyDiagnosticSnapshotToClipboard(bool bRedacted)
+{
+	const DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode = bRedacted
+		? DiagnosticSnapshotSeams::ESnapshotPrivacyMode::Redacted
+		: DiagnosticSnapshotSeams::ESnapshotPrivacyMode::Raw;
+	const nlohmann::json snapshot = BuildDiagnosticSnapshotJson(ePrivacyMode);
+	const CStringA strSerialized(WebServerJson::SerializeJsonUtf8(snapshot));
+	const CString strClipboardText(WebServerJson::FromStdUtf8(std::string(static_cast<LPCSTR>(strSerialized), strSerialized.GetLength())));
+	const CString strKind(GetResString(bRedacted ? IDS_DIAG_SNAPSHOT_KIND_REDACTED : IDS_DIAG_SNAPSHOT_KIND_RAW));
+
+	if (theApp.CopyTextToClipboard(strClipboardText)) {
+		AddLogLine(false, GetResString(IDS_DIAG_SNAPSHOT_COPY_SUCCESS), (LPCTSTR)strKind);
+		return;
+	}
+
+	AddLogLine(true, GetResString(IDS_DIAG_SNAPSHOT_COPY_FAILURE), (LPCTSTR)strKind);
 }
 
 

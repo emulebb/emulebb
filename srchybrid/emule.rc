@@ -3664,6 +3664,9 @@ BEGIN
     IDS_UPDATE_SERVERMET_FROM_ADDRESSES "Update server.met from addresses.dat"
     IDS_OPEN_EMULE_LOG      "Open eMule.log"
     IDS_OPEN_VERBOSE_LOG    "Open eMule_Verbose.log"
+    IDS_DIAG_COPY_SNAPSHOT_JSON "Copy Diagnostic Snapshot JSON"
+    IDS_DIAG_COPY_REDACTED_SNAPSHOT_JSON
+                            "Copy Redacted Diagnostic Snapshot JSON"
     IDS_TOOLS_STATUS_EDIT_PREFERENCES_INI
                             "Opens preferences.ini in the configured text editor. Edit carefully; some changes need an eMule restart."
     IDS_TOOLS_STATUS_EDIT_IPFILTER_DAT
@@ -3708,6 +3711,10 @@ BEGIN
                             "Opens the current eMule.log file if it exists."
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG
                             "Opens the current eMule_Verbose.log file if it exists."
+    IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON
+                            "Copies a raw local diagnostic JSON snapshot to the clipboard."
+    IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON
+                            "Copies a redacted diagnostic JSON snapshot to the clipboard for sharing."
     IDS_TOOLS_STATUS_SESSION_CONNECT
                             "Connects, cancels a connection attempt, or disconnects the current session."
     IDS_TOOLS_STATUS_SHOW_SERVER
@@ -3729,6 +3736,12 @@ BEGIN
     IDS_TOOLS_STATUS_MINIMIZE_TO_TRAY
                             "Minimizes eMule to the system tray."
     IDS_TOOLS_STATUS_EXIT   "Closes eMule."
+    IDS_DIAG_SNAPSHOT_COPY_SUCCESS
+                            "Copied %s diagnostic snapshot JSON to the clipboard."
+    IDS_DIAG_SNAPSHOT_COPY_FAILURE
+                            "Failed to copy %s diagnostic snapshot JSON to the clipboard."
+    IDS_DIAG_SNAPSHOT_KIND_RAW "raw"
+    IDS_DIAG_SNAPSHOT_KIND_REDACTED "redacted"
     IDS_SEARCHPARAMS        "Search Parameters"
 END
 
