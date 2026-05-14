@@ -5,8 +5,6 @@
 #include "PathHelpers.h"
 #include "SharedFileIntakePolicy.h"
 
-bool EqualPaths(const CString &rstrDir1, const CString &rstrDir2);
-
 namespace SharedDirectoryOps
 {
 inline bool ContainsDirectoryIdentity(const std::vector<LongPathSeams::FileSystemObjectIdentity> &rVisitedDirectories, const LongPathSeams::FileSystemObjectIdentity &rIdentity)
@@ -18,10 +16,21 @@ inline bool ContainsDirectoryIdentity(const std::vector<LongPathSeams::FileSyste
 	return false;
 }
 
+/**
+ * @brief Builds a case-insensitive lexical key for shared-directory list checks.
+ */
+inline CString MakeSharedDirectoryLookupKey(const CString &rstrDirectory)
+{
+	CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
+	strKey.MakeLower();
+	return strKey;
+}
+
 inline bool ListContainsEquivalentPath(const CStringList &rList, const CString &rstrPath)
 {
+	const CString strPathKey(MakeSharedDirectoryLookupKey(rstrPath));
 	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
-		if (EqualPaths(rList.GetNext(pos), rstrPath))
+		if (MakeSharedDirectoryLookupKey(rList.GetNext(pos)) == strPathKey)
 			return true;
 	}
 	return false;
@@ -52,16 +61,6 @@ inline bool ListContainsEquivalentDirectoryObject(const CStringList &rList, cons
 	}
 
 	return false;
-}
-
-/**
- * @brief Builds a case-insensitive lexical key for UI-only shared-directory ancestry checks.
- */
-inline CString MakeSharedDirectoryLookupKey(const CString &rstrDirectory)
-{
-	CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
-	strKey.MakeLower();
-	return strKey;
 }
 
 /**
@@ -178,13 +177,16 @@ inline void CollectDirectorySubtree(CStringList &rList, const CString &rstrDirec
 inline bool RemoveSharedDirectory(CStringList &rList, const CString &rstrDirectory, const bool bIncludeSubdirectories)
 {
 	const CString strCanonicalDirectory(PathHelpers::CanonicalizeDirectoryPath(rstrDirectory));
+	const CString strDirectoryKey(MakeSharedDirectoryLookupKey(strCanonicalDirectory));
 	bool bChanged = false;
 	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
 		const CString strCurrent(rList.GetNext(pos));
+		const CString strCurrentKey(MakeSharedDirectoryLookupKey(strCurrent));
+		const bool bSameDirectory = strCurrentKey == strDirectoryKey;
 		const bool bMatches = bIncludeSubdirectories
-			? (EqualPaths(strCurrent, strCanonicalDirectory) || PathHelpers::IsPathWithinDirectory(strCanonicalDirectory, strCurrent))
-			: EqualPaths(strCurrent, strCanonicalDirectory);
+			? (bSameDirectory || IsDirectoryKeyParentOfCandidate(strDirectoryKey, strCurrentKey))
+			: bSameDirectory;
 		if (!bMatches)
 			continue;
 
