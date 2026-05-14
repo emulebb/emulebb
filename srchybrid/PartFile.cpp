@@ -2421,7 +2421,8 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 	}
 
 	// If buffer size exceeds limit, or if not written within time limit, flush data
-	if (m_nTotalBufferData > thePrefs.GetFileBufferSize() || curTick >= m_nLastBufferFlushTime + thePrefs.GetFileBufferTimeLimit())
+	const uint64 uEffectiveFileBufferSize = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes() : thePrefs.GetFileBufferSize();
+	if (m_nTotalBufferData > uEffectiveFileBufferSize || curTick >= m_nLastBufferFlushTime + thePrefs.GetFileBufferTimeLimit())
 		FlushBuffer();
 	//If data keeps arriving, flush to disk sometimes for extra safety
 	if (m_nFileFlushTime && curTick >= m_nFileFlushTime + SEC2MS(31) && m_hWrite != INVALID_HANDLE_VALUE) {
@@ -4293,9 +4294,10 @@ uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start,
 		block->transferred += lenData;
 	// We prefer to flush the buffer on timer, but if we get over our limit too far
 	// (high speed upload), flush here to save memory and time on list processing
+	const uint64 uEffectiveFileBufferSize = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes() : thePrefs.GetFileBufferSize();
 	if (m_gaplist.IsEmpty()
 		|| !inSet(GetStatus(), PS_READY, PS_EMPTY) //import parts
-		|| (m_nTotalBufferData > thePrefs.GetFileBufferSize() * 2ull))
+		|| (m_nTotalBufferData > uEffectiveFileBufferSize * 2ull))
 	{
 		FlushBuffer();
 	}

@@ -38,6 +38,7 @@
 #include "MenuCmds.h"
 #include "Log.h"
 #include "OtherFunctions.h"
+#include "BroadbandIoSeams.h"
 #include "PathHelpers.h"
 #include "DownloadQueueAutoCatSeams.h"
 #include "DownloadQueueOverviewSeams.h"
@@ -104,6 +105,8 @@ CDownloadQueue::CDownloadQueue()
 	, m_nUDPFileReasks()
 	, m_nFailedUDPFileReasks()
 	, m_datarate()
+	, m_uBufferedDownloadBytesSnapshot()
+	, m_uBufferedDownloadFileCountSnapshot()
 	, m_uBulkAddDownloadsDepth()
 	, m_bBulkAddDownloadsNeedDiskspaceCheck()
 	, m_bBulkAddDownloadsNeedOverviewExport()
@@ -742,6 +745,7 @@ void CDownloadQueue::Process()
 	theStats.m_fGlobalDone = 0;
 	theStats.m_fGlobalSize = 0;
 	theStats.m_dwOverallStatus = 0;
+	RefreshBroadbandIoBufferSnapshot();
 	//file list is already sorted by prio, therefore I removed all the extra loops.
 	for (POSITION pos = filelist.GetHeadPosition(); pos != NULL;) {
 		CPartFile *cur_file = filelist.GetNext(pos);
@@ -1865,6 +1869,33 @@ LRESULT CSourceHostnameResolveWnd::OnHostnameResolved(WPARAM, LPARAM lParam)
 		delete entry;
 	}
 	return TRUE;
+}
+
+void CDownloadQueue::RefreshBroadbandIoBufferSnapshot()
+{
+	uint64 uBufferedBytes = 0;
+	UINT uBufferedFiles = 0;
+	for (POSITION pos = filelist.GetHeadPosition(); pos != NULL;) {
+		const CPartFile *const pFile = filelist.GetNext(pos);
+		if (pFile == NULL)
+			continue;
+		const uint64 uFileBufferedBytes = pFile->GetBufferedDataBytes();
+		if (uFileBufferedBytes == 0)
+			continue;
+		uBufferedBytes += uFileBufferedBytes;
+		++uBufferedFiles;
+	}
+	m_uBufferedDownloadBytesSnapshot = uBufferedBytes;
+	m_uBufferedDownloadFileCountSnapshot = uBufferedFiles;
+}
+
+uint64 CDownloadQueue::GetEffectiveFileBufferSizeBytes() const
+{
+	return BroadbandIoSeams::BuildEffectiveFileBufferSizeBytes(
+		thePrefs.IsAutoBroadbandIOEnabled(),
+		thePrefs.GetFileBufferSize(),
+		BroadbandIoSeams::kDefaultGlobalDownloadBufferBudgetBytes,
+		m_uBufferedDownloadFileCountSnapshot);
 }
 
 bool CDownloadQueue::DoKademliaFileRequest() const

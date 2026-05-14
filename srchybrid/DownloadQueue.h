@@ -123,6 +123,9 @@ public:
 	void	GetDownloadSourcesStats(SDownloadStats &results);
 	int		GetDownloadFilesStats(uint64 &rui64TotalFileSize, uint64 &rui64TotalLeftToTransfer, uint64 &rui64TotalAdditionalNeededSpace);
 	uint32	GetDatarate() const								{ return m_datarate; }
+	uint64	GetBufferedDownloadBytes() const					{ return m_uBufferedDownloadBytesSnapshot; }
+	UINT	GetBufferedDownloadFileCount() const				{ return m_uBufferedDownloadFileCountSnapshot; }
+	uint64	GetEffectiveFileBufferSizeBytes() const;
 
 	void	AddUDPFileReasks()								{ ++m_nUDPFileReasks; }
 	uint32	GetUDPFileReasks() const						{ return m_nUDPFileReasks; }
@@ -241,6 +244,7 @@ private:
 	 * @brief Adds a newly admitted file's placement demand to the current protected-volume snapshot.
 	 */
 	void	ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempPath, LPCTSTR pszIncomingPath, EMFileSize nFileSize) const;
+	void	RefreshBroadbandIoBufferSnapshot();
 	CString	BuildProtectedDiskSpaceBreachSignature(const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aStatuses) const;
 	void	ForceSaveAllPartMetFilesForDiskSpace();
 	void	StopAllDownloadsForDiskSpace();
@@ -269,6 +273,8 @@ private:
 	uint32	m_nUDPFileReasks;
 	uint32	m_nFailedUDPFileReasks;
 	uint32	m_datarate;
+	uint64	m_uBufferedDownloadBytesSnapshot;
+	UINT	m_uBufferedDownloadFileCountSnapshot;
 	UINT	m_uBulkAddDownloadsDepth;
 	bool	m_bBulkAddDownloadsNeedDiskspaceCheck;
 	bool	m_bBulkAddDownloadsNeedOverviewExport;

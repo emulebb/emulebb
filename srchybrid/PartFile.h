@@ -155,6 +155,7 @@ public:
 	bool	IsNormalFile() const						{ return (m_dwFileAttributes & (FILE_ATTRIBUTE_COMPRESSED | FILE_ATTRIBUTE_SPARSE_FILE)) == 0; }
 	EMFileSize	GetRealFileSize() const					{ return GetDiskFileSize(GetFilePath()); }
 	void	GetLeftToTransferAndAdditionalNeededSpace(uint64 &rui64LeftToTransfer, uint64 &rui64AdditionalNeededSpace) const;
+	uint64	GetBufferedDataBytes() const				{ return m_nTotalBufferData; }
 	uint64	GetNeededSpace() const;
 	virtual void SetFileSize(EMFileSize nFileSize);
 
