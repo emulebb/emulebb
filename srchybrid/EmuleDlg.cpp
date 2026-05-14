@@ -53,6 +53,8 @@
 #include "CreditsDlg.h"
 #include "PreferencesDlg.h"
 #include "ServerConnect.h"
+#include "DownloadQueue.h"
+#include "ClientUDPSocket.h"
 #include "UpDownClient.h"
 #include "KnownFileList.h"
 #include "ServerList.h"
@@ -64,6 +66,7 @@
 #include "Splashscreen.h"
 #include "Exceptions.h"
 #include "FakeFileDetector.h"
+#include "BroadbandIoSeams.h"
 #include "SearchList.h"
 #include "HTRichEditCtrl.h"
 #include "FrameGrabThread.h"
@@ -486,6 +489,46 @@ namespace
 		};
 	}
 
+	static nlohmann::json BuildSocketBufferJson()
+	{
+		nlohmann::json udpReceive = {
+			{"requestedBytes", 512 * 1024},
+			{"actualBytes", nullptr}
+		};
+
+		if (theApp.clientudp != NULL) {
+			int iValue = 0;
+			int iValueLen = sizeof iValue;
+			if (theApp.clientudp->GetSockOpt(SO_RCVBUF, &iValue, &iValueLen))
+				udpReceive["actualBytes"] = iValue;
+		}
+
+		return nlohmann::json{
+			{"udpReceive", udpReceive},
+			{"tcpUploadSend", nlohmann::json{
+				{"targetBytes", 512 * 1024}
+			}}
+		};
+	}
+
+	static nlohmann::json BuildIoJson()
+	{
+		const uint64 uEffectiveBufferBytes = theApp.downloadqueue != NULL
+			? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes()
+			: thePrefs.GetFileBufferSize();
+
+		return nlohmann::json{
+			{"autoBroadbandIo", thePrefs.IsAutoBroadbandIOEnabled()},
+			{"globalDownloadBufferBudgetBytes", BroadbandIoSeams::kDefaultGlobalDownloadBufferBudgetBytes},
+			{"configuredFileBufferBytes", thePrefs.GetFileBufferSize()},
+			{"effectiveFileBufferBytes", uEffectiveBufferBytes},
+			{"fileBufferTimeLimitMs", thePrefs.GetFileBufferTimeLimit()},
+			{"totalBufferedDownloadBytes", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetBufferedDownloadBytes()) : nlohmann::json(nullptr)},
+			{"activeBufferedDownloadFiles", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetBufferedDownloadFileCount()) : nlohmann::json(nullptr)},
+			{"socketBuffers", BuildSocketBufferJson()}
+		};
+	}
+
 	static nlohmann::json BuildSystemJson()
 	{
 		MEMORYSTATUSEX memory = {};
@@ -524,6 +567,7 @@ namespace
 			{"process", BuildProcessInfoJson(ePrivacyMode)},
 			{"paths", BuildPathsJson(ePrivacyMode)},
 			{"network", BuildNetworkJson(ePrivacyMode)},
+			{"io", BuildIoJson()},
 			{"transfers", BuildTransfersJson()},
 			{"modules", BuildModulesJson(ePrivacyMode)}
 		};

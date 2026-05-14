@@ -540,6 +540,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_htiTCPErrorFlooderThreshold()
 	, m_htiRearrangeKadSearchKeywords()
 	, m_htiMessageFromValidSourcesOnly()
+	, m_htiAutoBroadbandIO()
 	, m_htiFileBufferTimeLimit()
 	, m_htiFileBufferSize()
 	, m_htiQueueSize()
@@ -657,6 +658,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_bUseSystemFontForMainControls()
 	, m_bVerbose()
 	, m_bForceSpeedsToKB()
+	, m_bAutoBroadbandIO()
 	, m_uFileBufferTimeLimitSeconds()
 	, m_uGeoLocationCheckDays()
 	, m_iMaxUploadClients()
@@ -823,6 +825,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_ctrlTreeOptions.AddEditBox(m_htiMinFreeDiskSpaceTemp, RUNTIME_CLASS(CNumTreeOptionsEdit));
 		m_htiMinFreeDiskSpaceIncoming = m_ctrlTreeOptions.InsertItem(GetIncomingDiskSpaceLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiStoragePersistence);
 		m_ctrlTreeOptions.AddEditBox(m_htiMinFreeDiskSpaceIncoming, RUNTIME_CLASS(CNumTreeOptionsEdit));
+		m_htiAutoBroadbandIO = m_ctrlTreeOptions.InsertCheckBox(_T("Auto broadband IO buffers"), m_htiStoragePersistence, m_bAutoBroadbandIO);
 		m_htiFileBufferTimeLimit = m_ctrlTreeOptions.InsertItem(GetResString(IDS_FILEBUFFERTIMELIMIT), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiStoragePersistence);
 		m_ctrlTreeOptions.AddEditBox(m_htiFileBufferTimeLimit, RUNTIME_CLASS(CNumTreeOptionsEdit));
 		m_htiFileBufferSize = m_ctrlTreeOptions.InsertItem(GetFileBufferSizeLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiStoragePersistence);
@@ -1192,6 +1195,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 	DDV_MinMaxInt(pDX, m_iMinFreeDiskSpaceTempGB, static_cast<int>(PartFilePersistenceSeams::kMinTempDiskSpaceFloorGiB), static_cast<int>(PartFilePersistenceSeams::kMaxDiskSpaceFloorGiB));
 	DDX_Text(pDX, IDC_EXT_OPTS, m_htiMinFreeDiskSpaceIncoming, m_iMinFreeDiskSpaceIncomingGB);
 	DDV_MinMaxInt(pDX, m_iMinFreeDiskSpaceIncomingGB, static_cast<int>(PartFilePersistenceSeams::kMinIncomingDiskSpaceFloorGiB), static_cast<int>(PartFilePersistenceSeams::kMaxDiskSpaceFloorGiB));
+	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiAutoBroadbandIO, m_bAutoBroadbandIO);
 	DDX_TreeRadio(pDX, IDC_EXT_OPTS, m_htiCommit, m_iCommitFiles);
 	DDX_TreeRadio(pDX, IDC_EXT_OPTS, m_htiExtractMetaData, m_iExtractMetaData);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiRestoreLastMainWndDlg, m_bRestoreLastMainWndDlg);
@@ -1483,6 +1487,7 @@ BOOL CPPgTweaks::OnInitDialog()
 	m_bPartiallyPurgeOldKnownFiles = thePrefs.DoPartiallyPurgeOldKnownFiles();
 	m_bRearrangeKadSearchKeywords = thePrefs.GetRearrangeKadSearchKeywords();
 	m_bMessageFromValidSourcesOnly = thePrefs.MsgOnlySecure();
+	m_bAutoBroadbandIO = thePrefs.IsAutoBroadbandIOEnabled();
 	m_iQueueSize = static_cast<int>(thePrefs.GetQueueSize());
 	m_uFileBufferSizeKiB = thePrefs.GetFileBufferSize() / 1024u;
 	m_uMaxChatHistoryLines = static_cast<UINT>(thePrefs.GetMaxChatHistoryLines());
@@ -1615,6 +1620,7 @@ BOOL CPPgTweaks::OnApply()
 	thePrefs.SetFollowMajorityFilenameMinimumVotes(m_uFollowMajorityFilenameMinimumVotes);
 	thePrefs.m_bHighresTimer = m_bHighresTimer;
 	thePrefs.m_strTxtEditor = m_sTxtEditor;
+	thePrefs.SetAutoBroadbandIOEnabled(m_bAutoBroadbandIO);
 	thePrefs.SetFileBufferSize(m_uFileBufferSizeKiB * 1024u);
 	thePrefs.SetQueueSize(m_iQueueSize);
 	m_uFileBufferSizeKiB = thePrefs.GetFileBufferSize() / 1024u;
@@ -1854,6 +1860,7 @@ void CPPgTweaks::Localize()
 			m_ctrlTreeOptions.SetItemText(m_htiFullVerbose, GetFullVerboseLabel());
 		LocalizeItemText(m_htiVerboseGroup, IDS_VERBOSE);
 		m_ctrlTreeOptions.SetItemText(m_htiStoragePersistence, GetStoragePersistenceLabel());
+		m_ctrlTreeOptions.SetItemText(m_htiAutoBroadbandIO, _T("Auto broadband IO buffers"));
 		LocalizeEditLabel(m_htiDateTimeFormat4Lists, IDS_DATETIMEFORMAT4LISTS);
 		LocalizeEditLabel(m_htiFileBufferTimeLimit, IDS_FILEBUFFERTIMELIMIT);
 		m_ctrlTreeOptions.SetEditLabel(m_htiFileBufferSize, GetFileBufferSizeLabel());
@@ -1962,6 +1969,7 @@ void CPPgTweaks::OnDestroy()
 	m_htiPartiallyPurgeOldKnownFiles = NULL;
 	m_htiRearrangeKadSearchKeywords = NULL;
 	m_htiMessageFromValidSourcesOnly = NULL;
+	m_htiAutoBroadbandIO = NULL;
 	m_htiFileBufferTimeLimit = NULL;
 	m_htiFileBufferSize = NULL;
 	m_htiQueueSize = NULL;

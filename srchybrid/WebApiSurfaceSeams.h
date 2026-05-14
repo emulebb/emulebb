@@ -36,7 +36,8 @@ enum class EMutablePreference : uint8_t
 	CreditSystem,
 	SafeServerConnect,
 	NetworkKademlia,
-	NetworkEd2K
+	NetworkEd2K,
+	AutoBroadbandIO
 };
 
 enum class EMutablePreferenceValueKind : uint8_t
@@ -107,14 +108,14 @@ inline bool IsUploadSlotPreferenceValue(const uint64_t ullValue)
 inline constexpr const char *kMutablePreferenceFieldListCsv =
 	"uploadLimitKiBps,downloadLimitKiBps,maxConnections,maxConnectionsPerFiveSeconds,maxSourcesPerFile,"
 	"uploadClientDataRate,maxUploadSlots,queueSize,autoConnect,newAutoUp,newAutoDown,creditSystem,"
-	"safeServerConnect,networkKademlia,networkEd2k";
+	"safeServerConnect,networkKademlia,networkEd2k,autoBroadbandIo";
 
 /**
  * Returns the canonical metadata for the native REST mutable preferences.
  */
-inline const std::array<SMutablePreferenceSpec, 15> &GetMutablePreferenceSpecs()
+inline const std::array<SMutablePreferenceSpec, 16> &GetMutablePreferenceSpecs()
 {
-	static const std::array<SMutablePreferenceSpec, 15> specs = {{
+	static const std::array<SMutablePreferenceSpec, 16> specs = {{
 		{"uploadLimitKiBps", EMutablePreference::MaxUploadKiB, EMutablePreferenceValueKind::Unsigned, "uploadLimitKiBps must be an unsigned number in the range 1..4294967294", IsFiniteKiBpsPreferenceValue},
 		{"downloadLimitKiBps", EMutablePreference::MaxDownloadKiB, EMutablePreferenceValueKind::Unsigned, "downloadLimitKiBps must be an unsigned number in the range 1..4294967294", IsFiniteKiBpsPreferenceValue},
 		{"maxConnections", EMutablePreference::MaxConnections, EMutablePreferenceValueKind::Unsigned, "maxConnections must be an unsigned number in the range 1..2147483647", IsPositiveSignedIntPreferenceValue},
@@ -129,7 +130,8 @@ inline const std::array<SMutablePreferenceSpec, 15> &GetMutablePreferenceSpecs()
 		{"creditSystem", EMutablePreference::CreditSystem, EMutablePreferenceValueKind::Boolean, "creditSystem must be a boolean", NULL},
 		{"safeServerConnect", EMutablePreference::SafeServerConnect, EMutablePreferenceValueKind::Boolean, "safeServerConnect must be a boolean", NULL},
 		{"networkKademlia", EMutablePreference::NetworkKademlia, EMutablePreferenceValueKind::Boolean, "networkKademlia must be a boolean", NULL},
-		{"networkEd2k", EMutablePreference::NetworkEd2K, EMutablePreferenceValueKind::Boolean, "networkEd2k must be a boolean", NULL}
+		{"networkEd2k", EMutablePreference::NetworkEd2K, EMutablePreferenceValueKind::Boolean, "networkEd2k must be a boolean", NULL},
+		{"autoBroadbandIo", EMutablePreference::AutoBroadbandIO, EMutablePreferenceValueKind::Boolean, "autoBroadbandIo must be a boolean", NULL}
 	}};
 	return specs;
 }

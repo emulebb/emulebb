@@ -951,7 +951,8 @@ json BuildPreferencesJson()
 		{"creditSystem", thePrefs.UseCreditSystem()},
 		{"safeServerConnect", thePrefs.IsSafeServerConnectEnabled()},
 		{"networkKademlia", thePrefs.GetNetworkKademlia()},
-		{"networkEd2k", thePrefs.GetNetworkED2K()}
+		{"networkEd2k", thePrefs.GetNetworkED2K()},
+		{"autoBroadbandIo", thePrefs.IsAutoBroadbandIOEnabled()}
 	};
 }
 
@@ -1394,6 +1395,15 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 			return false;
 		}
 		thePrefs.SetNetworkED2K(rPrefs["networkEd2k"].get<bool>());
+	}
+
+	if (rPrefs.contains("autoBroadbandIo")) {
+		if (!rPrefs["autoBroadbandIo"].is_boolean()) {
+			rError.strCode = "INVALID_ARGUMENT";
+			rError.strMessage = _T("autoBroadbandIo must be a boolean");
+			return false;
+		}
+		thePrefs.SetAutoBroadbandIOEnabled(rPrefs["autoBroadbandIo"].get<bool>());
 	}
 
 	thePrefs.Save();
