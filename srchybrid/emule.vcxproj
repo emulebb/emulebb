@@ -451,6 +451,8 @@
     <ClInclude Include="CollectionListCtrl.h" />
     <ClInclude Include="CollectionViewDialog.h" />
     <ClInclude Include="ColorButton.h" />
+    <ClInclude Include="ConfigStartupBackup.h" />
+    <ClInclude Include="ConfigStartupBackupSeams.h" />
     <ClInclude Include="ColourPopup.h" />
     <ClInclude Include="ComboBoxEx2.h" />
     <ClInclude Include="CommentDialog.h" />

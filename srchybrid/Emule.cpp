@@ -56,6 +56,7 @@
 #include "KnownFileList.h"
 #include "Server.h"
 #include "ED2KLink.h"
+#include "ConfigStartupBackup.h"
 #include "Preferences.h"
 #include "StartupConfigOverride.h"
 #include "SafeFile.h"
@@ -211,6 +212,33 @@ bool TryCreateMonitoredRootWatcher(const CString &rRootPath, SMonitoredRootWatch
 		return false;
 	}
 	return true;
+}
+
+void LogStartupConfigBackupResult()
+{
+	const ConfigStartupBackup::StartupConfigBackupResult &rResult = ConfigStartupBackup::GetLastStartupConfigBackupResult();
+	if (!rResult.bAttempted)
+		return;
+
+	if (rResult.bCreated) {
+		Log(_T("Startup config backup created: %s (%u files, %u directories)."),
+			(LPCTSTR)rResult.strBackupDirectory,
+			rResult.uCopiedFiles,
+			rResult.uCopiedDirectories);
+	} else if (rResult.bSkippedExisting) {
+		Log(_T("Startup config backup already exists for today: %s"), (LPCTSTR)rResult.strBackupDirectory);
+	} else if (rResult.bCopyFailed) {
+		Log(_T("Startup config backup failed for %s (error %lu)."),
+			(LPCTSTR)rResult.strFailedPath,
+			rResult.dwLastError);
+	}
+
+	if (rResult.uPrunedDirectories > 0)
+		Log(_T("Startup config backup pruned %u old backup directories."), rResult.uPrunedDirectories);
+	if (rResult.bPruneFailed)
+		Log(_T("Startup config backup pruning failed for %s (error %lu)."),
+			(LPCTSTR)rResult.strFailedPath,
+			rResult.dwLastError);
 }
 
 void AddUniqueDirectoryPath(CStringList &rList, const CString &rDirectory)
@@ -1164,6 +1192,7 @@ BOOL CemuleApp::InitInstance()
 	free((void*)m_pszProfileName);
 	const CString &sConfDir(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
 	m_pszProfileName = _tcsdup(sConfDir + _T("preferences.ini"));
+	(void)ConfigStartupBackup::RunDailyStartupConfigBackup(sConfDir, ConfigStartupBackupSeams::kDefaultBackupRetentionCount);
 
 #ifdef _DEBUG
 	oldMemState.Checkpoint();
@@ -1255,6 +1284,7 @@ BOOL CemuleApp::InitInstance()
 		theVerboseLog.Log(_T("\r\n"));
 	}
 	Log(_T("Starting %s %s"), MOD_RELEASE_PRODUCT_NAME, (LPCTSTR)m_strCurVersionLong);
+	LogStartupConfigBackupResult();
 #if EMULE_COMPILED_STARTUP_PROFILING
 	ResetStartupProfile();
 	AppendStartupProfileLine(_T("InitInstance: logging and profile setup"), 0);
