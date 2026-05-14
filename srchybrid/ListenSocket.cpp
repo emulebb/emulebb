@@ -43,12 +43,23 @@
 #include "SourceExchangeSeams.h"
 #include "SHAHashSet.h"
 #include "Log.h"
+#include "PathHelpers.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
+namespace
+{
+CString BuildSharedBrowseDirectoryKey(const CString &rstrDirectory)
+{
+	CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
+	strKey.MakeLower();
+	return strKey;
+}
+}
 
 // CClientReqSocket
 
@@ -750,11 +761,12 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 					if (!bSingleSharedFiles)
 						strReqDir = theApp.sharedfiles->GetDirNameByPseudo(strReqDir);
 					if (!strReqDir.IsEmpty()) {
+						const CString strReqDirKey(bSingleSharedFiles ? CString() : BuildSharedBrowseDirectoryKey(strReqDir));
 						// get all shared files from requested directory
 						for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair)) {
 							CKnownFile *cur_file = pair->value;
 							// all files not in shared directories have to be single shared files
-							if (((!bSingleSharedFiles && EqualPaths(strReqDir, cur_file->GetSharedDirectory()))
+							if (((!bSingleSharedFiles && BuildSharedBrowseDirectoryKey(cur_file->GetSharedDirectory()) == strReqDirKey)
 								|| (bSingleSharedFiles && !theApp.sharedfiles->ShouldBeShared(cur_file->GetSharedDirectory(), NULL, false))
 								)
 								&& (!cur_file->IsLargeFile() || client->SupportsLargeFiles()))
