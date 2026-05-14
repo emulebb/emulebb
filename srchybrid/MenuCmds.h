@@ -200,6 +200,7 @@
 #define MP_COPY_FILE_STATUS		10413
 #define MP_COPY_FILE_PROGRESS	10414
 #define MP_COPY_FILE_TYPE		10415
+#define MP_CANCEL_NO_CONFIRM	10416
 
 
 // quick-speed changer

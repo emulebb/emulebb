@@ -1971,8 +1971,11 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 			CPartFile *file = static_cast<CPartFile*>(content->value);
 			switch (wParam) {
 			case MP_CANCEL:
+			case MP_CANCEL_NO_CONFIRM:
 			case MPG_DELETE: // keyboard del will continue to remove completed files from the screen while cancel will now also be available for complete files
 				if (selectedCount > 0) {
+					const bool bCancelCommand = wParam == MP_CANCEL || wParam == MP_CANCEL_NO_CONFIRM;
+					const bool bConfirmCancel = wParam != MP_CANCEL_NO_CONFIRM;
 					SetRedraw(false);
 					CString fileList(GetResString(selectedCount == 1 ? IDS_Q_CANCELDL2 : IDS_Q_CANCELDL));
 					bool validdelete = false;
@@ -1981,7 +1984,7 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 					const int iMaxDisplayFiles = 10;
 					for (POSITION pos = selectedList.GetHeadPosition(); pos != NULL;) {
 						const CPartFile *cur_file = selectedList.GetNext(pos);
-						if (cur_file->GetStatus() != PS_COMPLETING && (cur_file->GetStatus() != PS_COMPLETE || wParam == MP_CANCEL)) {
+						if (cur_file->GetStatus() != PS_COMPLETING && (cur_file->GetStatus() != PS_COMPLETE || bCancelCommand)) {
 							validdelete = true;
 							if (++cFiles < iMaxDisplayFiles)
 								fileList.AppendFormat(_T("\n%s"), (LPCTSTR)cur_file->GetFileName());
@@ -1991,7 +1994,8 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 							removecompl = true;
 					}
 
-					if ((removecompl && !validdelete) || (validdelete && AfxMessageBox(fileList, MB_DEFBUTTON2 | MB_ICONQUESTION | MB_YESNO) == IDYES)) {
+					if ((removecompl && !validdelete)
+						|| (validdelete && (!bConfirmCancel || AfxMessageBox(fileList, MB_DEFBUTTON2 | MB_ICONQUESTION | MB_YESNO) == IDYES))) {
 						bool bRemovedItems = !selectedList.IsEmpty();
 						while (!selectedList.IsEmpty()) {
 							CPartFile *partfile = selectedList.RemoveHead();
@@ -2002,7 +2006,7 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 							case PS_COMPLETING:
 								break;
 							case PS_COMPLETE:
-								if (wParam == MP_CANCEL) {
+								if (bCancelCommand) {
 									bool delsucc = ShellDeleteFile(partfile->GetFilePath());
 									if (delsucc)
 										theApp.sharedfiles->RemoveFile(partfile, true);

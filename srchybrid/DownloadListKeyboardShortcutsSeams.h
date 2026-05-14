@@ -33,6 +33,9 @@ namespace DownloadListKeyboardShortcutsSeams
 	 */
 	inline UINT ClassifyKeyMessage(UINT uMessage, WPARAM wParam, bool bCtrlDown, bool bAltDown, bool bShiftDown)
 	{
+		if (uMessage == WM_KEYDOWN && wParam == VK_DELETE && !bCtrlDown && !bAltDown)
+			return bShiftDown ? MP_CANCEL_NO_CONFIRM : 0;
+
 		return FileListKeyboardShortcutsSeams::ClassifyKeyMessage(
 			FileListKeyboardShortcutsSeams::EContext::Downloads,
 			uMessage,
