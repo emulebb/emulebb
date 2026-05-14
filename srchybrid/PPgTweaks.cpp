@@ -191,6 +191,16 @@ namespace
 		return label;
 	}
 
+	static CString GetAutoBroadbandIOLabel()
+	{
+		return _T("Auto broadband I/O buffer sizing");
+	}
+
+	static CString GetAutoBroadbandIOToolTip()
+	{
+		return _T("Automatically limits the effective per-file download write buffer during busy broadband sessions.\r\n\r\nWhen several files are buffering at once, eMule divides a 512 MiB global download-buffer budget across those active files and uses the smaller of that per-file budget and the manual File buffer size. Disable it if you want the manual File buffer size to be used exactly. This does not change socket buffers, transfer limits, or upload/download speed limits.");
+	}
+
 	static CString GetCreateCrashDumpLabel()
 	{
 		return GetResString(IDS_TWEAKS_CRASH_DUMP_CREATION);
@@ -857,7 +867,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_ctrlTreeOptions.AddEditBox(m_htiMinFreeDiskSpaceTemp, RUNTIME_CLASS(CNumTreeOptionsEdit));
 		m_htiMinFreeDiskSpaceIncoming = m_ctrlTreeOptions.InsertItem(GetIncomingDiskSpaceLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiStoragePersistence);
 		m_ctrlTreeOptions.AddEditBox(m_htiMinFreeDiskSpaceIncoming, RUNTIME_CLASS(CNumTreeOptionsEdit));
-		m_htiAutoBroadbandIO = m_ctrlTreeOptions.InsertCheckBox(_T("Auto broadband IO buffers"), m_htiStoragePersistence, m_bAutoBroadbandIO);
+		m_htiAutoBroadbandIO = m_ctrlTreeOptions.InsertCheckBox(GetAutoBroadbandIOLabel(), m_htiStoragePersistence, m_bAutoBroadbandIO);
 		m_htiFileBufferTimeLimit = m_ctrlTreeOptions.InsertItem(GetResString(IDS_FILEBUFFERTIMELIMIT), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiStoragePersistence);
 		m_ctrlTreeOptions.AddEditBox(m_htiFileBufferTimeLimit, RUNTIME_CLASS(CNumTreeOptionsEdit));
 		m_htiFileBufferSize = m_ctrlTreeOptions.InsertItem(GetFileBufferSizeLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiStoragePersistence);
@@ -1020,6 +1030,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiUPnPBackendModeIgdOnly, IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE_IGD_ONLY);
 		SetTreeToolTip(m_htiUPnPBackendModePcpNatPmpOnly, IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE_PCP_NAT_PMP_ONLY);
 		SetTreeToolTip(m_htiPreviewCopiedArchives, IDS_TWEAKS_TT_PREVIEW_COPIED_ARCHIVES);
+		SetTreeToolTip(m_htiAutoBroadbandIO, GetAutoBroadbandIOToolTip());
 		SetTreeToolTip(m_htiFileBufferTimeLimit, IDS_TWEAKS_TT_FILE_BUFFER_TIME_LIMIT);
 		SetTreeToolTip(m_htiFileBufferSize, IDS_TWEAKS_TT_FILE_BUFFER_SIZE);
 		SetTreeToolTip(m_htiQueueSize, IDS_TWEAKS_TT_QUEUE_SIZE);
@@ -1899,7 +1910,7 @@ void CPPgTweaks::Localize()
 			m_ctrlTreeOptions.SetItemText(m_htiFullVerbose, GetFullVerboseLabel());
 		LocalizeItemText(m_htiVerboseGroup, IDS_VERBOSE);
 		m_ctrlTreeOptions.SetItemText(m_htiStoragePersistence, GetStoragePersistenceLabel());
-		m_ctrlTreeOptions.SetItemText(m_htiAutoBroadbandIO, _T("Auto broadband IO buffers"));
+		m_ctrlTreeOptions.SetItemText(m_htiAutoBroadbandIO, GetAutoBroadbandIOLabel());
 		LocalizeEditLabel(m_htiDateTimeFormat4Lists, IDS_DATETIMEFORMAT4LISTS);
 		LocalizeEditLabel(m_htiFileBufferTimeLimit, IDS_FILEBUFFERTIMELIMIT);
 		m_ctrlTreeOptions.SetEditLabel(m_htiFileBufferSize, GetFileBufferSizeLabel());
