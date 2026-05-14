@@ -213,6 +213,7 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnContextMenu(CWnd*, CPoint point);
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnListModified(LPNMHDR pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnGetDispInfo(LPNMHDR pNMHDR, LRESULT *pResult);

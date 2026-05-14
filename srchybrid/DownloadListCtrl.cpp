@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "FakeFileDetector.h"
 #include "DownloadProgressBarSeams.h"
+#include "DownloadListKeyboardShortcutsSeams.h"
 #include "DownloadListCtrl.h"
 #include "updownclient.h"
 #include "MenuCmds.h"
@@ -176,6 +177,14 @@ namespace
 			return false;
 		return menu.RemoveMenu(static_cast<UINT>(position), MF_BYPOSITION) != FALSE;
 	}
+
+	CString AddMenuShortcutLabel(const CString &strLabel, LPCTSTR pszShortcut)
+	{
+		CString strMenuLabel(strLabel);
+		strMenuLabel += _T("\t");
+		strMenuLabel += pszShortcut;
+		return strMenuLabel;
+	}
 }
 
 
@@ -195,6 +204,7 @@ BEGIN_MESSAGE_MAP(CDownloadListCtrl, CMuleListCtrl)
 	ON_MESSAGE(TM_VIDEOTHUMBNAILFINISHED, OnVideoThumbnailFinished)
 	ON_WM_CONTEXTMENU()
 	ON_WM_DESTROY()
+	ON_WM_KEYDOWN()
 	ON_WM_MOUSEMOVE()
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_TIMER()
@@ -1645,6 +1655,8 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 
 			bool bOpenEnabled = (iSelectedItems == 1 && iFilesToOpen == 1);
 			m_FileMenu.EnableMenuItem(MP_OPEN, bOpenEnabled ? MF_ENABLED : MF_GRAYED);
+			bool bOpenFolderEnabled = (iSelectedItems == 1 && file1 != NULL && !file1->GetPath().IsEmpty());
+			m_FileMenu.EnableMenuItem(MP_OPENFOLDER, bOpenFolderEnabled ? MF_ENABLED : MF_GRAYED);
 
 			CMenu PreviewWithMenu;
 			PreviewWithMenu.CreateMenu();
@@ -1790,6 +1802,7 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 		m_FileMenu.EnableMenuItem(MP_STOP, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_RESUME, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_OPEN, MF_GRAYED);
+		m_FileMenu.EnableMenuItem(MP_OPENFOLDER, MF_GRAYED);
 
 		EnableSubMenuItem(m_FileMenu, m_PreviewMenu.m_hMenu, MF_GRAYED);
 		if (!thePrefs.GetPreviewPrio()) {
@@ -2700,13 +2713,14 @@ void CDownloadListCtrl::CreateMenus()
 
 	// Add file commands
 	//
-	m_FileMenu.AppendMenu(MF_STRING, MP_PAUSE, GetResString(IDS_DL_PAUSE), _T("PAUSE"));
-	m_FileMenu.AppendMenu(MF_STRING, MP_STOP, GetResString(IDS_DL_STOP), _T("STOP"));
-	m_FileMenu.AppendMenu(MF_STRING, MP_RESUME, GetResString(IDS_DL_RESUME), _T("RESUME"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_PAUSE, AddMenuShortcutLabel(GetResString(IDS_DL_PAUSE), _T("Ctrl+P")), _T("PAUSE"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_STOP, AddMenuShortcutLabel(GetResString(IDS_DL_STOP), _T("Ctrl+T")), _T("STOP"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_RESUME, AddMenuShortcutLabel(GetResString(IDS_DL_RESUME), _T("Ctrl+S")), _T("RESUME"));
 	m_FileMenu.AppendMenu(MF_STRING, MP_CANCEL, GetResString(IDS_MAIN_BTN_CANCEL), _T("DELETE"));
 	m_FileMenu.AppendMenu(MF_SEPARATOR);
 
 	m_FileMenu.AppendMenu(MF_STRING, MP_OPEN, GetResString(IDS_DL_OPEN), _T("OPENFILE"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_OPENFOLDER, GetResString(IDS_OPENFOLDER), _T("OPENFOLDER"));
 	// Extended: Submenu with Preview options, Normal: Preview and possibly 'Preview with' item
 	m_PreviewMenu.CreateMenu();
 	m_PreviewMenu.AddMenuTitle(NULL, true);
@@ -2912,6 +2926,22 @@ CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, i
 void CDownloadListCtrl::ShowFilesCount()
 {
 	theApp.emuledlg->transferwnd->UpdateFilesCount(GetFilesCountInCurCat());
+}
+
+void CDownloadListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	const UINT uCommand = DownloadListKeyboardShortcutsSeams::ClassifyKeyMessage(
+		WM_KEYDOWN,
+		nChar,
+		GetKeyState(VK_CONTROL) < 0,
+		GetKeyState(VK_MENU) < 0,
+		GetKeyState(VK_SHIFT) < 0);
+	if (uCommand != 0) {
+		SendMessage(WM_COMMAND, uCommand);
+		return;
+	}
+
+	CMuleListCtrl::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 void CDownloadListCtrl::ShowSelectedFileDetails()

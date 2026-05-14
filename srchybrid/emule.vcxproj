@@ -470,6 +470,7 @@
     <ClInclude Include="DirectoryTreeCtrl.h" />
     <ClInclude Include="DownloadClientsCtrl.h" />
     <ClInclude Include="DownloadListCtrl.h" />
+    <ClInclude Include="DownloadListKeyboardShortcutsSeams.h" />
     <ClInclude Include="DownloadQueue.h" />
     <ClInclude Include="Drawgdix.h" />
     <ClInclude Include="DropDownButton.h" />
