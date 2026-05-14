@@ -1457,6 +1457,7 @@ void CPreferences::Init()
 				sdirfile.Seek(sizeof(WORD), CFile::begin); // skip BOM
 
 			CStringList sharedDirs;
+			std::unordered_set<std::wstring> sharedDirLookupKeys;
 			CString toadd;
 			while (sdirfile.CStdioFile::ReadString(toadd)) {
 				toadd.Trim(_T(" \t\r\n")); // need to trim '\r' in binary mode
@@ -1465,15 +1466,9 @@ void CPreferences::Init()
 					// skip non-shareable directories
 					// maybe skip non-existing directories on fixed disks only
 					if (IsShareableDirectory(toadd) && (m_bKeepUnavailableFixedSharedDirs || DirAccsess(toadd))) {
-						bool bDuplicate = false;
-						for (POSITION pos = sharedDirs.GetHeadPosition(); pos != NULL;) {
-							if (EqualPaths(sharedDirs.GetNext(pos), toadd)) {
-								bDuplicate = true;
-								break;
-							}
-						}
-						if (!bDuplicate)
-						sharedDirs.AddTail(toadd);
+						const std::wstring strLookupKey(MakeDirectoryListLookupKey(toadd));
+						if (sharedDirLookupKeys.insert(strLookupKey).second)
+							sharedDirs.AddTail(toadd);
 					}
 				}
 			}
