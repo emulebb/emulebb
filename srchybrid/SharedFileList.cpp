@@ -66,6 +66,7 @@ constexpr ULONGLONG kStartupHashProfileInitialSamples = 8;
 constexpr ULONGLONG kStartupHashProfileSampleInterval = 256;
 constexpr unsigned int kSharedHashUiDrainBatchMax = 100;
 constexpr ULONGLONG kSharedHashUiDrainBudgetMs = 25;
+constexpr ULONGLONG kMaxVisibleDuplicateSharedFileWarnings = 25;
 
 bool ShouldEmitStartupHashProfileSample(const ULONGLONG ullCompletedFiles, const ULONGLONG ullFailedFiles, const INT_PTR iPendingFiles)
 {
@@ -584,6 +585,8 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	, m_nStartupCacheDirtyTick()
 	, m_uStartupHashCompletedFiles()
 	, m_uStartupHashFailedFiles()
+	, m_uDuplicateSharedFileWarningsShown()
+	, m_uDuplicateSharedFileWarningsSuppressed()
 	, m_hSharedHashQueueEvent(::CreateEvent(NULL, FALSE, FALSE, NULL))
 	, m_pSharedHashThread()
 	, m_sharedHashQueue()
@@ -595,6 +598,7 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	, m_bSharedHashWorkerExitRequested(false)
 	, m_bSharedHashActive(false)
 	, m_bSharedHashShutdownSignaled(false)
+	, m_bDuplicateSharedFileWarningSuppressionLogged(false)
 	, m_bStartupCacheInvalidatedByInterruptedHashing(false)
 	, m_bStartupCacheSaveShutdownAbandoned(false)
 	, m_bStartupCacheFilePresent(false)
@@ -1404,7 +1408,7 @@ bool CSharedFileList::AddKnownSharedFile(CKnownFile *pFile, const CString &strFo
 		TRACE(_T("%hs: File to add:                      %s \"%s\"\n"), __FUNCTION__, (LPCTSTR)md4str(pFile->GetFileHash()), (LPCTSTR)strFoundFilePath);
 		if (!pFileInMap->IsKindOf(RUNTIME_CLASS(CPartFile)) || theApp.downloadqueue->IsPartFile(pFileInMap)) {
 			if (!PathHelpers::ArePathsEquivalent(strFoundFilePath, pFileInMap->GetFilePath())) {
-				LogWarning(GetResString(IDS_ERR_DUPL_FILES), (LPCTSTR)pFileInMap->GetFilePath(), (LPCTSTR)strFoundFilePath);
+				ReportDuplicateSharedFileWarning(pFileInMap->GetFilePath(), strFoundFilePath);
 				LONGLONG utcCurrentFileDate = -1;
 				ULONGLONG ullCurrentFileSize = 0;
 				if (GetFileStartupState(strFoundFilePath, utcCurrentFileDate, ullCurrentFileSize))
@@ -1474,7 +1478,7 @@ bool CSharedFileList::AddFile(CKnownFile *pFile)
 		if ((!pFileInMap->IsKindOf(RUNTIME_CLASS(CPartFile)) || theApp.downloadqueue->IsPartFile(pFileInMap))
 			&& !PathHelpers::ArePathsEquivalent(pFileInMap->GetFilePath(), pFile->GetFilePath()))
 		{
-			LogWarning(GetResString(IDS_ERR_DUPL_FILES), (LPCTSTR)pFileInMap->GetFilePath(), (LPCTSTR)pFile->GetFilePath());
+			ReportDuplicateSharedFileWarning(pFileInMap->GetFilePath(), pFile->GetFilePath());
 			RememberDuplicateSharedPath(pFile->GetFilePath(), pFileInMap->GetFileHash(), static_cast<LONGLONG>(pFile->GetUtcFileDate()), static_cast<ULONGLONG>(pFile->GetFileSize()));
 		}
 		return false;
@@ -1560,7 +1564,7 @@ void CSharedFileList::FileHashingFinished(CKnownFile *file)
 	} else {
 		TRACE(_T("%hs: File already in shared file list: %s \"%s\"\n"), __FUNCTION__, (LPCTSTR)md4str(found_file->GetFileHash()), (LPCTSTR)found_file->GetFilePath());
 		TRACE(_T("%hs: File to add:                      %s \"%s\"\n"), __FUNCTION__, (LPCTSTR)md4str(file->GetFileHash()), (LPCTSTR)file->GetFilePath());
-		LogWarning(GetResString(IDS_ERR_DUPL_FILES), (LPCTSTR)found_file->GetFilePath(), (LPCTSTR)file->GetFilePath());
+		ReportDuplicateSharedFileWarning(found_file->GetFilePath(), file->GetFilePath());
 		RememberDuplicateSharedPath(
 			file->GetFilePath(),
 			found_file->GetFileHash(),
@@ -3110,6 +3114,22 @@ void CSharedFileList::RememberDuplicateSharedPath(const CString &strFilePath, co
 
 	m_duplicateSharedPathRecords[strKey] = record;
 	MarkStartupCacheDirty();
+}
+
+void CSharedFileList::ReportDuplicateSharedFileWarning(const CString &strCanonicalPath, const CString &strDuplicatePath)
+{
+	if (m_uDuplicateSharedFileWarningsShown < kMaxVisibleDuplicateSharedFileWarnings) {
+		++m_uDuplicateSharedFileWarningsShown;
+		LogWarning(GetResString(IDS_ERR_DUPL_FILES), (LPCTSTR)strCanonicalPath, (LPCTSTR)strDuplicatePath);
+		return;
+	}
+
+	++m_uDuplicateSharedFileWarningsSuppressed;
+	if (!m_bDuplicateSharedFileWarningSuppressionLogged) {
+		m_bDuplicateSharedFileWarningSuppressionLogged = true;
+		LogWarning(_T("Additional duplicate shared-file warnings suppressed; duplicate paths are still recorded in %s."),
+			SharedDuplicatePathCachePolicy::GetFileName());
+	}
 }
 
 bool CSharedFileList::TryReuseRememberedDuplicateSharedPath(const CString &strFilePath, const LONGLONG utcFileDate, const ULONGLONG ullFileSize)

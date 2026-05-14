@@ -461,6 +461,10 @@ private:
 	 */
 	void	RememberDuplicateSharedPath(const CString &strFilePath, const uchar *pCanonicalFileHash, LONGLONG utcFileDate, ULONGLONG ullFileSize);
 	/**
+	 * @brief Reports duplicate shared files without flooding the visible UI log during large startup scans.
+	 */
+	void	ReportDuplicateSharedFileWarning(const CString &strCanonicalPath, const CString &strDuplicatePath);
+	/**
 	 * @brief Reuses one remembered duplicate shared-file path during the startup scan when its canonical MD4 is still known.
 	 */
 	bool	TryReuseRememberedDuplicateSharedPath(const CString &strFilePath, LONGLONG utcFileDate, ULONGLONG ullFileSize);
@@ -551,6 +555,8 @@ private:
 	ULONGLONG m_nStartupCacheDirtyTick;
 	ULONGLONG m_uStartupHashCompletedFiles;
 	ULONGLONG m_uStartupHashFailedFiles;
+	ULONGLONG m_uDuplicateSharedFileWarningsShown;
+	ULONGLONG m_uDuplicateSharedFileWarningsSuppressed;
 	HANDLE m_hSharedHashQueueEvent;
 	CSharedFileHashThread *m_pSharedHashThread;
 	mutable CCriticalSection m_mutSharedHashQueue;
@@ -564,6 +570,7 @@ private:
 	bool m_bSharedHashWorkerExitRequested;
 	bool m_bSharedHashActive;
 	bool m_bSharedHashShutdownSignaled;
+	bool	m_bDuplicateSharedFileWarningSuppressionLogged;
 	bool	m_bStartupCacheInvalidatedByInterruptedHashing;
 	bool	m_bStartupCacheSaveShutdownAbandoned;
 	StartupScanStats m_startupScanStats;
