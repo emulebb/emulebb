@@ -100,6 +100,18 @@ namespace
 		return strMenuLabel;
 	}
 
+	CString BuildSharedFilesDirectoryKey(const CString &strDirectory)
+	{
+		CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(strDirectory))));
+		strKey.MakeLower();
+		return strKey;
+	}
+
+	bool AreSharedFilesDirectoriesEqual(const CString &strLeft, const CString &strRight)
+	{
+		return BuildSharedFilesDirectoryKey(strLeft) == BuildSharedFilesDirectoryKey(strRight);
+	}
+
 	CString FormatUploadRatio(float fRatio)
 	{
 		CString str;
@@ -726,7 +738,7 @@ bool CSharedFilesCtrl::ShouldDisplayFile(const CShareableFile *file) const
 				return false;
 		case SDI_NO:
 		case SDI_CATINCOMING:
-			if (!EqualPaths(file->GetSharedDirectory(), m_pDirectoryFilter->m_strFullPath))
+			if (!AreSharedFilesDirectoriesEqual(file->GetSharedDirectory(), m_pDirectoryFilter->m_strFullPath))
 				return false;
 			break;
 		case SDI_TEMP:
@@ -738,11 +750,11 @@ bool CSharedFilesCtrl::ShouldDisplayFile(const CShareableFile *file) const
 		case SDI_DIRECTORY:
 			if (file->IsPartFile())
 				return false;
-			if (EqualPaths(file->GetSharedDirectory(), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)))
+			if (AreSharedFilesDirectoriesEqual(file->GetSharedDirectory(), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)))
 				return false;
 			break;
 		case SDI_INCOMING:
-			if (!EqualPaths(file->GetSharedDirectory(), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)))
+			if (!AreSharedFilesDirectoriesEqual(file->GetSharedDirectory(), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)))
 				return false;
 		}
 	}

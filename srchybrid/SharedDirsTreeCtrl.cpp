@@ -1534,10 +1534,12 @@ CString CSharedDirsTreeCtrl::FindContainingMonitoredRoot(const CString &strDir, 
 
 bool CSharedDirsTreeCtrl::HasManagedSharedAncestor(const CString &strDir) const
 {
-	for (POSITION pos = m_strliSharedDirs.GetHeadPosition(); pos != NULL;) {
-		const CString strShared(m_strliSharedDirs.GetNext(pos));
-		if (!EqualPaths(strShared, strDir) && PathHelpers::IsPathWithinDirectory(strShared, strDir))
+	CString strParent(GetSharedTreeParentPath(strDir));
+	while (!strParent.IsEmpty()) {
+		void *pvShared = NULL;
+		if (m_mapSharedDirectoryKeys.Lookup(BuildSharedTreePathKey(strParent), pvShared))
 			return true;
+		strParent = GetSharedTreeParentPath(strParent);
 	}
 	return false;
 }
