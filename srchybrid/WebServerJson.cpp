@@ -128,6 +128,7 @@ private:
 };
 
 bool TryRejectRestCommandDuringShutdown(SPipeApiError &rError);
+bool TryRejectRestCommandForLifecycle(const bool bMutation, SPipeApiError &rError);
 
 class CScopedDownloadQueueBulkAdd
 {
@@ -837,6 +838,45 @@ json BuildSharedStartupCacheJson()
 }
 
 /**
+ * Reports whether shared-file startup hashing has drained enough for clients
+ * to trust the shared-files collection as complete.
+ */
+bool IsSharedFilesStartupReady()
+{
+	const INT_PTR iSharedHashingCount = GetSharedHashingCount();
+	return theApp.sharedfiles == NULL || (!theApp.sharedfiles->IsStartupDeferredHashingActive() && iSharedHashingCount <= 0);
+}
+
+/**
+ * Builds the current public lifecycle model from native app state and startup
+ * readiness signals.
+ */
+SAppLifecycleStatus BuildCurrentAppLifecycleStatus()
+{
+	return BuildAppLifecycleStatus(
+		theApp.m_app_state,
+		theApp.IsStartupComplete(),
+		IsSharedFilesStartupReady());
+}
+
+/**
+ * Serializes the current public lifecycle model.
+ */
+json BuildLifecycleJson()
+{
+	const SAppLifecycleStatus lifecycle = BuildCurrentAppLifecycleStatus();
+	return json{
+		{"state", lifecycle.pszState},
+		{"startupComplete", lifecycle.bStartupComplete},
+		{"coreReady", lifecycle.bCoreReady},
+		{"sharedFilesReady", lifecycle.bSharedFilesReady},
+		{"acceptingRest", lifecycle.bAcceptingRest},
+		{"acceptingMutations", lifecycle.bAcceptingMutations},
+		{"shutdownInProgress", lifecycle.bShutdownInProgress}
+	};
+}
+
+/**
  * Rejects transfer snapshots while shared hashing is active so REST workers do
  * not pile up behind a long shared-file scan.
  */
@@ -859,7 +899,7 @@ bool TryRejectSharedHashingBusy(SPipeApiError &rError)
 json BuildGlobalStatsJson()
 {
 	const INT_PTR iSharedHashingCount = GetSharedHashingCount();
-	const bool bSharedFilesReady = theApp.sharedfiles == NULL ? true : !theApp.sharedfiles->IsStartupDeferredHashingActive() && iSharedHashingCount <= 0;
+	const bool bSharedFilesReady = IsSharedFilesStartupReady();
 	return json{
 		{"connected", theApp.IsConnected()},
 		{"downloadSpeedKiBps", theApp.downloadqueue->GetDatarate() / 1024.0},
@@ -883,6 +923,7 @@ json BuildGlobalStatsJson()
 json BuildStatusJson()
 {
 	return json{
+		{"lifecycle", BuildLifecycleJson()},
 		{"stats", BuildGlobalStatsJson()},
 		{"servers", BuildServerStatusJson()},
 		{"kad", BuildKadStatusJson()},
@@ -966,6 +1007,7 @@ json BuildAppJson(const char *pszBuildFlavor)
 		{"version", StdUtf8FromCString(theApp.m_strCurVersionLong)},
 		{"apiVersion", "v1"},
 		{"build", pszBuildFlavor},
+		{"lifecycle", BuildLifecycleJson()},
 		{"capabilities", json{
 			{"transfers", true},
 			{"searches", true},
@@ -3754,11 +3796,20 @@ json BuildErrorEnvelope(LPCSTR pszCode, const CString &strMessage)
 
 bool TryRejectRestCommandDuringShutdown(SPipeApiError &rError)
 {
-	if (!WebServerJsonSeams::ShouldRejectRestCommandDuringShutdown(theApp.IsClosing()))
+	return TryRejectRestCommandForLifecycle(false, rError);
+}
+
+bool TryRejectRestCommandForLifecycle(const bool bMutation, SPipeApiError &rError)
+{
+	const SAppLifecycleStatus lifecycle = BuildCurrentAppLifecycleStatus();
+	if (!ShouldRejectRestCommandForLifecycle(lifecycle, bMutation))
 		return false;
 
 	rError.strCode = "EMULE_UNAVAILABLE";
-	rError.strMessage = _T("eMule is shutting down");
+	if (lifecycle.bShutdownInProgress)
+		rError.strMessage = _T("eMule is shutting down");
+	else
+		rError.strMessage = _T("eMule is still starting");
 	return true;
 }
 
@@ -4047,10 +4098,17 @@ void WebServerJson::ProcessRequest(const ThreadData &rData)
 	SPipeApiError error;
 	const json request{
 		{"cmd", route.strCommand},
+		{"method", route.strMethod},
 		{"params", route.params}
 	};
 
 	try {
+		if (TryRejectRestCommandForLifecycle(WebServerJsonSeams::IsRestMutationMethod(route.strMethod), error)) {
+			const int iStatus = WebServerJsonSeams::GetHttpStatusForError(StdStringFromCStringA(error.strCode));
+			SendJsonError(rData.pSocket, iStatus, GetHttpReasonPhrase(iStatus), error.strCode, error.strMessage);
+			return;
+		}
+
 		json result;
 		if (!TryExecuteDirectRestCommand(request, result, error))
 			result = ExecuteUiThreadCommand(request, error);

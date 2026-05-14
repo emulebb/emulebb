@@ -1594,6 +1594,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 		default:
 			serverwnd->serverlistctrl.Visible();
 			theApp.sharedfiles->StartDeferredHashing();
+			theApp.MarkStartupComplete();
 #if EMULE_COMPILED_STARTUP_PROFILING
 			theApp.AppendStartupProfileLine(_T("StartupTimer finalize: start deferred shared hashing"), 0);
 			theApp.AppendStartupProfileLine(_T("StartupTimer complete"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));

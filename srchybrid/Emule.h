@@ -20,6 +20,7 @@
 #endif
 #include <vector>
 #include "resource.h"
+#include "AppStateSeams.h"
 
 #define	DEFAULT_NICK			thePrefs.GetHomepageBaseURL()
 #define	DEFAULT_TCP_PORT_OLD	4662
@@ -59,15 +60,6 @@ class CGeoLocation;
 class CIPFilterUpdater;
 
 struct SLogItem;
-
-enum AppState : uint8
-{
-	APP_STATE_STARTING = 0,	//initialization phase
-	APP_STATE_RUNNING,
-	APP_STATE_ASKCLOSE,		//exit dialog is on screen
-	APP_STATE_SHUTTINGDOWN,
-	APP_STATE_DONE			//shutdown has completed
-};
 
 /**
  * @brief One Chrome Trace Event row captured for startup profiling.
@@ -119,10 +111,18 @@ class CemuleApp : public CWinApp
 public:
 	explicit CemuleApp(LPCTSTR lpszAppName = NULL);
 	// Barry - To find out if app is running or shutting/shut down
-	bool IsRunning() const	{ return m_app_state == APP_STATE_RUNNING || m_app_state == APP_STATE_ASKCLOSE; }
-	bool IsClosing() const	{ return m_app_state == APP_STATE_SHUTTINGDOWN || m_app_state == APP_STATE_DONE; }
+	bool IsRunning() const	{ return IsAppStateRunning(m_app_state); }
+	bool IsClosing() const	{ return IsAppStateClosing(m_app_state); }
 	bool IsStartupBindBlocked() const						{ return m_bStartupBindBlocked; }
 	const CString& GetStartupBindBlockReason() const		{ return m_strStartupBindBlockReason; }
+	/**
+	 * @brief Reports whether the startup timer completed all UI/runtime setup stages.
+	 */
+	bool IsStartupComplete() const							{ return m_bStartupComplete; }
+	/**
+	 * @brief Marks the startup timer as fully complete after the final startup stage.
+	 */
+	void MarkStartupComplete()								{ m_bStartupComplete = true; }
 	bool CanWritePartMetFiles(LPCTSTR pszPath, bool bForceRefresh = false, bool bBypassDiskSpaceFloor = false);
 	void InvalidatePartMetWriteGuardCache(LPCTSTR pszPath = NULL);
 	/**
@@ -341,6 +341,7 @@ protected:
 	bool		m_bGuardClipboardPrompt;
 	bool		m_bAutoStart;
 	bool		m_bStartupBindBlocked;
+	bool		m_bStartupComplete;
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnHelp();

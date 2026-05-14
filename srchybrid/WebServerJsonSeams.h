@@ -14,6 +14,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include "AppStateSeams.h"
 #include "WebApiSurfaceSeams.h"
 
 namespace WebServerJsonSeams
@@ -41,6 +42,7 @@ static const char *const kTransferStateError = "state must be one of downloading
 struct SApiRoute
 {
 	std::string strCommand;
+	std::string strMethod;
 	json params;
 	std::string strPathTemplate;
 
@@ -102,6 +104,15 @@ inline bool DidRestUiDispatchComplete(const LRESULT lSendMessageTimeoutResult)
 inline bool ShouldRejectRestCommandDuringShutdown(const bool bAppClosing)
 {
 	return bAppClosing;
+}
+
+/**
+ * @brief Reports whether an HTTP method mutates native state for lifecycle
+ * gating.
+ */
+inline bool IsRestMutationMethod(const std::string &rMethod)
+{
+	return rMethod == "POST" || rMethod == "PATCH" || rMethod == "DELETE";
 }
 
 inline std::string ToLowerAscii(const std::string &rValue)
@@ -2232,6 +2243,7 @@ inline bool TryBuildRoute(
 		rErrorMessage = "only GET, POST, PATCH, and DELETE are supported";
 		return false;
 	}
+	rRoute.strMethod = rMethod;
 
 	if (route.empty()) {
 		rErrorCode = "NOT_FOUND";
