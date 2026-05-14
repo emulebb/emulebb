@@ -2672,15 +2672,15 @@ bool CSharedFileList::GetFileStartupState(const CString &strFilePath, LONGLONG &
 
 bool CSharedFileList::HasPendingHashForDirectory(const CString &strDirectory) const
 {
-	const CString strCanonicalDirectory(NormalizeSharedDirectoryPath(strDirectory));
+	const CString strDirectoryKey(MakeSharedDirectoryLookupKey(strDirectory));
 	CSingleLock lock(&m_mutSharedHashQueue, TRUE);
 	for (const SharedHashJob &job : m_sharedHashQueue)
-		if (EqualPaths(job.strDirectory, strCanonicalDirectory))
+		if (MakeSharedDirectoryLookupKey(job.strDirectory) == strDirectoryKey)
 			return true;
 	for (const SharedHashJob &job : m_sharedHashPendingCompletions)
-		if (EqualPaths(job.strDirectory, strCanonicalDirectory))
+		if (MakeSharedDirectoryLookupKey(job.strDirectory) == strDirectoryKey)
 			return true;
-	if (m_bSharedHashActive && EqualPaths(m_sharedHashActiveJob.strDirectory, strCanonicalDirectory))
+	if (m_bSharedHashActive && MakeSharedDirectoryLookupKey(m_sharedHashActiveJob.strDirectory) == strDirectoryKey)
 		return true;
 	return false;
 }
@@ -2719,7 +2719,7 @@ bool CSharedFileList::BuildStartupCacheRecord(const CString &strDirectory, Share
 		CKnownFile *pFile = pair->value;
 		if (pFile == NULL || pFile->IsKindOf(RUNTIME_CLASS(CPartFile)))
 			continue;
-		if (!EqualPaths(pFile->GetPath(), strCanonicalDirectory))
+		if (!HasSameDirectoryTextFast(pFile->GetPath(), strCanonicalDirectory))
 			continue;
 
 		SharedStartupCachePolicy::FileRecord fileRecord = {};
@@ -3085,7 +3085,7 @@ bool CSharedFileList::CaptureDuplicatePathCacheSnapshot(std::vector<SharedDuplic
 		CKnownFile *pCanonicalSharedFile = GetFileByID(record.canonicalFileHash.data());
 		if (pCanonicalSharedFile == NULL)
 			continue;
-		if (PathHelpers::ArePathsEquivalent(record.strFilePath, pCanonicalSharedFile->GetFilePath()))
+		if (MakeSharedFileLookupKey(record.strFilePath) == MakeSharedFileLookupKey(pCanonicalSharedFile->GetFilePath()))
 			continue;
 
 		const CString strDuplicatePath(NormalizeSharedFilePath(record.strFilePath));
@@ -3166,7 +3166,7 @@ bool CSharedFileList::TryReuseRememberedDuplicateSharedPath(const CString &strFi
 	}
 
 	CKnownFile *pCanonicalKnownFile = theApp.knownfiles->FindKnownFileByID(record.canonicalFileHash.data());
-	if (pCanonicalKnownFile == NULL || PathHelpers::ArePathsEquivalent(record.strFilePath, pCanonicalKnownFile->GetFilePath())) {
+	if (pCanonicalKnownFile == NULL || MakeSharedFileLookupKey(record.strFilePath) == MakeSharedFileLookupKey(pCanonicalKnownFile->GetFilePath())) {
 		m_duplicateSharedPathRecords.erase(it);
 		MarkStartupCacheDirty();
 		return false;
