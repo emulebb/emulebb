@@ -366,6 +366,11 @@ std::wstring MakeDirectoryListLookupKey(const CString &rstrDirectory)
 	return std::wstring(strKey);
 }
 
+bool AreDirectoryListKeysEqual(const CString &rstrLeft, const CString &rstrRight)
+{
+	return MakeDirectoryListLookupKey(rstrLeft) == MakeDirectoryListLookupKey(rstrRight);
+}
+
 bool IsDirectoryLookupKeyWithin(const std::wstring &rstrDirectoryKey, const std::wstring &rstrCandidateKey)
 {
 	return rstrCandidateKey.length() > rstrDirectoryKey.length()
@@ -1603,7 +1608,7 @@ bool CPreferences::IsTempFile(const CString &rstrDirectory, const CString &rstrN
 		return false;
 
 	for (INT_PTR i = tempdir.GetCount(); --i >= 0;)
-		if (EqualPaths(rstrDirectory, GetTempDir(i)))
+		if (AreDirectoryListKeysEqual(rstrDirectory, GetTempDir(i)))
 			return true; //OK, found a directory
 
 	return false;
@@ -2893,7 +2898,7 @@ void CPreferences::LoadPreferences()
 		sTmp = PathHelpers::CanonicalizeDirectoryPath(sTmp);
 		bool bDup = false;
 		for (INT_PTR i = tempdir.GetCount(); --i >= 0;)	// avoid duplicate tempdirs
-			if (EqualPaths(sTmp, GetTempDir(i))) {
+			if (AreDirectoryListKeysEqual(sTmp, GetTempDir(i))) {
 				bDup = true;
 				break;
 			}
@@ -3634,11 +3639,11 @@ DWORD CPreferences::GetCatColor(INT_PTR index, int nDefault)
 bool CPreferences::IsInstallationDirectory(const CString &rstrDir)
 {
 	// skip sharing of several special eMule folders
-	return EqualPaths(rstrDir, GetMuleDirectory(EMULE_EXECUTABLEDIR))
-		|| EqualPaths(rstrDir, GetMuleDirectory(EMULE_CONFIGDIR))
-		|| EqualPaths(rstrDir, GetMuleDirectory(EMULE_WEBSERVERDIR))
-		|| EqualPaths(rstrDir, GetMuleDirectory(EMULE_INSTLANGDIR))
-		|| EqualPaths(rstrDir, GetMuleDirectory(EMULE_LOGDIR));
+	return AreDirectoryListKeysEqual(rstrDir, GetMuleDirectory(EMULE_EXECUTABLEDIR))
+		|| AreDirectoryListKeysEqual(rstrDir, GetMuleDirectory(EMULE_CONFIGDIR))
+		|| AreDirectoryListKeysEqual(rstrDir, GetMuleDirectory(EMULE_WEBSERVERDIR))
+		|| AreDirectoryListKeysEqual(rstrDir, GetMuleDirectory(EMULE_INSTLANGDIR))
+		|| AreDirectoryListKeysEqual(rstrDir, GetMuleDirectory(EMULE_LOGDIR));
 }
 
 bool CPreferences::IsShareableDirectory(const CString &rstrDir)
@@ -3649,10 +3654,10 @@ bool CPreferences::IsShareableDirectory(const CString &rstrDir)
 	// skip sharing of several special eMule folders
 	if (IsInstallationDirectory(rstrDir))
 		return false;
-	if (EqualPaths(rstrDir, GetMuleDirectory(EMULE_INCOMINGDIR)))
+	if (AreDirectoryListKeysEqual(rstrDir, GetMuleDirectory(EMULE_INCOMINGDIR)))
 		return false;
 	for (INT_PTR i = GetTempDirCount(); --i >= 0;)
-		if (EqualPaths(rstrDir, GetTempDir(i)))		// ".\eMule\temp"
+		if (AreDirectoryListKeysEqual(rstrDir, GetTempDir(i)))		// ".\eMule\temp"
 			return false;
 
 	return true;
