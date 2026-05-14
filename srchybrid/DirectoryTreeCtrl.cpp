@@ -25,6 +25,9 @@
 #include "TitledMenu.h"
 #include "UserMsgs.h"
 
+#include <string>
+#include <unordered_set>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -40,6 +43,19 @@ struct STreeItem
 {
 	CString strPath;
 };
+
+namespace
+{
+/**
+ * @brief Builds a lexical lookup key for bulk-loaded shared directory paths without filesystem probes.
+ */
+std::basic_string<TCHAR> MakeSharedDirectoryLoadKey(const CString &rstrDirectory)
+{
+	CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
+	strKey.MakeLower();
+	return std::basic_string<TCHAR>(static_cast<LPCTSTR>(strKey));
+}
+}
 
 
 // CDirectoryTreeCtrl
@@ -318,9 +334,19 @@ void CDirectoryTreeCtrl::GetSharedDirectories(CStringList &list)
 void CDirectoryTreeCtrl::SetSharedDirectories(CStringList &list)
 {
 	m_lstShared.RemoveAll();
+	std::unordered_set<std::basic_string<TCHAR> > knownDirectories;
 
-	for (POSITION pos = list.GetHeadPosition(); pos != NULL;)
-		AddShare(list.GetNext(pos), false);
+	for (POSITION pos = list.GetHeadPosition(); pos != NULL;) {
+		const CString strInput(list.GetNext(pos));
+		if (strInput.IsEmpty())
+			continue;
+
+		const CString strDirectory(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(strInput))));
+		if (!thePrefs.IsShareableDirectory(strDirectory))
+			continue;
+		if (knownDirectories.insert(MakeSharedDirectoryLoadKey(strDirectory)).second)
+			m_lstShared.AddTail(strDirectory);
+	}
 	RebuildUNCShareRoots();
 	Init();
 }
