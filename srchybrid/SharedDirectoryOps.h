@@ -54,11 +54,25 @@ inline bool ListContainsEquivalentDirectoryObject(const CStringList &rList, cons
 	return false;
 }
 
+/**
+ * @brief Returns true when a candidate resolves under an already canonicalized directory, excluding the directory itself.
+ */
+inline bool IsCanonicalParentOfPath(const CString &rstrCanonicalDirectory, const CString &rstrCandidatePath)
+{
+	const CString strDirectory(PathHelpers::EnsureTrailingSeparator(rstrCanonicalDirectory));
+	const CString strCandidate(PathHelpers::CanonicalizePathForComparison(rstrCandidatePath));
+	const CString strDirectoryWithoutSlash(PathHelpers::TrimTrailingSeparator(strDirectory));
+	const CString strCandidateWithoutSlash(PathHelpers::TrimTrailingSeparator(strCandidate));
+	return strCandidateWithoutSlash.CompareNoCase(strDirectoryWithoutSlash) != 0
+		&& strCandidate.GetLength() >= strDirectory.GetLength()
+		&& _tcsnicmp(strDirectory, strCandidate, strDirectory.GetLength()) == 0;
+}
+
 inline bool HasSharedSubdirectory(const CStringList &rList, const CString &rstrDirectory)
 {
+	const CString strCanonicalDirectory(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePathForComparison(rstrDirectory)));
 	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
-		const CString strCurrent(rList.GetNext(pos));
-		if (!EqualPaths(strCurrent, rstrDirectory) && PathHelpers::IsPathWithinDirectory(rstrDirectory, strCurrent))
+		if (IsCanonicalParentOfPath(strCanonicalDirectory, rList.GetNext(pos)))
 			return true;
 	}
 	return false;
