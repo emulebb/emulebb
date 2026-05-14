@@ -381,6 +381,7 @@
     <ClCompile Include="TreePropSheetPgFrameDef.cpp" />
     <ClCompile Include="UDPSocket.cpp" />
     <ClCompile Include="WindowsToastNotifier.cpp" />
+    <ClCompile Include="WindowsFirewallRepair.cpp" />
     <ClCompile Include="UploadBandwidthThrottler.cpp" />
     <ClCompile Include="UploadClient.cpp" />
     <ClCompile Include="UploadDiskIOThread.cpp" />
@@ -690,6 +691,8 @@
     <ClInclude Include="Types.h" />
     <ClInclude Include="UDPSocket.h" />
     <ClInclude Include="WindowsToastNotifier.h" />
+    <ClInclude Include="WindowsFirewallRepair.h" />
+    <ClInclude Include="WindowsFirewallRepairSeams.h" />
     <ClInclude Include="WindowPlacementSeams.h" />
     <ClInclude Include="UpdownClient.h" />
     <ClInclude Include="UploadBandwidthThrottler.h" />

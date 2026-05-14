@@ -122,6 +122,8 @@
 #include "Version.h"
 #include "WebServerJson.h"
 #include "Mdump.h"
+#include "PathHelpers.h"
+#include "WindowsFirewallRepair.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -197,6 +199,8 @@ namespace
 	{
 		return JsonString(DiagnosticSnapshotSeams::IsRedacted(ePrivacyMode) ? DiagnosticSnapshotSeams::RedactPath(rstrPath) : rstrPath);
 	}
+
+	static WindowsFirewallRepair::CRepairLaunchResult s_lastFirewallRepairResult;
 
 	static uint64 FileTimeToUInt64(const FILETIME &rFileTime)
 	{
@@ -394,6 +398,53 @@ namespace
 		return sockets;
 	}
 
+	static nlohmann::json BuildDesiredFirewallRulesJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode)
+	{
+		nlohmann::json rules = nlohmann::json::array();
+		for (const WindowsFirewallRepairSeams::CFirewallRuleSpec &rule : WindowsFirewallRepairSeams::BuildDesiredRules(
+			thePrefs.GetPort(),
+			thePrefs.GetUDPPort(),
+			thePrefs.GetWSIsEnabled(),
+			thePrefs.GetWSPort(),
+			thePrefs.GetWebBindAddr())) {
+			rules.push_back(nlohmann::json{
+				{"name", JsonString(rule.strName)},
+				{"protocol", JsonString(rule.strProtocol)},
+				{"port", rule.uPort}
+			});
+		}
+		return rules;
+	}
+
+	static nlohmann::json BuildLastFirewallRepairJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
+	{
+		if (!s_lastFirewallRepairResult.bStarted && s_lastFirewallRepairResult.dwLastError == ERROR_SUCCESS && s_lastFirewallRepairResult.rules.empty())
+			return nullptr;
+
+		nlohmann::json rules = nlohmann::json::array();
+		for (const WindowsFirewallRepairSeams::CFirewallRuleSpec &rule : s_lastFirewallRepairResult.rules) {
+			rules.push_back(nlohmann::json{
+				{"name", JsonString(rule.strName)},
+				{"protocol", JsonString(rule.strProtocol)},
+				{"port", rule.uPort}
+			});
+		}
+
+		return nlohmann::json{
+			{"started", s_lastFirewallRepairResult.bStarted},
+			{"succeeded", s_lastFirewallRepairResult.bSucceeded},
+			{"cancelled", s_lastFirewallRepairResult.bCancelled},
+			{"lastError", s_lastFirewallRepairResult.dwLastError},
+			{"exitCode", s_lastFirewallRepairResult.dwExitCode == STILL_ACTIVE ? nlohmann::json(nullptr) : nlohmann::json(s_lastFirewallRepairResult.dwExitCode)},
+			{"rules", rules},
+			{"tempDir", JsonPath(s_lastFirewallRepairResult.strTempDir, ePrivacyMode)},
+			{"scriptPath", JsonPath(s_lastFirewallRepairResult.strScriptPath, ePrivacyMode)},
+			{"resultPath", JsonPath(s_lastFirewallRepairResult.strResultPath, ePrivacyMode)},
+			{"errorText", JsonString(s_lastFirewallRepairResult.strErrorText)},
+			{"resultJson", DiagnosticSnapshotSeams::IsRedacted(ePrivacyMode) ? std::string("[redacted]") : JsonString(s_lastFirewallRepairResult.strResultJson)}
+		};
+	}
+
 	static nlohmann::json BuildModulesJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
 	{
 		nlohmann::json modules = nlohmann::json::array();
@@ -448,6 +499,10 @@ namespace
 				{"serverUdp", thePrefs.GetServerUDPPort()}
 			}},
 			{"upnpEnabled", thePrefs.IsUPnPEnabled()},
+			{"windowsFirewall", nlohmann::json{
+				{"desiredRules", BuildDesiredFirewallRulesJson(ePrivacyMode)},
+				{"lastRepair", BuildLastFirewallRepairJson(ePrivacyMode)}
+			}},
 			{"binding", nlohmann::json{
 				{"configuredAddress", JsonNetworkAddress(thePrefs.GetConfiguredBindAddr(), ePrivacyMode)},
 				{"configuredInterfaceId", JsonString(thePrefs.GetBindInterface())},
@@ -707,6 +762,8 @@ namespace
 			return IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON;
 		case MP_HM_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON:
 			return IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON;
+		case MP_HM_REPAIR_WINDOWS_FIREWALL:
+			return IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES;
 		default:
 			return 0;
 		}
@@ -3854,6 +3911,9 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON:
 		CopyDiagnosticSnapshotToClipboard(true);
 		break;
+	case MP_HM_REPAIR_WINDOWS_FIREWALL:
+		RepairWindowsFirewallRules();
+		break;
 	case MP_HM_OPEN_EMULE_LOG:
 		ShellOpenFile(theLog.GetFilePath());
 		break;
@@ -4182,6 +4242,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		networkUpdates.AppendMenu(MF_SEPARATOR);
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_UPDATE_SERVERMET_FROM_ADDRESSES, GetResString(IDS_UPDATE_SERVERMET_FROM_ADDRESSES), _T("SERVER"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_CHECK_OPEN_PORTS, GetResString(IDS_CHECK_OPEN_PORTS), _T("WEB"));
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_REPAIR_WINDOWS_FIREWALL, GetResString(IDS_REPAIR_WINDOWS_FIREWALL_RULES), _T("SECURITY"));
 		networkUpdates.AppendMenu(uGeoLocationMenuFlags, MP_HM_GEOLOCATION_DOWNLOAD, GetResString(IDS_GEOLOCATION_DOWNLOAD_DB), _T("DOWNLOAD"));
 
 		maintenance.AppendMenu(MF_STRING, MP_HM_RELOAD_IPFILTER_DAT, GetResString(IDS_RELOAD_IPFILTER_DAT), _T("IPFILTER"));
@@ -4287,6 +4348,43 @@ void CemuleDlg::CopyDiagnosticSnapshotToClipboard(bool bRedacted)
 	}
 
 	AddLogLine(true, GetResString(IDS_DIAG_SNAPSHOT_COPY_FAILURE), (LPCTSTR)strKind);
+}
+
+void CemuleDlg::RepairWindowsFirewallRules()
+{
+	const std::vector<WindowsFirewallRepairSeams::CFirewallRuleSpec> rules = WindowsFirewallRepairSeams::BuildDesiredRules(
+		thePrefs.GetPort(),
+		thePrefs.GetUDPPort(),
+		thePrefs.GetWSIsEnabled(),
+		thePrefs.GetWSPort(),
+		thePrefs.GetWebBindAddr());
+	if (rules.empty()) {
+		s_lastFirewallRepairResult = WindowsFirewallRepair::CRepairLaunchResult{};
+		s_lastFirewallRepairResult.bSucceeded = true;
+		AddLogLine(false, GetResString(IDS_FIREWALL_REPAIR_NO_RULES));
+		return;
+	}
+
+	CString strProgramPath(PathHelpers::GetModuleFilePath(NULL));
+	if (strProgramPath.IsEmpty())
+		strProgramPath = GetModulePath();
+
+	CWaitCursor waitCursor;
+	const bool bSucceeded = WindowsFirewallRepair::RunElevatedRepair(strProgramPath, rules, s_lastFirewallRepairResult);
+	if (bSucceeded) {
+		AddLogLine(false, GetResString(IDS_FIREWALL_REPAIR_SUCCESS), static_cast<UINT>(rules.size()));
+		return;
+	}
+
+	if (s_lastFirewallRepairResult.bCancelled) {
+		AddLogLine(false, GetResString(IDS_FIREWALL_REPAIR_CANCELLED));
+		return;
+	}
+
+	CString strError(s_lastFirewallRepairResult.strErrorText);
+	if (strError.IsEmpty())
+		strError = GetErrorMessage(s_lastFirewallRepairResult.dwLastError != ERROR_SUCCESS ? s_lastFirewallRepairResult.dwLastError : s_lastFirewallRepairResult.dwExitCode);
+	AddLogLine(true, GetResString(IDS_FIREWALL_REPAIR_FAILURE), (LPCTSTR)strError);
 }
 
 

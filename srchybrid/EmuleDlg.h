@@ -147,6 +147,8 @@ public:
 	void CaptureDiagnosticDump(bool bFullMemoryDump);
 	/// Copies a diagnostic JSON snapshot to the clipboard for local or shareable triage.
 	void CopyDiagnosticSnapshotToClipboard(bool bRedacted);
+	/// Runs the explicit elevated Windows Firewall repair action.
+	void RepairWindowsFirewallRules();
 	HBRUSH GetCtlColor(CDC*, CWnd*, UINT);
 
 	virtual void OnTrayRButtonUp(CPoint pt);

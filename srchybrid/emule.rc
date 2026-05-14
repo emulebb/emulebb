@@ -3632,6 +3632,7 @@ BEGIN
     IDS_DIAG_DUMP_LOG_SUCCESS "Diagnostic %s dump saved to ""%s""."
     IDS_DIAG_DUMP_LOG_FAILURE "Diagnostic %s dump failed: %s"
     IDS_CHECK_OPEN_PORTS    "Check Open Ports"
+    IDS_REPAIR_WINDOWS_FIREWALL_RULES "Repair Windows Firewall Rules..."
     IDS_RELOADFAKEFILEFILTER "Reload Fake-File Filter"
     IDS_FAKEFILESCORE       "Fake: %u%%"
     IDS_TOOLS_FOLDERS       "Folders"
@@ -3717,6 +3718,8 @@ BEGIN
                             "Copies a raw local diagnostic JSON snapshot to the clipboard."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON
                             "Copies a redacted diagnostic JSON snapshot to the clipboard for sharing."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES
+                            "Launches an elevated one-time repair for eMule BB TCP, UDP, and externally reachable REST firewall rules."
     IDS_TOOLS_STATUS_SESSION_CONNECT
                             "Connects, cancels a connection attempt, or disconnects the current session."
     IDS_TOOLS_STATUS_SHOW_SERVER
@@ -3744,6 +3747,14 @@ BEGIN
                             "Failed to copy %s diagnostic snapshot JSON to the clipboard."
     IDS_DIAG_SNAPSHOT_KIND_RAW "raw"
     IDS_DIAG_SNAPSHOT_KIND_REDACTED "redacted"
+    IDS_FIREWALL_REPAIR_SUCCESS
+                            "Windows Firewall rules repaired (%u rule(s))."
+    IDS_FIREWALL_REPAIR_FAILURE
+                            "Windows Firewall repair failed: %s"
+    IDS_FIREWALL_REPAIR_CANCELLED
+                            "Windows Firewall repair cancelled."
+    IDS_FIREWALL_REPAIR_NO_RULES
+                            "No Windows Firewall rules need repair for the current port configuration."
     IDS_WS_ENABLE_REST_API "Enable REST API"
     IDS_WS_ENABLE_LEGACY_WEBUI "Enable legacy Web UI"
     IDS_WEBSERVER_TT_WSLEGACYUI
