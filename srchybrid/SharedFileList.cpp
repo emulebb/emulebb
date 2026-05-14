@@ -582,6 +582,16 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	, m_bSharedHashShutdownSignaled(false)
 	, m_bStartupCacheInvalidatedByInterruptedHashing(false)
 	, m_bStartupCacheSaveShutdownAbandoned(false)
+	, m_bStartupCacheFilePresent(false)
+	, m_bStartupCacheLoaded(false)
+	, m_bStartupCacheRejected(false)
+	, m_bStartupCacheRemoved(false)
+	, m_bDuplicatePathCacheLoaded(false)
+	, m_bDuplicatePathCacheRejected(false)
+	, m_bDuplicatePathCacheRemoved(false)
+	, m_uStartupCacheRecordsLoaded()
+	, m_uStartupCacheVolumesLoaded()
+	, m_uDuplicatePathCacheRecordsLoaded()
 	, m_bStartupCacheSaveRunning(false)
 	, m_bStartupCacheSaveRunAfterCurrent(false)
 	, m_pStartupCacheSaveOperation()
@@ -992,8 +1002,10 @@ void CSharedFileList::InvalidateStartupCachesAfterInterruptedHashing()
 	m_startupCacheVolumes.clear();
 	m_startupCacheVolumeValidation.clear();
 	m_duplicateSharedPathRecords.clear();
-	(void)LongPathSeams::DeleteFileIfExists(GetStartupCachePath());
-	(void)LongPathSeams::DeleteFileIfExists(GetDuplicatePathCachePath());
+	const bool bStartupCacheRemoved = LongPathSeams::DeleteFileIfExists(GetStartupCachePath());
+	const bool bDuplicatePathCacheRemoved = LongPathSeams::DeleteFileIfExists(GetDuplicatePathCachePath());
+	NoteStartupCacheLoadResult(false, false, true, bStartupCacheRemoved, "interrupted_hashing", 0, 0);
+	NoteDuplicatePathCacheLoadResult(false, true, bDuplicatePathCacheRemoved, "interrupted_hashing", 0);
 }
 
 bool CSharedFileList::IsSharedHashInFlight(const CString &strDirectory, const CString &strName) const
@@ -2435,6 +2447,37 @@ void CSharedFileList::GetStartupCacheSaveProgress(StartupCacheSaveProgress &rPro
 	}
 }
 
+void CSharedFileList::GetStartupCacheStatus(StartupCacheStatus &rStatus) const
+{
+	rStatus = StartupCacheStatus{};
+	rStatus.iHashingCount = GetHashingCount();
+	{
+		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+		rStatus.bCacheFilePresent = m_bStartupCacheFilePresent;
+		rStatus.bCacheLoaded = m_bStartupCacheLoaded;
+		rStatus.bCacheRejected = m_bStartupCacheRejected;
+		rStatus.bCacheRemoved = m_bStartupCacheRemoved;
+		rStatus.strCacheRejectCode = m_strStartupCacheRejectCode;
+		rStatus.bDuplicatePathCacheLoaded = m_bDuplicatePathCacheLoaded;
+		rStatus.bDuplicatePathCacheRejected = m_bDuplicatePathCacheRejected;
+		rStatus.bDuplicatePathCacheRemoved = m_bDuplicatePathCacheRemoved;
+		rStatus.strDuplicatePathCacheRejectCode = m_strDuplicatePathCacheRejectCode;
+		rStatus.uRecordsLoaded = m_uStartupCacheRecordsLoaded;
+		rStatus.uVolumesLoaded = m_uStartupCacheVolumesLoaded;
+		rStatus.uDuplicatePathRecordsLoaded = m_uDuplicatePathCacheRecordsLoaded;
+		rStatus.scanStats = m_startupScanStats;
+		rStatus.saveProgress.ePhase = m_eStartupCacheSavePhase;
+		rStatus.saveProgress.uCompletedDirectories = m_uStartupCacheSaveDirectoriesDone;
+		rStatus.saveProgress.uTotalDirectories = m_uStartupCacheSaveDirectoriesTotal;
+		rStatus.saveProgress.bRunning = m_bStartupCacheSaveRunning;
+		rStatus.saveProgress.bDirty = m_bStartupCacheDirty;
+		rStatus.saveProgress.bWaitingForFollowUp = m_bStartupCacheSaveRunAfterCurrent;
+		rStatus.bDeferredHashingActive = m_bStartupDeferredHashingActive;
+		rStatus.bInterruptedHashingInvalidatedCache = m_bStartupCacheInvalidatedByInterruptedHashing;
+	}
+	rStatus.bReady = rStatus.iHashingCount <= 0 && !rStatus.bDeferredHashingActive;
+}
+
 CString CSharedFileList::GetStartupCachePath()
 {
 	return thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + SharedStartupCachePolicy::GetFileName();
@@ -2482,6 +2525,28 @@ void CSharedFileList::CollectSharedDirectories(CStringList &dirlist) const
 	thePrefs.CopySharedDirectoryList(sharedDirs);
 	for (POSITION pos = sharedDirs.GetHeadPosition(); pos != NULL;)
 		addUniqueDirectory(sharedDirs.GetNext(pos));
+}
+
+void CSharedFileList::NoteStartupCacheLoadResult(const bool bPresent, const bool bLoaded, const bool bRejected, const bool bRemoved, LPCSTR pszRejectCode, const ULONGLONG uRecordsLoaded, const ULONGLONG uVolumesLoaded)
+{
+	CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+	m_bStartupCacheFilePresent = bPresent;
+	m_bStartupCacheLoaded = bLoaded;
+	m_bStartupCacheRejected = bRejected;
+	m_bStartupCacheRemoved = bRemoved;
+	m_strStartupCacheRejectCode = pszRejectCode != NULL ? pszRejectCode : "";
+	m_uStartupCacheRecordsLoaded = uRecordsLoaded;
+	m_uStartupCacheVolumesLoaded = uVolumesLoaded;
+}
+
+void CSharedFileList::NoteDuplicatePathCacheLoadResult(const bool bLoaded, const bool bRejected, const bool bRemoved, LPCSTR pszRejectCode, const ULONGLONG uRecordsLoaded)
+{
+	CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+	m_bDuplicatePathCacheLoaded = bLoaded;
+	m_bDuplicatePathCacheRejected = bRejected;
+	m_bDuplicatePathCacheRemoved = bRemoved;
+	m_strDuplicatePathCacheRejectCode = pszRejectCode != NULL ? pszRejectCode : "";
+	m_uDuplicatePathCacheRecordsLoaded = uRecordsLoaded;
 }
 
 bool CSharedFileList::ReadStartupCacheString(CSafeBufferedFile &file, CString &rValue)
@@ -2695,12 +2760,17 @@ bool CSharedFileList::TryLoadStartupCache()
 	m_startupCacheVolumeValidation.clear();
 
 	const CString strFullPath(GetStartupCachePath());
-	if (!LongPathSeams::PathExists(strFullPath))
+	(void)LongPathSeams::DeleteFileIfExists(strFullPath + _T(".tmp"));
+	const bool bCacheFilePresent = LongPathSeams::PathExists(strFullPath);
+	NoteStartupCacheLoadResult(bCacheFilePresent, false, false, false, "", 0, 0);
+	if (!bCacheFilePresent)
 		return true;
 
 	CSafeBufferedFile file;
-	if (!LongPathSeams::OpenFile(file, strFullPath, CFile::modeRead | CFile::shareDenyWrite | CFile::typeBinary))
+	if (!LongPathSeams::OpenFile(file, strFullPath, CFile::modeRead | CFile::shareDenyWrite | CFile::typeBinary)) {
+		NoteStartupCacheLoadResult(true, false, true, false, "open_failed", 0, 0);
 		return false;
+	}
 
 	try {
 		constexpr uint32 kMaxVolumeCount = 1024u;
@@ -2779,14 +2849,21 @@ bool CSharedFileList::TryLoadStartupCache()
 			m_startupCacheRecords.emplace(MakeStartupCacheKey(record.strDirectoryPath), record);
 		}
 		file.Close();
+		NoteStartupCacheLoadResult(true, true, false, false, "", static_cast<ULONGLONG>(m_startupCacheRecords.size()), static_cast<ULONGLONG>(m_startupCacheVolumes.size()));
 		return true;
 	} catch (CFileException *ex) {
 		ex->Delete();
+		file.Abort();
 		m_startupCacheRecords.clear();
 		m_startupCacheVolumes.clear();
 		m_startupCacheVolumeValidation.clear();
-		if (SharedStartupCachePolicy::ShouldRejectWholeCacheOnMalformedBlock())
+		const bool bRemoved = LongPathSeams::DeleteFileIfExists(strFullPath);
+		NoteStartupCacheLoadResult(true, false, true, bRemoved, "malformed", 0, 0);
+		if (SharedStartupCachePolicy::ShouldRejectWholeCacheOnMalformedBlock()) {
 			DebugLogWarning(_T("Ignoring malformed %s"), SharedStartupCachePolicy::GetFileName());
+			if (!bRemoved)
+				DebugLogWarning(_T("Unable to remove malformed %s"), SharedStartupCachePolicy::GetFileName());
+		}
 	}
 	return false;
 }
@@ -2796,12 +2873,17 @@ bool CSharedFileList::TryLoadDuplicatePathCache()
 	m_duplicateSharedPathRecords.clear();
 
 	const CString strFullPath(GetDuplicatePathCachePath());
-	if (!LongPathSeams::PathExists(strFullPath))
+	(void)LongPathSeams::DeleteFileIfExists(strFullPath + _T(".tmp"));
+	if (!LongPathSeams::PathExists(strFullPath)) {
+		NoteDuplicatePathCacheLoadResult(false, false, false, "", 0);
 		return true;
+	}
 
 	CSafeBufferedFile file;
-	if (!LongPathSeams::OpenFile(file, strFullPath, CFile::modeRead | CFile::shareDenyWrite | CFile::typeBinary))
+	if (!LongPathSeams::OpenFile(file, strFullPath, CFile::modeRead | CFile::shareDenyWrite | CFile::typeBinary)) {
+		NoteDuplicatePathCacheLoadResult(false, true, false, "open_failed", 0);
 		return false;
+	}
 
 	try {
 		constexpr uint32 kMaxRecordCount = 1000000u;
@@ -2827,11 +2909,17 @@ bool CSharedFileList::TryLoadDuplicatePathCache()
 			m_duplicateSharedPathRecords.emplace(MakeDuplicatePathCacheKey(record.strFilePath), record);
 		}
 		file.Close();
+		NoteDuplicatePathCacheLoadResult(true, false, false, "", static_cast<ULONGLONG>(m_duplicateSharedPathRecords.size()));
 		return true;
 	} catch (CFileException *ex) {
 		ex->Delete();
+		file.Abort();
 		m_duplicateSharedPathRecords.clear();
+		const bool bRemoved = LongPathSeams::DeleteFileIfExists(strFullPath);
+		NoteDuplicatePathCacheLoadResult(false, true, bRemoved, "malformed", 0);
 		DebugLogWarning(_T("Ignoring malformed %s"), SharedDuplicatePathCachePolicy::GetFileName());
+		if (!bRemoved)
+			DebugLogWarning(_T("Unable to remove malformed %s"), SharedDuplicatePathCachePolicy::GetFileName());
 	}
 	return false;
 }

@@ -768,6 +768,72 @@ INT_PTR GetSharedHashingCount()
 	return theApp.sharedfiles != NULL ? theApp.sharedfiles->GetHashingCount() : 0;
 }
 
+const char *GetStartupCacheSavePhaseName(const CSharedFileList::StartupCacheSavePhase ePhase)
+{
+	switch (ePhase)
+	{
+	case CSharedFileList::StartupCacheSavePhase::BuildingRecords:
+		return "buildingRecords";
+	case CSharedFileList::StartupCacheSavePhase::WritingFile:
+		return "writingFile";
+	case CSharedFileList::StartupCacheSavePhase::ApplyingResult:
+		return "applyingResult";
+	case CSharedFileList::StartupCacheSavePhase::Idle:
+	default:
+		return "idle";
+	}
+}
+
+json BuildSharedStartupCacheJson()
+{
+	if (theApp.sharedfiles == NULL)
+		return json{{"ready", true}, {"available", false}};
+
+	CSharedFileList::StartupCacheStatus status = {};
+	theApp.sharedfiles->GetStartupCacheStatus(status);
+	return json{
+		{"available", true},
+		{"ready", status.bReady},
+		{"filePresent", status.bCacheFilePresent},
+		{"loaded", status.bCacheLoaded},
+		{"rejected", status.bCacheRejected},
+		{"removed", status.bCacheRemoved},
+		{"rejectCode", status.strCacheRejectCode.IsEmpty() ? json(nullptr) : json(status.strCacheRejectCode.GetString())},
+		{"recordsLoaded", status.uRecordsLoaded},
+		{"volumesLoaded", status.uVolumesLoaded},
+		{"duplicatePathCache", json{
+			{"loaded", status.bDuplicatePathCacheLoaded},
+			{"rejected", status.bDuplicatePathCacheRejected},
+			{"removed", status.bDuplicatePathCacheRemoved},
+			{"rejectCode", status.strDuplicatePathCacheRejectCode.IsEmpty() ? json(nullptr) : json(status.strDuplicatePathCacheRejectCode.GetString())},
+			{"recordsLoaded", status.uDuplicatePathRecordsLoaded}
+		}},
+		{"scan", json{
+			{"requestedDirectories", status.scanStats.uRequestedDirectories},
+			{"dedupedDirectories", status.scanStats.uDedupedDirectories},
+			{"duplicateDirectories", status.scanStats.uDuplicateDirectories},
+			{"directoriesFromCache", status.scanStats.uDirectoriesFromCache},
+			{"directoriesRescanned", status.scanStats.uDirectoriesRescanned},
+			{"inaccessibleDirectories", status.scanStats.uInaccessibleDirectories},
+			{"knownFilesAccepted", status.scanStats.uKnownFilesAccepted},
+			{"duplicatePathsReused", status.scanStats.uDuplicatePathsReused},
+			{"filesQueuedForHash", status.scanStats.uFilesQueuedForHash},
+			{"filesIgnored", status.scanStats.uFilesIgnored}
+		}},
+		{"save", json{
+			{"running", status.saveProgress.bRunning},
+			{"dirty", status.saveProgress.bDirty},
+			{"waitingForFollowUp", status.saveProgress.bWaitingForFollowUp},
+			{"phase", GetStartupCacheSavePhaseName(status.saveProgress.ePhase)},
+			{"completedDirectories", status.saveProgress.uCompletedDirectories},
+			{"totalDirectories", status.saveProgress.uTotalDirectories}
+		}},
+		{"hashingCount", static_cast<int64_t>(status.iHashingCount)},
+		{"deferredHashingActive", status.bDeferredHashingActive},
+		{"interruptedHashingInvalidatedCache", status.bInterruptedHashingInvalidatedCache}
+	};
+}
+
 /**
  * Rejects transfer snapshots while shared hashing is active so REST workers do
  * not pile up behind a long shared-file scan.
@@ -791,6 +857,7 @@ bool TryRejectSharedHashingBusy(SPipeApiError &rError)
 json BuildGlobalStatsJson()
 {
 	const INT_PTR iSharedHashingCount = GetSharedHashingCount();
+	const bool bSharedFilesReady = theApp.sharedfiles == NULL ? true : !theApp.sharedfiles->IsStartupDeferredHashingActive() && iSharedHashingCount <= 0;
 	return json{
 		{"connected", theApp.IsConnected()},
 		{"downloadSpeedKiBps", theApp.downloadqueue->GetDatarate() / 1024.0},
@@ -806,7 +873,18 @@ json BuildGlobalStatsJson()
 		{"kadConnected", Kademlia::CKademlia::IsConnected()},
 		{"kadFirewalled", Kademlia::CKademlia::IsConnected() ? json(Kademlia::CKademlia::IsFirewalled()) : json(nullptr)},
 		{"sharedHashingCount", static_cast<int64_t>(iSharedHashingCount)},
-		{"sharedHashingActive", iSharedHashingCount > 0}
+		{"sharedHashingActive", iSharedHashingCount > 0},
+		{"sharedFilesReady", bSharedFilesReady}
+	};
+}
+
+json BuildStatusJson()
+{
+	return json{
+		{"stats", BuildGlobalStatsJson()},
+		{"servers", BuildServerStatusJson()},
+		{"kad", BuildKadStatusJson()},
+		{"sharedStartupCache", BuildSharedStartupCacheJson()}
 	};
 }
 
@@ -1071,9 +1149,9 @@ json BuildLogEntriesJson(const size_t maxEntries)
  * Builds the transfer collection with the same selector semantics as the list
  * endpoint.
  */
-json BuildTransfersListJson(const json &rParams, SPipeApiError &rError)
+json BuildTransfersListJson(const json &rParams, SPipeApiError &rError, const bool bRejectSharedHashingBusy = true)
 {
-	if (TryRejectSharedHashingBusy(rError))
+	if (bRejectSharedHashingBusy && TryRejectSharedHashingBusy(rError))
 		return json();
 
 	WebApiCommandSeams::STransfersListRequest request;
@@ -2280,13 +2358,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	if (strCommand == "stats/global")
 		return BuildGlobalStatsJson();
 
-	if (strCommand == "status/get") {
-		return json{
-			{"stats", BuildGlobalStatsJson()},
-			{"servers", BuildServerStatusJson()},
-			{"kad", BuildKadStatusJson()}
-		};
-	}
+	if (strCommand == "status/get")
+		return BuildStatusJson();
 
 	if (strCommand == "categories/list")
 		return ItemsEnvelopeIfRequested(params, BuildCategoriesJson());
@@ -2393,7 +2466,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 
 	if (strCommand == "snapshot/get") {
 		SPipeApiError listError;
-		json transfers = BuildTransfersListJson(json::object(), listError);
+		json transfers = BuildTransfersListJson(json::object(), listError, false);
 		if (!listError.strCode.IsEmpty()) {
 			rError = listError;
 			return json();
@@ -2407,11 +2480,13 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		}
 
 		const size_t maxEntries = static_cast<size_t>(max(1, params.value("limit", 200)));
+		const json status = BuildStatusJson();
+		const bool bSharedFilesReady = status["stats"].value("sharedFilesReady", true);
 		return json{
 			{"app", BuildAppJson(GetRestBuildFlavor())},
-			{"status", json{{"stats", BuildGlobalStatsJson()}, {"servers", BuildServerStatusJson()}, {"kad", BuildKadStatusJson()}}},
+			{"status", status},
 			{"transfers", transfers},
-			{"sharedFiles", BuildSharedFilesListJson()},
+			{"sharedFiles", bSharedFilesReady ? BuildSharedFilesListJson() : json::array()},
 			{"uploads", BuildUploadsListJson(false)},
 			{"uploadQueue", BuildUploadsListJson(true)},
 			{"servers", servers},

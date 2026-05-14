@@ -92,6 +92,50 @@ public:
 		bool bWaitingForFollowUp = false;
 	};
 
+	/**
+	 * @brief Aggregates one shared-directory scan pass into stable machine-readable counters.
+	 */
+	struct StartupScanStats
+	{
+		ULONGLONG uRequestedDirectories = 0;
+		ULONGLONG uDedupedDirectories = 0;
+		ULONGLONG uDuplicateDirectories = 0;
+		ULONGLONG uDirectoriesFromCache = 0;
+		ULONGLONG uDirectoriesRescanned = 0;
+		ULONGLONG uInaccessibleDirectories = 0;
+		ULONGLONG uDirectoriesOver248Chars = 0;
+		ULONGLONG uPathsOver260Chars = 0;
+		ULONGLONG uKnownFilesAccepted = 0;
+		ULONGLONG uDuplicatePathsReused = 0;
+		ULONGLONG uFilesQueuedForHash = 0;
+		ULONGLONG uFilesIgnored = 0;
+	};
+
+	/**
+	 * @brief Captures the shared-files startup-cache load, scan, and save state for diagnostics.
+	 */
+	struct StartupCacheStatus
+	{
+		bool bCacheFilePresent = false;
+		bool bCacheLoaded = false;
+		bool bCacheRejected = false;
+		bool bCacheRemoved = false;
+		CStringA strCacheRejectCode;
+		bool bDuplicatePathCacheLoaded = false;
+		bool bDuplicatePathCacheRejected = false;
+		bool bDuplicatePathCacheRemoved = false;
+		CStringA strDuplicatePathCacheRejectCode;
+		ULONGLONG uRecordsLoaded = 0;
+		ULONGLONG uVolumesLoaded = 0;
+		ULONGLONG uDuplicatePathRecordsLoaded = 0;
+		StartupScanStats scanStats;
+		StartupCacheSaveProgress saveProgress;
+		INT_PTR iHashingCount = 0;
+		bool bDeferredHashingActive = false;
+		bool bInterruptedHashingInvalidatedCache = false;
+		bool bReady = true;
+	};
+
 	explicit CSharedFileList(CServerConnect *in_server);
 	~CSharedFileList();
 	CSharedFileList(const CSharedFileList&) = delete;
@@ -161,6 +205,10 @@ public:
 	 * @brief Copies the latest startup-cache save progress snapshot for shutdown UI polling.
 	 */
 	void	GetStartupCacheSaveProgress(StartupCacheSaveProgress &rProgress) const;
+	/**
+	 * @brief Copies the latest shared-files startup-cache diagnostics for REST and operator status.
+	 */
+	void	GetStartupCacheStatus(StartupCacheStatus &rStatus) const;
 	/**
 	 * @brief Applies one worker-produced startup-cache save result on the UI thread.
 	 */
@@ -272,25 +320,6 @@ private:
 	};
 
 	/**
-	 * @brief Aggregates one shared-directory scan pass into stable machine-readable counters.
-	 */
-	struct StartupScanStats
-	{
-		ULONGLONG uRequestedDirectories = 0;
-		ULONGLONG uDedupedDirectories = 0;
-		ULONGLONG uDuplicateDirectories = 0;
-		ULONGLONG uDirectoriesFromCache = 0;
-		ULONGLONG uDirectoriesRescanned = 0;
-		ULONGLONG uInaccessibleDirectories = 0;
-		ULONGLONG uDirectoriesOver248Chars = 0;
-		ULONGLONG uPathsOver260Chars = 0;
-		ULONGLONG uKnownFilesAccepted = 0;
-		ULONGLONG uDuplicatePathsReused = 0;
-		ULONGLONG uFilesQueuedForHash = 0;
-		ULONGLONG uFilesIgnored = 0;
-	};
-
-	/**
 	 * @brief Captures one shared directory block for worker-side startup-cache persistence.
 	 */
 	struct StartupCacheSaveDirectorySnapshot
@@ -359,6 +388,8 @@ private:
 	void	AddDirectory(const CString &strDir, CStringList &dirlist, std::unordered_set<std::wstring> &rAddedDirectoryKeys, bool bAllowStartupCache);
 	void	CollectSharedDirectories(CStringList &dirlist) const;
 	bool	TryLoadStartupCache();
+	void	NoteStartupCacheLoadResult(bool bPresent, bool bLoaded, bool bRejected, bool bRemoved, LPCSTR pszRejectCode, ULONGLONG uRecordsLoaded, ULONGLONG uVolumesLoaded);
+	void	NoteDuplicatePathCacheLoadResult(bool bLoaded, bool bRejected, bool bRemoved, LPCSTR pszRejectCode, ULONGLONG uRecordsLoaded);
 	void	MarkStartupCacheDirty();
 	bool	TryRehydrateSharedDirectoryFromCache(const CString &strDirectory);
 	/**
@@ -522,6 +553,18 @@ private:
 	bool	m_bStartupCacheInvalidatedByInterruptedHashing;
 	bool	m_bStartupCacheSaveShutdownAbandoned;
 	StartupScanStats m_startupScanStats;
+	bool	m_bStartupCacheFilePresent;
+	bool	m_bStartupCacheLoaded;
+	bool	m_bStartupCacheRejected;
+	bool	m_bStartupCacheRemoved;
+	CStringA m_strStartupCacheRejectCode;
+	bool	m_bDuplicatePathCacheLoaded;
+	bool	m_bDuplicatePathCacheRejected;
+	bool	m_bDuplicatePathCacheRemoved;
+	CStringA m_strDuplicatePathCacheRejectCode;
+	ULONGLONG m_uStartupCacheRecordsLoaded;
+	ULONGLONG m_uStartupCacheVolumesLoaded;
+	ULONGLONG m_uDuplicatePathCacheRecordsLoaded;
 	SharedStartupCacheRecordMap m_startupCacheRecords;
 	SharedStartupCacheVolumeRecordMap m_startupCacheVolumes;
 	SharedDuplicatePathRecordMap m_duplicateSharedPathRecords;
