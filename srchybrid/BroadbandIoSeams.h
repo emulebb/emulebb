@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <cstdint>
 
 namespace BroadbandIoSeams
@@ -21,6 +20,7 @@ inline std::uint64_t BuildEffectiveFileBufferSizeBytes(
 		return ullConfiguredFileBufferBytes;
 
 	const std::uint64_t ullPerFileBudget = ullGlobalBudgetBytes / uActiveBufferedFileCount;
-	return std::min(ullConfiguredFileBufferBytes, std::max<std::uint64_t>(1u, ullPerFileBudget));
+	const std::uint64_t ullBoundedPerFileBudget = ullPerFileBudget == 0 ? 1u : ullPerFileBudget;
+	return ullConfiguredFileBufferBytes < ullBoundedPerFileBudget ? ullConfiguredFileBufferBytes : ullBoundedPerFileBudget;
 }
 }
