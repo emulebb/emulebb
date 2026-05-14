@@ -30,7 +30,7 @@ inline bool ShouldRequeueUdpControlPacket(int nSendResult)
 }
 
 /**
- * @brief Reports whether the UDP throttler should cooperatively yield after requeueing a would-block packet.
+ * @brief Reports whether the UDP throttler should stop the current drain after requeueing a would-block packet.
  */
 inline bool ShouldYieldAfterUdpControlRequeue(int nSendResult)
 {

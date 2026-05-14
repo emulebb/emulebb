@@ -76,6 +76,7 @@
 #include "PerfLog.h"
 #include "DropTarget.h"
 #include "WebServer.h"
+#include "WebSocketHttpSeams.h"
 #include "DownloadQueue.h"
 #include "ClientUDPSocket.h"
 #include "UploadQueue.h"
@@ -539,6 +540,7 @@ namespace
 		const uint64 uEffectiveBufferBytes = theApp.downloadqueue != NULL
 			? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes()
 			: thePrefs.GetFileBufferSize();
+		const UploadTimerRuntimeStats uploadTimerStats = CUploadQueue::GetUploadTimerRuntimeStats();
 
 		return nlohmann::json{
 			{"autoBroadbandIo", thePrefs.IsAutoBroadbandIOEnabled()},
@@ -548,6 +550,22 @@ namespace
 			{"fileBufferTimeLimitMs", thePrefs.GetFileBufferTimeLimit()},
 			{"totalBufferedDownloadBytes", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetBufferedDownloadBytes()) : nlohmann::json(nullptr)},
 			{"activeBufferedDownloadFiles", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetBufferedDownloadFileCount()) : nlohmann::json(nullptr)},
+			{"legacyMetadataFileBuffers", nlohmann::json{
+				{"standardBytes", BroadbandIoSeams::kLegacyStandardMetadataFileBufferBytes},
+				{"largeBytes", BroadbandIoSeams::kLegacyLargeMetadataFileBufferBytes}
+			}},
+			{"transferTimer", nlohmann::json{
+				{"intervalMs", SEC2MS(1) / 10},
+				{"lastDurationMs", uploadTimerStats.uLastDurationMs},
+				{"maxDurationMs", uploadTimerStats.uMaxDurationMs},
+				{"slowLoopCount", uploadTimerStats.uSlowLoopCount},
+				{"slowLoopThresholdMs", uploadTimerStats.uSlowLoopThresholdMs}
+			}},
+			{"webAcceptedClient", nlohmann::json{
+				{"readBufferBytes", WebSocketHttpSeams::kAcceptedClientReadBufferBytes},
+				{"ioTimeoutMs", WebSocketHttpSeams::kAcceptedClientIoTimeoutMs},
+				{"maxThreads", WebSocketHttpSeams::kMaxAcceptedClientThreads}
+			}},
 			{"socketBuffers", BuildSocketBufferJson()}
 		};
 	}

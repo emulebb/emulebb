@@ -690,7 +690,8 @@ SocketSentBytes CUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend, uint3
 			delete packet;
 		} else {
 			controlpacket_queue.AddHead(packet); //try to resend
-			::Sleep(20);
+			if (ShouldYieldAfterUdpControlRequeue(iLen))
+				break;
 		}
 	}
 

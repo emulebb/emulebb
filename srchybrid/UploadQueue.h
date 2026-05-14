@@ -60,6 +60,14 @@ typedef struct
 	ULONGLONG timestamp;
 } ActiveClientsData;
 
+struct UploadTimerRuntimeStats
+{
+	uint32 uLastDurationMs;
+	uint32 uMaxDurationMs;
+	uint32 uSlowLoopCount;
+	uint32 uSlowLoopThresholdMs;
+};
+
 
 class CUploadQueue
 {
@@ -120,6 +128,7 @@ public:
 	uint32	GetAverageUpTime() const;
 
 	CUpDownClient* FindBestClientInQueue();
+	static UploadTimerRuntimeStats GetUploadTimerRuntimeStats();
 
 	CUpDownClientPtrList waitinglist;
 

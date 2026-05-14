@@ -652,7 +652,7 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 
 						if (FD_READ & stEvents.lNetworkEvents) {
 							for (;;) {
-								char pBuf[0x1000];
+								char pBuf[WebSocketHttpSeams::kAcceptedClientReadBufferBytes];
 								int nRes;
 								if (thePrefs.GetWebUseHttps())
 									nRes = mbedtls_ssl_read((mbedtls_ssl_context*)stWebSocket.m_ssl, (unsigned char*)pBuf, sizeof pBuf);

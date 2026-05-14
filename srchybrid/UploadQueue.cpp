@@ -55,12 +55,42 @@ static char THIS_FILE[] = __FILE__;
 static uint32 i1sec, i2sec, i5sec, i60sec;
 static UINT s_uSaveStatistics = 0;
 static uint32 igraph, istats;
+static uint32 s_uUploadTimerLastDurationMs = 0;
+static uint32 s_uUploadTimerMaxDurationMs = 0;
+static uint32 s_uUploadTimerSlowLoopCount = 0;
 
 #define HIGHSPEED_UPLOADRATE_START	(500*1024)
 #define HIGHSPEED_UPLOADRATE_END	(300*1024)
 
 namespace
 {
+	void RecordUploadTimerDuration(const uint32 uDurationMs) noexcept
+	{
+		s_uUploadTimerLastDurationMs = uDurationMs;
+		if (uDurationMs > s_uUploadTimerMaxDurationMs)
+			s_uUploadTimerMaxDurationMs = uDurationMs;
+		if (ShouldCountSlowUploadTimerLoop(uDurationMs))
+			++s_uUploadTimerSlowLoopCount;
+	}
+
+	class CUploadTimerDurationScope
+	{
+	public:
+		CUploadTimerDurationScope() noexcept
+			: m_ullStartTick(::GetTickCount64())
+		{
+		}
+
+		~CUploadTimerDurationScope() noexcept
+		{
+			const ULONGLONG ullDuration = ::GetTickCount64() - m_ullStartTick;
+			RecordUploadTimerDuration(ullDuration > _UI32_MAX ? _UI32_MAX : static_cast<uint32>(ullDuration));
+		}
+
+	private:
+		ULONGLONG m_ullStartTick;
+	};
+
 	uint64 ResolveSessionTransferLimitBytes(const CKnownFile *pUploadingFile)
 	{
 		switch (thePrefs.GetSessionTransferLimitMode()) {
@@ -1001,6 +1031,8 @@ UINT CUploadQueue::GetWaitingPosition(CUpDownClient *client)
 
 VOID CALLBACK CUploadQueue::UploadTimer(HWND /*hwnd*/, UINT /*uMsg*/, UINT_PTR /*idEvent*/, DWORD /*dwTime*/) noexcept
 {
+	const CUploadTimerDurationScope timerDurationScope;
+
 	// NOTE: Always handle all type of MFC exceptions in TimerProcs - otherwise we'll get mem leaks
 	try {
 		// Barry - Don't do anything if the app is shutting down - can cause unhandled exceptions
@@ -1138,6 +1170,16 @@ VOID CALLBACK CUploadQueue::UploadTimer(HWND /*hwnd*/, UINT /*uMsg*/, UINT_PTR /
 		thePerfLog.LogSamples();
 	}
 	CATCH_DFLT_EXCEPTIONS(_T("CUploadQueue::UploadTimer"))
+}
+
+UploadTimerRuntimeStats CUploadQueue::GetUploadTimerRuntimeStats()
+{
+	return UploadTimerRuntimeStats{
+		s_uUploadTimerLastDurationMs,
+		s_uUploadTimerMaxDurationMs,
+		s_uUploadTimerSlowLoopCount,
+		kUploadTimerSlowLoopThresholdMs
+	};
 }
 
 CUpDownClient* CUploadQueue::GetNextClient(const CUpDownClient *lastclient) const

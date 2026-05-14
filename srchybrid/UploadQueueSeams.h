@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+inline constexpr std::uint32_t kUploadTimerSlowLoopThresholdMs = 100u;
+
 enum UploadQueueEntryAccessState
 {
 	uploadQueueEntryMissing,
@@ -49,4 +51,9 @@ inline bool RejectSoftQueueCandidateByCombinedScore(bool bHardQueueLimitReached,
 {
 	return bHardQueueLimitReached
 		|| (bSoftQueueLimitReached && !bHasFriendSlot && fClientCombinedFilePrioAndCredit < fAverageCombinedFilePrioAndCredit);
+}
+
+inline bool ShouldCountSlowUploadTimerLoop(std::uint32_t uDurationMs, std::uint32_t uSlowThresholdMs = kUploadTimerSlowLoopThresholdMs)
+{
+	return uSlowThresholdMs > 0 && uDurationMs > uSlowThresholdMs;
 }

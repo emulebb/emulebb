@@ -1,10 +1,13 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace BroadbandIoSeams
 {
 inline constexpr std::uint64_t kDefaultGlobalDownloadBufferBudgetBytes = 512ull * 1024ull * 1024ull;
+inline constexpr std::size_t kLegacyStandardMetadataFileBufferBytes = 16u * 1024u;
+inline constexpr std::size_t kLegacyLargeMetadataFileBufferBytes = 32u * 1024u;
 
 /**
  * @brief Computes the per-file download write-buffer threshold used before
