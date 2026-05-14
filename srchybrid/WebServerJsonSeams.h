@@ -95,6 +95,15 @@ inline bool DidRestUiDispatchComplete(const LRESULT lSendMessageTimeoutResult)
 	return lSendMessageTimeoutResult != 0;
 }
 
+/**
+ * @brief Reports whether REST command execution must stop because app teardown
+ * has begun and UI-owned subsystems may already be partially destroyed.
+ */
+inline bool ShouldRejectRestCommandDuringShutdown(const bool bAppClosing)
+{
+	return bAppClosing;
+}
+
 inline std::string ToLowerAscii(const std::string &rValue)
 {
 	std::string result(rValue);

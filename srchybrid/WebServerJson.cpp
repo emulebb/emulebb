@@ -127,6 +127,8 @@ private:
 	SRestDispatchContext& operator=(const SRestDispatchContext&);
 };
 
+bool TryRejectRestCommandDuringShutdown(SPipeApiError &rError);
+
 class CScopedDownloadQueueBulkAdd
 {
 public:
@@ -2292,6 +2294,9 @@ json BuildMutationResult(const CString &rHash, bool bOk, LPCTSTR pszError = NULL
  */
 json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 {
+	if (TryRejectRestCommandDuringShutdown(rError))
+		return json();
+
 	const std::string strCommand = rRequest.value("cmd", std::string());
 	const json params = rRequest.value("params", json::object());
 
@@ -3747,6 +3752,16 @@ json BuildErrorEnvelope(LPCSTR pszCode, const CString &strMessage)
 		StdUtf8FromCString(strMessage));
 }
 
+bool TryRejectRestCommandDuringShutdown(SPipeApiError &rError)
+{
+	if (!WebServerJsonSeams::ShouldRejectRestCommandDuringShutdown(theApp.IsClosing()))
+		return false;
+
+	rError.strCode = "EMULE_UNAVAILABLE";
+	rError.strMessage = _T("eMule is shutting down");
+	return true;
+}
+
 /**
  * Handles REST commands which do not need UI-thread-owned runtime state.
  */
@@ -3830,6 +3845,9 @@ LPCSTR GetHttpReasonPhrase(const int iStatusCode)
 
 json ExecuteUiThreadCommand(const json &rRequest, SPipeApiError &rError)
 {
+	if (TryRejectRestCommandDuringShutdown(rError))
+		return json();
+
 	if (theApp.emuledlg == NULL || theApp.emuledlg->GetSafeHwnd() == NULL) {
 		rError.strCode = "EMULE_UNAVAILABLE";
 		rError.strMessage = _T("main window is not available");
@@ -3946,6 +3964,11 @@ bool WebServerJson::ExecuteInternalCommand(const nlohmann::json &rRequest, nlohm
 	rErrorMessage.Empty();
 	try {
 		SPipeApiError error;
+		if (TryRejectRestCommandDuringShutdown(error)) {
+			rErrorCode = error.strCode;
+			rErrorMessage = error.strMessage;
+			return false;
+		}
 		if (!TryExecuteDirectRestCommand(rRequest, rResult, error))
 			rResult = ExecuteUiThreadCommand(rRequest, error);
 		if (error.strCode.IsEmpty())
