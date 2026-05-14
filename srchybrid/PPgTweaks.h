@@ -128,7 +128,6 @@ protected:
 	HTREEITEM m_htiUseSystemFontForMainControls;
 	HTREEITEM m_htiReBarToolbar;
 	HTREEITEM m_htiShowUpDownIconInTaskbar;
-	HTREEITEM m_htiAlwaysShowTrayIcon;
 	HTREEITEM m_htiShowVerticalHourMarkers;
 	HTREEITEM m_htiForceSpeedsToKB;
 	HTREEITEM m_htiGeoLocationEnabled;
@@ -256,7 +255,6 @@ protected:
 	bool m_bShowCopyEd2kLinkCmd;
 	bool m_bFollowMajorityFilenameForNewDownloads;
 	bool m_bShowUpDownIconInTaskbar;
-	bool m_bAlwaysShowTrayIcon;
 	bool m_bShowVerticalHourMarkers;
 	bool m_bSparsePartFiles;
 	bool m_bUseSystemFontForMainControls;

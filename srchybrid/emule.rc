@@ -680,28 +680,29 @@ BEGIN
     EDITTEXT        IDC_TOOLTIPDELAY,119,25,28,12,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "",IDC_TOOLTIPDELAY_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,147,25,11,12
     CONTROL         "Minimize to tray",IDC_MINTRAY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,46,216,10
+    CONTROL         "Always show tray icon",IDC_ALWAYS_SHOW_TRAY_ICON,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,56,216,10
     CONTROL         "Download list double-click to expand",IDC_DBLCLICK,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,56,216,10
-    CONTROL         "Show download percentage",IDC_SHOWDWLPERCENT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,66,216,10
-    CONTROL         "Show transfer rate on title",IDC_SHOWRATEONTITLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,76,216,10
-    CONTROL         "CatInfo",IDC_SHOWCATINFO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,86,216,10
-    CONTROL         "Auto Clear Completed Downloads",IDC_CLEARCOMPL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,96,216,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,66,216,10
+    CONTROL         "Show download percentage",IDC_SHOWDWLPERCENT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,76,216,10
+    CONTROL         "Show transfer rate on title",IDC_SHOWRATEONTITLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,86,216,10
+    CONTROL         "CatInfo",IDC_SHOWCATINFO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,96,216,10
+    CONTROL         "Auto Clear Completed Downloads",IDC_CLEARCOMPL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,106,216,10
     CONTROL         "Show additional toolbar on Transfers window",IDC_SHOWTRANSTOOLBAR,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,106,216,10
-    CONTROL         "Remember open searches between restarts",IDC_STORESEARCHES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,116,216,10
-    CONTROL         "Enable Win7 taskbar stuff",IDC_WIN7TASKBARGOODIES,
+    CONTROL         "Remember open searches between restarts",IDC_STORESEARCHES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,126,216,10
-    GROUPBOX        "Lower CPU && Memory Usage",IDC_STATIC_CPUMEM,4,136,223,35
-    CONTROL         "Disable Known Clients list",IDC_DISABLEKNOWNLIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,147,202,10
-    CONTROL         "Disable Queue List",IDC_DISABLEQUEUELIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,157,202,10
-    PUSHBUTTON      "Select Font...",IDC_SELECT_HYPERTEXT_FONT,12,187,86,14
+    CONTROL         "Enable Win7 taskbar stuff",IDC_WIN7TASKBARGOODIES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,136,216,10
+    GROUPBOX        "Lower CPU && Memory Usage",IDC_STATIC_CPUMEM,4,146,223,35
+    CONTROL         "Disable Known Clients list",IDC_DISABLEKNOWNLIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,157,202,10
+    CONTROL         "Disable Queue List",IDC_DISABLEQUEUELIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,167,202,10
+    PUSHBUTTON      "Select Font...",IDC_SELECT_HYPERTEXT_FONT,12,197,86,14
     CONTROL         "Font for Server-, Message- and IRC-Window",IDC_HYPERTEXT_FONT_HINT,
-                    "Static",SS_LEFTNOWORDWRAP | WS_GROUP,4,177,216,8
+                    "Static",SS_LEFTNOWORDWRAP | WS_GROUP,4,187,216,8
     CONTROL         "Reset all autocompletion histories (search name, met-URL,...)",IDC_RESETLABEL,
-                    "Static",SS_LEFTNOWORDWRAP | WS_GROUP,3,207,216,8
-    CONTROL         "Check1",IDC_DISABLEHIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,218,86,11
-    PUSHBUTTON      "Reset",IDC_RESETHIST,105,217,48,14
+                    "Static",SS_LEFTNOWORDWRAP | WS_GROUP,3,217,216,8
+    CONTROL         "Check1",IDC_DISABLEHIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,228,86,11
+    PUSHBUTTON      "Reset",IDC_RESETHIST,105,227,48,14
     LTEXT           "",IDC_PREVIEW,90,5,26,13
 END
 

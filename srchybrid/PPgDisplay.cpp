@@ -41,6 +41,7 @@ IMPLEMENT_DYNAMIC(CPPgDisplay, CPropertyPage)
 
 BEGIN_MESSAGE_MAP(CPPgDisplay, CPropertyPage)
 	ON_BN_CLICKED(IDC_MINTRAY, OnSettingsChange)
+	ON_BN_CLICKED(IDC_ALWAYS_SHOW_TRAY_ICON, OnSettingsChange)
 	ON_BN_CLICKED(IDC_DBLCLICK, OnSettingsChange)
 	ON_EN_CHANGE(IDC_TOOLTIPDELAY, OnSettingsChange)
 	ON_WM_HSCROLL()
@@ -74,6 +75,7 @@ void CPPgDisplay::DoDataExchange(CDataExchange *pDX)
 void CPPgDisplay::LoadSettings()
 {
 	CheckDlgButton(IDC_MINTRAY, static_cast<UINT>(thePrefs.mintotray));
+	CheckDlgButton(IDC_ALWAYS_SHOW_TRAY_ICON, static_cast<UINT>(thePrefs.IsAlwaysShowTrayIcon()));
 	CheckDlgButton(IDC_DBLCLICK, static_cast<UINT>(thePrefs.transferDoubleclick));
 	CheckDlgButton(IDC_SHOWRATEONTITLE, static_cast<UINT>(thePrefs.showRatesInTitle));
 	CheckDlgButton(IDC_DISABLEKNOWNLIST, static_cast<UINT>(thePrefs.m_bDisableKnownClientList));
@@ -120,6 +122,7 @@ void CPPgDisplay::UpdateToolTips()
 		return;
 
 	m_toolTip.SetTool(this, IDC_MINTRAY, GetResString(IDS_PPG_DISPLAY_TT_MINTRAY));
+	m_toolTip.SetTool(this, IDC_ALWAYS_SHOW_TRAY_ICON, GetResString(IDS_TWEAKS_TT_ALWAYS_SHOW_TRAY_ICON));
 	m_toolTip.SetTool(this, IDC_3DDEPTH, GetResString(IDS_PPG_DISPLAY_TT_3DDEPTH));
 	m_toolTip.SetTool(this, IDC_TOOLTIPDELAY, GetResString(IDS_PPG_DISPLAY_TT_TOOLTIPDELAY));
 	m_toolTip.SetTool(this, IDC_DBLCLICK, GetResString(IDS_PPG_DISPLAY_TT_DBLCLICK));
@@ -140,7 +143,9 @@ void CPPgDisplay::UpdateToolTips()
 BOOL CPPgDisplay::OnApply()
 {
 	bool mintotray_old = thePrefs.mintotray;
+	bool always_show_tray_icon_old = thePrefs.IsAlwaysShowTrayIcon();
 	thePrefs.mintotray = IsDlgButtonChecked(IDC_MINTRAY) != 0;
+	thePrefs.m_bAlwaysShowTrayIcon = IsDlgButtonChecked(IDC_ALWAYS_SHOW_TRAY_ICON) != 0;
 	thePrefs.transferDoubleclick = IsDlgButtonChecked(IDC_DBLCLICK) != 0;
 	thePrefs.depth3D = static_cast<CSliderCtrl*>(GetDlgItem(IDC_3DDEPTH))->GetPos();
 	thePrefs.m_bShowDwlPercentage = IsDlgButtonChecked(IDC_SHOWDWLPERCENT) != 0;
@@ -197,6 +202,8 @@ BOOL CPPgDisplay::OnApply()
 
 	if (mintotray_old != thePrefs.mintotray)
 		theApp.emuledlg->TrayMinimizeToTrayChange();
+	if (always_show_tray_icon_old != thePrefs.IsAlwaysShowTrayIcon())
+		theApp.emuledlg->UpdateTrayVisibility();
 	if (!thePrefs.ShowRatesOnTitle())
 		theApp.emuledlg->SetWindowText(CString(MOD_RELEASE_PRODUCT_NAME) + _T(" ") + theApp.m_strCurVersionLong);
 
@@ -209,6 +216,7 @@ void CPPgDisplay::Localize()
 	if (m_hWnd) {
 		SetWindowText(GetResString(IDS_PW_DISPLAY));
 		SetDlgItemText(IDC_MINTRAY, GetResString(IDS_PW_TRAY));
+		SetDlgItemText(IDC_ALWAYS_SHOW_TRAY_ICON, GetResString(IDS_ALWAYS_SHOW_TRAY_ICON));
 		SetDlgItemText(IDC_DBLCLICK, GetResString(IDS_PW_DBLCLICK));
 		SetDlgItemText(IDC_TOOLTIPDELAY_LBL, GetResString(IDS_PW_TOOL));
 		SetDlgItemText(IDC_3DDEP, GetResString(IDS_3DDEP));

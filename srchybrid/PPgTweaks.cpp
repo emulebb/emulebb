@@ -528,7 +528,6 @@ CPPgTweaks::CPPgTweaks()
 	, m_htiUseSystemFontForMainControls()
 	, m_htiReBarToolbar()
 	, m_htiShowUpDownIconInTaskbar()
-	, m_htiAlwaysShowTrayIcon()
 	, m_htiShowVerticalHourMarkers()
 	, m_htiForceSpeedsToKB()
 	, m_htiGeoLocationEnabled()
@@ -653,7 +652,6 @@ CPPgTweaks::CPPgTweaks()
 	, m_bShowCopyEd2kLinkCmd()
 	, m_bFollowMajorityFilenameForNewDownloads()
 	, m_bShowUpDownIconInTaskbar()
-	, m_bAlwaysShowTrayIcon()
 	, m_bShowVerticalHourMarkers()
 	, m_bSparsePartFiles()
 	, m_bUseSystemFontForMainControls()
@@ -856,7 +854,6 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_htiUseSystemFontForMainControls = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_USESYSTEMFONTFORMAINCONTROLS), m_htiHiddenDisplay, m_bUseSystemFontForMainControls);
 		m_htiReBarToolbar = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_REBARTOOLBAR), m_htiHiddenDisplay, m_bReBarToolbar);
 		m_htiShowUpDownIconInTaskbar = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_SHOWUPDOWNICONINTASKBAR), m_htiHiddenDisplay, m_bShowUpDownIconInTaskbar);
-		m_htiAlwaysShowTrayIcon = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_ALWAYS_SHOW_TRAY_ICON), m_htiHiddenDisplay, m_bAlwaysShowTrayIcon);
 		m_htiShowVerticalHourMarkers = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_SHOWVERTICALHOURMARKERS), m_htiHiddenDisplay, m_bShowVerticalHourMarkers);
 		m_htiForceSpeedsToKB = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_FORCESPEEDSTOKB), m_htiHiddenDisplay, m_bForceSpeedsToKB);
 		m_htiGeoLocationEnabled = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_ENABLE_GEOLOCATION), m_htiHiddenDisplay, m_bGeoLocationEnabled);
@@ -998,7 +995,6 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiInspectAllFileTypes, IDS_TWEAKS_TT_INSPECT_ALL_FILE_TYPES);
 		SetTreeToolTip(m_htiReBarToolbar, IDS_TWEAKS_TT_RE_BAR_TOOLBAR);
 		SetTreeToolTip(m_htiShowUpDownIconInTaskbar, IDS_TWEAKS_TT_SHOW_UP_DOWN_ICON_IN_TASKBAR);
-		SetTreeToolTip(m_htiAlwaysShowTrayIcon, IDS_TWEAKS_TT_ALWAYS_SHOW_TRAY_ICON);
 		SetTreeToolTip(m_htiShowVerticalHourMarkers, IDS_TWEAKS_TT_SHOW_VERTICAL_HOUR_MARKERS);
 		SetTreeToolTip(m_htiForceSpeedsToKB, IDS_TWEAKS_TT_FORCE_SPEEDS_TO_KB);
 		SetTreeToolTip(m_htiRearrangeKadSearchKeywords, IDS_TWEAKS_TT_REARRANGE_KAD_SEARCH_KEYWORDS);
@@ -1215,7 +1211,6 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiUseSystemFontForMainControls, m_bUseSystemFontForMainControls);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiReBarToolbar, m_bReBarToolbar);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiShowUpDownIconInTaskbar, m_bShowUpDownIconInTaskbar);
-	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiAlwaysShowTrayIcon, m_bAlwaysShowTrayIcon);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiShowVerticalHourMarkers, m_bShowVerticalHourMarkers);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiForceSpeedsToKB, m_bForceSpeedsToKB);
 	if (pDX->m_bSaveAndValidate) {
@@ -1478,7 +1473,6 @@ BOOL CPPgTweaks::OnInitDialog()
 	m_bUseSystemFontForMainControls = thePrefs.GetUseSystemFontForMainControls();
 	m_bReBarToolbar = thePrefs.GetReBarToolbar();
 	m_bShowUpDownIconInTaskbar = thePrefs.IsShowUpDownIconInTaskbar();
-	m_bAlwaysShowTrayIcon = thePrefs.IsAlwaysShowTrayIcon();
 	m_bShowVerticalHourMarkers = thePrefs.m_bShowVerticalHourMarkers;
 	m_bForceSpeedsToKB = thePrefs.GetForceSpeedsToKB();
 	m_bIconFlashOnNewMessage = thePrefs.DoFlashOnNewMessage();
@@ -1664,10 +1658,8 @@ BOOL CPPgTweaks::OnApply()
 	thePrefs.m_bUseSystemFontForMainControls = m_bUseSystemFontForMainControls;
 	thePrefs.m_bReBarToolbar = m_bReBarToolbar;
 	thePrefs.m_bShowUpDownIconInTaskbar = m_bShowUpDownIconInTaskbar;
-	thePrefs.m_bAlwaysShowTrayIcon = m_bAlwaysShowTrayIcon;
 	thePrefs.m_bShowVerticalHourMarkers = m_bShowVerticalHourMarkers;
 	thePrefs.m_bForceSpeedsToKB = m_bForceSpeedsToKB;
-	theApp.emuledlg->UpdateTrayVisibility();
 	thePrefs.m_bIconflashOnNewMessage = m_bIconFlashOnNewMessage;
 	thePrefs.m_bExtraPreviewWithMenu = m_bExtraPreviewWithMenu;
 	thePrefs.m_bKeepUnavailableFixedSharedDirs = m_bKeepUnavailableFixedSharedDirs;
@@ -1847,7 +1839,6 @@ void CPPgTweaks::Localize()
 		LocalizeItemText(m_htiShowActiveDownloadsBold, IDS_SHOWACTIVEDOWNLOADSBOLD);
 		m_ctrlTreeOptions.SetItemText(m_htiIconFlashOnNewMessage, GetIconFlashOnNewMessageLabel());
 		LocalizeItemText(m_htiShowUpDownIconInTaskbar, IDS_SHOWUPDOWNICONINTASKBAR);
-		LocalizeItemText(m_htiAlwaysShowTrayIcon, IDS_ALWAYS_SHOW_TRAY_ICON);
 		LocalizeItemText(m_htiShowVerticalHourMarkers, IDS_SHOWVERTICALHOURMARKERS);
 		LocalizeItemText(m_htiGeoLocationEnabled, IDS_ENABLE_GEOLOCATION);
 		LocalizeItemText(m_htiSparsePartFiles, IDS_SPARSEPARTFILES);
@@ -1962,7 +1953,6 @@ void CPPgTweaks::OnDestroy()
 	m_htiUseSystemFontForMainControls = NULL;
 	m_htiReBarToolbar = NULL;
 	m_htiShowUpDownIconInTaskbar = NULL;
-	m_htiAlwaysShowTrayIcon = NULL;
 	m_htiShowVerticalHourMarkers = NULL;
 	m_htiForceSpeedsToKB = NULL;
 	m_htiGeoLocationEnabled = NULL;
