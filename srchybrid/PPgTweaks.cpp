@@ -43,6 +43,9 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
+	static const LPCTSTR kMediaInfoDllPathProfileKey = _T("MediaInfo_MediaInfoDllPath");
+	static const LPCTSTR kMediaInfoDllPathDefault = _T("MEDIAINFO.DLL");
+
 	static void FailTreeValidation(CDataExchange *pDX, UINT uMessageId, HTREEITEM hItem)
 	{
 		AfxMessageBox(uMessageId);
@@ -308,6 +311,31 @@ namespace
 		return GetResString(IDS_TWEAKS_TEXT_EDITOR_COMMAND);
 	}
 
+	static CString GetExtractMetaDataAutoLabel()
+	{
+		return _T("Auto media metadata");
+	}
+
+	static CString GetMediaInfoDllPathLabel()
+	{
+		return _T("MediaInfo.dll path");
+	}
+
+	static CString GetExtractMetaDataToolTip()
+	{
+		return _T("Controls whether eMule extracts metadata such as tags, codecs, bitrates, and media duration from shared audio/video files.\r\n\r\nThe enabled mode uses MediaInfo.dll when available, then built-in media parsers, then ID3 tags for MPEG audio.");
+	}
+
+	static CString GetExtractMetaDataAutoToolTip()
+	{
+		return _T("Extract metadata automatically.\r\n\r\nMediaInfo.dll is probed lazily only when metadata or Content Info is inspected. If MediaInfo.dll is unavailable, eMule falls back to built-in media parsers and ID3 tags for MPEG audio.");
+	}
+
+	static CString GetMediaInfoDllPathToolTip()
+	{
+		return _T("Optional MediaInfo.dll lookup path.\r\n\r\nDefault: MEDIAINFO.DLL. Relative paths are resolved from the eMule program folder. Use <noload> to disable MediaInfo.dll loading while keeping built-in metadata fallbacks. Compatible MediaInfo.dll versions must be 26.01 or newer. Restart eMule after changing this if MediaInfo.dll was already probed in this session.");
+	}
+
 	static CString GetMaxChatHistoryLinesLabel()
 	{
 		return GetResString(IDS_TWEAKS_MAX_CHAT_HISTORY_LINES);
@@ -474,6 +502,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_htiExtractMetaData()
 	, m_htiExtractMetaDataID3Lib()
 	, m_htiExtractMetaDataNever()
+	, m_htiMediaInfoDllPath()
 	, m_htiFilterLANIPs()
 	, m_htiFullAlloc()
 	, m_htiInspectAllFileTypes()
@@ -606,6 +635,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_sDateTimeFormat4Lists()
 	, m_sDateTimeFormat()
 	, m_sDateTimeFormat4Log()
+	, m_sMediaInfoDllPath()
 	, m_sPerfLogFile()
 	, m_sTxtEditor()
 	, m_sSlowUploadThresholdFactor()
@@ -804,8 +834,10 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_htiFullAlloc = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_FULLALLOC), m_htiHiddenFile, m_bFullAlloc);
 		m_htiExtractMetaData = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_EXTRACT_META_DATA), iImgMetaData, m_htiHiddenFile);
 		m_htiExtractMetaDataNever = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_NEVER), m_htiExtractMetaData, m_iExtractMetaData == 0);
-		m_htiExtractMetaDataID3Lib = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_META_DATA_ID3LIB), m_htiExtractMetaData, m_iExtractMetaData == 1);
+		m_htiExtractMetaDataID3Lib = m_ctrlTreeOptions.InsertRadioButton(GetExtractMetaDataAutoLabel(), m_htiExtractMetaData, m_iExtractMetaData == 1);
 		//m_htiExtractMetaDataMediaDet = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_META_DATA_MEDIADET), m_htiExtractMetaData, m_iExtractMetaData == 2);
+		m_htiMediaInfoDllPath = m_ctrlTreeOptions.InsertItem(GetMediaInfoDllPathLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiExtractMetaData);
+		m_ctrlTreeOptions.AddEditBox(m_htiMediaInfoDllPath, RUNTIME_CLASS(CTreeOptionsEditEx));
 		m_htiDateTimeFormat4Lists = m_ctrlTreeOptions.InsertItem(GetResString(IDS_DATETIMEFORMAT4LISTS), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiHiddenFile);
 		m_ctrlTreeOptions.AddEditBox(m_htiDateTimeFormat4Lists, RUNTIME_CLASS(CTreeOptionsEditEx));
 		m_htiPreviewCopiedArchives = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_PREVIEWCOPIEDARCHIVES), m_htiHiddenFile, m_bPreviewCopiedArchives);
@@ -980,7 +1012,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiCommitNever, IDS_TWEAKS_TT_COMMIT_NEVER);
 		SetTreeToolTip(m_htiCommitOnShutdown, IDS_TWEAKS_TT_COMMIT_ON_SHUTDOWN);
 		SetTreeToolTip(m_htiCommitAlways, IDS_TWEAKS_TT_COMMIT_ALWAYS);
-		SetTreeToolTip(m_htiExtractMetaData, IDS_TWEAKS_TT_EXTRACT_META_DATA);
+		SetTreeToolTip(m_htiExtractMetaData, GetExtractMetaDataToolTip());
 		SetTreeToolTip(m_htiGeoLocationEnabled, IDS_TWEAKS_TT_GEO_LOCATION_ENABLED);
 		SetTreeToolTip(m_htiCloseUPnPPorts, IDS_TWEAKS_TT_CLOSE_U_PN_P_PORTS);
 		SetTreeToolTip(m_htiUPnPBackendMode, IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE);
@@ -1053,7 +1085,8 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiA4AFSaveCpu, IDS_TWEAKS_TT_A4_AF_SAVE_CPU);
 		SetTreeToolTip(m_htiAutoArch, IDS_TWEAKS_TT_AUTO_ARCH);
 		SetTreeToolTip(m_htiExtractMetaDataNever, IDS_TWEAKS_TT_EXTRACT_META_DATA_NEVER);
-		SetTreeToolTip(m_htiExtractMetaDataID3Lib, IDS_TWEAKS_TT_EXTRACT_META_DATA_ID3_LIB);
+		SetTreeToolTip(m_htiExtractMetaDataID3Lib, GetExtractMetaDataAutoToolTip());
+		SetTreeToolTip(m_htiMediaInfoDllPath, GetMediaInfoDllPathToolTip());
 		SetTreeToolTip(m_htiPreviewOnIconDblClk, IDS_TWEAKS_TT_PREVIEW_ON_ICON_DBL_CLK);
 		SetTreeToolTip(m_htiExtraPreviewWithMenu, IDS_TWEAKS_TT_EXTRA_PREVIEW_WITH_MENU);
 		SetTreeToolTip(m_htiShowActiveDownloadsBold, IDS_TWEAKS_TT_SHOW_ACTIVE_DOWNLOADS_BOLD);
@@ -1198,6 +1231,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiAutoBroadbandIO, m_bAutoBroadbandIO);
 	DDX_TreeRadio(pDX, IDC_EXT_OPTS, m_htiCommit, m_iCommitFiles);
 	DDX_TreeRadio(pDX, IDC_EXT_OPTS, m_htiExtractMetaData, m_iExtractMetaData);
+	DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiMediaInfoDllPath, m_sMediaInfoDllPath);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiRestoreLastMainWndDlg, m_bRestoreLastMainWndDlg);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiRestoreLastLogPane, m_bRestoreLastLogPane);
 	DDX_Text(pDX, IDC_EXT_OPTS, m_htiFileBufferTimeLimit, m_uFileBufferTimeLimitSeconds);
@@ -1470,6 +1504,7 @@ BOOL CPPgTweaks::OnInitDialog()
 	m_sDateTimeFormat4Lists = thePrefs.GetDateTimeFormat4Lists();
 	m_sDateTimeFormat = thePrefs.GetDateTimeFormat();
 	m_sDateTimeFormat4Log = thePrefs.GetDateTimeFormat4Log();
+	m_sMediaInfoDllPath = theApp.GetProfileString(_T("eMule"), kMediaInfoDllPathProfileKey, kMediaInfoDllPathDefault);
 	m_bPreviewCopiedArchives = thePrefs.GetPreviewCopiedArchives();
 	m_bInspectAllFileTypes = thePrefs.GetInspectAllFileTypes();
 	m_bPreviewOnIconDblClk = thePrefs.GetPreviewOnIconDblClk();
@@ -1655,6 +1690,7 @@ BOOL CPPgTweaks::OnApply()
 	thePrefs.m_strDateTimeFormat = m_sDateTimeFormat;
 	thePrefs.m_strDateTimeFormat4Log = m_sDateTimeFormat4Log;
 	thePrefs.m_strDateTimeFormat4Lists = m_sDateTimeFormat4Lists;
+	theApp.WriteProfileString(_T("eMule"), kMediaInfoDllPathProfileKey, m_sMediaInfoDllPath);
 	thePrefs.m_iMaxChatHistory = static_cast<INT_PTR>(m_uMaxChatHistoryLines);
 	thePrefs.SetMsgSessionsMax(m_uMaxMessageSessions);
 	thePrefs.m_bPreviewCopiedArchives = m_bPreviewCopiedArchives;
@@ -1780,9 +1816,10 @@ void CPPgTweaks::Localize()
 		LocalizeItemText(m_htiDebugSourceExchange, IDS_DEBUG_SOURCE_EXCHANGE);
 		LocalizeItemText(m_htiExtraPreviewWithMenu, IDS_EXTRAPREVIEWWITHMENU);
 		LocalizeItemText(m_htiExtractMetaData, IDS_EXTRACT_META_DATA);
-		LocalizeItemText(m_htiExtractMetaDataID3Lib, IDS_META_DATA_ID3LIB);
+		m_ctrlTreeOptions.SetItemText(m_htiExtractMetaDataID3Lib, GetExtractMetaDataAutoLabel());
 		//LocalizeItemText(m_htiExtractMetaDataMediaDet, IDS_META_DATA_MEDIADET);
 		LocalizeItemText(m_htiExtractMetaDataNever, IDS_NEVER);
+		m_ctrlTreeOptions.SetEditLabel(m_htiMediaInfoDllPath, GetMediaInfoDllPathLabel());
 		LocalizeItemText(m_htiFilterLANIPs, IDS_PW_FILTER);
 		LocalizeItemText(m_htiForceSpeedsToKB, IDS_FORCESPEEDSTOKB);
 		LocalizeItemText(m_htiFullAlloc, IDS_FULLALLOC);
@@ -2007,6 +2044,7 @@ void CPPgTweaks::OnDestroy()
 	m_htiExtractMetaData = NULL;
 	m_htiExtractMetaDataNever = NULL;
 	m_htiExtractMetaDataID3Lib = NULL;
+	m_htiMediaInfoDllPath = NULL;
 	m_htiAutoArch = NULL;
 	m_htiTxtEditor = NULL;
 	m_htiUPnP = NULL;

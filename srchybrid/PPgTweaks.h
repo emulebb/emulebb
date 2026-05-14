@@ -74,6 +74,7 @@ protected:
 	HTREEITEM m_htiExtractMetaDataID3Lib;
 	//HTREEITEM m_htiExtractMetaDataMediaDet;
 	HTREEITEM m_htiExtractMetaDataNever;
+	HTREEITEM m_htiMediaInfoDllPath;
 	HTREEITEM m_htiFilterLANIPs;
 	HTREEITEM m_htiFullAlloc;
 	HTREEITEM m_htiInspectAllFileTypes;
@@ -208,6 +209,7 @@ protected:
 	CString m_sDateTimeFormat4Lists;
 	CString m_sDateTimeFormat;
 	CString m_sDateTimeFormat4Log;
+	CString m_sMediaInfoDllPath;
 	CString m_sPerfLogFile;
 	CString m_sTxtEditor;
 	CString m_sSlowUploadThresholdFactor;

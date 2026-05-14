@@ -3254,7 +3254,7 @@ void CPreferences::LoadPreferences()
 	commentFilter = ini.GetStringLong(_T("CommentFilter"), _T("http://|https://|ftp://|www.|ftp."));
 	commentFilter.MakeLower();
 	filenameCleanups = ini.GetStringLong(_T("FilenameCleanups"), _T("http|www.|.com|.de|.org|.net|shared|powered|sponsored|sharelive|filedonkey|"));
-	m_iExtractMetaData = ini.GetInt(_T("ExtractMetaData"), 1); // 0=disable, 1=mp3, 2=MediaDet
+	m_iExtractMetaData = ini.GetInt(_T("ExtractMetaData"), 1); // 0=disabled, 1=auto media metadata; legacy 2 normalizes to 1
 	if (m_iExtractMetaData > 1)
 		m_iExtractMetaData = 1;
 	m_bRearrangeKadSearchKeywords = ini.GetBool(_T("RearrangeKadSearchKeywords"), true);

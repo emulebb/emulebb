@@ -67,7 +67,7 @@ static CString BuildMediaInfoDllHint(MediaInfoDllSeams::EMediaInfoDllStatus eSta
 		strHint += _T("\r\nA MediaInfo.dll candidate was found, but Windows could not load it or one of its dependencies.");
 		break;
 	case MediaInfoDllSeams::MediaInfoDll_Missing:
-		strHint += _T("\r\nLookup also checks the configured MediaInfo_MediaInfoDllPath, MediaInfo registry install paths, and %ProgramFiles%\\MediaInfo\\MEDIAINFO.DLL.");
+		strHint += _T("\r\nLookup also checks the MediaInfo.dll path from Preferences > Tweaks, MediaInfo registry install paths, and %ProgramFiles%\\MediaInfo\\MEDIAINFO.DLL.");
 		break;
 	default:
 		break;
