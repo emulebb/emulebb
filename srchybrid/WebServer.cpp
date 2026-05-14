@@ -187,6 +187,8 @@ void CWebServer::_SaveWIConfigArray(BOOL *array, int size, LPCTSTR key)
 bool CWebServer::ReloadTemplates()
 {
 	m_bTemplatesLoaded = false;
+	if (!thePrefs.GetLegacyWebUiEnabled())
+		return false;
 
 	//Last-Modified: <day-name>, <day> <month-name> <year> <hour>:<minute>:<second> GMT
 	//Day and month names must be 3 English letters, 30 characters total.
@@ -267,12 +269,12 @@ bool CWebServer::ReloadTemplates()
 			m_bTemplatesLoaded = true;
 			return true;
 		}
-		if (thePrefs.GetWSIsEnabled() || m_bServerWorking) {
+		if (thePrefs.GetLegacyWebUiEnabled() && (thePrefs.GetWSIsEnabled() || m_bServerWorking)) {
 			CString buffer;
 			buffer.Format(GetResString(IDS_WS_ERR_LOADTEMPLATE), (LPCTSTR)sFile);
 			AddLogLine(true, buffer);
 		}
-	} else if (m_bServerWorking) {
+	} else if (thePrefs.GetLegacyWebUiEnabled() && m_bServerWorking) {
 		AddLogLine(true, GetResString(IDS_WEB_ERR_CANTLOAD), (LPCTSTR)sFile);
 	}
 	return false;
@@ -307,11 +309,13 @@ void CWebServer::RestartSockets()
 
 void CWebServer::StartServer()
 {
-	if (m_bServerWorking == thePrefs.GetWSIsEnabled())
+	const bool bShouldStart = WebServerLegacySeams::ShouldStartWebTransport(thePrefs.GetWSIsEnabled());
+	if (m_bServerWorking == bShouldStart)
 		return;
-	m_bServerWorking = thePrefs.GetWSIsEnabled();
+	m_bServerWorking = bShouldStart;
 	if (m_bServerWorking) {
-		ReloadTemplates();
+		if (WebServerLegacySeams::ShouldLoadLegacyTemplates(thePrefs.GetWSIsEnabled(), thePrefs.GetLegacyWebUiEnabled()))
+			ReloadTemplates();
 		if (m_bServerWorking) {
 			StartSockets(this);
 			m_nIntruderDetect = 0;
@@ -423,6 +427,12 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 
 		if (WebServerJson::IsApiRequest(Data)) {
 			WebServerJson::ProcessRequest(Data);
+			::CoUninitialize();
+			return;
+		}
+
+		if (!WebServerLegacySeams::ShouldServeLegacyWebUi(thePrefs.GetLegacyWebUiEnabled())) {
+			Data.pSocket->SendReply("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: 26\r\nConnection: close\r\n\r\nLegacy Web UI is disabled.");
 			::CoUninitialize();
 			return;
 		}

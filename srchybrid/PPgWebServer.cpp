@@ -219,6 +219,7 @@ BEGIN_MESSAGE_MAP(CPPgWebServer, CPropertyPage)
 	ON_EN_CHANGE(IDC_KEYPATH, OnDataChange)
 	ON_EN_CHANGE(IDC_WSTIMEOUT, OnDataChange)
 	ON_BN_CLICKED(IDC_WSENABLED, OnEnChangeWSEnabled)
+	ON_BN_CLICKED(IDC_WSLEGACYUI, OnLegacyWebUiChanged)
 	ON_BN_CLICKED(IDC_WEB_HTTPS, OnChangeHTTPS)
 	ON_BN_CLICKED(IDC_WEB_GENERATE, OnGenerateCertificate)
 	ON_BN_CLICKED(IDC_WSENABLEDLOW, OnEnChangeWSEnabled)
@@ -293,6 +294,7 @@ void CPPgWebServer::UpdateToolTips()
 		return;
 
 	m_toolTip.SetTool(this, IDC_WSENABLED, GetResString(IDS_WEBSERVER_TT_WSENABLED));
+	m_toolTip.SetTool(this, IDC_WSLEGACYUI, GetResString(IDS_WEBSERVER_TT_WSLEGACYUI));
 	m_toolTip.SetTool(this, IDC_WS_GZIP, GetResString(IDS_WEBSERVER_TT_WS_GZIP));
 	m_toolTip.SetTool(this, IDC_WEBBINDADDR, GetResString(IDS_WEBSERVER_TT_WEBBINDADDR));
 	m_toolTip.SetTool(this, IDC_WSPORT, GetResString(IDS_WEBSERVER_TT_WSPORT));
@@ -321,6 +323,7 @@ void CPPgWebServer::UpdateToolTips()
 void CPPgWebServer::LoadSettings()
 {
 	CheckDlgButton(IDC_WSENABLED, static_cast<UINT>(thePrefs.GetWSIsEnabled()));
+	CheckDlgButton(IDC_WSLEGACYUI, static_cast<UINT>(thePrefs.GetLegacyWebUiEnabled()));
 	CheckDlgButton(IDC_WS_GZIP, static_cast<UINT>(thePrefs.GetWebUseGzip()));
 
 	CheckDlgButton(IDC_WSUPNP, static_cast<UINT>(thePrefs.m_bWebUseUPnP));
@@ -357,21 +360,11 @@ BOOL CPPgWebServer::OnApply()
 	if (m_bModified) {
 		bool bUPnP = thePrefs.GetWSUseUPnP();
 		bool bWSIsEnabled = IsDlgButtonChecked(IDC_WSENABLED) != 0;
+		bool bLegacyWebUiEnabled = IsDlgButtonChecked(IDC_WSLEGACYUI) != 0;
 		bool bRestartWebServerSockets = false;
-		// get and check template file existence...
 		CString sBuf;
 		GetDlgItemText(IDC_TMPLPATH, sBuf);
-		if (bWSIsEnabled && !LongPathSeams::PathExists(sBuf)) {
-			CString buffer;
-			buffer.Format(GetResString(IDS_WEB_ERR_CANTLOAD), (LPCTSTR)sBuf);
-			AfxMessageBox(buffer, MB_OK);
-			return FALSE;
-		}
 		thePrefs.SetTemplate(sBuf);
-		if (!theApp.webserver->ReloadTemplates()) {
-			GetDlgItem(IDC_TMPLPATH)->SetFocus();
-			return FALSE;
-		}
 
 		bool bHTTPS = IsDlgButtonChecked(IDC_WEB_HTTPS) != 0;
 		GetDlgItemText(IDC_CERTPATH, sBuf);
@@ -464,9 +457,12 @@ BOOL CPPgWebServer::OnApply()
 		m_bNewCert = false;
 
 		thePrefs.SetWSIsEnabled(bWSIsEnabled);
-		thePrefs.SetWebUseGzip(IsDlgButtonChecked(IDC_WS_GZIP) != 0);
+		thePrefs.SetLegacyWebUiEnabled(bLegacyWebUiEnabled);
+		thePrefs.SetWebUseGzip(bLegacyWebUiEnabled && IsDlgButtonChecked(IDC_WS_GZIP) != 0);
 		thePrefs.SetWebUseHttps(bHTTPS);
 		thePrefs.SetWSIsLowUserEnabled(IsDlgButtonChecked(IDC_WSENABLEDLOW) != 0);
+		if (bWSIsEnabled && bLegacyWebUiEnabled)
+			theApp.webserver->ReloadTemplates();
 		if (bRestartWebServerSockets && bWSIsEnabled)
 			theApp.webserver->RestartSockets();
 		theApp.webserver->StartServer();
@@ -490,7 +486,8 @@ void CPPgWebServer::Localize()
 	if (m_hWnd) {
 		SetWindowText(GetResString(IDS_PW_WS));
 
-		SetDlgItemText(IDC_WSENABLED, GetResString(IDS_ENABLED));
+		SetDlgItemText(IDC_WSENABLED, GetResString(IDS_WS_ENABLE_REST_API));
+		SetDlgItemText(IDC_WSLEGACYUI, GetResString(IDS_WS_ENABLE_LEGACY_WEBUI));
 		SetDlgItemText(IDC_WS_GZIP, GetResString(IDS_WEB_GZIP_COMPRESSION));
 		SetDlgItemText(IDC_WSUPNP, GetResString(IDS_WEBUPNPINCLUDE));
 		SetDlgItemText(IDC_WSPORT_LBL, GetResString(IDS_PORT) + _T(':'));
@@ -527,32 +524,42 @@ void CPPgWebServer::SetUPnPState()
 	GetDlgItem(IDC_WSUPNP)->EnableWindow(thePrefs.IsUPnPEnabled() && IsDlgButtonChecked(IDC_WSENABLED));
 }
 
+void CPPgWebServer::UpdateLegacyWebUiControls()
+{
+	const bool bServerEnabled = IsDlgButtonChecked(IDC_WSENABLED) != 0;
+	const bool bLegacyWebUiEnabled = bServerEnabled && IsDlgButtonChecked(IDC_WSLEGACYUI) != 0;
+	const bool bHttpsEnabled = bServerEnabled && IsDlgButtonChecked(IDC_WEB_HTTPS) != 0;
+
+	GetDlgItem(IDC_WS_GZIP)->EnableWindow(bLegacyWebUiEnabled && !bHttpsEnabled);
+	GetDlgItem(IDC_TEMPLATE)->EnableWindow(bLegacyWebUiEnabled);
+	GetDlgItem(IDC_TMPLPATH)->EnableWindow(bLegacyWebUiEnabled);
+	GetDlgItem(IDC_TMPLBROWSE)->EnableWindow(bLegacyWebUiEnabled);
+	SetTmplButtonState();
+}
+
 void CPPgWebServer::OnChangeHTTPS()
 {
 	BOOL bEnable = IsDlgButtonChecked(IDC_WSENABLED) && IsDlgButtonChecked(IDC_WEB_HTTPS);
-	//forbid compression with TLS
-	if (bEnable)
+	if (bEnable && IsDlgButtonChecked(IDC_WS_GZIP))
 		CheckDlgButton(IDC_WS_GZIP, BST_UNCHECKED);
-	GetDlgItem(IDC_WS_GZIP)->EnableWindow(!bEnable);
 
 	GetDlgItem(IDC_WEB_GENERATE)->EnableWindow(bEnable && !m_generating);
 	GetDlgItem(IDC_CERTPATH)->EnableWindow(bEnable);
 	GetDlgItem(IDC_CERTBROWSE)->EnableWindow(bEnable);
 	GetDlgItem(IDC_KEYPATH)->EnableWindow(bEnable);
 	GetDlgItem(IDC_KEYBROWSE)->EnableWindow(bEnable);
+	UpdateLegacyWebUiControls();
 	SetModified();
 }
 
 void CPPgWebServer::OnEnChangeWSEnabled()
 {
 	bool bIsWIEnabled = IsDlgButtonChecked(IDC_WSENABLED) != 0;
-	GetDlgItem(IDC_WS_GZIP)->EnableWindow(bIsWIEnabled);
 	GetDlgItem(IDC_WSPORT)->EnableWindow(bIsWIEnabled);
 	GetDlgItem(IDC_WEBBINDADDR)->EnableWindow(bIsWIEnabled);
 	GetDlgItem(IDC_WS_MAXFILEUPLOAD)->EnableWindow(bIsWIEnabled);
 	GetDlgItem(IDC_WS_ALLOWEDIPS)->EnableWindow(bIsWIEnabled);
-	GetDlgItem(IDC_TMPLPATH)->EnableWindow(bIsWIEnabled);
-	GetDlgItem(IDC_TMPLBROWSE)->EnableWindow(bIsWIEnabled);
+	GetDlgItem(IDC_WSLEGACYUI)->EnableWindow(bIsWIEnabled);
 	GetDlgItem(IDC_WSTIMEOUT)->EnableWindow(bIsWIEnabled);
 	GetDlgItem(IDC_WEB_HTTPS)->EnableWindow(bIsWIEnabled);
 	GetDlgItem(IDC_WSPASS)->EnableWindow(bIsWIEnabled);
@@ -561,9 +568,15 @@ void CPPgWebServer::OnEnChangeWSEnabled()
 	GetDlgItem(IDC_WSENABLEDLOW)->EnableWindow(bIsWIEnabled);
 	GetDlgItem(IDC_WSPASSLOW)->EnableWindow(bIsWIEnabled && IsDlgButtonChecked(IDC_WSENABLEDLOW));
 	SetUPnPState();
-	SetTmplButtonState();
+	UpdateLegacyWebUiControls();
 	OnChangeHTTPS();
 
+	SetModified();
+}
+
+void CPPgWebServer::OnLegacyWebUiChanged()
+{
+	UpdateLegacyWebUiControls();
 	SetModified();
 }
 
@@ -653,7 +666,7 @@ void CPPgWebServer::SetTmplButtonState()
 	CString buffer;
 	GetDlgItemText(IDC_TMPLPATH, buffer);
 
-	GetDlgItem(IDC_WSRELOADTMPL)->EnableWindow(IsDlgButtonChecked(IDC_WSENABLED) && EqualPaths(buffer, thePrefs.GetTemplate()));
+	GetDlgItem(IDC_WSRELOADTMPL)->EnableWindow(IsDlgButtonChecked(IDC_WSENABLED) && IsDlgButtonChecked(IDC_WSLEGACYUI) && EqualPaths(buffer, thePrefs.GetTemplate()));
 }
 
 void CPPgWebServer::OnHelp()

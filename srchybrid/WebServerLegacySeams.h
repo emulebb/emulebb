@@ -10,6 +10,30 @@
 namespace WebServerLegacySeams
 {
 /**
+ * @brief Reports whether the shared WebServer transport should listen at all.
+ */
+inline bool ShouldStartWebTransport(bool bWebServerEnabled)
+{
+	return bWebServerEnabled;
+}
+
+/**
+ * @brief Reports whether legacy HTML templates are needed for the current configuration.
+ */
+inline bool ShouldLoadLegacyTemplates(bool bWebServerEnabled, bool bLegacyWebUiEnabled)
+{
+	return bWebServerEnabled && bLegacyWebUiEnabled;
+}
+
+/**
+ * @brief Reports whether non-REST legacy Web UI requests should be served.
+ */
+inline bool ShouldServeLegacyWebUi(bool bLegacyWebUiEnabled)
+{
+	return bLegacyWebUiEnabled;
+}
+
+/**
  * @brief Reports whether a legacy eD2K search type token can be forwarded to the search layer.
  */
 inline bool IsLegacySearchFileTypeAllowed(const TCHAR *pszFileType)

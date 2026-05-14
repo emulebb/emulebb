@@ -951,6 +951,7 @@ CUIntArray CPreferences::m_aAllowedRemoteAccessIPs;
 uint16	CPreferences::m_nWebPort;
 bool	CPreferences::m_bWebUseUPnP;
 bool	CPreferences::m_bWebEnabled;
+bool	CPreferences::m_bLegacyWebUiEnabled;
 bool	CPreferences::m_bWebUseGzip;
 int		CPreferences::m_nWebPageRefresh;
 bool	CPreferences::m_bWebLowEnabled;
@@ -2772,6 +2773,7 @@ void CPreferences::SavePreferences()
 	ini.WriteInt(_T("Port"), m_nWebPort, prefini::Sections::WebServer);
 	ini.WriteBool(_T("WebUseUPnP"), m_bWebUseUPnP, prefini::Sections::WebServer);
 	ini.WriteBool(_T("Enabled"), m_bWebEnabled, prefini::Sections::WebServer);
+	ini.WriteBool(_T("EnableLegacyWebUi"), m_bLegacyWebUiEnabled, prefini::Sections::WebServer);
 	ini.WriteBool(_T("UseGzip"), m_bWebUseGzip, prefini::Sections::WebServer);
 	ini.WriteInt(_T("PageRefreshTime"), m_nWebPageRefresh, prefini::Sections::WebServer);
 	ini.WriteBool(_T("UseLowRightsUser"), m_bWebLowEnabled, prefini::Sections::WebServer);
@@ -3376,6 +3378,7 @@ void CPreferences::LoadPreferences()
 	SetWSPort(NormalizePortPreferenceValue(ini.GetInt(_T("Port"), GetDefaultWSPort(), prefini::Sections::WebServer), GetDefaultWSPort(), false));
 	m_bWebUseUPnP = ini.GetBool(_T("WebUseUPnP"), false, prefini::Sections::WebServer);
 	m_bWebEnabled = ini.GetBool(_T("Enabled"), false, prefini::Sections::WebServer);
+	m_bLegacyWebUiEnabled = ini.GetBool(_T("EnableLegacyWebUi"), false, prefini::Sections::WebServer);
 	m_bWebLowEnabled = ini.GetBool(_T("UseLowRightsUser"), false, prefini::Sections::WebServer);
 	SetWebPageRefresh(NormalizeNonNegativePreference(ini.GetInt(_T("PageRefreshTime"), static_cast<int>(GetDefaultWebPageRefresh()), prefini::Sections::WebServer), GetDefaultWebPageRefresh()));
 	SetWebTimeoutMins(NormalizeNonNegativePreference(ini.GetInt(_T("WebTimeoutMins"), static_cast<int>(GetDefaultWebTimeoutMins()), prefini::Sections::WebServer), GetDefaultWebTimeoutMins()));

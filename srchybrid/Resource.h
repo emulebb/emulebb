@@ -2064,6 +2064,7 @@
 #define IDC_USERNAME_LBL                2695
 #define IDC_PASSWORD_LBL                2696
 #define IDC_AUTH_LBL                    2697
+#define IDC_WSLEGACYUI                  2698
 #define IDC_LISTVIEW_SEARCH_COLUMN      2700
 #define IDC_LISTVIEW_SEARCH_TEXT        2702
 #define IDC_AUTH_LBL2                   2703
@@ -2980,6 +2981,9 @@
 #define IDS_DIAG_SNAPSHOT_COPY_FAILURE         3153
 #define IDS_DIAG_SNAPSHOT_KIND_RAW             3154
 #define IDS_DIAG_SNAPSHOT_KIND_REDACTED        3155
+#define IDS_WS_ENABLE_REST_API                 3156
+#define IDS_WS_ENABLE_LEGACY_WEBUI             3157
+#define IDS_WEBSERVER_TT_WSLEGACYUI            3158
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025

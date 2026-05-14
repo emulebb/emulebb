@@ -772,44 +772,45 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Web Server"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "General",IDC_STATIC_GENERAL,4,2,223,184
-    CONTROL         "Enable",IDC_WSENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,12,107,8
-    CONTROL         "Gzip",IDC_WS_GZIP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,23,194,8
-    CONTROL         "Include port into UPnP setup",IDC_WSUPNP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,33,205,8
-    RTEXT           "Port",IDC_WSPORT_LBL,11,48,72,8
-    EDITTEXT        IDC_WSPORT,85,46,33,13,ES_AUTOHSCROLL | ES_NUMBER
-    RTEXT           "Bind address",IDC_WEBBINDADDR_LBL,121,48,41,8
-    EDITTEXT        IDC_WEBBINDADDR,164,46,56,13,ES_AUTOHSCROLL
-    RTEXT           "Template:",IDC_TEMPLATE,11,64,72,8
-    EDITTEXT        IDC_TMPLPATH,85,62,135,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_TMPLBROWSE,209,59,14,12
-    PUSHBUTTON      "Reload",IDC_WSRELOADTMPL,159,77,61,12
-    RTEXT           "Session time out",IDC_WSTIMEOUTLABEL,11,88,72,8
-    EDITTEXT        IDC_WSTIMEOUT,85,86,26,13,ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "minutes",IDC_MINS,114,88,40,8
-    RTEXT           "Max upload MB",IDC_WS_MAXFILEUPLOAD_LBL,11,104,72,8
-    EDITTEXT        IDC_WS_MAXFILEUPLOAD,85,102,40,13,ES_AUTOHSCROLL | ES_NUMBER
-    RTEXT           "Allowed IPs",IDC_WS_ALLOWEDIPS_LBL,11,120,72,8
-    EDITTEXT        IDC_WS_ALLOWEDIPS,85,118,135,13,ES_AUTOHSCROLL
-    CONTROL         "Use HTTPS",IDC_WEB_HTTPS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,134,70,8
-    PUSHBUTTON      "Create new certificate",IDC_WEB_GENERATE,85,134,135,12
-    RTEXT           "Certificate:",IDC_WEB_CERT,11,152,72,8
-    EDITTEXT        IDC_CERTPATH,85,150,135,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_CERTBROWSE,209,147,14,12
-    RTEXT           "Key:",IDC_WEB_KEY,11,170,72,8
-    EDITTEXT        IDC_KEYPATH,85,168,135,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_KEYBROWSE,209,165,14,12
-    GROUPBOX        "Admin",IDC_STATIC_ADMIN,4,188,223,51
-    RTEXT           "Password",IDC_WSPASS_LBL,11,200,72,8
-    EDITTEXT        IDC_WSPASS,85,198,135,13,ES_PASSWORD | ES_AUTOHSCROLL
-    RTEXT           "API key",IDC_WSAPIKEY_LBL,11,215,72,8
-    EDITTEXT        IDC_WSAPIKEY,85,213,135,13,ES_AUTOHSCROLL
+    GROUPBOX        "General",IDC_STATIC_GENERAL,4,2,223,196
+    CONTROL         "Enable REST API",IDC_WSENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,12,209,8
+    CONTROL         "Enable legacy Web UI",IDC_WSLEGACYUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,23,194,8
+    CONTROL         "Gzip",IDC_WS_GZIP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,33,194,8
+    CONTROL         "Include port into UPnP setup",IDC_WSUPNP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,43,205,8
+    RTEXT           "Port",IDC_WSPORT_LBL,11,60,72,8
+    EDITTEXT        IDC_WSPORT,85,58,33,13,ES_AUTOHSCROLL | ES_NUMBER
+    RTEXT           "Bind address",IDC_WEBBINDADDR_LBL,121,60,41,8
+    EDITTEXT        IDC_WEBBINDADDR,164,58,56,13,ES_AUTOHSCROLL
+    RTEXT           "Template:",IDC_TEMPLATE,11,76,72,8
+    EDITTEXT        IDC_TMPLPATH,85,74,135,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_TMPLBROWSE,209,71,14,12
+    PUSHBUTTON      "Reload",IDC_WSRELOADTMPL,159,89,61,12
+    RTEXT           "Session time out",IDC_WSTIMEOUTLABEL,11,100,72,8
+    EDITTEXT        IDC_WSTIMEOUT,85,98,26,13,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "minutes",IDC_MINS,114,100,40,8
+    RTEXT           "Max upload MB",IDC_WS_MAXFILEUPLOAD_LBL,11,116,72,8
+    EDITTEXT        IDC_WS_MAXFILEUPLOAD,85,114,40,13,ES_AUTOHSCROLL | ES_NUMBER
+    RTEXT           "Allowed IPs",IDC_WS_ALLOWEDIPS_LBL,11,132,72,8
+    EDITTEXT        IDC_WS_ALLOWEDIPS,85,130,135,13,ES_AUTOHSCROLL
+    CONTROL         "Use HTTPS",IDC_WEB_HTTPS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,146,70,8
+    PUSHBUTTON      "Create new certificate",IDC_WEB_GENERATE,85,146,135,12
+    RTEXT           "Certificate:",IDC_WEB_CERT,11,164,72,8
+    EDITTEXT        IDC_CERTPATH,85,162,135,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CERTBROWSE,209,159,14,12
+    RTEXT           "Key:",IDC_WEB_KEY,11,182,72,8
+    EDITTEXT        IDC_KEYPATH,85,180,135,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_KEYBROWSE,209,177,14,12
+    GROUPBOX        "Admin",IDC_STATIC_ADMIN,4,200,223,51
+    RTEXT           "Password",IDC_WSPASS_LBL,11,212,72,8
+    EDITTEXT        IDC_WSPASS,85,210,135,13,ES_PASSWORD | ES_AUTOHSCROLL
+    RTEXT           "API key",IDC_WSAPIKEY_LBL,11,227,72,8
+    EDITTEXT        IDC_WSAPIKEY,85,225,135,13,ES_AUTOHSCROLL
     CONTROL         "Allow exit, reboot and shutdown",IDC_WS_ALLOWHILEVFUNC,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,229,194,8
-    GROUPBOX        "low user",IDC_STATIC_LOWUSER,4,240,223,40
-    CONTROL         "Enable",IDC_WSENABLEDLOW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,250,100,11
-    RTEXT           "Password",IDC_WSPASS_LBL2,11,264,72,8
-    EDITTEXT        IDC_WSPASSLOW,85,262,135,13,ES_PASSWORD | ES_AUTOHSCROLL
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,241,194,8
+    GROUPBOX        "low user",IDC_STATIC_LOWUSER,4,252,223,40
+    CONTROL         "Enable",IDC_WSENABLEDLOW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,262,100,11
+    RTEXT           "Password",IDC_WSPASS_LBL2,11,276,72,8
+    EDITTEXT        IDC_WSPASSLOW,85,274,135,13,ES_PASSWORD | ES_AUTOHSCROLL
 END
 
 IDD_PPG_SCHEDULER DIALOGEX 0, 0, 391, 429
@@ -3742,6 +3743,10 @@ BEGIN
                             "Failed to copy %s diagnostic snapshot JSON to the clipboard."
     IDS_DIAG_SNAPSHOT_KIND_RAW "raw"
     IDS_DIAG_SNAPSHOT_KIND_REDACTED "redacted"
+    IDS_WS_ENABLE_REST_API "Enable REST API"
+    IDS_WS_ENABLE_LEGACY_WEBUI "Enable legacy Web UI"
+    IDS_WEBSERVER_TT_WSLEGACYUI
+                            "Enables the old template-based Web UI.\r\n\r\nLeave this off for REST-only use. If enabled, missing templates affect only legacy HTML pages, not REST API requests."
     IDS_SEARCHPARAMS        "Search Parameters"
 END
 
@@ -4812,17 +4817,17 @@ BEGIN
     IDS_WEBSERVER_TT_CERTPATH              "Certificate file used when HTTPS is enabled.\r\n\r\nThe WebServer cannot start in HTTPS mode if this file is missing or invalid."
     IDS_WEBSERVER_TT_KEYBROWSE             "Browses for the HTTPS private key file.\r\n\r\nKeep the selected key private and readable only by trusted local users."
     IDS_WEBSERVER_TT_KEYPATH               "Private key file used when HTTPS is enabled.\r\n\r\nProtect this file; anyone with the key can impersonate the WebServer certificate."
-    IDS_WEBSERVER_TT_TMPLBROWSE            "Browses for the WebServer template directory.\r\n\r\nChoose the folder containing the Web UI template files."
-    IDS_WEBSERVER_TT_TMPLPATH              "Template directory used by the built-in Web UI.\r\n\r\nThe WebServer cannot render pages correctly if this path is missing."
+    IDS_WEBSERVER_TT_TMPLBROWSE            "Browses for the legacy Web UI template file.\r\n\r\nThis is needed only when the legacy Web UI is enabled."
+    IDS_WEBSERVER_TT_TMPLPATH              "Template file used by the legacy Web UI.\r\n\r\nREST API requests do not require this file."
     IDS_WEBSERVER_TT_WEB_GENERATE          "Creates a new local certificate and private key for HTTPS.\r\n\r\nUse this for local or trusted-network setups when you do not provide your own certificate."
-    IDS_WEBSERVER_TT_WSENABLED             "Enables the built-in WebServer and REST API.\r\n\r\nOnly enable it when you need remote control and have configured passwords and access limits."
+    IDS_WEBSERVER_TT_WSENABLED             "Enables the REST API and shared WebServer listener.\r\n\r\nOnly enable it when you need remote control and have configured passwords and access limits."
     IDS_WEBSERVER_TT_WSENABLEDLOW          "Enables the low-rights WebServer account.\r\n\r\nUse it for clients that should not have full administrative Web access."
     IDS_WEBSERVER_TT_WSPASS                "Password for the main WebServer account.\r\n\r\nUse a strong unique password, especially if the WebServer is reachable beyond localhost."
     IDS_WEBSERVER_TT_WSPASSLOW             "Password for the low-rights WebServer account.\r\n\r\nUse a different password from the main account."
     IDS_WEBSERVER_TT_WSPORT                "TCP port used by the WebServer and REST API.\r\n\r\nChange it only when firewall, reverse proxy, or router rules are updated to match."
-    IDS_WEBSERVER_TT_WSRELOADTMPL          "Reloads WebServer templates from disk without restarting eMule.\r\n\r\nUse it after changing template files."
+    IDS_WEBSERVER_TT_WSRELOADTMPL          "Reloads legacy Web UI templates from disk without restarting eMule.\r\n\r\nUse it after changing template files."
     IDS_WEBSERVER_TT_WSTIMEOUT             "Session timeout for WebServer logins in minutes.\r\n\r\nShorter timeouts are safer on shared machines; longer timeouts are more convenient."
-    IDS_WEBSERVER_TT_WS_GZIP               "Compresses WebServer responses with gzip when clients support it.\r\n\r\nRecommended for remote access unless you are diagnosing a compatibility issue."
+    IDS_WEBSERVER_TT_WS_GZIP               "Compresses legacy Web UI responses with gzip when clients support it.\r\n\r\nREST API responses are not gated by this legacy UI option."
     IDS_PPG_DEBUG_TT_SERVER                "Enables server-side debug logging categories.\r\n\r\nUse only while diagnosing server communication or discovery problems."
     IDS_PPG_DEBUG_TT_CLIENT                "Enables client-side debug logging categories.\r\n\r\nUse only while diagnosing peer communication problems."
     IDS_PPG_DEBUG_TT_DETAIL                "Enables this debug category.\r\n\r\nDebug logging can be noisy and should normally stay off outside diagnostics."

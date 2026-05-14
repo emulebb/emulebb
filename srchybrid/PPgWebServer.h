@@ -26,6 +26,7 @@ protected:
 
 	void LoadSettings();
 	void UpdateToolTips();
+	void UpdateLegacyWebUiControls();
 
 	virtual void DoDataExchange(CDataExchange *pDX);
 	virtual BOOL OnInitDialog();
@@ -40,6 +41,7 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnEnChangeWSEnabled();
+	afx_msg void OnLegacyWebUiChanged();
 	afx_msg void OnChangeHTTPS();
 	afx_msg void OnReloadTemplates();
 	afx_msg void OnBnClickedTmplbrowse();

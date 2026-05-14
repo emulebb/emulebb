@@ -592,6 +592,7 @@ public:
 	static uint16	m_nWebPort;
 	static bool		m_bWebUseUPnP;
 	static bool		m_bWebEnabled;
+	static bool		m_bLegacyWebUiEnabled;
 	static bool		m_bWebUseGzip;
 	static int		m_nWebPageRefresh;
 	static bool		m_bWebLowEnabled;
@@ -1564,6 +1565,8 @@ public:
 	static void		SetWSApiKey(const CString &strNewKey);
 	static bool		GetWSIsEnabled()					{ return m_bWebEnabled; }
 	static void		SetWSIsEnabled(bool bEnable)		{ m_bWebEnabled = bEnable; }
+	static bool		GetLegacyWebUiEnabled()				{ return m_bLegacyWebUiEnabled; }
+	static void		SetLegacyWebUiEnabled(bool bEnable)	{ m_bLegacyWebUiEnabled = bEnable; }
 	static bool		GetWebUseGzip()						{ return m_bWebUseGzip; }
 	static void		SetWebUseGzip(bool bUse)			{ m_bWebUseGzip = bUse; }
 	static UINT		GetWebPageRefresh()					{ return static_cast<UINT>(m_nWebPageRefresh); }
