@@ -102,6 +102,28 @@ CString LexicallyNormalizeSharedFilePath(const CString &rstrPath)
 	return PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrPath));
 }
 
+CString MakeSharedFileLookupKey(const CString &rstrPath)
+{
+	CString strKey(LexicallyNormalizeSharedFilePath(rstrPath));
+	strKey.MakeLower();
+	return strKey;
+}
+
+CString MakeSharedDirectoryLookupKey(const CString &rstrPath)
+{
+	CString strKey(LexicallyNormalizeSharedDirectoryPath(rstrPath));
+	strKey.MakeLower();
+	return strKey;
+}
+
+bool IsSharedFilePathWithinDirectoryFast(const CString &strDirectory, const CString &strFilePath)
+{
+	const CString strDirectoryKey(MakeSharedDirectoryLookupKey(strDirectory));
+	const CString strFileKey(MakeSharedFileLookupKey(strFilePath));
+	return strFileKey.GetLength() > strDirectoryKey.GetLength()
+		&& _tcsncmp(strFileKey, strDirectoryKey, strDirectoryKey.GetLength()) == 0;
+}
+
 CString BuildSharedHashFilePath(const CString &strDirectory, const CString &strName)
 {
 	CString strFilePath(strDirectory);
@@ -135,9 +157,7 @@ std::wstring MakeStartupCacheSnapshotKey(const CString &strDirectory)
 
 bool HasSameDirectoryTextFast(const CString &strLeft, const CString &strRight)
 {
-	CString strLeftKey(LexicallyNormalizeSharedDirectoryPath(strLeft));
-	CString strRightKey(LexicallyNormalizeSharedDirectoryPath(strRight));
-	return strLeftKey.CompareNoCase(strRightKey) == 0;
+	return MakeSharedDirectoryLookupKey(strLeft) == MakeSharedDirectoryLookupKey(strRight);
 }
 
 CKnownFileProgressTargetSnapshot MakePartFileProgressTargetSnapshot(const CPartFile &partFile)
@@ -1282,10 +1302,11 @@ bool CSharedFileList::AddSingleSharedFile(const CString &rstrFilePath, bool bNoU
 
 	bool bExclude = false;
 	// first check if we are explicitly excluding this file
+	const CString strFilePathKey(MakeSharedFileLookupKey(strFilePath));
 	for (POSITION pos = m_liSingleExcludedFiles.GetHeadPosition(); pos != NULL;) {
 		POSITION pos2 = pos;
 		const CString strExcluded(m_liSingleExcludedFiles.GetNext(pos));
-		if (PathHelpers::ArePathsEquivalent(strFilePath, strExcluded)) {
+		if (strFilePathKey == MakeSharedFileLookupKey(strExcluded)) {
 			bExclude = true;
 			if (strExcluded.CompareNoCase(strFilePath) != 0) {
 				m_liSingleExcludedFiles.SetAt(pos2, strFilePath);
@@ -1356,8 +1377,9 @@ void CSharedFileList::CheckAndAddSingleFileFromNormalizedDirectory(const CString
 	if (strFoundFilePath.GetLength() > 260)
 		++m_startupScanStats.uPathsOver260Chars;
 
+	const CString strFoundFilePathKey(MakeSharedFileLookupKey(strFoundFilePath));
 	for (POSITION pos = m_liSingleExcludedFiles.GetHeadPosition(); pos != NULL;)
-		if (PathHelpers::ArePathsEquivalent(strFoundFilePath, m_liSingleExcludedFiles.GetNext(pos))) {
+		if (strFoundFilePathKey == MakeSharedFileLookupKey(m_liSingleExcludedFiles.GetNext(pos))) {
 			++m_startupScanStats.uFilesIgnored;
 			return;
 		}
@@ -2263,31 +2285,26 @@ bool CSharedFileList::ShouldBeShared(const CString &sDirPath, LPCTSTR const pFil
 	if (!bMustBeShared && thePrefs.IsSharedDirectoryListed(sDirPath)) {
 		// check if this file is explicitly unshared
 		if (pFilePath != NULL) {
+			const CString strFilePathKey(MakeSharedFileLookupKey(pFilePath));
 			for (POSITION pos = m_liSingleExcludedFiles.GetHeadPosition(); pos != NULL;)
-				if (PathHelpers::ArePathsEquivalent(m_liSingleExcludedFiles.GetNext(pos), pFilePath))
+				if (MakeSharedFileLookupKey(m_liSingleExcludedFiles.GetNext(pos)) == strFilePathKey)
 					return false;
 		}
 		return true;
 	}
 
-	if (EqualPaths(sDirPath, thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)))
-		return true;
-
-	for (INT_PTR i = thePrefs.GetCatCount(); --i > 0;) //down to 1
-		if (EqualPaths(sDirPath, thePrefs.GetCatPath(i)))
-			return true;
-
 	if (bMustBeShared) //check only incoming & categories (cannot be unshared)
 		return false;
 
 	if (pFilePath) {
+		const CString strFilePathKey(MakeSharedFileLookupKey(pFilePath));
 		// check if this file is explicitly unshared
 		for (POSITION pos = m_liSingleExcludedFiles.GetHeadPosition(); pos != NULL;)
-			if (PathHelpers::ArePathsEquivalent(m_liSingleExcludedFiles.GetNext(pos), pFilePath))
+			if (MakeSharedFileLookupKey(m_liSingleExcludedFiles.GetNext(pos)) == strFilePathKey)
 				return false;
 		// check if this file is explicitly shared (as single file)
 		for (POSITION pos = m_liSingleSharedFiles.GetHeadPosition(); pos != NULL;)
-			if (PathHelpers::ArePathsEquivalent(m_liSingleSharedFiles.GetNext(pos), pFilePath))
+			if (MakeSharedFileLookupKey(m_liSingleSharedFiles.GetNext(pos)) == strFilePathKey)
 				return true;
 	}
 
@@ -2297,7 +2314,7 @@ bool CSharedFileList::ShouldBeShared(const CString &sDirPath, LPCTSTR const pFil
 bool CSharedFileList::ContainsSingleSharedFiles(const CString &strDirectory) const
 {
 	for (POSITION pos = m_liSingleSharedFiles.GetHeadPosition(); pos != NULL;)
-		if (PathHelpers::IsPathWithinDirectory(strDirectory, m_liSingleSharedFiles.GetNext(pos)))
+		if (IsSharedFilePathWithinDirectoryFast(strDirectory, m_liSingleSharedFiles.GetNext(pos)))
 			return true;
 
 	return false;
