@@ -206,6 +206,88 @@ bool SavePathListToFile(const CString &rstrFullPath, const CStringList &rPaths)
 	return false;
 }
 
+/**
+ * @brief Loads server.met update URLs without applying filesystem path normalization.
+ */
+bool LoadServerMetAddressListFromFile(const CString &rstrFullPath, CStringList &rOutList)
+{
+	rOutList.RemoveAll();
+	const bool bIsUnicodeFile = IsUnicodeFile(rstrFullPath);
+	CSafeBufferedFile file;
+	if (!LongPathSeams::OpenFile(file, rstrFullPath, CFile::modeRead | CFile::shareDenyWrite | (bIsUnicodeFile ? CFile::typeBinary : 0)))
+		return false;
+
+	try {
+		if (bIsUnicodeFile)
+			file.Seek(sizeof(WORD), CFile::begin);
+
+		CString strUrl;
+		while (file.CStdioFile::ReadString(strUrl)) {
+			strUrl.Trim(_T(" \t\r\n"));
+			if (!strUrl.IsEmpty())
+				rOutList.AddTail(strUrl);
+		}
+	} catch (CFileException *ex) {
+		ASSERT(0);
+		ex->Delete();
+	}
+	file.Close();
+	return true;
+}
+
+/**
+ * @brief Saves server.met update URLs as a Unicode text file using a temp file replace.
+ */
+bool SaveServerMetAddressListToFile(const CString &rstrFullPath, const CStringList &rUrls)
+{
+	const CString strTempPath(rstrFullPath + _T(".tmp"));
+	CSafeBufferedFile file;
+	if (!LongPathSeams::OpenFile(file, strTempPath, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite | CFile::typeBinary))
+		return false;
+
+	try {
+		static const WORD wBOM = u'\xFEFF';
+		file.Write(&wBOM, sizeof wBOM);
+		for (POSITION pos = rUrls.GetHeadPosition(); pos != NULL;) {
+			file.CStdioFile::WriteString(rUrls.GetNext(pos));
+			file.Write(_T("\r\n"), 2 * sizeof(TCHAR));
+		}
+		file.Close();
+		return LongPathSeams::MoveFileEx(strTempPath, rstrFullPath, MOVEFILE_REPLACE_EXISTING) != 0;
+	} catch (CFileException *ex) {
+		if (thePrefs.GetVerbose())
+			AddDebugLogLine(true, _T("Failed to save %s%s"), (LPCTSTR)rstrFullPath, (LPCTSTR)CExceptionStrDash(*ex));
+		ex->Delete();
+	}
+	return false;
+}
+
+/**
+ * @brief Loads server.met update URLs and seeds the default source when the file is missing or empty.
+ */
+void LoadServerMetAddressList(const CString &rstrFullPath, CStringList &rOutList)
+{
+	CStringList loadedUrls;
+	const bool bAddressFileExists = LongPathSeams::PathExists(rstrFullPath) != FALSE;
+	const bool bLoaded = bAddressFileExists && LoadServerMetAddressListFromFile(rstrFullPath, loadedUrls);
+
+	rOutList.RemoveAll();
+	if (bLoaded && !loadedUrls.IsEmpty()) {
+		for (POSITION pos = loadedUrls.GetHeadPosition(); pos != NULL;)
+			rOutList.AddTail(loadedUrls.GetNext(pos));
+		return;
+	}
+
+	if (!bAddressFileExists || bLoaded) {
+		const CString strDefaultUrl(CPreferences::GetDefaultServerMetUrl());
+		rOutList.AddTail(strDefaultUrl);
+
+		CStringList defaultUrls;
+		defaultUrls.AddTail(strDefaultUrl);
+		SaveServerMetAddressListToFile(rstrFullPath, defaultUrls);
+	}
+}
+
 std::wstring MakeDirectoryListLookupKey(const CString &rstrDirectory)
 {
 	CString strKey(rstrDirectory);
@@ -1353,24 +1435,7 @@ void CPreferences::Init()
 
 	// server list addresses
 	strFullPath.Format(_T("%s") _T("addresses.dat"), (LPCTSTR)sConfDir);
-	bIsUnicodeFile = IsUnicodeFile(strFullPath);
-	if (LongPathSeams::OpenFile(sdirfile, strFullPath, CFile::modeRead | CFile::shareDenyWrite | (bIsUnicodeFile ? CFile::typeBinary : 0))) {
-		try {
-			if (bIsUnicodeFile)
-				sdirfile.Seek(sizeof(WORD), CFile::current); // skip BOM
-
-			CString toadd;
-			while (sdirfile.CStdioFile::ReadString(toadd)) {
-				toadd.Trim(_T(" \t\r\n")); // need to trim '\r' in binary mode
-				if (!toadd.IsEmpty())
-					addresses_list.AddTail(toadd);
-			}
-		} catch (CFileException *ex) {
-			ASSERT(0);
-			ex->Delete();
-		}
-		sdirfile.Close();
-	}
+	LoadServerMetAddressList(strFullPath, addresses_list);
 
 	// Explicitly inform the user about errors with incoming/temp folders!
 	if (!LongPathSeams::PathExists(GetMuleDirectory(EMULE_INCOMINGDIR)) && !LongPathSeams::CreateDirectory(GetMuleDirectory(EMULE_INCOMINGDIR), 0)) {
