@@ -104,6 +104,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void	OnSysColorChange();
 	afx_msg void	OnContextMenu(CWnd*, CPoint point);
+	afx_msg void	OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg	void	OnRButtonDown(UINT, CPoint point);
 	afx_msg	void	OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void	OnTvnItemexpanding(LPNMHDR pNMHDR, LRESULT *pResult);

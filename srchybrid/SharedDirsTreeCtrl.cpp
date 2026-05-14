@@ -28,6 +28,7 @@
 #include "SharedFileList.h"
 #include "SharedFilesWnd.h"
 #include "SharedDirectoryOps.h"
+#include "FileListKeyboardShortcutsSeams.h"
 
 #include <algorithm>
 #include <vector>
@@ -61,6 +62,14 @@ bool EnableSubMenuItem(CMenu &menu, HMENU hSubMenu, UINT state)
 	if (position < 0)
 		return false;
 	return menu.EnableMenuItem(static_cast<UINT>(position), MF_BYPOSITION | state) != static_cast<UINT>(-1);
+}
+
+CString AddMenuShortcutLabel(const CString &strLabel, LPCTSTR pszShortcut)
+{
+	CString strMenuLabel(strLabel);
+	strMenuLabel += _T("\t");
+	strMenuLabel += pszShortcut;
+	return strMenuLabel;
 }
 
 bool ListContainsEquivalentPath(const CStringList &rList, const CString &rstrPath)
@@ -341,6 +350,7 @@ IMPLEMENT_DYNAMIC(CSharedDirsTreeCtrl, CTreeCtrl)
 
 BEGIN_MESSAGE_MAP(CSharedDirsTreeCtrl, CTreeCtrl)
 	ON_WM_CONTEXTMENU()
+	ON_WM_KEYDOWN()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_MOUSEMOVE()
 	ON_WM_CANCELMODE()
@@ -796,17 +806,17 @@ void CSharedDirsTreeCtrl::CreateMenus()
 
 	m_SharedFilesMenu.CreatePopupMenu();
 	m_SharedFilesMenu.AddMenuTitle(GetResString(IDS_SHAREDFILES), true);
-	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_OPENFOLDER, GetResString(IDS_OPENFOLDER), _T("OPENFOLDER"));
+	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_OPENFOLDER, AddMenuShortcutLabel(GetResString(IDS_OPENFOLDER), _T("Ctrl+Shift+O")), _T("OPENFOLDER"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_REMOVE, GetResString(IDS_DELETE), _T("DELETE"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING | MF_SEPARATOR);
 	CString sPrio(GetResString(IDS_PRIORITY));
 	sPrio.AppendFormat(_T(" (%s)"), (LPCTSTR)GetResString(IDS_PW_CON_UPLBL));
 	m_SharedFilesMenu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)m_PrioMenu.m_hMenu, sPrio, _T("FILEPRIORITY"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING | MF_SEPARATOR);
-	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_DETAIL, GetResString(IDS_SHOWDETAILS), _T("FILEINFO"));
+	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_DETAIL, AddMenuShortcutLabel(GetResString(IDS_SHOWDETAILS), _T("Ctrl+I")), _T("FILEINFO"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_CMT, GetResString(IDS_CMT_ADD), _T("FILECOMMENTS"));
 	if (thePrefs.GetShowCopyEd2kLinkCmd())
-		m_SharedFilesMenu.AppendMenu(MF_STRING, MP_GETED2KLINK, GetResString(IDS_DL_LINK1), _T("ED2KLINK"));
+		m_SharedFilesMenu.AppendMenu(MF_STRING, MP_GETED2KLINK, AddMenuShortcutLabel(GetResString(IDS_DL_LINK1), _T("Ctrl+L")), _T("ED2KLINK"));
 	else
 		m_SharedFilesMenu.AppendMenu(MF_STRING, MP_SHOWED2KLINK, GetResString(IDS_DL_SHOWED2KLINK), _T("ED2KLINK"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING | MF_SEPARATOR);
@@ -815,7 +825,7 @@ void CSharedDirsTreeCtrl::CreateMenus()
 
 	m_ShareDirsMenu.CreatePopupMenu();
 	m_ShareDirsMenu.AddMenuTitle(GetResString(IDS_SHAREDFILES), true);
-	m_ShareDirsMenu.AppendMenu(MF_STRING, MP_OPENFOLDER, GetResString(IDS_OPENFOLDER), _T("OPENFOLDER"));
+	m_ShareDirsMenu.AppendMenu(MF_STRING, MP_OPENFOLDER, AddMenuShortcutLabel(GetResString(IDS_OPENFOLDER), _T("Ctrl+Shift+O")), _T("OPENFOLDER"));
 	m_ShareDirsMenu.AppendMenu(MF_STRING | MF_SEPARATOR);
 	m_ShareDirsMenu.AppendMenu(MF_STRING, MP_SHAREDIR, GetResString(IDS_SHAREDIR));
 	m_ShareDirsMenu.AppendMenu(MF_STRING, MP_SHAREDIRSUB, GetResString(IDS_SHAREDIRSUB));
@@ -928,6 +938,23 @@ void CSharedDirsTreeCtrl::OnRButtonDown(UINT, CPoint point)
 		Select(hItem, TVGN_CARET);
 		SetItemState(hItem, TVIS_SELECTED, TVIS_SELECTED);
 	}
+}
+
+void CSharedDirsTreeCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	const UINT uCommand = FileListKeyboardShortcutsSeams::ClassifyKeyMessage(
+		FileListKeyboardShortcutsSeams::EContext::SharedDirs,
+		WM_KEYDOWN,
+		nChar,
+		GetKeyState(VK_CONTROL) < 0,
+		GetKeyState(VK_MENU) < 0,
+		GetKeyState(VK_SHIFT) < 0);
+	if (uCommand != 0) {
+		SendMessage(WM_COMMAND, uCommand);
+		return;
+	}
+
+	CTreeCtrl::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 #pragma warning(push)

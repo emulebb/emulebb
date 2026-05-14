@@ -494,6 +494,7 @@
     <ClInclude Include="FileDetailDialogInfo.h" />
     <ClInclude Include="FileDetailDialogName.h" />
     <ClInclude Include="FileDetailDlgStatistics.h" />
+    <ClInclude Include="FileListKeyboardShortcutsSeams.h" />
     <ClInclude Include="FileTypeClassifierSeams.h" />
     <ClInclude Include="FileIdentifier.h" />
     <ClInclude Include="FileInfoDialog.h" />

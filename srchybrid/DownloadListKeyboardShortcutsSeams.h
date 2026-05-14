@@ -19,6 +19,7 @@
 #include <Windows.h>
 #include <tchar.h>
 
+#include "FileListKeyboardShortcutsSeams.h"
 #include "MenuCmds.h"
 
 /** Testable keyboard shortcut policy for the Downloads file list. */
@@ -32,18 +33,12 @@ namespace DownloadListKeyboardShortcutsSeams
 	 */
 	inline UINT ClassifyKeyMessage(UINT uMessage, WPARAM wParam, bool bCtrlDown, bool bAltDown, bool bShiftDown)
 	{
-		if (uMessage != WM_KEYDOWN || !bCtrlDown || bAltDown || bShiftDown)
-			return 0;
-
-		switch (wParam) {
-		case _T('P'):
-			return MP_PAUSE;
-		case _T('S'):
-			return MP_RESUME;
-		case _T('T'):
-			return MP_STOP;
-		default:
-			return 0;
-		}
+		return FileListKeyboardShortcutsSeams::ClassifyKeyMessage(
+			FileListKeyboardShortcutsSeams::EContext::Downloads,
+			uMessage,
+			wParam,
+			bCtrlDown,
+			bAltDown,
+			bShiftDown);
 	}
 }

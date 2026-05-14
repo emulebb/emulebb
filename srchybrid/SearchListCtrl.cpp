@@ -45,6 +45,7 @@
 #include "UserMsgs.h"
 #include "SearchResultsWnd.h"
 #include "MediaInfo.h"
+#include "FileListKeyboardShortcutsSeams.h"
 #include "ProUserMenuCopySeams.h"
 
 #ifdef _DEBUG
@@ -60,6 +61,16 @@ static char THIS_FILE[] = __FILE__;
 
 #define	TREE_WIDTH		10
 
+namespace
+{
+	CString AddMenuShortcutLabel(const CString &strLabel, LPCTSTR pszShortcut)
+	{
+		CString strMenuLabel(strLabel);
+		strMenuLabel += _T("\t");
+		strMenuLabel += pszShortcut;
+		return strMenuLabel;
+	}
+}
 
 //////////////////////////////////////////////////////////////////////////////
 // CSearchResultFileDetailSheet
@@ -717,7 +728,7 @@ void CSearchListCtrl::OnContextMenu(CWnd*, CPoint point)
 	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_HASH, GetResString(IDS_COPY_HASH));
 	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_GETED2KLINK, GetResString(IDS_DL_LINK1), _T("ED2KLink"));
 	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_GETHTMLED2KLINK, GetResString(IDS_DL_LINK2), _T("ED2KLink"));
-	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_SEARCH_SUMMARY, GetResString(IDS_COPY_RESULT_SUMMARY));
+	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_SEARCH_SUMMARY, AddMenuShortcutLabel(GetResString(IDS_COPY_RESULT_SUMMARY), _T("Ctrl+Shift+C")));
 	m_SearchFileMenu.AppendMenu(MF_POPUP | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), (UINT_PTR)CopyMenu.m_hMenu, GetResString(IDS_COPY));
 	CTitledMenu WebMenu;
 	WebMenu.CreateMenu();
@@ -935,14 +946,14 @@ void CSearchListCtrl::CreateMenus()
 
 	m_SearchFileMenu.CreatePopupMenu();
 	m_SearchFileMenu.AddMenuTitle(GetResString(IDS_FILE), true);
-	m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUME, GetResString(IDS_DOWNLOAD), _T("Resume"));
+	m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUME, AddMenuShortcutLabel(GetResString(IDS_DOWNLOAD), _T("Ctrl+D")), _T("Resume"));
 	CString sResumePaused(GetResString(IDS_DOWNLOAD));
 	sResumePaused.AppendFormat(_T(" (%s)"), (LPCTSTR)GetResString(IDS_PAUSED));
-	m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUMEPAUSED, sResumePaused);
-	m_SearchFileMenu.AppendMenu(MF_STRING, MP_DETAIL, GetResString(IDS_SHOWDETAILS), _T("FileInfo"));
+	m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUMEPAUSED, AddMenuShortcutLabel(sResumePaused, _T("Ctrl+Shift+D")));
+	m_SearchFileMenu.AppendMenu(MF_STRING, MP_DETAIL, AddMenuShortcutLabel(GetResString(IDS_SHOWDETAILS), _T("Ctrl+I")), _T("FileInfo"));
 	m_SearchFileMenu.AppendMenu(MF_STRING, MP_CMT, GetResString(IDS_CMT_ADD), _T("FILECOMMENTS"));
 	m_SearchFileMenu.AppendMenu(MF_SEPARATOR);
-	m_SearchFileMenu.AppendMenu(MF_STRING, MP_GETED2KLINK, GetResString(IDS_DL_LINK1), _T("ED2KLink"));
+	m_SearchFileMenu.AppendMenu(MF_STRING, MP_GETED2KLINK, AddMenuShortcutLabel(GetResString(IDS_DL_LINK1), _T("Ctrl+L")), _T("ED2KLink"));
 	m_SearchFileMenu.AppendMenu(MF_STRING, MP_GETHTMLED2KLINK, GetResString(IDS_DL_LINK2), _T("ED2KLink"));
 	m_SearchFileMenu.AppendMenu(MF_STRING, MP_REMOVESELECTED, GetResString(IDS_REMOVESELECTED), _T("DeleteSelected"));
 	//m_SearchFileMenu.AppendMenu(MF_STRING, MP_MARKASSPAM, GetResString(IDS_MARKSPAM), _T("Spam"));
@@ -1497,6 +1508,18 @@ void CSearchListCtrl::DrawSourceParent(CDC &dc, int nColumn, LPRECT lpRect, UINT
 
 void CSearchListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
+	const UINT uCommand = FileListKeyboardShortcutsSeams::ClassifyKeyMessage(
+		FileListKeyboardShortcutsSeams::EContext::SearchResults,
+		WM_KEYDOWN,
+		nChar,
+		GetKeyState(VK_CONTROL) < 0,
+		GetKeyState(VK_MENU) < 0,
+		GetKeyState(VK_SHIFT) < 0);
+	if (uCommand != 0) {
+		SendMessage(WM_COMMAND, uCommand);
+		return;
+	}
+
 	if (nChar == 'C' && GetKeyState(VK_CONTROL) < 0) {
 		// Ctrl+C: Copy listview items to clipboard
 		SendMessage(WM_COMMAND, MP_GETED2KLINK);

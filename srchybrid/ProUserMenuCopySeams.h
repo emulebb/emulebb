@@ -45,6 +45,27 @@ namespace ProUserMenuCopySeams
 		return result;
 	}
 
+	/** Formats a stable pro-user summary line for file-like context menus. */
+	inline CString FormatFileSummary(
+		const CString& name,
+		const CString& hash,
+		const CString& size,
+		const CString& status,
+		const CString& progress,
+		const CString& path,
+		const CString& link)
+	{
+		std::vector<NamedField> fields;
+		AppendField(fields, _T("name"), name);
+		AppendField(fields, _T("hash"), hash);
+		AppendField(fields, _T("size"), size);
+		AppendField(fields, _T("status"), status);
+		AppendField(fields, _T("progress"), progress);
+		AppendField(fields, _T("path"), path);
+		AppendField(fields, _T("link"), link);
+		return FormatSummary(fields);
+	}
+
 	inline CString JoinLines(const std::vector<CString>& values)
 	{
 		CString result;

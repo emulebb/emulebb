@@ -49,6 +49,7 @@
 #include "SearchDlg.h"
 #include "SearchResultsWnd.h"
 #include "OtherFunctions.h"
+#include "FileListKeyboardShortcutsSeams.h"
 #include "ProUserMenuCopySeams.h"
 #include "ToolTipCtrlX.h"
 #include "kademlia/kademlia/kademlia.h"
@@ -89,6 +90,14 @@ namespace
 		if (position < 0)
 			return false;
 		return menu.EnableMenuItem(static_cast<UINT>(position), MF_BYPOSITION | state) != static_cast<UINT>(-1);
+	}
+
+	CString AddMenuShortcutLabel(const CString &strLabel, LPCTSTR pszShortcut)
+	{
+		CString strMenuLabel(strLabel);
+		strMenuLabel += _T("\t");
+		strMenuLabel += pszShortcut;
+		return strMenuLabel;
 	}
 
 	CString FormatUploadRatio(float fRatio)
@@ -1432,6 +1441,7 @@ void CSharedFilesCtrl::OnContextMenu(CWnd*, CPoint point)
 	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_PATH, GetResString(IDS_COPY_FILE_PATH));
 	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_COPY_FOLDER_PATH, GetResString(IDS_COPY_FOLDER_PATH));
 	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_GETED2KLINK, GetResString(IDS_DL_LINK1), _T("ED2KLINK"));
+	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_SUMMARY, AddMenuShortcutLabel(_T("Copy File &Summary"), _T("Ctrl+Shift+C")));
 	m_SharedFilesMenu.AppendMenu(MF_POPUP | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), (UINT_PTR)CopyMenu.m_hMenu, GetResString(IDS_COPY));
 
 	CTitledMenu WebMenu;
@@ -1491,12 +1501,14 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM)
 		case MP_COPY_FILE_HASH:
 		case MP_COPY_FILE_PATH:
 		case MP_COPY_FOLDER_PATH:
+		case MP_COPY_FILE_SUMMARY:
 			{
 				std::vector<CString> lines;
 				for (POSITION pos = selectedList.GetHeadPosition(); pos != NULL;) {
 					CKnownFile *pfile = static_cast<CKnownFile*>(selectedList.GetNext(pos));
 					if (pfile == NULL || !pfile->IsKindOf(RUNTIME_CLASS(CKnownFile)))
 						continue;
+					CString size;
 					if (wParam == MP_COPY_FILE_NAME)
 						lines.push_back(pfile->GetFileName());
 					else if (wParam == MP_COPY_FILE_HASH)
@@ -1505,6 +1517,17 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM)
 						lines.push_back(pfile->GetFilePath());
 					else if (wParam == MP_COPY_FOLDER_PATH)
 						lines.push_back(pfile->GetPath());
+					else if (wParam == MP_COPY_FILE_SUMMARY) {
+						size.Format(_T("%I64u"), static_cast<uint64>(pfile->GetFileSize()));
+						lines.push_back(ProUserMenuCopySeams::FormatFileSummary(
+							pfile->GetFileName(),
+							md4str(pfile->GetFileHash()),
+							size,
+							CString(),
+							CString(),
+							pfile->GetFilePath(),
+							pfile->GetED2kLink()));
+					}
 				}
 				const CString text = ProUserMenuCopySeams::JoinLines(lines);
 				if (!text.IsEmpty())
@@ -1996,8 +2019,8 @@ void CSharedFilesCtrl::CreateMenus()
 	m_SharedFilesMenu.CreatePopupMenu();
 	m_SharedFilesMenu.AddMenuTitle(GetResString(IDS_SHAREDFILES), true);
 
-	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_OPEN, GetResString(IDS_OPENFILE), _T("OPENFILE"));
-	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_OPENFOLDER, GetResString(IDS_OPENFOLDER), _T("OPENFOLDER"));
+	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_OPEN, AddMenuShortcutLabel(GetResString(IDS_OPENFILE), _T("Ctrl+O")), _T("OPENFILE"));
+	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_OPENFOLDER, AddMenuShortcutLabel(GetResString(IDS_OPENFOLDER), _T("Ctrl+Shift+O")), _T("OPENFOLDER"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_RENAME, GetResString(IDS_RENAME) + _T("..."), _T("FILERENAME"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_REMOVE, GetResString(IDS_DELETE), _T("DELETE"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_UNSHAREFILE, GetResString(IDS_UNSHARE), _T("KADBOOTSTRAP")); // TODO: better icon
@@ -2012,10 +2035,10 @@ void CSharedFilesCtrl::CreateMenus()
 	m_SharedFilesMenu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)m_CollectionsMenu.m_hMenu, GetResString(IDS_META_COLLECTION), _T("AABCollectionFileType"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING | MF_SEPARATOR);
 
-	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_DETAIL, GetResString(IDS_SHOWDETAILS), _T("FILEINFO"));
+	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_DETAIL, AddMenuShortcutLabel(GetResString(IDS_SHOWDETAILS), _T("Ctrl+I")), _T("FILEINFO"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_CMT, GetResString(IDS_CMT_ADD), _T("FILECOMMENTS"));
 	if (thePrefs.GetShowCopyEd2kLinkCmd())
-		m_SharedFilesMenu.AppendMenu(MF_STRING, MP_GETED2KLINK, GetResString(IDS_DL_LINK1), _T("ED2KLINK"));
+		m_SharedFilesMenu.AppendMenu(MF_STRING, MP_GETED2KLINK, AddMenuShortcutLabel(GetResString(IDS_DL_LINK1), _T("Ctrl+L")), _T("ED2KLINK"));
 	else
 		m_SharedFilesMenu.AppendMenu(MF_STRING, MP_SHOWED2KLINK, GetResString(IDS_DL_SHOWED2KLINK), _T("ED2KLINK"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_FIND, GetResString(IDS_FIND), _T("Search"));
@@ -2072,6 +2095,18 @@ void CSharedFilesCtrl::OnLvnGetDispInfo(LPNMHDR pNMHDR, LRESULT *pResult)
 
 void CSharedFilesCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
+	const UINT uCommand = FileListKeyboardShortcutsSeams::ClassifyKeyMessage(
+		FileListKeyboardShortcutsSeams::EContext::SharedFiles,
+		WM_KEYDOWN,
+		nChar,
+		GetKeyState(VK_CONTROL) < 0,
+		GetKeyState(VK_MENU) < 0,
+		GetKeyState(VK_SHIFT) < 0);
+	if (uCommand != 0) {
+		SendMessage(WM_COMMAND, uCommand);
+		return;
+	}
+
 	if (nChar == 'C' && GetKeyState(VK_CONTROL) < 0) {
 		// Ctrl+C: Copy listview items to clipboard
 		SendMessage(WM_COMMAND, MP_GETED2KLINK);

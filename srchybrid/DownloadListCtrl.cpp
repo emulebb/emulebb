@@ -1707,6 +1707,7 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_PATH, GetResString(IDS_COPY_FILE_PATH));
 			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FOLDER_PATH, GetResString(IDS_COPY_FOLDER_PATH));
 			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_GETED2KLINK, GetResString(IDS_DL_LINK1), _T("ED2KLINK"));
+			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_SUMMARY, AddMenuShortcutLabel(_T("Copy File &Summary"), _T("Ctrl+Shift+C")));
 			m_FileMenu.AppendMenu(MF_POPUP | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), (UINT_PTR)CopyMenu.m_hMenu, GetResString(IDS_COPY));
 
 			CTitledMenu WebMenu;
@@ -2141,12 +2142,15 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 			case MP_COPY_FILE_HASH:
 			case MP_COPY_FILE_PATH:
 			case MP_COPY_FOLDER_PATH:
+			case MP_COPY_FILE_SUMMARY:
 				{
 					std::vector<CString> lines;
 					for (POSITION pos = selectedList.GetHeadPosition(); pos != NULL;) {
 						const CPartFile *partfile = selectedList.GetNext(pos);
 						if (partfile == NULL)
 							continue;
+						CString size;
+						CString progress;
 						switch (wParam) {
 						case MP_COPY_FILE_NAME:
 							lines.push_back(partfile->GetFileName());
@@ -2159,6 +2163,18 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 							break;
 						case MP_COPY_FOLDER_PATH:
 							lines.push_back(partfile->GetPath());
+							break;
+						case MP_COPY_FILE_SUMMARY:
+							size.Format(_T("%I64u"), static_cast<uint64>(partfile->GetFileSize()));
+							progress.Format(_T("%.1f%%"), partfile->GetPercentCompleted());
+							lines.push_back(ProUserMenuCopySeams::FormatFileSummary(
+								partfile->GetFileName(),
+								md4str(partfile->GetFileHash()),
+								size,
+								partfile->getPartfileStatus(),
+								progress,
+								partfile->GetFullName(),
+								partfile->GetED2kLink()));
 							break;
 						}
 					}
@@ -2719,8 +2735,8 @@ void CDownloadListCtrl::CreateMenus()
 	m_FileMenu.AppendMenu(MF_STRING, MP_CANCEL, GetResString(IDS_MAIN_BTN_CANCEL), _T("DELETE"));
 	m_FileMenu.AppendMenu(MF_SEPARATOR);
 
-	m_FileMenu.AppendMenu(MF_STRING, MP_OPEN, GetResString(IDS_DL_OPEN), _T("OPENFILE"));
-	m_FileMenu.AppendMenu(MF_STRING, MP_OPENFOLDER, GetResString(IDS_OPENFOLDER), _T("OPENFOLDER"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_OPEN, AddMenuShortcutLabel(GetResString(IDS_DL_OPEN), _T("Ctrl+O")), _T("OPENFILE"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_OPENFOLDER, AddMenuShortcutLabel(GetResString(IDS_OPENFOLDER), _T("Ctrl+Shift+O")), _T("OPENFOLDER"));
 	// Extended: Submenu with Preview options, Normal: Preview and possibly 'Preview with' item
 	m_PreviewMenu.CreateMenu();
 	m_PreviewMenu.AddMenuTitle(NULL, true);
@@ -2730,7 +2746,7 @@ void CDownloadListCtrl::CreateMenus()
 		m_PreviewMenu.AppendMenu(MF_STRING, MP_TRY_TO_GET_PREVIEW_PARTS, GetResString(IDS_DL_TRY_TO_GET_PREVIEW_PARTS));
 	m_FileMenu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)m_PreviewMenu.m_hMenu, GetResString(IDS_DL_PREVIEW), _T("PREVIEW"));
 
-	m_FileMenu.AppendMenu(MF_STRING, MP_METINFO, GetResString(IDS_DL_INFO), _T("FILEINFO"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_METINFO, AddMenuShortcutLabel(GetResString(IDS_DL_INFO), _T("Ctrl+I")), _T("FILEINFO"));
 	m_FileMenu.AppendMenu(MF_STRING, MP_VIEWFILECOMMENTS, GetResString(IDS_CMT_SHOWALL), _T("FILECOMMENTS"));
 	m_FileMenu.AppendMenu(MF_STRING, MP_FOLLOWMAJORITYFILENAME, GetResString(IDS_FOLLOW_MAJORITY_FILENAME), _T("FILERENAME"));
 	m_FileMenu.AppendMenu(MF_SEPARATOR);
@@ -2748,7 +2764,7 @@ void CDownloadListCtrl::CreateMenus()
 	// Add 'Copy & Paste' commands
 	//
 	if (thePrefs.GetShowCopyEd2kLinkCmd())
-		m_FileMenu.AppendMenu(MF_STRING, MP_GETED2KLINK, GetResString(IDS_DL_LINK1), _T("ED2KLINK"));
+		m_FileMenu.AppendMenu(MF_STRING, MP_GETED2KLINK, AddMenuShortcutLabel(GetResString(IDS_DL_LINK1), _T("Ctrl+L")), _T("ED2KLINK"));
 	else
 		m_FileMenu.AppendMenu(MF_STRING, MP_SHOWED2KLINK, GetResString(IDS_DL_SHOWED2KLINK), _T("ED2KLINK"));
 	m_FileMenu.AppendMenu(MF_STRING, MP_PASTE, GetResString(IDS_SW_DIRECTDOWNLOAD), _T("PASTELINK"));
