@@ -1438,10 +1438,12 @@ void CSharedFilesCtrl::OnContextMenu(CWnd*, CPoint point)
 	CopyMenu.AddMenuTitle(NULL, true);
 	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_NAME, GetResString(IDS_COPY_FILE_NAME));
 	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_HASH, GetResString(IDS_COPY_HASH));
+	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_SIZE, GetResString(IDS_COPY_FILE_SIZE));
 	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_PATH, GetResString(IDS_COPY_FILE_PATH));
 	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_COPY_FOLDER_PATH, GetResString(IDS_COPY_FOLDER_PATH));
 	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_GETED2KLINK, GetResString(IDS_DL_LINK1), _T("ED2KLINK"));
-	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_SUMMARY, AddMenuShortcutLabel(_T("Copy File &Summary"), _T("Ctrl+Shift+C")));
+	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_GETHTMLED2KLINK, GetResString(IDS_DL_LINK2), _T("ED2KLINK"));
+	CopyMenu.AppendMenu(MF_STRING | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_SUMMARY, AddMenuShortcutLabel(GetResString(IDS_COPY_FILE_SUMMARY), _T("Ctrl+Shift+C")));
 	m_SharedFilesMenu.AppendMenu(MF_POPUP | ((!bContainsOnlyShareableFile && iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED), (UINT_PTR)CopyMenu.m_hMenu, GetResString(IDS_COPY));
 
 	CTitledMenu WebMenu;
@@ -1484,14 +1486,15 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM)
 				theApp.emuledlg->ircwnd->SetSendFileString(pKnownFile->GetED2kLink());
 			break;
 		case MP_GETED2KLINK:
+		case MP_GETHTMLED2KLINK:
 			{
 				CString str;
 				for (POSITION pos = selectedList.GetHeadPosition(); pos != NULL;) {
 					CKnownFile *pfile = static_cast<CKnownFile*>(selectedList.GetNext(pos));
 					if (pfile != NULL && pfile->IsKindOf(RUNTIME_CLASS(CKnownFile))) {
 						if (!str.IsEmpty())
-							str += _T("\r\n");
-						str += pfile->GetED2kLink();
+							str += (wParam == MP_GETHTMLED2KLINK) ? _T("<br>\r\n") : _T("\r\n");
+						str += pfile->GetED2kLink(false, wParam == MP_GETHTMLED2KLINK);
 					}
 				}
 				theApp.CopyTextToClipboard(str);
@@ -1499,6 +1502,7 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM)
 			break;
 		case MP_COPY_FILE_NAME:
 		case MP_COPY_FILE_HASH:
+		case MP_COPY_FILE_SIZE:
 		case MP_COPY_FILE_PATH:
 		case MP_COPY_FOLDER_PATH:
 		case MP_COPY_FILE_SUMMARY:
@@ -1513,12 +1517,14 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM)
 						lines.push_back(pfile->GetFileName());
 					else if (wParam == MP_COPY_FILE_HASH)
 						lines.push_back(md4str(pfile->GetFileHash()));
+					else if (wParam == MP_COPY_FILE_SIZE)
+						lines.push_back(ProUserMenuCopySeams::FormatUInt64(static_cast<uint64>(pfile->GetFileSize())));
 					else if (wParam == MP_COPY_FILE_PATH)
 						lines.push_back(pfile->GetFilePath());
 					else if (wParam == MP_COPY_FOLDER_PATH)
 						lines.push_back(pfile->GetPath());
 					else if (wParam == MP_COPY_FILE_SUMMARY) {
-						size.Format(_T("%I64u"), static_cast<uint64>(pfile->GetFileSize()));
+						size = ProUserMenuCopySeams::FormatUInt64(static_cast<uint64>(pfile->GetFileSize()));
 						lines.push_back(ProUserMenuCopySeams::FormatFileSummary(
 							pfile->GetFileName(),
 							md4str(pfile->GetFileHash()),

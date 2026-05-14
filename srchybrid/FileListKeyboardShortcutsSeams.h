@@ -46,8 +46,12 @@ namespace FileListKeyboardShortcutsSeams
 		if (!bShiftDown) {
 			switch (wParam) {
 			case _T('I'):
+				if (eContext == EContext::SharedDirs)
+					return 0;
 				return eContext == EContext::Downloads ? MP_METINFO : MP_DETAIL;
 			case _T('L'):
+				if (eContext == EContext::SharedDirs)
+					return 0;
 				return MP_GETED2KLINK;
 			case _T('O'):
 				return eContext == EContext::Downloads || eContext == EContext::SharedFiles ? MP_OPEN : 0;

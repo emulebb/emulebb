@@ -29,6 +29,22 @@ namespace ProUserMenuCopySeams
 		fields.push_back(NamedField{ name, value });
 	}
 
+	/** Formats byte-sized raw integer fields for copy commands. */
+	inline CString FormatUInt64(unsigned __int64 value)
+	{
+		CString result;
+		result.Format(_T("%I64u"), value);
+		return result;
+	}
+
+	/** Formats progress fields with the same fixed precision across file menus. */
+	inline CString FormatPercent(double value)
+	{
+		CString result;
+		result.Format(_T("%.1f%%"), value);
+		return result;
+	}
+
 	inline CString FormatSummary(const std::vector<NamedField>& fields)
 	{
 		CString result;

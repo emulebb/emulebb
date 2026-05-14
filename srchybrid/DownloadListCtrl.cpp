@@ -1704,10 +1704,14 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			CopyMenu.AddMenuTitle(NULL, true);
 			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_NAME, GetResString(IDS_COPY_FILE_NAME));
 			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_HASH, GetResString(IDS_COPY_HASH));
+			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_SIZE, GetResString(IDS_COPY_FILE_SIZE));
+			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_STATUS, GetResString(IDS_COPY_FILE_STATUS));
+			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_PROGRESS, GetResString(IDS_COPY_FILE_PROGRESS));
 			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_PATH, GetResString(IDS_COPY_FILE_PATH));
 			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FOLDER_PATH, GetResString(IDS_COPY_FOLDER_PATH));
 			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_GETED2KLINK, GetResString(IDS_DL_LINK1), _T("ED2KLINK"));
-			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_SUMMARY, AddMenuShortcutLabel(_T("Copy File &Summary"), _T("Ctrl+Shift+C")));
+			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_GETHTMLED2KLINK, GetResString(IDS_DL_LINK2), _T("ED2KLINK"));
+			CopyMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_SUMMARY, AddMenuShortcutLabel(GetResString(IDS_COPY_FILE_SUMMARY), _T("Ctrl+Shift+C")));
 			m_FileMenu.AppendMenu(MF_POPUP | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), (UINT_PTR)CopyMenu.m_hMenu, GetResString(IDS_COPY));
 
 			CTitledMenu WebMenu;
@@ -2125,14 +2129,15 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 				break;
 			case MP_COPYSELECTED:
 			case MP_GETED2KLINK:
+			case MP_GETHTMLED2KLINK:
 				{
 					CString str;
 					while (!selectedList.IsEmpty()) {
 						const CAbstractFile *af = static_cast<CAbstractFile*>(selectedList.RemoveHead());
 						if (af) {
 							if (!str.IsEmpty())
-								str += _T("\r\n");
-							str += af->GetED2kLink();
+								str += (wParam == MP_GETHTMLED2KLINK) ? _T("<br>\r\n") : _T("\r\n");
+							str += af->GetED2kLink(false, wParam == MP_GETHTMLED2KLINK);
 						}
 					}
 					theApp.CopyTextToClipboard(str);
@@ -2140,6 +2145,9 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 				break;
 			case MP_COPY_FILE_NAME:
 			case MP_COPY_FILE_HASH:
+			case MP_COPY_FILE_SIZE:
+			case MP_COPY_FILE_STATUS:
+			case MP_COPY_FILE_PROGRESS:
 			case MP_COPY_FILE_PATH:
 			case MP_COPY_FOLDER_PATH:
 			case MP_COPY_FILE_SUMMARY:
@@ -2158,6 +2166,15 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 						case MP_COPY_FILE_HASH:
 							lines.push_back(md4str(partfile->GetFileHash()));
 							break;
+						case MP_COPY_FILE_SIZE:
+							lines.push_back(ProUserMenuCopySeams::FormatUInt64(static_cast<uint64>(partfile->GetFileSize())));
+							break;
+						case MP_COPY_FILE_STATUS:
+							lines.push_back(partfile->getPartfileStatus());
+							break;
+						case MP_COPY_FILE_PROGRESS:
+							lines.push_back(ProUserMenuCopySeams::FormatPercent(partfile->GetPercentCompleted()));
+							break;
 						case MP_COPY_FILE_PATH:
 							lines.push_back(partfile->GetFullName());
 							break;
@@ -2165,8 +2182,8 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 							lines.push_back(partfile->GetPath());
 							break;
 						case MP_COPY_FILE_SUMMARY:
-							size.Format(_T("%I64u"), static_cast<uint64>(partfile->GetFileSize()));
-							progress.Format(_T("%.1f%%"), partfile->GetPercentCompleted());
+							size = ProUserMenuCopySeams::FormatUInt64(static_cast<uint64>(partfile->GetFileSize()));
+							progress = ProUserMenuCopySeams::FormatPercent(partfile->GetPercentCompleted());
 							lines.push_back(ProUserMenuCopySeams::FormatFileSummary(
 								partfile->GetFileName(),
 								md4str(partfile->GetFileHash()),

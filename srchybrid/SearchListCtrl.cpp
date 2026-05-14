@@ -701,7 +701,7 @@ void CSearchListCtrl::OnContextMenu(CWnd*, CPoint point)
 
 	m_SearchFileMenu.EnableMenuItem(MP_RESUME, iToDownload > 0 ? MF_ENABLED : MF_GRAYED);
 	m_SearchFileMenu.EnableMenuItem(MP_RESUMEPAUSED, iToDownload > 0 ? MF_ENABLED : MF_GRAYED);
-	m_SearchFileMenu.EnableMenuItem(MP_DETAIL, iSelected == 1 ? MF_ENABLED : MF_GRAYED);
+	m_SearchFileMenu.EnableMenuItem(MP_DETAIL, iSelected > 0 ? MF_ENABLED : MF_GRAYED);
 	m_SearchFileMenu.EnableMenuItem(MP_CMT, iSelected > 0 ? MF_ENABLED : MF_GRAYED);
 	m_SearchFileMenu.EnableMenuItem(MP_GETED2KLINK, iSelected > 0 ? MF_ENABLED : MF_GRAYED);
 	m_SearchFileMenu.EnableMenuItem(MP_GETHTMLED2KLINK, iSelected > 0 ? MF_ENABLED : MF_GRAYED);
@@ -726,6 +726,8 @@ void CSearchListCtrl::OnContextMenu(CWnd*, CPoint point)
 	CopyMenu.AddMenuTitle(NULL, true);
 	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_NAME, GetResString(IDS_COPY_FILE_NAME));
 	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_HASH, GetResString(IDS_COPY_HASH));
+	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_SIZE, GetResString(IDS_COPY_FILE_SIZE));
+	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_TYPE, GetResString(IDS_COPY_FILE_TYPE));
 	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_GETED2KLINK, GetResString(IDS_DL_LINK1), _T("ED2KLink"));
 	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_GETHTMLED2KLINK, GetResString(IDS_DL_LINK2), _T("ED2KLink"));
 	CopyMenu.AppendMenu(MF_STRING | (iSelected > 0 ? MF_ENABLED : MF_GRAYED), MP_COPY_SEARCH_SUMMARY, AddMenuShortcutLabel(GetResString(IDS_COPY_RESULT_SUMMARY), _T("Ctrl+Shift+C")));
@@ -806,6 +808,8 @@ BOOL CSearchListCtrl::OnCommand(WPARAM wParam, LPARAM)
 			return TRUE;
 		case MP_COPY_FILE_NAME:
 		case MP_COPY_FILE_HASH:
+		case MP_COPY_FILE_SIZE:
+		case MP_COPY_FILE_TYPE:
 		case MP_COPY_SEARCH_SUMMARY:
 			{
 				std::vector<CString> lines;
@@ -817,10 +821,13 @@ BOOL CSearchListCtrl::OnCommand(WPARAM wParam, LPARAM)
 						lines.push_back(file->GetFileName());
 					} else if (wParam == MP_COPY_FILE_HASH) {
 						lines.push_back(md4str(file->GetFileHash()));
+					} else if (wParam == MP_COPY_FILE_SIZE) {
+						lines.push_back(ProUserMenuCopySeams::FormatUInt64(static_cast<uint64>(file->GetFileSize())));
+					} else if (wParam == MP_COPY_FILE_TYPE) {
+						lines.push_back(file->GetFileTypeDisplayStr());
 					} else {
 						std::vector<ProUserMenuCopySeams::NamedField> fields;
-						CString size;
-						size.Format(_T("%I64u"), static_cast<uint64>(file->GetFileSize()));
+						CString size = ProUserMenuCopySeams::FormatUInt64(static_cast<uint64>(file->GetFileSize()));
 						ProUserMenuCopySeams::AppendField(fields, _T("name"), file->GetFileName());
 						ProUserMenuCopySeams::AppendField(fields, _T("hash"), md4str(file->GetFileHash()));
 						ProUserMenuCopySeams::AppendField(fields, _T("size"), size);
