@@ -12,6 +12,7 @@
 #include "FileTypeClassifierSeams.h"
 #include "Kademlia/Kademlia/Entry.h"
 #include "Log.h"
+#include "LongPathSeams.h"
 #include "OtherFunctions.h"
 #include "PartFile.h"
 #include "Preferences.h"
@@ -151,9 +152,9 @@ uint32 BuildRulesFingerprint(const FakeFileDetectorSeams::RuleSet &rRules)
 
 void WriteDefaultRuleFile(const CString &rstrPath)
 {
-	CFile file;
+	CSafeFile file;
 	CFileException ex;
-	if (!file.Open(rstrPath, CFile::modeCreate | CFile::modeWrite | CFile::typeBinary | CFile::shareDenyWrite, &ex)) {
+	if (!LongPathSeams::OpenFile(file, rstrPath, CFile::modeCreate | CFile::modeWrite | CFile::typeBinary | CFile::shareDenyWrite, &ex)) {
 		DebugLogError(_T("Failed to create FakeFileFilter.dat%s"), (LPCTSTR)CExceptionStrDash(ex));
 		return;
 	}
@@ -166,9 +167,9 @@ void WriteDefaultRuleFile(const CString &rstrPath)
 bool ReadRuleFileText(const CString &rstrPath, CString &rstrText)
 {
 	rstrText.Empty();
-	CFile file;
+	CSafeFile file;
 	CFileException ex;
-	if (!file.Open(rstrPath, CFile::modeRead | CFile::typeBinary | CFile::shareDenyWrite, &ex)) {
+	if (!LongPathSeams::OpenFile(file, rstrPath, CFile::modeRead | CFile::typeBinary | CFile::shareDenyWrite, &ex)) {
 		DebugLogError(_T("Failed to load FakeFileFilter.dat%s"), (LPCTSTR)CExceptionStrDash(ex));
 		return false;
 	}
@@ -187,6 +188,16 @@ bool ReadRuleFileText(const CString &rstrPath, CString &rstrText)
 	if (!rstrText.IsEmpty() && rstrText[0] == 0xFEFF)
 		rstrText.Delete(0);
 	return true;
+}
+
+bool IsRuleFileMissingOrEmpty(const CString &rstrPath)
+{
+	WIN32_FILE_ATTRIBUTE_DATA fileData = {};
+	if (!LongPathSeams::GetFileAttributesEx(rstrPath, GetFileExInfoStandard, &fileData))
+		return true;
+	if ((fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+		return true;
+	return fileData.nFileSizeHigh == 0 && fileData.nFileSizeLow == 0;
 }
 
 void EnsureRulesLoaded()
@@ -458,8 +469,7 @@ bool FakeFileDetector::ReloadRules()
 	g_bRulesLoaded = true;
 
 	const CString strPath(BuildRuleFilePath());
-	CFileStatus fileStatus;
-	if (!PathFileExists(strPath) || (CFile::GetStatus(strPath, fileStatus) && fileStatus.m_size == 0))
+	if (IsRuleFileMissingOrEmpty(strPath))
 		WriteDefaultRuleFile(strPath);
 
 	CString strRulesText;

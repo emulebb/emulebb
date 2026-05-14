@@ -3,6 +3,7 @@
 #include <atlstr.h>
 #include <cstdint>
 #include "FileCompletionCommandSeams.h"
+#include "LongPathSeams.h"
 #include "PreferenceValidationSeams.h"
 
 namespace PartFilePreviewSeams
@@ -74,7 +75,7 @@ inline bool IsValidConfiguredFfmpegPath(const CString &rstrFfmpegPath)
 	CString strFfmpegPath(rstrFfmpegPath);
 	strFfmpegPath.Trim();
 	const LPCTSTR pszExt = ::PathFindExtension(strFfmpegPath);
-	return !strFfmpegPath.IsEmpty() && pszExt != NULL && _tcsicmp(pszExt, _T(".exe")) == 0 && ::PathFileExists(strFfmpegPath) != FALSE;
+	return !strFfmpegPath.IsEmpty() && pszExt != NULL && _tcsicmp(pszExt, _T(".exe")) == 0 && LongPathSeams::PathExists(strFfmpegPath);
 }
 
 /**

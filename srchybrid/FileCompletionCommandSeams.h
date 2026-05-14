@@ -2,6 +2,7 @@
 
 #include <atlstr.h>
 #include <shlwapi.h>
+#include "LongPathSeams.h"
 
 namespace FileCompletionCommandSeams
 {
@@ -40,7 +41,7 @@ inline bool IsValidConfiguredProgramPath(const CString &programPath)
 {
 	CString trimmed(programPath);
 	trimmed.Trim();
-	return !trimmed.IsEmpty() && HasSupportedProgramExtension(trimmed) && ::PathFileExists(trimmed) != FALSE;
+	return !trimmed.IsEmpty() && HasSupportedProgramExtension(trimmed) && LongPathSeams::PathExists(trimmed);
 }
 
 /** Quotes an argument using Windows command-line quoting rules. */
