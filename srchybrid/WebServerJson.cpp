@@ -128,7 +128,7 @@ private:
 };
 
 bool TryRejectRestCommandDuringShutdown(SPipeApiError &rError);
-bool TryRejectRestCommandForLifecycle(const bool bMutation, SPipeApiError &rError);
+bool TryRejectRestCommandForLifecycle(WebServerJsonSeams::ERestLifecyclePolicy ePolicy, SPipeApiError &rError);
 
 class CScopedDownloadQueueBulkAdd
 {
@@ -3796,13 +3796,13 @@ json BuildErrorEnvelope(LPCSTR pszCode, const CString &strMessage)
 
 bool TryRejectRestCommandDuringShutdown(SPipeApiError &rError)
 {
-	return TryRejectRestCommandForLifecycle(false, rError);
+	return TryRejectRestCommandForLifecycle(WebServerJsonSeams::ERestLifecyclePolicy::Read, rError);
 }
 
-bool TryRejectRestCommandForLifecycle(const bool bMutation, SPipeApiError &rError)
+bool TryRejectRestCommandForLifecycle(WebServerJsonSeams::ERestLifecyclePolicy ePolicy, SPipeApiError &rError)
 {
 	const SAppLifecycleStatus lifecycle = BuildCurrentAppLifecycleStatus();
-	if (!ShouldRejectRestCommandForLifecycle(lifecycle, bMutation))
+	if (!WebServerJsonSeams::ShouldRejectRestCommandForLifecycle(lifecycle, ePolicy))
 		return false;
 
 	rError.strCode = "EMULE_UNAVAILABLE";
@@ -4015,7 +4015,10 @@ bool WebServerJson::ExecuteInternalCommand(const nlohmann::json &rRequest, nlohm
 	rErrorMessage.Empty();
 	try {
 		SPipeApiError error;
-		if (TryRejectRestCommandDuringShutdown(error)) {
+		if (TryRejectRestCommandForLifecycle(
+				WebServerJsonSeams::GetLifecyclePolicyForCommand(rRequest.value("cmd", std::string())),
+				error))
+		{
 			rErrorCode = error.strCode;
 			rErrorMessage = error.strMessage;
 			return false;
@@ -4103,7 +4106,7 @@ void WebServerJson::ProcessRequest(const ThreadData &rData)
 	};
 
 	try {
-		if (TryRejectRestCommandForLifecycle(WebServerJsonSeams::IsRestMutationMethod(route.strMethod), error)) {
+		if (TryRejectRestCommandForLifecycle(WebServerJsonSeams::GetLifecyclePolicyForCommand(route.strCommand), error)) {
 			const int iStatus = WebServerJsonSeams::GetHttpStatusForError(StdStringFromCStringA(error.strCode));
 			SendJsonError(rData.pSocket, iStatus, GetHttpReasonPhrase(iStatus), error.strCode, error.strMessage);
 			return;

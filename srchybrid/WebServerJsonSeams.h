@@ -36,6 +36,17 @@ static const char *const kSearchMethodError = "method must be one of automatic, 
 static const char *const kTransferStateError = "state must be one of downloading, paused, queued, checking, completing, completed, error, missingfiles";
 
 /**
+ * @brief Lifecycle safety category for one native REST command.
+ */
+enum class ERestLifecyclePolicy : uint8_t
+{
+	Read,
+	Mutation,
+	Shutdown,
+	DiagnosticUnsafe
+};
+
+/**
  * @brief Carries one parsed REST route command together with the normalized
  * request parameters that feed the existing UI-command handler.
  */
@@ -113,6 +124,70 @@ inline bool ShouldRejectRestCommandDuringShutdown(const bool bAppClosing)
 inline bool IsRestMutationMethod(const std::string &rMethod)
 {
 	return rMethod == "POST" || rMethod == "PATCH" || rMethod == "DELETE";
+}
+
+/**
+ * @brief Returns the lifecycle policy for one internal REST command token.
+ */
+inline ERestLifecyclePolicy GetLifecyclePolicyForCommand(const std::string &rCommand)
+{
+	if (rCommand == "app/shutdown")
+		return ERestLifecyclePolicy::Shutdown;
+	if (rCommand == "app/capture_dump" || rCommand == "app/crash_test")
+		return ERestLifecyclePolicy::DiagnosticUnsafe;
+
+	if (rCommand == "app/version"
+		|| rCommand == "app/preferences/get"
+		|| rCommand == "stats/global"
+		|| rCommand == "status/get"
+		|| rCommand == "snapshot/get"
+		|| rCommand == "categories/list"
+		|| rCommand == "categories/get"
+		|| rCommand == "shared_directories/get"
+		|| rCommand == "transfers/list"
+		|| rCommand == "transfers/get"
+		|| rCommand == "transfers/sources"
+		|| rCommand == "transfers/source"
+		|| rCommand == "transfers/details"
+		|| rCommand == "uploads/list"
+		|| rCommand == "uploads/get"
+		|| rCommand == "uploads/queue"
+		|| rCommand == "uploads/queue_get"
+		|| rCommand == "servers/list"
+		|| rCommand == "servers/status"
+		|| rCommand == "servers/get"
+		|| rCommand == "kad/status"
+		|| rCommand == "shared/list"
+		|| rCommand == "shared/get"
+		|| rCommand == "shared/ed2k_link"
+		|| rCommand == "shared/comments"
+		|| rCommand == "search/list"
+		|| rCommand == "search/results"
+		|| rCommand == "friends/list"
+		|| rCommand == "log/get")
+	{
+		return ERestLifecyclePolicy::Read;
+	}
+
+	return ERestLifecyclePolicy::Mutation;
+}
+
+/**
+ * @brief Reports whether the command policy needs mutation-level lifecycle readiness.
+ */
+inline bool IsLifecycleMutationPolicy(const ERestLifecyclePolicy ePolicy)
+{
+	return ePolicy != ERestLifecyclePolicy::Read;
+}
+
+/**
+ * @brief Reports whether one REST command should be rejected for the current lifecycle.
+ */
+inline bool ShouldRejectRestCommandForLifecycle(
+	const SAppLifecycleStatus &rLifecycle,
+	const ERestLifecyclePolicy ePolicy)
+{
+	return !rLifecycle.bAcceptingRest || (IsLifecycleMutationPolicy(ePolicy) && !rLifecycle.bAcceptingMutations);
 }
 
 inline std::string ToLowerAscii(const std::string &rValue)
