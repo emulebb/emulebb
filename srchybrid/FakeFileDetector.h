@@ -36,6 +36,11 @@ struct SFakeFileReport
 namespace FakeFileDetector
 {
 /**
+ * @brief Returns the editable fake-file rule file path in the config directory.
+ */
+CString GetRuleFilePath();
+
+/**
  * @brief Reloads the editable local bad-signal rules from FakeFileFilter.dat.
  */
 bool ReloadRules();

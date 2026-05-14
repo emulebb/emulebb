@@ -105,7 +105,7 @@ SFakeFileReport ToAppReport(const FakeFileDetectorSeams::Report &rReport)
 	return report;
 }
 
-CString GetRuleFilePath()
+CString BuildRuleFilePath()
 {
 	return thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + kRuleFileName;
 }
@@ -469,7 +469,7 @@ bool FakeFileDetector::ReloadRules()
 	g_uRulesFingerprint = 0;
 	g_bRulesLoaded = true;
 
-	const CString strPath(GetRuleFilePath());
+	const CString strPath(BuildRuleFilePath());
 	if (!PathFileExists(strPath))
 		WriteDefaultRuleFile(strPath);
 
@@ -497,6 +497,11 @@ bool FakeFileDetector::ReloadRules()
 	g_uRulesFingerprint = BuildRulesFingerprint(g_rules);
 	DebugLog(_T("Loaded fake-file filter rules. Tokens: %u, regexes: %u"), static_cast<unsigned>(g_rules.tokens.size()), static_cast<unsigned>(g_rules.regexes.size()));
 	return true;
+}
+
+CString FakeFileDetector::GetRuleFilePath()
+{
+	return BuildRuleFilePath();
 }
 
 void FakeFileDetector::SaveCache()

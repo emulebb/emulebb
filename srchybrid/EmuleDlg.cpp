@@ -162,6 +162,40 @@ namespace
 		return text;
 	}
 
+	static CString GetConfigFilePath(LPCTSTR pszLeafName)
+	{
+		return thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + pszLeafName;
+	}
+
+	static void EditTextFile(const CString &rstrPath)
+	{
+		CString strQuotedPath;
+		strQuotedPath.Format(_T("\"%s\""), (LPCTSTR)rstrPath);
+		ShellOpen(thePrefs.GetTxtEditor(), strQuotedPath);
+	}
+
+	static UINT GetToolsMenuStatusStringID(UINT nItemID)
+	{
+		switch (nItemID) {
+		case MP_HM_EDIT_PREFERENCES_INI:
+			return IDS_TOOLS_STATUS_EDIT_PREFERENCES_INI;
+		case MP_HM_EDIT_IPFILTER_DAT:
+			return IDS_TOOLS_STATUS_EDIT_IPFILTER_DAT;
+		case MP_HM_RELOAD_IPFILTER_DAT:
+			return IDS_TOOLS_STATUS_RELOAD_IPFILTER_DAT;
+		case MP_HM_EDIT_FAKEFILEFILTER_DAT:
+			return IDS_TOOLS_STATUS_EDIT_FAKEFILEFILTER_DAT;
+		case MP_HM_RELOAD_FAKEFILEFILTER:
+			return IDS_TOOLS_STATUS_RELOAD_FAKEFILEFILTER;
+		case MP_HM_EDIT_ADDRESSES_DAT:
+			return IDS_TOOLS_STATUS_EDIT_ADDRESSES_DAT;
+		case MP_HM_EDIT_WEBSERVICES_DAT:
+			return IDS_TOOLS_STATUS_EDIT_WEBSERVICES_DAT;
+		default:
+			return 0;
+		}
+	}
+
 	static CString GetNotifierFallbackTitle(TbnMsg nMsgType)
 	{
 		switch (nMsgType) {
@@ -387,6 +421,7 @@ BEGIN_MESSAGE_MAP(CemuleDlg, CTrayDialog)
 	ON_WM_SIZE()
 	ON_WM_CLOSE()
 	ON_WM_MENUCHAR()
+	ON_WM_MENUSELECT()
 	ON_WM_QUERYENDSESSION()
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_CTLCOLOR()
@@ -3245,6 +3280,29 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_OPENLOGDIR:
 		ShellOpenFile(thePrefs.GetMuleDirectory(EMULE_LOGDIR));
 		break;
+	case MP_HM_EDIT_PREFERENCES_INI:
+		EditTextFile(GetConfigFilePath(_T("preferences.ini")));
+		break;
+	case MP_HM_EDIT_IPFILTER_DAT:
+		EditTextFile(CIPFilter::GetDefaultFilePath());
+		break;
+	case MP_HM_RELOAD_IPFILTER_DAT:
+		{
+			CWaitCursor curHourglass;
+			theApp.ipfilter->LoadFromDefaultFile();
+			if (thePrefs.GetFilterServerByIP())
+				serverwnd->serverlistctrl.RemoveAllFilteredServers();
+		}
+		break;
+	case MP_HM_EDIT_FAKEFILEFILTER_DAT:
+		EditTextFile(FakeFileDetector::GetRuleFilePath());
+		break;
+	case MP_HM_EDIT_ADDRESSES_DAT:
+		EditTextFile(GetConfigFilePath(_T("addresses.dat")));
+		break;
+	case MP_HM_EDIT_WEBSERVICES_DAT:
+		EditTextFile(theWebServices.GetDefaultServicesFile());
+		break;
 	case MP_HM_CAPTURE_MINIDUMP:
 		CaptureDiagnosticDump(false);
 		break;
@@ -3333,6 +3391,18 @@ LRESULT CemuleDlg::OnMenuChar(UINT nChar, UINT nFlags, CMenu *pMenu)
 	return CTrayDialog::OnMenuChar(nChar, nFlags, pMenu);
 }
 
+void CemuleDlg::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
+{
+	CTrayDialog::OnMenuSelect(nItemID, nFlags, hSysMenu);
+
+	if ((nFlags & MF_POPUP) != 0 || nFlags == 0xFFFF)
+		return;
+
+	const UINT uStatusStringID = GetToolsMenuStatusStringID(nItemID);
+	if (uStatusStringID != 0 && statusbar != NULL && ::IsWindow(statusbar->m_hWnd))
+		statusbar->SetText(GetResString(uStatusStringID), SBarLog, 0);
+}
+
 void CemuleDlg::OnBnClickedHotmenu()
 {
 	ShowToolPopup(false);
@@ -3389,21 +3459,63 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 		menu.AppendMenu(MF_SEPARATOR);
 	}
 
-	menu.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
-	menu.AppendMenu(MF_STRING, MP_HM_OPENCONFIGDIR, GetResString(IDS_OPENCONFIGDIR) + _T("..."), _T("OPENFOLDER"));
-	menu.AppendMenu(MF_STRING, MP_HM_OPENLOGDIR, GetResString(IDS_OPENLOGDIR) + _T("..."), _T("OPENFOLDER"));
-	menu.AppendMenu(MF_STRING, MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
-	menu.AppendMenu(MF_STRING, MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
-	menu.AppendMenu(MF_STRING, MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
+	CTitledMenu folders;
+	folders.CreateMenu();
+	folders.AddMenuTitle(NULL, true);
+
+	CTitledMenu editConfigFiles;
+	editConfigFiles.CreateMenu();
+	editConfigFiles.AddMenuTitle(NULL, true);
+
+	CTitledMenu networkUpdates;
+	networkUpdates.CreateMenu();
+	networkUpdates.AddMenuTitle(NULL, true);
+
+	CTitledMenu diagnostics;
+	diagnostics.CreateMenu();
+	diagnostics.AddMenuTitle(NULL, true);
+
 	if (toolsonly) {
 		UINT uGeoLocationMenuFlags = MF_STRING;
 		if (!thePrefs.IsGeoLocationEnabled())
 			uGeoLocationMenuFlags |= MF_GRAYED;
-		menu.AppendMenu(MF_STRING, MP_HM_CHECK_OPEN_PORTS, GetResString(IDS_CHECK_OPEN_PORTS), _T("WEB"));
-		menu.AppendMenu(uGeoLocationMenuFlags, MP_HM_GEOLOCATION_DOWNLOAD, GetResString(IDS_GEOLOCATION_DOWNLOAD_DB), _T("DOWNLOAD"));
-		menu.AppendMenu(MF_STRING, MP_HM_RELOAD_FAKEFILEFILTER, GetResString(IDS_RELOADFAKEFILEFILTER), _T("TOOLS"));
-		menu.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("TOOLS"));
-		menu.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
+
+		folders.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
+		folders.AppendMenu(MF_STRING, MP_HM_OPENCONFIGDIR, GetResString(IDS_OPENCONFIGDIR) + _T("..."), _T("OPENFOLDER"));
+		folders.AppendMenu(MF_STRING, MP_HM_OPENLOGDIR, GetResString(IDS_OPENLOGDIR) + _T("..."), _T("OPENFOLDER"));
+
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_PREFERENCES_INI, GetResString(IDS_EDIT_PREFERENCES_INI), _T("PREFERENCES"));
+		editConfigFiles.AppendMenu(MF_SEPARATOR);
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_IPFILTER_DAT, GetResString(IDS_EDIT_IPFILTER_DAT), _T("IPFILTER"));
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_RELOAD_IPFILTER_DAT, GetResString(IDS_RELOAD_IPFILTER_DAT), _T("IPFILTER"));
+		editConfigFiles.AppendMenu(MF_SEPARATOR);
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_FAKEFILEFILTER_DAT, GetResString(IDS_EDIT_FAKEFILEFILTER_DAT), _T("TOOLS"));
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_RELOAD_FAKEFILEFILTER, GetResString(IDS_RELOADFAKEFILEFILTER), _T("TOOLS"));
+		editConfigFiles.AppendMenu(MF_SEPARATOR);
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_ADDRESSES_DAT, GetResString(IDS_EDIT_ADDRESSES_DAT), _T("SERVER"));
+		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_WEBSERVICES_DAT, GetResString(IDS_EDIT_WEBSERVICES_DAT), _T("WEB"));
+
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
+		networkUpdates.AppendMenu(MF_SEPARATOR);
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_CHECK_OPEN_PORTS, GetResString(IDS_CHECK_OPEN_PORTS), _T("WEB"));
+		networkUpdates.AppendMenu(uGeoLocationMenuFlags, MP_HM_GEOLOCATION_DOWNLOAD, GetResString(IDS_GEOLOCATION_DOWNLOAD_DB), _T("DOWNLOAD"));
+
+		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("TOOLS"));
+		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
+
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, GetResString(IDS_TOOLS_FOLDERS), _T("OPENFOLDER"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T("PREFERENCES"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, GetResString(IDS_TOOLS_NETWORK_UPDATES), _T("WEB"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)diagnostics.m_hMenu, GetResString(IDS_TOOLS_DIAGNOSTICS), _T("TOOLS"));
+	} else {
+		menu.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
+		menu.AppendMenu(MF_STRING, MP_HM_OPENCONFIGDIR, GetResString(IDS_OPENCONFIGDIR) + _T("..."), _T("OPENFOLDER"));
+		menu.AppendMenu(MF_STRING, MP_HM_OPENLOGDIR, GetResString(IDS_OPENLOGDIR) + _T("..."), _T("OPENFOLDER"));
+		menu.AppendMenu(MF_STRING, MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
+		menu.AppendMenu(MF_STRING, MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
+		menu.AppendMenu(MF_STRING, MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
 	}
 
 	menu.AppendMenu(MF_SEPARATOR);
@@ -3415,6 +3527,10 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 		menu.AppendMenu(MF_STRING, MP_HM_EXIT, GetResString(IDS_EXIT) + _T("\tAlt+X"), _T("EXIT"));
 	}
 	menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+	VERIFY(folders.DestroyMenu());
+	VERIFY(editConfigFiles.DestroyMenu());
+	VERIFY(networkUpdates.DestroyMenu());
+	VERIFY(diagnostics.DestroyMenu());
 	VERIFY(Links.DestroyMenu());
 	VERIFY(scheduler.DestroyMenu());
 	VERIFY(menu.DestroyMenu());

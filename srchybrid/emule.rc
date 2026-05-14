@@ -3627,6 +3627,30 @@ BEGIN
     IDS_CHECK_OPEN_PORTS    "Check Open Ports"
     IDS_RELOADFAKEFILEFILTER "Reload Fake-File Filter"
     IDS_FAKEFILESCORE       "Fake: %u%%"
+    IDS_TOOLS_FOLDERS       "Folders"
+    IDS_TOOLS_EDIT_CONFIG_FILES "Edit Config Files"
+    IDS_TOOLS_NETWORK_UPDATES "Network && Updates"
+    IDS_TOOLS_DIAGNOSTICS   "Diagnostics"
+    IDS_EDIT_PREFERENCES_INI "Edit preferences.ini"
+    IDS_EDIT_IPFILTER_DAT   "Edit ipfilter.dat"
+    IDS_RELOAD_IPFILTER_DAT "Reload ipfilter.dat"
+    IDS_EDIT_FAKEFILEFILTER_DAT "Edit FakeFileFilter.dat"
+    IDS_EDIT_ADDRESSES_DAT  "Edit addresses.dat"
+    IDS_EDIT_WEBSERVICES_DAT "Edit webservices.dat"
+    IDS_TOOLS_STATUS_EDIT_PREFERENCES_INI
+                            "Opens preferences.ini in the configured text editor. Edit carefully; some changes need an eMule restart."
+    IDS_TOOLS_STATUS_EDIT_IPFILTER_DAT
+                            "Opens ipfilter.dat in the configured text editor. Save changes, then reload ipfilter.dat to apply them."
+    IDS_TOOLS_STATUS_RELOAD_IPFILTER_DAT
+                            "Reloads ipfilter.dat from disk and refreshes filtered server visibility."
+    IDS_TOOLS_STATUS_EDIT_FAKEFILEFILTER_DAT
+                            "Opens FakeFileFilter.dat in the configured text editor. Save changes, then reload the fake-file filter."
+    IDS_TOOLS_STATUS_RELOAD_FAKEFILEFILTER
+                            "Reloads FakeFileFilter.dat from disk for new fake-file analysis."
+    IDS_TOOLS_STATUS_EDIT_ADDRESSES_DAT
+                            "Opens addresses.dat, the startup server.met update URL list, in the configured text editor."
+    IDS_TOOLS_STATUS_EDIT_WEBSERVICES_DAT
+                            "Opens webservices.dat, the external lookup/action list, in the configured text editor."
     IDS_SEARCHPARAMS        "Search Parameters"
 END
 
