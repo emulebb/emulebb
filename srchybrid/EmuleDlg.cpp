@@ -195,6 +195,28 @@ namespace
 	static UINT GetToolsMenuStatusStringID(UINT nItemID)
 	{
 		switch (nItemID) {
+		case MP_HM_CON:
+			return IDS_TOOLS_STATUS_SESSION_CONNECT;
+		case MP_HM_SRVR:
+			return IDS_TOOLS_STATUS_SHOW_SERVER;
+		case MP_HM_TRANSFER:
+			return IDS_TOOLS_STATUS_SHOW_TRANSFERS;
+		case MP_HM_SEARCH:
+			return IDS_TOOLS_STATUS_SHOW_SEARCH;
+		case MP_HM_FILES:
+			return IDS_TOOLS_STATUS_SHOW_SHARED_FILES;
+		case MP_HM_MSGS:
+			return IDS_TOOLS_STATUS_SHOW_MESSAGES;
+		case MP_HM_IRC:
+			return IDS_TOOLS_STATUS_SHOW_IRC;
+		case MP_HM_STATS:
+			return IDS_TOOLS_STATUS_SHOW_STATISTICS;
+		case MP_HM_PREFS:
+			return IDS_TOOLS_STATUS_SHOW_OPTIONS;
+		case MP_MINIMIZETOTRAY:
+			return IDS_TOOLS_STATUS_MINIMIZE_TO_TRAY;
+		case MP_HM_EXIT:
+			return IDS_TOOLS_STATUS_EXIT;
 		case MP_HM_EDIT_PREFERENCES_INI:
 			return IDS_TOOLS_STATUS_EDIT_PREFERENCES_INI;
 		case MP_HM_EDIT_IPFILTER_DAT:
@@ -3319,6 +3341,9 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case TBBTN_TOOLS:
 		ShowToolPopup(true);
 		break;
+	case MP_MINIMIZETOTRAY:
+		SendMessage(WM_SYSCOMMAND, MP_MINIMIZETOTRAY, 0);
+		break;
 	case MP_HM_OPENINC:
 		ShellOpenFile(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
 		break;
@@ -3557,13 +3582,17 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 			scheduler.AppendMenu(MF_STRING, MP_SCHACTIONS + i, theApp.scheduler->GetSchedule(i)->title);
 	}
 
-	if (!toolsonly) {
+	const auto appendConnectionItem = [](CTitledMenu &targetMenu) {
 		if (theApp.serverconnect->IsConnected())
-			menu.AppendMenu(MF_STRING, MP_HM_CON, GetResString(IDS_MAIN_BTN_DISCONNECT), _T("DISCONNECT"));
+			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, GetResString(IDS_MAIN_BTN_DISCONNECT), _T("DISCONNECT"));
 		else if (theApp.serverconnect->IsConnecting())
-			menu.AppendMenu(MF_STRING, MP_HM_CON, GetResString(IDS_MAIN_BTN_CANCEL), _T("STOPCONNECTING"));
+			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, GetResString(IDS_MAIN_BTN_CANCEL), _T("STOPCONNECTING"));
 		else
-			menu.AppendMenu(MF_STRING, MP_HM_CON, GetResString(IDS_MAIN_BTN_CONNECT), _T("CONNECT"));
+			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, GetResString(IDS_MAIN_BTN_CONNECT), _T("CONNECT"));
+	};
+
+	if (!toolsonly) {
+		appendConnectionItem(menu);
 
 		menu.AppendMenu(MF_STRING, MP_HM_KAD, GetResString(IDS_EM_KADEMLIA), _T("KADEMLIA"));
 		menu.AppendMenu(MF_STRING, MP_HM_SRVR, GetResString(IDS_EM_SERVER), _T("SERVER"));
@@ -3577,6 +3606,10 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 		menu.AppendMenu(MF_STRING, MP_HM_HELP, GetResString(IDS_EM_HELP), _T("HELP"));
 		menu.AppendMenu(MF_SEPARATOR);
 	}
+
+	CTitledMenu session;
+	session.CreateMenu();
+	session.AddMenuTitle(NULL, true);
 
 	CTitledMenu folders;
 	folders.CreateMenu();
@@ -3602,6 +3635,19 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 		UINT uGeoLocationMenuFlags = MF_STRING;
 		if (!thePrefs.IsGeoLocationEnabled())
 			uGeoLocationMenuFlags |= MF_GRAYED;
+
+		appendConnectionItem(session);
+		session.AppendMenu(MF_SEPARATOR);
+		session.AppendMenu(MF_STRING, MP_HM_SRVR, GetResString(IDS_EM_SERVER), _T("SERVER"));
+		session.AppendMenu(MF_STRING, MP_HM_TRANSFER, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
+		session.AppendMenu(MF_STRING, MP_HM_SEARCH, GetResString(IDS_EM_SEARCH), _T("SEARCH"));
+		session.AppendMenu(MF_STRING, MP_HM_FILES, GetResString(IDS_EM_FILES), _T("SharedFiles"));
+		session.AppendMenu(MF_STRING, MP_HM_MSGS, GetResString(IDS_EM_MESSAGES), _T("MESSAGES"));
+		session.AppendMenu(MF_STRING, MP_HM_IRC, GetResString(IDS_IRC), _T("IRC"));
+		session.AppendMenu(MF_STRING, MP_HM_STATS, GetResString(IDS_EM_STATISTIC), _T("STATISTICS"));
+		session.AppendMenu(MF_STRING, MP_HM_PREFS, GetResString(IDS_EM_PREFS), _T("PREFERENCES"));
+		session.AppendMenu(MF_SEPARATOR);
+		session.AppendMenu(MF_STRING, MP_MINIMIZETOTRAY, GetResString(IDS_PW_TRAY), _T("TOOLS"));
 
 		folders.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
 		folders.AppendMenu(MF_STRING, MP_HM_OPEN_TEMPDIR, GetResString(IDS_OPEN_TEMP_DIR) + _T("..."), _T("OPENFOLDER"));
@@ -3652,6 +3698,7 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("TOOLS"));
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
 
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, GetResString(IDS_TOOLS_SESSION), _T("CONNECT"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, GetResString(IDS_TOOLS_FOLDERS), _T("OPENFOLDER"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T("PREFERENCES"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, GetResString(IDS_TOOLS_NETWORK_UPDATES), _T("WEB"));
@@ -3670,11 +3717,10 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 	menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB"));
 	menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)scheduler.m_hMenu, GetResString(IDS_SCHEDULER), _T("SCHEDULER"));
 
-	if (!toolsonly) {
-		menu.AppendMenu(MF_SEPARATOR);
-		menu.AppendMenu(MF_STRING, MP_HM_EXIT, GetResString(IDS_EXIT) + _T("\tAlt+X"), _T("EXIT"));
-	}
+	menu.AppendMenu(MF_SEPARATOR);
+	menu.AppendMenu(MF_STRING, MP_HM_EXIT, GetResString(IDS_EXIT) + _T("\tAlt+X"), _T("EXIT"));
 	menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+	VERIFY(session.DestroyMenu());
 	VERIFY(folders.DestroyMenu());
 	VERIFY(editConfigFiles.DestroyMenu());
 	VERIFY(networkUpdates.DestroyMenu());

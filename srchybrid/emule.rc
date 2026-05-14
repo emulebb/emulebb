@@ -3632,6 +3632,7 @@ BEGIN
     IDS_TOOLS_NETWORK_UPDATES "Network && Updates"
     IDS_TOOLS_DIAGNOSTICS   "Diagnostics"
     IDS_TOOLS_MAINTENANCE   "Maintenance"
+    IDS_TOOLS_SESSION       "Session"
     IDS_EDIT_PREFERENCES_INI "Edit preferences.ini"
     IDS_EDIT_IPFILTER_DAT   "Edit ipfilter.dat"
     IDS_RELOAD_IPFILTER_DAT "Reload ipfilter.dat"
@@ -3702,6 +3703,27 @@ BEGIN
                             "Opens the current eMule.log file if it exists."
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG
                             "Opens the current eMule_Verbose.log file if it exists."
+    IDS_TOOLS_STATUS_SESSION_CONNECT
+                            "Connects, cancels a connection attempt, or disconnects the current session."
+    IDS_TOOLS_STATUS_SHOW_SERVER
+                            "Switches to the Servers view."
+    IDS_TOOLS_STATUS_SHOW_TRANSFERS
+                            "Switches to the Transfers view."
+    IDS_TOOLS_STATUS_SHOW_SEARCH
+                            "Switches to the Search view."
+    IDS_TOOLS_STATUS_SHOW_SHARED_FILES
+                            "Switches to the Shared Files view."
+    IDS_TOOLS_STATUS_SHOW_MESSAGES
+                            "Switches to the Messages view."
+    IDS_TOOLS_STATUS_SHOW_IRC
+                            "Switches to the IRC view."
+    IDS_TOOLS_STATUS_SHOW_STATISTICS
+                            "Switches to the Statistics view."
+    IDS_TOOLS_STATUS_SHOW_OPTIONS
+                            "Opens eMule options."
+    IDS_TOOLS_STATUS_MINIMIZE_TO_TRAY
+                            "Minimizes eMule to the system tray."
+    IDS_TOOLS_STATUS_EXIT   "Closes eMule."
     IDS_SEARCHPARAMS        "Search Parameters"
 END
 
