@@ -39,6 +39,7 @@
 #include "Log.h"
 #include "OtherFunctions.h"
 #include "PathHelpers.h"
+#include "DownloadQueueAutoCatSeams.h"
 #include "DownloadQueueOverviewSeams.h"
 
 #ifdef _DEBUG
@@ -1631,24 +1632,8 @@ void CDownloadQueue::SetAutoCat(CPartFile *newfile)
 
 		if (thePrefs.GetCategory(i)->ac_regexpeval)
 			bFound = RegularExpressionMatch(catExt, newfile->GetFileName()); // regular expression evaluation
-		else {
-			CString fullname(newfile->GetFileName());
-			fullname.MakeLower();
-			catExt.MakeLower();
-			for (int iPos = 0; iPos >= 0;) {
-				const CString &cmpExt(catExt.Tokenize(_T("|"), iPos));
-				if (!cmpExt.IsEmpty())
-					break;
-				// HoaX_69: Allow wildcards in autocat string
-				// thanks to: bluecow, khaos and SlugFiller
-				if ((cmpExt.FindOneOf(_T("*?")) && ::PathMatchSpec(fullname, cmpExt)) // Use wildcards
-					|| fullname.Find(cmpExt) >= 0) //simple string comparison
-				{
-					bFound = true;
-					break;
-				}
-			}
-		}
+		else
+			bFound = DownloadQueueAutoCatSeams::MatchesNonRegexAutoCategory(catExt, newfile->GetFileName());
 		if (bFound) {
 			newfile->SetCategory((UINT)i);
 			return;

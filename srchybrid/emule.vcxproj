@@ -88,7 +88,7 @@
       <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;dbghelp.lib;dwmapi.lib;iphlpapi.lib;ole32.lib;propsys.lib;runtimeobject.lib;shell32.lib;version.lib;winmm.lib;ws2_32.lib;$(CryptoPpRoot)$(Platform)\Output\$(Configuration)\cryptlib.lib;$(Id3libRoot)libprj\$(Platform)\$(Configuration)\id3lib.lib;$(MbedTlsLibRoot)$(Configuration)\mbedtls.lib;$(MbedTlsLibRoot)$(Configuration)\mbedx509.lib;$(MbedTlsLibRoot)..\tf-psa-crypto\core\$(Configuration)\tfpsacrypto.lib;$(MiniUpnpRoot)miniupnpc\msvc\$(Platform)\$(Configuration)\miniupnpc.lib;$(PcpNatPmpLibRoot)\$(Configuration)\pcpnatpmp.lib;$(ResizableLibRoot)ResizableLib\$(Platform)\$(Configuration)\ResizableLib.lib;$(ZlibRoot)contrib\vstudio\vc\$(Platform)\$(Configuration)\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;dbghelp.lib;dwmapi.lib;iphlpapi.lib;ole32.lib;propsys.lib;runtimeobject.lib;shell32.lib;shlwapi.lib;version.lib;winmm.lib;ws2_32.lib;$(CryptoPpRoot)$(Platform)\Output\$(Configuration)\cryptlib.lib;$(Id3libRoot)libprj\$(Platform)\$(Configuration)\id3lib.lib;$(MbedTlsLibRoot)$(Configuration)\mbedtls.lib;$(MbedTlsLibRoot)$(Configuration)\mbedx509.lib;$(MbedTlsLibRoot)..\tf-psa-crypto\core\$(Configuration)\tfpsacrypto.lib;$(MiniUpnpRoot)miniupnpc\msvc\$(Platform)\$(Configuration)\miniupnpc.lib;$(PcpNatPmpLibRoot)\$(Configuration)\pcpnatpmp.lib;$(ResizableLibRoot)ResizableLib\$(Platform)\$(Configuration)\ResizableLib.lib;$(ZlibRoot)contrib\vstudio\vc\$(Platform)\$(Configuration)\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IncrementalLink>true</IncrementalLink>
       <IgnoreSpecificDefaultLibraries>mpr.lib;rasapi32.lib;secur32.lib;sensapi.lib;vfw32.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <LinkControlFlowGuard>true</LinkControlFlowGuard>
@@ -125,7 +125,7 @@
       <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;dbghelp.lib;dwmapi.lib;iphlpapi.lib;ole32.lib;propsys.lib;runtimeobject.lib;shell32.lib;version.lib;winmm.lib;ws2_32.lib;$(CryptoPpRoot)$(Platform)\Output\$(Configuration)\cryptlib.lib;$(Id3libRoot)libprj\$(Platform)\$(Configuration)\id3lib.lib;$(MbedTlsLibRoot)$(Configuration)\mbedtls.lib;$(MbedTlsLibRoot)$(Configuration)\mbedx509.lib;$(MbedTlsLibRoot)..\tf-psa-crypto\core\$(Configuration)\tfpsacrypto.lib;$(MiniUpnpRoot)miniupnpc\msvc\$(Platform)\$(Configuration)\miniupnpc.lib;$(PcpNatPmpLibRoot)\$(Configuration)\pcpnatpmp.lib;$(ResizableLibRoot)ResizableLib\$(Platform)\$(Configuration)\ResizableLib.lib;$(ZlibRoot)contrib\vstudio\vc\$(Platform)\$(Configuration)\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;dbghelp.lib;dwmapi.lib;iphlpapi.lib;ole32.lib;propsys.lib;runtimeobject.lib;shell32.lib;shlwapi.lib;version.lib;winmm.lib;ws2_32.lib;$(CryptoPpRoot)$(Platform)\Output\$(Configuration)\cryptlib.lib;$(Id3libRoot)libprj\$(Platform)\$(Configuration)\id3lib.lib;$(MbedTlsLibRoot)$(Configuration)\mbedtls.lib;$(MbedTlsLibRoot)$(Configuration)\mbedx509.lib;$(MbedTlsLibRoot)..\tf-psa-crypto\core\$(Configuration)\tfpsacrypto.lib;$(MiniUpnpRoot)miniupnpc\msvc\$(Platform)\$(Configuration)\miniupnpc.lib;$(PcpNatPmpLibRoot)\$(Configuration)\pcpnatpmp.lib;$(ResizableLibRoot)ResizableLib\$(Platform)\$(Configuration)\ResizableLib.lib;$(ZlibRoot)contrib\vstudio\vc\$(Platform)\$(Configuration)\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>mpr.lib;rasapi32.lib;secur32.lib;sensapi.lib;vfw32.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <IncrementalLink>false</IncrementalLink>
@@ -473,6 +473,7 @@
     <ClInclude Include="DownloadListCtrl.h" />
     <ClInclude Include="DownloadListKeyboardShortcutsSeams.h" />
     <ClInclude Include="DownloadQueue.h" />
+    <ClInclude Include="DownloadQueueAutoCatSeams.h" />
     <ClInclude Include="Drawgdix.h" />
     <ClInclude Include="DropDownButton.h" />
     <ClInclude Include="DropTarget.h" />
