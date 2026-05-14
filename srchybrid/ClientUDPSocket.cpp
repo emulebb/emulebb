@@ -35,6 +35,7 @@
 #include "LockScopeSeams.h"
 #include "Log.h"
 #include "SafeFile.h"
+#include "SocketIoSeams.h"
 #include "kademlia/kademlia/Kademlia.h"
 #include "kademlia/io/IOException.h"
 #include "kademlia/kademlia/prefs.h"
@@ -576,9 +577,17 @@ bool CClientUDPSocket::Create()
 		m_port = thePrefs.GetUDPPort();
 		// the default socket size seems to be insufficient for this UDP socket
 		// because we tend to drop packets if several arrived at the same time
-		int val = 512 * 1024;
+		int val = static_cast<int>(kBroadbandUdpReceiveBufferBytes);
 		if (!SetSockOpt(SO_RCVBUF, &val, sizeof val))
 			DebugLogError(_T("Failed to increase socket size on UDP socket"));
+#if defined(_DEBUG) || defined(_DEVBUILD)
+		else {
+			int actual = 0;
+			int actualLen = sizeof actual;
+			if (GetSockOpt(SO_RCVBUF, &actual, &actualLen) && actual < val)
+				theApp.QueueDebugLogLine(false, _T("UDP receive buffer requested %u KiB, Windows applied %u KiB"), val / 1024, actual / 1024);
+		}
+#endif
 	} else
 		m_port = 0;
 	return true;

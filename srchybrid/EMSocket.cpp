@@ -1107,20 +1107,20 @@ CString CEMSocket::GetFullErrorMessage(DWORD dwError) const
 // increases the send buffer to a bigger size
 bool CEMSocket::UseBigSendBuffer()
 {
-#define BIGSIZE (512 * 1024)
-
 	if (!m_bUseBigSendBuffers) {
-		int val = BIGSIZE;
+		int val = static_cast<int>(kBroadbandTcpUploadSendBufferBytes);
 		int oldval;
 		int vallen = sizeof oldval;
 		if (GetSockOpt(SO_SNDBUF, &oldval, &vallen))
-			if (BIGSIZE > oldval) {
+			if (static_cast<int>(kBroadbandTcpUploadSendBufferBytes) > oldval) {
 				SetSockOpt(SO_SNDBUF, &val, sizeof val);
 				vallen = sizeof val;
-				m_bUseBigSendBuffers = (GetSockOpt(SO_SNDBUF, &val, &vallen) && val >= BIGSIZE);
+				m_bUseBigSendBuffers = (GetSockOpt(SO_SNDBUF, &val, &vallen) && val > oldval);
 #if defined(_DEBUG) || defined(_DEVBUILD)
-				if (m_bUseBigSendBuffers)
+				if (m_bUseBigSendBuffers && val >= static_cast<int>(kBroadbandTcpUploadSendBufferBytes))
 					theApp.QueueDebugLogLine(false, _T("Increased Sendbuffer for uploading socket from %u KiB to %u KiB"), oldval / 1024, val / 1024);
+				else if (m_bUseBigSendBuffers)
+					theApp.QueueDebugLogLine(false, _T("Upload send buffer requested %u KiB, Windows applied %u KiB"), kBroadbandTcpUploadSendBufferBytes / 1024, val / 1024);
 				else
 					theApp.QueueDebugLogLine(false, _T("Failed to increase Sendbuffer for uploading socket, stays at %u KiB"), oldval / 1024);
 #endif

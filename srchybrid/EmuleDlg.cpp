@@ -55,6 +55,7 @@
 #include "ServerConnect.h"
 #include "DownloadQueue.h"
 #include "ClientUDPSocket.h"
+#include "EMSocket.h"
 #include "UpDownClient.h"
 #include "KnownFileList.h"
 #include "ServerList.h"
@@ -67,6 +68,7 @@
 #include "Exceptions.h"
 #include "FakeFileDetector.h"
 #include "BroadbandIoSeams.h"
+#include "SocketIoSeams.h"
 #include "SearchList.h"
 #include "HTRichEditCtrl.h"
 #include "FrameGrabThread.h"
@@ -492,7 +494,7 @@ namespace
 	static nlohmann::json BuildSocketBufferJson()
 	{
 		nlohmann::json udpReceive = {
-			{"requestedBytes", 512 * 1024},
+			{"requestedBytes", kBroadbandUdpReceiveBufferBytes},
 			{"actualBytes", nullptr}
 		};
 
@@ -503,10 +505,31 @@ namespace
 				udpReceive["actualBytes"] = iValue;
 		}
 
+		nlohmann::json tcpSamples = nlohmann::json::array();
+		if (theApp.uploadqueue != NULL) {
+			for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;) {
+				CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromUploadList(pos);
+				CEMSocket *const pSocket = pClient != NULL ? pClient->GetFileUploadSocket() : NULL;
+				if (pSocket == NULL)
+					continue;
+
+				int iValue = 0;
+				int iValueLen = sizeof iValue;
+				if (pSocket->GetSockOpt(SO_SNDBUF, &iValue, &iValueLen)) {
+					tcpSamples.push_back(nlohmann::json{
+						{"actualBytes", iValue},
+						{"meetsTarget", iValue >= static_cast<int>(kBroadbandTcpUploadSendBufferBytes)}
+					});
+				}
+			}
+		}
+
 		return nlohmann::json{
 			{"udpReceive", udpReceive},
 			{"tcpUploadSend", nlohmann::json{
-				{"targetBytes", 512 * 1024}
+				{"targetBytes", kBroadbandTcpUploadSendBufferBytes},
+				{"activeSocketCount", tcpSamples.size()},
+				{"activeSockets", tcpSamples}
 			}}
 		};
 	}
