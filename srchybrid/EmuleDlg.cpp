@@ -212,20 +212,12 @@ namespace
 
 	static CString GetModulePath()
 	{
-		CString strPath;
-		LPTSTR pszPath = strPath.GetBuffer(MAX_PATH);
-		const DWORD dwLength = ::GetModuleFileName(NULL, pszPath, MAX_PATH);
-		strPath.ReleaseBuffer(dwLength);
-		return strPath;
+		return PathHelpers::GetModuleFilePath(NULL);
 	}
 
 	static CString GetCurrentDirectoryPath()
 	{
-		CString strPath;
-		LPTSTR pszPath = strPath.GetBuffer(MAX_PATH);
-		const DWORD dwLength = ::GetCurrentDirectory(MAX_PATH, pszPath);
-		strPath.ReleaseBuffer(dwLength <= MAX_PATH ? dwLength : 0);
-		return strPath;
+		return PathHelpers::GetCurrentDirectoryPath();
 	}
 
 	static nlohmann::json BuildProcessInfoJson(DiagnosticSnapshotSeams::ESnapshotPrivacyMode ePrivacyMode)
