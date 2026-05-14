@@ -53,9 +53,18 @@ inline LPCTSTR GetIPFilterTemplateText()
 inline LPCTSTR GetWebServicesTemplateText()
 {
 	return _T("# webservices.dat\r\n")
-		_T("# Add one external action per line:\r\n")
-		_T("# Menu Label,https://example.invalid/search?q=#cleanfilename\r\n")
-		_T("# File macros: #hashid #filesize #filename #name #cleanfilename #cleanname\r\n");
+		_T("# Adds browser actions to eMule web-service menus. Nothing runs until you click a menu item.\r\n")
+		_T("# Format: Menu Label,URL template\r\n")
+		_T("# File macros: #hashid #filesize #filename #name #cleanfilename #cleanname\r\n")
+		_T("# Lines using file macros appear for one selected file in Transfers, Search, and Shared Files.\r\n")
+		_T("# Lines without file macros appear in the main Tools/Links menu.\r\n")
+		_T("Search Web for Clean Filename,https://duckduckgo.com/?q=#cleanfilename\r\n")
+		_T("Search Web for Exact Filename,https://duckduckgo.com/?q=#filename\r\n")
+		_T("Search Web for Base Name,https://duckduckgo.com/?q=#cleanname\r\n")
+		_T("# Power-user examples. Uncomment and adapt for preferred indexers or archives:\r\n")
+		_T("# Search Web for ED2K Hash,https://duckduckgo.com/?q=#hashid\r\n")
+		_T("# Search Web for Name and Size,https://duckduckgo.com/?q=#cleanname+%23filesize+#filesize\r\n")
+		_T("# Search Web for Exact Name and Size,https://duckduckgo.com/?q=#filename+%23filesize+#filesize\r\n");
 }
 
 inline LPCTSTR GetStaticServersTemplateText()

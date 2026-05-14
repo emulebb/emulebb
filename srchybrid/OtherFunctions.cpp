@@ -32,6 +32,7 @@
 #include "KnownFileList.h"
 #include "Opcodes.h"
 #include "WebServices.h"
+#include "WebServicesSeams.h"
 #include "emuledlg.h"
 #include "MenuCmds.h"
 #include "ZipFile.h"
@@ -1126,42 +1127,24 @@ INT_PTR CWebServices::ReadAllServices()
 	if (readFile != NULL) {
 		CString sbuffer;
 		while (!feof(readFile)) {
+			if (static_cast<size_t>(m_aServices.GetCount()) >= WebServicesSeams::kMaxWebServiceMenuEntries)
+				break;
+
 			TCHAR buffer[1024];
 			if (_fgetts(buffer, _countof(buffer), readFile) == NULL)
 				break;
 			sbuffer = buffer;
 
-			// ignore comments & too short lines
-			if (sbuffer[0] == _T('#') || sbuffer[0] == _T('/') || sbuffer.GetLength() < 5)
+			WebServicesSeams::ParsedService parsedService;
+			if (!WebServicesSeams::TryParseServiceLine(sbuffer, parsedService))
 				continue;
 
-			int iPos = sbuffer.Find(_T(','));
-			if (iPos > 0) {
-				const CString strUrlTemplate(sbuffer.Right(sbuffer.GetLength() - iPos - 1).Trim());
-				if (!strUrlTemplate.IsEmpty()) {
-					static LPCTSTR const _apszMacros[] = {
-						_T("#hashid"),
-						_T("#filesize"),
-						_T("#filename"),
-						_T("#name"),
-						_T("#cleanfilename"),
-						_T("#cleanname")
-					};
-					bool bFileMacros = false;
-					for (int i = (int)_countof(_apszMacros); --i >= 0;)
-						if (strUrlTemplate.Find(_apszMacros[i]) >= 0) {
-							bFileMacros = true;
-							break;
-						}
-
-					SEd2kLinkService svc;
-					svc.uMenuID = (UINT)(MP_WEBURL + m_aServices.GetCount());
-					svc.strMenuLabel = sbuffer.Left(iPos).Trim();
-					svc.strUrl = strUrlTemplate;
-					svc.bFileMacros = bFileMacros;
-					m_aServices.Add(svc);
-				}
-			}
+			SEd2kLinkService svc;
+			svc.uMenuID = (UINT)(MP_WEBURL + m_aServices.GetCount());
+			svc.strMenuLabel = parsedService.strMenuLabel;
+			svc.strUrl = parsedService.strUrl;
+			svc.bFileMacros = parsedService.bFileMacros;
+			m_aServices.Add(svc);
 		}
 		struct _stat64 st;
 		if (statUTC((HANDLE)_get_osfhandle(_fileno(readFile)), st) == 0)
