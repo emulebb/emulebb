@@ -72,10 +72,34 @@ CString AddMenuShortcutLabel(const CString &strLabel, LPCTSTR pszShortcut)
 	return strMenuLabel;
 }
 
+CString BuildSharedTreePathKey(const CString &rstrPath)
+{
+	CString strKey(PathHelpers::EnsureTrailingSeparator(rstrPath));
+	strKey.MakeLower();
+	return strKey;
+}
+
+bool AreSharedTreePathKeysEqual(const CString &rstrLeft, const CString &rstrRight)
+{
+	return BuildSharedTreePathKey(rstrLeft) == BuildSharedTreePathKey(rstrRight);
+}
+
+bool SharedDirectoryKeyLess(const CString &rstrLeft, const CString &rstrRight)
+{
+	return rstrLeft.Compare(rstrRight) < 0;
+}
+
+bool HasSharedDirectoryKeyPrefix(const CString &rstrPrefix, const CString &rstrCandidate)
+{
+	return rstrCandidate.GetLength() > rstrPrefix.GetLength()
+		&& _tcsncmp(rstrCandidate, rstrPrefix, rstrPrefix.GetLength()) == 0;
+}
+
 bool ListContainsEquivalentPath(const CStringList &rList, const CString &rstrPath)
 {
+	const CString strPathKey(BuildSharedTreePathKey(rstrPath));
 	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
-		if (EqualPaths(rList.GetNext(pos), rstrPath))
+		if (BuildSharedTreePathKey(rList.GetNext(pos)) == strPathKey)
 			return true;
 	}
 	return false;
@@ -83,9 +107,10 @@ bool ListContainsEquivalentPath(const CStringList &rList, const CString &rstrPat
 
 bool RemoveEquivalentPath(CStringList &rList, const CString &rstrPath)
 {
+	const CString strPathKey(BuildSharedTreePathKey(rstrPath));
 	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
-		if (!EqualPaths(rList.GetNext(pos), rstrPath))
+		if (BuildSharedTreePathKey(rList.GetNext(pos)) != strPathKey)
 			continue;
 		rList.RemoveAt(posCurrent);
 		return true;
@@ -96,11 +121,14 @@ bool RemoveEquivalentPath(CStringList &rList, const CString &rstrPath)
 bool RemovePathsWithinDirectory(CStringList &rList, const CString &rstrPath, bool bIncludeRoot)
 {
 	bool bChanged = false;
+	const CString strPathKey(BuildSharedTreePathKey(rstrPath));
 	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
 		const CString strCurrent(rList.GetNext(pos));
-		if ((!bIncludeRoot && EqualPaths(strCurrent, rstrPath))
-			|| !PathHelpers::IsPathWithinDirectory(rstrPath, strCurrent))
+		const CString strCurrentKey(BuildSharedTreePathKey(strCurrent));
+		const bool bSamePath = strCurrentKey == strPathKey;
+		if ((!bIncludeRoot && bSamePath)
+			|| (!bSamePath && !HasSharedDirectoryKeyPrefix(strPathKey, strCurrentKey)))
 		{
 			continue;
 		}
@@ -120,24 +148,6 @@ bool IsAccessibleDirectoryForSharedTree(const CString &rstrDirectory)
 		: LongPathSeams::PreparePathForLongPathRaw(strNormalized, strNormalized, bRequiresExactNamePrefix);
 	const DWORD dwAttributes = ::GetFileAttributes(strPrepared.c_str());
 	return dwAttributes != INVALID_FILE_ATTRIBUTES && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-}
-
-CString BuildSharedTreePathKey(const CString &rstrPath)
-{
-	CString strKey(PathHelpers::EnsureTrailingSeparator(rstrPath));
-	strKey.MakeLower();
-	return strKey;
-}
-
-bool SharedDirectoryKeyLess(const CString &rstrLeft, const CString &rstrRight)
-{
-	return rstrLeft.Compare(rstrRight) < 0;
-}
-
-bool HasSharedDirectoryKeyPrefix(const CString &rstrPrefix, const CString &rstrCandidate)
-{
-	return rstrCandidate.GetLength() > rstrPrefix.GetLength()
-		&& _tcsncmp(rstrCandidate, rstrPrefix, rstrPrefix.GetLength()) == 0;
 }
 
 CDirectoryItem* InsertSharedDirectoryItem(CSharedDirsTreeCtrl *pTreeCtrl, CDirectoryItem *pParentItem, const CString &rstrPath, bool bTopFolder, bool bAccessible, bool &rbShowWarning)
@@ -587,13 +597,16 @@ bool CSharedDirsTreeCtrl::FilterTreeIsSubDirectory(const CString &strDir, const 
 {
 	ASSERT(strRoot.IsEmpty() || strRoot.Right(1) == _T("\\"));
 	ASSERT(strDir.Right(1) == _T("\\"));
+	const CString strDirKey(BuildSharedTreePathKey(strDir));
+	const CString strRootKey(BuildSharedTreePathKey(strRoot));
 	for (POSITION pos = liDirs.GetHeadPosition(); pos != NULL;) {
 		const CString strCurrent(liDirs.GetNext(pos));
 		ASSERT(strCurrent.Right(1) == _T("\\"));
-		if (EqualPaths(strCurrent, strRoot) || EqualPaths(strCurrent, strDir))
+		const CString strCurrentKey(BuildSharedTreePathKey(strCurrent));
+		if ((!strRoot.IsEmpty() && strCurrentKey == strRootKey) || strCurrentKey == strDirKey)
 			continue;
-		if (PathHelpers::IsPathWithinDirectory(strCurrent, strDir)
-			&& (strRoot.IsEmpty() || !PathHelpers::IsPathWithinDirectory(strCurrent, strRoot)))
+		if (HasSharedDirectoryKeyPrefix(strCurrentKey, strDirKey)
+			&& (strRoot.IsEmpty() || !HasSharedDirectoryKeyPrefix(strCurrentKey, strRootKey)))
 		{
 			return true;
 		}
@@ -633,11 +646,13 @@ void CSharedDirsTreeCtrl::FilterTreeAddSubDirectories(CDirectoryItem *pDirectory
 	}
 
 	const CString &strDirectoryPath(pDirectory->m_strFullPath);
+	const CString strDirectoryKey(BuildSharedTreePathKey(strDirectoryPath));
 	for (POSITION pos = liDirs.GetHeadPosition(); pos != NULL;) { //all paths in liDirs should have a trailing backslash
 		const CString &strCurrent(liDirs.GetNext(pos));
-		if (!strDirectoryPath.IsEmpty() && !PathHelpers::IsPathWithinDirectory(strDirectoryPath, strCurrent))
+		const CString strCurrentKey(BuildSharedTreePathKey(strCurrent));
+		if (!strDirectoryPath.IsEmpty() && !HasSharedDirectoryKeyPrefix(strDirectoryKey, strCurrentKey))
 			continue;
-		if (EqualPaths(strCurrent, strDirectoryPath))
+		if (strCurrentKey == strDirectoryKey)
 			continue;
 		if (!FilterTreeIsSubDirectory(strCurrent, strDirectoryPath, liDirs)) {
 			bool bAccessible = bParentAccessible ? LongPathSeams::PathExists(strCurrent) : false;
@@ -700,7 +715,7 @@ void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 						if (pCatStruct != NULL) {
 							const CString &strCatIncomingPath(pCatStruct->strIncomingPath);
 							ASSERT(strCatIncomingPath.IsEmpty() || strCatIncomingPath.Right(1) == _T("\\"));
-							if (!strCatIncomingPath.IsEmpty() && !EqualPaths(strCatIncomingPath, strMainIncDir)
+							if (!strCatIncomingPath.IsEmpty() && !AreSharedTreePathKeysEqual(strCatIncomingPath, strMainIncDir)
 								&& !ListContainsEquivalentPath(m_strliCatIncomingDirs, strCatIncomingPath))
 							{
 								m_strliCatIncomingDirs.AddTail(strCatIncomingPath);
@@ -1436,7 +1451,7 @@ void CSharedDirsTreeCtrl::Reload(bool bForce)
 			while (pos != NULL && pos2 != NULL) {
 				const CString &str(m_strliSharedDirs.GetNext(pos));
 				const CString &str2(sharedDirs.GetNext(pos2));
-				if (!EqualPaths(str, str2)) {
+				if (!AreSharedTreePathKeysEqual(str, str2)) {
 					bForce = true;
 					break;
 				}
@@ -1451,7 +1466,7 @@ void CSharedDirsTreeCtrl::Reload(bool bForce)
 				POSITION pos = m_strliMonitoredRoots.GetHeadPosition();
 				POSITION pos2 = monitoredRoots.GetHeadPosition();
 				while (pos != NULL && pos2 != NULL) {
-					if (!EqualPaths(m_strliMonitoredRoots.GetNext(pos), monitoredRoots.GetNext(pos2))) {
+					if (!AreSharedTreePathKeysEqual(m_strliMonitoredRoots.GetNext(pos), monitoredRoots.GetNext(pos2))) {
 						bForce = true;
 						break;
 					}
@@ -1468,7 +1483,7 @@ void CSharedDirsTreeCtrl::Reload(bool bForce)
 				if (pCatStruct != NULL) {
 					CString strCatIncomingPath(pCatStruct->strIncomingPath);
 
-					if (!strCatIncomingPath.IsEmpty() && !EqualPaths(strCatIncomingPath, strMainIncDir)
+					if (!strCatIncomingPath.IsEmpty() && !AreSharedTreePathKeysEqual(strCatIncomingPath, strMainIncDir)
 						&& !ListContainsEquivalentPath(strliFound, strCatIncomingPath))
 					{
 						if (!ListContainsEquivalentPath(m_strliCatIncomingDirs, strCatIncomingPath)) {
@@ -1519,12 +1534,14 @@ bool CSharedDirsTreeCtrl::IsMonitoredRoot(const CString &strDir) const
 CString CSharedDirsTreeCtrl::FindContainingMonitoredRoot(const CString &strDir, bool bAllowExactMatch) const
 {
 	CString strBestMatch;
+	const CString strDirKey(BuildSharedTreePathKey(strDir));
 	for (POSITION pos = m_strliMonitoredRoots.GetHeadPosition(); pos != NULL;) {
 		const CString strRoot(m_strliMonitoredRoots.GetNext(pos));
-		if (EqualPaths(strRoot, strDir)) {
+		const CString strRootKey(BuildSharedTreePathKey(strRoot));
+		if (strRootKey == strDirKey) {
 			if (!bAllowExactMatch)
 				continue;
-		} else if (!PathHelpers::IsPathWithinDirectory(strRoot, strDir))
+		} else if (!HasSharedDirectoryKeyPrefix(strRootKey, strDirKey))
 			continue;
 		if (strBestMatch.IsEmpty() || strRoot.GetLength() > strBestMatch.GetLength())
 			strBestMatch = strRoot;
@@ -1737,7 +1754,7 @@ bool CSharedDirsTreeCtrl::ShowSharedDirectory(const CString &strDir)
 			// search for the fitting sub dir
 			for (POSITION pos2 = pTemp->liSubDirectories.GetHeadPosition(); pos2 != NULL;) {
 				CDirectoryItem *pTemp2 = pTemp->liSubDirectories.GetNext(pos2);
-				if (EqualPaths(strDir, pTemp2->m_strFullPath)) {
+				if (AreSharedTreePathKeysEqual(strDir, pTemp2->m_strFullPath)) {
 					Select(pTemp2->m_htItem, TVGN_CARET);
 					EnsureVisible(pTemp2->m_htItem);
 					return true;
