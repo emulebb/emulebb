@@ -23,6 +23,7 @@
 #include "ConfigDefaultFilesSeams.h"
 #include "emule.h"
 #include "Preferences.h"
+#include "WindowPlacementSeams.h"
 #include "Opcodes.h"
 #include "UpDownClient.h"
 #include "Ini2.h"
@@ -1554,14 +1555,14 @@ void CPreferences::Uninit()
 
 void CPreferences::SetStandardValues()
 {
-	WINDOWPLACEMENT defaultWPM;
-	defaultWPM.length = sizeof(WINDOWPLACEMENT);
-	defaultWPM.rcNormalPosition.left = 10;
-	defaultWPM.rcNormalPosition.top = 10;
-	defaultWPM.rcNormalPosition.right = 700;
-	defaultWPM.rcNormalPosition.bottom = 500;
-	defaultWPM.showCmd = SW_SHOWMAXIMIZED;
-	EmuleWindowPlacement = defaultWPM;
+	RECT rcWorkArea = {};
+	if (!::SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWorkArea, 0)) {
+		rcWorkArea.left = 0;
+		rcWorkArea.top = 0;
+		rcWorkArea.right = ::GetSystemMetrics(SM_CXSCREEN);
+		rcWorkArea.bottom = ::GetSystemMetrics(SM_CYSCREEN);
+	}
+	EmuleWindowPlacement = WindowPlacementSeams::BuildDefaultMainWindowPlacement(rcWorkArea);
 	versioncheckLastAutomatic = 0;
 }
 

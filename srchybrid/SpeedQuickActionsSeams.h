@@ -39,6 +39,18 @@ inline constexpr std::array<CQuickSpeedPercentAction, 9> kDownloadPercentActions
 	{MP_QS_D90, 90u},
 }};
 
+inline constexpr std::array<CQuickSpeedPercentAction, 9> kBothPercentActions = {{
+	{MP_QS_B10, 10u},
+	{MP_QS_B20, 20u},
+	{MP_QS_B30, 30u},
+	{MP_QS_B40, 40u},
+	{MP_QS_B50, 50u},
+	{MP_QS_B60, 60u},
+	{MP_QS_B70, 70u},
+	{MP_QS_B80, 80u},
+	{MP_QS_B90, 90u},
+}};
+
 /// Calculates a non-zero session cap from a configured bandwidth cap and percentage.
 inline std::uint32_t CalculatePercentLimitKiB(std::uint32_t uConfiguredLimitKiB, unsigned int uPercent)
 {
@@ -53,6 +65,10 @@ inline unsigned int GetPercentForCommand(unsigned int uCommandId)
 			return action.uPercent;
 	}
 	for (const CQuickSpeedPercentAction &action : kDownloadPercentActions) {
+		if (action.uCommandId == uCommandId)
+			return action.uPercent;
+	}
+	for (const CQuickSpeedPercentAction &action : kBothPercentActions) {
 		if (action.uCommandId == uCommandId)
 			return action.uPercent;
 	}

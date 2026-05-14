@@ -522,6 +522,7 @@ BEGIN_MESSAGE_MAP(CemuleDlg, CTrayDialog)
 	// quick-speed changer --
 	ON_COMMAND_RANGE(MP_QS_U10, MP_QS_UP10, QuickSpeedUpload)
 	ON_COMMAND_RANGE(MP_QS_D10, MP_QS_DC, QuickSpeedDownload)
+	ON_COMMAND_RANGE(MP_QS_B10, MP_QS_B90, QuickSpeedBoth)
 	//--- quickspeed - paralize all ---
 	ON_COMMAND_RANGE(MP_QS_PA, MP_QS_UA, QuickSpeedOther)
 	// quick-speed changer -- based on xrmb
@@ -1438,6 +1439,10 @@ void CemuleDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		QuickSpeedDownload(nID);
 		return;
 	}
+	if (nID >= MP_QS_B10 && nID <= MP_QS_B90) {
+		QuickSpeedBoth(nID);
+		return;
+	}
 	if (nID == MP_QS_PA || nID == MP_QS_UA) {
 		QuickSpeedOther(nID);
 		return;
@@ -1854,6 +1859,16 @@ void CemuleDlg::OnCancel()
 void CemuleDlg::MinimizeWindow()
 {
 	if (*thePrefs.GetMinTrayPTR()) {
+		WINDOWPLACEMENT wp = {};
+		wp.length = (UINT)sizeof wp;
+		if (GetWindowPlacement(&wp)) {
+			if (wp.showCmd == SW_SHOWMINIMIZED && (wp.flags & WPF_RESTORETOMAXIMIZED))
+				wp.showCmd = SW_SHOWMAXIMIZED;
+			if (wp.showCmd == SW_SHOWMAXIMIZED || wp.showCmd == SW_SHOWNORMAL) {
+				wp.flags = 0;
+				m_wpFirstRestore = wp;
+			}
+		}
 		ShowWindow(SW_HIDE);
 		UpdateTrayVisibility();
 	} else
@@ -2420,9 +2435,16 @@ void CemuleDlg::OnClose()
 	theApp.OnlineSig(); // Added By Bouc7
 
 	// get main window placement
-	WINDOWPLACEMENT wp;
-	wp.length = (UINT)sizeof wp;
-	if (GetWindowPlacement(&wp)) {
+	WINDOWPLACEMENT wp = {};
+	bool bHaveWindowPlacement = false;
+	if (m_wpFirstRestore.length) {
+		wp = m_wpFirstRestore;
+		bHaveWindowPlacement = true;
+	} else {
+		wp.length = (UINT)sizeof wp;
+		bHaveWindowPlacement = GetWindowPlacement(&wp) != FALSE;
+	}
+	if (bHaveWindowPlacement) {
 		ASSERT(wp.showCmd == SW_SHOWMAXIMIZED || wp.showCmd == SW_SHOWMINIMIZED || wp.showCmd == SW_SHOWNORMAL);
 		if (wp.showCmd == SW_SHOWMINIMIZED && (wp.flags & WPF_RESTORETOMAXIMIZED))
 			wp.showCmd = SW_SHOWMAXIMIZED;
@@ -3213,6 +3235,27 @@ void CemuleDlg::QuickSpeedDownload(UINT nID)
 	}
 }
 
+void CemuleDlg::QuickSpeedBoth(UINT nID)
+{
+	const unsigned int uPercent = SpeedQuickActionsSeams::GetPercentForCommand(nID);
+	if (uPercent == 0)
+		return;
+
+	const uint32 uUploadLimit = SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxUpload(), uPercent);
+	const uint32 uDownloadLimit = SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxDownload(), uPercent);
+	const CString strKiBps(GetResString(IDS_KBYTESPERSEC));
+	thePrefs.SetSessionMaxUpload(uUploadLimit);
+	thePrefs.SetSessionMaxDownload(uDownloadLimit);
+	AddLogLine(
+		false,
+		_T("Temporary session upload and download limits set to %u%% (up %u %s, down %u %s)."),
+		uPercent,
+		uUploadLimit,
+		(LPCTSTR)strKiBps,
+		uDownloadLimit,
+		(LPCTSTR)strKiBps);
+}
+
 // quick-speed changer -- based on xrmb
 int CemuleDlg::GetRecMaxUpload()
 {
@@ -3583,6 +3626,10 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	speedDownload.CreateMenu();
 	speedDownload.AddMenuTitle(NULL, true);
 
+	CTitledMenu speedBoth;
+	speedBoth.CreateMenu();
+	speedBoth.AddMenuTitle(NULL, true);
+
 	if (toolsonly) {
 		UINT uGeoLocationMenuFlags = MF_STRING;
 		if (!thePrefs.IsGeoLocationEnabled())
@@ -3628,6 +3675,17 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 				(LPCTSTR)kbyps);
 			speedDownload.AppendMenu(MF_STRING, action.uCommandId, text);
 		}
+		for (const SpeedQuickActionsSeams::CQuickSpeedPercentAction &action : SpeedQuickActionsSeams::kBothPercentActions) {
+			text.Format(
+				_T("Limit: Both %u%%\tU %u %s / D %u %s"),
+				action.uPercent,
+				SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxUpload(), action.uPercent),
+				(LPCTSTR)kbyps,
+				SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxDownload(), action.uPercent),
+				(LPCTSTR)kbyps);
+			speedBoth.AppendMenu(MF_STRING, action.uCommandId, text);
+		}
+		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedBoth.m_hMenu, _T("&Both Upload + Download"), _T("SPEED"));
 		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedUpload.m_hMenu, _T("&Upload"), _T("UPLOAD"));
 		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedDownload.m_hMenu, _T("&Download"), _T("DOWNLOAD"));
 		speedQuickActions.AppendMenu(MF_SEPARATOR);
@@ -3719,6 +3777,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	VERIFY(speedQuickActions.DestroyMenu());
 	VERIFY(speedUpload.DestroyMenu());
 	VERIFY(speedDownload.DestroyMenu());
+	VERIFY(speedBoth.DestroyMenu());
 	VERIFY(Links.DestroyMenu());
 	VERIFY(scheduler.DestroyMenu());
 	VERIFY(menu.DestroyMenu());

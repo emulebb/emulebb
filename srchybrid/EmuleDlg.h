@@ -302,6 +302,7 @@ protected:
 	// quick-speed changer -- based on xrmb
 	afx_msg void QuickSpeedUpload(UINT nID);
 	afx_msg void QuickSpeedDownload(UINT nID);
+	afx_msg void QuickSpeedBoth(UINT nID);
 	afx_msg void QuickSpeedOther(UINT nID);
 	// end of quick-speed changer
 

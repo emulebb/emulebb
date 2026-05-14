@@ -231,6 +231,15 @@
 #define MP_QS_DL				10532
 #define MP_QS_PA				10533
 #define MP_QS_UA				10534
+#define MP_QS_B10				10535
+#define MP_QS_B20				10536
+#define MP_QS_B30				10537
+#define MP_QS_B40				10538
+#define MP_QS_B50				10539
+#define MP_QS_B60				10540
+#define MP_QS_B70				10541
+#define MP_QS_B80				10542
+#define MP_QS_B90				10543
 
 #define MP_WEBURL				10600	// reserve 100 entries for weburls!
 #define MP_ASSIGNCAT			10700	// reserve 100 entries for categories!
