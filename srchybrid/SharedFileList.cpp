@@ -49,6 +49,8 @@
 #include "LongPathSeams.h"
 #include "MD5Sum.h"
 #include "UserMsgs.h"
+#include <string>
+#include <unordered_map>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -262,10 +264,18 @@ public:
 protected:
 	// can't use a CMap - too many disadvantages in processing the 'list'
 	//CTypedPtrMap<CMapStringToPtr, CString, CPublishKeyword*> m_lstKeywords;
+	struct KeywordIndexEntry
+	{
+		CPublishKeyword *pKeyword;
+		POSITION pos;
+	};
+
 	CTypedPtrList<CPtrList, CPublishKeyword*> m_lstKeywords;
+	std::unordered_map<std::wstring, KeywordIndexEntry> m_mapKeywordIndex;
 	POSITION m_posNextKeyword;
 	time_t m_tNextPublishKeywordTime;
 
+	static std::wstring MakeKeywordIndexKey(const CStringW &rstrKeyword);
 	CPublishKeyword *FindKeyword(const CStringW &rstrKeyword, POSITION *ppos = NULL) const;
 };
 
@@ -295,18 +305,19 @@ void CPublishKeywordList::ResetNextKeyword()
 	m_posNextKeyword = m_lstKeywords.GetHeadPosition();
 }
 
+std::wstring CPublishKeywordList::MakeKeywordIndexKey(const CStringW &rstrKeyword)
+{
+	return std::wstring(static_cast<LPCWSTR>(rstrKeyword), static_cast<size_t>(rstrKeyword.GetLength()));
+}
+
 CPublishKeyword *CPublishKeywordList::FindKeyword(const CStringW &rstrKeyword, POSITION *ppos) const
 {
-	for (POSITION pos = m_lstKeywords.GetHeadPosition(); pos != NULL;) {
-		POSITION posLast = pos;
-		CPublishKeyword *pPubKw = m_lstKeywords.GetNext(pos);
-		if (pPubKw->GetKeyword() == rstrKeyword) {
-			if (ppos)
-				*ppos = posLast;
-			return pPubKw;
-		}
-	}
-	return NULL;
+	const auto it = m_mapKeywordIndex.find(MakeKeywordIndexKey(rstrKeyword));
+	if (it == m_mapKeywordIndex.end())
+		return NULL;
+	if (ppos)
+		*ppos = it->second.pos;
+	return it->second.pKeyword;
 }
 
 void CPublishKeywordList::AddKeywords(CKnownFile *pFile)
@@ -318,7 +329,8 @@ void CPublishKeywordList::AddKeywords(CKnownFile *pFile)
 		CPublishKeyword *pPubKw = FindKeyword(strKeyword);
 		if (pPubKw == NULL) {
 			pPubKw = new CPublishKeyword(Kademlia::CKadTagValueString(strKeyword));
-			m_lstKeywords.AddTail(pPubKw);
+			const POSITION posNew = m_lstKeywords.AddTail(pPubKw);
+			m_mapKeywordIndex.emplace(MakeKeywordIndexKey(strKeyword), KeywordIndexEntry{pPubKw, posNew});
 			SetNextPublishTime(0);
 		}
 		if (pPubKw->AddRef(pFile) && pPubKw->GetNextPublishTime() > MIN2S(30)) {
@@ -342,6 +354,7 @@ void CPublishKeywordList::RemoveKeywords(CKnownFile *pFile)
 		if (pPubKw != NULL && pPubKw->RemoveRef(pFile) == 0) {
 			if (pos == m_posNextKeyword)
 				(void)m_lstKeywords.GetNext(m_posNextKeyword);
+			m_mapKeywordIndex.erase(MakeKeywordIndexKey(strKeyword));
 			m_lstKeywords.RemoveAt(pos);
 			delete pPubKw;
 			SetNextPublishTime(0);
@@ -353,6 +366,7 @@ void CPublishKeywordList::RemoveAllKeywords()
 {
 	while (!m_lstKeywords.IsEmpty())
 		delete m_lstKeywords.RemoveHead();
+	m_mapKeywordIndex.clear();
 	ResetNextKeyword();
 	SetNextPublishTime(0);
 }
@@ -371,6 +385,7 @@ void CPublishKeywordList::PurgeUnreferencedKeywords()
 		if (pPubKw->GetRefCount() == 0) {
 			if (posLast == m_posNextKeyword)
 				m_posNextKeyword = pos;
+			m_mapKeywordIndex.erase(MakeKeywordIndexKey(pPubKw->GetKeyword()));
 			m_lstKeywords.RemoveAt(posLast);
 			delete pPubKw;
 			SetNextPublishTime(0);
