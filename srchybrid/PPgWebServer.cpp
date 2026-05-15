@@ -541,6 +541,11 @@ void CPPgWebServer::UpdateLegacyWebUiControls()
 
 	EnableDlgItem(this, IDC_STATIC_LEGACY_WEBUI, bServerEnabled);
 	EnableDlgItem(this, IDC_WS_GZIP, bLegacyWebUiEnabled && !bHttpsEnabled);
+	EnableDlgItem(this, IDC_WS_MAXFILEUPLOAD_LBL, bLegacyWebUiEnabled);
+	EnableDlgItem(this, IDC_WS_MAXFILEUPLOAD, bLegacyWebUiEnabled);
+	EnableDlgItem(this, IDC_WSTIMEOUTLABEL, bLegacyWebUiEnabled);
+	EnableDlgItem(this, IDC_WSTIMEOUT, bLegacyWebUiEnabled);
+	EnableDlgItem(this, IDC_MINS, bLegacyWebUiEnabled);
 	EnableDlgItem(this, IDC_TEMPLATE, bLegacyWebUiEnabled);
 	EnableDlgItem(this, IDC_TMPLPATH, bLegacyWebUiEnabled);
 	EnableDlgItem(this, IDC_TMPLBROWSE, bLegacyWebUiEnabled);
@@ -579,11 +584,6 @@ void CPPgWebServer::OnEnChangeWSEnabled()
 	EnableDlgItem(this, IDC_WSAPIKEY, bIsWIEnabled);
 	EnableDlgItem(this, IDC_WS_ALLOWEDIPS_LBL, bIsWIEnabled);
 	EnableDlgItem(this, IDC_WS_ALLOWEDIPS, bIsWIEnabled);
-	EnableDlgItem(this, IDC_WS_MAXFILEUPLOAD_LBL, bIsWIEnabled);
-	EnableDlgItem(this, IDC_WS_MAXFILEUPLOAD, bIsWIEnabled);
-	EnableDlgItem(this, IDC_WSTIMEOUTLABEL, bIsWIEnabled);
-	EnableDlgItem(this, IDC_WSTIMEOUT, bIsWIEnabled);
-	EnableDlgItem(this, IDC_MINS, bIsWIEnabled);
 	EnableDlgItem(this, IDC_STATIC_ADMIN, bIsWIEnabled);
 	EnableDlgItem(this, IDC_WSPASS_LBL, bIsWIEnabled);
 	EnableDlgItem(this, IDC_WSPASS, bIsWIEnabled);
