@@ -54,6 +54,11 @@ namespace IPFilterKeys
 inline constexpr const TCHAR* Enabled = _T("IPFilterEnabled");
 }
 
+namespace MigrationKeys
+{
+inline constexpr const TCHAR* PreferenceSchema = _T("BBPreferenceSchema");
+}
+
 namespace UploadPolicyKeys
 {
 inline constexpr const TCHAR* MaxUploadClientsAllowed = _T("MaxUploadClientsAllowed");

@@ -1,11 +1,13 @@
 #pragma once
 
+#include "PreferenceIniMap.h"
+
 #include <atlstr.h>
 
 namespace BBPreferenceMigrationSeams
 {
 inline constexpr int kCurrentPreferenceSchema = 1;
-inline constexpr const TCHAR *kPreferenceSchemaKey = _T("BBPreferenceSchema");
+inline constexpr const TCHAR *kPreferenceSchemaKey = PreferenceIniMap::MigrationKeys::PreferenceSchema;
 inline constexpr const TCHAR *kListControlSetupSection = _T("ListControlSetup");
 
 inline constexpr const TCHAR *kMainGridListControlNames[] = {

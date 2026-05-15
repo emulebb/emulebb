@@ -2457,7 +2457,7 @@ void CPreferences::SavePreferences()
 	CIni ini(GetConfigFile(), _T("eMule"));
 	//---
 	ini.WriteString(_T("AppVersion"), theApp.m_strCurVersionLong);
-	ini.WriteInt(BBPreferenceMigrationSeams::kPreferenceSchemaKey, BBPreferenceMigrationSeams::kCurrentPreferenceSchema);
+	ini.WriteInt(prefini::MigrationKeys::PreferenceSchema, BBPreferenceMigrationSeams::kCurrentPreferenceSchema);
 	ini.WriteBool(_T("DisableFirstTimeWizard"), m_bDisableFirstTimeWizard);
 #ifdef _DEBUG
 	ini.WriteInt(_T("DebugHeap"), m_iDbgHeap);
@@ -2908,7 +2908,7 @@ void CPreferences::IniCopy(const CString &si, const CString &di)
 
 void CPreferences::ApplyBBPreferenceMigrations(CIni &ini)
 {
-	const int iStoredSchema = ini.GetInt(BBPreferenceMigrationSeams::kPreferenceSchemaKey, 0);
+	const int iStoredSchema = ini.GetInt(prefini::MigrationKeys::PreferenceSchema, 0);
 	if (!BBPreferenceMigrationSeams::ShouldRunPreferenceMigration(iStoredSchema))
 		return;
 
@@ -2920,7 +2920,7 @@ void CPreferences::ApplyBBPreferenceMigrations(CIni &ini)
 		}
 	}
 
-	ini.WriteInt(BBPreferenceMigrationSeams::kPreferenceSchemaKey, BBPreferenceMigrationSeams::kCurrentPreferenceSchema);
+	ini.WriteInt(prefini::MigrationKeys::PreferenceSchema, BBPreferenceMigrationSeams::kCurrentPreferenceSchema);
 }
 
 void CPreferences::LoadPreferences()
