@@ -33,6 +33,7 @@ class CCatDialog : public CDialog
 public:
 	explicit CCatDialog(int index);   // standard constructor
 	virtual	~CCatDialog();
+	void SetAddDialog(bool bAddDialog) { m_bAddDialog = bAddDialog; }
 
 protected:
 	CColorButton m_ctlColor;
@@ -41,6 +42,7 @@ protected:
 	CComboBox m_prio;
 	CCustomAutoComplete *m_pacRegExp;
 	COLORREF m_newcolor;
+	bool m_bAddDialog;
 
 	void Localize();
 	void UpdateData();

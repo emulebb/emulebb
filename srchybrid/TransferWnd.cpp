@@ -1130,8 +1130,9 @@ int CTransferWnd::AddCategory(const CString &newtitle, const CString &newincomin
 int CTransferWnd::AddCategoryInteractive()
 {
 	m_nLastCatTT = -1;
-	int newindex = AddCategory(CString(_T("?")), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR), CString(), CString(), false);
+	int newindex = AddCategory(CString(), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR), CString(), CString(), false);
 	CCatDialog dialog(newindex);
+	dialog.SetAddDialog(true);
 	if (dialog.DoModal() == IDOK) {
 		theApp.emuledlg->searchwnd->UpdateCatTabs();
 		m_dlTab.InsertItem(newindex, thePrefs.GetCategory(newindex)->strTitle);

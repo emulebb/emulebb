@@ -22,6 +22,7 @@
 #include "emuledlg.h"
 #include "TransferDlg.h"
 #include "CatDialog.h"
+#include "CategoryDialogSeams.h"
 #include "OtherFunctions.h"
 #include "PartFile.h"
 #include "PathHelpers.h"
@@ -37,31 +38,28 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-	UINT NormalizeCategoryPriority(UINT uPriority)
+	void EnableDlgItem(CWnd *pDialog, UINT uControlId, bool bEnable)
 	{
-		return uPriority <= PR_HIGH ? uPriority : PR_NORMAL;
+		CWnd *pControl = pDialog != NULL ? pDialog->GetDlgItem(uControlId) : NULL;
+		if (pControl != NULL)
+			pControl->EnableWindow(bEnable);
 	}
 
 	bool CategoryTitleExists(const CString& strTitle, INT_PTR iExcludeCategory)
 	{
-		CString strCandidate(strTitle);
-		strCandidate.Trim();
-		if (strCandidate.IsEmpty())
-			return false;
-
+		std::vector<CString> categoryTitles;
+		categoryTitles.reserve(static_cast<size_t>(thePrefs.GetCatCount()));
 		for (INT_PTR i = 1; i < thePrefs.GetCatCount(); ++i) {
-			if (i == iExcludeCategory)
-				continue;
 			const Category_Struct *pCategory = thePrefs.GetCategory(i);
-			if (pCategory != NULL && pCategory->strTitle.CompareNoCase(strCandidate) == 0)
-				return true;
+			categoryTitles.push_back(pCategory != NULL ? pCategory->strTitle : CString());
 		}
-		return false;
+		categoryTitles.insert(categoryTitles.begin(), CString());
+		return CategoryDialogSeams::CategoryTitleExists(strTitle, categoryTitles, iExcludeCategory);
 	}
 
 	CString FormatCategoryPriority(UINT uPriority)
 	{
-		switch (NormalizeCategoryPriority(uPriority)) {
+		switch (CategoryDialogSeams::NormalizeCategoryPriority(uPriority)) {
 		case PR_LOW:
 			return GetResString(IDS_PRIOLOW);
 		case PR_HIGH:
@@ -157,6 +155,7 @@ CCatDialog::CCatDialog(int index)
 	, m_myCat(thePrefs.GetCategory(index))
 	, m_pacRegExp()
 	, m_newcolor(CLR_NONE)
+	, m_bAddDialog(false)
 {
 }
 
@@ -211,7 +210,7 @@ void CCatDialog::UpdateData()
 
 	SetDlgItemText(IDC_AUTOCATEXT, m_myCat->autocat);
 
-	m_prio.SetCurSel(NormalizeCategoryPriority(m_myCat->prio));
+	m_prio.SetCurSel(CategoryDialogSeams::NormalizeCategoryPriority(m_myCat->prio));
 }
 
 void CCatDialog::DoDataExchange(CDataExchange *pDX)
@@ -236,7 +235,9 @@ void CCatDialog::Localize()
 	m_ctlColor.CustomText = GetResString(IDS_COL_MORECOLORS);
 	m_ctlColor.DefaultText = GetResString(IDS_DEFAULT);
 
-	SetWindowText(GetResString(IDS_EDITCAT));
+	CString strCaption(GetResString(CategoryDialogSeams::GetCategoryDialogCaptionResourceId(m_bAddDialog)));
+	strCaption.TrimRight(_T("."));
+	SetWindowText(strCaption);
 
 	SetDlgItemText(IDC_STATIC_REGEXP, GetResString(IDS_STATIC_REGEXP));
 
@@ -244,7 +245,7 @@ void CCatDialog::Localize()
 	m_prio.AddString(GetResString(IDS_PRIOLOW));
 	m_prio.AddString(GetResString(IDS_PRIONORMAL));
 	m_prio.AddString(GetResString(IDS_PRIOHIGH));
-	m_prio.SetCurSel(NormalizeCategoryPriority(m_myCat->prio));
+	m_prio.SetCurSel(CategoryDialogSeams::NormalizeCategoryPriority(m_myCat->prio));
 }
 
 void CCatDialog::OnBnClickedBrowse()
@@ -261,7 +262,7 @@ void CCatDialog::OnBnClickedOk()
 	const CString oldpath(m_myCat->strIncomingPath);
 
 	GetDlgItemText(IDC_TITLE, proposed.strTitle);
-	proposed.strTitle.Trim();
+	proposed.strTitle = CategoryDialogSeams::NormalizeCategoryTitle(proposed.strTitle);
 	if (m_iCategory != 0 && proposed.strTitle.IsEmpty()) {
 		ErrorBalloon(IDC_TITLE, IDS_ERR_CATEGORY_TITLE_REQUIRED);
 		return;
@@ -273,8 +274,10 @@ void CCatDialog::OnBnClickedOk()
 
 	if (GetDlgItem(IDC_INCOMING)->GetWindowTextLength() > 2)
 		GetDlgItemText(IDC_INCOMING, proposed.strIncomingPath);
+	proposed.strIncomingPath = CategoryDialogSeams::NormalizeCategoryText(proposed.strIncomingPath);
 
 	GetDlgItemText(IDC_COMMENT, proposed.strComment);
+	proposed.strComment = CategoryDialogSeams::NormalizeCategoryText(proposed.strComment);
 
 	proposed.strIncomingPath = PathHelpers::CanonicalizeDirectoryPath(proposed.strIncomingPath);
 	if (!thePrefs.IsShareableDirectory(proposed.strIncomingPath))
@@ -293,17 +296,19 @@ void CCatDialog::OnBnClickedOk()
 	}
 
 	proposed.color = m_newcolor;
-	proposed.prio = NormalizeCategoryPriority(m_prio.GetCurSel());
+	proposed.prio = CategoryDialogSeams::NormalizeCategoryPriority(m_prio.GetCurSel());
 
 	proposed.ac_regexpeval = IsDlgButtonChecked(IDC_REGEXPR) != 0;
 
 	GetDlgItemText(IDC_AUTOCATEXT, proposed.autocat);
+	proposed.autocat = CategoryDialogSeams::NormalizeCategoryText(proposed.autocat);
 	if (proposed.ac_regexpeval && !IsRegExpValid(proposed.autocat)) {
 		ErrorBalloon(IDC_AUTOCATEXT, IDS_ERR_REGEXP);
 		return;
 	}
 
 	GetDlgItemText(IDC_REGEXP, proposed.regexp);
+	proposed.regexp = CategoryDialogSeams::NormalizeCategoryText(proposed.regexp);
 	if (proposed.regexp.GetLength() > 0) {
 		if (!IsRegExpValid(proposed.regexp)) {
 			ErrorBalloon(IDC_REGEXP, IDS_ERR_REGEXP);
@@ -319,7 +324,8 @@ void CCatDialog::OnBnClickedOk()
 	}
 
 	*m_myCat = proposed;
-	theApp.emuledlg->transferwnd->GetDownloadList()->Invalidate();
+	if (theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL && theApp.emuledlg->transferwnd->GetDownloadList() != NULL)
+		theApp.emuledlg->transferwnd->GetDownloadList()->Invalidate();
 
 	OnOK();
 }
@@ -333,6 +339,8 @@ LRESULT CCatDialog::OnSelChange(WPARAM wParam, LPARAM)
 void CCatDialog::OnDDBnClicked()
 {
 	CWnd *box = GetDlgItem(IDC_REGEXP);
+	if (box == NULL)
+		return;
 	box->SetFocus();
 	box->SetWindowText(_T(""));
 	box->SendMessage(WM_KEYDOWN, VK_DOWN, 0x00510001);
@@ -340,7 +348,11 @@ void CCatDialog::OnDDBnClicked()
 
 void CCatDialog::ErrorBalloon(int iEdit, UINT uid)
 {
-	static_cast<CEdit*>(GetDlgItem(iEdit))->ShowBalloonTip(GetResString(IDS_ERROR), GetResString(uid), TTI_ERROR);
+	CWnd *pWnd = GetDlgItem(iEdit);
+	if (pWnd != NULL)
+		static_cast<CEdit*>(pWnd)->ShowBalloonTip(GetResString(IDS_ERROR), GetResString(uid), TTI_ERROR);
+	else
+		AfxMessageBox(GetResString(uid), MB_ICONERROR);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -374,12 +386,12 @@ BOOL CCategoryManagerDialog::OnInitDialog()
 	Localize();
 
 	m_categoryList.SetExtendedStyle(m_categoryList.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_LABELTIP);
-	m_categoryList.InsertColumn(0, GetResString(IDS_TITLE), LVCFMT_LEFT, 110);
-	m_categoryList.InsertColumn(1, GetResString(IDS_PW_INCOMING), LVCFMT_LEFT, 180);
-	m_categoryList.InsertColumn(2, GetResString(IDS_STARTPRIO), LVCFMT_LEFT, 70);
-	m_categoryList.InsertColumn(3, GetResString(IDS_CATEGORY_MANAGER_ASSIGNED), LVCFMT_RIGHT, 55);
-	m_categoryList.InsertColumn(4, GetResString(IDS_CATEGORY_MANAGER_FILTER), LVCFMT_LEFT, 100);
-	m_categoryList.InsertColumn(5, GetResString(IDS_CATEGORY_MANAGER_AUTOCAT), LVCFMT_LEFT, 110);
+	m_categoryList.InsertColumn(0, GetResString(IDS_TITLE), LVCFMT_LEFT, 150);
+	m_categoryList.InsertColumn(1, GetResString(IDS_PW_INCOMING), LVCFMT_LEFT, 240);
+	m_categoryList.InsertColumn(2, GetResString(IDS_STARTPRIO), LVCFMT_LEFT, 80);
+	m_categoryList.InsertColumn(3, GetResString(IDS_CATEGORY_MANAGER_ASSIGNED), LVCFMT_RIGHT, 70);
+	m_categoryList.InsertColumn(4, GetResString(IDS_CATEGORY_MANAGER_FILTER), LVCFMT_LEFT, 150);
+	m_categoryList.InsertColumn(5, GetResString(IDS_CATEGORY_MANAGER_AUTOCAT), LVCFMT_LEFT, 170);
 	RefreshCategoryList(0);
 	return TRUE;
 }
@@ -443,13 +455,13 @@ void CCategoryManagerDialog::UpdateButtons()
 {
 	const INT_PTR iCategory = GetSelectedCategory();
 	const bool bHasCategory = iCategory >= 0 && iCategory < thePrefs.GetCatCount();
-	const bool bCustomCategory = bHasCategory && iCategory > 0;
-	const bool bCategoryUnused = bCustomCategory && m_pTransferWnd != NULL && m_pTransferWnd->CountFilesAssignedToCategory(static_cast<UINT>(iCategory)) == 0;
-	GetDlgItem(IDC_CATMAN_EDIT)->EnableWindow(bCustomCategory);
-	GetDlgItem(IDC_CATMAN_REMOVE)->EnableWindow(bCategoryUnused);
-	GetDlgItem(IDC_CATMAN_MOVE_UP)->EnableWindow(bCustomCategory && iCategory > 1);
-	GetDlgItem(IDC_CATMAN_MOVE_DOWN)->EnableWindow(bCustomCategory && iCategory < thePrefs.GetCatCount() - 1);
-	GetDlgItem(IDC_CATMAN_OPEN_INCOMING)->EnableWindow(bHasCategory && thePrefs.GetCategory(iCategory) != NULL && !thePrefs.GetCategory(iCategory)->strIncomingPath.IsEmpty());
+	const UINT uAssigned = bHasCategory && m_pTransferWnd != NULL ? static_cast<UINT>(m_pTransferWnd->CountFilesAssignedToCategory(static_cast<UINT>(iCategory))) : 0u;
+	const bool bCustomCategory = CategoryDialogSeams::IsCustomCategory(iCategory, thePrefs.GetCatCount());
+	EnableDlgItem(this, IDC_CATMAN_EDIT, bCustomCategory);
+	EnableDlgItem(this, IDC_CATMAN_REMOVE, CategoryDialogSeams::CanRemoveCategory(iCategory, thePrefs.GetCatCount(), uAssigned));
+	EnableDlgItem(this, IDC_CATMAN_MOVE_UP, CategoryDialogSeams::CanMoveCategoryUp(iCategory, thePrefs.GetCatCount()));
+	EnableDlgItem(this, IDC_CATMAN_MOVE_DOWN, CategoryDialogSeams::CanMoveCategoryDown(iCategory, thePrefs.GetCatCount()));
+	EnableDlgItem(this, IDC_CATMAN_OPEN_INCOMING, bHasCategory && thePrefs.GetCategory(iCategory) != NULL && !thePrefs.GetCategory(iCategory)->strIncomingPath.IsEmpty());
 }
 
 void CCategoryManagerDialog::OnAdd()
