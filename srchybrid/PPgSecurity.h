@@ -21,6 +21,7 @@ public:
 protected:
 	CCustomAutoComplete *m_pacIPFilterURL;
 	CPreferenceToolTipHelper m_toolTip;
+	CString m_strUpdateUrlText;
 	bool m_bAutoUpdate;
 	UINT m_uPeriodDays;
 
@@ -42,6 +43,7 @@ protected:
 	afx_msg void OnEditIPFilter();
 	afx_msg void OnLoadIPFFromURL();
 	afx_msg void OnEnChangeUpdateUrl();
+	afx_msg LRESULT OnRestoreUpdateUrl(WPARAM, LPARAM);
 	afx_msg void OnBnClickedAutoupdateIpfilter();
 	afx_msg void OnEnChangeIpfilterperiod();
 	afx_msg void OnDDClicked();

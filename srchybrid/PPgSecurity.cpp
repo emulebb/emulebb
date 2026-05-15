@@ -35,6 +35,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 #define	IPFILTERUPDATEURL_STRINGS_PROFILE	_T("AC_IPFilterUpdateURLs.dat")
+#define UM_RESTORE_UPDATEURL				(WM_APP + 0x3D1)
 
 IMPLEMENT_DYNAMIC(CPPgSecurity, CPropertyPage)
 
@@ -47,6 +48,7 @@ BEGIN_MESSAGE_MAP(CPPgSecurity, CPropertyPage)
 	ON_BN_CLICKED(IDC_USESECIDENT, OnSettingsChange)
 	ON_BN_CLICKED(IDC_LOADURL, OnLoadIPFFromURL)
 	ON_EN_CHANGE(IDC_UPDATEURL, OnEnChangeUpdateUrl)
+	ON_MESSAGE(UM_RESTORE_UPDATEURL, OnRestoreUpdateUrl)
 	ON_BN_CLICKED(IDC_AUTOUPDATE_IPFILTER, OnBnClickedAutoupdateIpfilter)
 	ON_EN_CHANGE(IDC_IPFILTERPERIOD, OnEnChangeIpfilterperiod)
 	ON_BN_CLICKED(IDC_DD, OnDDClicked)
@@ -65,6 +67,7 @@ END_MESSAGE_MAP()
 CPPgSecurity::CPPgSecurity()
 	: CPropertyPage(CPPgSecurity::IDD)
 	, m_pacIPFilterURL()
+	, m_strUpdateUrlText()
 	, m_bAutoUpdate()
 	, m_uPeriodDays()
 {
@@ -124,12 +127,14 @@ BOOL CPPgSecurity::OnInitDialog()
 		if (strUpdateUrl.IsEmpty() && m_pacIPFilterURL->GetItemCount() > 0)
 			strUpdateUrl = m_pacIPFilterURL->GetItem(0);
 		SetDlgItemText(IDC_UPDATEURL, strUpdateUrl);
+		m_strUpdateUrlText = strUpdateUrl;
 		if (theApp.m_fontSymbol.m_hObject) {
 			GetDlgItem(IDC_DD)->SetFont(&theApp.m_fontSymbol);
 			SetDlgItemText(IDC_DD, _T("6")); // show a down-arrow
 		}
 	} else {
-		SetDlgItemText(IDC_UPDATEURL, thePrefs.GetIPFilterUpdateUrl());
+		m_strUpdateUrlText = thePrefs.GetIPFilterUpdateUrl();
+		SetDlgItemText(IDC_UPDATEURL, m_strUpdateUrlText);
 		GetDlgItem(IDC_DD)->ShowWindow(SW_HIDE);
 	}
 	SetModified(FALSE);
@@ -347,8 +352,22 @@ void CPPgSecurity::OnEnChangeUpdateUrl()
 {
 	CString strUrl;
 	GetDlgItemText(IDC_UPDATEURL, strUrl);
+	if (!strUrl.IsEmpty())
+		m_strUpdateUrlText = strUrl;
 	GetDlgItem(IDC_LOADURL)->EnableWindow(!strUrl.IsEmpty());
 	SetModified();
+}
+
+LRESULT CPPgSecurity::OnRestoreUpdateUrl(WPARAM, LPARAM)
+{
+	if (!m_strUpdateUrlText.IsEmpty()) {
+		CString strUrl;
+		GetDlgItemText(IDC_UPDATEURL, strUrl);
+		if (strUrl.IsEmpty())
+			SetDlgItemText(IDC_UPDATEURL, m_strUpdateUrlText);
+		GetDlgItem(IDC_LOADURL)->EnableWindow(TRUE);
+	}
+	return 0;
 }
 
 void CPPgSecurity::UpdateAutoUpdateControls()
@@ -387,8 +406,19 @@ void CPPgSecurity::OnEnChangeIpfilterperiod()
 void CPPgSecurity::OnDDClicked()
 {
 	CWnd *box = GetDlgItem(IDC_UPDATEURL);
+	CString strText;
+	box->GetWindowText(strText);
+	if (strText.IsEmpty() && !m_strUpdateUrlText.IsEmpty()) {
+		strText = m_strUpdateUrlText;
+		box->SetWindowText(strText);
+	}
 	box->SetFocus();
-	box->SetWindowText(_T(""));
+	if (!strText.IsEmpty()) {
+		m_strUpdateUrlText = strText;
+		static_cast<CEdit*>(box)->SetSel(strText.GetLength(), strText.GetLength());
+		PostMessage(UM_RESTORE_UPDATEURL);
+		return;
+	}
 	box->SendMessage(WM_KEYDOWN, VK_DOWN, 0x00510001);
 }
 
