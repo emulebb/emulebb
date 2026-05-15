@@ -214,8 +214,6 @@ BOOL CVideoThumbnailThread::Run()
 		pResult->eResult = PartFilePreviewSeams::VTAR_EXCEPTION;
 	}
 
-	m_pPartfile->m_bPreviewing = false;
-
 	if (!::IsWindow(m_hNotifyWnd) || !::PostMessage(m_hNotifyWnd, TM_VIDEOTHUMBNAILFINISHED, 0, reinterpret_cast<LPARAM>(pResult)))
 		delete pResult;
 	return TRUE;

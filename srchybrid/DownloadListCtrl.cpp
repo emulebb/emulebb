@@ -696,9 +696,13 @@ LRESULT CDownloadListCtrl::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
 	}
 	m_bVideoThumbnailWorkerActive = false;
 
-	const bool bFileStillCurrent = theApp.downloadqueue != NULL
+	const bool bFileStillTracked = theApp.downloadqueue != NULL
 		&& pResult->pPartFile != NULL
-		&& theApp.downloadqueue->IsPartFile(pResult->pPartFile)
+		&& theApp.downloadqueue->IsPartFile(pResult->pPartFile);
+	if (bFileStillTracked)
+		pResult->pPartFile->m_bPreviewing = false;
+
+	const bool bFileStillCurrent = bFileStillTracked
 		&& pResult->strFileHash.CompareNoCase(GetVideoThumbnailCacheKey(pResult->pPartFile)) == 0;
 	if (thePrefs.GetVerbose()) {
 		const CString strFileName(bFileStillCurrent ? pResult->pPartFile->GetFileName() : pResult->strFileHash);
