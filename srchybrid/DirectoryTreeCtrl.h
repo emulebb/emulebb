@@ -3,6 +3,8 @@
 // written by robert rostek - tecxx@rrs.at //
 /////////////////////////////////////////////
 
+#include <vector>
+
 #define MP_REMOVESHARE	46900
 
 class CDirectoryTreeCtrl : public CTreeCtrl
@@ -40,6 +42,7 @@ private:
 	void UpdateParentItems(HTREEITEM hChild);
 	void ShareSubDirTree(HTREEITEM hItem, BOOL bRecurse);
 	void RebuildUNCShareRoots();
+	void RebuildSharedDirectoryKeys();
 
 	// share list access
 	bool IsShared(const CString &strDir);
@@ -49,6 +52,7 @@ private:
 
 	CImageList m_images;
 	CStringList m_lstShared;
+	std::vector<CString> m_sortedSharedDirectoryKeys;
 	CStringArray m_aUNCshares; //UNC "drives" (ordered array)
 	CString m_strLastRightClicked;
 
