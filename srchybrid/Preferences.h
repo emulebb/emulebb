@@ -1437,11 +1437,11 @@ public:
 	/**
 	 * @brief Returns the built-in default URL for server.met update downloads.
 	 */
-	static LPCTSTR	GetDefaultServerMetUrl()			{ return _T("http://upd.emule-security.org/server.met"); }
+	static LPCTSTR	GetDefaultServerMetUrl()			{ return _T("https://upd.emule-security.org/server.met"); }
 	/**
 	 * @brief Returns the built-in default URL for nodes.dat Kad bootstrap downloads.
 	 */
-	static LPCTSTR	GetDefaultNodesDatUrl()				{ return _T("http://upd.emule-security.org/nodes.dat"); }
+	static LPCTSTR	GetDefaultNodesDatUrl()				{ return _T("https://upd.emule-security.org/nodes.dat"); }
 	/**
 	 * @brief Stores the automatic IP-filter update interval in days.
 	 */

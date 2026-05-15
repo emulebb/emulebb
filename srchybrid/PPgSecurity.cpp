@@ -39,7 +39,6 @@ static char THIS_FILE[] = __FILE__;
 
 static const LPCTSTR s_apszDefaultIPFilterUpdateUrls[] = {
 	_T("https://upd.emule-security.org/ipfilter.zip"),
-	_T("http://upd.emule-security.org/ipfilter.zip"),
 	_T("https://emuling.gitlab.io/ipfilter.zip"),
 	_T("https://github.com/DavidMoore/ipfilter/releases/download/lists/ipfilter.zip"),
 	_T("https://raw.githubusercontent.com/Naunter/BT_BlockLists/master/bt_blocklists.gz")

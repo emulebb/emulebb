@@ -333,6 +333,15 @@ bool SaveServerMetAddressListToFile(const CString &rstrFullPath, const CStringLi
 }
 
 /**
+ * @brief Appends vetted server.met defaults for first-run or blank addresses.dat profiles.
+ */
+void AddDefaultServerMetAddressUrls(CStringList &rUrls)
+{
+	rUrls.AddTail(CPreferences::GetDefaultServerMetUrl());
+	rUrls.AddTail(_T("https://emuling.gitlab.io/server.met"));
+}
+
+/**
  * @brief Loads server.met update URLs and seeds the default source when the file is missing or empty.
  */
 void LoadServerMetAddressList(const CString &rstrFullPath, CStringList &rOutList)
@@ -349,11 +358,10 @@ void LoadServerMetAddressList(const CString &rstrFullPath, CStringList &rOutList
 	}
 
 	if (!bAddressFileExists || bLoaded) {
-		const CString strDefaultUrl(CPreferences::GetDefaultServerMetUrl());
-		rOutList.AddTail(strDefaultUrl);
-
 		CStringList defaultUrls;
-		defaultUrls.AddTail(strDefaultUrl);
+		AddDefaultServerMetAddressUrls(defaultUrls);
+		for (POSITION pos = defaultUrls.GetHeadPosition(); pos != NULL;)
+			rOutList.AddTail(defaultUrls.GetNext(pos));
 		SaveServerMetAddressListToFile(rstrFullPath, defaultUrls);
 	}
 }
