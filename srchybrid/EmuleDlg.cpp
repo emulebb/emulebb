@@ -552,6 +552,74 @@ namespace
 		};
 	}
 
+	static const char *GetStartupCacheSavePhaseName(const CSharedFileList::StartupCacheSavePhase ePhase)
+	{
+		switch (ePhase)
+		{
+		case CSharedFileList::StartupCacheSavePhase::BuildingRecords:
+			return "buildingRecords";
+		case CSharedFileList::StartupCacheSavePhase::WritingFile:
+			return "writingFile";
+		case CSharedFileList::StartupCacheSavePhase::ApplyingResult:
+			return "applyingResult";
+		case CSharedFileList::StartupCacheSavePhase::Idle:
+		default:
+			return "idle";
+		}
+	}
+
+	static nlohmann::json BuildSharedStartupCacheJson()
+	{
+		if (theApp.sharedfiles == NULL)
+			return nlohmann::json{{"ready", true}, {"available", false}};
+
+		CSharedFileList::StartupCacheStatus status = {};
+		theApp.sharedfiles->GetStartupCacheStatus(status);
+		return nlohmann::json{
+			{"available", true},
+			{"ready", status.bReady},
+			{"filePresent", status.bCacheFilePresent},
+			{"loaded", status.bCacheLoaded},
+			{"rejected", status.bCacheRejected},
+			{"removed", status.bCacheRemoved},
+			{"rejectCode", status.strCacheRejectCode.IsEmpty() ? nlohmann::json(nullptr) : nlohmann::json(status.strCacheRejectCode.GetString())},
+			{"recordsLoaded", status.uRecordsLoaded},
+			{"volumesLoaded", status.uVolumesLoaded},
+			{"duplicatePathCache", nlohmann::json{
+				{"loaded", status.bDuplicatePathCacheLoaded},
+				{"rejected", status.bDuplicatePathCacheRejected},
+				{"removed", status.bDuplicatePathCacheRemoved},
+				{"rejectCode", status.strDuplicatePathCacheRejectCode.IsEmpty() ? nlohmann::json(nullptr) : nlohmann::json(status.strDuplicatePathCacheRejectCode.GetString())},
+				{"recordsLoaded", status.uDuplicatePathRecordsLoaded}
+			}},
+			{"scan", nlohmann::json{
+				{"requestedDirectories", status.scanStats.uRequestedDirectories},
+				{"dedupedDirectories", status.scanStats.uDedupedDirectories},
+				{"duplicateDirectories", status.scanStats.uDuplicateDirectories},
+				{"directoriesFromCache", status.scanStats.uDirectoriesFromCache},
+				{"directoriesRescanned", status.scanStats.uDirectoriesRescanned},
+				{"inaccessibleDirectories", status.scanStats.uInaccessibleDirectories},
+				{"directoriesOver248Chars", status.scanStats.uDirectoriesOver248Chars},
+				{"pathsOver260Chars", status.scanStats.uPathsOver260Chars},
+				{"knownFilesAccepted", status.scanStats.uKnownFilesAccepted},
+				{"duplicatePathsReused", status.scanStats.uDuplicatePathsReused},
+				{"filesQueuedForHash", status.scanStats.uFilesQueuedForHash},
+				{"filesIgnored", status.scanStats.uFilesIgnored}
+			}},
+			{"save", nlohmann::json{
+				{"running", status.saveProgress.bRunning},
+				{"dirty", status.saveProgress.bDirty},
+				{"waitingForFollowUp", status.saveProgress.bWaitingForFollowUp},
+				{"phase", GetStartupCacheSavePhaseName(status.saveProgress.ePhase)},
+				{"completedDirectories", status.saveProgress.uCompletedDirectories},
+				{"totalDirectories", status.saveProgress.uTotalDirectories}
+			}},
+			{"hashingCount", static_cast<int64_t>(status.iHashingCount)},
+			{"deferredHashingActive", status.bDeferredHashingActive},
+			{"interruptedHashingInvalidatedCache", status.bInterruptedHashingInvalidatedCache}
+		};
+	}
+
 	static nlohmann::json BuildSocketBufferJson()
 	{
 		nlohmann::json udpReceive = {
@@ -668,6 +736,7 @@ namespace
 			{"process", BuildProcessInfoJson(ePrivacyMode)},
 			{"paths", BuildPathsJson(ePrivacyMode)},
 			{"network", BuildNetworkJson(ePrivacyMode)},
+			{"sharedStartupCache", BuildSharedStartupCacheJson()},
 			{"io", BuildIoJson()},
 			{"transfers", BuildTransfersJson()},
 			{"modules", BuildModulesJson(ePrivacyMode)}
