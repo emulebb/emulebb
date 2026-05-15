@@ -239,7 +239,10 @@ BOOL CPPgGeneral::OnApply()
 	thePrefs.bringtoforeground = IsDlgButtonChecked(IDC_BRINGTOFOREGROUND) != 0;
 	thePrefs.confirmExit = IsDlgButtonChecked(IDC_EXIT) != 0;
 	thePrefs.onlineSig = IsDlgButtonChecked(IDC_ONLINESIG) != 0;
+	const bool bPreventStandbyWasEnabled = thePrefs.GetPreventStandby();
 	thePrefs.m_bPreventStandby = IsDlgButtonChecked(IDC_PREVENTSTANDBY) != 0;
+	if (bPreventStandbyWasEnabled && !thePrefs.GetPreventStandby())
+		theApp.ReleaseStandbyPrevention();
 	thePrefs.updatenotify = IsDlgButtonChecked(IDC_CHECK4UPDATE) != 0;
 	thePrefs.SetUpdateDays(static_cast<CSliderCtrl*>(GetDlgItem(IDC_CHECKDAYS))->GetPos());
 	thePrefs.splashscreen = IsDlgButtonChecked(IDC_SPLASHON) != 0;

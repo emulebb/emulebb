@@ -290,7 +290,7 @@ BEGIN
     CONTROL         "Start with Windows",IDC_STARTWIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,202,190,10
     PUSHBUTTON      "Edit Web Services...",IDC_WEBSVEDIT,11,121,100,14
     PUSHBUTTON      "Handle eD2K Links",IDC_ED2KFIX,116,121,106,14
-    CONTROL         "Prevent Standby mode while eMule is running",IDC_PREVENTSTANDBY,
+    CONTROL         "Prevent system sleep during network activity",IDC_PREVENTSTANDBY,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,104,212,10
 END
 
@@ -4359,7 +4359,7 @@ BEGIN
     IDS_DOWNLOADING_NODESDAT_FROM "Downloading nodes.dat from %s"
     IDS_DOWNLOADING_NODESDAT "Downloading nodes.dat..."
     IDS_ERR_FAILEDDOWNLOADNODES "Failed to download nodes.dat from %s"
-    IDS_PREVENTSTANDBY      "Prevent Standby mode while eMule is running"
+    IDS_PREVENTSTANDBY      "Prevent system sleep during network activity"
     IDS_KADID               "KadID"
 END
 
@@ -4821,7 +4821,7 @@ BEGIN
     IDS_PPG_GENERAL_TT_ONLINESIG           "Writes the legacy status file onlinesig.dat for external pages, scripts, or widgets that read eMule status.\r\n\r\nIt does not improve transfer speed or networking. Leave it off unless you actively consume that file somewhere."
     IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND   "Brings eMule to the foreground when a handled ed2k link or similar external action targets the app.\r\n\r\nEnable it if you want link clicks to reveal eMule immediately. Leave it off if you prefer background handling."
     IDS_PPG_GENERAL_TT_CHECK4_UPDATE       "Checks GitHub Releases on startup when the configured interval has elapsed and only alerts when a newer eMule BB package is available.\r\n\r\nLeave it off for a quiet startup, or enable it if you want a periodic update check."
-    IDS_PPG_GENERAL_TT_PREVENTSTANDBY      "Blocks system standby while eMule is running so long transfers, Kad, and server sessions are not interrupted.\r\n\r\nRecommended: enabled on desktops or dedicated boxes. Disable it if you want the machine's normal sleep policy to win."
+    IDS_PPG_GENERAL_TT_PREVENTSTANDBY      "Blocks system sleep while eMule BB is connected or transferring so long downloads, uploads, Kad, and server sessions are not interrupted.\r\n\r\nThe display can still turn off normally. Disabling this option immediately restores the normal Windows sleep policy."
     IDS_PPG_GENERAL_TT_WEBSVEDIT           "Edits the configured web-services list used by helper actions such as web lookups from the UI.\r\n\r\nYou normally only need this if you want to customize or repair those external lookup entries."
     IDS_PPG_GENERAL_TT_ED2_KFIX            "Repairs the Windows ed2k link registration so browser and shell ed2k links open in eMule again.\r\n\r\nUse it when ed2k links stop launching eMule or were stolen by another client."
     IDS_PPG_GENERAL_TT_STARTMIN            "Starts eMule minimized instead of opening the main window immediately.\r\n\r\nUseful for unattended startup. Leave it off if you usually want to inspect the UI right away."

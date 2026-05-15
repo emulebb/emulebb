@@ -1911,7 +1911,7 @@ BEGIN
     IDS_DOWNLOADING_NODESDAT_FROM "%s adresinden nodes.dat dosyası indiriliyor"
     IDS_DOWNLOADING_NODESDAT "Nodes.dat dosyası indiriliyor..."
     IDS_ERR_FAILEDDOWNLOADNODES "%s adresinden nodes.dat dosyasını indirme başarısız oldu"
-    IDS_PREVENTSTANDBY      "eMule çalışıyorken Sistem Bekleme konumunu önle"
+    IDS_PREVENTSTANDBY      "Ağ etkinliğinde sistem uykusunu önle"
     IDS_KADID               "KadID" //!
     IDS_SEARCHINGFRIENDKAD  "Arkadaş Kad Ağında aranıyor"
     IDS_FOUND               "bulundu"
@@ -2609,7 +2609,7 @@ BEGIN
     IDS_PPG_GENERAL_TT_ONLINESIG                               "eMule durumunu okuyan harici sayfalar, komut dosyaları veya widget'lar için eski durum dosyasını onlinesig.dat yazar.\r\n\r\nAktarım hızını veya ağ iletişimini iyileştirmez. Bu dosyayı aktif olarak bir yerde kullanmadığınız sürece kapalı bırakın."
     IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND                       "İşlenen bir ed2k bağlantısı veya benzer harici eylem uygulamayı hedeflediğinde eMule'yu ön plana getirir.\r\n\r\nBağlantı tıklamalarının eMule'yu hemen ortaya çıkarmasını istiyorsanız bunu etkinleştirin. Arka planda çalışmayı tercih ediyorsanız kapalı bırakın."
     IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Yapılandırılmış aralık dolduğunda başlangıçta GitHub Sürümlerini kontrol eder ve yalnızca daha yeni bir eMule BB paketi mevcut olduğunda uyarı verir.\r\nQ\r\nSessiz bir başlangıç ​​için bunu kapalı bırakın veya periyodik güncelleme kontrolü istiyorsanız etkinleştirin."
-    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "eMule uzun aktarımlar, Kad ve sunucu oturumlarının kesintiye uğramaması için çalışırken sistem beklemesini engeller.\r\n\r\nÖnerilen: masaüstü bilgisayarlarda veya özel kutularda etkinleştirilir. Makinenin normal uyku politikasının kazanmasını istiyorsanız bunu devre dışı bırakın."
+    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "eMule BB bağlıyken veya aktarım yaparken sistem uykusunu engeller; böylece indirmeler, yüklemeler, Kad ve sunucu oturumları kesintiye uğramaz.\r\n\r\nEkran normal şekilde kapanmaya devam edebilir. Bu seçeneği kapatmak normal Windows uyku ilkesini hemen geri yükler."
     IDS_PPG_GENERAL_TT_WEBSVEDIT                               "Kullanıcı arayüzünden web aramaları gibi yardımcı eylemler tarafından kullanılan yapılandırılmış web hizmetleri listesini düzenler.\r\n\r\nNormalde buna yalnızca bu harici arama girişlerini özelleştirmek veya onarmak istiyorsanız ihtiyacınız vardır."
     IDS_PPG_GENERAL_TT_ED2_KFIX                                "Windows ed2k bağlantı kaydını onarır, böylece tarayıcı ve kabuk ed2k bağlantıları eMule'da tekrar açılır.\r\n\r\nEd2k bağlantıları eMule'yu başlatmayı bıraktığında veya başka bir istemci tarafından çalındığında bunu kullanın."
     IDS_PPG_GENERAL_TT_STARTMIN                                "Ana pencereyi hemen açmak yerine eMule simge durumuna küçültülmüş olarak başlar.\r\n\r\nGözetimsiz başlatma için kullanışlıdır. Genellikle kullanıcı arayüzünü hemen incelemek istiyorsanız bunu kapalı bırakın."

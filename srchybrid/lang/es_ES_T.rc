@@ -1914,7 +1914,7 @@ BEGIN
     IDS_DOWNLOADING_NODESDAT_FROM "Descargando nodes.dat desde %s"
     IDS_DOWNLOADING_NODESDAT "Descargando nodes.dat..."
     IDS_ERR_FAILEDDOWNLOADNODES "Error al descargar nodes.dat desde %s"
-    IDS_PREVENTSTANDBY      "No suspender el sistema si eMule está funcionando"
+    IDS_PREVENTSTANDBY      "Evitar suspensión durante actividad de red"
     IDS_KADID               "KadID"//!
     IDS_SEARCHINGFRIENDKAD  "Buscando amigos en la Red Kad"
     IDS_FOUND               "encontrado"
@@ -2612,7 +2612,7 @@ BEGIN
     IDS_PPG_GENERAL_TT_ONLINESIG                               "Escribe el archivo de estado heredado onlinesig.dat para páginas externas, scripts o widgets que leen el estado eMule.\r\n\r\nIn. No mejora la velocidad de transferencia ni la conexión en red. Déjalo desactivado a menos que consumas activamente ese archivo en algún lugar."
     IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND                       "Pone eMule en primer plano cuando un enlace ed2k manejado o una acción externa similar apunta a la aplicación.\r\n\r\nHabilítelo si desea que los clics en el enlace revelen eMule inmediatamente. Déjalo desactivado si prefieres el manejo en segundo plano."
     IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Comprueba las versiones de GitHub al inicio cuando el intervalo configurado ha transcurrido y solo alerta cuando hay disponible un paquete eMule BB más nuevo.\r\n\r\nDéjalo desactivado para un inicio silencioso o habilítalo si deseas una verificación de actualización periódica."
-    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Bloquea el modo de espera del sistema mientras eMule se está ejecutando, de modo que las transferencias prolongadas, Kad y las sesiones del servidor no se interrumpan.\r\n\r\nRecomendado: habilitado en computadoras de escritorio o cajas dedicadas. Desactívelo si desea que prevalezca la política de suspensión normal de la máquina."
+    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Bloquea la suspensión del sistema mientras eMule BB está conectado o transfiriendo, para que las descargas, subidas, Kad y sesiones de servidor no se interrumpan.\r\n\r\nLa pantalla puede apagarse normalmente. Al desactivar esta opción se restaura de inmediato la política normal de suspensión de Windows."
     IDS_PPG_GENERAL_TT_WEBSVEDIT                               "Edita la lista de servicios web configurados utilizados por acciones auxiliares como búsquedas web desde la interfaz de usuario.\r\n\r\nNormalmente, solo necesita esto si desea personalizar o reparar esas entradas de búsqueda externas."
     IDS_PPG_GENERAL_TT_ED2_KFIX                                "Repara el registro del enlace ed2k Windows para que los enlaces ed2k del navegador y el shell se abran nuevamente en eMule.\r\n\r\nUÚselo cuando los enlaces ed2k dejen de iniciarse en eMule o hayan sido robados por otro cliente."
     IDS_PPG_GENERAL_TT_STARTMIN                                "Inicia eMule minimizado en lugar de abrir la ventana principal inmediatamente.\r\n\r\nUútil para el inicio desatendido. Déjelo desactivado si normalmente desea inspeccionar la interfaz de usuario de inmediato."

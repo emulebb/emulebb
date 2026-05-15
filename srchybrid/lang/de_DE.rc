@@ -1887,7 +1887,7 @@ BEGIN
     IDS_DOWNLOADING_NODESDAT_FROM "Lade nodes.dat von %s"
     IDS_DOWNLOADING_NODESDAT "Lade nodes.dat..."
     IDS_ERR_FAILEDDOWNLOADNODES "Fehler beim Herunterladen der nodes.dat von %s"
-    IDS_PREVENTSTANDBY      "Verhindere Standby-Modus während eMule läuft"
+    IDS_PREVENTSTANDBY      "Systemruhezustand bei Netzwerkaktivität verhindern"
     IDS_KADID               "KadID" //!
     IDS_SEARCHINGFRIENDKAD  "Suche nach Freunden im Kad Netzwerk"
     IDS_FOUND               "gefunden"
@@ -2585,7 +2585,7 @@ BEGIN
     IDS_PPG_GENERAL_TT_ONLINESIG                               "Schreibt die Legacy-Statusdatei onlinesig.dat für externe Seiten, Skripte oder Widgets, die den eMule-Status lesen.\r\n\r\nIt verbessert weder die Übertragungsgeschwindigkeit noch das Netzwerk. Lassen Sie es ausgeschaltet, es sei denn, Sie nutzen diese Datei aktiv irgendwo."
     IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND                       "Bringt eMule in den Vordergrund, wenn ein behandelter ed2k-Link oder eine ähnliche externe Aktion auf die App abzielt.\r\n\r\nAktivieren Sie diese Option, wenn Linkklicks eMule sofort anzeigen sollen. Lassen Sie es weg, wenn Sie die Hintergrundverarbeitung bevorzugen."
     IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Überprüft GitHub-Releases beim Start, wenn das konfigurierte Intervall abgelaufen ist, und warnt nur, wenn ein neueres eMule BB-Paket verfügbar ist.\r\n\r\nLassen Sie es für einen leisen Start aus oder aktivieren Sie es, wenn Sie eine regelmäßige Update-Überprüfung wünschen."
-    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Blockiert den System-Standby, während eMule ausgeführt wird, sodass lange Übertragungen, Kad und Serversitzungen nicht unterbrochen werden.\r\n\r\nEmpfohlen: auf Desktops oder dedizierten Boxen aktiviert. Deaktivieren Sie es, wenn Sie möchten, dass die normale Ruhezustandsrichtlinie des Computers wirksam wird."
+    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Blockiert den Systemruhezustand, solange eMule BB verbunden ist oder Daten überträgt, damit Downloads, Uploads, Kad und Serversitzungen nicht unterbrochen werden.\r\n\r\nDer Bildschirm kann weiterhin normal ausgeschaltet werden. Beim Deaktivieren dieser Option gilt sofort wieder die normale Windows-Energiesparrichtlinie."
     IDS_PPG_GENERAL_TT_WEBSVEDIT                               "Bearbeitet die konfigurierte Web-Services-Liste, die von Hilfsaktionen wie Web-Lookups über die Benutzeroberfläche verwendet wird.\r\n\r\nSie benötigen dies normalerweise nur, wenn Sie diese externen Lookup-Einträge anpassen oder reparieren möchten."
     IDS_PPG_GENERAL_TT_ED2_KFIX                                "Repariert die Windows ed2k-Linkregistrierung, sodass Browser- und Shell-ed2k-Links wieder in eMule geöffnet werden.\r\n\r\nVerwenden Sie es, wenn ed2k-Links nicht mehr gestartet werden eMule oder von einem anderen Client gestohlen wurden."
     IDS_PPG_GENERAL_TT_STARTMIN                                "Startet eMule minimiert, anstatt das Hauptfenster sofort zu öffnen.\r\n\r\nNützlich für den unbeaufsichtigten Start. Lassen Sie es weg, wenn Sie die Benutzeroberfläche normalerweise sofort überprüfen möchten."

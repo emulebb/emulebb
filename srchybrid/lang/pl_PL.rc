@@ -1882,7 +1882,7 @@ BEGIN
     IDS_DOWNLOADING_NODESDAT_FROM "Pobieranie nodes.dat z %s"
     IDS_DOWNLOADING_NODESDAT "Pobieranie nodes.dat..."
     IDS_ERR_FAILEDDOWNLOADNODES "Nie powiodło się pobranie nodes.dat z %s"
-    IDS_PREVENTSTANDBY      "Zapobiec trybu Standby gdy eMule jest uruchomiony"
+    IDS_PREVENTSTANDBY      "Blokuj uśpienie podczas aktywności sieci"
     IDS_KADID               "KadID" //!
 END
 
@@ -2584,7 +2584,7 @@ BEGIN
     IDS_PPG_GENERAL_TT_ONLINESIG                               "Zapisuje starszy plik statusu onlinesig.dat dla zewnętrznych stron, skryptów lub widżetów odczytujących status eMule.\r\n\r\nNie poprawia szybkości transferu ani pracy sieci. Zostaw to, chyba że aktywnie zużywasz gdzieś ten plik."
     IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND                       "Wysuwa eMule na pierwszy plan, gdy obsługiwane łącze ed2k lub podobne działanie zewnętrzne jest skierowane do aplikacji.\r\n\r\nWłącz tę opcję, jeśli chcesz, aby kliknięcia łącza natychmiast ujawniały eMule. Zostaw tę opcję, jeśli wolisz obsługę w tle."
     IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Sprawdza GitHub Releases przy uruchamianiu, gdy upłynie skonfigurowany interwał, i wyświetla alerty tylko wtedy, gdy dostępny jest nowszy pakiet eMule BB.\r\n\r\nPozostaw tę opcję wyłączoną, aby zapewnić ciche uruchamianie, lub włącz ją, jeśli chcesz okresowo sprawdzać aktualizacje."
-    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Blokuje stan wstrzymania systemu podczas wykonywania eMule tak, aby długie transfery, Kad i sesje serwerów nie były przerywane.\r\n\r\nZalecane: włączone na komputerach stacjonarnych lub dedykowanych urządzeniach. Wyłącz tę opcję, jeśli chcesz, aby zwyciężyła normalna polityka uśpienia komputera."
+    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Blokuje uśpienie systemu, gdy eMule BB jest połączony lub przesyła dane, aby pobieranie, wysyłanie, Kad i sesje serwera nie były przerywane.\r\n\r\nEkran nadal może wyłączać się normalnie. Wyłączenie tej opcji natychmiast przywraca normalną politykę uśpienia Windows."
     IDS_PPG_GENERAL_TT_WEBSVEDIT                               "Edytuje skonfigurowaną listę usług internetowych używaną przez akcje pomocnicze, takie jak wyszukiwanie w Internecie z poziomu interfejsu użytkownika.\r\n\r\nZwykle potrzebujesz tej opcji tylko wtedy, gdy chcesz dostosować lub naprawić te wpisy wyszukiwania zewnętrznego."
     IDS_PPG_GENERAL_TT_ED2_KFIX                                "Naprawia rejestrację łącza ed2k Windows, dzięki czemu łącza przeglądarki i powłoki ed2k otwierają się ponownie w eMule.\r\n\r\nUżyj go, gdy łącza ed2k przestaną uruchamiać eMule lub zostaną skradzione przez innego klienta."
     IDS_PPG_GENERAL_TT_STARTMIN                                "Uruchamia eMule w postaci zminimalizowanej, zamiast natychmiastowego otwierania okna głównego.\r\n\r\nPrzydatne w przypadku uruchamiania bez nadzoru. Zostaw to, jeśli zwykle chcesz od razu sprawdzić interfejs użytkownika."

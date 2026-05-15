@@ -1156,8 +1156,7 @@ VOID CALLBACK CUploadQueue::UploadTimer(HWND /*hwnd*/, UINT /*uMsg*/, UINT_PTR /
 
 				theApp.serverconnect->KeepConnectionAlive();
 
-				if (thePrefs.GetPreventStandby())
-					theApp.ResetStandByIdleTimer(); // Reset Windows idle standby timer if necessary
+				theApp.UpdateStandbyPrevention();
 			}
 
 			if (++s_uSaveStatistics >= thePrefs.GetStatsSaveInterval()) {

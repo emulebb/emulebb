@@ -3032,6 +3032,7 @@ void CemuleDlg::OnClose()
 		::InterlockedExchange(&closing, 0);
 		return;
 	}
+	theApp.ReleaseStandbyPrevention();
 	StopBindLossMonitor();
 	notifierenabled = false;
 

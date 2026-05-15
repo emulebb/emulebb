@@ -61,6 +61,7 @@
 #include "StartupConfigOverride.h"
 #include "SafeFile.h"
 #include "ShellUiHelpers.h"
+#include "StandbyPreventionSeams.h"
 #include "LongPathSeams.h"
 #include "emuleDlg.h"
 #include "SharedFilesWnd.h"
@@ -1474,6 +1475,7 @@ BOOL CemuleApp::InitInstance()
 int CemuleApp::ExitInstance()
 {
 	AddDebugLogLine(DLP_VERYLOW, _T("%hs"), __FUNCTION__);
+	ReleaseStandbyPrevention();
 	StopSharedDirectoryMonitor();
 
 	if (m_wTimerRes != 0)
@@ -3073,18 +3075,30 @@ void CemuleApp::UpdateLargeIconSize()
 	}
 }
 
-void CemuleApp::ResetStandByIdleTimer()
+void CemuleApp::UpdateStandbyPrevention()
 {
-	// Prevent system from falling asleep if connected or there are ongoing data transfers (upload or download)
-	// Since Windows 11 there is no option to reset the idle timer
-	if (IsConnected()
-		|| (uploadqueue != NULL && uploadqueue->GetUploadQueueLength() > 0)
-		|| (downloadqueue != NULL && downloadqueue->GetDatarate() > 0))
-	{
-		if (!m_bStandbyOff && ::SetThreadExecutionState(ES_SYSTEM_REQUIRED | ES_CONTINUOUS))
+	const unsigned int uUploadQueueLength = uploadqueue != NULL ? static_cast<unsigned int>(uploadqueue->GetUploadQueueLength()) : 0;
+	const unsigned int uDownloadDatarate = downloadqueue != NULL ? downloadqueue->GetDatarate() : 0;
+	if (StandbyPreventionSeams::ShouldPreventSystemSleep(thePrefs.GetPreventStandby(), IsConnected(), uUploadQueueLength, uDownloadDatarate)) {
+		if (!m_bStandbyOff && ::SetThreadExecutionState(StandbyPreventionSeams::GetPreventSystemSleepFlags()) != 0)
 			m_bStandbyOff = true;
-	} else if (m_bStandbyOff && ::SetThreadExecutionState(ES_CONTINUOUS))
+		return;
+	}
+
+	ReleaseStandbyPrevention();
+}
+
+bool CemuleApp::ReleaseStandbyPrevention()
+{
+	if (!m_bStandbyOff)
+		return true;
+
+	if (::SetThreadExecutionState(StandbyPreventionSeams::GetReleaseSystemSleepFlags()) != 0) {
 		m_bStandbyOff = false;
+		return true;
+	}
+
+	return false;
 }
 
 bool CemuleApp::IsLegacyThemedControlsActive() const

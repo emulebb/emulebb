@@ -301,7 +301,14 @@ public:
 	uint32		GetED2KPublicIP() const							{ return m_dwPublicIP; }
 	uint32		GetPublicIP() const;		// return current (valid) public IP or 0 if unknown
 	void		SetPublicIP(const uint32 dwIP);
-	void		ResetStandByIdleTimer();
+	/**
+	 * @brief Synchronizes the Windows system-sleep assertion with the current preference and transfer state.
+	 */
+	void		UpdateStandbyPrevention();
+	/**
+	 * @brief Releases any active Windows system-sleep assertion owned by the app.
+	 */
+	bool		ReleaseStandbyPrevention();
 
 	// because nearly all icons we are loading are 16x16, the default size is specified as 16 and not as 32 nor LR_DEFAULTSIZE
 	HICON		LoadIcon(LPCTSTR lpszResourceName, int cx = 16, int cy = 16, UINT uFlags = LR_DEFAULTCOLOR) const;

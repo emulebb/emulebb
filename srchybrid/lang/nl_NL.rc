@@ -1908,7 +1908,7 @@ BEGIN
     IDS_DOWNLOADING_NODESDAT_FROM "Bezig met downloaden van nodes.dat vanaf %s"
     IDS_DOWNLOADING_NODESDAT "Bezig met downloaden van nodes.dat..."
     IDS_ERR_FAILEDDOWNLOADNODES "Het downloaden van nodes.dat vanaf %s is mislukt"
-    IDS_PREVENTSTANDBY      "Slaapstand voorkomen als eMule uitgevoerd is"
+    IDS_PREVENTSTANDBY      "Slaapstand voorkomen bij netwerkactiviteit"
     IDS_KADID               "Kad-ID"
 END
 
@@ -2610,7 +2610,7 @@ BEGIN
     IDS_PPG_GENERAL_TT_ONLINESIG                               "Schrijft het verouderde statusbestand onlinesig.dat voor externe pagina's, scripts of widgets die de status eMule lezen.\r\n\r\nHet verbetert de overdrachtssnelheid of het netwerk niet. Laat het uitgeschakeld, tenzij u dat bestand ergens actief gebruikt."
     IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND                       "Brengt eMule naar de voorgrond wanneer een afgehandelde ed2k-link of soortgelijke externe actie de app target.\r\n\r\nSchakel dit in als u wilt dat klikken op links eMule onmiddellijk onthullen. Laat het uitgeschakeld als u de voorkeur geeft aan achtergrondverwerking."
     IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Controleert GitHub-releases bij het opstarten wanneer het geconfigureerde interval is verstreken en waarschuwt alleen wanneer een nieuwer eMule BB-pakket beschikbaar is.\r\n\r\nLaat het uitgeschakeld voor een rustige start, of schakel het in als u een periodieke updatecontrole wilt."
-    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Blokkeert stand-by van het systeem terwijl eMule actief is, zodat lange overdrachten, Kad en serversessies niet worden onderbroken.\r\n\r\nAanbevolen: ingeschakeld op desktops of speciale boxen. Schakel het uit als u wilt dat het normale slaapbeleid van de machine wint."
+    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Blokkeert de slaapstand van het systeem terwijl eMule BB verbonden is of overdraagt, zodat downloads, uploads, Kad en serversessies niet worden onderbroken.\r\n\r\nHet scherm kan nog steeds normaal uitschakelen. Als u deze optie uitschakelt, wordt het normale Windows-slaapbeleid direct hersteld."
     IDS_PPG_GENERAL_TT_WEBSVEDIT                               "Bewerkt de geconfigureerde lijst met webservices die wordt gebruikt door helperacties zoals webzoekopdrachten vanuit de gebruikersinterface.\r\n\r\nDit heeft u normaal gesproken alleen nodig als u die externe opzoekitems wilt aanpassen of repareren."
     IDS_PPG_GENERAL_TT_ED2_KFIX                                "Herstelt de Windows ed2k-linkregistratie, zodat browser- en shell-ed2k-links weer openen in eMule.\r\n\r\nGebruik het wanneer ed2k-links stoppen met het starten van eMule of zijn gestolen door een andere client."
     IDS_PPG_GENERAL_TT_STARTMIN                                "Start eMule geminimaliseerd in plaats van het hoofdvenster onmiddellijk te openen.\r\n\r\nHandig voor opstarten zonder toezicht. Laat het uitgeschakeld als u de gebruikersinterface normaal gesproken meteen wilt inspecteren."
