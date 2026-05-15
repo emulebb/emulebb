@@ -33,6 +33,26 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace
+{
+	CString MakeDirectoryPreferencePathKey(const CString &rstrDirectory)
+	{
+		CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
+		strKey.MakeLower();
+		return strKey;
+	}
+
+	bool AreDirectoryPreferencePathsEqual(const CString &rstrLeft, const CString &rstrRight)
+	{
+		return MakeDirectoryPreferencePathKey(rstrLeft) == MakeDirectoryPreferencePathKey(rstrRight);
+	}
+
+	bool IsDirectoryPreferencePathWithinKey(const CString &rstrDirectoryKey, const CString &rstrCandidateKey)
+	{
+		return rstrCandidateKey.GetLength() >= rstrDirectoryKey.GetLength()
+			&& _tcsncmp(rstrDirectoryKey, rstrCandidateKey, rstrDirectoryKey.GetLength()) == 0;
+	}
+}
 
 IMPLEMENT_DYNAMIC(CPPgDirectories, CPropertyPage)
 
@@ -142,7 +162,9 @@ BOOL CPPgDirectories::OnApply()
 	}
 
 	const CString &sOldIncoming(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
-	if (!EqualPaths(strIncomingDir, sOldIncoming) && !EqualPaths(strIncomingDir, thePrefs.GetDefaultDirectory(EMULE_INCOMINGDIR, false))) {
+	if (!AreDirectoryPreferencePathsEqual(strIncomingDir, sOldIncoming)
+		&& !AreDirectoryPreferencePathsEqual(strIncomingDir, thePrefs.GetDefaultDirectory(EMULE_INCOMINGDIR, false)))
+	{
 		// if the user chooses a non-default directory which already contains files,
 		// inform him that all those files will be shared
 		bool bExistingFile = false;
@@ -178,7 +200,7 @@ BOOL CPPgDirectories::OnApply()
 		if (atmp.Trim().IsEmpty())
 			continue;
 		UINT uid;
-		if (EqualPaths(strIncomingDir, atmp))
+		if (AreDirectoryPreferencePathsEqual(strIncomingDir, atmp))
 			uid = IDS_WRN_INCTEMP_SAME;
 		else if (thePrefs.IsInstallationDirectory(atmp))
 			uid = IDS_WRN_TEMPFILES_RESERVED;
@@ -191,7 +213,7 @@ BOOL CPPgDirectories::OnApply()
 
 		bool bDup = false;
 		for (INT_PTR i = temptempfolders.GetCount(); --i >= 0;)	// avoid duplicate tempdirs
-			if (EqualPaths(atmp, temptempfolders[i])) {
+			if (AreDirectoryPreferencePathsEqual(atmp, temptempfolders[i])) {
 				bDup = true;
 				break;
 			}
@@ -199,7 +221,7 @@ BOOL CPPgDirectories::OnApply()
 		if (!bDup) {
 			temptempfolders.Add(atmp);
 			if (thePrefs.GetTempDirCount() < temptempfolders.GetCount()
-				|| !EqualPaths(atmp, thePrefs.GetTempDir(temptempfolders.GetCount() - 1)))
+				|| !AreDirectoryPreferencePathsEqual(atmp, thePrefs.GetTempDir(temptempfolders.GetCount() - 1)))
 			{
 				testtempdirchanged = true;
 			}
@@ -241,14 +263,16 @@ BOOL CPPgDirectories::OnApply()
 
 	// on changing incoming dir, update directories for categories with the same path
 	const CString strNewIncoming(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
-	if (!EqualPaths(sOldIncoming, strNewIncoming)) {
+	if (!AreDirectoryPreferencePathsEqual(sOldIncoming, strNewIncoming)) {
 		thePrefs.GetCategory(0)->strIncomingPath = strNewIncoming;
 		bool bAskedOnce = false;
 		const CString strOldIncomingCanonical(PathHelpers::CanonicalizeDirectoryPath(sOldIncoming));
 		const CString strNewIncomingCanonical(PathHelpers::CanonicalizeDirectoryPath(strNewIncoming));
+		const CString strOldIncomingKey(MakeDirectoryPreferencePathKey(strOldIncomingCanonical));
 		for (INT_PTR cat = thePrefs.GetCatCount(); --cat > 0;) { //skip 0
 			const CString strOldPath(PathHelpers::CanonicalizeDirectoryPath(thePrefs.GetCatPath(cat)));
-			if (EqualPaths(strOldPath, strOldIncomingCanonical) || PathHelpers::IsPathWithinDirectory(strOldIncomingCanonical, strOldPath)) {
+			const CString strOldPathKey(MakeDirectoryPreferencePathKey(strOldPath));
+			if (strOldPathKey == strOldIncomingKey || IsDirectoryPreferencePathWithinKey(strOldIncomingKey, strOldPathKey)) {
 				if (!bAskedOnce) {
 					bAskedOnce = true;
 					if (LocMessageBox(IDS_UPDATECATINCOMINGDIRS, MB_YESNO, 0) == IDNO)
