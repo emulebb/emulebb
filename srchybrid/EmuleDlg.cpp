@@ -2104,6 +2104,26 @@ void CemuleDlg::AddLogText(UINT uFlags, LPCTSTR pszText, const CTime *pTimestamp
 	}
 }
 
+void CemuleDlg::BeginLogBatchUpdate()
+{
+	if (serverwnd == NULL)
+		return;
+	if (serverwnd->logbox != NULL)
+		serverwnd->logbox->BeginUpdateBatch();
+	if (serverwnd->debuglog != NULL)
+		serverwnd->debuglog->BeginUpdateBatch();
+}
+
+void CemuleDlg::EndLogBatchUpdate()
+{
+	if (serverwnd == NULL)
+		return;
+	if (serverwnd->debuglog != NULL)
+		serverwnd->debuglog->EndUpdateBatch();
+	if (serverwnd->logbox != NULL)
+		serverwnd->logbox->EndUpdateBatch();
+}
+
 CString CemuleDlg::GetLastLogEntry()
 {
 	return serverwnd->logbox->GetLastLogEntry();

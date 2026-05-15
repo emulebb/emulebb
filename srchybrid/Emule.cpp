@@ -2760,6 +2760,9 @@ void CemuleApp::HandleDebugLogQueue()
 	m_uDroppedDebugLogEntries = 0;
 	m_queueLock.Unlock();
 
+	const bool bBatchUiLogUpdates = emuledlg != NULL && !aPendingItems.IsEmpty();
+	if (bBatchUiLogUpdates)
+		emuledlg->BeginLogBatchUpdate();
 	while (!aPendingItems.IsEmpty()) {
 		const SLogItem *newItem = aPendingItems.RemoveHead();
 		if (thePrefs.GetVerbose()) {
@@ -2770,6 +2773,8 @@ void CemuleApp::HandleDebugLogQueue()
 		}
 		delete newItem;
 	}
+	if (bBatchUiLogUpdates)
+		emuledlg->EndLogBatchUpdate();
 
 	if (uDroppedEntries > 0)
 		LogWarning(_T("Dropped %u queued verbose log messages due to queue overflow."), uDroppedEntries);
@@ -2786,6 +2791,9 @@ void CemuleApp::HandleLogQueue()
 	m_uDroppedLogEntries = 0;
 	m_queueLock.Unlock();
 
+	const bool bBatchUiLogUpdates = emuledlg != NULL && !aPendingItems.IsEmpty();
+	if (bBatchUiLogUpdates)
+		emuledlg->BeginLogBatchUpdate();
 	while (!aPendingItems.IsEmpty()) {
 		const SLogItem *newItem = aPendingItems.RemoveHead();
 		if (emuledlg != NULL)
@@ -2794,6 +2802,8 @@ void CemuleApp::HandleLogQueue()
 			Log(newItem->uFlags, _T("%s"), (LPCTSTR)newItem->line);
 		delete newItem;
 	}
+	if (bBatchUiLogUpdates)
+		emuledlg->EndLogBatchUpdate();
 
 	if (uDroppedEntries > 0)
 		LogWarning(_T("Dropped %u queued log messages due to queue overflow."), uDroppedEntries);

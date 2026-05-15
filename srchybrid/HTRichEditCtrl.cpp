@@ -66,6 +66,10 @@ CHTRichEditCtrl::CHTRichEditCtrl()
 	, m_bDfltForeground()
 	, m_bDfltBackground()
 	, m_bRollingLogWindow()
+	, m_bUpdateBatchNeedsInvalidate()
+	, m_bUpdateBatchOldNoPaint()
+	, m_bUpdateBatchWasVisible()
+	, m_iUpdateBatchDepth()
 	, m_uRollingMaxEntries()
 	, m_iRollingMaxLineChars()
 {
@@ -317,6 +321,41 @@ void CHTRichEditCtrl::AppendRollingEntry(const CString &strText, const bool bTyp
 		AddLine(strText, strText.GetLength());
 }
 
+void CHTRichEditCtrl::BeginUpdateBatch()
+{
+	if (++m_iUpdateBatchDepth != 1)
+		return;
+
+	m_bUpdateBatchNeedsInvalidate = false;
+	m_bUpdateBatchOldNoPaint = m_bNoPaint;
+	m_bUpdateBatchWasVisible = IsWindowVisible();
+	m_bNoPaint = true;
+	if (m_bUpdateBatchWasVisible)
+		SetRedraw(FALSE);
+}
+
+void CHTRichEditCtrl::EndUpdateBatch()
+{
+	if (m_iUpdateBatchDepth <= 0) {
+		ASSERT(FALSE);
+		return;
+	}
+
+	if (--m_iUpdateBatchDepth != 0)
+		return;
+
+	const BOOL bWasVisible = m_bUpdateBatchWasVisible;
+	const bool bNeedsInvalidate = m_bUpdateBatchNeedsInvalidate;
+	m_bNoPaint = m_bUpdateBatchOldNoPaint;
+	m_bUpdateBatchWasVisible = FALSE;
+	m_bUpdateBatchNeedsInvalidate = false;
+	if (bWasVisible && !m_bNoPaint) {
+		SetRedraw();
+		if (bNeedsInvalidate)
+			Invalidate();
+	}
+}
+
 void CHTRichEditCtrl::FlushBuffer()
 {
 	if (!m_astrBuff.IsEmpty()) { // flush buffer
@@ -398,9 +437,11 @@ void CHTRichEditCtrl::AddLine(LPCTSTR pszMsg, int iLen, bool bLink, COLORREF cr,
 	}
 
 	// Reduce flicker by ignoring WM_PAINT
+	const bool bBatchedUpdate = m_iUpdateBatchDepth > 0;
+	const bool bOldNoPaint = m_bNoPaint;
 	m_bNoPaint = true;
 	BOOL bIsVisible = IsWindowVisible();
-	if (bIsVisible)
+	if (bIsVisible && !bBatchedUpdate)
 		SetRedraw(FALSE);
 
 	// Remember where we are
@@ -419,10 +460,14 @@ void CHTRichEditCtrl::AddLine(LPCTSTR pszMsg, int iLen, bool bLink, COLORREF cr,
 		SendMessage(EM_SETSCROLLPOS, 0, (LPARAM)&ptScrollPos);
 	}
 
-	m_bNoPaint = false;
+	m_bNoPaint = bOldNoPaint;
 	if (bIsVisible) {
-		SetRedraw();
-		Invalidate();
+		if (bBatchedUpdate)
+			m_bUpdateBatchNeedsInvalidate = true;
+		else {
+			SetRedraw();
+			Invalidate();
+		}
 	}
 }
 

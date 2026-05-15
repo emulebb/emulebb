@@ -27,6 +27,8 @@ public:
 	void AddEntry(LPCTSTR pszMsg);
 	void Add(LPCTSTR pszMsg, int iLen = -1);
 	void AddTyped(LPCTSTR pszMsg, int iLen, UINT eMsgType);
+	void BeginUpdateBatch();
+	void EndUpdateBatch();
 	void AddLine(LPCTSTR pszMsg, int iLen = -1, bool bLink = false, COLORREF cr = CLR_DEFAULT, COLORREF bk = CLR_DEFAULT, DWORD mask = 0);
 	bool AddCaptcha(HBITMAP hbmp);
 	void Reset();
@@ -80,6 +82,10 @@ protected:
 	bool m_bDfltForeground;
 	bool m_bDfltBackground;
 	bool m_bRollingLogWindow;
+	bool m_bUpdateBatchNeedsInvalidate;
+	bool m_bUpdateBatchOldNoPaint;
+	BOOL m_bUpdateBatchWasVisible;
+	int m_iUpdateBatchDepth;
 	size_t m_uRollingMaxEntries;
 	int m_iRollingMaxLineChars;
 	std::deque<SRollingLogEntry> m_aRollingEntries;
