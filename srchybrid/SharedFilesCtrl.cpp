@@ -727,12 +727,15 @@ void CSharedFilesCtrl::FlushVisibleFilePrune()
 
 void CSharedFilesCtrl::ApplyVisibleFileCount()
 {
-	SetItemCountEx(static_cast<int>(m_aVisibleFiles.size()), LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
+	const int iVisibleFileCount = static_cast<int>(min(m_aVisibleFiles.size(), static_cast<size_t>(INT_MAX)));
+	if (CListCtrl::GetItemCount() == iVisibleFileCount)
+		return;
+	SetItemCountEx(iVisibleFileCount, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
 #if EMULE_COMPILED_STARTUP_PROFILING
 	if (!theApp.IsClosing()) {
 		CString strPhase;
 		strPhase.Format(_T("CSharedFilesCtrl::ApplyVisibleFileCount model=%d control=%d"),
-			static_cast<int>(m_aVisibleFiles.size()),
+			iVisibleFileCount,
 			CListCtrl::GetItemCount());
 		theApp.AppendStartupProfileLine(strPhase, 0);
 	}
@@ -787,6 +790,11 @@ bool CSharedFilesCtrl::ShouldDisplayFile(const CShareableFile *file) const
 
 void CSharedFilesCtrl::SortVisibleFiles()
 {
+	if (!HasActiveSortOrder()) {
+		RebuildVisibleFileIndex();
+		return;
+	}
+
 	const LPARAM lParamSort = MAKELONG(GetSortItem() + (GetSortSecondValue() ? 100 : 0), !GetSortAscending());
 	std::stable_sort(m_aVisibleFiles.begin(), m_aVisibleFiles.end(),
 		[lParamSort](const CShareableFile *pLeft, const CShareableFile *pRight) {
