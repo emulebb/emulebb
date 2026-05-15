@@ -3501,6 +3501,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 
+		if (request.bExplicitUserRename)
+			pPartFile->DisableFollowMajorityFilenameForManualRename();
 		pPartFile->SetFileName(strNewName, true);
 		pPartFile->UpdateDisplayedInfo(true);
 		pPartFile->SavePartFile();

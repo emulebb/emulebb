@@ -108,6 +108,12 @@ struct STransferBulkMutationRequest
 struct STransferRenameRequest
 {
 	std::string strName;
+	bool bExplicitUserRename;
+
+	STransferRenameRequest()
+		: bExplicitUserRename(false)
+	{
+	}
 };
 
 /**
@@ -411,6 +417,7 @@ inline bool TryParseTransferRenameRequest(const json &rParams, STransferRenameRe
 		return false;
 
 	rRequest.strName = strName;
+	rRequest.bExplicitUserRename = true;
 	return true;
 }
 
