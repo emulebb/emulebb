@@ -262,7 +262,7 @@ void CDownloadListCtrl::Init()
 
 	InsertColumn(0,		_T(""),	LVCFMT_LEFT,	DFLT_FILENAME_COL_WIDTH);		//IDS_DL_FILENAME
 	InsertColumn(1,		_T(""),	LVCFMT_RIGHT,	DFLT_SIZE_COL_WIDTH);			//IDS_DL_SIZE
-	InsertColumn(2,		_T(""),	LVCFMT_RIGHT,	DFLT_SIZE_COL_WIDTH, -1, true);	//IDS_DL_TRANSF
+	InsertColumn(2,		_T(""),	LVCFMT_RIGHT,	DFLT_SIZE_COL_WIDTH);			//IDS_DL_TRANSF
 	InsertColumn(3,		_T(""),	LVCFMT_RIGHT,	DFLT_SIZE_COL_WIDTH);			//IDS_DL_TRANSFCOMPL
 	InsertColumn(4,		_T(""),	LVCFMT_RIGHT,	DFLT_DATARATE_COL_WIDTH);		//IDS_DL_SPEED
 	InsertColumn(5,		_T(""),	LVCFMT_LEFT,	DFLT_PARTSTATUS_COL_WIDTH);		//IDS_DL_PROGRESS
@@ -270,15 +270,17 @@ void CDownloadListCtrl::Init()
 	InsertColumn(7,		_T(""),	LVCFMT_LEFT,	DFLT_PRIORITY_COL_WIDTH);		//IDS_PRIORITY
 	InsertColumn(8,		_T(""),	LVCFMT_LEFT,	70);							//IDS_STATUS
 	InsertColumn(9,		_T(""),	LVCFMT_RIGHT,	110);							//IDS_DL_REMAINS
-	InsertColumn(10,	_T(""),	LVCFMT_LEFT,	150, -1, true);					//IDS_LASTSEENCOMPL
-	InsertColumn(11,	_T(""),	LVCFMT_LEFT,	120, -1, true);					//IDS_FD_LASTCHANGE
-	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	100, -1, true);					//IDS_CAT
+	InsertColumn(10,	_T(""),	LVCFMT_LEFT,	150);							//IDS_LASTSEENCOMPL
+	InsertColumn(11,	_T(""),	LVCFMT_LEFT,	120);							//IDS_FD_LASTCHANGE
+	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	100);							//IDS_CAT
 	InsertColumn(13,	_T(""),	LVCFMT_LEFT,	120);							//IDS_ADDEDON
 	InsertColumn(14,	_T(""),	LVCFMT_LEFT,	140);							//IDS_GEOLOCATION
 	InsertColumn(15,	_T(""),	LVCFMT_RIGHT,	50);							//IDS_PERCENTAGE
 	InsertColumn(16,	_T(""),	LVCFMT_LEFT,	100);							//IDS_IP
 	InsertColumn(17,	_T(""),	LVCFMT_LEFT,	70);							//IDS_IDLOW
 
+	static const int aiDefaultColumnOrder[] = {0, 1, 3, 15, 5, 4, 9, 6, 8, 7, 2, 13, 10, 11, 12, 14, 16, 17};
+	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
 	SetAllIcons();
 	Localize();
 	LoadSettings();

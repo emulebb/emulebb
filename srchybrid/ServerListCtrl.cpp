@@ -89,12 +89,14 @@ bool CServerListCtrl::Init()
 	InsertColumn(8,	 _T(""),	LVCFMT_RIGHT,	50);			//IDS_UFAILED
 	InsertColumn(9,	 _T(""),	LVCFMT_LEFT,	50);			//IDS_STATICSERVER
 	InsertColumn(10, _T(""),	LVCFMT_RIGHT,	60);			//IDS_SOFTFILES
-	InsertColumn(11, _T(""),	LVCFMT_RIGHT,	60, -1, true);	//IDS_HARDFILES
-	InsertColumn(12, _T(""),	LVCFMT_LEFT,	50, -1, true);	//IDS_VERSION
+	InsertColumn(11, _T(""),	LVCFMT_RIGHT,	60);			//IDS_HARDFILES
+	InsertColumn(12, _T(""),	LVCFMT_LEFT,	50);			//IDS_VERSION
 	InsertColumn(13, _T(""),	LVCFMT_RIGHT,	60);			//IDS_IDLOW
 	InsertColumn(14, _T(""),	LVCFMT_RIGHT,	50);			//IDS_OBFUSCATION
 	InsertColumn(15, _T(""),	LVCFMT_LEFT,	140);			//IDS_GEOLOCATION
 
+	static const int aiDefaultColumnOrder[] = {0, 1, 2, 3, 4, 5, 6, 13, 7, 9, 8, 10, 11, 12, 14, 15};
+	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
 	SetAllIcons();
 	Localize();
 	LoadSettings();

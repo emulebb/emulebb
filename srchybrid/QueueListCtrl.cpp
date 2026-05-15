@@ -148,6 +148,8 @@ void CQueueListCtrl::Init()
 	InsertColumn(20,_T(""),	LVCFMT_RIGHT, 85);							//IDS_FILE_SIZE
 	InsertColumn(21,_T(""),	LVCFMT_LEFT, DFLT_FOLDER_COL_WIDTH);		//IDS_FOLDER
 
+	static const int aiDefaultColumnOrder[] = {0, 1, 13, 2, 4, 5, 3, 6, 8, 7, 12, 10, 11, 20, 21, 15, 14, 16, 17, 18, 19, 9};
+	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
 	SetAllIcons();
 	Localize();
 	LoadSettings();

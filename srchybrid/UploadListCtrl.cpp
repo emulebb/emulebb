@@ -162,6 +162,8 @@ void CUploadListCtrl::Init()
 	InsertColumn(20,_T(""),	LVCFMT_RIGHT, 70);							//IDS_ETA
 	InsertColumn(21,_T(""),	LVCFMT_LEFT, 120);							//IDS_FOLDER
 
+	static const int aiDefaultColumnOrder[] = {0, 1, 2, 3, 18, 20, 6, 11, 4, 5, 10, 7, 8, 9, 19, 21, 13, 12, 14, 15, 16, 17};
+	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
 	SetAllIcons();
 	Localize();
 	LoadSettings();

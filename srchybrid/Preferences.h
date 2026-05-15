@@ -24,6 +24,8 @@
 #include "PreferenceValidationSeams.h"
 #include "Opcodes.h"
 
+class CIni;
+
 extern LPCTSTR const strDefaultToolbar;
 
 enum EViewSharedFilesAccess
@@ -1754,6 +1756,7 @@ public:
 	static void		SetNotifierSendMail(bool nv)		{ m_email.bSendMail = nv; }
 	static bool		DoFlashOnNewMessage()				{ return m_bIconflashOnNewMessage; }
 	static void		IniCopy(const CString &si, const CString &di);
+	static void		ApplyBBPreferenceMigrations(CIni &ini);
 	static bool		GetAllocCompleteMode()				{ return m_bAllocFull; }
 	static void		SetAllocCompleteMode(bool in)		{ m_bAllocFull = in; }
 

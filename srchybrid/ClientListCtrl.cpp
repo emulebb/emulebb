@@ -87,6 +87,8 @@ void CClientListCtrl::Init()
 	InsertColumn(7, _T(""), LVCFMT_LEFT,	DFLT_HASH_COL_WIDTH);		//IDS_CD_UHASH
 	InsertColumn(8, _T(""), LVCFMT_LEFT,	140);						//IDS_GEOLOCATION
 
+	static const int aiDefaultColumnOrder[] = {0, 5, 1, 2, 3, 4, 6, 8, 7};
+	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
 	SetAllIcons();
 	Localize();
 	LoadSettings();

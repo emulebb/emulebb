@@ -1,6 +1,7 @@
 #pragma once
 #include "Preferences.h"
 #include "resource.h"
+#include <vector>
 
 class CIni;
 class CMemoryDC;
@@ -46,6 +47,11 @@ public:
 
 	// Load from preferences
 	void LoadSettings();
+
+	/**
+	 * @brief Sets the first-run visual column order for profiles without saved column state.
+	 */
+	void SetDefaultColumnOrder(const int *piColumnOrder, int iColumnCount);
 
 	DWORD SetExtendedStyle(DWORD dwNewStyle)	{ return CListCtrl::SetExtendedStyle(dwNewStyle | LVS_EX_HEADERDRAGDROP); }
 
@@ -245,6 +251,7 @@ protected:
 	BOOL            m_bCustomDraw;
 	CImageList		m_imlHeaderCtrl;
 	CList<LONG>		m_liSortHistory;
+	std::vector<int> m_defaultColumnOrder;
 	UINT			m_uIDAccel;
 	HACCEL			m_hAccel;
 	EUpdateMode		m_eUpdateMode;
@@ -267,6 +274,7 @@ protected:
 
 private:
 	static int	IndexToOrder(CHeaderCtrl *pHeader, int iIndex);
+	bool TryBuildDefaultColumnOrder(int *piColumnOrder) const;
 
 	struct MULE_COLUMN
 	{

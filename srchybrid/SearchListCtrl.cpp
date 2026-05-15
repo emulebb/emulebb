@@ -281,10 +281,12 @@ void CSearchListCtrl::Init(CSearchList *in_searchlist)
 	InsertColumn(9,		_T(""),	LVCFMT_RIGHT,	DFLT_LENGTH_COL_WIDTH);				//IDS_LENGTH
 	InsertColumn(10,	_T(""),	LVCFMT_RIGHT,	DFLT_BITRATE_COL_WIDTH);			//IDS_BITRATE
 	InsertColumn(11,	_T(""),	LVCFMT_LEFT,	DFLT_CODEC_COL_WIDTH);				//IDS_CODEC
-	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	DFLT_FOLDER_COL_WIDTH, -1, true);	//IDS_FOLDER
+	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	DFLT_FOLDER_COL_WIDTH);			//IDS_FOLDER
 	InsertColumn(13,	_T(""),	LVCFMT_LEFT,	50);								//IDS_KNOWN
 	InsertColumn(14,	_T(""),	LVCFMT_LEFT,	DFLT_HASH_COL_WIDTH, -1, true);		//IDS_AICHHASH
 
+	static const int aiDefaultColumnOrder[] = {0, 1, 2, 3, 4, 13, 6, 7, 8, 9, 10, 11, 12, 5, 14};
+	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
 	SetAllIcons();
 
 	// This states image list with that particular width is only there to let the listview control

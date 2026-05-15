@@ -513,10 +513,10 @@ void CSharedFilesCtrl::Init()
 	InsertColumn(3,		_T(""),	LVCFMT_LEFT,	DFLT_PRIORITY_COL_WIDTH);			//IDS_PRIORITY
 	InsertColumn(4,		_T(""),	LVCFMT_LEFT,	DFLT_HASH_COL_WIDTH, -1, true);		//IDS_FILEID
 	InsertColumn(5,		_T(""),	LVCFMT_RIGHT,	100);								//IDS_SF_REQUESTS
-	InsertColumn(6,		_T(""),	LVCFMT_RIGHT,	100, -1, true);						//IDS_SF_ACCEPTS
+	InsertColumn(6,		_T(""),	LVCFMT_RIGHT,	100);								//IDS_SF_ACCEPTS
 	InsertColumn(7,		_T(""),	LVCFMT_RIGHT,	120);								//IDS_SF_TRANSFERRED
 	InsertColumn(8,		_T(""),	LVCFMT_LEFT,	DFLT_PARTSTATUS_COL_WIDTH);			//IDS_SHARED_STATUS
-	InsertColumn(9,		_T(""),	LVCFMT_LEFT,	DFLT_FOLDER_COL_WIDTH, -1, true);	//IDS_FOLDER
+	InsertColumn(9,		_T(""),	LVCFMT_LEFT,	DFLT_FOLDER_COL_WIDTH);			//IDS_FOLDER
 	InsertColumn(10,	_T(""),	LVCFMT_RIGHT,	60);								//IDS_COMPLSOURCES
 	InsertColumn(11,	_T(""),	LVCFMT_LEFT,	100);								//IDS_SHAREDTITLE
 	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	DFLT_ARTIST_COL_WIDTH, -1, true);	//IDS_ARTIST
@@ -528,6 +528,8 @@ void CSharedFilesCtrl::Init()
 	InsertColumn(18,	_T(""),	LVCFMT_RIGHT,	85);								//IDS_ALL_TIME_RATIO
 	InsertColumn(19,	_T(""),	LVCFMT_RIGHT,	85);								//IDS_SESSION_RATIO
 
+	static const int aiDefaultColumnOrder[] = {0, 1, 2, 9, 8, 3, 10, 5, 6, 7, 18, 19, 11, 12, 13, 14, 15, 16, 17, 4};
+	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
 	SetAllIcons();
 	CreateMenus();
 	LoadSettings();

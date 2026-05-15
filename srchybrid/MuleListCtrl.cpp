@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "MemDC.h"
 #include "MuleListCtrl.h"
+#include "MuleListCtrlSeams.h"
 #include "Ini2.h"
 #include "SharedFilesCtrl.h"
 #include "MenuCmds.h"
@@ -87,6 +88,7 @@ CMuleListCtrl::CMuleListCtrl(PFNLVCOMPARE pfnCompare, LPARAM iParamSort)
 	, m_crNoFocusLine()
 	, m_lvcd()
 	, m_bCustomDraw()
+	, m_defaultColumnOrder()
 	, m_uIDAccel(IDR_LISTVIEW)
 	, m_hAccel()
 	, m_eUpdateMode(lazy)
@@ -321,21 +323,26 @@ void CMuleListCtrl::LoadSettings()
 	int *piColWidths = new int[m_iColumnsTracked];
 	int *piColHidden = new int[m_iColumnsTracked];
 	int *piColOrders = new int[m_iColumnsTracked];
+	const bool bHasSavedColumnOrder = !ini.GetString(m_Name + _T("ColumnOrders")).IsEmpty();
 	ini.SerGet(true, piColWidths, m_iColumnsTracked, m_Name + _T("ColumnWidths"));
 	ini.SerGet(true, piColHidden, m_iColumnsTracked, m_Name + _T("ColumnHidden"), 0, -1);
 	ini.SerGet(true, piColOrders, m_iColumnsTracked, m_Name + _T("ColumnOrders"));
 
 	// apply column widths and verify sort order
 	int *piArray = new int[m_iColumnsTracked];
+	const bool bUseDefaultColumnOrder = !bHasSavedColumnOrder && TryBuildDefaultColumnOrder(piArray);
 	for (int i = 0; i < m_iColumnsTracked; ++i) {
-		piArray[i] = i;
+		if (!bUseDefaultColumnOrder)
+			piArray[i] = i;
 
 		if (piColWidths[i] >= 2) // don't allow column widths of 0 or 1 - just because it looks very confusing in GUI
 			SetColumnWidth(i, piColWidths[i]);
 
-		int iOrder = piColOrders[i];
-		if (i > 0 && iOrder > 0 && iOrder < m_iColumnsTracked && iOrder != i)
-			piArray[i] = iOrder;
+		if (!bUseDefaultColumnOrder) {
+			int iOrder = piColOrders[i];
+			if (i > 0 && iOrder > 0 && iOrder < m_iColumnsTracked && iOrder != i)
+				piArray[i] = iOrder;
+		}
 		m_aColumns[i].iLocation = piArray[i];
 	}
 	piArray[0] = 0;
@@ -352,6 +359,25 @@ void CMuleListCtrl::LoadSettings()
 	delete[] piColOrders;
 	delete[] piColWidths;
 	delete[] piColHidden;
+}
+
+void CMuleListCtrl::SetDefaultColumnOrder(const int *piColumnOrder, int iColumnCount)
+{
+	m_defaultColumnOrder.clear();
+	if (piColumnOrder == NULL || iColumnCount <= 0)
+		return;
+	m_defaultColumnOrder.assign(piColumnOrder, piColumnOrder + iColumnCount);
+}
+
+bool CMuleListCtrl::TryBuildDefaultColumnOrder(int *piColumnOrder) const
+{
+	if (piColumnOrder == NULL || m_defaultColumnOrder.size() != static_cast<size_t>(m_iColumnsTracked))
+		return false;
+	if (!MuleListCtrlSeams::IsCompleteColumnOrder(m_defaultColumnOrder.data(), m_iColumnsTracked))
+		return false;
+	for (int i = 0; i < m_iColumnsTracked; ++i)
+		piColumnOrder[i] = m_defaultColumnOrder[static_cast<size_t>(i)];
+	return true;
 }
 
 HBITMAP LoadImageAsPARGB(LPCTSTR pszPath)

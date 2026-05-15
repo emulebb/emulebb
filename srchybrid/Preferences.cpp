@@ -21,6 +21,7 @@
 #include <unordered_set>
 #include <vector>
 #include "ConfigDefaultFilesSeams.h"
+#include "BBPreferenceMigrationSeams.h"
 #include "emule.h"
 #include "Preferences.h"
 #include "WindowPlacementSeams.h"
@@ -2419,6 +2420,7 @@ void CPreferences::SavePreferences()
 	CIni ini(GetConfigFile(), _T("eMule"));
 	//---
 	ini.WriteString(_T("AppVersion"), theApp.m_strCurVersionLong);
+	ini.WriteInt(BBPreferenceMigrationSeams::kPreferenceSchemaKey, BBPreferenceMigrationSeams::kCurrentPreferenceSchema);
 	ini.WriteBool(_T("DisableFirstTimeWizard"), m_bDisableFirstTimeWizard);
 #ifdef _DEBUG
 	ini.WriteInt(_T("DebugHeap"), m_iDbgHeap);
@@ -2867,11 +2869,29 @@ void CPreferences::IniCopy(const CString &si, const CString &di)
 		ini.WriteString(di, sValue, _T("ListControlSetup"));
 }
 
+void CPreferences::ApplyBBPreferenceMigrations(CIni &ini)
+{
+	const int iStoredSchema = ini.GetInt(BBPreferenceMigrationSeams::kPreferenceSchemaKey, 0);
+	if (!BBPreferenceMigrationSeams::ShouldRunPreferenceMigration(iStoredSchema))
+		return;
+
+	CIni listIni(GetConfigFile(), BBPreferenceMigrationSeams::kListControlSetupSection);
+	for (const TCHAR *pszControlName : BBPreferenceMigrationSeams::kMainGridListControlNames) {
+		for (const TCHAR *pszSuffix : BBPreferenceMigrationSeams::kMainGridListControlResetSuffixes) {
+			const CString strKey(BBPreferenceMigrationSeams::BuildListControlSetupKey(pszControlName, pszSuffix));
+			listIni.DeleteKey(strKey);
+		}
+	}
+
+	ini.WriteInt(BBPreferenceMigrationSeams::kPreferenceSchemaKey, BBPreferenceMigrationSeams::kCurrentPreferenceSchema);
+}
+
 void CPreferences::LoadPreferences()
 {
 	(void)CIni::NormalizeUnicodeProfileFile(GetConfigFile());
 	CIni ini(GetConfigFile(), _T("eMule"));
 	ini.SetSection(_T("eMule"));
+	ApplyBBPreferenceMigrations(ini);
 
 	m_bFirstStart = ini.GetString(_T("AppVersion")).IsEmpty();
 	m_bDisableFirstTimeWizard = ini.GetBool(_T("DisableFirstTimeWizard"), true);
