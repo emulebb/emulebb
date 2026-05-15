@@ -21,6 +21,7 @@
 #include "DownloadListKeyboardShortcutsSeams.h"
 #include "DownloadPriorityShortcutsSeams.h"
 #include "DownloadListCtrl.h"
+#include "FilenameNormalizationPolicy.h"
 #include "updownclient.h"
 #include "MenuCmds.h"
 #include "ClientDetailDialog.h"
@@ -2146,8 +2147,11 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 							if (partfile->IsPartFile()) {
 								HideSources(partfile);
 								partfile->DisableFollowMajorityFilenameForManualRename();
-								partfile->SetFileName(CleanupFilename(partfile->GetFileName()));
-								partfile->SavePartFile();
+								CString strCleanedFileName;
+								if (FilenameNormalizationPolicy::TryNormalizeDownloadFilenameCandidate(CleanupFilename(partfile->GetFileName()), strCleanedFileName)) {
+									partfile->SetFileName(strCleanedFileName);
+									partfile->SavePartFile();
+								}
 							}
 						}
 				} else {

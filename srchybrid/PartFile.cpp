@@ -611,8 +611,11 @@ void CPartFile::CreatePartFile(UINT cat)
 		memset(&m_SrcPartFrequency[0], 0, GetPartCount() * sizeof m_SrcPartFrequency[0]);
 	m_paused = false;
 
-	if (thePrefs.AutoFilenameCleanup())
-		SetFileName(NormalizeDownloadFilename(CleanupFilename(GetFileName())));
+	if (thePrefs.AutoFilenameCleanup()) {
+		CString strCleanedFileName;
+		if (FilenameNormalizationPolicy::TryNormalizeDownloadFilenameCandidate(CleanupFilename(GetFileName()), strCleanedFileName))
+			SetFileName(strCleanedFileName);
+	}
 
 	m_bFollowMajorityFilename = thePrefs.GetFollowMajorityFilenameForNewDownloads();
 	SavePartFile();
