@@ -8,6 +8,7 @@
 #pragma once
 
 #include "FakeFileDetectorSeams.h"
+#include "SearchTrustHintSeams.h"
 
 #include <vector>
 
@@ -77,10 +78,19 @@ SFakeFileReport GetPartFileReportSnapshot(CPartFile &rPartFile);
 bool RefreshPartFileHeaderIfAvailable(CPartFile &rPartFile);
 
 /**
- * @brief Returns a compact English summary suitable for existing tooltip/status
- * surfaces.
+ * @brief Formats a shared trust hint for list columns and tooltip summaries.
+ */
+CString FormatTrustHint(const SearchTrustHintSeams::TrustHint &rHint);
+
+/**
+ * @brief Returns a compact localized score and reason summary.
  */
 CString FormatReportSummary(const SFakeFileReport &rReport);
+
+/**
+ * @brief Returns localized score, reason, and evidence details for tooltips.
+ */
+CString FormatReportDetails(const SFakeFileReport &rReport);
 
 /**
  * @brief Converts a severity bucket to the stable REST token.

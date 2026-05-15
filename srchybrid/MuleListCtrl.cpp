@@ -331,10 +331,11 @@ void CMuleListCtrl::LoadSettings()
 	ini.SerGet(true, piColWidths, m_iColumnsTracked, m_Name + _T("ColumnWidths"));
 	ini.SerGet(true, piColHidden, m_iColumnsTracked, m_Name + _T("ColumnHidden"), 0, -1);
 	ini.SerGet(true, piColOrders, m_iColumnsTracked, m_Name + _T("ColumnOrders"));
+	const bool bHasValidSavedColumnOrder = bHasSavedColumnOrder && MuleListCtrlSeams::IsCompleteColumnOrder(piColOrders, m_iColumnsTracked);
 
 	// apply column widths and verify sort order
 	int *piArray = new int[m_iColumnsTracked];
-	const bool bUseDefaultColumnOrder = !bHasSavedColumnOrder && TryBuildDefaultColumnOrder(piArray);
+	const bool bUseDefaultColumnOrder = !bHasValidSavedColumnOrder && TryBuildDefaultColumnOrder(piArray);
 	for (int i = 0; i < m_iColumnsTracked; ++i) {
 		if (!bUseDefaultColumnOrder)
 			piArray[i] = i;
@@ -342,11 +343,8 @@ void CMuleListCtrl::LoadSettings()
 		if (piColWidths[i] >= 2) // don't allow column widths of 0 or 1 - just because it looks very confusing in GUI
 			SetColumnWidth(i, piColWidths[i]);
 
-		if (!bUseDefaultColumnOrder) {
-			int iOrder = piColOrders[i];
-			if (i > 0 && iOrder > 0 && iOrder < m_iColumnsTracked && iOrder != i)
-				piArray[i] = iOrder;
-		}
+		if (!bUseDefaultColumnOrder && bHasValidSavedColumnOrder)
+			piArray[i] = piColOrders[i];
 		m_aColumns[i].iLocation = piArray[i];
 	}
 	piArray[0] = 0;

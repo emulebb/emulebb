@@ -18,6 +18,7 @@
 #include "Preferences.h"
 #include "SafeFile.h"
 #include "SearchFile.h"
+#include "SearchTrustHintSeams.h"
 #include "StringConversion.h"
 
 #include <map>
@@ -561,6 +562,106 @@ SFakeFileReport FakeFileDetector::GetPartFileReportSnapshot(CPartFile &rPartFile
 	return BuildPartFileReport(rPartFile, false, false);
 }
 
+CString GetSeverityDisplayName(FakeFileDetectorSeams::Severity eSeverity)
+{
+	UINT uResourceID = IDS_FAKEFILE_SEVERITY_NONE;
+	switch (eSeverity) {
+	case FakeFileDetectorSeams::Severity::Low:
+		uResourceID = IDS_FAKEFILE_SEVERITY_LOW;
+		break;
+	case FakeFileDetectorSeams::Severity::Medium:
+		uResourceID = IDS_FAKEFILE_SEVERITY_MEDIUM;
+		break;
+	case FakeFileDetectorSeams::Severity::High:
+		uResourceID = IDS_FAKEFILE_SEVERITY_HIGH;
+		break;
+	case FakeFileDetectorSeams::Severity::Critical:
+		uResourceID = IDS_FAKEFILE_SEVERITY_CRITICAL;
+		break;
+	case FakeFileDetectorSeams::Severity::None:
+	default:
+		break;
+	}
+	return GetResString(uResourceID);
+}
+
+CString GetReasonDisplayText(const CString &rstrReason)
+{
+	UINT uResourceID = 0;
+	const CStringA strReasonA(rstrReason);
+	switch (SearchTrustHintSeams::ClassifyExplanationReason(std::string(strReasonA.GetString()))) {
+	case SearchTrustHintSeams::ExplanationReason::MultipleNames:
+		uResourceID = IDS_FAKEFILE_REASON_MULTIPLE_NAMES;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::BadSignalName:
+		uResourceID = IDS_FAKEFILE_REASON_BAD_SIGNAL_NAME;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::BadSignalComment:
+		uResourceID = IDS_FAKEFILE_REASON_BAD_SIGNAL_COMMENT;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::HeaderExtensionMismatch:
+		uResourceID = IDS_FAKEFILE_REASON_HEADER_EXTENSION_MISMATCH;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::ExecutableMasquerade:
+		uResourceID = IDS_FAKEFILE_REASON_EXECUTABLE_MASQUERADE;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::ArchiveMasquerade:
+		uResourceID = IDS_FAKEFILE_REASON_ARCHIVE_MASQUERADE;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::PendingHeaderCheck:
+		uResourceID = IDS_FAKEFILE_REASON_PENDING_HEADER_CHECK;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::ClaimedTypeMismatch:
+		uResourceID = IDS_FAKEFILE_REASON_CLAIMED_TYPE_MISMATCH;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::SpamScore:
+		uResourceID = IDS_FAKEFILE_REASON_SPAM_SCORE;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::SpamStatus:
+		uResourceID = IDS_FAKEFILE_REASON_SPAM_STATUS;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::BadRating:
+		uResourceID = IDS_FAKEFILE_REASON_BAD_RATING;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::FakeRating:
+		uResourceID = IDS_FAKEFILE_REASON_FAKE_RATING;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::MultipleAich:
+		uResourceID = IDS_FAKEFILE_REASON_MULTIPLE_AICH;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::Unknown:
+	default:
+		break;
+	}
+	return uResourceID != 0 ? GetResString(uResourceID) : rstrReason;
+}
+
+CString JoinReportValues(const std::vector<CString> &rValues, bool bReasonCodes)
+{
+	CString strText;
+	const size_t uMaxValues = 4;
+	for (size_t i = 0; i < rValues.size() && i < uMaxValues; ++i) {
+		if (!strText.IsEmpty())
+			strText += _T(", ");
+		strText += bReasonCodes ? GetReasonDisplayText(rValues[i]) : rValues[i];
+	}
+	if (rValues.size() > uMaxValues) {
+		if (!strText.IsEmpty())
+			strText += _T(", ");
+		strText += _T("...");
+	}
+	return strText;
+}
+
+void AppendReportLine(CString &rstrText, const CString &rstrLine)
+{
+	if (rstrLine.IsEmpty())
+		return;
+	if (!rstrText.IsEmpty())
+		rstrText += _T('\n');
+	rstrText += rstrLine;
+}
+
 bool FakeFileDetector::RefreshPartFileHeaderIfAvailable(CPartFile &rPartFile)
 {
 	const EFileType eExtensionType = FileTypeClassifierSeams::GetFileTypeFromExtension(rPartFile.GetFileName());
@@ -588,19 +689,70 @@ bool FakeFileDetector::RefreshPartFileHeaderIfAvailable(CPartFile &rPartFile)
 	return true;
 }
 
+CString FakeFileDetector::FormatTrustHint(const SearchTrustHintSeams::TrustHint &rHint)
+{
+	CString strText;
+	switch (rHint.displayKind) {
+	case SearchTrustHintSeams::DisplayKind::Spam:
+		strText = GetResString(IDS_SPAM);
+		break;
+	case SearchTrustHintSeams::DisplayKind::HighRisk:
+		strText.Format(GetResString(IDS_SEARCH_TRUST_HIGH_RISK), rHint.fakeScore);
+		break;
+	case SearchTrustHintSeams::DisplayKind::Warning:
+		strText.Format(GetResString(IDS_SEARCH_TRUST_WARNING), rHint.fakeScore);
+		break;
+	case SearchTrustHintSeams::DisplayKind::Caution:
+		strText.Format(GetResString(IDS_SEARCH_TRUST_CAUTION), rHint.fakeScore);
+		break;
+	case SearchTrustHintSeams::DisplayKind::Ok:
+	default:
+		strText = GetResString(IDS_SEARCH_TRUST_OK);
+		break;
+	}
+	return strText;
+}
+
 CString FakeFileDetector::FormatReportSummary(const SFakeFileReport &rReport)
 {
 	CString strSummary;
-	strSummary.Format(_T("Fake-file score: %u (%S)"), rReport.nScore, SeverityToToken(rReport.eSeverity));
+	strSummary.Format(GetResString(IDS_FAKEFILE_REPORT_SUMMARY), rReport.nScore, (LPCTSTR)GetSeverityDisplayName(rReport.eSeverity));
 	if (!rReport.astrReasons.empty()) {
-		strSummary += _T(" - ");
-		for (size_t i = 0; i < rReport.astrReasons.size(); ++i) {
-			if (i > 0)
-				strSummary += _T(", ");
-			strSummary += rReport.astrReasons[i];
-		}
+		CString strReasons;
+		strReasons.Format(GetResString(IDS_FAKEFILE_REPORT_REASONS), (LPCTSTR)JoinReportValues(rReport.astrReasons, true));
+		AppendReportLine(strSummary, strReasons);
 	}
 	return strSummary;
+}
+
+CString FakeFileDetector::FormatReportDetails(const SFakeFileReport &rReport)
+{
+	CString strDetails(FormatReportSummary(rReport));
+	if (rReport.bPendingHeaderCheck)
+		AppendReportLine(strDetails, GetResString(IDS_FAKEFILE_EVIDENCE_PENDING_HEADER));
+	if (rReport.bCached)
+		AppendReportLine(strDetails, GetResString(IDS_FAKEFILE_EVIDENCE_CACHED));
+	if (!rReport.astrObservedExtensions.empty()) {
+		CString strLine;
+		strLine.Format(GetResString(IDS_FAKEFILE_EVIDENCE_EXTENSIONS), (LPCTSTR)JoinReportValues(rReport.astrObservedExtensions, false));
+		AppendReportLine(strDetails, strLine);
+	}
+	if (!rReport.astrObservedNames.empty()) {
+		CString strLine;
+		strLine.Format(GetResString(IDS_FAKEFILE_EVIDENCE_NAMES), (LPCTSTR)JoinReportValues(rReport.astrObservedNames, false));
+		AppendReportLine(strDetails, strLine);
+	}
+	if (!rReport.strClaimedType.IsEmpty()) {
+		CString strLine;
+		strLine.Format(GetResString(IDS_FAKEFILE_EVIDENCE_CLAIMED_TYPE), (LPCTSTR)rReport.strClaimedType);
+		AppendReportLine(strDetails, strLine);
+	}
+	if (rReport.eHeaderType != FILETYPE_UNKNOWN) {
+		CString strLine;
+		strLine.Format(GetResString(IDS_FAKEFILE_EVIDENCE_HEADER_TYPE), (LPCTSTR)GetFileTypeName(rReport.eHeaderType));
+		AppendReportLine(strDetails, strLine);
+	}
+	return strDetails;
 }
 
 const char* FakeFileDetector::SeverityToToken(FakeFileDetectorSeams::Severity eSeverity)

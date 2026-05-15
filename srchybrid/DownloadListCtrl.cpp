@@ -65,6 +65,7 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
+	constexpr int DOWNLOAD_COLUMN_TRUST = 9;
 	const UINT_PTR kVideoThumbnailTimerId = 0xE072;
 	const TCHAR kVideoThumbnailCacheFolder[] = _T("VideoThumbnails\\");
 
@@ -78,6 +79,16 @@ namespace
 	bool IsSourceCtrlItem(const CtrlItem_Struct *item)
 	{
 		return item != NULL && (item->type == AVAILABLE_SOURCE || item->type == UNAVAILABLE_SOURCE);
+	}
+
+	SearchTrustHintSeams::TrustHint BuildDownloadTrustHint(CPartFile &, const SFakeFileReport &rFakeReport)
+	{
+		return SearchTrustHintSeams::BuildTrustHint(false, rFakeReport.nScore, rFakeReport.eSeverity);
+	}
+
+	SearchTrustHintSeams::TrustHint BuildDownloadTrustHint(CPartFile &rPartFile)
+	{
+		return BuildDownloadTrustHint(rPartFile, FakeFileDetector::GetPartFileReportSnapshot(rPartFile));
 	}
 
 	bool IsLiveKnownFilePointer(const CKnownFile *file)
@@ -263,15 +274,16 @@ void CDownloadListCtrl::Init()
 	InsertColumn(6,		_T(""),	LVCFMT_RIGHT,	60);							//IDS_DL_SOURCES
 	InsertColumn(7,		_T(""),	LVCFMT_LEFT,	DFLT_PRIORITY_COL_WIDTH);		//IDS_PRIORITY
 	InsertColumn(8,		_T(""),	LVCFMT_LEFT,	70);							//IDS_STATUS
-	InsertColumn(9,		_T(""),	LVCFMT_RIGHT,	110);							//IDS_DL_REMAINS
-	InsertColumn(10,	_T(""),	LVCFMT_LEFT,	150);							//IDS_LASTSEENCOMPL
-	InsertColumn(11,	_T(""),	LVCFMT_LEFT,	120);							//IDS_FD_LASTCHANGE
-	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	100);							//IDS_CAT
-	InsertColumn(13,	_T(""),	LVCFMT_LEFT,	120);							//IDS_ADDEDON
-	InsertColumn(14,	_T(""),	LVCFMT_LEFT,	140);							//IDS_GEOLOCATION
-	InsertColumn(15,	_T(""),	LVCFMT_RIGHT,	50);							//IDS_PERCENTAGE
-	InsertColumn(16,	_T(""),	LVCFMT_LEFT,	100);							//IDS_IP
-	InsertColumn(17,	_T(""),	LVCFMT_LEFT,	70);							//IDS_IDLOW
+	InsertColumn(DOWNLOAD_COLUMN_TRUST,	_T(""),	LVCFMT_LEFT,	90);			//IDS_SEARCH_TRUST
+	InsertColumn(10,	_T(""),	LVCFMT_RIGHT,	110);							//IDS_DL_REMAINS
+	InsertColumn(11,	_T(""),	LVCFMT_LEFT,	150);							//IDS_LASTSEENCOMPL
+	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	120);							//IDS_FD_LASTCHANGE
+	InsertColumn(13,	_T(""),	LVCFMT_LEFT,	100);							//IDS_CAT
+	InsertColumn(14,	_T(""),	LVCFMT_LEFT,	120);							//IDS_ADDEDON
+	InsertColumn(15,	_T(""),	LVCFMT_LEFT,	140);							//IDS_GEOLOCATION
+	InsertColumn(16,	_T(""),	LVCFMT_RIGHT,	50);							//IDS_PERCENTAGE
+	InsertColumn(17,	_T(""),	LVCFMT_LEFT,	100);							//IDS_IP
+	InsertColumn(18,	_T(""),	LVCFMT_LEFT,	70);							//IDS_IDLOW
 
 	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("DownloadListCtrl")))
 		SetViewPresetProfile(*pProfile);
@@ -754,12 +766,12 @@ void CDownloadListCtrl::SetAllIcons()
 
 void CDownloadListCtrl::Localize()
 {
-	static const UINT uids[18] =
+	static const UINT uids[19] =
 	{
 		IDS_DL_FILENAME, IDS_DL_SIZE, IDS_DL_TRANSF, IDS_DL_TRANSFCOMPL, IDS_DL_SPEED
-		, IDS_DL_PROGRESS, IDS_DL_SOURCES, IDS_PRIORITY, IDS_STATUS, IDS_DL_REMAINS
-		, 0/*IDS_LASTSEENCOMPL*/, 0/*IDS_FD_LASTCHANGE*/, IDS_CAT, IDS_ADDEDON, IDS_GEOLOCATION
-		, IDS_PERCENTAGE, IDS_IP, IDS_IDLOW
+		, IDS_DL_PROGRESS, IDS_DL_SOURCES, IDS_PRIORITY, IDS_STATUS, IDS_SEARCH_TRUST
+		, IDS_DL_REMAINS, 0/*IDS_LASTSEENCOMPL*/, 0/*IDS_FD_LASTCHANGE*/, IDS_CAT, IDS_ADDEDON
+		, IDS_GEOLOCATION, IDS_PERCENTAGE, IDS_IP, IDS_IDLOW
 	};
 
 	LocaliseHeaderCtrl(uids, _countof(uids));
@@ -771,12 +783,12 @@ void CDownloadListCtrl::Localize()
 	CString strRes(GetResString(IDS_LASTSEENCOMPL));
 	strRes.Remove(_T(':'));
 	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(10, &hdi);
+	pHeaderCtrl->SetItem(11, &hdi);
 
 	strRes = GetResString(IDS_FD_LASTCHANGE);
 	strRes.Remove(_T(':'));
 	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(11, &hdi);
+	pHeaderCtrl->SetItem(12, &hdi);
 
 	CreateMenus();
 	ShowFilesCount();
@@ -1172,22 +1184,23 @@ CString CDownloadListCtrl::GetSourceItemDisplayText(const CtrlItem_Struct *pCtrl
 // ZZ:DownloadManager <--
 		}
 		break;
-	case 14: // geo location
+	case 15: // geo location
 		if (theApp.geolocation != NULL)
 			sText = theApp.geolocation->GetDisplayText(GetClientGeoIP(pClient));
 		break;
-	case 16: // IP
+	case 17: // IP
 		sText = ipstr(GetClientGeoIP(pClient));
 		break;
-	case 17: // LowID
+	case 18: // LowID
 		sText = GetResString(pClient->HasLowID() ? IDS_IDLOW : IDS_IDHIGH);
 		break;
 	//	break;
-	//case 9: //remaining time & size
-	//case 10: //last seen complete
-	//case 11: //last received
-	//case 12: //category
-	//case 13: //added on
+	//case 9: //trust
+	//case 10: //remaining time & size
+	//case 11: //last seen complete
+	//case 12: //last received
+	//case 13: //category
+	//case 14: //added on
 	}
 	return sText;
 }
@@ -1300,7 +1313,7 @@ void CDownloadListCtrl::DrawSourceItem(CDC &dc, int nColumn, LPCRECT lpRect, UIN
 			cdcStatus.SelectObject(hOldBitmap);
 		}
 		break;
-	case 14: // geo location
+	case 15: // geo location
 		{
 			CRect rcItem(*lpRect);
 			int iIconPosY = (rcItem.Height() > 16) ? ((rcItem.Height() - 15) / 2) : 0;
@@ -1312,13 +1325,14 @@ void CDownloadListCtrl::DrawSourceItem(CDC &dc, int nColumn, LPCRECT lpRect, UIN
 			dc.DrawText(sItem, &rcItem, MLC_DT_TEXT | uDrawTextAlignment);
 		}
 		break;
-	case 15: // percentage
+	case 16: // percentage
 		break;
-	//case 9: // remaining time & size
-	//case 10: // last seen complete
-	//case 11: // last received
-	//case 12: // category
-	//case 13: // added on
+	//case 9: // trust
+	//case 10: // remaining time & size
+	//case 11: // last seen complete
+	//case 12: // last received
+	//case 13: // category
+	//case 14: // added on
 	//	break;
 	default:
 		dc.DrawText(sItem, const_cast<LPRECT>(lpRect), MLC_DT_TEXT | uDrawTextAlignment);
@@ -2437,11 +2451,11 @@ void CDownloadListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 		case 3: // Completed
 		case 4: // Download rate
 		case 5: // Progress
-		case 15: // Percentage
+		case 16: // Percentage
 		case 6: // Sources / Client Software
 			sortAscending = false;
 			break;
-		case 9:
+		case 10:
 			// Keep the current 'm_bRemainSort' for that column, but reset to 'ascending'
 		default:
 			sortAscending = true;
@@ -2451,8 +2465,8 @@ void CDownloadListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 
 	// Ornis 4-way-sorting
 	int adder = 0;
-	if (pNMLV->iSubItem == 9) {
-		if (GetSortItem() == 9 && sortAscending) // check for 'ascending' because the initial sort order is also 'ascending'
+	if (pNMLV->iSubItem == 10) {
+		if (GetSortItem() == 10 && sortAscending) // check for 'ascending' because the initial sort order is also 'ascending'
 			m_bRemainSort = !m_bRemainSort;
 		if (m_bRemainSort)
 			adder = 81;
@@ -2586,7 +2600,11 @@ int CDownloadListCtrl::Compare(const CPartFile *file1, const CPartFile *file2, L
 		return CompareUnsigned(file1->GetDownPriority(), file2->GetDownPriority());
 	case 8: //Status
 		return file1->getPartfileStatusRank() - file2->getPartfileStatusRank();
-	case 9: //Remaining Time
+	case DOWNLOAD_COLUMN_TRUST:
+		return SearchTrustHintSeams::CompareTrustHints(
+			BuildDownloadTrustHint(*const_cast<CPartFile*>(file1)),
+			BuildDownloadTrustHint(*const_cast<CPartFile*>(file2)));
+	case 10: //Remaining Time
 		{
 			//Make ascending sort so we can have the smaller remaining time on the top
 			//instead of unknowns so we can see which files are about to finish better.
@@ -2613,19 +2631,19 @@ int CDownloadListCtrl::Compare(const CPartFile *file1, const CPartFile *file2, L
 
 	case 90: //Remaining SIZE
 		return CompareUnsigned(file1->GetFileSize() - file1->GetCompletedSize(), file2->GetFileSize() - file2->GetCompletedSize());
-	case 10: //last seen complete
+	case 11: //last seen complete
 		return sgn(file1->lastseencomplete - file2->lastseencomplete);
-	case 11: //last received Time
+	case 12: //last received Time
 		return sgn(file1->GetLastReceptionDate() - file2->GetLastReceptionDate());
-	case 12: //category
+	case 13: //category
 		return CompareLocaleStringNoCase(
 					(file1->GetCategory() != 0) ? thePrefs.GetCategory(file1->GetCategory())->strTitle : GetResString(IDS_ALL)
 				  , (file2->GetCategory() != 0) ? thePrefs.GetCategory(file2->GetCategory())->strTitle : GetResString(IDS_ALL));
-	case 13: // added on
+	case 14: // added on
 		return sgn(file1->GetCrFileDate() - file2->GetCrFileDate());
-	case 14: // geo location
+	case 15: // geo location
 		return 0;
-	case 15: // percentage
+	case 16: // percentage
 		return sgn(file1->GetPercentCompleted() - file2->GetPercentCompleted());
 	}
 	return 0;
@@ -2679,13 +2697,13 @@ int CDownloadListCtrl::Compare(const CUpDownClient *client1, const CUpDownClient
 				return -1;
 		}
 		return client1->GetDownloadState() - client2->GetDownloadState();
-	case 14: // geo location
+	case 15: // geo location
 		if (theApp.geolocation != NULL)
 			return CompareLocaleStringNoCase(theApp.geolocation->GetDisplayText(GetClientGeoIP(client1)), theApp.geolocation->GetDisplayText(GetClientGeoIP(client2)));
 		return 0;
-	case 16: // IP
+	case 17: // IP
 		return CompareLocaleStringNoCase(ipstr(GetClientGeoIP(client1)), ipstr(GetClientGeoIP(client2)));
-	case 17: // LowID
+	case 18: // LowID
 		return CompareUnsigned(client1->HasLowID(), client2->HasLowID());
 	}
 	return 0;
@@ -2964,21 +2982,20 @@ CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, i
 		break;
 	case 8: //state
 		sText = lpPartFile->getPartfileStatus();
+		break;
+	case DOWNLOAD_COLUMN_TRUST:
 		{
-			const SFakeFileReport fakeReport = FakeFileDetector::GetPartFileReportSnapshot(*const_cast<CPartFile*>(lpPartFile));
-			if (fakeReport.nScore > 0) {
-				sText += _T(" - ");
-				sText.AppendFormat(GetResString(IDS_FAKEFILESCORE), fakeReport.nScore);
-			}
+			CPartFile *pPartFile = const_cast<CPartFile*>(lpPartFile);
+			sText = FakeFileDetector::FormatTrustHint(BuildDownloadTrustHint(*pPartFile));
 		}
 		break;
-	case 9: //remaining time & size
+	case 10: //remaining time & size
 		if (lpPartFile->GetStatus() != PS_COMPLETING && lpPartFile->GetStatus() != PS_COMPLETE) {
 			time_t restTime = lpPartFile->getTimeRemaining();
 			sText.Format(_T("%s (%s)"), (LPCTSTR)CastSecondsToHM(restTime), (LPCTSTR)CastItoXBytes((uint64)(lpPartFile->GetFileSize() - lpPartFile->GetCompletedSize())));
 		}
 		break;
-	case 10: //last seen complete
+	case 11: //last seen complete
 		if (lpPartFile->lastseencomplete == 0)
 			sText = GetResString(IDS_NEVER);
 		else
@@ -2990,26 +3007,26 @@ CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, i
 		else
 			sText.AppendFormat(_T(" (%u - %u)"), lpPartFile->m_nCompleteSourcesCountLo, lpPartFile->m_nCompleteSourcesCountHi);
 		break;
-	case 11: //last receive
+	case 12: //last receive
 		if (lpPartFile->GetLastReceptionDate() == time_t(-1))
 			sText = GetResString(IDS_NEVER);
 		else
 			sText = lpPartFile->GetCFileDate().Format(thePrefs.GetDateTimeFormat4Lists());
 		break;
-	case 12: //cat
+	case 13: //cat
 		{
 			UINT cat = lpPartFile->GetCategory();
 			if (cat)
 				sText = thePrefs.GetCategory(cat)->strTitle;
 		}
 		break;
-	case 13: //added on
+	case 14: //added on
 		if (lpPartFile->GetCrFileDate())
 			sText = lpPartFile->GetCrCFileDate().Format(thePrefs.GetDateTimeFormat4Lists());
 		else
 			sText += _T('?');
 		break;
-	case 15: // percentage
+	case 16: // percentage
 		sText.Format(_T("%.1f%%"), lpPartFile->GetPercentCompleted());
 	}
 	return sText;
@@ -3267,6 +3284,18 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 				}
 				CPartFile *pPartFile = static_cast<CPartFile*>(content->value);
 				info = pPartFile->GetInfoSummary();
+				const SFakeFileReport fakeReport = FakeFileDetector::GetPartFileReportSnapshot(*pPartFile);
+				const CString strTrustText = FakeFileDetector::FormatTrustHint(BuildDownloadTrustHint(*pPartFile, fakeReport));
+				CString strTrustLine;
+				strTrustLine.Format(GetResString(IDS_SEARCH_TRUST_INFOTIP), (LPCTSTR)strTrustText);
+				if (!info.IsEmpty())
+					info += _T('\n');
+				info += strTrustLine;
+				if (fakeReport.nScore > 0 || fakeReport.bPendingHeaderCheck) {
+					if (!info.IsEmpty())
+						info += _T('\n');
+					info += FakeFileDetector::FormatReportDetails(fakeReport);
+				}
 				if (pPartFile->IsMovie() && thePrefs.IsVideoThumbnailGenerationEnabled()
 					&& PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.GetVideoThumbnailFfmpegPath())) {
 					HBITMAP hBitmap = GetCachedVideoThumbnail(pPartFile);

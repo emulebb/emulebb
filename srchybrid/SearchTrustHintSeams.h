@@ -3,6 +3,7 @@
 #include "FakeFileDetectorSeams.h"
 
 #include <cstdint>
+#include <string>
 
 namespace SearchTrustHintSeams
 {
@@ -16,6 +17,28 @@ enum class DisplayKind
 	Warning,
 	HighRisk,
 	Spam
+};
+
+/**
+ * @brief Stable categories for fake-file reason codes shown in user-facing
+ * explanations.
+ */
+enum class ExplanationReason
+{
+	Unknown,
+	MultipleNames,
+	BadSignalName,
+	BadSignalComment,
+	HeaderExtensionMismatch,
+	ExecutableMasquerade,
+	ArchiveMasquerade,
+	PendingHeaderCheck,
+	ClaimedTypeMismatch,
+	SpamScore,
+	SpamStatus,
+	BadRating,
+	FakeRating,
+	MultipleAich
 };
 
 /**
@@ -62,5 +85,39 @@ inline int CompareTrustHints(const TrustHint &rLeft, const TrustHint &rRight)
 	if (rLeft.fakeScore != rRight.fakeScore)
 		return rLeft.fakeScore < rRight.fakeScore ? -1 : 1;
 	return 0;
+}
+
+/**
+ * @brief Maps stable fake-file analyzer reason codes to explanation buckets.
+ */
+inline ExplanationReason ClassifyExplanationReason(const std::string &rReason)
+{
+	if (rReason == "multiple_names")
+		return ExplanationReason::MultipleNames;
+	if (rReason == "bad_signal_name")
+		return ExplanationReason::BadSignalName;
+	if (rReason == "bad_signal_comment")
+		return ExplanationReason::BadSignalComment;
+	if (rReason == "header_extension_mismatch")
+		return ExplanationReason::HeaderExtensionMismatch;
+	if (rReason == "executable_masquerade")
+		return ExplanationReason::ExecutableMasquerade;
+	if (rReason == "archive_masquerade")
+		return ExplanationReason::ArchiveMasquerade;
+	if (rReason == "pending_header_check")
+		return ExplanationReason::PendingHeaderCheck;
+	if (rReason == "claimed_type_mismatch")
+		return ExplanationReason::ClaimedTypeMismatch;
+	if (rReason == "spam_score")
+		return ExplanationReason::SpamScore;
+	if (rReason == "spam_status")
+		return ExplanationReason::SpamStatus;
+	if (rReason == "bad_rating")
+		return ExplanationReason::BadRating;
+	if (rReason == "fake_rating")
+		return ExplanationReason::FakeRating;
+	if (rReason == "multiple_aich")
+		return ExplanationReason::MultipleAich;
+	return ExplanationReason::Unknown;
 }
 }

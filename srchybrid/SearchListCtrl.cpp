@@ -81,29 +81,6 @@ SearchTrustHintSeams::TrustHint BuildSearchTrustHint(const CSearchFile &rFile)
 	return BuildSearchTrustHint(rFile, FakeFileDetector::GetSearchFileReportSnapshot(rFile));
 }
 
-CString FormatSearchTrustHint(const SearchTrustHintSeams::TrustHint &rHint)
-{
-	CString strText;
-	switch (rHint.displayKind) {
-	case SearchTrustHintSeams::DisplayKind::Spam:
-		strText = GetResString(IDS_SPAM);
-		break;
-	case SearchTrustHintSeams::DisplayKind::HighRisk:
-		strText.Format(GetResString(IDS_SEARCH_TRUST_HIGH_RISK), rHint.fakeScore);
-		break;
-	case SearchTrustHintSeams::DisplayKind::Warning:
-		strText.Format(GetResString(IDS_SEARCH_TRUST_WARNING), rHint.fakeScore);
-		break;
-	case SearchTrustHintSeams::DisplayKind::Caution:
-		strText.Format(GetResString(IDS_SEARCH_TRUST_CAUTION), rHint.fakeScore);
-		break;
-	case SearchTrustHintSeams::DisplayKind::Ok:
-	default:
-		strText = GetResString(IDS_SEARCH_TRUST_OK);
-		break;
-	}
-	return strText;
-}
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1150,16 +1127,16 @@ void CSearchListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 				}
 
 				const SFakeFileReport fakeReport = FakeFileDetector::GetSearchFileReportSnapshot(*file);
-				const CString strTrustText = FormatSearchTrustHint(BuildSearchTrustHint(*file, fakeReport));
+				const CString strTrustText = FakeFileDetector::FormatTrustHint(BuildSearchTrustHint(*file, fakeReport));
 				CString strTrustLine;
 				strTrustLine.Format(GetResString(IDS_SEARCH_TRUST_INFOTIP), (LPCTSTR)strTrustText);
 				if (!strInfo.IsEmpty())
 					strInfo += _T('\n');
 				strInfo += strTrustLine;
-				if (fakeReport.nScore > 0) {
+				if (fakeReport.nScore > 0 || fakeReport.bPendingHeaderCheck) {
 					if (!strInfo.IsEmpty())
 						strInfo += _T('\n');
-					strInfo += FakeFileDetector::FormatReportSummary(fakeReport);
+					strInfo += FakeFileDetector::FormatReportDetails(fakeReport);
 				}
 
 #ifdef USE_DEBUG_DEVICE
@@ -1768,7 +1745,7 @@ CString CSearchListCtrl::GetItemDisplayText(const CSearchFile *src, int iSubItem
 		}
 		break;
 	case SEARCH_COLUMN_TRUST:
-		sText = FormatSearchTrustHint(BuildSearchTrustHint(*src));
+		sText = FakeFileDetector::FormatTrustHint(BuildSearchTrustHint(*src));
 		break;
 	case SEARCH_COLUMN_AICH: //AICH hash
 		if (src->GetFileIdentifierC().HasAICHHash())
