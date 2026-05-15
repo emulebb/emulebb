@@ -285,8 +285,8 @@ void CSearchListCtrl::Init(CSearchList *in_searchlist)
 	InsertColumn(13,	_T(""),	LVCFMT_LEFT,	50);								//IDS_KNOWN
 	InsertColumn(14,	_T(""),	LVCFMT_LEFT,	DFLT_HASH_COL_WIDTH, -1, true);		//IDS_AICHHASH
 
-	static const int aiDefaultColumnOrder[] = {0, 1, 2, 3, 4, 13, 6, 7, 8, 9, 10, 11, 12, 5, 14};
-	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
+	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("SearchListCtrl")))
+		SetViewPresetProfile(*pProfile);
 	SetAllIcons();
 
 	// This states image list with that particular width is only there to let the listview control

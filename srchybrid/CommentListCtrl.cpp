@@ -48,8 +48,8 @@ void CCommentListCtrl::Init()
 	InsertColumn(colUserName,	_T(""),	LVCFMT_LEFT, DFLT_CLIENTNAME_COL_WIDTH);	//IDS_QL_USERNAME
 	InsertColumn(colOrigin,		_T(""),	LVCFMT_LEFT,  80);							//IDS_NETWORK
 
-	static const int aiDefaultColumnOrder[] = {colRating, colComment, colFileName, colUserName, colOrigin};
-	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
+	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("CommentListCtrl")))
+		SetViewPresetProfile(*pProfile);
 
 	CImageList iml;
 	iml.Create(16, 16, theApp.m_iDfltImageListColorFlags | ILC_MASK, 0, 1);

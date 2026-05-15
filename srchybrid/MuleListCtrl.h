@@ -1,6 +1,7 @@
 #pragma once
 #include "Preferences.h"
 #include "resource.h"
+#include "MuleListCtrlViewPresets.h"
 #include <vector>
 
 class CIni;
@@ -41,6 +42,7 @@ public:
 
 	// Sets the list name, used for settings in "preferences.ini"
 	void SetPrefsKey(LPCTSTR lpszName)			{ m_Name = lpszName; }
+	const CString& GetPrefsKey() const			{ return m_Name; }
 
 	// Save to preferences
 	void SaveSettings();
@@ -52,6 +54,16 @@ public:
 	 * @brief Sets the first-run visual column order for profiles without saved column state.
 	 */
 	void SetDefaultColumnOrder(const int *piColumnOrder, int iColumnCount);
+
+	/**
+	 * @brief Sets the complete Tools-menu view preset profile for this list control.
+	 */
+	void SetViewPresetProfile(const MuleListCtrlViewPresets::SListControlViewPresetProfile &profile);
+
+	/**
+	 * @brief Applies and persists one Tools-menu view preset to the live list control.
+	 */
+	bool ApplyViewPreset(MuleListCtrlViewPresets::ETableViewPreset ePreset, MuleListCtrlViewPresets::EColumnWidthMode eWidthMode);
 
 	DWORD SetExtendedStyle(DWORD dwNewStyle)	{ return CListCtrl::SetExtendedStyle(dwNewStyle | LVS_EX_HEADERDRAGDROP); }
 
@@ -252,6 +264,9 @@ protected:
 	CImageList		m_imlHeaderCtrl;
 	CList<LONG>		m_liSortHistory;
 	std::vector<int> m_defaultColumnOrder;
+	std::vector<int> m_defaultColumnWidths;
+	std::vector<int> m_stockHiddenColumns;
+	std::vector<int> m_extendedHiddenColumns;
 	UINT			m_uIDAccel;
 	HACCEL			m_hAccel;
 	EUpdateMode		m_eUpdateMode;
@@ -275,6 +290,10 @@ protected:
 private:
 	static int	IndexToOrder(CHeaderCtrl *pHeader, int iIndex);
 	bool TryBuildDefaultColumnOrder(int *piColumnOrder) const;
+	bool BuildViewPresetColumnOrder(MuleListCtrlViewPresets::ETableViewPreset ePreset, std::vector<int> &rColumnOrder) const;
+	bool IsPresetHiddenColumn(MuleListCtrlViewPresets::ETableViewPreset ePreset, int iColumn) const;
+	int GetDefaultColumnWidth(int iColumn) const;
+	void ResetSortState();
 
 	struct MULE_COLUMN
 	{

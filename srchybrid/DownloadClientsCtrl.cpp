@@ -88,8 +88,8 @@ void CDownloadClientsCtrl::Init()
 	InsertColumn(7,	_T(""),	LVCFMT_LEFT,	100);						//IDS_META_SRCTYPE
 	InsertColumn(8,	_T(""),	LVCFMT_LEFT,	140);						//IDS_GEOLOCATION
 
-	static const int aiDefaultColumnOrder[] = {0, 3, 4, 2, 1, 7, 5, 6, 8};
-	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
+	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("DownloadClientsCtrl")))
+		SetViewPresetProfile(*pProfile);
 	SetAllIcons();
 	Localize();
 	LoadSettings();

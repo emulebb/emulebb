@@ -3780,6 +3780,25 @@ BEGIN
                             "All to &Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC
                             "All to Ma&x"
+    IDS_TOOLS_VIEW_PRESETS  "&View Presets"
+    IDS_VIEW_PRESET_STOCK_KEEP_WIDTHS
+                            "&Stock - Preserve Widths"
+    IDS_VIEW_PRESET_STOCK_RESET_WIDTHS
+                            "Stock - &Reset Widths"
+    IDS_VIEW_PRESET_EXTENDED_KEEP_WIDTHS
+                            "&Extended - Preserve Widths"
+    IDS_VIEW_PRESET_EXTENDED_RESET_WIDTHS
+                            "Extended - Reset &Widths"
+    IDS_VIEW_PRESET_FULL_KEEP_WIDTHS
+                            "&Full - Preserve Widths"
+    IDS_VIEW_PRESET_FULL_RESET_WIDTHS
+                            "Full - Reset Widt&hs"
+    IDS_TOOLS_STATUS_VIEW_PRESET_STOCK
+                            "Applies stock eMule table columns to all main views."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED
+                            "Applies eMule BB extended table columns to all main views."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL
+                            "Shows all table columns in eMule BB order for all main views."
     IDS_CHAT_SMILEYS_BUTTON "Smileys"
     IDS_PPG_DEBUG_LEVEL     "Level"
     IDS_PPG_DEBUG_TCP       "TCP"

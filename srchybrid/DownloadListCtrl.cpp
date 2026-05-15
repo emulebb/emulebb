@@ -279,8 +279,8 @@ void CDownloadListCtrl::Init()
 	InsertColumn(16,	_T(""),	LVCFMT_LEFT,	100);							//IDS_IP
 	InsertColumn(17,	_T(""),	LVCFMT_LEFT,	70);							//IDS_IDLOW
 
-	static const int aiDefaultColumnOrder[] = {0, 1, 3, 15, 5, 4, 9, 6, 8, 7, 2, 13, 10, 11, 12, 14, 16, 17};
-	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
+	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("DownloadListCtrl")))
+		SetViewPresetProfile(*pProfile);
 	SetAllIcons();
 	Localize();
 	LoadSettings();

@@ -95,8 +95,8 @@ bool CServerListCtrl::Init()
 	InsertColumn(14, _T(""),	LVCFMT_RIGHT,	50);			//IDS_OBFUSCATION
 	InsertColumn(15, _T(""),	LVCFMT_LEFT,	140);			//IDS_GEOLOCATION
 
-	static const int aiDefaultColumnOrder[] = {0, 1, 2, 3, 4, 5, 6, 13, 7, 9, 8, 10, 11, 12, 14, 15};
-	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
+	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("ServerListCtrl")))
+		SetViewPresetProfile(*pProfile);
 	SetAllIcons();
 	Localize();
 	LoadSettings();

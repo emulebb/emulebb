@@ -46,6 +46,7 @@
 #include "DownloadListCtrl.h"
 #include "TransferDlg.h"
 #include "SearchDlg.h"
+#include "SearchResultsWnd.h"
 #include "SharedFilesWnd.h"
 #include "ChatWnd.h"
 #include "IrcWnd.h"
@@ -95,7 +96,9 @@
 #include "StatusBarInfo.h"
 #include "Scheduler.h"
 #include "MenuCmds.h"
+#include "Ini2.h"
 #include "MuleSystrayDlg.h"
+#include "MuleListCtrlViewPresets.h"
 #include "SpeedQuickActionsSeams.h"
 #include "IPFilterDlg.h"
 #include "WebServices.h"
@@ -668,6 +671,76 @@ namespace
 		ShellOpen(thePrefs.GetTxtEditor(), strQuotedPath);
 	}
 
+	static bool BuildViewPresetColumnOrder(const MuleListCtrlViewPresets::SListControlViewPresetProfile &profile, MuleListCtrlViewPresets::ETableViewPreset ePreset, std::vector<int> &rColumnOrder)
+	{
+		rColumnOrder.assign(static_cast<size_t>(profile.iColumnCount), 0);
+		if (ePreset == MuleListCtrlViewPresets::ETableViewPreset::Stock) {
+			for (int i = 0; i < profile.iColumnCount; ++i)
+				rColumnOrder[static_cast<size_t>(i)] = i;
+			return true;
+		}
+		if (!MuleListCtrlSeams::IsCompleteColumnOrder(profile.piExtendedOrder, profile.iColumnCount))
+			return false;
+		rColumnOrder.assign(profile.piExtendedOrder, profile.piExtendedOrder + profile.iColumnCount);
+		return true;
+	}
+
+	static bool IsViewPresetHiddenColumn(const MuleListCtrlViewPresets::SListControlViewPresetProfile &profile, MuleListCtrlViewPresets::ETableViewPreset ePreset, int iColumn)
+	{
+		if (ePreset == MuleListCtrlViewPresets::ETableViewPreset::Full)
+			return false;
+		const int *piHiddenColumns = ePreset == MuleListCtrlViewPresets::ETableViewPreset::Stock
+			? profile.piStockHiddenColumns
+			: profile.piExtendedHiddenColumns;
+		const int iHiddenColumnCount = ePreset == MuleListCtrlViewPresets::ETableViewPreset::Stock
+			? profile.iStockHiddenColumnCount
+			: profile.iExtendedHiddenColumnCount;
+		for (int i = 0; i < iHiddenColumnCount; ++i) {
+			if (piHiddenColumns[i] == iColumn)
+				return true;
+		}
+		return false;
+	}
+
+	static void PersistViewPresetProfile(const MuleListCtrlViewPresets::SListControlViewPresetProfile &profile, MuleListCtrlViewPresets::ETableViewPreset ePreset, MuleListCtrlViewPresets::EColumnWidthMode eWidthMode)
+	{
+		if (!MuleListCtrlViewPresets::IsProfileValid(profile))
+			return;
+
+		static const TCHAR *const s_apszPresetResetSuffixes[] = {
+			_T("ColumnOrders"),
+			_T("ColumnHidden"),
+			_T("ColumnWidths"),
+			_T("TableSortItem"),
+			_T("TableSortAscending"),
+			_T("SortHistory"),
+		};
+
+		CIni ini(thePrefs.GetConfigFile(), _T("ListControlSetup"));
+		for (LPCTSTR pszSuffix : s_apszPresetResetSuffixes) {
+			if (MuleListCtrlViewPresets::ShouldResetPresetSuffix(pszSuffix, eWidthMode)) {
+				CString strKey(profile.pszControlName);
+				strKey += pszSuffix;
+				ini.DeleteKey(strKey);
+			}
+		}
+
+		std::vector<int> columnOrder;
+		if (!BuildViewPresetColumnOrder(profile, ePreset, columnOrder))
+			return;
+		ini.SerGet(false, columnOrder.data(), static_cast<int>(columnOrder.size()), CString(profile.pszControlName) + _T("ColumnOrders"));
+
+		std::vector<int> columnHidden(static_cast<size_t>(profile.iColumnCount), 0);
+		for (int i = 1; i < profile.iColumnCount; ++i)
+			columnHidden[static_cast<size_t>(i)] = IsViewPresetHiddenColumn(profile, ePreset, i) ? 1 : 0;
+		ini.SerGet(false, columnHidden.data(), static_cast<int>(columnHidden.size()), CString(profile.pszControlName) + _T("ColumnHidden"));
+
+		ini.WriteInt(CString(profile.pszControlName) + _T("TableSortItem"), 0);
+		ini.WriteInt(CString(profile.pszControlName) + _T("TableSortAscending"), 1);
+		int iSortHistory[] = {1};
+		ini.SerGet(false, iSortHistory, _countof(iSortHistory), CString(profile.pszControlName) + _T("SortHistory"));
+	}
+
 	static void UpdateServerMetFromConfiguredAddresses(CServerWnd *pServerWnd)
 	{
 		if (pServerWnd == NULL)
@@ -756,6 +829,15 @@ namespace
 			return IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON;
 		case MP_HM_REPAIR_WINDOWS_FIREWALL:
 			return IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES;
+		case MP_HM_VIEW_PRESET_STOCK_KEEP_WIDTHS:
+		case MP_HM_VIEW_PRESET_STOCK_RESET_WIDTHS:
+			return IDS_TOOLS_STATUS_VIEW_PRESET_STOCK;
+		case MP_HM_VIEW_PRESET_EXTENDED_KEEP_WIDTHS:
+		case MP_HM_VIEW_PRESET_EXTENDED_RESET_WIDTHS:
+			return IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED;
+		case MP_HM_VIEW_PRESET_FULL_KEEP_WIDTHS:
+		case MP_HM_VIEW_PRESET_FULL_RESET_WIDTHS:
+			return IDS_TOOLS_STATUS_VIEW_PRESET_FULL;
 		default:
 			return 0;
 		}
@@ -3926,6 +4008,14 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_REPAIR_WINDOWS_FIREWALL:
 		RepairWindowsFirewallRules();
 		break;
+	case MP_HM_VIEW_PRESET_STOCK_KEEP_WIDTHS:
+	case MP_HM_VIEW_PRESET_STOCK_RESET_WIDTHS:
+	case MP_HM_VIEW_PRESET_EXTENDED_KEEP_WIDTHS:
+	case MP_HM_VIEW_PRESET_EXTENDED_RESET_WIDTHS:
+	case MP_HM_VIEW_PRESET_FULL_KEEP_WIDTHS:
+	case MP_HM_VIEW_PRESET_FULL_RESET_WIDTHS:
+		ApplyViewPresetCommand((UINT)wParam);
+		break;
 	case MP_HM_OPEN_EMULE_LOG:
 		ShellOpenFile(theLog.GetFilePath());
 		break;
@@ -4066,6 +4156,32 @@ void CemuleDlg::ShowTrayToolPopup(CPoint pt)
 	ShowToolPopupAt(true, pt, true);
 }
 
+void CemuleDlg::ApplyViewPresetCommand(UINT uCommandId)
+{
+	MuleListCtrlViewPresets::ETableViewPreset ePreset;
+	MuleListCtrlViewPresets::EColumnWidthMode eWidthMode;
+	if (!MuleListCtrlViewPresets::TryGetViewPresetCommand(uCommandId, ePreset, eWidthMode))
+		return;
+
+	for (const MuleListCtrlViewPresets::SListControlViewPresetProfile &profile : MuleListCtrlViewPresets::kProfiles)
+		PersistViewPresetProfile(profile, ePreset, eWidthMode);
+
+	CMuleListCtrl *apLiveLists[] = {
+		transferwnd != NULL ? transferwnd->GetDownloadList() : NULL,
+		transferwnd != NULL ? transferwnd->GetUploadList() : NULL,
+		transferwnd != NULL ? transferwnd->GetQueueList() : NULL,
+		transferwnd != NULL ? transferwnd->GetClientList() : NULL,
+		transferwnd != NULL ? transferwnd->GetDownloadClientsList() : NULL,
+		serverwnd != NULL ? &serverwnd->serverlistctrl : NULL,
+		searchwnd != NULL && searchwnd->m_pwndResults != NULL ? &searchwnd->m_pwndResults->searchlistctrl : NULL,
+		sharedfileswnd != NULL ? &sharedfileswnd->sharedfilesctrl : NULL,
+	};
+	for (CMuleListCtrl *pList : apLiveLists) {
+		if (pList != NULL)
+			pList->ApplyViewPreset(ePreset, eWidthMode);
+	}
+}
+
 void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 {
 	CTitledMenu menu;
@@ -4137,6 +4253,10 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	CTitledMenu maintenance;
 	maintenance.CreateMenu();
 	maintenance.AddMenuTitle(NULL, true);
+
+	CTitledMenu viewPresets;
+	viewPresets.CreateMenu();
+	viewPresets.AddMenuTitle(NULL, true);
 
 	CTitledMenu diagnostics;
 	diagnostics.CreateMenu();
@@ -4264,6 +4384,15 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		maintenance.AppendMenu(MF_STRING, MP_HM_RESCAN_SHARED_FILES, GetResString(IDS_RESCAN_SHARED_FILES), _T("SharedFiles"));
 		maintenance.AppendMenu(MF_STRING, MP_HM_SAVE_PREFERENCES_NOW, GetResString(IDS_SAVE_PREFERENCES_NOW), _T("PREFERENCES"));
 
+		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_STOCK_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_STOCK_KEEP_WIDTHS), _T("PREFERENCES"));
+		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_STOCK_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_STOCK_RESET_WIDTHS), _T("PREFERENCES"));
+		viewPresets.AppendMenu(MF_SEPARATOR);
+		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_EXTENDED_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_EXTENDED_KEEP_WIDTHS), _T("PREFERENCES"));
+		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_EXTENDED_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_EXTENDED_RESET_WIDTHS), _T("PREFERENCES"));
+		viewPresets.AppendMenu(MF_SEPARATOR);
+		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_FULL_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_FULL_KEEP_WIDTHS), _T("PREFERENCES"));
+		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_FULL_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_FULL_RESET_WIDTHS), _T("PREFERENCES"));
+
 		diagnostics.AppendMenu(GetExistingFileMenuFlags(theLog.GetFilePath()), MP_HM_OPEN_EMULE_LOG, GetResString(IDS_OPEN_EMULE_LOG), _T("LOG"));
 		diagnostics.AppendMenu(GetExistingFileMenuFlags(theVerboseLog.GetFilePath()), MP_HM_OPEN_VERBOSE_LOG, GetResString(IDS_OPEN_VERBOSE_LOG), _T("LOG"));
 		diagnostics.AppendMenu(MF_SEPARATOR);
@@ -4279,6 +4408,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T("PREFERENCES"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, GetResString(IDS_TOOLS_NETWORK_UPDATES), _T("WEB"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)maintenance.m_hMenu, GetResString(IDS_TOOLS_MAINTENANCE), _T("TOOLS"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)viewPresets.m_hMenu, GetResString(IDS_TOOLS_VIEW_PRESETS), _T("PREFERENCES"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)diagnostics.m_hMenu, GetResString(IDS_TOOLS_DIAGNOSTICS), _T("TOOLS"));
 	} else {
 		menu.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
@@ -4305,6 +4435,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	VERIFY(editConfigFiles.DestroyMenu());
 	VERIFY(networkUpdates.DestroyMenu());
 	VERIFY(maintenance.DestroyMenu());
+	VERIFY(viewPresets.DestroyMenu());
 	VERIFY(diagnostics.DestroyMenu());
 	VERIFY(speedQuickActions.DestroyMenu());
 	VERIFY(speedUpload.DestroyMenu());

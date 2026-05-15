@@ -15,6 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
+#include <algorithm>
 #include "emule.h"
 #include "MemDC.h"
 #include "MuleListCtrl.h"
@@ -89,6 +90,9 @@ CMuleListCtrl::CMuleListCtrl(PFNLVCOMPARE pfnCompare, LPARAM iParamSort)
 	, m_lvcd()
 	, m_bCustomDraw()
 	, m_defaultColumnOrder()
+	, m_defaultColumnWidths()
+	, m_stockHiddenColumns()
+	, m_extendedHiddenColumns()
 	, m_uIDAccel(IDR_LISTVIEW)
 	, m_hAccel()
 	, m_eUpdateMode(lazy)
@@ -377,6 +381,103 @@ bool CMuleListCtrl::TryBuildDefaultColumnOrder(int *piColumnOrder) const
 		return false;
 	for (int i = 0; i < m_iColumnsTracked; ++i)
 		piColumnOrder[i] = m_defaultColumnOrder[static_cast<size_t>(i)];
+	return true;
+}
+
+void CMuleListCtrl::SetViewPresetProfile(const MuleListCtrlViewPresets::SListControlViewPresetProfile &profile)
+{
+	SetPrefsKey(profile.pszControlName);
+	SetDefaultColumnOrder(profile.piExtendedOrder, profile.iColumnCount);
+	m_stockHiddenColumns.clear();
+	if (profile.piStockHiddenColumns != nullptr && profile.iStockHiddenColumnCount > 0)
+		m_stockHiddenColumns.assign(profile.piStockHiddenColumns, profile.piStockHiddenColumns + profile.iStockHiddenColumnCount);
+	m_extendedHiddenColumns.clear();
+	if (profile.piExtendedHiddenColumns != nullptr && profile.iExtendedHiddenColumnCount > 0)
+		m_extendedHiddenColumns.assign(profile.piExtendedHiddenColumns, profile.piExtendedHiddenColumns + profile.iExtendedHiddenColumnCount);
+}
+
+bool CMuleListCtrl::BuildViewPresetColumnOrder(MuleListCtrlViewPresets::ETableViewPreset ePreset, std::vector<int> &rColumnOrder) const
+{
+	rColumnOrder.assign(static_cast<size_t>(m_iColumnsTracked), 0);
+	if (ePreset == MuleListCtrlViewPresets::ETableViewPreset::Stock) {
+		for (int i = 0; i < m_iColumnsTracked; ++i)
+			rColumnOrder[static_cast<size_t>(i)] = i;
+		return true;
+	}
+
+	if (m_defaultColumnOrder.size() != static_cast<size_t>(m_iColumnsTracked)
+		|| !MuleListCtrlSeams::IsCompleteColumnOrder(m_defaultColumnOrder.data(), m_iColumnsTracked))
+	{
+		return false;
+	}
+	rColumnOrder = m_defaultColumnOrder;
+	return true;
+}
+
+bool CMuleListCtrl::IsPresetHiddenColumn(MuleListCtrlViewPresets::ETableViewPreset ePreset, int iColumn) const
+{
+	if (ePreset == MuleListCtrlViewPresets::ETableViewPreset::Full)
+		return false;
+	const std::vector<int> &rHiddenColumns = ePreset == MuleListCtrlViewPresets::ETableViewPreset::Stock
+		? m_stockHiddenColumns
+		: m_extendedHiddenColumns;
+	return std::find(rHiddenColumns.begin(), rHiddenColumns.end(), iColumn) != rHiddenColumns.end();
+}
+
+int CMuleListCtrl::GetDefaultColumnWidth(int iColumn) const
+{
+	if (iColumn >= 0 && static_cast<size_t>(iColumn) < m_defaultColumnWidths.size() && m_defaultColumnWidths[static_cast<size_t>(iColumn)] >= 2)
+		return m_defaultColumnWidths[static_cast<size_t>(iColumn)];
+	return GetColumnWidth(iColumn);
+}
+
+void CMuleListCtrl::ResetSortState()
+{
+	m_iCurrentSortItem = 0;
+	m_atSortArrow = arrowUp;
+	m_liSortHistory.RemoveAll();
+	m_liSortHistory.AddTail(m_iCurrentSortItem);
+	SetSortArrow();
+}
+
+bool CMuleListCtrl::ApplyViewPreset(MuleListCtrlViewPresets::ETableViewPreset ePreset, MuleListCtrlViewPresets::EColumnWidthMode eWidthMode)
+{
+	ASSERT(!m_Name.IsEmpty());
+	if (m_Name.IsEmpty() || GetSafeHwnd() == NULL || GetHeaderCtrl() == NULL || GetHeaderCtrl()->GetItemCount() != m_iColumnsTracked)
+		return false;
+
+	std::vector<int> columnOrder;
+	if (!BuildViewPresetColumnOrder(ePreset, columnOrder))
+		return false;
+
+	std::vector<int> columnWidths(static_cast<size_t>(m_iColumnsTracked), 0);
+	for (int i = 0; i < m_iColumnsTracked; ++i) {
+		columnWidths[static_cast<size_t>(i)] = eWidthMode == MuleListCtrlViewPresets::EColumnWidthMode::Reset
+			? GetDefaultColumnWidth(i)
+			: GetColumnWidth(i);
+	}
+
+	SetRedraw(false);
+	for (int i = 1; i < m_iColumnsTracked; ++i)
+		ShowColumn(i);
+
+	for (int i = 0; i < m_iColumnsTracked; ++i) {
+		const int iWidth = columnWidths[static_cast<size_t>(i)];
+		SetColumnWidth(i, iWidth >= 2 ? iWidth : GetDefaultColumnWidth(i));
+	}
+
+	GetHeaderCtrl()->SetOrderArray(m_iColumnsTracked, columnOrder.data());
+	for (int i = 0; i < m_iColumnsTracked; ++i)
+		m_aColumns[columnOrder[static_cast<size_t>(i)]].iLocation = i;
+
+	for (int i = 1; i < m_iColumnsTracked; ++i) {
+		if (IsPresetHiddenColumn(ePreset, i))
+			HideColumn(i);
+	}
+	ResetSortState();
+	SaveSettings();
+	SetRedraw(true);
+	Invalidate(FALSE);
 	return true;
 }
 
@@ -1556,5 +1657,11 @@ int CMuleListCtrl::InsertColumn(int nCol, LPCTSTR lpszColumnHeading, int nFormat
 {
 	if (bHiddenByDefault)
 		m_liDefaultHiddenColumns.AddTail(nCol);
+	if (nCol >= 0) {
+		const size_t uColumn = static_cast<size_t>(nCol);
+		if (m_defaultColumnWidths.size() <= uColumn)
+			m_defaultColumnWidths.resize(uColumn + 1, 0);
+		m_defaultColumnWidths[uColumn] = nWidth;
+	}
 	return CListCtrl::InsertColumn(nCol, lpszColumnHeading, nFormat, nWidth, nSubItem);
 }

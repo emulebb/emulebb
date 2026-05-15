@@ -528,8 +528,8 @@ void CSharedFilesCtrl::Init()
 	InsertColumn(18,	_T(""),	LVCFMT_RIGHT,	85);								//IDS_ALL_TIME_RATIO
 	InsertColumn(19,	_T(""),	LVCFMT_RIGHT,	85);								//IDS_SESSION_RATIO
 
-	static const int aiDefaultColumnOrder[] = {0, 1, 2, 9, 8, 3, 10, 5, 6, 7, 18, 19, 11, 12, 13, 14, 15, 16, 17, 4};
-	SetDefaultColumnOrder(aiDefaultColumnOrder, _countof(aiDefaultColumnOrder));
+	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("SharedFilesCtrl")))
+		SetViewPresetProfile(*pProfile);
 	SetAllIcons();
 	CreateMenus();
 	LoadSettings();
