@@ -246,6 +246,10 @@ public:
 	void	RemoveKeywords(CKnownFile *pFile);
 
 	void	CopySharedFileMap(CKnownFilesMap &Files_Map);
+	/**
+	 * @brief Finds one shared file by canonical full-path key without copying the shared-file map.
+	 */
+	CKnownFile*	GetFileByPath(const CString &strFilePath);
 
 	CKnownFile*	GetFileByID(const uchar *hash) const;
 	CKnownFile*	GetFileByIdentifier(const CFileIdentifierBase &rFileIdent, bool bStrict = false) const;

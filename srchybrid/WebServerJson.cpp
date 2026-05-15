@@ -1998,13 +1998,7 @@ void ApplySharedDirectoryLists(const CStringList &rSharedDirs, const CStringList
  */
 CKnownFile* FindSharedFileByPath(const CString &rFilePath)
 {
-	CKnownFilesMap sharedFiles;
-	theApp.sharedfiles->CopySharedFileMap(sharedFiles);
-	for (const CKnownFilesMap::CPair *pair = sharedFiles.PGetFirstAssoc(); pair != NULL; pair = sharedFiles.PGetNextAssoc(pair)) {
-		if (pair->value != NULL && pair->value->GetFilePath().CompareNoCase(rFilePath) == 0)
-			return pair->value;
-	}
-	return NULL;
+	return theApp.sharedfiles != NULL ? theApp.sharedfiles->GetFileByPath(rFilePath) : NULL;
 }
 
 /**

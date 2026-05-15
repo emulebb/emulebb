@@ -710,6 +710,17 @@ void CSharedFileList::CopySharedFileMap(CKnownFilesMap &Files_Map)
 		Files_Map[pair->key] = pair->value;
 }
 
+CKnownFile* CSharedFileList::GetFileByPath(const CString &strFilePath)
+{
+	const CString strFilePathKey(MakeSharedFileLookupKey(strFilePath));
+	CSingleLock listlock(&m_mutWriteList, TRUE);
+	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
+		if (pair->value != NULL && MakeSharedFileLookupKey(pair->value->GetFilePath()) == strFilePathKey)
+			return pair->value;
+	}
+	return NULL;
+}
+
 bool CSharedFileList::EnsureSharedHashWorkerStarted()
 {
 	if (m_pSharedHashThread != NULL)
