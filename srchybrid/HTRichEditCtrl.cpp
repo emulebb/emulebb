@@ -66,6 +66,7 @@ CHTRichEditCtrl::CHTRichEditCtrl()
 	, m_bDfltForeground()
 	, m_bDfltBackground()
 	, m_bRollingLogWindow()
+	, m_bRollingWindowNeedsRebuild()
 	, m_bUpdateBatchNeedsInvalidate()
 	, m_bUpdateBatchOldNoPaint()
 	, m_bUpdateBatchWasVisible()
@@ -170,10 +171,20 @@ int CHTRichEditCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 LRESULT CHTRichEditCtrl::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) {
+	case WM_SHOWWINDOW:
+		if (wParam != FALSE)
+			EnsureRollingWindowMaterialized();
+		break;
 	case WM_ERASEBKGND:
-	case WM_PAINT:
 		if (m_bNoPaint)
 			return TRUE;
+		break;
+	case WM_PAINT:
+		if (!m_bNoPaint)
+			EnsureRollingWindowMaterialized();
+		if (m_bNoPaint)
+			return TRUE;
+		break;
 	}
 	return CRichEditCtrl::WindowProc(message, wParam, lParam);
 }
@@ -273,7 +284,16 @@ void CHTRichEditCtrl::TrimRollingEntries()
 			iCharsToRemove = INT_MAX;
 		m_aRollingEntries.pop_front();
 	}
-	RemoveTextFromHead(iCharsToRemove);
+	if (m_hWnd != NULL && IsWindowVisible() && !m_bRollingWindowNeedsRebuild)
+		RemoveTextFromHead(iCharsToRemove);
+	else if (m_hWnd != NULL)
+		m_bRollingWindowNeedsRebuild = true;
+}
+
+void CHTRichEditCtrl::EnsureRollingWindowMaterialized()
+{
+	if (m_bRollingLogWindow && m_bRollingWindowNeedsRebuild && m_hWnd != NULL && IsWindowVisible())
+		RebuildRollingWindow();
 }
 
 void CHTRichEditCtrl::RebuildRollingWindow()
@@ -296,6 +316,7 @@ void CHTRichEditCtrl::RebuildRollingWindow()
 	}
 
 	m_bNoPaint = bOldNoPaint;
+	m_bRollingWindowNeedsRebuild = false;
 	if (bIsVisible && !m_bNoPaint) {
 		SetRedraw();
 		Invalidate();
@@ -313,6 +334,14 @@ void CHTRichEditCtrl::AppendRollingEntry(const CString &strText, const bool bTyp
 
 	if (m_hWnd == NULL)
 		return;
+	if (!IsWindowVisible()) {
+		m_bRollingWindowNeedsRebuild = true;
+		return;
+	}
+	if (m_bRollingWindowNeedsRebuild) {
+		RebuildRollingWindow();
+		return;
+	}
 
 	FlushBuffer();
 	if (bTyped)
@@ -464,7 +493,7 @@ void CHTRichEditCtrl::AddLine(LPCTSTR pszMsg, int iLen, bool bLink, COLORREF cr,
 	if (bIsVisible) {
 		if (bBatchedUpdate)
 			m_bUpdateBatchNeedsInvalidate = true;
-		else {
+		else if (!m_bNoPaint) {
 			SetRedraw();
 			Invalidate();
 		}
@@ -483,6 +512,7 @@ void CHTRichEditCtrl::OnEnMaxtext()
 
 void CHTRichEditCtrl::ScrollToLastLine(bool bForceLastLineAtBottom)
 {
+	EnsureRollingWindowMaterialized();
 	if (bForceLastLineAtBottom) {
 		int iFirstVisible = GetFirstVisibleLine();
 		if (iFirstVisible > 0)
@@ -667,6 +697,7 @@ void CHTRichEditCtrl::Reset()
 {
 	m_astrBuff.RemoveAll();
 	m_aRollingEntries.clear();
+	m_bRollingWindowNeedsRebuild = false;
 	SetRedraw(FALSE);
 	SetWindowText(_T(""));
 	SetRedraw();
@@ -675,6 +706,7 @@ void CHTRichEditCtrl::Reset()
 
 void CHTRichEditCtrl::OnContextMenu(CWnd*, CPoint point)
 {
+	EnsureRollingWindowMaterialized();
 	if (!PointInClient(*this, point)) {
 		Default();
 		return;
@@ -804,6 +836,7 @@ CString CHTRichEditCtrl::GetAllLogEntries()
 
 void CHTRichEditCtrl::SelectAllItems()
 {
+	EnsureRollingWindowMaterialized();
 	SetSel(0, -1);
 }
 

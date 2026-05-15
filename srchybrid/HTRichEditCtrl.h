@@ -82,6 +82,7 @@ protected:
 	bool m_bDfltForeground;
 	bool m_bDfltBackground;
 	bool m_bRollingLogWindow;
+	bool m_bRollingWindowNeedsRebuild;
 	bool m_bUpdateBatchNeedsInvalidate;
 	bool m_bUpdateBatchOldNoPaint;
 	BOOL m_bUpdateBatchWasVisible;
@@ -105,6 +106,7 @@ protected:
 	void TrimRollingEntries();
 	void RemoveTextFromHead(int iCharsToRemove);
 	void RebuildRollingWindow();
+	void EnsureRollingWindowMaterialized();
 	bool InsertSmiley(LPCTSTR pszSmileyID, COLORREF bk);
 	HBITMAP GetSmileyBitmap(LPCTSTR pszSmileyID, COLORREF bk);
 	void AddSmileys(LPCTSTR pszLine);
