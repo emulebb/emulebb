@@ -744,6 +744,7 @@ void CGeoLocation::Unload()
 {
 	if (m_pBackgroundRefreshState->pCancellation)
 		m_pBackgroundRefreshState->pCancellation->Cancel();
+	m_pBackgroundRefreshState->pCancellation.reset();
 	delete m_pDatabase;
 	m_pDatabase = NULL;
 	m_tBuildEpoch = 0;
@@ -850,6 +851,7 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 void CGeoLocation::HandleBackgroundRefreshResult(bool bUpdated)
 {
 	(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
+	m_pBackgroundRefreshState->pCancellation.reset();
 	if (bUpdated) {
 		Load();
 		RefreshVisibleWindows();

@@ -326,6 +326,7 @@ CIPFilterUpdater::~CIPFilterUpdater()
 {
 	if (m_pBackgroundRefreshState->pCancellation)
 		m_pBackgroundRefreshState->pCancellation->Cancel();
+	m_pBackgroundRefreshState->pCancellation.reset();
 	(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 }
 
@@ -453,6 +454,7 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 void CIPFilterUpdater::HandleBackgroundRefreshResult(bool bUpdated)
 {
 	(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
+	m_pBackgroundRefreshState->pCancellation.reset();
 	if (!bUpdated)
 		return;
 
