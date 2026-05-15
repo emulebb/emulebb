@@ -190,6 +190,8 @@ BOOL CPPgSecurity::OnApply()
 	thePrefs.SetIPFilterEnabled(IsDlgButtonChecked(IDC_ENABLE_IPFILTER) != 0);
 	thePrefs.filterlevel = GetDlgItemInt(IDC_FILTERLEVEL, NULL, FALSE);
 	thePrefs.filterserverbyip = IsDlgButtonChecked(IDC_FILTERSERVERBYIPFILTER) != 0;
+	if (thePrefs.IsIPFilterEnabled() && !bIPFilterEnabledOld && theApp.ipfilter != NULL)
+		theApp.ipfilter->LoadFromDefaultFile(true);
 	if (thePrefs.IsIPFilterEnabled() && thePrefs.filterserverbyip && (bIPFilterEnabledOld != thePrefs.IsIPFilterEnabled() || !bFilter || uLevel != thePrefs.filterlevel))
 		theApp.emuledlg->serverwnd->serverlistctrl.RemoveAllFilteredServers();
 

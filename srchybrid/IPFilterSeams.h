@@ -75,6 +75,22 @@ inline bool ShouldEvaluateFilter(bool bEnabled, size_t uFilterCount, uint32_t uI
 }
 
 /**
+ * @brief Determines whether startup should populate the in-memory IP filter table.
+ */
+inline bool ShouldLoadAtStartup(bool bEnabled)
+{
+	return bEnabled;
+}
+
+/**
+ * @brief Determines whether the background updater may refresh the local IP filter file.
+ */
+inline bool ShouldQueueAutomaticRefresh(bool bFilterEnabled, bool bAutoUpdateEnabled)
+{
+	return bFilterEnabled && bAutoUpdateEnabled;
+}
+
+/**
  * @brief Normalizes overlapping IP ranges into sorted, non-overlapping segments.
  */
 inline std::vector<IPRange> NormalizeIPRanges(const std::vector<IPRange> &rranges, NormalizationStats *pStats = nullptr)

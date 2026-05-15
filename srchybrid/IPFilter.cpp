@@ -36,8 +36,10 @@ static char THIS_FILE[] = __FILE__;
 
 CIPFilter::CIPFilter()
 	: m_pLastHit()
+	, m_bModified(false)
 {
-	LoadFromDefaultFile(false);
+	if (IPFilterSeams::ShouldLoadAtStartup(thePrefs.IsIPFilterEnabled()))
+		LoadFromDefaultFile(false);
 }
 
 CIPFilter::~CIPFilter()

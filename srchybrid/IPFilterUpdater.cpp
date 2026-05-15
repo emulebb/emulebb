@@ -21,6 +21,7 @@
 #include "DirectDownload.h"
 #include "emule.h"
 #include "IPFilter.h"
+#include "IPFilterSeams.h"
 #include "IPFilterUpdateSeams.h"
 #include "Preferences.h"
 #include "HttpDownloadDlg.h"
@@ -380,7 +381,8 @@ bool CIPFilterUpdater::IsAutomaticRefreshDue(const __time64_t tNow)
 
 bool CIPFilterUpdater::QueueBackgroundRefresh()
 {
-	if (!thePrefs.GetAutoIPFilterUpdate() || ::InterlockedCompareExchange(&m_pBackgroundRefreshState->lQueued, 0, 0) != 0)
+	if (!IPFilterSeams::ShouldQueueAutomaticRefresh(thePrefs.IsIPFilterEnabled(), thePrefs.GetAutoIPFilterUpdate())
+		|| ::InterlockedCompareExchange(&m_pBackgroundRefreshState->lQueued, 0, 0) != 0)
 		return false;
 
 	__time64_t tNow = 0;
