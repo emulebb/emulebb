@@ -19,6 +19,7 @@
 #include "ServerListCtrl.h"
 #include "OtherFunctions.h"
 #include "ProUserMenuCopySeams.h"
+#include "MenuShortcutLabels.h"
 #include "emuledlg.h"
 #include "DownloadQueue.h"
 #include "ServerList.h"
@@ -459,7 +460,7 @@ void CServerListCtrl::OnContextMenu(CWnd*, CPoint point)
 	ServerMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_REMOVEALL, GetResString(IDS_REMOVEALL), _T("DELETE"));
 
 	ServerMenu.AppendMenu(MF_SEPARATOR);
-	ServerMenu.AppendMenu(MF_ENABLED | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_FIND, GetResString(IDS_FIND), _T("Search"));
+	ServerMenu.AppendMenu(MF_ENABLED | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_FIND, AddMenuShortcutLabel(GetResString(IDS_FIND), _T("Ctrl+F")), _T("Search"));
 
 	GetPopupMenuPos(*this, point);
 	ServerMenu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);

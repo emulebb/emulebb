@@ -47,6 +47,7 @@
 #include "MediaInfo.h"
 #include "FileListKeyboardShortcutsSeams.h"
 #include "ProUserMenuCopySeams.h"
+#include "MenuShortcutLabels.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -60,17 +61,6 @@ static char THIS_FILE[] = __FILE__;
 #define EXPAND_COLLAPSE	2
 
 #define	TREE_WIDTH		10
-
-namespace
-{
-	CString AddMenuShortcutLabel(const CString &strLabel, LPCTSTR pszShortcut)
-	{
-		CString strMenuLabel(strLabel);
-		strMenuLabel += _T("\t");
-		strMenuLabel += pszShortcut;
-		return strMenuLabel;
-	}
-}
 
 //////////////////////////////////////////////////////////////////////////////
 // CSearchResultFileDetailSheet
@@ -970,7 +960,7 @@ void CSearchListCtrl::CreateMenus()
 	m_SearchFileMenu.AppendMenu(MF_STRING, MP_REMOVE, GetResString(IDS_REMOVESEARCHSTRING), _T("Delete"));
 	m_SearchFileMenu.AppendMenu(MF_STRING, MP_REMOVEALL, GetResString(IDS_REMOVEALLSEARCH), _T("ClearComplete"));
 	m_SearchFileMenu.AppendMenu(MF_SEPARATOR);
-	m_SearchFileMenu.AppendMenu(MF_STRING, MP_FIND, GetResString(IDS_FIND), _T("Search"));
+	m_SearchFileMenu.AppendMenu(MF_STRING, MP_FIND, AddMenuShortcutLabel(GetResString(IDS_FIND), _T("Ctrl+F")), _T("Search"));
 	m_SearchFileMenu.AppendMenu(MF_STRING, MP_SEARCHRELATED, GetResString(IDS_SEARCHRELATED), _T("KadFileSearch"));
 }
 

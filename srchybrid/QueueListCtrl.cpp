@@ -19,6 +19,7 @@
 #include "QueueListCtrl.h"
 #include "UpDownClient.h"
 #include "MenuCmds.h"
+#include "MenuShortcutLabels.h"
 #include "ClientDetailDialog.h"
 #include "Exceptions.h"
 #include "emuledlg.h"
@@ -681,7 +682,7 @@ void CQueueListCtrl::OnContextMenu(CWnd*, CPoint point)
 	CopyMenu.AppendMenu(MF_STRING | (bCanOpenFile ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_PATH, GetResString(IDS_COPY_FILE_PATH));
 	CopyMenu.AppendMenu(MF_STRING | (bCanOpenFile ? MF_ENABLED : MF_GRAYED), MP_COPY_FOLDER_PATH, GetResString(IDS_COPY_FOLDER_PATH));
 	ClientMenu.AppendMenu(MF_POPUP | (client ? MF_ENABLED : MF_GRAYED), (UINT_PTR)CopyMenu.m_hMenu, GetResString(IDS_COPY));
-	ClientMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_FIND, GetResString(IDS_FIND), _T("Search"));
+	ClientMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_FIND, AddMenuShortcutLabel(GetResString(IDS_FIND), _T("Ctrl+F")), _T("Search"));
 	GetPopupMenuPos(*this, point);
 	ClientMenu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
 	VERIFY(CopyMenu.DestroyMenu());

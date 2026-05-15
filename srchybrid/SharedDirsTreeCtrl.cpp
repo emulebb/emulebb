@@ -29,6 +29,7 @@
 #include "SharedFilesWnd.h"
 #include "SharedDirectoryOps.h"
 #include "FileListKeyboardShortcutsSeams.h"
+#include "MenuShortcutLabels.h"
 
 #include <algorithm>
 #include <vector>
@@ -62,14 +63,6 @@ bool EnableSubMenuItem(CMenu &menu, HMENU hSubMenu, UINT state)
 	if (position < 0)
 		return false;
 	return menu.EnableMenuItem(static_cast<UINT>(position), MF_BYPOSITION | state) != static_cast<UINT>(-1);
-}
-
-CString AddMenuShortcutLabel(const CString &strLabel, LPCTSTR pszShortcut)
-{
-	CString strMenuLabel(strLabel);
-	strMenuLabel += _T("\t");
-	strMenuLabel += pszShortcut;
-	return strMenuLabel;
 }
 
 CString BuildSharedTreePathKey(const CString &rstrPath)

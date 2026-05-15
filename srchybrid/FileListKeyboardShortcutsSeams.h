@@ -57,6 +57,8 @@ namespace FileListKeyboardShortcutsSeams
 				return eContext == EContext::Downloads || eContext == EContext::SharedFiles ? MP_OPEN : 0;
 			case _T('D'):
 				return eContext == EContext::SearchResults ? MP_RESUME : 0;
+			case _T('F'):
+				return eContext == EContext::Downloads || eContext == EContext::SearchResults || eContext == EContext::SharedFiles ? MP_FIND : 0;
 			case _T('P'):
 				return eContext == EContext::Downloads ? MP_PAUSE : 0;
 			case _T('S'):

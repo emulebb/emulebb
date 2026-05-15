@@ -51,6 +51,7 @@
 #include "OtherFunctions.h"
 #include "FileListKeyboardShortcutsSeams.h"
 #include "ProUserMenuCopySeams.h"
+#include "MenuShortcutLabels.h"
 #include "ToolTipCtrlX.h"
 #include "kademlia/kademlia/kademlia.h"
 #include "kademlia/kademlia/UDPFirewallTester.h"
@@ -92,14 +93,6 @@ namespace
 		if (position < 0)
 			return false;
 		return menu.EnableMenuItem(static_cast<UINT>(position), MF_BYPOSITION | state) != static_cast<UINT>(-1);
-	}
-
-	CString AddMenuShortcutLabel(const CString &strLabel, LPCTSTR pszShortcut)
-	{
-		CString strMenuLabel(strLabel);
-		strMenuLabel += _T("\t");
-		strMenuLabel += pszShortcut;
-		return strMenuLabel;
 	}
 
 	CString BuildSharedFilesDirectoryKey(const CString &strDirectory)
@@ -2101,7 +2094,7 @@ void CSharedFilesCtrl::CreateMenus()
 		m_SharedFilesMenu.AppendMenu(MF_STRING, MP_GETED2KLINK, AddMenuShortcutLabel(GetResString(IDS_DL_LINK1), _T("Ctrl+L")), _T("ED2KLINK"));
 	else
 		m_SharedFilesMenu.AppendMenu(MF_STRING, MP_SHOWED2KLINK, GetResString(IDS_DL_SHOWED2KLINK), _T("ED2KLINK"));
-	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_FIND, GetResString(IDS_FIND), _T("Search"));
+	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_FIND, AddMenuShortcutLabel(GetResString(IDS_FIND), _T("Ctrl+F")), _T("Search"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING | MF_SEPARATOR);
 
 #if defined(_DEBUG)

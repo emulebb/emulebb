@@ -48,6 +48,7 @@
 #include "LongPathSeams.h"
 #include "PartFilePreviewSeams.h"
 #include "ProUserMenuCopySeams.h"
+#include "MenuShortcutLabels.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -179,13 +180,6 @@ namespace
 		return menu.RemoveMenu(static_cast<UINT>(position), MF_BYPOSITION) != FALSE;
 	}
 
-	CString AddMenuShortcutLabel(const CString &strLabel, LPCTSTR pszShortcut)
-	{
-		CString strMenuLabel(strLabel);
-		strMenuLabel += _T("\t");
-		strMenuLabel += pszShortcut;
-		return strMenuLabel;
-	}
 }
 
 
