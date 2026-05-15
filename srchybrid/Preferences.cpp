@@ -3185,7 +3185,7 @@ void CPreferences::LoadPreferences()
 	m_bMoviePreviewBackup = ini.GetBool(_T("VideoPreviewBackupped"), false);
 	m_bVideoPreviewThumbnails = false;
 	m_iPreviewSmallBlocks = PreferenceUiSeams::NormalizePreviewSmallBlocks(ini.GetInt(_T("PreviewSmallBlocks"), 0));
-	m_bPreviewCopiedArchives = ini.GetBool(_T("PreviewCopiedArchives"), false);
+	m_bPreviewCopiedArchives = ini.GetBool(_T("PreviewCopiedArchives"), true);
 	m_bInspectAllFileTypes = ini.GetBool(_T("InspectAllFileTypes"), false);
 	m_bAllocFull = ini.GetBool(_T("AllocateFullFile"), 0);
 	m_bAutomaticArcPreviewStart = ini.GetBool(_T("AutoArchivePreviewStart"), false);
