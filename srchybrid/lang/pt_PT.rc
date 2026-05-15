@@ -2208,6 +2208,7 @@ BEGIN
     IDS_COMPLETIONCOMMAND                                      "Programa de conclusão de arquivos"
     IDS_RUNONFILECOMPLETE                                      "Execute o programa quando um arquivo for concluído"
     IDS_COMPLETIONCOMMAND_INVALID                              "Selecione um programa .exe ou .com existente antes de ativar o comando de conclusão de arquivo."
+    IDS_AUTOSTART_REG_FAILED                                   "O Windows não conseguiu registar o eMule BB para iniciar automaticamente para o utilizador atual."
     IDS_PERCENTAGE                                             "%"
     IDS_CLIENT_UPLOADED                                        "Cliente enviado"
     IDS_CLIENT_HASH                                            "Hash do cliente"

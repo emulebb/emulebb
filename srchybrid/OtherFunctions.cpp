@@ -3383,52 +3383,56 @@ void HeapSort(CArray<uint16, uint16> &count, UINT first, UINT last)
 
 static LPCTSTR const pstrKeyName = _T("eMuleAutoStart");
 
-void AddAutoStart()
+bool AddAutoStart()
 {
-#ifndef _DEBUG
+	if (!OtherFunctionsSeams::ShouldWriteAutoStartRegistry())
+		return true;
+
 	RemAutoStart();
 	const CString strExeFilePath(PathHelpers::GetModuleFilePath(NULL));
 	if (strExeFilePath.IsEmpty())
-		return;
-	CString sFullExeCommand;
-	sFullExeCommand.Format(_T("%s -AutoStart"), (LPCTSTR)strExeFilePath);
+		return false;
+	const CString sFullExeCommand(OtherFunctionsSeams::BuildAutoStartRunCommand(strExeFilePath));
 	CRegKey mKey;
-	mKey.Create(HKEY_CURRENT_USER
+	const LONG lCreateResult = mKey.Create(HKEY_CURRENT_USER
 		, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run")
 		, REG_NONE
 		, REG_OPTION_NON_VOLATILE
-		, KEY_ALL_ACCESS
+		, KEY_SET_VALUE
 		, NULL
 		, NULL);
-	if (mKey != NULL) {
-		mKey.SetStringValue(pstrKeyName, sFullExeCommand);
-		mKey.Close();
-	}
-#endif
+	if (lCreateResult != ERROR_SUCCESS || mKey == NULL)
+		return false;
+
+	const LONG lSetResult = mKey.SetStringValue(pstrKeyName, sFullExeCommand);
+	mKey.Close();
+	return lSetResult == ERROR_SUCCESS;
 }
 
-void RemAutoStart()
+bool RemAutoStart()
 {
+	if (!OtherFunctionsSeams::ShouldWriteAutoStartRegistry())
+		return true;
+
 	CRegKey mKey;
-	mKey.Create(HKEY_CURRENT_USER
+	const LONG lOpenResult = mKey.Open(HKEY_CURRENT_USER
 		, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Run")
-		, REG_NONE
-		, REG_OPTION_NON_VOLATILE
-		, KEY_ALL_ACCESS
-		, NULL
-		, NULL);
-	if (mKey != NULL) {
-		mKey.DeleteValue(pstrKeyName);
-		mKey.Close();
-	}
+		, KEY_SET_VALUE);
+	if (lOpenResult == ERROR_FILE_NOT_FOUND)
+		return true;
+	if (lOpenResult != ERROR_SUCCESS || mKey == NULL)
+		return false;
+
+	const LONG lDeleteResult = mKey.DeleteValue(pstrKeyName);
+	mKey.Close();
+	return lDeleteResult == ERROR_SUCCESS || lDeleteResult == ERROR_FILE_NOT_FOUND;
 }
 
-void SetAutoStart(bool bOn)
+bool SetAutoStart(bool bOn)
 {
 	if (bOn)
-		AddAutoStart();
-	else
-		RemAutoStart();
+		return AddAutoStart();
+	return RemAutoStart();
 }
 
 int FontPointSizeToLogUnits(int nPointSize)

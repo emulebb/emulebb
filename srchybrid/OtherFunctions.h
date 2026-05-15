@@ -321,9 +321,9 @@ bool Ask4RegFix(bool checkOnly, bool dontAsk = false, bool bAutoTakeCollections 
 void BackupReg(); // Barry - Store previous values
 void RevertReg(); // Barry - Restore previous values
 bool DoCollectionRegFix(bool checkOnly);
-void AddAutoStart();
-void RemAutoStart();
-void SetAutoStart(bool bOn);
+bool AddAutoStart();
+bool RemAutoStart();
+bool SetAutoStart(bool bOn);
 ULONGLONG GetModuleVersion(LPCTSTR pszFilePath);
 ULONGLONG GetModuleVersion(HMODULE hModule);
 

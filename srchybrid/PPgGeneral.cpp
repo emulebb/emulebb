@@ -244,8 +244,15 @@ BOOL CPPgGeneral::OnApply()
 	thePrefs.SetUpdateDays(static_cast<CSliderCtrl*>(GetDlgItem(IDC_CHECKDAYS))->GetPos());
 	thePrefs.splashscreen = IsDlgButtonChecked(IDC_SPLASHON) != 0;
 	thePrefs.startMinimized = IsDlgButtonChecked(IDC_STARTMIN) != 0;
-	thePrefs.m_bAutoStart = IsDlgButtonChecked(IDC_STARTWIN) != 0;
-	SetAutoStart(thePrefs.m_bAutoStart);
+	const bool bRequestedAutoStart = IsDlgButtonChecked(IDC_STARTWIN) != 0;
+	thePrefs.m_bAutoStart = bRequestedAutoStart;
+	if (!SetAutoStart(thePrefs.m_bAutoStart) && bRequestedAutoStart) {
+		thePrefs.m_bAutoStart = false;
+		CheckDlgButton(IDC_STARTWIN, BST_UNCHECKED);
+		const CString strAutoStartError(GetResString(IDS_AUTOSTART_REG_FAILED));
+		AddLogLine(false, _T("%s"), (LPCTSTR)strAutoStartError);
+		AfxMessageBox(strAutoStartError, MB_OK | MB_ICONWARNING);
+	}
 
 	LoadSettings();
 

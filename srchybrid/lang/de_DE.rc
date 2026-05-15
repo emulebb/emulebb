@@ -2176,6 +2176,7 @@ BEGIN
     IDS_COMPLETIONCOMMAND                                      "Dateivervollständigungsprogramm"
     IDS_RUNONFILECOMPLETE                                      "Führen Sie das Programm aus, wenn eine Datei abgeschlossen ist"
     IDS_COMPLETIONCOMMAND_INVALID                              "Wählen Sie ein vorhandenes .exe- oder .com-Programm aus, bevor Sie den Dateivervollständigungsbefehl aktivieren."
+    IDS_AUTOSTART_REG_FAILED                                   "Windows konnte eMule BB nicht für den automatischen Start für den aktuellen Benutzer registrieren."
     IDS_PERCENTAGE                                             "%"
     IDS_CLIENT_UPLOADED                                        "Kunde hochgeladen"
     IDS_CLIENT_HASH                                            "Client-Hash"

@@ -2200,6 +2200,7 @@ BEGIN
     IDS_COMPLETIONCOMMAND                                      "Dosya Tamamlama Programı"
     IDS_RUNONFILECOMPLETE                                      "Bir dosya tamamlandığında programı çalıştır"
     IDS_COMPLETIONCOMMAND_INVALID                              "Dosya tamamlama komutunu etkinleştirmeden önce mevcut bir .exe veya .com programını seçin."
+    IDS_AUTOSTART_REG_FAILED                                   "Windows, eMule BB'yi geçerli kullanıcı için otomatik başlatılacak şekilde kaydedemedi."
     IDS_PERCENTAGE                                             "%"
     IDS_CLIENT_UPLOADED                                        "Müşteri Yüklendi"
     IDS_CLIENT_HASH                                            "İstemci Karması"

@@ -24,6 +24,7 @@
 #include "ClientUDPSocket.h"
 #include "UPnPImpl.h"
 #include "UPnPImplWrapper.h"
+#include "Log.h"
 #include "opcodes.h"
 
 #ifdef _DEBUG
@@ -822,7 +823,12 @@ BOOL FirstTimeWizard()
 	thePrefs.SetUserNick(page2.m_strNick);
 	thePrefs.SetAutoConnect(page2.m_iAutoConnectAtStart != 0);
 	thePrefs.SetAutoStart(page2.m_iAutoStart != 0);
-	SetAutoStart(thePrefs.GetAutoStart());
+	if (!SetAutoStart(thePrefs.GetAutoStart()) && thePrefs.GetAutoStart()) {
+		thePrefs.SetAutoStart(false);
+		const CString strAutoStartError(GetResString(IDS_AUTOSTART_REG_FAILED));
+		AddLogLine(false, _T("%s"), (LPCTSTR)strAutoStartError);
+		AfxMessageBox(strAutoStartError, MB_OK | MB_ICONWARNING);
+	}
 
 	thePrefs.SetNewAutoDown(page4.m_iDAP != 0);
 	thePrefs.SetNewAutoUp(page4.m_iUAP != 0);

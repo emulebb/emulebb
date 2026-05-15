@@ -2209,6 +2209,7 @@ BEGIN
     IDS_COMPLETIONCOMMAND                                      "Программа завершения файлов"
     IDS_RUNONFILECOMPLETE                                      "Запустить программу после завершения файла"
     IDS_COMPLETIONCOMMAND_INVALID                              "Прежде чем активировать команду завершения файла, выберите существующую программу .exe или .com."
+    IDS_AUTOSTART_REG_FAILED                                   "Windows не удалось зарегистрировать eMule BB для автоматического запуска для текущего пользователя."
     IDS_PERCENTAGE                                             "%"
     IDS_CLIENT_UPLOADED                                        "Клиент загружен"
     IDS_CLIENT_HASH                                            "Хэш клиента"

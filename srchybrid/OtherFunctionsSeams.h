@@ -7,6 +7,29 @@
 namespace OtherFunctionsSeams
 {
 /**
+ * @brief Builds the command stored in the current user's Windows Run key for unattended startup.
+ */
+inline CString BuildAutoStartRunCommand(const CString &strExeFilePath)
+{
+	CString strCommand;
+	if (!strExeFilePath.IsEmpty())
+		strCommand.Format(_T("\"%s\" -AutoStart"), (LPCTSTR)strExeFilePath);
+	return strCommand;
+}
+
+/**
+ * @brief Reports whether the current build should perform real Windows autorun registry writes.
+ */
+inline bool ShouldWriteAutoStartRegistry()
+{
+#ifdef _DEBUG
+	return false;
+#else
+	return true;
+#endif
+}
+
+/**
  * @brief Describes which shell-delete path should be taken for the current request.
  */
 enum ShellDeleteRoute

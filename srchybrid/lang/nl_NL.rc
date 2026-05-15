@@ -2201,6 +2201,7 @@ BEGIN
     IDS_COMPLETIONCOMMAND                                      "Programma voor het voltooien van bestanden"
     IDS_RUNONFILECOMPLETE                                      "Voer het programma uit wanneer een bestand is voltooid"
     IDS_COMPLETIONCOMMAND_INVALID                              "Selecteer een bestaand .exe- of .com-programma voordat u de opdracht voor het voltooien van bestanden inschakelt."
+    IDS_AUTOSTART_REG_FAILED                                   "Windows kon eMule BB niet registreren om automatisch te starten voor de huidige gebruiker."
     IDS_PERCENTAGE                                             "%"
     IDS_CLIENT_UPLOADED                                        "Klant geüpload"
     IDS_CLIENT_HASH                                            "Klant-hash"
