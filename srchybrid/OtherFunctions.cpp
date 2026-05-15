@@ -39,6 +39,7 @@
 #include "RarFile.h"
 #include "shahashset.h"
 #include "collection.h"
+#include "AppRegistryIdentitySeams.h"
 #include "FilenameNormalizationPolicy.h"
 #include "FormatSafetySeams.h"
 #include "LongPathSeams.h"
@@ -806,7 +807,9 @@ bool Ask4RegFix(bool checkOnly, bool dontAsk, bool bAutoTakeCollections)
 	regbuffer.Format(_T("\"%s\" \"%%1\""), (LPCTSTR)strCanonFileName);
 
 	// first check if the registry keys are already set (either by installer in HKLM or by user in HKCU)
-	result = regkey.Open(HKEY_CLASSES_ROOT, _T("ed2k\\shell\\open\\command"), KEY_READ);
+	CString strEd2kCommandClassKey(AppRegistryIdentitySeams::GetEd2kScheme());
+	strEd2kCommandClassKey += _T("\\shell\\open\\command");
+	result = regkey.Open(HKEY_CLASSES_ROOT, strEd2kCommandClassKey, KEY_READ);
 	if (result == ERROR_SUCCESS) {
 		TCHAR rbuffer[MAX_PATH + 100];
 		ULONG maxsize = _countof(rbuffer);
@@ -822,18 +825,24 @@ bool Ask4RegFix(bool checkOnly, bool dontAsk, bool bAutoTakeCollections)
 		if (checkOnly)
 			return true;
 		HKEY hkeyCR = HKEY_CURRENT_USER;
-		if (regkey.Create(hkeyCR, _T("Software\\Classes\\ed2k\\shell\\open\\command")) == ERROR_SUCCESS) {
+		CString strEd2kCommandUserKey(AppRegistryIdentitySeams::GetEd2kClassesKey());
+		strEd2kCommandUserKey += _T("\\shell\\open\\command");
+		if (regkey.Create(hkeyCR, strEd2kCommandUserKey) == ERROR_SUCCESS) {
 			if (dontAsk || (LocMessageBox(IDS_ASSIGNED2K, MB_ICONQUESTION | MB_YESNO, 0) == IDYES)) {
 				VERIFY(regkey.SetStringValue(NULL, regbuffer) == ERROR_SUCCESS);
 
-				VERIFY(regkey.Create(hkeyCR, _T("Software\\Classes\\ed2k\\DefaultIcon")) == ERROR_SUCCESS);
+				CString strEd2kIconUserKey(AppRegistryIdentitySeams::GetEd2kClassesKey());
+				strEd2kIconUserKey += _T("\\DefaultIcon");
+				VERIFY(regkey.Create(hkeyCR, strEd2kIconUserKey) == ERROR_SUCCESS);
 				VERIFY(regkey.SetStringValue(NULL, strModulePath) == ERROR_SUCCESS);
 
-				VERIFY(regkey.Create(hkeyCR, _T("Software\\Classes\\ed2k")) == ERROR_SUCCESS);
+				VERIFY(regkey.Create(hkeyCR, AppRegistryIdentitySeams::GetEd2kClassesKey()) == ERROR_SUCCESS);
 				VERIFY(regkey.SetStringValue(NULL, _T("URL: ed2k Protocol")) == ERROR_SUCCESS);
 				VERIFY(regkey.SetStringValue(_T("URL Protocol"), _T("")) == ERROR_SUCCESS);
 
-				VERIFY(regkey.Open(hkeyCR, _T("Software\\Classes\\ed2k\\shell\\open")) == ERROR_SUCCESS);
+				CString strEd2kOpenUserKey(AppRegistryIdentitySeams::GetEd2kClassesKey());
+				strEd2kOpenUserKey += _T("\\shell\\open");
+				VERIFY(regkey.Open(hkeyCR, strEd2kOpenUserKey) == ERROR_SUCCESS);
 				regkey.RecurseDeleteKey(_T("ddexec"));
 				regkey.RecurseDeleteKey(_T("ddeexec"));
 			}
@@ -859,7 +868,9 @@ void BackupReg()
 	HKEY hkeyCR = HKEY_CURRENT_USER;
 	// Look for pre-existing old ed2k links
 	CRegKey regkey;
-	if (regkey.Create(hkeyCR, _T("Software\\Classes\\ed2k\\shell\\open\\command")) == ERROR_SUCCESS) {
+	CString strEd2kCommandUserKey(AppRegistryIdentitySeams::GetEd2kClassesKey());
+	strEd2kCommandUserKey += _T("\\shell\\open\\command");
+	if (regkey.Create(hkeyCR, strEd2kCommandUserKey) == ERROR_SUCCESS) {
 		TCHAR rbuffer[MAX_PATH + 100];
 		ULONG maxsize = _countof(rbuffer);
 		if (regkey.QueryStringValue(_T("OldDefault"), rbuffer, &maxsize) != ERROR_SUCCESS || maxsize == 0) {
@@ -867,7 +878,9 @@ void BackupReg()
 			if (regkey.QueryStringValue(NULL, rbuffer, &maxsize) == ERROR_SUCCESS)
 				VERIFY(regkey.SetStringValue(_T("OldDefault"), rbuffer) == ERROR_SUCCESS);
 
-			VERIFY(regkey.Create(hkeyCR, _T("Software\\Classes\\ed2k\\DefaultIcon")) == ERROR_SUCCESS);
+			CString strEd2kIconUserKey(AppRegistryIdentitySeams::GetEd2kClassesKey());
+			strEd2kIconUserKey += _T("\\DefaultIcon");
+			VERIFY(regkey.Create(hkeyCR, strEd2kIconUserKey) == ERROR_SUCCESS);
 			maxsize = _countof(rbuffer);
 			if (regkey.QueryStringValue(NULL, rbuffer, &maxsize) == ERROR_SUCCESS)
 				VERIFY(regkey.SetStringValue(_T("OldIcon"), rbuffer) == ERROR_SUCCESS);
@@ -883,14 +896,18 @@ void RevertReg()
 	HKEY hkeyCR = HKEY_CURRENT_USER;
 	// restore previous ed2k links before being assigned to emule
 	CRegKey regkey;
-	if (regkey.Create(hkeyCR, _T("Software\\Classes\\ed2k\\shell\\open\\command")) == ERROR_SUCCESS) {
+	CString strEd2kCommandUserKey(AppRegistryIdentitySeams::GetEd2kClassesKey());
+	strEd2kCommandUserKey += _T("\\shell\\open\\command");
+	if (regkey.Create(hkeyCR, strEd2kCommandUserKey) == ERROR_SUCCESS) {
 		TCHAR rbuffer[MAX_PATH + 100];
 		ULONG maxsize = _countof(rbuffer);
 		if (regkey.QueryStringValue(_T("OldDefault"), rbuffer, &maxsize) == ERROR_SUCCESS) {
 			VERIFY(regkey.SetStringValue(NULL, rbuffer) == ERROR_SUCCESS);
 			VERIFY(regkey.DeleteValue(_T("OldDefault")) == ERROR_SUCCESS);
 
-			VERIFY(regkey.Create(hkeyCR, _T("Software\\Classes\\ed2k\\DefaultIcon")) == ERROR_SUCCESS);
+			CString strEd2kIconUserKey(AppRegistryIdentitySeams::GetEd2kClassesKey());
+			strEd2kIconUserKey += _T("\\DefaultIcon");
+			VERIFY(regkey.Create(hkeyCR, strEd2kIconUserKey) == ERROR_SUCCESS);
 			maxsize = _countof(rbuffer);
 			if (regkey.QueryStringValue(_T("OldIcon"), rbuffer, &maxsize) == ERROR_SUCCESS) {
 				VERIFY(regkey.SetStringValue(NULL, rbuffer) == ERROR_SUCCESS);
@@ -3381,7 +3398,7 @@ void HeapSort(CArray<uint16, uint16> &count, UINT first, UINT last)
 }
 // SLUGFILLER: heapsortCompletesrc
 
-static LPCTSTR const pstrKeyName = _T("eMuleAutoStart");
+static LPCTSTR const pstrKeyName = AppRegistryIdentitySeams::GetAutoStartRunValueName();
 
 bool AddAutoStart()
 {
@@ -3618,7 +3635,9 @@ bool DoCollectionRegFix(bool checkOnly)
 	// first check if the registry keys are already set (either by installer in HKLM or by user in HKCU)
 	bool bGlobalSet = false;
 	CRegKey regkey;
-	LONG result = regkey.Open(HKEY_CLASSES_ROOT, _T("eMule\\shell\\open\\command"), KEY_READ);
+	CString strCollectionCommandClassKey(AppRegistryIdentitySeams::GetCollectionProgId());
+	strCollectionCommandClassKey += _T("\\shell\\open\\command");
+	LONG result = regkey.Open(HKEY_CLASSES_ROOT, strCollectionCommandClassKey, KEY_READ);
 	if (result == ERROR_SUCCESS) {
 		TCHAR rbuffer[MAX_PATH + 100];
 		ULONG maxsize = _countof(rbuffer);
@@ -3634,21 +3653,27 @@ bool DoCollectionRegFix(bool checkOnly)
 		if (checkOnly)
 			return true;
 		HKEY hkeyCR = HKEY_CURRENT_USER;
-		if (regkey.Create(hkeyCR, _T("Software\\Classes\\eMule\\shell\\open\\command")) == ERROR_SUCCESS) {
+		CString strCollectionCommandUserKey(AppRegistryIdentitySeams::GetCollectionClassesKey());
+		strCollectionCommandUserKey += _T("\\shell\\open\\command");
+		if (regkey.Create(hkeyCR, strCollectionCommandUserKey) == ERROR_SUCCESS) {
 			VERIFY(regkey.SetStringValue(NULL, regbuffer) == ERROR_SUCCESS);
 
-			VERIFY(regkey.Create(hkeyCR, _T("Software\\Classes\\eMule\\DefaultIcon")) == ERROR_SUCCESS);
+			CString strCollectionIconUserKey(AppRegistryIdentitySeams::GetCollectionClassesKey());
+			strCollectionIconUserKey += _T("\\DefaultIcon");
+			VERIFY(regkey.Create(hkeyCR, strCollectionIconUserKey) == ERROR_SUCCESS);
 			VERIFY(regkey.SetStringValue(NULL, strModulePath + _T(",1")) == ERROR_SUCCESS);
 
-			VERIFY(regkey.Create(hkeyCR, _T("Software\\Classes\\eMule")) == ERROR_SUCCESS);
-			VERIFY(regkey.SetStringValue(NULL, _T("eMule Collection File")) == ERROR_SUCCESS);
+			VERIFY(regkey.Create(hkeyCR, AppRegistryIdentitySeams::GetCollectionClassesKey()) == ERROR_SUCCESS);
+			VERIFY(regkey.SetStringValue(NULL, _T("eMule BB Collection File")) == ERROR_SUCCESS);
 
-			VERIFY(regkey.Open(hkeyCR, _T("Software\\Classes\\eMule\\shell\\open")) == ERROR_SUCCESS);
+			CString strCollectionOpenUserKey(AppRegistryIdentitySeams::GetCollectionClassesKey());
+			strCollectionOpenUserKey += _T("\\shell\\open");
+			VERIFY(regkey.Open(hkeyCR, strCollectionOpenUserKey) == ERROR_SUCCESS);
 			regkey.RecurseDeleteKey(_T("ddexec"));
 			regkey.RecurseDeleteKey(_T("ddeexec"));
 
 			VERIFY(regkey.Create(hkeyCR, _T("Software\\Classes\\") COLLECTION_FILEEXTENSION) == ERROR_SUCCESS);
-			VERIFY(regkey.SetStringValue(NULL, _T("eMule")) == ERROR_SUCCESS);
+			VERIFY(regkey.SetStringValue(NULL, AppRegistryIdentitySeams::GetCollectionProgId()) == ERROR_SUCCESS);
 			VERIFY(regkey.Close() == ERROR_SUCCESS);
 		} else
 			ASSERT(0);

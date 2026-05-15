@@ -20,6 +20,7 @@
 #include <iphlpapi.h>
 #include <unordered_set>
 #include <vector>
+#include "AppRegistryIdentitySeams.h"
 #include "ConfigDefaultFilesSeams.h"
 #include "BBPreferenceMigrationSeams.h"
 #include "emule.h"
@@ -4093,7 +4094,7 @@ CString CPreferences::GetDefaultDirectory(EDefaultDirectory eDirectory, bool bCr
 		// 0 = Multiuser, 1 = Publicuser, 2 = ExecutableDir. (on Winver < Vista 1 has the same effect as 2)
 		DWORD nRegistrySetting = _UI32_MAX;
 		CRegKey rkEMuleRegKey;
-		if (rkEMuleRegKey.Open(HKEY_CURRENT_USER, _T("Software\\eMule"), KEY_READ) == ERROR_SUCCESS) {
+		if (rkEMuleRegKey.Open(HKEY_CURRENT_USER, AppRegistryIdentitySeams::GetAppSettingsKey(), KEY_READ) == ERROR_SUCCESS) {
 			rkEMuleRegKey.QueryDWORDValue(_T("UsePublicUserDirectories"), nRegistrySetting);
 			rkEMuleRegKey.Close();
 		}
@@ -4253,7 +4254,7 @@ void CPreferences::ChangeUserDirMode(int nNewMode)
 	// and lets us ignore other defaults
 	// 0 = Multiuser, 1 = Public user, 2 = ExecutableDir.
 	CRegKey rkEMuleRegKey;
-	if (rkEMuleRegKey.Create(HKEY_CURRENT_USER, _T("Software\\eMule")) == ERROR_SUCCESS) {
+	if (rkEMuleRegKey.Create(HKEY_CURRENT_USER, AppRegistryIdentitySeams::GetAppSettingsKey()) == ERROR_SUCCESS) {
 		if (rkEMuleRegKey.SetDWORDValue(_T("UsePublicUserDirectories"), nNewMode) != ERROR_SUCCESS)
 			DebugLogError(_T("Failed to write registry key to switch UserDirMode"));
 		else
