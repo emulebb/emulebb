@@ -213,6 +213,11 @@ int CTransferDlg::AddCategoryInteractive()
 	return m_pwndTransfer->AddCategoryInteractive();
 }
 
+void CTransferDlg::ManageCategoriesInteractive()
+{
+	m_pwndTransfer->ManageCategoriesInteractive();
+}
+
 void CTransferDlg::SwitchUploadList()
 {
 	m_pwndTransfer->SwitchUploadList();

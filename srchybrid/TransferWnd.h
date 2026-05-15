@@ -73,6 +73,11 @@ public:
 	void VerifyCatTabSize();
 	int	 AddCategory(const CString &newtitle, const CString &newincoming, const CString &newcomment, const CString &newautocat, bool addTab = true);
 	int	 AddCategoryInteractive();
+	bool EditCategoryInteractive(INT_PTR index);
+	bool RemoveCategoryInteractive(INT_PTR index);
+	INT_PTR MoveCategoryInteractive(INT_PTR from, INT_PTR to);
+	int	 CountFilesAssignedToCategory(UINT cat) const;
+	void ManageCategoriesInteractive();
 	void SwitchUploadList();
 	void ResetTransToolbar(bool bShowToolbar, bool bResetLists = true);
 	void SetToolTipsDelay(DWORD dwDelay);

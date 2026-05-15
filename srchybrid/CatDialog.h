@@ -19,6 +19,7 @@
 
 struct Category_Struct;
 class CCustomAutoComplete;
+class CTransferWnd;
 
 class CCatDialog : public CDialog
 {
@@ -52,4 +53,41 @@ protected:
 	afx_msg void OnBnClickedBrowse();
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnDDBnClicked();
+};
+
+class CCategoryManagerDialog : public CDialog
+{
+	DECLARE_DYNAMIC(CCategoryManagerDialog)
+
+	enum
+	{
+		IDD = IDD_CATEGORY_MANAGER
+	};
+
+public:
+	explicit CCategoryManagerDialog(CTransferWnd *pTransferWnd);
+
+protected:
+	CTransferWnd *m_pTransferWnd;
+	CListCtrl m_categoryList;
+
+	void Localize();
+	void RefreshCategoryList(INT_PTR iSelectCategory = -1);
+	INT_PTR GetSelectedCategory() const;
+	void UpdateButtons();
+
+	virtual BOOL OnInitDialog();
+	virtual void DoDataExchange(CDataExchange *pDX);
+
+	DECLARE_MESSAGE_MAP()
+	afx_msg void OnAdd();
+	afx_msg void OnEdit();
+	afx_msg void OnRemove();
+	afx_msg void OnMoveUp();
+	afx_msg void OnMoveDown();
+	afx_msg void OnOpenIncoming();
+	afx_msg void OnRefresh();
+	afx_msg void OnItemChanged(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnDoubleClick(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnKeyDown(NMHDR *pNMHDR, LRESULT *pResult);
 };

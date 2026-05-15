@@ -40,6 +40,7 @@ public:
 	void UpdateCatTabTitles(bool force = true);
 	void VerifyCatTabSize();
 	int	 AddCategoryInteractive();
+	void ManageCategoriesInteractive();
 	void SwitchUploadList();
 	void ResetTransToolbar(bool bShowToolbar, bool bResetLists = true);
 	void SetToolTipsDelay(DWORD dwDelay);

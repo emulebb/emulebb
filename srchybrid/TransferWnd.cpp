@@ -945,38 +945,10 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM)
 		AddCategoryInteractive();
 		break;
 	case MP_CAT_EDIT:
-		{
-			m_nLastCatTT = -1;
-			const CString &oldincpath(thePrefs.GetCatPath(m_rightclickindex));
-			CCatDialog dialog(m_rightclickindex);
-			if (dialog.DoModal() == IDOK) {
-				EditCatTabLabel(m_rightclickindex, thePrefs.GetCategory(m_rightclickindex)->strTitle);
-				m_dlTab.SetTabTextColor(m_rightclickindex, thePrefs.GetCatColor(m_rightclickindex));
-				theApp.emuledlg->searchwnd->UpdateCatTabs();
-				downloadlistctrl.UpdateCurrentCategoryView();
-				thePrefs.SaveCats();
-				if (!EqualPaths(oldincpath, thePrefs.GetCatPath(m_rightclickindex)))
-					theApp.emuledlg->sharedfileswnd->Reload();
-			}
-		}
+		EditCategoryInteractive(m_rightclickindex);
 		break;
 	case MP_CAT_REMOVE:
-		{
-			m_nLastCatTT = -1;
-			bool toreload = (_tcsicmp(thePrefs.GetCatPath(m_rightclickindex), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)) != 0);
-			theApp.downloadqueue->ResetCatParts(m_rightclickindex);
-			thePrefs.RemoveCat(m_rightclickindex);
-			m_dlTab.DeleteItem(m_rightclickindex);
-			m_dlTab.SetCurSel(0);
-			downloadlistctrl.ChangeCategory(0);
-			thePrefs.SaveCats();
-			if (thePrefs.GetCatCount() == 1)
-				thePrefs.GetCategory(0)->filter = 0;
-			theApp.emuledlg->searchwnd->UpdateCatTabs();
-			VerifyCatTabSize();
-			if (toreload)
-				theApp.emuledlg->sharedfileswnd->Reload();
-		}
+		RemoveCategoryInteractive(m_rightclickindex);
 		break;
 
 	case MP_PRIOLOW:
@@ -1172,6 +1144,82 @@ int CTransferWnd::AddCategoryInteractive()
 	}
 	thePrefs.RemoveCat(newindex);
 	return 0;
+}
+
+bool CTransferWnd::EditCategoryInteractive(INT_PTR index)
+{
+	if (index <= 0 || index >= thePrefs.GetCatCount())
+		return false;
+
+	m_nLastCatTT = -1;
+	const CString oldincpath(thePrefs.GetCatPath(index));
+	CCatDialog dialog(static_cast<int>(index));
+	if (dialog.DoModal() != IDOK)
+		return false;
+
+	EditCatTabLabel(static_cast<int>(index), thePrefs.GetCategory(index)->strTitle);
+	m_dlTab.SetTabTextColor(static_cast<int>(index), thePrefs.GetCatColor(index));
+	theApp.emuledlg->searchwnd->UpdateCatTabs();
+	downloadlistctrl.UpdateCurrentCategoryView();
+	thePrefs.SaveCats();
+	if (!EqualPaths(oldincpath, thePrefs.GetCatPath(index)))
+		theApp.emuledlg->sharedfileswnd->Reload();
+	return true;
+}
+
+bool CTransferWnd::RemoveCategoryInteractive(INT_PTR index)
+{
+	if (index <= 0 || index >= thePrefs.GetCatCount())
+		return false;
+
+	m_nLastCatTT = -1;
+	const bool bReload = (_tcsicmp(thePrefs.GetCatPath(index), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)) != 0);
+	theApp.downloadqueue->ResetCatParts(static_cast<UINT>(index));
+	thePrefs.RemoveCat(index);
+	m_dlTab.DeleteItem(static_cast<int>(index));
+	m_dlTab.SetCurSel(0);
+	downloadlistctrl.ChangeCategory(0);
+	thePrefs.SaveCats();
+	if (thePrefs.GetCatCount() == 1)
+		thePrefs.GetCategory(0)->filter = 0;
+	theApp.emuledlg->searchwnd->UpdateCatTabs();
+	VerifyCatTabSize();
+	if (bReload)
+		theApp.emuledlg->sharedfileswnd->Reload();
+	return true;
+}
+
+INT_PTR CTransferWnd::MoveCategoryInteractive(INT_PTR from, INT_PTR to)
+{
+	if (from <= 0 || from >= thePrefs.GetCatCount() || to <= 0 || to > thePrefs.GetCatCount() || from == to || from == to - 1)
+		return from;
+
+	m_nLastCatTT = -1;
+	if (!thePrefs.MoveCat(from, to))
+		return from;
+
+	theApp.downloadqueue->MoveCat(static_cast<UINT>(from), static_cast<UINT>(to));
+	downloadlistctrl.MoveCompletedfilesCat(static_cast<UINT>(from), static_cast<UINT>(to));
+	m_dlTab.ReorderTab(static_cast<UINT>(from), static_cast<UINT>(to));
+
+	if (to > from)
+		--to;
+	m_dlTab.SetCurSel(static_cast<int>(to));
+	downloadlistctrl.ChangeCategory(static_cast<int>(to));
+	UpdateCatTabTitles();
+	theApp.emuledlg->searchwnd->UpdateCatTabs();
+	return to;
+}
+
+int CTransferWnd::CountFilesAssignedToCategory(UINT cat) const
+{
+	return downloadlistctrl.CountFilesAssignedToCategory(cat);
+}
+
+void CTransferWnd::ManageCategoriesInteractive()
+{
+	CCategoryManagerDialog dialog(this);
+	dialog.DoModal();
 }
 
 int CTransferWnd::GetTabUnderMouse(const CPoint &point)

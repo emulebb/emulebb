@@ -58,6 +58,86 @@ namespace
 		}
 		return false;
 	}
+
+	CString FormatCategoryPriority(UINT uPriority)
+	{
+		switch (NormalizeCategoryPriority(uPriority)) {
+		case PR_LOW:
+			return GetResString(IDS_PRIOLOW);
+		case PR_HIGH:
+			return GetResString(IDS_PRIOHIGH);
+		default:
+			return GetResString(IDS_PRIONORMAL);
+		}
+	}
+
+	CString FormatCategoryFilter(const Category_Struct& category)
+	{
+		CString strFilter;
+		if (category.filterNeg)
+			strFilter = _T("!");
+
+		switch (category.filter) {
+		case 0:
+			strFilter += GetResString(IDS_ALL);
+			break;
+		case 1:
+			strFilter += GetResString(IDS_ALLOTHERS);
+			break;
+		case 2:
+			strFilter += GetResString(IDS_STATUS_NOTCOMPLETED);
+			break;
+		case 3:
+			strFilter += GetResString(IDS_DL_TRANSFCOMPL);
+			break;
+		case 4:
+			strFilter += GetResString(IDS_WAITING);
+			break;
+		case 5:
+			strFilter += GetResString(IDS_DOWNLOADING);
+			break;
+		case 6:
+			strFilter += GetResString(IDS_ERRORLIKE);
+			break;
+		case 7:
+			strFilter += GetResString(IDS_PAUSED);
+			break;
+		case 8:
+			strFilter += GetResString(IDS_SEENCOMPL);
+			break;
+		case 10:
+			strFilter += GetResString(IDS_VIDEO);
+			break;
+		case 11:
+			strFilter += GetResString(IDS_AUDIO);
+			break;
+		case 12:
+			strFilter += GetResString(IDS_SEARCH_ARC);
+			break;
+		case 13:
+			strFilter += GetResString(IDS_SEARCH_CDIMG);
+			break;
+		case 14:
+			strFilter += GetResString(IDS_SEARCH_DOC);
+			break;
+		case 15:
+			strFilter += GetResString(IDS_SEARCH_PICS);
+			break;
+		case 16:
+			strFilter += GetResString(IDS_SEARCH_PRG);
+			break;
+		case 18:
+			strFilter.AppendFormat(_T("\"%s\""), (LPCTSTR)category.regexp);
+			break;
+		case 20:
+			strFilter += GetResString(IDS_SEARCH_EMULECOLLECTION);
+			break;
+		default:
+			strFilter += GetResString(IDS_ALL);
+			break;
+		}
+		return strFilter;
+	}
 }
 
 // CCatDialog dialog
@@ -261,4 +341,210 @@ void CCatDialog::OnDDBnClicked()
 void CCatDialog::ErrorBalloon(int iEdit, UINT uid)
 {
 	static_cast<CEdit*>(GetDlgItem(iEdit))->ShowBalloonTip(GetResString(IDS_ERROR), GetResString(uid), TTI_ERROR);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CCategoryManagerDialog
+
+IMPLEMENT_DYNAMIC(CCategoryManagerDialog, CDialog)
+
+BEGIN_MESSAGE_MAP(CCategoryManagerDialog, CDialog)
+	ON_BN_CLICKED(IDC_CATMAN_ADD, OnAdd)
+	ON_BN_CLICKED(IDC_CATMAN_EDIT, OnEdit)
+	ON_BN_CLICKED(IDC_CATMAN_REMOVE, OnRemove)
+	ON_BN_CLICKED(IDC_CATMAN_MOVE_UP, OnMoveUp)
+	ON_BN_CLICKED(IDC_CATMAN_MOVE_DOWN, OnMoveDown)
+	ON_BN_CLICKED(IDC_CATMAN_OPEN_INCOMING, OnOpenIncoming)
+	ON_BN_CLICKED(IDC_CATMAN_REFRESH, OnRefresh)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_CATMAN_LIST, OnItemChanged)
+	ON_NOTIFY(NM_DBLCLK, IDC_CATMAN_LIST, OnDoubleClick)
+	ON_NOTIFY(LVN_KEYDOWN, IDC_CATMAN_LIST, OnKeyDown)
+END_MESSAGE_MAP()
+
+CCategoryManagerDialog::CCategoryManagerDialog(CTransferWnd *pTransferWnd)
+	: CDialog(CCategoryManagerDialog::IDD)
+	, m_pTransferWnd(pTransferWnd)
+{
+}
+
+BOOL CCategoryManagerDialog::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+	InitWindowStyles(this);
+	Localize();
+
+	m_categoryList.SetExtendedStyle(m_categoryList.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_LABELTIP);
+	m_categoryList.InsertColumn(0, GetResString(IDS_TITLE), LVCFMT_LEFT, 110);
+	m_categoryList.InsertColumn(1, GetResString(IDS_PW_INCOMING), LVCFMT_LEFT, 180);
+	m_categoryList.InsertColumn(2, GetResString(IDS_STARTPRIO), LVCFMT_LEFT, 70);
+	m_categoryList.InsertColumn(3, GetResString(IDS_CATEGORY_MANAGER_ASSIGNED), LVCFMT_RIGHT, 55);
+	m_categoryList.InsertColumn(4, GetResString(IDS_CATEGORY_MANAGER_FILTER), LVCFMT_LEFT, 100);
+	m_categoryList.InsertColumn(5, GetResString(IDS_CATEGORY_MANAGER_AUTOCAT), LVCFMT_LEFT, 110);
+	RefreshCategoryList(0);
+	return TRUE;
+}
+
+void CCategoryManagerDialog::DoDataExchange(CDataExchange *pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_CATMAN_LIST, m_categoryList);
+}
+
+void CCategoryManagerDialog::Localize()
+{
+	SetWindowText(GetResString(IDS_CATEGORY_MANAGER_TITLE));
+	SetDlgItemText(IDC_CATMAN_ADD, GetResString(IDS_CAT_ADD));
+	SetDlgItemText(IDC_CATMAN_EDIT, GetResString(IDS_CAT_EDIT));
+	SetDlgItemText(IDC_CATMAN_REMOVE, GetResString(IDS_CAT_REMOVE));
+	SetDlgItemText(IDC_CATMAN_MOVE_UP, GetResString(IDS_CATEGORY_MANAGER_MOVE_UP));
+	SetDlgItemText(IDC_CATMAN_MOVE_DOWN, GetResString(IDS_CATEGORY_MANAGER_MOVE_DOWN));
+	SetDlgItemText(IDC_CATMAN_OPEN_INCOMING, GetResString(IDS_OPENINC));
+	SetDlgItemText(IDC_CATMAN_REFRESH, GetResString(IDS_SV_UPDATE));
+	SetDlgItemText(IDCANCEL, GetResString(IDS_FD_CLOSE));
+}
+
+void CCategoryManagerDialog::RefreshCategoryList(INT_PTR iSelectCategory)
+{
+	if (iSelectCategory < 0)
+		iSelectCategory = GetSelectedCategory();
+
+	m_categoryList.DeleteAllItems();
+	for (INT_PTR i = 0; i < thePrefs.GetCatCount(); ++i) {
+		const Category_Struct *pCategory = thePrefs.GetCategory(i);
+		if (pCategory == NULL)
+			continue;
+
+		CString strTitle(i == 0 && pCategory->strTitle.IsEmpty() ? GetResString(IDS_ALL) : pCategory->strTitle);
+		const int iItem = m_categoryList.InsertItem(static_cast<int>(i), strTitle);
+		m_categoryList.SetItemData(iItem, static_cast<DWORD_PTR>(i));
+		m_categoryList.SetItemText(iItem, 1, pCategory->strIncomingPath);
+		m_categoryList.SetItemText(iItem, 2, FormatCategoryPriority(pCategory->prio));
+		CString strAssigned;
+		strAssigned.Format(_T("%u"), m_pTransferWnd != NULL ? static_cast<UINT>(m_pTransferWnd->CountFilesAssignedToCategory(static_cast<UINT>(i))) : 0u);
+		m_categoryList.SetItemText(iItem, 3, strAssigned);
+		m_categoryList.SetItemText(iItem, 4, FormatCategoryFilter(*pCategory));
+		m_categoryList.SetItemText(iItem, 5, pCategory->autocat);
+		if (i == iSelectCategory)
+			m_categoryList.SetItemState(iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+	}
+	UpdateButtons();
+}
+
+INT_PTR CCategoryManagerDialog::GetSelectedCategory() const
+{
+	POSITION pos = m_categoryList.GetFirstSelectedItemPosition();
+	if (pos == NULL)
+		return -1;
+	const int iItem = m_categoryList.GetNextSelectedItem(pos);
+	return static_cast<INT_PTR>(m_categoryList.GetItemData(iItem));
+}
+
+void CCategoryManagerDialog::UpdateButtons()
+{
+	const INT_PTR iCategory = GetSelectedCategory();
+	const bool bHasCategory = iCategory >= 0 && iCategory < thePrefs.GetCatCount();
+	const bool bCustomCategory = bHasCategory && iCategory > 0;
+	GetDlgItem(IDC_CATMAN_EDIT)->EnableWindow(bCustomCategory);
+	GetDlgItem(IDC_CATMAN_REMOVE)->EnableWindow(bCustomCategory);
+	GetDlgItem(IDC_CATMAN_MOVE_UP)->EnableWindow(bCustomCategory && iCategory > 1);
+	GetDlgItem(IDC_CATMAN_MOVE_DOWN)->EnableWindow(bCustomCategory && iCategory < thePrefs.GetCatCount() - 1);
+	GetDlgItem(IDC_CATMAN_OPEN_INCOMING)->EnableWindow(bHasCategory && thePrefs.GetCategory(iCategory) != NULL && !thePrefs.GetCategory(iCategory)->strIncomingPath.IsEmpty());
+}
+
+void CCategoryManagerDialog::OnAdd()
+{
+	if (m_pTransferWnd == NULL)
+		return;
+	const int iCategory = m_pTransferWnd->AddCategoryInteractive();
+	RefreshCategoryList(iCategory);
+}
+
+void CCategoryManagerDialog::OnEdit()
+{
+	if (m_pTransferWnd == NULL)
+		return;
+	const INT_PTR iCategory = GetSelectedCategory();
+	if (m_pTransferWnd->EditCategoryInteractive(iCategory))
+		RefreshCategoryList(iCategory);
+}
+
+void CCategoryManagerDialog::OnRemove()
+{
+	if (m_pTransferWnd == NULL)
+		return;
+	const INT_PTR iCategory = GetSelectedCategory();
+	if (m_pTransferWnd->RemoveCategoryInteractive(iCategory))
+		RefreshCategoryList(0);
+}
+
+void CCategoryManagerDialog::OnMoveUp()
+{
+	if (m_pTransferWnd == NULL)
+		return;
+	const INT_PTR iCategory = GetSelectedCategory();
+	if (iCategory > 1)
+		RefreshCategoryList(m_pTransferWnd->MoveCategoryInteractive(iCategory, iCategory - 1));
+}
+
+void CCategoryManagerDialog::OnMoveDown()
+{
+	if (m_pTransferWnd == NULL)
+		return;
+	const INT_PTR iCategory = GetSelectedCategory();
+	if (iCategory > 0 && iCategory < thePrefs.GetCatCount() - 1)
+		RefreshCategoryList(m_pTransferWnd->MoveCategoryInteractive(iCategory, iCategory + 2));
+}
+
+void CCategoryManagerDialog::OnOpenIncoming()
+{
+	const INT_PTR iCategory = GetSelectedCategory();
+	const Category_Struct *pCategory = thePrefs.GetCategory(iCategory);
+	if (pCategory != NULL && !pCategory->strIncomingPath.IsEmpty())
+		ShellOpenFile(pCategory->strIncomingPath);
+}
+
+void CCategoryManagerDialog::OnRefresh()
+{
+	RefreshCategoryList();
+}
+
+void CCategoryManagerDialog::OnItemChanged(NMHDR *, LRESULT *pResult)
+{
+	UpdateButtons();
+	*pResult = 0;
+}
+
+void CCategoryManagerDialog::OnDoubleClick(NMHDR *, LRESULT *pResult)
+{
+	OnEdit();
+	*pResult = 0;
+}
+
+void CCategoryManagerDialog::OnKeyDown(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	const LPNMLVKEYDOWN pKeyDown = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
+	const bool bAltDown = (::GetKeyState(VK_MENU) & 0x8000) != 0;
+	switch (pKeyDown->wVKey) {
+	case VK_INSERT:
+		OnAdd();
+		break;
+	case VK_RETURN:
+		OnEdit();
+		break;
+	case VK_DELETE:
+		OnRemove();
+		break;
+	case VK_F5:
+		OnRefresh();
+		break;
+	case VK_UP:
+		if (bAltDown)
+			OnMoveUp();
+		break;
+	case VK_DOWN:
+		if (bAltDown)
+			OnMoveDown();
+		break;
+	}
+	*pResult = 0;
 }

@@ -113,6 +113,7 @@ public:
 	void	HideSources(CPartFile *toCollapse);
 	void	GetDisplayedFiles(CArray<CPartFile*, CPartFile*> *list);
 	void	MoveCompletedfilesCat(UINT from, UINT to);
+	int		CountFilesAssignedToCategory(UINT cat) const;
 	int		GetCompleteDownloads(int cat, int &total);
 	void	UpdateCurrentCategoryView();
 	void	UpdateCurrentCategoryView(CPartFile *thisfile);

@@ -3216,6 +3216,17 @@ void CDownloadListCtrl::MoveCompletedfilesCat(UINT from, UINT to)
 	}
 }
 
+int CDownloadListCtrl::CountFilesAssignedToCategory(UINT cat) const
+{
+	int count = 0;
+	for (ListItems::const_iterator it = m_ListItems.begin(); it != m_ListItems.end(); ++it) {
+		const CtrlItem_Struct *cur_item = it->second;
+		if (IsLiveFileItem(cur_item) && static_cast<const CPartFile*>(cur_item->value)->GetCategory() == cat)
+			++count;
+	}
+	return count;
+}
+
 void CDownloadListCtrl::OnLvnGetDispInfo(LPNMHDR pNMHDR, LRESULT *pResult)
 {
 	if (!theApp.IsClosing()) {

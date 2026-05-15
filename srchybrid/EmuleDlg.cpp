@@ -882,6 +882,8 @@ namespace
 			return IDS_TOOLS_STATUS_EDIT_MONITOR_OWNED_SHAREDDIR_DAT;
 		case MP_HM_EDIT_SHAREIGNORE_DAT:
 			return IDS_TOOLS_STATUS_EDIT_SHAREIGNORE_DAT;
+		case MP_HM_MANAGE_CATEGORIES:
+			return IDS_TOOLS_STATUS_MANAGE_CATEGORIES;
 		case MP_HM_EDIT_CATEGORY_INI:
 			return IDS_TOOLS_STATUS_EDIT_CATEGORY_INI;
 		case MP_HM_EDIT_NOTIFIER_INI:
@@ -4060,6 +4062,10 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_EDIT_SHAREIGNORE_DAT:
 		EditTextFile(GetConfigFilePath(_T("shareignore.dat")));
 		break;
+	case MP_HM_MANAGE_CATEGORIES:
+		if (transferwnd != NULL)
+			transferwnd->ManageCategoriesInteractive();
+		break;
 	case MP_HM_EDIT_CATEGORY_INI:
 		EditTextFile(GetConfigFilePath(_T("Category.ini")));
 		break;
@@ -4321,6 +4327,10 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	folders.CreateMenu();
 	folders.AddMenuTitle(NULL, true);
 
+	CTitledMenu categories;
+	categories.CreateMenu();
+	categories.AddMenuTitle(NULL, true);
+
 	CTitledMenu editConfigFiles;
 	editConfigFiles.CreateMenu();
 	editConfigFiles.AddMenuTitle(NULL, true);
@@ -4429,6 +4439,10 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		folders.AppendMenu(MF_STRING, MP_HM_OPEN_TOOLBARDIR, GetResString(IDS_OPEN_TOOLBAR_DIR) + _T("..."), _T("OPENFOLDER"));
 		folders.AppendMenu(MF_STRING, MP_HM_OPEN_EXECUTABLEDIR, GetResString(IDS_OPEN_EXECUTABLE_DIR) + _T("..."), _T("OPENFOLDER"));
 
+		categories.AppendMenu(MF_STRING, MP_HM_MANAGE_CATEGORIES, GetResString(IDS_MANAGE_CATEGORIES), _T("CATEGORY"));
+		categories.AppendMenu(MF_SEPARATOR);
+		categories.AppendMenu(MF_STRING, MP_HM_EDIT_CATEGORY_INI, GetResString(IDS_EDIT_CATEGORY_INI), _T("PREFERENCES"));
+
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_PREFERENCES_INI, GetResString(IDS_EDIT_PREFERENCES_INI), _T("PREFERENCES"));
 		editConfigFiles.AppendMenu(MF_SEPARATOR);
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_IPFILTER_DAT, GetResString(IDS_EDIT_IPFILTER_DAT), _T("IPFILTER"));
@@ -4442,7 +4456,6 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_MONITORED_SHAREDDIR_DAT, GetResString(IDS_EDIT_MONITORED_SHAREDDIR_DAT), _T("OPENFOLDER"));
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_MONITOR_OWNED_SHAREDDIR_DAT, GetResString(IDS_EDIT_MONITOR_OWNED_SHAREDDIR_DAT), _T("OPENFOLDER"));
 		editConfigFiles.AppendMenu(MF_SEPARATOR);
-		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_CATEGORY_INI, GetResString(IDS_EDIT_CATEGORY_INI), _T("CATEGORY"));
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_NOTIFIER_INI, GetResString(IDS_EDIT_NOTIFIER_INI), _T("TOOLS"));
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_FILEINFO_INI, GetResString(IDS_EDIT_FILEINFO_INI), _T("FILECOMMENTS"));
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_STATISTICS_INI, GetResString(IDS_EDIT_STATISTICS_INI), _T("STATISTICS"));
@@ -4484,6 +4497,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, _T("&") + GetResString(IDS_TOOLS_SESSION), _T("CONNECT"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, _T("S&peed Quick Actions"), _T("SPEED"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, _T("&") + GetResString(IDS_TOOLS_FOLDERS), _T("OPENFOLDER"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)categories.m_hMenu, GetResString(IDS_TOOLS_CATEGORIES), _T("CATEGORY"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T("PREFERENCES"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, GetResString(IDS_TOOLS_NETWORK_UPDATES), _T("WEB"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)maintenance.m_hMenu, GetResString(IDS_TOOLS_MAINTENANCE), _T("TOOLS"));

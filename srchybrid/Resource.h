@@ -2233,6 +2233,15 @@
 #define IDC_SOURCE_TYPE                 2909
 #define IDC_UIP                         2910
 #define IDC_REGEXPR                     2912
+#define IDD_CATEGORY_MANAGER            3055
+#define IDC_CATMAN_LIST                 3096
+#define IDC_CATMAN_ADD                  3097
+#define IDC_CATMAN_EDIT                 3098
+#define IDC_CATMAN_REMOVE               3099
+#define IDC_CATMAN_MOVE_UP              3100
+#define IDC_CATMAN_MOVE_DOWN            3101
+#define IDC_CATMAN_OPEN_INCOMING        3102
+#define IDC_CATMAN_REFRESH              3103
 #define IDC_SEARCHKAD                   2913
 #define IDC_CB_TBN_NOSOUND              2914
 #define IDC_CB_TBN_USESOUND             2915
@@ -3075,6 +3084,15 @@
 #define IDS_FAKEFILE_EVIDENCE_HEADER_TYPE      3244
 #define IDS_ERR_CATEGORY_TITLE_REQUIRED         3245
 #define IDS_ERR_CATEGORY_DUPLICATE              3246
+#define IDS_TOOLS_CATEGORIES                    3247
+#define IDS_MANAGE_CATEGORIES                   3248
+#define IDS_TOOLS_STATUS_MANAGE_CATEGORIES      3249
+#define IDS_CATEGORY_MANAGER_TITLE              3250
+#define IDS_CATEGORY_MANAGER_ASSIGNED           3251
+#define IDS_CATEGORY_MANAGER_FILTER             3252
+#define IDS_CATEGORY_MANAGER_AUTOCAT            3253
+#define IDS_CATEGORY_MANAGER_MOVE_UP            3254
+#define IDS_CATEGORY_MANAGER_MOVE_DOWN          3255
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025
@@ -3165,9 +3183,9 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        3055
+#define _APS_NEXT_RESOURCE_VALUE        3056
 #define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         3096
-#define _APS_NEXT_SYMED_VALUE           3247
+#define _APS_NEXT_CONTROL_VALUE         3104
+#define _APS_NEXT_SYMED_VALUE           3256
 #endif
 #endif
