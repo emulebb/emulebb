@@ -2753,6 +2753,18 @@ BEGIN
     IDS_TREEOPTIONS_BROWSE_FOLDER_CAPTION                      "Пожалуйста, укажите папку"
     IDS_TREEOPTIONS_BROWSE_FILE_CAPTION                        "Пожалуйста, укажите файл"
     IDS_TREEOPTIONS_ALL_FILES_FILTER                           "Все файлы (*.*)|*.*||"
+    IDS_ERR_CATEGORY_TITLE_REQUIRED                            "Введите название категории."
+    IDS_ERR_CATEGORY_DUPLICATE                                 "Категория с таким названием уже существует."
+    IDS_TOOLS_CATEGORIES                                       "&Категории"
+    IDS_MANAGE_CATEGORIES                                      "&Управление категориями..."
+    IDS_TOOLS_STATUS_MANAGE_CATEGORIES                         "Открывает менеджер категорий для добавления, редактирования, изменения порядка и просмотра категорий загрузки."
+    IDS_CATEGORY_MANAGER_TITLE                                 "Управление категориями"
+    IDS_CATEGORY_MANAGER_ASSIGNED                              "Назначенный"
+    IDS_CATEGORY_MANAGER_FILTER                                "Фильтр"
+    IDS_CATEGORY_MANAGER_AUTOCAT                               "Авто Категория"
+    IDS_CATEGORY_MANAGER_MOVE_UP                               "&Двигаться вверх"
+    IDS_CATEGORY_MANAGER_MOVE_DOWN                             "&Вниз"
+    IDS_CATEGORY_REMOVE_IN_USE                                 "В категории «%s» все еще есть загрузки, назначенные %u. Переместите или очистите эти загрузки, прежде чем удалять их."
 END
 // eMule BB managed translation block: end
 

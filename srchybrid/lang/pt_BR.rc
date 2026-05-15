@@ -2731,6 +2731,18 @@ BEGIN
     IDS_TREEOPTIONS_BROWSE_FOLDER_CAPTION                      "Especifique uma pasta"
     IDS_TREEOPTIONS_BROWSE_FILE_CAPTION                        "Especifique um arquivo"
     IDS_TREEOPTIONS_ALL_FILES_FILTER                           "Todos os arquivos (*.*)|*.*||"
+    IDS_ERR_CATEGORY_TITLE_REQUIRED                            "Insira um título de categoria."
+    IDS_ERR_CATEGORY_DUPLICATE                                 "Já existe uma categoria com este título."
+    IDS_TOOLS_CATEGORIES                                       "&Categorias"
+    IDS_MANAGE_CATEGORIES                                      "&Gerenciar categorias..."
+    IDS_TOOLS_STATUS_MANAGE_CATEGORIES                         "Abre o gerenciador de categorias para adicionar, editar, reordenar e revisar categorias de download."
+    IDS_CATEGORY_MANAGER_TITLE                                 "Gerenciar categorias"
+    IDS_CATEGORY_MANAGER_ASSIGNED                              "Atribuído"
+    IDS_CATEGORY_MANAGER_FILTER                                "Filtro"
+    IDS_CATEGORY_MANAGER_AUTOCAT                               "Categoria Automática"
+    IDS_CATEGORY_MANAGER_MOVE_UP                               "&Subir"
+    IDS_CATEGORY_MANAGER_MOVE_DOWN                             "&Mover para baixo"
+    IDS_CATEGORY_REMOVE_IN_USE                                 "A categoria ""%s"" ainda tem download(s) atribuído(s) %u. Mova ou limpe esses downloads antes de removê-los."
 END
 // eMule BB managed translation block: end
 

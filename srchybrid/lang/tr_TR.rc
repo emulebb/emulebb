@@ -2746,6 +2746,18 @@ BEGIN
     IDS_TREEOPTIONS_BROWSE_FOLDER_CAPTION                      "Lütfen bir klasör belirtin"
     IDS_TREEOPTIONS_BROWSE_FILE_CAPTION                        "Lütfen bir dosya belirtin"
     IDS_TREEOPTIONS_ALL_FILES_FILTER                           "Tüm Dosyalar (*.*)|*.*||"
+    IDS_ERR_CATEGORY_TITLE_REQUIRED                            "Bir kategori başlığı girin."
+    IDS_ERR_CATEGORY_DUPLICATE                                 "Bu başlığa sahip bir kategori zaten mevcut."
+    IDS_TOOLS_CATEGORIES                                       "&Kategoriler"
+    IDS_MANAGE_CATEGORIES                                      "&Kategorileri Yönet..."
+    IDS_TOOLS_STATUS_MANAGE_CATEGORIES                         "İndirme kategorilerini eklemek, düzenlemek, yeniden sıralamak ve incelemek için kategori yöneticisini açar."
+    IDS_CATEGORY_MANAGER_TITLE                                 "Kategorileri Yönet"
+    IDS_CATEGORY_MANAGER_ASSIGNED                              "Atandı"
+    IDS_CATEGORY_MANAGER_FILTER                                "Filtre"
+    IDS_CATEGORY_MANAGER_AUTOCAT                               "Otomatik Kategori"
+    IDS_CATEGORY_MANAGER_MOVE_UP                               "&Yukarı Taşı"
+    IDS_CATEGORY_MANAGER_MOVE_DOWN                             "&Aşağı Taşı"
+    IDS_CATEGORY_REMOVE_IN_USE                                 """%s"" kategorisi hâlâ %u'ya atanmış indirmelere sahiptir. Bu indirilenleri kaldırmadan önce taşıyın veya temizleyin."
 END
 // eMule BB managed translation block: end
 

@@ -2745,6 +2745,18 @@ BEGIN
     IDS_TREEOPTIONS_BROWSE_FOLDER_CAPTION                      "Veuillez spécifier un dossier"
     IDS_TREEOPTIONS_BROWSE_FILE_CAPTION                        "Veuillez spécifier un fichier"
     IDS_TREEOPTIONS_ALL_FILES_FILTER                           "Tous les fichiers (*.*)|*.*||"
+    IDS_ERR_CATEGORY_TITLE_REQUIRED                            "Entrez un titre de catégorie."
+    IDS_ERR_CATEGORY_DUPLICATE                                 "Une catégorie avec ce titre existe déjà."
+    IDS_TOOLS_CATEGORIES                                       "&Catégories"
+    IDS_MANAGE_CATEGORIES                                      "&Gérer les catégories..."
+    IDS_TOOLS_STATUS_MANAGE_CATEGORIES                         "Ouvre le gestionnaire de catégories pour ajouter, modifier, réorganiser et consulter les catégories de téléchargement."
+    IDS_CATEGORY_MANAGER_TITLE                                 "Gérer les catégories"
+    IDS_CATEGORY_MANAGER_ASSIGNED                              "Attribué"
+    IDS_CATEGORY_MANAGER_FILTER                                "Filtre"
+    IDS_CATEGORY_MANAGER_AUTOCAT                               "Catégorie automobile"
+    IDS_CATEGORY_MANAGER_MOVE_UP                               "&Monter"
+    IDS_CATEGORY_MANAGER_MOVE_DOWN                             "&Descendre"
+    IDS_CATEGORY_REMOVE_IN_USE                                 "La catégorie « %s » comporte toujours des téléchargements attribués à %u. Déplacez ou effacez ces téléchargements avant de les supprimer."
 END
 // eMule BB managed translation block: end
 

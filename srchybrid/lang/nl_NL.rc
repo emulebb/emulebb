@@ -2747,6 +2747,18 @@ BEGIN
     IDS_TREEOPTIONS_BROWSE_FOLDER_CAPTION                      "Geef een map op"
     IDS_TREEOPTIONS_BROWSE_FILE_CAPTION                        "Geef een bestand op"
     IDS_TREEOPTIONS_ALL_FILES_FILTER                           "Alle bestanden (*.*)|*.*||"
+    IDS_ERR_CATEGORY_TITLE_REQUIRED                            "Voer een categorietitel in."
+    IDS_ERR_CATEGORY_DUPLICATE                                 "Er bestaat al een categorie met deze titel."
+    IDS_TOOLS_CATEGORIES                                       "&Categorieën"
+    IDS_MANAGE_CATEGORIES                                      "&Categorieën beheren..."
+    IDS_TOOLS_STATUS_MANAGE_CATEGORIES                         "Opent categoriebeheer voor het toevoegen, bewerken, opnieuw ordenen en beoordelen van downloadcategorieën."
+    IDS_CATEGORY_MANAGER_TITLE                                 "Beheer categorieën"
+    IDS_CATEGORY_MANAGER_ASSIGNED                              "Toegewezen"
+    IDS_CATEGORY_MANAGER_FILTER                                "Filter"
+    IDS_CATEGORY_MANAGER_AUTOCAT                               "Automatische categorie"
+    IDS_CATEGORY_MANAGER_MOVE_UP                               "&Ga omhoog"
+    IDS_CATEGORY_MANAGER_MOVE_DOWN                             "&Ga naar beneden"
+    IDS_CATEGORY_REMOVE_IN_USE                                 "Categorie ""%s"" heeft nog steeds %u toegewezen download(s). Verplaats of wis deze downloads voordat u deze verwijdert."
 END
 // eMule BB managed translation block: end
 
