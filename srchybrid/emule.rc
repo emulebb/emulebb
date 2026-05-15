@@ -4374,6 +4374,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_TWEAKS_GENERAL_ADVANCED            "General Advanced"
+    IDS_TWEAKS_NETWORK_CONNECTIVITY        "Network & Connectivity"
     IDS_TWEAKS_FILE_BEHAVIOR               "File Behavior"
     IDS_FOLLOW_MAJORITY_FILENAME_NEW_DOWNLOADS "Follow majority filename for new downloads"
     IDS_TWEAKS_FOLLOW_MAJORITY_REQUIRED_AGREEMENT "Follow majority required agreement [%]"
@@ -4585,6 +4586,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_TWEAKS_TT_SHAREE_MULE              "Controls how eMule stores and shares per-user state on this Windows machine.\r\n\r\nLeave the current mode unless you are intentionally changing how multiple local users share configuration and data."
+    IDS_TWEAKS_TT_NETWORK_CONNECTIVITY     "Connection timing and automatic port-mapping controls.\r\n\r\nThese settings affect reachability and session stability. Keep defaults unless you are deliberately tuning network behavior."
     IDS_TWEAKS_TT_TCP_GROUP                "Advanced TCP connection burst, timeout, and keepalive controls.\r\n\r\nThese settings affect connection behavior rather than transfer limits. Default values are recommended unless you are diagnosing network setup issues."
     IDS_TWEAKS_TT_SEARCH_GROUP             "Advanced limits for how broadly and how long eMule searches on eD2K and Kad.\r\n\r\nHigher values can return more results, but they also add more network traffic and UI noise."
     IDS_TWEAKS_TT_SEARCH_ED2K_GROUP        "Server-based eD2K search limits.\r\n\r\nUse conservative values unless you deliberately want deeper server searches."

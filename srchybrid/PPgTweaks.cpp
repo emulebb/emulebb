@@ -541,6 +541,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_htiLoggingGroup()
 	, m_htiMaxCon5Sec()
 	, m_htiMaxHalfOpen()
+	, m_htiNetworkConnectivity()
 	, m_htiDateTimeFormat4Lists()
 	, m_htiMaxChatHistoryLines()
 	, m_htiMaxMessageSessions()
@@ -742,9 +743,21 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		}
 
 		/////////////////////////////////////////////////////////////////////////////
+		// Startup group
+		//
+		m_htiHiddenStartup = m_ctrlTreeOptions.InsertGroup(GetStartupTweaksLabel(), iImgConnection, TVI_ROOT);
+		m_htiRestoreLastMainWndDlg = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_RESTORELASTMAINWNDDLG), m_htiHiddenStartup, m_bRestoreLastMainWndDlg);
+		m_htiRestoreLastLogPane = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_RESTORELASTLOGPANE), m_htiHiddenStartup, m_bRestoreLastLogPane);
+
+		/////////////////////////////////////////////////////////////////////////////
+		// Network & Connectivity group
+		//
+		m_htiNetworkConnectivity = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_TWEAKS_NETWORK_CONNECTIVITY), iImgConnection, TVI_ROOT);
+
+		/////////////////////////////////////////////////////////////////////////////
 		// TCP/IP group
 		//
-		m_htiTCPGroup = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_TCPIP_CONNS), iImgConnection, TVI_ROOT);
+		m_htiTCPGroup = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_TCPIP_CONNS), iImgConnection, m_htiNetworkConnectivity);
 		m_htiMaxCon5Sec = m_ctrlTreeOptions.InsertItem(GetResString(IDS_MAXCON5SECLABEL), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiTCPGroup);
 		m_ctrlTreeOptions.AddEditBox(m_htiMaxCon5Sec, RUNTIME_CLASS(CNumTreeOptionsEdit));
 		m_htiMaxHalfOpen = m_ctrlTreeOptions.InsertItem(GetResString(IDS_MAXHALFOPENCONS), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiTCPGroup);
@@ -758,23 +771,14 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_ctrlTreeOptions.AddEditBox(m_htiServerKeepAliveTimeout, RUNTIME_CLASS(CNumTreeOptionsEdit));
 
 		/////////////////////////////////////////////////////////////////////////////
-		// Search group
+		// UPnP group
 		//
-		m_htiSearchGroup = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_SEARCHLIMITS), iImgSearch, TVI_ROOT);
-		m_htiSearchEd2kGroup = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_ED2K_SEARCH), iImgSearch, m_htiSearchGroup);
-		m_htiSearchEd2kMaxResults = m_ctrlTreeOptions.InsertItem(GetResString(IDS_ED2K_SEARCH_MAX_RESULTS), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchEd2kGroup);
-		m_ctrlTreeOptions.AddEditBox(m_htiSearchEd2kMaxResults, RUNTIME_CLASS(CNumTreeOptionsEdit));
-		m_htiSearchEd2kMaxMoreRequests = m_ctrlTreeOptions.InsertItem(GetResString(IDS_ED2K_SEARCH_MAX_MORE), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchEd2kGroup);
-		m_ctrlTreeOptions.AddEditBox(m_htiSearchEd2kMaxMoreRequests, RUNTIME_CLASS(CNumTreeOptionsEdit));
-		m_htiSearchKadGroup = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_SEARCHKAD), iImgSearch, m_htiSearchGroup);
-		m_htiSearchKadFileTotal = m_ctrlTreeOptions.InsertItem(GetResString(IDS_KAD_SEARCH_FILE_TOTAL), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchKadGroup);
-		m_ctrlTreeOptions.AddEditBox(m_htiSearchKadFileTotal, RUNTIME_CLASS(CNumTreeOptionsEdit));
-		m_htiSearchKadKeywordTotal = m_ctrlTreeOptions.InsertItem(GetResString(IDS_KAD_SEARCH_KEYWORD_TOTAL), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchKadGroup);
-		m_ctrlTreeOptions.AddEditBox(m_htiSearchKadKeywordTotal, RUNTIME_CLASS(CNumTreeOptionsEdit));
-		m_htiSearchKadFileLifetime = m_ctrlTreeOptions.InsertItem(GetResString(IDS_KAD_SEARCH_FILE_LIFETIME), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchKadGroup);
-		m_ctrlTreeOptions.AddEditBox(m_htiSearchKadFileLifetime, RUNTIME_CLASS(CNumTreeOptionsEdit));
-		m_htiSearchKadKeywordLifetime = m_ctrlTreeOptions.InsertItem(GetResString(IDS_KAD_SEARCH_KEYWORD_LIFETIME), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchKadGroup);
-		m_ctrlTreeOptions.AddEditBox(m_htiSearchKadKeywordLifetime, RUNTIME_CLASS(CNumTreeOptionsEdit));
+		m_htiUPnP = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_UPNP), iImgUPnP, m_htiNetworkConnectivity);
+		m_htiCloseUPnPPorts = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_UPNPCLOSEONEXIT), m_htiUPnP, m_bCloseUPnPOnExit);
+		m_htiUPnPBackendMode = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_UPNPBACKENDMODE), iImgUPnP, m_htiUPnP);
+		m_htiUPnPBackendModeAutomatic = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_AUTOMATIC), m_htiUPnPBackendMode, m_iUPnPBackendMode == UPNP_BACKEND_AUTOMATIC);
+		m_htiUPnPBackendModeIgdOnly = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_UPNPBACKENDMODE_IGDONLY), m_htiUPnPBackendMode, m_iUPnPBackendMode == UPNP_BACKEND_IGD_ONLY);
+		m_htiUPnPBackendModePcpNatPmpOnly = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_UPNPBACKENDMODE_PCPONLY), m_htiUPnPBackendMode, m_iUPnPBackendMode == UPNP_BACKEND_PCP_NATPMP_ONLY);
 
 		/////////////////////////////////////////////////////////////////////////////
 		// Broadband group
@@ -811,18 +815,23 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_ctrlTreeOptions.AddEditBox(m_htiSessionTimeLimit, RUNTIME_CLASS(CNumTreeOptionsEdit));
 
 		/////////////////////////////////////////////////////////////////////////////
-		// General advanced group
+		// Search group
 		//
-		m_htiGeneralAdvanced = m_ctrlTreeOptions.InsertGroup(GetGeneralAdvancedLabel(), iImgConnection, TVI_ROOT);
-		m_htiAutoTakeEd2kLinks = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_AUTOTAKEED2KLINKS), m_htiGeneralAdvanced, m_bAutoTakeEd2kLinks);
-		m_htiCreditSystem = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_USECREDITSYSTEM), m_htiGeneralAdvanced, m_bCreditSystem);
-		m_htiA4AFSaveCpu = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_A4AF_SAVE_CPU), m_htiGeneralAdvanced, m_bA4AFSaveCpu); // ZZ:DownloadManager
-		m_htiAutoArch = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_DISABLE_AUTOARCHPREV), m_htiGeneralAdvanced, m_bAutoArchDisable);
-		m_htiYourHostname = m_ctrlTreeOptions.InsertItem(GetResString(IDS_YOURHOSTNAME), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiGeneralAdvanced);
-		m_ctrlTreeOptions.AddEditBox(m_htiYourHostname, RUNTIME_CLASS(CTreeOptionsEditEx));
-		m_htiTxtEditor = m_ctrlTreeOptions.InsertItem(GetTxtEditorLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiGeneralAdvanced);
-		m_ctrlTreeOptions.AddEditBox(m_htiTxtEditor, RUNTIME_CLASS(CTreeOptionsEditEx));
-		m_htiHighresTimer = m_ctrlTreeOptions.InsertCheckBox(GetHighresTimerLabel(), m_htiGeneralAdvanced, m_bHighresTimer);
+		m_htiSearchGroup = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_SEARCHLIMITS), iImgSearch, TVI_ROOT);
+		m_htiSearchEd2kGroup = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_ED2K_SEARCH), iImgSearch, m_htiSearchGroup);
+		m_htiSearchEd2kMaxResults = m_ctrlTreeOptions.InsertItem(GetResString(IDS_ED2K_SEARCH_MAX_RESULTS), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchEd2kGroup);
+		m_ctrlTreeOptions.AddEditBox(m_htiSearchEd2kMaxResults, RUNTIME_CLASS(CNumTreeOptionsEdit));
+		m_htiSearchEd2kMaxMoreRequests = m_ctrlTreeOptions.InsertItem(GetResString(IDS_ED2K_SEARCH_MAX_MORE), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchEd2kGroup);
+		m_ctrlTreeOptions.AddEditBox(m_htiSearchEd2kMaxMoreRequests, RUNTIME_CLASS(CNumTreeOptionsEdit));
+		m_htiSearchKadGroup = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_SEARCHKAD), iImgSearch, m_htiSearchGroup);
+		m_htiSearchKadFileTotal = m_ctrlTreeOptions.InsertItem(GetResString(IDS_KAD_SEARCH_FILE_TOTAL), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchKadGroup);
+		m_ctrlTreeOptions.AddEditBox(m_htiSearchKadFileTotal, RUNTIME_CLASS(CNumTreeOptionsEdit));
+		m_htiSearchKadKeywordTotal = m_ctrlTreeOptions.InsertItem(GetResString(IDS_KAD_SEARCH_KEYWORD_TOTAL), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchKadGroup);
+		m_ctrlTreeOptions.AddEditBox(m_htiSearchKadKeywordTotal, RUNTIME_CLASS(CNumTreeOptionsEdit));
+		m_htiSearchKadFileLifetime = m_ctrlTreeOptions.InsertItem(GetResString(IDS_KAD_SEARCH_FILE_LIFETIME), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchKadGroup);
+		m_ctrlTreeOptions.AddEditBox(m_htiSearchKadFileLifetime, RUNTIME_CLASS(CNumTreeOptionsEdit));
+		m_htiSearchKadKeywordLifetime = m_ctrlTreeOptions.InsertItem(GetResString(IDS_KAD_SEARCH_KEYWORD_LIFETIME), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiSearchKadGroup);
+		m_ctrlTreeOptions.AddEditBox(m_htiSearchKadKeywordLifetime, RUNTIME_CLASS(CNumTreeOptionsEdit));
 
 		/////////////////////////////////////////////////////////////////////////////
 		// File behavior group
@@ -833,6 +842,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_htiPreviewSmallBlocksDisabled = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_DISABLED), m_htiPreviewSmallBlocks, m_iPreviewSmallBlocks == 0);
 		m_htiPreviewSmallBlocksAllow = m_ctrlTreeOptions.InsertRadioButton(GetPreviewSmallBlocksAllowLabel(), m_htiPreviewSmallBlocks, m_iPreviewSmallBlocks == 1);
 		m_htiPreviewSmallBlocksForce = m_ctrlTreeOptions.InsertRadioButton(GetPreviewSmallBlocksForceLabel(), m_htiPreviewSmallBlocks, m_iPreviewSmallBlocks == 2);
+		m_htiAutoArch = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_DISABLE_AUTOARCHPREV), m_htiHiddenFile, m_bAutoArchDisable);
 		m_htiBeepOnError = m_ctrlTreeOptions.InsertCheckBox(GetBeepOnErrorLabel(), m_htiHiddenFile, m_bBeepOnError);
 		m_htiShowCopyEd2kLinkCmd = m_ctrlTreeOptions.InsertCheckBox(GetShowCopyEd2kLinkCmdLabel(), m_htiHiddenFile, m_bShowCopyEd2kLinkCmd);
 		m_htiFollowMajorityFilenameForNewDownloads = m_ctrlTreeOptions.InsertCheckBox(GetFollowMajorityFilenameDefaultLabel(), m_htiHiddenFile, m_bFollowMajorityFilenameForNewDownloads);
@@ -878,13 +888,6 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_htiCommitNever = m_ctrlTreeOptions.InsertRadioButton(GetCommitNeverLabel(), m_htiCommit, m_iCommitFiles == 0);
 		m_htiCommitOnShutdown = m_ctrlTreeOptions.InsertRadioButton(GetCommitOnShutdownLabel(), m_htiCommit, m_iCommitFiles == 1);
 		m_htiCommitAlways = m_ctrlTreeOptions.InsertRadioButton(GetCommitAlwaysLabel(), m_htiCommit, m_iCommitFiles == 2);
-
-		/////////////////////////////////////////////////////////////////////////////
-		// Startup group
-		//
-		m_htiHiddenStartup = m_ctrlTreeOptions.InsertGroup(GetStartupTweaksLabel(), iImgConnection, TVI_ROOT);
-		m_htiRestoreLastMainWndDlg = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_RESTORELASTMAINWNDDLG), m_htiHiddenStartup, m_bRestoreLastMainWndDlg);
-		m_htiRestoreLastLogPane = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_RESTORELASTLOGPANE), m_htiHiddenStartup, m_bRestoreLastLogPane);
 
 		/////////////////////////////////////////////////////////////////////////////
 		// Display group
@@ -964,14 +967,17 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		}
 
 		/////////////////////////////////////////////////////////////////////////////
-		// UPnP group
+		// General advanced group
 		//
-		m_htiUPnP = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_UPNP), iImgUPnP, TVI_ROOT);
-		m_htiCloseUPnPPorts = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_UPNPCLOSEONEXIT), m_htiUPnP, m_bCloseUPnPOnExit);
-		m_htiUPnPBackendMode = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_UPNPBACKENDMODE), iImgUPnP, m_htiUPnP);
-		m_htiUPnPBackendModeAutomatic = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_AUTOMATIC), m_htiUPnPBackendMode, m_iUPnPBackendMode == UPNP_BACKEND_AUTOMATIC);
-		m_htiUPnPBackendModeIgdOnly = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_UPNPBACKENDMODE_IGDONLY), m_htiUPnPBackendMode, m_iUPnPBackendMode == UPNP_BACKEND_IGD_ONLY);
-		m_htiUPnPBackendModePcpNatPmpOnly = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_UPNPBACKENDMODE_PCPONLY), m_htiUPnPBackendMode, m_iUPnPBackendMode == UPNP_BACKEND_PCP_NATPMP_ONLY);
+		m_htiGeneralAdvanced = m_ctrlTreeOptions.InsertGroup(GetGeneralAdvancedLabel(), iImgConnection, TVI_ROOT);
+		m_htiAutoTakeEd2kLinks = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_AUTOTAKEED2KLINKS), m_htiGeneralAdvanced, m_bAutoTakeEd2kLinks);
+		m_htiCreditSystem = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_USECREDITSYSTEM), m_htiGeneralAdvanced, m_bCreditSystem);
+		m_htiA4AFSaveCpu = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_A4AF_SAVE_CPU), m_htiGeneralAdvanced, m_bA4AFSaveCpu); // ZZ:DownloadManager
+		m_htiYourHostname = m_ctrlTreeOptions.InsertItem(GetResString(IDS_YOURHOSTNAME), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiGeneralAdvanced);
+		m_ctrlTreeOptions.AddEditBox(m_htiYourHostname, RUNTIME_CLASS(CTreeOptionsEditEx));
+		m_htiTxtEditor = m_ctrlTreeOptions.InsertItem(GetTxtEditorLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiGeneralAdvanced);
+		m_ctrlTreeOptions.AddEditBox(m_htiTxtEditor, RUNTIME_CLASS(CTreeOptionsEditEx));
+		m_htiHighresTimer = m_ctrlTreeOptions.InsertCheckBox(GetHighresTimerLabel(), m_htiGeneralAdvanced, m_bHighresTimer);
 
 		/////////////////////////////////////////////////////////////////////////////
 		// eMule Shared Use
@@ -1000,6 +1006,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiHiddenDisplay, IDS_TWEAKS_TT_HIDDEN_DISPLAY);
 		SetTreeToolTip(m_htiHiddenSecurity, IDS_TWEAKS_TT_HIDDEN_SECURITY);
 		SetTreeToolTip(m_htiLoggingGroup, IDS_TWEAKS_TT_LOGGING_GROUP);
+		SetTreeToolTip(m_htiNetworkConnectivity, IDS_TWEAKS_TT_NETWORK_CONNECTIVITY);
 		SetTreeToolTip(m_htiAutoTakeEd2kLinks, IDS_TWEAKS_TT_AUTO_TAKE_ED2K_LINKS);
 		SetTreeToolTip(m_htiCreditSystem, IDS_TWEAKS_TT_CREDIT_SYSTEM);
 		SetTreeToolTip(m_htiYourHostname, IDS_TWEAKS_TT_YOUR_HOSTNAME);
@@ -1928,6 +1935,7 @@ void CPPgTweaks::OnDestroy()
 	m_ctrlTreeOptions.DestroyWindow();
 	m_bInitializedTreeOpts = false;
 	m_treeToolTips.clear();
+	m_htiNetworkConnectivity = NULL;
 	m_htiTCPGroup = NULL;
 	m_htiSearchGroup = NULL;
 	m_htiSearchEd2kGroup = NULL;

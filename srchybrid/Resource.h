@@ -3025,6 +3025,8 @@
 #define IDS_STATS_ALLOCATIONS                  3197
 #define IDS_STATS_BLOCK_SIZE_FMT               3198
 #define IDS_ARCHPREV_CRC                       3199
+#define IDS_TWEAKS_NETWORK_CONNECTIVITY        3200
+#define IDS_TWEAKS_TT_NETWORK_CONNECTIVITY     3201
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025
@@ -3115,6 +3117,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        3055
 #define _APS_NEXT_COMMAND_VALUE         32773
 #define _APS_NEXT_CONTROL_VALUE         3093
-#define _APS_NEXT_SYMED_VALUE           3200
+#define _APS_NEXT_SYMED_VALUE           3202
 #endif
 #endif

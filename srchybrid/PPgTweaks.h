@@ -103,6 +103,7 @@ protected:
 	HTREEITEM m_htiLoggingGroup;
 	HTREEITEM m_htiMaxCon5Sec;
 	HTREEITEM m_htiMaxHalfOpen;
+	HTREEITEM m_htiNetworkConnectivity;
 	HTREEITEM m_htiDateTimeFormat4Lists;
 	HTREEITEM m_htiMaxChatHistoryLines;
 	HTREEITEM m_htiMaxMessageSessions;
