@@ -37,6 +37,14 @@ static char THIS_FILE[] = __FILE__;
 #define	IPFILTERUPDATEURL_STRINGS_PROFILE	_T("AC_IPFilterUpdateURLs.dat")
 #define UM_RESTORE_UPDATEURL				(WM_APP + 0x3D1)
 
+static const LPCTSTR s_apszDefaultIPFilterUpdateUrls[] = {
+	_T("https://upd.emule-security.org/ipfilter.zip"),
+	_T("http://upd.emule-security.org/ipfilter.zip"),
+	_T("https://emuling.gitlab.io/ipfilter.zip"),
+	_T("https://github.com/DavidMoore/ipfilter/releases/download/lists/ipfilter.zip"),
+	_T("https://raw.githubusercontent.com/Naunter/BT_BlockLists/master/bt_blocklists.gz")
+};
+
 IMPLEMENT_DYNAMIC(CPPgSecurity, CPropertyPage)
 
 BEGIN_MESSAGE_MAP(CPPgSecurity, CPropertyPage)
@@ -100,6 +108,7 @@ void CPPgSecurity::LoadSettings()
 	SetDlgItemInt(IDC_IPFILTERPERIOD, m_uPeriodDays, FALSE);
 	UpdateIPFilterControls();
 	UpdateAutoUpdateControls();
+	UpdateIPFilterStats();
 
 	ASSERT(vsfaEverybody == 0);
 	ASSERT(vsfaFriends == 1);
@@ -120,8 +129,10 @@ BOOL CPPgSecurity::OnInitDialog()
 		if (!m_pacIPFilterURL) {
 			m_pacIPFilterURL = new CCustomAutoComplete();
 			m_pacIPFilterURL->AddRef();
-			if (m_pacIPFilterURL->Bind(::GetDlgItem(m_hWnd, IDC_UPDATEURL), ACO_UPDOWNKEYDROPSLIST | ACO_AUTOSUGGEST | ACO_FILTERPREFIXES))
+			if (m_pacIPFilterURL->Bind(::GetDlgItem(m_hWnd, IDC_UPDATEURL), ACO_UPDOWNKEYDROPSLIST | ACO_AUTOSUGGEST | ACO_FILTERPREFIXES)) {
 				m_pacIPFilterURL->LoadList(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + IPFILTERUPDATEURL_STRINGS_PROFILE);
+				SeedDefaultIPFilterUpdateUrls();
+			}
 		}
 		CString strUpdateUrl(thePrefs.GetIPFilterUpdateUrl());
 		if (strUpdateUrl.IsEmpty() && m_pacIPFilterURL->GetItemCount() > 0)
@@ -244,6 +255,7 @@ void CPPgSecurity::Localize()
 		SetDlgItemText(IDC_STATIC_IPFILTER, GetResString(IDS_IPFILTER));
 		SetDlgItemText(IDC_ENABLE_IPFILTER, GetResString(IDS_ENABLE_IPFILTER));
 		SetDlgItemText(IDC_IPFILTER_EXPLANATION, GetResString(IDS_IPFILTER_EXPLANATION));
+		UpdateIPFilterStats();
 		SetDlgItemText(IDC_RELOADFILTER, GetResString(IDS_SF_RELOAD));
 		SetDlgItemText(IDC_EDITFILTER, GetResString(IDS_EDIT));
 		SetDlgItemText(IDC_STATIC_FILTERLEVEL, GetResString(IDS_FILTERLEVEL) + _T(':'));
@@ -270,12 +282,22 @@ void CPPgSecurity::Localize()
 	}
 }
 
+void CPPgSecurity::SeedDefaultIPFilterUpdateUrls()
+{
+	if (m_pacIPFilterURL == NULL || !m_pacIPFilterURL->IsBound() || m_pacIPFilterURL->GetItemCount() > 0)
+		return;
+
+	for (int i = 0; i < _countof(s_apszDefaultIPFilterUpdateUrls); ++i)
+		m_pacIPFilterURL->AddItem(s_apszDefaultIPFilterUpdateUrls[i], -1);
+}
+
 void CPPgSecurity::OnReloadIPFilter()
 {
 	CWaitCursor curHourglass;
 	theApp.ipfilter->LoadFromDefaultFile();
 	if (thePrefs.GetFilterServerByIP())
 		theApp.emuledlg->serverwnd->serverlistctrl.RemoveAllFilteredServers();
+	UpdateIPFilterStats();
 }
 
 void CPPgSecurity::OnEditIPFilter()
@@ -294,6 +316,7 @@ void CPPgSecurity::OnLoadIPFFromURL()
 		(void)theApp.ipfilterUpdater->UpdateFromUrlInteractive(url);
 	else
 		OnReloadIPFilter();
+	UpdateIPFilterStats();
 }
 
 void CPPgSecurity::OnDestroy()
@@ -384,11 +407,37 @@ void CPPgSecurity::UpdateIPFilterControls()
 	GetDlgItem(IDC_STATIC_FILTERLEVEL)->EnableWindow(bEnabled);
 	GetDlgItem(IDC_STATIC_FILTERLEVEL2)->EnableWindow(bEnabled);
 	GetDlgItem(IDC_FILTERLEVEL)->EnableWindow(bEnabled);
+	UpdateIPFilterStats();
+}
+
+void CPPgSecurity::UpdateIPFilterStats()
+{
+	if (GetDlgItem(IDC_IPFILTER_STATS) == NULL)
+		return;
+
+	BOOL bTranslated = FALSE;
+	UINT uFilterLevel = GetDlgItemInt(IDC_FILTERLEVEL, &bTranslated, FALSE);
+	if (!bTranslated)
+		uFilterLevel = thePrefs.filterlevel;
+
+	const INT_PTR nRules = theApp.ipfilter != NULL ? theApp.ipfilter->GetIPFilter().GetCount() : 0;
+	CString strStats;
+	strStats.Format(GetResString(IDS_IPFILTER_STATS_FMT),
+		static_cast<LPCTSTR>(IsDlgButtonChecked(IDC_ENABLE_IPFILTER) != 0 ? GetResString(IDS_ENABLED) : GetResString(IDS_DISABLED)),
+		static_cast<LPCTSTR>(GetFormatedUInt(static_cast<ULONG>(nRules))),
+		uFilterLevel);
+	SetDlgItemText(IDC_IPFILTER_STATS, strStats);
 }
 
 void CPPgSecurity::OnBnClickedIPFilterEnabled()
 {
 	UpdateIPFilterControls();
+	SetModified();
+}
+
+void CPPgSecurity::OnSettingsChange()
+{
+	UpdateIPFilterStats();
 	SetModified();
 }
 

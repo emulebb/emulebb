@@ -1433,7 +1433,7 @@ public:
 	/**
 	 * @brief Returns the built-in default URL for IP-filter update downloads.
 	 */
-	static LPCTSTR	GetDefaultIPFilterUpdateUrl()		{ return _T("http://upd.emule-security.org/ipfilter.zip"); }
+	static LPCTSTR	GetDefaultIPFilterUpdateUrl()		{ return _T("https://upd.emule-security.org/ipfilter.zip"); }
 	/**
 	 * @brief Returns the built-in default URL for server.met update downloads.
 	 */

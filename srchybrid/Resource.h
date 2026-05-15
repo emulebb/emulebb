@@ -3030,6 +3030,7 @@
 #define IDS_ARCHPREV_CRC                       3199
 #define IDS_TWEAKS_NETWORK_CONNECTIVITY        3200
 #define IDS_TWEAKS_TT_NETWORK_CONNECTIVITY     3201
+#define IDS_IPFILTER_STATS_FMT                 3202
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025
@@ -3113,6 +3114,7 @@
 #define IDC_ALWAYS_SHOW_TRAY_ICON       3092
 #define IDC_ENABLE_IPFILTER             3093
 #define IDC_IPFILTER_EXPLANATION        3094
+#define IDC_IPFILTER_STATS              3095
 #define IDA_ENTER                       32771
 
 // Next default values for new objects
@@ -3121,7 +3123,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        3055
 #define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         3095
-#define _APS_NEXT_SYMED_VALUE           3202
+#define _APS_NEXT_CONTROL_VALUE         3096
+#define _APS_NEXT_SYMED_VALUE           3203
 #endif
 #endif

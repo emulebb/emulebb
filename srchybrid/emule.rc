@@ -714,6 +714,7 @@ BEGIN
     GROUPBOX        "IP Filter",IDC_STATIC_IPFILTER,4,2,539,103
     CONTROL         "Enable IP filter",IDC_ENABLE_IPFILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,13,206,10
     LTEXT           "IP filter explanation",IDC_IPFILTER_EXPLANATION,11,26,520,18
+    LTEXT           "Status: Enabled | Rules loaded: 0 | Level: < 127",IDC_IPFILTER_STATS,11,44,390,8
     RTEXT           "Filter level:",IDC_STATIC_FILTERLEVEL,11,52,54,8
     LTEXT           "<",IDC_STATIC_FILTERLEVEL2,72,52,8,9
     EDITTEXT        IDC_FILTERLEVEL,81,50,30,12,ES_AUTOHSCROLL | ES_NUMBER
@@ -3789,6 +3790,7 @@ BEGIN
     IDS_PPG_DEBUG_UDP_KAD   "UDP (Kad)"
     IDS_PPG_DEBUG_HEAP_LEVEL_LABEL
                             "Memory corruption check level"
+    IDS_IPFILTER_STATS_FMT "Status: %s | Rules loaded: %s | Level: < %u"
     IDS_STATS_DEBUG_INFO    "Debug info"
     IDS_STATS_DEBUG_BLOCKS  "Blocks"
     IDS_STATS_DEBUG_FREE    "Free"

@@ -27,8 +27,16 @@ protected:
 
 	void LoadSettings();
 	void UpdateToolTips();
+	/**
+	 * @brief Seeds the IP-filter update URL history when no user history exists.
+	 */
+	void SeedDefaultIPFilterUpdateUrls();
 	void UpdateIPFilterControls();
 	void UpdateAutoUpdateControls();
+	/**
+	 * @brief Refreshes the compact IP-filter status summary shown on the page.
+	 */
+	void UpdateIPFilterStats();
 
 	virtual void DoDataExchange(CDataExchange *pDX);    // DDX/DDV support
 	virtual BOOL OnInitDialog();
@@ -37,7 +45,7 @@ protected:
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 
 	DECLARE_MESSAGE_MAP()
-	afx_msg void OnSettingsChange()					{ SetModified(); }
+	afx_msg void OnSettingsChange();
 	afx_msg void OnBnClickedIPFilterEnabled();
 	afx_msg void OnReloadIPFilter();
 	afx_msg void OnEditIPFilter();
