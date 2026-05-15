@@ -444,6 +444,18 @@ bool CSharedDirsTreeCtrl::HasSharedDirectoryDescendant(const CString &strDir) co
 	return it != m_aSortedSharedDirectoryKeys.end() && HasSharedDirectoryKeyPrefix(strKey, *it);
 }
 
+bool CSharedDirsTreeCtrl::IsSharedTreeDirectoryAccessible(const CString &strDir)
+{
+	const CString strKey(BuildSharedTreePathKey(strDir));
+	void *pCachedValue = NULL;
+	if (m_mapAccessibleDirectoryCache.Lookup(strKey, pCachedValue))
+		return pCachedValue != NULL;
+
+	const bool bAccessible = LongPathSeams::PathExists(strDir);
+	m_mapAccessibleDirectoryCache.SetAt(strKey, bAccessible ? reinterpret_cast<void*>(1) : NULL);
+	return bAccessible;
+}
+
 void CSharedDirsTreeCtrl::OnSysColorChange()
 {
 	CTreeCtrl::OnSysColorChange();
@@ -655,7 +667,7 @@ void CSharedDirsTreeCtrl::FilterTreeAddSubDirectories(CDirectoryItem *pDirectory
 		if (strCurrentKey == strDirectoryKey)
 			continue;
 		if (!FilterTreeIsSubDirectory(strCurrent, strDirectoryPath, liDirs)) {
-			bool bAccessible = bParentAccessible ? LongPathSeams::PathExists(strCurrent) : false;
+			bool bAccessible = bParentAccessible ? IsSharedTreeDirectoryAccessible(strCurrent) : false;
 			const CString &strName(GetFolderLabel(strCurrent, nLevel == 0, bAccessible));
 			CDirectoryItem *pNewItem = new CDirectoryItem(strCurrent);
 			pNewItem->m_htItem = InsertItem(TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE, strName, 5, 5, 0, 0, (LPARAM)pNewItem, pDirectory->m_htItem, TVI_SORT);
@@ -677,6 +689,7 @@ void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree begin"), 0);
 #endif
 	m_bCreatingTree = true;
+	m_mapAccessibleDirectoryCache.RemoveAll();
 	// store current selection
 	CDirectoryItem *pOldSelectedItem = NULL;
 	if (GetSelectedFilter() != NULL)
@@ -719,7 +732,7 @@ void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 								&& !ListContainsEquivalentPath(m_strliCatIncomingDirs, strCatIncomingPath))
 							{
 								m_strliCatIncomingDirs.AddTail(strCatIncomingPath);
-								bool bAccessible = LongPathSeams::PathExists(strCatIncomingPath);
+								bool bAccessible = IsSharedTreeDirectoryAccessible(strCatIncomingPath);
 								const CString &strName(GetFolderLabel(strCatIncomingPath, true, bAccessible));
 								CDirectoryItem *pCatInc = new CDirectoryItem(strCatIncomingPath, 0, SDI_CATINCOMING);
 								pCatInc->m_htItem = InsertItem(TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE, strName, 5, 5, 0, 0, (LPARAM)pCatInc, pCurrent->m_htItem, TVI_SORT);

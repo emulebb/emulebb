@@ -100,6 +100,10 @@ protected:
 	CString			FindContainingMonitoredRoot(const CString &strDir, bool bAllowExactMatch) const;
 	bool			HasManagedSharedAncestor(const CString &strDir) const;
 	CString			BuildFileSystemTreeLabel(const CString &strDir, LPCTSTR pszBaseLabel) const;
+	/**
+	 * @brief Returns cached directory accessibility for the current shared-tree rebuild.
+	 */
+	bool			IsSharedTreeDirectoryAccessible(const CString &strDir);
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void	OnSysColorChange();
@@ -149,5 +153,6 @@ private:
 	bool	m_bUseIcons;
 	CMap<int, int, int, int> m_mapSystemIcons;
 	CMapStringToPtr m_mapSharedDirectoryKeys;
+	CMapStringToPtr m_mapAccessibleDirectoryCache;
 	std::vector<CString> m_aSortedSharedDirectoryKeys;
 };
