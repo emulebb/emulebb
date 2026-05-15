@@ -404,8 +404,13 @@ namespace
 			thePrefs.GetWebBindAddr())) {
 			rules.push_back(nlohmann::json{
 				{"name", JsonString(rule.strName)},
+				{"direction", JsonString(rule.strDirection)},
 				{"protocol", JsonString(rule.strProtocol)},
-				{"port", rule.uPort}
+				{"localPort", "Any"},
+				{"remotePort", "Any"},
+				{"localAddress", "Any"},
+				{"remoteAddress", "Any"},
+				{"profiles", nlohmann::json::array({"Domain", "Private", "Public"})}
 			});
 		}
 		return rules;
@@ -420,8 +425,13 @@ namespace
 		for (const WindowsFirewallRepairSeams::CFirewallRuleSpec &rule : s_lastFirewallRepairResult.rules) {
 			rules.push_back(nlohmann::json{
 				{"name", JsonString(rule.strName)},
+				{"direction", JsonString(rule.strDirection)},
 				{"protocol", JsonString(rule.strProtocol)},
-				{"port", rule.uPort}
+				{"localPort", "Any"},
+				{"remotePort", "Any"},
+				{"localAddress", "Any"},
+				{"remoteAddress", "Any"},
+				{"profiles", nlohmann::json::array({"Domain", "Private", "Public"})}
 			});
 		}
 
