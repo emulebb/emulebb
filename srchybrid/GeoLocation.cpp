@@ -22,6 +22,7 @@
 #include <time.h>
 #include <vector>
 #include "GeoLocation.h"
+#include "BackgroundRefreshSeams.h"
 #include "DirectDownload.h"
 #include "emule.h"
 #include "Preferences.h"
@@ -829,7 +830,6 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 	pThread->m_bAutoDelete = TRUE;
 	__time64_t tNow = 0;
 	_time64(&tNow);
-	thePrefs.SetGeoLocationLastCheckTime(tNow, true);
 	SBackgroundRefreshContext *pThreadContext = pContext.release();
 	if (pThread->ResumeThread() == static_cast<DWORD>(-1)) {
 		const DWORD dwResumeError = ::GetLastError();
@@ -842,6 +842,8 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 		AddDebugLogLine(false, _T("GeoLocation: failed to resume background refresh thread (%u)."), dwResumeError);
 		return false;
 	}
+	if (BackgroundRefreshSeams::ShouldRecordRefreshAttempt(true, true))
+		thePrefs.SetGeoLocationLastCheckTime(tNow, true);
 	return true;
 }
 

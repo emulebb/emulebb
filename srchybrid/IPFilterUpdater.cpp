@@ -18,6 +18,7 @@
 #include <memory>
 #include <time.h>
 #include "IPFilterUpdater.h"
+#include "BackgroundRefreshSeams.h"
 #include "DirectDownload.h"
 #include "emule.h"
 #include "IPFilter.h"
@@ -432,8 +433,6 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 	}
 
 	pThread->m_bAutoDelete = TRUE;
-	thePrefs.SetIPFilterLastUpdateTime(tNow, true);
-	AddLogLine(false, GetResString(IDS_IPFILTER_AUTO_UPDATE_STARTED), (LPCTSTR)strUpdateUrl);
 	SBackgroundRefreshContext *pThreadContext = pContext.release();
 	if (pThread->ResumeThread() == static_cast<DWORD>(-1)) {
 		const DWORD dwResumeError = ::GetLastError();
@@ -445,6 +444,9 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 		AddDebugLogLine(false, _T("IPFilter: failed to resume background update thread (%u)."), dwResumeError);
 		return false;
 	}
+	if (BackgroundRefreshSeams::ShouldRecordRefreshAttempt(true, true))
+		thePrefs.SetIPFilterLastUpdateTime(tNow, true);
+	AddLogLine(false, GetResString(IDS_IPFILTER_AUTO_UPDATE_STARTED), (LPCTSTR)strUpdateUrl);
 	return true;
 }
 
