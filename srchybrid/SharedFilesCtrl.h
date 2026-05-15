@@ -121,6 +121,7 @@ protected:
 	CMap<const CShareableFile*, const CShareableFile*, int, int> m_mapVisibleFileIndex;
 	bool			m_bSelectionRestoreInProgress;
 	bool			m_bStartupDeferredReloadPending;
+	bool			m_bVisibleFilePrunePending;
 
 	static int CALLBACK SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	void OpenFile(const CShareableFile *file);
@@ -131,6 +132,8 @@ protected:
 	void ApplyVisibleFileCount();
 	bool IsLiveVisibleFilePointer(const CShareableFile *file) const;
 	bool PruneStaleVisibleFiles();
+	void ScheduleVisibleFilePrune();
+	void FlushVisibleFilePrune();
 	bool ShouldPreserveVirtualListState() const;
 	bool ShouldDisplayFile(const CShareableFile *file) const;
 	void SortVisibleFiles();

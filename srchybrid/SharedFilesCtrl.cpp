@@ -70,6 +70,8 @@ namespace
 {
 	constexpr UINT_PTR kStartupDeferredReloadTimerId = 0x5346;
 	constexpr UINT kStartupDeferredReloadDelayMs = 500;
+	constexpr UINT_PTR kVisibleFilePruneTimerId = 0x5347;
+	constexpr UINT kVisibleFilePruneDelayMs = 250;
 
 	int FindSubMenuItemPosition(CMenu &menu, HMENU hSubMenu)
 	{
@@ -484,6 +486,7 @@ CSharedFilesCtrl::CSharedFilesCtrl()
 	, m_pHighlightedItem()
 	, m_bSelectionRestoreInProgress(false)
 	, m_bStartupDeferredReloadPending(false)
+	, m_bVisibleFilePrunePending(false)
 {
 	SetGeneralPurposeFind(true);
 	m_pToolTip = new CToolTipCtrlX;
@@ -654,6 +657,10 @@ void CSharedFilesCtrl::RebuildVisibleFileIndex()
 
 void CSharedFilesCtrl::ClearVisibleFiles()
 {
+	if (m_bVisibleFilePrunePending) {
+		KillTimer(kVisibleFilePruneTimerId);
+		m_bVisibleFilePrunePending = false;
+	}
 	m_aVisibleFiles.clear();
 	m_mapVisibleFileIndex.RemoveAll();
 }
@@ -680,30 +687,13 @@ bool CSharedFilesCtrl::IsLiveVisibleFilePointer(const CShareableFile *file) cons
 
 bool CSharedFilesCtrl::PruneStaleVisibleFiles()
 {
-	CMap<const CShareableFile*, const CShareableFile*, bool, bool> mapLiveFiles;
-	if (theApp.sharedfiles != NULL) {
-		for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair))
-			mapLiveFiles.SetAt(static_cast<const CShareableFile*>(pair->value), true);
-	}
-
-	if (theApp.knownfiles != NULL) {
-		const CKnownFilesMap &knownFiles = theApp.knownfiles->GetKnownFiles();
-		for (const CKnownFilesMap::CPair *pair = knownFiles.PGetFirstAssoc(); pair != NULL; pair = knownFiles.PGetNextAssoc(pair))
-			mapLiveFiles.SetAt(static_cast<const CShareableFile*>(pair->value), true);
-	}
-
-	for (POSITION pos = liTempShareableFilesInDir.GetHeadPosition(); pos != NULL;)
-		mapLiveFiles.SetAt(liTempShareableFilesInDir.GetNext(pos), true);
-
 	const size_t uOldSize = m_aVisibleFiles.size();
 	m_aVisibleFiles.erase(std::remove_if(m_aVisibleFiles.begin(), m_aVisibleFiles.end(),
-		[&mapLiveFiles](const CShareableFile *file) {
-			bool bLive = false;
-			return file == NULL || !mapLiveFiles.Lookup(file, bLive);
+		[this](const CShareableFile *file) {
+			return !IsLiveVisibleFilePointer(file);
 		}), m_aVisibleFiles.end());
 
-	bool bHighlightedLive = false;
-	if (m_pHighlightedItem != NULL && !mapLiveFiles.Lookup(m_pHighlightedItem, bHighlightedLive))
+	if (m_pHighlightedItem != NULL && !IsLiveVisibleFilePointer(m_pHighlightedItem))
 		m_pHighlightedItem = NULL;
 
 	if (m_aVisibleFiles.size() == uOldSize)
@@ -712,6 +702,27 @@ bool CSharedFilesCtrl::PruneStaleVisibleFiles()
 	RebuildVisibleFileIndex();
 	ApplyVisibleFileCount();
 	return true;
+}
+
+void CSharedFilesCtrl::ScheduleVisibleFilePrune()
+{
+	if (!m_bModelBound || theApp.IsClosing() || GetSafeHwnd() == NULL || m_bVisibleFilePrunePending)
+		return;
+
+	m_bVisibleFilePrunePending = true;
+	if (SetTimer(kVisibleFilePruneTimerId, kVisibleFilePruneDelayMs, NULL) == 0)
+		FlushVisibleFilePrune();
+}
+
+void CSharedFilesCtrl::FlushVisibleFilePrune()
+{
+	if (!m_bVisibleFilePrunePending)
+		return;
+
+	KillTimer(kVisibleFilePruneTimerId);
+	m_bVisibleFilePrunePending = false;
+	if (PruneStaleVisibleFiles())
+		Invalidate(FALSE);
 }
 
 void CSharedFilesCtrl::ApplyVisibleFileCount()
@@ -870,8 +881,7 @@ void CSharedFilesCtrl::AddFile(const CShareableFile *file)
 		return;
 	if (theApp.IsClosing())
 		return;
-	if (PruneStaleVisibleFiles())
-		Invalidate(FALSE);
+	ScheduleVisibleFilePrune();
 	if (!IsLiveVisibleFilePointer(file))
 		return;
 	if (!ShouldDisplayFile(file))
@@ -927,8 +937,7 @@ void CSharedFilesCtrl::RemoveFile(const CShareableFile *file, bool bDeletedFromD
 {
 	if (!m_bModelBound)
 		return;
-	if (PruneStaleVisibleFiles())
-		Invalidate(FALSE);
+	ScheduleVisibleFilePrune();
 	int iItem = FindFile(file);
 	if (iItem >= 0) {
 		if (!bDeletedFromDisk && m_pDirectoryFilter != NULL && m_pDirectoryFilter->m_eItemType == SDI_UNSHAREDDIRECTORY)
@@ -1137,6 +1146,10 @@ void CSharedFilesCtrl::OnTimer(UINT_PTR nIDEvent)
 			return;
 		m_bStartupDeferredReloadPending = false;
 		ReloadFileList();
+		return;
+	}
+	if (nIDEvent == kVisibleFilePruneTimerId) {
+		FlushVisibleFilePrune();
 		return;
 	}
 
