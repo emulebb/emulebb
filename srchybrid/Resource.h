@@ -2906,6 +2906,9 @@
 #define IDS_THUMBNAIL_FFMPEG                   2219
 #define IDS_THUMBNAIL_INTERVAL_SECONDS         2220
 #define IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG      2221
+#define IDS_ENABLE_IPFILTER                    2222
+#define IDS_IPFILTER_EXPLANATION               2223
+#define IDS_PPG_SECURITY_TT_ENABLE_IPFILTER    2224
 #define IDS_RELOADFAKEFILEFILTER               2230
 #define IDS_FAKEFILESCORE                      2231
 #define IDS_TOOLS_FOLDERS                      2232
@@ -3108,6 +3111,8 @@
 #define IDC_THUMBNAIL_INTERVAL          3090
 #define IDC_THUMBNAIL_INTERVAL_SPIN     3091
 #define IDC_ALWAYS_SHOW_TRAY_ICON       3092
+#define IDC_ENABLE_IPFILTER             3093
+#define IDC_IPFILTER_EXPLANATION        3094
 #define IDA_ENTER                       32771
 
 // Next default values for new objects
@@ -3116,7 +3121,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        3055
 #define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         3093
+#define _APS_NEXT_CONTROL_VALUE         3095
 #define _APS_NEXT_SYMED_VALUE           3202
 #endif
 #endif

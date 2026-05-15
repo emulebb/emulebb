@@ -368,7 +368,7 @@ static int __cdecl CmpSIPFilterByAddr(const void *pvKey, const void *pvElement) 
 
 bool CIPFilter::IsFiltered(uint32 ip, uint32 level) /*const*/
 {
-	if (m_iplist.IsEmpty() || ip == 0)
+	if (!IPFilterSeams::ShouldEvaluateFilter(thePrefs.IsIPFilterEnabled(), static_cast<size_t>(m_iplist.GetCount()), ip))
 		return false;
 
 	ip = ntohl(ip);

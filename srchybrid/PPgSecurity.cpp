@@ -39,6 +39,7 @@ static char THIS_FILE[] = __FILE__;
 IMPLEMENT_DYNAMIC(CPPgSecurity, CPropertyPage)
 
 BEGIN_MESSAGE_MAP(CPPgSecurity, CPropertyPage)
+	ON_BN_CLICKED(IDC_ENABLE_IPFILTER, OnBnClickedIPFilterEnabled)
 	ON_BN_CLICKED(IDC_FILTERSERVERBYIPFILTER, OnSettingsChange)
 	ON_BN_CLICKED(IDC_RELOADFILTER, OnReloadIPFilter)
 	ON_BN_CLICKED(IDC_EDITFILTER, OnEditIPFilter)
@@ -76,6 +77,7 @@ void CPPgSecurity::DoDataExchange(CDataExchange *pDX)
 
 void CPPgSecurity::LoadSettings()
 {
+	CheckDlgButton(IDC_ENABLE_IPFILTER, static_cast<UINT>(thePrefs.IsIPFilterEnabled()));
 	SetDlgItemInt(IDC_FILTERLEVEL, thePrefs.filterlevel);
 	CheckDlgButton(IDC_FILTERSERVERBYIPFILTER, thePrefs.filterserverbyip);
 
@@ -93,6 +95,7 @@ void CPPgSecurity::LoadSettings()
 	m_uPeriodDays = thePrefs.GetIPFilterUpdatePeriodDays();
 	CheckDlgButton(IDC_AUTOUPDATE_IPFILTER, static_cast<UINT>(m_bAutoUpdate));
 	SetDlgItemInt(IDC_IPFILTERPERIOD, m_uPeriodDays, FALSE);
+	UpdateIPFilterControls();
 	UpdateAutoUpdateControls();
 
 	ASSERT(vsfaEverybody == 0);
@@ -141,6 +144,7 @@ void CPPgSecurity::UpdateToolTips()
 		return;
 
 	m_toolTip.SetTool(this, IDC_USESECIDENT, GetResString(IDS_PPG_SECURITY_TT_USESECIDENT));
+	m_toolTip.SetTool(this, IDC_ENABLE_IPFILTER, GetResString(IDS_PPG_SECURITY_TT_ENABLE_IPFILTER));
 	m_toolTip.SetTool(this, IDC_FILTERSERVERBYIPFILTER, GetResString(IDS_PPG_SECURITY_TT_FILTERSERVERBYIPFILTER));
 	m_toolTip.SetTool(this, IDC_FILTERLEVEL, GetResString(IDS_PPG_SECURITY_TT_FILTERLEVEL));
 	m_toolTip.SetTool(this, IDC_RELOADFILTER, GetResString(IDS_PPG_SECURITY_TT_RELOADFILTER));
@@ -164,12 +168,14 @@ BOOL CPPgSecurity::OnApply()
 {
 	UINT uLevel = thePrefs.filterlevel;
 	bool bFilter = thePrefs.filterserverbyip;
+	const bool bIPFilterEnabledOld = thePrefs.IsIPFilterEnabled();
 	const bool bAutoUpdateOld = thePrefs.GetAutoIPFilterUpdate();
 	const UINT uPeriodDaysOld = thePrefs.GetIPFilterUpdatePeriodDays();
 	const CString strUpdateUrlOld(thePrefs.GetIPFilterUpdateUrl());
+	thePrefs.SetIPFilterEnabled(IsDlgButtonChecked(IDC_ENABLE_IPFILTER) != 0);
 	thePrefs.filterlevel = GetDlgItemInt(IDC_FILTERLEVEL, NULL, FALSE);
 	thePrefs.filterserverbyip = IsDlgButtonChecked(IDC_FILTERSERVERBYIPFILTER) != 0;
-	if (thePrefs.filterserverbyip && (!bFilter || uLevel != thePrefs.filterlevel))
+	if (thePrefs.IsIPFilterEnabled() && thePrefs.filterserverbyip && (bIPFilterEnabledOld != thePrefs.IsIPFilterEnabled() || !bFilter || uLevel != thePrefs.filterlevel))
 		theApp.emuledlg->serverwnd->serverlistctrl.RemoveAllFilteredServers();
 
 	thePrefs.m_bUseSecureIdent = IsDlgButtonChecked(IDC_USESECIDENT) != 0;
@@ -231,6 +237,8 @@ void CPPgSecurity::Localize()
 	if (m_hWnd) {
 		SetWindowText(GetResString(IDS_SECURITY));
 		SetDlgItemText(IDC_STATIC_IPFILTER, GetResString(IDS_IPFILTER));
+		SetDlgItemText(IDC_ENABLE_IPFILTER, GetResString(IDS_ENABLE_IPFILTER));
+		SetDlgItemText(IDC_IPFILTER_EXPLANATION, GetResString(IDS_IPFILTER_EXPLANATION));
 		SetDlgItemText(IDC_RELOADFILTER, GetResString(IDS_SF_RELOAD));
 		SetDlgItemText(IDC_EDITFILTER, GetResString(IDS_EDIT));
 		SetDlgItemText(IDC_STATIC_FILTERLEVEL, GetResString(IDS_FILTERLEVEL) + _T(':'));
@@ -348,6 +356,21 @@ void CPPgSecurity::UpdateAutoUpdateControls()
 	const BOOL bAutoUpdate = IsDlgButtonChecked(IDC_AUTOUPDATE_IPFILTER) != 0;
 	GetDlgItem(IDC_IPFILTERPERIOD_LABEL)->EnableWindow(bAutoUpdate);
 	GetDlgItem(IDC_IPFILTERPERIOD)->EnableWindow(bAutoUpdate);
+}
+
+void CPPgSecurity::UpdateIPFilterControls()
+{
+	const BOOL bEnabled = IsDlgButtonChecked(IDC_ENABLE_IPFILTER) != 0;
+	GetDlgItem(IDC_FILTERSERVERBYIPFILTER)->EnableWindow(bEnabled);
+	GetDlgItem(IDC_STATIC_FILTERLEVEL)->EnableWindow(bEnabled);
+	GetDlgItem(IDC_STATIC_FILTERLEVEL2)->EnableWindow(bEnabled);
+	GetDlgItem(IDC_FILTERLEVEL)->EnableWindow(bEnabled);
+}
+
+void CPPgSecurity::OnBnClickedIPFilterEnabled()
+{
+	UpdateIPFilterControls();
+	SetModified();
 }
 
 void CPPgSecurity::OnBnClickedAutoupdateIpfilter()

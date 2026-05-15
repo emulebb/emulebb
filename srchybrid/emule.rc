@@ -711,37 +711,39 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Security"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "IP Filter",IDC_STATIC_IPFILTER,4,2,223,78
-    CONTROL         "Filter servers too",IDC_FILTERSERVERBYIPFILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,12,206,10
-    RTEXT           "Filter level:",IDC_STATIC_FILTERLEVEL,11,25,54,8
-    LTEXT           "<",IDC_STATIC_FILTERLEVEL2,72,25,8,9
-    EDITTEXT        IDC_FILTERLEVEL,81,23,30,12,ES_AUTOHSCROLL | ES_NUMBER
-    PUSHBUTTON      "Reload",IDC_RELOADFILTER,119,23,50,12
-    PUSHBUTTON      "Edit",IDC_EDITFILTER,171,23,50,12
-    LTEXT           "Update from URL: (filter.dat- or PeerGuardian-format)",IDC_STATIC_UPDATEFROM,11,37,202,8
-    EDITTEXT        IDC_UPDATEURL,11,47,163,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "v",IDC_DD,174,47,11,12,BS_CENTER
-    PUSHBUTTON      "Load",IDC_LOADURL,186,47,35,12
-    CONTROL         "Auto update",IDC_AUTOUPDATE_IPFILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,63,74,10
-    RTEXT           "Every (days):",IDC_IPFILTERPERIOD_LABEL,91,64,70,8
-    EDITTEXT        IDC_IPFILTERPERIOD,166,62,30,12,ES_AUTOHSCROLL | ES_NUMBER
-    GROUPBOX        "See My Shared Files/Directories",IDC_SEEMYSHARE_FRM,4,85,223,26
-    CONTROL         "Everybody",IDC_SEESHARE1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,11,96,73,10
-    CONTROL         "Only friends",IDC_SEESHARE2,"Button",BS_AUTORADIOBUTTON,88,96,71,10
-    CONTROL         "Nobody",IDC_SEESHARE3,"Button",BS_AUTORADIOBUTTON,166,96,52,10
-    GROUPBOX        "Protocol Obfuscation",IDC_SEC_OBFUSCATIONBOX,4,115,223,45,WS_GROUP
+    GROUPBOX        "IP Filter",IDC_STATIC_IPFILTER,4,2,539,103
+    CONTROL         "Enable IP filter",IDC_ENABLE_IPFILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,13,206,10
+    LTEXT           "IP filter explanation",IDC_IPFILTER_EXPLANATION,11,26,520,18
+    RTEXT           "Filter level:",IDC_STATIC_FILTERLEVEL,11,52,54,8
+    LTEXT           "<",IDC_STATIC_FILTERLEVEL2,72,52,8,9
+    EDITTEXT        IDC_FILTERLEVEL,81,50,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Filter servers too",IDC_FILTERSERVERBYIPFILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,119,52,126,10
+    PUSHBUTTON      "Reload",IDC_RELOADFILTER,435,49,50,12
+    PUSHBUTTON      "Edit",IDC_EDITFILTER,487,49,50,12
+    LTEXT           "Update from URL: (filter.dat- or PeerGuardian-format)",IDC_STATIC_UPDATEFROM,11,66,390,8
+    EDITTEXT        IDC_UPDATEURL,11,76,437,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "v",IDC_DD,449,76,11,12,BS_CENTER
+    PUSHBUTTON      "Load",IDC_LOADURL,462,76,75,12
+    CONTROL         "Auto update",IDC_AUTOUPDATE_IPFILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,91,74,10
+    RTEXT           "Every (days):",IDC_IPFILTERPERIOD_LABEL,91,92,70,8
+    EDITTEXT        IDC_IPFILTERPERIOD,166,90,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    GROUPBOX        "See My Shared Files/Directories",IDC_SEEMYSHARE_FRM,4,110,223,26
+    CONTROL         "Everybody",IDC_SEESHARE1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,11,121,73,10
+    CONTROL         "Only friends",IDC_SEESHARE2,"Button",BS_AUTORADIOBUTTON,88,121,71,10
+    CONTROL         "Nobody",IDC_SEESHARE3,"Button",BS_AUTORADIOBUTTON,166,121,52,10
+    GROUPBOX        "Protocol Obfuscation",IDC_SEC_OBFUSCATIONBOX,4,140,223,45,WS_GROUP
     CONTROL         "Enable protocol obfuscation",IDC_ENABLEOBFUSCATION,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,126,202,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,151,202,10
     CONTROL         "Allow obfuscated connections only (not recommended)",IDC_ONLYOBFUSCATED,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,136,202,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,161,202,10
     CONTROL         "Disable support for obfuscated connections",IDC_DISABLEOBFUSCATION,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,146,202,10
-    GROUPBOX        "Misc",IDC_SEC_MISC,4,165,223,55,WS_GROUP
-    CONTROL         "Use secure Identification",IDC_USESECIDENT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,175,212,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,171,202,10
+    GROUPBOX        "Misc",IDC_SEC_MISC,4,190,223,55,WS_GROUP
+    CONTROL         "Use secure Identification",IDC_USESECIDENT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,200,212,10
     CONTROL         "Enable spam filter for search results",IDC_SEARCHSPAMFILTER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,195,212,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,220,212,10
     CONTROL         "Warn when opening untrusted files",IDC_CHECK_FILE_OPEN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,205,212,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,230,212,10
 END
 
 IDD_EXITBOX DIALOGEX 0, 0, 188, 96
@@ -3256,6 +3258,9 @@ BEGIN
     IDS_GEOLOCATION_CHECK_DAYS "Auto-check interval"
     IDS_GEOLOCATION_CHECK_DAYS_SUFFIX "days (0 = manual only)"
     IDS_GEOLOCATION_DOWNLOAD_DB "Download geolocation DB now"
+    IDS_ENABLE_IPFILTER    "Enable IP filter"
+    IDS_IPFILTER_EXPLANATION
+                            "When enabled, loaded ipfilter.dat rules block matching peers, sources, Kad contacts, and optionally servers. Filter level controls how aggressive the rules are."
     IDS_IPFILTER_AUTO_UPDATE "Auto update"
     IDS_IPFILTER_UPDATE_DAYS "Every (days):"
     IDS_IPFILTER_AUTO_UPDATE_STARTED "IP filter auto update started from %s"
@@ -4759,6 +4764,7 @@ BEGIN
     IDS_PPG_SCHEDULER_TT_CHECKNOENDTIME    "Runs the selected schedule entry without a stop time.\r\n\r\nUse it for one-way state changes that should stay active until another schedule overrides them."
     IDS_PPG_SCHEDULER_TT_APPLY             "Applies the edited details to the currently selected schedule entry.\r\n\r\nUse this after changing the day, time, or action list for that row."
     IDS_PPG_SECURITY_TT_USESECIDENT        "Uses secure identification when supported to make client credit identities harder to spoof.\r\n\r\nRecommended: enabled. Disabling it only reduces identity trust and is rarely useful."
+    IDS_PPG_SECURITY_TT_ENABLE_IPFILTER    "Applies loaded ipfilter.dat rules to peers, sources, Kad contacts, and other IP-filter checks.\r\n\r\nDisable it to keep the filter file available without blocking by IP-filter rules."
     IDS_PPG_SECURITY_TT_FILTERSERVERBYIPFILTER "Applies the IP filter to the visible server list so filtered servers are hidden or removed.\r\n\r\nRecommended: enabled if you rely on the IP filter for server hygiene as well as peer filtering."
 END
 
@@ -4862,7 +4868,7 @@ BEGIN
     IDS_PPG_SECURITY_TT_DD                 "Opens the stored IP-filter URL history for quick selection.\r\n\r\nUse only trusted filter providers."
     IDS_PPG_SECURITY_TT_DISABLEOBFUSCATION "Disables support for obfuscated connections entirely.\r\n\r\nNot recommended unless you need strict legacy behavior."
     IDS_PPG_SECURITY_TT_EDITFILTER         "Opens the local IP-filter file for manual editing.\r\n\r\nSave carefully; invalid entries may be ignored."
-    IDS_PPG_SECURITY_TT_FILTERLEVEL        "Minimum IP-filter level used when applying filter rules.\r\n\r\nLower values block more ranges; higher values are less aggressive."
+    IDS_PPG_SECURITY_TT_FILTERLEVEL        "Minimum IP-filter level used when IP filtering is enabled.\r\n\r\nLower values block more ranges; higher values are less aggressive."
     IDS_PPG_SECURITY_TT_LOADURL            "Downloads and applies the IP-filter list from the configured URL.\r\n\r\nUse trusted providers only; the existing filter is kept if the download fails."
     IDS_PPG_SECURITY_TT_RELOADFILTER       "Reloads the local IP-filter file from disk.\r\n\r\nUse it after manually editing the filter file outside eMule."
     IDS_PPG_SERVER_TT_EDITADR              "Edits the startup server-list update URLs.\r\n\r\nUse trusted server.met sources only; untrusted lists can pollute server discovery."

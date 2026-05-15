@@ -69,6 +69,11 @@ inline PathHintType DetectFileTypeFromPath(const CString &rstrFilePath)
 	return PathHintUnknown;
 }
 
+inline bool ShouldEvaluateFilter(bool bEnabled, size_t uFilterCount, uint32_t uIP)
+{
+	return bEnabled && uFilterCount > 0u && uIP != 0u;
+}
+
 /**
  * @brief Normalizes overlapping IP ranges into sorted, non-overlapping segments.
  */

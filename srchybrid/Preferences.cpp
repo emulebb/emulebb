@@ -916,6 +916,7 @@ bool	CPreferences::m_bPreviewOnIconDblClk;
 bool	CPreferences::m_bCheckFileOpen;
 bool	CPreferences::indicateratings;
 bool	CPreferences::watchclipboard;
+bool	CPreferences::m_bIPFilterEnabled;
 bool	CPreferences::filterserverbyip;
 bool	CPreferences::m_bFirstStart;
 bool	CPreferences::m_bDisableFirstTimeWizard;
@@ -2636,6 +2637,7 @@ void CPreferences::SavePreferences()
 	ini.WriteInt(_T("CommitFiles"), m_iCommitFiles);
 	ini.WriteBool(_T("DAPPref"), m_bDAP);
 	ini.WriteBool(_T("UAPPref"), m_bUAP);
+	ini.WriteBool(prefini::IPFilterKeys::Enabled, m_bIPFilterEnabled);
 	ini.WriteBool(_T("FilterServersByIP"), filterserverbyip);
 	ini.WriteBool(_T("DisableKnownClientList"), m_bDisableKnownClientList);
 	ini.WriteBool(_T("DisableQueueList"), m_bDisableQueueList);
@@ -3050,6 +3052,7 @@ void CPreferences::LoadPreferences()
 	m_bSafeServerConnect = ini.GetBool(_T("SafeServerConnect"), false);
 
 	m_bTransflstRemain = ini.GetBool(_T("TransflstRemainOrder"), false);
+	m_bIPFilterEnabled = ini.GetBool(prefini::IPFilterKeys::Enabled, true);
 	filterserverbyip = ini.GetBool(_T("FilterServersByIP"), false);
 	filterlevel = ini.GetInt(_T("FilterLevel"), 127);
 	SetMaxUploadClientsAllowed(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::MaxUploadClientsAllowed, PreferenceValidationSeams::kDefaultMaxUploadSlots, prefini::Sections::UploadPolicy), 0));

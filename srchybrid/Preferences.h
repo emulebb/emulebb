@@ -529,6 +529,7 @@ public:
 	static bool		m_bCheckFileOpen;
 	static bool		indicateratings;
 	static bool		watchclipboard;
+	static bool		m_bIPFilterEnabled;
 	static bool		filterserverbyip;
 	static bool		m_bFirstStart;
 	static bool		m_bDisableFirstTimeWizard;
@@ -1402,6 +1403,8 @@ public:
 	static void		SetUpdateDays(UINT in);
 	static time_t	GetLastVC()							{ return versioncheckLastAutomatic; }
 	static void		UpdateLastVC();
+	static bool		IsIPFilterEnabled()				{ return m_bIPFilterEnabled; }
+	static void		SetIPFilterEnabled(bool bEnable)	{ m_bIPFilterEnabled = bEnable; }
 	static int		GetIPFilterLevel()					{ return filterlevel; }
 	/**
 	 * @brief Returns whether automatic IP-filter downloads are enabled.

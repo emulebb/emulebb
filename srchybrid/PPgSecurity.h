@@ -26,6 +26,7 @@ protected:
 
 	void LoadSettings();
 	void UpdateToolTips();
+	void UpdateIPFilterControls();
 	void UpdateAutoUpdateControls();
 
 	virtual void DoDataExchange(CDataExchange *pDX);    // DDX/DDV support
@@ -36,6 +37,7 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnSettingsChange()					{ SetModified(); }
+	afx_msg void OnBnClickedIPFilterEnabled();
 	afx_msg void OnReloadIPFilter();
 	afx_msg void OnEditIPFilter();
 	afx_msg void OnLoadIPFFromURL();

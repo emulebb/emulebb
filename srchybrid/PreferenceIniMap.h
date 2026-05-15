@@ -49,6 +49,11 @@ inline constexpr const TCHAR* LastUpdateTime = _T("IPFilterLastUpdateTime");
 inline constexpr const TCHAR* Url = _T("IPFilterUpdateUrl");
 }
 
+namespace IPFilterKeys
+{
+inline constexpr const TCHAR* Enabled = _T("IPFilterEnabled");
+}
+
 namespace UploadPolicyKeys
 {
 inline constexpr const TCHAR* MaxUploadClientsAllowed = _T("MaxUploadClientsAllowed");
