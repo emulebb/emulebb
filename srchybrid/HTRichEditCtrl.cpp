@@ -260,11 +260,16 @@ void CHTRichEditCtrl::TrimRollingEntries()
 	if (!m_bRollingLogWindow || m_uRollingMaxEntries == 0)
 		return;
 
+	int iCharsToRemove = 0;
 	while (m_aRollingEntries.size() > m_uRollingMaxEntries) {
-		const SRollingLogEntry entryToRemove = m_aRollingEntries.front();
+		const int iEntryLength = m_aRollingEntries.front().strText.GetLength();
+		if (iCharsToRemove <= INT_MAX - iEntryLength)
+			iCharsToRemove += iEntryLength;
+		else
+			iCharsToRemove = INT_MAX;
 		m_aRollingEntries.pop_front();
-		RemoveTextFromHead(entryToRemove.strText.GetLength());
 	}
+	RemoveTextFromHead(iCharsToRemove);
 }
 
 void CHTRichEditCtrl::RebuildRollingWindow()
