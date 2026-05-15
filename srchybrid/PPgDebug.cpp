@@ -79,27 +79,27 @@ void CPPgDebug::DoDataExchange(CDataExchange *pDX)
 
 #define	ADD_DETAIL_ITEM(idx, label, group) \
 		m_cb[idx] = m_ctrlTreeOptions.InsertCheckBox(label, group); \
-		m_lv[idx] = m_ctrlTreeOptions.InsertItem(_T("Level"), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_cb[idx]); \
+		m_lv[idx] = m_ctrlTreeOptions.InsertItem(GetResString(IDS_PPG_DEBUG_LEVEL), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_cb[idx]); \
 		m_ctrlTreeOptions.AddEditBox(m_lv[idx], RUNTIME_CLASS(CNumTreeOptionsEdit))
 
 #define	ADD_INTEGER_ITEM(idx, label, group) \
 		m_htiInteger[idx] = m_ctrlTreeOptions.InsertItem(label, TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, group); \
 		m_ctrlTreeOptions.AddEditBox(m_htiInteger[idx], RUNTIME_CLASS(CNumTreeOptionsEdit))
 
-		m_htiServer = m_ctrlTreeOptions.InsertCheckBox(_T("Server"), TVI_ROOT, FALSE);
+		m_htiServer = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_SERVER), TVI_ROOT, FALSE);
 		SetTreeToolTip(m_htiServer, IDS_PPG_DEBUG_TT_SERVER);
-		ADD_DETAIL_ITEM(0, _T("TCP"), m_htiServer);
-		ADD_DETAIL_ITEM(1, _T("UDP"), m_htiServer);
-		ADD_DETAIL_ITEM(2, _T("Sources"), m_htiServer);
-		ADD_DETAIL_ITEM(3, _T("Searches"), m_htiServer);
+		ADD_DETAIL_ITEM(0, GetResString(IDS_PPG_DEBUG_TCP), m_htiServer);
+		ADD_DETAIL_ITEM(1, GetResString(IDS_PPG_DEBUG_UDP), m_htiServer);
+		ADD_DETAIL_ITEM(2, GetResString(IDS_PPG_DEBUG_SOURCES), m_htiServer);
+		ADD_DETAIL_ITEM(3, GetResString(IDS_PPG_DEBUG_SEARCHES), m_htiServer);
 
-		m_htiClient = m_ctrlTreeOptions.InsertCheckBox(_T("Client"), TVI_ROOT, FALSE);
+		m_htiClient = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_CLIENT), TVI_ROOT, FALSE);
 		SetTreeToolTip(m_htiClient, IDS_PPG_DEBUG_TT_CLIENT);
-		ADD_DETAIL_ITEM(4, _T("TCP"), m_htiClient);
-		ADD_DETAIL_ITEM(5, _T("UDP (eD2K)"), m_htiClient);
-		ADD_DETAIL_ITEM(6, _T("UDP (Kad)"), m_htiClient);
+		ADD_DETAIL_ITEM(4, GetResString(IDS_PPG_DEBUG_TCP), m_htiClient);
+		ADD_DETAIL_ITEM(5, GetResString(IDS_PPG_DEBUG_UDP_ED2K), m_htiClient);
+		ADD_DETAIL_ITEM(6, GetResString(IDS_PPG_DEBUG_UDP_KAD), m_htiClient);
 
-		ADD_INTEGER_ITEM(0, _T("Memory corruption check level"), TVI_ROOT);
+		ADD_INTEGER_ITEM(0, GetResString(IDS_PPG_DEBUG_HEAP_LEVEL_LABEL), TVI_ROOT);
 		SetTreeToolTip(m_htiInteger[0], IDS_PPG_DEBUG_TT_HEAP_LEVEL);
 
 		for (unsigned i = 0; i < _countof(m_cb); ++i) {

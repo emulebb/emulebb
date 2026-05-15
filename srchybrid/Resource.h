@@ -2996,6 +2996,35 @@
 #define IDS_FIREWALL_REPAIR_FAILURE            3168
 #define IDS_FIREWALL_REPAIR_CANCELLED          3169
 #define IDS_FIREWALL_REPAIR_NO_RULES           3170
+#define IDS_SPEED_LIMIT_UPLOAD_FMT             3171
+#define IDS_SPEED_LIMIT_DOWNLOAD_FMT           3172
+#define IDS_SPEED_LIMIT_BOTH_FMT               3173
+#define IDS_SPEED_ACTION_BOTH_UPLOAD_DOWNLOAD  3174
+#define IDS_SPEED_ACTION_UPLOAD                3175
+#define IDS_SPEED_ACTION_DOWNLOAD              3176
+#define IDS_SPEED_ACTION_ALL_TO_MIN            3177
+#define IDS_SPEED_ACTION_ALL_TO_MAX            3178
+#define IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC   3179
+#define IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC   3180
+#define IDS_CHAT_SMILEYS_BUTTON                3181
+#define IDS_PPG_DEBUG_LEVEL                    3182
+#define IDS_PPG_DEBUG_TCP                      3183
+#define IDS_PPG_DEBUG_UDP                      3184
+#define IDS_PPG_DEBUG_SOURCES                  3185
+#define IDS_PPG_DEBUG_SEARCHES                 3186
+#define IDS_PPG_DEBUG_UDP_ED2K                 3187
+#define IDS_PPG_DEBUG_UDP_KAD                  3188
+#define IDS_PPG_DEBUG_HEAP_LEVEL_LABEL         3189
+#define IDS_STATS_DEBUG_INFO                   3190
+#define IDS_STATS_DEBUG_BLOCKS                 3191
+#define IDS_STATS_DEBUG_FREE                   3192
+#define IDS_STATS_DEBUG_NORMAL                 3193
+#define IDS_STATS_DEBUG_CRT                    3194
+#define IDS_STATS_DEBUG_IGNORE                 3195
+#define IDS_STATS_DEBUG_CLIENT                 3196
+#define IDS_STATS_ALLOCATIONS                  3197
+#define IDS_STATS_BLOCK_SIZE_FMT               3198
+#define IDS_ARCHPREV_CRC                       3199
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025
@@ -3086,6 +3115,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        3055
 #define _APS_NEXT_COMMAND_VALUE         32773
 #define _APS_NEXT_CONTROL_VALUE         3093
-#define _APS_NEXT_SYMED_VALUE           3171
+#define _APS_NEXT_SYMED_VALUE           3200
 #endif
 #endif

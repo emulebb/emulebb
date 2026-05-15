@@ -3183,7 +3183,7 @@ void CemuleDlg::AddSpeedSelectorMenus(CMenu *addToMenu)
 	if (m_menuUploadCtrl.CreateMenu()) {
 		for (const SpeedQuickActionsSeams::CQuickSpeedPercentAction &action : SpeedQuickActionsSeams::kUploadPercentActions) {
 			text.Format(
-				_T("Limit: Upload %u%%\t%u %s"),
+				GetResString(IDS_SPEED_LIMIT_UPLOAD_FMT),
 				action.uPercent,
 				SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxUpload(), action.uPercent),
 				(LPCTSTR)kbyps);
@@ -3205,7 +3205,7 @@ void CemuleDlg::AddSpeedSelectorMenus(CMenu *addToMenu)
 	if (m_menuDownloadCtrl.CreateMenu()) {
 		for (const SpeedQuickActionsSeams::CQuickSpeedPercentAction &action : SpeedQuickActionsSeams::kDownloadPercentActions) {
 			text.Format(
-				_T("Limit: Download %u%%\t%u %s"),
+				GetResString(IDS_SPEED_LIMIT_DOWNLOAD_FMT),
 				action.uPercent,
 				SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxDownload(), action.uPercent),
 				(LPCTSTR)kbyps);
@@ -3217,8 +3217,8 @@ void CemuleDlg::AddSpeedSelectorMenus(CMenu *addToMenu)
 	}
 
 	addToMenu->AppendMenu(MF_SEPARATOR);
-	addToMenu->AppendMenu(MF_STRING, MP_QS_PA, _T("All to Min"));
-	addToMenu->AppendMenu(MF_STRING, MP_QS_UA, _T("All to Max"));
+	addToMenu->AppendMenu(MF_STRING, MP_QS_PA, GetResString(IDS_SPEED_ACTION_ALL_TO_MIN));
+	addToMenu->AppendMenu(MF_STRING, MP_QS_UA, GetResString(IDS_SPEED_ACTION_ALL_TO_MAX));
 }
 
 void CemuleDlg::StartConnection()
@@ -4189,7 +4189,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		CString text;
 		for (const SpeedQuickActionsSeams::CQuickSpeedPercentAction &action : SpeedQuickActionsSeams::kUploadPercentActions) {
 			text.Format(
-				_T("Limit: Upload %u%%\t%u %s"),
+				GetResString(IDS_SPEED_LIMIT_UPLOAD_FMT),
 				action.uPercent,
 				SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxUpload(), action.uPercent),
 				(LPCTSTR)kbyps);
@@ -4197,7 +4197,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		}
 		for (const SpeedQuickActionsSeams::CQuickSpeedPercentAction &action : SpeedQuickActionsSeams::kDownloadPercentActions) {
 			text.Format(
-				_T("Limit: Download %u%%\t%u %s"),
+				GetResString(IDS_SPEED_LIMIT_DOWNLOAD_FMT),
 				action.uPercent,
 				SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxDownload(), action.uPercent),
 				(LPCTSTR)kbyps);
@@ -4205,7 +4205,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		}
 		for (const SpeedQuickActionsSeams::CQuickSpeedPercentAction &action : SpeedQuickActionsSeams::kBothPercentActions) {
 			text.Format(
-				_T("Limit: Both %u%%\tU %u %s / D %u %s"),
+				GetResString(IDS_SPEED_LIMIT_BOTH_FMT),
 				action.uPercent,
 				SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxUpload(), action.uPercent),
 				(LPCTSTR)kbyps,
@@ -4213,12 +4213,12 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 				(LPCTSTR)kbyps);
 			speedBoth.AppendMenu(MF_STRING, action.uCommandId, text);
 		}
-		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedBoth.m_hMenu, _T("&Both Upload + Download"), _T("SPEED"));
-		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedUpload.m_hMenu, _T("&Upload"), _T("UPLOAD"));
-		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedDownload.m_hMenu, _T("&Download"), _T("DOWNLOAD"));
+		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedBoth.m_hMenu, GetResString(IDS_SPEED_ACTION_BOTH_UPLOAD_DOWNLOAD), _T("SPEED"));
+		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedUpload.m_hMenu, GetResString(IDS_SPEED_ACTION_UPLOAD), _T("UPLOAD"));
+		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedDownload.m_hMenu, GetResString(IDS_SPEED_ACTION_DOWNLOAD), _T("DOWNLOAD"));
 		speedQuickActions.AppendMenu(MF_SEPARATOR);
-		speedQuickActions.AppendMenu(MF_STRING, MP_QS_PA, _T("All to &Min"), _T("STOP"));
-		speedQuickActions.AppendMenu(MF_STRING, MP_QS_UA, _T("All to Ma&x"), _T("CONNECT"));
+		speedQuickActions.AppendMenu(MF_STRING, MP_QS_PA, GetResString(IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC), _T("STOP"));
+		speedQuickActions.AppendMenu(MF_STRING, MP_QS_UA, GetResString(IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC), _T("CONNECT"));
 
 		folders.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
 		folders.AppendMenu(MF_STRING, MP_HM_OPEN_TEMPDIR, GetResString(IDS_OPEN_TEMP_DIR) + _T("..."), _T("OPENFOLDER"));

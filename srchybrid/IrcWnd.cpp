@@ -127,7 +127,7 @@ void CIrcWnd::Localize()
 	m_wndChanSel.Localize();
 	m_wndNicks.Localize();
 
-	m_wndFormat.SetBtnText(IDC_SMILEY, _T("Smileys"));
+	m_wndFormat.SetBtnText(IDC_SMILEY, GetResString(IDS_CHAT_SMILEYS_BUTTON));
 	m_wndFormat.SetBtnText(IDC_BOLD, GetResString(IDS_BOLD));
 	m_wndFormat.SetBtnText(IDC_ITALIC, GetResString(IDS_ITALIC));
 	m_wndFormat.SetBtnText(IDC_UNDERLINE, GetResString(IDS_UNDERLINE));

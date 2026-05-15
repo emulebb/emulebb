@@ -2963,20 +2963,20 @@ void CStatisticsDlg::CreateMyTree()
 
 #ifdef _DEBUG
 	if (g_pfnPrevCrtAllocHook) {
-		h_debug = m_stattree.InsertItem(_T("Debug info"));m_stattree.SetItemData(h_debug, 0);
-		h_blocks = m_stattree.InsertItem(_T("Blocks"), h_debug);m_stattree.SetItemData(h_blocks, 1);
-		debug1 = m_stattree.InsertItem(_T("Free"), h_blocks);m_stattree.SetItemData(debug1, 1);
-		debug2 = m_stattree.InsertItem(_T("Normal"), h_blocks);m_stattree.SetItemData(debug2, 1);
-		debug3 = m_stattree.InsertItem(_T("CRT"), h_blocks);m_stattree.SetItemData(debug3, 1);
-		debug4 = m_stattree.InsertItem(_T("Ignore"), h_blocks);m_stattree.SetItemData(debug4, 1);
-		debug5 = m_stattree.InsertItem(_T("Client"), h_blocks);m_stattree.SetItemData(debug5, 1);
+		h_debug = m_stattree.InsertItem(GetResString(IDS_STATS_DEBUG_INFO));m_stattree.SetItemData(h_debug, 0);
+		h_blocks = m_stattree.InsertItem(GetResString(IDS_STATS_DEBUG_BLOCKS), h_debug);m_stattree.SetItemData(h_blocks, 1);
+		debug1 = m_stattree.InsertItem(GetResString(IDS_STATS_DEBUG_FREE), h_blocks);m_stattree.SetItemData(debug1, 1);
+		debug2 = m_stattree.InsertItem(GetResString(IDS_STATS_DEBUG_NORMAL), h_blocks);m_stattree.SetItemData(debug2, 1);
+		debug3 = m_stattree.InsertItem(GetResString(IDS_STATS_DEBUG_CRT), h_blocks);m_stattree.SetItemData(debug3, 1);
+		debug4 = m_stattree.InsertItem(GetResString(IDS_STATS_DEBUG_IGNORE), h_blocks);m_stattree.SetItemData(debug4, 1);
+		debug5 = m_stattree.InsertItem(GetResString(IDS_STATS_DEBUG_CLIENT), h_blocks);m_stattree.SetItemData(debug5, 1);
 		m_stattree.Expand(h_debug, TVE_EXPAND);
 		m_stattree.Expand(h_blocks, TVE_EXPAND);
 	}
 #endif
 
 #ifdef USE_MEM_STATS
-	h_allocs = m_stattree.InsertItem(_T("Allocations"));
+	h_allocs = m_stattree.InsertItem(GetResString(IDS_STATS_ALLOCATIONS));
 	for (int i = 0; i < ALLOC_SLOTS; ++i) {
 		unsigned uStart, uEnd;
 		if (i <= 1)
@@ -2985,7 +2985,7 @@ void CStatisticsDlg::CreateMyTree()
 			uStart = 1 << (i - 1);
 			uEnd = (i == ALLOC_SLOTS - 1) ? UINT_MAX : (uStart << 1) - 1;
 		}
-		sItem.Format(_T("Block size %08X-%08X: %s (%1.1f%%)"), uStart, uEnd, (LPCTSTR)CastItoIShort(g_aAllocStats[i], false, 2), 0.0);
+		sItem.Format(GetResString(IDS_STATS_BLOCK_SIZE_FMT), uStart, uEnd, (LPCTSTR)CastItoIShort(g_aAllocStats[i], false, 2), 0.0);
 		h_allocSizes[i] = m_stattree.InsertItem(sItem, h_allocs);
 	}
 #endif

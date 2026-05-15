@@ -3755,6 +3755,46 @@ BEGIN
                             "Windows Firewall repair cancelled."
     IDS_FIREWALL_REPAIR_NO_RULES
                             "No Windows Firewall rules need repair for the current port configuration."
+    IDS_SPEED_LIMIT_UPLOAD_FMT
+                            "Limit: Upload %u%%\t%u %s"
+    IDS_SPEED_LIMIT_DOWNLOAD_FMT
+                            "Limit: Download %u%%\t%u %s"
+    IDS_SPEED_LIMIT_BOTH_FMT
+                            "Limit: Both %u%%\tU %u %s / D %u %s"
+    IDS_SPEED_ACTION_BOTH_UPLOAD_DOWNLOAD
+                            "&Both Upload + Download"
+    IDS_SPEED_ACTION_UPLOAD "&Upload"
+    IDS_SPEED_ACTION_DOWNLOAD
+                            "&Download"
+    IDS_SPEED_ACTION_ALL_TO_MIN
+                            "All to Min"
+    IDS_SPEED_ACTION_ALL_TO_MAX
+                            "All to Max"
+    IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC
+                            "All to &Min"
+    IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC
+                            "All to Ma&x"
+    IDS_CHAT_SMILEYS_BUTTON "Smileys"
+    IDS_PPG_DEBUG_LEVEL     "Level"
+    IDS_PPG_DEBUG_TCP       "TCP"
+    IDS_PPG_DEBUG_UDP       "UDP"
+    IDS_PPG_DEBUG_SOURCES   "Sources"
+    IDS_PPG_DEBUG_SEARCHES  "Searches"
+    IDS_PPG_DEBUG_UDP_ED2K  "UDP (eD2K)"
+    IDS_PPG_DEBUG_UDP_KAD   "UDP (Kad)"
+    IDS_PPG_DEBUG_HEAP_LEVEL_LABEL
+                            "Memory corruption check level"
+    IDS_STATS_DEBUG_INFO    "Debug info"
+    IDS_STATS_DEBUG_BLOCKS  "Blocks"
+    IDS_STATS_DEBUG_FREE    "Free"
+    IDS_STATS_DEBUG_NORMAL  "Normal"
+    IDS_STATS_DEBUG_CRT     "CRT"
+    IDS_STATS_DEBUG_IGNORE  "Ignore"
+    IDS_STATS_DEBUG_CLIENT  "Client"
+    IDS_STATS_ALLOCATIONS   "Allocations"
+    IDS_STATS_BLOCK_SIZE_FMT
+                            "Block size %08X-%08X: %s (%1.1f%%)"
+    IDS_ARCHPREV_CRC        "CRC"
     IDS_WS_ENABLE_REST_API "Enable REST API"
     IDS_WS_ENABLE_LEGACY_WEBUI "Enable legacy Web UI"
     IDS_WEBSERVER_TT_WSLEGACYUI

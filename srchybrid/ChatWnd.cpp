@@ -429,7 +429,7 @@ void CChatWnd::Localize()
 	SetDlgItemText(IDC_FRIENDS_USERHASH, GetResString(IDS_CD_UHASH));
 	m_wndSend.SetWindowText(GetResString(IDS_CW_SEND));
 	m_wndClose.SetWindowText(GetResString(IDS_CW_CLOSE));
-	m_wndFormat.SetBtnText(IDC_SMILEY, _T("Smileys"));
+	m_wndFormat.SetBtnText(IDC_SMILEY, GetResString(IDS_CHAT_SMILEYS_BUTTON));
 	m_FriendListCtrl.Localize();
 }
 
