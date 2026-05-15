@@ -49,8 +49,10 @@
 #include "LongPathSeams.h"
 #include "MD5Sum.h"
 #include "UserMsgs.h"
+#include <algorithm>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1688,46 +1690,51 @@ void CSharedFileList::SendListToServer()
 
 	CServer *pCurServer = server->GetCurrentServer();
 	CSafeMemFile files(1024);
-	CTypedPtrList<CPtrList, CKnownFile*> sortedList;
+	struct ServerOfferCandidate
+	{
+		CKnownFile *pFile;
+		int iPriority;
+		size_t uSequence;
+	};
+	std::vector<ServerOfferCandidate> offerCandidates;
+	offerCandidates.reserve(static_cast<size_t>(m_Files_map.GetCount()));
 
+	size_t uSequence = 0;
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
 		CKnownFile *cur_file = pair->value;
-		//insert sorted into sortedList
 		if ((!cur_file->GetPublishedED2K() || cur_file->IsED2KRepublishPending()) && (!cur_file->IsLargeFile() || (pCurServer != NULL && pCurServer->SupportsLargeFilesTCP()))) {
-			bool added = false;
-			for (POSITION pos = sortedList.GetHeadPosition(); pos != 0 && !added;) {
-				POSITION pos2 = pos;
-				if (GetRealPrio(sortedList.GetNext(pos)->GetUpPriority()) <= GetRealPrio(cur_file->GetUpPriority())) {
-					sortedList.InsertBefore(pos2, cur_file);
-					added = true;
-				}
-			}
-			if (!added)
-				sortedList.AddTail(cur_file);
+			ServerOfferCandidate candidate = { cur_file, GetRealPrio(cur_file->GetUpPriority()), uSequence };
+			offerCandidates.push_back(candidate);
 		}
+		++uSequence;
 	}
+
+	std::sort(offerCandidates.begin(), offerCandidates.end(),
+		[](const ServerOfferCandidate &left, const ServerOfferCandidate &right) {
+			if (left.iPriority != right.iPriority)
+				return left.iPriority > right.iPriority;
+			return left.uSequence > right.uSequence;
+		});
 
 	// add to packet
 	uint32 limit = pCurServer ? pCurServer->GetSoftFiles() : 0;
 	if (limit == 0 || limit > 200)
 		limit = 200;
 
-	if ((uint32)sortedList.GetCount() < limit) {
-		limit = (uint32)sortedList.GetCount();
+	if (offerCandidates.size() < limit) {
+		limit = static_cast<uint32>(offerCandidates.size());
 		if (limit == 0) {
 			m_lastPublishED2KFlag = false;
 			return;
 		}
 	}
 	files.WriteUInt32(limit);
-	uint32 count = limit;
-	for (POSITION pos = sortedList.GetHeadPosition(); pos != 0 && count-- > 0;) {
-		CKnownFile *file = sortedList.GetNext(pos);
+	for (uint32 i = 0; i < limit; ++i) {
+		CKnownFile *file = offerCandidates[static_cast<size_t>(i)].pFile;
 		CreateOfferedFilePacket(file, files, pCurServer);
 		file->SetED2KRepublishPending(false);
 		file->SetPublishedED2K(true);
 	}
-	sortedList.RemoveAll();
 	Packet *packet = new Packet(files);
 	packet->opcode = OP_OFFERFILES;
 	// compress packet
