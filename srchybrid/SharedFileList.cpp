@@ -118,12 +118,10 @@ CString MakeSharedDirectoryLookupKey(const CString &rstrPath)
 	return strKey;
 }
 
-bool IsSharedFilePathWithinDirectoryFast(const CString &strDirectory, const CString &strFilePath)
+bool IsSingleFileRuleKeyWithinDirectory(const std::wstring &strDirectoryKey, const std::wstring &strFileKey)
 {
-	const CString strDirectoryKey(MakeSharedDirectoryLookupKey(strDirectory));
-	const CString strFileKey(MakeSharedFileLookupKey(strFilePath));
-	return strFileKey.GetLength() > strDirectoryKey.GetLength()
-		&& _tcsncmp(strFileKey, strDirectoryKey, strDirectoryKey.GetLength()) == 0;
+	return strFileKey.length() > strDirectoryKey.length()
+		&& strFileKey.compare(0, strDirectoryKey.length(), strDirectoryKey) == 0;
 }
 
 CString BuildSharedHashFilePath(const CString &strDirectory, const CString &strName)
@@ -1315,6 +1313,7 @@ bool CSharedFileList::AddSingleSharedFile(const CString &rstrFilePath, bool bNoU
 				DEBUG_ONLY(DebugLog(_T("Upgraded excluded shared-file spelling: \"%s\" -> \"%s\""), (LPCTSTR)strExcluded, (LPCTSTR)strFilePath));
 			}
 			m_liSingleExcludedFiles.RemoveAt(pos2);
+			RemoveSingleExcludedFileRuleKey(strExcluded);
 			break;
 		}
 	}
@@ -1325,8 +1324,10 @@ bool CSharedFileList::AddSingleSharedFile(const CString &rstrFilePath, bool bNoU
 
 	if (bShared && !bExclude)
 		return false; // we should be sharing this file already
-	if (!bShared)
+	if (!bShared) {
 		m_liSingleSharedFiles.AddTail(strFilePath); // the directory is not shared, so we need a new entry
+		AddSingleSharedFileRuleKey(strFilePath);
+	}
 
 	return bNoUpdate || CheckAndAddSingleFile(strFilePath);
 }
@@ -1379,12 +1380,10 @@ void CSharedFileList::CheckAndAddSingleFileFromNormalizedDirectory(const CString
 	if (strFoundFilePath.GetLength() > 260)
 		++m_startupScanStats.uPathsOver260Chars;
 
-	const CString strFoundFilePathKey(MakeSharedFileLookupKey(strFoundFilePath));
-	for (POSITION pos = m_liSingleExcludedFiles.GetHeadPosition(); pos != NULL;)
-		if (strFoundFilePathKey == MakeSharedFileLookupKey(m_liSingleExcludedFiles.GetNext(pos))) {
-			++m_startupScanStats.uFilesIgnored;
-			return;
-		}
+	if (HasSingleExcludedFileRule(strFoundFilePath)) {
+		++m_startupScanStats.uFilesIgnored;
+		return;
+	}
 
 	if (ShouldIgnoreSharedFileCandidate(strFoundFilePath, strFoundFileName)) {
 		TRACE(_T("%hs: Did not share file \"%s\" - not supported file type\n"), __FUNCTION__, (LPCTSTR)strFoundFilePath);
@@ -2062,6 +2061,54 @@ void CSharedFileList::RemoveFromHashing(const CKnownFile *hashed)
 		CompleteSharedHashCompletion(MakeSharedHashFilePathKey(*hashed));
 }
 
+std::wstring CSharedFileList::MakeSingleFileRuleKey(const CString &strFilePath)
+{
+	return std::wstring(MakeSharedFileLookupKey(strFilePath));
+}
+
+bool CSharedFileList::HasSingleSharedFileRule(const CString &strFilePath) const
+{
+	return m_singleSharedFileRuleKeys.find(MakeSingleFileRuleKey(strFilePath)) != m_singleSharedFileRuleKeys.end();
+}
+
+bool CSharedFileList::HasSingleExcludedFileRule(const CString &strFilePath) const
+{
+	return m_singleExcludedFileRuleKeys.find(MakeSingleFileRuleKey(strFilePath)) != m_singleExcludedFileRuleKeys.end();
+}
+
+void CSharedFileList::AddSingleSharedFileRuleKey(const CString &strFilePath)
+{
+	const std::wstring strKey(MakeSingleFileRuleKey(strFilePath));
+	if (!m_singleSharedFileRuleKeys.insert(strKey).second)
+		return;
+	m_sortedSingleSharedFileRuleKeys.insert(
+		std::lower_bound(m_sortedSingleSharedFileRuleKeys.begin(), m_sortedSingleSharedFileRuleKeys.end(), strKey),
+		strKey);
+}
+
+void CSharedFileList::RemoveSingleSharedFileRuleKey(const CString &strFilePath)
+{
+	const std::wstring strKey(MakeSingleFileRuleKey(strFilePath));
+	if (m_singleSharedFileRuleKeys.erase(strKey) == 0)
+		return;
+	const std::vector<std::wstring>::iterator it = std::lower_bound(
+		m_sortedSingleSharedFileRuleKeys.begin(),
+		m_sortedSingleSharedFileRuleKeys.end(),
+		strKey);
+	if (it != m_sortedSingleSharedFileRuleKeys.end() && *it == strKey)
+		m_sortedSingleSharedFileRuleKeys.erase(it);
+}
+
+void CSharedFileList::AddSingleExcludedFileRuleKey(const CString &strFilePath)
+{
+	m_singleExcludedFileRuleKeys.insert(MakeSingleFileRuleKey(strFilePath));
+}
+
+void CSharedFileList::RemoveSingleExcludedFileRuleKey(const CString &strFilePath)
+{
+	m_singleExcludedFileRuleKeys.erase(MakeSingleFileRuleKey(strFilePath));
+}
+
 void CSharedFileList::HashFailed(UnknownFile_Struct *hashed)
 {
 	if (hashed != NULL)
@@ -2289,10 +2336,8 @@ bool CSharedFileList::ShouldBeShared(const CString &sDirPath, LPCTSTR const pFil
 	if (!bMustBeShared && thePrefs.IsSharedDirectoryListed(sDirPath)) {
 		// check if this file is explicitly unshared
 		if (pFilePath != NULL) {
-			const CString strFilePathKey(MakeSharedFileLookupKey(pFilePath));
-			for (POSITION pos = m_liSingleExcludedFiles.GetHeadPosition(); pos != NULL;)
-				if (MakeSharedFileLookupKey(m_liSingleExcludedFiles.GetNext(pos)) == strFilePathKey)
-					return false;
+			if (HasSingleExcludedFileRule(pFilePath))
+				return false;
 		}
 		return true;
 	}
@@ -2301,15 +2346,12 @@ bool CSharedFileList::ShouldBeShared(const CString &sDirPath, LPCTSTR const pFil
 		return false;
 
 	if (pFilePath) {
-		const CString strFilePathKey(MakeSharedFileLookupKey(pFilePath));
 		// check if this file is explicitly unshared
-		for (POSITION pos = m_liSingleExcludedFiles.GetHeadPosition(); pos != NULL;)
-			if (MakeSharedFileLookupKey(m_liSingleExcludedFiles.GetNext(pos)) == strFilePathKey)
-				return false;
+		if (HasSingleExcludedFileRule(pFilePath))
+			return false;
 		// check if this file is explicitly shared (as single file)
-		for (POSITION pos = m_liSingleSharedFiles.GetHeadPosition(); pos != NULL;)
-			if (MakeSharedFileLookupKey(m_liSingleSharedFiles.GetNext(pos)) == strFilePathKey)
-				return true;
+		if (HasSingleSharedFileRule(pFilePath))
+			return true;
 	}
 
 	return false;
@@ -2317,9 +2359,16 @@ bool CSharedFileList::ShouldBeShared(const CString &sDirPath, LPCTSTR const pFil
 
 bool CSharedFileList::ContainsSingleSharedFiles(const CString &strDirectory) const
 {
-	for (POSITION pos = m_liSingleSharedFiles.GetHeadPosition(); pos != NULL;)
-		if (IsSharedFilePathWithinDirectoryFast(strDirectory, m_liSingleSharedFiles.GetNext(pos)))
-			return true;
+	if (m_sortedSingleSharedFileRuleKeys.empty())
+		return false;
+
+	const std::wstring strDirectoryKey(MakeSharedDirectoryLookupKey(strDirectory));
+	const std::vector<std::wstring>::const_iterator it = std::upper_bound(
+		m_sortedSingleSharedFileRuleKeys.begin(),
+		m_sortedSingleSharedFileRuleKeys.end(),
+		strDirectoryKey);
+	if (it != m_sortedSingleSharedFileRuleKeys.end())
+		return IsSingleFileRuleKeyWithinDirectory(strDirectoryKey, *it);
 
 	return false;
 }
@@ -2340,6 +2389,7 @@ bool CSharedFileList::ExcludeFile(const CString &strFilePath)
 				DEBUG_ONLY(DebugLog(_T("Upgraded single-shared file spelling: \"%s\" -> \"%s\""), (LPCTSTR)strExisting, (LPCTSTR)strCanonicalFilePath));
 			}
 			m_liSingleSharedFiles.RemoveAt(pos2);
+			RemoveSingleSharedFileRuleKey(strExisting);
 			break;
 		}
 	}
@@ -2358,6 +2408,7 @@ bool CSharedFileList::ExcludeFile(const CString &strFilePath)
 
 	// add to exclude list
 	m_liSingleExcludedFiles.AddTail(strCanonicalFilePath);
+	AddSingleExcludedFileRuleKey(strCanonicalFilePath);
 
 	// check if the file is in the shared list (doesn't have to; for example, if it is hashing or not loaded yet) and remove
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair))

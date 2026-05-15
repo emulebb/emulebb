@@ -528,6 +528,16 @@ private:
 	 * @brief Signals shutdown, discards queued jobs, and wakes the worker.
 	 */
 	void	SignalSharedHashWorkerShutdown();
+	/**
+	 * @brief Builds the canonical case-folded lookup key for one explicit single-file rule.
+	 */
+	static std::wstring MakeSingleFileRuleKey(const CString &strFilePath);
+	bool	HasSingleSharedFileRule(const CString &strFilePath) const;
+	bool	HasSingleExcludedFileRule(const CString &strFilePath) const;
+	void	AddSingleSharedFileRuleKey(const CString &strFilePath);
+	void	RemoveSingleSharedFileRuleKey(const CString &strFilePath);
+	void	AddSingleExcludedFileRuleKey(const CString &strFilePath);
+	void	RemoveSingleExcludedFileRuleKey(const CString &strFilePath);
 
 	CKnownFilesMap m_Files_map;
 	CMap<CSKey, const CSKey&, bool, bool>		 m_UnsharedFiles_map;
@@ -537,6 +547,9 @@ private:
 	CSharedFilesCtrl *output;
 	CStringList		 m_liSingleSharedFiles;
 	CStringList		 m_liSingleExcludedFiles;
+	std::unordered_set<std::wstring> m_singleSharedFileRuleKeys;
+	std::unordered_set<std::wstring> m_singleExcludedFileRuleKeys;
+	std::vector<std::wstring> m_sortedSingleSharedFileRuleKeys;
 #if defined(_DEVBUILD)
 	CString			m_strBetaFileName; //beta test file name
 #endif
