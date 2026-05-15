@@ -3673,6 +3673,8 @@ BEGIN
     IDS_FAKEFILE_EVIDENCE_NAMES "Observed names: %s"
     IDS_FAKEFILE_EVIDENCE_CLAIMED_TYPE "Claimed type: %s"
     IDS_FAKEFILE_EVIDENCE_HEADER_TYPE "Detected header type: %s"
+    IDS_ERR_CATEGORY_TITLE_REQUIRED "Enter a category title."
+    IDS_ERR_CATEGORY_DUPLICATE "A category with this title already exists."
     IDS_TOOLS_FOLDERS       "Folders"
     IDS_TOOLS_EDIT_CONFIG_FILES "Edit Config Files"
     IDS_TOOLS_NETWORK_UPDATES "Network && Updates"

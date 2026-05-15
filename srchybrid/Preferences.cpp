@@ -76,6 +76,43 @@ constexpr size_t kWebApiKeyBytes = 16;
 constexpr UINT kMaxServerKeepAliveTimeoutMinutes = 1440;
 constexpr UINT kMaxFileBufferTimeLimitSeconds = 86400;
 
+UINT NormalizeCategoryPriority(UINT uPriority)
+{
+	return uPriority <= PR_HIGH ? uPriority : PR_NORMAL;
+}
+
+bool IsValidCategoryFilter(int iFilter)
+{
+	switch (iFilter) {
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+	case 8:
+	case 10:
+	case 11:
+	case 12:
+	case 13:
+	case 14:
+	case 15:
+	case 16:
+	case 18:
+	case 20:
+		return true;
+	default:
+		return false;
+	}
+}
+
+int NormalizeCategoryFilter(int iFilter)
+{
+	return IsValidCategoryFilter(iFilter) ? iFilter : 0;
+}
+
 /**
  * @brief Updates the live runtime bind-address cache used by sockets for this session.
  */
@@ -3585,8 +3622,8 @@ void CPreferences::LoadCats()
 		} else
 			newcat->strIncomingPath.Empty();
 		newcat->strComment = ini.GetString(_T("Comment"));
-		newcat->prio = ini.GetInt(_T("a4afPriority"), PR_NORMAL); // ZZ:DownloadManager
-		newcat->filter = ini.GetInt(_T("Filter"), 0);
+		newcat->prio = NormalizeCategoryPriority(ini.GetInt(_T("a4afPriority"), PR_NORMAL)); // ZZ:DownloadManager
+		newcat->filter = NormalizeCategoryFilter(ini.GetInt(_T("Filter"), 0));
 		newcat->filterNeg = ini.GetBool(_T("FilterNegator"), FALSE);
 		newcat->ac_regexpeval = ini.GetBool(_T("AutoCatAsRegularExpression"), FALSE);
 		newcat->care4all = ini.GetBool(_T("Care4All"), FALSE);

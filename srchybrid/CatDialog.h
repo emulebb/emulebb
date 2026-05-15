@@ -35,6 +35,7 @@ public:
 
 protected:
 	CColorButton m_ctlColor;
+	INT_PTR m_iCategory;
 	Category_Struct *m_myCat;
 	CComboBox m_prio;
 	CCustomAutoComplete *m_pacRegExp;
