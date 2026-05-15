@@ -45,6 +45,7 @@ static char THIS_FILE[] = __FILE__;
 
 #define	SERVERMET_STRINGS_PROFILE	_T("AC_ServerMetURLs.dat")
 #define SZ_DEBUG_LOG_TITLE			_T("Verbose")
+#define UM_RESTORE_SERVERMETURL		(WM_APP + 0x3D2)
 
 // CServerWnd dialog
 
@@ -59,6 +60,7 @@ BEGIN_MESSAGE_MAP(CServerWnd, CResizableDialog)
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_DD, OnDDClicked)
+	ON_MESSAGE(UM_RESTORE_SERVERMETURL, OnRestoreServerMetUrl)
 	ON_WM_HELPINFO()
 	ON_EN_CHANGE(IDC_IPADDRESS, OnSvrTextChange)
 	ON_EN_CHANGE(IDC_SPORT, OnSvrTextChange)
@@ -169,7 +171,8 @@ BOOL CServerWnd::OnInitDialog()
 
 	static_cast<CEdit*>(GetDlgItem(IDC_SPORT))->SetLimitText(5);
 	SetDlgItemText(IDC_SPORT, _T("4661"));
-	SetDlgItemText(IDC_SERVERMETURL, CPreferences::GetDefaultServerMetUrl());
+	m_strServerMetUrlText = CPreferences::GetDefaultServerMetUrl();
+	SetDlgItemText(IDC_SERVERMETURL, m_strServerMetUrlText);
 
 	TCITEM ti;
 	CString name(GetResString(IDS_SV_SERVERINFO));
@@ -714,9 +717,32 @@ void CServerWnd::SaveAllSettings()
 void CServerWnd::OnDDClicked()
 {
 	CWnd *box = GetDlgItem(IDC_SERVERMETURL);
+	CString strText;
+	box->GetWindowText(strText);
+	if (strText.IsEmpty() && !m_strServerMetUrlText.IsEmpty()) {
+		strText = m_strServerMetUrlText;
+		box->SetWindowText(strText);
+	}
 	box->SetFocus();
-	box->SetWindowText(_T(""));
+	if (!strText.IsEmpty()) {
+		m_strServerMetUrlText = strText;
+		static_cast<CEdit*>(box)->SetSel(strText.GetLength(), strText.GetLength());
+		PostMessage(UM_RESTORE_SERVERMETURL);
+		return;
+	}
 	box->SendMessage(WM_KEYDOWN, VK_DOWN, 0x00510001);
+}
+
+LRESULT CServerWnd::OnRestoreServerMetUrl(WPARAM, LPARAM)
+{
+	if (!m_strServerMetUrlText.IsEmpty()) {
+		CString strUrl;
+		GetDlgItemText(IDC_SERVERMETURL, strUrl);
+		if (strUrl.IsEmpty())
+			SetDlgItemText(IDC_SERVERMETURL, m_strServerMetUrlText);
+		GetDlgItem(IDC_UPDATESERVERMETFROMURL)->EnableWindow(TRUE);
+	}
+	return 0;
 }
 
 void CServerWnd::ResetHistory()
@@ -736,7 +762,11 @@ BOOL CServerWnd::OnHelpInfo(HELPINFO*)
 void CServerWnd::OnSvrTextChange()
 {
 	GetDlgItem(IDC_ADDSERVER)->EnableWindow(GetDlgItem(IDC_IPADDRESS)->GetWindowTextLength());
-	GetDlgItem(IDC_UPDATESERVERMETFROMURL)->EnableWindow(GetDlgItem(IDC_SERVERMETURL)->GetWindowTextLength() > 0);
+	CString strServerMetUrl;
+	GetDlgItemText(IDC_SERVERMETURL, strServerMetUrl);
+	if (!strServerMetUrl.IsEmpty())
+		m_strServerMetUrlText = strServerMetUrl;
+	GetDlgItem(IDC_UPDATESERVERMETFROMURL)->EnableWindow(!strServerMetUrl.IsEmpty());
 }
 
 void CServerWnd::OnStnDblclickServlstIco()

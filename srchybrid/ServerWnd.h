@@ -83,6 +83,7 @@ private:
 	CHARFORMAT2 m_cfDef;
 	CHARFORMAT2 m_cfBold;
 	CCustomAutoComplete *m_pacServerMetURL;
+	CString m_strServerMetUrlText;
 	bool	debug;
 
 protected:
@@ -101,6 +102,7 @@ protected:
 	afx_msg void OnTcnSelchangeTab3(LPNMHDR, LRESULT *pResult);
 	afx_msg void OnSysColorChange();
 	afx_msg void OnDDClicked();
+	afx_msg LRESULT OnRestoreServerMetUrl(WPARAM, LPARAM);
 	afx_msg void OnSvrTextChange();
 	afx_msg BOOL OnHelpInfo(HELPINFO*);
 	afx_msg void OnStnDblclickServlstIco();
