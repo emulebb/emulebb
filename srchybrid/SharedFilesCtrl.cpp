@@ -107,9 +107,21 @@ namespace
 		return strKey;
 	}
 
+	CString BuildSharedFilesPathKey(const CString &strPath)
+	{
+		CString strKey(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(strPath)));
+		strKey.MakeLower();
+		return strKey;
+	}
+
 	bool AreSharedFilesDirectoriesEqual(const CString &strLeft, const CString &strRight)
 	{
 		return BuildSharedFilesDirectoryKey(strLeft) == BuildSharedFilesDirectoryKey(strRight);
+	}
+
+	bool AreSharedFilesPathsEqual(const CString &strLeft, const CString &strRight)
+	{
+		return BuildSharedFilesPathKey(strLeft) == BuildSharedFilesPathKey(strRight);
 	}
 
 	CString FormatUploadRatio(float fRatio)
@@ -876,7 +888,7 @@ void CSharedFilesCtrl::AddFile(const CShareableFile *file)
 	if (m_pDirectoryFilter != NULL && m_pDirectoryFilter->m_eItemType == SDI_UNSHAREDDIRECTORY && file->IsKindOf(RUNTIME_CLASS(CKnownFile)))
 		for (POSITION pos = liTempShareableFilesInDir.GetHeadPosition(); pos != NULL;) {
 			const CShareableFile *pFile = liTempShareableFilesInDir.GetNext(pos);
-			if (PathHelpers::ArePathsEquivalent(pFile->GetFilePath(), file->GetFilePath())) {
+			if (AreSharedFilesPathsEqual(pFile->GetFilePath(), file->GetFilePath())) {
 				int iOldFile = FindFile(pFile);
 				if (iOldFile >= 0) {
 					m_aVisibleFiles[static_cast<size_t>(iOldFile)] = const_cast<CShareableFile*>(file);
@@ -2493,7 +2505,7 @@ BOOL CSharedFilesCtrl::CShareDropTarget::OnDrop(CWnd*, COleDataObject *pDataObje
 							if (bFromSingleDirectory) {
 								if (strSingleDirectory.IsEmpty())
 									strSingleDirectory = strDisplayDirectory;
-								else if (!EqualPaths(strSingleDirectory, strDisplayDirectory))
+								else if (!AreSharedFilesDirectoriesEqual(strSingleDirectory, strDisplayDirectory))
 									bFromSingleDirectory = false;
 							}
 						}
