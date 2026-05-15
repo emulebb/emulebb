@@ -520,7 +520,7 @@ void CDownloadListCtrl::QueueVideoThumbnailScan()
 
 void CDownloadListCtrl::StartNextVideoThumbnailWorker()
 {
-	if (m_bVideoThumbnailWorkerActive || !::IsWindow(m_hWnd))
+	if (!PartFilePreviewSeams::ShouldStartVideoThumbnailWorker(m_bVideoThumbnailWorkerActive, ::IsWindow(m_hWnd) != FALSE, theApp.IsClosing()))
 		return;
 
 	while (!m_videoThumbnailQueue.IsEmpty()) {
@@ -554,7 +554,7 @@ void CDownloadListCtrl::StartNextVideoThumbnailWorker()
 			, pEntry->ullLastAttemptCompletedSize
 			, static_cast<uint64>(pPartFile->GetFileSize()));
 
-		CVideoThumbnailThread *pThread = static_cast<CVideoThumbnailThread*>(AfxBeginThread(RUNTIME_CLASS(CVideoThumbnailThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
+		CVideoThumbnailThread *pThread = static_cast<CVideoThumbnailThread*>(AfxBeginThread(RUNTIME_CLASS(CVideoThumbnailThread), PartFilePreviewSeams::kVideoThumbnailWorkerThreadPriority, 0, CREATE_SUSPENDED));
 		if (pThread == NULL) {
 			pPartFile->m_bPreviewing = false;
 			pEntry->bInFlight = false;

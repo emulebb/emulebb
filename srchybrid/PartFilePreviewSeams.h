@@ -33,6 +33,7 @@ constexpr UINT kVideoThumbnailMaxIntervalSeconds = PreferenceValidationSeams::kV
 constexpr std::uint64_t kVideoThumbnailRefreshDeltaPermille = 50;
 constexpr std::uint64_t kVideoThumbnailRefreshMaxDeltaBytes = 128ull * 1024ull * 1024ull;
 constexpr int kVideoThumbnailDisplayMaxWidth = 480;
+constexpr int kVideoThumbnailWorkerThreadPriority = THREAD_PRIORITY_LOWEST;
 constexpr DWORD kFfmpegThumbnailTimeoutMs = 30u * 1000u;
 
 /**
@@ -164,6 +165,14 @@ inline bool IsVideoThumbnailAttemptDue(std::uint64_t ullCurrentTick, std::uint64
 inline bool ShouldForceVideoThumbnailAttempt(bool bHighPriority, bool bHasCachedBitmap)
 {
 	return bHighPriority && !bHasCachedBitmap;
+}
+
+/**
+ * Returns whether the download list should launch a thumbnail helper now.
+ */
+inline bool ShouldStartVideoThumbnailWorker(bool bWorkerActive, bool bWindowAvailable, bool bAppClosing)
+{
+	return !bWorkerActive && bWindowAvailable && !bAppClosing;
 }
 
 /**
