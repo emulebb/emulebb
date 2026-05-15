@@ -112,10 +112,24 @@ struct SMonitoredRootWatcher
 	HANDLE hDirectoryWatch = INVALID_HANDLE_VALUE;
 };
 
+CString MakeMonitoredDirectoryKey(const CString &rstrDirectory)
+{
+	CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
+	strKey.MakeLower();
+	return strKey;
+}
+
+bool IsMonitoredDirectoryKeyWithinKey(const CString &rstrRootKey, const CString &rstrCandidateKey)
+{
+	return rstrCandidateKey.GetLength() >= rstrRootKey.GetLength()
+		&& _tcsncmp(rstrRootKey, rstrCandidateKey, rstrRootKey.GetLength()) == 0;
+}
+
 bool HasEquivalentRootPath(const CStringList &rRoots, const CString &rRootPath)
 {
+	const CString strRootKey(MakeMonitoredDirectoryKey(rRootPath));
 	for (POSITION pos = rRoots.GetHeadPosition(); pos != NULL;) {
-		if (EqualPaths(rRoots.GetNext(pos), rRootPath))
+		if (MakeMonitoredDirectoryKey(rRoots.GetNext(pos)) == strRootKey)
 			return true;
 	}
 	return false;
@@ -123,8 +137,9 @@ bool HasEquivalentRootPath(const CStringList &rRoots, const CString &rRootPath)
 
 SMonitoredSharedRootJournalState* FindMonitoredSharedRootJournalState(std::vector<SMonitoredSharedRootJournalState> &rStates, const CString &rRootPath)
 {
+	const CString strRootKey(MakeMonitoredDirectoryKey(rRootPath));
 	for (size_t i = 0; i < rStates.size(); ++i) {
-		if (EqualPaths(rStates[i].strRootPath, rRootPath))
+		if (MakeMonitoredDirectoryKey(rStates[i].strRootPath) == strRootKey)
 			return &rStates[i];
 	}
 	return NULL;
@@ -132,8 +147,9 @@ SMonitoredSharedRootJournalState* FindMonitoredSharedRootJournalState(std::vecto
 
 bool RemoveMonitoredSharedRootJournalState(std::vector<SMonitoredSharedRootJournalState> &rStates, const CString &rRootPath)
 {
+	const CString strRootKey(MakeMonitoredDirectoryKey(rRootPath));
 	for (std::vector<SMonitoredSharedRootJournalState>::iterator it = rStates.begin(); it != rStates.end(); ++it) {
-		if (EqualPaths(it->strRootPath, rRootPath)) {
+		if (MakeMonitoredDirectoryKey(it->strRootPath) == strRootKey) {
 			rStates.erase(it);
 			return true;
 		}
@@ -268,9 +284,10 @@ bool ReconcileMonitoredSharedRoot(const CString &rRootPath, const CStringList &r
 	}
 
 	if (!thePrefs.GetKeepUnavailableFixedSharedDirs()) {
+		const CString strRootKey(MakeMonitoredDirectoryKey(rRootPath));
 		for (POSITION pos = rOwnedDirs.GetHeadPosition(); pos != NULL;) {
 			const CString strOwned(rOwnedDirs.GetNext(pos));
-			if (!PathHelpers::IsPathWithinDirectory(rRootPath, strOwned))
+			if (!IsMonitoredDirectoryKeyWithinKey(strRootKey, MakeMonitoredDirectoryKey(strOwned)))
 				continue;
 			if (SharedDirectoryOps::ListContainsEquivalentPath(currentSubtreeDirs, strOwned))
 				continue;
@@ -1676,9 +1693,10 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 
 				std::unordered_set<LongPathSeams::UsnFileReference, LongPathSeams::UsnFileReferenceHasher> trackedDirectoryRefs;
 				trackedDirectoryRefs.insert(rootJournalState.fileReference);
+				const CString strRootKey(MakeMonitoredDirectoryKey(strRoot));
 				for (POSITION posOwned = ownedDirs.GetHeadPosition(); posOwned != NULL;) {
 					const CString strOwned(ownedDirs.GetNext(posOwned));
-					if (!PathHelpers::IsPathWithinDirectory(strRoot, strOwned))
+					if (!IsMonitoredDirectoryKeyWithinKey(strRootKey, MakeMonitoredDirectoryKey(strOwned)))
 						continue;
 
 					LongPathSeams::NtfsDirectoryJournalState ownedJournalState = {};
