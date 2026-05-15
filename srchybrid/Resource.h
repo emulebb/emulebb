@@ -3041,6 +3041,12 @@
 #define IDS_TOOLS_STATUS_VIEW_PRESET_STOCK     3210
 #define IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED  3211
 #define IDS_TOOLS_STATUS_VIEW_PRESET_FULL      3212
+#define IDS_SEARCH_TRUST                       3213
+#define IDS_SEARCH_TRUST_OK                    3214
+#define IDS_SEARCH_TRUST_CAUTION               3215
+#define IDS_SEARCH_TRUST_WARNING               3216
+#define IDS_SEARCH_TRUST_HIGH_RISK             3217
+#define IDS_SEARCH_TRUST_INFOTIP               3218
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025
@@ -3134,6 +3140,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        3055
 #define _APS_NEXT_COMMAND_VALUE         32773
 #define _APS_NEXT_CONTROL_VALUE         3096
-#define _APS_NEXT_SYMED_VALUE           3213
+#define _APS_NEXT_SYMED_VALUE           3219
 #endif
 #endif

@@ -643,6 +643,7 @@
     <ClInclude Include="SearchFile.h" />
     <ClInclude Include="SearchList.h" />
     <ClInclude Include="SearchListCtrl.h" />
+    <ClInclude Include="SearchTrustHintSeams.h" />
     <ClInclude Include="SearchParams.h" />
     <ClInclude Include="SearchParamsWnd.h" />
     <ClInclude Include="SearchResultsWnd.h" />

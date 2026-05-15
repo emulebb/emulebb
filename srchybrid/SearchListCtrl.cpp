@@ -18,6 +18,7 @@
 #include "SearchListCtrl.h"
 #include "emule.h"
 #include "FakeFileDetector.h"
+#include "SearchTrustHintSeams.h"
 #include "ResizableLib/ResizableSheet.h"
 #include "SearchFile.h"
 #include "SearchList.h"
@@ -61,6 +62,49 @@ static char THIS_FILE[] = __FILE__;
 #define EXPAND_COLLAPSE	2
 
 #define	TREE_WIDTH		10
+
+namespace
+{
+constexpr int SEARCH_COLUMN_TRUST = 14;
+constexpr int SEARCH_COLUMN_AICH = 15;
+
+SearchTrustHintSeams::TrustHint BuildSearchTrustHint(const CSearchFile &rFile, const SFakeFileReport &rFakeReport)
+{
+	return SearchTrustHintSeams::BuildTrustHint(
+		thePrefs.IsSearchSpamFilterEnabled() && rFile.IsConsideredSpam(),
+		rFakeReport.nScore,
+		rFakeReport.eSeverity);
+}
+
+SearchTrustHintSeams::TrustHint BuildSearchTrustHint(const CSearchFile &rFile)
+{
+	return BuildSearchTrustHint(rFile, FakeFileDetector::GetSearchFileReportSnapshot(rFile));
+}
+
+CString FormatSearchTrustHint(const SearchTrustHintSeams::TrustHint &rHint)
+{
+	CString strText;
+	switch (rHint.displayKind) {
+	case SearchTrustHintSeams::DisplayKind::Spam:
+		strText = GetResString(IDS_SPAM);
+		break;
+	case SearchTrustHintSeams::DisplayKind::HighRisk:
+		strText.Format(GetResString(IDS_SEARCH_TRUST_HIGH_RISK), rHint.fakeScore);
+		break;
+	case SearchTrustHintSeams::DisplayKind::Warning:
+		strText.Format(GetResString(IDS_SEARCH_TRUST_WARNING), rHint.fakeScore);
+		break;
+	case SearchTrustHintSeams::DisplayKind::Caution:
+		strText.Format(GetResString(IDS_SEARCH_TRUST_CAUTION), rHint.fakeScore);
+		break;
+	case SearchTrustHintSeams::DisplayKind::Ok:
+	default:
+		strText = GetResString(IDS_SEARCH_TRUST_OK);
+		break;
+	}
+	return strText;
+}
+}
 
 //////////////////////////////////////////////////////////////////////////////
 // CSearchResultFileDetailSheet
@@ -273,7 +317,8 @@ void CSearchListCtrl::Init(CSearchList *in_searchlist)
 	InsertColumn(11,	_T(""),	LVCFMT_LEFT,	DFLT_CODEC_COL_WIDTH);				//IDS_CODEC
 	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	DFLT_FOLDER_COL_WIDTH);			//IDS_FOLDER
 	InsertColumn(13,	_T(""),	LVCFMT_LEFT,	50);								//IDS_KNOWN
-	InsertColumn(14,	_T(""),	LVCFMT_LEFT,	DFLT_HASH_COL_WIDTH, -1, true);		//IDS_AICHHASH
+	InsertColumn(SEARCH_COLUMN_TRUST,	_T(""),	LVCFMT_LEFT,	90);					//IDS_SEARCH_TRUST
+	InsertColumn(SEARCH_COLUMN_AICH,	_T(""),	LVCFMT_LEFT,	DFLT_HASH_COL_WIDTH, -1, true);	//IDS_AICHHASH
 
 	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("SearchListCtrl")))
 		SetViewPresetProfile(*pProfile);
@@ -318,11 +363,11 @@ CSearchListCtrl::~CSearchListCtrl()
 
 void CSearchListCtrl::Localize()
 {
-	static const UINT uids[15] =
+	static const UINT uids[16] =
 	{
 		IDS_DL_FILENAME, IDS_DL_SIZE, 0/*IDS_SEARCHAVAIL*/, IDS_COMPLSOURCES, IDS_TYPE
 		, IDS_FILEID, IDS_ARTIST, IDS_ALBUM, IDS_TITLE, IDS_LENGTH
-		, IDS_BITRATE, IDS_CODEC, IDS_FOLDER, IDS_KNOWN, IDS_AICHHASH
+		, IDS_BITRATE, IDS_CODEC, IDS_FOLDER, IDS_KNOWN, IDS_SEARCH_TRUST, IDS_AICHHASH
 	};
 
 	LocaliseHeaderCtrl(uids, _countof(uids));
@@ -350,7 +395,7 @@ void CSearchListCtrl::AddResult(const CSearchFile *toshow)
 	int iItem = InsertItem(LVIF_TEXT | LVIF_PARAM, GetItemCount(), toshow->GetFileName(), 0, 0, 0, (LPARAM)toshow);
 	// Add all sub items as callbacks and restore updating with last sub item.
 	// The callbacks are only needed for 'Find' functionality, not for any drawing.
-	const int iSubItems = 13;
+	const int iSubItems = SEARCH_COLUMN_AICH;
 	for (int i = 1; i <= iSubItems; ++i) {
 		if (i == iSubItems)
 			SetUpdateMode(eCurUpdateMode);
@@ -607,7 +652,10 @@ int CSearchListCtrl::CompareChild(const CSearchFile *item1, const CSearchFile *i
 	case 0:	//filename
 		iResult = CompareLocaleStringNoCase(item1->GetFileName(), item2->GetFileName());
 		break;
-	case 14: // AICH Hash
+	case SEARCH_COLUMN_TRUST:
+		iResult = SearchTrustHintSeams::CompareTrustHints(BuildSearchTrustHint(*item1), BuildSearchTrustHint(*item2));
+		break;
+	case SEARCH_COLUMN_AICH: // AICH Hash
 		iResult = CompareAICHHash(item1->GetFileIdentifierC(), item2->GetFileIdentifierC(), true);
 		break;
 	default: // always sort by descending availability
@@ -618,7 +666,8 @@ int CSearchListCtrl::CompareChild(const CSearchFile *item1, const CSearchFile *i
 
 int CSearchListCtrl::Compare(const CSearchFile *item1, const CSearchFile *item2, LPARAM lParamSort, bool bSortAscending)
 {
-	if (thePrefs.IsSearchSpamFilterEnabled()) {
+	const int iColumn = LOWORD(lParamSort);
+	if (iColumn != SEARCH_COLUMN_TRUST && thePrefs.IsSearchSpamFilterEnabled()) {
 		// files marked as spam are always put to the bottom of the list (maybe as option later)
 		if (item1->IsConsideredSpam() ^ item2->IsConsideredSpam()) {
 			if (bSortAscending)
@@ -627,7 +676,7 @@ int CSearchListCtrl::Compare(const CSearchFile *item1, const CSearchFile *item2,
 		}
 	}
 
-	switch (LOWORD(lParamSort)) {
+	switch (iColumn) {
 	case 0: //filename asc
 		return CompareLocaleStringNoCase(item1->GetFileName(), item2->GetFileName());
 	case 1: //size asc
@@ -668,7 +717,9 @@ int CSearchListCtrl::Compare(const CSearchFile *item1, const CSearchFile *item2,
 		return CompareOptLocaleStringNoCaseUndefinedAtBottom(item1->GetDirectory(), item2->GetDirectory(), bSortAscending);
 	case 13:
 		return item1->GetKnownType() - item2->GetKnownType();
-	case 14:
+	case SEARCH_COLUMN_TRUST:
+		return SearchTrustHintSeams::CompareTrustHints(BuildSearchTrustHint(*item1), BuildSearchTrustHint(*item2));
+	case SEARCH_COLUMN_AICH:
 		return CompareAICHHash(item1->GetFileIdentifierC(), item2->GetFileIdentifierC(), bSortAscending);
 	}
 	return 0;
@@ -1096,6 +1147,19 @@ void CSearchListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 								break;
 						}
 					}
+				}
+
+				const SFakeFileReport fakeReport = FakeFileDetector::GetSearchFileReportSnapshot(*file);
+				const CString strTrustText = FormatSearchTrustHint(BuildSearchTrustHint(*file, fakeReport));
+				CString strTrustLine;
+				strTrustLine.Format(GetResString(IDS_SEARCH_TRUST_INFOTIP), (LPCTSTR)strTrustText);
+				if (!strInfo.IsEmpty())
+					strInfo += _T('\n');
+				strInfo += strTrustLine;
+				if (fakeReport.nScore > 0) {
+					if (!strInfo.IsEmpty())
+						strInfo += _T('\n');
+					strInfo += FakeFileDetector::FormatReportSummary(fakeReport);
 				}
 
 #ifdef USE_DEBUG_DEVICE
@@ -1701,15 +1765,12 @@ CString CSearchListCtrl::GetItemDisplayText(const CSearchFile *src, int iSubItem
 #ifdef _DEBUG
 			sText.AppendFormat(&_T(" SR: %u%%")[static_cast<size_t>(sText.IsEmpty())], src->GetSpamRating());
 #endif
-			const SFakeFileReport fakeReport = FakeFileDetector::GetSearchFileReportSnapshot(*src);
-			if (fakeReport.nScore > 0) {
-				if (!sText.IsEmpty())
-					sText += _T(' ');
-				sText.AppendFormat(GetResString(IDS_FAKEFILESCORE), fakeReport.nScore);
-			}
 		}
 		break;
-	case 14: //AICH hash
+	case SEARCH_COLUMN_TRUST:
+		sText = FormatSearchTrustHint(BuildSearchTrustHint(*src));
+		break;
+	case SEARCH_COLUMN_AICH: //AICH hash
 		if (src->GetFileIdentifierC().HasAICHHash())
 			sText = src->GetFileIdentifierC().GetAICHHash().GetString();
 	}
