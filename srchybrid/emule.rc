@@ -3701,6 +3701,8 @@ BEGIN
     IDS_CATEGORY_MANAGER_AUTOCAT "Auto Category"
     IDS_CATEGORY_MANAGER_MOVE_UP "Move &Up"
     IDS_CATEGORY_MANAGER_MOVE_DOWN "Move &Down"
+    IDS_CATEGORY_REMOVE_IN_USE
+                            "Category ""%s"" still has %u assigned download(s). Move or clear those downloads before removing it."
     IDS_TOOLS_FOLDERS       "Folders"
     IDS_TOOLS_EDIT_CONFIG_FILES "Edit Config Files"
     IDS_TOOLS_NETWORK_UPDATES "Network && Updates"

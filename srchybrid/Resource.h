@@ -3093,6 +3093,7 @@
 #define IDS_CATEGORY_MANAGER_AUTOCAT            3253
 #define IDS_CATEGORY_MANAGER_MOVE_UP            3254
 #define IDS_CATEGORY_MANAGER_MOVE_DOWN          3255
+#define IDS_CATEGORY_REMOVE_IN_USE              3256
 #define IDS_STATUS_BIND_IP_COMPACT_LABEL       2023
 #define IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     2024
 #define IDS_STATUS_ANY_COMPACT                 2025
@@ -3186,6 +3187,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        3056
 #define _APS_NEXT_COMMAND_VALUE         32773
 #define _APS_NEXT_CONTROL_VALUE         3104
-#define _APS_NEXT_SYMED_VALUE           3256
+#define _APS_NEXT_SYMED_VALUE           3257
 #endif
 #endif

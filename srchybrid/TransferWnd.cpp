@@ -803,11 +803,12 @@ void CTransferWnd::OnNmRClickDltab(LPNMHDR, LRESULT *pResult)
 	menu.AppendMenu(MF_SEPARATOR);
 	menu.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC), _T("Incoming"));
 
-	flag = (m_rightclickindex == 0) ? MF_GRAYED : MF_STRING;
+	const UINT categoryEditFlag = (m_rightclickindex == 0) ? MF_GRAYED : MF_STRING;
+	const UINT categoryRemoveFlag = (m_rightclickindex == 0 || CountFilesAssignedToCategory(static_cast<UINT>(m_rightclickindex)) > 0) ? MF_GRAYED : MF_STRING;
 	menu.AppendMenu(MF_SEPARATOR);
 	menu.AppendMenu(MF_STRING, MP_CAT_ADD, GetResString(IDS_CAT_ADD));
-	menu.AppendMenu(flag, MP_CAT_EDIT, GetResString(IDS_CAT_EDIT));
-	menu.AppendMenu(flag, MP_CAT_REMOVE, GetResString(IDS_CAT_REMOVE));
+	menu.AppendMenu(categoryEditFlag, MP_CAT_EDIT, GetResString(IDS_CAT_EDIT));
+	menu.AppendMenu(categoryRemoveFlag, MP_CAT_REMOVE, GetResString(IDS_CAT_REMOVE));
 
 	menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
 
@@ -1173,6 +1174,14 @@ bool CTransferWnd::RemoveCategoryInteractive(INT_PTR index)
 		return false;
 
 	m_nLastCatTT = -1;
+	const int iAssignedCount = CountFilesAssignedToCategory(static_cast<UINT>(index));
+	if (iAssignedCount > 0) {
+		CString strMessage;
+		strMessage.Format(GetResString(IDS_CATEGORY_REMOVE_IN_USE), (LPCTSTR)thePrefs.GetCategory(index)->strTitle, static_cast<UINT>(iAssignedCount));
+		AfxMessageBox(strMessage, MB_ICONINFORMATION);
+		return false;
+	}
+
 	const bool bReload = (_tcsicmp(thePrefs.GetCatPath(index), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)) != 0);
 	theApp.downloadqueue->ResetCatParts(static_cast<UINT>(index));
 	thePrefs.RemoveCat(index);

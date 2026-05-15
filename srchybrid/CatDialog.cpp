@@ -444,8 +444,9 @@ void CCategoryManagerDialog::UpdateButtons()
 	const INT_PTR iCategory = GetSelectedCategory();
 	const bool bHasCategory = iCategory >= 0 && iCategory < thePrefs.GetCatCount();
 	const bool bCustomCategory = bHasCategory && iCategory > 0;
+	const bool bCategoryUnused = bCustomCategory && m_pTransferWnd != NULL && m_pTransferWnd->CountFilesAssignedToCategory(static_cast<UINT>(iCategory)) == 0;
 	GetDlgItem(IDC_CATMAN_EDIT)->EnableWindow(bCustomCategory);
-	GetDlgItem(IDC_CATMAN_REMOVE)->EnableWindow(bCustomCategory);
+	GetDlgItem(IDC_CATMAN_REMOVE)->EnableWindow(bCategoryUnused);
 	GetDlgItem(IDC_CATMAN_MOVE_UP)->EnableWindow(bCustomCategory && iCategory > 1);
 	GetDlgItem(IDC_CATMAN_MOVE_DOWN)->EnableWindow(bCustomCategory && iCategory < thePrefs.GetCatCount() - 1);
 	GetDlgItem(IDC_CATMAN_OPEN_INCOMING)->EnableWindow(bHasCategory && thePrefs.GetCategory(iCategory) != NULL && !thePrefs.GetCategory(iCategory)->strIncomingPath.IsEmpty());
