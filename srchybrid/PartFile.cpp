@@ -35,6 +35,7 @@
 #include "kademlia/kademlia/Entry.h"
 #include "DownloadQueue.h"
 #include "FakeFileDetector.h"
+#include "FilenameNormalizationPolicy.h"
 #include "IPFilter.h"
 #include "Packets.h"
 #include "PathHelpers.h"
@@ -5515,7 +5516,9 @@ bool CPartFile::GetMajoritySourceFileName(PartFileMajorityNameSeams::MajorityNam
 		if (cur_src == NULL || cur_src->GetRequestFile() != this)
 			continue;
 
-		CString sourceName(NormalizeDownloadFilename(cur_src->GetClientFilename()));
+		CString sourceName;
+		if (!FilenameNormalizationPolicy::TryNormalizeDownloadFilenameCandidate(cur_src->GetClientFilename(), sourceName))
+			continue;
 		sourceName.Trim();
 		if (sourceName.IsEmpty() || !IsValidEd2kString(sourceName))
 			continue;

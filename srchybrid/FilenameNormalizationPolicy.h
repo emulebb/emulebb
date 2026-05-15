@@ -124,4 +124,47 @@ inline CString NormalizeDownloadFilename(const CString &strText)
 	ProtectReservedFilenameLeaf(strResult);
 	return strResult;
 }
+
+/**
+ * @brief Normalizes a source-provided filename only when it still has a usable basename.
+ */
+inline bool TryNormalizeDownloadFilenameCandidate(const CString &strText, CString &rstrNormalized)
+{
+	rstrNormalized.Empty();
+
+	CString strTrimmed(strText);
+	strTrimmed.Trim();
+	if (strTrimmed.IsEmpty())
+		return false;
+
+	CString strNormalized(FilenameNormalizationPolicy::StripInvalidFilenameChars(strTrimmed));
+	if (!strNormalized.IsEmpty() && strNormalized[0] == _T('.'))
+		return false;
+
+	CString strBaseName(strNormalized);
+	CString strExtension;
+	const int iDot = FindFilenameExtensionSeparator(strNormalized);
+	if (iDot >= 0) {
+		strBaseName = strNormalized.Left(iDot);
+		strExtension = strNormalized.Mid(iDot + 1);
+	}
+
+	strBaseName = CollapseFilenameWhitespace(strBaseName, true);
+	if (strBaseName.IsEmpty())
+		return false;
+
+	strExtension = CollapseFilenameWhitespace(strExtension, false);
+	rstrNormalized = strBaseName;
+	if (!strExtension.IsEmpty()) {
+		rstrNormalized += _T('.');
+		rstrNormalized += strExtension;
+	}
+
+	TrimWin32TrailingFilenameChars(rstrNormalized);
+	if (rstrNormalized.IsEmpty())
+		return false;
+
+	ProtectReservedFilenameLeaf(rstrNormalized);
+	return true;
+}
 }
