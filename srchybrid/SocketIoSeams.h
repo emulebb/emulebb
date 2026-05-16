@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <limits>
 
+inline constexpr std::uint32_t kBroadbandUdpReceiveBufferBytes = 1024u * 1024u;
+inline constexpr std::uint32_t kBroadbandTcpUploadSendBufferBytes = 1024u * 1024u;
+
 /**
  * @brief Reports whether a socket receive result fits inside the requested read buffer span.
  */
