@@ -1068,7 +1068,7 @@ BEGIN
     IDS_WEB_REFRESH_TIME    "Uploadtijdpagina's"
     IDS_WEB_REFRESH_COMMENT "Tijd in seconden (0=gedeactiveerd):"
     IDS_SV_URL              "URL" //!
-    IDS_WS_RELOAD_TMPL      "Sjabloon" //!
+    IDS_WS_RELOAD_TMPL      "Template" //!
     IDS_SV_DEBUGLOG         "Debuglogboek"
     IDS_WS_PASS             "Wachtwoord"
     IDS_WS_ERR_LOADTEMPLATE "Kan de templates niet laden: vervang bestand %s met een nieuwe versie!"

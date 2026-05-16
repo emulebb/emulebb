@@ -1305,7 +1305,7 @@ BEGIN
     IDS_WRN_TEMPFILES_RESERVED
                             "Le dossier pour les fichiers temporaires ne doit pas être défini dans le répertoire d'installation d'eMule."
     IDS_WRN_INCTEMP_SAME    "Le dossier pour les fichiers temporaires et le dossier pour les fichiers téléchargés ne doivent pas être le même."
-    IDS_SHOWDWLPERCENTAGE   "Afficher le pourcentage d'avancement dans la barre de progression"
+    IDS_SHOWDWLPERCENTAGE   "Afficher le % d'avancement dans la barre de progression"
     IDS_TBN_ONNEWDOWNLOAD   "Téléchargement ajouté"
     IDS_ARTIST              "Artiste"
     IDS_ALBUM               "Album" //!
