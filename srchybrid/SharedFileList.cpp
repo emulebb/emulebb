@@ -3095,12 +3095,26 @@ bool CSharedFileList::CaptureStartupCacheSaveSnapshot(StartupCacheSaveSnapshot &
 	rSnapshot.directories.reserve(static_cast<size_t>(sharedDirectories.GetCount()));
 
 	std::unordered_map<std::wstring, size_t> directoryIndex;
-	for (POSITION pos = sharedDirectories.GetHeadPosition(); pos != NULL;) {
+	const auto addSnapshotDirectory = [&rSnapshot, &directoryIndex](const CString &strDirectory) {
+		const std::wstring strDirectoryKey(MakeStartupCacheSnapshotKey(strDirectory));
+		if (directoryIndex.find(strDirectoryKey) != directoryIndex.end())
+			return;
+
 		StartupCacheSaveDirectorySnapshot directory = {};
-		directory.strDirectoryPath = sharedDirectories.GetNext(pos);
+		directory.strDirectoryPath = strDirectory;
 		const size_t uIndex = rSnapshot.directories.size();
-		directoryIndex[MakeStartupCacheSnapshotKey(directory.strDirectoryPath)] = uIndex;
+		directoryIndex[strDirectoryKey] = uIndex;
 		rSnapshot.directories.push_back(std::move(directory));
+	};
+
+	for (POSITION pos = sharedDirectories.GetHeadPosition(); pos != NULL;)
+		addSnapshotDirectory(sharedDirectories.GetNext(pos));
+
+	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
+		CKnownFile *pFile = pair->value;
+		if (pFile == NULL || pFile->IsKindOf(RUNTIME_CLASS(CPartFile)))
+			continue;
+		addSnapshotDirectory(pFile->GetPath());
 	}
 
 	{
