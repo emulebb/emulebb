@@ -2155,7 +2155,8 @@ BEGIN
 END
 // eMule BB managed translation block: end
 
-#endif
+#endif    // Persian (Iran) resources
+/////////////////////////////////////////////////////////////////////////////
 
 
 #ifndef APSTUDIO_INVOKED
