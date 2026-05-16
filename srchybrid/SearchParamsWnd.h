@@ -85,7 +85,7 @@ protected:
 	CSize m_szFloat;
 	CCustomAutoComplete *m_pacSearchString;
 
-	void UpdateControls();
+	void UpdateControls(bool bPersistSearchMethod = true);
 	BOOL SaveSearchStrings();
 	bool MoveFocusToResultsOnForwardTab();
 	CWnd* FindLastEnabledTabStop();

@@ -22,6 +22,7 @@
 #include "SearchParamsWnd.h"
 #include "AppKeyboardShortcutsSeams.h"
 #include "SearchParams.h"
+#include "SearchParamsPolicy.h"
 #include "Packets.h"
 #include "SearchFile.h"
 #include "SearchList.h"
@@ -268,27 +269,14 @@ bool CSearchResultsWnd::ResolveAutomaticSearchType(SSearchParams *pParams, CStri
 	}
 
 	if (pParams->eType == SearchTypeAutomatic) {
-		if (!theApp.serverconnect->IsConnected() && Kademlia::CKademlia::IsRunning() && Kademlia::CKademlia::IsConnected())
-			pParams->eType = SearchTypeKademlia;
-		else if (theApp.serverconnect->IsConnected() && (!Kademlia::CKademlia::IsRunning() || !Kademlia::CKademlia::IsConnected()))
-			pParams->eType = SearchTypeEd2kServer;
-		else {
-			if (!theApp.serverconnect->IsConnected() && (!Kademlia::CKademlia::IsRunning() || !Kademlia::CKademlia::IsConnected())) {
-				rError = _T("not connected to eD2k or Kad");
-				return false;
-			}
-
-			const CServer *const pCurrentServer = theApp.serverconnect->GetCurrentServer();
-			pParams->eType = (theApp.serverconnect->IsConnected()
-				&& pCurrentServer != NULL
-				&& (pCurrentServer->IsStaticMember()
-					|| (pCurrentServer->GetUsers() > 40000
-						&& theApp.serverlist->GetServerCount() < 40
-						&& pCurrentServer->GetUsers() < 2000000
-						&& pCurrentServer->GetFiles() > 5000000)))
-				? SearchTypeEd2kServer
-				: SearchTypeKademlia;
+		const uint8_t uResolvedType = SearchParamsPolicy::ResolveAutomaticSearchType(
+			theApp.serverconnect->IsConnected(),
+			Kademlia::CKademlia::IsRunning() && Kademlia::CKademlia::IsConnected());
+		if (uResolvedType == SearchParamsPolicy::kAutomaticSearchType) {
+			rError = _T("not connected to eD2k or Kad");
+			return false;
 		}
+		pParams->eType = static_cast<ESearchType>(uResolvedType);
 	}
 	return true;
 }
@@ -1350,37 +1338,11 @@ bool GetSearchPacket(CSafeMemFile &data, SSearchParams *pParams, bool bTargetSup
 bool CSearchResultsWnd::StartNewSearch(SSearchParams *pParams)
 {
 
-	if (pParams->eType == SearchTypeAutomatic) {
-		// select between kad and server
-		// its easy if we are connected to one network only
-		if (!theApp.serverconnect->IsConnected() && Kademlia::CKademlia::IsRunning() && Kademlia::CKademlia::IsConnected())
-			pParams->eType = SearchTypeKademlia;
-		else if (theApp.serverconnect->IsConnected() && (!Kademlia::CKademlia::IsRunning() || !Kademlia::CKademlia::IsConnected()))
-			pParams->eType = SearchTypeEd2kServer;
-		else {
-			if (!theApp.serverconnect->IsConnected() && (!Kademlia::CKademlia::IsRunning() || !Kademlia::CKademlia::IsConnected())) {
-				LocMessageBox(IDS_NOTCONNECTEDANY, MB_ICONWARNING, 0);
-				delete pParams;
-				return false;
-			}
-			// connected to both
-			// We choose Kad, except
-			// - if we are connected to a static server
-			// - or a server with more than 40k and less than 2mio users connected,
-			//      more than 5 mio files and if our serverlist contains less than 40 servers
-			//      (otherwise we have assume that its polluted with fake servers and we might
-			//      just as well to be connected to one)
-			// might be further optimized in the future
-			const CServer *curserv = theApp.serverconnect->GetCurrentServer();
-			pParams->eType = ( theApp.serverconnect->IsConnected() && curserv != NULL
-				&& (curserv->IsStaticMember()
-					|| (curserv->GetUsers() > 40000
-						&& theApp.serverlist->GetServerCount() < 40
-						&& curserv->GetUsers() < 2000000 //was 5M - copy & paste bug
-						&& curserv->GetFiles() > 5000000))
-				)
-				? SearchTypeEd2kServer : SearchTypeKademlia;
-		}
+	CString strSearchError;
+	if (!ResolveAutomaticSearchType(pParams, strSearchError)) {
+		LocMessageBox(IDS_NOTCONNECTEDANY, MB_ICONWARNING, 0);
+		delete pParams;
+		return false;
 	}
 
 	switch (pParams->eType) {

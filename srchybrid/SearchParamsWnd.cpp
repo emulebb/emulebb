@@ -20,6 +20,7 @@
 #include "SearchDlg.h"
 #include "SearchParamsWnd.h"
 #include "SearchResultsWnd.h"
+#include "SearchParamsPolicy.h"
 #include "AppKeyboardShortcutsSeams.h"
 #include "OtherFunctions.h"
 #include "CustomAutoComplete.h"
@@ -27,6 +28,8 @@
 #include "Opcodes.h"
 #include "StringConversion.h"
 #include "MuleToolBarCtrl.h"
+#include "ServerConnect.h"
+#include "Kademlia/Kademlia/Kademlia.h"
 #include <list>
 
 #ifdef _DEBUG
@@ -156,7 +159,12 @@ LRESULT CSearchParamsWnd::OnInitDialog(WPARAM, LPARAM)
 
 	m_ctlMethod.ModifyStyle(0, WS_CLIPCHILDREN); // Reduce flickering during resize
 	InitMethodsCtrl();
-	if (m_ctlMethod.SetCurSel(thePrefs.GetSearchMethod()) == CB_ERR)
+	int iInitialMethod = thePrefs.GetSearchMethod();
+	if (iInitialMethod == SearchTypeAutomatic)
+		iInitialMethod = SearchParamsPolicy::ResolveAutomaticSearchType(
+			theApp.serverconnect->IsConnected(),
+			Kademlia::CKademlia::IsRunning() && Kademlia::CKademlia::IsConnected());
+	if (m_ctlMethod.SetCurSel(iInitialMethod) == CB_ERR)
 		m_ctlMethod.SetCurSel(SearchTypeEd2kServer);
 
 	m_ctlFileType.ModifyStyle(0, WS_CLIPCHILDREN); // Reduce flickering during resize
@@ -184,7 +192,7 @@ LRESULT CSearchParamsWnd::OnInitDialog(WPARAM, LPARAM)
 	m_ctlOpts.SetColumnWidth(0, 100/*LVSCW_AUTOSIZE*/);
 	m_ctlOpts.SetColumnWidth(1, 120);
 
-	UpdateControls();
+	UpdateControls(false);
 	OnEnChangeName();
 
 	return TRUE;
@@ -432,7 +440,7 @@ void CSearchParamsWnd::OnUpdateCmdUI(CFrameWnd* /*pTarget*/, BOOL /*bDisableIfNo
 	// Disable MFC's command routing by not passing the process flow to the base class
 }
 
-void CSearchParamsWnd::UpdateControls()
+void CSearchParamsWnd::UpdateControls(bool bPersistSearchMethod)
 {
 	int iMethod = m_ctlMethod.GetCurSel();
 	if (iMethod != CB_ERR && iMethod != thePrefs.GetSearchMethod()) {
@@ -440,7 +448,8 @@ void CSearchParamsWnd::UpdateControls()
 			OnEnChangeName();
 		else if (m_searchdlg->IsLocalEd2kSearchRunning() && (iMethod == SearchTypeEd2kServer || iMethod == SearchTypeEd2kGlobal))
 			m_ctlStart.EnableWindow(FALSE);
-		thePrefs.SetSearchMethod(iMethod);
+		if (bPersistSearchMethod)
+			thePrefs.SetSearchMethod(iMethod);
 	}
 
 	DWORD_PTR dwData = static_cast<DWORD_PTR>(iMethod == SearchTypeEd2kServer || iMethod == SearchTypeEd2kGlobal);
