@@ -47,6 +47,7 @@ IMPLEMENT_DYNAMIC(CPPgGeneral, CPropertyPage)
 BEGIN_MESSAGE_MAP(CPPgGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_STARTMIN, OnSettingsChange)
 	ON_BN_CLICKED(IDC_STARTWIN, OnSettingsChange)
+	ON_BN_CLICKED(IDC_MINIMULE, OnSettingsChange)
 	ON_EN_CHANGE(IDC_NICK, OnSettingsChange)
 	ON_BN_CLICKED(IDC_EXIT, OnSettingsChange)
 	ON_BN_CLICKED(IDC_SPLASHON, OnSettingsChange)
@@ -92,6 +93,7 @@ void CPPgGeneral::LoadSettings()
 	CheckDlgButton(IDC_SPLASHON, static_cast<UINT>(thePrefs.splashscreen));
 	CheckDlgButton(IDC_STARTMIN, static_cast<UINT>(thePrefs.startMinimized));
 	CheckDlgButton(IDC_STARTWIN, static_cast<UINT>(thePrefs.m_bAutoStart));
+	CheckDlgButton(IDC_MINIMULE, static_cast<UINT>(thePrefs.m_bEnableMiniMule));
 
 	CheckDlgButton(IDC_PREVENTSTANDBY, static_cast<UINT>(thePrefs.GetPreventStandby()));
 
@@ -247,6 +249,7 @@ BOOL CPPgGeneral::OnApply()
 	thePrefs.SetUpdateDays(static_cast<CSliderCtrl*>(GetDlgItem(IDC_CHECKDAYS))->GetPos());
 	thePrefs.splashscreen = IsDlgButtonChecked(IDC_SPLASHON) != 0;
 	thePrefs.startMinimized = IsDlgButtonChecked(IDC_STARTMIN) != 0;
+	thePrefs.m_bEnableMiniMule = IsDlgButtonChecked(IDC_MINIMULE) != 0;
 	const bool bRequestedAutoStart = IsDlgButtonChecked(IDC_STARTWIN) != 0;
 	thePrefs.m_bAutoStart = bRequestedAutoStart;
 	if (!SetAutoStart(thePrefs.m_bAutoStart) && bRequestedAutoStart) {
@@ -298,6 +301,7 @@ void CPPgGeneral::Localize()
 		SetDlgItemText(IDC_SPLASHON, GetResString(IDS_PW_SPLASH));
 		SetDlgItemText(IDC_STARTMIN, GetResString(IDS_PREF_STARTMIN));
 		SetDlgItemText(IDC_STARTWIN, GetResString(IDS_STARTWITHWINDOWS));
+		SetDlgItemText(IDC_MINIMULE, GetResString(IDS_ENABLEMINIMULE));
 	}
 }
 

@@ -1859,6 +1859,7 @@ BEGIN
     IDS_UNVERIFIED          "Не перевірено"
     IDS_INVALIDFILEEXT      "Хибне розширення файлу"
     IDS_UNKNOWNFILEEXT      "невідоме розширення"
+    IDS_ENABLEMINIMULE      "Включити MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Заборонити автоматичний перегляд архівів"
     IDS_US_STALLEDW4BR      "Затримка! Очікування запиту блока."

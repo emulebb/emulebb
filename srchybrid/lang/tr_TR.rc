@@ -1865,6 +1865,7 @@ BEGIN
     IDS_UNVERIFIED          "Doğrulanmadı"
     IDS_INVALIDFILEEXT      "Geçersiz dosya uzantısı"
     IDS_UNKNOWNFILEEXT      "Bilinmeyen dosya uzantısı"
+    IDS_ENABLEMINIMULE      "MiniMule etkin"
     IDS_DISABLE_AUTOARCHPREV
                             "Dosya ayrıntılarında otomatik arşiv önizlemeyi başlatma etkisiz"
     IDS_US_STALLEDW4BR      "Durduruldu! Blok isteği için bekleniyor."

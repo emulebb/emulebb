@@ -97,6 +97,7 @@
 #include "Scheduler.h"
 #include "MenuCmds.h"
 #include "Ini2.h"
+#include "MiniMuleDlg.h"
 #include "MuleSystrayDlg.h"
 #include "MuleListCtrlViewPresets.h"
 #include "SpeedQuickActionsSeams.h"
@@ -1299,6 +1300,7 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_icoSysTrayConnected()
 	, m_icoSysTrayDisconnected()
 	, m_icoSysTrayLowID()
+	, m_pMiniMule()
 	, m_pSystrayDlg()
 	, m_pDropTarget()
 	, m_iMsgIcon()
@@ -1369,6 +1371,7 @@ void CemuleDlg::SetClientIconList()
 
 CemuleDlg::~CemuleDlg()
 {
+	DestroyMiniMule();
 	CloseTTS();
 	if (m_icoSysTrayCurrent)
 		VERIFY(::DestroyIcon(m_icoSysTrayCurrent));
@@ -2579,6 +2582,8 @@ void CemuleDlg::ShowTransferRate(bool bForceAll)
 		szBuff.Format(_T("(U:%.1f D:%.1f) %s %s"), m_uUpDatarate / 1024.0f, m_uDownDatarate / 1024.0f, MOD_RELEASE_PRODUCT_NAME, (LPCTSTR)theApp.m_strCurVersionLong);
 		SetWindowText(szBuff);
 	}
+	if (m_pMiniMule != NULL && m_pMiniMule->GetSafeHwnd() != NULL && m_pMiniMule->IsWindowVisible())
+		m_pMiniMule->UpdateContent(m_uUpDatarate, m_uDownDatarate);
 }
 
 void CemuleDlg::OnOK()
@@ -3088,6 +3093,7 @@ void CemuleDlg::OnClose()
 	theApp.ReleaseStandbyPrevention();
 	StopBindLossMonitor();
 	notifierenabled = false;
+	DestroyMiniMule();
 
 	CShutdownProgressDlg shutdownProgress(this);
 	if (shutdownProgress.Create(IDD_SHUTDOWNPROGRESS, this)) {
@@ -3365,14 +3371,34 @@ void CemuleDlg::OnTrayLButtonUp()
 	if (theApp.IsClosing())
 		return;
 
-	// Avoid re-entrance problems with the main window and options dialog.
+	// Avoid re-entrance problems with the main window, options dialog and MiniMule window.
 	if (IsPreferencesDlgOpen()) {
 		MessageBeep(MB_OK);
 		preferenceswnd->SetForegroundWindow();
 		preferenceswnd->BringWindowToTop();
 		return;
 	}
-	RestoreWindow();
+
+	if (m_pMiniMule != NULL) {
+		if (m_pMiniMule->GetSafeHwnd() != NULL) {
+			m_pMiniMule->ShowWindow(SW_SHOW);
+			m_pMiniMule->SetForegroundWindow();
+			m_pMiniMule->BringWindowToTop();
+			m_pMiniMule->UpdateContent(m_uUpDatarate, m_uDownDatarate);
+		}
+		return;
+	}
+
+	if (thePrefs.GetEnableMiniMule()) {
+		CMiniMuleDlg *pMiniMule = new CMiniMuleDlg(this);
+		if (pMiniMule->Create(IDD_MINIMULE, this)) {
+			m_pMiniMule = pMiniMule;
+			m_pMiniMule->UpdateContent(m_uUpDatarate, m_uDownDatarate);
+			m_pMiniMule->SetForegroundWindow();
+			m_pMiniMule->BringWindowToTop();
+		} else
+			delete pMiniMule;
+	}
 }
 
 void CemuleDlg::OnTrayRButtonUp(CPoint pt)
@@ -3494,6 +3520,7 @@ void CemuleDlg::RestoreWindow()
 		return;
 	}
 
+	DestroyMiniMule();
 	if (m_wpFirstRestore.length) {
 		SetWindowPlacement(&m_wpFirstRestore);
 		memset(&m_wpFirstRestore, 0, sizeof m_wpFirstRestore);
@@ -3502,6 +3529,25 @@ void CemuleDlg::RestoreWindow()
 	} else
 		CTrayDialog::RestoreWindow();
 	UpdateTrayVisibility();
+}
+
+void CemuleDlg::DestroyMiniMule()
+{
+	if (m_pMiniMule == NULL)
+		return;
+
+	CMiniMuleDlg *pMiniMule = m_pMiniMule;
+	m_pMiniMule = NULL;
+	if (pMiniMule->GetSafeHwnd() != NULL)
+		pMiniMule->DestroyWindow();
+	else
+		delete pMiniMule;
+}
+
+void CemuleDlg::OnMiniMuleDestroyed(CMiniMuleDlg *pMiniMule)
+{
+	if (m_pMiniMule == pMiniMule)
+		m_pMiniMule = NULL;
 }
 
 void CemuleDlg::UpdateTrayIcon(int iPercent)
@@ -3895,6 +3941,10 @@ void CemuleDlg::Localize()
 	toolbar->Localize();
 	ShowConnectionState();
 	ShowTransferRate(true);
+	if (m_pMiniMule != NULL && m_pMiniMule->GetSafeHwnd() != NULL) {
+		m_pMiniMule->Localize();
+		m_pMiniMule->UpdateContent(m_uUpDatarate, m_uDownDatarate);
+	}
 	ShowUserCount();
 }
 

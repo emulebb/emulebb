@@ -584,6 +584,7 @@ public:
 	static bool		m_bShowWin7TaskbarGoodies;
 	static bool		m_bShowUpDownIconInTaskbar;
 	static bool		m_bAlwaysShowTrayIcon;
+	static bool		m_bEnableMiniMule;
 	static bool		m_bForceSpeedsToKB;
 	static bool		m_bAutoShowLookups;
 	static bool		m_bExtraPreviewWithMenu;
@@ -1377,6 +1378,7 @@ public:
 	static void		SetSparsePartFiles(bool bEnable)	{ m_bSparsePartFiles = bEnable; }
 	static bool		IsShowUpDownIconInTaskbar()			{ return m_bShowUpDownIconInTaskbar; }
 	static bool		IsAlwaysShowTrayIcon()				{ return m_bAlwaysShowTrayIcon; }
+	static bool		GetEnableMiniMule()					{ return m_bEnableMiniMule; }
 	static bool		IsWin7TaskbarGoodiesEnabled()		{ return m_bShowWin7TaskbarGoodies; }
 	static void		SetWin7TaskbarGoodiesEnabled(bool flag)	{ m_bShowWin7TaskbarGoodies = flag; }
 

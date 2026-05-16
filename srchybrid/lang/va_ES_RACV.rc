@@ -1870,6 +1870,7 @@ BEGIN
     IDS_UNVERIFIED          "no verificat"
     IDS_INVALIDFILEEXT      "L'extensió de l'archiu no es valida"
     IDS_UNKNOWNFILEEXT      "Extensió de l'archiu desconeguda"
+    IDS_ENABLEMINIMULE      "Activar MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Desact. inici autom. de previsualis. d'archius en detalls de l'archiu"
     IDS_US_STALLEDW4BR      "¡Pausat! Esperant un bloc que s'ha solicitat."

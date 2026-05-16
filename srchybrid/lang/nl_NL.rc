@@ -1862,6 +1862,7 @@ BEGIN
     IDS_UNVERIFIED          "Ongecontroleerd"
     IDS_INVALIDFILEEXT      "Foutieve bestandsextensie"
     IDS_UNKNOWNFILEEXT      "onbekende bestandsextensie"
+    IDS_ENABLEMINIMULE      "MiniMule inschakelen"
     IDS_DISABLE_AUTOARCHPREV
                             "Automatische archiefvoorvertoning, startend in de bestandsdetails, uitschakelen"
     IDS_US_STALLEDW4BR      "Geblokkeerd! Wachtend op blokaanvraag."

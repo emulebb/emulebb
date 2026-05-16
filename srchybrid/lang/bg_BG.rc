@@ -1843,6 +1843,7 @@ BEGIN
     IDS_UNVERIFIED          "непроверен"
     IDS_INVALIDFILEEXT      "невалидно файлово разширение"
     IDS_UNKNOWNFILEEXT      "неизвестно файлово разширение"
+    IDS_ENABLEMINIMULE      "Използвай MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Изключи автоматичния преглед на архивите в детайлите за файла"
     IDS_US_STALLEDW4BR      "Забавяне! Изчакване на заявка за блока."

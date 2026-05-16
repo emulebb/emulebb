@@ -1873,6 +1873,7 @@ BEGIN
     IDS_UNVERIFIED          "não verificado"
     IDS_INVALIDFILEEXT      "Extensão de ficheiro inválida"
     IDS_UNKNOWNFILEEXT      "extensão de ficheiro desconhecida"
+    IDS_ENABLEMINIMULE      "Activar MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Desactivar início de pré-visualização automática de arquivos nos detalhes do ficheiro"
     IDS_US_STALLEDW4BR      "Em espera! A aguardar que o bloco seja pedido."

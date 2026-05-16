@@ -1820,6 +1820,7 @@ BEGIN
     IDS_UNVERIFIED          "manglar godkjenning"
     IDS_INVALIDFILEEXT      "Ikkje gangbart filetternamn"
     IDS_UNKNOWNFILEEXT      "ukjend filetternamn"
+    IDS_ENABLEMINIMULE      "Aktiver MiniMule"
     IDS_DISABLE_AUTOARCHPREV "Deaktiver automatisk arkivførehandssyning i fildetaljar"
     IDS_US_STALLEDW4BR      "Avventar! Etterspurt del."
     IDS_US_STALLEDREADINGFDISK "Avventar! Les frå harddisken."

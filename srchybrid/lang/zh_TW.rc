@@ -1840,6 +1840,7 @@ BEGIN
     IDS_UNVERIFIED          "未驗證"
     IDS_INVALIDFILEEXT      "無效的副檔名"
     IDS_UNKNOWNFILEEXT      "未知的副檔名"
+    IDS_ENABLEMINIMULE      "啟用 MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "在檔案詳細資訊內停用自動壓縮檔預覽"
     IDS_US_STALLEDW4BR      "動彈不得! 區塊要求等待中."

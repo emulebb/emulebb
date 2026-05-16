@@ -1066,6 +1066,7 @@ bool    CPreferences::m_bAllocFull;
 bool	CPreferences::m_bShowSharedFilesDetails;
 bool	CPreferences::m_bShowUpDownIconInTaskbar;
 bool	CPreferences::m_bAlwaysShowTrayIcon;
+bool	CPreferences::m_bEnableMiniMule;
 bool	CPreferences::m_bShowWin7TaskbarGoodies;
 bool	CPreferences::m_bForceSpeedsToKB;
 bool	CPreferences::m_bAutoShowLookups;
@@ -2732,6 +2733,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("ReBarToolbar"), m_bReBarToolbar);
 	ini.WriteBool(_T("ShowUpDownIconInTaskbar"), m_bShowUpDownIconInTaskbar);
 	ini.WriteBool(_T("AlwaysShowTrayIcon"), m_bAlwaysShowTrayIcon);
+	ini.WriteBool(_T("MiniMule"), m_bEnableMiniMule);
 	ini.WriteBool(_T("ShowVerticalHourMarkers"), m_bShowVerticalHourMarkers);
 	ini.WriteBool(_T("ForceSpeedsToKB"), m_bForceSpeedsToKB);
 	ini.WriteBool(_T("ExtraPreviewWithMenu"), m_bExtraPreviewWithMenu);
@@ -3262,6 +3264,7 @@ void CPreferences::LoadPreferences()
 	m_bAutoShowLookups = ini.GetBool(_T("AutoShowLookups"), true);
 	m_bShowUpDownIconInTaskbar = ini.GetBool(_T("ShowUpDownIconInTaskbar"), false);
 	m_bAlwaysShowTrayIcon = ini.GetBool(_T("AlwaysShowTrayIcon"), false);
+	m_bEnableMiniMule = ini.GetBool(_T("MiniMule"), true);
 	m_bShowWin7TaskbarGoodies = ini.GetBool(_T("ShowWin7TaskbarGoodies"), true);
 	m_bForceSpeedsToKB = ini.GetBool(_T("ForceSpeedsToKB"), false);
 	m_bExtraPreviewWithMenu = ini.GetBool(_T("ExtraPreviewWithMenu"), false);

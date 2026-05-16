@@ -1869,6 +1869,7 @@ BEGIN
     IDS_UNVERIFIED          "No verificat"
     IDS_INVALIDFILEEXT      "L'extensió de fitxer és invàlida"
     IDS_UNKNOWNFILEEXT      "extensió de fitxer desconeguda"
+    IDS_ENABLEMINIMULE      "Activa MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Desactiva l'inici automàtic de previsualització d'arxius als detalls del fitxer"
     IDS_US_STALLEDW4BR      "Blocat! Esperant la sol·licitud de bloc."

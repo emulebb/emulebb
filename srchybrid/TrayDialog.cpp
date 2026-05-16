@@ -246,8 +246,11 @@ LRESULT CTrayDialog::OnTrayNotify(WPARAM wParam, LPARAM lParam)
 		// whereby the according WM_LBUTTONDOWN message was meant for some other tray bar
 		// icon.
 		if (m_uLButtonDown) {
-			KillSingleClickTimer();
-			RestoreWindow();
+			if (m_uLButtonDown > 1 || !thePrefs.GetEnableMiniMule()) {
+				KillSingleClickTimer();
+				RestoreWindow();
+			} else if (!m_uSingleClickTimer && !IsWindowVisible())
+				m_uSingleClickTimer = SetTimer(IDT_SINGLE_CLICK, u_DblClickSpeed, NULL);
 		}
 		break;
 	case WM_LBUTTONDBLCLK:

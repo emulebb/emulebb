@@ -1812,6 +1812,7 @@ BEGIN
     IDS_UNVERIFIED          "Δεν επιβεβαιώθηκε"
     IDS_INVALIDFILEEXT      "Μη έγκυρη επέκταση αρχείου"
     IDS_UNKNOWNFILEEXT      "Άγνωση επέκταση αρχείου"
+    IDS_ENABLEMINIMULE      "Ενεργοποίηση του MiniMule"
     IDS_DISABLE_AUTOARCHPREV "Απενεργοποίηση αυτόματης προεπισκόπησης συμπιεσμένου, στις λεπτομέρειες του αρχείου"
     IDS_US_STALLEDW4BR      "Πάγωσε! Αναμονή αίτησης τμήματος."
     IDS_US_STALLEDREADINGFDISK "Πάγωσε! Ανάγνωση του δίσκου."

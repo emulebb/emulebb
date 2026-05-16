@@ -34,6 +34,7 @@ class CIrcWnd;
 class CKademliaWnd;
 class CKnownFileList;
 class CMainFrameDropTarget;
+class CMiniMuleDlg;
 class CMuleStatusBarCtrl;
 class CMuleSystrayDlg;
 class CMuleToolbarCtrl;
@@ -88,6 +89,10 @@ public:
 	void ShowTransferRate(bool bForceAll = false);
 	void UpdateTrayVisibility();
 	void Localize();
+	/**
+	 * @brief Clears the modeless MiniMule pointer after the popup destroys itself.
+	 */
+	void OnMiniMuleDestroyed(CMiniMuleDlg *pMiniMule);
 
 #ifdef HAVE_WIN7_SDK_H
 	void UpdateStatusBarProgress();
@@ -191,6 +196,7 @@ protected:
 	HICON			m_icoSysTrayLowID;			// do not use this icon for anything but the system tray!!!
 	CImageList		imagelist;
 	CTitledMenu		trayPopup;
+	CMiniMuleDlg	*m_pMiniMule;
 	CMuleSystrayDlg	*m_pSystrayDlg;
 	CMainFrameDropTarget *m_pDropTarget;
 	CMenu			m_SysMenuOptions;
@@ -227,6 +233,7 @@ protected:
 	ULONGLONG m_dwSplashTime;
 	void ShowSplash();
 	void DestroySplash();
+	void DestroyMiniMule();
 
 	CMap<UINT, UINT, LPCTSTR, LPCTSTR> m_mapTbarCmdToIcon;
 	void CreateToolbarCmdIconMap();

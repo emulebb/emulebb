@@ -1865,6 +1865,7 @@ BEGIN
     IDS_UNVERIFIED          "Neověřené"
     IDS_INVALIDFILEEXT      "Neplatná přípona souboru"
     IDS_UNKNOWNFILEEXT      "Neznámá přípona souboru"
+    IDS_ENABLEMINIMULE      "Povolit MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Zakázat automatické spuštění ukázky archivu v detailech souboru"
     IDS_US_STALLEDW4BR      "Pozastaveno! Čeká se na blokový požadavek."

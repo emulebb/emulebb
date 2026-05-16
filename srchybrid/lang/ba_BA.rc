@@ -1867,6 +1867,7 @@ BEGIN
     IDS_UNVERIFIED          "egiaztatu gabe"
     IDS_INVALIDFILEEXT      "Baliogabeko fitxategi luzapena"
     IDS_UNKNOWNFILEEXT      "Fitxategi luzapen ezezaguna"
+    IDS_ENABLEMINIMULE      "Gaitu MiniMule"
     IDS_US_STALLEDW4BR      "Stalled! Waiting for block request."
     IDS_US_STALLEDREADINGFDISK "Stalled! Reading from disk."
     IDS_SERVERFEATURE_INTTYPETAGS "Integer type tags"

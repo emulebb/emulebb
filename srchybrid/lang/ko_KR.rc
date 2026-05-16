@@ -1829,6 +1829,7 @@ BEGIN
     IDS_UNVERIFIED          "검사되지 않음"
     IDS_INVALIDFILEEXT      "잘못된 파일 확장자"
     IDS_UNKNOWNFILEEXT      "알 수 없는 파일 확장자"
+    IDS_ENABLEMINIMULE      "MiniMule 사용"
     IDS_DISABLE_AUTOARCHPREV
                             "파일 상세 보기에서 자동 압축 미리 보기 시작 금지"
     IDS_US_STALLEDW4BR      "실속! 블록 요청 대기."

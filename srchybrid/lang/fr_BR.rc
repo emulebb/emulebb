@@ -1826,6 +1826,7 @@ BEGIN
     IDS_UNVERIFIED          "Unverified"
     IDS_INVALIDFILEEXT      "Invalid file extension"
     IDS_UNKNOWNFILEEXT      "unknown file extension"
+	IDS_ENABLEMINIMULE      "Gweredekaat MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Disable automatic archive preview start in file details"
     IDS_US_STALLEDW4BR      "Stalled! Waiting for block request."

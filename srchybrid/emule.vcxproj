@@ -279,6 +279,7 @@
     <ClCompile Include="MediaInfo_DLL.cpp" />
     <ClCompile Include="MetaDataDlg.cpp" />
     <ClCompile Include="MeterIcon.cpp" />
+    <ClCompile Include="MiniMuleDlg.cpp" />
     <ClCompile Include="MuleListCtrl.cpp" />
     <ClCompile Include="MuleStatusBarCtrl.cpp" />
     <ClCompile Include="MuleSystrayDlg.cpp" />
@@ -591,6 +592,7 @@
     <ClInclude Include="MenuCmds.h" />
     <ClInclude Include="MetaDataDlg.h" />
     <ClInclude Include="MeterIcon.h" />
+    <ClInclude Include="MiniMuleDlg.h" />
     <ClInclude Include="MuleListCtrl.h" />
     <ClInclude Include="MuleStatusBarCtrl.h" />
     <ClInclude Include="MuleSystrayDlg.h" />

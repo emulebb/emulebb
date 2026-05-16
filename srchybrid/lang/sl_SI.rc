@@ -1864,6 +1864,7 @@ BEGIN
     IDS_UNVERIFIED          "Nepreverjeno"
     IDS_INVALIDFILEEXT      "Neveljavna končnica datoteke"
     IDS_UNKNOWNFILEEXT      "Neznana končnica datoteke"
+    IDS_ENABLEMINIMULE      "Omogoči MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Onemogoči samodejen predogled arhivov v podrobnostih o datoteki"
     IDS_US_STALLEDW4BR      "Zastoj med čakanjem na zahtevo bloka!"

@@ -1859,6 +1859,7 @@ BEGIN
     IDS_UNVERIFIED          "mhux verifikat"
     IDS_INVALIDFILEEXT      "Estensjoni tal-fajl invalida"
     IDS_UNKNOWNFILEEXT      "estensjoni tal-fajl mhux magħrufa"
+    IDS_ENABLEMINIMULE      "Ippermetti MiniMule"
     IDS_US_STALLEDW4BR      "Stalled! Waiting for block request."
     IDS_US_STALLEDREADINGFDISK "Stalled! Reading from disk."
     IDS_SERVERFEATURE_INTTYPETAGS "Integer type tags"

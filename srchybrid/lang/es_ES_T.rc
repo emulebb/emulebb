@@ -1868,6 +1868,7 @@ BEGIN
     IDS_UNVERIFIED          "no verificado"
     IDS_INVALIDFILEEXT      "La extensión del archivo no es válida"
     IDS_UNKNOWNFILEEXT      "Extensión del archivo desconocida"
+    IDS_ENABLEMINIMULE      "Activar MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Desact. inicio autom. de previsualiz. de archivos en detalles del archivo"
     IDS_US_STALLEDW4BR      "¡Pausado! Esperando a que se soliciten bloques."

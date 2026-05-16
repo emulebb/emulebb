@@ -1866,6 +1866,7 @@ BEGIN
     IDS_UNVERIFIED          "nepatikrinta"
     IDS_INVALIDFILEEXT      "Neteisingas failo plėtinys"
     IDS_UNKNOWNFILEEXT      "nežinomas failo plėtinys"
+    IDS_ENABLEMINIMULE      "Įjungti MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Išjungti automatišką archyvų peržiūrą failų detalėse"
     IDS_US_STALLEDW4BR      "Uždelsimas! Laukiu užklausimo blokui."

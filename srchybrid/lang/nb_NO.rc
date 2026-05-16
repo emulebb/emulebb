@@ -1866,6 +1866,7 @@ BEGIN
     IDS_UNVERIFIED          "Ikke bekreftet"
     IDS_INVALIDFILEEXT      "Ugyldig fil etternavn"
     IDS_UNKNOWNFILEEXT      "Ukjent fil etternavn"
+    IDS_ENABLEMINIMULE      "Aktiver MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Deaktiver automatisk forhåndsvisning av arkiv i fildetaljer"
     IDS_US_STALLEDW4BR      "Stalled! Venter på blokk forespørsel."

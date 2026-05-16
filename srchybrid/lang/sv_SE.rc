@@ -1866,6 +1866,7 @@ BEGIN
     IDS_UNVERIFIED          "overifierad"
     IDS_INVALIDFILEEXT      "Felaktigt filnamnstillägg"
     IDS_UNKNOWNFILEEXT      "Okänt filnamnstillägg"
+    IDS_ENABLEMINIMULE      "Aktivera MiniMule"
     IDS_DISABLE_AUTOARCHPREV
                             "Avaktivera automatisk arkivförhandsvisningsstart i fildetaljer"
     IDS_US_STALLEDW4BR      "Stannade! Väntar på block-efterfrågan."
