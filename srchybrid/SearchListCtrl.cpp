@@ -323,7 +323,7 @@ void CSearchListCtrl::Init(CSearchList *in_searchlist)
 	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	DFLT_FOLDER_COL_WIDTH);			//IDS_FOLDER
 	InsertColumn(13,	_T(""),	LVCFMT_LEFT,	50);								//IDS_KNOWN
 	InsertColumn(SEARCH_COLUMN_TRUST,	_T(""),	LVCFMT_LEFT,	90);					//IDS_SEARCH_TRUST
-	InsertColumn(SEARCH_COLUMN_KAD_TRUST,	_T(""),	LVCFMT_LEFT,	90);				//IDS_SEARCH_KAD_TRUST
+	InsertColumn(SEARCH_COLUMN_KAD_TRUST,	_T(""),	LVCFMT_LEFT,	120);				//IDS_SEARCH_KAD_TRUST
 	InsertColumn(SEARCH_COLUMN_AICH,	_T(""),	LVCFMT_LEFT,	DFLT_HASH_COL_WIDTH, -1, true);	//IDS_AICHHASH
 
 	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("SearchListCtrl")))

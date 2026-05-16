@@ -63,7 +63,7 @@ struct TrustHint
 };
 
 /**
- * @brief Deterministic Kad trust hint decoded from TAG_PUBLISHINFO.
+ * @brief Deterministic Kad confidence hint decoded from TAG_PUBLISHINFO.
  */
 struct KadTrustHint
 {
@@ -147,7 +147,7 @@ inline KadTrustHint BuildKadTrustHint(const uint32_t uKadPublishInfo)
 }
 
 /**
- * @brief Compares Kad trust hints in ascending confidence order.
+ * @brief Compares Kad confidence hints in ascending confidence order.
  */
 inline int CompareKadTrustHints(const KadTrustHint &rLeft, const KadTrustHint &rRight)
 {

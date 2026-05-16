@@ -2064,7 +2064,7 @@ BEGIN
     IDS_SEARCH_KAD_TRUST_LOW                                   "Bassa"
     IDS_SEARCH_KAD_TRUST_NORMAL                                "Normale"
     IDS_SEARCH_KAD_TRUST_HIGH                                  "Alta"
-    IDS_SEARCH_KAD_TRUST_INFOTIP                               "Affidabilità Kad: %s"
+    IDS_SEARCH_KAD_TRUST_INFOTIP                               "Affidabilità Kad: %s (coerenza fonti/nomi)"
     IDS_FAKEFILE_EVIDENCE_CANONICAL_NAMES                      "Nomi canonici: %s"
     IDS_FAKEFILE_EVIDENCE_IGNORED_TOKENS                       "Token del nome ignorati: %s"
     IDS_FAKEFILE_EVIDENCE_DIVERGENCE_GROUPS                    "Gruppi di divergenza dei nomi: %s"
