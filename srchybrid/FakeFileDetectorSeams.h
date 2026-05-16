@@ -238,7 +238,8 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules, const st
 			AddUnique(report.canonicalNames, canonicalName.canonical);
 		}
 	}
-	report.nameDivergenceGroups = uniqueCanonicalNames;
+	if (uniqueCanonicalNames.size() >= 2)
+		report.nameDivergenceGroups = uniqueCanonicalNames;
 	if (uniqueCanonicalNames.size() >= 3)
 		AddReason(report, "multiple_names", 25);
 	else if (uniqueCanonicalNames.size() == 2)
