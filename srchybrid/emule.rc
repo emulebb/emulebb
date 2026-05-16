@@ -3686,6 +3686,8 @@ BEGIN
     IDS_FAKEFILE_REASON_BAD_RATING "received bad ratings"
     IDS_FAKEFILE_REASON_FAKE_RATING "received fake-file ratings"
     IDS_FAKEFILE_REASON_MULTIPLE_AICH "conflicting AICH hashes were observed"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_LENGTH "implausible media length metadata"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_BITRATE "implausible media bitrate metadata"
     IDS_FAKEFILE_EVIDENCE_PENDING_HEADER "Header check: pending"
     IDS_FAKEFILE_EVIDENCE_CACHED "Header evidence: cached"
     IDS_FAKEFILE_EVIDENCE_EXTENSIONS "Observed extensions: %s"

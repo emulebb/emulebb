@@ -2053,6 +2053,8 @@ BEGIN
     IDS_FAKEFILE_REASON_BAD_RATING                             "ha ricevuto valutazioni negative"
     IDS_FAKEFILE_REASON_FAKE_RATING                            "ha ricevuto valutazioni di file falso"
     IDS_FAKEFILE_REASON_MULTIPLE_AICH                          "sono stati osservati hash AICH contrastanti"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_LENGTH                "metadati di durata multimediale non plausibili"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_BITRATE               "metadati di bitrate multimediale non plausibili"
     IDS_FAKEFILE_EVIDENCE_PENDING_HEADER                       "Controllo intestazione: in sospeso"
     IDS_FAKEFILE_EVIDENCE_CACHED                               "Evidenza intestazione: in cache"
     IDS_FAKEFILE_EVIDENCE_EXTENSIONS                           "Estensioni osservate: %s"

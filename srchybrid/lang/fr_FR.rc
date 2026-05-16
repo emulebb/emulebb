@@ -2082,6 +2082,8 @@ BEGIN
     IDS_FAKEFILE_REASON_BAD_RATING                             "a reçu de mauvaises notes"
     IDS_FAKEFILE_REASON_FAKE_RATING                            "a reçu des notes de faux fichier"
     IDS_FAKEFILE_REASON_MULTIPLE_AICH                          "des hashes AICH contradictoires ont été observés"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_LENGTH                "métadonnée de durée média peu plausible"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_BITRATE               "métadonnée de débit média peu plausible"
     IDS_FAKEFILE_EVIDENCE_PENDING_HEADER                       "Vérification de l'en-tête : en attente"
     IDS_FAKEFILE_EVIDENCE_CACHED                               "Preuve d'en-tête : en cache"
     IDS_FAKEFILE_EVIDENCE_EXTENSIONS                           "Extensions observées : %s"

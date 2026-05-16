@@ -53,6 +53,11 @@ struct Evidence
 	bool badRating = false;
 	bool fakeRating = false;
 	bool multipleAich = false;
+	uint64_t fileSizeBytes = 0;
+	uint32_t mediaLengthSeconds = 0;
+	uint32_t mediaBitrateKbps = 0;
+	bool mediaLengthAvailable = false;
+	bool mediaBitrateAvailable = false;
 };
 
 /**
@@ -168,6 +173,17 @@ inline bool IsMediaType(const EFileType eType)
 		|| eType == AUDIO_WAV || eType == AUDIO_AAC;
 }
 
+inline bool IsVideoType(const EFileType eType)
+{
+	return eType == VIDEO_AVI || eType == VIDEO_MPG || eType == VIDEO_MP4 || eType == VIDEO_MKV
+		|| eType == VIDEO_OGG || eType == WM;
+}
+
+inline bool IsAudioType(const EFileType eType)
+{
+	return eType == AUDIO_MPEG || eType == AUDIO_FLAC || eType == AUDIO_WAV || eType == AUDIO_AAC;
+}
+
 inline bool IsArchiveType(const EFileType eType)
 {
 	return eType == ARCHIVE_ZIP || eType == ARCHIVE_RAR || eType == ARCHIVE_ACE || eType == ARCHIVE_7Z
@@ -197,6 +213,51 @@ inline bool ClaimedTypeConflicts(const std::wstring &rClaimedType, const EFileTy
 	if ((claimed.find(L"archive") != std::wstring::npos || claimed.find(L"arc") != std::wstring::npos)
 		&& IsMediaType(eObservedType))
 		return true;
+	return false;
+}
+
+inline bool ClaimedAsVideo(const std::wstring &rClaimedType)
+{
+	return ToLower(rClaimedType).find(L"video") != std::wstring::npos;
+}
+
+inline bool ClaimedAsAudio(const std::wstring &rClaimedType)
+{
+	return ToLower(rClaimedType).find(L"audio") != std::wstring::npos;
+}
+
+inline bool HasVideoSignal(const Evidence &rEvidence)
+{
+	return IsVideoType(rEvidence.extensionType) || IsVideoType(rEvidence.headerType) || ClaimedAsVideo(rEvidence.claimedType);
+}
+
+inline bool HasAudioSignal(const Evidence &rEvidence)
+{
+	return IsAudioType(rEvidence.extensionType) || IsAudioType(rEvidence.headerType) || ClaimedAsAudio(rEvidence.claimedType);
+}
+
+inline bool HasImplausibleMediaLength(const Evidence &rEvidence)
+{
+	if (!rEvidence.mediaLengthAvailable || rEvidence.mediaLengthSeconds == 0)
+		return false;
+	constexpr uint64_t kLargeVideoBytes = 50ull * 1024ull * 1024ull;
+	if (HasVideoSignal(rEvidence))
+		return (rEvidence.fileSizeBytes >= kLargeVideoBytes && rEvidence.mediaLengthSeconds < 60)
+			|| rEvidence.mediaLengthSeconds > 12u * 60u * 60u;
+	if (HasAudioSignal(rEvidence))
+		return (rEvidence.fileSizeBytes >= 1024ull * 1024ull && rEvidence.mediaLengthSeconds < 2)
+			|| rEvidence.mediaLengthSeconds > 24u * 60u * 60u;
+	return false;
+}
+
+inline bool HasImplausibleMediaBitrate(const Evidence &rEvidence)
+{
+	if (!rEvidence.mediaBitrateAvailable || rEvidence.mediaBitrateKbps == 0)
+		return false;
+	if (HasVideoSignal(rEvidence))
+		return rEvidence.mediaBitrateKbps < 40 || rEvidence.mediaBitrateKbps > 500000;
+	if (HasAudioSignal(rEvidence))
+		return rEvidence.mediaBitrateKbps < 16 || rEvidence.mediaBitrateKbps > 2000;
 	return false;
 }
 
@@ -304,6 +365,10 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules, const st
 		AddReason(report, "fake_rating", 30);
 	if (rEvidence.multipleAich)
 		AddReason(report, "multiple_aich", 35);
+	if (HasImplausibleMediaLength(rEvidence))
+		AddReason(report, "implausible_media_length", 10);
+	if (HasImplausibleMediaBitrate(rEvidence))
+		AddReason(report, "implausible_media_bitrate", 10);
 
 	report.severity = SeverityFromScore(report.score);
 	return report;

@@ -2083,6 +2083,8 @@ BEGIN
     IDS_FAKEFILE_REASON_BAD_RATING                             "kötü puanlar aldı"
     IDS_FAKEFILE_REASON_FAKE_RATING                            "sahte dosya puanları aldı"
     IDS_FAKEFILE_REASON_MULTIPLE_AICH                          "çelişkili AICH hashleri gözlendi"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_LENGTH               "inandırıcı olmayan medya süresi meta verisi"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_BITRATE              "inandırıcı olmayan medya bitrate meta verisi"
     IDS_FAKEFILE_EVIDENCE_PENDING_HEADER                       "Başlık denetimi: beklemede"
     IDS_FAKEFILE_EVIDENCE_CACHED                               "Başlık kanıtı: önbellekte"
     IDS_FAKEFILE_EVIDENCE_EXTENSIONS                           "Gözlenen uzantılar: %s"

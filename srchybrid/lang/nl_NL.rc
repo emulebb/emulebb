@@ -2084,6 +2084,8 @@ BEGIN
     IDS_FAKEFILE_REASON_BAD_RATING                             "slechte beoordelingen ontvangen"
     IDS_FAKEFILE_REASON_FAKE_RATING                            "nepbestandbeoordelingen ontvangen"
     IDS_FAKEFILE_REASON_MULTIPLE_AICH                          "tegenstrijdige AICH-hashes waargenomen"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_LENGTH                "onwaarschijnlijke metadata voor mediaduratie"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_BITRATE               "onwaarschijnlijke metadata voor mediabitrate"
     IDS_FAKEFILE_EVIDENCE_PENDING_HEADER                       "Headercontrole: in behandeling"
     IDS_FAKEFILE_EVIDENCE_CACHED                               "Headerbewijs: in cache"
     IDS_FAKEFILE_EVIDENCE_EXTENSIONS                           "Waargenomen extensies: %s"

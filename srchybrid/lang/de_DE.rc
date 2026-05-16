@@ -2059,6 +2059,8 @@ BEGIN
     IDS_FAKEFILE_REASON_BAD_RATING                             "schlechte Bewertungen erhalten"
     IDS_FAKEFILE_REASON_FAKE_RATING                            "Fake-Datei-Bewertungen erhalten"
     IDS_FAKEFILE_REASON_MULTIPLE_AICH                          "widersprüchliche AICH-Hashes wurden beobachtet"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_LENGTH                "unplausible Medienlängen-Metadaten"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_BITRATE               "unplausible Medien-Bitrate-Metadaten"
     IDS_FAKEFILE_EVIDENCE_PENDING_HEADER                       "Header-Prüfung: ausstehend"
     IDS_FAKEFILE_EVIDENCE_CACHED                               "Header-Nachweis: zwischengespeichert"
     IDS_FAKEFILE_EVIDENCE_EXTENSIONS                           "Beobachtete Erweiterungen: %s"

@@ -404,6 +404,16 @@ void FillCommonEvidence(const CAbstractFile &rFile, FakeFileDetectorSeams::Evide
 	rEvidence.claimedType = ToWide(rFile.GetFileType());
 	rEvidence.names.push_back(ToWide(rFile.GetFileName()));
 	rEvidence.extensionType = FileTypeClassifierSeams::GetFileTypeFromExtension(rFile.GetFileName());
+	rEvidence.fileSizeBytes = static_cast<uint64_t>(rFile.GetFileSize());
+	uint32 uMediaValue = 0;
+	if (rFile.GetIntTagValue(FT_MEDIA_LENGTH, uMediaValue) && uMediaValue != 0) {
+		rEvidence.mediaLengthAvailable = true;
+		rEvidence.mediaLengthSeconds = uMediaValue;
+	}
+	if (rFile.GetIntTagValue(FT_MEDIA_BITRATE, uMediaValue) && uMediaValue != 0) {
+		rEvidence.mediaBitrateAvailable = true;
+		rEvidence.mediaBitrateKbps = uMediaValue;
+	}
 	if (const_cast<CAbstractFile&>(rFile).HasComment())
 		rEvidence.comments.push_back(ToWide(const_cast<CAbstractFile&>(rFile).GetFileComment()));
 	rEvidence.badRating = rEvidence.badRating || rFile.HasBadRating();
@@ -634,6 +644,12 @@ CString GetReasonDisplayText(const CString &rstrReason)
 		break;
 	case SearchTrustHintSeams::ExplanationReason::MultipleAich:
 		uResourceID = IDS_FAKEFILE_REASON_MULTIPLE_AICH;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::ImplausibleMediaLength:
+		uResourceID = IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_LENGTH;
+		break;
+	case SearchTrustHintSeams::ExplanationReason::ImplausibleMediaBitrate:
+		uResourceID = IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_BITRATE;
 		break;
 	case SearchTrustHintSeams::ExplanationReason::Unknown:
 	default:

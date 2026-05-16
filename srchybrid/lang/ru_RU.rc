@@ -2092,6 +2092,8 @@ BEGIN
     IDS_FAKEFILE_REASON_BAD_RATING                             "получены плохие оценки"
     IDS_FAKEFILE_REASON_FAKE_RATING                            "получены оценки поддельного файла"
     IDS_FAKEFILE_REASON_MULTIPLE_AICH                          "обнаружены противоречивые хэши AICH"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_LENGTH               "неправдоподобные метаданные длительности медиа"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_BITRATE              "неправдоподобные метаданные битрейта медиа"
     IDS_FAKEFILE_EVIDENCE_PENDING_HEADER                       "Проверка заголовка: ожидается"
     IDS_FAKEFILE_EVIDENCE_CACHED                               "Данные заголовка: из кэша"
     IDS_FAKEFILE_EVIDENCE_EXTENSIONS                           "Наблюдаемые расширения: %s"

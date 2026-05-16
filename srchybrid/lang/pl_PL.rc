@@ -2058,6 +2058,8 @@ BEGIN
     IDS_FAKEFILE_REASON_BAD_RATING                             "otrzymał złe oceny"
     IDS_FAKEFILE_REASON_FAKE_RATING                            "otrzymał oceny fałszywego pliku"
     IDS_FAKEFILE_REASON_MULTIPLE_AICH                          "zaobserwowano sprzeczne hashe AICH"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_LENGTH                "nieprawdopodobne metadane czasu trwania multimediów"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_BITRATE               "nieprawdopodobne metadane bitrate multimediów"
     IDS_FAKEFILE_EVIDENCE_PENDING_HEADER                       "Sprawdzanie nagłówka: oczekuje"
     IDS_FAKEFILE_EVIDENCE_CACHED                               "Dowód nagłówka: z pamięci podręcznej"
     IDS_FAKEFILE_EVIDENCE_EXTENSIONS                           "Zaobserwowane rozszerzenia: %s"

@@ -49,7 +49,9 @@ enum class ExplanationReason
 	SpamStatus,
 	BadRating,
 	FakeRating,
-	MultipleAich
+	MultipleAich,
+	ImplausibleMediaLength,
+	ImplausibleMediaBitrate
 };
 
 /**
@@ -195,6 +197,10 @@ inline ExplanationReason ClassifyExplanationReason(const std::string &rReason)
 		return ExplanationReason::FakeRating;
 	if (rReason == "multiple_aich")
 		return ExplanationReason::MultipleAich;
+	if (rReason == "implausible_media_length")
+		return ExplanationReason::ImplausibleMediaLength;
+	if (rReason == "implausible_media_bitrate")
+		return ExplanationReason::ImplausibleMediaBitrate;
 	return ExplanationReason::Unknown;
 }
 }
