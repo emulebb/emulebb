@@ -142,6 +142,14 @@ std::string BuildCapsXml()
 		"</caps>\n";
 }
 
+std::string BuildErrorXml(const int iStatusCode, const std::string &rDescription)
+{
+	std::ostringstream xml;
+	xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		<< "<error code=\"" << iStatusCode << "\" description=\"" << WebServerArrCompatSeams::XmlEscape(rDescription) << "\" />\n";
+	return xml.str();
+}
+
 std::string FormatPubDate()
 {
 	std::time_t now = std::time(NULL);
@@ -474,36 +482,36 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 	std::string strPath;
 	std::string strError;
 	if (!WebServerArrCompatSeams::TryGetArrCompatRequestPathLower(strRequestTarget, strPath, strError)) {
-		SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, "Bad Request", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
+		SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, "Bad Request", BuildErrorXml(WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, strError.empty() ? "malformed Torznab request path" : strError));
 		return;
 	}
 	if (strPath != "/indexer/emulebb/api" && strPath != "/indexer/emulebb/api/") {
-		SendXmlResponse(rData.pSocket, 404, "Not Found", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
+		SendXmlResponse(rData.pSocket, 404, "Not Found", BuildErrorXml(404, "Torznab API route not found"));
 		return;
 	}
 	if (WebServerJson::ToStdString(rData.strMethod) != "GET") {
-		SendXmlResponse(rData.pSocket, 404, "Not Found", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
+		SendXmlResponse(rData.pSocket, 404, "Not Found", BuildErrorXml(404, "Torznab API route not found"));
 		return;
 	}
 
 	if (thePrefs.GetWSApiKey().IsEmpty()) {
-		SendXmlResponse(rData.pSocket, 503, "Service Unavailable", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
+		SendXmlResponse(rData.pSocket, 503, "Service Unavailable", BuildErrorXml(503, "native REST API key is not configured"));
 		return;
 	}
 
 	std::map<std::string, std::string> normalizedQuery;
 	if (!WebServerArrCompatSeams::TryParseTorznabQueryParameters(strRequestTarget, normalizedQuery, strError)) {
-		SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, "Bad Request", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
+		SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, "Bad Request", BuildErrorXml(WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, strError.empty() ? "malformed Torznab query" : strError));
 		return;
 	}
 	if (!HasValidTorznabApiKey(rData, normalizedQuery)) {
-		SendXmlResponse(rData.pSocket, 401, "Unauthorized", BuildFeedXml(WebServerArrCompatSeams::STorznabRequest(), std::vector<SArrCompatResult>()));
+		SendXmlResponse(rData.pSocket, 401, "Unauthorized", BuildErrorXml(401, "missing or invalid API key"));
 		return;
 	}
 
 	WebServerArrCompatSeams::STorznabRequest request;
 	if (!WebServerArrCompatSeams::TryParseTorznabRequest(strRequestTarget, request, strError)) {
-		SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, "Bad Request", BuildFeedXml(request, std::vector<SArrCompatResult>()));
+		SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, "Bad Request", BuildErrorXml(WebServerArrCompatSeams::kTorznabParseErrorHttpStatus, strError.empty() ? "invalid Torznab request" : strError));
 		return;
 	}
 
@@ -538,7 +546,7 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 			if (TryGetCachedResults(strCacheKey, results))
 				SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
 			else
-				SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabBusyHttpStatus, "Service Unavailable", BuildFeedXml(request, results));
+				SendXmlResponse(rData.pSocket, WebServerArrCompatSeams::kTorznabBusyHttpStatus, "Service Unavailable", BuildErrorXml(WebServerArrCompatSeams::kTorznabBusyHttpStatus, "native search bridge is busy"));
 			return;
 		}
 	}
