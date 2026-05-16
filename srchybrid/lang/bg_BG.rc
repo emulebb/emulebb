@@ -2157,6 +2157,17 @@ BEGIN
     IDS_DL_RESUME_CATEGORY                                  "Възобновяване на всички в тази категория"
     IDS_PRIO_INCREASE                                       "Повишаване на приоритета"
     IDS_PRIO_DECREASE                                       "Понижаване на приоритета"
+    IDS_ENABLE_WINDOWS_LONG_PATHS                           "Активиране на Windows дълги пътища..."
+    IDS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS                   "Изключете eMule папки за изтегляне от Microsoft Defender..."
+    IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS              "Стартира повишено еднократно действие, за да активира политиката за дълъг път Windows."
+    IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS      "Стартира повишено еднократно действие за изключване на активни входящи, временни папки и папки с категории от сканирането на Microsoft Defender."
+    IDS_LONG_PATHS_ENABLE_SUCCESS                           "Политиката за дълъг път Windows е активирана."
+    IDS_LONG_PATHS_ENABLE_FAILURE                           "Windows актуализацията на правилата за дълъг път е неуспешна: %s"
+    IDS_LONG_PATHS_ENABLE_CANCELLED                         "Windows Актуализацията на правилата за дълъг път е анулирана."
+    IDS_DEFENDER_EXCLUSIONS_SUCCESS                         "Действието за изключване на Microsoft Defender е завършено за папка(и) %u."
+    IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Неуспешно действие за изключване на Microsoft Defender: %s"
+    IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Действието за изключване на Microsoft Defender е отменено."
+    IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Няма налични папки за изтегляне на eMule за изключване на Microsoft Defender."
 END
 // eMule BB managed translation block: end
 

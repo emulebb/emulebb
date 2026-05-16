@@ -2175,6 +2175,17 @@ BEGIN
     IDS_DL_RESUME_CATEGORY                                  "Obnovit vše v této kategorii"
     IDS_PRIO_INCREASE                                       "Zvýšit prioritu"
     IDS_PRIO_DECREASE                                       "Snížit prioritu"
+    IDS_ENABLE_WINDOWS_LONG_PATHS                           "Povolit dlouhé cesty Windows..."
+    IDS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS                   "Vyloučit složky stahování eMule z programu Microsoft Defender..."
+    IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS              "Spustí zvýšenou jednorázovou akci, která povolí zásadu dlouhé cesty Windows."
+    IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS      "Spustí zvýšenou jednorázovou akci k vyloučení aktivních složek Příchozí, Temp a kategorií z kontroly v aplikaci Microsoft Defender."
+    IDS_LONG_PATHS_ENABLE_SUCCESS                           "Je povolena zásada dlouhé cesty Windows."
+    IDS_LONG_PATHS_ENABLE_FAILURE                           "Aktualizace zásad dlouhé cesty Windows se nezdařila: %s"
+    IDS_LONG_PATHS_ENABLE_CANCELLED                         "Aktualizace zásad dlouhé cesty Windows byla zrušena."
+    IDS_DEFENDER_EXCLUSIONS_SUCCESS                         "Akce vyloučení programu Microsoft Defender byla dokončena pro složky %u."
+    IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Akce vyloučení aplikace Microsoft Defender se nezdařila: %s"
+    IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Akce vyloučení programu Microsoft Defender byla zrušena."
+    IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Pro vyloučení aplikace Microsoft Defender nebyly k dispozici žádné složky pro stahování eMule."
 END
 // eMule BB managed translation block: end
 

@@ -2183,6 +2183,17 @@ BEGIN
     IDS_DL_RESUME_CATEGORY                                  "Genoptag alle i denne kategori"
     IDS_PRIO_INCREASE                                       "Øg prioritet"
     IDS_PRIO_DECREASE                                       "Sænk prioritet"
+    IDS_ENABLE_WINDOWS_LONG_PATHS                           "Aktiver Windows lange stier..."
+    IDS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS                   "Udelad eMule downloadmapper fra Microsoft Defender..."
+    IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS              "Lancerer en forhøjet engangshandling for at aktivere Windows lang vej-politik."
+    IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS      "Starter en forhøjet engangshandling for at udelukke aktive mapper med indgående, midlertidige og kategorier fra Microsoft Defender-scanning."
+    IDS_LONG_PATHS_ENABLE_SUCCESS                           "Windows lang vej-politik er aktiveret."
+    IDS_LONG_PATHS_ENABLE_FAILURE                           "Windows lang sti-politikopdatering mislykkedes: %s"
+    IDS_LONG_PATHS_ENABLE_CANCELLED                         "Windows lang sti politikopdatering annulleret."
+    IDS_DEFENDER_EXCLUSIONS_SUCCESS                         "Microsoft Defender-ekskluderingshandling fuldført for %u-mappe(r)."
+    IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defender-ekskluderingshandling mislykkedes: %s"
+    IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defender-ekskluderingshandlingen blev annulleret."
+    IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Ingen eMule download-mapper var tilgængelige for Microsoft Defender-ekskludering."
 END
 // eMule BB managed translation block: end
 

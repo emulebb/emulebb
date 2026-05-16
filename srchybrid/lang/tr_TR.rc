@@ -2013,9 +2013,9 @@ BEGIN
     IDS_FIREWALL_REPAIR_FAILURE                                "Windows Güvenlik Duvarı onarımı başarısız: %s"
     IDS_FIREWALL_REPAIR_CANCELLED                              "Windows Güvenlik Duvarı onarımı iptal edildi."
     IDS_FIREWALL_REPAIR_NO_RULES                               "Geçerli port yapılandırması için onarılması gereken Windows Güvenlik Duvarı kuralı yok."
-    IDS_SPEED_LIMIT_UPLOAD_FMT                                 "Sınır: yükleme %u%%\t%u %s"
-    IDS_SPEED_LIMIT_DOWNLOAD_FMT                               "Sınır: indirme %u%%\t%u %s"
-    IDS_SPEED_LIMIT_BOTH_FMT                                   "Sınır: ikisi %u%%\tY %u %s / İ %u %s"
+    IDS_SPEED_LIMIT_UPLOAD_FMT                                 "Sınır: yükleme %u%%	%u %s"
+    IDS_SPEED_LIMIT_DOWNLOAD_FMT                               "Sınır: indirme %u%%	%u %s"
+    IDS_SPEED_LIMIT_BOTH_FMT                                   "Sınır: ikisi %u%%	Y %u %s / İ %u %s"
     IDS_SPEED_ACTION_BOTH_UPLOAD_DOWNLOAD                      "&Yükleme ve indirme"
     IDS_SPEED_ACTION_UPLOAD                                    "&Yükleme"
     IDS_SPEED_ACTION_DOWNLOAD                                  "&İndirme"
@@ -2174,22 +2174,50 @@ BEGIN
     IDS_ARCHPREV_CRC                                           "CRC"
     IDS_WS_ENABLE_REST_API                                     "REST API'yi etkinleştir"
     IDS_WS_ENABLE_LEGACY_WEBUI                                 "Eski Web kullanıcı arayüzünü etkinleştir"
-    IDS_WEBSERVER_TT_WSLEGACYUI                                "Eski şablon tabanlı Web kullanıcı arayüzünü etkinleştirir.\r\n\r\nBunu yalnızca REST kullanımı için kapalı bırakın. Etkinleştirilirse, eksik şablonlar REST API isteklerini değil, yalnızca eski HTML sayfalarını etkiler."
+    IDS_WEBSERVER_TT_WSLEGACYUI                                "Eski şablon tabanlı Web kullanıcı arayüzünü etkinleştirir.
+
+Bunu yalnızca REST kullanımı için kapalı bırakın. Etkinleştirilirse, eksik şablonlar REST API isteklerini değil, yalnızca eski HTML sayfalarını etkiler."
     IDS_TWEAKS_NETWORK_CONNECTIVITY                            "&Ağ Bağlantısı"
     IDS_EXIT_ON_BIND_LOSS                                      "Seçilen bağlama/VPN arayüzü kaybolursa eMule'den çıkın"
-    IDS_TWEAKS_TT_PREVIEW_COPIED_ARCHIVES                      "Önizlemeden önce geçici olarak kurtarılan bir arşiv kopyası oluşturur.\r\n\r\nBu, harici önizleme işleyicileriyle uyumluluğu artırabilir, ancak daha fazla disk alanı ve GÇ kullanır."
-    IDS_TWEAKS_TT_NETWORK_CONNECTIVITY                         "Bağlantı zamanlaması ve otomatik bağlantı noktası eşleme kontrolleri.\r\n\r\nBu ayarlar erişilebilirliği ve oturum kararlılığını etkiler. Ağ davranışını kasıtlı olarak ayarlamadığınız sürece varsayılanları koruyun."
-    IDS_TWEAKS_TT_AUTO_ARCH                                    "Arşiv taramasını otomatik olarak başlatmadan arşiv İçeriği sekmesini açar.\r\n\r\nArşiv önizlemelerini yalnızca açıkça başlattığınızda incelemek istiyorsanız bunu etkinleştirin."
-    IDS_CONNECTION_TT_EXIT_ON_BIND_LOSS                        "Seçilen bağlama/VPN arayüzü başlatma sonrasında kaybolursa eMule'den çıkar.\r\n\r\nYalnızca bir bağlama arayüzü seçildiğinde kullanılabilir. Bunu VPN koruması olarak kullanın, böylece P2P ağı hiçbir zaman sessizce VPN olmayan bir rotaya geri dönmez."
-    IDS_PPG_SECURITY_TT_ENABLE_IPFILTER                        "Yüklenen ipfilter.dat kurallarını eşlere, kaynaklara, Kad kişilerine ve diğer IP filtresi kontrollerine uygular.\r\n\r\nFiltre dosyasını IP filtresi kuralları tarafından engellemeden kullanılabilir durumda tutmak için bunu devre dışı bırakın."
-    IDS_PPG_FILES_TT_VIDEOTHUMBNAILS                           "eMule'nin video dosyalarını indirmek için video küçük resmi oluşturmayı ne sıklıkta denediğini kontrol eder.\r\n\r\nKüçük resim oluşturmayı devre dışı bırakmak için 0'a ayarlayın. Etkinleştirilen aralıklar 30..900 saniye kullanır. Varsayılan önerilen aralık 90 saniyedir."
-    IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG                          "Harici FFmpeg yürütülebilir dosyası yalnızca video küçük resmi oluşturmak için kullanılır.\r\n\r\nFFmpeg ayrıca yüklenmelidir. Gözat düğmesiyle ffmpeg.exe'yi seçin."
-    IDS_PPG_SECURITY_TT_FILTERLEVEL                            "IP filtreleme etkinleştirildiğinde kullanılan minimum IP filtresi düzeyi.\r\n\r\nDüşük değerler daha fazla aralığı engeller; daha yüksek değerler daha az agresiftir."
-    IDS_WEBSERVER_TT_TMPLBROWSE                                "Eski Web kullanıcı arayüzü şablon dosyasına göz atar.\r\n\r\nBu yalnızca eski Web kullanıcı arayüzü etkinleştirildiğinde gereklidir."
-    IDS_WEBSERVER_TT_TMPLPATH                                  "Eski web arayüzü tarafından kullanılan şablon dosyası.\r\n\r\nREST API istekleri bu dosyayı gerektirmez."
-    IDS_WEBSERVER_TT_WSENABLED                                 "REST API ve paylaşılan Web Sunucusu dinleyicisini etkinleştirir.\r\n\r\nBunu yalnızca uzaktan kontrole ihtiyacınız olduğunda ve şifreleri ve erişim sınırlarını yapılandırdığınızda etkinleştirin."
-    IDS_WEBSERVER_TT_WSRELOADTMPL                              "eMule'yi yeniden başlatmadan eski Web kullanıcı arayüzü şablonlarını diskten yeniden yükler.\r\n\r\nŞablon dosyalarını değiştirdikten sonra kullanın."
-    IDS_WEBSERVER_TT_WS_GZIP                                   "İstemciler desteklediğinde eski web arayüzü yanıtlarını gzip ile sıkıştırır.\r\n\r\nREST API yanıtları bu eski arayüz seçeneği tarafından kontrol edilmez."
+    IDS_TWEAKS_TT_PREVIEW_COPIED_ARCHIVES                      "Önizlemeden önce geçici olarak kurtarılan bir arşiv kopyası oluşturur.
+
+Bu, harici önizleme işleyicileriyle uyumluluğu artırabilir, ancak daha fazla disk alanı ve GÇ kullanır."
+    IDS_TWEAKS_TT_NETWORK_CONNECTIVITY                         "Bağlantı zamanlaması ve otomatik bağlantı noktası eşleme kontrolleri.
+
+Bu ayarlar erişilebilirliği ve oturum kararlılığını etkiler. Ağ davranışını kasıtlı olarak ayarlamadığınız sürece varsayılanları koruyun."
+    IDS_TWEAKS_TT_AUTO_ARCH                                    "Arşiv taramasını otomatik olarak başlatmadan arşiv İçeriği sekmesini açar.
+
+Arşiv önizlemelerini yalnızca açıkça başlattığınızda incelemek istiyorsanız bunu etkinleştirin."
+    IDS_CONNECTION_TT_EXIT_ON_BIND_LOSS                        "Seçilen bağlama/VPN arayüzü başlatma sonrasında kaybolursa eMule'den çıkar.
+
+Yalnızca bir bağlama arayüzü seçildiğinde kullanılabilir. Bunu VPN koruması olarak kullanın, böylece P2P ağı hiçbir zaman sessizce VPN olmayan bir rotaya geri dönmez."
+    IDS_PPG_SECURITY_TT_ENABLE_IPFILTER                        "Yüklenen ipfilter.dat kurallarını eşlere, kaynaklara, Kad kişilerine ve diğer IP filtresi kontrollerine uygular.
+
+Filtre dosyasını IP filtresi kuralları tarafından engellemeden kullanılabilir durumda tutmak için bunu devre dışı bırakın."
+    IDS_PPG_FILES_TT_VIDEOTHUMBNAILS                           "eMule'nin video dosyalarını indirmek için video küçük resmi oluşturmayı ne sıklıkta denediğini kontrol eder.
+
+Küçük resim oluşturmayı devre dışı bırakmak için 0'a ayarlayın. Etkinleştirilen aralıklar 30..900 saniye kullanır. Varsayılan önerilen aralık 90 saniyedir."
+    IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG                          "Harici FFmpeg yürütülebilir dosyası yalnızca video küçük resmi oluşturmak için kullanılır.
+
+FFmpeg ayrıca yüklenmelidir. Gözat düğmesiyle ffmpeg.exe'yi seçin."
+    IDS_PPG_SECURITY_TT_FILTERLEVEL                            "IP filtreleme etkinleştirildiğinde kullanılan minimum IP filtresi düzeyi.
+
+Düşük değerler daha fazla aralığı engeller; daha yüksek değerler daha az agresiftir."
+    IDS_WEBSERVER_TT_TMPLBROWSE                                "Eski Web kullanıcı arayüzü şablon dosyasına göz atar.
+
+Bu yalnızca eski Web kullanıcı arayüzü etkinleştirildiğinde gereklidir."
+    IDS_WEBSERVER_TT_TMPLPATH                                  "Eski web arayüzü tarafından kullanılan şablon dosyası.
+
+REST API istekleri bu dosyayı gerektirmez."
+    IDS_WEBSERVER_TT_WSENABLED                                 "REST API ve paylaşılan Web Sunucusu dinleyicisini etkinleştirir.
+
+Bunu yalnızca uzaktan kontrole ihtiyacınız olduğunda ve şifreleri ve erişim sınırlarını yapılandırdığınızda etkinleştirin."
+    IDS_WEBSERVER_TT_WSRELOADTMPL                              "eMule'yi yeniden başlatmadan eski Web kullanıcı arayüzü şablonlarını diskten yeniden yükler.
+
+Şablon dosyalarını değiştirdikten sonra kullanın."
+    IDS_WEBSERVER_TT_WS_GZIP                                   "İstemciler desteklediğinde eski web arayüzü yanıtlarını gzip ile sıkıştırır.
+
+REST API yanıtları bu eski arayüz seçeneği tarafından kontrol edilmez."
     IDS_DL_BATCH                                               "&Grup"
     IDS_DL_PAUSE_CATEGORY                                      "Bu Kategorideki Tümünü Duraklat"
     IDS_DL_STOP_CATEGORY                                       "Bu Kategorideki Tümünü Durdur"
@@ -2250,9 +2278,15 @@ BEGIN
     IDS_DIAG_CAPTURE_FULLDUMP                                  "&Tam Bellek Dökümünü Yakala..."
     IDS_DIAG_DUMP_KIND_MINI                                    "mini"
     IDS_DIAG_DUMP_KIND_FULL                                    "tam hafıza"
-    IDS_DIAG_MINIDUMP_SUCCESS                                  "Mini döküm ""%s"" konumuna kaydedildi.\r\n\r\nTanılamayı rapor ederken bu dosyayı ekleyin."
-    IDS_DIAG_FULLDUMP_SUCCESS                                  "Tam bellek dökümü ""%s"" olarak kaydedildi.\r\n\r\nTam dökümler, dosya yolları, arama metni, ağ ayrıntıları ve bellek içerikleri gibi özel verileri içerebilir. Bunu yalnızca güvendiğiniz kişilerle paylaşın."
-    IDS_DIAG_DUMP_FAILURE                                      "%s dökümü yakalanamadı.\r\n\r\n%s"
+    IDS_DIAG_MINIDUMP_SUCCESS                                  "Mini döküm ""%s"" konumuna kaydedildi.
+
+Tanılamayı rapor ederken bu dosyayı ekleyin."
+    IDS_DIAG_FULLDUMP_SUCCESS                                  "Tam bellek dökümü ""%s"" olarak kaydedildi.
+
+Tam dökümler, dosya yolları, arama metni, ağ ayrıntıları ve bellek içerikleri gibi özel verileri içerebilir. Bunu yalnızca güvendiğiniz kişilerle paylaşın."
+    IDS_DIAG_DUMP_FAILURE                                      "%s dökümü yakalanamadı.
+
+%s"
     IDS_DIAG_DUMP_LOG_SUCCESS                                  "Tanılama %s dökümü ""%s"" dosyasına kaydedildi."
     IDS_DIAG_DUMP_LOG_FAILURE                                  "Tanılama %s dökümü başarısız oldu: %s"
     IDS_SF_RELOADTIP                                           "Paylaşılan dosyaları diskten yeniden yükleyin."
@@ -2365,7 +2399,9 @@ BEGIN
     IDS_TWEAKS_COMMIT_NEVER                                    "Hiçbir zaman yıkamayı zorlamayın"
     IDS_TWEAKS_COMMIT_ON_SHUTDOWN                              "Yalnızca kapatma sırasında"
     IDS_TWEAKS_COMMIT_ALWAYS                                   "Her kaydetmede"
-    IDS_TWEAKS_VALIDATION_INVALID_VALUE_FMT                    """%s"" için geçersiz değer.\n\n%s"
+    IDS_TWEAKS_VALIDATION_INVALID_VALUE_FMT                    """%s"" için geçersiz değer.
+
+%s"
     IDS_TWEAKS_VALIDATION_INTEGER                              "Lütfen bir tam sayı girin."
     IDS_TWEAKS_VALIDATION_EDITOR_COMMAND                       "Lütfen bir düzenleyici komutu girin, örneğin notepad.exe."
     IDS_TWEAKS_VALIDATION_FOLLOW_MAJORITY_PERCENT_RANGE_FMT    "Beklenen aralık: yüzde %u..%u."
@@ -2396,7 +2432,9 @@ BEGIN
     IDS_WEB_MAX_UPLOAD_MIB_LABEL                               "Maksimum yükleme MiB'si:"
     IDS_WEB_ALLOWED_IPS_LABEL                                  "İzin verilen IP'lar:"
     IDS_WEB_INVALID_UPLOAD_SIZE_MIB                            "Lütfen MiB'de geçerli bir WebServer yükleme boyutu girin."
-    IDS_WEB_INVALID_ALLOWED_IP_FMT                             "Geçersiz izin verilen WebServer IP adresi ""%s"".\r\n\r\nNoktalı virgülle ayrılmış IPv4 adresleri kullanın veya herhangi bir uzak adrese izin vermek için alanı boş bırakın."
+    IDS_WEB_INVALID_ALLOWED_IP_FMT                             "Geçersiz izin verilen WebServer IP adresi ""%s"".
+
+Noktalı virgülle ayrılmış IPv4 adresleri kullanın veya herhangi bir uzak adrese izin vermek için alanı boş bırakın."
     IDS_USE_WINDOWS_TOAST_NOTIFICATIONS                        "Windows tost bildirimlerini kullan"
     IDS_NOTIFICATION_DISPLAY_MODE                              "Ekran modu:"
     IDS_NOTIFICATION_MODE_WINDOWS_TOAST                        "Windows kızarmış ekmek"
@@ -2423,176 +2461,486 @@ BEGIN
     IDS_FATAL_NO_RICHEDIT                                      "Önemli Hata: Zengin Düzenleme kontrol kitaplığı bulunamadı!"
     IDS_FATAL_KAD_UNICODE_TABLES                               "Önemli Hata: Kademlia için Unicode karakter tabloları yüklenemedi!"
     IDS_KAD_UNICODE_MAP_NOT_INITIALIZED                        "Kad Unicode küçük harf karakter haritası başlatılmadı!"
-    IDS_TWEAKS_TT_CONDITIONAL_TCP_ACCEPT                       "Gelen TCP bağlantılarını yalnızca yararlı göründüklerinde kabul etmeyi tercih eder.\r\n\r\nGelişmiş trafik şekillendirme ayarı. Bağlantı basıncını teşhis etmediğiniz sürece bunu varsayılan olarak bırakın."
-    IDS_TWEAKS_TT_MAX_CON5_SEC                                 "Maksimum yeni TCP bağlantısı sayısı eMule beş saniye içinde açılabilir.\r\n\r\nDüşük değerler Windows ve yönlendiricilerde daha yumuşaktır. Bağlantı patlaması davranışını ayarlamadığınız sürece bunu varsayılana yakın bırakın."
-    IDS_TWEAKS_TT_MAX_HALF_OPEN                                "Yarı açık giden TCP bağlantı girişimleri için üst sınır.\r\n\r\nÇoğunlukla bir uyumluluk korumasıdır. TCP kurulum sorunlarını araştırmıyorsanız varsayılan genellikle doğru seçimdir."
-    IDS_TWEAKS_TT_CONNECTION_TIMEOUT                           "eMule, yeni bir bağlantının başarısız olduğunu düşünmeden önce ilerleme kaydetmesi için ne kadar süre bekler.\r\n\r\nDaha kısa değerler ölü eşlerden daha hızlı kurtarılır; daha uzun değerler yavaş ağlara karşı daha toleranslıdır. Varsayılan değerler önerilir."
-    IDS_TWEAKS_TT_DOWNLOAD_TIMEOUT                             "Bir indirme kaynağı, eMule onu durmuş olarak bırakmadan önce ne kadar süre boşta kalabilir.\r\n\r\nDüşük değerler ölü kaynakları daha hızlı temizler, ancak çok düşük değerler yavaş eşlere zarar verebilir. Duraklamaları teşhis etmediğiniz sürece varsayılanı bırakın."
-    IDS_TWEAKS_TT_SERVER_KEEP_ALIVE_TIMEOUT                    "eMule'nun normalde boşta olan bir sunucu bağlantısını ne sıklıkta yenilediği.\r\n\r\nDakikaları kullanın. Canlı tutmayı devre dışı bırakmak için 0'ı ayarlayın. Belirli bir sunucu boşta bağlantı kesme sorununu çözmediğiniz sürece varsayılanı bırakın."
-    IDS_TWEAKS_TT_SEARCH_ED2K_MAX_RESULTS                      "Bir arama için bir eD2K sunucusundan istenen maksimum sonuç sayısı.\r\n\r\nDaha yüksek değerler daha fazla dosya bulabilir ancak sunucu çalışmasını ve kullanıcı arayüzü gürültüsünü artırır. Belirli bir nedeniniz olmadığı sürece varsayılana yakın kalın."
-    IDS_TWEAKS_TT_SEARCH_ED2K_MAX_MORE_REQUESTS                "Bir eD2K aramasından gelen maksimum takip sonuç sayfası sayısı eMule istekleri.\r\n\r\nDaha yüksek değerler daha fazla sonuç getirebilir ancak daha fazla sunucu trafiğine ve zamana mal olur. Muhafazakar değerler tavsiye edilir."
-    IDS_TWEAKS_TT_SEARCH_KAD_FILE_TOTAL                        "Kad dosya aramaları için hedef sonuç sayısı.\r\n\r\nDaha yüksek değerler daha geniş kapsamlı arama yapar ancak Kad aramalarını daha uzun süre canlı tutar. Daha derin aramalar istemediğiniz sürece varsayılana yakın kalın."
-    IDS_TWEAKS_TT_SEARCH_KAD_KEYWORD_TOTAL                     "Kad anahtar kelime aramaları için hedef sonuç sayısı.\r\n\r\nDaha yüksek değerler daha fazla eşleşme bulabilir ancak Kad sorgu yükünü ve kullanıcı arayüzü gürültüsünü artırır. Varsayılan genellikle doğru dengedir."
-    IDS_TWEAKS_TT_SEARCH_KAD_FILE_LIFETIME                     "Bir Kad dosya aramasının maksimum ömrü saniye cinsindendir.\r\n\r\nYalnızca daha uzun süre çalışan Kad aramaları istiyorsanız bu süreyi yükseltin."
-    IDS_TWEAKS_TT_SEARCH_KAD_KEYWORD_LIFETIME                  "Bir Kad anahtar kelime aramasının saniye cinsinden maksimum ömrü.\r\n\r\nDaha uzun ömürler daha sonraki sonuçları bulabilir ancak arka planda arama etkinliğini artırabilir."
-    IDS_TWEAKS_TT_GENERAL_ADVANCED                             "Ağ, dosya, görüntü veya güvenlik altına tam olarak uymayan genel gelişmiş davranış.\r\n\r\nÇoğu kullanıcı bunları varsayılan değerlerine yakın bırakmalıdır."
-    IDS_TWEAKS_TT_HIDDEN_FILE                                  "Gelişmiş dosya işleme davranışı, önizleme denetimi ve dosya geçmişiyle ilgili seçenekler.\r\n\r\nBu ayarlar, ne kadar disk alanı ayırdığını değil, eMule'nun dosyaları nasıl işleyeceğini şekillendirir."
-    IDS_TWEAKS_TT_STORAGE_PERSISTENCE                          "Gelişmiş disk alanı koruması, dosya arabelleğe alma ve meta veri kalıcılığı ayarları.\r\n\r\nBu, depolama güvenliği ve disk G/Ç değişimleri için ana gruptur."
-    IDS_TWEAKS_TT_HIDDEN_STARTUP                               "Gelişmiş başlangıç ​​geri yükleme davranışı.\r\n\r\nBu seçenekler yalnızca eMule başlatıldığında hangi kullanıcı arayüzü bölmelerinin geri geleceğini etkiler."
-    IDS_TWEAKS_TT_HIDDEN_DISPLAY                               "Gelişmiş ekran, görev çubuğu, tepsi ve görsel bilgi ayarları.\r\n\r\nBu seçenekler aktarım davranışını değil yalnızca sunumu değiştirir."
-    IDS_TWEAKS_TT_HIDDEN_SECURITY                              "Daha sıkı eş ve mesaj yönetimi için gelişmiş filtreleme ve koruma seçenekleri.\r\n\r\nÖnerilen varsayılanlar çoğu kullanıcı için uygundur."
-    IDS_TWEAKS_TT_LOGGING_GROUP                                "Kalıcı günlük kaydı ve tanısal çıktı kontrolleri.\r\n\r\nBu ayarların çoğu yalnızca bir sorunu tanılarken faydalıdır."
-    IDS_TWEAKS_TT_AUTO_TAKE_ED2K_LINKS                         "eMule'yu ed2k:// bağlantıları için varsayılan işleyici olarak kaydeder.\r\n\r\nBu makinenin ed2k bağlantılarını eMule'da otomatik olarak açması gerekiyorsa bunu etkinleştirin. Başka bir aracın bu ilişkiye sahip olması gerekiyorsa bunu devre dışı bırakın."
-    IDS_TWEAKS_TT_CREDIT_SYSTEM                                "Yükleme istemcilerini sıralarken normal eMule kredi sistemini kullanır.\r\n\r\nÖnerilen: etkin. Yalnızca hata ayıklama veya kasıtlı uyumluluk denemeleri için devre dışı bırakın."
-    IDS_TWEAKS_TT_YOUR_HOSTNAME                                "İsteğe bağlı ana bilgisayar adı etiketi eMule, yerel kimlik metninizin nerede gösterildiğini bildirir.\r\n\r\nBu örneği kasıtlı olarak adlandırmak istemediğiniz sürece boş bırakın."
-    IDS_TWEAKS_TT_TXT_EDITOR                                   "eMule, günlükler veya oluşturulan metin çıktısı gibi metin dosyalarını açtığında kullanılan komut.\r\n\r\nDüzenleyici PATH üzerinde değilse tam yolu kullanın. Varsayılan notepad.exe'dur."
-    IDS_TWEAKS_TT_HIGHRES_TIMER                                "eMule çalışırken yüksek çözünürlüklü bir Windows zamanlayıcı ister.\r\n\r\nBu, bazı sistemlerde zamanlamayı daha düzgün hale getirebilir ancak güç kullanımını artırabilir. Değiştirdikten sonra eMule'yu yeniden başlatın."
-    IDS_TWEAKS_TT_ICH                                          "İndirilen hasarlı parçalar için Akıllı Yolsuzluk İşlemeyi etkinleştirir.\r\n\r\nÖnerilen: etkin. Gerekenden fazlasını yeniden indirmek yerine, bozuk parçalar içindeki iyi verilerin kurtarılmasına yardımcı olur."
-    IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS                         "Normal önizleme güvenlik kontrolleri tam olarak karşılanmadan önce medya önizlemesinin sunulup sunulmadığını kontrol eder.\r\n\r\nDaha yüksek seviyeler önizlemenin daha erken kullanılabilir olmasını sağlar, ancak başarısız veya yanıltıcı önizlemelerin olasılığı artar."
+    IDS_TWEAKS_TT_CONDITIONAL_TCP_ACCEPT                       "Gelen TCP bağlantılarını yalnızca yararlı göründüklerinde kabul etmeyi tercih eder.
+
+Gelişmiş trafik şekillendirme ayarı. Bağlantı basıncını teşhis etmediğiniz sürece bunu varsayılan olarak bırakın."
+    IDS_TWEAKS_TT_MAX_CON5_SEC                                 "Maksimum yeni TCP bağlantısı sayısı eMule beş saniye içinde açılabilir.
+
+Düşük değerler Windows ve yönlendiricilerde daha yumuşaktır. Bağlantı patlaması davranışını ayarlamadığınız sürece bunu varsayılana yakın bırakın."
+    IDS_TWEAKS_TT_MAX_HALF_OPEN                                "Yarı açık giden TCP bağlantı girişimleri için üst sınır.
+
+Çoğunlukla bir uyumluluk korumasıdır. TCP kurulum sorunlarını araştırmıyorsanız varsayılan genellikle doğru seçimdir."
+    IDS_TWEAKS_TT_CONNECTION_TIMEOUT                           "eMule, yeni bir bağlantının başarısız olduğunu düşünmeden önce ilerleme kaydetmesi için ne kadar süre bekler.
+
+Daha kısa değerler ölü eşlerden daha hızlı kurtarılır; daha uzun değerler yavaş ağlara karşı daha toleranslıdır. Varsayılan değerler önerilir."
+    IDS_TWEAKS_TT_DOWNLOAD_TIMEOUT                             "Bir indirme kaynağı, eMule onu durmuş olarak bırakmadan önce ne kadar süre boşta kalabilir.
+
+Düşük değerler ölü kaynakları daha hızlı temizler, ancak çok düşük değerler yavaş eşlere zarar verebilir. Duraklamaları teşhis etmediğiniz sürece varsayılanı bırakın."
+    IDS_TWEAKS_TT_SERVER_KEEP_ALIVE_TIMEOUT                    "eMule'nun normalde boşta olan bir sunucu bağlantısını ne sıklıkta yenilediği.
+
+Dakikaları kullanın. Canlı tutmayı devre dışı bırakmak için 0'ı ayarlayın. Belirli bir sunucu boşta bağlantı kesme sorununu çözmediğiniz sürece varsayılanı bırakın."
+    IDS_TWEAKS_TT_SEARCH_ED2K_MAX_RESULTS                      "Bir arama için bir eD2K sunucusundan istenen maksimum sonuç sayısı.
+
+Daha yüksek değerler daha fazla dosya bulabilir ancak sunucu çalışmasını ve kullanıcı arayüzü gürültüsünü artırır. Belirli bir nedeniniz olmadığı sürece varsayılana yakın kalın."
+    IDS_TWEAKS_TT_SEARCH_ED2K_MAX_MORE_REQUESTS                "Bir eD2K aramasından gelen maksimum takip sonuç sayfası sayısı eMule istekleri.
+
+Daha yüksek değerler daha fazla sonuç getirebilir ancak daha fazla sunucu trafiğine ve zamana mal olur. Muhafazakar değerler tavsiye edilir."
+    IDS_TWEAKS_TT_SEARCH_KAD_FILE_TOTAL                        "Kad dosya aramaları için hedef sonuç sayısı.
+
+Daha yüksek değerler daha geniş kapsamlı arama yapar ancak Kad aramalarını daha uzun süre canlı tutar. Daha derin aramalar istemediğiniz sürece varsayılana yakın kalın."
+    IDS_TWEAKS_TT_SEARCH_KAD_KEYWORD_TOTAL                     "Kad anahtar kelime aramaları için hedef sonuç sayısı.
+
+Daha yüksek değerler daha fazla eşleşme bulabilir ancak Kad sorgu yükünü ve kullanıcı arayüzü gürültüsünü artırır. Varsayılan genellikle doğru dengedir."
+    IDS_TWEAKS_TT_SEARCH_KAD_FILE_LIFETIME                     "Bir Kad dosya aramasının maksimum ömrü saniye cinsindendir.
+
+Yalnızca daha uzun süre çalışan Kad aramaları istiyorsanız bu süreyi yükseltin."
+    IDS_TWEAKS_TT_SEARCH_KAD_KEYWORD_LIFETIME                  "Bir Kad anahtar kelime aramasının saniye cinsinden maksimum ömrü.
+
+Daha uzun ömürler daha sonraki sonuçları bulabilir ancak arka planda arama etkinliğini artırabilir."
+    IDS_TWEAKS_TT_GENERAL_ADVANCED                             "Ağ, dosya, görüntü veya güvenlik altına tam olarak uymayan genel gelişmiş davranış.
+
+Çoğu kullanıcı bunları varsayılan değerlerine yakın bırakmalıdır."
+    IDS_TWEAKS_TT_HIDDEN_FILE                                  "Gelişmiş dosya işleme davranışı, önizleme denetimi ve dosya geçmişiyle ilgili seçenekler.
+
+Bu ayarlar, ne kadar disk alanı ayırdığını değil, eMule'nun dosyaları nasıl işleyeceğini şekillendirir."
+    IDS_TWEAKS_TT_STORAGE_PERSISTENCE                          "Gelişmiş disk alanı koruması, dosya arabelleğe alma ve meta veri kalıcılığı ayarları.
+
+Bu, depolama güvenliği ve disk G/Ç değişimleri için ana gruptur."
+    IDS_TWEAKS_TT_HIDDEN_STARTUP                               "Gelişmiş başlangıç ​​geri yükleme davranışı.
+
+Bu seçenekler yalnızca eMule başlatıldığında hangi kullanıcı arayüzü bölmelerinin geri geleceğini etkiler."
+    IDS_TWEAKS_TT_HIDDEN_DISPLAY                               "Gelişmiş ekran, görev çubuğu, tepsi ve görsel bilgi ayarları.
+
+Bu seçenekler aktarım davranışını değil yalnızca sunumu değiştirir."
+    IDS_TWEAKS_TT_HIDDEN_SECURITY                              "Daha sıkı eş ve mesaj yönetimi için gelişmiş filtreleme ve koruma seçenekleri.
+
+Önerilen varsayılanlar çoğu kullanıcı için uygundur."
+    IDS_TWEAKS_TT_LOGGING_GROUP                                "Kalıcı günlük kaydı ve tanısal çıktı kontrolleri.
+
+Bu ayarların çoğu yalnızca bir sorunu tanılarken faydalıdır."
+    IDS_TWEAKS_TT_AUTO_TAKE_ED2K_LINKS                         "eMule'yu ed2k:// bağlantıları için varsayılan işleyici olarak kaydeder.
+
+Bu makinenin ed2k bağlantılarını eMule'da otomatik olarak açması gerekiyorsa bunu etkinleştirin. Başka bir aracın bu ilişkiye sahip olması gerekiyorsa bunu devre dışı bırakın."
+    IDS_TWEAKS_TT_CREDIT_SYSTEM                                "Yükleme istemcilerini sıralarken normal eMule kredi sistemini kullanır.
+
+Önerilen: etkin. Yalnızca hata ayıklama veya kasıtlı uyumluluk denemeleri için devre dışı bırakın."
+    IDS_TWEAKS_TT_YOUR_HOSTNAME                                "İsteğe bağlı ana bilgisayar adı etiketi eMule, yerel kimlik metninizin nerede gösterildiğini bildirir.
+
+Bu örneği kasıtlı olarak adlandırmak istemediğiniz sürece boş bırakın."
+    IDS_TWEAKS_TT_TXT_EDITOR                                   "eMule, günlükler veya oluşturulan metin çıktısı gibi metin dosyalarını açtığında kullanılan komut.
+
+Düzenleyici PATH üzerinde değilse tam yolu kullanın. Varsayılan notepad.exe'dur."
+    IDS_TWEAKS_TT_HIGHRES_TIMER                                "eMule çalışırken yüksek çözünürlüklü bir Windows zamanlayıcı ister.
+
+Bu, bazı sistemlerde zamanlamayı daha düzgün hale getirebilir ancak güç kullanımını artırabilir. Değiştirdikten sonra eMule'yu yeniden başlatın."
+    IDS_TWEAKS_TT_ICH                                          "İndirilen hasarlı parçalar için Akıllı Yolsuzluk İşlemeyi etkinleştirir.
+
+Önerilen: etkin. Gerekenden fazlasını yeniden indirmek yerine, bozuk parçalar içindeki iyi verilerin kurtarılmasına yardımcı olur."
+    IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS                         "Normal önizleme güvenlik kontrolleri tam olarak karşılanmadan önce medya önizlemesinin sunulup sunulmadığını kontrol eder.
+
+Daha yüksek seviyeler önizlemenin daha erken kullanılabilir olmasını sağlar, ancak başarısız veya yanıltıcı önizlemelerin olasılığı artar."
     IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS_DISABLED                "Normal muhafazakar önizleme kurallarını kullanın."
     IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS_ALLOW                   "Normal meta veriler ve oynatıcı kontrolleri geçtikten sonra daha küçük kullanılabilir bloklarla önizlemeye izin verin."
-    IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS_FORCE                   "İlk blok eksik olduğunda bile önizleme sunun.\r\n\r\nYalnızca VLC gibi eksik medyayı tolere edebilen oynatıcılarla kullanın."
-    IDS_TWEAKS_TT_BEEP_ON_ERROR                                "eMule önemli hatalar bildirdiğinde sistem hatası sesini çalar.\r\n\r\nGözetimsiz sorun giderme için kullanışlıdır. Sesli uyarılar dikkat dağıtıcı olacaksa bunu devre dışı bırakın."
-    IDS_TWEAKS_TT_SHOW_COPY_ED2K_LINK_CMD                      "Standart Ed2k Bağlantısını Göster eylemi yerine doğrudan ed2k Bağlantısını Kopyala komutunu gösterecek şekilde dosya bağlamı menülerini değiştirir.\r\n\r\nBağlantıları kopyalamak normal iş akışınızsa bunu etkinleştirin."
-    IDS_TWEAKS_TT_SPARSE_PART_FILES                            "Dosya sistemi onları desteklediğinde parça dosyaları için seyrek dosyalar kullanır.\r\n\r\nÖnerilen: ön disk tahsisini azaltmak için NTFS'de etkinleştirildi. Yalnızca seyrek dosya davranışı dosya sistemine özgü bir soruna neden oluyorsa devre dışı bırakın."
-    IDS_TWEAKS_TT_FULL_ALLOC                                   "İndirmeler başladığında diskteki tam hedef dosya boyutunu önceden tahsis eder.\r\n\r\nParçalanmayı azaltabilir, ancak hemen alan ayırır ve daha fazla disk çalışmasına mal olur. Tam ön tahsisi tercih etmediğiniz sürece bunu kapalı bırakın."
-    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_CONFIG                   "eMule'nun yapılandırma dosyalarını barındıran birimde ayrılan minimum boş alan.\r\n\r\nMinimum minimum: 1 GiB. Bu birim etkin sınırın altına düşerse, eMule tüm indirmeleri durdurur ve .part.met dosyalarını hemen kaydeder.\r\nYapılandırma bir birimi geçici veya gelenle paylaşırsa, o birimdeki en büyük sınır kazanır."
-    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_TEMP                     "Geçici dosyaları barındıran her birimde ayrılan minimum boş alan.\r\n\r\nMinimum minimum: 5 GiB. Korunan herhangi bir birim etkin sınırının altına düşerse, eMule tüm indirmeleri durdurur ve .part.met dosyalarını hemen kaydeder.\r\nTemp, config veya incoming ile bir birimi paylaşırsa, o birimdeki en büyük sınır kazanır."
-    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_INCOMING                 "Kategoriye özgü gelen dizinler de dahil olmak üzere, gelen dosyaları barındıran her birimde ayrılan minimum boş alan.\r\n\r\nMinimum minimum: 5 GiB. Gelen birim config veya temp ile paylaşılırsa, o birimdeki en büyük sınır kazanır ve bu sınır aşıldığında tüm indirmeler durdurulur."
-    IDS_TWEAKS_TT_PERF_LOG                                     "Harici grafik araçları için periyodik yük ve ek yük örnekleri yazar.\r\n\r\nYalnızca operatör/hata ayıklama özelliği. Oluşturulan dosyaları aktif olarak kullanmadığınız sürece kapalı bırakın."
-    IDS_TWEAKS_TT_COMMIT                                       "eMule'nun, Windows'yu kayıtlı dosya verilerini diske boşaltmaya ne kadar agresif bir şekilde zorladığını kontrol eder.\r\nQ\r\nDaha güvenli ayarlar kilitlenme kaybı riskini azaltır ancak daha fazla disk G/Ç maliyetine neden olur. 'Yalnızca kapatıldığında' dengeli varsayılandır."
-    IDS_TWEAKS_TT_COMMIT_NEVER                                 "İşletim sistemi düzeyinde disk temizlemeyi zorlamadan dosyaları normal şekilde kapatın.\r\n\r\nDisk G/Ç'de en hızlı ve en hafif, ancak daha sonra Windows temizlemeye en bağımlı olanıdır."
-    IDS_TWEAKS_TT_COMMIT_ON_SHUTDOWN                           "Yalnızca eMule kapanırken işletim sistemi düzeyinde disk temizlemeyi zorlayın.\r\n\r\nÖnerilen varsayılan. Her kaydetme sırasında fazladan yıkamayı zorlamadan temiz çıkışta kalıcılık güvenliğini artırır."
-    IDS_TWEAKS_TT_COMMIT_ALWAYS                                "eMule'nun kesinleştirme yardımcısını kullanan her kaydetme yolunda işletim sistemi düzeyinde disk temizlemeyi zorlayın.\r\n\r\nÇökme veya güç kaybı meta veri kaybına karşı en güvenlidir, ancak en fazla disk G/Ç'sine neden olur."
-    IDS_TWEAKS_TT_EXTRACT_META_DATA                            "eMule'nun dosyalardan etiketler ve medya süresi gibi meta verileri çıkarıp çıkarmayacağını kontrol eder.\r\n\r\nDaha zengin dosya bilgileri için kullanışlıdır ancak arka planda dosya incelemesi ekler. En hafif taramayı istiyorsanız bunu devre dışı bırakın."
-    IDS_TWEAKS_TT_GEO_LOCATION_ENABLED                         "Eş IP'ları görüntüleme için ülke düzeyindeki konum verilerine dönüştürür.\r\n\r\nTamamen bilgi amaçlıdır. Ülke bayraklarını umursamıyorsanız veya arka planın yenilenmesini istemiyorsanız bunu devre dışı bırakın."
-    IDS_TWEAKS_TT_CLOSE_U_PN_P_PORTS                           "Otomatik NAT eşleme kullanıldığında, temiz çıkışta yönlendirici eşlemelerini kapatır.\r\n\r\nÖnerilen: etkin. Yalnızca eşlemelerin kasıtlı olarak geride kalmasını istiyorsanız bunu devre dışı bırakın."
-    IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE                          "eMule'nun otomatik NAT eşlemesini nasıl gerçekleştireceğini seçer.\r\n\r\nÖnerilen: Otomatik. Bu, önce UPnP IGD'yi dener ve gerekirse PCP/NAT-PMP'ya geri döner."
+    IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS_FORCE                   "İlk blok eksik olduğunda bile önizleme sunun.
+
+Yalnızca VLC gibi eksik medyayı tolere edebilen oynatıcılarla kullanın."
+    IDS_TWEAKS_TT_BEEP_ON_ERROR                                "eMule önemli hatalar bildirdiğinde sistem hatası sesini çalar.
+
+Gözetimsiz sorun giderme için kullanışlıdır. Sesli uyarılar dikkat dağıtıcı olacaksa bunu devre dışı bırakın."
+    IDS_TWEAKS_TT_SHOW_COPY_ED2K_LINK_CMD                      "Standart Ed2k Bağlantısını Göster eylemi yerine doğrudan ed2k Bağlantısını Kopyala komutunu gösterecek şekilde dosya bağlamı menülerini değiştirir.
+
+Bağlantıları kopyalamak normal iş akışınızsa bunu etkinleştirin."
+    IDS_TWEAKS_TT_SPARSE_PART_FILES                            "Dosya sistemi onları desteklediğinde parça dosyaları için seyrek dosyalar kullanır.
+
+Önerilen: ön disk tahsisini azaltmak için NTFS'de etkinleştirildi. Yalnızca seyrek dosya davranışı dosya sistemine özgü bir soruna neden oluyorsa devre dışı bırakın."
+    IDS_TWEAKS_TT_FULL_ALLOC                                   "İndirmeler başladığında diskteki tam hedef dosya boyutunu önceden tahsis eder.
+
+Parçalanmayı azaltabilir, ancak hemen alan ayırır ve daha fazla disk çalışmasına mal olur. Tam ön tahsisi tercih etmediğiniz sürece bunu kapalı bırakın."
+    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_CONFIG                   "eMule'nun yapılandırma dosyalarını barındıran birimde ayrılan minimum boş alan.
+
+Minimum minimum: 1 GiB. Bu birim etkin sınırın altına düşerse, eMule tüm indirmeleri durdurur ve .part.met dosyalarını hemen kaydeder.
+Yapılandırma bir birimi geçici veya gelenle paylaşırsa, o birimdeki en büyük sınır kazanır."
+    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_TEMP                     "Geçici dosyaları barındıran her birimde ayrılan minimum boş alan.
+
+Minimum minimum: 5 GiB. Korunan herhangi bir birim etkin sınırının altına düşerse, eMule tüm indirmeleri durdurur ve .part.met dosyalarını hemen kaydeder.
+Temp, config veya incoming ile bir birimi paylaşırsa, o birimdeki en büyük sınır kazanır."
+    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_INCOMING                 "Kategoriye özgü gelen dizinler de dahil olmak üzere, gelen dosyaları barındıran her birimde ayrılan minimum boş alan.
+
+Minimum minimum: 5 GiB. Gelen birim config veya temp ile paylaşılırsa, o birimdeki en büyük sınır kazanır ve bu sınır aşıldığında tüm indirmeler durdurulur."
+    IDS_TWEAKS_TT_PERF_LOG                                     "Harici grafik araçları için periyodik yük ve ek yük örnekleri yazar.
+
+Yalnızca operatör/hata ayıklama özelliği. Oluşturulan dosyaları aktif olarak kullanmadığınız sürece kapalı bırakın."
+    IDS_TWEAKS_TT_COMMIT                                       "eMule'nun, Windows'yu kayıtlı dosya verilerini diske boşaltmaya ne kadar agresif bir şekilde zorladığını kontrol eder.
+Q
+Daha güvenli ayarlar kilitlenme kaybı riskini azaltır ancak daha fazla disk G/Ç maliyetine neden olur. 'Yalnızca kapatıldığında' dengeli varsayılandır."
+    IDS_TWEAKS_TT_COMMIT_NEVER                                 "İşletim sistemi düzeyinde disk temizlemeyi zorlamadan dosyaları normal şekilde kapatın.
+
+Disk G/Ç'de en hızlı ve en hafif, ancak daha sonra Windows temizlemeye en bağımlı olanıdır."
+    IDS_TWEAKS_TT_COMMIT_ON_SHUTDOWN                           "Yalnızca eMule kapanırken işletim sistemi düzeyinde disk temizlemeyi zorlayın.
+
+Önerilen varsayılan. Her kaydetme sırasında fazladan yıkamayı zorlamadan temiz çıkışta kalıcılık güvenliğini artırır."
+    IDS_TWEAKS_TT_COMMIT_ALWAYS                                "eMule'nun kesinleştirme yardımcısını kullanan her kaydetme yolunda işletim sistemi düzeyinde disk temizlemeyi zorlayın.
+
+Çökme veya güç kaybı meta veri kaybına karşı en güvenlidir, ancak en fazla disk G/Ç'sine neden olur."
+    IDS_TWEAKS_TT_EXTRACT_META_DATA                            "eMule'nun dosyalardan etiketler ve medya süresi gibi meta verileri çıkarıp çıkarmayacağını kontrol eder.
+
+Daha zengin dosya bilgileri için kullanışlıdır ancak arka planda dosya incelemesi ekler. En hafif taramayı istiyorsanız bunu devre dışı bırakın."
+    IDS_TWEAKS_TT_GEO_LOCATION_ENABLED                         "Eş IP'ları görüntüleme için ülke düzeyindeki konum verilerine dönüştürür.
+
+Tamamen bilgi amaçlıdır. Ülke bayraklarını umursamıyorsanız veya arka planın yenilenmesini istemiyorsanız bunu devre dışı bırakın."
+    IDS_TWEAKS_TT_CLOSE_U_PN_P_PORTS                           "Otomatik NAT eşleme kullanıldığında, temiz çıkışta yönlendirici eşlemelerini kapatır.
+
+Önerilen: etkin. Yalnızca eşlemelerin kasıtlı olarak geride kalmasını istiyorsanız bunu devre dışı bırakın."
+    IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE                          "eMule'nun otomatik NAT eşlemesini nasıl gerçekleştireceğini seçer.
+
+Önerilen: Otomatik. Bu, önce UPnP IGD'yi dener ve gerekirse PCP/NAT-PMP'ya geri döner."
     IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE_AUTOMATIC                "Önerilen mod. Önce UPnP IGD'yi deneyin, ardından eşleme başarısız olursa PCP/NAT-PMP'ya geri dönün."
     IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE_IGD_ONLY                 "Yalnızca UPnP IGD eşlemesini kullanın. Tamamen klasik UPnP davranışı istiyorsanız bunu seçin."
     IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE_PCP_NAT_PMP_ONLY         "Yalnızca PCP/NAT-PMP eşlemesini kullanın. Bunu yalnızca yönlendirici ortamınız açıkça tercih ediyorsa seçin."
-    IDS_TWEAKS_TT_FILE_BUFFER_TIME_LIMIT                       "eMule, ara belleğe alınan dosya verilerinin diske aktarılmadan önceki maksimum yaşı.\r\n\r\nDaha düşük değerler, çökmeler sırasında risk altındaki verileri azaltır. Daha yüksek değerler disk karmaşasını azaltabilir. Varsayılan genellikle iyi bir uzlaşmadır."
-    IDS_TWEAKS_TT_FILE_BUFFER_SIZE                             "İndirme verilerini diske aktarmadan önce kullanılan dosya başına yazma arabelleğinin boyutu.\r\n\r\nDaha büyük arabellekler disk etkinliğini azaltabilir, ancak bellek kullanımını artırır ve yazma işlemlerini geciktirir. Belirli bir depolama kurulumu için ayarlama yapmadığınız sürece orta değerleri koruyun."
-    IDS_TWEAKS_TT_QUEUE_SIZE                                   "Yükleme bekleme kuyruğunun hedef boyutu.\r\n\r\nDaha yüksek değerler daha fazla istemcinin beklemesine izin verir, ancak bellek kullanımı ve yönetim yükünü artırır. Çoğu kullanıcı için varsayılan değerler önerilir."
-    IDS_TWEAKS_TT_DATE_TIME_FORMAT4_LISTS                      "Liste görünümlerinde kullanılan özel tarih/saat biçimi.\r\n\r\nNormal varsayılan biçimlendirmeyi kullanmak için boş bırakın. Bunu yalnızca belirli bir özel zaman damgası stili istiyorsanız değiştirin."
-    IDS_TWEAKS_TT_DATE_TIME_FORMAT                             "Genel dosya ve eş ayrıntısı ekranları tarafından kullanılan özel tarih/saat biçimi.\r\n\r\nCTime biçimlendirme belirteçlerini kullanır. Boş olmamasına dikkat edin; geçersiz belirteçler kafa karıştırıcı zaman damgalarına neden olabilir."
-    IDS_TWEAKS_TT_DATE_TIME_FORMAT4_LOG                        "Günlük satırlarında ve günlük benzeri durum çıktısında kullanılan özel tarih/saat biçimi.\r\n\r\nCTime biçimlendirme belirteçlerini kullanır. Günlük satırlarının okunabilir kalması için kısa ve öz tutun."
-    IDS_TWEAKS_TT_ICON_FLASH_ON_NEW_MESSAGE                    "Yeni bir sohbet mesajı geldiğinde tepsi simgesini yanıp söner.\r\n\r\nTamamen bir bildirim tercihi. eMule simge durumuna küçültülmüşken mesajların öne çıkmasını istiyorsanız bunu etkinleştirin."
-    IDS_TWEAKS_TT_INSPECT_ALL_FILE_TYPES                       "Ayrıca, halihazırda ses veya video olarak sınıflandırılmamış dosya türleri için pahalı MediaInfo tarzı inceleme yolunu çalıştırın.\r\n\r\nOlağandışı veya yanlış etiketlenmiş dosyalar için daha zengin dosya bilgisi araştırması istiyorsanız bunu etkinleştirin. Yalnızca olası ses/video dosyalarını incelemek ve arka planda inceleme çalışmalarını azaltmak için bu seçeneği kapalı bırakın."
-    IDS_TWEAKS_TT_RE_BAR_TOOLBAR                               "Daha basit düz araç çubuğu düzeni yerine eski inşaat demiri tarzı ana araç çubuğu kapsayıcısını kullanır.\r\n\r\nÇoğunlukla bir kullanıcı arayüzü düzeni tercihi. Yalnızca eski araç çubuğu sunumunu tercih ediyorsanız etkin bırakın."
-    IDS_TWEAKS_TT_SHOW_UP_DOWN_ICON_IN_TASKBAR                 "Görev çubuğu bildirim alanında birleşik yükleme/indirme hızı simgesini gösterir.\r\n\r\nTamamen görsel. Daha temiz bir tepsi alanı istiyorsanız bunu devre dışı bırakın."
-    IDS_TWEAKS_TT_ALWAYS_SHOW_TRAY_ICON                        "eMule çalışırken eMule simgesini Windows bildirim alanında görünür tutar.\r\n\r\nKlasik tepsi balonu bildirimleri ve tepsiye küçültme, bu devre dışı bırakıldığında yine de tepsi simgesinin görünür olmasını sağlayabilir."
-    IDS_TWEAKS_TT_SHOW_VERTICAL_HOUR_MARKERS                   "Uzun vadeli istatistik grafiklerinde saatlik kılavuz işaretleyicileri çizer.\r\n\r\nZamana dayalı trafik modellerini okumak için kullanışlıdır. Daha az grafik karmaşasını tercih ediyorsanız bunu devre dışı bırakın."
-    IDS_TWEAKS_TT_FORCE_SPEEDS_TO_KB                           "Oran ekranlarını daha büyük birimlere otomatik olarak ölçeklendirmek yerine KB/s tarzı birimleri kullanmaya zorlar.\r\n\r\nSabit tanıdık birimleri tercih ediyorsanız bunu etkinleştirin. Daha okunabilir, büyük hızlı ekranlar için bunu kapalı bırakın."
-    IDS_TWEAKS_TT_REARRANGE_KAD_SEARCH_KEYWORDS                "Önce daha kullanışlı bir sorgu şekli denemek için Kad anahtar kelime arama terimlerini yeniden sıralar.\r\n\r\nGelişmiş arama davranışı ayarı. Kad arama davranışını kasıtlı olarak ayarlamadığınız sürece bunu varsayılanda bırakın."
-    IDS_TWEAKS_TT_MESSAGE_FROM_VALID_SOURCES_ONLY              "Yalnızca aktarımlarınız için zaten geçerli kaynaklar gibi görünen eşlerden gelen mesajları kabul eder.\r\n\r\nDaha güçlü gizlilik/spam koruması, ancak istenmeyen iletişimi engelleyebilir. Daha katı bir mesaj politikası istiyorsanız bunu etkinleştirin."
-    IDS_TWEAKS_TT_MAX_CHAT_HISTORY_LINES                       "Sohbet veya IRC kanal görünümü başına tutulan maksimum geçmiş satırı sayısı.\r\n\r\nDaha yüksek değerler daha fazla bağlam sağlar ancak daha fazla bellek kullanır ve yoğun sohbetlerin görüntülenmesini daha yavaş hale getirebilir."
-    IDS_TWEAKS_TT_MAX_MESSAGE_SESSIONS                         "Aynı anda saklanan maksimum eş ileti oturumu sayısı.\r\n\r\nDaha yüksek değerler daha fazla görüşmeyi kullanılabilir durumda tutar ancak bellek kullanımını artırır. Varsayılan muhafazakardır."
-    IDS_TWEAKS_TT_CREATE_CRASH_DUMP                            "eMule işlenmeyen bir kilitlenmeyle karşılaştığında kilitlenme dökümü oluşturmayı kontrol eder.\r\n\r\nÇökme dökümleri ciddi arızaların tanılanmasına yardımcı olur ancak işlem belleği içerebilir. Bunları yalnızca güvenilir geliştiricilerle paylaşın."
+    IDS_TWEAKS_TT_FILE_BUFFER_TIME_LIMIT                       "eMule, ara belleğe alınan dosya verilerinin diske aktarılmadan önceki maksimum yaşı.
+
+Daha düşük değerler, çökmeler sırasında risk altındaki verileri azaltır. Daha yüksek değerler disk karmaşasını azaltabilir. Varsayılan genellikle iyi bir uzlaşmadır."
+    IDS_TWEAKS_TT_FILE_BUFFER_SIZE                             "İndirme verilerini diske aktarmadan önce kullanılan dosya başına yazma arabelleğinin boyutu.
+
+Daha büyük arabellekler disk etkinliğini azaltabilir, ancak bellek kullanımını artırır ve yazma işlemlerini geciktirir. Belirli bir depolama kurulumu için ayarlama yapmadığınız sürece orta değerleri koruyun."
+    IDS_TWEAKS_TT_QUEUE_SIZE                                   "Yükleme bekleme kuyruğunun hedef boyutu.
+
+Daha yüksek değerler daha fazla istemcinin beklemesine izin verir, ancak bellek kullanımı ve yönetim yükünü artırır. Çoğu kullanıcı için varsayılan değerler önerilir."
+    IDS_TWEAKS_TT_DATE_TIME_FORMAT4_LISTS                      "Liste görünümlerinde kullanılan özel tarih/saat biçimi.
+
+Normal varsayılan biçimlendirmeyi kullanmak için boş bırakın. Bunu yalnızca belirli bir özel zaman damgası stili istiyorsanız değiştirin."
+    IDS_TWEAKS_TT_DATE_TIME_FORMAT                             "Genel dosya ve eş ayrıntısı ekranları tarafından kullanılan özel tarih/saat biçimi.
+
+CTime biçimlendirme belirteçlerini kullanır. Boş olmamasına dikkat edin; geçersiz belirteçler kafa karıştırıcı zaman damgalarına neden olabilir."
+    IDS_TWEAKS_TT_DATE_TIME_FORMAT4_LOG                        "Günlük satırlarında ve günlük benzeri durum çıktısında kullanılan özel tarih/saat biçimi.
+
+CTime biçimlendirme belirteçlerini kullanır. Günlük satırlarının okunabilir kalması için kısa ve öz tutun."
+    IDS_TWEAKS_TT_ICON_FLASH_ON_NEW_MESSAGE                    "Yeni bir sohbet mesajı geldiğinde tepsi simgesini yanıp söner.
+
+Tamamen bir bildirim tercihi. eMule simge durumuna küçültülmüşken mesajların öne çıkmasını istiyorsanız bunu etkinleştirin."
+    IDS_TWEAKS_TT_INSPECT_ALL_FILE_TYPES                       "Ayrıca, halihazırda ses veya video olarak sınıflandırılmamış dosya türleri için pahalı MediaInfo tarzı inceleme yolunu çalıştırın.
+
+Olağandışı veya yanlış etiketlenmiş dosyalar için daha zengin dosya bilgisi araştırması istiyorsanız bunu etkinleştirin. Yalnızca olası ses/video dosyalarını incelemek ve arka planda inceleme çalışmalarını azaltmak için bu seçeneği kapalı bırakın."
+    IDS_TWEAKS_TT_RE_BAR_TOOLBAR                               "Daha basit düz araç çubuğu düzeni yerine eski inşaat demiri tarzı ana araç çubuğu kapsayıcısını kullanır.
+
+Çoğunlukla bir kullanıcı arayüzü düzeni tercihi. Yalnızca eski araç çubuğu sunumunu tercih ediyorsanız etkin bırakın."
+    IDS_TWEAKS_TT_SHOW_UP_DOWN_ICON_IN_TASKBAR                 "Görev çubuğu bildirim alanında birleşik yükleme/indirme hızı simgesini gösterir.
+
+Tamamen görsel. Daha temiz bir tepsi alanı istiyorsanız bunu devre dışı bırakın."
+    IDS_TWEAKS_TT_ALWAYS_SHOW_TRAY_ICON                        "eMule çalışırken eMule simgesini Windows bildirim alanında görünür tutar.
+
+Klasik tepsi balonu bildirimleri ve tepsiye küçültme, bu devre dışı bırakıldığında yine de tepsi simgesinin görünür olmasını sağlayabilir."
+    IDS_TWEAKS_TT_SHOW_VERTICAL_HOUR_MARKERS                   "Uzun vadeli istatistik grafiklerinde saatlik kılavuz işaretleyicileri çizer.
+
+Zamana dayalı trafik modellerini okumak için kullanışlıdır. Daha az grafik karmaşasını tercih ediyorsanız bunu devre dışı bırakın."
+    IDS_TWEAKS_TT_FORCE_SPEEDS_TO_KB                           "Oran ekranlarını daha büyük birimlere otomatik olarak ölçeklendirmek yerine KB/s tarzı birimleri kullanmaya zorlar.
+
+Sabit tanıdık birimleri tercih ediyorsanız bunu etkinleştirin. Daha okunabilir, büyük hızlı ekranlar için bunu kapalı bırakın."
+    IDS_TWEAKS_TT_REARRANGE_KAD_SEARCH_KEYWORDS                "Önce daha kullanışlı bir sorgu şekli denemek için Kad anahtar kelime arama terimlerini yeniden sıralar.
+
+Gelişmiş arama davranışı ayarı. Kad arama davranışını kasıtlı olarak ayarlamadığınız sürece bunu varsayılanda bırakın."
+    IDS_TWEAKS_TT_MESSAGE_FROM_VALID_SOURCES_ONLY              "Yalnızca aktarımlarınız için zaten geçerli kaynaklar gibi görünen eşlerden gelen mesajları kabul eder.
+
+Daha güçlü gizlilik/spam koruması, ancak istenmeyen iletişimi engelleyebilir. Daha katı bir mesaj politikası istiyorsanız bunu etkinleştirin."
+    IDS_TWEAKS_TT_MAX_CHAT_HISTORY_LINES                       "Sohbet veya IRC kanal görünümü başına tutulan maksimum geçmiş satırı sayısı.
+
+Daha yüksek değerler daha fazla bağlam sağlar ancak daha fazla bellek kullanır ve yoğun sohbetlerin görüntülenmesini daha yavaş hale getirebilir."
+    IDS_TWEAKS_TT_MAX_MESSAGE_SESSIONS                         "Aynı anda saklanan maksimum eş ileti oturumu sayısı.
+
+Daha yüksek değerler daha fazla görüşmeyi kullanılabilir durumda tutar ancak bellek kullanımını artırır. Varsayılan muhafazakardır."
+    IDS_TWEAKS_TT_CREATE_CRASH_DUMP                            "eMule işlenmeyen bir kilitlenmeyle karşılaştığında kilitlenme dökümü oluşturmayı kontrol eder.
+
+Çökme dökümleri ciddi arızaların tanılanmasına yardımcı olur ancak işlem belleği içerebilir. Bunları yalnızca güvenilir geliştiricilerle paylaşın."
     IDS_TWEAKS_TT_CREATE_CRASH_DUMP_DISABLED                   "Kilitlenme dökümü dosyaları oluşturmayın."
     IDS_TWEAKS_TT_CREATE_CRASH_DUMP_PROMPT                     "Bir kilitlenme meydana geldiğinde kilitlenme dökümü yazmadan önce sorun."
-    IDS_TWEAKS_TT_CREATE_CRASH_DUMP_ALWAYS                     "Bir kilitlenme meydana geldiğinde otomatik olarak bir kilitlenme dökümü oluşturun.\r\n\r\nGüvenilir bir makinede tekrarlanabilir çökmelerde hata ayıklamak için en iyisi."
-    IDS_TWEAKS_TT_MAX_LOG_FILE_SIZE                            "KiB'deki her diskteki günlük dosyasının maksimum boyutu.\r\n\r\nDöndürme sınırı olmaması için 0'ı kullanın. Çok büyük değerler daha fazla geçmiş tutar ancak daha fazla disk alanı tüketir."
-    IDS_TWEAKS_TT_MAX_LOG_BUFFER                               "KiB'deki maksimum bellek içi günlük görüntüleme arabelleği.\r\n\r\nDaha yüksek değerler günlük geçmişini daha görünür tutar ancak daha fazla bellek kullanır ve çok yoğun günlük görünümlerini yavaşlatabilir."
-    IDS_TWEAKS_TT_LOG_FILE_FORMAT                              "Diskteki yeni açılan günlük dosyaları için kullanılan kodlama.\r\n\r\nGünlükler zaten açıkken bunu değiştirmek kalıcıdır, ancak günlük dosyası yeniden açıldıktan veya eMule yeniden başlatıldıktan sonra yeni biçim kullanılır."
+    IDS_TWEAKS_TT_CREATE_CRASH_DUMP_ALWAYS                     "Bir kilitlenme meydana geldiğinde otomatik olarak bir kilitlenme dökümü oluşturun.
+
+Güvenilir bir makinede tekrarlanabilir çökmelerde hata ayıklamak için en iyisi."
+    IDS_TWEAKS_TT_MAX_LOG_FILE_SIZE                            "KiB'deki her diskteki günlük dosyasının maksimum boyutu.
+
+Döndürme sınırı olmaması için 0'ı kullanın. Çok büyük değerler daha fazla geçmiş tutar ancak daha fazla disk alanı tüketir."
+    IDS_TWEAKS_TT_MAX_LOG_BUFFER                               "KiB'deki maksimum bellek içi günlük görüntüleme arabelleği.
+
+Daha yüksek değerler günlük geçmişini daha görünür tutar ancak daha fazla bellek kullanır ve çok yoğun günlük görünümlerini yavaşlatabilir."
+    IDS_TWEAKS_TT_LOG_FILE_FORMAT                              "Diskteki yeni açılan günlük dosyaları için kullanılan kodlama.
+
+Günlükler zaten açıkken bunu değiştirmek kalıcıdır, ancak günlük dosyası yeniden açıldıktan veya eMule yeniden başlatıldıktan sonra yeni biçim kullanılır."
     IDS_TWEAKS_TT_LOG_FILE_FORMAT_UNICODE                      "Günlükleri UTF-16 Unicode olarak yazın. Bu, eski varsayılandır ve Windows metnini geniş ölçüde korur."
     IDS_TWEAKS_TT_LOG_FILE_FORMAT_UTF8                         "Günlükleri UTF-8 olarak yazın. Modern UTF-8 metin dosyalarını bekleyen araçlar için kullanışlıdır."
-    IDS_TWEAKS_TT_LOG2_DISK                                    "Normal uygulama günlüğünü yalnızca bellekte tutmak yerine diske yazar.\r\n\r\nHata ayıklama ve uzun süreli gözetimsiz kullanım için kullanışlıdır, ancak disk yazma işlemlerini ekler. Kalıcı günlükler istemiyorsanız bunu kapalı bırakın."
-    IDS_TWEAKS_TT_PERF_LOG_FILE_FORMAT                         "Performans günlüğü örnekleri için çıktı formatı.\r\n\r\nCSV'nun manuel olarak incelenmesi en kolaydır. MRTG, MRTG tarzı giriş bekleyen grafik araçları için sepet dosyaları yazar."
+    IDS_TWEAKS_TT_LOG2_DISK                                    "Normal uygulama günlüğünü yalnızca bellekte tutmak yerine diske yazar.
+
+Hata ayıklama ve uzun süreli gözetimsiz kullanım için kullanışlıdır, ancak disk yazma işlemlerini ekler. Kalıcı günlükler istemiyorsanız bunu kapalı bırakın."
+    IDS_TWEAKS_TT_PERF_LOG_FILE_FORMAT                         "Performans günlüğü örnekleri için çıktı formatı.
+
+CSV'nun manuel olarak incelenmesi en kolaydır. MRTG, MRTG tarzı giriş bekleyen grafik araçları için sepet dosyaları yazar."
     IDS_TWEAKS_TT_PERF_LOG_FILE_FORMAT_CSV                     "Zaman damgalı yük ve ek yük örnekleri içeren bir CSV performans günlük dosyası yazın."
     IDS_TWEAKS_TT_PERF_LOG_FILE_FORMAT_MRTG                    "Yapılandırılmış temel yoldan türetilen MRTG tarzı verileri ve baş üstü sepet dosyalarını yazın."
-    IDS_TWEAKS_TT_PERF_LOG_FILE                                "Performans günlüğü için temel dosya yolu.\r\n\r\neMule'nun yapılandırma dizinindeki varsayılan dosyayı kullanmak için boş bırakın. MRTG modu, _data ve _overhead dosyalarını bu yoldan türetir."
-    IDS_TWEAKS_TT_PERF_LOG_INTERVAL                            "Dakika cinsinden performans kaydı için örnekleme aralığı.\r\n\r\nKısa aralıklar daha hassas grafikler oluşturur ancak daha fazla disk yazma işlemi gerçekleştirir. 1..1440'ı kullanın."
-    IDS_TWEAKS_TT_VERBOSE_GROUP                                "Derinlemesine sorun giderme için ekstra tanılama günlüğü kontrolleri.\r\n\r\nBu seçenekler normal çalışma için değil, hata ayıklama içindir. Belirli bir konuyu araştırmıyorsanız bunları bırakın."
-    IDS_TWEAKS_TT_RESTORE_LAST_MAIN_WND_DLG                    "Başlangıçta seçilen son ana pencere sayfasını geri yükler.\r\n\r\neMule'nun kaldığınız yerden yeniden açılmasını istiyorsanız bunu etkinleştirin."
-    IDS_TWEAKS_TT_RESTORE_LAST_LOG_PANE                        "Başlangıçta seçilen son günlük bölmesini geri yükler.\r\n\r\nGünlük görünümlerinde zaman harcayan kullanıcılar için tamamen kolaylık sağlayan bir seçenek."
-    IDS_TWEAKS_TT_KEEP_UNAVAILABLE_FIXED_SHARED_DIRS           "Manuel olarak yapılandırılmış paylaşılan dizinleri, şu anda kullanılamadıklarında bile listede tutar.\r\n\r\nÇıkarılabilir veya bazen eksik olan depolama için kullanışlıdır. Eksik klasörlerin agresif bir şekilde budanmasını istiyorsanız bunu devre dışı bırakın."
-    IDS_TWEAKS_TT_PARTIALLY_PURGE_OLD_KNOWN_FILES              "Bilinen dosyalar geçmişindeki eski girişlerin daha agresif bir şekilde temizlenmesine olanak tanır.\r\n\r\nZamanla dağınıklığı azaltabilir, ancak aynı zamanda eski dosya geçmişini daha çabuk unutur. Daha yalın bir geçmiş istemiyorsanız varsayılanı bırakın."
-    IDS_TWEAKS_TT_DETECT_TCP_ERROR_FLOODER                     "Kötü niyetli veya bozuk eşleri gösterebilecek tekrarlanan TCP hata patlamalarını algılar.\r\n\r\nÖnerilen: etkin. Yalnızca yanlış pozitifleri teşhis ediyorsanız devre dışı bırakın."
-    IDS_TWEAKS_TT_TCP_ERROR_FLOODER_INTERVAL_MINUTES           "TCP hata taşması tespiti için kullanılan zaman penceresi.\r\n\r\nDaha kısa pencereler daha hızlı tepki verir; daha uzun pencereler daha az hassastır. Varsayılan değerler önerilir."
-    IDS_TWEAKS_TT_TCP_ERROR_FLOODER_THRESHOLD                  "Taşkın yönetimini tetikleyen aralık içindeki TCP hatalarının sayısı.\r\n\r\nDaha düşük değerler daha katıdır. Yalnızca ortamınız zararsız sıklıkta TCP hataları üretiyorsa yükseltin."
-    IDS_TWEAKS_TT_SHAREE_MULE                                  "eMule'nun bu Windows makinesinde kullanıcı başına durumu nasıl depoladığını ve paylaştığını kontrol eder.\r\n\r\nBirden fazla yerel kullanıcının yapılandırmayı ve verileri paylaşma şeklini kasıtlı olarak değiştirmediğiniz sürece mevcut moddan çıkın."
-    IDS_TWEAKS_TT_TCP_GROUP                                    "Gelişmiş TCP bağlantı patlaması, zaman aşımı ve canlı tutma kontrolleri.\r\n\r\nBu ayarlar aktarım limitlerinden ziyade bağlantı davranışını etkiler. Ağ kurulumu sorunlarını teşhis etmediğiniz sürece varsayılan değerler önerilir."
-    IDS_TWEAKS_TT_SEARCH_GROUP                                 "eMule'nun eD2K ve Kad'da ne kadar kapsamlı ve ne kadar süreyle arama yapacağına ilişkin gelişmiş sınırlar.\r\n\r\nDaha yüksek değerler daha fazla sonuç getirebilir, ancak aynı zamanda daha fazla ağ trafiği ve kullanıcı arayüzü gürültüsü ekler."
-    IDS_TWEAKS_TT_SEARCH_ED2K_GROUP                            "Sunucu tabanlı eD2K arama sınırları.\r\n\r\nKasıtlı olarak daha derin sunucu aramaları istemediğiniz sürece muhafazakar değerleri kullanın."
-    IDS_TWEAKS_TT_SEARCH_KAD_GROUP                             "Kad arama kapsamı ve kullanım ömrü kontrolleri.\r\n\r\nDaha yüksek değerler, dağıtılmış aramaları daha uzun süre canlı tutar ve daha fazla sonuç bulabilir, ancak daha fazla arka plan etkinliğine mal olur."
-    IDS_TWEAKS_TT_BROADBAND                                    "Geniş bant tarzı yükleme davranışı için gelişmiş yükleme yuvası geri dönüşümü ve kuyruk puanlama politikası.\r\n\r\nBu ayarlar kasıtlı ayarlama içindir. Yükleme adaletini veya slot cirosunu ayarlamadığınız sürece bunları varsayılan değerlerinde bırakın."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_MAX_UPLOAD_CLIENTS             "Geniş bant zamanlayıcı altında eş zamanlı etkin yükleme istemcileri için yumuşak sınır.\r\n\r\nDaha yüksek değerler, bant genişliğini daha fazla eşe yayar ancak her yuvayı daha ince hale getirir. Daha düşük değerler daha az sayıda, daha güçlü yuvaları korur."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_THRESHOLD                 "Yuva başına hedef yükleme hızının, altındaki bir yuvanın yavaş olduğu kabul edilen kısmı.\r\n\r\nDüşük değerler, daha zayıf yuvaları daha uzun süre tolere eder. Daha yüksek değerler, düşük performans gösteren slotları daha agresif bir şekilde geri dönüştürür."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_GRACE                     "eMule, onu geri dönüştürmeyi düşünmeden önce bir slot ne kadar süre yavaş eşiğin altında kalabilir.\r\n\r\nDaha uzun süre, zayıf emsallere karşı daha sabırlıdır; daha kısa zarafet, zayıf slotları daha çabuk devreder."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_WARMUP                    "Yavaş yuva tespiti başlamadan önce yeni bir yükleme yuvası için ısınma süresi.\r\n\r\nBu, yeni yüklemelerin başlangıç ​​gürültüsü ve hızlanma süresi nedeniyle cezalandırılmasını önler."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_ZERO_RATE_GRACE                "Aslında hiçbir yükleme verisi sağlamayan yuvalar için ek süre.\r\n\r\nDüşük değerler ölü veya durmuş yuvalara daha hızlı tepki verir."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_COOLDOWN                       "Geri dönüştürülmüş bir yavaş slotun tekrar normal şekilde rekabet edebilmesi için kuyruk puanlamasında ne kadar süre cezalı kalacağı.\r\n\r\nDaha uzun bekleme süresi, yakın zamanda zayıflamış istemcilerin anında yeniden seçilmesini azaltır."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_BOOST                "Geçmiş yükleme oranı düşük olan dosyaları isteyen istemciler için ekstra kuyruk puanı ekler.\r\n\r\nŞimdiye kadar nispeten az yükleme almış dosyaları tercih etmek istiyorsanız bunu kullanın."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_THRESHOLD            "Altında düşük oranlı kuyruk puanı artışının uygulandığı yükleme oranı kesintisi.\r\n\r\nDüşük değerler, yükseltmeyi daha güçlü bir şekilde yetersiz sunulan dosyalarla sınırlandırır."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_BONUS                "Düşük oranlı güçlendirme tetiklendiğinde ek etkin kuyruk puanı verilir.\r\n\r\nDaha yüksek değerler, yükleme sıralamasında yükseltmenin daha önemli olmasını sağlar."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_ID_DIVISOR                 "Yükleme sırası puanlaması sırasında LowID istemcilerine uygulanan ceza bölücü.\r\n\r\nDaha yüksek değerler LowID önceliğini daha agresif bir şekilde azaltır. Ekstra LowID cezasını devre dışı bırakmak için 1'i ayarlayın."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER               "eMule o yuvayı döndürmeyi düşünmeden önce bir yükleme oturumunun ne kadar aktarılabileceğini sınırlar.\r\n\r\nDöndürme yalnızca başka bir istemcinin yuvaya gerçekten ihtiyacı olduğunda gerçekleşir."
+    IDS_TWEAKS_TT_PERF_LOG_FILE                                "Performans günlüğü için temel dosya yolu.
+
+eMule'nun yapılandırma dizinindeki varsayılan dosyayı kullanmak için boş bırakın. MRTG modu, _data ve _overhead dosyalarını bu yoldan türetir."
+    IDS_TWEAKS_TT_PERF_LOG_INTERVAL                            "Dakika cinsinden performans kaydı için örnekleme aralığı.
+
+Kısa aralıklar daha hassas grafikler oluşturur ancak daha fazla disk yazma işlemi gerçekleştirir. 1..1440'ı kullanın."
+    IDS_TWEAKS_TT_VERBOSE_GROUP                                "Derinlemesine sorun giderme için ekstra tanılama günlüğü kontrolleri.
+
+Bu seçenekler normal çalışma için değil, hata ayıklama içindir. Belirli bir konuyu araştırmıyorsanız bunları bırakın."
+    IDS_TWEAKS_TT_RESTORE_LAST_MAIN_WND_DLG                    "Başlangıçta seçilen son ana pencere sayfasını geri yükler.
+
+eMule'nun kaldığınız yerden yeniden açılmasını istiyorsanız bunu etkinleştirin."
+    IDS_TWEAKS_TT_RESTORE_LAST_LOG_PANE                        "Başlangıçta seçilen son günlük bölmesini geri yükler.
+
+Günlük görünümlerinde zaman harcayan kullanıcılar için tamamen kolaylık sağlayan bir seçenek."
+    IDS_TWEAKS_TT_KEEP_UNAVAILABLE_FIXED_SHARED_DIRS           "Manuel olarak yapılandırılmış paylaşılan dizinleri, şu anda kullanılamadıklarında bile listede tutar.
+
+Çıkarılabilir veya bazen eksik olan depolama için kullanışlıdır. Eksik klasörlerin agresif bir şekilde budanmasını istiyorsanız bunu devre dışı bırakın."
+    IDS_TWEAKS_TT_PARTIALLY_PURGE_OLD_KNOWN_FILES              "Bilinen dosyalar geçmişindeki eski girişlerin daha agresif bir şekilde temizlenmesine olanak tanır.
+
+Zamanla dağınıklığı azaltabilir, ancak aynı zamanda eski dosya geçmişini daha çabuk unutur. Daha yalın bir geçmiş istemiyorsanız varsayılanı bırakın."
+    IDS_TWEAKS_TT_DETECT_TCP_ERROR_FLOODER                     "Kötü niyetli veya bozuk eşleri gösterebilecek tekrarlanan TCP hata patlamalarını algılar.
+
+Önerilen: etkin. Yalnızca yanlış pozitifleri teşhis ediyorsanız devre dışı bırakın."
+    IDS_TWEAKS_TT_TCP_ERROR_FLOODER_INTERVAL_MINUTES           "TCP hata taşması tespiti için kullanılan zaman penceresi.
+
+Daha kısa pencereler daha hızlı tepki verir; daha uzun pencereler daha az hassastır. Varsayılan değerler önerilir."
+    IDS_TWEAKS_TT_TCP_ERROR_FLOODER_THRESHOLD                  "Taşkın yönetimini tetikleyen aralık içindeki TCP hatalarının sayısı.
+
+Daha düşük değerler daha katıdır. Yalnızca ortamınız zararsız sıklıkta TCP hataları üretiyorsa yükseltin."
+    IDS_TWEAKS_TT_SHAREE_MULE                                  "eMule'nun bu Windows makinesinde kullanıcı başına durumu nasıl depoladığını ve paylaştığını kontrol eder.
+
+Birden fazla yerel kullanıcının yapılandırmayı ve verileri paylaşma şeklini kasıtlı olarak değiştirmediğiniz sürece mevcut moddan çıkın."
+    IDS_TWEAKS_TT_TCP_GROUP                                    "Gelişmiş TCP bağlantı patlaması, zaman aşımı ve canlı tutma kontrolleri.
+
+Bu ayarlar aktarım limitlerinden ziyade bağlantı davranışını etkiler. Ağ kurulumu sorunlarını teşhis etmediğiniz sürece varsayılan değerler önerilir."
+    IDS_TWEAKS_TT_SEARCH_GROUP                                 "eMule'nun eD2K ve Kad'da ne kadar kapsamlı ve ne kadar süreyle arama yapacağına ilişkin gelişmiş sınırlar.
+
+Daha yüksek değerler daha fazla sonuç getirebilir, ancak aynı zamanda daha fazla ağ trafiği ve kullanıcı arayüzü gürültüsü ekler."
+    IDS_TWEAKS_TT_SEARCH_ED2K_GROUP                            "Sunucu tabanlı eD2K arama sınırları.
+
+Kasıtlı olarak daha derin sunucu aramaları istemediğiniz sürece muhafazakar değerleri kullanın."
+    IDS_TWEAKS_TT_SEARCH_KAD_GROUP                             "Kad arama kapsamı ve kullanım ömrü kontrolleri.
+
+Daha yüksek değerler, dağıtılmış aramaları daha uzun süre canlı tutar ve daha fazla sonuç bulabilir, ancak daha fazla arka plan etkinliğine mal olur."
+    IDS_TWEAKS_TT_BROADBAND                                    "Geniş bant tarzı yükleme davranışı için gelişmiş yükleme yuvası geri dönüşümü ve kuyruk puanlama politikası.
+
+Bu ayarlar kasıtlı ayarlama içindir. Yükleme adaletini veya slot cirosunu ayarlamadığınız sürece bunları varsayılan değerlerinde bırakın."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_MAX_UPLOAD_CLIENTS             "Geniş bant zamanlayıcı altında eş zamanlı etkin yükleme istemcileri için yumuşak sınır.
+
+Daha yüksek değerler, bant genişliğini daha fazla eşe yayar ancak her yuvayı daha ince hale getirir. Daha düşük değerler daha az sayıda, daha güçlü yuvaları korur."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_THRESHOLD                 "Yuva başına hedef yükleme hızının, altındaki bir yuvanın yavaş olduğu kabul edilen kısmı.
+
+Düşük değerler, daha zayıf yuvaları daha uzun süre tolere eder. Daha yüksek değerler, düşük performans gösteren slotları daha agresif bir şekilde geri dönüştürür."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_GRACE                     "eMule, onu geri dönüştürmeyi düşünmeden önce bir slot ne kadar süre yavaş eşiğin altında kalabilir.
+
+Daha uzun süre, zayıf emsallere karşı daha sabırlıdır; daha kısa zarafet, zayıf slotları daha çabuk devreder."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_WARMUP                    "Yavaş yuva tespiti başlamadan önce yeni bir yükleme yuvası için ısınma süresi.
+
+Bu, yeni yüklemelerin başlangıç ​​gürültüsü ve hızlanma süresi nedeniyle cezalandırılmasını önler."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ZERO_RATE_GRACE                "Aslında hiçbir yükleme verisi sağlamayan yuvalar için ek süre.
+
+Düşük değerler ölü veya durmuş yuvalara daha hızlı tepki verir."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_COOLDOWN                       "Geri dönüştürülmüş bir yavaş slotun tekrar normal şekilde rekabet edebilmesi için kuyruk puanlamasında ne kadar süre cezalı kalacağı.
+
+Daha uzun bekleme süresi, yakın zamanda zayıflamış istemcilerin anında yeniden seçilmesini azaltır."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_BOOST                "Geçmiş yükleme oranı düşük olan dosyaları isteyen istemciler için ekstra kuyruk puanı ekler.
+
+Şimdiye kadar nispeten az yükleme almış dosyaları tercih etmek istiyorsanız bunu kullanın."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_THRESHOLD            "Altında düşük oranlı kuyruk puanı artışının uygulandığı yükleme oranı kesintisi.
+
+Düşük değerler, yükseltmeyi daha güçlü bir şekilde yetersiz sunulan dosyalarla sınırlandırır."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_BONUS                "Düşük oranlı güçlendirme tetiklendiğinde ek etkin kuyruk puanı verilir.
+
+Daha yüksek değerler, yükleme sıralamasında yükseltmenin daha önemli olmasını sağlar."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_ID_DIVISOR                 "Yükleme sırası puanlaması sırasında LowID istemcilerine uygulanan ceza bölücü.
+
+Daha yüksek değerler LowID önceliğini daha agresif bir şekilde azaltır. Ekstra LowID cezasını devre dışı bırakmak için 1'i ayarlayın."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER               "eMule o yuvayı döndürmeyi düşünmeden önce bir yükleme oturumunun ne kadar aktarılabileceğini sınırlar.
+
+Döndürme yalnızca başka bir istemcinin yuvaya gerçekten ihtiyacı olduğunda gerçekleşir."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_DISABLED      "Aktarılan yük miktarına göre yükleme oturumlarını geri dönüştürmeyin."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_PERCENT       "Her yükleme oturumunu istenen dosya boyutunun belirli bir yüzdesi ile sınırlayın."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_PERCENT_VALUE "Oturum aktarım sınırı dosya boyutunun paylaşımı olarak yapılandırıldığında kullanılan yüzde."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_MI_B          "Dosya boyutundan bağımsız olarak her yükleme oturumunu sabit bir MiB miktarıyla sınırlayın."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_MI_B_VALUE    "Oturum aktarım sınırı sabit boyut olarak yapılandırıldığında kullanılan mutlak MiB miktarı."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TIME_LIMIT             "eMule yuvayı döndürmeyi dikkate almadan önce maksimum bir yükleme oturumu süresi.\r\n\r\nZamana dayalı sınırı devre dışı bırakmak için 0'ı ayarlayın."
-    IDS_TWEAKS_TT_A4_AF_SAVE_CPU                               "CPU zamanından tasarruf etmek için tekrarlanan A4AF (Başka Dosya İçin İstenen) kaynak kontrollerini azaltır.\r\n\r\nMeşgul istemciler için kullanışlıdır, ancak aynı istemci kaynak değiştirme işlemini daha az istekli hale getirebilir."
-    IDS_TWEAKS_TT_EXTRACT_META_DATA_NEVER                      "Dosyalardan meta verileri çıkarmayın.\r\n\r\nLightest seçeneği. Arka plan meta verilerinin araştırılmasını istemiyorsanız bunu kullanın."
-    IDS_TWEAKS_TT_EXTRACT_META_DATA_ID3_LIB                    "Meta verileri yalnızca MPEG ses dosyaları için ID3 kitaplık yolu aracılığıyla çıkarın.\r\n\r\nDaha geniş medya incelemesi olmadan temel müzik etiketleri için dengeli varsayılan."
-    IDS_TWEAKS_TT_PREVIEW_ON_ICON_DBL_CLK                      "Bir dosya simgesine çift tıklamak, olağan varsayılan eylem yerine önizlemeyi açar.\r\n\r\nTamamen bir kullanıcı arayüzü iş akışı tercihi."
-    IDS_TWEAKS_TT_EXTRA_PREVIEW_WITH_MENU                      "Yalnızca daha basit doğrudan önizleme eylemini göstermek yerine, önizleme komutlarını özel bir önizleme eylem menüsü aracılığıyla gösterir.\r\n\r\nİndirme listesi içerik menüsünde daha açık önizleme seçenekleri istiyorsanız kullanışlıdır."
-    IDS_TWEAKS_TT_SHOW_ACTIVE_DOWNLOADS_BOLD                   "İndirme listesinde aktif olarak aktarılan indirmeleri kalın harflerle çizer.\r\n\r\nTamamen görsel. Aktif öğelerin daha net bir şekilde öne çıkmasını istiyorsanız bunu etkinleştirin."
-    IDS_TWEAKS_TT_USE_SYSTEM_FONT_FOR_MAIN_CONTROLS            "Ana kontroller ve liste görünümleri için eMule'nun özel yazı tipi kurulumu yerine normal Windows kullanıcı arayüzü yazı tipini kullanır.\r\n\r\nYerel görünümlü metni tercih ediyorsanız veya sistem yazı tipi ayarlarınızla daha iyi uyumluluğa ihtiyacınız varsa kullanışlıdır."
-    IDS_TWEAKS_TT_FILTER_LANI_PS                               "Özel/LAN aralıklarındaki sunucu ve istemci adreslerini yok sayar.\r\n\r\nÖnerilen: etkin. Bu, genel ağdaki yönlendirilemeyen eş adresleri kullanmaya çalışmaktan kaçınır."
-    IDS_TWEAKS_TT_GEO_LOCATION_CHECK_DAYS                      "eMule'nun güncellenmiş coğrafi konum veritabanı içeriğini ne sıklıkla kontrol ettiği.\r\n\r\nOtomatik güncelleme kontrollerini devre dışı bırakmak için 0'ı ayarlayın. Daha büyük değerler arka plan yenileme etkinliğini azaltır."
-    IDS_TWEAKS_TT_VERBOSE                                      "Aşağıdaki ayrıntılı kayıt kontrolleri için ana anahtar.\r\n\r\nNormal kullanım için devre dışı bırakın. Yalnızca belirli bir sorunu araştırırken etkinleştirin."
-    IDS_TWEAKS_TT_FULL_VERBOSE                                 "Ayrıntılı günlük kaydı etkinleştirildiğinde mevcut en ayrıntılı ayrıntılı izlemeyi kaydeder.\r\n\r\nBu çok gürültülü olabilir ve yalnızca odaklanmış sorun giderme için kullanılmalıdır."
-    IDS_TWEAKS_TT_LOG_LEVEL                                    "Tanılama günlüğü çıkışı için ayrıntı eşiği.\r\n\r\nDaha yüksek seviyeler daha fazla ayrıntı kaydeder ancak daha fazla gürültü oluşturur."
-    IDS_TWEAKS_TT_DEBUG2_DISK                                  "Ayrıntılı tanılama çıktısını geçici tutmak yerine diske yazar.\r\n\r\nKalıcı bir hata ayıklama izine ihtiyaç duyduğunuzda kullanışlıdır, ancak disk etkinliğini artırır."
-    IDS_TWEAKS_TT_DEBUG_SOURCE_EXCHANGE                        "Kaynak değişimiyle ilgili paketleri ve kararları günlüğe kaydeder.\r\n\r\nÖzel teşhis seçeneği. Bunu yalnızca kaynak bulma davranışında hata ayıklarken etkinleştirin."
-    IDS_TWEAKS_TT_LOG_BANNED_CLIENTS                           "Eşlerin ne zaman yasaklandığını ve neden yasaklandığını kaydeder.\r\n\r\nKötüye kullanım veya yanlış pozitif teşhis için kullanışlıdır ancak normal çalışma için çok gürültülüdür."
-    IDS_TWEAKS_TT_LOG_RATING_DESC_RECEIVED                     "Alınan dosya yorumlarını, açıklamalarını ve derecelendirmelerini kaydeder.\r\n\r\nMeta veri akışında hata ayıklamak için kullanışlıdır, ancak genellikle gerekli değildir."
-    IDS_TWEAKS_TT_LOG_SECURE_IDENT                             "Güvenli kimlik doğrulamasını ve ilgili kimlik kontrollerini kaydeder.\r\n\r\nGüven/kimlik doğrulama sorunlarını gidermek için kullanışlıdır."
-    IDS_TWEAKS_TT_LOG_FILTERED_I_PS                            "IP filtreleme veya yoksayma mantığı eş veya sunucu adreslerini bıraktığında kayıt yapar.\r\n\r\nBazı eşlerin neden reddedildiğini teşhis etmek için kullanışlıdır."
-    IDS_TWEAKS_TT_LOG_FILE_SAVING                              "Bilinen dosyalar, krediler ve ilgili durum gibi kalıcı verilerin kayıtlarını kaydeder.\r\n\r\nKalıcı hata ayıklama için kullanışlıdır ancak normal kullanım için gereksizdir."
-    IDS_TWEAKS_TT_LOG_A4_AF                                    "A4AF (Başka Bir Dosya İçin İstendi) kaynak yeniden atama etkinliğini kaydeder.\r\n\r\nÖzel indirme yöneticisi tanılama seçeneği."
-    IDS_TWEAKS_TT_LOG_UL_DL_EVENTS                             "Yükleme yuvası ve indirme olayı yaşam döngüsü değişikliklerini kaydeder.\r\n\r\nKuyruk kaybı, yuva rotasyonu veya aktarım durumu geçişlerini tanılarken kullanışlıdır."
-    IDS_TWEAKS_TT_U_PN_P                                       "Gelen bağlantı için otomatik yönlendirici bağlantı noktası eşleme ayarları.\r\n\r\nÇoğu kullanıcı, yönlendirici ortamları belirli bir şey gerektirmediği sürece bu grubu otomatik varsayılanlarda bırakmalıdır."
-    IDS_TWEAKS_TT_SHAREE_MULE_MULTI_USER                       "Her Windows kullanıcısı ayrı bir eMule yapılandırmasına ve ayrı bir indirme durumuna sahip olur.\r\n\r\nConfig, Yerel Uygulama Verileri altında bulunur ve indirmeler, o kullanıcının kendi İndirilenler klasörünü kullanır. Kullanıcıların eMule verilerini paylaşmaması gereken paylaşılan bilgisayarlar için en uygun seçenek."
-    IDS_TWEAKS_TT_SHAREE_MULE_PUBLIC_USER                      "Tüm Windows kullanıcıları aynı eMule yapılandırmasını ve indirmeleri paylaşır.\r\n\r\nConfig, ProgramData altında bulunur ve indirmeler Genel İndirmeleri kullanır. Bunu yalnızca makine kasıtlı olarak ortak bir eMule durumunu paylaşıyorsa kullanın."
-    IDS_TWEAKS_TT_SHAREE_MULE_OLD_STYLE                        "Eski eski düzeni kullanarak yapılandırmayı ve indirmeleri program dizininde tutun.\r\n\r\nYalnızca eski uyumluluk modu. Genellikle modern Windows'da en az tercih edilen seçimdir."
-    IDS_CONNECTION_TT_AUTOCONNECT                              "eMule başlatıldığında etkin ağları otomatik olarak başlatır.\r\n\r\nÖnerilen: normal gözetimsiz kullanım için etkinleştirilir. Yalnızca her oturuma manuel olarak bağlanmak istiyorsanız bunu devre dışı bırakın."
-    IDS_CONNECTION_TT_RECONN                                   "Bağlantı kesildikten veya başarısız denemelerden sonra sunucu bağlantılarını yeniden dener.\r\n\r\nÖnerilen: eD2K sunucu ağını kullanıyorsanız etkinleştirilir. Sunucu ağı devre dışı bırakıldığında hiçbir etkisi yoktur."
-    IDS_CONNECTION_TT_SHOWOVERHEAD                             "Aktarım hızlarında ve istatistiklerde protokol yükünü ayrı ayrı gösterir.\r\n\r\nKablolu trafiğin daha dürüst bir görünümünü istiyorsanız bunu etkinleştirin. Yalnızca yük taşımaya yönelik daha basit sayıları tercih ediyorsanız bunu kapalı bırakın."
-    IDS_CONNECTION_TT_PORT                                     "Gelen istemci bağlantıları için kullanılan ana TCP bağlantı noktası.\r\n\r\nBunu yalnızca güvenlik duvarı veya yönlendirici kurallarını kasıtlı olarak yeniden yapılandırdığınızda değiştirin. Değiştirdikten sonra bağlantıyı yeniden test edin."
-    IDS_CONNECTION_TT_UDPPORT                                  "Kad ve diğer UDP destekli özellikler için kullanılan UDP bağlantı noktası.\r\n\r\nÖnerilen: UDP tabanlı ağı kasıtlı olarak devre dışı bırakmak istemediğiniz sürece onu etkin ve erişilebilir tutun."
-    IDS_CONNECTION_TT_MAXSOURCEPERFILE                         "eMule'nun indirme başına kaç uzak kaynak tutacağına ilişkin kesin sınır.\r\n\r\nDaha yüksek değerler, nadir dosyaların kullanılabilirliğini artırabilir ancak daha fazla bellek ve kaynak yönetimi trafiğine mal olur. Yükseltmek için özel bir nedeniniz olmadığı sürece orta değerleri kullanın."
-    IDS_CONNECTION_TT_MAXCON                                   "Eş zamanlı bağlantılar için üst limit eMule açık kalabilir.\r\n\r\nDaha yüksek değerler otomatik olarak daha iyi değildir. Belirli bir ağ sınırlamasını teşhis etmediğiniz sürece bunu ayarlanmış varsayılana yakın bırakın."
-    IDS_CONNECTION_TT_DOWNLOAD_CAP                             "KiB/s cinsinden yapılandırılmış aşağı akış kapasiteniz. eMule bunu kaydırıcılar ve bant genişliği kararları için bir üst referans olarak kullanır.\r\n\r\nBunu pazarlama maksimumuna değil, gerçek kullanılabilir hat hızınıza yakın bir değere ayarlayın."
-    IDS_CONNECTION_TT_UPLOAD_CAP                               "KiB/s cinsinden yapılandırılmış yukarı akış kapasiteniz. eMule bunu yükleme kontrolü için bir üst referans olarak kullanır.\r\n\r\nBunu hattınızın gerçek kullanılabilir sürekli yükleme hızına yakın bir yere ayarlayın."
-    IDS_CONNECTION_TT_NETWORK_ED2_K                            "Klasik eD2K sunucu ağını etkinleştirir.\r\n\r\nHala sunucu tabanlı kaynak bulmayı kullanıyorsanız bunu etkin bırakın. Yalnızca kasıtlı olarak yalnızca Kad çalışmasını istiyorsanız bunu devre dışı bırakın."
-    IDS_CONNECTION_TT_NETWORK_KADEMLIA                         "Kad dağıtılmış ağı etkinleştirir.\r\n\r\nÖnerilen: modern kullanım için etkinleştirilir. UDP bağlantı noktasının etkin kalmasını gerektirir."
-    IDS_CONNECTION_TT_PREF_UPNPONSTART                         "Yapılandırılmış TCP ve UDP bağlantı noktaları için başlangıçta otomatik NAT bağlantı noktası eşlemesini dener.\r\n\r\nÖnerilen: yönlendiriciniz UPnP veya PCP/NAT-PMP'yu desteklediğinde etkinleştirilir. Bağlantı noktalarını manuel olarak iletirseniz bunu devre dışı bırakın."
-    IDS_CONNECTION_TT_RANDOMIZE_PORTS_ON_STARTUP               "Otomatik bağlantı noktası eşleme çalıştırılmadan önce başlangıçta yeni TCP ve UDP dinleme bağlantı noktalarını seçer.\r\n\r\nSeçenek, eMule'nun mevcut rastgele bağlantı noktası aralığını kullanır ve UDP bağlantı noktası devre dışı bırakıldığında UDP'yu devre dışı bırakır."
-    IDS_CONNECTION_TT_UDPDISABLE                               "eMule'nun UDP bağlantı noktasını devre dışı bırakır ve bu nedenle Kad ağı gibi UDP'ya bağımlı özellikleri devre dışı bırakır.\r\n\r\nÖnerilen: çok özel bir ağ ortamı için yalnızca TCP'yu çalıştırmanız gerekmediği sürece bunu kapalı bırakın."
-    IDS_CONNECTION_TT_STARTTEST                                "Geçerli olarak yapılandırılmış TCP ve UDP bağlantı noktaları için harici bağlantı testini başlatır.\r\n\r\nBağlantı noktalarını, bağlama ayarlarını veya yönlendirici eşleme kurallarını değiştirdikten sonra kullanın."
-    IDS_CONNECTION_TT_BIND_INTERFACE                           "P2P soket bağlama için kullanılan isteğe bağlı Windows ağ arayüzü adı.\r\n\r\nMatch, adaptör numarasına değil, kolay anlaşılır arayüz adına göredir. Değişiklikler yeniden başlatmanın ardından etkili olur."
-    IDS_CONNECTION_TT_BIND_ADDRESS                             "P2P soket bağlama için kullanılan isteğe bağlı IPv4 adresi.\r\n\r\nSeçilen arayüzde ilk IPv4'yu veya hiçbir arayüz seçilmediğinde varsayılan yönlendirme seçeneğini kullanmak için boş bırakın."
-    IDS_CONNECTION_TT_STARTUP_BIND_BLOCK                       "Yapılandırılmış bağlama hedefi başlangıçta çözülemezse, P2P ağını oturum boyunca çevrimdışı tutar.\r\n\r\nYalnızca bir bağlama arayüzü seçildiğinde kullanılabilir. Adlandırılmış bir arayüze açıkça bağlandığınızda ve sessiz geri dönüş istemediğinizde önerilir."
-    IDS_WEBSERVER_TT_WEBBINDADDR                               "Yerleşik WebServer ve REST API için yerel bağlama adresi.\r\n\r\nTüm arayüzlerde dinlemek için boş veya 0.0.0.0 olarak bırakın. Yalnızca hizmetin dinlediği yeri kasıtlı olarak kısıtlamak istiyorsanız belirli bir IPv4 ayarlayın."
-    IDS_WEBSERVER_TT_WSAPIKEY                                  "X-API-Key başlığında istemciler tarafından kullanılan düz metin REST API anahtarı.\r\n\r\nÖnerilen: belirli bir belirtece ihtiyacınız olmadığı sürece oluşturulan rastgele değeri koruyun. Bu anahtara sahip olan herkes tam API erişimine sahiptir."
-    IDS_WEBSERVER_TT_WSUPNP                                    "UPnP veya PCP/NAT-PMP etkinleştirildiğinde otomatik NAT eşlemesinde WebServer bağlantı noktasını içerir.\r\n\r\nBunu yalnızca Web UI veya REST API'nun yönlendirici eşlemeniz aracılığıyla erişilebilir olmasını istiyorsanız etkinleştirin."
-    IDS_WEBSERVER_TT_WS_MAXFILEUPLOAD                          "MiB'de WebServer tarafından kabul edilen maksimum tek dosya yükleme boyutu.\r\n\r\nNormal uzaktan kontrol için küçük bir değer kullanın. Yalnızca güvenilir Web istemcilerinin daha büyük dosyalar yüklemesi gerekiyorsa yükseltin."
-    IDS_WEBSERVER_TT_WS_MAXFILEUPLOAD_LBL                      "MiB'de WebServer tarafından kabul edilen maksimum tek dosya yükleme boyutu.\r\n\r\nNormal uzaktan kontrol için küçük bir değer kullanın. Yalnızca güvenilir Web istemcilerinin daha büyük dosyalar yüklemesi gerekiyorsa yükseltin."
-    IDS_WEBSERVER_TT_WS_ALLOWEDIPS                             "WebServer istemcileri için isteğe bağlı noktalı virgülle ayrılmış IPv4 izin verilenler listesi.\r\n\r\nWebServer'ya ulaşabilecek herhangi bir uzak adrese izin vermek için boş bırakın. Örnek: 127.0.0.1;192.168.1.50"
-    IDS_WEBSERVER_TT_WS_ALLOWEDIPS_LBL                         "WebServer istemcileri için isteğe bağlı noktalı virgülle ayrılmış IPv4 izin verilenler listesi.\r\n\r\nWebServer'ya ulaşabilecek herhangi bir uzak adrese izin vermek için boş bırakın. Örnek: 127.0.0.1;192.168.1.50"
-    IDS_WEBSERVER_TT_WS_ALLOWHILEVFUNC                         "Çalışma zamanı durumunu daha agresif bir şekilde değiştirebilen üst düzey yönetimsel Web eylemlerine izin verir.\r\n\r\nÖnerilen: Güvenilir yönetici istemcilerinden bu eylemlere açıkça ihtiyaç duymadığınız sürece bunu kapalı tutun."
-    IDS_WEBSERVER_TT_WEB_HTTPS                                 "Yapılandırılmış sertifikayı ve anahtarı kullanarak Web UI ve REST API'yu HTTPS üzerinden sunar.\r\n\r\nÖnerilen: WebServer'yu yerel makinenin ötesinde kullanıma sunduğunuzda etkinleştirilir."
-    IDS_NOTIFY_TT_CB_TBN_USESOUND                              "Görev çubuğu bildirimleri için özel bir WAV dosyası oynatır.\r\n\r\nSesli bir uyarı istiyorsanız bunu kullanın. Sessiz açılır pencereler veya konuşma yeterliyse bunu bırakın."
-    IDS_NOTIFY_TT_CB_TBN_USESPEECH                             "Bir konuşma motoru mevcut olduğunda görev çubuğu bildirimleri için metinden konuşmaya kullanır.\r\n\r\nSözlü uyarıların fark edilmesinin seslerden daha kolay olduğu gözetimsiz sistemlerde kullanışlıdır."
-    IDS_NOTIFY_TT_CB_TBN_POP_ALWAYS                            "Yalnızca ilk mesaj yerine her gelen sohbet mesajı için bir açılır pencere gösterir.\r\n\r\nSonraki sohbet mesajlarının sessiz kalmasını istemiyorsanız bunu etkinleştirin."
-    IDS_NOTIFY_TT_CB_TBN_USEWINDOWSTOAST                       "Özel eMule açılır penceresi yerine Windows bildirimlerini kullanır.\r\n\r\nWindows bir bildirimi reddederse, eMule özel açılır pencereye geri döner."
-    IDS_NOTIFY_TT_TBN_DISPLAYMODE                              "eMule'nun etkin açılır bildirimleri nasıl göstereceğini seçer.\r\n\r\nWindows tost varsayılandır. eMule'nun yönetici olarak çalıştırılması da dahil olmak üzere Windows bir bildirim bildirimini reddederse, eMule klasik tepsi balonuna geri döner."
-    IDS_NOTIFY_TT_CB_ENABLENOTIFICATIONS                       "Yapılandırılan olaylar için giden e-posta bildirimlerini etkinleştirir.\r\n\r\nYalnızca çalışan bir SMTP sunucusunu ve adreslerini zaten yapılandırdıysanız etkinleştirin."
-    IDS_NOTIFY_TT_SMTPSERVER                                   "E-posta bildirimleri tarafından kullanılan SMTP sunucusu yapılandırmasını açar.\r\n\r\nBuna yalnızca e-posta bildirimleri etkinse ihtiyacınız vardır."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TIME_LIMIT             "eMule yuvayı döndürmeyi dikkate almadan önce maksimum bir yükleme oturumu süresi.
+
+Zamana dayalı sınırı devre dışı bırakmak için 0'ı ayarlayın."
+    IDS_TWEAKS_TT_A4_AF_SAVE_CPU                               "CPU zamanından tasarruf etmek için tekrarlanan A4AF (Başka Dosya İçin İstenen) kaynak kontrollerini azaltır.
+
+Meşgul istemciler için kullanışlıdır, ancak aynı istemci kaynak değiştirme işlemini daha az istekli hale getirebilir."
+    IDS_TWEAKS_TT_EXTRACT_META_DATA_NEVER                      "Dosyalardan meta verileri çıkarmayın.
+
+Lightest seçeneği. Arka plan meta verilerinin araştırılmasını istemiyorsanız bunu kullanın."
+    IDS_TWEAKS_TT_EXTRACT_META_DATA_ID3_LIB                    "Meta verileri yalnızca MPEG ses dosyaları için ID3 kitaplık yolu aracılığıyla çıkarın.
+
+Daha geniş medya incelemesi olmadan temel müzik etiketleri için dengeli varsayılan."
+    IDS_TWEAKS_TT_PREVIEW_ON_ICON_DBL_CLK                      "Bir dosya simgesine çift tıklamak, olağan varsayılan eylem yerine önizlemeyi açar.
+
+Tamamen bir kullanıcı arayüzü iş akışı tercihi."
+    IDS_TWEAKS_TT_EXTRA_PREVIEW_WITH_MENU                      "Yalnızca daha basit doğrudan önizleme eylemini göstermek yerine, önizleme komutlarını özel bir önizleme eylem menüsü aracılığıyla gösterir.
+
+İndirme listesi içerik menüsünde daha açık önizleme seçenekleri istiyorsanız kullanışlıdır."
+    IDS_TWEAKS_TT_SHOW_ACTIVE_DOWNLOADS_BOLD                   "İndirme listesinde aktif olarak aktarılan indirmeleri kalın harflerle çizer.
+
+Tamamen görsel. Aktif öğelerin daha net bir şekilde öne çıkmasını istiyorsanız bunu etkinleştirin."
+    IDS_TWEAKS_TT_USE_SYSTEM_FONT_FOR_MAIN_CONTROLS            "Ana kontroller ve liste görünümleri için eMule'nun özel yazı tipi kurulumu yerine normal Windows kullanıcı arayüzü yazı tipini kullanır.
+
+Yerel görünümlü metni tercih ediyorsanız veya sistem yazı tipi ayarlarınızla daha iyi uyumluluğa ihtiyacınız varsa kullanışlıdır."
+    IDS_TWEAKS_TT_FILTER_LANI_PS                               "Özel/LAN aralıklarındaki sunucu ve istemci adreslerini yok sayar.
+
+Önerilen: etkin. Bu, genel ağdaki yönlendirilemeyen eş adresleri kullanmaya çalışmaktan kaçınır."
+    IDS_TWEAKS_TT_GEO_LOCATION_CHECK_DAYS                      "eMule'nun güncellenmiş coğrafi konum veritabanı içeriğini ne sıklıkla kontrol ettiği.
+
+Otomatik güncelleme kontrollerini devre dışı bırakmak için 0'ı ayarlayın. Daha büyük değerler arka plan yenileme etkinliğini azaltır."
+    IDS_TWEAKS_TT_VERBOSE                                      "Aşağıdaki ayrıntılı kayıt kontrolleri için ana anahtar.
+
+Normal kullanım için devre dışı bırakın. Yalnızca belirli bir sorunu araştırırken etkinleştirin."
+    IDS_TWEAKS_TT_FULL_VERBOSE                                 "Ayrıntılı günlük kaydı etkinleştirildiğinde mevcut en ayrıntılı ayrıntılı izlemeyi kaydeder.
+
+Bu çok gürültülü olabilir ve yalnızca odaklanmış sorun giderme için kullanılmalıdır."
+    IDS_TWEAKS_TT_LOG_LEVEL                                    "Tanılama günlüğü çıkışı için ayrıntı eşiği.
+
+Daha yüksek seviyeler daha fazla ayrıntı kaydeder ancak daha fazla gürültü oluşturur."
+    IDS_TWEAKS_TT_DEBUG2_DISK                                  "Ayrıntılı tanılama çıktısını geçici tutmak yerine diske yazar.
+
+Kalıcı bir hata ayıklama izine ihtiyaç duyduğunuzda kullanışlıdır, ancak disk etkinliğini artırır."
+    IDS_TWEAKS_TT_DEBUG_SOURCE_EXCHANGE                        "Kaynak değişimiyle ilgili paketleri ve kararları günlüğe kaydeder.
+
+Özel teşhis seçeneği. Bunu yalnızca kaynak bulma davranışında hata ayıklarken etkinleştirin."
+    IDS_TWEAKS_TT_LOG_BANNED_CLIENTS                           "Eşlerin ne zaman yasaklandığını ve neden yasaklandığını kaydeder.
+
+Kötüye kullanım veya yanlış pozitif teşhis için kullanışlıdır ancak normal çalışma için çok gürültülüdür."
+    IDS_TWEAKS_TT_LOG_RATING_DESC_RECEIVED                     "Alınan dosya yorumlarını, açıklamalarını ve derecelendirmelerini kaydeder.
+
+Meta veri akışında hata ayıklamak için kullanışlıdır, ancak genellikle gerekli değildir."
+    IDS_TWEAKS_TT_LOG_SECURE_IDENT                             "Güvenli kimlik doğrulamasını ve ilgili kimlik kontrollerini kaydeder.
+
+Güven/kimlik doğrulama sorunlarını gidermek için kullanışlıdır."
+    IDS_TWEAKS_TT_LOG_FILTERED_I_PS                            "IP filtreleme veya yoksayma mantığı eş veya sunucu adreslerini bıraktığında kayıt yapar.
+
+Bazı eşlerin neden reddedildiğini teşhis etmek için kullanışlıdır."
+    IDS_TWEAKS_TT_LOG_FILE_SAVING                              "Bilinen dosyalar, krediler ve ilgili durum gibi kalıcı verilerin kayıtlarını kaydeder.
+
+Kalıcı hata ayıklama için kullanışlıdır ancak normal kullanım için gereksizdir."
+    IDS_TWEAKS_TT_LOG_A4_AF                                    "A4AF (Başka Bir Dosya İçin İstendi) kaynak yeniden atama etkinliğini kaydeder.
+
+Özel indirme yöneticisi tanılama seçeneği."
+    IDS_TWEAKS_TT_LOG_UL_DL_EVENTS                             "Yükleme yuvası ve indirme olayı yaşam döngüsü değişikliklerini kaydeder.
+
+Kuyruk kaybı, yuva rotasyonu veya aktarım durumu geçişlerini tanılarken kullanışlıdır."
+    IDS_TWEAKS_TT_U_PN_P                                       "Gelen bağlantı için otomatik yönlendirici bağlantı noktası eşleme ayarları.
+
+Çoğu kullanıcı, yönlendirici ortamları belirli bir şey gerektirmediği sürece bu grubu otomatik varsayılanlarda bırakmalıdır."
+    IDS_TWEAKS_TT_SHAREE_MULE_MULTI_USER                       "Her Windows kullanıcısı ayrı bir eMule yapılandırmasına ve ayrı bir indirme durumuna sahip olur.
+
+Config, Yerel Uygulama Verileri altında bulunur ve indirmeler, o kullanıcının kendi İndirilenler klasörünü kullanır. Kullanıcıların eMule verilerini paylaşmaması gereken paylaşılan bilgisayarlar için en uygun seçenek."
+    IDS_TWEAKS_TT_SHAREE_MULE_PUBLIC_USER                      "Tüm Windows kullanıcıları aynı eMule yapılandırmasını ve indirmeleri paylaşır.
+
+Config, ProgramData altında bulunur ve indirmeler Genel İndirmeleri kullanır. Bunu yalnızca makine kasıtlı olarak ortak bir eMule durumunu paylaşıyorsa kullanın."
+    IDS_TWEAKS_TT_SHAREE_MULE_OLD_STYLE                        "Eski eski düzeni kullanarak yapılandırmayı ve indirmeleri program dizininde tutun.
+
+Yalnızca eski uyumluluk modu. Genellikle modern Windows'da en az tercih edilen seçimdir."
+    IDS_CONNECTION_TT_AUTOCONNECT                              "eMule başlatıldığında etkin ağları otomatik olarak başlatır.
+
+Önerilen: normal gözetimsiz kullanım için etkinleştirilir. Yalnızca her oturuma manuel olarak bağlanmak istiyorsanız bunu devre dışı bırakın."
+    IDS_CONNECTION_TT_RECONN                                   "Bağlantı kesildikten veya başarısız denemelerden sonra sunucu bağlantılarını yeniden dener.
+
+Önerilen: eD2K sunucu ağını kullanıyorsanız etkinleştirilir. Sunucu ağı devre dışı bırakıldığında hiçbir etkisi yoktur."
+    IDS_CONNECTION_TT_SHOWOVERHEAD                             "Aktarım hızlarında ve istatistiklerde protokol yükünü ayrı ayrı gösterir.
+
+Kablolu trafiğin daha dürüst bir görünümünü istiyorsanız bunu etkinleştirin. Yalnızca yük taşımaya yönelik daha basit sayıları tercih ediyorsanız bunu kapalı bırakın."
+    IDS_CONNECTION_TT_PORT                                     "Gelen istemci bağlantıları için kullanılan ana TCP bağlantı noktası.
+
+Bunu yalnızca güvenlik duvarı veya yönlendirici kurallarını kasıtlı olarak yeniden yapılandırdığınızda değiştirin. Değiştirdikten sonra bağlantıyı yeniden test edin."
+    IDS_CONNECTION_TT_UDPPORT                                  "Kad ve diğer UDP destekli özellikler için kullanılan UDP bağlantı noktası.
+
+Önerilen: UDP tabanlı ağı kasıtlı olarak devre dışı bırakmak istemediğiniz sürece onu etkin ve erişilebilir tutun."
+    IDS_CONNECTION_TT_MAXSOURCEPERFILE                         "eMule'nun indirme başına kaç uzak kaynak tutacağına ilişkin kesin sınır.
+
+Daha yüksek değerler, nadir dosyaların kullanılabilirliğini artırabilir ancak daha fazla bellek ve kaynak yönetimi trafiğine mal olur. Yükseltmek için özel bir nedeniniz olmadığı sürece orta değerleri kullanın."
+    IDS_CONNECTION_TT_MAXCON                                   "Eş zamanlı bağlantılar için üst limit eMule açık kalabilir.
+
+Daha yüksek değerler otomatik olarak daha iyi değildir. Belirli bir ağ sınırlamasını teşhis etmediğiniz sürece bunu ayarlanmış varsayılana yakın bırakın."
+    IDS_CONNECTION_TT_DOWNLOAD_CAP                             "KiB/s cinsinden yapılandırılmış aşağı akış kapasiteniz. eMule bunu kaydırıcılar ve bant genişliği kararları için bir üst referans olarak kullanır.
+
+Bunu pazarlama maksimumuna değil, gerçek kullanılabilir hat hızınıza yakın bir değere ayarlayın."
+    IDS_CONNECTION_TT_UPLOAD_CAP                               "KiB/s cinsinden yapılandırılmış yukarı akış kapasiteniz. eMule bunu yükleme kontrolü için bir üst referans olarak kullanır.
+
+Bunu hattınızın gerçek kullanılabilir sürekli yükleme hızına yakın bir yere ayarlayın."
+    IDS_CONNECTION_TT_NETWORK_ED2_K                            "Klasik eD2K sunucu ağını etkinleştirir.
+
+Hala sunucu tabanlı kaynak bulmayı kullanıyorsanız bunu etkin bırakın. Yalnızca kasıtlı olarak yalnızca Kad çalışmasını istiyorsanız bunu devre dışı bırakın."
+    IDS_CONNECTION_TT_NETWORK_KADEMLIA                         "Kad dağıtılmış ağı etkinleştirir.
+
+Önerilen: modern kullanım için etkinleştirilir. UDP bağlantı noktasının etkin kalmasını gerektirir."
+    IDS_CONNECTION_TT_PREF_UPNPONSTART                         "Yapılandırılmış TCP ve UDP bağlantı noktaları için başlangıçta otomatik NAT bağlantı noktası eşlemesini dener.
+
+Önerilen: yönlendiriciniz UPnP veya PCP/NAT-PMP'yu desteklediğinde etkinleştirilir. Bağlantı noktalarını manuel olarak iletirseniz bunu devre dışı bırakın."
+    IDS_CONNECTION_TT_RANDOMIZE_PORTS_ON_STARTUP               "Otomatik bağlantı noktası eşleme çalıştırılmadan önce başlangıçta yeni TCP ve UDP dinleme bağlantı noktalarını seçer.
+
+Seçenek, eMule'nun mevcut rastgele bağlantı noktası aralığını kullanır ve UDP bağlantı noktası devre dışı bırakıldığında UDP'yu devre dışı bırakır."
+    IDS_CONNECTION_TT_UDPDISABLE                               "eMule'nun UDP bağlantı noktasını devre dışı bırakır ve bu nedenle Kad ağı gibi UDP'ya bağımlı özellikleri devre dışı bırakır.
+
+Önerilen: çok özel bir ağ ortamı için yalnızca TCP'yu çalıştırmanız gerekmediği sürece bunu kapalı bırakın."
+    IDS_CONNECTION_TT_STARTTEST                                "Geçerli olarak yapılandırılmış TCP ve UDP bağlantı noktaları için harici bağlantı testini başlatır.
+
+Bağlantı noktalarını, bağlama ayarlarını veya yönlendirici eşleme kurallarını değiştirdikten sonra kullanın."
+    IDS_CONNECTION_TT_BIND_INTERFACE                           "P2P soket bağlama için kullanılan isteğe bağlı Windows ağ arayüzü adı.
+
+Match, adaptör numarasına değil, kolay anlaşılır arayüz adına göredir. Değişiklikler yeniden başlatmanın ardından etkili olur."
+    IDS_CONNECTION_TT_BIND_ADDRESS                             "P2P soket bağlama için kullanılan isteğe bağlı IPv4 adresi.
+
+Seçilen arayüzde ilk IPv4'yu veya hiçbir arayüz seçilmediğinde varsayılan yönlendirme seçeneğini kullanmak için boş bırakın."
+    IDS_CONNECTION_TT_STARTUP_BIND_BLOCK                       "Yapılandırılmış bağlama hedefi başlangıçta çözülemezse, P2P ağını oturum boyunca çevrimdışı tutar.
+
+Yalnızca bir bağlama arayüzü seçildiğinde kullanılabilir. Adlandırılmış bir arayüze açıkça bağlandığınızda ve sessiz geri dönüş istemediğinizde önerilir."
+    IDS_WEBSERVER_TT_WEBBINDADDR                               "Yerleşik WebServer ve REST API için yerel bağlama adresi.
+
+Tüm arayüzlerde dinlemek için boş veya 0.0.0.0 olarak bırakın. Yalnızca hizmetin dinlediği yeri kasıtlı olarak kısıtlamak istiyorsanız belirli bir IPv4 ayarlayın."
+    IDS_WEBSERVER_TT_WSAPIKEY                                  "X-API-Key başlığında istemciler tarafından kullanılan düz metin REST API anahtarı.
+
+Önerilen: belirli bir belirtece ihtiyacınız olmadığı sürece oluşturulan rastgele değeri koruyun. Bu anahtara sahip olan herkes tam API erişimine sahiptir."
+    IDS_WEBSERVER_TT_WSUPNP                                    "UPnP veya PCP/NAT-PMP etkinleştirildiğinde otomatik NAT eşlemesinde WebServer bağlantı noktasını içerir.
+
+Bunu yalnızca Web UI veya REST API'nun yönlendirici eşlemeniz aracılığıyla erişilebilir olmasını istiyorsanız etkinleştirin."
+    IDS_WEBSERVER_TT_WS_MAXFILEUPLOAD                          "MiB'de WebServer tarafından kabul edilen maksimum tek dosya yükleme boyutu.
+
+Normal uzaktan kontrol için küçük bir değer kullanın. Yalnızca güvenilir Web istemcilerinin daha büyük dosyalar yüklemesi gerekiyorsa yükseltin."
+    IDS_WEBSERVER_TT_WS_MAXFILEUPLOAD_LBL                      "MiB'de WebServer tarafından kabul edilen maksimum tek dosya yükleme boyutu.
+
+Normal uzaktan kontrol için küçük bir değer kullanın. Yalnızca güvenilir Web istemcilerinin daha büyük dosyalar yüklemesi gerekiyorsa yükseltin."
+    IDS_WEBSERVER_TT_WS_ALLOWEDIPS                             "WebServer istemcileri için isteğe bağlı noktalı virgülle ayrılmış IPv4 izin verilenler listesi.
+
+WebServer'ya ulaşabilecek herhangi bir uzak adrese izin vermek için boş bırakın. Örnek: 127.0.0.1;192.168.1.50"
+    IDS_WEBSERVER_TT_WS_ALLOWEDIPS_LBL                         "WebServer istemcileri için isteğe bağlı noktalı virgülle ayrılmış IPv4 izin verilenler listesi.
+
+WebServer'ya ulaşabilecek herhangi bir uzak adrese izin vermek için boş bırakın. Örnek: 127.0.0.1;192.168.1.50"
+    IDS_WEBSERVER_TT_WS_ALLOWHILEVFUNC                         "Çalışma zamanı durumunu daha agresif bir şekilde değiştirebilen üst düzey yönetimsel Web eylemlerine izin verir.
+
+Önerilen: Güvenilir yönetici istemcilerinden bu eylemlere açıkça ihtiyaç duymadığınız sürece bunu kapalı tutun."
+    IDS_WEBSERVER_TT_WEB_HTTPS                                 "Yapılandırılmış sertifikayı ve anahtarı kullanarak Web UI ve REST API'yu HTTPS üzerinden sunar.
+
+Önerilen: WebServer'yu yerel makinenin ötesinde kullanıma sunduğunuzda etkinleştirilir."
+    IDS_NOTIFY_TT_CB_TBN_USESOUND                              "Görev çubuğu bildirimleri için özel bir WAV dosyası oynatır.
+
+Sesli bir uyarı istiyorsanız bunu kullanın. Sessiz açılır pencereler veya konuşma yeterliyse bunu bırakın."
+    IDS_NOTIFY_TT_CB_TBN_USESPEECH                             "Bir konuşma motoru mevcut olduğunda görev çubuğu bildirimleri için metinden konuşmaya kullanır.
+
+Sözlü uyarıların fark edilmesinin seslerden daha kolay olduğu gözetimsiz sistemlerde kullanışlıdır."
+    IDS_NOTIFY_TT_CB_TBN_POP_ALWAYS                            "Yalnızca ilk mesaj yerine her gelen sohbet mesajı için bir açılır pencere gösterir.
+
+Sonraki sohbet mesajlarının sessiz kalmasını istemiyorsanız bunu etkinleştirin."
+    IDS_NOTIFY_TT_CB_TBN_USEWINDOWSTOAST                       "Özel eMule açılır penceresi yerine Windows bildirimlerini kullanır.
+
+Windows bir bildirimi reddederse, eMule özel açılır pencereye geri döner."
+    IDS_NOTIFY_TT_TBN_DISPLAYMODE                              "eMule'nun etkin açılır bildirimleri nasıl göstereceğini seçer.
+
+Windows tost varsayılandır. eMule'nun yönetici olarak çalıştırılması da dahil olmak üzere Windows bir bildirim bildirimini reddederse, eMule klasik tepsi balonuna geri döner."
+    IDS_NOTIFY_TT_CB_ENABLENOTIFICATIONS                       "Yapılandırılan olaylar için giden e-posta bildirimlerini etkinleştirir.
+
+Yalnızca çalışan bir SMTP sunucusunu ve adreslerini zaten yapılandırdıysanız etkinleştirin."
+    IDS_NOTIFY_TT_SMTPSERVER                                   "E-posta bildirimleri tarafından kullanılan SMTP sunucusu yapılandırmasını açar.
+
+Buna yalnızca e-posta bildirimleri etkinse ihtiyacınız vardır."
     IDS_BIND_STARTUP_INTERFACE_NOT_FOUND_FMT                   "Seçilen bağlama arayüzü artık mevcut olmadığından ağ iletişimi bu oturum için devre dışı bırakıldı: %s"
     IDS_BIND_STARTUP_INTERFACE_AMBIGUOUS_FMT                   "Seçilen bağlama arayüzü adı birden fazla canlı bağdaştırıcıyla eşleştiğinden ağ iletişimi bu oturum için devre dışı bırakıldı: %s"
     IDS_BIND_STARTUP_INTERFACE_NO_ADDRESS_FMT                  "Seçilen bağlama arayüzünün kullanılabilir IPv4 adresi olmadığından ağ iletişimi bu oturum için devre dışı bırakıldı: %s"
@@ -2607,159 +2955,465 @@ BEGIN
     IDS_STATUS_ANY_COMPACT                                     "Herhangi"
     IDS_STATUS_UNKNOWN_COMPACT                                 "?"
     IDS_STATUS_NETWORK_ADDRESS_TEXT_FMT                        "%s:%s|%s:%s"
-    IDS_PPG_DIRECTORIES_TT_INCFILES                            "Tamamlanan indirmeler için ana gelen dizini.\r\n\r\nYeterli boş alana sahip kararlı bir yerel yol kullanın. Bitmiş dosyaların orada olmasını gerçekten istemiyorsanız, geçici veya çıkarılabilir konumlardan kaçının."
-    IDS_PPG_DIRECTORIES_TT_TEMPFILES                           "Parça dosyaları, karmalar ve aktarım durumu için çalışma dizini listesi.\r\n\r\nBu yollar, indirmeler çalışırken kullanılabilir kalmalıdır. Çıkarılabilir veya güvenilir olmayan ağ yolları üzerinden hızlı yerel diskler önerilir."
-    IDS_PPG_DIRECTORIES_TT_SHARESELECTOR                       "eMule'nun diğer istemcilerle hangi yerel klasörleri paylaştığını seçer.\r\n\r\nYalnızca yayınlamayı düşündüğünüz dizinleri paylaşın. Tüm sürücü gibi geniş köklerden kaçının."
-    IDS_PPG_DISPLAY_TT_MINTRAY                                 "eMule'yu görev çubuğunda bırakmak yerine tepsiye küçültür.\r\n\r\nHer zaman açık kurulumlar için kullanışlıdır. Normal görev çubuğu davranışını tercih ediyorsanız bunu kapalı bırakın."
-    IDS_PPG_DISPLAY_TT_TOOLTIPDELAY                            "Kullanıcı arayüzü araç ipuçlarının görüntülenmesinden önceki gecikme.\r\n\r\nDüşük değerler daha hızlı hissettirir, daha yüksek değerler kazara açılan pencereleri azaltır. Varsayılan aralık genellikle iyi bir uzlaşmadır."
-    IDS_PPG_DISPLAY_TT_SHOWRATEONTITLE                         "Geçerli yükleme ve indirme hızlarını ana pencere başlığında gösterir.\r\n\r\neMule arka planda kaldığında ve yine de hızlı bir bakış atmak istediğinizde kullanışlıdır."
-    IDS_PPG_DISPLAY_TT_STORESEARCHES                           "Daha sonra yeniden kullanılabilmeleri için en son arama terimlerini saklar.\r\n\r\nÖnerilen: özellikle arama geçmişinin saklanmasını istemediğiniz sürece etkinleştirilir."
-    IDS_PPG_DISPLAY_TT_WIN7_TASKBARGOODIES                     "Desteklendiğinde Windows görev çubuğu ilerlemesini ve ilgili kabuk entegrasyonunu etkinleştirir.\r\n\r\nÖnerilen: Daha az kabuk varlığını istemediğiniz sürece modern Windows'da etkinleştirilir."
-    IDS_PPG_FILES_TT_PF_TIMECALC                               "İndirmeler için daha ayrıntılı kalan süre hesaplamasını kullanır.\r\n\r\nÖnerilen: Daha istikrarlı ETA tahminleri istiyorsanız etkinleştirilir. Yalnızca eski ve daha basit hesaplamayı tercih ediyorsanız devre dışı bırakın."
-    IDS_PPG_FILES_TT_PREVIEWPRIO                               "Kısmen indirilen medyanın daha erken önizlenebilir hale gelmesi için film önizleme parçalarına öncelik verir.\r\n\r\nVideo indirmeleri için kullanışlıdır. Nötr parça sıralamasını tercih ediyorsanız bunu bırakın."
-    IDS_PPG_FILES_TT_WATCHCB                                   "Ed2k bağlantıları için panoyu izler ve bunları yönetmeyi teklif eder.\r\n\r\nTarayıcılardan çok sayıda indirme dosyası eklerseniz kullanışlıdır. eMule'nun panoyu izlemesini istemiyorsanız bunu devre dışı bırakın."
-    IDS_PPG_FILES_TT_FNCLEANUP                                 "İndirilen dosya adlarını yapılandırılmış kurallara göre otomatik olarak temizler.\r\n\r\nÖnerilen: manuel temizleme olmadan daha tutarlı son dosya adları istiyorsanız etkinleştirilir."
-    IDS_PPG_FILES_TT_STARTNEXTFILE                             "Başka bir indirme işlemi bittiğinde veya duraklatıldığında sıradaki dosyayı otomatik olarak başlatır.\r\n\r\nÖnerilen: aynı anda kaç dosyanın çalıştırılacağını kontrol etmek için duraklatılmış kuyrukları kullanıyorsanız etkinleştirilir."
-    IDS_PPG_FILES_TT_RUNONFILECOMPLETE                         "Bir dosya başarıyla tamamlanıp saklandıktan sonra yürütülebilir dosyayı çalıştırır.\r\n\r\nBu, varsayılan olarak devre dışıdır. Program doğrudan Windows kabuğu olmadan başlatılır."
-    IDS_PPG_FILES_TT_FILECOMPLETEARGS                          "Desteklenen belirteçler: %F tam yol, %D dizini, %N dosya adı, %H dosya karması, %S boyut baytları, %C kategorisi.\r\n\r\n%F ve %D otomatik olarak alıntılanır. Ortam değişkenleri genişletilmez."
-    IDS_PPG_GENERAL_TT_ONLINESIG                               "eMule durumunu okuyan harici sayfalar, komut dosyaları veya widget'lar için eski durum dosyasını onlinesig.dat yazar.\r\n\r\nAktarım hızını veya ağ iletişimini iyileştirmez. Bu dosyayı aktif olarak bir yerde kullanmadığınız sürece kapalı bırakın."
-    IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND                       "İşlenen bir ed2k bağlantısı veya benzer harici eylem uygulamayı hedeflediğinde eMule'yu ön plana getirir.\r\n\r\nBağlantı tıklamalarının eMule'yu hemen ortaya çıkarmasını istiyorsanız bunu etkinleştirin. Arka planda çalışmayı tercih ediyorsanız kapalı bırakın."
-    IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Yapılandırılmış aralık dolduğunda başlangıçta GitHub Sürümlerini kontrol eder ve yalnızca daha yeni bir eMule BB paketi mevcut olduğunda uyarı verir.\r\nQ\r\nSessiz bir başlangıç ​​için bunu kapalı bırakın veya periyodik güncelleme kontrolü istiyorsanız etkinleştirin."
-    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "eMule BB bağlıyken veya aktarım yaparken sistem uykusunu engeller; böylece indirmeler, yüklemeler, Kad ve sunucu oturumları kesintiye uğramaz.\r\n\r\nEkran normal şekilde kapanmaya devam edebilir. Bu seçeneği kapatmak normal Windows uyku ilkesini hemen geri yükler."
-    IDS_PPG_GENERAL_TT_WEBSVEDIT                               "Kullanıcı arayüzünden web aramaları gibi yardımcı eylemler tarafından kullanılan yapılandırılmış web hizmetleri listesini düzenler.\r\n\r\nNormalde buna yalnızca bu harici arama girişlerini özelleştirmek veya onarmak istiyorsanız ihtiyacınız vardır."
-    IDS_PPG_GENERAL_TT_ED2_KFIX                                "Windows ed2k bağlantı kaydını onarır, böylece tarayıcı ve kabuk ed2k bağlantıları eMule'da tekrar açılır.\r\n\r\nEd2k bağlantıları eMule'yu başlatmayı bıraktığında veya başka bir istemci tarafından çalındığında bunu kullanın."
-    IDS_PPG_GENERAL_TT_STARTMIN                                "Ana pencereyi hemen açmak yerine eMule simge durumuna küçültülmüş olarak başlar.\r\n\r\nGözetimsiz başlatma için kullanışlıdır. Genellikle kullanıcı arayüzünü hemen incelemek istiyorsanız bunu kapalı bırakın."
-    IDS_PPG_GENERAL_TT_STARTWIN                                "Geçerli kullanıcı için Windows ile başlayacak şekilde eMule'yu kaydeder.\r\n\r\nBunu yalnızca eMule'nun arka planda sürekli olarak çalışmasının amaçlandığı makinelerde etkinleştirin."
-    IDS_PPG_IRC_TT_IRC_USECHANFILTER                           "IRC kanal listesi istenirken kanal adı ve minimum kullanıcı filtresini uygular.\r\n\r\nListenin otomatik olarak daraltılmasını istiyorsanız bunu etkinleştirin. Her zaman tam kanal listesini almak için bunu devre dışı bırakın."
-    IDS_PPG_IRC_TT_IRC_USEPERFORM                              "IRC'ya bağlandıktan sonra performans komut dosyasını çalıştırır.\r\n\r\nOtomatik birleştirmeler veya IRC komutları için kullanın. Bir performans betiği tutmuyorsanız bunu kapalı bırakın."
-    IDS_PPG_IRC_TT_IRC_NAME_BOX                                "IRC kanal listesi için filtre metni.\r\n\r\nKanal filtresi etkinleştirildiğinde yalnızca bu metinle eşleşen kanallar tutulur."
-    IDS_PPG_IRC_TT_IRC_MINUSER_BOX                             "IRC kanal listesi filtresi tarafından gösterilen kanallar için minimum kullanıcı sayısı.\r\n\r\nKüçük kanalları gizlemek için bunu artırın. Kanalları boyutuna bakılmaksızın tutmak için 0'ı kullanın."
-    IDS_PPG_MESSAGES_TT_MSGONLYFRIENDS                         "Yalnızca arkadaş listenizdeki kullanıcılardan gelen doğrudan mesajları kabul eder.\r\n\r\nÇok sessiz bir sohbet kurulumu istiyorsanız önerilir. Hala sıradan müşterilerden mesaj almak istiyorsanız bunu bırakın."
-    IDS_PPG_MESSAGES_TT_ADVSPAMFILTER                          "Daha güçlü mesaj spam filtre yolunu etkinleştirir.\r\n\r\nÖnerilen: normal genel ağ kullanımı için etkinleştirilir. Daha sıkı filtreleme için sohbet captcha'larıyla birlikte çalışır."
-    IDS_PPG_MESSAGES_TT_USECAPTCHAS                            "Bilinmeyen istemcilerin bir sohbet görüşmesini tamamlamadan önce bir captcha sınaması gerektirir.\r\n\r\nSohbet spam'ına karşı kullanışlıdır. En iyi şekilde gelişmiş spam filtresiyle birlikte kullanılır."
-    IDS_PPG_MESSAGES_TT_COMMENTFILTER                          "Yapılandırılmış filtre terimlerini içeren dosya yorumlarını engeller.\r\n\r\n'|' kullanın terimler arasındaki ayırıcı. Bilinen spam kelimeler veya rahatsız edici kalıplar için iyidir."
-    IDS_PPG_PROXY_TT_ENABLEPROXY                               "Desteklenen giden bağlantıları yapılandırılmış proxy üzerinden yönlendirir.\r\n\r\nYalnızca eMule'yu kasıtlı olarak bir proxy arkasında çalıştırıyorsanız etkinleştirin. Doğrudan bağlantılar daha basit ve genellikle daha hızlıdır."
-    IDS_PPG_PROXY_TT_PROXYTYPE                                 "Proxy sunucunuzun beklediği proxy protokolünü seçer.\r\n\r\nProxy operatörü tarafından sağlanan tam türü kullanın; yanlış tür genellikle anında bağlantı arızaları anlamına gelir."
-    IDS_PPG_PROXY_TT_PROXYNAME                                 "Proxy sunucunun ana bilgisayar adı veya IP adresi.\r\n\r\nProxy hizmetiniz tarafından sağlanan uç noktayı tam olarak girin. Yanlış bir ana bilgisayar, tüm proxy trafiğinin başarısız olacağı anlamına gelir."
-    IDS_PPG_PROXY_TT_PROXYPORT                                 "Proxy sunucusunun dinleme bağlantı noktası.\r\n\r\nProxy'nin gerektirdiği tam bağlantı noktasını kullanın. Yaygın SOCKS varsayılanlarının doğru olduğu garanti edilmez."
-    IDS_PPG_PROXY_TT_ENABLEAUTH                                "Proxy kimlik doğrulaması gerektirdiğinde proxy kullanıcı adı ve parola kimlik bilgilerini gönderir.\r\n\r\nBunu yalnızca proxy hizmetiniz gerçekten oturum açma kimlik bilgilerini kullanıyorsa etkinleştirin."
-    IDS_PPG_PROXY_TT_USERNAME_A                                "Proxy hesabı kullanıcı adı.\r\n\r\nProxy'niz açıkça kimlik doğrulamalı erişim gerektirmediği sürece boş bırakın."
-    IDS_PPG_SCHEDULER_TT_ENABLE                                "Zamana dayalı kuralların ayarları otomatik olarak değiştirebilmesi için zamanlayıcıyı etkinleştirir.\r\n\r\nPlanlanmış bant genişliği, bağlantı veya kategori değişikliklerini aktif olarak kullanmadığınız sürece bunu kapalı bırakın."
-    IDS_PPG_SCHEDULER_TT_CHECKNOENDTIME                        "Seçilen zamanlama girişini durma süresi olmadan çalıştırır.\r\n\r\nBaşka bir zamanlama onları geçersiz kılana kadar aktif kalması gereken tek yönlü durum değişiklikleri için bunu kullanın."
-    IDS_PPG_SCHEDULER_TT_APPLY                                 "Düzenlenen ayrıntıları geçerli olarak seçilen program girişine uygular.\r\n\r\nBunu söz konusu satır için günü, saati veya eylem listesini değiştirdikten sonra kullanın."
-    IDS_PPG_SECURITY_TT_USESECIDENT                            "Müşteri kredi kimliklerinin sahteleştirilmesini zorlaştırmak için desteklendiğinde güvenli kimlik doğrulamayı kullanır.\r\n\r\nÖnerilen: etkin. Bunu devre dışı bırakmak yalnızca kimlik güvenini azaltır ve nadiren faydalıdır."
-    IDS_PPG_SECURITY_TT_FILTERSERVERBYIPFILTER                 "Filtrelenen sunucuların gizlenmesi veya kaldırılması için IP filtresini görünür sunucu listesine uygular.\r\n\r\nÖnerilen: sunucu temizliği ve eş filtreleme için IP filtresine güveniyorsanız etkinleştirilir."
-    IDS_PPG_SECURITY_TT_UPDATEURL                              "Yenilenen IP filtre listelerini indirirken kullanılan kaynak URL'si.\r\n\r\nYalnızca güvenilir bir sağlayıcı kullanın. Otomatik güncellemeler bu URL'yi yeniden kullanır ve indirme geçersizse mevcut filtreyi korur."
-    IDS_PPG_SECURITY_TT_AUTOUPDATE_IPFILTER                    "Güncelleme aralığının zamanı geldiğinde, başlangıçtan sonra yapılandırılmış IP filtresi URL'sini otomatik olarak kontrol eder.\r\n\r\nÖnerilen: sağlayıcıya güvenmediğiniz ve filtrenin manuel işlem olmadan yenilenmesini istemediğiniz sürece devre dışı bırakılır."
-    IDS_PPG_SECURITY_TT_IPFILTERPERIOD                         "Otomatik IP filtresi güncelleme girişimleri arasındaki gün sayısı.\r\n\r\nİzin verilen aralık: 1 ila 365 gün. Bir sağlayıcı kullanılamadığında yeniden deneme döngülerini önlemek için başarısız denemeler yine de sayılır."
-    IDS_PPG_SECURITY_TT_SEESHARE1                              "Uzak istemci desteklediğinde herkesin paylaşılan dosyalarınıza göz atmasına izin verir.\r\n\r\nEn izin verilen seçenek. Bunu yalnızca paylaşılan listenizi geniş bir şekilde sergileme konusunda rahatsanız kullanın."
-    IDS_PPG_SECURITY_TT_SEESHARE2                              "Yalnızca arkadaşlarınızın paylaşılan dosyalarınıza göz atmasına izin verir.\r\n\r\nAçıkça güvenilen kişiler için hâlâ göz atma desteği istiyorsanız dengeli gizlilik seçeneği."
-    IDS_PPG_SECURITY_TT_SEESHARE3                              "Uzak istemcilerin paylaşılan dosya listenize göz atmasını engeller.\r\n\r\nPaylaşılan dosyaya göz atma için en katı gizlilik tutumunu istiyorsanız önerilir."
-    IDS_PPG_SECURITY_TT_ENABLEOBFUSCATION                      "Uzak taraf da desteklediğinde protokol gizlemeyi tercih eder.\r\n\r\nÖnerilen: etkin. Yalnızca gizleme politikasını zorlamadan kısıtlayıcı ağlarda yardımcı olabilir."
-    IDS_PPG_SECURITY_TT_ONLYOBFUSCATED                         "Normal bağlantıları kabul etmek yerine karmaşık bağlantılar gerektirir.\r\n\r\nBunu yalnızca ağ ortamınız buna gerçekten ihtiyaç duyuyorsa kullanın. Bağlantıyı ve akran erişimini azaltabilir."
-    IDS_PPG_SECURITY_TT_SEARCHSPAMFILTER                       "Kullanıcı arayüzünü karmaşık hale getirmeden önce arama sonuçlarındaki bariz spam'leri filtreler.\r\n\r\nÖnerilen: normal genel ağ kullanımı için etkindir."
-    IDS_PPG_SECURITY_TT_CHECK_FILE_OPEN                        "Özel erişim gerektiren işlemlerden önce indirilen dosyaların açık/kilitli durumunu kontrol eder.\r\n\r\nÖnerilen: güvenlik kontrolünü atlamak için özel bir nedeniniz olmadığı sürece etkinleştirilir."
-    IDS_PPG_SERVER_TT_AUTOSERVER                               "Bağlı istemcilerden ve diğer güvenilir kaynaklardan gelen sunucu listesini otomatik olarak günceller.\r\n\r\nKullanışlı ancak aynı zamanda listenin zaman içinde kaymasına da olanak tanır. Sıkı bir şekilde seçilmiş statik sunucu listesini tercih ediyorsanız bunu devre dışı bırakın."
-    IDS_PPG_SERVER_TT_UPDATESERVERCONNECT                      "Bağlı sunucuların listenize ek sunucular eklemesine olanak tanır.\r\n\r\nKullanışlı, ancak düşük değerli girişlerle listeyi büyütebilir. Daha katı manuel düzenlemeyi tercih ediyorsanız bunu devre dışı bırakın."
-    IDS_PPG_SERVER_TT_UPDATESERVERCLIENT                       "İstemcilerin, sunucu listenize sunucu adresleri eklemesine izin verir.\r\n\r\nÇoğu kullanıcı bu konuda dikkatli olmalıdır. Sunucu listesi kalitesi üzerinde daha sıkı kontrol istiyorsanız bunu devre dışı bırakın."
-    IDS_PPG_SERVER_TT_SAFESERVERCONNECT                        "Çok sayıda aday arasından acele etmek yerine daha dikkatli bir sunucu bağlantı stratejisi kullanır.\r\n\r\nÖnerilen: kararlılık için etkinleştirildi. Yalnızca kasıtlı olarak daha agresif bir bağlantı yaklaşımı istiyorsanız bunu devre dışı bırakın."
-    IDS_PPG_SERVER_TT_SMARTIDCHECK                             "Sunucu tarafı erişilebilirliğinizin zayıf olduğuna karar vermeden önce akıllı LowID denetimini gerçekleştirir.\r\n\r\nÖnerilen: etkin. Geçici ağ koşulları sırasında bazı yanlış LowID sonuçlarından kaçınır."
-    IDS_PPG_SERVER_TT_SCORE                                    "Sunucuları seçerken ve sipariş ederken sunucu önceliklerini kullanır.\r\n\r\nÖnerilen: Tercih edilen bir sunucu alt kümesini koruyorsanız ve eMule'nun bunları tercih etmesini istiyorsanız etkinleştirilir."
-    IDS_PPG_SERVER_TT_SERVERRETRIES                            "eMule onu ölü olarak değerlendirmeden önce bir sunucunun kaç tane başarısız bağlantı denemesi biriktirebileceği.\r\n\r\nDaha düşük değerler kötü sunucuları daha hızlı budatır; daha yüksek değerler geçici kesintileri daha fazla affeder."
-    IDS_PPG_SERVER_TT_AUTOCONNECTSTATICONLY                    "Statik olarak işaretlenen sunuculara otomatik sunucu bağlanma girişimlerini kısıtlar.\r\n\r\nKüçük bir güvenilir statik liste tutuyorsanız ve tüm sunucu listesi genelinde otomatik rotasyon istemiyorsanız bunu etkinleştirin."
-    IDS_PPG_SERVER_TT_MANUALSERVERHIGHPRIO                     "Manuel olarak eklenen sunuculara, sıradan keşfedilen girişlerden daha yüksek bir öncelik eğilimi verir.\r\n\r\nÖzellikle seçilmiş bir sunucu seti kullanıyorsanız ve bu eklemelerin tercih edilmesini istiyorsanız bunu etkinleştirin."
-    IDS_PPG_STATS_TT_FILL_GRAPHS                               "Yalnızca çizgiler çizmek yerine grafik alanlarını doldurur.\r\n\r\nTamamen görsel. Daha hafif, daha az meşgul bir istatistik görünümünü tercih ediyorsanız bunu devre dışı bırakın."
-    IDS_PPG_STATS_TT_SLIDER                                    "Canlı trafik grafiği için yenileme aralığı.\r\n\r\nDüşük değerler daha hızlı yanıt verir ancak daha fazla kullanıcı arayüzü çalışmasına mal olur. Orta değerler genellikle en iyisidir."
-    IDS_PPG_STATS_TT_SLIDER2                                   "İstatistik ağacı ve özet değerleri için yenileme aralığı.\r\n\r\nDüşük değerler daha sık güncellenir ancak daha fazla kullanıcı arayüzü kaybına neden olur. Daha sakin güncellemeler istiyorsanız bunu artırın."
-    IDS_PPG_STATS_TT_SLIDER3                                   "Grafikler tarafından kullanılan ortalama alma penceresi.\r\n\r\nKısa pencereler artışları açıkça gösterir; daha uzun pencereler ekranı pürüzsüzleştirir ve trendleri vurgular."
-    IDS_PPG_STATS_TT_COLORSELECTOR                             "Düzenlediğiniz istatistik öğesi rengini seçer.\r\n\r\nBunu yalnızca grafik paletini özelleştiriyorsanız kullanın."
-    IDS_PPG_STATS_TT_CGRAPHSCALE                               "Bağlantı grafiği için manuel Y ekseni ölçeği.\r\n\r\nGrafik yüksek değerleri keserse bunu yükseltin; daha düşük değerler, orta düzeyde bağlantı sayılarında daha fazla ayrıntı verir."
-    IDS_PPG_STATS_TT_CRATIO                                    "Birleşik bağlantı grafiği tarafından kullanılan yükleme/indirme en boy oranı.\r\n\r\nGrafiğin bir yönü daha güçlü bir şekilde vurgulamasını istemiyorsanız bunu varsayılana yakın bırakın."
-    IDS_NOTIFY_TT_BTN_BROWSE_WAV                               "Görev çubuğu ses bildirimleri tarafından kullanılan WAV dosyasına göz atar.\r\n\r\nYalnızca özel ses bildirimleri seçildiğinde kullanılabilir."
-    IDS_NOTIFY_TT_CB_TBN_IMPORTATNT                            "Disk alanı uyarıları veya sunucu bağlantılarının kesilmesi gibi acil durumlara ilişkin bildirimleri gösterir.\r\n\r\nÖnerilen: makine sıklıkla gözetimsiz çalışıyorsa etkinleştirilir."
-    IDS_NOTIFY_TT_CB_TBN_NOSOUND                               "Bildirim ses çıkışını devre dışı bırakır.\r\n\r\nGörsel bildirimler yeterli olduğunda veya makinenin sessiz kalması gerektiğinde bunu kullanın."
-    IDS_NOTIFY_TT_CB_TBN_ONCHAT                                "Bir sohbet oturumu başladığında bir bildirim gösterir.\r\n\r\neMule'yu simge durumuna küçültüyorsanız ve yine de yeni konuşmaları fark etmek istiyorsanız kullanışlıdır."
-    IDS_NOTIFY_TT_CB_TBN_ONDOWNLOAD                            "İndirme tamamlandığında bir bildirim gösterir.\r\n\r\nTamamlanan dosyalara Aktarımlar sayfasını izlemeden müdahale edilmesi gerekiyorsa önerilir."
-    IDS_NOTIFY_TT_CB_TBN_ONLOG                                 "Bir günlük girişi eklendiğinde bir bildirim gösterir.\r\n\r\nTanılama için kullanışlıdır ancak normal uzun süreli oturumlar sırasında gürültülüdür."
-    IDS_NOTIFY_TT_CB_TBN_ONNEWDOWNLOAD                         "Yeni bir indirme eklendiğinde bir bildirim gösterir.\r\n\r\nİndirilenler harici olarak eklenebiliyorsa ve onay istiyorsanız bunu etkinleştirin."
-    IDS_NOTIFY_TT_CB_TBN_ONNEWVERSION                          "Güncelleme denetleyicisi daha yeni bir eMule BB sürümü bulduğunda bir bildirim gösterir.\r\n\r\nBu yalnızca Genel sayfasında güncelleme kontrolleri etkinleştirildiğinde önemlidir."
-    IDS_NOTIFY_TT_EDIT_RECEIVER                                "eMule bildirim mesajlarını alan e-posta adresi.\r\n\r\nYapılandırılan SMTP sunucusu tarafından kabul edilen bir adresi kullanın."
-    IDS_NOTIFY_TT_EDIT_SENDER                                  "E-posta bildirimleri için kullanılan gönderen adresi.\r\n\r\nBirçok SMTP sunucusu, kimliği doğrulanmış hesapla eşleşmesi veya bu hesaba ait olması için bu adresi gerektirir."
-    IDS_NOTIFY_TT_EDIT_TBN_WAVFILE                             "Ses bildirimleri için oynatılan WAV dosyasının yolu.\r\n\r\nKısa bir yerel dosya seçin; eksik veya erişilemeyen dosyalar sesin çalınmasını engeller."
-    IDS_NOTIFY_TT_TEST_NOTIFICATION                            "Geçerli bildirim ayarlarını kullanarak bir test bildirimi gönderir.\r\n\r\nAçılır pencere, ses veya e-posta yapılandırmasını değiştirdikten sonra kullanın."
-    IDS_PPG_DIRECTORIES_TT_SELINCDIR                           "Tamamlanan indirmeler için kullanılan gelen dizine göz atar.\r\n\r\nYeterli boş alana sahip sabit bir yerel yol seçin."
-    IDS_PPG_DIRECTORIES_TT_SELTEMPDIR                          "Seçilen geçici dosyalar dizinine göz atar.\r\n\r\nPart dosyaları, indirmeler çalışırken bu yolun kullanılabilir kalmasına bağlıdır."
-    IDS_PPG_DIRECTORIES_TT_SELTEMPDIRADD                       "Çalışma dizini listesine başka bir geçici dosyalar dizini ekler.\r\n\r\nBirden fazla hızlı, güvenilir yerel diski yalnızca parça dosyalarını kasıtlı olarak yaymak istediğinizde kullanın."
-    IDS_PPG_DIRECTORIES_TT_UNCADD                              "Paylaşılan dizin listesine bir ağ UNC yolu ekler.\r\n\r\nYalnızca erişilebilir durumda olan ve yayınlanması amaçlanan ağ klasörlerini paylaşın."
-    IDS_PPG_DISPLAY_TT_3DDEPTH                                 "Klasik liste ve grafik görselleri tarafından kullanılan 3 boyutlu gölgelemenin derinliğini kontrol eder.\r\n\r\nTamamen görsel; düşük değerler daha düz görünür ve yüksek değerler daha güçlü gölgeleme sağlar."
-    IDS_PPG_DISPLAY_TT_CLEARCOMPL                              "Tamamlanan indirmeleri görünür Aktarımlar listesinden otomatik olarak kaldırır.\r\n\r\nBitmiş dosyalar diskte kalır; bu yalnızca indirme listesinin daha temiz kalmasını sağlar."
-    IDS_PPG_DISPLAY_TT_DBLCLICK                                "Aktarımlar listesinde çift tıklandığında indirmeyi genişletir veya daraltır.\r\n\r\nÇift tıklamanın satır düzenini değiştirmesini gerektirmemesi gerekiyorsa bunu devre dışı bırakın."
-    IDS_PPG_DISPLAY_TT_DISABLEHIST                             "Arama metni ve server.met URL'leri gibi alanlar için otomatik tamamlama geçmişlerini etkinleştirir.\r\n\r\nBu girişlerin hatırlanmasını istemiyorsanız bunu devre dışı bırakın."
-    IDS_PPG_DISPLAY_TT_DISABLEKNOWNLIST                        "Aktarımlar penceresinde Bilinen İstemciler listesini gizler ve devre dışı bırakır.\r\n\r\nBunu yalnızca daha hafif bir kullanıcı arayüzü istiyorsanız ve bu tanılama görünümüne ihtiyacınız yoksa kullanın."
-    IDS_PPG_DISPLAY_TT_DISABLEQUEUELIST                        "Aktarımlar penceresindeki Kuyruk listesini gizler ve devre dışı bırakır.\r\n\r\nBunu yalnızca sıraya alınmış yükleme istemcilerini incelemeyecekseniz kullanın."
-    IDS_PPG_DISPLAY_TT_RESETHIST                               "Saklanan otomatik tamamlama geçmişi girişlerini temizler.\r\n\r\nBu yalnızca kayıtlı geçmişi etkiler ve etkin indirmeleri veya sunucu listelerini değiştirmez."
-    IDS_PPG_DISPLAY_TT_SELECT_HYPERTEXT_FONT                   "Sunucu, mesaj ve IRC metin görünümleri için yazı tipi seçiciyi açar.\r\n\r\nBunun yerine günlük yazı tipini düzenlemek için açarken Ctrl tuşunu basılı tutun."
-    IDS_PPG_DISPLAY_TT_SHOWCATINFO                             "Aktarım kategorisi sekmelerinde kategori bilgilerini gösterir.\r\n\r\nİndirmeleri birden fazla kategori üzerinden yönetirken kullanışlıdır."
-    IDS_PPG_DISPLAY_TT_SHOWDWLPERCENT                          "Aktarımlar listesinde indirme ilerleme yüzdelerini gösterir.\r\n\r\nDosya ayrıntılarını açmadan hızlı tarama ilerlemesi için bunu etkinleştirin."
-    IDS_PPG_DISPLAY_TT_SHOWTRANSTOOLBAR                        "Aktarımlar penceresinde ek araç çubuğunu gösterir.\r\n\r\nAktarım satırları için daha fazla alan tercih ediyorsanız bunu devre dışı bırakın."
-    IDS_PPG_FILES_TT_ADDNEWFILESPAUSED                         "Duraklatılmış modda sıraya alınan yeni indirmeleri ekler.\r\n\r\nDosyaları aktarmaya başlamadan önce incelemek veya planlamak istediğinizde kullanışlıdır."
-    IDS_PPG_FILES_TT_BROWSEV                                   "Yürütülebilir harici video oynatıcısına göz atar.\r\n\r\nÖnizlenen medya dosyalarını açması gereken programı seçin."
-    IDS_PPG_FILES_TT_BROWSE_FILECOMPLETEPROGRAM                "Bir dosya tamamlandıktan sonra başlatılan programa göz atar.\r\n\r\nEtkinleştirildiğinde otomatik olarak çalıştığından güvenilir bir yerel yürütülebilir dosya kullanın."
-    IDS_PPG_FILES_TT_DAP                                       "Yeni eklenen indirmelere otomatik öncelik atar.\r\n\r\nİndirme önceliklerini manuel olarak yönetmeyi tercih etmediğiniz sürece önerilir."
-    IDS_PPG_FILES_TT_FILECOMPLETEPROGRAM                       "Bir dosya tamamlandıktan sonra çalıştırılacak yürütülebilir dosya.\r\n\r\nGüvenilir bir programın tam yolunu kullanın; Windows kabuğu olmadan doğrudan başlatılır."
-    IDS_PPG_FILES_TT_FNC                                       "Otomatik dosya adı temizliği için kullanılan temizleme filtresini düzenler.\r\n\r\nBunu yalnızca varsayılan temizleme kuralları adlandırma tercihlerinizle eşleşmediğinde kullanın."
-    IDS_PPG_FILES_TT_FULLCHUNKTRANS                            "Mümkün olduğunda istemcilere tüm parçaları yüklemeye çalışır.\r\n\r\nBu, parça dağıtımını iyileştirebilir ancak bazı yüklemelerin daha uzun süre çalışmasını sağlayabilir."
-    IDS_PPG_FILES_TT_REMEMBERCANCELLED                         "Daha sonra tanınabilmeleri için iptal edilen dosyaları hatırlar.\r\n\r\nKasıtlı olarak iptal ettiğiniz dosyaların yeniden eklenmesini önlemek için kullanışlıdır."
-    IDS_PPG_FILES_TT_REMEMBERDOWNLOADED                        "Tamamlanan indirmeleri hatırlar, böylece zaten tamamlanmış dosyalar daha sonra tanınabilir.\r\n\r\nYinelenen indirme uyarıları istiyorsanız önerilir."
-    IDS_PPG_FILES_TT_STARTNEXTFILECAT                          "Duraklatılan bir sonraki dosyayı başlatırken, tamamlanan dosyayla aynı kategorideki dosyaları tercih edin.\r\n\r\nKategori sıralarının birlikte hareket etmesini sağlamak için bunu kullanın."
-    IDS_PPG_FILES_TT_STARTNEXTFILECAT2                         "Duraklatılan bir sonraki dosyayı başlatırken, yalnızca tamamlanan dosyayla aynı kategoriden seçim yapın.\r\n\r\nKategori başına sıkı kuyruk kontrolü için bunu kullanın."
-    IDS_PPG_FILES_TT_UAP                                       "Yeni paylaşılan dosyalara otomatik öncelik atar.\r\n\r\nPaylaşılan dosya önceliklerini bilinçli olarak kendiniz ayarlamadığınız sürece önerilir."
-    IDS_PPG_FILES_TT_VIDEOBACKUP                               "Kısmen indirilen bir medya dosyasının ön izlemesini yapmadan önce bir yedek kopya oluşturur.\r\n\r\nKırılgan oynatıcılar için daha güvenlidir ancak ekstra disk alanı ve zaman kullanır."
-    IDS_PPG_FILES_TT_VIDEOPLAYER                               "Medya önizlemeleri için kullanılan harici oynatıcı.\r\n\r\nVarsayılan ilişkilendirmeyi kullanmak için alanı boş bırakın veya belirli bir güvenilir oynatıcı ayarlayın."
-    IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS                          "Harici önizleme oynatıcısına aktarılan bağımsız değişkenler.\r\n\r\nBunu yalnızca oynatıcının özel komut satırı seçeneklerine ihtiyacı varsa kullanın."
-    IDS_PPG_GENERAL_TT_CHECKDAYS                               "Başlangıç ​​güncelleme kontrolleri arasındaki gün sayısı.\r\n\r\nDaha yüksek değerler ağ kontrollerini azaltır; daha düşük değerler yeni yayınlanan sürümleri daha çabuk bulur."
-    IDS_PPG_GENERAL_TT_EXIT                                    "eMule çıkmadan önce onay ister.\r\n\r\nKazara kapanmaları önlemek için gözetimsiz sistemlerde önerilir."
-    IDS_PPG_GENERAL_TT_LANGS                                   "eMule tarafından yüklenen kullanıcı arayüzü dili kaynağını seçer.\r\n\r\nDili değiştirmek, her etiket yenilenmeden önce iletişim kutularının yeniden açılmasını gerektirebilir."
-    IDS_PPG_GENERAL_TT_NICK                                    "Kullanıcı adı diğer eMule istemcilerine duyurulur.\r\n\r\nHassas olmayan bir takma ad kullanın; akranlar tarafından görülebilir."
-    IDS_PPG_GENERAL_TT_SPLASHON                                "Başlatma sırasında açılış ekranını gösterir.\r\n\r\nDaha sessiz bir başlatma yolu için bunu devre dışı bırakın."
-    IDS_PPG_IRC_TT_IRC_NICK_BOX                                "IRC'ya bağlanırken kullanılan takma ad.\r\n\r\nHedef IRC ağı tarafından kabul edilen bir ad seçin."
-    IDS_PPG_IRC_TT_IRC_PERFORM_BOX                             "Gerçekleştirme etkinleştirildiğinde IRC bağlandıktan sonra komutlar otomatik olarak çalışır.\r\n\r\nTek satırlı IRC komutlarını yalnızca onlara güveniyor ve anlıyorsanız kullanın."
-    IDS_PPG_IRC_TT_IRC_SERVER_BOX                              "Yerleşik IRC istemcisi tarafından kullanılan IRC sunucu adresi.\r\n\r\nBunu yalnızca kasıtlı olarak başka bir IRC ağı kullandığınızda değiştirin."
-    IDS_PPG_MESSAGES_TT_FILTER                                 "Gelen sohbet mesajları için metin filtresi.\r\n\r\nBilinen rahatsız edici kelimeleri veya kalıpları gizlemek için bunu kullanın."
-    IDS_PPG_MESSAGES_TT_INDICATERATINGS                        "Yorumları veya derecelendirmeleri olan indirmeler için bir simge gösterir.\r\n\r\nDosyaları açmadan önce topluluk geri bildirimlerini incelemek istediğinizde kullanışlıdır."
-    IDS_PPG_MESSAGES_TT_MSHOWSMILEYS                           "Sohbet mesajlarında suratlar görüntüler.\r\n\r\nDüz metin oluşturmayı tercih ediyorsanız bunu devre dışı bırakın."
-    IDS_PPG_PROXY_TT_PASSWORD                                  "Proxy hesap şifresi.\r\n\r\nProxy kimlik doğrulaması etkin olmadığı ve proxy sunucusu tarafından gerekli olmadığı sürece boş bırakın."
-    IDS_PPG_SCHEDULER_TT_DATETIMEPICKER1                       "Seçilen program girişi için başlangıç ​​zamanı.\r\n\r\nKural, seçilen gün modelinde bu saatte etkin hale gelir."
-    IDS_PPG_SCHEDULER_TT_DATETIMEPICKER2                       "Seçilen program girişi için bitiş zamanı.\r\n\r\nBaşka bir program onu ​​değiştirene kadar kuralın etkin kalması gereken bitiş zamanını devre dışı bırakın."
-    IDS_PPG_SCHEDULER_TT_NEW                                   "Yeni bir zamanlama girişi oluşturur.\r\n\r\nAyrıntılarını düzenleyin ve yapılandırılan kuralı saklamak için Uygula'ya tıklayın."
-    IDS_PPG_SCHEDULER_TT_REMOVE                                "Seçilen zamanlama girişini kaldırır.\r\n\r\nBunu yalnızca artık istemediğiniz kuralı seçtikten sonra kullanın."
-    IDS_PPG_SCHEDULER_TT_SCHEDACTION                           "Seçilen zamanlama girişinin geçerli olduğu eylemler.\r\n\r\nZamanlanmış değişiklikleri düzenlemek için listeye çift tıklayın veya sağ tıklayın."
-    IDS_PPG_SCHEDULER_TT_SCHEDLIST                             "Yapılandırılmış program girişlerinin listesi.\r\n\r\nBaşlığını, saatini, gün düzenini, etkin durumunu ve eylemlerini düzenlemek için bir giriş seçin."
-    IDS_PPG_SCHEDULER_TT_S_ENABLE                              "Seçilen zamanlama girişini etkinleştirir veya devre dışı bırakır.\r\n\r\nTek bir kuralı silmeden duraklatmak için bunu kullanın."
-    IDS_PPG_SCHEDULER_TT_S_TITLE                               "Seçilen program girişi için görünen ad.\r\n\r\nKuralın neleri değiştirdiğini tanımlayan kısa bir ad kullanın."
-    IDS_PPG_SCHEDULER_TT_TIMESEL                               "Seçilen program girişi için gün düzeni.\r\n\r\nBaşlangıç ​​ve bitiş zamanlarının ne zaman uygulanacağını seçin."
-    IDS_PPG_SECURITY_TT_DD                                     "Hızlı seçim için depolanan IP filtresi URL geçmişini açar.\r\n\r\nYalnızca güvenilir filtre sağlayıcılarını kullanın."
-    IDS_PPG_SECURITY_TT_DISABLEOBFUSCATION                     "Gizlenmiş bağlantılar için desteği tamamen devre dışı bırakır.\r\n\r\nEski davranışa katı bir şekilde ihtiyacınız olmadığı sürece önerilmez."
-    IDS_PPG_SECURITY_TT_EDITFILTER                             "Manuel düzenleme için yerel IP filtre dosyasını açar.\r\n\r\nDikkatlice kaydedin; geçersiz girişler göz ardı edilebilir."
-    IDS_PPG_SECURITY_TT_LOADURL                                "Yapılandırılmış URL'den IP filtre listesini indirir ve uygular.\r\n\r\nYalnızca güvenilir sağlayıcıları kullanın; indirme başarısız olursa mevcut filtre korunur."
-    IDS_PPG_SECURITY_TT_RELOADFILTER                           "Yerel IP filtre dosyasını diskten yeniden yükler.\r\n\r\neMule dışında filtre dosyasını manuel olarak düzenledikten sonra bunu kullanın."
-    IDS_PPG_SERVER_TT_EDITADR                                  "Başlangıç ​​sunucusu listesi güncelleme URL'lerini düzenler.\r\n\r\nYalnızca güvenilir server.met kaynaklarını kullanın; güvenilmeyen listeler sunucu keşfini kirletebilir."
-    IDS_PPG_STATS_TT_COLOR_BUTTON                              "Seçilen istatistik öğesi için renk seçiciyi açar.\r\n\r\nRenk seçicide bir öğe seçtikten sonra bunu kullanın."
-    IDS_WEBSERVER_TT_CERTBROWSE                                "HTTPS sertifika dosyasına göz atar.\r\n\r\nYapılandırılan özel anahtarla eşleşen bir sertifika dosyası kullanın."
-    IDS_WEBSERVER_TT_CERTPATH                                  "HTTPS etkinleştirildiğinde kullanılan sertifika dosyası.\r\n\r\nBu dosya eksik veya geçersizse WebServer, HTTPS modunda başlatılamaz."
-    IDS_WEBSERVER_TT_KEYBROWSE                                 "HTTPS özel anahtar dosyasına göz atar.\r\n\r\nSeçilen anahtarı özel ve yalnızca güvenilir yerel kullanıcılar tarafından okunabilir halde tutun."
-    IDS_WEBSERVER_TT_KEYPATH                                   "HTTPS etkinleştirildiğinde kullanılan özel anahtar dosyası.\r\n\r\nBu dosyayı koruyun; anahtara sahip olan herkes WebServer sertifikasını taklit edebilir."
-    IDS_WEBSERVER_TT_WEB_GENERATE                              "HTTPS için yeni bir yerel sertifika ve özel anahtar oluşturur.\r\n\r\nKendi sertifikanızı sağlamadığınızda bunu yerel veya güvenilir ağ kurulumları için kullanın."
-    IDS_WEBSERVER_TT_WSENABLEDLOW                              "Düşük haklara sahip WebServer hesabını etkinleştirir.\r\n\r\nTam yönetim Web erişimine sahip olmaması gereken istemciler için bunu kullanın."
-    IDS_WEBSERVER_TT_WSPASS                                    "Ana WebServer hesabının parolası.\r\n\r\nÖzellikle WebServer'ya yerel ana bilgisayarın ötesinde erişilebiliyorsa, güçlü ve benzersiz bir parola kullanın."
-    IDS_WEBSERVER_TT_WSPASSLOW                                 "Düşük haklara sahip WebServer hesabının şifresi.\r\n\r\nAna hesaptan farklı bir şifre kullanın."
-    IDS_WEBSERVER_TT_WSPORT                                    "WebServer ve REST API tarafından kullanılan TCP bağlantı noktası.\r\n\r\nBunu yalnızca güvenlik duvarı, ters proxy veya yönlendirici kuralları eşleşecek şekilde güncellendiğinde değiştirin."
-    IDS_WEBSERVER_TT_WSTIMEOUT                                 "WebServer oturum açma işlemleri için dakikalar içinde oturum zaman aşımı.\r\n\r\nDaha kısa zaman aşımları, paylaşılan makinelerde daha güvenlidir; daha uzun zaman aşımları daha uygundur."
-    IDS_PPG_DEBUG_TT_SERVER                                    "Sunucu tarafı hata ayıklama günlük kategorilerini etkinleştirir.\r\n\r\nYalnızca sunucu iletişimi veya bulma sorunlarını tanılarken kullanın."
-    IDS_PPG_DEBUG_TT_CLIENT                                    "İstemci tarafı hata ayıklama günlük kategorilerini etkinleştirir.\r\n\r\nYalnızca eş iletişim sorunlarını tanılarken kullanın."
-    IDS_PPG_DEBUG_TT_DETAIL                                    "Bu hata ayıklama kategorisini etkinleştirir.\r\n\r\nHata ayıklama günlüğü gürültülü olabilir ve normalde tanılama dışında kalmalıdır."
-    IDS_PPG_DEBUG_TT_DETAIL_LEVEL                              "Bu hata ayıklama kategorisi için ayrıntı düzeyi.\r\n\r\nDaha yüksek değerler daha fazla bilgiyi günlüğe kaydeder ve günlük hacmini önemli ölçüde artırabilir."
-    IDS_PPG_DEBUG_TT_HEAP_LEVEL                                "Hata ayıklama tanılaması tarafından kullanılan bellek bozulması denetimi düzeyi.\r\n\r\nDaha yüksek değerler daha fazla sorun yakalayabilir ancak uygulamayı yavaşlatabilir."
+    IDS_PPG_DIRECTORIES_TT_INCFILES                            "Tamamlanan indirmeler için ana gelen dizini.
+
+Yeterli boş alana sahip kararlı bir yerel yol kullanın. Bitmiş dosyaların orada olmasını gerçekten istemiyorsanız, geçici veya çıkarılabilir konumlardan kaçının."
+    IDS_PPG_DIRECTORIES_TT_TEMPFILES                           "Parça dosyaları, karmalar ve aktarım durumu için çalışma dizini listesi.
+
+Bu yollar, indirmeler çalışırken kullanılabilir kalmalıdır. Çıkarılabilir veya güvenilir olmayan ağ yolları üzerinden hızlı yerel diskler önerilir."
+    IDS_PPG_DIRECTORIES_TT_SHARESELECTOR                       "eMule'nun diğer istemcilerle hangi yerel klasörleri paylaştığını seçer.
+
+Yalnızca yayınlamayı düşündüğünüz dizinleri paylaşın. Tüm sürücü gibi geniş köklerden kaçının."
+    IDS_PPG_DISPLAY_TT_MINTRAY                                 "eMule'yu görev çubuğunda bırakmak yerine tepsiye küçültür.
+
+Her zaman açık kurulumlar için kullanışlıdır. Normal görev çubuğu davranışını tercih ediyorsanız bunu kapalı bırakın."
+    IDS_PPG_DISPLAY_TT_TOOLTIPDELAY                            "Kullanıcı arayüzü araç ipuçlarının görüntülenmesinden önceki gecikme.
+
+Düşük değerler daha hızlı hissettirir, daha yüksek değerler kazara açılan pencereleri azaltır. Varsayılan aralık genellikle iyi bir uzlaşmadır."
+    IDS_PPG_DISPLAY_TT_SHOWRATEONTITLE                         "Geçerli yükleme ve indirme hızlarını ana pencere başlığında gösterir.
+
+eMule arka planda kaldığında ve yine de hızlı bir bakış atmak istediğinizde kullanışlıdır."
+    IDS_PPG_DISPLAY_TT_STORESEARCHES                           "Daha sonra yeniden kullanılabilmeleri için en son arama terimlerini saklar.
+
+Önerilen: özellikle arama geçmişinin saklanmasını istemediğiniz sürece etkinleştirilir."
+    IDS_PPG_DISPLAY_TT_WIN7_TASKBARGOODIES                     "Desteklendiğinde Windows görev çubuğu ilerlemesini ve ilgili kabuk entegrasyonunu etkinleştirir.
+
+Önerilen: Daha az kabuk varlığını istemediğiniz sürece modern Windows'da etkinleştirilir."
+    IDS_PPG_FILES_TT_PF_TIMECALC                               "İndirmeler için daha ayrıntılı kalan süre hesaplamasını kullanır.
+
+Önerilen: Daha istikrarlı ETA tahminleri istiyorsanız etkinleştirilir. Yalnızca eski ve daha basit hesaplamayı tercih ediyorsanız devre dışı bırakın."
+    IDS_PPG_FILES_TT_PREVIEWPRIO                               "Kısmen indirilen medyanın daha erken önizlenebilir hale gelmesi için film önizleme parçalarına öncelik verir.
+
+Video indirmeleri için kullanışlıdır. Nötr parça sıralamasını tercih ediyorsanız bunu bırakın."
+    IDS_PPG_FILES_TT_WATCHCB                                   "Ed2k bağlantıları için panoyu izler ve bunları yönetmeyi teklif eder.
+
+Tarayıcılardan çok sayıda indirme dosyası eklerseniz kullanışlıdır. eMule'nun panoyu izlemesini istemiyorsanız bunu devre dışı bırakın."
+    IDS_PPG_FILES_TT_FNCLEANUP                                 "İndirilen dosya adlarını yapılandırılmış kurallara göre otomatik olarak temizler.
+
+Önerilen: manuel temizleme olmadan daha tutarlı son dosya adları istiyorsanız etkinleştirilir."
+    IDS_PPG_FILES_TT_STARTNEXTFILE                             "Başka bir indirme işlemi bittiğinde veya duraklatıldığında sıradaki dosyayı otomatik olarak başlatır.
+
+Önerilen: aynı anda kaç dosyanın çalıştırılacağını kontrol etmek için duraklatılmış kuyrukları kullanıyorsanız etkinleştirilir."
+    IDS_PPG_FILES_TT_RUNONFILECOMPLETE                         "Bir dosya başarıyla tamamlanıp saklandıktan sonra yürütülebilir dosyayı çalıştırır.
+
+Bu, varsayılan olarak devre dışıdır. Program doğrudan Windows kabuğu olmadan başlatılır."
+    IDS_PPG_FILES_TT_FILECOMPLETEARGS                          "Desteklenen belirteçler: %F tam yol, %D dizini, %N dosya adı, %H dosya karması, %S boyut baytları, %C kategorisi.
+
+%F ve %D otomatik olarak alıntılanır. Ortam değişkenleri genişletilmez."
+    IDS_PPG_GENERAL_TT_ONLINESIG                               "eMule durumunu okuyan harici sayfalar, komut dosyaları veya widget'lar için eski durum dosyasını onlinesig.dat yazar.
+
+Aktarım hızını veya ağ iletişimini iyileştirmez. Bu dosyayı aktif olarak bir yerde kullanmadığınız sürece kapalı bırakın."
+    IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND                       "İşlenen bir ed2k bağlantısı veya benzer harici eylem uygulamayı hedeflediğinde eMule'yu ön plana getirir.
+
+Bağlantı tıklamalarının eMule'yu hemen ortaya çıkarmasını istiyorsanız bunu etkinleştirin. Arka planda çalışmayı tercih ediyorsanız kapalı bırakın."
+    IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Yapılandırılmış aralık dolduğunda başlangıçta GitHub Sürümlerini kontrol eder ve yalnızca daha yeni bir eMule BB paketi mevcut olduğunda uyarı verir.
+Q
+Sessiz bir başlangıç ​​için bunu kapalı bırakın veya periyodik güncelleme kontrolü istiyorsanız etkinleştirin."
+    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "eMule BB bağlıyken veya aktarım yaparken sistem uykusunu engeller; böylece indirmeler, yüklemeler, Kad ve sunucu oturumları kesintiye uğramaz.
+
+Ekran normal şekilde kapanmaya devam edebilir. Bu seçeneği kapatmak normal Windows uyku ilkesini hemen geri yükler."
+    IDS_PPG_GENERAL_TT_WEBSVEDIT                               "Kullanıcı arayüzünden web aramaları gibi yardımcı eylemler tarafından kullanılan yapılandırılmış web hizmetleri listesini düzenler.
+
+Normalde buna yalnızca bu harici arama girişlerini özelleştirmek veya onarmak istiyorsanız ihtiyacınız vardır."
+    IDS_PPG_GENERAL_TT_ED2_KFIX                                "Windows ed2k bağlantı kaydını onarır, böylece tarayıcı ve kabuk ed2k bağlantıları eMule'da tekrar açılır.
+
+Ed2k bağlantıları eMule'yu başlatmayı bıraktığında veya başka bir istemci tarafından çalındığında bunu kullanın."
+    IDS_PPG_GENERAL_TT_STARTMIN                                "Ana pencereyi hemen açmak yerine eMule simge durumuna küçültülmüş olarak başlar.
+
+Gözetimsiz başlatma için kullanışlıdır. Genellikle kullanıcı arayüzünü hemen incelemek istiyorsanız bunu kapalı bırakın."
+    IDS_PPG_GENERAL_TT_STARTWIN                                "Geçerli kullanıcı için Windows ile başlayacak şekilde eMule'yu kaydeder.
+
+Bunu yalnızca eMule'nun arka planda sürekli olarak çalışmasının amaçlandığı makinelerde etkinleştirin."
+    IDS_PPG_IRC_TT_IRC_USECHANFILTER                           "IRC kanal listesi istenirken kanal adı ve minimum kullanıcı filtresini uygular.
+
+Listenin otomatik olarak daraltılmasını istiyorsanız bunu etkinleştirin. Her zaman tam kanal listesini almak için bunu devre dışı bırakın."
+    IDS_PPG_IRC_TT_IRC_USEPERFORM                              "IRC'ya bağlandıktan sonra performans komut dosyasını çalıştırır.
+
+Otomatik birleştirmeler veya IRC komutları için kullanın. Bir performans betiği tutmuyorsanız bunu kapalı bırakın."
+    IDS_PPG_IRC_TT_IRC_NAME_BOX                                "IRC kanal listesi için filtre metni.
+
+Kanal filtresi etkinleştirildiğinde yalnızca bu metinle eşleşen kanallar tutulur."
+    IDS_PPG_IRC_TT_IRC_MINUSER_BOX                             "IRC kanal listesi filtresi tarafından gösterilen kanallar için minimum kullanıcı sayısı.
+
+Küçük kanalları gizlemek için bunu artırın. Kanalları boyutuna bakılmaksızın tutmak için 0'ı kullanın."
+    IDS_PPG_MESSAGES_TT_MSGONLYFRIENDS                         "Yalnızca arkadaş listenizdeki kullanıcılardan gelen doğrudan mesajları kabul eder.
+
+Çok sessiz bir sohbet kurulumu istiyorsanız önerilir. Hala sıradan müşterilerden mesaj almak istiyorsanız bunu bırakın."
+    IDS_PPG_MESSAGES_TT_ADVSPAMFILTER                          "Daha güçlü mesaj spam filtre yolunu etkinleştirir.
+
+Önerilen: normal genel ağ kullanımı için etkinleştirilir. Daha sıkı filtreleme için sohbet captcha'larıyla birlikte çalışır."
+    IDS_PPG_MESSAGES_TT_USECAPTCHAS                            "Bilinmeyen istemcilerin bir sohbet görüşmesini tamamlamadan önce bir captcha sınaması gerektirir.
+
+Sohbet spam'ına karşı kullanışlıdır. En iyi şekilde gelişmiş spam filtresiyle birlikte kullanılır."
+    IDS_PPG_MESSAGES_TT_COMMENTFILTER                          "Yapılandırılmış filtre terimlerini içeren dosya yorumlarını engeller.
+
+'|' kullanın terimler arasındaki ayırıcı. Bilinen spam kelimeler veya rahatsız edici kalıplar için iyidir."
+    IDS_PPG_PROXY_TT_ENABLEPROXY                               "Desteklenen giden bağlantıları yapılandırılmış proxy üzerinden yönlendirir.
+
+Yalnızca eMule'yu kasıtlı olarak bir proxy arkasında çalıştırıyorsanız etkinleştirin. Doğrudan bağlantılar daha basit ve genellikle daha hızlıdır."
+    IDS_PPG_PROXY_TT_PROXYTYPE                                 "Proxy sunucunuzun beklediği proxy protokolünü seçer.
+
+Proxy operatörü tarafından sağlanan tam türü kullanın; yanlış tür genellikle anında bağlantı arızaları anlamına gelir."
+    IDS_PPG_PROXY_TT_PROXYNAME                                 "Proxy sunucunun ana bilgisayar adı veya IP adresi.
+
+Proxy hizmetiniz tarafından sağlanan uç noktayı tam olarak girin. Yanlış bir ana bilgisayar, tüm proxy trafiğinin başarısız olacağı anlamına gelir."
+    IDS_PPG_PROXY_TT_PROXYPORT                                 "Proxy sunucusunun dinleme bağlantı noktası.
+
+Proxy'nin gerektirdiği tam bağlantı noktasını kullanın. Yaygın SOCKS varsayılanlarının doğru olduğu garanti edilmez."
+    IDS_PPG_PROXY_TT_ENABLEAUTH                                "Proxy kimlik doğrulaması gerektirdiğinde proxy kullanıcı adı ve parola kimlik bilgilerini gönderir.
+
+Bunu yalnızca proxy hizmetiniz gerçekten oturum açma kimlik bilgilerini kullanıyorsa etkinleştirin."
+    IDS_PPG_PROXY_TT_USERNAME_A                                "Proxy hesabı kullanıcı adı.
+
+Proxy'niz açıkça kimlik doğrulamalı erişim gerektirmediği sürece boş bırakın."
+    IDS_PPG_SCHEDULER_TT_ENABLE                                "Zamana dayalı kuralların ayarları otomatik olarak değiştirebilmesi için zamanlayıcıyı etkinleştirir.
+
+Planlanmış bant genişliği, bağlantı veya kategori değişikliklerini aktif olarak kullanmadığınız sürece bunu kapalı bırakın."
+    IDS_PPG_SCHEDULER_TT_CHECKNOENDTIME                        "Seçilen zamanlama girişini durma süresi olmadan çalıştırır.
+
+Başka bir zamanlama onları geçersiz kılana kadar aktif kalması gereken tek yönlü durum değişiklikleri için bunu kullanın."
+    IDS_PPG_SCHEDULER_TT_APPLY                                 "Düzenlenen ayrıntıları geçerli olarak seçilen program girişine uygular.
+
+Bunu söz konusu satır için günü, saati veya eylem listesini değiştirdikten sonra kullanın."
+    IDS_PPG_SECURITY_TT_USESECIDENT                            "Müşteri kredi kimliklerinin sahteleştirilmesini zorlaştırmak için desteklendiğinde güvenli kimlik doğrulamayı kullanır.
+
+Önerilen: etkin. Bunu devre dışı bırakmak yalnızca kimlik güvenini azaltır ve nadiren faydalıdır."
+    IDS_PPG_SECURITY_TT_FILTERSERVERBYIPFILTER                 "Filtrelenen sunucuların gizlenmesi veya kaldırılması için IP filtresini görünür sunucu listesine uygular.
+
+Önerilen: sunucu temizliği ve eş filtreleme için IP filtresine güveniyorsanız etkinleştirilir."
+    IDS_PPG_SECURITY_TT_UPDATEURL                              "Yenilenen IP filtre listelerini indirirken kullanılan kaynak URL'si.
+
+Yalnızca güvenilir bir sağlayıcı kullanın. Otomatik güncellemeler bu URL'yi yeniden kullanır ve indirme geçersizse mevcut filtreyi korur."
+    IDS_PPG_SECURITY_TT_AUTOUPDATE_IPFILTER                    "Güncelleme aralığının zamanı geldiğinde, başlangıçtan sonra yapılandırılmış IP filtresi URL'sini otomatik olarak kontrol eder.
+
+Önerilen: sağlayıcıya güvenmediğiniz ve filtrenin manuel işlem olmadan yenilenmesini istemediğiniz sürece devre dışı bırakılır."
+    IDS_PPG_SECURITY_TT_IPFILTERPERIOD                         "Otomatik IP filtresi güncelleme girişimleri arasındaki gün sayısı.
+
+İzin verilen aralık: 1 ila 365 gün. Bir sağlayıcı kullanılamadığında yeniden deneme döngülerini önlemek için başarısız denemeler yine de sayılır."
+    IDS_PPG_SECURITY_TT_SEESHARE1                              "Uzak istemci desteklediğinde herkesin paylaşılan dosyalarınıza göz atmasına izin verir.
+
+En izin verilen seçenek. Bunu yalnızca paylaşılan listenizi geniş bir şekilde sergileme konusunda rahatsanız kullanın."
+    IDS_PPG_SECURITY_TT_SEESHARE2                              "Yalnızca arkadaşlarınızın paylaşılan dosyalarınıza göz atmasına izin verir.
+
+Açıkça güvenilen kişiler için hâlâ göz atma desteği istiyorsanız dengeli gizlilik seçeneği."
+    IDS_PPG_SECURITY_TT_SEESHARE3                              "Uzak istemcilerin paylaşılan dosya listenize göz atmasını engeller.
+
+Paylaşılan dosyaya göz atma için en katı gizlilik tutumunu istiyorsanız önerilir."
+    IDS_PPG_SECURITY_TT_ENABLEOBFUSCATION                      "Uzak taraf da desteklediğinde protokol gizlemeyi tercih eder.
+
+Önerilen: etkin. Yalnızca gizleme politikasını zorlamadan kısıtlayıcı ağlarda yardımcı olabilir."
+    IDS_PPG_SECURITY_TT_ONLYOBFUSCATED                         "Normal bağlantıları kabul etmek yerine karmaşık bağlantılar gerektirir.
+
+Bunu yalnızca ağ ortamınız buna gerçekten ihtiyaç duyuyorsa kullanın. Bağlantıyı ve akran erişimini azaltabilir."
+    IDS_PPG_SECURITY_TT_SEARCHSPAMFILTER                       "Kullanıcı arayüzünü karmaşık hale getirmeden önce arama sonuçlarındaki bariz spam'leri filtreler.
+
+Önerilen: normal genel ağ kullanımı için etkindir."
+    IDS_PPG_SECURITY_TT_CHECK_FILE_OPEN                        "Özel erişim gerektiren işlemlerden önce indirilen dosyaların açık/kilitli durumunu kontrol eder.
+
+Önerilen: güvenlik kontrolünü atlamak için özel bir nedeniniz olmadığı sürece etkinleştirilir."
+    IDS_PPG_SERVER_TT_AUTOSERVER                               "Bağlı istemcilerden ve diğer güvenilir kaynaklardan gelen sunucu listesini otomatik olarak günceller.
+
+Kullanışlı ancak aynı zamanda listenin zaman içinde kaymasına da olanak tanır. Sıkı bir şekilde seçilmiş statik sunucu listesini tercih ediyorsanız bunu devre dışı bırakın."
+    IDS_PPG_SERVER_TT_UPDATESERVERCONNECT                      "Bağlı sunucuların listenize ek sunucular eklemesine olanak tanır.
+
+Kullanışlı, ancak düşük değerli girişlerle listeyi büyütebilir. Daha katı manuel düzenlemeyi tercih ediyorsanız bunu devre dışı bırakın."
+    IDS_PPG_SERVER_TT_UPDATESERVERCLIENT                       "İstemcilerin, sunucu listenize sunucu adresleri eklemesine izin verir.
+
+Çoğu kullanıcı bu konuda dikkatli olmalıdır. Sunucu listesi kalitesi üzerinde daha sıkı kontrol istiyorsanız bunu devre dışı bırakın."
+    IDS_PPG_SERVER_TT_SAFESERVERCONNECT                        "Çok sayıda aday arasından acele etmek yerine daha dikkatli bir sunucu bağlantı stratejisi kullanır.
+
+Önerilen: kararlılık için etkinleştirildi. Yalnızca kasıtlı olarak daha agresif bir bağlantı yaklaşımı istiyorsanız bunu devre dışı bırakın."
+    IDS_PPG_SERVER_TT_SMARTIDCHECK                             "Sunucu tarafı erişilebilirliğinizin zayıf olduğuna karar vermeden önce akıllı LowID denetimini gerçekleştirir.
+
+Önerilen: etkin. Geçici ağ koşulları sırasında bazı yanlış LowID sonuçlarından kaçınır."
+    IDS_PPG_SERVER_TT_SCORE                                    "Sunucuları seçerken ve sipariş ederken sunucu önceliklerini kullanır.
+
+Önerilen: Tercih edilen bir sunucu alt kümesini koruyorsanız ve eMule'nun bunları tercih etmesini istiyorsanız etkinleştirilir."
+    IDS_PPG_SERVER_TT_SERVERRETRIES                            "eMule onu ölü olarak değerlendirmeden önce bir sunucunun kaç tane başarısız bağlantı denemesi biriktirebileceği.
+
+Daha düşük değerler kötü sunucuları daha hızlı budatır; daha yüksek değerler geçici kesintileri daha fazla affeder."
+    IDS_PPG_SERVER_TT_AUTOCONNECTSTATICONLY                    "Statik olarak işaretlenen sunuculara otomatik sunucu bağlanma girişimlerini kısıtlar.
+
+Küçük bir güvenilir statik liste tutuyorsanız ve tüm sunucu listesi genelinde otomatik rotasyon istemiyorsanız bunu etkinleştirin."
+    IDS_PPG_SERVER_TT_MANUALSERVERHIGHPRIO                     "Manuel olarak eklenen sunuculara, sıradan keşfedilen girişlerden daha yüksek bir öncelik eğilimi verir.
+
+Özellikle seçilmiş bir sunucu seti kullanıyorsanız ve bu eklemelerin tercih edilmesini istiyorsanız bunu etkinleştirin."
+    IDS_PPG_STATS_TT_FILL_GRAPHS                               "Yalnızca çizgiler çizmek yerine grafik alanlarını doldurur.
+
+Tamamen görsel. Daha hafif, daha az meşgul bir istatistik görünümünü tercih ediyorsanız bunu devre dışı bırakın."
+    IDS_PPG_STATS_TT_SLIDER                                    "Canlı trafik grafiği için yenileme aralığı.
+
+Düşük değerler daha hızlı yanıt verir ancak daha fazla kullanıcı arayüzü çalışmasına mal olur. Orta değerler genellikle en iyisidir."
+    IDS_PPG_STATS_TT_SLIDER2                                   "İstatistik ağacı ve özet değerleri için yenileme aralığı.
+
+Düşük değerler daha sık güncellenir ancak daha fazla kullanıcı arayüzü kaybına neden olur. Daha sakin güncellemeler istiyorsanız bunu artırın."
+    IDS_PPG_STATS_TT_SLIDER3                                   "Grafikler tarafından kullanılan ortalama alma penceresi.
+
+Kısa pencereler artışları açıkça gösterir; daha uzun pencereler ekranı pürüzsüzleştirir ve trendleri vurgular."
+    IDS_PPG_STATS_TT_COLORSELECTOR                             "Düzenlediğiniz istatistik öğesi rengini seçer.
+
+Bunu yalnızca grafik paletini özelleştiriyorsanız kullanın."
+    IDS_PPG_STATS_TT_CGRAPHSCALE                               "Bağlantı grafiği için manuel Y ekseni ölçeği.
+
+Grafik yüksek değerleri keserse bunu yükseltin; daha düşük değerler, orta düzeyde bağlantı sayılarında daha fazla ayrıntı verir."
+    IDS_PPG_STATS_TT_CRATIO                                    "Birleşik bağlantı grafiği tarafından kullanılan yükleme/indirme en boy oranı.
+
+Grafiğin bir yönü daha güçlü bir şekilde vurgulamasını istemiyorsanız bunu varsayılana yakın bırakın."
+    IDS_NOTIFY_TT_BTN_BROWSE_WAV                               "Görev çubuğu ses bildirimleri tarafından kullanılan WAV dosyasına göz atar.
+
+Yalnızca özel ses bildirimleri seçildiğinde kullanılabilir."
+    IDS_NOTIFY_TT_CB_TBN_IMPORTATNT                            "Disk alanı uyarıları veya sunucu bağlantılarının kesilmesi gibi acil durumlara ilişkin bildirimleri gösterir.
+
+Önerilen: makine sıklıkla gözetimsiz çalışıyorsa etkinleştirilir."
+    IDS_NOTIFY_TT_CB_TBN_NOSOUND                               "Bildirim ses çıkışını devre dışı bırakır.
+
+Görsel bildirimler yeterli olduğunda veya makinenin sessiz kalması gerektiğinde bunu kullanın."
+    IDS_NOTIFY_TT_CB_TBN_ONCHAT                                "Bir sohbet oturumu başladığında bir bildirim gösterir.
+
+eMule'yu simge durumuna küçültüyorsanız ve yine de yeni konuşmaları fark etmek istiyorsanız kullanışlıdır."
+    IDS_NOTIFY_TT_CB_TBN_ONDOWNLOAD                            "İndirme tamamlandığında bir bildirim gösterir.
+
+Tamamlanan dosyalara Aktarımlar sayfasını izlemeden müdahale edilmesi gerekiyorsa önerilir."
+    IDS_NOTIFY_TT_CB_TBN_ONLOG                                 "Bir günlük girişi eklendiğinde bir bildirim gösterir.
+
+Tanılama için kullanışlıdır ancak normal uzun süreli oturumlar sırasında gürültülüdür."
+    IDS_NOTIFY_TT_CB_TBN_ONNEWDOWNLOAD                         "Yeni bir indirme eklendiğinde bir bildirim gösterir.
+
+İndirilenler harici olarak eklenebiliyorsa ve onay istiyorsanız bunu etkinleştirin."
+    IDS_NOTIFY_TT_CB_TBN_ONNEWVERSION                          "Güncelleme denetleyicisi daha yeni bir eMule BB sürümü bulduğunda bir bildirim gösterir.
+
+Bu yalnızca Genel sayfasında güncelleme kontrolleri etkinleştirildiğinde önemlidir."
+    IDS_NOTIFY_TT_EDIT_RECEIVER                                "eMule bildirim mesajlarını alan e-posta adresi.
+
+Yapılandırılan SMTP sunucusu tarafından kabul edilen bir adresi kullanın."
+    IDS_NOTIFY_TT_EDIT_SENDER                                  "E-posta bildirimleri için kullanılan gönderen adresi.
+
+Birçok SMTP sunucusu, kimliği doğrulanmış hesapla eşleşmesi veya bu hesaba ait olması için bu adresi gerektirir."
+    IDS_NOTIFY_TT_EDIT_TBN_WAVFILE                             "Ses bildirimleri için oynatılan WAV dosyasının yolu.
+
+Kısa bir yerel dosya seçin; eksik veya erişilemeyen dosyalar sesin çalınmasını engeller."
+    IDS_NOTIFY_TT_TEST_NOTIFICATION                            "Geçerli bildirim ayarlarını kullanarak bir test bildirimi gönderir.
+
+Açılır pencere, ses veya e-posta yapılandırmasını değiştirdikten sonra kullanın."
+    IDS_PPG_DIRECTORIES_TT_SELINCDIR                           "Tamamlanan indirmeler için kullanılan gelen dizine göz atar.
+
+Yeterli boş alana sahip sabit bir yerel yol seçin."
+    IDS_PPG_DIRECTORIES_TT_SELTEMPDIR                          "Seçilen geçici dosyalar dizinine göz atar.
+
+Part dosyaları, indirmeler çalışırken bu yolun kullanılabilir kalmasına bağlıdır."
+    IDS_PPG_DIRECTORIES_TT_SELTEMPDIRADD                       "Çalışma dizini listesine başka bir geçici dosyalar dizini ekler.
+
+Birden fazla hızlı, güvenilir yerel diski yalnızca parça dosyalarını kasıtlı olarak yaymak istediğinizde kullanın."
+    IDS_PPG_DIRECTORIES_TT_UNCADD                              "Paylaşılan dizin listesine bir ağ UNC yolu ekler.
+
+Yalnızca erişilebilir durumda olan ve yayınlanması amaçlanan ağ klasörlerini paylaşın."
+    IDS_PPG_DISPLAY_TT_3DDEPTH                                 "Klasik liste ve grafik görselleri tarafından kullanılan 3 boyutlu gölgelemenin derinliğini kontrol eder.
+
+Tamamen görsel; düşük değerler daha düz görünür ve yüksek değerler daha güçlü gölgeleme sağlar."
+    IDS_PPG_DISPLAY_TT_CLEARCOMPL                              "Tamamlanan indirmeleri görünür Aktarımlar listesinden otomatik olarak kaldırır.
+
+Bitmiş dosyalar diskte kalır; bu yalnızca indirme listesinin daha temiz kalmasını sağlar."
+    IDS_PPG_DISPLAY_TT_DBLCLICK                                "Aktarımlar listesinde çift tıklandığında indirmeyi genişletir veya daraltır.
+
+Çift tıklamanın satır düzenini değiştirmesini gerektirmemesi gerekiyorsa bunu devre dışı bırakın."
+    IDS_PPG_DISPLAY_TT_DISABLEHIST                             "Arama metni ve server.met URL'leri gibi alanlar için otomatik tamamlama geçmişlerini etkinleştirir.
+
+Bu girişlerin hatırlanmasını istemiyorsanız bunu devre dışı bırakın."
+    IDS_PPG_DISPLAY_TT_DISABLEKNOWNLIST                        "Aktarımlar penceresinde Bilinen İstemciler listesini gizler ve devre dışı bırakır.
+
+Bunu yalnızca daha hafif bir kullanıcı arayüzü istiyorsanız ve bu tanılama görünümüne ihtiyacınız yoksa kullanın."
+    IDS_PPG_DISPLAY_TT_DISABLEQUEUELIST                        "Aktarımlar penceresindeki Kuyruk listesini gizler ve devre dışı bırakır.
+
+Bunu yalnızca sıraya alınmış yükleme istemcilerini incelemeyecekseniz kullanın."
+    IDS_PPG_DISPLAY_TT_RESETHIST                               "Saklanan otomatik tamamlama geçmişi girişlerini temizler.
+
+Bu yalnızca kayıtlı geçmişi etkiler ve etkin indirmeleri veya sunucu listelerini değiştirmez."
+    IDS_PPG_DISPLAY_TT_SELECT_HYPERTEXT_FONT                   "Sunucu, mesaj ve IRC metin görünümleri için yazı tipi seçiciyi açar.
+
+Bunun yerine günlük yazı tipini düzenlemek için açarken Ctrl tuşunu basılı tutun."
+    IDS_PPG_DISPLAY_TT_SHOWCATINFO                             "Aktarım kategorisi sekmelerinde kategori bilgilerini gösterir.
+
+İndirmeleri birden fazla kategori üzerinden yönetirken kullanışlıdır."
+    IDS_PPG_DISPLAY_TT_SHOWDWLPERCENT                          "Aktarımlar listesinde indirme ilerleme yüzdelerini gösterir.
+
+Dosya ayrıntılarını açmadan hızlı tarama ilerlemesi için bunu etkinleştirin."
+    IDS_PPG_DISPLAY_TT_SHOWTRANSTOOLBAR                        "Aktarımlar penceresinde ek araç çubuğunu gösterir.
+
+Aktarım satırları için daha fazla alan tercih ediyorsanız bunu devre dışı bırakın."
+    IDS_PPG_FILES_TT_ADDNEWFILESPAUSED                         "Duraklatılmış modda sıraya alınan yeni indirmeleri ekler.
+
+Dosyaları aktarmaya başlamadan önce incelemek veya planlamak istediğinizde kullanışlıdır."
+    IDS_PPG_FILES_TT_BROWSEV                                   "Yürütülebilir harici video oynatıcısına göz atar.
+
+Önizlenen medya dosyalarını açması gereken programı seçin."
+    IDS_PPG_FILES_TT_BROWSE_FILECOMPLETEPROGRAM                "Bir dosya tamamlandıktan sonra başlatılan programa göz atar.
+
+Etkinleştirildiğinde otomatik olarak çalıştığından güvenilir bir yerel yürütülebilir dosya kullanın."
+    IDS_PPG_FILES_TT_DAP                                       "Yeni eklenen indirmelere otomatik öncelik atar.
+
+İndirme önceliklerini manuel olarak yönetmeyi tercih etmediğiniz sürece önerilir."
+    IDS_PPG_FILES_TT_FILECOMPLETEPROGRAM                       "Bir dosya tamamlandıktan sonra çalıştırılacak yürütülebilir dosya.
+
+Güvenilir bir programın tam yolunu kullanın; Windows kabuğu olmadan doğrudan başlatılır."
+    IDS_PPG_FILES_TT_FNC                                       "Otomatik dosya adı temizliği için kullanılan temizleme filtresini düzenler.
+
+Bunu yalnızca varsayılan temizleme kuralları adlandırma tercihlerinizle eşleşmediğinde kullanın."
+    IDS_PPG_FILES_TT_FULLCHUNKTRANS                            "Mümkün olduğunda istemcilere tüm parçaları yüklemeye çalışır.
+
+Bu, parça dağıtımını iyileştirebilir ancak bazı yüklemelerin daha uzun süre çalışmasını sağlayabilir."
+    IDS_PPG_FILES_TT_REMEMBERCANCELLED                         "Daha sonra tanınabilmeleri için iptal edilen dosyaları hatırlar.
+
+Kasıtlı olarak iptal ettiğiniz dosyaların yeniden eklenmesini önlemek için kullanışlıdır."
+    IDS_PPG_FILES_TT_REMEMBERDOWNLOADED                        "Tamamlanan indirmeleri hatırlar, böylece zaten tamamlanmış dosyalar daha sonra tanınabilir.
+
+Yinelenen indirme uyarıları istiyorsanız önerilir."
+    IDS_PPG_FILES_TT_STARTNEXTFILECAT                          "Duraklatılan bir sonraki dosyayı başlatırken, tamamlanan dosyayla aynı kategorideki dosyaları tercih edin.
+
+Kategori sıralarının birlikte hareket etmesini sağlamak için bunu kullanın."
+    IDS_PPG_FILES_TT_STARTNEXTFILECAT2                         "Duraklatılan bir sonraki dosyayı başlatırken, yalnızca tamamlanan dosyayla aynı kategoriden seçim yapın.
+
+Kategori başına sıkı kuyruk kontrolü için bunu kullanın."
+    IDS_PPG_FILES_TT_UAP                                       "Yeni paylaşılan dosyalara otomatik öncelik atar.
+
+Paylaşılan dosya önceliklerini bilinçli olarak kendiniz ayarlamadığınız sürece önerilir."
+    IDS_PPG_FILES_TT_VIDEOBACKUP                               "Kısmen indirilen bir medya dosyasının ön izlemesini yapmadan önce bir yedek kopya oluşturur.
+
+Kırılgan oynatıcılar için daha güvenlidir ancak ekstra disk alanı ve zaman kullanır."
+    IDS_PPG_FILES_TT_VIDEOPLAYER                               "Medya önizlemeleri için kullanılan harici oynatıcı.
+
+Varsayılan ilişkilendirmeyi kullanmak için alanı boş bırakın veya belirli bir güvenilir oynatıcı ayarlayın."
+    IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS                          "Harici önizleme oynatıcısına aktarılan bağımsız değişkenler.
+
+Bunu yalnızca oynatıcının özel komut satırı seçeneklerine ihtiyacı varsa kullanın."
+    IDS_PPG_GENERAL_TT_CHECKDAYS                               "Başlangıç ​​güncelleme kontrolleri arasındaki gün sayısı.
+
+Daha yüksek değerler ağ kontrollerini azaltır; daha düşük değerler yeni yayınlanan sürümleri daha çabuk bulur."
+    IDS_PPG_GENERAL_TT_EXIT                                    "eMule çıkmadan önce onay ister.
+
+Kazara kapanmaları önlemek için gözetimsiz sistemlerde önerilir."
+    IDS_PPG_GENERAL_TT_LANGS                                   "eMule tarafından yüklenen kullanıcı arayüzü dili kaynağını seçer.
+
+Dili değiştirmek, her etiket yenilenmeden önce iletişim kutularının yeniden açılmasını gerektirebilir."
+    IDS_PPG_GENERAL_TT_NICK                                    "Kullanıcı adı diğer eMule istemcilerine duyurulur.
+
+Hassas olmayan bir takma ad kullanın; akranlar tarafından görülebilir."
+    IDS_PPG_GENERAL_TT_SPLASHON                                "Başlatma sırasında açılış ekranını gösterir.
+
+Daha sessiz bir başlatma yolu için bunu devre dışı bırakın."
+    IDS_PPG_IRC_TT_IRC_NICK_BOX                                "IRC'ya bağlanırken kullanılan takma ad.
+
+Hedef IRC ağı tarafından kabul edilen bir ad seçin."
+    IDS_PPG_IRC_TT_IRC_PERFORM_BOX                             "Gerçekleştirme etkinleştirildiğinde IRC bağlandıktan sonra komutlar otomatik olarak çalışır.
+
+Tek satırlı IRC komutlarını yalnızca onlara güveniyor ve anlıyorsanız kullanın."
+    IDS_PPG_IRC_TT_IRC_SERVER_BOX                              "Yerleşik IRC istemcisi tarafından kullanılan IRC sunucu adresi.
+
+Bunu yalnızca kasıtlı olarak başka bir IRC ağı kullandığınızda değiştirin."
+    IDS_PPG_MESSAGES_TT_FILTER                                 "Gelen sohbet mesajları için metin filtresi.
+
+Bilinen rahatsız edici kelimeleri veya kalıpları gizlemek için bunu kullanın."
+    IDS_PPG_MESSAGES_TT_INDICATERATINGS                        "Yorumları veya derecelendirmeleri olan indirmeler için bir simge gösterir.
+
+Dosyaları açmadan önce topluluk geri bildirimlerini incelemek istediğinizde kullanışlıdır."
+    IDS_PPG_MESSAGES_TT_MSHOWSMILEYS                           "Sohbet mesajlarında suratlar görüntüler.
+
+Düz metin oluşturmayı tercih ediyorsanız bunu devre dışı bırakın."
+    IDS_PPG_PROXY_TT_PASSWORD                                  "Proxy hesap şifresi.
+
+Proxy kimlik doğrulaması etkin olmadığı ve proxy sunucusu tarafından gerekli olmadığı sürece boş bırakın."
+    IDS_PPG_SCHEDULER_TT_DATETIMEPICKER1                       "Seçilen program girişi için başlangıç ​​zamanı.
+
+Kural, seçilen gün modelinde bu saatte etkin hale gelir."
+    IDS_PPG_SCHEDULER_TT_DATETIMEPICKER2                       "Seçilen program girişi için bitiş zamanı.
+
+Başka bir program onu ​​değiştirene kadar kuralın etkin kalması gereken bitiş zamanını devre dışı bırakın."
+    IDS_PPG_SCHEDULER_TT_NEW                                   "Yeni bir zamanlama girişi oluşturur.
+
+Ayrıntılarını düzenleyin ve yapılandırılan kuralı saklamak için Uygula'ya tıklayın."
+    IDS_PPG_SCHEDULER_TT_REMOVE                                "Seçilen zamanlama girişini kaldırır.
+
+Bunu yalnızca artık istemediğiniz kuralı seçtikten sonra kullanın."
+    IDS_PPG_SCHEDULER_TT_SCHEDACTION                           "Seçilen zamanlama girişinin geçerli olduğu eylemler.
+
+Zamanlanmış değişiklikleri düzenlemek için listeye çift tıklayın veya sağ tıklayın."
+    IDS_PPG_SCHEDULER_TT_SCHEDLIST                             "Yapılandırılmış program girişlerinin listesi.
+
+Başlığını, saatini, gün düzenini, etkin durumunu ve eylemlerini düzenlemek için bir giriş seçin."
+    IDS_PPG_SCHEDULER_TT_S_ENABLE                              "Seçilen zamanlama girişini etkinleştirir veya devre dışı bırakır.
+
+Tek bir kuralı silmeden duraklatmak için bunu kullanın."
+    IDS_PPG_SCHEDULER_TT_S_TITLE                               "Seçilen program girişi için görünen ad.
+
+Kuralın neleri değiştirdiğini tanımlayan kısa bir ad kullanın."
+    IDS_PPG_SCHEDULER_TT_TIMESEL                               "Seçilen program girişi için gün düzeni.
+
+Başlangıç ​​ve bitiş zamanlarının ne zaman uygulanacağını seçin."
+    IDS_PPG_SECURITY_TT_DD                                     "Hızlı seçim için depolanan IP filtresi URL geçmişini açar.
+
+Yalnızca güvenilir filtre sağlayıcılarını kullanın."
+    IDS_PPG_SECURITY_TT_DISABLEOBFUSCATION                     "Gizlenmiş bağlantılar için desteği tamamen devre dışı bırakır.
+
+Eski davranışa katı bir şekilde ihtiyacınız olmadığı sürece önerilmez."
+    IDS_PPG_SECURITY_TT_EDITFILTER                             "Manuel düzenleme için yerel IP filtre dosyasını açar.
+
+Dikkatlice kaydedin; geçersiz girişler göz ardı edilebilir."
+    IDS_PPG_SECURITY_TT_LOADURL                                "Yapılandırılmış URL'den IP filtre listesini indirir ve uygular.
+
+Yalnızca güvenilir sağlayıcıları kullanın; indirme başarısız olursa mevcut filtre korunur."
+    IDS_PPG_SECURITY_TT_RELOADFILTER                           "Yerel IP filtre dosyasını diskten yeniden yükler.
+
+eMule dışında filtre dosyasını manuel olarak düzenledikten sonra bunu kullanın."
+    IDS_PPG_SERVER_TT_EDITADR                                  "Başlangıç ​​sunucusu listesi güncelleme URL'lerini düzenler.
+
+Yalnızca güvenilir server.met kaynaklarını kullanın; güvenilmeyen listeler sunucu keşfini kirletebilir."
+    IDS_PPG_STATS_TT_COLOR_BUTTON                              "Seçilen istatistik öğesi için renk seçiciyi açar.
+
+Renk seçicide bir öğe seçtikten sonra bunu kullanın."
+    IDS_WEBSERVER_TT_CERTBROWSE                                "HTTPS sertifika dosyasına göz atar.
+
+Yapılandırılan özel anahtarla eşleşen bir sertifika dosyası kullanın."
+    IDS_WEBSERVER_TT_CERTPATH                                  "HTTPS etkinleştirildiğinde kullanılan sertifika dosyası.
+
+Bu dosya eksik veya geçersizse WebServer, HTTPS modunda başlatılamaz."
+    IDS_WEBSERVER_TT_KEYBROWSE                                 "HTTPS özel anahtar dosyasına göz atar.
+
+Seçilen anahtarı özel ve yalnızca güvenilir yerel kullanıcılar tarafından okunabilir halde tutun."
+    IDS_WEBSERVER_TT_KEYPATH                                   "HTTPS etkinleştirildiğinde kullanılan özel anahtar dosyası.
+
+Bu dosyayı koruyun; anahtara sahip olan herkes WebServer sertifikasını taklit edebilir."
+    IDS_WEBSERVER_TT_WEB_GENERATE                              "HTTPS için yeni bir yerel sertifika ve özel anahtar oluşturur.
+
+Kendi sertifikanızı sağlamadığınızda bunu yerel veya güvenilir ağ kurulumları için kullanın."
+    IDS_WEBSERVER_TT_WSENABLEDLOW                              "Düşük haklara sahip WebServer hesabını etkinleştirir.
+
+Tam yönetim Web erişimine sahip olmaması gereken istemciler için bunu kullanın."
+    IDS_WEBSERVER_TT_WSPASS                                    "Ana WebServer hesabının parolası.
+
+Özellikle WebServer'ya yerel ana bilgisayarın ötesinde erişilebiliyorsa, güçlü ve benzersiz bir parola kullanın."
+    IDS_WEBSERVER_TT_WSPASSLOW                                 "Düşük haklara sahip WebServer hesabının şifresi.
+
+Ana hesaptan farklı bir şifre kullanın."
+    IDS_WEBSERVER_TT_WSPORT                                    "WebServer ve REST API tarafından kullanılan TCP bağlantı noktası.
+
+Bunu yalnızca güvenlik duvarı, ters proxy veya yönlendirici kuralları eşleşecek şekilde güncellendiğinde değiştirin."
+    IDS_WEBSERVER_TT_WSTIMEOUT                                 "WebServer oturum açma işlemleri için dakikalar içinde oturum zaman aşımı.
+
+Daha kısa zaman aşımları, paylaşılan makinelerde daha güvenlidir; daha uzun zaman aşımları daha uygundur."
+    IDS_PPG_DEBUG_TT_SERVER                                    "Sunucu tarafı hata ayıklama günlük kategorilerini etkinleştirir.
+
+Yalnızca sunucu iletişimi veya bulma sorunlarını tanılarken kullanın."
+    IDS_PPG_DEBUG_TT_CLIENT                                    "İstemci tarafı hata ayıklama günlük kategorilerini etkinleştirir.
+
+Yalnızca eş iletişim sorunlarını tanılarken kullanın."
+    IDS_PPG_DEBUG_TT_DETAIL                                    "Bu hata ayıklama kategorisini etkinleştirir.
+
+Hata ayıklama günlüğü gürültülü olabilir ve normalde tanılama dışında kalmalıdır."
+    IDS_PPG_DEBUG_TT_DETAIL_LEVEL                              "Bu hata ayıklama kategorisi için ayrıntı düzeyi.
+
+Daha yüksek değerler daha fazla bilgiyi günlüğe kaydeder ve günlük hacmini önemli ölçüde artırabilir."
+    IDS_PPG_DEBUG_TT_HEAP_LEVEL                                "Hata ayıklama tanılaması tarafından kullanılan bellek bozulması denetimi düzeyi.
+
+Daha yüksek değerler daha fazla sorun yakalayabilir ancak uygulamayı yavaşlatabilir."
     IDS_TREEOPTIONS_BROWSE_FOLDER_CAPTION                      "Lütfen bir klasör belirtin"
     IDS_TREEOPTIONS_BROWSE_FILE_CAPTION                        "Lütfen bir dosya belirtin"
     IDS_TREEOPTIONS_ALL_FILES_FILTER                           "Tüm Dosyalar (*.*)|*.*||"
@@ -2775,6 +3429,17 @@ BEGIN
     IDS_CATEGORY_MANAGER_MOVE_UP                               "&Yukarı Taşı"
     IDS_CATEGORY_MANAGER_MOVE_DOWN                             "&Aşağı Taşı"
     IDS_CATEGORY_REMOVE_IN_USE                                 """%s"" kategorisi hâlâ %u'ya atanmış indirmelere sahiptir. Bu indirilenleri kaldırmadan önce taşıyın veya temizleyin."
+    IDS_ENABLE_WINDOWS_LONG_PATHS                              "Windows Uzun Yolları Etkinleştir..."
+    IDS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS                      "eMule İndirme Klasörlerini Microsoft Defender'dan hariç tutun..."
+    IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS                 "Windows uzun yol ilkesini etkinleştirmek için yükseltilmiş tek seferlik bir eylem başlatır."
+    IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS         "Etkin Gelen, Geçici ve kategori klasörlerini Microsoft Defender taramasının dışında bırakmak için yükseltilmiş bir kerelik eylem başlatır."
+    IDS_LONG_PATHS_ENABLE_SUCCESS                              "Windows uzun yol ilkesi etkinleştirildi."
+    IDS_LONG_PATHS_ENABLE_FAILURE                              "Windows uzun yol ilkesi güncellemesi başarısız oldu: %s"
+    IDS_LONG_PATHS_ENABLE_CANCELLED                            "Windows uzun yol ilkesi güncellemesi iptal edildi."
+    IDS_DEFENDER_EXCLUSIONS_SUCCESS                            "%u klasörleri için Microsoft Defender hariç tutma işlemi tamamlandı."
+    IDS_DEFENDER_EXCLUSIONS_FAILURE                            "Microsoft Defender hariç tutma eylemi başarısız oldu: %s"
+    IDS_DEFENDER_EXCLUSIONS_CANCELLED                          "Microsoft Defender hariç tutma eylemi iptal edildi."
+    IDS_DEFENDER_EXCLUSIONS_NO_PATHS                           "Microsoft Defender'ın hariç tutulması için kullanılabilir eMule indirme klasörü yoktu."
 END
 // eMule BB managed translation block: end
 

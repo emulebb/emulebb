@@ -2167,6 +2167,17 @@ BEGIN
     IDS_DL_RESUME_CATEGORY                                  "استئناف الكل في هذه الفئة"
     IDS_PRIO_INCREASE                                       "زيادة الأولوية"
     IDS_PRIO_DECREASE                                       "خفض الأولوية"
+    IDS_ENABLE_WINDOWS_LONG_PATHS                           "تمكين المسارات الطويلة Windows..."
+    IDS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS                   "استبعاد eMule تنزيل المجلدات من Microsoft Defender..."
+    IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS              "إطلاق إجراء مرتفع لمرة واحدة لتمكين سياسة المسار الطويل Windows."
+    IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS      "إطلاق إجراء مرتفع لمرة واحدة لاستبعاد المجلدات الواردة ودرجة الحرارة والفئة النشطة من فحص Microsoft Defender."
+    IDS_LONG_PATHS_ENABLE_SUCCESS                           "تم تمكين سياسة المسار الطويل Windows."
+    IDS_LONG_PATHS_ENABLE_FAILURE                           "فشل تحديث سياسة المسار الطويل Windows: %s"
+    IDS_LONG_PATHS_ENABLE_CANCELLED                         "تم إلغاء تحديث سياسة المسار الطويل Windows."
+    IDS_DEFENDER_EXCLUSIONS_SUCCESS                         "اكتمل إجراء استبعاد Microsoft Defender لمجلد (مجلدات) %u."
+    IDS_DEFENDER_EXCLUSIONS_FAILURE                         "فشل إجراء استثناء Microsoft Defender: %s"
+    IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "تم إلغاء إجراء استبعاد Microsoft Defender."
+    IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "لم تكن هناك مجلدات تنزيل eMule متاحة لاستثناء Microsoft Defender."
 END
 // eMule BB managed translation block: end
 

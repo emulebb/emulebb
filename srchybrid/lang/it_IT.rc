@@ -1983,9 +1983,9 @@ BEGIN
     IDS_FIREWALL_REPAIR_FAILURE                                "Riparazione di Windows Firewall non riuscita: %s"
     IDS_FIREWALL_REPAIR_CANCELLED                              "Riparazione di Windows Firewall annullata."
     IDS_FIREWALL_REPAIR_NO_RULES                               "Nessuna regola di Windows Firewall da riparare per la configurazione porte corrente."
-    IDS_SPEED_LIMIT_UPLOAD_FMT                                 "Limite: upload %u%%\t%u %s"
-    IDS_SPEED_LIMIT_DOWNLOAD_FMT                               "Limite: download %u%%\t%u %s"
-    IDS_SPEED_LIMIT_BOTH_FMT                                   "Limite: entrambi %u%%\tU %u %s / D %u %s"
+    IDS_SPEED_LIMIT_UPLOAD_FMT                                 "Limite: upload %u%%	%u %s"
+    IDS_SPEED_LIMIT_DOWNLOAD_FMT                               "Limite: download %u%%	%u %s"
+    IDS_SPEED_LIMIT_BOTH_FMT                                   "Limite: entrambi %u%%	U %u %s / D %u %s"
     IDS_SPEED_ACTION_BOTH_UPLOAD_DOWNLOAD                      "&Upload e download"
     IDS_SPEED_ACTION_UPLOAD                                    "&Upload"
     IDS_SPEED_ACTION_DOWNLOAD                                  "&Download"
@@ -2053,8 +2053,8 @@ BEGIN
     IDS_FAKEFILE_REASON_BAD_RATING                             "ha ricevuto valutazioni negative"
     IDS_FAKEFILE_REASON_FAKE_RATING                            "ha ricevuto valutazioni di file falso"
     IDS_FAKEFILE_REASON_MULTIPLE_AICH                          "sono stati osservati hash AICH contrastanti"
-    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_LENGTH                "metadati di durata multimediale poco plausibili"
-    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_BITRATE               "metadati di bitrate multimediale poco plausibili"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_LENGTH               "metadati di durata multimediale poco plausibili"
+    IDS_FAKEFILE_REASON_IMPLAUSIBLE_MEDIA_BITRATE              "metadati di bitrate multimediale poco plausibili"
     IDS_FAKEFILE_EVIDENCE_PENDING_HEADER                       "Controllo intestazione: in sospeso"
     IDS_FAKEFILE_EVIDENCE_CACHED                               "Evidenza intestazione: in cache"
     IDS_FAKEFILE_EVIDENCE_EXTENSIONS                           "Estensioni osservate: %s"
@@ -2144,22 +2144,50 @@ BEGIN
     IDS_ARCHPREV_CRC                                           "CRC"
     IDS_WS_ENABLE_REST_API                                     "Abilita REST API"
     IDS_WS_ENABLE_LEGACY_WEBUI                                 "Abilita l'interfaccia utente Web precedente"
-    IDS_WEBSERVER_TT_WSLEGACYUI                                "Abilita la vecchia interfaccia utente Web basata su modello.\r\n\r\nLascia questa opzione disattivata per l'utilizzo solo REST. Se abilitati, i modelli mancanti influiscono solo sulle pagine HTML precedenti, non sulle richieste REST API."
+    IDS_WEBSERVER_TT_WSLEGACYUI                                "Abilita la vecchia interfaccia utente Web basata su modello.
+
+Lascia questa opzione disattivata per l'utilizzo solo REST. Se abilitati, i modelli mancanti influiscono solo sulle pagine HTML precedenti, non sulle richieste REST API."
     IDS_TWEAKS_NETWORK_CONNECTIVITY                            "&Connettività di rete"
     IDS_EXIT_ON_BIND_LOSS                                      "Uscire da eMule se l'interfaccia di collegamento/VPN selezionata viene persa"
-    IDS_TWEAKS_TT_PREVIEW_COPIED_ARCHIVES                      "Crea una copia di archivio recuperata temporanea prima dell'anteprima.\r\n\r\nQuesto può migliorare la compatibilità con i gestori di anteprime esterni, ma utilizza più spazio su disco e I/O."
-    IDS_TWEAKS_TT_NETWORK_CONNECTIVITY                         "Tempi di connessione e controlli automatici di mappatura delle porte.\r\n\r\nQueste impostazioni influiscono sulla raggiungibilità e sulla stabilità della sessione. Mantieni le impostazioni predefinite a meno che tu non stia deliberatamente ottimizzando il comportamento della rete."
-    IDS_TWEAKS_TT_AUTO_ARCH                                    "Apre la scheda Contenuto dell'archivio senza avviare automaticamente la scansione dell'archivio.\r\n\r\nAbilitala se desideri controllare le anteprime dell'archivio solo quando le avvii esplicitamente."
-    IDS_CONNECTION_TT_EXIT_ON_BIND_LOSS                        "Esce da eMule se l'interfaccia di collegamento/VPN selezionata scompare dopo l'avvio.\r\n\r\nDisponibile solo quando è selezionata un'interfaccia di collegamento. Usalo come protezione VPN in modo che la rete P2P non ricada mai silenziosamente su un percorso non VPN."
-    IDS_PPG_SECURITY_TT_ENABLE_IPFILTER                        "Applica le regole ipfilter.dat caricate a peer, origini, contatti Kad e altri controlli del filtro IP.\r\n\r\nDisabilita per mantenere il file del filtro disponibile senza essere bloccato dalle regole del filtro IP."
-    IDS_PPG_FILES_TT_VIDEOTHUMBNAILS                           "Controlla la frequenza con cui eMule tenta la generazione di miniature video per scaricare file video.\r\n\r\nImposta su 0 per disabilitare la generazione di miniature. Gli intervalli abilitati utilizzano 30..900 secondi. L'intervallo consigliato predefinito è 90 secondi."
-    IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG                          "L'eseguibile FFmpeg esterno utilizzato solo per la generazione di miniature video.\r\n\r\nFFmpeg deve essere installato separatamente. Selezionare ffmpeg.exe con il pulsante Sfoglia."
-    IDS_PPG_SECURITY_TT_FILTERLEVEL                            "Livello minimo di filtro IP utilizzato quando il filtro IP è abilitato.\r\n\r\nValori inferiori bloccano più intervalli; valori più alti sono meno aggressivi."
-    IDS_WEBSERVER_TT_TMPLBROWSE                                "Cerca il file modello dell'interfaccia utente Web legacy.\r\n\r\nÈ necessario solo quando l'interfaccia utente Web legacy è abilitata."
-    IDS_WEBSERVER_TT_TMPLPATH                                  "File modello usato dall'interfaccia web legacy.\r\n\r\nLe richieste API REST non richiedono questo file."
-    IDS_WEBSERVER_TT_WSENABLED                                 "Abilita REST API e il listener del server Web condiviso.\r\n\r\nAttivalo solo quando è necessario il controllo remoto e sono state configurate password e limiti di accesso."
-    IDS_WEBSERVER_TT_WSRELOADTMPL                              "Ricarica i modelli dell'interfaccia utente Web legacy dal disco senza riavviare eMule.\r\n\r\nUtilizzalo dopo aver modificato i file del modello."
-    IDS_WEBSERVER_TT_WS_GZIP                                   "Comprime con gzip le risposte dell'interfaccia web legacy quando i client lo supportano.\r\n\r\nLe risposte dell'API REST non sono controllate da questa opzione dell'interfaccia legacy."
+    IDS_TWEAKS_TT_PREVIEW_COPIED_ARCHIVES                      "Crea una copia di archivio recuperata temporanea prima dell'anteprima.
+
+Questo può migliorare la compatibilità con i gestori di anteprime esterni, ma utilizza più spazio su disco e I/O."
+    IDS_TWEAKS_TT_NETWORK_CONNECTIVITY                         "Tempi di connessione e controlli automatici di mappatura delle porte.
+
+Queste impostazioni influiscono sulla raggiungibilità e sulla stabilità della sessione. Mantieni le impostazioni predefinite a meno che tu non stia deliberatamente ottimizzando il comportamento della rete."
+    IDS_TWEAKS_TT_AUTO_ARCH                                    "Apre la scheda Contenuto dell'archivio senza avviare automaticamente la scansione dell'archivio.
+
+Abilitala se desideri controllare le anteprime dell'archivio solo quando le avvii esplicitamente."
+    IDS_CONNECTION_TT_EXIT_ON_BIND_LOSS                        "Esce da eMule se l'interfaccia di collegamento/VPN selezionata scompare dopo l'avvio.
+
+Disponibile solo quando è selezionata un'interfaccia di collegamento. Usalo come protezione VPN in modo che la rete P2P non ricada mai silenziosamente su un percorso non VPN."
+    IDS_PPG_SECURITY_TT_ENABLE_IPFILTER                        "Applica le regole ipfilter.dat caricate a peer, origini, contatti Kad e altri controlli del filtro IP.
+
+Disabilita per mantenere il file del filtro disponibile senza essere bloccato dalle regole del filtro IP."
+    IDS_PPG_FILES_TT_VIDEOTHUMBNAILS                           "Controlla la frequenza con cui eMule tenta la generazione di miniature video per scaricare file video.
+
+Imposta su 0 per disabilitare la generazione di miniature. Gli intervalli abilitati utilizzano 30..900 secondi. L'intervallo consigliato predefinito è 90 secondi."
+    IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG                          "L'eseguibile FFmpeg esterno utilizzato solo per la generazione di miniature video.
+
+FFmpeg deve essere installato separatamente. Selezionare ffmpeg.exe con il pulsante Sfoglia."
+    IDS_PPG_SECURITY_TT_FILTERLEVEL                            "Livello minimo di filtro IP utilizzato quando il filtro IP è abilitato.
+
+Valori inferiori bloccano più intervalli; valori più alti sono meno aggressivi."
+    IDS_WEBSERVER_TT_TMPLBROWSE                                "Cerca il file modello dell'interfaccia utente Web legacy.
+
+È necessario solo quando l'interfaccia utente Web legacy è abilitata."
+    IDS_WEBSERVER_TT_TMPLPATH                                  "File modello usato dall'interfaccia web legacy.
+
+Le richieste API REST non richiedono questo file."
+    IDS_WEBSERVER_TT_WSENABLED                                 "Abilita REST API e il listener del server Web condiviso.
+
+Attivalo solo quando è necessario il controllo remoto e sono state configurate password e limiti di accesso."
+    IDS_WEBSERVER_TT_WSRELOADTMPL                              "Ricarica i modelli dell'interfaccia utente Web legacy dal disco senza riavviare eMule.
+
+Utilizzalo dopo aver modificato i file del modello."
+    IDS_WEBSERVER_TT_WS_GZIP                                   "Comprime con gzip le risposte dell'interfaccia web legacy quando i client lo supportano.
+
+Le risposte dell'API REST non sono controllate da questa opzione dell'interfaccia legacy."
     IDS_DL_BATCH                                               "&Lotto"
     IDS_DL_PAUSE_CATEGORY                                      "Metti in pausa tutto in questa categoria"
     IDS_DL_STOP_CATEGORY                                       "Interrompi tutto in questa categoria"
@@ -2220,9 +2248,15 @@ BEGIN
     IDS_DIAG_CAPTURE_FULLDUMP                                  "&Cattura dump della memoria completa..."
     IDS_DIAG_DUMP_KIND_MINI                                    "mini"
     IDS_DIAG_DUMP_KIND_FULL                                    "memoria completa"
-    IDS_DIAG_MINIDUMP_SUCCESS                                  "Mini dump salvato in ""%s"".\r\n\r\nAllega questo file quando riporti la diagnostica."
-    IDS_DIAG_FULLDUMP_SUCCESS                                  "Dump della memoria completa salvato in ""%s"".\r\n\r\nI dump completi possono contenere dati privati ​​come percorsi di file, testo di ricerca, dettagli di rete e contenuto della memoria. Condividilo solo con le persone di cui ti fidi."
-    IDS_DIAG_DUMP_FAILURE                                      "Impossibile acquisire il dump %s.\r\n\r\n%s"
+    IDS_DIAG_MINIDUMP_SUCCESS                                  "Mini dump salvato in ""%s"".
+
+Allega questo file quando riporti la diagnostica."
+    IDS_DIAG_FULLDUMP_SUCCESS                                  "Dump della memoria completa salvato in ""%s"".
+
+I dump completi possono contenere dati privati ​​come percorsi di file, testo di ricerca, dettagli di rete e contenuto della memoria. Condividilo solo con le persone di cui ti fidi."
+    IDS_DIAG_DUMP_FAILURE                                      "Impossibile acquisire il dump %s.
+
+%s"
     IDS_DIAG_DUMP_LOG_SUCCESS                                  "Dump diagnostico %s salvato in ""%s""."
     IDS_DIAG_DUMP_LOG_FAILURE                                  "Dump diagnostico %s non riuscito: %s"
     IDS_SF_RELOADTIP                                           "Ricarica i file condivisi dal disco."
@@ -2335,7 +2369,9 @@ BEGIN
     IDS_TWEAKS_COMMIT_NEVER                                    "Non forzare mai lo scarico"
     IDS_TWEAKS_COMMIT_ON_SHUTDOWN                              "Solo allo spegnimento"
     IDS_TWEAKS_COMMIT_ALWAYS                                   "Ad ogni salvataggio"
-    IDS_TWEAKS_VALIDATION_INVALID_VALUE_FMT                    "Valore non valido per ""%s"".\n\n%s"
+    IDS_TWEAKS_VALIDATION_INVALID_VALUE_FMT                    "Valore non valido per ""%s"".
+
+%s"
     IDS_TWEAKS_VALIDATION_INTEGER                              "Inserisci un numero intero."
     IDS_TWEAKS_VALIDATION_EDITOR_COMMAND                       "Inserisci un comando dell'editor, ad esempio notepad.exe."
     IDS_TWEAKS_VALIDATION_FOLLOW_MAJORITY_PERCENT_RANGE_FMT    "Intervallo previsto: %u..%u percentuale."
@@ -2366,7 +2402,9 @@ BEGIN
     IDS_WEB_MAX_UPLOAD_MIB_LABEL                               "MiB massimo di caricamento:"
     IDS_WEB_ALLOWED_IPS_LABEL                                  "IP consentiti:"
     IDS_WEB_INVALID_UPLOAD_SIZE_MIB                            "Inserisci una dimensione di caricamento WebServer valida in MiB."
-    IDS_WEB_INVALID_ALLOWED_IP_FMT                             "WebServer IP indirizzo ""%s"" non valido consentito.\r\n\r\nUtilizzare indirizzi IPv4 separati da punto e virgola o lasciare il campo vuoto per consentire qualsiasi indirizzo remoto."
+    IDS_WEB_INVALID_ALLOWED_IP_FMT                             "WebServer IP indirizzo ""%s"" non valido consentito.
+
+Utilizzare indirizzi IPv4 separati da punto e virgola o lasciare il campo vuoto per consentire qualsiasi indirizzo remoto."
     IDS_USE_WINDOWS_TOAST_NOTIFICATIONS                        "Utilizza le notifiche di avviso popup Windows"
     IDS_NOTIFICATION_DISPLAY_MODE                              "Modalità di visualizzazione:"
     IDS_NOTIFICATION_MODE_WINDOWS_TOAST                        "Windows pane tostato"
@@ -2393,176 +2431,486 @@ BEGIN
     IDS_FATAL_NO_RICHEDIT                                      "Errore fatale: nessuna libreria di controlli Rich Edit trovata!"
     IDS_FATAL_KAD_UNICODE_TABLES                               "Errore irreversibile: impossibile caricare le tabelle di caratteri Unicode per Kademlia!"
     IDS_KAD_UNICODE_MAP_NOT_INITIALIZED                        "Kad Mappa caratteri minuscoli Unicode non inizializzata!"
-    IDS_TWEAKS_TT_CONDITIONAL_TCP_ACCEPT                       "Preferisce accettare connessioni TCP in entrata solo quando sembrano utili.\r\n\r\nModifica avanzata di modellazione del traffico. Lasciarlo al valore predefinito a meno che non si stia diagnosticando la pressione di connessione."
-    IDS_TWEAKS_TT_MAX_CON5_SEC                                 "Numero massimo di nuove connessioni TCP eMule può aprirsi entro cinque secondi.\r\n\r\nI valori più bassi sono più delicati su Windows e sui router. Lasciarlo vicino al valore predefinito a meno che non si stia ottimizzando il comportamento del burst di connessione."
-    IDS_TWEAKS_TT_MAX_HALF_OPEN                                "Limite superiore per tentativi di connessione TCP in uscita semiaperti.\r\n\r\nPrincipalmente una salvaguardia della compatibilità. L'impostazione predefinita è solitamente la scelta giusta a meno che non si stiano esaminando problemi di configurazione di TCP."
-    IDS_TWEAKS_TT_CONNECTION_TIMEOUT                           "Quanto tempo eMule attende affinché una nuova connessione faccia progressi prima di considerarla fallita.\r\n\r\nI valori più brevi vengono ripristinati più velocemente dai peer inattivi; valori più lunghi sono più tolleranti nei confronti delle reti lente. Si consigliano valori predefiniti."
-    IDS_TWEAKS_TT_DOWNLOAD_TIMEOUT                             "Per quanto tempo una fonte di download può rimanere inattiva prima che eMule la rilasci come bloccata.\r\n\r\nValori più bassi ripuliscono le fonti morte più velocemente, ma valori molto bassi possono danneggiare i peer lenti. Lasciare l'impostazione predefinita a meno che non si stia diagnosticando uno stallo."
-    IDS_TWEAKS_TT_SERVER_KEEP_ALIVE_TIMEOUT                    "La frequenza con cui eMule aggiorna una connessione al server altrimenti inattiva.\r\n\r\nUtilizzare minuti. Impostare 0 per disabilitare i keepalive. Lasciare l'impostazione predefinita a meno che non si stia risolvendo un problema specifico di disconnessione del server inattivo."
-    IDS_TWEAKS_TT_SEARCH_ED2K_MAX_RESULTS                      "Numero massimo di risultati richiesti da un server eD2K per una ricerca.\r\n\r\nValori più alti possono trovare più file ma aumentano il lavoro del server e il rumore dell'interfaccia utente. Rimani vicino al valore predefinito a meno che tu non abbia un motivo specifico."
-    IDS_TWEAKS_TT_SEARCH_ED2K_MAX_MORE_REQUESTS                "Numero massimo di pagine di risultati di follow-up richieste eMule da una ricerca eD2K.\r\n\r\nValori più alti possono ottenere più risultati ma costano più traffico e tempo sul server. Si consigliano valori conservativi."
-    IDS_TWEAKS_TT_SEARCH_KAD_FILE_TOTAL                        "Numero target di risultati per le ricerche di file Kad.\r\n\r\nI valori più alti eseguono ricerche in modo più ampio ma mantengono attive le ricerche Kad più a lungo. Rimani vicino all'impostazione predefinita a meno che tu non voglia ricerche più approfondite."
-    IDS_TWEAKS_TT_SEARCH_KAD_KEYWORD_TOTAL                     "Numero target di risultati per le ricerche di parole chiave Kad.\r\n\r\nValori più alti possono trovare più corrispondenze ma aumentano il carico di query Kad e il rumore dell'interfaccia utente. L'impostazione predefinita è solitamente il giusto equilibrio."
-    IDS_TWEAKS_TT_SEARCH_KAD_FILE_LIFETIME                     "Durata massima di una ricerca di file Kad in secondi.\r\n\r\nAlzalo solo se desideri deliberatamente ricerche Kad più lunghe."
-    IDS_TWEAKS_TT_SEARCH_KAD_KEYWORD_LIFETIME                  "Durata massima di una ricerca per parola chiave Kad in secondi.\r\n\r\nVite più lunghe possono trovare risultati successivi ma aumentare l'attività di ricerca in background."
-    IDS_TWEAKS_TT_GENERAL_ADVANCED                             "Comportamento avanzato generale che non si adatta perfettamente alla rete, ai file, al display o alla sicurezza.\r\n\r\nLa maggior parte degli utenti dovrebbe lasciarli vicini ai valori predefiniti."
-    IDS_TWEAKS_TT_HIDDEN_FILE                                  "Comportamento avanzato di gestione dei file, ispezione dell'anteprima e opzioni relative alla cronologia dei file.\r\n\r\nQueste impostazioni determinano il modo in cui eMule tratta i file, non la quantità di spazio su disco che riserva."
-    IDS_TWEAKS_TT_STORAGE_PERSISTENCE                          "Impostazioni avanzate di protezione dello spazio su disco, buffering dei file e persistenza dei metadati.\r\n\r\nQuesto è il gruppo principale per la sicurezza dello storage e i compromessi di I/O del disco."
-    IDS_TWEAKS_TT_HIDDEN_STARTUP                               "Comportamento di ripristino all'avvio avanzato.\r\n\r\nQueste opzioni influiscono solo su quali riquadri dell'interfaccia utente vengono ripristinati all'avvio di eMule."
-    IDS_TWEAKS_TT_HIDDEN_DISPLAY                               "Impostazioni avanzate di visualizzazione, barra delle applicazioni, vassoio e informazioni visive.\r\n\r\nQueste opzioni modificano solo la presentazione, non il comportamento di trasferimento."
-    IDS_TWEAKS_TT_HIDDEN_SECURITY                              "Opzioni avanzate di filtro e protezione per una gestione più rigorosa dei peer e dei messaggi.\r\n\r\nLe impostazioni predefinite consigliate sono appropriate per la maggior parte degli utenti."
-    IDS_TWEAKS_TT_LOGGING_GROUP                                "Registrazione persistente e controlli dell'output diagnostico.\r\n\r\nLa maggior parte di queste impostazioni sono utili solo durante la diagnosi di un problema."
-    IDS_TWEAKS_TT_AUTO_TAKE_ED2K_LINKS                         "Registra eMule come gestore predefinito per i collegamenti ed2k://.\r\n\r\nAbilitalo se questa macchina deve aprire automaticamente i collegamenti ed2k in eMule. Disabilitalo se un altro strumento dovesse possedere quell'associazione."
-    IDS_TWEAKS_TT_CREDIT_SYSTEM                                "Utilizza il normale sistema di crediti eMule quando classifica i client di caricamento.\r\n\r\nConsigliato: abilitato. Disabilitalo solo per il debug o per esperimenti di compatibilità deliberati."
-    IDS_TWEAKS_TT_YOUR_HOSTNAME                                "L'etichetta opzionale del nome host eMule segnala dove viene mostrato il testo della tua identità locale.\r\n\r\nLascia vuoto a meno che tu non voglia intenzionalmente nominare questa istanza."
-    IDS_TWEAKS_TT_TXT_EDITOR                                   "Comando utilizzato quando eMule apre file di testo come registri o output di testo generato.\r\n\r\nUtilizza un percorso completo se l'editor non è su PATH. Il valore predefinito è notepad.exe."
-    IDS_TWEAKS_TT_HIGHRES_TIMER                                "Richiede un timer Windows ad alta risoluzione mentre eMule è in esecuzione.\r\n\r\nCiò può rendere il timing più fluido su alcuni sistemi, ma potrebbe aumentare il consumo energetico. Riavvia eMule dopo averlo modificato."
-    IDS_TWEAKS_TT_ICH                                          "Abilita la gestione intelligente della corruzione per i blocchi scaricati danneggiati.\r\n\r\nConsigliato: abilitato. Aiuta a recuperare i dati validi all'interno delle parti danneggiate invece di scaricarli nuovamente più del necessario."
-    IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS                         "Controlla se l'anteprima multimediale viene offerta prima che i normali controlli di sicurezza dell'anteprima siano completamente soddisfatti.\r\n\r\nI livelli più alti rendono l'anteprima disponibile prima, ma diventano più probabili anteprime fallite o fuorvianti."
+    IDS_TWEAKS_TT_CONDITIONAL_TCP_ACCEPT                       "Preferisce accettare connessioni TCP in entrata solo quando sembrano utili.
+
+Modifica avanzata di modellazione del traffico. Lasciarlo al valore predefinito a meno che non si stia diagnosticando la pressione di connessione."
+    IDS_TWEAKS_TT_MAX_CON5_SEC                                 "Numero massimo di nuove connessioni TCP eMule può aprirsi entro cinque secondi.
+
+I valori più bassi sono più delicati su Windows e sui router. Lasciarlo vicino al valore predefinito a meno che non si stia ottimizzando il comportamento del burst di connessione."
+    IDS_TWEAKS_TT_MAX_HALF_OPEN                                "Limite superiore per tentativi di connessione TCP in uscita semiaperti.
+
+Principalmente una salvaguardia della compatibilità. L'impostazione predefinita è solitamente la scelta giusta a meno che non si stiano esaminando problemi di configurazione di TCP."
+    IDS_TWEAKS_TT_CONNECTION_TIMEOUT                           "Quanto tempo eMule attende affinché una nuova connessione faccia progressi prima di considerarla fallita.
+
+I valori più brevi vengono ripristinati più velocemente dai peer inattivi; valori più lunghi sono più tolleranti nei confronti delle reti lente. Si consigliano valori predefiniti."
+    IDS_TWEAKS_TT_DOWNLOAD_TIMEOUT                             "Per quanto tempo una fonte di download può rimanere inattiva prima che eMule la rilasci come bloccata.
+
+Valori più bassi ripuliscono le fonti morte più velocemente, ma valori molto bassi possono danneggiare i peer lenti. Lasciare l'impostazione predefinita a meno che non si stia diagnosticando uno stallo."
+    IDS_TWEAKS_TT_SERVER_KEEP_ALIVE_TIMEOUT                    "La frequenza con cui eMule aggiorna una connessione al server altrimenti inattiva.
+
+Utilizzare minuti. Impostare 0 per disabilitare i keepalive. Lasciare l'impostazione predefinita a meno che non si stia risolvendo un problema specifico di disconnessione del server inattivo."
+    IDS_TWEAKS_TT_SEARCH_ED2K_MAX_RESULTS                      "Numero massimo di risultati richiesti da un server eD2K per una ricerca.
+
+Valori più alti possono trovare più file ma aumentano il lavoro del server e il rumore dell'interfaccia utente. Rimani vicino al valore predefinito a meno che tu non abbia un motivo specifico."
+    IDS_TWEAKS_TT_SEARCH_ED2K_MAX_MORE_REQUESTS                "Numero massimo di pagine di risultati di follow-up richieste eMule da una ricerca eD2K.
+
+Valori più alti possono ottenere più risultati ma costano più traffico e tempo sul server. Si consigliano valori conservativi."
+    IDS_TWEAKS_TT_SEARCH_KAD_FILE_TOTAL                        "Numero target di risultati per le ricerche di file Kad.
+
+I valori più alti eseguono ricerche in modo più ampio ma mantengono attive le ricerche Kad più a lungo. Rimani vicino all'impostazione predefinita a meno che tu non voglia ricerche più approfondite."
+    IDS_TWEAKS_TT_SEARCH_KAD_KEYWORD_TOTAL                     "Numero target di risultati per le ricerche di parole chiave Kad.
+
+Valori più alti possono trovare più corrispondenze ma aumentano il carico di query Kad e il rumore dell'interfaccia utente. L'impostazione predefinita è solitamente il giusto equilibrio."
+    IDS_TWEAKS_TT_SEARCH_KAD_FILE_LIFETIME                     "Durata massima di una ricerca di file Kad in secondi.
+
+Alzalo solo se desideri deliberatamente ricerche Kad più lunghe."
+    IDS_TWEAKS_TT_SEARCH_KAD_KEYWORD_LIFETIME                  "Durata massima di una ricerca per parola chiave Kad in secondi.
+
+Vite più lunghe possono trovare risultati successivi ma aumentare l'attività di ricerca in background."
+    IDS_TWEAKS_TT_GENERAL_ADVANCED                             "Comportamento avanzato generale che non si adatta perfettamente alla rete, ai file, al display o alla sicurezza.
+
+La maggior parte degli utenti dovrebbe lasciarli vicini ai valori predefiniti."
+    IDS_TWEAKS_TT_HIDDEN_FILE                                  "Comportamento avanzato di gestione dei file, ispezione dell'anteprima e opzioni relative alla cronologia dei file.
+
+Queste impostazioni determinano il modo in cui eMule tratta i file, non la quantità di spazio su disco che riserva."
+    IDS_TWEAKS_TT_STORAGE_PERSISTENCE                          "Impostazioni avanzate di protezione dello spazio su disco, buffering dei file e persistenza dei metadati.
+
+Questo è il gruppo principale per la sicurezza dello storage e i compromessi di I/O del disco."
+    IDS_TWEAKS_TT_HIDDEN_STARTUP                               "Comportamento di ripristino all'avvio avanzato.
+
+Queste opzioni influiscono solo su quali riquadri dell'interfaccia utente vengono ripristinati all'avvio di eMule."
+    IDS_TWEAKS_TT_HIDDEN_DISPLAY                               "Impostazioni avanzate di visualizzazione, barra delle applicazioni, vassoio e informazioni visive.
+
+Queste opzioni modificano solo la presentazione, non il comportamento di trasferimento."
+    IDS_TWEAKS_TT_HIDDEN_SECURITY                              "Opzioni avanzate di filtro e protezione per una gestione più rigorosa dei peer e dei messaggi.
+
+Le impostazioni predefinite consigliate sono appropriate per la maggior parte degli utenti."
+    IDS_TWEAKS_TT_LOGGING_GROUP                                "Registrazione persistente e controlli dell'output diagnostico.
+
+La maggior parte di queste impostazioni sono utili solo durante la diagnosi di un problema."
+    IDS_TWEAKS_TT_AUTO_TAKE_ED2K_LINKS                         "Registra eMule come gestore predefinito per i collegamenti ed2k://.
+
+Abilitalo se questa macchina deve aprire automaticamente i collegamenti ed2k in eMule. Disabilitalo se un altro strumento dovesse possedere quell'associazione."
+    IDS_TWEAKS_TT_CREDIT_SYSTEM                                "Utilizza il normale sistema di crediti eMule quando classifica i client di caricamento.
+
+Consigliato: abilitato. Disabilitalo solo per il debug o per esperimenti di compatibilità deliberati."
+    IDS_TWEAKS_TT_YOUR_HOSTNAME                                "L'etichetta opzionale del nome host eMule segnala dove viene mostrato il testo della tua identità locale.
+
+Lascia vuoto a meno che tu non voglia intenzionalmente nominare questa istanza."
+    IDS_TWEAKS_TT_TXT_EDITOR                                   "Comando utilizzato quando eMule apre file di testo come registri o output di testo generato.
+
+Utilizza un percorso completo se l'editor non è su PATH. Il valore predefinito è notepad.exe."
+    IDS_TWEAKS_TT_HIGHRES_TIMER                                "Richiede un timer Windows ad alta risoluzione mentre eMule è in esecuzione.
+
+Ciò può rendere il timing più fluido su alcuni sistemi, ma potrebbe aumentare il consumo energetico. Riavvia eMule dopo averlo modificato."
+    IDS_TWEAKS_TT_ICH                                          "Abilita la gestione intelligente della corruzione per i blocchi scaricati danneggiati.
+
+Consigliato: abilitato. Aiuta a recuperare i dati validi all'interno delle parti danneggiate invece di scaricarli nuovamente più del necessario."
+    IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS                         "Controlla se l'anteprima multimediale viene offerta prima che i normali controlli di sicurezza dell'anteprima siano completamente soddisfatti.
+
+I livelli più alti rendono l'anteprima disponibile prima, ma diventano più probabili anteprime fallite o fuorvianti."
     IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS_DISABLED                "Utilizza le normali regole di anteprima conservatrici."
     IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS_ALLOW                   "Consenti l'anteprima con blocchi disponibili più piccoli dopo il superamento dei normali controlli dei metadati e del giocatore."
-    IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS_FORCE                   "Offri l'anteprima anche quando manca il primo blocco.\r\n\r\nUtilizzare solo con lettori che possono tollerare contenuti multimediali incompleti, come VLC."
-    IDS_TWEAKS_TT_BEEP_ON_ERROR                                "Riproduce il suono degli errori di sistema quando eMule segnala errori importanti.\r\n\r\nUtile per la risoluzione dei problemi automatica. Disabilitalo se gli avvisi acustici potrebbero distrarre."
-    IDS_TWEAKS_TT_SHOW_COPY_ED2K_LINK_CMD                      "Modifica i menu contestuali dei file per mostrare un comando diretto Copia collegamento ed2k invece dell'azione standard Mostra collegamento ed2k.\r\n\r\nAbilitala se la copia dei collegamenti è il tuo normale flusso di lavoro."
-    IDS_TWEAKS_TT_SPARSE_PART_FILES                            "Utilizza file sparsi per i file di parte quando il file system li supporta.\r\n\r\nConsigliato: abilitato su NTFS per ridurre l'allocazione iniziale del disco. Disabilitarlo solo se il comportamento dei file sparsi causa un problema specifico del file system."
-    IDS_TWEAKS_TT_FULL_ALLOC                                   "Prealloca l'intera dimensione del file di destinazione sul disco all'avvio dei download.\r\n\r\nPuò ridurre la frammentazione, ma riserva spazio immediatamente e costa più lavoro sul disco. Lascialo disattivato a meno che tu non preferisca la preallocazione completa."
-    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_CONFIG                   "Spazio libero minimo riservato sul volume che ospita i file di configurazione di eMule.\r\n\r\nMinimo rigido: 1 GiB. Se questo volume scende al di sotto del limite effettivo, eMule interrompe tutti i download e salva immediatamente i file .part.met.\r\nSe la configurazione condivide un volume con temp o in entrata, prevale il limite più grande su quel volume."
-    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_TEMP                     "Spazio libero minimo riservato su ogni volume che ospita file temporanei.\r\n\r\nMinimo rigido: 5 GiB. Se un volume protetto scende al di sotto del limite effettivo, eMule interrompe tutti i download e salva immediatamente i file .part.met.\r\nSe temp condivide un volume con config o incoming, prevale il limite maggiore su quel volume."
-    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_INCOMING                 "Spazio libero minimo riservato su ogni volume che ospita file in entrata, incluse directory in entrata specifiche della categoria.\r\n\r\nMinimo rigido: 5 GiB. Se in entrata condivide un volume con config o temp, prevale il limite maggiore su quel volume e tutti i download vengono interrotti quando viene superato."
-    IDS_TWEAKS_TT_PERF_LOG                                     "Scrive campioni periodici di carico utile e spese generali per strumenti grafici esterni.\r\n\r\nSolo funzione operatore/debug. Lascialo disattivato a meno che non consumi attivamente i file generati."
-    IDS_TWEAKS_TT_COMMIT                                       "Controlla l'aggressività con cui eMule costringe Windows a scaricare i dati dei file salvati sul disco.\r\n\r\nLe impostazioni più sicure riducono il rischio di perdita di crash ma costano più I/O del disco. ""Solo allo spegnimento"" è l'impostazione predefinita bilanciata."
-    IDS_TWEAKS_TT_COMMIT_NEVER                                 "Chiudi i file normalmente senza forzare uno svuotamento del disco a livello di sistema operativo.\r\n\r\nIl più veloce e leggero sull'I/O del disco, ma più dipendente dallo scaricamento Windows successivo."
-    IDS_TWEAKS_TT_COMMIT_ON_SHUTDOWN                           "Forza uno svuotamento del disco a livello di sistema operativo solo durante la chiusura di eMule.\r\n\r\nPredefinito consigliato. Migliora la sicurezza della persistenza in caso di uscita pulita senza forzare scarichi aggiuntivi durante ogni salvataggio."
-    IDS_TWEAKS_TT_COMMIT_ALWAYS                                "Forza uno svuotamento del disco a livello di sistema operativo su ogni percorso di salvataggio che utilizza l'helper di chiusura commit di eMule.\r\n\r\nIl più sicuro contro arresti anomali o perdita di metadati per interruzione di corrente, ma causa la maggior parte di I/O del disco."
-    IDS_TWEAKS_TT_EXTRACT_META_DATA                            "Controlla se eMule estrae metadati come tag e durata multimediale dai file.\r\n\r\nUtile per informazioni più ricche sui file, ma aggiunge l'ispezione dei file in background. Disabilitalo se desideri la scansione più leggera."
-    IDS_TWEAKS_TT_GEO_LOCATION_ENABLED                         "Risolve i IP peer in dati sulla posizione a livello di paese per la visualizzazione.\r\n\r\nPuramente informativo. Disabilitalo se non ti interessano le bandiere dei paesi o non desideri aggiornare lo sfondo."
-    IDS_TWEAKS_TT_CLOSE_U_PN_P_PORTS                           "Chiude le mappature del router all'uscita pulita quando è stata utilizzata la mappatura NAT automatica.\r\n\r\nConsigliato: abilitato. Disabilitalo solo se vuoi deliberatamente lasciare indietro le mappature."
-    IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE                          "Seleziona il modo in cui eMule esegue la mappatura NAT automatica.\r\n\r\nConsigliato: automatico. Questo prova prima UPnP IGD e torna a PCP/NAT-PMP se necessario."
+    IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS_FORCE                   "Offri l'anteprima anche quando manca il primo blocco.
+
+Utilizzare solo con lettori che possono tollerare contenuti multimediali incompleti, come VLC."
+    IDS_TWEAKS_TT_BEEP_ON_ERROR                                "Riproduce il suono degli errori di sistema quando eMule segnala errori importanti.
+
+Utile per la risoluzione dei problemi automatica. Disabilitalo se gli avvisi acustici potrebbero distrarre."
+    IDS_TWEAKS_TT_SHOW_COPY_ED2K_LINK_CMD                      "Modifica i menu contestuali dei file per mostrare un comando diretto Copia collegamento ed2k invece dell'azione standard Mostra collegamento ed2k.
+
+Abilitala se la copia dei collegamenti è il tuo normale flusso di lavoro."
+    IDS_TWEAKS_TT_SPARSE_PART_FILES                            "Utilizza file sparsi per i file di parte quando il file system li supporta.
+
+Consigliato: abilitato su NTFS per ridurre l'allocazione iniziale del disco. Disabilitarlo solo se il comportamento dei file sparsi causa un problema specifico del file system."
+    IDS_TWEAKS_TT_FULL_ALLOC                                   "Prealloca l'intera dimensione del file di destinazione sul disco all'avvio dei download.
+
+Può ridurre la frammentazione, ma riserva spazio immediatamente e costa più lavoro sul disco. Lascialo disattivato a meno che tu non preferisca la preallocazione completa."
+    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_CONFIG                   "Spazio libero minimo riservato sul volume che ospita i file di configurazione di eMule.
+
+Minimo rigido: 1 GiB. Se questo volume scende al di sotto del limite effettivo, eMule interrompe tutti i download e salva immediatamente i file .part.met.
+Se la configurazione condivide un volume con temp o in entrata, prevale il limite più grande su quel volume."
+    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_TEMP                     "Spazio libero minimo riservato su ogni volume che ospita file temporanei.
+
+Minimo rigido: 5 GiB. Se un volume protetto scende al di sotto del limite effettivo, eMule interrompe tutti i download e salva immediatamente i file .part.met.
+Se temp condivide un volume con config o incoming, prevale il limite maggiore su quel volume."
+    IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_INCOMING                 "Spazio libero minimo riservato su ogni volume che ospita file in entrata, incluse directory in entrata specifiche della categoria.
+
+Minimo rigido: 5 GiB. Se in entrata condivide un volume con config o temp, prevale il limite maggiore su quel volume e tutti i download vengono interrotti quando viene superato."
+    IDS_TWEAKS_TT_PERF_LOG                                     "Scrive campioni periodici di carico utile e spese generali per strumenti grafici esterni.
+
+Solo funzione operatore/debug. Lascialo disattivato a meno che non consumi attivamente i file generati."
+    IDS_TWEAKS_TT_COMMIT                                       "Controlla l'aggressività con cui eMule costringe Windows a scaricare i dati dei file salvati sul disco.
+
+Le impostazioni più sicure riducono il rischio di perdita di crash ma costano più I/O del disco. ""Solo allo spegnimento"" è l'impostazione predefinita bilanciata."
+    IDS_TWEAKS_TT_COMMIT_NEVER                                 "Chiudi i file normalmente senza forzare uno svuotamento del disco a livello di sistema operativo.
+
+Il più veloce e leggero sull'I/O del disco, ma più dipendente dallo scaricamento Windows successivo."
+    IDS_TWEAKS_TT_COMMIT_ON_SHUTDOWN                           "Forza uno svuotamento del disco a livello di sistema operativo solo durante la chiusura di eMule.
+
+Predefinito consigliato. Migliora la sicurezza della persistenza in caso di uscita pulita senza forzare scarichi aggiuntivi durante ogni salvataggio."
+    IDS_TWEAKS_TT_COMMIT_ALWAYS                                "Forza uno svuotamento del disco a livello di sistema operativo su ogni percorso di salvataggio che utilizza l'helper di chiusura commit di eMule.
+
+Il più sicuro contro arresti anomali o perdita di metadati per interruzione di corrente, ma causa la maggior parte di I/O del disco."
+    IDS_TWEAKS_TT_EXTRACT_META_DATA                            "Controlla se eMule estrae metadati come tag e durata multimediale dai file.
+
+Utile per informazioni più ricche sui file, ma aggiunge l'ispezione dei file in background. Disabilitalo se desideri la scansione più leggera."
+    IDS_TWEAKS_TT_GEO_LOCATION_ENABLED                         "Risolve i IP peer in dati sulla posizione a livello di paese per la visualizzazione.
+
+Puramente informativo. Disabilitalo se non ti interessano le bandiere dei paesi o non desideri aggiornare lo sfondo."
+    IDS_TWEAKS_TT_CLOSE_U_PN_P_PORTS                           "Chiude le mappature del router all'uscita pulita quando è stata utilizzata la mappatura NAT automatica.
+
+Consigliato: abilitato. Disabilitalo solo se vuoi deliberatamente lasciare indietro le mappature."
+    IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE                          "Seleziona il modo in cui eMule esegue la mappatura NAT automatica.
+
+Consigliato: automatico. Questo prova prima UPnP IGD e torna a PCP/NAT-PMP se necessario."
     IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE_AUTOMATIC                "Modalità consigliata. Prova prima UPnP IGD, poi torna a PCP/NAT-PMP se la mappatura fallisce."
     IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE_IGD_ONLY                 "Utilizzare solo la mappatura IGD UPnP. Scegli questo se desideri un comportamento UPnP strettamente classico."
     IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE_PCP_NAT_PMP_ONLY         "Utilizzare solo la mappatura PCP/NAT-PMP. Sceglilo solo se l'ambiente del tuo router lo preferisce chiaramente."
-    IDS_TWEAKS_TT_FILE_BUFFER_TIME_LIMIT                       "Età massima dei dati dei file memorizzati nel buffer prima che eMule li scarichi sul disco.\r\n\r\nI valori più bassi riducono i dati a rischio durante gli arresti anomali. Valori più alti possono ridurre la varianza del disco. Il valore predefinito è solitamente un buon compromesso."
-    IDS_TWEAKS_TT_FILE_BUFFER_SIZE                             "Dimensioni del buffer di scrittura per file utilizzato prima di scaricare i dati di download sul disco.\r\n\r\nBuffer più grandi possono ridurre l'attività del disco, ma aumentano l'utilizzo della memoria e le scritture ritardate. Mantieni valori moderati a meno che non stai ottimizzando una configurazione di archiviazione specifica."
-    IDS_TWEAKS_TT_QUEUE_SIZE                                   "Dimensione target della coda di attesa del caricamento.\r\n\r\nValori più alti consentono a più client di attendere, ma aggiungono utilizzo della memoria e sovraccarico di gestione. I valori predefiniti sono consigliati per la maggior parte degli utenti."
-    IDS_TWEAKS_TT_DATE_TIME_FORMAT4_LISTS                      "Formato data/ora personalizzato utilizzato nelle visualizzazioni elenco.\r\n\r\nLascia vuoto per utilizzare la normale formattazione predefinita. Modificalo solo se desideri uno stile di timestamp personalizzato specifico."
-    IDS_TWEAKS_TT_DATE_TIME_FORMAT                             "Formato data/ora personalizzato utilizzato dalle visualizzazioni generali di file e dettagli peer.\r\n\r\nUtilizza token di formattazione CTime. Mantienilo non vuoto; i token non validi possono produrre timestamp confusi."
-    IDS_TWEAKS_TT_DATE_TIME_FORMAT4_LOG                        "Formato data/ora personalizzato utilizzato nelle righe di registro e nell'output di stato simile a un registro.\r\n\r\nUtilizza token di formattazione CTime. Mantienilo conciso in modo che le righe di registro rimangano leggibili."
-    IDS_TWEAKS_TT_ICON_FLASH_ON_NEW_MESSAGE                    "L'icona nella barra delle applicazioni lampeggia quando arriva un nuovo messaggio di chat.\r\n\r\nPuramente una preferenza di notifica. Abilitalo se vuoi che i messaggi risaltino mentre eMule è ridotto a icona."
-    IDS_TWEAKS_TT_INSPECT_ALL_FILE_TYPES                       "Esegui anche il costoso percorso di ispezione in stile MediaInfo per i tipi di file che non sono già classificati come audio o video.\r\n\r\nAttivalo se desideri un'analisi più completa delle informazioni sui file per file insoliti o etichettati erroneamente. Lascialo disattivato per controllare solo i probabili file audio/video e ridurre il lavoro di ispezione in background."
-    IDS_TWEAKS_TT_RE_BAR_TOOLBAR                               "Utilizza il vecchio contenitore della barra degli strumenti principale in stile armatura invece del più semplice layout della barra degli strumenti semplice.\r\n\r\nPrincipalmente una preferenza di layout dell'interfaccia utente. Lascialo abilitato solo se preferisci la presentazione della barra degli strumenti legacy."
-    IDS_TWEAKS_TT_SHOW_UP_DOWN_ICON_IN_TASKBAR                 "Mostra l'icona della velocità combinata di caricamento/download nell'area di notifica della barra delle applicazioni.\r\n\r\nPuramente visivo. Disabilitalo se desideri un'area del vassoio più pulita."
-    IDS_TWEAKS_TT_ALWAYS_SHOW_TRAY_ICON                        "Mantiene l'icona eMule visibile nell'area di notifica Windows mentre eMule è in esecuzione.\r\n\r\nLe classiche notifiche con fumetto nel vassoio e la riduzione a icona nel vassoio possono comunque rendere visibile l'icona nel vassoio quando questa è disabilitata."
-    IDS_TWEAKS_TT_SHOW_VERTICAL_HOUR_MARKERS                   "Disegna indicatori di guida orari nei grafici delle statistiche a lungo termine.\r\n\r\nUtile per leggere i modelli di traffico basati sul tempo. Disabilitalo se preferisci meno confusione nel grafico."
-    IDS_TWEAKS_TT_FORCE_SPEEDS_TO_KB                           "Forza la visualizzazione della velocità a utilizzare unità in stile KB/s invece di ridimensionarsi automaticamente a unità più grandi.\r\n\r\nAbilitalo se preferisci unità familiari fisse. Lascialo spento per display ad alta velocità più leggibili."
-    IDS_TWEAKS_TT_REARRANGE_KAD_SEARCH_KEYWORDS                "Riordina i termini di ricerca delle parole chiave Kad per provare prima una forma di query più utile.\r\n\r\nModifica avanzata del comportamento di ricerca. Lascialo al valore predefinito a meno che tu non stia ottimizzando deliberatamente il comportamento di ricerca di Kad."
-    IDS_TWEAKS_TT_MESSAGE_FROM_VALID_SOURCES_ONLY              "Accetta messaggi solo da peer che sembrano già fonti valide per i tuoi trasferimenti.\r\n\r\nProtezione privacy/spam più forte, ma può bloccare i contatti non richiesti. Abilitalo se desideri una politica di messaggio più rigorosa."
-    IDS_TWEAKS_TT_MAX_CHAT_HISTORY_LINES                       "Numero massimo di righe della cronologia conservate per chat o visualizzazione canale IRC.\r\n\r\nValori più alti mantengono più contesto ma utilizzano più memoria e possono rallentare la visualizzazione delle chat molto occupate."
-    IDS_TWEAKS_TT_MAX_MESSAGE_SESSIONS                         "Numero massimo di sessioni di messaggi peer conservate contemporaneamente.\r\n\r\nValori più elevati mantengono disponibili più conversazioni, ma aumentano l'utilizzo della memoria. L'impostazione predefinita è conservativa."
-    IDS_TWEAKS_TT_CREATE_CRASH_DUMP                            "Controlla la creazione del dump del crash quando eMule rileva un crash non gestito.\r\n\r\nI dump del crash aiutano a diagnosticare gli errori gravi ma possono contenere memoria del processo. Condividili solo con sviluppatori fidati."
+    IDS_TWEAKS_TT_FILE_BUFFER_TIME_LIMIT                       "Età massima dei dati dei file memorizzati nel buffer prima che eMule li scarichi sul disco.
+
+I valori più bassi riducono i dati a rischio durante gli arresti anomali. Valori più alti possono ridurre la varianza del disco. Il valore predefinito è solitamente un buon compromesso."
+    IDS_TWEAKS_TT_FILE_BUFFER_SIZE                             "Dimensioni del buffer di scrittura per file utilizzato prima di scaricare i dati di download sul disco.
+
+Buffer più grandi possono ridurre l'attività del disco, ma aumentano l'utilizzo della memoria e le scritture ritardate. Mantieni valori moderati a meno che non stai ottimizzando una configurazione di archiviazione specifica."
+    IDS_TWEAKS_TT_QUEUE_SIZE                                   "Dimensione target della coda di attesa del caricamento.
+
+Valori più alti consentono a più client di attendere, ma aggiungono utilizzo della memoria e sovraccarico di gestione. I valori predefiniti sono consigliati per la maggior parte degli utenti."
+    IDS_TWEAKS_TT_DATE_TIME_FORMAT4_LISTS                      "Formato data/ora personalizzato utilizzato nelle visualizzazioni elenco.
+
+Lascia vuoto per utilizzare la normale formattazione predefinita. Modificalo solo se desideri uno stile di timestamp personalizzato specifico."
+    IDS_TWEAKS_TT_DATE_TIME_FORMAT                             "Formato data/ora personalizzato utilizzato dalle visualizzazioni generali di file e dettagli peer.
+
+Utilizza token di formattazione CTime. Mantienilo non vuoto; i token non validi possono produrre timestamp confusi."
+    IDS_TWEAKS_TT_DATE_TIME_FORMAT4_LOG                        "Formato data/ora personalizzato utilizzato nelle righe di registro e nell'output di stato simile a un registro.
+
+Utilizza token di formattazione CTime. Mantienilo conciso in modo che le righe di registro rimangano leggibili."
+    IDS_TWEAKS_TT_ICON_FLASH_ON_NEW_MESSAGE                    "L'icona nella barra delle applicazioni lampeggia quando arriva un nuovo messaggio di chat.
+
+Puramente una preferenza di notifica. Abilitalo se vuoi che i messaggi risaltino mentre eMule è ridotto a icona."
+    IDS_TWEAKS_TT_INSPECT_ALL_FILE_TYPES                       "Esegui anche il costoso percorso di ispezione in stile MediaInfo per i tipi di file che non sono già classificati come audio o video.
+
+Attivalo se desideri un'analisi più completa delle informazioni sui file per file insoliti o etichettati erroneamente. Lascialo disattivato per controllare solo i probabili file audio/video e ridurre il lavoro di ispezione in background."
+    IDS_TWEAKS_TT_RE_BAR_TOOLBAR                               "Utilizza il vecchio contenitore della barra degli strumenti principale in stile armatura invece del più semplice layout della barra degli strumenti semplice.
+
+Principalmente una preferenza di layout dell'interfaccia utente. Lascialo abilitato solo se preferisci la presentazione della barra degli strumenti legacy."
+    IDS_TWEAKS_TT_SHOW_UP_DOWN_ICON_IN_TASKBAR                 "Mostra l'icona della velocità combinata di caricamento/download nell'area di notifica della barra delle applicazioni.
+
+Puramente visivo. Disabilitalo se desideri un'area del vassoio più pulita."
+    IDS_TWEAKS_TT_ALWAYS_SHOW_TRAY_ICON                        "Mantiene l'icona eMule visibile nell'area di notifica Windows mentre eMule è in esecuzione.
+
+Le classiche notifiche con fumetto nel vassoio e la riduzione a icona nel vassoio possono comunque rendere visibile l'icona nel vassoio quando questa è disabilitata."
+    IDS_TWEAKS_TT_SHOW_VERTICAL_HOUR_MARKERS                   "Disegna indicatori di guida orari nei grafici delle statistiche a lungo termine.
+
+Utile per leggere i modelli di traffico basati sul tempo. Disabilitalo se preferisci meno confusione nel grafico."
+    IDS_TWEAKS_TT_FORCE_SPEEDS_TO_KB                           "Forza la visualizzazione della velocità a utilizzare unità in stile KB/s invece di ridimensionarsi automaticamente a unità più grandi.
+
+Abilitalo se preferisci unità familiari fisse. Lascialo spento per display ad alta velocità più leggibili."
+    IDS_TWEAKS_TT_REARRANGE_KAD_SEARCH_KEYWORDS                "Riordina i termini di ricerca delle parole chiave Kad per provare prima una forma di query più utile.
+
+Modifica avanzata del comportamento di ricerca. Lascialo al valore predefinito a meno che tu non stia ottimizzando deliberatamente il comportamento di ricerca di Kad."
+    IDS_TWEAKS_TT_MESSAGE_FROM_VALID_SOURCES_ONLY              "Accetta messaggi solo da peer che sembrano già fonti valide per i tuoi trasferimenti.
+
+Protezione privacy/spam più forte, ma può bloccare i contatti non richiesti. Abilitalo se desideri una politica di messaggio più rigorosa."
+    IDS_TWEAKS_TT_MAX_CHAT_HISTORY_LINES                       "Numero massimo di righe della cronologia conservate per chat o visualizzazione canale IRC.
+
+Valori più alti mantengono più contesto ma utilizzano più memoria e possono rallentare la visualizzazione delle chat molto occupate."
+    IDS_TWEAKS_TT_MAX_MESSAGE_SESSIONS                         "Numero massimo di sessioni di messaggi peer conservate contemporaneamente.
+
+Valori più elevati mantengono disponibili più conversazioni, ma aumentano l'utilizzo della memoria. L'impostazione predefinita è conservativa."
+    IDS_TWEAKS_TT_CREATE_CRASH_DUMP                            "Controlla la creazione del dump del crash quando eMule rileva un crash non gestito.
+
+I dump del crash aiutano a diagnosticare gli errori gravi ma possono contenere memoria del processo. Condividili solo con sviluppatori fidati."
     IDS_TWEAKS_TT_CREATE_CRASH_DUMP_DISABLED                   "Non creare file di dump di arresto anomalo del sistema."
     IDS_TWEAKS_TT_CREATE_CRASH_DUMP_PROMPT                     "Chiedi prima di scrivere un dump di arresto anomalo del sistema quando si verifica un arresto anomalo."
-    IDS_TWEAKS_TT_CREATE_CRASH_DUMP_ALWAYS                     "Crea automaticamente un crash dump quando si verifica un arresto anomalo.\r\n\r\nIdeale per il debug di arresti anomali ripetibili su una macchina attendibile."
-    IDS_TWEAKS_TT_MAX_LOG_FILE_SIZE                            "Dimensione massima di ciascun file di registro su disco in KiB.\r\n\r\nUtilizzare 0 per nessun limite di rotazione. Valori molto grandi mantengono più cronologia ma consumano più spazio su disco."
-    IDS_TWEAKS_TT_MAX_LOG_BUFFER                               "Buffer massimo di visualizzazione del registro in memoria in KiB.\r\n\r\nI valori più alti mantengono una cronologia del registro più visibile ma utilizzano più memoria e possono rallentare le visualizzazioni del registro molto occupate."
-    IDS_TWEAKS_TT_LOG_FILE_FORMAT                              "Codifica utilizzata per i file di registro su disco appena aperti.\r\n\r\nLa modifica mentre i registri sono già aperti viene mantenuta, ma il nuovo formato viene utilizzato dopo la riapertura del file di registro o il riavvio di eMule."
+    IDS_TWEAKS_TT_CREATE_CRASH_DUMP_ALWAYS                     "Crea automaticamente un crash dump quando si verifica un arresto anomalo.
+
+Ideale per il debug di arresti anomali ripetibili su una macchina attendibile."
+    IDS_TWEAKS_TT_MAX_LOG_FILE_SIZE                            "Dimensione massima di ciascun file di registro su disco in KiB.
+
+Utilizzare 0 per nessun limite di rotazione. Valori molto grandi mantengono più cronologia ma consumano più spazio su disco."
+    IDS_TWEAKS_TT_MAX_LOG_BUFFER                               "Buffer massimo di visualizzazione del registro in memoria in KiB.
+
+I valori più alti mantengono una cronologia del registro più visibile ma utilizzano più memoria e possono rallentare le visualizzazioni del registro molto occupate."
+    IDS_TWEAKS_TT_LOG_FILE_FORMAT                              "Codifica utilizzata per i file di registro su disco appena aperti.
+
+La modifica mentre i registri sono già aperti viene mantenuta, ma il nuovo formato viene utilizzato dopo la riapertura del file di registro o il riavvio di eMule."
     IDS_TWEAKS_TT_LOG_FILE_FORMAT_UNICODE                      "Scrivi i log come Unicode UTF-16. Questa è l'impostazione predefinita legacy e preserva ampiamente il testo Windows."
     IDS_TWEAKS_TT_LOG_FILE_FORMAT_UTF8                         "Scrivi i log come UTF-8. Utile per gli strumenti che prevedono file di testo UTF-8 moderni."
-    IDS_TWEAKS_TT_LOG2_DISK                                    "Scrive il normale registro dell'applicazione su disco invece di mantenerlo solo in memoria.\r\n\r\nUtile per il debug e l'utilizzo non presidiato a lunga esecuzione, ma aggiunge scritture su disco. Lascialo disattivato a meno che non desideri registri persistenti."
-    IDS_TWEAKS_TT_PERF_LOG_FILE_FORMAT                         "Formato di output per i campioni di registrazione delle prestazioni.\r\n\r\nCSV è più semplice da controllare manualmente. MRTG scrive file collaterali per strumenti grafici che prevedono input in stile MRTG."
+    IDS_TWEAKS_TT_LOG2_DISK                                    "Scrive il normale registro dell'applicazione su disco invece di mantenerlo solo in memoria.
+
+Utile per il debug e l'utilizzo non presidiato a lunga esecuzione, ma aggiunge scritture su disco. Lascialo disattivato a meno che non desideri registri persistenti."
+    IDS_TWEAKS_TT_PERF_LOG_FILE_FORMAT                         "Formato di output per i campioni di registrazione delle prestazioni.
+
+CSV è più semplice da controllare manualmente. MRTG scrive file collaterali per strumenti grafici che prevedono input in stile MRTG."
     IDS_TWEAKS_TT_PERF_LOG_FILE_FORMAT_CSV                     "Scrivere un file di registro delle prestazioni CSV con carico utile con timestamp e campioni generali."
     IDS_TWEAKS_TT_PERF_LOG_FILE_FORMAT_MRTG                    "Scrivere dati in stile MRTG e file sidecar generali derivati ​​dal percorso di base configurato."
-    IDS_TWEAKS_TT_PERF_LOG_FILE                                "Percorso file di base per la registrazione delle prestazioni.\r\n\r\nLascia vuoto per utilizzare il file predefinito nella directory di configurazione di eMule. La modalità MRTG deriva i file _data e _overhead da questo percorso."
-    IDS_TWEAKS_TT_PERF_LOG_INTERVAL                            "Intervallo di campionamento per la registrazione delle prestazioni in minuti.\r\n\r\nIntervalli brevi creano grafici più fini ma più scritture su disco. Utilizzare 1..1440."
-    IDS_TWEAKS_TT_VERBOSE_GROUP                                "Controlli di registrazione diagnostica aggiuntivi per una risoluzione approfondita dei problemi.\r\n\r\nQueste opzioni sono per il debug, non per il normale funzionamento. Lasciali disattivati ​​a meno che tu non stia indagando su un problema specifico."
-    IDS_TWEAKS_TT_RESTORE_LAST_MAIN_WND_DLG                    "Ripristina l'ultima pagina della finestra principale selezionata all'avvio.\r\n\r\nAbilitalo se vuoi che eMule riapra da dove eri rimasto."
-    IDS_TWEAKS_TT_RESTORE_LAST_LOG_PANE                        "Ripristina l'ultimo riquadro del registro selezionato all'avvio.\r\n\r\nPuramente un'opzione comoda per gli utenti che trascorrono del tempo nelle visualizzazioni del registro."
-    IDS_TWEAKS_TT_KEEP_UNAVAILABLE_FIXED_SHARED_DIRS           "Mantiene le directory condivise configurate manualmente nell'elenco anche quando non sono attualmente disponibili.\r\n\r\nUtile per archivi rimovibili o occasionalmente mancanti. Disabilitalo se desideri che le cartelle mancanti vengano eliminate in modo aggressivo."
-    IDS_TWEAKS_TT_PARTIALLY_PURGE_OLD_KNOWN_FILES              "Consente una pulizia più aggressiva delle voci obsolete nella cronologia dei file conosciuti.\r\n\r\nPuò ridurre il disordine nel tempo, ma dimentica anche prima la cronologia dei vecchi file. Lascia l'impostazione predefinita a meno che tu non voglia una cronologia più snella."
-    IDS_TWEAKS_TT_DETECT_TCP_ERROR_FLOODER                     "Rileva ripetuti burst di errori TCP che potrebbero indicare peer abusivi o non funzionanti.\r\n\r\nConsigliato: abilitato. Disabilitalo solo se stai diagnosticando falsi positivi."
-    IDS_TWEAKS_TT_TCP_ERROR_FLOODER_INTERVAL_MINUTES           "Finestra temporale utilizzata per il rilevamento del flusso di errori TCP.\r\n\r\nLe finestre più brevi reagiscono più velocemente; le finestre più lunghe sono meno sensibili. Si consigliano valori predefiniti."
-    IDS_TWEAKS_TT_TCP_ERROR_FLOODER_THRESHOLD                  "Numero di errori TCP nell'intervallo che attiva la gestione del Flooder.\r\n\r\nI valori inferiori sono più rigidi. Alzalo solo se il tuo ambiente produce errori TCP frequenti e innocui."
-    IDS_TWEAKS_TT_SHAREE_MULE                                  "Controlla il modo in cui eMule memorizza e condivide lo stato per utente su questa macchina Windows.\r\n\r\nLascia la modalità corrente a meno che non si stia modificando intenzionalmente il modo in cui più utenti locali condividono configurazione e dati."
-    IDS_TWEAKS_TT_TCP_GROUP                                    "Controlli avanzati TCP burst di connessione, timeout e keepalive.\r\n\r\nQueste impostazioni influiscono sul comportamento della connessione anziché sui limiti di trasferimento. Si consigliano valori predefiniti a meno che non si stiano diagnosticando problemi di configurazione della rete."
-    IDS_TWEAKS_TT_SEARCH_GROUP                                 "Limiti avanzati sull'ampiezza e sulla durata delle ricerche eMule su eD2K e Kad.\r\n\r\nValori più alti possono restituire più risultati, ma aggiungono anche più traffico di rete e rumore dell'interfaccia utente."
-    IDS_TWEAKS_TT_SEARCH_ED2K_GROUP                            "Limiti di ricerca eD2K basati su server.\r\n\r\nUtilizza valori conservativi a meno che non desideri deliberatamente ricerche più approfondite sul server."
-    IDS_TWEAKS_TT_SEARCH_KAD_GROUP                             "Kad ampiezza della ricerca e controlli a vita.\r\n\r\nValori più alti mantengono attive le ricerche distribuite più a lungo e possono trovare più risultati, ma costano più attività in background."
-    IDS_TWEAKS_TT_BROADBAND                                    "Criteri avanzati di riciclaggio degli slot di caricamento e punteggio delle code per un comportamento di caricamento in stile banda larga.\r\n\r\nQueste impostazioni servono per un'ottimizzazione deliberata. Lasciali ai valori predefiniti, a meno che tu non stia modificando l'equità del caricamento o il turnover degli slot."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_MAX_UPLOAD_CLIENTS             "Soft cap per client di caricamento attivi contemporaneamente nell'ambito dello scheduler a banda larga.\r\n\r\nValori più elevati distribuiscono la larghezza di banda su più peer ma rendono ogni slot più sottile. Valori più bassi mantengono meno slot, più forti."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_THRESHOLD                 "Frazione della velocità di caricamento target per slot al di sotto della quale uno slot è considerato lento.\r\n\r\nI valori più bassi tollerano più a lungo gli slot più deboli. Valori più alti riciclano gli slot con prestazioni inferiori in modo più aggressivo."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_GRACE                     "Per quanto tempo uno slot può rimanere al di sotto della soglia lenta prima che eMule prenda in considerazione il riciclo.\r\n\r\nLa grazia più lunga è più paziente con i peer deboli; la grazia più breve gira prima sugli slot deboli."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_WARMUP                    "Periodo di riscaldamento per un nuovo slot di caricamento prima dell'avvio del rilevamento degli slot lenti.\r\n\r\nIn questo modo si evita di penalizzare i nuovi caricamenti per il rumore di avvio e il tempo di accelerazione."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_ZERO_RATE_GRACE                "Periodo di tolleranza per gli slot che non forniscono praticamente alcun dato di caricamento.\r\n\r\nI valori più bassi reagiscono più velocemente agli slot morti o bloccati."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_COOLDOWN                       "Per quanto tempo uno slot lento riciclato rimane penalizzato nel punteggio della coda prima di poter competere di nuovo normalmente.\r\n\r\nUn tempo di recupero più lungo riduce la riselezione immediata dei client recentemente deboli."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_BOOST                "Aggiunge un punteggio extra in coda per i client che richiedono file con un rapporto di caricamento storico basso.\r\n\r\nUtilizzalo se desideri favorire i file che finora hanno ricevuto un caricamento relativamente basso."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_THRESHOLD            "Limite del rapporto di caricamento al di sotto del quale si applica l'incremento del punteggio della coda con rapporto basso.\r\n\r\nI valori inferiori limitano l'incremento ai file con un livello di pubblicazione più basso."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_BONUS                "Punteggio effettivo aggiuntivo in coda concesso quando si attiva il boost con rapporto basso.\r\n\r\nValori più alti rendono il boost più importante nell'ordine di caricamento."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_ID_DIVISOR                 "Divisore di penalità applicato ai client LowID durante il punteggio della coda di caricamento.\r\n\r\nValori più alti riducono la priorità LowID in modo più aggressivo. Imposta 1 per disabilitare la penalità extra LowID."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER               "Limita la quantità di trasferimento che una sessione di caricamento può trasferire prima che eMule prenda in considerazione la rotazione di quello slot.\r\n\r\nLa rotazione avviene solo quando un altro client ha effettivamente bisogno dello slot."
+    IDS_TWEAKS_TT_PERF_LOG_FILE                                "Percorso file di base per la registrazione delle prestazioni.
+
+Lascia vuoto per utilizzare il file predefinito nella directory di configurazione di eMule. La modalità MRTG deriva i file _data e _overhead da questo percorso."
+    IDS_TWEAKS_TT_PERF_LOG_INTERVAL                            "Intervallo di campionamento per la registrazione delle prestazioni in minuti.
+
+Intervalli brevi creano grafici più fini ma più scritture su disco. Utilizzare 1..1440."
+    IDS_TWEAKS_TT_VERBOSE_GROUP                                "Controlli di registrazione diagnostica aggiuntivi per una risoluzione approfondita dei problemi.
+
+Queste opzioni sono per il debug, non per il normale funzionamento. Lasciali disattivati ​​a meno che tu non stia indagando su un problema specifico."
+    IDS_TWEAKS_TT_RESTORE_LAST_MAIN_WND_DLG                    "Ripristina l'ultima pagina della finestra principale selezionata all'avvio.
+
+Abilitalo se vuoi che eMule riapra da dove eri rimasto."
+    IDS_TWEAKS_TT_RESTORE_LAST_LOG_PANE                        "Ripristina l'ultimo riquadro del registro selezionato all'avvio.
+
+Puramente un'opzione comoda per gli utenti che trascorrono del tempo nelle visualizzazioni del registro."
+    IDS_TWEAKS_TT_KEEP_UNAVAILABLE_FIXED_SHARED_DIRS           "Mantiene le directory condivise configurate manualmente nell'elenco anche quando non sono attualmente disponibili.
+
+Utile per archivi rimovibili o occasionalmente mancanti. Disabilitalo se desideri che le cartelle mancanti vengano eliminate in modo aggressivo."
+    IDS_TWEAKS_TT_PARTIALLY_PURGE_OLD_KNOWN_FILES              "Consente una pulizia più aggressiva delle voci obsolete nella cronologia dei file conosciuti.
+
+Può ridurre il disordine nel tempo, ma dimentica anche prima la cronologia dei vecchi file. Lascia l'impostazione predefinita a meno che tu non voglia una cronologia più snella."
+    IDS_TWEAKS_TT_DETECT_TCP_ERROR_FLOODER                     "Rileva ripetuti burst di errori TCP che potrebbero indicare peer abusivi o non funzionanti.
+
+Consigliato: abilitato. Disabilitalo solo se stai diagnosticando falsi positivi."
+    IDS_TWEAKS_TT_TCP_ERROR_FLOODER_INTERVAL_MINUTES           "Finestra temporale utilizzata per il rilevamento del flusso di errori TCP.
+
+Le finestre più brevi reagiscono più velocemente; le finestre più lunghe sono meno sensibili. Si consigliano valori predefiniti."
+    IDS_TWEAKS_TT_TCP_ERROR_FLOODER_THRESHOLD                  "Numero di errori TCP nell'intervallo che attiva la gestione del Flooder.
+
+I valori inferiori sono più rigidi. Alzalo solo se il tuo ambiente produce errori TCP frequenti e innocui."
+    IDS_TWEAKS_TT_SHAREE_MULE                                  "Controlla il modo in cui eMule memorizza e condivide lo stato per utente su questa macchina Windows.
+
+Lascia la modalità corrente a meno che non si stia modificando intenzionalmente il modo in cui più utenti locali condividono configurazione e dati."
+    IDS_TWEAKS_TT_TCP_GROUP                                    "Controlli avanzati TCP burst di connessione, timeout e keepalive.
+
+Queste impostazioni influiscono sul comportamento della connessione anziché sui limiti di trasferimento. Si consigliano valori predefiniti a meno che non si stiano diagnosticando problemi di configurazione della rete."
+    IDS_TWEAKS_TT_SEARCH_GROUP                                 "Limiti avanzati sull'ampiezza e sulla durata delle ricerche eMule su eD2K e Kad.
+
+Valori più alti possono restituire più risultati, ma aggiungono anche più traffico di rete e rumore dell'interfaccia utente."
+    IDS_TWEAKS_TT_SEARCH_ED2K_GROUP                            "Limiti di ricerca eD2K basati su server.
+
+Utilizza valori conservativi a meno che non desideri deliberatamente ricerche più approfondite sul server."
+    IDS_TWEAKS_TT_SEARCH_KAD_GROUP                             "Kad ampiezza della ricerca e controlli a vita.
+
+Valori più alti mantengono attive le ricerche distribuite più a lungo e possono trovare più risultati, ma costano più attività in background."
+    IDS_TWEAKS_TT_BROADBAND                                    "Criteri avanzati di riciclaggio degli slot di caricamento e punteggio delle code per un comportamento di caricamento in stile banda larga.
+
+Queste impostazioni servono per un'ottimizzazione deliberata. Lasciali ai valori predefiniti, a meno che tu non stia modificando l'equità del caricamento o il turnover degli slot."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_MAX_UPLOAD_CLIENTS             "Soft cap per client di caricamento attivi contemporaneamente nell'ambito dello scheduler a banda larga.
+
+Valori più elevati distribuiscono la larghezza di banda su più peer ma rendono ogni slot più sottile. Valori più bassi mantengono meno slot, più forti."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_THRESHOLD                 "Frazione della velocità di caricamento target per slot al di sotto della quale uno slot è considerato lento.
+
+I valori più bassi tollerano più a lungo gli slot più deboli. Valori più alti riciclano gli slot con prestazioni inferiori in modo più aggressivo."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_GRACE                     "Per quanto tempo uno slot può rimanere al di sotto della soglia lenta prima che eMule prenda in considerazione il riciclo.
+
+La grazia più lunga è più paziente con i peer deboli; la grazia più breve gira prima sugli slot deboli."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_WARMUP                    "Periodo di riscaldamento per un nuovo slot di caricamento prima dell'avvio del rilevamento degli slot lenti.
+
+In questo modo si evita di penalizzare i nuovi caricamenti per il rumore di avvio e il tempo di accelerazione."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ZERO_RATE_GRACE                "Periodo di tolleranza per gli slot che non forniscono praticamente alcun dato di caricamento.
+
+I valori più bassi reagiscono più velocemente agli slot morti o bloccati."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_COOLDOWN                       "Per quanto tempo uno slot lento riciclato rimane penalizzato nel punteggio della coda prima di poter competere di nuovo normalmente.
+
+Un tempo di recupero più lungo riduce la riselezione immediata dei client recentemente deboli."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_BOOST                "Aggiunge un punteggio extra in coda per i client che richiedono file con un rapporto di caricamento storico basso.
+
+Utilizzalo se desideri favorire i file che finora hanno ricevuto un caricamento relativamente basso."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_THRESHOLD            "Limite del rapporto di caricamento al di sotto del quale si applica l'incremento del punteggio della coda con rapporto basso.
+
+I valori inferiori limitano l'incremento ai file con un livello di pubblicazione più basso."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_BONUS                "Punteggio effettivo aggiuntivo in coda concesso quando si attiva il boost con rapporto basso.
+
+Valori più alti rendono il boost più importante nell'ordine di caricamento."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_ID_DIVISOR                 "Divisore di penalità applicato ai client LowID durante il punteggio della coda di caricamento.
+
+Valori più alti riducono la priorità LowID in modo più aggressivo. Imposta 1 per disabilitare la penalità extra LowID."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER               "Limita la quantità di trasferimento che una sessione di caricamento può trasferire prima che eMule prenda in considerazione la rotazione di quello slot.
+
+La rotazione avviene solo quando un altro client ha effettivamente bisogno dello slot."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_DISABLED      "Non riciclare le sessioni di caricamento in base alla quantità di payload trasferito."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_PERCENT       "Limita ogni sessione di caricamento a una percentuale della dimensione del file richiesta."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_PERCENT_VALUE "Percentuale utilizzata quando il limite di trasferimento della sessione è configurato come una quota della dimensione del file."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_MI_B          "Limita ciascuna sessione di caricamento a un importo MiB fisso indipendentemente dalla dimensione del file."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_MI_B_VALUE    "Importo assoluto di MiB utilizzato quando il limite di trasferimento della sessione è configurato come dimensione fissa."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TIME_LIMIT             "Durata massima di una sessione di caricamento prima che eMule consideri la rotazione dello slot.\r\n\r\nImposta 0 per disabilitare il limite basato sul tempo."
-    IDS_TWEAKS_TT_A4_AF_SAVE_CPU                               "Riduce i controlli ripetuti dell'origine A4AF (richiesto per un altro file) per risparmiare tempo della CPU.\r\n\r\nUtile su client occupati, ma può rendere meno entusiasta il passaggio all'origine dello stesso client."
-    IDS_TWEAKS_TT_EXTRACT_META_DATA_NEVER                      "Non estrarre i metadati dai file.\r\n\r\nOpzione più leggera. Usalo se non vuoi eseguire il sondaggio dei metadati in background."
-    IDS_TWEAKS_TT_EXTRACT_META_DATA_ID3_LIB                    "Estrai i metadati solo tramite il percorso della libreria ID3 per i file audio MPEG.\r\n\r\nPredefinito bilanciato per tag musicali di base senza un'ispezione multimediale più ampia."
-    IDS_TWEAKS_TT_PREVIEW_ON_ICON_DBL_CLK                      "Facendo doppio clic sull'icona di un file si apre l'anteprima invece della solita azione predefinita.\r\n\r\nPuramente una preferenza del flusso di lavoro dell'interfaccia utente."
-    IDS_TWEAKS_TT_EXTRA_PREVIEW_WITH_MENU                      "Mostra i comandi di anteprima tramite un menu di azione di anteprima dedicato invece di esporre solo la più semplice azione di anteprima diretta.\r\n\r\nUtile se desideri scelte di anteprima più esplicite nel menu contestuale dell'elenco di download."
-    IDS_TWEAKS_TT_SHOW_ACTIVE_DOWNLOADS_BOLD                   "Disegna i download in fase di trasferimento attivo in grassetto nell'elenco dei download.\r\n\r\nPuramente visivo. Abilitalo se desideri che gli elementi attivi risaltino più chiaramente."
-    IDS_TWEAKS_TT_USE_SYSTEM_FONT_FOR_MAIN_CONTROLS            "Utilizza il normale carattere dell'interfaccia utente Windows per i controlli principali e le visualizzazioni elenco invece della configurazione dei caratteri personalizzata di eMule.\r\n\r\nUtile se preferisci il testo dall'aspetto nativo o hai bisogno di una migliore compatibilità con le impostazioni dei caratteri del tuo sistema."
-    IDS_TWEAKS_TT_FILTER_LANI_PS                               "Ignora gli indirizzi server e client dagli intervalli LAN/privati.\r\n\r\nConsigliato: abilitato. Ciò evita di tentare di utilizzare indirizzi peer non instradabili dalla rete pubblica."
-    IDS_TWEAKS_TT_GEO_LOCATION_CHECK_DAYS                      "La frequenza con cui eMule controlla il contenuto aggiornato del database di geolocalizzazione.\r\n\r\nImposta 0 per disabilitare i controlli di aggiornamento automatici. Valori più grandi riducono l'attività di aggiornamento in background."
-    IDS_TWEAKS_TT_VERBOSE                                      "Interruttore principale per i controlli di registrazione dettagliata riportati di seguito.\r\n\r\nDisabilitalo per l'uso normale. Abilitarlo solo durante l'analisi di un problema specifico."
-    IDS_TWEAKS_TT_FULL_VERBOSE                                 "Registra la traccia dettagliata più completa disponibile quando la registrazione dettagliata è abilitata.\r\n\r\nQuesto può diventare molto rumoroso e deve essere utilizzato solo per la risoluzione dei problemi mirata."
-    IDS_TWEAKS_TT_LOG_LEVEL                                    "Soglia di verbosità per l'output del registro diagnostico.\r\n\r\nI livelli più alti registrano più dettagli ma creano più rumore."
-    IDS_TWEAKS_TT_DEBUG2_DISK                                  "Scrive un output diagnostico dettagliato sul disco invece di mantenerlo transitorio.\r\n\r\nUtile quando è necessaria una traccia di debug persistente, ma aumenta l'attività del disco."
-    IDS_TWEAKS_TT_DEBUG_SOURCE_EXCHANGE                        "Registra i pacchetti e le decisioni relativi allo scambio di origine.\r\n\r\nOpzione diagnostica specializzata. Abilitarlo solo durante il debug del comportamento di rilevamento dell'origine."
-    IDS_TWEAKS_TT_LOG_BANNED_CLIENTS                           "Registra quando i peer vengono bannati e perché.\r\n\r\nUtile per abusi o diagnosi di falsi positivi, ma troppo rumoroso per il normale funzionamento."
-    IDS_TWEAKS_TT_LOG_RATING_DESC_RECEIVED                     "I record hanno ricevuto commenti, descrizioni e valutazioni dei file.\r\n\r\nUtile per il debug del flusso di metadati, ma generalmente non necessario."
-    IDS_TWEAKS_TT_LOG_SECURE_IDENT                             "Registra la verifica dell'identità sicura e i relativi controlli di identità.\r\n\r\nUtile per la risoluzione dei problemi di attendibilità/autenticazione."
-    IDS_TWEAKS_TT_LOG_FILTERED_I_PS                            "Registra quando IP filtra o ignora la logica elimina gli indirizzi peer o server.\r\n\r\nUtile per diagnosticare il motivo per cui alcuni peer vengono rifiutati."
-    IDS_TWEAKS_TT_LOG_FILE_SAVING                              "Registra i salvataggi di dati persistenti come file conosciuti, crediti e stato correlato.\r\n\r\nUtile per il debugging persistente, ma non necessario per l'uso normale."
-    IDS_TWEAKS_TT_LOG_A4_AF                                    "Registra l'attività di riassegnazione dell'origine A4AF (richiesto per un altro file).\r\n\r\nOpzione diagnostica specializzata per la gestione dei download."
-    IDS_TWEAKS_TT_LOG_UL_DL_EVENTS                             "Registra le modifiche al ciclo di vita degli eventi di caricamento e di download.\r\n\r\nUtile per diagnosticare la varianza della coda, la rotazione degli slot o le transizioni dello stato di trasferimento."
-    IDS_TWEAKS_TT_U_PN_P                                       "Impostazioni di mappatura automatica delle porte del router per la connettività in entrata.\r\n\r\nLa maggior parte degli utenti dovrebbe lasciare questo gruppo con le impostazioni predefinite automatiche, a meno che l'ambiente del router non richieda qualcosa di specifico."
-    IDS_TWEAKS_TT_SHAREE_MULE_MULTI_USER                       "Ogni utente Windows riceve una configurazione eMule separata e uno stato di download separato.\r\n\r\nConfig si trova in Local AppData e i download utilizzano la cartella Download dell'utente. La soluzione migliore per i PC condivisi in cui gli utenti non devono condividere i dati eMule."
-    IDS_TWEAKS_TT_SHAREE_MULE_PUBLIC_USER                      "Tutti gli utenti Windows condividono la stessa configurazione e gli stessi download di eMule.\r\n\r\nConfig si trova in ProgramData e i download utilizzano i download pubblici. Utilizzarlo solo se la macchina condivide intenzionalmente uno stato eMule comune."
-    IDS_TWEAKS_TT_SHAREE_MULE_OLD_STYLE                        "Mantieni la configurazione e i download nella directory del programma, utilizzando il layout legacy precedente.\r\n\r\nSolo modalità di compatibilità legacy. Di solito è la scelta meno desiderabile sui moderni Windows."
-    IDS_CONNECTION_TT_AUTOCONNECT                              "Avvia automaticamente le reti abilitate all'avvio di eMule.\r\n\r\nConsigliato: abilitato per il normale utilizzo non presidiato. Disabilitalo solo se vuoi connetterti manualmente ad ogni sessione."
-    IDS_CONNECTION_TT_RECONN                                   "Tenta nuovamente le connessioni al server dopo disconnessioni o tentativi falliti.\r\n\r\nConsigliato: abilitato se si utilizza la rete del server eD2K. Non ha alcun effetto quando la rete del server è disabilitata."
-    IDS_CONNECTION_TT_SHOWOVERHEAD                             "Mostra l'overhead del protocollo separatamente nelle velocità di trasferimento e nelle statistiche.\r\n\r\nAbilitalo se desideri una visione più onesta del traffico via cavo. Lascialo disattivato se preferisci numeri più semplici basati solo sul payload."
-    IDS_CONNECTION_TT_PORT                                     "Porta principale TCP utilizzata per le connessioni client in entrata.\r\n\r\nCambiala solo quando riconfiguri intenzionalmente le regole del firewall o del router. Dopo averlo modificato, testare nuovamente la connettività."
-    IDS_CONNECTION_TT_UDPPORT                                  "Porta UDP utilizzata per Kad e altre funzionalità assistite da UDP.\r\n\r\nConsigliato: mantenerlo abilitato e raggiungibile a meno che non si desideri disabilitare intenzionalmente la rete basata su UDP."
-    IDS_CONNECTION_TT_MAXSOURCEPERFILE                         "Limite rigido per il numero di origini remote che eMule conserva per download.\r\n\r\nValori più elevati possono migliorare la disponibilità di file rari ma costano più memoria e traffico di gestione dell'origine. Utilizza valori moderati a meno che tu non abbia un motivo specifico per aumentarlo."
-    IDS_CONNECTION_TT_MAXCON                                   "Il limite superiore per le connessioni simultanee eMule potrebbe rimanere aperto.\r\n\r\nI valori più alti non sono automaticamente migliori. Lascialo vicino all'impostazione predefinita sintonizzata a meno che tu non stia diagnosticando una limitazione di rete specifica."
-    IDS_CONNECTION_TT_DOWNLOAD_CAP                             "La tua capacità downstream configurata in KiB/s. eMule lo utilizza come riferimento superiore per i cursori e le decisioni sulla larghezza di banda.\r\n\r\nImpostalo vicino alla velocità di linea effettivamente utilizzabile, non al massimo di marketing."
-    IDS_CONNECTION_TT_UPLOAD_CAP                               "La tua capacità upstream configurata in KiB/s. eMule lo utilizza come riferimento superiore per il controllo del caricamento.\r\n\r\nImpostalo vicino alla velocità di caricamento sostenuto reale utilizzabile della tua linea."
-    IDS_CONNECTION_TT_NETWORK_ED2_K                            "Abilita la classica rete di server eD2K.\r\n\r\nLasciala abilitata se utilizzi ancora il rilevamento dell'origine basato su server. Disabilitalo solo se desideri intenzionalmente il funzionamento solo di Kad."
-    IDS_CONNECTION_TT_NETWORK_KADEMLIA                         "Abilita la rete distribuita Kad.\r\n\r\nConsigliato: abilitato per l'uso moderno. Richiede che la porta UDP rimanga abilitata."
-    IDS_CONNECTION_TT_PREF_UPNPONSTART                         "Tenta la mappatura automatica delle porte NAT all'avvio per le porte TCP e UDP configurate.\r\n\r\nConsigliato: abilitato quando il router supporta UPnP o PCP/NAT-PMP. Disabilitalo se inoltri le porte manualmente."
-    IDS_CONNECTION_TT_RANDOMIZE_PORTS_ON_STARTUP               "Sceglie le nuove porte di ascolto TCP e UDP all'avvio prima dell'esecuzione della mappatura automatica delle porte.\r\n\r\nL'opzione utilizza l'intervallo di porte casuale esistente di eMule e lascia UDP disabilitato quando la porta UDP è disabilitata."
-    IDS_CONNECTION_TT_UDPDISABLE                               "Disabilita la porta UDP di eMule e quindi disabilita le funzionalità dipendenti da UDP come la rete Kad.\r\n\r\nConsigliato: lasciarlo disattivato a meno che non sia necessario eseguire TCP solo per un ambiente di rete molto specifico."
-    IDS_CONNECTION_TT_STARTTEST                                "Avvia il test di connettività esterna per le porte TCP e UDP attualmente configurate.\r\n\r\nUtilizzalo dopo aver modificato le porte, le impostazioni di associazione o le regole di mappatura del router."
-    IDS_CONNECTION_TT_BIND_INTERFACE                           "Nome dell'interfaccia di rete Windows opzionale utilizzato per l'associazione del socket P2P.\r\n\r\nMatch è in base al nome dell'interfaccia descrittivo, non al numero dell'adattatore. Le modifiche diventano effettive dopo il riavvio."
-    IDS_CONNECTION_TT_BIND_ADDRESS                             "Indirizzo IPv4 opzionale utilizzato per l'associazione del socket P2P.\r\n\r\nLascia vuoto per utilizzare il primo IPv4 sull'interfaccia selezionata o la scelta di routing predefinita quando non è selezionata alcuna interfaccia."
-    IDS_CONNECTION_TT_STARTUP_BIND_BLOCK                       "Mantiene la rete P2P offline per la sessione se la destinazione di associazione configurata non può essere risolta all'avvio.\r\n\r\nDisponibile solo quando è selezionata un'interfaccia di associazione. Consigliato quando si esegue l'associazione esplicita a un'interfaccia denominata e non si desidera il fallback silenzioso."
-    IDS_WEBSERVER_TT_WEBBINDADDR                               "Indirizzo di collegamento locale per WebServer e REST API integrati.\r\n\r\nLascialo vuoto o come 0.0.0.0 per l'ascolto su tutte le interfacce. Imposta un IPv4 specifico solo se desideri deliberatamente limitare il luogo in cui il servizio è in ascolto."
-    IDS_WEBSERVER_TT_WSAPIKEY                                  "Chiave REST API in testo normale utilizzata dai client nell'intestazione X-API-Key.\r\n\r\nConsigliato: mantenere il valore casuale generato a meno che non sia necessario un token specifico. Chiunque disponga di questa chiave ha accesso completo all'API."
-    IDS_WEBSERVER_TT_WSUPNP                                    "Include la porta WebServer nella mappatura NAT automatica quando UPnP o PCP/NAT-PMP è abilitato.\r\n\r\nAbilitalo solo se desideri intenzionalmente che Web UI o REST API siano raggiungibili tramite la mappatura del router."
-    IDS_WEBSERVER_TT_WS_MAXFILEUPLOAD                          "Dimensione massima del caricamento di un singolo file accettata dal WebServer in MiB.\r\n\r\nUtilizzare un valore piccolo per il normale controllo remoto. Aumentalo solo se i client Web attendibili devono caricare file di dimensioni maggiori."
-    IDS_WEBSERVER_TT_WS_MAXFILEUPLOAD_LBL                      "Dimensione massima del caricamento di un singolo file accettata dal WebServer in MiB.\r\n\r\nUtilizzare un valore piccolo per il normale controllo remoto. Aumentalo solo se i client Web attendibili devono caricare file di dimensioni maggiori."
-    IDS_WEBSERVER_TT_WS_ALLOWEDIPS                             "Elenco consentiti IPv4 opzionale separato da punto e virgola per i client WebServer.\r\n\r\nLascia vuoto per consentire qualsiasi indirizzo remoto che può raggiungere WebServer. Esempio: 127.0.0.1;192.168.1.50"
-    IDS_WEBSERVER_TT_WS_ALLOWEDIPS_LBL                         "Elenco consentiti IPv4 opzionale separato da punto e virgola per i client WebServer.\r\n\r\nLascia vuoto per consentire qualsiasi indirizzo remoto che può raggiungere WebServer. Esempio: 127.0.0.1;192.168.1.50"
-    IDS_WEBSERVER_TT_WS_ALLOWHILEVFUNC                         "Consente azioni Web amministrative di alto livello che possono modificare lo stato di runtime in modo più aggressivo.\r\n\r\nConsigliato: mantenerlo disattivato a meno che non siano necessarie esplicitamente tali azioni da client di amministrazione attendibili."
-    IDS_WEBSERVER_TT_WEB_HTTPS                                 "Serve Web UI e REST API su HTTPS utilizzando il certificato e la chiave configurati.\r\n\r\nConsigliato: abilitato ogni volta che si espone WebServer oltre la macchina locale."
-    IDS_NOTIFY_TT_CB_TBN_USESOUND                              "Riproduce un file WAV personalizzato per le notifiche sulla barra delle applicazioni.\r\n\r\nUtilizzalo se desideri un avviso sonoro. Lascialo disattivato se i popup silenziosi o la voce sono sufficienti."
-    IDS_NOTIFY_TT_CB_TBN_USESPEECH                             "Utilizza la sintesi vocale per le notifiche sulla barra delle applicazioni quando è disponibile un motore vocale.\r\n\r\nUtile su sistemi non presidiati in cui gli avvisi vocali sono più facili da notare dei suoni."
-    IDS_NOTIFY_TT_CB_TBN_POP_ALWAYS                            "Mostra un popup per ogni messaggio di chat in arrivo invece che solo per il primo.\r\n\r\nAbilitalo se non vuoi che i messaggi di chat successivi rimangano silenziosi."
-    IDS_NOTIFY_TT_CB_TBN_USEWINDOWSTOAST                       "Utilizza le notifiche di avviso popup Windows invece del popup personalizzato eMule.\r\n\r\nSe Windows rifiuta una notifica di avviso popup, eMule torna al popup personalizzato."
-    IDS_NOTIFY_TT_TBN_DISPLAYMODE                              "Seleziona il modo in cui eMule mostra le notifiche popup abilitate. Il toast\r\n\r\nWindows è l'impostazione predefinita. Se Windows rifiuta una notifica di avviso popup, anche quando eMule è in esecuzione come amministratore, eMule torna al classico fumetto della barra delle applicazioni."
-    IDS_NOTIFY_TT_CB_ENABLENOTIFICATIONS                       "Abilita le notifiche e-mail in uscita per gli eventi configurati.\r\n\r\nAbilitalo solo se hai già configurato un server SMTP e indirizzi funzionanti."
-    IDS_NOTIFY_TT_SMTPSERVER                                   "Apre la configurazione del server SMTP utilizzato dalle notifiche e-mail.\r\n\r\nÈ necessario solo se le notifiche e-mail sono abilitate."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TIME_LIMIT             "Durata massima di una sessione di caricamento prima che eMule consideri la rotazione dello slot.
+
+Imposta 0 per disabilitare il limite basato sul tempo."
+    IDS_TWEAKS_TT_A4_AF_SAVE_CPU                               "Riduce i controlli ripetuti dell'origine A4AF (richiesto per un altro file) per risparmiare tempo della CPU.
+
+Utile su client occupati, ma può rendere meno entusiasta il passaggio all'origine dello stesso client."
+    IDS_TWEAKS_TT_EXTRACT_META_DATA_NEVER                      "Non estrarre i metadati dai file.
+
+Opzione più leggera. Usalo se non vuoi eseguire il sondaggio dei metadati in background."
+    IDS_TWEAKS_TT_EXTRACT_META_DATA_ID3_LIB                    "Estrai i metadati solo tramite il percorso della libreria ID3 per i file audio MPEG.
+
+Predefinito bilanciato per tag musicali di base senza un'ispezione multimediale più ampia."
+    IDS_TWEAKS_TT_PREVIEW_ON_ICON_DBL_CLK                      "Facendo doppio clic sull'icona di un file si apre l'anteprima invece della solita azione predefinita.
+
+Puramente una preferenza del flusso di lavoro dell'interfaccia utente."
+    IDS_TWEAKS_TT_EXTRA_PREVIEW_WITH_MENU                      "Mostra i comandi di anteprima tramite un menu di azione di anteprima dedicato invece di esporre solo la più semplice azione di anteprima diretta.
+
+Utile se desideri scelte di anteprima più esplicite nel menu contestuale dell'elenco di download."
+    IDS_TWEAKS_TT_SHOW_ACTIVE_DOWNLOADS_BOLD                   "Disegna i download in fase di trasferimento attivo in grassetto nell'elenco dei download.
+
+Puramente visivo. Abilitalo se desideri che gli elementi attivi risaltino più chiaramente."
+    IDS_TWEAKS_TT_USE_SYSTEM_FONT_FOR_MAIN_CONTROLS            "Utilizza il normale carattere dell'interfaccia utente Windows per i controlli principali e le visualizzazioni elenco invece della configurazione dei caratteri personalizzata di eMule.
+
+Utile se preferisci il testo dall'aspetto nativo o hai bisogno di una migliore compatibilità con le impostazioni dei caratteri del tuo sistema."
+    IDS_TWEAKS_TT_FILTER_LANI_PS                               "Ignora gli indirizzi server e client dagli intervalli LAN/privati.
+
+Consigliato: abilitato. Ciò evita di tentare di utilizzare indirizzi peer non instradabili dalla rete pubblica."
+    IDS_TWEAKS_TT_GEO_LOCATION_CHECK_DAYS                      "La frequenza con cui eMule controlla il contenuto aggiornato del database di geolocalizzazione.
+
+Imposta 0 per disabilitare i controlli di aggiornamento automatici. Valori più grandi riducono l'attività di aggiornamento in background."
+    IDS_TWEAKS_TT_VERBOSE                                      "Interruttore principale per i controlli di registrazione dettagliata riportati di seguito.
+
+Disabilitalo per l'uso normale. Abilitarlo solo durante l'analisi di un problema specifico."
+    IDS_TWEAKS_TT_FULL_VERBOSE                                 "Registra la traccia dettagliata più completa disponibile quando la registrazione dettagliata è abilitata.
+
+Questo può diventare molto rumoroso e deve essere utilizzato solo per la risoluzione dei problemi mirata."
+    IDS_TWEAKS_TT_LOG_LEVEL                                    "Soglia di verbosità per l'output del registro diagnostico.
+
+I livelli più alti registrano più dettagli ma creano più rumore."
+    IDS_TWEAKS_TT_DEBUG2_DISK                                  "Scrive un output diagnostico dettagliato sul disco invece di mantenerlo transitorio.
+
+Utile quando è necessaria una traccia di debug persistente, ma aumenta l'attività del disco."
+    IDS_TWEAKS_TT_DEBUG_SOURCE_EXCHANGE                        "Registra i pacchetti e le decisioni relativi allo scambio di origine.
+
+Opzione diagnostica specializzata. Abilitarlo solo durante il debug del comportamento di rilevamento dell'origine."
+    IDS_TWEAKS_TT_LOG_BANNED_CLIENTS                           "Registra quando i peer vengono bannati e perché.
+
+Utile per abusi o diagnosi di falsi positivi, ma troppo rumoroso per il normale funzionamento."
+    IDS_TWEAKS_TT_LOG_RATING_DESC_RECEIVED                     "I record hanno ricevuto commenti, descrizioni e valutazioni dei file.
+
+Utile per il debug del flusso di metadati, ma generalmente non necessario."
+    IDS_TWEAKS_TT_LOG_SECURE_IDENT                             "Registra la verifica dell'identità sicura e i relativi controlli di identità.
+
+Utile per la risoluzione dei problemi di attendibilità/autenticazione."
+    IDS_TWEAKS_TT_LOG_FILTERED_I_PS                            "Registra quando IP filtra o ignora la logica elimina gli indirizzi peer o server.
+
+Utile per diagnosticare il motivo per cui alcuni peer vengono rifiutati."
+    IDS_TWEAKS_TT_LOG_FILE_SAVING                              "Registra i salvataggi di dati persistenti come file conosciuti, crediti e stato correlato.
+
+Utile per il debugging persistente, ma non necessario per l'uso normale."
+    IDS_TWEAKS_TT_LOG_A4_AF                                    "Registra l'attività di riassegnazione dell'origine A4AF (richiesto per un altro file).
+
+Opzione diagnostica specializzata per la gestione dei download."
+    IDS_TWEAKS_TT_LOG_UL_DL_EVENTS                             "Registra le modifiche al ciclo di vita degli eventi di caricamento e di download.
+
+Utile per diagnosticare la varianza della coda, la rotazione degli slot o le transizioni dello stato di trasferimento."
+    IDS_TWEAKS_TT_U_PN_P                                       "Impostazioni di mappatura automatica delle porte del router per la connettività in entrata.
+
+La maggior parte degli utenti dovrebbe lasciare questo gruppo con le impostazioni predefinite automatiche, a meno che l'ambiente del router non richieda qualcosa di specifico."
+    IDS_TWEAKS_TT_SHAREE_MULE_MULTI_USER                       "Ogni utente Windows riceve una configurazione eMule separata e uno stato di download separato.
+
+Config si trova in Local AppData e i download utilizzano la cartella Download dell'utente. La soluzione migliore per i PC condivisi in cui gli utenti non devono condividere i dati eMule."
+    IDS_TWEAKS_TT_SHAREE_MULE_PUBLIC_USER                      "Tutti gli utenti Windows condividono la stessa configurazione e gli stessi download di eMule.
+
+Config si trova in ProgramData e i download utilizzano i download pubblici. Utilizzarlo solo se la macchina condivide intenzionalmente uno stato eMule comune."
+    IDS_TWEAKS_TT_SHAREE_MULE_OLD_STYLE                        "Mantieni la configurazione e i download nella directory del programma, utilizzando il layout legacy precedente.
+
+Solo modalità di compatibilità legacy. Di solito è la scelta meno desiderabile sui moderni Windows."
+    IDS_CONNECTION_TT_AUTOCONNECT                              "Avvia automaticamente le reti abilitate all'avvio di eMule.
+
+Consigliato: abilitato per il normale utilizzo non presidiato. Disabilitalo solo se vuoi connetterti manualmente ad ogni sessione."
+    IDS_CONNECTION_TT_RECONN                                   "Tenta nuovamente le connessioni al server dopo disconnessioni o tentativi falliti.
+
+Consigliato: abilitato se si utilizza la rete del server eD2K. Non ha alcun effetto quando la rete del server è disabilitata."
+    IDS_CONNECTION_TT_SHOWOVERHEAD                             "Mostra l'overhead del protocollo separatamente nelle velocità di trasferimento e nelle statistiche.
+
+Abilitalo se desideri una visione più onesta del traffico via cavo. Lascialo disattivato se preferisci numeri più semplici basati solo sul payload."
+    IDS_CONNECTION_TT_PORT                                     "Porta principale TCP utilizzata per le connessioni client in entrata.
+
+Cambiala solo quando riconfiguri intenzionalmente le regole del firewall o del router. Dopo averlo modificato, testare nuovamente la connettività."
+    IDS_CONNECTION_TT_UDPPORT                                  "Porta UDP utilizzata per Kad e altre funzionalità assistite da UDP.
+
+Consigliato: mantenerlo abilitato e raggiungibile a meno che non si desideri disabilitare intenzionalmente la rete basata su UDP."
+    IDS_CONNECTION_TT_MAXSOURCEPERFILE                         "Limite rigido per il numero di origini remote che eMule conserva per download.
+
+Valori più elevati possono migliorare la disponibilità di file rari ma costano più memoria e traffico di gestione dell'origine. Utilizza valori moderati a meno che tu non abbia un motivo specifico per aumentarlo."
+    IDS_CONNECTION_TT_MAXCON                                   "Il limite superiore per le connessioni simultanee eMule potrebbe rimanere aperto.
+
+I valori più alti non sono automaticamente migliori. Lascialo vicino all'impostazione predefinita sintonizzata a meno che tu non stia diagnosticando una limitazione di rete specifica."
+    IDS_CONNECTION_TT_DOWNLOAD_CAP                             "La tua capacità downstream configurata in KiB/s. eMule lo utilizza come riferimento superiore per i cursori e le decisioni sulla larghezza di banda.
+
+Impostalo vicino alla velocità di linea effettivamente utilizzabile, non al massimo di marketing."
+    IDS_CONNECTION_TT_UPLOAD_CAP                               "La tua capacità upstream configurata in KiB/s. eMule lo utilizza come riferimento superiore per il controllo del caricamento.
+
+Impostalo vicino alla velocità di caricamento sostenuto reale utilizzabile della tua linea."
+    IDS_CONNECTION_TT_NETWORK_ED2_K                            "Abilita la classica rete di server eD2K.
+
+Lasciala abilitata se utilizzi ancora il rilevamento dell'origine basato su server. Disabilitalo solo se desideri intenzionalmente il funzionamento solo di Kad."
+    IDS_CONNECTION_TT_NETWORK_KADEMLIA                         "Abilita la rete distribuita Kad.
+
+Consigliato: abilitato per l'uso moderno. Richiede che la porta UDP rimanga abilitata."
+    IDS_CONNECTION_TT_PREF_UPNPONSTART                         "Tenta la mappatura automatica delle porte NAT all'avvio per le porte TCP e UDP configurate.
+
+Consigliato: abilitato quando il router supporta UPnP o PCP/NAT-PMP. Disabilitalo se inoltri le porte manualmente."
+    IDS_CONNECTION_TT_RANDOMIZE_PORTS_ON_STARTUP               "Sceglie le nuove porte di ascolto TCP e UDP all'avvio prima dell'esecuzione della mappatura automatica delle porte.
+
+L'opzione utilizza l'intervallo di porte casuale esistente di eMule e lascia UDP disabilitato quando la porta UDP è disabilitata."
+    IDS_CONNECTION_TT_UDPDISABLE                               "Disabilita la porta UDP di eMule e quindi disabilita le funzionalità dipendenti da UDP come la rete Kad.
+
+Consigliato: lasciarlo disattivato a meno che non sia necessario eseguire TCP solo per un ambiente di rete molto specifico."
+    IDS_CONNECTION_TT_STARTTEST                                "Avvia il test di connettività esterna per le porte TCP e UDP attualmente configurate.
+
+Utilizzalo dopo aver modificato le porte, le impostazioni di associazione o le regole di mappatura del router."
+    IDS_CONNECTION_TT_BIND_INTERFACE                           "Nome dell'interfaccia di rete Windows opzionale utilizzato per l'associazione del socket P2P.
+
+Match è in base al nome dell'interfaccia descrittivo, non al numero dell'adattatore. Le modifiche diventano effettive dopo il riavvio."
+    IDS_CONNECTION_TT_BIND_ADDRESS                             "Indirizzo IPv4 opzionale utilizzato per l'associazione del socket P2P.
+
+Lascia vuoto per utilizzare il primo IPv4 sull'interfaccia selezionata o la scelta di routing predefinita quando non è selezionata alcuna interfaccia."
+    IDS_CONNECTION_TT_STARTUP_BIND_BLOCK                       "Mantiene la rete P2P offline per la sessione se la destinazione di associazione configurata non può essere risolta all'avvio.
+
+Disponibile solo quando è selezionata un'interfaccia di associazione. Consigliato quando si esegue l'associazione esplicita a un'interfaccia denominata e non si desidera il fallback silenzioso."
+    IDS_WEBSERVER_TT_WEBBINDADDR                               "Indirizzo di collegamento locale per WebServer e REST API integrati.
+
+Lascialo vuoto o come 0.0.0.0 per l'ascolto su tutte le interfacce. Imposta un IPv4 specifico solo se desideri deliberatamente limitare il luogo in cui il servizio è in ascolto."
+    IDS_WEBSERVER_TT_WSAPIKEY                                  "Chiave REST API in testo normale utilizzata dai client nell'intestazione X-API-Key.
+
+Consigliato: mantenere il valore casuale generato a meno che non sia necessario un token specifico. Chiunque disponga di questa chiave ha accesso completo all'API."
+    IDS_WEBSERVER_TT_WSUPNP                                    "Include la porta WebServer nella mappatura NAT automatica quando UPnP o PCP/NAT-PMP è abilitato.
+
+Abilitalo solo se desideri intenzionalmente che Web UI o REST API siano raggiungibili tramite la mappatura del router."
+    IDS_WEBSERVER_TT_WS_MAXFILEUPLOAD                          "Dimensione massima del caricamento di un singolo file accettata dal WebServer in MiB.
+
+Utilizzare un valore piccolo per il normale controllo remoto. Aumentalo solo se i client Web attendibili devono caricare file di dimensioni maggiori."
+    IDS_WEBSERVER_TT_WS_MAXFILEUPLOAD_LBL                      "Dimensione massima del caricamento di un singolo file accettata dal WebServer in MiB.
+
+Utilizzare un valore piccolo per il normale controllo remoto. Aumentalo solo se i client Web attendibili devono caricare file di dimensioni maggiori."
+    IDS_WEBSERVER_TT_WS_ALLOWEDIPS                             "Elenco consentiti IPv4 opzionale separato da punto e virgola per i client WebServer.
+
+Lascia vuoto per consentire qualsiasi indirizzo remoto che può raggiungere WebServer. Esempio: 127.0.0.1;192.168.1.50"
+    IDS_WEBSERVER_TT_WS_ALLOWEDIPS_LBL                         "Elenco consentiti IPv4 opzionale separato da punto e virgola per i client WebServer.
+
+Lascia vuoto per consentire qualsiasi indirizzo remoto che può raggiungere WebServer. Esempio: 127.0.0.1;192.168.1.50"
+    IDS_WEBSERVER_TT_WS_ALLOWHILEVFUNC                         "Consente azioni Web amministrative di alto livello che possono modificare lo stato di runtime in modo più aggressivo.
+
+Consigliato: mantenerlo disattivato a meno che non siano necessarie esplicitamente tali azioni da client di amministrazione attendibili."
+    IDS_WEBSERVER_TT_WEB_HTTPS                                 "Serve Web UI e REST API su HTTPS utilizzando il certificato e la chiave configurati.
+
+Consigliato: abilitato ogni volta che si espone WebServer oltre la macchina locale."
+    IDS_NOTIFY_TT_CB_TBN_USESOUND                              "Riproduce un file WAV personalizzato per le notifiche sulla barra delle applicazioni.
+
+Utilizzalo se desideri un avviso sonoro. Lascialo disattivato se i popup silenziosi o la voce sono sufficienti."
+    IDS_NOTIFY_TT_CB_TBN_USESPEECH                             "Utilizza la sintesi vocale per le notifiche sulla barra delle applicazioni quando è disponibile un motore vocale.
+
+Utile su sistemi non presidiati in cui gli avvisi vocali sono più facili da notare dei suoni."
+    IDS_NOTIFY_TT_CB_TBN_POP_ALWAYS                            "Mostra un popup per ogni messaggio di chat in arrivo invece che solo per il primo.
+
+Abilitalo se non vuoi che i messaggi di chat successivi rimangano silenziosi."
+    IDS_NOTIFY_TT_CB_TBN_USEWINDOWSTOAST                       "Utilizza le notifiche di avviso popup Windows invece del popup personalizzato eMule.
+
+Se Windows rifiuta una notifica di avviso popup, eMule torna al popup personalizzato."
+    IDS_NOTIFY_TT_TBN_DISPLAYMODE                              "Seleziona il modo in cui eMule mostra le notifiche popup abilitate. Il toast
+
+Windows è l'impostazione predefinita. Se Windows rifiuta una notifica di avviso popup, anche quando eMule è in esecuzione come amministratore, eMule torna al classico fumetto della barra delle applicazioni."
+    IDS_NOTIFY_TT_CB_ENABLENOTIFICATIONS                       "Abilita le notifiche e-mail in uscita per gli eventi configurati.
+
+Abilitalo solo se hai già configurato un server SMTP e indirizzi funzionanti."
+    IDS_NOTIFY_TT_SMTPSERVER                                   "Apre la configurazione del server SMTP utilizzato dalle notifiche e-mail.
+
+È necessario solo se le notifiche e-mail sono abilitate."
     IDS_BIND_STARTUP_INTERFACE_NOT_FOUND_FMT                   "Rete disabilitata per questa sessione perché l'interfaccia di collegamento selezionata non è più disponibile: %s"
     IDS_BIND_STARTUP_INTERFACE_AMBIGUOUS_FMT                   "Rete disabilitata per questa sessione perché il nome dell'interfaccia di associazione selezionata corrisponde a più adattatori attivi: %s"
     IDS_BIND_STARTUP_INTERFACE_NO_ADDRESS_FMT                  "Rete disabilitata per questa sessione perché l'interfaccia di collegamento selezionata non ha un indirizzo IPv4 utilizzabile: %s"
@@ -2577,159 +2925,465 @@ BEGIN
     IDS_STATUS_ANY_COMPACT                                     "Qualunque"
     IDS_STATUS_UNKNOWN_COMPACT                                 "?"
     IDS_STATUS_NETWORK_ADDRESS_TEXT_FMT                        "%s:%s|%s:%s"
-    IDS_PPG_DIRECTORIES_TT_INCFILES                            "Directory principale in entrata per i download completati.\r\n\r\nUtilizza un percorso locale stabile con spazio libero sufficiente. Evita posizioni temporanee o rimovibili a meno che tu non voglia davvero che i file finiti siano lì."
-    IDS_PPG_DIRECTORIES_TT_TEMPFILES                           "Elenco delle directory di lavoro per file di parti, hash e stato di trasferimento.\r\n\r\nQuesti percorsi devono rimanere disponibili durante l'esecuzione dei download. Si consigliano dischi locali veloci su percorsi di rete rimovibili o inaffidabili."
-    IDS_PPG_DIRECTORIES_TT_SHARESELECTOR                       "Seleziona quali cartelle locali eMule condivide con altri client.\r\n\r\nCondividi solo le directory che intendi pubblicare. Evitare radici larghe come un intero disco."
-    IDS_PPG_DISPLAY_TT_MINTRAY                                 "Riduce a icona eMule nel vassoio invece di lasciarlo sulla barra delle applicazioni.\r\n\r\nUtile per configurazioni sempre attive. Lascialo disattivato se preferisci il normale comportamento della barra delle applicazioni."
-    IDS_PPG_DISPLAY_TT_TOOLTIPDELAY                            "Ritardo prima che vengano visualizzate le descrizioni comandi dell'interfaccia utente.\r\n\r\nI valori più bassi sembrano più veloci, i valori più alti riducono i popup accidentali. L'intervallo predefinito è solitamente un buon compromesso."
-    IDS_PPG_DISPLAY_TT_SHOWRATEONTITLE                         "Mostra le velocità attuali di upload e download nel titolo della finestra principale.\r\n\r\nUtile quando eMule rimane in background e vuoi comunque dare una rapida occhiata."
-    IDS_PPG_DISPLAY_TT_STORESEARCHES                           "Conserva i termini di ricerca recenti in modo che possano essere riutilizzati in seguito.\r\n\r\nConsigliato: abilitato a meno che non si desideri specificamente che la cronologia delle ricerche non venga conservata."
-    IDS_PPG_DISPLAY_TT_WIN7_TASKBARGOODIES                     "Abilita l'avanzamento della barra delle applicazioni Windows e la relativa integrazione della shell dove supportato.\r\n\r\nConsigliato: abilitato sul moderno Windows a meno che non si desideri una presenza della shell più minima."
-    IDS_PPG_FILES_TT_PF_TIMECALC                               "Utilizza il calcolo più dettagliato del tempo rimanente per i download.\r\n\r\nConsigliato: abilitato se desideri stime di ETA più stabili. Disabilitalo solo se preferisci il vecchio calcolo più semplice."
-    IDS_PPG_FILES_TT_PREVIEWPRIO                               "Dà la priorità ai blocchi di anteprima del film in modo che i contenuti multimediali parzialmente scaricati diventino visualizzabili in anteprima in anticipo.\r\n\r\nUtile per i download di video. Lascialo disattivato se preferisci un ordine neutro in blocchi."
-    IDS_PPG_FILES_TT_WATCHCB                                   "Controlla negli appunti i collegamenti ed2k e si offre di gestirli.\r\n\r\nComodo se aggiungi molti download dai browser. Disabilitalo se non vuoi che eMule guardi gli appunti."
-    IDS_PPG_FILES_TT_FNCLEANUP                                 "Pulisce automaticamente i nomi dei file scaricati in base alle regole configurate.\r\n\r\nConsigliato: abilitato se si desidera nomi di file finali più coerenti senza pulizia manuale."
-    IDS_PPG_FILES_TT_STARTNEXTFILE                             "Avvia automaticamente il file in coda successivo al termine di un altro download o quando viene messo in pausa.\r\n\r\nConsigliato: abilitato se si utilizzano code in pausa per controllare il numero di file eseguiti contemporaneamente."
-    IDS_PPG_FILES_TT_RUNONFILECOMPLETE                         "Esegue un eseguibile dopo che un file è stato completato e conservato con successo.\r\n\r\nQuesto è disabilitato per impostazione predefinita. Il programma viene avviato direttamente senza la shell Windows."
-    IDS_PPG_FILES_TT_FILECOMPLETEARGS                          "Token supportati: percorso completo %F, directory %D, nome file %N, hash file %H, dimensione byte %S, categoria %C.\r\n\r\n%F e %D vengono quotati automaticamente. Le variabili d'ambiente non vengono espanse."
-    IDS_PPG_GENERAL_TT_ONLINESIG                               "Scrive il file di stato legacy onlinesig.dat per pagine esterne, script o widget che leggono lo stato eMule.\r\n\r\nNon migliora la velocità di trasferimento o la rete. Lascialo spento a meno che non consumi attivamente quel file da qualche parte."
-    IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND                       "Porta eMule in primo piano quando un collegamento ed2k gestito o un'azione esterna simile prende di mira l'app.\r\n\r\nAbilitalo se desideri che i clic sul collegamento rivelino immediatamente eMule. Lascialo disattivato se preferisci la gestione in background."
-    IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Controlla i rilasci di GitHub all'avvio quando l'intervallo configurato è trascorso e avvisa solo quando è disponibile un pacchetto eMule BB più recente.\r\n\r\nLascialo disattivato per un avvio silenzioso o abilitalo se desideri un controllo periodico degli aggiornamenti."
-    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Blocca la sospensione del sistema mentre eMule BB è connesso o sta trasferendo, così download, upload, Kad e sessioni server non vengono interrotti.\r\n\r\nLo schermo può comunque spegnersi normalmente. Disabilitando questa opzione viene ripristinata subito la normale politica di sospensione di Windows."
-    IDS_PPG_GENERAL_TT_WEBSVEDIT                               "Modifica l'elenco dei servizi Web configurati utilizzato dalle azioni di supporto come le ricerche Web dall'interfaccia utente.\r\n\r\nNormalmente ne hai bisogno solo se desideri personalizzare o riparare le voci di ricerca esterne."
-    IDS_PPG_GENERAL_TT_ED2_KFIX                                "Ripara la registrazione del collegamento ed2k Windows in modo che i collegamenti ed2k del browser e della shell si aprano nuovamente in eMule.\r\n\r\nUtilizzalo quando i collegamenti ed2k smettono di avviare eMule o sono stati rubati da un altro client."
-    IDS_PPG_GENERAL_TT_STARTMIN                                "Avvia eMule ridotto a icona invece di aprire immediatamente la finestra principale.\r\n\r\nUtile per l'avvio automatico. Lascialo disattivato se di solito desideri ispezionare subito l'interfaccia utente."
-    IDS_PPG_GENERAL_TT_STARTWIN                                "Registra eMule per iniziare con Windows per l'utente corrente.\r\n\r\nAbilitalo solo su macchine in cui eMule deve essere eseguito in modo persistente in background."
-    IDS_PPG_IRC_TT_IRC_USECHANFILTER                           "Applica il nome del canale e il filtro utente minimo quando si richiede l'elenco dei canali IRC.\r\n\r\nAbilitalo se vuoi che l'elenco venga ristretto automaticamente. Disabilitalo per recuperare sempre l'elenco completo dei canali."
-    IDS_PPG_IRC_TT_IRC_USEPERFORM                              "Esegue lo script di esecuzione dopo la connessione a IRC.\r\n\r\nUtilizzalo per join automatici o comandi IRC. Lascialo disattivato se non mantieni uno script di esecuzione."
-    IDS_PPG_IRC_TT_IRC_NAME_BOX                                "Filtra il testo per l'elenco dei canali IRC.\r\n\r\nSolo i canali che corrispondono a questo testo vengono mantenuti quando il filtro dei canali è abilitato."
-    IDS_PPG_IRC_TT_IRC_MINUSER_BOX                             "Conteggio minimo utenti per i canali mostrati dal filtro elenco canali IRC.\r\n\r\nAlzalo per nascondere i canali più piccoli. Utilizzare 0 per mantenere i canali indipendentemente dalle dimensioni."
-    IDS_PPG_MESSAGES_TT_MSGONLYFRIENDS                         "Accetta messaggi diretti solo dagli utenti presenti nella tua lista amici.\r\n\r\nConsigliato se desideri una configurazione di chat molto silenziosa. Lascialo disattivato se desideri comunque ricevere messaggi dai clienti ordinari."
-    IDS_PPG_MESSAGES_TT_ADVSPAMFILTER                          "Abilita il percorso di filtro antispam dei messaggi più efficace.\r\n\r\nConsigliato: abilitato per il normale utilizzo della rete pubblica. Funziona insieme ai captcha della chat per un filtraggio più rigoroso."
-    IDS_PPG_MESSAGES_TT_USECAPTCHAS                            "Richiede una verifica captcha prima che i client sconosciuti possano completare una conversazione in chat.\r\n\r\nUtile contro lo spam in chat. Da utilizzare preferibilmente insieme al filtro antispam avanzato."
-    IDS_PPG_MESSAGES_TT_COMMENTFILTER                          "Blocca i commenti sui file contenenti i termini del filtro configurato.\r\n\r\nUtilizzare un '|' separatore tra i termini. Utile per parole spam conosciute o schemi fastidiosi."
-    IDS_PPG_PROXY_TT_ENABLEPROXY                               "Instrada le connessioni in uscita supportate tramite il proxy configurato.\r\n\r\nAbilitalo solo se esegui intenzionalmente eMule dietro un proxy. Le connessioni dirette sono più semplici e solitamente più veloci."
-    IDS_PPG_PROXY_TT_PROXYTYPE                                 "Seleziona il protocollo proxy previsto dal tuo server proxy.\r\n\r\nUtilizza il tipo esatto fornito dall'operatore proxy; il tipo sbagliato di solito significa errori di connessione immediati."
-    IDS_PPG_PROXY_TT_PROXYNAME                                 "Nome host o indirizzo IP del server proxy.\r\n\r\nInserisci esattamente l'endpoint fornito dal tuo servizio proxy. Un host sbagliato significa che tutto il traffico proxy fallirà."
-    IDS_PPG_PROXY_TT_PROXYPORT                                 "Porta di ascolto del server proxy.\r\n\r\nUtilizzare la porta esatta richiesta dal proxy. Non è garantito che i valori predefiniti comuni di SOCKS siano corretti."
-    IDS_PPG_PROXY_TT_ENABLEAUTH                                "Invia le credenziali del nome utente e della password del proxy quando il proxy richiede l'autenticazione.\r\n\r\nAbilitalo solo se il servizio proxy utilizza effettivamente le credenziali di accesso."
-    IDS_PPG_PROXY_TT_USERNAME_A                                "Nome utente dell'account proxy.\r\n\r\nLascia vuoto a meno che il proxy non richieda esplicitamente l'accesso autenticato."
-    IDS_PPG_SCHEDULER_TT_ENABLE                                "Abilita la pianificazione in modo che le regole basate sul tempo possano modificare automaticamente le impostazioni.\r\n\r\nLasciatelo disattivato a meno che non utilizziate attivamente modifiche di larghezza di banda, connessione o categoria pianificate."
-    IDS_PPG_SCHEDULER_TT_CHECKNOENDTIME                        "Esegue la voce di pianificazione selezionata senza un orario di fine.\r\n\r\nUtilizzalo per modifiche di stato unidirezionali che dovrebbero rimanere attive finché un'altra pianificazione non le sovrascrive."
-    IDS_PPG_SCHEDULER_TT_APPLY                                 "Applica i dettagli modificati alla voce di pianificazione attualmente selezionata.\r\n\r\nUtilizzare questa opzione dopo aver modificato il giorno, l'ora o l'elenco delle azioni per quella riga."
-    IDS_PPG_SECURITY_TT_USESECIDENT                            "Utilizza l'identificazione sicura quando supportato per rendere più difficile lo spoofing delle identità di credito del cliente.\r\n\r\nConsigliato: abilitato. Disabilitarlo riduce solo la fiducia nell'identità ed è raramente utile."
-    IDS_PPG_SECURITY_TT_FILTERSERVERBYIPFILTER                 "Applica il filtro IP all'elenco dei server visibili in modo che i server filtrati vengano nascosti o rimossi.\r\n\r\nConsigliato: abilitato se si fa affidamento sul filtro IP per la pulizia del server e per il filtraggio peer."
-    IDS_PPG_SECURITY_TT_UPDATEURL                              "URL di origine utilizzato durante il download degli elenchi di filtri IP aggiornati.\r\n\r\nUtilizza solo un provider affidabile. Gli aggiornamenti automatici riutilizzano questo URL e mantengono il filtro esistente se il download non è valido."
-    IDS_PPG_SECURITY_TT_AUTOUPDATE_IPFILTER                    "Controlla automaticamente l'URL del filtro IP configurato dopo l'avvio alla scadenza dell'intervallo di aggiornamento.\r\n\r\nConsigliato: disabilitato a meno che non ti fidi del provider e desideri che il filtro venga aggiornato senza azione manuale."
-    IDS_PPG_SECURITY_TT_IPFILTERPERIOD                         "Numero di giorni tra i tentativi di aggiornamento automatico del filtro IP.\r\n\r\nIntervallo consentito: da 1 a 365 giorni. I tentativi falliti vengono comunque conteggiati per evitare cicli di tentativi quando un provider non è disponibile."
-    IDS_PPG_SECURITY_TT_SEESHARE1                              "Consente a tutti di sfogliare i file condivisi quando il client remoto lo supporta.\r\n\r\nOpzione più permissiva. Usalo solo se ti senti a tuo agio nell'esporre ampiamente la tua lista condivisa."
-    IDS_PPG_SECURITY_TT_SEESHARE2                              "Consente solo agli amici di sfogliare i tuoi file condivisi.\r\n\r\nScelta di privacy bilanciata se desideri comunque sfogliare il supporto per i contatti esplicitamente fidati."
-    IDS_PPG_SECURITY_TT_SEESHARE3                              "Impedisce ai client remoti di sfogliare l'elenco dei file condivisi.\r\n\r\nConsigliato se si desidera il rispetto più rigoroso della privacy per l'esplorazione dei file condivisi."
-    IDS_PPG_SECURITY_TT_ENABLEOBFUSCATION                      "Preferisce l'offuscamento del protocollo quando lo supporta anche il lato remoto.\r\n\r\nConsigliato: abilitato. Può essere utile su reti restrittive senza imporre una politica di solo offuscamento."
-    IDS_PPG_SECURITY_TT_ONLYOBFUSCATED                         "Richiede connessioni offuscate invece di accettare quelle normali.\r\n\r\nUtilizzalo solo se il tuo ambiente di rete ne ha veramente bisogno. Può ridurre la connettività e la portata dei pari."
-    IDS_PPG_SECURITY_TT_SEARCHSPAMFILTER                       "Filtra lo spam evidente dai risultati di ricerca prima che ingombra l'interfaccia utente.\r\n\r\nConsigliato: abilitato per il normale utilizzo della rete pubblica."
-    IDS_PPG_SECURITY_TT_CHECK_FILE_OPEN                        "Controlla lo stato aperto/bloccato dei file scaricati prima delle operazioni che richiedono l'accesso esclusivo.\r\n\r\nConsigliato: abilitato a meno che non si abbia un motivo specifico per saltare il controllo di sicurezza."
-    IDS_PPG_SERVER_TT_AUTOSERVER                               "Aggiorna automaticamente l'elenco dei server dai client connessi e da altre fonti attendibili.\r\n\r\nComodo, ma lascia anche che l'elenco vada alla deriva nel tempo. Disabilitalo se preferisci un elenco di server statici strettamente curato."
-    IDS_PPG_SERVER_TT_UPDATESERVERCONNECT                      "Consente ai server connessi di pubblicizzare server aggiuntivi nel tuo elenco.\r\n\r\nComodo, ma può far crescere l'elenco con voci di basso valore. Disabilitalo se preferisci una cura manuale più rigorosa."
-    IDS_PPG_SERVER_TT_UPDATESERVERCLIENT                       "Consente ai client di contribuire con indirizzi di server al tuo elenco di server.\r\n\r\nLa maggior parte degli utenti dovrebbe trattare questa cosa con cautela. Disabilitalo se desideri un controllo più rigoroso sulla qualità dell'elenco dei server."
-    IDS_PPG_SERVER_TT_SAFESERVERCONNECT                        "Utilizza una strategia di connessione al server più cauta invece di affrettarsi tra molti candidati.\r\n\r\nConsigliato: abilitato per la stabilità. Disabilitalo solo se desideri deliberatamente un approccio di connessione più aggressivo."
-    IDS_PPG_SERVER_TT_SMARTIDCHECK                             "Esegue il controllo intelligente LowID prima di decidere che la raggiungibilità lato server è scarsa.\r\n\r\nConsigliato: abilitato. Evita alcune false conclusioni LowID durante condizioni di rete transitorie."
-    IDS_PPG_SERVER_TT_SCORE                                    "Utilizza le priorità dei server quando si scelgono e si ordinano i server.\r\n\r\nConsigliato: abilitato se si mantiene un sottoinsieme di server preferito e si desidera che eMule li favorisca."
-    IDS_PPG_SERVER_TT_SERVERRETRIES                            "Quanti tentativi di connessione falliti un server può accumulare prima che eMule lo consideri morto.\r\n\r\nI valori più bassi eliminano i server danneggiati più velocemente; valori più alti sono più tolleranti nei confronti delle interruzioni temporanee."
-    IDS_PPG_SERVER_TT_AUTOCONNECTSTATICONLY                    "Limita i tentativi di connessione automatica al server ai server contrassegnati come statici.\r\n\r\nAbilitala se mantieni un piccolo elenco statico attendibile e non desideri la rotazione automatica nell'elenco completo dei server."
-    IDS_PPG_SERVER_TT_MANUALSERVERHIGHPRIO                     "Assegna ai server aggiunti manualmente una priorità più elevata rispetto alle normali voci rilevate.\r\n\r\nAbilitala se mantieni un set di server selezionati manualmente e desideri che tali aggiunte siano favorite."
-    IDS_PPG_STATS_TT_FILL_GRAPHS                               "Riempie le aree del grafico invece di disegnare solo linee.\r\n\r\nPuramente visivo. Disabilitalo se preferisci una visualizzazione delle statistiche più leggera e meno impegnativa."
-    IDS_PPG_STATS_TT_SLIDER                                    "Intervallo di aggiornamento per il grafico del traffico in tempo reale.\r\n\r\nValori più bassi sembrano più reattivi ma costano più lavoro sull'interfaccia utente. I valori moderati sono solitamente i migliori."
-    IDS_PPG_STATS_TT_SLIDER2                                   "Intervallo di aggiornamento per l'albero delle statistiche e i valori di riepilogo.\r\n\r\nI valori inferiori si aggiornano più spesso ma costano più abbandono dell'interfaccia utente. Aumentalo se desideri aggiornamenti più tranquilli."
-    IDS_PPG_STATS_TT_SLIDER3                                   "Finestra di media utilizzata dai grafici.\r\n\r\nLe finestre brevi mostrano chiaramente i picchi; finestre più lunghe uniformano la visualizzazione ed enfatizzano le tendenze."
-    IDS_PPG_STATS_TT_COLORSELECTOR                             "Seleziona il colore dell'elemento statistico che stai modificando.\r\n\r\nUtilizzalo solo se stai personalizzando la tavolozza del grafico."
-    IDS_PPG_STATS_TT_CGRAPHSCALE                               "Scala manuale dell'asse Y per il grafico di connessione.\r\n\r\nAlzala se il grafico taglia valori alti; valori più bassi forniscono maggiori dettagli con conteggi di connessioni modesti."
-    IDS_PPG_STATS_TT_CRATIO                                    "Proporzioni di caricamento/scaricamento utilizzate dal grafico di connessione combinato.\r\n\r\nLascialo vicino al valore predefinito a meno che non desideri che il grafico enfatizzi una direzione in modo più forte."
-    IDS_NOTIFY_TT_BTN_BROWSE_WAV                               "Cerca il file WAV utilizzato dalle notifiche sonore sulla barra delle applicazioni.\r\n\r\nDisponibile solo quando sono selezionate le notifiche sonore personalizzate."
-    IDS_NOTIFY_TT_CB_TBN_IMPORTATNT                            "Mostra notifiche per condizioni urgenti come avvisi di spazio su disco o perdita di connessioni al server.\r\n\r\nConsigliato: abilitato se la macchina viene spesso eseguita incustodita."
-    IDS_NOTIFY_TT_CB_TBN_NOSOUND                               "Disabilita l'uscita audio delle notifiche.\r\n\r\nUtilizzare questa opzione quando le notifiche visive sono sufficienti o la macchina deve rimanere silenziosa."
-    IDS_NOTIFY_TT_CB_TBN_ONCHAT                                "Mostra una notifica all'avvio di una sessione di chat.\r\n\r\nUtile se mantieni eMule ridotto a icona e vuoi comunque notare le nuove conversazioni."
-    IDS_NOTIFY_TT_CB_TBN_ONDOWNLOAD                            "Mostra una notifica al termine del download.\r\n\r\nConsigliato se i file completati richiedono attenzione senza guardare la pagina Trasferimenti."
-    IDS_NOTIFY_TT_CB_TBN_ONLOG                                 "Mostra una notifica quando viene aggiunta una voce di registro.\r\n\r\nUtile per la diagnostica, ma rumoroso durante le normali sessioni di lunga durata."
-    IDS_NOTIFY_TT_CB_TBN_ONNEWDOWNLOAD                         "Mostra una notifica quando viene aggiunto un nuovo download.\r\n\r\nAbilitalo se i download possono essere aggiunti esternamente e vuoi conferma."
-    IDS_NOTIFY_TT_CB_TBN_ONNEWVERSION                          "Mostra una notifica quando il controllo degli aggiornamenti trova una versione eMule BB più recente.\r\n\r\nQuesto è importante solo quando i controlli degli aggiornamenti sono abilitati nella pagina Generale."
-    IDS_NOTIFY_TT_EDIT_RECEIVER                                "Indirizzo e-mail che riceve messaggi di notifica eMule.\r\n\r\nUtilizzare un indirizzo accettato dal server SMTP configurato."
-    IDS_NOTIFY_TT_EDIT_SENDER                                  "Indirizzo del mittente utilizzato per le notifiche e-mail.\r\n\r\nMolti server SMTP richiedono che corrisponda o appartenga all'account autenticato."
-    IDS_NOTIFY_TT_EDIT_TBN_WAVFILE                             "Percorso del file WAV riprodotto per le notifiche sonore.\r\n\r\nScegli un breve file locale; file mancanti o inaccessibili impediscono la riproduzione dell'audio."
-    IDS_NOTIFY_TT_TEST_NOTIFICATION                            "Invia una notifica di prova utilizzando le impostazioni di notifica correnti.\r\n\r\nUtilizzalo dopo aver modificato la configurazione popup, audio o e-mail."
-    IDS_PPG_DIRECTORIES_TT_SELINCDIR                           "Cerca la directory in entrata utilizzata per i download completati.\r\n\r\nScegli un percorso locale stabile con spazio libero sufficiente."
-    IDS_PPG_DIRECTORIES_TT_SELTEMPDIR                          "Cerca la directory dei file temporanei selezionata.\r\n\r\nI file delle parti dipendono dalla disponibilità di questo percorso durante l'esecuzione dei download."
-    IDS_PPG_DIRECTORIES_TT_SELTEMPDIRADD                       "Aggiunge un'altra directory di file temporanei all'elenco delle directory di lavoro.\r\n\r\nUtilizza più dischi locali veloci e affidabili solo quando desideri deliberatamente diffondere parte dei file."
-    IDS_PPG_DIRECTORIES_TT_UNCADD                              "Aggiunge un percorso UNC di rete all'elenco delle directory condivise.\r\n\r\nCondividi solo le cartelle di rete che rimangono raggiungibili e sono destinate alla pubblicazione."
-    IDS_PPG_DISPLAY_TT_3DDEPTH                                 "Controlla la profondità dell'ombreggiatura 3D utilizzata dagli elementi visivi classici di elenchi e grafici.\r\n\r\nPuramente visivo; i valori più bassi appaiono più piatti mentre i valori più alti aggiungono un'ombreggiatura più forte."
-    IDS_PPG_DISPLAY_TT_CLEARCOMPL                              "Rimuove automaticamente i download completati dall'elenco dei trasferimenti visibile.\r\n\r\nI file completati rimangono sul disco; questo mantiene solo più pulito l'elenco dei download."
-    IDS_PPG_DISPLAY_TT_DBLCLICK                                "Espande o comprime un download quando si fa doppio clic su di esso nell'elenco Trasferimenti.\r\n\r\nDisabilitalo se i doppi clic dovrebbero evitare di modificare il layout della riga."
-    IDS_PPG_DISPLAY_TT_DISABLEHIST                             "Abilita le cronologie di completamento automatico per campi come testo di ricerca e URL server.met.\r\n\r\nDisabilitalo se non vuoi che quelle voci vengano ricordate."
-    IDS_PPG_DISPLAY_TT_DISABLEKNOWNLIST                        "Nasconde e disabilita l'elenco dei client conosciuti nella finestra Trasferimenti.\r\n\r\nUtilizzalo solo se desideri un'interfaccia utente più leggera e non hai bisogno della visualizzazione diagnostica."
-    IDS_PPG_DISPLAY_TT_DISABLEQUEUELIST                        "Nasconde e disabilita l'elenco delle code nella finestra Trasferimenti.\r\n\r\nUtilizzalo solo se non controlli i client di caricamento in coda."
-    IDS_PPG_DISPLAY_TT_RESETHIST                               "Cancella le voci della cronologia di completamento automatico memorizzate.\r\n\r\nInfluisce solo sulla cronologia salvata e non modifica i download attivi o gli elenchi di server."
-    IDS_PPG_DISPLAY_TT_SELECT_HYPERTEXT_FONT                   "Apre il selettore dei caratteri per le visualizzazioni server, messaggi e testo IRC.\r\n\r\nTieni premuto Ctrl mentre lo apri per modificare invece il carattere del registro."
-    IDS_PPG_DISPLAY_TT_SHOWCATINFO                             "Mostra le informazioni sulla categoria nelle schede delle categorie di trasferimento.\r\n\r\nUtile quando gestisci i download attraverso più categorie."
-    IDS_PPG_DISPLAY_TT_SHOWDWLPERCENT                          "Mostra le percentuali di avanzamento del download nell'elenco Trasferimenti.\r\n\r\nAbilitalo per una scansione rapida dell'avanzamento senza aprire i dettagli del file."
-    IDS_PPG_DISPLAY_TT_SHOWTRANSTOOLBAR                        "Mostra la barra degli strumenti aggiuntiva nella finestra Trasferimenti.\r\n\r\nDisattivala se preferisci più spazio per le righe di trasferimento."
-    IDS_PPG_FILES_TT_ADDNEWFILESPAUSED                         "Aggiunge i nuovi download in coda in modalità di pausa.\r\n\r\nUtile quando si desidera rivedere o pianificare i file prima che inizino il trasferimento."
-    IDS_PPG_FILES_TT_BROWSEV                                   "Cerca l'eseguibile del lettore video esterno.\r\n\r\nScegli il programma che dovrebbe aprire i file multimediali in anteprima."
-    IDS_PPG_FILES_TT_BROWSE_FILECOMPLETEPROGRAM                "Cerca il programma avviato dopo il completamento di un file.\r\n\r\nUtilizza un eseguibile locale attendibile perché viene eseguito automaticamente quando abilitato."
-    IDS_PPG_FILES_TT_DAP                                       "Assegna la priorità automatica ai download appena aggiunti.\r\n\r\nConsigliato a meno che non si preferisca gestire manualmente le priorità dei download."
-    IDS_PPG_FILES_TT_FILECOMPLETEPROGRAM                       "Eseguibile da eseguire dopo il completamento di un file.\r\n\r\nUtilizzare un percorso completo a un programma attendibile; viene lanciato direttamente senza la shell Windows."
-    IDS_PPG_FILES_TT_FNC                                       "Modifica il filtro di pulizia utilizzato per la pulizia automatica dei nomi file.\r\n\r\nUtilizzalo solo se le regole di pulizia predefinite non corrispondono alle tue preferenze di denominazione."
-    IDS_PPG_FILES_TT_FULLCHUNKTRANS                            "Tenta di caricare blocchi completi sui client quando possibile.\r\n\r\nQuesto può migliorare la distribuzione dei blocchi, ma potrebbe far durare più a lungo alcuni caricamenti."
-    IDS_PPG_FILES_TT_REMEMBERCANCELLED                         "Ricorda i file cancellati in modo che possano essere riconosciuti in seguito.\r\n\r\nUtile per evitare di aggiungere nuovamente i file cancellati intenzionalmente."
-    IDS_PPG_FILES_TT_REMEMBERDOWNLOADED                        "Ricorda i download completati in modo che i file già completati possano essere riconosciuti in seguito.\r\n\r\nConsigliato se si desidera ricevere avvisi di download duplicati."
-    IDS_PPG_FILES_TT_STARTNEXTFILECAT                          "Quando avvii il successivo file in pausa, preferisci i file della stessa categoria del file completato.\r\n\r\nUtilizzalo per mantenere le code delle categorie in movimento insieme."
-    IDS_PPG_FILES_TT_STARTNEXTFILECAT2                         "Quando avvii il successivo file in pausa, scegli solo dalla stessa categoria del file completato.\r\n\r\nUtilizzalo per un rigoroso controllo della coda per categoria."
-    IDS_PPG_FILES_TT_UAP                                       "Assegna la priorità automatica ai file appena condivisi.\r\n\r\nConsigliato a meno che tu non modifichi deliberatamente le priorità dei file condivisi."
-    IDS_PPG_FILES_TT_VIDEOBACKUP                               "Crea una copia di backup prima di visualizzare in anteprima un file multimediale parzialmente scaricato.\r\n\r\nPiù sicuro per lettori fragili, ma utilizza spazio e tempo su disco aggiuntivi."
-    IDS_PPG_FILES_TT_VIDEOPLAYER                               "Lettore esterno utilizzato per le anteprime multimediali.\r\n\r\nLascia vuoto per utilizzare l'associazione predefinita o impostare un lettore attendibile specifico."
-    IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS                          "Argomenti passati al lettore di anteprima esterno.\r\n\r\nUtilizzalo solo se il lettore necessita di opzioni personalizzate della riga di comando."
-    IDS_PPG_GENERAL_TT_CHECKDAYS                               "Numero di giorni tra i controlli degli aggiornamenti all'avvio.\r\n\r\nI valori più alti riducono i controlli di rete; valori più bassi trovano prima le nuove versioni pubblicate."
-    IDS_PPG_GENERAL_TT_EXIT                                    "Chiede conferma prima dell'uscita di eMule.\r\n\r\nConsigliato su sistemi non presidiati per evitare arresti accidentali."
-    IDS_PPG_GENERAL_TT_LANGS                                   "Seleziona la risorsa della lingua dell'interfaccia utente caricata da eMule.\r\n\r\nLa modifica della lingua potrebbe richiedere la riapertura delle finestre di dialogo prima dell'aggiornamento di ogni etichetta."
-    IDS_PPG_GENERAL_TT_NICK                                    "Nome utente annunciato agli altri client eMule.\r\n\r\nUtilizzare un nickname non sensibile; può essere visibile ai peer."
-    IDS_PPG_GENERAL_TT_SPLASHON                                "Mostra la schermata iniziale durante l'avvio.\r\n\r\nDisabilitala per un percorso di avvio più silenzioso."
-    IDS_PPG_IRC_TT_IRC_NICK_BOX                                "Nickname utilizzato quando ci si connette a IRC.\r\n\r\nScegli un nome accettato dalla rete IRC di destinazione."
-    IDS_PPG_IRC_TT_IRC_PERFORM_BOX                             "I comandi vengono eseguiti automaticamente dopo la connessione di IRC quando l'esecuzione è abilitata.\r\n\r\nUtilizza i comandi IRC a riga singola solo se ti fidi e li comprendi."
-    IDS_PPG_IRC_TT_IRC_SERVER_BOX                              "Indirizzo del server IRC utilizzato dal client IRC integrato.\r\n\r\nCambialo solo quando usi intenzionalmente un'altra rete IRC."
-    IDS_PPG_MESSAGES_TT_FILTER                                 "Filtro di testo per i messaggi di chat in arrivo.\r\n\r\nUtilizzalo per eliminare parole o schemi noti fastidiosi."
-    IDS_PPG_MESSAGES_TT_INDICATERATINGS                        "Mostra un'icona per i download che contengono commenti o valutazioni.\r\n\r\nUtile quando si desidera rivedere il feedback della community prima di aprire i file."
-    IDS_PPG_MESSAGES_TT_MSHOWSMILEYS                           "Visualizza emoticon nei messaggi di chat.\r\n\r\nDisabilitalo se preferisci il rendering in testo semplice."
-    IDS_PPG_PROXY_TT_PASSWORD                                  "Password dell'account proxy.\r\n\r\nLascia vuoto a meno che l'autenticazione proxy non sia abilitata e richiesta dal server proxy."
-    IDS_PPG_SCHEDULER_TT_DATETIMEPICKER1                       "Ora di inizio per la voce di pianificazione selezionata.\r\n\r\nLa regola diventa attiva a quest'ora nello schema giornaliero selezionato."
-    IDS_PPG_SCHEDULER_TT_DATETIMEPICKER2                       "Ora di fine per la voce di pianificazione selezionata.\r\n\r\nDisabilita l'ora di fine in cui la regola deve rimanere attiva finché un'altra pianificazione non la modifica."
-    IDS_PPG_SCHEDULER_TT_NEW                                   "Crea una nuova voce di pianificazione.\r\n\r\nModifica i suoi dettagli e fai clic su Applica per memorizzare la regola configurata."
-    IDS_PPG_SCHEDULER_TT_REMOVE                                "Rimuove la voce di pianificazione selezionata.\r\n\r\nUtilizzalo solo dopo aver selezionato la regola che non desideri più."
-    IDS_PPG_SCHEDULER_TT_SCHEDACTION                           "Azioni applicate dalla voce di pianificazione selezionata.\r\n\r\nFare doppio clic o fare clic con il pulsante destro del mouse sull'elenco per modificare le modifiche pianificate."
-    IDS_PPG_SCHEDULER_TT_SCHEDLIST                             "Elenco delle voci di pianificazione configurate.\r\n\r\nSelezionare una voce per modificarne il titolo, l'ora, lo schema giornaliero, lo stato abilitato e le azioni."
-    IDS_PPG_SCHEDULER_TT_S_ENABLE                              "Abilita o disabilita la voce di pianificazione selezionata.\r\n\r\nUtilizzare questa opzione per mettere in pausa una singola regola senza eliminarla."
-    IDS_PPG_SCHEDULER_TT_S_TITLE                               "Nome visualizzato per la voce di pianificazione selezionata.\r\n\r\nUtilizzare un nome breve che identifichi cosa cambia la regola."
-    IDS_PPG_SCHEDULER_TT_TIMESEL                               "Schema giornaliero per la voce di pianificazione selezionata.\r\n\r\nScegli quando devono essere applicati gli orari di inizio e fine."
-    IDS_PPG_SECURITY_TT_DD                                     "Apre la cronologia degli URL del filtro IP memorizzata per una selezione rapida.\r\n\r\nUtilizzare solo fornitori di filtri attendibili."
-    IDS_PPG_SECURITY_TT_DISABLEOBFUSCATION                     "Disabilita completamente il supporto per le connessioni offuscate.\r\n\r\nNon consigliato a meno che non sia necessario un comportamento legacy rigoroso."
-    IDS_PPG_SECURITY_TT_EDITFILTER                             "Apre il file del filtro IP locale per la modifica manuale.\r\n\r\nSalvare con attenzione; le voci non valide potrebbero essere ignorate."
-    IDS_PPG_SECURITY_TT_LOADURL                                "Scarica e applica l'elenco dei filtri IP dall'URL configurato.\r\n\r\nUtilizza solo provider attendibili; il filtro esistente viene mantenuto se il download fallisce."
-    IDS_PPG_SECURITY_TT_RELOADFILTER                           "Ricarica il file del filtro IP locale dal disco.\r\n\r\nUtilizzalo dopo aver modificato manualmente il file del filtro all'esterno di eMule."
-    IDS_PPG_SERVER_TT_EDITADR                                  "Modifica gli URL di aggiornamento dell'elenco dei server di avvio.\r\n\r\nUtilizza solo fonti server.met attendibili; gli elenchi non attendibili possono inquinare il rilevamento dei server."
-    IDS_PPG_STATS_TT_COLOR_BUTTON                              "Apre il selettore colori per l'elemento statistico selezionato.\r\n\r\nUtilizzalo dopo aver scelto un elemento nel selettore colori."
-    IDS_WEBSERVER_TT_CERTBROWSE                                "Cerca il file del certificato HTTPS.\r\n\r\nUtilizzare un file del certificato che corrisponda alla chiave privata configurata."
-    IDS_WEBSERVER_TT_CERTPATH                                  "File di certificato utilizzato quando HTTPS è abilitato.\r\n\r\nWebServer non può essere avviato in modalità HTTPS se questo file manca o non è valido."
-    IDS_WEBSERVER_TT_KEYBROWSE                                 "Cerca il file della chiave privata HTTPS.\r\n\r\nMantieni la chiave selezionata privata e leggibile solo da utenti locali fidati."
-    IDS_WEBSERVER_TT_KEYPATH                                   "File di chiave privata utilizzato quando HTTPS è abilitato.\r\n\r\nProteggi questo file; chiunque abbia la chiave può impersonare il certificato WebServer."
-    IDS_WEBSERVER_TT_WEB_GENERATE                              "Crea un nuovo certificato locale e una chiave privata per HTTPS.\r\n\r\nUtilizzalo per configurazioni locali o di rete attendibili quando non fornisci il tuo certificato."
-    IDS_WEBSERVER_TT_WSENABLEDLOW                              "Abilita l'account WebServer con diritti limitati.\r\n\r\nUtilizzarlo per i client che non devono avere accesso Web amministrativo completo."
-    IDS_WEBSERVER_TT_WSPASS                                    "Password per l'account WebServer principale.\r\n\r\nUtilizzare una password univoca complessa, soprattutto se WebServer è raggiungibile oltre localhost."
-    IDS_WEBSERVER_TT_WSPASSLOW                                 "Password per l'account WebServer con diritti inferiori.\r\n\r\nUtilizza una password diversa dall'account principale."
-    IDS_WEBSERVER_TT_WSPORT                                    "Porta TCP utilizzata da WebServer e REST API.\r\n\r\nCambiala solo quando le regole del firewall, del proxy inverso o del router vengono aggiornate per corrispondere."
-    IDS_WEBSERVER_TT_WSTIMEOUT                                 "Timeout della sessione per gli accessi WebServer in minuti.\r\n\r\nTimeout più brevi sono più sicuri sulle macchine condivise; timeout più lunghi sono più convenienti."
-    IDS_PPG_DEBUG_TT_SERVER                                    "Abilita le categorie di registrazione del debug lato server.\r\n\r\nUtilizzare solo durante la diagnosi di problemi di comunicazione o rilevamento del server."
-    IDS_PPG_DEBUG_TT_CLIENT                                    "Abilita le categorie di registrazione del debug lato client.\r\n\r\nUtilizzare solo durante la diagnosi dei problemi di comunicazione peer."
-    IDS_PPG_DEBUG_TT_DETAIL                                    "Abilita questa categoria di debug.\r\n\r\nLa registrazione del debug può essere rumorosa e normalmente dovrebbe rimanere disattivata al di fuori della diagnostica."
-    IDS_PPG_DEBUG_TT_DETAIL_LEVEL                              "Livello di dettaglio per questa categoria di debug.\r\n\r\nValori più alti registrano più informazioni e possono aumentare significativamente il volume del registro."
-    IDS_PPG_DEBUG_TT_HEAP_LEVEL                                "Livello di controllo del danneggiamento della memoria utilizzato dalla diagnostica di debug.\r\n\r\nValori più alti possono rilevare più problemi ma potrebbero rallentare l'applicazione."
+    IDS_PPG_DIRECTORIES_TT_INCFILES                            "Directory principale in entrata per i download completati.
+
+Utilizza un percorso locale stabile con spazio libero sufficiente. Evita posizioni temporanee o rimovibili a meno che tu non voglia davvero che i file finiti siano lì."
+    IDS_PPG_DIRECTORIES_TT_TEMPFILES                           "Elenco delle directory di lavoro per file di parti, hash e stato di trasferimento.
+
+Questi percorsi devono rimanere disponibili durante l'esecuzione dei download. Si consigliano dischi locali veloci su percorsi di rete rimovibili o inaffidabili."
+    IDS_PPG_DIRECTORIES_TT_SHARESELECTOR                       "Seleziona quali cartelle locali eMule condivide con altri client.
+
+Condividi solo le directory che intendi pubblicare. Evitare radici larghe come un intero disco."
+    IDS_PPG_DISPLAY_TT_MINTRAY                                 "Riduce a icona eMule nel vassoio invece di lasciarlo sulla barra delle applicazioni.
+
+Utile per configurazioni sempre attive. Lascialo disattivato se preferisci il normale comportamento della barra delle applicazioni."
+    IDS_PPG_DISPLAY_TT_TOOLTIPDELAY                            "Ritardo prima che vengano visualizzate le descrizioni comandi dell'interfaccia utente.
+
+I valori più bassi sembrano più veloci, i valori più alti riducono i popup accidentali. L'intervallo predefinito è solitamente un buon compromesso."
+    IDS_PPG_DISPLAY_TT_SHOWRATEONTITLE                         "Mostra le velocità attuali di upload e download nel titolo della finestra principale.
+
+Utile quando eMule rimane in background e vuoi comunque dare una rapida occhiata."
+    IDS_PPG_DISPLAY_TT_STORESEARCHES                           "Conserva i termini di ricerca recenti in modo che possano essere riutilizzati in seguito.
+
+Consigliato: abilitato a meno che non si desideri specificamente che la cronologia delle ricerche non venga conservata."
+    IDS_PPG_DISPLAY_TT_WIN7_TASKBARGOODIES                     "Abilita l'avanzamento della barra delle applicazioni Windows e la relativa integrazione della shell dove supportato.
+
+Consigliato: abilitato sul moderno Windows a meno che non si desideri una presenza della shell più minima."
+    IDS_PPG_FILES_TT_PF_TIMECALC                               "Utilizza il calcolo più dettagliato del tempo rimanente per i download.
+
+Consigliato: abilitato se desideri stime di ETA più stabili. Disabilitalo solo se preferisci il vecchio calcolo più semplice."
+    IDS_PPG_FILES_TT_PREVIEWPRIO                               "Dà la priorità ai blocchi di anteprima del film in modo che i contenuti multimediali parzialmente scaricati diventino visualizzabili in anteprima in anticipo.
+
+Utile per i download di video. Lascialo disattivato se preferisci un ordine neutro in blocchi."
+    IDS_PPG_FILES_TT_WATCHCB                                   "Controlla negli appunti i collegamenti ed2k e si offre di gestirli.
+
+Comodo se aggiungi molti download dai browser. Disabilitalo se non vuoi che eMule guardi gli appunti."
+    IDS_PPG_FILES_TT_FNCLEANUP                                 "Pulisce automaticamente i nomi dei file scaricati in base alle regole configurate.
+
+Consigliato: abilitato se si desidera nomi di file finali più coerenti senza pulizia manuale."
+    IDS_PPG_FILES_TT_STARTNEXTFILE                             "Avvia automaticamente il file in coda successivo al termine di un altro download o quando viene messo in pausa.
+
+Consigliato: abilitato se si utilizzano code in pausa per controllare il numero di file eseguiti contemporaneamente."
+    IDS_PPG_FILES_TT_RUNONFILECOMPLETE                         "Esegue un eseguibile dopo che un file è stato completato e conservato con successo.
+
+Questo è disabilitato per impostazione predefinita. Il programma viene avviato direttamente senza la shell Windows."
+    IDS_PPG_FILES_TT_FILECOMPLETEARGS                          "Token supportati: percorso completo %F, directory %D, nome file %N, hash file %H, dimensione byte %S, categoria %C.
+
+%F e %D vengono quotati automaticamente. Le variabili d'ambiente non vengono espanse."
+    IDS_PPG_GENERAL_TT_ONLINESIG                               "Scrive il file di stato legacy onlinesig.dat per pagine esterne, script o widget che leggono lo stato eMule.
+
+Non migliora la velocità di trasferimento o la rete. Lascialo spento a meno che non consumi attivamente quel file da qualche parte."
+    IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND                       "Porta eMule in primo piano quando un collegamento ed2k gestito o un'azione esterna simile prende di mira l'app.
+
+Abilitalo se desideri che i clic sul collegamento rivelino immediatamente eMule. Lascialo disattivato se preferisci la gestione in background."
+    IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Controlla i rilasci di GitHub all'avvio quando l'intervallo configurato è trascorso e avvisa solo quando è disponibile un pacchetto eMule BB più recente.
+
+Lascialo disattivato per un avvio silenzioso o abilitalo se desideri un controllo periodico degli aggiornamenti."
+    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Blocca la sospensione del sistema mentre eMule BB è connesso o sta trasferendo, così download, upload, Kad e sessioni server non vengono interrotti.
+
+Lo schermo può comunque spegnersi normalmente. Disabilitando questa opzione viene ripristinata subito la normale politica di sospensione di Windows."
+    IDS_PPG_GENERAL_TT_WEBSVEDIT                               "Modifica l'elenco dei servizi Web configurati utilizzato dalle azioni di supporto come le ricerche Web dall'interfaccia utente.
+
+Normalmente ne hai bisogno solo se desideri personalizzare o riparare le voci di ricerca esterne."
+    IDS_PPG_GENERAL_TT_ED2_KFIX                                "Ripara la registrazione del collegamento ed2k Windows in modo che i collegamenti ed2k del browser e della shell si aprano nuovamente in eMule.
+
+Utilizzalo quando i collegamenti ed2k smettono di avviare eMule o sono stati rubati da un altro client."
+    IDS_PPG_GENERAL_TT_STARTMIN                                "Avvia eMule ridotto a icona invece di aprire immediatamente la finestra principale.
+
+Utile per l'avvio automatico. Lascialo disattivato se di solito desideri ispezionare subito l'interfaccia utente."
+    IDS_PPG_GENERAL_TT_STARTWIN                                "Registra eMule per iniziare con Windows per l'utente corrente.
+
+Abilitalo solo su macchine in cui eMule deve essere eseguito in modo persistente in background."
+    IDS_PPG_IRC_TT_IRC_USECHANFILTER                           "Applica il nome del canale e il filtro utente minimo quando si richiede l'elenco dei canali IRC.
+
+Abilitalo se vuoi che l'elenco venga ristretto automaticamente. Disabilitalo per recuperare sempre l'elenco completo dei canali."
+    IDS_PPG_IRC_TT_IRC_USEPERFORM                              "Esegue lo script di esecuzione dopo la connessione a IRC.
+
+Utilizzalo per join automatici o comandi IRC. Lascialo disattivato se non mantieni uno script di esecuzione."
+    IDS_PPG_IRC_TT_IRC_NAME_BOX                                "Filtra il testo per l'elenco dei canali IRC.
+
+Solo i canali che corrispondono a questo testo vengono mantenuti quando il filtro dei canali è abilitato."
+    IDS_PPG_IRC_TT_IRC_MINUSER_BOX                             "Conteggio minimo utenti per i canali mostrati dal filtro elenco canali IRC.
+
+Alzalo per nascondere i canali più piccoli. Utilizzare 0 per mantenere i canali indipendentemente dalle dimensioni."
+    IDS_PPG_MESSAGES_TT_MSGONLYFRIENDS                         "Accetta messaggi diretti solo dagli utenti presenti nella tua lista amici.
+
+Consigliato se desideri una configurazione di chat molto silenziosa. Lascialo disattivato se desideri comunque ricevere messaggi dai clienti ordinari."
+    IDS_PPG_MESSAGES_TT_ADVSPAMFILTER                          "Abilita il percorso di filtro antispam dei messaggi più efficace.
+
+Consigliato: abilitato per il normale utilizzo della rete pubblica. Funziona insieme ai captcha della chat per un filtraggio più rigoroso."
+    IDS_PPG_MESSAGES_TT_USECAPTCHAS                            "Richiede una verifica captcha prima che i client sconosciuti possano completare una conversazione in chat.
+
+Utile contro lo spam in chat. Da utilizzare preferibilmente insieme al filtro antispam avanzato."
+    IDS_PPG_MESSAGES_TT_COMMENTFILTER                          "Blocca i commenti sui file contenenti i termini del filtro configurato.
+
+Utilizzare un '|' separatore tra i termini. Utile per parole spam conosciute o schemi fastidiosi."
+    IDS_PPG_PROXY_TT_ENABLEPROXY                               "Instrada le connessioni in uscita supportate tramite il proxy configurato.
+
+Abilitalo solo se esegui intenzionalmente eMule dietro un proxy. Le connessioni dirette sono più semplici e solitamente più veloci."
+    IDS_PPG_PROXY_TT_PROXYTYPE                                 "Seleziona il protocollo proxy previsto dal tuo server proxy.
+
+Utilizza il tipo esatto fornito dall'operatore proxy; il tipo sbagliato di solito significa errori di connessione immediati."
+    IDS_PPG_PROXY_TT_PROXYNAME                                 "Nome host o indirizzo IP del server proxy.
+
+Inserisci esattamente l'endpoint fornito dal tuo servizio proxy. Un host sbagliato significa che tutto il traffico proxy fallirà."
+    IDS_PPG_PROXY_TT_PROXYPORT                                 "Porta di ascolto del server proxy.
+
+Utilizzare la porta esatta richiesta dal proxy. Non è garantito che i valori predefiniti comuni di SOCKS siano corretti."
+    IDS_PPG_PROXY_TT_ENABLEAUTH                                "Invia le credenziali del nome utente e della password del proxy quando il proxy richiede l'autenticazione.
+
+Abilitalo solo se il servizio proxy utilizza effettivamente le credenziali di accesso."
+    IDS_PPG_PROXY_TT_USERNAME_A                                "Nome utente dell'account proxy.
+
+Lascia vuoto a meno che il proxy non richieda esplicitamente l'accesso autenticato."
+    IDS_PPG_SCHEDULER_TT_ENABLE                                "Abilita la pianificazione in modo che le regole basate sul tempo possano modificare automaticamente le impostazioni.
+
+Lasciatelo disattivato a meno che non utilizziate attivamente modifiche di larghezza di banda, connessione o categoria pianificate."
+    IDS_PPG_SCHEDULER_TT_CHECKNOENDTIME                        "Esegue la voce di pianificazione selezionata senza un orario di fine.
+
+Utilizzalo per modifiche di stato unidirezionali che dovrebbero rimanere attive finché un'altra pianificazione non le sovrascrive."
+    IDS_PPG_SCHEDULER_TT_APPLY                                 "Applica i dettagli modificati alla voce di pianificazione attualmente selezionata.
+
+Utilizzare questa opzione dopo aver modificato il giorno, l'ora o l'elenco delle azioni per quella riga."
+    IDS_PPG_SECURITY_TT_USESECIDENT                            "Utilizza l'identificazione sicura quando supportato per rendere più difficile lo spoofing delle identità di credito del cliente.
+
+Consigliato: abilitato. Disabilitarlo riduce solo la fiducia nell'identità ed è raramente utile."
+    IDS_PPG_SECURITY_TT_FILTERSERVERBYIPFILTER                 "Applica il filtro IP all'elenco dei server visibili in modo che i server filtrati vengano nascosti o rimossi.
+
+Consigliato: abilitato se si fa affidamento sul filtro IP per la pulizia del server e per il filtraggio peer."
+    IDS_PPG_SECURITY_TT_UPDATEURL                              "URL di origine utilizzato durante il download degli elenchi di filtri IP aggiornati.
+
+Utilizza solo un provider affidabile. Gli aggiornamenti automatici riutilizzano questo URL e mantengono il filtro esistente se il download non è valido."
+    IDS_PPG_SECURITY_TT_AUTOUPDATE_IPFILTER                    "Controlla automaticamente l'URL del filtro IP configurato dopo l'avvio alla scadenza dell'intervallo di aggiornamento.
+
+Consigliato: disabilitato a meno che non ti fidi del provider e desideri che il filtro venga aggiornato senza azione manuale."
+    IDS_PPG_SECURITY_TT_IPFILTERPERIOD                         "Numero di giorni tra i tentativi di aggiornamento automatico del filtro IP.
+
+Intervallo consentito: da 1 a 365 giorni. I tentativi falliti vengono comunque conteggiati per evitare cicli di tentativi quando un provider non è disponibile."
+    IDS_PPG_SECURITY_TT_SEESHARE1                              "Consente a tutti di sfogliare i file condivisi quando il client remoto lo supporta.
+
+Opzione più permissiva. Usalo solo se ti senti a tuo agio nell'esporre ampiamente la tua lista condivisa."
+    IDS_PPG_SECURITY_TT_SEESHARE2                              "Consente solo agli amici di sfogliare i tuoi file condivisi.
+
+Scelta di privacy bilanciata se desideri comunque sfogliare il supporto per i contatti esplicitamente fidati."
+    IDS_PPG_SECURITY_TT_SEESHARE3                              "Impedisce ai client remoti di sfogliare l'elenco dei file condivisi.
+
+Consigliato se si desidera il rispetto più rigoroso della privacy per l'esplorazione dei file condivisi."
+    IDS_PPG_SECURITY_TT_ENABLEOBFUSCATION                      "Preferisce l'offuscamento del protocollo quando lo supporta anche il lato remoto.
+
+Consigliato: abilitato. Può essere utile su reti restrittive senza imporre una politica di solo offuscamento."
+    IDS_PPG_SECURITY_TT_ONLYOBFUSCATED                         "Richiede connessioni offuscate invece di accettare quelle normali.
+
+Utilizzalo solo se il tuo ambiente di rete ne ha veramente bisogno. Può ridurre la connettività e la portata dei pari."
+    IDS_PPG_SECURITY_TT_SEARCHSPAMFILTER                       "Filtra lo spam evidente dai risultati di ricerca prima che ingombra l'interfaccia utente.
+
+Consigliato: abilitato per il normale utilizzo della rete pubblica."
+    IDS_PPG_SECURITY_TT_CHECK_FILE_OPEN                        "Controlla lo stato aperto/bloccato dei file scaricati prima delle operazioni che richiedono l'accesso esclusivo.
+
+Consigliato: abilitato a meno che non si abbia un motivo specifico per saltare il controllo di sicurezza."
+    IDS_PPG_SERVER_TT_AUTOSERVER                               "Aggiorna automaticamente l'elenco dei server dai client connessi e da altre fonti attendibili.
+
+Comodo, ma lascia anche che l'elenco vada alla deriva nel tempo. Disabilitalo se preferisci un elenco di server statici strettamente curato."
+    IDS_PPG_SERVER_TT_UPDATESERVERCONNECT                      "Consente ai server connessi di pubblicizzare server aggiuntivi nel tuo elenco.
+
+Comodo, ma può far crescere l'elenco con voci di basso valore. Disabilitalo se preferisci una cura manuale più rigorosa."
+    IDS_PPG_SERVER_TT_UPDATESERVERCLIENT                       "Consente ai client di contribuire con indirizzi di server al tuo elenco di server.
+
+La maggior parte degli utenti dovrebbe trattare questa cosa con cautela. Disabilitalo se desideri un controllo più rigoroso sulla qualità dell'elenco dei server."
+    IDS_PPG_SERVER_TT_SAFESERVERCONNECT                        "Utilizza una strategia di connessione al server più cauta invece di affrettarsi tra molti candidati.
+
+Consigliato: abilitato per la stabilità. Disabilitalo solo se desideri deliberatamente un approccio di connessione più aggressivo."
+    IDS_PPG_SERVER_TT_SMARTIDCHECK                             "Esegue il controllo intelligente LowID prima di decidere che la raggiungibilità lato server è scarsa.
+
+Consigliato: abilitato. Evita alcune false conclusioni LowID durante condizioni di rete transitorie."
+    IDS_PPG_SERVER_TT_SCORE                                    "Utilizza le priorità dei server quando si scelgono e si ordinano i server.
+
+Consigliato: abilitato se si mantiene un sottoinsieme di server preferito e si desidera che eMule li favorisca."
+    IDS_PPG_SERVER_TT_SERVERRETRIES                            "Quanti tentativi di connessione falliti un server può accumulare prima che eMule lo consideri morto.
+
+I valori più bassi eliminano i server danneggiati più velocemente; valori più alti sono più tolleranti nei confronti delle interruzioni temporanee."
+    IDS_PPG_SERVER_TT_AUTOCONNECTSTATICONLY                    "Limita i tentativi di connessione automatica al server ai server contrassegnati come statici.
+
+Abilitala se mantieni un piccolo elenco statico attendibile e non desideri la rotazione automatica nell'elenco completo dei server."
+    IDS_PPG_SERVER_TT_MANUALSERVERHIGHPRIO                     "Assegna ai server aggiunti manualmente una priorità più elevata rispetto alle normali voci rilevate.
+
+Abilitala se mantieni un set di server selezionati manualmente e desideri che tali aggiunte siano favorite."
+    IDS_PPG_STATS_TT_FILL_GRAPHS                               "Riempie le aree del grafico invece di disegnare solo linee.
+
+Puramente visivo. Disabilitalo se preferisci una visualizzazione delle statistiche più leggera e meno impegnativa."
+    IDS_PPG_STATS_TT_SLIDER                                    "Intervallo di aggiornamento per il grafico del traffico in tempo reale.
+
+Valori più bassi sembrano più reattivi ma costano più lavoro sull'interfaccia utente. I valori moderati sono solitamente i migliori."
+    IDS_PPG_STATS_TT_SLIDER2                                   "Intervallo di aggiornamento per l'albero delle statistiche e i valori di riepilogo.
+
+I valori inferiori si aggiornano più spesso ma costano più abbandono dell'interfaccia utente. Aumentalo se desideri aggiornamenti più tranquilli."
+    IDS_PPG_STATS_TT_SLIDER3                                   "Finestra di media utilizzata dai grafici.
+
+Le finestre brevi mostrano chiaramente i picchi; finestre più lunghe uniformano la visualizzazione ed enfatizzano le tendenze."
+    IDS_PPG_STATS_TT_COLORSELECTOR                             "Seleziona il colore dell'elemento statistico che stai modificando.
+
+Utilizzalo solo se stai personalizzando la tavolozza del grafico."
+    IDS_PPG_STATS_TT_CGRAPHSCALE                               "Scala manuale dell'asse Y per il grafico di connessione.
+
+Alzala se il grafico taglia valori alti; valori più bassi forniscono maggiori dettagli con conteggi di connessioni modesti."
+    IDS_PPG_STATS_TT_CRATIO                                    "Proporzioni di caricamento/scaricamento utilizzate dal grafico di connessione combinato.
+
+Lascialo vicino al valore predefinito a meno che non desideri che il grafico enfatizzi una direzione in modo più forte."
+    IDS_NOTIFY_TT_BTN_BROWSE_WAV                               "Cerca il file WAV utilizzato dalle notifiche sonore sulla barra delle applicazioni.
+
+Disponibile solo quando sono selezionate le notifiche sonore personalizzate."
+    IDS_NOTIFY_TT_CB_TBN_IMPORTATNT                            "Mostra notifiche per condizioni urgenti come avvisi di spazio su disco o perdita di connessioni al server.
+
+Consigliato: abilitato se la macchina viene spesso eseguita incustodita."
+    IDS_NOTIFY_TT_CB_TBN_NOSOUND                               "Disabilita l'uscita audio delle notifiche.
+
+Utilizzare questa opzione quando le notifiche visive sono sufficienti o la macchina deve rimanere silenziosa."
+    IDS_NOTIFY_TT_CB_TBN_ONCHAT                                "Mostra una notifica all'avvio di una sessione di chat.
+
+Utile se mantieni eMule ridotto a icona e vuoi comunque notare le nuove conversazioni."
+    IDS_NOTIFY_TT_CB_TBN_ONDOWNLOAD                            "Mostra una notifica al termine del download.
+
+Consigliato se i file completati richiedono attenzione senza guardare la pagina Trasferimenti."
+    IDS_NOTIFY_TT_CB_TBN_ONLOG                                 "Mostra una notifica quando viene aggiunta una voce di registro.
+
+Utile per la diagnostica, ma rumoroso durante le normali sessioni di lunga durata."
+    IDS_NOTIFY_TT_CB_TBN_ONNEWDOWNLOAD                         "Mostra una notifica quando viene aggiunto un nuovo download.
+
+Abilitalo se i download possono essere aggiunti esternamente e vuoi conferma."
+    IDS_NOTIFY_TT_CB_TBN_ONNEWVERSION                          "Mostra una notifica quando il controllo degli aggiornamenti trova una versione eMule BB più recente.
+
+Questo è importante solo quando i controlli degli aggiornamenti sono abilitati nella pagina Generale."
+    IDS_NOTIFY_TT_EDIT_RECEIVER                                "Indirizzo e-mail che riceve messaggi di notifica eMule.
+
+Utilizzare un indirizzo accettato dal server SMTP configurato."
+    IDS_NOTIFY_TT_EDIT_SENDER                                  "Indirizzo del mittente utilizzato per le notifiche e-mail.
+
+Molti server SMTP richiedono che corrisponda o appartenga all'account autenticato."
+    IDS_NOTIFY_TT_EDIT_TBN_WAVFILE                             "Percorso del file WAV riprodotto per le notifiche sonore.
+
+Scegli un breve file locale; file mancanti o inaccessibili impediscono la riproduzione dell'audio."
+    IDS_NOTIFY_TT_TEST_NOTIFICATION                            "Invia una notifica di prova utilizzando le impostazioni di notifica correnti.
+
+Utilizzalo dopo aver modificato la configurazione popup, audio o e-mail."
+    IDS_PPG_DIRECTORIES_TT_SELINCDIR                           "Cerca la directory in entrata utilizzata per i download completati.
+
+Scegli un percorso locale stabile con spazio libero sufficiente."
+    IDS_PPG_DIRECTORIES_TT_SELTEMPDIR                          "Cerca la directory dei file temporanei selezionata.
+
+I file delle parti dipendono dalla disponibilità di questo percorso durante l'esecuzione dei download."
+    IDS_PPG_DIRECTORIES_TT_SELTEMPDIRADD                       "Aggiunge un'altra directory di file temporanei all'elenco delle directory di lavoro.
+
+Utilizza più dischi locali veloci e affidabili solo quando desideri deliberatamente diffondere parte dei file."
+    IDS_PPG_DIRECTORIES_TT_UNCADD                              "Aggiunge un percorso UNC di rete all'elenco delle directory condivise.
+
+Condividi solo le cartelle di rete che rimangono raggiungibili e sono destinate alla pubblicazione."
+    IDS_PPG_DISPLAY_TT_3DDEPTH                                 "Controlla la profondità dell'ombreggiatura 3D utilizzata dagli elementi visivi classici di elenchi e grafici.
+
+Puramente visivo; i valori più bassi appaiono più piatti mentre i valori più alti aggiungono un'ombreggiatura più forte."
+    IDS_PPG_DISPLAY_TT_CLEARCOMPL                              "Rimuove automaticamente i download completati dall'elenco dei trasferimenti visibile.
+
+I file completati rimangono sul disco; questo mantiene solo più pulito l'elenco dei download."
+    IDS_PPG_DISPLAY_TT_DBLCLICK                                "Espande o comprime un download quando si fa doppio clic su di esso nell'elenco Trasferimenti.
+
+Disabilitalo se i doppi clic dovrebbero evitare di modificare il layout della riga."
+    IDS_PPG_DISPLAY_TT_DISABLEHIST                             "Abilita le cronologie di completamento automatico per campi come testo di ricerca e URL server.met.
+
+Disabilitalo se non vuoi che quelle voci vengano ricordate."
+    IDS_PPG_DISPLAY_TT_DISABLEKNOWNLIST                        "Nasconde e disabilita l'elenco dei client conosciuti nella finestra Trasferimenti.
+
+Utilizzalo solo se desideri un'interfaccia utente più leggera e non hai bisogno della visualizzazione diagnostica."
+    IDS_PPG_DISPLAY_TT_DISABLEQUEUELIST                        "Nasconde e disabilita l'elenco delle code nella finestra Trasferimenti.
+
+Utilizzalo solo se non controlli i client di caricamento in coda."
+    IDS_PPG_DISPLAY_TT_RESETHIST                               "Cancella le voci della cronologia di completamento automatico memorizzate.
+
+Influisce solo sulla cronologia salvata e non modifica i download attivi o gli elenchi di server."
+    IDS_PPG_DISPLAY_TT_SELECT_HYPERTEXT_FONT                   "Apre il selettore dei caratteri per le visualizzazioni server, messaggi e testo IRC.
+
+Tieni premuto Ctrl mentre lo apri per modificare invece il carattere del registro."
+    IDS_PPG_DISPLAY_TT_SHOWCATINFO                             "Mostra le informazioni sulla categoria nelle schede delle categorie di trasferimento.
+
+Utile quando gestisci i download attraverso più categorie."
+    IDS_PPG_DISPLAY_TT_SHOWDWLPERCENT                          "Mostra le percentuali di avanzamento del download nell'elenco Trasferimenti.
+
+Abilitalo per una scansione rapida dell'avanzamento senza aprire i dettagli del file."
+    IDS_PPG_DISPLAY_TT_SHOWTRANSTOOLBAR                        "Mostra la barra degli strumenti aggiuntiva nella finestra Trasferimenti.
+
+Disattivala se preferisci più spazio per le righe di trasferimento."
+    IDS_PPG_FILES_TT_ADDNEWFILESPAUSED                         "Aggiunge i nuovi download in coda in modalità di pausa.
+
+Utile quando si desidera rivedere o pianificare i file prima che inizino il trasferimento."
+    IDS_PPG_FILES_TT_BROWSEV                                   "Cerca l'eseguibile del lettore video esterno.
+
+Scegli il programma che dovrebbe aprire i file multimediali in anteprima."
+    IDS_PPG_FILES_TT_BROWSE_FILECOMPLETEPROGRAM                "Cerca il programma avviato dopo il completamento di un file.
+
+Utilizza un eseguibile locale attendibile perché viene eseguito automaticamente quando abilitato."
+    IDS_PPG_FILES_TT_DAP                                       "Assegna la priorità automatica ai download appena aggiunti.
+
+Consigliato a meno che non si preferisca gestire manualmente le priorità dei download."
+    IDS_PPG_FILES_TT_FILECOMPLETEPROGRAM                       "Eseguibile da eseguire dopo il completamento di un file.
+
+Utilizzare un percorso completo a un programma attendibile; viene lanciato direttamente senza la shell Windows."
+    IDS_PPG_FILES_TT_FNC                                       "Modifica il filtro di pulizia utilizzato per la pulizia automatica dei nomi file.
+
+Utilizzalo solo se le regole di pulizia predefinite non corrispondono alle tue preferenze di denominazione."
+    IDS_PPG_FILES_TT_FULLCHUNKTRANS                            "Tenta di caricare blocchi completi sui client quando possibile.
+
+Questo può migliorare la distribuzione dei blocchi, ma potrebbe far durare più a lungo alcuni caricamenti."
+    IDS_PPG_FILES_TT_REMEMBERCANCELLED                         "Ricorda i file cancellati in modo che possano essere riconosciuti in seguito.
+
+Utile per evitare di aggiungere nuovamente i file cancellati intenzionalmente."
+    IDS_PPG_FILES_TT_REMEMBERDOWNLOADED                        "Ricorda i download completati in modo che i file già completati possano essere riconosciuti in seguito.
+
+Consigliato se si desidera ricevere avvisi di download duplicati."
+    IDS_PPG_FILES_TT_STARTNEXTFILECAT                          "Quando avvii il successivo file in pausa, preferisci i file della stessa categoria del file completato.
+
+Utilizzalo per mantenere le code delle categorie in movimento insieme."
+    IDS_PPG_FILES_TT_STARTNEXTFILECAT2                         "Quando avvii il successivo file in pausa, scegli solo dalla stessa categoria del file completato.
+
+Utilizzalo per un rigoroso controllo della coda per categoria."
+    IDS_PPG_FILES_TT_UAP                                       "Assegna la priorità automatica ai file appena condivisi.
+
+Consigliato a meno che tu non modifichi deliberatamente le priorità dei file condivisi."
+    IDS_PPG_FILES_TT_VIDEOBACKUP                               "Crea una copia di backup prima di visualizzare in anteprima un file multimediale parzialmente scaricato.
+
+Più sicuro per lettori fragili, ma utilizza spazio e tempo su disco aggiuntivi."
+    IDS_PPG_FILES_TT_VIDEOPLAYER                               "Lettore esterno utilizzato per le anteprime multimediali.
+
+Lascia vuoto per utilizzare l'associazione predefinita o impostare un lettore attendibile specifico."
+    IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS                          "Argomenti passati al lettore di anteprima esterno.
+
+Utilizzalo solo se il lettore necessita di opzioni personalizzate della riga di comando."
+    IDS_PPG_GENERAL_TT_CHECKDAYS                               "Numero di giorni tra i controlli degli aggiornamenti all'avvio.
+
+I valori più alti riducono i controlli di rete; valori più bassi trovano prima le nuove versioni pubblicate."
+    IDS_PPG_GENERAL_TT_EXIT                                    "Chiede conferma prima dell'uscita di eMule.
+
+Consigliato su sistemi non presidiati per evitare arresti accidentali."
+    IDS_PPG_GENERAL_TT_LANGS                                   "Seleziona la risorsa della lingua dell'interfaccia utente caricata da eMule.
+
+La modifica della lingua potrebbe richiedere la riapertura delle finestre di dialogo prima dell'aggiornamento di ogni etichetta."
+    IDS_PPG_GENERAL_TT_NICK                                    "Nome utente annunciato agli altri client eMule.
+
+Utilizzare un nickname non sensibile; può essere visibile ai peer."
+    IDS_PPG_GENERAL_TT_SPLASHON                                "Mostra la schermata iniziale durante l'avvio.
+
+Disabilitala per un percorso di avvio più silenzioso."
+    IDS_PPG_IRC_TT_IRC_NICK_BOX                                "Nickname utilizzato quando ci si connette a IRC.
+
+Scegli un nome accettato dalla rete IRC di destinazione."
+    IDS_PPG_IRC_TT_IRC_PERFORM_BOX                             "I comandi vengono eseguiti automaticamente dopo la connessione di IRC quando l'esecuzione è abilitata.
+
+Utilizza i comandi IRC a riga singola solo se ti fidi e li comprendi."
+    IDS_PPG_IRC_TT_IRC_SERVER_BOX                              "Indirizzo del server IRC utilizzato dal client IRC integrato.
+
+Cambialo solo quando usi intenzionalmente un'altra rete IRC."
+    IDS_PPG_MESSAGES_TT_FILTER                                 "Filtro di testo per i messaggi di chat in arrivo.
+
+Utilizzalo per eliminare parole o schemi noti fastidiosi."
+    IDS_PPG_MESSAGES_TT_INDICATERATINGS                        "Mostra un'icona per i download che contengono commenti o valutazioni.
+
+Utile quando si desidera rivedere il feedback della community prima di aprire i file."
+    IDS_PPG_MESSAGES_TT_MSHOWSMILEYS                           "Visualizza emoticon nei messaggi di chat.
+
+Disabilitalo se preferisci il rendering in testo semplice."
+    IDS_PPG_PROXY_TT_PASSWORD                                  "Password dell'account proxy.
+
+Lascia vuoto a meno che l'autenticazione proxy non sia abilitata e richiesta dal server proxy."
+    IDS_PPG_SCHEDULER_TT_DATETIMEPICKER1                       "Ora di inizio per la voce di pianificazione selezionata.
+
+La regola diventa attiva a quest'ora nello schema giornaliero selezionato."
+    IDS_PPG_SCHEDULER_TT_DATETIMEPICKER2                       "Ora di fine per la voce di pianificazione selezionata.
+
+Disabilita l'ora di fine in cui la regola deve rimanere attiva finché un'altra pianificazione non la modifica."
+    IDS_PPG_SCHEDULER_TT_NEW                                   "Crea una nuova voce di pianificazione.
+
+Modifica i suoi dettagli e fai clic su Applica per memorizzare la regola configurata."
+    IDS_PPG_SCHEDULER_TT_REMOVE                                "Rimuove la voce di pianificazione selezionata.
+
+Utilizzalo solo dopo aver selezionato la regola che non desideri più."
+    IDS_PPG_SCHEDULER_TT_SCHEDACTION                           "Azioni applicate dalla voce di pianificazione selezionata.
+
+Fare doppio clic o fare clic con il pulsante destro del mouse sull'elenco per modificare le modifiche pianificate."
+    IDS_PPG_SCHEDULER_TT_SCHEDLIST                             "Elenco delle voci di pianificazione configurate.
+
+Selezionare una voce per modificarne il titolo, l'ora, lo schema giornaliero, lo stato abilitato e le azioni."
+    IDS_PPG_SCHEDULER_TT_S_ENABLE                              "Abilita o disabilita la voce di pianificazione selezionata.
+
+Utilizzare questa opzione per mettere in pausa una singola regola senza eliminarla."
+    IDS_PPG_SCHEDULER_TT_S_TITLE                               "Nome visualizzato per la voce di pianificazione selezionata.
+
+Utilizzare un nome breve che identifichi cosa cambia la regola."
+    IDS_PPG_SCHEDULER_TT_TIMESEL                               "Schema giornaliero per la voce di pianificazione selezionata.
+
+Scegli quando devono essere applicati gli orari di inizio e fine."
+    IDS_PPG_SECURITY_TT_DD                                     "Apre la cronologia degli URL del filtro IP memorizzata per una selezione rapida.
+
+Utilizzare solo fornitori di filtri attendibili."
+    IDS_PPG_SECURITY_TT_DISABLEOBFUSCATION                     "Disabilita completamente il supporto per le connessioni offuscate.
+
+Non consigliato a meno che non sia necessario un comportamento legacy rigoroso."
+    IDS_PPG_SECURITY_TT_EDITFILTER                             "Apre il file del filtro IP locale per la modifica manuale.
+
+Salvare con attenzione; le voci non valide potrebbero essere ignorate."
+    IDS_PPG_SECURITY_TT_LOADURL                                "Scarica e applica l'elenco dei filtri IP dall'URL configurato.
+
+Utilizza solo provider attendibili; il filtro esistente viene mantenuto se il download fallisce."
+    IDS_PPG_SECURITY_TT_RELOADFILTER                           "Ricarica il file del filtro IP locale dal disco.
+
+Utilizzalo dopo aver modificato manualmente il file del filtro all'esterno di eMule."
+    IDS_PPG_SERVER_TT_EDITADR                                  "Modifica gli URL di aggiornamento dell'elenco dei server di avvio.
+
+Utilizza solo fonti server.met attendibili; gli elenchi non attendibili possono inquinare il rilevamento dei server."
+    IDS_PPG_STATS_TT_COLOR_BUTTON                              "Apre il selettore colori per l'elemento statistico selezionato.
+
+Utilizzalo dopo aver scelto un elemento nel selettore colori."
+    IDS_WEBSERVER_TT_CERTBROWSE                                "Cerca il file del certificato HTTPS.
+
+Utilizzare un file del certificato che corrisponda alla chiave privata configurata."
+    IDS_WEBSERVER_TT_CERTPATH                                  "File di certificato utilizzato quando HTTPS è abilitato.
+
+WebServer non può essere avviato in modalità HTTPS se questo file manca o non è valido."
+    IDS_WEBSERVER_TT_KEYBROWSE                                 "Cerca il file della chiave privata HTTPS.
+
+Mantieni la chiave selezionata privata e leggibile solo da utenti locali fidati."
+    IDS_WEBSERVER_TT_KEYPATH                                   "File di chiave privata utilizzato quando HTTPS è abilitato.
+
+Proteggi questo file; chiunque abbia la chiave può impersonare il certificato WebServer."
+    IDS_WEBSERVER_TT_WEB_GENERATE                              "Crea un nuovo certificato locale e una chiave privata per HTTPS.
+
+Utilizzalo per configurazioni locali o di rete attendibili quando non fornisci il tuo certificato."
+    IDS_WEBSERVER_TT_WSENABLEDLOW                              "Abilita l'account WebServer con diritti limitati.
+
+Utilizzarlo per i client che non devono avere accesso Web amministrativo completo."
+    IDS_WEBSERVER_TT_WSPASS                                    "Password per l'account WebServer principale.
+
+Utilizzare una password univoca complessa, soprattutto se WebServer è raggiungibile oltre localhost."
+    IDS_WEBSERVER_TT_WSPASSLOW                                 "Password per l'account WebServer con diritti inferiori.
+
+Utilizza una password diversa dall'account principale."
+    IDS_WEBSERVER_TT_WSPORT                                    "Porta TCP utilizzata da WebServer e REST API.
+
+Cambiala solo quando le regole del firewall, del proxy inverso o del router vengono aggiornate per corrispondere."
+    IDS_WEBSERVER_TT_WSTIMEOUT                                 "Timeout della sessione per gli accessi WebServer in minuti.
+
+Timeout più brevi sono più sicuri sulle macchine condivise; timeout più lunghi sono più convenienti."
+    IDS_PPG_DEBUG_TT_SERVER                                    "Abilita le categorie di registrazione del debug lato server.
+
+Utilizzare solo durante la diagnosi di problemi di comunicazione o rilevamento del server."
+    IDS_PPG_DEBUG_TT_CLIENT                                    "Abilita le categorie di registrazione del debug lato client.
+
+Utilizzare solo durante la diagnosi dei problemi di comunicazione peer."
+    IDS_PPG_DEBUG_TT_DETAIL                                    "Abilita questa categoria di debug.
+
+La registrazione del debug può essere rumorosa e normalmente dovrebbe rimanere disattivata al di fuori della diagnostica."
+    IDS_PPG_DEBUG_TT_DETAIL_LEVEL                              "Livello di dettaglio per questa categoria di debug.
+
+Valori più alti registrano più informazioni e possono aumentare significativamente il volume del registro."
+    IDS_PPG_DEBUG_TT_HEAP_LEVEL                                "Livello di controllo del danneggiamento della memoria utilizzato dalla diagnostica di debug.
+
+Valori più alti possono rilevare più problemi ma potrebbero rallentare l'applicazione."
     IDS_TREEOPTIONS_BROWSE_FOLDER_CAPTION                      "Si prega di specificare una cartella"
     IDS_TREEOPTIONS_BROWSE_FILE_CAPTION                        "Si prega di specificare un file"
     IDS_TREEOPTIONS_ALL_FILES_FILTER                           "Tutti i file (*.*)|*.*||"
@@ -2745,6 +3399,17 @@ BEGIN
     IDS_CATEGORY_MANAGER_MOVE_UP                               "&Spostati in alto"
     IDS_CATEGORY_MANAGER_MOVE_DOWN                             "&Sposta giù"
     IDS_CATEGORY_REMOVE_IN_USE                                 "Alla categoria ""%s"" sono ancora assegnati download %u. Sposta o cancella i download prima di rimuoverli."
+    IDS_ENABLE_WINDOWS_LONG_PATHS                              "Abilita Windows Percorsi lunghi..."
+    IDS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS                      "Escludi le cartelle di download eMule da Microsoft Defender..."
+    IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS                 "Avvia un'azione una tantum con privilegi elevati per abilitare la policy di percorso lungo Windows."
+    IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS         "Avvia un'azione una tantum con privilegi elevati per escludere le cartelle attive in entrata, temporanee e di categoria dalla scansione di Microsoft Defender."
+    IDS_LONG_PATHS_ENABLE_SUCCESS                              "Il criterio del percorso lungo Windows è abilitato."
+    IDS_LONG_PATHS_ENABLE_FAILURE                              "Windows aggiornamento policy percorso lungo non riuscito: %s"
+    IDS_LONG_PATHS_ENABLE_CANCELLED                            "Windows Aggiornamento policy percorso lungo annullato."
+    IDS_DEFENDER_EXCLUSIONS_SUCCESS                            "Azione di esclusione di Microsoft Defender completata per le cartelle %u."
+    IDS_DEFENDER_EXCLUSIONS_FAILURE                            "Azione di esclusione di Microsoft Defender non riuscita: %s"
+    IDS_DEFENDER_EXCLUSIONS_CANCELLED                          "Azione di esclusione di Microsoft Defender annullata."
+    IDS_DEFENDER_EXCLUSIONS_NO_PATHS                           "Nessuna cartella di download eMule disponibile per l'esclusione di Microsoft Defender."
 END
 // eMule BB managed translation block: end
 

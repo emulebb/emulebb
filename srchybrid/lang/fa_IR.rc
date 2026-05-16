@@ -1989,11 +1989,11 @@ BEGIN
     IDS_SEARCH_KAD_TRUST_NORMAL                             "عادی"
     IDS_SEARCH_KAD_TRUST_HIGH                               "بالا"
     IDS_SEARCH_KAD_TRUST_INFOTIP                            "اطمینان Kad: %s (سازگاری ناشر/نام)"
-    IDS_SEARCH_STATUS_QUEUED                                  "در صف..."
-    IDS_SEARCH_STATUS_SEARCHING_SERVER                        "در حال جستجو در سرور..."
-    IDS_SEARCH_STATUS_SEARCHING_GLOBAL                        "در حال جستجو در سرورهای سراسری..."
-    IDS_SEARCH_STATUS_SEARCHING_KAD                           "در حال جستجو در Kad..."
-    IDS_SEARCH_STATUS_NO_RESULTS                              "نتیجه‌ای یافت نشد."
+    IDS_SEARCH_STATUS_QUEUED                                "در صف..."
+    IDS_SEARCH_STATUS_SEARCHING_SERVER                      "در حال جستجو در سرور..."
+    IDS_SEARCH_STATUS_SEARCHING_GLOBAL                      "در حال جستجو در سرورهای سراسری..."
+    IDS_SEARCH_STATUS_SEARCHING_KAD                         "در حال جستجو در Kad..."
+    IDS_SEARCH_STATUS_NO_RESULTS                            "نتیجه‌ای یافت نشد."
     IDS_FAKEFILE_EVIDENCE_CANONICAL_NAMES                   "نام های متعارف: %s"
     IDS_FAKEFILE_EVIDENCE_IGNORED_TOKENS                    "نشانه‌های نام نادیده گرفته شده: %s"
     IDS_FAKEFILE_EVIDENCE_DIVERGENCE_GROUPS                 "گروه های اختلاف نام: %s"
@@ -2075,9 +2075,9 @@ BEGIN
     IDS_FIREWALL_REPAIR_FAILURE                             "تعمیر Windows Firewall ناموفق بود: %s"
     IDS_FIREWALL_REPAIR_CANCELLED                           "تعمیر Windows Firewall لغو شد."
     IDS_FIREWALL_REPAIR_NO_RULES                            "هیچ قانون Windows Firewall برای پیکربندی پورت فعلی نیاز به تعمیر ندارد."
-    IDS_SPEED_LIMIT_UPLOAD_FMT                              "محدودیت: آپلود %u%%\t%u %s"
-    IDS_SPEED_LIMIT_DOWNLOAD_FMT                            "محدودیت: دانلود %u%%\t%u %s"
-    IDS_SPEED_LIMIT_BOTH_FMT                                "محدودیت: هر دو %u%%\tU %u %s / D %u %s"
+    IDS_SPEED_LIMIT_UPLOAD_FMT                              "محدودیت: آپلود %u%%	%u %s"
+    IDS_SPEED_LIMIT_DOWNLOAD_FMT                            "محدودیت: دانلود %u%%	%u %s"
+    IDS_SPEED_LIMIT_BOTH_FMT                                "محدودیت: هر دو %u%%	U %u %s / D %u %s"
     IDS_SPEED_ACTION_BOTH_UPLOAD_DOWNLOAD                   "&هر دو آپلود + دانلود"
     IDS_SPEED_ACTION_UPLOAD                                 "&آپلود کنید"
     IDS_SPEED_ACTION_DOWNLOAD                               "&دانلود کنید"
@@ -2117,29 +2117,68 @@ BEGIN
     IDS_ARCHPREV_CRC                                        "CRC"
     IDS_WS_ENABLE_REST_API                                  "REST API را فعال کنید"
     IDS_WS_ENABLE_LEGACY_WEBUI                              "Web UI قدیمی را فعال کنید"
-    IDS_WEBSERVER_TT_WSLEGACYUI                             "Web UI مبتنی بر الگوی قدیمی را فعال می کند.\r\n\r\nاین را فقط برای استفاده REST خاموش کنید. در صورت فعال بودن، الگوهای از دست رفته فقط بر صفحات HTML قدیمی تأثیر می‌گذارند، نه درخواست‌های REST API."
+    IDS_WEBSERVER_TT_WSLEGACYUI                             "Web UI مبتنی بر الگوی قدیمی را فعال می کند.
+
+این را فقط برای استفاده REST خاموش کنید. در صورت فعال بودن، الگوهای از دست رفته فقط بر صفحات HTML قدیمی تأثیر می‌گذارند، نه درخواست‌های REST API."
     IDS_PREVIEWCOPIEDARCHIVES                               "برای پیش نمایش از نسخه بایگانی موقت استفاده کنید"
     IDS_TWEAKS_NETWORK_CONNECTIVITY                         "&اتصال به شبکه"
     IDS_EXIT_ON_BIND_LOSS                                   "اگر رابط انتخابی bind/VPN گم شد از eMule خارج شوید"
-    IDS_TWEAKS_TT_PREVIEW_COPIED_ARCHIVES                   "یک کپی بایگانی بازیابی شده موقت قبل از پیش نمایش ایجاد می کند.\r\n\r\nاین می تواند سازگاری با کنترل کننده های پیش نمایش خارجی را بهبود بخشد، اما از فضای دیسک و IO بیشتری استفاده می کند."
-    IDS_TWEAKS_TT_NETWORK_CONNECTIVITY                      "زمان‌بندی اتصال و کنترل‌های نگاشت پورت خودکار.\r\n\r\nاین تنظیمات بر قابلیت دسترسی و پایداری جلسه تأثیر می‌گذارند. پیش فرض ها را حفظ کنید مگر اینکه عمداً رفتار شبکه را تنظیم کنید."
-    IDS_TWEAKS_TT_AUTO_ARCH                                 "برگه محتوای بایگانی را بدون شروع خودکار اسکن بایگانی باز می‌کند. اگر می‌خواهید پیش‌نمایش‌های بایگانی را فقط زمانی که صریحاً شروع می‌کنید، آن را بررسی کنید،\r\n\r\nآن را فعال کنید."
-    IDS_CONNECTION_TT_EXIT_ON_BIND_LOSS                     "اگر رابط bind/VPN انتخاب‌شده پس از راه‌اندازی ناپدید شود، eMule خارج می‌شود.\r\n\r\nفقط وقتی رابط bind انتخاب شده باشد در دسترس است. از این گزینه برای محافظت VPN استفاده کنید تا شبکه P2P هرگز بی‌صدا به مسیر غیر VPN برنگردد."
-    IDS_PPG_SECURITY_TT_ENABLE_IPFILTER                     "قوانین ipfilter.dat بارگذاری شده را برای همتایان، منابع، مخاطبین Kad و سایر بررسی‌های فیلتر IP اعمال می‌کند.\r\n\r\nآن را غیرفعال کنید تا فایل فیلتر بدون مسدود کردن قوانین فیلتر IP در دسترس بماند."
-    IDS_PPG_FILES_TT_VIDEOTHUMBNAILS                        "کنترل می‌کند eMule هر چند وقت یک بار برای فایل‌های ویدیویی در حال دانلود تصویر بندانگشتی بسازد.\r\n\r\nبرای غیرفعال کردن تولید تصویر بندانگشتی مقدار را 0 بگذارید. فاصله‌های فعال از 30..900 ثانیه استفاده می‌کنند. فاصله پیشنهادی پیش‌فرض 90 ثانیه است."
-    IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG                       "فایل اجرایی خارجی FFmpeg فقط برای تولید تصاویر کوچک ویدیو استفاده می شود.\r\n\r\nFFmpeg باید جداگانه نصب شود. ffmpeg.exe را با دکمه مرور انتخاب کنید."
-    IDS_PPG_SECURITY_TT_FILTERLEVEL                         "حداقل سطح فیلتر IP زمانی که فیلتر IP فعال است استفاده می شود. مقادیر\r\n\r\nکمتر محدوده های بیشتری را مسدود می کنند مقادیر بالاتر تهاجمی کمتری دارند."
-    IDS_WEBSERVER_TT_TMPLBROWSE                             "فایل الگوی قدیمی Web UI را مرور می کند.\r\n\r\nاین فقط زمانی مورد نیاز است که Web UI قدیمی فعال باشد."
-    IDS_WEBSERVER_TT_TMPLPATH                               "فایل الگوی استفاده شده توسط Web UI.\r\n\r\nREST API قدیمی به این فایل نیازی ندارد."
-    IDS_WEBSERVER_TT_WSENABLED                              "شنونده REST API و WebServer مشترک را فعال می کند.\r\n\r\nفقط زمانی که به کنترل از راه دور نیاز دارید و گذرواژه ها و محدودیت های دسترسی پیکربندی شده دارید، آن را فعال کنید."
-    IDS_WEBSERVER_TT_WSRELOADTMPL                           "قالب‌های قدیمی Web UI را بدون راه‌اندازی مجدد از دیسک بارگیری می‌کند.\r\n\r\nپس از تغییر فایل‌های الگو از آن استفاده کنید."
-    IDS_WEBSERVER_TT_WS_GZIP                                "پاسخ‌های قدیمی Web UI را با gzip فشرده می‌کند زمانی که مشتریان از آن پشتیبانی می‌کنند. پاسخ‌های\r\n\r\nREST API توسط این گزینه رابط کاربری قدیمی بسته نمی‌شوند."
+    IDS_TWEAKS_TT_PREVIEW_COPIED_ARCHIVES                   "یک کپی بایگانی بازیابی شده موقت قبل از پیش نمایش ایجاد می کند.
+
+این می تواند سازگاری با کنترل کننده های پیش نمایش خارجی را بهبود بخشد، اما از فضای دیسک و IO بیشتری استفاده می کند."
+    IDS_TWEAKS_TT_NETWORK_CONNECTIVITY                      "زمان‌بندی اتصال و کنترل‌های نگاشت پورت خودکار.
+
+این تنظیمات بر قابلیت دسترسی و پایداری جلسه تأثیر می‌گذارند. پیش فرض ها را حفظ کنید مگر اینکه عمداً رفتار شبکه را تنظیم کنید."
+    IDS_TWEAKS_TT_AUTO_ARCH                                 "برگه محتوای بایگانی را بدون شروع خودکار اسکن بایگانی باز می‌کند. اگر می‌خواهید پیش‌نمایش‌های بایگانی را فقط زمانی که صریحاً شروع می‌کنید، آن را بررسی کنید،
+
+آن را فعال کنید."
+    IDS_CONNECTION_TT_EXIT_ON_BIND_LOSS                     "اگر رابط bind/VPN انتخاب‌شده پس از راه‌اندازی ناپدید شود، eMule خارج می‌شود.
+
+فقط وقتی رابط bind انتخاب شده باشد در دسترس است. از این گزینه برای محافظت VPN استفاده کنید تا شبکه P2P هرگز بی‌صدا به مسیر غیر VPN برنگردد."
+    IDS_PPG_SECURITY_TT_ENABLE_IPFILTER                     "قوانین ipfilter.dat بارگذاری شده را برای همتایان، منابع، مخاطبین Kad و سایر بررسی‌های فیلتر IP اعمال می‌کند.
+
+آن را غیرفعال کنید تا فایل فیلتر بدون مسدود کردن قوانین فیلتر IP در دسترس بماند."
+    IDS_PPG_FILES_TT_VIDEOTHUMBNAILS                        "کنترل می‌کند eMule هر چند وقت یک بار برای فایل‌های ویدیویی در حال دانلود تصویر بندانگشتی بسازد.
+
+برای غیرفعال کردن تولید تصویر بندانگشتی مقدار را 0 بگذارید. فاصله‌های فعال از 30..900 ثانیه استفاده می‌کنند. فاصله پیشنهادی پیش‌فرض 90 ثانیه است."
+    IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG                       "فایل اجرایی خارجی FFmpeg فقط برای تولید تصاویر کوچک ویدیو استفاده می شود.
+
+FFmpeg باید جداگانه نصب شود. ffmpeg.exe را با دکمه مرور انتخاب کنید."
+    IDS_PPG_SECURITY_TT_FILTERLEVEL                         "حداقل سطح فیلتر IP زمانی که فیلتر IP فعال است استفاده می شود. مقادیر
+
+کمتر محدوده های بیشتری را مسدود می کنند مقادیر بالاتر تهاجمی کمتری دارند."
+    IDS_WEBSERVER_TT_TMPLBROWSE                             "فایل الگوی قدیمی Web UI را مرور می کند.
+
+این فقط زمانی مورد نیاز است که Web UI قدیمی فعال باشد."
+    IDS_WEBSERVER_TT_TMPLPATH                               "فایل الگوی استفاده شده توسط Web UI.
+
+REST API قدیمی به این فایل نیازی ندارد."
+    IDS_WEBSERVER_TT_WSENABLED                              "شنونده REST API و WebServer مشترک را فعال می کند.
+
+فقط زمانی که به کنترل از راه دور نیاز دارید و گذرواژه ها و محدودیت های دسترسی پیکربندی شده دارید، آن را فعال کنید."
+    IDS_WEBSERVER_TT_WSRELOADTMPL                           "قالب‌های قدیمی Web UI را بدون راه‌اندازی مجدد از دیسک بارگیری می‌کند.
+
+پس از تغییر فایل‌های الگو از آن استفاده کنید."
+    IDS_WEBSERVER_TT_WS_GZIP                                "پاسخ‌های قدیمی Web UI را با gzip فشرده می‌کند زمانی که مشتریان از آن پشتیبانی می‌کنند. پاسخ‌های
+
+REST API توسط این گزینه رابط کاربری قدیمی بسته نمی‌شوند."
     IDS_DL_BATCH                                            "&دسته ای"
     IDS_DL_PAUSE_CATEGORY                                   "مکث همه در این دسته"
     IDS_DL_STOP_CATEGORY                                    "توقف همه در این دسته"
     IDS_DL_RESUME_CATEGORY                                  "رزومه همه در این دسته"
     IDS_PRIO_INCREASE                                       "افزایش اولویت"
     IDS_PRIO_DECREASE                                       "کاهش اولویت"
+    IDS_ENABLE_WINDOWS_LONG_PATHS                           "فعال کردن مسیرهای طولانی Windows..."
+    IDS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS                   "حذف پوشه های دانلود eMule از Microsoft Defender..."
+    IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS              "برای فعال کردن خط مشی مسیر طولانی Windows، یک اقدام یکباره افزایش یافته را راه اندازی می کند."
+    IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS      "برای حذف پوشه‌های Incoming، Temp، و دسته‌بندی فعال از اسکن Microsoft Defender، یک کنش یک‌باره بالا را راه‌اندازی می‌کند."
+    IDS_LONG_PATHS_ENABLE_SUCCESS                           "خط مشی مسیر طولانی Windows فعال است."
+    IDS_LONG_PATHS_ENABLE_FAILURE                           "به‌روزرسانی خط‌مشی مسیر طولانی Windows ناموفق بود: %s"
+    IDS_LONG_PATHS_ENABLE_CANCELLED                         "به‌روزرسانی خط‌مشی مسیر طولانی Windows لغو شد."
+    IDS_DEFENDER_EXCLUSIONS_SUCCESS                         "اقدام حذف Microsoft Defender برای پوشه(های) %u تکمیل شد."
+    IDS_DEFENDER_EXCLUSIONS_FAILURE                         "اقدام حذف Microsoft Defender انجام نشد: %s"
+    IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "اقدام حذف Microsoft Defender لغو شد."
+    IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "هیچ پوشه بارگیری eMule برای حذف Microsoft Defender در دسترس نبود."
 END
 // eMule BB managed translation block: end
 

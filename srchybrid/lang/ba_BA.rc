@@ -2175,6 +2175,17 @@ BEGIN
     IDS_DL_RESUME_CATEGORY                                  "Berrekin kategoria honetako guztiei"
     IDS_PRIO_INCREASE                                       "Handitu lehentasuna"
     IDS_PRIO_DECREASE                                       "Txikitu lehentasuna"
+    IDS_ENABLE_WINDOWS_LONG_PATHS                           "Gaitu Windows bide luzeak..."
+    IDS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS                   "Baztertu eMule Deskargatu karpetak Microsoft Defender-etik..."
+    IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS              "Windows bide luzeko politika gaitzeko behin-behineko ekintza altxatua abiarazten du."
+    IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS      "Ekintza bat abiarazten du Sarrerako, Tenperaturako eta kategoriako karpeta aktiboak Microsoft Defender-en eskaneatzetik baztertzeko."
+    IDS_LONG_PATHS_ENABLE_SUCCESS                           "Windows bide luzeko politika gaituta dago."
+    IDS_LONG_PATHS_ENABLE_FAILURE                           "Windows bide luzeko politika eguneratzeak huts egin du: %s"
+    IDS_LONG_PATHS_ENABLE_CANCELLED                         "Windows bide luzeko gidalerroen eguneratzea bertan behera utzi da."
+    IDS_DEFENDER_EXCLUSIONS_SUCCESS                         "Microsoft Defender baztertzeko ekintza burutu da %u karpetarentzat."
+    IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defender baztertzeko ekintzak huts egin du: %s"
+    IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defender baztertzeko ekintza bertan behera utzi da."
+    IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Ez zegoen eMule deskarga-karpetarik eskuragarri Microsoft Defender baztertzeko."
 END
 // eMule BB managed translation block: end
 
