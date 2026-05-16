@@ -136,11 +136,12 @@ LONG WINAPI CMiniDumper::TopLevelFilter(struct _EXCEPTION_POINTERS *pExceptionIn
 #ifdef _DEBUG
 	LONG lRetValue = EXCEPTION_CONTINUE_SEARCH;
 #endif
+	const bool bAutoCreateDump = (theCrashDumper.uCreateCrashDump == 2);
 	SYSTEMTIME t;
 	::GetLocalTime(&t); //time of this crash
 	// Ask user to confirm writing a dump file
 	// Do *NOT* localize that string (in fact, do not use MFC to load it)!
-	if (theCrashDumper.uCreateCrashDump == 2 || MessageBox(NULL, CRASHTEXT, m_strAppName, MB_ICONSTOP | MB_YESNO) == IDYES) {
+	if (bAutoCreateDump || MessageBox(NULL, CRASHTEXT, m_strAppName, MB_ICONSTOP | MB_YESNO) == IDYES) {
 		CString strBaseName;
 		strBaseName.Format(_T("%s_%4d%02d%02d-%02d%02d%02d")
 			, (LPCTSTR)m_strAppName, t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
@@ -177,14 +178,17 @@ LONG WINAPI CMiniDumper::TopLevelFilter(struct _EXCEPTION_POINTERS *pExceptionIn
 			strResult.Format(_T("Failed to create dump file \"%s\".\r\n\r\nError: %lu")
 				, (LPCTSTR)strDumpPath, ::GetLastError());
 		}
-		if (!strResult.IsEmpty())
+		if (!bAutoCreateDump && !strResult.IsEmpty())
 			::MessageBox(NULL, strResult, m_strAppName, MB_ICONINFORMATION | MB_OK);
 	}
 
 #ifndef _DEBUG
 	// Exit the process only in release builds, so that in debug builds the exception
 	// is passed to an installed debugger
-	ExitProcess(0);
+	const DWORD dwExitCode = (pExceptionInfo != NULL && pExceptionInfo->ExceptionRecord != NULL)
+		? pExceptionInfo->ExceptionRecord->ExceptionCode
+		: 1;
+	ExitProcess(dwExitCode);
 #else
 	return lRetValue;
 #endif
