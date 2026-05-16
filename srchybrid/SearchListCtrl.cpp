@@ -109,6 +109,60 @@ CString FormatKadTrustHint(const CSearchFile &rFile)
 	return FormatKadTrustHint(SearchTrustHintSeams::BuildKadTrustHint(rFile.GetKadPublishInfo()));
 }
 
+/**
+ * @brief Appends one localized tooltip line while preserving compact spacing.
+ */
+void AppendInfoLine(CString &rstrText, const CString &rstrLine)
+{
+	if (rstrLine.IsEmpty())
+		return;
+	if (!rstrText.IsEmpty())
+		rstrText += _T('\n');
+	rstrText += rstrLine;
+}
+
+/**
+ * @brief Builds the localized search-result WHY block from existing evidence.
+ */
+CString FormatSearchEvidenceDetails(const CSearchFile &rFile, const SFakeFileReport &rFakeReport)
+{
+	CString strInfo;
+
+	CString strRiskText(FakeFileDetector::FormatTrustHint(BuildSearchTrustHint(rFile, rFakeReport)));
+	CString strLine;
+	strLine.Format(GetResString(IDS_SEARCH_TRUST_INFOTIP), static_cast<LPCTSTR>(strRiskText));
+	AppendInfoLine(strInfo, strLine);
+
+	const SearchTrustHintSeams::KadTrustHint kadHint(SearchTrustHintSeams::BuildKadTrustHint(rFile.GetKadPublishInfo()));
+	if (rFile.IsKademlia() && kadHint.publishers > 0)
+		strLine.Format(_T("%s: %u (%u)"), static_cast<LPCTSTR>(GetResString(IDS_SEARCHAVAIL)), rFile.GetSourceCount(), kadHint.publishers);
+	else
+		strLine.Format(_T("%s: %u"), static_cast<LPCTSTR>(GetResString(IDS_SEARCHAVAIL)), rFile.GetSourceCount());
+	AppendInfoLine(strInfo, strLine);
+	strLine.Format(_T("%s: %u"), static_cast<LPCTSTR>(GetResString(IDS_COMPLSOURCES)), rFile.GetCompleteSourceCount());
+	AppendInfoLine(strInfo, strLine);
+
+	if (rFile.IsKademlia()) {
+		const CString strKadText(FormatKadTrustHint(kadHint));
+		strLine.Format(GetResString(IDS_SEARCH_KAD_TRUST_INFOTIP), static_cast<LPCTSTR>(strKadText));
+		AppendInfoLine(strInfo, strLine);
+	}
+
+	if (rFakeReport.bPendingHeaderCheck)
+		AppendInfoLine(strInfo, GetResString(IDS_FAKEFILE_EVIDENCE_PENDING_HEADER));
+	if (rFile.GetFileIdentifierC().HasAICHHash()) {
+		strLine.Format(_T("%s: %s"), static_cast<LPCTSTR>(GetResString(IDS_AICHHASH)), static_cast<LPCTSTR>(rFile.GetFileIdentifierC().GetAICHHash().GetString()));
+		AppendInfoLine(strInfo, strLine);
+	}
+
+	if (rFakeReport.nScore > 0 || rFakeReport.bPendingHeaderCheck || !rFakeReport.astrObservedNames.empty()
+		|| !rFakeReport.astrCanonicalNames.empty() || !rFakeReport.astrNameDivergenceGroups.empty())
+	{
+		AppendInfoLine(strInfo, FakeFileDetector::FormatReportDetails(rFakeReport));
+	}
+	return strInfo;
+}
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1170,26 +1224,10 @@ void CSearchListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 					}
 				}
 
-				const SFakeFileReport fakeReport = FakeFileDetector::GetSearchFileReportSnapshot(*file);
-				const CString strTrustText = FakeFileDetector::FormatTrustHint(BuildSearchTrustHint(*file, fakeReport));
-				CString strTrustLine;
-				strTrustLine.Format(GetResString(IDS_SEARCH_TRUST_INFOTIP), (LPCTSTR)strTrustText);
 				if (!strInfo.IsEmpty())
 					strInfo += _T('\n');
-				strInfo += strTrustLine;
-				const CString strKadTrustText = FormatKadTrustHint(*file);
-				if (!strKadTrustText.IsEmpty()) {
-					CString strKadTrustLine;
-					strKadTrustLine.Format(GetResString(IDS_SEARCH_KAD_TRUST_INFOTIP), (LPCTSTR)strKadTrustText);
-					if (!strInfo.IsEmpty())
-						strInfo += _T('\n');
-					strInfo += strKadTrustLine;
-				}
-				if (fakeReport.nScore > 0 || fakeReport.bPendingHeaderCheck) {
-					if (!strInfo.IsEmpty())
-						strInfo += _T('\n');
-					strInfo += FakeFileDetector::FormatReportDetails(fakeReport);
-				}
+				const SFakeFileReport fakeReport = FakeFileDetector::GetSearchFileReportSnapshot(*file);
+				strInfo += FormatSearchEvidenceDetails(*file, fakeReport);
 
 #ifdef USE_DEBUG_DEVICE
 				if (file->GetClientsCount()) {

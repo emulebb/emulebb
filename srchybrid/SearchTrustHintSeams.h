@@ -111,6 +111,26 @@ inline int CompareTrustHints(const TrustHint &rLeft, const TrustHint &rRight)
 	return 0;
 }
 
+/**
+ * @brief Converts a user-visible risk display kind to the stable REST token.
+ */
+inline const char* DisplayKindToken(const DisplayKind eKind)
+{
+	switch (eKind) {
+	case DisplayKind::Caution:
+		return "caution";
+	case DisplayKind::Warning:
+		return "warning";
+	case DisplayKind::HighRisk:
+		return "high_risk";
+	case DisplayKind::Spam:
+		return "spam";
+	case DisplayKind::Ok:
+	default:
+		return "ok";
+	}
+}
+
 inline unsigned int KadTrustRank(const KadTrustKind eKind)
 {
 	switch (eKind) {
@@ -164,6 +184,24 @@ inline int CompareKadTrustHints(const KadTrustHint &rLeft, const KadTrustHint &r
 	if (rLeft.differentNames != rRight.differentNames)
 		return rLeft.differentNames > rRight.differentNames ? -1 : 1;
 	return 0;
+}
+
+/**
+ * @brief Converts a Kad publisher confidence bucket to the stable REST token.
+ */
+inline const char* KadTrustKindToken(const KadTrustKind eKind)
+{
+	switch (eKind) {
+	case KadTrustKind::Low:
+		return "low";
+	case KadTrustKind::Normal:
+		return "normal";
+	case KadTrustKind::High:
+		return "high";
+	case KadTrustKind::Unknown:
+	default:
+		return "unknown";
+	}
 }
 
 /**

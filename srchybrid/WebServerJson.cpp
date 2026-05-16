@@ -529,6 +529,72 @@ json BuildFakeFileReportJson(const SFakeFileReport &rReport)
 }
 
 /**
+ * Serializes decoded Kad publisher metadata without treating it as identity trust.
+ */
+json BuildKadPublisherEvidenceJson(const CSearchFile &rSearchFile)
+{
+	const SearchTrustHintSeams::KadTrustHint hint(SearchTrustHintSeams::BuildKadTrustHint(rSearchFile.GetKadPublishInfo()));
+	return json{
+		{"available", rSearchFile.IsKademlia() && hint.kind != SearchTrustHintSeams::KadTrustKind::Unknown},
+		{"band", SearchTrustHintSeams::KadTrustKindToken(hint.kind)},
+		{"publishers", hint.publishers},
+		{"differentNames", hint.differentNames},
+		{"rawTrustValueCent", hint.trustValueCent},
+		{"rawTrustValue", static_cast<double>(hint.trustValueCent) / 100.0},
+		{"source", rSearchFile.IsKademlia() ? "kad_publish_info" : "not_kad"}
+	};
+}
+
+/**
+ * Serializes grouped search evidence so controllers can explain WHY a row is
+ * risky, weakly supported, or internally inconsistent.
+ */
+json BuildSearchEvidenceJson(const CSearchFile &rSearchFile, const SFakeFileReport &rFakeReport)
+{
+	const SearchTrustHintSeams::TrustHint riskHint(SearchTrustHintSeams::BuildTrustHint(
+		thePrefs.IsSearchSpamFilterEnabled() && rSearchFile.IsConsideredSpam(),
+		rFakeReport.nScore,
+		rFakeReport.eSeverity));
+	const int iComplete = rSearchFile.IsComplete();
+	return json{
+		{"riskEvidence", json{
+			{"band", SearchTrustHintSeams::DisplayKindToken(riskHint.displayKind)},
+			{"bucket", riskHint.riskBucket},
+			{"score", rFakeReport.nScore},
+			{"severity", FakeFileDetector::SeverityToToken(rFakeReport.eSeverity)},
+			{"spam", rSearchFile.IsConsideredSpam()},
+			{"reasons", BuildStringArrayJson(rFakeReport.astrReasons)}
+		}},
+		{"availabilityEvidence", json{
+			{"sources", rSearchFile.GetSourceCount()},
+			{"completeSources", rSearchFile.GetCompleteSourceCount()},
+			{"complete", iComplete >= 0 ? json(iComplete != 0) : json(nullptr)},
+			{"clientCount", rSearchFile.GetClientsCount()},
+			{"serverCount", rSearchFile.GetServers().GetSize()},
+			{"kadPublishers", (rSearchFile.GetKadPublishInfo() >> 16) & 0xffu}
+		}},
+		{"nameEvidence", json{
+			{"observedNames", BuildStringArrayJson(rFakeReport.astrObservedNames)},
+			{"observedExtensions", BuildStringArrayJson(rFakeReport.astrObservedExtensions)},
+			{"canonicalNames", BuildStringArrayJson(rFakeReport.astrCanonicalNames)},
+			{"ignoredNameTokens", BuildStringArrayJson(rFakeReport.astrIgnoredNameTokens)},
+			{"divergenceGroups", BuildStringArrayJson(rFakeReport.astrNameDivergenceGroups)},
+			{"divergent", !rFakeReport.astrNameDivergenceGroups.empty()}
+		}},
+		{"kadPublisherEvidence", BuildKadPublisherEvidenceJson(rSearchFile)},
+		{"integrityEvidence", json{
+			{"hasAichHash", rSearchFile.GetFileIdentifierC().HasAICHHash()},
+			{"multipleAich", rSearchFile.HasFoundMultipleAICH()},
+			{"pendingHeaderCheck", rFakeReport.bPendingHeaderCheck},
+			{"cachedHeaderEvidence", rFakeReport.bCached},
+			{"claimedType", rFakeReport.strClaimedType.IsEmpty() ? json(nullptr) : json(StdUtf8FromCString(rFakeReport.strClaimedType))},
+			{"extensionType", FileTypeNameOrNull(rFakeReport.eExtensionType)},
+			{"detectedHeaderType", FileTypeNameOrNull(rFakeReport.eHeaderType)}
+		}}
+	};
+}
+
+/**
  * Serializes one part file into the stable transfer payload.
  */
 json BuildTransferJson(const CPartFile &rPartFile)
@@ -1496,6 +1562,7 @@ std::string GetSearchTypeName(const CString &rFileType)
 json BuildSearchResultJson(const CSearchFile &rSearchFile, const SSearchParams *const pSearchParams = NULL)
 {
 	const int iComplete = rSearchFile.IsComplete();
+	const SFakeFileReport fakeReport(FakeFileDetector::GetSearchFileReportSnapshot(rSearchFile));
 	json result = json{
 		{"searchId", StdUtf8FromCString(FormatSearchId(rSearchFile.GetSearchID()))},
 		{"hash", StdUtf8FromCString(HashToHex(rSearchFile.GetFileHash()))},
@@ -1517,7 +1584,7 @@ json BuildSearchResultJson(const CSearchFile &rSearchFile, const SSearchParams *
 		{"rating", rSearchFile.UserRating()},
 		{"hasComment", rSearchFile.HasComment()},
 		{"spam", rSearchFile.IsConsideredSpam()},
-		{"fakeFile", BuildFakeFileReportJson(FakeFileDetector::GetSearchFileReportSnapshot(rSearchFile))}
+		{"evidence", BuildSearchEvidenceJson(rSearchFile, fakeReport)}
 	};
 	if (pSearchParams != NULL) {
 		result["method"] = GetSearchMethodName(pSearchParams->eType);
