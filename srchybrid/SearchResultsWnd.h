@@ -114,6 +114,8 @@ public:
 	bool	SelectAdjacentSearchResultTab(int iDirection);
 	/** Moves focus to the visible search results list when it can accept keyboard input. */
 	bool	FocusResultsList();
+	/** Refreshes the visible queued/searching/empty status for the active result tab. */
+	void	RefreshSearchActivity();
 	void	ShowSearchSelector(bool visible);
 	int		GetSelectedCat() const				{ return m_cattabs.GetCurSel(); }
 	void	UpdateCatTabs();
@@ -124,6 +126,7 @@ public:
 
 protected:
 	CProgressCtrl searchprogress;
+	CStatic		m_ctlSearchStatus;
 	CHeaderCtrl m_ctlSearchListHeader;
 	CEditDelayed m_ctlFilter;
 	CButton		m_ctlOpenParamsWnd;
@@ -161,6 +164,10 @@ protected:
 	void ClearQueuedSearches();
 	void SearchStarted();
 	void SearchCancelled(uint32 uSearchID);
+	CString GetSearchActivityText(const SSearchParams *pParams) const;
+	void PositionSearchStatusOverlay();
+	void SetSearchProgressIndeterminate(bool bEnable);
+	bool IsBoundedSearchProgressVisible(const SSearchParams *pParams) const;
 	void ShowResults(const SSearchParams *pParams);
 	void SetAllIcons();
 	void SetSearchResultsIcon(uint32 uSearchID, int iImage);
@@ -181,6 +188,7 @@ protected:
 	afx_msg LRESULT OnDblClickTab(WPARAM wParam, LPARAM);
 	afx_msg void OnDestroy();
 	afx_msg void OnSysColorChange();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnBnClickedDownloadSelected();
 	afx_msg void OnBnClickedClearAll();

@@ -97,6 +97,7 @@ BEGIN_MESSAGE_MAP(CSearchResultsWnd, CResizableFormView)
 	ON_MESSAGE(UM_DBLCLICKTAB, OnDblClickTab)
 	ON_WM_DESTROY()
 	ON_WM_SYSCOLORCHANGE()
+	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
 	ON_WM_CLOSE()
 	ON_WM_CREATE()
@@ -164,6 +165,8 @@ void CSearchResultsWnd::OnInitialUpdate()
 	searchprogress.SetStep(1);
 	global_search_timer = 0;
 	m_globsearch = false;
+	m_ctlSearchStatus.Create(_T(""), WS_CHILD | SS_CENTER | SS_CENTERIMAGE | SS_NOPREFIX, CRect(0, 0, 0, 0), this, IDC_SEARCH_STATUS);
+	m_ctlSearchStatus.SetFont(GetFont());
 	ShowSearchSelector(false); //set anchors for IDC_SEARCHLIST
 
 	AddAnchor(m_btnSearchListMenu, TOP_LEFT);
@@ -180,6 +183,7 @@ void CSearchResultsWnd::OnInitialUpdate()
 		GetDlgItem(IDC_STATIC_DLTOof)->SetFont(&theApp.m_fontSymbol);
 		SetDlgItemText(IDC_STATIC_DLTOof, (GetExStyle() & WS_EX_LAYOUTRTL) ? _T("3") : _T("4")); // show a right-arrow
 	}
+	RefreshSearchActivity();
 }
 
 BOOL CSearchResultsWnd::PreTranslateMessage(MSG *pMsg)
@@ -389,6 +393,7 @@ void CSearchResultsWnd::ProcessSearchQueue()
 
 	SSearchParams *const pParams = m_queuedSearches.GetHead();
 	if (IsQueuedSearchStartBlocked(pParams)) {
+		RefreshSearchActivity();
 		ArmSearchQueueTimer(SEC2MS(1));
 		return;
 	}
@@ -416,8 +421,10 @@ void CSearchResultsWnd::OnTimer(UINT_PTR nIDEvent)
 
 		// start the global search
 		if (m_globsearch) {
-			if (global_search_timer == 0)
+			if (global_search_timer == 0) {
 				VERIFY((global_search_timer = SetTimer(TimerGlobalSearch, SEC2MS(3) / 4, NULL)) != 0);
+				RefreshSearchActivity();
+			}
 		} else
 			CancelEd2kSearch();
 	} else if (nIDEvent == global_search_timer) {
@@ -657,6 +664,7 @@ void CSearchResultsWnd::SearchStarted()
 	if (pWndFocus && pWndFocus->m_hWnd == m_pwndParams->m_ctlStart.m_hWnd)
 		m_pwndParams->m_ctlName.SetFocus();
 	m_pwndParams->m_ctlCancel.EnableWindow(TRUE);
+	RefreshSearchActivity();
 }
 
 void CSearchResultsWnd::SearchCancelled(uint32 uSearchID)
@@ -675,6 +683,7 @@ void CSearchResultsWnd::SearchCancelled(uint32 uSearchID)
 			m_pwndParams->m_ctlStart.EnableWindow(m_pwndParams->m_ctlName.GetWindowTextLength() > 0);
 		}
 	}
+	RefreshSearchActivity();
 }
 
 void CSearchResultsWnd::LocalEd2kSearchEnd(UINT count, bool bMoreResultsAvailable)
@@ -689,8 +698,10 @@ void CSearchResultsWnd::LocalEd2kSearchEnd(UINT count, bool bMoreResultsAvailabl
 	if (!m_cancelled) {
 		if (!m_globsearch)
 			SearchCancelled(m_nEd2kSearchID);
-		else if (!global_search_timer)
+		else if (!global_search_timer) {
 			VERIFY((global_search_timer = SetTimer(TimerGlobalSearch, SEC2MS(3) / 4, NULL)) != 0);
+			RefreshSearchActivity();
+		}
 	}
 	const UINT uMaxMoreRequests = thePrefs.GetEd2kSearchMaxMoreRequests();
 	m_pwndParams->m_ctlMore.EnableWindow(bMoreResultsAvailable && (uMaxMoreRequests == 0 || static_cast<UINT>(m_iSentMoreReq) < uMaxMoreRequests));
@@ -790,6 +801,111 @@ void CSearchResultsWnd::Localize()
 	m_btnSearchListMenu.SetWindowText(GetResString(IDS_SW_RESULT));
 	SetDlgItemText(IDC_SDOWNLOAD, GetResString(IDS_SW_DOWNLOAD));
 	m_ctlOpenParamsWnd.SetWindowText(GetResString(IDS_SEARCHPARAMS) + _T("..."));
+	RefreshSearchActivity();
+}
+
+bool CSearchResultsWnd::IsBoundedSearchProgressVisible(const SSearchParams *pParams) const
+{
+	return pParams != NULL
+		&& pParams->eType == SearchTypeEd2kGlobal
+		&& pParams->dwSearchID == m_nEd2kSearchID
+		&& global_search_timer != 0;
+}
+
+void CSearchResultsWnd::SetSearchProgressIndeterminate(bool bEnable)
+{
+	if (searchprogress.GetSafeHwnd() == NULL)
+		return;
+
+	if (bEnable) {
+		searchprogress.ModifyStyle(0, PBS_MARQUEE);
+		searchprogress.SetMarquee(TRUE, 45);
+	} else {
+		searchprogress.SetMarquee(FALSE, 0);
+		searchprogress.ModifyStyle(PBS_MARQUEE, 0);
+		searchprogress.SetStep(1);
+	}
+}
+
+CString CSearchResultsWnd::GetSearchActivityText(const SSearchParams *pParams) const
+{
+	if (pParams == NULL)
+		return CString();
+
+	if (IsSearchQueued(pParams->dwSearchID))
+		return GetResString(IDS_SEARCH_STATUS_QUEUED);
+
+	if (IsSearchRunning(pParams->dwSearchID)) {
+		switch (pParams->eType) {
+		case SearchTypeEd2kServer:
+			return GetResString(IDS_SEARCH_STATUS_SEARCHING_SERVER);
+		case SearchTypeEd2kGlobal:
+			return GetResString(IDS_SEARCH_STATUS_SEARCHING_GLOBAL);
+		case SearchTypeKademlia:
+			return GetResString(IDS_SEARCH_STATUS_SEARCHING_KAD);
+		default:
+			break;
+		}
+	}
+
+	return GetResString(IDS_SEARCH_STATUS_NO_RESULTS);
+}
+
+void CSearchResultsWnd::PositionSearchStatusOverlay()
+{
+	if (m_ctlSearchStatus.GetSafeHwnd() == NULL || searchlistctrl.GetSafeHwnd() == NULL)
+		return;
+
+	CRect rcList;
+	searchlistctrl.GetWindowRect(&rcList);
+	ScreenToClient(&rcList);
+
+	if (m_ctlSearchListHeader.GetSafeHwnd() != NULL) {
+		CRect rcHeader;
+		m_ctlSearchListHeader.GetWindowRect(&rcHeader);
+		ScreenToClient(&rcHeader);
+		rcList.top = rcHeader.bottom;
+	}
+
+	rcList.DeflateRect(1, 1);
+	m_ctlSearchStatus.SetWindowPos(&wndTop, rcList.left, rcList.top, rcList.Width(), rcList.Height(), SWP_NOACTIVATE);
+}
+
+void CSearchResultsWnd::RefreshSearchActivity()
+{
+	if (m_ctlSearchStatus.GetSafeHwnd() == NULL || searchlistctrl.GetSafeHwnd() == NULL)
+		return;
+
+	PositionSearchStatusOverlay();
+
+	const SSearchParams *pParams = NULL;
+	const int iCurSel = searchselect.GetCurSel();
+	if (iCurSel >= 0) {
+		TCITEM ti;
+		ti.mask = TCIF_PARAM;
+		if (searchselect.GetItem(iCurSel, &ti) && ti.lParam != NULL)
+			pParams = reinterpret_cast<const SSearchParams*>(ti.lParam);
+	}
+
+	const bool bHasVisibleRows = searchlistctrl.GetItemCount() > 0;
+	const bool bRunning = pParams != NULL && IsSearchRunning(pParams->dwSearchID);
+	const bool bQueued = pParams != NULL && IsSearchQueued(pParams->dwSearchID);
+	const bool bBoundedProgress = IsBoundedSearchProgressVisible(pParams);
+	const bool bHiddenByFilter = pParams != NULL
+		&& !m_astrFilter.IsEmpty()
+		&& !bHasVisibleRows
+		&& theApp.searchlist->GetFoundFiles(pParams->dwSearchID) > 0;
+
+	if (pParams != NULL && !bHasVisibleRows && !bHiddenByFilter) {
+		m_ctlSearchStatus.SetWindowText(GetSearchActivityText(pParams));
+		m_ctlSearchStatus.ShowWindow(SW_SHOW);
+		m_ctlSearchStatus.SetWindowPos(&wndTop, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
+	} else
+		m_ctlSearchStatus.ShowWindow(SW_HIDE);
+
+	SetSearchProgressIndeterminate((bQueued || bRunning) && !bHasVisibleRows && !bBoundedProgress);
+	if (!bBoundedProgress && (!bRunning || bHasVisibleRows))
+		searchprogress.SetPos(0);
 }
 
 void CSearchResultsWnd::OnBnClickedClearAll()
@@ -1708,6 +1824,7 @@ void CSearchResultsWnd::NoTabItems()
 	searchselect.DeleteAllItems();
 	searchlistctrl.NoTabs();
 	theApp.searchlist->Clear();
+	RefreshSearchActivity();
 
 	const CWnd *pWndFocus = GetFocus();
 	m_pwndParams->m_ctlMore.EnableWindow(FALSE);
@@ -1739,6 +1856,7 @@ void CSearchResultsWnd::ShowResults(const SSearchParams *pParams)
 		m_pwndParams->m_ctlCancel.EnableWindow(IsSearchQueued(pParams->dwSearchID) || Kademlia::CSearchManager::IsSearching(pParams->dwSearchID));
 
 	searchlistctrl.ShowResults(pParams->dwSearchID);
+	RefreshSearchActivity();
 }
 
 void CSearchResultsWnd::OnSelChangeTab(LPNMHDR, LRESULT *pResult)
@@ -1848,6 +1966,7 @@ void CSearchResultsWnd::ShowSearchSelector(bool visible)
 	AddAnchor(searchlistctrl, TOP_LEFT, BOTTOM_RIGHT);
 	GetDlgItem(IDC_CLEARALL)->ShowWindow(nCmdShow);
 	m_ctlFilter.ShowWindow(nCmdShow);
+	PositionSearchStatusOverlay();
 }
 
 void CSearchResultsWnd::OnDestroy()
@@ -1859,6 +1978,12 @@ void CSearchResultsWnd::OnDestroy()
 			delete reinterpret_cast<SSearchParams*>(ti.lParam);
 
 	CResizableFormView::OnDestroy();
+}
+
+void CSearchResultsWnd::OnSize(UINT nType, int cx, int cy)
+{
+	CResizableFormView::OnSize(nType, cx, cy);
+	PositionSearchStatusOverlay();
 }
 
 void CSearchResultsWnd::OnClose()
@@ -2058,6 +2183,12 @@ BOOL CSearchResultsWnd::OnCommand(WPARAM wParam, LPARAM lParam)
 
 HBRUSH CSearchResultsWnd::OnCtlColor(CDC *pDC, CWnd *pWnd, UINT nCtlColor)
 {
+	if (pWnd != NULL && pWnd->GetSafeHwnd() == m_ctlSearchStatus.GetSafeHwnd()) {
+		pDC->SetTextColor(::GetSysColor(COLOR_GRAYTEXT));
+		pDC->SetBkColor(::GetSysColor(COLOR_WINDOW));
+		return ::GetSysColorBrush(COLOR_WINDOW);
+	}
+
 	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
 	return hbr ? hbr : __super::OnCtlColor(pDC, pWnd, nCtlColor);
 }

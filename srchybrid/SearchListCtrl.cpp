@@ -407,6 +407,9 @@ void CSearchListCtrl::AddResult(const CSearchFile *toshow)
 			SetUpdateMode(eCurUpdateMode);
 		SetItemText(iItem, i, LPSTR_TEXTCALLBACK);
 	}
+
+	if (theApp.emuledlg != NULL && theApp.emuledlg->searchwnd != NULL && theApp.emuledlg->searchwnd->m_pwndResults != NULL)
+		theApp.emuledlg->searchwnd->m_pwndResults->RefreshSearchActivity();
 }
 
 void CSearchListCtrl::UpdateSources(const CSearchFile *toupdate)
@@ -537,8 +540,11 @@ void CSearchListCtrl::RemoveResult(const CSearchFile *toremove)
 	find.flags = LVFI_PARAM;
 	find.lParam = (LPARAM)toremove;
 	int iItem = FindItem(&find);
-	if (iItem >= 0)
+	if (iItem >= 0) {
 		DeleteItem(iItem);
+		if (theApp.emuledlg != NULL && theApp.emuledlg->searchwnd != NULL && theApp.emuledlg->searchwnd->m_pwndResults != NULL)
+			theApp.emuledlg->searchwnd->m_pwndResults->RefreshSearchActivity();
+	}
 }
 
 void CSearchListCtrl::ShowResults(uint32 nResultsID)
