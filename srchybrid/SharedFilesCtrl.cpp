@@ -2074,8 +2074,8 @@ void CSharedFilesCtrl::CreateMenus()
 
 	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_OPEN, AddMenuShortcutLabel(GetResString(IDS_OPENFILE), _T("Ctrl+O")), _T("OPENFILE"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_OPENFOLDER, AddMenuShortcutLabel(GetResString(IDS_OPENFOLDER), _T("Ctrl+Shift+O")), _T("OPENFOLDER"));
-	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_RENAME, GetResString(IDS_RENAME) + _T("..."), _T("FILERENAME"));
-	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_REMOVE, GetResString(IDS_DELETE), _T("DELETE"));
+	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_RENAME, AddMenuShortcutLabel(GetResString(IDS_RENAME) + _T("..."), _T("F2")), _T("FILERENAME"));
+	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_REMOVE, AddMenuShortcutLabel(GetResString(IDS_DELETE), _T("Delete")), _T("DELETE"));
 	m_SharedFilesMenu.AppendMenu(MF_STRING, MP_UNSHAREFILE, GetResString(IDS_UNSHARE), _T("KADBOOTSTRAP")); // TODO: better icon
 	m_SharedFilesMenu.AppendMenu(MF_STRING, Irc_SetSendLink, GetResString(IDS_IRC_ADDLINKTOIRC), _T("IRCCLIPBOARD"));
 

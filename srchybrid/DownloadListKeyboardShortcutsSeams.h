@@ -54,6 +54,8 @@ namespace DownloadListKeyboardShortcutsSeams
 					return MP_PAUSE_CATEGORY;
 				if (wParam == _T('S'))
 					return MP_RESUME_CATEGORY;
+				if (wParam == _T('T'))
+					return MP_STOP_CATEGORY;
 				if (IsPriorityUpKey(wParam))
 					return MP_PRIOHIGH;
 				if (IsPriorityDownKey(wParam))

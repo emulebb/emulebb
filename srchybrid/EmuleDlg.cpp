@@ -833,6 +833,25 @@ namespace
 				break;
 	}
 
+	/** Adds a display-time menu mnemonic without changing localized resources. */
+	static CString WithMenuMnemonic(const CString &label, TCHAR chMnemonic)
+	{
+		if (label.Find(_T('&')) >= 0)
+			return label;
+
+		CString result(label);
+		const TCHAR chTarget = static_cast<TCHAR>(_totlower(chMnemonic));
+		for (int i = 0; i < result.GetLength(); ++i) {
+			if (_totlower(result[i]) == chTarget) {
+				result.Insert(i, _T('&'));
+				return result;
+			}
+		}
+
+		result.Insert(0, _T('&'));
+		return result;
+	}
+
 	static UINT GetToolsMenuStatusStringID(UINT nItemID)
 	{
 		switch (nItemID) {
@@ -4495,15 +4514,15 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("TOOLS"));
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
 
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, _T("&") + GetResString(IDS_TOOLS_SESSION), _T("CONNECT"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, _T("S&peed Quick Actions"), _T("SPEED"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, _T("&") + GetResString(IDS_TOOLS_FOLDERS), _T("OPENFOLDER"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)categories.m_hMenu, GetResString(IDS_TOOLS_CATEGORIES), _T("CATEGORY"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T("PREFERENCES"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, GetResString(IDS_TOOLS_NETWORK_UPDATES), _T("WEB"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)maintenance.m_hMenu, GetResString(IDS_TOOLS_MAINTENANCE), _T("TOOLS"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)viewPresets.m_hMenu, GetResString(IDS_TOOLS_VIEW_PRESETS), _T("PREFERENCES"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)diagnostics.m_hMenu, GetResString(IDS_TOOLS_DIAGNOSTICS), _T("TOOLS"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(_T("Speed Quick Actions"), _T('P')), _T("SPEED"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_FOLDERS), _T('F')), _T("OPENFOLDER"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)categories.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_CATEGORIES), _T('C')), _T("CATEGORY"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T('E')), _T("PREFERENCES"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_NETWORK_UPDATES), _T('N')), _T("WEB"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)maintenance.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_MAINTENANCE), _T('M')), _T("TOOLS"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)viewPresets.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_VIEW_PRESETS), _T('V')), _T("PREFERENCES"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)diagnostics.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_DIAGNOSTICS), _T('D')), _T("TOOLS"));
 	} else {
 		menu.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
 		menu.AppendMenu(MF_STRING, MP_HM_OPENCONFIGDIR, GetResString(IDS_OPENCONFIGDIR) + _T("..."), _T("OPENFOLDER"));
