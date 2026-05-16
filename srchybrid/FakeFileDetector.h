@@ -27,6 +27,9 @@ struct SFakeFileReport
 	std::vector<CString> astrReasons;
 	std::vector<CString> astrObservedNames;
 	std::vector<CString> astrObservedExtensions;
+	std::vector<CString> astrCanonicalNames;
+	std::vector<CString> astrIgnoredNameTokens;
+	std::vector<CString> astrNameDivergenceGroups;
 	CString strClaimedType;
 	EFileType eExtensionType = FILETYPE_UNKNOWN;
 	EFileType eHeaderType = FILETYPE_UNKNOWN;

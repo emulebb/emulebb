@@ -66,7 +66,8 @@ static char THIS_FILE[] = __FILE__;
 namespace
 {
 constexpr int SEARCH_COLUMN_TRUST = 14;
-constexpr int SEARCH_COLUMN_AICH = 15;
+constexpr int SEARCH_COLUMN_KAD_TRUST = 15;
+constexpr int SEARCH_COLUMN_AICH = 16;
 
 SearchTrustHintSeams::TrustHint BuildSearchTrustHint(const CSearchFile &rFile, const SFakeFileReport &rFakeReport)
 {
@@ -79,6 +80,33 @@ SearchTrustHintSeams::TrustHint BuildSearchTrustHint(const CSearchFile &rFile, c
 SearchTrustHintSeams::TrustHint BuildSearchTrustHint(const CSearchFile &rFile)
 {
 	return BuildSearchTrustHint(rFile, FakeFileDetector::GetSearchFileReportSnapshot(rFile));
+}
+
+CString FormatKadTrustHint(const SearchTrustHintSeams::KadTrustHint &rHint)
+{
+	UINT uResourceID = IDS_SEARCH_KAD_TRUST_UNKNOWN;
+	switch (rHint.kind) {
+	case SearchTrustHintSeams::KadTrustKind::Low:
+		uResourceID = IDS_SEARCH_KAD_TRUST_LOW;
+		break;
+	case SearchTrustHintSeams::KadTrustKind::Normal:
+		uResourceID = IDS_SEARCH_KAD_TRUST_NORMAL;
+		break;
+	case SearchTrustHintSeams::KadTrustKind::High:
+		uResourceID = IDS_SEARCH_KAD_TRUST_HIGH;
+		break;
+	case SearchTrustHintSeams::KadTrustKind::Unknown:
+	default:
+		break;
+	}
+	return GetResString(uResourceID);
+}
+
+CString FormatKadTrustHint(const CSearchFile &rFile)
+{
+	if (!rFile.IsKademlia())
+		return CString();
+	return FormatKadTrustHint(SearchTrustHintSeams::BuildKadTrustHint(rFile.GetKadPublishInfo()));
 }
 
 }
@@ -295,6 +323,7 @@ void CSearchListCtrl::Init(CSearchList *in_searchlist)
 	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	DFLT_FOLDER_COL_WIDTH);			//IDS_FOLDER
 	InsertColumn(13,	_T(""),	LVCFMT_LEFT,	50);								//IDS_KNOWN
 	InsertColumn(SEARCH_COLUMN_TRUST,	_T(""),	LVCFMT_LEFT,	90);					//IDS_SEARCH_TRUST
+	InsertColumn(SEARCH_COLUMN_KAD_TRUST,	_T(""),	LVCFMT_LEFT,	90);				//IDS_SEARCH_KAD_TRUST
 	InsertColumn(SEARCH_COLUMN_AICH,	_T(""),	LVCFMT_LEFT,	DFLT_HASH_COL_WIDTH, -1, true);	//IDS_AICHHASH
 
 	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("SearchListCtrl")))
@@ -340,11 +369,11 @@ CSearchListCtrl::~CSearchListCtrl()
 
 void CSearchListCtrl::Localize()
 {
-	static const UINT uids[16] =
+	static const UINT uids[17] =
 	{
 		IDS_DL_FILENAME, IDS_DL_SIZE, 0/*IDS_SEARCHAVAIL*/, IDS_COMPLSOURCES, IDS_TYPE
 		, IDS_FILEID, IDS_ARTIST, IDS_ALBUM, IDS_TITLE, IDS_LENGTH
-		, IDS_BITRATE, IDS_CODEC, IDS_FOLDER, IDS_KNOWN, IDS_SEARCH_TRUST, IDS_AICHHASH
+		, IDS_BITRATE, IDS_CODEC, IDS_FOLDER, IDS_KNOWN, IDS_SEARCH_TRUST, IDS_SEARCH_KAD_TRUST, IDS_AICHHASH
 	};
 
 	LocaliseHeaderCtrl(uids, _countof(uids));
@@ -632,6 +661,11 @@ int CSearchListCtrl::CompareChild(const CSearchFile *item1, const CSearchFile *i
 	case SEARCH_COLUMN_TRUST:
 		iResult = SearchTrustHintSeams::CompareTrustHints(BuildSearchTrustHint(*item1), BuildSearchTrustHint(*item2));
 		break;
+	case SEARCH_COLUMN_KAD_TRUST:
+		iResult = SearchTrustHintSeams::CompareKadTrustHints(
+			SearchTrustHintSeams::BuildKadTrustHint(item1->GetKadPublishInfo()),
+			SearchTrustHintSeams::BuildKadTrustHint(item2->GetKadPublishInfo()));
+		break;
 	case SEARCH_COLUMN_AICH: // AICH Hash
 		iResult = CompareAICHHash(item1->GetFileIdentifierC(), item2->GetFileIdentifierC(), true);
 		break;
@@ -696,6 +730,10 @@ int CSearchListCtrl::Compare(const CSearchFile *item1, const CSearchFile *item2,
 		return item1->GetKnownType() - item2->GetKnownType();
 	case SEARCH_COLUMN_TRUST:
 		return SearchTrustHintSeams::CompareTrustHints(BuildSearchTrustHint(*item1), BuildSearchTrustHint(*item2));
+	case SEARCH_COLUMN_KAD_TRUST:
+		return SearchTrustHintSeams::CompareKadTrustHints(
+			SearchTrustHintSeams::BuildKadTrustHint(item1->GetKadPublishInfo()),
+			SearchTrustHintSeams::BuildKadTrustHint(item2->GetKadPublishInfo()));
 	case SEARCH_COLUMN_AICH:
 		return CompareAICHHash(item1->GetFileIdentifierC(), item2->GetFileIdentifierC(), bSortAscending);
 	}
@@ -1133,6 +1171,14 @@ void CSearchListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 				if (!strInfo.IsEmpty())
 					strInfo += _T('\n');
 				strInfo += strTrustLine;
+				const CString strKadTrustText = FormatKadTrustHint(*file);
+				if (!strKadTrustText.IsEmpty()) {
+					CString strKadTrustLine;
+					strKadTrustLine.Format(GetResString(IDS_SEARCH_KAD_TRUST_INFOTIP), (LPCTSTR)strKadTrustText);
+					if (!strInfo.IsEmpty())
+						strInfo += _T('\n');
+					strInfo += strKadTrustLine;
+				}
 				if (fakeReport.nScore > 0 || fakeReport.bPendingHeaderCheck) {
 					if (!strInfo.IsEmpty())
 						strInfo += _T('\n');
@@ -1746,6 +1792,9 @@ CString CSearchListCtrl::GetItemDisplayText(const CSearchFile *src, int iSubItem
 		break;
 	case SEARCH_COLUMN_TRUST:
 		sText = FakeFileDetector::FormatTrustHint(BuildSearchTrustHint(*src));
+		break;
+	case SEARCH_COLUMN_KAD_TRUST:
+		sText = FormatKadTrustHint(*src);
 		break;
 	case SEARCH_COLUMN_AICH: //AICH hash
 		if (src->GetFileIdentifierC().HasAICHHash())

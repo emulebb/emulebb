@@ -20,6 +20,17 @@ enum class DisplayKind
 };
 
 /**
+ * @brief User-facing Kad publisher confidence bucket for search results.
+ */
+enum class KadTrustKind
+{
+	Unknown,
+	Low,
+	Normal,
+	High
+};
+
+/**
  * @brief Stable categories for fake-file reason codes shown in user-facing
  * explanations.
  */
@@ -49,6 +60,17 @@ struct TrustHint
 	DisplayKind displayKind = DisplayKind::Ok;
 	unsigned int riskBucket = 0;
 	uint32_t fakeScore = 0;
+};
+
+/**
+ * @brief Deterministic Kad trust hint decoded from TAG_PUBLISHINFO.
+ */
+struct KadTrustHint
+{
+	KadTrustKind kind = KadTrustKind::Unknown;
+	uint32_t trustValueCent = 0;
+	uint32_t publishers = 0;
+	uint32_t differentNames = 0;
 };
 
 /**
@@ -84,6 +106,61 @@ inline int CompareTrustHints(const TrustHint &rLeft, const TrustHint &rRight)
 		return rLeft.riskBucket < rRight.riskBucket ? -1 : 1;
 	if (rLeft.fakeScore != rRight.fakeScore)
 		return rLeft.fakeScore < rRight.fakeScore ? -1 : 1;
+	return 0;
+}
+
+inline unsigned int KadTrustRank(const KadTrustKind eKind)
+{
+	switch (eKind) {
+	case KadTrustKind::High:
+		return 3;
+	case KadTrustKind::Normal:
+		return 2;
+	case KadTrustKind::Low:
+		return 1;
+	case KadTrustKind::Unknown:
+	default:
+		return 0;
+	}
+}
+
+/**
+ * @brief Decodes Kad publish info into simple Low/Normal/High buckets.
+ */
+inline KadTrustHint BuildKadTrustHint(const uint32_t uKadPublishInfo)
+{
+	KadTrustHint hint;
+	hint.differentNames = (uKadPublishInfo >> 24) & 0xffu;
+	hint.publishers = (uKadPublishInfo >> 16) & 0xffu;
+	hint.trustValueCent = uKadPublishInfo & 0xffffu;
+	if (uKadPublishInfo == 0 || hint.publishers == 0) {
+		hint.kind = KadTrustKind::Unknown;
+		return hint;
+	}
+	if (hint.trustValueCent < 100)
+		hint.kind = KadTrustKind::Low;
+	else if (hint.trustValueCent < 300)
+		hint.kind = KadTrustKind::Normal;
+	else
+		hint.kind = KadTrustKind::High;
+	return hint;
+}
+
+/**
+ * @brief Compares Kad trust hints in ascending confidence order.
+ */
+inline int CompareKadTrustHints(const KadTrustHint &rLeft, const KadTrustHint &rRight)
+{
+	const unsigned int uLeftRank = KadTrustRank(rLeft.kind);
+	const unsigned int uRightRank = KadTrustRank(rRight.kind);
+	if (uLeftRank != uRightRank)
+		return uLeftRank < uRightRank ? -1 : 1;
+	if (rLeft.trustValueCent != rRight.trustValueCent)
+		return rLeft.trustValueCent < rRight.trustValueCent ? -1 : 1;
+	if (rLeft.publishers != rRight.publishers)
+		return rLeft.publishers < rRight.publishers ? -1 : 1;
+	if (rLeft.differentNames != rRight.differentNames)
+		return rLeft.differentNames > rRight.differentNames ? -1 : 1;
 	return 0;
 }
 

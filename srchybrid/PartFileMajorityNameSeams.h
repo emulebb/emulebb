@@ -1,5 +1,7 @@
 #pragma once
 
+#include "FilenameTokenizationSeams.h"
+
 #include <atlstr.h>
 #include <cstdint>
 #include <vector>
@@ -10,6 +12,7 @@ struct MajorityNameSelection
 {
 	bool HasCandidate = false;
 	CString Name;
+	CString CanonicalName;
 	UINT CandidateVotes = 0;
 	UINT TotalVotes = 0;
 	UINT RequiredPercent = 51;
@@ -45,8 +48,10 @@ inline MajorityNameSelection SelectMajorityName(const std::vector<CString> &sour
 {
 	struct Bucket
 	{
+		CString CanonicalName;
 		CString Name;
 		UINT Votes = 0;
+		UINT BestExactVotes = 0;
 	};
 
 	std::vector<Bucket> buckets;
@@ -56,20 +61,39 @@ inline MajorityNameSelection SelectMajorityName(const std::vector<CString> &sour
 		name.Trim();
 		if (name.IsEmpty())
 			continue;
+		const FilenameTokenizationSeams::CanonicalName canonical = FilenameTokenizationSeams::BuildCanonicalName(std::wstring(name.GetString()));
+		if (!canonical.hasUsableBaseName || canonical.canonical.empty())
+			continue;
+		if (canonical.canonical == L"download")
+			continue;
+		CString canonicalName(canonical.canonical.c_str());
 
 		++totalVotes;
 		bool found = false;
 		for (Bucket &bucket : buckets) {
-			if (bucket.Name.CompareNoCase(name) == 0) {
+			if (bucket.CanonicalName.CompareNoCase(canonicalName) == 0) {
 				++bucket.Votes;
+				UINT exactVotes = 0;
+				for (const CString &candidateName : sourceNames) {
+					CString normalizedCandidate(candidateName);
+					normalizedCandidate.Trim();
+					if (normalizedCandidate.Compare(name) == 0)
+						++exactVotes;
+				}
+				if (exactVotes > bucket.BestExactVotes || (exactVotes == bucket.BestExactVotes && bucket.Name.CompareNoCase(name) > 0)) {
+					bucket.Name = name;
+					bucket.BestExactVotes = exactVotes;
+				}
 				found = true;
 				break;
 			}
 		}
 		if (!found) {
 			Bucket bucket;
+			bucket.CanonicalName = canonicalName;
 			bucket.Name = name;
 			bucket.Votes = 1;
+			bucket.BestExactVotes = 1;
 			buckets.push_back(bucket);
 		}
 	}
@@ -83,6 +107,7 @@ inline MajorityNameSelection SelectMajorityName(const std::vector<CString> &sour
 	for (const Bucket &bucket : buckets) {
 		if (bucket.Votes > selection.CandidateVotes) {
 			selection.Name = bucket.Name;
+			selection.CanonicalName = bucket.CanonicalName;
 			selection.CandidateVotes = bucket.Votes;
 			tiedForFirst = false;
 		} else if (bucket.Votes == selection.CandidateVotes) {
@@ -95,6 +120,8 @@ inline MajorityNameSelection SelectMajorityName(const std::vector<CString> &sour
 		&& HasRequiredAgreement(selection.CandidateVotes, selection.TotalVotes, selection.RequiredPercent);
 	if (!selection.HasCandidate)
 		selection.Name.Empty();
+	if (!selection.HasCandidate)
+		selection.CanonicalName.Empty();
 	return selection;
 }
 }

@@ -105,6 +105,12 @@ SFakeFileReport ToAppReport(const FakeFileDetectorSeams::Report &rReport)
 		AddCStringUnique(report.astrObservedNames, CString(rName.c_str()));
 	for (const std::wstring &rExtension : rReport.observedExtensions)
 		AddCStringUnique(report.astrObservedExtensions, CString(rExtension.c_str()));
+	for (const std::wstring &rCanonicalName : rReport.canonicalNames)
+		AddCStringUnique(report.astrCanonicalNames, CString(rCanonicalName.c_str()));
+	for (const std::wstring &rIgnoredToken : rReport.ignoredNameTokens)
+		AddCStringUnique(report.astrIgnoredNameTokens, CString(rIgnoredToken.c_str()));
+	for (const std::wstring &rGroup : rReport.nameDivergenceGroups)
+		AddCStringUnique(report.astrNameDivergenceGroups, CString(rGroup.c_str()));
 	return report;
 }
 
@@ -740,6 +746,21 @@ CString FakeFileDetector::FormatReportDetails(const SFakeFileReport &rReport)
 	if (!rReport.astrObservedNames.empty()) {
 		CString strLine;
 		strLine.Format(GetResString(IDS_FAKEFILE_EVIDENCE_NAMES), (LPCTSTR)JoinReportValues(rReport.astrObservedNames, false));
+		AppendReportLine(strDetails, strLine);
+	}
+	if (!rReport.astrCanonicalNames.empty()) {
+		CString strLine;
+		strLine.Format(GetResString(IDS_FAKEFILE_EVIDENCE_CANONICAL_NAMES), (LPCTSTR)JoinReportValues(rReport.astrCanonicalNames, false));
+		AppendReportLine(strDetails, strLine);
+	}
+	if (!rReport.astrIgnoredNameTokens.empty()) {
+		CString strLine;
+		strLine.Format(GetResString(IDS_FAKEFILE_EVIDENCE_IGNORED_TOKENS), (LPCTSTR)JoinReportValues(rReport.astrIgnoredNameTokens, false));
+		AppendReportLine(strDetails, strLine);
+	}
+	if (!rReport.astrNameDivergenceGroups.empty()) {
+		CString strLine;
+		strLine.Format(GetResString(IDS_FAKEFILE_EVIDENCE_DIVERGENCE_GROUPS), (LPCTSTR)JoinReportValues(rReport.astrNameDivergenceGroups, false));
 		AppendReportLine(strDetails, strLine);
 	}
 	if (!rReport.strClaimedType.IsEmpty()) {

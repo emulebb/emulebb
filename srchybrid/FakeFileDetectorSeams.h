@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FileTypeClassifierSeams.h"
+#include "FilenameTokenizationSeams.h"
 #include "Opcodes.h"
 #include "RegexMatchSeams.h"
 
@@ -64,6 +65,9 @@ struct Report
 	std::vector<std::string> reasons;
 	std::vector<std::wstring> observedNames;
 	std::vector<std::wstring> observedExtensions;
+	std::vector<std::wstring> canonicalNames;
+	std::vector<std::wstring> ignoredNameTokens;
+	std::vector<std::wstring> nameDivergenceGroups;
 	EFileType extensionType = FILETYPE_UNKNOWN;
 	EFileType headerType = FILETYPE_UNKNOWN;
 	std::wstring claimedType;
@@ -222,13 +226,22 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules, const st
 	report.pendingHeaderCheck = rEvidence.headerPending;
 
 	std::vector<std::wstring> uniqueNames;
+	std::vector<std::wstring> uniqueCanonicalNames;
 	for (const std::wstring &rName : rEvidence.names) {
 		AddUnique(uniqueNames, rName);
 		AddUnique(report.observedExtensions, GetExtension(rName));
+		const FilenameTokenizationSeams::CanonicalName canonicalName = FilenameTokenizationSeams::BuildCanonicalName(rName);
+		for (const std::wstring &rIgnoredToken : canonicalName.ignoredTokens)
+			AddUnique(report.ignoredNameTokens, rIgnoredToken);
+		if (canonicalName.hasUsableBaseName && !canonicalName.canonical.empty()) {
+			AddUnique(uniqueCanonicalNames, canonicalName.canonical);
+			AddUnique(report.canonicalNames, canonicalName.canonical);
+		}
 	}
-	if (uniqueNames.size() >= 3)
+	report.nameDivergenceGroups = uniqueCanonicalNames;
+	if (uniqueCanonicalNames.size() >= 3)
 		AddReason(report, "multiple_names", 25);
-	else if (uniqueNames.size() == 2)
+	else if (uniqueCanonicalNames.size() == 2)
 		AddReason(report, "multiple_names", 15);
 
 	bool bBadNameSignal = false;
