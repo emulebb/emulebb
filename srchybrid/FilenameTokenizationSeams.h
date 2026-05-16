@@ -74,6 +74,11 @@ inline std::wstring JoinTokens(const std::vector<std::wstring> &rTokens)
 	return result;
 }
 
+inline bool IsDefaultFallbackBaseName(const std::vector<std::wstring> &rTokens)
+{
+	return rTokens.size() == 1 && rTokens[0] == L"download";
+}
+
 inline CanonicalName BuildCanonicalName(std::wstring name)
 {
 	name = ToLower(name);
@@ -113,7 +118,9 @@ inline CanonicalName BuildCanonicalName(std::wstring name)
 			keptTokens.push_back(token);
 	}
 
-	result.hasUsableBaseName = !keptTokens.empty();
+	result.hasUsableBaseName = !keptTokens.empty() && !IsDefaultFallbackBaseName(keptTokens);
+	if (!result.hasUsableBaseName)
+		return result;
 	result.canonical = JoinTokens(keptTokens);
 	if (!extension.empty()) {
 		if (!result.canonical.empty())
