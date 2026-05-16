@@ -2137,7 +2137,7 @@ BEGIN
     IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES             "Lanceert een verhoogde eenmalige reparatie voor eMule BB TCP, UDP en extern bereikbare REST-firewallregels."
     IDS_TOOLS_STATUS_SESSION_CONNECT                           "Maakt verbinding, annuleert een verbindingspoging of verbreekt de huidige sessie."
     IDS_TOOLS_STATUS_SHOW_SERVER                               "Schakelt over naar de weergave Servers."
-    IDS_TOOLS_STATUS_SHOW_TRANSFERS                            "Schakelt over naar de weergave Overboekingen."
+    IDS_TOOLS_STATUS_SHOW_TRANSFERS                            "Schakelt over naar de weergave Overdrachten."
     IDS_TOOLS_STATUS_SHOW_SEARCH                               "Schakelt over naar de zoekweergave."
     IDS_TOOLS_STATUS_SHOW_SHARED_FILES                         "Schakelt over naar de weergave Gedeelde bestanden."
     IDS_TOOLS_STATUS_SHOW_MESSAGES                             "Schakelt over naar de berichtenweergave."

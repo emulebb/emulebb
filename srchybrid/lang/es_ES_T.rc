@@ -2186,7 +2186,7 @@ BEGIN
     IDS_WEBSERVER_TT_TMPLBROWSE                                "Busca el archivo de plantilla de la interfaz de usuario web heredada.\r\n\r\nEsto solo es necesario cuando la interfaz de usuario web heredada está habilitada."
     IDS_WEBSERVER_TT_TMPLPATH                                  "Archivo de plantilla utilizado por la interfaz de usuario web heredada.\r\n\r\nLas solicitudes de la API REST no requieren este archivo."
     IDS_WEBSERVER_TT_WSENABLED                                 "Habilita el REST API y el oyente del servidor web compartido.\r\n\r\nHabilítelo solo cuando necesite control remoto y haya configurado contraseñas y límites de acceso."
-    IDS_WEBSERVER_TT_WSRELOADTMPL                              "Vuelve a cargar las plantillas de interfaz de usuario web heredadas desde el disco sin reiniciar eMule.\r\n\r\nUselo después de cambiar los archivos de plantilla."
+    IDS_WEBSERVER_TT_WSRELOADTMPL                              "Vuelve a cargar las plantillas de interfaz de usuario web heredadas desde el disco sin reiniciar eMule.\r\n\r\nÚselo después de cambiar los archivos de plantilla."
     IDS_WEBSERVER_TT_WS_GZIP                                   "Comprime las respuestas de la interfaz de usuario web heredada con gzip cuando los clientes lo admiten.\r\n\r\nLas respuestas de la API REST no están controladas por esta opción de interfaz heredada."
     IDS_DL_BATCH                                               "&Lote"
     IDS_DL_PAUSE_CATEGORY                                      "Pausar todo en esta categoría"
