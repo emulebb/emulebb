@@ -7,6 +7,7 @@
 //version 2 of the License, or (at your option) any later version.
 #pragma once
 
+#include "ElevatedPowerShellAction.h"
 #include "WindowsFirewallRepairSeams.h"
 
 #include <vector>
@@ -16,18 +17,8 @@
  */
 namespace WindowsFirewallRepair
 {
-	struct CRepairLaunchResult
+	struct CRepairLaunchResult : ElevatedPowerShellAction::CLaunchResult
 	{
-		bool bStarted = false;
-		bool bSucceeded = false;
-		bool bCancelled = false;
-		DWORD dwLastError = ERROR_SUCCESS;
-		DWORD dwExitCode = STILL_ACTIVE;
-		CString strTempDir;
-		CString strScriptPath;
-		CString strResultPath;
-		CString strErrorText;
-		CString strResultJson;
 		std::vector<WindowsFirewallRepairSeams::CFirewallRuleSpec> rules;
 	};
 

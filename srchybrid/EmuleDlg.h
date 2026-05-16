@@ -151,6 +151,10 @@ public:
 	void CopyDiagnosticSnapshotToClipboard(bool bRedacted);
 	/// Runs the explicit elevated Windows Firewall repair action.
 	void RepairWindowsFirewallRules();
+	/// Runs the explicit elevated Windows long-path policy action.
+	void EnableWindowsLongPaths();
+	/// Runs the explicit elevated Microsoft Defender folder exclusion action.
+	void ExcludeDownloadFoldersFromDefender();
 	HBRUSH GetCtlColor(CDC*, CWnd*, UINT);
 
 	virtual void OnTrayRButtonUp(CPoint pt);

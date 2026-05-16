@@ -194,6 +194,7 @@
     <ClCompile Include="ED2kLinkDlg.cpp" />
     <ClCompile Include="EditDelayed.cpp" />
     <ClCompile Include="EditX.cpp" />
+    <ClCompile Include="ElevatedPowerShellAction.cpp" />
     <ClCompile Include="EMSocket.cpp" />
     <ClCompile Include="Emule.cpp" />
     <ClCompile Include="EmuleDlg.cpp" />
@@ -382,6 +383,7 @@
     <ClCompile Include="UDPSocket.cpp" />
     <ClCompile Include="WindowsToastNotifier.cpp" />
     <ClCompile Include="WindowsFirewallRepair.cpp" />
+    <ClCompile Include="WindowsMaintenanceActions.cpp" />
     <ClCompile Include="UploadBandwidthThrottler.cpp" />
     <ClCompile Include="UploadClient.cpp" />
     <ClCompile Include="UploadDiskIOThread.cpp" />
@@ -486,6 +488,7 @@
     <ClInclude Include="ED2kLinkDlg.h" />
     <ClInclude Include="EditDelayed.h" />
     <ClInclude Include="EditX.h" />
+    <ClInclude Include="ElevatedPowerShellAction.h" />
     <ClInclude Include="EMSocket.h" />
     <ClInclude Include="Emule.h" />
     <ClInclude Include="emule_site_config.h" />
@@ -697,6 +700,8 @@
     <ClInclude Include="WindowsToastNotifier.h" />
     <ClInclude Include="WindowsFirewallRepair.h" />
     <ClInclude Include="WindowsFirewallRepairSeams.h" />
+    <ClInclude Include="WindowsMaintenanceActions.h" />
+    <ClInclude Include="WindowsMaintenanceActionsSeams.h" />
     <ClInclude Include="WindowPlacementSeams.h" />
     <ClInclude Include="UpdownClient.h" />
     <ClInclude Include="UploadBandwidthThrottler.h" />

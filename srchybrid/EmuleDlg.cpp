@@ -127,6 +127,7 @@
 #include "Mdump.h"
 #include "PathHelpers.h"
 #include "WindowsFirewallRepair.h"
+#include "WindowsMaintenanceActions.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -929,6 +930,10 @@ namespace
 			return IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON;
 		case MP_HM_REPAIR_WINDOWS_FIREWALL:
 			return IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES;
+		case MP_HM_ENABLE_WINDOWS_LONG_PATHS:
+			return IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS;
+		case MP_HM_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS:
+			return IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS;
 		case MP_HM_VIEW_PRESET_STOCK_KEEP_WIDTHS:
 		case MP_HM_VIEW_PRESET_STOCK_RESET_WIDTHS:
 			return IDS_TOOLS_STATUS_VIEW_PRESET_STOCK;
@@ -1020,6 +1025,35 @@ namespace
 	static VOID CALLBACK BindLossUnicastAddressChangeCallback(PVOID pContext, PMIB_UNICASTIPADDRESS_ROW, MIB_NOTIFICATION_TYPE) noexcept
 	{
 		PostBindInterfaceChanged(pContext);
+	}
+
+	static void AddUniqueDefenderDirectory(std::vector<CString> &paths, const CString &rstrPath)
+	{
+		CString strPath(rstrPath);
+		strPath.Trim();
+		if (strPath.IsEmpty())
+			return;
+
+		strPath = PathHelpers::CanonicalizeDirectoryPath(strPath);
+		for (const CString &strExisting : paths) {
+			if (PathHelpers::ArePathsEquivalent(strExisting, strPath))
+				return;
+		}
+		paths.push_back(strPath);
+	}
+
+	static std::vector<CString> BuildDefenderDownloadFolderExclusions()
+	{
+		std::vector<CString> paths;
+		AddUniqueDefenderDirectory(paths, thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
+		for (INT_PTR iTempDir = 0; iTempDir < thePrefs.GetTempDirCount(); ++iTempDir)
+			AddUniqueDefenderDirectory(paths, thePrefs.GetTempDir(iTempDir));
+		for (INT_PTR iCategory = 0; iCategory < thePrefs.GetCatCount(); ++iCategory) {
+			const Category_Struct *pCategory = thePrefs.GetCategory(iCategory);
+			if (pCategory != NULL)
+				AddUniqueDefenderDirectory(paths, pCategory->strIncomingPath);
+		}
+		return paths;
 	}
 
 	struct SVersionCheckContext
@@ -4113,6 +4147,12 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_REPAIR_WINDOWS_FIREWALL:
 		RepairWindowsFirewallRules();
 		break;
+	case MP_HM_ENABLE_WINDOWS_LONG_PATHS:
+		EnableWindowsLongPaths();
+		break;
+	case MP_HM_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS:
+		ExcludeDownloadFoldersFromDefender();
+		break;
 	case MP_HM_VIEW_PRESET_STOCK_KEEP_WIDTHS:
 	case MP_HM_VIEW_PRESET_STOCK_RESET_WIDTHS:
 	case MP_HM_VIEW_PRESET_EXTENDED_KEEP_WIDTHS:
@@ -4495,6 +4535,9 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		maintenance.AppendMenu(MF_SEPARATOR);
 		maintenance.AppendMenu(MF_STRING, MP_HM_RESCAN_SHARED_FILES, GetResString(IDS_RESCAN_SHARED_FILES), _T("SharedFiles"));
 		maintenance.AppendMenu(MF_STRING, MP_HM_SAVE_PREFERENCES_NOW, GetResString(IDS_SAVE_PREFERENCES_NOW), _T("PREFERENCES"));
+		maintenance.AppendMenu(MF_SEPARATOR);
+		maintenance.AppendMenu(MF_STRING, MP_HM_ENABLE_WINDOWS_LONG_PATHS, GetResString(IDS_ENABLE_WINDOWS_LONG_PATHS), _T("OPENFOLDER"));
+		maintenance.AppendMenu(MF_STRING, MP_HM_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS, GetResString(IDS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS), _T("SECURITY"));
 
 		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_STOCK_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_STOCK_KEEP_WIDTHS), _T("PREFERENCES"));
 		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_STOCK_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_STOCK_RESET_WIDTHS), _T("PREFERENCES"));
@@ -4641,6 +4684,54 @@ void CemuleDlg::RepairWindowsFirewallRules()
 	if (strError.IsEmpty())
 		strError = GetErrorMessage(s_lastFirewallRepairResult.dwLastError != ERROR_SUCCESS ? s_lastFirewallRepairResult.dwLastError : s_lastFirewallRepairResult.dwExitCode);
 	AddLogLine(true, GetResString(IDS_FIREWALL_REPAIR_FAILURE), (LPCTSTR)strError);
+}
+
+void CemuleDlg::EnableWindowsLongPaths()
+{
+	WindowsMaintenanceActions::CMaintenanceLaunchResult result;
+	CWaitCursor waitCursor;
+	const bool bSucceeded = WindowsMaintenanceActions::RunElevatedEnableLongPaths(result);
+	if (bSucceeded) {
+		AddLogLine(false, GetResString(IDS_LONG_PATHS_ENABLE_SUCCESS));
+		return;
+	}
+
+	if (result.bCancelled) {
+		AddLogLine(false, GetResString(IDS_LONG_PATHS_ENABLE_CANCELLED));
+		return;
+	}
+
+	CString strError(result.strErrorText);
+	if (strError.IsEmpty())
+		strError = GetErrorMessage(result.dwLastError != ERROR_SUCCESS ? result.dwLastError : result.dwExitCode);
+	AddLogLine(true, GetResString(IDS_LONG_PATHS_ENABLE_FAILURE), (LPCTSTR)strError);
+}
+
+void CemuleDlg::ExcludeDownloadFoldersFromDefender()
+{
+	const std::vector<CString> paths = BuildDefenderDownloadFolderExclusions();
+	if (paths.empty()) {
+		AddLogLine(false, GetResString(IDS_DEFENDER_EXCLUSIONS_NO_PATHS));
+		return;
+	}
+
+	WindowsMaintenanceActions::CMaintenanceLaunchResult result;
+	CWaitCursor waitCursor;
+	const bool bSucceeded = WindowsMaintenanceActions::RunElevatedDefenderExclusions(paths, result);
+	if (bSucceeded) {
+		AddLogLine(false, GetResString(IDS_DEFENDER_EXCLUSIONS_SUCCESS), static_cast<UINT>(paths.size()));
+		return;
+	}
+
+	if (result.bCancelled) {
+		AddLogLine(false, GetResString(IDS_DEFENDER_EXCLUSIONS_CANCELLED));
+		return;
+	}
+
+	CString strError(result.strErrorText);
+	if (strError.IsEmpty())
+		strError = GetErrorMessage(result.dwLastError != ERROR_SUCCESS ? result.dwLastError : result.dwExitCode);
+	AddLogLine(true, GetResString(IDS_DEFENDER_EXCLUSIONS_FAILURE), (LPCTSTR)strError);
 }
 
 

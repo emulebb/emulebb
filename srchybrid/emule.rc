@@ -3658,6 +3658,9 @@ BEGIN
     IDS_DIAG_DUMP_LOG_FAILURE "Diagnostic %s dump failed: %s"
     IDS_CHECK_OPEN_PORTS    "Check Open Ports"
     IDS_REPAIR_WINDOWS_FIREWALL_RULES "Repair Windows Firewall Rules..."
+    IDS_ENABLE_WINDOWS_LONG_PATHS "Enable Windows Long Paths..."
+    IDS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS
+                            "Exclude eMule Download Folders from Microsoft Defender..."
     IDS_RELOADFAKEFILEFILTER "Reload Fake-File Filter"
     IDS_FAKEFILESCORE       "Fake: %u%%"
     IDS_SEARCH_TRUST        "Risk"
@@ -3807,6 +3810,10 @@ BEGIN
                             "Copies a redacted diagnostic JSON snapshot to the clipboard for sharing."
     IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES
                             "Launches an elevated one-time repair for eMule BB TCP, UDP, and externally reachable REST firewall rules."
+    IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS
+                            "Launches an elevated one-time action to enable the Windows long path policy."
+    IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS
+                            "Launches an elevated one-time action to exclude active Incoming, Temp, and category folders from Microsoft Defender scanning."
     IDS_TOOLS_STATUS_SESSION_CONNECT
                             "Connects, cancels a connection attempt, or disconnects the current session."
     IDS_TOOLS_STATUS_SHOW_SERVER
@@ -3842,6 +3849,20 @@ BEGIN
                             "Windows Firewall repair cancelled."
     IDS_FIREWALL_REPAIR_NO_RULES
                             "No Windows Firewall rules need repair for the current port configuration."
+    IDS_LONG_PATHS_ENABLE_SUCCESS
+                            "Windows long path policy is enabled."
+    IDS_LONG_PATHS_ENABLE_FAILURE
+                            "Windows long path policy update failed: %s"
+    IDS_LONG_PATHS_ENABLE_CANCELLED
+                            "Windows long path policy update cancelled."
+    IDS_DEFENDER_EXCLUSIONS_SUCCESS
+                            "Microsoft Defender exclusion action completed for %u folder(s)."
+    IDS_DEFENDER_EXCLUSIONS_FAILURE
+                            "Microsoft Defender exclusion action failed: %s"
+    IDS_DEFENDER_EXCLUSIONS_CANCELLED
+                            "Microsoft Defender exclusion action cancelled."
+    IDS_DEFENDER_EXCLUSIONS_NO_PATHS
+                            "No eMule download folders were available for Microsoft Defender exclusion."
     IDS_SPEED_LIMIT_UPLOAD_FMT
                             "Limit: Upload %u%%\t%u %s"
     IDS_SPEED_LIMIT_DOWNLOAD_FMT
