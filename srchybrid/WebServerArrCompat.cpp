@@ -517,14 +517,14 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
 		return;
 	}
-	if (request.uOffset > 0) {
-		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
-		return;
-	}
 
 	const std::vector<std::string> nativeSearchMethods(BuildAvailableNativeSearchMethods(request.eFamily));
 	const std::string strCacheKey(WebServerArrCompatSeams::BuildCacheKey(request, nativeSearchMethods));
 	if (TryGetCachedResults(strCacheKey, results)) {
+		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
+		return;
+	}
+	if (request.uOffset > 0) {
 		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
 		return;
 	}
