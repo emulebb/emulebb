@@ -18,6 +18,7 @@
 #include "TrayDialog.h"
 #include "Preferences.h"
 #include "MenuCmds.h"
+#include "TrayNotificationSeams.h"
 #include "UserMsgs.h"
 
 #ifdef _DEBUG
@@ -225,9 +226,23 @@ LRESULT CTrayDialog::OnTrayNotify(WPARAM wParam, LPARAM lParam)
 		return 1;
 	}
 
-	if (uEvent == NIN_SELECT || uEvent == NIN_KEYSELECT) {
+	if (uEvent == NIN_KEYSELECT) {
 		KillSingleClickTimer();
 		RestoreWindow();
+		return 1;
+	}
+	if (uEvent == NIN_SELECT) {
+		KillSingleClickTimer();
+		TrayNotificationSeams::CTrayPrimaryActivationState state;
+		state.bMiniMuleEnabled = thePrefs.GetEnableMiniMule();
+		state.bMainWindowVisible = IsWindowVisible() != FALSE;
+		state.eActivation = TrayNotificationSeams::ETrayPrimaryActivation::MouseSingleClick;
+		const TrayNotificationSeams::ETrayPrimaryActivationAction eAction =
+			TrayNotificationSeams::ResolveTrayPrimaryActivation(state);
+		if (eAction == TrayNotificationSeams::ETrayPrimaryActivationAction::RestoreMainWindow)
+			RestoreWindow();
+		else if (eAction == TrayNotificationSeams::ETrayPrimaryActivationAction::ShowMiniMule)
+			QueueSingleClickTrayAction();
 		return 1;
 	}
 
@@ -246,16 +261,28 @@ LRESULT CTrayDialog::OnTrayNotify(WPARAM wParam, LPARAM lParam)
 		// whereby the according WM_LBUTTONDOWN message was meant for some other tray bar
 		// icon.
 		if (m_uLButtonDown) {
-			if (m_uLButtonDown > 1 || !thePrefs.GetEnableMiniMule()) {
+			TrayNotificationSeams::CTrayPrimaryActivationState state;
+			state.bMiniMuleEnabled = thePrefs.GetEnableMiniMule();
+			state.bMainWindowVisible = IsWindowVisible() != FALSE;
+			state.eActivation = (m_uLButtonDown > 1)
+				? TrayNotificationSeams::ETrayPrimaryActivation::MouseDoubleClick
+				: TrayNotificationSeams::ETrayPrimaryActivation::MouseSingleClick;
+			const TrayNotificationSeams::ETrayPrimaryActivationAction eAction =
+				TrayNotificationSeams::ResolveTrayPrimaryActivation(state);
+			if (eAction == TrayNotificationSeams::ETrayPrimaryActivationAction::RestoreMainWindow) {
 				KillSingleClickTimer();
 				RestoreWindow();
-			} else if (!m_uSingleClickTimer && !IsWindowVisible())
-				m_uSingleClickTimer = SetTimer(IDT_SINGLE_CLICK, u_DblClickSpeed, NULL);
+			} else if (eAction == TrayNotificationSeams::ETrayPrimaryActivationAction::ShowMiniMule)
+				QueueSingleClickTrayAction();
+			else
+				KillSingleClickTimer();
 		}
 		break;
 	case WM_LBUTTONDBLCLK:
 		KillSingleClickTimer();
 		OnTrayLButtonDblClk();
+		RestoreWindow();
+		m_uLButtonDown = 0;
 		break;
 	case WM_RBUTTONUP:
 	case WM_CONTEXTMENU:
@@ -277,6 +304,12 @@ void CTrayDialog::KillSingleClickTimer()
 		m_uSingleClickTimer = 0;
 	}
 	m_uLButtonDown = 0;
+}
+
+void CTrayDialog::QueueSingleClickTrayAction()
+{
+	if (!m_uSingleClickTimer)
+		m_uSingleClickTimer = SetTimer(IDT_SINGLE_CLICK, u_DblClickSpeed, NULL);
 }
 
 void CTrayDialog::OnTimer(UINT_PTR nIDEvent)

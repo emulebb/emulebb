@@ -45,4 +45,41 @@ namespace TrayNotificationSeams
 			|| (state.eNotifierDisplayMode == ENotifierDisplayMode::WindowsToast && state.bTrayBalloonFallbackForSession)
 			|| (!state.bMainWindowVisible && state.bMinimizeToTray);
 	}
+
+	/** Primary tray activation sources with user-visible restore semantics. */
+	enum class ETrayPrimaryActivation
+	{
+		MouseSingleClick,
+		MouseDoubleClick,
+		KeyboardSelect
+	};
+
+	/** Action selected for a primary tray activation. */
+	enum class ETrayPrimaryActivationAction
+	{
+		None,
+		RestoreMainWindow,
+		ShowMiniMule
+	};
+
+	/** Inputs needed to resolve primary tray icon activation. */
+	struct CTrayPrimaryActivationState
+	{
+		bool bMiniMuleEnabled = false;
+		bool bMainWindowVisible = true;
+		ETrayPrimaryActivation eActivation = ETrayPrimaryActivation::MouseSingleClick;
+	};
+
+	/** Returns the UI action for a primary tray icon activation. */
+	inline ETrayPrimaryActivationAction ResolveTrayPrimaryActivation(const CTrayPrimaryActivationState &state)
+	{
+		if (state.eActivation == ETrayPrimaryActivation::KeyboardSelect
+			|| state.eActivation == ETrayPrimaryActivation::MouseDoubleClick
+			|| !state.bMiniMuleEnabled)
+			return ETrayPrimaryActivationAction::RestoreMainWindow;
+
+		return state.bMainWindowVisible
+			? ETrayPrimaryActivationAction::None
+			: ETrayPrimaryActivationAction::ShowMiniMule;
+	}
 }

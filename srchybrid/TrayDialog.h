@@ -50,6 +50,7 @@ protected:
 
 private:
 	void KillSingleClickTimer();
+	void QueueSingleClickTrayAction();
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg LRESULT OnTrayNotify(WPARAM wParam, LPARAM lParam);

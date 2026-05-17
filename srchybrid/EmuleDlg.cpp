@@ -2165,6 +2165,18 @@ void CemuleDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		QuickSpeedOther(nID);
 		return;
 	}
+	if ((nID & 0xFFF0) == SC_MINIMIZE) {
+		MinimizeWindow();
+		ShowTransferRate(true);
+		transferwnd->UpdateCatTabTitles();
+		return;
+	}
+	if ((nID & 0xFFF0) == MP_MINIMIZETOTRAY) {
+		MinimizeWindow(true);
+		ShowTransferRate(true);
+		transferwnd->UpdateCatTabTitles();
+		return;
+	}
 
 	switch (nID) {
 	case MP_ABOUTBOX:
@@ -2596,9 +2608,9 @@ void CemuleDlg::OnCancel()
 		MinimizeWindow();
 }
 
-void CemuleDlg::MinimizeWindow()
+void CemuleDlg::MinimizeWindow(bool bForceTray)
 {
-	if (*thePrefs.GetMinTrayPTR()) {
+	if (bForceTray || *thePrefs.GetMinTrayPTR()) {
 		WINDOWPLACEMENT wp = {};
 		wp.length = (UINT)sizeof wp;
 		if (GetWindowPlacement(&wp)) {
@@ -2609,8 +2621,13 @@ void CemuleDlg::MinimizeWindow()
 				m_wpFirstRestore = wp;
 			}
 		}
-		ShowWindow(SW_HIDE);
-		UpdateTrayVisibility();
+		if (bForceTray) {
+			if (TrayShow())
+				ShowWindow(SW_HIDE);
+		} else {
+			ShowWindow(SW_HIDE);
+			UpdateTrayVisibility();
+		}
 	} else
 		ShowWindow(SW_MINIMIZE);
 

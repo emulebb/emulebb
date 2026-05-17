@@ -252,7 +252,7 @@ protected:
 
 	void StartConnection();
 	void CloseConnection();
-	void MinimizeWindow();
+	void MinimizeWindow(bool bForceTray = false);
 	void PostStartupMinimized();
 	void UpdateTrayIcon(int iPercent);
 	void ShowConnectionStateIcon();
