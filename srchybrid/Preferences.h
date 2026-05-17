@@ -519,6 +519,7 @@ public:
 	static CString	m_strVideoThumbnailFfmpegPath;
 	static UINT		m_uVideoThumbnailIntervalSeconds;
 	static bool		m_bAllowPeerPreview;
+	static CString	m_strMediaInfoDllPath;
 	static bool		m_bRunCommandOnFileCompletion;
 	static CString	m_strFileCompletionProgram;
 	static CString	m_strFileCompletionArguments;
@@ -1348,6 +1349,8 @@ public:
 	static int		GetPreviewSmallBlocks()				{ return m_iPreviewSmallBlocks; }
 	static bool		GetPreviewCopiedArchives()			{ return m_bPreviewCopiedArchives; }
 	static bool		GetInspectAllFileTypes()			{ return m_bInspectAllFileTypes; }
+	static const CString& GetMediaInfoDllPath()			{ return m_strMediaInfoDllPath; }
+	static void		SetMediaInfoDllPath(const CString &path) { m_strMediaInfoDllPath = path; }
 	static int		GetExtractMetaData()				{ return m_iExtractMetaData; }
 	static bool		GetRearrangeKadSearchKeywords()		{ return m_bRearrangeKadSearchKeywords; }
 

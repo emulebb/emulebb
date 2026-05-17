@@ -98,7 +98,7 @@ public:
 			CString strSummaryReason(_T("no compatible version 26.01 or newer was found"));
 			MediaInfoDllSeams::EMediaInfoDllStatus eSummaryStatus = MediaInfoDllSeams::MediaInfoDll_Missing;
 
-			const CString strConfiguredPath(theApp.GetProfileString(_T("eMule"), _T("MediaInfo_MediaInfoDllPath"), MediaInfoDllSeams::GetDefaultConfiguredPath()));
+			const CString strConfiguredPath(thePrefs.GetMediaInfoDllPath());
 			if (MediaInfoDllSeams::IsLoadingDisabled(strConfiguredPath)) {
 				strSummaryReason = _T("loading disabled by configuration");
 				m_eStatus = MediaInfoDllSeams::MediaInfoDll_Disabled;

@@ -44,8 +44,6 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-	static const LPCTSTR kMediaInfoDllPathProfileKey = _T("MediaInfo_MediaInfoDllPath");
-
 	static void FailTreeValidation(CDataExchange *pDX, UINT uMessageId, HTREEITEM hItem)
 	{
 		AfxMessageBox(uMessageId);
@@ -1521,7 +1519,7 @@ BOOL CPPgTweaks::OnInitDialog()
 	m_sDateTimeFormat4Lists = thePrefs.GetDateTimeFormat4Lists();
 	m_sDateTimeFormat = thePrefs.GetDateTimeFormat();
 	m_sDateTimeFormat4Log = thePrefs.GetDateTimeFormat4Log();
-	m_sMediaInfoDllPath = ResolveMediaInfoDllPreferencePath(theApp.GetProfileString(_T("eMule"), kMediaInfoDllPathProfileKey, MediaInfoDllSeams::GetDefaultConfiguredPath()));
+	m_sMediaInfoDllPath = ResolveMediaInfoDllPreferencePath(thePrefs.GetMediaInfoDllPath());
 	m_bPreviewCopiedArchives = thePrefs.GetPreviewCopiedArchives();
 	m_bInspectAllFileTypes = thePrefs.GetInspectAllFileTypes();
 	m_bPreviewOnIconDblClk = thePrefs.GetPreviewOnIconDblClk();
@@ -1709,7 +1707,7 @@ BOOL CPPgTweaks::OnApply()
 	thePrefs.m_strDateTimeFormat4Lists = m_sDateTimeFormat4Lists;
 	m_sMediaInfoDllPath.Trim();
 	m_sMediaInfoDllPath = ResolveMediaInfoDllPreferencePath(m_sMediaInfoDllPath);
-	theApp.WriteProfileString(_T("eMule"), kMediaInfoDllPathProfileKey, m_sMediaInfoDllPath);
+	thePrefs.SetMediaInfoDllPath(m_sMediaInfoDllPath);
 	thePrefs.m_iMaxChatHistory = static_cast<INT_PTR>(m_uMaxChatHistoryLines);
 	thePrefs.SetMsgSessionsMax(m_uMaxMessageSessions);
 	thePrefs.m_bPreviewCopiedArchives = m_bPreviewCopiedArchives;

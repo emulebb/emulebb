@@ -49,6 +49,7 @@
 #include "PreferenceIniMap.h"
 #include "PreferenceUiSeams.h"
 #include "PreferenceValidationSeams.h"
+#include "MediaInfoDllSeams.h"
 #include "PartFilePreviewSeams.h"
 #include "SearchParamsPolicy.h"
 #include "StringConversion.h"
@@ -952,6 +953,7 @@ CString CPreferences::m_strVideoPlayerArgs;
 CString CPreferences::m_strVideoThumbnailFfmpegPath;
 UINT CPreferences::m_uVideoThumbnailIntervalSeconds;
 bool	CPreferences::m_bAllowPeerPreview;
+CString CPreferences::m_strMediaInfoDllPath;
 bool	CPreferences::m_bRunCommandOnFileCompletion;
 CString CPreferences::m_strFileCompletionProgram;
 CString CPreferences::m_strFileCompletionArguments;
@@ -2607,6 +2609,7 @@ void CPreferences::SavePreferences()
 	ini.WriteString(prefini::VideoThumbnailKeys::FfmpegPath, m_strVideoThumbnailFfmpegPath);
 	ini.WriteInt(prefini::VideoThumbnailKeys::IntervalSeconds, static_cast<int>(PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(m_uVideoThumbnailIntervalSeconds)));
 	ini.WriteBool(prefini::VideoThumbnailKeys::AllowPeerPreview, m_bAllowPeerPreview);
+	ini.WriteString(_T("MediaInfo_MediaInfoDllPath"), m_strMediaInfoDllPath);
 	ini.WriteBool(prefini::FileCompletionKeys::RunCommandOnFileCompletion, m_bRunCommandOnFileCompletion, prefini::Sections::FileCompletion);
 	ini.WriteString(prefini::FileCompletionKeys::Program, m_strFileCompletionProgram, prefini::Sections::FileCompletion);
 	ini.WriteString(prefini::FileCompletionKeys::Arguments, m_strFileCompletionArguments, prefini::Sections::FileCompletion);
@@ -3322,6 +3325,7 @@ void CPreferences::LoadPreferences()
 	m_uVideoThumbnailIntervalSeconds = PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(
 		NormalizeNonNegativePreference(ini.GetInt(prefini::VideoThumbnailKeys::IntervalSeconds, static_cast<int>(PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds)), PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds));
 	m_bAllowPeerPreview = ini.GetBool(prefini::VideoThumbnailKeys::AllowPeerPreview, false);
+	m_strMediaInfoDllPath = ini.GetString(_T("MediaInfo_MediaInfoDllPath"), MediaInfoDllSeams::GetDefaultConfiguredPath());
 	m_bRunCommandOnFileCompletion = ini.GetBool(prefini::FileCompletionKeys::RunCommandOnFileCompletion, false, prefini::Sections::FileCompletion);
 	m_strFileCompletionProgram = ini.GetString(prefini::FileCompletionKeys::Program, _T(""), prefini::Sections::FileCompletion);
 	m_strFileCompletionArguments = ini.GetString(prefini::FileCompletionKeys::Arguments, _T(""), prefini::Sections::FileCompletion);
