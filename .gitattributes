@@ -3,9 +3,9 @@
 .editorconfig text eol=lf
 .gitignore text eol=lf
 
-# Windows shell and installer files should keep CRLF.
-*.cmd text eol=crlf
-*.bat text eol=crlf
+# Windows shell files are normalized to LF with the rest of the workspace.
+*.cmd text eol=lf
+*.bat text eol=lf
 
 # Source files keep LF to match .editorconfig.
 *.c text eol=lf
