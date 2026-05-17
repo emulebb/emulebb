@@ -1125,7 +1125,6 @@ public:
 	static bool		IsLanguageSupported(LANGID lidSelected);
 	static CString	GetLangDLLNameByID(LANGID lidSelected);
 	static void		InitThreadLocale();
-	static void		SetRtlLocale(LCID lcid);
 	static CString GetHtmlCharset();
 
 	static bool		IsDoubleClickEnabled()				{ return transferDoubleclick; }
