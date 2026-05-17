@@ -3,11 +3,9 @@
 .editorconfig text eol=lf
 .gitignore text eol=lf
 
-# Windows shell and Visual Studio files should keep CRLF.
+# Windows shell and installer files should keep CRLF.
 *.cmd text eol=crlf
 *.bat text eol=crlf
-*.rc text eol=crlf
-*.rc2 text eol=crlf
 *.iss text eol=crlf
 
 # Source files keep LF to match .editorconfig.
@@ -23,6 +21,8 @@
 *.idl text eol=lf
 *.def text eol=lf
 *.l text eol=lf
+*.rc text eol=lf
+*.rc2 text eol=lf
 *.skl text eol=lf
 *.tmpl text eol=lf
 *.txt text eol=lf
