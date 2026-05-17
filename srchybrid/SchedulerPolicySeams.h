@@ -1,10 +1,12 @@
 #pragma once
 
 #include <afx.h>
+#include <afxtempl.h>
 #include <atlstr.h>
 #include <cstdint>
 #include <limits>
 
+#include "types.h"
 #include "Scheduler.h"
 
 namespace SchedulerPolicySeams
