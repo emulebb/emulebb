@@ -6,14 +6,6 @@
 
 namespace StartupConfigOverride
 {
-	/**
-	 * @brief Reports whether the raw command-line token is the supported config-base override option.
-	 */
-	inline bool IsConfigBaseDirOptionToken(LPCTSTR pszArgument)
-	{
-		return pszArgument != NULL && (_tcsicmp(pszArgument, _T("-c")) == 0 || _tcsicmp(pszArgument, _T("/c")) == 0);
-	}
-
 	inline bool IsDriveRootedPath(const CString &strPath)
 	{
 		return strPath.GetLength() >= 3
@@ -100,41 +92,5 @@ namespace StartupConfigOverride
 	inline CString GetPreferencesIniPathFromBaseDir(const CString &strBaseDir)
 	{
 		return GetConfigDirectoryFromBaseDir(strBaseDir) + _T("preferences.ini");
-	}
-
-	/**
-	 * @brief Parses the supported `-c <base-dir>` override from the raw command line.
-	 *
-	 * The option may be specified at most once and requires a canonical absolute drive path.
-	 */
-	inline bool TryParseConfigBaseDirOverride(int argc, TCHAR *argv[], CString &rstrBaseDir, CString &rstrError)
-	{
-		rstrBaseDir.Empty();
-		rstrError.Empty();
-		bool bSeenOverride = false;
-
-		for (int i = 1; i < argc; ++i) {
-			if (!IsConfigBaseDirOptionToken(argv[i]))
-				continue;
-
-			if (bSeenOverride) {
-				rstrError = _T("The -c option may be specified only once.");
-				return false;
-			}
-			if (++i >= argc) {
-				rstrError = _T("The -c option requires a canonical absolute eMule base directory like C:\\path.");
-				return false;
-			}
-
-			CString strCandidate(argv[i]);
-			if (strCandidate.IsEmpty() || !IsAbsoluteBaseDirPath(strCandidate)) {
-				rstrError = _T("The -c option requires a canonical absolute eMule base directory like C:\\path.");
-				return false;
-			}
-
-			rstrBaseDir = NormalizeBaseDir(strCandidate);
-			bSeenOverride = true;
-		}
-		return true;
 	}
 }

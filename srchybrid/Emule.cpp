@@ -22,10 +22,12 @@
 #include <atlconv.h>
 #include <atlimage.h>
 #include <memory>
+#include <shellapi.h>
 #include <string>
 #include <sockimpl.h> //for *m_pfnSockTerm()
 #include <timeapi.h>
 #include <uxtheme.h>
+#include "AppCommandLineSeams.h"
 #include "emule.h"
 #include "Version.h"
 #include "opcodes.h"
@@ -95,82 +97,71 @@ LPCTSTR const ONLINEHELPURL = _T("https://github.com/eMulebb/eMule-tooling/blob/
 constexpr DWORD kMonitoredSharedFileWatchMask = FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE;
 constexpr DWORD kMonitoredSharedDirectoryWatchMask = FILE_NOTIFY_CHANGE_DIR_NAME;
 
-bool IsCommandLineSwitch(LPCTSTR pszValue, LPCTSTR pszLongName)
+std::vector<CString> TokenizeCurrentCommandLine()
 {
-	if (pszValue == NULL || pszLongName == NULL)
-		return false;
-	if (pszValue[0] != _T('-') && pszValue[0] != _T('/'))
-		return false;
-	++pszValue;
-	if (pszValue[0] == _T('-'))
-		++pszValue;
-	return _tcsicmp(pszValue, pszLongName) == 0;
-}
-
-bool TryReadCommandLineValue(int &riIndex, CString &rstrValue)
-{
-	if (riIndex + 1 >= __argc)
-		return false;
-	rstrValue = __targv[++riIndex];
-	return !rstrValue.IsEmpty();
-}
-
-bool LooksLikeIpAddress(const CStringA &rstrValue)
-{
-	IN_ADDR ipv4Address = {};
-	if (::InetPtonA(AF_INET, rstrValue, &ipv4Address) == 1)
-		return true;
-	IN6_ADDR ipv6Address = {};
-	return ::InetPtonA(AF_INET6, rstrValue, &ipv6Address) == 1;
-}
-
-int TryHandleHeadlessWebServerCertificateCommandline()
-{
-	bool bGenerate = false;
-	CString strCertFile;
-	CString strKeyFile;
-	std::vector<CStringA> astrHosts;
-
-	for (int i = 1; i < __argc; ++i) {
-		if (IsCommandLineSwitch(__targv[i], _T("generate-webserver-cert"))) {
-			bGenerate = true;
-			continue;
-		}
-		if (IsCommandLineSwitch(__targv[i], _T("cert"))) {
-			if (!TryReadCommandLineValue(i, strCertFile))
-				return 2;
-			continue;
-		}
-		if (IsCommandLineSwitch(__targv[i], _T("key"))) {
-			if (!TryReadCommandLineValue(i, strKeyFile))
-				return 2;
-			continue;
-		}
-		if (IsCommandLineSwitch(__targv[i], _T("host"))) {
-			CString strHost;
-			if (!TryReadCommandLineValue(i, strHost))
-				return 2;
-			strHost.Trim();
-			if (!strHost.IsEmpty())
-				astrHosts.push_back(CStringA(strHost));
-		}
+	std::vector<CString> aTokens;
+	int iArgCount = 0;
+	LPWSTR *papszArguments = ::CommandLineToArgvW(::GetCommandLineW(), &iArgCount);
+	if (papszArguments != NULL) {
+		aTokens.reserve(iArgCount);
+		for (int i = 0; i < iArgCount; ++i)
+			aTokens.emplace_back(papszArguments[i]);
+		::LocalFree(papszArguments);
+		return aTokens;
 	}
 
-	if (!bGenerate)
-		return -1;
-	if (strCertFile.IsEmpty() || strKeyFile.IsEmpty())
-		return 2;
+	aTokens.reserve(__argc);
+	for (int i = 0; i < __argc; ++i)
+		aTokens.emplace_back(__targv[i]);
+	return aTokens;
+}
 
-	WebServerCertificate::SGenerationRequest request = WebServerCertificate::BuildDefaultLocalRequest(strKeyFile, strCertFile);
-	if (!astrHosts.empty()) {
+void WriteCommandLineText(const DWORD dwStdHandle, const CString &rstrText)
+{
+	if (rstrText.IsEmpty())
+		return;
+
+	HANDLE hOutput = ::GetStdHandle(dwStdHandle);
+	if (hOutput == NULL || hOutput == INVALID_HANDLE_VALUE)
+		return;
+
+	DWORD dwWritten = 0;
+	if (::GetFileType(hOutput) == FILE_TYPE_CHAR) {
+		(void)::WriteConsole(hOutput, rstrText.GetString(), static_cast<DWORD>(rstrText.GetLength()), &dwWritten, NULL);
+		return;
+	}
+
+	const CStringA strUtf8(CW2A(rstrText, CP_UTF8));
+	(void)::WriteFile(hOutput, strUtf8.GetString(), static_cast<DWORD>(strUtf8.GetLength()), &dwWritten, NULL);
+}
+
+void ReportCommandLineText(const DWORD dwStdHandle, const CString &rstrText)
+{
+	WriteCommandLineText(dwStdHandle, rstrText);
+	::OutputDebugString(rstrText);
+}
+
+void ReportCommandLineError(const CString &rstrError, const CString &rstrUsage, const bool bIncludeUsage)
+{
+	CString strText;
+	strText.Format(_T("eMule BB command-line error: %s\r\n"), (LPCTSTR)rstrError);
+	if (bIncludeUsage) {
+		strText += _T("\r\n");
+		strText += rstrUsage;
+	}
+	ReportCommandLineText(STD_ERROR_HANDLE, strText);
+}
+
+int HandleHeadlessWebServerCertificateCommandLine(const AppCommandLineSeams::SParseResult &rCommandLine)
+{
+	WebServerCertificate::SGenerationRequest request = WebServerCertificate::BuildDefaultLocalRequest(
+		rCommandLine.strKeyFile,
+		rCommandLine.strCertFile);
+	if (!rCommandLine.astrCertDnsNames.empty() || !rCommandLine.astrCertIpAddresses.empty()) {
 		request.astrDnsNames.clear();
 		request.astrIpAddresses.clear();
-		for (const CStringA &strHost : astrHosts) {
-			if (LooksLikeIpAddress(strHost))
-				request.astrIpAddresses.push_back(strHost);
-			else
-				request.astrDnsNames.push_back(strHost);
-		}
+		request.astrDnsNames = rCommandLine.astrCertDnsNames;
+		request.astrIpAddresses = rCommandLine.astrCertIpAddresses;
 	}
 	return WebServerCertificate::CreateSelfSignedCertificate(request) == 0 ? 0 : 1;
 }
@@ -778,32 +769,6 @@ std::string BuildStartupTraceEventJson(const SStartupProfileTraceEvent &rEvent, 
 }
 #endif
 
-/**
- * @brief Command-line parser which skips the `-c <base-dir>` pair before handing the rest to MFC.
- */
-class CEmuleCommandLineInfo : public CCommandLineInfo
-{
-public:
-	using CCommandLineInfo::ParseParam;
-
-	void ParseParam(const TCHAR *pszParam, BOOL bFlag, BOOL bLast) override
-	{
-		if (m_bSkipNextParam) {
-			m_bSkipNextParam = false;
-			return;
-		}
-
-		if (bFlag && pszParam != NULL && _tcsicmp(pszParam, _T("c")) == 0) {
-			m_bSkipNextParam = !bLast;
-			return;
-		}
-
-		CCommandLineInfo::ParseParam(pszParam, bFlag, bLast);
-	}
-
-private:
-	bool m_bSkipNextParam = false;
-};
 }
 
 
@@ -1253,11 +1218,23 @@ BOOL CemuleApp::InitInstance()
 	// output all ASSERT messages to debug device
 	_CrtSetReportMode(_CRT_ASSERT, _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_REPORT_MODE) | _CRTDBG_MODE_DEBUG);
 #endif
-	if (!InitializeStartupConfigBaseDirOverride())
-		return FALSE;
-	const int iHeadlessCertificateResult = TryHandleHeadlessWebServerCertificateCommandline();
-	if (iHeadlessCertificateResult >= 0)
-		::ExitProcess(static_cast<UINT>(iHeadlessCertificateResult));
+	const AppCommandLineSeams::SParseResult commandLine = AppCommandLineSeams::ParseTokens(TokenizeCurrentCommandLine());
+	if (commandLine.eMode == AppCommandLineSeams::EMode::Help) {
+		ReportCommandLineText(STD_OUTPUT_HANDLE, commandLine.strUsage);
+		::ExitProcess(0);
+	}
+	if (commandLine.eMode == AppCommandLineSeams::EMode::Invalid) {
+		ReportCommandLineError(commandLine.strError, commandLine.strUsage, true);
+		::ExitProcess(2);
+	}
+
+	CString strStartupConfigError;
+	if (!InitializeStartupConfigBaseDirOverride(commandLine, strStartupConfigError)) {
+		ReportCommandLineError(strStartupConfigError, commandLine.strUsage, false);
+		::ExitProcess(2);
+	}
+	if (commandLine.eMode == AppCommandLineSeams::EMode::GenerateWebServerCertificate)
+		::ExitProcess(static_cast<UINT>(HandleHeadlessWebServerCertificateCommandLine(commandLine)));
 	free((void*)m_pszProfileName);
 	const CString &sConfDir(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
 	m_pszProfileName = _tcsdup(sConfDir + _T("preferences.ini"));
@@ -1291,7 +1268,7 @@ BOOL CemuleApp::InitInstance()
 	AfxOleInit();
 	DetectWin32LongPathsSupportAtStartup();
 
-	if (ProcessCommandline())
+	if (ProcessCommandline(commandLine))
 		return FALSE;
 
 	///////////////////////////////////////////////////////////////////////////
@@ -1941,34 +1918,26 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 	CloseMonitoredRootWatchers(aWatchers);
 }
 
-bool CemuleApp::InitializeStartupConfigBaseDirOverride()
+bool CemuleApp::InitializeStartupConfigBaseDirOverride(
+	const AppCommandLineSeams::SParseResult &rCommandLine,
+	CString &rstrError)
 {
-	CString strStartupConfigBaseDir;
-	CString strStartupConfigError;
-	if (!StartupConfigOverride::TryParseConfigBaseDirOverride(__argc, __targv, strStartupConfigBaseDir, strStartupConfigError)) {
-		AfxMessageBox(strStartupConfigError, MB_OK | MB_ICONSTOP);
-		return false;
-	}
+	rstrError.Empty();
+	const CString strStartupConfigBaseDir = rCommandLine.strConfigBaseDir;
 
-	if (!strStartupConfigBaseDir.IsEmpty()) {
+	if (rCommandLine.bHasConfigBaseDir) {
 		const CString strConfigDir(StartupConfigOverride::GetConfigDirectoryFromBaseDir(strStartupConfigBaseDir));
 		const CString strLogDir(StartupConfigOverride::GetLogDirectoryFromBaseDir(strStartupConfigBaseDir));
 		if (!LongPathSeams::CreateDirectory(strStartupConfigBaseDir, NULL) && !LongPathSeams::PathExists(strStartupConfigBaseDir)) {
-			CString strError;
-			strError.Format(_T("The -c base directory could not be created: %s"), (LPCTSTR)strStartupConfigBaseDir);
-			AfxMessageBox(strError, MB_OK | MB_ICONSTOP);
+			rstrError.Format(_T("The -c base directory could not be created: %s"), (LPCTSTR)strStartupConfigBaseDir);
 			return false;
 		}
 		if (!LongPathSeams::CreateDirectory(strConfigDir, NULL) && !LongPathSeams::PathExists(strConfigDir)) {
-			CString strError;
-			strError.Format(_T("The -c config directory could not be created: %s"), (LPCTSTR)strConfigDir);
-			AfxMessageBox(strError, MB_OK | MB_ICONSTOP);
+			rstrError.Format(_T("The -c config directory could not be created: %s"), (LPCTSTR)strConfigDir);
 			return false;
 		}
 		if (!LongPathSeams::CreateDirectory(strLogDir, NULL) && !LongPathSeams::PathExists(strLogDir)) {
-			CString strError;
-			strError.Format(_T("The -c log directory could not be created: %s"), (LPCTSTR)strLogDir);
-			AfxMessageBox(strError, MB_OK | MB_ICONSTOP);
+			rstrError.Format(_T("The -c log directory could not be created: %s"), (LPCTSTR)strLogDir);
 			return false;
 		}
 	}
@@ -2019,25 +1988,14 @@ int eMuleAllocHook(int mode, void *pUserData, size_t nSize, int nBlockUse, long 
 }
 #endif
 
-bool CemuleApp::ProcessCommandline()
+bool CemuleApp::ProcessCommandline(const AppCommandLineSeams::SParseResult &rCommandLine)
 {
-	bool bIgnoreRunningInstances = (GetProfileInt(_T("eMule"), _T("IgnoreInstances"), 0) != 0);
-	for (int i = 1; i < __argc; ++i) {
-		LPCTSTR pszParam = __targv[i];
-		if (pszParam[0] == _T('-') || pszParam[0] == _T('/')) {
-			++pszParam;
+	bool bIgnoreRunningInstances = (GetProfileInt(_T("eMule"), _T("IgnoreInstances"), 0) != 0) || rCommandLine.bIgnoreInstances;
 #ifdef _DEBUG
-			if (_tcsicmp(pszParam, _T("assertfile")) == 0)
-				_CrtSetReportHook(CrtDebugReportCB);
+	if (rCommandLine.bAssertFile)
+		_CrtSetReportHook(CrtDebugReportCB);
 #endif
-			bIgnoreRunningInstances |= (_tcsicmp(pszParam, _T("ignoreinstances")) == 0);
-
-			m_bAutoStart |= (_tcsicmp(pszParam, _T("AutoStart")) == 0);
-		}
-	}
-
-	CEmuleCommandLineInfo cmdInfo;
-	ParseCommandLine(cmdInfo);
+	m_bAutoStart |= rCommandLine.bAutoStart;
 
 	// If we create our TCP listen socket with SO_REUSEADDR, we have to ensure that there are
 	// no 2 eMules are running on the same port.
@@ -2046,28 +2004,29 @@ bool CemuleApp::ProcessCommandline()
 	CString strMutextName;
 	strMutextName.Format(_T("%s:%u"), EMULE_GUID, uTcpPort);
 	m_hMutexOneInstance = CreateMutex(NULL, FALSE, strMutextName);
+	const DWORD dwMutexLastError = ::GetLastError();
 
-	const CString &command(cmdInfo.m_strFileName);
+	const CString &command(rCommandLine.strPositional);
 
 	//this code part is to determine special cases when we do add a link to our eMule
 	//because in this case it would be nonsense to start another instance!
 	bool bAlreadyRunning = false;
 	if (bIgnoreRunningInstances
-		&& cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen
+		&& !command.IsEmpty()
 		&& (command.Find(_T("://")) > 0 || command.Find(_T("magnet:?")) >= 0 || CCollection::HasCollectionExtention(command)))
 	{
 		bIgnoreRunningInstances = false;
 	}
 	HWND maininst = NULL;
 	if (!bIgnoreRunningInstances)
-		switch (::GetLastError()) {
+		switch (dwMutexLastError) {
 		case ERROR_ALREADY_EXISTS:
 		case ERROR_ACCESS_DENIED:
 			bAlreadyRunning = true;
 			EnumWindows(SearchEmuleWindow, (LPARAM)&maininst);
 		}
 
-	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen) {
+	if (!command.IsEmpty()) {
 		if (command.Find(_T("://")) > 0 || command.Find(_T("magnet:?")) >= 0) {
 			sendstruct.cbData = static_cast<DWORD>((command.GetLength() + 1) * sizeof(TCHAR));
 			sendstruct.dwData = OP_ED2KLINK;

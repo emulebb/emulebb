@@ -63,6 +63,11 @@ class CIPFilterUpdater;
 
 struct SLogItem;
 
+namespace AppCommandLineSeams
+{
+	struct SParseResult;
+}
+
 #if EMULE_COMPILED_STARTUP_PROFILING
 /**
  * @brief One Chrome Trace Event row captured for startup profiling.
@@ -349,8 +354,8 @@ protected:
 	/**
 	 * @brief Parses and validates the optional startup config-root override before any profile-backed settings are read.
 	 */
-	bool InitializeStartupConfigBaseDirOverride();
-	bool ProcessCommandline();
+	bool InitializeStartupConfigBaseDirOverride(const AppCommandLineSeams::SParseResult &rCommandLine, CString &rstrError);
+	bool ProcessCommandline(const AppCommandLineSeams::SParseResult &rCommandLine);
 	void SetTimeOnTransfer();
 	static BOOL CALLBACK SearchEmuleWindow(HWND hWnd, LPARAM lParam) noexcept;
 
