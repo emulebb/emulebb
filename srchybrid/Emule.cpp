@@ -3077,10 +3077,6 @@ void CemuleApp::CreateBackwardDiagonalBrush()
 void CemuleApp::UpdateDesktopColorDepth()
 {
 	g_bLowColorDesktop = (GetDesktopColorDepth() <= 8);
-#ifdef _DEBUG
-	if (!g_bLowColorDesktop)
-		g_bLowColorDesktop = (GetProfileInt(_T("eMule"), _T("LowColorRes"), 0) != 0);
-#endif
 
 	if (g_bLowColorDesktop) {
 		// If we have 4- or 8-bit desktop color depth, Windows will (by design) load only
