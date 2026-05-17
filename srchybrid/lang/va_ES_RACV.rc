@@ -1808,7 +1808,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "No pots descarregar est archiu perque el teu sistema d'archius no admet archius de mes de 4 GB, planteja't convertir-lo a NTFS"
-    IDS_NEWVERSIONAVLBETA   "Esta versió beta està antiquada. ¡Les versions beta solen tindre fallos, per lo que es molt important que actualises a una versió estable lo mes pronte possible!"
     IDS_KADSEARCHACTIVE     "(Buscant via Kad...)"
     IDS_BOLD                "Canvia a text en negreta"
     IDS_UNDERLINE           "Canvia a text subrallat"
@@ -1927,7 +1926,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Modificació del filtre de spam..."
     IDS_EDITSPAMFILTERCOMMENTS "Modificar el filtre de spam per a comentaris"
     IDS_WIZZARDOBFUSCATION  "Activa esta opció si vols habilitar la ofuscació de protocol\n\nSi tu ISP intenta llimitar o bloquejar eMule, la ofuscació ajudarà a esquivar estes restriccions."
-    IDS_BETANAG             "Esta es una versió beta de eMule. Per favor, informa de possibles problemes i comprova regularment si hi ha actualisacions en el nostre fòrum (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "¿Vols descarregar i utilisar els contactes de Kad (nodes.dat) de la següent direcció:\n%s ?"
     IDS_AUTOMATIC           "Automàtic"

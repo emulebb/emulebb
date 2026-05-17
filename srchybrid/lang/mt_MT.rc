@@ -1802,7 +1802,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "Ma tistax tiddawnlowdja dan il-fajl għax is-sistema tal-fajls tiegħek ma tissapportjax fajls li huma ikbar minn 4GB. Ikkunsidra li taqleb għall-NTFS"
-    IDS_NEWVERSIONAVLBETA   "Din il-verżjoni Beta hija skaduta. Minħabba n-natura tal-verżjonijiet Beta, li s-soltu jkun fihom il-bags, huwa importanti ħafna li tapdetja għal-verżjoni stabbli malajr kemm jista' jkun!"
     IDS_KADSEARCHACTIVE     "(Qed issir tfittxija tal-Kad...)"
     IDS_BOLD                "Ittogilja l-kliem bold"
     IDS_UNDERLINE           "Ittogilja l-kliem b'sing taħtu"
@@ -1914,7 +1913,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Edit spam filter..."
     IDS_EDITSPAMFILTERCOMMENTS "Edit spam filter for comments"
     IDS_WIZZARDOBFUSCATION  "Enable this option if you want to enable protocol obfuscation\n\nIf your ISP tries throttle or block eMule, enabling obfuscation will help to circumvent such restrictions."
-    IDS_BETANAG             "This is a beta version of eMule. Please report problems and check regulary for updates in our forum (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Do you want to download and use Kad contacts (nodes.dat) from this address:\n%s ?"
     IDS_AUTOMATIC           "Automatic"

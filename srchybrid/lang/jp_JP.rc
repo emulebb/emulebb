@@ -1809,7 +1809,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "現在使用されているOSのファイルシステムが4GBを超えるサイズのファイルに対応していないため、このファイルをダウンロードできません。 ファイルシステムをNTFSに変更する必要があります。"
-    IDS_NEWVERSIONAVLBETA   "このベータバージョンは最早型遅れになっています。 ベータバージョンの成り立ち上、バグが混入している可能性が高いため、出来るだけ早く安定リリースにアップデートすることが重要になります!"
     IDS_KADSEARCHACTIVE     "(Kad検索を実行中...)"
     IDS_BOLD                "テキストを太字にする"
     IDS_UNDERLINE           "テキストに下線を付ける"
@@ -1926,7 +1925,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Edit spam filter..."
     IDS_EDITSPAMFILTERCOMMENTS "Edit spam filter for comments"
     IDS_WIZZARDOBFUSCATION  "Enable this option if you want to enable protocol obfuscation\n\nIf your ISP tries throttle or block eMule, enabling obfuscation will help to circumvent such restrictions."
-    IDS_BETANAG             "This is a beta version of eMule. Please report problems and check regulary for updates in our forum (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Do you want to download and use Kad contacts (nodes.dat) from this address:\n%s ?"
     IDS_AUTOMATIC           "Automatic"

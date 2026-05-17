@@ -1780,7 +1780,6 @@ BEGIN
     IDS_SRV_LARGEFILES      "Unterstützung für große Dateien"
     IDS_ERR_FSCANTHANDLEFILE
                             "Du kannst diese Datei nicht herunterladen, da dein Dateisystem keine Dateien größer als 4GB unterstützt! Überlege es nach NTFS zu konvertieren!"
-    IDS_NEWVERSIONAVLBETA   "Diese Betaversion ist veraltet. Da Betaversionen oft noch Fehler enthalten, wird dringend angeraten, möglichst bald auf eine stabile Version zu wechseln!"
     IDS_BOLD                "Schaltet Fettschrift an/aus"
     IDS_UNDERLINE           "Schaltet Unterstreichung ein/aus"
     IDS_COLOUR              "Wählt Vordergrundfarbe (optional Hintergrundfarbe)"
@@ -1898,7 +1897,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Ändere Spamfilter..."
     IDS_EDITSPAMFILTERCOMMENTS "Ändere Spam-Filter für Kommentare"
     IDS_WIZZARDOBFUSCATION  "Aktiviere diese Einstellung, wenn du Protokoll-Obfuskation einschalten willst.\n\nFalls dein Provider versucht eMule zu blockieren oder einzuschränken, kann diese Funktion helfen, solche Einschränkungen zu umgehen."
-    IDS_BETANAG             "Dies ist eine Beta-Version von eMule. Bitte melde Probleme im Forum (https://forum.emule-project.net) und achte dort auch auf neue Versionen."
     IDS_CONFIRMNODESDOWNLOAD
                             "Möchtest du Kad-Kontakte (nodes.dat) von der folgenden Adresse herunterladen und benutzen: %s ?"
     IDS_AUTOMATIC           "Automatisch"

@@ -1780,7 +1780,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "您不能下載這個檔案因為您的檔案系統不支援檔案大於 4GB, 請考慮轉換磁碟格式為 NTFS"
-    IDS_NEWVERSIONAVLBETA   "這個測試版本已經過期. 由於是測試版本, 它可能包含許多臭蟲, 可能的話盡快更新到穩定的發佈版本是重要的!"
     IDS_KADSEARCHACTIVE     "(Kad 搜尋在處理中...)"
     IDS_BOLD                "固定為粗體文字"
     IDS_UNDERLINE           "固定為加底線文字"
@@ -1897,7 +1896,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "編輯廣告過濾器..."
     IDS_EDITSPAMFILTERCOMMENTS "編輯用於註解的廣告過濾器"
     IDS_WIZZARDOBFUSCATION  "假如您想要啟用模糊化協定請啟用這個選項\n\n如果您的 ISP 嘗試壓制或封鎖 eMule, 啟用模糊化將會幫助改善像這樣的限制."
-    IDS_BETANAG             "這是一個測試版的 eMule. 請回報問題並經常地在我們的論壇檢查是否有更新 (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "您想要下載並使用 Kad 聯繫 (nodes.dat) 來自這個位址:\n%s ?"
     IDS_AUTOMATIC           "自動的"

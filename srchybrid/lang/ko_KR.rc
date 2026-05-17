@@ -1768,7 +1768,6 @@ BEGIN
     IDS_SRV_LARGEFILES      "큰 파일 지원"
     IDS_ERR_FSCANTHANDLEFILE
                             "시스템이 4GB 이상의 파일 크기를 지원하지 않기 때문에 이 파일을 다운로드할 수 없습니다. NTFS로 파일 시스템을 변경하면 가능합니다."
-    IDS_NEWVERSIONAVLBETA   "이 베타 버전은 기한이 만료되었습니다. 베타 버전은 버그를 포함하고 있을 수 있기 때문에 가능한 한 신속히 안정된 버전으로 교체하십시오!"
     IDS_BOLD                "굵은 글꼴"
     IDS_UNDERLINE           "밑줄 글꼴"
     IDS_COLOUR              "글자 전경색 선택 (선택 사항: 배경색)"
@@ -1886,7 +1885,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "스팸 필터 편집..."
     IDS_EDITSPAMFILTERCOMMENTS "주석에 대한 스팸 필터 편집"
     IDS_WIZZARDOBFUSCATION  "프로토콜 암호화를 활성화하기 원한다면 이 설정을 선택하십시오.\n\nISP에서 eMule의 실행을 방해하거나 막으려한다면, 암호화 활성화는 그러한 제한을 교묘히 회피하는 데 도움을 줍니다."
-    IDS_BETANAG             "eMule의 베타 버전입니다. 문제점을 보고하고 포럼에서 정기적으로 업데이트를 확인해주십시오. (https://forum.emule-project.net)"
     IDS_CONFIRMNODESDOWNLOAD
                             "\n%s 주소에서 Kad 연결(nodes.dat)을 사용해서 다운로드받으시겠습니까?"
     IDS_AUTOMATIC           "자동"

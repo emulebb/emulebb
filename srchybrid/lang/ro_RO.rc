@@ -1806,7 +1806,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "Nu poţi descărca acest fişier fiindcă sistemul tău (FAT-FAT32) nu suportă fişiere mai mari de 4GB, încearcă să-l converteşti în NTFS"
-    IDS_NEWVERSIONAVLBETA   "Această versiune Beta e depăşită. Fiindcă versiunile Beta deseori conţin erori, e foarte important să faci update cu o versiune stabilă cît mai curînd posibil!"
     IDS_KADSEARCHACTIVE     "(Kad căutare în curs...)"
     IDS_BOLD                "Text îngroşat da/nu"
     IDS_UNDERLINE           "Text subliniat da/nu"
@@ -1925,7 +1924,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Editare filtru spam..."
     IDS_EDITSPAMFILTERCOMMENTS "Editare filtru spam ptr. comentarii"
     IDS_WIZZARDOBFUSCATION  "Activează această opţiune pentru a activa mascarea de protocol\n\nDacă prividerul tău încearcă să limiteze sau blocheze eMule, activarea mascării ajută la depăşirea acestor restricţii."
-    IDS_BETANAG             "Aceasta este o versiune beta a eMule. Te rugăm să raportezi orice problemă şi să verifici regulat dacă sînt noutăţi în forumul nostru (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Vrei să descarci şi să foloseşti contacte Kad (nodes.dat) de la această adresă:\n%s ?"
     IDS_AUTOMATIC           "Automat"

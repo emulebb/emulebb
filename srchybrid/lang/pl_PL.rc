@@ -1775,7 +1775,6 @@ BEGIN
     IDS_SRV_LARGEFILES      "Wsparcie dla dużych plików"
     IDS_ERR_FSCANTHANDLEFILE
                             "Nie możesz sciągać tego pliku, ponieważ twój system nie obsługuje plików większych niż 4GB, rozważ przekonwertowanie dysku na NTFS"
-    IDS_NEWVERSIONAVLBETA   "Ta beta wersja jest nieaktualna. Wersja ta może zawierać błedy, dlatego uaktualnij eMula do najnowszej stabilnej wersji"
     IDS_BOLD                "Włącz pogrubiony tekst"
     IDS_UNDERLINE           "Włącz pokreślony tekst"
     IDS_COLOUR              "Wybierz kolor tekstu,(kolor tła domyślny)."
@@ -1897,7 +1896,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Edytuj filtr spamu..."
     IDS_EDITSPAMFILTERCOMMENTS "Edytuj filtr spamu dla komentarzy"
     IDS_WIZZARDOBFUSCATION  "Włącz tą opcję, jeśli chcesz używać protokołu maskowania\n\nJeśli twój dostawca ISP próbuje blokować lub ograniczać eMule, włączając maskowanie pozwoli to na obejście tych ograniczeń."
-    IDS_BETANAG             "To jest wersja beta eMule. Proszę zgłaszać problemy i regularnie sprawdzać dostępność aktualizacji na naszym forum (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Czy chcesz pobrać i używać kontaktów KAD (nodes.dat) z tego adresu:\n%s ?"
     IDS_AUTOMATIC           "Automatyczne"

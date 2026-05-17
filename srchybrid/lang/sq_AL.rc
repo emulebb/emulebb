@@ -1801,7 +1801,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "Kjo skedë nuk mund të shkarkohet pasi sistem-skeda juaj nuk i përkrah skedat më të mëdha sesa 4GB; mbase duhet ta konvertoni në format NTFS"
-    IDS_NEWVERSIONAVLBETA   "Ky version Beta e ka kaluar datën. Për shkak të natyrës së versioneve Beta, që shpesh përmbajnë probleme, është tepër e rëndësishme që të merrni një lëshim të qëndrueshëm sa më shpejt të jetë e mundur!"
     IDS_KADSEARCHACTIVE     "(Kërkimi me Kad vijon...)"
     IDS_BOLD                "Vë Tekstin e Trashë"
     IDS_UNDERLINE           "Vë Tekstin e Nënvizuar"
@@ -1916,7 +1915,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Edito filtrin e spamit..."
     IDS_EDITSPAMFILTERCOMMENTS "Editoni filtrin e spamit për komentet"
     IDS_WIZZARDOBFUSCATION  "Aktivizojeni këtë mundësi nëse doni të lejoni turbullimin e protokollit\n\nNëse ISP-ja juaj orvatet të mbytë ose bllokojë eMule-n, aktivizimi i turbullimit do ndihmojë që këto pengesa të shmangen."
-    IDS_BETANAG             "Ky është një version beta i eMule. Ju lutemi raportoni problemet dhe verifikoni rregullisht ridatimet në forumin tonë (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "A do i shkarkoni dhë përdorni kontaktet në Kad (nodes.dat) nga kjo adresë:\n%s ?"
     IDS_AUTOMATIC           "Automatike"

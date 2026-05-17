@@ -4272,7 +4272,6 @@ BEGIN
     IDS_SRV_LARGEFILES      "Support for large files"
     IDS_ERR_FSCANTHANDLEFILE
                             "You cannot download this file because your file system doesn't support files which are larger than 4GB, consider converting it to NTFS"
-    IDS_NEWVERSIONAVLBETA   "This Beta version is out of date. Due to the nature of Beta versions, which often contain bugs it is very important that you update to a stable release as soon as possible!"
     IDS_BOLD                "Toggles bold text"
     IDS_UNDERLINE           "Toggles underlined text"
     IDS_COLOUR              "Selects foreground text color (optional background color)"
@@ -4443,7 +4442,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Edit spam filter..."
     IDS_EDITSPAMFILTERCOMMENTS "Edit spam filter for comments"
     IDS_WIZZARDOBFUSCATION  "Enable this option if you want to use protocol obfuscation\n\nIf your ISP tries throttle or block eMule, enabling obfuscation will help to circumvent such restrictions."
-    IDS_BETANAG             "This is a beta version of eMule. Please report problems and check regularly for updates in our forum (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Do you want to download and use Kad contacts (nodes.dat) from this address:\n%s ?"
     IDS_NOTCONNECTEDANY     "You are not connected to a server or the Kad network!"

@@ -1792,7 +1792,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "Te datoteke ne morete prenesti, ker vaš datotečni sistem ne podpira datotek večjih od 4GB, premislite o pretvorbi dat. sistema v NTFS"
-    IDS_NEWVERSIONAVLBETA   "Ta beta različica je zastarela. Zaradi narave beta različic, katere pogosto vsebujejo hrošče, je zelo pomembno, da čimprej izvedete posodobitev na stabilno različico!"
     IDS_KADSEARCHACTIVE     "(Iskanje Kad poteka...)"
     IDS_BOLD                "Preklopi na krepki tekst"
     IDS_UNDERLINE           "Preklopi na podčrtan tekst"
@@ -1921,7 +1920,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Uredi spam filter..."
     IDS_EDITSPAMFILTERCOMMENTS "Uredi filtriranje komentarjev"
     IDS_WIZZARDOBFUSCATION  "Ta možnost aktivira maskiranje protokola.\n\nČe vaš ponudnik interneta zavira eMule prenose, lahko maskiranje protokola zaobide to omejitev."
-    IDS_BETANAG             "Uporabljate beta različico eMule. Prosim, sporočite morebitne težave in redno preverjajte ali obstaja posodobitev na našem forumu (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Ali želite prenesti in uporabljati kontakte Kad (nodes.dat) iz tega naslova:\n%s ?"
     IDS_AUTOMATIC           "Samodejno"

@@ -1800,7 +1800,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "Jūs negalite gauti šio failo, nes jūsų failų sistema nepalaiko didesnių failų nei 4GB, pagalvokite apie perėjimą prie NTFS"
-    IDS_NEWVERSIONAVLBETA   "Ši Beta versija yra pasenusi. Ji turi daug įvairių klaidų, taigi yra labai svarbu atsinaujinti į normalią versiją kuo greičiau!"
     IDS_KADSEARCHACTIVE     "(Vykdoma Kad paieška...)"
     IDS_BOLD                "Įjungti storą tekstą"
     IDS_UNDERLINE           "Įjungit pabrauktą tekstą"
@@ -1923,7 +1922,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Keisti spam filtrą..."
     IDS_EDITSPAMFILTERCOMMENTS "Keisti komentarų spam filtrą"
     IDS_WIZZARDOBFUSCATION  "Įjunkite šį punktą jei norite įjungti protokolo slėpimą\n\nJei jūsų IPT bando filtruoti ar blokuoti eMule, šio punkto įjungimas padės apeiti tokius veiksmus."
-    IDS_BETANAG             "Tai yra beta eMule versija. Prašom pranešti apie problemas bei tikrinti ar yra atnaujinimai mūsų forume (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Ar norite gauti ir naudoti Kad kontaktus (nodes.dat) iš šio adreso:\n%s ?"
     IDS_AUTOMATIC           "Automatiškai"

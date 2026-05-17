@@ -1805,7 +1805,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "Ezin duzu fitxategi hau jaitsi zure fitxategi sistemak ez duelako 4 GB-tik gorako fitxategirik onartzen, NTFS sistema erabiltzea komeniko litzaizuke"
-    IDS_NEWVERSIONAVLBETA   "Beta bertsio hau zaharra da. Kontuan izanez beta bertsioak akatsak izan ditzakeela, lehenbailehen bertsio egonkor bat instalatzea gomendatzen dizugu!"
     IDS_KADSEARCHACTIVE     "(Kad bilaketa egiten...)"
     IDS_BOLD                "Testu beltza aktibatu/desaktibatu"
     IDS_UNDERLINE           "Azpimarratutako testua aktibatu/desaktibatu"
@@ -1922,7 +1921,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Edit spam filter..."
     IDS_EDITSPAMFILTERCOMMENTS "Edit spam filter for comments"
     IDS_WIZZARDOBFUSCATION  "Enable this option if you want to enable protocol obfuscation\n\nIf your ISP tries throttle or block eMule, enabling obfuscation will help to circumvent such restrictions."
-    IDS_BETANAG             "This is a beta version of eMule. Please report problems and check regulary for updates in our forum (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Do you want to download and use Kad contacts (nodes.dat) from this address:\n%s ?"
     IDS_AUTOMATIC           "Automatic"

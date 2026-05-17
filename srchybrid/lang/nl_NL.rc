@@ -1842,7 +1842,6 @@ BEGIN
     IDS_RUNNINGRESTRICTED   "eMule wordt uitgevoerd met verminderde privileges"
     IDS_ERR_FSCANTHANDLEFILE
                             "U kunt dit bestand niet downloaden omdat uw bestandssysteem bestanden groter dan 4 GB niet ondersteund, u zult het dan moeten converteren naar NTFS"
-    IDS_NEWVERSIONAVLBETA   "Deze bètaversie is verlopen. Door de natuur van bètaversies, die vaak fouten bevatten, is het belangrijk dat u update naar een stabiele uitgave als dat mogelijk is!"
     IDS_ARCHPREV_ATTRIBINFO "Bestandsattributen kunnen bevatten:\r\n\r\nP\tbestand is met wachtwoord beschermd\r\nD\tis een map\r\nC\tCommentaar\r\nLx\tCompressieniveau x\r\nM\tgecompresseerde data nog niet compleet gedownload\r\n<\tbestand verdergegaan vanaf vorige volume\r\n>\tbestand gaat verder in volgende volume\r\n"
     IDS_CONTENT_INFO        "Inhoud"
 END
@@ -1923,7 +1922,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Spamfilter bewerken..."
     IDS_EDITSPAMFILTERCOMMENTS "Spamfilter voor commentaar bewerken"
     IDS_WIZZARDOBFUSCATION  "Schakel deze optie in als u protocolverduistering in wilt schakelen\n\nIndien uw ISP eMule wil blokkeren, helpt protocolverduistering om dit soort beperkingen te omzeilen."
-    IDS_BETANAG             "Dit is een bètaversie van eMule. Rapporteer eventuele problemen en kijk regelmatig op het forum voor updates (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Wilt u Kad-contacten (nodes.dat) downloaden en gebruiken vanaf dit adres:\n%s ?"
     IDS_AUTOMATIC           "Automatisch"

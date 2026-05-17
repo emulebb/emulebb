@@ -1773,7 +1773,6 @@ BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "你无法下载这个文件因为你的文件系统不支持大于4GB的文件,建议转换为NTFS文件系统"
 //"You cannot download this file because your filesystem doesn't supports files which are larger than 4GB, consider converting it to NTFS"
-    IDS_NEWVERSIONAVLBETA   "这个beta版本已经过期. 因为测试版经常含有错误,因此请尽快更新到稳定的版本!"
 //"This Beta version is out of date. Due to the nature of Beta versions, which often contain bugs it is very important that you update to a stable release as soon as possible!"
     IDS_BOLD                "切换到粗体字" //"Toggles bold text"
     IDS_UNDERLINE           "切换到下划线字体" //"Toggles underlined text"
@@ -1897,7 +1896,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "编辑垃圾消息过滤器..." //"Edit spam filter..."
     IDS_EDITSPAMFILTERCOMMENTS "编辑用于文件注释的垃圾信息过滤器" //"Edit spam filter for comments"
     IDS_WIZZARDOBFUSCATION  "启用这个选项可以开启乱序协议加密\n\n如果你的 ISP 打算限制或者封杀 eMule, 开启乱序协议加密可以帮助你突破这类限制." //"Enable this option if you want to enable protocol obfuscation\n\nIf your ISP tries throttle or block eMule, enabling obfuscation will help to circumvent such restrictions."
-    IDS_BETANAG             "这是一个测试版本的 eMule. 请定期到官方论坛(https://forum.emule-project.net)检查更新并报告使用过程中出现的问题." //"This is a beta version of eMule. Please report problems and check regulary for updates in our forum (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "你是否要从以下地址下载 Kad 联系人列表(nodes.dat):\n%s ?" //"Do you want to download and use Kad contacts (nodes.dat) from this address:\n%s ?"
     IDS_AUTOMATIC           "自动" //"Automatic"

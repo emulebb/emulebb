@@ -1803,7 +1803,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "Bạn không thể tải tập tin này về vì hệ thống không hỗ trợ tập tin lớn hơn 4GB, bạn nên chuyển hệ thống tập tin sang NTFS"
-    IDS_NEWVERSIONAVLBETA   "Phiên bản thử nghiệm này đã quá hạn. Vì phiên bản thử nghiệm thường có lỗi, bạn nên nâng cấp lên phiên bản chính thức, ổn định hơn càng sớm càng tốt!"
     IDS_KADSEARCHACTIVE     "(Tìm kiếm Kad đang tiến hành...)"
     IDS_BOLD                "Bật chữ đậm"
     IDS_UNDERLINE           "Bật chữ gạch dưới"
@@ -1917,7 +1916,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Chỉnh sửa bộ lọc rác ..."
     IDS_EDITSPAMFILTERCOMMENTS "Chỉnh sửa bộ lọc rác cho các chú thích"
     IDS_WIZZARDOBFUSCATION  "Chọn mục này nếu như bạn muốn dùng giao thức ẩn\n\nNếu ISP của bạn chặn eMule, chọn phương thức ảo giúp bạn có thể dùng eMule với ISP này."
-    IDS_BETANAG             "Đây là phiên bản thử nghiệm của eMule. Vui lòng gởi lỗi về cho chúng tôi và nhớ là luôn luôn cập nhật phiên bản mới (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Bạn có muốn tải và sử dụng các liên lạc Kad (nodes.dat) từ địa chỉ:\n%s ?"
     IDS_AUTOMATIC           "Tự động"

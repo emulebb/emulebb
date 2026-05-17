@@ -1808,7 +1808,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "Bu dosyayı indiremezsiniz çünkü dosya sisteminiz 4GB'dan daha büyük dosyaları desteklemez, NTFS'e dönüştürmeyi düşünün"
-    IDS_NEWVERSIONAVLBETA   "Bu Beta sürüm eskimiş. Sık sık program hataları içeren Beta sürümlerin cinsinden dolayı en kısa zamanda sağlam yayıma güncellemeniz çok önemlidir!"
     IDS_BOLD                "Kalın metine değiştirir"
     IDS_UNDERLINE           "Altı çizilmiş metine değiştirir"
     IDS_COLOUR              "Önplan metin rengini seçer (isteğe bağlı arkaplan rengi)"
@@ -1922,7 +1921,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "İstenmeyen Mesaj süzgecini düzenle..."
     IDS_EDITSPAMFILTERCOMMENTS "Yorumlar için istenmeyen mesaj süzgecini düzenle"
     IDS_WIZZARDOBFUSCATION  "Eğer protokol gizlemeyi etkinleştirmek istiyorsanız bu seçeneği etkinleştirin\n\nEğer ISS'niz eMule'u yavaşlatmayı ya da engellemeyi deniyorsa, gizlemeyi etkinleştirmek bu gibi kısıtlamaları atlatabilir."
-    IDS_BETANAG             "Bu eMule'un beta sürümüdür. Lütfen sorunları rapor edin ve düzenli olarak güncellemeleri forumumuzdan (https://forum.emule-project.net) kontrol edin."
     IDS_CONFIRMNODESDOWNLOAD
                             "Bu adresten Kad bağlantılarını (nodes.dat) indirmek ve kullanmak istiyor musunuz:\n%s ?"
     IDS_AUTOMATIC           "Otomatik"

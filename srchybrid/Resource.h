@@ -1393,7 +1393,6 @@
 #define IDS_ERR_MET_BAD                 1464
 #define IDS_SRV_LARGEFILES              1465
 #define IDS_ERR_FSCANTHANDLEFILE        1466
-#define IDS_NEWVERSIONAVLBETA           1467
 #define IDS_BOLD                        1468
 #define IDS_UNDERLINE                   1469
 #define IDS_COLOUR                      1470
@@ -1487,7 +1486,6 @@
 #define IDS_EDITSPAMFILTER              1557
 #define IDS_EDITSPAMFILTERCOMMENTS      1558
 #define IDS_WIZZARDOBFUSCATION          1559
-#define IDS_BETANAG                     1560
 #define IDS_CONFIRMNODESDOWNLOAD        1561
 #define IDS_NOTCONNECTEDANY             1562
 #define IDS_ERR_SHARED_DIR              1563

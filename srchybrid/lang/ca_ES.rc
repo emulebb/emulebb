@@ -1798,7 +1798,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "No pots baixar aquest fitxer per que el vostre sistema de fitxers no en suporta de més grans que 4GB, considera convertir-lo a NTFS"
-    IDS_NEWVERSIONAVLBETA   "Aquesta versió Beta està desactualitzada. Arran de la naturalesa de les versions Beta, que sovint contenen errors, és molt important que actualitzis a una versió estable així que puguis!"
     IDS_KADSEARCHACTIVE     "(Cerca Kad en marxa...)"
     IDS_BOLD                "Commuta la negreta"
     IDS_UNDERLINE           "Commuta el subratllat"
@@ -1926,7 +1925,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Editar el filtre de spam..."
     IDS_EDITSPAMFILTERCOMMENTS "Modificar el filtre de spam per a comentaris"
     IDS_WIZZARDOBFUSCATION  "Activa aquesta opció si vols habilitar l'ofuscació de protocol\n\nSi la teva ISP intenta limitar o bloquejar l'eMule, l'ofuscació ajudarà a esquivar aquestes restriccions."
-    IDS_BETANAG             "Aquesta és una versió beta d'eMule. Per favor, informa de possibles problemes i comprova regularment si hi ha actualitzacions en el nostre fòrum (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Vols descarregar i usar els contactes de Kad (nodes.dat) de la següent adreça:\n%s ?"
     IDS_AUTOMATIC           "Automàtic"

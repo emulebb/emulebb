@@ -1771,7 +1771,6 @@ BEGIN
     IDS_SRV_LARGEFILES      "Tuki suurikokoisille tiedostoille"
     IDS_ERR_FSCANTHANDLEFILE
                             "Et voi ladata tätä tiedostoa, koska kovalevysi tiedostojärjestelmä ei tue yli 4 GB kokoisia tiedostoja; harkitse kovalevyn tiedostojärjestelmän muunnosta NTFS:ään."
-    IDS_NEWVERSIONAVLBETA   "Tämä betaversio on vanhentunut. Ottaen huomioon sen, että betaversiot ovat usein vailinaisia ja sisältävät virheitä, on tärkeää että päivität ohjelmasi vakaaseen versioon niin pian kuin mahdollista!"
     IDS_BOLD                "Vaihtaa lihavoidun tekstin päälle/pois"
     IDS_UNDERLINE           "vaihtaa alleviivatun tekstin päälle/pois"
     IDS_COLOUR              "Valitsee tekstin värin (valinnainen taustaväri on myös käytettävissä)"
@@ -1893,7 +1892,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Muokkaa roskafiltteriä..."
     IDS_EDITSPAMFILTERCOMMENTS "Muokkaa kommenttien roskafiltteriä"
     IDS_WIZZARDOBFUSCATION  "Käytä tätä asetusta, jos haluat naamioida ohjelman siirtoprotokollan verkkoliikenteen\n\nJos Internet -operaattorisi rajoittaa tai estää eMulen toimintaa, naamiointi auttaa kiertämään rajoitteet."
-    IDS_BETANAG             "Tämä on eMulen betaversio. Pyydämme, että kerrot ongelmista ja käyt säännöllisesti keskustelualueillamme (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "haluatko ladata ja käyttää Kademlia-kontakteja (nodes.dat) tästä osoitteesta:\n%s ?"
     IDS_NOTCONNECTEDANY     "Sinulla ei ole yhteyttä palvelimeen tai Kademlia-verkkoon!"

@@ -1792,7 +1792,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "Sa ei saa allalaadida seda faili sest sinu failisüsteem ei toeta faile4 mis on suuremad kui 4GB, kaalu selle konvertimist NTFS-i"
-    IDS_NEWVERSIONAVLBETA   "See Beta versioon on aegunud. See Beta versioon, sisaldab puuke on väga tähtis et uuendaksid  stabiilsuse saavutamiseks!"
     IDS_KADSEARCHACTIVE     "(Kad otisng arengus...)"
     IDS_BOLD                "Rasvase teksti nupp"
     IDS_UNDERLINE           "Allakriipsutatud teksti nupp"
@@ -1916,7 +1915,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Muuda spämmi filtrit..."
     IDS_EDITSPAMFILTERCOMMENTS "Muuda spämmi filtrit komentaarides"
     IDS_WIZZARDOBFUSCATION  "Luba see valik, kui soovite lubada protokolli hämamist\n\nIf your ISP tries throttle or block eMule, enabling obfuscation will help to circumvent such restrictions."
-    IDS_BETANAG             "See on beta versioon eMule-st. Palun teata probleemdest ja jälgi regulaarselt uuendustest meie foorumis (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Kas soovite alla laadida ja kasutada Kad kontaktisi (nodes.dat) Sellelt aadressilt:\n%s ?"
     IDS_AUTOMATIC           "Automaatne"

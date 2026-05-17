@@ -1800,7 +1800,6 @@ STRINGTABLE
 BEGIN
    IDS_ERR_FSCANTHANDLEFILE
                            "Téléchargement impossible car votre partition ne gère pas les fichiers de plus de 4 Go, songez à la convertir en NTFS"
-   IDS_NEWVERSIONAVLBETA   "Cette version bêta est obsolète. Du fait de leur nature, les versions bêta contiennent souvent des bugs, installez une version finale stable dès que possible !"
     IDS_KADSEARCHACTIVE     "(Recherche Kad en cours...)"
     IDS_BOLD                "Texte en gras"
     IDS_UNDERLINE           "Texte souligné"
@@ -1921,7 +1920,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Editer le filtre anti-spam..."
     IDS_EDITSPAMFILTERCOMMENTS "Editer le filtre des commentaires"
     IDS_WIZZARDOBFUSCATION  "Cochez cette option si vous souhaitez activer le brouillage de protocole\n\nSi votre FAI bride ou bloque eMule, le brouillage de protocole aidera à contourner ces restrictions."
-    IDS_BETANAG             "Ceci est une version beta de eMule. Merci de nous faire part des problèmes rencontrés et de vérifier régulièrement la présence de mises à jour sur notre forum (https://forum.emule-project.net)."
     IDS_CONFIRMNODESDOWNLOAD
                             "Voulez-vous qu'eMule télécharge et utilise des contacts Kad (nodes.dat) à partir de cette adresse:\n%s ?"
     IDS_AUTOMATIC           "Automatique"

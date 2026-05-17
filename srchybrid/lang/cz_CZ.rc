@@ -1765,7 +1765,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "Tento soubor nemůžete stáhnout, nebo? Váš systém souborů nepodporuje soubory přesahující 4GB. Zvažte proto jeho konverzi na NTFS."
-    IDS_NEWVERSIONAVLBETA   "Tato betaverze je již zastaralá. Betaverze jsou svojí podstatou určené k odlaďování chyb, které obsahují. Důrazně proto doporučujeme bezodkladné upgradování na stabilní verzi!"
 END
 
 STRINGTABLE
@@ -1922,7 +1921,6 @@ BEGIN
     IDS_EDITSPAMFILTER      "Upravit spam filtr..."
     IDS_EDITSPAMFILTERCOMMENTS "Upravit spam filtr komentářů"
     IDS_WIZZARDOBFUSCATION  "Povolte tuto možnost, pokud máte zájem o šifrování protokolu. Pokud váš poskytovatel selektivně zpomaluje eMule, můžete použít šifrování protokolu, abyste se tomuto omezení vyhnuli."
-    IDS_BETANAG             "Toto je beta verze eMule. Jakékoliv problémy prosím ohlaste na našem fóru (https://forum.emule-project.net). Na fóru se také můžete dozvědět o nových aktualizacích."
     IDS_CONFIRMNODESDOWNLOAD
                             "Přejete si stáhnout a použít Kad kontakty (nodes.dat) z této adresy:\n%s ?"
     IDS_AUTOMATIC           "Automatický"

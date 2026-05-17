@@ -1804,7 +1804,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_FSCANTHANDLEFILE
                             "Du kan ikke downloade denne fil, da dit filsystem ikke understøtter filer større end 4GB. Du kan overveje at ændre filsystemet til NTFS"
-    IDS_NEWVERSIONAVLBETA   "Denne Beta version er forældet. Da Beta versioner ofte indeholder fejl er det yderst vigtigt at du opdaterer til den nyeste version hurtigst muligt!"
     IDS_KADSEARCHACTIVE     "(Kad søgning igang...)"
     IDS_BOLD                "Skift Fed Tekst"
     IDS_UNDERLINE           "Skift understreget Tekst"
@@ -1931,7 +1930,6 @@ IDS_CAPTCHAREQUEST					"For at undgå spam beskeder kræver denne bruger at du l
 	IDS_EDITSPAMFILTER	      "Rediger spam filter..."
 	IDS_EDITSPAMFILTERCOMMENTS	"Rediger spam filter for bemærkninger"
 	IDS_WIZZARDOBFUSCATION	  "Aktiver denne indstilling hvis du vil aktivere protokol sløring\n\nHvis din ISP prøver at begrænse eller blokere eMule, vil sløring hjælpe til at omgå disse restriktioner."
-	IDS_BETANAG	              "Dette er en Beta version af eMule. Rapporter venligst problemer og tjek ofte for opdateringer i vores forum (https://forum.emule-project.net)."
 	IDS_CONFIRMNODESDOWNLOAD	"Ønsker du at downloade og bruge Kad kontakter (nodes.dat) fra denne adresse:\n%s ?"
 	IDS_NOTCONNECTEDANY	      "Du er ikke forbundet til en server eller Kad netværket!"
   IDS_AUTOMATIC             "Automatisk"
