@@ -80,6 +80,7 @@
 #include "UserMsgs.h"
 #include "BindStartupPolicy.h"
 #include "WorkerUiMessageSeams.h"
+#include "WebServerCertificate.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -93,6 +94,86 @@ LPCTSTR const MONITOREDSHAREDJOURNALSTATE = _T("shareddir.monitor-journal.dat");
 LPCTSTR const ONLINEHELPURL = _T("https://github.com/eMulebb/eMule-tooling/blob/main/docs/HELP.md");
 constexpr DWORD kMonitoredSharedFileWatchMask = FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE;
 constexpr DWORD kMonitoredSharedDirectoryWatchMask = FILE_NOTIFY_CHANGE_DIR_NAME;
+
+bool IsCommandLineSwitch(LPCTSTR pszValue, LPCTSTR pszLongName)
+{
+	if (pszValue == NULL || pszLongName == NULL)
+		return false;
+	if (pszValue[0] != _T('-') && pszValue[0] != _T('/'))
+		return false;
+	++pszValue;
+	if (pszValue[0] == _T('-'))
+		++pszValue;
+	return _tcsicmp(pszValue, pszLongName) == 0;
+}
+
+bool TryReadCommandLineValue(int &riIndex, CString &rstrValue)
+{
+	if (riIndex + 1 >= __argc)
+		return false;
+	rstrValue = __targv[++riIndex];
+	return !rstrValue.IsEmpty();
+}
+
+bool LooksLikeIpAddress(const CStringA &rstrValue)
+{
+	IN_ADDR ipv4Address = {};
+	if (::InetPtonA(AF_INET, rstrValue, &ipv4Address) == 1)
+		return true;
+	IN6_ADDR ipv6Address = {};
+	return ::InetPtonA(AF_INET6, rstrValue, &ipv6Address) == 1;
+}
+
+int TryHandleHeadlessWebServerCertificateCommandline()
+{
+	bool bGenerate = false;
+	CString strCertFile;
+	CString strKeyFile;
+	std::vector<CStringA> astrHosts;
+
+	for (int i = 1; i < __argc; ++i) {
+		if (IsCommandLineSwitch(__targv[i], _T("generate-webserver-cert"))) {
+			bGenerate = true;
+			continue;
+		}
+		if (IsCommandLineSwitch(__targv[i], _T("cert"))) {
+			if (!TryReadCommandLineValue(i, strCertFile))
+				return 2;
+			continue;
+		}
+		if (IsCommandLineSwitch(__targv[i], _T("key"))) {
+			if (!TryReadCommandLineValue(i, strKeyFile))
+				return 2;
+			continue;
+		}
+		if (IsCommandLineSwitch(__targv[i], _T("host"))) {
+			CString strHost;
+			if (!TryReadCommandLineValue(i, strHost))
+				return 2;
+			strHost.Trim();
+			if (!strHost.IsEmpty())
+				astrHosts.push_back(CStringA(strHost));
+		}
+	}
+
+	if (!bGenerate)
+		return -1;
+	if (strCertFile.IsEmpty() || strKeyFile.IsEmpty())
+		return 2;
+
+	WebServerCertificate::SGenerationRequest request = WebServerCertificate::BuildDefaultLocalRequest(strKeyFile, strCertFile);
+	if (!astrHosts.empty()) {
+		request.astrDnsNames.clear();
+		request.astrIpAddresses.clear();
+		for (const CStringA &strHost : astrHosts) {
+			if (LooksLikeIpAddress(strHost))
+				request.astrIpAddresses.push_back(strHost);
+			else
+				request.astrDnsNames.push_back(strHost);
+		}
+	}
+	return WebServerCertificate::CreateSelfSignedCertificate(request) == 0 ? 0 : 1;
+}
 
 BindStartupPolicy::CBindStartupPolicyText GetBindStartupPolicyText()
 {
@@ -1174,6 +1255,9 @@ BOOL CemuleApp::InitInstance()
 #endif
 	if (!InitializeStartupConfigBaseDirOverride())
 		return FALSE;
+	const int iHeadlessCertificateResult = TryHandleHeadlessWebServerCertificateCommandline();
+	if (iHeadlessCertificateResult >= 0)
+		::ExitProcess(static_cast<UINT>(iHeadlessCertificateResult));
 	free((void*)m_pszProfileName);
 	const CString &sConfDir(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
 	m_pszProfileName = _tcsdup(sConfDir + _T("preferences.ini"));

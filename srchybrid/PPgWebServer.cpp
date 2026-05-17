@@ -26,9 +26,7 @@
 #include "UPnPImplWrapper.h"
 #include "UPnPImpl.h"
 #include "Log.h"
-
-#include "mbedtls/x509_crt.h"
-#include "TLSthreading.h"
+#include "WebServerCertificate.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -65,149 +63,6 @@ void EnableDlgItem(CWnd *pDialog, UINT uId, bool bEnable)
 	if (pWnd != NULL)
 		pWnd->EnableWindow(bEnable);
 }
-}
-
-struct options
-{
-	LPCTSTR	issuer_key;		//filename of the issuer key file
-	LPCTSTR cert_file;		//where to store the constructed certificate file
-	LPCSTR	subject_name;	//subject name for certificate
-	LPCSTR	issuer_name;	//issuer name for certificate
-	LPCSTR	not_before;		//validity period not before
-	LPCSTR	not_after;		//validity period not after
-	uint16	serial;			//serial number string
-};
-
-static int write_buffer(LPCTSTR output_file, const unsigned char *buffer)
-{
-	const size_t len = strlen((const char*)buffer);
-	if (!LongPathSeams::WriteAllBytes(output_file, buffer, len))
-		return -1;
-	return 0;
-}
-
-static int write_private_key(const mbedtls_pk_context *key, LPCTSTR output_file)
-{
-	unsigned char output_buf[16000];
-
-	int ret = mbedtls_pk_write_key_pem(key, output_buf, sizeof(output_buf));
-	return ret ? ret : write_buffer(output_file, output_buf);
-}
-
-//create RSA 2048 key
-int KeyCreate(mbedtls_pk_context *key, LPCTSTR output_file)
-{
-	psa_key_attributes_t attr = PSA_KEY_ATTRIBUTES_INIT;
-	psa_set_key_algorithm(&attr, PSA_ALG_RSA_PKCS1V15_SIGN(PSA_ALG_ANY_HASH));
-	psa_set_key_type(&attr, PSA_KEY_TYPE_RSA_KEY_PAIR);
-	psa_set_key_bits(&attr, 2048);
-	psa_set_key_usage_flags(&attr, PSA_KEY_USAGE_SIGN_HASH | PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT);
-
-	LPCTSTR pmsg = NULL;
-	mbedtls_svc_key_id_t key_id;
-	int ret = (int)psa_generate_key(&attr, &key_id);
-	psa_reset_key_attributes(&attr);
-
-	if (ret)
-		pmsg = _T("psa_generate_key");
-	else {
-		ret = mbedtls_pk_wrap_psa(key, key_id);
-		if (ret)
-			pmsg = _T("mbedtls_pk_wrap_psa");
-		else {
-			ret = write_private_key(key, output_file);	//write the key to a file
-			if (ret)
-				pmsg = _T("write_private_key");
-		}
-	}
-	if (pmsg)
-		DebugLogError(_T("Error: %s returned -0x%04x - %s"), pmsg, -ret, (LPCTSTR)SSLerror(ret));
-	return ret;
-}
-
-int write_certificate(mbedtls_x509write_cert *crt, LPCTSTR output_file)
-{
-	unsigned char output_buf[4096];
-
-	int ret = mbedtls_x509write_crt_pem(crt, output_buf, sizeof output_buf);
-	return ret ? ret : write_buffer(output_file, output_buf);
-}
-
-int CertCreate(const struct options &opt)
-{
-	mbedtls_pk_context issuer_key;
-	mbedtls_x509write_cert crt;
-	LPCTSTR pmsg = NULL;
-
-	mbedtls_threading_set_alt(threading_mutex_init_alt, threading_mutex_destroy_alt, threading_mutex_lock_alt, threading_mutex_unlock_alt
-							 , cond_init_alt, cond_destroy_alt, cond_signal_alt, cond_broadcast_alt, cond_wait_alt);
-	psa_crypto_init();
-	mbedtls_pk_init(&issuer_key);
-	mbedtls_x509write_crt_init(&crt);
-
-	//generate the key
-	int ret = KeyCreate(&issuer_key, opt.issuer_key);
-	if (ret)
-		goto exit; //the bug already was logged
-
-	mbedtls_x509write_crt_set_subject_key(&crt, &issuer_key);
-	mbedtls_x509write_crt_set_issuer_key(&crt, &issuer_key);
-
-	//set parameters
-	ret = mbedtls_x509write_crt_set_subject_name(&crt, opt.subject_name);
-	if (ret) {
-		pmsg = _T("mbedtls_x509write_crt_set_subject_name");
-		goto exit;
-	}
-	ret = mbedtls_x509write_crt_set_issuer_name(&crt, opt.issuer_name);
-	if (ret) {
-		pmsg = _T("mbedtls_x509write_crt_set_issuer_name");
-		goto exit;
-	}
-
-	mbedtls_x509write_crt_set_version(&crt, MBEDTLS_X509_CRT_VERSION_3);
-	mbedtls_x509write_crt_set_md_alg(&crt, MBEDTLS_MD_SHA256);
-
-	ret = mbedtls_x509write_crt_set_serial_raw(&crt, (unsigned char*)&opt.serial, 1 + static_cast<size_t>(opt.serial > 0xff));
-	if (ret) {
-		pmsg = _T("mbedtls_x509write_crt_set_serial_raw");
-		goto exit;
-	}
-	ret = mbedtls_x509write_crt_set_validity(&crt, opt.not_before, opt.not_after);
-	if (ret) {
-		pmsg = _T("mbedtls_x509write_crt_set_validity");
-		goto exit;
-	}
-	ret = mbedtls_x509write_crt_set_basic_constraints(&crt, 0, 0);
-	if (ret) {
-		pmsg = _T("x509write_crt_set_basic_contraints");
-		goto exit;
-	}
-	ret = mbedtls_x509write_crt_set_subject_key_identifier(&crt);
-	if (ret) {
-		pmsg = _T("mbedtls_x509write_crt_set_subject_key_identifier");
-		goto exit;
-	}
-	ret = mbedtls_x509write_crt_set_authority_key_identifier(&crt);
-	if (ret) {
-		pmsg = _T("mbedtls_x509write_crt_set_authority_key_identifier");
-		goto exit;
-	}
-
-	//write the certificate to a file
-	ret = write_certificate(&crt, opt.cert_file);
-	if (ret)
-		pmsg = _T("write_certificate");
-
-exit:
-	mbedtls_x509write_crt_free(&crt);
-	mbedtls_pk_free(&issuer_key);
-	mbedtls_psa_crypto_free();
-	mbedtls_threading_free_alt();
-
-	if (pmsg)
-		DebugLogError(_T("Error: %s returned -0x%04x - %s"), pmsg, -ret, (LPCTSTR)SSLerror(ret));
-	return ret;
 }
 
 IMPLEMENT_DYNAMIC(CPPgWebServer, CPropertyPage)
@@ -634,25 +489,10 @@ void CPPgWebServer::OnGenerateCertificate()
 	const CString &confdir(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
 	const CString &fkey(confdir + _T("cert.key"));
 	const CString &fcrt(confdir + _T("cert.crt"));
-	CStringA not_after, not_before;
-	SYSTEMTIME st;
-	GetSystemTime(&st);
-	not_before.Format("%4hu%02hu01000000", st.wYear, st.wMonth);
-	not_after.Format("%4hu%02hu01000000", st.wYear + 1, st.wMonth);
-
-	struct options opt;
-	opt.issuer_key = (LPCTSTR)fkey;
-	opt.cert_file = (LPCTSTR)fcrt;
-	opt.subject_name = "CN=Web Interface,O=emule-project.net,OU=eMule";
-	opt.issuer_name = "CN=eMule,O=emule-project.net";
-	opt.not_before = (LPCSTR)not_before;
-	opt.not_after = (LPCSTR)not_after;
-	opt.serial = _byteswap_ushort(rand() & 0xfff); //avoid repeated serials (kind of)
-	if (!opt.serial)
-		++opt.serial; //must be positive
-	m_bNewCert = !CertCreate(opt);
+	const WebServerCertificate::SGenerationRequest request = WebServerCertificate::BuildDefaultLocalRequest(fkey, fcrt);
+	m_bNewCert = !WebServerCertificate::CreateSelfSignedCertificate(request);
 	if (m_bNewCert) {
-		AddLogLine(false, _T("New certificate created; serial %d"), opt.serial);
+		AddLogLine(false, _T("New certificate created; serial %d"), request.uSerial);
 		SetDlgItemText(IDC_KEYPATH, fkey);
 		SetDlgItemText(IDC_CERTPATH, fcrt);
 		GetDlgItem(IDC_WEB_GENERATE)->EnableWindow(FALSE);
