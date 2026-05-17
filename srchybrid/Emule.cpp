@@ -1021,11 +1021,6 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	strTmp.Format(_T("0x%lu"), m_dwProductVersionMS);
 	VERIFY(_stscanf(strTmp, _T("0x%x"), &m_uCurVersionShort) == 1);
 	ASSERT(m_uCurVersionShort < 0x99);
-
-	// create the version check number
-	strTmp.Format(_T("0x%lu%c"), m_dwProductVersionMS, _T('A') + CemuleApp::m_nVersionUpd);
-	VERIFY(_stscanf(strTmp, _T("0x%x"), &m_uCurVersionCheck) == 1);
-	ASSERT(m_uCurVersionCheck < 0x999);
 // MOD Note: end
 
 }
