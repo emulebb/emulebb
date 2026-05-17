@@ -21,6 +21,7 @@
 #include "emuledlg.h"
 #include "Preferences.h"
 #include "Scheduler.h"
+#include "SchedulerPolicySeams.h"
 #include "MenuCmds.h"
 #include "HelpIDs.h"
 
@@ -229,13 +230,22 @@ void CPPgScheduler::OnBnClickedApply()
 		if (IsDlgButtonChecked(IDC_CHECKNOENDTIME))
 			schedule->time2 = 0;
 		//time kind of (days)
-		schedule->day = m_timesel.GetCurSel();
+		schedule->day = SchedulerPolicySeams::NormalizeScheduleDay(m_timesel.GetCurSel());
 		schedule->enabled = IsDlgButtonChecked(IDC_S_ENABLE) != 0;
 
 		schedule->ResetActions();
-		for (int i = m_actions.GetItemCount(); --i >= 0;) {
-			schedule->actions[i] = (int)m_actions.GetItemData(i);
-			schedule->values[i] = m_actions.GetItemText(i, 1);
+		int iStoredAction = 0;
+		for (int i = 0; i < m_actions.GetItemCount() && SchedulerPolicySeams::CanAddScheduleAction(iStoredAction); ++i) {
+			const int iAction = static_cast<int>(m_actions.GetItemData(i));
+			if (!SchedulerPolicySeams::IsValidScheduleAction(iAction))
+				continue;
+			CString strValue(m_actions.GetItemText(i, 1));
+			CString strNormalized;
+			if (!strValue.IsEmpty() && !SchedulerPolicySeams::TryNormalizeScheduleActionValueText(iAction, strValue, strNormalized))
+				continue;
+			schedule->actions[iStoredAction] = iAction;
+			schedule->values[iStoredAction] = strValue.IsEmpty() ? CString() : strNormalized;
+			++iStoredAction;
 		}
 
 		m_list.SetItemText(index, 0, schedule->title);
@@ -406,8 +416,10 @@ BOOL CPPgScheduler::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	int iSel = m_actions.GetSelectionMark();
 	// add
-	if (wParam >= MP_SCHACTIONS && wParam < MP_SCHACTIONS + 20 && m_actions.GetItemCount() < 16) {
+	if (wParam >= MP_SCHACTIONS && wParam < MP_SCHACTIONS + 20 && SchedulerPolicySeams::CanAddScheduleAction(m_actions.GetItemCount())) {
 		int action = (int)(wParam - MP_SCHACTIONS);
+		if (!SchedulerPolicySeams::IsValidScheduleAction(action))
+			return TRUE;
 		int i = m_actions.GetItemCount();
 		m_actions.InsertItem(i, GetActionLabel(action));
 		m_actions.SetItemData(i, action);
@@ -417,7 +429,9 @@ BOOL CPPgScheduler::OnCommand(WPARAM wParam, LPARAM lParam)
 	} else if (wParam >= MP_SCHACTIONS + 20 && wParam <= MP_SCHACTIONS + 80 && iSel >= 0) {
 		CString newval;
 		newval.Format(_T("%i"), (int)(wParam - MP_SCHACTIONS - 22));
-		m_actions.SetItemText(iSel, 1, newval);
+		CString strNormalized;
+		if (SchedulerPolicySeams::TryNormalizeScheduleActionValueText(static_cast<int>(m_actions.GetItemData(iSel)), newval, strNormalized))
+			m_actions.SetItemText(iSel, 1, strNormalized);
 	} else if (wParam == ID_HELP) {
 		OnHelp();
 		return TRUE;
@@ -434,8 +448,11 @@ BOOL CPPgScheduler::OnCommand(WPARAM wParam, LPARAM lParam)
 				prompt.Format(_T("%s (%s)"), (LPCTSTR)GetResString(IDS_SCHED_ENTERVAL), (LPCTSTR)GetActionLabel(action));
 			inputbox.SetLabels(GetResString(IDS_SCHED_ACTCONFIG), prompt, m_actions.GetItemText(iSel, 1));
 			inputbox.DoModal();
-			if (!inputbox.WasCancelled())
-				m_actions.SetItemText(iSel, 1, inputbox.GetInput());
+			if (!inputbox.WasCancelled()) {
+				CString strNormalized;
+				if (SchedulerPolicySeams::TryNormalizeScheduleActionValueText(action, inputbox.GetInput(), strNormalized))
+					m_actions.SetItemText(iSel, 1, strNormalized);
+			}
 		} else if (wParam == MP_CAT_REMOVE) { // remove
 			int i = m_actions.GetSelectionMark();
 			if (i >= 0)

@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "CommentDialog.h"
+#include "CommentDialogSeams.h"
 #include "PartFile.h"
 #include "Opcodes.h"
 #include "UpDownClient.h"
@@ -139,7 +140,7 @@ BOOL CCommentDialog::OnSetActive()
 		static_cast<CEdit*>(GetDlgItem(IDC_CMT_TEXT))->SetLimitText(MAXFILECOMMENTLEN);
 		m_ratebox.SetCurSel(m_iRating);
 		m_bSelf = false;
-		EnableDialog(bContainsSharedKnownFile);
+		EnableDialog(CommentDialogSeams::ShouldEnableCommentEditing(bContainsSharedKnownFile));
 
 		m_bDataChanged = false;
 
@@ -172,9 +173,9 @@ BOOL CCommentDialog::OnApply()
 			if ((*m_paFiles)[i]->IsKindOf(RUNTIME_CLASS(CKnownFile))) {
 				CKnownFile *file = static_cast<CKnownFile*>((*m_paFiles)[i]);
 				if (theApp.sharedfiles->GetFileByID(file->GetFileHash()) != NULL) {
-					if (!strComment.IsEmpty() || !m_bMergedComment)
+					if (CommentDialogSeams::ShouldWriteCommentText(m_bMergedComment, strComment.IsEmpty()))
 						file->SetFileComment(strComment);
-					if (m_iRating >= 0)
+					if (CommentDialogSeams::IsValidRatingSelection(m_iRating))
 						file->SetFileRating(m_iRating);
 				}
 			}
@@ -285,7 +286,7 @@ void CCommentDialog::RefreshData(bool deleteOld)
 	CWnd *pWndFocus = GetFocus();
 	if (Kademlia::CKademlia::IsConnected()) {
 		SetDlgItemText(IDC_SEARCHKAD, GetResString(kadsearchable ? IDS_SEARCHKAD : IDS_KADSEARCHACTIVE));
-		GetDlgItem(IDC_SEARCHKAD)->EnableWindow(kadsearchable);
+		GetDlgItem(IDC_SEARCHKAD)->EnableWindow(CommentDialogSeams::ShouldEnableKadCommentSearchButton(m_bEnabled, true, kadsearchable));
 	} else {
 		SetDlgItemText(IDC_SEARCHKAD, GetResString(IDS_SEARCHKAD));
 		GetDlgItem(IDC_SEARCHKAD)->EnableWindow(FALSE);
@@ -298,17 +299,23 @@ void CCommentDialog::OnBnClickedSearchKad()
 {
 	if (m_bEnabled && Kademlia::CKademlia::IsConnected()) {
 		bool bSkipped = false;
-		int iMaxSearches = min(m_paFiles->GetSize(), KADEMLIATOTALFILE);
-		for (int i = 0; i < iMaxSearches; ++i) {
+		const int iMaxSearches = CommentDialogSeams::GetKadCommentSearchLimit(m_paFiles->GetSize(), KADEMLIATOTALFILE);
+		int iQueuedSearches = 0;
+		for (int i = 0; i < m_paFiles->GetSize(); ++i) {
 			CAbstractFile *file = static_cast<CAbstractFile*>((*m_paFiles)[i]);
-			if (file && file->IsKindOf(RUNTIME_CLASS(CKnownFile)) && theApp.sharedfiles->GetFileByID(file->GetFileHash()) != NULL) {
+			const bool bIsKnownFile = file != NULL && file->IsKindOf(RUNTIME_CLASS(CKnownFile));
+			const bool bIsSharedKnownFile = bIsKnownFile && theApp.sharedfiles->GetFileByID(file->GetFileHash()) != NULL;
+			const bool bAlreadySearching = file != NULL && Kademlia::CSearchManager::AlreadySearchingFor(Kademlia::CUInt128(file->GetFileHash()));
+			if (CommentDialogSeams::CanQueueEditableKadCommentSearch(m_bEnabled, true, bIsKnownFile, bIsSharedKnownFile, bAlreadySearching, iQueuedSearches, iMaxSearches)) {
 				if (!Kademlia::CSearchManager::PrepareLookup(Kademlia::CSearch::NOTES, true, Kademlia::CUInt128(file->GetFileHash())))
 					bSkipped = true;
 				else {
 					theApp.searchlist->SetNotesSearchStatus(file->GetFileHash(), true);
 					file->SetKadCommentSearchRunning(true);
+					++iQueuedSearches;
 				}
-			}
+			} else if (bAlreadySearching)
+				bSkipped = true;
 		}
 		if (bSkipped)
 			LocMessageBox(IDS_KADSEARCHALREADY, MB_OK | MB_ICONINFORMATION, 0);

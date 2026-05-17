@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "CommentDialogLst.h"
+#include "CommentDialogSeams.h"
 #include "UpDownClient.h"
 #include "PartFile.h"
 #include "UserMsgs.h"
@@ -154,7 +155,7 @@ void CCommentDialogLst::RefreshData(bool deleteOld)
 	CWnd *pWndFocus = GetFocus();
 	if (Kademlia::CKademlia::IsConnected()) {
 		SetDlgItemText(IDC_SEARCHKAD, GetResString(kadsearchable ? IDS_SEARCHKAD : IDS_KADSEARCHACTIVE));
-		GetDlgItem(IDC_SEARCHKAD)->EnableWindow(kadsearchable);
+		GetDlgItem(IDC_SEARCHKAD)->EnableWindow(CommentDialogSeams::ShouldEnableKadCommentSearchButton(true, true, kadsearchable));
 	} else {
 		SetDlgItemText(IDC_SEARCHKAD, GetResString(IDS_SEARCHKAD));
 		GetDlgItem(IDC_SEARCHKAD)->EnableWindow(FALSE);
@@ -167,16 +168,21 @@ void CCommentDialogLst::OnBnClickedSearchKad()
 {
 	if (Kademlia::CKademlia::IsConnected()) {
 		bool bSkipped = false;
-		int iMaxSearches = min(m_paFiles->GetSize(), KADEMLIATOTALFILE);
-		for (int i = 0; i < iMaxSearches; ++i) {
+		const int iMaxSearches = CommentDialogSeams::GetKadCommentSearchLimit(m_paFiles->GetSize(), KADEMLIATOTALFILE);
+		int iQueuedSearches = 0;
+		for (int i = 0; i < m_paFiles->GetSize(); ++i) {
 			CAbstractFile *file = static_cast<CAbstractFile*>((*m_paFiles)[i]);
-			if (file)
+			const bool bAlreadySearching = file != NULL && Kademlia::CSearchManager::AlreadySearchingFor(Kademlia::CUInt128(file->GetFileHash()));
+			if (CommentDialogSeams::CanQueueListKadCommentSearch(true, file != NULL, bAlreadySearching, iQueuedSearches, iMaxSearches)) {
 				if (!Kademlia::CSearchManager::PrepareLookup(Kademlia::CSearch::NOTES, true, Kademlia::CUInt128(file->GetFileHash())))
 					bSkipped = true;
 				else {
 					theApp.searchlist->SetNotesSearchStatus(file->GetFileHash(), true);
 					file->SetKadCommentSearchRunning(true);
+					++iQueuedSearches;
 				}
+			} else if (bAlreadySearching)
+				bSkipped = true;
 		}
 		if (bSkipped)
 			LocMessageBox(IDS_KADSEARCHALREADY, MB_OK | MB_ICONINFORMATION, 0);
@@ -190,17 +196,7 @@ void CCommentDialogLst::OnBnClickedFilter()
 	inputbox.SetLabels(GetResString(IDS_EDITSPAMFILTERCOMMENTS), GetResString(IDS_FILTERCOMMENTSLABEL), thePrefs.GetCommentFilter());
 	inputbox.DoModal();
 	if (!inputbox.WasCancelled()) {
-		CString strCommentFilters(inputbox.GetInput());
-		strCommentFilters.MakeLower();
-		CString strNewCommentFilters;
-		for (int iPos = 0; iPos >= 0;) {
-			CString strFilter(strCommentFilters.Tokenize(_T("|"), iPos));
-			if (!strFilter.Trim().IsEmpty()) {
-				if (!strNewCommentFilters.IsEmpty())
-					strNewCommentFilters += _T('|');
-				strNewCommentFilters += strFilter;
-			}
-		}
+		const CString strNewCommentFilters(CommentDialogSeams::NormalizeCommentFilterText(inputbox.GetInput()));
 
 		if (thePrefs.GetCommentFilter() != strNewCommentFilters) {
 			thePrefs.SetCommentFilter(strNewCommentFilters);

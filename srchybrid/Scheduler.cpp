@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "Scheduler.h"
+#include "SchedulerPolicySeams.h"
 #include "OtherFunctions.h"
 #include "ini2.h"
 #include "Preferences.h"
@@ -59,12 +60,28 @@ int CScheduler::LoadFromFile()
 			break;
 		Schedule_Struct *news = new Schedule_Struct();
 		news->title = temp;
-		news->day = ini.GetInt(_T("Day"), 0);
+		news->day = SchedulerPolicySeams::NormalizeScheduleDay(ini.GetInt(_T("Day"), 0));
 		news->enabled = ini.GetBool(_T("Enabled"));
 		news->time = ini.GetInt(_T("StartTime"));
 		news->time2 = ini.GetInt(_T("EndTime"));
 		ini.SerGet(true, news->actions, _countof(news->actions), _T("Actions"));
 		ini.SerGet(true, news->values, _countof(news->values), _T("Values"));
+		for (int i = 0; i < SchedulerPolicySeams::kMaxScheduleActions; ++i) {
+			if (news->actions[i] == ACTION_NONE)
+				break;
+			if (!SchedulerPolicySeams::IsValidScheduleAction(news->actions[i])) {
+				news->actions[i] = ACTION_NONE;
+				news->values[i].Empty();
+				break;
+			}
+			if (!news->values[i].IsEmpty()) {
+				CString strNormalized;
+				if (SchedulerPolicySeams::TryNormalizeScheduleActionValueText(news->actions[i], news->values[i], strNormalized))
+					news->values[i] = strNormalized;
+				else
+					news->values[i].Empty();
+			}
+		}
 		AddSchedule(news);
 	}
 	return count;
@@ -112,16 +129,9 @@ INT_PTR CScheduler::AddSchedule(Schedule_Struct *schedule)
 
 int CScheduler::Check(bool forcecheck)
 {
-	if (!thePrefs.IsSchedulerEnabled()
-		|| theApp.scheduler->GetCount() == 0
-		|| theApp.IsClosing())
-	{
-		return -1;
-	}
 	struct tm tmTemp;
 	CTime tNow = CTime(safe_mktime(CTime::GetCurrentTime().GetLocalTm(&tmTemp)));
-
-	if (!forcecheck && tNow.GetMinute() == m_iLastCheckedMinute)
+	if (!SchedulerPolicySeams::ShouldCheckScheduler(thePrefs.IsSchedulerEnabled(), theApp.scheduler->GetCount(), theApp.IsClosing(), forcecheck, tNow.GetMinute(), m_iLastCheckedMinute))
 		return -1;
 
 	m_iLastCheckedMinute = tNow.GetMinute();
@@ -129,51 +139,15 @@ int CScheduler::Check(bool forcecheck)
 
 	for (INT_PTR i = 0; i < theApp.scheduler->GetCount(); ++i) {
 		const Schedule_Struct *schedule = theApp.scheduler->GetSchedule(i);
-		if (!schedule->actions[0] || !schedule->enabled)
+		if (schedule == NULL)
 			continue;
-
-		// check the day of the week
-		if (schedule->day != DAY_DAILY) {
-			UINT dow = (UINT)tNow.GetDayOfWeek();
-			switch (schedule->day) {
-			case DAY_MO:
-			case DAY_DI:
-			case DAY_MI:
-			case DAY_DO:
-			case DAY_FR:
-			case DAY_SA:
-			case DAY_SO:
-				if ((schedule->day % 7) + 1 != dow)
-					continue;
-				break;
-			case DAY_MO_FR:
-				if (dow == 7 || dow == 1)
-					continue;
-				break;
-			case DAY_MO_SA:
-				if (dow == 1)
-					continue;
-				break;
-			case DAY_SA_SO:
-				if (dow >= 2 && dow <= 6)
-					continue;
-			}
-		}
-		//check time
 		CTime t1 = CTime(schedule->time);
 		CTime t2 = CTime(schedule->time2);
-		int it1 = t1.GetHour() * 60 + t1.GetMinute();
-		int it2 = t2.GetHour() * 60 + t2.GetMinute();
-		int itn = tNow.GetHour() * 60 + tNow.GetMinute();
-		if (it1 <= it2) { // normal timespan
-			if (itn < it1 || itn >= it2)
-				continue;
-		} else {		   // reversed timespan (23:30 to 5:10)  now 10
-			if (itn < it1 && itn >= it2)
-				continue;
-		}
-		// OK, lets do the actions of this schedule
-		ActivateSchedule(i, schedule->time2 == 0);
+		const int iStartMinute = SchedulerPolicySeams::MinutesSinceMidnight(t1.GetHour(), t1.GetMinute());
+		const int iEndMinute = SchedulerPolicySeams::MinutesSinceMidnight(t2.GetHour(), t2.GetMinute());
+		const int iNowMinute = SchedulerPolicySeams::MinutesSinceMidnight(tNow.GetHour(), tNow.GetMinute());
+		if (SchedulerPolicySeams::ShouldActivateSchedule(schedule->enabled, schedule->actions[0] != ACTION_NONE, schedule->day, iStartMinute, iEndMinute, static_cast<UINT>(tNow.GetDayOfWeek()), iNowMinute))
+			ActivateSchedule(i, schedule->time2 == 0);
 	}
 
 	return -1;
@@ -200,42 +174,47 @@ void CScheduler::RestoreOriginals()
 void CScheduler::ActivateSchedule(INT_PTR index, bool makedefault)
 {
 	Schedule_Struct *schedule = GetSchedule(index);
+	if (schedule == NULL)
+		return;
 
 	for (int ai = 0; ai < 16 && schedule->actions[ai]; ++ai) {
 		if (schedule->values[ai].IsEmpty() /* maybe ignore in some future cases...*/)
 			continue;
+		int iValue = 0;
+		if (!SchedulerPolicySeams::TryParseScheduleActionValue(schedule->actions[ai], schedule->values[ai], iValue))
+			continue;
 
 		switch (schedule->actions[ai]) {
 		case ACTION_SETUPL:
-			thePrefs.SetMaxUpload(_tstoi(schedule->values[ai]));
+			thePrefs.SetMaxUpload(iValue);
 			if (makedefault)
-				original_upload = (uint16)_tstoi(schedule->values[ai]);
+				original_upload = static_cast<uint32>(iValue);
 			break;
 		case ACTION_SETDOWNL:
-			thePrefs.SetMaxDownload(_tstoi(schedule->values[ai]));
+			thePrefs.SetMaxDownload(iValue);
 			if (makedefault)
-				original_download = (uint16)_tstoi(schedule->values[ai]);
+				original_download = static_cast<uint32>(iValue);
 			break;
 		case ACTION_SOURCESL:
-			thePrefs.SetMaxSourcesPerFile(_tstoi(schedule->values[ai]));
+			thePrefs.SetMaxSourcesPerFile(iValue);
 			if (makedefault)
-				original_sources = _tstoi(schedule->values[ai]);
+				original_sources = static_cast<UINT>(iValue);
 			break;
 		case ACTION_CON5SEC:
-			thePrefs.SetMaxConsPerFive(_tstoi(schedule->values[ai]));
+			thePrefs.SetMaxConsPerFive(iValue);
 			if (makedefault)
-				original_cons5s = _tstoi(schedule->values[ai]);
+				original_cons5s = static_cast<UINT>(iValue);
 			break;
 		case ACTION_CONS:
-			thePrefs.SetMaxConnections(_tstoi(schedule->values[ai]));
+			thePrefs.SetMaxConnections(iValue);
 			if (makedefault)
-				original_connections = _tstoi(schedule->values[ai]);
+				original_connections = static_cast<UINT>(iValue);
 			break;
 		case ACTION_CATSTOP:
-			theApp.downloadqueue->SetCatStatus(_tstoi(schedule->values[ai]), MP_STOP);
+			theApp.downloadqueue->SetCatStatus(iValue, MP_STOP);
 			break;
 		case ACTION_CATRESUME:
-			theApp.downloadqueue->SetCatStatus(_tstoi(schedule->values[ai]), MP_RESUME);
+			theApp.downloadqueue->SetCatStatus(iValue, MP_RESUME);
 		}
 	}
 }

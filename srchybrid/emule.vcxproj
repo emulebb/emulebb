@@ -465,6 +465,7 @@
     <ClInclude Include="ComboBoxEx2.h" />
     <ClInclude Include="CommentDialog.h" />
     <ClInclude Include="CommentDialogLst.h" />
+    <ClInclude Include="CommentDialogSeams.h" />
     <ClInclude Include="CommentListCtrl.h" />
     <ClInclude Include="CorruptionBlackBox.h" />
     <ClInclude Include="CreditsDlg.h" />
@@ -649,6 +650,7 @@
     <ClInclude Include="SafeFile.h" />
     <ClInclude Include="Scanner.h" />
     <ClInclude Include="Scheduler.h" />
+    <ClInclude Include="SchedulerPolicySeams.h" />
     <ClInclude Include="SearchDlg.h" />
     <ClInclude Include="SearchExpr.h" />
     <ClInclude Include="SearchFile.h" />
