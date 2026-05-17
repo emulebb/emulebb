@@ -31,6 +31,7 @@ class CMiniMuleDlg : public CDialog
 
 public:
 	explicit CMiniMuleDlg(CemuleDlg *pOwner);
+	virtual ~CMiniMuleDlg();
 
 	/**
 	 * @brief Refreshes visible transfer and queue statistics.
@@ -51,7 +52,10 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnClose();
+	afx_msg HBRUSH OnCtlColor(CDC *pDC, CWnd *pWnd, UINT nCtlColor);
 	afx_msg void OnDestroy();
+	afx_msg void OnPaint();
+	afx_msg void OnSysColorChange();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnRestoreMainWindow();
 	afx_msg void OnOpenIncomingFolder();
@@ -62,6 +66,19 @@ private:
 	 * @brief Positions the popup near the taskbar without using cross-thread shell appbar calls.
 	 */
 	void AutoSizeAndPosition();
+	void ApplyVisualStyle();
+	void CreateDerivedFonts();
+	void RefreshColorResources();
+	bool IsHeaderTextControl(UINT uCtrlID) const;
+	bool IsLabelControl(UINT uCtrlID) const;
+	bool IsMetricValueControl(UINT uCtrlID) const;
+	bool IsValueControl(UINT uCtrlID) const;
 
 	CemuleDlg *m_pOwner;
+	CFont m_fontTitle;
+	CFont m_fontMetricValue;
+	CFont m_fontValue;
+	CBrush m_brBackground;
+	CBrush m_brHeader;
+	HICON m_hAppIcon;
 };

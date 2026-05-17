@@ -3233,6 +3233,8 @@
 #define IDC_MINIMULE_RESTORE            3126
 #define IDC_MINIMULE_OPENINC            3127
 #define IDC_MINIMULE_OPTIONS            3128
+#define IDC_MINIMULE_ICON               3300
+#define IDC_MINIMULE_TITLE              3301
 #define IDA_ENTER                       32771
 
 // Next default values for new objects
@@ -3241,7 +3243,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        3057
 #define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         3129
+#define _APS_NEXT_CONTROL_VALUE         3302
 #define _APS_NEXT_SYMED_VALUE           3273
 #endif
 #endif

@@ -35,11 +35,23 @@ static char THIS_FILE[] = __FILE__;
 namespace
 {
 	const UINT_PTR IDT_MINIMULE_REFRESH = 1;
+
+	void SetControlFont(CWnd *pParent, UINT uCtrlID, CFont *pFont)
+	{
+		if (pParent != NULL && pFont != NULL && pFont->GetSafeHandle() != NULL) {
+			CWnd *pWnd = pParent->GetDlgItem(uCtrlID);
+			if (pWnd != NULL)
+				pWnd->SetFont(pFont);
+		}
+	}
 }
 
 BEGIN_MESSAGE_MAP(CMiniMuleDlg, CDialog)
 	ON_WM_CLOSE()
+	ON_WM_CTLCOLOR()
 	ON_WM_DESTROY()
+	ON_WM_PAINT()
+	ON_WM_SYSCOLORCHANGE()
 	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_MINIMULE_RESTORE, OnRestoreMainWindow)
 	ON_BN_CLICKED(IDC_MINIMULE_OPENINC, OnOpenIncomingFolder)
@@ -49,12 +61,22 @@ END_MESSAGE_MAP()
 CMiniMuleDlg::CMiniMuleDlg(CemuleDlg *pOwner)
 	: CDialog(CMiniMuleDlg::IDD, pOwner)
 	, m_pOwner(pOwner)
+	, m_hAppIcon()
 {
+}
+
+CMiniMuleDlg::~CMiniMuleDlg()
+{
+	if (m_hAppIcon != NULL) {
+		VERIFY(::DestroyIcon(m_hAppIcon));
+		m_hAppIcon = NULL;
+	}
 }
 
 BOOL CMiniMuleDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
+	ApplyVisualStyle();
 	Localize();
 	UpdateContent();
 	AutoSizeAndPosition();
@@ -92,12 +114,64 @@ void CMiniMuleDlg::OnClose()
 	DestroyWindow();
 }
 
+HBRUSH CMiniMuleDlg::OnCtlColor(CDC *pDC, CWnd *pWnd, UINT nCtlColor)
+{
+	if (pDC != NULL && pWnd != NULL && nCtlColor == CTLCOLOR_STATIC) {
+		const UINT uCtrlID = static_cast<UINT>(pWnd->GetDlgCtrlID());
+		pDC->SetBkMode(TRANSPARENT);
+		if (IsHeaderTextControl(uCtrlID)) {
+			pDC->SetTextColor(::GetSysColor(COLOR_WINDOWTEXT));
+			return static_cast<HBRUSH>(m_brHeader.GetSafeHandle());
+		}
+		if (IsLabelControl(uCtrlID)) {
+			pDC->SetTextColor(::GetSysColor(COLOR_GRAYTEXT));
+			return static_cast<HBRUSH>(m_brBackground.GetSafeHandle());
+		}
+		if (IsValueControl(uCtrlID)) {
+			pDC->SetTextColor(::GetSysColor(COLOR_WINDOWTEXT));
+			return static_cast<HBRUSH>(m_brBackground.GetSafeHandle());
+		}
+	}
+	return CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
 void CMiniMuleDlg::OnDestroy()
 {
 	KillTimer(IDT_MINIMULE_REFRESH);
 	if (m_pOwner != NULL)
 		m_pOwner->OnMiniMuleDestroyed(this);
 	CDialog::OnDestroy();
+}
+
+void CMiniMuleDlg::OnPaint()
+{
+	CPaintDC dc(this);
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	dc.FillSolidRect(rcClient, ::GetSysColor(COLOR_WINDOW));
+
+	CRect rcHeader(0, 0, 286, 36);
+	MapDialogRect(&rcHeader);
+	rcHeader.left = rcClient.left;
+	rcHeader.top = rcClient.top;
+	rcHeader.right = rcClient.right;
+	dc.FillSolidRect(rcHeader, ::GetSysColor(COLOR_3DFACE));
+	dc.FillSolidRect(rcHeader.left, rcHeader.bottom - 1, rcHeader.right, rcHeader.bottom, ::GetSysColor(COLOR_3DSHADOW));
+
+	CRect rcMetricDivider(12, 76, 274, 77);
+	MapDialogRect(&rcMetricDivider);
+	dc.FillSolidRect(rcMetricDivider, ::GetSysColor(COLOR_3DLIGHT));
+
+	CRect rcVerticalDivider(143, 42, 144, 68);
+	MapDialogRect(&rcVerticalDivider);
+	dc.FillSolidRect(rcVerticalDivider, ::GetSysColor(COLOR_3DLIGHT));
+}
+
+void CMiniMuleDlg::OnSysColorChange()
+{
+	CDialog::OnSysColorChange();
+	RefreshColorResources();
+	Invalidate();
 }
 
 void CMiniMuleDlg::OnTimer(UINT_PTR nIDEvent)
@@ -136,6 +210,7 @@ void CMiniMuleDlg::OnOptions()
 void CMiniMuleDlg::Localize()
 {
 	SetWindowText(_T("MiniMule"));
+	SetDlgItemText(IDC_MINIMULE_TITLE, _T("MiniMule"));
 	SetDlgItemText(IDC_MINIMULE_CONNECTED_LABEL, GetResString(IDS_CONNECTED));
 	SetDlgItemText(IDC_MINIMULE_UPLOAD_LABEL, GetResString(IDS_PW_CON_UPLBL));
 	SetDlgItemText(IDC_MINIMULE_DOWNLOAD_LABEL, GetResString(IDS_PW_CON_DOWNLBL));
@@ -216,4 +291,118 @@ void CMiniMuleDlg::AutoSizeAndPosition()
 	}
 
 	SetWindowPos(&wndTopMost, ptWnd.x, ptWnd.y, rcWnd.Width(), rcWnd.Height(), SWP_NOACTIVATE | SWP_SHOWWINDOW);
+}
+
+void CMiniMuleDlg::ApplyVisualStyle()
+{
+	RefreshColorResources();
+	CreateDerivedFonts();
+
+	SetControlFont(this, IDC_MINIMULE_TITLE, &m_fontTitle);
+	SetControlFont(this, IDC_MINIMULE_UPLOAD_VALUE, &m_fontMetricValue);
+	SetControlFont(this, IDC_MINIMULE_DOWNLOAD_VALUE, &m_fontMetricValue);
+
+	const UINT aValueControls[] = {
+		IDC_MINIMULE_CONNECTED_VALUE,
+		IDC_MINIMULE_COMPLETED_VALUE,
+		IDC_MINIMULE_FREESPACE_VALUE,
+		IDC_MINIMULE_ACTIVE_DOWNLOADS_VALUE,
+		IDC_MINIMULE_ACTIVE_UPLOADS_VALUE,
+		IDC_MINIMULE_WAITING_UPLOADS_VALUE,
+		IDC_MINIMULE_TOTAL_DOWNLOADS_VALUE
+	};
+	for (UINT uCtrlID : aValueControls)
+		SetControlFont(this, uCtrlID, &m_fontValue);
+
+	m_hAppIcon = theApp.LoadIcon(_T("AAAEMULEAPP"), 20, 20);
+	if (m_hAppIcon != NULL) {
+		SetIcon(m_hAppIcon, FALSE);
+		if (CWnd *pIconWnd = GetDlgItem(IDC_MINIMULE_ICON))
+			static_cast<CStatic*>(pIconWnd)->SetIcon(m_hAppIcon);
+	}
+}
+
+void CMiniMuleDlg::CreateDerivedFonts()
+{
+	CFont *pBaseFont = GetFont();
+	if (pBaseFont == NULL)
+		return;
+
+	LOGFONT lf = {};
+	if (pBaseFont->GetLogFont(&lf) == 0)
+		return;
+
+	LOGFONT lfTitle = lf;
+	lfTitle.lfWeight = FW_BOLD;
+	if (lfTitle.lfHeight < 0)
+		lfTitle.lfHeight = lfTitle.lfHeight * 13 / 10;
+	else if (lfTitle.lfHeight > 0)
+		lfTitle.lfHeight = lfTitle.lfHeight * 13 / 10;
+	m_fontTitle.DeleteObject();
+	VERIFY(m_fontTitle.CreateFontIndirect(&lfTitle));
+
+	LOGFONT lfMetric = lf;
+	lfMetric.lfWeight = FW_BOLD;
+	if (lfMetric.lfHeight < 0)
+		lfMetric.lfHeight = lfMetric.lfHeight * 12 / 10;
+	else if (lfMetric.lfHeight > 0)
+		lfMetric.lfHeight = lfMetric.lfHeight * 12 / 10;
+	m_fontMetricValue.DeleteObject();
+	VERIFY(m_fontMetricValue.CreateFontIndirect(&lfMetric));
+
+	LOGFONT lfValue = lf;
+	lfValue.lfWeight = FW_BOLD;
+	m_fontValue.DeleteObject();
+	VERIFY(m_fontValue.CreateFontIndirect(&lfValue));
+}
+
+void CMiniMuleDlg::RefreshColorResources()
+{
+	m_brBackground.DeleteObject();
+	VERIFY(m_brBackground.CreateSolidBrush(::GetSysColor(COLOR_WINDOW)));
+	m_brHeader.DeleteObject();
+	VERIFY(m_brHeader.CreateSolidBrush(::GetSysColor(COLOR_3DFACE)));
+}
+
+bool CMiniMuleDlg::IsHeaderTextControl(UINT uCtrlID) const
+{
+	return uCtrlID == IDC_MINIMULE_TITLE
+		|| uCtrlID == IDC_MINIMULE_ICON
+		|| uCtrlID == IDC_MINIMULE_CONNECTED_LABEL
+		|| uCtrlID == IDC_MINIMULE_CONNECTED_VALUE;
+}
+
+bool CMiniMuleDlg::IsLabelControl(UINT uCtrlID) const
+{
+	switch (uCtrlID) {
+	case IDC_MINIMULE_UPLOAD_LABEL:
+	case IDC_MINIMULE_DOWNLOAD_LABEL:
+	case IDC_MINIMULE_COMPLETED_LABEL:
+	case IDC_MINIMULE_FREESPACE_LABEL:
+	case IDC_MINIMULE_ACTIVE_DOWNLOADS_LABEL:
+	case IDC_MINIMULE_ACTIVE_UPLOADS_LABEL:
+	case IDC_MINIMULE_WAITING_UPLOADS_LABEL:
+	case IDC_MINIMULE_TOTAL_DOWNLOADS_LABEL:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool CMiniMuleDlg::IsMetricValueControl(UINT uCtrlID) const
+{
+	return uCtrlID == IDC_MINIMULE_UPLOAD_VALUE
+		|| uCtrlID == IDC_MINIMULE_DOWNLOAD_VALUE;
+}
+
+bool CMiniMuleDlg::IsValueControl(UINT uCtrlID) const
+{
+	return IsMetricValueControl(uCtrlID)
+		|| uCtrlID == IDC_MINIMULE_CONNECTED_VALUE
+		|| uCtrlID == IDC_MINIMULE_COMPLETED_VALUE
+		|| uCtrlID == IDC_MINIMULE_FREESPACE_VALUE
+		|| uCtrlID == IDC_MINIMULE_ACTIVE_DOWNLOADS_VALUE
+		|| uCtrlID == IDC_MINIMULE_ACTIVE_UPLOADS_VALUE
+		|| uCtrlID == IDC_MINIMULE_WAITING_UPLOADS_VALUE
+		|| uCtrlID == IDC_MINIMULE_TOTAL_DOWNLOADS_VALUE;
 }
