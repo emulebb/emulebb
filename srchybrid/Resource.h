@@ -1298,7 +1298,6 @@
 #define IDS_PACKSENT                    1365
 #define IDS_RESPONSES                   1366
 #define IDS_EXTRACT_META_DATA           1367
-#define IDS_META_DATA_MEDIADET          1368
 #define IDS_META_DATA_ID3LIB            1369
 #define IDS_ASREGEXPR                   1371
 #define IDS_STATIC_REGEXP               1372

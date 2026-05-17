@@ -1677,7 +1677,6 @@ BEGIN
     IDS_PACKSENT            "送信パケット"
     IDS_RESPONSES           "応答"
     IDS_EXTRACT_META_DATA   "メタデータ抽出"
-    IDS_META_DATA_MEDIADET  "DirectShow (他の全てのオーディオ/ビデオファイル用)"
     IDS_META_DATA_ID3LIB    "ID3 ライブラリ (MPEGオーディオファイル用)"
 END
 

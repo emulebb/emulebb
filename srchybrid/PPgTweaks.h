@@ -72,7 +72,6 @@ protected:
 	HTREEITEM m_htiIconFlashOnNewMessage;
 	HTREEITEM m_htiExtractMetaData;
 	HTREEITEM m_htiExtractMetaDataID3Lib;
-	//HTREEITEM m_htiExtractMetaDataMediaDet;
 	HTREEITEM m_htiExtractMetaDataNever;
 	HTREEITEM m_htiMediaInfoDllPath;
 	HTREEITEM m_htiFilterLANIPs;

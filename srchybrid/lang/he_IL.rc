@@ -1663,7 +1663,6 @@ BEGIN
     IDS_PACKSENT            "מנות שנשלחו"
     IDS_RESPONSES           "תגובות"
     IDS_EXTRACT_META_DATA   "הרחב מידע מטה"
-    IDS_META_DATA_MEDIADET  "DirectShow (לכל שאר סוגי קבצי האודיו והוידאו)"
     IDS_META_DATA_ID3LIB    "ספריית ID3 (רק לקבצי אודיו מסוג MPEG)"
 END
 

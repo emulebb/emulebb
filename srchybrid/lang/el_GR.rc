@@ -1631,7 +1631,6 @@ BEGIN
     IDS_PACKSENT            "Σταλθέντα πακέτα"
     IDS_RESPONSES           "Απαντήσεις"
     IDS_EXTRACT_META_DATA   "Εξαγωγή ετικετών"
-    IDS_META_DATA_MEDIADET  "DirectShow (για όλα τα άλλα αρχεία ήχου/βίντεο)"
     IDS_META_DATA_ID3LIB    "Βιβλιοθήκη ID3 (μόνο για αρχεία ήχου MPEG)"
 END
 

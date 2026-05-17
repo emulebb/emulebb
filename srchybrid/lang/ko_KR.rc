@@ -1685,7 +1685,6 @@ BEGIN
     IDS_PACKSENT            "보낸 패킷"
     IDS_RESPONSES           "응답"
     IDS_EXTRACT_META_DATA   "메타 데이터 추출"
-    IDS_META_DATA_MEDIADET  "DirectShow (모든 다른 오디오/비디오 파일용)"
     IDS_META_DATA_ID3LIB    "ID3 라이브러리 (단지 MPEG 오디오 파일용)"
     IDS_COMCTRL32_DLL_TOOOLD
                             "Windows Common Controls 라이브러리 파일 (COMCTL32.DLL)이 구버전입니다!\r\n\r\n""Windows Common Controls library (COMCTL32.DLL)"" 파일이 구버전입니다. eMule이 정상적으로 실행되려면 최소한 버전 5.8 이상의 ""Windows Common Controls library (COMCTL32.DLL)""가 필요합니다.\r\n\r\n마이크로소프트 다운로드센터에서 ""Windows Common Controls library (COMCTL32.DLL)"" 파일을 다운로드하여 설치하십시오. URL 주소를 방문하시겠습니까?"

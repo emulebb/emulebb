@@ -1694,7 +1694,6 @@ BEGIN
     IDS_PACKSENT            "Pakketti mibgħuta"
     IDS_RESPONSES           "Resposti"
     IDS_EXTRACT_META_DATA   "Aqra l-meta data"
-    IDS_META_DATA_MEDIADET  "Uża id-DirectShow (għal files ta' awdjo/vidjo)"
     IDS_META_DATA_ID3LIB    "Uża l-ID3 Library (għal files MPEG biss)"
 END
 

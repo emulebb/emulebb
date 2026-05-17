@@ -855,7 +855,6 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_htiExtractMetaData = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_EXTRACT_META_DATA), iImgMetaData, m_htiHiddenFile);
 		m_htiExtractMetaDataNever = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_NEVER), m_htiExtractMetaData, m_iExtractMetaData == 0);
 		m_htiExtractMetaDataID3Lib = m_ctrlTreeOptions.InsertRadioButton(GetExtractMetaDataAutoLabel(), m_htiExtractMetaData, m_iExtractMetaData == 1);
-		//m_htiExtractMetaDataMediaDet = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_META_DATA_MEDIADET), m_htiExtractMetaData, m_iExtractMetaData == 2);
 		m_htiMediaInfoDllPath = m_ctrlTreeOptions.InsertItem(GetMediaInfoDllPathLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiExtractMetaData);
 		m_ctrlTreeOptions.AddEditBox(m_htiMediaInfoDllPath, RUNTIME_CLASS(CTreeOptionsEditEx));
 		m_htiDateTimeFormat4Lists = m_ctrlTreeOptions.InsertItem(GetResString(IDS_DATETIMEFORMAT4LISTS), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiHiddenFile);
@@ -1837,7 +1836,6 @@ void CPPgTweaks::Localize()
 		LocalizeItemText(m_htiExtraPreviewWithMenu, IDS_EXTRAPREVIEWWITHMENU);
 		LocalizeItemText(m_htiExtractMetaData, IDS_EXTRACT_META_DATA);
 		m_ctrlTreeOptions.SetItemText(m_htiExtractMetaDataID3Lib, GetExtractMetaDataAutoLabel());
-		//LocalizeItemText(m_htiExtractMetaDataMediaDet, IDS_META_DATA_MEDIADET);
 		LocalizeItemText(m_htiExtractMetaDataNever, IDS_NEVER);
 		m_ctrlTreeOptions.SetEditLabel(m_htiMediaInfoDllPath, GetMediaInfoDllPathLabel());
 		LocalizeItemText(m_htiFilterLANIPs, IDS_PW_FILTER);
@@ -2078,7 +2076,6 @@ void CPPgTweaks::OnDestroy()
 	m_htiShareeMuleMultiUser = NULL;
 	m_htiShareeMulePublicUser = NULL;
 	m_htiShareeMuleOldStyle = NULL;
-	//m_htiExtractMetaDataMediaDet = NULL;
 	CPropertyPage::OnDestroy();
 }
 

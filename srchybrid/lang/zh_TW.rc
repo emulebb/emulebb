@@ -1649,7 +1649,6 @@ BEGIN
     IDS_PACKSENT            "封包送出"
     IDS_RESPONSES           "回應"
     IDS_EXTRACT_META_DATA   "擷取詮釋資料"
-    IDS_META_DATA_MEDIADET  "DirectShow (用於全部其他的 聲音/影像 檔案)"
     IDS_META_DATA_ID3LIB    "ID3 程式庫 (只用於 MPEG 聲音檔案)"
 END
 

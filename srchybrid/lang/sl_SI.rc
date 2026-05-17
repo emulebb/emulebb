@@ -1660,7 +1660,6 @@ BEGIN
     IDS_PACKSENT            "Poslani paketi"
     IDS_RESPONSES           "Odzivi"
     IDS_EXTRACT_META_DATA   "Izvleci meta podatke"
-    IDS_META_DATA_MEDIADET  "DirectShow (za vse ostale zvočne/video datoteke)"
     IDS_META_DATA_ID3LIB    "Knjižnica ID3 (samo za zvočne datoteke MPEG)"
 END
 

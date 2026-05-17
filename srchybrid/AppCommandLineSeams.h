@@ -16,6 +16,7 @@ namespace AppCommandLineSeams
 		NormalStartup,
 		Help,
 		GenerateWebServerCertificate,
+		DiagnoseMediaMetadata,
 		Invalid
 	};
 
@@ -33,6 +34,8 @@ namespace AppCommandLineSeams
 		CString strPositional;
 		CString strCertFile;
 		CString strKeyFile;
+		CString strMetadataInputFile;
+		CString strMetadataOutputFile;
 		std::vector<CStringA> astrCertDnsNames;
 		std::vector<CStringA> astrCertIpAddresses;
 		CString strError;
@@ -56,6 +59,9 @@ namespace AppCommandLineSeams
 			_T("  --cert <path>                         Certificate output path for certificate generation.\r\n")
 			_T("  --key <path>                          Private-key output path for certificate generation.\r\n")
 			_T("  --host <dns-or-ip>                    Certificate subject alternative name; repeatable.\r\n")
+			_T("  --diagnose-media-metadata             Probe maintained metadata extractors and exit.\r\n")
+			_T("  --input <path>                        Media file path for metadata diagnostics.\r\n")
+			_T("  --output <path>                       Optional JSON output path for metadata diagnostics.\r\n")
 			_T("  --help, -h, /?                        Show this help text and exit.\r\n");
 	}
 
@@ -211,7 +217,10 @@ namespace AppCommandLineSeams
 			|| strName == _T("generate-webserver-cert")
 			|| strName == _T("cert")
 			|| strName == _T("key")
-			|| strName == _T("host");
+			|| strName == _T("host")
+			|| strName == _T("diagnose-media-metadata")
+			|| strName == _T("input")
+			|| strName == _T("output");
 	}
 
 	/**
@@ -227,8 +236,11 @@ namespace AppCommandLineSeams
 		bool bSeenAutoStart = false;
 		bool bSeenAssertFile = false;
 		bool bSeenGenerate = false;
+		bool bSeenMetadataDiagnostic = false;
 		bool bSeenCert = false;
 		bool bSeenKey = false;
+		bool bSeenInput = false;
+		bool bSeenOutput = false;
 		bool bSawCertificateHost = false;
 
 		for (size_t i = 1; i < raTokens.size(); ++i) {
@@ -322,6 +334,16 @@ namespace AppCommandLineSeams
 				continue;
 			}
 
+			if (strName == _T("diagnose-media-metadata")) {
+				if (bHasInlineValue || !TrySetSingleton(bSeenMetadataDiagnostic, _T("--diagnose-media-metadata"), result.strError)) {
+					result.eMode = EMode::Invalid;
+					if (result.strError.IsEmpty())
+						result.strError = _T("The --diagnose-media-metadata option does not accept a value.");
+					return result;
+				}
+				continue;
+			}
+
 			if (strName == _T("cert")) {
 				if (!TrySetSingleton(bSeenCert, _T("--cert"), result.strError)
 					|| !TryReadOptionValue(raTokens, i, _T("--cert"), bHasInlineValue, strInlineValue, result.strCertFile, result.strError)) {
@@ -350,10 +372,34 @@ namespace AppCommandLineSeams
 				bSawCertificateHost = true;
 				continue;
 			}
+
+			if (strName == _T("input")) {
+				if (!TrySetSingleton(bSeenInput, _T("--input"), result.strError)
+					|| !TryReadOptionValue(raTokens, i, _T("--input"), bHasInlineValue, strInlineValue, result.strMetadataInputFile, result.strError)) {
+					result.eMode = EMode::Invalid;
+					return result;
+				}
+				continue;
+			}
+
+			if (strName == _T("output")) {
+				if (!TrySetSingleton(bSeenOutput, _T("--output"), result.strError)
+					|| !TryReadOptionValue(raTokens, i, _T("--output"), bHasInlineValue, strInlineValue, result.strMetadataOutputFile, result.strError)) {
+					result.eMode = EMode::Invalid;
+					return result;
+				}
+				continue;
+			}
 		}
 
 		if (result.eMode == EMode::Help)
 			return result;
+
+		if (bSeenGenerate && bSeenMetadataDiagnostic) {
+			result.eMode = EMode::Invalid;
+			result.strError = _T("Only one headless command may be specified.");
+			return result;
+		}
 
 		if (bSeenGenerate) {
 			if (result.strCertFile.IsEmpty() || result.strKeyFile.IsEmpty()) {
@@ -370,9 +416,30 @@ namespace AppCommandLineSeams
 			return result;
 		}
 
+		if (bSeenMetadataDiagnostic) {
+			if (result.strMetadataInputFile.IsEmpty()) {
+				result.eMode = EMode::Invalid;
+				result.strError = _T("The --diagnose-media-metadata command requires --input.");
+				return result;
+			}
+			if (!result.strPositional.IsEmpty()) {
+				result.eMode = EMode::Invalid;
+				result.strError = _T("The --diagnose-media-metadata command does not accept a positional argument.");
+				return result;
+			}
+			result.eMode = EMode::DiagnoseMediaMetadata;
+			return result;
+		}
+
 		if (bSeenCert || bSeenKey || bSawCertificateHost) {
 			result.eMode = EMode::Invalid;
 			result.strError = _T("The --cert, --key, and --host options require --generate-webserver-cert.");
+			return result;
+		}
+
+		if (bSeenInput || bSeenOutput) {
+			result.eMode = EMode::Invalid;
+			result.strError = _T("The --input and --output options require --diagnose-media-metadata.");
 			return result;
 		}
 

@@ -1695,7 +1695,6 @@ BEGIN
     IDS_PACKSENT            "Gói tin đã gởi"
     IDS_RESPONSES           "Đã trả lời"
     IDS_EXTRACT_META_DATA   "Sao chép meta data"
-    IDS_META_DATA_MEDIADET  "DirectShow (cho tất cả tập tin audio/video khác)"
     IDS_META_DATA_ID3LIB    "Thẻ Thư viện ID3 (tập tin âm thanh dạng MPEG)"
 END
 

@@ -1538,6 +1538,21 @@ void CKnownFile::UpdateMetaDataTags()
 		delete mi;
 	}
 
+	if (!bMetaDataApplied) {
+		try {
+			SMediaInfo mediaInfo;
+			mediaInfo.strFileName = GetFileName();
+			if (GetFallbackMediaInfo(strFullPath, GetFileSize(), &mediaInfo, false, true)) {
+				ApplyMediaInfoTags(mediaInfo);
+				bMetaDataApplied = true;
+			}
+		} catch (...) {
+			if (thePrefs.GetVerbose())
+				AddDebugLogLine(false, _T("Unhandled exception while extracting fallback media metadata from \"%s\""), (LPCTSTR)strFullPath);
+			ASSERT(0);
+		}
+	}
+
 	if (!bMetaDataApplied
 		&& bIsMpegAudio
 		&& theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_ID3LIB"), 1))

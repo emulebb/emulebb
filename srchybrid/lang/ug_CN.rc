@@ -1686,7 +1686,6 @@ BEGIN
     IDS_PACKSENT            "يوللىغان بوغچا"
     IDS_RESPONSES           "جاۋاب ئومۇمىي سانى"
     IDS_EXTRACT_META_DATA   "مېتا سانلىق مەلۇماتنى ياي"
-    IDS_META_DATA_MEDIADET  "‫DirectShow (بارلىق باشقا ئاۋاز/سىن ھۆججىتى)‬"
     IDS_META_DATA_ID3LIB    "‫ھەرىكەتلىك ئۇلىنىش ئامبىرى ID3 (پەقەت MPEG ئۈن ھۆججىتى ئۈچۈنلا)‬"
     IDS_COMCTRL32_DLL_TOOOLD
                             "‫Windows نىڭ (COMCTL32.DLL)نەشرى بەك كونا!\r\n\r\nWindows نىڭ (COMCTL32.DLL)نەشرى بەك كونا بولسا eMule نورمال خىزمەت قىلماسلىقى مۇمكىن. eMule نىڭ تولۇق مۇكەممەل ئىجرا بولۇشىغا كاپالەتلىك قىلىش ئۈچۈن  ""Windows Common Controls library (COMCTL32.DLL)‎"" نىڭ ئاز دېگەندە 5.8 نەشرىنى ئىشلىتىشىڭىزنى تەۋسىيە قىلىمىز.\r\n\r\nمىكروسوفت چۈشۈرۈش مەركىزىدىن يېڭىلانغان ""Windows Common Controls library (COMCTL32.DLL)‎"" نەشرىنى چۈشۈرۈشكە بولىدۇ، مۇناسىپ ئۇلانمىنى زىيارەت قىلامسىز؟"

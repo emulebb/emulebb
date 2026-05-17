@@ -1668,7 +1668,6 @@ BEGIN
     IDS_PACKSENT            "Išsiųsta paketų"
     IDS_RESPONSES           "Atsakymai"
     IDS_EXTRACT_META_DATA   "Ištraukti meta duomenis"
-    IDS_META_DATA_MEDIADET  "DirectShow (visiems kitiems audio/video failams)"
     IDS_META_DATA_ID3LIB    "ID3 biblioteka (tiktai MPEG audio failams)"
 END
 

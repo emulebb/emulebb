@@ -1674,7 +1674,6 @@ BEGIN
     IDS_PACKSENT            "Paquetes Enviados"
     IDS_RESPONSES           "Respostas"
     IDS_EXTRACT_META_DATA   "Extraer metadatos"
-    IDS_META_DATA_MEDIADET  "DirectShow (para todos os outros arquivos de audio/video)"
     IDS_META_DATA_ID3LIB    "Librería ID3 (só para aruivos de audio MPEG)"
 END
 

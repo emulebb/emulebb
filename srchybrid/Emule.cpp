@@ -22,13 +22,16 @@
 #include <atlconv.h>
 #include <atlimage.h>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <shellapi.h>
 #include <string>
+#include <sys/stat.h>
 #include <sockimpl.h> //for *m_pfnSockTerm()
 #include <timeapi.h>
 #include <uxtheme.h>
 #include "AppCommandLineSeams.h"
 #include "emule.h"
+#include "resource.h"
 #include "Version.h"
 #include "opcodes.h"
 #include "mdump.h"
@@ -83,6 +86,7 @@
 #include "BindStartupPolicy.h"
 #include "WorkerUiMessageSeams.h"
 #include "WebServerCertificate.h"
+#include "MediaInfo.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -164,6 +168,98 @@ int HandleHeadlessWebServerCertificateCommandLine(const AppCommandLineSeams::SPa
 		request.astrIpAddresses = rCommandLine.astrCertIpAddresses;
 	}
 	return WebServerCertificate::CreateSelfSignedCertificate(request) == 0 ? 0 : 1;
+}
+
+std::string CommandLineUtf8(const CString &rstrValue)
+{
+	return std::string(CW2A(rstrValue, CP_UTF8));
+}
+
+nlohmann::json BuildMetadataVariantJson(const MediaMetadataFallbackSeams::SVariantSummary &rVariant)
+{
+	const MediaMetadataFallbackSeams::SBasicMediaInfo &info = rVariant.info;
+	return nlohmann::json{
+		{"name", CommandLineUtf8(rVariant.strName)},
+		{"succeeded", rVariant.bSucceeded},
+		{"status", CommandLineUtf8(rVariant.strStatus)},
+		{"facts", nlohmann::json{
+			{"container", CommandLineUtf8(info.strContainer)},
+			{"durationSeconds", info.fDurationSec > 0.0 ? nlohmann::json(info.fDurationSec) : nlohmann::json(nullptr)},
+			{"videoStreams", info.iVideoStreams},
+			{"audioStreams", info.iAudioStreams},
+			{"videoCodec", CommandLineUtf8(info.strVideoCodec)},
+			{"audioCodec", CommandLineUtf8(info.strAudioCodec)},
+			{"width", info.uWidth != 0 ? nlohmann::json(info.uWidth) : nlohmann::json(nullptr)},
+			{"height", info.uHeight != 0 ? nlohmann::json(info.uHeight) : nlohmann::json(nullptr)},
+			{"videoBitrate", info.uVideoBitrate != 0 ? nlohmann::json(info.uVideoBitrate) : nlohmann::json(nullptr)},
+			{"audioBitrate", info.uAudioBitrate != 0 ? nlohmann::json(info.uAudioBitrate) : nlohmann::json(nullptr)},
+			{"audioChannels", info.uAudioChannels != 0 ? nlohmann::json(info.uAudioChannels) : nlohmann::json(nullptr)},
+			{"audioSampleRate", info.uAudioSampleRate != 0 ? nlohmann::json(info.uAudioSampleRate) : nlohmann::json(nullptr)}
+		}}
+	};
+}
+
+int HandleHeadlessMediaMetadataCommandLine(const AppCommandLineSeams::SParseResult &rCommandLine)
+{
+	const CString strInputPath(rCommandLine.strMetadataInputFile);
+	struct _stati64 fileStatus = {};
+	if (_tstati64(strInputPath, &fileStatus) != 0 || (fileStatus.st_mode & _S_IFREG) == 0) {
+		CString strError;
+		strError.Format(_T("Metadata diagnostic input is not a readable file: %s\r\n"), (LPCTSTR)strInputPath);
+		ReportCommandLineText(STD_ERROR_HANDLE, strError);
+		return 2;
+	}
+
+	const EMFileSize ullInputSize(static_cast<uint64>(fileStatus.st_size));
+	const std::vector<MediaMetadataFallbackSeams::SVariantSummary> variants = ProbeMediaMetadataVariants(strInputPath, ullInputSize);
+	const MediaMetadataFallbackSeams::SVariantSummary *pReference = NULL;
+	for (const MediaMetadataFallbackSeams::SVariantSummary &rVariant : variants) {
+		if (rVariant.bSucceeded) {
+			pReference = &rVariant;
+			break;
+		}
+	}
+
+	std::vector<CString> aFindings;
+	if (pReference != NULL) {
+		for (const MediaMetadataFallbackSeams::SVariantSummary &rVariant : variants)
+			MediaMetadataFallbackSeams::AppendDivergenceFindings(*pReference, rVariant, aFindings);
+	}
+
+	nlohmann::json variantJson = nlohmann::json::array();
+	for (const MediaMetadataFallbackSeams::SVariantSummary &rVariant : variants)
+		variantJson.push_back(BuildMetadataVariantJson(rVariant));
+	nlohmann::json findingsJson = nlohmann::json::array();
+	for (const CString &rFinding : aFindings)
+		findingsJson.push_back(CommandLineUtf8(rFinding));
+
+	const nlohmann::json report{
+		{"schema", "emulebb.mediaMetadataDiagnostic.v1"},
+		{"input", nlohmann::json{
+			{"path", CommandLineUtf8(strInputPath)},
+			{"sizeBytes", static_cast<std::uint64_t>(fileStatus.st_size)}
+		}},
+		{"referenceVariant", pReference != NULL ? nlohmann::json(CommandLineUtf8(pReference->strName)) : nlohmann::json(nullptr)},
+		{"variants", variantJson},
+		{"divergenceFindings", findingsJson},
+		{"hasDivergence", !aFindings.empty()},
+		{"ok", pReference != NULL}
+	};
+	const std::string strReport = report.dump(2) + "\n";
+	if (rCommandLine.strMetadataOutputFile.IsEmpty()) {
+		ReportCommandLineText(STD_OUTPUT_HANDLE, CString(CA2W(strReport.c_str(), CP_UTF8)));
+		return pReference != NULL ? 0 : 1;
+	}
+
+	CFile outputFile;
+	if (!outputFile.Open(rCommandLine.strMetadataOutputFile, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite)) {
+		CString strError;
+		strError.Format(_T("Could not write metadata diagnostic output: %s\r\n"), (LPCTSTR)rCommandLine.strMetadataOutputFile);
+		ReportCommandLineText(STD_ERROR_HANDLE, strError);
+		return 2;
+	}
+	outputFile.Write(strReport.data(), static_cast<UINT>(strReport.size()));
+	return pReference != NULL ? 0 : 1;
 }
 
 BindStartupPolicy::CBindStartupPolicyText GetBindStartupPolicyText()
@@ -1233,6 +1329,8 @@ BOOL CemuleApp::InitInstance()
 	free((void*)m_pszProfileName);
 	const CString &sConfDir(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
 	m_pszProfileName = _tcsdup(sConfDir + _T("preferences.ini"));
+	if (commandLine.eMode == AppCommandLineSeams::EMode::DiagnoseMediaMetadata)
+		::ExitProcess(static_cast<UINT>(HandleHeadlessMediaMetadataCommandLine(commandLine)));
 	(void)ConfigStartupBackup::RunDailyStartupConfigBackup(sConfDir, ConfigStartupBackupSeams::kDefaultBackupRetentionCount);
 
 #ifdef _DEBUG

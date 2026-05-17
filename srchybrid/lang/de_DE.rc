@@ -1651,7 +1651,6 @@ BEGIN
     IDS_PACKSENT            "gesendete Pakete"
     IDS_RESPONSES           "Antworten"
     IDS_EXTRACT_META_DATA   "Metadaten extrahieren"
-    IDS_META_DATA_MEDIADET  "DirectShow (für alle anderen Audio-/Videodateien)"
     IDS_META_DATA_ID3LIB    "ID3 Bibliothek (nur für MPEG Audiodateien)"
     IDS_COMCTRL32_DLL_TOOOLD
                             "Die ""Windows Common Controls"" Bibliothek (COMCTL32.DLL) ist zu alt!\r\n\r\neMule hat eine Version der ""Windows Common Controls Bibliothek (COMCTL32.DLL)"" gefunden, welche zu alt ist um von eMule korrekt verwendet zu werden. Um volle und korrekte Funktionalität von eMule zu sichern, raten wir dringend, diese Bibliothek mindestens auf die Version 5.8 zu aktualisieren.\r\n\r\nDer Download dieser Bibliothek (COMCTL32.DLL) kann vom Microsoft(R) Download Center erfolgen. Soll die entsprechende WWW-Seite im Browser geöffnet werden?"

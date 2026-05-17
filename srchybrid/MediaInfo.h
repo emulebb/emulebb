@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 #include "MediaInfoDllSeams.h"
+#include "MediaMetadataFallbackSeams.h"
 #include "RichEditStream.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -52,7 +53,7 @@ protected:
 	CString str;
 };
 
-// DirectShow MediaDet
+// Core Windows multimedia structs used by the legacy `SMediaInfo` data model.
 //#define MMNODRV		// mmsystem: Installable driver support
 #define MMNOSOUND		// mmsystem: Sound support
 //#define MMNOWAVE		// mmsystem: Waveform support
@@ -63,10 +64,10 @@ protected:
 #define MMNOJOY			// mmsystem: Joystick support
 #define MMNOMCI			// mmsystem: MCI support
 //#define MMNOMMIO		// mmsystem: Multimedia file I/O support
-#define MMNOMMSYSTEM	// mmsystem: General MMSYSTEM functions
-#include <qedit.h>
+#include <mmsystem.h>
+#include <mmreg.h>
 
-// Those defines are for 'mmreg.h' which is included by 'vfw.h'
+// Those defines are for 'mmreg.h' and 'vfw.h'
 #define NOMMIDS		 // Multimedia IDs are not defined
 //#define NONEWWAVE	   // No new waveform types are defined except WAVEFORMATEX
 #define NONEWRIFF	 // No new RIFF forms are defined
@@ -83,15 +84,15 @@ protected:
 #define NOMCIWND
 #define NOAVICAP
 #define NOMSACM
-#include <mmiscapi.h>
-#include <mmeapi.h>
-#define MMNOMIXERDEV
-#include <mmddk.h>
 #include <amvideo.h>
 #include <strmif.h>
-#include <uuids.h>
 #include <vfw.h>
-#pragma comment(lib, "strmiids.lib") //for uuids.h
+#ifndef FOURCC_RIFF
+#define FOURCC_RIFF mmioFOURCC('R', 'I', 'F', 'F')
+#endif
+#ifndef FOURCC_LIST
+#define FOURCC_LIST mmioFOURCC('L', 'I', 'S', 'T')
+#endif
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -212,6 +213,26 @@ bool GetDRM(LPCTSTR pszFilePath);
  * @brief Extracts audio/video metadata through the optional MediaInfo DLL when it is available.
  */
 bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo *mi, bool bFullInfo = false, bool bSingleFile = true, bool *pbLibraryAvailable = NULL, MediaInfoDllSeams::EMediaInfoDllStatus *peLibraryStatus = NULL);
+/**
+ * @brief Extracts basic media metadata through maintained fallback providers when MediaInfo.dll is unavailable.
+ */
+bool GetFallbackMediaInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo *mi, bool bFullInfo = false, bool bSingleFile = true);
+/**
+ * @brief Extracts basic metadata through Windows Media Foundation without decoding samples.
+ */
+bool GetMediaFoundationMediaInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo *mi);
+/**
+ * @brief Extracts basic metadata through eMule BB-owned MP4 and EBML parsers.
+ */
+bool GetOwnedContainerMediaInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo *mi);
+/**
+ * @brief Supplements descriptive metadata from Windows Shell properties without replacing technical parser facts.
+ */
+bool SupplementShellMediaProperties(LPCTSTR pszFilePath, SMediaInfo *mi);
+/**
+ * @brief Runs each maintained metadata extractor independently for redacted diagnostics and live corpus comparison.
+ */
+std::vector<MediaMetadataFallbackSeams::SVariantSummary> ProbeMediaMetadataVariants(LPCTSTR pszFilePath, EMFileSize ullFileSize);
 /**
  * @brief Returns the preferred visible MediaInfo DLL preference path for the current machine.
  */

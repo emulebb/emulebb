@@ -1668,7 +1668,6 @@ BEGIN
     IDS_PACKSENT            "Verzonden pakketten"
     IDS_RESPONSES           "Antwoorden"
     IDS_EXTRACT_META_DATA   "Metadata uitpakken"
-    IDS_META_DATA_MEDIADET  "DirectShow (voor alle andere audio-/videobestanden)"
     IDS_META_DATA_ID3LIB    "ID3-bibliotheek (alleen voor MP3-bestanden)"
 END
 

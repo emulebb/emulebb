@@ -1678,7 +1678,6 @@ BEGIN
     IDS_PACKSENT            "تم ارسال الباكيتس"
     IDS_RESPONSES           "جاوب"
     IDS_EXTRACT_META_DATA   "استخرج معلومات ال ميتا"
-    IDS_META_DATA_MEDIADET  "ديريكت شو (لكل ملفات الصوت و القيديو)"
     IDS_META_DATA_ID3LIB    "مكتبة ID3 (لملفات الام بي اي جي)"
 END
 

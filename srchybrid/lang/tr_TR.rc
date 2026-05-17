@@ -1677,7 +1677,6 @@ BEGIN
     IDS_PACKSENT            "Gönderilmiş Paket"
     IDS_RESPONSES           "Cevap"
     IDS_EXTRACT_META_DATA   "Üst veriyi çıkart"
-    IDS_META_DATA_MEDIADET  "DirectShow (tüm diğer ses/görüntü dosyaları için)"
     IDS_META_DATA_ID3LIB    "ID3 Kütüphanesi (sadece MPEG ses dosyaları için)"
 END
 

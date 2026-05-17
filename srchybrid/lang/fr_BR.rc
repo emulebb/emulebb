@@ -1633,7 +1633,6 @@ BEGIN
 	IDS_PACKSENT	"Pakadoù kaset"
 	IDS_RESPONSES	"Respontoù"
 	IDS_EXTRACT_META_DATA	"Eztennañ meta stlennoù"
-	IDS_META_DATA_MEDIADET	"DirectShow (evit pep restr odio/video all)"
 	IDS_META_DATA_ID3LIB	"Levraoueg ID3 (nemet evit restroù MPEG odio)"
 END
 

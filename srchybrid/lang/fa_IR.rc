@@ -1687,7 +1687,6 @@ BEGIN
     IDS_PACKSENT            "بسته هاي فرستاده شده"
     IDS_RESPONSES           "پاسخ ها"
     IDS_EXTRACT_META_DATA   "خارج کردن اطلاعات جانبي"
-    IDS_META_DATA_MEDIADET  "نمايش مستقيم (براي تمام موارد ديگر audio/video files)"
     IDS_META_DATA_ID3LIB    "ID3 Library ( MPEG audio files فقط براي)"
     IDS_COMCTRL32_DLL_TOOOLD
                             "بيش از حد قديمي است!(COMCTL32.DLL)کتابخانه معمولي ويندوز \r\n\r\nرا پيدا کرده که آنقدر قديمي است که ايمول نمي تواند به درستي از آن استفاده کند""Windows Common Controls library (COMCTL32.DLL)""ايمول نسخه اي از. را حداقل به نسخه5.8 آپدين کنيد ""Windows Common Controls library (COMCTL32.DLL)""براي اطمينان يافتن از عملکرد کامل و بي نقص ايمول اکيدا توصيه ميکنيم که \r\n\r\nدانلود و نصب کنيد آيا ميخواهيد آدرس وب مربوطه را ببينيد؟  Microsoft (R) Download Center را از سايت ""Windows Common Controls library (COMCTL32.DLL)"" آپديت"

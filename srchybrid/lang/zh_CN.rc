@@ -1689,7 +1689,6 @@ BEGIN
     IDS_PACKSENT            "已发送包"
     IDS_RESPONSES           "回应总数"
     IDS_EXTRACT_META_DATA   "展开Meta数据"
-    IDS_META_DATA_MEDIADET  "DirectShow (所有其他音频/视频文件)"
     IDS_META_DATA_ID3LIB    "ID3动态链接库 (仅限MPEG音频文件)"
     IDS_COMCTRL32_DLL_TOOOLD
                             "Windows的通用控件链接库(COMCTL32.DLL)的版本太旧了!\r\n\r\neMule检测到""Windows的通用控件链接库(COMCTL32.DLL)""的版本太旧,以至于它可能使得eMule无法正常工作.为了确保eMule完整 正确的运作,我们强烈建议你将""Windows的通用控件链接库(COMCTL32.DLL)""至少更新到5.8版.\r\n\r\n在Microsoft (R)下载中心可以下载和安装最新版本的""Windows的通用控件链接库(COMCTL32.DLL)"".你愿意访问相应的URL吗?"

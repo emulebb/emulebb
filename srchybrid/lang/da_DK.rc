@@ -1672,7 +1672,6 @@ BEGIN
     IDS_PACKSENT            "Pakker Sendt"
     IDS_RESPONSES           "Svar"
     IDS_EXTRACT_META_DATA   "Udtræk meta data"
-    IDS_META_DATA_MEDIADET  "DirectShow (for alle andre lyd/video filer)"
     IDS_META_DATA_ID3LIB    "ID3 mappe (kun for MPEG lyd filer)"
 END
 

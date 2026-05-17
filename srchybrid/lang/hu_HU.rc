@@ -1671,7 +1671,6 @@ BEGIN
     IDS_PACKSENT            "Csomag elküldve"
     IDS_RESPONSES           "Válaszok"
     IDS_EXTRACT_META_DATA   "Metaadat kinyerése"
-    IDS_META_DATA_MEDIADET  "DirectShow (minden más kép/hangfájlhoz)"
     IDS_META_DATA_ID3LIB    "ID3 Könyvtár (csak MPEG hangfájlhoz)"
 END
 

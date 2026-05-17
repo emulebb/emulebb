@@ -5,9 +5,8 @@
 
 /**
  * Detect optional SDK integrations which are not vendored in the tree.
- * Bundled headers such as "qedit.h" are required directly by the modules that
- * use them, while SAPI and WMSDK stay feature-gated by real header
- * availability in the active toolchain.
+ * SAPI and WMSDK stay feature-gated by real header availability in the active
+ * toolchain.
  */
 #if defined(__has_include) && __has_include(<sapi.h>)
 #define HAVE_SAPI_H

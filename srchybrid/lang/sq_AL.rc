@@ -1693,7 +1693,6 @@ BEGIN
     IDS_PACKSENT            "Paketa Dërguar"
     IDS_RESPONSES           "Përgjigje"
     IDS_EXTRACT_META_DATA   "Nxjerrje e 'meta data've"
-    IDS_META_DATA_MEDIADET  "DirectShow (për gjithë skedat e tjera audio/video)"
     IDS_META_DATA_ID3LIB    "Librari ID3 (vetëm për skeda audio MPEG)"
 END
 

@@ -1693,7 +1693,6 @@ BEGIN
     IDS_PACKSENT            "Paquetes unviaos"
     IDS_RESPONSES           "Retruques"
     IDS_EXTRACT_META_DATA   "Estrayer datos propios"
-    IDS_META_DATA_MEDIADET  "DirectShow (pa tolos archivos d’audiu/videu)"
     IDS_META_DATA_ID3LIB    "Llibrería ID3 (namás p’archivos d’audio MPEG)"
 END
 
