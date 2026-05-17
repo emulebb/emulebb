@@ -25,7 +25,7 @@ trim_trailing_whitespace = false
 end_of_line = lf
 
 [*.{rc,rc2}]
-end_of_line = crlf
+end_of_line = lf
 
 [*.{rc,rc2}]
 charset = utf-8-bom
