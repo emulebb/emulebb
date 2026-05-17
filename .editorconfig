@@ -17,7 +17,7 @@ indent_style = tab
 trim_trailing_whitespace = false
 
 [*.{cmd,bat}]
-end_of_line = crlf
+end_of_line = lf
 indent_style = tab
 trim_trailing_whitespace = false
 
