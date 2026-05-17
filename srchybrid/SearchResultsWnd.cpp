@@ -857,17 +857,21 @@ void CSearchResultsWnd::PositionSearchStatusOverlay()
 		return;
 
 	CRect rcList;
-	searchlistctrl.GetWindowRect(&rcList);
-	ScreenToClient(&rcList);
+	searchlistctrl.GetClientRect(&rcList);
+	::MapWindowPoints(searchlistctrl.GetSafeHwnd(), GetSafeHwnd(), reinterpret_cast<LPPOINT>(&rcList), 2);
 
 	if (m_ctlSearchListHeader.GetSafeHwnd() != NULL) {
 		CRect rcHeader;
 		m_ctlSearchListHeader.GetWindowRect(&rcHeader);
 		ScreenToClient(&rcHeader);
-		rcList.top = rcHeader.bottom;
+		rcList.top = max(rcList.top, rcHeader.bottom);
 	}
 
 	rcList.DeflateRect(1, 1);
+	if (rcList.Width() < 1 || rcList.Height() < 1) {
+		m_ctlSearchStatus.SetWindowPos(&wndTop, 0, 0, 0, 0, SWP_NOACTIVATE);
+		return;
+	}
 	m_ctlSearchStatus.SetWindowPos(&wndTop, rcList.left, rcList.top, rcList.Width(), rcList.Height(), SWP_NOACTIVATE);
 }
 
@@ -900,8 +904,19 @@ void CSearchResultsWnd::RefreshSearchActivity()
 		m_ctlSearchStatus.SetWindowText(GetSearchActivityText(pParams));
 		m_ctlSearchStatus.ShowWindow(SW_SHOW);
 		m_ctlSearchStatus.SetWindowPos(&wndTop, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
-	} else
+	} else {
+		const bool bWasVisible = m_ctlSearchStatus.IsWindowVisible() != FALSE;
+		CRect rcStatus;
+		if (bWasVisible) {
+			m_ctlSearchStatus.GetWindowRect(&rcStatus);
+			ScreenToClient(&rcStatus);
+		}
 		m_ctlSearchStatus.ShowWindow(SW_HIDE);
+		if (bWasVisible) {
+			InvalidateRect(&rcStatus, TRUE);
+			searchlistctrl.RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
+		}
+	}
 
 	SetSearchProgressIndeterminate((bQueued || bRunning) && !bHasVisibleRows && !bBoundedProgress);
 	if (!bBoundedProgress && (!bRunning || bHasVisibleRows))
@@ -1948,24 +1963,36 @@ void CSearchResultsWnd::UpdateCatTabs()
 
 void CSearchResultsWnd::ShowSearchSelector(bool visible)
 {
-	WINDOWPLACEMENT wpTabSelect, wpList;
-	searchselect.GetWindowPlacement(&wpTabSelect);
-	searchlistctrl.GetWindowPlacement(&wpList);
+	CRect rcTabSelect;
+	searchselect.GetWindowRect(&rcTabSelect);
+	ScreenToClient(&rcTabSelect);
+
+	CRect rcListOld;
+	searchlistctrl.GetWindowRect(&rcListOld);
+	ScreenToClient(&rcListOld);
+
+	CRect rcListNew(rcListOld);
 
 	int nCmdShow;
 	if (visible) {
 		nCmdShow = SW_SHOW;
-		wpList.rcNormalPosition.top = wpTabSelect.rcNormalPosition.bottom;
+		rcListNew.top = rcTabSelect.bottom;
 	} else {
 		nCmdShow = SW_HIDE;
-		wpList.rcNormalPosition.top = wpTabSelect.rcNormalPosition.top;
+		rcListNew.top = rcTabSelect.top;
 	}
 	searchselect.ShowWindow(nCmdShow);
 	RemoveAnchor(searchlistctrl);
-	searchlistctrl.SetWindowPlacement(&wpList);
+	searchlistctrl.SetWindowPos(NULL, rcListNew.left, rcListNew.top, rcListNew.Width(), max(0, rcListNew.Height()), SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_FRAMECHANGED);
+	searchlistctrl.RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN | RDW_UPDATENOW);
 	AddAnchor(searchlistctrl, TOP_LEFT, BOTTOM_RIGHT);
 	GetDlgItem(IDC_CLEARALL)->ShowWindow(nCmdShow);
 	m_ctlFilter.ShowWindow(nCmdShow);
+
+	CRect rcInvalidate;
+	rcInvalidate.UnionRect(&rcListOld, &rcListNew);
+	InvalidateRect(&rcInvalidate, TRUE);
+	RedrawWindow(&rcInvalidate, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 	PositionSearchStatusOverlay();
 }
 

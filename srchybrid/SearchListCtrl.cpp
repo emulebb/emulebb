@@ -1419,11 +1419,13 @@ void CSearchListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		return;
 
 	CRect rcItem(lpDrawItemStruct->rcItem);
-	CMemoryDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), rcItem);
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	CRect rcPaint(rcItem);
+	rcPaint.right = max(rcPaint.right, rcClient.right);
+	CMemoryDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), rcPaint);
 	BOOL bCtrlFocused;
 	InitItemMemDC(dc, lpDrawItemStruct, bCtrlFocused);
-	RECT rcClient;
-	GetClientRect(&rcClient);
 	CSearchFile *content = reinterpret_cast<CSearchFile*>(lpDrawItemStruct->itemData);
 	if (!g_bLowColorDesktop || (lpDrawItemStruct->itemState & ODS_SELECTED) == 0)
 		dc.SetTextColor(GetSearchItemColor(content));
