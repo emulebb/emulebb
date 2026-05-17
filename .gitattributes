@@ -22,7 +22,11 @@
 *.inl text eol=lf
 *.idl text eol=lf
 *.def text eol=lf
+*.l text eol=lf
+*.skl text eol=lf
+*.tmpl text eol=lf
 *.txt text eol=lf
+*.y text eol=lf
 
 # Repo metadata and structured text stay LF.
 *.md text eol=lf
