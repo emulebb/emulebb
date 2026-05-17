@@ -656,14 +656,12 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 	////////////////////////////////////////////////////////////////////////////
 	// Check for AVI file
 	//
-	if (theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_RIFF"), 1)) {
-		try {
-			bool bIsAVI = false;
-			if (GetRIFFHeaders(pFile->GetFilePath(), mi, bIsAVI, true))
-				return true;
-		} catch (...) {
-			ASSERT(0);
-		}
+	try {
+		bool bIsAVI = false;
+		if (GetRIFFHeaders(pFile->GetFilePath(), mi, bIsAVI, true))
+			return true;
+	} catch (...) {
+		ASSERT(0);
 	}
 
 	if (!::IsWindow(hWndOwner))
@@ -672,14 +670,12 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 	////////////////////////////////////////////////////////////////////////////
 	// Check for RM file
 	//
-	if (theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_RM"), 1)) {
-		try {
-			bool bIsRM = false;
-			if (GetRMHeaders(pFile->GetFilePath(), mi, bIsRM, true))
-				return true;
-		} catch (...) {
-			ASSERT(0);
-		}
+	try {
+		bool bIsRM = false;
+		if (GetRMHeaders(pFile->GetFilePath(), mi, bIsRM, true))
+			return true;
+	} catch (...) {
+		ASSERT(0);
 	}
 
 	if (!::IsWindow(hWndOwner))
@@ -689,14 +685,12 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 	// Check for WM file
 	//
 #ifdef HAVE_WMSDK_H
-	if (theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_WM"), 1)) {
-		try {
-			bool bIsWM = false;
-			if (GetWMHeaders(pFile->GetFilePath(), mi, bIsWM, true))
-				return true;
-		} catch (...) {
-			ASSERT(0);
-		}
+	try {
+		bool bIsWM = false;
+		if (GetWMHeaders(pFile->GetFilePath(), mi, bIsWM, true))
+			return true;
+	} catch (...) {
+		ASSERT(0);
 	}
 
 	if (!::IsWindow(hWndOwner))
@@ -706,9 +700,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 	////////////////////////////////////////////////////////////////////////////
 	// Check for MPEG Audio file
 	//
-	if (theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_ID3LIB"), 1)
-		&& KnownFileMetadataSeams::IsMpegAudioMetadataExtension(pFile->GetFileName()))
-	{
+	if (KnownFileMetadataSeams::IsMpegAudioMetadataExtension(pFile->GetFileName())) {
 		try {
 			// ID3LIB BUG: If there are ID3v2 _and_ ID3v1 tags available, id3lib
 			// destroys (actually corrupts) the Unicode strings from ID3v2 tags due to

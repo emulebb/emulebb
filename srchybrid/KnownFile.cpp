@@ -1553,10 +1553,7 @@ void CKnownFile::UpdateMetaDataTags()
 		}
 	}
 
-	if (!bMetaDataApplied
-		&& bIsMpegAudio
-		&& theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_ID3LIB"), 1))
-	{
+	if (!bMetaDataApplied && bIsMpegAudio) {
 		wchar_t *pszText = NULL;
 		try {
 				// ID3LIB BUG: If there are ID3v2 _and_ ID3v1 tags available, id3lib
