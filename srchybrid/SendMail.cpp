@@ -31,6 +31,10 @@
 #include "mbedtls/ssl_ticket.h"
 #include "TLSthreading.h"
 
+// FROZEN SURFACE (2026-05-17): SMTP/email notifications receive no support, no
+// new tests, and no hardening/refactor investment. This feature may be removed;
+// only touch it to delete it or to protect supported shared infrastructure.
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE

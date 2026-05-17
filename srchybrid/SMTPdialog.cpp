@@ -19,6 +19,10 @@
 #include "PreferencesDlg.h"
 #include "SMTPdialog.h"
 
+// FROZEN SURFACE (2026-05-17): SMTP/email notification preferences receive no
+// support, no new tests, and no hardening/refactor investment. This dialog may
+// be removed with the SMTP notification feature.
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE

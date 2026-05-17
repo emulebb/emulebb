@@ -20,6 +20,9 @@
 #include "OtherFunctions.h"
 #include "Version.h"
 
+// FROZEN SURFACE (2026-05-17): the startup splash screen receives no support,
+// no new tests, and no hardening/refactor investment. It may be removed.
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
