@@ -1034,7 +1034,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Перевірка версії"
     IDS_VISITVERSIONCHECK   "\n\nви хочете відвідати інформаційну сторінку зараз?"
     IDS_PW_VIDEOPLAYER      "Відео програвач"
-    IDS_VIDEOBACKUP         "Створти копію для перегляду"
     IDS_MYINFO              "My Info"
     IDS_ID                  "ID"
     IDS_IDLOW               "Низький ID"
@@ -2179,6 +2178,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Помилка виключення Microsoft Defender: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Дію виключення Microsoft Defender скасовано."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Для виключення Microsoft Defender не було доступних папок для завантаження eMule."
+    IDS_ALLOW_PEER_PREVIEW                                  "Дозволити попередній перегляд для пірів"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Виберіть наявний виконуваний файл FFmpeg, перш ніж дозволити попередній перегляд для пірів."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Дозволяє іншим клієнтам eMule запитувати кадри попереднього перегляду для спільних відеофайлів.\r\n\r\neMule використовує FFmpeg для створення статичних кадрів і надсилає лише ці зображення попереднього перегляду, а не все відео. Спільні файли також мають бути видимими для пірів."
 END
 // eMule BB managed translation block: end
 

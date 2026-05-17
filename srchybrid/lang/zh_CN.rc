@@ -368,7 +368,6 @@ BEGIN
     IDS_VERSIONCHECK        "检查版本(&V)"
     IDS_VISITVERSIONCHECK   "\n\n要访问信息页面吗?"
     IDS_PW_VIDEOPLAYER      "视频播放器"
-    IDS_VIDEOBACKUP         "预览时建立备份"
     IDS_MYINFO              "我的信息"
     IDS_ID                  "ID" //!
     IDS_IDLOW               "LowID"
@@ -2160,6 +2159,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defender 排除操作失败：%s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defender 排除操作已取消。"
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "没有可用于 Microsoft Defender 排除的 eMule 下载文件夹。"
+    IDS_ALLOW_PEER_PREVIEW                                  "允许对等方预览"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "允许对等方预览前，请先选择一个现有的 FFmpeg 可执行文件。"
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "允许其他 eMule 客户端请求共享视频文件的预览帧。\r\n\r\neMule 使用 FFmpeg 渲染静态帧，并且只发送这些预览图像，而不是整个视频。共享文件也必须对对等方可见。"
 END
 // eMule BB managed translation block: end
 

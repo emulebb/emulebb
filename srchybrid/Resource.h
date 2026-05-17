@@ -694,7 +694,6 @@
 #define IDS_VERSIONCHECK                768
 #define IDS_VISITVERSIONCHECK           769
 #define IDS_PW_VIDEOPLAYER              770
-#define IDS_VIDEOBACKUP                 771
 #define IDS_MYINFO                      772
 #define IDS_ID                          773
 #define IDS_IDLOW                       774
@@ -2030,7 +2029,6 @@
 #define IDC_UAP                         2665
 #define IDC_SMARTIDCHECK                2666
 #define IDC_UPDATEQUEUE                 2667
-#define IDC_VIDEOBACKUP                 2668
 #define IDC_REPAINT                     2669
 #define IDC_WSENABLED                   2671
 #define IDC_ENABLE                      2672
@@ -2846,7 +2844,6 @@
 #define IDS_PPG_FILES_TT_STARTNEXTFILECAT      2151
 #define IDS_PPG_FILES_TT_STARTNEXTFILECAT2     2152
 #define IDS_PPG_FILES_TT_UAP                   2153
-#define IDS_PPG_FILES_TT_VIDEOBACKUP           2154
 #define IDS_PPG_FILES_TT_VIDEOPLAYER           2155
 #define IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS      2156
 #define IDS_PPG_GENERAL_TT_CHECKDAYS           2157
@@ -2914,6 +2911,9 @@
 #define IDS_THUMBNAIL_FFMPEG                   2219
 #define IDS_THUMBNAIL_INTERVAL_SECONDS         2220
 #define IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG      2221
+#define IDS_ALLOW_PEER_PREVIEW                 3284
+#define IDS_ALLOW_PEER_PREVIEW_INVALID         3285
+#define IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW    3286
 #define IDS_ENABLE_IPFILTER                    2222
 #define IDS_IPFILTER_EXPLANATION               2223
 #define IDS_PPG_SECURITY_TT_ENABLE_IPFILTER    2224
@@ -3202,6 +3202,7 @@
 #define IDC_THUMBNAIL_INTERVAL_LBL      3089
 #define IDC_THUMBNAIL_INTERVAL          3090
 #define IDC_THUMBNAIL_INTERVAL_SPIN     3091
+#define IDC_ALLOW_PEER_PREVIEW          3096
 #define IDC_ALWAYS_SHOW_TRAY_ICON       3092
 #define IDC_ENABLE_IPFILTER             3093
 #define IDC_IPFILTER_EXPLANATION        3094

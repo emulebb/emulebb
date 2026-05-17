@@ -1040,7 +1040,6 @@ BEGIN
     IDS_VERSIONCHECK        "バージョンチェック(&V)"
     IDS_VISITVERSIONCHECK   "\n\n今すぐインフォメーションページを訪問しますか?"
     IDS_PW_VIDEOPLAYER      "ビデオプレーヤー"
-    IDS_VIDEOBACKUP         "プレビュー用バックアップを作成"
     IDS_MYINFO              "情報"
     IDS_ID                  "ID"
     IDS_IDLOW               "Low ID"
@@ -2189,6 +2188,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defender の除外アクションが失敗しました: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defender の除外アクションがキャンセルされました。"
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Microsoft Defender の除外に使用できる eMule ダウンロード フォルダーはありませんでした。"
+    IDS_ALLOW_PEER_PREVIEW                                  "ピアプレビューを許可"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "ピアプレビューを許可する前に、既存の FFmpeg 実行ファイルを選択してください。"
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "他の eMule クライアントが共有動画ファイルのプレビューフレームを要求できるようにします。\r\n\r\neMule は FFmpeg を使用して静止フレームを生成し、動画全体ではなく、そのプレビュー画像だけを送信します。共有ファイルはピアからも見える必要があります。"
 END
 // eMule BB managed translation block: end
 

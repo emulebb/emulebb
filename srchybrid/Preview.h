@@ -18,6 +18,8 @@
 #include "PartFilePreviewSeams.h"
 
 class CPartFile;
+class CKnownFile;
+class CUpDownClient;
 
 /**
  * Owns the result payload passed from the thumbnail worker back to the UI thread.
@@ -44,6 +46,31 @@ struct VideoThumbnailResult_Struct
  * Loads a cached PNG thumbnail into a caller-owned bitmap handle.
  */
 bool ReadVideoThumbnailBitmapFile(const CString &rstrPath, HBITMAP &rhBitmap);
+
+/**
+ * Owns FFmpeg-generated peer preview frames until the UI thread sends them.
+ */
+struct PeerPreviewResult_Struct
+{
+	CKnownFile *pFile = NULL;
+	CUpDownClient *pSender = NULL;
+	HBITMAP *imgResults = NULL;
+	uint8 nImagesGrabbed = 0;
+
+	~PeerPreviewResult_Struct()
+	{
+		for (int i = nImagesGrabbed; --i >= 0;)
+			if (imgResults[i])
+				::DeleteObject(imgResults[i]);
+		delete[] imgResults;
+	}
+
+	void ReleaseFrames()
+	{
+		imgResults = NULL;
+		nImagesGrabbed = 0;
+	}
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // CVideoThumbnailThread
@@ -76,26 +103,30 @@ protected:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// CPreviewThread
+// CPeerPreviewThread
 
-class CPreviewThread : public CWinThread
+/**
+ * Uses FFmpeg to produce wire-compatible peer preview PNG frames.
+ */
+class CPeerPreviewThread : public CWinThread
 {
-	DECLARE_DYNCREATE(CPreviewThread)
+	DECLARE_DYNCREATE(CPeerPreviewThread)
 
 public:
 	virtual	BOOL	InitInstance();
 	virtual int		Run();
-	void	SetValues(CPartFile *pPartFile, LPCTSTR pszCommand, LPCTSTR pszCommandArgs);
+	void	SetValues(CKnownFile *pFile, CUpDownClient *pSender, LPCTSTR pszFfmpegPath, HWND hNotifyWnd);
 
 protected:
-	CPreviewThread();			// protected constructor used by dynamic creation
+	CPeerPreviewThread();
 
-	CPartFile	*m_pPartfile;
-	CArray<Gap_Struct> m_aFilled;
-	CString		m_strCommand;
-	CString		m_strCommandArgs;
-
-	//DECLARE_MESSAGE_MAP()
+	CKnownFile *m_pFile;
+	CUpDownClient *m_pSender;
+	CString m_strFfmpegPath;
+	CString m_strInputPath;
+	CString m_strWorkingDirectory;
+	CString m_strFileHash;
+	HWND m_hNotifyWnd;
 };
 
 

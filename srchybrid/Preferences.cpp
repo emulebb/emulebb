@@ -951,10 +951,10 @@ CString	CPreferences::m_strVideoPlayer;
 CString CPreferences::m_strVideoPlayerArgs;
 CString CPreferences::m_strVideoThumbnailFfmpegPath;
 UINT CPreferences::m_uVideoThumbnailIntervalSeconds;
+bool	CPreferences::m_bAllowPeerPreview;
 bool	CPreferences::m_bRunCommandOnFileCompletion;
 CString CPreferences::m_strFileCompletionProgram;
 CString CPreferences::m_strFileCompletionArguments;
-bool	CPreferences::m_bMoviePreviewBackup;
 bool	CPreferences::m_bVideoPreviewThumbnails;
 int		CPreferences::m_iPreviewSmallBlocks;
 bool	CPreferences::m_bPreviewCopiedArchives;
@@ -2606,6 +2606,7 @@ void CPreferences::SavePreferences()
 	ini.WriteString(_T("VideoPlayerArgs"), m_strVideoPlayerArgs);
 	ini.WriteString(prefini::VideoThumbnailKeys::FfmpegPath, m_strVideoThumbnailFfmpegPath);
 	ini.WriteInt(prefini::VideoThumbnailKeys::IntervalSeconds, static_cast<int>(PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(m_uVideoThumbnailIntervalSeconds)));
+	ini.WriteBool(prefini::VideoThumbnailKeys::AllowPeerPreview, m_bAllowPeerPreview);
 	ini.WriteBool(prefini::FileCompletionKeys::RunCommandOnFileCompletion, m_bRunCommandOnFileCompletion, prefini::Sections::FileCompletion);
 	ini.WriteString(prefini::FileCompletionKeys::Program, m_strFileCompletionProgram, prefini::Sections::FileCompletion);
 	ini.WriteString(prefini::FileCompletionKeys::Arguments, m_strFileCompletionArguments, prefini::Sections::FileCompletion);
@@ -2673,7 +2674,6 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("ManualHighPrio"), m_bManualAddedServersHighPriority);
 	ini.WriteBool(_T("FullChunkTransfers"), m_btransferfullchunks);
 	ini.WriteBool(_T("ShowOverhead"), m_bshowoverhead);
-	ini.WriteBool(_T("VideoPreviewBackupped"), m_bMoviePreviewBackup);
 	ini.WriteBool(_T("VideoPreviewThumbnails"), false);
 	ini.WriteInt(_T("PreviewSmallBlocks"), m_iPreviewSmallBlocks);
 	ini.WriteInt(_T("StartNextFile"), m_istartnextfile);
@@ -3253,7 +3253,6 @@ void CPreferences::LoadPreferences()
 	m_btransferfullchunks = ini.GetBool(_T("FullChunkTransfers"), true);
 	m_istartnextfile = ini.GetInt(_T("StartNextFile"), 0);
 	m_bshowoverhead = ini.GetBool(_T("ShowOverhead"), false);
-	m_bMoviePreviewBackup = ini.GetBool(_T("VideoPreviewBackupped"), false);
 	m_bVideoPreviewThumbnails = false;
 	m_iPreviewSmallBlocks = PreferenceUiSeams::NormalizePreviewSmallBlocks(ini.GetInt(_T("PreviewSmallBlocks"), 0));
 	m_bPreviewCopiedArchives = ini.GetBool(_T("PreviewCopiedArchives"), true);
@@ -3323,6 +3322,7 @@ void CPreferences::LoadPreferences()
 	m_strVideoThumbnailFfmpegPath = ini.GetString(prefini::VideoThumbnailKeys::FfmpegPath, _T(""));
 	m_uVideoThumbnailIntervalSeconds = PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(
 		NormalizeNonNegativePreference(ini.GetInt(prefini::VideoThumbnailKeys::IntervalSeconds, static_cast<int>(PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds)), PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds));
+	m_bAllowPeerPreview = ini.GetBool(prefini::VideoThumbnailKeys::AllowPeerPreview, false);
 	m_bRunCommandOnFileCompletion = ini.GetBool(prefini::FileCompletionKeys::RunCommandOnFileCompletion, false, prefini::Sections::FileCompletion);
 	m_strFileCompletionProgram = ini.GetString(prefini::FileCompletionKeys::Program, _T(""), prefini::Sections::FileCompletion);
 	m_strFileCompletionArguments = ini.GetString(prefini::FileCompletionKeys::Arguments, _T(""), prefini::Sections::FileCompletion);

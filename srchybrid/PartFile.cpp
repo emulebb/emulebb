@@ -3799,15 +3799,7 @@ void CPartFile::PreviewFile()
 		return;
 	}
 
-	if (thePrefs.IsMoviePreviewBackup()) {
-		if (!CheckFileOpen(GetFilePath(), GetFileName()))
-			return;
-		m_bPreviewing = true;
-		CPreviewThread *pThread = static_cast<CPreviewThread*>(AfxBeginThread(RUNTIME_CLASS(CPreviewThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
-		pThread->SetValues(this, thePrefs.GetVideoPlayer(), thePrefs.GetVideoPlayerArgs());
-		pThread->ResumeThread();
-	} else
-		ExecutePartFile(this, thePrefs.GetVideoPlayer(), thePrefs.GetVideoPlayerArgs());
+	ExecutePartFile(this, thePrefs.GetVideoPlayer(), thePrefs.GetVideoPlayerArgs());
 }
 
 bool CPartFile::IsReadyForVideoThumbnail() const
@@ -3867,18 +3859,8 @@ bool CPartFile::IsReadyForPreview() const
 		}
 		if (!PartFilePreviewSeams::HasEnoughCompletedDataForPartialVideoPreview(static_cast<uint64>(m_nFileSize), static_cast<uint64>(GetCompletedSize())))
 			return false;
-		if (thePrefs.IsMoviePreviewBackup() && static_cast<uint64>(m_nFileSize) >= GetFreeDiskSpaceX(GetTmpPath()) + 100000000)
-			return false;
 		return true;
 	}
-
-	if (thePrefs.IsMoviePreviewBackup())
-		return inSet(uStatus, PS_READY, PS_PAUSED)
-			&& GetPartCount() >= 5
-			&& IsMovie()
-			&& (uint64)m_nFileSize < GetFreeDiskSpaceX(GetTmpPath()) + 100000000
-			&& IsComplete(0)
-			&& IsComplete(GetPartCount() - 1);
 
 	const CString strVideoPlayerFileName = PartFilePreviewSeams::ExtractConfiguredVideoPlayerBaseName(thePrefs.GetVideoPlayer());
 
@@ -5370,28 +5352,6 @@ bool CPartFile::CopyPartFile(CArray<Gap_Struct> &raFilled, const CString &tempFi
 	}
 	m_bPreviewing = false;
 	return false;
-}
-
-bool CPartFile::GrabImage(uint8 nFramesToGrab, double dStartTime, bool bReduceColor, uint16 nMaxWidth, void *pSender)
-{
-	if (IsPartFile()) {
-		if (!inSet(GetStatus(), PS_READY, PS_PAUSED) || m_bPreviewing || GetPartCount() < 2 || !IsCompleteBD(0))
-			return false;
-		m_bPreviewing = m_FileCompleteMutex.Lock(100);
-		if (!m_bPreviewing)
-			return false;
-	}
-	const CString &sFile(IsPartFile() ? RemoveFileExtension(m_fullname) : GetFilePath());
-	return CKnownFile::GrabImage(sFile, nFramesToGrab, dStartTime, bReduceColor, nMaxWidth, pSender);
-}
-
-void CPartFile::GrabbingFinished(HBITMAP *imgResults, uint8 nFramesGrabbed, void *pSender)
-{
-	if (IsPartFile()) {
-		m_bPreviewing = false;
-		m_FileCompleteMutex.Unlock(); // unlock the file and continue processing
-	}
-	CKnownFile::GrabbingFinished(imgResults, nFramesGrabbed, pSender);
 }
 
 void CPartFile::GetLeftToTransferAndAdditionalNeededSpace(uint64 &rui64LeftToTransfer

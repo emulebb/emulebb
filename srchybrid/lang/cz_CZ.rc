@@ -990,7 +990,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Zjištění verze"
     IDS_VISITVERSIONCHECK   "\n\nChcete nyní navštívit informační stránku?"
     IDS_PW_VIDEOPLAYER      "Přehrávač videa"
-    IDS_VIDEOBACKUP         "Vytvořit zálohu pro ukázku"
     IDS_MYINFO              "Moje info"
     IDS_ID                  "ID" //!
     IDS_IDLOW               "Low ID" //!
@@ -2185,6 +2184,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Akce vyloučení aplikace Microsoft Defender se nezdařila: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Akce vyloučení programu Microsoft Defender byla zrušena."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Pro vyloučení aplikace Microsoft Defender nebyly k dispozici žádné složky pro stahování eMule."
+    IDS_ALLOW_PEER_PREVIEW                                  "Povolit náhled pro partnery"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Před povolením náhledu pro partnery vyberte existující spustitelný soubor FFmpeg."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Umožňuje ostatním klientům eMule požadovat náhledové snímky sdílených videosouborů.\r\n\r\neMule používá FFmpeg k vykreslení statických snímků a odesílá pouze tyto náhledové obrázky, nikoli celé video. Sdílené soubory musí být také viditelné pro partnery."
 END
 // eMule BB managed translation block: end
 

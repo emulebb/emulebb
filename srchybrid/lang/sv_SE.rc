@@ -945,7 +945,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Versionskontroll"
     IDS_VISITVERSIONCHECK   "\n\nVill du besöka informationssidan nu?"
     IDS_PW_VIDEOPLAYER      "Videospelare"
-    IDS_VIDEOBACKUP         "Skapa backup till granskning"
     IDS_MYINFO              "Min info"
     IDS_ID                  "ID" //!
     IDS_IDLOW               "Lågt ID"
@@ -2186,6 +2185,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defender-uteslutningsåtgärden misslyckades: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defender-uteslutningsåtgärden avbröts."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Inga eMule-nedladdningsmappar var tillgängliga för Microsoft Defender-uteslutning."
+    IDS_ALLOW_PEER_PREVIEW                                  "Tillåt förhandsvisning för peers"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Välj en befintlig FFmpeg-körbar fil innan förhandsvisning för peers tillåts."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Låter andra eMule-klienter begära förhandsvisningsrutor för delade videofiler.\r\n\r\neMule använder FFmpeg för att skapa stillbilder och skickar bara dessa förhandsvisningsbilder, inte hela videon. Delade filer måste också vara synliga för peers."
 END
 // eMule BB managed translation block: end
 

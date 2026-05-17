@@ -1033,7 +1033,6 @@ BEGIN
     IDS_VERSIONCHECK        "Проверка на версия"
     IDS_VISITVERSIONCHECK   "\n\nИскате ли да посетите нашата Информационна страница сега?"
     IDS_PW_VIDEOPLAYER      "Видео плейър"
-    IDS_VIDEOBACKUP         "Създай резервно копие за преглед"
     IDS_MYINFO              "Моя информация"
     IDS_ID                  "ID" //!
     IDS_IDLOW               "Low ID" //!
@@ -2167,6 +2166,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Неуспешно действие за изключване на Microsoft Defender: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Действието за изключване на Microsoft Defender е отменено."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Няма налични папки за изтегляне на eMule за изключване на Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                  "Разреши преглед от пиъри"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Изберете съществуващ изпълним файл на FFmpeg, преди да разрешите преглед от пиъри."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Позволява на други eMule клиенти да заявяват кадри за преглед на споделени видео файлове.\r\n\r\neMule използва FFmpeg за създаване на неподвижни кадри и изпраща само тези изображения за преглед, а не целия видеоклип. Споделените файлове трябва също да са видими за пиърите."
 END
 // eMule BB managed translation block: end
 

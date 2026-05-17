@@ -35,6 +35,10 @@ constexpr std::uint64_t kVideoThumbnailRefreshMaxDeltaBytes = 128ull * 1024ull *
 constexpr int kVideoThumbnailDisplayMaxWidth = 480;
 constexpr int kVideoThumbnailWorkerThreadPriority = THREAD_PRIORITY_LOWEST;
 constexpr DWORD kFfmpegThumbnailTimeoutMs = 30u * 1000u;
+constexpr std::uint8_t kPeerPreviewFrameCount = 4;
+constexpr std::uint32_t kPeerPreviewFirstFrameSecond = 15;
+constexpr std::uint32_t kPeerPreviewFrameStepSeconds = 50;
+constexpr int kPeerPreviewFrameMaxWidth = 450;
 
 /**
  * Extracts the executable basename used by preview-player dependent features.
@@ -220,6 +224,41 @@ inline CString BuildFfmpegThumbnailCommandLine(const CString &rstrFfmpegPath, co
 	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(rstrInputPath);
 	strCommandLine += _T(" -an -frames:v 1 -vf ");
 	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(_T("scale=480:-2:force_original_aspect_ratio=decrease"));
+	strCommandLine += _T(" ");
+	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(rstrOutputPath);
+	return strCommandLine;
+}
+
+/**
+ * Selects the timestamp for a wire-compatible peer preview frame.
+ */
+inline std::uint32_t GetPeerPreviewFrameSecond(std::uint8_t uFrameIndex)
+{
+	return kPeerPreviewFirstFrameSecond + static_cast<std::uint32_t>(uFrameIndex) * kPeerPreviewFrameStepSeconds;
+}
+
+/**
+ * Returns whether this client should advertise and serve peer preview frames.
+ */
+inline bool ShouldAllowPeerPreview(bool bAllowPeerPreview, bool bSharesVisible, bool bHasValidFfmpegPath)
+{
+	return bAllowPeerPreview && bSharesVisible && bHasValidFfmpegPath;
+}
+
+/**
+ * Builds an FFmpeg command line that captures one peer-preview PNG frame.
+ */
+inline CString BuildFfmpegPeerPreviewFrameCommandLine(const CString &rstrFfmpegPath, const CString &rstrInputPath, const CString &rstrOutputPath, std::uint32_t uStartSecond)
+{
+	CString strCommandLine(FileCompletionCommandSeams::QuoteCommandLineArgument(rstrFfmpegPath));
+	strCommandLine += _T(" -hide_banner -loglevel error -y");
+	strCommandLine.AppendFormat(_T(" -ss %u"), uStartSecond);
+	strCommandLine += _T(" -fflags +genpts+discardcorrupt -err_detect ignore_err -analyzeduration 5M -probesize 5M -i ");
+	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(rstrInputPath);
+	strCommandLine += _T(" -an -frames:v 1 -vf ");
+	CString strScaleFilter;
+	strScaleFilter.Format(_T("scale=%d:-2:force_original_aspect_ratio=decrease"), kPeerPreviewFrameMaxWidth);
+	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(strScaleFilter);
 	strCommandLine += _T(" ");
 	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(rstrOutputPath);
 	return strCommandLine;

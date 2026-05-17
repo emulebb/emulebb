@@ -1034,7 +1034,6 @@ BEGIN
     IDS_VERSIONCHECK        "Iċċeka l-verżjoni"
     IDS_VISITVERSIONCHECK   "\n\nTixtieq iżżur il-paġna tal-Informazzjoni issa?"
     IDS_PW_VIDEOPLAYER      "Video player"
-    IDS_VIDEOBACKUP         "Agħmel backup biex tara preview"
     IDS_MYINFO              "Info tiegħi"
     IDS_ID                  "ID"
     IDS_IDLOW               "ID Baxxa"
@@ -2177,6 +2176,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Azzjoni ta' esklużjoni ta' Microsoft Defender falliet: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Azzjoni ta' esklużjoni ta' Microsoft Defender ikkanċellata."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "L-ebda folders tat-tniżżil eMule ma kienu disponibbli għall-esklużjoni tal-Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                  "Ħalli preview mill-pari"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Agħżel fajl eżekutabbli FFmpeg eżistenti qabel ma tħalli preview mill-pari."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Jippermetti lil klijenti eMule oħra jitolbu frames ta’ preview għal fajls tal-vidjo kondiviżi.\r\n\r\neMule juża FFmpeg biex joħloq frames statiċi u jibgħat biss dawk l-istampi ta’ preview, mhux il-vidjo kollu. Il-fajls kondiviżi jridu jkunu viżibbli wkoll għall-pari."
 END
 // eMule BB managed translation block: end
 

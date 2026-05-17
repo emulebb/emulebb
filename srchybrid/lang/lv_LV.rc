@@ -1035,7 +1035,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Versioncheck"
     IDS_VISITVERSIONCHECK   "\n\nDo you want do visit the Informationpage now?"
     IDS_PW_VIDEOPLAYER      "Video player"
-    IDS_VIDEOBACKUP         "Create backup to preview"
     IDS_MYINFO              "My Info"
     IDS_ID                  "ID"
     IDS_IDLOW               "Low ID"
@@ -2180,6 +2179,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defender izslēgšanas darbība neizdevās: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defender izslēgšanas darbība ir atcelta."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Microsoft Defender izslēgšanai nebija pieejama neviena eMule lejupielādes mape."
+    IDS_ALLOW_PEER_PREVIEW                                  "Atļaut partneru priekšskatījumu"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Pirms partneru priekšskatījuma atļaušanas izvēlieties esošu FFmpeg izpildāmo failu."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Ļauj citiem eMule klientiem pieprasīt koplietotu video failu priekšskatījuma kadrus.\r\n\r\neMule izmanto FFmpeg nekustīgu kadru izveidei un nosūta tikai šos priekšskatījuma attēlus, nevis visu video. Koplietotajiem failiem jābūt redzamiem arī partneriem."
 END
 // eMule BB managed translation block: end
 

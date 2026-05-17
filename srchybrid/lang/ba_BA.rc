@@ -955,7 +955,6 @@ BEGIN
     IDS_VERSIONCHECK        "Bertsio berria bilatu"
     IDS_VISITVERSIONCHECK   "\n\nInformazio orria bisitatu nahi al duzu?"
     IDS_PW_VIDEOPLAYER      "Bideo erreproduktorea"
-    IDS_VIDEOBACKUP         "Segurtasun kopia sortu aurrikusteko"
     IDS_MYINFO              "Norbere informazioa"
     IDS_ID                  "ID-a"
     IDS_IDLOW               "ID baxua"
@@ -2185,6 +2184,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defender baztertzeko ekintzak huts egin du: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defender baztertzeko ekintza bertan behera utzi da."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Ez zegoen eMule deskarga-karpetarik eskuragarri Microsoft Defender baztertzeko."
+    IDS_ALLOW_PEER_PREVIEW                                  "Onartu parekoen aurrebista"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Hautatu dagoen FFmpeg exekutagarri bat parekoen aurrebista onartu aurretik."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Beste eMule bezeroei partekatutako bideo-fitxategien aurrebista-fotogramak eskatzeko aukera ematen die.\r\n\r\neMulek FFmpeg erabiltzen du fotograma geldiak sortzeko, eta aurrebista-irudi horiek bakarrik bidaltzen ditu, ez bideo osoa. Partekatutako fitxategiek parekoentzat ikusgai egon behar dute."
 END
 // eMule BB managed translation block: end
 

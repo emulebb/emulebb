@@ -1035,7 +1035,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Kiểm tra Phiên bản"
     IDS_VISITVERSIONCHECK   "\n\nBạn có muốn truy cập trang thông tin Phiên bản bây giờ không?"
     IDS_PW_VIDEOPLAYER      "Chương trình xem Video"
-    IDS_VIDEOBACKUP         "Tạo bản sao cho xem thử"
     IDS_MYINFO              "Thông tin"
     IDS_ID                  "ID" //!
     IDS_IDLOW               "IDThấp"
@@ -2180,6 +2179,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Hành động loại trừ Microsoft Defender không thành công: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Hành động loại trừ của Microsoft Defender đã bị hủy."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Không có thư mục tải xuống eMule nào có sẵn để loại trừ Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                  "Cho phép xem trước từ máy ngang hàng"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Chọn một tệp thực thi FFmpeg hiện có trước khi cho phép xem trước từ máy ngang hàng."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Cho phép các máy khách eMule khác yêu cầu khung hình xem trước cho các tệp video được chia sẻ.\r\n\r\neMule dùng FFmpeg để tạo các khung hình tĩnh và chỉ gửi những ảnh xem trước đó, không gửi toàn bộ video. Các tệp chia sẻ cũng phải hiển thị với máy ngang hàng."
 END
 // eMule BB managed translation block: end
 

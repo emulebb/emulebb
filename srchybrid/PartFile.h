@@ -299,8 +299,6 @@ public:
 
 	//preview
 	bool CopyPartFile(CArray<Gap_Struct> &raFilled, const CString &tempFileName);
-	virtual bool GrabImage(uint8 nFramesToGrab, double dStartTime, bool bReduceColor, uint16 nMaxWidth, void *pSender);
-	virtual void GrabbingFinished(HBITMAP *imgResults, uint8 nFramesGrabbed, void *pSender);
 
 	void	FlushBuffersExceptionHandler(CFileException *ex);
 	void	FlushBuffersExceptionHandler();

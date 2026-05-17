@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <share.h>
 #include "Preferences.h"
+#include "KnownFile.h"
 #include "PartFile.h"
 #include "Preview.h"
 #include "MenuCmds.h"
@@ -42,6 +43,7 @@ CPreviewApps thePreviewApps;
 namespace
 {
 constexpr ULONGLONG kMaxThumbnailBytes = 16ull * 1024ull * 1024ull;
+const TCHAR kPeerPreviewWorkFolder[] = _T("PeerPreview\\");
 volatile LONG g_lVideoThumbnailProcessActive = 0;
 
 class CScopedVideoThumbnailProcessSlot
@@ -234,91 +236,80 @@ void CVideoThumbnailThread::SetValues(CPartFile *pPartFile, LPCTSTR pszFfmpegPat
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// CPreviewThread
+// CPeerPreviewThread
 
-IMPLEMENT_DYNCREATE(CPreviewThread, CWinThread)
+IMPLEMENT_DYNCREATE(CPeerPreviewThread, CWinThread)
 
-//BEGIN_MESSAGE_MAP(CPreviewThread, CWinThread)
-//END_MESSAGE_MAP()
-
-CPreviewThread::CPreviewThread()
-	: m_pPartfile()
-	, m_aFilled()
+CPeerPreviewThread::CPeerPreviewThread()
+	: m_pFile()
+	, m_pSender()
+	, m_strFfmpegPath()
+	, m_strInputPath()
+	, m_strWorkingDirectory()
+	, m_strFileHash()
+	, m_hNotifyWnd()
 {
 }
 
-BOOL CPreviewThread::InitInstance()
+BOOL CPeerPreviewThread::InitInstance()
 {
-	DbgSetThreadName("PartFilePreview");
+	DbgSetThreadName("PeerPreview");
 	InitThreadLocale();
 	return TRUE;
 }
 
-BOOL CPreviewThread::Run()
+BOOL CPeerPreviewThread::Run()
 {
+	PeerPreviewResult_Struct *pResult = new PeerPreviewResult_Struct;
+	pResult->pFile = m_pFile;
+	pResult->pSender = m_pSender;
+
 	try {
-		const CString srcName(m_pPartfile->GetFileName());
-		CString strPreviewName(m_pPartfile->GetTmpPath());
-		strPreviewName.AppendFormat(_T("%s_preview%s"), (LPCTSTR)srcName.Left(5), ::PathFindExtension(srcName));
+		if (!m_strInputPath.IsEmpty()
+			&& LongPathSeams::GetFileAttributes(m_strInputPath) != INVALID_FILE_ATTRIBUTES
+			&& PartFilePreviewSeams::IsValidConfiguredFfmpegPath(m_strFfmpegPath))
+		{
+			if (!LongPathSeams::PathExists(m_strWorkingDirectory))
+				(void)LongPathSeams::CreateDirectory(m_strWorkingDirectory, NULL);
 
-		bool bRet = m_pPartfile->CopyPartFile(m_aFilled, strPreviewName);
-		m_pPartfile->m_bPreviewing = false;
-		m_aFilled.RemoveAll();
-		if (!bRet)
-			return FALSE;
+			pResult->imgResults = new HBITMAP[PartFilePreviewSeams::kPeerPreviewFrameCount]{};
+			for (uint8 i = 0; i < PartFilePreviewSeams::kPeerPreviewFrameCount; ++i) {
+				CString strOutputPath(m_strWorkingDirectory);
+				strOutputPath.AppendFormat(_T("peerpreview_%s_%lu_%u.png"), (LPCTSTR)m_strFileHash, ::GetCurrentThreadId(), i);
+				(void)LongPathSeams::DeleteFileIfExists(strOutputPath);
 
-		SHELLEXECUTEINFO SE = {};
-		SE.cbSize = (DWORD)sizeof SE;
-		SE.fMask = SEE_MASK_NOCLOSEPROCESS;
-		SE.nShow = SW_SHOW;
-
-		if (m_strCommand.IsEmpty()) {
-			// use the default verb for the document
-			SE.lpFile = strPreviewName;
-			ShellExecuteEx(&SE);
-		} else {
-			SE.lpVerb = _T("open");	// "open" the specified video player
-
-			// get directory of video player application
-			CString strCommandDir(m_strCommand);
-			int iPos = strCommandDir.ReverseFind(_T('\\'));
-			strCommandDir.Truncate(iPos + 1); //may be empty
-
-			CString strArgs(m_strCommandArgs);
-			if (!strArgs.IsEmpty())
-				strArgs += _T(' ');
-			if (strPreviewName.Find(_T(' ')) >= 0)
-				strArgs.AppendFormat(_T("\"%s\""), (LPCTSTR)strPreviewName);
-			else
-				strArgs += strPreviewName;
-
-			CString strCommand(m_strCommand);
-			ExpandEnvironmentStrings(strCommand);
-			ExpandEnvironmentStrings(strArgs);
-			ExpandEnvironmentStrings(strCommandDir);
-			SE.lpFile = strCommand;
-			SE.lpParameters = strArgs;
-			SE.lpDirectory = strCommandDir;
-			ShellExecuteEx(&SE);
+				DWORD dwExitCode = 0;
+				const CString strCommandLine(PartFilePreviewSeams::BuildFfmpegPeerPreviewFrameCommandLine(
+					m_strFfmpegPath, m_strInputPath, strOutputPath, PartFilePreviewSeams::GetPeerPreviewFrameSecond(i)));
+				if (RunVideoThumbnailCommand(strCommandLine, m_strWorkingDirectory, dwExitCode) && dwExitCode == 0
+					&& LongPathSeams::GetFileAttributes(strOutputPath) != INVALID_FILE_ATTRIBUTES)
+				{
+					HBITMAP hBitmap = NULL;
+					if (ReadVideoThumbnailBitmapFile(strOutputPath, hBitmap) && hBitmap != NULL)
+						pResult->imgResults[pResult->nImagesGrabbed++] = hBitmap;
+				}
+				(void)LongPathSeams::DeleteFileIfExists(strOutputPath);
+			}
 		}
-		if (SE.hProcess) {
-			::WaitForSingleObject(SE.hProcess, INFINITE);
-			::CloseHandle(SE.hProcess);
-		}
-		(void)LongPathSeams::DeleteFileIfExists(strPreviewName);
 	} catch (CFileException *ex) {
-		m_pPartfile->m_bPreviewing = false;
 		ex->Delete();
+	} catch (...) {
 	}
+
+	if (!::IsWindow(m_hNotifyWnd) || !::PostMessage(m_hNotifyWnd, TM_PEERPREVIEWFINISHED, reinterpret_cast<WPARAM>(m_pFile), reinterpret_cast<LPARAM>(pResult)))
+		delete pResult;
 	return TRUE;
 }
 
-void CPreviewThread::SetValues(CPartFile *pPartFile, LPCTSTR pszCommand, LPCTSTR pszCommandArgs)
+void CPeerPreviewThread::SetValues(CKnownFile *pFile, CUpDownClient *pSender, LPCTSTR pszFfmpegPath, HWND hNotifyWnd)
 {
-	m_pPartfile = pPartFile;
-	pPartFile->GetFilledArray(m_aFilled);
-	m_strCommand = pszCommand;
-	m_strCommandArgs = pszCommandArgs;
+	m_pFile = pFile;
+	m_pSender = pSender;
+	m_strFfmpegPath = pszFfmpegPath;
+	m_strInputPath = pFile != NULL ? pFile->GetFilePath() : CString();
+	m_strWorkingDirectory = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + kPeerPreviewWorkFolder;
+	m_strFileHash = pFile != NULL ? CString(md4str(pFile->GetFileHash())) : CString();
+	m_hNotifyWnd = hNotifyWnd;
 }
 
 

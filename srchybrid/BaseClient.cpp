@@ -54,6 +54,7 @@
 #include "TransferDlg.h"
 #include "ChatWnd.h"
 #include "PreviewDlg.h"
+#include "PartFilePreviewSeams.h"
 #include "Exceptions.h"
 #include "ClientUDPSocket.h"
 #include "shahashset.h"
@@ -743,7 +744,11 @@ void CUpDownClient::SendMuleInfoPacket(bool bAnswer)
 	tag6.WriteTagToFile(data);
 
 	uint32 dwTagValue = (theApp.clientcredits->CryptoAvailable() ? 3 : 0);
-	if (thePrefs.CanSeeShares() != vsfaNobody) // set 'Preview supported' only if 'View Shared Files' allowed
+	const bool bCanThisPeerSeeShares = thePrefs.CanSeeShares() == vsfaEverybody || (thePrefs.CanSeeShares() == vsfaFriends && IsFriend());
+	if (PartFilePreviewSeams::ShouldAllowPeerPreview(
+		thePrefs.IsPeerPreviewAllowed(),
+		bCanThisPeerSeeShares,
+		PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.GetVideoThumbnailFfmpegPath())))
 		dwTagValue |= 0x80;
 	CTag tag7(ET_FEATURES, dwTagValue);
 	tag7.WriteTagToFile(data);
@@ -987,7 +992,11 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile &data)
 	const UINT uAcceptCommentVer = 1;
 	const UINT uNoViewSharedFiles = static_cast<int>(thePrefs.CanSeeShares() == vsfaNobody); // for backward compatibility this has to be a 'negative' flag
 	const UINT uMultiPacket = 1;
-	const UINT uSupportPreview = static_cast<int>(thePrefs.CanSeeShares() != vsfaNobody); // set 'Preview supported' only if 'View Shared Files' allowed
+	const bool bCanThisPeerSeeShares = thePrefs.CanSeeShares() == vsfaEverybody || (thePrefs.CanSeeShares() == vsfaFriends && IsFriend());
+	const UINT uSupportPreview = static_cast<int>(PartFilePreviewSeams::ShouldAllowPeerPreview(
+		thePrefs.IsPeerPreviewAllowed(),
+		bCanThisPeerSeeShares,
+		PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.GetVideoThumbnailFfmpegPath())));
 	const UINT uUnicodeSupport = 1;
 	const UINT nAICHVer = 1;
 	CTag tagMisOptions1(CT_EMULE_MISCOPTIONS1,
@@ -2077,7 +2086,7 @@ void CUpDownClient::SendPreviewRequest(const CAbstractFile &rForFile)
 void CUpDownClient::SendPreviewAnswer(const CKnownFile *pForFile, HBITMAP *imgFrames, uint8 nCount)
 {
 	m_fPreviewAnsPending = 0;
-	if (imgFrames == NULL) {
+	if (imgFrames == NULL && nCount != 0) {
 		ASSERT(0);
 		return;
 	}
@@ -2135,8 +2144,13 @@ void CUpDownClient::ProcessPreviewReq(const uchar *pachPacket, uint32 nSize)
 	CKnownFile *previewFile = theApp.sharedfiles->GetFileByID(pachPacket);
 	if (previewFile == NULL)
 		SendPreviewAnswer(NULL, NULL, 0);
-	else
-		previewFile->GrabImage(4, 15.0, true, 450, this); //do not start at 0 because videos commonly begin with blank screens
+	else if (!PartFilePreviewSeams::ShouldAllowPeerPreview(
+		thePrefs.IsPeerPreviewAllowed(),
+		true,
+		PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.GetVideoThumbnailFfmpegPath()))
+		|| theApp.emuledlg == NULL
+		|| !previewFile->StartPeerPreviewFrames(this, theApp.emuledlg->GetSafeHwnd()))
+		SendPreviewAnswer(previewFile, NULL, 0);
 }
 
 void CUpDownClient::ProcessPreviewAnswer(const uchar *pachPacket, uint32 nSize)

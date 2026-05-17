@@ -955,7 +955,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Verificar versão"
     IDS_VISITVERSIONCHECK   "\n\nVocê gostaria de visitar a página de informações agora?"
     IDS_PW_VIDEOPLAYER      "Reprodutor de Vídeo"
-    IDS_VIDEOBACKUP         "Criar cópia para pré-visualizar"
     IDS_MYINFO              "Meus Dados"
     IDS_ID                  "ID"//!
     IDS_IDLOW               "ID Baixa"
@@ -2698,7 +2697,6 @@ BEGIN
     IDS_PPG_FILES_TT_STARTNEXTFILECAT                          "Ao iniciar o próximo arquivo pausado, prefira arquivos da mesma categoria do arquivo concluído.\r\n\r\nUuse-o para manter as filas de categoria movendo-se juntas."
     IDS_PPG_FILES_TT_STARTNEXTFILECAT2                         "Ao iniciar o próximo arquivo pausado, escolha apenas a mesma categoria do arquivo concluído.\r\n\r\nUuse-o para controle estrito da fila por categoria."
     IDS_PPG_FILES_TT_UAP                                       "Atribui prioridade automática aos arquivos recém-compartilhados.\r\n\r\nRecomendado, a menos que você mesmo ajuste deliberadamente as prioridades dos arquivos compartilhados."
-    IDS_PPG_FILES_TT_VIDEOBACKUP                               "Cria uma cópia de backup antes de visualizar um arquivo de mídia parcialmente baixado.\r\n\r\nMais seguro para players frágeis, mas usa espaço e tempo extras em disco."
     IDS_PPG_FILES_TT_VIDEOPLAYER                               "Player externo usado para visualizações de mídia.\r\n\r\nDeixe-o em branco para usar a associação padrão ou defina um player confiável específico."
     IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS                          "Argumentos passados ​​para o player de visualização externo.\r\n\r\nUUse isso apenas se o player precisar de opções de linha de comando personalizadas."
     IDS_PPG_GENERAL_TT_CHECKDAYS                               "Número de dias entre verificações de atualização de inicialização.\r\n\r\nValores mais altos reduzem verificações de rede; valores mais baixos encontram novos lançamentos publicados mais cedo."
@@ -2770,6 +2768,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                            "Falha na ação de exclusão do Microsoft Defender: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                          "Ação de exclusão do Microsoft Defender cancelada."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                           "Nenhuma pasta de download eMule estava disponível para exclusão do Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                     "Permitir prévia por peers"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                             "Selecione um executável FFmpeg existente antes de permitir prévia por peers."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                        "Permite que outros clientes eMule solicitem quadros de prévia para arquivos de vídeo compartilhados.\r\n\r\neMule usa FFmpeg para gerar quadros estáticos e envia apenas essas imagens de prévia, não o vídeo inteiro. Os arquivos compartilhados também precisam estar visíveis para os peers."
 END
 // eMule BB managed translation block: end
 

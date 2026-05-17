@@ -364,7 +364,6 @@ BEGIN
     IDS_VERSIONCHECK        "버전 확인(&V)"
     IDS_VISITVERSIONCHECK   "\n\n지금 정보 페이지를 방문하시겠습니까?"
     IDS_PW_VIDEOPLAYER      "비디오 재생기"
-    IDS_VIDEOBACKUP         "미리 보기를 위한 백업 생성"
     IDS_MYINFO              "내 정보"
     IDS_ID                  "ID"
     IDS_IDLOW               "로우 ID"
@@ -2149,6 +2148,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defender 제외 작업 실패: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defender 제외 작업이 취소되었습니다."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Microsoft Defender 제외에 사용할 수 있는 eMule 다운로드 폴더가 없습니다."
+    IDS_ALLOW_PEER_PREVIEW                                  "피어 미리보기 허용"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "피어 미리보기를 허용하기 전에 기존 FFmpeg 실행 파일을 선택하십시오."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "다른 eMule 클라이언트가 공유된 동영상 파일의 미리보기 프레임을 요청할 수 있게 합니다.\r\n\r\neMule은 FFmpeg를 사용해 정지 프레임을 렌더링하고 전체 동영상이 아니라 해당 미리보기 이미지만 보냅니다. 공유 파일도 피어에게 표시되어야 합니다."
 END
 // eMule BB managed translation block: end
 

@@ -72,7 +72,7 @@
 #include "SocketIoSeams.h"
 #include "SearchList.h"
 #include "HTRichEditCtrl.h"
-#include "FrameGrabThread.h"
+#include "Preview.h"
 #include "kademlia/kademlia/kademlia.h"
 #include "PerfLog.h"
 #include "DropTarget.h"
@@ -1274,7 +1274,7 @@ BEGIN_MESSAGE_MAP(CemuleDlg, CTrayDialog)
 	ON_MESSAGE(TM_SHAREDFILEHASHED, OnSharedFileHashed)
 	ON_MESSAGE(TM_SHAREDFILEHASHFAILED, OnSharedHashFailed)
 	ON_MESSAGE(TM_SHAREDHASHRESULTSAVAILABLE, OnSharedHashResultsAvailable)
-	ON_MESSAGE(TM_FRAMEGRABFINISHED, OnFrameGrabFinished)
+	ON_MESSAGE(TM_PEERPREVIEWFINISHED, OnPeerPreviewFinished)
 	ON_MESSAGE(TM_FILEALLOCEXC, OnFileAllocExc)
 	ON_MESSAGE(TM_FILECOMPLETED, OnFileCompleted)
 	ON_MESSAGE(TM_CONSOLETHREADEVENT, OnConsoleThreadEvent)
@@ -4823,13 +4823,20 @@ void CemuleDlg::ApplyLogFont(LPLOGFONT pFont)
 	}
 }
 
-LRESULT CemuleDlg::OnFrameGrabFinished(WPARAM wParam, LPARAM lParam)
+LRESULT CemuleDlg::OnPeerPreviewFinished(WPARAM wParam, LPARAM lParam)
 {
 	CKnownFile *pOwner = reinterpret_cast<CKnownFile*>(wParam);
-	FrameGrabResult_Struct *result = (FrameGrabResult_Struct*)lParam;
+	PeerPreviewResult_Struct *result = reinterpret_cast<PeerPreviewResult_Struct*>(lParam);
+	if (result == NULL)
+		return 0;
 
 	if (theApp.knownfiles->IsKnownFile(pOwner) || theApp.downloadqueue->IsPartFile(pOwner))
-		pOwner->GrabbingFinished(result->imgResults, result->nImagesGrabbed, result->pSender);
+	{
+		pOwner->PeerPreviewFinished(result->imgResults, result->nImagesGrabbed, result->pSender);
+		result->ReleaseFrames();
+	}
+	else if (theApp.clientlist->IsValidClient(result->pSender))
+		result->pSender->SendPreviewAnswer(NULL, NULL, 0);
 	else
 		ASSERT(0);
 

@@ -519,10 +519,10 @@ public:
 	static CString	m_strVideoPlayerArgs;
 	static CString	m_strVideoThumbnailFfmpegPath;
 	static UINT		m_uVideoThumbnailIntervalSeconds;
+	static bool		m_bAllowPeerPreview;
 	static bool		m_bRunCommandOnFileCompletion;
 	static CString	m_strFileCompletionProgram;
 	static CString	m_strFileCompletionArguments;
-	static bool		m_bMoviePreviewBackup;
 	static bool		m_bVideoPreviewThumbnails;
 	static int		m_iPreviewSmallBlocks;
 	static bool		m_bPreviewCopiedArchives;
@@ -1259,6 +1259,7 @@ public:
 	static const CString& GetVideoPlayerArgs()			{ return m_strVideoPlayerArgs; }
 	static const CString& GetVideoThumbnailFfmpegPath()	{ return m_strVideoThumbnailFfmpegPath; }
 	static UINT		GetVideoThumbnailIntervalSeconds()	{ return m_uVideoThumbnailIntervalSeconds; }
+	static bool		IsPeerPreviewAllowed()				{ return m_bAllowPeerPreview; }
 	static bool		GetRunCommandOnFileCompletion()		{ return m_bRunCommandOnFileCompletion; }
 	static const CString& GetFileCompletionProgram()		{ return m_strFileCompletionProgram; }
 	static const CString& GetFileCompletionArguments()	{ return m_strFileCompletionArguments; }
@@ -1343,7 +1344,6 @@ public:
 
 	static bool		IsSafeServerConnectEnabled()		{ return m_bSafeServerConnect; }
 	static void		SetSafeServerConnectEnabled(bool in) { m_bSafeServerConnect = in; }
-	static bool		IsMoviePreviewBackup()				{ return m_bMoviePreviewBackup; }
 	static bool		IsVideoThumbnailGenerationEnabled()	{ return m_uVideoThumbnailIntervalSeconds > 0; }
 	static bool		UseVideoPreviewThumbnails()			{ return IsVideoThumbnailGenerationEnabled(); }
 	static DWORD	GetVideoThumbnailIntervalMs()		{ return SEC2MS(m_uVideoThumbnailIntervalSeconds); }

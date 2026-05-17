@@ -944,7 +944,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Vérifier si une nouvelle version existe"
     IDS_VISITVERSIONCHECK   "\n\nVoulez-vous visiter la page d'information maintenant ?"
     IDS_PW_VIDEOPLAYER      "Lecteur vidéo"
-    IDS_VIDEOBACKUP         "Faire une sauvegarde avant l'aperçu"
     IDS_MYINFO              "Mes Infos"
     IDS_ID                  "ID" //!
     IDS_IDLOW               "Low ID" //!
@@ -2712,7 +2711,6 @@ BEGIN
     IDS_PPG_FILES_TT_STARTNEXTFILECAT                          "Lors du démarrage du prochain fichier mis en pause, préférez les fichiers de la même catégorie que le fichier terminé.\r\n\r\nUtilisez-le pour maintenir les files d'attente de catégories en mouvement ensemble."
     IDS_PPG_FILES_TT_STARTNEXTFILECAT2                         "Lors du démarrage du prochain fichier mis en pause, choisissez uniquement dans la même catégorie que le fichier terminé.\r\n\r\nUUtilisez-le pour un contrôle strict de la file d'attente par catégorie."
     IDS_PPG_FILES_TT_UAP                                       "Attribue une priorité automatique aux fichiers nouvellement partagés.\r\n\r\nRecommandé, sauf si vous réglez délibérément vous-même les priorités des fichiers partagés."
-    IDS_PPG_FILES_TT_VIDEOBACKUP                               "Crée une copie de sauvegarde avant de prévisualiser un fichier multimédia partiellement téléchargé.\r\n\r\nPlus sûr pour les lecteurs fragiles, mais utilise de l'espace disque et du temps supplémentaires."
     IDS_PPG_FILES_TT_VIDEOPLAYER                               "Lecteur externe utilisé pour les aperçus multimédias.\r\n\r\nLaissez-le vide pour utiliser l'association par défaut ou définissez un lecteur de confiance spécifique."
     IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS                          "Arguments transmis au lecteur d'aperçu externe.\r\n\r\nUtilisez-le uniquement si le lecteur a besoin d'options de ligne de commande personnalisées."
     IDS_PPG_GENERAL_TT_CHECKDAYS                               "Nombre de jours entre les vérifications de mise à jour au démarrage.\r\n\r\nDes valeurs plus élevées réduisent les vérifications du réseau ; les valeurs inférieures trouvent les nouvelles versions publiées plus tôt."
@@ -2784,6 +2782,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                            "L’action d’exclusion de Microsoft Defender a échoué : %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                          "Action d’exclusion de Microsoft Defender annulée."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                           "Aucun dossier de téléchargement eMule n’était disponible pour l’exclusion de Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                     "Autoriser l’aperçu par les pairs"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                             "Sélectionnez un exécutable FFmpeg existant avant d’autoriser l’aperçu par les pairs."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                        "Autorise les autres clients eMule à demander des images d’aperçu pour les fichiers vidéo partagés.\r\n\r\neMule utilise FFmpeg pour générer des images fixes et n’envoie que ces images d’aperçu, pas la vidéo complète. Les fichiers partagés doivent également être visibles par les pairs."
 END
 // eMule BB managed translation block: end
 

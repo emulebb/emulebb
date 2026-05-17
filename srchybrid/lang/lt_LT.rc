@@ -948,7 +948,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Versijos tikrinimas"
     IDS_VISITVERSIONCHECK   "\n\nAr jūs norite aplankyti informacinį puslapį dabar?"
     IDS_PW_VIDEOPLAYER      "Video grotuvas"
-    IDS_VIDEOBACKUP         "Kurti rezervinę peržiūros kopiją"
     IDS_MYINFO              "Mano informacija"
     IDS_ID                  "ID"//!
     IDS_IDLOW               "Žemas ID"
@@ -2186,6 +2185,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "„Microsoft Defender“ pašalinimo veiksmas nepavyko: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "„Microsoft Defender“ pašalinimo veiksmas atšauktas."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Nebuvo pasiekiamų eMule atsisiuntimo aplankų, kad būtų galima išskirti „Microsoft Defender“."
+    IDS_ALLOW_PEER_PREVIEW                                  "Leisti peržiūrą iš partnerių"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Prieš leisdami peržiūrą iš partnerių pasirinkite esamą FFmpeg vykdomąjį failą."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Leidžia kitiems eMule klientams prašyti bendrinamų vaizdo failų peržiūros kadrų.\r\n\r\neMule naudoja FFmpeg statiniams kadrams sukurti ir siunčia tik tas peržiūros nuotraukas, o ne visą vaizdo įrašą. Bendrinami failai taip pat turi būti matomi partneriams."
 END
 // eMule BB managed translation block: end
 

@@ -909,7 +909,6 @@ BEGIN
 	IDS_VERSIONCHECK	"&Gwiriañ stumm"
 	IDS_VISITVERSIONCHECK	"\n\nHa fellout a ra deoc'h gweladenniñ ar bajenn ditouroù diouzhtu ?"
 	IDS_PW_VIDEOPLAYER	"Lenner video"
-	IDS_VIDEOBACKUP	"Gwarediñ ar stlennoù evit rakgwelout"
 	IDS_MYINFO	"Ma zitouroù"
 	IDS_ID	"ID"
 	IDS_IDLOW	"Low ID"
@@ -2146,6 +2145,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "L’action d’exclusion de Microsoft Defender a échoué : %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Action d’exclusion de Microsoft Defender annulée."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Aucun dossier de téléchargement eMule n’était disponible pour l’exclusion de Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                  "Aotren rakwel ar c'hevelerien"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Dibabit un arload FFmpeg zo anezhañ a-raok aotren rakwel ar c'hevelerien."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Aotren a ra arvalien eMule all da c'houlenn skeudennoù rakwel evit restroù video rannet.\r\n\r\neMule a implij FFmpeg evit sevel skeudennoù difiñv hag a gas ar skeudennoù rakwel-se hepken, ket ar video a-bezh. Ret eo ivez d'ar restroù rannet bezañ gwelet gant ar c'hevelerien."
 END
 // eMule BB managed translation block: end
 

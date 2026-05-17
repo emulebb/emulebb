@@ -939,7 +939,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Versioonikontroll"
     IDS_VISITVERSIONCHECK   "\n\nKas Sa soovite infolehekülge kohe külastada?"
     IDS_PW_VIDEOPLAYER      "Video vaataja"
-    IDS_VIDEOBACKUP         "Eelvaade koopia alusel"
     IDS_MYINFO              "Minu info"
     IDS_ID                  "ID"	//!
     IDS_IDLOW               "MadalID"
@@ -2179,6 +2178,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defenderi välistamistoiming ebaõnnestus: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defenderi välistamistoiming tühistati."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Ükski eMule allalaadimiskaust ei olnud Microsoft Defenderi välistamiseks saadaval."
+    IDS_ALLOW_PEER_PREVIEW                                  "Luba partnerite eelvaade"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Vali olemasolev FFmpeg käivitusfail enne partnerite eelvaate lubamist."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Lubab teistel eMule klientidel küsida jagatud videofailide eelvaatekaadreid.\r\n\r\neMule kasutab FFmpeg-i staatiliste kaadrite loomiseks ja saadab ainult need eelvaatepildid, mitte kogu video. Jagatud failid peavad olema partneritele nähtavad."
 END
 // eMule BB managed translation block: end
 

@@ -31,6 +31,7 @@ namespace VideoThumbnailKeys
 {
 inline constexpr const TCHAR* FfmpegPath = _T("VideoThumbnailFfmpegPath");
 inline constexpr const TCHAR* IntervalSeconds = _T("VideoThumbnailIntervalSeconds");
+inline constexpr const TCHAR* AllowPeerPreview = _T("AllowPeerPreview");
 }
 
 namespace GeoLocationKeys

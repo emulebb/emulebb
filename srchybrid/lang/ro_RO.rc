@@ -1009,7 +1009,6 @@ BEGIN
     IDS_VERSIONCHECK        "Control &Versiune"
     IDS_VISITVERSIONCHECK   "\n\nVrei să vezi acum pagina de noutăţi?"
     IDS_PW_VIDEOPLAYER      "Player pentru pre-vizualizare:"
-    IDS_VIDEOBACKUP         "Creează copie de pre-vizualizare"
     IDS_MYINFO              "Datele mele"
     IDS_ID                  "ID" //!
     IDS_IDLOW               "IDmic"
@@ -2190,6 +2189,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Acțiunea de excludere Microsoft Defender a eșuat: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Acțiunea de excludere Microsoft Defender a fost anulată."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Nu au fost disponibile foldere de descărcare eMule pentru excluderea Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                  "Permite previzualizarea de la parteneri"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Selectați un executabil FFmpeg existent înainte de a permite previzualizarea de la parteneri."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Permite altor clienți eMule să solicite cadre de previzualizare pentru fișiere video partajate.\r\n\r\neMule folosește FFmpeg pentru a genera cadre statice și trimite doar acele imagini de previzualizare, nu întregul video. Fișierele partajate trebuie să fie vizibile și pentru parteneri."
 END
 // eMule BB managed translation block: end
 

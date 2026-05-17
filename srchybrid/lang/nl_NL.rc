@@ -949,7 +949,6 @@ BEGIN
     IDS_VERSIONCHECK        "Versiecontrole"
     IDS_VISITVERSIONCHECK   "\n\nWilt u nu de informatiepagina bezoeken?"
     IDS_PW_VIDEOPLAYER      "Videospeler"
-    IDS_VIDEOBACKUP         "Maak een backup voor voorvertoning"
     IDS_MYINFO              "Mijn informatie"
     IDS_ID                  "ID" //!
     IDS_IDLOW               "Laag-ID"
@@ -2714,7 +2713,6 @@ BEGIN
     IDS_PPG_FILES_TT_STARTNEXTFILECAT                          "Geef bij het starten van het volgende gepauzeerde bestand de voorkeur aan bestanden uit dezelfde categorie als het voltooide bestand.\r\n\r\nGebruik dit om categoriewachtrijen samen te laten bewegen."
     IDS_PPG_FILES_TT_STARTNEXTFILECAT2                         "Wanneer u het volgende gepauzeerde bestand start, kiest u alleen uit dezelfde categorie als het voltooide bestand.\r\n\r\nGebruik dit voor strikt wachtrijbeheer per categorie."
     IDS_PPG_FILES_TT_UAP                                       "Wijst automatische prioriteit toe aan nieuw gedeelde bestanden.\r\n\r\nAanbevolen, tenzij u de prioriteiten voor gedeelde bestanden opzettelijk zelf afstemt."
-    IDS_PPG_FILES_TT_VIDEOBACKUP                               "Maakt een back-up voordat u een voorbeeld van een gedeeltelijk gedownload mediabestand bekijkt.\r\n\r\nVeiliger voor kwetsbare spelers, maar gebruikt extra schijfruimte en tijd."
     IDS_PPG_FILES_TT_VIDEOPLAYER                               "Externe speler gebruikt voor mediavoorbeelden.\r\n\r\nLaat dit leeg om de standaardkoppeling te gebruiken of stel een specifieke vertrouwde speler in."
     IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS                          "Argumenten doorgegeven aan de externe voorbeeldspeler.\r\n\r\nGebruik dit alleen als de speler aangepaste opdrachtregelopties nodig heeft."
     IDS_PPG_GENERAL_TT_CHECKDAYS                               "Aantal dagen tussen opstartupdatecontroles.\r\n\r\nHogere waarden verminderen netwerkcontroles; lagere waarden vinden eerder nieuwe gepubliceerde releases."
@@ -2786,6 +2784,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                            "Uitsluitingsactie van Microsoft Defender mislukt: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                          "Uitsluitingsactie voor Microsoft Defender geannuleerd."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                           "Er waren geen eMule-downloadmappen beschikbaar voor uitsluiting van Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                     "Peer-voorbeeld toestaan"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                             "Selecteer een bestaand uitvoerbaar FFmpeg-bestand voordat peer-voorbeeld wordt toegestaan."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                        "Staat andere eMule-clients toe om voorbeeldframes op te vragen voor gedeelde videobestanden.\r\n\r\neMule gebruikt FFmpeg om stilstaande frames te maken en verzendt alleen die voorbeeldafbeeldingen, niet de volledige video. Gedeelde bestanden moeten ook zichtbaar zijn voor peers."
 END
 // eMule BB managed translation block: end
 

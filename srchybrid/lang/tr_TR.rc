@@ -964,7 +964,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Sürüm Kontrolü"
     IDS_VISITVERSIONCHECK   "\n\nBilgi sayfasını şimdi ziyaret etmek istiyor musunuz?"
     IDS_PW_VIDEOPLAYER      "Görüntü Oynatıcı"
-    IDS_VIDEOBACKUP         "Önizlemek için yedekleme oluştur"
     IDS_MYINFO              "Bilgilerim"
     IDS_ID                  "Kimlik No"
     IDS_IDLOW               "Düşük ID"
@@ -2713,7 +2712,6 @@ BEGIN
     IDS_PPG_FILES_TT_STARTNEXTFILECAT                          "Duraklatılan bir sonraki dosyayı başlatırken, tamamlanan dosyayla aynı kategorideki dosyaları tercih edin.\r\n\r\nKategori sıralarının birlikte hareket etmesini sağlamak için bunu kullanın."
     IDS_PPG_FILES_TT_STARTNEXTFILECAT2                         "Duraklatılan bir sonraki dosyayı başlatırken, yalnızca tamamlanan dosyayla aynı kategoriden seçim yapın.\r\n\r\nKategori başına sıkı kuyruk kontrolü için bunu kullanın."
     IDS_PPG_FILES_TT_UAP                                       "Yeni paylaşılan dosyalara otomatik öncelik atar.\r\n\r\nPaylaşılan dosya önceliklerini bilinçli olarak kendiniz ayarlamadığınız sürece önerilir."
-    IDS_PPG_FILES_TT_VIDEOBACKUP                               "Kısmen indirilen bir medya dosyasının ön izlemesini yapmadan önce bir yedek kopya oluşturur.\r\n\r\nKırılgan oynatıcılar için daha güvenlidir ancak ekstra disk alanı ve zaman kullanır."
     IDS_PPG_FILES_TT_VIDEOPLAYER                               "Medya önizlemeleri için kullanılan harici oynatıcı.\r\n\r\nVarsayılan ilişkilendirmeyi kullanmak için alanı boş bırakın veya belirli bir güvenilir oynatıcı ayarlayın."
     IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS                          "Harici önizleme oynatıcısına aktarılan bağımsız değişkenler.\r\n\r\nBunu yalnızca oynatıcının özel komut satırı seçeneklerine ihtiyacı varsa kullanın."
     IDS_PPG_GENERAL_TT_CHECKDAYS                               "Başlangıç ​​güncelleme kontrolleri arasındaki gün sayısı.\r\n\r\nDaha yüksek değerler ağ kontrollerini azaltır; daha düşük değerler yeni yayınlanan sürümleri daha çabuk bulur."
@@ -2785,6 +2783,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                            "Microsoft Defender hariç tutma eylemi başarısız oldu: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                          "Microsoft Defender hariç tutma eylemi iptal edildi."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                           "Microsoft Defender'ın hariç tutulması için kullanılabilir eMule indirme klasörü yoktu."
+    IDS_ALLOW_PEER_PREVIEW                                     "Eş önizlemeye izin ver"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                             "Eş önizlemeye izin vermeden önce mevcut bir FFmpeg çalıştırılabilir dosyası seçin."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                        "Diğer eMule istemcilerinin paylaşılan video dosyaları için önizleme kareleri istemesine izin verir.\r\n\r\neMule, sabit kareler oluşturmak için FFmpeg kullanır ve videonun tamamını değil yalnızca bu önizleme görüntülerini gönderir. Paylaşılan dosyalar eşler tarafından da görülebilir olmalıdır."
 END
 // eMule BB managed translation block: end
 

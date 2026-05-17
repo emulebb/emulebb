@@ -366,7 +366,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Päivitystarve"
     IDS_VISITVERSIONCHECK   "\n\nHaluatko vierailla eMulen www-sivuilla nyt?"
     IDS_PW_VIDEOPLAYER      "Videosoitin"
-    IDS_VIDEOBACKUP         "Luo kopio katselemista varten"
     IDS_MYINFO              "Tietosi"
     IDS_ID                  "Tunniste"
     IDS_IDLOW               "Matala tunniste"
@@ -2155,6 +2154,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defenderin poissulkemistoiminto epäonnistui: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defenderin poissulkemistoiminto peruutettu."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "eMule-latauskansioita ei ollut saatavilla Microsoft Defenderin poissulkemiseksi."
+    IDS_ALLOW_PEER_PREVIEW                                  "Salli vertais-esikatselu"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Valitse olemassa oleva FFmpeg-suoritustiedosto ennen vertais-esikatselun sallimista."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Sallii muiden eMule-asiakkaiden pyytää esikatselukuvia jaetuista videotiedostoista.\r\n\r\neMule käyttää FFmpeg-ohjelmaa pysäytyskuvien luomiseen ja lähettää vain nämä esikatselukuvat, ei koko videota. Jaettujen tiedostojen on myös oltava näkyvissä vertaisille."
 END
 // eMule BB managed translation block: end
 

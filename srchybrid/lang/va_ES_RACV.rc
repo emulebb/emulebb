@@ -955,7 +955,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Comprovar versió"
     IDS_VISITVERSIONCHECK   "\n\n¿Vols visitar la pagina d'informació ara?"
     IDS_PW_VIDEOPLAYER      "Reproductor de Vídeo"
-    IDS_VIDEOBACKUP         "Crear copia per a prevore"
     IDS_MYINFO              "La meua informació"
     IDS_ID                  "ID"//!
     IDS_IDLOW               "ID Baixa"
@@ -2190,6 +2189,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "L'acció d'exclusió de Microsoft Defender ha fallat: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "S'ha cancel·lat l'acció d'exclusió de Microsoft Defender."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "No hi havia cap carpeta de baixada eMule disponible per a l'exclusió de Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                  "Permetre la previsualisació dels iguals"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Tria un executable FFmpeg existent abans de permetre la previsualisació dels iguals."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Permet que atres clients eMule demanen fotogrames de previsualisació dels archius de vídeo compartits.\r\n\r\neMule usa FFmpeg per a generar fotogrames fixos i només envia eixes imàgens de previsualisació, no tot el vídeo. Els archius compartits també han de ser visibles per als iguals."
 END
 // eMule BB managed translation block: end
 

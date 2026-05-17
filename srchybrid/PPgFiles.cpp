@@ -60,10 +60,10 @@ BEGIN_MESSAGE_MAP(CPPgFiles, CPropertyPage)
 	ON_BN_CLICKED(IDC_FNC, OnSetCleanupFilter)
 	ON_EN_CHANGE(IDC_VIDEOPLAYER, OnSettingsChange)
 	ON_EN_CHANGE(IDC_VIDEOPLAYER_ARGS, OnSettingsChange)
-	ON_BN_CLICKED(IDC_VIDEOBACKUP, OnSettingsChange)
 	ON_EN_CHANGE(IDC_THUMBNAIL_FFMPEG, OnSettingsChange)
 	ON_EN_CHANGE(IDC_THUMBNAIL_INTERVAL, OnSettingsChange)
 	ON_EN_KILLFOCUS(IDC_THUMBNAIL_INTERVAL, OnThumbnailIntervalKillFocus)
+	ON_BN_CLICKED(IDC_ALLOW_PEER_PREVIEW, OnSettingsChange)
 	ON_BN_CLICKED(IDC_RUNONFILECOMPLETE, OnSettingsChange)
 	ON_EN_CHANGE(IDC_FILECOMPLETEPROGRAM, OnSettingsChange)
 	ON_EN_CHANGE(IDC_FILECOMPLETEARGS, OnSettingsChange)
@@ -133,10 +133,10 @@ void CPPgFiles::UpdateToolTips()
 	m_toolTip.SetTool(this, IDC_VIDEOPLAYER, GetResString(IDS_PPG_FILES_TT_VIDEOPLAYER));
 	m_toolTip.SetTool(this, IDC_BROWSEV, GetResString(IDS_PPG_FILES_TT_BROWSEV));
 	m_toolTip.SetTool(this, IDC_VIDEOPLAYER_ARGS, GetResString(IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS));
-	m_toolTip.SetTool(this, IDC_VIDEOBACKUP, GetResString(IDS_PPG_FILES_TT_VIDEOBACKUP));
 	m_toolTip.SetTool(this, IDC_THUMBNAIL_FFMPEG, GetResString(IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG));
 	m_toolTip.SetTool(this, IDC_BROWSE_THUMBNAIL_FFMPEG, GetResString(IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG));
 	m_toolTip.SetTool(this, IDC_THUMBNAIL_INTERVAL, GetResString(IDS_PPG_FILES_TT_VIDEOTHUMBNAILS));
+	m_toolTip.SetTool(this, IDC_ALLOW_PEER_PREVIEW, GetResString(IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW));
 	m_toolTip.SetTool(this, IDC_RUNONFILECOMPLETE, GetResString(IDS_PPG_FILES_TT_RUNONFILECOMPLETE));
 	m_toolTip.SetTool(this, IDC_FILECOMPLETEPROGRAM, GetResString(IDS_PPG_FILES_TT_FILECOMPLETEPROGRAM));
 	m_toolTip.SetTool(this, IDC_BROWSE_FILECOMPLETEPROGRAM, GetResString(IDS_PPG_FILES_TT_BROWSE_FILECOMPLETEPROGRAM));
@@ -177,11 +177,11 @@ void CPPgFiles::LoadSettings()
 	SetDlgItemText(IDC_VIDEOPLAYER_ARGS, thePrefs.m_strVideoPlayerArgs);
 	SetDlgItemText(IDC_THUMBNAIL_FFMPEG, thePrefs.m_strVideoThumbnailFfmpegPath);
 	SetDlgItemInt(IDC_THUMBNAIL_INTERVAL, thePrefs.m_uVideoThumbnailIntervalSeconds, FALSE);
+	CheckDlgButton(IDC_ALLOW_PEER_PREVIEW, static_cast<UINT>(thePrefs.m_bAllowPeerPreview));
 	CheckDlgButton(IDC_RUNONFILECOMPLETE, static_cast<UINT>(thePrefs.GetRunCommandOnFileCompletion()));
 	SetDlgItemText(IDC_FILECOMPLETEPROGRAM, thePrefs.GetFileCompletionProgram());
 	SetDlgItemText(IDC_FILECOMPLETEARGS, thePrefs.GetFileCompletionArguments());
 
-	CheckDlgButton(IDC_VIDEOBACKUP, static_cast<UINT>(thePrefs.m_bMoviePreviewBackup));
 	CheckDlgButton(IDC_FNCLEANUP, static_cast<UINT>(thePrefs.AutoFilenameCleanup()));
 	CheckDlgButton(IDC_WATCHCB, static_cast<UINT>(thePrefs.watchclipboard));
 	CheckDlgButton(IDC_REMEMBERDOWNLOADED, static_cast<UINT>(thePrefs.IsRememberingDownloadedFiles()));
@@ -195,6 +195,7 @@ BOOL CPPgFiles::OnApply()
 {
 	const CString strOldVideoThumbnailFfmpegPath(thePrefs.m_strVideoThumbnailFfmpegPath);
 	const UINT uOldVideoThumbnailIntervalSeconds = thePrefs.m_uVideoThumbnailIntervalSeconds;
+	const bool bOldAllowPeerPreview = thePrefs.m_bAllowPeerPreview;
 	bool bOldPreviewPrio = thePrefs.m_bpreviewprio;
 	thePrefs.m_bpreviewprio = IsDlgButtonChecked(IDC_PREVIEWPRIO) != 0;
 	if (bOldPreviewPrio != thePrefs.m_bpreviewprio)
@@ -234,6 +235,7 @@ BOOL CPPgFiles::OnApply()
 	BOOL bThumbnailIntervalTranslated = FALSE;
 	const UINT uVideoThumbnailIntervalSeconds = PartFilePreviewSeams::NormalizeVideoThumbnailIntervalSeconds(GetDlgItemInt(IDC_THUMBNAIL_INTERVAL, &bThumbnailIntervalTranslated, FALSE));
 	thePrefs.m_uVideoThumbnailIntervalSeconds = bThumbnailIntervalTranslated ? uVideoThumbnailIntervalSeconds : PartFilePreviewSeams::kVideoThumbnailDefaultIntervalSeconds;
+	thePrefs.m_bAllowPeerPreview = IsDlgButtonChecked(IDC_ALLOW_PEER_PREVIEW) != 0;
 	thePrefs.m_bRunCommandOnFileCompletion = IsDlgButtonChecked(IDC_RUNONFILECOMPLETE) != 0;
 	GetDlgItemText(IDC_FILECOMPLETEPROGRAM, thePrefs.m_strFileCompletionProgram);
 	thePrefs.m_strFileCompletionProgram.Trim();
@@ -246,10 +248,17 @@ BOOL CPPgFiles::OnApply()
 	if (thePrefs.m_uVideoThumbnailIntervalSeconds > 0 && !PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.m_strVideoThumbnailFfmpegPath)) {
 		thePrefs.m_strVideoThumbnailFfmpegPath = strOldVideoThumbnailFfmpegPath;
 		thePrefs.m_uVideoThumbnailIntervalSeconds = uOldVideoThumbnailIntervalSeconds;
+		thePrefs.m_bAllowPeerPreview = bOldAllowPeerPreview;
 		AfxMessageBox(GetResString(IDS_VIDEOTHUMBNAILS_INVALID), MB_ICONWARNING);
 		return FALSE;
 	}
-	thePrefs.m_bMoviePreviewBackup = IsDlgButtonChecked(IDC_VIDEOBACKUP) != 0;
+	if (thePrefs.m_bAllowPeerPreview && !PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.m_strVideoThumbnailFfmpegPath)) {
+		thePrefs.m_strVideoThumbnailFfmpegPath = strOldVideoThumbnailFfmpegPath;
+		thePrefs.m_uVideoThumbnailIntervalSeconds = uOldVideoThumbnailIntervalSeconds;
+		thePrefs.m_bAllowPeerPreview = bOldAllowPeerPreview;
+		AfxMessageBox(GetResString(IDS_ALLOW_PEER_PREVIEW_INVALID), MB_ICONWARNING);
+		return FALSE;
+	}
 	thePrefs.m_bVideoPreviewThumbnails = false;
 	if (theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
 		theApp.emuledlg->transferwnd->GetDownloadList()->UpdateVideoThumbnailTimer();
@@ -280,10 +289,10 @@ void CPPgFiles::Localize()
 		SetDlgItemText(IDC_STATICVIDEOPLAYER, GetResString(IDS_PW_VIDEOPLAYER));
 		SetDlgItemText(IDC_VIDEOPLAYER_CMD_LBL, GetResString(IDS_COMMAND));
 		SetDlgItemText(IDC_VIDEOPLAYER_ARGS_LBL, GetResString(IDS_ARGUMENTS));
-		SetDlgItemText(IDC_VIDEOBACKUP, GetResString(IDS_VIDEOBACKUP));
 		SetDlgItemText(IDC_VIDEOTHUMBNAILS_GROUP, GetResString(IDS_VIDEOTHUMBNAILS));
 		SetDlgItemText(IDC_THUMBNAIL_FFMPEG_LBL, GetResString(IDS_THUMBNAIL_FFMPEG));
 		SetDlgItemText(IDC_THUMBNAIL_INTERVAL_LBL, GetResString(IDS_THUMBNAIL_INTERVAL_SECONDS));
+		SetDlgItemText(IDC_ALLOW_PEER_PREVIEW, GetResString(IDS_ALLOW_PEER_PREVIEW));
 		SetDlgItemText(IDC_FILECOMPLETE_GROUP, GetResString(IDS_COMPLETIONCOMMAND));
 		SetDlgItemText(IDC_RUNONFILECOMPLETE, GetResString(IDS_RUNONFILECOMPLETE));
 		SetDlgItemText(IDC_FILECOMPLETEPROGRAM_LBL, GetResString(IDS_COMMAND));

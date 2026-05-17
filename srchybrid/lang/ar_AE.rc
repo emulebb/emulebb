@@ -1033,7 +1033,6 @@ BEGIN
     IDS_VERSIONCHECK        "&فحص الاصدار"
     IDS_VISITVERSIONCHECK   "\n\nهل تريد زيارة صفحة المعلومات الان؟"
     IDS_PW_VIDEOPLAYER      "فيديو بلير"
-    IDS_VIDEOBACKUP         "اعمل باك اب للاظهار"
     IDS_MYINFO              "معلوملتي"
     IDS_ID                  "هوية"
     IDS_IDLOW               "اي دي واطي"
@@ -2177,6 +2176,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "فشل إجراء استثناء Microsoft Defender: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "تم إلغاء إجراء استبعاد Microsoft Defender."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "لم تكن هناك مجلدات تنزيل eMule متاحة لاستثناء Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                  "السماح بمعاينة الأقران"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "حدد ملف FFmpeg تنفيذيًا موجودًا قبل السماح بمعاينة الأقران."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "يسمح لعملاء eMule الآخرين بطلب إطارات معاينة لملفات الفيديو المشتركة.\r\n\r\nيستخدم eMule برنامج FFmpeg لعرض إطارات ثابتة ويرسل صور المعاينة هذه فقط، وليس الفيديو كاملًا. يجب أن تكون الملفات المشتركة مرئية أيضًا للأقران."
 END
 // eMule BB managed translation block: end
 

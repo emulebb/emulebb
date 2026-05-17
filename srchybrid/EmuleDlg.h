@@ -336,8 +336,7 @@ protected:
 	afx_msg LRESULT OnFileCompleted(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnFileOpProgress(WPARAM wParam, LPARAM lParam);
 
-	//Frame grabbing
-	afx_msg LRESULT OnFrameGrabFinished(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPeerPreviewFinished(WPARAM wParam, LPARAM lParam);
 
 	afx_msg LRESULT OnAreYouEmule(WPARAM, LPARAM);
 
@@ -384,7 +383,7 @@ enum EEMuleAppMsgs
 	TM_SHAREDFILEHASHED,
 	TM_SHAREDFILEHASHFAILED,
 	TM_SHAREDHASHRESULTSAVAILABLE,
-	TM_FRAMEGRABFINISHED,
+	TM_PEERPREVIEWFINISHED,
 	TM_FILEALLOCEXC,
 	TM_FILECOMPLETED,
 	TM_FILEOPPROGRESS,

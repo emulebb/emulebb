@@ -949,7 +949,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Verziófrissítés"
     IDS_VISITVERSIONCHECK   "\n\nMeg szeretnéd látogatni az információs oldalt?"
     IDS_PW_VIDEOPLAYER      "Videólejátszó"
-    IDS_VIDEOBACKUP         "Készítsen ideiglenes másolatot az előnézethez"
     IDS_MYINFO              "Saját adatok"
     IDS_ID                  "ID"
     IDS_IDLOW               "Alacsony ID"
@@ -2189,6 +2188,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "A Microsoft Defender kizárási művelete sikertelen: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "A Microsoft Defender kizárási művelete megszakítva."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Nem volt elérhető eMule letöltési mappa a Microsoft Defender kizárásához."
+    IDS_ALLOW_PEER_PREVIEW                                  "Partner előnézet engedélyezése"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Válassz egy létező FFmpeg futtatható fájlt a partner előnézet engedélyezése előtt."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Lehetővé teszi, hogy más eMule kliensek előnézeti képkockákat kérjenek a megosztott videófájlokhoz.\r\n\r\nAz eMule az FFmpeg segítségével állóképeket készít, és csak ezeket az előnézeti képeket küldi el, nem a teljes videót. A megosztott fájloknak a partnerek számára is láthatónak kell lenniük."
 END
 // eMule BB managed translation block: end
 

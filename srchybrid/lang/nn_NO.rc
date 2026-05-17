@@ -938,7 +938,6 @@ BEGIN
     IDS_VERSIONCHECK        "Utgåvekontroll"
     IDS_VISITVERSIONCHECK   "\n\nVil du vitje informasjonssida no?"
     IDS_PW_VIDEOPLAYER      "Videoavspelar"
-    IDS_VIDEOBACKUP         "Opprett tryggingskopi før førehandssyning"
     IDS_MYINFO              "Min info"
     IDS_ID                  "ID"
     IDS_IDLOW               "Låg ID"
@@ -2139,6 +2138,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defender-ekskluderingshandling mislyktes: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defender-ekskluderingshandlingen ble avbrutt."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Ingen eMule nedlastingsmapper var tilgjengelig for Microsoft Defender-ekskludering."
+    IDS_ALLOW_PEER_PREVIEW                                  "Tillat førehandsvising frå nodar"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Vel ei eksisterande FFmpeg-køyrbar fil før førehandsvising frå nodar blir tillaten."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Lèt andre eMule-klientar be om førehandsvisingsbilete for delte videofiler.\r\n\r\neMule brukar FFmpeg til å laga stillbilete og sender berre desse førehandsvisingsbileta, ikkje heile videoen. Delte filer må òg vera synlege for nodar."
 END
 // eMule BB managed translation block: end
 

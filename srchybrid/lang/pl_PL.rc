@@ -368,7 +368,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Wersja"
     IDS_VISITVERSIONCHECK   "\n\nCzy chcesz odwiedzić teraz strone informacyjną?"
     IDS_PW_VIDEOPLAYER      "Odtwarzacz wideo"
-    IDS_VIDEOBACKUP         "Twórz kopie do podglądu"
     IDS_MYINFO              "Moje Info"
     IDS_ID                  "ID" //!
     IDS_IDLOW               "Niskie ID"
@@ -2688,7 +2687,6 @@ BEGIN
     IDS_PPG_FILES_TT_STARTNEXTFILECAT                          "Rozpoczynając pracę nad kolejnym wstrzymanym plikiem, preferuj pliki z tej samej kategorii, co plik ukończony.\r\n\r\nUżyj go, aby kolejki kategorii poruszały się razem."
     IDS_PPG_FILES_TT_STARTNEXTFILECAT2                         "Rozpoczynając następny wstrzymany plik, wybieraj tylko z tej samej kategorii, co plik ukończony.\r\n\r\nUżyj go do ścisłej kontroli kolejki według kategorii."
     IDS_PPG_FILES_TT_UAP                                       "Przypisuje automatyczny priorytet nowo udostępnionym plikom.\r\n\r\nZalecane, chyba że sam celowo dostosujesz priorytety plików udostępnionych."
-    IDS_PPG_FILES_TT_VIDEOBACKUP                               "Tworzy kopię zapasową przed wyświetleniem podglądu częściowo pobranego pliku multimedialnego.\r\n\r\nBezpieczniejsze dla delikatnych odtwarzaczy, ale wymaga dodatkowego miejsca i czasu na dysku."
     IDS_PPG_FILES_TT_VIDEOPLAYER                               "Zewnętrzny odtwarzacz używany do podglądów multimediów.\r\n\r\nPozostaw to pole puste, aby użyć domyślnego skojarzenia, lub ustaw określonego zaufanego odtwarzacza."
     IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS                          "Argumenty przekazywane do zewnętrznego odtwarzacza podglądu.\r\n\r\nUżyj tej opcji tylko wtedy, gdy odtwarzacz potrzebuje niestandardowych opcji wiersza poleceń."
     IDS_PPG_GENERAL_TT_CHECKDAYS                               "Liczba dni pomiędzy sprawdzaniem aktualizacji podczas uruchamiania.\r\n\r\nWyższe wartości zmniejszają liczbę kontroli sieci; niższe wartości szybciej znajdują nowe opublikowane wydania."
@@ -2760,6 +2758,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                            "Akcja wykluczenia usługi Microsoft Defender nie powiodła się: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                          "Akcja wykluczenia usługi Microsoft Defender została anulowana."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                           "Żadne foldery pobierania eMule nie były dostępne do wykluczenia programu Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                     "Zezwalaj na podgląd dla peerów"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                             "Wybierz istniejący plik wykonywalny FFmpeg przed zezwoleniem na podgląd dla peerów."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                        "Pozwala innym klientom eMule żądać klatek podglądu dla udostępnionych plików wideo.\r\n\r\neMule używa FFmpeg do tworzenia nieruchomych klatek i wysyła tylko te obrazy podglądu, a nie cały film. Udostępnione pliki muszą być także widoczne dla peerów."
 END
 // eMule BB managed translation block: end
 

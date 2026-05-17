@@ -943,7 +943,6 @@ BEGIN
     IDS_VERSIONCHECK        "Pre&verjanje za novo različico"
     IDS_VISITVERSIONCHECK   "\n\nAli žlite obiskati informacijsko stran?"
     IDS_PW_VIDEOPLAYER      "Video predvajalnik"
-    IDS_VIDEOBACKUP         "Ustvari varnostno kopijo za predogled"
     IDS_MYINFO              "Moji podatki"
     IDS_ID                  "ID" //!
     IDS_IDLOW               "Nizek ID"
@@ -2184,6 +2183,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Dejanje izključitve programa Microsoft Defender ni uspelo: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Dejanje izključitve programa Microsoft Defender preklicano."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Za izključitev programa Microsoft Defender ni bila na voljo nobena mapa za prenos eMule."
+    IDS_ALLOW_PEER_PREVIEW                                  "Dovoli predogled vrstnikom"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Preden dovolite predogled vrstnikom, izberite obstoječo izvedljivo datoteko FFmpeg."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Drugim odjemalcem eMule omogoča zahtevati sličice predogleda za deljene video datoteke.\r\n\r\neMule uporablja FFmpeg za ustvarjanje statičnih sličic in pošlje samo te slike predogleda, ne celotnega videa. Deljene datoteke morajo biti vidne tudi vrstnikom."
 END
 // eMule BB managed translation block: end
 

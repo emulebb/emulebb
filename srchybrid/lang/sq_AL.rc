@@ -1033,7 +1033,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Verifikim versioni"
     IDS_VISITVERSIONCHECK   "\n\nA do e vizitoni tani faqen e informacionit?"
     IDS_PW_VIDEOPLAYER      "Luajtësi i videos"
-    IDS_VIDEOBACKUP         "Për parashikimin, krijo një 'kthim mbrapa'"
     IDS_MYINFO              "Informacion"
     IDS_ID                  "ID"//!
     IDS_IDLOW               "ID i Ulët"
@@ -2179,6 +2178,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Veprimi i përjashtimit të Microsoft Defender dështoi: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Veprimi i përjashtimit të Microsoft Defender u anulua."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Asnjë dosje shkarkimi eMule nuk ishte e disponueshme për përjashtimin e Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                  "Lejo parapamjen nga peer-ët"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Zgjidh një skedar ekzekutues ekzistues FFmpeg para se të lejosh parapamjen nga peer-ët."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "U lejon klientëve të tjerë eMule të kërkojnë korniza parapamjeje për skedarët video të ndarë.\r\n\r\neMule përdor FFmpeg për të krijuar korniza të palëvizshme dhe dërgon vetëm ato imazhe parapamjeje, jo të gjithë videon. Skedarët e ndarë duhet të jenë gjithashtu të dukshëm për peer-ët."
 END
 // eMule BB managed translation block: end
 

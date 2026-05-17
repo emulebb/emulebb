@@ -928,7 +928,6 @@ BEGIN
     IDS_VERSIONCHECK        "Έλεγχος νέας έ&κδοσης"
     IDS_VISITVERSIONCHECK   "\n\nΘέλετε να επισκευθείτε την σελίδα πληροφοριών τώρα;"
     IDS_PW_VIDEOPLAYER      "Πρόγραμμα αναπαραγωγής βίντεο"
-    IDS_VIDEOBACKUP         "Δημιουργία αντιγράφου κατά την προεπισκόπηση"
     IDS_MYINFO              "Οι πληροφορίες μου"
     IDS_ID                  "Κωδικός"
     IDS_IDLOW               "Χαμηλό ID"
@@ -2129,6 +2128,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Η ενέργεια εξαίρεσης του Microsoft Defender απέτυχε: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Η ενέργεια εξαίρεσης του Microsoft Defender ακυρώθηκε."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Δεν ήταν διαθέσιμοι φάκελοι λήψης eMule για εξαίρεση του Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                  "Να επιτρέπεται προεπισκόπηση από ομότιμους"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Επιλέξτε ένα υπάρχον εκτελέσιμο FFmpeg πριν επιτρέψετε την προεπισκόπηση από ομότιμους."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Επιτρέπει σε άλλους πελάτες eMule να ζητούν καρέ προεπισκόπησης για κοινόχρηστα αρχεία βίντεο.\r\n\r\nΤο eMule χρησιμοποιεί το FFmpeg για να δημιουργεί στατικά καρέ και στέλνει μόνο αυτές τις εικόνες προεπισκόπησης, όχι ολόκληρο το βίντεο. Τα κοινόχρηστα αρχεία πρέπει επίσης να είναι ορατά στους ομότιμους."
 END
 // eMule BB managed translation block: end
 

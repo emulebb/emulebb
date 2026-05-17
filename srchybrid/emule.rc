@@ -328,23 +328,23 @@ BEGIN
     PUSHBUTTON      "...",IDC_BROWSEV,210,180,14,14
     LTEXT           "Arguments:",IDC_VIDEOPLAYER_ARGS_LBL,10,199,151,8
     EDITTEXT        IDC_VIDEOPLAYER_ARGS,10,208,211,12,ES_AUTOHSCROLL
-    CONTROL         "Create file backup for preview",IDC_VIDEOBACKUP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,224,195,8
-    GROUPBOX        "Video Thumbnails",IDC_VIDEOTHUMBNAILS_GROUP,4,241,223,64
+    GROUPBOX        "Video Thumbnails",IDC_VIDEOTHUMBNAILS_GROUP,4,241,223,76
     LTEXT           "FFmpeg:",IDC_THUMBNAIL_FFMPEG_LBL,10,251,151,8
     EDITTEXT        IDC_THUMBNAIL_FFMPEG,10,260,211,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_BROWSE_THUMBNAIL_FFMPEG,210,255,14,14
-    LTEXT           "Interval (seconds):",IDC_THUMBNAIL_INTERVAL_LBL,10,278,151,8
-    EDITTEXT        IDC_THUMBNAIL_INTERVAL,10,287,42,12,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_THUMBNAIL_INTERVAL_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,52,287,11,12
+    CONTROL         "Allow peer preview",IDC_ALLOW_PEER_PREVIEW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,277,209,10
+    LTEXT           "Interval (seconds):",IDC_THUMBNAIL_INTERVAL_LBL,10,291,151,8
+    EDITTEXT        IDC_THUMBNAIL_INTERVAL,10,300,42,12,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_THUMBNAIL_INTERVAL_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,52,300,11,12
     GROUPBOX        "Static",IDC_LBL_MISC,4,60,223,104
-    GROUPBOX        "Run Program On Completion",IDC_FILECOMPLETE_GROUP,4,317,223,78
+    GROUPBOX        "Run Program On Completion",IDC_FILECOMPLETE_GROUP,4,329,223,78
     CONTROL         "Run program when a file completes",IDC_RUNONFILECOMPLETE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,328,209,10
-    LTEXT           "Command:",IDC_FILECOMPLETEPROGRAM_LBL,10,342,151,8
-    EDITTEXT        IDC_FILECOMPLETEPROGRAM,10,351,211,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_BROWSE_FILECOMPLETEPROGRAM,210,346,14,14
-    LTEXT           "Arguments:",IDC_FILECOMPLETEARGS_LBL,10,365,151,8
-    EDITTEXT        IDC_FILECOMPLETEARGS,10,374,211,12,ES_AUTOHSCROLL
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,340,209,10
+    LTEXT           "Command:",IDC_FILECOMPLETEPROGRAM_LBL,10,354,151,8
+    EDITTEXT        IDC_FILECOMPLETEPROGRAM,10,363,211,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BROWSE_FILECOMPLETEPROGRAM,210,358,14,14
+    LTEXT           "Arguments:",IDC_FILECOMPLETEARGS_LBL,10,377,151,8
+    EDITTEXT        IDC_FILECOMPLETEARGS,10,386,211,12,ES_AUTOHSCROLL
 END
 
 IDD_PPG_DIRECTORIES DIALOGEX 0, 0, 547, 454
@@ -2531,11 +2531,12 @@ BEGIN
     IDS_VERSIONCHECK        "&Check for updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want do visit the Information page now?"
     IDS_PW_VIDEOPLAYER      "Video Player"
-    IDS_VIDEOBACKUP         "Create backup to preview"
     IDS_VIDEOTHUMBNAILS     "Video Thumbnails"
     IDS_VIDEOTHUMBNAILS_INVALID "Select an existing FFmpeg executable before enabling video thumbnails."
     IDS_THUMBNAIL_FFMPEG    "FFmpeg:"
     IDS_THUMBNAIL_INTERVAL_SECONDS "Interval (seconds):"
+    IDS_ALLOW_PEER_PREVIEW  "Allow peer preview"
+    IDS_ALLOW_PEER_PREVIEW_INVALID "Select an existing FFmpeg executable before allowing peer preview."
     IDS_MYINFO              "My Info"
     IDS_ID                  "ID"
     IDS_IDLOW               "Low ID"
@@ -4991,9 +4992,9 @@ BEGIN
     IDS_PPG_FILES_TT_STARTNEXTFILECAT      "When starting the next paused file, prefer files from the same category as the completed file.\r\n\r\nUse it to keep category queues moving together."
     IDS_PPG_FILES_TT_STARTNEXTFILECAT2     "When starting the next paused file, choose only from the same category as the completed file.\r\n\r\nUse it for strict per-category queue control."
     IDS_PPG_FILES_TT_UAP                   "Assigns auto priority to newly shared files.\r\n\r\nRecommended unless you deliberately tune shared-file priorities yourself."
-    IDS_PPG_FILES_TT_VIDEOBACKUP           "Creates a backup copy before previewing a partially downloaded media file.\r\n\r\nSafer for fragile players, but uses extra disk space and time."
     IDS_PPG_FILES_TT_VIDEOTHUMBNAILS       "Controls how often eMule attempts video thumbnail generation for downloading video files.\r\n\r\nSet to 0 to disable thumbnail generation. Enabled intervals use 30..900 seconds. Default recommended interval is 90 seconds."
     IDS_PPG_FILES_TT_THUMBNAIL_FFMPEG      "External FFmpeg executable used only for video thumbnail generation.\r\n\r\nFFmpeg must be installed separately. Select ffmpeg.exe with the browse button."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW    "Allows other eMule clients to request preview frames for shared video files.\r\n\r\neMule uses FFmpeg to render still frames and sends only those preview images, not the whole video. Shared files must also be visible to peers."
     IDS_PPG_FILES_TT_VIDEOPLAYER           "External player used for media previews.\r\n\r\nLeave it empty to use the default association, or set a specific trusted player."
     IDS_PPG_FILES_TT_VIDEOPLAYER_ARGS      "Arguments passed to the external preview player.\r\n\r\nUse this only if the player needs custom command-line options."
     IDS_PPG_GENERAL_TT_CHECKDAYS           "Number of days between startup update checks.\r\n\r\nHigher values reduce network checks; lower values find new published releases sooner."

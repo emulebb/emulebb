@@ -29,7 +29,7 @@
 #include "ClientList.h"
 #include "opcodes.h"
 #include "ini2.h"
-#include "FrameGrabThread.h"
+#include "Preview.h"
 #include "Preferences.h"
 #include "PartFile.h"
 #include "Packets.h"
@@ -1674,29 +1674,28 @@ bool CKnownFile::IsMovie() const
 }
 
 // function assumes that this file is shared and that any needed permission to preview exists. checks have to be done before calling!
-bool CKnownFile::GrabImage(uint8 nFramesToGrab, double dStartTime, bool bReduceColor, uint16 nMaxWidth, void *pSender)
+bool CKnownFile::StartPeerPreviewFrames(CUpDownClient *pSender, HWND hNotifyWnd)
 {
-	return GrabImage(GetFilePath(), nFramesToGrab, dStartTime, bReduceColor, nMaxWidth, pSender);
-}
-
-bool CKnownFile::GrabImage(const CString &strFileName, uint8 nFramesToGrab, double dStartTime, bool bReduceColor, uint16 nMaxWidth, void *pSender)
-{
-	if (!IsMovie())
+	if (!IsMovie() || !PartFilePreviewSeams::ShouldAllowPeerPreview(
+		thePrefs.IsPeerPreviewAllowed(),
+		thePrefs.CanSeeShares() != vsfaNobody,
+		PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.GetVideoThumbnailFfmpegPath())))
 		return false;
-	CFrameGrabThread *framegrabthread = static_cast<CFrameGrabThread*>(AfxBeginThread(RUNTIME_CLASS(CFrameGrabThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
-	framegrabthread->SetValues(this, strFileName, nFramesToGrab, dStartTime, bReduceColor, nMaxWidth, pSender);
-	framegrabthread->ResumeThread();
+	CPeerPreviewThread *pThread = static_cast<CPeerPreviewThread*>(AfxBeginThread(RUNTIME_CLASS(CPeerPreviewThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
+	if (pThread == NULL)
+		return false;
+	pThread->SetValues(this, pSender, thePrefs.GetVideoThumbnailFfmpegPath(), hNotifyWnd);
+	pThread->ResumeThread();
 	return true;
 }
 
-// imgResults[i] can be NULL
-void CKnownFile::GrabbingFinished(HBITMAP *imgResults, uint8 nFramesGrabbed, void *pSender)
+void CKnownFile::PeerPreviewFinished(HBITMAP *imgResults, uint8 nFramesGrabbed, CUpDownClient *pSender)
 {
 	// continue processing
-	if (theApp.clientlist->IsValidClient(reinterpret_cast<CUpDownClient*>(pSender)))
-		reinterpret_cast<CUpDownClient*>(pSender)->SendPreviewAnswer(this, imgResults, nFramesGrabbed);
+	if (theApp.clientlist->IsValidClient(pSender))
+		pSender->SendPreviewAnswer(this, imgResults, nFramesGrabbed);
 	else if (thePrefs.GetVerbose()) //probably the client got deleted while grabbing the frames
-		AddDebugLogLine(false, _T("Couldn't find Sender of FrameGrabbing Request"));
+		AddDebugLogLine(false, _T("Couldn't find sender of peer preview request"));
 
 	//cleanup
 	for (int i = nFramesGrabbed; --i >= 0;)

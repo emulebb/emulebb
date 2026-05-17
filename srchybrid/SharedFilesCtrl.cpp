@@ -1606,14 +1606,6 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM)
 #endif
 		// file operations
 		case MP_OPEN:
-#if TEST_FRAMEGRABBER //see also FrameGrabThread::GrabFrames
-			if (file) {
-				CKnownFile *previewFile = theApp.sharedfiles->GetFileByID(file->GetFileHash());
-				if (previewFile != NULL)
-					previewFile->GrabImage(4, 15, true, 450, this);
-				break;
-			}
-#endif
 		case IDA_ENTER:
 			if (file && !file->IsPartFile())
 				OpenFile(file);

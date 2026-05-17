@@ -366,7 +366,6 @@ BEGIN
     IDS_VERSIONCHECK        "&تطبيق دادن نسخه موجود"
     IDS_VISITVERSIONCHECK   "\n\nآيا مي خواهيد صفحه اطلاعات موجود را ببينيد؟"
     IDS_PW_VIDEOPLAYER      "نرم افزار نمايش دهنده ويدئويي"
-    IDS_VIDEOBACKUP         "ايجاد نسخه پشتيبان در هنگام نمايش دادن"
     IDS_MYINFO              "اطلاعات من"
     IDS_ID                  "شناسه"
     IDS_IDLOW               "شناسه سطح پايين"
@@ -2151,6 +2150,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "اقدام حذف Microsoft Defender انجام نشد: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "اقدام حذف Microsoft Defender لغو شد."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "هیچ پوشه بارگیری eMule برای حذف Microsoft Defender در دسترس نبود."
+    IDS_ALLOW_PEER_PREVIEW                                  "اجازهٔ پیش‌نمایش همتا"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "پیش از اجازه دادن به پیش‌نمایش همتا، یک فایل اجرایی موجود FFmpeg را انتخاب کنید."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "به دیگر کلاینت‌های eMule اجازه می‌دهد برای فایل‌های ویدئویی اشتراکی، فریم‌های پیش‌نمایش درخواست کنند.\r\n\r\neMule از FFmpeg برای ساخت فریم‌های ثابت استفاده می‌کند و فقط همان تصاویر پیش‌نمایش را می‌فرستد، نه کل ویدئو را. فایل‌های اشتراکی نیز باید برای همتاها قابل مشاهده باشند."
 END
 // eMule BB managed translation block: end
 

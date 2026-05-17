@@ -120,8 +120,8 @@ public:
 
 	// preview
 	bool	IsMovie() const;
-	virtual bool GrabImage(uint8 nFramesToGrab, double dStartTime, bool bReduceColor, uint16 nMaxWidth, void *pSender);
-	virtual void GrabbingFinished(HBITMAP *imgResults, uint8 nFramesGrabbed, void *pSender);
+	bool	StartPeerPreviewFrames(CUpDownClient *pSender, HWND hNotifyWnd);
+	void	PeerPreviewFinished(HBITMAP *imgResults, uint8 nFramesGrabbed, CUpDownClient *pSender);
 
 	// Display / Info / Strings
 	virtual CString	GetInfoSummary(bool bNoFormatCommands = false) const;
@@ -161,8 +161,6 @@ public:
 #endif
 
 protected:
-	//preview
-	bool	GrabImage(const CString &strFileName, uint8 nFramesToGrab, double dStartTime, bool bReduceColor, uint16 nMaxWidth, void *pSender);
 	bool	LoadTagsFromFile(CFileDataIO &file);
 	bool	LoadDateFromFile(CFileDataIO &file);
 	static bool	CreateHash(CFile *pFile, uint64 Length, uchar *pucHash, CAICHHashTree *pShaHashOut = NULL);

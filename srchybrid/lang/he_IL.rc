@@ -305,7 +305,6 @@ BEGIN
     IDS_VERSIONCHECK        "בדיקת גירסה"
     IDS_VISITVERSIONCHECK   "\n\nהאם ברצונך לבקר בדף המידע?"
     IDS_PW_VIDEOPLAYER      "נגן וידאו"
-    IDS_VIDEOBACKUP         "צור גיבוי לתצוגה מקדימה"
     IDS_MYINFO              "המידע שלי"
     IDS_ID                  "מזהה"
     IDS_IDLOW               "מזהה נמוך"
@@ -2175,6 +2174,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "פעולת אי הכללת Microsoft Defender נכשלה: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "פעולת ההחרגה של Microsoft Defender בוטלה."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "לא היו תיקיות הורדה של eMule זמינות להחרגה של Microsoft Defender."
+    IDS_ALLOW_PEER_PREVIEW                                  "אפשר תצוגה מקדימה לעמיתים"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "בחר קובץ הרצה קיים של FFmpeg לפני שתאפשר תצוגה מקדימה לעמיתים."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "מאפשר ללקוחות eMule אחרים לבקש תמונות תצוגה מקדימה מקובצי וידאו משותפים.\r\n\r\neMule משתמש ב-FFmpeg כדי ליצור תמונות סטילס ושולח רק את תמונות התצוגה המקדימה האלה, לא את כל הווידאו. הקבצים המשותפים חייבים להיות גלויים גם לעמיתים."
 END
 // eMule BB managed translation block: end
 

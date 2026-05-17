@@ -957,7 +957,6 @@ BEGIN
     IDS_VERSIONCHECK        "&Versjonskontroll"
     IDS_VISITVERSIONCHECK   "\n\nØnsker du å besøke informasjonssiden nå?"
     IDS_PW_VIDEOPLAYER      "Videoavspiller"
-    IDS_VIDEOBACKUP         "Opprett sikkerhetskopi før forhåndsvisning"
     IDS_MYINFO              "Min info"
     IDS_ID                  "ID"//!
     IDS_IDLOW               "Lav ID"
@@ -2186,6 +2185,9 @@ BEGIN
     IDS_DEFENDER_EXCLUSIONS_FAILURE                         "Microsoft Defender-ekskluderingshandling mislyktes: %s"
     IDS_DEFENDER_EXCLUSIONS_CANCELLED                       "Microsoft Defender-ekskluderingshandlingen ble avbrutt."
     IDS_DEFENDER_EXCLUSIONS_NO_PATHS                        "Ingen eMule nedlastingsmapper var tilgjengelig for Microsoft Defender-ekskludering."
+    IDS_ALLOW_PEER_PREVIEW                                  "Tillat forhåndsvisning fra noder"
+    IDS_ALLOW_PEER_PREVIEW_INVALID                          "Velg en eksisterende FFmpeg-kjørbar fil før forhåndsvisning fra noder tillates."
+    IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Lar andre eMule-klienter be om forhåndsvisningsbilder for delte videofiler.\r\n\r\neMule bruker FFmpeg til å lage stillbilder og sender bare disse forhåndsvisningsbildene, ikke hele videoen. Delte filer må også være synlige for noder."
 END
 // eMule BB managed translation block: end
 
