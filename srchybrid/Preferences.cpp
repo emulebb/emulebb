@@ -2789,7 +2789,6 @@ void CPreferences::SavePreferences()
 	ini.WriteString(_T("NotifierMailRecipient"), m_email.sTo);
 	ini.WriteString(_T("NotifierMailLogin"), m_email.sUser);
 	ini.WriteString(_T("NotifierMailPassword"), m_email.sPass);
-	//ini.WriteString(_T("NotifierMailEncryptCertName"), m_email.sEncryptCertName);
 
 	ini.WriteBool(_T("WinaTransToolbar"), m_bWinaTransToolbar);
 	ini.WriteBool(_T("ShowDownloadToolbar"), m_bShowDownloadToolbar);
@@ -3406,7 +3405,6 @@ void CPreferences::LoadPreferences()
 	m_email.sTo = ini.GetString(_T("NotifierMailRecipient"), _T(""));
 	m_email.sUser = ini.GetString(_T("NotifierMailLogin"), _T(""));
 	m_email.sPass = ini.GetString(_T("NotifierMailPassword"), _T(""));
-	//m_email.sEncryptCertName = ini.GetString(_T("NotifierMailEncryptCertName"), _T(""));
 
 	m_bWinaTransToolbar = ini.GetBool(_T("WinaTransToolbar"), true);
 	m_bShowDownloadToolbar = ini.GetBool(_T("ShowDownloadToolbar"), true);

@@ -23,7 +23,6 @@
 #include "Log.h"
 #include "Preferences.h"
 #include <atlenc.h>
-#include <wincrypt.h>
 
 #include "mbedtls/base64.h"
 #include "mbedtls/net_sockets.h"
@@ -40,102 +39,6 @@
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
-
-void LogCertificate(PCCERT_CONTEXT pCertContext)
-{
-	if (!pCertContext)
-		return;
-
-	DebugLog(LOG_DONTNOTIFY, _T("Email Encryption: Found certificate"));
-
-	TCHAR szString[512];
-	PCERT_INFO pCertInfo = pCertContext->pCertInfo;
-	if (pCertInfo) {
-		if (CertNameToStr(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, &pCertInfo->Subject, CERT_X500_NAME_STR, szString, _countof(szString)))
-			DebugLog(LOG_DONTNOTIFY, _T("Email Encryption: Subject: %s"), szString);
-
-		if (pCertInfo->SerialNumber.cbData && pCertInfo->SerialNumber.pbData)
-			DebugLog(LOG_DONTNOTIFY, _T("Email Encryption: Serial nr.: %s"), (LPCTSTR)GetCertInteger(pCertInfo->SerialNumber.pbData, pCertInfo->SerialNumber.cbData));
-
-		if (CertNameToStr(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, &pCertInfo->Issuer, CERT_X500_NAME_STR, szString, _countof(szString)))
-			DebugLog(LOG_DONTNOTIFY, _T("Email Encryption: Issuer: %s"), szString);
-	} else {
-		if (CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, CERT_NAME_DISABLE_IE4_UTF8_FLAG, szOID_COMMON_NAME, szString, _countof(szString)))
-			DebugLog(LOG_DONTNOTIFY, _T("Email Encryption: Name: %s"), szString);
-
-		BYTE md5[16];
-		DWORD cb = (DWORD)sizeof md5;
-		if (CertGetCertificateContextProperty(pCertContext, CERT_MD5_HASH_PROP_ID, md5, &cb) && cb == sizeof md5)
-			DebugLog(LOG_DONTNOTIFY, _T("Email Encryption: MD5 hash: %s"), (LPCTSTR)GetCertHash(md5, cb));
-
-		BYTE sha1[20];
-		cb = (DWORD)sizeof sha1;
-		if (CertGetCertificateContextProperty(pCertContext, CERT_SHA1_HASH_PROP_ID, sha1, &cb) && cb == sizeof sha1)
-			DebugLog(LOG_DONTNOTIFY, _T("Email Encryption: SHA1 hash: %s"), (LPCTSTR)GetCertHash(sha1, cb));
-	}
-}
-
-bool Encrypt(const CStringA &rstrContentA, CByteArray &raEncrypted, LPCWSTR pwszCertSubject)
-{
-	LPCTSTR pszContainer = AfxGetAppName();
-	HCRYPTPROV hCryptProv;
-	if (!CryptAcquireContext(&hCryptProv, pszContainer, NULL, PROV_RSA_FULL, NULL)) {
-		DWORD dwError = ::GetLastError();
-		if (dwError != (DWORD)NTE_BAD_KEYSET) {
-			DebugLogWarning(LOG_DONTNOTIFY, _T("Email Encryption: Failed to acquire certificate context container '%s' - %s"), pszContainer, (LPCTSTR)GetErrorMessage(dwError, 1));
-			return false;
-		}
-		if (!CryptAcquireContext(&hCryptProv, pszContainer, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
-			DebugLogWarning(LOG_DONTNOTIFY, _T("Email Encryption: Failed to create certificate context container '%s' - %s"), pszContainer, (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
-			return false;
-		}
-	}
-
-	static LPCTSTR const pszCertStore = _T("AddressBook");
-	HCERTSTORE hStoreHandle = CertOpenSystemStore(hCryptProv, pszCertStore);
-	if (hStoreHandle) {
-		PCCERT_CONTEXT pRecipientCert = CertFindCertificateInStore(hStoreHandle, PKCS_7_ASN_ENCODING | X509_ASN_ENCODING, 0, CERT_FIND_SUBJECT_STR, pwszCertSubject, NULL);
-		if (pRecipientCert) {
-			if (thePrefs.GetVerbose())
-				LogCertificate(pRecipientCert);
-			//PCCERT_CONTEXT RecipientCertArray[1] = { pRecipientCert };
-
-			CRYPT_ALGORITHM_IDENTIFIER EncryptAlgorithm = {};
-			EncryptAlgorithm.pszObjId = szOID_RSA_DES_EDE3_CBC;
-
-			CRYPT_ENCRYPT_MESSAGE_PARA EncryptParams = {};
-			EncryptParams.cbSize = (DWORD)sizeof EncryptParams;
-			EncryptParams.dwMsgEncodingType = PKCS_7_ASN_ENCODING | X509_ASN_ENCODING;
-			EncryptParams.hCryptProv = hCryptProv;
-			EncryptParams.ContentEncryptionAlgorithm = EncryptAlgorithm;
-
-			DWORD cbEncryptedBlob = 0;
-			if (CryptEncryptMessage(&EncryptParams, 1, &pRecipientCert, (BYTE*)(LPCSTR)rstrContentA, rstrContentA.GetLength(), NULL, &cbEncryptedBlob)) {
-				try {
-					raEncrypted.SetSize(cbEncryptedBlob);
-					if (!CryptEncryptMessage(&EncryptParams, 1, &pRecipientCert, (BYTE*)(LPCSTR)rstrContentA, rstrContentA.GetLength(), raEncrypted.GetData(), &cbEncryptedBlob)) {
-						DebugLogWarning(LOG_DONTNOTIFY, _T("Email Encryption: Failed to encrypt message - %s"), (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
-						raEncrypted.SetSize(0);
-					}
-				} catch (CMemoryException *ex) {
-					ex->Delete();
-					DebugLogWarning(LOG_DONTNOTIFY, _T("Email Encryption: Failed to encrypt message - %s"), _tcserror(ENOMEM));
-				}
-			} else
-				DebugLogWarning(LOG_DONTNOTIFY, _T("Email Encryption: Failed to get length of encrypted message - %s"), (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
-
-			VERIFY(CertFreeCertificateContext(pRecipientCert));
-		} else
-			DebugLogWarning(LOG_DONTNOTIFY, _T("Email Encryption: Failed to find certificate with subject '%ls' - %s"), pwszCertSubject, (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
-
-		VERIFY(CertCloseStore(hStoreHandle, 0));
-	} else
-		DebugLogWarning(LOG_DONTNOTIFY, _T("Email Encryption: Failed to open certificate store '%s' - %s"), pszCertStore, (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
-
-	VERIFY(CryptReleaseContext(hCryptProv, 0));
-
-	return !raEncrypted.IsEmpty();
-}
 
 bool encoded_word(const CString &src, CStringA &dst)
 {
@@ -457,28 +360,6 @@ void CNotifierMailThread::sendmail()
 			"Content-Transfer-Encoding: 8bit\r\n\r\n%s"
 			, (LPCSTR)(NeedUTF8String(m_strBody) ? wc2utf8(m_strBody) : (CStringA)m_strBody));
 
-	bool bEncrypt = !m_mail.sEncryptCertName.IsEmpty();
-	if (bEncrypt) {
-		CByteArray aEncrypted;
-		if (!Encrypt(sBodyA, aEncrypted, m_mail.sEncryptCertName))
-			goto failed;
-
-		int iLength = Base64EncodeGetRequiredLength((int)aEncrypted.GetSize());
-		if (!Base64Encode(aEncrypted.GetData(), (int)aEncrypted.GetSize(), sBodyA.GetBuffer(iLength), &iLength)) {
-			sBodyA.ReleaseBuffer(0);
-			DebugLogWarning(LOG_DONTNOTIFY, _T("Encrypted body to base64 failed"));
-			goto failed;
-		}
-		sBodyA.ReleaseBuffer(iLength);
-		sBodyA.Insert(0, "Content-Type: application/x-pkcs7-mime;\r\n"
-			"\tformat=flowed;\r\n"
-			"\tsmime-type=enveloped-data;\r\n"
-			"\tname=\"smime.p7m\"\r\n"
-			"Content-Transfer-Encoding: base64\r\n"
-			"Content-Disposition: attachment;\r\n"
-			"\tfilename=\"smime.p7m\"\r\n\r\n");
-	}
-
 	if (!encoded_word(m_strSubject, sTmpA)) //subject
 		goto failed;
 
@@ -541,7 +422,6 @@ void CemuleDlg::SendNotificationMail(TbnMsg nMsgType, LPCTSTR pszText)
 
 	CNotifierMailThread *pThread = static_cast<CNotifierMailThread*>(AfxBeginThread(RUNTIME_CLASS(CNotifierMailThread), THREAD_PRIORITY_LOWEST, 0, CREATE_SUSPENDED));
 	if (pThread) {
-		mail.sEncryptCertName = theApp.GetProfileString(_T("eMule"), _T("NotifierMailEncryptCertName")).Trim();
 		pThread->m_mail = mail;
 		pThread->m_strSubject = GetResString(IDS_EMULENOTIFICATION);
 		UINT uid;

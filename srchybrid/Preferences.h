@@ -125,7 +125,6 @@ struct EmailSettings
 	CString	sTo;
 	CString	sUser;
 	CString	sPass;
-	CString	sEncryptCertName;
 	uint16	uPort;
 	SMTPauth uAuth;
 	TLSmode uTLS;
