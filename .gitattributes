@@ -6,7 +6,6 @@
 # Windows shell and installer files should keep CRLF.
 *.cmd text eol=crlf
 *.bat text eol=crlf
-*.iss text eol=crlf
 
 # Source files keep LF to match .editorconfig.
 *.c text eol=lf
