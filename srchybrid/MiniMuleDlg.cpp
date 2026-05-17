@@ -35,15 +35,6 @@ static char THIS_FILE[] = __FILE__;
 namespace
 {
 	const UINT_PTR IDT_MINIMULE_REFRESH = 1;
-
-	void SetControlFont(CWnd *pParent, UINT uCtrlID, CFont *pFont)
-	{
-		if (pParent != NULL && pFont != NULL && pFont->GetSafeHandle() != NULL) {
-			CWnd *pWnd = pParent->GetDlgItem(uCtrlID);
-			if (pWnd != NULL)
-				pWnd->SetFont(pFont);
-		}
-	}
 }
 
 BEGIN_MESSAGE_MAP(CMiniMuleDlg, CDialog)
@@ -61,16 +52,11 @@ END_MESSAGE_MAP()
 CMiniMuleDlg::CMiniMuleDlg(CemuleDlg *pOwner)
 	: CDialog(CMiniMuleDlg::IDD, pOwner)
 	, m_pOwner(pOwner)
-	, m_hAppIcon()
+	, m_auUploadHistory()
+	, m_auDownloadHistory()
+	, m_uHistoryNext()
+	, m_uHistoryCount()
 {
-}
-
-CMiniMuleDlg::~CMiniMuleDlg()
-{
-	if (m_hAppIcon != NULL) {
-		VERIFY(::DestroyIcon(m_hAppIcon));
-		m_hAppIcon = NULL;
-	}
 }
 
 BOOL CMiniMuleDlg::OnInitDialog()
@@ -106,6 +92,11 @@ BOOL CMiniMuleDlg::PreTranslateMessage(MSG *pMsg)
 		DestroyWindow();
 		return TRUE;
 	}
+	if (ShouldStartDragFromMessage(pMsg)) {
+		ReleaseCapture();
+		SendMessage(WM_NCLBUTTONDOWN, HTCAPTION, MAKELPARAM(pMsg->pt.x, pMsg->pt.y));
+		return TRUE;
+	}
 	return CDialog::PreTranslateMessage(pMsg);
 }
 
@@ -119,10 +110,6 @@ HBRUSH CMiniMuleDlg::OnCtlColor(CDC *pDC, CWnd *pWnd, UINT nCtlColor)
 	if (pDC != NULL && pWnd != NULL && nCtlColor == CTLCOLOR_STATIC) {
 		const UINT uCtrlID = static_cast<UINT>(pWnd->GetDlgCtrlID());
 		pDC->SetBkMode(TRANSPARENT);
-		if (IsHeaderTextControl(uCtrlID)) {
-			pDC->SetTextColor(::GetSysColor(COLOR_WINDOWTEXT));
-			return static_cast<HBRUSH>(m_brHeader.GetSafeHandle());
-		}
 		if (IsLabelControl(uCtrlID)) {
 			pDC->SetTextColor(::GetSysColor(COLOR_GRAYTEXT));
 			return static_cast<HBRUSH>(m_brBackground.GetSafeHandle());
@@ -149,22 +136,10 @@ void CMiniMuleDlg::OnPaint()
 	CRect rcClient;
 	GetClientRect(&rcClient);
 	dc.FillSolidRect(rcClient, ::GetSysColor(COLOR_WINDOW));
+	dc.Draw3dRect(rcClient, ::GetSysColor(COLOR_3DSHADOW), ::GetSysColor(COLOR_3DHILIGHT));
 
-	CRect rcHeader(0, 0, 286, 36);
-	MapDialogRect(&rcHeader);
-	rcHeader.left = rcClient.left;
-	rcHeader.top = rcClient.top;
-	rcHeader.right = rcClient.right;
-	dc.FillSolidRect(rcHeader, ::GetSysColor(COLOR_3DFACE));
-	dc.FillSolidRect(rcHeader.left, rcHeader.bottom - 1, rcHeader.right, rcHeader.bottom, ::GetSysColor(COLOR_3DSHADOW));
-
-	CRect rcMetricDivider(12, 76, 274, 77);
-	MapDialogRect(&rcMetricDivider);
-	dc.FillSolidRect(rcMetricDivider, ::GetSysColor(COLOR_3DLIGHT));
-
-	CRect rcVerticalDivider(143, 42, 144, 68);
-	MapDialogRect(&rcVerticalDivider);
-	dc.FillSolidRect(rcVerticalDivider, ::GetSysColor(COLOR_3DLIGHT));
+	DrawTableFrame(dc);
+	DrawSpeedChart(dc);
 }
 
 void CMiniMuleDlg::OnSysColorChange()
@@ -210,7 +185,6 @@ void CMiniMuleDlg::OnOptions()
 void CMiniMuleDlg::Localize()
 {
 	SetWindowText(_T("MiniMule"));
-	SetDlgItemText(IDC_MINIMULE_TITLE, _T("MiniMule"));
 	SetDlgItemText(IDC_MINIMULE_CONNECTED_LABEL, GetResString(IDS_CONNECTED));
 	SetDlgItemText(IDC_MINIMULE_UPLOAD_LABEL, GetResString(IDS_PW_CON_UPLBL));
 	SetDlgItemText(IDC_MINIMULE_DOWNLOAD_LABEL, GetResString(IDS_PW_CON_DOWNLBL));
@@ -227,9 +201,13 @@ void CMiniMuleDlg::Localize()
 
 void CMiniMuleDlg::UpdateContent(UINT uUpDatarate, UINT uDownDatarate)
 {
+	const UINT uResolvedUpDatarate = uUpDatarate != UINT_MAX ? uUpDatarate : (theApp.uploadqueue != NULL ? theApp.uploadqueue->GetDatarate() : 0);
+	const UINT uResolvedDownDatarate = uDownDatarate != UINT_MAX ? uDownDatarate : (theApp.downloadqueue != NULL ? theApp.downloadqueue->GetDatarate() : 0);
+
 	SetDlgItemText(IDC_MINIMULE_CONNECTED_VALUE, GetResString(theApp.IsConnected() ? IDS_YES : IDS_NO));
-	SetDlgItemText(IDC_MINIMULE_UPLOAD_VALUE, m_pOwner != NULL ? m_pOwner->GetUpDatarateString(uUpDatarate) : _T(""));
-	SetDlgItemText(IDC_MINIMULE_DOWNLOAD_VALUE, m_pOwner != NULL ? m_pOwner->GetDownDatarateString(uDownDatarate) : _T(""));
+	SetDlgItemText(IDC_MINIMULE_UPLOAD_VALUE, m_pOwner != NULL ? m_pOwner->GetUpDatarateString(uResolvedUpDatarate) : _T(""));
+	SetDlgItemText(IDC_MINIMULE_DOWNLOAD_VALUE, m_pOwner != NULL ? m_pOwner->GetDownDatarateString(uResolvedDownDatarate) : _T(""));
+	TrackSpeedSample(uResolvedUpDatarate, uResolvedDownDatarate);
 
 	UINT uCompleted = 0;
 	if (thePrefs.GetRemoveFinishedDownloads())
@@ -252,6 +230,8 @@ void CMiniMuleDlg::UpdateContent(UINT uUpDatarate, UINT uDownDatarate)
 	SetDlgItemText(IDC_MINIMULE_WAITING_UPLOADS_VALUE, strValue);
 	strValue.Format(_T("%u"), theApp.downloadqueue != NULL ? static_cast<UINT>(theApp.downloadqueue->GetFileCount()) : 0);
 	SetDlgItemText(IDC_MINIMULE_TOTAL_DOWNLOADS_VALUE, strValue);
+
+	Invalidate(FALSE);
 }
 
 void CMiniMuleDlg::AutoSizeAndPosition()
@@ -296,85 +276,107 @@ void CMiniMuleDlg::AutoSizeAndPosition()
 void CMiniMuleDlg::ApplyVisualStyle()
 {
 	RefreshColorResources();
-	CreateDerivedFonts();
-
-	SetControlFont(this, IDC_MINIMULE_TITLE, &m_fontTitle);
-	SetControlFont(this, IDC_MINIMULE_UPLOAD_VALUE, &m_fontMetricValue);
-	SetControlFont(this, IDC_MINIMULE_DOWNLOAD_VALUE, &m_fontMetricValue);
-
-	const UINT aValueControls[] = {
-		IDC_MINIMULE_CONNECTED_VALUE,
-		IDC_MINIMULE_COMPLETED_VALUE,
-		IDC_MINIMULE_FREESPACE_VALUE,
-		IDC_MINIMULE_ACTIVE_DOWNLOADS_VALUE,
-		IDC_MINIMULE_ACTIVE_UPLOADS_VALUE,
-		IDC_MINIMULE_WAITING_UPLOADS_VALUE,
-		IDC_MINIMULE_TOTAL_DOWNLOADS_VALUE
-	};
-	for (UINT uCtrlID : aValueControls)
-		SetControlFont(this, uCtrlID, &m_fontValue);
-
-	m_hAppIcon = theApp.LoadIcon(_T("AAAEMULEAPP"), 20, 20);
-	if (m_hAppIcon != NULL) {
-		SetIcon(m_hAppIcon, FALSE);
-		if (CWnd *pIconWnd = GetDlgItem(IDC_MINIMULE_ICON))
-			static_cast<CStatic*>(pIconWnd)->SetIcon(m_hAppIcon);
-	}
-}
-
-void CMiniMuleDlg::CreateDerivedFonts()
-{
-	CFont *pBaseFont = GetFont();
-	if (pBaseFont == NULL)
-		return;
-
-	LOGFONT lf = {};
-	if (pBaseFont->GetLogFont(&lf) == 0)
-		return;
-
-	LOGFONT lfTitle = lf;
-	lfTitle.lfWeight = FW_BOLD;
-	if (lfTitle.lfHeight < 0)
-		lfTitle.lfHeight = lfTitle.lfHeight * 13 / 10;
-	else if (lfTitle.lfHeight > 0)
-		lfTitle.lfHeight = lfTitle.lfHeight * 13 / 10;
-	m_fontTitle.DeleteObject();
-	VERIFY(m_fontTitle.CreateFontIndirect(&lfTitle));
-
-	LOGFONT lfMetric = lf;
-	lfMetric.lfWeight = FW_BOLD;
-	if (lfMetric.lfHeight < 0)
-		lfMetric.lfHeight = lfMetric.lfHeight * 12 / 10;
-	else if (lfMetric.lfHeight > 0)
-		lfMetric.lfHeight = lfMetric.lfHeight * 12 / 10;
-	m_fontMetricValue.DeleteObject();
-	VERIFY(m_fontMetricValue.CreateFontIndirect(&lfMetric));
-
-	LOGFONT lfValue = lf;
-	lfValue.lfWeight = FW_BOLD;
-	m_fontValue.DeleteObject();
-	VERIFY(m_fontValue.CreateFontIndirect(&lfValue));
 }
 
 void CMiniMuleDlg::RefreshColorResources()
 {
 	m_brBackground.DeleteObject();
 	VERIFY(m_brBackground.CreateSolidBrush(::GetSysColor(COLOR_WINDOW)));
-	m_brHeader.DeleteObject();
-	VERIFY(m_brHeader.CreateSolidBrush(::GetSysColor(COLOR_3DFACE)));
 }
 
-bool CMiniMuleDlg::IsHeaderTextControl(UINT uCtrlID) const
+CRect CMiniMuleDlg::MapDlgUnits(int iLeft, int iTop, int iRight, int iBottom)
 {
-	return uCtrlID == IDC_MINIMULE_TITLE
-		|| uCtrlID == IDC_MINIMULE_ICON
-		|| uCtrlID == IDC_MINIMULE_CONNECTED_LABEL
-		|| uCtrlID == IDC_MINIMULE_CONNECTED_VALUE;
+	CRect rc(iLeft, iTop, iRight, iBottom);
+	MapDialogRect(&rc);
+	return rc;
+}
+
+void CMiniMuleDlg::DrawTableFrame(CDC &dc)
+{
+	const CRect rcTable = MapDlgUnits(8, 8, 278, 125);
+	dc.Draw3dRect(rcTable, ::GetSysColor(COLOR_3DLIGHT), ::GetSysColor(COLOR_3DSHADOW));
+
+	const int iRowTop = MapDlgUnits(0, 8, 0, 8).top;
+	for (int iRow = 1; iRow < 9; ++iRow) {
+		const int y = MapDlgUnits(0, 8 + iRow * 13, 0, 8 + iRow * 13).top;
+		dc.FillSolidRect(rcTable.left + 1, y, rcTable.Width() - 2, 1, ::GetSysColor(COLOR_3DLIGHT));
+	}
+
+	const int xDivider = MapDlgUnits(137, 0, 137, 0).left;
+	dc.FillSolidRect(xDivider, iRowTop + 1, 1, rcTable.Height() - 2, ::GetSysColor(COLOR_3DLIGHT));
+}
+
+void CMiniMuleDlg::DrawSpeedChart(CDC &dc)
+{
+	const CRect rcChart = MapDlgUnits(8, 132, 278, 166);
+	dc.Draw3dRect(rcChart, ::GetSysColor(COLOR_3DLIGHT), ::GetSysColor(COLOR_3DSHADOW));
+
+	CRect rcPlot = rcChart;
+	rcPlot.DeflateRect(4, 4);
+	dc.FillSolidRect(rcPlot, ::GetSysColor(COLOR_WINDOW));
+
+	const int yMiddle = rcPlot.top + rcPlot.Height() / 2;
+	dc.FillSolidRect(rcPlot.left, yMiddle, rcPlot.Width(), 1, ::GetSysColor(COLOR_3DLIGHT));
+
+	if (m_uHistoryCount < 2)
+		return;
+
+	UINT uMaxRate = 1;
+	for (UINT i = 0; i < m_uHistoryCount; ++i) {
+		const UINT uIndex = m_uHistoryCount == SPEED_HISTORY_SIZE ? (m_uHistoryNext + i) % SPEED_HISTORY_SIZE : i;
+		uMaxRate = max(uMaxRate, m_auUploadHistory[uIndex]);
+		uMaxRate = max(uMaxRate, m_auDownloadHistory[uIndex]);
+	}
+
+	CPen penUpload(PS_SOLID, 1, ::GetSysColor(COLOR_WINDOWTEXT));
+	CPen penDownload(PS_SOLID, 1, ::GetSysColor(COLOR_HIGHLIGHT));
+	CPen *pOldPen = dc.SelectObject(&penUpload);
+
+	for (int iSeries = 0; iSeries < 2; ++iSeries) {
+		dc.SelectObject(iSeries == 0 ? &penUpload : &penDownload);
+		for (UINT i = 0; i < m_uHistoryCount; ++i) {
+			const UINT uIndex = m_uHistoryCount == SPEED_HISTORY_SIZE ? (m_uHistoryNext + i) % SPEED_HISTORY_SIZE : i;
+			const UINT uRate = iSeries == 0 ? m_auUploadHistory[uIndex] : m_auDownloadHistory[uIndex];
+			const int x = rcPlot.left + static_cast<int>(i * (rcPlot.Width() - 1) / (m_uHistoryCount - 1));
+			const int y = rcPlot.bottom - 1 - MulDiv(static_cast<int>(uRate), rcPlot.Height() - 1, static_cast<int>(uMaxRate));
+			if (i == 0)
+				dc.MoveTo(x, y);
+			else
+				dc.LineTo(x, y);
+		}
+	}
+
+	dc.SelectObject(pOldPen);
+}
+
+void CMiniMuleDlg::TrackSpeedSample(UINT uUpDatarate, UINT uDownDatarate)
+{
+	m_auUploadHistory[m_uHistoryNext] = uUpDatarate;
+	m_auDownloadHistory[m_uHistoryNext] = uDownDatarate;
+	m_uHistoryNext = (m_uHistoryNext + 1) % SPEED_HISTORY_SIZE;
+	if (m_uHistoryCount < SPEED_HISTORY_SIZE)
+		++m_uHistoryCount;
+}
+
+bool CMiniMuleDlg::ShouldStartDragFromMessage(const MSG *pMsg) const
+{
+	if (pMsg == NULL || pMsg->message != WM_LBUTTONDOWN || m_hWnd == NULL)
+		return false;
+	if (pMsg->hwnd != m_hWnd && !::IsChild(m_hWnd, pMsg->hwnd))
+		return false;
+
+	TCHAR szClassName[32] = {};
+	::GetClassName(pMsg->hwnd, szClassName, _countof(szClassName));
+	if (_tcscmp(szClassName, _T("Button")) == 0)
+		return false;
+
+	return true;
 }
 
 bool CMiniMuleDlg::IsLabelControl(UINT uCtrlID) const
 {
 	switch (uCtrlID) {
+	case IDC_MINIMULE_CONNECTED_LABEL:
 	case IDC_MINIMULE_UPLOAD_LABEL:
 	case IDC_MINIMULE_DOWNLOAD_LABEL:
 	case IDC_MINIMULE_COMPLETED_LABEL:
@@ -389,15 +391,10 @@ bool CMiniMuleDlg::IsLabelControl(UINT uCtrlID) const
 	}
 }
 
-bool CMiniMuleDlg::IsMetricValueControl(UINT uCtrlID) const
-{
-	return uCtrlID == IDC_MINIMULE_UPLOAD_VALUE
-		|| uCtrlID == IDC_MINIMULE_DOWNLOAD_VALUE;
-}
-
 bool CMiniMuleDlg::IsValueControl(UINT uCtrlID) const
 {
-	return IsMetricValueControl(uCtrlID)
+	return uCtrlID == IDC_MINIMULE_UPLOAD_VALUE
+		|| uCtrlID == IDC_MINIMULE_DOWNLOAD_VALUE
 		|| uCtrlID == IDC_MINIMULE_CONNECTED_VALUE
 		|| uCtrlID == IDC_MINIMULE_COMPLETED_VALUE
 		|| uCtrlID == IDC_MINIMULE_FREESPACE_VALUE

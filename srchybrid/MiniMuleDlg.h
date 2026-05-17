@@ -31,7 +31,6 @@ class CMiniMuleDlg : public CDialog
 
 public:
 	explicit CMiniMuleDlg(CemuleDlg *pOwner);
-	virtual ~CMiniMuleDlg();
 
 	/**
 	 * @brief Refreshes visible transfer and queue statistics.
@@ -62,23 +61,29 @@ protected:
 	afx_msg void OnOptions();
 
 private:
+	enum
+	{
+		SPEED_HISTORY_SIZE = 60
+	};
+
 	/**
 	 * @brief Positions the popup near the taskbar without using cross-thread shell appbar calls.
 	 */
 	void AutoSizeAndPosition();
 	void ApplyVisualStyle();
-	void CreateDerivedFonts();
 	void RefreshColorResources();
-	bool IsHeaderTextControl(UINT uCtrlID) const;
+	CRect MapDlgUnits(int iLeft, int iTop, int iRight, int iBottom);
+	void DrawTableFrame(CDC &dc);
+	void DrawSpeedChart(CDC &dc);
+	void TrackSpeedSample(UINT uUpDatarate, UINT uDownDatarate);
+	bool ShouldStartDragFromMessage(const MSG *pMsg) const;
 	bool IsLabelControl(UINT uCtrlID) const;
-	bool IsMetricValueControl(UINT uCtrlID) const;
 	bool IsValueControl(UINT uCtrlID) const;
 
 	CemuleDlg *m_pOwner;
-	CFont m_fontTitle;
-	CFont m_fontMetricValue;
-	CFont m_fontValue;
 	CBrush m_brBackground;
-	CBrush m_brHeader;
-	HICON m_hAppIcon;
+	UINT m_auUploadHistory[SPEED_HISTORY_SIZE];
+	UINT m_auDownloadHistory[SPEED_HISTORY_SIZE];
+	UINT m_uHistoryNext;
+	UINT m_uHistoryCount;
 };
