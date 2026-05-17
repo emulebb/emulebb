@@ -1,0 +1,26 @@
+{
+  "policyVersion": "tracked-file-privacy-guard-policy/v1",
+  "excludedPathRegexes": [
+    "(^|[\\\\/])build([\\\\/]|$)",
+    "(^|[\\\\/])reports([\\\\/]|$)",
+    "(^|[\\\\/])dist([\\\\/]|$)"
+  ],
+  "pathRules": [],
+  "contentRules": [
+    {
+      "id": "windows-user-profile-path",
+      "reason": "Tracked content must not contain committed Windows user-profile paths.",
+      "regex": "C:\\\\Users\\\\[A-Za-z0-9_][A-Za-z0-9._-]*"
+    },
+    {
+      "id": "windows-user-profile-path-forward-slash",
+      "reason": "Tracked content must not contain committed Windows user-profile paths written with forward slashes.",
+      "regex": "C:/Users/[A-Za-z0-9_][A-Za-z0-9._-]*"
+    },
+    {
+      "id": "unix-macos-user-profile-path",
+      "reason": "Tracked content must not contain committed macOS user-profile paths.",
+      "regex": "/Users/[A-Za-z0-9_][A-Za-z0-9._-]*"
+    }
+  ]
+}
