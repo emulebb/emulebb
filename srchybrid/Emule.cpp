@@ -2083,7 +2083,7 @@ int eMuleAllocHook(int mode, void *pUserData, size_t nSize, int nBlockUse, long 
 
 bool CemuleApp::ProcessCommandline(const AppCommandLineSeams::SParseResult &rCommandLine)
 {
-	bool bIgnoreRunningInstances = (GetProfileInt(_T("eMule"), _T("IgnoreInstances"), 0) != 0) || rCommandLine.bIgnoreInstances;
+	bool bIgnoreRunningInstances = rCommandLine.bIgnoreInstances;
 #ifdef _DEBUG
 	if (rCommandLine.bAssertFile)
 		_CrtSetReportHook(CrtDebugReportCB);
