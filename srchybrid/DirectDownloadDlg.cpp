@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "DirectDownloadDlg.h"
+#include "DirectDownloadSeams.h"
 #include "ED2KLink.h"
 #include "DownloadQueue.h"
 #include "Preferences.h"
@@ -70,11 +71,7 @@ void CDirectDownloadDlg::OnEnKillfocusElink()
 {
 	CString strLinks;
 	GetDlgItemText(IDC_ELINK, strLinks);
-	if (!strLinks.IsEmpty()) {
-		strLinks.Replace(_T("\n"), _T("\r\n"));
-		strLinks.Replace(_T("\r\r"), _T("\r"));
-		SetDlgItemText(IDC_ELINK, strLinks);
-	}
+	SetDlgItemText(IDC_ELINK, DirectDownloadSeams::NormalizeDirectDownloadEditText(strLinks));
 }
 
 void CDirectDownloadDlg::OnOK()
@@ -82,18 +79,15 @@ void CDirectDownloadDlg::OnOK()
 	CString strLinks;
 	GetDlgItemText(IDC_ELINK, strLinks);
 
-	for (int iPos = 0; iPos >= 0;) {
-		const CString &sToken(strLinks.Tokenize(_T(" \t\r\n"), iPos)); //tokenize by whitespace
-		if (sToken.IsEmpty())
-			break;
-		bool bSlash = (sToken[sToken.GetLength() - 1] == _T('/'));
+	const std::vector<CString> tokens = DirectDownloadSeams::TokenizeDirectDownloadLinks(strLinks);
+	for (const CString& sToken : tokens) {
 		CED2KLink *pLink = NULL;
 		try {
-			pLink = CED2KLink::CreateLinkFromUrl(bSlash ? sToken : sToken + _T('/'));
+			pLink = CED2KLink::CreateLinkFromUrl(DirectDownloadSeams::NormalizeDirectDownloadLinkToken(sToken));
 			if (pLink) {
 				if (pLink->GetKind() != CED2KLink::kFile)
 					throwCStr(_T("bad link"));
-				theApp.downloadqueue->AddFileLinkToDownload(*pLink->GetFileLink(), thePrefs.GetCatCount() ? m_cattabs.GetCurSel() : 0);
+				theApp.downloadqueue->AddFileLinkToDownload(*pLink->GetFileLink(), DirectDownloadSeams::NormalizeDirectDownloadCategorySelection(m_cattabs.GetCurSel(), static_cast<int>(thePrefs.GetCatCount())));
 				delete pLink;
 				pLink = NULL;
 			}

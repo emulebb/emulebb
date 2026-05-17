@@ -33,6 +33,7 @@
 #include "UserMsgs.h"
 #include "Version.h"
 #include "OtherFunctions.h"
+#include "ServerInputSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -294,7 +295,8 @@ void CServerWnd::DoDataExchange(CDataExchange *pDX)
 
 bool CServerWnd::UpdateServerMetFromURL(const CString &strURL)
 {
-	if (strURL.IsEmpty() || strURL.Find(_T("://")) < 0) {
+	const ServerInputSeams::ServerMetUrlInput input = ServerInputSeams::ParseServerMetUrlInput(strURL);
+	if (!input.Valid) {
 		// not a valid URL
 		LogError(LOG_STATUSBAR, GetResString(IDS_INVALIDURL));
 		return false;
@@ -302,19 +304,19 @@ bool CServerWnd::UpdateServerMetFromURL(const CString &strURL)
 
 	// add entered URL to LRU list even if it's not yet known whether we can download from this URL (it's just more convenient this way)
 	if (m_pacServerMetURL && m_pacServerMetURL->IsBound())
-		m_pacServerMetURL->AddItem(strURL, 0);
+		m_pacServerMetURL->AddItem(input.Url, 0);
 
 	CString strTempFilename(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
 	strTempFilename.AppendFormat(_T("temp-%I64u-server.met"), ::GetTickCount64());
 
 	// try to download server.met
-	Log(GetResString(IDS_DOWNLOADING_SERVERMET_FROM), (LPCTSTR)strURL);
+	Log(GetResString(IDS_DOWNLOADING_SERVERMET_FROM), (LPCTSTR)input.Url);
 	CHttpDownloadDlg dlgDownload;
 	dlgDownload.m_strTitle = GetResString(IDS_DOWNLOADING_SERVERMET);
-	dlgDownload.m_sURLToDownload = strURL;
+	dlgDownload.m_sURLToDownload = input.Url;
 	dlgDownload.m_sFileToDownloadInto = strTempFilename;
 	if (dlgDownload.DoModal() != IDOK) {
-		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDDOWNLOADMET), (LPCTSTR)strURL);
+		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDDOWNLOADMET), (LPCTSTR)input.Url);
 		return false;
 	}
 
@@ -425,23 +427,24 @@ void CServerWnd::OnBnClickedAddserver()
 			return;
 		}
 
-		BOOL bTranslated;
-		uPort = (uint16)GetDlgItemInt(IDC_SPORT, &bTranslated, FALSE);
-		if (!bTranslated) {
+		CString strPort;
+		GetDlgItemText(IDC_SPORT, strPort);
+		if (!DialogInputParsingSeams::TryParseTcpPort(strPort, uPort)) {
 			LocMessageBox(IDS_SRV_PORT, MB_OK, 0);
 			return;
 		}
 	}
 
-	if (serveraddr.IsEmpty() || uPort == 0) {
+	CString strServerName;
+	GetDlgItemText(IDC_SNAME, strServerName);
+
+	const ServerInputSeams::ManualServerInput input = ServerInputSeams::BuildManualServerInput(serveraddr, uPort, strServerName);
+	if (!input.Valid) {
 		LocMessageBox(IDS_SRV_ADDR, MB_OK, 0);
 		return;
 	}
 
-	CString strServerName;
-	GetDlgItemText(IDC_SNAME, strServerName);
-
-	AddServer(uPort, serveraddr, strServerName);
+	AddServer(input.Port, input.Address, input.Name);
 }
 
 void CServerWnd::PasteServerFromClipboard()

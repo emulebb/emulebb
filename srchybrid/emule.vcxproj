@@ -428,7 +428,9 @@
     <ClInclude Include="3DPreviewControl.h" />
     <ClInclude Include="AbstractFile.h" />
     <ClInclude Include="AddFriend.h" />
+    <ClInclude Include="AddFriendInputSeams.h" />
     <ClInclude Include="AddSourceDlg.h" />
+    <ClInclude Include="AddSourceInputSeams.h" />
     <ClInclude Include="AICHSyncThread.h" />
     <ClInclude Include="ArchivePreviewDlg.h" />
     <ClInclude Include="ArchiveRecovery.h" />
@@ -473,6 +475,7 @@
     <ClInclude Include="Debug_FileSize.h" />
     <ClInclude Include="DebugHelpers.h" />
     <ClInclude Include="DiagnosticSnapshotSeams.h" />
+    <ClInclude Include="DialogInputParsingSeams.h" />
     <ClInclude Include="DirectDownload.h" />
     <ClInclude Include="DirectDownloadSeams.h" />
     <ClInclude Include="DialogMinTrayBtn.h" />
@@ -656,6 +659,7 @@
     <ClInclude Include="SearchParamsWnd.h" />
     <ClInclude Include="SearchResultsWnd.h" />
     <ClInclude Include="Server.h" />
+    <ClInclude Include="ServerInputSeams.h" />
     <ClInclude Include="ServerConnect.h" />
     <ClInclude Include="ServerList.h" />
     <ClInclude Include="ServerListCtrl.h" />

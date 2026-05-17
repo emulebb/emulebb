@@ -19,6 +19,7 @@
 #include "otherfunctions.h"
 #include "Preferences.h"
 #include "AddFriend.h"
+#include "AddFriendInputSeams.h"
 #include "FriendList.h"
 
 #ifdef _DEBUG
@@ -113,43 +114,24 @@ void CAddFriend::Localize()
 void CAddFriend::OnAddBtn()
 {
 	if (!m_pShowFriend) {
-		CString strBuff;
-		uint32 ip;
-		GetDlgItemText(IDC_IP, strBuff);
-		UINT u1, u2, u3, u4, uPort;
-		if (_stscanf(strBuff, _T("%u.%u.%u.%u:%u"), &u1, &u2, &u3, &u4, &uPort) != 5 || u1 > 255 || u2 > 255 || u3 > 255 || u4 > 255 || uPort > 65535) {
-			if (_stscanf(strBuff, _T("%u.%u.%u.%u"), &u1, &u2, &u3, &u4) != 4 || u1 > 255 || u2 > 255 || u3 > 255 || u4 > 255) {
-				LocMessageBox(IDS_ERR_NOVALIDFRIENDINFO, MB_OK, 0);
-				GetDlgItem(IDC_IP)->SetFocus();
-				return;
-			}
-			uPort = 0;
-		}
-		in_addr iaFriend;
-		iaFriend.S_un.S_un_b.s_b1 = (UCHAR)u1;
-		iaFriend.S_un.S_un_b.s_b2 = (UCHAR)u2;
-		iaFriend.S_un.S_un_b.s_b3 = (UCHAR)u3;
-		iaFriend.S_un.S_un_b.s_b4 = (UCHAR)u4;
-		ip = iaFriend.s_addr;
-
-		if (uPort == 0) {
-			GetDlgItemText(IDC_PORT, strBuff);
-			if (_stscanf(strBuff, _T("%u"), &uPort) != 1) {
-				LocMessageBox(IDS_ERR_NOVALIDFRIENDINFO, MB_OK, 0);
-				GetDlgItem(IDC_PORT)->SetFocus();
-				return;
-			}
-		}
-
+		CString strAddress;
+		CString strPort;
 		CString strUserName;
+		GetDlgItemText(IDC_IP, strAddress);
+		GetDlgItemText(IDC_PORT, strPort);
 		GetDlgItemText(IDC_USERNAME, strUserName);
-		if (strUserName.Trim().GetLength() > thePrefs.GetMaxUserNickLength())
-			strUserName.Truncate(thePrefs.GetMaxUserNickLength());
+
+		const AddFriendInputSeams::FriendInput input = AddFriendInputSeams::ParseFriendInput(strAddress, strPort, strUserName, thePrefs.GetMaxUserNickLength());
+		if (input.Status != AddFriendInputSeams::FriendInputStatus::Valid) {
+			LocMessageBox(IDS_ERR_NOVALIDFRIENDINFO, MB_OK, 0);
+			GetDlgItem(input.Status == AddFriendInputSeams::FriendInputStatus::InvalidPort || input.Status == AddFriendInputSeams::FriendInputStatus::MissingPort ? IDC_PORT : IDC_IP)->SetFocus();
+			return;
+		}
 
 		// why did we offer an edit control for entering the userhash but did not store it?
 		;
 
-		if (!theApp.friendlist->AddFriend(NULL, 0, ip, (uint16)uPort, 0, strUserName, 0)) {
+		if (!theApp.friendlist->AddFriend(NULL, 0, input.NetworkOrderAddress, input.Port, 0, input.UserName, 0)) {
 			LocMessageBox(IDS_WRN_FRIENDDUPLIPPORT, MB_OK, 0);
 			GetDlgItem(IDC_IP)->SetFocus();
 			return;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atlstr.h>
 #include <cstddef>
 #include <time.h>
 
@@ -55,5 +56,16 @@ inline bool LooksLikeMarkupPayload(const char* pcData, const std::size_t uLength
 		|| (uRemaining >= 4 && (pc[0] == '<') && (pc[1] == 'x' || pc[1] == 'X') && (pc[2] == 'm' || pc[2] == 'M') && (pc[3] == 'l' || pc[3] == 'L'))
 		|| (uRemaining >= 5 && (pc[0] == '<') && pc[1] == '?' && (pc[2] == 'x' || pc[2] == 'X') && (pc[3] == 'm' || pc[3] == 'M') && (pc[4] == 'l' || pc[4] == 'L'))
 		|| (uRemaining >= 5 && (pc[0] == '<') && pc[1] == '!' && (pc[2] == 'd' || pc[2] == 'D') && (pc[3] == 'o' || pc[3] == 'O') && (pc[4] == 'c' || pc[4] == 'C'));
+}
+
+/**
+ * @brief Returns whether an archive member name is an accepted IP-filter payload.
+ */
+inline bool IsSupportedArchiveMemberName(CString strFileName)
+{
+	strFileName.Trim();
+	return strFileName.CompareNoCase(_T("ipfilter.dat")) == 0
+		|| strFileName.CompareNoCase(_T("guarding.p2p")) == 0
+		|| strFileName.CompareNoCase(_T("guardian.p2p")) == 0;
 }
 }

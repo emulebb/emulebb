@@ -187,11 +187,10 @@ namespace
 			bIsArchiveFile = true;
 
 			CZIPFile::File* zfile = zip.GetFile(_T("ipfilter.dat"));
-			if (zfile == NULL) {
+			if (zfile == NULL)
 				zfile = zip.GetFile(_T("guarding.p2p"));
-				if (zfile == NULL)
-					zfile = zip.GetFile(_T("guardian.p2p"));
-			}
+			if (zfile == NULL)
+				zfile = zip.GetFile(_T("guardian.p2p"));
 			if (zfile != NULL) {
 				CString strTempUnzipFilePath;
 				if (!CreateIPFilterTempPath(_T("ipf"), strTempUnzipFilePath, strError)) {
@@ -227,9 +226,7 @@ namespace
 			if (rar.Open(strDownloadedPath)) {
 				CString strFile;
 				if (rar.GetNextFile(strFile)
-					&& (strFile.CompareNoCase(_T("ipfilter.dat")) == 0
-						|| strFile.CompareNoCase(_T("guarding.p2p")) == 0
-						|| strFile.CompareNoCase(_T("guardian.p2p")) == 0))
+					&& IPFilterUpdateSeams::IsSupportedArchiveMemberName(strFile))
 				{
 					CString strTempUnzipFilePath;
 					if (!CreateIPFilterTempPath(_T("ipf"), strTempUnzipFilePath, strError)) {

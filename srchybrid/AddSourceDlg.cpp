@@ -17,10 +17,10 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "AddSourceDlg.h"
+#include "AddSourceInputSeams.h"
 #include "PartFile.h"
 #include "UpDownClient.h"
 #include "DownloadQueue.h"
-#include <wininet.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -110,24 +110,15 @@ void CAddSourceDlg::OnBnClickedButton1()
 	case 0: //source client
 		{
 			CString sip;
+			CString strPort;
 			GetDlgItemText(IDC_EDIT2, sip);
-			if (sip.IsEmpty())
+			GetDlgItemText(IDC_EDIT3, strPort);
+			const AddSourceInputSeams::SourceClientInput input = AddSourceInputSeams::ParseSourceClientInput(sip, strPort);
+			if (!input.Valid)
 				return;
 
-			// if the port is specified with the IP, ignore any possible specified port in the port control
-			uint16 port;
-			int iColon = sip.Find(_T(':'));
-			if (iColon >= 0) {
-				port = (uint16)_tstoi(CPTR(sip, iColon + 1));
-				sip.Truncate(iColon);
-			} else {
-				BOOL bTranslated;
-				port = (uint16)GetDlgItemInt(IDC_EDIT3, &bTranslated, FALSE);
-				if (!bTranslated)
-					return;
-			}
-
-			uint32 ip = inet_addr((CStringA)sip);
+			const uint32 ip = input.NetworkOrderAddress;
+			const uint16 port = input.Port;
 			if (ip != INADDR_NONE && IsGoodIPPort(ip, port)) {
 				CUpDownClient *toadd = new CUpDownClient(m_pFile, port, ntohl(ip), 0, 0);
 				toadd->SetSourceFrom(SF_PASSIVE);
@@ -139,30 +130,11 @@ void CAddSourceDlg::OnBnClickedButton1()
 		{
 			CString strURL;
 			if (GetDlgItemText(IDC_EDIT10, strURL)) {
-				TCHAR szScheme[INTERNET_MAX_SCHEME_LENGTH];
-				TCHAR szHostName[INTERNET_MAX_HOST_NAME_LENGTH];
-				TCHAR szUrlPath[INTERNET_MAX_PATH_LENGTH];
-				TCHAR szUserName[INTERNET_MAX_USER_NAME_LENGTH];
-				TCHAR szPassword[INTERNET_MAX_PASSWORD_LENGTH];
-				TCHAR szExtraInfo[INTERNET_MAX_URL_LENGTH];
-				URL_COMPONENTS Url = {};
-				Url.dwStructSize = (DWORD)sizeof Url;
-				Url.lpszScheme = szScheme;
-				Url.dwSchemeLength = _countof(szScheme);
-				Url.lpszHostName = szHostName;
-				Url.dwHostNameLength = _countof(szHostName);
-				Url.lpszUserName = szUserName;
-				Url.dwUserNameLength = _countof(szUserName);
-				Url.lpszPassword = szPassword;
-				Url.dwPasswordLength = _countof(szPassword);
-				Url.lpszUrlPath = szUrlPath;
-				Url.dwUrlPathLength = _countof(szUrlPath);
-				Url.lpszExtraInfo = szExtraInfo;
-				Url.dwExtraInfoLength = _countof(szExtraInfo);
-				if (::InternetCrackUrl(strURL, strURL.GetLength() /*0*/, 0, &Url) && Url.dwHostNameLength > 0 && Url.dwHostNameLength < INTERNET_MAX_HOST_NAME_LENGTH) {
+				const AddSourceInputSeams::UrlSourceInput input = AddSourceInputSeams::ParseUrlSourceInput(strURL);
+				if (input.Valid) {
 					SUnresolvedHostname hostname;
-					hostname.strURL = strURL;
-					hostname.strHostname = szHostName;
+					hostname.strURL = input.Url;
+					hostname.strHostname = input.HostName;
 					theApp.downloadqueue->AddToResolved(m_pFile, &hostname);
 				}
 			}
