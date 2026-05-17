@@ -23,6 +23,11 @@
 #include "PartFile.h"
 #include "zlib.h"
 
+// FROZEN SURFACE (2026-05-17): archive recovery receives no support, no new
+// tests, and no hardening/refactor investment. It may be removed. Only touch
+// this area to delete it or to protect supported shared infrastructure. See
+// repos/eMule-tooling/docs/active/FROZEN-SURFACES.md.
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE

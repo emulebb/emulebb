@@ -115,6 +115,12 @@ Version history
 - 1.0 initial release
 */
 
+// FROZEN SURFACE (2026-05-17): proxy support receives no support, no new tests,
+// and no hardening/refactor investment. It may be removed or replaced by a
+// future deliberate transport policy. Only touch this area to delete it or to
+// protect supported shared infrastructure. See
+// repos/eMule-tooling/docs/active/FROZEN-SURFACES.md.
+
 #include "stdafx.h"
 #include <atlenc.h>
 #include "AsyncProxySocketLayer.h"

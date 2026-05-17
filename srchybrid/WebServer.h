@@ -252,6 +252,10 @@ typedef struct
 	in_addr			inadr;
 } ThreadData;
 
+// FROZEN SURFACE (2026-05-17): this struct stores legacy HTML template state.
+// Template behavior is unsupported, untested, and may be removed. Keep REST and
+// shared listener safety separate from template maintenance. See
+// repos/eMule-tooling/docs/active/FROZEN-SURFACES.md.
 typedef struct
 {
 	CString	sAddServerBox;

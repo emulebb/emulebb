@@ -59,6 +59,11 @@ static char THIS_FILE[] = __FILE__;
 #define HTTPInitGZ HTTPInit "Content-Encoding: gzip\r\n"
 #define HTTPENCODING _T("utf-8")
 
+// FROZEN SURFACE (2026-05-17): legacy WebServer HTML templates receive no
+// support, no new tests, and no functional parity work. The supported WebServer
+// surface is JSON REST/controller routing and shared listener safety. Only
+// touch template code to remove it or to protect supported shared
+// infrastructure. See repos/eMule-tooling/docs/active/FROZEN-SURFACES.md.
 #define WEB_SERVER_TEMPLATES_VERSION	7
 
 //SyruS CQArray-Sorting operators
