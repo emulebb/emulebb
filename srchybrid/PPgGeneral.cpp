@@ -89,7 +89,7 @@ void CPPgGeneral::LoadSettings()
 	CheckDlgButton(IDC_BRINGTOFOREGROUND, static_cast<UINT>(thePrefs.bringtoforeground));
 	CheckDlgButton(IDC_EXIT, static_cast<UINT>(thePrefs.confirmExit));
 	CheckDlgButton(IDC_ONLINESIG, static_cast<UINT>(thePrefs.onlineSig));
-	CheckDlgButton(IDC_CHECK4UPDATE, static_cast<UINT>(thePrefs.updatenotify));
+	CheckDlgButton(IDC_CHECK4UPDATE, static_cast<UINT>(thePrefs.UpdateNotify()));
 	CheckDlgButton(IDC_SPLASHON, static_cast<UINT>(thePrefs.splashscreen));
 	CheckDlgButton(IDC_STARTMIN, static_cast<UINT>(thePrefs.startMinimized));
 	CheckDlgButton(IDC_STARTWIN, static_cast<UINT>(thePrefs.m_bAutoStart));
@@ -98,7 +98,7 @@ void CPPgGeneral::LoadSettings()
 	CheckDlgButton(IDC_PREVENTSTANDBY, static_cast<UINT>(thePrefs.GetPreventStandby()));
 
 	CString strBuffer;
-	strBuffer.Format(_T("%u %s"), thePrefs.versioncheckdays, (LPCTSTR)GetResString(IDS_DAYS2));
+	strBuffer.Format(_T("%u %s"), thePrefs.GetUpdateDays(), (LPCTSTR)GetResString(IDS_DAYS2));
 	SetDlgItemText(IDC_DAYS, strBuffer);
 }
 
@@ -245,7 +245,7 @@ BOOL CPPgGeneral::OnApply()
 	thePrefs.m_bPreventStandby = IsDlgButtonChecked(IDC_PREVENTSTANDBY) != 0;
 	if (bPreventStandbyWasEnabled && !thePrefs.GetPreventStandby())
 		theApp.ReleaseStandbyPrevention();
-	thePrefs.updatenotify = IsDlgButtonChecked(IDC_CHECK4UPDATE) != 0;
+	thePrefs.SetUpdateNotify(IsDlgButtonChecked(IDC_CHECK4UPDATE) != 0);
 	thePrefs.SetUpdateDays(static_cast<CSliderCtrl*>(GetDlgItem(IDC_CHECKDAYS))->GetPos());
 	thePrefs.splashscreen = IsDlgButtonChecked(IDC_SPLASHON) != 0;
 	thePrefs.startMinimized = IsDlgButtonChecked(IDC_STARTMIN) != 0;

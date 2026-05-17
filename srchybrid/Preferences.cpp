@@ -700,7 +700,7 @@ CString	CPreferences::m_strIncomingDir;
 CStringArray CPreferences::tempdir;
 bool	CPreferences::ICH;
 bool	CPreferences::m_bAutoUpdateServerList;
-bool	CPreferences::updatenotify;
+bool	CPreferences::m_bUpdateNotify;
 bool	CPreferences::mintotray;
 bool	CPreferences::autoconnect;
 bool	CPreferences::m_bAutoConnectToStaticServersOnly;
@@ -944,7 +944,7 @@ bool	CPreferences::m_bUAP;
 bool	CPreferences::m_bDisableKnownClientList;
 bool	CPreferences::m_bDisableQueueList;
 bool	CPreferences::m_bTransflstRemain;
-UINT	CPreferences::versioncheckdays;
+UINT	CPreferences::m_uUpdateDays;
 bool	CPreferences::showRatesInTitle;
 CString	CPreferences::m_strTxtEditor;
 CString	CPreferences::m_strVideoPlayer;
@@ -2523,12 +2523,12 @@ void CPreferences::SavePreferences()
 	ini.WriteInt(_T("VariousStatisticsMaxValue"), statsMax);
 	ini.WriteInt(_T("StatsAverageMinutes"), statsAverageMinutes);
 	ini.WriteInt(_T("MaxConnectionsPerFiveSeconds"), MaxConperFive);
-	ini.WriteInt(_T("Check4NewVersionDelay"), versioncheckdays);
+	ini.WriteInt(_T("Check4NewVersionDelay"), m_uUpdateDays);
 
 	ini.WriteBool(_T("Reconnect"), reconnect);
 	ini.WriteBool(_T("Scoresystem"), m_bUseServerPriorities);
 	ini.WriteBool(_T("Serverlist"), m_bAutoUpdateServerList);
-	ini.WriteBool(_T("UpdateNotifyTestClient"), updatenotify);
+	ini.WriteBool(_T("UpdateNotify"), m_bUpdateNotify);
 	if (IsRunningAeroGlassTheme())
 		ini.WriteBool(_T("MinToTray_Aero"), mintotray);
 	else
@@ -2944,7 +2944,7 @@ void CPreferences::LoadPreferences()
 #endif
 
 	m_nWebMirrorAlertLevel = ini.GetInt(_T("WebMirrorAlertLevel"), 0);
-	updatenotify = ini.GetBool(_T("UpdateNotifyTestClient"), false);
+	m_bUpdateNotify = ini.GetBool(_T("UpdateNotify"), false);
 
 	SetUserNick(ini.GetString(_T("Nick"), DEFAULT_NICK));
 	if (strNick.IsEmpty() || IsDefaultNick(strNick))
@@ -3863,7 +3863,7 @@ UINT CPreferences::NormalizeUpdateDays(UINT in)
 
 void CPreferences::SetUpdateDays(UINT in)
 {
-	versioncheckdays = NormalizeUpdateDays(in);
+	m_uUpdateDays = NormalizeUpdateDays(in);
 }
 
 void CPreferences::SetMaxUpload(uint32 val)

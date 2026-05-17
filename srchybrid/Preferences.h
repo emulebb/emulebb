@@ -213,7 +213,7 @@ public:
 	static CStringArray	tempdir;
 	static bool		ICH;
 	static bool		m_bAutoUpdateServerList;
-	static bool		updatenotify;
+	static bool		m_bUpdateNotify;
 	static bool		mintotray;
 	static bool		autoconnect;
 	static bool		m_bAutoConnectToStaticServersOnly; // Barry
@@ -511,7 +511,7 @@ public:
 	static bool		m_bDisableQueueList;
 	static bool		m_bTransflstRemain;
 
-	static UINT		versioncheckdays;
+	static UINT		m_uUpdateDays;
 	static bool		showRatesInTitle;
 
 	static CString	m_strTxtEditor;
@@ -835,7 +835,8 @@ public:
 	static uint32	GetMaxUpload()						{ return m_uSessionMaxUpload != 0 ? m_uSessionMaxUpload : m_maxupload; }
 	static bool		IsICHEnabled()						{ return ICH; }
 	static bool		GetAutoUpdateServerList()			{ return m_bAutoUpdateServerList; }
-	static bool		UpdateNotify()						{ return updatenotify; }
+	static bool		UpdateNotify()						{ return m_bUpdateNotify; }
+	static void		SetUpdateNotify(bool bUpdateNotify)	{ m_bUpdateNotify = bUpdateNotify; }
 	static bool		GetMinToTray()						{ return mintotray; }
 	static bool		DoAutoConnect()						{ return autoconnect; }
 	static void		SetAutoConnect(bool inautoconnect)	{ autoconnect = inautoconnect; }
@@ -1399,7 +1400,7 @@ public:
 	static void		SetWindowLayout(const WINDOWPLACEMENT &in) { EmuleWindowPlacement = in; }
 
 	static bool		GetAutoConnectToStaticServersOnly()	{ return m_bAutoConnectToStaticServersOnly; }
-	static UINT		GetUpdateDays()						{ return versioncheckdays; }
+	static UINT		GetUpdateDays()						{ return m_uUpdateDays; }
 	static UINT		GetDefaultUpdateDays()				{ return 5; }
 	static UINT		GetMinUpdateDays()					{ return 1; }
 	static UINT		GetMaxUpdateDays()					{ return 30; }
