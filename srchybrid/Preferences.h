@@ -512,6 +512,7 @@ public:
 
 	static UINT		m_uUpdateDays;
 	static bool		showRatesInTitle;
+	static int		m_iSearchResultsFileSizeFormat;
 
 	static CString	m_strTxtEditor;
 	static CString	m_strVideoPlayer;
@@ -1343,6 +1344,8 @@ public:
 
 	static bool		IsSafeServerConnectEnabled()		{ return m_bSafeServerConnect; }
 	static void		SetSafeServerConnectEnabled(bool in) { m_bSafeServerConnect = in; }
+	static int		GetSearchResultsFileSizeFormat()	{ return m_iSearchResultsFileSizeFormat; }
+	static void		SetSearchResultsFileSizeFormat(int format);
 	static bool		IsVideoThumbnailGenerationEnabled()	{ return m_uVideoThumbnailIntervalSeconds > 0; }
 	static bool		UseVideoPreviewThumbnails()			{ return IsVideoThumbnailGenerationEnabled(); }
 	static DWORD	GetVideoThumbnailIntervalMs()		{ return SEC2MS(m_uVideoThumbnailIntervalSeconds); }

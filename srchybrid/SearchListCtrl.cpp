@@ -307,13 +307,13 @@ CSearchListCtrl::CSearchListCtrl()
 	, m_nResultsID()
 {
 	SetGeneralPurposeFind(true);
-	m_eFileSizeFormat = (EFileSizeFormat)theApp.GetProfileInt(_T("eMule"), _T("SearchResultsFileSizeFormat"), fsizeDefault);
+	m_eFileSizeFormat = static_cast<EFileSizeFormat>(thePrefs.GetSearchResultsFileSizeFormat());
 	SetSkinKey(_T("SearchResultsLv"));
 }
 
 void CSearchListCtrl::OnDestroy()
 {
-	theApp.WriteProfileInt(_T("eMule"), _T("SearchResultsFileSizeFormat"), m_eFileSizeFormat);
+	thePrefs.SetSearchResultsFileSizeFormat(static_cast<int>(m_eFileSizeFormat));
 	__super::OnDestroy();
 }
 

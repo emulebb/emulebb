@@ -947,6 +947,7 @@ bool	CPreferences::m_bDisableQueueList;
 bool	CPreferences::m_bTransflstRemain;
 UINT	CPreferences::m_uUpdateDays;
 bool	CPreferences::showRatesInTitle;
+int		CPreferences::m_iSearchResultsFileSizeFormat;
 CString	CPreferences::m_strTxtEditor;
 CString	CPreferences::m_strVideoPlayer;
 CString CPreferences::m_strVideoPlayerArgs;
@@ -1309,6 +1310,11 @@ void CPreferences::SetIPFilterUpdatePeriodDays(UINT uDays)
 ESessionTransferLimitMode CPreferences::NormalizeSessionTransferLimitMode(ESessionTransferLimitMode eMode)
 {
 	return static_cast<ESessionTransferLimitMode>(PreferenceValidationSeams::NormalizeSessionTransferLimitMode(static_cast<int>(eMode)));
+}
+
+void CPreferences::SetSearchResultsFileSizeFormat(int format)
+{
+	m_iSearchResultsFileSizeFormat = static_cast<int>(NormalizeBoundedPreference(format, 0, 0, 2));
 }
 
 UINT CPreferences::NormalizeSessionTransferLimitValue(ESessionTransferLimitMode eMode, UINT uVal)
@@ -2571,6 +2577,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("UserSortedServerList"), m_bUseUserSortedServerList);
 	ini.WriteBool(_T("ICH"), ICH);
 	ini.WriteBool(_T("ShowRatesOnTitle"), showRatesInTitle);
+	ini.WriteInt(_T("SearchResultsFileSizeFormat"), m_iSearchResultsFileSizeFormat);
 	ini.WriteBool(_T("IndicateRatings"), indicateratings);
 	ini.WriteBool(_T("WatchClipboard4ED2kFilelinks"), watchclipboard);
 	ini.WriteInt(_T("SearchMethod"), m_iSearchMethod);
@@ -3110,6 +3117,7 @@ void CPreferences::LoadPreferences()
 	m_bAllocLocalHostIP = ini.GetBool(_T("AllowLocalHostIP"), false);
 	autoconnect = ini.GetBool(_T("Autoconnect"), false);
 	showRatesInTitle = ini.GetBool(_T("ShowRatesOnTitle"), true);
+	SetSearchResultsFileSizeFormat(ini.GetInt(_T("SearchResultsFileSizeFormat"), 0));
 	m_bIconflashOnNewMessage = ini.GetBool(_T("IconflashOnNewMessage"), false);
 
 	onlineSig = ini.GetBool(_T("OnlineSignature"), false);
