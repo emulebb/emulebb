@@ -424,8 +424,6 @@ void CCreditsThread::InitText()
 	m_arCredits.Add(_T("S:5"));
 	m_arCredits.Add(_T("01:06:Paolo Messina (ResizableDialog class)"));
 	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:6:PJ Naughter (HttpDownload Dialog)"));
-	m_arCredits.Add(_T("S:5"));
 	m_arCredits.Add(_T("01:06:Jim Connor (Scrolling Credits)"));
 	m_arCredits.Add(_T("S:5"));
 	m_arCredits.Add(_T("01:06:Yury Goltsman (extended Progressbar)"));
