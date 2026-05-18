@@ -39,6 +39,7 @@
 #include "RarFile.h"
 #include "shahashset.h"
 #include "collection.h"
+#include "ComInitializationSeams.h"
 #include "AppRegistryIdentitySeams.h"
 #include "FilenameNormalizationPolicy.h"
 #include "FormatSafetySeams.h"
@@ -631,9 +632,8 @@ bool DeleteFileToRecycleBinIFileOperation(LPCTSTR pszFilePath, HWND hOwnerWindow
 	const CString strShellPath = PathHelpers::StripExtendedLengthPrefix(CString(pszFilePath));
 	if (!PathHelpers::IsShellSafePath(strShellPath))
 		return false;
-	const HRESULT hrCoInitialize = ::CoInitialize(NULL);
-	const bool bShouldUninitialize = SUCCEEDED(hrCoInitialize);
-	if (FAILED(hrCoInitialize) && hrCoInitialize != RPC_E_CHANGED_MODE)
+	const ComInitializationSeams::CScopedComInitialize coInitialize;
+	if (!coInitialize.IsUsable())
 		return false;
 
 	CComPtr<IFileOperation> pFileOperation;
@@ -654,9 +654,6 @@ bool DeleteFileToRecycleBinIFileOperation(LPCTSTR pszFilePath, HWND hOwnerWindow
 	BOOL bAnyOperationsAborted = FALSE;
 	if (SUCCEEDED(hr))
 		hr = pFileOperation->GetAnyOperationsAborted(&bAnyOperationsAborted);
-
-	if (bShouldUninitialize)
-		::CoUninitialize();
 
 	return SUCCEEDED(hr) && !bAnyOperationsAborted;
 }
@@ -1245,29 +1242,6 @@ void CWebServices::Edit()
 
 namespace
 {
-class ScopedCoInitialize
-{
-public:
-	ScopedCoInitialize()
-		: m_hr(::CoInitialize(NULL))
-	{
-	}
-
-	~ScopedCoInitialize()
-	{
-		if (SUCCEEDED(m_hr))
-			::CoUninitialize();
-	}
-
-	bool IsReady() const
-	{
-		return SUCCEEDED(m_hr);
-	}
-
-private:
-	HRESULT m_hr;
-};
-
 struct DialogFilterStorage
 {
 	std::vector<CString> names;
@@ -1338,8 +1312,8 @@ void InitializeDialogPathSelection(IFileDialog &rDialog, const CString &rstrInit
 bool ShowShellFolderPicker(const CString &rstrInitialPath, HWND hWnd, LPCTSTR pszTitle, LPCTSTR pszDlgTitle, CString &rstrSelectedPath)
 {
 	rstrSelectedPath.Empty();
-	ScopedCoInitialize coInitialize;
-	if (!coInitialize.IsReady())
+	ComInitializationSeams::CScopedComInitialize coInitialize;
+	if (!coInitialize.IsInitialized())
 		return false;
 
 	CComPtr<IFileOpenDialog> pOpenDialog;
@@ -1385,8 +1359,8 @@ bool ShowShellFolderPicker(const CString &rstrInitialPath, HWND hWnd, LPCTSTR ps
 bool ShowShellFileDialog(const CString &rstrInitialPath, LPCTSTR pszFilters, DWORD dwFlags, const bool bOpenFileDialog, HWND hWndOwner, LPCTSTR pszDlgTitle, LPCTSTR pszDefExt, CString &rstrSelectedPath)
 {
 	rstrSelectedPath.Empty();
-	ScopedCoInitialize coInitialize;
-	if (!coInitialize.IsReady())
+	ComInitializationSeams::CScopedComInitialize coInitialize;
+	if (!coInitialize.IsInitialized())
 		return false;
 
 	CComPtr<IFileDialog> pDialog;

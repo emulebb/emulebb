@@ -15,6 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
+#include "ComInitializationSeams.h"
 #include "WindowsToastNotifier.h"
 #include "Log.h"
 #include "UserMsgs.h"
@@ -160,9 +161,8 @@ namespace
 		if (::GetModuleFileNameW(NULL, szModulePath, _countof(szModulePath)) == 0)
 			return false;
 
-		HRESULT hrCo = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-		const bool bCoInitialized = SUCCEEDED(hrCo);
-		if (FAILED(hrCo) && hrCo != RPC_E_CHANGED_MODE)
+		const ComInitializationSeams::CScopedComInitialize coInitialize(COINIT_APARTMENTTHREADED);
+		if (!coInitialize.IsUsable())
 			return false;
 
 		bool bSaved = false;
@@ -191,8 +191,6 @@ namespace
 			pShellLink->Release();
 		}
 
-		if (bCoInitialized)
-			::CoUninitialize();
 		return bSaved;
 	}
 

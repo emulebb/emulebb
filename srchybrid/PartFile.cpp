@@ -22,6 +22,7 @@
 #include "DebugHelpers.h"
 #endif
 #include "emule.h"
+#include "ComInitializationSeams.h"
 #include "PartFile.h"
 #include "UpDownClient.h"
 #include "ED2KLink.h"
@@ -2931,9 +2932,8 @@ UINT CPartFile::CompleteThreadProc(LPVOID pvParams)
 	CPartFile *pFile = reinterpret_cast<CPartFile*>(pvParams);
 	if (!pFile)
 		return UINT_MAX;
-	(void)::CoInitialize(NULL);
+	const ComInitializationSeams::CScopedComInitialize coInitialize;
 	pFile->PerformFileComplete();
-	::CoUninitialize();
 	return 0;
 }
 

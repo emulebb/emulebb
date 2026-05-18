@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "eMule.h"
+#include "ComInitializationSeams.h"
 #include "FileInfoDialog.h"
 #include "OtherFunctions.h"
 #include "KnownFileMetadataSeams.h"
@@ -257,7 +258,7 @@ BOOL CGetMediaInfoThread::InitInstance()
 
 int CGetMediaInfoThread::Run()
 {
-	(void)::CoInitialize(NULL);
+	const ComInitializationSeams::CScopedComInitialize coInitialize;
 
 	HWND hwndRE = ::CreateWindow(MSFTEDIT_CLASS, NULL, ES_MULTILINE | ES_READONLY | WS_DISABLED, 0, 0, 200, 200, NULL, NULL, NULL, NULL);
 	ASSERT(hwndRE);
@@ -317,7 +318,6 @@ int CGetMediaInfoThread::Run()
 	if (delivery.eDelivery != EWorkerUiMessageDelivery::Delivered)
 		delete pThreadRes;
 
-	::CoUninitialize();
 	return 0;
 }
 

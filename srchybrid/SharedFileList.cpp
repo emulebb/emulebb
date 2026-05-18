@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "ComInitializationSeams.h"
 #include "KnownFileList.h"
 #include "SharedFileList.h"
 #include "SharedFileListSeams.h"
@@ -466,7 +467,7 @@ int CAddFileThread::Run()
 	if (!(m_pOwner || m_partfile) || m_strFilename.IsEmpty() || theApp.IsClosing())
 		return 0;
 
-	(void)::CoInitialize(NULL);
+	const ComInitializationSeams::CScopedComInitialize coInitialize;
 
 	// Locking this hashing thread is needed because we may create a few of those threads
 	// at startup when rehashing potentially corrupted downloading part files.
@@ -530,7 +531,6 @@ int CAddFileThread::Run()
 #endif
 
 	hashingLock.Unlock();
-	::CoUninitialize();
 	return 0;
 }
 
@@ -556,11 +556,10 @@ int CSharedFileHashThread::Run()
 	if (m_pOwner == NULL)
 		return 0;
 
-	(void)::CoInitialize(NULL);
+	const ComInitializationSeams::CScopedComInitialize coInitialize;
 	CSharedFileList::SharedHashJob job;
 	while (m_pOwner->WaitForSharedHashJob(job))
 		m_pOwner->RunSharedHashJob(job);
-	::CoUninitialize();
 	return 0;
 }
 

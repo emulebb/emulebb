@@ -15,6 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
+#include "ComInitializationSeams.h"
 #include "KnownFileMetadataSeams.h"
 #include "LongPathSeams.h"
 #include "OtherFunctions.h"
@@ -40,31 +41,6 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-class CScopedCoInitialize
-{
-public:
-	CScopedCoInitialize()
-		: m_hr(::CoInitializeEx(NULL, COINIT_MULTITHREADED))
-		, m_bUninitialize(SUCCEEDED(m_hr))
-	{
-	}
-
-	~CScopedCoInitialize()
-	{
-		if (m_bUninitialize)
-			::CoUninitialize();
-	}
-
-	bool IsUsable() const
-	{
-		return SUCCEEDED(m_hr) || m_hr == RPC_E_CHANGED_MODE;
-	}
-
-private:
-	HRESULT m_hr;
-	bool m_bUninitialize;
-};
-
 class CScopedMfStartup
 {
 public:
@@ -285,7 +261,7 @@ bool GetMediaFoundationMediaInfo(LPCTSTR pszFilePath, EMFileSize, SMediaInfo *mi
 	if (pszFilePath == NULL || *pszFilePath == _T('\0') || mi == NULL)
 		return false;
 
-	CScopedCoInitialize coInit;
+	ComInitializationSeams::CScopedComInitialize coInit(COINIT_MULTITHREADED);
 	if (!coInit.IsUsable())
 		return false;
 	CScopedMfStartup mfStartup;
@@ -379,7 +355,7 @@ bool SupplementShellMediaProperties(LPCTSTR pszFilePath, SMediaInfo *mi)
 {
 	if (pszFilePath == NULL || *pszFilePath == _T('\0') || mi == NULL)
 		return false;
-	CScopedCoInitialize coInit;
+	ComInitializationSeams::CScopedComInitialize coInit(COINIT_MULTITHREADED);
 	if (!coInit.IsUsable())
 		return false;
 
