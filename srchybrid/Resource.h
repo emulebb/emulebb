@@ -69,14 +69,12 @@
 #define IDS_ERR_REHASH                  160
 #define IDS_SKIN_PROF                   161
 #define IDS_ERR_PART_FNF                162
-#define IDD_HTTPDOWNLOAD                163
 #define IDS_KADOPEN                     163
 #define IDS_ERR_SAVEMET                 164
 #define IDD_CHAT                        165
 #define IDS_ERR_FOUNDCORRUPTION         165
 #define IDS_HASHINGDONE                 166
 #define IDS_ERR_PARTCORRUPT             167
-#define IDR_HTTPDOWNLOAD_ANI            168
 #define IDS_ICHWORKED                   168
 #define IDS_ERR_OUTOFSPACE              169
 #define IDS_SE                          170
@@ -1534,11 +1532,6 @@
 #define IDS_IMPORTPARTS_IMPORTSTART     1607
 #define IDS_IMPORTPARTS                 1608
 #define IDS_IMPORTPARTS_STOP            1609
-#define IDC_ANIMATE1                    2000
-#define IDC_STATUS                      2001
-#define IDC_FILESTATUS                  2002
-#define IDC_TIMELEFT                    2003
-#define IDC_TRANSFER_RATE               2004
 #define IDC_MAXSOURCEPERFILE            2005
 #define IDC_TITLEWINDOW                 2006
 #define IDC_INPUTWINDOW                 2007
@@ -2135,8 +2128,6 @@
 #define IDD_IPFILTER                    2786
 #define IDC_COMPRESSION                 2787
 #define IDD_ED2KLINK                    2787
-#define IDC_TIMELEFTTEXT                2789
-#define IDC_TRANSFER_RATE_LABEL         2790
 #define IDC_RADIP                       2791
 #define IDC_RADCLIENTS                  2792
 #define IDC_HSAV                        2793
