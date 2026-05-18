@@ -486,6 +486,7 @@
     <ClInclude Include="DownloadPriorityShortcutsSeams.h" />
     <ClInclude Include="DownloadQueue.h" />
     <ClInclude Include="DownloadQueueAutoCatSeams.h" />
+    <ClInclude Include="DownloadQueueHostnameResolverSeams.h" />
     <ClInclude Include="Drawgdix.h" />
     <ClInclude Include="DropDownButton.h" />
     <ClInclude Include="DropTarget.h" />

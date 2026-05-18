@@ -16,19 +16,24 @@ enum class EDownloadHostnameResolveDispatch
 };
 
 /**
- * Classifies a resolved hostname completion without pulling the full
- * download-queue implementation into shared regression tests.
+ * @brief Classifies a resolved source hostname before touching download-queue state.
  */
-inline EDownloadHostnameResolveDispatch GetDownloadHostnameResolveDispatch(
-	bool bFileStillExists,
-	bool bLookupSucceeded,
-	bool bHasIpv4Address,
-	bool bHasUrl)
+inline EDownloadHostnameResolveDispatch GetDownloadHostnameResolveDispatch(const bool bFileStillExists, const bool bLookupSucceeded, const bool bHasIpv4Address, const bool bHasUrl)
 {
 	if (!bFileStillExists || !bLookupSucceeded || !bHasIpv4Address)
 		return EDownloadHostnameResolveDispatch::Drop;
+	return bHasUrl ? EDownloadHostnameResolveDispatch::AddUrlSource : EDownloadHostnameResolveDispatch::AddPackedSource;
+}
 
-	return bHasUrl
-		? EDownloadHostnameResolveDispatch::AddUrlSource
-		: EDownloadHostnameResolveDispatch::AddPackedSource;
+namespace DownloadQueueHostnameResolverSeams
+{
+using ResolveDispatch = EDownloadHostnameResolveDispatch;
+
+/**
+ * @brief Classifies a resolved ed2k hostname source without enabling URL-source dispatch.
+ */
+inline ResolveDispatch GetResolveDispatch(const bool bFileStillExists, const bool bLookupSucceeded, const bool bHasIpv4Address)
+{
+	return GetDownloadHostnameResolveDispatch(bFileStillExists, bLookupSucceeded, bHasIpv4Address, false);
+}
 }

@@ -14,6 +14,11 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
+#include <condition_variable>
+#include <deque>
+#include <mutex>
+#include <thread>
+
 #include "ring.h"
 
 class CSafeMemFile;
@@ -31,28 +36,45 @@ namespace Kademlia
 	class CUInt128;
 };
 
-class CSourceHostnameResolveWnd : public CWnd
+/**
+ * @brief Resolves ed2k source hostnames away from the UI thread and drains results on the download queue.
+ */
+class CSourceHostnameResolver
 {
-	// Construction
 public:
-	CSourceHostnameResolveWnd();
-	virtual	~CSourceHostnameResolveWnd();
+	CSourceHostnameResolver();
+	~CSourceHostnameResolver();
 
 	void AddToResolve(const uchar *fileid, LPCSTR pszHostname, uint16 port);
-
-protected:
-	DECLARE_MESSAGE_MAP()
-	afx_msg LRESULT OnHostnameResolved(WPARAM, LPARAM lParam);
+	void DrainResolved(class CDownloadQueue &downloadQueue);
+	void Stop();
 
 private:
-	struct Hostname_Entry
+	struct HostnameResolveRequest
 	{
 		uchar fileid[MDX_DIGEST_SIZE];
 		CStringA strHostname;
 		uint16 port;
 	};
-	CTypedPtrList<CPtrList, Hostname_Entry*> m_toresolve;
-	char m_aucHostnameBuffer[MAXGETHOSTSTRUCT];
+
+	struct HostnameResolveResult
+	{
+		uchar fileid[MDX_DIGEST_SIZE];
+		uint32 nIP;
+		uint16 port;
+		bool bLookupSucceeded;
+		bool bHasIpv4Address;
+	};
+
+	static bool TryResolveHostnameIPv4(const CStringA &rstrHostname, uint32 &rnAddress);
+	void WorkerMain();
+
+	std::deque<HostnameResolveRequest> m_pending;
+	std::deque<HostnameResolveResult> m_resolved;
+	std::mutex m_mutex;
+	std::condition_variable m_workAvailable;
+	bool m_bStopping;
+	std::thread m_worker;
 };
 
 
@@ -252,7 +274,7 @@ private:
 	CRing<TransferredData> average_dr_hist;
 	// END By BadWolf - Accurate Speed Measurement
 
-	CSourceHostnameResolveWnd m_srcwnd;
+	CSourceHostnameResolver m_hostnameResolver;
 	uint64	m_datarateMS;
 	CPartFile *m_lastfile;
 	ULONGLONG m_dwLastA4AFtime; // ZZ:DownloadManager
