@@ -721,6 +721,7 @@
     <ClInclude Include="UPnPImpl.h" />
     <ClInclude Include="UPnPImplMiniLib.h" />
     <ClInclude Include="UPnPImplPcpNatPmp.h" />
+    <ClInclude Include="UPnPImplPcpNatPmpSeams.h" />
     <ClInclude Include="UPnPImplWrapper.h" />
     <ClInclude Include="URLClient.h" />
     <ClInclude Include="UserMsgs.h" />

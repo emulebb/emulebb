@@ -64,6 +64,7 @@ private:
 	 */
 	bool ResolveSourceAddress();
 	void StartThread();
+	void ReapDiscoveryThreadIfFinished();
 	void GetOldPorts();
 	void DeletePorts(bool bSkipLock);
 	void CloseFlow(pcp_flow_t *&pFlow, LPCTSTR pszLabel);
@@ -76,7 +77,10 @@ private:
 	pcp_flow_t *m_pTCPFlow;
 	pcp_flow_t *m_pUDPFlow;
 	pcp_flow_t *m_pTCPWebFlow;
-	HANDLE m_hThreadHandle;
+	/**
+	 * Owns the non-auto-deleting discovery worker while it is alive.
+	 */
+	CStartDiscoveryThread *m_pDiscoveryThread;
 	CStringA m_strSourceAddress;
 	sockaddr_storage m_sourceAddress;
 	int m_nSourceAddressLen;
