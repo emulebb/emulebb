@@ -29,6 +29,7 @@
 #include "PartFile.h"
 #include "Log.h"
 #include "UserMsgs.h"
+#include "WorkerUiMessageSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -92,8 +93,13 @@ namespace
 			return;
 
 		const HWND hSharedFilesWnd = GetAICHSyncProgressWindow();
-		if (hSharedFilesWnd != NULL && ::IsWindow(hSharedFilesWnd))
-			VERIFY(::PostMessage(hSharedFilesWnd, UM_AICH_HASHING_COUNT_CHANGED, static_cast<WPARAM>(nRemainingHashes), 0));
+		const SWorkerUiMessageDelivery delivery = PostWorkerUiMessage(
+			hSharedFilesWnd,
+			UM_AICH_HASHING_COUNT_CHANGED,
+			static_cast<WPARAM>(nRemainingHashes),
+			0);
+		if (GetAICHSyncProgressDeliveryAction(nRemainingHashes, delivery.eDelivery) == EAICHSyncProgressDeliveryAction::Failed && thePrefs.GetVerbose())
+			AddDebugLogLine(false, _T("AICH sync progress update could not be posted to the shared-files window (%u)"), delivery.dwLastError);
 	}
 }
 

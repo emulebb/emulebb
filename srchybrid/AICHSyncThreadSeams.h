@@ -1,6 +1,18 @@
 #pragma once
 
 #include "AICHMaintenanceSeams.h"
+#include "WorkerUiMessageSeams.h"
+
+/**
+ * @brief UI delivery outcome for AICH background progress updates.
+ */
+enum class EAICHSyncProgressDeliveryAction
+{
+	IgnoreInvalidCount,
+	DropUnavailableTarget,
+	Delivered,
+	Failed
+};
 
 /**
  * @brief Reports whether AICH background hashing should wait for foreground hash work to finish.
@@ -25,4 +37,22 @@ inline bool ShouldCreateAICHSyncHash(bool bIsClosing, bool bIsStillShared)
 inline bool HasValidAICHSyncProgressCount(INT_PTR nRemainingHashes)
 {
 	return nRemainingHashes >= 0;
+}
+
+/**
+ * @brief Classifies the result of forwarding an AICH progress update to the UI thread.
+ */
+inline EAICHSyncProgressDeliveryAction GetAICHSyncProgressDeliveryAction(INT_PTR nRemainingHashes, EWorkerUiMessageDelivery eDelivery)
+{
+	if (!HasValidAICHSyncProgressCount(nRemainingHashes))
+		return EAICHSyncProgressDeliveryAction::IgnoreInvalidCount;
+
+	switch (eDelivery) {
+	case EWorkerUiMessageDelivery::Delivered:
+		return EAICHSyncProgressDeliveryAction::Delivered;
+	case EWorkerUiMessageDelivery::InvalidWindow:
+		return EAICHSyncProgressDeliveryAction::DropUnavailableTarget;
+	default:
+		return EAICHSyncProgressDeliveryAction::Failed;
+	}
 }
