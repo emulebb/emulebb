@@ -420,7 +420,6 @@
       <Outputs>$(ProjectDir)%(Filename).cpp;%(Outputs)</Outputs>
     </CustomBuild>
     <None Include="res\emule.rc2" />
-    <None Include="res\InetDownload.avi" />
     <None Include="res\WideCharLowerMap.bin" />
     <None Include="..\setup\staticservers.dat" />
     <None Include="..\setup\Template.eMuleSkin.ini" />
