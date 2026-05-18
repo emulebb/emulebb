@@ -17,6 +17,9 @@
 #include "stdafx.h"
 
 #ifdef HAVE_SAPI_H
+// Text-to-speech notifications are a frozen legacy convenience surface. The
+// implementation remains best-effort for existing users with SAPI installed;
+// supported notification work should not add new speech features here.
 // NOTE: If you get a compile error due to missing 'sapi.h', look at "emule_site_config.h" for further information.
 #include <sapi.h>
 #endif//HAVE_SAPI_H

@@ -114,6 +114,8 @@ BOOL CPPgNotify::OnInitDialog()
 	Localize();
 	UpdateToolTips();
 
+	// Frozen legacy option: expose speech only when the existing SAPI backend is
+	// available; do not treat this path as a supported notification target.
 	GetDlgItem(IDC_CB_TBN_USESPEECH)->EnableWindow(IsSpeechEngineAvailable());
 
 	return TRUE;  // return TRUE unless you set the focus to the control
