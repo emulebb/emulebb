@@ -446,6 +446,14 @@ void CAddFileThread::SetValues(CSharedFileList *pOwner, LPCTSTR directory, LPCTS
 	m_strSharedDir = strSharedDir;
 }
 
+CAddFileThread *CreateSuspendedPartFileHashThread(LPCTSTR pszDirectory, LPCTSTR pszFilename, CPartFile *pPartFile)
+{
+	CAddFileThread *pAddFileThread = static_cast<CAddFileThread*>(AfxBeginThread(RUNTIME_CLASS(CAddFileThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
+	if (pAddFileThread != NULL)
+		pAddFileThread->SetValues(NULL, pszDirectory, pszFilename, _T(""), pPartFile);
+	return pAddFileThread;
+}
+
 BOOL CAddFileThread::InitInstance()
 {
 	InitThreadLocale();

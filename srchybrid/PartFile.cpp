@@ -1288,10 +1288,9 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 				LogError(LOG_STATUSBAR, GetResString(IDS_ERR_REHASH), (LPCTSTR)strFileInfo);
 				// rehash
 				SetStatus(PS_WAITINGFORHASH);
-				CAddFileThread *addfilethread = static_cast<CAddFileThread*>(AfxBeginThread(RUNTIME_CLASS(CAddFileThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
+				CAddFileThread *addfilethread = CreateSuspendedPartFileHashThread(GetPath(), m_hpartfile.GetFileName(), this);
 				if (addfilethread) {
 					SetFileOp(PFOP_HASHING);
-					addfilethread->SetValues(0, GetPath(), m_hpartfile.GetFileName(), _T(""), this);
 					SetFileOpProgress(0);
 					SetStatus(PS_HASHING);
 					addfilethread->ResumeThread();
@@ -1658,12 +1657,11 @@ void CPartFile::PartFileHashFinished(CKnownFile *result)
 			m_pAICHRecoveryHashSet->FreeHashSet();
 			SetAICHRecoverHashSetAvailable(false);
 
-			CAddFileThread *addfilethread = static_cast<CAddFileThread*>(AfxBeginThread(RUNTIME_CLASS(CAddFileThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
+			const CString mytemppath(m_fullname, m_fullname.GetLength() - m_partmetfilename.GetLength());
+			CAddFileThread *addfilethread = CreateSuspendedPartFileHashThread(mytemppath, RemoveFileExtension(m_partmetfilename), this);
 			if (addfilethread) {
-				const CString mytemppath(m_fullname, m_fullname.GetLength() - m_partmetfilename.GetLength());
 				SetStatus(PS_WAITINGFORHASH);
 				SetFileOp(PFOP_HASHING);
-				addfilethread->SetValues(NULL, mytemppath, RemoveFileExtension(m_partmetfilename), _T(""), this);
 				SetFileOpProgress(0);
 				SetStatus(PS_HASHING);
 				addfilethread->ResumeThread();
@@ -2880,10 +2878,9 @@ void CPartFile::CompleteFile(bool bIsHashingDone)
 	if (!bIsHashingDone) {
 		SetStatus(PS_COMPLETING);
 		m_datarate = 0;
-		CAddFileThread *addfilethread = static_cast<CAddFileThread*>(AfxBeginThread(RUNTIME_CLASS(CAddFileThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
+		const CString mytemppath(m_fullname, m_fullname.GetLength() - m_partmetfilename.GetLength());
+		CAddFileThread *addfilethread = CreateSuspendedPartFileHashThread(mytemppath, RemoveFileExtension(m_partmetfilename), this);
 		if (addfilethread) {
-			const CString mytemppath(m_fullname, m_fullname.GetLength() - m_partmetfilename.GetLength());
-			addfilethread->SetValues(NULL, mytemppath, RemoveFileExtension(m_partmetfilename), _T(""), this);
 			SetFileOp(PFOP_HASHING);
 			SetFileOpProgress(0);
 			addfilethread->ResumeThread();

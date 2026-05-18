@@ -39,6 +39,7 @@
 #include "Mdump.h"
 #include "OtherFunctions.h"
 #include "PartFile.h"
+#include "PartFileHashLaunchSeams.h"
 #include "WebApiCommandSeams.h"
 #include "WebApiSurfaceSeams.h"
 #include "WebServerJsonSeams.h"
@@ -2370,13 +2371,13 @@ bool PostWebGuiInteraction(const WPARAM wAction, const LPARAM lParam = 0)
  */
 bool StartPartFileRecheck(CPartFile &rPartFile, SPipeApiError &rError)
 {
-	if (inSet(rPartFile.GetStatus(), PS_WAITINGFORHASH, PS_HASHING, PS_COMPLETING)) {
+	if (PartFileHashLaunchSeams::IsHashWorkerBusyStatus(rPartFile.GetStatus(), PS_WAITINGFORHASH, PS_HASHING, PS_COMPLETING)) {
 		rError.strCode = "INVALID_ARGUMENT";
 		rError.strMessage = _T("transfer is already being hashed or completed");
 		return false;
 	}
 
-	CAddFileThread *pAddFileThread = static_cast<CAddFileThread*>(AfxBeginThread(RUNTIME_CLASS(CAddFileThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
+	CAddFileThread *pAddFileThread = CreateSuspendedPartFileHashThread(rPartFile.GetPath(), rPartFile.GetPartMetFileName(), &rPartFile);
 	if (pAddFileThread == NULL) {
 		rError.strCode = "EMULE_ERROR";
 		rError.strMessage = _T("failed to start recheck thread");
@@ -2386,7 +2387,6 @@ bool StartPartFileRecheck(CPartFile &rPartFile, SPipeApiError &rError)
 	rPartFile.SetStatus(PS_WAITINGFORHASH);
 	rPartFile.SetFileOp(PFOP_HASHING);
 	rPartFile.SetFileOpProgress(0);
-	pAddFileThread->SetValues(NULL, rPartFile.GetPath(), rPartFile.GetPartMetFileName(), _T(""), &rPartFile);
 	rPartFile.SetStatus(PS_HASHING);
 	pAddFileThread->ResumeThread();
 	return true;

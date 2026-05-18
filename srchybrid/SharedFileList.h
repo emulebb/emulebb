@@ -634,6 +634,11 @@ private:
 };
 
 /**
+ * @brief Creates a suspended part-file hash worker and binds it to the target file.
+ */
+CAddFileThread *CreateSuspendedPartFileHashThread(LPCTSTR pszDirectory, LPCTSTR pszFilename, CPartFile *pPartFile);
+
+/**
  * @brief App-lifetime worker that serially drains shared-file hash jobs without per-file thread churn.
  */
 class CSharedFileHashThread : public CWinThread
