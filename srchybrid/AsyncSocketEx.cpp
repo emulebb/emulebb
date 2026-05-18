@@ -64,6 +64,7 @@ to tim.kosse@filezilla-project.org
 #include "stdafx.h"
 #include "AsyncSocketEx.h"
 
+#include "AsyncDnsResolveSeams.h"
 #include "AsyncSocketExLayer.h"
 #include "AsyncSocketExRuntimeSeams.h"
 #include "IPv4AddressSeams.h"
@@ -80,78 +81,6 @@ static char THIS_FILE[] = __FILE__;
 
 THREADLOCAL CAsyncSocketEx::t_AsyncSocketExThreadData *CAsyncSocketEx::thread_local_data = NULL;
 static std::atomic<UINT_PTR> s_uAsyncResolveNextRequestId{0};
-
-struct AsyncSocketExHostnameResolveWork
-{
-	HWND hTargetWnd;
-	int nSocketIndex;
-	UINT_PTR uRequestId;
-	CStringA strHostAddress;
-	USHORT nHostPort;
-};
-
-struct AsyncSocketExHostnameResolveResult
-{
-	UINT_PTR uRequestId;
-	int nErrorCode;
-	SOCKADDR_IN sockAddr;
-};
-
-/**
- * @brief Allocates a process-unique non-zero id for stale hostname-result detection.
- */
-static UINT_PTR AllocateAsyncSocketResolveRequestId()
-{
-	UINT_PTR uRequestId = ++s_uAsyncResolveNextRequestId;
-	if (uRequestId == 0)
-		uRequestId = ++s_uAsyncResolveNextRequestId;
-	return uRequestId;
-}
-
-/**
- * @brief Resolves an IPv4 TCP hostname for the legacy async-socket connect callback path.
- */
-static int ResolveAsyncSocketHostnameIPv4(const CStringA& strHostAddress, USHORT nHostPort, SOCKADDR_IN& sockAddr)
-{
-	addrinfo hints = {};
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-
-	addrinfo *pResult = NULL;
-	const int nResolveError = getaddrinfo(strHostAddress.GetString(), NULL, &hints, &pResult);
-	if (nResolveError != 0)
-		return WSAHOST_NOT_FOUND;
-
-	int nErrorCode = WSAHOST_NOT_FOUND;
-	for (addrinfo *pCurrent = pResult; pCurrent != NULL; pCurrent = pCurrent->ai_next) {
-		if (pCurrent->ai_family != AF_INET || pCurrent->ai_addr == NULL || pCurrent->ai_addrlen < sizeof(sockaddr_in))
-			continue;
-
-		sockAddr = *reinterpret_cast<SOCKADDR_IN*>(pCurrent->ai_addr);
-		sockAddr.sin_family = AF_INET;
-		sockAddr.sin_port = htons(nHostPort);
-		nErrorCode = 0;
-		break;
-	}
-
-	freeaddrinfo(pResult);
-	return nErrorCode;
-}
-
-/**
- * @brief Worker entrypoint for CAsyncSocketEx hostname resolution.
- */
-static UINT AFX_CDECL AsyncSocketExHostnameResolveThreadProc(LPVOID pParam)
-{
-	std::unique_ptr<AsyncSocketExHostnameResolveWork> pWork(static_cast<AsyncSocketExHostnameResolveWork*>(pParam));
-	std::unique_ptr<AsyncSocketExHostnameResolveResult> pResult(new AsyncSocketExHostnameResolveResult());
-	pResult->uRequestId = pWork->uRequestId;
-	pResult->nErrorCode = ResolveAsyncSocketHostnameIPv4(pWork->strHostAddress, pWork->nHostPort, pResult->sockAddr);
-
-	if (::PostMessage(pWork->hTargetWnd, WM_SOCKETEX_GETHOST, static_cast<WPARAM>(pWork->nSocketIndex), reinterpret_cast<LPARAM>(pResult.get())))
-		pResult.release();
-	return 0;
-}
 
 /////////////////////////////
 //Helper Window class
@@ -580,7 +509,7 @@ public:
 				ASSERT(hWnd);
 				CAsyncSocketExHelperWindow *pWnd = reinterpret_cast<CAsyncSocketExHelperWindow*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
 				ASSERT(pWnd);
-				std::unique_ptr<AsyncSocketExHostnameResolveResult> pResult(reinterpret_cast<AsyncSocketExHostnameResolveResult*>(lParam));
+				std::unique_ptr<AsyncDnsResolveSeams::SHostnameResolveResult> pResult(reinterpret_cast<AsyncDnsResolveSeams::SHostnameResolveResult*>(lParam));
 				if (!pWnd || !pResult)
 					return 0;
 
@@ -593,8 +522,9 @@ public:
 					return 0;
 
 				pSocket->m_uAsyncResolveRequestId = 0;
-				if (pResult->nErrorCode) {
-					pSocket->OnConnect(pResult->nErrorCode);
+				const int nResolveError = AsyncDnsResolveSeams::GetLegacyHostResolveError(*pResult);
+				if (nResolveError != 0) {
+					pSocket->OnConnect(nResolveError);
 					return 0;
 				}
 
@@ -962,15 +892,17 @@ bool CAsyncSocketEx::Connect(const CString &sHostAddress, UINT nHostPort)
 
 		uint32_t uNetworkOrderAddress = 0;
 		if (!IPv4AddressSeams::TryParseIPv4Address(sHostAddress, uNetworkOrderAddress)) {
-			AsyncSocketExHostnameResolveWork *pWork = new AsyncSocketExHostnameResolveWork();
+			AsyncDnsResolveSeams::SHostnameResolveWork *pWork = new AsyncDnsResolveSeams::SHostnameResolveWork();
 			pWork->hTargetWnd = GetHelperWindowHandle();
-			pWork->nSocketIndex = m_SocketData.nSocketIndex;
-			pWork->uRequestId = AllocateAsyncSocketResolveRequestId();
+			pWork->uCompletionMessage = WM_SOCKETEX_GETHOST;
+			pWork->wParam = static_cast<WPARAM>(m_SocketData.nSocketIndex);
+			pWork->uRequestId = AsyncDnsResolveSeams::AllocateNonZeroRequestId(s_uAsyncResolveNextRequestId);
 			m_uAsyncResolveRequestId = pWork->uRequestId;
 			pWork->strHostAddress = sAscii;
+			pWork->nSocketType = SOCK_STREAM;
 			pWork->nHostPort = static_cast<USHORT>(nHostPort);
 
-			if (AfxBeginThread(AsyncSocketExHostnameResolveThreadProc, pWork, THREAD_PRIORITY_NORMAL) != NULL) {
+			if (AfxBeginThread(AsyncDnsResolveSeams::HostnameResolveThreadProc, pWork, THREAD_PRIORITY_NORMAL) != NULL) {
 #ifndef NOSOCKETSTATES
 				SetState(connecting);
 #endif //NOSOCKETSTATES

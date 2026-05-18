@@ -32,6 +32,7 @@
 #include "emuledlg.h"
 #include "ServerWnd.h"
 #include "SearchDlg.h"
+#include "AsyncDnsResolveSeams.h"
 #include "IPv4AddressSeams.h"
 #include "LockScopeSeams.h"
 #include "Log.h"
@@ -94,68 +95,8 @@ struct SServerDNSRequest
 	CTypedPtrList<CPtrList, SRawServerPacket*> m_aPackets;
 };
 
-struct SServerDNSLookupWork
-{
-	HWND m_hTargetWnd;
-	UINT m_uRequestId;
-	CStringA m_strHostAddress;
-};
-
-struct SServerDNSLookupResult
-{
-	UINT m_uRequestId;
-	bool m_bLookupSucceeded;
-	bool m_bHasIpv4Address;
-	uint32 m_nIP;
-	int m_iLookupError;
-};
-
 //Safer to keep all message codes different (see also AsyncSocketEx.h and UserMsgs.h)
 #define WM_DNSLOOKUPDONE	(WM_USER+0x106)
-
-/**
- * @brief Resolves a server hostname to one IPv4 address using the modern Winsock resolver.
- */
-static bool TryResolveServerHostnameIPv4(const CStringA& rstrHostAddress, uint32& rnIP, int& riLookupError)
-{
-	addrinfo hints = {};
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_DGRAM;
-
-	addrinfo *pResult = NULL;
-	riLookupError = getaddrinfo(rstrHostAddress.GetString(), NULL, &hints, &pResult);
-	if (riLookupError != 0)
-		return false;
-
-	bool bResolved = false;
-	for (addrinfo *pCurrent = pResult; pCurrent != NULL; pCurrent = pCurrent->ai_next) {
-		if (pCurrent->ai_family != AF_INET || pCurrent->ai_addr == NULL || pCurrent->ai_addrlen < sizeof(sockaddr_in))
-			continue;
-
-		rnIP = reinterpret_cast<sockaddr_in*>(pCurrent->ai_addr)->sin_addr.s_addr;
-		bResolved = true;
-		break;
-	}
-
-	freeaddrinfo(pResult);
-	return bResolved;
-}
-
-/**
- * @brief Worker entrypoint for server UDP hostname resolution.
- */
-static UINT AFX_CDECL ServerDNSLookupThreadProc(LPVOID pParam)
-{
-	std::unique_ptr<SServerDNSLookupWork> pWork(static_cast<SServerDNSLookupWork*>(pParam));
-	std::unique_ptr<SServerDNSLookupResult> pResult(new SServerDNSLookupResult());
-	pResult->m_uRequestId = pWork->m_uRequestId;
-	pResult->m_bLookupSucceeded = TryResolveServerHostnameIPv4(pWork->m_strHostAddress, pResult->m_nIP, pResult->m_iLookupError);
-	pResult->m_bHasIpv4Address = pResult->m_bLookupSucceeded;
-
-	if (::PostMessage(pWork->m_hTargetWnd, WM_DNSLOOKUPDONE, static_cast<WPARAM>(pWork->m_uRequestId), reinterpret_cast<LPARAM>(pResult.get())))
-		pResult.release();
-	return 0;
-}
 
 BEGIN_MESSAGE_MAP(CUDPSocketWnd, CWnd)
 	ON_MESSAGE(WM_DNSLOOKUPDONE, OnDNSLookupDone)
@@ -279,10 +220,7 @@ void CUDPSocket::OnReceive(int nErrorCode)
 
 UINT CUDPSocket::AllocateDnsRequestId()
 {
-	++m_uNextDNSRequestId;
-	if (m_uNextDNSRequestId == 0)
-		++m_uNextDNSRequestId;
-	return m_uNextDNSRequestId;
+	return AsyncDnsResolveSeams::AllocateNonZeroRequestId(m_uNextDNSRequestId);
 }
 
 bool CUDPSocket::ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint32 nIP, uint16 nUDPPort)
@@ -633,8 +571,8 @@ void CUDPSocket::ProcessPacketError(UINT size, UINT opcode, uint32 nIP, uint16 n
 
 void CUDPSocket::DnsLookupDone(WPARAM wp, LPARAM lp)
 {
-	std::unique_ptr<SServerDNSLookupResult> pResult(reinterpret_cast<SServerDNSLookupResult*>(lp));
-	const UINT uRequestId = pResult ? pResult->m_uRequestId : static_cast<UINT>(wp);
+	std::unique_ptr<AsyncDnsResolveSeams::SHostnameResolveResult> pResult(reinterpret_cast<AsyncDnsResolveSeams::SHostnameResolveResult*>(lp));
+	const UINT uRequestId = pResult ? static_cast<UINT>(pResult->uRequestId) : static_cast<UINT>(wp);
 
 	// A worker DNS lookup has completed. Search the according application data for
 	// that request id; stale completions can arrive after a request timed out.
@@ -657,18 +595,18 @@ void CUDPSocket::DnsLookupDone(WPARAM wp, LPARAM lp)
 
 	const UDPSocketSeams::EServerUdpDnsCompletion eCompletion = UDPSocketSeams::ClassifyDnsCompletion(
 		pDNSReq != NULL,
-		pResult != NULL && pResult->m_bLookupSucceeded,
-		pResult != NULL && pResult->m_bHasIpv4Address,
-		pResult != NULL ? pResult->m_nIP : INADDR_NONE);
+		pResult != NULL && pResult->bLookupSucceeded,
+		pResult != NULL && pResult->bHasIpv4Address,
+		pResult != NULL ? pResult->nAddress : INADDR_NONE);
 
 	if (eCompletion == UDPSocketSeams::EServerUdpDnsCompletion::Failed) {
 		if (thePrefs.GetVerbose())
-			DebugLogWarning(_T("Error: Server UDP socket: Failed to resolve address for server '%s' (%s) - getaddrinfo error %d"), (LPCTSTR)pDNSReq->m_pServer->GetListName(), pDNSReq->m_pServer->GetAddress(), pResult != NULL ? pResult->m_iLookupError : 0);
+			DebugLogWarning(_T("Error: Server UDP socket: Failed to resolve address for server '%s' (%s) - getaddrinfo error %d"), (LPCTSTR)pDNSReq->m_pServer->GetListName(), pDNSReq->m_pServer->GetAddress(), pResult != NULL ? pResult->nLookupError : 0);
 		delete pDNSReq;
 		return;
 	}
 
-	const uint32 nIP = pResult != NULL ? pResult->m_nIP : INADDR_NONE;
+	const uint32 nIP = pResult != NULL ? pResult->nAddress : INADDR_NONE;
 
 	if (eCompletion == UDPSocketSeams::EServerUdpDnsCompletion::Resolved) {
 		DEBUG_ONLY(DebugLog(_T("Resolved DN for server '%s': IP=%s"), pDNSReq->m_pServer->GetAddress(), (LPCTSTR)ipstr(nIP)));
@@ -878,11 +816,14 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 		pDNSReq->m_aPackets.AddTail(pServerPacket);
 		m_aDNSReqs.AddTail(pDNSReq);
 
-		SServerDNSLookupWork *pWork = new SServerDNSLookupWork();
-		pWork->m_hTargetWnd = m_hWndResolveMessage;
-		pWork->m_uRequestId = uRequestId;
-		pWork->m_strHostAddress = pszHostAddressA;
-		if (AfxBeginThread(ServerDNSLookupThreadProc, pWork, THREAD_PRIORITY_NORMAL) == NULL) {
+		AsyncDnsResolveSeams::SHostnameResolveWork *pWork = new AsyncDnsResolveSeams::SHostnameResolveWork();
+		pWork->hTargetWnd = m_hWndResolveMessage;
+		pWork->uCompletionMessage = WM_DNSLOOKUPDONE;
+		pWork->wParam = static_cast<WPARAM>(uRequestId);
+		pWork->uRequestId = uRequestId;
+		pWork->strHostAddress = pszHostAddressA;
+		pWork->nSocketType = SOCK_DGRAM;
+		if (AfxBeginThread(AsyncDnsResolveSeams::HostnameResolveThreadProc, pWork, THREAD_PRIORITY_NORMAL) == NULL) {
 			delete pWork;
 			for (POSITION pos = m_aDNSReqs.GetHeadPosition(); pos != NULL;) {
 				POSITION posPrev = pos;
