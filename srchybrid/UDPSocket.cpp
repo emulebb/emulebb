@@ -816,15 +816,14 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 		pDNSReq->m_aPackets.AddTail(pServerPacket);
 		m_aDNSReqs.AddTail(pDNSReq);
 
-		AsyncDnsResolveSeams::SHostnameResolveWork *pWork = new AsyncDnsResolveSeams::SHostnameResolveWork();
-		pWork->hTargetWnd = m_hWndResolveMessage;
-		pWork->uCompletionMessage = WM_DNSLOOKUPDONE;
-		pWork->wParam = static_cast<WPARAM>(uRequestId);
-		pWork->uRequestId = uRequestId;
-		pWork->strHostAddress = pszHostAddressA;
-		pWork->nSocketType = SOCK_DGRAM;
-		if (AfxBeginThread(AsyncDnsResolveSeams::HostnameResolveThreadProc, pWork, THREAD_PRIORITY_NORMAL) == NULL) {
-			delete pWork;
+		std::unique_ptr<AsyncDnsResolveSeams::SHostnameResolveWork> pWork = AsyncDnsResolveSeams::MakeHostnameResolveWork(
+			m_hWndResolveMessage,
+			WM_DNSLOOKUPDONE,
+			static_cast<WPARAM>(uRequestId),
+			uRequestId,
+			pszHostAddressA,
+			SOCK_DGRAM);
+		if (!AsyncDnsResolveSeams::StartHostnameResolveThread(pWork)) {
 			for (POSITION pos = m_aDNSReqs.GetHeadPosition(); pos != NULL;) {
 				POSITION posPrev = pos;
 				if (m_aDNSReqs.GetNext(pos)->m_uRequestId == uRequestId) {

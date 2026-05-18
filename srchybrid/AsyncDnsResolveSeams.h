@@ -20,6 +20,8 @@
 #include <Ws2tcpip.h>
 #include <Windows.h>
 
+#include <afxwin.h>
+
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -54,6 +56,46 @@ namespace AsyncDnsResolveSeams
 		int nLookupError = 0;
 		SOCKADDR_IN sockAddr = {};
 	};
+
+	inline UINT __cdecl HostnameResolveThreadProc(LPVOID pParam);
+
+	/**
+	 * @brief Builds the owned DNS work item shared by async-socket and server-UDP callers.
+	 */
+	inline std::unique_ptr<SHostnameResolveWork> MakeHostnameResolveWork(
+		HWND hTargetWnd,
+		UINT uCompletionMessage,
+		WPARAM wParam,
+		UINT_PTR uRequestId,
+		const CStringA &rstrHostAddress,
+		int nSocketType,
+		USHORT nHostPort = 0)
+	{
+		std::unique_ptr<SHostnameResolveWork> pWork(new SHostnameResolveWork());
+		pWork->hTargetWnd = hTargetWnd;
+		pWork->uCompletionMessage = uCompletionMessage;
+		pWork->wParam = wParam;
+		pWork->uRequestId = uRequestId;
+		pWork->strHostAddress = rstrHostAddress;
+		pWork->nSocketType = nSocketType;
+		pWork->nHostPort = nHostPort;
+		return pWork;
+	}
+
+	/**
+	 * @brief Starts a resolver worker and transfers work-item ownership only after launch succeeds.
+	 */
+	inline bool StartHostnameResolveThread(std::unique_ptr<SHostnameResolveWork> &rpWork)
+	{
+		if (rpWork == NULL)
+			return false;
+
+		if (AfxBeginThread(HostnameResolveThreadProc, rpWork.get(), THREAD_PRIORITY_NORMAL) == NULL)
+			return false;
+
+		(void)rpWork.release();
+		return true;
+	}
 
 	/**
 	 * @brief Allocates a non-zero request id from a scalar UI-thread counter.

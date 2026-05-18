@@ -892,17 +892,18 @@ bool CAsyncSocketEx::Connect(const CString &sHostAddress, UINT nHostPort)
 
 		uint32_t uNetworkOrderAddress = 0;
 		if (!IPv4AddressSeams::TryParseIPv4Address(sHostAddress, uNetworkOrderAddress)) {
-			AsyncDnsResolveSeams::SHostnameResolveWork *pWork = new AsyncDnsResolveSeams::SHostnameResolveWork();
-			pWork->hTargetWnd = GetHelperWindowHandle();
-			pWork->uCompletionMessage = WM_SOCKETEX_GETHOST;
-			pWork->wParam = static_cast<WPARAM>(m_SocketData.nSocketIndex);
-			pWork->uRequestId = AsyncDnsResolveSeams::AllocateNonZeroRequestId(s_uAsyncResolveNextRequestId);
-			m_uAsyncResolveRequestId = pWork->uRequestId;
-			pWork->strHostAddress = sAscii;
-			pWork->nSocketType = SOCK_STREAM;
-			pWork->nHostPort = static_cast<USHORT>(nHostPort);
+			const UINT_PTR uRequestId = AsyncDnsResolveSeams::AllocateNonZeroRequestId(s_uAsyncResolveNextRequestId);
+			std::unique_ptr<AsyncDnsResolveSeams::SHostnameResolveWork> pWork = AsyncDnsResolveSeams::MakeHostnameResolveWork(
+				GetHelperWindowHandle(),
+				WM_SOCKETEX_GETHOST,
+				static_cast<WPARAM>(m_SocketData.nSocketIndex),
+				uRequestId,
+				sAscii,
+				SOCK_STREAM,
+				static_cast<USHORT>(nHostPort));
+			m_uAsyncResolveRequestId = uRequestId;
 
-			if (AfxBeginThread(AsyncDnsResolveSeams::HostnameResolveThreadProc, pWork, THREAD_PRIORITY_NORMAL) != NULL) {
+			if (AsyncDnsResolveSeams::StartHostnameResolveThread(pWork)) {
 #ifndef NOSOCKETSTATES
 				SetState(connecting);
 #endif //NOSOCKETSTATES
@@ -910,7 +911,6 @@ bool CAsyncSocketEx::Connect(const CString &sHostAddress, UINT nHostPort)
 				return false;
 			}
 
-			delete pWork;
 			m_uAsyncResolveRequestId = 0;
 			WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
 			return false;
