@@ -24,6 +24,7 @@
 #include "PartFile.h"
 #include "Preferences.h"
 #include "UserMsgs.h"
+#include "WorkerUiMessageSeams.h"
 #include "SplitterControl.h"
 
 #include "id3/tag.h"
@@ -309,26 +310,11 @@ int CGetMediaInfoThread::Run()
 	re.Detach();
 	VERIFY(DestroyWindow(hwndRE));
 
-	// Usage of 'PostMessage': The idea is to post a message to the window in that other
-	// thread and never deadlock (because of the post). This is safe, but leads to the problem
-	// that we may create memory leaks in case the target window is currently in the process
-	// of getting destroyed! E.g. if the target window gets destroyed after we put the message
-	// into the queue, we have no chance of determining that and the memory wouldn't get freed.
-	//if (!::IsWindow(m_hWndOwner) || !::PostMessage(m_hWndOwner, UM_MEDIA_INFO_RESULT, 0, (LPARAM)pThreadRes))
-	//	delete pThreadRes;
-
-	// Usage of 'SendMessage': Using 'SendMessage' seems to be dangerous because of potential
-	// deadlocks. Basically it depends on what the target thread/window is currently doing
-	// whether there is a risk for a deadlock. However, even with extensive stress testing
-	// there does not show any problem. The worse thing which can happen, is that we call
-	// 'SendMessage', then the target window gets destroyed (while we are still waiting in
-	// 'SendMessage') and would get blocked. Though, this does not happen, it seems that Windows
-	// is catching that case internally and lets our 'SendMessage' call return (with a result
-	// of '0'). If that happened, the 'IsWindow(m_hWndOwner)' returns FALSE, which positively
-	// indicates that the target window was destroyed while we were waiting in 'SendMessage'.
-	// So, everything should be fine (with that special scenario) with using 'SendMessage'.
-	// Let's be brave. :)
-	if (!::IsWindow(m_hWndOwner) || !::SendMessage(m_hWndOwner, UM_MEDIA_INFO_RESULT, 0, (LPARAM)pThreadRes))
+	// Keep media-info delivery synchronous: the result owns heap data that the dialog must
+	// accept immediately, otherwise the worker remains responsible for deleting it.
+	const SWorkerUiMessageDelivery delivery = SendWorkerUiMessage(
+		m_hWndOwner, UM_MEDIA_INFO_RESULT, 0, (LPARAM)pThreadRes);
+	if (delivery.eDelivery != EWorkerUiMessageDelivery::Delivered)
 		delete pThreadRes;
 
 	::CoUninitialize();

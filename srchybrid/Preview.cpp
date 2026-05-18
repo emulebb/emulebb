@@ -29,6 +29,7 @@
 #include "PartFilePreviewSeams.h"
 #include "ProcessLaunchSeams.h"
 #include "SafeFile.h"
+#include "WorkerUiMessageSeams.h"
 #include "emule.h"
 #include "emuledlg.h"
 
@@ -203,7 +204,9 @@ BOOL CVideoThumbnailThread::Run()
 		pResult->eResult = PartFilePreviewSeams::VTAR_EXCEPTION;
 	}
 
-	if (!::IsWindow(m_hNotifyWnd) || !::PostMessage(m_hNotifyWnd, TM_VIDEOTHUMBNAILFINISHED, 0, reinterpret_cast<LPARAM>(pResult)))
+	const SWorkerUiMessageDelivery delivery = PostWorkerUiMessage(
+		m_hNotifyWnd, TM_VIDEOTHUMBNAILFINISHED, 0, reinterpret_cast<LPARAM>(pResult));
+	if (delivery.eDelivery != EWorkerUiMessageDelivery::Delivered)
 		delete pResult;
 	return TRUE;
 }
@@ -283,7 +286,9 @@ BOOL CPeerPreviewThread::Run()
 	} catch (...) {
 	}
 
-	if (!::IsWindow(m_hNotifyWnd) || !::PostMessage(m_hNotifyWnd, TM_PEERPREVIEWFINISHED, reinterpret_cast<WPARAM>(m_pFile), reinterpret_cast<LPARAM>(pResult)))
+	const SWorkerUiMessageDelivery delivery = PostWorkerUiMessage(
+		m_hNotifyWnd, TM_PEERPREVIEWFINISHED, reinterpret_cast<WPARAM>(m_pFile), reinterpret_cast<LPARAM>(pResult));
+	if (delivery.eDelivery != EWorkerUiMessageDelivery::Delivered)
 		delete pResult;
 	return TRUE;
 }

@@ -69,6 +69,25 @@ namespace WorkerUiMessageSeams
 }
 
 /**
+ * @brief Result category for handing an owned worker payload to a UI window.
+ */
+enum class EWorkerUiMessageDelivery
+{
+	Delivered,
+	InvalidWindow,
+	Failed
+};
+
+/**
+ * @brief Delivery result plus the Win32 error captured on failed dispatch.
+ */
+struct SWorkerUiMessageDelivery
+{
+	EWorkerUiMessageDelivery eDelivery = EWorkerUiMessageDelivery::Failed;
+	DWORD dwLastError = ERROR_SUCCESS;
+};
+
+/**
  * @brief Converts an owner object's stable address into the queue key used for deferred worker payload cleanup.
  */
 inline ULONG_PTR GetWorkerUiPayloadOwnerKey(const void *pOwner)
@@ -98,6 +117,56 @@ inline bool CanPostWorkerUiMessage(HWND hTargetWnd, const std::atomic_bool *pbTa
 inline bool TryPostWorkerUiMessage(HWND hTargetWnd, UINT uMessage, WPARAM wParam = 0, LPARAM lParam = 0, const std::atomic_bool *pbTargetClosing = NULL)
 {
 	return CanPostWorkerUiMessage(hTargetWnd, pbTargetClosing) && ::PostMessage(hTargetWnd, uMessage, wParam, lParam) != FALSE;
+}
+
+/**
+ * @brief Classifies whether a worker result was accepted by a UI window.
+ */
+inline EWorkerUiMessageDelivery ClassifyWorkerUiMessageDelivery(const bool bWindowAvailable, const bool bDelivered) noexcept
+{
+	if (!bWindowAvailable)
+		return EWorkerUiMessageDelivery::InvalidWindow;
+	return bDelivered ? EWorkerUiMessageDelivery::Delivered : EWorkerUiMessageDelivery::Failed;
+}
+
+/**
+ * @brief Posts an owned worker payload to the UI thread without blocking the worker.
+ */
+inline SWorkerUiMessageDelivery PostWorkerUiMessage(HWND hTargetWnd, UINT uMessage, WPARAM wParam = 0, LPARAM lParam = 0, const std::atomic_bool *pbTargetClosing = NULL)
+{
+	SWorkerUiMessageDelivery result;
+	const bool bWindowAvailable = CanPostWorkerUiMessage(hTargetWnd, pbTargetClosing);
+	if (!bWindowAvailable) {
+		result.eDelivery = EWorkerUiMessageDelivery::InvalidWindow;
+		result.dwLastError = ERROR_INVALID_WINDOW_HANDLE;
+		return result;
+	}
+
+	::SetLastError(ERROR_SUCCESS);
+	const bool bDelivered = ::PostMessage(hTargetWnd, uMessage, wParam, lParam) != FALSE;
+	result.eDelivery = ClassifyWorkerUiMessageDelivery(true, bDelivered);
+	result.dwLastError = bDelivered ? ERROR_SUCCESS : ::GetLastError();
+	return result;
+}
+
+/**
+ * @brief Sends an owned worker payload synchronously when the receiver must take ownership before the worker exits.
+ */
+inline SWorkerUiMessageDelivery SendWorkerUiMessage(HWND hTargetWnd, UINT uMessage, WPARAM wParam = 0, LPARAM lParam = 0)
+{
+	SWorkerUiMessageDelivery result;
+	const bool bWindowAvailable = hTargetWnd != NULL && ::IsWindow(hTargetWnd) != FALSE;
+	if (!bWindowAvailable) {
+		result.eDelivery = EWorkerUiMessageDelivery::InvalidWindow;
+		result.dwLastError = ERROR_INVALID_WINDOW_HANDLE;
+		return result;
+	}
+
+	::SetLastError(ERROR_SUCCESS);
+	const bool bDelivered = ::SendMessage(hTargetWnd, uMessage, wParam, lParam) != 0;
+	result.eDelivery = ClassifyWorkerUiMessageDelivery(true, bDelivered);
+	result.dwLastError = bDelivered ? ERROR_SUCCESS : ::GetLastError();
+	return result;
 }
 
 /**
