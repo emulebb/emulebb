@@ -123,6 +123,7 @@
 #include "PartFileWriteThread.h"
 #include "ClientCredits.h"
 #include "ReleaseUpdateCheck.h"
+#include "VersionCheckLaunchSeams.h"
 #include "Version.h"
 #include "WebServerJson.h"
 #include "Mdump.h"
@@ -1060,6 +1061,7 @@ namespace
 	struct SVersionCheckContext
 	{
 		HWND hNotifyWnd = NULL;
+		volatile LONG *plQueued = NULL;
 		bool bManual = false;
 	};
 
@@ -1079,8 +1081,15 @@ namespace
 		pResult->bManual = pContext->bManual;
 		pResult->result = ReleaseUpdateCheck::CheckLatestRelease();
 
-		if (pContext->hNotifyWnd != NULL && ::PostMessage(pContext->hNotifyWnd, UM_VERSIONCHECK_RESPONSE, 0, reinterpret_cast<LPARAM>(pResult.get())))
+		const VersionCheckLaunchSeams::SCompletionPostResult postResult = VersionCheckLaunchSeams::PostCompletion(
+			pContext->hNotifyWnd,
+			UM_VERSIONCHECK_RESPONSE,
+			reinterpret_cast<LPARAM>(pResult.get()),
+			pContext->plQueued);
+		if (postResult.bDelivered)
 			(void)pResult.release();
+		else
+			AddDebugLogLine(false, _T("Version check: failed to deliver background update result (%lu)."), postResult.dwLastError);
 		return 0;
 	}
 
@@ -1307,7 +1316,7 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_uLastSysTrayIconCookie(SYS_TRAY_ICON_COOKIE_FORCE_UPDATE)
 	, m_uUpDatarate()
 	, m_uDownDatarate()
-	, m_bVersionCheckQueued()
+	, m_lVersionCheckQueued()
 	, m_bStartMinimizedChecked()
 	, m_bStartMinimized()
 	, m_bMsgBlinkState()
@@ -1755,9 +1764,6 @@ BOOL CemuleDlg::OnInitDialog()
 void CemuleDlg::DoVersioncheck(bool manual)
 {
 #ifndef _DEVBUILD
-	if (m_bVersionCheckQueued)
-		return;
-
 	if (!manual && thePrefs.GetLastVC() != 0) {
 		CTime last(thePrefs.GetLastVC());
 		struct tm tmTemp;
@@ -1767,13 +1773,18 @@ void CemuleDlg::DoVersioncheck(bool manual)
 			return;
 	}
 
+	if (!VersionCheckLaunchSeams::TryMarkQueued(m_lVersionCheckQueued))
+		return;
+
 	const HWND hNotifyWnd = m_hWnd;
 	std::unique_ptr<SVersionCheckContext> pContext(new SVersionCheckContext);
 	pContext->hNotifyWnd = hNotifyWnd;
+	pContext->plQueued = &m_lVersionCheckQueued;
 	pContext->bManual = manual;
 
 	CWinThread *pThread = AfxBeginThread(VersionCheckThreadProc, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
 	if (pThread == NULL) {
+		VersionCheckLaunchSeams::ClearQueued(m_lVersionCheckQueued);
 		if (manual)
 			AddLogLine(true, GetResString(IDS_NEWVERSIONFAILED));
 		else
@@ -1782,7 +1793,6 @@ void CemuleDlg::DoVersioncheck(bool manual)
 	}
 
 	pThread->m_bAutoDelete = TRUE;
-	m_bVersionCheckQueued = true;
 	thePrefs.UpdateLastVC();
 	(void)pContext.release();
 #endif
@@ -1791,7 +1801,7 @@ void CemuleDlg::DoVersioncheck(bool manual)
 LRESULT CemuleDlg::OnVersionCheckResponse(WPARAM, LPARAM lParam)
 {
 	std::unique_ptr<SVersionCheckResult> pResult(reinterpret_cast<SVersionCheckResult*>(lParam));
-	m_bVersionCheckQueued = false;
+	VersionCheckLaunchSeams::ClearQueued(m_lVersionCheckQueued);
 	if (pResult.get() == NULL)
 		return 0;
 

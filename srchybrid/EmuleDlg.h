@@ -206,7 +206,7 @@ protected:
 	UINT			m_uLastSysTrayIconCookie;
 	uint32			m_uUpDatarate;
 	uint32			m_uDownDatarate;
-	bool			m_bVersionCheckQueued;
+	volatile LONG	m_lVersionCheckQueued;
 	bool			m_bStartMinimizedChecked;
 	bool			m_bStartMinimized;
 	bool			m_bMsgBlinkState;
