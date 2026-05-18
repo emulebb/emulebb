@@ -33,6 +33,7 @@
 #include "ServerWnd.h"
 #include "TaskbarNotifier.h"
 #include "Log.h"
+#include "Win32CallbackTimerSeams.h"
 #include "IPv4AddressSeams.h"
 
 #ifdef _DEBUG
@@ -57,7 +58,7 @@ void CServerConnect::TryAnotherConnectionRequest()
 					LogWarning(LOG_STATUSBAR, GetResString(IDS_OUTOFSERVERS));
 					AddLogLine(false, GetResString(IDS_RECONNECT), CS_RETRYCONNECTTIME);
 					m_uStartAutoConnectPos = 0; // default: start at 0
-					VERIFY((m_idRetryTimer = ::SetTimer(NULL, 0, SEC2MS(CS_RETRYCONNECTTIME), RetryConnectTimer)) != 0);
+					VERIFY(Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(m_idRetryTimer, SEC2MS(CS_RETRYCONNECTTIME), RetryConnectTimer));
 					if (thePrefs.GetVerbose() && !m_idRetryTimer)
 						DebugLogError(_T("Failed to create 'server connect retry' timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
 				}
@@ -147,8 +148,7 @@ void CServerConnect::StopConnectionTry()
 	connecting = false;
 	singleconnecting = false;
 	if (m_idRetryTimer) {
-		::KillTimer(NULL, m_idRetryTimer);
-		m_idRetryTimer = 0;
+		(void)Win32CallbackTimerSeams::StopNullWindowCallbackTimer(m_idRetryTimer);
 	}
 	// close all currently opened sockets except those that are:
 	//- connected to our current server
@@ -345,7 +345,7 @@ void CServerConnect::ConnectionFailed(CServerSocket *sender)
 					if (iPosInList >= 0)
 						m_uStartAutoConnectPos = (iPosInList + 1) % theApp.serverlist->GetServerCount();
 				}
-				VERIFY((m_idRetryTimer = ::SetTimer(NULL, 0, SEC2MS(CS_RETRYCONNECTTIME), RetryConnectTimer)) != 0);
+				VERIFY(Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(m_idRetryTimer, SEC2MS(CS_RETRYCONNECTTIME), RetryConnectTimer));
 				if (thePrefs.GetVerbose() && !m_idRetryTimer)
 					DebugLogError(_T("Failed to create 'server connect retry' timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
 			}
@@ -404,7 +404,7 @@ VOID CALLBACK CServerConnect::RetryConnectTimer(HWND /*hWnd*/, UINT /*nMsg*/, UI
 	try {
 		CServerConnect *_this = theApp.serverconnect;
 		ASSERT(_this);
-		if (_this) {
+		if (Win32CallbackTimerSeams::ShouldDispatchServerRetryTimer(_this != NULL)) {
 			_this->StopConnectionTry();
 			if (_this->IsConnected())
 				return;

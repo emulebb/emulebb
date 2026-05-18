@@ -44,6 +44,7 @@
 #include "Log.h"
 #include "collection.h"
 #include "UploadQueueSeams.h"
+#include "Win32CallbackTimerSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -133,7 +134,7 @@ CUploadQueue::CUploadQueue()
 #if EMULE_COMPILED_STARTUP_PROFILING
 	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 #endif
-	VERIFY((h_timer = ::SetTimer(NULL, 0, SEC2MS(1)/10, UploadTimer)) != 0);
+	VERIFY(Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(h_timer, SEC2MS(1)/10, UploadTimer));
 #if EMULE_COMPILED_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("broadband.upload_queue.timer_ready"), theApp.GetStartupProfileElapsedUs(ullPhaseStart), ullPhaseStart);
 #endif
@@ -143,8 +144,7 @@ CUploadQueue::CUploadQueue()
 
 CUploadQueue::~CUploadQueue()
 {
-	if (h_timer)
-		::KillTimer(0, h_timer);
+	(void)Win32CallbackTimerSeams::StopNullWindowCallbackTimer(h_timer);
 }
 
 /**
@@ -1036,7 +1036,7 @@ VOID CALLBACK CUploadQueue::UploadTimer(HWND /*hwnd*/, UINT /*uMsg*/, UINT_PTR /
 	// NOTE: Always handle all type of MFC exceptions in TimerProcs - otherwise we'll get mem leaks
 	try {
 		// Barry - Don't do anything if the app is shutting down - can cause unhandled exceptions
-		if (theApp.IsClosing())
+		if (!Win32CallbackTimerSeams::ShouldDispatchUploadQueueTimer(theApp.IsClosing()))
 			return;
 
 		// Elandal:ThreadSafeLogging -->

@@ -130,6 +130,7 @@
 #include "PathHelpers.h"
 #include "WindowsFirewallRepair.h"
 #include "WindowsMaintenanceActions.h"
+#include "Win32CallbackTimerSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -3509,8 +3510,7 @@ void CemuleDlg::StartConnection()
 			return;
 		}
 		if (m_hUPnPTimeOutTimer != 0) {
-			VERIFY(::KillTimer(NULL, m_hUPnPTimeOutTimer));
-			m_hUPnPTimeOutTimer = 0;
+			VERIFY(Win32CallbackTimerSeams::StopNullWindowCallbackTimer(m_hUPnPTimeOutTimer) != Win32CallbackTimerSeams::ETimerStopResult::Failed);
 		}
 		AddLogLine(true, GetResString(IDS_CONNECTING));
 
@@ -5554,6 +5554,8 @@ void CemuleDlg::SetToolTipsDelay(UINT uMilliseconds)
 
 void CALLBACK CemuleDlg::UPnPTimeOutTimer(HWND /*hwnd*/, UINT /*uiMsg*/, UINT_PTR /*idEvent*/, DWORD /*dwTime*/) noexcept
 {
+	if (!Win32CallbackTimerSeams::ShouldDispatchUPnPTimeoutTimer(theApp.emuledlg != NULL, theApp.IsClosing()))
+		return;
 	theApp.emuledlg->PostMessage(UM_UPNP_RESULT, (WPARAM)CUPnPImpl::UPNP_TIMEOUT, 0);
 }
 
@@ -5581,8 +5583,7 @@ LRESULT CemuleDlg::OnUPnPResult(WPARAM wParam, LPARAM lParam)
 	}
 
 	if (m_hUPnPTimeOutTimer != 0) {
-		VERIFY(::KillTimer(NULL, m_hUPnPTimeOutTimer));
-		m_hUPnPTimeOutTimer = 0;
+		VERIFY(Win32CallbackTimerSeams::StopNullWindowCallbackTimer(m_hUPnPTimeOutTimer) != Win32CallbackTimerSeams::ETimerStopResult::Failed);
 	}
 	if (!bWasRefresh)
 		if (wParam == CUPnPImpl::UPNP_OK) {
@@ -5647,7 +5648,7 @@ void CemuleDlg::StartUPnP(bool bReset, uint16 nForceTCPPort, uint16 nForceUDPPor
 				DebugLog(_T("Attempting NAT mapping backend '%s'"), impl->GetImplementationName());
 				impl->SetMessageOnResult(this, UM_UPNP_RESULT);
 				if (bReset)
-					VERIFY((m_hUPnPTimeOutTimer = ::SetTimer(NULL, 0, SEC2MS(40), (TIMERPROC)UPnPTimeOutTimer)) != 0);
+					VERIFY(Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(m_hUPnPTimeOutTimer, SEC2MS(40), UPnPTimeOutTimer));
 				impl->StartDiscovery((nForceTCPPort ? nForceTCPPort : thePrefs.GetPort())
 					, (nForceUDPPort ? nForceUDPPort : thePrefs.GetUDPPort())
 					, (thePrefs.GetWSUseUPnP() ? thePrefs.GetWSPort() : 0));
@@ -5675,7 +5676,7 @@ void CemuleDlg::RefreshUPnP(bool bRequestAnswer)
 				if (bRequestAnswer)
 					impl->SetMessageOnResult(this, UM_UPNP_RESULT);
 				if (impl->CheckAndRefresh() && bRequestAnswer)
-					VERIFY((m_hUPnPTimeOutTimer = ::SetTimer(NULL, 0, SEC2MS(10), UPnPTimeOutTimer)) != 0);
+					VERIFY(Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(m_hUPnPTimeOutTimer, SEC2MS(10), UPnPTimeOutTimer));
 				else
 					impl->SetMessageOnResult(NULL, 0);
 			} else

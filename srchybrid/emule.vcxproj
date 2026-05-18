@@ -712,6 +712,7 @@
     <ClInclude Include="WindowsFirewallRepairSeams.h" />
     <ClInclude Include="WindowsMaintenanceActions.h" />
     <ClInclude Include="WindowsMaintenanceActionsSeams.h" />
+    <ClInclude Include="Win32CallbackTimerSeams.h" />
     <ClInclude Include="WindowPlacementSeams.h" />
     <ClInclude Include="UpdownClient.h" />
     <ClInclude Include="UploadBandwidthThrottler.h" />

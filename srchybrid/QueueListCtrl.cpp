@@ -25,6 +25,7 @@
 #include "emuledlg.h"
 #include "FriendList.h"
 #include "UploadQueue.h"
+#include "Win32CallbackTimerSeams.h"
 #include "ClientList.h"
 #include "TransferDlg.h"
 #include "GeoLocation.h"
@@ -110,15 +111,14 @@ CQueueListCtrl::CQueueListCtrl()
 	SetSkinKey(_T("QueuedLv"));
 
 	// Barry - Refresh the queue every 10 secs
-	VERIFY((m_hTimer = ::SetTimer(NULL, 0, SEC2MS(10), QueueUpdateTimer)) != 0);
+	VERIFY(Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(m_hTimer, SEC2MS(10), QueueUpdateTimer));
 	if (thePrefs.GetVerbose() && !m_hTimer)
 		AddDebugLogLine(true, _T("Failed to create 'queue list control' timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
 }
 
 CQueueListCtrl::~CQueueListCtrl()
 {
-	if (m_hTimer)
-		VERIFY(::KillTimer(NULL, m_hTimer));
+	VERIFY(Win32CallbackTimerSeams::StopNullWindowCallbackTimer(m_hTimer) != Win32CallbackTimerSeams::ETimerStopResult::Failed);
 }
 
 void CQueueListCtrl::Init()
@@ -902,10 +902,11 @@ void CALLBACK CQueueListCtrl::QueueUpdateTimer(HWND /*hwnd*/, UINT /*uiMsg*/, UI
 {
 	// NOTE: Always handle all type of MFC exceptions in TimerProcs - otherwise we'll get mem leaks
 	try {
-		if (thePrefs.GetUpdateQueueList()
-			&& theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd
-			&& theApp.emuledlg->transferwnd->GetQueueList()->IsWindowVisible()
-			&& !theApp.IsClosing()) // Don't do anything if the app is shutting down - can cause unhandled exceptions
+		if (Win32CallbackTimerSeams::ShouldDispatchQueueListRefreshTimer(
+			thePrefs.GetUpdateQueueList(),
+			theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd,
+			theApp.emuledlg->transferwnd->GetQueueList()->IsWindowVisible(),
+			theApp.IsClosing())) // Don't do anything if the app is shutting down - can cause unhandled exceptions
 		{
 			const CUpDownClient *update = NULL;
 			while ((update = theApp.uploadqueue->GetNextClient(update)) != NULL)
