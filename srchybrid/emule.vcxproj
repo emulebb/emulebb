@@ -730,6 +730,7 @@
     <ClInclude Include="WebServerArrCompat.h" />
     <ClInclude Include="WebServerArrCompatSeams.h" />
     <ClInclude Include="WebServerCertificate.h" />
+    <ClInclude Include="WebServerHttpResponse.h" />
     <ClInclude Include="WebServerJson.h" />
     <ClInclude Include="WebServerQBitCompat.h" />
     <ClInclude Include="WebServerQBitCompatSeams.h" />

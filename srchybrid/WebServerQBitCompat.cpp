@@ -25,6 +25,7 @@
 #include "Log.h"
 #include "OtherFunctions.h"
 #include "Preferences.h"
+#include "WebServerHttpResponse.h"
 #include "WebServerJson.h"
 #include "WebServerJsonSeams.h"
 #include "WebServerQBitCompatSeams.h"
@@ -38,47 +39,13 @@ CCriticalSection g_qbitSessionIdLock;
 
 void SendTextResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, const CStringA &rBody, LPCSTR pszExtraHeaders = NULL)
 {
-	if (pSocket == NULL)
-		return;
-
-	CStringA strHeader;
-	strHeader.Format(
-		"HTTP/1.1 %d %s\r\n"
-		"%s"
-		"Cache-Control: no-store\r\n"
-		"Connection: close\r\n"
-		"%s"
-		"Content-Length: %u\r\n\r\n",
-		iStatusCode,
-		pszReason != NULL ? pszReason : "OK",
-		WebServerQBitCompatSeams::kQBitTextContentTypeHeader,
-		pszExtraHeaders != NULL ? pszExtraHeaders : "",
-		static_cast<UINT>(rBody.GetLength()));
-	pSocket->SendData(strHeader, strHeader.GetLength());
-	if (!rBody.IsEmpty())
-		pSocket->SendData(rBody, rBody.GetLength());
+	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "OK", WebServerQBitCompatSeams::kQBitTextContentTypeHeader, rBody, pszExtraHeaders);
 }
 
 void SendJsonResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, const json &rPayload)
 {
-	if (pSocket == NULL)
-		return;
-
 	const CStringA strBody(WebServerJson::SerializeJsonUtf8(rPayload));
-	CStringA strHeader;
-	strHeader.Format(
-		"HTTP/1.1 %d %s\r\n"
-		"%s"
-		"Cache-Control: no-store\r\n"
-		"Connection: close\r\n"
-		"Content-Length: %u\r\n\r\n",
-		iStatusCode,
-		pszReason != NULL ? pszReason : "OK",
-		WebServerQBitCompatSeams::kQBitJsonContentTypeHeader,
-		static_cast<UINT>(strBody.GetLength()));
-	pSocket->SendData(strHeader, strHeader.GetLength());
-	if (!strBody.IsEmpty())
-		pSocket->SendData(strBody, strBody.GetLength());
+	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "OK", WebServerQBitCompatSeams::kQBitJsonContentTypeHeader, strBody);
 }
 
 std::string LowerBase16(const BYTE *pData, const size_t uSize)

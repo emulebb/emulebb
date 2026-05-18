@@ -63,6 +63,7 @@
 #include "UploadQueue.h"
 #include "UserMsgs.h"
 #include "WebServer.h"
+#include "WebServerHttpResponse.h"
 #include "DownloadQueue.h"
 #include "Opcodes.h"
 #include "kademlia/kademlia/Kademlia.h"
@@ -3906,44 +3907,14 @@ bool TryExecuteDirectRestCommand(const json &rRequest, json &rResult, SPipeApiEr
 
 void SendJsonResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, const json &rPayload)
 {
-	if (pSocket == NULL)
-		return;
-
 	const CStringA strBody(WebServerJson::SerializeJsonUtf8(BuildSuccessEnvelope(rPayload)));
-	CStringA strHeader;
-	strHeader.Format(
-		"HTTP/1.1 %d %s\r\n"
-		"Content-Type: application/json; charset=utf-8\r\n"
-		"Cache-Control: no-store\r\n"
-		"Connection: close\r\n"
-		"Content-Length: %u\r\n\r\n",
-		iStatusCode,
-		pszReason != NULL ? pszReason : "OK",
-		static_cast<UINT>(strBody.GetLength()));
-	pSocket->SendData(strHeader, strHeader.GetLength());
-	if (!strBody.IsEmpty())
-		pSocket->SendData(strBody, strBody.GetLength());
+	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "OK", "Content-Type: application/json; charset=utf-8\r\n", strBody);
 }
 
 void SendJsonError(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, LPCSTR pszCode, const CString &strMessage)
 {
-	if (pSocket == NULL)
-		return;
-
 	const CStringA strBody(WebServerJson::SerializeJsonUtf8(BuildErrorEnvelope(pszCode, strMessage)));
-	CStringA strHeader;
-	strHeader.Format(
-		"HTTP/1.1 %d %s\r\n"
-		"Content-Type: application/json; charset=utf-8\r\n"
-		"Cache-Control: no-store\r\n"
-		"Connection: close\r\n"
-		"Content-Length: %u\r\n\r\n",
-		iStatusCode,
-		pszReason != NULL ? pszReason : "Error",
-		static_cast<UINT>(strBody.GetLength()));
-	pSocket->SendData(strHeader, strHeader.GetLength());
-	if (!strBody.IsEmpty())
-		pSocket->SendData(strBody, strBody.GetLength());
+	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "Error", "Content-Type: application/json; charset=utf-8\r\n", strBody);
 }
 
 LPCSTR GetHttpReasonPhrase(const int iStatusCode)

@@ -28,6 +28,7 @@
 #include "Log.h"
 #include "Preferences.h"
 #include "WebServerArrCompatSeams.h"
+#include "WebServerHttpResponse.h"
 #include "WebServerJson.h"
 #include "WebSocket.h"
 
@@ -101,22 +102,7 @@ private:
 
 void SendXmlResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, const std::string &rBody)
 {
-	if (pSocket == NULL)
-		return;
-
-	CStringA strHeader;
-	strHeader.Format(
-		"HTTP/1.1 %d %s\r\n"
-		"%s"
-		"Cache-Control: no-store\r\n"
-		"Content-Length: %u\r\n\r\n",
-		iStatusCode,
-		pszReason != NULL ? pszReason : "OK",
-		WebServerArrCompatSeams::kTorznabXmlContentTypeHeader,
-		static_cast<UINT>(rBody.size()));
-	pSocket->SendData(strHeader, strHeader.GetLength());
-	if (!rBody.empty())
-		pSocket->SendData(rBody.c_str(), static_cast<int>(rBody.size()));
+	WebServerHttpResponse::SendBody(pSocket, iStatusCode, pszReason, "OK", WebServerArrCompatSeams::kTorznabXmlContentTypeHeader, rBody.c_str(), rBody.size(), NULL, false);
 }
 
 std::string BuildCapsXml()
