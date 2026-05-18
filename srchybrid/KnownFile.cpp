@@ -35,6 +35,7 @@
 #include "Packets.h"
 #include "ProtocolGuards.h"
 #include "DisplayRefreshSeams.h"
+#include "HelperThreadLaunchSeams.h"
 #include "SourceExchangeSeams.h"
 #include "OtherFunctions.h"
 #include "PathHelpers.h"
@@ -1696,7 +1697,11 @@ bool CKnownFile::StartPeerPreviewFrames(CUpDownClient *pSender, HWND hNotifyWnd)
 	if (pThread == NULL)
 		return false;
 	pThread->SetValues(this, pSender, thePrefs.GetVideoThumbnailFfmpegPath(), hNotifyWnd);
-	pThread->ResumeThread();
+	DWORD dwResumeError = ERROR_SUCCESS;
+	if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(pThread, dwResumeError)) {
+		AddDebugLogLine(false, _T("Failed to resume peer-preview worker thread - Error %lu"), dwResumeError);
+		return false;
+	}
 	return true;
 }
 

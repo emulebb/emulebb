@@ -31,12 +31,76 @@ namespace HelperThreadLaunchSeams
 		Failed
 	};
 
+	enum class SuspendedThreadResumeAction
+	{
+		LaunchFailed,
+		Resumed,
+		ResumeFailed
+	};
+
 	/**
 	 * @brief Reports whether a helper-thread launch returned a live thread object.
 	 */
 	inline bool DidStartThread(const void *pThread)
 	{
 		return pThread != nullptr;
+	}
+
+	/**
+	 * @brief Reports whether ResumeThread made a suspended helper runnable.
+	 */
+	inline bool DidResumeThread(DWORD dwResumeResult)
+	{
+		return dwResumeResult != static_cast<DWORD>(-1);
+	}
+
+	/**
+	 * @brief Classifies a suspended helper launch after its resume attempt.
+	 */
+	inline SuspendedThreadResumeAction ClassifySuspendedThreadResume(const void *pThread, DWORD dwResumeResult)
+	{
+		if (!DidStartThread(pThread))
+			return SuspendedThreadResumeAction::LaunchFailed;
+		return DidResumeThread(dwResumeResult) ? SuspendedThreadResumeAction::Resumed : SuspendedThreadResumeAction::ResumeFailed;
+	}
+
+	/**
+	 * @brief Resumes a suspended MFC auto-delete worker without changing its ownership policy.
+	 */
+	template <typename TThread>
+	inline bool ResumeAutoDeleteSuspendedThread(TThread *pThread, DWORD &rdwLastError)
+	{
+		rdwLastError = ERROR_SUCCESS;
+		if (pThread == nullptr)
+			return false;
+
+		if (!DidResumeThread(pThread->ResumeThread())) {
+			rdwLastError = ::GetLastError();
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * @brief Owns and resumes a suspended MFC worker, releasing it if resume fails.
+	 */
+	template <typename TThread>
+	inline bool OwnAndResumeSuspendedThread(TThread *&rpOwnedThread, TThread *pThread, DWORD &rdwLastError)
+	{
+		rdwLastError = ERROR_SUCCESS;
+		rpOwnedThread = nullptr;
+		if (pThread == nullptr)
+			return false;
+
+		pThread->m_bAutoDelete = FALSE;
+		rpOwnedThread = pThread;
+		if (!DidResumeThread(pThread->ResumeThread())) {
+			rdwLastError = ::GetLastError();
+			delete rpOwnedThread;
+			rpOwnedThread = nullptr;
+			return false;
+		}
+		return true;
 	}
 
 	/**

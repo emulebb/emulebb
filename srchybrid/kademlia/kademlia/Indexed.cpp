@@ -28,6 +28,7 @@ their client on the eMule forum.
 #include "stdafx.h"
 #include "Preferences.h"
 #include "Log.h"
+#include "HelperThreadLaunchSeams.h"
 #include "kademlia/kademlia/Entry.h"
 #include "kademlia/kademlia/Indexed.h"
 #include "kademlia/kademlia/KadIndexedLoadThreadSeams.h"
@@ -87,11 +88,15 @@ void CIndexed::ReadFile()
 		DebugLogWarning(_T("Kad could not start CIndexed load thread; preserving existing index files and continuing with an empty in-memory index"));
 		return;
 	}
+	pLoadDataThread->SetValues(this);
+	DWORD dwResumeError = ERROR_SUCCESS;
+	if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(pLoadDataThread, dwResumeError)) {
+		DebugLogWarning(_T("Kad could not resume CIndexed load thread - Error %lu; preserving existing index files and continuing with an empty in-memory index"), dwResumeError);
+		return;
+	}
 	// CLoadDataThread remains MFC auto-delete owned after ResumeThread. This
 	// flag only records that shutdown may need to wait for its guarded load.
 	m_bLoadThreadStarted = true;
-	pLoadDataThread->SetValues(this);
-	pLoadDataThread->ResumeThread();
 }
 
 CIndexed::~CIndexed()

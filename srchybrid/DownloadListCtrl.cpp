@@ -47,6 +47,7 @@
 #include "ClientList.h"
 #include "OtherFunctions.h"
 #include "LongPathSeams.h"
+#include "HelperThreadLaunchSeams.h"
 #include "PartFilePreviewSeams.h"
 #include "ProUserMenuCopySeams.h"
 #include "MenuShortcutLabels.h"
@@ -578,7 +579,16 @@ void CDownloadListCtrl::StartNextVideoThumbnailWorker()
 			continue;
 		}
 		pThread->SetValues(pPartFile, thePrefs.GetVideoThumbnailFfmpegPath(), m_hWnd, pEntry->strCachePath);
-		pThread->ResumeThread();
+		DWORD dwResumeError = ERROR_SUCCESS;
+		if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(pThread, dwResumeError)) {
+			pPartFile->m_bPreviewing = false;
+			pEntry->bInFlight = false;
+			m_bVideoThumbnailWorkerActive = false;
+			pEntry->eLastResult = PartFilePreviewSeams::VTAR_EXCEPTION;
+			pEntry->dwLastErrorCode = dwResumeError;
+			LogVideoThumbnailVerbose(_T("failed to resume worker thread for \"%s\" (error %lu)"), (LPCTSTR)pPartFile->GetFileName(), dwResumeError);
+			continue;
+		}
 		return;
 	}
 }

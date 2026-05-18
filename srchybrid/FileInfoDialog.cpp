@@ -21,6 +21,8 @@
 #include "OtherFunctions.h"
 #include "KnownFileMetadataSeams.h"
 #include "PathHelpers.h"
+#include "HelperThreadLaunchSeams.h"
+#include "Log.h"
 #include "MediaInfo.h"
 #include "PartFile.h"
 #include "Preferences.h"
@@ -229,14 +231,18 @@ BOOL CFileInfoDialog::OnSetActive()
 		InitDisplay(GetResString(IDS_FSTAT_WAITING));
 
 		CGetMediaInfoThread *pThread = (CGetMediaInfoThread*)AfxBeginThread(RUNTIME_CLASS(CGetMediaInfoThread), THREAD_PRIORITY_LOWEST, 0, CREATE_SUSPENDED);
+		bool bWorkerStarted = false;
 		if (pThread) {
 			pThread->SetValues(m_hWnd, m_paFiles, (HFONT)GetDlgItem(IDC_FD_XI1)->GetFont()->m_hObject);
-			pThread->ResumeThread();
+			DWORD dwResumeError = ERROR_SUCCESS;
+			bWorkerStarted = HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(pThread, dwResumeError);
+			if (!bWorkerStarted)
+				AddDebugLogLine(false, _T("Failed to resume media-info worker thread - Error %lu"), dwResumeError);
 		}
 		m_pFiles.RemoveAll();
 		for (int i = m_paFiles->GetSize(); --i >= 0;)
 			m_pFiles.Add((*m_paFiles)[i]);
-		m_bDataChanged = false;
+		m_bDataChanged = !bWorkerStarted;
 	}
 	return TRUE;
 }

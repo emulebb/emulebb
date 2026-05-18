@@ -36,6 +36,7 @@
 #include "DownloadQueue.h"
 #include "FakeFileDetector.h"
 #include "FilenameNormalizationPolicy.h"
+#include "HelperThreadLaunchSeams.h"
 #include "IPFilter.h"
 #include "Packets.h"
 #include "PathHelpers.h"
@@ -1308,7 +1309,12 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 					SetFileOp(PFOP_HASHING);
 					SetFileOpProgress(0);
 					SetStatus(PS_HASHING);
-					addfilethread->ResumeThread();
+					DWORD dwResumeError = ERROR_SUCCESS;
+					if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(addfilethread, dwResumeError)) {
+						LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FILECOMPLETIONTHREAD));
+						DebugLogError(_T("Failed to resume part-file rehash worker - Error %lu"), dwResumeError);
+						SetStatus(PS_ERROR);
+					}
 				} else
 					SetStatus(PS_ERROR);
 			}
@@ -1679,7 +1685,12 @@ void CPartFile::PartFileHashFinished(CKnownFile *result)
 				SetFileOp(PFOP_HASHING);
 				SetFileOpProgress(0);
 				SetStatus(PS_HASHING);
-				addfilethread->ResumeThread();
+				DWORD dwResumeError = ERROR_SUCCESS;
+				if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(addfilethread, dwResumeError)) {
+					LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FILECOMPLETIONTHREAD));
+					DebugLogError(_T("Failed to resume part-file completion hash worker - Error %lu"), dwResumeError);
+					SetStatus(PS_ERROR);
+				}
 			} else
 				SetStatus(PS_ERROR);
 		} else {
@@ -2898,7 +2909,12 @@ void CPartFile::CompleteFile(bool bIsHashingDone)
 		if (addfilethread) {
 			SetFileOp(PFOP_HASHING);
 			SetFileOpProgress(0);
-			addfilethread->ResumeThread();
+			DWORD dwResumeError = ERROR_SUCCESS;
+			if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(addfilethread, dwResumeError)) {
+				LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FILECOMPLETIONTHREAD));
+				DebugLogError(_T("Failed to resume part-file completion hash worker - Error %lu"), dwResumeError);
+				SetStatus(PS_ERROR);
+			}
 		} else {
 			LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FILECOMPLETIONTHREAD));
 			SetStatus(PS_ERROR);
@@ -2912,7 +2928,13 @@ void CPartFile::CompleteFile(bool bIsHashingDone)
 			// resumed. This guard only keeps launch failure handling explicit.
 			SetFileOp(PFOP_COPYING);
 			SetFileOpProgress(0);
-			pThread->ResumeThread();
+			DWORD dwResumeError = ERROR_SUCCESS;
+			if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(pThread, dwResumeError)) {
+				LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FILECOMPLETIONTHREAD));
+				DebugLogError(_T("Failed to resume part-file completion worker - Error %lu"), dwResumeError);
+				SetStatus(PS_ERROR);
+				return;
+			}
 
 			theApp.emuledlg->transferwnd->GetDownloadList()->ShowFilesCount();
 			if (thePrefs.ShowCatTabInfos())

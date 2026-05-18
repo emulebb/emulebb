@@ -41,6 +41,7 @@
 #include "PartFile.h"
 #include "DisplayRefreshSeams.h"
 #include "emuledlg.h"
+#include "HelperThreadLaunchSeams.h"
 #include "SharedFilesWnd.h"
 #include "ClientList.h"
 #include "Log.h"
@@ -740,10 +741,12 @@ bool CSharedFileList::EnsureSharedHashWorkerStarted()
 	if (pThread == NULL)
 		return false;
 
-	pThread->m_bAutoDelete = FALSE;
 	pThread->SetOwner(this);
-	m_pSharedHashThread = pThread;
-	pThread->ResumeThread();
+	DWORD dwResumeError = ERROR_SUCCESS;
+	if (!HelperThreadLaunchSeams::OwnAndResumeSuspendedThread(m_pSharedHashThread, pThread, dwResumeError)) {
+		DebugLogError(_T("Failed to resume shared-file hash worker thread - Error %lu"), dwResumeError);
+		return false;
+	}
 	return true;
 }
 
