@@ -201,6 +201,9 @@ static bool LoadLangLib(const CString &rstrLangDir1, const CString &rstrLangDir2
 				return true;
 			}
 
+			// Language resource DLLs are first-party optional resources. Keep
+			// dynamic loading constrained to eMule language directories, matching
+			// product version checks, and LoadLibraryEx scoped search flags.
 			CString strLangDLL;
 			strLangDLL.Format(_T("%s%s.dll"), (LPCTSTR)rstrLangDir1, pLang->pszISOLocale);
 			if (CheckLangDLLVersion(strLangDLL)) {

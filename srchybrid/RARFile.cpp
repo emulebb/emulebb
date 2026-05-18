@@ -69,6 +69,10 @@ CRARFile::~CRARFile()
 bool CRARFile::InitUnRarLib()
 {
 	if (m_hLibUnRar == NULL) {
+		// Optional RARLAB UnRAR integration. Keep this loader constrained to
+		// the documented installed DLL path, LoadLibraryEx search flags, and
+		// required export/API-version gates; do not fall back to ambient DLL
+		// search paths.
 		CString strFailure;
 		const CString strDllPath(GetInstalledUnRarDllPath());
 		if (!RARFileSeams::IsAbsoluteLoadCandidate(strDllPath)) {

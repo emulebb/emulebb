@@ -59,9 +59,12 @@ typedef enum MediaInfo_info_t
 	MediaInfo_Info_Max
 } MediaInfo_info_C;
 
-/** @brief Runtime loader for the optional MediaInfo.dll dependency. */
 /**
  * @brief Runtime loader for the optional MediaInfo DLL used by the metadata pipeline.
+ *
+ * Dynamic loading stays intentional here: MediaInfo is optional, must come from
+ * a configured or discovered absolute candidate, must satisfy the version and
+ * export gates below, and falls back to built-in metadata readers when absent.
  */
 class CMediaInfoDLL
 {
@@ -481,7 +484,6 @@ CString ResolveMediaInfoDllPreferencePath(const CString &strConfiguredPath)
 	return theMediaInfoDLL.ResolvePreferencePath(strConfiguredPath);
 }
 
-/** @brief Extracts audio/video metadata through the optional MediaInfo.dll runtime. */
 /**
  * @brief Populates `SMediaInfo` from the optional MediaInfo DLL and reports whether the DLL was usable.
  */
