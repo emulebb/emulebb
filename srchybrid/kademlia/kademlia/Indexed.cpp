@@ -30,6 +30,7 @@ their client on the eMule forum.
 #include "Log.h"
 #include "kademlia/kademlia/Entry.h"
 #include "kademlia/kademlia/Indexed.h"
+#include "kademlia/kademlia/KadIndexedLoadThreadSeams.h"
 #include "kademlia/kademlia/Kademlia.h"
 #include "kademlia/kademlia/Prefs.h"
 #include "kademlia/io/BufferedFileIO.h"
@@ -63,6 +64,7 @@ CIndexed::CIndexed()
 	, m_uTotalIndexLoad()
 	, m_bAbortLoading()
 	, m_bDataLoaded()
+	, m_bLoadThreadStarted()
 {
 	m_mapKeyword.InitHashTable(1031);
 	m_mapNotes.InitHashTable(1031);
@@ -79,7 +81,15 @@ CIndexed::CIndexed()
 void CIndexed::ReadFile()
 {
 	m_bAbortLoading = false;
+	m_bLoadThreadStarted = false;
 	CLoadDataThread *pLoadDataThread = static_cast<CLoadDataThread*>(AfxBeginThread(RUNTIME_CLASS(CLoadDataThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
+	if (KadIndexedLoadThreadSeams::ClassifyLoadThreadLaunch(pLoadDataThread) == KadIndexedLoadThreadSeams::ELoadThreadLaunchAction::DiscardWithoutStore) {
+		DebugLogWarning(_T("Kad could not start CIndexed load thread; preserving existing index files and continuing with an empty in-memory index"));
+		return;
+	}
+	// CLoadDataThread remains MFC auto-delete owned after ResumeThread. This
+	// flag only records that shutdown may need to wait for its guarded load.
+	m_bLoadThreadStarted = true;
 	pLoadDataThread->SetValues(this);
 	pLoadDataThread->ResumeThread();
 }
@@ -87,13 +97,17 @@ void CIndexed::ReadFile()
 CIndexed::~CIndexed()
 {
 	if (!m_bDataLoaded) {
-		// the user clicked on disconnect/close just after he started kad (and probably just before posting in the forum that emule doesn't work :P )
-		// while the loading thread is still busy. First tell the thread to abort its loading, afterwards wait for it to terminate
-		// and then delete all loaded items without writing them to the files (as they are incomplete and unchanged)
-		m_bAbortLoading = true;
-		DebugLogWarning(_T("Kad stopping while still loading CIndexed data, waiting for abort"));
-		CSingleLock sLock(&m_mutSync, TRUE); // wait
-		ASSERT(m_bDataLoaded);
+		if (KadIndexedLoadThreadSeams::ShouldWaitForLoadThreadShutdown(m_bLoadThreadStarted, m_bDataLoaded)) {
+			// The user clicked on disconnect/close just after starting Kad while
+			// the auto-delete loader is still busy. Ask it to stop, wait through
+			// the loader mutex, then discard partial data without storing.
+			m_bAbortLoading = true;
+			DebugLogWarning(_T("Kad stopping while still loading CIndexed data, waiting for abort"));
+			CSingleLock sLock(&m_mutSync, TRUE); // wait
+			ASSERT(m_bDataLoaded);
+		} else {
+			DebugLogWarning(_T("Kad stopping without a CIndexed load thread; preserving existing index files"));
+		}
 
 		// cleanup without storing
 		CCKey key1;

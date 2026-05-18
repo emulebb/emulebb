@@ -548,6 +548,7 @@
     <ClInclude Include="kademlia\kademlia\Entry.h" />
     <ClInclude Include="kademlia\kademlia\Error.h" />
     <ClInclude Include="kademlia\kademlia\Indexed.h" />
+    <ClInclude Include="kademlia\kademlia\KadIndexedLoadThreadSeams.h" />
     <ClInclude Include="kademlia\kademlia\Kademlia.h" />
     <ClInclude Include="kademlia\kademlia\Prefs.h" />
     <ClInclude Include="kademlia\kademlia\Search.h" />

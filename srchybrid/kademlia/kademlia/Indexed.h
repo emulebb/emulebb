@@ -103,6 +103,7 @@ namespace Kademlia
 		CMutex		m_mutSync;
 		volatile bool	m_bAbortLoading; // signals the loading thread to abort
 		volatile bool	m_bDataLoaded;
+		bool		m_bLoadThreadStarted;
 		static CString	m_sSourceFileName;
 		static CString	m_sKeyFileName;
 		static CString	m_sLoadFileName;
