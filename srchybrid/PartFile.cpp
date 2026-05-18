@@ -75,6 +75,21 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace
+{
+void PostPartFileCompletionThreadResult(CPartFile *pFile, const DWORD dwResult)
+{
+	const HWND hNotifyWnd = theApp.emuledlg != NULL ? theApp.emuledlg->GetSafeHwnd() : NULL;
+	const PartFileCompletionSeams::SWorkerCompletionPostResult result =
+		PartFileCompletionSeams::PostWorkerCompletion(theApp.IsClosing(), hNotifyWnd, TM_FILECOMPLETED, dwResult, reinterpret_cast<LPARAM>(pFile));
+	if (result.eDelivery == PartFileCompletionSeams::EWorkerCompletionDelivery::Failed) {
+		const CString strFileName(pFile != NULL ? pFile->GetFileName() : CString(_T("<null>")));
+		DebugLogError(_T("Dropped part-file completion result for \"%s\" because TM_FILECOMPLETED could not be posted (%u)"),
+			static_cast<LPCTSTR>(strFileName),
+			result.dwLastError);
+	}
+}
+}
 
 // Barry - use this constant for both places
 #define PROGRESS_HEIGHT 3
@@ -2892,7 +2907,9 @@ void CPartFile::CompleteFile(bool bIsHashingDone)
 		StopFile();
 		SetStatus(PS_COMPLETING);
 		CWinThread *pThread = AfxBeginThread(CompleteThreadProc, this, THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED); // Lord KiRon - using threads for file completion
-		if (pThread) {
+		if (PartFileCompletionSeams::DidStartCompletionThread(pThread)) {
+			// The completion worker remains MFC auto-delete owned after it is
+			// resumed. This guard only keeps launch failure handling explicit.
 			SetFileOp(PFOP_COPYING);
 			SetFileOpProgress(0);
 			pThread->ResumeThread();
@@ -3086,8 +3103,7 @@ BOOL CPartFile::PerformFileComplete()
 			SetStatus(PS_ERROR);
 			m_bCompletionError = true;
 			SetFileOp(PFOP_NONE);
-			if (!theApp.IsClosing())
-				VERIFY(theApp.emuledlg->PostMessage(TM_FILECOMPLETED, FILE_COMPLETION_THREAD_FAILED, (LPARAM)this));
+			PostPartFileCompletionThreadResult(this, FILE_COMPLETION_THREAD_FAILED);
 			bNoNewReads = false; //re-enable reading till next completion attempt
 			return FALSE;
 		}
@@ -3151,8 +3167,7 @@ BOOL CPartFile::PerformFileComplete()
 	// explicitly unlock the file before posting something to the main thread.
 	sLock.Unlock();
 
-	if (!theApp.IsClosing())
-		VERIFY(theApp.emuledlg->PostMessage(TM_FILECOMPLETED, FILE_COMPLETION_THREAD_SUCCESS | (renamed ? FILE_COMPLETION_THREAD_RENAMED : 0), (LPARAM)this));
+	PostPartFileCompletionThreadResult(this, FILE_COMPLETION_THREAD_SUCCESS | (renamed ? FILE_COMPLETION_THREAD_RENAMED : 0));
 	return TRUE;
 }
 
