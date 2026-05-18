@@ -633,6 +633,7 @@
     <ClInclude Include="Preferences.h" />
     <ClInclude Include="PreferencesDlg.h" />
     <ClInclude Include="Preview.h" />
+    <ClInclude Include="ProcessLaunchSeams.h" />
     <ClInclude Include="PreviewDlg.h" />
     <ClInclude Include="ProgressCtrlX.h" />
     <ClInclude Include="QArray.h" />

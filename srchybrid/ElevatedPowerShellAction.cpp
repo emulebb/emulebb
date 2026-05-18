@@ -9,6 +9,7 @@
 #include "ElevatedPowerShellAction.h"
 #include "LongPathSeams.h"
 #include "OtherFunctions.h"
+#include "ProcessLaunchSeams.h"
 
 #include <AclAPI.h>
 #include <vector>
@@ -263,7 +264,25 @@ bool ElevatedPowerShellAction::RunPreparedScript(const CString &rstrScript, CLau
 	}
 
 	rResult.bStarted = true;
-	(void)::WaitForSingleObject(sei.hProcess, INFINITE);
+	const DWORD dwWaitResult = ::WaitForSingleObject(sei.hProcess, ProcessLaunchSeams::kElevatedPowerShellActionTimeoutMs);
+	const ProcessLaunchSeams::EProcessWaitResult eWaitResult = ProcessLaunchSeams::ClassifyProcessWaitResult(dwWaitResult);
+	if (eWaitResult == ProcessLaunchSeams::EProcessWaitResult::TimedOut) {
+		rResult.dwLastError = WAIT_TIMEOUT;
+		rResult.dwExitCode = WAIT_TIMEOUT;
+		rResult.strErrorText = _T("Elevated PowerShell action timed out.");
+		(void)::TerminateProcess(sei.hProcess, WAIT_TIMEOUT);
+		(void)::WaitForSingleObject(sei.hProcess, ProcessLaunchSeams::kTimedOutProcessTerminateWaitMs);
+		::CloseHandle(sei.hProcess);
+		CleanupActionTemp(rResult.strScriptPath, rResult.strResultPath, rResult.strTempDir);
+		return false;
+	}
+	if (eWaitResult != ProcessLaunchSeams::EProcessWaitResult::Completed) {
+		rResult.dwLastError = eWaitResult == ProcessLaunchSeams::EProcessWaitResult::Failed ? ::GetLastError() : dwWaitResult;
+		rResult.strErrorText = GetErrorMessage(rResult.dwLastError);
+		::CloseHandle(sei.hProcess);
+		CleanupActionTemp(rResult.strScriptPath, rResult.strResultPath, rResult.strTempDir);
+		return false;
+	}
 	if (::GetExitCodeProcess(sei.hProcess, &rResult.dwExitCode) == FALSE) {
 		rResult.dwLastError = ::GetLastError();
 		rResult.strErrorText = GetErrorMessage(rResult.dwLastError);

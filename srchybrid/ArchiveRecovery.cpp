@@ -19,6 +19,7 @@
 #include "ArchiveRecovery.h"
 #include "LongPathSeams.h"
 #include "PathHelpers.h"
+#include "ProcessLaunchSeams.h"
 #include "Log.h"
 #include "PartFile.h"
 #include "zlib.h"
@@ -200,11 +201,17 @@ bool CArchiveRecovery::performRecovery(CPartFile *partFile, CArray<Gap_Struct> *
 				SE.nShow = SW_SHOW;
 				SE.cbSize = (DWORD)sizeof SE;
 				ShellExecuteEx(&SE);
+				bool bDeletePreviewOutput = true;
 				if (SE.hProcess) {
-					::WaitForSingleObject(SE.hProcess, INFINITE);
+					const DWORD dwWaitResult = ::WaitForSingleObject(SE.hProcess, ProcessLaunchSeams::kArchiveRecoveryPreviewTimeoutMs);
+					if (ProcessLaunchSeams::ClassifyProcessWaitResult(dwWaitResult) != ProcessLaunchSeams::EProcessWaitResult::Completed) {
+						bDeletePreviewOutput = false;
+						theApp.QueueDebugLogLine(false, _T("Archive recovery: preview process did not exit before timeout; leaving temporary output file \"%s\"."), (LPCTSTR)outputFileName);
+					}
 					::CloseHandle(SE.hProcess);
 				}
-				(void)LongPathSeams::DeleteFileIfExists(outputFileName);
+				if (bDeletePreviewOutput)
+					(void)LongPathSeams::DeleteFileIfExists(outputFileName);
 			}
 		} else
 			(void)LongPathSeams::DeleteFileIfExists(outputFileName);
