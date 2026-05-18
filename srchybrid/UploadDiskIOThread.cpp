@@ -75,7 +75,7 @@ CUploadDiskIOThread::CUploadDiskIOThread()
 
 CUploadDiskIOThread::~CUploadDiskIOThread()
 {
-	ASSERT(!m_hPort && !m_Run);
+	ASSERT(!m_hPort && HelperThreadLaunchSeams::GetState(m_Run) == RUN_STOP);
 }
 
 UINT AFX_CDECL CUploadDiskIOThread::RunProc(LPVOID pParam)
@@ -91,16 +91,24 @@ UINT AFX_CDECL CUploadDiskIOThread::RunProc(LPVOID pParam)
 
 void CUploadDiskIOThread::EndThread()
 {
-	m_bStopRequested = true;
+	HelperThreadLaunchSeams::SetFlag(m_bStopRequested);
 	const HelperThreadLaunchSeams::IocpShutdownAction action =
 		HelperThreadLaunchSeams::ClassifyIocpShutdown(m_bThreadStarted, m_hPort != NULL);
 	if (action == HelperThreadLaunchSeams::IocpShutdownAction::NoOp)
 		return;
 
-	m_Run = RUN_STOP;
+	HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 	if (action == HelperThreadLaunchSeams::IocpShutdownAction::SignalAndWait)
 		PostQueuedCompletionStatus(m_hPort, 0, 0, NULL);
-	m_eventThreadEnded.Lock();
+	const DWORD dwWait = ::WaitForSingleObject(m_eventThreadEnded, HelperThreadLaunchSeams::kHelperThreadShutdownWaitMs);
+	const HelperThreadLaunchSeams::ShutdownWaitAction waitAction = HelperThreadLaunchSeams::ClassifyShutdownWait(dwWait);
+	if (waitAction == HelperThreadLaunchSeams::ShutdownWaitAction::TimedOut) {
+		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Timed out waiting for upload disk I/O helper thread; waiting for cooperative exit"));
+		m_eventThreadEnded.Lock();
+	} else if (waitAction == HelperThreadLaunchSeams::ShutdownWaitAction::Failed) {
+		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed waiting for upload disk I/O helper thread: %s"), (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
+		m_eventThreadEnded.Lock();
+	}
 }
 
 UINT CUploadDiskIOThread::RunInternal()
@@ -112,14 +120,14 @@ UINT CUploadDiskIOThread::RunInternal()
 	if (!m_hPort) {
 		const DWORD dwError = ::GetLastError();
 		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed to create upload disk I/O completion port: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
-		m_Run = RUN_STOP;
+		HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 		m_eventThreadEnded.SetEvent();
 		return dwError;
 	}
-	if (m_bStopRequested) {
+	if (HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested)) {
 		::CloseHandle(m_hPort);
 		m_hPort = 0;
-		m_Run = RUN_STOP;
+		HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 		m_eventThreadEnded.SetEvent();
 		return 0;
 	}
@@ -127,22 +135,22 @@ UINT CUploadDiskIOThread::RunInternal()
 	DWORD dwRead = 0;
 	ULONG_PTR completionKey = 0;
 	OverlappedRead_Struct *pCurIO = NULL;
-	m_Run = RUN_IDLE;
+	HelperThreadLaunchSeams::SetState(m_Run, RUN_IDLE);
 #if EMULE_COMPILED_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("broadband.upload_disk_io.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
 #endif
-	while (!m_bStopRequested && m_Run
+	while (!HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested) && HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP
 			&& ::GetQueuedCompletionStatus(m_hPort, &dwRead, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE)
 			&& completionKey)
 	{
-		m_Run = RUN_WORK;
+		HelperThreadLaunchSeams::SetState(m_Run, RUN_WORK);
 		//start new I/O
 		CCriticalSection *pcsUploadListRead = NULL;
 		const CUploadingPtrList &rUploadList = theApp.uploadqueue->GetUploadListTS(&pcsUploadListRead);
 		pcsUploadListRead->Lock();
 		for (POSITION pos = rUploadList.GetHeadPosition(); pos != NULL;)
 			StartCreateNextBlockPackage(rUploadList.GetNext(pos));
-		InterlockedExchange8(&m_bNewData, 0);
+		HelperThreadLaunchSeams::ClearFlag(m_bNewData);
 		pcsUploadListRead->Unlock();
 
 		//completed I/O
@@ -155,16 +163,16 @@ UINT CUploadDiskIOThread::RunInternal()
 
 		if (!completionKey) //thread termination
 			break;
-		m_Run = RUN_IDLE;
+		HelperThreadLaunchSeams::SetState(m_Run, RUN_IDLE);
 		// if we have put a new data on any socket, tell the throttler
 		if (m_bSignalThrottler && theApp.uploadBandwidthThrottler != NULL) {
 			theApp.uploadBandwidthThrottler->NewUploadDataAvailable();
 			m_bSignalThrottler = false;
 		}
-		if (InterlockedExchange8(&m_bNewData, 0) && m_listPendingIO.IsEmpty())
+		if (HelperThreadLaunchSeams::ExchangeState(m_bNewData, 0) != 0 && m_listPendingIO.IsEmpty())
 			PostQueuedCompletionStatus(m_hPort, 0, WAKEUP, NULL);
 	}
-	m_Run = RUN_STOP;
+	HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 
 	//Improper termination of asynchronous I/O follows...
 	//close file handles to release the I/O completion port
@@ -180,9 +188,9 @@ UINT CUploadDiskIOThread::RunInternal()
 
 bool CUploadDiskIOThread::AssociateFile(CKnownFile *pFile)
 {
-	if (!HelperThreadLaunchSeams::CanPostIocpWork(m_bThreadStarted, m_bStopRequested, m_hPort != NULL, m_Run != RUN_STOP))
+	if (!HelperThreadLaunchSeams::CanPostIocpWork(m_bThreadStarted, HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested), m_hPort != NULL, HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP))
 		return false;
-	ASSERT(m_hPort && m_Run);
+	ASSERT(m_hPort && HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP);
 	if (pFile && pFile->m_hRead == INVALID_HANDLE_VALUE && !pFile->bNoNewReads) {
 		CString fullname = (pFile->IsPartFile())
 			? RemoveFileExtension(static_cast<const CPartFile*>(pFile)->GetFullName())
@@ -328,7 +336,7 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 	UploadingToClient_Struct *pStruct = pOvRead->pUploadClientStruct;
 
 	CKnownFile *pKnownFile = pOvRead->pFile;
-	if (m_Run) {
+	if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP) {
 		m_listPendingIO.RemoveAt(pOvRead->pos);
 		bool bReadError = !dwRead;
 		if (bReadError)
@@ -533,11 +541,11 @@ void CUploadDiskIOThread::CreatePackedPackets(const OverlappedRead_Struct &Overl
 
 void CUploadDiskIOThread::WakeUpCall()
 {
-	if (!HelperThreadLaunchSeams::CanPostIocpWork(m_bThreadStarted, m_bStopRequested, m_hPort != NULL, m_Run != RUN_STOP))
+	if (!HelperThreadLaunchSeams::CanPostIocpWork(m_bThreadStarted, HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested), m_hPort != NULL, HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP))
 		return;
 	//pending I/O makes posting unnecessary
-	if (m_Run == RUN_IDLE && m_listPendingIO.IsEmpty())
+	if (HelperThreadLaunchSeams::GetState(m_Run) == RUN_IDLE && m_listPendingIO.IsEmpty())
 		PostQueuedCompletionStatus(m_hPort, 0, WAKEUP, NULL);
 	else
-		InterlockedExchange8(&m_bNewData, 1);
+		HelperThreadLaunchSeams::SetFlag(m_bNewData);
 }

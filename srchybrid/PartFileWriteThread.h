@@ -16,6 +16,8 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+#include "HelperThreadLaunchSeams.h"
+
 struct PartFileBufferedData;
 
 struct ToWrite
@@ -44,7 +46,7 @@ public:
 
 	void	EndThread();	//completionkey == 0
 	void	WakeUpCall();	//completionkey == -1
-	bool	IsRunning() const							{ return m_Run > 0; }
+	bool	IsRunning() const							{ return HelperThreadLaunchSeams::GetState(m_Run) > 0; }
 	bool	AddFile(CPartFile *pFile);
 	static void	RemFile(CPartFile *pFile);
 
@@ -64,7 +66,7 @@ private:
 	CEvent	m_eventThreadEnded;
 	HANDLE	m_hPort;
 	bool	m_bThreadStarted;
-	volatile bool m_bStopRequested;
-	volatile char m_Run; //0 - not running; 1 - idle; 2 - processing
-	volatile char m_bNewData;
+	volatile LONG m_bStopRequested;
+	volatile LONG m_Run; //0 - not running; 1 - idle; 2 - processing
+	volatile LONG m_bNewData;
 };

@@ -59,7 +59,7 @@ CPartFileWriteThread::CPartFileWriteThread()
 
 CPartFileWriteThread::~CPartFileWriteThread()
 {
-	ASSERT(!m_hPort && !m_Run);
+	ASSERT(!m_hPort && HelperThreadLaunchSeams::GetState(m_Run) == RUN_STOP);
 }
 
 UINT AFX_CDECL CPartFileWriteThread::RunProc(LPVOID pParam)
@@ -75,16 +75,24 @@ UINT AFX_CDECL CPartFileWriteThread::RunProc(LPVOID pParam)
 
 void CPartFileWriteThread::EndThread()
 {
-	m_bStopRequested = true;
+	HelperThreadLaunchSeams::SetFlag(m_bStopRequested);
 	const HelperThreadLaunchSeams::IocpShutdownAction action =
 		HelperThreadLaunchSeams::ClassifyIocpShutdown(m_bThreadStarted, m_hPort != NULL);
 	if (action == HelperThreadLaunchSeams::IocpShutdownAction::NoOp)
 		return;
 
-	m_Run = RUN_STOP;
+	HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 	if (action == HelperThreadLaunchSeams::IocpShutdownAction::SignalAndWait)
 		PostQueuedCompletionStatus(m_hPort, 0, 0, NULL);
-	m_eventThreadEnded.Lock();
+	const DWORD dwWait = ::WaitForSingleObject(m_eventThreadEnded, HelperThreadLaunchSeams::kHelperThreadShutdownWaitMs);
+	const HelperThreadLaunchSeams::ShutdownWaitAction waitAction = HelperThreadLaunchSeams::ClassifyShutdownWait(dwWait);
+	if (waitAction == HelperThreadLaunchSeams::ShutdownWaitAction::TimedOut) {
+		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Timed out waiting for part-file write helper thread; waiting for cooperative exit"));
+		m_eventThreadEnded.Lock();
+	} else if (waitAction == HelperThreadLaunchSeams::ShutdownWaitAction::Failed) {
+		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed waiting for part-file write helper thread: %s"), (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
+		m_eventThreadEnded.Lock();
+	}
 }
 
 UINT CPartFileWriteThread::RunInternal()
@@ -96,14 +104,14 @@ UINT CPartFileWriteThread::RunInternal()
 	if (!m_hPort) {
 		const DWORD dwError = ::GetLastError();
 		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed to create part-file write completion port: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
-		m_Run = RUN_STOP;
+		HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 		m_eventThreadEnded.SetEvent();
 		return dwError;
 	}
-	if (m_bStopRequested) {
+	if (HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested)) {
 		::CloseHandle(m_hPort);
 		m_hPort = 0;
-		m_Run = RUN_STOP;
+		HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 		m_eventThreadEnded.SetEvent();
 		return 0;
 	}
@@ -111,21 +119,21 @@ UINT CPartFileWriteThread::RunInternal()
 	DWORD dwWrite = 0;
 	ULONG_PTR completionKey = 0;
 	OverlappedWrite_Struct *pCurIO = NULL;
-	m_Run = RUN_IDLE;
+	HelperThreadLaunchSeams::SetState(m_Run, RUN_IDLE);
 #if EMULE_COMPILED_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("broadband.partfile_write.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
 #endif
-	while (!m_bStopRequested && m_Run
+	while (!HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested) && HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP
 		&& ::GetQueuedCompletionStatus(m_hPort, &dwWrite, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE)
 		&& completionKey)
 	{
-		m_Run = RUN_WORK;
+		HelperThreadLaunchSeams::SetState(m_Run, RUN_WORK);
 		//move buffer lists into the local storage
 		if (!m_FlushList.IsEmpty()) {
 			m_lockFlushList.Lock();
 			while (!m_FlushList.IsEmpty())
 				m_listToWrite.AddTail(m_FlushList.RemoveHead());
-			InterlockedExchange8(&m_bNewData, 0);
+			HelperThreadLaunchSeams::ClearFlag(m_bNewData);
 			m_lockFlushList.Unlock();
 		}
 		//start new I/O
@@ -140,11 +148,11 @@ UINT CPartFileWriteThread::RunInternal()
 
 		if (!completionKey) //thread termination
 			break;
-		m_Run = RUN_IDLE;
-		if (InterlockedExchange8(&m_bNewData, 0) && m_listPendingIO.IsEmpty())
+		HelperThreadLaunchSeams::SetState(m_Run, RUN_IDLE);
+		if (HelperThreadLaunchSeams::ExchangeState(m_bNewData, 0) != 0 && m_listPendingIO.IsEmpty())
 			PostQueuedCompletionStatus(m_hPort, 0, WAKEUP, NULL);
 	}
-	m_Run = RUN_STOP;
+	HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 
 	//Improper termination of asynchronous I/O follows...
 	//close file handles to release I/O completion port
@@ -161,7 +169,7 @@ UINT CPartFileWriteThread::RunInternal()
 void CPartFileWriteThread::WriteBuffers()
 {
 	//process internal list
-	while (!m_listToWrite.IsEmpty() && m_Run) {
+	while (!m_listToWrite.IsEmpty() && HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP) {
 		const ToWrite &item = m_listToWrite.RemoveHead();
 		PartFileBufferedData *pBuffer = item.pBuffer;
 		ASSERT(pBuffer->end >= pBuffer->start && (pBuffer->data || pBuffer->end == pBuffer->start)); //verifies allocation requests too
@@ -207,7 +215,7 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 		return;
 	}
 	CPartFile *pFile = pOvWrite->pFile;
-	if (m_Run) {
+	if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP) {
 		PartFileBufferedData *pBuffer = pOvWrite->pBuffer;
 		const DWORD dwWrite = (DWORD)(pBuffer->end - pBuffer->start + 1);
 
@@ -238,9 +246,9 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 
 bool CPartFileWriteThread::AddFile(CPartFile *pFile)
 {
-	if (!HelperThreadLaunchSeams::CanPostIocpWork(m_bThreadStarted, m_bStopRequested, m_hPort != NULL, m_Run != RUN_STOP))
+	if (!HelperThreadLaunchSeams::CanPostIocpWork(m_bThreadStarted, HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested), m_hPort != NULL, HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP))
 		return false;
-	ASSERT(m_hPort && m_Run);
+	ASSERT(m_hPort && HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP);
 	if (pFile && pFile->m_hWrite == INVALID_HANDLE_VALUE) {
 		const CString sPartFile(RemoveFileExtension(pFile->GetFullName()));
 		pFile->m_hWrite = LongPathSeams::CreateFile(sPartFile, GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
@@ -270,11 +278,11 @@ void CPartFileWriteThread::RemFile(CPartFile *pFile)
 
 void CPartFileWriteThread::WakeUpCall()
 {
-	if (!HelperThreadLaunchSeams::CanPostIocpWork(m_bThreadStarted, m_bStopRequested, m_hPort != NULL, m_Run != RUN_STOP))
+	if (!HelperThreadLaunchSeams::CanPostIocpWork(m_bThreadStarted, HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested), m_hPort != NULL, HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP))
 		return;
 	//pending I/O makes posting unnecessary
-	if (m_Run == RUN_IDLE && m_listPendingIO.IsEmpty())
+	if (HelperThreadLaunchSeams::GetState(m_Run) == RUN_IDLE && m_listPendingIO.IsEmpty())
 		PostQueuedCompletionStatus(m_hPort, 0, WAKEUP, NULL);
 	else
-		InterlockedExchange8(&m_bNewData, 1);
+		HelperThreadLaunchSeams::SetFlag(m_bNewData);
 }

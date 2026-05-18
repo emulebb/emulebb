@@ -83,5 +83,5 @@ private:
 	LONG m_nNeedsMoreBandwidthSlots;
 
 	bool m_bThreadStarted;
-	volatile bool m_bRun;
+	volatile LONG m_bRun;
 };

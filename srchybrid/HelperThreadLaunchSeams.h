@@ -8,13 +8,24 @@
 
 #pragma once
 
+#include <windows.h>
+
 namespace HelperThreadLaunchSeams
 {
+	constexpr DWORD kHelperThreadShutdownWaitMs = 7000;
+
 	enum class IocpShutdownAction
 	{
 		NoOp,
 		WaitOnly,
 		SignalAndWait
+	};
+
+	enum class ShutdownWaitAction
+	{
+		Finished,
+		TimedOut,
+		Failed
 	};
 
 	/**
@@ -49,5 +60,73 @@ namespace HelperThreadLaunchSeams
 	inline bool ShouldWaitForEventThreadShutdown(bool bThreadStarted)
 	{
 		return bThreadStarted;
+	}
+
+	/**
+	 * @brief Classifies a bounded helper-thread shutdown wait.
+	 */
+	inline ShutdownWaitAction ClassifyShutdownWait(DWORD dwWait)
+	{
+		if (dwWait == WAIT_OBJECT_0)
+			return ShutdownWaitAction::Finished;
+		if (dwWait == WAIT_TIMEOUT)
+			return ShutdownWaitAction::TimedOut;
+		return ShutdownWaitAction::Failed;
+	}
+
+	/**
+	 * @brief Atomically marks a helper-thread flag as true.
+	 */
+	inline void SetFlag(volatile LONG& rnFlag)
+	{
+		::InterlockedExchange(&rnFlag, 1);
+	}
+
+	/**
+	 * @brief Atomically marks a helper-thread flag as false.
+	 */
+	inline void ClearFlag(volatile LONG& rnFlag)
+	{
+		::InterlockedExchange(&rnFlag, 0);
+	}
+
+	/**
+	 * @brief Atomically reads a helper-thread flag.
+	 */
+	inline bool IsFlagSet(volatile LONG& rnFlag)
+	{
+		return ::InterlockedCompareExchange(&rnFlag, 0, 0) != 0;
+	}
+
+	/**
+	 * @brief Atomically writes a helper-thread state value.
+	 */
+	inline void SetState(volatile LONG& rnState, LONG nState)
+	{
+		::InterlockedExchange(&rnState, nState);
+	}
+
+	/**
+	 * @brief Atomically reads a helper-thread state value.
+	 */
+	inline LONG GetState(volatile LONG& rnState)
+	{
+		return ::InterlockedCompareExchange(&rnState, 0, 0);
+	}
+
+	/**
+	 * @brief Atomically reads a helper-thread state value from const methods.
+	 */
+	inline LONG GetState(const volatile LONG& rnState)
+	{
+		return GetState(const_cast<volatile LONG&>(rnState));
+	}
+
+	/**
+	 * @brief Atomically exchanges a helper-thread state value.
+	 */
+	inline LONG ExchangeState(volatile LONG& rnState, LONG nState)
+	{
+		return ::InterlockedExchange(&rnState, nState);
 	}
 }

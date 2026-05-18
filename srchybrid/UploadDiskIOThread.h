@@ -16,6 +16,8 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+#include "HelperThreadLaunchSeams.h"
+
 class Packet;
 class CUpDownClient;
 typedef CTypedPtrList<CPtrList, Packet*> CPacketList;
@@ -66,8 +68,8 @@ private:
 	uint64		dbgDataReadPending;
 #endif
 	bool		m_bThreadStarted;
-	volatile bool m_bStopRequested;
-	volatile char m_Run; //0 - not running; 1 - idle; 2 - processing
-	volatile char m_bNewData;
+	volatile LONG m_bStopRequested;
+	volatile LONG m_Run; //0 - not running; 1 - idle; 2 - processing
+	volatile LONG m_bNewData;
 	bool		m_bSignalThrottler;
 };

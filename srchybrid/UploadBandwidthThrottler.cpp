@@ -53,7 +53,7 @@ UploadBandwidthThrottler::UploadBandwidthThrottler()
 	CWinThread *pThread = AfxBeginThread(RunProc, (LPVOID)this);
 	m_bThreadStarted = HelperThreadLaunchSeams::DidStartThread(pThread);
 	if (!m_bThreadStarted) {
-		m_bRun = false;
+		HelperThreadLaunchSeams::ClearFlag(m_bRun);
 		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed to start upload bandwidth throttler helper thread"));
 		m_eventThreadEnded.SetEvent();
 	}
@@ -181,7 +181,7 @@ bool UploadBandwidthThrottler::RemoveFromStandardListNoLock(ThrottledFileSocket 
 */
 void UploadBandwidthThrottler::QueueForSendingControlPacket(ThrottledControlSocket *socket, const bool hasSent)
 {
-	if (m_bRun) {
+	if (HelperThreadLaunchSeams::IsFlagSet(m_bRun)) {
 		tempQueueLocker.Lock();
 
 		if (hasSent)
@@ -214,7 +214,7 @@ void UploadBandwidthThrottler::RemoveFromAllQueuesNoLock(ThrottledControlSocket 
 
 void UploadBandwidthThrottler::RemoveFromAllQueues(ThrottledFileSocket *socket)
 {
-	if (m_bRun) {
+	if (HelperThreadLaunchSeams::IsFlagSet(m_bRun)) {
 		queueLocker.Lock(); // Get critical section
 
 		RemoveFromAllQueuesNoLock(socket);
@@ -228,7 +228,7 @@ void UploadBandwidthThrottler::RemoveFromAllQueues(ThrottledFileSocket *socket)
 
 void UploadBandwidthThrottler::RemoveFromAllQueuesLocked(ThrottledControlSocket *socket)
 {
-	if (m_bRun) {
+	if (HelperThreadLaunchSeams::IsFlagSet(m_bRun)) {
 		queueLocker.Lock();
 		RemoveFromAllQueuesNoLock(socket);
 		queueLocker.Unlock();
@@ -245,7 +245,7 @@ void UploadBandwidthThrottler::EndThread()
 	//the flag is never checked in the thread loop, no need to get locks
 
 	// signal the thread to stop looping and exit.
-	m_bRun = false;
+	HelperThreadLaunchSeams::ClearFlag(m_bRun);
 	if (!HelperThreadLaunchSeams::ShouldWaitForEventThreadShutdown(m_bThreadStarted))
 		return;
 
@@ -254,7 +254,15 @@ void UploadBandwidthThrottler::EndThread()
 	m_eventSocketAvailable.SetEvent();
 
 	// wait for the thread to signal that it has stopped looping.
-	m_eventThreadEnded.Lock();
+	const DWORD dwWait = ::WaitForSingleObject(m_eventThreadEnded, HelperThreadLaunchSeams::kHelperThreadShutdownWaitMs);
+	const HelperThreadLaunchSeams::ShutdownWaitAction waitAction = HelperThreadLaunchSeams::ClassifyShutdownWait(dwWait);
+	if (waitAction == HelperThreadLaunchSeams::ShutdownWaitAction::TimedOut) {
+		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Timed out waiting for upload bandwidth throttler helper thread; waiting for cooperative exit"));
+		m_eventThreadEnded.Lock();
+	} else if (waitAction == HelperThreadLaunchSeams::ShutdownWaitAction::Failed) {
+		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed waiting for upload bandwidth throttler helper thread: %s"), (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
+		m_eventThreadEnded.Lock();
+	}
 }
 
 /*void UploadBandwidthThrottler::Pause(bool paused)
@@ -350,7 +358,7 @@ UINT UploadBandwidthThrottler::RunInternal()
 #if EMULE_COMPILED_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("broadband.throttler.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
 #endif
-	while (m_bRun) {
+	while (HelperThreadLaunchSeams::IsFlagSet(m_bRun)) {
 //		m_eventPaused.Lock();
 
 		DWORD timeSinceLastLoop = timeGetTime() - lastLoopTick;
@@ -421,7 +429,7 @@ UINT UploadBandwidthThrottler::RunInternal()
 			else
 				::Sleep(dwSleep);
 		}
-		if (!m_bRun)
+		if (!HelperThreadLaunchSeams::IsFlagSet(m_bRun))
 			break;
 
 		const DWORD thisLoopTick = timeGetTime();
@@ -599,12 +607,12 @@ UINT UploadBandwidthThrottler::RunInternal()
 
 void UploadBandwidthThrottler::NewUploadDataAvailable()
 {
-	if (m_bRun)
+	if (HelperThreadLaunchSeams::IsFlagSet(m_bRun))
 		m_eventDataAvailable.SetEvent();
 }
 
 void UploadBandwidthThrottler::SocketAvailable()
 {
-	if (m_bRun)
+	if (HelperThreadLaunchSeams::IsFlagSet(m_bRun))
 		m_eventSocketAvailable.SetEvent();
 }
