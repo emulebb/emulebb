@@ -17,7 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "ServerWnd.h"
-#include "HttpDownloadDlg.h"
+#include "HttpDownloadLog.h"
 #include "HTRichEditCtrl.h"
 #include "ED2KLink.h"
 #include "kademlia/kademlia/kademlia.h"
@@ -311,12 +311,11 @@ bool CServerWnd::UpdateServerMetFromURL(const CString &strURL)
 
 	// try to download server.met
 	Log(GetResString(IDS_DOWNLOADING_SERVERMET_FROM), (LPCTSTR)input.Url);
-	CHttpDownloadDlg dlgDownload;
-	dlgDownload.m_strTitle = GetResString(IDS_DOWNLOADING_SERVERMET);
-	dlgDownload.m_sURLToDownload = input.Url;
-	dlgDownload.m_sFileToDownloadInto = strTempFilename;
-	if (dlgDownload.DoModal() != IDOK) {
+	CString strDownloadError;
+	if (!HttpDownloadLog::DownloadToFile(input.Url, strTempFilename, GetResString(IDS_DOWNLOADING_SERVERMET), strDownloadError)) {
 		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDDOWNLOADMET), (LPCTSTR)input.Url);
+		if (!strDownloadError.IsEmpty())
+			AddDebugLogLine(false, _T("server.met download error: %s"), (LPCTSTR)strDownloadError);
 		return false;
 	}
 

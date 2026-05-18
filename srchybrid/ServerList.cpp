@@ -30,7 +30,7 @@
 #include "ServerMetPersistenceSeams.h"
 #include "Packets.h"
 #include "emuledlg.h"
-#include "HttpDownloadDlg.h"
+#include "HttpDownloadLog.h"
 #include "ServerWnd.h"
 #include "Log.h"
 
@@ -77,22 +77,22 @@ void CServerList::AutoUpdate()
 	bool bDownloaded = false;
 	for (POSITION Pos = thePrefs.addresses_list.GetHeadPosition(); Pos != NULL;) {
 		(void)LongPathSeams::DeleteFileIfExists(servermetdownloadcandidate);
-		CHttpDownloadDlg dlgDownload;
-		dlgDownload.m_strTitle = GetResString(IDS_HTTP_CAPTION);
-		dlgDownload.m_sURLToDownload = thePrefs.addresses_list.GetNext(Pos);
-		dlgDownload.m_sFileToDownloadInto = servermetdownloadcandidate;
-		if (dlgDownload.DoModal() == IDOK) {
+		const CString strUrl(thePrefs.addresses_list.GetNext(Pos));
+		CString strError;
+		if (HttpDownloadLog::DownloadToFile(strUrl, servermetdownloadcandidate, GetResString(IDS_HTTP_CAPTION), strError)) {
 			DWORD dwPromoteError = ERROR_SUCCESS;
 			if (ServerMetPersistenceSeams::InstallDownloadedServerMetCandidate(servermetdownloadcandidate, servermetdownload, &dwPromoteError)) {
 				bDownloaded = true;
 				break;
 			}
 			LogError(LOG_STATUSBAR, _T("Failed to install downloaded server.met from \"%s\": %s"),
-				(LPCTSTR)dlgDownload.m_sURLToDownload, (LPCTSTR)GetErrorMessage(dwPromoteError));
+				(LPCTSTR)strUrl, (LPCTSTR)GetErrorMessage(dwPromoteError));
 			(void)LongPathSeams::DeleteFileIfExists(servermetdownloadcandidate);
 			continue;
 		}
-		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDDOWNLOADMET), (LPCTSTR)dlgDownload.m_sURLToDownload);
+		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDDOWNLOADMET), (LPCTSTR)strUrl);
+		if (!strError.IsEmpty())
+			AddDebugLogLine(false, _T("server.met auto-update download error: %s"), (LPCTSTR)strError);
 	}
 
 	if (!bDownloaded)

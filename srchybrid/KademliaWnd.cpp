@@ -29,7 +29,7 @@
 #include "OtherFunctions.h"
 #include "emuledlg.h"
 #include "log.h"
-#include "HttpDownloadDlg.h"
+#include "HttpDownloadLog.h"
 #include "Kademlia/routing/RoutingZone.h"
 #include "kademlia/utils/NodesDatSupport.h"
 #include "HelpIDs.h"
@@ -459,13 +459,12 @@ bool CKademliaWnd::UpdateNodesDatFromURL(const CString &strURL)
 
 	// try to download nodes.dat
 	Log(GetResString(IDS_DOWNLOADING_NODESDAT_FROM), (LPCTSTR)strTrimmedUrl);
-	CHttpDownloadDlg dlgDownload;
-	dlgDownload.m_strTitle = GetResString(IDS_DOWNLOADING_NODESDAT);
-	dlgDownload.m_sURLToDownload = strTrimmedUrl;
-	dlgDownload.m_sFileToDownloadInto = strTempFilename;
-	if (dlgDownload.DoModal() != IDOK) {
+	CString strDownloadError;
+	if (!HttpDownloadLog::DownloadToFile(strTrimmedUrl, strTempFilename, GetResString(IDS_DOWNLOADING_NODESDAT), strDownloadError)) {
 		(void)LongPathSeams::DeleteFileIfExists(strTempFilename);
 		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDDOWNLOADNODES), (LPCTSTR)strTrimmedUrl);
+		if (!strDownloadError.IsEmpty())
+			AddDebugLogLine(false, _T("nodes.dat download error: %s"), (LPCTSTR)strDownloadError);
 		return false;
 	}
 

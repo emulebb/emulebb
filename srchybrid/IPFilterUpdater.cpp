@@ -25,7 +25,7 @@
 #include "IPFilterSeams.h"
 #include "IPFilterUpdateSeams.h"
 #include "Preferences.h"
-#include "HttpDownloadDlg.h"
+#include "HttpDownloadLog.h"
 #include "emuledlg.h"
 #include "OtherFunctions.h"
 #include "ZipFile.h"
@@ -323,15 +323,12 @@ bool CIPFilterUpdater::UpdateFromUrlInteractive(const CString& strUrl)
 		return false;
 	}
 
-	CHttpDownloadDlg dlgDownload;
-	dlgDownload.m_strTitle = GetResString(IDS_DWL_IPFILTERFILE);
-	dlgDownload.m_sURLToDownload = strUrl;
-	dlgDownload.m_sFileToDownloadInto = strTempFilePath;
-	if (dlgDownload.DoModal() != IDOK) {
+	if (!HttpDownloadLog::DownloadToFile(strUrl, strTempFilePath, GetResString(IDS_DWL_IPFILTERFILE), strError)) {
 		(void)LongPathSeams::DeleteFileIfExists(strTempFilePath);
-		strError = GetResString(IDS_DWLIPFILTERFAILED);
-		if (!dlgDownload.GetError().IsEmpty())
-			strError.AppendFormat(_T("\r\n\r\n%s"), (LPCTSTR)dlgDownload.GetError());
+		CString strDisplayError(GetResString(IDS_DWLIPFILTERFAILED));
+		if (!strError.IsEmpty())
+			strDisplayError.AppendFormat(_T("\r\n\r\n%s"), (LPCTSTR)strError);
+		strError = strDisplayError;
 		ReportIPFilterUpdateError(strError, true);
 		return false;
 	}
