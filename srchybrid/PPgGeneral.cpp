@@ -20,7 +20,6 @@
 #include "SearchDlg.h"
 #include "PreferencesDlg.h"
 #include "ppggeneral.h"
-#include "HttpDownloadDlg.h"
 #include "Preferences.h"
 #include "emuledlg.h"
 #include "StatisticsDlg.h"
@@ -326,52 +325,12 @@ void CPPgGeneral::OnBnClickedEditWebservices()
 
 void CPPgGeneral::OnLangChange()
 {
-// Official version mirrors
-//#define MIRRORS_URL	_T("http://langmirror%u.emule-project.org/lang/%u%u%u%u/")
-
-// Community version mirrors
-#if defined _M_X64
-#define SBITS _T("64/")
-#elif defined _M_ARM64
-#define SBITS _T("arm64/")
-#else
-#define SBITS
-#endif
-#define MIRRORS_URL	_T("https://langmirror%u.emule-project.org/lang/fox/%u%u%u%u/") SBITS
-
 	LANGID newLangId = (LANGID)m_language.GetItemData(m_language.GetCurSel());
 	if (thePrefs.GetLanguageID() != newLangId) {
 		if (!thePrefs.IsLanguageSupported(newLangId)) {
-			CString sAsk(GetResString(IDS_ASKDOWNLOADLANGCAP));
-			sAsk.AppendFormat(_T("\r\n\r\n%s"), (LPCTSTR)GetResString(IDS_ASKDOWNLOADLANG));
-			if (AfxMessageBox(sAsk, MB_ICONQUESTION | MB_YESNO) == IDYES) {
-				// download file
-				const CString &strFilename(thePrefs.GetLangDLLNameByID(newLangId));
-				// create url, use random mirror for load balancing
-				UINT nRand = rand() % 3 + 1;
-				CString strUrl;
-				strUrl.Format(MIRRORS_URL _T("%s")
-					, nRand
-					, CemuleApp::m_nVersionMjr, CemuleApp::m_nVersionMin
-					, CemuleApp::m_nVersionUpd, CemuleApp::m_nVersionBld
-					, (LPCTSTR)strFilename);
-
-				// start download
-				CHttpDownloadDlg dlgDownload;
-				dlgDownload.m_strTitle = GetResString(IDS_DOWNLOAD_LANGFILE);
-				dlgDownload.m_sURLToDownload = strUrl;
-				dlgDownload.m_sFileToDownloadInto = thePrefs.GetMuleDirectory(EMULE_ADDLANGDIR, true) + strFilename; // save to
-				if (dlgDownload.DoModal() == IDOK && thePrefs.IsLanguageSupported(newLangId)) {
-					// everything OK, new language downloaded and working
-					OnSettingsChange();
-					return;
-				}
-				CString strErr;
-				strErr.Format(GetResString(IDS_ERR_FAILEDDOWNLOADLANG), (LPCTSTR)strUrl);
-				LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strErr);
-				AfxMessageBox(strErr, MB_ICONERROR | MB_OK);
-			}
-			// undo change selection
+			const CString strErr(_T("The selected language library is not installed. Language libraries are expected to be included in the application distribution."));
+			LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strErr);
+			AfxMessageBox(strErr, MB_ICONWARNING | MB_OK);
 			SetLangSel();
 		} else
 			OnSettingsChange();
