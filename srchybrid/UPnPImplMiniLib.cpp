@@ -72,18 +72,17 @@ void CUPnPImplMiniLib::StopAsyncFind()
 {
 	ReapDiscoveryThreadIfFinished();
 	if (m_pDiscoveryThread != NULL) {
-		UPnPDiscoveryThreadSeams::RequestAbort(m_bAbortDiscovery);	// if there is a thread, tell it to abort as soon as possible - it won't send a Result message when aborted
-		const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, UPnPDiscoveryThreadSeams::kCooperativeStopWaitMs);
-		const UPnPDiscoveryThreadSeams::EStopWaitAction eAction = UPnPDiscoveryThreadSeams::ClassifyStopWait(dwWait);
+		DWORD dwLastError = ERROR_SUCCESS;
+		const UPnPDiscoveryThreadSeams::EStopWaitAction eAction =
+			UPnPDiscoveryThreadSeams::RequestDiscoveryThreadStop(m_pDiscoveryThread, m_bAbortDiscovery, dwLastError);
 		if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::WaitCooperatively) {
 			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread to quit timed out; waiting for cooperative exit without forced termination"));
 			(void)::WaitForSingleObject(m_pDiscoveryThread->m_hThread, INFINITE);
 		} else if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::ReleaseAfterWaitFailure)
-			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread failed (%u); releasing stale thread wrapper"), ::GetLastError());
+			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread failed (%u); releasing stale thread wrapper"), dwLastError);
 		else
 			DebugLog(_T("Aborted any possible UPnP StartDiscoveryThread"));
-		delete m_pDiscoveryThread;
-		m_pDiscoveryThread = NULL;
+		UPnPDiscoveryThreadSeams::ReleaseDiscoveryThread(m_pDiscoveryThread);
 	}
 	UPnPDiscoveryThreadSeams::ClearAbort(m_bAbortDiscovery);
 }
@@ -397,19 +396,11 @@ void CUPnPImplMiniLib::Cleanup()
 
 void CUPnPImplMiniLib::ReapDiscoveryThreadIfFinished()
 {
-	if (m_pDiscoveryThread == NULL)
-		return;
-
-	const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, 0);
-	const UPnPDiscoveryThreadSeams::ENonblockingWaitAction eAction = UPnPDiscoveryThreadSeams::ClassifyNonblockingWait(dwWait);
-	if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseFinished) {
-		delete m_pDiscoveryThread;
-		m_pDiscoveryThread = NULL;
-	} else if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseAfterWaitFailure) {
-		DebugLogError(_T("UPnP StartDiscoveryThread wait failed (%u); releasing stale thread wrapper"), ::GetLastError());
-		delete m_pDiscoveryThread;
-		m_pDiscoveryThread = NULL;
-	}
+	DWORD dwLastError = ERROR_SUCCESS;
+	const UPnPDiscoveryThreadSeams::ENonblockingWaitAction eAction =
+		UPnPDiscoveryThreadSeams::ReapDiscoveryThreadIfFinished(m_pDiscoveryThread, dwLastError);
+	if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseAfterWaitFailure)
+		DebugLogError(_T("UPnP StartDiscoveryThread wait failed (%u); releasing stale thread wrapper"), dwLastError);
 }
 
 void CUPnPImplMiniLib::StartThread()
@@ -424,13 +415,9 @@ void CUPnPImplMiniLib::StartThread()
 		DebugLogError(_T("Failed to create UPnP StartDiscoveryThread"));
 		return;
 	}
-	pStartDiscoveryThread->m_bAutoDelete = FALSE;
-	pStartDiscoveryThread->SetValues(this);
-	m_pDiscoveryThread = pStartDiscoveryThread;
-	if (pStartDiscoveryThread->ResumeThread() == static_cast<DWORD>(-1)) {
-		DebugLogError(_T("Failed to resume UPnP StartDiscoveryThread (%u)"), ::GetLastError());
-		delete m_pDiscoveryThread;
-		m_pDiscoveryThread = NULL;
+	DWORD dwLastError = ERROR_SUCCESS;
+	if (!UPnPDiscoveryThreadSeams::OwnAndResumeDiscoveryThread(m_pDiscoveryThread, pStartDiscoveryThread, this, dwLastError)) {
+		DebugLogError(_T("Failed to resume UPnP StartDiscoveryThread (%u)"), dwLastError);
 		m_bUPnPPortsForwarded = TRIS_FALSE;
 	}
 }

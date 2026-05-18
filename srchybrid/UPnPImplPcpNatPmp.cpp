@@ -17,7 +17,7 @@
 #include "StdAfx.h"
 #include "Preferences.h"
 #include "UPnPImplPcpNatPmp.h"
-#include "UPnPImplPcpNatPmpSeams.h"
+#include "UPnPDiscoveryThreadSeams.h"
 #include "Log.h"
 #include "OtherFunctions.h"
 
@@ -119,18 +119,17 @@ void CUPnPImplPcpNatPmp::StopAsyncFind()
 {
 	ReapDiscoveryThreadIfFinished();
 	if (m_pDiscoveryThread != NULL) {
-		UPnPDiscoveryThreadSeams::RequestAbort(m_bAbortDiscovery); // cooperative shutdown; do not force-kill mapping code while libpcpnatpmp owns state
-		const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, UPnPDiscoveryThreadSeams::kCooperativeStopWaitMs);
-		const UPnPDiscoveryThreadSeams::EStopWaitAction eAction = UPnPDiscoveryThreadSeams::ClassifyStopWait(dwWait);
+		DWORD dwLastError = ERROR_SUCCESS;
+		const UPnPDiscoveryThreadSeams::EStopWaitAction eAction =
+			UPnPDiscoveryThreadSeams::RequestDiscoveryThreadStop(m_pDiscoveryThread, m_bAbortDiscovery, dwLastError);
 		if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::WaitCooperatively) {
 			DebugLogError(_T("Waiting for PCP/NAT-PMP discovery thread to quit timed out; waiting for cooperative exit without forced termination"));
 			(void)::WaitForSingleObject(m_pDiscoveryThread->m_hThread, INFINITE);
 		} else if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::ReleaseAfterWaitFailure)
-			DebugLogError(_T("Waiting for PCP/NAT-PMP discovery thread failed (%u); releasing stale thread wrapper"), ::GetLastError());
+			DebugLogError(_T("Waiting for PCP/NAT-PMP discovery thread failed (%u); releasing stale thread wrapper"), dwLastError);
 		else
 			DebugLog(_T("Aborted any possible PCP/NAT-PMP discovery thread"));
-		delete m_pDiscoveryThread;
-		m_pDiscoveryThread = NULL;
+		UPnPDiscoveryThreadSeams::ReleaseDiscoveryThread(m_pDiscoveryThread);
 	}
 	UPnPDiscoveryThreadSeams::ClearAbort(m_bAbortDiscovery);
 }
@@ -352,32 +351,20 @@ void CUPnPImplPcpNatPmp::StartThread()
 		DebugLogError(_T("Failed to create PCP/NAT-PMP discovery thread"));
 		return;
 	}
-	pStartDiscoveryThread->m_bAutoDelete = FALSE;
-	pStartDiscoveryThread->SetValues(this);
-	m_pDiscoveryThread = pStartDiscoveryThread;
-	if (pStartDiscoveryThread->ResumeThread() == static_cast<DWORD>(-1)) {
-		DebugLogError(_T("Failed to resume PCP/NAT-PMP discovery thread (%u)"), ::GetLastError());
-		delete m_pDiscoveryThread;
-		m_pDiscoveryThread = NULL;
+	DWORD dwLastError = ERROR_SUCCESS;
+	if (!UPnPDiscoveryThreadSeams::OwnAndResumeDiscoveryThread(m_pDiscoveryThread, pStartDiscoveryThread, this, dwLastError)) {
+		DebugLogError(_T("Failed to resume PCP/NAT-PMP discovery thread (%u)"), dwLastError);
 		m_bUPnPPortsForwarded = TRIS_FALSE;
 	}
 }
 
 void CUPnPImplPcpNatPmp::ReapDiscoveryThreadIfFinished()
 {
-	if (m_pDiscoveryThread == NULL)
-		return;
-
-	const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, 0);
-	const UPnPDiscoveryThreadSeams::ENonblockingWaitAction eAction = UPnPDiscoveryThreadSeams::ClassifyNonblockingWait(dwWait);
-	if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseFinished) {
-		delete m_pDiscoveryThread;
-		m_pDiscoveryThread = NULL;
-	} else if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseAfterWaitFailure) {
-		DebugLogError(_T("PCP/NAT-PMP discovery thread wait failed (%u); releasing stale thread wrapper"), ::GetLastError());
-		delete m_pDiscoveryThread;
-		m_pDiscoveryThread = NULL;
-	}
+	DWORD dwLastError = ERROR_SUCCESS;
+	const UPnPDiscoveryThreadSeams::ENonblockingWaitAction eAction =
+		UPnPDiscoveryThreadSeams::ReapDiscoveryThreadIfFinished(m_pDiscoveryThread, dwLastError);
+	if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseAfterWaitFailure)
+		DebugLogError(_T("PCP/NAT-PMP discovery thread wait failed (%u); releasing stale thread wrapper"), dwLastError);
 }
 
 typedef CUPnPImplPcpNatPmp::CStartDiscoveryThread CStartDiscoveryThread;

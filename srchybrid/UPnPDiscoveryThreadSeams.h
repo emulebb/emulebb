@@ -56,6 +56,16 @@ inline bool IsAbortRequested(volatile LONG& rnAbortFlag)
 }
 
 /**
+ * @brief Releases an owned non-auto-deleting discovery thread wrapper.
+ */
+template <typename TThread>
+inline void ReleaseDiscoveryThread(TThread *&rpThread)
+{
+	delete rpThread;
+	rpThread = NULL;
+}
+
+/**
  * @brief Classifies a nonblocking WaitForSingleObject result for an owned discovery worker.
  */
 inline ENonblockingWaitAction ClassifyNonblockingWait(DWORD dwWait)
@@ -77,5 +87,71 @@ inline EStopWaitAction ClassifyStopWait(DWORD dwWait)
 	if (dwWait == WAIT_FAILED)
 		return EStopWaitAction::ReleaseAfterWaitFailure;
 	return EStopWaitAction::WaitCooperatively;
+}
+
+/**
+ * @brief Probes and releases a finished or stale owned discovery thread wrapper.
+ */
+template <typename TThread>
+inline ENonblockingWaitAction ReapDiscoveryThreadIfFinished(TThread *&rpThread, DWORD &rdwLastError)
+{
+	rdwLastError = ERROR_SUCCESS;
+	if (rpThread == NULL)
+		return ENonblockingWaitAction::KeepWaiting;
+
+	const DWORD dwWait = ::WaitForSingleObject(rpThread->m_hThread, 0);
+	const ENonblockingWaitAction eAction = ClassifyNonblockingWait(dwWait);
+	if (eAction == ENonblockingWaitAction::ReleaseAfterWaitFailure)
+		rdwLastError = ::GetLastError();
+	if (eAction == ENonblockingWaitAction::ReleaseFinished || eAction == ENonblockingWaitAction::ReleaseAfterWaitFailure)
+		ReleaseDiscoveryThread(rpThread);
+	return eAction;
+}
+
+/**
+ * @brief Requests cooperative stop and performs the first bounded discovery-thread wait.
+ */
+template <typename TThread>
+inline EStopWaitAction RequestDiscoveryThreadStop(TThread *pThread, volatile LONG &rnAbortFlag, DWORD &rdwLastError)
+{
+	rdwLastError = ERROR_SUCCESS;
+	if (pThread == NULL)
+		return EStopWaitAction::ReleaseFinished;
+
+	RequestAbort(rnAbortFlag);
+	const DWORD dwWait = ::WaitForSingleObject(pThread->m_hThread, kCooperativeStopWaitMs);
+	const EStopWaitAction eAction = ClassifyStopWait(dwWait);
+	if (eAction == EStopWaitAction::ReleaseAfterWaitFailure)
+		rdwLastError = ::GetLastError();
+	return eAction;
+}
+
+/**
+ * @brief Reports whether ResumeThread successfully made a suspended discovery worker runnable.
+ */
+inline bool DidResumeDiscoveryThread(DWORD dwResumeResult)
+{
+	return dwResumeResult != static_cast<DWORD>(-1);
+}
+
+/**
+ * @brief Takes ownership of a suspended discovery worker and releases it if ResumeThread fails.
+ */
+template <typename TThread, typename TOwner>
+inline bool OwnAndResumeDiscoveryThread(TThread *&rpOwnedThread, TThread *pThread, TOwner *pOwner, DWORD &rdwLastError)
+{
+	rdwLastError = ERROR_SUCCESS;
+	if (pThread == NULL)
+		return false;
+
+	pThread->m_bAutoDelete = FALSE;
+	pThread->SetValues(pOwner);
+	rpOwnedThread = pThread;
+	if (!DidResumeDiscoveryThread(pThread->ResumeThread())) {
+		rdwLastError = ::GetLastError();
+		ReleaseDiscoveryThread(rpOwnedThread);
+		return false;
+	}
+	return true;
 }
 }
