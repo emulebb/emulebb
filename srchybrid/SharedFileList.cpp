@@ -64,8 +64,6 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-constexpr int kSharedHashCompletionPostRetries = 20;
-constexpr DWORD kSharedHashCompletionPostRetryDelayMs = 25;
 constexpr ULONGLONG kStartupHashProfileInitialSamples = 8;
 constexpr ULONGLONG kStartupHashProfileSampleInterval = 256;
 constexpr unsigned int kSharedHashUiDrainBatchMax = 100;
@@ -964,7 +962,7 @@ bool CSharedFileList::TakeDeferredSharedHashResult(CSharedFileHashResult *&rpRes
 
 bool CSharedFileList::PostSharedHashResultsDrain()
 {
-	for (int iRetry = 0; iRetry < kSharedHashCompletionPostRetries; ++iRetry) {
+	for (unsigned int uRetry = 0; uRetry < SharedFileListSeams::kSharedHashCompletionPostRetries; ++uRetry) {
 		HWND hTargetWnd = NULL;
 		{
 			CSingleLock lock(&m_mutSharedHashQueue, TRUE);
@@ -976,7 +974,8 @@ bool CSharedFileList::PostSharedHashResultsDrain()
 		}
 		if (::PostMessage(hTargetWnd, TM_SHAREDHASHRESULTSAVAILABLE, 0, 0) != FALSE)
 			return true;
-		::Sleep(kSharedHashCompletionPostRetryDelayMs);
+		if (SharedFileListSeams::ShouldRetrySharedHashDrainPost(uRetry, SharedFileListSeams::kSharedHashCompletionPostRetries))
+			::Sleep(SharedFileListSeams::kSharedHashCompletionPostRetryDelayMs);
 	}
 
 	CSingleLock lock(&m_mutSharedHashQueue, TRUE);

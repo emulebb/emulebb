@@ -50,6 +50,16 @@ struct StartupCacheSaveShutdownWaitState
 };
 
 /**
+ * @brief Stable snapshot of one bounded shutdown poll interval.
+ */
+struct SharedShutdownPollState
+{
+	ULONGLONG ullElapsedMs;
+	ULONGLONG ullWaitBudgetMs;
+	DWORD dwPollIntervalMs;
+};
+
+/**
  * @brief Stable snapshot of the startup-cache save scheduling state evaluated on the UI thread.
  */
 struct StartupCacheSaveScheduleState
@@ -135,6 +145,11 @@ struct SharedHashShutdownCacheState
 constexpr DWORD kImportPartProgressYieldMs = 100;
 constexpr unsigned int kSharedHashPendingCompletionBacklogMax = 256u;
 constexpr ULONGLONG kStartupCacheSaveDelayIdleMs = 15000ui64;
+constexpr DWORD kSharedHashShutdownWaitMs = 5000u;
+constexpr DWORD kStartupCacheSaveShutdownWaitMs = 5000u;
+constexpr DWORD kSharedShutdownPollIntervalMs = 15u;
+constexpr unsigned int kSharedHashCompletionPostRetries = 20u;
+constexpr DWORD kSharedHashCompletionPostRetryDelayMs = 25u;
 
 /**
  * @brief Returns the scheduling decision for the next shared-folder auto-reload from one stable state snapshot.
@@ -176,6 +191,33 @@ inline bool ShouldKeepWaitingForSharedHashWorkerShutdown(const SharedHashShutdow
 inline bool ShouldKeepWaitingForStartupCacheSaveShutdown(const StartupCacheSaveShutdownWaitState &rState)
 {
 	return rState.ullElapsedMs < rState.ullWaitBudgetMs;
+}
+
+/**
+ * @brief Reports whether a shared-file shutdown poll should continue waiting.
+ */
+inline bool ShouldKeepWaitingForSharedShutdownPoll(const SharedShutdownPollState &rState)
+{
+	return rState.ullElapsedMs < rState.ullWaitBudgetMs;
+}
+
+/**
+ * @brief Returns the next bounded shared-file shutdown sleep interval.
+ */
+inline DWORD GetSharedShutdownPollSleepMs(const SharedShutdownPollState &rState)
+{
+	if (!ShouldKeepWaitingForSharedShutdownPoll(rState) || rState.dwPollIntervalMs == 0)
+		return 0;
+	const ULONGLONG ullRemainingMs = rState.ullWaitBudgetMs - rState.ullElapsedMs;
+	return static_cast<DWORD>(ullRemainingMs < rState.dwPollIntervalMs ? ullRemainingMs : rState.dwPollIntervalMs);
+}
+
+/**
+ * @brief Reports whether a failed deferred shared-hash UI post should be retried.
+ */
+inline bool ShouldRetrySharedHashDrainPost(unsigned int uAttemptIndex, unsigned int uMaxAttempts)
+{
+	return uAttemptIndex + 1u < uMaxAttempts;
 }
 
 /**
