@@ -222,6 +222,7 @@ bool		DirAccsess(const CString &strDir);
 #define CompareLocaleStringNoCase	CompareLocaleStringNoCaseA
 #endif // !UNICODE
 #include "LongPathSeams.h"
+#include "OtherFunctionsSeams.h"
 #include "SharedFileIntakePolicy.h"
 bool IsThumbsDb(const CString &sFilePath, const CString &sFileName);
 bool CheckFileOpen(LPCTSTR pszFilePath, LPCTSTR pszFileTitle = NULL);
@@ -234,6 +235,10 @@ void CommitAndClose(CStdioFile &file);
 // GUI helpers
 //
 void InstallSkin(LPCTSTR pszSkinPackage);
+/**
+ * @brief Launches a file, URL, or shell verb through the common ShellExecute boundary.
+ */
+HINSTANCE ShellLaunch(HWND hWnd, LPCTSTR lpVerb, LPCTSTR lpTarget, LPCTSTR lpParameters, LPCTSTR lpDirectory, int nShowCmd);
 HINSTANCE BrowserOpen(LPCTSTR lpURL, LPCTSTR lpDirectory);
 void ShellOpen(LPCTSTR lpName, LPCTSTR lpParameters);
 void ShellOpenFile(LPCTSTR lpName);

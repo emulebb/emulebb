@@ -476,8 +476,9 @@ void ExecutePartFile(CPartFile *file, LPCTSTR pszCommand, LPCTSTR pszCommandArgs
 	TRACE(_T("  Command =%s\n"), (LPCTSTR)strCommand);
 	TRACE(_T("  Args    =%s\n"), (LPCTSTR)strArgs);
 	TRACE(_T("  Dir     =%s\n"), (LPCTSTR)strCommandDir);
-	DWORD dwError = (DWORD)ShellExecute(NULL, pszVerb, strCommand, strArgs.IsEmpty() ? NULL : (LPCTSTR)strArgs, strCommandDir.IsEmpty() ? NULL : (LPCTSTR)strCommandDir, SW_SHOWNORMAL);
-	if (dwError <= 32) {
+	const HINSTANCE hLaunchResult = ShellLaunch(NULL, pszVerb, strCommand, strArgs.IsEmpty() ? NULL : (LPCTSTR)strArgs, strCommandDir.IsEmpty() ? NULL : (LPCTSTR)strCommandDir, SW_SHOWNORMAL);
+	if (!OtherFunctionsSeams::DidShellExecuteLaunch(hLaunchResult)) {
+		const DWORD dwError = OtherFunctionsSeams::GetShellExecuteErrorCode(hLaunchResult);
 		//
 		// Unfortunately, Windows may already have shown an error dialog which tells
 		// the user about the failed 'ShellExecute' call. *BUT* that error dialog is not

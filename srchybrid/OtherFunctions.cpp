@@ -596,14 +596,19 @@ bool CopyFileToTempAndReplace(const CString &strSrc, const CString &strDst, cons
 	return PartFilePersistenceSeams::TryCopyFileToTempAndReplace(strPreparedSrc, strPreparedDst, strPreparedTmp, bDontOverride, pdwLastError);
 }
 
+HINSTANCE ShellLaunch(HWND hWnd, LPCTSTR lpVerb, LPCTSTR lpTarget, LPCTSTR lpParameters, LPCTSTR lpDirectory, int nShowCmd)
+{
+	return ShellExecute(hWnd, lpVerb, lpTarget, lpParameters, lpDirectory, nShowCmd);
+}
+
 HINSTANCE BrowserOpen(LPCTSTR lpURL, LPCTSTR lpDirectory)
 {
-	return ShellExecute(NULL, NULL, lpURL, NULL, lpDirectory, SW_SHOWDEFAULT);
+	return ShellLaunch(NULL, NULL, lpURL, NULL, lpDirectory, SW_SHOWDEFAULT);
 }
 
 void ShellOpen(LPCTSTR lpName, LPCTSTR lpParameters)
 {
-	ShellExecute(NULL, _T("open"), lpName, lpParameters, NULL, SW_SHOW);
+	ShellLaunch(NULL, _T("open"), lpName, lpParameters, NULL, SW_SHOW);
 }
 
 void ShellOpenFile(LPCTSTR lpName)
@@ -613,7 +618,7 @@ void ShellOpenFile(LPCTSTR lpName)
 
 void ShellDefaultVerb(LPCTSTR lpName)
 {
-	ShellExecute(NULL, NULL, lpName, NULL, NULL, SW_SHOW);
+	ShellLaunch(NULL, NULL, lpName, NULL, NULL, SW_SHOW);
 }
 
 namespace
@@ -1225,7 +1230,7 @@ bool CWebServices::RunURL(const CAbstractFile *file, UINT uMenuID)
 
 			// Open URL
 			TRACE(_T("Starting URL: %s\n"), (LPCTSTR)strUrlTemplate);
-			return BrowserOpen(strUrlTemplate, thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR)) > reinterpret_cast<HINSTANCE>(32);
+			return OtherFunctionsSeams::DidShellExecuteLaunch(BrowserOpen(strUrlTemplate, thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR)));
 		}
 	}
 	return false;

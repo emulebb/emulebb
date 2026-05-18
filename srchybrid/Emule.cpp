@@ -2389,7 +2389,7 @@ void CemuleApp::ShowHelp(UINT uTopic, UINT uCmd)
 	UNREFERENCED_PARAMETER(uCmd);
 
 	const HINSTANCE hResult = BrowserOpen(ONLINEHELPURL, thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));
-	if (reinterpret_cast<INT_PTR>(hResult) <= 32) {
+	if (!OtherFunctionsSeams::DidShellExecuteLaunch(hResult)) {
 		QueueDebugLogLineEx(LOG_ERROR, _T("Failed to open online help URL \"%s\" (ShellExecute result %Id)"), ONLINEHELPURL, reinterpret_cast<INT_PTR>(hResult));
 	}
 }
