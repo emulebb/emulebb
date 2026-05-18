@@ -66,6 +66,7 @@ to tim.kosse@filezilla-project.org
 
 #include "AsyncSocketExLayer.h"
 #include "AsyncSocketExRuntimeSeams.h"
+#include "IPv4AddressSeams.h"
 #include "Log.h"
 
 #ifdef _DEBUG
@@ -897,9 +898,9 @@ bool CAsyncSocketEx::Connect(const CString &sHostAddress, UINT nHostPort)
 	if (m_SocketData.nFamily == AF_INET) {
 		SOCKADDR_IN sockAddr = {};
 		sockAddr.sin_family = AF_INET;
-		sockAddr.sin_addr.s_addr = inet_addr(sAscii);
 
-		if (sockAddr.sin_addr.s_addr == INADDR_NONE) {
+		uint32_t uNetworkOrderAddress = 0;
+		if (!IPv4AddressSeams::TryParseIPv4Address(sHostAddress, uNetworkOrderAddress)) {
 			delete[] m_pAsyncGetHostByNameBuffer;
 			m_pAsyncGetHostByNameBuffer = new char[MAXGETHOSTSTRUCT];
 
@@ -915,6 +916,7 @@ bool CAsyncSocketEx::Connect(const CString &sHostAddress, UINT nHostPort)
 			return false;
 		}
 
+		sockAddr.sin_addr.s_addr = uNetworkOrderAddress;
 		sockAddr.sin_port = htons((u_short)nHostPort);
 		return CAsyncSocketEx::Connect((LPSOCKADDR)&sockAddr, sizeof sockAddr);
 	}

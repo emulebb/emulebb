@@ -32,6 +32,7 @@
 #include "emuledlg.h"
 #include "ServerWnd.h"
 #include "SearchDlg.h"
+#include "IPv4AddressSeams.h"
 #include "LockScopeSeams.h"
 #include "Log.h"
 #include "ServerConnect.h"
@@ -468,7 +469,7 @@ bool CUDPSocket::ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint3
 								pServer->SetDescription(tag.GetStr());
 							else if (tag.GetNameID() == ST_DYNIP && tag.IsStr()) {
 								// Verify that we really received a DN.
-								if (inet_addr((CStringA)tag.GetStr()) == INADDR_NONE) {
+								if (!IPv4AddressSeams::IsDottedIPv4Literal(tag.GetStr())) {
 									const CString &strOldDynIP(pServer->GetDynIP());
 									pServer->SetDynIP(tag.GetStr());
 									// If a dynIP-server changed its address or, if this is the
@@ -787,8 +788,8 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 
 	// Do we need to resolve the DN of this server?
 	CStringA pszHostAddressA(pServer->GetAddress());
-	uint32 nIP = inet_addr(pszHostAddressA);
-	if (nIP == INADDR_NONE) {
+	uint32_t nIP = 0;
+	if (!IPv4AddressSeams::TryParseIPv4Address(pServer->GetAddress(), nIP)) {
 		// If there is already a DNS query ongoing or queued for this server, append the
 		// current packet to this DNS query. The packet(s) will be sent later after the DNS
 		// query has completed.

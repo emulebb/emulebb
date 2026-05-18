@@ -33,6 +33,7 @@
 #include "ServerWnd.h"
 #include "TaskbarNotifier.h"
 #include "Log.h"
+#include "IPv4AddressSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -556,9 +557,9 @@ void CServerConnect::InitLocalIP()
 	// but 'gethostbyname' will return the 2nd IP.
 	// To alleviate the problem at least for users which are binding eMule to a certain IP,
 	// we use the explicitly specified bind address as our local IP address.
-	if (thePrefs.GetBindAddrA() != NULL) {
-		unsigned long ulBindAddr = inet_addr(thePrefs.GetBindAddrA());
-		if (ulBindAddr != INADDR_ANY && ulBindAddr != INADDR_NONE) {
+	if (thePrefs.GetBindAddr() != NULL) {
+		uint32_t ulBindAddr = 0;
+		if (IPv4AddressSeams::TryParseIPv4Address(thePrefs.GetBindAddr(), ulBindAddr) && ulBindAddr != INADDR_ANY && ulBindAddr != INADDR_NONE) {
 			m_nLocalIP = ulBindAddr;
 			return;
 		}

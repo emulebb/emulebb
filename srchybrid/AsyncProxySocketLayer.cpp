@@ -124,6 +124,7 @@ Version history
 #include "stdafx.h"
 #include <atlenc.h>
 #include "AsyncProxySocketLayer.h"
+#include "IPv4AddressSeams.h"
 #include "opcodes.h"
 #include "otherfunctions.h"
 
@@ -735,9 +736,9 @@ bool CAsyncProxySocketLayer::Connect(const CString &sHostAddress, UINT nHostPort
 
 	SOCKADDR_IN sockAddr = {};
 	sockAddr.sin_family = AF_INET;
-	sockAddr.sin_addr.s_addr = inet_addr(sAscii);
 
-	if (sockAddr.sin_addr.s_addr == INADDR_NONE) {
+	uint32_t uNetworkOrderAddress = 0;
+	if (!IPv4AddressSeams::TryParseIPv4Address(sHostAddress, uNetworkOrderAddress)) {
 		addrinfo hints = {};
 		hints.ai_family = AF_INET;
 		hints.ai_socktype = SOCK_STREAM;
@@ -752,6 +753,8 @@ bool CAsyncProxySocketLayer::Connect(const CString &sHostAddress, UINT nHostPort
 		}
 		sockAddr.sin_addr.s_addr = reinterpret_cast<LPSOCKADDR_IN>(ipv4->ai_addr)->sin_addr.s_addr;
 		freeaddrinfo(ipv4);
+	} else {
+		sockAddr.sin_addr.s_addr = uNetworkOrderAddress;
 	}
 
 	sockAddr.sin_port = htons((u_short)nHostPort);

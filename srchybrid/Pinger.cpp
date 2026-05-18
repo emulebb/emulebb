@@ -95,6 +95,7 @@
 #include "Pinger.h"
 #include "OtherFunctions.h"
 #include "Preferences.h"
+#include "IPv4AddressSeams.h"
 #include "opcodes.h"
 
 #ifdef _DEBUG
@@ -112,10 +113,10 @@ namespace
 {
 	unsigned long GetPingerBindAddress()
 	{
-		if (thePrefs.GetBindAddrA() == NULL)
+		if (thePrefs.GetBindAddr() == NULL)
 			return INADDR_ANY;
-		const unsigned long ulBindAddr = inet_addr(thePrefs.GetBindAddrA());
-		return ulBindAddr == INADDR_NONE ? INADDR_ANY : ulBindAddr;
+		uint32_t ulBindAddr = 0;
+		return IPv4AddressSeams::TryParseIPv4Address(thePrefs.GetBindAddr(), ulBindAddr) ? ulBindAddr : INADDR_ANY;
 	}
 }
 

@@ -36,6 +36,7 @@
 #include "SearchDlg.h"
 #include "IPFilter.h"
 #include "Log.h"
+#include "IPv4AddressSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -228,7 +229,7 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 							const CString &dynip(message.Mid(iDynIP, iBracket - iDynIP).Trim());
 							if (!dynip.IsEmpty() && dynip.GetLength() < 51) {
 								// Verify that we really received a DN.
-								if (pServer && inet_addr((CStringA)dynip) == INADDR_NONE) {
+								if (pServer && !IPv4AddressSeams::IsDottedIPv4Literal(dynip)) {
 									// Update the dynIP of this server, but do not reset it's IP
 									// which we just determined during connecting.
 									const CString &strOldDynIP(pServer->GetDynIP());

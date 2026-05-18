@@ -43,6 +43,7 @@ their client on the eMule forum.
 #include "Packets.h"
 #include "Statistics.h"
 #include "updownclient.h"
+#include "IPv4AddressSeams.h"
 #include "KademliaUDPListener.h"
 #include "kademlia/io/ByteIO.h"
 #include "kademlia/kademlia/Prefs.h"
@@ -78,8 +79,8 @@ CKademliaUDPListener::~CKademliaUDPListener()
 void CKademliaUDPListener::Bootstrap(LPCTSTR szHost, uint16 uUDPPort)
 {
 	const CStringA sHost(szHost);
-	uint32 uRetVal = inet_addr(sHost);
-	if (uRetVal == INADDR_NONE) {
+	uint32_t uRetVal = 0;
+	if (!IPv4AddressSeams::TryParseIPv4Address(szHost, uRetVal)) {
 		addrinfo hints = {};
 		hints.ai_family = AF_INET;
 		hints.ai_socktype = SOCK_DGRAM;

@@ -76,6 +76,15 @@ inline bool TryParseIPv4Address(CString strText, uint32_t& uNetworkOrderAddress)
 }
 
 /**
+ * @brief Returns whether text is a strict dotted-decimal IPv4 literal.
+ */
+inline bool IsDottedIPv4Literal(const CString& strText)
+{
+	uint32_t uNetworkOrderAddress = 0;
+	return TryParseIPv4Address(strText, uNetworkOrderAddress);
+}
+
+/**
  * @brief Parses an IPv4 address that may carry a trailing :port suffix.
  */
 inline bool TryParseIPv4AddressAndOptionalPort(CString strText, uint32_t& uNetworkOrderAddress, uint16_t& uPort, bool& bHasPort)

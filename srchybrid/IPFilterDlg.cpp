@@ -28,6 +28,7 @@
 #include "ZipFile.h"
 #include "GZipFile.h"
 #include "RarFile.h"
+#include "IPv4AddressSeams.h"
 #include "LongPathSeams.h"
 
 #ifdef _DEBUG
@@ -539,7 +540,10 @@ bool CIPFilterDlg::FindItem(const CListCtrlX &lv, int iItem, DWORD_PTR lParam)
 
 	const CIPFilterDlg *dlg = reinterpret_cast<CIPFilterDlg*>(lParam);
 	ASSERT_VALID(dlg);
-	u_long ip = htonl(inet_addr((CStringA)lv.GetFindText()));
+	uint32_t uNetworkOrderAddress = 0;
+	if (!IPv4AddressSeams::TryParseIPv4Address(lv.GetFindText(), uNetworkOrderAddress))
+		return false;
+	u_long ip = htonl(uNetworkOrderAddress);
 	const SIPFilter *filter = dlg->m_ppIPFilterItems[iItem];
 	return ip >= filter->start && ip <= filter->end;
 }
