@@ -84,6 +84,21 @@ inline bool IsValidConfiguredFfmpegPath(const CString &rstrFfmpegPath)
 }
 
 /**
+ * Returns whether a configured external preview command is a concrete executable.
+ */
+inline bool IsValidConfiguredPreviewApplicationPath(const CString &rstrCommandPath)
+{
+	CString strCommandPath(rstrCommandPath);
+	strCommandPath.Trim();
+	strCommandPath.Trim(_T("\""));
+	strCommandPath.Trim();
+	return !strCommandPath.IsEmpty()
+		&& !::PathIsRelative(strCommandPath)
+		&& FileCompletionCommandSeams::HasSupportedProgramExtension(strCommandPath)
+		&& LongPathSeams::PathExists(strCommandPath);
+}
+
+/**
  * Bounds the thumbnail scan/retry interval; zero intentionally disables thumbnail generation.
  */
 inline UINT NormalizeVideoThumbnailIntervalSeconds(UINT uIntervalSeconds)

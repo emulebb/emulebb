@@ -435,15 +435,13 @@ void CPreviewApps::RunApp(CPartFile *file, UINT uMenuID) const
 
 void ExecutePartFile(CPartFile *file, LPCTSTR pszCommand, LPCTSTR pszCommandArgs)
 {
+	if (file == NULL)
+		return;
 	if (!CheckFileOpen(file->GetFilePath(), file->GetFileName()))
 		return;
 
-	// get directory of video player application
-	CString strCommandDir(pszCommand);
-	int iPos = strCommandDir.ReverseFind(_T('\\'));
-	strCommandDir.Truncate(iPos + 1); //may be empty
-
-	CString strArgs(pszCommandArgs);
+	CString strCommand(pszCommand != NULL ? pszCommand : _T(""));
+	CString strArgs(pszCommandArgs != NULL ? pszCommandArgs : _T(""));
 	if (!strArgs.IsEmpty())
 		strArgs += _T(' ');
 
@@ -456,22 +454,36 @@ void ExecutePartFile(CPartFile *file, LPCTSTR pszCommand, LPCTSTR pszCommandArgs
 
 	file->FlushBuffer(true);
 
-	CString strCommand(pszCommand);
 	ExpandEnvironmentStrings(strCommand);
 	ExpandEnvironmentStrings(strArgs);
-	ExpandEnvironmentStrings(strCommandDir);
+	strCommand.Trim();
+	strCommand.Trim(_T("\""));
+	strCommand.Trim();
 
 	LPCTSTR pszVerb;
+	CString strCommandDir;
 
 	// Backward compatibility with old 'preview' command (when no preview application is specified):
 	//	"ShellExecute(NULL, NULL, strPartFilePath, NULL, NULL, SW_SHOWNORMAL);"
 	if (strCommand.IsEmpty()) {
 		strCommand = strArgs;
 		strArgs.Empty();
-		strCommandDir.Empty();
 		pszVerb = NULL;
-	} else
+	} else {
+		// Configured PreviewApps.dat commands remain supported, but the launch
+		// boundary intentionally avoids PATH/current-directory resolution.
+		if (!PartFilePreviewSeams::IsValidConfiguredPreviewApplicationPath(strCommand)) {
+			CString strMsg;
+			strMsg.Format(_T("Invalid preview application: %s"), (LPCTSTR)strCommand);
+			AfxMessageBox(strMsg, MB_ICONSTOP);
+			return;
+		}
+
+		// get directory of video player application
+		const int iPos = strCommand.ReverseFind(_T('\\'));
+		strCommandDir = strCommand.Left(iPos + 1);
 		pszVerb = _T("open");
+	}
 
 	TRACE(_T("Starting preview application:\n"));
 	TRACE(_T("  Command =%s\n"), (LPCTSTR)strCommand);
