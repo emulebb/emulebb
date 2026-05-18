@@ -19,6 +19,7 @@
 #include "resource.h"
 #include "opcodes.h"
 #include "ED2KLink.h"
+#include "FileSizeSeams.h"
 #include "ProtocolGuards.h"
 #include "SafeFile.h"
 #include "StringConversion.h"
@@ -313,7 +314,7 @@ void CED2KFileLink::GetLink(CString &lnk) const
 
 EMFileSize CED2KFileLink::GetSize() const
 {
-	return (EMFileSize)(uint64)_tstoi64(m_size);
+	return FileSizeSeams::FromUInt64(static_cast<uint64>(_tstoi64(m_size)));
 }
 
 CED2KLink* CED2KLink::CreateLinkFromUrl(LPCTSTR uri)

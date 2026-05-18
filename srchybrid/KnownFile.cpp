@@ -50,6 +50,7 @@
 #include "emuledlg.h"
 #include "SharedFilesWnd.h"
 #include "KnownFileMetadataSeams.h"
+#include "FileSizeSeams.h"
 #include "MediaInfo.h"
 #include "id3/tag.h"
 #include "uploaddiskiothread.h"
@@ -421,7 +422,7 @@ bool CKnownFile::CreateFromFile(LPCTSTR in_directory, LPCTSTR in_filename, const
 
 	// set file size. Zero size is valid for .part files
 	__int64 llFileSize = _filelengthi64(_fileno(file));
-	if ((uint64)llFileSize > MAX_EMULE_FILE_SIZE) {
+	if (!FileSizeSeams::IsSupportedNetworkFileSize(llFileSize)) {
 		if (llFileSize <= 0)
 			LogError(_T("Failed to hash file \"%s\" - %s"), (LPCTSTR)strFilePath, _tcserror(errno));
 		else
@@ -429,7 +430,7 @@ bool CKnownFile::CreateFromFile(LPCTSTR in_directory, LPCTSTR in_filename, const
 		fclose(file);
 		return false; // not supported by network
 	}
-	SetFileSize((EMFileSize)(uint64)llFileSize);
+	SetFileSize(FileSizeSeams::FromSignedFileLength(llFileSize));
 
 	// we are reading the file data later in 8K blocks, adjust the internal file stream buffer accordingly
 	::setvbuf(file, NULL, _IOFBF, 1024 * 8 * 2);
@@ -440,7 +441,7 @@ bool CKnownFile::CreateFromFile(LPCTSTR in_directory, LPCTSTR in_filename, const
 
 	// create hashset
 	CAICHRecoveryHashSet cAICHHashSet(this, m_nFileSize);
-	uint64 togo = (uint64)m_nFileSize;
+	uint64 togo = FileSizeSeams::ToUInt64(m_nFileSize);
 	UINT hashcount;
 	for (hashcount = 0; ; ++hashcount) {
 		UINT uSize = (UINT)min(togo, PARTSIZE);
@@ -553,7 +554,7 @@ bool CKnownFile::CreateAICHHashSetOnly()
 
 	// create aich hashset
 	CAICHRecoveryHashSet cAICHHashSet(this, m_nFileSize);
-	uint64 togo = (uint64)m_nFileSize;
+	uint64 togo = FileSizeSeams::ToUInt64(m_nFileSize);
 	for (UINT hashcount = 0; togo; ++hashcount) {
 		uint64 uSize = min(togo, PARTSIZE);
 		CAICHHashTree *pBlockAICHHashTree = cAICHHashSet.m_pHashTree.FindHash(hashcount * PARTSIZE, uSize);

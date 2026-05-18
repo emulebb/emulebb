@@ -42,6 +42,7 @@
 #include "PartFileHashSeams.h"
 #include "PartFileCompletionSeams.h"
 #include "FileCompletionCommandSeams.h"
+#include "FileSizeSeams.h"
 #include "PartFilePauseResumeSeams.h"
 #include "PartFilePreviewSeams.h"
 #include "PartFilePersistenceSeams.h"
@@ -495,7 +496,7 @@ void CPartFile::AssertValid() const
 	m_downloadingSourceList.AssertValid();
 	(void)m_fullname;
 	(void)m_partmetfilename;
-	ASSERT(m_completedsize <= (uint64)m_nFileSize);
+	ASSERT(m_completedsize <= FileSizeSeams::ToUInt64(m_nFileSize));
 	(void)m_uTransferred;
 	(void)m_uCorruptionLoss;
 	(void)m_uCompressionGain;
@@ -532,7 +533,7 @@ void CPartFile::Dump(CDumpContext &dc) const
 
 void CPartFile::CreatePartFile(UINT cat)
 {
-	if ((uint64)m_nFileSize > MAX_EMULE_FILE_SIZE) {
+	if (FileSizeSeams::ToUInt64(m_nFileSize) > MAX_EMULE_FILE_SIZE) {
 		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_CREATEPARTFILE));
 		SetStatus(PS_ERROR);
 		return;
@@ -566,7 +567,7 @@ void CPartFile::CreatePartFile(UINT cat)
 	CTag *partnametag = new CTag(FT_PARTFILENAME, RemoveFileExtension(m_partmetfilename));
 	m_taglist.Add(partnametag);
 
-	AddGap(0, (uint64)m_nFileSize - 1);
+	AddGap(0, FileSizeSeams::ToUInt64(m_nFileSize) - 1);
 
 	if (thePrefs.GetSparsePartFiles()) {
 		DWORD dwReturnedBytes;
@@ -690,7 +691,7 @@ EPartFileLoadResult CPartFile::ImportShareazaTempfile(LPCTSTR in_directory, LPCT
 		unsigned __int64 lSize;
 		ar >> lSize;
 
-		SetFileSize(EMFileSize(lSize));
+		SetFileSize(FileSizeSeams::FromUInt64(lSize));
 
 		// Get the ed2k hash
 		BOOL bSHA1, bTiger, Trusted, bED2K = false;
@@ -1190,7 +1191,7 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 #endif
 	}
 
-	if ((uint64)m_nFileSize > MAX_EMULE_FILE_SIZE) {
+	if (FileSizeSeams::ToUInt64(m_nFileSize) > MAX_EMULE_FILE_SIZE) {
 		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FILEERROR), (LPCTSTR)m_partmetfilename, (LPCTSTR)FormatDisplayFileName(GetFileName()), _T("File size exceeds supported limit"));
 		return PLR_FAILED_OTHER;
 	}
@@ -1205,8 +1206,8 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 	for (const CGapMap::CPair *pair = gap_map.PGetFirstAssoc(); pair != NULL; pair = gap_map.PGetNextAssoc(pair)) {
 		const Gap_Struct &gap = pair->value;
 		// SLUGFILLER: SafeHash - revised code, and extra safety
-		if (gap.start != _UI64_MAX && gap.end != _UI64_MAX && gap.start <= gap.end && gap.start < (uint64)m_nFileSize)
-			AddGap(gap.start, min(gap.end, (uint64)m_nFileSize - 1)); // use safe adding
+		if (gap.start != _UI64_MAX && gap.end != _UI64_MAX && gap.start <= gap.end && gap.start < FileSizeSeams::ToUInt64(m_nFileSize))
+			AddGap(gap.start, min(gap.end, FileSizeSeams::ToUInt64(m_nFileSize) - 1)); // use safe adding
 		// SLUGFILLER: SafeHash
 	}
 
@@ -1247,12 +1248,12 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 			m_dwFileAttributes = 0;
 
 		// SLUGFILLER: SafeHash - final safety, make sure any missing part of the file is a gap
-		if (m_hpartfile.GetLength() < (uint64)m_nFileSize)
-			AddGap(m_hpartfile.GetLength(), (uint64)m_nFileSize - 1);
-		else if (m_hpartfile.GetLength() > (uint64)m_nFileSize) {
+		if (m_hpartfile.GetLength() < FileSizeSeams::ToUInt64(m_nFileSize))
+			AddGap(m_hpartfile.GetLength(), FileSizeSeams::ToUInt64(m_nFileSize) - 1);
+		else if (m_hpartfile.GetLength() > FileSizeSeams::ToUInt64(m_nFileSize)) {
 			// Goes both ways - Partfile should never be too large
-			TRACE(_T("Partfile \"%s\" is too large! Truncating %I64u bytes.\n"), (LPCTSTR)GetFileName(), m_hpartfile.GetLength() - (uint64)m_nFileSize);
-			m_hpartfile.SetLength((uint64)m_nFileSize);
+			TRACE(_T("Partfile \"%s\" is too large! Truncating %I64u bytes.\n"), (LPCTSTR)GetFileName(), m_hpartfile.GetLength() - FileSizeSeams::ToUInt64(m_nFileSize));
+			m_hpartfile.SetLength(FileSizeSeams::ToUInt64(m_nFileSize));
 		}
 		// SLUGFILLER: SafeHash
 
@@ -1380,7 +1381,7 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak, bool bBypassDiskSpaceGuard)
 		nametag.WriteTagToFile(file, UTF8strOptBOM);
 		++uTagCount;
 
-		CTag sizetag(FT_FILESIZE, (uint64)m_nFileSize, IsLargeFile());
+		CTag sizetag(FT_FILESIZE, FileSizeSeams::ToUInt64(m_nFileSize), IsLargeFile());
 		sizetag.WriteTagToFile(file);
 		++uTagCount;
 
@@ -1728,7 +1729,7 @@ void CPartFile::PartFileHashFinished(CKnownFile *result)
 				errorfound = true;
 				LogWarning(GetResString(IDS_ERR_FOUNDCORRUPTION), nPart, (LPCTSTR)FormatDisplayFileName(GetFileName()));
 				const uint64 nPartStart = nPart * PARTSIZE;
-				AddGap(nPartStart, min(nPartStart + PARTSIZE, (uint64)m_nFileSize) - 1);
+				AddGap(nPartStart, min(nPartStart + PARTSIZE, FileSizeSeams::ToUInt64(m_nFileSize)) - 1);
 				if (bMD4Checked && bAICHChecked && bMD4Error != bAICHError)
 					DebugLogError(_T("AICH and MD4 HashSet disagree on verifying part %u for file %s. MD4: %s - AICH: %s"), nPart
 						, (LPCTSTR)GetFileName(), bMD4Error ? _T("Corrupt") : _T("OK"), bAICHError ? _T("Corrupt") : _T("OK"));
@@ -1784,7 +1785,7 @@ void CPartFile::PartFileHashFinished(CKnownFile *result)
 
 void CPartFile::AddGap(uint64 start, uint64 end) //keep the list ordered!
 {
-	ASSERT(end < (uint64)m_nFileSize && start <= end);
+	ASSERT(end < FileSizeSeams::ToUInt64(m_nFileSize) && start <= end);
 	bool bChanged = false;
 	POSITION before = NULL;
 	for (POSITION pos = m_gaplist.GetHeadPosition(); pos != NULL;) {
@@ -1819,7 +1820,7 @@ void CPartFile::AddGap(uint64 start, uint64 end) //keep the list ordered!
 
 bool CPartFile::IsComplete(uint64 start, uint64 end) const
 {
-	ASSERT(end < (uint64)m_nFileSize && start <= end);
+	ASSERT(end < FileSizeSeams::ToUInt64(m_nFileSize) && start <= end);
 
 	for (POSITION pos = m_gaplist.GetHeadPosition(); pos != NULL;) {
 		const Gap_Struct &gap = m_gaplist.GetNext(pos);
@@ -1833,7 +1834,7 @@ bool CPartFile::IsComplete(uint64 start, uint64 end) const
 
 bool CPartFile::IsCompleteSafe(uint64 start, uint64 end) const
 {
-	return IsComplete(start, min(end, (uint64)m_nFileSize - 1));
+	return IsComplete(start, min(end, FileSizeSeams::ToUInt64(m_nFileSize) - 1));
 }
 
 bool CPartFile::IsComplete(UINT uPart) const
@@ -1844,7 +1845,7 @@ bool CPartFile::IsComplete(UINT uPart) const
 //take into account unwritten buffered data
 bool CPartFile::IsCompleteBD(uint64 start, uint64 end) const
 {
-	ASSERT(end < (uint64)m_nFileSize && start <= end);
+	ASSERT(end < FileSizeSeams::ToUInt64(m_nFileSize) && start <= end);
 
 	if (!IsComplete(start, end))
 		return false;
@@ -1861,7 +1862,7 @@ bool CPartFile::IsCompleteBD(uint64 start, uint64 end) const
 
 bool CPartFile::IsCompleteBDSafe(uint64 start, uint64 end) const
 {
-	return IsCompleteBD(start, min(end, (uint64)m_nFileSize - 1));
+	return IsCompleteBD(start, min(end, FileSizeSeams::ToUInt64(m_nFileSize) - 1));
 }
 
 bool CPartFile::IsCompleteBD(UINT uPart) const
@@ -1871,8 +1872,8 @@ bool CPartFile::IsCompleteBD(UINT uPart) const
 
 bool CPartFile::IsPureGap(uint64 start, uint64 end) const
 {
-	if (end >= (uint64)m_nFileSize)
-		end = (uint64)m_nFileSize - 1;
+	if (end >= FileSizeSeams::ToUInt64(m_nFileSize))
+		end = FileSizeSeams::ToUInt64(m_nFileSize) - 1;
 	ASSERT(start <= end);
 
 	for (POSITION pos = m_gaplist.GetHeadPosition(); pos != NULL;) {
@@ -1960,8 +1961,8 @@ uint64 CPartFile::GetTotalGapSizeInRange(uint64 uRangeStart, uint64 uRangeEnd) c
 
 	uint64 uTotalGapSize = 0;
 
-	if (uRangeEnd >= (uint64)m_nFileSize)
-		uRangeEnd = (uint64)m_nFileSize - 1;
+	if (uRangeEnd >= FileSizeSeams::ToUInt64(m_nFileSize))
+		uRangeEnd = FileSizeSeams::ToUInt64(m_nFileSize) - 1;
 
 	for (POSITION pos = m_gaplist.GetHeadPosition(); pos != NULL;) {
 		const Gap_Struct &gap = m_gaplist.GetNext(pos);
@@ -1995,7 +1996,7 @@ bool CPartFile::GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct 
 	uint64 start = partStart;
 
 	// The end of the part must be within file size
-	uint64 partEnd = min(partStart + PARTSIZE, (uint64)m_nFileSize) - 1;
+	uint64 partEnd = min(partStart + PARTSIZE, FileSizeSeams::ToUInt64(m_nFileSize)) - 1;
 	ASSERT(partStart <= partEnd);
 
 	// Loop until a suitable gap is found and return true, or no more gaps and return false
@@ -2068,7 +2069,7 @@ bool CPartFile::GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct 
 
 void CPartFile::FillGap(uint64 start, uint64 end)
 {
-	ASSERT(end < (uint64)m_nFileSize && start <= end);
+	ASSERT(end < FileSizeSeams::ToUInt64(m_nFileSize) && start <= end);
 	bool bChanged = false;
 
 	for (POSITION pos = m_gaplist.GetHeadPosition(); pos != NULL;) {
@@ -2116,20 +2117,20 @@ void CPartFile::UpdateCompletedInfos()
 
 void CPartFile::UpdateCompletedInfos(uint64 uTotalGaps)
 {
-	if (uTotalGaps > (uint64)m_nFileSize) {
+	if (uTotalGaps > FileSizeSeams::ToUInt64(m_nFileSize)) {
 		ASSERT(0);
-		uTotalGaps = (uint64)m_nFileSize;
+		uTotalGaps = FileSizeSeams::ToUInt64(m_nFileSize);
 	}
 
 	if (m_gaplist.IsEmpty()) {
 		m_percentcompleted = 100.0F;
-		m_completedsize = (uint64)m_nFileSize;
+		m_completedsize = FileSizeSeams::ToUInt64(m_nFileSize);
 	} else {
 		// 'm_percentcompleted' is only used in GUI, round down to avoid showing "100%" in case
 		// we actually have only "99.9%"
-		const double completedFraction = 1.0 - static_cast<double>(uTotalGaps) / static_cast<double>((uint64)m_nFileSize);
+		const double completedFraction = 1.0 - static_cast<double>(uTotalGaps) / static_cast<double>(FileSizeSeams::ToUInt64(m_nFileSize));
 		m_percentcompleted = static_cast<float>(floor(completedFraction * 1000.0) / 10.0);
-		m_completedsize = (uint64)m_nFileSize - uTotalGaps;
+		m_completedsize = FileSizeSeams::ToUInt64(m_nFileSize) - uTotalGaps;
 	}
 }
 
@@ -2211,12 +2212,12 @@ void CPartFile::DrawStatusBar(CDC &dc, const CRect &rect, bool bFlat) /*const*/
 	}
 
 	s_ChunkBar.SetRect(rect);
-	s_ChunkBar.SetFileSize((uint64)m_nFileSize);
+	s_ChunkBar.SetFileSize(FileSizeSeams::ToUInt64(m_nFileSize));
 	s_ChunkBar.Fill(crHave);
 
 	if (status == PS_COMPLETE || status == PS_COMPLETING) {
 		m_percentcompleted = 100.0F;
-		m_completedsize = (uint64)m_nFileSize;
+		m_completedsize = FileSizeSeams::ToUInt64(m_nFileSize);
 		s_ChunkBar.FillRange(0, m_completedsize, crProgress);
 		s_ChunkBar.Draw(dc, rect.left, rect.top, bFlat);
 	} else if (eVirtualState == PS_INSUFFICIENT || status == PS_ERROR) {
@@ -2281,8 +2282,8 @@ void CPartFile::DrawStatusBar(CDC &dc, const CRect &rect, bool bFlat) /*const*/
 		s_ChunkBar.Draw(dc, rect.left, rect.top, bFlat);
 
 		// green progress
-		const float blockpixel = static_cast<float>(rect.Width()) / static_cast<float>((uint64)m_nFileSize);
-		const float width = static_cast<float>((uint64)m_nFileSize - allgaps) * blockpixel + 0.5f;
+		const float blockpixel = static_cast<float>(rect.Width()) / static_cast<float>(FileSizeSeams::ToUInt64(m_nFileSize));
+		const float width = static_cast<float>(FileSizeSeams::ToUInt64(m_nFileSize) - allgaps) * blockpixel + 0.5f;
 		if (!bFlat) {
 			s_LoadBar.SetWidth((int)width);
 			s_LoadBar.Fill(crProgress);
@@ -2372,7 +2373,7 @@ UINT CPartFile::GetNotCurrentSourcesCount() const
 uint64 CPartFile::GetNeededSpace() const
 {
 	// Do a safety check, though it should never happen
-	return ((uint64)m_nFileSize > m_hpartfile.GetLength()) ? (uint64)m_nFileSize - m_hpartfile.GetLength() : 0;
+	return (FileSizeSeams::ToUInt64(m_nFileSize) > m_hpartfile.GetLength()) ? FileSizeSeams::ToUInt64(m_nFileSize) - m_hpartfile.GetLength() : 0;
 }
 
 EPartFileStatus CPartFile::GetStatus(bool ignorepause) const
@@ -3729,13 +3730,13 @@ int CPartFile::getPartfileStatusRank() const
 time_t CPartFile::getTimeRemaining() const
 {
 	uint64 completesize = (uint64)GetCompletedSize();
-	time_t simple = (time_t)(GetDatarate() ? ((uint64)m_nFileSize - completesize) / GetDatarate() : -1);
+	time_t simple = (time_t)(GetDatarate() ? (FileSizeSeams::ToUInt64(m_nFileSize) - completesize) / GetDatarate() : -1);
 	if (thePrefs.UseSimpleTimeRemainingComputation())
 		return simple;
 	time_t tActive = GetDlActiveTime();
 	time_t estimate = (time_t)-1;
 	if (tActive && completesize >= 512000) {
-		const double remainingBytes = static_cast<double>((uint64)m_nFileSize - completesize);
+		const double remainingBytes = static_cast<double>(FileSizeSeams::ToUInt64(m_nFileSize) - completesize);
 		const double activeRate = static_cast<double>(completesize) / static_cast<double>(tActive);
 		estimate = (time_t)(remainingBytes / activeRate);
 	}
@@ -3801,7 +3802,7 @@ bool CPartFile::IsReadyForPreview() const
 			? theApp.downloadqueue->GetRequiredFreeDiskSpaceForPath(GetTmpPath())
 			: thePrefs.GetEffectiveMinFreeDiskSpaceForPath(GetTmpPath());
 		if (thePrefs.GetPreviewCopiedArchives())
-			uMinFreeDiskSpace += (uint64)m_nFileSize * 2;
+			uMinFreeDiskSpace += FileSizeSeams::ToUInt64(m_nFileSize) * 2;
 		else
 			uMinFreeDiskSpace += (uint64)GetCompletedSize() + 16 * 1024;
 		return GetFreeDiskSpaceX(GetTmpPath()) >= uMinFreeDiskSpace;
@@ -4163,7 +4164,7 @@ void CPartFile::AddEd2kLinkSources(CSafeMemFile *sources)
 uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start, uint64 end
 	, Requested_Block_Struct *block, const CUpDownClient *client, bool bCopyData)
 {
-	ASSERT((sint64)transize > 0 && end < (uint64)m_nFileSize && start <= end);
+	ASSERT((sint64)transize > 0 && end < FileSizeSeams::ToUInt64(m_nFileSize) && start <= end);
 	// Increment transferred bytes counter for this file
 	if (client) //Imported Parts are not counted as transferred
 		m_uTransferred += transize;
@@ -4286,10 +4287,10 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 			// Get an offset closest to the end
 			newsize = m_BufferedData_list.GetTail()->end + 1;
 			if (uAllocate) {
-				if (newsize == (uint64)m_nFileSize)
+				if (newsize == FileSizeSeams::ToUInt64(m_nFileSize))
 					uAllocate = 2; //using buffered data for allocation
 				else
-					newsize = (uint64)m_nFileSize; //write an extra byte
+					newsize = FileSizeSeams::ToUInt64(m_nFileSize); //write an extra byte
 			} else if (newsize < cursize)
 				newsize = 0;
 		} else
@@ -4328,7 +4329,7 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 						bLocked = true;
 						pThread->m_lockFlushList.Lock();
 						if (uAllocate == 1) //an extra byte to allocate
-							pThread->m_FlushList.AddHead(ToWrite{ this, new PartFileBufferedData{(uint64)m_nFileSize, (uint64)m_nFileSize} });
+							pThread->m_FlushList.AddHead(ToWrite{ this, new PartFileBufferedData{FileSizeSeams::ToUInt64(m_nFileSize), FileSizeSeams::ToUInt64(m_nFileSize)} });
 					}
 					if (uAllocate == 2 && pos == NULL) //using the last item for allocation
 						pThread->m_FlushList.AddHead(ToWrite{this, item});
@@ -4364,10 +4365,10 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 		}
 
 		// Partfile should never be too large
-		if (m_hpartfile.GetLength() > (uint64)m_nFileSize) {
+		if (m_hpartfile.GetLength() > FileSizeSeams::ToUInt64(m_nFileSize)) {
 			// "last chance" correction. the real bugfix had to be applied elsewhere
-			TRACE(_T("Partfile \"%s\" is too large! Truncating %I64u byte(s).\n"), (LPCTSTR)GetFileName(), m_hpartfile.GetLength() - (uint64)m_nFileSize);
-			m_hpartfile.SetLength((uint64)m_nFileSize);
+			TRACE(_T("Partfile \"%s\" is too large! Truncating %I64u byte(s).\n"), (LPCTSTR)GetFileName(), m_hpartfile.GetLength() - FileSizeSeams::ToUInt64(m_nFileSize));
+			m_hpartfile.SetLength(FileSizeSeams::ToUInt64(m_nFileSize));
 		}
 
 		// Check every changed part of the file
@@ -4377,7 +4378,7 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 			m_aChangedPart[uPartNumber] = false;
 
 			const uint64 uStart = PARTSIZE * uPartNumber;
-			const uint64 uEnd = min(uStart + PARTSIZE, (uint64)m_nFileSize) - 1;
+			const uint64 uEnd = min(uStart + PARTSIZE, FileSizeSeams::ToUInt64(m_nFileSize)) - 1;
 			// Is this 9MB part complete
 			if (IsCompleteBD(uStart, uEnd)) {
 				// Is part corrupt
@@ -4574,7 +4575,7 @@ void CPartFile::GetFilledArray(CArray<Gap_Struct> &filled) const
 	filled.RemoveAll();
 	if (m_gaplist.IsEmpty())
 		return;
-	uint64 uEnd = (uint64)m_nFileSize;
+	uint64 uEnd = FileSizeSeams::ToUInt64(m_nFileSize);
 	INT_PTR iCnt = m_gaplist.GetCount() + static_cast<INT_PTR>(m_gaplist.GetTail().end < uEnd);
 	filled.SetSize(iCnt);
 	uint64 start = 0;
@@ -4691,13 +4692,13 @@ const CStringA CPartFile::GetProgressString(uint16 size) const
 
 	CStringA my_ChunkBar(crHave, size + 2); // two more for safety
 
-	const float unit = static_cast<float>(size) / static_cast<float>((uint64)m_nFileSize);
+	const float unit = static_cast<float>(size) / static_cast<float>(FileSizeSeams::ToUInt64(m_nFileSize));
 	const auto toChunkBarUnit = [unit](uint64 value) {
 		return static_cast<uint32>(static_cast<float>(value) * unit);
 	};
 
 	if (inSet(GetStatus(), PS_COMPLETE, PS_COMPLETING))
-		CharFillRange(my_ChunkBar, 0, toChunkBarUnit((uint64)m_nFileSize), crProgress);
+		CharFillRange(my_ChunkBar, 0, toChunkBarUnit(FileSizeSeams::ToUInt64(m_nFileSize)), crProgress);
 	else {
 		// red gaps
 		UINT i = 0;
@@ -5000,7 +5001,7 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient *sender, Requested_Block_Str
 
 			// Cache Preview state (Criterion 2)
 			const bool isPreviewEnable = (thePrefs.GetPreviewPrio() || GetPreviewPrio())
-				&& (uint64)m_nFileSize > 2 * PARTSIZE
+				&& FileSizeSeams::ToUInt64(m_nFileSize) > 2 * PARTSIZE
 				&& IsPreviewableFileType();
 
 			// Collect and calculate criteria for all chunks
@@ -5010,7 +5011,7 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient *sender, Requested_Block_Str
 				// Offsets of chunk
 				UINT uCurChunkPart = cur_chunk.part; // help VC71...
 				const uint64 uStart = uCurChunkPart * PARTSIZE;
-				const uint64 uEnd = min(uStart + PARTSIZE, (uint64)m_nFileSize) - 1;
+				const uint64 uEnd = min(uStart + PARTSIZE, FileSizeSeams::ToUInt64(m_nFileSize)) - 1;
 				ASSERT(uStart <= uEnd);
 
 				// Criterion 2. Parts used for preview
@@ -5217,7 +5218,7 @@ CString CPartFile::GetInfoSummary(bool bNoFormatCommands) const
 	CString compl(GetResString(IDS_DL_TRANSFCOMPL));
 	compl.AppendFormat(_T(": %s/%s (%.1f%%)")
 		, (LPCTSTR)CastItoXBytes((uint64)GetCompletedSize())
-		, (LPCTSTR)CastItoXBytes((uint64)m_nFileSize)
+		, (LPCTSTR)CastItoXBytes(FileSizeSeams::ToUInt64(m_nFileSize))
 		, GetPercentCompleted());
 
 	const CString &lsc((lastseencomplete > 0) ? lastseencomplete.Format(thePrefs.GetDateTimeFormat()) : GetResString(IDS_NEVER));
@@ -5256,7 +5257,7 @@ CString CPartFile::GetInfoSummary(bool bNoFormatCommands) const
 		_T("%s %s\n")
 		_T("%s %s")
 		, (LPCTSTR)GetResString(IDS_FD_HASH), (LPCTSTR)md4str(GetFileHash())
-		, (LPCTSTR)GetResString(IDS_FD_SIZE), (LPCTSTR)CastItoXBytes((uint64)m_nFileSize), (LPCTSTR)sOnDisk
+		, (LPCTSTR)GetResString(IDS_FD_SIZE), (LPCTSTR)CastItoXBytes(FileSizeSeams::ToUInt64(m_nFileSize)), (LPCTSTR)sOnDisk
 		, bNoFormatCommands ? _T("") : _T("<br_head>")
 		, (LPCTSTR)GetResString(IDS_FD_MET), (LPCTSTR)GetPartMetFileName()
 		, (LPCTSTR)GetResString(IDS_STATUS), (LPCTSTR)sStatus
@@ -5323,7 +5324,7 @@ void CPartFile::GetLeftToTransferAndAdditionalNeededSpace(uint64 &rui64LeftToTra
 		const Gap_Struct &gap = m_gaplist.GetNext(pos);
 		uint64 uGapSize = gap.end - gap.start + 1;
 		rui64LeftToTransfer += uGapSize;
-		if (gap.end == (uint64)m_nFileSize - 1)
+		if (gap.end == FileSizeSeams::ToUInt64(m_nFileSize) - 1)
 			uSizeLastGap = uGapSize;
 	}
 
@@ -5588,7 +5589,7 @@ void CPartFile::RequestAICHRecovery(UINT nPart)
 		AddDebugLogLine(DLP_DEFAULT, false, _T("Unable to request AICH recovery data because we have no trusted Masterhash"));
 		return;
 	}
-	if ((uint64)m_nFileSize <= PARTSIZE * nPart + EMBLOCKSIZE)
+	if (FileSizeSeams::ToUInt64(m_nFileSize) <= PARTSIZE * nPart + EMBLOCKSIZE)
 		return;
 	if (CAICHRecoveryHashSet::IsClientRequestPending(this, (uint16)nPart)) {
 		AddDebugLogLine(DLP_DEFAULT, false, _T("RequestAICHRecovery: Already a request for this part pending"));

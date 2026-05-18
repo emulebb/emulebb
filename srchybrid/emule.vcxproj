@@ -509,6 +509,7 @@
     <ClInclude Include="FileDetailDialogName.h" />
     <ClInclude Include="FileDetailDlgStatistics.h" />
     <ClInclude Include="FileListKeyboardShortcutsSeams.h" />
+    <ClInclude Include="FileSizeSeams.h" />
     <ClInclude Include="FileTypeClassifierSeams.h" />
     <ClInclude Include="FileIdentifier.h" />
     <ClInclude Include="FileInfoDialog.h" />
