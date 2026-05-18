@@ -14,6 +14,9 @@ namespace HelperThreadLaunchSeams
 {
 	constexpr DWORD kHelperThreadShutdownWaitMs = 7000;
 
+	inline void SetFlag(volatile LONG& rnFlag);
+	inline void SetState(volatile LONG& rnState, LONG nState);
+
 	enum class IocpShutdownAction
 	{
 		NoOp,
@@ -52,6 +55,70 @@ namespace HelperThreadLaunchSeams
 	inline bool CanPostIocpWork(bool bThreadStarted, bool bStopRequested, bool bPortReady, bool bWorkerRunning)
 	{
 		return bThreadStarted && !bStopRequested && bPortReady && bWorkerRunning;
+	}
+
+	/**
+	 * @brief Requests IOCP helper shutdown and posts the stop completion when the port is ready.
+	 */
+	inline IocpShutdownAction RequestIocpShutdown(volatile LONG& rnStopRequested, volatile LONG& rnRunState, LONG nStopState, bool bThreadStarted, HANDLE hPort)
+	{
+		SetFlag(rnStopRequested);
+		const IocpShutdownAction action = ClassifyIocpShutdown(bThreadStarted, hPort != NULL);
+		if (action == IocpShutdownAction::NoOp)
+			return action;
+
+		SetState(rnRunState, nStopState);
+		if (action == IocpShutdownAction::SignalAndWait)
+			(void)::PostQueuedCompletionStatus(hPort, 0, 0, NULL);
+		return action;
+	}
+
+	/**
+	 * @brief Creates the private IOCP used by helper threads.
+	 */
+	inline bool TryCreateIocpPort(HANDLE& rhPort, DWORD& rdwLastError)
+	{
+		rdwLastError = ERROR_SUCCESS;
+		rhPort = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 1);
+		if (rhPort != NULL)
+			return true;
+		rdwLastError = ::GetLastError();
+		return false;
+	}
+
+	/**
+	 * @brief Closes and clears a helper IOCP handle if one is owned.
+	 */
+	inline void CloseIocpPort(HANDLE& rhPort)
+	{
+		if (rhPort != NULL) {
+			(void)::CloseHandle(rhPort);
+			rhPort = NULL;
+		}
+	}
+
+	/**
+	 * @brief Reports whether an IOCP helper should enter the blocking completion wait.
+	 */
+	inline bool ShouldWaitForIocpWorkerCompletion(bool bStopRequested, LONG nRunState, LONG nStopState)
+	{
+		return !bStopRequested && nRunState != nStopState;
+	}
+
+	/**
+	 * @brief Reports whether an IOCP helper should process the received completion.
+	 */
+	inline bool ShouldProcessIocpWorkerCompletion(BOOL bCompletionReceived, ULONG_PTR nCompletionKey)
+	{
+		return bCompletionReceived != FALSE && nCompletionKey != 0;
+	}
+
+	/**
+	 * @brief Reports whether deferred new data should wake an idle IOCP helper.
+	 */
+	inline bool ShouldPostIocpWakeAfterNewData(LONG nPreviousNewDataFlag, bool bPendingIoEmpty)
+	{
+		return nPreviousNewDataFlag != 0 && bPendingIoEmpty;
 	}
 
 	/**

@@ -75,15 +75,11 @@ UINT AFX_CDECL CPartFileWriteThread::RunProc(LPVOID pParam)
 
 void CPartFileWriteThread::EndThread()
 {
-	HelperThreadLaunchSeams::SetFlag(m_bStopRequested);
 	const HelperThreadLaunchSeams::IocpShutdownAction action =
-		HelperThreadLaunchSeams::ClassifyIocpShutdown(m_bThreadStarted, m_hPort != NULL);
+		HelperThreadLaunchSeams::RequestIocpShutdown(m_bStopRequested, m_Run, RUN_STOP, m_bThreadStarted, m_hPort);
 	if (action == HelperThreadLaunchSeams::IocpShutdownAction::NoOp)
 		return;
 
-	HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
-	if (action == HelperThreadLaunchSeams::IocpShutdownAction::SignalAndWait)
-		PostQueuedCompletionStatus(m_hPort, 0, 0, NULL);
 	const DWORD dwWait = ::WaitForSingleObject(m_eventThreadEnded, HelperThreadLaunchSeams::kHelperThreadShutdownWaitMs);
 	const HelperThreadLaunchSeams::ShutdownWaitAction waitAction = HelperThreadLaunchSeams::ClassifyShutdownWait(dwWait);
 	if (waitAction == HelperThreadLaunchSeams::ShutdownWaitAction::TimedOut) {
@@ -100,17 +96,15 @@ UINT CPartFileWriteThread::RunInternal()
 #if EMULE_COMPILED_STARTUP_PROFILING
 	const ULONGLONG ullThreadStartUs = theApp.GetStartupProfileTimestampUs();
 #endif
-	m_hPort = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 1);
-	if (!m_hPort) {
-		const DWORD dwError = ::GetLastError();
+	DWORD dwError = ERROR_SUCCESS;
+	if (!HelperThreadLaunchSeams::TryCreateIocpPort(m_hPort, dwError)) {
 		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed to create part-file write completion port: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 		m_eventThreadEnded.SetEvent();
 		return dwError;
 	}
 	if (HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested)) {
-		::CloseHandle(m_hPort);
-		m_hPort = 0;
+		HelperThreadLaunchSeams::CloseIocpPort(m_hPort);
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 		m_eventThreadEnded.SetEvent();
 		return 0;
@@ -123,10 +117,16 @@ UINT CPartFileWriteThread::RunInternal()
 #if EMULE_COMPILED_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("broadband.partfile_write.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
 #endif
-	while (!HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested) && HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP
-		&& ::GetQueuedCompletionStatus(m_hPort, &dwWrite, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE)
-		&& completionKey)
+	while (HelperThreadLaunchSeams::ShouldWaitForIocpWorkerCompletion(
+		HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested),
+		HelperThreadLaunchSeams::GetState(m_Run),
+		RUN_STOP))
 	{
+		if (!HelperThreadLaunchSeams::ShouldProcessIocpWorkerCompletion(
+			::GetQueuedCompletionStatus(m_hPort, &dwWrite, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE),
+			completionKey))
+			break;
+
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_WORK);
 		//move buffer lists into the local storage
 		if (!m_FlushList.IsEmpty()) {
@@ -149,7 +149,7 @@ UINT CPartFileWriteThread::RunInternal()
 		if (!completionKey) //thread termination
 			break;
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_IDLE);
-		if (HelperThreadLaunchSeams::ExchangeState(m_bNewData, 0) != 0 && m_listPendingIO.IsEmpty())
+		if (HelperThreadLaunchSeams::ShouldPostIocpWakeAfterNewData(HelperThreadLaunchSeams::ExchangeState(m_bNewData, 0), m_listPendingIO.IsEmpty()))
 			PostQueuedCompletionStatus(m_hPort, 0, WAKEUP, NULL);
 	}
 	HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
@@ -159,8 +159,7 @@ UINT CPartFileWriteThread::RunInternal()
 	while (!m_listPendingIO.IsEmpty())
 		WriteCompletionRoutine(0, m_listPendingIO.RemoveHead());
 
-	::CloseHandle(m_hPort);
-	m_hPort = 0;
+	HelperThreadLaunchSeams::CloseIocpPort(m_hPort);
 
 	m_eventThreadEnded.SetEvent();
 	return 0;

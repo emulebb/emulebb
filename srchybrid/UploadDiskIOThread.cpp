@@ -91,15 +91,11 @@ UINT AFX_CDECL CUploadDiskIOThread::RunProc(LPVOID pParam)
 
 void CUploadDiskIOThread::EndThread()
 {
-	HelperThreadLaunchSeams::SetFlag(m_bStopRequested);
 	const HelperThreadLaunchSeams::IocpShutdownAction action =
-		HelperThreadLaunchSeams::ClassifyIocpShutdown(m_bThreadStarted, m_hPort != NULL);
+		HelperThreadLaunchSeams::RequestIocpShutdown(m_bStopRequested, m_Run, RUN_STOP, m_bThreadStarted, m_hPort);
 	if (action == HelperThreadLaunchSeams::IocpShutdownAction::NoOp)
 		return;
 
-	HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
-	if (action == HelperThreadLaunchSeams::IocpShutdownAction::SignalAndWait)
-		PostQueuedCompletionStatus(m_hPort, 0, 0, NULL);
 	const DWORD dwWait = ::WaitForSingleObject(m_eventThreadEnded, HelperThreadLaunchSeams::kHelperThreadShutdownWaitMs);
 	const HelperThreadLaunchSeams::ShutdownWaitAction waitAction = HelperThreadLaunchSeams::ClassifyShutdownWait(dwWait);
 	if (waitAction == HelperThreadLaunchSeams::ShutdownWaitAction::TimedOut) {
@@ -116,17 +112,15 @@ UINT CUploadDiskIOThread::RunInternal()
 #if EMULE_COMPILED_STARTUP_PROFILING
 	const ULONGLONG ullThreadStartUs = theApp.GetStartupProfileTimestampUs();
 #endif
-	m_hPort = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 1);
-	if (!m_hPort) {
-		const DWORD dwError = ::GetLastError();
+	DWORD dwError = ERROR_SUCCESS;
+	if (!HelperThreadLaunchSeams::TryCreateIocpPort(m_hPort, dwError)) {
 		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed to create upload disk I/O completion port: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 		m_eventThreadEnded.SetEvent();
 		return dwError;
 	}
 	if (HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested)) {
-		::CloseHandle(m_hPort);
-		m_hPort = 0;
+		HelperThreadLaunchSeams::CloseIocpPort(m_hPort);
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 		m_eventThreadEnded.SetEvent();
 		return 0;
@@ -139,10 +133,16 @@ UINT CUploadDiskIOThread::RunInternal()
 #if EMULE_COMPILED_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("broadband.upload_disk_io.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
 #endif
-	while (!HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested) && HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP
-			&& ::GetQueuedCompletionStatus(m_hPort, &dwRead, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE)
-			&& completionKey)
+	while (HelperThreadLaunchSeams::ShouldWaitForIocpWorkerCompletion(
+		HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested),
+		HelperThreadLaunchSeams::GetState(m_Run),
+		RUN_STOP))
 	{
+		if (!HelperThreadLaunchSeams::ShouldProcessIocpWorkerCompletion(
+			::GetQueuedCompletionStatus(m_hPort, &dwRead, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE),
+			completionKey))
+			break;
+
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_WORK);
 		//start new I/O
 		CCriticalSection *pcsUploadListRead = NULL;
@@ -169,7 +169,7 @@ UINT CUploadDiskIOThread::RunInternal()
 			theApp.uploadBandwidthThrottler->NewUploadDataAvailable();
 			m_bSignalThrottler = false;
 		}
-		if (HelperThreadLaunchSeams::ExchangeState(m_bNewData, 0) != 0 && m_listPendingIO.IsEmpty())
+		if (HelperThreadLaunchSeams::ShouldPostIocpWakeAfterNewData(HelperThreadLaunchSeams::ExchangeState(m_bNewData, 0), m_listPendingIO.IsEmpty()))
 			PostQueuedCompletionStatus(m_hPort, 0, WAKEUP, NULL);
 	}
 	HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
@@ -179,8 +179,7 @@ UINT CUploadDiskIOThread::RunInternal()
 	while (!m_listPendingIO.IsEmpty())
 		ReadCompletionRoutine(0, m_listPendingIO.RemoveHead());
 
-	::CloseHandle(m_hPort);
-	m_hPort = 0;
+	HelperThreadLaunchSeams::CloseIocpPort(m_hPort);
 
 	m_eventThreadEnded.SetEvent();
 	return 0;
