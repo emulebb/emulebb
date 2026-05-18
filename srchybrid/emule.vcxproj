@@ -218,6 +218,7 @@
     <ClCompile Include="GradientStatic.cpp" />
     <ClCompile Include="GZipFile.cpp" />
     <ClCompile Include="HTRichEditCtrl.cpp" />
+    <ClCompile Include="HttpTransfer.cpp" />
     <ClCompile Include="HttpClientReqSocket.cpp" />
     <ClCompile Include="HttpDownloadDlg.cpp" />
     <ClCompile Include="I18n.cpp" />
@@ -525,6 +526,8 @@
     <ClInclude Include="HelpIDs.h" />
     <ClInclude Include="HighColorTab.hpp" />
     <ClInclude Include="HTRichEditCtrl.h" />
+    <ClInclude Include="HttpTransfer.h" />
+    <ClInclude Include="HttpTransferSeams.h" />
     <ClInclude Include="HttpClientReqSocket.h" />
     <ClInclude Include="HttpDownloadDlg.h" />
     <ClInclude Include="IconStatic.h" />

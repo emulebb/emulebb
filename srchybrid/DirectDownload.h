@@ -16,48 +16,20 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
-#include <afxmt.h>
-#include <cstddef>
+#include "HttpTransfer.h"
 #include <memory>
-#include <wininet.h>
 
 /**
  * @brief Shared helpers for noninteractive direct HTTP(S) downloads used by background data refreshers.
  */
 namespace DirectDownload
 {
-	class CRegisteredInternetHandle;
-
-	/**
-	 * @brief Lets an owner abort an in-flight direct WinInet download by closing its active handles.
-	 */
-	class CDownloadCancellation
+	class CDownloadCancellation : public HttpTransfer::CTransferCancellation
 	{
 	public:
-		CDownloadCancellation() noexcept;
+		CDownloadCancellation() noexcept = default;
 		CDownloadCancellation(const CDownloadCancellation&) = delete;
 		CDownloadCancellation& operator=(const CDownloadCancellation&) = delete;
-
-		void Cancel() noexcept;
-		bool IsCancelled() const noexcept;
-
-		enum class InternetHandleSlot : unsigned char
-		{
-			Session = 0,
-			Connection,
-			Request,
-			Count
-		};
-
-	private:
-		friend class CRegisteredInternetHandle;
-
-		bool RegisterHandle(InternetHandleSlot eSlot, HINTERNET hInternet) noexcept;
-		bool ReleaseHandle(InternetHandleSlot eSlot, HINTERNET hInternet) noexcept;
-
-		mutable CCriticalSection m_lock;
-		HINTERNET m_hInternet[static_cast<size_t>(InternetHandleSlot::Count)];
-		bool m_bCancelled;
 	};
 
 	/**
