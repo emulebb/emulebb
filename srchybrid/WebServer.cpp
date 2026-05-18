@@ -436,6 +436,9 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 			return;
 		}
 
+		// Frozen legacy HTML UI boundary. REST/controller requests above remain
+		// supported; template pages below stay available only when explicitly
+		// enabled and should not receive feature or parity work.
 		if (!WebServerLegacySeams::ShouldServeLegacyWebUi(thePrefs.GetLegacyWebUiEnabled())) {
 			Data.pSocket->SendReply("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: 26\r\nConnection: close\r\n\r\nLegacy Web UI is disabled.");
 			::CoUninitialize();
@@ -450,6 +453,9 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 
 		bool isUseGzip = thePrefs.GetWebUseGzip();
 
+		// Preserve legacy template-session behavior as-is while this UI is
+		// frozen. Do not treat the rand()-backed page session as a supported
+		// authentication primitive for new controller/API work.
 		srand((unsigned)time(NULL));
 
 		uint32 myip = inet_addr(ipstrA(Data.inadr));
