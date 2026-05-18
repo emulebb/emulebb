@@ -128,14 +128,12 @@ bool QueuePartFileProgressUpdate(const CKnownFileProgressTargetSnapshot &progres
 	if (!progressTarget.isPartFile || theApp.emuledlg == NULL)
 		return false;
 
-	CPartFileProgressUpdateRequest *pRequest = new CPartFileProgressUpdateRequest{};
+	std::unique_ptr<CPartFileProgressUpdateRequest> pRequest(new CPartFileProgressUpdateRequest{});
 	memcpy(pRequest->fileHash, progressTarget.fileHash, sizeof pRequest->fileHash);
 	pRequest->fileSize = progressTarget.fileSize;
 	pRequest->progress = uProgress;
-	if (!theApp.emuledlg->PostMessage(UM_PARTFILE_PROGRESS_UPDATE, reinterpret_cast<WPARAM>(pRequest), 0)) {
-		delete pRequest;
+	if (!PostOwnedDisplayRefreshRequest(theApp.emuledlg->GetSafeHwnd(), UM_PARTFILE_PROGRESS_UPDATE, pRequest))
 		return false;
-	}
 	return true;
 }
 
@@ -4635,12 +4633,10 @@ void CPartFile::UpdateDisplayedInfo(bool force)
 			m_lastRefreshedDLDisplay = curTick;
 			if (ShouldQueueDisplayRefresh(::GetCurrentThreadId(), g_uMainThreadId)) {
 				if (AccumulatePendingDisplayMask(m_nPendingDisplayUpdate, 1) == 0) {
-					CPartFileDisplayUpdateRequest *pRequest = new CPartFileDisplayUpdateRequest;
+					std::unique_ptr<CPartFileDisplayUpdateRequest> pRequest(new CPartFileDisplayUpdateRequest);
 					md4cpy(pRequest->fileHash, GetFileHash());
-					if (theApp.emuledlg == NULL || !theApp.emuledlg->PostMessage(UM_PARTFILE_DISPLAY_UPDATE, reinterpret_cast<WPARAM>(pRequest), 0)) {
-						delete pRequest;
+					if (theApp.emuledlg == NULL || !PostOwnedDisplayRefreshRequest(theApp.emuledlg->GetSafeHwnd(), UM_PARTFILE_DISPLAY_UPDATE, pRequest))
 						m_nPendingDisplayUpdate.exchange(0);
-					}
 				}
 			} else
 				theApp.emuledlg->transferwnd->GetDownloadList()->UpdateItem(this);

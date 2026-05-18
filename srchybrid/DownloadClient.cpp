@@ -1480,15 +1480,13 @@ void CUpDownClient::QueueDisplayUpdate(uint32 nMask)
 
 	if (ShouldQueueDisplayRefresh(::GetCurrentThreadId(), g_uMainThreadId)) {
 		if (AccumulatePendingDisplayMask(m_nPendingDisplayUpdateMask, static_cast<LONG>(nMask)) == 0) {
-			CClientDisplayUpdateRequest *pRequest = new CClientDisplayUpdateRequest;
+			std::unique_ptr<CClientDisplayUpdateRequest> pRequest(new CClientDisplayUpdateRequest);
 			md4cpy(pRequest->userHash, GetUserHash());
 			pRequest->connectIP = GetConnectIP();
 			pRequest->userPort = GetUserPort();
 			pRequest->reserved = 0;
-			if (theApp.emuledlg == NULL || !theApp.emuledlg->PostMessage(UM_CLIENT_DISPLAY_UPDATE, reinterpret_cast<WPARAM>(pRequest), 0)) {
-				delete pRequest;
+			if (theApp.emuledlg == NULL || !PostOwnedDisplayRefreshRequest(theApp.emuledlg->GetSafeHwnd(), UM_CLIENT_DISPLAY_UPDATE, pRequest))
 				m_nPendingDisplayUpdateMask.exchange(0);
-			}
 		}
 		return;
 	}

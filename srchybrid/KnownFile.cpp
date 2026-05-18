@@ -85,14 +85,12 @@ bool QueuePartFileProgressUpdate(const CKnownFileProgressTargetSnapshot *pProgre
 	if (pProgressTarget == NULL || !pProgressTarget->isPartFile || theApp.emuledlg == NULL)
 		return false;
 
-	CPartFileProgressUpdateRequest *pRequest = new CPartFileProgressUpdateRequest{};
+	std::unique_ptr<CPartFileProgressUpdateRequest> pRequest(new CPartFileProgressUpdateRequest{});
 	memcpy(pRequest->fileHash, pProgressTarget->fileHash, sizeof pRequest->fileHash);
 	pRequest->fileSize = pProgressTarget->fileSize;
 	pRequest->progress = uProgress;
-	if (!theApp.emuledlg->PostMessage(UM_PARTFILE_PROGRESS_UPDATE, reinterpret_cast<WPARAM>(pRequest), 0)) {
-		delete pRequest;
+	if (!PostOwnedDisplayRefreshRequest(theApp.emuledlg->GetSafeHwnd(), UM_PARTFILE_PROGRESS_UPDATE, pRequest))
 		return false;
-	}
 	return true;
 }
 }

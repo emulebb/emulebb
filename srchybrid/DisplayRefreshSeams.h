@@ -1,6 +1,10 @@
 #pragma once
 
+#include <Windows.h>
+
 #include <atomic>
+#include <cstdint>
+#include <memory>
 
 enum EDisplayRefreshMask : uint32
 {
@@ -59,4 +63,24 @@ inline LONG AccumulatePendingDisplayMask(std::atomic<LONG> &rnPendingMask, LONG 
 		if (rnPendingMask.compare_exchange_weak(nCurrent, nUpdated))
 			return nCurrent;
 	}
+}
+
+/**
+ * @brief Posts a heap-owned display refresh request and releases it only after successful delivery.
+ */
+template <typename TRequest>
+inline bool PostOwnedDisplayRefreshRequest(HWND hTargetWnd, UINT uMessage, std::unique_ptr<TRequest> &rpRequest)
+{
+	if (hTargetWnd == NULL || rpRequest == NULL) {
+		rpRequest.reset();
+		return false;
+	}
+
+	if (::PostMessage(hTargetWnd, uMessage, reinterpret_cast<WPARAM>(rpRequest.get()), 0) == FALSE) {
+		rpRequest.reset();
+		return false;
+	}
+
+	(void)rpRequest.release();
+	return true;
 }
