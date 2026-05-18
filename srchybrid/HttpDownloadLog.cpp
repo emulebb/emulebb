@@ -31,44 +31,43 @@ namespace
 	const ULONGLONG PROGRESS_LOG_INTERVAL_MS = 5000;
 	const DWORD PROGRESS_LOG_PERCENT_STEP = 10;
 
-	CString FormatDownloadBytes(DWORD dwBytes)
+	CString FormatDownloadBytes(ULONGLONG ullBytes)
 	{
-		return CastItoXBytes(static_cast<uint64>(dwBytes));
+		return CastItoXBytes(static_cast<uint64>(ullBytes));
 	}
 }
 
 namespace HttpDownloadLog
 {
-	bool DownloadToFile(const CString& strUrl, const CString& strTargetPath, const CString& strLabel, CString& strError)
+	bool DownloadToFile(const CString& strUrl, const CString& strTargetPath, const CString& strLabel, HttpTransferSeams::ERequestProfile eProfile, CString& strError)
 	{
-		HttpTransfer::SRequest request;
-		request.strUrl = strUrl;
+		HttpTransfer::SRequest request = HttpTransfer::MakeRequest(eProfile, strUrl);
 		request.strHeaders = _T("Accept-Encoding: identity\r\n");
 
 		Log(_T("Downloading %s from %s"), (LPCTSTR)strLabel, (LPCTSTR)strUrl);
 
 		ULONGLONG ullLastLogTick = ::GetTickCount64();
 		DWORD dwLastPercent = 101;
-		const HttpTransfer::ProgressCallback progressCallback = [strLabel, &ullLastLogTick, &dwLastPercent](DWORD dwBytesRead, DWORD dwContentLength) {
+		const HttpTransfer::ProgressCallback progressCallback = [strLabel, &ullLastLogTick, &dwLastPercent](ULONGLONG ullBytesRead, ULONGLONG ullContentLength) {
 			const ULONGLONG ullNow = ::GetTickCount64();
 			const bool bIntervalElapsed = ullNow - ullLastLogTick >= PROGRESS_LOG_INTERVAL_MS;
 
-			if (dwContentLength != 0) {
-				const ULONGLONG ullPercent = static_cast<ULONGLONG>(dwBytesRead) * 100ull / dwContentLength;
+			if (ullContentLength != 0) {
+				const ULONGLONG ullPercent = ullBytesRead * 100ull / ullContentLength;
 				const DWORD dwPercent = static_cast<DWORD>(ullPercent > 100ull ? 100ull : ullPercent);
 				if (dwLastPercent == 101 || dwPercent >= dwLastPercent + PROGRESS_LOG_PERCENT_STEP || dwPercent == 100 || bIntervalElapsed) {
 					AddDebugLogLine(false, _T("%s download %u%% (%s of %s)"),
 						(LPCTSTR)strLabel,
 						dwPercent,
-						(LPCTSTR)FormatDownloadBytes(dwBytesRead),
-						(LPCTSTR)FormatDownloadBytes(dwContentLength));
+						(LPCTSTR)FormatDownloadBytes(ullBytesRead),
+						(LPCTSTR)FormatDownloadBytes(ullContentLength));
 					ullLastLogTick = ullNow;
 					dwLastPercent = dwPercent;
 				}
 			} else if (bIntervalElapsed) {
 				AddDebugLogLine(false, _T("%s download received %s"),
 					(LPCTSTR)strLabel,
-					(LPCTSTR)FormatDownloadBytes(dwBytesRead));
+					(LPCTSTR)FormatDownloadBytes(ullBytesRead));
 				ullLastLogTick = ullNow;
 			}
 			return true;

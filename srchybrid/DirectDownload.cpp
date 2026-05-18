@@ -37,8 +37,12 @@ bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CStr
 
 bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CString& strError, const std::shared_ptr<CDownloadCancellation>& pCancellation)
 {
-	HttpTransfer::SRequest request;
-	request.strUrl = strUrl;
+	return DownloadUrlToFile(strUrl, strTargetPath, strError, HttpTransferSeams::ERequestProfile::GenericFileDownload, pCancellation);
+}
+
+bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CString& strError, HttpTransferSeams::ERequestProfile eProfile, const std::shared_ptr<CDownloadCancellation>& pCancellation)
+{
+	HttpTransfer::SRequest request = HttpTransfer::MakeRequest(eProfile, strUrl);
 	return HttpTransfer::DownloadToFile(request, strTargetPath, strError, pCancellation);
 }
 }

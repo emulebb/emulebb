@@ -460,7 +460,7 @@ bool CKademliaWnd::UpdateNodesDatFromURL(const CString &strURL)
 	// try to download nodes.dat
 	Log(GetResString(IDS_DOWNLOADING_NODESDAT_FROM), (LPCTSTR)strTrimmedUrl);
 	CString strDownloadError;
-	if (!HttpDownloadLog::DownloadToFile(strTrimmedUrl, strTempFilename, GetResString(IDS_DOWNLOADING_NODESDAT), strDownloadError)) {
+	if (!HttpDownloadLog::DownloadToFile(strTrimmedUrl, strTempFilename, GetResString(IDS_DOWNLOADING_NODESDAT), HttpTransferSeams::ERequestProfile::NodesDat, strDownloadError)) {
 		(void)LongPathSeams::DeleteFileIfExists(strTempFilename);
 		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDDOWNLOADNODES), (LPCTSTR)strTrimmedUrl);
 		if (!strDownloadError.IsEmpty())

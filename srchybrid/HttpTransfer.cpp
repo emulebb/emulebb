@@ -218,13 +218,31 @@ namespace
 		return true;
 	}
 
-	DWORD QueryContentLength(HINTERNET hHttpFile)
+	ULONGLONG QueryContentLength(HINTERNET hHttpFile)
 	{
 		DWORD dwContentLength = 0;
 		DWORD dwContentLengthSize = sizeof(dwContentLength);
 		if (!::HttpQueryInfo(hHttpFile, HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER, &dwContentLength, &dwContentLengthSize, NULL))
 			return 0;
-		return dwContentLength;
+		return static_cast<ULONGLONG>(dwContentLength);
+	}
+
+	bool CheckKnownContentLengthLimit(ULONGLONG ullContentLength, ULONGLONG ullMaxResponseBytes, CString& strError)
+	{
+		if (HttpTransferSeams::IsKnownContentLengthAllowed(ullContentLength, ullMaxResponseBytes))
+			return true;
+
+		strError.Format(_T("HTTP response is too large (%I64u bytes, limit %I64u bytes)."), ullContentLength, ullMaxResponseBytes);
+		return false;
+	}
+
+	bool CheckStreamingResponseLimit(ULONGLONG ullCurrentBytes, DWORD dwNextBytes, ULONGLONG ullMaxResponseBytes, CString& strError)
+	{
+		if (!HttpTransferSeams::WouldExceedResponseLimit(ullCurrentBytes, dwNextBytes, ullMaxResponseBytes))
+			return true;
+
+		strError.Format(_T("HTTP response is too large (limit %I64u bytes)."), ullMaxResponseBytes);
+		return false;
 	}
 }
 
@@ -303,6 +321,19 @@ bool CreateTempPathInDirectory(const CString& strDirectory, LPCTSTR pszPrefix, C
 	return true;
 }
 
+SRequest MakeRequest(HttpTransferSeams::ERequestProfile eProfile, const CString& strUrl)
+{
+	const HttpTransferSeams::SRequestLimits limits = HttpTransferSeams::GetRequestLimitsForProfile(eProfile);
+	SRequest request;
+	request.strUrl = strUrl;
+	request.dwConnectTimeoutMs = limits.dwConnectTimeoutMs;
+	request.dwSendTimeoutMs = limits.dwSendTimeoutMs;
+	request.dwReceiveTimeoutMs = limits.dwReceiveTimeoutMs;
+	request.ullTotalTimeoutMs = limits.ullTotalTimeoutMs;
+	request.ullMaxResponseBytes = limits.ullMaxResponseBytes;
+	return request;
+}
+
 bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CString& strError, const std::shared_ptr<CTransferCancellation>& pCancellation, const ProgressCallback& progressCallback)
 {
 	strError.Empty();
@@ -313,17 +344,20 @@ bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CStri
 	if (!OpenGetRequest(request, strError, pCancellation, hInternetSession, hHttpConnection, hHttpFile))
 		return false;
 
+	const ULONGLONG ullContentLength = QueryContentLength(hHttpFile.Get());
+	if (!CheckKnownContentLengthLimit(ullContentLength, request.ullMaxResponseBytes, strError))
+		return false;
+
 	const int fdOut = LongPathSeams::OpenCrtWriteOnlyLongPath(strTargetPath, CREATE_ALWAYS, FILE_SHARE_READ);
 	if (fdOut == -1) {
 		strError.Format(_T("Could not open %s for writing"), (LPCTSTR)strTargetPath);
 		return false;
 	}
 
-	const DWORD dwContentLength = QueryContentLength(hHttpFile.Get());
 	const ULONGLONG ullTransferStartTick = ::GetTickCount64();
 	BYTE buffer[16 * 1024] = {};
 	DWORD dwBytesRead = 0;
-	DWORD dwTotalBytesRead = 0;
+	ULONGLONG ullTotalBytesRead = 0;
 	bool bSuccess = true;
 	do {
 		if (IsTransferCancelled(pCancellation, strError)) {
@@ -343,13 +377,17 @@ bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CStri
 		}
 
 		if (dwBytesRead > 0) {
+			if (!CheckStreamingResponseLimit(ullTotalBytesRead, dwBytesRead, request.ullMaxResponseBytes, strError)) {
+				bSuccess = false;
+				break;
+			}
 			if (_write(fdOut, buffer, dwBytesRead) != static_cast<int>(dwBytesRead)) {
 				strError.Format(_T("Write failed for %s (%u)"), (LPCTSTR)strTargetPath, errno);
 				bSuccess = false;
 				break;
 			}
-			dwTotalBytesRead += dwBytesRead;
-			if (progressCallback && !progressCallback(dwTotalBytesRead, dwContentLength)) {
+			ullTotalBytesRead += dwBytesRead;
+			if (progressCallback && !progressCallback(ullTotalBytesRead, ullContentLength)) {
 				strError = _T("HTTP transfer cancelled");
 				bSuccess = false;
 				break;
@@ -378,7 +416,10 @@ bool FetchToMemory(const SRequest& request, std::string& strResponse, CString& s
 	if (!OpenGetRequest(request, strError, pCancellation, hInternetSession, hHttpConnection, hHttpFile))
 		return false;
 
-	const DWORD dwContentLength = QueryContentLength(hHttpFile.Get());
+	const ULONGLONG ullContentLength = QueryContentLength(hHttpFile.Get());
+	if (!CheckKnownContentLengthLimit(ullContentLength, request.ullMaxResponseBytes, strError))
+		return false;
+
 	const ULONGLONG ullTransferStartTick = ::GetTickCount64();
 	BYTE buffer[16 * 1024] = {};
 	DWORD dwBytesRead = 0;
@@ -396,12 +437,10 @@ bool FetchToMemory(const SRequest& request, std::string& strResponse, CString& s
 		}
 
 		if (dwBytesRead != 0) {
-			if (request.uMaxResponseBytes != 0 && strResponse.size() + dwBytesRead > request.uMaxResponseBytes) {
-				strError = _T("HTTP response is too large.");
+			if (!CheckStreamingResponseLimit(static_cast<ULONGLONG>(strResponse.size()), dwBytesRead, request.ullMaxResponseBytes, strError))
 				return false;
-			}
 			strResponse.append(reinterpret_cast<const char*>(buffer), dwBytesRead);
-			if (progressCallback && !progressCallback(static_cast<DWORD>(strResponse.size()), dwContentLength)) {
+			if (progressCallback && !progressCallback(static_cast<ULONGLONG>(strResponse.size()), ullContentLength)) {
 				strError = _T("HTTP transfer cancelled");
 				return false;
 			}

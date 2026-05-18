@@ -44,4 +44,8 @@ namespace DirectDownload
 	 * @brief Downloads a URL directly to a file and lets the owner close active WinInet handles for hard cancellation.
 	 */
 	bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CString& strError, const std::shared_ptr<CDownloadCancellation>& pCancellation);
+	/**
+	 * @brief Downloads a URL directly to a file using the supplied bounded transfer profile.
+	 */
+	bool DownloadUrlToFile(const CString& strUrl, const CString& strTargetPath, CString& strError, HttpTransferSeams::ERequestProfile eProfile, const std::shared_ptr<CDownloadCancellation>& pCancellation = std::shared_ptr<CDownloadCancellation>());
 }

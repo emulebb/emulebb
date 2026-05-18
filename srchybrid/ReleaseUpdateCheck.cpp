@@ -30,9 +30,6 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-	const DWORD kReleaseCheckTimeoutMs = 7000;
-	const size_t kMaxReleaseJsonBytes = 512u * 1024u;
-
 	CString CStringFromUtf8(const std::string &strValue)
 	{
 		if (strValue.empty())
@@ -49,17 +46,11 @@ namespace
 
 	bool FetchLatestReleaseJson(std::string &strJson, CString &strError)
 	{
-		HttpTransfer::SRequest request;
-		request.strUrl = thePrefs.GetVersionCheckApiURL();
+		HttpTransfer::SRequest request = HttpTransfer::MakeRequest(HttpTransferSeams::ERequestProfile::ReleaseUpdateJson, thePrefs.GetVersionCheckApiURL());
 		request.strUserAgent = GetReleaseCheckUserAgent();
 		request.strHeaders = _T("Accept: application/vnd.github+json\r\n")
 			_T("Accept-Encoding: identity\r\n")
 			_T("X-GitHub-Api-Version: 2022-11-28\r\n");
-		request.dwConnectTimeoutMs = kReleaseCheckTimeoutMs;
-		request.dwReceiveTimeoutMs = kReleaseCheckTimeoutMs;
-		request.dwSendTimeoutMs = kReleaseCheckTimeoutMs;
-		request.ullTotalTimeoutMs = kReleaseCheckTimeoutMs;
-		request.uMaxResponseBytes = kMaxReleaseJsonBytes;
 		if (!HttpTransfer::FetchToMemory(request, strJson, strError))
 			return false;
 		return true;

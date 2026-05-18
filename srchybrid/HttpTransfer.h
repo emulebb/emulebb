@@ -17,6 +17,7 @@
 #pragma once
 
 #include <afxmt.h>
+#include "HttpTransferSeams.h"
 #include <cstddef>
 #include <functional>
 #include <memory>
@@ -72,12 +73,13 @@ namespace HttpTransfer
 		DWORD dwSendTimeoutMs = 30000;
 		DWORD dwReceiveTimeoutMs = 30000;
 		ULONGLONG ullTotalTimeoutMs = 5ull * 60ull * 1000ull;
-		size_t uMaxResponseBytes = 0;
+		ULONGLONG ullMaxResponseBytes = 0;
 		bool bUseWindowsSystemProxy = false;
 	};
 
-	typedef std::function<bool(DWORD dwBytesRead, DWORD dwContentLength)> ProgressCallback;
+	typedef std::function<bool(ULONGLONG ullBytesRead, ULONGLONG ullContentLength)> ProgressCallback;
 
+	SRequest MakeRequest(HttpTransferSeams::ERequestProfile eProfile, const CString& strUrl = CString());
 	bool CreateTempPathInDirectory(const CString& strDirectory, LPCTSTR pszPrefix, CString& strTempPath, CString& strError);
 	bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CString& strError, const std::shared_ptr<CTransferCancellation>& pCancellation = std::shared_ptr<CTransferCancellation>(), const ProgressCallback& progressCallback = ProgressCallback());
 	bool FetchToMemory(const SRequest& request, std::string& strResponse, CString& strError, const std::shared_ptr<CTransferCancellation>& pCancellation = std::shared_ptr<CTransferCancellation>(), const ProgressCallback& progressCallback = ProgressCallback());

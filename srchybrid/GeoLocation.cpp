@@ -1037,7 +1037,7 @@ UINT AFX_CDECL CGeoLocation::BackgroundRefreshThread(LPVOID pParam)
 	}
 
 	CString strError;
-	if (!DirectDownload::DownloadUrlToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, strError, pContext->pCancellation)) {
+	if (!DirectDownload::DownloadUrlToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, strError, HttpTransferSeams::ERequestProfile::GeoDatabase, pContext->pCancellation)) {
 		AddDebugLogLine(false, _T("GeoLocation: download failed from %s (%s)"), (LPCTSTR)pContext->strDownloadUrl, (LPCTSTR)strError);
 		goto cleanup;
 	}

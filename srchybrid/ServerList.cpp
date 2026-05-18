@@ -79,7 +79,7 @@ void CServerList::AutoUpdate()
 		(void)LongPathSeams::DeleteFileIfExists(servermetdownloadcandidate);
 		const CString strUrl(thePrefs.addresses_list.GetNext(Pos));
 		CString strError;
-		if (HttpDownloadLog::DownloadToFile(strUrl, servermetdownloadcandidate, GetResString(IDS_HTTP_CAPTION), strError)) {
+		if (HttpDownloadLog::DownloadToFile(strUrl, servermetdownloadcandidate, GetResString(IDS_HTTP_CAPTION), HttpTransferSeams::ERequestProfile::ServerMet, strError)) {
 			DWORD dwPromoteError = ERROR_SUCCESS;
 			if (ServerMetPersistenceSeams::InstallDownloadedServerMetCandidate(servermetdownloadcandidate, servermetdownload, &dwPromoteError)) {
 				bDownloaded = true;

@@ -16,7 +16,9 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+#include "HttpTransferSeams.h"
+
 namespace HttpDownloadLog
 {
-	bool DownloadToFile(const CString& strUrl, const CString& strTargetPath, const CString& strLabel, CString& strError);
+	bool DownloadToFile(const CString& strUrl, const CString& strTargetPath, const CString& strLabel, HttpTransferSeams::ERequestProfile eProfile, CString& strError);
 }

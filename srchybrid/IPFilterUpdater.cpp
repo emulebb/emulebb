@@ -323,7 +323,7 @@ bool CIPFilterUpdater::UpdateFromUrlInteractive(const CString& strUrl)
 		return false;
 	}
 
-	if (!HttpDownloadLog::DownloadToFile(strUrl, strTempFilePath, GetResString(IDS_DWL_IPFILTERFILE), strError)) {
+	if (!HttpDownloadLog::DownloadToFile(strUrl, strTempFilePath, GetResString(IDS_DWL_IPFILTERFILE), HttpTransferSeams::ERequestProfile::IPFilter, strError)) {
 		(void)LongPathSeams::DeleteFileIfExists(strTempFilePath);
 		CString strDisplayError(GetResString(IDS_DWLIPFILTERFAILED));
 		if (!strError.IsEmpty())
@@ -447,7 +447,7 @@ UINT AFX_CDECL CIPFilterUpdater::BackgroundRefreshThread(LPVOID pParam)
 		theApp.QueueLogLine(false, _T("IPFilter: proxy-backed automatic refresh is ignored; use the manual updater or a VPN for network privacy."));
 
 	CString strError;
-	if (!DirectDownload::DownloadUrlToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, strError, pContext->pCancellation)) {
+	if (!DirectDownload::DownloadUrlToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, strError, HttpTransferSeams::ERequestProfile::IPFilter, pContext->pCancellation)) {
 		CString strDownloadError;
 		strDownloadError.Format(_T("%s (%s)"), (LPCTSTR)pContext->strDownloadUrl, (LPCTSTR)strError);
 		ReportIPFilterUpdateError(strDownloadError, false);
