@@ -115,24 +115,6 @@ namespace
 	}
 
 	/**
-	 * @brief Releases an MFC worker object whose suspended thread never entered user code.
-	 */
-	void DeleteNeverResumedRefreshThread(CWinThread* pThread, LPCTSTR pszComponentName)
-	{
-		if (pThread == NULL)
-			return;
-
-		pThread->m_bAutoDelete = FALSE;
-		if (pThread->m_hThread != NULL) {
-			if (::TerminateThread(pThread->m_hThread, 0))
-				(void)::WaitForSingleObject(pThread->m_hThread, INFINITE);
-			else
-				AddDebugLogLine(false, _T("%s: failed to terminate never-resumed refresh thread (%u)."), pszComponentName, ::GetLastError());
-		}
-		delete pThread;
-	}
-
-	/**
 	 * @brief Promotes a prepared IP-filter file through the app's atomic replacement helper.
 	 */
 	bool PromoteIPFilterFile(const CString& strSourcePath, DWORD* pdwLastError)
@@ -421,27 +403,18 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 		return false;
 	}
 	m_pBackgroundRefreshState->pCancellation = pCancellation;
-	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED, NULL);
+	SBackgroundRefreshContext *pThreadContext = pContext.release();
+	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pThreadContext, THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
 	if (pThread == NULL) {
+		std::unique_ptr<SBackgroundRefreshContext> pCleanupContext(pThreadContext);
 		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 		m_pBackgroundRefreshState->pCancellation.reset();
-		(void)LongPathSeams::DeleteFileIfExists(strArchiveTempPath);
+		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strArchiveTempPath);
 		AddDebugLogLine(false, _T("IPFilter: failed to start background update thread."));
 		return false;
 	}
 
-	pThread->m_bAutoDelete = TRUE;
-	SBackgroundRefreshContext *pThreadContext = pContext.release();
-	if (pThread->ResumeThread() == static_cast<DWORD>(-1)) {
-		const DWORD dwResumeError = ::GetLastError();
-		std::unique_ptr<SBackgroundRefreshContext> pCleanupContext(pThreadContext);
-		DeleteNeverResumedRefreshThread(pThread, _T("IPFilter"));
-		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
-		m_pBackgroundRefreshState->pCancellation.reset();
-		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strArchiveTempPath);
-		AddDebugLogLine(false, _T("IPFilter: failed to resume background update thread (%u)."), dwResumeError);
-		return false;
-	}
+	UNREFERENCED_PARAMETER(pThread);
 	if (BackgroundRefreshSeams::ShouldRecordRefreshAttempt(true, true))
 		thePrefs.SetIPFilterLastUpdateTime(tNow, true);
 	AddLogLine(false, GetResString(IDS_IPFILTER_AUTO_UPDATE_STARTED), (LPCTSTR)strUpdateUrl);

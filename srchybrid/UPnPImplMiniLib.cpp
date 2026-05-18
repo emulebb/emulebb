@@ -42,7 +42,7 @@ static LPCTSTR const sUDP = _T("UDP");
 CUPnPImplMiniLib::CUPnPImplMiniLib()
 	: m_pURLs()
 	, m_pIGDData()
-	, m_hThreadHandle()
+	, m_pDiscoveryThread()
 	, m_bSucceededOnce()
 	, m_bAbortDiscovery()
 {
@@ -55,6 +55,7 @@ CUPnPImplMiniLib::CUPnPImplMiniLib()
 
 CUPnPImplMiniLib::~CUPnPImplMiniLib()
 {
+	StopAsyncFind();
 	Cleanup();
 }
 
@@ -69,21 +70,17 @@ bool CUPnPImplMiniLib::IsReady()
 
 void CUPnPImplMiniLib::StopAsyncFind()
 {
-	if (m_hThreadHandle != NULL) {
-		m_bAbortDiscovery = true;	// if there is a thread, tell it to abort as soon as possible - he won't sent a Result message when aborted
-		CSingleLock lockTest(&m_mutBusy);
-		if (!lockTest.Lock(SEC2MS(7))) {	// give the thread 7 seconds to exit gracefully - it should never really take that long
-			// that is quite bad, something seems to be locked up. There isn't a good solution here, we need the thread to quit
-			// or it might try to access the object later, but terminating is quite bad too. Well.
-			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread to quit failed, trying to terminate the thread..."));
-
-			if (m_hThreadHandle != NULL)
-				DebugLogError(::TerminateThread(m_hThreadHandle, 0) ? _T("...OK") : _T("...Failed"));
-			else
-				ASSERT(0);
+	ReapDiscoveryThreadIfFinished();
+	if (m_pDiscoveryThread != NULL) {
+		m_bAbortDiscovery = true;	// if there is a thread, tell it to abort as soon as possible - it won't send a Result message when aborted
+		const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, SEC2MS(7));
+		if (dwWait != WAIT_OBJECT_0) {
+			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread to quit timed out; waiting for cooperative exit without forced termination"));
+			(void)::WaitForSingleObject(m_pDiscoveryThread->m_hThread, INFINITE);
 		} else
 			DebugLog(_T("Aborted any possible UPnP StartDiscoveryThread"));
-		m_hThreadHandle = NULL;
+		delete m_pDiscoveryThread;
+		m_pDiscoveryThread = NULL;
 	}
 	m_bAbortDiscovery = false;
 }
@@ -147,6 +144,7 @@ void CUPnPImplMiniLib::StartDiscovery(uint16 nTCPPort, uint16 nUDPPort, uint16 n
 {
 	DebugLog(_T("Using MiniUPnPLib based implementation"));
 	DebugLog(_T("miniupnpc (c) 2005-2026 Thomas Bernard - http://miniupnp.free.fr/"));
+	StopAsyncFind();
 	GetOldPorts();
 	m_nUDPPort = nUDPPort;
 	m_nTCPPort = nTCPPort;
@@ -394,10 +392,41 @@ void CUPnPImplMiniLib::Cleanup()
 	m_pIGDData = NULL;
 }
 
+void CUPnPImplMiniLib::ReapDiscoveryThreadIfFinished()
+{
+	if (m_pDiscoveryThread == NULL)
+		return;
+
+	const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, 0);
+	if (dwWait == WAIT_OBJECT_0) {
+		delete m_pDiscoveryThread;
+		m_pDiscoveryThread = NULL;
+	} else if (dwWait == WAIT_FAILED) {
+		DebugLogError(_T("UPnP StartDiscoveryThread wait failed (%u); releasing stale thread wrapper"), ::GetLastError());
+		delete m_pDiscoveryThread;
+		m_pDiscoveryThread = NULL;
+	}
+}
+
 void CUPnPImplMiniLib::StartThread()
 {
+	ReapDiscoveryThreadIfFinished();
+	if (m_pDiscoveryThread != NULL)
+		StopAsyncFind();
+
 	CStartDiscoveryThread *pStartDiscoveryThread = (CStartDiscoveryThread*)AfxBeginThread(RUNTIME_CLASS(CStartDiscoveryThread), THREAD_PRIORITY_NORMAL, 0, CREATE_SUSPENDED);
-	m_hThreadHandle = pStartDiscoveryThread->m_hThread;
+	if (pStartDiscoveryThread == NULL) {
+		m_bUPnPPortsForwarded = TRIS_FALSE;
+		DebugLogError(_T("Failed to create UPnP StartDiscoveryThread"));
+		return;
+	}
+	pStartDiscoveryThread->m_bAutoDelete = FALSE;
 	pStartDiscoveryThread->SetValues(this);
-	pStartDiscoveryThread->ResumeThread();
+	m_pDiscoveryThread = pStartDiscoveryThread;
+	if (pStartDiscoveryThread->ResumeThread() == static_cast<DWORD>(-1)) {
+		DebugLogError(_T("Failed to resume UPnP StartDiscoveryThread (%u)"), ::GetLastError());
+		delete m_pDiscoveryThread;
+		m_pDiscoveryThread = NULL;
+		m_bUPnPPortsForwarded = TRIS_FALSE;
+	}
 }

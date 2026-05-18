@@ -76,24 +76,6 @@ namespace
 		AddDebugLogLine(false, _T("%s: dropped background refresh completion because PostMessage failed (%u)."), pszComponentName, dwPostError);
 	}
 
-	/**
-	 * @brief Releases an MFC worker object whose suspended thread never entered user code.
-	 */
-	void DeleteNeverResumedRefreshThread(CWinThread* pThread, LPCTSTR pszComponentName)
-	{
-		if (pThread == NULL)
-			return;
-
-		pThread->m_bAutoDelete = FALSE;
-		if (pThread->m_hThread != NULL) {
-			if (::TerminateThread(pThread->m_hThread, 0))
-				(void)::WaitForSingleObject(pThread->m_hThread, INFINITE);
-			else
-				AddDebugLogLine(false, _T("%s: failed to terminate never-resumed refresh thread (%u)."), pszComponentName, ::GetLastError());
-		}
-		delete pThread;
-	}
-
 	enum MMDBDataType
 	{
 		MMDB_TYPE_UNKNOWN = 0,
@@ -818,31 +800,21 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 		return false;
 	}
 	m_pBackgroundRefreshState->pCancellation = pCancellation;
-	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED, NULL);
-	if (pThread == NULL) {
-		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
-		m_pBackgroundRefreshState->pCancellation.reset();
-		(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
-		(void)LongPathSeams::DeleteFileIfExists(pContext->strDatabaseTempPath);
-		AddDebugLogLine(false, _T("GeoLocation: failed to start background refresh thread."));
-		return false;
-	}
-
-	pThread->m_bAutoDelete = TRUE;
-	__time64_t tNow = 0;
-	_time64(&tNow);
 	SBackgroundRefreshContext *pThreadContext = pContext.release();
-	if (pThread->ResumeThread() == static_cast<DWORD>(-1)) {
-		const DWORD dwResumeError = ::GetLastError();
+	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pThreadContext, THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
+	if (pThread == NULL) {
 		std::unique_ptr<SBackgroundRefreshContext> pCleanupContext(pThreadContext);
-		DeleteNeverResumedRefreshThread(pThread, _T("GeoLocation"));
 		(void)::InterlockedExchange(&m_pBackgroundRefreshState->lQueued, 0);
 		m_pBackgroundRefreshState->pCancellation.reset();
 		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strArchiveTempPath);
 		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strDatabaseTempPath);
-		AddDebugLogLine(false, _T("GeoLocation: failed to resume background refresh thread (%u)."), dwResumeError);
+		AddDebugLogLine(false, _T("GeoLocation: failed to start background refresh thread."));
 		return false;
 	}
+
+	UNREFERENCED_PARAMETER(pThread);
+	__time64_t tNow = 0;
+	_time64(&tNow);
 	if (BackgroundRefreshSeams::ShouldRecordRefreshAttempt(true, true))
 		thePrefs.SetGeoLocationLastCheckTime(tNow, true);
 	return true;

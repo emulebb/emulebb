@@ -57,13 +57,14 @@ private:
 	void Cleanup();
 	void DeletePort(uint16 port, LPCTSTR prot);
 	void GetOldPorts();
+	void ReapDiscoveryThreadIfFinished();
 	void StartThread();
 
 	static CMutex m_mutBusy;
 
 	UPNPUrls *m_pURLs;
 	IGDdatas *m_pIGDData;
-	HANDLE m_hThreadHandle;
+	CStartDiscoveryThread *m_pDiscoveryThread;
 	char m_achLanIP[40];
 	char m_achWanIP[40];
 
