@@ -352,8 +352,9 @@ UINT UploadBandwidthThrottler::RunInternal()
 	uint32 loopsCount = 0;
 	int nSlotsBusyLevel = 0;
 
-	// Timer-resolution probe, 2026-05-02: keep timeGetTime() for upload pacing.
-	// It observed 1 ms deltas; GetTickCount64 stayed at 15-16 ms on the same host.
+	// Keep timeGetTime() intentionally for upload pacing. Measurement on
+	// 2026-05-02 showed 1 ms deltas here, while GetTickCount64 stayed at
+	// 15-16 ms on the same host; the throttler depends on that finer cadence.
 	lastTickReachedBandwidth = lastLoopTick = timeGetTime();
 #if EMULE_COMPILED_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("broadband.throttler.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
