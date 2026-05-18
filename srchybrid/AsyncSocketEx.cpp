@@ -1004,7 +1004,7 @@ bool CAsyncSocketEx::GetPeerName(CString &rPeerAddress, UINT &rPeerPort)
 			rPeerAddress = Inet6AddrToString(((LPSOCKADDR_IN6)sockAddr)->sin6_addr);
 		} else {
 			rPeerPort = ntohs(((LPSOCKADDR_IN)sockAddr)->sin_port);
-			rPeerAddress = inet_ntoa(((LPSOCKADDR_IN)sockAddr)->sin_addr);
+			rPeerAddress = IPv4AddressSeams::FormatIPv4Address(((LPSOCKADDR_IN)sockAddr)->sin_addr.s_addr);
 		}
 
 	delete[] sockAddr;
@@ -1032,7 +1032,7 @@ bool CAsyncSocketEx::GetSockName(CString &rSocketAddress, UINT &rSocketPort) con
 			rSocketAddress = Inet6AddrToString(((LPSOCKADDR_IN6)sockAddr)->sin6_addr);
 		} else {
 			rSocketPort = ntohs(((LPSOCKADDR_IN)sockAddr)->sin_port);
-			rSocketAddress = inet_ntoa(((LPSOCKADDR_IN)sockAddr)->sin_addr);
+			rSocketAddress = IPv4AddressSeams::FormatIPv4Address(((LPSOCKADDR_IN)sockAddr)->sin_addr.s_addr);
 		}
 
 	delete[] sockAddr;

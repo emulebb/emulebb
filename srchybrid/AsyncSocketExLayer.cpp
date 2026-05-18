@@ -64,6 +64,7 @@ to tim.kosse@filezilla-project.org
 #include "AsyncSocketExLayer.h"
 
 #include "AsyncSocketEx.h"
+#include "IPv4AddressSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -401,7 +402,7 @@ bool CAsyncSocketExLayer::GetPeerNameNext(CString &rPeerAddress, UINT &rPeerPort
 			rPeerAddress = Inet6AddrToString(((LPSOCKADDR_IN6)sockAddr)->sin6_addr);
 		} else {
 			rPeerPort = ntohs(((LPSOCKADDR_IN)sockAddr)->sin_port);
-			rPeerAddress = inet_ntoa(((LPSOCKADDR_IN)sockAddr)->sin_addr);
+			rPeerAddress = IPv4AddressSeams::FormatIPv4Address(((LPSOCKADDR_IN)sockAddr)->sin_addr.s_addr);
 		}
 
 	delete[] sockAddr;
@@ -445,7 +446,7 @@ bool CAsyncSocketExLayer::GetSockNameNext(CString &rSockAddress, UINT &rSockPort
 			rSockAddress = Inet6AddrToString(((LPSOCKADDR_IN6)sockAddr)->sin6_addr);
 		} else {
 			rSockPort = ntohs(((LPSOCKADDR_IN)sockAddr)->sin_port);
-			rSockAddress = inet_ntoa(((LPSOCKADDR_IN)sockAddr)->sin_addr);
+			rSockAddress = IPv4AddressSeams::FormatIPv4Address(((LPSOCKADDR_IN)sockAddr)->sin_addr.s_addr);
 		}
 
 	delete[] sockAddr;
