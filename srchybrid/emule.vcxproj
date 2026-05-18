@@ -428,6 +428,7 @@
     <ClInclude Include="AddSourceDlg.h" />
     <ClInclude Include="AddSourceInputSeams.h" />
     <ClInclude Include="AICHSyncThread.h" />
+    <ClInclude Include="AtomicFileSaveSeams.h" />
     <ClInclude Include="ArchivePreviewDlg.h" />
     <ClInclude Include="ArchiveRecovery.h" />
     <ClInclude Include="AsyncProxySocketLayer.h" />

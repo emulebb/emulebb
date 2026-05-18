@@ -20,6 +20,7 @@
 #include <iphlpapi.h>
 #include <unordered_set>
 #include <vector>
+#include "AtomicFileSaveSeams.h"
 #include "AppRegistryIdentitySeams.h"
 #include "ConfigDefaultFilesSeams.h"
 #include "BBPreferenceMigrationSeams.h"
@@ -227,22 +228,34 @@ bool TryReadSmallConfigFileBytes(const CString &rstrFullPath, std::vector<unsign
 
 bool WriteDefaultConfigTemplateFile(const CString &rstrFullPath, LPCTSTR pszTemplateText)
 {
-	const CString strTempPath(rstrFullPath + _T(".tmp"));
+	const CString strTempPath(AtomicFileSaveSeams::BuildDefaultTempPath(rstrFullPath));
+	bool bTempFileCreated = false;
+	bool bSaveSucceeded = false;
 	CSafeFile file;
 	if (!LongPathSeams::OpenFile(file, strTempPath, CFile::modeCreate | CFile::modeWrite | CFile::typeBinary | CFile::shareDenyWrite))
 		return false;
+	bTempFileCreated = true;
 
 	try {
 		const CUnicodeToUTF8 utf8{ CString(pszTemplateText) };
 		file.Write(static_cast<LPCSTR>(utf8), utf8.GetLength());
 		file.Close();
-		return LongPathSeams::MoveFileEx(strTempPath, rstrFullPath, MOVEFILE_REPLACE_EXISTING) != 0;
+		DWORD dwReplaceError = ERROR_SUCCESS;
+		bSaveSucceeded = AtomicFileSaveSeams::TryReplaceTempFile(
+			strTempPath,
+			rstrFullPath,
+			AtomicFileSaveSeams::GetReplaceFlags(false),
+			&dwReplaceError);
+		if (!bSaveSucceeded && thePrefs.GetVerbose())
+			AddDebugLogLine(true, _T("Failed to install default config file %s (%u)"), (LPCTSTR)rstrFullPath, dwReplaceError);
 	} catch (CFileException *ex) {
 		if (thePrefs.GetVerbose())
 			AddDebugLogLine(true, _T("Failed to create default config file %s%s"), (LPCTSTR)rstrFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
+		file.Abort();
 	}
-	return false;
+	(void)AtomicFileSaveSeams::DeleteTempFileAfterSaveAttemptIfNeeded(strTempPath, bTempFileCreated, bSaveSucceeded);
+	return bSaveSucceeded;
 }
 
 void EnsureDefaultConfigTextFiles(const CString &rstrConfigDirectory)
@@ -294,10 +307,13 @@ bool LoadPathListFromFile(const CString &rstrFullPath, CStringList &rOutList)
 
 bool SavePathListToFile(const CString &rstrFullPath, const CStringList &rPaths)
 {
-	const CString strTempPath(rstrFullPath + _T(".tmp"));
+	const CString strTempPath(AtomicFileSaveSeams::BuildDefaultTempPath(rstrFullPath));
+	bool bTempFileCreated = false;
+	bool bSaveSucceeded = false;
 	CSafeBufferedFile file;
 	if (!LongPathSeams::OpenFile(file, strTempPath, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite | CFile::typeBinary))
 		return false;
+	bTempFileCreated = true;
 
 	try {
 		static const WORD wBOM = u'\xFEFF';
@@ -307,13 +323,22 @@ bool SavePathListToFile(const CString &rstrFullPath, const CStringList &rPaths)
 			file.Write(_T("\r\n"), 2 * sizeof(TCHAR));
 		}
 		file.Close();
-		return LongPathSeams::MoveFileEx(strTempPath, rstrFullPath, MOVEFILE_REPLACE_EXISTING) != 0;
+		DWORD dwReplaceError = ERROR_SUCCESS;
+		bSaveSucceeded = AtomicFileSaveSeams::TryReplaceTempFile(
+			strTempPath,
+			rstrFullPath,
+			AtomicFileSaveSeams::GetReplaceFlags(false),
+			&dwReplaceError);
+		if (!bSaveSucceeded && thePrefs.GetVerbose())
+			AddDebugLogLine(true, _T("Failed to install %s (%u)"), (LPCTSTR)rstrFullPath, dwReplaceError);
 	} catch (CFileException *ex) {
 		if (thePrefs.GetVerbose())
 			AddDebugLogLine(true, _T("Failed to save %s%s"), (LPCTSTR)rstrFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
+		file.Abort();
 	}
-	return false;
+	(void)AtomicFileSaveSeams::DeleteTempFileAfterSaveAttemptIfNeeded(strTempPath, bTempFileCreated, bSaveSucceeded);
+	return bSaveSucceeded;
 }
 
 /**
@@ -350,10 +375,13 @@ bool LoadServerMetAddressListFromFile(const CString &rstrFullPath, CStringList &
  */
 bool SaveServerMetAddressListToFile(const CString &rstrFullPath, const CStringList &rUrls)
 {
-	const CString strTempPath(rstrFullPath + _T(".tmp"));
+	const CString strTempPath(AtomicFileSaveSeams::BuildDefaultTempPath(rstrFullPath));
+	bool bTempFileCreated = false;
+	bool bSaveSucceeded = false;
 	CSafeBufferedFile file;
 	if (!LongPathSeams::OpenFile(file, strTempPath, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite | CFile::typeBinary))
 		return false;
+	bTempFileCreated = true;
 
 	try {
 		static const WORD wBOM = u'\xFEFF';
@@ -363,13 +391,22 @@ bool SaveServerMetAddressListToFile(const CString &rstrFullPath, const CStringLi
 			file.Write(_T("\r\n"), 2 * sizeof(TCHAR));
 		}
 		file.Close();
-		return LongPathSeams::MoveFileEx(strTempPath, rstrFullPath, MOVEFILE_REPLACE_EXISTING) != 0;
+		DWORD dwReplaceError = ERROR_SUCCESS;
+		bSaveSucceeded = AtomicFileSaveSeams::TryReplaceTempFile(
+			strTempPath,
+			rstrFullPath,
+			AtomicFileSaveSeams::GetReplaceFlags(false),
+			&dwReplaceError);
+		if (!bSaveSucceeded && thePrefs.GetVerbose())
+			AddDebugLogLine(true, _T("Failed to install %s (%u)"), (LPCTSTR)rstrFullPath, dwReplaceError);
 	} catch (CFileException *ex) {
 		if (thePrefs.GetVerbose())
 			AddDebugLogLine(true, _T("Failed to save %s%s"), (LPCTSTR)rstrFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
+		file.Abort();
 	}
-	return false;
+	(void)AtomicFileSaveSeams::DeleteTempFileAfterSaveAttemptIfNeeded(strTempPath, bTempFileCreated, bSaveSucceeded);
+	return bSaveSucceeded;
 }
 
 /**
