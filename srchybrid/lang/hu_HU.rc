@@ -59,45 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Nem tudtam használatba venni a fájlleírót. (socket)"
     IDS_ABOUTBOX            "&Az eMule névjegye..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s -> %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Sikeres kapcsolat: %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Név feloldás: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Név feloldva %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Kapcsolódás: %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Átirányítás: %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Fájlinformációk gyűjtése"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR "Letöltési hiba, kód: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Hiba történt a kapcsolódásnál, kód: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Érvénytelen válasz érkezett a kiszolgálótól."
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Érvénytelen HTTP válasz érkezett a kiszolgálótól."
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "A fájl letöltése közben hiba következett be, kód: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "Kiszolgálók listájának frissítése: %s%% / %s kész"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Fájl fogadása"
-    IDS_HTTPDOWNLOAD_OF     "%s / %s"
     IDS_CANCEL              "Mégsem"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Kiszolgálók listájának frissítése"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s másolva)"
     IDS_HSAV                "Hash-készlet elérhető"
     IDS_FD_CORR             "Sérült"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "A megadott '%s' fájl már létezik.\nBiztosan felülírjam?"
     IDS_FD_RECOV            "Helyreállított"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "A letöltendő fájl megnyitása nem sikerült, kód: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Átvitel megszakítása"
     IDS_FD_COMPR            "Tömörítés"
     IDS_WIZARD_NETWORK      "Válaszd ki a használni kívánt hálózatot."
     IDS_MAIN_READY          "eMule Verzió %s kész"
@@ -1399,11 +1373,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Átviteli ráta:"
     IDS_SAVELOG             "Napló mentése"
     IDS_CMT_COPYCLIPBOARD   "Megjegyzés másolása vágólapra"
-    IDS_ASKDOWNLOADLANG     "A kiválasztott nyelv még nincs telepítve. Szeretnéd, hogy az eMule letöltse az emule-project.net oldalról?"
-    IDS_ASKDOWNLOADLANGCAP  "Nyelvi fájlok letöltése"
     IDS_DELETESELECTED      "Törlés"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "A kiválasztott nyelv letöltése és telepítése nem sikerült: %s!"
     IDS_ERR_BADFOLDER       "Érvénytelen mappa.\nA mappát nem sikerült létrehozni. Kérlek ellenőrizd a nevét és a helyét."
     IDS_AUTOREMOVEFD        "Befejezett letöltések automatikus törlése a sorból"
 END
@@ -1780,7 +1750,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Nyelvi fájl letöltése"
     IDS_DOWNLOADING_SERVERMET_FROM "Server.met letöltése innen: %s"
     IDS_DOWNLOADING_SERVERMET "Server.met letöltése..."
     IDS_FULLALLOC           "A teljes fájlméret lefoglalása a nem-szétszort részekből álló fájlok számára"

@@ -59,30 +59,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "خطاي ورود به سوكت ويندوز"
     IDS_ABOUTBOX            "&درباره ايمول(قاطر)َ..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s از %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "اتصال به %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "درست كردن نام: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "نام تغيير يافت به %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "در حال اتصال به %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "در حال اتصال دوباره به %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "دريافت اطلاعات فايل"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "هنگام دريافت فايل خطايي رخ داد, شناسه خطا: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "هنگام متصل شدن به سرويس دهنده  خطايي رخ داد, شناسه خطا: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "ناتواني از دريافت پاسخ درست از سرويس دهنده "
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "ناتواني از دريافت صحيح لينك وب از سرويس دهنده "
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "در هنگام دريافت فايل خطايي به وقوع پيوست, شناسه خطا: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "در حال دريافت: %s%% از %s تكميل شد"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "درحال دريافت فايل"
-    IDS_HTTPDOWNLOAD_OF     "%s از %s"
     IDS_FILELINK            "لينك فايل"
     IDS_LD_BASICOPT         "تنظيمات اصلي"
     IDS_LD_ADDSOURCE        "من را به عنوان منبع فايل اضافه كن"
@@ -95,17 +75,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "بروز رساني ليست سرويس دهنده ها"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s كپي شد)"
     IDS_LD_ADDHASHSET       "كد اطلاعاتي را بطور كامل اضافه كن hashset"
     IDS_HSAV                "Hashset كد اطلاعاتي موجود است"
     IDS_DL_SHOWED2KLINK     "eD2K لينكهاي ايدانكي..."
     IDS_FD_CORR             "خراب شده"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "فايل مورد نظر '%s' پيش از اين موجود بوده.\nآيا ميخواهيد اين فايل جايگزين شود؟"
     IDS_FD_RECOV            "بهبود و بازيافت شد"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "در هنگام باز كردن فايل دريافت شده خطايي بروز كرد, شناسه خطا: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER " درحال قطع كردن انتقال فايل"
     IDS_FD_COMPR            "مقدار حجم فشردگي"
     IDS_WIZARD_NETWORK      "شبكه(هايي) را كه ميخواهي استفاده كني انتخاب كن."
     IDS_MAIN_READY          "شماره نسخه ايمول است %s در حال حاضر"
@@ -1506,11 +1480,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "سرعت انتقال"
     IDS_SAVELOG             "ذخيره کردن گزارش"
     IDS_CMT_COPYCLIPBOARD   "کپي کردن نظرات"
-    IDS_ASKDOWNLOADLANG     "زباني را که انتخاب کرده ايده در سيستم شما نصب نشده است.آيا مايليد ايمول آنرا دانلود کند؟"
-    IDS_ASKDOWNLOADLANGCAP  "دريافت فايل هاي زبان"
     IDS_DELETESELECTED      "حذف"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "و نصب زبان انتخابي نشد از dllموفق به دانلود کردنِ %s!"
     IDS_ERR_BADFOLDER       "پوشه بي اعتبار.\ساختن فولدر جديد امکان ندارد. لطفا نام و محل ان را چک کنيد.َ"
     IDS_AUTOREMOVEFD        "دانلود هاي کامل شده بصورت خودکار حذف شوند"
 END
@@ -1747,7 +1717,6 @@ BEGIN
     IDS_SEARCH_ATTRERR      "در خطاي نحوي '%s' جزء جستجو"
     IDS_SEARCH_MISSINGANDRIGHT "ANDفقدان قسمت راست براي اپراتور "
     IDS_SEARCH_OPRERR       "خطاي نحوي در اپراتور مقايسه اي '%s'"
-    IDS_DOWNLOAD_LANGFILE   "در حال دريافت کردن فايل زبان"
     IDS_DOWNLOADING_SERVERMET_FROM ".met در حال دريافت کردن از سرور %s"
     IDS_DOWNLOADING_SERVERMET ".metدر حال دريافت کردن سرور...َ"
     IDS_FULLALLOC           " اندازه فايلي کامل به فايل هاي غير پراکنده اختصاص دهيد"

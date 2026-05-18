@@ -59,30 +59,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Помилка при ініціалізації сокетів."
     IDS_ABOUTBOX            "&Про eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s з %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "З'єднано з %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Визначення імені: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Ім'я визначено як %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "З'єднування з %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Переадресовано на %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Отримання інформації про файл"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Сталася помилка спробі завантажити файл, Помилка: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Сталася помилка при з'єднуванні з сервером, Помилка: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Неможливо отримати відповідь з сервера"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Неможливо отримати HTTP відповідь з сервера"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Сталася помилка при завантаженні файла, Помилка: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Завантажування: %s%% з %s завершено"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Відшукування файлу"
-    IDS_HTTPDOWNLOAD_OF     "%s з %s"
     IDS_FILELINK            "Посилання на файл"
     IDS_LD_BASICOPT         "Основні опції"
     IDS_LD_ADDSOURCE        "Додати себе як джерело"
@@ -95,17 +75,11 @@ STRINGTABLE
 BEGIN
     IDS_LD_ADDHTML          "Додати HTML-теґи"
     IDS_HTTP_CAPTION        "Оновлення списку серверів"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s скопійовано)"
     IDS_LD_ADDHASHSET       "Додати повний хеш"
     IDS_HSAV                "Хеш є доступним"
     IDS_DL_SHOWED2KLINK     "eD2K посилання..."
     IDS_FD_CORR             "Пошкоджено"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Файл '%s' вже існує.\nВи хочете його замінити?"
     IDS_FD_RECOV            "Відновлено"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Сталася помилка при відкриванні файла, який буде завантажено, помилка: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Переривання передавання"
     IDS_FD_COMPR            "Стиснення"
     IDS_WIZARD_NETWORK      "Виберіть яку(і) мережу(і) Ви хочете використовувати."
     IDS_MAIN_READY          "eMule версії %s готовий до роботи"
@@ -1470,11 +1444,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Швидкість:"
     IDS_SAVELOG             "Зберегти Лог"
     IDS_CMT_COPYCLIPBOARD   "Копіювати коментар"
-    IDS_ASKDOWNLOADLANG     "Мову, яку Ви вибрали не встановлено у Вашій системі. Ви хочете, щоб eMule завантажив її з emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Завантажити мовний файл"
     IDS_DELETESELECTED      "Видалити"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Неможливо завантажити і встановити вибраний dll мови з %s!"
     IDS_ERR_BADFOLDER       "Хибна тека.\nНеможливо створити тку. Будь ласка перевірте ім'я і розташування."
     IDS_AUTOREMOVEFD        "Автоматично прибирати завершені завантаження"
 END
@@ -1779,7 +1749,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Завантажування мовного файлу"
     IDS_DOWNLOADING_SERVERMET_FROM "Завантажування server.met з %s"
     IDS_DOWNLOADING_SERVERMET "Завантажування server.met..."
     IDS_FULLALLOC           "Займати місце під повний розмір файлу (окрім 'розкиданих')"

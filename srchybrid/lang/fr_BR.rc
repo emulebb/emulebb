@@ -58,25 +58,10 @@ STRINGTABLE FIXED IMPURE
 BEGIN
 	IDS_SOCKETS_INIT_FAILED	"Fazi p'eo bet deraouekaet ar Socket Windows"
 	IDS_ABOUTBOX	"&A-zivout eMule..."
-	IDS_HTTPDOWNLOAD_FILESTATUS	"%s eus %s"
-	IDS_HTTPDOWNLOAD_CONNECTED	"Kennasket ouzh %s"
-	IDS_HTTPDOWNLOAD_RESOLVING_NAME	"Klask an anv : %s"
-	IDS_HTTPDOWNLOAD_RESOLVED_NAME	"Anv kavet : %s"
-	IDS_HTTPDOWNLOAD_CONNECTING	"Kennaskañ ouzh %s"
-	IDS_HTTPDOWNLOAD_REDIRECTING	"Dilec'hiañ diwar %s"
 END
 
 STRINGTABLE FIXED IMPURE
 BEGIN
-	IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION	"Klask titouroù restroù"
-	IDS_HTTPDOWNLOAD_GENERIC_ERROR	"Fazi e-pad an taol-esae pellgargañ, Fazi : %s"
-	IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER	"Fazi e-pad ar c'hennaskañ ouzh ar servijer, Fazi : %s"
-	IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE	"Respont ar servijer direizh"
-	IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE	"Respont HTTP ar servijer direizh"
-	IDS_HTTPDOWNLOAD_ERROR_READFILE	"Fazi p'eo bet pellgarget ar restr, Fazi : %s"
-	IDS_HTTPDOWNLOAD_PERCENTAGE	"Nevesaat roll ar servijerioù : %s%% eus %s graet"
-	IDS_HTTPDOWNLOAD_RETREIVEING_FILE	"Dastum ar restr"
-	IDS_HTTPDOWNLOAD_OF	"%s eus %s"
 	IDS_FILELINK	"Ere restr"
 	IDS_LD_BASICOPT	"Dibaboù kentañ"
 	IDS_LD_ADDSOURCE	"Klokaat an ere gant hoc'h IP"
@@ -89,15 +74,11 @@ STRINGTABLE FIXED IMPURE
 BEGIN
 	IDS_LD_ADDHTML	"Ouzhpennañ ar balizennoù HTML"
 	IDS_HTTP_CAPTION	"Nevesaat roll ar servijerioù"
-	IDS_HTTPDOWNLOAD_TIMELEFT	"%s (%s kopiet)"
 	IDS_LD_ADDHASHSET	"Ouzhpennañ an daolenn zrailhañ klokaet"
 	IDS_HSAV	"Taolenn zrailhañ"
 	IDS_DL_SHOWED2KLINK	"Diskouez an ereoù eD2K..."
 	IDS_FD_CORR	"Gwastet"
-	IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE	"Amañ eo dija ar restr '%s'.\nFlastrañ anezhañ ?"
 	IDS_FD_RECOV	"Dastumet"
-	IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN	"Fazi p'eo bet digoret ar restr da bellgargañ, Fazi: %s"
-	IDS_HTTPDOWNLOAD_ABORTING_TRANSFER	"Dilezel an treuzkas"
 	IDS_FD_COMPR	"Gwaskañ"
 	IDS_WIZARD_NETWORK	"Dibabit pe rouedad(où) a fell deoc'h implijout."
 	IDS_MAIN_READY	"Prest eo eMule stumm %s"
@@ -1381,10 +1362,7 @@ BEGIN
 	IDS_TRANSFER_RATE_LABEL	"Feur kas :"
 	IDS_SAVELOG	"Enrollañ ar c'herzh-levr"
 	IDS_CMT_COPYCLIPBOARD	"Kopiañ an evezhiadenn er skurzer"
-	IDS_ASKDOWNLOADLANG	"N'eo ket staliet en hor reizhiad ar yezh ho peus dibabet. Ha fellout a ra deoc'h e vefe pellgarget gant eMule an droidigezh adalek emule-project.net ?"
-	IDS_ASKDOWNLOADLANGCAP	"Pellgargañ an droidigezh"
 	IDS_DELETESELECTED	"Dilemel"
-	IDS_ERR_FAILEDDOWNLOADLANG	"Fazi o pellgargañ ha fazi o staliañ ar yezh dibabet adalek %s!"
 	IDS_ERR_BADFOLDER	"Kavlec'h direizh.\nN'haller ket sevel ar c'havlec'h. Gwiriit e anv hag e lec'hiadur."
 	IDS_AUTOREMOVEFD	"Diverkañ ar pellgargañ kaset a-benn ent-emgefre"
 END
@@ -1743,7 +1721,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE	"O pellgargañ restr yezh"
     IDS_DOWNLOADING_SERVERMET_FROM "O pellgargañ server.met adalek %s"
     IDS_DOWNLOADING_SERVERMET "O pellgargañ server.met..."
     IDS_FULLALLOC	"Mirout memor a-bezh evit lodennoù ar restroù non-sparse"

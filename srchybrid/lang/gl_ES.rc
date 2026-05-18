@@ -59,45 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Erro inicializando os sockets de windows."
     IDS_ABOUTBOX            "&Acerca de eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s de %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Conectado a %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Resolvendo nome: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Nome resolto a %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Conectando a %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Redireccionando a %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Obtendo información do arquivo"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Houbo un erro mentres se trataba de descargar o arquivo, Erro: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Houbo un erro conectando co servidor, Erro: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Non se recibíu unha resposta válida do servidor"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Non se recibíu unha resposta HTTP válida do servidor"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Houbo un erro mentres se trataba de descargar o arquivo, Erro: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "Actualizando a lista de servidores: %s%% of %s completado"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Obtendo o arquivo"
-    IDS_HTTPDOWNLOAD_OF     "%s de %s"
     IDS_CANCEL              "Cancelar"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Actualizando a lista de servidores"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s copiado)"
     IDS_HSAV                "Hashset disponible"
     IDS_FD_CORR             "Corrompido"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "O arquivo '%s' xa existe.\nDesexas substituílo?"
     IDS_FD_RECOV            "Recuperado"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN "Houbo un erro ao abrir o arquivo, Erro: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Abortando transferencia"
     IDS_FD_COMPR            "Compresión"
     IDS_WIZARD_NETWORK      "Seleccionar que red(es) queres usar."
     IDS_MAIN_READY          "Versión %s de eMule preparada"
@@ -1401,11 +1375,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Tasa de transferencia:"
     IDS_SAVELOG             "Gardar rexistro"
     IDS_CMT_COPYCLIPBOARD   "Copiar comentario ao portapapeis"
-    IDS_ASKDOWNLOADLANG     "O idioma seleccionado non está instalado no sistema. Queres que eMule o descargue de emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Descargar arquivos de idiomas"
     IDS_DELETESELECTED      "Borrar"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Erro ao descargar e instalar o arquivo dll da linguaxe seleccionada de %s!"
     IDS_ERR_BADFOLDER       "Carpeta non válida.\nA carpeta non pode ser creada. Por favor comproba nome e ubicación."
     IDS_AUTOREMOVEFD        "Limpar automaticamente as descargas completas"
 END
@@ -1783,7 +1753,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Descargando arquivo de idioma"
     IDS_DOWNLOADING_SERVERMET_FROM "Descargando server.met dende %s"
     IDS_DOWNLOADING_SERVERMET "Descargando server.met..."
     IDS_FULLALLOC           "Reservar o espacio necesario para arquivos de partes non dispersos"

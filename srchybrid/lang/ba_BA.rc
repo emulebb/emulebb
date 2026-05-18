@@ -59,47 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Errorea Windowseko socket-ak hasterakoan."
     IDS_ABOUTBOX            "&eMule-ren inguruan..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s / %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "%s(e)ra konektatuta"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Izena ebazten: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Izena %s(e)ra ebatzita"
-    IDS_HTTPDOWNLOAD_CONNECTING "%s(e)ra konektatzen"
-    IDS_HTTPDOWNLOAD_REDIRECTING "%s(e)ra bideratzen"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION
-                            "Fitxategi informazioa eskuratzen"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Errorea fitxategia jaisten saiatzerakoan: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Errorea zerbitzarira konektatzerakoan: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Zerbitzaritik ez da balioko erantzunik jaso"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Zerbitzaritik ez da balioko HTTP erantzunik jaso"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Errorea fitxategia jaisterakoan: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "Zerbitzari zerrenda eguneratzen: %s%% / %s osatua"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Fitxategia eskuratzen"
-    IDS_HTTPDOWNLOAD_OF     "%s / %s"
     IDS_CANCEL              "Utzi"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Zerbitzari zerrenda eguneratzen"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s kopiatuta)"
     IDS_HSAV                "Hashset-a eskuragarri"
     IDS_FD_CORR             "Akatsduna"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Badago '%s' izeneko fitxategi bat.\nOrdezkatu nahi al duzu?"
     IDS_FD_RECOV            "Berreskuratuta"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Errorea jaitsitako fitxategia irekitzerakoan: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Transferentzia ezeztatzen"
     IDS_FD_COMPR            "Konpresioa"
     IDS_WIZARD_NETWORK      "Hautatu erabili nahi d(it)uzun sarea(k)."
     IDS_MAIN_READY          "eMule %s Bertsioa prest"
@@ -1402,11 +1374,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Transferentzia indizea:"
     IDS_SAVELOG             "Log fitxategia gorde"
     IDS_CMT_COPYCLIPBOARD   "Iruzkina kopiatu"
-    IDS_ASKDOWNLOADLANG     "Aukeratutako hizkuntza ez dago instalatuta. eMulek eMule-project.net-etik jaistea nahi al duzu?"
-    IDS_ASKDOWNLOADLANGCAP  "Hizkuntza fitxategiak jaitsi dira"
     IDS_DELETESELECTED      "Ezabatu"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Errorea aukeratutako hizkuntza jaitsi eta instalatzerakoan (dll fitxategia) %s-tik!"
     IDS_ERR_BADFOLDER       "Baliogabeko karpeta.\nEzin da karpeta sortu. Izena eta kokapena aztertu."
     IDS_AUTOREMOVEFD        "Osatutako jaitsierak automatikoki garbitu"
 END
@@ -1782,7 +1750,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Hizkuntza fitxategia jaisten"
     IDS_DOWNLOADING_SERVERMET_FROM "server.met jaisten %s-(e)tik"
     IDS_DOWNLOADING_SERVERMET "server.met jaisten..."
     IDS_FULLALLOC           "Fitxategiaren tamaina osoa gorde jende ugarik dituen fitxategientzako"

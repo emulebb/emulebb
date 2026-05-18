@@ -61,30 +61,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Socket初始化失败."
     IDS_ABOUTBOX            "关于eMule(&A) ..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s从%s"
-    IDS_HTTPDOWNLOAD_CONNECTED "连接到%s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "正在解析域名: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "成功解析域名为%s"
-    IDS_HTTPDOWNLOAD_CONNECTING "正在连接%s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "重定向到%s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "获取文件信息"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "试图下载文件时产生错误: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "连接服务器时产生错误: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "无法从服务器获得正确的回应"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "无法从服务器获得正确的HTTP回应"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "下载文件时产生错误: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "正在下载:已完成 %s%%/%s"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "正在接收文件"
-    IDS_HTTPDOWNLOAD_OF     "%s/%s"
     IDS_FILELINK            "文件链接"
     IDS_LD_BASICOPT         "基本选项"
     IDS_LD_ADDSOURCE        "把你的IP地址作为来源添加进链接"
@@ -97,17 +77,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "正在更新服务器列表"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s(已复制%s)"
     IDS_LD_ADDHASHSET       "添加完整 Hashset"
     IDS_HSAV                "Hashset 可用"
     IDS_DL_SHOWED2KLINK     "显示 ED2K 链接..."
     IDS_FD_CORR             "已损坏"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "文件'%s'已存在,\n是否替换?"
     IDS_FD_RECOV            "已恢复"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "打开下载文件时产生错误: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "正在中止传输"
     IDS_FD_COMPR            "压缩"
     IDS_WIZARD_NETWORK      "选择你想要使用网络."
     IDS_MAIN_READY          "eMule版本%s已经就绪"
@@ -1508,11 +1482,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "传输比例:"
     IDS_SAVELOG             "保存日志"
     IDS_CMT_COPYCLIPBOARD   "复制评语到剪贴板"
-    IDS_ASKDOWNLOADLANG     "所选的语言没有安装在你的系统里.你想要从emule-project.net下载吗?"
-    IDS_ASKDOWNLOADLANGCAP  "下载语言文件"
     IDS_DELETESELECTED      "删除"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "从%s下载和安装所选的语言dll失败!"
     IDS_ERR_BADFOLDER       "无效文件夹.\n不能创建文件夹.请检查名字和位置."
     IDS_AUTOREMOVEFD        "自动清除完成的下载"
 END
@@ -1749,7 +1719,6 @@ BEGIN
     IDS_SEARCH_ATTRERR      "搜索属性 '%s' 中有语法错误"
     IDS_SEARCH_MISSINGANDRIGHT "未指定 AND 操作符的右侧操作数"
     IDS_SEARCH_OPRERR       "比较操作符 '%s' 中有语法错误"
-    IDS_DOWNLOAD_LANGFILE   "正在下载语言文件..."
     IDS_DOWNLOADING_SERVERMET_FROM "正在下载来自 %s 的 server.met 文件..."
     IDS_DOWNLOADING_SERVERMET "正在下载 server.met 文件..."
     IDS_FULLALLOC           "为非稀疏文件分配硬盘空间"

@@ -59,30 +59,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Kohtasin virheen, kun yritin luoda Windows-soketteja."
     IDS_ABOUTBOX            "&Tietoa eMulesta..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "Tiedosto: %s Palvelin: %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Yhdistin %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Selvitän nimeä: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Nimi selvitetty: %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Yhdistän: %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Uudelleenohjaus: %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Haen tiedoston tiedot"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Kohtasin virheen, kun yritin ladata tiedostoa: %s."
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Kohtasin virheen, kun yhdistin palvelimelle: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Palvelin ei palauttanut kelvollista vastausta."
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Palvelin ei palauttanut kelvollista HTTP-vastausta."
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Kohtasin virheen, kun latasin tiedostoa: %s."
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Päivitän palvelinlistaa: %s%% / %s valmiina"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Haen tiedostoa"
-    IDS_HTTPDOWNLOAD_OF     "%s / %s"
     IDS_FILELINK            "Tiedostolinkki"
     IDS_LD_BASICOPT         "Perusasetukset"
     IDS_LD_ADDSOURCE        "Lisää itsesi lähteeksi"
@@ -95,17 +75,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Päivitän palvelinlistaa"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s kopioitu)"
     IDS_LD_ADDHASHSET       "Lisää täydellinen hashkokoelma"
     IDS_HSAV                "Hashkokoelma on saatavilla"
     IDS_DL_SHOWED2KLINK     "eD2K -linkit..."
     IDS_FD_CORR             "Turmeltunut"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Tiedosto '%s' on jo olemassa.\nHaluatko korvata sen?"
     IDS_FD_RECOV            "Pelastettu"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Kohtasin virheen avatessaan tiedostoa luettavaksi: %s."
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Peruutan siirtoa"
     IDS_FD_COMPR            "Pakkaus"
     IDS_WIZARD_NETWORK      "Valitse mitä verkkoja haluat käyttää."
     IDS_MAIN_READY          "eMule %s on valmis käytettäväksi"
@@ -1507,11 +1481,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Siirtonopeus:"
     IDS_SAVELOG             "Tallenna loki"
     IDS_CMT_COPYCLIPBOARD   "Kopioi kommentti leikepöydälle"
-    IDS_ASKDOWNLOADLANG     "Valitsemaasi kieltä ei ole vielä asennettu. Haluatko, että lataan sen verkosta?"
-    IDS_ASKDOWNLOADLANGCAP  "Kielitiedostojen lataus..."
     IDS_DELETESELECTED      "Poista"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Kohtasin virheen, kun yritin ladata ja asentaa valitun kielen osoitteesta %s!"
     IDS_ERR_BADFOLDER       "Kelvoton hakemisto.\nEn ei voi luoda hakemistoa. Tarkista hakemiston nimi ja sijainti."
     IDS_AUTOREMOVEFD        "Poista valmiit lataukset listasta autom."
 END
@@ -1748,7 +1718,6 @@ BEGIN
     IDS_SEARCH_ATTRERR      "Rakennevirhe hakuehdossa '%s'"
     IDS_SEARCH_MISSINGANDRIGHT "AND-operaattorin oikea puoli puuttuu"
     IDS_SEARCH_OPRERR       "Rakennevirhe vertailuoperaattorin '%s' käytössä"
-    IDS_DOWNLOAD_LANGFILE   "Lataa kielipakettia"
     IDS_DOWNLOADING_SERVERMET_FROM "Lataa server.met- tiedostoa palvelimelta %s"
     IDS_DOWNLOADING_SERVERMET "Lataa tiedostoa server.met..."
     IDS_FULLALLOC           "Varaa levyltä tiedoston verran tilaa tiedostoille"

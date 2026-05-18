@@ -59,45 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Fout bij het initialiseren van de Windows-sockets."
     IDS_ABOUTBOX            "Over eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s van %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Verbonden met %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Zoeken naar: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Gevonden naam: %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Bezig te verbinden met %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Herleid naar %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Bestandsinformatie ophalen"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Er is een fout opgetreden bij het ophalen van het bestand, fout: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Er is een fout opgetreden met de verbinding naar de server, fout: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Ongeldig antwoord gekregen van de server"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Ongeldig HTTP-antwoord gekregen van de server"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Er is een fout opgetreden bij het downloaden van het bestand, fout: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Servers bijwerken: %s%% van %s compleet"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Ophalen van het bestand"
-    IDS_HTTPDOWNLOAD_OF     "%s van %s"
     IDS_CANCEL              "Afbreken"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Serverlijst bijwerken"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s gekopieerd)"
     IDS_HSAV                "Hashset beschikbaar"
     IDS_FD_CORR             "Corrupt"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Het bestand '%s' bestaat al.\nWilt u het vervangen?"
     IDS_FD_RECOV            "Hersteld"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Er is een fout opgetreden bij het openen van het bestand voor bestandsoverdracht, fout: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Overdracht afgebroken"
     IDS_FD_COMPR            "Compressie"
     IDS_WIZARD_NETWORK      "Kies welke netwerk(en) u wilt gebruiken."
     IDS_MAIN_READY          "eMule versie %s is klaar"
@@ -1396,11 +1370,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Overdrachtssnelheid:"
     IDS_SAVELOG             "Logboek opslaan"
     IDS_CMT_COPYCLIPBOARD   "Commentaar naar klembord kopiëren"
-    IDS_ASKDOWNLOADLANG     "De geselecteerde taal is niet geïnstalleerd. Wilt u het via eMule downloaden van emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Taalbestanden downloaden"
     IDS_DELETESELECTED      "Verwijderen"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Fout bij het downloaden en installeren van de geselecteerde taal-DLL van %s!"
     IDS_ERR_BADFOLDER       "Ongeldige map.\nMap kan niet worden aangemaakt. Controleer a.u.b. naam en plaats."
     IDS_AUTOREMOVEFD        "Complete downloads automatisch verwijderen"
 END
@@ -1777,7 +1747,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Taalbestand downloaden"
     IDS_DOWNLOADING_SERVERMET_FROM "Server.met downloaden vanaf %s"
     IDS_DOWNLOADING_SERVERMET "Server.met downloaden..."
     IDS_FULLALLOC           "Reserveer direct volledige bestandsgrootte voor non-sparse inkomende bestanden"

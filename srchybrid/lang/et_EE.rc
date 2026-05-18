@@ -59,42 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Viga Windowsi socketite initsialiseerimsiel."
     IDS_ABOUTBOX            "&eMule info..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s kasutajalt %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Ühendatud serveriga %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Lahendan nime: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Lahendatud nimi on %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Ühendan serveriga %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Suunan serverile %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Tõmban failiinfot"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR "Viga faili tõmbamisel, viga: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Viga serveriühendusel, viga: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Vigane vastus serverilt"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Vigane HTTP vastus serverilt"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE "Viga faili tõmbamisel, viga: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Uuendan serverite loendit: %s%% (%s) valmis"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Tõmban faili"
-    IDS_HTTPDOWNLOAD_OF     "%s/%s"
     IDS_CANCEL              "Loobu"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Uuendan serverite loendit"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s kopeeritud)"
     IDS_HSAV                "Hashset olemas"
     IDS_FD_CORR             "Vigane"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Fail nimega '%s' on juba olemas.\nKas kirjutan selle üle?"
     IDS_FD_RECOV            "Taastatud"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN "Viga tõmmatava faili avamisel, viga: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Katkestan tõmbamist"
     IDS_FD_COMPR            "Pakkimine"
     IDS_WIZARD_NETWORK      "Vali, milliseid võrke soovid kasutada."
     IDS_MAIN_READY          "eMule versioon %s töövalmis"
@@ -1382,10 +1359,6 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Ülekandekiirus:"
     IDS_SAVELOG             "Salvesta logi"
     IDS_CMT_COPYCLIPBOARD   "Kopeeri kommentaar puhvrisse"
-    IDS_ASKDOWNLOADLANG     "Valitud keel pole Sinu arvutisse paigaldatud. Kas soovid tõmmata ta emule-project.net kodulehelt?"
-    IDS_ASKDOWNLOADLANGCAP  "Tõmba keelefailid"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Viga valitud keelefailide tõmbamisel ja paigaldusel %s-st!"
     IDS_ERR_BADFOLDER       "Ebasobiv kaust.\nKausta pole võimalik tekitada - kontrolli nime ja asukohta."
     IDS_AUTOREMOVEFD        "Peida kohalejõudnud failid automaatselt"
 END
@@ -1769,7 +1742,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Lae alla keele fail"
     IDS_DOWNLOADING_SERVERMET_FROM "Lae alla server.met alates %s"
     IDS_DOWNLOADING_SERVERMET "Lae alla server.met ..."
     IDS_FULLALLOC           "Paiguta täis failikülg koondatud part failiks"

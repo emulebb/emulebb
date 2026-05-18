@@ -59,30 +59,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Windowsソケットの初期化中にエラーが発生しました"
     IDS_ABOUTBOX            "eMuleについて(&A)..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s(%s)"
-    IDS_HTTPDOWNLOAD_CONNECTED "%sに接続しました"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "名前解決中: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "%sに名前解決しました"
-    IDS_HTTPDOWNLOAD_CONNECTING "%sへ接続中"
-    IDS_HTTPDOWNLOAD_REDIRECTING "%sへリダイレクト中"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "ファイル情報を取得しています"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "ファイルのダウンロード試行中にエラーが発生しました。エラー: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "サーバーへの接続中にエラーが発生しました。エラー: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "サーバーから有効な応答の受信に失敗しました"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "サーバーから有効なHTTP応答の受信に失敗しました"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "ファイルをダウンロード中にエラーが発生しました。エラー: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "ダウンロード中: %s%%完了 (総サイズ: %s)"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "ファイルを検索中"
-    IDS_HTTPDOWNLOAD_OF     "%s / %s"
     IDS_FILELINK            "ファイルリンク"
     IDS_LD_BASICOPT         "基本オプション"
     IDS_LD_ADDSOURCE        "ソースとして自分自身を追加する"
@@ -95,17 +75,11 @@ STRINGTABLE
 BEGIN
     IDS_LD_ADDHTML          "HTMLタグを追加"
     IDS_HTTP_CAPTION        "サーバーリストを更新中"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s 済)"
     IDS_LD_ADDHASHSET       "完了ハッシュセットを追加"
     IDS_HSAV                "利用可能ハッシュセット"
     IDS_DL_SHOWED2KLINK     "eD2Kリンクを表示..."
     IDS_FD_CORR             "破損"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "ファイル'%s'は既に存在しています。\n上書きして宜しいですか?"
     IDS_FD_RECOV            "修復"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "ダウンロードしたファイルのオープン中にエラーが発生しました。エラー: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "転送を中止しています"
     IDS_FD_COMPR            "圧縮"
     IDS_WIZARD_NETWORK      "使用するネットワークを選択して下さい"
     IDS_MAIN_READY          "eMule バージョン %s がリリースされました"
@@ -1451,11 +1425,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "転送速度:"
     IDS_SAVELOG             "記録を保存する"
     IDS_CMT_COPYCLIPBOARD   "解説をクリップボードにコピー"
-    IDS_ASKDOWNLOADLANG     "選択した言語はシステムにインストールされていません。eMuleでemule-projectから言語ファイルをダウンロードしますか?"
-    IDS_ASKDOWNLOADLANGCAP  "言語ファイルをダウンロード"
     IDS_DELETESELECTED      "削除"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "%sから選択された言語DLLのダウンロード・インストール作業に失敗しました!"
     IDS_ERR_BADFOLDER       "無効なフォルダ\nフォルダを作成できません。フォルダ名と位置を確認して下さい"
     IDS_AUTOREMOVEFD        "完了したダウンロードを自動クリア"
 END
@@ -1786,7 +1756,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "言語ファイルをダウンロードしています"
     IDS_DOWNLOADING_SERVERMET_FROM "%sからserver.metをダウンロードしています"
     IDS_DOWNLOADING_SERVERMET "server.metをダウンロードしています..."
     IDS_FULLALLOC           "非スパース部品ファイル用に完全なファイルサイズを割り当てる"

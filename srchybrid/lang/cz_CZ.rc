@@ -59,46 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Chyba při zavedení soketů windows."
     IDS_ABOUTBOX            "&O eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s z %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Připojeno k %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Přebírané jméno: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Přebrané jméno k %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Připojování k %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Přesměrování do %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Získávání informací o souboru"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Během pokusu o stahování souboru se vyskytla chyba: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Během připojování k serveru se vyskytla chyba: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Nepodařilo se přijmout platnou odezvu od serveru"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Nepodařilo se přijmout platnou HTTP odezvu od serveru"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Během stahování souboru se vyskytla chyba: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "Aktualizace seznamu serverů: %s%% z %s dokončeno"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Ukládání souboru"
-    IDS_HTTPDOWNLOAD_OF     "%s z %s"
     IDS_CANCEL              "Zrušit"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Aktualizace seznamu serverů"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s zkopírováno)"
     IDS_HSAV                "Hashset povolený"
     IDS_FD_CORR             "Pokažené"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Soubor '%s' už existuje.\nChcete jej přepsat?"
     IDS_FD_RECOV            "Opravené"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Během vytváření souboru pro stahování se vyskytla chyba: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Ukončování přenosu"
     IDS_FD_COMPR            "Komprimace"
     IDS_WIZARD_NETWORK      "Vyberte, které sítě chcete používat."
     IDS_MAIN_READY          "eMule verze %s k dispozici"
@@ -1397,11 +1370,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Přenosová rychlost:"
     IDS_SAVELOG             "Uložit log"
     IDS_CMT_COPYCLIPBOARD   "Zkopírovat poznámku do schránky"
-    IDS_ASKDOWNLOADLANG     "Vámi zvolený jazyk není nainstalován ve Vašem systému. Chcete aby jej e-mule stáhnul z emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Stáhnout jazykové soubory"
     IDS_DELETESELECTED      "Smazat"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Nepodařilo se stáhnout a nainstalovat vybrané jazykové knihovny z %s!"
     IDS_ERR_BADFOLDER       "Neplatná složka.\nSložku nelze vytvořit. Prosím zkontrolujte jméno a umístění."
     IDS_AUTOREMOVEFD        "Automaticky čistit dokončené"
 END
@@ -1767,7 +1736,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Stahuji jazyková data"
     IDS_DOWNLOADING_SERVERMET_FROM "Stahuji soubor server.met z %s"
     IDS_DOWNLOADING_SERVERMET "Stahuji soubor server.met..."
 END

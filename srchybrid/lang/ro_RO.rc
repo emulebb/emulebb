@@ -59,46 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Eroare la deschiderea socket-urilor Windows."
     IDS_ABOUTBOX            "&Despre eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s de la %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Conectat la %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Interpretez numele %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Nume interpretat ca %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Mă conectez la %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Redirecţionez spre %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION
-                            "Primesc informaţii despre fişier"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Încercînd să descarc fişierul, a apărut eroarea: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Conectîndu-mă la server, a apărut eroarea: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE "Răspuns incorect de la server"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Răspuns HTTP incorect de la server"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Descărcînd fişierul, a apărut eroarea: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "Descarc lista de servere: %s%% din %s completat"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Aduc fişierul"
-    IDS_HTTPDOWNLOAD_OF     "%s din %s"
     IDS_CANCEL              "Renunţă"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Actualizez lista de servere"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s copiat)"
     IDS_HSAV                "Hashset disponibil"
     IDS_FD_CORR             "Corupt"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Fişierul '%s' deja există.\nVrei să-l suprascriu?"
     IDS_FD_RECOV            "Recuperat"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "La deschiderea fişierului de descărcat a apărut eroarea: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Anulez descărcarea"
     IDS_FD_COMPR            "Comprimare"
     IDS_WIZARD_NETWORK      "Alege ce reţea foloseşti."
     IDS_MAIN_READY          "eMule versiunea %s e pregătit"
@@ -1419,11 +1392,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Viteză de transfer:"
     IDS_SAVELOG             "Salvare log"
     IDS_CMT_COPYCLIPBOARD   "Copiază comentariu în Agendă"
-    IDS_ASKDOWNLOADLANG     "Limba selectată nu e instalată pe sistemul tău. Vrei ca eMule s-o descarce de la emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Descarc fişiere limbaj"
     IDS_DELETESELECTED      "Şterge"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Nu pot descărca şi instala dll-ul limbii selectate de la %s!"
     IDS_ERR_BADFOLDER       "Dosar incorect.\nDosarul nu poate fi creat. Verifică numele şi calea."
     IDS_AUTOREMOVEFD        "Şterge automat din listă fişierele descărcate"
 END
@@ -1755,7 +1724,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Descarc fişierul de limbaj"
     IDS_DOWNLOADING_SERVERMET_FROM "Descarc server.met de la %s"
     IDS_DOWNLOADING_SERVERMET "Descarc server.met..."
 END

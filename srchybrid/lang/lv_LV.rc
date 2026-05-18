@@ -60,30 +60,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Kļūda ievadot Windows ligzdas."
     IDS_ABOUTBOX            "&Par eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s no %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Pievienots pie %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Pieņem vārdu: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Vārds pieņemts pie %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Pieslēdzies pie %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Pārsūta uz %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Iegūst datnes informāciju"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Kļūda mēģinot lejupielādet datni, kļūda: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Kļūda mēģinot pislēgties serverim, kļūda: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Nevar saņemt pareizu atbildi no servera"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Neizdevās iegūt pareizu HTTP atbildi no servera"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Radās kļūda lejupielādējot datni, kļūda: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Lejupielādē: %s%% of %s Pabeigts"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Atgūst datni"
-    IDS_HTTPDOWNLOAD_OF     "%s of %s"
     IDS_FILELINK            "Datnes saite"
     IDS_LD_BASICOPT         "Pamata iespējas"
     IDS_LD_ADDSOURCE        "Pievienot sevi, kā avotu"
@@ -96,17 +76,11 @@ STRINGTABLE
 BEGIN
     IDS_LD_ADDHTML          "Pievienot HTML birkas"
     IDS_HTTP_CAPTION        "Atjauno servera sarakstu"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s pārkopēts)"
     IDS_LD_ADDHASHSET       "Pievienot pabeigtu hashset"
     IDS_HSAV                "Hashset pieejams"
     IDS_DL_SHOWED2KLINK     "eD2K saites..."
     IDS_FD_CORR             "Bojāts"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Datne '%s' jau pastāv.\nVai aizvietot to?"
     IDS_FD_RECOV            "Atgūts"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Kļūda atverot lejupielādējamo datni, kļūda: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Pārtraukt sūtījumu"
     IDS_FD_COMPR            "kompresija"
     IDS_WIZARD_NETWORK      "Izvēlies, kuru(s) tīklojumu(s) Tu vēlies izmantot."
     IDS_MAIN_READY          "eMule versija %s ir gatava"
@@ -1468,11 +1442,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Transfer rate:"
     IDS_SAVELOG             "Save Log"
     IDS_CMT_COPYCLIPBOARD   "Copy comment"
-    IDS_ASKDOWNLOADLANG     "The language you selected is not installed on your system. Do you want eMule to download it from emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Download language files"
     IDS_DELETESELECTED      "Delete"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Failed to download and install selected language dll from %s!"
     IDS_ERR_BADFOLDER       "Invalid folder.\nFolder can not be created. Please check name and location."
     IDS_AUTOREMOVEFD        "Auto clear completed downloads"
 END
@@ -1779,7 +1749,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Downloading language file"
     IDS_DOWNLOADING_SERVERMET_FROM "Downloading server.met from %s"
     IDS_DOWNLOADING_SERVERMET "Downloading server.met..."
     IDS_FULLALLOC           "Allocate full filesize for non-sparse part files"

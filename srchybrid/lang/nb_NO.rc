@@ -59,45 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Feil ved initialisering av Windows sockets."
     IDS_ABOUTBOX            "&Om eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s fra %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Koblet til %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Finner navn: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Funnet navn til %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Kobler til %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Omdirigerer til %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Henter filinformasjon"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Det oppstod en feil ved forsøk på nedlastning av filen, Feil: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Det oppstod en feil ved opprettelse av forbindelse til server, Feil: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Det oppstod en feil, da serveren ikke sendte et forventet svar."
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Det oppstod en feil, da server ikke sendte et forventet HTTP svar"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Det oppstod en feil ved nedlastning av filen, Feil: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Opdaterer serverliste: %s%% av %s fullført"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Mottar filen"
-    IDS_HTTPDOWNLOAD_OF     "%s af %s"
     IDS_CANCEL              "Avbryt"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Oppdaterer serverliste"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s kopiert)"
     IDS_HSAV                "Hashset tilgjengelig"
     IDS_FD_CORR             "Korrupt"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Filen '%s' eksisterer allerede.\nØnsker du å overskrive den?"
     IDS_FD_RECOV            "Gjenopprettet"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Det oppstod en feil ved åpning av filen som skal lastes ned, Feil: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Avbryter overførsel"
     IDS_FD_COMPR            "Kompresjon"
     IDS_WIZARD_NETWORK      "Velg hvilke(t) nettrverk du ønsker å bruke."
     IDS_MAIN_READY          "eMule Version %s klar"
@@ -1406,11 +1380,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Overføringsrate:"
     IDS_SAVELOG             "Lagre logg"
     IDS_CMT_COPYCLIPBOARD   "Kopier kommentar til utklippstavlen"
-    IDS_ASKDOWNLOADLANG     "Det valgte språk er ikke installeret på din PC. Ønsker du å laste ned det fra emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Last ned språkfiler"
     IDS_DELETESELECTED      "Slett"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Klarte ikke å laste ned og installere den valgte språk dll fil fra %s!"
     IDS_ERR_BADFOLDER       "Ugyldig mappe.\nMappe kunne ikke opprettes. Kontroller navn og plassering."
     IDS_AUTOREMOVEFD        "Rydd ferdige nedlastninger automatisk"
 END
@@ -1774,7 +1744,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Laster ned språk fil"
     IDS_DOWNLOADING_SERVERMET_FROM "Laster ned server.met fra %s"
     IDS_DOWNLOADING_SERVERMET "Laster ned server.met..."
     IDS_FULLALLOC           "Tildel full filstørrelse for ikke-sparsommelig fil deler"

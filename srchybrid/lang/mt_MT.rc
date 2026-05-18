@@ -59,30 +59,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Kien hemm problema bis-sockets tal-windows."
     IDS_ABOUTBOX            "&Dwar l-eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s mingħand %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Ikkonnektjat ma' %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Tfittix għall-isem: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "L-isem instab: %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Qiegħed taqbad ma' %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Qiegħed tiġi trasferit għal %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Qiegħed tirċievi l-informazzjoni dwar il-file tiegħek"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Kien hemm problema waqt l-attentat biex jiġi ddawnlowdjat dan il-file. Il-problema hi: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Kien hemm problema waqt li kont qiegħed taqbad mas-server. Il-problema hi: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Ma rnexxilniex nirċievu rispons validu mingħand is-server"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Ma rnexxilniex nirċievu rispons validu tal-HTTP mingħand is-server"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Kien hemm problema waqt l-iddownlowdjar tal-file. Il-problema hi: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Download: %s%% minn %s kompluta"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Qiegħed tirċievi il-file"
-    IDS_HTTPDOWNLOAD_OF     "%s minn %s"
     IDS_FILELINK            "Link għall-file"
     IDS_LD_BASICOPT         "Għażliet Bażiċi"
     IDS_LD_ADDSOURCE        "Żid lilek innifsek bħala sors"
@@ -95,17 +75,11 @@ STRINGTABLE
 BEGIN
     IDS_LD_ADDHTML          "Żid it-Tags tal-HTML"
     IDS_HTTP_CAPTION        "Il-lista tas-servers qiegħda tiġi aġġornata"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s ikkupjat)"
     IDS_LD_ADDHASHSET       "Żid il-hashset kollu"
     IDS_HSAV                "Il-Hashset huwa disponibbli"
     IDS_DL_SHOWED2KLINK     "Il-links tal-eD2K..."
     IDS_FD_CORR             "Imħassar"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Il-file '%s' diġa' jeżisti.\nTixtieq tikteb mill-ġdid fuqu?"
     IDS_FD_RECOV            "Irpilja"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Kien hemm problema waqt il-ftuh tal-file li qiegħed jiġi mniżżel. Il-problema hi: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Qiegħed jiġi mwaqqaf it-transfer"
     IDS_FD_COMPR            "Ikkompressar"
     IDS_WIZARD_NETWORK      "Agħżel liema network(s) tixtieq tuża."
     IDS_MAIN_READY          "Il-verżjoni %s tal-eMule hija lesta"
@@ -1470,11 +1444,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Rata ta' transfer:"
     IDS_SAVELOG             "Issejvja il-Log"
     IDS_CMT_COPYCLIPBOARD   "Ikkopja l-kumment"
-    IDS_ASKDOWNLOADLANG     "Il-lingwa l-għażilt mhix installata fuq is-sistema tiegħek. Trid lill eMule jiddawnlowdjaha minn emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Iddawnlowdja il-files tal-lingwa"
     IDS_DELETESELECTED      "Ħassar"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Ma setgħux jiġu ddawnlowdjati u nstallati il-files tal-lingwa minn %s!"
     IDS_ERR_BADFOLDER       "Direttorju invalidu. \nId-direttorju ma jsitax jiġi magħmul. Iċċeja l-isem u d-destinazzjoni."
     IDS_AUTOREMOVEFD        "Neħħi awtomatikament id-downloads lesti"
 END
@@ -1779,7 +1749,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Qed jiġi ddawnlowdjat il-fajl tal-lingwa"
     IDS_DOWNLOADING_SERVERMET_FROM "Qed jiġi ddawnlowdjat server.met minn %s"
     IDS_DOWNLOADING_SERVERMET "Qed jiġi ddawnlowdjat server.met..."
     IDS_FULLALLOC           "Alloka id-daqs tal-fajl kollu għal files non-sparse"

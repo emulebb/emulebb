@@ -60,30 +60,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Không thể khởi tạo Windows sockets."
     IDS_ABOUTBOX            "&Giới thiệu eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s từ %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Đã kết nối đến %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Đang chuyển tên: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Đã chuyển tên sang %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Đang kết nối đến %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Đang chuyển đến %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Đang lấy thông tin về Tập tin"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Lỗi khi cố gắng tải xuống tập tin, Lỗi: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Lỗi kết nối đến máy chủ, Lỗi: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Lỗi khi nhận trả lời từ máy chủ"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Lỗi khi nhận trả lời HTTP từ máy chủ"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Lỗi khi tải tập tin xuống, Lỗi: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Đang tải xuống: %s%% trong %s hoàn tất"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Đang tìm tập tin"
-    IDS_HTTPDOWNLOAD_OF     "%s trong %s"
     IDS_FILELINK            "Liên kết Tập tin"
     IDS_LD_BASICOPT         "Tùy chọn cơ bản"
     IDS_LD_ADDSOURCE        "Thêm chính bạn là nguồn"
@@ -96,17 +76,11 @@ STRINGTABLE
 BEGIN
     IDS_LD_ADDHTML          "Thêm Thẻ-HTML"
     IDS_HTTP_CAPTION        "Đang cập nhật danh sách máy chủ"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s đã chép)"
     IDS_LD_ADDHASHSET       "Thêm bộ mã hash hoàn tất"
     IDS_HSAV                "Bộ mã Hash có thể dùng được"
     IDS_DL_SHOWED2KLINK     "&Liên kết eD2K..."
     IDS_FD_CORR             "Đã bị hỏng"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Tập tin '%s' đã tồn tại.\nBạn có muốn ghi đè lên không?"
     IDS_FD_RECOV            "Đã phục hồi"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Có lỗi xày ra khi đang mở tập tin được tải xuống, Lỗi: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Đang bỏ truyền tải"
     IDS_FD_COMPR            "Nén"
     IDS_WIZARD_NETWORK      "Chọn Mạng lưới bạn muốn sử dụng."
     IDS_MAIN_READY          "Phiên bản eMule %s sẵn sàng"
@@ -1471,11 +1445,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Tỉ lệ truyền tải:"
     IDS_SAVELOG             "Lưu bản ghi"
     IDS_CMT_COPYCLIPBOARD   "Chép chú thích"
-    IDS_ASKDOWNLOADLANG     "Ngôn ngữ này chưa có trong hệ thống. Bạn có muốn tải xuống từ emule-project.net không?"
-    IDS_ASKDOWNLOADLANGCAP  "Tải xuống tập tin Ngôn ngữ"
     IDS_DELETESELECTED      "Xóa"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Không thể tải xuống và cài đặt tập tin ngôn ngữ dll từ %s!"
     IDS_ERR_BADFOLDER       "Thư mục không hợp lệ.\nKhông thể tạo thư mục. Vui lòng kiểm tra tên và vị trí."
     IDS_AUTOREMOVEFD        "Tự động xóa các tác vụ đã thực hiện xong."
 END
@@ -1780,7 +1750,6 @@ STRINGTABLE
 BEGIN
     IDS_SEARCH_MISSINGANDRIGHT "Thiếu vế phải của phép toán AND"
     IDS_SEARCH_OPRERR       "Lỗi cú pháp ở phép toán so sánh '%s'"
-    IDS_DOWNLOAD_LANGFILE   "Đang tải xuống Tập tin Ngôn ngữ"
     IDS_DOWNLOADING_SERVERMET_FROM "Đang tải server.met xuống từ %s"
     IDS_DOWNLOADING_SERVERMET "Đang tải server.met xuống..."
     IDS_FULLALLOC           "Cấp phát toàn bộ kích thước cho các tập tin tạm không rải rác - 'non-sparse'"

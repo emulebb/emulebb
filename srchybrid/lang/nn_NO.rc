@@ -56,38 +56,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Feil med oppstart av windowssoklar"
     IDS_ABOUTBOX            "Om eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s frå %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Tilkopla %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Finn namn: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Funne namn til %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Kople til %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Omdirigerer til %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Hentar filinformasjon"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR "Feil i freisting på nedlasting av fila. Feil: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER "Feil ved oppretting av oppkopling til tenar. Feil: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE "Feil. Tenaren svara ikkje."
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE "Feil. Tenaren sende eit ugangbart HTTP svar"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE "Det oppstod ein feil i nedlastinga av fila. Feil: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Oppdaterer tenarliste: %s%% av %s fullført"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Mottek fila"
-    IDS_HTTPDOWNLOAD_OF     "%s av %s"
     IDS_CANCEL              "Avbryt"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Oppdaterer tenarliste"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s kopiert)"
     IDS_HSAV                "Hashsett tilgjengeleg"
     IDS_FD_CORR             "Korrupt"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE "Fila '%s' finst allereie.\nVil du skrive over ho?"
     IDS_FD_RECOV            "Gjenoppretta"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN "Feil i opning av fila som skal lastast ned. Feil: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Avbryt overføring"
     IDS_FD_COMPR            "Komprimering"
     IDS_WIZARD_NETWORK      "Vel kva slag nettverk du vil nytte"
     IDS_MAIN_READY          "eMule utgåve %s klar"
@@ -1375,10 +1356,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Overføringsrate:"
     IDS_SAVELOG             "Lagre logg"
     IDS_CMT_COPYCLIPBOARD   "Kopier kommentar til utklippstavla"
-    IDS_ASKDOWNLOADLANG     "Det valde språket er ikkje installert på PCen din. Vil du laste det ned frå emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Last ned språkfiler"
     IDS_DELETESELECTED      "Slett"
-    IDS_ERR_FAILEDDOWNLOADLANG "Klarte ikkje å laste ned og installere den valde språk-dll fila frå %s!"
     IDS_ERR_BADFOLDER       "Ugyldig mappe.\nMappe kunne ikkje verte oppretta. Kontroller namn og plasering."
     IDS_AUTOREMOVEFD        "Ta bort ferdige nedlastingar automatisk"
 END
@@ -1732,7 +1710,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Lastar ned språkfil"
     IDS_DOWNLOADING_SERVERMET_FROM "Lastar ned server.met frå %s"
     IDS_DOWNLOADING_SERVERMET "Lastar ned server.met..."
     IDS_FULLALLOC           "Set til side full filstorleik for spreidde delfiler"

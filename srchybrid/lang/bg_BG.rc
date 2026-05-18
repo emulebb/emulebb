@@ -59,32 +59,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Грешка при инициализиране на сокета.."
     IDS_ABOUTBOX            "За eMule"
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s от %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Свързан с %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Определяне на името: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Името е определено като %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Свързване с %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Пренасочване към %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION
-                            "Получаване на информация за файла"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Възникна грешка при опита за сваляне на файла, Грешка: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Възникна грешка при свързване със сървъра, Грешка: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Неуспешно получаване на валиден отговор от сървъра"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Неуспешно получаване на валиден отговор от HTTP сървъра"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Възникна грешка при сваляне на файла, Грешка: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "Сваляне: %s%% от %s завършени"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Сваляне на файла"
-    IDS_HTTPDOWNLOAD_OF     "%s от %s"
     IDS_FILELINK            "Линк към файла"
     IDS_LD_BASICOPT         "Основни опции"
     IDS_LD_ADDSOURCE        "Добави себе си като източник"
@@ -97,17 +75,11 @@ STRINGTABLE
 BEGIN
     IDS_LD_ADDHTML          "Добави HTML тагове"
     IDS_HTTP_CAPTION        "Обновяване на списъка със сървъри"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s копирани)"
     IDS_LD_ADDHASHSET       "Добави пълна проверка на хеша"
     IDS_HSAV                "Проверка на хеша"
     IDS_DL_SHOWED2KLINK     "Покажи eD2K линка..."
     IDS_FD_CORR             "Повредени"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Файлът '%s' вече съществува.\nИскате ли да го замените?"
     IDS_FD_RECOV            "Възстановени"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Възникна грешка при отварянето на сваленият файл, Грешка: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Прекратяване на трансфера"
     IDS_FD_COMPR            "Компресия"
     IDS_WIZARD_NETWORK      "Изберете коя(и) мрежа(и) искате да използвате."
     IDS_MAIN_READY          "eMule версия %s е готов за работа"
@@ -1458,11 +1430,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Скорост:"
     IDS_SAVELOG             "Запиши отчета"
     IDS_CMT_COPYCLIPBOARD   "Копирай коментара в буфера"
-    IDS_ASKDOWNLOADLANG     "Избраният от вас език не е инсталиран на компютъра ви. Искате ли eMule да го свали от emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Свали езикови файлове"
     IDS_DELETESELECTED      "Изтрий"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Не можах да сваля и инсталирам избраният езиков файл от %s!"
     IDS_ERR_BADFOLDER       "Грешна папка.\nПапката не може да бъде създадена. Моля, проверете името и положението й."
     IDS_AUTOREMOVEFD        "Автоматично изтриване на завършените задачи"
 END
@@ -1764,7 +1732,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Сваляне на езиков файл"
     IDS_DOWNLOADING_SERVERMET_FROM "Сваляне на 'server.met' от %s"
     IDS_DOWNLOADING_SERVERMET "Сваляне на 'server.met'..."
     IDS_FULLALLOC           "Разпределяне на пълния размер на файла на отделни части"

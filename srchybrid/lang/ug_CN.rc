@@ -58,30 +58,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "دەسلەپلەشتۈرۈش مەغلۇپ بولدى.‏Socket"
     IDS_ABOUTBOX            "‫eMule ھەققىدە…‬"
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s دىن %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "غا ئۇلان %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "دائىرە ئاتىنى تەھلىل قىلىۋاتىدۇ: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "‫%s دائىرە ئاتى مۇۋپپەقىيەتلىك تەھلىل قىلىندى‬"
-    IDS_HTTPDOWNLOAD_CONNECTING "غا ئۇلىنىۋاتىدۇ %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "غا قايتا نىشان بەلگىلەش %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "ھۆججەت ئۇچۇرىغا ئېرىشىش"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "ھۆججەت چۈشۈرۈشتە خاتالىق كۆرۈلدى: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "مۇلازىمېتىرغا ئۇلىنىشتا خاتالىق كۆرۈلدى: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "مۇلازىمېتىردىن توغرا جاۋابقا ئېرىشەلمىدى"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "‫مۇلازىمېتىردىن توغرا HTTP جاۋابقا ئېرىشەلمىدى‬"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "ھۆججەت چۈشۈرۈشتە خاتالىق كۆرۈلدى: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "چۈشۈرۈۋاتىدۇ: %s%% تاماملانغىنى %s "
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "ھۆججەت قوبۇللاۋاتىدۇ"
-    IDS_HTTPDOWNLOAD_OF     "%s دىن %s"
     IDS_FILELINK            "ھۆججەت ئۇلانما"
     IDS_LD_BASICOPT         "ئاساسىي تاللانما"
     IDS_LD_ADDSOURCE        "‫IP ئادرېسىڭىزنى مەنبە سۈپىتىدە ئۇلانمىغا قوشىدۇ‬"
@@ -94,17 +74,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "مۇلازىمېتىر تىزىملىكىنى يېڭىلاۋاتىدۇ"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s كۆچۈرۈلدى)"
     IDS_LD_ADDHASHSET       "‫تولۇق Hashset قوش"
     IDS_HSAV                "‫Hashset ئىشلىتىشكە بولىدۇ‬"
     IDS_DL_SHOWED2KLINK     "‫ED2K ئۇلانمىسى…‬"
     IDS_FD_CORR             "بۇزۇلغان"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            " ھۆججەت مەۋجۇد«%s»\nئالماشتۇرامسىز؟"
     IDS_FD_RECOV            "ئەسلىگە كەلدى"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "چۈشۈرگەن ھۆججەتنى ئاچقاندا خاتالىق كۆرۈلدى: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "يوللاش ئاخىرلىشىۋاتىدۇ"
     IDS_FD_COMPR            "پرىسلاش"
     IDS_WIZARD_NETWORK      "ئىشلەتمەكچى بولغان تورنى تاللاڭ"
     IDS_MAIN_READY          "‫eMule نىڭ  %s نەشرى ھازىرلاندى‬"
@@ -1505,11 +1479,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "يوللاش نىسبىتى:"
     IDS_SAVELOG             "كۈندىلىك خاتىرىنى ساقلا"
     IDS_CMT_COPYCLIPBOARD   "باھا سۆزىنى كۆچۈر"
-    IDS_ASKDOWNLOADLANG     "‫تاللىغان تىل سىستېمىڭىزغا قاچىلانمىغان emule-project.net دىن چۈشۈرەمسىز؟‬"
-    IDS_ASKDOWNLOADLANGCAP  "تىل ھۆججىتىنى چۈشۈر"
     IDS_DELETESELECTED      "ئۆچۈر"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "‫%s دىن تاللىغان تىل dll ھۆججىتىنى چۈشۈرۈش ۋە قاچىلاش مەغلۇپ بولدى!‬"
     IDS_ERR_BADFOLDER       "‫ئىناۋەتسىز قىسقۇچ.\nقىسقۇچ قۇرالمىدى، نامى ۋە ئورنىنى تەكشۈرۈڭ.‬"
     IDS_AUTOREMOVEFD        "تاماملانغان چۈشۈرۈشنى ئۆزلۈكىدىن تازىلا"
 END
@@ -1746,7 +1716,6 @@ BEGIN
     IDS_SEARCH_ATTRERR      "‫ئىزدەش خاسلىقى «%s» دا گرامماتىكىلىق خاتالىق بار‬"
     IDS_SEARCH_MISSINGANDRIGHT "‫AND  مەشغۇلات بەلگىسىنىڭ ئوڭ تەرىپىدىكى مەشغۇلات سانى بەلگىلەنمىگەن‬"
     IDS_SEARCH_OPRERR       "‫سېلىشتۇرۇش مەشغۇلات بەلگىسى «%s» دا گرامماتىكىلىق خاتالىق بار‬"
-    IDS_DOWNLOAD_LANGFILE   "تىل ھۆججىتى چۈشۈرۈۋاتىدۇ"
     IDS_DOWNLOADING_SERVERMET_FROM "‫%s دىن server.met ھۆججىتى چۈشۈرۈۋاتىدۇ‬"
     IDS_DOWNLOADING_SERVERMET "‫server.met ھۆججىتى چۈشۈرۈۋاتىدۇ…‬"
     IDS_FULLALLOC           "ئاز ئۇچرىمايدىغان ھۆججەتكە دىسكا بوشلۇقى تەقسىملەش"

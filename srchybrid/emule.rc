@@ -2166,30 +2166,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Error initiating Windows sockets."
     IDS_ABOUTBOX            "&About eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s from %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Connected to %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Resolving name: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Resolved name to %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Connecting to %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Redirecting to %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Getting file information"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "An error occurred while attempting to download the file, Error: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "An error occurred connecting to the server, Error: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Failed to receive a valid response from the server"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Failed to receive a valid HTTP response from the server"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "An error reading the downloaded file, Error: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Downloading: %s%% of %s completed"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Retrieving the file"
-    IDS_HTTPDOWNLOAD_OF     "%s of %s"
     IDS_FILELINK            "File Link"
     IDS_LD_BASICOPT         "Basic Options"
     IDS_LD_ADDSOURCE        "Add yourself as source"
@@ -2241,17 +2221,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Updating server list"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s copied)"
     IDS_LD_ADDHASHSET       "Add complete hashset"
     IDS_HSAV                "Hashset available"
     IDS_DL_SHOWED2KLINK     "eD2K Links..."
     IDS_FD_CORR             "Corrupted"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "The file '%s' already exists.\nDo you want to replace it?"
     IDS_FD_RECOV            "Recovered"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "An error occurred while opening the file to be downloaded, Error: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Aborting transfer"
     IDS_FD_COMPR            "Compression"
     IDS_WIZARD_NETWORK      "Choose which Network(s) you want to use"
     IDS_MAIN_READY          "eMule BB %s ready"
@@ -3992,11 +3966,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Transfer rate:"
     IDS_SAVELOG             "Save Log"
     IDS_CMT_COPYCLIPBOARD   "Copy comment"
-    IDS_ASKDOWNLOADLANG     "The language you selected is not installed on your system. Do you want eMule to download it from https://emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Download language files"
     IDS_DELETESELECTED      "Delete"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Failed to download and install selected language library from %s!"
     IDS_ERR_BADFOLDER       "Invalid folder.\nFolder can not be created. Please check name and location."
     IDS_AUTOREMOVEFD        "Auto clear completed downloads"
 END
@@ -4232,7 +4202,6 @@ BEGIN
     IDS_SEARCH_ATTRERR      "Syntax error in '%s' search attribute"
     IDS_SEARCH_MISSINGANDRIGHT "Missing right side for AND operator"
     IDS_SEARCH_OPRERR       "Syntax error in comparison operator '%s'"
-    IDS_DOWNLOAD_LANGFILE   "Downloading language file"
     IDS_DOWNLOADING_SERVERMET_FROM "Downloading server.met from %s"
     IDS_DOWNLOADING_SERVERMET "Downloading server.met..."
     IDS_FULLALLOC           "Allocate full file size for non-sparse part files"

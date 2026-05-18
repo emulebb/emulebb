@@ -59,27 +59,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Windows-Sockets 初始化失敗."
     IDS_ABOUTBOX            "關於 eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s 從 %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "連線到 %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "解析名稱: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "解析名稱到 %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "連線到 %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "改變方向到 %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "取得檔案資訊"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR "嘗試下載檔案時發生錯誤, 錯誤: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER "連線到這個伺服器時發生錯誤, 錯誤: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "從這個伺服器接收一個有效回應失敗"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "從這個伺服器接收一個有效的 HTTP 回應失敗"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE "下載這個檔案時發生錯誤, 錯誤: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "下載中: %s%% 於 %s 已完成"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "重新取得這個檔案"
-    IDS_HTTPDOWNLOAD_OF     "%s 於 %s"
     IDS_FILELINK            "檔案連結"
     IDS_LD_BASICOPT         "基本的選項"
     IDS_LD_ADDSOURCE        "加入您自己成為來源"
@@ -92,15 +75,11 @@ STRINGTABLE
 BEGIN
     IDS_LD_ADDHTML          "加入 HTML-標籤"
     IDS_HTTP_CAPTION        "伺服器清單更新中"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s 已複製)"
     IDS_LD_ADDHASHSET       "加入完整的片段切細值"
     IDS_HSAV                "片段切細值可得"
     IDS_DL_SHOWED2KLINK     "顯示 eD2K 連結..."
     IDS_FD_CORR             "已損壞"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE "檔案 '%s' 已經存在.\n您想取代它嗎?"
     IDS_FD_RECOV            "已恢復"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN "開啟已下載完成的檔案時發生錯誤, 錯誤: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "傳輸已中斷"
     IDS_FD_COMPR            "壓縮"
     IDS_WIZARD_NETWORK      "選擇您想要使用的網路"
     IDS_MAIN_READY          "eMule 版本 %s 已備妥"
@@ -1393,10 +1372,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "傳輸速率:"
     IDS_SAVELOG             "儲存記錄"
     IDS_CMT_COPYCLIPBOARD   "複製註解到剪貼簿"
-    IDS_ASKDOWNLOADLANG     "您選擇的語言尚未安裝在您的系統. 您想要 eMule 從 emule-project.net 下載它?"
-    IDS_ASKDOWNLOADLANGCAP  "下載語言檔案"
     IDS_DELETESELECTED      "刪除"
-    IDS_ERR_FAILEDDOWNLOADLANG "從 %s 下載並安裝已選擇的語言 DLL 檔案失敗!"
     IDS_ERR_BADFOLDER       "無效的資料夾.\n資料夾不能被建立. 請檢查名稱及位置."
     IDS_AUTOREMOVEFD        "自動清除已完成下載"
 END
@@ -1757,7 +1733,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "語言檔案下載中"
     IDS_DOWNLOADING_SERVERMET_FROM "server.met 從 %s 下載中"
     IDS_DOWNLOADING_SERVERMET "server.met 下載中..."
     IDS_FULLALLOC           "分配完整檔案大小為非疏鬆部分檔案"

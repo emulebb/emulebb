@@ -59,45 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Napaka pri inicializaciji Windows vtičnic."
     IDS_ABOUTBOX            "&Vizitka..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s od %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Povezan z: %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Razreševanje imena: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Ime razrešeno kot %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Povezovanje z %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Preusmerjanje do %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Pridobivanje informacij o datoteki"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Napaka pri poskusu prenosa datoteke, Napaka: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Napaka pri poskusu povezave s strežnikom, Napaka: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Ni bilo mogoče dobiti veljavnega odgovora od strežnika."
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Ni bilo mogoče sprejeti odgovora HTTP od strežnika."
-    IDS_HTTPDOWNLOAD_ERROR_READFILE "Napaka pri prenosu datoteke, Napaka: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "Osveževanje seznama strežnikov: %s%% od %s Končano."
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Prenašanje datoteke"
-    IDS_HTTPDOWNLOAD_OF     "%s od %s"
     IDS_CANCEL              "Prekliči"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Osveževanje seznama strežnikov"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s kopirano)"
     IDS_HSAV                "Hashset na voljo"
     IDS_FD_CORR             "Pokvarjeno"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Datoteka '%s' že obstaja.\nAli jo želite prepisati?"
     IDS_FD_RECOV            "Rešeno"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Napaka pri odpiranju datoteke za prenos, Napaka: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Prenašanje prekinjeno"
     IDS_FD_COMPR            "Kompresija"
     IDS_WIZARD_NETWORK      "Izberite omrežja, ki jih želite uporabljati."
     IDS_MAIN_READY          "eMule %s pripravljen"
@@ -1389,11 +1363,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Hitrost prenosa:"
     IDS_SAVELOG             "Shrani dnevnik"
     IDS_CMT_COPYCLIPBOARD   "Kopiraj komentarje na odložišče"
-    IDS_ASKDOWNLOADLANG     "Jezik, ki ste ga izbrali, ni nameščen na vašem sistemu. Želite, da ga eMule prenese s strani emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Prenesi datoteke za jezike"
     IDS_DELETESELECTED      "Izbriši"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Ni bilo mogoče prenesti in namestiti izbrane jezikovne knjižice iz %s!"
     IDS_AUTOREMOVEFD        "Samodejno počisti končane prenose"
 END
 
@@ -1769,7 +1739,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Prenesi datoteko z jezikom"
     IDS_DOWNLOADING_SERVERMET_FROM "Prenašanje server.met iz %s"
     IDS_DOWNLOADING_SERVERMET "Prenašanje server.met..."
     IDS_FULLALLOC           "Dodeli celotno velikost za 'ne-redke' ('non-sparse') delne datoteke"

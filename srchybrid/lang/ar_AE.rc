@@ -59,30 +59,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "خطـأ عند بدأ وندوز سوكيت"
     IDS_ABOUTBOX            "&عن امول"
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s من %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "متصل بــ %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "حجز إسم: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "الاسم حجز لــ %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "الاتصال بــ %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "تغيير الى %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "أخذ معلومات عن الملف"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "خطأ عند محاولة تحميل الملف, Error: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "خطأ عند محاولة الاتصال بالسيرفر, Error: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "لم يتم الحصول على معلومات من السرفر"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "فشل في تلقّي ردّ إتش تي تي بي صحيح من الخادم"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "خطـأ اثناء تحميل الملف, Error: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "تحميل: %s%% من %s completed"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "استعادة الملف"
-    IDS_HTTPDOWNLOAD_OF     "%s من %s"
     IDS_FILELINK            "وصلة ملف"
     IDS_LD_BASICOPT         "اختيارات بدائية"
     IDS_LD_ADDSOURCE        "اظف نفسك كمصدر"
@@ -95,17 +75,11 @@ STRINGTABLE
 BEGIN
     IDS_LD_ADDHTML          "اظف شريط  هتمل"
     IDS_HTTP_CAPTION        "تحديث قائمة الخادم"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s نسخ)"
     IDS_LD_ADDHASHSET       "اظف هاشسيت كامل"
     IDS_HSAV                "هاشسيت متوفر"
     IDS_DL_SHOWED2KLINK     "اظهر  وصلة  eD2K "
     IDS_FD_CORR             "غير صالح"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "الملف موجود مسبقاً, هل تريد استبداله بالملف الحالي؟ (%s)"
     IDS_FD_RECOV            "استرجع"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "خطأ أثناء فتح الملف للتحميل, Error: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "توقيف النقل"
     IDS_FD_COMPR            "ضغط"
     IDS_WIZARD_NETWORK      "اختر اي شبكة تريد الاستعمال"
     IDS_MAIN_READY          "امول الاصدار  %s جاهز"
@@ -1454,11 +1428,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "تقييم النقل:"
     IDS_SAVELOG             "اخزن اللوج"
     IDS_CMT_COPYCLIPBOARD   "انسخ التعليقات الى الكليب بورد"
-    IDS_ASKDOWNLOADLANG     "اللغة التي اخترتها غير موجودة في نظامك هل تريد لامول ان تحمل ملفات اللغة من الموقع الرسمي لامول؟"
-    IDS_ASKDOWNLOADLANGCAP  "حمل ملفات اللغة"
     IDS_DELETESELECTED      "احذف"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "فشل في تحمل و تنصيب ملف اللغة المحدد من %s!"
     IDS_ERR_BADFOLDER       "مجلد غير صالح.\nلا يمكن بناء المجلد الرجاء التأكد من الاسم و المكان."
     IDS_AUTOREMOVEFD        "ازالة التحميلات المكتملة تلقائيا"
 END
@@ -1773,7 +1743,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "ملف اللغة قيد التحميل"
     IDS_DOWNLOADING_SERVERMET_FROM "تحميل server.met من %s"
     IDS_DOWNLOADING_SERVERMET "قيد التحميل server.met..."
     IDS_FULLALLOC           "تحديد حجم الملف الكلي للملفات الصغيرة الغير مقسمة"

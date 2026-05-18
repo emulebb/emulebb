@@ -59,38 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED     "Πρόβλημα στην αρχικοποίηση των windows sockets!"
     IDS_ABOUTBOX                "&Σχετικά με το eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s από %s"
-    IDS_HTTPDOWNLOAD_CONNECTED  "Σύνδεση με τον %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Αναζήτηση ονόματος: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Ορίστηκε το όνομα ως %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Επιχειρείται σύνδεση με τον %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Επανακατεύθυνση σε %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Απόκτηση πληροφοριών αρχείου"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR "Πρόβλημα κατά την προσπάθεια κατεβάσματος του αρχείου. Σφάλμα: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER "Δημιουργήθηκε σφάλμα σύνδεσης με τον εξυπηρετητή. Σφάλμα: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE "Αποτυχία λήψης έγκυρης απόκρισης από τον εξυπηρετητή"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE "Αποτυχία λήψης έγκυρης HTTP απόκρισης από τον εξυπηρετητή"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE "Πρόβλημα κατά το κατεβάσμα του αρχείου. Σφάλμα: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Λήψη: Ολοκληρώθηκαν %s%% του %s"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Λήψη αρχείου"
-    IDS_HTTPDOWNLOAD_OF     "%s από %s"
     IDS_CANCEL              "Ακύρωση"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Ενημέρωση λίστας εξυπηρετητών"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s αντιγράφηκαν)"
     IDS_HSAV                "Υπογραφές"
     IDS_FD_CORR             "Χαλασμένο"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE "Το αρχείο '%s' υπάρχει ήδη.\nΘέλετε να το αντικαταστήσετε;"
     IDS_FD_RECOV            "Ανακτήθηκαν"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN "Πρόβλημα κατά το άνοιγμα του αρχείου που πρόκειται να κατέβει. Σφάλμα: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Εγκατάλειψη μεταφοράς"
     IDS_FD_COMPR            "Συμπίεση"
     IDS_WIZARD_NETWORK      "Επιλέξτε ποιο(α) δίκτυο(α) θέλετε να χρησιμοποιήσετε."
     IDS_MAIN_READY          "eMule έκδοση %s σε ετοιμότητα!"
@@ -1366,10 +1347,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Ταχύτητα:"
     IDS_SAVELOG             "Αποθήκευση γεγονότων"
     IDS_CMT_COPYCLIPBOARD   "Αντιγραφή σχολίου στο πρόχειρο"
-    IDS_ASKDOWNLOADLANG     "Η γλώσσα που επιλέξατε δεν είναι εγκατεστημένη στον υπολογιστή σας. Θέλετε να την κατεβάσει το eMule από την διεύθυνση emule-project.net;"
-    IDS_ASKDOWNLOADLANGCAP  "Κατέβασμα αρχείων γλώσσας"
     IDS_DELETESELECTED      "Σβήσιμο"
-    IDS_ERR_FAILEDDOWNLOADLANG "Αποτυχία κατά το κατέβασμα και εγκατάσταση του αρχείου dll της επιλεγμένης γλώσσας από %s!"
     IDS_ERR_BADFOLDER       "Μη έγκυρος φάκελος.\nΟ φάκελος δεν μπορεί να δημιουργηθεί. Παρακαλώ ελέγξτε όνομα και τοποθεσία."
     IDS_AUTOREMOVEFD        "Αυτόματη απομάκρυνση ολοκληρωμένων κατεβασμάτων"
 END
@@ -1742,7 +1720,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Λήψη αρχείου γλώσσας"
     IDS_DOWNLOADING_SERVERMET_FROM "Λήψη server.met από %s"
     IDS_DOWNLOADING_SERVERMET "Λήψη server.met..."
     IDS_FULLALLOC           "Δέσμευση πλήρους μεγέθους για αρχεία part (non-sparse)"

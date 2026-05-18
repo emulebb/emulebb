@@ -1143,15 +1143,9 @@ END
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "מעדכן רשימת שרתים"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s הועתקו)"
     IDS_HSAV                "סט האשים זמין"
     IDS_FD_CORR             "נפגם"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "הקובץ '%s' כבר קיים.\nהאם ברצונך להחליפו?"
     IDS_FD_RECOV            "שוחזר"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "התרחשה שגיאה בעת ניסיון לפתוח את הקובץ העומד לרדת, שגיאה: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "מבטל העברה"
     IDS_FD_COMPR            "כיווץ"
     IDS_WIZARD_NETWORK      "בחר אילו רשתות ברצונך להשתמש."
     IDS_MAIN_READY          "אימיול %s מוכן"
@@ -1161,16 +1155,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "משיג מידע לקובץ"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "שגיאה בעת ניסיון להוריד את הקובץ, שגיאה: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER "שגיאה בהתקשרות לשרת, שגיאה: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE "נכשל בקבלת תגובה תקינה מהשרת"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE "נכשל בקבלת תגובת HTTP תקינה מהשרת"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE "שגיאה בעת הורדת הקובץ, שגיאה: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "מעדכן רשימת שרתים: %s%% מתוך %s הושלמו"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "משיג את הקובץ"
-    IDS_HTTPDOWNLOAD_OF     "%s מ-%s"
     IDS_CANCEL              "ביטול"
 END
 
@@ -1178,12 +1162,6 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "שגיאה באתחול windows sockets."
     IDS_ABOUTBOX            "על אימיול"
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s מתוך %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "מחובר ל-%s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "מפענח שם: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "שם פוענח ל-%s"
-    IDS_HTTPDOWNLOAD_CONNECTING "מתחבר ל-%s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "מעביר ל-%s"
 END
 
 STRINGTABLE
@@ -1391,11 +1369,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "קצב העברה:"
     IDS_SAVELOG             "שמור יומן"
     IDS_CMT_COPYCLIPBOARD   "העתק הערה לקליפבורד"
-    IDS_ASKDOWNLOADLANG     "השפה שבחרת אינה מותקנת במחשבך. האם ברצונך להוריד אותה מ-emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "הורד קבצי שפה"
     IDS_DELETESELECTED      "מחק"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "נכשל בהורדה והתקנה של השפה שנבחרה מ-%s!"
     IDS_ERR_BADFOLDER       "תיקייה לא תקינה.\nלא ניתן ליצור תיקייה. נא לבדוק שם ומיקום."
     IDS_AUTOREMOVEFD        "נקה אוטומטית הורדות שהסתיימו"
 END
@@ -1772,7 +1746,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "מוריד קובץ שפה"
     IDS_DOWNLOADING_SERVERMET_FROM "מוריד server.met מ-%s"
     IDS_DOWNLOADING_SERVERMET "מוריד server.met..."
     IDS_FULLALLOC           "הקצא גודל קובץ מלא לקבצים זמניים לא דחוסים (sparse)"

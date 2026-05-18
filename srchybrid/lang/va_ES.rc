@@ -59,46 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "S'ha produït un error en iniciar els sòcols del Windows."
     IDS_ABOUTBOX            "&Quant a l'eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s de %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "S'ha connectat a %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "S'està resolent el nom: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "S'ha resolt el com a %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "S'està connectant a %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "S'està redireccionant a %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "S'està rebent la informació del fitxer"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "S'ha produït un error en intentar baixar el fitxer. Error: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "S'ha produït un error en intentar connectar al servidor. Error: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "No s'ha rebut una resposta vàlida del servidor"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "No s'ha rebut una resposta HTTP vàlida del servidor"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "S'ha produït un error durant la baixada del fitxer. Error: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "S'està baixant: %s%% de %s completat"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "S'està recuperant el fitxer"
-    IDS_HTTPDOWNLOAD_OF     "%s de %s"
     IDS_CANCEL              "Cancel·la"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "S'està actualitzant la llista de servidors"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s copiats)"
     IDS_HSAV                "Hashset disponible"
     IDS_FD_CORR             "Malmés"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "El fitxer «%s» ja existeix.\nVoleu reemplaçar-lo?"
     IDS_FD_RECOV            "Recuperat"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "S'ha produït un error en obrir el fitxer que s'ha de baixar. Error: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "S'està interrompent la transferència"
     IDS_FD_COMPR            "Compressió"
     IDS_WIZARD_NETWORK      "Trieu quines xarxes voleu utilitzar."
     IDS_MAIN_READY          "La versió %s de l'eMule està a punt"
@@ -1397,11 +1370,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Velocitat de transferència:"
     IDS_SAVELOG             "Alça el registre"
     IDS_CMT_COPYCLIPBOARD   "Copia el comentari al porta-retalls"
-    IDS_ASKDOWNLOADLANG     "La llengua que heu triat no està instal·lat al sistema. Voleu que l'eMule la baixe des d'emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Baixa els fitxers de llengua"
     IDS_DELETESELECTED      "Suprimeix"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "S'ha produït un error en baixar i instal·lar el fitxer dll de la llengua seleccionada des de %s"
     IDS_ERR_BADFOLDER       "La carpeta és incorrecta.\nLa carpeta no es pot crear. Comproveu-ne el nom i la ubicació."
     IDS_AUTOREMOVEFD        "Neteja les baixades completades automàticament"
 END
@@ -1775,7 +1744,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "S'està baixant el fitxer de llengua"
     IDS_DOWNLOADING_SERVERMET_FROM "S'està baixant el fitxer server.met de %s"
     IDS_DOWNLOADING_SERVERMET "S'està baixant el fitxer server.met..."
     IDS_FULLALLOC           "Allotja la mida del fitxer complet per als fitxers sense parts buides (sparse)"

@@ -57,30 +57,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Windows 소켓 초기화 중 오류."
     IDS_ABOUTBOX            "eMule 정보(&A)..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s / %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "%s(으)로 접속 완료"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "호스트 검색: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "%s 호스트 검색 완료"
-    IDS_HTTPDOWNLOAD_CONNECTING "%s(으)로 접속"
-    IDS_HTTPDOWNLOAD_REDIRECTING "%s(으)로 재연결"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "파일 정보 가져오기"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-														"파일 다운로드 시도 중 오류: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-														"서버 접속 중 오류: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "서버로부터 올바른 응답 수신 실패"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "서버로부터 올바른 HTTP 응답 수신 실패"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-														"파일 다운로드 중 오류: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "다운로드: %s%% / %s 완료"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "파일 받기"
-    IDS_HTTPDOWNLOAD_OF     "%s / %s"
     IDS_FILELINK            "파일 링크"
     IDS_LD_BASICOPT         "기본 설정"
     IDS_LD_ADDSOURCE        "소스로 나를 추가"
@@ -93,17 +73,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "서버 목록 업데이트"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s 복사 완료)"
     IDS_LD_ADDHASHSET       "완료 해시셋 추가"
     IDS_HSAV                "해시셋 사용 가능"
     IDS_DL_SHOWED2KLINK     "eD2K 링크..."
     IDS_FD_CORR             "손상됨"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "'%s' 파일은 이미 존재합니다.\n교체하시겠습니까?"
     IDS_FD_RECOV            "복구됨"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "다운로드하려는 파일을 여는 중 오류: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "전송 중단"
     IDS_FD_COMPR            "압축"
     IDS_WIZARD_NETWORK      "사용할 네트워크 선택"
     IDS_MAIN_READY          "eMule 버전 %s 준비 완료"
@@ -1504,11 +1478,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "전송 속도:"
     IDS_SAVELOG             "로그 저장"
     IDS_CMT_COPYCLIPBOARD   "주석 복사"
-    IDS_ASKDOWNLOADLANG     "선택한 언어가 시스템에 설치되어 있지 않습니다. https://emule-project.net 사이트로부터 다운로드하시겠습니까?"
-    IDS_ASKDOWNLOADLANGCAP  "언어 파일 다운로드"
     IDS_DELETESELECTED      "삭제"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "%s에서 선택한 언어 DLL 설치 실패!"
     IDS_ERR_BADFOLDER       "잘못된 폴더.\n폴더를 생성할 수 없습니다. 이름과 위치를 확인하십시오."
     IDS_AUTOREMOVEFD        "완료된 다운로드는 목록에서 자동 제거"
 END
@@ -1745,7 +1715,6 @@ BEGIN
     IDS_SEARCH_ATTRERR      "검색 속성 '%s' 중 문법 오류"
     IDS_SEARCH_MISSINGANDRIGHT "AND 연산자의 우측 항 누락"
     IDS_SEARCH_OPRERR       "비교 연산자 '%s' 중 문법 오류"
-    IDS_DOWNLOAD_LANGFILE   "언어 파일 다운로드"
     IDS_DOWNLOADING_SERVERMET_FROM "%s(으)로부터 server.met 다운로드"
     IDS_DOWNLOADING_SERVERMET "server.met 다운로드 중..."
     IDS_FULLALLOC           "산재되지 않은 파일을 전체 파일 크기로 할당"

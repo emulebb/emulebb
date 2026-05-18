@@ -59,46 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Erro inicialisant els sockets de windows."
     IDS_ABOUTBOX            "&Sobre l'eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s de %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Conectat a %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Resolguent nom: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Nom resolt com %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Conectant a %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Redireccionant cap a %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Rebent informació d'archiu"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "S'ha produït un erro en l'intent de descarregar  \nl'archiu, Erro: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "S'ha produït un error en l'intent de conexió al  \nservidor, Erro: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "No s'ha rebut una resposta valida del servidor"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "No s'ha rebut una resposta HTTP valida del  \nservidor"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "S'ha produït un erro durant la descarrega de  \nl'archiu, Erro: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "Actualisant la llista de servidors: %s%% de %s  \ncomplet"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Recuperant l'archiu"
-    IDS_HTTPDOWNLOAD_OF     "%s de %s"
     IDS_CANCEL              "Cancelar"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Actualisant llista de servidors"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s copiats)"
     IDS_HSAV                "Disponible Hashset"
     IDS_FD_CORR             "Corrupte"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "L'archiu '%s' ya existix.\nVols  \nreemplaçar-lo?"
     IDS_FD_RECOV            "Recuperat"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "S'ha produit un erro obrint l'archiu per a  \ndescarregar, Erro: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Abortant transferència"
     IDS_FD_COMPR            "Compressió"
     IDS_WIZARD_NETWORK      "Tria quines rets vols utilisar."
     IDS_MAIN_READY          "Versió eMule %s preparada"
@@ -1404,11 +1377,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Velocitat de transferència:"
     IDS_SAVELOG             "Guardar registre"
     IDS_CMT_COPYCLIPBOARD   "Copiar comentari en el portapapers"
-    IDS_ASKDOWNLOADLANG     "L'idioma que has triat no està instalat en el sistema. ¿Vols que l'eMule el descarregue des de emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Descarregar archius d'idioma"
     IDS_DELETESELECTED      "Borrar"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Erro al descarregar i instalar la dll de l' idioma seleccionat des de %s!"
     IDS_ERR_BADFOLDER       "Carpeta incorrecta.\nLa carpeta no pot ser creada. Per favor, comprova el nom i la localisació."
     IDS_AUTOREMOVEFD        "Auto-netejar descarregues completes"
 END
@@ -1785,7 +1754,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Descarregant archiu d'idioma"
     IDS_DOWNLOADING_SERVERMET_FROM "Descarregant server.met des de %s"
     IDS_DOWNLOADING_SERVERMET "Descarregant server.met..."
     IDS_FULLALLOC           "Reservar tot l'espai necessari per als archius de parts no dispersos"

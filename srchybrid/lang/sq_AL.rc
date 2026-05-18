@@ -58,30 +58,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Gabim në nisje te foletë e Windows."
     IDS_ABOUTBOX            "&Rreth eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s nga %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Lidhur në %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Emri zbërthehet: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Emri i zbërthyer në %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Lidhje në %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Ridrejtim në %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Merret informacioni i skedës"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Ndodhi një gabim gjatë pritjes për shkarkimin e skedës, Gabimi: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Ndodhi një gabim gjatë lidhjes në server, Gabimi: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Dështoi marrja e përgjigjes së vlefshme nga serveri"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Dështoi marrja e përgjigjes së vlefshme HTTP nga serveri"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Ndodhi një gabim gjatë shkarkimit të skedës, Gabimi: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Shkarkohet: e përfunduar %s%% nga %s"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Rigjendet një skedë"
-    IDS_HTTPDOWNLOAD_OF     "%s nga %s"
     IDS_FILELINK            "Link-skeda"
     IDS_LD_BASICOPT         "Mundësitë Themelore"
     IDS_LD_ADDSOURCE        "Shto veten si burim"
@@ -94,17 +74,11 @@ STRINGTABLE
 BEGIN
     IDS_LD_ADDHTML          "Shto etiketën HTML"
     IDS_HTTP_CAPTION        "Ridatuat listën e serverave"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s u kopjua)"
     IDS_LD_ADDHASHSET       "Shto një 'hashset' të plotë"
     IDS_HSAV                "'Hashset' i vlefshëm"
     IDS_DL_SHOWED2KLINK     "Link eD2K..."
     IDS_FD_CORR             "Të Korruptuara"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Skeda '%s' ekziston edhe më parë.\nA do e zëvendësoni atë?"
     IDS_FD_RECOV            "Të Përtërira"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Ndodhi një gabim gjatë hapjes së skedës për shkarkim, Gabimi: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Transferta u prish"
     IDS_FD_COMPR            "Të Ngjeshura"
     IDS_WIZARD_NETWORK      "Zgjidheni cilin rrjet doni të përdorni"
     IDS_MAIN_READY          "Versioni i eMule %s është gati!"
@@ -1469,11 +1443,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Vlerë e transferimit:"
     IDS_SAVELOG             "Ruaje ditarin"
     IDS_CMT_COPYCLIPBOARD   "Kopjo komentin në fushëkapje"
-    IDS_ASKDOWNLOADLANG     "Gjuha që ju zgjodhët nuk është e instaluar në sistemin tuaj. A doni që eMule ta shkarkojë atë nga emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Shkarko skeda gjuhe"
     IDS_DELETESELECTED      "Fshije"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Shkarkimi dhe instalimi i gjuhës së zgjedhur dll nga %s dështoi!"
     IDS_ERR_BADFOLDER       "Dosje e pavlerë.\nDosja nuk mund të krijohet. Ju lutemi verifikoni emrin dhe pozicionin."
     IDS_AUTOREMOVEFD        "Autofshirje shkarkesave të përfunduara"
 END
@@ -1778,7 +1748,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Shkarkim i gjuhë-skedës"
     IDS_DOWNLOADING_SERVERMET_FROM "Shkarkim i 'Server.met' nga %s"
     IDS_DOWNLOADING_SERVERMET "Shkarkim i 'Server.met'..."
     IDS_FULLALLOC           "Llogarite përmasën e plotë për pjesët jo të rralla të skedës"

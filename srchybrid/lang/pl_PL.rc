@@ -59,31 +59,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Błąd inicjalizacji gniazd Windows."
     IDS_ABOUTBOX            "&O eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s od %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Podłączony do %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Odszukiwanie nazwy: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Nazwa odszukana: %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Podłączanie do %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Przekierowanie do %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Pobieranie informacji o pliku"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Wystąpił błąd podczas próby pobrania pliku, BLĄD: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Wystąpił błąd podczas podłączania do serwera, BŁĄD: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Nie uzyskano prawidłowej odpowiedzi od serwera"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Nie uzyskano prawidłowej odpowiedzi od serwera HTTP"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Wystąpił błąd podczas próby pobrania pliku, BLĄD: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "Trwa aktualizacja listy serwerów. %s%% / %s zaktualizowane."
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Pobieranie pliku"
-    IDS_HTTPDOWNLOAD_OF     "%s / %s"
     IDS_FILELINK            "Link pliku"
     IDS_LD_BASICOPT         "Podstawowe Opcje"
     IDS_LD_ADDSOURCE        "Dodaj siebie jako źródło"
@@ -96,17 +75,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Aktualizacja listy serwerów"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s skopiowano)"
     IDS_LD_ADDHASHSET       "Dodaj kompletny Hashset"
     IDS_HSAV                "Dostępny Hashset"
     IDS_DL_SHOWED2KLINK     "Pokaż link eD2K..."
     IDS_FD_CORR             "Uszkodzony"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Plik '%s' już istnieje.\nChcesz go zastąpić?"
     IDS_FD_RECOV            "Odzyskane"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Wystąpił błąd podczas otwierania pliku do pobrania, BŁĄD: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Pobieranie jest przerywane"
     IDS_FD_COMPR            "Kompresja"
     IDS_WIZARD_NETWORK      "wybierz z których sieci chcesz korzystać."
     IDS_MAIN_READY          "eMule %s gotowy do pracy"
@@ -1510,11 +1483,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Prędkość transferu:"
     IDS_SAVELOG             "Zapisz log"
     IDS_CMT_COPYCLIPBOARD   "Kopiuj komentarz do schowka"
-    IDS_ASKDOWNLOADLANG     "Język, który wybrałeś nie jest zainstalowany. Czy checsz żeby eMule pobrał odpowiedni plik z emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Pobieranie plików tłumaczeń"
     IDS_DELETESELECTED      "Usuń"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Nie udało się pobrać i zainstalować pliku tłumaczeń z %s!"
     IDS_ERR_BADFOLDER       "Błędny katalog.\nKatalog nie mogł być utworzony. Sprawdź nazwe i lokalizacje."
     IDS_AUTOREMOVEFD        "Czyść zakończone pliki automatycznie"
 END
@@ -1752,7 +1721,6 @@ BEGIN
     IDS_SEARCH_ATTRERR      "Błąd składni w '%s' szukanym atrybcie"
     IDS_SEARCH_MISSINGANDRIGHT "Brak lewej strony przy operatorze AND"
     IDS_SEARCH_OPRERR       "Błąd składni w porównaniu operatora '%s'"
-    IDS_DOWNLOAD_LANGFILE   "Ściągnie pliku językowego"
     IDS_DOWNLOADING_SERVERMET_FROM "Ściąganie server.met z %s"
     IDS_DOWNLOADING_SERVERMET "Ściąganie server.met..."
     IDS_FULLALLOC           "Umieszczanie pełnego rozmiaru pliku dla nierozrastających się części pliku"

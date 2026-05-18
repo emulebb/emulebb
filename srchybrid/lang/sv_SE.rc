@@ -59,45 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Fel vid initiering av windows sockets."
     IDS_ABOUTBOX            "&Om eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s från %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Ansluten till %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Hittar namn: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Hittar namn till %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Ansluter till %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Omdirigeras till %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Hämtar filinformation"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Ett fel inträffade när filen försöktes laddas hem, fel: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Ett fel inträffade vid anslutning till server, fel: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Misslyckades att få ett giltigt svar från servern"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Misslyckades att få ett giltigt HTTP svar från servern"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Ett fel inträffade vid nedladdning av filen, fel: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Uppdaterar serverlistan: %s%% av %s slutfört"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Tar emot filen"
-    IDS_HTTPDOWNLOAD_OF     "%s av %s"
     IDS_CANCEL              "Avbryt"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Uppdaterar serverlistan"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s kopierad)"
     IDS_HSAV                "Hashset tillgänglig"
     IDS_FD_CORR             "Korrupt"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Filen '%s' existerar redan.\nVill du ersätta den?"
     IDS_FD_RECOV            "Återställd"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Ett fel inträffade när filen som skall laddas hem öppnades, fel: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Avbryter överföringen"
     IDS_FD_COMPR            "Komprimering"
     IDS_MAIN_READY          "eMule version %s redo"
     IDS_SEL_SKIN            "Välj skal..."
@@ -1393,11 +1367,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Hastighet:"
     IDS_SAVELOG             "Spara logg"
     IDS_CMT_COPYCLIPBOARD   "Kopiera kommentar till urklipp"
-    IDS_ASKDOWNLOADLANG     "Språket du valde är inte installerat på ditt system. Vill du att eMule skall ladda hem det från emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Ladda ner språkfiler"
     IDS_DELETESELECTED      "Ta bort"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Misslyckades att ladda ner och installera språkfilen från %s!"
     IDS_ERR_BADFOLDER       "Felaktig katalog.\nKatalogen kan inte skapas. Kolla namnet och katalogstrukturen."
     IDS_AUTOREMOVEFD        "Rensa automatiskt slutförda nedladdningar"
 END
@@ -1774,7 +1744,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Laddar hem språkfil"
     IDS_DOWNLOADING_SERVERMET_FROM "Laddar hem server.met från %s"
     IDS_DOWNLOADING_SERVERMET "Laddar hem server.met..."
     IDS_FULLALLOC           "Allokera hela filstorleken för icke-sparse-delfiler"

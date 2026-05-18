@@ -59,44 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Klaida aktivuojant windows soketus."
     IDS_ABOUTBOX            "&Apie eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s nuo %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Prisijungta prie %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Priskiriamas vardas: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Priskirtas vardas prie %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Jungiamasi prie %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Nukreipiama į %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Gaunama failo informacija"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR "Klaida gaunant failą, klaida: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Klaida jungiantis prie serverio, klaida: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Nepavyko gauti teisingo atsakymo iš serverio"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Nepavyko gauti teisingo HTTP atsakymo iš serverio"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE "Klaida gaunant failą, klaida: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "Atnaujinamas serverių sąrašas: %s%% iš %s baigta"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Gaunamas failas"
-    IDS_HTTPDOWNLOAD_OF     "%s iš %s"
     IDS_CANCEL              "Atšaukt"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Atnaujinamas serverių sąrašas"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s nukopijuota)"
     IDS_HSAV                "Prieinami haš"
     IDS_FD_CORR             "Pažeista"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Failas '%s' jau egzistuoja.\nAr norite jį perrašyti?"
     IDS_FD_RECOV            "Atstatyta"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Klaida atidarant failą skirtą pakrovimui, klaida: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Nutraukti siuntimą"
     IDS_FD_COMPR            "Kompresija"
     IDS_WIZARD_NETWORK      "Pasirinkite kurį tinklą(us) norite naudoti."
     IDS_MAIN_READY          "eMule versija %s pasiruošus"
@@ -1396,11 +1371,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Greitis:"
     IDS_SAVELOG             "Išsaugoti logą"
     IDS_CMT_COPYCLIPBOARD   "Kopijuoti komentarą į atmintinę"
-    IDS_ASKDOWNLOADLANG     "Kalba kurią jūs pasirinkote nėta instaliuota jūsų sistemoje. Ar norėtumėte kad eMule ją pasiimtu iš emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Kalbos failų gavimas"
     IDS_DELETESELECTED      "Trinti"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Nepavyko gauti ir instaliuoti pasirinktą kalbos dll iš %s!"
     IDS_ERR_BADFOLDER       "Neteisingas katalogas.\nKatalogas negali būti sukurtas. Prašom patikrinti pavadinimą ir vietą."
     IDS_AUTOREMOVEFD        "Automatiškai išvalyti gautus failus"
 END
@@ -1777,7 +1748,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Gaunamas kalbos failas"
     IDS_DOWNLOADING_SERVERMET_FROM "Gaunamas server.met iš %s"
     IDS_DOWNLOADING_SERVERMET "Gaunamas server.met..."
     IDS_FULLALLOC           "Rerervuoti visą failo dydžio vietą diske ne sparse part failams"

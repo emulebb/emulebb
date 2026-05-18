@@ -59,30 +59,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Errore durante l'inizializzazione dei socket di Windows."
     IDS_ABOUTBOX            "Informazioni su &eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s da %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Connesso a %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Risoluzione nome: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Nome determinato: %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Connessione in corso a %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Reindirizzamento a %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Ricezione informazioni sul file in corso"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Si è verificato un errore nel tentativo di scaricare il file, errore: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Si è verificato un errore durante la connessione al server, errore: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Il server non ha dato una risposta valida"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Il server non ha dato una risposta HTTP valida"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Si è verificato un errore durante lo scaricamento del file, errore: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "In scaricamento: %s%% di %s completato"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Recupero del file in corso..."
-    IDS_HTTPDOWNLOAD_OF     "%s di %s"
     IDS_FILELINK            "Indirizzo del file"
     IDS_LD_BASICOPT         "Opzioni di base"
     IDS_LD_ADDSOURCE        "Inserisci il tuo IP o nome di dominio come fonte"
@@ -95,17 +75,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Aggiornamento della lista server in corso..."
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s copiati)"
     IDS_LD_ADDHASHSET       "Inserisci l'hashset completo"
     IDS_HSAV                "Hashset disponibile"
     IDS_DL_SHOWED2KLINK     "Mostra indirizzo eD2K..."//and the plural?
     IDS_FD_CORR             "Corrotti"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "Il file ""%s"" è già presente.\nVuoi sovrascriverlo?"
     IDS_FD_RECOV            "Recuperate"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Si è verificato un errore durante l'apertura del file da scaricare, errore: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Cancellazione scaricamento"
     IDS_FD_COMPR            "Compressione"
     IDS_WIZARD_NETWORK      "Scegli le reti da usare."
     IDS_MAIN_READY          "eMule v%s è pronto"
@@ -1506,11 +1480,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Velocità di scaricamento:"
     IDS_SAVELOG             "Salva registro"
     IDS_CMT_COPYCLIPBOARD   "Copia commenti negli appunti"
-    IDS_ASKDOWNLOADLANG     "La lingua che hai selezionato non è installata nel tuo sistema. Vuoi che eMule la scarichi da https://emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Scarica il file della lingua"
     IDS_DELETESELECTED      "Elimina"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Tentativo fallito di scaricare ed installare la libreria dll della lingua selezionata da %s!"
     IDS_ERR_BADFOLDER       "Cartella non valida.\nLa cartella non può essere creata. Controllare il nome ed il percorso."
     IDS_AUTOREMOVEFD        "Nascondi automaticamente i file completati"
 END
@@ -1747,7 +1717,6 @@ BEGIN
     IDS_SEARCH_ATTRERR      "Errore di sintassi nel parametro di ricerca '%s'"
     IDS_SEARCH_MISSINGANDRIGHT "Lato destro mancante per l'operatore AND"
     IDS_SEARCH_OPRERR       "Errore di sintassi nell'operatore di confronto '%s'"
-    IDS_DOWNLOAD_LANGFILE   "Scaricamento del file della lingua in corso..."
     IDS_DOWNLOADING_SERVERMET_FROM "Scarico 'server.met' da %s"
     IDS_DOWNLOADING_SERVERMET "Scaricamento di 'server.met' in corso..."
     IDS_FULLALLOC           "Assegna subito tutto lo spazio per i file .part non sparsi"

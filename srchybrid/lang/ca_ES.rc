@@ -59,46 +59,19 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Error iniciant els sockets de Windows."
     IDS_ABOUTBOX            "&Sobre l'eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s de %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Connectat a %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Resolent nom: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Nom resolt com a %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Connectant amb %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Redireccionant a %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Rebent la informació de l'arxiu"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Ha ocorregut un error al intentar descarregar l'arxiu, Error: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Ha ocorregut un error al intentar connectar al servidor, Error: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "No s'ha rebut una resposta vàlida del servidor"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "No s'ha rebut una resposta HTTP vàlida del servidor"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Hi ha hagut un error durant la descàrrega de l'arxiu, Error: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE
-                            "Baixant: %s%% de %s completat"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Recuperant l'arxiu"
-    IDS_HTTPDOWNLOAD_OF     "%s de %s"
     IDS_CANCEL              "Cancel·lar"
 END
 
 STRINGTABLE
 BEGIN
     IDS_HTTP_CAPTION        "Actualitzant la llista de servidors"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s copiats)"
     IDS_HSAV                "Hashset disponible"
     IDS_FD_CORR             "Corrupte"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "L'arxiu '%s' ja existeix.\nVols reemplaçar-lo?"
     IDS_FD_RECOV            "Recuperat"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Ha ocorregut un error al obrir l'arxiu que s'ha de descarregar, Error: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Avortant transferència"
     IDS_FD_COMPR            "Compressió"
     IDS_WIZARD_NETWORK      "Tria quina(es) xarxa(es) vols utilitzar."
     IDS_MAIN_READY          "La versió %s d'eMule està llesta"
@@ -1397,11 +1370,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Velocitat de transferència:"
     IDS_SAVELOG             "Desa registre"
     IDS_CMT_COPYCLIPBOARD   "Copia comentari al portapapers"
-    IDS_ASKDOWNLOADLANG     "L'idioma que heu triat no és instal·lat al sistema. Vols que l'eMule la baixi des d'emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Baixar fitxers d'idioma"
     IDS_DELETESELECTED      "Esborra"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Error en baixar i instal·lar la dll de l'idioma seleccionat des de %s!"
     IDS_ERR_BADFOLDER       "Carpeta incorrecta.\nLa carpeta no pot ser creada. Si us plau, comproveu-ne el nom i la localització."
     IDS_AUTOREMOVEFD        "Auto-neteja descàrregues completes"
 END
@@ -1775,7 +1744,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DOWNLOAD_LANGFILE   "Baixant fitxer d'idioma"
     IDS_DOWNLOADING_SERVERMET_FROM "Baixant server.met de %s"
     IDS_DOWNLOADING_SERVERMET "Baixant server.met..."
     IDS_FULLALLOC           "Allotja la mida del fitxer complet per als fitxers sense parts buides (sparse)"

@@ -58,30 +58,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Error aniciando los sockets de Windows."
     IDS_ABOUTBOX            "&Alrodiu d’eMule..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "%s de %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "Conectao a %s"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Resolviendo nome: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "Nome resueltu a %s"
-    IDS_HTTPDOWNLOAD_CONNECTING "Conectando a %s"
-    IDS_HTTPDOWNLOAD_REDIRECTING "Redireccionando a %s"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Sacando información del ficheru"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Asocedió un error al baxar el ficheru, Error: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Asocedió un error al conectase al servidor, Error: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Nun s’obtuvo una respuesta afayadiza del servidor"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Nun s’obtuvo una respuesta HTML afayadiza del servidor"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Asocedió un error demientres baxaba’l ficheru, Error: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "Baxando: %s%% de %s completao"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Sacando l’archivu"
-    IDS_HTTPDOWNLOAD_OF     "%s de %s"
     IDS_FILELINK            "Enllaz d’archivu"
     IDS_LD_BASICOPT         "Opciones básiques"
     IDS_LD_ADDSOURCE        "Amestate como fonte"
@@ -94,17 +74,11 @@ STRINGTABLE
 BEGIN
     IDS_LD_ADDHTML          "Amestar HTML-Tags"
     IDS_HTTP_CAPTION        "Actualizando la llista’l servidor"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s copiao)"
     IDS_LD_ADDHASHSET       "Amestar tol hashset"
     IDS_HSAV                "Hashset disponible"
     IDS_DL_SHOWED2KLINK     "Amosar enllaz eD2K"
     IDS_FD_CORR             "Corruptu"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "L’archivu '%s' yá esiste.\n ¿Quies camudalu por esti?"
     IDS_FD_RECOV            "Recuperao"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "Asocedió un error demientres abría l’archivu pa baxalu, Error: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Albortando tresferencia"
     IDS_FD_COMPR            "Compresión"
     IDS_WIZARD_NETWORK      "Escueyi la(es) rede(s) que quies emplegar."
     IDS_MAIN_READY          "Versión %s d’eMule llista"
@@ -1469,11 +1443,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Índiz de treferencia:"
     IDS_SAVELOG             "Guardar rexistru"
     IDS_CMT_COPYCLIPBOARD   "Copiar comentariu al portapapeles"
-    IDS_ASKDOWNLOADLANG     "La llingua seleccionada nun tá instalada. ¿Quies qu’eMule la baxe dende emule-project.net?"
-    IDS_ASKDOWNLOADLANGCAP  "Archivos de llingua baxaos"
     IDS_DELETESELECTED      "Borrar"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Error al baxar ya instalar la llingua seleccionada (archivu dll) dende %s!"
     IDS_ERR_BADFOLDER       "Carpeta non válida.\nNun se pue pesllar la carpeta. Comprobar Nome y Localización."
     IDS_AUTOREMOVEFD        "Autollimpiar descargues completes"
 END

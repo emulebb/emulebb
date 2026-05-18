@@ -59,30 +59,10 @@ STRINGTABLE
 BEGIN
     IDS_SOCKETS_INIT_FAILED "Windows soketlerini başlatım hatası."
     IDS_ABOUTBOX            "eMule &Hakkında..."
-    IDS_HTTPDOWNLOAD_FILESTATUS "Dosya: %s, Adresi: %s"
-    IDS_HTTPDOWNLOAD_CONNECTED "%s adresine bağlandı"
-    IDS_HTTPDOWNLOAD_RESOLVING_NAME "Çözülen isim: %s"
-    IDS_HTTPDOWNLOAD_RESOLVED_NAME "İsim %s adresine çözüldü"
-    IDS_HTTPDOWNLOAD_CONNECTING "%s adresine bağlanıyor"
-    IDS_HTTPDOWNLOAD_REDIRECTING "%s adresine yönlendiriliyor"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION "Dosya bilgisi alınıyor"
-    IDS_HTTPDOWNLOAD_GENERIC_ERROR
-                            "Dosya indirme denenirken bir hata oldu, Hata: %s"
-    IDS_HTTPDOWNLOAD_FAIL_CONNECT_SERVER
-                            "Sunucuya bağlanırken bir hata oldu, Hata: %s"
-    IDS_HTTPDOWNLOAD_INVALID_SERVER_RESPONSE
-                            "Sunucudan geçerli bir yanıt alma başarısız"
-    IDS_HTTPDOWNLOAD_INVALID_HTTP_RESPONSE
-                            "Sunucudan geçerli bir HTTP yanıtı alma başarısız"
-    IDS_HTTPDOWNLOAD_ERROR_READFILE
-                            "Dosya indirilirken bir hata oldu, Hata: %s"
-    IDS_HTTPDOWNLOAD_PERCENTAGE "İndiriliyor: %s%% tamamlandı. Dosya: %s"
-    IDS_HTTPDOWNLOAD_RETREIVEING_FILE "Dosya alınıyor"
-    IDS_HTTPDOWNLOAD_OF     "%s / %s"
     IDS_FILELINK            "Dosya Bağlantısı"
     IDS_LD_BASICOPT         "Temel Seçenekler"
     IDS_LD_ADDSOURCE        "Kendini kaynak olarak ekle"
@@ -95,17 +75,11 @@ STRINGTABLE
 BEGIN
     IDS_LD_ADDHTML          "HTML-Etiket ekle"
     IDS_HTTP_CAPTION        "Sunucu listesi güncelleniyor"
-    IDS_HTTPDOWNLOAD_TIMELEFT "%s (%s kopyalandı)"
     IDS_LD_ADDHASHSET       "Tam adresleme grubu ekle"
     IDS_HSAV                "Adresleme grubu var"
     IDS_DL_SHOWED2KLINK     "eD2K Bağlantıları..."
     IDS_FD_CORR             "Bozulan"
-    IDS_HTTPDOWNLOAD_OK_TO_OVERWRITE
-                            "'%s' dosyası zaten var.\nDeğiştirmek istiyor musunuz?"
     IDS_FD_RECOV            "Onarılan"
-    IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN
-                            "İndirilmiş dosya açılırken bir hata oldu, Hata: %s"
-    IDS_HTTPDOWNLOAD_ABORTING_TRANSFER "Aktarım durduruluyor"
     IDS_FD_COMPR            "Sıkıştırma"
     IDS_WIZARD_NETWORK      "Kullanmak istediğiniz ağ(lar)ı seçin."
     IDS_MAIN_READY          "eMule %s Sürümü hazır"
@@ -1417,11 +1391,7 @@ BEGIN
     IDS_TRANSFER_RATE_LABEL "Aktarma hızı:"
     IDS_SAVELOG             "Günlüğü Kaydet"
     IDS_CMT_COPYCLIPBOARD   "Yorumu Panoya Kopyala"
-    IDS_ASKDOWNLOADLANG     "Seçmiş olduğunuz dil sisteminize kurulu değil. eMule'un bunu emule-project.net adresinden indirmesini istiyor musunuz?"
-    IDS_ASKDOWNLOADLANGCAP  "Dil Dosyalarını İndir"
     IDS_DELETESELECTED      "Sil"
-    IDS_ERR_FAILEDDOWNLOADLANG
-                            "Seçili '.dll' dil dosyasını %s adresinden indirme ve kurma başarısız!"
     IDS_ERR_BADFOLDER       "Geçersiz klasör.\nKlasör oluşturulamadı. Lütfen isim ve yerini kontrol edin."
     IDS_AUTOREMOVEFD        "Tamamlanan indirmeleri otomatik temizle"
 END
@@ -1785,7 +1755,6 @@ STRINGTABLE
 BEGIN
     IDS_SEARCH_MISSINGANDRIGHT "VE işleticisi için eksik sağ kısım"
     IDS_SEARCH_OPRERR       "'%s' karşılaştırma işleticisinde sözdizimi hatası"
-    IDS_DOWNLOAD_LANGFILE   "Dil dosyası indiriliyor"
     IDS_DOWNLOADING_SERVERMET_FROM "%s adresinden server.met indiriliyor"
     IDS_DOWNLOADING_SERVERMET "Server.met indiriliyor..."
     IDS_FULLALLOC           "Seyrek olmayan parça dosyaları için tam dosya boyutu ayır"
