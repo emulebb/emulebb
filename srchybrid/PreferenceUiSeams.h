@@ -4,6 +4,7 @@
 #include <climits>
 #include <cstdint>
 #include <vector>
+#include "IPv4AddressSeams.h"
 #include "PreferenceValidationSeams.h"
 
 namespace PreferenceUiSeams
@@ -113,48 +114,12 @@ inline bool IsPositiveBounded(UINT uValue, UINT uMax)
 
 inline bool TryParseIPv4Address(const CString &strInput, uint32_t &uAddress)
 {
-	CString strValue(strInput);
-	strValue.Trim();
-	if (strValue.IsEmpty())
-		return false;
-
-	uint32_t parts[4] = {};
-	int iPart = 0;
-	int iValue = 0;
-	int iDigits = 0;
-	for (int i = 0; i <= strValue.GetLength(); ++i) {
-		const TCHAR ch = (i < strValue.GetLength()) ? strValue[i] : _T('.');
-		if (ch >= _T('0') && ch <= _T('9')) {
-			iValue = (iValue * 10) + (ch - _T('0'));
-			if (++iDigits > 3 || iValue > 255)
-				return false;
-			continue;
-		}
-
-		if (ch != _T('.') || iDigits == 0 || iPart >= 4)
-			return false;
-
-		parts[iPart++] = static_cast<uint32_t>(iValue);
-		iValue = 0;
-		iDigits = 0;
-	}
-
-	if (iPart != 4)
-		return false;
-
-	uAddress = parts[0] | (parts[1] << 8) | (parts[2] << 16) | (parts[3] << 24);
-	return true;
+	return IPv4AddressSeams::TryParseIPv4Address(strInput, uAddress);
 }
 
 inline CString FormatIPv4Address(uint32_t uAddress)
 {
-	CString strAddress;
-	strAddress.Format(_T("%u.%u.%u.%u"),
-		static_cast<unsigned>(uAddress & 0xffu),
-		static_cast<unsigned>((uAddress >> 8) & 0xffu),
-		static_cast<unsigned>((uAddress >> 16) & 0xffu),
-		static_cast<unsigned>((uAddress >> 24) & 0xffu));
-	return strAddress;
+	return IPv4AddressSeams::FormatIPv4Address(uAddress);
 }
 
 inline bool TryParseAllowedRemoteIpList(const CString &strInput, std::vector<uint32_t> &ruAddresses, CString &rstrInvalidToken)

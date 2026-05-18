@@ -533,6 +533,7 @@
     <ClInclude Include="IPFilterDlg.h" />
     <ClInclude Include="IPFilterUpdater.h" />
     <ClInclude Include="IPFilterUpdateSeams.h" />
+    <ClInclude Include="IPv4AddressSeams.h" />
     <ClInclude Include="IrcChannelListCtrl.h" />
     <ClInclude Include="IrcChannelTabCtrl.h" />
     <ClInclude Include="IrcMain.h" />
