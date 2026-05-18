@@ -21,7 +21,7 @@
 
 class CDC;
 class CImageList;
-struct SGeoLocationBackgroundRefreshState;
+namespace BackgroundRefreshSeams { struct SRefreshState; }
 
 namespace DirectDownload
 {
@@ -118,7 +118,7 @@ private:
 		CString strDatabaseTempPath;
 		CString strInstallPath;
 		HWND hNotifyWnd;
-		std::shared_ptr<SGeoLocationBackgroundRefreshState> pRefreshState;
+		std::shared_ptr<BackgroundRefreshSeams::SRefreshState> pRefreshState;
 		std::shared_ptr<DirectDownload::CDownloadCancellation> pCancellation;
 		bool bProxyEnabled;
 	};
@@ -147,5 +147,5 @@ private:
 	mutable SGeoLocationRecord m_defaultRecord;
 	mutable std::map<uint32, SGeoLocationRecord> m_cacheByIp;
 	std::map<CString, int, CStringLess> m_flagIndexByCode;
-	std::shared_ptr<SGeoLocationBackgroundRefreshState> m_pBackgroundRefreshState;
+	std::shared_ptr<BackgroundRefreshSeams::SRefreshState> m_pBackgroundRefreshState;
 };

@@ -18,7 +18,7 @@
 
 #include <memory>
 
-struct SIPFilterBackgroundRefreshState;
+namespace BackgroundRefreshSeams { struct SRefreshState; }
 
 /**
  * @brief Updates the local IP-filter file through shared safe download, promotion, and live reload paths.
@@ -55,5 +55,5 @@ private:
 
 	static UINT AFX_CDECL BackgroundRefreshThread(LPVOID pParam);
 
-	std::shared_ptr<SIPFilterBackgroundRefreshState> m_pBackgroundRefreshState;
+	std::shared_ptr<BackgroundRefreshSeams::SRefreshState> m_pBackgroundRefreshState;
 };
