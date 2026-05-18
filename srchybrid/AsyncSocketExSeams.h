@@ -21,6 +21,7 @@
 #define FD_FORCEREAD (1<<15)
 #define FD_DEFAULT (FD_READ | FD_WRITE | FD_OOB | FD_ACCEPT | FD_CONNECT | FD_CLOSE)
 #define EMULE_TEST_HAVE_ASYNC_SOCKET_CONNECT_TARGET_SEAMS 1
+#define EMULE_TEST_HAVE_ASYNC_SOCKET_HOSTNAME_RESOLVE_SEAMS 1
 
 enum AsyncSocketExState : uint8_t
 {
@@ -47,6 +48,14 @@ struct AsyncSocketExConnectTarget
 	int nProtocol;
 	int nSockAddrLen;
 	SOCKADDR_STORAGE sockAddr;
+};
+
+enum class AsyncSocketExHostnameCompletion
+{
+	UnknownSocket,
+	StaleRequest,
+	Failed,
+	Resolved
 };
 
 /**
@@ -162,4 +171,18 @@ inline bool TryCaptureAsyncSocketConnectTarget(const addrinfo *pAddr, AsyncSocke
 inline bool ShouldYieldForAsyncSocketCallbackDrain(long nCallbacksInFlight)
 {
 	return nCallbacksInFlight > 0;
+}
+
+/**
+ * @brief Classifies a posted hostname-resolution result before dispatching socket callbacks.
+ */
+inline AsyncSocketExHostnameCompletion ClassifyAsyncSocketHostnameCompletion(bool bSocketFound, bool bRequestMatches, int nErrorCode)
+{
+	if (!bSocketFound)
+		return AsyncSocketExHostnameCompletion::UnknownSocket;
+	if (!bRequestMatches)
+		return AsyncSocketExHostnameCompletion::StaleRequest;
+	if (nErrorCode != 0)
+		return AsyncSocketExHostnameCompletion::Failed;
+	return AsyncSocketExHostnameCompletion::Resolved;
 }

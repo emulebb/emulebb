@@ -76,7 +76,7 @@ to tim.kosse@filezilla-project.org
 class CAsyncSocketExHelperWindow;
 
 #define WM_SOCKETEX_TRIGGER		(WM_USER + 0x101 + 0)				// 0x0501 event sent by a layer
-#define WM_SOCKETEX_GETHOST		(WM_USER + 0x101 + 1)				// 0x0502 WSAAsyncGetHostByName reply
+#define WM_SOCKETEX_GETHOST		(WM_USER + 0x101 + 1)				// 0x0502 hostname resolver worker reply
 #define WM_SOCKETEX_CALLBACK	(WM_USER + 0x101 + 2)				// 0x0503
 #define WM_SOCKETEX_NOTIFY		(WM_USER + 0x101 + 3)				// 0x0504 socket notification message
 #define MAX_SOCKETS				(0xBFFF - WM_SOCKETEX_NOTIFY + 1)	// 0xBAFD (47869 decimal)
@@ -288,10 +288,8 @@ protected:
 	// Add a new notification to the list of pending callbacks
 	void AddCallbackNotification(const t_callbackMsg &msg);
 
-	//AsyncGetHostByName
-	char *m_pAsyncGetHostByNameBuffer; //Buffer for hostend structure
-	HANDLE m_hAsyncGetHostByNameHandle; //TaskHandle
-	USHORT m_nAsyncGetHostByNamePort; //Port to connect to
+	// Async hostname resolution
+	UINT_PTR m_uAsyncResolveRequestId; // Current worker request id; zero means no pending hostname result.
 
 #ifndef NOSOCKETSTATES
 	AsyncSocketExState m_nState;

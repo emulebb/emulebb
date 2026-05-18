@@ -69,6 +69,9 @@ to tim.kosse@filezilla-project.org
 #include "IPv4AddressSeams.h"
 #include "Log.h"
 
+#include <atomic>
+#include <memory>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -76,6 +79,79 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 THREADLOCAL CAsyncSocketEx::t_AsyncSocketExThreadData *CAsyncSocketEx::thread_local_data = NULL;
+static std::atomic<UINT_PTR> s_uAsyncResolveNextRequestId{0};
+
+struct AsyncSocketExHostnameResolveWork
+{
+	HWND hTargetWnd;
+	int nSocketIndex;
+	UINT_PTR uRequestId;
+	CStringA strHostAddress;
+	USHORT nHostPort;
+};
+
+struct AsyncSocketExHostnameResolveResult
+{
+	UINT_PTR uRequestId;
+	int nErrorCode;
+	SOCKADDR_IN sockAddr;
+};
+
+/**
+ * @brief Allocates a process-unique non-zero id for stale hostname-result detection.
+ */
+static UINT_PTR AllocateAsyncSocketResolveRequestId()
+{
+	UINT_PTR uRequestId = ++s_uAsyncResolveNextRequestId;
+	if (uRequestId == 0)
+		uRequestId = ++s_uAsyncResolveNextRequestId;
+	return uRequestId;
+}
+
+/**
+ * @brief Resolves an IPv4 TCP hostname for the legacy async-socket connect callback path.
+ */
+static int ResolveAsyncSocketHostnameIPv4(const CStringA& strHostAddress, USHORT nHostPort, SOCKADDR_IN& sockAddr)
+{
+	addrinfo hints = {};
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+
+	addrinfo *pResult = NULL;
+	const int nResolveError = getaddrinfo(strHostAddress.GetString(), NULL, &hints, &pResult);
+	if (nResolveError != 0)
+		return WSAHOST_NOT_FOUND;
+
+	int nErrorCode = WSAHOST_NOT_FOUND;
+	for (addrinfo *pCurrent = pResult; pCurrent != NULL; pCurrent = pCurrent->ai_next) {
+		if (pCurrent->ai_family != AF_INET || pCurrent->ai_addr == NULL || pCurrent->ai_addrlen < sizeof(sockaddr_in))
+			continue;
+
+		sockAddr = *reinterpret_cast<SOCKADDR_IN*>(pCurrent->ai_addr);
+		sockAddr.sin_family = AF_INET;
+		sockAddr.sin_port = htons(nHostPort);
+		nErrorCode = 0;
+		break;
+	}
+
+	freeaddrinfo(pResult);
+	return nErrorCode;
+}
+
+/**
+ * @brief Worker entrypoint for CAsyncSocketEx hostname resolution.
+ */
+static UINT AFX_CDECL AsyncSocketExHostnameResolveThreadProc(LPVOID pParam)
+{
+	std::unique_ptr<AsyncSocketExHostnameResolveWork> pWork(static_cast<AsyncSocketExHostnameResolveWork*>(pParam));
+	std::unique_ptr<AsyncSocketExHostnameResolveResult> pResult(new AsyncSocketExHostnameResolveResult());
+	pResult->uRequestId = pWork->uRequestId;
+	pResult->nErrorCode = ResolveAsyncSocketHostnameIPv4(pWork->strHostAddress, pWork->nHostPort, pResult->sockAddr);
+
+	if (::PostMessage(pWork->hTargetWnd, WM_SOCKETEX_GETHOST, static_cast<WPARAM>(pWork->nSocketIndex), reinterpret_cast<LPARAM>(pResult.get())))
+		pResult.release();
+	return 0;
+}
 
 /////////////////////////////
 //Helper Window class
@@ -498,43 +574,35 @@ public:
 					::PostMessage(hWnd, WM_SOCKETEX_NOTIFY + socket->m_SocketData.nSocketIndex, socket->m_SocketData.hSocket, FD_CLOSE);
 			}
 			return 0;
-		case WM_SOCKETEX_GETHOST: //WSAAsyncGetHostByName reply
+		case WM_SOCKETEX_GETHOST: // hostname resolver worker reply
 			{
 				// Verify parameters
 				ASSERT(hWnd);
 				CAsyncSocketExHelperWindow *pWnd = reinterpret_cast<CAsyncSocketExHelperWindow*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
 				ASSERT(pWnd);
-				if (!pWnd || !wParam) //wParam must be a non-zero handle
+				std::unique_ptr<AsyncSocketExHostnameResolveResult> pResult(reinterpret_cast<AsyncSocketExHostnameResolveResult*>(lParam));
+				if (!pWnd || !pResult)
 					return 0;
 
-				CAsyncSocketEx *pSocket = NULL;
-				for (int i = 0; i < pWnd->m_nWindowDataSize; ++i) {
-					pSocket = pWnd->m_pAsyncSocketExWindowData[i].m_pSocket;
-					if (pSocket && pSocket->m_hAsyncGetHostByNameHandle == (HANDLE)wParam)
-						break;
-					pSocket = NULL;
+				const int nSocketIndex = static_cast<int>(wParam);
+				if (nSocketIndex < 0 || nSocketIndex >= pWnd->m_nWindowDataSize)
+					return 0;
+
+				CAsyncSocketEx *pSocket = pWnd->m_pAsyncSocketExWindowData[nSocketIndex].m_pSocket;
+				if (pSocket == NULL || pSocket->m_uAsyncResolveRequestId != pResult->uRequestId)
+					return 0;
+
+				pSocket->m_uAsyncResolveRequestId = 0;
+				if (pResult->nErrorCode) {
+					pSocket->OnConnect(pResult->nErrorCode);
+					return 0;
 				}
-				if (!pSocket || !pSocket->m_pAsyncGetHostByNameBuffer)
-					return 0;
 
-				int nErrorCode = (int)WSAGETASYNCERROR(lParam);
-				if (nErrorCode) {
-					pSocket->OnConnect(nErrorCode);
-					return 0;
-				}
-
-				SOCKADDR_IN sockAddr = {};
-				sockAddr.sin_family = AF_INET;
-				sockAddr.sin_addr.s_addr = ((LPIN_ADDR)((LPHOSTENT)pSocket->m_pAsyncGetHostByNameBuffer)->h_addr)->s_addr;
-				sockAddr.sin_port = htons(pSocket->m_nAsyncGetHostByNamePort);
-
+				SOCKADDR_IN sockAddr = pResult->sockAddr;
 				if (!pSocket->OnHostNameResolved(&sockAddr))
 					return 0;
 
 				BOOL res = pSocket->Connect((LPSOCKADDR)& sockAddr, sizeof sockAddr);
-				delete[] pSocket->m_pAsyncGetHostByNameBuffer;
-				pSocket->m_pAsyncGetHostByNameBuffer = NULL;
-				pSocket->m_hAsyncGetHostByNameHandle = 0;
 
 				if (!res && GetLastError() != WSAEWOULDBLOCK)
 					pSocket->OnConnect(GetLastError());
@@ -589,9 +657,7 @@ IMPLEMENT_DYNAMIC(CAsyncSocketEx, CObject)
 
 CAsyncSocketEx::CAsyncSocketEx()
 	: m_pLocalAsyncSocketExThreadData()
-	, m_pAsyncGetHostByNameBuffer()
-	, m_hAsyncGetHostByNameHandle()
-	, m_nAsyncGetHostByNamePort()
+	, m_uAsyncResolveRequestId()
 #ifndef NOSOCKETSTATES
 	, m_nState(notsock)
 	, m_nPendingEvents()
@@ -811,12 +877,7 @@ void CAsyncSocketEx::Close()
 	m_sSocketAddress.Empty();
 	m_nSocketPort = 0;
 	RemoveAllLayers();
-	delete[] m_pAsyncGetHostByNameBuffer;
-	m_pAsyncGetHostByNameBuffer = NULL;
-	if (m_hAsyncGetHostByNameHandle) {
-		WSACancelAsyncRequest(m_hAsyncGetHostByNameHandle);
-		m_hAsyncGetHostByNameHandle = NULL;
-	}
+	m_uAsyncResolveRequestId = 0;
 	m_SocketData.bIsClosing = false;
 }
 
@@ -901,18 +962,25 @@ bool CAsyncSocketEx::Connect(const CString &sHostAddress, UINT nHostPort)
 
 		uint32_t uNetworkOrderAddress = 0;
 		if (!IPv4AddressSeams::TryParseIPv4Address(sHostAddress, uNetworkOrderAddress)) {
-			delete[] m_pAsyncGetHostByNameBuffer;
-			m_pAsyncGetHostByNameBuffer = new char[MAXGETHOSTSTRUCT];
+			AsyncSocketExHostnameResolveWork *pWork = new AsyncSocketExHostnameResolveWork();
+			pWork->hTargetWnd = GetHelperWindowHandle();
+			pWork->nSocketIndex = m_SocketData.nSocketIndex;
+			pWork->uRequestId = AllocateAsyncSocketResolveRequestId();
+			m_uAsyncResolveRequestId = pWork->uRequestId;
+			pWork->strHostAddress = sAscii;
+			pWork->nHostPort = static_cast<USHORT>(nHostPort);
 
-			m_nAsyncGetHostByNamePort = (USHORT)nHostPort;
-
-			m_hAsyncGetHostByNameHandle = WSAAsyncGetHostByName(GetHelperWindowHandle(), WM_SOCKETEX_GETHOST, sAscii, m_pAsyncGetHostByNameBuffer, MAXGETHOSTSTRUCT);
-			if (m_hAsyncGetHostByNameHandle) {
-				WSASetLastError(WSAEWOULDBLOCK);
+			if (AfxBeginThread(AsyncSocketExHostnameResolveThreadProc, pWork, THREAD_PRIORITY_NORMAL) != NULL) {
 #ifndef NOSOCKETSTATES
 				SetState(connecting);
 #endif //NOSOCKETSTATES
+				WSASetLastError(WSAEWOULDBLOCK);
+				return false;
 			}
+
+			delete pWork;
+			m_uAsyncResolveRequestId = 0;
+			WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
 			return false;
 		}
 
@@ -1273,9 +1341,7 @@ void CAsyncSocketEx::AssertValid() const
 
 	(void)m_SocketData;
 	(void)m_lEvent;
-	(void)m_pAsyncGetHostByNameBuffer;
-	(void)m_hAsyncGetHostByNameHandle;
-	(void)m_nAsyncGetHostByNamePort;
+	(void)m_uAsyncResolveRequestId;
 	(void)m_nSocketPort;
 	(void)m_pendingCallbacks;
 	(void)m_pFirstLayer;
