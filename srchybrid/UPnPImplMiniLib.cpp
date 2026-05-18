@@ -61,7 +61,7 @@ CUPnPImplMiniLib::~CUPnPImplMiniLib()
 
 bool CUPnPImplMiniLib::IsReady()
 {
-	if (m_bAbortDiscovery)
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_bAbortDiscovery))
 		return false;
 	// the only check we need to do is if we are already busy with some async/threaded function
 	CSingleLock lockTest(&m_mutBusy);
@@ -72,17 +72,20 @@ void CUPnPImplMiniLib::StopAsyncFind()
 {
 	ReapDiscoveryThreadIfFinished();
 	if (m_pDiscoveryThread != NULL) {
-		m_bAbortDiscovery = true;	// if there is a thread, tell it to abort as soon as possible - it won't send a Result message when aborted
-		const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, SEC2MS(7));
-		if (dwWait != WAIT_OBJECT_0) {
+		UPnPDiscoveryThreadSeams::RequestAbort(m_bAbortDiscovery);	// if there is a thread, tell it to abort as soon as possible - it won't send a Result message when aborted
+		const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, UPnPDiscoveryThreadSeams::kCooperativeStopWaitMs);
+		const UPnPDiscoveryThreadSeams::EStopWaitAction eAction = UPnPDiscoveryThreadSeams::ClassifyStopWait(dwWait);
+		if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::WaitCooperatively) {
 			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread to quit timed out; waiting for cooperative exit without forced termination"));
 			(void)::WaitForSingleObject(m_pDiscoveryThread->m_hThread, INFINITE);
-		} else
+		} else if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::ReleaseAfterWaitFailure)
+			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread failed (%u); releasing stale thread wrapper"), ::GetLastError());
+		else
 			DebugLog(_T("Aborted any possible UPnP StartDiscoveryThread"));
 		delete m_pDiscoveryThread;
 		m_pDiscoveryThread = NULL;
 	}
-	m_bAbortDiscovery = false;
+	UPnPDiscoveryThreadSeams::ClearAbort(m_bAbortDiscovery);
 }
 
 void CUPnPImplMiniLib::DeletePorts()
@@ -153,7 +156,7 @@ void CUPnPImplMiniLib::StartDiscovery(uint16 nTCPPort, uint16 nUDPPort, uint16 n
 	m_bCheckAndRefresh = false;
 
 	Cleanup();
-	if (!m_bAbortDiscovery)
+	if (!UPnPDiscoveryThreadSeams::IsAbortRequested(m_bAbortDiscovery))
 		StartThread();
 }
 
@@ -162,7 +165,7 @@ bool CUPnPImplMiniLib::CheckAndRefresh()
 	// in CheckAndRefresh we don't do any new time consuming discovery tries, we expect to find the same router like the first time
 	// and of course we also don't delete old ports (this was done in Discovery) but only check that our current mappings still exist
 	// and refresh them if not
-	if (m_bAbortDiscovery || !m_bSucceededOnce || m_pURLs == NULL || m_pIGDData == NULL
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_bAbortDiscovery) || !m_bSucceededOnce || m_pURLs == NULL || m_pIGDData == NULL
 	    || m_pURLs->controlURL == NULL || m_nTCPPort == 0)
 	{
 		DebugLog(_T("Not refreshing UPnP ports because they don't seem to be forwarded in the first place"));
@@ -208,7 +211,7 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 		return 0;
 	}
 
-	if (m_pOwner->m_bAbortDiscovery)// requesting to abort ASAP?
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery))// requesting to abort ASAP?
 		return 0;
 
 	bool bSucceeded = false;
@@ -226,7 +229,7 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 				return 0;
 			}
 
-			if (m_pOwner->m_bAbortDiscovery) {	// requesting to abort ASAP?
+			if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery)) {	// requesting to abort ASAP?
 				freeUPNPDevlist(structDeviceList);
 				return 0;
 			}
@@ -270,7 +273,7 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 			}
 			DebugLog(_T("Our LAN IP: %S"), m_pOwner->m_achLanIP);
 
-			if (m_pOwner->m_bAbortDiscovery)// requesting to abort ASAP?
+			if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery))// requesting to abort ASAP?
 				return 0;
 
 			// do we still have old mappings? Remove them first
@@ -291,7 +294,7 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 		DebugLogError(_T("Unknown Exception in CUPnPImplMiniLib::CStartDiscoveryThread::Run()"));
 #endif
 	}
-	if (!m_pOwner->m_bAbortDiscovery) {	// don't send the result on an abort request
+	if (!UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery)) {	// don't send the result on an abort request
 		if (bSucceeded) {
 			m_pOwner->m_bUPnPPortsForwarded = TRIS_TRUE;
 			m_pOwner->m_bSucceededOnce = true;
@@ -304,7 +307,7 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 
 bool CUPnPImplMiniLib::CStartDiscoveryThread::OpenPort(uint16 nPort, bool bTCP, char *pachLANIP, bool bCheckAndRefresh)
 {
-	if (m_pOwner->m_bAbortDiscovery)
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery))
 		return false;
 
 	static const char achDescTCP[] = "eMule_TCP";
@@ -358,7 +361,7 @@ bool CUPnPImplMiniLib::CStartDiscoveryThread::OpenPort(uint16 nPort, bool bTCP, 
 		return false;
 	}
 
-	if (m_pOwner->m_bAbortDiscovery)
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery))
 		return false;
 
 	// make sure it really worked
@@ -398,10 +401,11 @@ void CUPnPImplMiniLib::ReapDiscoveryThreadIfFinished()
 		return;
 
 	const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, 0);
-	if (dwWait == WAIT_OBJECT_0) {
+	const UPnPDiscoveryThreadSeams::ENonblockingWaitAction eAction = UPnPDiscoveryThreadSeams::ClassifyNonblockingWait(dwWait);
+	if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseFinished) {
 		delete m_pDiscoveryThread;
 		m_pDiscoveryThread = NULL;
-	} else if (dwWait == WAIT_FAILED) {
+	} else if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseAfterWaitFailure) {
 		DebugLogError(_T("UPnP StartDiscoveryThread wait failed (%u); releasing stale thread wrapper"), ::GetLastError());
 		delete m_pDiscoveryThread;
 		m_pDiscoveryThread = NULL;

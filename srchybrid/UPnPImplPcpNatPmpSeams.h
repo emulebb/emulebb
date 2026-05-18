@@ -2,6 +2,8 @@
 
 #include <windows.h>
 
+#include "UPnPDiscoveryThreadSeams.h"
+
 #define EMULE_TEST_HAVE_UPNP_PCP_NATPMP_SEAMS 1
 
 /**
@@ -19,9 +21,10 @@ enum class EPcpNatPmpDiscoveryThreadWaitAction
  */
 inline EPcpNatPmpDiscoveryThreadWaitAction ClassifyPcpNatPmpDiscoveryThreadWait(DWORD dwWait)
 {
-	if (dwWait == WAIT_OBJECT_0)
+	const UPnPDiscoveryThreadSeams::ENonblockingWaitAction eAction = UPnPDiscoveryThreadSeams::ClassifyNonblockingWait(dwWait);
+	if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseFinished)
 		return EPcpNatPmpDiscoveryThreadWaitAction::ReleaseFinished;
-	if (dwWait == WAIT_FAILED)
+	if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseAfterWaitFailure)
 		return EPcpNatPmpDiscoveryThreadWaitAction::ReleaseAfterWaitFailure;
 	return EPcpNatPmpDiscoveryThreadWaitAction::KeepWaiting;
 }

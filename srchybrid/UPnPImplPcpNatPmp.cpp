@@ -87,13 +87,13 @@ void CUPnPImplPcpNatPmp::StartDiscovery(uint16 nTCPPort, uint16 nUDPPort, uint16
 	m_nTCPWebPort = nTCPWebPort;
 	m_bUPnPPortsForwarded = TRIS_UNKNOWN;
 	m_bCheckAndRefresh = false;
-	if (!m_bAbortDiscovery)
+	if (!UPnPDiscoveryThreadSeams::IsAbortRequested(m_bAbortDiscovery))
 		StartThread();
 }
 
 bool CUPnPImplPcpNatPmp::CheckAndRefresh()
 {
-	if (m_bAbortDiscovery || !m_bSucceededOnce || m_pContext == NULL || m_pTCPFlow == NULL || m_nTCPPort == 0) {
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_bAbortDiscovery) || !m_bSucceededOnce || m_pContext == NULL || m_pTCPFlow == NULL || m_nTCPPort == 0) {
 		DebugLog(_T("Not refreshing PCP/NAT-PMP mappings because they don't seem to be active in the first place"));
 		return false;
 	}
@@ -119,17 +119,20 @@ void CUPnPImplPcpNatPmp::StopAsyncFind()
 {
 	ReapDiscoveryThreadIfFinished();
 	if (m_pDiscoveryThread != NULL) {
-		m_bAbortDiscovery = true; // cooperative shutdown; do not force-kill mapping code while libpcpnatpmp owns state
-		const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, SEC2MS(7));
-		if (dwWait != WAIT_OBJECT_0) {
+		UPnPDiscoveryThreadSeams::RequestAbort(m_bAbortDiscovery); // cooperative shutdown; do not force-kill mapping code while libpcpnatpmp owns state
+		const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, UPnPDiscoveryThreadSeams::kCooperativeStopWaitMs);
+		const UPnPDiscoveryThreadSeams::EStopWaitAction eAction = UPnPDiscoveryThreadSeams::ClassifyStopWait(dwWait);
+		if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::WaitCooperatively) {
 			DebugLogError(_T("Waiting for PCP/NAT-PMP discovery thread to quit timed out; waiting for cooperative exit without forced termination"));
 			(void)::WaitForSingleObject(m_pDiscoveryThread->m_hThread, INFINITE);
-		} else
+		} else if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::ReleaseAfterWaitFailure)
+			DebugLogError(_T("Waiting for PCP/NAT-PMP discovery thread failed (%u); releasing stale thread wrapper"), ::GetLastError());
+		else
 			DebugLog(_T("Aborted any possible PCP/NAT-PMP discovery thread"));
 		delete m_pDiscoveryThread;
 		m_pDiscoveryThread = NULL;
 	}
-	m_bAbortDiscovery = false;
+	UPnPDiscoveryThreadSeams::ClearAbort(m_bAbortDiscovery);
 }
 
 void CUPnPImplPcpNatPmp::DeletePorts()
@@ -366,11 +369,11 @@ void CUPnPImplPcpNatPmp::ReapDiscoveryThreadIfFinished()
 		return;
 
 	const DWORD dwWait = ::WaitForSingleObject(m_pDiscoveryThread->m_hThread, 0);
-	const EPcpNatPmpDiscoveryThreadWaitAction eAction = ClassifyPcpNatPmpDiscoveryThreadWait(dwWait);
-	if (eAction == EPcpNatPmpDiscoveryThreadWaitAction::ReleaseFinished) {
+	const UPnPDiscoveryThreadSeams::ENonblockingWaitAction eAction = UPnPDiscoveryThreadSeams::ClassifyNonblockingWait(dwWait);
+	if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseFinished) {
 		delete m_pDiscoveryThread;
 		m_pDiscoveryThread = NULL;
-	} else if (eAction == EPcpNatPmpDiscoveryThreadWaitAction::ReleaseAfterWaitFailure) {
+	} else if (eAction == UPnPDiscoveryThreadSeams::ENonblockingWaitAction::ReleaseAfterWaitFailure) {
 		DebugLogError(_T("PCP/NAT-PMP discovery thread wait failed (%u); releasing stale thread wrapper"), ::GetLastError());
 		delete m_pDiscoveryThread;
 		m_pDiscoveryThread = NULL;
@@ -403,7 +406,7 @@ int CUPnPImplPcpNatPmp::CStartDiscoveryThread::Run()
 		return 0;
 	}
 
-	if (m_pOwner->m_bAbortDiscovery)
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery))
 		return 0;
 
 	bool bSucceeded = false;
@@ -433,7 +436,7 @@ int CUPnPImplPcpNatPmp::CStartDiscoveryThread::Run()
 			m_pOwner->m_nOldTCPWebPort = 0;
 		}
 
-		if (m_pOwner->m_bAbortDiscovery)
+		if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery))
 			return 0;
 
 		bSucceeded = m_pOwner->EnsureMappedPort(m_pOwner->m_nTCPPort, true, m_pOwner->m_pTCPFlow, false);
@@ -445,7 +448,7 @@ int CUPnPImplPcpNatPmp::CStartDiscoveryThread::Run()
 		DebugLogError(_T("Unknown Exception in CUPnPImplPcpNatPmp::CStartDiscoveryThread::Run()"));
 	}
 
-	if (!m_pOwner->m_bAbortDiscovery) {
+	if (!UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery)) {
 		if (bSucceeded) {
 			m_pOwner->m_bUPnPPortsForwarded = TRIS_TRUE;
 			m_pOwner->m_bSucceededOnce = true;

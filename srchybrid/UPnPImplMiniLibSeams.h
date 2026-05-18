@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <cstring>
 
+#include "UPnPDiscoveryThreadSeams.h"
+
 #define EMULE_TEST_HAVE_UPNP_MINILIB_SEAMS 1
 #define EMULE_TEST_HAVE_UPNP_MINILIB_ADD_FAILURE_SEAM 1
 

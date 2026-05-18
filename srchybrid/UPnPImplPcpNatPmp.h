@@ -86,5 +86,8 @@ private:
 	int m_nSourceAddressLen;
 
 	bool m_bSucceededOnce;
-	volatile bool m_bAbortDiscovery;
+	/**
+	 * Interlocked cooperative-cancellation flag read by the discovery worker.
+	 */
+	volatile LONG m_bAbortDiscovery;
 };
