@@ -1,6 +1,9 @@
 #pragma once
 
+#include <cstdint>
+
 #define EMULE_TEST_HAVE_SERVER_UDP_SOCKET_FAILURE_SEAMS 1
+#define EMULE_TEST_HAVE_SERVER_UDP_DNS_SEAMS 1
 
 /**
  * @brief Testable policy helpers for server UDP packet failure diagnostics.
@@ -17,6 +20,17 @@ enum class EServerUdpPacketFailureLogPolicy
 };
 
 /**
+ * @brief Completion states for server UDP hostname resolution.
+ */
+enum class EServerUdpDnsCompletion
+{
+	UnknownRequest,
+	Failed,
+	NoAddress,
+	Resolved
+};
+
+/**
  * @brief Unexpected release exceptions should not be hidden behind verbose logging.
  */
 inline EServerUdpPacketFailureLogPolicy GetPacketFailureLogPolicy(const bool bUnexpectedException)
@@ -30,5 +44,19 @@ inline EServerUdpPacketFailureLogPolicy GetPacketFailureLogPolicy(const bool bUn
 inline bool ShouldLogPacketFailure(const bool bVerboseEnabled, const EServerUdpPacketFailureLogPolicy ePolicy)
 {
 	return bVerboseEnabled || ePolicy == EServerUdpPacketFailureLogPolicy::Always;
+}
+
+/**
+ * @brief Classifies an asynchronous server UDP DNS completion before packet dispatch.
+ */
+inline EServerUdpDnsCompletion ClassifyDnsCompletion(const bool bKnownRequest, const bool bLookupSucceeded, const bool bHasIpv4Address, const uint32_t uNetworkOrderAddress)
+{
+	if (!bKnownRequest)
+		return EServerUdpDnsCompletion::UnknownRequest;
+	if (!bLookupSucceeded)
+		return EServerUdpDnsCompletion::Failed;
+	if (!bHasIpv4Address || uNetworkOrderAddress == 0xffffffffu)
+		return EServerUdpDnsCompletion::NoAddress;
+	return EServerUdpDnsCompletion::Resolved;
 }
 }

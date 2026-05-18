@@ -71,6 +71,10 @@ private:
 	void SendBuffer(uint32 nIP, uint16 nPort, BYTE *pPacket, UINT uSize);
 	bool ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint32 nIP, uint16 nUDPPort);
 	void ProcessPacketError(UINT size, UINT opcode, uint32 nIP, uint16 nUDPPort, LPCTSTR pszError, bool bUnexpectedException = false);
+	/**
+	 * @brief Allocates a non-zero id for matching asynchronous DNS completions.
+	 */
+	UINT AllocateDnsRequestId();
 	bool IsBusy() const						{ return m_bWouldBlock; }
 	int SendTo(BYTE *lpBuf, int nBufLen, uint32 dwIP, uint16 nPort);
 
@@ -79,5 +83,6 @@ private:
 	CTypedPtrList<CPtrList, SServerUDPPacket*> controlpacket_queue;
 	CCriticalSection sendLocker; // ZZ:UploadBandWithThrottler (UDP)
 	HWND m_hWndResolveMessage;
+	UINT m_uNextDNSRequestId;
 	bool m_bWouldBlock;
 };
