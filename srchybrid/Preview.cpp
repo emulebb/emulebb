@@ -27,6 +27,7 @@
 #include "LongPathSeams.h"
 #include "OtherFunctions.h"
 #include "PartFilePreviewSeams.h"
+#include "ProcessLaunchSeams.h"
 #include "SafeFile.h"
 #include "emule.h"
 #include "emuledlg.h"
@@ -80,35 +81,21 @@ bool RunVideoThumbnailCommand(const CString &rstrCommand, const CString &rstrWor
 		return false;
 	}
 
-	STARTUPINFO startupInfo = {};
-	startupInfo.cb = sizeof(startupInfo);
-	startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-	startupInfo.wShowWindow = SW_HIDE;
-
-	PROCESS_INFORMATION processInfo = {};
-	CString strCommand(rstrCommand);
-	LPTSTR pszCommand = strCommand.GetBuffer();
-	const BOOL bStarted = ::CreateProcess(NULL, pszCommand, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL
-		, rstrWorkingDirectory.IsEmpty() ? NULL : (LPCTSTR)rstrWorkingDirectory, &startupInfo, &processInfo);
-	const DWORD dwError = bStarted ? ERROR_SUCCESS : ::GetLastError();
-	strCommand.ReleaseBuffer();
-
-	if (!bStarted) {
-		rdwExitCode = dwError;
+	const ProcessLaunchSeams::BoundedProcessResult result = ProcessLaunchSeams::RunProcessWithTimeout(
+		rstrCommand,
+		rstrWorkingDirectory.IsEmpty() ? NULL : (LPCTSTR)rstrWorkingDirectory,
+		SW_HIDE,
+		CREATE_NO_WINDOW,
+		PartFilePreviewSeams::kFfmpegThumbnailTimeoutMs,
+		true,
+		ProcessLaunchSeams::kTimedOutProcessTerminateWaitMs);
+	if (!result.Started) {
+		rdwExitCode = result.LastError;
 		return false;
 	}
 
-	const DWORD dwWait = ::WaitForSingleObject(processInfo.hProcess, PartFilePreviewSeams::kFfmpegThumbnailTimeoutMs);
-	if (dwWait == WAIT_TIMEOUT) {
-		(void)::TerminateProcess(processInfo.hProcess, WAIT_TIMEOUT);
-		(void)::WaitForSingleObject(processInfo.hProcess, SEC2MS(2));
-		rdwExitCode = WAIT_TIMEOUT;
-	} else if (!::GetExitCodeProcess(processInfo.hProcess, &rdwExitCode))
-		rdwExitCode = ::GetLastError();
-
-	VERIFY(::CloseHandle(processInfo.hThread));
-	VERIFY(::CloseHandle(processInfo.hProcess));
-	return dwWait != WAIT_TIMEOUT;
+	rdwExitCode = result.ExitCode != ERROR_SUCCESS || result.LastError == ERROR_SUCCESS ? result.ExitCode : result.LastError;
+	return result.WaitResult == ProcessLaunchSeams::EProcessWaitResult::Completed;
 }
 }
 

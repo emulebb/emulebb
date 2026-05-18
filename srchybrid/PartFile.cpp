@@ -46,6 +46,7 @@
 #include "PartFilePreviewSeams.h"
 #include "PartFilePersistenceSeams.h"
 #include "PartFileEndgameSeams.h"
+#include "ProcessLaunchSeams.h"
 #include "SafeFile.h"
 #include "StringConversion.h"
 #include "UserMsgs.h"
@@ -145,37 +146,19 @@ void LaunchFileCompletionCommand(const CPartFile &partFile, const UINT nComplete
 	if (!FileCompletionCommandSeams::TryBuildLaunchRequest(context, launchRequest))
 		return;
 
-	STARTUPINFO startupInfo = {};
-	startupInfo.cb = sizeof(startupInfo);
-	startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-	startupInfo.wShowWindow = SW_SHOWMINNOACTIVE;
-
-	PROCESS_INFORMATION processInfo = {};
-	LPTSTR pszCommandLine = launchRequest.commandLine.GetBuffer();
-	const BOOL bCreated = ::CreateProcess(
+	const ProcessLaunchSeams::DetachedLaunchResult launchResult = ProcessLaunchSeams::LaunchDetachedProcess(
 		launchRequest.applicationName,
-		pszCommandLine,
-		NULL,
-		NULL,
-		FALSE,
-		0,
-		NULL,
+		launchRequest.commandLine,
 		launchRequest.workingDirectory.IsEmpty() ? NULL : (LPCTSTR)launchRequest.workingDirectory,
-		&startupInfo,
-		&processInfo);
-	const DWORD dwError = bCreated ? ERROR_SUCCESS : ::GetLastError();
-	launchRequest.commandLine.ReleaseBuffer();
-
-	if (!bCreated) {
+		SW_SHOWMINNOACTIVE,
+		0);
+	if (!launchResult.Started) {
 		LogWarning(LOG_DONTNOTIFY, _T("Failed to launch file completion program \"%s\" for \"%s\" - %s"),
 			(LPCTSTR)launchRequest.applicationName,
 			(LPCTSTR)partFile.GetFilePath(),
-			(LPCTSTR)GetErrorMessage(dwError, 1));
+			(LPCTSTR)GetErrorMessage(launchResult.LastError, 1));
 		return;
 	}
-
-	VERIFY(::CloseHandle(processInfo.hThread));
-	VERIFY(::CloseHandle(processInfo.hProcess));
 }
 
 struct CPartFileCopyProgressContext
