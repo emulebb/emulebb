@@ -797,7 +797,6 @@ uint64	CPreferences::cumDownData_MLDONKEY;
 uint64	CPreferences::cumDownData_AMULE;
 uint64	CPreferences::cumDownData_EMULECOMPAT;
 uint64	CPreferences::cumDownData_SHAREAZA;
-uint64	CPreferences::cumDownData_URL;
 uint64	CPreferences::sesDownData_EDONKEY;
 uint64	CPreferences::sesDownData_EDONKEYHYBRID;
 uint64	CPreferences::sesDownData_EMULE;
@@ -805,7 +804,6 @@ uint64	CPreferences::sesDownData_MLDONKEY;
 uint64	CPreferences::sesDownData_AMULE;
 uint64	CPreferences::sesDownData_EMULECOMPAT;
 uint64	CPreferences::sesDownData_SHAREAZA;
-uint64	CPreferences::sesDownData_URL;
 uint64	CPreferences::cumDownDataPort_4662;
 uint64	CPreferences::cumDownDataPort_OTHER;
 uint64	CPreferences::sesDownDataPort_4662;
@@ -1722,7 +1720,6 @@ void CPreferences::SaveStats(int bBackUp)
 	ini.WriteUInt64(_T("DownData_LMULE"), GetCumDownData_EMULECOMPAT());
 	ini.WriteUInt64(_T("DownData_AMULE"), GetCumDownData_AMULE());
 	ini.WriteUInt64(_T("DownData_SHAREAZA"), GetCumDownData_SHAREAZA());
-	ini.WriteUInt64(_T("DownData_URL"), GetCumDownData_URL());
 	ini.WriteUInt64(_T("DownDataPort_4662"), GetCumDownDataPort_4662());
 	ini.WriteUInt64(_T("DownDataPort_OTHER"), GetCumDownDataPort_OTHER());
 
@@ -2024,8 +2021,6 @@ void CPreferences::Add2SessionTransferData(UINT uClientID, UINT uClientPort, BOO
 		case SO_XMULE:
 			sesDownData_EMULECOMPAT += bytes;
 			break;
-		case SO_URL:
-			sesDownData_URL += bytes;
 		}
 
 		switch (uClientPort) {
@@ -2104,7 +2099,6 @@ void CPreferences::ResetCumulativeStatistics()
 	cumDownData_AMULE = 0;
 	cumDownData_EMULECOMPAT = 0;
 	cumDownData_SHAREAZA = 0;
-	cumDownData_URL = 0;
 	cumDownDataPort_4662 = 0;
 	cumDownDataPort_OTHER = 0;
 	cumConnAvgDownRate = 0;
@@ -2239,7 +2233,6 @@ bool CPreferences::LoadStats(int loadBackUp)
 	cumDownData_EMULECOMPAT = ini.GetUInt64(_T("DownData_LMULE"));
 	cumDownData_AMULE = ini.GetUInt64(_T("DownData_AMULE"));
 	cumDownData_SHAREAZA = ini.GetUInt64(_T("DownData_SHAREAZA"));
-	cumDownData_URL = ini.GetUInt64(_T("DownData_URL"));
 
 	// Load cumulative port breakdown stats for received bytes
 	cumDownDataPort_4662 = ini.GetUInt64(_T("DownDataPort_4662"));
@@ -2337,7 +2330,6 @@ bool CPreferences::LoadStats(int loadBackUp)
 		sesDownData_AMULE = 0;
 		sesDownData_EMULECOMPAT = 0;
 		sesDownData_SHAREAZA = 0;
-		sesDownData_URL = 0;
 		sesDownDataPort_4662 = 0;
 		sesDownDataPort_OTHER = 0;
 

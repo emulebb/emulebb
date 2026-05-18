@@ -80,7 +80,6 @@ enum EClientSoftware : uint8
 	SO_EDONKEYHYBRID	= 50,
 	SO_EDONKEY,
 	SO_OLDEMULE,
-	SO_URL,
 	SO_UNKNOWN
 };
 

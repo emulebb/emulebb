@@ -38,7 +38,7 @@ public:
 	CSourceHostnameResolveWnd();
 	virtual	~CSourceHostnameResolveWnd();
 
-	void AddToResolve(const uchar *fileid, LPCSTR pszHostname, uint16 port, LPCTSTR pszURL = NULL);
+	void AddToResolve(const uchar *fileid, LPCSTR pszHostname, uint16 port);
 
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -50,7 +50,6 @@ private:
 		uchar fileid[MDX_DIGEST_SIZE];
 		CStringA strHostname;
 		uint16 port;
-		CString strURL;
 	};
 	CTypedPtrList<CPtrList, Hostname_Entry*> m_toresolve;
 	char m_aucHostnameBuffer[MAXGETHOSTSTRUCT];
@@ -168,8 +167,6 @@ public:
 
 	void	ExportPartMetFilesOverview() const;
 	void	OnConnectionState(bool bConnected);
-
-	void	AddToResolved(const CPartFile *pFile, SUnresolvedHostname *pUH);
 
 	/**
 	 * @brief Returns the best valid temp directory for a new part file, or an empty string if no placement satisfies the protected-volume policy.

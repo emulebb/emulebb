@@ -324,9 +324,7 @@ public:
 	bool			AddRequestForAnotherFile(CPartFile *file);
 	void			CreateBlockRequests(int blockCount);
 	virtual void	SendBlockRequests();
-	virtual bool	SendHttpBlockRequests()							{ return false; }
 	virtual void	ProcessBlockPacket(const uchar *packet, uint32 size, bool packed, bool bI64Offsets);
-	virtual void	ProcessHttpBlockPacket(const BYTE *pucData, UINT uSize);
 	void			ClearPendingBlockRequest(const Pending_Block_Struct *pending);
 	void			ClearDownloadBlockRequests();
 	/**
@@ -465,9 +463,6 @@ public:
 	void			SetSlotNumber(UINT newValue)					{ m_slotNumber = newValue; }
 	UINT			GetSlotNumber() const							{ return m_slotNumber; }
 	CEMSocket*		GetFileUploadSocket(bool bLog = false);
-
-	virtual bool ProcessHttpDownResponse(const CStringAArray &astrHeaders);
-	virtual bool ProcessHttpDownResponseBody(const BYTE *pucData, UINT uSize);
 
 protected:
 	// base
@@ -624,12 +619,6 @@ protected:
 	CRing<TransferredData> m_AverageDDR_hist;
 	UINT		m_nDownDatarate;
 	UINT		m_nDownDataRateMS;
-
-	// Download from URL
-	CStringA	m_strUrlPath;
-	uint64		m_uReqStart;
-	uint64		m_uReqEnd;
-	uint64		m_nUrlStartPos;
 
 	//////////////////////////////////////////////////////////
 	// GUI helpers

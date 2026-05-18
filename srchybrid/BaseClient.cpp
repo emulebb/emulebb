@@ -238,10 +238,6 @@ void CUpDownClient::Init()
 	m_bUDPPending = false;
 	m_bTransferredDownMini = false;
 
-	m_uReqStart = 0ull;
-	m_uReqEnd = 0ull;
-	m_nUrlStartPos = _UI64_MAX;
-
 	m_nUpDatarate = 0;
 	m_nSumForAvgUpDataRate = 0;
 
@@ -2628,9 +2624,6 @@ void CUpDownClient::GetDisplayImage(int &iImage, UINT &uOverlayImage) const
 			break;
 		case SO_LPHANT:
 			iImage = bRatioGt1 ? 14 : 13;
-			break;
-		case SO_URL:
-			iImage = 15; //server icon
 			break;
 		default:
 			if (ExtProtocolAvailable())

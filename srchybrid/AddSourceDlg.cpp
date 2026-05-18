@@ -35,7 +35,6 @@ IMPLEMENT_DYNAMIC(CAddSourceDlg, CDialog)
 
 BEGIN_MESSAGE_MAP(CAddSourceDlg, CResizableDialog)
 	ON_BN_CLICKED(IDC_RSRC, OnBnClickedRadio1)
-	ON_BN_CLICKED(IDC_RURL, OnBnClickedRadio4)
 	ON_BN_CLICKED(IDC_BUTTON1, OnBnClickedButton1)
 	ON_BN_CLICKED(IDOK, OnBnClickedOk)
 END_MESSAGE_MAP()
@@ -59,7 +58,6 @@ BOOL CAddSourceDlg::OnInitDialog()
 	InitWindowStyles(this);
 
 	AddAnchor(IDC_SOURCE_TYPE, TOP_LEFT, BOTTOM_RIGHT);
-	AddAnchor(IDC_EDIT10, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDOK, BOTTOM_RIGHT);
 	AddAnchor(IDC_BUTTON1, BOTTOM_RIGHT);
 	AddAnchor(IDCANCEL, BOTTOM_RIGHT);
@@ -72,7 +70,6 @@ BOOL CAddSourceDlg::OnInitDialog()
 	SetDlgItemText(IDCANCEL, GetResString(IDS_CANCEL));
 	SetDlgItemText(IDC_RSRC, GetResString(IDS_SOURCECLIENT));
 	SetDlgItemText(IDC_SOURCE_TYPE, GetResString(IDS_META_SRCTYPE));
-	SetDlgItemText(IDC_RURL, GetResString(IDS_SV_URL));
 	SetDlgItemText(IDC_UIP, GetResString(IDS_USERSIP));
 	SetDlgItemText(IDC_PORT, GetResString(IDS_PORT));
 	SetDlgItemText(IDOK, GetResString(IDS_TREEOPTIONS_OK));
@@ -88,17 +85,7 @@ void CAddSourceDlg::OnBnClickedRadio1()
 	m_nSourceType = 0; //source client
 	GetDlgItem(IDC_EDIT2)->EnableWindow(true);
 	GetDlgItem(IDC_EDIT3)->EnableWindow(true);
-	GetDlgItem(IDC_EDIT10)->EnableWindow(false);
 	GetDlgItem(IDC_EDIT2)->SetFocus();
-}
-
-void CAddSourceDlg::OnBnClickedRadio4()
-{
-	m_nSourceType = 1; //URL
-	GetDlgItem(IDC_EDIT2)->EnableWindow(false);
-	GetDlgItem(IDC_EDIT3)->EnableWindow(false);
-	GetDlgItem(IDC_EDIT10)->EnableWindow(true);
-	GetDlgItem(IDC_EDIT10)->SetFocus();
 }
 
 void CAddSourceDlg::OnBnClickedButton1()
@@ -126,19 +113,6 @@ void CAddSourceDlg::OnBnClickedButton1()
 			}
 		}
 		break;
-	case 1: //URL
-		{
-			CString strURL;
-			if (GetDlgItemText(IDC_EDIT10, strURL)) {
-				const AddSourceInputSeams::UrlSourceInput input = AddSourceInputSeams::ParseUrlSourceInput(strURL);
-				if (input.Valid) {
-					SUnresolvedHostname hostname;
-					hostname.strURL = input.Url;
-					hostname.strHostname = input.HostName;
-					theApp.downloadqueue->AddToResolved(m_pFile, &hostname);
-				}
-			}
-		}
 	}
 }
 

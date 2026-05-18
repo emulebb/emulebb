@@ -24,7 +24,6 @@
 #include "emule.h"
 #include "PartFile.h"
 #include "UpDownClient.h"
-#include "UrlClient.h"
 #include "ED2KLink.h"
 #include "Preview.h"
 #include "ArchiveRecovery.h"
@@ -2766,35 +2765,6 @@ void CPartFile::AddSources(CSafeMemFile *sources, uint32 serverip, uint16 server
 	}
 	if (thePrefs.GetDebugSourceExchange())
 		AddDebugLogLine(false, _T("SXRecv: Server source response; Count=%u, Dropped=%u, PossibleSources=%u, File=\"%s\""), ucount, debug_lowiddropped, debug_possiblesources, (LPCTSTR)GetFileName());
-}
-
-void CPartFile::AddSource(LPCTSTR pszURL, uint32 nIP)
-{
-	if (m_stopped)
-		return;
-
-	if (!IsGoodIP(nIP)) {
-		// check for 0-IP, localhost and optionally for LAN addresses
-		//if (thePrefs.GetLogFilteredIPs())
-		//	AddDebugLogLine(false, _T("Ignored URL source (IP=%s) \"%s\" - bad IP"), (LPCTSTR)ipstr(nIP), pszURL);
-		return;
-	}
-	if (theApp.ipfilter->IsFiltered(nIP)) {
-		if (thePrefs.GetLogFilteredIPs())
-			AddDebugLogLine(false, _T("Ignored URL source (IP=%s) \"%s\" - IP filter (%s)"), (LPCTSTR)ipstr(nIP), pszURL, (LPCTSTR)theApp.ipfilter->GetLastHit());
-		return;
-	}
-
-	CUrlClient *client = new CUrlClient;
-	if (!client->SetUrl(pszURL, nIP)) {
-		LogError(LOG_STATUSBAR, _T("Failed to process URL source \"%s\""), pszURL);
-		delete client;
-		return;
-	}
-	client->SetRequestFile(this);
-	client->SetSourceFrom(SF_LINK);
-	if (theApp.downloadqueue->CheckAndAddSource(this, client))
-		UpdatePartsInfo();
 }
 
 void CPartFile::UpdatePartsInfo()

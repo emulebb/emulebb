@@ -44,12 +44,6 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnBnClickedRadio1();
-//	afx_msg void OnBnClickedRadio2();
-//	afx_msg void OnBnClickedRadio3();
-	afx_msg void OnBnClickedRadio4();
-//	afx_msg void OnBnClickedRadio5();
-//	afx_msg void OnBnClickedRadio6();
-//	afx_msg void OnBnClickedRadio7();
 	afx_msg void OnBnClickedButton1();
 	afx_msg void OnBnClickedOk();
 };

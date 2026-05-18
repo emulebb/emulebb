@@ -752,14 +752,6 @@ void CStatisticsDlg::ShowStatistics(bool forceUpdate)
 							percentClientTransferred = 0;
 						sText.Format(_T("eM Compat: %s (%1.1f%%)"), (LPCTSTR)CastItoXBytes(DownDataClient), percentClientTransferred);
 						m_stattree.SetItemText(down_scb[i], sText);
-						++i;
-						DownDataClient = thePrefs.GetDownData_URL();
-						if (DownDataTotal != 0 && DownDataClient != 0)
-							percentClientTransferred = 100.0 * DownDataClient / DownDataTotal;
-						else
-							percentClientTransferred = 0;
-						sText.Format(_T("URL: %s (%1.1f%%)"), (LPCTSTR)CastItoXBytes(DownDataClient), percentClientTransferred);
-						m_stattree.SetItemText(down_scb[i], sText);
 					}
 					// Downloaded Data By Port
 					if (forceUpdate || m_stattree.IsExpanded(hdown_spb)) {
@@ -1043,14 +1035,6 @@ void CStatisticsDlg::ShowStatistics(bool forceUpdate)
 						else
 							percentClientTransferred = 0;
 						sText.Format(_T("eM Compat: %s (%1.1f%%)"), (LPCTSTR)CastItoXBytes(DownDataClient), percentClientTransferred);
-						m_stattree.SetItemText(down_tcb[i], sText);
-						++i;
-						DownDataClient = thePrefs.GetCumDownData_URL();
-						if (DownDataTotal != 0 && DownDataClient != 0)
-							percentClientTransferred = 100.0 * DownDataClient / DownDataTotal;
-						else
-							percentClientTransferred = 0;
-						sText.Format(_T("URL: %s (%1.1f%%)"), (LPCTSTR)CastItoXBytes(DownDataClient), percentClientTransferred);
 						m_stattree.SetItemText(down_tcb[i], sText);
 					}
 					// Downloaded Data By Port
@@ -2004,11 +1988,6 @@ void CStatisticsDlg::ShowStatistics(bool forceUpdate)
 								DownDataClient = ScaleProjectedU64(thePrefs.GetCumDownData_EMULECOMPAT());
 								percentClientTransferred = PercentProjectedU64(DownDataClient, DownDataTotal);
 								sText.Format(_T("eM Compat: %s (%1.1f%%)"), (LPCTSTR)CastItoXBytes(DownDataClient), percentClientTransferred);
-								m_stattree.SetItemText(time_aap_down_dc[mx][i], sText);
-								++i;
-								DownDataClient = ScaleProjectedU64(thePrefs.GetCumDownData_URL());
-								percentClientTransferred = PercentProjectedU64(DownDataClient, DownDataTotal);
-								sText.Format(_T("URL: %s (%1.1f%%)"), (LPCTSTR)CastItoXBytes(DownDataClient), percentClientTransferred);
 								m_stattree.SetItemText(time_aap_down_dc[mx][i], sText);
 							}
 							// Downloaded Data By Port

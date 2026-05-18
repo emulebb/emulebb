@@ -1269,9 +1269,6 @@ void CDownloadListCtrl::DrawSourceItem(CDC &dc, int nColumn, LPCRECT lpRect, UIN
 				case SO_SHAREAZA:
 					iImage = 10;
 					break;
-				case SO_URL:
-					iImage = 11;
-					break;
 				case SO_AMULE:
 					iImage = 12;
 					break;

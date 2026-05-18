@@ -138,38 +138,7 @@ CED2KFileLink::CED2KFileLink(LPCTSTR pszName, LPCTSTR pszSize, LPCTSTR pszHash
 			strTok = strParam.Left(iPos);
 		switch (strTok[0]) {
 		case _T('s'):
-			{
-				const CString &strURL(strParam.Mid(iPos + 1));
-				if (!strURL.IsEmpty()) {
-					TCHAR szScheme[INTERNET_MAX_SCHEME_LENGTH];
-					TCHAR szHostName[INTERNET_MAX_HOST_NAME_LENGTH];
-					TCHAR szUrlPath[INTERNET_MAX_PATH_LENGTH];
-					TCHAR szUserName[INTERNET_MAX_USER_NAME_LENGTH];
-					TCHAR szPassword[INTERNET_MAX_PASSWORD_LENGTH];
-					TCHAR szExtraInfo[INTERNET_MAX_URL_LENGTH];
-					URL_COMPONENTS Url = {};
-					Url.dwStructSize = (DWORD)sizeof Url;
-					Url.lpszScheme = szScheme;
-					Url.dwSchemeLength = _countof(szScheme);
-					Url.lpszHostName = szHostName;
-					Url.dwHostNameLength = _countof(szHostName);
-					Url.lpszUserName = szUserName;
-					Url.dwUserNameLength = _countof(szUserName);
-					Url.lpszPassword = szPassword;
-					Url.dwPasswordLength = _countof(szPassword);
-					Url.lpszUrlPath = szUrlPath;
-					Url.dwUrlPathLength = _countof(szUrlPath);
-					Url.lpszExtraInfo = szExtraInfo;
-					Url.dwExtraInfoLength = _countof(szExtraInfo);
-					if (::InternetCrackUrl(strURL, 0, 0, &Url) && Url.dwHostNameLength > 0 && Url.dwHostNameLength < INTERNET_MAX_HOST_NAME_LENGTH) {
-						SUnresolvedHostname *hostname = new SUnresolvedHostname;
-						hostname->strURL = strURL;
-						hostname->strHostname = szHostName;
-						m_HostnameSourcesList.AddTail(hostname);
-					}
-				} else
-					ASSERT(0);
-			}
+			// HTTP file sources are no longer supported; ignore retained link metadata.
 			break;
 		case _T('p'):
 			{
@@ -423,8 +392,7 @@ CED2KLink* CED2KLink::CreateLinkFromUrl(LPCTSTR uri)
 				const CString &strT(strTok.Left(2));
 				strTok.Delete(0, 3);
 				if (strT == _T("as")) { //acceptable source
-					if (strTok.Left(7).CompareNoCase(_T("http://")) == 0)
-						astrEd2kParams.Add(_T("s=") + strTok); //http source
+					// HTTP file sources are intentionally not imported.
 				} else if (strT == _T("dn")) { //display name
 					strName = strTok; //file name
 				} else if (strT == _T("xl")) { //eXact length

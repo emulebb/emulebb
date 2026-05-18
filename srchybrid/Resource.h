@@ -2181,9 +2181,7 @@
 #define IDC_AUTOSTART                   2880
 #define IDC_STARTWIN                    2882
 #define IDC_RSRC                        2883
-#define IDC_RURL                        2886
 #define IDC_EDIT3                       2887
-#define IDC_EDIT10                      2895
 #define IDC_BUTTON1                     2899
 #define IDC_LD_LINKGROUP                2900
 #define IDC_LD_BASICGROUP               2901

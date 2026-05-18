@@ -75,7 +75,6 @@ struct SUnresolvedHostname
 	{
 	}
 	CStringA strHostname;
-	CString strURL;
 	uint16 nPort;
 };
 

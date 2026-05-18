@@ -201,7 +201,6 @@ public:
 	void	WritePartStatus(CSafeMemFile &file) const;
 	void	WriteCompleteSourcesCount(CSafeMemFile &file) const;
 	void	AddSources(CSafeMemFile *sources, uint32 serverip, uint16 serverport, bool bWithObfuscationAndHash);
-	void	AddSource(LPCTSTR pszURL, uint32 nIP);
 	static bool CanAddSource(uint32 userid, uint16 port, uint32 serverip, uint16 serverport, UINT *pdebug_lowiddropped = NULL, bool ed2kID = true);
 
 	EPartFileStatus	GetStatus(bool ignorepause = false) const;

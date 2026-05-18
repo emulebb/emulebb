@@ -69,8 +69,8 @@ private:
 	HTREEITEM	hup_soh, up_soh[4], hup_toh, up_toh[4]; // Upline Overhead
 	HTREEITEM	up_ssessions[4], up_tsessions[4]; // Breakdown of Upload Sessions
 	HTREEITEM	h_download, h_down_session, down_S[8], h_down_total, down_T[6]; // Downloads Session and Total Items and Headers
-	HTREEITEM	hdown_scb, down_scb[8], hdown_spb, down_spb[2]; // Session Downloaded Byte Breakdowns
-	HTREEITEM	hdown_tcb, down_tcb[8], hdown_tpb, down_tpb[2]; // Total Downloaded Byte Breakdowns
+	HTREEITEM	hdown_scb, down_scb[7], hdown_spb, down_spb[2]; // Session Downloaded Byte Breakdowns
+	HTREEITEM	hdown_tcb, down_tcb[7], hdown_tpb, down_tpb[2]; // Total Downloaded Byte Breakdowns
 	HTREEITEM	hdown_soh, down_soh[4], hdown_toh, down_toh[4]; // Downline Overhead
 	HTREEITEM	down_ssessions[4], down_tsessions[4], down_sources[22]; // Breakdown of Download Sessions and Sources
 	HTREEITEM	h_connection, h_conn_session, h_conn_total; // Connection Section Headers

@@ -12,14 +12,6 @@ struct SourceClientInput
 	bool AddressContainedPort = false;
 };
 
-struct UrlSourceInput
-{
-	bool Valid = false;
-	CString Url;
-	CString Scheme;
-	CString HostName;
-};
-
 /**
  * @brief Builds a validated source-client endpoint from IP and port dialog fields.
  */
@@ -33,23 +25,6 @@ inline SourceClientInput ParseSourceClientInput(const CString& strAddressText, c
 	if (input.AddressContainedPort)
 		input.Port = uEmbeddedPort;
 	else if (!DialogInputParsingSeams::TryParseTcpPort(strPortText, input.Port))
-		return input;
-
-	input.Valid = true;
-	return input;
-}
-
-/**
- * @brief Builds a validated unresolved URL source request from dialog text.
- */
-inline UrlSourceInput ParseUrlSourceInput(CString strUrl)
-{
-	UrlSourceInput input;
-	strUrl.Trim();
-	input.Url = strUrl;
-	if (!DialogInputParsingSeams::TryExtractAbsoluteUrlHost(strUrl, input.Scheme, input.HostName))
-		return input;
-	if (!DialogInputParsingSeams::IsSupportedDownloadUrlScheme(input.Scheme))
 		return input;
 
 	input.Valid = true;

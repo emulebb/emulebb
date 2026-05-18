@@ -4401,9 +4401,6 @@ void CWebServer::_GetClientversionImage(const CUpDownClient &client, TCHAR pSoft
 	case SO_LPHANT:
 		*pSoft = _T('l');
 		break;
-	case SO_URL:
-		*pSoft = _T('u');
-		break;
 	//case SO_EDONKEY:
 	default:
 		*pSoft = _T('0');

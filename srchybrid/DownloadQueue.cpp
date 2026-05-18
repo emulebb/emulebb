@@ -591,7 +591,7 @@ void CDownloadQueue::AddFileLinkToDownload(const CED2KFileLink &Link, int cat, u
 	if (Link.HasHostnameSources())
 		for (POSITION pos = Link.m_HostnameSourcesList.GetHeadPosition(); pos != NULL;) {
 			const SUnresolvedHostname *pUnresHost = Link.m_HostnameSourcesList.GetNext(pos);
-			m_srcwnd.AddToResolve(Link.GetHashKey(), pUnresHost->strHostname, pUnresHost->nPort, pUnresHost->strURL);
+			m_srcwnd.AddToResolve(Link.GetHashKey(), pUnresHost->strHostname, pUnresHost->nPort);
 		}
 }
 
@@ -655,12 +655,6 @@ int CDownloadQueue::GetNextAvailablePartFileIndex(LPCTSTR pszTempDir) const
 		m_aBulkPartFileNumberCache.Add(entry);
 	}
 	return iAvailablePartFileIndex;
-}
-
-void CDownloadQueue::AddToResolved(const CPartFile *pFile, SUnresolvedHostname *pUH)
-{
-	if (pFile && pUH)
-		m_srcwnd.AddToResolve(pFile->GetFileHash(), pUH->strHostname, pUH->nPort, pUH->strURL);
 }
 
 void CDownloadQueue::AddDownload(CPartFile *newfile, bool paused)
@@ -1806,7 +1800,7 @@ CSourceHostnameResolveWnd::~CSourceHostnameResolveWnd()
 		delete m_toresolve.RemoveHead();
 }
 
-void CSourceHostnameResolveWnd::AddToResolve(const uchar *fileid, LPCSTR pszHostname, uint16 port, LPCTSTR pszURL)
+void CSourceHostnameResolveWnd::AddToResolve(const uchar *fileid, LPCSTR pszHostname, uint16 port)
 {
 	// double checking
 	if (!theApp.downloadqueue->GetFileByID(fileid))
@@ -1818,7 +1812,6 @@ void CSourceHostnameResolveWnd::AddToResolve(const uchar *fileid, LPCSTR pszHost
 	md4cpy(entry->fileid, fileid);
 	entry->strHostname = pszHostname;
 	entry->port = port;
-	entry->strURL = pszURL;
 	m_toresolve.AddTail(entry);
 
 	if (bResolving)
@@ -1844,16 +1837,14 @@ LRESULT CSourceHostnameResolveWnd::OnHostnameResolved(WPARAM, LPARAM lParam)
 				uint32 nIP = ((LPIN_ADDR)(pHost->h_addr_list[0]))->s_addr;
 
 				CPartFile *file = theApp.downloadqueue->GetFileByID(resolved->fileid);
-				if (file)
-					if (resolved->strURL.IsEmpty()) {
-						CSafeMemFile sources(1 + 4 + 2);
-						sources.WriteUInt8(1);
-						sources.WriteUInt32(nIP);
-						sources.WriteUInt16(resolved->port);
-						sources.SeekToBegin();
-						file->AddSources(&sources, 0, 0, false);
-					} else
-						file->AddSource(resolved->strURL, nIP);
+				if (file) {
+					CSafeMemFile sources(1 + 4 + 2);
+					sources.WriteUInt8(1);
+					sources.WriteUInt32(nIP);
+					sources.WriteUInt16(resolved->port);
+					sources.SeekToBegin();
+					file->AddSources(&sources, 0, 0, false);
+				}
 
 			}
 		}

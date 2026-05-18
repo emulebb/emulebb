@@ -333,7 +333,6 @@ public:
 	static uint64	cumDownData_AMULE;
 	static uint64	cumDownData_EMULECOMPAT;
 	static uint64	cumDownData_SHAREAZA;
-	static uint64	cumDownData_URL;
 	// Session client breakdown stats for received bytes...
 	static uint64	sesDownData_EDONKEY;
 	static uint64	sesDownData_EDONKEYHYBRID;
@@ -342,7 +341,6 @@ public:
 	static uint64	sesDownData_AMULE;
 	static uint64	sesDownData_EMULECOMPAT;
 	static uint64	sesDownData_SHAREAZA;
-	static uint64	sesDownData_URL;
 
 	// Cumulative port breakdown stats for received bytes...
 	static uint64	cumDownDataPort_4662;
@@ -996,8 +994,7 @@ public:
 																+ GetCumDownData_MLDONKEY()
 																+ GetCumDownData_AMULE()
 																+ GetCumDownData_EMULECOMPAT()
-																+ GetCumDownData_SHAREAZA()
-																+ GetCumDownData_URL(); }
+																+ GetCumDownData_SHAREAZA(); }
 	static uint64	GetCumDownData_EDONKEY()			{ return cumDownData_EDONKEY +		sesDownData_EDONKEY; }
 	static uint64	GetCumDownData_EDONKEYHYBRID()		{ return cumDownData_EDONKEYHYBRID + sesDownData_EDONKEYHYBRID; }
 	static uint64	GetCumDownData_EMULE()				{ return cumDownData_EMULE +		sesDownData_EMULE; }
@@ -1005,7 +1002,6 @@ public:
 	static uint64	GetCumDownData_AMULE()				{ return cumDownData_AMULE +		sesDownData_AMULE; }
 	static uint64	GetCumDownData_EMULECOMPAT()		{ return cumDownData_EMULECOMPAT +	sesDownData_EMULECOMPAT; }
 	static uint64	GetCumDownData_SHAREAZA()			{ return cumDownData_SHAREAZA +		sesDownData_SHAREAZA; }
-	static uint64	GetCumDownData_URL()				{ return cumDownData_URL +			sesDownData_URL; }
 
 	// Session client breakdown stats for received bytes
 	static uint64	GetDownSessionClientData()			{ return  sesDownData_EDONKEY
@@ -1014,8 +1010,7 @@ public:
 																+ sesDownData_MLDONKEY
 																+ sesDownData_AMULE
 																+ sesDownData_EMULECOMPAT
-																+ sesDownData_SHAREAZA
-																+ sesDownData_URL; }
+																+ sesDownData_SHAREAZA; }
 	static uint64	GetDownData_EDONKEY()				{ return sesDownData_EDONKEY; }
 	static uint64	GetDownData_EDONKEYHYBRID()			{ return sesDownData_EDONKEYHYBRID; }
 	static uint64	GetDownData_EMULE()					{ return sesDownData_EMULE; }
@@ -1023,7 +1018,6 @@ public:
 	static uint64	GetDownData_AMULE()					{ return sesDownData_AMULE; }
 	static uint64	GetDownData_EMULECOMPAT()			{ return sesDownData_EMULECOMPAT; }
 	static uint64	GetDownData_SHAREAZA()				{ return sesDownData_SHAREAZA; }
-	static uint64	GetDownData_URL()					{ return sesDownData_URL; }
 
 	// Cumulative port breakdown stats for received bytes...
 	static uint64	GetDownTotalPortData()				{ return  GetCumDownDataPort_4662()

@@ -17,7 +17,6 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "UpDownClient.h"
-#include "UrlClient.h"
 #include "Opcodes.h"
 #include "Packets.h"
 #include "UploadQueue.h"
@@ -136,10 +135,8 @@ void CUpDownClient::SetUploadState(EUploadState eNewState)
  */
 float CUpDownClient::GetCombinedFilePrioAndCredit()
 {
-	if (!credits) {
-		ASSERT(IsKindOf(RUNTIME_CLASS(CUrlClient)));
+	if (!credits)
 		return 0.0F;
-	}
 
 	return UploadScoreSeams::ComputeCombinedFilePrioAndCredit(credits->GetScoreRatio(GetIP()), GetFilePrioAsNumber());
 }
@@ -188,10 +185,8 @@ UploadScoreSeams::UploadScoreBreakdown CUpDownClient::GetScoreBreakdown(bool sys
 	if (!m_pszUsername)
 		return breakdown;
 
-	if (!credits) {
-		ASSERT(IsKindOf(RUNTIME_CLASS(CUrlClient)));
+	if (!credits)
 		return breakdown;
-	}
 
 	const CKnownFile *pRequestedFile = theApp.sharedfiles->GetFileByID(requpfileid);
 	if (pRequestedFile == NULL) //is any file requested?

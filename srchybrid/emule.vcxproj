@@ -220,7 +220,6 @@
     <ClCompile Include="HTRichEditCtrl.cpp" />
     <ClCompile Include="HttpDownloadLog.cpp" />
     <ClCompile Include="HttpTransfer.cpp" />
-    <ClCompile Include="HttpClientReqSocket.cpp" />
     <ClCompile Include="I18n.cpp" />
     <ClCompile Include="IconStatic.cpp" />
     <ClCompile Include="Ini2.cpp" />
@@ -395,7 +394,6 @@
     <ClCompile Include="UPnPImplMiniLib.cpp" />
     <ClCompile Include="UPnPImplPcpNatPmp.cpp" />
     <ClCompile Include="UPnPImplWrapper.cpp" />
-    <ClCompile Include="URLClient.cpp" />
     <ClCompile Include="Version.cpp" />
     <ClCompile Include="WebServer.cpp" />
     <ClCompile Include="WebServerArrCompat.cpp" />
@@ -528,7 +526,6 @@
     <ClInclude Include="HttpDownloadLog.h" />
     <ClInclude Include="HttpTransfer.h" />
     <ClInclude Include="HttpTransferSeams.h" />
-    <ClInclude Include="HttpClientReqSocket.h" />
     <ClInclude Include="IconStatic.h" />
     <ClInclude Include="Ini2.h" />
     <ClInclude Include="InputBox.h" />
@@ -725,7 +722,6 @@
     <ClInclude Include="UPnPImplPcpNatPmp.h" />
     <ClInclude Include="UPnPImplPcpNatPmpSeams.h" />
     <ClInclude Include="UPnPImplWrapper.h" />
-    <ClInclude Include="URLClient.h" />
     <ClInclude Include="UserMsgs.h" />
     <ClInclude Include="Version.h" />
     <ClInclude Include="VistaDefines.h" />
