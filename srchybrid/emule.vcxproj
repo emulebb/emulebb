@@ -177,7 +177,6 @@
     <ClCompile Include="CommentListCtrl.cpp" />
     <ClCompile Include="CorruptionBlackBox.cpp" />
     <ClCompile Include="CreditsDlg.cpp" />
-    <ClCompile Include="CreditsThread.cpp" />
     <ClCompile Include="CustomAutoComplete.cpp" />
     <ClCompile Include="DeadSourceList.cpp" />
     <ClCompile Include="DirectDownload.cpp" />
@@ -213,7 +212,6 @@
     <ClCompile Include="Friend.cpp" />
     <ClCompile Include="FriendList.cpp" />
     <ClCompile Include="FriendListCtrl.cpp" />
-    <ClCompile Include="GDIThread.cpp" />
     <ClCompile Include="GeoLocation.cpp" />
     <ClCompile Include="GradientStatic.cpp" />
     <ClCompile Include="GZipFile.cpp" />
@@ -467,7 +465,6 @@
     <ClInclude Include="CommentListCtrl.h" />
     <ClInclude Include="CorruptionBlackBox.h" />
     <ClInclude Include="CreditsDlg.h" />
-    <ClInclude Include="CreditsThread.h" />
     <ClInclude Include="CustomAutoComplete.h" />
     <ClInclude Include="CustomAutoCompleteSeams.h" />
     <ClInclude Include="DeadSourceList.h" />
@@ -517,7 +514,6 @@
     <ClInclude Include="Friend.h" />
     <ClInclude Include="FriendList.h" />
     <ClInclude Include="FriendListCtrl.h" />
-    <ClInclude Include="GDIThread.h" />
     <ClInclude Include="GeoLocation.h" />
     <ClInclude Include="GradientStatic.h" />
     <ClInclude Include="GZipFile.h" />
