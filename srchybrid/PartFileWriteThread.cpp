@@ -80,15 +80,16 @@ void CPartFileWriteThread::EndThread()
 	if (action == HelperThreadLaunchSeams::IocpShutdownAction::NoOp)
 		return;
 
-	const DWORD dwWait = ::WaitForSingleObject(m_eventThreadEnded, HelperThreadLaunchSeams::kHelperThreadShutdownWaitMs);
-	const HelperThreadLaunchSeams::ShutdownWaitAction waitAction = HelperThreadLaunchSeams::ClassifyShutdownWait(dwWait);
-	if (waitAction == HelperThreadLaunchSeams::ShutdownWaitAction::TimedOut) {
-		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Timed out waiting for part-file write helper thread; waiting for cooperative exit"));
-		m_eventThreadEnded.Lock();
-	} else if (waitAction == HelperThreadLaunchSeams::ShutdownWaitAction::Failed) {
-		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed waiting for part-file write helper thread: %s"), (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
-		m_eventThreadEnded.Lock();
-	}
+	HelperThreadLaunchSeams::WaitForEventThreadShutdown(
+		m_eventThreadEnded,
+		m_bThreadStarted,
+		HelperThreadLaunchSeams::kHelperThreadShutdownWaitMs,
+		[]() {
+			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Timed out waiting for part-file write helper thread; waiting for cooperative exit"));
+		},
+		[](DWORD dwLastError) {
+			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed waiting for part-file write helper thread: %s"), (LPCTSTR)GetErrorMessage(dwLastError, 1));
+		});
 }
 
 UINT CPartFileWriteThread::RunInternal()

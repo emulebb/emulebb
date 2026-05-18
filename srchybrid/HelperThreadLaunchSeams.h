@@ -206,6 +206,33 @@ namespace HelperThreadLaunchSeams
 	}
 
 	/**
+	 * @brief Performs the common bounded wait and final cooperative wait for event-ended helpers.
+	 */
+	template <typename TEvent, typename TTimedOutFn, typename TFailedFn>
+	inline ShutdownWaitAction WaitForEventThreadShutdown(
+		TEvent& rThreadEndedEvent,
+		bool bThreadStarted,
+		DWORD dwWaitMilliseconds,
+		TTimedOutFn timedOutFn,
+		TFailedFn failedFn)
+	{
+		if (!ShouldWaitForEventThreadShutdown(bThreadStarted))
+			return ShutdownWaitAction::Finished;
+
+		const DWORD dwWait = ::WaitForSingleObject(rThreadEndedEvent, dwWaitMilliseconds);
+		const ShutdownWaitAction waitAction = ClassifyShutdownWait(dwWait);
+		if (waitAction == ShutdownWaitAction::TimedOut) {
+			timedOutFn();
+			rThreadEndedEvent.Lock();
+		} else if (waitAction == ShutdownWaitAction::Failed) {
+			const DWORD dwLastError = (dwWait == WAIT_FAILED) ? ::GetLastError() : ERROR_SUCCESS;
+			failedFn(dwLastError);
+			rThreadEndedEvent.Lock();
+		}
+		return waitAction;
+	}
+
+	/**
 	 * @brief Atomically marks a helper-thread flag as true.
 	 */
 	inline void SetFlag(volatile LONG& rnFlag)
