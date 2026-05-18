@@ -1665,29 +1665,30 @@ void CemuleApp::StartSharedDirectoryMonitor()
 	(void)LoadSharedDirectoryMonitorJournalState();
 	m_hSharedDirectoryMonitorStopEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
 	m_hSharedDirectoryMonitorWakeEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (m_hSharedDirectoryMonitorStopEvent == NULL || m_hSharedDirectoryMonitorWakeEvent == NULL) {
-		if (m_hSharedDirectoryMonitorStopEvent != NULL) {
-			::CloseHandle(m_hSharedDirectoryMonitorStopEvent);
-			m_hSharedDirectoryMonitorStopEvent = NULL;
-		}
-		if (m_hSharedDirectoryMonitorWakeEvent != NULL) {
-			::CloseHandle(m_hSharedDirectoryMonitorWakeEvent);
-			m_hSharedDirectoryMonitorWakeEvent = NULL;
-		}
+	if (!SharedDirectoryMonitorSeams::AreStartupEventsReady(m_hSharedDirectoryMonitorStopEvent, m_hSharedDirectoryMonitorWakeEvent)) {
+		SharedDirectoryMonitorSeams::CloseMonitorEvent(m_hSharedDirectoryMonitorStopEvent);
+		SharedDirectoryMonitorSeams::CloseMonitorEvent(m_hSharedDirectoryMonitorWakeEvent);
 		return;
 	}
 
 	m_pSharedDirectoryMonitorThread = AfxBeginThread(&CemuleApp::SharedDirectoryMonitorThreadProc, this, THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED);
 	if (m_pSharedDirectoryMonitorThread == NULL) {
-		::CloseHandle(m_hSharedDirectoryMonitorStopEvent);
-		m_hSharedDirectoryMonitorStopEvent = NULL;
-		::CloseHandle(m_hSharedDirectoryMonitorWakeEvent);
-		m_hSharedDirectoryMonitorWakeEvent = NULL;
+		SharedDirectoryMonitorSeams::CloseMonitorEvent(m_hSharedDirectoryMonitorStopEvent);
+		SharedDirectoryMonitorSeams::CloseMonitorEvent(m_hSharedDirectoryMonitorWakeEvent);
 		return;
 	}
 
+	// The app owns the CWinThread object so shutdown can wait and release it explicitly.
 	m_pSharedDirectoryMonitorThread->m_bAutoDelete = FALSE;
-	m_pSharedDirectoryMonitorThread->ResumeThread();
+	const DWORD dwResumeResult = m_pSharedDirectoryMonitorThread->ResumeThread();
+	if (!SharedDirectoryMonitorSeams::DidResumeMonitorThread(dwResumeResult)) {
+		const DWORD dwError = ::GetLastError();
+		AddDebugLogLine(false, _T("Shared-directory monitor thread failed to resume (error %lu)."), dwError);
+		delete m_pSharedDirectoryMonitorThread;
+		m_pSharedDirectoryMonitorThread = NULL;
+		SharedDirectoryMonitorSeams::CloseMonitorEvent(m_hSharedDirectoryMonitorStopEvent);
+		SharedDirectoryMonitorSeams::CloseMonitorEvent(m_hSharedDirectoryMonitorWakeEvent);
+	}
 }
 
 void CemuleApp::StopSharedDirectoryMonitor()
@@ -1700,7 +1701,7 @@ void CemuleApp::StopSharedDirectoryMonitor()
 	SharedDirectoryMonitorSeams::StopWaitResult waitResult = {};
 	waitResult.bHadThread = m_pSharedDirectoryMonitorThread != NULL;
 	if (m_pSharedDirectoryMonitorThread != NULL) {
-		waitResult.dwWaitResult = ::WaitForSingleObject(m_pSharedDirectoryMonitorThread->m_hThread, SEC2MS(30));
+		waitResult.dwWaitResult = ::WaitForSingleObject(m_pSharedDirectoryMonitorThread->m_hThread, SharedDirectoryMonitorSeams::kMonitorShutdownWaitMs);
 	}
 	if (SharedDirectoryMonitorSeams::ShouldLogAbandonedMonitorResources(waitResult)) {
 		const DWORD dwError = waitResult.dwWaitResult == WAIT_FAILED ? ::GetLastError() : ERROR_SUCCESS;
@@ -1714,14 +1715,8 @@ void CemuleApp::StopSharedDirectoryMonitor()
 	}
 	(void)SaveSharedDirectoryMonitorJournalState();
 	m_aSharedDirectoryMonitorJournalStates.clear();
-	if (m_hSharedDirectoryMonitorStopEvent != NULL) {
-		::CloseHandle(m_hSharedDirectoryMonitorStopEvent);
-		m_hSharedDirectoryMonitorStopEvent = NULL;
-	}
-	if (m_hSharedDirectoryMonitorWakeEvent != NULL) {
-		::CloseHandle(m_hSharedDirectoryMonitorWakeEvent);
-		m_hSharedDirectoryMonitorWakeEvent = NULL;
-	}
+	SharedDirectoryMonitorSeams::CloseMonitorEvent(m_hSharedDirectoryMonitorStopEvent);
+	SharedDirectoryMonitorSeams::CloseMonitorEvent(m_hSharedDirectoryMonitorWakeEvent);
 }
 
 void CemuleApp::WakeSharedDirectoryMonitor()
@@ -1803,7 +1798,7 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 		SMonitoredSharedDirectoryUpdate localUpdate;
 		SMonitoredSharedDirectoryUpdate &rUpdate = pInitialUpdate != NULL ? *pInitialUpdate : localUpdate;
 		bool bStateChanged = (m_aSharedDirectoryMonitorJournalStates.size() != uPreviousStateCount);
-		const UINT uWatcherCapacity = (MAXIMUM_WAIT_OBJECTS - 2u) / 2u;
+		const UINT uWatcherCapacity = static_cast<UINT>(SharedDirectoryMonitorSeams::GetMonitorWatcherCapacity());
 		UINT uActiveWatchers = 0;
 
 		for (POSITION posRoot = configuredRoots.GetHeadPosition(); posRoot != NULL;) {
@@ -1926,24 +1921,34 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 			aWaitHandles.push_back(aWatchers[i].hDirectoryWatch);
 		}
 
-		const DWORD dwWait = ::WaitForMultipleObjects(static_cast<DWORD>(aWaitHandles.size()), &aWaitHandles[0], FALSE, INFINITE);
-		if (dwWait == WAIT_OBJECT_0 || IsClosing())
+		if (!SharedDirectoryMonitorSeams::CanWaitForMonitorHandles(aWaitHandles.size())) {
+			AddDebugLogLine(false, _T("Shared-directory monitor has an invalid wait-handle count (%Iu); stopping monitor loop."), aWaitHandles.size());
 			break;
-		if (dwWait == WAIT_OBJECT_0 + 1) {
+		}
+
+		const DWORD dwWait = ::WaitForMultipleObjects(static_cast<DWORD>(aWaitHandles.size()), &aWaitHandles[0], FALSE, INFINITE);
+		const SharedDirectoryMonitorSeams::MonitorWaitResult waitResult = SharedDirectoryMonitorSeams::ClassifyMonitorWaitResult(dwWait, aWaitHandles.size());
+		if (waitResult.eAction == SharedDirectoryMonitorSeams::EMonitorWaitAction::Stop || IsClosing())
+			break;
+		if (waitResult.eAction == SharedDirectoryMonitorSeams::EMonitorWaitAction::Wake) {
 			if (m_hSharedDirectoryMonitorWakeEvent != NULL)
 				VERIFY(::ResetEvent(m_hSharedDirectoryMonitorWakeEvent));
 			rebuildWatchers(false, NULL);
 			continue;
 		}
-		if (dwWait < WAIT_OBJECT_0 + 2 || dwWait >= WAIT_OBJECT_0 + aWaitHandles.size())
+		if (waitResult.eAction == SharedDirectoryMonitorSeams::EMonitorWaitAction::Failed) {
+			const DWORD dwError = dwWait == WAIT_FAILED ? ::GetLastError() : ERROR_SUCCESS;
+			AddDebugLogLine(false, _T("Shared-directory monitor wait failed (wait result %lu, handles %Iu, error %lu); stopping monitor loop."), dwWait, aWaitHandles.size(), dwError);
+			break;
+		}
+		if (waitResult.eAction != SharedDirectoryMonitorSeams::EMonitorWaitAction::Watcher)
 			continue;
 
 		SMonitoredSharedDirectoryUpdate update;
 		CStringList liFileEventRoots;
 		CStringList liDirectoryEventRoots;
-		const DWORD dwTriggeredHandleIndex = dwWait - WAIT_OBJECT_0 - 2;
-		const size_t uWatcherIndex = static_cast<size_t>(dwTriggeredHandleIndex / 2u);
-		const bool bDirectoryEvent = ((dwTriggeredHandleIndex % 2u) != 0u);
+		const size_t uWatcherIndex = waitResult.uWatcherIndex;
+		const bool bDirectoryEvent = waitResult.bDirectoryEvent;
 		if (uWatcherIndex < aWatchers.size()) {
 			SMonitoredRootWatcher &rWatcher = aWatchers[uWatcherIndex];
 			HANDLE hWatchHandle = bDirectoryEvent ? rWatcher.hDirectoryWatch : rWatcher.hFileWatch;
