@@ -76,8 +76,9 @@ void CUPnPImplMiniLib::StopAsyncFind()
 		const UPnPDiscoveryThreadSeams::EStopWaitAction eAction =
 			UPnPDiscoveryThreadSeams::RequestDiscoveryThreadStop(m_pDiscoveryThread, m_bAbortDiscovery, dwLastError);
 		if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::WaitCooperatively) {
-			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread to quit timed out; waiting for cooperative exit without forced termination"));
-			(void)::WaitForSingleObject(m_pDiscoveryThread->m_hThread, INFINITE);
+			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread to quit timed out; preserving owner lifetime until cooperative exit"));
+			if (UPnPDiscoveryThreadSeams::WaitForDiscoveryThreadOwnerLifetime(m_pDiscoveryThread, dwLastError) == UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction::ReleaseAfterWaitFailure)
+				DebugLogError(_T("Final UPnP StartDiscoveryThread owner-lifetime wait failed (%u); releasing stale thread wrapper"), dwLastError);
 		} else if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::ReleaseAfterWaitFailure)
 			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread failed (%u); releasing stale thread wrapper"), dwLastError);
 		else

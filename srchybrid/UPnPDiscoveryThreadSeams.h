@@ -27,6 +27,15 @@ enum class EStopWaitAction
 };
 
 /**
+ * @brief Action selected after the mandatory owner-lifetime wait completes.
+ */
+enum class EOwnerLifetimeWaitAction
+{
+	ReleaseFinished,
+	ReleaseAfterWaitFailure
+};
+
+/**
  * @brief Timeout used when first waiting for a cooperative discovery-thread stop.
  */
 constexpr DWORD kCooperativeStopWaitMs = 7000;
@@ -90,6 +99,14 @@ inline EStopWaitAction ClassifyStopWait(DWORD dwWait)
 }
 
 /**
+ * @brief Classifies the final wait which preserves the owner object lifetime.
+ */
+inline EOwnerLifetimeWaitAction ClassifyOwnerLifetimeWait(DWORD dwWait)
+{
+	return dwWait == WAIT_OBJECT_0 ? EOwnerLifetimeWaitAction::ReleaseFinished : EOwnerLifetimeWaitAction::ReleaseAfterWaitFailure;
+}
+
+/**
  * @brief Probes and releases a finished or stale owned discovery thread wrapper.
  */
 template <typename TThread>
@@ -105,6 +122,30 @@ inline ENonblockingWaitAction ReapDiscoveryThreadIfFinished(TThread *&rpThread, 
 		rdwLastError = ::GetLastError();
 	if (eAction == ENonblockingWaitAction::ReleaseFinished || eAction == ENonblockingWaitAction::ReleaseAfterWaitFailure)
 		ReleaseDiscoveryThread(rpThread);
+	return eAction;
+}
+
+/**
+ * @brief Waits until a timed-out discovery worker exits so its owner remains alive.
+ *
+ * Discovery workers dereference their owning UPnP implementation object while
+ * running third-party MiniUPnP or PCP/NAT-PMP calls. After the bounded
+ * cooperative stop wait expires, forced termination would leak library state
+ * and detaching would allow use-after-free on the owner. This final wait is
+ * intentionally centralized and documented so both implementations share the
+ * same lifetime policy.
+ */
+template <typename TThread>
+inline EOwnerLifetimeWaitAction WaitForDiscoveryThreadOwnerLifetime(TThread *pThread, DWORD &rdwLastError)
+{
+	rdwLastError = ERROR_SUCCESS;
+	if (pThread == NULL)
+		return EOwnerLifetimeWaitAction::ReleaseFinished;
+
+	const DWORD dwWait = ::WaitForSingleObject(pThread->m_hThread, INFINITE);
+	const EOwnerLifetimeWaitAction eAction = ClassifyOwnerLifetimeWait(dwWait);
+	if (eAction == EOwnerLifetimeWaitAction::ReleaseAfterWaitFailure)
+		rdwLastError = ::GetLastError();
 	return eAction;
 }
 
