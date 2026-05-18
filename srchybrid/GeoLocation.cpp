@@ -773,26 +773,21 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 
 	(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
 
-	if (!BackgroundRefreshSeams::TryMarkRefreshQueued(*m_pBackgroundRefreshState)) {
-		(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
-		(void)LongPathSeams::DeleteFileIfExists(pContext->strDatabaseTempPath);
+	const auto cleanupContext = [](const SBackgroundRefreshContext& context) {
+		(void)LongPathSeams::DeleteFileIfExists(context.strArchiveTempPath);
+		(void)LongPathSeams::DeleteFileIfExists(context.strDatabaseTempPath);
+	};
+	const auto startWorker = [](SBackgroundRefreshContext *pThreadContext) -> CWinThread* {
+		return AfxBeginThread(BackgroundRefreshThread, pThreadContext, THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
+	};
+	if (!BackgroundRefreshSeams::StartQueuedRefreshWorker(*m_pBackgroundRefreshState, pContext, pCancellation, startWorker, cleanupContext)) {
 		if (bUserInitiated)
 			AddLogLine(false, _T("GeoLocation: refresh already in progress."));
-		return false;
-	}
-	m_pBackgroundRefreshState->pCancellation = pCancellation;
-	SBackgroundRefreshContext *pThreadContext = pContext.release();
-	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pThreadContext, THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
-	if (pThread == NULL) {
-		std::unique_ptr<SBackgroundRefreshContext> pCleanupContext(pThreadContext);
-		BackgroundRefreshSeams::ClearRefreshQueued(*m_pBackgroundRefreshState);
-		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strArchiveTempPath);
-		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strDatabaseTempPath);
-		AddDebugLogLine(false, _T("GeoLocation: failed to start background refresh thread."));
+		else if (!BackgroundRefreshSeams::IsRefreshQueued(*m_pBackgroundRefreshState))
+			AddDebugLogLine(false, _T("GeoLocation: failed to start background refresh thread."));
 		return false;
 	}
 
-	UNREFERENCED_PARAMETER(pThread);
 	__time64_t tNow = 0;
 	_time64(&tNow);
 	if (BackgroundRefreshSeams::ShouldRecordRefreshAttempt(true, true))

@@ -376,22 +376,18 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 	pContext->pCancellation = pCancellation;
 	pContext->bProxyEnabled = thePrefs.GetProxySettings().bUseProxy;
 
-	if (!BackgroundRefreshSeams::TryMarkRefreshQueued(*m_pBackgroundRefreshState)) {
-		(void)LongPathSeams::DeleteFileIfExists(strArchiveTempPath);
-		return false;
-	}
-	m_pBackgroundRefreshState->pCancellation = pCancellation;
-	SBackgroundRefreshContext *pThreadContext = pContext.release();
-	CWinThread* pThread = AfxBeginThread(BackgroundRefreshThread, pThreadContext, THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
-	if (pThread == NULL) {
-		std::unique_ptr<SBackgroundRefreshContext> pCleanupContext(pThreadContext);
-		BackgroundRefreshSeams::ClearRefreshQueued(*m_pBackgroundRefreshState);
-		(void)LongPathSeams::DeleteFileIfExists(pCleanupContext->strArchiveTempPath);
-		AddDebugLogLine(false, _T("IPFilter: failed to start background update thread."));
+	const auto cleanupContext = [](const SBackgroundRefreshContext& context) {
+		(void)LongPathSeams::DeleteFileIfExists(context.strArchiveTempPath);
+	};
+	const auto startWorker = [](SBackgroundRefreshContext *pThreadContext) -> CWinThread* {
+		return AfxBeginThread(BackgroundRefreshThread, pThreadContext, THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
+	};
+	if (!BackgroundRefreshSeams::StartQueuedRefreshWorker(*m_pBackgroundRefreshState, pContext, pCancellation, startWorker, cleanupContext)) {
+		if (!BackgroundRefreshSeams::IsRefreshQueued(*m_pBackgroundRefreshState))
+			AddDebugLogLine(false, _T("IPFilter: failed to start background update thread."));
 		return false;
 	}
 
-	UNREFERENCED_PARAMETER(pThread);
 	if (BackgroundRefreshSeams::ShouldRecordRefreshAttempt(true, true))
 		thePrefs.SetIPFilterLastUpdateTime(tNow, true);
 	AddLogLine(false, GetResString(IDS_IPFILTER_AUTO_UPDATE_STARTED), (LPCTSTR)strUpdateUrl);

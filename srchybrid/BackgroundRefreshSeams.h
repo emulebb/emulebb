@@ -63,6 +63,36 @@ inline void CancelAndClearRefresh(SRefreshState& rState)
 	ClearRefreshQueued(rState);
 }
 
+/**
+ * @brief Starts an owner-managed refresh worker after atomically claiming queued state.
+ */
+template <typename Context, typename StartWorkerFn, typename CleanupContextFn>
+inline bool StartQueuedRefreshWorker(
+	SRefreshState& rState,
+	std::unique_ptr<Context>& pContext,
+	const std::shared_ptr<DirectDownload::CDownloadCancellation>& pCancellation,
+	StartWorkerFn startWorkerFn,
+	CleanupContextFn cleanupContextFn)
+{
+	if (!TryMarkRefreshQueued(rState)) {
+		if (pContext)
+			cleanupContextFn(*pContext);
+		return false;
+	}
+
+	rState.pCancellation = pCancellation;
+	Context *pThreadContext = pContext.release();
+	if (!startWorkerFn(pThreadContext)) {
+		std::unique_ptr<Context> pCleanupContext(pThreadContext);
+		ClearRefreshQueued(rState);
+		if (pCleanupContext)
+			cleanupContextFn(*pCleanupContext);
+		return false;
+	}
+
+	return true;
+}
+
 struct SRefreshCompletionPostResult
 {
 	bool bDelivered = false;
