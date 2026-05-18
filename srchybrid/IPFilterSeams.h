@@ -9,6 +9,8 @@
 
 namespace IPFilterSeams
 {
+constexpr uint32_t kDefaultFilterLevel = 100u;
+
 enum PathHintType
 {
 	PathHintUnknown = 0,
@@ -88,6 +90,137 @@ inline bool ShouldLoadAtStartup(bool bEnabled)
 inline bool ShouldQueueAutomaticRefresh(bool bFilterEnabled, bool bAutoUpdateEnabled)
 {
 	return bFilterEnabled && bAutoUpdateEnabled;
+}
+
+inline void SkipAsciiSpaces(const CStringA &rstrText, int &riPos)
+{
+	while (riPos < rstrText.GetLength() && (rstrText[riPos] == ' ' || rstrText[riPos] == '\t'))
+		++riPos;
+}
+
+inline bool TryParseUnsignedAscii(const CStringA &rstrText, int &riPos, uint32_t &ruValue, const uint32_t uMaxValue)
+{
+	SkipAsciiSpaces(rstrText, riPos);
+	if (riPos >= rstrText.GetLength() || rstrText[riPos] < '0' || rstrText[riPos] > '9')
+		return false;
+
+	uint32_t uValue = 0;
+	while (riPos < rstrText.GetLength() && rstrText[riPos] >= '0' && rstrText[riPos] <= '9') {
+		const uint32_t uDigit = static_cast<uint32_t>(rstrText[riPos] - '0');
+		if (uValue > (uMaxValue - uDigit) / 10u)
+			return false;
+		uValue = uValue * 10u + uDigit;
+		++riPos;
+	}
+
+	ruValue = uValue;
+	return true;
+}
+
+/**
+ * @brief Parses a dotted IPv4 literal into the host-order integer used by IP filter ranges.
+ */
+inline bool TryParseIPv4HostOrder(const CStringA &rstrText, int &riPos, uint32_t &ruAddress)
+{
+	uint32_t uParts[4] = {};
+	for (int iPart = 0; iPart < 4; ++iPart) {
+		if (!TryParseUnsignedAscii(rstrText, riPos, uParts[iPart], 255u))
+			return false;
+		if (iPart < 3) {
+			if (riPos >= rstrText.GetLength() || rstrText[riPos] != '.')
+				return false;
+			++riPos;
+		}
+	}
+
+	ruAddress = (uParts[0] << 24u) | (uParts[1] << 16u) | (uParts[2] << 8u) | uParts[3];
+	return true;
+}
+
+/**
+ * @brief Parses an ipfilter.dat style line: start - end [, level [, description]].
+ */
+inline bool TryParseFilterDatLine(const CStringA &rstrLine, IPRange &rRange)
+{
+	int iPos = 0;
+	uint32_t uStart = 0;
+	uint32_t uEnd = 0;
+	if (!TryParseIPv4HostOrder(rstrLine, iPos, uStart))
+		return false;
+
+	SkipAsciiSpaces(rstrLine, iPos);
+	if (iPos >= rstrLine.GetLength() || rstrLine[iPos] != '-')
+		return false;
+	++iPos;
+
+	if (!TryParseIPv4HostOrder(rstrLine, iPos, uEnd))
+		return false;
+
+	uint32_t uLevel = kDefaultFilterLevel;
+	CStringA strDescription;
+	SkipAsciiSpaces(rstrLine, iPos);
+	if (iPos < rstrLine.GetLength()) {
+		if (rstrLine[iPos] != ',')
+			return false;
+		++iPos;
+		if (!TryParseUnsignedAscii(rstrLine, iPos, uLevel, (std::numeric_limits<uint32_t>::max)()))
+			return false;
+
+		SkipAsciiSpaces(rstrLine, iPos);
+		if (iPos < rstrLine.GetLength()) {
+			if (rstrLine[iPos] != ',')
+				return false;
+			++iPos;
+			SkipAsciiSpaces(rstrLine, iPos);
+			strDescription = rstrLine.Mid(iPos);
+			while (!strDescription.IsEmpty() && static_cast<unsigned char>(strDescription[strDescription.GetLength() - 1]) < ' ')
+				strDescription.Truncate(strDescription.GetLength() - 1);
+		}
+	}
+
+	rRange.Start = uStart;
+	rRange.End = uEnd;
+	rRange.Level = uLevel;
+	rRange.Description = strDescription;
+	return true;
+}
+
+/**
+ * @brief Parses a PeerGuardian text line: description : start - end.
+ */
+inline bool TryParsePeerGuardianLine(const CStringA &rstrLine, IPRange &rRange)
+{
+	const int iColon = rstrLine.ReverseFind(':');
+	if (iColon < 0)
+		return false;
+
+	CStringA strDescription = rstrLine.Left(iColon);
+	strDescription.Replace("PGIPDB", "");
+	strDescription.Trim();
+
+	int iPos = iColon + 1;
+	uint32_t uStart = 0;
+	uint32_t uEnd = 0;
+	if (!TryParseIPv4HostOrder(rstrLine, iPos, uStart))
+		return false;
+
+	SkipAsciiSpaces(rstrLine, iPos);
+	if (iPos >= rstrLine.GetLength() || rstrLine[iPos] != '-')
+		return false;
+	++iPos;
+
+	if (!TryParseIPv4HostOrder(rstrLine, iPos, uEnd))
+		return false;
+
+	SkipAsciiSpaces(rstrLine, iPos);
+	if (iPos != rstrLine.GetLength())
+		return false;
+
+	rRange.Start = uStart;
+	rRange.End = uEnd;
+	rRange.Level = kDefaultFilterLevel;
+	rRange.Description = strDescription;
+	return true;
 }
 
 /**

@@ -32,7 +32,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 
-#define	DFLT_FILTER_LEVEL	100 // default filter level if non specified
+#define	DFLT_FILTER_LEVEL	IPFilterSeams::kDefaultFilterLevel // default filter level if non specified
 
 CIPFilter::CIPFilter()
 	: m_pLastHit()
@@ -161,22 +161,23 @@ INT_PTR CIPFilter::AddFromFile(LPCTSTR pszFilePath, bool bShowResponse)
 						if (sbuffer.Find('>') >= 0 && sbuffer.Find('<') >= 0)
 							sbuffer.Delete(0, sbuffer.ReverseFind('>') + 1);
 
-						// check for <IP> - <IP> at start of line
-						UINT u1, u2, u3, u4, u5, u6, u7, u8;
-						if (sscanf(sbuffer, "%3u.%3u.%3u.%3u - %3u.%3u.%3u.%3u", &u1, &u2, &u3, &u4, &u5, &u6, &u7, &u8) == 8)
+						IPFilterSeams::IPRange detectedRange;
+						if (IPFilterSeams::TryParseFilterDatLine(sbuffer, detectedRange))
 							eFileType = FilterDat;
 						else {
 							// check for <description> ':' <IP> '-' <IP>
 							int iColon = sbuffer.Find(':');
 							if (iColon >= 0) {
-								if (sscanf(CPTRA(sbuffer, iColon + 1), "%3u.%3u.%3u.%3u - %3u.%3u.%3u.%3u", &u1, &u2, &u3, &u4, &u5, &u6, &u7, &u8) == 8)
+								if (IPFilterSeams::TryParsePeerGuardianLine(sbuffer, detectedRange))
 									eFileType = PeerGuardian;
 							}
 						}
 					}
 
 					bool bValid;
-					uint32 start, end, level;
+					uint32 start = 0;
+					uint32 end = 0;
+					uint32 level = 0;
 					CStringA desc;
 					if (eFileType == FilterDat)
 						bValid = ParseFilterLine1(sbuffer, start, end, level, desc);
@@ -280,66 +281,27 @@ void CIPFilter::SaveToDefaultFile()
 
 bool CIPFilter::ParseFilterLine1(const CStringA &sbuffer, uint32 &ip1, uint32 &ip2, uint32 &level, CStringA &desc)
 {
-	UINT u1, u2, u3, u4, u5, u6, u7, u8, uLevel = DFLT_FILTER_LEVEL;
-	int iDescStart = 0;
-	int iItems = sscanf(sbuffer, "%3u.%3u.%3u.%3u - %3u.%3u.%3u.%3u , %3u , %n", &u1, &u2, &u3, &u4, &u5, &u6, &u7, &u8, &uLevel, &iDescStart);
-	if (iItems < 8)
+	IPFilterSeams::IPRange range;
+	if (!IPFilterSeams::TryParseFilterDatLine(sbuffer, range))
 		return false;
 
-	((BYTE*)&ip1)[0] = (BYTE)u4;
-	((BYTE*)&ip1)[1] = (BYTE)u3;
-	((BYTE*)&ip1)[2] = (BYTE)u2;
-	((BYTE*)&ip1)[3] = (BYTE)u1;
-
-	((BYTE*)&ip2)[0] = (BYTE)u8;
-	((BYTE*)&ip2)[1] = (BYTE)u7;
-	((BYTE*)&ip2)[2] = (BYTE)u6;
-	((BYTE*)&ip2)[3] = (BYTE)u5;
-
-	if (iItems == 8) {
-		level = DFLT_FILTER_LEVEL;	// set default level
-		return true;
-	}
-
-	level = uLevel;
-
-	if (iDescStart > 0) {
-		LPCSTR pszDescStart = CPTRA(sbuffer, iDescStart);
-		int iDescLen = sbuffer.GetLength() - iDescStart;
-		while (iDescLen > 0 && pszDescStart[iDescLen - 1] < ' ') //any control characters
-			--iDescLen;
-		desc = CStringA(pszDescStart, iDescLen);
-	}
-
+	ip1 = range.Start;
+	ip2 = range.End;
+	level = range.Level;
+	desc = range.Description;
 	return true;
 }
 
 bool CIPFilter::ParseFilterLine2(const CStringA &sbuffer, uint32 &ip1, uint32 &ip2, uint32 &level, CStringA &desc)
 {
-	int iPos = sbuffer.ReverseFind(':');
-	if (iPos < 0)
+	IPFilterSeams::IPRange range;
+	if (!IPFilterSeams::TryParsePeerGuardianLine(sbuffer, range))
 		return false;
 
-	desc = sbuffer.Left(iPos);
-	desc.Replace("PGIPDB", "");
-	desc.Trim();
-
-	unsigned u1, u2, u3, u4, u5, u6, u7, u8;
-	if (sscanf(CPTRA(sbuffer, iPos + 1), "%3u.%3u.%3u.%3u - %3u.%3u.%3u.%3u", &u1, &u2, &u3, &u4, &u5, &u6, &u7, &u8) != 8)
-		return false;
-
-	((BYTE*)&ip1)[0] = (BYTE)u4;
-	((BYTE*)&ip1)[1] = (BYTE)u3;
-	((BYTE*)&ip1)[2] = (BYTE)u2;
-	((BYTE*)&ip1)[3] = (BYTE)u1;
-
-	((BYTE*)&ip2)[0] = (BYTE)u8;
-	((BYTE*)&ip2)[1] = (BYTE)u7;
-	((BYTE*)&ip2)[2] = (BYTE)u6;
-	((BYTE*)&ip2)[3] = (BYTE)u5;
-
-	level = DFLT_FILTER_LEVEL;
-
+	ip1 = range.Start;
+	ip2 = range.End;
+	level = range.Level;
+	desc = range.Description;
 	return true;
 }
 
