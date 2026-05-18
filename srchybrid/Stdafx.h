@@ -116,12 +116,12 @@
 #include <winsock2.h>
 #define _WINSOCKAPI_
 #include <afxsock.h>		// MFC support for Windows Sockets
-#include <afxdhtml.h>
 #include <afxmt.h>			// MFC Multithreaded Extensions (Synchronization Objects)
 #include <afxdlgs.h>		// MFC Standard dialogs
 #include <atlcoll.h>
 #include <afxcoll.h>
 #include <afximpl.h>
+#include <afxpriv.h>
 
 
 #ifndef EWX_FORCEIFHUNG

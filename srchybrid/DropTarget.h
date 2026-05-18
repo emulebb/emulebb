@@ -1,7 +1,5 @@
 #pragma once
 
-struct PASTEURLDATA;
-
 //////////////////////////////////////////////////////////////////////////////
 // CMainFrameDropTarget
 
@@ -17,13 +15,9 @@ public:
 
 protected:
 	BOOL m_bDropDataValid;
-	CLIPFORMAT m_cfHTML;
 	CLIPFORMAT m_cfShellURL;
 
 	BOOL IsSupportedDropData(COleDataObject *pDataObject);
-	HRESULT PasteHTMLDocument(IHTMLDocument2 *doc, PASTEURLDATA *pPaste);
-	HRESULT PasteHTML(PASTEURLDATA *pPaste);
-	HRESULT PasteHTML(COleDataObject &data);
 	HRESULT PasteText(CLIPFORMAT cfData, COleDataObject &data);
 	HRESULT PasteHDROP(COleDataObject &data);
 	HRESULT AddUrlFileContents(LPCTSTR pszFileName);

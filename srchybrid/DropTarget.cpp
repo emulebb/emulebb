@@ -96,237 +96,13 @@ LPCWSTR GetFileExtW(LPCWSTR pszPathW, int iLen /*= -1*/)
 
 
 //////////////////////////////////////////////////////////////////////////////
-// PASTEURLDATA
-
-struct PASTEURLDATA
-{
-	PASTEURLDATA()
-		: m_eType(InvalidType)
-		, m_dwFlags()
-	{
-	}
-
-	explicit PASTEURLDATA(BSTR bstrText, DWORD dwFlags = 0)
-		: m_eType(HTMLText)
-		, m_dwFlags(dwFlags)
-		, m_bstrURLs(bstrText)
-	{
-	}
-
-	explicit PASTEURLDATA(IDispatch *pIDispatch, DWORD dwFlags = 0)
-		: m_eType(Document)
-		, m_dwFlags(dwFlags)
-		, m_pIDispDoc(pIDispatch)
-	{
-	}
-
-	enum DataType
-	{
-		InvalidType = -1,
-		Text,
-		HTMLText,
-		Document
-	} m_eType;
-
-	DWORD m_dwFlags;
-
-	union
-	{
-		BSTR m_bstrURLs;
-		IDispatch *m_pIDispDoc;
-	};
-};
-
-
-//////////////////////////////////////////////////////////////////////////////
 // CMainFrameDropTarget
 
 CMainFrameDropTarget::CMainFrameDropTarget()
 	: m_bDropDataValid()
-	, m_cfHTML((CLIPFORMAT)RegisterClipboardFormat(_T("HTML Format")))
 	, m_cfShellURL((CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLURL))
 {
-	ASSERT(m_cfHTML && m_cfShellURL);
-}
-
-HRESULT CMainFrameDropTarget::PasteHTMLDocument(IHTMLDocument2 *doc, PASTEURLDATA* /*pPaste*/)
-{
-	HRESULT hrPasteResult = S_FALSE; // default: nothing was pasted
-	int iURLElements = 0;
-
-	// get_links		HREF	all <LINK> and <AREA> elements -> that's *wrong* it also contains all <A> elements!
-	// get_anchors		HREF	all <A> elements which have a NAME or ID value!
-
-	//
-	// Links
-	//
-	CComPtr<IHTMLElementCollection> links;
-	if (doc->get_links(&links) == S_OK) {
-		long lLinks;
-		if (links->get_length(&lLinks) == S_OK && lLinks > 0) {
-			iURLElements += lLinks;
-			CComVariant vaIndex(0L);
-			CComVariant vaNull(0L);
-			for (long i = 0; i < lLinks; ++i) {
-				vaIndex.lVal = i;
-				CComPtr<IDispatch> item;
-				if (links->item(vaIndex, vaNull, &item) == S_OK) {
-					CComPtr<IHTMLAnchorElement> anchor;
-					if (SUCCEEDED(item->QueryInterface(&anchor))) {
-						CComBSTR bstrHref;
-						if (anchor->get_href(&bstrHref) == S_OK && bstrHref.Length() > 0 && IsUrlSchemeSupportedW(bstrHref)) {
-							theApp.emuledlg->ProcessED2KLink(CString(bstrHref));
-							hrPasteResult = S_OK;
-						}
-						anchor.Release(); // free memory
-					}
-				}
-			}
-		}
-		links.Release(); // conserve memory
-	}
-
-	//
-	// Text
-	//
-	// The explicit handling of text is needed, if we're looking at contents which were copied
-	// to the clipboard in HTML format -- although it is simple raw text!! This situation applies,
-	// if the user opens the "View Partial Source" HTML window for some selected HTML contents,
-	// and copies some text (e.g. a URL) to the clipboard. In that case we'll get the raw text
-	// as HTML contents!!!
-	//
-	// PROBLEM: We can *not* always process the HTML elements (anchors, ...) *and* the inner text.
-	// The following example (a rather *usual* one) would lead to the adding of the same URL twice
-	// because the URL is noted as a HREF *and* as the inner text.
-	//
-	// <P><A href="http://www.domain.com/image.gif">http://www.domain.com/image.gif</A></P>
-	//
-	// So, in practice, the examination of the 'innerText' is only done, if there were no other
-	// HTML elements in the document.
-	//
-	if (iURLElements == 0) {
-		CComPtr<IHTMLElement> el;
-		if (doc->get_body(&el) == S_OK) {
-			CComBSTR bstr;
-			if (el->get_innerText(&bstr) == S_OK && bstr.Length() > 0) {
-				LPCWSTR pwsz = bstr;
-				while (*pwsz != L'\0' && iswspace(*pwsz)) // Skip white spaces
-					++pwsz;
-
-				// PROBLEM: The 'innerText' does not contain any HTML tags, but it *MAY* contain
-				// HTML comments like "<!--StartFragment-->...<!--EndFragment-->". Those
-				// tags have to be explicitly parsed to get the real raw text contents.
-				// Those Start- and End-tags are available if the text is copied into the clipboard
-				// from a HTML window which was open with "View Partial Source"!
-				static const WCHAR _wszStartFrag[] = L"<!--StartFragment-->";
-				if (wcsncmp(pwsz, _wszStartFrag, _countof(_wszStartFrag) - 1) == 0) {
-					pwsz += _countof(_wszStartFrag) - 1;
-
-					// If there's a Start-tag, search for an End-tag.
-					static const WCHAR _wszEndFrag[] = L"<!--EndFragment-->";
-					LPWSTR pwszEnd = (LPWSTR)bstr + bstr.Length();
-					pwszEnd -= _countof(_wszEndFrag) - 1;
-					if (pwszEnd >= pwsz) {
-						if (wcsncmp(pwszEnd, _wszEndFrag, _countof(_wszEndFrag) - 1) == 0)
-							*pwszEnd = L'\0'; // Ugly but efficient, terminate the BSTR!
-					}
-				}
-
-				// Search all white-space terminated strings and check for a valid URL-scheme
-				while (*pwsz != L'\0') {
-					while (*pwsz != L'\0' && iswspace(*pwsz)) // Skip white spaces
-						++pwsz;
-
-					if (IsUrlSchemeSupportedW(pwsz)) {
-						LPCWSTR pwszEnd = pwsz;
-						while (*pwszEnd != L'\0' && !iswspace(*pwszEnd)) // Search next white space (end of current string)
-							++pwszEnd;
-						int iLen = (int)(pwszEnd - pwsz);
-						if (iLen > 0) {
-							CString strURL(pwsz, iLen);
-							theApp.emuledlg->ProcessED2KLink(strURL);
-							hrPasteResult = S_OK;
-							pwsz += iLen;
-						}
-					} else {
-						while (*pwsz != L'\0' && !iswspace(*pwsz)) // Search next white space (end of current string)
-							++pwsz;
-					}
-
-					while (*pwsz != L'\0' && iswspace(*pwsz)) // Skip white spaces
-						++pwsz;
-				}
-			}
-		}
-	}
-
-	return hrPasteResult;
-}
-
-HRESULT CMainFrameDropTarget::PasteHTML(PASTEURLDATA *pPaste)
-{
-	HRESULT hrPasteResult = S_FALSE; // default: nothing was pasted
-	if (pPaste->m_bstrURLs[0] != L'\0') {
-		CComPtr<IHTMLDocument2> doc;
-		if (SUCCEEDED(doc.CoCreateInstance(CLSID_HTMLDocument, NULL))) {
-			SAFEARRAY *psfHtmlLines = SafeArrayCreateVector(VT_VARIANT, 0, 1);
-			if (psfHtmlLines != NULL) {
-				VARIANT *pva;
-				if (SafeArrayAccessData(psfHtmlLines, (void**)&pva) == S_OK) {
-					pva->vt = VT_BSTR;
-					pva->bstrVal = pPaste->m_bstrURLs;
-					VERIFY(SafeArrayUnaccessData(psfHtmlLines) == S_OK);
-
-					// Build the HTML document
-					//
-					// NOTE: 'bstrHTML' may contain a complete HTML document (see CF_HTML) or
-					// just a fragment (without <HTML>, <BODY>, ... tags).
-					//
-					// WOW! We even can pump partially (but well defined) HTML stuff into the
-					// document (e.g. contents without <HTML>, <BODY>...) *and* we are capable
-					// of accessing the HTML object model (can use 'get_links'...)
-					if (doc->write(psfHtmlLines) == S_OK)
-						hrPasteResult = PasteHTMLDocument(doc, pPaste);
-					else
-						hrPasteResult = E_FAIL;
-				} else
-					hrPasteResult = E_OUTOFMEMORY;
-
-				// Destroy the array *and* all of the data (BSTRs!)
-				if (SafeArrayAccessData(psfHtmlLines, (void**)&pva) == S_OK) {
-					// 'Remove' the BSTR which was specified before, to *NOT* have it deleted by 'SafeArrayDestroy'
-					pva->vt = VT_NULL;
-					pva->bstrVal = NULL;
-					VERIFY(SafeArrayUnaccessData(psfHtmlLines) == S_OK);
-				}
-				VERIFY(SafeArrayDestroy(psfHtmlLines) == S_OK);
-			} else
-				hrPasteResult = E_OUTOFMEMORY;
-		} else
-			hrPasteResult = E_FAIL;
-	}
-	return hrPasteResult;
-}
-
-HRESULT CMainFrameDropTarget::PasteHTML(COleDataObject &data)
-{
-	HRESULT hrPasteResult = E_FAIL;
-	HGLOBAL hMem = data.GetGlobalData(m_cfHTML);
-	if (hMem != NULL) {
-		LPCSTR pszClipboard = (LPCSTR)::GlobalLock(hMem);
-		if (pszClipboard != NULL) {
-			hrPasteResult = S_FALSE; // default: nothing was pasted
-			LPCSTR pszHTML = strchr(pszClipboard, '<');
-			if (pszHTML != NULL) {
-				CComBSTR bstrHTMLText(pszHTML);
-				PASTEURLDATA Paste(bstrHTMLText);
-				hrPasteResult = PasteHTML(&Paste);
-			}
-			::GlobalUnlock(hMem);
-		}
-		::GlobalFree(hMem);
-	}
-	return hrPasteResult;
+	ASSERT(m_cfShellURL);
 }
 
 HRESULT CMainFrameDropTarget::PasteText(CLIPFORMAT cfData, COleDataObject &data)
@@ -334,20 +110,40 @@ HRESULT CMainFrameDropTarget::PasteText(CLIPFORMAT cfData, COleDataObject &data)
 	HRESULT hrPasteResult = E_FAIL;
 	HANDLE hMem = data.GetGlobalData(cfData);
 	if (hMem != NULL) {
-		LPCSTR pszUrlA = (LPCSTR)::GlobalLock(hMem);
-		if (pszUrlA != NULL) {
-			// skip white space
-			while (isspace(*pszUrlA))
-				++pszUrlA;
+		const void *pvData = ::GlobalLock(hMem);
+		if (pvData != NULL) {
+			if (cfData == CF_UNICODETEXT) {
+				LPCWSTR pszUrlW = static_cast<LPCWSTR>(pvData);
+				while (iswspace(*pszUrlW))
+					++pszUrlW;
 
-			hrPasteResult = S_FALSE; // default: nothing was pasted
-			if (_strnicmp(pszUrlA, "ed2k://|", 8) == 0 || _strnicmp(pszUrlA, "magnet:?", 8) == 0) {
-				const CString strData(pszUrlA);
-				for (int iPos = 0; iPos >= 0;) {
-					const CString &sLink(strData.Tokenize(_T("\r\n"), iPos));
-					if (!sLink.IsEmpty()) {
-						theApp.emuledlg->ProcessED2KLink(sLink);
-						hrPasteResult = S_OK;
+				hrPasteResult = S_FALSE; // default: nothing was pasted
+				if (_wcsnicmp(pszUrlW, L"ed2k://|", 8) == 0 || _wcsnicmp(pszUrlW, L"magnet:?", 8) == 0) {
+					const CString strData(pszUrlW);
+					for (int iPos = 0; iPos >= 0;) {
+						CString sLink(strData.Tokenize(_T("\r\n"), iPos));
+						sLink.Trim();
+						if (!sLink.IsEmpty()) {
+							theApp.emuledlg->ProcessED2KLink(sLink);
+							hrPasteResult = S_OK;
+						}
+					}
+				}
+			} else {
+				LPCSTR pszUrlA = static_cast<LPCSTR>(pvData);
+				while (isspace(*pszUrlA))
+					++pszUrlA;
+
+				hrPasteResult = S_FALSE; // default: nothing was pasted
+				if (_strnicmp(pszUrlA, "ed2k://|", 8) == 0 || _strnicmp(pszUrlA, "magnet:?", 8) == 0) {
+					const CString strData(pszUrlA);
+					for (int iPos = 0; iPos >= 0;) {
+						CString sLink(strData.Tokenize(_T("\r\n"), iPos));
+						sLink.Trim();
+						if (!sLink.IsEmpty()) {
+							theApp.emuledlg->ProcessED2KLink(sLink);
+							hrPasteResult = S_OK;
+						}
 					}
 				}
 			}
@@ -425,10 +221,6 @@ BOOL CMainFrameDropTarget::IsSupportedDropData(COleDataObject *pDataObject)
 	//*** THIS FUNCTION HAS TO BE AS FAST AS POSSIBLE!!!
 	//************************************************************************
 
-	// If the data is in 'HTML Format', there is no need to check the contents.
-	if (m_cfHTML && pDataObject->IsDataAvailable(m_cfHTML))
-		return TRUE;
-
 	// If the data is in 'UniformResourceLocator', there is no need to check the contents.
 	if (m_cfShellURL && pDataObject->IsDataAvailable(m_cfShellURL))
 		return TRUE;
@@ -443,7 +235,7 @@ BOOL CMainFrameDropTarget::IsSupportedDropData(COleDataObject *pDataObject)
 			LPCWSTR lpszUrl = (LPCWSTR)::GlobalLock(hMem);
 			if (lpszUrl != NULL) {
 				// skip white space
-				while (isspace(*lpszUrl))
+				while (iswspace(*lpszUrl))
 					++lpszUrl;
 				bResult = IsUrlSchemeSupportedW(lpszUrl);
 				::GlobalUnlock(hMem);
@@ -504,10 +296,10 @@ DROPEFFECT CMainFrameDropTarget::OnDragOver(CWnd*, COleDataObject*, DWORD, CPoin
 BOOL CMainFrameDropTarget::OnDrop(CWnd*, COleDataObject *pDataObject, DROPEFFECT /*dropEffect*/, CPoint /*point*/)
 {
 	if (m_bDropDataValid) {
-		if (m_cfHTML && pDataObject->IsDataAvailable(m_cfHTML))
-			PasteHTML(*pDataObject);
-		else if (m_cfShellURL && pDataObject->IsDataAvailable(m_cfShellURL))
+		if (m_cfShellURL && pDataObject->IsDataAvailable(m_cfShellURL))
 			PasteText(m_cfShellURL, *pDataObject);
+		else if (pDataObject->IsDataAvailable(CF_UNICODETEXT))
+			PasteText(CF_UNICODETEXT, *pDataObject);
 		else if (pDataObject->IsDataAvailable(CF_TEXT))
 			PasteText(CF_TEXT, *pDataObject);
 		else if (pDataObject->IsDataAvailable(CF_HDROP))
