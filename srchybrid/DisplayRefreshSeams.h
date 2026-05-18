@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <memory>
 
+#define EMULE_TEST_HAVE_DISPLAY_REFRESH_OWNED_POST 1
+
 enum EDisplayRefreshMask : uint32
 {
 	DISPLAY_REFRESH_NONE = 0,

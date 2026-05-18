@@ -3,6 +3,8 @@
 #include "AICHMaintenanceSeams.h"
 #include "WorkerUiMessageSeams.h"
 
+#define EMULE_TEST_HAVE_AICH_SYNC_PROGRESS_DELIVERY_ACTION 1
+
 /**
  * @brief UI delivery outcome for AICH background progress updates.
  */
