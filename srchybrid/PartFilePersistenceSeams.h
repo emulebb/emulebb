@@ -189,6 +189,15 @@ inline uint64_t GetRequiredFreeBytesForUnresolvedVolume(const uint64_t nHighestP
 	return nHighestProtectedRequiredBytes;
 }
 
+/**
+ * Adds byte counts without wrapping, returning UINT64_MAX on overflow.
+ */
+inline uint64_t SaturatingAddBytes(const uint64_t nLeftBytes, const uint64_t nRightBytes)
+{
+	const uint64_t nRemainingCapacity = static_cast<uint64_t>(-1) - nLeftBytes;
+	return nRightBytes <= nRemainingCapacity ? nLeftBytes + nRightBytes : static_cast<uint64_t>(-1);
+}
+
 inline PartMetWriteGuardDecision ResolvePartMetWriteGuard(const bool bHasCachedResult, const bool bCachedCanWrite, const bool bForceRefresh, const uint64_t nFreeBytes, const uint64_t nRequiredBytes = kMinPartMetWriteFreeBytes)
 {
 	(void)bHasCachedResult;

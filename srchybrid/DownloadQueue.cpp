@@ -205,7 +205,9 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 		if (iStatus < 0)
 			return;
 
-		(*paStatuses)[iStatus].CompletionBytes += nBytes;
+		(*paStatuses)[iStatus].CompletionBytes = PartFilePersistenceSeams::SaturatingAddBytes(
+			(*paStatuses)[iStatus].CompletionBytes,
+			nBytes);
 	};
 
 	MergeProtectedVolumeRole(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR), thePrefs.GetMinFreeDiskSpaceConfig(), ProtectedDiskRoleConfig);
@@ -245,8 +247,11 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 			AddProtectedVolumeCompletionDemand(strIncomingPath, static_cast<uint64>(pPartFile->GetFileSize()));
 	}
 
-	for (INT_PTR i = 0; i < paStatuses->GetCount(); ++i)
-		(*paStatuses)[i].RequiredBytes = (*paStatuses)[i].FloorBytes + (*paStatuses)[i].CompletionBytes;
+	for (INT_PTR i = 0; i < paStatuses->GetCount(); ++i) {
+		(*paStatuses)[i].RequiredBytes = PartFilePersistenceSeams::SaturatingAddBytes(
+			(*paStatuses)[i].FloorBytes,
+			(*paStatuses)[i].CompletionBytes);
+	}
 }
 
 const CArray<CDownloadQueue::ProtectedVolumeStatus, const CDownloadQueue::ProtectedVolumeStatus&>& CDownloadQueue::GetProtectedVolumeStatusSnapshot(
@@ -294,8 +299,12 @@ void CDownloadQueue::ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempP
 
 		for (INT_PTR i = 0; i < m_aProtectedVolumeStatusSnapshot.GetCount(); ++i) {
 			if (m_aProtectedVolumeStatusSnapshot[i].VolumeId == strVolumeId) {
-				m_aProtectedVolumeStatusSnapshot[i].CompletionBytes += uDemandBytes;
-				m_aProtectedVolumeStatusSnapshot[i].RequiredBytes += uDemandBytes;
+				m_aProtectedVolumeStatusSnapshot[i].CompletionBytes = PartFilePersistenceSeams::SaturatingAddBytes(
+					m_aProtectedVolumeStatusSnapshot[i].CompletionBytes,
+					uDemandBytes);
+				m_aProtectedVolumeStatusSnapshot[i].RequiredBytes = PartFilePersistenceSeams::SaturatingAddBytes(
+					m_aProtectedVolumeStatusSnapshot[i].RequiredBytes,
+					uDemandBytes);
 				return;
 			}
 		}
