@@ -70,6 +70,11 @@ inline bool IsProtectedVolumeBreached(const ProtectedVolumeSpaceState &rState)
 	return rState.FreeBytes < rState.RequiredBytes;
 }
 
+inline uint64_t GetUnresolvedProtectedVolumeFreeBytes()
+{
+	return 0u;
+}
+
 inline bool HasProtectedVolumeBreach(const ProtectedVolumeSpaceState *pStates, const std::size_t nStateCount)
 {
 	if (pStates == NULL)

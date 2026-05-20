@@ -87,6 +87,16 @@ namespace
 			return pCategory->strIncomingPath;
 		return thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR);
 	}
+
+	CString BuildUnresolvedProtectedVolumeId(LPCTSTR pszPath)
+	{
+		CString strPath(PathHelpers::TrimTrailingSeparator(PathHelpers::CanonicalizePath(
+			PathHelpers::StripExtendedLengthPrefix(CString(pszPath != NULL ? pszPath : _T(""))))));
+		if (strPath.IsEmpty() && pszPath != NULL)
+			strPath = pszPath;
+		strPath.MakeLower();
+		return _T("#unresolved-volume:") + strPath;
+	}
 }
 
 CDownloadQueue::CDownloadQueue()
@@ -167,8 +177,9 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 			return -1;
 
 		CString strVolumeId;
-		if (!volumeIdentityPathCache.Resolve(pszPath, strVolumeId))
-			return -1;
+		const bool bResolvedVolume = volumeIdentityPathCache.Resolve(pszPath, strVolumeId);
+		if (!bResolvedVolume)
+			strVolumeId = BuildUnresolvedProtectedVolumeId(pszPath);
 
 		const INT_PTR iExisting = FindProtectedVolumeStatus(strVolumeId);
 		if (iExisting >= 0)
@@ -176,7 +187,9 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 
 		ProtectedVolumeStatus status = {
 			strVolumeId,
-			bNotEnoughSpaceLeft ? 0 : GetFreeDiskSpaceX(pszPath),
+			bResolvedVolume && !bNotEnoughSpaceLeft
+				? GetFreeDiskSpaceX(pszPath)
+				: DownloadQueueDiskSpaceSeams::GetUnresolvedProtectedVolumeFreeBytes(),
 			0,
 			0,
 			0,
@@ -243,7 +256,7 @@ void CDownloadQueue::CollectProtectedVolumeStatuses(CArray<ProtectedVolumeStatus
 		CString strIncomingVolumeId;
 		const bool bHaveTempVolume = volumeIdentityPathCache.Resolve(pPartFile->GetTmpPath(), strTempVolumeId);
 		const bool bHaveIncomingVolume = volumeIdentityPathCache.Resolve(strIncomingPath, strIncomingVolumeId);
-		if (bHaveIncomingVolume && (!bHaveTempVolume || strIncomingVolumeId != strTempVolumeId))
+		if (!bHaveTempVolume || !bHaveIncomingVolume || strIncomingVolumeId != strTempVolumeId)
 			AddProtectedVolumeCompletionDemand(strIncomingPath, static_cast<uint64>(pPartFile->GetFileSize()));
 	}
 
