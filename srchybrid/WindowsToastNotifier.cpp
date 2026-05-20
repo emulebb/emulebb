@@ -148,12 +148,11 @@ namespace
 
 	bool EnsureToastShortcut()
 	{
-		PWSTR pszStartMenuPath = NULL;
-		if (FAILED(::SHGetKnownFolderPath(FOLDERID_StartMenu, KF_FLAG_CREATE, NULL, &pszStartMenuPath)))
+		ComInitializationSeams::CScopedCoTaskMem<WCHAR> startMenuPath;
+		if (FAILED(::SHGetKnownFolderPath(FOLDERID_StartMenu, KF_FLAG_CREATE, NULL, startMenuPath.GetAddressOf())))
 			return false;
 
-		CStringW strShortcutPath(pszStartMenuPath);
-		::CoTaskMemFree(pszStartMenuPath);
+		CStringW strShortcutPath(startMenuPath.Get());
 		strShortcutPath += L"\\Programs\\";
 		strShortcutPath += kToastShortcutName;
 
@@ -165,33 +164,30 @@ namespace
 		if (!coInitialize.IsUsable())
 			return false;
 
-		bool bSaved = false;
-		IShellLinkW *pShellLink = NULL;
-		if (SUCCEEDED(::CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pShellLink)))) {
-			pShellLink->SetPath(szModulePath);
-			pShellLink->SetIconLocation(szModulePath, 0);
-			pShellLink->SetDescription(L"eMule BB");
+		CComPtr<IShellLinkW> pShellLink;
+		if (FAILED(pShellLink.CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER)) || pShellLink == NULL)
+			return false;
+		pShellLink->SetPath(szModulePath);
+		pShellLink->SetIconLocation(szModulePath, 0);
+		pShellLink->SetDescription(L"eMule BB");
 
-			IPropertyStore *pPropertyStore = NULL;
-			if (SUCCEEDED(pShellLink->QueryInterface(IID_PPV_ARGS(&pPropertyStore)))) {
-				PROPVARIANT appId;
-				::PropVariantInit(&appId);
-				if (SUCCEEDED(::InitPropVariantFromString(kToastAppId, &appId))) {
-					if (SUCCEEDED(pPropertyStore->SetValue(PKEY_AppUserModel_ID, appId)) && SUCCEEDED(pPropertyStore->Commit())) {
-						IPersistFile *pPersistFile = NULL;
-						if (SUCCEEDED(pShellLink->QueryInterface(IID_PPV_ARGS(&pPersistFile)))) {
-							bSaved = SUCCEEDED(pPersistFile->Save(strShortcutPath, TRUE));
-							pPersistFile->Release();
-						}
-					}
-					::PropVariantClear(&appId);
-				}
-				pPropertyStore->Release();
-			}
-			pShellLink->Release();
+		CComPtr<IPropertyStore> pPropertyStore;
+		if (FAILED(pShellLink.QueryInterface(&pPropertyStore)) || pPropertyStore == NULL)
+			return false;
+
+		ComInitializationSeams::CScopedPropVariant appId;
+		if (FAILED(::InitPropVariantFromString(kToastAppId, appId.GetAddressOf()))
+			|| FAILED(pPropertyStore->SetValue(PKEY_AppUserModel_ID, appId.Get()))
+			|| FAILED(pPropertyStore->Commit()))
+		{
+			return false;
 		}
 
-		return bSaved;
+		CComPtr<IPersistFile> pPersistFile;
+		if (FAILED(pShellLink.QueryInterface(&pPersistFile)) || pPersistFile == NULL)
+			return false;
+
+		return SUCCEEDED(pPersistFile->Save(strShortcutPath, TRUE));
 	}
 
 	void PruneToastState(const std::shared_ptr<ToastState> &state)

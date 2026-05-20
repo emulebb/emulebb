@@ -149,11 +149,32 @@ bool HasUsableMediaFacts(const SMediaInfo &rMediaInfo)
 		|| !rMediaInfo.strAlbum.IsEmpty();
 }
 
-void SetPropVariantString(PROPVARIANT &rValue, CString &rTarget)
+void SetPropVariantString(const PROPVARIANT &rValue, CString &rTarget)
 {
 	WCHAR wszValue[512] = {};
 	if (rTarget.IsEmpty() && SUCCEEDED(::PropVariantToString(rValue, wszValue, _countof(wszValue))))
 		rTarget = wszValue;
+}
+
+bool TrySupplementShellStringProperty(IPropertyStore *pStore, REFPROPERTYKEY rKey, CString &rTarget)
+{
+	ComInitializationSeams::CScopedPropVariant value;
+	if (FAILED(pStore->GetValue(rKey, value.GetAddressOf())))
+		return false;
+	const bool bWasEmpty = rTarget.IsEmpty();
+	SetPropVariantString(value.Get(), rTarget);
+	return bWasEmpty && !rTarget.IsEmpty();
+}
+
+bool TryReadShellDurationSec(IPropertyStore *pStore, double &rfDurationSec)
+{
+	ComInitializationSeams::CScopedPropVariant value;
+	if (FAILED(pStore->GetValue(PKEY_Media_Duration, value.GetAddressOf())))
+		return false;
+	if (value.Get().vt != VT_UI8 || value.Get().uhVal.QuadPart == 0)
+		return false;
+	rfDurationSec = static_cast<double>(value.Get().uhVal.QuadPart) / 10000000.0;
+	return true;
 }
 
 bool LoadProbeWindow(LPCTSTR pszFilePath, std::vector<std::uint8_t> &raBytes)
@@ -276,11 +297,13 @@ bool GetMediaFoundationMediaInfo(LPCTSTR pszFilePath, EMFileSize, SMediaInfo *mi
 	MediaMetadataFallbackSeams::SBasicMediaInfo basic;
 	basic.strContainer = _T("Media Foundation");
 
-	PROPVARIANT var;
-	::PropVariantInit(&var);
-	if (SUCCEEDED(pReader->GetPresentationAttribute(MF_SOURCE_READER_MEDIASOURCE, MF_PD_DURATION, &var)) && var.vt == VT_UI8 && var.uhVal.QuadPart != 0)
-		basic.fDurationSec = static_cast<double>(var.uhVal.QuadPart) / 10000000.0;
-	::PropVariantClear(&var);
+	ComInitializationSeams::CScopedPropVariant duration;
+	if (SUCCEEDED(pReader->GetPresentationAttribute(MF_SOURCE_READER_MEDIASOURCE, MF_PD_DURATION, duration.GetAddressOf()))
+		&& duration.Get().vt == VT_UI8
+		&& duration.Get().uhVal.QuadPart != 0)
+	{
+		basic.fDurationSec = static_cast<double>(duration.Get().uhVal.QuadPart) / 10000000.0;
+	}
 
 	for (DWORD uStream = 0; uStream < 128; ++uStream) {
 		CComPtr<IMFMediaType> pType;
@@ -364,35 +387,15 @@ bool SupplementShellMediaProperties(LPCTSTR pszFilePath, SMediaInfo *mi)
 	if (FAILED(::SHGetPropertyStoreFromParsingName(strPreparedPath, NULL, GPS_BESTEFFORT, IID_PPV_ARGS(&pStore))) || pStore == NULL)
 		return false;
 
-	bool bChanged = false;
-	PROPVARIANT var;
-	::PropVariantInit(&var);
-	if (SUCCEEDED(pStore->GetValue(PKEY_Title, &var))) {
-		const bool bWasEmpty = mi->strTitle.IsEmpty();
-		SetPropVariantString(var, mi->strTitle);
-		bChanged |= bWasEmpty && !mi->strTitle.IsEmpty();
-	}
-	::PropVariantClear(&var);
-	::PropVariantInit(&var);
-	if (SUCCEEDED(pStore->GetValue(PKEY_Music_Artist, &var))) {
-		const bool bWasEmpty = mi->strAuthor.IsEmpty();
-		SetPropVariantString(var, mi->strAuthor);
-		bChanged |= bWasEmpty && !mi->strAuthor.IsEmpty();
-	}
-	::PropVariantClear(&var);
-	::PropVariantInit(&var);
-	if (SUCCEEDED(pStore->GetValue(PKEY_Music_AlbumTitle, &var))) {
-		const bool bWasEmpty = mi->strAlbum.IsEmpty();
-		SetPropVariantString(var, mi->strAlbum);
-		bChanged |= bWasEmpty && !mi->strAlbum.IsEmpty();
-	}
-	::PropVariantClear(&var);
-	::PropVariantInit(&var);
-	if (mi->fFileLengthSec <= 0.0 && SUCCEEDED(pStore->GetValue(PKEY_Media_Duration, &var)) && var.vt == VT_UI8 && var.uhVal.QuadPart != 0) {
-		mi->fFileLengthSec = static_cast<double>(var.uhVal.QuadPart) / 10000000.0;
+	bool bChanged = TrySupplementShellStringProperty(pStore, PKEY_Title, mi->strTitle);
+	bChanged |= TrySupplementShellStringProperty(pStore, PKEY_Music_Artist, mi->strAuthor);
+	bChanged |= TrySupplementShellStringProperty(pStore, PKEY_Music_AlbumTitle, mi->strAlbum);
+
+	double fDurationSec = 0.0;
+	if (mi->fFileLengthSec <= 0.0 && TryReadShellDurationSec(pStore, fDurationSec)) {
+		mi->fFileLengthSec = fDurationSec;
 		bChanged = true;
 	}
-	::PropVariantClear(&var);
 	mi->InitFileLength();
 	return bChanged;
 }

@@ -9,6 +9,7 @@
 #pragma once
 
 #include <objbase.h>
+#include <propidl.h>
 
 namespace ComInitializationSeams
 {
@@ -82,5 +83,100 @@ namespace ComInitializationSeams
 	private:
 		HRESULT m_hr;
 		bool m_bUninitialize;
+	};
+
+	/**
+	 * @brief Owns memory returned by Shell/COM APIs which must be released with CoTaskMemFree.
+	 */
+	template <typename T>
+	class CScopedCoTaskMem
+	{
+	public:
+		CScopedCoTaskMem() = default;
+
+		explicit CScopedCoTaskMem(T *pValue)
+			: m_pValue(pValue)
+		{
+		}
+
+		~CScopedCoTaskMem()
+		{
+			Reset();
+		}
+
+		CScopedCoTaskMem(const CScopedCoTaskMem&) = delete;
+		CScopedCoTaskMem& operator=(const CScopedCoTaskMem&) = delete;
+
+		T *Get() const
+		{
+			return m_pValue;
+		}
+
+		T **GetAddressOf()
+		{
+			Reset();
+			return &m_pValue;
+		}
+
+		T *Detach()
+		{
+			T *pValue = m_pValue;
+			m_pValue = NULL;
+			return pValue;
+		}
+
+		void Reset(T *pValue = NULL)
+		{
+			if (m_pValue != NULL)
+				::CoTaskMemFree(m_pValue);
+			m_pValue = pValue;
+		}
+
+	private:
+		T *m_pValue = NULL;
+	};
+
+	/**
+	 * @brief Owns a PROPVARIANT and clears it on every exit path.
+	 */
+	class CScopedPropVariant
+	{
+	public:
+		CScopedPropVariant()
+		{
+			::PropVariantInit(&m_value);
+		}
+
+		~CScopedPropVariant()
+		{
+			::PropVariantClear(&m_value);
+		}
+
+		CScopedPropVariant(const CScopedPropVariant&) = delete;
+		CScopedPropVariant& operator=(const CScopedPropVariant&) = delete;
+
+		PROPVARIANT &Get()
+		{
+			return m_value;
+		}
+
+		const PROPVARIANT &Get() const
+		{
+			return m_value;
+		}
+
+		PROPVARIANT *GetAddressOf()
+		{
+			return &m_value;
+		}
+
+		void Clear()
+		{
+			::PropVariantClear(&m_value);
+			::PropVariantInit(&m_value);
+		}
+
+	private:
+		PROPVARIANT m_value;
 	};
 }
