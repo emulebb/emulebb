@@ -485,8 +485,7 @@ void CUploadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 				strInfo += GetResString(IDS_REQ_UNKNOWNFILE);
 
 			strInfo += TOOLTIP_AUTOFORMAT_SUFFIX_CH;
-			_tcsncpy(pGetInfoTip->pszText, strInfo, pGetInfoTip->cchTextMax);
-			pGetInfoTip->pszText[pGetInfoTip->cchTextMax - 1] = _T('\0');
+			_tcsncpy_s(pGetInfoTip->pszText, pGetInfoTip->cchTextMax, strInfo, _TRUNCATE);
 		}
 	}
 	*pResult = 0;

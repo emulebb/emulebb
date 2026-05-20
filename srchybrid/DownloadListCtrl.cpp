@@ -3393,8 +3393,7 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 				m_tooltip.SetPreviewBitmap(NULL, 0);
 
 			info += TOOLTIP_AUTOFORMAT_SUFFIX_CH;
-			_tcsncpy(pGetInfoTip->pszText, info, pGetInfoTip->cchTextMax);
-			pGetInfoTip->pszText[pGetInfoTip->cchTextMax - 1] = _T('\0');
+			_tcsncpy_s(pGetInfoTip->pszText, pGetInfoTip->cchTextMax, info, _TRUNCATE);
 		}
 	}
 	*pResult = 0;

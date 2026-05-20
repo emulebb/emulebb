@@ -196,7 +196,7 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 						if (pServer) {
 							CString strVer(message.Mid(14));
 							UINT nVerMaj, nVerMin;
-							if (_stscanf(strVer.Trim(), _T("%u.%u"), &nVerMaj, &nVerMin) == 2)
+							if (_stscanf_s(strVer.Trim(), _T("%u.%u"), &nVerMaj, &nVerMin) == 2)
 								strVer.Format(_T("%u.%02u"), nVerMaj, nVerMin);
 							pServer->SetVersion(strVer);
 							theApp.emuledlg->serverwnd->serverlistctrl.RefreshServer(pServer);

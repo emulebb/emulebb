@@ -39,6 +39,21 @@ static char THIS_FILE[] = __FILE__;
 
 namespace Kademlia
 {
+#ifdef DEBUG
+	static void RaiseThreadNameException(DWORD dwThreadID, LPCSTR pszThreadName)
+	{
+		THREADNAME_INFO info;
+		info.dwType = 0x1000;
+		info.szName = pszThreadName;
+		info.dwThreadID = dwThreadID;
+		info.dwFlags = 0;
+		__try {
+			RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
+		} __except (EXCEPTION_CONTINUE_EXECUTION) {
+		}
+	}
+#endif
+
 	void SetThreadName(DWORD dwThreadID, LPCSTR szThreadName, ...)
 	{
 #ifdef DEBUG
@@ -49,26 +64,17 @@ namespace Kademlia
 		__try {
 			va_list args;
 			va_start(args, szThreadName);
-			int iLenBuf = 0;
-			char *pcharBuffer = NULL;
-			int iLenResult;
-			do {
-				iLenBuf += 128;
-				delete[] pcharBuffer;
-				pcharBuffer = new char[iLenBuf];
-				iLenResult = _vsnprintf(pcharBuffer, iLenBuf, szThreadName, args);
-			} while (iLenResult == -1);
+			const int iLenResult = _vscprintf(szThreadName, args);
 			va_end(args);
-			THREADNAME_INFO info;
-			info.dwType = 0x1000;
-			info.szName = pcharBuffer;
-			info.dwThreadID = dwThreadID;
-			info.dwFlags = 0;
-			__try {
-				RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
-			} __except (EXCEPTION_CONTINUE_EXECUTION) {
+			if (iLenResult >= 0) {
+				const size_t nBufferLen = static_cast<size_t>(iLenResult) + 1;
+				char *pcharBuffer = new char[nBufferLen];
+				va_start(args, szThreadName);
+				_vsnprintf_s(pcharBuffer, nBufferLen, _TRUNCATE, szThreadName, args);
+				va_end(args);
+				RaiseThreadNameException(dwThreadID, pcharBuffer);
+				delete[] pcharBuffer;
 			}
-			delete[] pcharBuffer;
 		} __except (EXCEPTION_CONTINUE_EXECUTION) {
 		}
 #pragma warning(pop)
@@ -87,26 +93,17 @@ namespace Kademlia
 		__try {
 			va_list args;
 			va_start(args, szThreadName);
-			int iLenBuf = 0;
-			char *pcharBuffer = NULL;
-			int iLenResult;
-			do {
-				iLenBuf += 128;
-				delete[] pcharBuffer;
-				pcharBuffer = new char[iLenBuf];
-				iLenResult = _vsnprintf(pcharBuffer, iLenBuf, szThreadName, args);
-			} while (iLenResult == -1);
+			const int iLenResult = _vscprintf(szThreadName, args);
 			va_end(args);
-			THREADNAME_INFO info;
-			info.dwType = 0x1000;
-			info.szName = pcharBuffer;
-			info.dwThreadID = _UI32_MAX;
-			info.dwFlags = 0;
-			__try {
-				RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
-			} __except (EXCEPTION_CONTINUE_EXECUTION) {
+			if (iLenResult >= 0) {
+				const size_t nBufferLen = static_cast<size_t>(iLenResult) + 1;
+				char *pcharBuffer = new char[nBufferLen];
+				va_start(args, szThreadName);
+				_vsnprintf_s(pcharBuffer, nBufferLen, _TRUNCATE, szThreadName, args);
+				va_end(args);
+				RaiseThreadNameException(_UI32_MAX, pcharBuffer);
+				delete[] pcharBuffer;
 			}
-			delete[] pcharBuffer;
 		} __except (EXCEPTION_CONTINUE_EXECUTION) {
 		}
 #pragma warning(pop)

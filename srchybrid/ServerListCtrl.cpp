@@ -920,8 +920,7 @@ void CServerListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 				, (LPCTSTR)GetResString(IDS_IDLOW), (LPCTSTR)CastItoIShort(ulTotalLowIdUsers)
 				, (LPCTSTR)GetResString(IDS_PW_FILES), (LPCTSTR)CastItoIShort(ulTotalFiles)
 			);
-			_tcsncpy(pGetInfoTip->pszText, strInfo, pGetInfoTip->cchTextMax);
-			pGetInfoTip->pszText[pGetInfoTip->cchTextMax - 1] = _T('\0');
+			_tcsncpy_s(pGetInfoTip->pszText, pGetInfoTip->cchTextMax, strInfo, _TRUNCATE);
 		}
 	}
 	*pResult = 0;

@@ -48,8 +48,7 @@ BOOL CIOException::GetErrorMessage(LPTSTR lpszError, UINT uMaxError, PUINT pnHel
 {
 	static LPCTSTR const sMsg = _T("ONLY AVAILABLE WITH EMULE INTEGRATION");
 	//	CString msg = GetResString(IOEXCEPTION_ERR_BASE + m_cause);
-	_tcsncpy(lpszError, sMsg, uMaxError);
-	lpszError[uMaxError - 1] = _T('\0');
+	_tcsncpy_s(lpszError, uMaxError, sMsg, _TRUNCATE);
 
 	if (pnHelpContext != NULL)
 		*pnHelpContext = 0;

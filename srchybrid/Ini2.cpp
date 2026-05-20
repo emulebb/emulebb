@@ -120,7 +120,7 @@ ULONGLONG CIni::GetUInt64(LPCTSTR lpszEntry, ULONGLONG nDefault, LPCTSTR lpszSec
 	CString strDefault;
 	strDefault.Format(_T("%I64u"), nDefault);
 	ULONGLONG nResult;
-	if (_stscanf(GetString(lpszEntry, strDefault, lpszSection), _T("%I64u"), &nResult) != 1)
+	if (_stscanf_s(GetString(lpszEntry, strDefault, lpszSection), _T("%I64u"), &nResult) != 1)
 		return nDefault;
 	return nResult;
 }
@@ -150,7 +150,7 @@ CPoint CIni::GetPoint(LPCTSTR lpszEntry, const CPoint &ptDefault, LPCTSTR lpszSe
 	strDefault.Format(pszFmt, ptDefault.x, ptDefault.y);
 
 	const CString &strPoint = GetString(lpszEntry, strDefault, lpszSection);
-	if (_stscanf(strPoint, pszFmt, &ptReturn.x, &ptReturn.y) != 2)
+	if (_stscanf_s(strPoint, pszFmt, &ptReturn.x, &ptReturn.y) != 2)
 		return ptDefault;
 
 	return ptReturn;
@@ -166,8 +166,8 @@ CRect CIni::GetRect(LPCTSTR lpszEntry, const CRect &rcDefault, LPCTSTR lpszSecti
 	//read settings
 	const CString &strRect = GetString(lpszEntry, strDefault, lpszSection);
 	//try as the new Version first, then check the old version
-	if (_stscanf(strRect, pszFmt, &rcReturn.top, &rcReturn.left, &rcReturn.bottom, &rcReturn.right) != 4
-		&&_stscanf(strRect, _T("(%ld,%ld,%ld,%ld)"), &rcReturn.top, &rcReturn.left, &rcReturn.bottom, &rcReturn.right) != 4)
+	if (_stscanf_s(strRect, pszFmt, &rcReturn.top, &rcReturn.left, &rcReturn.bottom, &rcReturn.right) != 4
+		&&_stscanf_s(strRect, _T("(%ld,%ld,%ld,%ld)"), &rcReturn.top, &rcReturn.left, &rcReturn.bottom, &rcReturn.right) != 4)
 	{
 		return rcDefault; //both versions failed, fall back to defaults
 	}
@@ -185,7 +185,7 @@ COLORREF CIni::GetColRef(LPCTSTR lpszEntry, COLORREF crDefault, LPCTSTR lpszSect
 	strDefault.Format(_T("RGB(%d,%d,%d)"), r, g, b);
 
 	const CString &strColRef(GetString(lpszEntry, strDefault, lpszSection));
-	return (_stscanf(strColRef, _T("RGB(%d,%d,%d)"), &r, &g, &b) == 3) ? RGB(r, g, b) : crDefault;
+	return (_stscanf_s(strColRef, _T("RGB(%d,%d,%d)"), &r, &g, &b) == 3) ? RGB(r, g, b) : crDefault;
 }
 
 void CIni::WriteString(LPCTSTR lpszEntry, LPCTSTR lpsz, LPCTSTR lpszSection)

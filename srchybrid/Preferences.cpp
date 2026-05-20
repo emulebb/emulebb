@@ -1702,7 +1702,7 @@ bool CPreferences::IsTempFile(const CString &rstrDirectory, const CString &rstrN
 		UINT uNum;
 		TCHAR iChar;
 		// "misuse" the 'scanf' function for a very simple pattern scanning.
-		if (_stscanf(strNameLower, _apszNotSharedExts[i], &uNum, &iChar) == 2 && iChar == _T('|')) {
+		if (_stscanf_s(strNameLower, _apszNotSharedExts[i], &uNum, &iChar, 1) == 2 && iChar == _T('|')) {
 			bLooksLikeTempFile = true;
 			break;
 		}
@@ -2403,12 +2403,11 @@ CString CPreferences::GetStatsLastResetStr(bool formatLong)
 	// true: DateTime format from the .ini
 	// false: DateTime format from the .ini for the log
 	if (GetStatsLastResetLng()) {
-		tm *statsReset;
+		tm statsReset = {};
 		TCHAR szDateReset[128];
 		time_t lastResetDateTime = GetStatsLastResetLng();
-		statsReset = localtime(&lastResetDateTime);
-		if (statsReset) {
-			_tcsftime(szDateReset, _countof(szDateReset), formatLong ? (LPCTSTR)GetDateTimeFormat() : _T("%c"), statsReset);
+		if (localtime_s(&statsReset, &lastResetDateTime) == 0) {
+			_tcsftime(szDateReset, _countof(szDateReset), formatLong ? (LPCTSTR)GetDateTimeFormat() : _T("%c"), &statsReset);
 			if (*szDateReset)
 				return CString(szDateReset);
 		}
@@ -3494,7 +3493,7 @@ void CPreferences::LoadPreferences()
 	for (unsigned i = 0; i < _countof(m_adwStatsColors); ++i) {
 		buffer.Format(_T("StatColor%u"), i);
 		m_adwStatsColors[i] = 0;
-		if (_stscanf(ini.GetString(buffer, _T(""), prefini::Sections::Statistics), _T("%li"), (long*)&m_adwStatsColors[i]) != 1)
+		if (_stscanf_s(ini.GetString(buffer, _T(""), prefini::Sections::Statistics), _T("%li"), (long*)&m_adwStatsColors[i]) != 1)
 			ResetStatsColor(i);
 	}
 	m_bHasCustomTaskIconColor = ini.GetBool(_T("HasCustomTaskIconColor"), false, prefini::Sections::Statistics);

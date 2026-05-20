@@ -258,32 +258,27 @@ void CIPFilterDlg::OnLvnGetDispInfoIPFilter(LPNMHDR pNMHDR, LRESULT *pResult)
 		switch (rItem.iSubItem) {
 		case IPFILTER_COL_START:
 			if (rItem.cchTextMax > 0) {
-				_tcsncpy(rItem.pszText, (LPCTSTR)ipstr(htonl(m_ppIPFilterItems[rItem.iItem]->start)), rItem.cchTextMax);
-				rItem.pszText[rItem.cchTextMax - 1] = _T('\0');
+				_tcsncpy_s(rItem.pszText, rItem.cchTextMax, (LPCTSTR)ipstr(htonl(m_ppIPFilterItems[rItem.iItem]->start)), _TRUNCATE);
 			}
 			break;
 		case IPFILTER_COL_END:
 			if (rItem.cchTextMax > 0) {
-				_tcsncpy(rItem.pszText, (LPCTSTR)ipstr(htonl(m_ppIPFilterItems[rItem.iItem]->end)), rItem.cchTextMax);
-				rItem.pszText[rItem.cchTextMax - 1] = _T('\0');
+				_tcsncpy_s(rItem.pszText, rItem.cchTextMax, (LPCTSTR)ipstr(htonl(m_ppIPFilterItems[rItem.iItem]->end)), _TRUNCATE);
 			}
 			break;
 		case IPFILTER_COL_LEVEL:
 			if (rItem.cchTextMax > 0) {
-				_tcsncpy(rItem.pszText, _itot(m_ppIPFilterItems[rItem.iItem]->level, rItem.pszText, 10), rItem.cchTextMax);
-				rItem.pszText[rItem.cchTextMax - 1] = _T('\0');
+				_itot_s(m_ppIPFilterItems[rItem.iItem]->level, rItem.pszText, rItem.cchTextMax, 10);
 			}
 			break;
 		case IPFILTER_COL_HITS:
 			if (rItem.cchTextMax > 0) {
-				_tcsncpy(rItem.pszText, _itot(m_ppIPFilterItems[rItem.iItem]->hits, rItem.pszText, 10), rItem.cchTextMax);
-				rItem.pszText[rItem.cchTextMax - 1] = _T('\0');
+				_itot_s(m_ppIPFilterItems[rItem.iItem]->hits, rItem.pszText, rItem.cchTextMax, 10);
 			}
 			break;
 		case IPFILTER_COL_DESC:
 			if (rItem.cchTextMax > 0) {
-				_tcsncpy(rItem.pszText, (CString)m_ppIPFilterItems[rItem.iItem]->desc, rItem.cchTextMax);
-				rItem.pszText[rItem.cchTextMax - 1] = _T('\0');
+				_tcsncpy_s(rItem.pszText, rItem.cchTextMax, (CString)m_ppIPFilterItems[rItem.iItem]->desc, _TRUNCATE);
 			}
 		}
 

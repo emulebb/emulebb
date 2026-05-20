@@ -478,8 +478,7 @@ void CMuleToolbarCtrl::OnTbnGetButtonInfo(LPNMHDR pNMHDR, LRESULT *pResult)
 	if (*pResult) {
 		CString strText(TBStrings[pNMTB->iItem]);
 		strText.Remove(_T('&'));
-		_tcsncpy(pNMTB->pszText, strText, pNMTB->cchText - 1);
-		pNMTB->pszText[pNMTB->cchText - 1] = _T('\0');
+		_tcsncpy_s(pNMTB->pszText, pNMTB->cchText, strText, _TRUNCATE);
 		pNMTB->tbButton = TBButtons[pNMTB->iItem];
 		if (m_eLabelType == LabelsRight)
 			pNMTB->tbButton.fsStyle |= TBSTYLE_AUTOSIZE;

@@ -1289,8 +1289,7 @@ void CSearchListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 #endif
 				strInfo.Insert(0, strHead);
 				strInfo += TOOLTIP_AUTOFORMAT_SUFFIX_CH;
-				_tcsncpy(pGetInfoTip->pszText, strInfo, pGetInfoTip->cchTextMax);
-				pGetInfoTip->pszText[pGetInfoTip->cchTextMax - 1] = _T('\0');
+				_tcsncpy_s(pGetInfoTip->pszText, pGetInfoTip->cchTextMax, strInfo, _TRUNCATE);
 			}
 		} else {
 			int iSelected = 0;
@@ -1311,8 +1310,7 @@ void CSearchListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 					, (LPCTSTR)FormatFileSize(ulTotalSize)
 					, TOOLTIP_AUTOFORMAT_SUFFIX_CH
 				);
-				_tcsncpy(pGetInfoTip->pszText, strInfo, pGetInfoTip->cchTextMax);
-				pGetInfoTip->pszText[pGetInfoTip->cchTextMax - 1] = _T('\0');
+				_tcsncpy_s(pGetInfoTip->pszText, pGetInfoTip->cchTextMax, strInfo, _TRUNCATE);
 			}
 		}
 	}

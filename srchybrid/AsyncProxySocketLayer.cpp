@@ -433,10 +433,10 @@ void CAsyncProxySocketLayer::OnReceive(int nErrorCode)
 					buffer[0] = 1;
 					buffer[1] = static_cast<unsigned char>(nLenUser);
 					if (nLenUser)
-						strncpy((char*)buffer + 2, sAsciiUser, nLenUser);
+						memcpy(buffer + 2, sAsciiUser.GetString(), nLenUser);
 					buffer[2 + nLenUser] = static_cast<unsigned char>(nLenPass);
 					if (nLenPass)
-						strncpy((char*)buffer + 3 + nLenUser, sAsciiPass, nLenPass);
+						memcpy(buffer + 3 + nLenUser, sAsciiPass.GetString(), nLenPass);
 					int nBufLen = 3 + nLenUser + nLenPass;
 					int res = SendNext(buffer, nBufLen);
 					delete[] buffer;
@@ -468,7 +468,7 @@ void CAsyncProxySocketLayer::OnReceive(int nErrorCode)
 				nBufLen += 4;
 			} else {
 				command[nBufLen] = static_cast<char>(nlen);
-				strncpy(&command[++nBufLen], sAsciiHost, nlen);
+				memcpy(&command[++nBufLen], sAsciiHost.GetString(), nlen);
 				nBufLen += (int)nlen;
 			}
 			*(USHORT*)&command[nBufLen] = m_nProxyPeerPort;
@@ -527,7 +527,7 @@ void CAsyncProxySocketLayer::OnReceive(int nErrorCode)
 					nBufLen = 8;
 				} else {
 					command[4] = static_cast<char>(nlen);
-					strncpy(&command[5], sAsciiHost, nlen);
+					memcpy(&command[5], sAsciiHost.GetString(), nlen);
 					nBufLen = 5 + (int)nlen;
 				}
 				*(USHORT*)&command[nBufLen] = m_nProxyPeerPort;

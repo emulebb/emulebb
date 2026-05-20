@@ -376,9 +376,9 @@ INT_PTR CPreviewApps::ReadAllApps()
 					if (strId == _T("ext"))
 						astrExtensions.Add((strValue[0] == _T('.')) ? strValue : _T('.') + strValue);
 					else if (strId == _T("minsize"))
-						(void)_stscanf(strValue, _T("%I64u"), &ullMinCompletedSize);
+						(void)_stscanf_s(strValue, _T("%I64u"), &ullMinCompletedSize);
 					else if (strId == _T("minstart"))
-						(void)_stscanf(strValue, _T("%I64u"), &ullMinStartOfFile);
+						(void)_stscanf_s(strValue, _T("%I64u"), &ullMinStartOfFile);
 				}
 
 				SPreviewApp svc;

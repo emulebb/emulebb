@@ -253,7 +253,7 @@ void CDirectoryTreeCtrl::Init()
 		for (LPCTSTR pos = drivebuffer; *pos != _T('\0');) {
 			// Copy drive name
 			TCHAR drive[4];
-			_tcsncpy(drive, pos, _countof(drive));
+			_tcsncpy_s(drive, _countof(drive), pos, 2);
 			drive[2] = _T('\0');
 			AddChildItem(NULL, drive); // e.g. "C:"
 

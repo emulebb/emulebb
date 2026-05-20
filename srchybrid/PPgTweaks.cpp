@@ -2135,8 +2135,7 @@ void CPPgTweaks::OnTvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult)
 	if (pGetInfoTip != NULL && pGetInfoTip->pszText != NULL && pGetInfoTip->cchTextMax > 0) {
 		const std::map<HTREEITEM, CString>::const_iterator it = m_treeToolTips.find(pGetInfoTip->hItem);
 		if (it != m_treeToolTips.end()) {
-			_tcsncpy(pGetInfoTip->pszText, it->second, pGetInfoTip->cchTextMax);
-			pGetInfoTip->pszText[pGetInfoTip->cchTextMax - 1] = _T('\0');
+			_tcsncpy_s(pGetInfoTip->pszText, pGetInfoTip->cchTextMax, it->second, _TRUNCATE);
 		}
 	}
 	*pResult = 0;

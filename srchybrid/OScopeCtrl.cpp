@@ -876,7 +876,11 @@ void COScopeCtrl::OnMouseMove(UINT nFlags, CPoint point)
 		DWORD dwTime = (DWORD)(mypos * apixel);
 		time_t tNow = time(NULL) - dwTime;
 		TCHAR szDate[128];
-		_tcsftime(szDate, _countof(szDate), thePrefs.GetDateTimeFormat4Log(), localtime(&tNow));
+		tm tmNow = {};
+		if (localtime_s(&tmNow, &tNow) == 0)
+			_tcsftime(szDate, _countof(szDate), thePrefs.GetDateTimeFormat4Log(), &tmNow);
+		else
+			szDate[0] = _T('\0');
 		CString strInfo(m_str.YUnits);
 		strInfo.AppendFormat(_T(": %u @ %s ") + GetResString(IDS_TIMEBEFORE), yValue, szDate, (LPCTSTR)CastSecondsToLngHM(dwTime));
 

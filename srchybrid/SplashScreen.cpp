@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "SplashScreen.h"
 #include "OtherFunctions.h"
+#include "FontSafetySeams.h"
 #include "Version.h"
 
 // FROZEN SURFACE (2026-05-17): the startup splash screen receives no support,
@@ -107,7 +108,7 @@ void CSplashScreen::OnPaint()
 #endif
 			lf.lfWeight = FW_BOLD;
 			lf.lfQuality = ANTIALIASED_QUALITY;
-			_tcscpy(lf.lfFaceName, _T("Arial"));
+			CopyLogFontFaceName(lf.lfFaceName, _T("Arial"));
 			CFont font;
 			font.CreateFontIndirect(&lf);
 			CFont *pOldFont = dc.SelectObject(&font);
@@ -122,7 +123,7 @@ void CSplashScreen::OnPaint()
 			lf.lfHeight = 14;
 			lf.lfWeight = FW_NORMAL;
 			lf.lfQuality = ANTIALIASED_QUALITY;
-			_tcscpy(lf.lfFaceName, _T("Arial"));
+			CopyLogFontFaceName(lf.lfFaceName, _T("Arial"));
 			font.CreateFontIndirect(&lf);
 			pOldFont = dc.SelectObject(&font);
 			dc.DrawText(_T("Copyright (C) 2002-2026 Merkur"), -1, &rc, DT_CENTER | DT_NOPREFIX);

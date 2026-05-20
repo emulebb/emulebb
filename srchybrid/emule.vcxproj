@@ -323,7 +323,6 @@
     <ClCompile Include="RichEditStream.cpp" />
     <ClCompile Include="SafeFile.cpp" />
     <ClCompile Include="Scanner.cpp">
-      <PreprocessorDefinitions>_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader />
     </ClCompile>
     <ClCompile Include="Scheduler.cpp" />

@@ -592,7 +592,7 @@ void CPartFile::CreatePartFile(UINT cat)
 		}
 	} else {
 		m_tCreated = m_tLastModified = time(NULL);
-		AddDebugLogLine(false, _T("Failed to get file date for \"%s\" - %s"), (LPCTSTR)partfull, _tcserror(errno));
+		AddDebugLogLine(false, _T("Failed to get file date for \"%s\" - %s"), (LPCTSTR)partfull, (LPCTSTR)GetCrtErrorString(errno));
 	}
 
 	m_dwFileAttributes = LongPathSeams::GetFileAttributes(partfull);
@@ -1096,7 +1096,7 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 							const CString &strPart(strCorruptedParts.Tokenize(_T(","), iPos));
 							uint16 uPart;
 							if (!strPart.IsEmpty()
-								&& _stscanf(strPart, _T("%hu"), &uPart) == 1
+								&& _stscanf_s(strPart, _T("%hu"), &uPart) == 1
 								&& uPart < GetPartCount()
 								&& !IsCorruptedPart(uPart))
 							{
@@ -1241,7 +1241,7 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 		m_tCreated = (time_t)st.st_ctime;
 		m_tLastModified = (time_t)st.st_mtime;
 	} else
-		AddDebugLogLine(false, _T("Failed to get file date for \"%s\" - %s"), (LPCTSTR)searchpath, _tcserror(errno));
+		AddDebugLogLine(false, _T("Failed to get file date for \"%s\" - %s"), (LPCTSTR)searchpath, (LPCTSTR)GetCrtErrorString(errno));
 
 	try {
 		SetFilePath(searchpath);
@@ -1551,7 +1551,7 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak, bool bBypassDiskSpaceGuard)
 		UINT i_pos = 0;
 		for (POSITION pos = m_gaplist.GetHeadPosition(); pos != NULL;) {
 			const Gap_Struct &gap = m_gaplist.GetNext(pos);
-			_itoa(i_pos, number, 10);
+			_itoa_s(i_pos, number, _countof(namebuffer) - 1, 10);
 			namebuffer[0] = FT_GAPSTART;
 			CTag gapstarttag(namebuffer, gap.start, IsLargeFile());
 			gapstarttag.WriteTagToFile(file);
@@ -1594,7 +1594,7 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak, bool bBypassDiskSpaceGuard)
 				nEnd = item->end;
 			}
 
-			_itoa(i_pos, number, 10);
+			_itoa_s(i_pos, number, _countof(namebuffer) - 1, 10);
 			namebuffer[0] = FT_GAPSTART;
 			CTag gapstarttag(namebuffer, nStart, IsLargeFile());
 			gapstarttag.WriteTagToFile(file);

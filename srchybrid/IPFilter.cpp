@@ -199,7 +199,7 @@ INT_PTR CIPFilter::AddFromFile(LPCTSTR pszFilePath, bool bShowResponse)
 				}
 			}
 		} catch (...) {
-			AddDebugLogLine(false, _T("Exception when loading IP filters - %s"), _tcserror(errno));
+			AddDebugLogLine(false, _T("Exception when loading IP filters - %s"), (LPCTSTR)GetCrtErrorString(errno));
 			fclose(readFile);
 			throw;
 		}
@@ -265,7 +265,7 @@ void CIPFilter::SaveToDefaultFile()
 
 			if (fprintf(fp, "%-15s - %-15s , %3u , %s\n", szStart, szEnd, flt->level, (LPCSTR)flt->desc) == 0 || ferror(fp)) {
 				CString strError;
-				strError.Format(_T("Failed to save IP filter to file \"%s\" - %s"), (LPCTSTR)strFilePath, _tcserror(errno));
+				strError.Format(_T("Failed to save IP filter to file \"%s\" - %s"), (LPCTSTR)strFilePath, (LPCTSTR)GetCrtErrorString(errno));
 				fclose(fp);
 				throw strError;
 			}
@@ -274,7 +274,7 @@ void CIPFilter::SaveToDefaultFile()
 		m_bModified = false;
 	} else {
 		CString strError;
-		strError.Format(_T("Failed to save IP filter to file \"%s\" - %s"), (LPCTSTR)strFilePath, _tcserror(errno));
+		strError.Format(_T("Failed to save IP filter to file \"%s\" - %s"), (LPCTSTR)strFilePath, (LPCTSTR)GetCrtErrorString(errno));
 		throw strError;
 	}
 }

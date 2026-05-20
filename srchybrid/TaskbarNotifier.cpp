@@ -147,8 +147,7 @@ bool CTaskbarNotifier::LoadConfiguration(LPCTSTR pszFilePath)
 	TCHAR szConfigDir[MAX_PATH];
 	m_strConfigFilePath = pszFilePath;
 	CIni ini(pszFilePath, _T("Config"));
-	_tcsncpy(szConfigDir, pszFilePath, _countof(szConfigDir));
-	szConfigDir[_countof(szConfigDir) - 1] = _T('\0');
+	_tcsncpy_s(szConfigDir, _countof(szConfigDir), pszFilePath, _TRUNCATE);
 	LPTSTR pszFileName = _tcsrchr(szConfigDir, _T('\\'));
 	if (pszFileName == NULL)
 		return false;

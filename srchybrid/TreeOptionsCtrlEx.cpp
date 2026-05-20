@@ -394,7 +394,7 @@ void EditTextFloatFormat(CDataExchange *pDX, int nIDC, HTREEITEM hItem, void *pD
 	if (pDX->m_bSaveAndValidate) {
 		CString sText(pCtrlTreeOptions->GetEditText(hItem));
 		double d;
-		if (_stscanf(sText, _T("%lf"), &d) != 1) {
+		if (_stscanf_s(sText, _T("%lf"), &d) != 1) {
 			AfxMessageBox(AFX_IDP_PARSE_REAL);
 			pDX->Fail();	// throws exception
 		}
@@ -404,8 +404,7 @@ void EditTextFloatFormat(CDataExchange *pDX, int nIDC, HTREEITEM hItem, void *pD
 			*((double*)pData) = d;
 	} else {
 		TCHAR szBuffer[400];
-		_sntprintf(szBuffer, _countof(szBuffer), _T("%.*g"), nSizeGcvt, value);
-		szBuffer[_countof(szBuffer) - 1] = _T('\0');
+		_sntprintf_s(szBuffer, _countof(szBuffer), _TRUNCATE, _T("%.*g"), nSizeGcvt, value);
 		pCtrlTreeOptions->SetEditText(hItem, szBuffer);
 	}
 }
@@ -428,14 +427,13 @@ void EditTextWithFormat(CDataExchange *pDX, int nIDC, HTREEITEM hItem, LPCTSTR l
 		void *pResult = va_arg(pData, void*);
 		// the following works for %d, %u, %ld, %lu
 		CString sText(pCtrlTreeOptions->GetEditText(hItem));
-		if (_stscanf(sText, lpszFormat, pResult) != 1) {
+		if (_stscanf_s(sText, lpszFormat, pResult) != 1) {
 			AfxMessageBox(nIDPrompt);
 			pDX->Fail();	// throws exception
 		}
 	} else {
 		TCHAR szT[64];
-		_vsntprintf(szT, _countof(szT), lpszFormat, pData);
-		szT[_countof(szT) - 1] = _T('\0');
+		_vsntprintf_s(szT, _countof(szT), _TRUNCATE, lpszFormat, pData);
 		// does not support floating point numbers - see dlgfloat.cpp
 		pCtrlTreeOptions->SetEditText(hItem, szT);
 	}

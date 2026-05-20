@@ -691,7 +691,7 @@ bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo
 			mi->fAudioLengthSec = fFileLengthSec;
 
 			str = InfoGet(Handle, MediaInfo_Stream_Audio, 0, pCodec);
-			if (_stscanf(str, _T("%hx"), &mi->audio.wFormatTag) != 1) {
+			if (_stscanf_s(str, _T("%hx"), &mi->audio.wFormatTag) != 1) {
 				mi->strAudioFormat = str;
 				str = InfoGet(Handle, MediaInfo_Stream_Audio, 0, pCodecString);
 			} else {
@@ -736,7 +736,7 @@ bool GetMediaInfoDllInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo
 					CString strAudioFormat(InfoGet(Handle, MediaInfo_Stream_Audio, iStream, pCodec));
 					str = InfoGet(Handle, MediaInfo_Stream_Audio, iStream, pCodecString);
 					WORD wFormatTag = 0;
-					if (_stscanf(str, _T("%hx"), &wFormatTag) == 1) {
+					if (_stscanf_s(str, _T("%hx"), &wFormatTag) == 1) {
 						strAudioFormat = str;
 						str = InfoGet(Handle, MediaInfo_Stream_Audio, iStream, pCodecInfo);
 					}

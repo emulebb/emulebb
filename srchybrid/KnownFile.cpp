@@ -425,7 +425,7 @@ bool CKnownFile::CreateFromFile(LPCTSTR in_directory, LPCTSTR in_filename, const
 	__int64 llFileSize = _filelengthi64(_fileno(file));
 	if (!FileSizeSeams::IsSupportedNetworkFileSize(llFileSize)) {
 		if (llFileSize <= 0)
-			LogError(_T("Failed to hash file \"%s\" - %s"), (LPCTSTR)strFilePath, _tcserror(errno));
+			LogError(_T("Failed to hash file \"%s\" - %s"), (LPCTSTR)strFilePath, (LPCTSTR)GetCrtErrorString(errno));
 		else
 			LogError(_T("Skipped hashing file \"%s\" - File size exceeds limit."), (LPCTSTR)strFilePath);
 		fclose(file);
@@ -460,7 +460,7 @@ bool CKnownFile::CreateFromFile(LPCTSTR in_directory, LPCTSTR in_filename, const
 				delete[] newhash;
 				return false;
 			}
-			LogError(_T("Failed to hash file \"%s\" - %s"), (LPCTSTR)strFilePath, _tcserror(errno));
+			LogError(_T("Failed to hash file \"%s\" - %s"), (LPCTSTR)strFilePath, (LPCTSTR)GetCrtErrorString(errno));
 			fclose(file);
 			delete[] newhash;
 			return false;
@@ -565,7 +565,7 @@ bool CKnownFile::CreateAICHHashSetOnly()
 				fclose(file);
 				return false;
 			}
-			LogError(_T("Failed to hash file \"%s\" - %s"), (LPCTSTR)GetFilePath(), _tcserror(errno));
+			LogError(_T("Failed to hash file \"%s\" - %s"), (LPCTSTR)GetFilePath(), (LPCTSTR)GetCrtErrorString(errno));
 			fclose(file);
 			return false;
 		}

@@ -577,7 +577,7 @@ wchar_t* ID3_GetStringW(const ID3_Frame *frame, ID3_FieldID fldName)
 	CStringW wstr(text);
 	delete[] text;
 	wchar_t *pwsz = new wchar_t[wstr.GetLength() + 1];
-	wcscpy(pwsz, wstr);
+	wcscpy_s(pwsz, wstr.GetLength() + 1, wstr);
 	return pwsz;
 }
 

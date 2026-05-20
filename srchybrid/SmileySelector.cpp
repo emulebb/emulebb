@@ -251,8 +251,7 @@ void CSmileySelector::OnTbnSmileyGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 	if (pNMTBGIT->cchTextMax) {
 		int iButtons = m_tb.GetButtonCount();
 		if (pNMTBGIT->iItem >= SMSEL_CMD_START && pNMTBGIT->iItem < SMSEL_CMD_START + iButtons) {
-			_sntprintf(pNMTBGIT->pszText, pNMTBGIT->cchTextMax, _T(" %s "), g_aSmileys[pNMTBGIT->iItem - SMSEL_CMD_START].pszSmileys);
-			pNMTBGIT->pszText[pNMTBGIT->cchTextMax - 1] = _T('\0');
+			_sntprintf_s(pNMTBGIT->pszText, pNMTBGIT->cchTextMax, _TRUNCATE, _T(" %s "), g_aSmileys[pNMTBGIT->iItem - SMSEL_CMD_START].pszSmileys);
 		}
 	}
 	*pResult = 0;

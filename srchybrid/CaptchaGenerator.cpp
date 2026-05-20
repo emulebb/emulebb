@@ -157,7 +157,7 @@ void CCaptchaGenerator::ReGenerateCaptcha(uint32 nLetterCount)
 	LOGFONT m_LF = { 0 };
 	m_LF.lfHeight = nFontSize;
 	m_LF.lfWeight = FW_HEAVY;
-	_tcsncpy(m_LF.lfFaceName, _T("Arial"), LF_FACESIZE - 1);	// For UNICODE support
+	_tcscpy_s(m_LF.lfFaceName, _countof(m_LF.lfFaceName), _T("Arial"));	// For UNICODE support
 	CScopedDeleteGdiObject hFont(CreateFontIndirect(&m_LF));
 
 	CScopedDeleteDc hdc(::CreateCompatibleDC(NULL));

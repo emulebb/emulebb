@@ -34,6 +34,7 @@
 #include "WebServices.h"
 #include "WebServicesSeams.h"
 #include "emuledlg.h"
+#include "FontSafetySeams.h"
 #include "MenuCmds.h"
 #include "ZipFile.h"
 #include "RarFile.h"
@@ -706,8 +707,7 @@ CString URLDecode(const CString &inStr, bool bKeepNewLine)
 	for (int x = 0; x < inStr.GetLength(); ++x) {
 		if (inStr[x] == _T('%') && x + 2 < inStr.GetLength() && _istxdigit(inStr[x + 1]) && _istxdigit(inStr[x + 2])) {
 			TCHAR hexstr[3];
-			_tcsncpy(hexstr, inStr.Mid(x + 1, 2), 2);
-			hexstr[2] = _T('\0');
+			_tcsncpy_s(hexstr, _countof(hexstr), inStr.Mid(x + 1, 2), _TRUNCATE);
 			x += 2;
 
 			// Convert the hex to ASCII
@@ -1502,7 +1502,7 @@ bool strmd4(const char *pszHash, byte *hash)
 			return false;
 		str[2] = '\0';
 		unsigned b;
-		if (sscanf(str, "%x", &b) != 1)
+		if (sscanf_s(str, "%x", &b) != 1)
 			return false;
 		hash[i] = (byte)b;
 	}
@@ -1521,7 +1521,7 @@ bool strmd4(const CString &rstr, byte *hash)
 			return false;
 		str[2] = '\0';
 		unsigned b;
-		if (sscanf(str, "%x", &b) != 1)
+		if (sscanf_s(str, "%x", &b) != 1)
 			return false;
 		hash[i] = (byte)b;
 	}
@@ -2085,6 +2085,17 @@ int GetSystemErrorString(DWORD dwError, CString &rstrError)
 	return GetModuleErrorString(dwError, rstrError, NULL);
 }
 
+CString GetCrtErrorString(const int iErrno)
+{
+	TCHAR szError[256] = {};
+	if (_tcserror_s(szError, _countof(szError), iErrno) == 0)
+		return CString(szError);
+
+	CString strFallback;
+	strFallback.Format(_T("errno %d"), iErrno);
+	return strFallback;
+}
+
 int GetModuleErrorString(DWORD dwError, CString &rstrError, LPCTSTR pszModule)
 {
 	LPTSTR pszSysMsg = NULL;
@@ -2427,7 +2438,7 @@ CString GetFormatedUInt(ULONG ulVal)
 CString GetFormatedUInt64(ULONGLONG ullVal)
 {
 	TCHAR szVal[24];
-	_ui64tot(ullVal, szVal, 10);
+	_ui64tot_s(ullVal, szVal, _countof(szVal), 10);
 
 	static NUMBERFMT nf;
 	if (nf.Grouping == 0) {
@@ -2472,7 +2483,13 @@ void Debug(LPCTSTR pszFmtMsg, ...)
 	CString strBuff;
 #ifdef _DEBUG
 	time_t tNow = time(NULL);
-	int iTimeLen = (int)_tcsftime(strBuff.GetBuffer(40), 40, _T("%H:%M:%S "), localtime(&tNow));
+	tm tmNow = {};
+	int iTimeLen = 0;
+	LPTSTR pszTime = strBuff.GetBuffer(40);
+	if (localtime_s(&tmNow, &tNow) == 0)
+		iTimeLen = (int)_tcsftime(pszTime, 40, _T("%H:%M:%S "), &tmNow);
+	else
+		pszTime[0] = _T('\0');
 	strBuff.ReleaseBuffer(iTimeLen);
 #endif
 	strBuff.AppendFormatV(pszFmtMsg, pArgs);
@@ -3488,7 +3505,7 @@ bool CreatePointFont(CFont &rFont, int nPointSize, LPCTSTR lpszFaceName)
 	LOGFONT logFont = {};
 	logFont.lfCharSet = DEFAULT_CHARSET;
 	logFont.lfHeight = nPointSize;
-	_tcsncpy(logFont.lfFaceName, lpszFaceName, _countof(logFont.lfFaceName));
+	CopyLogFontFaceName(logFont.lfFaceName, lpszFaceName);
 	return CreatePointFontIndirect(rFont, &logFont);
 }
 

@@ -1100,7 +1100,7 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	// create the protocol version number
 	CString strTmp;
 	strTmp.Format(_T("0x%lu"), m_dwProductVersionMS);
-	VERIFY(_stscanf(strTmp, _T("0x%x"), &m_uCurVersionShort) == 1);
+	VERIFY(_stscanf_s(strTmp, _T("0x%x"), &m_uCurVersionShort) == 1);
 	ASSERT(m_uCurVersionShort < 0x99);
 // MOD Note: end
 
@@ -1391,7 +1391,7 @@ BOOL CemuleApp::InitInstance()
 		EnableRTLWindowsLayout();
 
 #ifdef _DEBUG
-	_sntprintf(s_szCrtDebugReportFilePath, _countof(s_szCrtDebugReportFilePath) - 1, _T("%s%s"), (LPCTSTR)thePrefs.GetMuleDirectory(EMULE_LOGDIR, false), APP_CRT_DEBUG_LOG_FILE);
+	_sntprintf_s(s_szCrtDebugReportFilePath, _countof(s_szCrtDebugReportFilePath), _TRUNCATE, _T("%s%s"), (LPCTSTR)thePrefs.GetMuleDirectory(EMULE_LOGDIR, false), APP_CRT_DEBUG_LOG_FILE);
 #endif
 	VERIFY(theLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, thePrefs.GetLog2Disk()) + _T("eMule.log")));
 	VERIFY(theVerboseLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false) + _T("eMule_Verbose.log")));
@@ -2044,7 +2044,11 @@ static int CrtDebugReportCB(int reportType, char *message, int *returnValue) noe
 	if (fp) {
 		time_t tNow = time(NULL);
 		TCHAR szTime[40];
-		_tcsftime(szTime, _countof(szTime), _T("%H:%M:%S"), localtime(&tNow));
+		tm tmNow = {};
+		if (localtime_s(&tmNow, &tNow) == 0)
+			_tcsftime(szTime, _countof(szTime), _T("%H:%M:%S"), &tmNow);
+		else
+			szTime[0] = _T('\0');
 		_ftprintf(fp, _T("%ls  %i  %hs"), szTime, reportType, message);
 		fclose(fp);
 	}
@@ -2203,7 +2207,7 @@ bool CemuleApp::CopyTextToClipboard(const CString &strText)
 	if (hGlobalT != NULL) {
 		LPTSTR pGlobalT = static_cast<LPTSTR>(::GlobalLock(hGlobalT));
 		if (pGlobalT != NULL) {
-			_tcscpy(pGlobalT, strText);
+			_tcscpy_s(pGlobalT, strText.GetLength() + 1, strText);
 			::GlobalUnlock(hGlobalT);
 		} else {
 			::GlobalFree(hGlobalT);
@@ -2336,7 +2340,7 @@ void CemuleApp::OnlineSig() // Added By Bouc7
 
 			file.Write("|", 1);
 			if (serverconnect->IsConnected()) {
-				_itoa(serverconnect->GetCurrentServer()->GetPort(), buffer, 10);
+				_itoa_s(serverconnect->GetCurrentServer()->GetPort(), buffer, _countof(buffer), 10);
 				file.Write(buffer, (UINT)strlen(buffer));
 			} else
 				file.Write("0", 1);
@@ -2352,7 +2356,7 @@ void CemuleApp::OnlineSig() // Added By Bouc7
 		file.Write(buffer, (UINT)strlen(buffer));
 		file.Write("|", 1);
 
-		_itoa((int)uploadqueue->GetWaitingUserCount(), buffer, 10);
+		_itoa_s((int)uploadqueue->GetWaitingUserCount(), buffer, _countof(buffer), 10);
 		file.Write(buffer, (UINT)strlen(buffer));
 
 		file.Close();
@@ -2537,7 +2541,7 @@ HICON CemuleApp::LoadIcon(LPCTSTR lpszResourceName, int cx, int cy, UINT uFlags)
 			int iIconIndex = 0;
 			int iComma = strFullResPath.ReverseFind(_T(','));
 			if (iComma >= 0) {
-				bExtractIcon |= (_stscanf(CPTR(strFullResPath, iComma + 1), _T("%d"), &iIconIndex) == 1);
+				bExtractIcon |= (_stscanf_s(CPTR(strFullResPath, iComma + 1), _T("%d"), &iIconIndex) == 1);
 				strFullResPath.Truncate(iComma);
 			}
 
@@ -2638,7 +2642,7 @@ bool CemuleApp::LoadSkinColor(LPCTSTR pszKey, COLORREF &crColor) const
 		const CString strColor(ShellUiHelpers::GetProfileString(_T("Colors"), pszKey, NULL, sSkinProfile));
 		if (!strColor.IsEmpty()) {
 			int red, grn, blu;
-			if (_stscanf(strColor, _T("%i , %i , %i"), &red, &grn, &blu) == 3) {
+			if (_stscanf_s(strColor, _T("%i , %i , %i"), &red, &grn, &blu) == 3) {
 				crColor = RGB(red, grn, blu);
 				return true;
 			}
@@ -3128,8 +3132,7 @@ BOOL WINAPI ConsoleCtrlHandler(DWORD dwCtrlType) noexcept
 			pszCtrlType = _T("CTRL_SHUTDOWN_EVENT");
 			break;
 		default:
-			_sntprintf(szCtrlType, _countof(szCtrlType), _T("0x%08lx"), dwCtrlType);
-			szCtrlType[_countof(szCtrlType) - 1] = _T('\0');
+			_sntprintf_s(szCtrlType, _countof(szCtrlType), _TRUNCATE, _T("0x%08lx"), dwCtrlType);
 			pszCtrlType = szCtrlType;
 		}
 		theVerboseLog.Logf(_T("%hs: CtrlType=%s"), __FUNCTION__, pszCtrlType);
@@ -3188,7 +3191,7 @@ void CemuleApp::UpdateLargeIconSize()
 		ULONG ulChars = _countof(szShellLargeIconSize);
 		if (key.QueryStringValue(_T("Shell Icon Size"), szShellLargeIconSize, &ulChars) == ERROR_SUCCESS) {
 			UINT uIconSize = 0;
-			if (_stscanf(szShellLargeIconSize, _T("%u"), &uIconSize) == 1 && uIconSize > 0) {
+			if (_stscanf_s(szShellLargeIconSize, _T("%u"), &uIconSize) == 1 && uIconSize > 0) {
 				m_sizBigSystemIcon.cx = uIconSize;
 				m_sizBigSystemIcon.cy = uIconSize;
 			}

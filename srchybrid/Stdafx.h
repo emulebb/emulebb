@@ -68,12 +68,6 @@
 #pragma warning(disable:5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 #pragma warning(disable:5220) // a non-static data member with a volatile qualified type no longer implies that compiler generated copy/move constructors and copy/move assignment operators are non trivial
 
-// _CRT_SECURE_NO_DEPRECATE - Disable all warnings for not using "_s" functions.
-//
-#ifndef _CRT_SECURE_NO_DEPRECATE
-#define _CRT_SECURE_NO_DEPRECATE
-#endif
-
 // _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES - Overloads all standard string functions (e.g. strcpy) with "_s" functions
 // if, and only if, the size of the output buffer is known at compile time (so, if it is a static array). If there is
 // a buffer overflow during runtime, it will throw an exception.

@@ -80,11 +80,11 @@ void ConvertED2KTag(CTag *&pTag)
 					if (_aEmuleToED2KMetaTagsMap[j].nID == FT_MEDIA_LENGTH) {
 						UINT nMediaLength = 0;
 						UINT hour = 0, min = 0, sec = 0;
-						if (_stscanf(pTag->GetStr(), _T("%u : %u : %u"), &hour, &min, &sec) == 3)
+						if (_stscanf_s(pTag->GetStr(), _T("%u : %u : %u"), &hour, &min, &sec) == 3)
 							nMediaLength = HR2S(hour) + MIN2S(min) + sec;
-						else if (_stscanf(pTag->GetStr(), _T("%u : %u"), &min, &sec) == 2)
+						else if (_stscanf_s(pTag->GetStr(), _T("%u : %u"), &min, &sec) == 2)
 							nMediaLength = MIN2S(min) + sec;
-						else if (_stscanf(pTag->GetStr(), _T("%u"), &sec) == 1)
+						else if (_stscanf_s(pTag->GetStr(), _T("%u"), &sec) == 1)
 							nMediaLength = sec;
 
 						if (nMediaLength != 0)

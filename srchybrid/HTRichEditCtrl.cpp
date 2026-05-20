@@ -788,14 +788,14 @@ bool CHTRichEditCtrl::SaveLog(LPCTSTR pszDefName)
 			fwrite(strText, sizeof(TCHAR), strText.GetLength(), fp);
 			if (ferror(fp)) {
 				CString strError;
-				strError.Format(_T("Failed to write log file \"%s\" - %s"), (LPCTSTR)strLogPath, _tcserror(errno));
+				strError.Format(_T("Failed to write log file \"%s\" - %s"), (LPCTSTR)strLogPath, (LPCTSTR)GetCrtErrorString(errno));
 				AfxMessageBox(strError, MB_ICONERROR);
 			} else
 				bResult = true;
 			fclose(fp);
 		} else {
 			CString strError;
-			strError.Format(_T("Failed to create log file \"%s\" - %s"), (LPCTSTR)strLogPath, _tcserror(errno));
+			strError.Format(_T("Failed to create log file \"%s\" - %s"), (LPCTSTR)strLogPath, (LPCTSTR)GetCrtErrorString(errno));
 			AfxMessageBox(strError, MB_ICONERROR);
 		}
 	}
@@ -986,8 +986,7 @@ void CHTRichEditCtrl::SetFont(CFont *pFont, BOOL bRedraw)
 
 	cf.dwMask |= CFM_FACE;
 	cf.bPitchAndFamily = lf.lfPitchAndFamily;
-	_tcsncpy(cf.szFaceName, lf.lfFaceName, _countof(cf.szFaceName));
-	cf.szFaceName[_countof(cf.szFaceName) - 1] = _T('\0');
+	_tcsncpy_s(cf.szFaceName, _countof(cf.szFaceName), lf.lfFaceName, _TRUNCATE);
 
 	// although this should work correctly (according to SDK) it may give false results (e.g. the "click here..." text
 	// which is shown in the server info window may not be entirely used as a hyperlink???)

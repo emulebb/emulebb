@@ -285,6 +285,7 @@ CString GetResNoAmp(RESSTRIDTYPE uStringID);
 int GetSystemErrorString(DWORD dwError, CString &rstrError);
 int GetModuleErrorString(DWORD dwError, CString &rstrError, LPCTSTR pszModule);
 int GetErrorMessage(DWORD dwError, CString &rstrErrorMsg, DWORD dwFlags = 0);
+CString GetCrtErrorString(int iErrno);
 CString GetErrorMessage(DWORD dwError, DWORD dwFlags = 0);
 CString CExceptionStr(CException &ex);
 CString CExceptionStrDash(CException &ex);

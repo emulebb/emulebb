@@ -5817,7 +5817,7 @@ void CemuleDlg::UpdateThumbBarButtons(bool initialAddToDlg)
 		// set tooltips in widechar
 		if (uid) {
 			const CString &tooltip(GetResNoAmp(uid));
-			wcscpy(m_thbButtons[i].szTip, tooltip);
+			wcscpy_s(m_thbButtons[i].szTip, _countof(m_thbButtons[i].szTip), tooltip);
 			m_thbButtons[i].dwMask |= THB_TOOLTIP;
 		}
 	}

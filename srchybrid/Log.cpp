@@ -444,7 +444,11 @@ void CLogFile::StartNewLogFile()
 	Close();
 
 	TCHAR szDateLogStarted[40];
-	_tcsftime(szDateLogStarted, _countof(szDateLogStarted), _T("%Y.%m.%d %H.%M.%S"), localtime(&tStarted));
+	tm tmStarted = {};
+	if (localtime_s(&tmStarted, &tStarted) == 0)
+		_tcsftime(szDateLogStarted, _countof(szDateLogStarted), _T("%Y.%m.%d %H.%M.%S"), &tmStarted);
+	else
+		szDateLogStarted[0] = _T('\0');
 	const CString strLogBakFilePath = LogFileSeams::BuildRotatedLogFilePath(m_strFilePath, CString(szDateLogStarted));
 
 	if (!LongPathSeams::MoveFile(m_strFilePath, strLogBakFilePath))

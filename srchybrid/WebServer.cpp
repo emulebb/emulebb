@@ -202,8 +202,9 @@ bool CWebServer::ReloadTemplates()
 	_locale_t locale = _tcreate_locale(LC_TIME, _T("en-US"));
 	TCHAR szTime[32] = {0};
 	time_t t = time(NULL);
-	tm *pGmt = (t != (time_t)-1) ? gmtime(&t) : NULL;
-	if (locale == NULL || pGmt == NULL || !_tcsftime_l(szTime, _countof(szTime), _T("%a, %d %b %Y %H:%M:%S GMT"), pGmt, locale))
+	tm tmGmt = {};
+	const bool bHaveGmt = t != (time_t)-1 && gmtime_s(&tmGmt, &t) == 0;
+	if (locale == NULL || !bHaveGmt || !_tcsftime_l(szTime, _countof(szTime), _T("%a, %d %b %Y %H:%M:%S GMT"), &tmGmt, locale))
 		*szTime = _T('\0');
 	if (locale != NULL)
 		_free_locale(locale);

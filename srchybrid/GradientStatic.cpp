@@ -5,6 +5,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "GradientStatic.h"
+#include "FontSafetySeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -178,7 +179,7 @@ void CGradientStatic::DrawVerticalText(CRect *pRect)
 	else {
 		CFont *pFont = GetFont();
 		pFont->GetLogFont(&lfFont);
-		_tcscpy(lfFont.lfFaceName, _T("Arial"));	// some fonts won't turn :(
+		CopyLogFontFaceName(lfFont.lfFaceName, _T("Arial"));	// some fonts won't turn :(
 	}
 	lfFont.lfEscapement = 900;
 

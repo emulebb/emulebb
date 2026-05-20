@@ -117,8 +117,7 @@ void CTrayDialog::TraySetIcon(LPCTSTR lpszResourceName)
 void CTrayDialog::TraySetToolTip(LPCTSTR lpszToolTip)
 {
 	ASSERT(*lpszToolTip != '\0' && _tcslen(lpszToolTip) < NOTIFYICONDATA_TIP_SIZE);
-	_tcsncpy(m_nidIconData.szTip, lpszToolTip, NOTIFYICONDATA_TIP_SIZE);
-	m_nidIconData.szTip[NOTIFYICONDATA_TIP_SIZE - 1] = _T('\0');
+	_tcsncpy_s(m_nidIconData.szTip, _countof(m_nidIconData.szTip), lpszToolTip, _TRUNCATE);
 	m_nidIconData.uFlags |= NIF_TIP;
 
 	Shell_NotifyIcon(NIM_MODIFY, &m_nidIconData);

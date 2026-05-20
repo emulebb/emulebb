@@ -2208,8 +2208,7 @@ void CSharedFilesCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 		if (pFile && pGetInfoTip->pszText && pGetInfoTip->cchTextMax > 0) {
 			CString strInfo(pFile->GetInfoSummary());
 			strInfo += TOOLTIP_AUTOFORMAT_SUFFIX_CH;
-			_tcsncpy(pGetInfoTip->pszText, strInfo, pGetInfoTip->cchTextMax);
-			pGetInfoTip->pszText[pGetInfoTip->cchTextMax - 1] = _T('\0');
+			_tcsncpy_s(pGetInfoTip->pszText, pGetInfoTip->cchTextMax, strInfo, _TRUNCATE);
 		}
 	}
 	*pResult = 0;

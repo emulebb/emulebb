@@ -987,9 +987,9 @@ ULONG CSearchParamsWnd::GetSearchAttrLength(const CString &rstrExpr)
 	strExpr.Trim();
 
 	UINT hour, min, sec;
-	if (_stscanf(strExpr, _T("%u : %u : %u"), &hour, &min, &sec) == 3)
+	if (_stscanf_s(strExpr, _T("%u : %u : %u"), &hour, &min, &sec) == 3)
 		return HR2S(hour) + MIN2S(min) + sec;
-	if (_stscanf(strExpr, _T("%u : %u"), &min, &sec) == 2)
+	if (_stscanf_s(strExpr, _T("%u : %u"), &min, &sec) == 2)
 		return MIN2S(min) + sec;
 
 	LPTSTR endptr = NULL;
