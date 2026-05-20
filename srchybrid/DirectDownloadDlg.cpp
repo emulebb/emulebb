@@ -22,6 +22,9 @@
 #include "DownloadQueue.h"
 #include "Preferences.h"
 
+#include <memory>
+#include <vector>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -80,6 +83,9 @@ void CDirectDownloadDlg::OnOK()
 	GetDlgItemText(IDC_ELINK, strLinks);
 
 	const std::vector<CString> tokens = DirectDownloadSeams::TokenizeDirectDownloadLinks(strLinks);
+	std::vector<std::unique_ptr<CED2KLink> > parsedLinks;
+	parsedLinks.reserve(tokens.size());
+
 	for (const CString& sToken : tokens) {
 		CED2KLink *pLink = NULL;
 		try {
@@ -87,8 +93,7 @@ void CDirectDownloadDlg::OnOK()
 			if (pLink) {
 				if (pLink->GetKind() != CED2KLink::kFile)
 					throwCStr(_T("bad link"));
-				theApp.downloadqueue->AddFileLinkToDownload(*pLink->GetFileLink(), DirectDownloadSeams::NormalizeDirectDownloadCategorySelection(m_cattabs.GetCurSel(), static_cast<int>(thePrefs.GetCatCount())));
-				delete pLink;
+				parsedLinks.emplace_back(pLink);
 				pLink = NULL;
 			}
 		} catch (const CString &error) {
@@ -100,6 +105,12 @@ void CDirectDownloadDlg::OnOK()
 			AfxMessageBox(strError);
 			return;
 		}
+	}
+
+	const int iCategory = DirectDownloadSeams::NormalizeDirectDownloadCategorySelection(m_cattabs.GetCurSel(), static_cast<int>(thePrefs.GetCatCount()));
+	if (DirectDownloadSeams::ShouldCommitParsedDirectDownloadLinks(parsedLinks.size(), tokens.size())) {
+		for (const std::unique_ptr<CED2KLink>& pLink : parsedLinks)
+			theApp.downloadqueue->AddFileLinkToDownload(*pLink->GetFileLink(), iCategory);
 	}
 
 	CResizableDialog::OnOK();

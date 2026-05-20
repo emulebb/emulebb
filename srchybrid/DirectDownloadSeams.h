@@ -47,4 +47,12 @@ inline int NormalizeDirectDownloadCategorySelection(const int iSelectedCategory,
 		return 0;
 	return iSelectedCategory >= 0 && iSelectedCategory < iCategoryCount ? iSelectedCategory : 0;
 }
+
+/**
+ * @brief Reports whether the dialog may enqueue links after completing its parse pass.
+ */
+inline bool ShouldCommitParsedDirectDownloadLinks(const size_t uParsedLinks, const size_t uInputTokens)
+{
+	return uParsedLinks == uInputTokens;
+}
 }
