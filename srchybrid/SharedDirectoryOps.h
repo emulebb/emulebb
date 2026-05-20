@@ -82,6 +82,19 @@ inline bool HasSharedSubdirectory(const CStringList &rList, const CString &rstrD
 	return false;
 }
 
+/**
+ * @brief Resolves the stable local volume key for a directory, including mounted-folder volumes.
+ */
+inline bool TryResolveDirectoryVolumeKey(const CString &rstrDirectory, CString &rstrVolumeKey)
+{
+	rstrVolumeKey.Empty();
+	LongPathSeams::ResolvedVolumeContext volumeContext = {};
+	if (!LongPathSeams::TryResolveContainingVolumeContext(PathHelpers::TrimTrailingSeparator(rstrDirectory), volumeContext))
+		return false;
+	rstrVolumeKey = CString(volumeContext.strVolumeKey.c_str());
+	return !rstrVolumeKey.IsEmpty();
+}
+
 inline bool EnumerateChildDirectories(const CString &rstrDirectory, CStringList &rChildNames)
 {
 	rChildNames.RemoveAll();
@@ -172,6 +185,133 @@ inline void CollectDirectorySubtree(CStringList &rList, const CString &rstrDirec
 {
 	std::vector<LongPathSeams::FileSystemObjectIdentity> visitedDirectories;
 	CollectDirectorySubtreeImpl(rList, rstrDirectory, bIncludeRoot, isShareableDirectoryFn, visitedDirectories);
+}
+
+template <typename IsShareableDirectoryFn, typename ResolveVolumeKeyFn>
+inline void CollectMonitoredSharedRootStateImpl(
+	CStringList &rMonitoredRoots,
+	CStringList &rMonitorOwnedDirs,
+	const CString &rstrDirectory,
+	const bool bIncludeRootInOwnedDirs,
+	const CString &rstrRootVolumeKey,
+	const bool bRootVolumeResolved,
+	IsShareableDirectoryFn isShareableDirectoryFn,
+	ResolveVolumeKeyFn resolveVolumeKeyFn,
+	std::vector<LongPathSeams::FileSystemObjectIdentity> &rVisitedDirectories)
+{
+	const CString strCanonicalDirectory(PathHelpers::CanonicalizeDirectoryPath(rstrDirectory));
+	LongPathSeams::FileSystemObjectIdentity directoryIdentity = {};
+	const bool bHasDirectoryIdentity = LongPathSeams::TryGetResolvedDirectoryIdentity(strCanonicalDirectory, directoryIdentity);
+	if (bHasDirectoryIdentity) {
+		if (ContainsDirectoryIdentity(rVisitedDirectories, directoryIdentity))
+			return;
+		rVisitedDirectories.push_back(directoryIdentity);
+	}
+
+	CString strDirectoryVolumeKey;
+	const bool bDirectoryVolumeResolved = resolveVolumeKeyFn(strCanonicalDirectory, strDirectoryVolumeKey);
+	if (bIncludeRootInOwnedDirs
+		&& bRootVolumeResolved
+		&& bDirectoryVolumeResolved
+		&& strDirectoryVolumeKey.CompareNoCase(rstrRootVolumeKey) != 0)
+	{
+		if (isShareableDirectoryFn(strCanonicalDirectory)
+			&& !ListContainsEquivalentDirectoryObject(rMonitoredRoots, strCanonicalDirectory, bHasDirectoryIdentity ? &directoryIdentity : NULL))
+		{
+			rMonitoredRoots.AddTail(strCanonicalDirectory);
+		}
+		if (isShareableDirectoryFn(strCanonicalDirectory)
+			&& !ListContainsEquivalentDirectoryObject(rMonitorOwnedDirs, strCanonicalDirectory, bHasDirectoryIdentity ? &directoryIdentity : NULL))
+		{
+			rMonitorOwnedDirs.AddTail(strCanonicalDirectory);
+		}
+
+		CStringList childNames;
+		if (!EnumerateChildDirectories(strCanonicalDirectory, childNames))
+			return;
+		for (POSITION pos = childNames.GetHeadPosition(); pos != NULL;) {
+			const CString strChildPath(PathHelpers::AppendPathComponent(strCanonicalDirectory, childNames.GetNext(pos)));
+			CollectMonitoredSharedRootStateImpl(
+				rMonitoredRoots,
+				rMonitorOwnedDirs,
+				strChildPath,
+				true,
+				strDirectoryVolumeKey,
+				true,
+				isShareableDirectoryFn,
+				resolveVolumeKeyFn,
+				rVisitedDirectories);
+		}
+		return;
+	}
+
+	if (bIncludeRootInOwnedDirs
+		&& isShareableDirectoryFn(strCanonicalDirectory)
+		&& !ListContainsEquivalentDirectoryObject(rMonitorOwnedDirs, strCanonicalDirectory, bHasDirectoryIdentity ? &directoryIdentity : NULL))
+	{
+		rMonitorOwnedDirs.AddTail(strCanonicalDirectory);
+	}
+
+	CStringList childNames;
+	if (!EnumerateChildDirectories(strCanonicalDirectory, childNames))
+		return;
+
+	const CString strEffectiveRootVolumeKey(bDirectoryVolumeResolved ? strDirectoryVolumeKey : rstrRootVolumeKey);
+	const bool bEffectiveRootVolumeResolved = bDirectoryVolumeResolved || bRootVolumeResolved;
+	for (POSITION pos = childNames.GetHeadPosition(); pos != NULL;) {
+		const CString strChildPath(PathHelpers::AppendPathComponent(strCanonicalDirectory, childNames.GetNext(pos)));
+		CollectMonitoredSharedRootStateImpl(
+			rMonitoredRoots,
+			rMonitorOwnedDirs,
+			strChildPath,
+			true,
+			strEffectiveRootVolumeKey,
+			bEffectiveRootVolumeResolved,
+			isShareableDirectoryFn,
+			resolveVolumeKeyFn,
+			rVisitedDirectories);
+	}
+}
+
+/**
+ * @brief Adds one recursive monitored root and promotes mounted-folder volume boundaries to separate monitored roots.
+ */
+template <typename IsShareableDirectoryFn, typename ResolveVolumeKeyFn>
+inline void AddMonitoredSharedRoot(
+	CStringList &rMonitoredRoots,
+	CStringList &rMonitorOwnedDirs,
+	const CString &rstrDirectory,
+	IsShareableDirectoryFn isShareableDirectoryFn,
+	ResolveVolumeKeyFn resolveVolumeKeyFn)
+{
+	const CString strCanonicalDirectory(PathHelpers::CanonicalizeDirectoryPath(rstrDirectory));
+	CString strRootVolumeKey;
+	const bool bRootVolumeResolved = resolveVolumeKeyFn(strCanonicalDirectory, strRootVolumeKey);
+	if (!ListContainsEquivalentDirectoryObject(rMonitoredRoots, strCanonicalDirectory))
+		rMonitoredRoots.AddTail(strCanonicalDirectory);
+
+	std::vector<LongPathSeams::FileSystemObjectIdentity> visitedDirectories;
+	CollectMonitoredSharedRootStateImpl(
+		rMonitoredRoots,
+		rMonitorOwnedDirs,
+		strCanonicalDirectory,
+		false,
+		strRootVolumeKey,
+		bRootVolumeResolved,
+		isShareableDirectoryFn,
+		resolveVolumeKeyFn,
+		visitedDirectories);
+}
+
+/**
+ * @brief Adds one recursive monitored root using the production Win32 volume resolver.
+ */
+template <typename IsShareableDirectoryFn>
+inline void AddMonitoredSharedRoot(CStringList &rMonitoredRoots, CStringList &rMonitorOwnedDirs, const CString &rstrDirectory, IsShareableDirectoryFn isShareableDirectoryFn)
+{
+	AddMonitoredSharedRoot(rMonitoredRoots, rMonitorOwnedDirs, rstrDirectory, isShareableDirectoryFn, [](const CString &rstrCandidate, CString &rstrVolumeKey) -> bool {
+		return TryResolveDirectoryVolumeKey(rstrCandidate, rstrVolumeKey);
+	});
 }
 
 inline bool RemoveSharedDirectory(CStringList &rList, const CString &rstrDirectory, const bool bIncludeSubdirectories)

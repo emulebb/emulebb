@@ -432,13 +432,27 @@ void AddUniqueDirectoryPath(CStringList &rList, const CString &rDirectory)
 		rList.AddTail(rDirectory);
 }
 
-bool ReconcileMonitoredSharedRoot(const CString &rRootPath, const CStringList &rSharedDirs, const CStringList &rOwnedDirs, SMonitoredSharedDirectoryUpdate &rUpdate)
+bool ReconcileMonitoredSharedRoot(const CString &rRootPath, const CStringList &rSharedDirs, const CStringList &rOwnedDirs, const CStringList &rMonitoredRoots, SMonitoredSharedDirectoryUpdate &rUpdate)
 {
 	bool bChanged = false;
 	CStringList currentSubtreeDirs;
-	SharedDirectoryOps::CollectDirectorySubtree(currentSubtreeDirs, rRootPath, false, [](const CString &rstrDirectory) -> bool {
+	CStringList currentMonitorRoots;
+	SharedDirectoryOps::AddMonitoredSharedRoot(currentMonitorRoots, currentSubtreeDirs, rRootPath, [](const CString &rstrDirectory) -> bool {
 		return thePrefs.IsShareableDirectory(rstrDirectory);
 	});
+
+	for (POSITION pos = currentMonitorRoots.GetHeadPosition(); pos != NULL;) {
+		const CString strCurrentRoot(currentMonitorRoots.GetNext(pos));
+		if (SharedDirectoryOps::ListContainsEquivalentPath(rUpdate.liNewMonitoredRoots, strCurrentRoot)
+			|| SharedDirectoryOps::ListContainsEquivalentPath(rMonitoredRoots, strCurrentRoot)
+			|| !SharedDirectoryOps::ListContainsEquivalentPath(currentSubtreeDirs, strCurrentRoot))
+		{
+			continue;
+		}
+
+		rUpdate.liNewMonitoredRoots.AddTail(strCurrentRoot);
+		bChanged = true;
+	}
 
 	for (POSITION pos = currentSubtreeDirs.GetHeadPosition(); pos != NULL;) {
 		const CString strCurrent(currentSubtreeDirs.GetNext(pos));
@@ -1722,7 +1736,8 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 			&& !rUpdate.bForceTreeReload
 			&& rUpdate.liNewDirectories.IsEmpty()
 			&& rUpdate.liRemovedDirectories.IsEmpty()
-			&& rUpdate.liDowngradedRoots.IsEmpty())
+			&& rUpdate.liDowngradedRoots.IsEmpty()
+			&& rUpdate.liNewMonitoredRoots.IsEmpty())
 		{
 			return;
 		}
@@ -1734,6 +1749,8 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 			pPostedUpdate->liRemovedDirectories.AddTail(rUpdate.liRemovedDirectories.GetNext(pos));
 		for (POSITION pos = rUpdate.liDowngradedRoots.GetHeadPosition(); pos != NULL;)
 			pPostedUpdate->liDowngradedRoots.AddTail(rUpdate.liDowngradedRoots.GetNext(pos));
+		for (POSITION pos = rUpdate.liNewMonitoredRoots.GetHeadPosition(); pos != NULL;)
+			pPostedUpdate->liNewMonitoredRoots.AddTail(rUpdate.liNewMonitoredRoots.GetNext(pos));
 		pPostedUpdate->bForceTreeReload = rUpdate.bForceTreeReload;
 		pPostedUpdate->bReloadSharedFiles = rUpdate.bReloadSharedFiles;
 		(void)TryPostWorkerUiPayloadMessage(
@@ -1860,7 +1877,7 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 
 				if (!changedDirectoryRefs.empty()) {
 					rUpdate.bReloadSharedFiles = true;
-					if (ReconcileMonitoredSharedRoot(strRoot, sharedDirs, ownedDirs, rUpdate))
+					if (ReconcileMonitoredSharedRoot(strRoot, sharedDirs, ownedDirs, configuredRoots, rUpdate))
 						rUpdate.bForceTreeReload = true;
 				}
 
@@ -1961,7 +1978,7 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 				continue;
 			}
 
-			(void)ReconcileMonitoredSharedRoot(strRoot, sharedDirs, ownedDirs, update);
+			(void)ReconcileMonitoredSharedRoot(strRoot, sharedDirs, ownedDirs, monitoredRoots, update);
 			update.bForceTreeReload = true;
 			update.bReloadSharedFiles = true;
 

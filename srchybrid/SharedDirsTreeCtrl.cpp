@@ -1337,10 +1337,8 @@ void CSharedDirsTreeCtrl::AddMonitoredSharedDirectory(const CString &strDir)
 {
 	CWaitCursor curWait;
 	AddSharedDirectory(strDir, true);
-	if (!ListContainsEquivalentPath(m_strliMonitoredRoots, strDir))
-		m_strliMonitoredRoots.AddTail(PathHelpers::CanonicalizeDirectoryPath(strDir));
 	(void)RemovePathsWithinDirectory(m_strliMonitorOwnedDirs, strDir, false);
-	SharedDirectoryOps::CollectDirectorySubtree(m_strliMonitorOwnedDirs, strDir, false, [](const CString &rstrDirectory) -> bool {
+	SharedDirectoryOps::AddMonitoredSharedRoot(m_strliMonitoredRoots, m_strliMonitorOwnedDirs, strDir, [](const CString &rstrDirectory) -> bool {
 		return thePrefs.IsShareableDirectory(rstrDirectory);
 	});
 

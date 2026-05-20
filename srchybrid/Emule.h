@@ -101,6 +101,7 @@ struct SMonitoredSharedDirectoryUpdate
 	CStringList liNewDirectories;
 	CStringList liRemovedDirectories;
 	CStringList liDowngradedRoots;
+	CStringList liNewMonitoredRoots;
 	bool bForceTreeReload = false;
 	bool bReloadSharedFiles = false;
 };

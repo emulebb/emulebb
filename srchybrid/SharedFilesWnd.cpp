@@ -464,6 +464,10 @@ LRESULT CSharedFilesWnd::OnMonitoredSharedDirectoryUpdate(WPARAM wParam, LPARAM)
 		bStateChanged |= thePrefs.AddSharedDirectoryIfAbsent(strDirectory);
 		bStateChanged |= thePrefs.AddMonitorOwnedDirectoryIfAbsent(strDirectory);
 	}
+	for (POSITION pos = pUpdate->liNewMonitoredRoots.GetHeadPosition(); pos != NULL;) {
+		const CString strDirectory(pUpdate->liNewMonitoredRoots.GetNext(pos));
+		bStateChanged |= thePrefs.AddMonitoredSharedRootIfAbsent(strDirectory);
+	}
 	for (POSITION pos = pUpdate->liRemovedDirectories.GetHeadPosition(); pos != NULL;) {
 		const CString strDirectory(pUpdate->liRemovedDirectories.GetNext(pos));
 		bStateChanged |= thePrefs.RemoveMonitorOwnedDirectory(strDirectory);

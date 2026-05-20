@@ -1888,9 +1888,7 @@ bool TryBuildSharedDirectoryListsFromJson(
 			return thePrefs.IsShareableDirectory(rstrDirectory);
 		});
 		if (bRecursive) {
-			if (!SharedDirectoryOps::ListContainsEquivalentPath(rMonitoredRoots, strDirectory))
-				rMonitoredRoots.AddTail(strDirectory);
-			SharedDirectoryOps::CollectDirectorySubtree(rMonitorOwnedDirs, strDirectory, false, [](const CString &rstrDirectory) -> bool {
+			SharedDirectoryOps::AddMonitoredSharedRoot(rMonitoredRoots, rMonitorOwnedDirs, strDirectory, [](const CString &rstrDirectory) -> bool {
 				return thePrefs.IsShareableDirectory(rstrDirectory);
 			});
 		}
