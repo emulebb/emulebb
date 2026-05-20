@@ -5346,11 +5346,14 @@ void CPartFile::GetLeftToTransferAndAdditionalNeededSpace(uint64 &rui64LeftToTra
 	, uint64 &rui64AdditionalNeededSpace) const
 {
 	uint64 uSizeLastGap = 0;
+	const uint64 uFileSize = FileSizeSeams::ToUInt64(m_nFileSize);
 	for (POSITION pos = m_gaplist.GetHeadPosition(); pos != NULL;) {
 		const Gap_Struct &gap = m_gaplist.GetNext(pos);
-		uint64 uGapSize = gap.end - gap.start + 1;
-		rui64LeftToTransfer += uGapSize;
-		if (gap.end == FileSizeSeams::ToUInt64(m_nFileSize) - 1)
+		uint64 uGapSize = 0;
+		if (!PartFilePersistenceSeams::TryMeasureGapBytes(gap.start, gap.end, &uGapSize))
+			continue;
+		rui64LeftToTransfer = PartFilePersistenceSeams::SaturatingAddBytes(rui64LeftToTransfer, uGapSize);
+		if (uFileSize > 0 && gap.end == uFileSize - 1)
 			uSizeLastGap = uGapSize;
 	}
 

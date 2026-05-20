@@ -200,6 +200,18 @@ inline uint64_t SaturatingAddBytes(const uint64_t nLeftBytes, const uint64_t nRi
 	return nRightBytes <= nRemainingCapacity ? nLeftBytes + nRightBytes : static_cast<uint64_t>(-1);
 }
 
+inline bool TryMeasureGapBytes(const uint64_t nStartByte, const uint64_t nEndByte, uint64_t *pnGapBytes)
+{
+	if (pnGapBytes != NULL)
+		*pnGapBytes = 0;
+	if (nEndByte < nStartByte)
+		return false;
+
+	if (pnGapBytes != NULL)
+		*pnGapBytes = SaturatingAddBytes(nEndByte - nStartByte, 1u);
+	return true;
+}
+
 inline PartMetWriteGuardDecision ResolvePartMetWriteGuard(const bool bHasCachedResult, const bool bCachedCanWrite, const bool bForceRefresh, const uint64_t nFreeBytes, const uint64_t nRequiredBytes = kMinPartMetWriteFreeBytes)
 {
 	(void)bHasCachedResult;
