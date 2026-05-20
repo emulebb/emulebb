@@ -28,10 +28,12 @@
 #include "SharedFileList.h"
 #include "SharedFilesWnd.h"
 #include "SharedDirectoryOps.h"
+#include "SharedDirsTreeCtrlSeams.h"
 #include "FileListKeyboardShortcutsSeams.h"
 #include "MenuShortcutLabels.h"
 
 #include <algorithm>
+#include <memory>
 #include <vector>
 
 #ifdef _DEBUG
@@ -1586,9 +1588,10 @@ void CSharedDirsTreeCtrl::OnTvnBeginDrag(LPNMHDR pNMHDR, LRESULT *pResult)
 
 	ASSERT(m_pDraggingItem == NULL);
 	delete m_pDraggingItem;
-	m_pDraggingItem = pToDrag->CloneContent(); // to be safe we store a copy, as items can be deleted when collapsing the tree etc
+	m_pDraggingItem = NULL;
 
-	CImageList *piml = CreateDragImage(lpnmtv->itemNew.hItem);
+	std::unique_ptr<CDirectoryItem> pDraggingItem(pToDrag->CloneContent()); // to be safe we store a copy, as items can be deleted when collapsing the tree etc
+	std::unique_ptr<CImageList> piml(CreateDragImage(lpnmtv->itemNew.hItem));
 	if (piml == NULL)
 		return;
 
@@ -1609,12 +1612,20 @@ void CSharedDirsTreeCtrl::OnTvnBeginDrag(LPNMHDR pNMHDR, LRESULT *pResult)
 		ptOffset.x = ptOffset.y = 8;
 	}
 
-	if (piml->BeginDrag(0, ptOffset)) {
+	const bool bBeginDragSucceeded = piml->BeginDrag(0, ptOffset) != FALSE;
+	bool bDragEnterSucceeded = false;
+	if (bBeginDragSucceeded) {
 		CPoint ptDragEnter(lpnmtv->ptDrag);
 		ClientToScreen(&ptDragEnter);
-		piml->DragEnter(NULL, ptDragEnter);
+		bDragEnterSucceeded = piml->DragEnter(NULL, ptDragEnter) != FALSE;
 	}
-	delete piml;
+	if (!SharedDirsTreeCtrlSeams::ShouldCommitDragStartState(piml.get() != NULL, bBeginDragSucceeded, bDragEnterSucceeded)) {
+		if (bBeginDragSucceeded)
+			CImageList::EndDrag();
+		return;
+	}
+	piml.reset();
+	m_pDraggingItem = pDraggingItem.release();
 
 	/* set the focus here, so we get a WM_CANCELMODE if needed */
 	SetFocus();
