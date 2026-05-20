@@ -2,6 +2,7 @@
 #include <locale.h>
 #include <algorithm>
 #include <vector>
+#include "ComInitializationSeams.h"
 #include "emule.h"
 #include "StringConversion.h"
 #include "WebServer.h"
@@ -414,26 +415,23 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 	// or use some hundreds of critical sections... For now, an exception handler
 	// should prevent the worst things.
 	//////////////////////////////////////////////////////////////////////////
-	(void)::CoInitialize(NULL);
+	const ComInitializationSeams::CScopedComInitialize coInitialize;
 
 #ifndef _DEBUG
 	try {
 #endif
 		if (WebServerArrCompat::IsCompatRequest(Data)) {
 			WebServerArrCompat::ProcessRequest(Data);
-			::CoUninitialize();
 			return;
 		}
 
 		if (WebServerQBitCompat::IsCompatRequest(Data)) {
 			WebServerQBitCompat::ProcessRequest(Data);
-			::CoUninitialize();
 			return;
 		}
 
 		if (WebServerJson::IsApiRequest(Data)) {
 			WebServerJson::ProcessRequest(Data);
-			::CoUninitialize();
 			return;
 		}
 
@@ -442,13 +440,11 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 		// enabled and should not receive feature or parity work.
 		if (!WebServerLegacySeams::ShouldServeLegacyWebUi(thePrefs.GetLegacyWebUiEnabled())) {
 			Data.pSocket->SendReply("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: 26\r\nConnection: close\r\n\r\nLegacy Web UI is disabled.");
-			::CoUninitialize();
 			return;
 		}
 
 		if (!pThis->AreTemplatesLoaded()) {
 			Data.pSocket->SendReply("HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: 40\r\nConnection: close\r\n\r\nWeb interface templates are unavailable.");
-			::CoUninitialize();
 			return;
 		}
 
@@ -475,7 +471,6 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 
 		if (WebServerAuthStateSeams::ShouldDenyForBadLoginFaults(myfaults)) {
 			Data.pSocket->SendContent(HTTPInit, _GetPlainResString(IDS_ACCESSDENIED));
-			::CoUninitialize();
 			return;
 		}
 
@@ -537,7 +532,6 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 				}
 				if (WebServerAuthStateSeams::ShouldDenyForBadLoginFaults(myfaults)) {
 					Data.pSocket->SendContent(HTTPInit, _GetPlainResString(IDS_ACCESSDENIED));
-					::CoUninitialize();
 					return;
 				}
 			}
@@ -569,7 +563,6 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 
 				SendMessage(theApp.emuledlg->m_hWnd, WM_CLOSE, 0, 0);
 
-				::CoUninitialize();
 				return;
 			}
 
@@ -581,7 +574,6 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 
 				SendMessage(theApp.emuledlg->m_hWnd, WEB_GUI_INTERACTION, WEBGUIIA_WINFUNC, 1);
 
-				::CoUninitialize();
 				return;
 			}
 
@@ -594,7 +586,6 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 
 				SendMessage(theApp.emuledlg->m_hWnd, WEB_GUI_INTERACTION, WEBGUIIA_WINFUNC, 2);
 
-				::CoUninitialize();
 				return;
 			}
 
@@ -604,7 +595,6 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 				if (!Out1.IsEmpty()) {
 					Data.pSocket->SendContent(HTTPInit, Out1);
 
-					::CoUninitialize();
 					return;
 				}
 			} else if (_ParseURL(Data.sURL, _T("w")) == _T("getfile") && bAdmin) {
@@ -615,7 +605,6 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 					if (thePrefs.GetMaxWebUploadFileSizeMB() != 0 && kf->GetFileSize() > (uint64)thePrefs.GetMaxWebUploadFileSizeMB() * 1024 * 1024) {
 						Data.pSocket->SendReply("HTTP/1.1 403 Forbidden\r\n");
 
-						::CoUninitialize();
 						return;
 					}
 
@@ -629,7 +618,6 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 							buffer.resize(SENDFILEBUFSIZE);
 						} catch (...) {
 							Data.pSocket->SendReply("HTTP/1.1 500 Internal Server Error\r\n");
-							::CoUninitialize();
 							return;
 						}
 
@@ -653,7 +641,6 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 						file.Close();
 					} else
 						Data.pSocket->SendReply("HTTP/1.1 404 File not found\r\n");
-					::CoUninitialize();
 					return;
 				}
 			}
@@ -735,7 +722,6 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 	}
 #endif
 
-	::CoUninitialize();
 }
 
 CString CWebServer::_ParseURLArray(CString URL, CString fieldname)
