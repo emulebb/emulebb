@@ -75,6 +75,16 @@ inline uint64_t GetUnresolvedProtectedVolumeFreeBytes()
 	return 0u;
 }
 
+inline bool ShouldReserveProtectedVolumeSnapshotDemand(const bool bSnapshotValid, const bool bNotEnoughSpaceLeftSnapshot, const uint64_t nFileSize)
+{
+	return bSnapshotValid && !bNotEnoughSpaceLeftSnapshot && nFileSize > 0u;
+}
+
+inline bool ShouldInvalidateRequiredFreeSpacePathCacheAfterReservation(const bool bReservedDemand)
+{
+	return bReservedDemand;
+}
+
 inline bool HasProtectedVolumeBreach(const ProtectedVolumeSpaceState *pStates, const std::size_t nStateCount)
 {
 	if (pStates == NULL)

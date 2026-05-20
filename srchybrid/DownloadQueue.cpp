@@ -293,7 +293,10 @@ const CArray<CDownloadQueue::ProtectedVolumeStatus, const CDownloadQueue::Protec
 
 void CDownloadQueue::ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempPath, LPCTSTR pszIncomingPath, EMFileSize nFileSize) const
 {
-	if (!m_bProtectedVolumeStatusSnapshotValid || m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft || static_cast<uint64>(nFileSize) == 0)
+	if (!DownloadQueueDiskSpaceSeams::ShouldReserveProtectedVolumeSnapshotDemand(
+		m_bProtectedVolumeStatusSnapshotValid,
+		m_bProtectedVolumeStatusSnapshotNotEnoughSpaceLeft,
+		static_cast<uint64>(nFileSize)))
 		return;
 
 	VolumeIdentityPathCache volumeIdentityPathCache;
@@ -304,6 +307,7 @@ void CDownloadQueue::ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempP
 	CString strIncomingVolumeId;
 	const bool bHaveIncomingVolume = volumeIdentityPathCache.Resolve(pszIncomingPath, strIncomingVolumeId);
 	const uint64 uDemandBytes = static_cast<uint64>(nFileSize);
+	bool bReservedDemand = false;
 
 	auto AddDemand = [&](const CString &strVolumeId) -> void
 	{
@@ -318,6 +322,7 @@ void CDownloadQueue::ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempP
 				m_aProtectedVolumeStatusSnapshot[i].RequiredBytes = PartFilePersistenceSeams::SaturatingAddBytes(
 					m_aProtectedVolumeStatusSnapshot[i].RequiredBytes,
 					uDemandBytes);
+				bReservedDemand = true;
 				return;
 			}
 		}
@@ -326,6 +331,9 @@ void CDownloadQueue::ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempP
 	AddDemand(strTempVolumeId);
 	if (bHaveIncomingVolume && strIncomingVolumeId != strTempVolumeId)
 		AddDemand(strIncomingVolumeId);
+
+	if (DownloadQueueDiskSpaceSeams::ShouldInvalidateRequiredFreeSpacePathCacheAfterReservation(bReservedDemand))
+		m_aRequiredFreeDiskSpacePathCache.RemoveAll();
 }
 
 CString CDownloadQueue::BuildProtectedDiskSpaceBreachSignature(const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aStatuses) const
