@@ -15,7 +15,6 @@ public:
 
 protected:
 	BOOL m_bDropDataValid;
-	CLIPFORMAT m_cfShellURL;
 
 	BOOL IsSupportedDropData(COleDataObject *pDataObject);
 	HRESULT PasteText(CLIPFORMAT cfData, COleDataObject &data);

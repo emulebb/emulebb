@@ -53,9 +53,7 @@ namespace
 
 CMainFrameDropTarget::CMainFrameDropTarget()
 	: m_bDropDataValid()
-	, m_cfShellURL((CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLURL))
 {
-	ASSERT(m_cfShellURL);
 }
 
 HRESULT CMainFrameDropTarget::PasteText(CLIPFORMAT cfData, COleDataObject &data)
@@ -114,9 +112,7 @@ BOOL CMainFrameDropTarget::IsSupportedDropData(COleDataObject *pDataObject)
 	//************************************************************************
 
 	BOOL bResult = FALSE; // Unknown data format
-	if (m_cfShellURL && pDataObject->IsDataAvailable(m_cfShellURL))
-		bResult = IsSupportedDropText(m_cfShellURL, *pDataObject);
-	if (!bResult && pDataObject->IsDataAvailable(CF_UNICODETEXT))
+	if (pDataObject->IsDataAvailable(CF_UNICODETEXT))
 		bResult = IsSupportedDropText(CF_UNICODETEXT, *pDataObject);
 	if (!bResult && pDataObject->IsDataAvailable(CF_TEXT))
 		bResult = IsSupportedDropText(CF_TEXT, *pDataObject);
@@ -137,14 +133,10 @@ DROPEFFECT CMainFrameDropTarget::OnDragOver(CWnd*, COleDataObject*, DWORD, CPoin
 BOOL CMainFrameDropTarget::OnDrop(CWnd*, COleDataObject *pDataObject, DROPEFFECT /*dropEffect*/, CPoint /*point*/)
 {
 	if (m_bDropDataValid) {
-		if (m_cfShellURL && pDataObject->IsDataAvailable(m_cfShellURL))
-			PasteText(m_cfShellURL, *pDataObject);
-		else if (pDataObject->IsDataAvailable(CF_UNICODETEXT))
+		if (pDataObject->IsDataAvailable(CF_UNICODETEXT))
 			PasteText(CF_UNICODETEXT, *pDataObject);
 		else if (pDataObject->IsDataAvailable(CF_TEXT))
 			PasteText(CF_TEXT, *pDataObject);
-		else if (m_cfShellURL && pDataObject->IsDataAvailable(m_cfShellURL))
-			PasteText(m_cfShellURL, *pDataObject);
 		return TRUE;
 	}
 	return FALSE;
