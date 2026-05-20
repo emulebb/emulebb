@@ -129,6 +129,7 @@ protected:
 	void	SetWnd2Icon(EWnd2Icon iIcon);
 	void	ShowSplitWindow(bool bReDraw = false);
 	void	LocalizeToolbars();
+	void	CancelCategoryDrag(bool bResetTabSelection);
 
 	virtual BOOL PreTranslateMessage(MSG *pMsg);
 	virtual void DoDataExchange(CDataExchange *pDX);    // DDX/DDV support
@@ -148,6 +149,7 @@ protected:
 	afx_msg void OnLvnBeginDragDownloadList(LPNMHDR pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnKeydownDownloadList(LPNMHDR pNMHDR, LRESULT *pResult);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnCancelMode();
 	afx_msg void OnNmRClickDltab(LPNMHDR, LRESULT *pResult);
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
 	afx_msg void OnSplitterMoved(LPNMHDR pNMHDR, LRESULT *pResult);

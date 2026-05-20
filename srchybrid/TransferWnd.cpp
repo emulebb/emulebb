@@ -35,6 +35,8 @@
 #include "AppKeyboardShortcutsSeams.h"
 #include "MuleToolBarCtrl.h"
 
+#include <memory>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -86,6 +88,7 @@ BEGIN_MESSAGE_MAP(CTransferWnd, CResizableFormView)
 	ON_WM_HELPINFO()
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
+	ON_WM_CANCELMODE()
 	ON_WM_SETTINGCHANGE()
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_PAINT()
@@ -832,6 +835,7 @@ void CTransferWnd::OnLvnBeginDragDownloadList(LPNMHDR pNMHDR, LRESULT *pResult)
 
 	ASSERT(m_pDragImage == NULL);
 	delete m_pDragImage;
+	m_pDragImage = NULL;
 	// It is actually more user friendly to attach the drag image (which could become
 	// quite large) somewhat below the mouse cursor, instead of using the exact drag
 	// position. When moving the drag image over the category tab control it is hard
@@ -839,17 +843,23 @@ void CTransferWnd::OnLvnBeginDragDownloadList(LPNMHDR pNMHDR, LRESULT *pResult)
 	// of the drag image.
 	const bool bUseDragHotSpot = false;
 	CPoint pt(0, -10); // default drag hot spot
-	m_pDragImage = downloadlistctrl.CreateDragImage(m_nDragIndex, bUseDragHotSpot ? &pt : NULL);
-	if (m_pDragImage == NULL) {
+	std::unique_ptr<CImageList> pDragImage(downloadlistctrl.CreateDragImage(m_nDragIndex, bUseDragHotSpot ? &pt : NULL));
+	if (pDragImage.get() == NULL) {
 		// fall back code
-		m_pDragImage = new CImageList();
-		m_pDragImage->Create(16, 16, theApp.m_iDfltImageListColorFlags | ILC_MASK, 0, 0);
-		m_pDragImage->Add(CTempIconLoader(_T("AllFiles")));
+		pDragImage.reset(new CImageList());
+		if (!pDragImage->Create(16, 16, theApp.m_iDfltImageListColorFlags | ILC_MASK, 0, 0) || pDragImage->Add(CTempIconLoader(_T("AllFiles"))) < 0)
+			return;
 	}
 
-	m_pDragImage->BeginDrag(0, pt);
-	m_pDragImage->DragEnter(GetDesktopWindow(), pNMLV->ptAction);
+	const bool bBeginDragSucceeded = pDragImage->BeginDrag(0, pt) != FALSE;
+	const bool bDragEnterSucceeded = bBeginDragSucceeded && pDragImage->DragEnter(GetDesktopWindow(), pNMLV->ptAction) != FALSE;
+	if (!TransferWndSeams::ShouldCommitCategoryDragStart(pDragImage.get() != NULL, bBeginDragSucceeded, bDragEnterSucceeded)) {
+		if (bBeginDragSucceeded)
+			CImageList::EndDrag();
+		return;
+	}
 
+	m_pDragImage = pDragImage.release();
 	m_bIsDragging = true;
 	m_nDropIndex = -1;
 	SetCapture();
@@ -859,8 +869,10 @@ void CTransferWnd::OnLvnBeginDragDownloadList(LPNMHDR pNMHDR, LRESULT *pResult)
 
 void CTransferWnd::OnMouseMove(UINT nFlags, CPoint point)
 {
-	if (!(nFlags & MK_LBUTTON))
-		m_bIsDragging = false;
+	if (TransferWndSeams::ShouldCancelCategoryDragOnMouseMove(m_bIsDragging, (nFlags & MK_LBUTTON) != 0)) {
+		CancelCategoryDrag(true);
+		return;
+	}
 
 	if (m_bIsDragging) {
 		ClientToScreen(&point);
@@ -878,14 +890,10 @@ void CTransferWnd::OnMouseMove(UINT nFlags, CPoint point)
 void CTransferWnd::OnLButtonUp(UINT /*nFlags*/, CPoint /*point*/)
 {
 	if (m_bIsDragging) {
-		::ReleaseCapture();
-		m_bIsDragging = false;
-		m_pDragImage->DragLeave(GetDesktopWindow());
-		m_pDragImage->EndDrag();
-		delete m_pDragImage;
-		m_pDragImage = NULL;
+		const int nDropIndex = m_nDropIndex;
+		CancelCategoryDrag(false);
 
-		if (m_nDropIndex >= 0 && (downloadlistctrl.m_curTab == 0 || (UINT)m_nDropIndex != downloadlistctrl.m_curTab)) {
+		if (nDropIndex >= 0 && (downloadlistctrl.m_curTab == 0 || (UINT)nDropIndex != downloadlistctrl.m_curTab)) {
 			// for multi-selections
 			CTypedPtrList<CPtrList, CPartFile*> selectedList;
 			for (POSITION pos = downloadlistctrl.GetFirstSelectedItemPosition(); pos != NULL;) {
@@ -898,7 +906,7 @@ void CTransferWnd::OnLButtonUp(UINT /*nFlags*/, CPoint /*point*/)
 			}
 
 			while (!selectedList.IsEmpty())
-				selectedList.RemoveHead()->SetCategory(m_nDropIndex);
+				selectedList.RemoveHead()->SetCategory(nDropIndex);
 			m_dlTab.SetCurSel(downloadlistctrl.m_curTab);
 			downloadlistctrl.UpdateCurrentCategoryView();
 			UpdateCatTabTitles();
@@ -906,6 +914,33 @@ void CTransferWnd::OnLButtonUp(UINT /*nFlags*/, CPoint /*point*/)
 			m_dlTab.SetCurSel(downloadlistctrl.m_curTab);
 		downloadlistctrl.Invalidate();
 	}
+}
+
+void CTransferWnd::CancelCategoryDrag(bool bResetTabSelection)
+{
+	if (!m_bIsDragging && m_pDragImage == NULL)
+		return;
+
+	if (::GetCapture() == m_hWnd)
+		::ReleaseCapture();
+	m_bIsDragging = false;
+
+	if (m_pDragImage != NULL) {
+		m_pDragImage->DragLeave(GetDesktopWindow());
+		m_pDragImage->EndDrag();
+		delete m_pDragImage;
+		m_pDragImage = NULL;
+	}
+	m_nDropIndex = -1;
+
+	if (bResetTabSelection)
+		m_dlTab.SetCurSel(downloadlistctrl.m_curTab);
+}
+
+void CTransferWnd::OnCancelMode()
+{
+	CancelCategoryDrag(true);
+	CResizableFormView::OnCancelMode();
 }
 
 BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM)
