@@ -32,10 +32,8 @@ namespace HttpTransfer
 class CRegisteredInternetHandle
 {
 public:
-	CRegisteredInternetHandle(CTransferCancellation::InternetHandleSlot eSlot, const std::shared_ptr<CTransferCancellation>& pCancellation) noexcept
-		: m_eSlot(eSlot)
-		, m_pCancellation(pCancellation)
-		, m_hInternet(NULL)
+	CRegisteredInternetHandle() noexcept
+		: m_hInternet(NULL)
 	{
 	}
 
@@ -59,30 +57,14 @@ public:
 
 	void Reset(HINTERNET hInternet = NULL) noexcept
 	{
-		if (m_hInternet != NULL && m_hInternet != hInternet) {
-			bool bCloseHandle = true;
-			if (m_pCancellation)
-				bCloseHandle = m_pCancellation->ReleaseHandle(m_eSlot, m_hInternet);
-			if (bCloseHandle)
-				::InternetCloseHandle(m_hInternet);
-		}
+		if (m_hInternet != NULL && m_hInternet != hInternet)
+			::InternetCloseHandle(m_hInternet);
 
 		m_hInternet = NULL;
-		if (hInternet == NULL)
-			return;
-
-		if (m_pCancellation) {
-			if (!m_pCancellation->RegisterHandle(m_eSlot, hInternet)) {
-				::InternetCloseHandle(hInternet);
-				return;
-			}
-		}
 		m_hInternet = hInternet;
 	}
 
 private:
-	CTransferCancellation::InternetHandleSlot m_eSlot;
-	std::shared_ptr<CTransferCancellation> m_pCancellation;
 	HINTERNET m_hInternet;
 };
 
@@ -100,15 +82,6 @@ namespace
 	bool HasTransferDeadlineExpired(ULONGLONG ullStartTick, ULONGLONG ullTotalTimeoutMs)
 	{
 		return ullTotalTimeoutMs != 0 && ::GetTickCount64() - ullStartTick >= ullTotalTimeoutMs;
-	}
-
-	bool IsTransferCancelled(const std::shared_ptr<CTransferCancellation>& pCancellation, CString& strError)
-	{
-		if (!pCancellation || !pCancellation->IsCancelled())
-			return false;
-
-		strError = _T("HTTP transfer cancelled");
-		return true;
 	}
 
 	bool CrackHttpUrl(const CString& strUrl, URL_COMPONENTS& components, TCHAR (&szHostName)[INTERNET_MAX_HOST_NAME_LENGTH], TCHAR (&szUrlPath)[2048], TCHAR (&szExtraInfo)[2048], CString& strError)
@@ -133,20 +106,14 @@ namespace
 		return true;
 	}
 
-	bool OpenGetRequest(const SRequest& request, CString& strError, const std::shared_ptr<CTransferCancellation>& pCancellation, CRegisteredInternetHandle& hInternetSession, CRegisteredInternetHandle& hHttpConnection, CRegisteredInternetHandle& hHttpFile)
+	bool OpenGetRequest(const SRequest& request, CString& strError, CRegisteredInternetHandle& hInternetSession, CRegisteredInternetHandle& hHttpConnection, CRegisteredInternetHandle& hHttpFile)
 	{
-		if (IsTransferCancelled(pCancellation, strError))
-			return false;
-
 		const CString strUserAgent = request.strUserAgent.IsEmpty() ? CString(AfxGetAppName()) : request.strUserAgent;
 		hInternetSession.Reset(::InternetOpen(strUserAgent, HttpTransferSeams::GetInternetOpenTypeForSystemProxyMode(request.bUseWindowsSystemProxy), NULL, NULL, 0));
 		if (!hInternetSession) {
-			if (!IsTransferCancelled(pCancellation, strError))
-				strError.Format(_T("InternetOpen failed (%u)"), ::GetLastError());
+			strError.Format(_T("InternetOpen failed (%u)"), ::GetLastError());
 			return false;
 		}
-		if (IsTransferCancelled(pCancellation, strError))
-			return false;
 		if (!SetInternetTimeout(hInternetSession.Get(), INTERNET_OPTION_CONNECT_TIMEOUT, request.dwConnectTimeoutMs, strError))
 			return false;
 
@@ -171,12 +138,9 @@ namespace
 			0,
 			0));
 		if (!hHttpConnection) {
-			if (!IsTransferCancelled(pCancellation, strError))
-				strError.Format(_T("InternetConnect failed (%u)"), ::GetLastError());
+			strError.Format(_T("InternetConnect failed (%u)"), ::GetLastError());
 			return false;
 		}
-		if (IsTransferCancelled(pCancellation, strError))
-			return false;
 
 		LPCTSTR pszAcceptTypes[] = { _T("*/*"), NULL };
 		DWORD dwFlags = INTERNET_FLAG_RELOAD | INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_NO_COOKIES;
@@ -185,12 +149,9 @@ namespace
 
 		hHttpFile.Reset(::HttpOpenRequest(hHttpConnection.Get(), _T("GET"), strObject, NULL, NULL, pszAcceptTypes, dwFlags, 0));
 		if (!hHttpFile) {
-			if (!IsTransferCancelled(pCancellation, strError))
-				strError.Format(_T("HttpOpenRequest failed (%u)"), ::GetLastError());
+			strError.Format(_T("HttpOpenRequest failed (%u)"), ::GetLastError());
 			return false;
 		}
-		if (IsTransferCancelled(pCancellation, strError))
-			return false;
 		if (!SetInternetTimeout(hHttpFile.Get(), INTERNET_OPTION_SEND_TIMEOUT, request.dwSendTimeoutMs, strError)
 			|| !SetInternetTimeout(hHttpFile.Get(), INTERNET_OPTION_RECEIVE_TIMEOUT, request.dwReceiveTimeoutMs, strError))
 			return false;
@@ -199,15 +160,10 @@ namespace
 		if (strHeaders.Find(_T("Accept-Encoding:")) < 0)
 			strHeaders.Append(_T("Accept-Encoding: identity\r\n"));
 
-		if (IsTransferCancelled(pCancellation, strError))
-			return false;
 		if (!::HttpSendRequest(hHttpFile.Get(), strHeaders.IsEmpty() ? NULL : (LPCTSTR)strHeaders, strHeaders.GetLength(), NULL, 0)) {
-			if (!IsTransferCancelled(pCancellation, strError))
-				strError.Format(_T("HttpSendRequest failed (%u)"), ::GetLastError());
+			strError.Format(_T("HttpSendRequest failed (%u)"), ::GetLastError());
 			return false;
 		}
-		if (IsTransferCancelled(pCancellation, strError))
-			return false;
 
 		DWORD dwStatusCode = 0;
 		DWORD dwStatusLength = sizeof(dwStatusCode);
@@ -246,69 +202,6 @@ namespace
 	}
 }
 
-CTransferCancellation::CTransferCancellation() noexcept
-	: m_hInternet{}
-	, m_bCancelled(false)
-{
-}
-
-void CTransferCancellation::Cancel() noexcept
-{
-	HINTERNET ahInternet[static_cast<size_t>(InternetHandleSlot::Count)] = {};
-
-	{
-		CSingleLock lock(&m_lock, TRUE);
-		m_bCancelled = true;
-		for (size_t uIndex = 0; uIndex < static_cast<size_t>(InternetHandleSlot::Count); ++uIndex) {
-			ahInternet[uIndex] = m_hInternet[uIndex];
-			m_hInternet[uIndex] = NULL;
-		}
-	}
-
-	for (size_t uIndex = static_cast<size_t>(InternetHandleSlot::Count); uIndex > 0; --uIndex) {
-		HINTERNET hInternet = ahInternet[uIndex - 1];
-		if (hInternet != NULL)
-			::InternetCloseHandle(hInternet);
-	}
-}
-
-bool CTransferCancellation::IsCancelled() const noexcept
-{
-	CSingleLock lock(&m_lock, TRUE);
-	return m_bCancelled;
-}
-
-bool CTransferCancellation::RegisterHandle(InternetHandleSlot eSlot, HINTERNET hInternet) noexcept
-{
-	if (hInternet == NULL)
-		return false;
-
-	CSingleLock lock(&m_lock, TRUE);
-	if (!HttpTransferSeams::ShouldRegisterInternetHandleForCancellationState(m_bCancelled))
-		return false;
-
-	const size_t uSlot = static_cast<size_t>(eSlot);
-	ASSERT(uSlot < static_cast<size_t>(InternetHandleSlot::Count));
-	ASSERT(m_hInternet[uSlot] == NULL);
-	m_hInternet[uSlot] = hInternet;
-	return true;
-}
-
-bool CTransferCancellation::ReleaseHandle(InternetHandleSlot eSlot, HINTERNET hInternet) noexcept
-{
-	if (hInternet == NULL)
-		return false;
-
-	CSingleLock lock(&m_lock, TRUE);
-	const size_t uSlot = static_cast<size_t>(eSlot);
-	ASSERT(uSlot < static_cast<size_t>(InternetHandleSlot::Count));
-	if (m_hInternet[uSlot] != hInternet)
-		return false;
-
-	m_hInternet[uSlot] = NULL;
-	return true;
-}
-
 bool CreateTempPathInDirectory(const CString& strDirectory, LPCTSTR pszPrefix, CString& strTempPath, CString& strError)
 {
 	LongPathSeams::PathString strTempPathLong;
@@ -334,14 +227,14 @@ SRequest MakeRequest(HttpTransferSeams::ERequestProfile eProfile, const CString&
 	return request;
 }
 
-bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CString& strError, const std::shared_ptr<CTransferCancellation>& pCancellation, const ProgressCallback& progressCallback)
+bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CString& strError, const ProgressCallback& progressCallback)
 {
 	strError.Empty();
 
-	CRegisteredInternetHandle hInternetSession(CTransferCancellation::InternetHandleSlot::Session, pCancellation);
-	CRegisteredInternetHandle hHttpConnection(CTransferCancellation::InternetHandleSlot::Connection, pCancellation);
-	CRegisteredInternetHandle hHttpFile(CTransferCancellation::InternetHandleSlot::Request, pCancellation);
-	if (!OpenGetRequest(request, strError, pCancellation, hInternetSession, hHttpConnection, hHttpFile))
+	CRegisteredInternetHandle hInternetSession;
+	CRegisteredInternetHandle hHttpConnection;
+	CRegisteredInternetHandle hHttpFile;
+	if (!OpenGetRequest(request, strError, hInternetSession, hHttpConnection, hHttpFile))
 		return false;
 
 	const ULONGLONG ullContentLength = QueryContentLength(hHttpFile.Get());
@@ -360,18 +253,13 @@ bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CStri
 	ULONGLONG ullTotalBytesRead = 0;
 	bool bSuccess = true;
 	do {
-		if (IsTransferCancelled(pCancellation, strError)) {
-			bSuccess = false;
-			break;
-		}
 		if (HasTransferDeadlineExpired(ullTransferStartTick, request.ullTotalTimeoutMs)) {
 			strError.Format(_T("HTTP transfer timed out after %u seconds"), static_cast<unsigned>(request.ullTotalTimeoutMs / 1000ull));
 			bSuccess = false;
 			break;
 		}
 		if (!::InternetReadFile(hHttpFile.Get(), buffer, sizeof(buffer), &dwBytesRead)) {
-			if (!IsTransferCancelled(pCancellation, strError))
-				strError.Format(_T("InternetReadFile failed (%u)"), ::GetLastError());
+			strError.Format(_T("InternetReadFile failed (%u)"), ::GetLastError());
 			bSuccess = false;
 			break;
 		}
@@ -387,11 +275,8 @@ bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CStri
 				break;
 			}
 			ullTotalBytesRead += dwBytesRead;
-			if (progressCallback && !progressCallback(ullTotalBytesRead, ullContentLength)) {
-				strError = _T("HTTP transfer cancelled");
-				bSuccess = false;
-				break;
-			}
+			if (progressCallback)
+				progressCallback(ullTotalBytesRead, ullContentLength);
 		}
 	} while (dwBytesRead != 0);
 
@@ -405,15 +290,15 @@ bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CStri
 	return bSuccess;
 }
 
-bool FetchToMemory(const SRequest& request, std::string& strResponse, CString& strError, const std::shared_ptr<CTransferCancellation>& pCancellation, const ProgressCallback& progressCallback)
+bool FetchToMemory(const SRequest& request, std::string& strResponse, CString& strError, const ProgressCallback& progressCallback)
 {
 	strResponse.clear();
 	strError.Empty();
 
-	CRegisteredInternetHandle hInternetSession(CTransferCancellation::InternetHandleSlot::Session, pCancellation);
-	CRegisteredInternetHandle hHttpConnection(CTransferCancellation::InternetHandleSlot::Connection, pCancellation);
-	CRegisteredInternetHandle hHttpFile(CTransferCancellation::InternetHandleSlot::Request, pCancellation);
-	if (!OpenGetRequest(request, strError, pCancellation, hInternetSession, hHttpConnection, hHttpFile))
+	CRegisteredInternetHandle hInternetSession;
+	CRegisteredInternetHandle hHttpConnection;
+	CRegisteredInternetHandle hHttpFile;
+	if (!OpenGetRequest(request, strError, hInternetSession, hHttpConnection, hHttpFile))
 		return false;
 
 	const ULONGLONG ullContentLength = QueryContentLength(hHttpFile.Get());
@@ -424,15 +309,12 @@ bool FetchToMemory(const SRequest& request, std::string& strResponse, CString& s
 	BYTE buffer[16 * 1024] = {};
 	DWORD dwBytesRead = 0;
 	do {
-		if (IsTransferCancelled(pCancellation, strError))
-			return false;
 		if (HasTransferDeadlineExpired(ullTransferStartTick, request.ullTotalTimeoutMs)) {
 			strError.Format(_T("HTTP transfer timed out after %u seconds"), static_cast<unsigned>(request.ullTotalTimeoutMs / 1000ull));
 			return false;
 		}
 		if (!::InternetReadFile(hHttpFile.Get(), buffer, sizeof(buffer), &dwBytesRead)) {
-			if (!IsTransferCancelled(pCancellation, strError))
-				strError.Format(_T("InternetReadFile failed (%u)"), ::GetLastError());
+			strError.Format(_T("InternetReadFile failed (%u)"), ::GetLastError());
 			return false;
 		}
 
@@ -440,10 +322,8 @@ bool FetchToMemory(const SRequest& request, std::string& strResponse, CString& s
 			if (!CheckStreamingResponseLimit(static_cast<ULONGLONG>(strResponse.size()), dwBytesRead, request.ullMaxResponseBytes, strError))
 				return false;
 			strResponse.append(reinterpret_cast<const char*>(buffer), dwBytesRead);
-			if (progressCallback && !progressCallback(static_cast<ULONGLONG>(strResponse.size()), ullContentLength)) {
-				strError = _T("HTTP transfer cancelled");
-				return false;
-			}
+			if (progressCallback)
+				progressCallback(static_cast<ULONGLONG>(strResponse.size()), ullContentLength);
 		}
 	} while (dwBytesRead != 0);
 

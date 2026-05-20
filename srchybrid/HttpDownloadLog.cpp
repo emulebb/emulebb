@@ -70,10 +70,9 @@ namespace HttpDownloadLog
 					(LPCTSTR)FormatDownloadBytes(ullBytesRead));
 				ullLastLogTick = ullNow;
 			}
-			return true;
 		};
 
-		if (!HttpTransfer::DownloadToFile(request, strTargetPath, strError, std::shared_ptr<HttpTransfer::CTransferCancellation>(), progressCallback)) {
+		if (!HttpTransfer::DownloadToFile(request, strTargetPath, strError, progressCallback)) {
 			AddDebugLogLine(false, _T("%s download failed from %s: %s"),
 				(LPCTSTR)strLabel,
 				(LPCTSTR)strUrl,

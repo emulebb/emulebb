@@ -72,11 +72,6 @@ namespace HttpTransferSeams
 		return bUseWindowsSystemProxy ? INTERNET_OPEN_TYPE_PRECONFIG : INTERNET_OPEN_TYPE_DIRECT;
 	}
 
-	inline bool ShouldRegisterInternetHandleForCancellationState(bool bCancelled) noexcept
-	{
-		return !bCancelled;
-	}
-
 	inline bool IsKnownContentLengthAllowed(const ULONGLONG ullContentLength, const ULONGLONG ullMaxResponseBytes) noexcept
 	{
 		return ullMaxResponseBytes == 0 || ullContentLength == 0 || ullContentLength <= ullMaxResponseBytes;

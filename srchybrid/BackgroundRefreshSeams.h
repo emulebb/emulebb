@@ -2,12 +2,10 @@
 
 #include <memory>
 
-#include "DirectDownload.h"
-
 namespace BackgroundRefreshSeams
 {
 /**
- * @brief Shared queue/cancellation state for one owner-managed background refresh worker.
+ * @brief Shared queue state for one owner-managed background refresh worker.
  */
 struct SRefreshState
 {
@@ -17,7 +15,6 @@ struct SRefreshState
 	}
 
 	volatile LONG lQueued;
-	std::shared_ptr<DirectDownload::CDownloadCancellation> pCancellation;
 };
 
 /**
@@ -45,21 +42,18 @@ inline bool TryMarkRefreshQueued(SRefreshState& rState)
 }
 
 /**
- * @brief Clears queued state and releases any owner-visible cancellation handle.
+ * @brief Clears queued state after the worker has finished or failed to start.
  */
 inline void ClearRefreshQueued(SRefreshState& rState)
 {
 	(void)::InterlockedExchange(&rState.lQueued, 0);
-	rState.pCancellation.reset();
 }
 
 /**
- * @brief Cancels any live transfer and clears queued state during owner teardown.
+ * @brief Clears queued state during owner teardown without interrupting an in-flight worker.
  */
-inline void CancelAndClearRefresh(SRefreshState& rState)
+inline void ClearRefreshOnOwnerTeardown(SRefreshState& rState)
 {
-	if (rState.pCancellation)
-		rState.pCancellation->Cancel();
 	ClearRefreshQueued(rState);
 }
 
@@ -70,7 +64,6 @@ template <typename Context, typename StartWorkerFn, typename CleanupContextFn>
 inline bool StartQueuedRefreshWorker(
 	SRefreshState& rState,
 	std::unique_ptr<Context>& pContext,
-	const std::shared_ptr<DirectDownload::CDownloadCancellation>& pCancellation,
 	StartWorkerFn startWorkerFn,
 	CleanupContextFn cleanupContextFn)
 {
@@ -80,7 +73,6 @@ inline bool StartQueuedRefreshWorker(
 		return false;
 	}
 
-	rState.pCancellation = pCancellation;
 	Context *pThreadContext = pContext.release();
 	if (!startWorkerFn(pThreadContext)) {
 		std::unique_ptr<Context> pCleanupContext(pThreadContext);

@@ -179,7 +179,6 @@
     <ClCompile Include="CreditsDlg.cpp" />
     <ClCompile Include="CustomAutoComplete.cpp" />
     <ClCompile Include="DeadSourceList.cpp" />
-    <ClCompile Include="DirectDownload.cpp" />
     <ClCompile Include="DialogMinTrayBtn.cpp" />
     <ClCompile Include="DirectDownloadDlg.cpp" />
     <ClCompile Include="DirectoryTreeCtrl.cpp" />
@@ -474,7 +473,6 @@
     <ClInclude Include="DebugHelpers.h" />
     <ClInclude Include="DiagnosticSnapshotSeams.h" />
     <ClInclude Include="DialogInputParsingSeams.h" />
-    <ClInclude Include="DirectDownload.h" />
     <ClInclude Include="DirectDownloadSeams.h" />
     <ClInclude Include="DialogMinTrayBtn.h" />
     <ClInclude Include="DirectDownloadDlg.h" />

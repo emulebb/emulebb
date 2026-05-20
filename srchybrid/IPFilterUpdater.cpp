@@ -19,13 +19,13 @@
 #include <time.h>
 #include "IPFilterUpdater.h"
 #include "BackgroundRefreshSeams.h"
-#include "DirectDownload.h"
 #include "emule.h"
 #include "IPFilter.h"
 #include "IPFilterSeams.h"
 #include "IPFilterUpdateSeams.h"
 #include "Preferences.h"
 #include "HttpDownloadLog.h"
+#include "HttpTransfer.h"
 #include "emuledlg.h"
 #include "OtherFunctions.h"
 #include "ZipFile.h"
@@ -52,7 +52,6 @@ struct CIPFilterUpdater::SBackgroundRefreshContext
 	CString strInstallPath;
 	HWND hNotifyWnd;
 	std::shared_ptr<BackgroundRefreshSeams::SRefreshState> pRefreshState;
-	std::shared_ptr<DirectDownload::CDownloadCancellation> pCancellation;
 	bool bProxyEnabled;
 };
 
@@ -71,14 +70,11 @@ namespace
 	}
 
 	/**
-	 * @brief Reports IP-filter update failures either through a modal message or noninteractive logging.
+	 * @brief Reports IP-filter update failures through status logging.
 	 */
-	void ReportIPFilterUpdateError(const CString& strError, bool bInteractive)
+	void ReportIPFilterUpdateError(const CString& strError)
 	{
-		if (bInteractive)
-			AfxMessageBox(strError, MB_ICONERROR);
-		else
-			theApp.QueueLogLine(false, GetResString(IDS_IPFILTER_AUTO_UPDATE_FAILED), (LPCTSTR)strError);
+		theApp.QueueLogLine(false, GetResString(IDS_IPFILTER_AUTO_UPDATE_FAILED), (LPCTSTR)strError);
 	}
 
 	/**
@@ -86,7 +82,7 @@ namespace
 	 */
 	bool CreateIPFilterTempPath(LPCTSTR pszPrefix, CString& strTempPath, CString& strError)
 	{
-		return DirectDownload::CreateTempPathInDirectory(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR), pszPrefix, strTempPath, strError);
+		return HttpTransfer::CreateTempPathInDirectory(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR), pszPrefix, strTempPath, strError);
 	}
 
 	void DeliverBackgroundRefreshCompletion(HWND hNotifyWnd, UINT uMessage, bool bUpdated, const std::shared_ptr<BackgroundRefreshSeams::SRefreshState>& pRefreshState, LPCTSTR pszComponentName)
@@ -287,7 +283,7 @@ CIPFilterUpdater::CIPFilterUpdater()
 
 CIPFilterUpdater::~CIPFilterUpdater()
 {
-	BackgroundRefreshSeams::CancelAndClearRefresh(*m_pBackgroundRefreshState);
+	BackgroundRefreshSeams::ClearRefreshOnOwnerTeardown(*m_pBackgroundRefreshState);
 }
 
 bool CIPFilterUpdater::UpdateFromUrlInteractive(const CString& strUrl)
@@ -300,7 +296,7 @@ bool CIPFilterUpdater::UpdateFromUrlInteractive(const CString& strUrl)
 	CString strTempFilePath;
 	CString strError;
 	if (!CreateIPFilterTempPath(_T("ipf"), strTempFilePath, strError)) {
-		ReportIPFilterUpdateError(strError, true);
+		ReportIPFilterUpdateError(strError);
 		return false;
 	}
 
@@ -310,14 +306,14 @@ bool CIPFilterUpdater::UpdateFromUrlInteractive(const CString& strUrl)
 		if (!strError.IsEmpty())
 			strDisplayError.AppendFormat(_T("\r\n\r\n%s"), (LPCTSTR)strError);
 		strError = strDisplayError;
-		ReportIPFilterUpdateError(strError, true);
+		ReportIPFilterUpdateError(strError);
 		return false;
 	}
 
 	const bool bUpdated = InstallDownloadedIPFilter(strTempFilePath, true, strError);
 	(void)LongPathSeams::DeleteFileIfExists(strTempFilePath);
 	if (!bUpdated) {
-		ReportIPFilterUpdateError(strError, true);
+		ReportIPFilterUpdateError(strError);
 		return false;
 	}
 
@@ -327,7 +323,7 @@ bool CIPFilterUpdater::UpdateFromUrlInteractive(const CString& strUrl)
 		strLoaded.Format(GetResString(IDS_IPFILTERLOADED), static_cast<UINT>(nLoaded));
 		CString strWarning(GetResString(IDS_DWLIPFILTERFAILED));
 		strWarning.AppendFormat(_T("\r\n\r\n%s"), (LPCTSTR)strLoaded);
-		ReportIPFilterUpdateError(strWarning, true);
+		ReportIPFilterUpdateError(strWarning);
 		return false;
 	}
 	return true;
@@ -367,13 +363,11 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 	}
 
 	std::unique_ptr<SBackgroundRefreshContext> pContext(new SBackgroundRefreshContext);
-	std::shared_ptr<DirectDownload::CDownloadCancellation> pCancellation(std::make_shared<DirectDownload::CDownloadCancellation>());
 	pContext->strDownloadUrl = strUpdateUrl;
 	pContext->strArchiveTempPath = strArchiveTempPath;
 	pContext->strInstallPath = CIPFilter::GetDefaultFilePath();
 	pContext->hNotifyWnd = hNotifyWnd;
 	pContext->pRefreshState = m_pBackgroundRefreshState;
-	pContext->pCancellation = pCancellation;
 	pContext->bProxyEnabled = thePrefs.GetProxySettings().bUseProxy;
 
 	const auto cleanupContext = [](const SBackgroundRefreshContext& context) {
@@ -382,7 +376,7 @@ bool CIPFilterUpdater::QueueBackgroundRefresh()
 	const auto startWorker = [](SBackgroundRefreshContext *pThreadContext) -> CWinThread* {
 		return AfxBeginThread(BackgroundRefreshThread, pThreadContext, THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
 	};
-	if (!BackgroundRefreshSeams::StartQueuedRefreshWorker(*m_pBackgroundRefreshState, pContext, pCancellation, startWorker, cleanupContext)) {
+	if (!BackgroundRefreshSeams::StartQueuedRefreshWorker(*m_pBackgroundRefreshState, pContext, startWorker, cleanupContext)) {
 		if (!BackgroundRefreshSeams::IsRefreshQueued(*m_pBackgroundRefreshState))
 			AddDebugLogLine(false, _T("IPFilter: failed to start background update thread."));
 		return false;
@@ -422,15 +416,15 @@ UINT AFX_CDECL CIPFilterUpdater::BackgroundRefreshThread(LPVOID pParam)
 		theApp.QueueLogLine(false, _T("IPFilter: proxy-backed automatic refresh is ignored; use the manual updater or a VPN for network privacy."));
 
 	CString strError;
-	if (!DirectDownload::DownloadUrlToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, strError, HttpTransferSeams::ERequestProfile::IPFilter, pContext->pCancellation)) {
+	if (!HttpDownloadLog::DownloadToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, GetResString(IDS_DWL_IPFILTERFILE), HttpTransferSeams::ERequestProfile::IPFilter, strError)) {
 		CString strDownloadError;
 		strDownloadError.Format(_T("%s (%s)"), (LPCTSTR)pContext->strDownloadUrl, (LPCTSTR)strError);
-		ReportIPFilterUpdateError(strDownloadError, false);
+		ReportIPFilterUpdateError(strDownloadError);
 		goto cleanup;
 	}
 
 	if (!InstallDownloadedIPFilter(pContext->strArchiveTempPath, false, strError)) {
-		ReportIPFilterUpdateError(strError, false);
+		ReportIPFilterUpdateError(strError);
 		goto cleanup;
 	}
 

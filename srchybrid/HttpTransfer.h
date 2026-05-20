@@ -16,11 +16,8 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
-#include <afxmt.h>
 #include "HttpTransferSeams.h"
-#include <cstddef>
 #include <functional>
-#include <memory>
 #include <string>
 #include <wininet.h>
 
@@ -33,37 +30,6 @@
  */
 namespace HttpTransfer
 {
-	class CRegisteredInternetHandle;
-
-	class CTransferCancellation
-	{
-	public:
-		CTransferCancellation() noexcept;
-		CTransferCancellation(const CTransferCancellation&) = delete;
-		CTransferCancellation& operator=(const CTransferCancellation&) = delete;
-
-		void Cancel() noexcept;
-		bool IsCancelled() const noexcept;
-
-		enum class InternetHandleSlot : unsigned char
-		{
-			Session = 0,
-			Connection,
-			Request,
-			Count
-		};
-
-	private:
-		friend class CRegisteredInternetHandle;
-
-		bool RegisterHandle(InternetHandleSlot eSlot, HINTERNET hInternet) noexcept;
-		bool ReleaseHandle(InternetHandleSlot eSlot, HINTERNET hInternet) noexcept;
-
-		mutable CCriticalSection m_lock;
-		HINTERNET m_hInternet[static_cast<size_t>(InternetHandleSlot::Count)];
-		bool m_bCancelled;
-	};
-
 	struct SRequest
 	{
 		CString strUrl;
@@ -77,10 +43,10 @@ namespace HttpTransfer
 		bool bUseWindowsSystemProxy = false;
 	};
 
-	typedef std::function<bool(ULONGLONG ullBytesRead, ULONGLONG ullContentLength)> ProgressCallback;
+	typedef std::function<void(ULONGLONG ullBytesRead, ULONGLONG ullContentLength)> ProgressCallback;
 
 	SRequest MakeRequest(HttpTransferSeams::ERequestProfile eProfile, const CString& strUrl = CString());
 	bool CreateTempPathInDirectory(const CString& strDirectory, LPCTSTR pszPrefix, CString& strTempPath, CString& strError);
-	bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CString& strError, const std::shared_ptr<CTransferCancellation>& pCancellation = std::shared_ptr<CTransferCancellation>(), const ProgressCallback& progressCallback = ProgressCallback());
-	bool FetchToMemory(const SRequest& request, std::string& strResponse, CString& strError, const std::shared_ptr<CTransferCancellation>& pCancellation = std::shared_ptr<CTransferCancellation>(), const ProgressCallback& progressCallback = ProgressCallback());
+	bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CString& strError, const ProgressCallback& progressCallback = ProgressCallback());
+	bool FetchToMemory(const SRequest& request, std::string& strResponse, CString& strError, const ProgressCallback& progressCallback = ProgressCallback());
 }

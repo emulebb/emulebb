@@ -23,9 +23,10 @@
 #include <vector>
 #include "GeoLocation.h"
 #include "BackgroundRefreshSeams.h"
-#include "DirectDownload.h"
 #include "emule.h"
 #include "Preferences.h"
+#include "HttpDownloadLog.h"
+#include "HttpTransfer.h"
 #include "UserMsgs.h"
 #include "GZipFile.h"
 #include "emuledlg.h"
@@ -708,7 +709,7 @@ void CGeoLocation::Load()
 
 void CGeoLocation::Unload()
 {
-	BackgroundRefreshSeams::CancelAndClearRefresh(*m_pBackgroundRefreshState);
+	BackgroundRefreshSeams::ClearRefreshOnOwnerTeardown(*m_pBackgroundRefreshState);
 	delete m_pDatabase;
 	m_pDatabase = NULL;
 	m_tBuildEpoch = 0;
@@ -750,25 +751,23 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 	CString strArchiveTempPath;
 	CString strDatabaseTempPath;
 	CString strError;
-	if (!DirectDownload::CreateTempPathInDirectory(strConfigDir, _T("geo"), strArchiveTempPath, strError)) {
+	if (!HttpTransfer::CreateTempPathInDirectory(strConfigDir, _T("geo"), strArchiveTempPath, strError)) {
 		AddDebugLogLine(false, _T("%s"), (LPCTSTR)strError);
 		return false;
 	}
-	if (!DirectDownload::CreateTempPathInDirectory(strConfigDir, _T("gdb"), strDatabaseTempPath, strError)) {
+	if (!HttpTransfer::CreateTempPathInDirectory(strConfigDir, _T("gdb"), strDatabaseTempPath, strError)) {
 		(void)LongPathSeams::DeleteFileIfExists(strArchiveTempPath);
 		AddDebugLogLine(false, _T("%s"), (LPCTSTR)strError);
 		return false;
 	}
 
 	std::unique_ptr<SBackgroundRefreshContext> pContext(new SBackgroundRefreshContext);
-	std::shared_ptr<DirectDownload::CDownloadCancellation> pCancellation(std::make_shared<DirectDownload::CDownloadCancellation>());
 	pContext->strDownloadUrl = ExpandConfiguredUpdateUrlTemplate();
 	pContext->strArchiveTempPath = strArchiveTempPath + _T(".gz");
 	pContext->strDatabaseTempPath = strDatabaseTempPath;
 	pContext->strInstallPath = strDatabasePath;
 	pContext->hNotifyWnd = hNotifyWnd;
 	pContext->pRefreshState = m_pBackgroundRefreshState;
-	pContext->pCancellation = pCancellation;
 	pContext->bProxyEnabled = thePrefs.GetProxySettings().bUseProxy;
 
 	(void)LongPathSeams::DeleteFileIfExists(pContext->strArchiveTempPath);
@@ -780,7 +779,7 @@ bool CGeoLocation::QueueRefresh(bool bForce, bool bUserInitiated)
 	const auto startWorker = [](SBackgroundRefreshContext *pThreadContext) -> CWinThread* {
 		return AfxBeginThread(BackgroundRefreshThread, pThreadContext, THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
 	};
-	if (!BackgroundRefreshSeams::StartQueuedRefreshWorker(*m_pBackgroundRefreshState, pContext, pCancellation, startWorker, cleanupContext)) {
+	if (!BackgroundRefreshSeams::StartQueuedRefreshWorker(*m_pBackgroundRefreshState, pContext, startWorker, cleanupContext)) {
 		if (bUserInitiated)
 			AddLogLine(false, _T("GeoLocation: refresh already in progress."));
 		else if (!BackgroundRefreshSeams::IsRefreshQueued(*m_pBackgroundRefreshState))
@@ -1011,7 +1010,7 @@ UINT AFX_CDECL CGeoLocation::BackgroundRefreshThread(LPVOID pParam)
 	}
 
 	CString strError;
-	if (!DirectDownload::DownloadUrlToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, strError, HttpTransferSeams::ERequestProfile::GeoDatabase, pContext->pCancellation)) {
+	if (!HttpDownloadLog::DownloadToFile(pContext->strDownloadUrl, pContext->strArchiveTempPath, _T("GeoLocation database"), HttpTransferSeams::ERequestProfile::GeoDatabase, strError)) {
 		AddDebugLogLine(false, _T("GeoLocation: download failed from %s (%s)"), (LPCTSTR)pContext->strDownloadUrl, (LPCTSTR)strError);
 		goto cleanup;
 	}
