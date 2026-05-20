@@ -903,29 +903,12 @@ bool CemuleApp::CanWritePartMetFiles(LPCTSTR pszPath, const bool bForceRefresh, 
 	if (!TryResolvePartMetWriteGuardVolume(pszPath, bForceRefresh, strVolumeRoot))
 		return true;
 
-	{
-		CSingleLock lock(&m_partMetWriteGuardLock, TRUE);
-		if (bForceRefresh)
-			m_aPartMetWriteGuardByVolume.RemoveKey(strVolumeRoot);
-		else {
-			void *pCachedCanWrite = NULL;
-			const bool bHasCachedResult = m_aPartMetWriteGuardByVolume.Lookup(strVolumeRoot, pCachedCanWrite);
-			const PartFilePersistenceSeams::PartMetWriteGuardDecision cachedDecision = PartFilePersistenceSeams::ResolvePartMetWriteGuard(bHasCachedResult, pCachedCanWrite != NULL, bForceRefresh, 0u);
-			if (cachedDecision.UseCachedResult)
-				return cachedDecision.CanWrite;
-		}
-	}
-
 	const uint64 nFreeBytes = GetFreeDiskSpaceX(strVolumeRoot);
 	const uint64 nRequiredBytes = theApp.downloadqueue != NULL
 		? theApp.downloadqueue->GetRequiredFreeDiskSpaceForPath(pszPath)
 		: thePrefs.GetEffectiveMinFreeDiskSpaceForPath(pszPath);
 	const PartFilePersistenceSeams::PartMetWriteGuardDecision refreshedDecision = PartFilePersistenceSeams::ResolvePartMetWriteGuard(false, false, bForceRefresh, nFreeBytes, nRequiredBytes);
 	const bool bCanWrite = refreshedDecision.CanWrite;
-	{
-		CSingleLock lock(&m_partMetWriteGuardLock, TRUE);
-		m_aPartMetWriteGuardByVolume.SetAt(strVolumeRoot, bCanWrite ? reinterpret_cast<void*>(1) : NULL);
-	}
 
 	if (!bCanWrite) {
 		QueueDebugLogLineEx(LOG_WARNING, _T("Part.met disk-space guard blocked metadata writes on \"%s\" (%I64u bytes free, need at least %I64u).")
@@ -970,7 +953,6 @@ void CemuleApp::InvalidatePartMetWriteGuardCache(LPCTSTR pszPath)
 {
 	CSingleLock lock(&m_partMetWriteGuardLock, TRUE);
 	if (pszPath == NULL || pszPath[0] == _T('\0')) {
-		m_aPartMetWriteGuardByVolume.RemoveAll();
 		m_aPartMetWriteGuardPathToVolume.RemoveAll();
 		return;
 	}
@@ -980,14 +962,7 @@ void CemuleApp::InvalidatePartMetWriteGuardCache(LPCTSTR pszPath)
 	strPathKey.MakeLower();
 	if (m_aPartMetWriteGuardPathToVolume.Lookup(strPathKey, strVolumeRoot)) {
 		m_aPartMetWriteGuardPathToVolume.RemoveKey(strPathKey);
-		m_aPartMetWriteGuardByVolume.RemoveKey(strVolumeRoot);
 		return;
-	}
-
-	lock.Unlock();
-	if (TryGetVolumeIdentityPath(pszPath, strVolumeRoot)) {
-		CSingleLock relock(&m_partMetWriteGuardLock, TRUE);
-		m_aPartMetWriteGuardByVolume.RemoveKey(strVolumeRoot);
 	}
 }
 

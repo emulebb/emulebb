@@ -183,10 +183,9 @@ inline bool CanWritePartMetWithFreeSpace(const uint64_t nFreeBytes, const uint64
 
 inline PartMetWriteGuardDecision ResolvePartMetWriteGuard(const bool bHasCachedResult, const bool bCachedCanWrite, const bool bForceRefresh, const uint64_t nFreeBytes, const uint64_t nRequiredBytes = kMinPartMetWriteFreeBytes)
 {
-	if (bHasCachedResult && bCachedCanWrite && !bForceRefresh) {
-		PartMetWriteGuardDecision decision = { true, bCachedCanWrite };
-		return decision;
-	}
+	(void)bHasCachedResult;
+	(void)bCachedCanWrite;
+	(void)bForceRefresh;
 
 	PartMetWriteGuardDecision decision = { false, CanWritePartMetWithFreeSpace(nFreeBytes, nRequiredBytes) };
 	return decision;
@@ -194,7 +193,9 @@ inline PartMetWriteGuardDecision ResolvePartMetWriteGuard(const bool bHasCachedR
 
 inline bool ShouldReusePartMetWriteCache(const bool bHasCachedResult, const bool bForceRefresh)
 {
-	return bHasCachedResult && !bForceRefresh;
+	(void)bHasCachedResult;
+	(void)bForceRefresh;
+	return false;
 }
 
 inline void StorePartMetWriteGuardState(PartMetWriteGuardState *pState, const bool bCanWrite)

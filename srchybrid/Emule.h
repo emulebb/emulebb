@@ -378,7 +378,6 @@ protected:
 	UINT m_uDroppedLogEntries;
 	// Elandal:ThreadSafeLogging <--
 	CCriticalSection m_partMetWriteGuardLock;
-	CMapStringToPtr m_aPartMetWriteGuardByVolume;
 	CMapStringToString m_aPartMetWriteGuardPathToVolume;
 
 	WSADATA		m_wsaData;
