@@ -54,6 +54,7 @@
 #include "PartFilePreviewSeams.h"
 #include "SearchParamsPolicy.h"
 #include "StringConversion.h"
+#include "SharedDirectoryOps.h"
 #include "VistaDefines.h"
 #include <osrng.h>
 
@@ -473,11 +474,9 @@ void ReplaceCanonicalDirectoryListLocked(CStringList &rTargetList, std::unordere
 {
 	rTargetList.RemoveAll();
 	rLookupKeys.clear();
-	for (POSITION pos = rInputList.GetHeadPosition(); pos != NULL;) {
-		const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(rInputList.GetNext(pos)));
-		if (rLookupKeys.insert(MakeDirectoryListLookupKey(strCanonicalDir)).second)
-			rTargetList.AddTail(strCanonicalDir);
-	}
+	for (POSITION pos = rInputList.GetHeadPosition(); pos != NULL;)
+		(void)SharedDirectoryOps::AddSharedDirectory(rTargetList, rInputList.GetNext(pos), false, [](const CString &) { return true; });
+	RebuildDirectoryLookupKeysLocked(rTargetList, rLookupKeys);
 }
 
 bool AddCanonicalDirectoryIfAbsentLocked(CStringList &rTargetList, std::unordered_set<std::wstring> &rLookupKeys, const CString &rstrDirectory)
@@ -493,13 +492,7 @@ bool AddCanonicalDirectoryIfAbsentLocked(CStringList &rTargetList, std::unordere
 		}
 		return false;
 	}
-	for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;) {
-		const POSITION posCurrent = pos;
-		const CString strExisting(rTargetList.GetNext(pos));
-		if (MakeDirectoryListLookupKey(strExisting) != strLookupKey)
-			continue;
-		if (strExisting.CompareNoCase(strCanonicalDir) != 0)
-			rTargetList.SetAt(posCurrent, strCanonicalDir);
+	if (SharedDirectoryOps::ListContainsEquivalentDirectoryObject(rTargetList, strCanonicalDir)) {
 		rLookupKeys.insert(strLookupKey);
 		return false;
 	}
@@ -512,10 +505,19 @@ bool RemoveCanonicalDirectoryLocked(CStringList &rTargetList, std::unordered_set
 {
 	const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(rstrDirectory));
 	const std::wstring strLookupKey(MakeDirectoryListLookupKey(strCanonicalDir));
+	LongPathSeams::FileSystemObjectIdentity targetIdentity = {};
+	const bool bHasTargetIdentity = LongPathSeams::TryGetResolvedDirectoryIdentity(strCanonicalDir, targetIdentity);
 	for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
-		if (MakeDirectoryListLookupKey(rTargetList.GetNext(pos)) != strLookupKey)
+		const CString strCurrent(rTargetList.GetNext(pos));
+		LongPathSeams::FileSystemObjectIdentity currentIdentity = {};
+		const bool bSameDirectoryObject = bHasTargetIdentity
+			&& LongPathSeams::TryGetResolvedDirectoryIdentity(strCurrent, currentIdentity)
+			&& currentIdentity == targetIdentity;
+		if (MakeDirectoryListLookupKey(strCurrent) != strLookupKey && !bSameDirectoryObject)
+		{
 			continue;
+		}
 		rTargetList.RemoveAt(posCurrent);
 		RebuildDirectoryLookupKeysLocked(rTargetList, rLookupKeys);
 		return true;
@@ -552,11 +554,7 @@ bool ListContainsEquivalentDirectoryLocked(const CStringList &rTargetList, const
 	if (rLookupKeys.find(strLookupKey) != rLookupKeys.end())
 		return true;
 
-	for (POSITION pos = rTargetList.GetHeadPosition(); pos != NULL;) {
-		if (MakeDirectoryListLookupKey(rTargetList.GetNext(pos)) == strLookupKey)
-			return true;
-	}
-	return false;
+	return SharedDirectoryOps::ListContainsEquivalentDirectoryObject(rTargetList, rstrDirectory);
 }
 
 void FilterMonitoredDirectoryStateAgainstSharedListLocked(CStringList &rMonitoredRoots, CStringList &rMonitorOwnedDirs, const CStringList &rSharedDirs, const std::unordered_set<std::wstring> &rSharedLookupKeys)
