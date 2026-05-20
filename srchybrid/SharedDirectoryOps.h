@@ -337,4 +337,72 @@ inline bool RemoveSharedDirectory(CStringList &rList, const CString &rstrDirecto
 	}
 	return bChanged;
 }
+
+/**
+ * @brief Reports whether a normalized directory key is equal to or below another normalized directory key.
+ */
+inline bool IsDirectoryKeySameOrDescendant(const CString &rstrRootKey, const CString &rstrCandidateKey)
+{
+	return rstrRootKey == rstrCandidateKey || IsDirectoryKeyParentOfCandidate(rstrRootKey, rstrCandidateKey);
+}
+
+/**
+ * @brief Reports whether a retained monitored root is nested below a downgraded root.
+ */
+inline bool IsRetainedMonitoredRootProtectedByDowngradedRoot(const CString &rstrRetainedRootKey, const CStringList &rDowngradedRoots)
+{
+	for (POSITION pos = rDowngradedRoots.GetHeadPosition(); pos != NULL;) {
+		if (IsDirectoryKeySameOrDescendant(MakeSharedDirectoryLookupKey(rDowngradedRoots.GetNext(pos)), rstrRetainedRootKey))
+			return true;
+	}
+	return false;
+}
+
+/**
+ * @brief Reports whether one monitor-owned directory still belongs to a retained promoted root.
+ */
+inline bool IsMonitorOwnedDirectoryProtectedByRetainedRoot(const CString &rstrOwnedKey, const CStringList &rRetainedMonitoredRoots, const CStringList &rDowngradedRoots)
+{
+	for (POSITION pos = rRetainedMonitoredRoots.GetHeadPosition(); pos != NULL;) {
+		const CString strRetainedRootKey(MakeSharedDirectoryLookupKey(rRetainedMonitoredRoots.GetNext(pos)));
+		if (IsDirectoryKeySameOrDescendant(strRetainedRootKey, rstrOwnedKey)
+			&& IsRetainedMonitoredRootProtectedByDowngradedRoot(strRetainedRootKey, rDowngradedRoots))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * @brief Reports whether one monitor-owned directory was covered by a downgraded root.
+ */
+inline bool IsMonitorOwnedDirectoryAffectedByDowngradedRoot(const CString &rstrOwnedKey, const CStringList &rDowngradedRoots)
+{
+	for (POSITION pos = rDowngradedRoots.GetHeadPosition(); pos != NULL;) {
+		if (IsDirectoryKeySameOrDescendant(MakeSharedDirectoryLookupKey(rDowngradedRoots.GetNext(pos)), rstrOwnedKey))
+			return true;
+	}
+	return false;
+}
+
+/**
+ * @brief Removes monitor-owned directories lost by downgraded roots while preserving subtrees owned by retained promoted roots.
+ */
+inline bool RemoveMonitorOwnedDirectoriesForDowngradedRoots(CStringList &rMonitorOwnedDirs, const CStringList &rDowngradedRoots, const CStringList &rRetainedMonitoredRoots)
+{
+	bool bChanged = false;
+	for (POSITION pos = rMonitorOwnedDirs.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
+		const CString strOwnedKey(MakeSharedDirectoryLookupKey(rMonitorOwnedDirs.GetNext(pos)));
+		if (!IsMonitorOwnedDirectoryAffectedByDowngradedRoot(strOwnedKey, rDowngradedRoots)
+			|| IsMonitorOwnedDirectoryProtectedByRetainedRoot(strOwnedKey, rRetainedMonitoredRoots, rDowngradedRoots))
+		{
+			continue;
+		}
+		rMonitorOwnedDirs.RemoveAt(posCurrent);
+		bChanged = true;
+	}
+	return bChanged;
+}
 }

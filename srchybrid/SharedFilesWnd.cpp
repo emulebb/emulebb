@@ -22,6 +22,7 @@
 #include "WorkerUiMessageSeams.h"
 #include "OtherFunctions.h"
 #include "SharedFileList.h"
+#include "SharedDirectoryOps.h"
 #include "KnownFile.h"
 #include "UserMsgs.h"
 #include "HelpIDs.h"
@@ -453,10 +454,21 @@ LRESULT CSharedFilesWnd::OnMonitoredSharedDirectoryUpdate(WPARAM wParam, LPARAM)
 		return 0;
 
 	bool bStateChanged = false;
-	for (POSITION pos = pUpdate->liDowngradedRoots.GetHeadPosition(); pos != NULL;) {
-		const CString strRoot(pUpdate->liDowngradedRoots.GetNext(pos));
-		bStateChanged |= thePrefs.RemoveMonitoredSharedRoot(strRoot);
-		bStateChanged |= thePrefs.RemoveMonitorOwnedDirectoriesUnderRoot(strRoot);
+	if (!pUpdate->liDowngradedRoots.IsEmpty()) {
+		CStringList retainedMonitoredRoots;
+		CStringList monitorOwnedDirs;
+		thePrefs.CopyMonitoredSharedRootList(retainedMonitoredRoots);
+		thePrefs.CopyMonitorOwnedDirectoryList(monitorOwnedDirs);
+		for (POSITION pos = pUpdate->liDowngradedRoots.GetHeadPosition(); pos != NULL;)
+			(void)SharedDirectoryOps::RemoveSharedDirectory(retainedMonitoredRoots, pUpdate->liDowngradedRoots.GetNext(pos), false);
+		if (SharedDirectoryOps::RemoveMonitorOwnedDirectoriesForDowngradedRoots(monitorOwnedDirs, pUpdate->liDowngradedRoots, retainedMonitoredRoots)) {
+			thePrefs.ReplaceMonitorOwnedDirectoryList(monitorOwnedDirs);
+			bStateChanged = true;
+		}
+		for (POSITION pos = pUpdate->liDowngradedRoots.GetHeadPosition(); pos != NULL;) {
+			const CString strRoot(pUpdate->liDowngradedRoots.GetNext(pos));
+			bStateChanged |= thePrefs.RemoveMonitoredSharedRoot(strRoot);
+		}
 	}
 
 	for (POSITION pos = pUpdate->liNewDirectories.GetHeadPosition(); pos != NULL;) {
