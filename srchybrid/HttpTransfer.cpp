@@ -79,11 +79,6 @@ namespace
 		return false;
 	}
 
-	bool HasTransferDeadlineExpired(ULONGLONG ullStartTick, ULONGLONG ullTotalTimeoutMs)
-	{
-		return ullTotalTimeoutMs != 0 && ::GetTickCount64() - ullStartTick >= ullTotalTimeoutMs;
-	}
-
 	bool CrackHttpUrl(const CString& strUrl, URL_COMPONENTS& components, TCHAR (&szHostName)[INTERNET_MAX_HOST_NAME_LENGTH], TCHAR (&szUrlPath)[2048], TCHAR (&szExtraInfo)[2048], CString& strError)
 	{
 		ZeroMemory(&components, sizeof(components));
@@ -222,7 +217,6 @@ SRequest MakeRequest(HttpTransferSeams::ERequestProfile eProfile, const CString&
 	request.dwConnectTimeoutMs = limits.dwConnectTimeoutMs;
 	request.dwSendTimeoutMs = limits.dwSendTimeoutMs;
 	request.dwReceiveTimeoutMs = limits.dwReceiveTimeoutMs;
-	request.ullTotalTimeoutMs = limits.ullTotalTimeoutMs;
 	request.ullMaxResponseBytes = limits.ullMaxResponseBytes;
 	return request;
 }
@@ -247,17 +241,11 @@ bool DownloadToFile(const SRequest& request, const CString& strTargetPath, CStri
 		return false;
 	}
 
-	const ULONGLONG ullTransferStartTick = ::GetTickCount64();
 	BYTE buffer[16 * 1024] = {};
 	DWORD dwBytesRead = 0;
 	ULONGLONG ullTotalBytesRead = 0;
 	bool bSuccess = true;
 	do {
-		if (HasTransferDeadlineExpired(ullTransferStartTick, request.ullTotalTimeoutMs)) {
-			strError.Format(_T("HTTP transfer timed out after %u seconds"), static_cast<unsigned>(request.ullTotalTimeoutMs / 1000ull));
-			bSuccess = false;
-			break;
-		}
 		if (!::InternetReadFile(hHttpFile.Get(), buffer, sizeof(buffer), &dwBytesRead)) {
 			strError.Format(_T("InternetReadFile failed (%u)"), ::GetLastError());
 			bSuccess = false;
@@ -305,14 +293,9 @@ bool FetchToMemory(const SRequest& request, std::string& strResponse, CString& s
 	if (!CheckKnownContentLengthLimit(ullContentLength, request.ullMaxResponseBytes, strError))
 		return false;
 
-	const ULONGLONG ullTransferStartTick = ::GetTickCount64();
 	BYTE buffer[16 * 1024] = {};
 	DWORD dwBytesRead = 0;
 	do {
-		if (HasTransferDeadlineExpired(ullTransferStartTick, request.ullTotalTimeoutMs)) {
-			strError.Format(_T("HTTP transfer timed out after %u seconds"), static_cast<unsigned>(request.ullTotalTimeoutMs / 1000ull));
-			return false;
-		}
 		if (!::InternetReadFile(hHttpFile.Get(), buffer, sizeof(buffer), &dwBytesRead)) {
 			strError.Format(_T("InternetReadFile failed (%u)"), ::GetLastError());
 			return false;

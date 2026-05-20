@@ -38,7 +38,6 @@ namespace HttpTransfer
 		DWORD dwConnectTimeoutMs = 30000;
 		DWORD dwSendTimeoutMs = 30000;
 		DWORD dwReceiveTimeoutMs = 30000;
-		ULONGLONG ullTotalTimeoutMs = 5ull * 60ull * 1000ull;
 		ULONGLONG ullMaxResponseBytes = 0;
 		bool bUseWindowsSystemProxy = false;
 	};

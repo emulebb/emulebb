@@ -35,7 +35,6 @@ namespace HttpTransferSeams
 		DWORD dwConnectTimeoutMs;
 		DWORD dwSendTimeoutMs;
 		DWORD dwReceiveTimeoutMs;
-		ULONGLONG ullTotalTimeoutMs;
 		ULONGLONG ullMaxResponseBytes;
 	};
 
@@ -53,17 +52,17 @@ namespace HttpTransferSeams
 	{
 		switch (eProfile) {
 		case ERequestProfile::ReleaseUpdateJson:
-			return { 7000u, 7000u, 7000u, 7000ull, KiB(512) };
+			return { 7000u, 7000u, 7000u, KiB(512) };
 		case ERequestProfile::ServerMet:
 		case ERequestProfile::NodesDat:
-			return { 15000u, 15000u, 15000u, 30000ull, MiB(2) };
+			return { 15000u, 15000u, 15000u, MiB(2) };
 		case ERequestProfile::IPFilter:
-			return { 30000u, 30000u, 30000u, 180000ull, MiB(64) };
+			return { 30000u, 30000u, 30000u, MiB(64) };
 		case ERequestProfile::GeoDatabase:
-			return { 30000u, 30000u, 30000u, 600000ull, MiB(192) };
+			return { 30000u, 30000u, 30000u, MiB(192) };
 		case ERequestProfile::GenericFileDownload:
 		default:
-			return { 30000u, 30000u, 30000u, 300000ull, MiB(64) };
+			return { 30000u, 30000u, 30000u, MiB(64) };
 		}
 	}
 
