@@ -343,28 +343,24 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 	return true;
 }
 
-/**
- * @brief Builds a deterministic fake BTIH from a 32-character eD2K hash.
- */
-inline std::string BuildFakeBtihHash(const std::string &rEd2kHash)
+inline bool IsMd4HexString(const std::string &rValue)
 {
-	std::string hash(WebServerJsonSeams::ToLowerAscii(rEd2kHash));
-	if (hash.size() != 32)
-		return std::string();
-	for (const char ch : hash) {
+	if (rValue.size() != 32)
+		return false;
+	for (const char ch : rValue) {
 		if (!std::isxdigit(static_cast<unsigned char>(ch)))
-			return std::string();
+			return false;
 	}
-	return hash + "00000000";
+	return true;
 }
 
 /**
- * @brief Builds the qBittorrent-style magnet link Prowlarr can hand to *arr.
+ * @brief Builds the native eD2K download link exposed by the Torznab adapter.
  */
-inline std::string BuildMagnetFromEd2k(const std::string &rEd2kHash, const std::string &rName, const uint64_t ullSize)
+inline std::string BuildEd2kDownloadLink(const std::string &rEd2kHash, const std::string &rName, const uint64_t ullSize)
 {
-	const std::string strBtih(BuildFakeBtihHash(rEd2kHash));
-	if (strBtih.empty())
+	const std::string strHash(WebServerJsonSeams::ToLowerAscii(rEd2kHash));
+	if (!IsMd4HexString(strHash))
 		return std::string();
 	if (ullSize == 0)
 		return std::string();
@@ -372,7 +368,7 @@ inline std::string BuildMagnetFromEd2k(const std::string &rEd2kHash, const std::
 	if (!WebServerJsonSeams::TryValidatePublicFileNameText(rName, "name", strError))
 		return std::string();
 	std::ostringstream link;
-	link << "magnet:?xt=urn:btih:" << strBtih << "&dn=" << WebServerJsonSeams::UrlEncodeUtf8(rName) << "&xl=" << ullSize;
+	link << "ed2k://|file|" << WebServerJsonSeams::UrlEncodeUtf8(rName) << '|' << ullSize << '|' << strHash << "|/";
 	return link.str();
 }
 

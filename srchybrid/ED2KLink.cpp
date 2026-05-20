@@ -379,40 +379,6 @@ CED2KLink* CED2KLink::CreateLinkFromUrl(LPCTSTR uri)
 			if (!strSearchTerm.IsEmpty())
 				return new CED2KSearchLink(strSearchTerm);
 		}
-	} else {
-		iPos = 0;
-		if (GetNextString(strURI, _T('?'), iPos).Compare(_T("magnet:")) == 0) {
-			CString strName, strSize, strHash, strEmuleExt;
-			CStringArray astrEd2kParams;
-			for (;;) {
-				strTok = GetNextString(strURI, _T('&'), iPos);
-				if (iPos < 0)
-					return new CED2KFileLink(strName, strSize, strHash, astrEd2kParams, strEmuleExt);
-				if (strTok[2] != _T('='))
-					continue;
-				const CString &strT(strTok.Left(2));
-				strTok.Delete(0, 3);
-				if (strT == _T("as")) { //acceptable source
-					// HTTP file sources are intentionally not imported.
-				} else if (strT == _T("dn")) { //display name
-					strName = strTok; //file name
-				} else if (strT == _T("xl")) { //eXact length
-					strSize = strTok; //file size
-				} else if (strT == _T("xs") && strTok.Left(10) == _T("ed2kftp://")) {//eXact source
-					strTok.Delete(0, 10);
-					int i = strTok.Find(_T('/'));
-					if (i > 0)
-						astrEd2kParams.Add(_T("sources,") + strTok.Left(i)); //source IP:port
-				} else if (strT == _T("xt")) {//eXact topic
-					if (strTok.Left(9) == _T("urn:ed2k:"))
-						strHash = strTok.Mid(9); //file ID
-					else if (strTok.Left(13) == _T("urn:ed2khash:"))
-						strHash = strTok.Mid(13); //file ID
-					else if (strTok.Left(9) == _T("urn:aich:"))
-						astrEd2kParams.Add(_T("h=") + strTok.Mid(9)); //AICH root hash
-				}
-			}
-		}
 	}
 
 	throw GetResString(IDS_ERR_NOSLLINK);

@@ -46,7 +46,7 @@ struct SArrCompatResult
 {
 	std::string strHash;
 	std::string strName;
-	std::string strMagnet;
+	std::string strDownloadLink;
 	uint64_t ullSize = 0;
 	uint64_t ullSeeders = 0;
 	uint64_t ullPeers = 0;
@@ -214,15 +214,13 @@ std::string BuildFeedXml(const WebServerArrCompatSeams::STorznabRequest &rReques
 			<< "      <category>" << iCategory << "</category>\n"
 			<< "      <comments>ed2k:" << WebServerArrCompatSeams::XmlEscape(rResult.strHash) << "</comments>\n"
 			<< "      <description>" << WebServerArrCompatSeams::XmlEscape(rResult.strName) << "</description>\n"
-			<< "      <link>" << WebServerArrCompatSeams::XmlEscape(rResult.strMagnet) << "</link>\n"
-			<< "      <enclosure url=\"" << WebServerArrCompatSeams::XmlEscape(rResult.strMagnet) << "\" length=\"" << rResult.ullSize << "\" type=\"application/x-bittorrent;x-scheme-handler/magnet\" />\n"
+			<< "      <link>" << WebServerArrCompatSeams::XmlEscape(rResult.strDownloadLink) << "</link>\n"
+			<< "      <enclosure url=\"" << WebServerArrCompatSeams::XmlEscape(rResult.strDownloadLink) << "\" length=\"" << rResult.ullSize << "\" type=\"application/x-ed2k-link\" />\n"
 			<< "      <torznab:attr name=\"size\" value=\"" << rResult.ullSize << "\" />\n"
 			<< "      <torznab:attr name=\"seeders\" value=\"" << rResult.ullSeeders << "\" />\n"
 			<< "      <torznab:attr name=\"peers\" value=\"" << rResult.ullPeers << "\" />\n"
 			<< "      <torznab:attr name=\"grabs\" value=\"" << rResult.ullGrabs << "\" />\n"
 			<< "      <torznab:attr name=\"category\" value=\"" << iCategory << "\" />\n"
-			<< "      <torznab:attr name=\"magneturl\" value=\"" << WebServerArrCompatSeams::XmlEscape(rResult.strMagnet) << "\" />\n"
-			<< "      <torznab:attr name=\"infohash\" value=\"" << WebServerArrCompatSeams::XmlEscape(WebServerArrCompatSeams::BuildFakeBtihHash(rResult.strHash)) << "\" />\n"
 			<< "      <torznab:attr name=\"minimumratio\" value=\"0\" />\n"
 			<< "      <torznab:attr name=\"minimumseedtime\" value=\"0\" />\n"
 			<< "      <torznab:attr name=\"downloadvolumefactor\" value=\"0\" />\n"
@@ -341,8 +339,8 @@ void AppendResultsFromJson(const json &rResultPayload, const WebServerArrCompatS
 		item.ullPeers = JsonUInt64Value(rResult, "sources");
 		item.ullGrabs = item.ullSeeders;
 		item.eFamily = eFamily;
-		item.strMagnet = WebServerArrCompatSeams::BuildMagnetFromEd2k(item.strHash, item.strName, item.ullSize);
-		if (item.strMagnet.empty())
+		item.strDownloadLink = WebServerArrCompatSeams::BuildEd2kDownloadLink(item.strHash, item.strName, item.ullSize);
+		if (item.strDownloadLink.empty())
 			continue;
 
 		rSeenHashes.insert(strHash);

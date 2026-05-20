@@ -432,87 +432,36 @@ inline bool TryValidateShareLimitFormFields(const std::map<std::string, std::str
 		&& TryParseOptionalSignedIntegerFormField(rForm, "inactiveSeedingTimeLimit", rErrorMessage);
 }
 
-inline bool IsMd4Hex(const std::string &rValue)
-{
-	if (rValue.size() != 32)
-		return false;
-	for (const char ch : rValue) {
-		if (!std::isxdigit(static_cast<unsigned char>(ch)))
-			return false;
-	}
-	return true;
-}
-
 inline bool IsNativeMd4Hash(const std::string &rValue)
 {
 	return rValue.size() == 32 && WebServerJsonSeams::IsLowercaseMd4HexString(rValue);
 }
 
-inline bool IsQBitWrappedEd2kBtih(const std::string &rBtih)
+inline bool StartsWithNoCase(const std::string &rValue, const char *pszPrefix)
 {
-	const std::string strBtih(WebServerJsonSeams::ToLowerAscii(rBtih));
-	return strBtih.size() == 40 && IsMd4Hex(strBtih.substr(0, 32)) && strBtih.substr(32) == "00000000";
+	const std::string strPrefix(pszPrefix != NULL ? pszPrefix : "");
+	if (rValue.size() < strPrefix.size())
+		return false;
+	return WebServerJsonSeams::ToLowerAscii(rValue.substr(0, strPrefix.size())) == WebServerJsonSeams::ToLowerAscii(strPrefix);
 }
 
-/**
- * @brief Converts one qBittorrent magnet emitted by the Torznab bridge back to
- * a native eD2K file link.
- */
-inline bool TryBuildEd2kLinkFromMagnet(const std::string &rMagnet, std::string &rEd2kLink, std::string &rErrorMessage)
+inline bool TryValidateAddRequestUrl(const std::string &rUrl, std::string &rNormalizedUrl, std::string &rErrorMessage)
 {
-	rEd2kLink.clear();
-	const std::string strPrefix("magnet:?");
-	if (rMagnet.rfind(strPrefix, 0) != 0) {
-		rErrorMessage = "only magnet URLs are supported";
+	rNormalizedUrl.clear();
+	if (StartsWithNoCase(rUrl, "magnet:")) {
+		rErrorMessage = "magnet URLs are not supported";
 		return false;
 	}
-
-	std::map<std::string, std::string> query;
-	if (!WebServerJsonSeams::TryParseQueryString("?" + rMagnet.substr(strPrefix.size()), query, rErrorMessage))
-		return false;
-
-	const auto xtIt = query.find("xt");
-	const auto nameIt = query.find("dn");
-	const auto sizeIt = query.find("xl");
-	if (xtIt == query.end() || nameIt == query.end() || sizeIt == query.end()) {
-		rErrorMessage = "magnet must contain xt, dn, and xl";
+	if (!StartsWithNoCase(rUrl, "ed2k://")) {
+		rErrorMessage = "only eD2K URLs are supported";
 		return false;
 	}
-	if (!WebServerJsonSeams::TryValidatePublicFileNameText(nameIt->second, "magnet display name", rErrorMessage))
-		return false;
-
-	const std::string strXtLower(WebServerJsonSeams::ToLowerAscii(xtIt->second));
-	const std::string strBtihPrefix("urn:btih:");
-	if (strXtLower.rfind(strBtihPrefix, 0) != 0 || !IsQBitWrappedEd2kBtih(strXtLower.substr(strBtihPrefix.size()))) {
-		rErrorMessage = "magnet btih does not carry an eD2K hash";
-		return false;
-	}
-	uint64_t ullSize = 0;
-	if (!WebServerJsonSeams::TryParseUnsignedDecimalValue(sizeIt->second, ullSize)) {
-		rErrorMessage = "magnet size must be an unsigned decimal value";
-		return false;
-	}
-
-	if (ullSize == 0) {
-		rErrorMessage = "magnet size must be positive";
-		return false;
-	}
-
-	std::ostringstream ed2k;
-	ed2k << "ed2k://|file|"
-		<< WebServerJsonSeams::UrlEncodeUtf8(nameIt->second)
-		<< '|'
-		<< sizeIt->second
-		<< '|'
-		<< strXtLower.substr(strBtihPrefix.size(), 32)
-		<< "|/";
-	rEd2kLink = ed2k.str();
+	rNormalizedUrl = rUrl;
 	return true;
 }
 
 /**
- * @brief Parses the qBittorrent torrent-add form and converts its URL to eD2K
- * when possible.
+ * @brief Parses the qBittorrent torrent-add form for native eD2K URLs.
  */
 inline bool TryParseTorrentAddRequest(const std::string &rBody, SQBitTorrentAddRequest &rRequest, std::string &rErrorMessage)
 {
@@ -520,11 +469,11 @@ inline bool TryParseTorrentAddRequest(const std::string &rBody, SQBitTorrentAddR
 	if (!TryParseFormBody(rBody, form, rErrorMessage))
 		return false;
 
-	std::string strMagnet;
-	if (!TryGetRequiredNonEmptyFormField(form, "urls", strMagnet, rErrorMessage))
+	std::string strUrl;
+	if (!TryGetRequiredNonEmptyFormField(form, "urls", strUrl, rErrorMessage))
 		return false;
 
-	if (!TryBuildEd2kLinkFromMagnet(strMagnet, rRequest.strUrl, rErrorMessage))
+	if (!TryValidateAddRequestUrl(strUrl, rRequest.strUrl, rErrorMessage))
 		return false;
 
 	if (!TryNormalizeCategoryFormField(form, "category", false, rRequest.strCategory, rErrorMessage))

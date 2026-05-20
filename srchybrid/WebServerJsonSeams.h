@@ -459,7 +459,7 @@ inline bool TryNormalizeCategoryNameText(
 
 /**
  * @brief Validates a public file/display name before REST-adjacent link
- * conversion emits it into an eD2K or magnet URL.
+ * conversion emits it into an eD2K URL.
  */
 inline bool TryValidatePublicFileNameText(
 	const std::string &rValue,

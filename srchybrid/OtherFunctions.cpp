@@ -107,7 +107,6 @@ const struct LinkScheme s_apszSchemes[] =
 	{ _T("www."),     4 },
 	{ _T("ftp."),     4 },
 	{ _T("mailto:"),  7 },
-	{ _T("magnet:?"), 8 },
 	{ NULL, 0 }
 };
 

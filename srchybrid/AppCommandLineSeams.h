@@ -48,7 +48,7 @@ namespace AppCommandLineSeams
 	inline CString BuildUsageText()
 	{
 		return _T("Usage:\r\n")
-			_T("  emule.exe [options] [ed2k-link|magnet-link|collection-file|command]\r\n")
+			_T("  emule.exe [options] [ed2k-link|collection-file|command]\r\n")
 			_T("\r\n")
 			_T("Options:\r\n")
 			_T("  -c <base-dir>                         Use an isolated eMule base directory.\r\n")

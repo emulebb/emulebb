@@ -2149,7 +2149,7 @@ bool CemuleApp::ProcessCommandline(const AppCommandLineSeams::SParseResult &rCom
 	bool bAlreadyRunning = false;
 	if (bIgnoreRunningInstances
 		&& !command.IsEmpty()
-		&& (command.Find(_T("://")) > 0 || command.Find(_T("magnet:?")) >= 0 || CCollection::HasCollectionExtention(command)))
+		&& (command.Find(_T("://")) > 0 || CCollection::HasCollectionExtention(command)))
 	{
 		bIgnoreRunningInstances = false;
 	}
@@ -2163,7 +2163,7 @@ bool CemuleApp::ProcessCommandline(const AppCommandLineSeams::SParseResult &rCom
 		}
 
 	if (!command.IsEmpty()) {
-		if (command.Find(_T("://")) > 0 || command.Find(_T("magnet:?")) >= 0) {
+		if (command.Find(_T("://")) > 0) {
 			sendstruct.cbData = static_cast<DWORD>((command.GetLength() + 1) * sizeof(TCHAR));
 			sendstruct.dwData = OP_ED2KLINK;
 			sendstruct.lpData = const_cast<LPTSTR>((LPCTSTR)command);
