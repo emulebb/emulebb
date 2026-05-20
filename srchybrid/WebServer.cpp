@@ -42,6 +42,7 @@
 #include "UpDownClient.h"
 #include "PartFile.h"
 #include "UserMsgs.h"
+#include "IPv4AddressSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -458,7 +459,7 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 		// authentication primitive for new controller/API work.
 		srand((unsigned)time(NULL));
 
-		uint32 myip = inet_addr(ipstrA(Data.inadr));
+		uint32 myip = Data.inadr.s_addr;
 
 		// check for being banned
 		int myfaults = 0;
@@ -1297,7 +1298,8 @@ CString CWebServer::_GetServerList(const ThreadData &Data)
 		Entry.nServerSoftLimit = cur_serv.GetSoftFiles();
 		Entry.nServerHardLimit = cur_serv.GetHardFiles();
 		Entry.sServerVersion = cur_serv.GetVersion();
-		if (inet_addr((CStringA)Entry.sServerIP) != INADDR_NONE) {
+		uint32_t uServerAddress = 0;
+		if (IPv4AddressSeams::TryParseIPv4Address(Entry.sServerIP, uServerAddress)) {
 			CString &newip(Entry.sServerFullIP);
 			for (int j = 0, iPos = 0; j < 4 && iPos >= 0; ++j) {
 				const CString &temp(Entry.sServerIP.Tokenize(_T("."), iPos));

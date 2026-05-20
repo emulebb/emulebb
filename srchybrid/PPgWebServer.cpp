@@ -27,6 +27,7 @@
 #include "UPnPImpl.h"
 #include "Log.h"
 #include "WebServerCertificate.h"
+#include "IPv4AddressSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -109,9 +110,8 @@ bool CPPgWebServer::IsValidBindAddressOverride(const CString &strAddr)
 {
 	if (strAddr.IsEmpty())
 		return true;
-	const CStringA strAddrA(strAddr);
-	const unsigned long ulAddr = inet_addr(strAddrA);
-	return ulAddr != INADDR_NONE || strAddr == _T("255.255.255.255");
+	uint32_t uAddress = 0;
+	return IPv4AddressSeams::TryParseIPv4Address(strAddr, uAddress);
 }
 
 void CPPgWebServer::DoDataExchange(CDataExchange *pDX)

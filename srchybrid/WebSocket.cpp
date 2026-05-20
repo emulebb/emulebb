@@ -7,6 +7,7 @@
 #include "Preferences.h"
 #include "StringConversion.h"
 #include "Log.h"
+#include "IPv4AddressSeams.h"
 
 #include <vector>
 #include "mbedtls/net_sockets.h"
@@ -333,14 +334,13 @@ namespace
 		if (strWebBindAddr.IsEmpty())
 			return true;
 
-		const CStringA strWebBindAddrA(strWebBindAddr);
-		const unsigned long ulAddr = inet_addr(strWebBindAddrA);
-		if (ulAddr == INADDR_NONE && strWebBindAddr != _T("255.255.255.255")) {
+		uint32_t uAddress = 0;
+		if (!IPv4AddressSeams::TryParseIPv4Address(strWebBindAddr, uAddress)) {
 			DebugLogError(_T("Web Interface start failed: invalid WebBindAddr '%s'"), (LPCTSTR)strWebBindAddr);
 			return false;
 		}
 
-		pAddr->s_addr = ulAddr;
+		pAddr->s_addr = uAddress;
 		return true;
 	}
 }

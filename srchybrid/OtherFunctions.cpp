@@ -2940,7 +2940,7 @@ CString ipstr(uint32 nIP, uint16 nPort)
 
 /**
  * Format an IPv4 address into a caller-provided ANSI buffer without relying on
- * Winsock's thread-local/static inet_ntoa conversion storage.
+ * Winsock's thread-local/static IPv4 formatting storage.
  */
 static void FormatIPv4AddressA(CHAR *pszAddress, int iMaxAddress, uint32 nIP)
 {

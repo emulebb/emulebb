@@ -73,6 +73,10 @@ to tim.kosse@filezilla-project.org
 #include <atomic>
 #include <memory>
 
+// This legacy helper-window socket backend intentionally stays on WSAAsyncSelect
+// until the broader async-socket transport replacement is scheduled.
+#pragma warning(disable:4996)
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE

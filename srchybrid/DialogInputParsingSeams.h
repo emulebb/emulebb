@@ -28,7 +28,7 @@ inline bool TryParseTcpPort(const CString& strText, uint16_t& uPort)
 }
 
 /**
- * @brief Parses a dotted IPv4 address into the same network-order value returned by inet_addr.
+ * @brief Parses a dotted IPv4 address into a network-order scalar.
  */
 inline bool TryParseIPv4Address(CString strText, uint32_t& uNetworkOrderAddress)
 {
