@@ -85,6 +85,11 @@ inline bool ShouldInvalidateRequiredFreeSpacePathCacheAfterReservation(const boo
 	return bReservedDemand;
 }
 
+inline bool WasProtectedVolumeSnapshotDemandFullyReserved(const bool bShouldReserveDemand, const bool bReservedTempDemand, const bool bNeedsIncomingDemand, const bool bReservedIncomingDemand)
+{
+	return !bShouldReserveDemand || (bReservedTempDemand && (!bNeedsIncomingDemand || bReservedIncomingDemand));
+}
+
 inline bool HasProtectedVolumeBreach(const ProtectedVolumeSpaceState *pStates, const std::size_t nStateCount)
 {
 	if (pStates == NULL)

@@ -262,7 +262,7 @@ private:
 	/**
 	 * @brief Adds a newly admitted file's placement demand to the current protected-volume snapshot.
 	 */
-	void	ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempPath, LPCTSTR pszIncomingPath, EMFileSize nFileSize) const;
+	bool	ReserveProtectedVolumeStatusSnapshotDemand(LPCTSTR pszTempPath, LPCTSTR pszIncomingPath, EMFileSize nFileSize) const;
 	void	RefreshBroadbandIoBufferSnapshot();
 	CString	BuildProtectedDiskSpaceBreachSignature(const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aStatuses) const;
 	void	ForceSaveAllPartMetFilesForDiskSpace();
