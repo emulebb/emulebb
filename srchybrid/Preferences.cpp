@@ -4322,6 +4322,9 @@ ULONGLONG CPreferences::GetEffectiveMinFreeDiskSpaceForPath(LPCTSTR pszPath)
 		return 0;
 
 	CArray<ProtectedDiskVolumeThreshold, const ProtectedDiskVolumeThreshold&> aThresholds;
+	const ULONGLONG ullConfiguredProtectedFallbackBytes = max(
+		GetMinFreeDiskSpaceConfig(),
+		max(GetMinFreeDiskSpaceTemp(), GetMinFreeDiskSpaceIncoming()));
 	MergeProtectedDiskVolumeThreshold(&aThresholds, GetMuleDirectory(EMULE_CONFIGDIR), GetMinFreeDiskSpaceConfig());
 	for (INT_PTR i = 0; i < GetTempDirCount(); ++i)
 		MergeProtectedDiskVolumeThreshold(&aThresholds, GetTempDir(i), GetMinFreeDiskSpaceTemp());
@@ -4332,7 +4335,8 @@ ULONGLONG CPreferences::GetEffectiveMinFreeDiskSpaceForPath(LPCTSTR pszPath)
 	CString strPathVolumeId;
 	if (!TryGetVolumeIdentityPath(pszPath, strPathVolumeId))
 		return PartFilePersistenceSeams::GetRequiredFreeBytesForUnresolvedVolume(
-			GetHighestProtectedDiskVolumeThreshold(aThresholds));
+			GetHighestProtectedDiskVolumeThreshold(aThresholds),
+			ullConfiguredProtectedFallbackBytes);
 
 	const INT_PTR iThreshold = FindProtectedDiskVolumeThreshold(aThresholds, strPathVolumeId);
 	return iThreshold >= 0 ? aThresholds[iThreshold].RequiredBytes : 0;

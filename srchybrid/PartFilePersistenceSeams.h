@@ -184,9 +184,11 @@ inline bool CanWritePartMetWithFreeSpace(const uint64_t nFreeBytes, const uint64
 /**
  * Returns the conservative free-space floor to apply when a protected path's volume cannot be identified.
  */
-inline uint64_t GetRequiredFreeBytesForUnresolvedVolume(const uint64_t nHighestProtectedRequiredBytes)
+inline uint64_t GetRequiredFreeBytesForUnresolvedVolume(const uint64_t nHighestResolvedProtectedRequiredBytes, const uint64_t nConfiguredProtectedFallbackBytes)
 {
-	return nHighestProtectedRequiredBytes;
+	return nHighestResolvedProtectedRequiredBytes > nConfiguredProtectedFallbackBytes
+		? nHighestResolvedProtectedRequiredBytes
+		: nConfiguredProtectedFallbackBytes;
 }
 
 /**
