@@ -3823,10 +3823,14 @@ bool CPartFile::IsReadyForPreview() const
 		uint64 uMinFreeDiskSpace = theApp.downloadqueue != NULL
 			? theApp.downloadqueue->GetRequiredFreeDiskSpaceForPath(GetTmpPath())
 			: thePrefs.GetEffectiveMinFreeDiskSpaceForPath(GetTmpPath());
-		if (thePrefs.GetPreviewCopiedArchives())
-			uMinFreeDiskSpace += FileSizeSeams::ToUInt64(m_nFileSize) * 2;
-		else
-			uMinFreeDiskSpace += (uint64)GetCompletedSize() + 16 * 1024;
+		if (thePrefs.GetPreviewCopiedArchives()) {
+			const uint64 uFileSize = FileSizeSeams::ToUInt64(m_nFileSize);
+			uMinFreeDiskSpace = PartFilePersistenceSeams::SaturatingAddBytes(
+				PartFilePersistenceSeams::SaturatingAddBytes(uMinFreeDiskSpace, uFileSize), uFileSize);
+		} else {
+			uMinFreeDiskSpace = PartFilePersistenceSeams::SaturatingAddBytes(
+				PartFilePersistenceSeams::SaturatingAddBytes(uMinFreeDiskSpace, (uint64)GetCompletedSize()), 16 * 1024);
+		}
 		return GetFreeDiskSpaceX(GetTmpPath()) >= uMinFreeDiskSpace;
 	}
 
@@ -4324,12 +4328,12 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 			ULONGLONG uIncrease = uMinFreeDiskSpace;
 			if (IsNormalFile()) {
 				if (newsize > cursize)
-					uIncrease += newsize - cursize;
+					uIncrease = PartFilePersistenceSeams::SaturatingAddBytes(uIncrease, newsize - cursize);
 			} else {
 				// Check free disk space for compressed/sparse files before possibly increasing the file size
 				// regardless whether the file is increased in size, use the amount of data which will be written
 				// Would need to use disk cluster sizes for more accuracy
-				uIncrease += m_nTotalBufferData;
+				uIncrease = PartFilePersistenceSeams::SaturatingAddBytes(uIncrease, m_nTotalBufferData);
 			}
 			// See if increasing the file would reduce the amount of min. free space below the limit.
 			// Would need to use disk cluster sizes for more accuracy
