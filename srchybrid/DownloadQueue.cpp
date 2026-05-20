@@ -97,6 +97,18 @@ namespace
 		strPath.MakeLower();
 		return _T("#unresolved-volume:") + strPath;
 	}
+
+	CString BuildRequiredFreeDiskSpacePathCacheKey(LPCTSTR pszPath)
+	{
+		CString strPath(PathHelpers::TrimTrailingSeparator(PathHelpers::CanonicalizePath(
+			PathHelpers::StripExtendedLengthPrefix(CString(pszPath != NULL ? pszPath : _T(""))))));
+		if (strPath.IsEmpty() && pszPath != NULL)
+			strPath = pszPath;
+
+		const DownloadQueueDiskSpaceSeams::RequiredFreeSpacePathCacheKey strKey =
+			DownloadQueueDiskSpaceSeams::NormalizeRequiredFreeSpacePathCacheKey(static_cast<LPCTSTR>(strPath));
+		return CString(strKey.c_str());
+	}
 }
 
 CDownloadQueue::CDownloadQueue()
@@ -382,9 +394,10 @@ ULONGLONG CDownloadQueue::GetRequiredFreeDiskSpaceForPath(LPCTSTR pszPath) const
 	if (pszPath == NULL || pszPath[0] == _T('\0'))
 		return 0;
 
+	const CString strPathCacheKey(BuildRequiredFreeDiskSpacePathCacheKey(pszPath));
 	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, false);
 	for (INT_PTR i = 0; i < m_aRequiredFreeDiskSpacePathCache.GetCount(); ++i) {
-		if (m_aRequiredFreeDiskSpacePathCache[i].Path == pszPath)
+		if (m_aRequiredFreeDiskSpacePathCache[i].Path == strPathCacheKey)
 			return m_aRequiredFreeDiskSpacePathCache[i].RequiredBytes;
 	}
 
@@ -404,7 +417,7 @@ ULONGLONG CDownloadQueue::GetRequiredFreeDiskSpaceForPath(LPCTSTR pszPath) const
 	if (!bMatchedProtectedVolume)
 		ullRequiredBytes = thePrefs.GetEffectiveMinFreeDiskSpaceForPath(pszPath);
 
-	const RequiredFreeDiskSpacePathCacheEntry entry = { pszPath, ullRequiredBytes };
+	const RequiredFreeDiskSpacePathCacheEntry entry = { strPathCacheKey, ullRequiredBytes };
 	m_aRequiredFreeDiskSpacePathCache.Add(entry);
 	return ullRequiredBytes;
 }

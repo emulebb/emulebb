@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <tchar.h>
 
 #include "PartFilePersistenceSeams.h"
 
@@ -58,6 +59,31 @@ struct ProtectedDiskSpaceBreachAction
 	bool ShouldStopDownloads;
 	bool ShouldRememberBlock;
 };
+
+using RequiredFreeSpacePathCacheKey = std::basic_string<TCHAR>;
+
+inline bool IsPathCacheSeparator(const TCHAR ch)
+{
+	return ch == _T('\\') || ch == _T('/');
+}
+
+inline bool IsDriveRootPathCacheKey(const RequiredFreeSpacePathCacheKey &rKey)
+{
+	return rKey.size() == 3u && rKey[1] == _T(':') && IsPathCacheSeparator(rKey[2]);
+}
+
+inline RequiredFreeSpacePathCacheKey NormalizeRequiredFreeSpacePathCacheKey(RequiredFreeSpacePathCacheKey key)
+{
+	for (TCHAR &rch : key) {
+		if (rch == _T('/'))
+			rch = _T('\\');
+		rch = static_cast<TCHAR>(_totlower(rch));
+	}
+
+	while (!key.empty() && IsPathCacheSeparator(key.back()) && !IsDriveRootPathCacheKey(key))
+		key.pop_back();
+	return key;
+}
 
 inline bool IsSameVolumeKey(const VolumeKey &rLeft, const VolumeKey &rRight)
 {
