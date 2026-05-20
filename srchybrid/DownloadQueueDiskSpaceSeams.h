@@ -48,6 +48,17 @@ struct ProtectedVolumeSpaceState
 	uint64_t RequiredBytes;
 };
 
+/**
+ * Describes how the queue should react to the current protected-volume snapshot.
+ */
+struct ProtectedDiskSpaceBreachAction
+{
+	bool ShouldClearBlock;
+	bool ShouldLogBreach;
+	bool ShouldStopDownloads;
+	bool ShouldRememberBlock;
+};
+
 inline bool IsSameVolumeKey(const VolumeKey &rLeft, const VolumeKey &rRight)
 {
 	return rLeft.DriveNumber == rRight.DriveNumber
@@ -69,6 +80,17 @@ inline bool HasProtectedVolumeBreach(const ProtectedVolumeSpaceState *pStates, c
 			return true;
 	}
 	return false;
+}
+
+inline ProtectedDiskSpaceBreachAction ResolveProtectedDiskSpaceBreachAction(const bool bHasBreach, const bool bAlreadyBlocked, const bool bSameBreachSignature)
+{
+	if (!bHasBreach) {
+		ProtectedDiskSpaceBreachAction action = { true, false, false, false };
+		return action;
+	}
+
+	ProtectedDiskSpaceBreachAction action = { false, !(bAlreadyBlocked && bSameBreachSignature), true, true };
+	return action;
 }
 
 inline bool IsPauseCandidate(const FileDiskSpaceStatus eStatus)

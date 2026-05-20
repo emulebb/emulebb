@@ -181,6 +181,14 @@ inline bool CanWritePartMetWithFreeSpace(const uint64_t nFreeBytes, const uint64
 	return nFreeBytes >= nRequiredBytes;
 }
 
+/**
+ * Returns the conservative free-space floor to apply when a protected path's volume cannot be identified.
+ */
+inline uint64_t GetRequiredFreeBytesForUnresolvedVolume(const uint64_t nHighestProtectedRequiredBytes)
+{
+	return nHighestProtectedRequiredBytes;
+}
+
 inline PartMetWriteGuardDecision ResolvePartMetWriteGuard(const bool bHasCachedResult, const bool bCachedCanWrite, const bool bForceRefresh, const uint64_t nFreeBytes, const uint64_t nRequiredBytes = kMinPartMetWriteFreeBytes)
 {
 	(void)bHasCachedResult;

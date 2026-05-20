@@ -900,8 +900,18 @@ bool CemuleApp::CanWritePartMetFiles(LPCTSTR pszPath, const bool bForceRefresh, 
 		return true;
 
 	CString strVolumeRoot;
-	if (!TryResolvePartMetWriteGuardVolume(pszPath, bForceRefresh, strVolumeRoot))
-		return true;
+	if (!TryResolvePartMetWriteGuardVolume(pszPath, bForceRefresh, strVolumeRoot)) {
+		const uint64 nRequiredBytes = theApp.downloadqueue != NULL
+			? theApp.downloadqueue->GetRequiredFreeDiskSpaceForPath(pszPath)
+			: thePrefs.GetEffectiveMinFreeDiskSpaceForPath(pszPath);
+		if (nRequiredBytes == 0)
+			return true;
+
+		QueueDebugLogLineEx(LOG_WARNING, _T("Part.met disk-space guard blocked metadata writes for \"%s\" because the target volume could not be resolved (need at least %I64u bytes free).")
+			, pszPath
+			, nRequiredBytes);
+		return false;
+	}
 
 	const uint64 nFreeBytes = GetFreeDiskSpaceX(strVolumeRoot);
 	const uint64 nRequiredBytes = theApp.downloadqueue != NULL

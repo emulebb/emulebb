@@ -627,6 +627,17 @@ INT_PTR FindProtectedDiskVolumeThreshold(const CArray<ProtectedDiskVolumeThresho
 	return -1;
 }
 
+/**
+ * Returns the strongest configured threshold in a protected-volume threshold set.
+ */
+ULONGLONG GetHighestProtectedDiskVolumeThreshold(const CArray<ProtectedDiskVolumeThreshold, const ProtectedDiskVolumeThreshold&> &aThresholds)
+{
+	ULONGLONG ullHighestRequiredBytes = 0;
+	for (INT_PTR i = 0; i < aThresholds.GetCount(); ++i)
+		ullHighestRequiredBytes = max(ullHighestRequiredBytes, aThresholds[i].RequiredBytes);
+	return ullHighestRequiredBytes;
+}
+
 void MergeProtectedDiskVolumeThreshold(CArray<ProtectedDiskVolumeThreshold, const ProtectedDiskVolumeThreshold&> *paThresholds, LPCTSTR pszPath, const ULONGLONG nRequiredBytes)
 {
 	if (paThresholds == NULL || pszPath == NULL || pszPath[0] == _T('\0'))
@@ -4310,10 +4321,6 @@ ULONGLONG CPreferences::GetEffectiveMinFreeDiskSpaceForPath(LPCTSTR pszPath)
 	if (pszPath == NULL || pszPath[0] == _T('\0'))
 		return 0;
 
-	CString strPathVolumeId;
-	if (!TryGetVolumeIdentityPath(pszPath, strPathVolumeId))
-		return 0;
-
 	CArray<ProtectedDiskVolumeThreshold, const ProtectedDiskVolumeThreshold&> aThresholds;
 	MergeProtectedDiskVolumeThreshold(&aThresholds, GetMuleDirectory(EMULE_CONFIGDIR), GetMinFreeDiskSpaceConfig());
 	for (INT_PTR i = 0; i < GetTempDirCount(); ++i)
@@ -4321,6 +4328,11 @@ ULONGLONG CPreferences::GetEffectiveMinFreeDiskSpaceForPath(LPCTSTR pszPath)
 	MergeProtectedDiskVolumeThreshold(&aThresholds, GetMuleDirectory(EMULE_INCOMINGDIR), GetMinFreeDiskSpaceIncoming());
 	for (INT_PTR i = 0; i < GetCatCount(); ++i)
 		MergeProtectedDiskVolumeThreshold(&aThresholds, GetCatPath(i), GetMinFreeDiskSpaceIncoming());
+
+	CString strPathVolumeId;
+	if (!TryGetVolumeIdentityPath(pszPath, strPathVolumeId))
+		return PartFilePersistenceSeams::GetRequiredFreeBytesForUnresolvedVolume(
+			GetHighestProtectedDiskVolumeThreshold(aThresholds));
 
 	const INT_PTR iThreshold = FindProtectedDiskVolumeThreshold(aThresholds, strPathVolumeId);
 	return iThreshold >= 0 ? aThresholds[iThreshold].RequiredBytes : 0;

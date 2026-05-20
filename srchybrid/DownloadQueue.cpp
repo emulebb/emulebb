@@ -346,7 +346,7 @@ ULONGLONG CDownloadQueue::GetRequiredFreeDiskSpaceForPath(LPCTSTR pszPath) const
 
 	CString strVolumeId;
 	if (!TryGetVolumeIdentityPath(pszPath, strVolumeId))
-		return 0;
+		return thePrefs.GetEffectiveMinFreeDiskSpaceForPath(pszPath);
 
 	bool bMatchedProtectedVolume = false;
 	ULONGLONG ullRequiredBytes = 0;
@@ -1377,34 +1377,42 @@ void CDownloadQueue::CheckDiskspace(bool bNotEnoughSpaceLeft)
 			break;
 		}
 	}
-	if (!bHasBreach) {
+	const CString strBreachSignature(bHasBreach ? BuildProtectedDiskSpaceBreachSignature(aProtectedVolumes) : CString());
+	const DownloadQueueDiskSpaceSeams::ProtectedDiskSpaceBreachAction action =
+		DownloadQueueDiskSpaceSeams::ResolveProtectedDiskSpaceBreachAction(
+			bHasBreach,
+			m_bProtectedDiskSpaceBlocked,
+			m_strProtectedDiskSpaceBreachSignature == strBreachSignature);
+
+	if (action.ShouldClearBlock) {
 		m_bProtectedDiskSpaceBlocked = false;
 		m_strProtectedDiskSpaceBreachSignature.Empty();
 		return;
 	}
 
-	const CString strBreachSignature(BuildProtectedDiskSpaceBreachSignature(aProtectedVolumes));
-	if (m_bProtectedDiskSpaceBlocked && m_strProtectedDiskSpaceBreachSignature == strBreachSignature)
-		return;
+	if (action.ShouldLogBreach) {
+		for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
+			const ProtectedVolumeStatus &rStatus = aProtectedVolumes[i];
+			const DownloadQueueDiskSpaceSeams::ProtectedVolumeSpaceState state = { rStatus.FreeBytes, rStatus.RequiredBytes };
+			if (!DownloadQueueDiskSpaceSeams::IsProtectedVolumeBreached(state))
+				continue;
 
-	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
-		const ProtectedVolumeStatus &rStatus = aProtectedVolumes[i];
-		const DownloadQueueDiskSpaceSeams::ProtectedVolumeSpaceState state = { rStatus.FreeBytes, rStatus.RequiredBytes };
-		if (!DownloadQueueDiskSpaceSeams::IsProtectedVolumeBreached(state))
-			continue;
-
-		LogWarning(_T("Disk-space guard stopped all downloads because protected volume \"%s\" for %s has %I64u bytes free and requires at least %I64u (floor %I64u + completion reserve %I64u).")
-			, (LPCTSTR)rStatus.VolumeId
-			, (LPCTSTR)FormatProtectedVolumeRoles(rStatus.RoleMask)
-			, rStatus.FreeBytes
-			, rStatus.RequiredBytes
-			, rStatus.FloorBytes
-			, rStatus.CompletionBytes);
+			LogWarning(_T("Disk-space guard stopped all downloads because protected volume \"%s\" for %s has %I64u bytes free and requires at least %I64u (floor %I64u + completion reserve %I64u).")
+				, (LPCTSTR)rStatus.VolumeId
+				, (LPCTSTR)FormatProtectedVolumeRoles(rStatus.RoleMask)
+				, rStatus.FreeBytes
+				, rStatus.RequiredBytes
+				, rStatus.FloorBytes
+				, rStatus.CompletionBytes);
+		}
 	}
 
-	StopAllDownloadsForDiskSpace();
-	m_bProtectedDiskSpaceBlocked = true;
-	m_strProtectedDiskSpaceBreachSignature = strBreachSignature;
+	if (action.ShouldStopDownloads)
+		StopAllDownloadsForDiskSpace();
+	if (action.ShouldRememberBlock) {
+		m_bProtectedDiskSpaceBlocked = true;
+		m_strProtectedDiskSpaceBreachSignature = strBreachSignature;
+	}
 }
 
 void CDownloadQueue::GetDownloadSourcesStats(SDownloadStats &results)
