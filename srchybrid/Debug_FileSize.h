@@ -17,6 +17,13 @@
 #pragma once
 #include "opcodes.h"
 
+#include <assert.h>
+#include <limits.h>
+
+#ifndef ASSERT
+#define ASSERT(expr) assert(expr)
+#endif
+
 enum E_DebugFSAtion
 {
 	DFSA_ADD = 0,
