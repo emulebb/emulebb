@@ -41,6 +41,7 @@
 #include "BroadbandIoSeams.h"
 #include "PathHelpers.h"
 #include "DownloadQueueAutoCatSeams.h"
+#include "DownloadQueueDiskSpaceSeams.h"
 #include "DownloadQueueHostnameResolverSeams.h"
 #include "DownloadQueueOverviewSeams.h"
 
@@ -310,7 +311,8 @@ CString CDownloadQueue::BuildProtectedDiskSpaceBreachSignature(const CArray<Prot
 	CString strSignature;
 	for (INT_PTR i = 0; i < aStatuses.GetCount(); ++i) {
 		const ProtectedVolumeStatus &rStatus = aStatuses[i];
-		if (rStatus.FreeBytes >= rStatus.RequiredBytes)
+		const DownloadQueueDiskSpaceSeams::ProtectedVolumeSpaceState state = { rStatus.FreeBytes, rStatus.RequiredBytes };
+		if (!DownloadQueueDiskSpaceSeams::IsProtectedVolumeBreached(state))
 			continue;
 
 		CString strItem;
@@ -324,7 +326,8 @@ bool CDownloadQueue::IsProtectedDiskSpaceBlocked() const
 {
 	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, false);
 	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
-		if (aProtectedVolumes[i].FreeBytes < aProtectedVolumes[i].RequiredBytes)
+		const DownloadQueueDiskSpaceSeams::ProtectedVolumeSpaceState state = { aProtectedVolumes[i].FreeBytes, aProtectedVolumes[i].RequiredBytes };
+		if (DownloadQueueDiskSpaceSeams::IsProtectedVolumeBreached(state))
 			return true;
 	}
 	return false;
@@ -1368,7 +1371,8 @@ void CDownloadQueue::CheckDiskspace(bool bNotEnoughSpaceLeft)
 	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(bNotEnoughSpaceLeft, true);
 	bool bHasBreach = false;
 	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
-		if (aProtectedVolumes[i].FreeBytes < aProtectedVolumes[i].RequiredBytes) {
+		const DownloadQueueDiskSpaceSeams::ProtectedVolumeSpaceState state = { aProtectedVolumes[i].FreeBytes, aProtectedVolumes[i].RequiredBytes };
+		if (DownloadQueueDiskSpaceSeams::IsProtectedVolumeBreached(state)) {
 			bHasBreach = true;
 			break;
 		}
@@ -1385,7 +1389,8 @@ void CDownloadQueue::CheckDiskspace(bool bNotEnoughSpaceLeft)
 
 	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
 		const ProtectedVolumeStatus &rStatus = aProtectedVolumes[i];
-		if (rStatus.FreeBytes >= rStatus.RequiredBytes)
+		const DownloadQueueDiskSpaceSeams::ProtectedVolumeSpaceState state = { rStatus.FreeBytes, rStatus.RequiredBytes };
+		if (!DownloadQueueDiskSpaceSeams::IsProtectedVolumeBreached(state))
 			continue;
 
 		LogWarning(_T("Disk-space guard stopped all downloads because protected volume \"%s\" for %s has %I64u bytes free and requires at least %I64u (floor %I64u + completion reserve %I64u).")
@@ -2102,7 +2107,8 @@ CString CDownloadQueue::GetOptimalTempDir(UINT nCat, EMFileSize nFileSize)
 
 	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, false);
 	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
-		if (aProtectedVolumes[i].FreeBytes < aProtectedVolumes[i].RequiredBytes)
+		const DownloadQueueDiskSpaceSeams::ProtectedVolumeSpaceState state = { aProtectedVolumes[i].FreeBytes, aProtectedVolumes[i].RequiredBytes };
+		if (DownloadQueueDiskSpaceSeams::IsProtectedVolumeBreached(state))
 			return CString();
 	}
 

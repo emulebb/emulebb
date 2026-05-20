@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
@@ -38,10 +39,36 @@ struct VolumeResumeBudget
 	uint64_t ResumeHeadroomBytes;
 };
 
+/**
+ * Lightweight, testable view of one protected volume's free-space guard state.
+ */
+struct ProtectedVolumeSpaceState
+{
+	uint64_t FreeBytes;
+	uint64_t RequiredBytes;
+};
+
 inline bool IsSameVolumeKey(const VolumeKey &rLeft, const VolumeKey &rRight)
 {
 	return rLeft.DriveNumber == rRight.DriveNumber
 		&& (rLeft.DriveNumber >= 0 || rLeft.ShareName == rRight.ShareName);
+}
+
+inline bool IsProtectedVolumeBreached(const ProtectedVolumeSpaceState &rState)
+{
+	return rState.FreeBytes < rState.RequiredBytes;
+}
+
+inline bool HasProtectedVolumeBreach(const ProtectedVolumeSpaceState *pStates, const std::size_t nStateCount)
+{
+	if (pStates == NULL)
+		return false;
+
+	for (std::size_t i = 0; i < nStateCount; ++i) {
+		if (IsProtectedVolumeBreached(pStates[i]))
+			return true;
+	}
+	return false;
 }
 
 inline bool IsPauseCandidate(const FileDiskSpaceStatus eStatus)
