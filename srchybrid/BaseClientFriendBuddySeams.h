@@ -3,6 +3,7 @@
 #include <atlstr.h>
 
 #include "types.h"
+#include "ClientStateDefs.h"
 #include "Version.h"
 
 enum FriendLinkTransitionAction
@@ -65,6 +66,54 @@ inline CString BuildFullClientSoftVersionDisplay(const CString &strClientSoftwar
 
 	CString strDisplay;
 	strDisplay.Format(_T("%s [%s]"), (LPCTSTR)strClientSoftware, (LPCTSTR)strClientModVersion);
+	return strDisplay;
+}
+
+/**
+ * @brief Formats a client software label without a version suffix.
+ */
+inline CString BuildClientSoftwareNameDisplay(LPCTSTR pszSoftware)
+{
+	return CString(pszSoftware);
+}
+
+/**
+ * @brief Formats legacy eMule-compatible version bytes as a v0.minor client label.
+ */
+inline CString BuildClientSoftwareMinorVersionDisplay(LPCTSTR pszSoftware, UINT nClientMinVersion)
+{
+	CString strDisplay;
+	strDisplay.Format(_T("%s v0.%u"), pszSoftware, nClientMinVersion);
+	return strDisplay;
+}
+
+/**
+ * @brief Formats packed eMule-protocol client version fields using stock display rules.
+ */
+inline CString BuildClientSoftwareStructuredVersionDisplay(EClientSoftware clientSoft, LPCTSTR pszSoftware, UINT nClientMajVersion, UINT nClientMinVersion, UINT nClientUpVersion)
+{
+	CString strDisplay;
+	if (clientSoft == SO_EMULE)
+		strDisplay.Format(_T("%s v%u.%u%c"), pszSoftware, nClientMajVersion, nClientMinVersion, _T('a') + nClientUpVersion);
+	else if (clientSoft == SO_AMULE || nClientUpVersion != 0)
+		strDisplay.Format(_T("%s v%u.%u.%u"), pszSoftware, nClientMajVersion, nClientMinVersion, nClientUpVersion);
+	else if (clientSoft == SO_LPHANT)
+		strDisplay.Format(_T("%s v%u.%02u"), pszSoftware, nClientMajVersion - 1, nClientMinVersion);
+	else
+		strDisplay.Format(_T("%s v%u.%u"), pszSoftware, nClientMajVersion, nClientMinVersion);
+	return strDisplay;
+}
+
+/**
+ * @brief Formats a decoded legacy eDonkeyHybrid version tuple.
+ */
+inline CString BuildDonkeyHybridClientSoftwareVersionDisplay(UINT nClientMajVersion, UINT nClientMinVersion, UINT nClientUpVersion)
+{
+	CString strDisplay;
+	if (nClientUpVersion != 0)
+		strDisplay.Format(_T("eDonkeyHybrid v%u.%u.%u"), nClientMajVersion, nClientMinVersion, nClientUpVersion);
+	else
+		strDisplay.Format(_T("eDonkeyHybrid v%u.%u"), nClientMajVersion, nClientMinVersion);
 	return strDisplay;
 }
 

@@ -1636,32 +1636,19 @@ void CUpDownClient::InitClientSoftwareVersion()
 			}
 		}
 
-		int iLen;
-		TCHAR szSoftware[128];
 		if (m_byEmuleVersion == 0) {
 			m_nClientVersion = MAKE_CLIENT_VERSION(0, 0, 0);
-			iLen = _sntprintf(szSoftware, _countof(szSoftware), _T("%s"), pszSoftware);
+			m_strClientSoftware = BuildClientSoftwareNameDisplay(pszSoftware);
 		} else if (m_byEmuleVersion != 0x99) {
 			UINT nClientMinVersion = (m_byEmuleVersion >> 4) * 10 + (m_byEmuleVersion & 0x0f);
 			m_nClientVersion = MAKE_CLIENT_VERSION(0, nClientMinVersion, 0);
-			iLen = _sntprintf(szSoftware, _countof(szSoftware), _T("%s v0.%u"), pszSoftware, nClientMinVersion);
+			m_strClientSoftware = BuildClientSoftwareMinorVersionDisplay(pszSoftware, nClientMinVersion);
 		} else {
 			UINT nClientMajVersion = (m_nClientVersion >> 17) & 0x7f;
 			UINT nClientMinVersion = (m_nClientVersion >> 10) & 0x7f;
 			UINT nClientUpVersion = (m_nClientVersion >> 7) & 0x07;
 			m_nClientVersion = MAKE_CLIENT_VERSION(nClientMajVersion, nClientMinVersion, nClientUpVersion);
-			if (m_clientSoft == SO_EMULE)
-				iLen = _sntprintf(szSoftware, _countof(szSoftware), _T("%s v%u.%u%c"), pszSoftware, nClientMajVersion, nClientMinVersion, _T('a') + nClientUpVersion);
-			else if (m_clientSoft == SO_AMULE || nClientUpVersion != 0)
-				iLen = _sntprintf(szSoftware, _countof(szSoftware), _T("%s v%u.%u.%u"), pszSoftware, nClientMajVersion, nClientMinVersion, nClientUpVersion);
-			else if (m_clientSoft == SO_LPHANT)
-				iLen = _sntprintf(szSoftware, _countof(szSoftware), _T("%s v%u.%02u"), pszSoftware, (nClientMajVersion - 1), nClientMinVersion);
-			else
-				iLen = _sntprintf(szSoftware, _countof(szSoftware), _T("%s v%u.%u"), pszSoftware, nClientMajVersion, nClientMinVersion);
-		}
-		if (iLen > 0) {
-			memcpy(m_strClientSoftware.GetBuffer(iLen), szSoftware, iLen * sizeof(TCHAR));
-			m_strClientSoftware.ReleaseBuffer(iLen);
+			m_strClientSoftware = BuildClientSoftwareStructuredVersionDisplay(m_clientSoft, pszSoftware, nClientMajVersion, nClientMinVersion, nClientUpVersion);
 		}
 		return;
 	}
@@ -1721,16 +1708,7 @@ void CUpDownClient::InitClientSoftwareVersion()
 		}
 		m_nClientVersion = MAKE_CLIENT_VERSION(nClientMajVersion, nClientMinVersion, nClientUpVersion);
 
-		int iLen;
-		TCHAR szSoftware[128];
-		if (nClientUpVersion)
-			iLen = _sntprintf(szSoftware, _countof(szSoftware), _T("eDonkeyHybrid v%u.%u.%u"), nClientMajVersion, nClientMinVersion, nClientUpVersion);
-		else
-			iLen = _sntprintf(szSoftware, _countof(szSoftware), _T("eDonkeyHybrid v%u.%u"), nClientMajVersion, nClientMinVersion);
-		if (iLen > 0) {
-			memcpy(m_strClientSoftware.GetBuffer(iLen), szSoftware, iLen * sizeof(TCHAR));
-			m_strClientSoftware.ReleaseBuffer(iLen);
-		}
+		m_strClientSoftware = BuildDonkeyHybridClientSoftwareVersionDisplay(nClientMajVersion, nClientMinVersion, nClientUpVersion);
 		return;
 	}
 
@@ -1738,12 +1716,7 @@ void CUpDownClient::InitClientSoftwareVersion()
 		m_clientSoft = SO_MLDONKEY;
 		UINT nClientMinVersion = m_nClientVersion;
 		m_nClientVersion = MAKE_CLIENT_VERSION(0, nClientMinVersion, 0);
-		TCHAR szSoftware[128];
-		int iLen = _sntprintf(szSoftware, _countof(szSoftware), _T("MLdonkey v0.%u"), nClientMinVersion);
-		if (iLen > 0) {
-			memcpy(m_strClientSoftware.GetBuffer(iLen), szSoftware, iLen * sizeof(TCHAR));
-			m_strClientSoftware.ReleaseBuffer(iLen);
-		}
+		m_strClientSoftware = BuildClientSoftwareMinorVersionDisplay(_T("MLdonkey"), nClientMinVersion);
 		return;
 	}
 
@@ -1751,24 +1724,14 @@ void CUpDownClient::InitClientSoftwareVersion()
 		m_clientSoft = SO_OLDEMULE;
 		UINT nClientMinVersion = m_nClientVersion;
 		m_nClientVersion = MAKE_CLIENT_VERSION(0, nClientMinVersion, 0);
-		TCHAR szSoftware[128];
-		int iLen = _sntprintf(szSoftware, _countof(szSoftware), _T("Old eMule v0.%u"), nClientMinVersion);
-		if (iLen > 0) {
-			memcpy(m_strClientSoftware.GetBuffer(iLen), szSoftware, iLen * sizeof(TCHAR));
-			m_strClientSoftware.ReleaseBuffer(iLen);
-		}
+		m_strClientSoftware = BuildClientSoftwareMinorVersionDisplay(_T("Old eMule"), nClientMinVersion);
 		return;
 	}
 
 	m_clientSoft = SO_EDONKEY;
 	UINT nClientMinVersion = m_nClientVersion;
 	m_nClientVersion = MAKE_CLIENT_VERSION(0, nClientMinVersion, 0);
-	TCHAR szSoftware[128];
-	int iLen = _sntprintf(szSoftware, _countof(szSoftware), _T("eDonkey v0.%u"), nClientMinVersion);
-	if (iLen > 0) {
-		memcpy(m_strClientSoftware.GetBuffer(iLen), szSoftware, iLen * sizeof(TCHAR));
-		m_strClientSoftware.ReleaseBuffer(iLen);
-	}
+	m_strClientSoftware = BuildClientSoftwareMinorVersionDisplay(_T("eDonkey"), nClientMinVersion);
 }
 
 int CUpDownClient::GetHashType() const
