@@ -2418,15 +2418,12 @@ void CSharedFilesCtrl::OnMouseMove(UINT nFlags, CPoint point)
 
 CSharedFilesCtrl::CShareDropTarget::CShareDropTarget()
 {
-	//m_piDropHelper = NULL; would be NULLed on error
 	m_pParent = NULL;
-	m_bUseDnDHelper = SUCCEEDED(CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_IDropTargetHelper, (LPVOID*)&m_piDropHelper));
+	m_bUseDnDHelper = SUCCEEDED(m_piDropHelper.CoCreateInstance(CLSID_DragDropHelper));
 }
 
 CSharedFilesCtrl::CShareDropTarget::~CShareDropTarget()
 {
-	if (m_piDropHelper != NULL)
-		m_piDropHelper->Release();
 }
 
 DROPEFFECT CSharedFilesCtrl::CShareDropTarget::OnDragEnter(CWnd *pWnd, COleDataObject *pDataObject, DWORD /*dwKeyState*/, CPoint point)

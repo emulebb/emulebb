@@ -19,6 +19,4 @@ protected:
 
 	BOOL IsSupportedDropData(COleDataObject *pDataObject);
 	HRESULT PasteText(CLIPFORMAT cfData, COleDataObject &data);
-	HRESULT PasteHDROP(COleDataObject &data);
-	HRESULT AddUrlFileContents(LPCTSTR pszFileName);
 };

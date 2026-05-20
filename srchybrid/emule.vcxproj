@@ -486,6 +486,7 @@
     <ClInclude Include="Drawgdix.h" />
     <ClInclude Include="DropDownButton.h" />
     <ClInclude Include="DropTarget.h" />
+    <ClInclude Include="DropTargetSeams.h" />
     <ClInclude Include="ED2KLink.h" />
     <ClInclude Include="ED2kLinkDlg.h" />
     <ClInclude Include="EditDelayed.h" />

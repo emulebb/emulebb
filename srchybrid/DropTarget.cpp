@@ -18,8 +18,7 @@
 #include "emule.h"
 #include "emuledlg.h"
 #include "DropTarget.h"
-#include "OtherFunctions.h"
-#include <intshcut.h>
+#include "DropTargetSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -27,71 +26,25 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#define FILEEXT_INETSHRTCUTA		"url"						// ANSI string
-#define FILEEXT_INETSHRTCUTW		L"url"						// Unicode string
-#define FILEEXT_INETSHRTCUT			_T(FILEEXT_INETSHRTCUTA)
-#define FILEEXTDOT_INETSHRTCUTA		"." FILEEXT_INETSHRTCUTA	// ANSI string
-#define FILEEXTDOT_INETSHRTCUTW		L"." FILEEXT_INETSHRTCUTW	// Unicode string
-#define FILEEXTDOT_INETSHRTCUT		_T(".") FILEEXT_INETSHRTCUT
-//#define FILETYPE_INETSHRTCUT		_T("Internet Shortcut File")
-//#define FILEFLT_INETSHRTCUT		FILETYPE_INETSHRTCUT _T("s (*") FILEEXTDOT_INETSHRTCUT _T(")|*") FILEEXTDOT_INETSHRTCUT _T("|")
-
-BOOL IsUrlSchemeSupportedW(LPCWSTR pszUrl)
+namespace
 {
-	static const struct SCHEME
+	bool IsSupportedDropText(CLIPFORMAT cfData, COleDataObject &data)
 	{
-		LPCWSTR pszPrefix;
-		int iLen;
-	} _aSchemes[] =
-	{
-#define SCHEME_ENTRY(prefix)	{ prefix, _countof(prefix)-1 }
-		SCHEME_ENTRY(L"ed2k://"),
-		SCHEME_ENTRY(L"magnet:?")
-#undef SCHEME_ENTRY
-	};
-
-	for (unsigned i = 0; i < _countof(_aSchemes); ++i)
-		if (wcsncmp(pszUrl, _aSchemes[i].pszPrefix, _aSchemes[i].iLen) == 0)
-			return TRUE;
-	return FALSE;
-}
-
-// GetFileExtA -- ANSI version
-//
-// This function is thought to be used only for filenames which have been
-// validated by 'GetFullPathName' or similar functions.
-LPCSTR GetFileExtA(LPCSTR pszPathA, int iLen /*= -1*/)
-{
-	// Just search the last '.'-character which comes after an optionally
-	// available last '\'-char.
-	int iPos = iLen >= 0 ? iLen : (int)strlen(pszPathA);
-	while (iPos-- > 0) {
-		if (pszPathA[iPos] == '.')
-			return &pszPathA[iPos];
-		if (pszPathA[iPos] == '\\')
-			break;
+		bool bResult = false;
+		HANDLE hMem = data.GetGlobalData(cfData);
+		if (hMem != NULL) {
+			const void *pvData = ::GlobalLock(hMem);
+			if (pvData != NULL) {
+				if (cfData == CF_UNICODETEXT)
+					bResult = DropTargetSeams::IsSupportedTextDrop(static_cast<LPCWSTR>(pvData));
+				else
+					bResult = DropTargetSeams::IsSupportedTextDrop(static_cast<LPCSTR>(pvData));
+				::GlobalUnlock(hMem);
+			}
+			::GlobalFree(hMem);
+		}
+		return bResult;
 	}
-
-	return NULL;
-}
-
-// GetFileExtW -- Unicode version
-//
-// This function is thought to be used only for filenames which have been
-// validated by 'GetFullPathName' or similar functions.
-LPCWSTR GetFileExtW(LPCWSTR pszPathW, int iLen /*= -1*/)
-{
-	// Just search the last '.'-character which comes after an optionally
-	// available last '\'-char.
-	int iPos = iLen >= 0 ? iLen : (int)wcslen(pszPathW);
-	while (iPos-- > 0) {
-		if (pszPathW[iPos] == L'.')
-			return &pszPathW[iPos];
-		if (pszPathW[iPos] == L'\\')
-			break;
-	}
-
-	return NULL;
 }
 
 
@@ -118,7 +71,7 @@ HRESULT CMainFrameDropTarget::PasteText(CLIPFORMAT cfData, COleDataObject &data)
 					++pszUrlW;
 
 				hrPasteResult = S_FALSE; // default: nothing was pasted
-				if (_wcsnicmp(pszUrlW, L"ed2k://|", 8) == 0 || _wcsnicmp(pszUrlW, L"magnet:?", 8) == 0) {
+				if (DropTargetSeams::IsSupportedTextDrop(pszUrlW)) {
 					const CString strData(pszUrlW);
 					for (int iPos = 0; iPos >= 0;) {
 						CString sLink(strData.Tokenize(_T("\r\n"), iPos));
@@ -135,7 +88,7 @@ HRESULT CMainFrameDropTarget::PasteText(CLIPFORMAT cfData, COleDataObject &data)
 					++pszUrlA;
 
 				hrPasteResult = S_FALSE; // default: nothing was pasted
-				if (_strnicmp(pszUrlA, "ed2k://|", 8) == 0 || _strnicmp(pszUrlA, "magnet:?", 8) == 0) {
+				if (DropTargetSeams::IsSupportedTextDrop(pszUrlA)) {
 					const CString strData(pszUrlA);
 					for (int iPos = 0; iPos >= 0;) {
 						CString sLink(strData.Tokenize(_T("\r\n"), iPos));
@@ -154,131 +107,19 @@ HRESULT CMainFrameDropTarget::PasteText(CLIPFORMAT cfData, COleDataObject &data)
 	return hrPasteResult;
 }
 
-HRESULT CMainFrameDropTarget::AddUrlFileContents(LPCTSTR pszFileName)
-{
-	HRESULT hrResult = S_FALSE;
-
-	if (ExtensionIs(pszFileName, FILEEXTDOT_INETSHRTCUT)) {
-		CComPtr<IUniformResourceLocatorW> pIUrl;
-		hrResult = CoCreateInstance(CLSID_InternetShortcut, NULL, CLSCTX_INPROC_SERVER, IID_IUniformResourceLocatorW, (LPVOID*)&pIUrl);
-		if (SUCCEEDED(hrResult)) {
-			CComPtr<IPersistFile> pIFile;
-			hrResult = pIUrl.QueryInterface(&pIFile);
-			if (SUCCEEDED(hrResult)) {
-				hrResult = pIFile->Load(CComBSTR(pszFileName), STGM_READ | STGM_SHARE_DENY_WRITE);
-				if (SUCCEEDED(hrResult)) {
-					LPWSTR pwszUrl;
-					hrResult = pIUrl->GetURL(&pwszUrl);
-					if (hrResult == S_OK) {
-						if (pwszUrl != NULL && pwszUrl[0] != L'\0' && IsUrlSchemeSupportedW(pwszUrl))
-							theApp.emuledlg->ProcessED2KLink(pwszUrl);
-						else
-							hrResult = S_FALSE;
-						::CoTaskMemFree(pwszUrl);
-					}
-				}
-			}
-		}
-	}
-
-	return hrResult;
-}
-
-HRESULT CMainFrameDropTarget::PasteHDROP(COleDataObject &data)
-{
-	HRESULT hrPasteResult = E_FAIL;
-	HANDLE hMem = data.GetGlobalData(CF_HDROP);
-	if (hMem != NULL) {
-		LPDROPFILES lpDrop = (LPDROPFILES)::GlobalLock(hMem);
-		if (lpDrop != NULL) {
-			if (lpDrop->fWide) {
-				LPCWSTR pszFileNameW = (LPCWSTR)((LPBYTE)lpDrop + lpDrop->pFiles);
-				while (*pszFileNameW != L'\0') {
-					if (FAILED(AddUrlFileContents(pszFileNameW)))
-						break;
-					hrPasteResult = S_OK;
-					pszFileNameW += wcslen(pszFileNameW) + 1;
-				}
-			} else {
-				LPCSTR pszFileNameA = (LPCSTR)((LPBYTE)lpDrop + lpDrop->pFiles);
-				while (*pszFileNameA != '\0') {
-					if (FAILED(AddUrlFileContents(CString(pszFileNameA))))
-						break;
-					hrPasteResult = S_OK;
-					pszFileNameA += strlen(pszFileNameA) + 1;
-				}
-			}
-			::GlobalUnlock(hMem);
-		}
-		::GlobalFree(hMem);
-	}
-	return hrPasteResult;
-}
-
 BOOL CMainFrameDropTarget::IsSupportedDropData(COleDataObject *pDataObject)
 {
 	//************************************************************************
 	//*** THIS FUNCTION HAS TO BE AS FAST AS POSSIBLE!!!
 	//************************************************************************
 
-	// If the data is in 'UniformResourceLocator', there is no need to check the contents.
-	if (m_cfShellURL && pDataObject->IsDataAvailable(m_cfShellURL))
-		return TRUE;
-
 	BOOL bResult = FALSE; // Unknown data format
-	if (pDataObject->IsDataAvailable(CF_UNICODETEXT)) {
-		//
-		// Check text data
-		//
-		HANDLE hMem = pDataObject->GetGlobalData(CF_UNICODETEXT);
-		if (hMem != NULL) {
-			LPCWSTR lpszUrl = (LPCWSTR)::GlobalLock(hMem);
-			if (lpszUrl != NULL) {
-				// skip white space
-				while (iswspace(*lpszUrl))
-					++lpszUrl;
-				bResult = IsUrlSchemeSupportedW(lpszUrl);
-				::GlobalUnlock(hMem);
-			}
-			::GlobalFree(hMem);
-		}
-	} else if (pDataObject->IsDataAvailable(CF_HDROP)) {
-		//
-		// Check HDROP data
-		//
-		HANDLE hMem = pDataObject->GetGlobalData(CF_HDROP);
-		if (hMem != NULL) {
-			LPDROPFILES lpDrop = (LPDROPFILES)::GlobalLock(hMem);
-			if (lpDrop != NULL) {
-				// Just check, if there's at least one file we can import
-				if (lpDrop->fWide) {
-					LPCWSTR pszFileW = (LPCWSTR)((LPBYTE)lpDrop + lpDrop->pFiles);
-					while (*pszFileW != L'\0') {
-						size_t iLen = wcslen(pszFileW);
-						LPCWSTR pszExtW = GetFileExtW(pszFileW, (int)iLen);
-						if (pszExtW != NULL && _wcsicmp(pszExtW, FILEEXTDOT_INETSHRTCUTW) == 0) {
-							bResult = TRUE;
-							break;
-						}
-						pszFileW += iLen + 1;
-					}
-				} else {
-					LPCSTR pszFileA = (LPCSTR)((LPBYTE)lpDrop + lpDrop->pFiles);
-					while (*pszFileA != '\0') {
-						size_t iLen = strlen(pszFileA);
-						LPCSTR pszExtA = GetFileExtA(pszFileA, (int)iLen);
-						if (pszExtA != NULL && _stricmp(pszExtA, FILEEXTDOT_INETSHRTCUTA) == 0) {
-							bResult = TRUE;
-							break;
-						}
-						pszFileA += iLen + 1;
-					}
-				}
-				::GlobalUnlock(hMem);
-			}
-			::GlobalFree(hMem);
-		}
-	}
+	if (m_cfShellURL && pDataObject->IsDataAvailable(m_cfShellURL))
+		bResult = IsSupportedDropText(m_cfShellURL, *pDataObject);
+	if (!bResult && pDataObject->IsDataAvailable(CF_UNICODETEXT))
+		bResult = IsSupportedDropText(CF_UNICODETEXT, *pDataObject);
+	if (!bResult && pDataObject->IsDataAvailable(CF_TEXT))
+		bResult = IsSupportedDropText(CF_TEXT, *pDataObject);
 	return bResult;
 }
 
@@ -302,8 +143,8 @@ BOOL CMainFrameDropTarget::OnDrop(CWnd*, COleDataObject *pDataObject, DROPEFFECT
 			PasteText(CF_UNICODETEXT, *pDataObject);
 		else if (pDataObject->IsDataAvailable(CF_TEXT))
 			PasteText(CF_TEXT, *pDataObject);
-		else if (pDataObject->IsDataAvailable(CF_HDROP))
-			return PasteHDROP(*pDataObject) == S_OK;
+		else if (m_cfShellURL && pDataObject->IsDataAvailable(m_cfShellURL))
+			PasteText(m_cfShellURL, *pDataObject);
 		return TRUE;
 	}
 	return FALSE;
