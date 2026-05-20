@@ -358,6 +358,7 @@ bool TryCaptureMonitoredSharedRootJournalState(const CString &rRootPath, SMonito
 	rState.strRootPath = PathHelpers::CanonicalizeDirectoryPath(rRootPath);
 	rState.ullUsnJournalId = volumeState.ullUsnJournalId;
 	rState.llCheckpointUsn = volumeState.llNextUsn;
+	rState.bHasTrustedJournal = true;
 	return true;
 }
 
@@ -514,6 +515,7 @@ bool LoadMonitoredSharedRootJournalStateFile(const CString &rstrFullPath, std::v
 				continue;
 			if (state.strRootPath.IsEmpty() || state.ullUsnJournalId == 0 || state.llCheckpointUsn <= 0)
 				continue;
+			state.bHasTrustedJournal = true;
 
 			SMonitoredSharedRootJournalState *pExistingState = FindMonitoredSharedRootJournalState(rOutStates, state.strRootPath);
 			if (pExistingState != NULL)
@@ -544,6 +546,8 @@ bool SaveMonitoredSharedRootJournalStateFile(const CString &rstrFullPath, const 
 		static const WORD wBOM = u'\xFEFF';
 		file.Write(&wBOM, sizeof wBOM);
 		for (size_t i = 0; i < rStates.size(); ++i) {
+			if (!SharedDirectoryMonitorSeams::ShouldPersistJournalState(rStates[i].bHasTrustedJournal, rStates[i].ullUsnJournalId, rStates[i].llCheckpointUsn))
+				continue;
 			CString strLine;
 			strLine.Format(_T("%s\t%I64u\t%I64d\r\n"), (LPCTSTR)rStates[i].strRootPath, rStates[i].ullUsnJournalId, rStates[i].llCheckpointUsn);
 			file.CStdioFile::WriteString(strLine);
@@ -1771,6 +1775,17 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 		(void)RemoveMonitoredSharedRootJournalState(m_aSharedDirectoryMonitorJournalStates, rRootPath);
 	};
 
+	const auto captureBestEffortRootState = [](const CString &rRootPath, SMonitoredSharedRootJournalState &rState) -> bool {
+		if (TryCaptureMonitoredSharedRootJournalState(rRootPath, rState))
+			return true;
+		if (!DirAccsess(rRootPath))
+			return false;
+
+		rState = SMonitoredSharedRootJournalState{};
+		rState.strRootPath = PathHelpers::CanonicalizeDirectoryPath(rRootPath);
+		return true;
+	};
+
 	const auto refreshConfiguredRoots = [&](CStringList &rConfiguredRoots, CStringList &rSharedDirs, CStringList &rOwnedDirs) -> void {
 		rConfiguredRoots.RemoveAll();
 		rSharedDirs.RemoveAll();
@@ -1815,15 +1830,10 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 			}
 
 			SMonitoredSharedRootJournalState *pState = FindMonitoredSharedRootJournalState(m_aSharedDirectoryMonitorJournalStates, strRoot);
+			const bool bHadRootState = pState != NULL;
 			if (pState == NULL) {
-				if (bStartupCatchup) {
-					appendDowngradedRoot(rUpdate, strRoot);
-					bStateChanged = true;
-					continue;
-				}
-
 				SMonitoredSharedRootJournalState state = {};
-				if (!TryCaptureMonitoredSharedRootJournalState(strRoot, state)) {
+				if (!captureBestEffortRootState(strRoot, state)) {
 					appendDowngradedRoot(rUpdate, strRoot);
 					bStateChanged = true;
 					continue;
@@ -1833,57 +1843,73 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 				bStateChanged = true;
 			}
 
-			if (bStartupCatchup) {
+			const SharedDirectoryMonitorSeams::EMonitoredRootCatchupMode eCatchupMode =
+				SharedDirectoryMonitorSeams::GetStartupCatchupMode(bStartupCatchup, bHadRootState, pState != NULL && pState->bHasTrustedJournal);
+			if (eCatchupMode == SharedDirectoryMonitorSeams::EMonitoredRootCatchupMode::FullReconcile) {
+				rUpdate.bReloadSharedFiles = true;
+				if (ReconcileMonitoredSharedRoot(strRoot, sharedDirs, ownedDirs, configuredRoots, rUpdate))
+					rUpdate.bForceTreeReload = true;
+				SMonitoredSharedRootJournalState currentState = {};
+				if (captureBestEffortRootState(strRoot, currentState)) {
+					*pState = currentState;
+					bStateChanged = true;
+				}
+			} else if (eCatchupMode == SharedDirectoryMonitorSeams::EMonitoredRootCatchupMode::JournalDelta) {
 				LongPathSeams::NtfsDirectoryJournalState rootJournalState = {};
 				LongPathSeams::NtfsJournalVolumeState currentVolumeState = {};
 				if (!LongPathSeams::TryGetNtfsDirectoryJournalState(PathHelpers::TrimTrailingSeparator(strRoot), rootJournalState)
 					|| !LongPathSeams::TryGetLocalNtfsJournalVolumeState(PathHelpers::TrimTrailingSeparator(strRoot), currentVolumeState))
 				{
-					appendDowngradedRoot(rUpdate, strRoot);
-					bStateChanged = true;
-					continue;
-				}
-
-				std::unordered_set<LongPathSeams::UsnFileReference, LongPathSeams::UsnFileReferenceHasher> trackedDirectoryRefs;
-				trackedDirectoryRefs.insert(rootJournalState.fileReference);
-				const CString strRootKey(MakeMonitoredDirectoryKey(strRoot));
-				for (POSITION posOwned = ownedDirs.GetHeadPosition(); posOwned != NULL;) {
-					const CString strOwned(ownedDirs.GetNext(posOwned));
-					if (!IsMonitoredDirectoryKeyWithinKey(strRootKey, MakeMonitoredDirectoryKey(strOwned)))
-						continue;
-
-					LongPathSeams::NtfsDirectoryJournalState ownedJournalState = {};
-					if (LongPathSeams::TryGetNtfsDirectoryJournalState(PathHelpers::TrimTrailingSeparator(strOwned), ownedJournalState)) {
-						trackedDirectoryRefs.insert(ownedJournalState.fileReference);
-						continue;
-					}
-
-					if (!thePrefs.GetKeepUnavailableFixedSharedDirs())
-						AddUniqueDirectoryPath(rUpdate.liRemovedDirectories, strOwned);
-				}
-
-				std::unordered_set<LongPathSeams::UsnFileReference, LongPathSeams::UsnFileReferenceHasher> changedDirectoryRefs;
-				if (!LongPathSeams::TryCollectChangedDirectoryFileReferences(
-						PathHelpers::TrimTrailingSeparator(strRoot),
-						pState->ullUsnJournalId,
-						pState->llCheckpointUsn,
-						trackedDirectoryRefs,
-						changedDirectoryRefs))
-				{
-					appendDowngradedRoot(rUpdate, strRoot);
-					bStateChanged = true;
-					continue;
-				}
-
-				if (!changedDirectoryRefs.empty()) {
 					rUpdate.bReloadSharedFiles = true;
 					if (ReconcileMonitoredSharedRoot(strRoot, sharedDirs, ownedDirs, configuredRoots, rUpdate))
 						rUpdate.bForceTreeReload = true;
-				}
+					SMonitoredSharedRootJournalState currentState = {};
+					if (captureBestEffortRootState(strRoot, currentState))
+						*pState = currentState;
+					bStateChanged = true;
+				} else {
+					std::unordered_set<LongPathSeams::UsnFileReference, LongPathSeams::UsnFileReferenceHasher> trackedDirectoryRefs;
+					trackedDirectoryRefs.insert(rootJournalState.fileReference);
+					const CString strRootKey(MakeMonitoredDirectoryKey(strRoot));
+					for (POSITION posOwned = ownedDirs.GetHeadPosition(); posOwned != NULL;) {
+						const CString strOwned(ownedDirs.GetNext(posOwned));
+						if (!IsMonitoredDirectoryKeyWithinKey(strRootKey, MakeMonitoredDirectoryKey(strOwned)))
+							continue;
 
-				pState->ullUsnJournalId = currentVolumeState.ullUsnJournalId;
-				pState->llCheckpointUsn = currentVolumeState.llNextUsn;
-				bStateChanged = true;
+						LongPathSeams::NtfsDirectoryJournalState ownedJournalState = {};
+						if (LongPathSeams::TryGetNtfsDirectoryJournalState(PathHelpers::TrimTrailingSeparator(strOwned), ownedJournalState)) {
+							trackedDirectoryRefs.insert(ownedJournalState.fileReference);
+							continue;
+						}
+
+						if (!thePrefs.GetKeepUnavailableFixedSharedDirs())
+							AddUniqueDirectoryPath(rUpdate.liRemovedDirectories, strOwned);
+					}
+
+					std::unordered_set<LongPathSeams::UsnFileReference, LongPathSeams::UsnFileReferenceHasher> changedDirectoryRefs;
+					if (!LongPathSeams::TryCollectChangedDirectoryFileReferences(
+							PathHelpers::TrimTrailingSeparator(strRoot),
+							pState->ullUsnJournalId,
+							pState->llCheckpointUsn,
+							trackedDirectoryRefs,
+							changedDirectoryRefs))
+					{
+						rUpdate.bReloadSharedFiles = true;
+						if (ReconcileMonitoredSharedRoot(strRoot, sharedDirs, ownedDirs, configuredRoots, rUpdate))
+							rUpdate.bForceTreeReload = true;
+					} else if (!changedDirectoryRefs.empty()) {
+						rUpdate.bReloadSharedFiles = true;
+						if (ReconcileMonitoredSharedRoot(strRoot, sharedDirs, ownedDirs, configuredRoots, rUpdate))
+							rUpdate.bForceTreeReload = true;
+					}
+
+					pState->ullUsnJournalId = currentVolumeState.ullUsnJournalId;
+					pState->llCheckpointUsn = currentVolumeState.llNextUsn;
+					pState->bHasTrustedJournal = true;
+					bStateChanged = true;
+					if (!rUpdate.liRemovedDirectories.IsEmpty())
+						rUpdate.bForceTreeReload = true;
+				}
 			}
 
 			if (uActiveWatchers >= uWatcherCapacity) {
@@ -1984,11 +2010,14 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 
 			SMonitoredSharedRootJournalState *pState = FindMonitoredSharedRootJournalState(m_aSharedDirectoryMonitorJournalStates, strRoot);
 			SMonitoredSharedRootJournalState currentState = {};
-			if (pState == NULL || !TryCaptureMonitoredSharedRootJournalState(strRoot, currentState)) {
+			if (!captureBestEffortRootState(strRoot, currentState)) {
 				appendDowngradedRoot(update, strRoot);
 				continue;
 			}
-			*pState = currentState;
+			if (pState != NULL)
+				*pState = currentState;
+			else
+				m_aSharedDirectoryMonitorJournalStates.push_back(currentState);
 		}
 
 		for (POSITION pos = liFileEventRoots.GetHeadPosition(); pos != NULL;) {
@@ -2001,11 +2030,14 @@ void CemuleApp::RunSharedDirectoryMonitorLoop()
 
 			SMonitoredSharedRootJournalState *pState = FindMonitoredSharedRootJournalState(m_aSharedDirectoryMonitorJournalStates, strRoot);
 			SMonitoredSharedRootJournalState currentState = {};
-			if (pState == NULL || !TryCaptureMonitoredSharedRootJournalState(strRoot, currentState)) {
+			if (!captureBestEffortRootState(strRoot, currentState)) {
 				appendDowngradedRoot(update, strRoot);
 				continue;
 			}
-			*pState = currentState;
+			if (pState != NULL)
+				*pState = currentState;
+			else
+				m_aSharedDirectoryMonitorJournalStates.push_back(currentState);
 		}
 
 		if (!update.liDowngradedRoots.IsEmpty())

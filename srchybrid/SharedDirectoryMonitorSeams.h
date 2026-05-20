@@ -20,6 +20,13 @@ namespace SharedDirectoryMonitorSeams
 		Failed
 	};
 
+	enum class EMonitoredRootCatchupMode
+	{
+		None,
+		FullReconcile,
+		JournalDelta
+	};
+
 	struct StopWaitResult
 	{
 		bool bHadThread = false;
@@ -145,5 +152,25 @@ namespace SharedDirectoryMonitorSeams
 	inline bool ShouldDeleteJournalTempFile(bool bTempFileCreated, bool bSaveSucceeded)
 	{
 		return bTempFileCreated && !bSaveSucceeded;
+	}
+
+	/**
+	 * @brief Chooses the startup catch-up strategy for one monitored root.
+	 */
+	inline EMonitoredRootCatchupMode GetStartupCatchupMode(const bool bStartupCatchup, const bool bHasState, const bool bHasTrustedJournal)
+	{
+		if (!bStartupCatchup)
+			return EMonitoredRootCatchupMode::None;
+		return bHasState && bHasTrustedJournal
+			? EMonitoredRootCatchupMode::JournalDelta
+			: EMonitoredRootCatchupMode::FullReconcile;
+	}
+
+	/**
+	 * @brief Reports whether a monitor state carries a reusable NTFS journal checkpoint.
+	 */
+	inline bool ShouldPersistJournalState(const bool bHasTrustedJournal, const ULONGLONG ullUsnJournalId, const LONGLONG llCheckpointUsn)
+	{
+		return bHasTrustedJournal && ullUsnJournalId != 0 && llCheckpointUsn > 0;
 	}
 }

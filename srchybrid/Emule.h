@@ -114,6 +114,7 @@ struct SMonitoredSharedRootJournalState
 	CString		strRootPath;
 	ULONGLONG	ullUsnJournalId = 0;
 	LONGLONG	llCheckpointUsn = 0;
+	bool		bHasTrustedJournal = false;
 };
 
 class CemuleApp : public CWinApp
