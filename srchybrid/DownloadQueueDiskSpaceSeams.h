@@ -2,8 +2,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <tchar.h>
+#include <vector>
 
 #include "PartFilePersistenceSeams.h"
 
@@ -61,6 +63,25 @@ struct ProtectedDiskSpaceBreachAction
 };
 
 using RequiredFreeSpacePathCacheKey = std::basic_string<TCHAR>;
+using VolumeIdentity = std::basic_string<TCHAR>;
+
+struct ProtectedVolumeAvailability
+{
+	VolumeIdentity VolumeId;
+	int64_t AvailableBytes;
+};
+
+struct TempDirVolumeCandidate
+{
+	VolumeIdentity VolumeId;
+	bool IsFatVolume;
+};
+
+struct TempDirPlacementDecision
+{
+	bool HasSelection;
+	std::size_t CandidateIndex;
+};
 
 inline bool IsPathCacheSeparator(const TCHAR ch)
 {
@@ -114,6 +135,117 @@ inline bool ShouldInvalidateRequiredFreeSpacePathCacheAfterReservation(const boo
 inline bool WasProtectedVolumeSnapshotDemandFullyReserved(const bool bShouldReserveDemand, const bool bReservedTempDemand, const bool bNeedsIncomingDemand, const bool bReservedIncomingDemand)
 {
 	return !bShouldReserveDemand || (bReservedTempDemand && (!bNeedsIncomingDemand || bReservedIncomingDemand));
+}
+
+inline int64_t CalculateProtectedVolumeAvailableBytes(const uint64_t nFreeBytes, const uint64_t nRequiredBytes)
+{
+	if (nFreeBytes >= nRequiredBytes) {
+		const uint64_t nAvailableBytes = nFreeBytes - nRequiredBytes;
+		return nAvailableBytes > static_cast<uint64_t>((std::numeric_limits<int64_t>::max)())
+			? (std::numeric_limits<int64_t>::max)()
+			: static_cast<int64_t>(nAvailableBytes);
+	}
+
+	const uint64_t nDeficitBytes = nRequiredBytes - nFreeBytes;
+	return nDeficitBytes > static_cast<uint64_t>((std::numeric_limits<int64_t>::max)())
+		? (std::numeric_limits<int64_t>::min)()
+		: -static_cast<int64_t>(nDeficitBytes);
+}
+
+inline int64_t FindProtectedVolumeAvailableBytes(const ProtectedVolumeAvailability *pVolumes, const std::size_t nVolumeCount, const VolumeIdentity &rVolumeId)
+{
+	if (pVolumes == NULL || rVolumeId.empty())
+		return 0;
+
+	for (std::size_t i = 0; i < nVolumeCount; ++i) {
+		if (pVolumes[i].VolumeId == rVolumeId)
+			return pVolumes[i].AvailableBytes;
+	}
+	return 0;
+}
+
+inline TempDirPlacementDecision SelectTempDirForProtectedVolumeSnapshot(
+	const TempDirVolumeCandidate *pCandidates,
+	const std::size_t nCandidateCount,
+	const ProtectedVolumeAvailability *pVolumes,
+	const std::size_t nVolumeCount,
+	const VolumeIdentity &rIncomingVolumeId,
+	const uint64_t nFileSize,
+	const uint64_t nOldMaxFileSize)
+{
+	TempDirPlacementDecision noSelection = { false, 0u };
+	if (pCandidates == NULL || nCandidateCount == 0)
+		return noSelection;
+
+	std::vector<bool> aDuplicateVolume(nCandidateCount, false);
+	std::vector<int64_t> aAvailableBytes(nCandidateCount, 0);
+	int64_t nHighestFreeBytes = 0;
+	std::size_t nHighestFreeCandidate = nCandidateCount;
+	for (std::size_t i = 0; i < nCandidateCount; ++i) {
+		for (std::size_t j = 0; j < i; ++j) {
+			if (pCandidates[i].VolumeId == pCandidates[j].VolumeId) {
+				aDuplicateVolume[i] = true;
+				break;
+			}
+		}
+		if (aDuplicateVolume[i])
+			continue;
+
+		const int64_t nAvailableBytes = FindProtectedVolumeAvailableBytes(pVolumes, nVolumeCount, pCandidates[i].VolumeId);
+		aAvailableBytes[i] = nAvailableBytes;
+		if (nAvailableBytes > nHighestFreeBytes) {
+			nHighestFreeBytes = nAvailableBytes;
+			nHighestFreeCandidate = i;
+		}
+	}
+
+	int64_t nHighestTotalBytes = 0;
+	std::size_t nHighestTotalCandidate = nCandidateCount;
+	std::size_t nHighestFreeEnoughCandidate = nCandidateCount;
+	const int64_t nIncomingAvailableBytes = rIncomingVolumeId.empty()
+		? 0
+		: FindProtectedVolumeAvailableBytes(pVolumes, nVolumeCount, rIncomingVolumeId);
+	const int64_t nTempDemandBytes = nFileSize > static_cast<uint64_t>((std::numeric_limits<int64_t>::max)())
+		? (std::numeric_limits<int64_t>::max)()
+		: static_cast<int64_t>(nFileSize);
+
+	for (std::size_t i = 0; i < nCandidateCount; ++i) {
+		if (aDuplicateVolume[i])
+			continue;
+		if (nFileSize > nOldMaxFileSize && pCandidates[i].IsFatVolume)
+			continue;
+
+		const int64_t nAvailableBytes = aAvailableBytes[i];
+		const int64_t nIncomingDemandBytes = (!rIncomingVolumeId.empty() && rIncomingVolumeId != pCandidates[i].VolumeId)
+			? nTempDemandBytes
+			: 0;
+		const bool bHasEnoughTempSpace = nAvailableBytes >= nTempDemandBytes;
+		const bool bHasEnoughIncomingSpace = nIncomingDemandBytes == 0 || nIncomingAvailableBytes >= nIncomingDemandBytes;
+		if (!bHasEnoughTempSpace || !bHasEnoughIncomingSpace)
+			continue;
+
+		if (!rIncomingVolumeId.empty() && rIncomingVolumeId == pCandidates[i].VolumeId) {
+			TempDirPlacementDecision decision = { true, i };
+			return decision;
+		}
+
+		if (nAvailableBytes > nHighestTotalBytes) {
+			nHighestTotalBytes = nAvailableBytes;
+			nHighestTotalCandidate = i;
+		}
+		if (i == nHighestFreeCandidate && nHighestFreeEnoughCandidate == nCandidateCount)
+			nHighestFreeEnoughCandidate = i;
+	}
+
+	if (nHighestTotalCandidate < nCandidateCount) {
+		TempDirPlacementDecision decision = { true, nHighestTotalCandidate };
+		return decision;
+	}
+	if (nHighestFreeEnoughCandidate < nCandidateCount) {
+		TempDirPlacementDecision decision = { true, nHighestFreeEnoughCandidate };
+		return decision;
+	}
+	return noSelection;
 }
 
 inline bool HasProtectedVolumeBreach(const ProtectedVolumeSpaceState *pStates, const std::size_t nStateCount)

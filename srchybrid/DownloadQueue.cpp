@@ -45,6 +45,8 @@
 #include "DownloadQueueHostnameResolverSeams.h"
 #include "DownloadQueueOverviewSeams.h"
 
+#include <vector>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -2177,22 +2179,14 @@ CString CDownloadQueue::GetOptimalTempDir(UINT nCat, EMFileSize nFileSize)
 			return CString();
 	}
 
-	struct tmpDir
-	{
-		bool bDuplicateVolume;
-		CString sVolumeId;
-		sint64 llAvailableSpace;	// free space - effective required bytes for the current protected volume snapshot
-	};
-	CArray<tmpDir> aDrive;
-	aDrive.SetSize(iTempDirCnt);
-
 	const Category_Struct *pCategory = thePrefs.GetCategory(nCat);
 	const CString strIncomingPath((pCategory != NULL && LongPathSeams::PathExists(pCategory->strIncomingPath))
 		? pCategory->strIncomingPath
 		: thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
 	VolumeIdentityPathCache volumeIdentityPathCache;
 	CString strIncomingVolumeId;
-	(void)volumeIdentityPathCache.Resolve(strIncomingPath, strIncomingVolumeId);
+	if (!volumeIdentityPathCache.Resolve(strIncomingPath, strIncomingVolumeId))
+		strIncomingVolumeId = BuildUnresolvedProtectedVolumeId(strIncomingPath);
 
 	auto SelectTempDir = [&](const INT_PTR iTempDir) -> CString
 	{
@@ -2202,94 +2196,48 @@ CString CDownloadQueue::GetOptimalTempDir(UINT nCat, EMFileSize nFileSize)
 		return strSelectedTempDir;
 	};
 
-	auto FindProtectedVolumeStatus = [&](const CString &strVolumeId) -> const ProtectedVolumeStatus*
-	{
-		for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
-			if (aProtectedVolumes[i].VolumeId == strVolumeId)
-				return &aProtectedVolumes[i];
-		}
-		return NULL;
-	};
-
-	auto GetAvailableBytesForVolume = [&](const CString &strVolumeId) -> sint64
-	{
-		const ProtectedVolumeStatus *pStatus = FindProtectedVolumeStatus(strVolumeId);
-		if (pStatus == NULL)
-			return 0;
-		return static_cast<sint64>(pStatus->FreeBytes) - static_cast<sint64>(pStatus->RequiredBytes);
-	};
+	std::vector<DownloadQueueDiskSpaceSeams::ProtectedVolumeAvailability> aVolumeAvailabilities;
+	aVolumeAvailabilities.reserve(static_cast<size_t>(aProtectedVolumes.GetCount()));
+	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
+		DownloadQueueDiskSpaceSeams::ProtectedVolumeAvailability availability = {
+			static_cast<LPCTSTR>(aProtectedVolumes[i].VolumeId),
+			DownloadQueueDiskSpaceSeams::CalculateProtectedVolumeAvailableBytes(
+				aProtectedVolumes[i].FreeBytes,
+				aProtectedVolumes[i].RequiredBytes)
+		};
+		aVolumeAvailabilities.push_back(availability);
+	}
 
 	// Step 1: collect free space on volumes
-	sint64 llHighestFreeSpace = 0;
-	INT_PTR	nHighestFreeSpaceDrive = -1;
+	std::vector<DownloadQueueDiskSpaceSeams::TempDirVolumeCandidate> aCandidates;
+	std::vector<INT_PTR> aCandidateTempDirs;
+	aCandidates.reserve(static_cast<size_t>(iTempDirCnt));
+	aCandidateTempDirs.reserve(static_cast<size_t>(iTempDirCnt));
 	for (INT_PTR i = 0; i < iTempDirCnt; ++i) {
 		const CString &sDir(thePrefs.GetTempDir(i));
-		if (!volumeIdentityPathCache.Resolve(sDir, aDrive[i].sVolumeId))
-			aDrive[i].sVolumeId = sDir;
-		// Free space is calculated per volume, but several temp directories may be on one volume.
-		INT_PTR j;
-		for (j = 0; j < i; ++j)
-			if (aDrive[i].sVolumeId == aDrive[j].sVolumeId)
-				break;
+		CString strVolumeId;
+		if (!volumeIdentityPathCache.Resolve(sDir, strVolumeId))
+			strVolumeId = BuildUnresolvedProtectedVolumeId(sDir);
 
-		if (i >= j) {
-			aDrive[i].bDuplicateVolume = false;
-			const sint64 llSpace = GetAvailableBytesForVolume(aDrive[i].sVolumeId);
-			if (llSpace > llHighestFreeSpace) {
-				nHighestFreeSpaceDrive = i;
-				llHighestFreeSpace = llSpace;
-			}
-			aDrive[i].llAvailableSpace = llSpace;
-		} else {
-			aDrive[i].bDuplicateVolume = true; // data for this volume is already known
-		}
+		DownloadQueueDiskSpaceSeams::TempDirVolumeCandidate candidate = {
+			static_cast<LPCTSTR>(strVolumeId),
+			IsFileOnFATVolume(sDir)
+		};
+		aCandidates.push_back(candidate);
+		aCandidateTempDirs.push_back(i);
 	}
 
-	sint64 llHighestTotalSpace = 0;
-	INT_PTR	nHighestTotalSpaceDir = -1;
-	INT_PTR	nHighestFreeSpaceDir = -1;
-	// first round (0): on the same volume as incoming and enough space for all downloading
-	// second round (1): enough space for all downloading
-	// third round (2): largest actual free space among still-valid candidates
-	for (INT_PTR i = 0; i < iTempDirCnt; ++i) {
-		if (aDrive[i].bDuplicateVolume)
-			continue;
-		const sint64 llAvailableSpace = aDrive[i].llAvailableSpace;
-		const sint64 llIncomingAvailableSpace = strIncomingVolumeId.IsEmpty() ? 0 : GetAvailableBytesForVolume(strIncomingVolumeId);
-		const sint64 llTempDemandForNewFile = static_cast<sint64>(nFileSize);
-		const sint64 llIncomingDemandForNewFile = (!strIncomingVolumeId.IsEmpty() && strIncomingVolumeId != aDrive[i].sVolumeId)
-			? static_cast<sint64>(nFileSize)
-			: 0;
-		const bool bHasEnoughTempSpace = llAvailableSpace >= llTempDemandForNewFile;
-		const bool bHasEnoughIncomingSpace = llIncomingDemandForNewFile == 0 || llIncomingAvailableSpace >= llIncomingDemandForNewFile;
-
-		// no condition can be met for a large file on a FAT volume
-		if (nFileSize <= OLD_MAX_EMULE_FILE_SIZE || !IsFileOnFATVolume(thePrefs.GetTempDir(i))) {
-			if (bHasEnoughTempSpace && bHasEnoughIncomingSpace) {
-				// condition 0
-				// needs to be the same volume and enough space
-				if (!strIncomingVolumeId.IsEmpty() && strIncomingVolumeId == aDrive[i].sVolumeId)
-					return SelectTempDir(i);	//this one is perfect
-
-				// condition 1
-				// needs to have enough space for downloading
-				if (llAvailableSpace > llHighestTotalSpace) {
-					llHighestTotalSpace = llAvailableSpace;
-					nHighestTotalSpaceDir = i;
-				}
-			}
-			// condition 2
-			// the first valid one with the highest actually free space (see Step 1)
-			if (bHasEnoughTempSpace && bHasEnoughIncomingSpace && i == nHighestFreeSpaceDrive && nHighestFreeSpaceDir < 0)
-				nHighestFreeSpaceDir = i;
-		}
-	}
-
-	if (nHighestTotalSpaceDir >= 0) // condition 0 was apparently too strong, take 1
-		return SelectTempDir(nHighestTotalSpaceDir);
-
-	if (nHighestFreeSpaceDir >= 0) // condition 1 could not be met too, take 2
-		return SelectTempDir(nHighestFreeSpaceDir);
+	const DownloadQueueDiskSpaceSeams::TempDirPlacementDecision decision =
+		DownloadQueueDiskSpaceSeams::SelectTempDirForProtectedVolumeSnapshot(
+			aCandidates.data(),
+			aCandidates.size(),
+			aVolumeAvailabilities.data(),
+			aVolumeAvailabilities.size(),
+			static_cast<LPCTSTR>(strIncomingVolumeId),
+			static_cast<uint64>(nFileSize),
+			OLD_MAX_EMULE_FILE_SIZE);
+	if (decision.HasSelection && decision.CandidateIndex < aCandidateTempDirs.size())
+		return SelectTempDir(aCandidateTempDirs[decision.CandidateIndex]);
 
 	return CString();
 }
