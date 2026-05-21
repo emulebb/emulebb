@@ -139,9 +139,10 @@ UINT CUploadDiskIOThread::RunInternal()
 		HelperThreadLaunchSeams::GetState(m_Run),
 		RUN_STOP))
 	{
-		if (!HelperThreadLaunchSeams::ShouldProcessIocpWorkerCompletion(
-			::GetQueuedCompletionStatus(m_hPort, &dwRead, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE),
-			completionKey))
+		const BOOL bCompletionReceived = ::GetQueuedCompletionStatus(m_hPort, &dwRead, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE);
+		DWORD dwCompletionError = bCompletionReceived != FALSE ? ERROR_SUCCESS : ::GetLastError();
+		if (HelperThreadLaunchSeams::IsIocpStopCompletion(bCompletionReceived, completionKey, pCurIO)
+			|| !HelperThreadLaunchSeams::ShouldProcessIocpWorkerCompletion(bCompletionReceived, completionKey, pCurIO))
 			break;
 
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_WORK);
@@ -155,14 +156,28 @@ UINT CUploadDiskIOThread::RunInternal()
 		pcsUploadListRead->Unlock();
 
 		//completed I/O
+		bool bStopCompletion = false;
 		do {
-			if (!completionKey)
+			if (HelperThreadLaunchSeams::IsIocpStopCompletion(bCompletionReceived, completionKey, pCurIO)) {
+				bStopCompletion = true;
 				break;
+			}
 			if (completionKey != WAKEUP) //ignore wakeups
-				ReadCompletionRoutine(dwRead, pCurIO);
-		} while (::GetQueuedCompletionStatus(m_hPort, &dwRead, &completionKey, (LPOVERLAPPED*)&pCurIO, 0));
+				ReadCompletionRoutine(dwRead, pCurIO, dwCompletionError);
 
-		if (!completionKey) //thread termination
+			completionKey = 0;
+			pCurIO = NULL;
+			dwRead = 0;
+			const BOOL bNextCompletionReceived = ::GetQueuedCompletionStatus(m_hPort, &dwRead, &completionKey, (LPOVERLAPPED*)&pCurIO, 0);
+			dwCompletionError = bNextCompletionReceived != FALSE ? ERROR_SUCCESS : ::GetLastError();
+			if (!HelperThreadLaunchSeams::ShouldProcessIocpWorkerCompletion(bNextCompletionReceived, completionKey, pCurIO)) {
+				if (HelperThreadLaunchSeams::IsIocpStopCompletion(bNextCompletionReceived, completionKey, pCurIO))
+					bStopCompletion = true;
+				break;
+			}
+		} while (true);
+
+		if (bStopCompletion) //thread termination
 			break;
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_IDLE);
 		// if we have put a new data on any socket, tell the throttler
@@ -178,7 +193,7 @@ UINT CUploadDiskIOThread::RunInternal()
 	//Improper termination of asynchronous I/O follows...
 	//close file handles to release the I/O completion port
 	while (!m_listPendingIO.IsEmpty())
-		ReadCompletionRoutine(0, m_listPendingIO.RemoveHead());
+		ReadCompletionRoutine(0, m_listPendingIO.RemoveHead(), ERROR_OPERATION_ABORTED);
 
 	HelperThreadLaunchSeams::CloseIocpPort(m_hPort);
 
@@ -324,7 +339,7 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 	pUploadClientStruct->m_bIOError = true; // will let remove this client from the list in the main thread
 }
 
-void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRead_Struct *pOvRead)
+void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRead_Struct *pOvRead, DWORD dwCompletionError)
 {
 	if (pOvRead == NULL) {
 		ASSERT(0);
@@ -338,9 +353,11 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 	CKnownFile *pKnownFile = pOvRead->pFile;
 	if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP) {
 		m_listPendingIO.RemoveAt(pOvRead->pos);
-		bool bReadError = !dwRead;
-		if (bReadError)
-			Debug(_T("  Completed read, dwRead=0\n"));
+		bool bReadError = dwCompletionError != ERROR_SUCCESS || !dwRead;
+		if (bReadError) {
+			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Upload overlapped read failed: read %lu bytes, error %lu (%s)")
+				, dwRead, dwCompletionError, (LPCTSTR)GetErrorMessage(dwCompletionError, 1));
+		}
 		else if (dwRead != pOvRead->uEndOffset - pOvRead->uStartOffset) {
 			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("ReadCompletionRoutine: Didn't read requested data count - wanted: %lu, read: %lu")
 				, (DWORD)(pOvRead->uEndOffset - pOvRead->uStartOffset), dwRead);

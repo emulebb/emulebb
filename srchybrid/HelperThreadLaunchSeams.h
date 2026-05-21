@@ -172,9 +172,25 @@ namespace HelperThreadLaunchSeams
 	/**
 	 * @brief Reports whether an IOCP helper should process the received completion.
 	 */
-	inline bool ShouldProcessIocpWorkerCompletion(BOOL bCompletionReceived, ULONG_PTR nCompletionKey)
+	inline bool IsIocpStopCompletion(BOOL bCompletionReceived, ULONG_PTR nCompletionKey, const void *pOverlapped)
 	{
-		return bCompletionReceived != FALSE && nCompletionKey != 0;
+		return bCompletionReceived != FALSE && nCompletionKey == 0 && pOverlapped == NULL;
+	}
+
+	/**
+	 * @brief Reports whether an IOCP result contains a completion packet.
+	 *
+	 * GetQueuedCompletionStatus returns FALSE both for "no packet available"
+	 * and for a dequeued overlapped operation that completed with an error.
+	 * Failed operation completions still carry a non-null OVERLAPPED pointer
+	 * and must be processed; otherwise the owner keeps the buffer pending
+	 * forever.
+	 */
+	inline bool ShouldProcessIocpWorkerCompletion(BOOL bCompletionReceived, ULONG_PTR nCompletionKey, const void *pOverlapped)
+	{
+		if (IsIocpStopCompletion(bCompletionReceived, nCompletionKey, pOverlapped))
+			return false;
+		return nCompletionKey != 0 || pOverlapped != NULL;
 	}
 
 	/**

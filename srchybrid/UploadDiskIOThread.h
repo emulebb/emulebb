@@ -55,7 +55,7 @@ private:
 	bool		AssociateFile(CKnownFile *pFile);
 	static bool ShouldCompressBasedOnFilename(const CString &strFileName);
 	void		StartCreateNextBlockPackage(UploadingToClient_Struct *pUploadClientStruct);
-	void		ReadCompletionRoutine(DWORD dwRead, const OverlappedRead_Struct *pOvRead);
+	void		ReadCompletionRoutine(DWORD dwRead, const OverlappedRead_Struct *pOvRead, DWORD dwCompletionError);
 
 	static void CreatePackedPackets(const OverlappedRead_Struct &OverlappedRead, CPacketList &rOutPacketList);
 	static void CreateStandardPackets(const OverlappedRead_Struct &OverlappedRead, CPacketList &rOutPacketList);

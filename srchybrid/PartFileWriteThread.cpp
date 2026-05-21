@@ -123,9 +123,10 @@ UINT CPartFileWriteThread::RunInternal()
 		HelperThreadLaunchSeams::GetState(m_Run),
 		RUN_STOP))
 	{
-		if (!HelperThreadLaunchSeams::ShouldProcessIocpWorkerCompletion(
-			::GetQueuedCompletionStatus(m_hPort, &dwWrite, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE),
-			completionKey))
+		const BOOL bCompletionReceived = ::GetQueuedCompletionStatus(m_hPort, &dwWrite, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE);
+		DWORD dwCompletionError = bCompletionReceived != FALSE ? ERROR_SUCCESS : ::GetLastError();
+		if (HelperThreadLaunchSeams::IsIocpStopCompletion(bCompletionReceived, completionKey, pCurIO)
+			|| !HelperThreadLaunchSeams::ShouldProcessIocpWorkerCompletion(bCompletionReceived, completionKey, pCurIO))
 			break;
 
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_WORK);
@@ -140,14 +141,28 @@ UINT CPartFileWriteThread::RunInternal()
 		//start new I/O
 		WriteBuffers();
 		//completed I/O
+		bool bStopCompletion = false;
 		do {
-			if (!completionKey)
+			if (HelperThreadLaunchSeams::IsIocpStopCompletion(bCompletionReceived, completionKey, pCurIO)) {
+				bStopCompletion = true;
 				break;
+			}
 			if (completionKey != WAKEUP) //ignore wakeups
-				WriteCompletionRoutine(dwWrite, pCurIO);
-		} while (::GetQueuedCompletionStatus(m_hPort, &dwWrite, &completionKey, (LPOVERLAPPED*)&pCurIO, 0));
+				WriteCompletionRoutine(dwWrite, pCurIO, dwCompletionError);
 
-		if (!completionKey) //thread termination
+			completionKey = 0;
+			pCurIO = NULL;
+			dwWrite = 0;
+			const BOOL bNextCompletionReceived = ::GetQueuedCompletionStatus(m_hPort, &dwWrite, &completionKey, (LPOVERLAPPED*)&pCurIO, 0);
+			dwCompletionError = bNextCompletionReceived != FALSE ? ERROR_SUCCESS : ::GetLastError();
+			if (!HelperThreadLaunchSeams::ShouldProcessIocpWorkerCompletion(bNextCompletionReceived, completionKey, pCurIO)) {
+				if (HelperThreadLaunchSeams::IsIocpStopCompletion(bNextCompletionReceived, completionKey, pCurIO))
+					bStopCompletion = true;
+				break;
+			}
+		} while (true);
+
+		if (bStopCompletion) //thread termination
 			break;
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_IDLE);
 		if (HelperThreadLaunchSeams::ShouldPostIocpWakeAfterNewData(HelperThreadLaunchSeams::ExchangeState(m_bNewData, 0), m_listPendingIO.IsEmpty()))
@@ -158,7 +173,7 @@ UINT CPartFileWriteThread::RunInternal()
 	//Improper termination of asynchronous I/O follows...
 	//close file handles to release I/O completion port
 	while (!m_listPendingIO.IsEmpty())
-		WriteCompletionRoutine(0, m_listPendingIO.RemoveHead());
+		WriteCompletionRoutine(0, m_listPendingIO.RemoveHead(), ERROR_OPERATION_ABORTED);
 
 	HelperThreadLaunchSeams::CloseIocpPort(m_hPort);
 
@@ -208,7 +223,7 @@ void CPartFileWriteThread::WriteBuffers()
 	}
 }
 
-void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const OverlappedWrite_Struct *pOvWrite)
+void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const OverlappedWrite_Struct *pOvWrite, DWORD dwCompletionError)
 {
 	if (pOvWrite == NULL) {
 		ASSERT(0);
@@ -221,7 +236,7 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 
 		ASSERT(pOvWrite->pos);
 		m_listPendingIO.RemoveAt(pOvWrite->pos);
-		if (dwBytesWritten && dwWrite == dwBytesWritten) {
+		if (dwCompletionError == ERROR_SUCCESS && dwBytesWritten && dwWrite == dwBytesWritten) {
 			if (pFile) {
 				--pFile->m_iWrites;
 				if (pBuffer->data) { //write data
@@ -235,8 +250,15 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 				}
 			}
 		} else {
-			pBuffer->flushed = PB_ERROR; //error code is unknown
-			Debug(_T("  Completed write size: expected %lu, written %lu\n"), dwWrite, dwBytesWritten);
+			if (pFile)
+				--pFile->m_iWrites;
+			if (pBuffer->data) {
+				pBuffer->dwError = dwCompletionError != ERROR_SUCCESS ? dwCompletionError : ERROR_WRITE_FAULT;
+				pBuffer->flushed = PB_ERROR;
+			} else
+				delete pBuffer;
+			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Part-file overlapped write failed: expected %lu, written %lu, error %lu (%s)")
+				, dwWrite, dwBytesWritten, dwCompletionError, (LPCTSTR)GetErrorMessage(dwCompletionError, 1));
 		}
 	} else if (pFile)
 		RemFile(pFile);
