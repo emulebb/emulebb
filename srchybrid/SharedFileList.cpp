@@ -3145,6 +3145,11 @@ bool CSharedFileList::CaptureStartupCacheSaveSnapshot(StartupCacheSaveSnapshot &
 		}
 	}
 
+	for (StartupCacheSaveDirectorySnapshot &directory : rSnapshot.directories) {
+		const CString strCanonicalDirectory(NormalizeSharedDirectoryPath(directory.strDirectoryPath));
+		directory.bHasDirectoryState = GetDirectoryStartupState(strCanonicalDirectory, directory.directoryState);
+	}
+
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
 		CKnownFile *pFile = pair->value;
 		if (pFile == NULL || pFile->IsKindOf(RUNTIME_CLASS(CPartFile)))
@@ -3273,16 +3278,15 @@ bool CSharedFileList::BuildStartupCacheRecordFromSnapshot(const StartupCacheSave
 
 	rRecord = SharedStartupCachePolicy::DirectoryRecord{};
 	rRecord.strDirectoryPath = strCanonicalDirectory;
-	DirectoryStartupState directoryState = {};
-	if (!GetDirectoryStartupState(strCanonicalDirectory, directoryState))
+	if (!rDirectory.bHasDirectoryState)
 		return false;
-	rRecord.identity = directoryState.identity;
-	rRecord.bHasIdentity = directoryState.bHasIdentity;
-	rRecord.utcDirectoryDate = directoryState.utcDirectoryDate;
-	if (directoryState.bHasTrustedNtfsJournalState) {
+	rRecord.identity = rDirectory.directoryState.identity;
+	rRecord.bHasIdentity = rDirectory.directoryState.bHasIdentity;
+	rRecord.utcDirectoryDate = rDirectory.directoryState.utcDirectoryDate;
+	if (rDirectory.directoryState.bHasTrustedNtfsJournalState) {
 		rRecord.eValidationMode = SharedStartupCachePolicy::ValidationMode::LocalNtfsJournalFastPath;
-		rRecord.volumeRecord = directoryState.volumeRecord;
-		rRecord.directoryFileReference = directoryState.directoryFileReference;
+		rRecord.volumeRecord = rDirectory.directoryState.volumeRecord;
+		rRecord.directoryFileReference = rDirectory.directoryState.directoryFileReference;
 		SharedStartupCachePolicy::VolumeRecord &rVolumeRecord = rVolumeRecords[MakeStartupCacheVolumeKey(rRecord.volumeRecord.strVolumeKey)];
 		if (rVolumeRecord.strVolumeKey.IsEmpty())
 			rVolumeRecord = rRecord.volumeRecord;

@@ -343,6 +343,8 @@ private:
 	struct StartupCacheSaveDirectorySnapshot
 	{
 		CString strDirectoryPath;
+		DirectoryStartupState directoryState = {};
+		bool bHasDirectoryState = false;
 		std::vector<SharedStartupCachePolicy::FileRecord> files;
 		bool bHasPendingHash = false;
 	};
