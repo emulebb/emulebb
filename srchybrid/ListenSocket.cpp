@@ -50,6 +50,23 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
+/**
+ * @brief Writes explicit all-parts-present status for deterministic tracing-harness complete sources.
+ */
+void WriteParityHarnessCompleteFileStatus(CSafeMemFile &data, const CKnownFile &file)
+{
+	const uint16 uED2KPartCount = file.GetED2KPartCount();
+	data.WriteUInt16(uED2KPartCount);
+	for (UINT uPart = 0; uPart < uED2KPartCount;) {
+		uint8 towrite = 0;
+		for (UINT i = 0; i < 8 && uPart < uED2KPartCount; ++i) {
+			towrite |= 1 << i;
+			++uPart;
+		}
+		data.WriteUInt8(towrite);
+	}
+}
+
 bool IsOracleFirewallHelperFlow(const CUpDownClient *pClient)
 {
 	if (pClient == NULL)
@@ -583,6 +600,8 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 				data.WriteHash16(reqfile->GetFileHash());
 				if (reqfile->IsPartFile())
 					static_cast<CPartFile*>(reqfile)->WritePartStatus(data);
+				else if (theApp.IsParityHarnessMode())
+					WriteParityHarnessCompleteFileStatus(data, *reqfile);
 				else
 					data.WriteUInt16(0);
 				Packet *packet2 = new Packet(data);
@@ -1160,6 +1179,8 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 					data_out.WriteUInt8(OP_FILESTATUS);
 					if (reqfile->IsPartFile())
 						static_cast<CPartFile*>(reqfile)->WritePartStatus(data_out);
+					else if (theApp.IsParityHarnessMode())
+						WriteParityHarnessCompleteFileStatus(data_out, *reqfile);
 					else
 						data_out.WriteUInt16(0);
 					break;
@@ -1643,6 +1664,8 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 					if (sender->GetUDPVersion() > 3)
 						if (reqfile->IsPartFile())
 							static_cast<CPartFile*>(reqfile)->WritePartStatus(data_out);
+						else if (theApp.IsParityHarnessMode())
+							WriteParityHarnessCompleteFileStatus(data_out, *reqfile);
 						else
 							data_out.WriteUInt16(0);
 
