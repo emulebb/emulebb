@@ -40,7 +40,7 @@ constexpr ULONGLONG ARR_COMPAT_CACHE_TTL_MS = 10ULL * 60ULL * 1000ULL;
 constexpr ULONGLONG ARR_COMPAT_BUSY_WAIT_MS = 15ULL * 1000ULL;
 constexpr DWORD ARR_COMPAT_POLL_SLEEP_MS = 750;
 constexpr DWORD ARR_COMPAT_BUSY_POLL_SLEEP_MS = 250;
-constexpr size_t ARR_COMPAT_MAX_RETURNED_PAGE_ITEMS = 99U;
+constexpr size_t ARR_COMPAT_MAX_RETURNED_PAGE_ITEMS = 100U;
 
 struct SArrCompatResult
 {
@@ -194,7 +194,7 @@ std::string BuildFeedXml(const WebServerArrCompatSeams::STorznabRequest &rReques
 	const size_t uStart = (std::min)(static_cast<size_t>(rRequest.uOffset), uTotal);
 	const size_t uLimit = (std::min)(static_cast<size_t>(rRequest.uLimit), ARR_COMPAT_MAX_RETURNED_PAGE_ITEMS);
 	const size_t uEnd = (std::min)(uTotal, uStart + uLimit);
-	const size_t uAdvertisedTotal = static_cast<size_t>(rRequest.uOffset) + (uEnd - uStart);
+	const size_t uAdvertisedTotal = uTotal;
 	xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		<< "<rss version=\"2.0\" xmlns:torznab=\"http://torznab.com/schemas/2015/feed\">\n"
 		<< "  <channel>\n"

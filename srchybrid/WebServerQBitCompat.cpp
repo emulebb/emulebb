@@ -572,8 +572,13 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		return;
 	}
 
-	if (strPath == "/api/v2/torrents/pause" || strPath == "/api/v2/torrents/stop") {
+	if (strPath == "/api/v2/torrents/pause") {
 		HandleTorrentStateMutation(rData, "transfers/pause");
+		return;
+	}
+
+	if (strPath == "/api/v2/torrents/stop") {
+		HandleTorrentStateMutation(rData, "transfers/stop");
 		return;
 	}
 
