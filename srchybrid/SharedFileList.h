@@ -413,6 +413,14 @@ private:
 	void	MarkStartupCacheDirty();
 	bool	TryRehydrateSharedDirectoryFromCache(const CString &strDirectory);
 	/**
+	 * @brief Builds the generic validation record for one current directory entry without mutating shared state.
+	 */
+	bool	BuildGenericStartupCacheFileRecord(const CString &strFoundDirectory, const WIN32_FIND_DATA &findData, SharedStartupCachePolicy::FileRecord &rRecord) const;
+	/**
+	 * @brief Enumerates current shareable directory entries for generic startup-cache validation.
+	 */
+	bool	CollectGenericStartupCacheFileRecords(const CString &strDirectory, std::vector<SharedStartupCachePolicy::FileRecord> &rRecords, DWORD *pdwLastError) const;
+	/**
 	 * @brief Builds one startup-cache directory block and records any shared NTFS volume guard it depends on.
 	 */
 	bool	BuildStartupCacheRecord(const CString &strDirectory, SharedStartupCachePolicy::DirectoryRecord &rRecord, SharedStartupCacheVolumeRecordMap &rVolumeRecords) const;

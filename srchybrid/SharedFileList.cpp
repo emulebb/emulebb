@@ -160,6 +160,33 @@ bool HasSameDirectoryTextFast(const CString &strLeft, const CString &strRight)
 	return MakeSharedDirectoryLookupKey(strLeft) == MakeSharedDirectoryLookupKey(strRight);
 }
 
+bool StartupCacheFileRecordLess(const SharedStartupCachePolicy::FileRecord &rLeft, const SharedStartupCachePolicy::FileRecord &rRight)
+{
+	const int iNameCompare = rLeft.strLeafName.Compare(rRight.strLeafName);
+	if (iNameCompare != 0)
+		return iNameCompare < 0;
+	if (rLeft.utcFileDate != rRight.utcFileDate)
+		return rLeft.utcFileDate < rRight.utcFileDate;
+	return rLeft.ullFileSize < rRight.ullFileSize;
+}
+
+bool StartupCacheFileRecordEquals(const SharedStartupCachePolicy::FileRecord &rLeft, const SharedStartupCachePolicy::FileRecord &rRight)
+{
+	return rLeft.utcFileDate == rRight.utcFileDate
+		&& rLeft.ullFileSize == rRight.ullFileSize
+		&& rLeft.strLeafName == rRight.strLeafName;
+}
+
+bool StartupCacheFileRecordSetsEqual(
+	std::vector<SharedStartupCachePolicy::FileRecord> left,
+	std::vector<SharedStartupCachePolicy::FileRecord> right)
+{
+	std::sort(left.begin(), left.end(), StartupCacheFileRecordLess);
+	std::sort(right.begin(), right.end(), StartupCacheFileRecordLess);
+	return left.size() == right.size()
+		&& std::equal(left.begin(), left.end(), right.begin(), StartupCacheFileRecordEquals);
+}
+
 CKnownFileProgressTargetSnapshot MakePartFileProgressTargetSnapshot(const CPartFile &partFile)
 {
 	CKnownFileProgressTargetSnapshot snapshot{};
@@ -2746,6 +2773,43 @@ bool CSharedFileList::GetFileStartupState(const CString &strFilePath, LONGLONG &
 	return true;
 }
 
+bool CSharedFileList::BuildGenericStartupCacheFileRecord(const CString &strFoundDirectory, const WIN32_FIND_DATA &findData, SharedStartupCachePolicy::FileRecord &rRecord) const
+{
+	rRecord = SharedStartupCachePolicy::FileRecord{};
+	if ((findData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_TEMPORARY)) != 0)
+		return false;
+
+	const ULONGLONG ullFoundFileSize = (static_cast<ULONGLONG>(findData.nFileSizeHigh) << 32) | findData.nFileSizeLow;
+	if (ullFoundFileSize == 0 || ullFoundFileSize > MAX_EMULE_FILE_SIZE)
+		return false;
+
+	const CString strFoundFileName(findData.cFileName);
+	const CString strFoundFilePath(NormalizeSharedFilePath(strFoundDirectory + strFoundFileName));
+	if (HasSingleExcludedFileRule(strFoundFilePath) || ShouldIgnoreSharedFileCandidate(strFoundFilePath, strFoundFileName))
+		return false;
+
+	time_t tUtcFileDate = (time_t)FileTimeToUnixTime(findData.ftLastWriteTime);
+	if (tUtcFileDate <= 0)
+		tUtcFileDate = (time_t)-1;
+
+	rRecord.strLeafName = strFoundFileName;
+	rRecord.utcFileDate = static_cast<LONGLONG>(tUtcFileDate);
+	rRecord.ullFileSize = ullFoundFileSize;
+	return true;
+}
+
+bool CSharedFileList::CollectGenericStartupCacheFileRecords(const CString &strDirectory, std::vector<SharedStartupCachePolicy::FileRecord> &rRecords, DWORD *pdwLastError) const
+{
+	rRecords.clear();
+	const CString strCanonicalDirectory(NormalizeSharedDirectoryPath(strDirectory));
+	return PathHelpers::ForEachDirectoryEntry(strCanonicalDirectory, [&](const WIN32_FIND_DATA &findData) -> bool {
+		SharedStartupCachePolicy::FileRecord record = {};
+		if (BuildGenericStartupCacheFileRecord(strCanonicalDirectory, findData, record))
+			rRecords.push_back(record);
+		return true;
+	}, pdwLastError);
+}
+
 bool CSharedFileList::HasPendingHashForDirectory(const CString &strDirectory) const
 {
 	const CString strDirectoryKey(MakeSharedDirectoryLookupKey(strDirectory));
@@ -2835,6 +2899,14 @@ bool CSharedFileList::TryRehydrateSharedDirectoryFromCache(const CString &strDir
 		if (itVolumeState->second.changedDirectoryFileReferences.find(rRecord.directoryFileReference) != itVolumeState->second.changedDirectoryFileReferences.end())
 			return false;
 	}
+	else {
+		std::vector<SharedStartupCachePolicy::FileRecord> currentRecords;
+		DWORD dwError = ERROR_SUCCESS;
+		if (!CollectGenericStartupCacheFileRecords(strDirectory, currentRecords, &dwError))
+			return false;
+		if (!StartupCacheFileRecordSetsEqual(rRecord.files, currentRecords))
+			return false;
+	}
 
 	struct RehydrateCandidate
 	{
@@ -2846,16 +2918,6 @@ bool CSharedFileList::TryRehydrateSharedDirectoryFromCache(const CString &strDir
 
 	for (const SharedStartupCachePolicy::FileRecord &rFileRecord : rRecord.files) {
 		const CString strFoundFilePath(PathHelpers::AppendPathComponent(strDirectory, rFileRecord.strLeafName));
-		if (!SharedStartupCachePolicy::UsesTrustedNtfsFastPath(rRecord)) {
-			LONGLONG utcCurrentFileDate = -1;
-			ULONGLONG ullCurrentFileSize = 0;
-			if (!GetFileStartupState(strFoundFilePath, utcCurrentFileDate, ullCurrentFileSize))
-				return false;
-
-			if (!SharedStartupCachePolicy::MatchesVerifiedFileState(rFileRecord, true, utcCurrentFileDate, ullCurrentFileSize))
-				return false;
-		}
-
 		CKnownFile *pKnownFile = theApp.knownfiles->FindKnownFile(rFileRecord.strLeafName, static_cast<time_t>(rFileRecord.utcFileDate), rFileRecord.ullFileSize);
 		if (pKnownFile == NULL && SharedStartupCachePolicy::ShouldRescanDirectoryOnCachedLookupMiss())
 			return false;
