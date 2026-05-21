@@ -3271,7 +3271,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		if (!TryParseOptionalDownloadPaused(params, uPaused, rError))
 			return json();
 
-		auto addOneLink = [&](const std::string &rLinkUtf8, CString &rLinkError) -> json
+		auto addOneLink = [&](const std::string &rLinkUtf8, CStringA &rLinkErrorCode, CString &rLinkError) -> json
 		{
 			std::unique_ptr<CED2KLink> pLink;
 			try {
@@ -3286,12 +3286,17 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 
 				const CED2KFileLink *const pFileLink = pLink->GetFileLink();
 				theApp.downloadqueue->AddFileLinkToDownload(*pFileLink, static_cast<int>(uCategory), uPaused);
-				const json result{
+				json result{
 					{"hash", StdUtf8FromCString(HashToHex(pFileLink->GetHashKey()))},
 					{"name", StdUtf8FromCString(pFileLink->GetName())}
 				};
+				if (theApp.downloadqueue->GetFileByID(pFileLink->GetHashKey()) == NULL) {
+					rLinkErrorCode = "INVALID_STATE";
+					rLinkError = _T("transfer could not be queued because no temp/incoming volume placement satisfies the protected disk-space thresholds");
+				}
 				return result;
 			} catch (const CString &rCaughtError) {
+				rLinkErrorCode = "INVALID_ARGUMENT";
 				rLinkError = rCaughtError;
 				return json();
 			}
@@ -3314,10 +3319,18 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 					continue;
 				}
 
+				CStringA strLinkErrorCode;
 				CString strLinkError;
-				json added = addOneLink(strLinkUtf8, strLinkError);
-				if (!strLinkError.IsEmpty())
-					results.push_back(json{{"ok", false}, {"error", StdUtf8FromCString(strLinkError)}});
+				json added = addOneLink(strLinkUtf8, strLinkErrorCode, strLinkError);
+				if (!strLinkError.IsEmpty()) {
+					if (!added.is_object())
+						added = json::object();
+					added["ok"] = false;
+					if (!strLinkErrorCode.IsEmpty())
+						added["code"] = static_cast<LPCSTR>(strLinkErrorCode);
+					added["error"] = StdUtf8FromCString(strLinkError);
+					results.push_back(added);
+				}
 				else {
 					added["ok"] = true;
 					results.push_back(added);
@@ -3334,10 +3347,11 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 
+		CStringA strLinkErrorCode;
 		CString strLinkError;
-		json result = addOneLink(strLinkUtf8, strLinkError);
+		json result = addOneLink(strLinkUtf8, strLinkErrorCode, strLinkError);
 		if (!strLinkError.IsEmpty()) {
-			rError.strCode = "INVALID_ARGUMENT";
+			rError.strCode = !strLinkErrorCode.IsEmpty() ? strLinkErrorCode : CStringA("INVALID_ARGUMENT");
 			rError.strMessage = strLinkError;
 			return json();
 		}
