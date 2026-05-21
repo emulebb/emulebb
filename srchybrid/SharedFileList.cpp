@@ -160,33 +160,6 @@ bool HasSameDirectoryTextFast(const CString &strLeft, const CString &strRight)
 	return MakeSharedDirectoryLookupKey(strLeft) == MakeSharedDirectoryLookupKey(strRight);
 }
 
-bool StartupCacheFileRecordLess(const SharedStartupCachePolicy::FileRecord &rLeft, const SharedStartupCachePolicy::FileRecord &rRight)
-{
-	const int iNameCompare = rLeft.strLeafName.Compare(rRight.strLeafName);
-	if (iNameCompare != 0)
-		return iNameCompare < 0;
-	if (rLeft.utcFileDate != rRight.utcFileDate)
-		return rLeft.utcFileDate < rRight.utcFileDate;
-	return rLeft.ullFileSize < rRight.ullFileSize;
-}
-
-bool StartupCacheFileRecordEquals(const SharedStartupCachePolicy::FileRecord &rLeft, const SharedStartupCachePolicy::FileRecord &rRight)
-{
-	return rLeft.utcFileDate == rRight.utcFileDate
-		&& rLeft.ullFileSize == rRight.ullFileSize
-		&& rLeft.strLeafName == rRight.strLeafName;
-}
-
-bool StartupCacheFileRecordSetsEqual(
-	std::vector<SharedStartupCachePolicy::FileRecord> left,
-	std::vector<SharedStartupCachePolicy::FileRecord> right)
-{
-	std::sort(left.begin(), left.end(), StartupCacheFileRecordLess);
-	std::sort(right.begin(), right.end(), StartupCacheFileRecordLess);
-	return left.size() == right.size()
-		&& std::equal(left.begin(), left.end(), right.begin(), StartupCacheFileRecordEquals);
-}
-
 CKnownFileProgressTargetSnapshot MakePartFileProgressTargetSnapshot(const CPartFile &partFile)
 {
 	CKnownFileProgressTargetSnapshot snapshot{};
@@ -2904,7 +2877,7 @@ bool CSharedFileList::TryRehydrateSharedDirectoryFromCache(const CString &strDir
 		DWORD dwError = ERROR_SUCCESS;
 		if (!CollectGenericStartupCacheFileRecords(strDirectory, currentRecords, &dwError))
 			return false;
-		if (!StartupCacheFileRecordSetsEqual(rRecord.files, currentRecords))
+		if (!SharedStartupCachePolicy::FileRecordSetsMatchForInventoryValidation(rRecord.files, currentRecords))
 			return false;
 	}
 

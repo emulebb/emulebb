@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <vector>
 #include "LongPathSeams.h"
@@ -170,5 +171,39 @@ inline bool MatchesVerifiedFileState(const FileRecord &rRecord, const bool bHave
 	if (!bHaveCurrentFileDate)
 		return false;
 	return rRecord.utcFileDate == utcCurrentFileDate && rRecord.ullFileSize == ullCurrentFileSize;
+}
+
+/**
+ * \brief Orders cached file records for complete generic directory-inventory comparison.
+ */
+inline bool FileRecordLessForInventoryValidation(const FileRecord &rLeft, const FileRecord &rRight)
+{
+	const int iNameCompare = rLeft.strLeafName.Compare(rRight.strLeafName);
+	if (iNameCompare != 0)
+		return iNameCompare < 0;
+	if (rLeft.utcFileDate != rRight.utcFileDate)
+		return rLeft.utcFileDate < rRight.utcFileDate;
+	return rLeft.ullFileSize < rRight.ullFileSize;
+}
+
+/**
+ * \brief Checks whether two cached file records describe the same leaf, date, and size.
+ */
+inline bool FileRecordsMatchForInventoryValidation(const FileRecord &rLeft, const FileRecord &rRight)
+{
+	return rLeft.utcFileDate == rRight.utcFileDate
+		&& rLeft.ullFileSize == rRight.ullFileSize
+		&& rLeft.strLeafName == rRight.strLeafName;
+}
+
+/**
+ * \brief Checks whether a generic startup-cache block exactly matches the current shareable directory inventory.
+ */
+inline bool FileRecordSetsMatchForInventoryValidation(std::vector<FileRecord> left, std::vector<FileRecord> right)
+{
+	std::sort(left.begin(), left.end(), FileRecordLessForInventoryValidation);
+	std::sort(right.begin(), right.end(), FileRecordLessForInventoryValidation);
+	return left.size() == right.size()
+		&& std::equal(left.begin(), left.end(), right.begin(), FileRecordsMatchForInventoryValidation);
 }
 }
