@@ -69,6 +69,7 @@
 #include "UPnPImplWrapper.h"
 #include "UploadDiskIOThread.h"
 #include "PartFileWriteThread.h"
+#include "PartFile.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -337,6 +338,7 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	, m_bParityHarnessLinkWritten()
 	, m_bParityHarnessAichWritten()
 	, m_bParityHarnessDownloadIssued()
+	, m_bParityHarnessDownloadReportWritten()
 	, m_bParityHarnessSearchStarted()
 	, m_bParityHarnessSearchDownloadQueued()
 	, m_nParityHarnessSearchID()
@@ -648,6 +650,88 @@ static bool ExtractParityHarnessJsonStringValue(const CStringA &strJson, LPCSTR 
 	return false;
 }
 
+static bool TryCaptureParityHarnessDownloadMetadata(const CString &strLink, CString &strHash, CString &strName, CString &strSize)
+{
+	CED2KLink *pLink = NULL;
+	try {
+		pLink = CED2KLink::CreateLinkFromUrl(strLink);
+		if (pLink == NULL || pLink->GetKind() != CED2KLink::kFile || pLink->GetFileLink() == NULL) {
+			delete pLink;
+			return false;
+		}
+
+		const CED2KFileLink *pFileLink = pLink->GetFileLink();
+		strHash = md4str(pFileLink->GetHashKey());
+		strName = pFileLink->GetName();
+		strSize.Format(_T("%I64u"), (uint64)pFileLink->GetSize());
+		delete pLink;
+		return !strHash.IsEmpty() && !strName.IsEmpty() && !strSize.IsEmpty();
+	}
+	catch (...) {
+		delete pLink;
+		return false;
+	}
+}
+
+static bool IsParityHarnessExpectedDownloadComplete(const CString &strName, const CString &strSize, CString &strPath, ULONGLONG &ullActualSize)
+{
+	strPath = thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR) + strName;
+	WIN32_FILE_ATTRIBUTE_DATA data = {};
+	if (!::GetFileAttributesEx(strPath, GetFileExInfoStandard, &data) || (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+		ullActualSize = 0;
+		return false;
+	}
+
+	ullActualSize = (static_cast<ULONGLONG>(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
+	return ullActualSize == _ttoi64(strSize);
+}
+
+static bool WriteParityHarnessDownloadReport(
+	const CString &strPath,
+	const CStringArray &astrHashes,
+	const CStringArray &astrNames,
+	const CStringArray &astrSizes)
+{
+	if (strPath.IsEmpty())
+		return false;
+
+	FILE *pFile = _tfsopen(strPath, _T("wt"), _SH_DENYWR);
+	if (pFile == NULL)
+		return false;
+
+	const CString strTimestamp = CTime::GetCurrentTime().FormatGmt(_T("%Y-%m-%dT%H:%M:%SZ"));
+	fprintf(pFile, "{\n");
+	fprintf(pFile, "  \"schema\": \"parity_harness_downloads_v1\",\n");
+	fprintf(pFile, "  \"source\": \"emule_harness\",\n");
+	fprintf(pFile, "  \"ts_utc\": \"%s\",\n", (LPCSTR)CT2A(strTimestamp));
+	fprintf(pFile, "  \"download_count\": %d,\n", (int)astrHashes.GetCount());
+	fprintf(pFile, "  \"downloads\": [\n");
+
+	bool bAllComplete = astrHashes.GetCount() > 0;
+	for (INT_PTR i = 0; i < astrHashes.GetCount(); ++i) {
+		CString strDownloadPath;
+		ULONGLONG ullActualSize = 0;
+		const bool bComplete = IsParityHarnessExpectedDownloadComplete(astrNames[i], astrSizes[i], strDownloadPath, ullActualSize);
+		bAllComplete = bAllComplete && bComplete;
+		fprintf(
+			pFile,
+			"    {\"hash\": \"%s\", \"name\": \"%s\", \"expected_size\": %s, \"path\": \"%s\", \"exists\": %s, \"actual_size\": %llu, \"complete\": %s}%s\n",
+			(LPCSTR)EscapeJsonUtf8(astrHashes[i]),
+			(LPCSTR)EscapeJsonUtf8(astrNames[i]),
+			(LPCSTR)CT2A(astrSizes[i]),
+			(LPCSTR)EscapeJsonUtf8(strDownloadPath),
+			ullActualSize > 0 ? "true" : "false",
+			(unsigned long long)ullActualSize,
+			bComplete ? "true" : "false",
+			(i + 1 < astrHashes.GetCount()) ? "," : "");
+	}
+	fprintf(pFile, "  ],\n");
+	fprintf(pFile, "  \"complete\": %s\n", bAllComplete ? "true" : "false");
+	fprintf(pFile, "}\n");
+	fclose(pFile);
+	return bAllComplete;
+}
+
 static void EmitParityHarnessHookEvent(const CString &strPath, LPCSTR pszEvent, const CString &strHookSetId, const CString &strConfigPath)
 {
 	if (strPath.IsEmpty())
@@ -780,6 +864,7 @@ bool CemuleApp::HasPendingParityHarnessScenario() const
 		|| !m_strParityHarnessExportLinkFile.IsEmpty()
 		|| !m_strParityHarnessExportAichFile.IsEmpty()
 		|| !m_strParityHarnessDownloadLinkFile.IsEmpty()
+		|| !m_strParityHarnessDownloadReportFile.IsEmpty()
 		|| HasPendingParityHarnessSearch();
 }
 
@@ -793,6 +878,8 @@ bool CemuleApp::HasPendingParityHarnessSearch() const
 bool CemuleApp::ShouldKeepParityHarnessStartupTimerRunning() const
 {
 	if (!m_strParityHarnessBootstrapPeers.IsEmpty() && Kademlia::CKademlia::IsRunning())
+		return true;
+	if (!m_strParityHarnessDownloadReportFile.IsEmpty() && !m_bParityHarnessDownloadReportWritten)
 		return true;
 
 	return HasPendingParityHarnessSearch();
@@ -913,15 +1000,26 @@ bool CemuleApp::ProcessPendingParityHarnessScenario()
 	if (!m_bParityHarnessDownloadIssued && !m_strParityHarnessDownloadLinkFile.IsEmpty() && _taccess(m_strParityHarnessDownloadLinkFile, 0) == 0) {
 		CStdioFile linkFile;
 		if (linkFile.Open(m_strParityHarnessDownloadLinkFile, CFile::modeRead | CFile::shareDenyNone)) {
+			UINT uQueuedLinks = 0;
 			CString ed2kLink;
-			if (linkFile.ReadString(ed2kLink)) {
+			while (linkFile.ReadString(ed2kLink)) {
 				ed2kLink.Trim();
 				if (!ed2kLink.IsEmpty()) {
 					Log(_T("Parity harness processing ED2K link from: %s"), (LPCTSTR)m_strParityHarnessDownloadLinkFile);
 					try {
+						CString strHash;
+						CString strName;
+						CString strSize;
+						if (!TryCaptureParityHarnessDownloadMetadata(ed2kLink, strHash, strName, strSize))
+							LogWarning(_T("Parity harness could not inspect ED2K file link metadata from %s"), (LPCTSTR)m_strParityHarnessDownloadLinkFile);
 						emuledlg->ProcessED2KLink(ed2kLink);
 						Log(_T("Parity harness queued ED2K link from: %s"), (LPCTSTR)m_strParityHarnessDownloadLinkFile);
-						m_bParityHarnessDownloadIssued = true;
+						if (!strHash.IsEmpty()) {
+							m_astrParityHarnessDownloadHashes.Add(strHash);
+							m_astrParityHarnessDownloadNames.Add(strName);
+							m_astrParityHarnessDownloadSizes.Add(strSize);
+						}
+						++uQueuedLinks;
 					}
 					catch (const CString &strError) {
 						LogWarning(_T("Parity harness failed to queue ED2K link from %s: %s"), (LPCTSTR)m_strParityHarnessDownloadLinkFile, (LPCTSTR)strError);
@@ -941,18 +1039,34 @@ bool CemuleApp::ProcessPendingParityHarnessScenario()
 				else
 					LogWarning(_T("Parity harness download link file is empty after trimming: %s"), (LPCTSTR)m_strParityHarnessDownloadLinkFile);
 			}
+			if (uQueuedLinks > 0)
+				m_bParityHarnessDownloadIssued = true;
 			else
-				LogWarning(_T("Parity harness could not read ED2K link from: %s"), (LPCTSTR)m_strParityHarnessDownloadLinkFile);
+				LogWarning(_T("Parity harness did not queue any ED2K links from: %s"), (LPCTSTR)m_strParityHarnessDownloadLinkFile);
 			linkFile.Close();
 		}
 		else
 			LogWarning(_T("Parity harness could not open ED2K link file: %s"), (LPCTSTR)m_strParityHarnessDownloadLinkFile);
 	}
 
+	if (m_bParityHarnessDownloadIssued && !m_strParityHarnessDownloadReportFile.IsEmpty() && !m_bParityHarnessDownloadReportWritten) {
+		if (WriteParityHarnessDownloadReport(
+				m_strParityHarnessDownloadReportFile,
+				m_astrParityHarnessDownloadHashes,
+				m_astrParityHarnessDownloadNames,
+				m_astrParityHarnessDownloadSizes))
+		{
+			m_bParityHarnessDownloadReportWritten = true;
+			Log(_T("Parity harness wrote completed download report: %s"), (LPCTSTR)m_strParityHarnessDownloadReportFile);
+		}
+	}
+
 	const bool exportDone =
 		(m_strParityHarnessExportLinkFile.IsEmpty() || m_bParityHarnessLinkWritten)
 		&& (m_strParityHarnessExportAichFile.IsEmpty() || m_bParityHarnessAichWritten);
-	const bool downloadDone = m_strParityHarnessDownloadLinkFile.IsEmpty() || m_bParityHarnessDownloadIssued;
+	const bool downloadDone =
+		(m_strParityHarnessDownloadLinkFile.IsEmpty() || m_bParityHarnessDownloadIssued)
+		&& (m_strParityHarnessDownloadReportFile.IsEmpty() || m_bParityHarnessDownloadReportWritten);
 	if (!HasPendingParityHarnessSearch())
 		return exportDone && downloadDone;
 
@@ -1467,6 +1581,11 @@ bool CemuleApp::ProcessCommandline()
 		CString strDownloadLinkFile;
 		if (TryParseNamedArgument(i, _T("downloadlinkfile"), _T("dlf"), strDownloadLinkFile)) {
 			m_strParityHarnessDownloadLinkFile = strDownloadLinkFile;
+			continue;
+		}
+		CString strDownloadReportFile;
+		if (TryParseNamedArgument(i, _T("downloadreportfile"), _T("drf"), strDownloadReportFile)) {
+			m_strParityHarnessDownloadReportFile = strDownloadReportFile;
 			continue;
 		}
 		CString strSearchTerm;

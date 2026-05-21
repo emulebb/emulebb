@@ -249,6 +249,7 @@ protected:
 	bool		m_bParityHarnessLinkWritten;
 	bool		m_bParityHarnessAichWritten;
 	bool		m_bParityHarnessDownloadIssued;
+	bool		m_bParityHarnessDownloadReportWritten;
 	bool		m_bParityHarnessSearchStarted;
 	bool		m_bParityHarnessSearchDownloadQueued;
 	uint32		m_nParityHarnessSearchID;
@@ -261,6 +262,10 @@ protected:
 	CString		m_strParityHarnessExportAichFile;
 	CString		m_strParityHarnessExportSourceIp;
 	CString		m_strParityHarnessDownloadLinkFile;
+	CString		m_strParityHarnessDownloadReportFile;
+	CStringArray m_astrParityHarnessDownloadHashes;
+	CStringArray m_astrParityHarnessDownloadNames;
+	CStringArray m_astrParityHarnessDownloadSizes;
 	CString		m_strParityHarnessSearchTerm;
 	CString		m_strParityHarnessSearchResultsFile;
 	CString		m_strParityHarnessSearchDownloadHashFile;
