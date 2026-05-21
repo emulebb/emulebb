@@ -221,6 +221,10 @@ public:
 	 * @brief Writes recorded startup errors into the normal log and opens the durable startup error log once.
 	 */
 	void FlushStartupErrorsToLog();
+	/**
+	 * @brief Logs startup diagnostics for profile, temp, and incoming directories on risky storage.
+	 */
+	void WarnAboutStartupStoragePlacement();
 
 	UploadBandwidthThrottler *uploadBandwidthThrottler;
 	CemuleDlg			*emuledlg;

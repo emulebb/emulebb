@@ -189,6 +189,28 @@ bool AppendStartupErrorLogLine(const CString &rstrPath, const CString &rstrMessa
 	return bWritten && bClosed;
 }
 
+LPCTSTR GetStoragePlacementRiskLogName(const LongPathSeams::StoragePlacementRisk eRisk)
+{
+	switch (eRisk) {
+	case LongPathSeams::StoragePlacementRisk::NetworkShare:
+		return _T("network share");
+	case LongPathSeams::StoragePlacementRisk::RemovableDrive:
+		return _T("removable drive");
+	case LongPathSeams::StoragePlacementRisk::None:
+	default:
+		return _T("");
+	}
+}
+
+bool HasStartupStorageWarningKey(const std::vector<CString> &rKeys, const CString &rstrKey)
+{
+	for (const CString &rExistingKey : rKeys) {
+		if (rExistingKey == rstrKey)
+			return true;
+	}
+	return false;
+}
+
 int HandleHeadlessWebServerCertificateCommandLine(const AppCommandLineSeams::SParseResult &rCommandLine)
 {
 	WebServerCertificate::SGenerationRequest request = WebServerCertificate::BuildDefaultLocalRequest(
@@ -1194,6 +1216,37 @@ void CemuleApp::FlushStartupErrorsToLog()
 	m_aStartupErrorLines.clear();
 }
 
+void CemuleApp::WarnAboutStartupStoragePlacement()
+{
+	std::vector<CString> aWarningKeys;
+	const auto warnIfRisky = [&](LPCTSTR pszRole, LPCTSTR pszPath) {
+		if (pszRole == NULL || pszRole[0] == _T('\0') || pszPath == NULL || pszPath[0] == _T('\0'))
+			return;
+
+		const LongPathSeams::StoragePlacementProbeResult placement = LongPathSeams::ClassifyStoragePlacement(pszPath);
+		if (placement.eRisk == LongPathSeams::StoragePlacementRisk::None)
+			return;
+
+		CString strKey;
+		strKey.Format(_T("%s|%u|%s"), pszRole, static_cast<unsigned int>(placement.eRisk), placement.strInputPath.c_str());
+		strKey.MakeLower();
+		if (HasStartupStorageWarningKey(aWarningKeys, strKey))
+			return;
+		aWarningKeys.push_back(strKey);
+
+		QueueLogLineEx(LOG_WARNING, _T("%s is on a %s (storage root %s): %s"),
+			pszRole,
+			GetStoragePlacementRiskLogName(placement.eRisk),
+			placement.strVolumeRoot.c_str(),
+			pszPath);
+	};
+
+	warnIfRisky(_T("eMule profile directory"), thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
+	for (INT_PTR i = 0; i < thePrefs.GetTempDirCount(); ++i)
+		warnIfRisky(_T("Temporary Files directory"), thePrefs.GetTempDir(i));
+	warnIfRisky(_T("Incoming Files directory"), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
+}
+
 #if EMULE_COMPILED_STARTUP_PROFILING
 void CemuleApp::ResetStartupProfile()
 {
@@ -1506,6 +1559,7 @@ BOOL CemuleApp::InitInstance()
 	if (IsCurrentProcessElevated())
 		QueueLogLineEx(LOG_WARNING, _T("eMule is running with administrator privileges. This is not recommended for normal P2P use; restart without elevation unless required."));
 	FlushStartupErrorsToLog();
+	WarnAboutStartupStoragePlacement();
 
 	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 

@@ -207,6 +207,29 @@ struct ResolvedVolumeContext
 };
 
 /**
+ * @brief Coarse startup-storage risks that should be visible in diagnostics.
+ */
+enum class StoragePlacementRisk
+{
+	None = 0,
+	NetworkShare,
+	RemovableDrive
+};
+
+/**
+ * @brief Captures the resolved storage root and drive classification for one startup directory path.
+ */
+struct StoragePlacementProbeResult
+{
+	PathString strInputPath;
+	PathString strVolumeRoot;
+	DWORD dwDriveType = DRIVE_UNKNOWN;
+	DWORD dwLastError = ERROR_SUCCESS;
+	StoragePlacementRisk eRisk = StoragePlacementRisk::None;
+	bool bResolved = false;
+};
+
+/**
  * @brief Normalizes forward slashes to backslashes before building extended-length DOS/UNC paths.
  */
 inline PathString NormalizeAbsolutePathSeparators(LPCTSTR pszPath)
@@ -554,6 +577,91 @@ inline bool EnsureTrailingSeparator(PathString &rPath)
 	if (!rPath.empty() && !IsPathSeparator(rPath[rPath.size() - 1]))
 		rPath += _T('\\');
 	return !rPath.empty();
+}
+
+/**
+ * @brief Returns the drive or UNC root from normalized logical path text when it is syntactically available.
+ */
+inline PathString GetLogicalStorageRoot(LPCTSTR pszPath)
+{
+	if (pszPath == NULL || pszPath[0] == _T('\0'))
+		return PathString();
+
+	const PathString logicalPath = GetLogicalPathText(pszPath);
+	const size_t uRootLength = GetLogicalPathComponentStart(logicalPath.c_str());
+	if (uRootLength == 0u || uRootLength > logicalPath.size())
+		return PathString();
+	return logicalPath.substr(0u, uRootLength);
+}
+
+/**
+ * @brief Maps Win32 drive types to startup-storage warning classes.
+ */
+inline StoragePlacementRisk GetStoragePlacementRiskFromDriveType(const DWORD dwDriveType)
+{
+	if (dwDriveType == DRIVE_REMOTE)
+		return StoragePlacementRisk::NetworkShare;
+	if (dwDriveType == DRIVE_REMOVABLE)
+		return StoragePlacementRisk::RemovableDrive;
+	return StoragePlacementRisk::None;
+}
+
+/**
+ * @brief Classifies whether a path resolves to network or removable storage using injectable Win32 probes.
+ */
+template <typename GetVolumePathNameFn, typename GetDriveTypeFn>
+inline StoragePlacementProbeResult ClassifyStoragePlacement(
+	LPCTSTR pszPath,
+	GetVolumePathNameFn getVolumePathNameFn,
+	GetDriveTypeFn getDriveTypeFn)
+{
+	StoragePlacementProbeResult result;
+	result.strInputPath = NormalizeAbsolutePathSeparators(pszPath);
+	if (pszPath == NULL || pszPath[0] == _T('\0')) {
+		result.dwLastError = ERROR_INVALID_PARAMETER;
+		return result;
+	}
+
+	const PathString strLogicalPath(GetLogicalPathText(pszPath));
+	if (GetLogicalPathComponentStart(strLogicalPath.c_str()) == 0u) {
+		result.dwLastError = ERROR_NOT_SUPPORTED;
+		return result;
+	}
+
+	std::vector<TCHAR> volumeRootBuffer(4096u, _T('\0'));
+	if (getVolumePathNameFn(strLogicalPath.c_str(), volumeRootBuffer.data(), static_cast<DWORD>(volumeRootBuffer.size())) != FALSE) {
+		result.strVolumeRoot.assign(volumeRootBuffer.data());
+		result.strVolumeRoot = NormalizeAbsolutePathSeparators(result.strVolumeRoot.c_str());
+	} else {
+		result.dwLastError = ::GetLastError();
+		result.strVolumeRoot = GetLogicalStorageRoot(strLogicalPath.c_str());
+	}
+
+	if (result.strVolumeRoot.empty())
+		return result;
+
+	EnsureTrailingSeparator(result.strVolumeRoot);
+	result.dwDriveType = getDriveTypeFn(result.strVolumeRoot.c_str());
+	result.eRisk = GetStoragePlacementRiskFromDriveType(result.dwDriveType);
+	result.bResolved = result.dwDriveType != DRIVE_UNKNOWN && result.dwDriveType != DRIVE_NO_ROOT_DIR;
+	if (!result.bResolved && result.dwLastError == ERROR_SUCCESS)
+		result.dwLastError = ERROR_PATH_NOT_FOUND;
+	return result;
+}
+
+/**
+ * @brief Classifies whether a path resolves to network or removable storage using the real Win32 APIs.
+ */
+inline StoragePlacementProbeResult ClassifyStoragePlacement(LPCTSTR pszPath)
+{
+	return ClassifyStoragePlacement(
+		pszPath,
+		[](LPCTSTR pszFileName, LPTSTR pszVolumePathName, DWORD cchBufferLength) -> BOOL {
+			return ::GetVolumePathName(pszFileName, pszVolumePathName, cchBufferLength);
+		},
+		[](LPCTSTR pszRootPathName) -> UINT {
+			return ::GetDriveType(pszRootPathName);
+		});
 }
 
 /**
