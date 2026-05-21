@@ -139,7 +139,7 @@ CED2KFileLink::CED2KFileLink(LPCTSTR pszName, LPCTSTR pszSize, LPCTSTR pszHash
 			strTok = strParam.Left(iPos);
 		switch (strTok[0]) {
 		case _T('s'):
-			// HTTP file sources are no longer supported; ignore retained link metadata.
+			// HTTP file sources are intentionally not imported; ignore retained link metadata.
 			break;
 		case _T('p'):
 			{
