@@ -78,6 +78,26 @@ namespace
 {
 constexpr size_t kWebApiKeyBytes = 16;
 constexpr UINT kMaxServerKeepAliveTimeoutMinutes = 1440;
+
+void RecordStartupDirectoryCreateError(LPCTSTR pszDirectoryLabel, const CString &rstrDirectory, const DWORD dwError)
+{
+	CString strError;
+	strError.Format(GetResString(IDS_ERR_CREATE_DIR), pszDirectoryLabel, (LPCTSTR)rstrDirectory, (LPCTSTR)GetErrorMessage(dwError));
+	theApp.RecordStartupError(strError);
+}
+
+bool EnsureStartupDirectory(LPCTSTR pszDirectoryLabel, const CString &rstrDirectory)
+{
+	if (LongPathSeams::DirectoryExists(rstrDirectory))
+		return true;
+
+	if (LongPathSeams::CreateDirectoryPath(rstrDirectory))
+		return true;
+
+	const DWORD dwError = ::GetLastError();
+	RecordStartupDirectoryCreateError(pszDirectoryLabel, rstrDirectory, dwError);
+	return false;
+}
 constexpr UINT kMaxFileBufferTimeLimitSeconds = 86400;
 
 UINT NormalizeCategoryPriority(UINT uPriority)
@@ -1628,36 +1648,22 @@ void CPreferences::Init()
 	strFullPath.Format(_T("%s") _T("addresses.dat"), (LPCTSTR)sConfDir);
 	LoadServerMetAddressList(strFullPath, addresses_list);
 
-	// Explicitly inform the user about errors with incoming/temp folders!
-	if (!LongPathSeams::PathExists(GetMuleDirectory(EMULE_INCOMINGDIR)) && !LongPathSeams::CreateDirectory(GetMuleDirectory(EMULE_INCOMINGDIR), 0)) {
-		CString strError;
-		strError.Format(GetResString(IDS_ERR_CREATE_DIR), (LPCTSTR)GetResString(IDS_PW_INCOMING), (LPCTSTR)GetMuleDirectory(EMULE_INCOMINGDIR), (LPCTSTR)GetErrorMessage(::GetLastError()));
-		AfxMessageBox(strError, MB_ICONERROR);
-
+	// Startup must never block on profile folder errors; record them and keep the legacy fallback behavior.
+	if (!EnsureStartupDirectory(GetResString(IDS_PW_INCOMING), GetMuleDirectory(EMULE_INCOMINGDIR))) {
 		m_strIncomingDir = GetDefaultDirectory(EMULE_INCOMINGDIR, true); // will also try to create it if needed
-		if (!LongPathSeams::PathExists(GetMuleDirectory(EMULE_INCOMINGDIR))) {
-			strError.Format(GetResString(IDS_ERR_CREATE_DIR), (LPCTSTR)GetResString(IDS_PW_INCOMING), (LPCTSTR)GetMuleDirectory(EMULE_INCOMINGDIR), (LPCTSTR)GetErrorMessage(::GetLastError()));
-			AfxMessageBox(strError, MB_ICONERROR);
-		}
+		(void)EnsureStartupDirectory(GetResString(IDS_PW_INCOMING), GetMuleDirectory(EMULE_INCOMINGDIR));
 	}
-	if (!LongPathSeams::PathExists(GetTempDir()) && !LongPathSeams::CreateDirectory(GetTempDir(), 0)) {
-		CString strError;
-		strError.Format(GetResString(IDS_ERR_CREATE_DIR), (LPCTSTR)GetResString(IDS_PW_TEMP), GetTempDir(), (LPCTSTR)GetErrorMessage(::GetLastError()));
-		AfxMessageBox(strError, MB_ICONERROR);
-
+	if (!EnsureStartupDirectory(GetResString(IDS_PW_TEMP), GetTempDir())) {
 		tempdir[0] = GetDefaultDirectory(EMULE_TEMPDIR, true); // will also try to create it if needed;
-		if (!LongPathSeams::PathExists(GetTempDir())) {
-			strError.Format(GetResString(IDS_ERR_CREATE_DIR), (LPCTSTR)GetResString(IDS_PW_TEMP), GetTempDir(), (LPCTSTR)GetErrorMessage(::GetLastError()));
-			AfxMessageBox(strError, MB_ICONERROR);
-		}
+		(void)EnsureStartupDirectory(GetResString(IDS_PW_TEMP), GetTempDir());
 	}
 
 	// Create 'skins' directory
-	if (!LongPathSeams::PathExists(GetMuleDirectory(EMULE_SKINDIR)) && !LongPathSeams::CreateDirectory(GetMuleDirectory(EMULE_SKINDIR), 0))
+	if (!EnsureStartupDirectory(GetResString(IDS_SKIN_PROF), GetMuleDirectory(EMULE_SKINDIR)))
 		m_strSkinProfileDir = GetDefaultDirectory(EMULE_SKINDIR, true); // will also try to create it if needed
 
 	// Create 'toolbars' directory
-	if (!LongPathSeams::PathExists(GetMuleDirectory(EMULE_TOOLBARDIR)) && !LongPathSeams::CreateDirectory(GetMuleDirectory(EMULE_TOOLBARDIR), 0))
+	if (!EnsureStartupDirectory(GetResString(IDS_TOOLBARSKINS), GetMuleDirectory(EMULE_TOOLBARDIR)))
 		m_sToolbarBitmapFolder = GetDefaultDirectory(EMULE_TOOLBARDIR, true); // will also try to create it if needed;
 }
 
@@ -2458,8 +2464,8 @@ bool CPreferences::Save()
 	error |= !SavePathListToFile(sConfDir + MONITOREDSHAREDDIRS, monitoredRoots);
 	error |= !SavePathListToFile(sConfDir + MONITOROWNSHAREDDIRS, monitorOwnedDirs);
 
-	LongPathSeams::CreateDirectory(GetMuleDirectory(EMULE_INCOMINGDIR), 0);
-	LongPathSeams::CreateDirectory(GetTempDir(), 0);
+	LongPathSeams::CreateDirectoryPath(GetMuleDirectory(EMULE_INCOMINGDIR), 0);
+	LongPathSeams::CreateDirectoryPath(GetTempDir(), 0);
 	return error;
 }
 

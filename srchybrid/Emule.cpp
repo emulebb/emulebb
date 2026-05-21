@@ -68,6 +68,7 @@
 #include "ShellUiHelpers.h"
 #include "StandbyPreventionSeams.h"
 #include "LongPathSeams.h"
+#include "PathHelpers.h"
 #include "emuleDlg.h"
 #include "SharedFilesWnd.h"
 #include "enbitmap.h"
@@ -98,6 +99,7 @@ namespace
 {
 LPCTSTR const MONITOREDSHAREDJOURNALSTATE = _T("shareddir.monitor-journal.dat");
 LPCTSTR const ONLINEHELPURL = _T("https://github.com/eMulebb/eMule-tooling/blob/main/docs/HELP.md");
+LPCTSTR const STARTUPERRORLOG = _T("eMule-startup-errors.log");
 constexpr DWORD kMonitoredSharedFileWatchMask = FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE;
 constexpr DWORD kMonitoredSharedDirectoryWatchMask = FILE_NOTIFY_CHANGE_DIR_NAME;
 
@@ -154,6 +156,37 @@ void ReportCommandLineError(const CString &rstrError, const CString &rstrUsage, 
 		strText += rstrUsage;
 	}
 	ReportCommandLineText(STD_ERROR_HANDLE, strText);
+}
+
+CString BuildStartupErrorLogPath()
+{
+	CString strLogDirectory(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false));
+	if (strLogDirectory.IsEmpty())
+		strLogDirectory = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR, false);
+	if (strLogDirectory.IsEmpty())
+		return CString();
+
+	strLogDirectory = PathHelpers::EnsureTrailingSeparator(strLogDirectory);
+	if (!LongPathSeams::CreateDirectoryPath(strLogDirectory))
+		return CString();
+	return strLogDirectory + STARTUPERRORLOG;
+}
+
+bool AppendStartupErrorLogLine(const CString &rstrPath, const CString &rstrMessage)
+{
+	if (rstrPath.IsEmpty() || rstrMessage.IsEmpty())
+		return false;
+
+	CString strLine;
+	strLine.Format(_T("%s %s\r\n"), (LPCTSTR)CTime::GetCurrentTime().Format(_T("%Y-%m-%d %H:%M:%S")), (LPCTSTR)rstrMessage);
+	const CStringA strUtf8(StrToUtf8(strLine));
+	FILE *fp = LongPathSeams::OpenFileStreamDenyWriteLongPath(rstrPath, _T("ab"));
+	if (fp == NULL)
+		return false;
+
+	const bool bWritten = fwrite(strUtf8.GetString(), 1, static_cast<size_t>(strUtf8.GetLength()), fp) == static_cast<size_t>(strUtf8.GetLength());
+	const bool bClosed = fclose(fp) == 0;
+	return bWritten && bClosed;
 }
 
 int HandleHeadlessWebServerCertificateCommandLine(const AppCommandLineSeams::SParseResult &rCommandLine)
@@ -1068,10 +1101,12 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	, m_uDroppedLogEntries()
 	, m_dwPublicIP()
 	, m_strStartupBindBlockReason()
+	, m_strStartupErrorLogPath()
 	, m_bGuardClipboardPrompt()
 	, m_bAutoStart()
 	, m_bStartupBindBlocked()
 	, m_bStartupComplete()
+	, m_bStartupErrorLogOpened()
 	, m_bStandbyOff()
 #if EMULE_COMPILED_STARTUP_PROFILING
 	, m_bStartupProfilingEnabled(::GetEnvironmentVariable(_T("EMULE_STARTUP_PROFILE"), NULL, 0) > 0)
@@ -1122,6 +1157,41 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	ASSERT(m_uCurVersionShort < 0x99);
 // MOD Note: end
 
+}
+
+void CemuleApp::RecordStartupError(LPCTSTR pszMessage)
+{
+	if (pszMessage == NULL || pszMessage[0] == _T('\0'))
+		return;
+
+	const CString strMessage(pszMessage);
+	m_aStartupErrorLines.push_back(strMessage);
+
+	CString strDebugLine;
+	strDebugLine.Format(_T("eMule startup error: %s\r\n"), (LPCTSTR)strMessage);
+	::OutputDebugString(strDebugLine);
+
+	if (m_strStartupErrorLogPath.IsEmpty())
+		m_strStartupErrorLogPath = BuildStartupErrorLogPath();
+	if (!m_strStartupErrorLogPath.IsEmpty())
+		(void)AppendStartupErrorLogLine(m_strStartupErrorLogPath, strMessage);
+}
+
+void CemuleApp::FlushStartupErrorsToLog()
+{
+	if (m_aStartupErrorLines.empty())
+		return;
+
+	LogError(LOG_STATUSBAR, _T("Recoverable startup errors were logged; eMule will continue with fallback paths where possible."));
+	for (const CString &rstrLine : m_aStartupErrorLines)
+		LogError(LOG_STATUSBAR, _T("Startup: %s"), (LPCTSTR)rstrLine);
+
+	if (!m_bStartupErrorLogOpened && !m_strStartupErrorLogPath.IsEmpty() && LongPathSeams::PathExists(m_strStartupErrorLogPath)) {
+		m_bStartupErrorLogOpened = true;
+		ShellOpenFile(m_strStartupErrorLogPath);
+	}
+
+	m_aStartupErrorLines.clear();
 }
 
 #if EMULE_COMPILED_STARTUP_PROFILING
@@ -1435,6 +1505,7 @@ BOOL CemuleApp::InitInstance()
 		QueueLogLineEx(LOG_WARNING, _T("Windows long-path support is disabled. Enable LongPathsEnabled to avoid failures with overlong paths."));
 	if (IsCurrentProcessElevated())
 		QueueLogLineEx(LOG_WARNING, _T("eMule is running with administrator privileges. This is not recommended for normal P2P use; restart without elevation unless required."));
+	FlushStartupErrorsToLog();
 
 	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 
@@ -2060,15 +2131,15 @@ bool CemuleApp::InitializeStartupConfigBaseDirOverride(
 	if (rCommandLine.bHasConfigBaseDir) {
 		const CString strConfigDir(StartupConfigOverride::GetConfigDirectoryFromBaseDir(strStartupConfigBaseDir));
 		const CString strLogDir(StartupConfigOverride::GetLogDirectoryFromBaseDir(strStartupConfigBaseDir));
-		if (!LongPathSeams::CreateDirectory(strStartupConfigBaseDir, NULL) && !LongPathSeams::PathExists(strStartupConfigBaseDir)) {
+		if (!LongPathSeams::CreateDirectoryPath(strStartupConfigBaseDir, NULL)) {
 			rstrError.Format(_T("The -c base directory could not be created: %s"), (LPCTSTR)strStartupConfigBaseDir);
 			return false;
 		}
-		if (!LongPathSeams::CreateDirectory(strConfigDir, NULL) && !LongPathSeams::PathExists(strConfigDir)) {
+		if (!LongPathSeams::CreateDirectoryPath(strConfigDir, NULL)) {
 			rstrError.Format(_T("The -c config directory could not be created: %s"), (LPCTSTR)strConfigDir);
 			return false;
 		}
-		if (!LongPathSeams::CreateDirectory(strLogDir, NULL) && !LongPathSeams::PathExists(strLogDir)) {
+		if (!LongPathSeams::CreateDirectoryPath(strLogDir, NULL)) {
 			rstrError.Format(_T("The -c log directory could not be created: %s"), (LPCTSTR)strLogDir);
 			return false;
 		}

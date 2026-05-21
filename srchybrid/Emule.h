@@ -213,6 +213,14 @@ public:
 	 * @brief Returns the normalized override base directory selected through `-c`.
 	 */
 	const CString& GetStartupConfigBaseDirOverride() const		{ return m_strStartupConfigBaseDir; }
+	/**
+	 * @brief Records a recoverable startup error before the normal log UI is fully initialized.
+	 */
+	void RecordStartupError(LPCTSTR pszMessage);
+	/**
+	 * @brief Writes recorded startup errors into the normal log and opens the durable startup error log once.
+	 */
+	void FlushStartupErrorsToLog();
 
 	UploadBandwidthThrottler *uploadBandwidthThrottler;
 	CemuleDlg			*emuledlg;
@@ -386,10 +394,13 @@ protected:
 	uint32		m_dwPublicIP;
 	CString		m_strStartupConfigBaseDir;
 	CString		m_strStartupBindBlockReason;
+	CString		m_strStartupErrorLogPath;
+	std::vector<CString> m_aStartupErrorLines;
 	bool		m_bGuardClipboardPrompt;
 	bool		m_bAutoStart;
 	bool		m_bStartupBindBlocked;
 	bool		m_bStartupComplete;
+	bool		m_bStartupErrorLogOpened;
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnHelp();

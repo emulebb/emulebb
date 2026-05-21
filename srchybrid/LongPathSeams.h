@@ -793,6 +793,136 @@ inline BOOL CreateDirectory(LPCTSTR pszPath, LPSECURITY_ATTRIBUTES pSecurityAttr
 }
 
 /**
+ * @brief Reports whether the target path exists and is a directory.
+ */
+inline bool DirectoryExists(LPCTSTR pszPath)
+{
+	const DWORD dwAttributes = GetFileAttributes(pszPath);
+	return dwAttributes != INVALID_FILE_ATTRIBUTES && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+}
+
+/**
+ * @brief Returns the non-creatable root prefix length for absolute DOS, UNC, and extended-length directory paths.
+ */
+inline size_t GetAbsoluteDirectoryRootLength(const PathString &rPath)
+{
+	if (rPath.size() >= 8u && _tcsnicmp(rPath.c_str(), _T("\\\\?\\UNC\\"), 8) == 0) {
+		size_t iIndex = 8u;
+		while (iIndex < rPath.size() && !IsPathSeparator(rPath[iIndex]))
+			++iIndex;
+		while (iIndex < rPath.size() && IsPathSeparator(rPath[iIndex]))
+			++iIndex;
+		while (iIndex < rPath.size() && !IsPathSeparator(rPath[iIndex]))
+			++iIndex;
+		while (iIndex < rPath.size() && IsPathSeparator(rPath[iIndex]))
+			++iIndex;
+		return iIndex;
+	}
+
+	if (rPath.size() >= 7u
+		&& _tcsnicmp(rPath.c_str(), _T("\\\\?\\"), 4) == 0
+		&& rPath[5] == _T(':')
+		&& IsPathSeparator(rPath[6]))
+	{
+		return 7u;
+	}
+
+	if (rPath.size() >= 3u
+		&& ((rPath[0] >= _T('A') && rPath[0] <= _T('Z')) || (rPath[0] >= _T('a') && rPath[0] <= _T('z')))
+		&& rPath[1] == _T(':')
+		&& IsPathSeparator(rPath[2]))
+	{
+		return 3u;
+	}
+
+	if (rPath.size() >= 2u && rPath[0] == _T('\\') && rPath[1] == _T('\\')) {
+		size_t iIndex = 2u;
+		while (iIndex < rPath.size() && !IsPathSeparator(rPath[iIndex]))
+			++iIndex;
+		while (iIndex < rPath.size() && IsPathSeparator(rPath[iIndex]))
+			++iIndex;
+		while (iIndex < rPath.size() && !IsPathSeparator(rPath[iIndex]))
+			++iIndex;
+		while (iIndex < rPath.size() && IsPathSeparator(rPath[iIndex]))
+			++iIndex;
+		return iIndex;
+	}
+
+	if (!rPath.empty() && IsPathSeparator(rPath[0]))
+		return 1u;
+
+	return 0u;
+}
+
+/**
+ * @brief Removes trailing directory separators without stripping the filesystem root.
+ */
+inline PathString TrimDirectoryTrailingSeparators(const PathString &rPath, const size_t uRootLength)
+{
+	PathString path(rPath);
+	while (path.size() > uRootLength && IsPathSeparator(path[path.size() - 1u]))
+		path.resize(path.size() - 1u);
+	return path;
+}
+
+/**
+ * @brief Creates every missing directory segment with the same long-path preparation rules as `CreateDirectory`.
+ */
+inline bool CreateDirectoryPath(LPCTSTR pszPath, LPSECURITY_ATTRIBUTES pSecurityAttributes = NULL)
+{
+	if (pszPath == NULL || pszPath[0] == _T('\0')) {
+		::SetLastError(ERROR_PATH_NOT_FOUND);
+		return false;
+	}
+
+	const PathString strNormalized(NormalizeAbsolutePathSeparators(pszPath));
+	const size_t uRootLength = GetAbsoluteDirectoryRootLength(strNormalized);
+	const PathString strDirectory(TrimDirectoryTrailingSeparators(strNormalized, uRootLength));
+	if (strDirectory.empty()) {
+		::SetLastError(ERROR_PATH_NOT_FOUND);
+		return false;
+	}
+
+	if (DirectoryExists(strDirectory.c_str()))
+		return true;
+
+	if (uRootLength > 0u) {
+		const size_t uClampedRootLength = uRootLength < strDirectory.size() ? uRootLength : strDirectory.size();
+		const PathString strRoot(strDirectory.substr(0u, uClampedRootLength));
+		if (!DirectoryExists(strRoot.c_str())) {
+			::SetLastError(ERROR_PATH_NOT_FOUND);
+			return false;
+		}
+	}
+
+	for (size_t i = uRootLength; i < strDirectory.size(); ++i) {
+		if (!IsPathSeparator(strDirectory[i]))
+			continue;
+
+		const PathString strCurrent(TrimDirectoryTrailingSeparators(strDirectory.substr(0u, i), uRootLength));
+		if (strCurrent.size() <= uRootLength || DirectoryExists(strCurrent.c_str()))
+			continue;
+
+		if (::CreateDirectory(PrepareDirectoryCreatePathForLongPath(strCurrent.c_str()).c_str(), pSecurityAttributes) == FALSE) {
+			const DWORD dwError = ::GetLastError();
+			if (dwError != ERROR_ALREADY_EXISTS || !DirectoryExists(strCurrent.c_str())) {
+				::SetLastError(dwError);
+				return false;
+			}
+		}
+	}
+
+	if (::CreateDirectory(PrepareDirectoryCreatePathForLongPath(strDirectory.c_str()).c_str(), pSecurityAttributes) != FALSE)
+		return true;
+
+	const DWORD dwError = ::GetLastError();
+	if (dwError == ERROR_ALREADY_EXISTS && DirectoryExists(strDirectory.c_str()))
+		return true;
+	::SetLastError(dwError);
+	return false;
+}
+
+/**
  * @brief Removes a directory using an extended-length path when needed.
  */
 inline BOOL RemoveDirectory(LPCTSTR pszPath)
