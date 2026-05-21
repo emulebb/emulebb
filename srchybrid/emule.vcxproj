@@ -73,8 +73,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <AdditionalIncludeDirectories>.;..;$(ZlibRoot);$(CryptoPpRoot);$(Id3libRoot)include;$(MiniUpnpRoot);$(MbedTlsRoot)include;$(MbedTlsRoot)tf-psa-crypto\include;$(MbedTlsRoot)tf-psa-crypto\drivers\builtin\include;$(ResizableLibRoot);$(VC_ATLMFC_SourcePath);$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\um\;$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\shared;</AdditionalIncludeDirectories>
-      <AdditionalOptions Condition="'$(Platform)'!='ARM64'">/Zc:throwingNew /FS</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Platform)'=='ARM64'">/Zc:enumTypes /Zc:throwingNew /FS</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Platform)'!='ARM64'">/Zc:throwingNew /FS /w14996</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Platform)'=='ARM64'">/Zc:enumTypes /Zc:throwingNew /FS /w14996</AdditionalOptions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <SDLCheck>true</SDLCheck>
@@ -110,8 +110,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <AdditionalIncludeDirectories>.;..;$(ZlibRoot);$(CryptoPpRoot);$(Id3libRoot)include;$(MiniUpnpRoot);$(MbedTlsRoot)include;$(MbedTlsRoot)tf-psa-crypto\include;$(MbedTlsRoot)tf-psa-crypto\drivers\builtin\include;$(ResizableLibRoot);$(VC_ATLMFC_SourcePath);$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\um\;$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\shared;</AdditionalIncludeDirectories>
-      <AdditionalOptions Condition="'$(Platform)'!='ARM64'">/Zc:throwingNew /FS</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Platform)'=='ARM64'">/Zc:enumTypes /Zc:throwingNew /FS</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Platform)'!='ARM64'">/Zc:throwingNew /FS /w14996</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Platform)'=='ARM64'">/Zc:enumTypes /Zc:throwingNew /FS /w14996</AdditionalOptions>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <SDLCheck>true</SDLCheck>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -146,8 +146,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='_SpecialBootstrapNodes'">
     <ClCompile>
       <AdditionalIncludeDirectories>.;..;$(ZlibRoot);$(CryptoPpRoot);$(Id3libRoot)include;$(MiniUpnpRoot);$(MbedTlsRoot)include;$(MbedTlsRoot)tf-psa-crypto\include;$(MbedTlsRoot)tf-psa-crypto\drivers\builtin\include;$(ResizableLibRoot);$(VC_ATLMFC_SourcePath);$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\um\;$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\shared;</AdditionalIncludeDirectories>
-      <AdditionalOptions Condition="'$(Platform)'!='ARM64'">/Zc:throwingNew /FS</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Platform)'=='ARM64'">/Zc:enumTypes /Zc:throwingNew /FS</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Platform)'!='ARM64'">/Zc:throwingNew /FS /w14996</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Platform)'=='ARM64'">/Zc:enumTypes /Zc:throwingNew /FS /w14996</AdditionalOptions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
