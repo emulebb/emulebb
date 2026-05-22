@@ -1127,12 +1127,13 @@ json BuildSharedFilesListJson()
 /**
  * Builds one shared-directory row with stable flags for REST management UIs.
  */
-json BuildSharedDirectoryRowJson(const CString &rDirectory, const CStringList &rMonitoredRoots, const CStringList &rMonitorOwnedDirs)
+json BuildSharedDirectoryRowJson(const CString &rDirectory, const std::vector<CString> &rMonitoredRootKeys, const std::vector<CString> &rMonitorOwnedDirKeys)
 {
+	const CString strDirectoryKey(SharedDirectoryOps::MakeSharedDirectoryLookupKey(rDirectory));
 	return json{
 		{"path", StdUtf8FromCString(rDirectory)},
-		{"recursive", SharedDirectoryOps::ListContainsEquivalentPath(rMonitoredRoots, rDirectory)},
-		{"monitorOwned", SharedDirectoryOps::ListContainsEquivalentPath(rMonitorOwnedDirs, rDirectory)},
+		{"recursive", SharedDirectoryOps::ContainsSharedDirectoryLookupKey(rMonitoredRootKeys, strDirectoryKey)},
+		{"monitorOwned", SharedDirectoryOps::ContainsSharedDirectoryLookupKey(rMonitorOwnedDirKeys, strDirectoryKey)},
 		{"shareable", thePrefs.IsShareableDirectory(rDirectory)},
 		{"accessible", DirAccsess(rDirectory)}
 	};
@@ -1149,6 +1150,10 @@ json BuildSharedDirectoriesJson()
 	thePrefs.CopySharedDirectoryList(sharedDirs);
 	thePrefs.CopyMonitoredSharedRootList(monitoredRoots);
 	thePrefs.CopyMonitorOwnedDirectoryList(monitorOwnedDirs);
+	std::vector<CString> aMonitoredRootKeys;
+	std::vector<CString> aMonitorOwnedDirKeys;
+	SharedDirectoryOps::BuildSharedDirectoryLookupKeyVector(monitoredRoots, aMonitoredRootKeys);
+	SharedDirectoryOps::BuildSharedDirectoryLookupKeyVector(monitorOwnedDirs, aMonitorOwnedDirKeys);
 
 	json roots = json::array();
 	json items = json::array();
@@ -1156,7 +1161,7 @@ json BuildSharedDirectoriesJson()
 
 	for (POSITION pos = sharedDirs.GetHeadPosition(); pos != NULL;) {
 		const CString strDirectory(sharedDirs.GetNext(pos));
-		const json row = BuildSharedDirectoryRowJson(strDirectory, monitoredRoots, monitorOwnedDirs);
+		const json row = BuildSharedDirectoryRowJson(strDirectory, aMonitoredRootKeys, aMonitorOwnedDirKeys);
 		items.push_back(row);
 		if (!row.value("monitorOwned", false))
 			roots.push_back(row);

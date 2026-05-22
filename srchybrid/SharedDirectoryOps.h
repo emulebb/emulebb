@@ -360,6 +360,18 @@ inline void BuildSharedDirectoryLookupKeyVector(const CStringList &rDirectories,
 }
 
 /**
+ * @brief Reports whether a normalized key exists in a prebuilt shared-directory key vector.
+ */
+inline bool ContainsSharedDirectoryLookupKey(const std::vector<CString> &rDirectoryKeys, const CString &rstrDirectoryKey)
+{
+	for (size_t i = 0; i < rDirectoryKeys.size(); ++i) {
+		if (rDirectoryKeys[i] == rstrDirectoryKey)
+			return true;
+	}
+	return false;
+}
+
+/**
  * @brief Reports whether one normalized candidate key is equal to or below any normalized root key.
  */
 inline bool IsDirectoryKeySameOrDescendantOfAny(const std::vector<CString> &rRootKeys, const CString &rstrCandidateKey)
