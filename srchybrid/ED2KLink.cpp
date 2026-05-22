@@ -19,6 +19,7 @@
 #include "resource.h"
 #include "opcodes.h"
 #include "ED2KLink.h"
+#include "FilenameTextRepairSeams.h"
 #include "FileSizeSeams.h"
 #include "ProtocolGuards.h"
 #include "SafeFile.h"
@@ -98,7 +99,8 @@ CED2KFileLink::CED2KFileLink(LPCTSTR pszName, LPCTSTR pszSize, LPCTSTR pszHash
 		, const CStringArray &astrParams, LPCTSTR pszSources)
 	: SourcesList()
 	, m_hashset()
-	, m_name(OptUtf8ToStr(URLDecode(pszName)).Trim())
+	, m_name(FilenameTextRepairSeams::RepairIncomingEd2kLinkFilename(
+		OptUtf8ToStr(URLDecode(pszName)).Trim()))
 	, m_size(pszSize)
 	, m_bAICHHashValid()
 {

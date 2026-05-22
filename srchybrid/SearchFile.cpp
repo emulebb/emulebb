@@ -21,6 +21,7 @@
 #include "opcodes.h"
 #include "Packets.h"
 #include "Preferences.h"
+#include "FilenameTextRepairSeams.h"
 #include "Kademlia/Kademlia/Entry.h"
 #include "emule.h"
 #include "emuledlg.h"
@@ -264,7 +265,11 @@ CSearchFile::CSearchFile(CFileDataIO &in_data, bool bOptUTF8, uint32 nSearchID, 
 	// but, in no case, we will use the received file type when adding this search result to the download queue, to avoid
 	// that we are using 'wrong' file types in part files. (this has to be handled when creating the part files)
 	const CString &rstrFileType(GetStrTagValue(FT_FILETYPE));
-	SetAFileName(GetStrTagValue(FT_FILENAME), false, rstrFileType.IsEmpty(), true);
+	const CString strOriginalFileName(GetStrTagValue(FT_FILENAME));
+	const CString strRepairedFileName(FilenameTextRepairSeams::RepairIncomingSearchFilename(strOriginalFileName));
+	if (!strOriginalFileName.IsEmpty() && strRepairedFileName != strOriginalFileName)
+		SetStrTagValue(FT_FILENAME, strRepairedFileName);
+	SetAFileName(strRepairedFileName, false, rstrFileType.IsEmpty(), true);
 
 	uint64 ui64FileSize = 0;
 	CTag *pTagFileSize = GetTag(FT_FILESIZE);
