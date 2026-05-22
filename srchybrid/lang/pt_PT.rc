@@ -582,6 +582,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Ficheiro desconhecido pedido"
     IDS_SF_AVERAGESIZE      "Tamanho médio do ficheiro: %s"
     IDS_SF_REQUESTS         "Pedidos"
+    IDS_SF_LASTREQUEST         "Último pedido"
     IDS_SF_ACCEPTS          "Pedidos Aceites"
     IDS_SF_TRANSFERRED      "Dados Transferidos"
 END

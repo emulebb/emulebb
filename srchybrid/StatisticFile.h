@@ -17,11 +17,14 @@
 #pragma once
 class CKnownFile;
 
+inline constexpr char kLastRequestTagName[] = "LastRequest";
+
 class CStatisticFile
 {
 public:
 	CStatisticFile()
 		: fileParent()
+		, alltimelastrequested()
 		, alltimetransferred()
 		, transferred()
 		, alltimerequested()
@@ -39,9 +42,11 @@ public:
 	UINT	GetRequests() const					{ return requested; }
 	UINT	GetAccepts() const					{ return accepted; }
 	uint64	GetTransferred() const				{ return transferred; }
+	uint64	GetAllTimeLastRequest() const		{ return alltimelastrequested; }
 	UINT	GetAllTimeRequests() const			{ return alltimerequested; }
 	UINT	GetAllTimeAccepts() const			{ return alltimeaccepted; }
 	uint64	GetAllTimeTransferred() const		{ return alltimetransferred; }
+	void	SetAllTimeLastRequest(uint64 nVal)	{ alltimelastrequested = nVal; }
 	void	SetAllTimeRequests(uint32 nVal)		{ alltimerequested = nVal; }
 	void	SetAllTimeAccepts(uint32 nVal)		{ alltimeaccepted = nVal; }
 	void	SetAllTimeTransferred(uint64 nVal)	{ alltimetransferred = nVal; }
@@ -49,6 +54,7 @@ public:
 	CKnownFile *fileParent;
 
 private:
+	uint64 alltimelastrequested;
 	uint64 alltimetransferred;
 	uint64 transferred;
 	uint32 alltimerequested;

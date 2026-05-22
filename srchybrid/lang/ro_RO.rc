@@ -621,6 +621,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Cerut fişier necunoscut"
     IDS_SF_AVERAGESIZE      "Mărime medie fişier: %s"
     IDS_SF_REQUESTS         "Cereri"
+    IDS_SF_LASTREQUEST         "Ultima cerere"
     IDS_SF_ACCEPTS          "Cereri acceptate"
     IDS_SF_TRANSFERRED      "Date trimise"
 END

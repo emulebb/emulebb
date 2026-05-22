@@ -135,6 +135,34 @@ namespace
 		return 0;
 	}
 
+	int CompareTimestampUndefinedAtBottom(uint64 uTime1, uint64 uTime2, bool bSortAscending)
+	{
+		if (uTime1 == 0) {
+			if (uTime2 == 0)
+				return 0;
+			return bSortAscending ? 1 : -1;
+		}
+		if (uTime2 == 0)
+			return bSortAscending ? -1 : 1;
+		return CompareUnsigned(uTime1, uTime2);
+	}
+
+	CString FormatSharedFileTimestamp(uint64 uTimestamp)
+	{
+		if (uTimestamp == 0 || uTimestamp > 0x7fffffffffffffffui64)
+			return CString();
+
+		const __time64_t tTimestamp = static_cast<__time64_t>(uTimestamp);
+		struct tm tmLocal = {};
+		if (_localtime64_s(&tmLocal, &tTimestamp) != 0)
+			return CString();
+
+		TCHAR szTimestamp[128];
+		if (_tcsftime(szTimestamp, _countof(szTimestamp), thePrefs.GetDateTimeFormat4Lists(), &tmLocal) == 0)
+			return CString();
+		return CString(szTimestamp);
+	}
+
 	bool TryCanonicalizeDroppedSharedPath(const CString &rstrOriginalPath, CString &rstrCanonicalPath, DWORD &rdwCanonicalizeError)
 	{
 		const CString strNormalizedInput(PathHelpers::NormalizePathSeparators(rstrOriginalPath));
@@ -506,20 +534,21 @@ void CSharedFilesCtrl::Init()
 	InsertColumn(3,		_T(""),	LVCFMT_LEFT,	DFLT_PRIORITY_COL_WIDTH);			//IDS_PRIORITY
 	InsertColumn(4,		_T(""),	LVCFMT_LEFT,	DFLT_HASH_COL_WIDTH, -1, true);		//IDS_FILEID
 	InsertColumn(5,		_T(""),	LVCFMT_RIGHT,	100);								//IDS_SF_REQUESTS
-	InsertColumn(6,		_T(""),	LVCFMT_RIGHT,	100);								//IDS_SF_ACCEPTS
-	InsertColumn(7,		_T(""),	LVCFMT_RIGHT,	120);								//IDS_SF_TRANSFERRED
-	InsertColumn(8,		_T(""),	LVCFMT_LEFT,	DFLT_PARTSTATUS_COL_WIDTH);			//IDS_SHARED_STATUS
-	InsertColumn(9,		_T(""),	LVCFMT_LEFT,	DFLT_FOLDER_COL_WIDTH);			//IDS_FOLDER
-	InsertColumn(10,	_T(""),	LVCFMT_RIGHT,	60);								//IDS_COMPLSOURCES
-	InsertColumn(11,	_T(""),	LVCFMT_LEFT,	100);								//IDS_SHAREDTITLE
-	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	DFLT_ARTIST_COL_WIDTH, -1, true);	//IDS_ARTIST
-	InsertColumn(13,	_T(""),	LVCFMT_LEFT,	DFLT_ALBUM_COL_WIDTH, -1, true);	//IDS_ALBUM
-	InsertColumn(14,	_T(""),	LVCFMT_LEFT,	DFLT_TITLE_COL_WIDTH, -1, true);	//IDS_TITLE
-	InsertColumn(15,	_T(""),	LVCFMT_RIGHT,	DFLT_LENGTH_COL_WIDTH, -1, true);	//IDS_LENGTH
-	InsertColumn(16,	_T(""),	LVCFMT_RIGHT,	DFLT_BITRATE_COL_WIDTH, -1, true);	//IDS_BITRATE
-	InsertColumn(17,	_T(""),	LVCFMT_LEFT,	DFLT_CODEC_COL_WIDTH, -1, true);	//IDS_CODEC
-	InsertColumn(18,	_T(""),	LVCFMT_RIGHT,	85);								//IDS_ALL_TIME_RATIO
-	InsertColumn(19,	_T(""),	LVCFMT_RIGHT,	85);								//IDS_SESSION_RATIO
+	InsertColumn(6,		_T(""),	LVCFMT_LEFT,	140);								//IDS_SF_LASTREQUEST
+	InsertColumn(7,		_T(""),	LVCFMT_RIGHT,	100);								//IDS_SF_ACCEPTS
+	InsertColumn(8,		_T(""),	LVCFMT_RIGHT,	120);								//IDS_SF_TRANSFERRED
+	InsertColumn(9,		_T(""),	LVCFMT_LEFT,	DFLT_PARTSTATUS_COL_WIDTH);			//IDS_SHARED_STATUS
+	InsertColumn(10,	_T(""),	LVCFMT_LEFT,	DFLT_FOLDER_COL_WIDTH);			//IDS_FOLDER
+	InsertColumn(11,	_T(""),	LVCFMT_RIGHT,	60);								//IDS_COMPLSOURCES
+	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	100);								//IDS_SHAREDTITLE
+	InsertColumn(13,	_T(""),	LVCFMT_LEFT,	DFLT_ARTIST_COL_WIDTH, -1, true);	//IDS_ARTIST
+	InsertColumn(14,	_T(""),	LVCFMT_LEFT,	DFLT_ALBUM_COL_WIDTH, -1, true);	//IDS_ALBUM
+	InsertColumn(15,	_T(""),	LVCFMT_LEFT,	DFLT_TITLE_COL_WIDTH, -1, true);	//IDS_TITLE
+	InsertColumn(16,	_T(""),	LVCFMT_RIGHT,	DFLT_LENGTH_COL_WIDTH, -1, true);	//IDS_LENGTH
+	InsertColumn(17,	_T(""),	LVCFMT_RIGHT,	DFLT_BITRATE_COL_WIDTH, -1, true);	//IDS_BITRATE
+	InsertColumn(18,	_T(""),	LVCFMT_LEFT,	DFLT_CODEC_COL_WIDTH, -1, true);	//IDS_CODEC
+	InsertColumn(19,	_T(""),	LVCFMT_RIGHT,	85);								//IDS_ALL_TIME_RATIO
+	InsertColumn(20,	_T(""),	LVCFMT_RIGHT,	85);								//IDS_SESSION_RATIO
 
 	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("SharedFilesCtrl")))
 		SetViewPresetProfile(*pProfile);
@@ -531,9 +560,13 @@ void CSharedFilesCtrl::Init()
 	m_aSortBySecondValue[1] = true; // Accepted Requests:	Sort by 2nd value by default
 	m_aSortBySecondValue[2] = true; // Transferred Data:	Sort by 2nd value by default
 	m_aSortBySecondValue[3] = false; // Shared ED2K|Kad:	Sort by 1st value by default
-	if (GetSortItem() >= 5 && GetSortItem() <= 7)
-		m_aSortBySecondValue[GetSortItem() - 5] = GetSortSecondValue();
-	else if (GetSortItem() == 11)
+	if (GetSortItem() == 5)
+		m_aSortBySecondValue[0] = GetSortSecondValue();
+	else if (GetSortItem() == 7)
+		m_aSortBySecondValue[1] = GetSortSecondValue();
+	else if (GetSortItem() == 8)
+		m_aSortBySecondValue[2] = GetSortSecondValue();
+	else if (GetSortItem() == 12)
 		m_aSortBySecondValue[3] = GetSortSecondValue();
 	SetSortArrow();
 
@@ -581,12 +614,12 @@ void CSharedFilesCtrl::SetAllIcons()
 
 void CSharedFilesCtrl::Localize()
 {
-	static const UINT uids[20] =
+	static const UINT uids[21] =
 	{
 		IDS_DL_FILENAME, IDS_DL_SIZE, IDS_TYPE, IDS_PRIORITY, IDS_FILEID
-		, IDS_SF_REQUESTS, IDS_SF_ACCEPTS, IDS_SF_TRANSFERRED, IDS_SHARED_STATUS, IDS_FOLDER
-		, IDS_COMPLSOURCES, IDS_SHAREDTITLE, IDS_ARTIST, IDS_ALBUM, IDS_TITLE
-		, IDS_LENGTH, IDS_BITRATE, IDS_CODEC, IDS_ALL_TIME_RATIO, IDS_SESSION_RATIO
+		, IDS_SF_REQUESTS, IDS_SF_LASTREQUEST, IDS_SF_ACCEPTS, IDS_SF_TRANSFERRED, IDS_SHARED_STATUS
+		, IDS_FOLDER, IDS_COMPLSOURCES, IDS_SHAREDTITLE, IDS_ARTIST, IDS_ALBUM
+		, IDS_TITLE, IDS_LENGTH, IDS_BITRATE, IDS_CODEC, IDS_ALL_TIME_RATIO, IDS_SESSION_RATIO
 	};
 
 	LocaliseHeaderCtrl(uids, _countof(uids));
@@ -1262,7 +1295,7 @@ void CSharedFilesCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 				rcItem.right -= sm_iSubItemInset;
 				dc.DrawText(sItem, &rcItem, MLC_DT_TEXT | uDrawTextAlignment);
 				break;
-			case 8: //shared parts bar
+			case 9: //shared parts bar
 				if (pKnownFile != NULL && pKnownFile->GetPartCount()) {
 					++rcItem.top;
 					--rcItem.bottom;
@@ -1271,7 +1304,7 @@ void CSharedFilesCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 					--rcItem.top;
 				}
 				break;
-			case 11: //shared ed2k/kad
+			case 12: //shared ed2k/kad
 				if (pKnownFile != NULL) {
 					rcItem.left += sm_iIconOffset;
 					POINT point{rcItem.left, rcItem.top + iIconY};
@@ -1300,7 +1333,7 @@ CString CSharedFilesCtrl::GetItemDisplayText(const CShareableFile *file, int iSu
 		return CastItoXBytes((uint64)file->GetFileSize());
 	case 2:
 		return file->GetFileTypeDisplayStr();
-	case 9:
+	case 10:
 		sText = PathHelpers::TrimTrailingSeparator(file->GetPath());
 		return sText;
 	}
@@ -1318,15 +1351,18 @@ CString CSharedFilesCtrl::GetItemDisplayText(const CShareableFile *file, int iSu
 			sText.Format(_T("%u (%u)"), pKnownFile->statistic.GetRequests(), pKnownFile->statistic.GetAllTimeRequests());
 			break;
 		case 6:
-			sText.Format(_T("%u (%u)"), pKnownFile->statistic.GetAccepts(), pKnownFile->statistic.GetAllTimeAccepts());
+			sText = FormatSharedFileTimestamp(pKnownFile->statistic.GetAllTimeLastRequest());
 			break;
 		case 7:
-			sText.Format(_T("%s (%s)"), (LPCTSTR)CastItoXBytes(pKnownFile->statistic.GetTransferred()), (LPCTSTR)CastItoXBytes(pKnownFile->statistic.GetAllTimeTransferred()));
+			sText.Format(_T("%u (%u)"), pKnownFile->statistic.GetAccepts(), pKnownFile->statistic.GetAllTimeAccepts());
 			break;
 		case 8:
+			sText.Format(_T("%s (%s)"), (LPCTSTR)CastItoXBytes(pKnownFile->statistic.GetTransferred()), (LPCTSTR)CastItoXBytes(pKnownFile->statistic.GetAllTimeTransferred()));
+			break;
+		case 9:
 			sText.Format(_T("%s: %u"), (LPCTSTR)GetResString(IDS_SHARED_STATUS), pKnownFile->GetPartCount());
 			break;
-		case 10:
+		case 11:
 			if (pKnownFile->m_nCompleteSourcesCountLo == pKnownFile->m_nCompleteSourcesCountHi)
 				sText.Format(_T("%u"), pKnownFile->m_nCompleteSourcesCountLo);
 			else if (pKnownFile->m_nCompleteSourcesCountLo == 0)
@@ -1334,39 +1370,39 @@ CString CSharedFilesCtrl::GetItemDisplayText(const CShareableFile *file, int iSu
 			else
 				sText.Format(_T("%u - %u"), pKnownFile->m_nCompleteSourcesCountLo, pKnownFile->m_nCompleteSourcesCountHi);
 			break;
-		case 11:
+		case 12:
 			sText.Format(_T("%s|%s"), (LPCTSTR)GetResString(pKnownFile->GetPublishedED2K() ? IDS_YES : IDS_NO), (LPCTSTR)GetResString(IsSharedInKad(pKnownFile) ? IDS_YES : IDS_NO));
 			break;
-		case 12:
+		case 13:
 			sText = pKnownFile->GetStrTagValue(FT_MEDIA_ARTIST);
 			break;
-		case 13:
+		case 14:
 			sText = pKnownFile->GetStrTagValue(FT_MEDIA_ALBUM);
 			break;
-		case 14:
+		case 15:
 			sText = pKnownFile->GetStrTagValue(FT_MEDIA_TITLE);
 			break;
-		case 15:
+		case 16:
 			{
 				uint32 nMediaLength = pKnownFile->GetIntTagValue(FT_MEDIA_LENGTH);
 				if (nMediaLength)
 					sText = SecToTimeLength(nMediaLength);
 			}
 			break;
-		case 16:
+		case 17:
 			{
 				uint32 nBitrate = pKnownFile->GetIntTagValue(FT_MEDIA_BITRATE);
 				if (nBitrate)
 					sText.Format(_T("%u %s"), nBitrate, (LPCTSTR)GetResString(IDS_KBITSSEC));
 			}
 			break;
-		case 17:
+		case 18:
 			sText = GetCodecDisplayName(pKnownFile->GetStrTagValue(FT_MEDIA_CODEC));
 			break;
-		case 18:
+		case 19:
 			sText = FormatUploadRatio(pKnownFile->GetAllTimeUploadRatio());
 			break;
-		case 19:
+		case 20:
 			sText = FormatUploadRatio(pKnownFile->GetSessionUploadRatio());
 		}
 	}
@@ -1830,12 +1866,13 @@ void CSharedFilesCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 		switch (pNMLV->iSubItem) {
 		case 3:  // Priority
 		case 5:  // Requests
-		case 6:  // Accepted Requests
-		case 7:  // Transferred Data
-		case 10: // Complete Sources
-		case 11: // Shared ed2k/kad
-		case 18: // All-time ratio
-		case 19: // Session ratio
+		case 6:  // Last Request
+		case 7:  // Accepted Requests
+		case 8:  // Transferred Data
+		case 11: // Complete Sources
+		case 12: // Shared ed2k/kad
+		case 19: // All-time ratio
+		case 20: // Session ratio
 			// Keep the current 'm_aSortBySecondValue' for that column, but reset to 'descending'
 			sortAscending = false;
 			break;
@@ -1847,13 +1884,21 @@ void CSharedFilesCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 
 	// Ornis 4-way-sorting
 	int adder = 0;
-	if (pNMLV->iSubItem >= 5 && pNMLV->iSubItem <= 7) { // 5=IDS_SF_REQUESTS, 6=IDS_SF_ACCEPTS, 7=IDS_SF_TRANSFERRED
-		ASSERT(pNMLV->iSubItem - 5 < (int)_countof(m_aSortBySecondValue));
+	int iSortBySecondValueIndex = -1;
+	if (pNMLV->iSubItem == 5)
+		iSortBySecondValueIndex = 0;
+	else if (pNMLV->iSubItem == 7)
+		iSortBySecondValueIndex = 1;
+	else if (pNMLV->iSubItem == 8)
+		iSortBySecondValueIndex = 2;
+
+	if (iSortBySecondValueIndex >= 0) { // 5=IDS_SF_REQUESTS, 7=IDS_SF_ACCEPTS, 8=IDS_SF_TRANSFERRED
+		ASSERT(iSortBySecondValueIndex < (int)_countof(m_aSortBySecondValue));
 		if (GetSortItem() == pNMLV->iSubItem && !sortAscending) // check for 'descending' because the initial sort order is also 'descending'
-			m_aSortBySecondValue[pNMLV->iSubItem - 5] = !m_aSortBySecondValue[pNMLV->iSubItem - 5];
-		if (m_aSortBySecondValue[pNMLV->iSubItem - 5])
+			m_aSortBySecondValue[iSortBySecondValueIndex] = !m_aSortBySecondValue[iSortBySecondValueIndex];
+		if (m_aSortBySecondValue[iSortBySecondValueIndex])
 			adder = 100;
-	} else if (pNMLV->iSubItem == 11) { // 11=IDS_SHAREDTITLE
+	} else if (pNMLV->iSubItem == 12) { // 12=IDS_SHAREDTITLE
 		ASSERT(3 < _countof(m_aSortBySecondValue));
 		if (GetSortItem() == pNMLV->iSubItem && !sortAscending) // check for 'descending' because the initial sort order is also 'descending'
 			m_aSortBySecondValue[3] = !m_aSortBySecondValue[3];
@@ -1910,7 +1955,7 @@ int CALLBACK CSharedFilesCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM l
 				iResult = *pszExt1 ? _tcsicmp(pszExt1, pszExt2) : 0;
 		}
 		break;
-	case 9: //folder
+	case 10: //folder
 		iResult = CompareLocaleStringNoCase(item1->GetPath(), item2->GetPath());
 		break;
 	default:
@@ -1944,53 +1989,56 @@ int CALLBACK CSharedFilesCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM l
 			case 5: //requests
 				iResult = CompareUnsigned(kitem1->statistic.GetRequests(), kitem2->statistic.GetRequests());
 				break;
-			case 6: //accepted requests
+			case 6: //last request
+				iResult = CompareTimestampUndefinedAtBottom(kitem1->statistic.GetAllTimeLastRequest(), kitem2->statistic.GetAllTimeLastRequest(), bSortAscending);
+				break;
+			case 7: //accepted requests
 				iResult = CompareUnsigned(kitem1->statistic.GetAccepts(), kitem2->statistic.GetAccepts());
 				break;
-			case 7: //all transferred
+			case 8: //all transferred
 				iResult = CompareUnsigned(kitem1->statistic.GetTransferred(), kitem2->statistic.GetTransferred());
 				break;
-			case 10: //complete sources
+			case 11: //complete sources
 				iResult = CompareUnsigned(kitem1->m_nCompleteSourcesCount, kitem2->m_nCompleteSourcesCount);
 				break;
-			case 11: //ed2k shared
+			case 12: //ed2k shared
 				iResult = kitem1->GetPublishedED2K() - kitem2->GetPublishedED2K();
 				break;
-			case 12:
+			case 13:
 				iResult = CompareOptLocaleStringNoCaseUndefinedAtBottom(kitem1->GetStrTagValue(FT_MEDIA_ARTIST), kitem2->GetStrTagValue(FT_MEDIA_ARTIST), bSortAscending);
 				break;
-			case 13:
+			case 14:
 				iResult = CompareOptLocaleStringNoCaseUndefinedAtBottom(kitem1->GetStrTagValue(FT_MEDIA_ALBUM), kitem2->GetStrTagValue(FT_MEDIA_ALBUM), bSortAscending);
 				break;
-			case 14:
+			case 15:
 				iResult = CompareOptLocaleStringNoCaseUndefinedAtBottom(kitem1->GetStrTagValue(FT_MEDIA_TITLE), kitem2->GetStrTagValue(FT_MEDIA_TITLE), bSortAscending);
 				break;
-			case 15:
+			case 16:
 				iResult = CompareUnsignedUndefinedAtBottom(kitem1->GetIntTagValue(FT_MEDIA_LENGTH), kitem2->GetIntTagValue(FT_MEDIA_LENGTH), bSortAscending);
 				break;
-			case 16:
+			case 17:
 				iResult = CompareUnsignedUndefinedAtBottom(kitem1->GetIntTagValue(FT_MEDIA_BITRATE), kitem2->GetIntTagValue(FT_MEDIA_BITRATE), bSortAscending);
 				break;
-			case 17:
+			case 18:
 				iResult = CompareOptLocaleStringNoCaseUndefinedAtBottom(GetCodecDisplayName(kitem1->GetStrTagValue(FT_MEDIA_CODEC)), GetCodecDisplayName(kitem2->GetStrTagValue(FT_MEDIA_CODEC)), bSortAscending);
 				break;
-			case 18:
+			case 19:
 				iResult = CompareRatio(kitem1->GetAllTimeUploadRatio(), kitem2->GetAllTimeUploadRatio());
 				break;
-			case 19:
+			case 20:
 				iResult = CompareRatio(kitem1->GetSessionUploadRatio(), kitem2->GetSessionUploadRatio());
 				break;
 
 			case 105: //all requests
 				iResult = CompareUnsigned(kitem1->statistic.GetAllTimeRequests(), kitem2->statistic.GetAllTimeRequests());
 				break;
-			case 106: //all accepted requests
+			case 107: //all accepted requests
 				iResult = CompareUnsigned(kitem1->statistic.GetAllTimeAccepts(), kitem2->statistic.GetAllTimeAccepts());
 				break;
-			case 107: //all transferred
+			case 108: //all transferred
 				iResult = CompareUnsigned(kitem1->statistic.GetAllTimeTransferred(), kitem2->statistic.GetAllTimeTransferred());
 				break;
-			case 111: //kad shared
+			case 112: //kad shared
 				{
 					time_t tNow = time(NULL);
 					int i1 = static_cast<int>(tNow < kitem1->GetLastPublishTimeKadSrc());

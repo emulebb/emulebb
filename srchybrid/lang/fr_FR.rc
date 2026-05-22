@@ -578,6 +578,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Fichier demandé inconnu"
     IDS_SF_AVERAGESIZE      "Taille moyenne fichier : %s"
     IDS_SF_REQUESTS         "Demandes "
+    IDS_SF_LASTREQUEST         "Dernière demande"
     IDS_SF_ACCEPTS          "Acceptées"
     IDS_SF_TRANSFERRED      "Transféré "
 END

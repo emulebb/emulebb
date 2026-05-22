@@ -571,6 +571,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Ζητήθηκε άγνωστο αρχείο"
     IDS_SF_AVERAGESIZE      "Μέσο μέγεθος αρχείου: %s"
     IDS_SF_REQUESTS         "Αιτήσεις"
+    IDS_SF_LASTREQUEST         "Τελευταία αίτηση"
     IDS_SF_ACCEPTS          "Αποδεκτές αιτήσεις"
     IDS_SF_TRANSFERRED      "Μεταφέρθηκαν"
 END

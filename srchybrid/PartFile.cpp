@@ -1126,7 +1126,11 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 						ASSERT(0);
 					break;
 				default:
-					if (newtag->HasName() && strcmp(newtag->GetName(), kFollowMajorityFilenameTag) == 0) {
+					if (newtag->HasName() && CmpED2KTagName(newtag->GetName(), kLastRequestTagName) == 0) {
+						ASSERT(newtag->IsInt64(true));
+						if (newtag->IsInt64(true))
+							statistic.SetAllTimeLastRequest(newtag->GetInt64());
+					} else if (newtag->HasName() && strcmp(newtag->GetName(), kFollowMajorityFilenameTag) == 0) {
 						ASSERT(newtag->IsInt());
 						if (newtag->IsInt())
 							m_bFollowMajorityFilename = newtag->GetInt() != 0;
@@ -1479,6 +1483,12 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak, bool bBypassDiskSpaceGuard)
 		if (statistic.GetAllTimeRequests()) {
 			CTag attag2(FT_ATREQUESTED, statistic.GetAllTimeRequests());
 			attag2.WriteTagToFile(file);
+			++uTagCount;
+		}
+
+		if (statistic.GetAllTimeLastRequest()) {
+			CTag tagLastRequest(kLastRequestTagName, statistic.GetAllTimeLastRequest(), true);
+			tagLastRequest.WriteTagToFile(file);
 			++uTagCount;
 		}
 

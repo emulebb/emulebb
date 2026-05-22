@@ -2815,6 +2815,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Requested unknown file"
     IDS_SF_AVERAGESIZE      "Average file size: %s"
     IDS_SF_REQUESTS         "Requests"
+    IDS_SF_LASTREQUEST      "Last Request"
     IDS_SF_ACCEPTS          "Accepted Requests"
     IDS_SF_TRANSFERRED      "Transferred Data"
     IDS_REMOVESEARCHSTRING  "Close Search Results"

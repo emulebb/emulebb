@@ -682,6 +682,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "התבקש קובץ לא ידוע"
     IDS_SF_AVERAGESIZE      "ממוצע גודל קובץ: %s"
     IDS_SF_REQUESTS         "בקשות"
+    IDS_SF_LASTREQUEST         "בקשה אחרונה"
     IDS_SF_ACCEPTS          "בקשות שאושרו"
     IDS_SF_TRANSFERRED      "מידע שהועבר"
 END

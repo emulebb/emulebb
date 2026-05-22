@@ -568,6 +568,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Spurt etter ukjend fil"
     IDS_SF_AVERAGESIZE      "Gjennomsnittleg filstorleik: %s"
     IDS_SF_REQUESTS         "Førespurnader"
+    IDS_SF_LASTREQUEST         "Siste førespurnad"
     IDS_SF_ACCEPTS          "Aksepterte førespurnader"
     IDS_SF_TRANSFERRED      "Overført data"
 END

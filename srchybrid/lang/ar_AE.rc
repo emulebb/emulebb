@@ -629,6 +629,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "طلب ملف غير معرف"
     IDS_SF_AVERAGESIZE      "متوسط حجم الملف: %s"
     IDS_SF_REQUESTS         "طلبات"
+    IDS_SF_LASTREQUEST         "آخر طلب"
     IDS_SF_ACCEPTS          "قبول الطلبات"
     IDS_SF_TRANSFERRED      "الداتا المحولة"
 END

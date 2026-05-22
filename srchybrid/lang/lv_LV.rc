@@ -630,6 +630,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Pieprasīta nepazīstama datne"
     IDS_SF_AVERAGESIZE      "Vidējais datnes izmērs: %s"
     IDS_SF_REQUESTS         "Pieprasījumi"
+    IDS_SF_LASTREQUEST         "Pēdējais pieprasījums"
     IDS_SF_ACCEPTS          "Pieņemtie pieprasījumi"
     IDS_SF_TRANSFERRED      "Pārsūtītie dati"
 END

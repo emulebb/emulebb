@@ -646,6 +646,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "请求了未知文件"
     IDS_SF_AVERAGESIZE      "平均文件大小: %s"
     IDS_SF_REQUESTS         "请求数"
+    IDS_SF_LASTREQUEST         "最后请求"
     IDS_SF_ACCEPTS          "接受的请求数"
     IDS_SF_TRANSFERRED      "已传输的数据"
     IDS_REMOVESEARCHSTRING  "关闭此次搜索结果"

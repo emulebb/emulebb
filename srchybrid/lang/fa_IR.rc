@@ -644,6 +644,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "فايل نامشخص درخواست شده"
     IDS_SF_AVERAGESIZE      "معدل حجم فايل ها: %s"
     IDS_SF_REQUESTS         "درخواست ها"
+    IDS_SF_LASTREQUEST         "آخرین درخواست"
     IDS_SF_ACCEPTS          "در خواست هاي مورد قبول واقع شده"
     IDS_SF_TRANSFERRED      "اطلاعات ارسال شده"
     IDS_REMOVESEARCHSTRING  "بستن پنجره نتايج جستجو"

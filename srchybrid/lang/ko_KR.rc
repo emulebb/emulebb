@@ -642,6 +642,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "알 수 없는 파일을 요청함"
     IDS_SF_AVERAGESIZE      "평균 파일 크기: %s"
     IDS_SF_REQUESTS         "요청"
+    IDS_SF_LASTREQUEST         "마지막 요청"
     IDS_SF_ACCEPTS          "수락된 요청"
     IDS_SF_TRANSFERRED      "전송된 데이터"
     IDS_REMOVESEARCHSTRING  "검색 결과 닫기"

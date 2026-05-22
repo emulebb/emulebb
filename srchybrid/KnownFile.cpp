@@ -789,10 +789,16 @@ bool CKnownFile::LoadTagsFromFile(CFileDataIO &file)
 				ASSERT(0);
 			break;
 		default:
-			ConvertED2KTag(newtag);
-			if (newtag) {
-				m_taglist.Add(newtag);
-				newtag = NULL;
+			if (newtag->HasName() && CmpED2KTagName(newtag->GetName(), kLastRequestTagName) == 0) {
+				ASSERT(newtag->IsInt64(true));
+				if (newtag->IsInt64(true))
+					statistic.SetAllTimeLastRequest(newtag->GetInt64());
+			} else {
+				ConvertED2KTag(newtag);
+				if (newtag) {
+					m_taglist.Add(newtag);
+					newtag = NULL;
+				}
 			}
 		}
 		delete newtag;
@@ -919,6 +925,12 @@ bool CKnownFile::WriteToFile(CFileDataIO &file)
 	if (statistic.GetAllTimeRequests()) {
 		CTag attag2(FT_ATREQUESTED, statistic.GetAllTimeRequests());
 		attag2.WriteTagToFile(file);
+		++uTagCount;
+	}
+
+	if (statistic.GetAllTimeLastRequest()) {
+		CTag tagLastRequest(kLastRequestTagName, statistic.GetAllTimeLastRequest(), true);
+		tagLastRequest.WriteTagToFile(file);
 		++uTagCount;
 	}
 

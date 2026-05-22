@@ -628,6 +628,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Solicitáu archivu desconocíu"
     IDS_SF_AVERAGESIZE      "Tamañu mediu d’archivu: %s"
     IDS_SF_REQUESTS         "Pidíos"
+    IDS_SF_LASTREQUEST         "Últimu pidíu"
     IDS_SF_ACCEPTS          "Pidíos aceptaos"
     IDS_SF_TRANSFERRED      "Datos tresferíos"
 END

@@ -585,6 +585,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Demanat archiu desconegut"
     IDS_SF_AVERAGESIZE      "Promig tamany: %s"
     IDS_SF_REQUESTS         "Peticions"
+    IDS_SF_LASTREQUEST         "Última petició"
     IDS_SF_ACCEPTS          "Peticions Acceptades"
     IDS_SF_TRANSFERRED      "Senyes Transferides"
 END

@@ -402,6 +402,7 @@
 #define IDS_SF_REQUESTS                 503
 #define IDS_SF_ACCEPTS                  504
 #define IDS_SF_TRANSFERRED              505
+#define IDS_SF_LASTREQUEST              2314
 #define IDS_REMOVESEARCHSTRING          506
 #define IDS_REMOVESELECTED              507
 #define IDS_REMOVEALLSEARCH             508

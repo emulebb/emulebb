@@ -580,6 +580,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Onbekend bestand gevraagd"
     IDS_SF_AVERAGESIZE      "Gemiddelde bestandsgrootte: %s"
     IDS_SF_REQUESTS         "Verzoeken"
+    IDS_SF_LASTREQUEST         "Laatste verzoek"
     IDS_SF_ACCEPTS          "Geaccepteerde verzoeken"
     IDS_SF_TRANSFERRED      "Overgedragen data"
 END

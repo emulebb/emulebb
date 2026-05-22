@@ -583,6 +583,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Unbekannte Datei angefordert"
     IDS_SF_AVERAGESIZE      "Durchschnittliche Dateigröße: %s"
     IDS_SF_REQUESTS         "Anfragen"
+    IDS_SF_LASTREQUEST         "Letzte Anfrage"
     IDS_SF_ACCEPTS          "Akzeptierte Anfragen"
     IDS_SF_TRANSFERRED      "Gesendet"
     IDS_REMOVESEARCHSTRING  "Sch&ließe diese Ergebnisse"

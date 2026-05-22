@@ -630,6 +630,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Запрошен неизвестный файл"
     IDS_SF_AVERAGESIZE      "Средний размер файла: %s"
     IDS_SF_REQUESTS         "Запросы"
+    IDS_SF_LASTREQUEST         "Последний запрос"
     IDS_SF_ACCEPTS          "Принятые запросы"
     IDS_SF_TRANSFERRED      "Передано данных"
 END

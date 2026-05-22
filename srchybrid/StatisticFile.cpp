@@ -32,6 +32,7 @@ void CStatisticFile::MergeFileStats(const CStatisticFile *toMerge)
 	requested += toMerge->GetRequests();
 	accepted += toMerge->GetAccepts();
 	transferred += toMerge->GetTransferred();
+	SetAllTimeLastRequest(max(alltimelastrequested, toMerge->GetAllTimeLastRequest()));
 	SetAllTimeRequests(alltimerequested + toMerge->GetAllTimeRequests());
 	SetAllTimeTransferred(alltimetransferred + toMerge->GetAllTimeTransferred());
 	SetAllTimeAccepts(alltimeaccepted + toMerge->GetAllTimeAccepts());
@@ -41,6 +42,9 @@ void CStatisticFile::AddRequest()
 {
 	++requested;
 	++alltimerequested;
+	const time_t tNow = time(NULL);
+	if (tNow > 0)
+		alltimelastrequested = static_cast<uint64>(tNow);
 	++theApp.knownfiles->requested;
 	theApp.sharedfiles->UpdateFile(fileParent);
 }

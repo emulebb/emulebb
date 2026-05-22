@@ -579,6 +579,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Užklausė nežinomą failą"
     IDS_SF_AVERAGESIZE      "Vidutinis failo dydis: %s"
     IDS_SF_REQUESTS         "Užklausimai"
+    IDS_SF_LASTREQUEST         "Paskutinė užklausa"
     IDS_SF_ACCEPTS          "Priimti užklausimai"
     IDS_SF_TRANSFERRED      "Persiųsta duomenų"
 END

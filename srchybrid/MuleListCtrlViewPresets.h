@@ -54,15 +54,15 @@ inline constexpr int kDownloadExtendedOrder[] = {0, 1, 3, 16, 5, 4, 10, 6, 8, 9,
 inline constexpr int kQueueExtendedOrder[] = {0, 1, 13, 2, 4, 5, 3, 6, 8, 7, 12, 10, 11, 20, 21, 15, 14, 16, 17, 18, 19, 9};
 inline constexpr int kSearchExtendedOrder[] = {0, 1, 2, 3, 4, 13, 14, 15, 6, 7, 8, 9, 10, 11, 12, 5, 16};
 inline constexpr int kServerExtendedOrder[] = {0, 1, 2, 3, 4, 5, 6, 13, 7, 9, 8, 10, 11, 12, 14, 15};
-inline constexpr int kSharedFilesExtendedOrder[] = {0, 1, 2, 9, 8, 3, 10, 5, 6, 7, 18, 19, 11, 12, 13, 14, 15, 16, 17, 4};
+inline constexpr int kSharedFilesExtendedOrder[] = {0, 1, 2, 10, 9, 3, 11, 5, 6, 7, 8, 19, 20, 12, 13, 14, 15, 16, 17, 18, 4};
 inline constexpr int kUploadExtendedOrder[] = {0, 1, 2, 3, 18, 20, 6, 11, 4, 5, 10, 7, 8, 9, 19, 21, 13, 12, 14, 15, 16, 17};
 
 inline constexpr int kDownloadStockHiddenColumns[] = {2, 11, 12, 13};
 inline constexpr int kSearchStockHiddenColumns[] = {5, 12, 16};
 inline constexpr int kSearchExtendedHiddenColumns[] = {5, 16};
 inline constexpr int kServerStockHiddenColumns[] = {11, 12};
-inline constexpr int kSharedFilesStockHiddenColumns[] = {4, 6, 9, 12, 13, 14, 15, 16, 17};
-inline constexpr int kSharedFilesExtendedHiddenColumns[] = {4, 12, 13, 14, 15, 16, 17};
+inline constexpr int kSharedFilesStockHiddenColumns[] = {4, 7, 10, 13, 14, 15, 16, 17, 18};
+inline constexpr int kSharedFilesExtendedHiddenColumns[] = {4, 13, 14, 15, 16, 17, 18};
 
 inline constexpr SListControlViewPresetProfile kProfiles[] = {
 	{_T("ClientListCtrl"), kClientExtendedOrder, _countof(kClientExtendedOrder), nullptr, 0, nullptr, 0},
