@@ -2629,9 +2629,9 @@ void CPreferences::SavePreferences()
 	ini.WriteString(prefini::IPFilterUpdateKeys::Url, m_strIPFilterUpdateUrl);
 	ini.WriteBool(_T("AddServersFromServer"), m_bAddServersFromServer);
 	ini.WriteBool(_T("AddServersFromClient"), m_bAddServersFromClients);
-	ini.WriteInt(_T("StartupProgressDialog"), m_iStartupProgressDialogMode);
-	ini.WriteInt(_T("ShutdownProgressDialog"), m_iShutdownProgressDialogMode);
-	ini.WriteBool(GetDailyConfigBackupIniKey(), m_bDailyConfigBackup);
+	ini.WriteInt(prefini::LifecycleKeys::StartupProgressDialog, m_iStartupProgressDialogMode);
+	ini.WriteInt(prefini::LifecycleKeys::ShutdownProgressDialog, m_iShutdownProgressDialogMode);
+	ini.WriteBool(prefini::BackupKeys::DailyConfigBackup, m_bDailyConfigBackup);
 	ini.WriteBool(_T("BringToFront"), bringtoforeground);
 	ini.WriteBool(_T("TransferDoubleClick"), transferDoubleclick);
 	ini.WriteBool(_T("ConfirmExit"), confirmExit);
@@ -2814,7 +2814,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("ShowUpDownIconInTaskbar"), m_bShowUpDownIconInTaskbar);
 	ini.WriteBool(_T("AlwaysShowTrayIcon"), m_bAlwaysShowTrayIcon);
 	ini.WriteBool(_T("MiniMule"), m_bEnableMiniMule);
-	ini.WriteInt(GetDesktopUiRefreshIntervalIniKey(), static_cast<int>(m_uDesktopUiRefreshIntervalMs));
+	ini.WriteInt(prefini::DisplayKeys::DesktopUiRefreshIntervalMs, static_cast<int>(m_uDesktopUiRefreshIntervalMs));
 	ini.WriteBool(_T("ShowVerticalHourMarkers"), m_bShowVerticalHourMarkers);
 	ini.WriteBool(_T("ForceSpeedsToKB"), m_bForceSpeedsToKB);
 	ini.WriteBool(_T("ExtraPreviewWithMenu"), m_bExtraPreviewWithMenu);
@@ -3179,10 +3179,10 @@ void CPreferences::LoadPreferences()
 	SetIPFilterUpdateUrl(ini.GetString(prefini::IPFilterUpdateKeys::Url, GetDefaultIPFilterUpdateUrl()));
 	m_bAddServersFromServer = ini.GetBool(_T("AddServersFromServer"), false);
 	m_bAddServersFromClients = ini.GetBool(_T("AddServersFromClient"), false);
-	SetStartupProgressDialogMode(ini.GetInt(_T("StartupProgressDialog"), GetDefaultLifecycleProgressDialogMode()));
-	SetShutdownProgressDialogMode(ini.GetInt(_T("ShutdownProgressDialog"), GetDefaultLifecycleProgressDialogMode()));
-	m_bDailyConfigBackup = ini.GetBool(GetDailyConfigBackupIniKey(), GetDefaultDailyConfigBackup());
-	SetDesktopUiRefreshIntervalMs(static_cast<UINT>(max(0, ini.GetInt(GetDesktopUiRefreshIntervalIniKey(), static_cast<int>(GetDefaultDesktopUiRefreshIntervalMs())))));
+	SetStartupProgressDialogMode(ini.GetInt(prefini::LifecycleKeys::StartupProgressDialog, GetDefaultLifecycleProgressDialogMode()));
+	SetShutdownProgressDialogMode(ini.GetInt(prefini::LifecycleKeys::ShutdownProgressDialog, GetDefaultLifecycleProgressDialogMode()));
+	m_bDailyConfigBackup = ini.GetBool(prefini::BackupKeys::DailyConfigBackup, GetDefaultDailyConfigBackup());
+	SetDesktopUiRefreshIntervalMs(static_cast<UINT>(max(0, ini.GetInt(prefini::DisplayKeys::DesktopUiRefreshIntervalMs, static_cast<int>(GetDefaultDesktopUiRefreshIntervalMs())))));
 	bringtoforeground = ini.GetBool(_T("BringToFront"), false);
 	transferDoubleclick = ini.GetBool(_T("TransferDoubleClick"), true);
 	beepOnError = ini.GetBool(_T("BeepOnError"), false);

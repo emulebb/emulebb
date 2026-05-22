@@ -60,6 +60,22 @@ namespace MigrationKeys
 inline constexpr const TCHAR* PreferenceSchema = _T("BBPreferenceSchema");
 }
 
+namespace LifecycleKeys
+{
+inline constexpr const TCHAR* StartupProgressDialog = _T("StartupProgressDialog");
+inline constexpr const TCHAR* ShutdownProgressDialog = _T("ShutdownProgressDialog");
+}
+
+namespace BackupKeys
+{
+inline constexpr const TCHAR* DailyConfigBackup = _T("DailyConfigBackup");
+}
+
+namespace DisplayKeys
+{
+inline constexpr const TCHAR* DesktopUiRefreshIntervalMs = _T("DesktopUiRefreshIntervalMs");
+}
+
 namespace UploadPolicyKeys
 {
 inline constexpr const TCHAR* MaxUploadClientsAllowed = _T("MaxUploadClientsAllowed");
