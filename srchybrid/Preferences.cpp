@@ -494,9 +494,23 @@ void ReplaceCanonicalDirectoryListLocked(CStringList &rTargetList, std::unordere
 {
 	rTargetList.RemoveAll();
 	rLookupKeys.clear();
-	for (POSITION pos = rInputList.GetHeadPosition(); pos != NULL;)
-		(void)SharedDirectoryOps::AddSharedDirectory(rTargetList, rInputList.GetNext(pos), false, [](const CString &) { return true; });
-	RebuildDirectoryLookupKeysLocked(rTargetList, rLookupKeys);
+	std::vector<LongPathSeams::FileSystemObjectIdentity> aDirectoryIdentities;
+	for (POSITION pos = rInputList.GetHeadPosition(); pos != NULL;) {
+		const CString strCanonicalDir(PathHelpers::CanonicalizeDirectoryPath(rInputList.GetNext(pos)));
+		const std::wstring strLookupKey(MakeDirectoryListLookupKey(strCanonicalDir));
+		if (rLookupKeys.find(strLookupKey) != rLookupKeys.end())
+			continue;
+
+		LongPathSeams::FileSystemObjectIdentity directoryIdentity = {};
+		const bool bHasDirectoryIdentity = LongPathSeams::TryGetResolvedDirectoryIdentity(strCanonicalDir, directoryIdentity);
+		if (bHasDirectoryIdentity && SharedDirectoryOps::ContainsDirectoryIdentity(aDirectoryIdentities, directoryIdentity))
+			continue;
+
+		rTargetList.AddTail(strCanonicalDir);
+		rLookupKeys.insert(strLookupKey);
+		if (bHasDirectoryIdentity)
+			aDirectoryIdentities.push_back(directoryIdentity);
+	}
 }
 
 bool AddCanonicalDirectoryIfAbsentLocked(CStringList &rTargetList, std::unordered_set<std::wstring> &rLookupKeys, const CString &rstrDirectory)
@@ -793,7 +807,8 @@ bool	CPreferences::m_bIconflashOnNewMessage;
 bool	CPreferences::confirmExit;
 DWORD	CPreferences::m_adwStatsColors[15];
 bool	CPreferences::m_bHasCustomTaskIconColor;
-bool	CPreferences::splashscreen;
+int		CPreferences::m_iStartupProgressDialogMode;
+int		CPreferences::m_iShutdownProgressDialogMode;
 bool	CPreferences::filterLANIPs;
 bool	CPreferences::m_bAllocLocalHostIP;
 bool	CPreferences::onlineSig;
@@ -1420,6 +1435,18 @@ void CPreferences::SetStatsInterval(UINT in)
 void CPreferences::SetMaxConsPerFive(UINT in)
 {
 	MaxConperFive = NormalizePositivePreference(in, GetDefaultMaxConperFive());
+}
+
+int CPreferences::NormalizeLifecycleProgressDialogMode(int iMode)
+{
+	switch (iMode) {
+	case LPDM_OFF:
+	case LPDM_WHEN_VISIBLE:
+	case LPDM_ALWAYS:
+		return iMode;
+	default:
+		return GetDefaultLifecycleProgressDialogMode();
+	}
 }
 
 UINT CPreferences::NormalizeStatsMax(UINT in)
@@ -2604,7 +2631,8 @@ void CPreferences::SavePreferences()
 	ini.WriteString(prefini::IPFilterUpdateKeys::Url, m_strIPFilterUpdateUrl);
 	ini.WriteBool(_T("AddServersFromServer"), m_bAddServersFromServer);
 	ini.WriteBool(_T("AddServersFromClient"), m_bAddServersFromClients);
-	ini.WriteBool(_T("Splashscreen"), splashscreen);
+	ini.WriteInt(_T("StartupProgressDialog"), m_iStartupProgressDialogMode);
+	ini.WriteInt(_T("ShutdownProgressDialog"), m_iShutdownProgressDialogMode);
 	ini.WriteBool(_T("BringToFront"), bringtoforeground);
 	ini.WriteBool(_T("TransferDoubleClick"), transferDoubleclick);
 	ini.WriteBool(_T("ConfirmExit"), confirmExit);
@@ -3151,7 +3179,8 @@ void CPreferences::LoadPreferences()
 	SetIPFilterUpdateUrl(ini.GetString(prefini::IPFilterUpdateKeys::Url, GetDefaultIPFilterUpdateUrl()));
 	m_bAddServersFromServer = ini.GetBool(_T("AddServersFromServer"), false);
 	m_bAddServersFromClients = ini.GetBool(_T("AddServersFromClient"), false);
-	splashscreen = ini.GetBool(_T("Splashscreen"), false);
+	SetStartupProgressDialogMode(ini.GetInt(_T("StartupProgressDialog"), GetDefaultLifecycleProgressDialogMode()));
+	SetShutdownProgressDialogMode(ini.GetInt(_T("ShutdownProgressDialog"), GetDefaultLifecycleProgressDialogMode()));
 	bringtoforeground = ini.GetBool(_T("BringToFront"), false);
 	transferDoubleclick = ini.GetBool(_T("TransferDoubleClick"), true);
 	beepOnError = ini.GetBool(_T("BeepOnError"), false);

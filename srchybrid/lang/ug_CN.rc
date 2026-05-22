@@ -535,7 +535,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_PW_SPLASH           "قارشى ئېلىش كۆزنىكىنى كۆرسەت"
     IDS_PW_DBLCLICK         "قوش چېكىلسە چۈشۈرۈش تىزىملىكىنى ياي"
     IDS_PW_TOOL             "دوستانە ئەسكەرتىش ۋاقتىنى كېچىكتۈرۈش [سېكۇنت]‏"
     IDS_PW_FRONT            "ئۇلىنىش چېكىلگەندە ئالدى سۇپىغا ئالماش"
@@ -2121,6 +2120,31 @@ BEGIN
     IDS_ALLOW_PEER_PREVIEW                                  "تورداش ئالدىن كۆرۈشنى رۇخسەت قىل"
     IDS_ALLOW_PEER_PREVIEW_INVALID                          "تورداش ئالدىن كۆرۈشنى رۇخسەت قىلىشتىن بۇرۇن مەۋجۇت FFmpeg ئىجرا ھۆججىتىنى تاللاڭ."
     IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "باشقا eMule خېرىدارلىرىنىڭ ھەمبەھىرلەنگەن سىن ھۆججەتلىرى ئۈچۈن ئالدىن كۆرۈش رامكىلىرىنى سورىشىغا يول قويىدۇ.\r\n\r\neMule تىنچ رامكىلارنى ھاسىل قىلىش ئۈچۈن FFmpeg نى ئىشلىتىدۇ ۋە پۈتۈن سىننى ئەمەس، پەقەت شۇ ئالدىن كۆرۈش سۈرەتلىرىنىلا ئەۋەتىدۇ. ھەمبەھىرلەنگەن ھۆججەتلەر تورداشلارغا كۆرۈنۈپ تۇرۇشىمۇ كېرەك."
+    IDS_STARTING_EMULE                                      "eMule نى باشلاش"
+    IDS_EMULE_IS_STARTING                                   "eMule باشلىنىۋاتىدۇ ..."
+    IDS_EMULE_IS_SHUTTING_DOWN                              "eMule تاقىلىپ قالدى ..."
+    IDS_STARTUP_PROGRESS_STARTING                           "eMule نى باشلاش"
+    IDS_STARTUP_PROGRESS_PREPARING                          "ئىگىلىك تىكلەش تەييارلىقى."
+    IDS_STARTUP_PROGRESS_CREATING_UI                        "ئاساسلىق كۆزنەك قۇرۇش"
+    IDS_STARTUP_PROGRESS_CREATING_PAGES                     "ئاساسلىق كۆزنەك بەتلىرىنى قۇرۇش."
+    IDS_STARTUP_PROGRESS_RESTORING_UI                       "ساقلانغان كۆزنەك ئورۇنلاشتۇرۇشىنى ئەسلىگە كەلتۈرۈش."
+    IDS_STARTUP_PROGRESS_STARTING_SERVICES                  "مۇلازىمەتنى باشلاش"
+    IDS_STARTUP_PROGRESS_QUEUING_STAGES                     "باشلىنىش باسقۇچى."
+    IDS_STARTUP_PROGRESS_LOADING_FILES                      "ئورتاق ھۆججەتلەرنى يۈكلەۋاتىدۇ"
+    IDS_STARTUP_PROGRESS_ATTACHING_SHARED_FILES             "ئورتاق ھۆججەت تىزىملىكى تەييارلاش."
+    IDS_STARTUP_PROGRESS_LOADING_SERVERS                    "مۇلازىمېتىرنى يۈكلەۋاتىدۇ"
+    IDS_STARTUP_PROGRESS_LOADING_SERVER_LIST                "مۇلازىمېتىر تىزىملىكىنى يۈكلەۋاتىدۇ."
+    IDS_STARTUP_PROGRESS_STARTING_NETWORK                   "تورنى قوزغىتىش"
+    IDS_STARTUP_PROGRESS_LOADING_DOWNLOADS                  "چۈشۈرۈش ۋە تور ئېغىزى ئېچىش."
+    IDS_STARTUP_PROGRESS_LOADING_SEARCHES                   "ئىزدەشنى يۈكلەۋاتىدۇ"
+    IDS_STARTUP_PROGRESS_LOADING_STORED_SEARCHES            "ساقلانغان ئىزدەشلەرنى يۈكلەۋاتىدۇ."
+    IDS_STARTUP_PROGRESS_FINISHING                          "ئىگىلىك تىكلەشنى تاماملاش"
+    IDS_STARTUP_PROGRESS_STARTING_BACKGROUND_WORK           "ئورتاق بەھرىلىنىدىغان ھۆججەت خىزمىتىنى باشلاش."
+    IDS_TWEAKS_STARTUP_PROGRESS_DIALOG                      "قوزغىتىش ئىلگىرىلەش دىئالوگى"
+    IDS_TWEAKS_SHUTDOWN_PROGRESS_DIALOG                     "تاقاش ئىلگىرىلەش دىئالوگى"
+    IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "eMule كۆرۈنگەندە"
+    IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "eMule قوزغىلىش ئىلگىرىلەش دىئالوگىنى كۆرسەتكەندە كونترول قىلىدۇ. ھەمىشە كىچىكلىتىلگەن ياكى تەخسە قوزغىتىش يوللىرى ئۈچۈنمۇ كۆرسىتىڭ."
+    IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "eMule تاقاش ئىلگىرىلەش دىئالوگىنى كۆرسەتكەندە كونترول قىلىدۇ. ھەمىشە eMule تەخسىگە يوشۇرۇنغاندىمۇ ئۇنى كۆرسىتىش ئۈچۈن ئىشلىتىڭ."
 END
 // eMule BB managed translation block: end
 

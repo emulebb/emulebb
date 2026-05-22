@@ -49,7 +49,6 @@ BEGIN_MESSAGE_MAP(CPPgGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_MINIMULE, OnSettingsChange)
 	ON_EN_CHANGE(IDC_NICK, OnSettingsChange)
 	ON_BN_CLICKED(IDC_EXIT, OnSettingsChange)
-	ON_BN_CLICKED(IDC_SPLASHON, OnSettingsChange)
 	ON_BN_CLICKED(IDC_BRINGTOFOREGROUND, OnSettingsChange)
 	ON_CBN_SELCHANGE(IDC_LANGS, OnLangChange)
 	ON_BN_CLICKED(IDC_ED2KFIX, OnBnClickedEd2kfix)
@@ -89,7 +88,6 @@ void CPPgGeneral::LoadSettings()
 	CheckDlgButton(IDC_EXIT, static_cast<UINT>(thePrefs.confirmExit));
 	CheckDlgButton(IDC_ONLINESIG, static_cast<UINT>(thePrefs.onlineSig));
 	CheckDlgButton(IDC_CHECK4UPDATE, static_cast<UINT>(thePrefs.UpdateNotify()));
-	CheckDlgButton(IDC_SPLASHON, static_cast<UINT>(thePrefs.splashscreen));
 	CheckDlgButton(IDC_STARTMIN, static_cast<UINT>(thePrefs.startMinimized));
 	CheckDlgButton(IDC_STARTWIN, static_cast<UINT>(thePrefs.m_bAutoStart));
 	CheckDlgButton(IDC_MINIMULE, static_cast<UINT>(thePrefs.m_bEnableMiniMule));
@@ -174,7 +172,6 @@ void CPPgGeneral::UpdateToolTips()
 	m_toolTip.SetTool(this, IDC_EXIT, GetResString(IDS_PPG_GENERAL_TT_EXIT));
 	m_toolTip.SetTool(this, IDC_CHECK4UPDATE, GetResString(IDS_PPG_GENERAL_TT_CHECK4_UPDATE));
 	m_toolTip.SetTool(this, IDC_CHECKDAYS, GetResString(IDS_PPG_GENERAL_TT_CHECKDAYS));
-	m_toolTip.SetTool(this, IDC_SPLASHON, GetResString(IDS_PPG_GENERAL_TT_SPLASHON));
 	m_toolTip.SetTool(this, IDC_PREVENTSTANDBY, GetResString(IDS_PPG_GENERAL_TT_PREVENTSTANDBY));
 	m_toolTip.SetTool(this, IDC_WEBSVEDIT, GetResString(IDS_PPG_GENERAL_TT_WEBSVEDIT));
 	m_toolTip.SetTool(this, IDC_ED2KFIX, GetResString(IDS_PPG_GENERAL_TT_ED2_KFIX));
@@ -246,7 +243,6 @@ BOOL CPPgGeneral::OnApply()
 		theApp.ReleaseStandbyPrevention();
 	thePrefs.SetUpdateNotify(IsDlgButtonChecked(IDC_CHECK4UPDATE) != 0);
 	thePrefs.SetUpdateDays(static_cast<CSliderCtrl*>(GetDlgItem(IDC_CHECKDAYS))->GetPos());
-	thePrefs.splashscreen = IsDlgButtonChecked(IDC_SPLASHON) != 0;
 	thePrefs.startMinimized = IsDlgButtonChecked(IDC_STARTMIN) != 0;
 	thePrefs.m_bEnableMiniMule = IsDlgButtonChecked(IDC_MINIMULE) != 0;
 	const bool bRequestedAutoStart = IsDlgButtonChecked(IDC_STARTWIN) != 0;
@@ -297,7 +293,6 @@ void CPPgGeneral::Localize()
 		SetDlgItemText(IDC_ED2KFIX, GetResString(IDS_ED2KLINKFIX));
 		SetDlgItemText(IDC_STARTUP, GetResString(IDS_STARTUP));
 		SetDlgItemText(IDC_CHECK4UPDATE, GetResString(IDS_CHECK4UPDATE));
-		SetDlgItemText(IDC_SPLASHON, GetResString(IDS_PW_SPLASH));
 		SetDlgItemText(IDC_STARTMIN, GetResString(IDS_PREF_STARTMIN));
 		SetDlgItemText(IDC_STARTWIN, GetResString(IDS_STARTWITHWINDOWS));
 		SetDlgItemText(IDC_MINIMULE, GetResString(IDS_ENABLEMINIMULE));

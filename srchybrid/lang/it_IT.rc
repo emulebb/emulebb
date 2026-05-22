@@ -536,7 +536,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_PW_SPLASH           "Mostra la schermata di caricamento"
     IDS_PW_DBLCLICK         "Doppio clic per espandere la lista delle fonti"
     IDS_PW_TOOL             "Attesa prima del suggerimento a comparsa [sec.]:"
     IDS_PW_FRONT            "Ripristina eMule al clic su un indirizzo eD2K"
@@ -915,7 +914,7 @@ STRINGTABLE
 BEGIN
     IDS_DOWNLOADED          "Scaricato"
     IDS_SOURCENAMES         "Nome file"
-    IDS_PREF_STARTMIN       "Avvia ridotto ad icona"//actually the relative option hides splash screen too
+    IDS_PREF_STARTMIN       "Avvia ridotto ad icona"
     IDS_PS_TBN_IMPORTANT    "Urgente: spazio su disco terminato oppure disconnessione dal server"
     IDS_COLORS              "Colori"
     IDS_SP_BACKGROUND       "Sfondo"
@@ -2657,7 +2656,6 @@ BEGIN
     IDS_PPG_GENERAL_TT_EXIT                                    "Chiede conferma prima dell'uscita di eMule.\r\n\r\nConsigliato su sistemi non presidiati per evitare arresti accidentali."
     IDS_PPG_GENERAL_TT_LANGS                                   "Seleziona la risorsa della lingua dell'interfaccia utente caricata da eMule.\r\n\r\nLa modifica della lingua potrebbe richiedere la riapertura delle finestre di dialogo prima dell'aggiornamento di ogni etichetta."
     IDS_PPG_GENERAL_TT_NICK                                    "Nome utente annunciato agli altri client eMule.\r\n\r\nUtilizzare un nickname non sensibile; può essere visibile ai peer."
-    IDS_PPG_GENERAL_TT_SPLASHON                                "Mostra la schermata iniziale durante l'avvio.\r\n\r\nDisabilitala per un percorso di avvio più silenzioso."
     IDS_PPG_IRC_TT_IRC_NICK_BOX                                "Nickname utilizzato quando ci si connette a IRC.\r\n\r\nScegli un nome accettato dalla rete IRC di destinazione."
     IDS_PPG_IRC_TT_IRC_PERFORM_BOX                             "I comandi vengono eseguiti automaticamente dopo la connessione di IRC quando l'esecuzione è abilitata.\r\n\r\nUtilizza i comandi IRC a riga singola solo se ti fidi e li comprendi."
     IDS_PPG_IRC_TT_IRC_SERVER_BOX                              "Indirizzo del server IRC utilizzato dal client IRC integrato.\r\n\r\nCambialo solo quando usi intenzionalmente un'altra rete IRC."
@@ -2725,6 +2723,31 @@ BEGIN
     IDS_ALLOW_PEER_PREVIEW                                     "Consenti anteprima peer"
     IDS_ALLOW_PEER_PREVIEW_INVALID                             "Seleziona un eseguibile FFmpeg esistente prima di consentire l’anteprima peer."
     IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                        "Consente agli altri client eMule di richiedere fotogrammi di anteprima per i file video condivisi.\r\n\r\neMule usa FFmpeg per generare immagini statiche e invia solo quelle immagini di anteprima, non l’intero video. Anche i file condivisi devono essere visibili ai peer."
+    IDS_STARTING_EMULE                                         "Inizio eMule"
+    IDS_EMULE_IS_STARTING                                      "eMule sta iniziando..."
+    IDS_EMULE_IS_SHUTTING_DOWN                                 "eMule si sta spegnendo..."
+    IDS_STARTUP_PROGRESS_STARTING                              "Inizio eMule"
+    IDS_STARTUP_PROGRESS_PREPARING                             "Preparazione dell'avvio."
+    IDS_STARTUP_PROGRESS_CREATING_UI                           "Creazione della finestra principale"
+    IDS_STARTUP_PROGRESS_CREATING_PAGES                        "Creazione delle pagine della finestra principale."
+    IDS_STARTUP_PROGRESS_RESTORING_UI                          "Ripristino del layout della finestra salvato."
+    IDS_STARTUP_PROGRESS_STARTING_SERVICES                     "Avvio dei servizi"
+    IDS_STARTUP_PROGRESS_QUEUING_STAGES                        "Fasi di avvio della coda."
+    IDS_STARTUP_PROGRESS_LOADING_FILES                         "Caricamento di file condivisi"
+    IDS_STARTUP_PROGRESS_ATTACHING_SHARED_FILES                "Preparazione dell'elenco dei file condivisi."
+    IDS_STARTUP_PROGRESS_LOADING_SERVERS                       "Caricamento dei server"
+    IDS_STARTUP_PROGRESS_LOADING_SERVER_LIST                   "Caricamento elenco server."
+    IDS_STARTUP_PROGRESS_STARTING_NETWORK                      "Rete iniziale"
+    IDS_STARTUP_PROGRESS_LOADING_DOWNLOADS                     "Caricamento download e apertura socket di rete."
+    IDS_STARTUP_PROGRESS_LOADING_SEARCHES                      "Caricamento ricerche"
+    IDS_STARTUP_PROGRESS_LOADING_STORED_SEARCHES               "Caricamento delle ricerche memorizzate."
+    IDS_STARTUP_PROGRESS_FINISHING                             "Completamento dell'avvio"
+    IDS_STARTUP_PROGRESS_STARTING_BACKGROUND_WORK              "Avvio del lavoro in background sui file condivisi."
+    IDS_TWEAKS_STARTUP_PROGRESS_DIALOG                         "Finestra di dialogo di avanzamento dell'avvio"
+    IDS_TWEAKS_SHUTDOWN_PROGRESS_DIALOG                        "Finestra di dialogo di avanzamento dello spegnimento"
+    IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                           "Quando eMule visibile"
+    IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                      "Controlla quando eMule mostra una finestra di dialogo di avanzamento dell'avvio. Utilizza Sempre per mostrarla anche per percorsi di avvio ridotti a icona o nel vassoio."
+    IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                     "Controlla quando eMule mostra una finestra di dialogo di avanzamento dello spegnimento. Utilizza Sempre per mostrarla anche quando eMule è nascosto nel vassoio."
 END
 // eMule BB managed translation block: end
 

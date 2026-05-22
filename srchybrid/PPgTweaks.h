@@ -68,6 +68,14 @@ protected:
 	HTREEITEM m_htiHiddenFile;
 	HTREEITEM m_htiHiddenSecurity;
 	HTREEITEM m_htiHiddenStartup;
+	HTREEITEM m_htiStartupProgressDialog;
+	HTREEITEM m_htiStartupProgressDialogOff;
+	HTREEITEM m_htiStartupProgressDialogWhenVisible;
+	HTREEITEM m_htiStartupProgressDialogAlways;
+	HTREEITEM m_htiShutdownProgressDialog;
+	HTREEITEM m_htiShutdownProgressDialogOff;
+	HTREEITEM m_htiShutdownProgressDialogWhenVisible;
+	HTREEITEM m_htiShutdownProgressDialogAlways;
 	HTREEITEM m_htiICH;
 	HTREEITEM m_htiIconFlashOnNewMessage;
 	HTREEITEM m_htiExtractMetaData;
@@ -204,6 +212,8 @@ protected:
 	int m_iMaxHalfOpen;
 	int m_iShareeMule;
 	int m_iSessionTransferLimitMode;
+	int m_iStartupProgressDialogMode;
+	int m_iShutdownProgressDialogMode;
 	int m_iUPnPBackendMode;
 
 	CString m_sDateTimeFormat4Lists;

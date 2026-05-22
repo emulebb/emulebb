@@ -29,7 +29,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
 CAPTION "Shutting down eMule"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    LTEXT           "eMule is shutting down...",IDC_STATIC,7,7,236,8
+    LTEXT           "",IDC_PROGRESS_HEADER,7,7,236,8
     LTEXT           "",IDC_SHUTDOWN_STEP,7,23,236,8
     LTEXT           "",IDC_SHUTDOWN_DETAIL,7,36,236,20
     CONTROL         "",IDC_PROGRESS1,"msctls_progress32",WS_BORDER,7,63,236,10
@@ -196,13 +196,6 @@ BEGIN
     CONTROL         "",IDC_SLIDER2,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,13,171,201,12
 END
 
-IDD_SPLASH DIALOGEX 0, 0, 234, 185
-STYLE DS_SETFONT | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN
-EXSTYLE WS_EX_TOPMOST
-FONT 8, "MS Shell Dlg", 0, 0, 0x0
-BEGIN
-END
-
 IDD_PPG_PROXY DIALOGEX 0, 0, 547, 454
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Proxy"
@@ -269,9 +262,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,172,153,10
     CONTROL         "",IDC_CHECKDAYS,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,169,175,53,10
     LTEXT           "days",IDC_DAYS,171,166,48,9
-    CONTROL         "Show splash screen",IDC_SPLASHON,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,182,158,10
-    CONTROL         "Startup Minimized",IDC_STARTMIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,192,190,10
-    CONTROL         "Start with Windows",IDC_STARTWIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,202,190,10
+    CONTROL         "Startup Minimized",IDC_STARTMIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,182,190,10
+    CONTROL         "Start with Windows",IDC_STARTWIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,192,190,10
     PUSHBUTTON      "Edit Web Services...",IDC_WEBSVEDIT,11,132,100,14
     PUSHBUTTON      "Handle eD2K Links",IDC_ED2KFIX,116,132,106,14
     CONTROL         "Prevent system sleep during network activity",IDC_PREVENTSTANDBY,
@@ -2707,7 +2699,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_PW_SPLASH           "Show splash screen"
     IDS_PW_DBLCLICK         "Download list double-click to expand"
     IDS_PW_TOOL             "Tooltip delay time [sec.]"
     IDS_PW_FRONT            "Bring to front on link click"
@@ -3299,6 +3290,31 @@ BEGIN
     IDS_COPY_FILE_STATUS    "Copy File S&tatus"
     IDS_COPY_FILE_PROGRESS  "Copy File &Progress"
     IDS_COPY_FILE_TYPE      "Copy File T&ype"
+    IDS_STARTING_EMULE      "Starting eMule"
+    IDS_EMULE_IS_STARTING   "eMule is starting..."
+    IDS_EMULE_IS_SHUTTING_DOWN "eMule is shutting down..."
+    IDS_STARTUP_PROGRESS_STARTING "Starting eMule"
+    IDS_STARTUP_PROGRESS_PREPARING "Preparing startup."
+    IDS_STARTUP_PROGRESS_CREATING_UI "Creating main window"
+    IDS_STARTUP_PROGRESS_CREATING_PAGES "Creating main window pages."
+    IDS_STARTUP_PROGRESS_RESTORING_UI "Restoring saved window layout."
+    IDS_STARTUP_PROGRESS_STARTING_SERVICES "Starting services"
+    IDS_STARTUP_PROGRESS_QUEUING_STAGES "Queuing startup stages."
+    IDS_STARTUP_PROGRESS_LOADING_FILES "Loading shared files"
+    IDS_STARTUP_PROGRESS_ATTACHING_SHARED_FILES "Preparing shared file list."
+    IDS_STARTUP_PROGRESS_LOADING_SERVERS "Loading servers"
+    IDS_STARTUP_PROGRESS_LOADING_SERVER_LIST "Loading server list."
+    IDS_STARTUP_PROGRESS_STARTING_NETWORK "Starting network"
+    IDS_STARTUP_PROGRESS_LOADING_DOWNLOADS "Loading downloads and opening network sockets."
+    IDS_STARTUP_PROGRESS_LOADING_SEARCHES "Loading searches"
+    IDS_STARTUP_PROGRESS_LOADING_STORED_SEARCHES "Loading stored searches."
+    IDS_STARTUP_PROGRESS_FINISHING "Finishing startup"
+    IDS_STARTUP_PROGRESS_STARTING_BACKGROUND_WORK "Starting background shared-file work."
+    IDS_TWEAKS_STARTUP_PROGRESS_DIALOG "Startup progress dialog"
+    IDS_TWEAKS_SHUTDOWN_PROGRESS_DIALOG "Shutdown progress dialog"
+    IDS_TWEAKS_PROGRESS_WHEN_VISIBLE "When eMule visible"
+    IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG "Controls when eMule shows a startup progress dialog. Use Always to show it even for minimized or tray startup paths."
+    IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG "Controls when eMule shows a shutdown progress dialog. Use Always to show it even when eMule is hidden to the tray."
     IDS_CL_TRANSFDOWN       "Transferred Down"
     IDS_CL_PENDING          "Pending"
     IDS_CL_LOW2LOW          "Low To Low IP"
@@ -4948,7 +4964,6 @@ BEGIN
     IDS_PPG_GENERAL_TT_EXIT                "Asks for confirmation before eMule exits.\r\n\r\nRecommended on unattended systems to avoid accidental shutdowns."
     IDS_PPG_GENERAL_TT_LANGS               "Selects the UI language resource loaded by eMule.\r\n\r\nChanging language may require reopening dialogs before every label is refreshed."
     IDS_PPG_GENERAL_TT_NICK                "User name announced to other eMule clients.\r\n\r\nUse a non-sensitive nickname; it can be visible to peers."
-    IDS_PPG_GENERAL_TT_SPLASHON            "Shows the splash screen during startup.\r\n\r\nDisable it for a quieter startup path."
     IDS_PPG_IRC_TT_IRC_NICK_BOX            "Nickname used when connecting to IRC.\r\n\r\nChoose a name accepted by the target IRC network."
     IDS_PPG_IRC_TT_IRC_PERFORM_BOX         "Commands run automatically after IRC connects when perform is enabled.\r\n\r\nUse one-line IRC commands only if you trust and understand them."
     IDS_PPG_IRC_TT_IRC_SERVER_BOX          "IRC server address used by the built-in IRC client.\r\n\r\nChange it only when you intentionally use another IRC network."

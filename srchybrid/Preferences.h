@@ -49,6 +49,13 @@ enum ENotifierDisplayMode
 	ntfdmTrayBalloon
 };
 
+enum ELifecycleProgressDialogMode
+{
+	LPDM_OFF = 0,
+	LPDM_WHEN_VISIBLE = 1,
+	LPDM_ALWAYS = 2
+};
+
 enum TLSmode: byte
 {
 	MODE_NONE,
@@ -239,7 +246,8 @@ public:
 	static bool		m_bHasCustomTaskIconColor;
 	static bool		m_bIconflashOnNewMessage;
 
-	static bool		splashscreen;
+	static int		m_iStartupProgressDialogMode;
+	static int		m_iShutdownProgressDialogMode;
 	static bool		filterLANIPs;
 	static bool		m_bAllocLocalHostIP;
 	static bool		onlineSig;
@@ -1081,7 +1089,12 @@ public:
 	static bool		IsErrorBeepEnabled()				{ return beepOnError; }
 	static bool		IsConfirmExitEnabled()				{ return confirmExit; }
 	static void		SetConfirmExit(bool bVal)			{ confirmExit = bVal; }
-	static bool		UseSplashScreen()					{ return splashscreen; }
+	static int		NormalizeLifecycleProgressDialogMode(int iMode);
+	static int		GetDefaultLifecycleProgressDialogMode() { return LPDM_ALWAYS; }
+	static int		GetStartupProgressDialogMode()		{ return m_iStartupProgressDialogMode; }
+	static void		SetStartupProgressDialogMode(int iMode) { m_iStartupProgressDialogMode = NormalizeLifecycleProgressDialogMode(iMode); }
+	static int		GetShutdownProgressDialogMode()		{ return m_iShutdownProgressDialogMode; }
+	static void		SetShutdownProgressDialogMode(int iMode) { m_iShutdownProgressDialogMode = NormalizeLifecycleProgressDialogMode(iMode); }
 	static bool		FilterLANIPs()						{ return filterLANIPs; }
 	static bool		GetAllowLocalHostIP()				{ return m_bAllocLocalHostIP; }
 	static bool		IsOnlineSignatureEnabled()			{ return onlineSig; }

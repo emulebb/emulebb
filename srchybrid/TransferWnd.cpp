@@ -314,7 +314,7 @@ void CTransferWnd::OnSplitterMoved(LPNMHDR pNMHDR, LRESULT* /*pResult*/)
 
 BOOL CTransferWnd::PreTranslateMessage(MSG *pMsg)
 {
-	if (theApp.emuledlg->m_pSplashWnd)
+	if (theApp.emuledlg->IsTransientDialogActive())
 		return FALSE;
 	switch (pMsg->message) {
 	case WM_MOUSEMOVE:

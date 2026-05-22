@@ -26,5 +26,5 @@ protected:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 private:
-	CBitmap m_imgSplash;
+	CBitmap m_imgAbout;
 };

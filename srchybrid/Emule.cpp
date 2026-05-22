@@ -88,6 +88,7 @@
 #include "WorkerUiMessageSeams.h"
 #include "WebServerCertificate.h"
 #include "MediaInfo.h"
+#include "LifecycleProgressDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -770,8 +771,8 @@ SStartupTraceDescriptor DescribeStartupTracePhase(LPCTSTR pszPhase)
 		descriptor.strCategory = _T("ui.statistics");
 	} else if (StartsWithNoCase(strNormalized, _T("CemuleDlg::OnInitDialog "))) {
 		descriptor.strCategory = _T("ui.init");
-	} else if (StartsWithNoCase(strNormalized, _T("CemuleDlg::ShowSplash")) || StartsWithNoCase(strNormalized, _T("CemuleDlg::DestroySplash"))) {
-		descriptor.strCategory = _T("ui.splash");
+	} else if (StartsWithNoCase(strNormalized, _T("CemuleDlg::ShowStartupProgress")) || StartsWithNoCase(strNormalized, _T("CemuleDlg::DestroyStartupProgress"))) {
+		descriptor.strCategory = _T("ui.startup_progress");
 	} else if (StartsWithNoCase(strNormalized, _T("CemuleDlg::OnKickIdle "))) {
 		descriptor.strCategory = _T("startup.idle");
 	} else if (StartsWithNoCase(strNormalized, _T("BuildSharedDirectoryTree "))) {
@@ -1129,6 +1130,7 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	, m_bStartupBindBlocked()
 	, m_bStartupComplete()
 	, m_bStartupErrorLogOpened()
+	, m_pEarlyStartupProgressDlg()
 	, m_bStandbyOff()
 #if EMULE_COMPILED_STARTUP_PROFILING
 	, m_bStartupProfilingEnabled(::GetEnvironmentVariable(_T("EMULE_STARTUP_PROFILE"), NULL, 0) > 0)
@@ -1502,29 +1504,37 @@ BOOL CemuleApp::InitInstance()
 	UpdateDesktopColorDepth();
 
 	CWinApp::InitInstance();
+	AfxEnableControlContainer();
+	ShowEarlyStartupProgress();
+	UpdateEarlyStartupProgress(3, IDS_STARTUP_PROGRESS_STARTING, IDS_STARTUP_PROGRESS_PREPARING);
 
 	if (!InitWinsock2(&m_wsaData) && !AfxSocketInit(&m_wsaData)) {
+		DestroyEarlyStartupProgress();
 		LocMessageBox(IDS_SOCKETS_INIT_FAILED, MB_OK, 0);
 		return FALSE;
 	}
 
 	atexit(__AfxSocketTerm);
 
-	AfxEnableControlContainer();
 	if (!AfxInitRichEdit5())
 		AfxMessageBox(GetResString(IDS_FATAL_NO_RICHEDIT)); // should never happen.
 
 	if (!Kademlia::CKademlia::InitUnicode(AfxGetInstanceHandle())) {
+		DestroyEarlyStartupProgress();
 		AfxMessageBox(GetResString(IDS_FATAL_KAD_UNICODE_TABLES)); // should never happen.
 		return FALSE; // DO *NOT* START !!!
 	}
 
 	extern bool SelfTest();
-	if (!SelfTest())
+	if (!SelfTest()) {
+		DestroyEarlyStartupProgress();
 		return FALSE; // DO *NOT* START !!!
+	}
 
 	// create & initialize all the important stuff
+	UpdateEarlyStartupProgress(6, IDS_STARTUP_PROGRESS_STARTING, IDS_STARTUP_PROGRESS_PREPARING);
 	thePrefs.Init();
+	UpdateEarlyStartupProgress(10, IDS_STARTUP_PROGRESS_STARTING_SERVICES, IDS_STARTUP_PROGRESS_QUEUING_STAGES);
 	RefreshStartupBindBlockState();
 	theStats.Init();
 
@@ -1757,6 +1767,7 @@ BOOL CemuleApp::InitInstance()
 int CemuleApp::ExitInstance()
 {
 	AddDebugLogLine(DLP_VERYLOW, _T("%hs"), __FUNCTION__);
+	DestroyEarlyStartupProgress();
 	ReleaseStandbyPrevention();
 	StopSharedDirectoryMonitor();
 
@@ -2248,6 +2259,66 @@ int eMuleAllocHook(int mode, void *pUserData, size_t nSize, int nBlockUse, long 
 	return g_pfnPrevCrtAllocHook(mode, pUserData, nSize, nBlockUse, lRequest, pszFileName, nLine);
 }
 #endif
+
+void CemuleApp::ShowEarlyStartupProgress()
+{
+	if (m_pEarlyStartupProgressDlg != NULL)
+		return;
+
+	const int iMode = CPreferences::NormalizeLifecycleProgressDialogMode(::GetPrivateProfileInt(
+		_T("eMule"),
+		_T("StartupProgressDialog"),
+		CPreferences::GetDefaultLifecycleProgressDialogMode(),
+		m_pszProfileName));
+	if (iMode == LPDM_OFF)
+		return;
+
+	if (iMode == LPDM_WHEN_VISIBLE) {
+		const bool bStartMinimized = ::GetPrivateProfileInt(_T("eMule"), _T("StartupMinimized"), 0, m_pszProfileName) != 0;
+		if (bStartMinimized || DidWeAutoStart())
+			return;
+	}
+
+	CLifecycleProgressDlg *pDialog = NULL;
+	try {
+		pDialog = new CLifecycleProgressDlg(IDS_STARTING_EMULE, IDS_EMULE_IS_STARTING);
+	} catch (...) {
+		return;
+	}
+	if (pDialog->Create(IDD_SHUTDOWNPROGRESS, NULL)) {
+		m_pEarlyStartupProgressDlg = pDialog;
+		pDialog->CenterWindow();
+		pDialog->ShowWindow(SW_SHOW);
+		pDialog->SetPhase(1, GetResString(IDS_STARTUP_PROGRESS_STARTING), GetResString(IDS_STARTUP_PROGRESS_PREPARING), false);
+		PumpLifecycleProgressMessages(pDialog);
+#if EMULE_COMPILED_STARTUP_PROFILING
+		AppendStartupProfileLine(_T("CemuleApp::ShowEarlyStartupProgress"), 0);
+#endif
+	} else
+		delete pDialog;
+}
+
+void CemuleApp::UpdateEarlyStartupProgress(UINT uPercent, UINT uStepStringId, UINT uDetailStringId, bool bMarquee)
+{
+	if (m_pEarlyStartupProgressDlg == NULL)
+		return;
+
+	m_pEarlyStartupProgressDlg->SetPhase(uPercent, GetResString(uStepStringId), GetResString(uDetailStringId), bMarquee);
+	PumpLifecycleProgressMessages(m_pEarlyStartupProgressDlg);
+}
+
+void CemuleApp::DestroyEarlyStartupProgress()
+{
+	if (m_pEarlyStartupProgressDlg != NULL) {
+		if (m_pEarlyStartupProgressDlg->GetSafeHwnd() != NULL)
+			m_pEarlyStartupProgressDlg->DestroyWindow();
+		delete m_pEarlyStartupProgressDlg;
+		m_pEarlyStartupProgressDlg = NULL;
+#if EMULE_COMPILED_STARTUP_PROFILING
+		AppendStartupProfileLine(_T("CemuleApp::DestroyEarlyStartupProgress"), 0);
+#endif
+	}
+}
 
 bool CemuleApp::ProcessCommandline(const AppCommandLineSeams::SParseResult &rCommandLine)
 {

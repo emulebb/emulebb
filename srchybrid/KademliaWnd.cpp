@@ -222,7 +222,7 @@ void CKademliaWnd::DoDataExchange(CDataExchange *pDX)
 
 BOOL CKademliaWnd::PreTranslateMessage(MSG *pMsg)
 {
-	if (theApp.emuledlg->m_pSplashWnd)
+	if (theApp.emuledlg->IsTransientDialogActive())
 		return FALSE;
 	if (m_btnsetsize) {
 		m_btnsetsize = false;

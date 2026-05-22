@@ -60,6 +60,7 @@ class CUploadDiskIOThread;
 class CPartFileWriteThread;
 class CGeoLocation;
 class CIPFilterUpdater;
+class CLifecycleProgressDlg;
 
 struct SLogItem;
 
@@ -225,6 +226,18 @@ public:
 	 * @brief Logs startup diagnostics for profile, temp, and incoming directories on risky storage.
 	 */
 	void WarnAboutStartupStoragePlacement();
+	/**
+	 * @brief Shows the pre-main-window startup progress dialog when the tweak setting allows it.
+	 */
+	void ShowEarlyStartupProgress();
+	/**
+	 * @brief Updates the pre-main-window startup progress dialog if it is visible.
+	 */
+	void UpdateEarlyStartupProgress(UINT uPercent, UINT uStepStringId, UINT uDetailStringId, bool bMarquee = false);
+	/**
+	 * @brief Closes the pre-main-window startup progress dialog.
+	 */
+	void DestroyEarlyStartupProgress();
 
 	UploadBandwidthThrottler *uploadBandwidthThrottler;
 	CemuleDlg			*emuledlg;
@@ -405,6 +418,7 @@ protected:
 	bool		m_bStartupBindBlocked;
 	bool		m_bStartupComplete;
 	bool		m_bStartupErrorLogOpened;
+	CLifecycleProgressDlg *m_pEarlyStartupProgressDlg;
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnHelp();

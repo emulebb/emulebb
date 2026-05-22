@@ -522,7 +522,7 @@ void CSharedFilesWnd::OnNmClickSharedFiles(LPNMHDR pNMHDR, LRESULT *pResult)
 
 BOOL CSharedFilesWnd::PreTranslateMessage(MSG *pMsg)
 {
-	if (theApp.emuledlg->m_pSplashWnd)
+	if (theApp.emuledlg->IsTransientDialogActive())
 		return FALSE;
 	if (m_bReloadToolTipCreated)
 		m_reloadToolTip.RelayEvent(pMsg);

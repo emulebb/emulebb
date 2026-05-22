@@ -475,7 +475,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_PW_SPLASH           "Logo beim Start anzeigen"
     IDS_PW_DBLCLICK         "Doppelklick öffnet Download"
     IDS_PW_TOOL             "Tooltip Verzögerung (Sekunden)"
     IDS_PW_FRONT            "In den Vordergrund beim Linkklick"
@@ -2663,7 +2662,6 @@ BEGIN
     IDS_PPG_GENERAL_TT_EXIT                                    "Fordert eine Bestätigung an, bevor eMule beendet wird.\r\n\r\nEmpfohlen auf unbeaufsichtigten Systemen, um versehentliches Herunterfahren zu vermeiden."
     IDS_PPG_GENERAL_TT_LANGS                                   "Wählt die UI-Sprachressource aus, die von eMule.\r\n\r\ngeladen wird. Beim Ändern der Sprache müssen möglicherweise Dialoge erneut geöffnet werden, bevor jede Beschriftung aktualisiert wird."
     IDS_PPG_GENERAL_TT_NICK                                    "Benutzername, der anderen eMule-Clients bekannt gegeben wird.\r\n\r\nVerwenden Sie einen nicht vertraulichen Spitznamen. es kann für Gleichaltrige sichtbar sein."
-    IDS_PPG_GENERAL_TT_SPLASHON                                "Zeigt den Begrüßungsbildschirm während des Startvorgangs an.\r\n\r\nDeaktivieren Sie ihn für einen ruhigeren Startpfad."
     IDS_PPG_IRC_TT_IRC_NICK_BOX                                "Spitzname, der beim Herstellen einer Verbindung mit IRC verwendet wird.\r\n\r\nWählen Sie einen Namen, der vom IRC-Zielnetzwerk akzeptiert wird."
     IDS_PPG_IRC_TT_IRC_PERFORM_BOX                             "Befehle werden automatisch ausgeführt, nachdem IRC eine Verbindung hergestellt hat, wenn „Perform“ aktiviert ist.\r\n\r\nVerwenden Sie einzeilige IRC-Befehle nur, wenn Sie ihnen vertrauen und sie verstehen."
     IDS_PPG_IRC_TT_IRC_SERVER_BOX                              "IRC-Serveradresse, die vom integrierten IRC-Client verwendet wird.\r\n\r\nÄndern Sie diese Adresse nur, wenn Sie absichtlich ein anderes IRC-Netzwerk verwenden."
@@ -2731,6 +2729,31 @@ BEGIN
     IDS_ALLOW_PEER_PREVIEW                                     "Peer-Vorschau erlauben"
     IDS_ALLOW_PEER_PREVIEW_INVALID                             "Wählen Sie eine vorhandene ausführbare FFmpeg-Datei aus, bevor Sie die Peer-Vorschau erlauben."
     IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                        "Erlaubt anderen eMule-Clients, Vorschaubilder für freigegebene Videodateien anzufordern.\r\n\r\neMule verwendet FFmpeg zum Erzeugen einzelner Standbilder und sendet nur diese Vorschaubilder, nicht das gesamte Video. Freigegebene Dateien müssen außerdem für Peers sichtbar sein."
+    IDS_STARTING_EMULE                                         "Starten von eMule"
+    IDS_EMULE_IS_STARTING                                      "eMule startet..."
+    IDS_EMULE_IS_SHUTTING_DOWN                                 "eMule wird heruntergefahren..."
+    IDS_STARTUP_PROGRESS_STARTING                              "Starten von eMule"
+    IDS_STARTUP_PROGRESS_PREPARING                             "Inbetriebnahme vorbereiten."
+    IDS_STARTUP_PROGRESS_CREATING_UI                           "Hauptfenster erstellen"
+    IDS_STARTUP_PROGRESS_CREATING_PAGES                        "Hauptfensterseiten erstellen."
+    IDS_STARTUP_PROGRESS_RESTORING_UI                          "Gespeichertes Fensterlayout wiederherstellen."
+    IDS_STARTUP_PROGRESS_STARTING_SERVICES                     "Startdienste"
+    IDS_STARTUP_PROGRESS_QUEUING_STAGES                        "Startphasen in Warteschlange stellen."
+    IDS_STARTUP_PROGRESS_LOADING_FILES                         "Geteilte Dateien werden geladen"
+    IDS_STARTUP_PROGRESS_ATTACHING_SHARED_FILES                "Liste der freigegebenen Dateien wird vorbereitet."
+    IDS_STARTUP_PROGRESS_LOADING_SERVERS                       "Server werden geladen"
+    IDS_STARTUP_PROGRESS_LOADING_SERVER_LIST                   "Serverliste wird geladen."
+    IDS_STARTUP_PROGRESS_STARTING_NETWORK                      "Netzwerk starten"
+    IDS_STARTUP_PROGRESS_LOADING_DOWNLOADS                     "Downloads laden und Netzwerk-Sockets öffnen."
+    IDS_STARTUP_PROGRESS_LOADING_SEARCHES                      "Suchanfragen werden geladen"
+    IDS_STARTUP_PROGRESS_LOADING_STORED_SEARCHES               "Gespeicherte Suchen werden geladen."
+    IDS_STARTUP_PROGRESS_FINISHING                             "Der Startvorgang wird abgeschlossen"
+    IDS_STARTUP_PROGRESS_STARTING_BACKGROUND_WORK              "Start der Arbeit mit gemeinsam genutzten Dateien im Hintergrund."
+    IDS_TWEAKS_STARTUP_PROGRESS_DIALOG                         "Dialog zum Startfortschritt"
+    IDS_TWEAKS_SHUTDOWN_PROGRESS_DIALOG                        "Dialog zum Fortschritt des Herunterfahrens"
+    IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                           "Wenn eMule sichtbar ist"
+    IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                      "Steuert, wann eMule ein Startup-Fortschrittsdialogfeld anzeigt. UVerwenden Sie „Immer“, um es auch für minimierte oder Tray-Startpfade anzuzeigen."
+    IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                     "Steuert, wann eMule einen Dialog zum Fortschritt des Herunterfahrens anzeigt. Verwenden Sie „Immer“, um ihn anzuzeigen, auch wenn eMule in der Taskleiste ausgeblendet ist."
 END
 // eMule BB managed translation block: end
 

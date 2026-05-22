@@ -214,6 +214,7 @@
     <ClCompile Include="GeoLocation.cpp" />
     <ClCompile Include="GradientStatic.cpp" />
     <ClCompile Include="GZipFile.cpp" />
+    <ClCompile Include="LifecycleProgressDlg.cpp" />
     <ClCompile Include="HTRichEditCtrl.cpp" />
     <ClCompile Include="HttpDownloadLog.cpp" />
     <ClCompile Include="HttpTransfer.cpp" />
@@ -349,7 +350,6 @@
     <ClCompile Include="SharedFilesWnd.cpp" />
     <ClCompile Include="SmileySelector.cpp" />
     <ClCompile Include="SMTPdialog.cpp" />
-    <ClCompile Include="SplashScreen.cpp" />
     <ClCompile Include="SplitterControl.cpp" />
     <ClCompile Include="StatisticFile.cpp" />
     <ClCompile Include="Statistics.cpp" />
@@ -518,6 +518,7 @@
     <ClInclude Include="GeoLocation.h" />
     <ClInclude Include="GradientStatic.h" />
     <ClInclude Include="GZipFile.h" />
+    <ClInclude Include="LifecycleProgressDlg.h" />
     <ClInclude Include="HelpIDs.h" />
     <ClInclude Include="HighColorTab.hpp" />
     <ClInclude Include="HTRichEditCtrl.h" />
@@ -677,7 +678,6 @@
     <ClInclude Include="SpeedQuickActionsSeams.h" />
     <ClInclude Include="SmileySelector.h" />
     <ClInclude Include="SMTPdialog.h" />
-    <ClInclude Include="SplashScreen.h" />
     <ClInclude Include="SplitterControl.h" />
     <ClInclude Include="StatisticFile.h" />
     <ClInclude Include="Statistics.h" />

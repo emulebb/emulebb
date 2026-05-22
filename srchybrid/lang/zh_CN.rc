@@ -538,7 +538,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_PW_SPLASH           "显示欢迎窗口"
     IDS_PW_DBLCLICK         "双击展开下载列表"
     IDS_PW_TOOL             "友好提示延时(秒)"
     IDS_PW_FRONT            "点击链接时切换到前台"
@@ -2131,6 +2130,31 @@ BEGIN
     IDS_ALLOW_PEER_PREVIEW                                  "允许对等方预览"
     IDS_ALLOW_PEER_PREVIEW_INVALID                          "允许对等方预览前，请先选择一个现有的 FFmpeg 可执行文件。"
     IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "允许其他 eMule 客户端请求共享视频文件的预览帧。\r\n\r\neMule 使用 FFmpeg 渲染静态帧，并且只发送这些预览图像，而不是整个视频。共享文件也必须对对等方可见。"
+    IDS_STARTING_EMULE                                      "起始 eMule"
+    IDS_EMULE_IS_STARTING                                   "eMule 正在启动..."
+    IDS_EMULE_IS_SHUTTING_DOWN                              "eMule 正在关闭..."
+    IDS_STARTUP_PROGRESS_STARTING                           "起始 eMule"
+    IDS_STARTUP_PROGRESS_PREPARING                          "准备启动。"
+    IDS_STARTUP_PROGRESS_CREATING_UI                        "创建主窗口"
+    IDS_STARTUP_PROGRESS_CREATING_PAGES                     "创建主窗口页面。"
+    IDS_STARTUP_PROGRESS_RESTORING_UI                       "恢复保存的窗口布局。"
+    IDS_STARTUP_PROGRESS_STARTING_SERVICES                  "启动服务"
+    IDS_STARTUP_PROGRESS_QUEUING_STAGES                     "排队启动阶段。"
+    IDS_STARTUP_PROGRESS_LOADING_FILES                      "加载共享文件"
+    IDS_STARTUP_PROGRESS_ATTACHING_SHARED_FILES             "准备共享文件列表。"
+    IDS_STARTUP_PROGRESS_LOADING_SERVERS                    "加载服务器"
+    IDS_STARTUP_PROGRESS_LOADING_SERVER_LIST                "正在加载服务器列表。"
+    IDS_STARTUP_PROGRESS_STARTING_NETWORK                   "启动网络"
+    IDS_STARTUP_PROGRESS_LOADING_DOWNLOADS                  "加载下载并打开网络套接字。"
+    IDS_STARTUP_PROGRESS_LOADING_SEARCHES                   "加载搜索"
+    IDS_STARTUP_PROGRESS_LOADING_STORED_SEARCHES            "加载存储的搜索。"
+    IDS_STARTUP_PROGRESS_FINISHING                          "完成启动"
+    IDS_STARTUP_PROGRESS_STARTING_BACKGROUND_WORK           "开始后台共享文件工作。"
+    IDS_TWEAKS_STARTUP_PROGRESS_DIALOG                      "启动进度对话框"
+    IDS_TWEAKS_SHUTDOWN_PROGRESS_DIALOG                     "关闭进度对话框"
+    IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "当 eMule 可见时"
+    IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "控制 eMule 何时显示启动进度对话框。 使用始终显示它，即使对于最小化或托盘启动路径也是如此。"
+    IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "控制 eMule 何时显示关机进度对话框。 使用 始终显示它，即使 eMule 隐藏在托盘中也是如此。"
 END
 // eMule BB managed translation block: end
 

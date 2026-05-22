@@ -188,7 +188,7 @@ void CSearchResultsWnd::OnInitialUpdate()
 
 BOOL CSearchResultsWnd::PreTranslateMessage(MSG *pMsg)
 {
-	if (theApp.emuledlg->m_pSplashWnd)
+	if (theApp.emuledlg->IsTransientDialogActive())
 		return FALSE;
 	if (AppKeyboardShortcutsSeams::ClassifySearchKeyMessage(
 			pMsg->message,

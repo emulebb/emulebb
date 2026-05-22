@@ -536,7 +536,6 @@ BEGIN
 
 STRINGTABLE
 BEGIN
-   IDS_PW_SPLASH           "Näytä aloituskuva"
     IDS_PW_DBLCLICK         "Näytä latauksen lähteet  tuplanapsautuksella"
     IDS_PW_TOOL             "Pikkuvihjeiden viive (s)"
     IDS_PW_FRONT            "Tule päällimmäiseksi linkistä"
@@ -2126,6 +2125,31 @@ BEGIN
     IDS_ALLOW_PEER_PREVIEW                                  "Salli vertais-esikatselu"
     IDS_ALLOW_PEER_PREVIEW_INVALID                          "Valitse olemassa oleva FFmpeg-suoritustiedosto ennen vertais-esikatselun sallimista."
     IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "Sallii muiden eMule-asiakkaiden pyytää esikatselukuvia jaetuista videotiedostoista.\r\n\r\neMule käyttää FFmpeg-ohjelmaa pysäytyskuvien luomiseen ja lähettää vain nämä esikatselukuvat, ei koko videota. Jaettujen tiedostojen on myös oltava näkyvissä vertaisille."
+    IDS_STARTING_EMULE                                      "eMule käynnistyy"
+    IDS_EMULE_IS_STARTING                                   "eMule alkaa..."
+    IDS_EMULE_IS_SHUTTING_DOWN                              "eMule sammuu..."
+    IDS_STARTUP_PROGRESS_STARTING                           "eMule käynnistyy"
+    IDS_STARTUP_PROGRESS_PREPARING                          "Valmistelee käynnistystä."
+    IDS_STARTUP_PROGRESS_CREATING_UI                        "Pääikkunan luominen"
+    IDS_STARTUP_PROGRESS_CREATING_PAGES                     "Pääikkunan sivujen luominen."
+    IDS_STARTUP_PROGRESS_RESTORING_UI                       "Palautetaan tallennettu ikkunaasettelu."
+    IDS_STARTUP_PROGRESS_STARTING_SERVICES                  "Palvelujen aloittaminen"
+    IDS_STARTUP_PROGRESS_QUEUING_STAGES                     "Aloitusvaiheiden jonottaminen."
+    IDS_STARTUP_PROGRESS_LOADING_FILES                      "Ladataan jaettuja tiedostoja"
+    IDS_STARTUP_PROGRESS_ATTACHING_SHARED_FILES             "Valmistellaan jaettua tiedostoluetteloa."
+    IDS_STARTUP_PROGRESS_LOADING_SERVERS                    "Ladataan palvelimia"
+    IDS_STARTUP_PROGRESS_LOADING_SERVER_LIST                "Ladataan palvelinluetteloa."
+    IDS_STARTUP_PROGRESS_STARTING_NETWORK                   "Aloitetaan verkko"
+    IDS_STARTUP_PROGRESS_LOADING_DOWNLOADS                  "Ladataan latauksia ja avataan verkkopistokkeita."
+    IDS_STARTUP_PROGRESS_LOADING_SEARCHES                   "Ladataan hakuja"
+    IDS_STARTUP_PROGRESS_LOADING_STORED_SEARCHES            "Ladataan tallennettuja hakuja."
+    IDS_STARTUP_PROGRESS_FINISHING                          "Käynnistyksen viimeistely"
+    IDS_STARTUP_PROGRESS_STARTING_BACKGROUND_WORK           "Aloitetaan jaetun tiedoston taustatyö."
+    IDS_TWEAKS_STARTUP_PROGRESS_DIALOG                      "Käynnistyksen edistymisen valintaikkuna"
+    IDS_TWEAKS_SHUTDOWN_PROGRESS_DIALOG                     "Sammutuksen edistymisikkuna"
+    IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "Kun eMule näkyy"
+    IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "Ohjaa, milloin eMule näyttää käynnistyksen edistymisen valintaikkunan. UAina näyttääksesi sen myös minimoiduissa tai alustan käynnistyspoluissa."
+    IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Ohjaa, milloin eMule näyttää sammutuksen edistymisikkunan. UAina näyttääksesi sen, vaikka eMule olisi piilotettu lokeroon."
 END
 // eMule BB managed translation block: end
 

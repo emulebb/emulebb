@@ -42,7 +42,6 @@ class CPreferencesDlg;
 class CSearchDlg;
 class CServerWnd;
 class CSharedFilesWnd;
-class CSplashScreen;
 class CStatisticsDlg;
 class CTransferDlg;
 struct Status;
@@ -89,6 +88,7 @@ public:
 	void ShowTransferRate(bool bForceAll = false);
 	void UpdateTrayVisibility();
 	void Localize();
+	bool IsTransientDialogActive() const		{ return m_bTransientDialogActive; }
 	/**
 	 * @brief Clears the modeless MiniMule pointer after the popup destroys itself.
 	 */
@@ -178,7 +178,7 @@ public:
 	CIrcWnd			*ircwnd;
 	CMuleToolbarCtrl *toolbar;
 	CKademliaWnd	*kademliawnd;
-	CSplashScreen	*m_pSplashWnd;
+	CDialog			*m_pStartupProgressDlg;
 	CWnd			*activewnd;
 	uint8			status;
 
@@ -214,6 +214,7 @@ protected:
 	bool			m_bKadSuspendDisconnect;
 	bool			m_bEd2kSuspendDisconnect;
 	bool			m_bTrayBalloonFallbackForSession;
+	bool			m_bTransientDialogActive;
 	bool			m_bInitedCOM;
 	bool			m_bBindLossMonitorActive;
 	bool			m_bBindLossShutdown;
@@ -229,10 +230,11 @@ protected:
 	HICON			m_ovlIcon;
 #endif
 
-	// Splash screen
-	ULONGLONG m_dwSplashTime;
-	void ShowSplash();
-	void DestroySplash();
+	// Lifecycle progress
+	void ShowStartupProgress();
+	void UpdateStartupProgress(UINT uPercent, UINT uStepStringId, UINT uDetailStringId, bool bMarquee = false);
+	void DestroyStartupProgress();
+	bool ShouldShowLifecycleProgressDialog(int iMode, bool bStartup) const;
 	void DestroyMiniMule();
 
 	CMap<UINT, UINT, LPCTSTR, LPCTSTR> m_mapTbarCmdToIcon;

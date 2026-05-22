@@ -536,7 +536,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_PW_SPLASH           "آرم برنامه را در شروع آن نمايش بده"
     IDS_PW_DBLCLICK         "اگر بر روي ليست دانلود دوبار كليك كردم آن را باز كن"
     IDS_PW_TOOL             "شروع نمايش متن کمکي به ثانيه"
     IDS_PW_FRONT            "با کليک بر روي لينک ايدانکي برنامه خودكار بروي صفحه بيايد"
@@ -2122,6 +2121,31 @@ BEGIN
     IDS_ALLOW_PEER_PREVIEW                                  "اجازهٔ پیش‌نمایش همتا"
     IDS_ALLOW_PEER_PREVIEW_INVALID                          "پیش از اجازه دادن به پیش‌نمایش همتا، یک فایل اجرایی موجود FFmpeg را انتخاب کنید."
     IDS_PPG_FILES_TT_ALLOW_PEER_PREVIEW                     "به دیگر کلاینت‌های eMule اجازه می‌دهد برای فایل‌های ویدئویی اشتراکی، فریم‌های پیش‌نمایش درخواست کنند.\r\n\r\neMule از FFmpeg برای ساخت فریم‌های ثابت استفاده می‌کند و فقط همان تصاویر پیش‌نمایش را می‌فرستد، نه کل ویدئو را. فایل‌های اشتراکی نیز باید برای همتاها قابل مشاهده باشند."
+    IDS_STARTING_EMULE                                      "شروع eMule"
+    IDS_EMULE_IS_STARTING                                   "eMule شروع می شود..."
+    IDS_EMULE_IS_SHUTTING_DOWN                              "eMule در حال خاموش شدن است..."
+    IDS_STARTUP_PROGRESS_STARTING                           "شروع eMule"
+    IDS_STARTUP_PROGRESS_PREPARING                          "در حال آماده سازی استارت آپ"
+    IDS_STARTUP_PROGRESS_CREATING_UI                        "ایجاد پنجره اصلی"
+    IDS_STARTUP_PROGRESS_CREATING_PAGES                     "ایجاد صفحات پنجره اصلی"
+    IDS_STARTUP_PROGRESS_RESTORING_UI                       "بازیابی طرح بندی پنجره ذخیره شده"
+    IDS_STARTUP_PROGRESS_STARTING_SERVICES                  "شروع خدمات"
+    IDS_STARTUP_PROGRESS_QUEUING_STAGES                     "مراحل راه اندازی صف."
+    IDS_STARTUP_PROGRESS_LOADING_FILES                      "در حال بارگیری فایل های مشترک"
+    IDS_STARTUP_PROGRESS_ATTACHING_SHARED_FILES             "در حال آماده سازی لیست فایل های مشترک"
+    IDS_STARTUP_PROGRESS_LOADING_SERVERS                    "در حال بارگذاری سرورها"
+    IDS_STARTUP_PROGRESS_LOADING_SERVER_LIST                "در حال بارگیری لیست سرور"
+    IDS_STARTUP_PROGRESS_STARTING_NETWORK                   "شروع شبکه"
+    IDS_STARTUP_PROGRESS_LOADING_DOWNLOADS                  "بارگیری دانلودها و باز کردن سوکت های شبکه."
+    IDS_STARTUP_PROGRESS_LOADING_SEARCHES                   "در حال بارگیری جستجوها"
+    IDS_STARTUP_PROGRESS_LOADING_STORED_SEARCHES            "بارگیری جستجوهای ذخیره شده"
+    IDS_STARTUP_PROGRESS_FINISHING                          "اتمام راه اندازی"
+    IDS_STARTUP_PROGRESS_STARTING_BACKGROUND_WORK           "شروع کار با فایل مشترک پس‌زمینه."
+    IDS_TWEAKS_STARTUP_PROGRESS_DIALOG                      "گفتگوی پیشرفت راه اندازی"
+    IDS_TWEAKS_SHUTDOWN_PROGRESS_DIALOG                     "گفتگوی پیشرفت خاموش کردن"
+    IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "وقتی eMule قابل مشاهده است"
+    IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "زمانی را کنترل می‌کند که eMule یک گفتگوی پیشرفت راه‌اندازی را نشان می‌دهد."
+    IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "زمانی را کنترل می‌کند که eMule یک گفتگوی پیشرفت خاموش شدن را نشان می‌دهد."
 END
 // eMule BB managed translation block: end
 

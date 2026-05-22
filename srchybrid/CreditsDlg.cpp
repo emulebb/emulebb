@@ -24,7 +24,7 @@ CCreditsDlg::CCreditsDlg(CWnd *pParent /*=NULL*/)
 
 CCreditsDlg::~CCreditsDlg()
 {
-	m_imgSplash.DeleteObject();
+	m_imgAbout.DeleteObject();
 }
 
 BEGIN_MESSAGE_MAP(CCreditsDlg, CDialog)
@@ -42,21 +42,21 @@ END_MESSAGE_MAP()
 BOOL CCreditsDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	VERIFY(m_imgSplash.Attach(theApp.LoadImage(_T("ABOUT"), _T("JPG"))));
+	VERIFY(m_imgAbout.Attach(theApp.LoadImage(_T("ABOUT"), _T("JPG"))));
 
 	return TRUE;
 }
 
 void CCreditsDlg::OnPaint()
 {
-	if (m_imgSplash.GetSafeHandle()) {
+	if (m_imgAbout.GetSafeHandle()) {
 		CDC dcMem;
 		CPaintDC dc(this); // device context for painting
 
 		if (dcMem.CreateCompatibleDC(&dc)) {
-			CBitmap *pOldBM = dcMem.SelectObject(&m_imgSplash);
+			CBitmap *pOldBM = dcMem.SelectObject(&m_imgAbout);
 			BITMAP BM;
-			m_imgSplash.GetBitmap(&BM);
+			m_imgAbout.GetBitmap(&BM);
 
 			WINDOWPLACEMENT wp;
 			GetWindowPlacement(&wp);

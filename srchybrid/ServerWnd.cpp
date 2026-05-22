@@ -626,7 +626,7 @@ CString CServerWnd::GetMyInfoString()
 
 BOOL CServerWnd::PreTranslateMessage(MSG *pMsg)
 {
-	if (theApp.emuledlg->m_pSplashWnd) //splash or about dialogs are active
+	if (theApp.emuledlg->IsTransientDialogActive())
 		return FALSE;
 	if (pMsg->message == WM_KEYDOWN) {
 		// Don't handle Ctrl+Tab in this window. It will be handled by the main window.

@@ -358,7 +358,7 @@ void CChatWnd::OnShowWindow(BOOL bShow, UINT /*nStatus*/)
 
 BOOL CChatWnd::PreTranslateMessage(MSG *pMsg)
 {
-	if (theApp.emuledlg->m_pSplashWnd)
+	if (theApp.emuledlg->IsTransientDialogActive())
 		return FALSE;
 	if (pMsg->message == WM_KEYDOWN) {
 		// Don't handle Ctrl+Tab in this window. It will be handled by main window.

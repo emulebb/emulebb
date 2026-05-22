@@ -65,7 +65,6 @@
 #include "SharedFileList.h"
 #include "SharedFileListSeams.h"
 #include "ED2KLink.h"
-#include "Splashscreen.h"
 #include "Exceptions.h"
 #include "FakeFileDetector.h"
 #include "BroadbandIoSeams.h"
@@ -131,6 +130,7 @@
 #include "WindowsFirewallRepair.h"
 #include "WindowsMaintenanceActions.h"
 #include "Win32CallbackTimerSeams.h"
+#include "LifecycleProgressDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1111,65 +1111,6 @@ namespace
 		return NULL;
 	}
 
-	class CShutdownProgressDlg : public CDialog
-	{
-	public:
-		explicit CShutdownProgressDlg(CWnd *pParent = NULL)
-			: CDialog(IDD_SHUTDOWNPROGRESS, pParent)
-			, m_ctrlProgress()
-		{
-		}
-
-		void SetPhase(UINT uPercent, const CString &strStep, const CString &strDetail, bool bMarquee)
-		{
-			if (GetSafeHwnd() == NULL)
-				return;
-
-			if (CWnd *pStep = GetDlgItem(IDC_SHUTDOWN_STEP))
-				pStep->SetWindowText(strStep);
-			if (CWnd *pDetail = GetDlgItem(IDC_SHUTDOWN_DETAIL))
-				pDetail->SetWindowText(strDetail);
-			if (bMarquee != IsMarqueeEnabled()) {
-				m_ctrlProgress.SetMarquee(bMarquee ? TRUE : FALSE, 40);
-				m_bMarqueeEnabled = bMarquee;
-			}
-			if (!bMarquee)
-				m_ctrlProgress.SetPos(static_cast<int>(uPercent > 100u ? 100u : uPercent));
-			UpdateWindow();
-		}
-
-	protected:
-		virtual BOOL OnInitDialog()
-		{
-			CDialog::OnInitDialog();
-			m_ctrlProgress.SubclassDlgItem(IDC_PROGRESS1, this);
-			m_ctrlProgress.SetRange32(0, 100);
-			m_ctrlProgress.SetPos(0);
-			SetWindowText(GetResString(IDS_SHUTTING_DOWN_EMULE));
-			return TRUE;
-		}
-
-	private:
-		bool IsMarqueeEnabled() const
-		{
-			return m_bMarqueeEnabled;
-		}
-
-		CProgressCtrl m_ctrlProgress;
-		bool m_bMarqueeEnabled = false;
-	};
-
-	void PumpShutdownProgressMessages(CShutdownProgressDlg &rDialog)
-	{
-		MSG msg = {};
-		while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-			if (rDialog.GetSafeHwnd() != NULL && rDialog.IsDialogMessage(&msg))
-				continue;
-			::TranslateMessage(&msg);
-			::DispatchMessage(&msg);
-		}
-	}
-
 	CString FormatStartupCacheShutdownDetail(const CSharedFileList::StartupCacheSaveProgress &progress)
 	{
 		CString strDetail;
@@ -1297,7 +1238,7 @@ END_MESSAGE_MAP()
 
 CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	: CTrayDialog(CemuleDlg::IDD, pParent)
-	, m_pSplashWnd()
+	, m_pStartupProgressDlg()
 	, activewnd()
 	, status()
 	, m_wpFirstRestore()
@@ -1325,6 +1266,7 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_bKadSuspendDisconnect()
 	, m_bEd2kSuspendDisconnect()
 	, m_bTrayBalloonFallbackForSession()
+	, m_bTransientDialogActive()
 	, m_bInitedCOM()
 	, m_bBindLossMonitorActive()
 	, m_bBindLossShutdown()
@@ -1335,7 +1277,6 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_currentTBP_state(TBPF_NOPROGRESS)
 	, m_prevProgress()
 	, m_ovlIcon()
-	, m_dwSplashTime(_UI32_MAX)
 	, m_hUPnPTimeOutTimer()
 	, notifierenabled()
 {
@@ -1381,6 +1322,7 @@ void CemuleDlg::SetClientIconList()
 
 CemuleDlg::~CemuleDlg()
 {
+	DestroyStartupProgress();
 	DestroyMiniMule();
 	CloseTTS();
 	if (m_icoSysTrayCurrent)
@@ -1460,9 +1402,8 @@ BOOL CemuleDlg::OnInitDialog()
 	if (!thePrefs.IsFirstStart())
 		m_bStartMinimized = thePrefs.GetStartMinimized() || theApp.DidWeAutoStart();
 
-	// show splash screen as early as possible to "entertain" user while starting emule up
-	if (thePrefs.UseSplashScreen() && !m_bStartMinimized)
-		ShowSplash();
+	// Show startup progress as early as possible while the main window is being prepared.
+	ShowStartupProgress();
 
 	// Create global GUI objects
 #if EMULE_COMPILED_STARTUP_PROFILING
@@ -1474,6 +1415,7 @@ BOOL CemuleDlg::OnInitDialog()
 	CTrayDialog::OnInitDialog();
 	InitWindowStyles(this);
 	CreateToolbarCmdIconMap();
+	UpdateStartupProgress(8, IDS_STARTUP_PROGRESS_STARTING, IDS_STARTUP_PROGRESS_CREATING_UI);
 #if EMULE_COMPILED_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("CemuleDlg::OnInitDialog base window/font init"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
 #endif
@@ -1526,6 +1468,7 @@ BOOL CemuleDlg::OnInitDialog()
 	// Init taskbar notifier
 	m_wndTaskbarNotifier.CreateWnd(this);
 	LoadNotifier(thePrefs.GetNotifierConfiguration());
+	UpdateStartupProgress(14, IDS_STARTUP_PROGRESS_STARTING, IDS_STARTUP_PROGRESS_CREATING_UI);
 
 	// set statusbar
 	// the statusbar control is created as a custom control in the dialog resource,
@@ -1536,6 +1479,7 @@ BOOL CemuleDlg::OnInitDialog()
 	ShowNetworkAddressState();
 
 	// create main window dialog pages
+	UpdateStartupProgress(20, IDS_STARTUP_PROGRESS_CREATING_UI, IDS_STARTUP_PROGRESS_CREATING_PAGES);
 #if EMULE_COMPILED_STARTUP_PROFILING
 	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 #endif
@@ -1627,6 +1571,7 @@ BOOL CemuleDlg::OnInitDialog()
 
 	SetAllIcons();
 	Localize();
+	UpdateStartupProgress(38, IDS_STARTUP_PROGRESS_CREATING_UI, IDS_STARTUP_PROGRESS_RESTORING_UI);
 
 	// set update interval of graphic rate display (in seconds)
 	//ShowConnectionState(false);
@@ -1729,6 +1674,7 @@ BOOL CemuleDlg::OnInitDialog()
 
 	if (thePrefs.GetWSIsEnabled())
 		theApp.webserver->StartServer();
+	UpdateStartupProgress(45, IDS_STARTUP_PROGRESS_STARTING_SERVICES, IDS_STARTUP_PROGRESS_QUEUING_STAGES);
 
 	VERIFY(PostMessage(UM_STARTUP_NEXT_STAGE) != 0);
 	if (thePrefs.GetVerbose())
@@ -1741,8 +1687,10 @@ BOOL CemuleDlg::OnInitDialog()
 	if (thePrefs.IsFirstStart() && !thePrefs.IsFirstTimeWizardDisabled()) {
 		// temporary disable the 'startup minimized' option, otherwise no window will be shown at all
 		m_bStartMinimized = false;
-		DestroySplash();
+		DestroyStartupProgress();
 		FirstTimeWizard();
+		ShowStartupProgress();
+		UpdateStartupProgress(45, IDS_STARTUP_PROGRESS_STARTING_SERVICES, IDS_STARTUP_PROGRESS_QUEUING_STAGES);
 	}
 
 	VERIFY(m_pDropTarget->Register(this));
@@ -1853,6 +1801,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 #endif
 		switch (status) {
 		case 0:
+			UpdateStartupProgress(50, IDS_STARTUP_PROGRESS_LOADING_FILES, IDS_STARTUP_PROGRESS_ATTACHING_SHARED_FILES);
 			status = 2;
 #if EMULE_COMPILED_STARTUP_PROFILING
 			theApp.sharedfiles->SetOutputCtrl(&sharedfileswnd->sharedfilesctrl);
@@ -1862,6 +1811,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 #endif
 			break;
 		case 2:
+			UpdateStartupProgress(62, IDS_STARTUP_PROGRESS_LOADING_SERVERS, IDS_STARTUP_PROGRESS_LOADING_SERVER_LIST);
 			status = 4;
 			{
 #if EMULE_COMPILED_STARTUP_PROFILING
@@ -1880,6 +1830,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 			break;
 		case 4:
 			{
+				UpdateStartupProgress(74, IDS_STARTUP_PROGRESS_STARTING_NETWORK, IDS_STARTUP_PROGRESS_LOADING_DOWNLOADS);
 				status = 5;
 				bool bError = false;
 #if EMULE_COMPILED_STARTUP_PROFILING
@@ -1943,6 +1894,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 			}
 			break;
 		case 5:
+			UpdateStartupProgress(88, IDS_STARTUP_PROGRESS_LOADING_SEARCHES, IDS_STARTUP_PROGRESS_LOADING_STORED_SEARCHES);
 			status = 6;
 			{
 #if EMULE_COMPILED_STARTUP_PROFILING
@@ -1956,6 +1908,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 			}
 			break;
 		default:
+			UpdateStartupProgress(96, IDS_STARTUP_PROGRESS_FINISHING, IDS_STARTUP_PROGRESS_STARTING_BACKGROUND_WORK);
 			serverwnd->serverlistctrl.Visible();
 			theApp.sharedfiles->StartDeferredHashing();
 			theApp.MarkStartupComplete();
@@ -1966,6 +1919,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 				sharedfileswnd->OnStartupProfileStartupComplete();
 #endif
 			StopTimer();
+			DestroyStartupProgress();
 			return;
 		}
 		VERIFY(PostMessage(UM_STARTUP_NEXT_STAGE) != 0);
@@ -2193,9 +2147,9 @@ void CemuleDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	case MP_ABOUTBOX:
 		{
 			CCreditsDlg dlgAbout;
-			m_pSplashWnd = (CSplashScreen*)&dlgAbout;
+			m_bTransientDialogActive = true;
 			dlgAbout.DoModal();
-			m_pSplashWnd = NULL;
+			m_bTransientDialogActive = m_pStartupProgressDlg != NULL;
 			break;
 		}
 	case MP_VERSIONCHECK:
@@ -3122,27 +3076,29 @@ void CemuleDlg::OnClose()
 	StopBindLossMonitor();
 	notifierenabled = false;
 	DestroyMiniMule();
+	DestroyStartupProgress();
 
-	CShutdownProgressDlg shutdownProgress(this);
-	if (shutdownProgress.Create(IDD_SHUTDOWNPROGRESS, this)) {
+	CLifecycleProgressDlg shutdownProgress(IDS_SHUTTING_DOWN_EMULE, IDS_EMULE_IS_SHUTTING_DOWN, this);
+	if (ShouldShowLifecycleProgressDialog(thePrefs.GetShutdownProgressDialogMode(), false) && shutdownProgress.Create(IDD_SHUTDOWNPROGRESS, this)) {
+		m_bTransientDialogActive = true;
 		shutdownProgress.CenterWindow();
 		shutdownProgress.ShowWindow(SW_SHOW);
 		shutdownProgress.SetPhase(2, _T("Closing eMule"), _T("Preparing shutdown."), false);
-		PumpShutdownProgressMessages(shutdownProgress);
+		PumpLifecycleProgressMessages(&shutdownProgress);
 	}
 
 	const auto updateShutdownPhase = [&shutdownProgress](UINT uPercent, LPCTSTR pszStep, LPCTSTR pszDetail, bool bMarquee = false) {
 		if (shutdownProgress.GetSafeHwnd() == NULL)
 			return;
 		shutdownProgress.SetPhase(uPercent, CString(pszStep), CString(pszDetail), bMarquee);
-		PumpShutdownProgressMessages(shutdownProgress);
+		PumpLifecycleProgressMessages(&shutdownProgress);
 	};
 
 	const auto sleepAndPumpSharedShutdownPoll = [&shutdownProgress](const SharedFileListSeams::SharedShutdownPollState &rState) {
 		const DWORD dwSleepMs = SharedFileListSeams::GetSharedShutdownPollSleepMs(rState);
 		if (dwSleepMs != 0)
 			::Sleep(dwSleepMs);
-		PumpShutdownProgressMessages(shutdownProgress);
+		PumpLifecycleProgressMessages(&shutdownProgress);
 	};
 
 	theApp.m_app_state = APP_STATE_SHUTTINGDOWN;
@@ -3392,8 +3348,10 @@ void CemuleDlg::OnClose()
 	delete theApp.m_pPartFileWriteThread;	theApp.m_pPartFileWriteThread = NULL;
 
 	updateShutdownPhase(100, _T("Closing eMule"), _T("Finalizing shutdown."));
-	if (shutdownProgress.GetSafeHwnd() != NULL)
+	if (shutdownProgress.GetSafeHwnd() != NULL) {
 		shutdownProgress.DestroyWindow();
+		m_bTransientDialogActive = false;
+	}
 	thePrefs.Uninit();
 	theApp.m_app_state = APP_STATE_DONE;
 	CTrayDialog::OnCancel();
@@ -4926,41 +4884,71 @@ void InitWindowStyles(CWnd *pWnd)
 	}
 }
 
-void CemuleDlg::ShowSplash()
+bool CemuleDlg::ShouldShowLifecycleProgressDialog(int iMode, bool bStartup) const
 {
-	ASSERT(m_pSplashWnd == NULL);
-	if (m_pSplashWnd == NULL) {
-		try {
-			m_pSplashWnd = new CSplashScreen;
-		} catch (...) {
-			return;
-		}
-		ASSERT(m_hWnd);
-		if (m_pSplashWnd->Create(CSplashScreen::IDD, this)) {
-			m_pSplashWnd->ShowWindow(SW_SHOW);
-			m_pSplashWnd->UpdateWindow();
-			m_dwSplashTime = ::GetTickCount64();
-#if EMULE_COMPILED_STARTUP_PROFILING
-			theApp.AppendStartupProfileLine(_T("CemuleDlg::ShowSplash"), 0);
-#endif
-		} else {
-			delete m_pSplashWnd;
-			m_pSplashWnd = NULL;
-		}
+	switch (CPreferences::NormalizeLifecycleProgressDialogMode(iMode)) {
+	case LPDM_ALWAYS:
+		return true;
+	case LPDM_WHEN_VISIBLE:
+		return bStartup ? !m_bStartMinimized : IsWindowVisible() != FALSE;
+	default:
+		return false;
 	}
 }
 
-void CemuleDlg::DestroySplash()
+void CemuleDlg::ShowStartupProgress()
 {
-	if (m_pSplashWnd != NULL) {
+	if (m_pStartupProgressDlg != NULL)
+		return;
+	if (!ShouldShowLifecycleProgressDialog(thePrefs.GetStartupProgressDialogMode(), true)) {
+		theApp.DestroyEarlyStartupProgress();
+		return;
+	}
+
+	theApp.DestroyEarlyStartupProgress();
+
+	CLifecycleProgressDlg *pDialog = NULL;
+	try {
+		pDialog = new CLifecycleProgressDlg(IDS_STARTING_EMULE, IDS_EMULE_IS_STARTING, this);
+	} catch (...) {
+		return;
+	}
+	if (pDialog->Create(IDD_SHUTDOWNPROGRESS, this)) {
+		m_pStartupProgressDlg = pDialog;
+		m_bTransientDialogActive = true;
+		pDialog->CenterWindow();
+		pDialog->ShowWindow(SW_SHOW);
+		pDialog->SetPhase(2, GetResString(IDS_STARTUP_PROGRESS_STARTING), GetResString(IDS_STARTUP_PROGRESS_PREPARING), false);
+		PumpLifecycleProgressMessages(pDialog);
+#if EMULE_COMPILED_STARTUP_PROFILING
+		theApp.AppendStartupProfileLine(_T("CemuleDlg::ShowStartupProgress"), 0);
+#endif
+	} else
+		delete pDialog;
+}
+
+void CemuleDlg::UpdateStartupProgress(UINT uPercent, UINT uStepStringId, UINT uDetailStringId, bool bMarquee)
+{
+	if (m_pStartupProgressDlg == NULL)
+		return;
+
+	static_cast<CLifecycleProgressDlg*>(m_pStartupProgressDlg)->SetPhase(uPercent, GetResString(uStepStringId), GetResString(uDetailStringId), bMarquee);
+	PumpLifecycleProgressMessages(m_pStartupProgressDlg);
+}
+
+void CemuleDlg::DestroyStartupProgress()
+{
+	if (m_pStartupProgressDlg != NULL) {
 #if EMULE_COMPILED_STARTUP_PROFILING
 		const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 #endif
-		m_pSplashWnd->EndDialog(IDOK); //deletes the dialog
-		delete m_pSplashWnd;
-		m_pSplashWnd = NULL;
+		if (m_pStartupProgressDlg->GetSafeHwnd() != NULL)
+			m_pStartupProgressDlg->DestroyWindow();
+		delete m_pStartupProgressDlg;
+		m_pStartupProgressDlg = NULL;
+		m_bTransientDialogActive = false;
 #if EMULE_COMPILED_STARTUP_PROFILING
-		theApp.AppendStartupProfileLine(_T("CemuleDlg::DestroySplash"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
+		theApp.AppendStartupProfileLine(_T("CemuleDlg::DestroyStartupProgress"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
 #endif
 	}
 }
@@ -5011,17 +4999,6 @@ LRESULT CemuleDlg::OnKickIdle(WPARAM, LPARAM lIdleCount)
 	const ULONGLONG ullPhaseStart = theApp.IsStartupProfilingEnabled() ? theApp.GetStartupProfileTimestampUs() : 0;
 	static bool s_bLoggedFirstKickIdle = false;
 #endif
-
-	if (m_pSplashWnd) {
-		if (::GetTickCount64() >= m_dwSplashTime + static_cast<ULONGLONG>(SEC2MS(2.5))) {
-			// timeout expired, destroy the splash window
-			DestroySplash();
-			UpdateWindow();
-		} else {
-			// check again later...
-			lResult = 1;
-		}
-	}
 
 	if (m_bStartMinimized)
 		PostStartupMinimized();
@@ -5152,24 +5129,6 @@ int CemuleDlg::GetNextWindowToolbarButton(int iButtonID, int iDirection) const
 BOOL CemuleDlg::PreTranslateMessage(MSG *pMsg)
 {
 	BOOL bResult = CTrayDialog::PreTranslateMessage(pMsg);
-
-	if (m_pSplashWnd && m_pSplashWnd->m_hWnd != NULL)
-		switch (pMsg->message) {
-		case WM_SYSCOMMAND:
-			if (pMsg->wParam != SC_CLOSE)
-				break;
-		case WM_KEYDOWN:
-		case WM_SYSKEYDOWN:
-		case WM_LBUTTONDOWN:
-		case WM_RBUTTONDOWN:
-		case WM_MBUTTONDOWN:
-		case WM_NCLBUTTONDOWN:
-		case WM_NCRBUTTONDOWN:
-		case WM_NCMBUTTONDOWN:
-			DestroySplash();
-			UpdateWindow();
-			return bResult;
-		}
 
 	// Handle Ctrl+Tab and Ctrl+Shift+Tab
 	if (pMsg->message == WM_KEYDOWN)
