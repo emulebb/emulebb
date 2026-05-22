@@ -288,10 +288,11 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules, const st
 
 	std::vector<std::wstring> uniqueNames;
 	std::vector<std::wstring> uniqueCanonicalNames;
+	const FilenameTokenizationSeams::CanonicalNameOptions trustNameOptions{ true, false };
 	for (const std::wstring &rName : rEvidence.names) {
 		AddUnique(uniqueNames, rName);
 		AddUnique(report.observedExtensions, GetExtension(rName));
-		const FilenameTokenizationSeams::CanonicalName canonicalName = FilenameTokenizationSeams::BuildCanonicalName(rName);
+		const FilenameTokenizationSeams::CanonicalName canonicalName = FilenameTokenizationSeams::BuildCanonicalName(rName, trustNameOptions);
 		for (const std::wstring &rIgnoredToken : canonicalName.ignoredTokens)
 			AddUnique(report.ignoredNameTokens, rIgnoredToken);
 		if (canonicalName.hasUsableBaseName && !canonicalName.canonical.empty()) {
