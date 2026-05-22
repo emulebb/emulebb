@@ -618,7 +618,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Zažádán neznámý soubor"
     IDS_SF_AVERAGESIZE      "Průměrná velikost souboru: %s"
     IDS_SF_REQUESTS         "Požadavky"
-    IDS_SF_LASTREQUEST         "Poslední požadavek"
+    IDS_SF_LASTREQUEST      "Poslední požadavek"
     IDS_SF_ACCEPTS          "Přijaté požadavky"
     IDS_SF_TRANSFERRED      "Přenesená data"
 END

@@ -579,7 +579,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "S'ha sol·licitat un fitxer desconegut "
     IDS_SF_AVERAGESIZE      "Mida mitjana dels fitxer: %s"
     IDS_SF_REQUESTS         "Peticions"
-    IDS_SF_LASTREQUEST         "Última petició"
+    IDS_SF_LASTREQUEST      "Última petició"
     IDS_SF_ACCEPTS          "Peticions acceptades"
     IDS_SF_TRANSFERRED      "Dades transferides"
 END

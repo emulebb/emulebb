@@ -644,7 +644,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Richiesto un file sconosciuto"
     IDS_SF_AVERAGESIZE      "Dimensione file media: %s"
     IDS_SF_REQUESTS         "Richieste"
-    IDS_SF_LASTREQUEST         "Ultima richiesta"
+    IDS_SF_LASTREQUEST      "Ultima richiesta"
     IDS_SF_ACCEPTS          "Richieste accettate"
     IDS_SF_TRANSFERRED      "Dati inviati"
     IDS_REMOVESEARCHSTRING  "Chiudi questa scheda"

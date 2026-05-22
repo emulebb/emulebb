@@ -579,7 +579,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Ismeretlen fájlt kért"
     IDS_SF_AVERAGESIZE      "Átlagos fájlméret: %s"
     IDS_SF_REQUESTS         "Kérések"
-    IDS_SF_LASTREQUEST         "Utolsó kérés"
+    IDS_SF_LASTREQUEST      "Utolsó kérés"
     IDS_SF_ACCEPTS          "Elfogadott kérések"
     IDS_SF_TRANSFERRED      "Átvitt adat"
 END

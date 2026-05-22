@@ -592,7 +592,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Bilinmeyen bir dosya istendi"
     IDS_SF_AVERAGESIZE      "Ortalama Dosya Boyutu: %s"
     IDS_SF_REQUESTS         "İstek"
-    IDS_SF_LASTREQUEST         "Son istek"
+    IDS_SF_LASTREQUEST      "Son istek"
     IDS_SF_ACCEPTS          "Kabul Edilmiş İstek"
     IDS_SF_TRANSFERRED      "Aktarılmış Veri"
 END

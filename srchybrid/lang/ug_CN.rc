@@ -643,7 +643,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "نامەلۇم ھۆججەت ئىلتىماس قىلىندى"
     IDS_SF_AVERAGESIZE      "ئوتتۇرىچە ھۆججەت چوڭلۇقى: %s"
     IDS_SF_REQUESTS         "ئىلتىماس سانى"
-    IDS_SF_LASTREQUEST         "ئاخىرقى ئىلتىماس"
+    IDS_SF_LASTREQUEST      "ئاخىرقى ئىلتىماس"
     IDS_SF_ACCEPTS          "قوبۇل قىلغان ئىلتىماس سانى"
     IDS_SF_TRANSFERRED      "يوللىغان سانلىق مەلۇمات"
     IDS_REMOVESEARCHSTRING  "بۇ قېتىمقى ئىزدەش نەتىجىسىنى ياپ"

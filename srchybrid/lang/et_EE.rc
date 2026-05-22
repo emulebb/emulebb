@@ -575,7 +575,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Päris olematut faili"
     IDS_SF_AVERAGESIZE      "Keskmine failisuurus: %s"
     IDS_SF_REQUESTS         "Päringud"
-    IDS_SF_LASTREQUEST         "Viimane päring"
+    IDS_SF_LASTREQUEST      "Viimane päring"
     IDS_SF_ACCEPTS          "Vastatud päringud"
     IDS_SF_TRANSFERRED      "Ülekantud andmed"
 END

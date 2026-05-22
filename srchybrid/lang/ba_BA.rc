@@ -584,7 +584,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Fitxategi ezezaguna eskatu da"
     IDS_SF_AVERAGESIZE      "Fitxategien batez besteko tamaina: %s"
     IDS_SF_REQUESTS         "Eskaerak"
-    IDS_SF_LASTREQUEST         "Azken eskaera"
+    IDS_SF_LASTREQUEST      "Azken eskaera"
     IDS_SF_ACCEPTS          "Onartutako eskaerak"
     IDS_SF_TRANSFERRED      "Transferitutako datuak"
 END

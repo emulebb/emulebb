@@ -548,7 +548,7 @@ BEGIN
 	IDS_REQ_UNKNOWNFILE	"Restr c'houlennet dianav"
 	IDS_SF_AVERAGESIZE	"Ment geitad ar restr : %s"
 	IDS_SF_REQUESTS	"Goulennoù "
-	IDS_SF_LASTREQUEST	"Goulenn diwezhañ"
+    IDS_SF_LASTREQUEST      "Goulenn diwezhañ"
 	IDS_SF_ACCEPTS	"Degemeret"
 	IDS_SF_TRANSFERRED	"Treuzkaset"
 END

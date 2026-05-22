@@ -628,7 +628,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Kërkimi i një skede të panjohur"
     IDS_SF_AVERAGESIZE      "Përmasa mesatare e skedës: %s"
     IDS_SF_REQUESTS         "Kërkesat"
-    IDS_SF_LASTREQUEST         "Kërkesa e fundit"
+    IDS_SF_LASTREQUEST      "Kërkesa e fundit"
     IDS_SF_ACCEPTS          "Pranuar"
     IDS_SF_TRANSFERRED      "Transferuar"
 END

@@ -630,7 +630,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Yêu cầu tập tin không biết"
     IDS_SF_AVERAGESIZE      "Kích thước tập tin trung bình: %s"
     IDS_SF_REQUESTS         "Yêu cầu"
-    IDS_SF_LASTREQUEST         "Yêu cầu cuối"
+    IDS_SF_LASTREQUEST      "Yêu cầu cuối"
     IDS_SF_ACCEPTS          "Yêu cầu đã chấp nhận"
     IDS_SF_TRANSFERRED      "Dữ liệu đã truyền tải"
 END

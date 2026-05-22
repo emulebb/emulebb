@@ -644,7 +644,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Pyysi tuntematonta tiedostoa"
     IDS_SF_AVERAGESIZE      "Keskimääräinen koko: %s"
     IDS_SF_REQUESTS         "Pyyntöjä"
-    IDS_SF_LASTREQUEST         "Viimeisin pyyntö"
+    IDS_SF_LASTREQUEST      "Viimeisin pyyntö"
     IDS_SF_ACCEPTS          "Hyväksyttyjä"
     IDS_SF_TRANSFERRED      "Lähetetty"
     IDS_REMOVESEARCHSTRING  "Sulje tämä haku"

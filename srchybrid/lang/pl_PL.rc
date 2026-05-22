@@ -645,7 +645,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Zażądano nieznanego pliku"
     IDS_SF_AVERAGESIZE      "Średni rozmiar pliku: %s"
     IDS_SF_REQUESTS         "Żądań"
-    IDS_SF_LASTREQUEST         "Ostatnie żądanie"
+    IDS_SF_LASTREQUEST      "Ostatnie żądanie"
     IDS_SF_ACCEPTS          "Zaakcept."
     IDS_SF_TRANSFERRED      "Przesłanych danych"
     IDS_REMOVESEARCHSTRING  "Usuń wybrane przeszukiwanie(a)"

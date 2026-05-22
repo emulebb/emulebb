@@ -631,7 +631,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "未知のファイルを要求しました"
     IDS_SF_AVERAGESIZE      "平均ファイルサイズ: %s"
     IDS_SF_REQUESTS         "要求"
-    IDS_SF_LASTREQUEST         "最終要求"
+    IDS_SF_LASTREQUEST      "最終要求"
     IDS_SF_ACCEPTS          "受諾した要求"
     IDS_SF_TRANSFERRED      "転送済みデータ"
 END

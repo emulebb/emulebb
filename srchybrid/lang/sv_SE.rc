@@ -576,7 +576,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Förfrågade okänd fil"
     IDS_SF_AVERAGESIZE      "Genomsnittlig storlek på utdelade filer: %s"
     IDS_SF_REQUESTS         "Förfrågningar"
-    IDS_SF_LASTREQUEST         "Senaste förfrågan"
+    IDS_SF_LASTREQUEST      "Senaste förfrågan"
     IDS_SF_ACCEPTS          "Godkända förfrågningar"
     IDS_SF_TRANSFERRED      "Överförd data"
 END

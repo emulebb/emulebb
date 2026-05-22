@@ -553,7 +553,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "已要求未知的檔案"
     IDS_SF_AVERAGESIZE      "平均檔案大小: %s"
     IDS_SF_REQUESTS         "已要求"
-    IDS_SF_LASTREQUEST         "最後要求"
+    IDS_SF_LASTREQUEST      "最後要求"
     IDS_SF_ACCEPTS          "已接受要求"
     IDS_SF_TRANSFERRED      "已傳輸資料"
 END

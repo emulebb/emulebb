@@ -627,7 +627,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Запитване за непознат файл"
     IDS_SF_AVERAGESIZE      "Среден размер на файла: %s"
     IDS_SF_REQUESTS         "Запитвания"
-    IDS_SF_LASTREQUEST         "Последно запитване"
+    IDS_SF_LASTREQUEST      "Последно запитване"
     IDS_SF_ACCEPTS          "Приети запитвания"
     IDS_SF_TRANSFERRED      "Трансферирани данни"
 END

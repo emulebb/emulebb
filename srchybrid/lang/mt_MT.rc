@@ -629,7 +629,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Il-file mitlub mhux magħruf"
     IDS_SF_AVERAGESIZE      "Il-medja tad-daqs tal-files: %s"
     IDS_SF_REQUESTS         "Talbiet"
-    IDS_SF_LASTREQUEST         "L-aħħar talba"
+    IDS_SF_LASTREQUEST      "L-aħħar talba"
     IDS_SF_ACCEPTS          "Talbiet Milqugħa"
     IDS_SF_TRANSFERRED      "'Data' Transferita"
 END

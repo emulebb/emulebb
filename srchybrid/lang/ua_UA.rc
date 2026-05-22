@@ -629,7 +629,7 @@ BEGIN
     IDS_REQ_UNKNOWNFILE     "Запитано невідомий файл"
     IDS_SF_AVERAGESIZE      "Середній розмір файлу: %s"
     IDS_SF_REQUESTS         "Запитів"
-    IDS_SF_LASTREQUEST         "Останній запит"
+    IDS_SF_LASTREQUEST      "Останній запит"
     IDS_SF_ACCEPTS          "Прийнятих запитів"
     IDS_SF_TRANSFERRED      "Передано даних"
 END
