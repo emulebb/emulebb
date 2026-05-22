@@ -20,6 +20,7 @@
 #include "MenuCmds.h"
 #include "TrayNotificationSeams.h"
 #include "UserMsgs.h"
+#include "WindowPlacementSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -397,6 +398,11 @@ LRESULT CTrayDialog::OnTaskBarCreated(WPARAM, LPARAM)
 
 void CTrayDialog::RestoreWindow()
 {
-	ShowWindow(SW_NORMAL);
+	WINDOWPLACEMENT wp = {};
+	wp.length = sizeof wp;
+	const int iShowCommand = GetWindowPlacement(&wp)
+		? WindowPlacementSeams::ResolveRestoreShowCommand(wp)
+		: SW_SHOWNORMAL;
+	ShowWindow(iShowCommand);
 	SetForegroundWindow();
 }

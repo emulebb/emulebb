@@ -35,4 +35,15 @@ inline WINDOWPLACEMENT BuildDefaultMainWindowPlacement(const RECT &rcWorkArea)
 	placement.rcNormalPosition = BuildCenteredPercentRect(rcWorkArea, kDefaultNormalRectPercent);
 	return placement;
 }
+
+/// Returns the visible show command that preserves a minimized window's restore state.
+inline int ResolveRestoreShowCommand(const WINDOWPLACEMENT &placement)
+{
+	if ((placement.showCmd == SW_SHOWMINIMIZED || placement.showCmd == SW_MINIMIZE)
+		&& (placement.flags & WPF_RESTORETOMAXIMIZED))
+		return SW_SHOWMAXIMIZED;
+	if (placement.showCmd == SW_SHOWMAXIMIZED)
+		return SW_SHOWMAXIMIZED;
+	return SW_SHOWNORMAL;
+}
 }
