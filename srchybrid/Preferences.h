@@ -20,6 +20,7 @@
 #include <unordered_set>
 
 #include "BindAddressResolver.h"
+#include "DisplayRefreshSeams.h"
 #include "PartFilePersistenceSeams.h"
 #include "PreferenceValidationSeams.h"
 #include "Opcodes.h"
@@ -249,6 +250,7 @@ public:
 	static int		m_iStartupProgressDialogMode;
 	static int		m_iShutdownProgressDialogMode;
 	static bool		m_bDailyConfigBackup;
+	static UINT		m_uDesktopUiRefreshIntervalMs;
 	static bool		filterLANIPs;
 	static bool		m_bAllocLocalHostIP;
 	static bool		onlineSig;
@@ -1100,6 +1102,10 @@ public:
 	static bool		GetDefaultDailyConfigBackup()		{ return true; }
 	static bool		GetDailyConfigBackup()				{ return m_bDailyConfigBackup; }
 	static void		SetDailyConfigBackup(bool bEnabled) { m_bDailyConfigBackup = bEnabled; }
+	static UINT		GetDefaultDesktopUiRefreshIntervalMs() { return DESKTOP_UI_REFRESH_BELOWNORMAL_MS; }
+	static LPCTSTR	GetDesktopUiRefreshIntervalIniKey() { return _T("DesktopUiRefreshIntervalMs"); }
+	static UINT		GetDesktopUiRefreshIntervalMs()		{ return m_uDesktopUiRefreshIntervalMs; }
+	static void		SetDesktopUiRefreshIntervalMs(UINT uIntervalMs) { m_uDesktopUiRefreshIntervalMs = NormalizeDesktopUiRefreshIntervalMs(uIntervalMs); }
 	static bool		FilterLANIPs()						{ return filterLANIPs; }
 	static bool		GetAllowLocalHostIP()				{ return m_bAllocLocalHostIP; }
 	static bool		IsOnlineSignatureEnabled()			{ return onlineSig; }

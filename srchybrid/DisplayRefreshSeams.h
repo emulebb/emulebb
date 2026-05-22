@@ -8,6 +8,15 @@
 
 #define EMULE_TEST_HAVE_DISPLAY_REFRESH_OWNED_POST 1
 
+enum EDesktopUiRefreshIntervalMs : uint32_t
+{
+	DESKTOP_UI_REFRESH_FAST_MS = 500,
+	DESKTOP_UI_REFRESH_NORMAL_MS = 1000,
+	DESKTOP_UI_REFRESH_BELOWNORMAL_MS = 2000,
+	DESKTOP_UI_REFRESH_SLOW_MS = 5000,
+	DESKTOP_UI_REFRESH_VERYSLOW_MS = 10000
+};
+
 enum EDisplayRefreshMask : uint32
 {
 	DISPLAY_REFRESH_NONE = 0,
@@ -52,6 +61,23 @@ inline bool ShouldQueueDisplayRefresh(UINT uCurrentThreadId, UINT uMainThreadId)
 inline bool ShouldRunDisplayRefresh(bool bForce, ULONGLONG dwCurrentTick, ULONGLONG dwLastRefreshTick, ULONGLONG dwMinimumWait, ULONGLONG dwRandomWait = 0)
 {
 	return bForce || dwCurrentTick >= dwLastRefreshTick + dwMinimumWait + dwRandomWait;
+}
+
+/**
+ * @brief Normalizes the desktop list refresh interval to the supported System Informer-style values.
+ */
+inline UINT NormalizeDesktopUiRefreshIntervalMs(UINT uIntervalMs)
+{
+	switch (uIntervalMs) {
+	case DESKTOP_UI_REFRESH_FAST_MS:
+	case DESKTOP_UI_REFRESH_NORMAL_MS:
+	case DESKTOP_UI_REFRESH_BELOWNORMAL_MS:
+	case DESKTOP_UI_REFRESH_SLOW_MS:
+	case DESKTOP_UI_REFRESH_VERYSLOW_MS:
+		return uIntervalMs;
+	default:
+		return DESKTOP_UI_REFRESH_BELOWNORMAL_MS;
+	}
 }
 
 /**

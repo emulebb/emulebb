@@ -491,7 +491,7 @@ void CUpDownClient::UpdateUploadingStatisticsData()
 		m_nUpDatarate = 0; // not enough data to calculate trustworthy speed
 
 	// Check if it's time to update the display.
-	if (curTick >= m_lastRefreshedULDisplay + MINWAIT_BEFORE_ULDISPLAY_WINDOWUPDATE + rand() % 800) {
+	if (ShouldRunDisplayRefresh(false, curTick, m_lastRefreshedULDisplay, thePrefs.GetDesktopUiRefreshIntervalMs(), rand() % 800)) {
 		// Update display
 		QueueDisplayUpdate(DISPLAY_REFRESH_UPLOAD_LIST | DISPLAY_REFRESH_CLIENT_LIST);
 		m_lastRefreshedULDisplay = curTick;

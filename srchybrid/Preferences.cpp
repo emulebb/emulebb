@@ -806,6 +806,7 @@ bool	CPreferences::m_bHasCustomTaskIconColor;
 int		CPreferences::m_iStartupProgressDialogMode;
 int		CPreferences::m_iShutdownProgressDialogMode;
 bool	CPreferences::m_bDailyConfigBackup;
+UINT	CPreferences::m_uDesktopUiRefreshIntervalMs;
 bool	CPreferences::filterLANIPs;
 bool	CPreferences::m_bAllocLocalHostIP;
 bool	CPreferences::onlineSig;
@@ -2813,6 +2814,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("ShowUpDownIconInTaskbar"), m_bShowUpDownIconInTaskbar);
 	ini.WriteBool(_T("AlwaysShowTrayIcon"), m_bAlwaysShowTrayIcon);
 	ini.WriteBool(_T("MiniMule"), m_bEnableMiniMule);
+	ini.WriteInt(GetDesktopUiRefreshIntervalIniKey(), static_cast<int>(m_uDesktopUiRefreshIntervalMs));
 	ini.WriteBool(_T("ShowVerticalHourMarkers"), m_bShowVerticalHourMarkers);
 	ini.WriteBool(_T("ForceSpeedsToKB"), m_bForceSpeedsToKB);
 	ini.WriteBool(_T("ExtraPreviewWithMenu"), m_bExtraPreviewWithMenu);
@@ -3180,6 +3182,7 @@ void CPreferences::LoadPreferences()
 	SetStartupProgressDialogMode(ini.GetInt(_T("StartupProgressDialog"), GetDefaultLifecycleProgressDialogMode()));
 	SetShutdownProgressDialogMode(ini.GetInt(_T("ShutdownProgressDialog"), GetDefaultLifecycleProgressDialogMode()));
 	m_bDailyConfigBackup = ini.GetBool(GetDailyConfigBackupIniKey(), GetDefaultDailyConfigBackup());
+	SetDesktopUiRefreshIntervalMs(static_cast<UINT>(max(0, ini.GetInt(GetDesktopUiRefreshIntervalIniKey(), static_cast<int>(GetDefaultDesktopUiRefreshIntervalMs())))));
 	bringtoforeground = ini.GetBool(_T("BringToFront"), false);
 	transferDoubleclick = ini.GetBool(_T("TransferDoubleClick"), true);
 	beepOnError = ini.GetBool(_T("BeepOnError"), false);

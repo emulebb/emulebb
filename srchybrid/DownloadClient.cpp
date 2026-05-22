@@ -1463,12 +1463,8 @@ void CUpDownClient::UDPReaskForDownload()
 void CUpDownClient::UpdateDisplayedInfo(bool force)
 {
 	const ULONGLONG curTick = ::GetTickCount64();
-#ifndef _DEBUG
-	if (!ShouldRunDisplayRefresh(force, curTick, m_lastRefreshedDLDisplay, MINWAIT_BEFORE_DLDISPLAY_WINDOWUPDATE, m_random_update_wait))
+	if (!ShouldRunDisplayRefresh(force, curTick, m_lastRefreshedDLDisplay, thePrefs.GetDesktopUiRefreshIntervalMs(), m_random_update_wait))
 		return;
-#else
-	UNREFERENCED_PARAMETER(force);
-#endif
 	m_lastRefreshedDLDisplay = curTick;
 	QueueDisplayUpdate(DISPLAY_REFRESH_DOWNLOAD_LIST | DISPLAY_REFRESH_CLIENT_LIST | DISPLAY_REFRESH_DOWNLOAD_CLIENTS);
 }

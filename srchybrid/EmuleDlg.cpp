@@ -879,6 +879,12 @@ namespace
 			return IDS_TOOLS_STATUS_SHOW_OPTIONS;
 		case MP_MINIMIZETOTRAY:
 			return IDS_TOOLS_STATUS_MINIMIZE_TO_TRAY;
+		case MP_HM_REFRESH_INTERVAL_FAST:
+		case MP_HM_REFRESH_INTERVAL_NORMAL:
+		case MP_HM_REFRESH_INTERVAL_BELOWNORMAL:
+		case MP_HM_REFRESH_INTERVAL_SLOW:
+		case MP_HM_REFRESH_INTERVAL_VERYSLOW:
+			return IDS_TOOLS_STATUS_REFRESH_INTERVAL;
 		case MP_HM_EXIT:
 			return IDS_TOOLS_STATUS_EXIT;
 		case MP_HM_EDIT_PREFERENCES_INI:
@@ -4282,6 +4288,21 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 		else
 			AddLogLine(false, _T("Saved preferences and config files."));
 		break;
+	case MP_HM_REFRESH_INTERVAL_FAST:
+		thePrefs.SetDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_FAST_MS);
+		break;
+	case MP_HM_REFRESH_INTERVAL_NORMAL:
+		thePrefs.SetDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_NORMAL_MS);
+		break;
+	case MP_HM_REFRESH_INTERVAL_BELOWNORMAL:
+		thePrefs.SetDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_BELOWNORMAL_MS);
+		break;
+	case MP_HM_REFRESH_INTERVAL_SLOW:
+		thePrefs.SetDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_SLOW_MS);
+		break;
+	case MP_HM_REFRESH_INTERVAL_VERYSLOW:
+		thePrefs.SetDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_VERYSLOW_MS);
+		break;
 	case MP_HM_UPDATE_SERVERMET_FROM_ADDRESSES:
 		thePrefs.ReloadServerMetAddressList();
 		UpdateServerMetFromConfiguredAddresses(serverwnd);
@@ -4471,6 +4492,10 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	speedBoth.CreateMenu();
 	speedBoth.AddMenuTitle(NULL, true);
 
+	CTitledMenu refreshInterval;
+	refreshInterval.CreateMenu();
+	refreshInterval.AddMenuTitle(NULL, true);
+
 	if (toolsonly) {
 		UINT uGeoLocationMenuFlags = MF_STRING;
 		if (!thePrefs.IsGeoLocationEnabled())
@@ -4532,6 +4557,16 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		speedQuickActions.AppendMenu(MF_SEPARATOR);
 		speedQuickActions.AppendMenu(MF_STRING, MP_QS_PA, GetResString(IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC), _T("STOP"));
 		speedQuickActions.AppendMenu(MF_STRING, MP_QS_UA, GetResString(IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC), _T("CONNECT"));
+
+		const UINT uDesktopRefreshIntervalMs = thePrefs.GetDesktopUiRefreshIntervalMs();
+		const auto getRefreshIntervalFlags = [uDesktopRefreshIntervalMs](UINT uIntervalMs) -> UINT {
+			return MF_STRING | (uDesktopRefreshIntervalMs == uIntervalMs ? MF_CHECKED : 0);
+		};
+		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_FAST_MS), MP_HM_REFRESH_INTERVAL_FAST, GetResString(IDS_REFRESH_INTERVAL_FAST), _T("TOOLS"));
+		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_NORMAL_MS), MP_HM_REFRESH_INTERVAL_NORMAL, GetResString(IDS_REFRESH_INTERVAL_NORMAL), _T("TOOLS"));
+		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_BELOWNORMAL_MS), MP_HM_REFRESH_INTERVAL_BELOWNORMAL, GetResString(IDS_REFRESH_INTERVAL_BELOWNORMAL), _T("TOOLS"));
+		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_SLOW_MS), MP_HM_REFRESH_INTERVAL_SLOW, GetResString(IDS_REFRESH_INTERVAL_SLOW), _T("TOOLS"));
+		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_VERYSLOW_MS), MP_HM_REFRESH_INTERVAL_VERYSLOW, GetResString(IDS_REFRESH_INTERVAL_VERYSLOW), _T("TOOLS"));
 
 		folders.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
 		folders.AppendMenu(MF_STRING, MP_HM_OPEN_TEMPDIR, GetResString(IDS_OPEN_TEMP_DIR) + _T("..."), _T("OPENFOLDER"));
@@ -4603,6 +4638,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(_T("Speed Quick Actions"), _T('P')), _T("SPEED"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)refreshInterval.m_hMenu, GetResString(IDS_TOOLS_REFRESH_INTERVAL), _T("TOOLS"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_FOLDERS), _T('F')), _T("OPENFOLDER"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)categories.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_CATEGORIES), _T('C')), _T("CATEGORY"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T('E')), _T("PREFERENCES"));
@@ -4638,6 +4674,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	VERIFY(viewPresets.DestroyMenu());
 	VERIFY(diagnostics.DestroyMenu());
 	VERIFY(speedQuickActions.DestroyMenu());
+	VERIFY(refreshInterval.DestroyMenu());
 	VERIFY(speedUpload.DestroyMenu());
 	VERIFY(speedDownload.DestroyMenu());
 	VERIFY(speedBoth.DestroyMenu());

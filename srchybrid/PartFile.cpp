@@ -4666,7 +4666,7 @@ void CPartFile::UpdateDisplayedInfo(bool force)
 	if (!theApp.IsClosing()) {
 		const ULONGLONG curTick = ::GetTickCount64();
 
-		if (ShouldRunDisplayRefresh(force, curTick, m_lastRefreshedDLDisplay, MINWAIT_BEFORE_DLDISPLAY_WINDOWUPDATE, m_random_update_wait)) {
+		if (ShouldRunDisplayRefresh(force, curTick, m_lastRefreshedDLDisplay, thePrefs.GetDesktopUiRefreshIntervalMs(), m_random_update_wait)) {
 			m_lastRefreshedDLDisplay = curTick;
 			if (ShouldQueueDisplayRefresh(::GetCurrentThreadId(), g_uMainThreadId)) {
 				if (AccumulatePendingDisplayMask(m_nPendingDisplayUpdate, 1) == 0) {
