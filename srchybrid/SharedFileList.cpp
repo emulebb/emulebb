@@ -3232,16 +3232,8 @@ bool CSharedFileList::CaptureDuplicatePathCacheSnapshot(std::vector<SharedDuplic
 		if (MakeSharedFileLookupKey(record.strFilePath) == MakeSharedFileLookupKey(pCanonicalSharedFile->GetFilePath()))
 			continue;
 
-		const CString strDuplicatePath(NormalizeSharedFilePath(record.strFilePath));
-		const CString strDuplicateDirectory(PathHelpers::EnsureTrailingSeparator(PathHelpers::GetDirectoryPath(strDuplicatePath)));
-		if (!ShouldBeShared(strDuplicateDirectory, strDuplicatePath, false))
-			continue;
-
-		LONGLONG utcCurrentFileDate = -1;
-		ULONGLONG ullCurrentFileSize = 0;
-		if (!GetFileStartupState(strDuplicatePath, utcCurrentFileDate, ullCurrentFileSize))
-			continue;
-		if (utcCurrentFileDate != record.utcFileDate || ullCurrentFileSize != record.ullFileSize)
+		const CString strDuplicateDirectory(PathHelpers::EnsureTrailingSeparator(PathHelpers::GetDirectoryPath(record.strFilePath)));
+		if (!ShouldBeShared(strDuplicateDirectory, record.strFilePath, false))
 			continue;
 
 		rSnapshot.push_back(record);
@@ -3356,6 +3348,26 @@ bool CSharedFileList::BuildStartupCacheRecordFromSnapshot(const StartupCacheSave
 	rRecord.files = rDirectory.files;
 	rRecord.uCachedFileCount = static_cast<uint32>(rRecord.files.size());
 	return SharedStartupCachePolicy::IsStructurallyValid(rRecord);
+}
+
+void CSharedFileList::BuildDuplicatePathCacheRecordsFromSnapshot(const std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rCandidates, std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rRecords)
+{
+	rRecords.clear();
+	rRecords.reserve(rCandidates.size());
+	for (SharedDuplicatePathCachePolicy::PathRecord record : rCandidates) {
+		if (!SharedDuplicatePathCachePolicy::IsStructurallyValid(record))
+			continue;
+
+		record.strFilePath = NormalizeSharedFilePath(record.strFilePath);
+		LONGLONG utcCurrentFileDate = -1;
+		ULONGLONG ullCurrentFileSize = 0;
+		if (!GetFileStartupState(record.strFilePath, utcCurrentFileDate, ullCurrentFileSize))
+			continue;
+		if (utcCurrentFileDate != record.utcFileDate || ullCurrentFileSize != record.ullFileSize)
+			continue;
+
+		rRecords.push_back(record);
+	}
 }
 
 void CSharedFileList::UpdateStartupCacheSaveProgress(StartupCacheSavePhase ePhase, ULONGLONG uCompletedDirectories, ULONGLONG uTotalDirectories)
@@ -3480,8 +3492,10 @@ void CSharedFileList::RunStartupCacheSaveWorker(const StartupCacheSaveSnapshot &
 		return;
 	rResult.bWriteSucceeded = true;
 
-	if (WriteDuplicatePathCacheFile(rSnapshot.strDuplicatePathCachePath, rSnapshot.duplicatePathRecords)) {
-		for (const SharedDuplicatePathCachePolicy::PathRecord &record : rSnapshot.duplicatePathRecords)
+	std::vector<SharedDuplicatePathCachePolicy::PathRecord> duplicatePathRecords;
+	BuildDuplicatePathCacheRecordsFromSnapshot(rSnapshot.duplicatePathRecords, duplicatePathRecords);
+	if (WriteDuplicatePathCacheFile(rSnapshot.strDuplicatePathCachePath, duplicatePathRecords)) {
+		for (const SharedDuplicatePathCachePolicy::PathRecord &record : duplicatePathRecords)
 			rResult.duplicatePathRecords.emplace(MakeDuplicatePathCacheKey(record.strFilePath), record);
 		rResult.bDuplicatePathWriteSucceeded = true;
 	}

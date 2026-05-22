@@ -454,10 +454,11 @@ private:
 	static UINT AFX_CDECL StartupCacheSaveThreadProc(LPVOID pParam);
 	bool	CaptureStartupCacheSaveSnapshot(StartupCacheSaveSnapshot &rSnapshot) const;
 	/**
-	 * @brief Captures the currently valid duplicate shared-path records for sidecar persistence.
+	 * @brief Captures duplicate shared-path candidates for worker-side sidecar validation.
 	 */
 	bool	CaptureDuplicatePathCacheSnapshot(std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rSnapshot) const;
 	static bool	BuildStartupCacheRecordFromSnapshot(const StartupCacheSaveDirectorySnapshot &rDirectory, SharedStartupCachePolicy::DirectoryRecord &rRecord, SharedStartupCacheVolumeRecordMap &rVolumeRecords);
+	static void	BuildDuplicatePathCacheRecordsFromSnapshot(const std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rCandidates, std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rRecords);
 	static void	RunStartupCacheSaveWorker(const StartupCacheSaveSnapshot &rSnapshot, const std::shared_ptr<StartupCacheSaveOperation> &pOperation, StartupCacheSaveResult &rResult);
 	static bool	WriteStartupCacheFile(const CString &strFullPath, const SharedStartupCacheVolumeRecordMap &rVolumeRecords, const std::vector<SharedStartupCachePolicy::DirectoryRecord> &rRecords);
 	/**
