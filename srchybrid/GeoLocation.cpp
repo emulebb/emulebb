@@ -220,6 +220,31 @@ public:
 		return m_tBuildEpoch;
 	}
 
+	ULONGLONG GetDatabaseBytes() const
+	{
+		return static_cast<ULONGLONG>(m_vecData.size());
+	}
+
+	ULONGLONG GetIndexBytes() const
+	{
+		return static_cast<ULONGLONG>(m_dwIndexSize);
+	}
+
+	uint32 GetNodeCount() const
+	{
+		return m_dwNodeCount;
+	}
+
+	uint16 GetRecordSize() const
+	{
+		return m_uRecordSize;
+	}
+
+	size_t GetDecodedNodeCacheCount() const
+	{
+		return m_mapNodeGeo.size();
+	}
+
 	const CString& GetType() const
 	{
 		return m_strDatabaseType;
@@ -666,6 +691,19 @@ SGeoLocationRecord::SGeoLocationRecord()
 {
 }
 
+SGeoLocationRuntimeStats::SGeoLocationRuntimeStats()
+	: bEnabled(false)
+	, bDatabaseLoaded(false)
+	, ullDatabaseBytes(0)
+	, ullIndexBytes(0)
+	, dwNodeCount(0)
+	, uRecordSize(0)
+	, uLookupCacheCount(0)
+	, uDecodedNodeCacheCount(0)
+	, bRefreshQueued(false)
+{
+}
+
 CGeoLocation::CGeoLocation()
 	: m_pDatabase(NULL)
 	, m_tBuildEpoch(0)
@@ -806,6 +844,23 @@ void CGeoLocation::HandleBackgroundRefreshResult(bool bUpdated)
 bool CGeoLocation::IsRefreshQueued() const
 {
 	return BackgroundRefreshSeams::IsRefreshQueued(*m_pBackgroundRefreshState);
+}
+
+SGeoLocationRuntimeStats CGeoLocation::GetRuntimeStats() const
+{
+	SGeoLocationRuntimeStats stats;
+	stats.bEnabled = IsEnabled();
+	stats.bDatabaseLoaded = m_pDatabase != NULL;
+	stats.uLookupCacheCount = m_cacheByIp.size();
+	stats.bRefreshQueued = IsRefreshQueued();
+	if (m_pDatabase != NULL) {
+		stats.ullDatabaseBytes = m_pDatabase->GetDatabaseBytes();
+		stats.ullIndexBytes = m_pDatabase->GetIndexBytes();
+		stats.dwNodeCount = m_pDatabase->GetNodeCount();
+		stats.uRecordSize = m_pDatabase->GetRecordSize();
+		stats.uDecodedNodeCacheCount = m_pDatabase->GetDecodedNodeCacheCount();
+	}
+	return stats;
 }
 
 const SGeoLocationRecord& CGeoLocation::Lookup(uint32 dwIP) const

@@ -38,6 +38,24 @@ struct SGeoLocationRecord
 };
 
 /**
+ * @brief Compact geolocation memory/cache counters for diagnostics.
+ */
+struct SGeoLocationRuntimeStats
+{
+	bool bEnabled;
+	bool bDatabaseLoaded;
+	ULONGLONG ullDatabaseBytes;
+	ULONGLONG ullIndexBytes;
+	uint32 dwNodeCount;
+	uint16 uRecordSize;
+	size_t uLookupCacheCount;
+	size_t uDecodedNodeCacheCount;
+	bool bRefreshQueued;
+
+	SGeoLocationRuntimeStats();
+};
+
+/**
  * @brief Resolves IPv4 addresses to country and city data from a local DB-IP MMDB.
  */
 class CGeoLocation
@@ -94,6 +112,10 @@ public:
 	 * @brief Returns whether a background refresh worker is already running.
 	 */
 	bool IsRefreshQueued() const;
+	/**
+	 * @brief Returns live geolocation database and lookup-cache counters.
+	 */
+	SGeoLocationRuntimeStats GetRuntimeStats() const;
 
 private:
 	struct CStringLess

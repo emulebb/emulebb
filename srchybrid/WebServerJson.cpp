@@ -35,6 +35,8 @@
 #include "FakeFileDetector.h"
 #include "Friend.h"
 #include "FriendList.h"
+#include "GeoLocation.h"
+#include "KnownFileList.h"
 #include "Log.h"
 #include "Mdump.h"
 #include "OtherFunctions.h"
@@ -995,6 +997,39 @@ json BuildGlobalStatsJson()
 	};
 }
 
+/**
+ * Builds diagnostic-only runtime counters for long-running monitor scripts.
+ */
+json BuildRuntimeDiagnosticsJson()
+{
+	json geolocation = json(nullptr);
+	if (theApp.geolocation != NULL) {
+		const SGeoLocationRuntimeStats geoStats = theApp.geolocation->GetRuntimeStats();
+		geolocation = json{
+			{"enabled", geoStats.bEnabled},
+			{"databaseLoaded", geoStats.bDatabaseLoaded},
+			{"databaseBytes", geoStats.ullDatabaseBytes},
+			{"indexBytes", geoStats.ullIndexBytes},
+			{"nodeCount", geoStats.dwNodeCount},
+			{"recordSize", geoStats.uRecordSize},
+			{"lookupCacheCount", static_cast<int64_t>(geoStats.uLookupCacheCount)},
+			{"decodedNodeCacheCount", static_cast<int64_t>(geoStats.uDecodedNodeCacheCount)},
+			{"refreshQueued", geoStats.bRefreshQueued}
+		};
+	}
+
+	return json{
+		{"processId", static_cast<uint32>(::GetCurrentProcessId())},
+		{"knownFileCount", theApp.knownfiles != NULL ? static_cast<int64_t>(theApp.knownfiles->GetKnownFiles().GetCount()) : 0},
+		{"sharedFileCount", theApp.sharedfiles != NULL ? static_cast<int64_t>(theApp.sharedfiles->GetCount()) : 0},
+		{"sharedHashingCount", theApp.sharedfiles != NULL ? static_cast<int64_t>(theApp.sharedfiles->GetHashingCount()) : 0},
+		{"downloadFileCount", theApp.downloadqueue != NULL ? static_cast<int64_t>(theApp.downloadqueue->GetFileCount()) : 0},
+		{"activeUploads", theApp.uploadqueue != NULL ? static_cast<int64_t>(theApp.uploadqueue->GetActiveUploadsCount()) : 0},
+		{"waitingUploads", theApp.uploadqueue != NULL ? static_cast<int64_t>(theApp.uploadqueue->GetWaitingUserCount()) : 0},
+		{"geolocation", geolocation}
+	};
+}
+
 json BuildStatusJson()
 {
 	return json{
@@ -1002,7 +1037,8 @@ json BuildStatusJson()
 		{"stats", BuildGlobalStatsJson()},
 		{"servers", BuildServerStatusJson()},
 		{"kad", BuildKadStatusJson()},
-		{"sharedStartupCache", BuildSharedStartupCacheJson()}
+		{"sharedStartupCache", BuildSharedStartupCacheJson()},
+		{"runtimeDiagnostics", BuildRuntimeDiagnosticsJson()}
 	};
 }
 
