@@ -56,6 +56,7 @@ static char THIS_FILE[] = __FILE__;
 static uint32 i1sec, i2sec, i5sec, i60sec;
 static UINT s_uSaveStatistics = 0;
 static uint32 igraph, istats;
+static ULONGLONG s_ullLastDesktopUiRefreshTick = 0;
 static uint32 s_uUploadTimerLastDurationMs = 0;
 static uint32 s_uUploadTimerMaxDurationMs = 0;
 static uint32 s_uUploadTimerSlowLoopCount = 0;
@@ -131,6 +132,7 @@ CUploadQueue::CUploadQueue()
 	, m_bStatisticsWaitingListDirty(true)
 {
 	i1sec = i2sec = i5sec = i60sec = 0;
+	s_ullLastDesktopUiRefreshTick = 0;
 #if EMULE_COMPILED_STARTUP_PROFILING
 	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 #endif
@@ -1052,6 +1054,23 @@ VOID CALLBACK CUploadQueue::UploadTimer(HWND /*hwnd*/, UINT /*uMsg*/, UINT_PTR /
 			theStats.CompDownDatarateOverhead();
 		}
 
+		const ULONGLONG ullCurrentTick = ::GetTickCount64();
+		if (theApp.emuledlg != NULL
+			&& theApp.emuledlg->transferwnd != NULL
+			&& ShouldRunDesktopUiRefreshTick(ullCurrentTick, s_ullLastDesktopUiRefreshTick, thePrefs.GetDesktopUiRefreshIntervalMs()))
+		{
+			s_ullLastDesktopUiRefreshTick = ullCurrentTick;
+			if (!theApp.emuledlg->IsTrayIconToFlash())
+				theApp.emuledlg->ShowTransferRate();
+			if (thePrefs.ShowCatTabInfos()
+				&& theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd
+				&& theApp.emuledlg->IsWindowVisible())
+			{
+				theApp.emuledlg->transferwnd->UpdateCatTabTitles(false);
+			}
+			theApp.emuledlg->transferwnd->UpdateListCount(CTransferWnd::wnd2Uploading, -1);
+		}
+
 		// one second
 		if (++i1sec >= 10) {
 			i1sec = 0;
@@ -1127,24 +1146,12 @@ VOID CALLBACK CUploadQueue::UploadTimer(HWND /*hwnd*/, UINT /*uMsg*/, UINT_PTR /
 #endif
 				theApp.listensocket->Process();
 				theApp.OnlineSig(); // Added By Bouc7
-				if (!theApp.emuledlg->IsTrayIconToFlash())
-					theApp.emuledlg->ShowTransferRate();
 
 				if (!thePrefs.TransferFullChunks())
 					theApp.uploadqueue->UpdateMaxClientScore();
 
-				// update cat-titles with downloads info only when needed
-				if (thePrefs.ShowCatTabInfos()
-					&& theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd
-					&& theApp.emuledlg->IsWindowVisible())
-				{
-					theApp.emuledlg->transferwnd->UpdateCatTabTitles(false);
-				}
-
 				if (thePrefs.IsSchedulerEnabled())
 					theApp.scheduler->Check();
-
-				theApp.emuledlg->transferwnd->UpdateListCount(CTransferWnd::wnd2Uploading, -1);
 			}
 
 			// *** 60 seconds *********************************************
