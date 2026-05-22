@@ -1,6 +1,7 @@
 #pragma once
 
 #define EMULE_TESTS_HAS_KNOWN_FILE_COLLISION_SEAMS 1
+#define EMULE_TESTS_HAS_KNOWN_FILE_PUBLISH_SEAMS 1
 
 /**
  * @brief Determines whether a stored AICH hashset should be purged from known2.met.
@@ -38,4 +39,12 @@ inline KnownFileCollisionDecision ResolveKnownFileCollision(
 		return KnownFileCollisionDecision::AdoptIncoming;
 
 	return KnownFileCollisionDecision::KeepExisting;
+}
+
+/**
+ * @brief Reports whether changing the visible eD2K publish state should notify shared-files UI.
+ */
+inline bool ShouldNotifyPublishedED2KChange(bool bCurrentPublished, bool bRequestedPublished) noexcept
+{
+	return bCurrentPublished != bRequestedPublished;
 }

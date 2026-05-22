@@ -24,6 +24,7 @@
 #endif
 #include "emule.h"
 #include "KnownFileList.h"
+#include "KnownFileListSeams.h"
 #include "SharedFileList.h"
 #include "UpDownClient.h"
 #include "ClientList.h"
@@ -1653,6 +1654,8 @@ void CKnownFile::UpdateMetaDataTags()
 
 void CKnownFile::SetPublishedED2K(bool val)
 {
+	if (!ShouldNotifyPublishedED2KChange(m_PublishedED2K, val))
+		return;
 	m_PublishedED2K = val;
 	theApp.emuledlg->sharedfileswnd->sharedfilesctrl.UpdateFile(this);
 }
