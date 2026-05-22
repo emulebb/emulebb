@@ -55,6 +55,8 @@
     <CryptoPpRoot>$(ThirdPartyRoot)eMule-cryptopp\</CryptoPpRoot>
     <NlohmannJsonRoot>$(ThirdPartyRoot)eMule-nlohmann-json\single_include\</NlohmannJsonRoot>
     <ZlibRoot>$(ThirdPartyRoot)eMule-zlib\</ZlibRoot>
+    <EnableStartupProfiling Condition="'$(EnableStartupProfiling)'=='' and '$(Configuration)'=='Release'">true</EnableStartupProfiling>
+    <StartupProfilingPreprocessorDefinition Condition="'$(EnableStartupProfiling)'=='true'">EMULE_ENABLE_STARTUP_PROFILING;</StartupProfilingPreprocessorDefinition>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
     <PcpNatPmpLibRoot Condition="'$(PcpNatPmpLibRoot)'==''">$(PcpNatPmpRoot)cmake-build-x64\lib</PcpNatPmpLibRoot>
@@ -118,7 +120,7 @@
       <Optimization>MaxSpeed</Optimization>
       <OmitFramePointers>true</OmitFramePointers>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;NDEBUG;EMULE_ENABLE_STARTUP_PROFILING;MBEDTLS_ALLOW_PRIVATE_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;NDEBUG;$(StartupProfilingPreprocessorDefinition)MBEDTLS_ALLOW_PRIVATE_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
