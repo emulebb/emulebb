@@ -128,6 +128,7 @@ protected:
 	void ShowFileDialog(CTypedPtrList<CPtrList, CShareableFile*> &aFiles, UINT uInvokePage = 0);
 	void SetAllIcons();
 	void RebuildVisibleFileIndex();
+	void UpdateVisibleFileIndexRange(int iStartIndex, int iEndIndex);
 	void ClearVisibleFiles();
 	void ApplyVisibleFileCount();
 	bool IsLiveVisibleFilePointer(const CShareableFile *file) const;

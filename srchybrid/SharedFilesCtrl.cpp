@@ -36,6 +36,7 @@
 #include "MenuCmds.h"
 #include "IrcWnd.h"
 #include "SharedFilesWnd.h"
+#include "SharedFilesCtrlSeams.h"
 #include "SharedFilesWndSeams.h"
 #include "Opcodes.h"
 #include "InputBox.h"
@@ -683,6 +684,16 @@ void CSharedFilesCtrl::RebuildVisibleFileIndex()
 		m_mapVisibleFileIndex.SetAt(m_aVisibleFiles[static_cast<size_t>(i)], i);
 }
 
+void CSharedFilesCtrl::UpdateVisibleFileIndexRange(int iStartIndex, int iEndIndex)
+{
+	const SharedFilesCtrlSeams::VisibleIndexRange range = SharedFilesCtrlSeams::GetMovedVisibleIndexRange(iStartIndex, iEndIndex, static_cast<int>(m_aVisibleFiles.size()));
+	if (!range.bValid)
+		return;
+
+	for (int i = range.iFirst; i <= range.iLast; ++i)
+		m_mapVisibleFileIndex.SetAt(m_aVisibleFiles[static_cast<size_t>(i)], i);
+}
+
 void CSharedFilesCtrl::ClearVisibleFiles()
 {
 	if (m_bVisibleFilePrunePending) {
@@ -887,7 +898,7 @@ bool CSharedFilesCtrl::RepositionFileByCurrentSort(CShareableFile *file, int iIn
 
 	const int iStartIndex = min(iIndex, iNewIndex);
 	const int iEndIndex = max(iIndex, iNewIndex);
-	RebuildVisibleFileIndex();
+	UpdateVisibleFileIndexRange(iStartIndex, iEndIndex);
 	{
 		CSharedFilesSelectionRestoreGuard guard(*this);
 		RestoreSharedFilesRepositionState(*this, savedState);
