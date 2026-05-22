@@ -163,7 +163,7 @@ WebServerCertificate::SGenerationRequest WebServerCertificate::BuildDefaultLocal
 	request.strKeyFile = strKeyFile;
 	request.strCertFile = strCertFile;
 	request.strSubjectName = "CN=eMule BB WebServer,O=eMule BB,OU=REST";
-	request.strIssuerName = "CN=eMule BB Local WebServer CA,O=eMule BB";
+	request.strIssuerName = request.strSubjectName;
 	BuildDefaultValidityWindow(request.strNotBefore, request.strNotAfter);
 	request.uSerial = _byteswap_ushort(rand() & 0x0fff);
 	if (request.uSerial == 0)
@@ -216,12 +216,12 @@ int WebServerCertificate::CreateSelfSignedCertificate(const SGenerationRequest &
 		pszMessage = _T("mbedtls_x509write_crt_set_validity");
 		goto exit;
 	}
-	iResult = mbedtls_x509write_crt_set_basic_constraints(&certificate, 0, 0);
+	iResult = mbedtls_x509write_crt_set_basic_constraints(&certificate, 1, 0);
 	if (iResult != 0) {
 		pszMessage = _T("mbedtls_x509write_crt_set_basic_constraints");
 		goto exit;
 	}
-	iResult = mbedtls_x509write_crt_set_key_usage(&certificate, MBEDTLS_X509_KU_DIGITAL_SIGNATURE | MBEDTLS_X509_KU_KEY_ENCIPHERMENT);
+	iResult = mbedtls_x509write_crt_set_key_usage(&certificate, MBEDTLS_X509_KU_DIGITAL_SIGNATURE | MBEDTLS_X509_KU_KEY_ENCIPHERMENT | MBEDTLS_X509_KU_KEY_CERT_SIGN);
 	if (iResult != 0) {
 		pszMessage = _T("mbedtls_x509write_crt_set_key_usage");
 		goto exit;
