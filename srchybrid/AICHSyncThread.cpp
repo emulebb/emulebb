@@ -125,6 +125,8 @@ int CAICHSyncThread::Run()
 	// we collect all masterhashes which we find in the known2.met and store them in a list
 	CArray<CAICHHash> aKnown2Hashes;
 	CArray<ULONGLONG> aKnown2HashesFilePos;
+	CMap<CAICHHash, const CAICHHash&, ULONGLONG, ULONGLONG> mapKnown2HashPositions;
+	CMap<CAICHHash, const CAICHHash&, bool, bool> mapUsedKnown2Hashes;
 
 	CSafeFile file;
 	// we need to keep a lock on this file while the thread is running
@@ -148,9 +150,15 @@ int CAICHSyncThread::Run()
 
 			//::setvbuf(file.m_pStream, NULL, _IOFBF, 16384);
 			ULONGLONG nExistingSize = file.GetLength();
+			const UINT nKnown2HashIndexBuckets = AICHMaintenanceSeams::EstimateAICHHashIndexBucketCount(nExistingSize, CAICHHash::GetHashSize());
+			mapKnown2HashPositions.InitHashTable(nKnown2HashIndexBuckets);
+			mapUsedKnown2Hashes.InitHashTable(nKnown2HashIndexBuckets);
 			while (file.GetPosition() < nExistingSize) {
-				aKnown2HashesFilePos.Add(file.GetPosition());
-				aKnown2Hashes.Add(CAICHHash(file));
+				const ULONGLONG nHashsetFilePosition = file.GetPosition();
+				CAICHHash aichHash(file);
+				aKnown2HashesFilePos.Add(nHashsetFilePosition);
+				aKnown2Hashes.Add(aichHash);
+				mapKnown2HashPositions[aichHash] = nHashsetFilePosition;
 				uint32 nHashCount = file.ReadUInt32();
 				if (file.GetPosition() + nHashCount * (ULONGLONG)CAICHHash::GetHashSize() > nExistingSize)
 					AfxThrowFileException(CFileException::endOfFile, 0, file.GetFileName());
@@ -183,9 +191,12 @@ int CAICHSyncThread::Run()
 
 	// now we check that all files which are in the shared file list have a corresponding hash in the out list
 	// those who don't are added to the hashing list
-	CList<CAICHHash> liUsedHashes;
 	CArray<CKnownFile*, CKnownFile*> aSharedFiles;
+#ifdef _DEBUG
+	CArray<CKnownFile*, CKnownFile*> aUsedAICHFiles;
+#endif
 	bool bDbgMsgCreatingPartHashes = true;
+	INT_PTR nUsedKnown2HashCount = 0;
 
 	SnapshotSharedAICHFiles(aSharedFiles);
 	for (INT_PTR iFile = 0; iFile < aSharedFiles.GetCount(); ++iFile) {
@@ -196,44 +207,46 @@ int CAICHSyncThread::Run()
 			continue;
 		CFileIdentifier &fileid = pFile->GetFileIdentifier();
 		if (fileid.HasAICHHash()) {
-			bool bAICHfound = false;
-			for (INT_PTR i = aKnown2Hashes.GetCount(); --i >= 0;) {
-				if (aKnown2Hashes[i] == fileid.GetAICHHash()) {
-					bAICHfound = true;
-					liUsedHashes.AddTail(CAICHHash(aKnown2Hashes[i]));
-					pFile->SetAICHRecoverHashSetAvailable(true);
-					// Has the file the proper AICH Part hashset? If not, probably upgrading, create it
-					if (!fileid.HasExpectedAICHHashCount()) {
-						if (bDbgMsgCreatingPartHashes) {
-							bDbgMsgCreatingPartHashes = false;
-							DebugLogWarning(_T("Missing AICH Part Hashsets for known files - maybe upgrading from earlier version. Creating them out of full AICH recovery Hashsets, shouldn't take too long"));
-						}
-						CAICHRecoveryHashSet tempHashSet(pFile, pFile->GetFileSize());
-						tempHashSet.SetMasterHash(fileid.GetAICHHash(), AICH_HASHSETCOMPLETE);
-						if (!tempHashSet.LoadHashSet()) {
-							ASSERT(0);
-							DebugLogError(_T("Failed to load full AICH recovery Hashset - known2.met might be corrupt. Unable to create AICH Part Hashset - %s"), (LPCTSTR)pFile->GetFileName());
-						} else {
-							if (!fileid.SetAICHHashSet(tempHashSet)) {
-								DebugLogError(_T("Failed to create AICH Part Hashset out of full AICH recovery Hashset - %s"), (LPCTSTR)pFile->GetFileName());
-								ASSERT(0);
-							}
-							ASSERT(fileid.HasExpectedAICHHashCount());
-						}
-					}
-					//theApp.QueueDebugLogLine(false, _T("%s - %s"), current_hash.GetString(), pFile->GetFileName());
-					break;
+			ULONGLONG nKnown2HashPosition = 0;
+			if (mapKnown2HashPositions.Lookup(fileid.GetAICHHash(), nKnown2HashPosition)) {
+				bool bWasAlreadyUsed = false;
+				if (!mapUsedKnown2Hashes.Lookup(fileid.GetAICHHash(), bWasAlreadyUsed)) {
+					mapUsedKnown2Hashes[fileid.GetAICHHash()] = true;
+					++nUsedKnown2HashCount;
 				}
-			}
-			if (bAICHfound)
+#ifdef _DEBUG
+				aUsedAICHFiles.Add(pFile);
+#endif
+				pFile->SetAICHRecoverHashSetAvailable(true);
+				// Has the file the proper AICH Part hashset? If not, probably upgrading, create it
+				if (!fileid.HasExpectedAICHHashCount()) {
+					if (bDbgMsgCreatingPartHashes) {
+						bDbgMsgCreatingPartHashes = false;
+						DebugLogWarning(_T("Missing AICH Part Hashsets for known files - maybe upgrading from earlier version. Creating them out of full AICH recovery Hashsets, shouldn't take too long"));
+					}
+					CAICHRecoveryHashSet tempHashSet(pFile, pFile->GetFileSize());
+					tempHashSet.SetMasterHash(fileid.GetAICHHash(), AICH_HASHSETCOMPLETE);
+					if (!tempHashSet.LoadHashSet()) {
+						ASSERT(0);
+						DebugLogError(_T("Failed to load full AICH recovery Hashset - known2.met might be corrupt. Unable to create AICH Part Hashset - %s"), (LPCTSTR)pFile->GetFileName());
+					} else {
+						if (!fileid.SetAICHHashSet(tempHashSet)) {
+							DebugLogError(_T("Failed to create AICH Part Hashset out of full AICH recovery Hashset - %s"), (LPCTSTR)pFile->GetFileName());
+							ASSERT(0);
+						}
+						ASSERT(fileid.HasExpectedAICHHashCount());
+					}
+				}
+				//theApp.QueueDebugLogLine(false, _T("%s - %s"), current_hash.GetString(), pFile->GetFileName());
 				continue;
+			}
 		}
 		pFile->SetAICHRecoverHashSetAvailable(false);
 		m_aToHash.Add(CSKey(pFile->GetFileHash()));
 	}
 
 	// remove all unused AICH hashsets from known2.met
-	if (liUsedHashes.GetCount() != aKnown2Hashes.GetCount()
+	if (nUsedKnown2HashCount != aKnown2Hashes.GetCount()
 		&& (!thePrefs.IsRememberingDownloadedFiles() || thePrefs.DoPartiallyPurgeOldKnownFiles()))
 	{
 		file.SeekToBegin();
@@ -257,7 +270,8 @@ int CAICHSyncThread::Run()
 				if (file.GetPosition() + nHashCount * (ULONGLONG)CAICHHash::GetHashSize() > nExistingSize)
 					AfxThrowFileException(CFileException::endOfFile, 0, file.GetFileName());
 
-				if (aichHash == empty || (!thePrefs.IsRememberingDownloadedFiles() && liUsedHashes.Find(aichHash) == NULL)) {
+				bool bKnown2HashUsed = false;
+				if (aichHash == empty || (!thePrefs.IsRememberingDownloadedFiles() && !mapUsedKnown2Hashes.Lookup(aichHash, bKnown2HashUsed))) {
 					// unused hashset skip the rest of this hashset
 					file.Seek(nHashCount * (LONGLONG)CAICHHash::GetHashSize(), CFile::current);
 					++nPurgeCount;
@@ -319,8 +333,8 @@ int CAICHSyncThread::Run()
 	}
 
 #ifdef _DEBUG
-	for (POSITION pos = liUsedHashes.GetHeadPosition(); pos != NULL && !theApp.IsClosing();) {
-		CKnownFile *pFile = theApp.sharedfiles->GetFileByAICH(liUsedHashes.GetNext(pos));
+	for (INT_PTR i = 0; i < aUsedAICHFiles.GetCount() && !theApp.IsClosing(); ++i) {
+		CKnownFile *pFile = aUsedAICHFiles[i];
 		if (pFile == NULL) {
 			ASSERT(0);
 			continue;

@@ -51,6 +51,8 @@ namespace AICHMaintenanceSeams
  * @brief Bounded fallback delay used when the AICH sync thread yields to foreground hashing.
  */
 constexpr DWORD kForegroundHashYieldDelayMs = 1u;
+constexpr UINT kMinAICHHashIndexBucketCount = 257u;
+constexpr UINT kMaxAICHHashIndexBucketCount = 1048583u;
 
 /**
  * @brief Derives the raw byte span for a sequence of serialized AICH hashes while rejecting overflow.
@@ -69,6 +71,30 @@ inline bool TryDeriveAICHHashPayloadSize(const size_t nHashSize, const uint32 nH
 
 	*pnPayloadSize = static_cast<uint32>(nPayloadSize);
 	return true;
+}
+
+/**
+ * @brief Estimates a bounded hash-table size for indexing serialized known2 hashsets.
+ */
+inline UINT EstimateAICHHashIndexBucketCount(ULONGLONG nSerializedFileSize, const size_t nHashSize)
+{
+	if (nHashSize == 0u || nHashSize > (std::numeric_limits<ULONGLONG>::max)() - sizeof(uint32))
+		return kMinAICHHashIndexBucketCount;
+
+	const ULONGLONG nMinSerializedHashsetSize = static_cast<ULONGLONG>(nHashSize) + sizeof(uint32);
+	if (nSerializedFileSize <= 1u)
+		return kMinAICHHashIndexBucketCount;
+
+	const ULONGLONG nEstimatedHashsets = (nSerializedFileSize - 1u) / nMinSerializedHashsetSize;
+	if (nEstimatedHashsets >= ((std::numeric_limits<ULONGLONG>::max)() - 1u) / 2u)
+		return kMaxAICHHashIndexBucketCount;
+
+	const ULONGLONG nRequestedBuckets = nEstimatedHashsets * 2u + 1u;
+	if (nRequestedBuckets <= kMinAICHHashIndexBucketCount)
+		return kMinAICHHashIndexBucketCount;
+	if (nRequestedBuckets >= kMaxAICHHashIndexBucketCount)
+		return kMaxAICHHashIndexBucketCount;
+	return static_cast<UINT>(nRequestedBuckets | 1u);
 }
 
 /**
