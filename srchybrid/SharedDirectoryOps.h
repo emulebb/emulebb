@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <afxtempl.h>
 
 #include "PathHelpers.h"
@@ -344,6 +346,29 @@ inline bool RemoveSharedDirectory(CStringList &rList, const CString &rstrDirecto
 inline bool IsDirectoryKeySameOrDescendant(const CString &rstrRootKey, const CString &rstrCandidateKey)
 {
 	return rstrRootKey == rstrCandidateKey || IsDirectoryKeyParentOfCandidate(rstrRootKey, rstrCandidateKey);
+}
+
+/**
+ * @brief Builds normalized shared-directory lookup keys once for repeated containment checks.
+ */
+inline void BuildSharedDirectoryLookupKeyVector(const CStringList &rDirectories, std::vector<CString> &rDirectoryKeys)
+{
+	rDirectoryKeys.clear();
+	rDirectoryKeys.reserve(static_cast<size_t>(rDirectories.GetCount()));
+	for (POSITION pos = rDirectories.GetHeadPosition(); pos != NULL;)
+		rDirectoryKeys.push_back(MakeSharedDirectoryLookupKey(rDirectories.GetNext(pos)));
+}
+
+/**
+ * @brief Reports whether one normalized candidate key is equal to or below any normalized root key.
+ */
+inline bool IsDirectoryKeySameOrDescendantOfAny(const std::vector<CString> &rRootKeys, const CString &rstrCandidateKey)
+{
+	for (size_t i = 0; i < rRootKeys.size(); ++i) {
+		if (IsDirectoryKeySameOrDescendant(rRootKeys[i], rstrCandidateKey))
+			return true;
+	}
+	return false;
 }
 
 /**

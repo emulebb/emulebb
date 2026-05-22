@@ -599,20 +599,16 @@ void FilterMonitoredDirectoryStateAgainstSharedListLocked(CStringList &rMonitore
 			rMonitoredRoots.RemoveAt(posCurrent);
 	}
 
+	std::vector<CString> aMonitoredRootKeys;
+	SharedDirectoryOps::BuildSharedDirectoryLookupKeyVector(rMonitoredRoots, aMonitoredRootKeys);
+
 	for (POSITION pos = rMonitorOwnedDirs.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
 		const CString strCurrent(rMonitorOwnedDirs.GetNext(pos));
 		bool bKeep = ListContainsEquivalentDirectoryLocked(rSharedDirs, rSharedLookupKeys, strCurrent);
 		if (bKeep) {
-			bKeep = false;
-			const std::wstring strCurrentKey(MakeDirectoryListLookupKey(strCurrent));
-			for (POSITION posRoot = rMonitoredRoots.GetHeadPosition(); posRoot != NULL;) {
-				const std::wstring strRootKey(MakeDirectoryListLookupKey(rMonitoredRoots.GetNext(posRoot)));
-				if (strRootKey == strCurrentKey || IsDirectoryLookupKeyWithin(strRootKey, strCurrentKey)) {
-					bKeep = true;
-					break;
-				}
-			}
+			const CString strCurrentKey(SharedDirectoryOps::MakeSharedDirectoryLookupKey(strCurrent));
+			bKeep = SharedDirectoryOps::IsDirectoryKeySameOrDescendantOfAny(aMonitoredRootKeys, strCurrentKey);
 		}
 		if (!bKeep)
 			rMonitorOwnedDirs.RemoveAt(posCurrent);
