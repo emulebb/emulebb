@@ -69,6 +69,7 @@ public:
 	void	AddFile(const CShareableFile *file);
 	void	RemoveFile(const CShareableFile *file, bool bDeletedFromDisk);
 	void	UpdateFile(const CShareableFile *file, bool bUpdateFileSummary = true);
+	void	UpdateFilesAfterPublishedED2KBatch();
 	/**
 	 * @brief Queues one coalesced Shared Files list reload for startup-deferred hash intake.
 	 */

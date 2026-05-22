@@ -5,6 +5,7 @@
 
 #define EMULE_TESTS_HAS_SHARED_FILE_LIST_PATH_SEAMS 1
 #define EMULE_TESTS_HAS_SHARED_FILE_LIST_ASYNC_HASH_SEAMS 1
+#define EMULE_TESTS_HAS_SHARED_FILE_LIST_PUBLISH_BATCH_SEAMS 1
 
 namespace SharedFileListSeams
 {
@@ -150,6 +151,14 @@ constexpr DWORD kStartupCacheSaveShutdownWaitMs = 5000u;
 constexpr DWORD kSharedShutdownPollIntervalMs = 15u;
 constexpr unsigned int kSharedHashCompletionPostRetries = 20u;
 constexpr DWORD kSharedHashCompletionPostRetryDelayMs = 25u;
+
+/**
+ * @brief Reports whether eD2K publish-state changes should refresh the shared-files UI as one batch.
+ */
+inline bool ShouldBatchPublishedED2KUiRefresh(unsigned int uChangedFiles) noexcept
+{
+	return uChangedFiles > 1u;
+}
 
 /**
  * @brief Returns the scheduling decision for the next shared-folder auto-reload from one stable state snapshot.

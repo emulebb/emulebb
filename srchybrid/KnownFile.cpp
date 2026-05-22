@@ -1652,12 +1652,14 @@ void CKnownFile::UpdateMetaDataTags()
 	}
 }
 
-void CKnownFile::SetPublishedED2K(bool val)
+bool CKnownFile::SetPublishedED2K(bool val, bool bUpdateUi)
 {
 	if (!ShouldNotifyPublishedED2KChange(m_PublishedED2K, val))
-		return;
+		return false;
 	m_PublishedED2K = val;
-	theApp.emuledlg->sharedfileswnd->sharedfilesctrl.UpdateFile(this);
+	if (bUpdateUi)
+		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.UpdateFile(this);
+	return true;
 }
 
 bool CKnownFile::PublishNotes()

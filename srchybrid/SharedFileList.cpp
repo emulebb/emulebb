@@ -84,6 +84,17 @@ bool ShouldLogStartupHashFile(const ULONGLONG ullCompletedFiles, const ULONGLONG
 		|| ShouldEmitStartupHashProfileSample(ullCompletedFiles, ullFailedFiles, 1);
 }
 
+void UpdateSharedFilesForPublishedED2KChanges(CSharedFilesCtrl *pOutput, const std::vector<CKnownFile*> &rChangedFiles)
+{
+	if (pOutput == NULL || rChangedFiles.empty())
+		return;
+
+	if (SharedFileListSeams::ShouldBatchPublishedED2KUiRefresh(static_cast<unsigned int>(rChangedFiles.size())))
+		pOutput->UpdateFilesAfterPublishedED2KBatch();
+	else
+		pOutput->UpdateFile(rChangedFiles.front());
+}
+
 CString NormalizeSharedFilePath(const CString &rstrPath)
 {
 	return PathHelpers::CanonicalizePathForComparison(rstrPath);
@@ -1748,12 +1759,16 @@ void CSharedFileList::SendListToServer()
 		}
 	}
 	files.WriteUInt32(limit);
+	std::vector<CKnownFile*> publishedFilesChanged;
+	publishedFilesChanged.reserve(static_cast<size_t>(limit));
 	for (uint32 i = 0; i < limit; ++i) {
 		CKnownFile *file = offerCandidates[static_cast<size_t>(i)].pFile;
 		CreateOfferedFilePacket(file, files, pCurServer);
 		file->SetED2KRepublishPending(false);
-		file->SetPublishedED2K(true);
+		if (file->SetPublishedED2K(true, false))
+			publishedFilesChanged.push_back(file);
 	}
+	UpdateSharedFilesForPublishedED2KChanges(output, publishedFilesChanged);
 	Packet *packet = new Packet(files);
 	packet->opcode = OP_OFFERFILES;
 	// compress packet
@@ -1779,10 +1794,14 @@ void CSharedFileList::SendListToServer()
 void CSharedFileList::ClearED2KPublishInfo()
 {
 	m_lastPublishED2KFlag = true;
+	std::vector<CKnownFile*> publishedFilesChanged;
+	publishedFilesChanged.reserve(static_cast<size_t>(m_Files_map.GetCount()));
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
 		pair->value->SetED2KRepublishPending(false);
-		pair->value->SetPublishedED2K(false);
+		if (pair->value->SetPublishedED2K(false, false))
+			publishedFilesChanged.push_back(pair->value);
 	}
+	UpdateSharedFilesForPublishedED2KChanges(output, publishedFilesChanged);
 }
 
 void CSharedFileList::ClearKadSourcePublishInfo()

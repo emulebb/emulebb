@@ -87,7 +87,7 @@ public:
 	void	SetFileRating(UINT uRating);
 
 	bool	GetPublishedED2K() const					{ return m_PublishedED2K; }
-	void	SetPublishedED2K(bool val);
+	bool	SetPublishedED2K(bool val, bool bUpdateUi = true);
 	/**
 	 * @brief Reports whether this file needs to be offered again without clearing the visible ED2K published state.
 	 */

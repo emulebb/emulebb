@@ -1045,6 +1045,33 @@ void CSharedFilesCtrl::UpdateFile(const CShareableFile *file, bool bUpdateFileSu
 	}
 }
 
+void CSharedFilesCtrl::UpdateFilesAfterPublishedED2KBatch()
+{
+	if (!m_bModelBound)
+		return;
+	if (theApp.IsClosing())
+		return;
+	if (m_aVisibleFiles.empty())
+		return;
+
+	SharedFilesRepositionState savedState;
+	const bool bPreserveState = ShouldPreserveVirtualListState() && HasActiveSortOrder();
+	if (bPreserveState)
+		CaptureSharedFilesRepositionState(*this, savedState);
+
+	if (HasActiveSortOrder())
+		SortVisibleFiles();
+
+	if (bPreserveState) {
+		CSharedFilesSelectionRestoreGuard guard(*this);
+		RestoreSharedFilesRepositionState(*this, savedState);
+	}
+
+	Invalidate(FALSE);
+	if (GetFirstSelectedItemPosition() != NULL)
+		theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails(true);
+}
+
 int CSharedFilesCtrl::FindFile(const CShareableFile *pFile)
 {
 	int iItem = -1;
