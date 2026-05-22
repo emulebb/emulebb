@@ -866,7 +866,7 @@ END
 
 STRINGTABLE FIXED IMPURE
 BEGIN
-	IDS_ERR_NOHELP	"Trugarez da vont war hor bajenn zegemer evit dastum ar stumm diwezhañ ! (kevrenn Pellgargañ)\nHa fellout a ra deoc'h furchal er skoazell en-linenn a-hend-all ?"
+	IDS_ERR_NOHELP	"Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
 	IDS_SHOWOVERHEAD	"Diskouez ar bann tremen dreistniverel"
 	IDS_UPDOWNSMALL	"E : %.1f | R : %.1f"
 	IDS_EDITLIST	"Aozañ"
@@ -876,10 +876,10 @@ BEGIN
 	IDS_WEBSERVICES	"WebServices"
 	IDS_WEBSVEDIT	"Aozañ WebServices"
 	IDS_IRC_EMULEPROTO_IGNORESENDLINK	"Leuskel a-gostez ar c'hemennadennoù kas eus ereoù"
-	IDS_CHECK4UPDATE	"Gwiriañ stumm nevez"
+	IDS_CHECK4UPDATE	"Check for eMule BB updates"
 	IDS_STARTUP	"Loc'hañ"
-	IDS_NEWVERSIONAVL	"Prest eo ur stumm nevez eus eMule da vezañ pellgarget. Sellit ouzh https://emule-project.net evit lenn muioc'h a ditouroù."
-	IDS_NEWVERSIONAVLPOPUP 	"Prest eo stumm nevez eus eMule da vezañ staliet. Klikit amañ evit lenn muioc'h a ditouroù."
+	IDS_NEWVERSIONAVL	"A new version of eMule BB is available. Check GitHub Releases for more information."
+	IDS_NEWVERSIONAVLPOPUP 	"A new version of eMule BB is available. Click here to read about the new version."
 	IDS_NEWVERSIONFAILED 	"N'haller ket gwiriañ mard ez eus ur stumm nevez da bellgargañ."
 END
 
@@ -887,8 +887,8 @@ STRINGTABLE FIXED IMPURE
 BEGIN
 	IDS_CB_TBN_ONNEWVERSION	"Dizoloet ez eus bet ur stumm nevez eus eMule"
 	IDS_NONEWERVERSION	"Stumm nevez eus eMule ebet kavet."
-	IDS_VERSIONCHECK	"&Gwiriañ stumm"
-	IDS_VISITVERSIONCHECK	"\n\nHa fellout a ra deoc'h gweladenniñ ar bajenn ditouroù diouzhtu ?"
+	IDS_VERSIONCHECK	"&Check for eMule BB updates"
+	IDS_VISITVERSIONCHECK	"\n\nDo you want to open GitHub Releases now?"
 	IDS_PW_VIDEOPLAYER	"Lenner video"
 	IDS_MYINFO	"Ma zitouroù"
 	IDS_ID	"ID"
@@ -1109,9 +1109,9 @@ BEGIN
 	IDS_LINKS	"Ereoù"
 	IDS_HM_SCHED_ON	"Gweredekaat ar Raktreser"
 	IDS_HM_SCHED_OFF	"Diweredekaat ar Raktreser"
-	IDS_HM_LINKHP	"Lec'hienn ofisiel eMule"
-	IDS_HM_LINKFAQ	"FAG eMule"
-	IDS_HM_LINKVC	"Gwiriañ stummoù nevez eMule"
+	IDS_HM_LINKHP	"eMule BB Homepage"
+	IDS_HM_LINKFAQ	"eMule BB Help"
+	IDS_HM_LINKVC	"eMule BB Releases"
 	IDS_DEBUG_SOURCE_EXCHANGE	"Diskouez ar gemennadennoù diwar eskemm an orinoù"
 	IDS_SHAREDREQ1	"Goulennet en deus an implijour %s (%u) ganeoc'h ho roll restroù eskemmet -> %s"
 	IDS_SHAREDREQ2	"Goulennet en deus an implijour %s (%u) ganeoc'h ho roll restroù eskemmet evit ar c'havlec'h '%s' -> %s"

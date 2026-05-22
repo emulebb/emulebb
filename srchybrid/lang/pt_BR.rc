@@ -716,7 +716,7 @@ BEGIN
     IDS_SAMEUSERHASH        "Clientes '%s' e '%s' tem o mesmo hash ou IP - removido '%s'"
     IDS_SEARCHEXTENTION     "Extensão"
     IDS_SEARCHAVAIL         "Disponibilidade"
-    IDS_ERR_NOHELP          "Visite por favor a seção de download da nossa homepage para baixar uma cópia do arquivo de ajuda recente!\n\nVocê deseja acessar a ajuda online agora?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
 END
 
 STRINGTABLE
@@ -914,10 +914,10 @@ BEGIN
     IDS_WEBSVEDIT           "Editar Serviços Web..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignorar mensagens de envio de links do eMule"
-    IDS_CHECK4UPDATE        "Verificar se há uma nova versão"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Iniciando"
-    IDS_NEWVERSIONAVL       "Uma nova versão do eMule está disponível. Verifique a página do projeto para maiores informações."
-    IDS_NEWVERSIONAVLPOPUP  "Uma nova versão do eMule está disponível. Clique aqui para ler sobre a nova versão!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Não é possível verificar se há uma nova versão."
     IDS_CB_TBN_ONNEWVERSION "Nova versão do eMule encontrada"
     IDS_NONEWERVERSION      "Nenhuma nova versão do eMule encontrada."
@@ -925,8 +925,8 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_VERSIONCHECK        "&Verificar versão"
-    IDS_VISITVERSIONCHECK   "\n\nVocê gostaria de visitar a página de informações agora?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Reprodutor de Vídeo"
     IDS_MYINFO              "Meus Dados"
     IDS_ID                  "ID"//!
@@ -1111,9 +1111,9 @@ STRINGTABLE
 BEGIN
     IDS_HM_SCHED_ON         "Alterar Agendador para Ligado"
     IDS_HM_SCHED_OFF        "Alterar Agendador para Desligado"
-    IDS_HM_LINKHP           "Homepage do eMule"
-    IDS_HM_LINKFAQ          "FAQ do eMule"
-    IDS_HM_LINKVC           "Verificar versão do eMule"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Registrar troca de fonte de cliente e fonte de perguntas/respostas de servidor"
     IDS_SHAREDREQ1          "O Usuário %s (%u) solicitou sua lista de pastas compartilhadas -> %s"

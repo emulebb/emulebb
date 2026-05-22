@@ -898,7 +898,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Kérjük látogasd meg a honlapunk letöltési oldalát, ahonnan megszerezheted a legfrissebb súgófájlt!\n\nMegnéznéd inkább az online súgót?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Sávszélesség megjelenítése"
     IDS_UPDOWNSMALL         "Fel: %.1f | Le: %.1f"
     IDS_EDITLIST            "Lista"
@@ -909,10 +909,10 @@ BEGIN
     IDS_WEBSVEDIT           "Webszolgáltatás módosítása"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "eMule hivatkozásküldés üzenetek mellőzése"
-    IDS_CHECK4UPDATE        "Új verzió keresése"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Indításkor"
-    IDS_NEWVERSIONAVL       "Új eMule verzió érhető el! Látogass el a honlapra tovább információért."
-    IDS_NEWVERSIONAVLPOPUP  "Új eMule verzió érhető. Klikkelj ide további információért!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Nem sikerült megvizsgálni, van-e új verzió."
 END
 
@@ -920,8 +920,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Új eMule verziót észlelek."
     IDS_NONEWERVERSION      "Nem észleltem újabb eMule verziót."
-    IDS_VERSIONCHECK        "&Verziófrissítés"
-    IDS_VISITVERSIONCHECK   "\n\nMeg szeretnéd látogatni az információs oldalt?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Videólejátszó"
     IDS_MYINFO              "Saját adatok"
     IDS_ID                  "ID"
@@ -1116,9 +1116,9 @@ BEGIN
     IDS_LINKS               "Hivatkozások"
     IDS_HM_SCHED_ON         "Ütemező engedélyezése"
     IDS_HM_SCHED_OFF        "Ütemező tiltása"
-    IDS_HM_LINKHP           "eMule honlap"
-    IDS_HM_LINKFAQ          "eMule GyIK (FAQ)"
-    IDS_HM_LINKVC           "eMule verziófrissítés"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Forráscsere üzenetek megjelenítése"
     IDS_SHAREDREQ1          "%s (%u) felhasználó lekérdezte a megosztott mappáidat -> %s"
     IDS_SHAREDREQ2          "%s (%u) felhasználó lekérdezte az egyik megosztott mappád fájljait '%s' -> %s"

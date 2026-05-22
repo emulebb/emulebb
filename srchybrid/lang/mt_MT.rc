@@ -983,7 +983,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Jekk jogħġbok żur is-sezzjoni tad-downlods tal-website tagħna biex tniżżel kopja tal-aħħar file tal-għajnuna!\n\nTixtieq tuża għajnuna online għalissa?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Uri il-bandwidth mhux utilizzat"
     IDS_UPDOWNSMALL         "Up: %.1f | Down: %.1f"
     IDS_EDITLIST            "Ara..."
@@ -994,10 +994,10 @@ BEGIN
     IDS_WEBSVEDIT           "Is-Servizzi tal-Web..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Injora il-messaġġi tal-'eMule send link protocol'"
-    IDS_CHECK4UPDATE        "Iċċekja għall-verżjonijiet ġodda"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Ftuħ tal-programm"
-    IDS_NEWVERSIONAVL       "Ħarġet verżjoni ġdida tal-eMule! Iċċekja il-website għal aktar informazzjoni."
-    IDS_NEWVERSIONAVLPOPUP  "Ħarġet verżjoni ġdida tal-eMule! Agħfas hawn biex taqra dwar din il-verżjoni."
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Ma jistax jiġi ċċekkjat jekk hemmx verzjoni ġdida."
 END
 
@@ -1005,8 +1005,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "M'hemmx verżjoni ġdida tal-eMule"
     IDS_NONEWERVERSION      "M'hemmx verżjoni ġdida tal-eMule."
-    IDS_VERSIONCHECK        "Iċċeka l-verżjoni"
-    IDS_VISITVERSIONCHECK   "\n\nTixtieq iżżur il-paġna tal-Informazzjoni issa?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Video player"
     IDS_MYINFO              "Info tiegħi"
     IDS_ID                  "ID"
@@ -1160,9 +1160,9 @@ BEGIN
     IDS_LINKS               "Links"
     IDS_HM_SCHED_ON         "Ixgħal l-iskeda"
     IDS_HM_SCHED_OFF        "Itfi l-iskeda"
-    IDS_HM_LINKHP           "eIl-website tal-Mule"
-    IDS_HM_LINKFAQ          "Mistoqsijiet kommuni dwar l-eMule"
-    IDS_HM_LINKVC           "Iċċekja il-verżjoni tal-eMule"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Żomm nota tat-tpartit tas-sorsi bejn il-klijenti u tat-talbiet u r-risposti tas-server"
     IDS_SHAREDREQ1          "Il-user %s (%u) jixtieq il-lista ta' direttori ixxerjati -> %s"

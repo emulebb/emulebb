@@ -980,7 +980,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Моля, посетете раздела за сваляне на eMule на нашата страница за да вземете най-новата версия на помощния файл!\n\nИскате ли вместо това да разгледате помощния файл онлайн?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Показвай превишение на канала"
     IDS_UPDOWNSMALL         "Качване: %.1f | Сваляне: %.1f"
     IDS_EDITLIST            "Списък..."
@@ -991,10 +991,10 @@ BEGIN
     IDS_WEBSVEDIT           "Редактор за Уеб услуги..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Игнорирай съобщения за изпращане на протокол"
-    IDS_CHECK4UPDATE        "Проверка за нова версия"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Стартиране"
-    IDS_NEWVERSIONAVL       "Налична е нова версия на eMule! За повече информация посетете домашната страница на eMule."
-    IDS_NEWVERSIONAVLPOPUP  "Налична е нова версия на eMule. Щракнете тук за да прочетете повече за нея!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Неуспешна проверка за наличие на нова версия."
 END
 
@@ -1002,8 +1002,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Открита е нова версия на eMule"
     IDS_NONEWERVERSION      "Няма нови версии на eMule"
-    IDS_VERSIONCHECK        "Проверка на версия"
-    IDS_VISITVERSIONCHECK   "\n\nИскате ли да посетите нашата Информационна страница сега?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Видео плейър"
     IDS_MYINFO              "Моя информация"
     IDS_ID                  "ID" //!
@@ -1154,9 +1154,9 @@ BEGIN
     IDS_LINKS               "Линкове"
     IDS_HM_SCHED_ON         "Включи разписанието"
     IDS_HM_SCHED_OFF        "Изключи разписанието"
-    IDS_HM_LINKHP           "Домашна страница"
-    IDS_HM_LINKFAQ          "eMule FAQ"	//!
-    IDS_HM_LINKVC           "Проверка на версията на eMule"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"	//!
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Показвай съобщения за обмен"
     IDS_SHAREDREQ1          "Потребител %s (%u) запитва за списък с вашите споделени файлове -> %s"
     IDS_SHAREDREQ2          "Потребител %s (%u) запитва за списък с вашите споделени файлове от папка '%s' -> %s"

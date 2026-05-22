@@ -891,7 +891,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Uusima helpfaili saamiseks palun külastada meie kodulehe tõmbamise sektsiooni!\n\nKas soovid selle asemel sirvida online helpi?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Näita raisatud kiirusi (Overhead)"
     IDS_UPDOWNSMALL         "Üles: %.1f | Alla: %.1f"
     IDS_EDITLIST            "Loend"
@@ -902,10 +902,10 @@ BEGIN
     IDS_WEBSVEDIT           "Muuda veebiteenuseid"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignoreeri eMule viite saatmise protokollisõnumeid"
-    IDS_CHECK4UPDATE        "Kontrolli uue versiooni saadavust"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Käivitamine"
-    IDS_NEWVERSIONAVL       "Uus eMule versioon on saadaval! Vaata projekti kodulehte täiendava info saamiseks."
-    IDS_NEWVERSIONAVLPOPUP  "Uus eMule versioon on saadaval. Kliki siia uue versiooni kohta lugemiseks!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Ei suutnud kontrollida uue versiooni olemasolu."
 END
 
@@ -913,8 +913,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Leidsin uue eMule versiooni"
     IDS_NONEWERVERSION      "Uut eMule versiooni ei leitud."
-    IDS_VERSIONCHECK        "&Versioonikontroll"
-    IDS_VISITVERSIONCHECK   "\n\nKas Sa soovite infolehekülge kohe külastada?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Video vaataja"
     IDS_MYINFO              "Minu info"
     IDS_ID                  "ID"	//!
@@ -1106,9 +1106,9 @@ BEGIN
     IDS_LINKS               "Viited"
     IDS_HM_SCHED_ON         "Luba planeerija"
     IDS_HM_SCHED_OFF        "Keela planeerija"
-    IDS_HM_LINKHP           "eMule koduleht"
-    IDS_HM_LINKFAQ          "eMule KKK"
-    IDS_HM_LINKVC           "eMule versioonikontroll"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Logi allikavahetuse ja serverilt allikate küsimise päringud"
     IDS_SHAREDREQ1          "Kasutaja %s (%u) küsis Sinu jagatud kaustade nimekirja -> %s"
     IDS_SHAREDREQ2          "Kasutaja %s (%u) küsis Sinu jagatud failide nimekirja kataloogist '%s' -> %s"

@@ -902,7 +902,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Mesedez, bisita ezazu gure webguneko jaitsieren atala laguntza fitxategiaren azken bertsioa lortzeko!\n\nSarean ikusi nahi al duzu laguntza?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Banda zabaleraren gainkarga erakutsi"
     IDS_UPDOWNSMALL         "Igoera: %.1f | Jaitsiera: %.1f"
     IDS_EDITLIST            "Editatu"
@@ -913,10 +913,10 @@ BEGIN
     IDS_WEBSVEDIT           "Web zerbitzuak editatu"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "eMule loturak bidaltzean, protokolo mezuak baztertu"
-    IDS_CHECK4UPDATE        "Bertsio berririk dagoen begiratu"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Hasieran"
-    IDS_NEWVERSIONAVL       "eMule bertsio berri bat dago. Informazio gehiago jasotzeko emule-project webgunea bisitatu"
-    IDS_NEWVERSIONAVLPOPUP  "eMule bertsio berri bat dago. Egin klik hemen, bertsio berri honen aldaketak aztertzeko!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Ezin izan da bertsio berririk dagoen begiratu"
 END
 
@@ -924,8 +924,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "eMule bertsio berria antzematerakoan"
     IDS_NONEWERVERSION      "Ez da eMuleren bertsio berririk antzeman."
-    IDS_VERSIONCHECK        "Bertsio berria bilatu"
-    IDS_VISITVERSIONCHECK   "\n\nInformazio orria bisitatu nahi al duzu?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Bideo erreproduktorea"
     IDS_MYINFO              "Norbere informazioa"
     IDS_ID                  "ID-a"
@@ -1117,9 +1117,9 @@ BEGIN
     IDS_LINKS               "Loturak"
     IDS_HM_SCHED_ON         "Programatzailea aktibatu"
     IDS_HM_SCHED_OFF        "Programatzailea desaktibatu"
-    IDS_HM_LINKHP           "eMuleren webgunea"
-    IDS_HM_LINKFAQ          "eMule FAQ-a"
-    IDS_HM_LINKVC           "eMuleren bertsio azterketa"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Iturrien trukeen mezuak ikusi"
     IDS_SHAREDREQ1          "%s (%u) erabiltzaileak zuk konpartitutako karpeten zerrenda eskatu du -> %s"
     IDS_SHAREDREQ2          "%s (%u) erabiltzaileak '%s' karpetako fitxategi konpartituak eskatu dizkizu -> %s"

@@ -99,7 +99,6 @@ static char THIS_FILE[] = __FILE__;
 namespace
 {
 LPCTSTR const MONITOREDSHAREDJOURNALSTATE = _T("shareddir.monitor-journal.dat");
-LPCTSTR const ONLINEHELPURL = _T("https://github.com/eMulebb/eMule-tooling/blob/main/docs/HELP.md");
 LPCTSTR const STARTUPERRORLOG = _T("eMule-startup-errors.log");
 constexpr DWORD kMonitoredSharedFileWatchMask = FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE;
 constexpr DWORD kMonitoredSharedDirectoryWatchMask = FILE_NOTIFY_CHANGE_DIR_NAME;
@@ -2634,9 +2633,10 @@ void CemuleApp::ShowHelp(UINT uTopic, UINT uCmd)
 	UNREFERENCED_PARAMETER(uTopic);
 	UNREFERENCED_PARAMETER(uCmd);
 
-	const HINSTANCE hResult = BrowserOpen(ONLINEHELPURL, thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));
+	const CString strOnlineHelpURL(thePrefs.GetOnlineHelpURL());
+	const HINSTANCE hResult = BrowserOpen(strOnlineHelpURL, thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));
 	if (!OtherFunctionsSeams::DidShellExecuteLaunch(hResult)) {
-		QueueDebugLogLineEx(LOG_ERROR, _T("Failed to open online help URL \"%s\" (ShellExecute result %Id)"), ONLINEHELPURL, reinterpret_cast<INT_PTR>(hResult));
+		QueueDebugLogLineEx(LOG_ERROR, _T("Failed to open online help URL \"%s\" (ShellExecute result %Id)"), (LPCTSTR)strOnlineHelpURL, reinterpret_cast<INT_PTR>(hResult));
 	}
 }
 

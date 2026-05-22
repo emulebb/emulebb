@@ -871,7 +871,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "請參觀我們首頁的下載區來取得新版本的使用說明檔案!\n\n您現在想要以線上瀏覽來替代?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "顯示額外支出的頻寬"
     IDS_UPDOWNSMALL         "上載: %.1f | 下載: %.1f"
     IDS_EDITLIST            "清單..."
@@ -881,10 +881,10 @@ BEGIN
     IDS_WEBSERVICES         "Web 服務"
     IDS_WEBSVEDIT           "編輯 Web 服務..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK "忽略 eMule 送出連結的協定訊息"
-    IDS_CHECK4UPDATE        "檢查是否有新版本"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "啟動"
-    IDS_NEWVERSIONAVL       "一個新版的 eMule 已可取得! 按這裡到 專案-首頁 取得更多資訊."
-    IDS_NEWVERSIONAVLPOPUP  "一個新版的 eMule 已可取得. 按這裡來讀取新版的相關資訊!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "無法檢查是否有新版本."
 END
 
@@ -892,8 +892,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "已偵測到新版的 eMule"
     IDS_NONEWERVERSION      "未偵測到新版的 eMule."
-    IDS_VERSIONCHECK        "版本檢查"
-    IDS_VISITVERSIONCHECK   "\n\n您現在想要參觀通知網頁嗎?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "影像播放器"
     IDS_MYINFO              "我的資訊"
     IDS_ID                  "ID"//!
@@ -1117,9 +1117,9 @@ BEGIN
     IDS_LINKS               "連結"
     IDS_HM_SCHED_ON         "啟用時間表"
     IDS_HM_SCHED_OFF        "停用時間表"
-    IDS_HM_LINKHP           "eMule 首頁"
-    IDS_HM_LINKFAQ          "eMule FAQ"//!
-    IDS_HM_LINKVC           "eMule 版本檢查"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"//!
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "記錄客戶端來源交換及伺服器來源查詢/回覆"
     IDS_SHAREDREQ1          "使用者 %s (%u) 要求您的已分享資料夾清單 -> %s"
     IDS_SHAREDREQ2          "使用者 %s (%u) 要求您的已分享資料夾中的檔案清單 '%s' -> %s"

@@ -1717,6 +1717,7 @@ public:
 	static bool		GetHighresTimer()					{ return m_bHighresTimer; }
 
 	static CString	GetHomepageBaseURL()				{ return GetHomepageBaseURLForLevel(GetWebMirrorAlertLevel()); }
+	static CString	GetOnlineHelpURL();
 	static CString	GetVersionCheckBaseURL();
 	static CString	GetVersionCheckApiURL();
 	static CString	GetVersionCheckURL();

@@ -913,7 +913,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Yardım dosyasının yenisini almak için lütfen ana sayfamızın indirme bölümünü ziyaret edin!\n\nOnun yerine şimdi çevrimiçi yardıma göz atmak istiyor musunuz?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Ek yük bant genişliğini göster"
     IDS_UPDOWNSMALL         "Gönderme: %.1f | İndirme: %.1f"
     IDS_EDITLIST            "Liste..."
@@ -924,10 +924,10 @@ BEGIN
     IDS_WEBSVEDIT           "Web Hizmetini Düzenle..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "eMule bağlantı gönder protokol mesajlarını yoksay"
-    IDS_CHECK4UPDATE        "Yeni sürümü kontrol et"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Başlangıç"
-    IDS_NEWVERSIONAVL       "eMule'un yeni sürümü mevcut! Daha fazla bilgi için proje ana sayfamızı kontrol edin."
-    IDS_NEWVERSIONAVLPOPUP  "eMule'un yeni sürümü mevcut! Yeni sürüm hakkında bilgi almak için buraya tıklayın!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Yeni Sürüm Kontrol Edilemez!"
 END
 
@@ -935,8 +935,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Yeni eMule sürümü algılandığında"
     IDS_NONEWERVERSION      "Yeni eMule Sürümü Algılanmadı!"
-    IDS_VERSIONCHECK        "&Sürüm Kontrolü"
-    IDS_VISITVERSIONCHECK   "\n\nBilgi sayfasını şimdi ziyaret etmek istiyor musunuz?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Görüntü Oynatıcı"
     IDS_MYINFO              "Bilgilerim"
     IDS_ID                  "Kimlik No"
@@ -1130,9 +1130,9 @@ BEGIN
     IDS_LINKS               "Bağlantılar"
     IDS_HM_SCHED_ON         "Zamanlayıcı Açık"
     IDS_HM_SCHED_OFF        "Zamanlayıcı Kapalı"
-    IDS_HM_LINKHP           "eMule Ana Sayfası"
-    IDS_HM_LINKFAQ          "eMule S.S.S"
-    IDS_HM_LINKVC           "eMule Sürüm Kontrolü"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "İstemci kaynak değişimi ve sunucu kaynak sorgulamalarını/cevaplarını günlükle"
     IDS_SHAREDREQ1          "Kullanıcı %s (%u) paylaşılmış dizinlerinizin listesini istedi -> %s"

@@ -906,7 +906,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Vennligst besøk  vår hjemmeside, download kategorien, for å få en kopi av den nyeste hjelpe filen!\n\nØnsker du å se på online hjelp istedet?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Vis dataoverskuddsbåndbredde"
     IDS_UPDOWNSMALL         "Opp: %.1f | Ned: %.1f"
     IDS_EDITLIST            "Liste"
@@ -917,10 +917,10 @@ BEGIN
     IDS_WEBSVEDIT           "Rediger webtjenester"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignorer eMule send link protokol melding"
-    IDS_CHECK4UPDATE        "Se etter ny versjon"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Oppstart"
-    IDS_NEWVERSIONAVL       "Det er en ny eMule versjon tilgjengelig! Se eMule sin hjemmeside for mer informasjon."
-    IDS_NEWVERSIONAVLPOPUP  "Det er en ny eMule versjon tilgjengelig!. Klikk her for å lese mer om den!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Ikke i stand til å se etter ny versjon."
 END
 
@@ -928,8 +928,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Ny eMule versjon funnet"
     IDS_NONEWERVERSION      "Ingen ny eMule versjon funnet."
-    IDS_VERSIONCHECK        "&Versjonskontroll"
-    IDS_VISITVERSIONCHECK   "\n\nØnsker du å besøke informasjonssiden nå?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Videoavspiller"
     IDS_MYINFO              "Min info"
     IDS_ID                  "ID"//!
@@ -1123,9 +1123,9 @@ BEGIN
     IDS_LINKS               "Lenker"
     IDS_HM_SCHED_ON         "Aktiver planlegger"
     IDS_HM_SCHED_OFF        "Deaktiver planlegger"
-    IDS_HM_LINKHP           "eMule hjemmeside"
-    IDS_HM_LINKFAQ          "eMule OSS"
-    IDS_HM_LINKVC           "eMule versjonskontroll"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Vis kildeutvekslingsmeldinger"
     IDS_SHAREDREQ1          "Bruker %s (%u) forespurt liste på dine delte mapper -> %s"
     IDS_SHAREDREQ2          "Bruker %s (%u) forespurt liste på delte filer for mappe '%s' -> %s"

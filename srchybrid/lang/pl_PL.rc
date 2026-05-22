@@ -338,8 +338,8 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_VERSIONCHECK        "&Wersja"
-    IDS_VISITVERSIONCHECK   "\n\nCzy chcesz odwiedzić teraz strone informacyjną?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Odtwarzacz wideo"
     IDS_MYINFO              "Moje Info"
     IDS_ID                  "ID" //!
@@ -809,7 +809,7 @@ BEGIN
     IDS_SAMEUSERHASH        "Klient '%s' i '%s' mają ten sam userhash lub IP - usunięto '%s'"
     IDS_SEARCHEXTENTION     "Rozszerzenie"
     IDS_SEARCHAVAIL         "Dostępność"
-    IDS_ERR_NOHELP          "Zajrzyj na naszą strone domową po najnowszą wersje pliku pomocy!\n\nCZy chcesz teraz obejrzeć pomoc online?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
 END
 
 STRINGTABLE
@@ -1048,10 +1048,10 @@ BEGIN
     IDS_WEBSVEDIT           "Usługi edycji Web..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignoruj wiadmomości protokołu eMule (wysyłanie linków)"
-    IDS_CHECK4UPDATE        "Sprawdź czy jest nowa wersja"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Uruchamianie"
-    IDS_NEWVERSIONAVL       "Nowe werjsa eMule jest dostępna! Szczególy na stronie domowej projektu."
-    IDS_NEWVERSIONAVLPOPUP  "Nowe werjsa eMule jest dostępna! Kliknij tutaj po wiecej informacji!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Sprawdzenie nowej wersji nie powiodło się."
     IDS_CB_TBN_ONNEWVERSION "Wykryto nową werjse eMule"
     IDS_NONEWERVERSION      "Nie znaleziono nowej wersji eMula'a."
@@ -1183,9 +1183,9 @@ STRINGTABLE
 BEGIN
     IDS_HM_SCHED_ON         "Włącz Harmonogram"
     IDS_HM_SCHED_OFF        "Wyłacz Harmonogram"
-    IDS_HM_LINKHP           "Strona domowa eMule"
-    IDS_HM_LINKFAQ          "eMule FAQ" //!
-    IDS_HM_LINKVC           "Sprawdzenie wersji eMule"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help" //!
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Wyświetlaj wiadomości o wymianie źródeł"
     IDS_SHAREDREQ1          "Użytkownik %s (%u) zażądał twojej listy udostępnianych katalogów -> %s"
     IDS_SHAREDREQ2          "Użytkownik %s (%u) zażądał listy udostępnianych plików z katalogu '%s' -> %s"

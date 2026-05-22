@@ -337,8 +337,8 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_VERSIONCHECK        "&Päivitystarve"
-    IDS_VISITVERSIONCHECK   "\n\nHaluatko vierailla eMulen www-sivuilla nyt?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Videosoitin"
     IDS_MYINFO              "Tietosi"
     IDS_ID                  "Tunniste"
@@ -806,7 +806,7 @@ BEGIN
     IDS_SAMEUSERHASH        "Käyttäjillä '%s' ja '%s' on sama hash tai IP. Poistin käyttäjän '%s'."
     IDS_SEARCHEXTENTION     "Tiedostopääte"
     IDS_SEARCHAVAIL         "Saatavuus"
-    IDS_ERR_NOHELP          "Ole hyvä ja vieraile kotisivuillamme saadaksesi uusimmat ohjetiedostot!\n\nHaluaisitko selailla WWW-ohjeita nyt?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
 END
 
 STRINGTABLE
@@ -1044,10 +1044,10 @@ BEGIN
     IDS_WEBSVEDIT           "Muokkaa verkkopalveluita"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Suodata eMulen linkinlähetysprotokollan viestit"
-    IDS_CHECK4UPDATE        "Tarkista uuden version saatavuus"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Käynnistys"
-    IDS_NEWVERSIONAVL       "Uusi versio on saatavilla! Projektin kotisivuilta saat lisätietoja."
-    IDS_NEWVERSIONAVLPOPUP  "Uusi versio on saatavilla. Napsauta tästä, jos haluat lukea uudesta versiosta!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Uuden version saatavuuden tarkistaminen epäonnistui."
     IDS_CB_TBN_ONNEWVERSION "Uusi versio on saatavilla."
     IDS_NONEWERVERSION      "Uutta versioita ei ole saatavilla."
@@ -1180,9 +1180,9 @@ STRINGTABLE
 BEGIN
     IDS_HM_SCHED_ON         "Ajastin päälle"
     IDS_HM_SCHED_OFF        "Ajastin pois päältä"
-    IDS_HM_LINKHP           "eMule kotisivut"
-    IDS_HM_LINKFAQ          "eMule usein kysytyt kysymykset"
-    IDS_HM_LINKVC           "eMule version tarkistus"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Näytä lähteiden vaihtoa koskevat viestit."
     IDS_SHAREDREQ1          "Käyttäjä %s (%u) pyysi listaa jaetuista hakemistoista, %s."

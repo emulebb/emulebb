@@ -898,7 +898,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Bezoek de downloadsectie van onze website om een kopie te downloaden van het nieuwste helpbestand!\n\nWilt u nu de online help proberen?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Overheadbandbreedte tonen"
     IDS_UPDOWNSMALL         "Uit: %.1f | In: %.1f"
     IDS_EDITLIST            "Lijst"
@@ -909,10 +909,10 @@ BEGIN
     IDS_WEBSVEDIT           "Webservices bewerken"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Negeer eMule-linkverzendingsprotocolberichten"
-    IDS_CHECK4UPDATE        "Controleren voor nieuwe versie"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Opstarten"
-    IDS_NEWVERSIONAVL       "Een nieuwe eMule-versie is beschikbaar! Kijk op de projectpagina voor meer informatie."
-    IDS_NEWVERSIONAVLPOPUP  "Een nieuwe eMule-versie is beschikbaar. Klik hier voor informatie over de nieuwe versie!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Onmogelijk te controleren of er een nieuwe versie beschikbaar is."
 END
 
@@ -920,8 +920,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Nieuwe eMule-versie gevonden"
     IDS_NONEWERVERSION      "Geen nieuwe eMule-versie gevonden."
-    IDS_VERSIONCHECK        "Versiecontrole"
-    IDS_VISITVERSIONCHECK   "\n\nWilt u nu de informatiepagina bezoeken?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Videospeler"
     IDS_MYINFO              "Mijn informatie"
     IDS_ID                  "ID" //!
@@ -1114,9 +1114,9 @@ BEGIN
     IDS_LINKS               "Links" //!
     IDS_HM_SCHED_ON         "Planner inschakelen"
     IDS_HM_SCHED_OFF        "Planner uitschakelen"
-    IDS_HM_LINKHP           "eMule-website"
-    IDS_HM_LINKFAQ          "eMule-FAQ" //!
-    IDS_HM_LINKVC           "eMule-versiecontrole"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help" //!
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Bronuitwisselingsberichten tonen"
     IDS_SHAREDREQ1          "Gebruiker %s (%u) verzoekt om uw lijst van gedeelde mappen -> %s"
     IDS_SHAREDREQ2          "Gebruiker %s (%u) verzoekt om uw lijst van gedeelde bestanden in de map '%s' -> %s"

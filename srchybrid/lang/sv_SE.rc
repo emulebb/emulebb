@@ -894,7 +894,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Besök våran hemsidas nedladdningssida för att få tag på den senaste versionen av hjäpfilen!\n\nVill du besöka online-hjälpen istället?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Visa overheadbandbredd"
     IDS_UPDOWNSMALL         "Upp: %.1f | Ner: %.1f"
     IDS_EDITLIST            "Lista"
@@ -905,10 +905,10 @@ BEGIN
     IDS_WEBSVEDIT           "Ändra webtjänster"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignorera eMule skicka länk protokollmeddelanden"
-    IDS_CHECK4UPDATE        "Kolla efter ny version"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Start av eMule"
-    IDS_NEWVERSIONAVL       "En ny version av eMule är tillgänglig! Kolla hemsidan för mer information."
-    IDS_NEWVERSIONAVLPOPUP  "En ny version av eMule är tillgänglig. Klicka här för att läsa om den nya versionen!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Misslyckades att kolla om det fanns en ny version."
 END
 
@@ -916,8 +916,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Ny eMule version hittad"
     IDS_NONEWERVERSION      "Ingen ny eMule version hittad."
-    IDS_VERSIONCHECK        "&Versionskontroll"
-    IDS_VISITVERSIONCHECK   "\n\nVill du besöka informationssidan nu?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Videospelare"
     IDS_MYINFO              "Min info"
     IDS_ID                  "ID" //!
@@ -1110,9 +1110,9 @@ BEGIN
     IDS_LINKS               "Länkar"
     IDS_HM_SCHED_ON         "Aktivera schemat"
     IDS_HM_SCHED_OFF        "Avaktivera schemat"
-    IDS_HM_LINKHP           "eMules hemsida"
-    IDS_HM_LINKFAQ          "eMules FAQ"
-    IDS_HM_LINKVC           "eMules Versionskontroll"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Visa källutbytningsmeddelanden"
     IDS_SHAREDREQ1          "Användare %s (%u) frågade efter listan med dina utdelade mappar -> %s"
     IDS_SHAREDREQ2          "Användare %s (%u) frågade efter listan med dina utdelade filer i mapp '%s' -> %s"

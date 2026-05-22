@@ -898,7 +898,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Prašom apsilankyti mūsų puslapyje, kad gauti naujausią pagalbos failo kopiją! (download skilitis)\n\nAr norėtumėte dabar iškart aplankyti online pagalbą?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Rodyti perteklinę linijos apkrovą"
     IDS_UPDOWNSMALL         "Siunt: %.1f | Gav: %.1f"
     IDS_EDITLIST            "Sąrašas"
@@ -909,10 +909,10 @@ BEGIN
     IDS_WEBSVEDIT           "Redaguot Web servisus"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignoruoti eMule nuorodų siuntimo protokolo pranešimus"
-    IDS_CHECK4UPDATE        "Tikrinti ar yra nauja versija kas"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Startuojant"
-    IDS_NEWVERSIONAVL       "Išleista nauja eMule versija! Patikrinkite eMule projekto puslapį norėdami gauti daugiau informacijos."
-    IDS_NEWVERSIONAVLPOPUP  "Išleista nauja eMule versija! Spauskite čia, kad sužinoti apie naują versiją!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Negaliu patikrinti ar yra nauja versija."
 END
 
@@ -920,8 +920,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Aptikta nauja eMule versija"
     IDS_NONEWERVERSION      "Neaptikta nauja eMule versija."
-    IDS_VERSIONCHECK        "&Versijos tikrinimas"
-    IDS_VISITVERSIONCHECK   "\n\nAr jūs norite aplankyti informacinį puslapį dabar?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Video grotuvas"
     IDS_MYINFO              "Mano informacija"
     IDS_ID                  "ID"//!
@@ -1114,9 +1114,9 @@ BEGIN
     IDS_LINKS               "Nuorodos"
     IDS_HM_SCHED_ON         "Įjungti planavimą"
     IDS_HM_SCHED_OFF        "Išjungti planavimą"
-    IDS_HM_LINKHP           "eMule puslapis"
-    IDS_HM_LINKFAQ          "eMule FAQ"//!
-    IDS_HM_LINKVC           "eMule versijos tikrinimas"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"//!
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Rodyti šaltinių apsikeitimo pranešimus"
     IDS_SHAREDREQ1          "Vartotojas %s (%u) užklausė jūsų šarintų katalogų sąrašą -> %s"
     IDS_SHAREDREQ2          "Vartotojas %s (%u) užklausė jūsų šarintų failų sąrašą kataloge '%s' -> %s"

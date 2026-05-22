@@ -989,7 +989,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "ヘルプファイルが見つかりません。\nホームページのダウンロードページから最新のヘルプファイルをダウンロードして下さい!\n\n代わりにオンラインヘルプを参照しますか?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "オーバーヘッドした帯域幅を表示"
     IDS_UPDOWNSMALL         "㊤: %.1f | ㊦: %.1f"
     IDS_EDITLIST            "リスト..."
@@ -1000,10 +1000,10 @@ BEGIN
     IDS_WEBSVEDIT           "ウェブサービスを編集..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "eMuleの send link プロトコルメッセージを無視"
-    IDS_CHECK4UPDATE        "新しいバージョンをチェック"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "起動時"
-    IDS_NEWVERSIONAVL       "新しいバージョンのeMuleが利用可能になりました! プロジェクトホームページで詳細情報を確認できます"
-    IDS_NEWVERSIONAVLPOPUP  "新しいバージョンのeMuleが利用可能になりました! ここをクリックすれば新バージョンについての詳細を確認することができます!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "新しいバージョンをチェックできません"
 END
 
@@ -1011,8 +1011,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "新しいバージョンのeMuleを検出"
     IDS_NONEWERVERSION      "eMuleの新しいバージョンはありません"
-    IDS_VERSIONCHECK        "バージョンチェック(&V)"
-    IDS_VISITVERSIONCHECK   "\n\n今すぐインフォメーションページを訪問しますか?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "ビデオプレーヤー"
     IDS_MYINFO              "情報"
     IDS_ID                  "ID"
@@ -1167,9 +1167,9 @@ BEGIN
     IDS_LINKS               "リンク"
     IDS_HM_SCHED_ON         "スケジューラを使用する"
     IDS_HM_SCHED_OFF        "スケジューラを使用しない"
-    IDS_HM_LINKHP           "eMule ホームページ"
-    IDS_HM_LINKFAQ          "eMule FAQ"
-    IDS_HM_LINKVC           "eMule バージョン確認"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "クライアントソース交換とサーバソース問い合わせ/応答のログを採る"
     IDS_SHAREDREQ1          "ユーザー %s (%u) が共有ディレクトリのリストを要求しました -> %s"

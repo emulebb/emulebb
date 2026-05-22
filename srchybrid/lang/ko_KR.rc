@@ -335,8 +335,8 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_VERSIONCHECK        "버전 확인(&V)"
-    IDS_VISITVERSIONCHECK   "\n\n지금 정보 페이지를 방문하시겠습니까?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "비디오 재생기"
     IDS_MYINFO              "내 정보"
     IDS_ID                  "ID"
@@ -804,7 +804,7 @@ BEGIN
     IDS_SAMEUSERHASH        "'%s' 및 '%s' 두 클라이언트는 동일한 사용자 해시나 IP를 가지고 있습니다 - '%s' 삭제됨"
     IDS_SEARCHEXTENTION     "확장자"
     IDS_SEARCHAVAIL         "가용 소스"
-    IDS_ERR_NOHELP          "새로운 도움말 파일을 보려면 홈페이지로부터 다운로드하십시오!\n\n지금 온라인 도움말을 보시겠습니까?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
 END
 
 STRINGTABLE
@@ -1042,10 +1042,10 @@ BEGIN
     IDS_WEBSVEDIT           "웹 서비스 편집..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
 														"eMule 링크 전송 프로토콜 메시지 무시"
-    IDS_CHECK4UPDATE        "새로운 버전 확인"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "시작"
-    IDS_NEWVERSIONAVL       "eMule의 새로운 버전이 나왔습니다! 프로젝트 홈페이지에서 자세한 내용을 확인하십시오."
-    IDS_NEWVERSIONAVLPOPUP  "eMule의 새로운 버전이 나왔습니다. 새로운 버전에 대한 정보는 여기를 누르십시오!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "새로운 버전을 확인할 수 없음"
     IDS_CB_TBN_ONNEWVERSION "새로운 eMule 버전을 찾음"
     IDS_NONEWERVERSION      "새로운 eMule 버전이 없음"
@@ -1177,9 +1177,9 @@ STRINGTABLE
 BEGIN
     IDS_HM_SCHED_ON         "시간표 켜기"
     IDS_HM_SCHED_OFF        "시간표 끄기"
-    IDS_HM_LINKHP           "eMule 홈 페이지"
-    IDS_HM_LINKFAQ          "eMule 자주 묻는 질문"
-    IDS_HM_LINKVC           "eMule 버전 확인"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
 														"클라이언트 소스 교환 및 서버 소스 질의/응답 기록"
     IDS_SHAREDREQ1          "%s (%u) 사용자가 공유 디렉토리 목록을 요청 -> %s"

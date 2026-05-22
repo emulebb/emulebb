@@ -339,8 +339,8 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_VERSIONCHECK        "检查版本(&V)"
-    IDS_VISITVERSIONCHECK   "\n\n要访问信息页面吗?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "视频播放器"
     IDS_MYINFO              "我的信息"
     IDS_ID                  "ID" //!
@@ -808,7 +808,7 @@ BEGIN
     IDS_SAMEUSERHASH        "客户'%s'和'%s'拥有相同的userhash或IP - 移除'%s'"
     IDS_SEARCHEXTENTION     "扩展名"
     IDS_SEARCHAVAIL         "可用源数"
-    IDS_ERR_NOHELP          "请访问我们主页上的下载区来获得最新的帮助文件!\n\n你想要立即浏览在线帮助吗?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
 END
 
 STRINGTABLE
@@ -1046,10 +1046,10 @@ BEGIN
     IDS_WEBSVEDIT           "编辑Web服务"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "忽略eMule发送链接协议消息"
-    IDS_CHECK4UPDATE        "检查新版本"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "启动"
-    IDS_NEWVERSIONAVL       "已有新版本的eMule可下载!查看主页上的详细信息."
-    IDS_NEWVERSIONAVLPOPUP  "已有新版本的eMule可下载!单击这里查看相关信息."
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "无法检查新版本."
     IDS_CB_TBN_ONNEWVERSION "侦测到新版本的eMule!"
     IDS_NONEWERVERSION      "未侦测到更新版本的eMule."
@@ -1181,9 +1181,9 @@ STRINGTABLE
 BEGIN
     IDS_HM_SCHED_ON         "打开计划任务"
     IDS_HM_SCHED_OFF        "关闭计划任务"
-    IDS_HM_LINKHP           "eMule主页"
-    IDS_HM_LINKFAQ          "eMule常见问题解答"
-    IDS_HM_LINKVC           "eMule版本检查"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "记录来源交换信息"
     IDS_SHAREDREQ1          "用户 %s (%u) 请求你的共享目录列表-> %s"

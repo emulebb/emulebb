@@ -4227,7 +4227,7 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 		BrowserOpen(thePrefs.GetHomepageBaseURL(), thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));
 		break;
 	case MP_HM_LINK2:
-		BrowserOpen(thePrefs.GetHomepageBaseURL() + _T("/faq/"), thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));
+		BrowserOpen(thePrefs.GetOnlineHelpURL(), thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));
 		break;
 	case MP_HM_LINK3:
 		BrowserOpen(thePrefs.GetVersionCheckURL(), thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));

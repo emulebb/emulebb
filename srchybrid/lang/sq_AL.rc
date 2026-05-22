@@ -982,7 +982,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Ju lutemi vizitoni sektorin e shkarkimit në faqen zyrtare për të marrë një kopje të ndihmë-skedës më të ri!\n\nA do e shfletoni që tani ndihmën me linjë?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Trego shtrirjen sipërore të bandës"
     IDS_UPDOWNSMALL         "Lart: %.1f | Poshtë: %.1f"
     IDS_EDITLIST            "Listë..."
@@ -993,10 +993,10 @@ BEGIN
     IDS_WEBSVEDIT           "Shërbimet e Rrjetit..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Për dërgimin e linkeve"
-    IDS_CHECK4UPDATE        "Verifiko versionin më të ri"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Në nisje"
-    IDS_NEWVERSIONAVL       "Për eMule ka një version të ri! Për më tepër informacion verifikoni faqen kryesore të projektit."
-    IDS_NEWVERSIONAVLPOPUP  "Për eMule ka një version të ri. Klikoni për të lexuar rreth tij!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Versioni i ri nuk mund të verifikohet!"
 END
 
@@ -1004,8 +1004,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Për eMule diktohet një version i ri"
     IDS_NONEWERVERSION      "Për eMule nuk diktohet asnjë version i ri."
-    IDS_VERSIONCHECK        "&Verifikim versioni"
-    IDS_VISITVERSIONCHECK   "\n\nA do e vizitoni tani faqen e informacionit?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Luajtësi i videos"
     IDS_MYINFO              "Informacion"
     IDS_ID                  "ID"//!
@@ -1159,9 +1159,9 @@ BEGIN
     IDS_LINKS               "Linke"
     IDS_HM_SCHED_ON         "Ndize Planifikuesin"
     IDS_HM_SCHED_OFF        "Fike Planifikuesin"
-    IDS_HM_LINKHP           "Faqe zyrtare e eMule"
-    IDS_HM_LINKFAQ          "eMule PBSH"
-    IDS_HM_LINKVC           "Verifikimi i versionit"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Hape shkëmbimin me burimin e klientit dhe pyetje/përgjigje me burimin e serverit"
     IDS_SHAREDREQ1          "Përdoruesi %s (%u) kërkoi listën e direktorive të shpërndara -> %s"

@@ -100,9 +100,9 @@ BEGIN
     IDS_LINKS               "קישורים"
     IDS_HM_SCHED_ON         "הפעל תיזמון"
     IDS_HM_SCHED_OFF        "בטל תיזמון"
-    IDS_HM_LINKHP           "אתר הבית של אימיול"
-    IDS_HM_LINKFAQ          "שאלות נפוצות"
-    IDS_HM_LINKVC           "בדיקת גירסה"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "הצג הודעת החלפת מקורות"
     IDS_SHAREDREQ1          "המשתמש %s (%u) ביקש את רשימת התיקיות המשותפות שלך -> %s"
     IDS_SHAREDREQ2          "המשתמש %s (%u) ביקש את רשימת הקבצים המשותפים שלך בתיקייה '%s' -> %s"
@@ -302,8 +302,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "אותרה גירסה חדשה לאימיול"
     IDS_NONEWERVERSION      "לא אותרה גירסה חדשה לאימיול."
-    IDS_VERSIONCHECK        "בדיקת גירסה"
-    IDS_VISITVERSIONCHECK   "\n\nהאם ברצונך לבקר בדף המידע?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "נגן וידאו"
     IDS_MYINFO              "המידע שלי"
     IDS_ID                  "מזהה"
@@ -338,7 +338,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "אנא בקר בדף ההורדות באתר הבית שלנו כדי להוריד את קובץ העזרה החדש ביותר!\n\nהאם ברצונך לדפדף בעזרה באתר במקום?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "הצג תעבורה כללית (תקורה)"
     IDS_UPDOWNSMALL         "עולה: %.1f | יורד: %.1f"
     IDS_EDITLIST            "רשימה"
@@ -349,10 +349,10 @@ BEGIN
     IDS_WEBSVEDIT           "ערוך שירותי נט"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "התעלם מהודעות פרוטוקול שליחת קישורים של אימיול"
-    IDS_CHECK4UPDATE        "בדוק אם קיימת גירסה חדשה"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "הפעלה"
-    IDS_NEWVERSIONAVL       "גירסה חדשה של אימיול זמינה! בדוק את אתר הפרוייקט למידע נוסף."
-    IDS_NEWVERSIONAVLPOPUP  "גירסה חדשה של אימיול זמינה. לחץ כאן כדי לקרוא על הגירסה החדשה!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "לא יכול לבדוק קיום של גירסה חדשה."
 END
 

@@ -885,7 +885,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Δεν βρέθηκε αρχείο βοήθειας!\n\nΠαρακαλώ επισκευθείτε τον δικτυακό μας τόπο για να βρείτε την τελευταία έκδοση του αρχείου βοήθειας (στο τμήμα download)."
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Έυρος κατανάλωσης δικτύου ενεργό"
     IDS_UPDOWNSMALL         "Πάνω:%.1f | Κάτω:%.1f"
     IDS_EDITLIST            "Λίστα..."
@@ -895,10 +895,10 @@ BEGIN
     IDS_WEBSERVICES         "Υπηρεσίες Web"
     IDS_WEBSVEDIT           "Αλλαγή υπηρεσιών Web..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK "Μηνύματα για αποστολή link"
-    IDS_CHECK4UPDATE        "Έλεγχος νέας έκδοσης"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Εκκίνηση"
-    IDS_NEWVERSIONAVL       "Μια νέα έκδοση του eMule είναι διαθέσιμη! Ελέγξτε την κεντρική σελίδα του προγράμματος για περισσότερες πληροφορίες."
-    IDS_NEWVERSIONAVLPOPUP  "Μια νέα έκδοση του eMule είναι διαθέσιμη! Κάντε κλικ εδώ για να διαβάσετε σχετικά με την νέα έκδοση!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Αδύνατος ο έλεγχος για νέα έκδοση"
 END
 
@@ -906,8 +906,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Εντοπισμό νέας έκδοσης του eMule"
     IDS_NONEWERVERSION      "Δεν εντοπίστηκε νέα έκδοση του eMule"
-    IDS_VERSIONCHECK        "Έλεγχος νέας έ&κδοσης"
-    IDS_VISITVERSIONCHECK   "\n\nΘέλετε να επισκευθείτε την σελίδα πληροφοριών τώρα;"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Πρόγραμμα αναπαραγωγής βίντεο"
     IDS_MYINFO              "Οι πληροφορίες μου"
     IDS_ID                  "Κωδικός"
@@ -1094,9 +1094,9 @@ BEGIN
     IDS_LINKS               "Σχετικές τοποθεσίες"
     IDS_HM_SCHED_ON         "Ενεργοποίηση προγραμματισμού"
     IDS_HM_SCHED_OFF        "Απενεργοποίηση προγραμματισμού"
-    IDS_HM_LINKHP           "Κεντρική σελίδα του eMule"
-    IDS_HM_LINKFAQ          "Συχνές ερωτήσεις για το eMule"
-    IDS_HM_LINKVC           "Έλεγχος νέας έκδοσης"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Καταγραφή διαδικασίας ανταλλαγής πηγών"
     IDS_SHAREDREQ1          "Ο χρήστης %s (%u) ζήτησε τη λίστα των κοινόχρηστων φακέλων σας -> %s"
     IDS_SHAREDREQ2          "Ο χρήστης %s (%u) ζήτησε τη λίστα των κοινόχρηστων αρχείων για τον φάκελο '%s' -> %s"

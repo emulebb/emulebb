@@ -982,7 +982,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "¡Por favor, visita la estaya de descarga de la nuesa páxina web pa baxar un calcu del archivu d’ayuda más reciente!\n\nD ¿Quies güeyar agora l’ayuda en llinia?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Amosar anchu de banda que sobra"
     IDS_UPDOWNSMALL         "Subida: %.1f | Baxada: %.1f"
     IDS_EDITLIST            "Editar"
@@ -993,10 +993,10 @@ BEGIN
     IDS_WEBSVEDIT           "Editar servicios web"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Inorar mensaxes unviar enllaz d’eMule"
-    IDS_CHECK4UPDATE        "Comprobar si hai una nueva versión"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Al entamar"
-    IDS_NEWVERSIONAVL       "¡Una nueva versión d’eMule ta disponible! Pa más información visita la web d’emule-project."
-    IDS_NEWVERSIONAVLPOPUP  "Una nueva versión d’eMule ta disponible. ¡Fai click equí pa güeyar les novedaes d’esta nueva versión!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Nun se pue comprobar si hai una nueva versión."
 END
 
@@ -1004,8 +1004,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Al detectar nueva versión d’eMule"
     IDS_NONEWERVERSION      "Nun se detectó denguna versión nueva d’eMule."
-    IDS_VERSIONCHECK        "Comprobar nueva &versión"
-    IDS_VISITVERSIONCHECK   "\n\n¿Quies visitar la páxina d’información agora?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Reproductor de video"
     IDS_MYINFO              "La mio información"
     IDS_ID                  "ID"
@@ -1159,9 +1159,9 @@ BEGIN
     IDS_LINKS               "Enllaces"
     IDS_HM_SCHED_ON         "Activar Programdor"
     IDS_HM_SCHED_OFF        "Desactivar Programador"
-    IDS_HM_LINKHP           "Web d’eMule"
-    IDS_HM_LINKFAQ          "eMule FAQ"
-    IDS_HM_LINKVC           "Comprobar versión d’eMule"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Amosar l’orixe d’intercambiu de mensaxes"
     IDS_SHAREDREQ1          "L’usuariu %s (%u) solicitó la to llista de carpetes compartíes -> %s"

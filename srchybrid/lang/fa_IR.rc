@@ -337,8 +337,8 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_VERSIONCHECK        "&تطبيق دادن نسخه موجود"
-    IDS_VISITVERSIONCHECK   "\n\nآيا مي خواهيد صفحه اطلاعات موجود را ببينيد؟"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "نرم افزار نمايش دهنده ويدئويي"
     IDS_MYINFO              "اطلاعات من"
     IDS_ID                  "شناسه"
@@ -806,7 +806,7 @@ BEGIN
     IDS_SAMEUSERHASH        "كاربر مشتري '%s' و '%s' يك كد رمز يا آي پي يكسان دارند - حذف شدند '%s'"
     IDS_SEARCHEXTENTION     "پسوند"
     IDS_SEARCHAVAIL         "مقدار دسترسي"
-    IDS_ERR_NOHELP          "لطفا به بخش دانلود صفحه خانگي ايمول مراجعه كنيد براي گرفتن كتاب راهناي جديد\n\nآيا شما ميخواهيد بصورت آنلاين در وب بدنبال راهنماي مورد نظرتان بگرديد؟"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
 END
 
 STRINGTABLE
@@ -1044,10 +1044,10 @@ BEGIN
     IDS_WEBSVEDIT           "ويرايش سرويس وب...َ"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "ايمول پيغام هاي دستوري كه در آنها لينك فرستاده شده را ناديده بگيرد"
-    IDS_CHECK4UPDATE        "چک کردن براي نسخه جديد"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "شروع به كار"
-    IDS_NEWVERSIONAVL       "يك نسخه جديد از ايمول موجود است! به سايت اصلي ايمول براي جزئيات بيشتر مراجعه كنيد.َ"
-    IDS_NEWVERSIONAVLPOPUP  "يك نسخه جديد از ايمول موجود است. براي گرفتن اطلاعات درباره آن اينجا كليك كنيد!َ"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "نمي توان نسخه جديد را چك كرد.َ"
     IDS_CB_TBN_ONNEWVERSION "نسخه جديد ايمول پيدا شد"
     IDS_NONEWERVERSION      "نسخه جديدي از ايمول پيدا نشده.َ"
@@ -1179,9 +1179,9 @@ STRINGTABLE
 BEGIN
     IDS_HM_SCHED_ON         "فعال كردن عمليات زمان بندي"
     IDS_HM_SCHED_OFF        "غير فعال كردن عمليات زمان بندي"
-    IDS_HM_LINKHP           "صفحه وب خانگي ايمول"
-    IDS_HM_LINKFAQ          "سوالاتي كه اغلب درباره ايمول پرسيده مي شود"
-    IDS_HM_LINKVC           "چك كردن بروز بودن نسخه نرم افزار ايمول شما"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "گزارش ردوبدل كردن منابع واندازه صف ها  و درخواست هاي كاربران/و جواب ها"
     IDS_SHAREDREQ1          "كاربر %s (%u) درخواست گرفتن ليست فايلهاي به اشتراك گذاشته شده شما را كرد -> %s"

@@ -957,7 +957,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Vino, te rog, în secţia de Download a paginii noastre de Net ptr. un nou fişier de Ajutor!\n\nVrei să răsfoieşti ajutorul online acum, în schimb?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Arată consum adiţional bandă"
     IDS_UPDOWNSMALL         "Tr: %.1f | Desc: %.1f"
     IDS_EDITLIST            "Lista..."
@@ -968,10 +968,10 @@ BEGIN
     IDS_WEBSVEDIT           "Modifică serviciile Web"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignoră mesaje protocol eMule Trimitere link"
-    IDS_CHECK4UPDATE        "Caută o nouă versiune"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "La pornire"
-    IDS_NEWVERSIONAVL       "E disponibilă o nouă versiune de eMule! Pentru alte informaţii intră pe site-ul eMule."
-    IDS_NEWVERSIONAVLPOPUP  "E disponibilă o nouă versiune de eMule. Pentru informaţii dă click aici!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Nu pot verifica actualizarea."
 END
 
@@ -979,8 +979,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "E disponibilă o nouă versiune de eMule"
     IDS_NONEWERVERSION      "Ai deja ultima versiune de eMule."
-    IDS_VERSIONCHECK        "Control &Versiune"
-    IDS_VISITVERSIONCHECK   "\n\nVrei să vezi acum pagina de noutăţi?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Player pentru pre-vizualizare:"
     IDS_MYINFO              "Datele mele"
     IDS_ID                  "ID" //!
@@ -1134,9 +1134,9 @@ BEGIN
     IDS_LINKS               "Link-uri"
     IDS_HM_SCHED_ON         "Activare acţiuni programate"
     IDS_HM_SCHED_OFF        "Dezactivare acţiuni programate"
-    IDS_HM_LINKHP           "Homepage eMule"
-    IDS_HM_LINKFAQ          "F.A.Q. eMule"
-    IDS_HM_LINKVC           "Control versiune eMule"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Log mesaje de schimb de surse client şi cereri/răspunsuri server"
     IDS_SHAREDREQ1          "Utilizatorul %s (%u) a cerut lista dosarelor tale share -> %s"

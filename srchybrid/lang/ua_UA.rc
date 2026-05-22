@@ -983,7 +983,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Бідь ласка відвідайте нашу домашню сторінку, щоб отримати останній файл довідки!\n\nАбо Ви хочете відвідати замість цього Довідку он-лайн?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Показувати перевищення швидкості"
     IDS_UPDOWNSMALL         "Відван: %.1f | Заван: %.1f"
     IDS_EDITLIST            "Список..."
@@ -994,10 +994,10 @@ BEGIN
     IDS_WEBSVEDIT           "Редагувати..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ігнорувати посилання eMule"
-    IDS_CHECK4UPDATE        "Перевірка нової версії"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Запуск"
-    IDS_NEWVERSIONAVL       "Нова версія eMule доступна для завантаження! Відвідайте project-homepage, щоб дізнатися більше."
-    IDS_NEWVERSIONAVLPOPUP  "Нова версія eMule доступна для завантаження. Натисність тут, щоб прочитати більше про неї!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Неможливо перевірити наявність нової версії."
 END
 
@@ -1005,8 +1005,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Знайдена нова версія eMule"
     IDS_NONEWERVERSION      "Нової версії eMule не знайдено."
-    IDS_VERSIONCHECK        "&Перевірка версії"
-    IDS_VISITVERSIONCHECK   "\n\nви хочете відвідати інформаційну сторінку зараз?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Відео програвач"
     IDS_MYINFO              "My Info"
     IDS_ID                  "ID"
@@ -1160,9 +1160,9 @@ BEGIN
     IDS_LINKS               "Посилання"
     IDS_HM_SCHED_ON         "Включити планувальник"
     IDS_HM_SCHED_OFF        "Виключити планувальник"
-    IDS_HM_LINKHP           "Домашня сторінка eMule"
-    IDS_HM_LINKFAQ          "Питання по eMule"
-    IDS_HM_LINKVC           "Перевірка версії eMule"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Лоґ повідомлень обміну з сервером і клієнтами"
     IDS_SHAREDREQ1          "Користувач %s (%u) зробив запит на Ваш список спільних тек -> %s"

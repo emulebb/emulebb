@@ -894,7 +894,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Prosim, obiščite oddelek s prenosi na naši spletni strani za prenos najnovješe datoteke s pomočjo!\n\nAli želite namesto tega prebrskati spletno pomoč?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Prikaži presežek prenosa"
     IDS_UPDOWNSMALL         "Gor: %.1f | Dol: %.1f"
     IDS_EDITLIST            "Prikaži"
@@ -903,10 +903,10 @@ BEGIN
     IDS_DESCRIPTIONRECV     "Sprejet opis datoteke '%s' - %s"
     IDS_WEBSERVICES         "Spletne storitve"
     IDS_WEBSVEDIT           "Uredi spletne storitve"
-    IDS_CHECK4UPDATE        "Preveri za novo različico"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Zagon"
-    IDS_NEWVERSIONAVL       "Na voljo je nova različica eMule! Obiščite našo spletno stran za več informacij."
-    IDS_NEWVERSIONAVLPOPUP  "Na voljo je nova različica eMule. Pritisnite tukaj za več informacij!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Pregled za novo različico ni uspel."
 END
 
@@ -914,8 +914,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Na voljo je nova različica eMule"
     IDS_NONEWERVERSION      "Nove različice ni na voljo."
-    IDS_VERSIONCHECK        "Pre&verjanje za novo različico"
-    IDS_VISITVERSIONCHECK   "\n\nAli žlite obiskati informacijsko stran?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Video predvajalnik"
     IDS_MYINFO              "Moji podatki"
     IDS_ID                  "ID" //!
@@ -1106,9 +1106,9 @@ BEGIN
     IDS_LINKS               "Povezave"
     IDS_HM_SCHED_ON         "Vklopi Urnik"
     IDS_HM_SCHED_OFF        "Izklopi Urnik"
-    IDS_HM_LINKHP           "Domača Stran eMule"
-    IDS_HM_LINKFAQ          "Pogosta vprašanja o eMule"
-    IDS_HM_LINKVC           "Pregled različice eMule"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Prikaži sporočila ob izmenjavi virov"
     IDS_SHAREDREQ1          "Uporabnik %s (%u) je zahteval vaš seznam deljenih datotek -> %s"
     IDS_SHAREDREQ2          "Uporabnik %s (%u) je zahteval vaš seznam deljenih datotek za mapo '%s' -> %s"

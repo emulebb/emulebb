@@ -3994,6 +3994,11 @@ CString CPreferences::GetHomepageBaseURLForLevel(int nLevel)
 	return _T("https://emulebb.github.io");
 }
 
+CString CPreferences::GetOnlineHelpURL()
+{
+	return _T("https://emulebb.github.io/eMule-tooling/HELP/");
+}
+
 CString CPreferences::GetVersionCheckBaseURL()
 {
 	return _T("https://github.com/eMulebb/eMule/releases");

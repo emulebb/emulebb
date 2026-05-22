@@ -984,7 +984,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Please visit our homepage's download section to get a copy of the newest help file!\n\nDo you want to browse the online help now instead?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Show overhead bandwidth"
     IDS_UPDOWNSMALL         "Up: %.1f | Down: %.1f"
     IDS_EDITLIST            "List..."
@@ -995,10 +995,10 @@ BEGIN
     IDS_WEBSVEDIT           "Edit Web Services..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignore eMule send link protocol messages"
-    IDS_CHECK4UPDATE        "Check for new version"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Startup"
-    IDS_NEWVERSIONAVL       "A new version of eMule is available! Check the project-homepage for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule is available. Click here to read about the new version!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Unable to check for new version."
 END
 
@@ -1006,8 +1006,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "New eMule version detected"
     IDS_NONEWERVERSION      "No new eMule version detected."
-    IDS_VERSIONCHECK        "&Versioncheck"
-    IDS_VISITVERSIONCHECK   "\n\nDo you want do visit the Informationpage now?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Video player"
     IDS_MYINFO              "My Info"
     IDS_ID                  "ID"
@@ -1161,9 +1161,9 @@ BEGIN
     IDS_LINKS               "Links"
     IDS_HM_SCHED_ON         "Switch Scheduler On"
     IDS_HM_SCHED_OFF        "Switch Scheduler Off"
-    IDS_HM_LINKHP           "eMule Homepage"
-    IDS_HM_LINKFAQ          "eMule FAQ"
-    IDS_HM_LINKVC           "eMule Versioncheck"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Log client source exchange and server source queries/answers"
     IDS_SHAREDREQ1          "User %s (%u) requested your list of shared directories -> %s"

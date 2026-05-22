@@ -984,7 +984,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Vui lòng truy cập trang Tải Xuống của eMule để lấy tập tin Trợ Giúp mới nhất!\n\nBạn có muốn truy cập Trợ Giúp trực tuyến bây giờ không?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Hiển thị lượng băng thông đã sử dụng"
     IDS_UPDOWNSMALL         "Lên: %.1f | Xuống: %.1f"
     IDS_EDITLIST            "DSách..."
@@ -995,10 +995,10 @@ BEGIN
     IDS_WEBSVEDIT           "Chỉnh sửa Dịch-vụ-Web..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Bỏ qua Thông điệp gởi Liên kết"
-    IDS_CHECK4UPDATE        "Kiểm tra Phiên bản mới"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Khởi động"
-    IDS_NEWVERSIONAVL       "Đã có Phiên bản eMule mới! Truy cập trang chủ eMule để biết thêm thông tin."
-    IDS_NEWVERSIONAVLPOPUP  "Đã có Phiên bản eMule mới! Nhấn vào đây để xem chi tiết!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Không thể kiểm tra phiên bản mới"
 END
 
@@ -1006,8 +1006,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Đã có Phiên bản eMule mới"
     IDS_NONEWERVERSION      "Không có phiên bản eMule mới."
-    IDS_VERSIONCHECK        "&Kiểm tra Phiên bản"
-    IDS_VISITVERSIONCHECK   "\n\nBạn có muốn truy cập trang thông tin Phiên bản bây giờ không?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Chương trình xem Video"
     IDS_MYINFO              "Thông tin"
     IDS_ID                  "ID" //!
@@ -1161,9 +1161,9 @@ BEGIN
     IDS_LINKS               "Liên kết"
     IDS_HM_SCHED_ON         "Bật Thời gian biểu"
     IDS_HM_SCHED_OFF        "Tắt Thời gian biểu"
-    IDS_HM_LINKHP           "Trang chủ eMule"
-    IDS_HM_LINKFAQ          "Câu hỏi thường gặp eMule"
-    IDS_HM_LINKVC           "Kiểm tra phiên bản eMule"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Ghi lại Trao đổi nguồn máy khách và Yêu cầu/trả lời máy chủ"
     IDS_SHAREDREQ1          "Người dùng %s (%u) yêu cầu danh sách thư mục chia sẻ của bạn -> %s"

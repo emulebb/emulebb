@@ -938,7 +938,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Prosím, navštivte sekci Downloady na naší homepage, kde získáte nejnovější verzi souborů nápovědy!\n\nMáte nyní zájem o navštívení on-line nápovědy?"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Zobrazit overhead bandwidth"
     IDS_UPDOWNSMALL         "Up: %.1f | Down: %.1f" //!
     IDS_EDITLIST            "Seznam"
@@ -949,10 +949,10 @@ BEGIN
     IDS_WEBSVEDIT           "Upravit webové služby"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignorovat zprávy protokolu o zasílání odkazů eMule"
-    IDS_CHECK4UPDATE        "Zjisti novou verzi"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "Po spuštění"
-    IDS_NEWVERSIONAVL       "Nová verze eMule je k dispozici! Pro více informací se podívejte na domovskou stránku eMule projektu."
-    IDS_NEWVERSIONAVLPOPUP  "Nová verze eMule je k dispozici. Pro další informace o nové verzi klikněte zde!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Nelze zjistit novou verzi."
 END
 
@@ -960,8 +960,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Nová verze eMule zjištěna"
     IDS_NONEWERVERSION      "Žádná nová verze eMule nezjištěna."
-    IDS_VERSIONCHECK        "&Zjištění verze"
-    IDS_VISITVERSIONCHECK   "\n\nChcete nyní navštívit informační stránku?"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Přehrávač videa"
     IDS_MYINFO              "Moje info"
     IDS_ID                  "ID" //!
@@ -1115,9 +1115,9 @@ BEGIN
     IDS_LINKS               "Odkazy"
     IDS_HM_SCHED_ON         "Zapnout plánovač"
     IDS_HM_SCHED_OFF        "Vypnout plánovač"
-    IDS_HM_LINKHP           "Domovská stránka eMule"
-    IDS_HM_LINKFAQ          "FAQ eMule"
-    IDS_HM_LINKVC           "Zjištění verze eMule"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Zobrazit zprávy o výměně zdrojů"
     IDS_SHAREDREQ1          "Uživatel %s (%u) požádal o Váš seznam sdílených adresářů -> %s"
     IDS_SHAREDREQ2          "Uživatel %s (%u) požádal o Váš seznam sdílených souborů z adresáře '%s' -> %s"

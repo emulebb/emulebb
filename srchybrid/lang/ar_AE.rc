@@ -982,7 +982,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "الرجاء زيارة موقعنا لتحميل نسخة جديدة من ملف المساعدة!\n\nهل تريد تصفح ملف المساعدة الان؟"
+    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "اظهر الحد المسموح"
     IDS_UPDOWNSMALL         "تحميل: %.1f | رفع: %.1f"
     IDS_EDITLIST            "قائمة..."
@@ -993,10 +993,10 @@ BEGIN
     IDS_WEBSVEDIT           "عدل خدمة الموقع..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "تجاهل وصلات بروتوكول ايمول"
-    IDS_CHECK4UPDATE        "افحص هل هاك اصدار جديد"
+    IDS_CHECK4UPDATE        "Check for eMule BB updates"
     IDS_STARTUP             "البدأ"
-    IDS_NEWVERSIONAVL       "اصدار جديد من ايمول متوفر! افحص موقعنا لمزيد من المعلومات."
-    IDS_NEWVERSIONAVLPOPUP  "اصدار جديد من ايمول متوفر. اضغط هنا لقراة بعض المعلومات عن الاصدار الجديد!"
+    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "غير قادر على فحص اصدار جديد."
 END
 
@@ -1004,8 +1004,8 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "اصدار جديد من ايمول متوفر حاليا"
     IDS_NONEWERVERSION      "ليس هنال اصدار جديد من ايمول متوفر حاليا."
-    IDS_VERSIONCHECK        "&فحص الاصدار"
-    IDS_VISITVERSIONCHECK   "\n\nهل تريد زيارة صفحة المعلومات الان؟"
+    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "فيديو بلير"
     IDS_MYINFO              "معلوملتي"
     IDS_ID                  "هوية"
@@ -1159,9 +1159,9 @@ BEGIN
     IDS_LINKS               "وصلات"
     IDS_HM_SCHED_ON         "فعل القائمة"
     IDS_HM_SCHED_OFF        "ابطل القائمة"
-    IDS_HM_LINKHP           "صفحة ايمول "
-    IDS_HM_LINKFAQ          "معلومات ايمول"
-    IDS_HM_LINKVC           "فحص اصدار ايمول"
+    IDS_HM_LINKHP           "eMule BB Homepage"
+    IDS_HM_LINKFAQ          "eMule BB Help"
+    IDS_HM_LINKVC           "eMule BB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "دخول مصدر العميل و مصدر الخادم"
     IDS_SHAREDREQ1          "المستخدم %s (%u) طلب قائمة الملفات المشتركة الخاصة بك -> %s"
