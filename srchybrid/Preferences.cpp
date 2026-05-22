@@ -809,6 +809,7 @@ DWORD	CPreferences::m_adwStatsColors[15];
 bool	CPreferences::m_bHasCustomTaskIconColor;
 int		CPreferences::m_iStartupProgressDialogMode;
 int		CPreferences::m_iShutdownProgressDialogMode;
+bool	CPreferences::m_bDailyConfigBackup;
 bool	CPreferences::filterLANIPs;
 bool	CPreferences::m_bAllocLocalHostIP;
 bool	CPreferences::onlineSig;
@@ -2633,6 +2634,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("AddServersFromClient"), m_bAddServersFromClients);
 	ini.WriteInt(_T("StartupProgressDialog"), m_iStartupProgressDialogMode);
 	ini.WriteInt(_T("ShutdownProgressDialog"), m_iShutdownProgressDialogMode);
+	ini.WriteBool(GetDailyConfigBackupIniKey(), m_bDailyConfigBackup);
 	ini.WriteBool(_T("BringToFront"), bringtoforeground);
 	ini.WriteBool(_T("TransferDoubleClick"), transferDoubleclick);
 	ini.WriteBool(_T("ConfirmExit"), confirmExit);
@@ -3181,6 +3183,7 @@ void CPreferences::LoadPreferences()
 	m_bAddServersFromClients = ini.GetBool(_T("AddServersFromClient"), false);
 	SetStartupProgressDialogMode(ini.GetInt(_T("StartupProgressDialog"), GetDefaultLifecycleProgressDialogMode()));
 	SetShutdownProgressDialogMode(ini.GetInt(_T("ShutdownProgressDialog"), GetDefaultLifecycleProgressDialogMode()));
+	m_bDailyConfigBackup = ini.GetBool(GetDailyConfigBackupIniKey(), GetDefaultDailyConfigBackup());
 	bringtoforeground = ini.GetBool(_T("BringToFront"), false);
 	transferDoubleclick = ini.GetBool(_T("TransferDoubleClick"), true);
 	beepOnError = ini.GetBool(_T("BeepOnError"), false);

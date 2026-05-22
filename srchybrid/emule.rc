@@ -3315,6 +3315,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE "When eMule visible"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG "Controls when eMule shows a startup progress dialog. Use Always to show it even for minimized or tray startup paths."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG "Controls when eMule shows a shutdown progress dialog. Use Always to show it even when eMule is hidden to the tray."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP "Daily config backup"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP "Creates one startup snapshot of configuration and state files per day before normal loading continues."
     IDS_CL_TRANSFDOWN       "Transferred Down"
     IDS_CL_PENDING          "Pending"
     IDS_CL_LOW2LOW          "Low To Low IP"

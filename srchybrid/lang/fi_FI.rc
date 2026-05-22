@@ -2150,6 +2150,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "Kun eMule näkyy"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "Ohjaa, milloin eMule näyttää käynnistyksen edistymisen valintaikkunan. UAina näyttääksesi sen myös minimoiduissa tai alustan käynnistyspoluissa."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Ohjaa, milloin eMule näyttää sammutuksen edistymisikkunan. UAina näyttääksesi sen, vaikka eMule olisi piilotettu lokeroon."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Päivittäinen määritysten varmuuskopio"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Luo käynnistyksen yhteydessä kerran päivässä vedoksen määritys- ja tilatiedostoista ennen normaalin latauksen jatkumista."
 END
 // eMule BB managed translation block: end
 

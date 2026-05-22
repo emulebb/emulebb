@@ -2155,6 +2155,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "当 eMule 可见时"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "控制 eMule 何时显示启动进度对话框。 使用始终显示它，即使对于最小化或托盘启动路径也是如此。"
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "控制 eMule 何时显示关机进度对话框。 使用 始终显示它，即使 eMule 隐藏在托盘中也是如此。"
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "每日配置备份"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "每天启动时创建一次配置和状态文件快照，然后继续正常加载。"
 END
 // eMule BB managed translation block: end
 

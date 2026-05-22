@@ -248,6 +248,7 @@ public:
 
 	static int		m_iStartupProgressDialogMode;
 	static int		m_iShutdownProgressDialogMode;
+	static bool		m_bDailyConfigBackup;
 	static bool		filterLANIPs;
 	static bool		m_bAllocLocalHostIP;
 	static bool		onlineSig;
@@ -1095,6 +1096,10 @@ public:
 	static void		SetStartupProgressDialogMode(int iMode) { m_iStartupProgressDialogMode = NormalizeLifecycleProgressDialogMode(iMode); }
 	static int		GetShutdownProgressDialogMode()		{ return m_iShutdownProgressDialogMode; }
 	static void		SetShutdownProgressDialogMode(int iMode) { m_iShutdownProgressDialogMode = NormalizeLifecycleProgressDialogMode(iMode); }
+	static LPCTSTR	GetDailyConfigBackupIniKey()		{ return _T("DailyConfigBackup"); }
+	static bool		GetDefaultDailyConfigBackup()		{ return true; }
+	static bool		GetDailyConfigBackup()				{ return m_bDailyConfigBackup; }
+	static void		SetDailyConfigBackup(bool bEnabled) { m_bDailyConfigBackup = bEnabled; }
 	static bool		FilterLANIPs()						{ return filterLANIPs; }
 	static bool		GetAllowLocalHostIP()				{ return m_bAllocLocalHostIP; }
 	static bool		IsOnlineSignatureEnabled()			{ return onlineSig; }

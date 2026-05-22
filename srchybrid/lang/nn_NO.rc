@@ -2142,6 +2142,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "Når eMule er synlig"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "Kontrollerer når eMule viser en oppstartsfremdriftsdialog. Bruk alltid for å vise den selv for minimerte oppstartsbaner eller skuff."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Kontrollerer når eMule viser en fremdriftsdialog for avslutning. Bruk alltid for å vise den selv når eMule er skjult i skuffen."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Dagleg tryggleikskopi av konfigurasjon"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Opprettar eitt oppstartsaugneblinksbilete av konfigurasjons- og statusfiler per dag før normal innlasting held fram."
 END
 // eMule BB managed translation block: end
 

@@ -55,11 +55,23 @@ inline bool IsConfigBackupWorkingDirectoryName(const CString &rstrName)
 	return IsConfigBackupDirectoryName(rstrName.Left(rstrName.GetLength() - strSuffix.GetLength()));
 }
 
+/**
+ * @brief Reports whether a config file is a generated cache that can be
+ *        rebuilt and should not enlarge daily startup snapshots.
+ */
+inline bool IsGeneratedConfigBackupCacheFileName(const CString &rstrName)
+{
+	return rstrName.CompareNoCase(_T("sharedcache.dat")) == 0
+		|| rstrName.CompareNoCase(_T("shareddups.dat")) == 0
+		|| rstrName.CompareNoCase(_T("dbip-city-lite.mmdb")) == 0
+		|| rstrName.CompareNoCase(_T("GeoIPCountryWhois.csv")) == 0;
+}
+
 inline bool ShouldSkipConfigBackupEntry(const CString &rstrName, const bool bIsDirectory)
 {
-	if (!bIsDirectory)
-		return false;
-	return IsConfigBackupDirectoryName(rstrName) || IsConfigBackupWorkingDirectoryName(rstrName);
+	if (bIsDirectory)
+		return IsConfigBackupDirectoryName(rstrName) || IsConfigBackupWorkingDirectoryName(rstrName);
+	return IsGeneratedConfigBackupCacheFileName(rstrName);
 }
 
 inline std::vector<CString> SelectConfigBackupDirectoriesToPrune(const std::vector<CString> &rNames, const size_t uRetentionCount)

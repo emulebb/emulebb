@@ -2145,6 +2145,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "eMule كۆرۈنگەندە"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "eMule قوزغىلىش ئىلگىرىلەش دىئالوگىنى كۆرسەتكەندە كونترول قىلىدۇ. ھەمىشە كىچىكلىتىلگەن ياكى تەخسە قوزغىتىش يوللىرى ئۈچۈنمۇ كۆرسىتىڭ."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "eMule تاقاش ئىلگىرىلەش دىئالوگىنى كۆرسەتكەندە كونترول قىلىدۇ. ھەمىشە eMule تەخسىگە يوشۇرۇنغاندىمۇ ئۇنى كۆرسىتىش ئۈچۈن ئىشلىتىڭ."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "كۈندىلىك سەپلىمە زاپاسلىمىسى"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "نورمال يۈكلەش داۋاملىشىشتىن بۇرۇن ھەر كۈنى قوزغالغاندا سەپلىمە ۋە ھالەت ھۆججەتلىرىنىڭ بىر پارچە كۆرۈنۈشىنى قۇرىدۇ."
 END
 // eMule BB managed translation block: end
 

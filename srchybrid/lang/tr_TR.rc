@@ -2778,6 +2778,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                           "eMule görünür olduğunda"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                      "eMule'nun bir başlatma ilerleme durumu iletişim kutusu gösterdiği zamanı kontrol eder. Küçültülmüş veya tepsi başlangıç ​​yolları için bile bunu göstermek için Her Zaman seçeneğini kullanın."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                     "eMule'nun kapatma ilerleme durumu iletişim kutusunu ne zaman görüntüleyeceğini kontrol eder. eMule tepside gizlendiğinde bile bunu göstermek için Her Zaman seçeneğini kullanın."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                             "Günlük yapılandırma yedeği"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                          "Normal yükleme devam etmeden önce günde bir kez başlangıçta yapılandırma ve durum dosyalarının anlık görüntüsünü oluşturur."
 END
 // eMule BB managed translation block: end
 

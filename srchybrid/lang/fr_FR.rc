@@ -2778,6 +2778,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                           "Lorsque eMule est visible"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                      "Contrôle quand eMule affiche une boîte de dialogue de progression du démarrage. Utilisez Toujours pour l'afficher même pour les chemins de démarrage réduits ou dans la barre d'état système."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                     "Contrôle le moment où eMule affiche une boîte de dialogue de progression de l'arrêt. Utilisez Toujours pour l'afficher même lorsque eMule est masqué dans la barre d'état."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                             "Sauvegarde quotidienne de la configuration"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                          "Crée une fois par jour au démarrage un instantané des fichiers de configuration et d'état avant la poursuite du chargement normal."
 END
 // eMule BB managed translation block: end
 

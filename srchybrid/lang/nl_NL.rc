@@ -2779,6 +2779,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                           "Wanneer eMule zichtbaar is"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                      "Bepaalt wanneer eMule een dialoogvenster voor de voortgang van het opstarten toont. Gebruik Altijd om dit weer te geven, zelfs voor geminimaliseerde opstartpaden of lade-opstartpaden."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                     "Bepaalt wanneer eMule een dialoogvenster voor de voortgang van het afsluiten weergeeft. Gebruik Altijd om dit weer te geven, zelfs als eMule verborgen is in de lade."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                             "Dagelijkse configuratieback-up"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                          "Maakt eenmaal per dag bij het opstarten een momentopname van configuratie- en statusbestanden voordat normaal laden doorgaat."
 END
 // eMule BB managed translation block: end
 

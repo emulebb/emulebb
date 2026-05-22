@@ -2178,6 +2178,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "eMule ikusgai dagoenean"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "eMule abiarazte-aurrerapen-elkarrizketa bat noiz erakusten duen kontrolatzen du. Use Beti abiarazteko bide txikietan edo erretiluetan ere erakusteko."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "eMulek itzaltze-aurrerapeneko elkarrizketa-koadroa noiz erakusten duen kontrolatzen du. Use Beti erakusteko eMule erretiluan ezkutatuta dagoenean ere."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Dnevna sigurnosna kopija konfiguracije"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Pravi jedan snimak konfiguracijskih i statusnih datoteka pri pokretanju svaki dan prije nastavka normalnog učitavanja."
 END
 // eMule BB managed translation block: end
 

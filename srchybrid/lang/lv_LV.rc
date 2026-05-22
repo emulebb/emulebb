@@ -2175,6 +2175,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "Kad redzams eMule"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "Kontrolē, kad eMule parāda startēšanas norises dialoglodziņu. Use Vienmēr, lai to rādītu pat minimizētiem vai teknes startēšanas ceļiem."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Kontrolē, kad eMule parāda izslēgšanas norises dialoglodziņu. UIzmantojiet Vienmēr, lai to rādītu pat tad, ja eMule ir paslēpts teknē."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Ikdienas konfigurācijas dublējums"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Reizi dienā palaišanas laikā izveido konfigurācijas un stāvokļa failu momentuzņēmumu, pirms turpinās parastā ielāde."
 END
 // eMule BB managed translation block: end
 

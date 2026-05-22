@@ -2146,6 +2146,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "وقتی eMule قابل مشاهده است"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "زمانی را کنترل می‌کند که eMule یک گفتگوی پیشرفت راه‌اندازی را نشان می‌دهد."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "زمانی را کنترل می‌کند که eMule یک گفتگوی پیشرفت خاموش شدن را نشان می‌دهد."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "پشتیبان‌گیری روزانه از پیکربندی"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "هر روز پیش از ادامه بارگذاری عادی، یک تصویر لحظه‌ای هنگام شروع از فایل‌های پیکربندی و وضعیت ایجاد می‌کند."
 END
 // eMule BB managed translation block: end
 

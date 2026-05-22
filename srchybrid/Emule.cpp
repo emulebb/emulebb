@@ -1459,7 +1459,6 @@ BOOL CemuleApp::InitInstance()
 	m_pszProfileName = _tcsdup(sConfDir + _T("preferences.ini"));
 	if (commandLine.eMode == AppCommandLineSeams::EMode::DiagnoseMediaMetadata)
 		::ExitProcess(static_cast<UINT>(HandleHeadlessMediaMetadataCommandLine(commandLine)));
-	(void)ConfigStartupBackup::RunDailyStartupConfigBackup(sConfDir, ConfigStartupBackupSeams::kDefaultBackupRetentionCount);
 
 #ifdef _DEBUG
 	oldMemState.Checkpoint();
@@ -1507,6 +1506,14 @@ BOOL CemuleApp::InitInstance()
 	AfxEnableControlContainer();
 	ShowEarlyStartupProgress();
 	UpdateEarlyStartupProgress(3, IDS_STARTUP_PROGRESS_STARTING, IDS_STARTUP_PROGRESS_PREPARING);
+	const bool bDailyConfigBackup = ::GetPrivateProfileInt(
+		_T("eMule"),
+		CPreferences::GetDailyConfigBackupIniKey(),
+		CPreferences::GetDefaultDailyConfigBackup() ? 1 : 0,
+		m_pszProfileName) != 0;
+	if (bDailyConfigBackup)
+		(void)ConfigStartupBackup::RunDailyStartupConfigBackup(sConfDir, ConfigStartupBackupSeams::kDefaultBackupRetentionCount);
+	UpdateEarlyStartupProgress(4, IDS_STARTUP_PROGRESS_STARTING, IDS_STARTUP_PROGRESS_PREPARING);
 
 	if (!InitWinsock2(&m_wsaData) && !AfxSocketInit(&m_wsaData)) {
 		DestroyEarlyStartupProgress();

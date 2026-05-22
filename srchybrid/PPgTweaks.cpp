@@ -513,6 +513,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_htiShutdownProgressDialogOff()
 	, m_htiShutdownProgressDialogWhenVisible()
 	, m_htiShutdownProgressDialogAlways()
+	, m_htiDailyConfigBackup()
 	, m_htiICH()
 	, m_htiIconFlashOnNewMessage()
 	, m_htiExtractMetaData()
@@ -697,6 +698,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_bReBarToolbar()
 	, m_bRestoreLastLogPane()
 	, m_bRestoreLastMainWndDlg()
+	, m_bDailyConfigBackup()
 	, m_bShowedWarning()
 	, m_bShowActiveDownloadsBold()
 	, m_bShowCopyEd2kLinkCmd()
@@ -756,6 +758,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_htiHiddenStartup = m_ctrlTreeOptions.InsertGroup(GetStartupTweaksLabel(), iImgConnection, TVI_ROOT);
 		m_htiRestoreLastMainWndDlg = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_RESTORELASTMAINWNDDLG), m_htiHiddenStartup, m_bRestoreLastMainWndDlg);
 		m_htiRestoreLastLogPane = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_RESTORELASTLOGPANE), m_htiHiddenStartup, m_bRestoreLastLogPane);
+		m_htiDailyConfigBackup = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_TWEAKS_DAILY_CONFIG_BACKUP), m_htiHiddenStartup, m_bDailyConfigBackup);
 		m_htiStartupProgressDialog = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_TWEAKS_STARTUP_PROGRESS_DIALOG), iImgConnection, m_htiHiddenStartup);
 		m_htiStartupProgressDialogOff = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_DISABLED), m_htiStartupProgressDialog, m_iStartupProgressDialogMode == LPDM_OFF);
 		m_htiStartupProgressDialogWhenVisible = m_ctrlTreeOptions.InsertRadioButton(GetResString(IDS_TWEAKS_PROGRESS_WHEN_VISIBLE), m_htiStartupProgressDialog, m_iStartupProgressDialogMode == LPDM_WHEN_VISIBLE);
@@ -1018,6 +1021,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiHiddenFile, IDS_TWEAKS_TT_HIDDEN_FILE);
 		SetTreeToolTip(m_htiStoragePersistence, IDS_TWEAKS_TT_STORAGE_PERSISTENCE);
 		SetTreeToolTip(m_htiHiddenStartup, IDS_TWEAKS_TT_HIDDEN_STARTUP);
+		SetTreeToolTip(m_htiDailyConfigBackup, IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP);
 		SetTreeToolTip(m_htiStartupProgressDialog, IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG);
 		SetTreeToolTip(m_htiShutdownProgressDialog, IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG);
 		SetTreeToolTip(m_htiHiddenDisplay, IDS_TWEAKS_TT_HIDDEN_DISPLAY);
@@ -1269,6 +1273,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 	DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiMediaInfoDllPath, m_sMediaInfoDllPath);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiRestoreLastMainWndDlg, m_bRestoreLastMainWndDlg);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiRestoreLastLogPane, m_bRestoreLastLogPane);
+	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiDailyConfigBackup, m_bDailyConfigBackup);
 	DDX_TreeRadio(pDX, IDC_EXT_OPTS, m_htiStartupProgressDialog, m_iStartupProgressDialogMode);
 	DDX_TreeRadio(pDX, IDC_EXT_OPTS, m_htiShutdownProgressDialog, m_iShutdownProgressDialogMode);
 	DDX_Text(pDX, IDC_EXT_OPTS, m_htiFileBufferTimeLimit, m_uFileBufferTimeLimitSeconds);
@@ -1505,6 +1510,7 @@ BOOL CPPgTweaks::OnInitDialog()
 	m_bHighresTimer = thePrefs.GetHighresTimer();
 	m_bRestoreLastMainWndDlg = thePrefs.GetRestoreLastMainWndDlg();
 	m_bRestoreLastLogPane = thePrefs.GetRestoreLastLogPane();
+	m_bDailyConfigBackup = thePrefs.GetDailyConfigBackup();
 	m_iStartupProgressDialogMode = thePrefs.GetStartupProgressDialogMode();
 	m_iShutdownProgressDialogMode = thePrefs.GetShutdownProgressDialogMode();
 	m_uConnectionTimeoutSeconds = max(thePrefs.GetMinTimeoutSeconds(), thePrefs.TimeoutMsToSeconds(thePrefs.GetConnectionTimeout()));
@@ -1725,6 +1731,7 @@ BOOL CPPgTweaks::OnApply()
 	thePrefs.m_bA4AFSaveCpu = m_bA4AFSaveCpu;
 	thePrefs.m_bRestoreLastMainWndDlg = m_bRestoreLastMainWndDlg;
 	thePrefs.m_bRestoreLastLogPane = m_bRestoreLastLogPane;
+	thePrefs.SetDailyConfigBackup(m_bDailyConfigBackup);
 	thePrefs.SetStartupProgressDialogMode(m_iStartupProgressDialogMode);
 	thePrefs.SetShutdownProgressDialogMode(m_iShutdownProgressDialogMode);
 	thePrefs.SetFileBufferTimeLimitSeconds(m_uFileBufferTimeLimitSeconds);
@@ -1882,6 +1889,7 @@ void CPPgTweaks::Localize()
 		LocalizeEditLabel(m_htiTCPErrorFlooderIntervalMinutes, IDS_TCP_ERROR_FLOODER_INTERVAL_MINUTES);
 		LocalizeEditLabel(m_htiTCPErrorFlooderThreshold, IDS_TCP_ERROR_FLOODER_THRESHOLD);
 		m_ctrlTreeOptions.SetItemText(m_htiHiddenStartup, GetStartupTweaksLabel());
+		LocalizeItemText(m_htiDailyConfigBackup, IDS_TWEAKS_DAILY_CONFIG_BACKUP);
 		LocalizeItemText(m_htiStartupProgressDialog, IDS_TWEAKS_STARTUP_PROGRESS_DIALOG);
 		LocalizeItemText(m_htiStartupProgressDialogOff, IDS_DISABLED);
 		LocalizeItemText(m_htiStartupProgressDialogWhenVisible, IDS_TWEAKS_PROGRESS_WHEN_VISIBLE);
@@ -2030,6 +2038,7 @@ void CPPgTweaks::OnDestroy()
 	m_htiShutdownProgressDialogOff = NULL;
 	m_htiShutdownProgressDialogWhenVisible = NULL;
 	m_htiShutdownProgressDialogAlways = NULL;
+	m_htiDailyConfigBackup = NULL;
 	m_htiLogBannedClients = NULL;
 	m_htiLogRatingDescReceived = NULL;
 	m_htiLogSecureIdent = NULL;

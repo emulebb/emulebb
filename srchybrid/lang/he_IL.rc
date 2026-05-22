@@ -2174,6 +2174,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "כאשר eMule גלוי"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "שולט כאשר eMule מציג תיבת דו-שיח של התקדמות אתחול. השתמש ב-Always כדי להציג אותו אפילו עבור נתיבי הפעלה ממוזערים או במגש."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "שולט כאשר eMule מציג תיבת דו-שיח של התקדמות כיבוי. השתמש ב-Always כדי להציג אותו גם כאשר eMule מוסתר במגש."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "גיבוי יומי של התצורה"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "יוצר פעם ביום בעת ההפעלה תמונת מצב של קובצי התצורה והמצב לפני שהטעינה הרגילה ממשיכה."
 END
 // eMule BB managed translation block: end
 

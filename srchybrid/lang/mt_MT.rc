@@ -2172,6 +2172,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "Meta eMule viżibbli"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "Jikkontrolla meta eMule juri djalogu dwar il-progress tal-istartjar. Use Dejjem turih anke għal mogħdijiet minimizzati jew tal-istartjar tat-trej."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Jikkontrolla meta eMule juri djalogu dwar il-progress tal-għeluq. Use Dejjem turih anke meta eMule ikun moħbi mat-trej."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Kopja ta' sigurtà ta' kuljum tal-konfigurazzjoni"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Joħloq stampa waħda tal-bidu tal-fajls tal-konfigurazzjoni u tal-istat kuljum qabel ikompli t-tagħbija normali."
 END
 // eMule BB managed translation block: end
 

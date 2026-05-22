@@ -2187,6 +2187,8 @@ BEGIN
     IDS_TWEAKS_PROGRESS_WHEN_VISIBLE                        "Cando eMule visible"
     IDS_TWEAKS_TT_STARTUP_PROGRESS_DIALOG                   "Controla cando eMule amosa un diálogo de progreso de inicio. Use Mostrar sempre mesmo para rutas de inicio minimizadas ou de bandexa."
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Controla cando eMule mostra un diálogo de progreso de apagado. Use Mostrar sempre aínda que eMule estea oculto na bandexa."
+    IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Copia de seguranza diaria da configuración"
+    IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Crea unha instantánea de inicio dos ficheiros de configuración e estado unha vez ao día antes de continuar a carga normal."
 END
 // eMule BB managed translation block: end
 

@@ -76,6 +76,7 @@ protected:
 	HTREEITEM m_htiShutdownProgressDialogOff;
 	HTREEITEM m_htiShutdownProgressDialogWhenVisible;
 	HTREEITEM m_htiShutdownProgressDialogAlways;
+	HTREEITEM m_htiDailyConfigBackup;
 	HTREEITEM m_htiICH;
 	HTREEITEM m_htiIconFlashOnNewMessage;
 	HTREEITEM m_htiExtractMetaData;
@@ -263,6 +264,7 @@ protected:
 	bool m_bReBarToolbar;
 	bool m_bRestoreLastLogPane;
 	bool m_bRestoreLastMainWndDlg;
+	bool m_bDailyConfigBackup;
 	bool m_bShowedWarning;
 	bool m_bShowActiveDownloadsBold;
 	bool m_bShowCopyEd2kLinkCmd;
