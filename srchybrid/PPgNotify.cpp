@@ -22,6 +22,7 @@
 #include "Preferences.h"
 #include "OtherFunctions.h"
 #include "HelpIDs.h"
+#include "FileCompletionCommandSeams.h"
 #include "TextToSpeech.h"
 #include "TaskbarNotifier.h"
 
@@ -31,6 +32,15 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace
+{
+void EnableDlgItemIfPresent(CWnd &wndParent, int iControlId, BOOL bEnabled)
+{
+	CWnd *pControl = wndParent.GetDlgItem(iControlId);
+	if (pControl != NULL)
+		pControl->EnableWindow(bEnabled);
+}
+}
 
 IMPLEMENT_DYNAMIC(CPPgNotify, CPropertyPage)
 
@@ -54,6 +64,10 @@ BEGIN_MESSAGE_MAP(CPPgNotify, CPropertyPage)
 	ON_EN_CHANGE(IDC_EDIT_SENDER, OnSettingsChange)
 	ON_EN_CHANGE(IDC_EDIT_RECEIVER, OnSettingsChange)
 	ON_BN_CLICKED(IDC_CB_ENABLENOTIFICATIONS, OnBnClickedCbEnableNotifications)
+	ON_BN_CLICKED(IDC_RUNONFILECOMPLETE, OnBnClickedRunOnFileComplete)
+	ON_EN_CHANGE(IDC_FILECOMPLETEPROGRAM, OnSettingsChange)
+	ON_EN_CHANGE(IDC_FILECOMPLETEARGS, OnSettingsChange)
+	ON_BN_CLICKED(IDC_BROWSE_FILECOMPLETEPROGRAM, BrowseFileCompletionProgram)
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
@@ -76,6 +90,8 @@ BOOL CPPgNotify::OnInitDialog()
 
 	AddBuddyButton(GetDlgItem(IDC_EDIT_TBN_WAVFILE)->m_hWnd, ::GetDlgItem(m_hWnd, IDC_BTN_BROWSE_WAV));
 	InitAttachedBrowseButton(::GetDlgItem(m_hWnd, IDC_BTN_BROWSE_WAV), m_icoBrowse);
+	AddBuddyButton(GetDlgItem(IDC_FILECOMPLETEPROGRAM)->m_hWnd, ::GetDlgItem(m_hWnd, IDC_BROWSE_FILECOMPLETEPROGRAM));
+	InitAttachedBrowseButton(::GetDlgItem(m_hWnd, IDC_BROWSE_FILECOMPLETEPROGRAM), m_icoBrowse);
 
 	ASSERT(IDC_CB_TBN_NOSOUND < IDC_CB_TBN_USESOUND && IDC_CB_TBN_USESOUND < IDC_CB_TBN_USESPEECH);
 	int iBtnID;
@@ -109,6 +125,9 @@ BOOL CPPgNotify::OnInitDialog()
 	CheckDlgButton(IDC_CB_ENABLENOTIFICATIONS, m_mail.bSendMail ? BST_CHECKED : BST_UNCHECKED);
 	SetDlgItemText(IDC_EDIT_RECEIVER, m_mail.sTo);
 	SetDlgItemText(IDC_EDIT_SENDER, m_mail.sFrom);
+	CheckDlgButton(IDC_RUNONFILECOMPLETE, static_cast<UINT>(thePrefs.GetRunCommandOnFileCompletion()));
+	SetDlgItemText(IDC_FILECOMPLETEPROGRAM, thePrefs.GetFileCompletionProgram());
+	SetDlgItemText(IDC_FILECOMPLETEARGS, thePrefs.GetFileCompletionArguments());
 
 	UpdateControls();
 	Localize();
@@ -145,6 +164,10 @@ void CPPgNotify::UpdateToolTips()
 	m_toolTip.SetTool(this, IDC_EDIT_RECEIVER, GetResString(IDS_NOTIFY_TT_EDIT_RECEIVER));
 	m_toolTip.SetTool(this, IDC_EDIT_SENDER, GetResString(IDS_NOTIFY_TT_EDIT_SENDER));
 	m_toolTip.SetTool(this, IDC_TEST_NOTIFICATION, GetResString(IDS_NOTIFY_TT_TEST_NOTIFICATION));
+	m_toolTip.SetTool(this, IDC_RUNONFILECOMPLETE, GetResString(IDS_PPG_FILES_TT_RUNONFILECOMPLETE));
+	m_toolTip.SetTool(this, IDC_FILECOMPLETEPROGRAM, GetResString(IDS_PPG_FILES_TT_FILECOMPLETEPROGRAM));
+	m_toolTip.SetTool(this, IDC_BROWSE_FILECOMPLETEPROGRAM, GetResString(IDS_PPG_FILES_TT_BROWSE_FILECOMPLETEPROGRAM));
+	m_toolTip.SetTool(this, IDC_FILECOMPLETEARGS, GetResString(IDS_PPG_FILES_TT_FILECOMPLETEARGS));
 }
 
 void CPPgNotify::UpdateControls()
@@ -157,6 +180,18 @@ void CPPgNotify::UpdateControls()
 	GetDlgItem(IDC_SMTPSERVER)->EnableWindow(b);
 	GetDlgItem(IDC_EDIT_RECEIVER)->EnableWindow(b);
 	GetDlgItem(IDC_EDIT_SENDER)->EnableWindow(b);
+
+	UpdateCompletionCommandControls();
+}
+
+void CPPgNotify::UpdateCompletionCommandControls()
+{
+	const BOOL bEnabled = IsDlgButtonChecked(IDC_RUNONFILECOMPLETE) != 0;
+	EnableDlgItemIfPresent(*this, IDC_FILECOMPLETEPROGRAM_LBL, bEnabled);
+	EnableDlgItemIfPresent(*this, IDC_FILECOMPLETEPROGRAM, bEnabled);
+	EnableDlgItemIfPresent(*this, IDC_BROWSE_FILECOMPLETEPROGRAM, bEnabled);
+	EnableDlgItemIfPresent(*this, IDC_FILECOMPLETEARGS_LBL, bEnabled);
+	EnableDlgItemIfPresent(*this, IDC_FILECOMPLETEARGS, bEnabled);
 }
 
 void CPPgNotify::Localize()
@@ -185,6 +220,10 @@ void CPPgNotify::Localize()
 		SetDlgItemText(IDC_TXT_SENDER, GetResString(IDS_PW_SENDERADDRESS));
 		SetDlgItemText(IDC_CB_ENABLENOTIFICATIONS, GetResString(IDS_PW_ENABLEEMAIL));
 		SetDlgItemText(IDC_TEST_NOTIFICATION, GetResString(IDS_TEST));
+		SetDlgItemText(IDC_FILECOMPLETE_GROUP, GetResString(IDS_COMPLETIONCOMMAND));
+		SetDlgItemText(IDC_RUNONFILECOMPLETE, GetResString(IDS_RUNONFILECOMPLETE));
+		SetDlgItemText(IDC_FILECOMPLETEPROGRAM_LBL, GetResString(IDS_COMMAND));
+		SetDlgItemText(IDC_FILECOMPLETEARGS_LBL, GetResString(IDS_ARGUMENTS));
 	}
 }
 
@@ -213,6 +252,16 @@ BOOL CPPgNotify::OnApply()
 	GetDlgItemText(IDC_EDIT_SENDER, m_mail.sFrom);
 	GetDlgItemText(IDC_EDIT_RECEIVER, m_mail.sTo);
 	thePrefs.SetEmailSettings(m_mail);
+
+	thePrefs.m_bRunCommandOnFileCompletion = IsDlgButtonChecked(IDC_RUNONFILECOMPLETE) != 0;
+	GetDlgItemText(IDC_FILECOMPLETEPROGRAM, thePrefs.m_strFileCompletionProgram);
+	thePrefs.m_strFileCompletionProgram.Trim();
+	GetDlgItemText(IDC_FILECOMPLETEARGS, thePrefs.m_strFileCompletionArguments);
+	thePrefs.m_strFileCompletionArguments.Trim();
+	if (thePrefs.m_bRunCommandOnFileCompletion && !FileCompletionCommandSeams::IsValidConfiguredProgramPath(thePrefs.m_strFileCompletionProgram)) {
+		AfxMessageBox(GetResString(IDS_COMPLETIONCOMMAND_INVALID), MB_ICONWARNING);
+		return FALSE;
+	}
 
 	ApplyNotifierSoundType();
 	if (thePrefs.notifierSoundType != ntfstSpeech)
@@ -298,6 +347,16 @@ void CPPgNotify::OnBnClickedBrowseAudioFile()
 	}
 }
 
+void CPPgNotify::BrowseFileCompletionProgram()
+{
+	CString strProgramPath;
+	GetDlgItemText(IDC_FILECOMPLETEPROGRAM, strProgramPath);
+	if (DialogBrowseFile(strProgramPath, _T("Executable (*.exe;*.com)|*.exe;*.com||"), (strProgramPath.IsEmpty() ? NULL : strProgramPath), OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY, true, GetSafeHwnd(), NULL, _T("exe"))) {
+		SetDlgItemText(IDC_FILECOMPLETEPROGRAM, strProgramPath);
+		SetModified();
+	}
+}
+
 void CPPgNotify::OnBnClickedNoSound()
 {
 	UpdateControls();
@@ -367,6 +426,12 @@ BOOL CPPgNotify::PreTranslateMessage(MSG *pMsg)
 void CPPgNotify::OnBnClickedCbEnableNotifications()
 {
 	UpdateControls();
+	SetModified();
+}
+
+void CPPgNotify::OnBnClickedRunOnFileComplete()
+{
+	UpdateCompletionCommandControls();
 	SetModified();
 }
 
