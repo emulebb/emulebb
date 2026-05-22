@@ -69,6 +69,7 @@
 #include "Opcodes.h"
 #include "kademlia/kademlia/Kademlia.h"
 #include "kademlia/kademlia/UDPFirewallTester.h"
+#include "kademlia/routing/RoutingZone.h"
 
 #pragma warning(push, 0)
 #include <nlohmann/json.hpp>
@@ -484,12 +485,15 @@ json BuildKadStatusJson()
 	const bool bRunning = Kademlia::CKademlia::IsRunning();
 	const bool bConnected = Kademlia::CKademlia::IsConnected();
 	const bool bBootstrapping = bRunning && !bConnected;
+	Kademlia::CRoutingZone *pRoutingZone = bRunning ? Kademlia::CKademlia::GetRoutingZone() : NULL;
 	return json{
 		{"running", bRunning},
 		{"connected", bConnected},
 		{"firewalled", bConnected ? json(Kademlia::CKademlia::IsFirewalled()) : json(nullptr)},
 		{"bootstrapping", bBootstrapping},
 		{"bootstrapProgress", json(0)},
+		{"contactCount", pRoutingZone != NULL ? json(pRoutingZone->GetNumContacts()) : json(nullptr)},
+		{"lanMode", Kademlia::CKademlia::IsRunningInLANMode()},
 		{"users", bConnected ? json(Kademlia::CKademlia::GetKademliaUsers()) : json(nullptr)},
 		{"files", bConnected ? json(Kademlia::CKademlia::GetKademliaFiles()) : json(nullptr)}
 	};
