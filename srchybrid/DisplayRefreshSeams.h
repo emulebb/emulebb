@@ -17,7 +17,7 @@ enum EDesktopUiRefreshIntervalMs : uint32_t
 	DESKTOP_UI_REFRESH_VERYSLOW_MS = 10000
 };
 
-enum EDisplayRefreshMask : uint32
+enum EDisplayRefreshMask : uint32_t
 {
 	DISPLAY_REFRESH_NONE = 0,
 	DISPLAY_REFRESH_CLIENT_LIST = 1u << 0,

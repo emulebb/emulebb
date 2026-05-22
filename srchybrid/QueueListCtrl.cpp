@@ -106,14 +106,12 @@ END_MESSAGE_MAP()
 
 CQueueListCtrl::CQueueListCtrl()
 	: CListCtrlItemWalk(this)
+	, m_hTimer(0)
 {
 	SetGeneralPurposeFind(true);
 	SetSkinKey(_T("QueuedLv"));
 
-	// Barry - Refresh the queue every 10 secs
-	VERIFY(Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(m_hTimer, SEC2MS(10), QueueUpdateTimer));
-	if (thePrefs.GetVerbose() && !m_hTimer)
-		AddDebugLogLine(true, _T("Failed to create 'queue list control' timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
+	RestartUpdateTimer();
 }
 
 CQueueListCtrl::~CQueueListCtrl()
@@ -897,7 +895,17 @@ void CQueueListCtrl::ShowQueueClients()
 		AddClient(update, false);
 }
 
-// Barry - Refresh the queue every 10 secs
+bool CQueueListCtrl::RestartUpdateTimer()
+{
+	VERIFY(Win32CallbackTimerSeams::StopNullWindowCallbackTimer(m_hTimer) != Win32CallbackTimerSeams::ETimerStopResult::Failed);
+
+	const UINT uDelayMs = Win32CallbackTimerSeams::GetQueueListRefreshTimerDelayMs(thePrefs.GetDesktopUiRefreshIntervalMs());
+	const bool bStarted = Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(m_hTimer, uDelayMs, QueueUpdateTimer);
+	if (thePrefs.GetVerbose() && !bStarted)
+		AddDebugLogLine(true, _T("Failed to create 'queue list control' timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
+	return bStarted;
+}
+
 void CALLBACK CQueueListCtrl::QueueUpdateTimer(HWND /*hwnd*/, UINT /*uiMsg*/, UINT_PTR /*idEvent*/, DWORD /*dwTime*/) noexcept
 {
 	// NOTE: Always handle all type of MFC exceptions in TimerProcs - otherwise we'll get mem leaks

@@ -1,4 +1,5 @@
 #pragma once
+#include "DisplayRefreshSeams.h"
 
 namespace DownloadProgressBarSeams
 {
@@ -10,5 +11,10 @@ inline bool HasDrawableExtent(const int iWidth, const int iHeight)
 inline bool ShouldIsolateFlatBarDcState(const bool bUseFlatBar)
 {
 	return bUseFlatBar;
+}
+
+inline UINT GetStatusBitmapCacheDelayMs(UINT uDesktopUiRefreshIntervalMs)
+{
+	return NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs);
 }
 }

@@ -4289,19 +4289,19 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 			AddLogLine(false, _T("Saved preferences and config files."));
 		break;
 	case MP_HM_REFRESH_INTERVAL_FAST:
-		thePrefs.SetDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_FAST_MS);
+		ApplyDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_FAST_MS);
 		break;
 	case MP_HM_REFRESH_INTERVAL_NORMAL:
-		thePrefs.SetDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_NORMAL_MS);
+		ApplyDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_NORMAL_MS);
 		break;
 	case MP_HM_REFRESH_INTERVAL_BELOWNORMAL:
-		thePrefs.SetDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_BELOWNORMAL_MS);
+		ApplyDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_BELOWNORMAL_MS);
 		break;
 	case MP_HM_REFRESH_INTERVAL_SLOW:
-		thePrefs.SetDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_SLOW_MS);
+		ApplyDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_SLOW_MS);
 		break;
 	case MP_HM_REFRESH_INTERVAL_VERYSLOW:
-		thePrefs.SetDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_VERYSLOW_MS);
+		ApplyDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_VERYSLOW_MS);
 		break;
 	case MP_HM_UPDATE_SERVERMET_FROM_ADDRESSES:
 		thePrefs.ReloadServerMetAddressList();
@@ -5400,6 +5400,13 @@ LRESULT CemuleDlg::OnWebServerFileRename(WPARAM wParam, LPARAM lParam)
 	sharedfileswnd->sharedfilesctrl.UpdateFile(reinterpret_cast<CKnownFile*>(wParam));
 
 	return 0;
+}
+
+void CemuleDlg::ApplyDesktopUiRefreshIntervalMs(UINT uIntervalMs)
+{
+	thePrefs.SetDesktopUiRefreshIntervalMs(uIntervalMs);
+	if (transferwnd != NULL && transferwnd->GetQueueList() != NULL)
+		transferwnd->GetQueueList()->RestartUpdateTimer();
 }
 
 LRESULT CemuleDlg::OnWebRestApiCommand(WPARAM, LPARAM lParam)

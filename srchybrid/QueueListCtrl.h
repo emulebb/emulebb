@@ -38,6 +38,7 @@ public:
 	void	Localize();
 	void	ShowSelectedUserDetails();
 	void	ShowQueueClients();
+	bool	RestartUpdateTimer();
 
 protected:
 	UINT_PTR m_hTimer;

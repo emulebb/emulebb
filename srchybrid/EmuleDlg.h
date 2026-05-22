@@ -235,6 +235,7 @@ protected:
 	void UpdateStartupProgress(UINT uPercent, UINT uStepStringId, UINT uDetailStringId, bool bMarquee = false);
 	void DestroyStartupProgress();
 	bool ShouldShowLifecycleProgressDialog(int iMode, bool bStartup) const;
+	void ApplyDesktopUiRefreshIntervalMs(UINT uIntervalMs);
 	void DestroyMiniMule();
 
 	CMap<UINT, UINT, LPCTSTR, LPCTSTR> m_mapTbarCmdToIcon;

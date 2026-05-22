@@ -61,8 +61,6 @@ static char THIS_FILE[] = __FILE__;
 
 // CDownloadListCtrl
 
-#define DLC_BARUPDATE (SEC2MS(1)/2)
-
 #define RATING_ICON_WIDTH	16
 
 namespace
@@ -1086,7 +1084,9 @@ void CDownloadListCtrl::DrawFileItem(CDC &dc, int nColumn, LPCRECT lpRect, UINT 
 				pPartFile->DrawStatusBar(cdcStatus, rec_status, bUseFlatBar);
 				if (iSavedDC != 0)
 					cdcStatus.RestoreDC(iSavedDC);
-				pCtrlItem->dwUpdated = curTick + DLC_BARUPDATE + (rand() & 0x7f);
+				pCtrlItem->dwUpdated = curTick
+					+ DownloadProgressBarSeams::GetStatusBitmapCacheDelayMs(thePrefs.GetDesktopUiRefreshIntervalMs())
+					+ (rand() & 0x7f);
 			} else
 				hOldBitmap = cdcStatus.SelectObject(pCtrlItem->status);
 			dc.BitBlt(rcDraw.left, rcDraw.top, iWidth, iHeight, &cdcStatus, 0, 0, SRCCOPY);
@@ -1318,7 +1318,9 @@ void CDownloadListCtrl::DrawSourceItem(CDC &dc, int nColumn, LPCRECT lpRect, UIN
 				pClient->DrawStatusBar(cdcStatus, rec_status, (pCtrlItem->type == UNAVAILABLE_SOURCE), bUseFlatBar);
 				if (iSavedDC != 0)
 					cdcStatus.RestoreDC(iSavedDC);
-				pCtrlItem->dwUpdated = curTick + DLC_BARUPDATE + (rand() & 0x7f);
+				pCtrlItem->dwUpdated = curTick
+					+ DownloadProgressBarSeams::GetStatusBitmapCacheDelayMs(thePrefs.GetDesktopUiRefreshIntervalMs())
+					+ (rand() & 0x7f);
 			} else
 				hOldBitmap = cdcStatus.SelectObject(pCtrlItem->status);
 			dc.BitBlt(lpRect->left, lpRect->top + 1, iWidth, iHeight, &cdcStatus, 0, 0, SRCCOPY);

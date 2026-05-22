@@ -17,6 +17,8 @@
 #pragma once
 #include <Windows.h>
 
+#include "DisplayRefreshSeams.h"
+
 namespace Win32CallbackTimerSeams
 {
 	using TNoThrowTimerProc = VOID (CALLBACK *)(HWND, UINT, UINT_PTR, DWORD) noexcept;
@@ -56,6 +58,15 @@ namespace Win32CallbackTimerSeams
 	inline bool ShouldDispatchQueueListRefreshTimer(bool bUpdateQueueList, bool bTransferWindowActive, bool bQueueListVisible, bool bAppClosing)
 	{
 		return bUpdateQueueList && bTransferWindowActive && bQueueListVisible && !bAppClosing;
+	}
+
+	/**
+	 * @brief Returns the queue-list timer cadence derived from the desktop UI refresh preference.
+	 */
+	inline UINT GetQueueListRefreshTimerDelayMs(UINT uDesktopUiRefreshIntervalMs)
+	{
+		const UINT uNormalizedIntervalMs = NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs);
+		return uNormalizedIntervalMs < 10000u ? 10000u : uNormalizedIntervalMs;
 	}
 
 	/**
