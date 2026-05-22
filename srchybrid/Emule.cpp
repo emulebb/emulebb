@@ -150,7 +150,7 @@ void ReportCommandLineText(const DWORD dwStdHandle, const CString &rstrText)
 void ReportCommandLineError(const CString &rstrError, const CString &rstrUsage, const bool bIncludeUsage)
 {
 	CString strText;
-	strText.Format(_T("eMule BB command-line error: %s\r\n"), (LPCTSTR)rstrError);
+	strText.Format(_T("eMuleBB command-line error: %s\r\n"), (LPCTSTR)rstrError);
 	if (bIncludeUsage) {
 		strText += _T("\r\n");
 		strText += rstrUsage;
@@ -1505,11 +1505,10 @@ BOOL CemuleApp::InitInstance()
 	AfxEnableControlContainer();
 	ShowEarlyStartupProgress();
 	UpdateEarlyStartupProgress(3, IDS_STARTUP_PROGRESS_STARTING, IDS_STARTUP_PROGRESS_PREPARING);
-	const bool bDailyConfigBackup = ::GetPrivateProfileInt(
+	const bool bDailyConfigBackup = GetProfileInt(
 		_T("eMule"),
 		CPreferences::GetDailyConfigBackupIniKey(),
-		CPreferences::GetDefaultDailyConfigBackup() ? 1 : 0,
-		m_pszProfileName) != 0;
+		CPreferences::GetDefaultDailyConfigBackup() ? 1 : 0) != 0;
 	if (bDailyConfigBackup)
 		(void)ConfigStartupBackup::RunDailyStartupConfigBackup(sConfDir, ConfigStartupBackupSeams::kDefaultBackupRetentionCount);
 	UpdateEarlyStartupProgress(4, IDS_STARTUP_PROGRESS_STARTING, IDS_STARTUP_PROGRESS_PREPARING);
@@ -2271,16 +2270,15 @@ void CemuleApp::ShowEarlyStartupProgress()
 	if (m_pEarlyStartupProgressDlg != NULL)
 		return;
 
-	const int iMode = CPreferences::NormalizeLifecycleProgressDialogMode(::GetPrivateProfileInt(
+	const int iMode = CPreferences::NormalizeLifecycleProgressDialogMode(GetProfileInt(
 		_T("eMule"),
 		_T("StartupProgressDialog"),
-		CPreferences::GetDefaultLifecycleProgressDialogMode(),
-		m_pszProfileName));
+		CPreferences::GetDefaultLifecycleProgressDialogMode()));
 	if (iMode == LPDM_OFF)
 		return;
 
 	if (iMode == LPDM_WHEN_VISIBLE) {
-		const bool bStartMinimized = ::GetPrivateProfileInt(_T("eMule"), _T("StartupMinimized"), 0, m_pszProfileName) != 0;
+		const bool bStartMinimized = GetProfileInt(_T("eMule"), _T("StartupMinimized"), 0) != 0;
 		if (bStartMinimized || DidWeAutoStart())
 			return;
 	}

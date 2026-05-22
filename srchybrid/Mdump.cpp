@@ -77,7 +77,7 @@ void CMiniDumper::Enable(LPCTSTR pszAppName, bool bShowErrors, LPCTSTR pszDumpDi
 	ASSERT(m_strAppName.IsEmpty());
 	m_strAppName = (pszAppName != NULL) ? pszAppName : _T("");
 
-	// eMule may not have the permission to create a DMP file in the directory where the "emule.exe" is located.
+	// eMule may not have the permission to create a DMP file in the directory where the "emulebb.exe" is located.
 	// Need to pre-determine a valid directory.
 	m_strDumpDir = PathHelpers::EnsureTrailingSeparator((pszDumpDir != NULL) ? CString(pszDumpDir) : CString());
 

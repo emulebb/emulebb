@@ -871,7 +871,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "顯示額外支出的頻寬"
     IDS_UPDOWNSMALL         "上載: %.1f | 下載: %.1f"
     IDS_EDITLIST            "清單..."
@@ -881,10 +881,10 @@ BEGIN
     IDS_WEBSERVICES         "Web 服務"
     IDS_WEBSVEDIT           "編輯 Web 服務..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK "忽略 eMule 送出連結的協定訊息"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "啟動"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "無法檢查是否有新版本."
 END
 
@@ -892,7 +892,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "已偵測到新版的 eMule"
     IDS_NONEWERVERSION      "未偵測到新版的 eMule."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "影像播放器"
     IDS_MYINFO              "我的資訊"
@@ -1117,9 +1117,9 @@ BEGIN
     IDS_LINKS               "連結"
     IDS_HM_SCHED_ON         "啟用時間表"
     IDS_HM_SCHED_OFF        "停用時間表"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"//!
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"//!
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "記錄客戶端來源交換及伺服器來源查詢/回覆"
     IDS_SHAREDREQ1          "使用者 %s (%u) 要求您的已分享資料夾清單 -> %s"
     IDS_SHAREDREQ2          "使用者 %s (%u) 要求您的已分享資料夾中的檔案清單 '%s' -> %s"
@@ -1915,7 +1915,7 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "視訊縮圖"
@@ -2039,7 +2039,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "如果目前的 eMule_Verbose.log 檔案存在，則開啟它。"
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "將原始本機診斷 JSON 快照複製到剪貼簿。"
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "將已遮蔽的診斷 JSON 快照複製到剪貼簿以便分享。"
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "啟動一次提權修復，處理 eMule BB TCP、UDP 和可從外部存取的 REST 防火牆規則。"
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "啟動一次提權修復，處理 eMuleBB TCP、UDP 和可從外部存取的 REST 防火牆規則。"
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "連線、取消連線嘗試，或中斷目前工作階段。"
     IDS_TOOLS_STATUS_SHOW_SERVER                            "切換到伺服器檢視。"
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "切換到傳輸檢視。"
@@ -2084,8 +2084,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "完整 - 保留寬度(&F)"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "完整 - 重設寬度(&H)"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "將原版 eMule 表格欄套用到所有主要檢視。"
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "將 eMule BB 擴充表格欄套用到所有主要檢視。"
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "依 eMule BB 順序在所有主要檢視中顯示全部表格欄。"
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "將 eMuleBB 擴充表格欄套用到所有主要檢視。"
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "依 eMuleBB 順序在所有主要檢視中顯示全部表格欄。"
     IDS_CHAT_SMILEYS_BUTTON                                 "表情符號"
     IDS_PPG_DEBUG_LEVEL                                     "等級"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2173,7 +2173,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "每日設定備份"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "每天啟動時建立一次設定與狀態檔案快照，然後繼續正常載入。"
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Chinese (Taiwan) resources
 /////////////////////////////////////////////////////////////////////////////

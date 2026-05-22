@@ -12,7 +12,7 @@
 #include "WebServerJsonSeams.h"
 
 /**
- * @brief Pure helper surface for the eMule BB *arr compatibility bridge.
+ * @brief Pure helper surface for the eMuleBB *arr compatibility bridge.
  */
 namespace WebServerArrCompatSeams
 {

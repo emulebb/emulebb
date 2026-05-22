@@ -982,7 +982,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Trego shtrirjen sipërore të bandës"
     IDS_UPDOWNSMALL         "Lart: %.1f | Poshtë: %.1f"
     IDS_EDITLIST            "Listë..."
@@ -993,10 +993,10 @@ BEGIN
     IDS_WEBSVEDIT           "Shërbimet e Rrjetit..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Për dërgimin e linkeve"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Në nisje"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Versioni i ri nuk mund të verifikohet!"
 END
 
@@ -1004,7 +1004,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Për eMule diktohet një version i ri"
     IDS_NONEWERVERSION      "Për eMule nuk diktohet asnjë version i ri."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Luajtësi i videos"
     IDS_MYINFO              "Informacion"
@@ -1159,9 +1159,9 @@ BEGIN
     IDS_LINKS               "Linke"
     IDS_HM_SCHED_ON         "Ndize Planifikuesin"
     IDS_HM_SCHED_OFF        "Fike Planifikuesin"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Hape shkëmbimin me burimin e klientit dhe pyetje/përgjigje me burimin e serverit"
     IDS_SHAREDREQ1          "Përdoruesi %s (%u) kërkoi listën e direktorive të shpërndara -> %s"
@@ -1926,7 +1926,7 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Miniatura videoje"
@@ -2050,7 +2050,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Hap skedarin aktual eMule_Verbose.log nëse ekziston."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Kopjon një çast diagnostik lokal të papërpunuar JSON në kujtesën e fragmenteve."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Kopjon një çast diagnostik të redaktuar JSON në kujtesën e fragmenteve për ndarje."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Nis një riparim njëherësh me privilegje të ngritura për rregullat e firewall-it TCP, UDP dhe REST të arritshme nga jashtë për eMule BB."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Nis një riparim njëherësh me privilegje të ngritura për rregullat e firewall-it TCP, UDP dhe REST të arritshme nga jashtë për eMuleBB."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Lidhet, anulon një përpjekje lidhjeje ose shkëput sesionin aktual."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Kalon te pamja Serverët."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Kalon te pamja Transferimet."
@@ -2095,8 +2095,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&E plotë - ruaj gjerësitë"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "E plotë - rivendos g&jerësitë"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Zbaton kolonat standarde të tabelave eMule në të gjitha pamjet kryesore."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Zbaton kolonat e zgjeruara të tabelave eMule BB në të gjitha pamjet kryesore."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Shfaq të gjitha kolonat e tabelave në rendin e eMule BB për të gjitha pamjet kryesore."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Zbaton kolonat e zgjeruara të tabelave eMuleBB në të gjitha pamjet kryesore."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Shfaq të gjitha kolonat e tabelave në rendin e eMuleBB për të gjitha pamjet kryesore."
     IDS_CHAT_SMILEYS_BUTTON                                 "Buzëqeshje"
     IDS_PPG_DEBUG_LEVEL                                     "Niveli"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2184,7 +2184,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Kopje rezervë ditore e konfigurimit"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Krijon një pamje fillimi të skedarëve të konfigurimit dhe gjendjes një herë në ditë para se të vazhdojë ngarkimi normal."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Albanisch resources
 /////////////////////////////////////////////////////////////////////////////

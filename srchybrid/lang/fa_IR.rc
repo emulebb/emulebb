@@ -337,7 +337,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "نرم افزار نمايش دهنده ويدئويي"
     IDS_MYINFO              "اطلاعات من"
@@ -806,7 +806,7 @@ BEGIN
     IDS_SAMEUSERHASH        "كاربر مشتري '%s' و '%s' يك كد رمز يا آي پي يكسان دارند - حذف شدند '%s'"
     IDS_SEARCHEXTENTION     "پسوند"
     IDS_SEARCHAVAIL         "مقدار دسترسي"
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
 END
 
 STRINGTABLE
@@ -1044,10 +1044,10 @@ BEGIN
     IDS_WEBSVEDIT           "ويرايش سرويس وب...َ"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "ايمول پيغام هاي دستوري كه در آنها لينك فرستاده شده را ناديده بگيرد"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "شروع به كار"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "نمي توان نسخه جديد را چك كرد.َ"
     IDS_CB_TBN_ONNEWVERSION "نسخه جديد ايمول پيدا شد"
     IDS_NONEWERVERSION      "نسخه جديدي از ايمول پيدا نشده.َ"
@@ -1179,9 +1179,9 @@ STRINGTABLE
 BEGIN
     IDS_HM_SCHED_ON         "فعال كردن عمليات زمان بندي"
     IDS_HM_SCHED_OFF        "غير فعال كردن عمليات زمان بندي"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "گزارش ردوبدل كردن منابع واندازه صف ها  و درخواست هاي كاربران/و جواب ها"
     IDS_SHAREDREQ1          "كاربر %s (%u) درخواست گرفتن ليست فايلهاي به اشتراك گذاشته شده شما را كرد -> %s"
@@ -1898,7 +1898,7 @@ BEGIN
     IDS_OPENPREFINI         "باز کردن preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "تصاویر کوچک ویدیو"
@@ -2022,7 +2022,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "فایل eMule_Verbose.log فعلی را در صورت وجود باز می کند."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "یک عکس فوری تشخیصی محلی JSON خام را در کلیپ بورد کپی می کند."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "یک عکس فوری تشخیصی JSON را برای اشتراک‌گذاری در کلیپ بورد کپی می‌کند."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "یک تعمیر یکباره برای eMule BB TCP، UDP و قوانین دیواره آتش REST قابل دسترسی خارجی راه اندازی می کند."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "یک تعمیر یکباره برای eMuleBB TCP، UDP و قوانین دیواره آتش REST قابل دسترسی خارجی راه اندازی می کند."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "تلاش برای اتصال را وصل می کند، لغو می کند یا جلسه جاری را قطع می کند."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "به نمای سرورها جابجا می شود."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "به نمای انتقال می رود."
@@ -2067,8 +2067,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&کامل - حفظ عرض"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "&کامل - تنظیم مجدد عرض"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "ستون های جدول استوک eMule را برای همه نماهای اصلی اعمال می کند."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "ستون های جدول توسعه یافته eMule BB را برای همه نماهای اصلی اعمال می کند."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "تمام ستون های جدول را به ترتیب eMule BB برای همه نماهای اصلی نشان می دهد."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "ستون های جدول توسعه یافته eMuleBB را برای همه نماهای اصلی اعمال می کند."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "تمام ستون های جدول را به ترتیب eMuleBB برای همه نماهای اصلی نشان می دهد."
     IDS_CHAT_SMILEYS_BUTTON                                 "شکلک ها"
     IDS_PPG_DEBUG_LEVEL                                     "سطح"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2156,7 +2156,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "پشتیبان‌گیری روزانه از پیکربندی"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "هر روز پیش از ادامه بارگذاری عادی، یک تصویر لحظه‌ای هنگام شروع از فایل‌های پیکربندی و وضعیت ایجاد می‌کند."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Persian (Iran) resources
 /////////////////////////////////////////////////////////////////////////////

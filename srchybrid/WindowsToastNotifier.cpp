@@ -32,8 +32,8 @@
 
 namespace
 {
-	constexpr PCWSTR kToastAppId = L"eMule.BB";
-	constexpr PCWSTR kToastShortcutName = L"eMule BB.lnk";
+	constexpr PCWSTR kToastAppId = L"eMuleBB";
+	constexpr PCWSTR kToastShortcutName = L"eMuleBB.lnk";
 	constexpr UINT kMaxTrackedToasts = 64;
 
 	void LogToastFailure(LPCTSTR pszContext, const winrt::hresult_error& error)
@@ -99,7 +99,7 @@ namespace
 		case TBN_NEWVERSION:
 			return L"New version";
 		default:
-			return L"eMule BB";
+			return L"eMuleBB";
 		}
 	}
 
@@ -169,7 +169,7 @@ namespace
 			return false;
 		pShellLink->SetPath(szModulePath);
 		pShellLink->SetIconLocation(szModulePath, 0);
-		pShellLink->SetDescription(L"eMule BB");
+		pShellLink->SetDescription(L"eMuleBB");
 
 		CComPtr<IPropertyStore> pPropertyStore;
 		if (FAILED(pShellLink.QueryInterface(&pPropertyStore)) || pPropertyStore == NULL)

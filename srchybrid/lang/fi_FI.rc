@@ -337,7 +337,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Videosoitin"
     IDS_MYINFO              "Tietosi"
@@ -806,7 +806,7 @@ BEGIN
     IDS_SAMEUSERHASH        "Käyttäjillä '%s' ja '%s' on sama hash tai IP. Poistin käyttäjän '%s'."
     IDS_SEARCHEXTENTION     "Tiedostopääte"
     IDS_SEARCHAVAIL         "Saatavuus"
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
 END
 
 STRINGTABLE
@@ -1044,10 +1044,10 @@ BEGIN
     IDS_WEBSVEDIT           "Muokkaa verkkopalveluita"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Suodata eMulen linkinlähetysprotokollan viestit"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Käynnistys"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Uuden version saatavuuden tarkistaminen epäonnistui."
     IDS_CB_TBN_ONNEWVERSION "Uusi versio on saatavilla."
     IDS_NONEWERVERSION      "Uutta versioita ei ole saatavilla."
@@ -1180,9 +1180,9 @@ STRINGTABLE
 BEGIN
     IDS_HM_SCHED_ON         "Ajastin päälle"
     IDS_HM_SCHED_OFF        "Ajastin pois päältä"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Näytä lähteiden vaihtoa koskevat viestit."
     IDS_SHAREDREQ1          "Käyttäjä %s (%u) pyysi listaa jaetuista hakemistoista, %s."
@@ -1902,7 +1902,7 @@ BEGIN
     IDS_OPENPREFINI         "Avaa preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Videoiden pikkukuvat"
@@ -2026,7 +2026,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Avaa nykyisen eMule_Verbose.log-tiedoston, jos se on olemassa."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Kopioi raa'an paikallisen diagnoosin JSON-vedoksen leikepöydälle."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Kopioi muokatun diagnostisen JSON-tilanteen leikepöydälle jaettavaksi."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Käynnistää korotetun kertakorjauksen eMule BB TCP-, UDP- ja ulkoisesti tavoitettavissa REST-palomuurisäännöille."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Käynnistää korotetun kertakorjauksen eMuleBB TCP-, UDP- ja ulkoisesti tavoitettavissa REST-palomuurisäännöille."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Yhdistää, peruuttaa yhteysyrityksen tai katkaisee yhteyden nykyiseen istuntoon."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Vaihtaa Palvelimet-näkymään."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Vaihtaa Siirrot-näkymään."
@@ -2071,8 +2071,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&Täysi - Säilytä leveydet"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "&Full - Nollaa leveydet"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Käyttää eMule-varastotaulukon sarakkeita kaikkiin päänäkymiin."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Käyttää eMule BB laajennettuja taulukon sarakkeita kaikissa päänäkymissä."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Näyttää kaikki taulukon sarakkeet eMule BB-järjestyksessä kaikissa päänäkymissä."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Käyttää eMuleBB laajennettuja taulukon sarakkeita kaikissa päänäkymissä."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Näyttää kaikki taulukon sarakkeet eMuleBB-järjestyksessä kaikissa päänäkymissä."
     IDS_CHAT_SMILEYS_BUTTON                                 "Hymiöt"
     IDS_PPG_DEBUG_LEVEL                                     "Taso"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2160,7 +2160,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Päivittäinen määritysten varmuuskopio"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Luo käynnistyksen yhteydessä kerran päivässä vedoksen määritys- ja tilatiedostoista ennen normaalin latauksen jatkumista."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Finnish resources
 /////////////////////////////////////////////////////////////////////////////

@@ -5,7 +5,7 @@
 namespace AppRegistryIdentitySeams
 {
 /**
- * @brief Registry key owned by eMule BB for per-user app settings.
+ * @brief Registry key owned by eMuleBB for per-user app settings.
  */
 inline LPCTSTR GetAppSettingsKey()
 {
@@ -13,7 +13,7 @@ inline LPCTSTR GetAppSettingsKey()
 }
 
 /**
- * @brief Value name owned by eMule BB in the current user's Windows Run key.
+ * @brief Value name owned by eMuleBB in the current user's Windows Run key.
  */
 inline LPCTSTR GetAutoStartRunValueName()
 {
@@ -29,7 +29,7 @@ inline LPCTSTR GetEd2kScheme()
 }
 
 /**
- * @brief HKCU classes key used when eMule BB claims the shared ed2k URL scheme.
+ * @brief HKCU classes key used when eMuleBB claims the shared ed2k URL scheme.
  */
 inline LPCTSTR GetEd2kClassesKey()
 {
@@ -37,7 +37,7 @@ inline LPCTSTR GetEd2kClassesKey()
 }
 
 /**
- * @brief ProgID owned by eMule BB for collection files.
+ * @brief ProgID owned by eMuleBB for collection files.
  */
 inline LPCTSTR GetCollectionProgId()
 {
@@ -45,7 +45,7 @@ inline LPCTSTR GetCollectionProgId()
 }
 
 /**
- * @brief HKCU classes key owned by eMule BB for collection files.
+ * @brief HKCU classes key owned by eMuleBB for collection files.
  */
 inline LPCTSTR GetCollectionClassesKey()
 {

@@ -899,7 +899,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Mostrar largura de banda adicional"
     IDS_UPDOWNSMALL         "Envio: %.1f | Recepção: %.1f"
     IDS_EDITLIST            "Lista"
@@ -908,10 +908,10 @@ BEGIN
     IDS_DESCRIPTIONRECV     "Recebida a descrição para o ficheiro '%s': %s"
     IDS_WEBSERVICES         "Serviços Web"
     IDS_WEBSVEDIT           "Editar Serviços Web"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Arranque"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Não foi possível verificar a existência de uma nova versão."
 END
 
@@ -919,7 +919,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "For detectada uma nova versão do eMule"
     IDS_NONEWERVERSION      "Não foi detectada nenhuma nova versão do eMule."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Programa de Visualização"
     IDS_MYINFO              "A Minha Informação"
@@ -1114,9 +1114,9 @@ BEGIN
     IDS_LINKS               "Ligações"
     IDS_HM_SCHED_ON         "Ligar o Temporizador"
     IDS_HM_SCHED_OFF        "Desligar o Temporizador"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Registar pedidos/respostas de troca de fontes para clientes/servidores"
     IDS_SHAREDREQ1          "Utilizador %s (%u) pediu a sua lista de pastas partilhadas -> %s"
@@ -1939,7 +1939,7 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_ENABLE_IPFILTER                                        "Ativar filtro de IP"
@@ -2011,8 +2011,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                           "&Completo - preservar larguras"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                          "Completo - repor larg&uras"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                         "Aplica as colunas padrão do eMule a todas as vistas principais."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                      "Aplica as colunas estendidas do eMule BB a todas as vistas principais."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                          "Mostra todas as colunas na ordem do eMule BB em todas as vistas principais."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                      "Aplica as colunas estendidas do eMuleBB a todas as vistas principais."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                          "Mostra todas as colunas na ordem do eMuleBB em todas as vistas principais."
     IDS_BROADBAND                                              "Banda larga"
     IDS_FILEBUFFERTIMELIMIT                                    "Limite de tempo da memória intermédia do ficheiro (segundos)"
     IDS_PREVIEWCOPIEDARCHIVES                                  "Usar cópia temporária do arquivo para pré-visualização"
@@ -2118,7 +2118,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                          "Abre o arquivo eMule_Verbose.log atual, se existir."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON             "Copia uma captura de diagnóstico local como JSON em bruto para a área de transferência."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON    "Copia uma captura de diagnóstico em JSON expurgado para a área de transferência para partilha."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES             "Inicia um reparo único elevado para eMule BB TCP, UDP e regras de firewall REST acessíveis externamente."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES             "Inicia um reparo único elevado para eMuleBB TCP, UDP e regras de firewall REST acessíveis externamente."
     IDS_TOOLS_STATUS_SESSION_CONNECT                           "Conecta, cancela uma tentativa de conexão ou desconecta a sessão atual."
     IDS_TOOLS_STATUS_SHOW_SERVER                               "Muda para a visualização Servidores."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                            "Muda para a visualização Transferências."
@@ -2196,7 +2196,7 @@ BEGIN
     IDS_COMPLETIONCOMMAND                                      "Programa de conclusão de arquivos"
     IDS_RUNONFILECOMPLETE                                      "Execute o programa quando um arquivo for concluído"
     IDS_COMPLETIONCOMMAND_INVALID                              "Selecione um programa .exe ou .com existente antes de ativar o comando de conclusão de arquivo."
-    IDS_AUTOSTART_REG_FAILED                                   "O Windows não conseguiu registar o eMule BB para iniciar automaticamente para o utilizador atual."
+    IDS_AUTOSTART_REG_FAILED                                   "O Windows não conseguiu registar o eMuleBB para iniciar automaticamente para o utilizador atual."
     IDS_PERCENTAGE                                             "%"
     IDS_CLIENT_UPLOADED                                        "Cliente enviado"
     IDS_CLIENT_HASH                                            "Hash do cliente"
@@ -2604,8 +2604,8 @@ BEGIN
     IDS_PPG_FILES_TT_FILECOMPLETEARGS                          "Tokens suportados: caminho completo %F, diretório %D, nome do arquivo %N, hash do arquivo %H, bytes de tamanho %S, categoria %C.\r\n\r\n%F e %D são citados automaticamente. As variáveis ​​de ambiente não são expandidas."
     IDS_PPG_GENERAL_TT_ONLINESIG                               "Grava o arquivo de status herdado onlinesig.dat para páginas externas, scripts ou widgets que leem o status eMule.\r\n\r\nNão melhora a velocidade de transferência ou a rede. Deixe-o desativado, a menos que você consuma ativamente esse arquivo em algum lugar."
     IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND                       "Traz eMule para o primeiro plano quando um link ed2k manipulado ou ação externa semelhante tem como alvo o aplicativo.\r\n\r\nAtive-o se desejar que cliques no link revelem eMule imediatamente. Deixe-o desativado se preferir o tratamento em segundo plano."
-    IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Verifica as versões do GitHub na inicialização quando o intervalo configurado expirou e apenas alerta quando um pacote eMule BB mais recente está disponível.\r\n\r\nDeixe-o desligado para uma inicialização silenciosa ou habilite-o se desejar uma verificação periódica de atualização."
-    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Bloqueia a suspensão do sistema enquanto o eMule BB está ligado ou a transferir, para que descarregamentos, envios, Kad e sessões de servidor não sejam interrompidos.\r\n\r\nO ecrã pode continuar a desligar-se normalmente. Desativar esta opção repõe imediatamente a política normal de suspensão do Windows."
+    IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Verifica as versões do GitHub na inicialização quando o intervalo configurado expirou e apenas alerta quando um pacote eMuleBB mais recente está disponível.\r\n\r\nDeixe-o desligado para uma inicialização silenciosa ou habilite-o se desejar uma verificação periódica de atualização."
+    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Bloqueia a suspensão do sistema enquanto o eMuleBB está ligado ou a transferir, para que descarregamentos, envios, Kad e sessões de servidor não sejam interrompidos.\r\n\r\nO ecrã pode continuar a desligar-se normalmente. Desativar esta opção repõe imediatamente a política normal de suspensão do Windows."
     IDS_PPG_GENERAL_TT_WEBSVEDIT                               "Edita a lista de serviços da web configurada usada por ações auxiliares, como pesquisas na web da UI.\r\n\r\nVocê normalmente só precisa disso se quiser personalizar ou reparar essas entradas de pesquisa externas."
     IDS_PPG_GENERAL_TT_ED2_KFIX                                "Repara o registro do link ed2k Windows para que os links ed2k do navegador e do shell abram em eMule novamente.\r\n\r\nU Use-o quando os links ed2k pararem de iniciar eMule ou forem roubados por outro cliente."
     IDS_PPG_GENERAL_TT_STARTMIN                                "Inicia eMule minimizado em vez de abrir a janela principal imediatamente.\r\n\r\nUútil para inicialização autônoma. Deixe-o desativado se quiser inspecionar a IU imediatamente."
@@ -2662,7 +2662,7 @@ BEGIN
     IDS_NOTIFY_TT_CB_TBN_ONDOWNLOAD                            "Mostra uma notificação quando um download termina.\r\n\r\nRecomendado se os arquivos concluídos precisarem de atenção sem observar a página Transferências."
     IDS_NOTIFY_TT_CB_TBN_ONLOG                                 "Mostra uma notificação quando uma entrada de log é adicionada.\r\n\r\nUútil para diagnósticos, mas barulhento durante sessões normais de longa duração."
     IDS_NOTIFY_TT_CB_TBN_ONNEWDOWNLOAD                         "Mostra uma notificação quando um novo download é adicionado.\r\n\r\nAtive-o se os downloads puderem ser adicionados externamente e você desejar confirmação."
-    IDS_NOTIFY_TT_CB_TBN_ONNEWVERSION                          "Mostra uma notificação quando o verificador de atualização encontra uma versão eMule BB mais recente.\r\n\r\nIsso só importa quando as verificações de atualização estão habilitadas na página Geral."
+    IDS_NOTIFY_TT_CB_TBN_ONNEWVERSION                          "Mostra uma notificação quando o verificador de atualização encontra uma versão eMuleBB mais recente.\r\n\r\nIsso só importa quando as verificações de atualização estão habilitadas na página Geral."
     IDS_NOTIFY_TT_EDIT_RECEIVER                                "Endereço de e-mail que recebe mensagens de notificação eMule.\r\n\r\nUuse um endereço aceito pelo servidor SMTP configurado."
     IDS_NOTIFY_TT_EDIT_SENDER                                  "Endereço do remetente usado para notificações por e-mail.\r\n\r\nMuitos servidores SMTP exigem que ele corresponda ou pertença à conta autenticada."
     IDS_NOTIFY_TT_EDIT_TBN_WAVFILE                             "Caminho para o arquivo WAV reproduzido para notificações sonoras.\r\n\r\nEscolha um arquivo local curto; arquivos ausentes ou inacessíveis impedem a reprodução do som."
@@ -2795,7 +2795,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                             "Cópia de segurança diária da configuração"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                          "Cria uma captura de arranque dos ficheiros de configuração e estado uma vez por dia antes de continuar o carregamento normal."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Portuguese (Portugal) resources
 /////////////////////////////////////////////////////////////////////////////

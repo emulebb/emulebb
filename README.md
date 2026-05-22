@@ -1,13 +1,13 @@
-# eMule BB
+# eMuleBB
 
 This repo is the canonical app source for eMule broadband edition, compactly
-branded as eMule BB. Public product releases use the independent eMule BB
+branded as eMuleBB. Public product releases use the independent eMuleBB
 version line while the workspace keeps explicit community `0.72a` baselines for
 parity testing.
 
 ## Refs
 
-- `main`: maintained eMule BB integration line and beta `0.7.3` release
+- `main`: maintained eMuleBB integration line and beta `0.7.3` release
   source after reviewed release proof passes
 - `baseline/community-0.72a`: seam-enabled parity and regression baseline,
   test-only

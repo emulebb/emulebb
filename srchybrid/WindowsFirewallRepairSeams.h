@@ -35,7 +35,7 @@ namespace WindowsFirewallRepairSeams
 			|| strBindAddress.Left(4) == _T("127.");
 	}
 
-	/** Builds the desired persistent broad rules for the eMule BB executable. */
+	/** Builds the desired persistent broad rules for the eMuleBB executable. */
 	inline std::vector<CFirewallRuleSpec> BuildDesiredRules(const UINT uTcpPort, const UINT uUdpPort, const bool bWebServerEnabled, const UINT uWebPort, const CString &rstrWebBindAddress)
 	{
 		(void)uTcpPort;
@@ -45,10 +45,10 @@ namespace WindowsFirewallRepairSeams
 		(void)rstrWebBindAddress;
 
 		std::vector<CFirewallRuleSpec> rules;
-		rules.push_back(CFirewallRuleSpec{_T("eMule BB Inbound TCP"), _T("Inbound"), _T("TCP")});
-		rules.push_back(CFirewallRuleSpec{_T("eMule BB Inbound UDP"), _T("Inbound"), _T("UDP")});
-		rules.push_back(CFirewallRuleSpec{_T("eMule BB Outbound TCP"), _T("Outbound"), _T("TCP")});
-		rules.push_back(CFirewallRuleSpec{_T("eMule BB Outbound UDP"), _T("Outbound"), _T("UDP")});
+		rules.push_back(CFirewallRuleSpec{_T("eMuleBB Inbound TCP"), _T("Inbound"), _T("TCP")});
+		rules.push_back(CFirewallRuleSpec{_T("eMuleBB Inbound UDP"), _T("Inbound"), _T("UDP")});
+		rules.push_back(CFirewallRuleSpec{_T("eMuleBB Outbound TCP"), _T("Outbound"), _T("TCP")});
+		rules.push_back(CFirewallRuleSpec{_T("eMuleBB Outbound UDP"), _T("Outbound"), _T("UDP")});
 		return rules;
 	}
 
@@ -60,12 +60,12 @@ namespace WindowsFirewallRepairSeams
 		return _T("'") + strEscaped + _T("'");
 	}
 
-	/** Builds the elevated PowerShell script body that repairs eMule BB-owned firewall rules. */
+	/** Builds the elevated PowerShell script body that repairs eMuleBB-owned firewall rules. */
 	inline CString BuildRepairScript(const CString &rstrProgramPath, const std::vector<CFirewallRuleSpec> &rules, const CString &rstrResultPath)
 	{
 		CString strScript;
 		strScript += _T("$ErrorActionPreference = 'Stop'\r\n");
-		strScript += _T("$Host.UI.RawUI.WindowTitle = 'eMule BB Windows Firewall Repair'\r\n");
+		strScript += _T("$Host.UI.RawUI.WindowTitle = 'eMuleBB Windows Firewall Repair'\r\n");
 		strScript.AppendFormat(_T("$ProgramPath = %s\r\n"), (LPCTSTR)QuotePowerShellSingleQuotedLiteral(rstrProgramPath));
 		strScript.AppendFormat(_T("$ResultPath = %s\r\n"), (LPCTSTR)QuotePowerShellSingleQuotedLiteral(rstrResultPath));
 		strScript += _T("$Rules = @(\r\n");
@@ -78,7 +78,7 @@ namespace WindowsFirewallRepairSeams
 		}
 		strScript += _T(")\r\n");
 		strScript += _T("Write-Host ''\r\n");
-		strScript += _T("Write-Host 'eMule BB Windows Firewall Repair' -ForegroundColor Cyan\r\n");
+		strScript += _T("Write-Host 'eMuleBB Windows Firewall Repair' -ForegroundColor Cyan\r\n");
 		strScript += _T("Write-Host ('Program: {0}' -f $ProgramPath)\r\n");
 		strScript += _T("Write-Host 'Profiles: Domain, Private, Public'\r\n");
 		strScript += _T("Write-Host 'Scope: inbound and outbound TCP/UDP, all ports, all hosts, all interfaces'\r\n");

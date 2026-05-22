@@ -5,7 +5,7 @@
 namespace StandbyPreventionSeams
 {
 /**
- * @brief Returns true when eMule BB should hold a Windows system-sleep assertion.
+ * @brief Returns true when eMuleBB should hold a Windows system-sleep assertion.
  */
 inline bool ShouldPreventSystemSleep(bool bPreventStandbyEnabled, bool bIsConnected, unsigned int uUploadQueueLength, unsigned int uDownloadDatarate)
 {

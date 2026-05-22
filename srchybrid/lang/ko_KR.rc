@@ -335,7 +335,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "비디오 재생기"
     IDS_MYINFO              "내 정보"
@@ -804,7 +804,7 @@ BEGIN
     IDS_SAMEUSERHASH        "'%s' 및 '%s' 두 클라이언트는 동일한 사용자 해시나 IP를 가지고 있습니다 - '%s' 삭제됨"
     IDS_SEARCHEXTENTION     "확장자"
     IDS_SEARCHAVAIL         "가용 소스"
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
 END
 
 STRINGTABLE
@@ -1042,10 +1042,10 @@ BEGIN
     IDS_WEBSVEDIT           "웹 서비스 편집..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
 														"eMule 링크 전송 프로토콜 메시지 무시"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "시작"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "새로운 버전을 확인할 수 없음"
     IDS_CB_TBN_ONNEWVERSION "새로운 eMule 버전을 찾음"
     IDS_NONEWERVERSION      "새로운 eMule 버전이 없음"
@@ -1177,9 +1177,9 @@ STRINGTABLE
 BEGIN
     IDS_HM_SCHED_ON         "시간표 켜기"
     IDS_HM_SCHED_OFF        "시간표 끄기"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
 														"클라이언트 소스 교환 및 서버 소스 질의/응답 기록"
     IDS_SHAREDREQ1          "%s (%u) 사용자가 공유 디렉토리 목록을 요청 -> %s"
@@ -1896,7 +1896,7 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "비디오 썸네일"
@@ -2020,7 +2020,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "현재 eMule_Verbose.log 파일이 있으면 엽니다."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "원시 로컬 진단 JSON 스냅샷을 클립보드에 복사합니다."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "공유용으로 수정된 진단 JSON 스냅샷을 클립보드에 복사합니다."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "eMule BB TCP, UDP 및 외부에서 접근 가능한 REST 방화벽 규칙에 대해 한 번의 관리자 권한 복구를 시작합니다."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "eMuleBB TCP, UDP 및 외부에서 접근 가능한 REST 방화벽 규칙에 대해 한 번의 관리자 권한 복구를 시작합니다."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "현재 세션을 연결하거나 연결 시도를 취소하거나 연결을 끊습니다."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "서버 보기로 전환합니다."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "전송 보기로 전환합니다."
@@ -2065,8 +2065,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "전체 - 너비 유지(&F)"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "전체 - 너비 재설정(&H)"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "모든 기본 보기에 기본 eMule 표 열을 적용합니다."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "모든 기본 보기에 eMule BB 확장 표 열을 적용합니다."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "모든 기본 보기에서 eMule BB 순서로 모든 표 열을 표시합니다."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "모든 기본 보기에 eMuleBB 확장 표 열을 적용합니다."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "모든 기본 보기에서 eMuleBB 순서로 모든 표 열을 표시합니다."
     IDS_CHAT_SMILEYS_BUTTON                                 "스마일리"
     IDS_PPG_DEBUG_LEVEL                                     "수준"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2154,7 +2154,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "일일 설정 백업"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "정상 로딩을 계속하기 전에 하루에 한 번 시작 시 설정 및 상태 파일의 스냅샷을 만듭니다."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Korean resources
 /////////////////////////////////////////////////////////////////////////////

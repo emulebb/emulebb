@@ -984,7 +984,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Hiển thị lượng băng thông đã sử dụng"
     IDS_UPDOWNSMALL         "Lên: %.1f | Xuống: %.1f"
     IDS_EDITLIST            "DSách..."
@@ -995,10 +995,10 @@ BEGIN
     IDS_WEBSVEDIT           "Chỉnh sửa Dịch-vụ-Web..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Bỏ qua Thông điệp gởi Liên kết"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Khởi động"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Không thể kiểm tra phiên bản mới"
 END
 
@@ -1006,7 +1006,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Đã có Phiên bản eMule mới"
     IDS_NONEWERVERSION      "Không có phiên bản eMule mới."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Chương trình xem Video"
     IDS_MYINFO              "Thông tin"
@@ -1161,9 +1161,9 @@ BEGIN
     IDS_LINKS               "Liên kết"
     IDS_HM_SCHED_ON         "Bật Thời gian biểu"
     IDS_HM_SCHED_OFF        "Tắt Thời gian biểu"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Ghi lại Trao đổi nguồn máy khách và Yêu cầu/trả lời máy chủ"
     IDS_SHAREDREQ1          "Người dùng %s (%u) yêu cầu danh sách thư mục chia sẻ của bạn -> %s"
@@ -1927,7 +1927,7 @@ BEGIN
     IDS_OPENPREFINI         "Mở preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Hình thu nhỏ video"
@@ -2051,7 +2051,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Mở tệp eMule_Verbose.log hiện tại nếu tệp tồn tại."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Sao chép ảnh chụp JSON chẩn đoán cục bộ thô vào bảng tạm."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Sao chép ảnh chụp JSON chẩn đoán đã che vào bảng tạm để chia sẻ."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Khởi chạy sửa chữa một lần với quyền nâng cao cho các quy tắc tường lửa eMule BB TCP, UDP và REST có thể truy cập từ bên ngoài."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Khởi chạy sửa chữa một lần với quyền nâng cao cho các quy tắc tường lửa eMuleBB TCP, UDP và REST có thể truy cập từ bên ngoài."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Kết nối, hủy lần thử kết nối hoặc ngắt kết nối phiên hiện tại."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Chuyển sang khung Máy chủ."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Chuyển sang khung Truyền tải."
@@ -2096,8 +2096,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&Đầy đủ - Giữ nguyên độ rộng"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "Đầy đủ - Đặt lại độ rộ&ng"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Áp dụng các cột bảng eMule gốc cho mọi khung chính."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Áp dụng các cột bảng mở rộng của eMule BB cho mọi khung chính."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Hiển thị mọi cột bảng theo thứ tự eMule BB cho mọi khung chính."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Áp dụng các cột bảng mở rộng của eMuleBB cho mọi khung chính."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Hiển thị mọi cột bảng theo thứ tự eMuleBB cho mọi khung chính."
     IDS_CHAT_SMILEYS_BUTTON                                 "Biểu tượng cười"
     IDS_PPG_DEBUG_LEVEL                                     "Mức"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2185,7 +2185,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Sao lưu cấu hình hằng ngày"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Tạo một ảnh chụp khi khởi động của các tệp cấu hình và trạng thái mỗi ngày trước khi tiếp tục tải bình thường."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Vietnamese resources
 /////////////////////////////////////////////////////////////////////////////

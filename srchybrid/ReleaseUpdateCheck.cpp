@@ -40,7 +40,7 @@ namespace
 	CString GetReleaseCheckUserAgent()
 	{
 		CString strUserAgent;
-		strUserAgent.Format(_T("eMule-BB/%s"), MOD_RELEASE_VERSION_TEXT);
+	strUserAgent.Format(_T("emulebb/%s"), MOD_RELEASE_VERSION_TEXT);
 		return strUserAgent;
 	}
 

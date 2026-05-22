@@ -4,7 +4,7 @@
   before app-source work; it is authoritative for workspace-wide rules.
 - This file contains app-source local deltas only. Do not duplicate branch,
   worktree, setup, dependency, or build/test policy here.
-- this repo is the canonical app source for eMule BB, the compact app/mod name
+- this repo is the canonical app source for eMuleBB, the compact app/mod name
   for eMule broadband edition
 - the first post-community commit must remain the global source-encoding normalization commit
 - always honor repo `.editorconfig` and `.gitattributes` when editing tracked

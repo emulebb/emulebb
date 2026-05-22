@@ -894,7 +894,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Prikaži presežek prenosa"
     IDS_UPDOWNSMALL         "Gor: %.1f | Dol: %.1f"
     IDS_EDITLIST            "Prikaži"
@@ -903,10 +903,10 @@ BEGIN
     IDS_DESCRIPTIONRECV     "Sprejet opis datoteke '%s' - %s"
     IDS_WEBSERVICES         "Spletne storitve"
     IDS_WEBSVEDIT           "Uredi spletne storitve"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Zagon"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Pregled za novo različico ni uspel."
 END
 
@@ -914,7 +914,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Na voljo je nova različica eMule"
     IDS_NONEWERVERSION      "Nove različice ni na voljo."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Video predvajalnik"
     IDS_MYINFO              "Moji podatki"
@@ -1106,9 +1106,9 @@ BEGIN
     IDS_LINKS               "Povezave"
     IDS_HM_SCHED_ON         "Vklopi Urnik"
     IDS_HM_SCHED_OFF        "Izklopi Urnik"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Prikaži sporočila ob izmenjavi virov"
     IDS_SHAREDREQ1          "Uporabnik %s (%u) je zahteval vaš seznam deljenih datotek -> %s"
     IDS_SHAREDREQ2          "Uporabnik %s (%u) je zahteval vaš seznam deljenih datotek za mapo '%s' -> %s"
@@ -1931,7 +1931,7 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Video sličice"
@@ -2055,7 +2055,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Odpre trenutno datoteko eMule_Verbose.log, če obstaja."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Kopira neobdelan lokalni diagnostični posnetek JSON v odložišče."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Kopira redigiran diagnostični posnetek JSON v odložišče za deljenje."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Zažene enkratno popravilo s povišanimi pravicami za pravila požarnega zidu za eMule BB TCP, UDP in zunanje dosegljiva pravila REST."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Zažene enkratno popravilo s povišanimi pravicami za pravila požarnega zidu za eMuleBB TCP, UDP in zunanje dosegljiva pravila REST."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Poveže, prekliče poskus povezave ali prekine trenutno sejo."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Preklopi na pogled Strežniki."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Preklopi na pogled Prenosi."
@@ -2100,8 +2100,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&Polno - ohrani širine"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "Polno - ponastavi š&irine"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Uporabi izvirne stolpce tabel eMule za vse glavne poglede."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Uporabi razširjene stolpce tabel eMule BB za vse glavne poglede."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Prikaže vse stolpce tabel v vrstnem redu eMule BB za vse glavne poglede."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Uporabi razširjene stolpce tabel eMuleBB za vse glavne poglede."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Prikaže vse stolpce tabel v vrstnem redu eMuleBB za vse glavne poglede."
     IDS_CHAT_SMILEYS_BUTTON                                 "Smeški"
     IDS_PPG_DEBUG_LEVEL                                     "Raven"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2189,7 +2189,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Dnevna varnostna kopija konfiguracije"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Enkrat na dan ob zagonu ustvari posnetek konfiguracijskih in stanjskih datotek, preden se nadaljuje običajno nalaganje."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Slovenian resources
 /////////////////////////////////////////////////////////////////////////////

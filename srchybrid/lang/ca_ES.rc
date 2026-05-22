@@ -897,7 +897,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Mostrar ample de banda excedent"
     IDS_UPDOWNSMALL         "Pujada: %.1f | Descàrrega: %.1f"
     IDS_EDITLIST            "Editar..."
@@ -908,10 +908,10 @@ BEGIN
     IDS_WEBSVEDIT           "Editar Serveis Web"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignorar missatges enviar enllaç d'eMule"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "A l'iniciar"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "No es pot comprovar si hi ha una nova versió."
 END
 
@@ -919,7 +919,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Al detectar nova versió d'eMule"
     IDS_NONEWERVERSION      "No s'ha detectat una nova versió d'eMule."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Reproductor de vídeo"
     IDS_MYINFO              "Informació pròpia"
@@ -1114,9 +1114,9 @@ BEGIN
     IDS_LINKS               "Enllaços"
     IDS_HM_SCHED_ON         "Activar Programador"
     IDS_HM_SCHED_OFF        "Desactivar Programador"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Registre d'intercanvi de fonts i de recerques i resultats des dels servidors "
     IDS_SHAREDREQ1          "L'usuari %s (%u) ha demanat la teva llista de carpetes compartides -> %s"
     IDS_SHAREDREQ2          "L'usuari %s (%u) ha demanat la llista de fitxers compartits de la carpeta '%s' -> %s"
@@ -1935,7 +1935,7 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Miniatures de vídeo"
@@ -2059,7 +2059,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Obre el fitxer eMule_Verbose.log actual si existeix."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Copia una instantània JSON de diagnòstic local en brut al porta-retalls."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Copia una instantània JSON de diagnòstic redactada al porta-retalls per compartir-la."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Inicia una reparació única amb elevació per a les regles del tallafoc de eMule BB TCP, UDP i REST accessible externament."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Inicia una reparació única amb elevació per a les regles del tallafoc de eMuleBB TCP, UDP i REST accessible externament."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Connecta, cancel·la un intent de connexió o desconnecta la sessió actual."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Canvia a la vista Servidors."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Canvia a la vista Transferències."
@@ -2104,8 +2104,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&Complet - conserva amplades"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "Complet - reinicia am&plades"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Aplica les columnes de taula originals de l'eMule a totes les vistes principals."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Aplica les columnes de taula esteses de l'eMule BB a totes les vistes principals."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Mostra totes les columnes de taula en l'ordre de l'eMule BB a totes les vistes principals."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Aplica les columnes de taula esteses de l'eMuleBB a totes les vistes principals."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Mostra totes les columnes de taula en l'ordre de l'eMuleBB a totes les vistes principals."
     IDS_CHAT_SMILEYS_BUTTON                                 "Emoticones"
     IDS_PPG_DEBUG_LEVEL                                     "Nivell"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2193,7 +2193,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Còpia de seguretat diària de la configuració"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Crea una instantània d'inici dels fitxers de configuració i estat cada dia abans que continuï la càrrega normal."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Catalan resources
 /////////////////////////////////////////////////////////////////////////////

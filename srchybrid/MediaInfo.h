@@ -222,7 +222,7 @@ bool GetFallbackMediaInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInf
  */
 bool GetMediaFoundationMediaInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo *mi);
 /**
- * @brief Extracts basic metadata through eMule BB-owned MP4 and EBML parsers.
+ * @brief Extracts basic metadata through eMuleBB-owned MP4 and EBML parsers.
  */
 bool GetOwnedContainerMediaInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInfo *mi);
 /**

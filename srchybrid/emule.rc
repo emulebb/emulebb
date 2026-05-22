@@ -258,7 +258,7 @@ BEGIN
     CONTROL         "Prompt on exit",IDC_EXIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,84,202,10
     CONTROL         "Onlinesig",IDC_ONLINESIG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,94,202,10
     GROUPBOX        "Startup",IDC_STARTUP,3,156,223,61
-    CONTROL         "Check for eMule BB updates",IDC_CHECK4UPDATE,
+    CONTROL         "Check for eMuleBB updates",IDC_CHECK4UPDATE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,172,153,10
     CONTROL         "",IDC_CHECKDAYS,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,169,175,53,10
     LTEXT           "days",IDC_DAYS,171,166,48,9
@@ -2217,7 +2217,7 @@ BEGIN
     IDS_FD_RECOV            "Recovered"
     IDS_FD_COMPR            "Compression"
     IDS_WIZARD_NETWORK      "Choose which Network(s) you want to use"
-    IDS_MAIN_READY          "eMule BB %s ready"
+    IDS_MAIN_READY          "eMuleBB %s ready"
     IDS_WIZARD_ED2K         "eD2K Settings"
     IDS_SEL_SKIN            "Select Skin..."
     IDS_MAIN_SOCKETERROR    "Fatal Error: Unable to create socket on port %u"
@@ -2472,7 +2472,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Video Player"
     IDS_VIDEOTHUMBNAILS     "Video Thumbnails"
@@ -2970,7 +2970,7 @@ BEGIN
     IDS_SAMEUSERHASH        "Client '%s' and '%s' have the same hash or IP - removed '%s'"
     IDS_SEARCHEXTENTION     "Extension"
     IDS_SEARCHAVAIL         "Availability"
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
 END
 
 STRINGTABLE
@@ -3227,13 +3227,13 @@ BEGIN
     IDS_WEBSVEDIT           "Edit Web Services..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignore eMule send link protocol messages"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Startup"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
-    IDS_NEWVERSIONFAILED    "Unable to check for eMule BB updates."
-    IDS_CB_TBN_ONNEWVERSION "New eMule BB version detected"
-    IDS_NONEWERVERSION      "No new eMule BB version detected."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
+    IDS_NEWVERSIONFAILED    "Unable to check for eMuleBB updates."
+    IDS_CB_TBN_ONNEWVERSION "New eMuleBB version detected"
+    IDS_NONEWERVERSION      "No new eMuleBB version detected."
 END
 
 STRINGTABLE
@@ -3265,7 +3265,7 @@ BEGIN
     IDS_RUNONFILECOMPLETE   "Run program when a file completes"
     IDS_COMPLETIONCOMMAND_INVALID
                             "Select an existing .exe or .com program before enabling the file completion command."
-    IDS_AUTOSTART_REG_FAILED "Windows could not register eMule BB to start automatically for the current user."
+    IDS_AUTOSTART_REG_FAILED "Windows could not register eMuleBB to start automatically for the current user."
     IDS_PERCENTAGE          "%"
     IDS_CLIENT_UPLOADED     "Client Uploaded"
     IDS_CLIENT_HASH         "Client Hash"
@@ -3430,9 +3430,9 @@ STRINGTABLE
 BEGIN
     IDS_HM_SCHED_ON         "Switch Scheduler On"
     IDS_HM_SCHED_OFF        "Switch Scheduler Off"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Log client source exchange and server source queries/answers"
     IDS_SHAREDREQ1          "User %s (%u) requested your list of shared directories -> %s"
@@ -3811,7 +3811,7 @@ BEGIN
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON
                             "Copies a redacted diagnostic JSON snapshot to the clipboard for sharing."
     IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES
-                            "Launches an elevated one-time repair for eMule BB TCP, UDP, and externally reachable REST firewall rules."
+                            "Launches an elevated one-time repair for eMuleBB TCP, UDP, and externally reachable REST firewall rules."
     IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS
                             "Launches an elevated one-time action to enable the Windows long path policy."
     IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS
@@ -3908,9 +3908,9 @@ BEGIN
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK
                             "Applies stock eMule table columns to all main views."
     IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED
-                            "Applies eMule BB extended table columns to all main views."
+                            "Applies eMuleBB extended table columns to all main views."
     IDS_TOOLS_STATUS_VIEW_PRESET_FULL
-                            "Shows all table columns in eMule BB order for all main views."
+                            "Shows all table columns in eMuleBB order for all main views."
     IDS_CHAT_SMILEYS_BUTTON "Smileys"
     IDS_PPG_DEBUG_LEVEL     "Level"
     IDS_PPG_DEBUG_TCP       "TCP"
@@ -4862,8 +4862,8 @@ BEGIN
     IDS_PPG_FILES_TT_FILECOMPLETEARGS      "Supported tokens: %F full path, %D directory, %N file name, %H file hash, %S size bytes, %C category.\r\n\r\n%F and %D are quoted automatically. Environment variables are not expanded."
     IDS_PPG_GENERAL_TT_ONLINESIG           "Writes the legacy status file onlinesig.dat for external pages, scripts, or widgets that read eMule status.\r\n\r\nIt does not improve transfer speed or networking. Leave it off unless you actively consume that file somewhere."
     IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND   "Brings eMule to the foreground when a handled ed2k link or similar external action targets the app.\r\n\r\nEnable it if you want link clicks to reveal eMule immediately. Leave it off if you prefer background handling."
-    IDS_PPG_GENERAL_TT_CHECK4_UPDATE       "Checks GitHub Releases on startup when the configured interval has elapsed and only alerts when a newer eMule BB package is available.\r\n\r\nLeave it off for a quiet startup, or enable it if you want a periodic update check."
-    IDS_PPG_GENERAL_TT_PREVENTSTANDBY      "Blocks system sleep while eMule BB is connected or transferring so long downloads, uploads, Kad, and server sessions are not interrupted.\r\n\r\nThe display can still turn off normally. Disabling this option immediately restores the normal Windows sleep policy."
+    IDS_PPG_GENERAL_TT_CHECK4_UPDATE       "Checks GitHub Releases on startup when the configured interval has elapsed and only alerts when a newer eMuleBB package is available.\r\n\r\nLeave it off for a quiet startup, or enable it if you want a periodic update check."
+    IDS_PPG_GENERAL_TT_PREVENTSTANDBY      "Blocks system sleep while eMuleBB is connected or transferring so long downloads, uploads, Kad, and server sessions are not interrupted.\r\n\r\nThe display can still turn off normally. Disabling this option immediately restores the normal Windows sleep policy."
     IDS_PPG_GENERAL_TT_WEBSVEDIT           "Edits the configured web-services list used by helper actions such as web lookups from the UI.\r\n\r\nYou normally only need this if you want to customize or repair those external lookup entries."
     IDS_PPG_GENERAL_TT_ED2_KFIX            "Repairs the Windows ed2k link registration so browser and shell ed2k links open in eMule again.\r\n\r\nUse it when ed2k links stop launching eMule or were stolen by another client."
     IDS_PPG_GENERAL_TT_STARTMIN            "Starts eMule minimized instead of opening the main window immediately.\r\n\r\nUseful for unattended startup. Leave it off if you usually want to inspect the UI right away."
@@ -4933,7 +4933,7 @@ BEGIN
     IDS_NOTIFY_TT_CB_TBN_ONDOWNLOAD        "Shows a notification when a download finishes.\r\n\r\nRecommended if completed files need attention without watching the Transfers page."
     IDS_NOTIFY_TT_CB_TBN_ONLOG             "Shows a notification when a log entry is added.\r\n\r\nUseful for diagnostics, but noisy during normal long-running sessions."
     IDS_NOTIFY_TT_CB_TBN_ONNEWDOWNLOAD     "Shows a notification when a new download is added.\r\n\r\nEnable it if downloads can be added externally and you want confirmation."
-    IDS_NOTIFY_TT_CB_TBN_ONNEWVERSION      "Shows a notification when the update checker finds a newer eMule BB release.\r\n\r\nThis only matters when update checks are enabled on the General page."
+    IDS_NOTIFY_TT_CB_TBN_ONNEWVERSION      "Shows a notification when the update checker finds a newer eMuleBB release.\r\n\r\nThis only matters when update checks are enabled on the General page."
     IDS_NOTIFY_TT_EDIT_RECEIVER            "Email address that receives eMule notification messages.\r\n\r\nUse an address accepted by the configured SMTP server."
     IDS_NOTIFY_TT_EDIT_SENDER              "Sender address used for email notifications.\r\n\r\nMany SMTP servers require this to match or belong to the authenticated account."
     IDS_NOTIFY_TT_EDIT_TBN_WAVFILE         "Path to the WAV file played for sound notifications.\r\n\r\nChoose a short local file; missing or inaccessible files prevent the sound from playing."

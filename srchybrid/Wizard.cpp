@@ -24,7 +24,7 @@
 
 // FROZEN SURFACE (2026-05-17): the first-run connection wizard receives no
 // support, no new tests, and no hardening/refactor investment. The preferred
-// path is removal in favor of eMule BB-owned defaults and profiles.
+// path is removal in favor of eMuleBB-owned defaults and profiles.
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

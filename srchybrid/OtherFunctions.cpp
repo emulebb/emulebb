@@ -3659,7 +3659,7 @@ bool DoCollectionRegFix(bool checkOnly)
 			VERIFY(regkey.SetStringValue(NULL, strModulePath + _T(",1")) == ERROR_SUCCESS);
 
 			VERIFY(regkey.Create(hkeyCR, AppRegistryIdentitySeams::GetCollectionClassesKey()) == ERROR_SUCCESS);
-			VERIFY(regkey.SetStringValue(NULL, _T("eMule BB Collection File")) == ERROR_SUCCESS);
+			VERIFY(regkey.SetStringValue(NULL, _T("eMuleBB Collection File")) == ERROR_SUCCESS);
 
 			CString strCollectionOpenUserKey(AppRegistryIdentitySeams::GetCollectionClassesKey());
 			strCollectionOpenUserKey += _T("\\shell\\open");

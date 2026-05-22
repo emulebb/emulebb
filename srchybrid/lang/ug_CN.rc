@@ -336,7 +336,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "سىن قويغۇچ"
     IDS_MYINFO              "ئۇچۇرۇم"
@@ -805,7 +805,7 @@ BEGIN
     IDS_SAMEUSERHASH        "‫«%s»‎ ۋە «%s» خېرىدارنىڭ ئوخشاش userhash ياكى IP ئادرېسىغا ئىگە -  چىقىرىۋەت«%s»"
     IDS_SEARCHEXTENTION     "كېڭەيتىلگەن نامى"
     IDS_SEARCHAVAIL         "ئىشلىتىلىشچان مەنبە سانى"
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
 END
 
 STRINGTABLE
@@ -1043,10 +1043,10 @@ BEGIN
     IDS_WEBSVEDIT           "‫Web مۇلازىمىتى تەھرىر…‬"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "‫eMule يوللىغان ئۇلىنىش كېلىشىم ئۇچۇرىغا پەرۋا قىلما‬"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "قوزغات"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "يېڭى نەشرىنى تەكشۈرەلمىدى"
     IDS_CB_TBN_ONNEWVERSION "‫يېڭى نەشرىدىكى eMule بايقالدى!‬"
     IDS_NONEWERVERSION      "‫يېڭى نەشرىدىكى eMule بايقالمىدى!‬"
@@ -1178,9 +1178,9 @@ STRINGTABLE
 BEGIN
     IDS_HM_SCHED_ON         "پىلان ۋەزىپىنى ئاچ"
     IDS_HM_SCHED_OFF        "پىلان ۋەزىپىنى ياپ"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "مەنبە ئالماشتۇرۇش ئۇچۇرىنى خاتىرىلە"
     IDS_SHAREDREQ1          "User %s (%u) requested your list of shared directories -> %s"
@@ -1897,7 +1897,7 @@ BEGIN
     IDS_OPENPREFINI         "‫سەپلىمە ھۆججەت preferences.ini نى ئاچ‬"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "سىن كىچىك سۈرەتلىرى"
@@ -2021,7 +2021,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "ئەگەر بار بولسا نۆۋەتتىكى eMule_Verbose.log ھۆججىتىنى ئاچىدۇ."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "خام يەرلىك دىئاگنوز قويۇلغان JSON رەسىمنى چاپلاش تاختىسىغا كۆچۈردى."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "ھەمبەھىرلىنىش ئۈچۈن قىسقارتىلغان دىئاگنوز قويۇلغان JSON رەسىمنى چاپلاش تاختىسىغا كۆچۈرۈڭ."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "eMule BB TCP ، UDP ۋە سىرتقا يەتكىلى بولىدىغان REST مۇداپىئە تام قائىدىسىنى يۇقىرى كۆتۈرۈلگەن بىر قېتىم رېمونت قىلىشنى يولغا قويدى."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "eMuleBB TCP ، UDP ۋە سىرتقا يەتكىلى بولىدىغان REST مۇداپىئە تام قائىدىسىنى يۇقىرى كۆتۈرۈلگەن بىر قېتىم رېمونت قىلىشنى يولغا قويدى."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "ئۇلىنىش سىنىقىنى ئۇلايدۇ ، ئەمەلدىن قالدۇرىدۇ ياكى نۆۋەتتىكى يىغىننى ئۈزۈۋېتىدۇ."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "مۇلازىمېتىر كۆرۈنۈشىگە ئالماشتۇرۇلىدۇ."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "يۆتكەش كۆرۈنۈشىگە ئالماشتۇرۇلىدۇ."
@@ -2066,8 +2066,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&تولۇق - كەڭلىكلەرنى ساقلا"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "تولۇق - كەڭلىكلەرنى ئەسلىگە &قايتۇر"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "بارلىق ئاساسلىق كۆرۈنۈشلەرگە زاپاس eMule جەدۋەل ستونلىرىنى قوللىنىدۇ."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "بارلىق ئاساسلىق كۆرۈنۈشلەرگە eMule BB كېڭەيتىلگەن جەدۋەل ستونلىرىنى قوللىنىدۇ."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "بارلىق ئاساسلىق كۆرۈنۈشلەر ئۈچۈن بارلىق جەدۋەل ستونلىرىنى eMule BB تەرتىپىدە كۆرسىتىدۇ."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "بارلىق ئاساسلىق كۆرۈنۈشلەرگە eMuleBB كېڭەيتىلگەن جەدۋەل ستونلىرىنى قوللىنىدۇ."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "بارلىق ئاساسلىق كۆرۈنۈشلەر ئۈچۈن بارلىق جەدۋەل ستونلىرىنى eMuleBB تەرتىپىدە كۆرسىتىدۇ."
     IDS_CHAT_SMILEYS_BUTTON                                 "Smileys"
     IDS_PPG_DEBUG_LEVEL                                     "دەرىجە"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2155,7 +2155,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "كۈندىلىك سەپلىمە زاپاسلىمىسى"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "نورمال يۈكلەش داۋاملىشىشتىن بۇرۇن ھەر كۈنى قوزغالغاندا سەپلىمە ۋە ھالەت ھۆججەتلىرىنىڭ بىر پارچە كۆرۈنۈشىنى قۇرىدۇ."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Uyghur (PRC) resources
 /////////////////////////////////////////////////////////////////////////////

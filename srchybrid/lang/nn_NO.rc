@@ -895,7 +895,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Syn dataoverskotbandbreidde"
     IDS_UPDOWNSMALL         "Opp: %.1f | Ned: %.1f"
     IDS_EDITLIST            "Liste"
@@ -905,10 +905,10 @@ BEGIN
     IDS_WEBSERVICES         "Vevtenester"
     IDS_WEBSVEDIT           "Rediger vevtenester"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK "Ignorer eMule protokollmelding om send lenke "
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Oppstart"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Ikkje i stand til å sjå etter ny version"
 END
 
@@ -916,7 +916,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Ny utgåve av eMule funne"
     IDS_NONEWERVERSION      "Ikkje funne ny utgåve av eMule"
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Videoavspelar"
     IDS_MYINFO              "Min info"
@@ -1104,9 +1104,9 @@ BEGIN
     IDS_LINKS               "Lenker"
     IDS_HM_SCHED_ON         "Aktiver tidsplanleggjar"
     IDS_HM_SCHED_OFF        "Deaktiver tidsplanleggjar"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Syn kjeldeutvekslingsmeldingar"
     IDS_SHAREDREQ1          "Brukar %s (%u) førespurt liste over dine delte mapper -> %s"
     IDS_SHAREDREQ2          "Brukar %s (%u) førespurt liste over delte filer for mappe '%s' -> %s"
@@ -1894,7 +1894,7 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Miniatyrbilete av video"
@@ -2018,7 +2018,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Opnar den gjeldande eMule_Verbose.log-fila viss ho finst."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Kopierer eit rått lokalt diagnostisk JSON-augeblinksbilete til utklippstavla."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Kopierer eit sladda diagnostisk JSON-augeblinksbilete til utklippstavla for deling."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Startar ein opphøgd eingongsreparasjon for eMule BB TCP-, UDP- og eksternt tilgjengelege REST-brannmurreglar."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Startar ein opphøgd eingongsreparasjon for eMuleBB TCP-, UDP- og eksternt tilgjengelege REST-brannmurreglar."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Koplar til, avbryt eit tilkoplingsforsøk eller koplar frå gjeldande økt."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Byter til tenarvisinga."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Byter til overføringsvisinga."
@@ -2063,8 +2063,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&Full - hald på breidder"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "Full - tilbakestill breid&der"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Brukar standard eMule-tabellkolonnar på alle hovudvisingar."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Brukar utvida eMule BB-tabellkolonnar på alle hovudvisingar."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Viser alle tabellkolonnar i eMule BB-rekkjefølgje for alle hovudvisingar."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Brukar utvida eMuleBB-tabellkolonnar på alle hovudvisingar."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Viser alle tabellkolonnar i eMuleBB-rekkjefølgje for alle hovudvisingar."
     IDS_CHAT_SMILEYS_BUTTON                                 "Smilefjes"
     IDS_PPG_DEBUG_LEVEL                                     "Nivå"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2152,7 +2152,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Dagleg tryggleikskopi av konfigurasjon"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Opprettar eitt oppstartsaugneblinksbilete av konfigurasjons- og statusfiler per dag før normal innlasting held fram."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Norwegian (Nynorsk) resources
 /////////////////////////////////////////////////////////////////////////////

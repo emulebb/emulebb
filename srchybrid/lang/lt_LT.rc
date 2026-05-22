@@ -898,7 +898,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Rodyti perteklinę linijos apkrovą"
     IDS_UPDOWNSMALL         "Siunt: %.1f | Gav: %.1f"
     IDS_EDITLIST            "Sąrašas"
@@ -909,10 +909,10 @@ BEGIN
     IDS_WEBSVEDIT           "Redaguot Web servisus"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignoruoti eMule nuorodų siuntimo protokolo pranešimus"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Startuojant"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Negaliu patikrinti ar yra nauja versija."
 END
 
@@ -920,7 +920,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Aptikta nauja eMule versija"
     IDS_NONEWERVERSION      "Neaptikta nauja eMule versija."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Video grotuvas"
     IDS_MYINFO              "Mano informacija"
@@ -1114,9 +1114,9 @@ BEGIN
     IDS_LINKS               "Nuorodos"
     IDS_HM_SCHED_ON         "Įjungti planavimą"
     IDS_HM_SCHED_OFF        "Išjungti planavimą"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"//!
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"//!
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Rodyti šaltinių apsikeitimo pranešimus"
     IDS_SHAREDREQ1          "Vartotojas %s (%u) užklausė jūsų šarintų katalogų sąrašą -> %s"
     IDS_SHAREDREQ2          "Vartotojas %s (%u) užklausė jūsų šarintų failų sąrašą kataloge '%s' -> %s"
@@ -1934,7 +1934,7 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Vaizdo miniatiūros"
@@ -2058,7 +2058,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Atidaro dabartinį eMule_Verbose.log failą, jei jis yra."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Kopijuoja neapdorotą vietinę diagnostikos JSON momentinę kopiją į iškarpinę."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Kopijuoja užmaskuotą diagnostikos JSON momentinę kopiją į iškarpinę bendrinimui."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Paleidžia vienkartinį privilegijuotą eMule BB TCP, UDP ir iš išorės pasiekiamų REST užkardos taisyklių taisymą."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Paleidžia vienkartinį privilegijuotą eMuleBB TCP, UDP ir iš išorės pasiekiamų REST užkardos taisyklių taisymą."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Prijungia, atšaukia jungimosi bandymą arba atjungia dabartinę sesiją."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Perjungia į serverių rodinį."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Perjungia į siuntimų rodinį."
@@ -2103,8 +2103,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&Visas - išlaikyti pločius"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "Visas - atstatyti plo&čius"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Pritaiko standartinius eMule lentelės stulpelius visiems pagrindiniams rodiniams."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Pritaiko eMule BB išplėstinius lentelės stulpelius visiems pagrindiniams rodiniams."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Rodo visus lentelės stulpelius eMule BB tvarka visuose pagrindiniuose rodiniuose."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Pritaiko eMuleBB išplėstinius lentelės stulpelius visiems pagrindiniams rodiniams."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Rodo visus lentelės stulpelius eMuleBB tvarka visuose pagrindiniuose rodiniuose."
     IDS_CHAT_SMILEYS_BUTTON                                 "Šypsenėlės"
     IDS_PPG_DEBUG_LEVEL                                     "Lygis"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2192,7 +2192,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Kasdienė konfigūracijos atsarginė kopija"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Kartą per dieną paleidimo metu sukuria konfigūracijos ir būsenos failų momentinę kopiją prieš tęsiant įprastą įkėlimą."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Lithuanian resources
 /////////////////////////////////////////////////////////////////////////////

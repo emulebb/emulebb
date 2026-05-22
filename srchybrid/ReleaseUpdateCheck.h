@@ -19,7 +19,7 @@
 namespace ReleaseUpdateCheck
 {
 	/**
-	 * @brief Runtime outcome of checking GitHub Releases for a newer eMule BB package.
+	 * @brief Runtime outcome of checking GitHub Releases for a newer eMuleBB package.
 	 */
 	enum class EUpdateCheckStatus
 	{

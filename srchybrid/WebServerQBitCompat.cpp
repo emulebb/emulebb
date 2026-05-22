@@ -81,7 +81,7 @@ bool ExecuteBridgeCommand(const json &rCommand, json &rResult, CString &rErrorMe
 	if (WebServerJson::ExecuteInternalCommand(rCommand, rResult, strErrorCode, rErrorMessage))
 		return true;
 	if (!strErrorCode.IsEmpty())
-		AddLogLine(false, _T("eMule BB qBittorrent Compatibility: native command failed (%hs)"), (LPCSTR)strErrorCode);
+		AddLogLine(false, _T("eMuleBB qBittorrent Compatibility: native command failed (%hs)"), (LPCSTR)strErrorCode);
 	return false;
 }
 

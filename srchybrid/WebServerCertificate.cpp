@@ -162,7 +162,7 @@ WebServerCertificate::SGenerationRequest WebServerCertificate::BuildDefaultLocal
 	SGenerationRequest request = {};
 	request.strKeyFile = strKeyFile;
 	request.strCertFile = strCertFile;
-	request.strSubjectName = "CN=eMule BB WebServer,O=eMule BB,OU=REST";
+	request.strSubjectName = "CN=eMuleBB WebServer,O=eMuleBB,OU=REST";
 	request.strIssuerName = request.strSubjectName;
 	BuildDefaultValidityWindow(request.strNotBefore, request.strNotAfter);
 	request.uSerial = _byteswap_ushort(rand() & 0x0fff);

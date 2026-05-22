@@ -27,7 +27,7 @@
 namespace ReleaseUpdateCheckSeams
 {
 	/**
-	 * @brief Public eMule BB release version used by GitHub tag comparison.
+	 * @brief Public eMuleBB release version used by GitHub tag comparison.
 	 */
 	struct SModReleaseVersion
 	{
@@ -60,8 +60,8 @@ namespace ReleaseUpdateCheckSeams
 		std::string strError;
 	};
 
-	inline constexpr const char *kModReleaseTagPrefix = "emule-bb-v";
-	inline constexpr const char *kModReleaseAssetPrefix = "eMule-broadband-";
+	inline constexpr const char *kModReleaseTagPrefix = "emulebb-v";
+	inline constexpr const char *kModReleaseAssetPrefix = "emulebb-";
 
 	/**
 	 * @brief Returns the asset platform token for the current binary.
@@ -118,7 +118,7 @@ namespace ReleaseUpdateCheckSeams
 	}
 
 	/**
-	 * @brief Parses a strict emule-bb-vMAJOR.MINOR.PATCH GitHub release tag.
+	 * @brief Parses a strict emulebb-vMAJOR.MINOR.PATCH GitHub release tag.
 	 */
 	inline bool TryParseReleaseTag(std::string_view strTagName, SModReleaseVersion &version)
 	{
@@ -196,7 +196,7 @@ namespace ReleaseUpdateCheckSeams
 			const nlohmann::json::const_iterator itTagName = releaseJson.find("tag_name");
 			if (itTagName == releaseJson.end() || !itTagName->is_string() || !TryParseReleaseTag(itTagName->get<std::string>(), evaluation.version)) {
 				evaluation.eStatus = EReleaseEvaluationStatus::IgnoredRelease;
-				evaluation.strError = "latest release tag does not match emule-bb-vMAJOR.MINOR.PATCH";
+				evaluation.strError = "latest release tag does not match emulebb-vMAJOR.MINOR.PATCH";
 				return evaluation;
 			}
 

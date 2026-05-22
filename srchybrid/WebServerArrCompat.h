@@ -3,12 +3,12 @@
 #include "WebServer.h"
 
 /**
- * @brief Runtime web-server entry points for the eMule BB *arr compatibility bridge.
+ * @brief Runtime web-server entry points for the eMuleBB *arr compatibility bridge.
  */
 namespace WebServerArrCompat
 {
 /**
- * @brief Reports whether the request belongs to the eMule BB *arr compatibility surface.
+ * @brief Reports whether the request belongs to the eMuleBB *arr compatibility surface.
  */
 bool IsCompatRequest(const ThreadData &rData);
 

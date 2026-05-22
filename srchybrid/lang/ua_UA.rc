@@ -983,7 +983,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Показувати перевищення швидкості"
     IDS_UPDOWNSMALL         "Відван: %.1f | Заван: %.1f"
     IDS_EDITLIST            "Список..."
@@ -994,10 +994,10 @@ BEGIN
     IDS_WEBSVEDIT           "Редагувати..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ігнорувати посилання eMule"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Запуск"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Неможливо перевірити наявність нової версії."
 END
 
@@ -1005,7 +1005,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Знайдена нова версія eMule"
     IDS_NONEWERVERSION      "Нової версії eMule не знайдено."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Відео програвач"
     IDS_MYINFO              "My Info"
@@ -1160,9 +1160,9 @@ BEGIN
     IDS_LINKS               "Посилання"
     IDS_HM_SCHED_ON         "Включити планувальник"
     IDS_HM_SCHED_OFF        "Виключити планувальник"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Лоґ повідомлень обміну з сервером і клієнтами"
     IDS_SHAREDREQ1          "Користувач %s (%u) зробив запит на Ваш список спільних тек -> %s"
@@ -1926,7 +1926,7 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Мініатюри відео"
@@ -2050,7 +2050,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Відкриває поточний файл eMule_Verbose.log, якщо він існує."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Копіює необроблений знімок локальної діагностики JSON у буфер обміну."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Копіює діагностичний знімок JSON з очищеними даними у буфер обміну для спільного використання."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Запускає одноразове відновлення з підвищеними правами для правил брандмауера eMule BB TCP, UDP і зовнішнього доступу REST."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Запускає одноразове відновлення з підвищеними правами для правил брандмауера eMuleBB TCP, UDP і зовнішнього доступу REST."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Підключається, скасовує спробу підключення або розриває поточний сеанс."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Перемикається в режим перегляду серверів."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Перемикається до подання передавань."
@@ -2095,8 +2095,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&Повний – зберегти ширину"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "&Повний – скинути ширину"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Застосовує типові стовпці таблиць eMule до всіх основних подань."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Застосовує стовпці розширеної таблиці eMule BB до всіх основних поданнях."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Показує всі стовпці таблиці в порядку eMule BB для всіх основних видів."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Застосовує стовпці розширеної таблиці eMuleBB до всіх основних поданнях."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Показує всі стовпці таблиці в порядку eMuleBB для всіх основних видів."
     IDS_CHAT_SMILEYS_BUTTON                                 "Смайли"
     IDS_PPG_DEBUG_LEVEL                                     "Рівень"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2184,7 +2184,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Щоденна резервна копія конфігурації"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Один раз на день під час запуску створює знімок файлів конфігурації та стану перед продовженням звичайного завантаження."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Ukrainian resources
 /////////////////////////////////////////////////////////////////////////////

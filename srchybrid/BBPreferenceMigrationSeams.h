@@ -32,7 +32,7 @@ inline constexpr const TCHAR *kMainGridListControlResetSuffixes[] = {
 };
 
 /**
- * @brief Determines whether eMule BB preference migrations should run.
+ * @brief Determines whether eMuleBB preference migrations should run.
  */
 inline bool ShouldRunPreferenceMigration(int iStoredSchema, int iCurrentSchema = kCurrentPreferenceSchema)
 {

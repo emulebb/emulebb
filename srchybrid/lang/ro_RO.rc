@@ -957,7 +957,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Arată consum adiţional bandă"
     IDS_UPDOWNSMALL         "Tr: %.1f | Desc: %.1f"
     IDS_EDITLIST            "Lista..."
@@ -968,10 +968,10 @@ BEGIN
     IDS_WEBSVEDIT           "Modifică serviciile Web"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignoră mesaje protocol eMule Trimitere link"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "La pornire"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Nu pot verifica actualizarea."
 END
 
@@ -979,7 +979,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "E disponibilă o nouă versiune de eMule"
     IDS_NONEWERVERSION      "Ai deja ultima versiune de eMule."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Player pentru pre-vizualizare:"
     IDS_MYINFO              "Datele mele"
@@ -1134,9 +1134,9 @@ BEGIN
     IDS_LINKS               "Link-uri"
     IDS_HM_SCHED_ON         "Activare acţiuni programate"
     IDS_HM_SCHED_OFF        "Dezactivare acţiuni programate"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Log mesaje de schimb de surse client şi cereri/răspunsuri server"
     IDS_SHAREDREQ1          "Utilizatorul %s (%u) a cerut lista dosarelor tale share -> %s"
@@ -1936,7 +1936,7 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Miniaturi video"
@@ -2060,7 +2060,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Deschide fișierul eMule_Verbose.log curent, dacă acesta există."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Copiază un instantaneu JSON de diagnostic local brut în clipboard."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Copiază un instantaneu JSON de diagnostic anonimizat în clipboard pentru partajare."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Lansează o reparație unică ridicată pentru eMule BB TCP, UDP și regulile de firewall REST accesibile extern."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Lansează o reparație unică ridicată pentru eMuleBB TCP, UDP și regulile de firewall REST accesibile extern."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Se conectează, anulează o încercare de conectare sau deconectează sesiunea curentă."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Comută la vizualizarea Servere."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Comută la vizualizarea Transferuri."
@@ -2105,8 +2105,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&Complet - Păstrează lățimile"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "&Complet - Resetați lățimile"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Aplică coloanele standard eMule pentru toate vizualizările principale."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Aplică eMule BB coloane de tabel extinse tuturor vederilor principale."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Afișează toate coloanele din tabel în ordinea eMule BB pentru toate vizualizările principale."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Aplică eMuleBB coloane de tabel extinse tuturor vederilor principale."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Afișează toate coloanele din tabel în ordinea eMuleBB pentru toate vizualizările principale."
     IDS_CHAT_SMILEYS_BUTTON                                 "Smiley-uri"
     IDS_PPG_DEBUG_LEVEL                                     "Nivel"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2194,7 +2194,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Copie de siguranță zilnică a configurației"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Creează o captură de pornire a fișierelor de configurare și stare o dată pe zi înainte ca încărcarea normală să continue."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Romanian resources
 /////////////////////////////////////////////////////////////////////////////

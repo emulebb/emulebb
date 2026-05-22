@@ -18,8 +18,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
-        FILEVERSION         VERSION_MJR,VERSION_MIN,VERSION_UPDATE,VERSION_BUILD
-        PRODUCTVERSION      VERSION_MJR,VERSION_MIN,VERSION_UPDATE,VERSION_BUILD
+        FILEVERSION         MOD_RELEASE_VERSION_MAJOR,MOD_RELEASE_VERSION_MINOR,MOD_RELEASE_VERSION_PATCH,MOD_RELEASE_VERSION_BUILD
+        PRODUCTVERSION      MOD_RELEASE_VERSION_MAJOR,MOD_RELEASE_VERSION_MINOR,MOD_RELEASE_VERSION_PATCH,MOD_RELEASE_VERSION_BUILD
         FILEFLAGSMASK       VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
         FILEFLAGS           VS_FF_DEBUG | VS_FF_PRIVATEBUILD | VS_FF_PRERELEASE
@@ -36,14 +36,14 @@ BEGIN
     BEGIN
         BLOCK "040904B0" // Lang=US English, CharSet=Unicode
         BEGIN
-            VALUE "CompanyName", "https://www.emule-project.net"
-            VALUE "FileDescription", "eMule"
-            VALUE "FileVersion", SZ_VERSION_NAME " Unicode"
-            VALUE "InternalName", "emule.exe"
+            VALUE "CompanyName", "https://github.com/eMulebb"
+            VALUE "FileDescription", "eMuleBB"
+            VALUE "FileVersion", MOD_RELEASE_VERSION_TEXT " Unicode"
+            VALUE "InternalName", "emulebb.exe"
             VALUE "LegalCopyright", "Copyright © 2002-2026 Merkur - Read license.txt for more infos."
-            VALUE "OriginalFilename", "emule.exe"
-            VALUE "ProductName", "eMule"
-            VALUE "ProductVersion", SZ_VERSION_NAME " Unicode"
+            VALUE "OriginalFilename", "emulebb.exe"
+            VALUE "ProductName", "eMule broadband edition"
+            VALUE "ProductVersion", MOD_RELEASE_VERSION_TEXT " Unicode"
         END
     END
     BLOCK "VarFileInfo"

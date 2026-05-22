@@ -866,7 +866,7 @@ END
 
 STRINGTABLE FIXED IMPURE
 BEGIN
-	IDS_ERR_NOHELP	"Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+	IDS_ERR_NOHELP	"Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
 	IDS_SHOWOVERHEAD	"Diskouez ar bann tremen dreistniverel"
 	IDS_UPDOWNSMALL	"E : %.1f | R : %.1f"
 	IDS_EDITLIST	"Aozañ"
@@ -876,10 +876,10 @@ BEGIN
 	IDS_WEBSERVICES	"WebServices"
 	IDS_WEBSVEDIT	"Aozañ WebServices"
 	IDS_IRC_EMULEPROTO_IGNORESENDLINK	"Leuskel a-gostez ar c'hemennadennoù kas eus ereoù"
-	IDS_CHECK4UPDATE	"Check for eMule BB updates"
+	IDS_CHECK4UPDATE	"Check for eMuleBB updates"
 	IDS_STARTUP	"Loc'hañ"
-	IDS_NEWVERSIONAVL	"A new version of eMule BB is available. Check GitHub Releases for more information."
-	IDS_NEWVERSIONAVLPOPUP 	"A new version of eMule BB is available. Click here to read about the new version."
+	IDS_NEWVERSIONAVL	"A new version of eMuleBB is available. Check GitHub Releases for more information."
+	IDS_NEWVERSIONAVLPOPUP 	"A new version of eMuleBB is available. Click here to read about the new version."
 	IDS_NEWVERSIONFAILED 	"N'haller ket gwiriañ mard ez eus ur stumm nevez da bellgargañ."
 END
 
@@ -887,7 +887,7 @@ STRINGTABLE FIXED IMPURE
 BEGIN
 	IDS_CB_TBN_ONNEWVERSION	"Dizoloet ez eus bet ur stumm nevez eus eMule"
 	IDS_NONEWERVERSION	"Stumm nevez eus eMule ebet kavet."
-	IDS_VERSIONCHECK	"&Check for eMule BB updates"
+	IDS_VERSIONCHECK	"&Check for eMuleBB updates"
 	IDS_VISITVERSIONCHECK	"\n\nDo you want to open GitHub Releases now?"
 	IDS_PW_VIDEOPLAYER	"Lenner video"
 	IDS_MYINFO	"Ma zitouroù"
@@ -1109,9 +1109,9 @@ BEGIN
 	IDS_LINKS	"Ereoù"
 	IDS_HM_SCHED_ON	"Gweredekaat ar Raktreser"
 	IDS_HM_SCHED_OFF	"Diweredekaat ar Raktreser"
-	IDS_HM_LINKHP	"eMule BB Homepage"
-	IDS_HM_LINKFAQ	"eMule BB Help"
-	IDS_HM_LINKVC	"eMule BB Releases"
+	IDS_HM_LINKHP	"eMuleBB Homepage"
+	IDS_HM_LINKFAQ	"eMuleBB Help"
+	IDS_HM_LINKVC	"eMuleBB Releases"
 	IDS_DEBUG_SOURCE_EXCHANGE	"Diskouez ar gemennadennoù diwar eskemm an orinoù"
 	IDS_SHAREDREQ1	"Goulennet en deus an implijour %s (%u) ganeoc'h ho roll restroù eskemmet -> %s"
 	IDS_SHAREDREQ2	"Goulennet en deus an implijour %s (%u) ganeoc'h ho roll restroù eskemmet evit ar c'havlec'h '%s' -> %s"
@@ -1901,7 +1901,7 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Skeudennoùigoù video"
@@ -2025,7 +2025,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Digeriñ a ra ar restr eMule_Verbose.log bremanel ma'z eus anezhi."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Eilañ a ra ur skeudenn diagnostik lec'hel c'hrou JSON d'ar c'hlipboard."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Eilañ a ra ur skeudenn diagnostik JSON diverket d'ar c'hlipboard evit e rannañ."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Lañsañ a ra un dresadenn ur wech uhelaet evit eMule BB TCP, UDP, ha reolennoù ar pared-tan REST a c'haller tizhout diavaez."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Lañsañ a ra un dresadenn ur wech uhelaet evit eMuleBB TCP, UDP, ha reolennoù ar pared-tan REST a c'haller tizhout diavaez."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Kevreañ, nullañ ur c'hlask kennaskañ pe digennaskañ an dalc'h bremanel."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Tremen d'ar gwel Servijerioù."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Tremen d'ar gwel Treuzkasoù."
@@ -2070,8 +2070,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&Leun - Mirout al ledander"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "&Ledanderioù leun - Adderaouekaat"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Arverañ bannoù taolenn eMule evit an holl weledigezhioù pennañ."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Arverañ bannoù taolenn astennet eMule BB evit an holl weledigezhioù pennañ."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Diskouez a ra an holl bannoù taolenn en urzh eMule BB evit an holl weledigezhioù pennañ."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Arverañ bannoù taolenn astennet eMuleBB evit an holl weledigezhioù pennañ."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Diskouez a ra an holl bannoù taolenn en urzh eMuleBB evit an holl weledigezhioù pennañ."
     IDS_CHAT_SMILEYS_BUTTON                                 "Mousc'hoarzhadegoù"
     IDS_PPG_DEBUG_LEVEL                                     "Live"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2159,7 +2159,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Sauvegarde quotidienne de la configuration"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Crée une fois par jour au démarrage un instantané des fichiers de configuration et d'état avant la poursuite du chargement normal."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Breton (France) resources
 /////////////////////////////////////////////////////////////////////////////

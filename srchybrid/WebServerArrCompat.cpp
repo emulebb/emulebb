@@ -110,7 +110,7 @@ std::string BuildCapsXml()
 	return
 		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		"<caps>\n"
-		"  <server app=\"eMule BB *arr Compatibility\" version=\"1\" title=\"eMule BB\" />\n"
+		"  <server app=\"eMuleBB *arr Compatibility\" version=\"1\" title=\"eMuleBB\" />\n"
 		"  <limits max=\"100\" default=\"100\" />\n"
 		"  <searching>\n"
 		"    <search available=\"yes\" supportedParams=\"q,cat\" />\n"
@@ -198,7 +198,7 @@ std::string BuildFeedXml(const WebServerArrCompatSeams::STorznabRequest &rReques
 	xml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		<< "<rss version=\"2.0\" xmlns:torznab=\"http://torznab.com/schemas/2015/feed\">\n"
 		<< "  <channel>\n"
-		<< "    <title>eMule BB *arr Compatibility</title>\n"
+		<< "    <title>eMuleBB *arr Compatibility</title>\n"
 		<< "    <description>Native eMule search results exposed as Torznab</description>\n"
 		<< "    <link>http://localhost/indexer/emulebb/api</link>\n"
 		<< "    <language>en-us</language>\n"
@@ -266,7 +266,7 @@ bool ExecuteBridgeCommand(const json &rCommand, json &rResult)
 	if (WebServerJson::ExecuteInternalCommand(rCommand, rResult, strErrorCode, strErrorMessage))
 		return true;
 	if (!strErrorCode.IsEmpty())
-		AddLogLine(false, _T("eMule BB *arr Compatibility: native command failed (%hs)"), (LPCSTR)strErrorCode);
+		AddLogLine(false, _T("eMuleBB *arr Compatibility: native command failed (%hs)"), (LPCSTR)strErrorCode);
 	return false;
 }
 

@@ -33,15 +33,16 @@
 #define VERSION_BUILD	1
 // NOTE: Do not forget to update manifests in "res\eMule*.manifest"
 
-// eMule BB is a mod release line with its own public release cadence.
+// eMuleBB is a mod release line with its own public release cadence.
 // Keep the upstream eMule version above for protocol, manifests, and legacy
 // compatibility checks; use these values for public branding and update checks.
-#define MOD_RELEASE_PRODUCT_NAME		_T("eMule BB")
-#define MOD_RELEASE_TAG_PREFIX			_T("emule-bb-v")
+#define MOD_RELEASE_PRODUCT_NAME		_T("eMuleBB")
+#define MOD_RELEASE_TAG_PREFIX			_T("emulebb-v")
 #define MOD_RELEASE_BASE_VERSION_TEXT	_T("0.72a")
 #define MOD_RELEASE_VERSION_MAJOR		0
 #define MOD_RELEASE_VERSION_MINOR		7
 #define MOD_RELEASE_VERSION_PATCH		3
+#define MOD_RELEASE_VERSION_BUILD		0
 #define MOD_RELEASE_VERSION_TEXT		chSTR(MOD_RELEASE_VERSION_MAJOR) _T(".") chSTR(MOD_RELEASE_VERSION_MINOR) _T(".") chSTR(MOD_RELEASE_VERSION_PATCH)
 #define MOD_RELEASE_DISPLAY_NAME		MOD_RELEASE_PRODUCT_NAME _T(" ") MOD_RELEASE_VERSION_TEXT
 #define MOD_CLIENT_MOD_VERSION_TEXT	MOD_RELEASE_DISPLAY_NAME

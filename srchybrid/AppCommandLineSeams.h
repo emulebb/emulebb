@@ -9,7 +9,7 @@
 namespace AppCommandLineSeams
 {
 	/**
-	 * @brief High-level startup mode selected by the normalized eMule BB command line.
+	 * @brief High-level startup mode selected by the normalized eMuleBB command line.
 	 */
 	enum class EMode
 	{
@@ -43,12 +43,12 @@ namespace AppCommandLineSeams
 	};
 
 	/**
-	 * @brief Builds the supported eMule BB command-line usage text.
+	 * @brief Builds the supported eMuleBB command-line usage text.
 	 */
 	inline CString BuildUsageText()
 	{
 		return _T("Usage:\r\n")
-			_T("  emule.exe [options] [ed2k-link|collection-file|command]\r\n")
+			_T("  emulebb.exe [options] [ed2k-link|collection-file|command]\r\n")
 			_T("\r\n")
 			_T("Options:\r\n")
 			_T("  -c <base-dir>                         Use an isolated eMule base directory.\r\n")
@@ -224,7 +224,7 @@ namespace AppCommandLineSeams
 	}
 
 	/**
-	 * @brief Parses the normalized Windows argv tokens into eMule BB startup options.
+	 * @brief Parses the normalized Windows argv tokens into eMuleBB startup options.
 	 */
 	inline SParseResult ParseTokens(const std::vector<CString> &raTokens)
 	{

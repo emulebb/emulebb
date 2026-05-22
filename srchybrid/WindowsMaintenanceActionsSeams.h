@@ -23,11 +23,11 @@ namespace WindowsMaintenanceActionsSeams
 	{
 		CString strScript;
 		strScript += _T("$ErrorActionPreference = 'Stop'\r\n");
-		strScript += _T("$Host.UI.RawUI.WindowTitle = 'eMule BB Long Path Policy'\r\n");
+		strScript += _T("$Host.UI.RawUI.WindowTitle = 'eMuleBB Long Path Policy'\r\n");
 		strScript.AppendFormat(_T("$ResultPath = %s\r\n"), (LPCTSTR)QuotePowerShellSingleQuotedLiteral(rstrResultPath));
 		strScript += _T("$RegistryPath = 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\FileSystem'\r\n");
 		strScript += _T("Write-Host ''\r\n");
-		strScript += _T("Write-Host 'eMule BB Long Path Policy' -ForegroundColor Cyan\r\n");
+		strScript += _T("Write-Host 'eMuleBB Long Path Policy' -ForegroundColor Cyan\r\n");
 		strScript += _T("Write-Host 'Target: HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem\\LongPathsEnabled = 1'\r\n");
 		strScript += _T("$result = [ordered]@{ schema = 'emulebb.longPathPolicyResult.v1'; success = $false; alreadyEnabled = $false; changed = $false; errors = @() }\r\n");
 		strScript += _T("try {\r\n");
@@ -58,14 +58,14 @@ namespace WindowsMaintenanceActionsSeams
 	{
 		CString strScript;
 		strScript += _T("$ErrorActionPreference = 'Stop'\r\n");
-		strScript += _T("$Host.UI.RawUI.WindowTitle = 'eMule BB Microsoft Defender Exclusions'\r\n");
+		strScript += _T("$Host.UI.RawUI.WindowTitle = 'eMuleBB Microsoft Defender Exclusions'\r\n");
 		strScript.AppendFormat(_T("$ResultPath = %s\r\n"), (LPCTSTR)QuotePowerShellSingleQuotedLiteral(rstrResultPath));
 		strScript += _T("$Paths = @(\r\n");
 		for (const CString &strPath : paths)
 			strScript.AppendFormat(_T("    %s\r\n"), (LPCTSTR)QuotePowerShellSingleQuotedLiteral(strPath));
 		strScript += _T(")\r\n");
 		strScript += _T("Write-Host ''\r\n");
-		strScript += _T("Write-Host 'eMule BB Microsoft Defender Exclusions' -ForegroundColor Cyan\r\n");
+		strScript += _T("Write-Host 'eMuleBB Microsoft Defender Exclusions' -ForegroundColor Cyan\r\n");
 		strScript += _T("Write-Host 'Scope: active Incoming, Temp, and category incoming folders'\r\n");
 		strScript += _T("Write-Host ('Folders requested: {0}' -f $Paths.Count)\r\n");
 		strScript += _T("$result = [ordered]@{ schema = 'emulebb.defenderExclusionResult.v1'; success = $false; added = @(); skipped = @(); errors = @() }\r\n");

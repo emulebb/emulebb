@@ -424,7 +424,7 @@ bool GetFallbackMediaInfo(LPCTSTR pszFilePath, EMFileSize ullFileSize, SMediaInf
 		ASSERT(0);
 	}
 	if (bFullInfo && HasUsableMediaFacts(*mi))
-		AppendFullInfoSummary(mi, _T("eMule BB fallback metadata"));
+		AppendFullInfoSummary(mi, _T("eMuleBB fallback metadata"));
 	return bFoundHeader || HasUsableMediaFacts(*mi);
 }
 

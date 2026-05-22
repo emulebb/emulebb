@@ -25,7 +25,7 @@ struct DefaultFileSpec
 
 inline LPCTSTR GetFakeFileFilterDefaultText()
 {
-	return _T("# eMule BB fake-file bad-signal rules\r\n")
+	return _T("# eMuleBB fake-file bad-signal rules\r\n")
 		_T("# UTF-8 text. One rule per line. Lines starting with # or ; are ignored.\r\n")
 		_T("# Token rules match whole words or separator-delimited phrases.\r\n")
 		_T("# Regex rules use ECMAScript syntax and are matched case-insensitively.\r\n\r\n")

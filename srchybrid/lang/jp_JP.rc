@@ -989,7 +989,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "オーバーヘッドした帯域幅を表示"
     IDS_UPDOWNSMALL         "㊤: %.1f | ㊦: %.1f"
     IDS_EDITLIST            "リスト..."
@@ -1000,10 +1000,10 @@ BEGIN
     IDS_WEBSVEDIT           "ウェブサービスを編集..."
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "eMuleの send link プロトコルメッセージを無視"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "起動時"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "新しいバージョンをチェックできません"
 END
 
@@ -1011,7 +1011,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "新しいバージョンのeMuleを検出"
     IDS_NONEWERVERSION      "eMuleの新しいバージョンはありません"
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "ビデオプレーヤー"
     IDS_MYINFO              "情報"
@@ -1167,9 +1167,9 @@ BEGIN
     IDS_LINKS               "リンク"
     IDS_HM_SCHED_ON         "スケジューラを使用する"
     IDS_HM_SCHED_OFF        "スケジューラを使用しない"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE
                             "クライアントソース交換とサーバソース問い合わせ/応答のログを採る"
     IDS_SHAREDREQ1          "ユーザー %s (%u) が共有ディレクトリのリストを要求しました -> %s"
@@ -1936,7 +1936,7 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "動画サムネイル"
@@ -2060,7 +2060,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "現在のeMule_Verbose.logファイルが存在する場合は開きます。"
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "生のローカル診断JSONスナップショットをクリップボードにコピーします。"
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "共有用に伏せ字化した診断JSONスナップショットをクリップボードにコピーします。"
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "eMule BBのTCP、UDP、および外部到達可能なRESTファイアウォールルールを、一回限りの昇格修復で起動します。"
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "eMuleBBのTCP、UDP、および外部到達可能なRESTファイアウォールルールを、一回限りの昇格修復で起動します。"
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "現在のセッションに接続、接続試行をキャンセル、または切断します。"
     IDS_TOOLS_STATUS_SHOW_SERVER                            "サーバービューに切り替えます。"
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "転送ビューに切り替えます。"
@@ -2105,8 +2105,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "完全 - 幅を保持(&F)"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "完全 - 幅をリセット(&H)"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "すべてのメインビューに標準eMuleの表列を適用します。"
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "すべてのメインビューにeMule BB拡張表列を適用します。"
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "すべてのメインビューで、eMule BB順のすべての表列を表示します。"
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "すべてのメインビューにeMuleBB拡張表列を適用します。"
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "すべてのメインビューで、eMuleBB順のすべての表列を表示します。"
     IDS_CHAT_SMILEYS_BUTTON                                 "スマイリー"
     IDS_PPG_DEBUG_LEVEL                                     "レベル"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2194,7 +2194,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "毎日の設定バックアップ"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "通常の読み込みを続行する前に、起動時に設定ファイルと状態ファイルのスナップショットを1日1回作成します。"
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // 日本語 (Japanese) resources
 /////////////////////////////////////////////////////////////////////////////

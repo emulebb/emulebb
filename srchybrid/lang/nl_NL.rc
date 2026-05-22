@@ -898,7 +898,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Overheadbandbreedte tonen"
     IDS_UPDOWNSMALL         "Uit: %.1f | In: %.1f"
     IDS_EDITLIST            "Lijst"
@@ -909,10 +909,10 @@ BEGIN
     IDS_WEBSVEDIT           "Webservices bewerken"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Negeer eMule-linkverzendingsprotocolberichten"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Opstarten"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Onmogelijk te controleren of er een nieuwe versie beschikbaar is."
 END
 
@@ -920,7 +920,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Nieuwe eMule-versie gevonden"
     IDS_NONEWERVERSION      "Geen nieuwe eMule-versie gevonden."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Videospeler"
     IDS_MYINFO              "Mijn informatie"
@@ -1114,9 +1114,9 @@ BEGIN
     IDS_LINKS               "Links" //!
     IDS_HM_SCHED_ON         "Planner inschakelen"
     IDS_HM_SCHED_OFF        "Planner uitschakelen"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help" //!
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help" //!
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Bronuitwisselingsberichten tonen"
     IDS_SHAREDREQ1          "Gebruiker %s (%u) verzoekt om uw lijst van gedeelde mappen -> %s"
     IDS_SHAREDREQ2          "Gebruiker %s (%u) verzoekt om uw lijst van gedeelde bestanden in de map '%s' -> %s"
@@ -1933,7 +1933,7 @@ BEGIN
     IDS_OPENPREFINI         "preferences.ini openen"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_ENABLE_IPFILTER                                        "IP-filter inschakelen"
@@ -2005,8 +2005,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                           "&Volledig - breedtes behouden"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                          "Volledig - breedtes re&setten"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                         "Past de standaard eMule-tabelkolommen toe op alle hoofdweergaven."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                      "Past de uitgebreide eMule BB-tabelkolommen toe op alle hoofdweergaven."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                          "Toont alle tabelkolommen in eMule BB-volgorde voor alle hoofdweergaven."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                      "Past de uitgebreide eMuleBB-tabelkolommen toe op alle hoofdweergaven."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                          "Toont alle tabelkolommen in eMuleBB-volgorde voor alle hoofdweergaven."
     IDS_BROADBAND                                              "Breedband"
     IDS_FILEBUFFERTIMELIMIT                                    "Tijdslimiet bestandsbuffer (seconden)"
     IDS_PREVIEWCOPIEDARCHIVES                                  "Tijdelijke archiefkopie gebruiken voor voorbeeld"
@@ -2112,7 +2112,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                          "Opent het huidige eMule_Verbose.log-bestand, als dit bestaat."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON             "Kopieert een onbewerkte lokale diagnostische JSON-snapshot naar het klembord."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON    "Kopieert een gezuiverde diagnostische JSON-snapshot naar het klembord om te delen."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES             "Lanceert een verhoogde eenmalige reparatie voor eMule BB TCP, UDP en extern bereikbare REST-firewallregels."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES             "Lanceert een verhoogde eenmalige reparatie voor eMuleBB TCP, UDP en extern bereikbare REST-firewallregels."
     IDS_TOOLS_STATUS_SESSION_CONNECT                           "Maakt verbinding, annuleert een verbindingspoging of verbreekt de huidige sessie."
     IDS_TOOLS_STATUS_SHOW_SERVER                               "Schakelt over naar de weergave Servers."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                            "Schakelt over naar de weergave Overdrachten."
@@ -2190,7 +2190,7 @@ BEGIN
     IDS_COMPLETIONCOMMAND                                      "Programma voor het voltooien van bestanden"
     IDS_RUNONFILECOMPLETE                                      "Voer het programma uit wanneer een bestand is voltooid"
     IDS_COMPLETIONCOMMAND_INVALID                              "Selecteer een bestaand .exe- of .com-programma voordat u de opdracht voor het voltooien van bestanden inschakelt."
-    IDS_AUTOSTART_REG_FAILED                                   "Windows kon eMule BB niet registreren om automatisch te starten voor de huidige gebruiker."
+    IDS_AUTOSTART_REG_FAILED                                   "Windows kon eMuleBB niet registreren om automatisch te starten voor de huidige gebruiker."
     IDS_PERCENTAGE                                             "%"
     IDS_CLIENT_UPLOADED                                        "Klant geüpload"
     IDS_CLIENT_HASH                                            "Klant-hash"
@@ -2598,8 +2598,8 @@ BEGIN
     IDS_PPG_FILES_TT_FILECOMPLETEARGS                          "Ondersteunde tokens: %F volledig pad, %D map, %N bestandsnaam, %H bestandshash, %S groottebytes, %C categorie.\r\n\r\n%F en %D worden automatisch geciteerd. Omgevingsvariabelen worden niet uitgebreid."
     IDS_PPG_GENERAL_TT_ONLINESIG                               "Schrijft het verouderde statusbestand onlinesig.dat voor externe pagina's, scripts of widgets die de status eMule lezen.\r\n\r\nHet verbetert de overdrachtssnelheid of het netwerk niet. Laat het uitgeschakeld, tenzij u dat bestand ergens actief gebruikt."
     IDS_PPG_GENERAL_TT_BRINGTOFOREGROUND                       "Brengt eMule naar de voorgrond wanneer een afgehandelde ed2k-link of soortgelijke externe actie de app target.\r\n\r\nSchakel dit in als u wilt dat klikken op links eMule onmiddellijk onthullen. Laat het uitgeschakeld als u de voorkeur geeft aan achtergrondverwerking."
-    IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Controleert GitHub-releases bij het opstarten wanneer het geconfigureerde interval is verstreken en waarschuwt alleen wanneer een nieuwer eMule BB-pakket beschikbaar is.\r\n\r\nLaat het uitgeschakeld voor een rustige start, of schakel het in als u een periodieke updatecontrole wilt."
-    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Blokkeert de slaapstand van het systeem terwijl eMule BB verbonden is of overdraagt, zodat downloads, uploads, Kad en serversessies niet worden onderbroken.\r\n\r\nHet scherm kan nog steeds normaal uitschakelen. Als u deze optie uitschakelt, wordt het normale Windows-slaapbeleid direct hersteld."
+    IDS_PPG_GENERAL_TT_CHECK4_UPDATE                           "Controleert GitHub-releases bij het opstarten wanneer het geconfigureerde interval is verstreken en waarschuwt alleen wanneer een nieuwer eMuleBB-pakket beschikbaar is.\r\n\r\nLaat het uitgeschakeld voor een rustige start, of schakel het in als u een periodieke updatecontrole wilt."
+    IDS_PPG_GENERAL_TT_PREVENTSTANDBY                          "Blokkeert de slaapstand van het systeem terwijl eMuleBB verbonden is of overdraagt, zodat downloads, uploads, Kad en serversessies niet worden onderbroken.\r\n\r\nHet scherm kan nog steeds normaal uitschakelen. Als u deze optie uitschakelt, wordt het normale Windows-slaapbeleid direct hersteld."
     IDS_PPG_GENERAL_TT_WEBSVEDIT                               "Bewerkt de geconfigureerde lijst met webservices die wordt gebruikt door helperacties zoals webzoekopdrachten vanuit de gebruikersinterface.\r\n\r\nDit heeft u normaal gesproken alleen nodig als u die externe opzoekitems wilt aanpassen of repareren."
     IDS_PPG_GENERAL_TT_ED2_KFIX                                "Herstelt de Windows ed2k-linkregistratie, zodat browser- en shell-ed2k-links weer openen in eMule.\r\n\r\nGebruik het wanneer ed2k-links stoppen met het starten van eMule of zijn gestolen door een andere client."
     IDS_PPG_GENERAL_TT_STARTMIN                                "Start eMule geminimaliseerd in plaats van het hoofdvenster onmiddellijk te openen.\r\n\r\nHandig voor opstarten zonder toezicht. Laat het uitgeschakeld als u de gebruikersinterface normaal gesproken meteen wilt inspecteren."
@@ -2656,7 +2656,7 @@ BEGIN
     IDS_NOTIFY_TT_CB_TBN_ONDOWNLOAD                            "Toont een melding wanneer een download is voltooid.\r\n\r\nAanbevolen als voltooide bestanden aandacht vereisen zonder de overdrachtspagina te bekijken."
     IDS_NOTIFY_TT_CB_TBN_ONLOG                                 "Toont een melding wanneer een logboekinvoer wordt toegevoegd.\r\n\r\nHandig voor diagnostiek, maar luidruchtig tijdens normale, langlopende sessies."
     IDS_NOTIFY_TT_CB_TBN_ONNEWDOWNLOAD                         "Toont een melding wanneer een nieuwe download wordt toegevoegd.\r\n\r\nSchakel dit in als downloads extern kunnen worden toegevoegd en u bevestiging wilt."
-    IDS_NOTIFY_TT_CB_TBN_ONNEWVERSION                          "Toont een melding wanneer de updatecontrole een nieuwere eMule BB-release vindt.\r\n\r\nDit is alleen van belang als updatecontroles zijn ingeschakeld op de pagina Algemeen."
+    IDS_NOTIFY_TT_CB_TBN_ONNEWVERSION                          "Toont een melding wanneer de updatecontrole een nieuwere eMuleBB-release vindt.\r\n\r\nDit is alleen van belang als updatecontroles zijn ingeschakeld op de pagina Algemeen."
     IDS_NOTIFY_TT_EDIT_RECEIVER                                "E-mailadres dat eMule-meldingsberichten ontvangt.\r\n\r\nGebruik een adres dat wordt geaccepteerd door de geconfigureerde SMTP-server."
     IDS_NOTIFY_TT_EDIT_SENDER                                  "Afzenderadres gebruikt voor e-mailmeldingen.\r\n\r\nVeel SMTP-servers vereisen dat dit overeenkomt met of hoort bij het geverifieerde account."
     IDS_NOTIFY_TT_EDIT_TBN_WAVFILE                             "Pad naar het WAV-bestand dat wordt afgespeeld voor geluidsmeldingen.\r\n\r\nKies een kort lokaal bestand; ontbrekende of ontoegankelijke bestanden voorkomen dat het geluid wordt afgespeeld."
@@ -2789,7 +2789,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                             "Dagelijkse configuratieback-up"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                          "Maakt eenmaal per dag bij het opstarten een momentopname van configuratie- en statusbestanden voordat normaal laden doorgaat."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Dutch (Netherlands) resources
 /////////////////////////////////////////////////////////////////////////////

@@ -902,7 +902,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Banda zabaleraren gainkarga erakutsi"
     IDS_UPDOWNSMALL         "Igoera: %.1f | Jaitsiera: %.1f"
     IDS_EDITLIST            "Editatu"
@@ -913,10 +913,10 @@ BEGIN
     IDS_WEBSVEDIT           "Web zerbitzuak editatu"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "eMule loturak bidaltzean, protokolo mezuak baztertu"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Hasieran"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Ezin izan da bertsio berririk dagoen begiratu"
 END
 
@@ -924,7 +924,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "eMule bertsio berria antzematerakoan"
     IDS_NONEWERVERSION      "Ez da eMuleren bertsio berririk antzeman."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Bideo erreproduktorea"
     IDS_MYINFO              "Norbere informazioa"
@@ -1117,9 +1117,9 @@ BEGIN
     IDS_LINKS               "Loturak"
     IDS_HM_SCHED_ON         "Programatzailea aktibatu"
     IDS_HM_SCHED_OFF        "Programatzailea desaktibatu"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Iturrien trukeen mezuak ikusi"
     IDS_SHAREDREQ1          "%s (%u) erabiltzaileak zuk konpartitutako karpeten zerrenda eskatu du -> %s"
     IDS_SHAREDREQ2          "%s (%u) erabiltzaileak '%s' karpetako fitxategi konpartituak eskatu dizkizu -> %s"
@@ -1930,7 +1930,7 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Bideo miniaturak"
@@ -2054,7 +2054,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Uneko eMule_Verbose.log fitxategia irekitzen du, badago."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Tokiko diagnostiko JSON snapshot gordina arbelera kopiatzen du."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Partekatzerako ezkutatutako diagnostiko JSON snapshot bat arbelera kopiatzen du."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Behin bakarrik, eskubide altuekin, eMule BB TCP, UDP eta kanpotik eskuragarri dauden REST firewall arauen konponketa abiarazten du."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Behin bakarrik, eskubide altuekin, eMuleBB TCP, UDP eta kanpotik eskuragarri dauden REST firewall arauen konponketa abiarazten du."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Uneko saioa konektatzen du, konexio saiakera bertan behera uzten du edo deskonektatzen du."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Zerbitzariak ikuspegira aldatzen da."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Transferentziak ikuspegira aldatzen da."
@@ -2099,8 +2099,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&Osoa - mantendu zabalerak"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "Osoa - berrezarri z&abalerak"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Jatorrizko eMule taula zutabeak ikuspegi nagusi guztiei aplikatzen dizkie."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "eMule BB taula zutabe zabalduak ikuspegi nagusi guztiei aplikatzen dizkie."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Taula zutabe guztiak eMule BB ordenan erakusten ditu ikuspegi nagusi guztietan."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "eMuleBB taula zutabe zabalduak ikuspegi nagusi guztiei aplikatzen dizkie."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Taula zutabe guztiak eMuleBB ordenan erakusten ditu ikuspegi nagusi guztietan."
     IDS_CHAT_SMILEYS_BUTTON                                 "Irribarreak"
     IDS_PPG_DEBUG_LEVEL                                     "Maila"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2188,7 +2188,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Dnevna sigurnosna kopija konfiguracije"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Pravi jedan snimak konfiguracijskih i statusnih datoteka pri pokretanju svaki dan prije nastavka normalnog učitavanja."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Basque resources
 /////////////////////////////////////////////////////////////////////////////

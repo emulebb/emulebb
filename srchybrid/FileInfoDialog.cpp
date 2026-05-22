@@ -62,7 +62,7 @@ static CString BuildMediaInfoDllHint(MediaInfoDllSeams::EMediaInfoDllStatus eSta
 
 	switch (eStatus) {
 	case MediaInfoDllSeams::MediaInfoDll_Incompatible:
-		strHint += _T("\r\nMediaInfo.dll was found, but eMule BB requires version 26.01 or newer.");
+		strHint += _T("\r\nMediaInfo.dll was found, but eMuleBB requires version 26.01 or newer.");
 		break;
 	case MediaInfoDllSeams::MediaInfoDll_BadExports:
 		strHint += _T("\r\nA MediaInfo.dll candidate was found, but it does not expose the required MediaInfo API exports.");

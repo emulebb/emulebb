@@ -938,7 +938,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "Zobrazit overhead bandwidth"
     IDS_UPDOWNSMALL         "Up: %.1f | Down: %.1f" //!
     IDS_EDITLIST            "Seznam"
@@ -949,10 +949,10 @@ BEGIN
     IDS_WEBSVEDIT           "Upravit webové služby"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "Ignorovat zprávy protokolu o zasílání odkazů eMule"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "Po spuštění"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "Nelze zjistit novou verzi."
 END
 
@@ -960,7 +960,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "Nová verze eMule zjištěna"
     IDS_NONEWERVERSION      "Žádná nová verze eMule nezjištěna."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "Přehrávač videa"
     IDS_MYINFO              "Moje info"
@@ -1115,9 +1115,9 @@ BEGIN
     IDS_LINKS               "Odkazy"
     IDS_HM_SCHED_ON         "Zapnout plánovač"
     IDS_HM_SCHED_OFF        "Vypnout plánovač"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "Zobrazit zprávy o výměně zdrojů"
     IDS_SHAREDREQ1          "Uživatel %s (%u) požádal o Váš seznam sdílených adresářů -> %s"
     IDS_SHAREDREQ2          "Uživatel %s (%u) požádal o Váš seznam sdílených souborů z adresáře '%s' -> %s"
@@ -1931,7 +1931,7 @@ BEGIN
     IDS_OPENPREFINI         "Otevřít preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "Miniatury videí"
@@ -2055,7 +2055,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "Otevře aktuální soubor eMule_Verbose.log, pokud existuje."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "Zkopíruje nezpracovaný místní diagnostický snímek JSON do schránky."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "Zkopíruje redigovaný diagnostický snímek JSON do schránky pro sdílení."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Spouští zvýšenou jednorázovou opravu pro pravidla brány firewall eMule BB TCP, UDP a externě dosažitelná REST."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "Spouští zvýšenou jednorázovou opravu pro pravidla brány firewall eMuleBB TCP, UDP a externě dosažitelná REST."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "Připojí, zruší pokus o připojení nebo odpojí aktuální relaci."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "Přepne do zobrazení Servery."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "Přepne do zobrazení Přenosy."
@@ -2100,8 +2100,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&Úplné - zachovat šířky"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "&Úplné - Resetovat šířky"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "Použije standardní sloupce tabulek eMule ve všech hlavních zobrazeních."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Aplikuje rozšířené sloupce tabulky eMule BB na všechna hlavní zobrazení."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Zobrazuje všechny sloupce tabulky v pořadí eMule BB pro všechna hlavní zobrazení."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "Aplikuje rozšířené sloupce tabulky eMuleBB na všechna hlavní zobrazení."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "Zobrazuje všechny sloupce tabulky v pořadí eMuleBB pro všechna hlavní zobrazení."
     IDS_CHAT_SMILEYS_BUTTON                                 "Smajlíci"
     IDS_PPG_DEBUG_LEVEL                                     "Úroveň"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2189,7 +2189,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Denní záloha konfigurace"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Každý den před pokračováním běžného načítání vytvoří jeden spouštěcí snímek konfiguračních a stavových souborů."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Czech resources
 /////////////////////////////////////////////////////////////////////////////

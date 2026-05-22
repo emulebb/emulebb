@@ -100,9 +100,9 @@ BEGIN
     IDS_LINKS               "קישורים"
     IDS_HM_SCHED_ON         "הפעל תיזמון"
     IDS_HM_SCHED_OFF        "בטל תיזמון"
-    IDS_HM_LINKHP           "eMule BB Homepage"
-    IDS_HM_LINKFAQ          "eMule BB Help"
-    IDS_HM_LINKVC           "eMule BB Releases"
+    IDS_HM_LINKHP           "eMuleBB Homepage"
+    IDS_HM_LINKFAQ          "eMuleBB Help"
+    IDS_HM_LINKVC           "eMuleBB Releases"
     IDS_DEBUG_SOURCE_EXCHANGE "הצג הודעת החלפת מקורות"
     IDS_SHAREDREQ1          "המשתמש %s (%u) ביקש את רשימת התיקיות המשותפות שלך -> %s"
     IDS_SHAREDREQ2          "המשתמש %s (%u) ביקש את רשימת הקבצים המשותפים שלך בתיקייה '%s' -> %s"
@@ -302,7 +302,7 @@ STRINGTABLE
 BEGIN
     IDS_CB_TBN_ONNEWVERSION "אותרה גירסה חדשה לאימיול"
     IDS_NONEWERVERSION      "לא אותרה גירסה חדשה לאימיול."
-    IDS_VERSIONCHECK        "&Check for eMule BB updates"
+    IDS_VERSIONCHECK        "&Check for eMuleBB updates"
     IDS_VISITVERSIONCHECK   "\n\nDo you want to open GitHub Releases now?"
     IDS_PW_VIDEOPLAYER      "נגן וידאו"
     IDS_MYINFO              "המידע שלי"
@@ -338,7 +338,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ERR_NOHELP          "Online help is available in the eMule BB documentation.\n\nDo you want to open the online help now?"
+    IDS_ERR_NOHELP          "Online help is available in the eMuleBB documentation.\n\nDo you want to open the online help now?"
     IDS_SHOWOVERHEAD        "הצג תעבורה כללית (תקורה)"
     IDS_UPDOWNSMALL         "עולה: %.1f | יורד: %.1f"
     IDS_EDITLIST            "רשימה"
@@ -349,10 +349,10 @@ BEGIN
     IDS_WEBSVEDIT           "ערוך שירותי נט"
     IDS_IRC_EMULEPROTO_IGNORESENDLINK
                             "התעלם מהודעות פרוטוקול שליחת קישורים של אימיול"
-    IDS_CHECK4UPDATE        "Check for eMule BB updates"
+    IDS_CHECK4UPDATE        "Check for eMuleBB updates"
     IDS_STARTUP             "הפעלה"
-    IDS_NEWVERSIONAVL       "A new version of eMule BB is available. Check GitHub Releases for more information."
-    IDS_NEWVERSIONAVLPOPUP  "A new version of eMule BB is available. Click here to read about the new version."
+    IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
+    IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
     IDS_NEWVERSIONFAILED    "לא יכול לבדוק קיום של גירסה חדשה."
 END
 
@@ -1926,7 +1926,7 @@ BEGIN
     IDS_OPENPREFINI         "פתח את preferences.ini"
 END
 
-// eMule BB managed translation block: begin
+// eMuleBB managed translation block: begin
 STRINGTABLE
 BEGIN
     IDS_VIDEOTHUMBNAILS                                     "תמונות ממוזערות לווידאו"
@@ -2050,7 +2050,7 @@ BEGIN
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG                       "פותח את קובץ eMule_Verbose.log הנוכחי אם הוא קיים."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON          "מעתיק תמונת מצב JSON מקומית גולמית לאבחון אל הלוח."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON "מעתיק תמונת מצב JSON מצונזרת לאבחון אל הלוח לצורך שיתוף."
-    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "מפעיל תיקון חד-פעמי בהרשאות מוגבהות לכללי חומת האש של eMule BB עבור TCP, UDP ו-REST נגיש מבחוץ."
+    IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES          "מפעיל תיקון חד-פעמי בהרשאות מוגבהות לכללי חומת האש של eMuleBB עבור TCP, UDP ו-REST נגיש מבחוץ."
     IDS_TOOLS_STATUS_SESSION_CONNECT                        "מתחבר, מבטל ניסיון התחברות, או מנתק את ההפעלה הנוכחית."
     IDS_TOOLS_STATUS_SHOW_SERVER                            "עובר לתצוגת השרתים."
     IDS_TOOLS_STATUS_SHOW_TRANSFERS                         "עובר לתצוגת ההעברות."
@@ -2095,8 +2095,8 @@ BEGIN
     IDS_VIEW_PRESET_FULL_KEEP_WIDTHS                        "&מלא - שמור רוחבים"
     IDS_VIEW_PRESET_FULL_RESET_WIDTHS                       "מלא - אפס רו&חבים"
     IDS_TOOLS_STATUS_VIEW_PRESET_STOCK                      "מחיל עמודות טבלה מקוריות של eMule על כל התצוגות הראשיות."
-    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "מחיל עמודות טבלה מורחבות של eMule BB על כל התצוגות הראשיות."
-    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "מציג את כל עמודות הטבלה בסדר eMule BB בכל התצוגות הראשיות."
+    IDS_TOOLS_STATUS_VIEW_PRESET_EXTENDED                   "מחיל עמודות טבלה מורחבות של eMuleBB על כל התצוגות הראשיות."
+    IDS_TOOLS_STATUS_VIEW_PRESET_FULL                       "מציג את כל עמודות הטבלה בסדר eMuleBB בכל התצוגות הראשיות."
     IDS_CHAT_SMILEYS_BUTTON                                 "סמיילים"
     IDS_PPG_DEBUG_LEVEL                                     "רמה"
     IDS_PPG_DEBUG_TCP                                       "TCP"
@@ -2184,7 +2184,7 @@ BEGIN
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "גיבוי יומי של התצורה"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "יוצר פעם ביום בעת ההפעלה תמונת מצב של קובצי התצורה והמצב לפני שהטעינה הרגילה ממשיכה."
 END
-// eMule BB managed translation block: end
+// eMuleBB managed translation block: end
 
 #endif    // Hebrew resources
 /////////////////////////////////////////////////////////////////////////////
