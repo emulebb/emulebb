@@ -398,6 +398,76 @@ ULONGLONG CDownloadQueue::GetRequiredFreeDiskSpaceForPath(LPCTSTR pszPath) const
 
 	const CString strPathCacheKey(BuildRequiredFreeDiskSpacePathCacheKey(pszPath));
 	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, false);
+	const auto TryGetCachedRequiredBytes = [&](const CString &rstrCacheKey, ULONGLONG &rullRequiredBytes) -> bool
+	{
+		const DownloadQueueDiskSpaceSeams::RequiredFreeSpacePathCacheKey candidateKey(static_cast<LPCTSTR>(rstrCacheKey));
+		for (INT_PTR i = 0; i < m_aRequiredFreeDiskSpacePathCache.GetCount(); ++i) {
+			const DownloadQueueDiskSpaceSeams::RequiredFreeSpacePathCacheKey cachedKey(
+				static_cast<LPCTSTR>(m_aRequiredFreeDiskSpacePathCache[i].Path));
+			if (DownloadQueueDiskSpaceSeams::IsRequiredFreeSpacePathCacheKeyWithinRoot(candidateKey, cachedKey)) {
+				rullRequiredBytes = m_aRequiredFreeDiskSpacePathCache[i].RequiredBytes;
+				return true;
+			}
+		}
+		return false;
+	};
+
+	ULONGLONG ullCachedRequiredBytes = 0;
+	if (TryGetCachedRequiredBytes(strPathCacheKey, ullCachedRequiredBytes))
+		return ullCachedRequiredBytes;
+
+	const auto AddRequiredBytesForVolumePath = [&](LPCTSTR pszVolumePath, const CString &rstrVolumeId) -> ULONGLONG
+	{
+		ULONGLONG ullRequiredBytes = 0;
+		bool bMatchedProtectedVolume = false;
+		for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
+			if (aProtectedVolumes[i].VolumeId == rstrVolumeId) {
+				ullRequiredBytes = aProtectedVolumes[i].RequiredBytes;
+				bMatchedProtectedVolume = true;
+				break;
+			}
+		}
+		if (!bMatchedProtectedVolume)
+			ullRequiredBytes = thePrefs.GetEffectiveMinFreeDiskSpaceForPath(pszVolumePath);
+
+		const RequiredFreeDiskSpacePathCacheEntry entry = { BuildRequiredFreeDiskSpacePathCacheKey(pszVolumePath), ullRequiredBytes };
+		m_aRequiredFreeDiskSpacePathCache.Add(entry);
+		return ullRequiredBytes;
+	};
+
+	const auto TryCacheConfiguredRootForPath = [&](LPCTSTR pszRootPath, ULONGLONG &rullRequiredBytes) -> bool
+	{
+		if (pszRootPath == NULL || pszRootPath[0] == _T('\0'))
+			return false;
+
+		const CString strRootCacheKey(BuildRequiredFreeDiskSpacePathCacheKey(pszRootPath));
+		const DownloadQueueDiskSpaceSeams::RequiredFreeSpacePathCacheKey candidateKey(static_cast<LPCTSTR>(strPathCacheKey));
+		const DownloadQueueDiskSpaceSeams::RequiredFreeSpacePathCacheKey rootKey(static_cast<LPCTSTR>(strRootCacheKey));
+		if (!DownloadQueueDiskSpaceSeams::IsRequiredFreeSpacePathCacheKeyWithinRoot(candidateKey, rootKey))
+			return false;
+
+		if (TryGetCachedRequiredBytes(strRootCacheKey, rullRequiredBytes))
+			return true;
+
+		CString strRootVolumeId;
+		if (!TryGetVolumeIdentityPath(pszRootPath, strRootVolumeId))
+			return false;
+
+		rullRequiredBytes = AddRequiredBytesForVolumePath(pszRootPath, strRootVolumeId);
+		return true;
+	};
+
+	for (INT_PTR i = 0; i < thePrefs.GetTempDirCount(); ++i) {
+		if (TryCacheConfiguredRootForPath(thePrefs.GetTempDir(i), ullCachedRequiredBytes))
+			return ullCachedRequiredBytes;
+	}
+	if (TryCacheConfiguredRootForPath(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR), ullCachedRequiredBytes))
+		return ullCachedRequiredBytes;
+	for (INT_PTR i = 0; i < thePrefs.GetCatCount(); ++i) {
+		if (TryCacheConfiguredRootForPath(thePrefs.GetCatPath(i), ullCachedRequiredBytes))
+			return ullCachedRequiredBytes;
+	}
+
 	for (INT_PTR i = 0; i < m_aRequiredFreeDiskSpacePathCache.GetCount(); ++i) {
 		if (m_aRequiredFreeDiskSpacePathCache[i].Path == strPathCacheKey)
 			return m_aRequiredFreeDiskSpacePathCache[i].RequiredBytes;
@@ -407,21 +477,7 @@ ULONGLONG CDownloadQueue::GetRequiredFreeDiskSpaceForPath(LPCTSTR pszPath) const
 	if (!TryGetVolumeIdentityPath(pszPath, strVolumeId))
 		return thePrefs.GetEffectiveMinFreeDiskSpaceForPath(pszPath);
 
-	bool bMatchedProtectedVolume = false;
-	ULONGLONG ullRequiredBytes = 0;
-	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
-		if (aProtectedVolumes[i].VolumeId == strVolumeId) {
-			ullRequiredBytes = aProtectedVolumes[i].RequiredBytes;
-			bMatchedProtectedVolume = true;
-			break;
-		}
-	}
-	if (!bMatchedProtectedVolume)
-		ullRequiredBytes = thePrefs.GetEffectiveMinFreeDiskSpaceForPath(pszPath);
-
-	const RequiredFreeDiskSpacePathCacheEntry entry = { strPathCacheKey, ullRequiredBytes };
-	m_aRequiredFreeDiskSpacePathCache.Add(entry);
-	return ullRequiredBytes;
+	return AddRequiredBytesForVolumePath(pszPath, strVolumeId);
 }
 
 void CDownloadQueue::AddPartFilesToShare()
@@ -1427,7 +1483,7 @@ void CDownloadQueue::CheckDiskspace(bool bNotEnoughSpaceLeft)
 {
 	m_lastcheckdiskspacetime = ::GetTickCount64();
 
-	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(bNotEnoughSpaceLeft, true);
+	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(bNotEnoughSpaceLeft, bNotEnoughSpaceLeft);
 	bool bHasBreach = false;
 	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
 		const DownloadQueueDiskSpaceSeams::ProtectedVolumeSpaceState state = { aProtectedVolumes[i].FreeBytes, aProtectedVolumes[i].RequiredBytes };

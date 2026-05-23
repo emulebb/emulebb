@@ -1158,7 +1158,11 @@ void CMuleListCtrl::OnLvnEndScrollList(LPNMHDR pNMHDR, LRESULT *pResult)
 			GetItemRect(iLast, &rcItem, LVIR_BOUNDS);
 			if (rcItem.bottom < rcClient.bottom) {
 				rcClient.top = rcItem.bottom;
-				GetDC()->FillSolidRect(&rcClient, GetBkColor());
+				CDC *pDC = GetDC();
+				if (pDC != NULL) {
+					pDC->FillSolidRect(&rcClient, GetBkColor());
+					ReleaseDC(pDC);
+				}
 			}
 		}
 	}

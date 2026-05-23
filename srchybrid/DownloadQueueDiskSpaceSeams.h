@@ -106,6 +106,23 @@ inline RequiredFreeSpacePathCacheKey NormalizeRequiredFreeSpacePathCacheKey(Requ
 	return key;
 }
 
+inline bool IsRequiredFreeSpacePathCacheKeyWithinRoot(
+	const RequiredFreeSpacePathCacheKey &rCandidate,
+	const RequiredFreeSpacePathCacheKey &rRoot)
+{
+	if (rCandidate.empty() || rRoot.empty())
+		return false;
+	if (rCandidate == rRoot)
+		return true;
+	if (rCandidate.size() <= rRoot.size())
+		return false;
+	if (rCandidate.compare(0u, rRoot.size(), rRoot) != 0)
+		return false;
+	if (IsDriveRootPathCacheKey(rRoot))
+		return true;
+	return IsPathCacheSeparator(rCandidate[rRoot.size()]);
+}
+
 inline bool IsSameVolumeKey(const VolumeKey &rLeft, const VolumeKey &rRight)
 {
 	return rLeft.DriveNumber == rRight.DriveNumber
