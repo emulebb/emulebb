@@ -648,9 +648,15 @@ void CSearchListCtrl::ShowResults(uint32 nResultsID)
 void CSearchListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 {
 	const LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	SortByColumn(pNMLV->iSubItem);
+	*pResult = 0;
+}
+
+void CSearchListCtrl::SortByColumn(int iSubItem)
+{
 	bool sortAscending;
-	if (GetSortItem() != pNMLV->iSubItem)
-		switch (pNMLV->iSubItem) {
+	if (GetSortItem() != iSubItem)
+		switch (iSubItem) {
 		case 2: // Availability
 		case 3: // Complete Sources
 			sortAscending = false;
@@ -662,10 +668,9 @@ void CSearchListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 		sortAscending = !GetSortAscending();
 
 	// Sort table
-	UpdateSortHistory(MAKELONG(pNMLV->iSubItem, !sortAscending));
-	SetSortArrow(pNMLV->iSubItem, sortAscending);
-	SortItems(SortProc, MAKELONG(pNMLV->iSubItem, !sortAscending));
-	*pResult = 0;
+	UpdateSortHistory(MAKELONG(iSubItem, !sortAscending));
+	SetSortArrow(iSubItem, sortAscending);
+	SortItems(SortProc, MAKELONG(iSubItem, !sortAscending));
 }
 
 int CALLBACK CSearchListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
@@ -1638,6 +1643,9 @@ void CSearchListCtrl::DrawSourceParent(CDC &dc, int nColumn, LPRECT lpRect, UINT
 
 void CSearchListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
+	if (HandleSortShortcut(nChar))
+		return;
+
 	const UINT uCommand = FileListKeyboardShortcutsSeams::ClassifyKeyMessage(
 		FileListKeyboardShortcutsSeams::EContext::SearchResults,
 		WM_KEYDOWN,
@@ -1656,6 +1664,26 @@ void CSearchListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		return;
 	}
 	CMuleListCtrl::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+bool CSearchListCtrl::HandleSortShortcut(UINT nChar)
+{
+	const FileListKeyboardShortcutsSeams::ESortRole eSortRole = FileListKeyboardShortcutsSeams::ClassifySortKeyMessage(
+		WM_KEYDOWN,
+		nChar,
+		GetKeyState(VK_CONTROL) < 0,
+		GetKeyState(VK_MENU) < 0,
+		GetKeyState(VK_SHIFT) < 0);
+	if (eSortRole == FileListKeyboardShortcutsSeams::ESortRole::None)
+		return false;
+
+	const int iColumn = FileListKeyboardShortcutsSeams::GetSortShortcutColumn(FileListKeyboardShortcutsSeams::EContext::SearchResults, eSortRole);
+	if (iColumn < 0) {
+		MessageBeep(MB_OK);
+		return true;
+	}
+	SortByColumn(iColumn);
+	return true;
 }
 
 void CSearchListCtrl::SetHighlightColors()

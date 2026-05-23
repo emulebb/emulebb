@@ -190,6 +190,8 @@ protected:
 	void CountBatchCommandsInCurCat(int &riFilesToPause, int &riFilesToResume, int &riFilesToStop) const;
 	CString GetFileItemDisplayText(const CPartFile *lpPartFile, int iSubItem);
 	CString GetSourceItemDisplayText(const CtrlItem_Struct *pCtrlItem, int iSubItem);
+	bool HandleSortShortcut(UINT nChar);
+	void SortByColumn(int iSubItem);
 	void InitializeVideoThumbnailCache();
 	void ClearVideoThumbnailCache();
 	CString GetVideoThumbnailCacheDirectory() const;

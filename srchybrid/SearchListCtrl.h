@@ -99,6 +99,8 @@ protected:
 	CString	FormatFileSize(ULONGLONG ullFileSize) const;
 	CString GetItemDisplayText(const CSearchFile *src, int iSubItem) const;
 	bool	IsFilteredOut(const CSearchFile *pSearchFile) const;
+	bool	HandleSortShortcut(UINT nChar);
+	void	SortByColumn(int iSubItem);
 
 	void	DrawSourceParent(CDC &dc, int nColumn, LPRECT lpRect, UINT uDrawTextAlignment, const CSearchFile *src);
 	void	DrawSourceChild(CDC &dc, int nColumn, LPRECT lpRect, UINT uDrawTextAlignment, const CSearchFile *src);

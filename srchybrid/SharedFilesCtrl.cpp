@@ -1899,9 +1899,15 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM)
 void CSharedFilesCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 {
 	const LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	SortByColumn(pNMLV->iSubItem);
+	*pResult = 0;
+}
+
+void CSharedFilesCtrl::SortByColumn(int iSubItem)
+{
 	bool sortAscending;
-	if (GetSortItem() != pNMLV->iSubItem)
-		switch (pNMLV->iSubItem) {
+	if (GetSortItem() != iSubItem)
+		switch (iSubItem) {
 		case 3:  // Priority
 		case 5:  // Requests
 		case 6:  // Last Request
@@ -1923,22 +1929,22 @@ void CSharedFilesCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 	// Ornis 4-way-sorting
 	int adder = 0;
 	int iSortBySecondValueIndex = -1;
-	if (pNMLV->iSubItem == 5)
+	if (iSubItem == 5)
 		iSortBySecondValueIndex = 0;
-	else if (pNMLV->iSubItem == 7)
+	else if (iSubItem == 7)
 		iSortBySecondValueIndex = 1;
-	else if (pNMLV->iSubItem == 8)
+	else if (iSubItem == 8)
 		iSortBySecondValueIndex = 2;
 
 	if (iSortBySecondValueIndex >= 0) { // 5=IDS_SF_REQUESTS, 7=IDS_SF_ACCEPTS, 8=IDS_SF_TRANSFERRED
 		ASSERT(iSortBySecondValueIndex < (int)_countof(m_aSortBySecondValue));
-		if (GetSortItem() == pNMLV->iSubItem && !sortAscending) // check for 'descending' because the initial sort order is also 'descending'
+		if (GetSortItem() == iSubItem && !sortAscending) // check for 'descending' because the initial sort order is also 'descending'
 			m_aSortBySecondValue[iSortBySecondValueIndex] = !m_aSortBySecondValue[iSortBySecondValueIndex];
 		if (m_aSortBySecondValue[iSortBySecondValueIndex])
 			adder = 100;
-	} else if (pNMLV->iSubItem == 12) { // 12=IDS_SHAREDTITLE
+	} else if (iSubItem == 12) { // 12=IDS_SHAREDTITLE
 		ASSERT(3 < _countof(m_aSortBySecondValue));
-		if (GetSortItem() == pNMLV->iSubItem && !sortAscending) // check for 'descending' because the initial sort order is also 'descending'
+		if (GetSortItem() == iSubItem && !sortAscending) // check for 'descending' because the initial sort order is also 'descending'
 			m_aSortBySecondValue[3] = !m_aSortBySecondValue[3];
 		if (m_aSortBySecondValue[3])
 			adder = 100;
@@ -1946,11 +1952,11 @@ void CSharedFilesCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 
 	// Sort table
 	if (adder == 0)
-		SetSortArrow(pNMLV->iSubItem, sortAscending);
+		SetSortArrow(iSubItem, sortAscending);
 	else
-		SetSortArrow(pNMLV->iSubItem, sortAscending ? arrowDoubleUp : arrowDoubleDown);
+		SetSortArrow(iSubItem, sortAscending ? arrowDoubleUp : arrowDoubleDown);
 
-	UpdateSortHistory(MAKELONG(pNMLV->iSubItem + adder, !sortAscending));
+	UpdateSortHistory(MAKELONG(iSubItem + adder, !sortAscending));
 	SharedFilesRepositionState savedState;
 	const bool bPreserveState = ShouldPreserveVirtualListState() && !m_aVisibleFiles.empty();
 	if (bPreserveState)
@@ -1961,7 +1967,6 @@ void CSharedFilesCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 		RestoreSharedFilesRepositionState(*this, savedState);
 	}
 	Invalidate(FALSE);
-	*pResult = 0;
 }
 
 int CALLBACK CSharedFilesCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
@@ -2226,6 +2231,9 @@ void CSharedFilesCtrl::OnLvnGetDispInfo(LPNMHDR pNMHDR, LRESULT *pResult)
 
 void CSharedFilesCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
+	if (HandleSortShortcut(nChar))
+		return;
+
 	const UINT uCommand = FileListKeyboardShortcutsSeams::ClassifyKeyMessage(
 		FileListKeyboardShortcutsSeams::EContext::SharedFiles,
 		WM_KEYDOWN,
@@ -2258,6 +2266,26 @@ void CSharedFilesCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	}
 
 	CMuleListCtrl::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+bool CSharedFilesCtrl::HandleSortShortcut(UINT nChar)
+{
+	const FileListKeyboardShortcutsSeams::ESortRole eSortRole = FileListKeyboardShortcutsSeams::ClassifySortKeyMessage(
+		WM_KEYDOWN,
+		nChar,
+		GetKeyState(VK_CONTROL) < 0,
+		GetKeyState(VK_MENU) < 0,
+		GetKeyState(VK_SHIFT) < 0);
+	if (eSortRole == FileListKeyboardShortcutsSeams::ESortRole::None)
+		return false;
+
+	const int iColumn = FileListKeyboardShortcutsSeams::GetSortShortcutColumn(FileListKeyboardShortcutsSeams::EContext::SharedFiles, eSortRole);
+	if (iColumn < 0) {
+		MessageBeep(MB_OK);
+		return true;
+	}
+	SortByColumn(iColumn);
+	return true;
 }
 
 void CSharedFilesCtrl::ShowFileDialog(CTypedPtrList<CPtrList, CShareableFile*> &aFiles, UINT uInvokePage)

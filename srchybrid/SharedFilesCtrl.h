@@ -144,6 +144,8 @@ protected:
 	bool NeedsSortReposition(int iIndex) const;
 	bool RepositionFileByCurrentSort(CShareableFile *file, int iIndex);
 	CString GetItemDisplayText(const CShareableFile *file, int iSubItem) const;
+	bool HandleSortShortcut(UINT nChar);
+	void SortByColumn(int iSubItem);
 	bool IsFilteredOut(const CShareableFile *pKnownFile) const;
 	bool IsSharedInKad(const CKnownFile *file) const;
 	void AddShareableFiles(const CString &strFromDir);

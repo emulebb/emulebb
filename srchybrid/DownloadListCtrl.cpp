@@ -2490,9 +2490,15 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 void CDownloadListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 {
 	const LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	SortByColumn(pNMLV->iSubItem);
+	*pResult = 0;
+}
+
+void CDownloadListCtrl::SortByColumn(int iSubItem)
+{
 	bool sortAscending;
-	if (GetSortItem() != pNMLV->iSubItem)
-		switch (pNMLV->iSubItem) {
+	if (GetSortItem() != iSubItem)
+		switch (iSubItem) {
 		case 2: // Transferred
 		case 3: // Completed
 		case 4: // Download rate
@@ -2511,7 +2517,7 @@ void CDownloadListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 
 	// Ornis 4-way-sorting
 	int adder = 0;
-	if (pNMLV->iSubItem == 10) {
+	if (iSubItem == 10) {
 		if (GetSortItem() == 10 && sortAscending) // check for 'ascending' because the initial sort order is also 'ascending'
 			m_bRemainSort = !m_bRemainSort;
 		if (m_bRemainSort)
@@ -2519,15 +2525,14 @@ void CDownloadListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 	}
 	// Sort table
 	if (adder == 0)
-		SetSortArrow(pNMLV->iSubItem, sortAscending);
+		SetSortArrow(iSubItem, sortAscending);
 	else
-		SetSortArrow(pNMLV->iSubItem, sortAscending ? arrowDoubleUp : arrowDoubleDown);
-	UpdateSortHistory(MAKELONG(pNMLV->iSubItem + adder, !sortAscending));
+		SetSortArrow(iSubItem, sortAscending ? arrowDoubleUp : arrowDoubleDown);
+	UpdateSortHistory(MAKELONG(iSubItem + adder, !sortAscending));
 	PruneStaleFileItems();
-	SortItems(SortProc, MAKELONG(pNMLV->iSubItem + adder, !sortAscending));
+	SortItems(SortProc, MAKELONG(iSubItem + adder, !sortAscending));
 	// Save new preferences
 	thePrefs.TransferlistRemainSortStyle(m_bRemainSort);
-	*pResult = 0;
 }
 
 int CALLBACK CDownloadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
@@ -3085,6 +3090,9 @@ void CDownloadListCtrl::ShowFilesCount()
 
 void CDownloadListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
+	if (HandleSortShortcut(nChar))
+		return;
+
 	const UINT uCommand = DownloadListKeyboardShortcutsSeams::ClassifyKeyMessage(
 		WM_KEYDOWN,
 		nChar,
@@ -3097,6 +3105,26 @@ void CDownloadListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	}
 
 	CMuleListCtrl::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+bool CDownloadListCtrl::HandleSortShortcut(UINT nChar)
+{
+	const FileListKeyboardShortcutsSeams::ESortRole eSortRole = FileListKeyboardShortcutsSeams::ClassifySortKeyMessage(
+		WM_KEYDOWN,
+		nChar,
+		GetKeyState(VK_CONTROL) < 0,
+		GetKeyState(VK_MENU) < 0,
+		GetKeyState(VK_SHIFT) < 0);
+	if (eSortRole == FileListKeyboardShortcutsSeams::ESortRole::None)
+		return false;
+
+	const int iColumn = FileListKeyboardShortcutsSeams::GetSortShortcutColumn(FileListKeyboardShortcutsSeams::EContext::Downloads, eSortRole);
+	if (iColumn < 0) {
+		MessageBeep(MB_OK);
+		return true;
+	}
+	SortByColumn(iColumn);
+	return true;
 }
 
 void CDownloadListCtrl::ShowSelectedFileDetails()

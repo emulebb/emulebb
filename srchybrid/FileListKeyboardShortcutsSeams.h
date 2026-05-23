@@ -32,6 +32,77 @@ namespace FileListKeyboardShortcutsSeams
 		SharedDirs
 	};
 
+	enum class ESortRole
+	{
+		None,
+		Name,
+		Type,
+		Date,
+		Size
+	};
+
+	inline ESortRole ClassifySortKeyMessage(UINT uMessage, WPARAM wParam, bool bCtrlDown, bool bAltDown, bool bShiftDown)
+	{
+		if (uMessage != WM_KEYDOWN || !bCtrlDown || bAltDown || bShiftDown)
+			return ESortRole::None;
+
+		switch (wParam) {
+		case VK_F3:
+			return ESortRole::Name;
+		case VK_F4:
+			return ESortRole::Type;
+		case VK_F5:
+			return ESortRole::Date;
+		case VK_F6:
+			return ESortRole::Size;
+		default:
+			return ESortRole::None;
+		}
+	}
+
+	inline int GetSortShortcutColumn(EContext eContext, ESortRole eSortRole)
+	{
+		switch (eContext) {
+		case EContext::Downloads:
+			switch (eSortRole) {
+			case ESortRole::Name:
+				return 0;
+			case ESortRole::Date:
+				return 14; // Added On
+			case ESortRole::Size:
+				return 1;
+			default:
+				return -1;
+			}
+		case EContext::SearchResults:
+			switch (eSortRole) {
+			case ESortRole::Name:
+				return 0;
+			case ESortRole::Type:
+				return 4;
+			case ESortRole::Size:
+				return 1;
+			default:
+				return -1;
+			}
+		case EContext::SharedFiles:
+			switch (eSortRole) {
+			case ESortRole::Name:
+				return 0;
+			case ESortRole::Type:
+				return 2;
+			case ESortRole::Date:
+				return 6; // Last Request
+			case ESortRole::Size:
+				return 1;
+			default:
+				return -1;
+			}
+		default:
+			return -1;
+		}
+	}
+
 	/**
 	 * Classifies local file-list key messages into existing menu commands.
 	 *
