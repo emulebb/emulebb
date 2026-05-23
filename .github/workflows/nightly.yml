@@ -1,0 +1,204 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Publish even when this commit already has a nightly release"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: emulebb-nightly
+  cancel-in-progress: false
+
+env:
+  EMULEBB_NIGHTLY_BASE_VERSION: "0.7.3"
+
+jobs:
+  prepare:
+    name: Prepare nightly metadata
+    runs-on: ubuntu-latest
+    outputs:
+      package_version: ${{ steps.meta.outputs.package_version }}
+      release_date: ${{ steps.meta.outputs.release_date }}
+      short_sha: ${{ steps.meta.outputs.short_sha }}
+      should_publish: ${{ steps.meta.outputs.should_publish }}
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - name: Checkout app source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute nightly metadata
+        id: meta
+        env:
+          FORCE_NIGHTLY: ${{ github.event_name == 'workflow_dispatch' && inputs.force == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          short_sha="${GITHUB_SHA::7}"
+          release_date="$(date -u +%Y%m%d)"
+          tag="emulebb-nightly-${release_date}-${short_sha}"
+          package_version="${EMULEBB_NIGHTLY_BASE_VERSION}-nightly.${release_date}.${short_sha}"
+
+          existing_for_sha="$(git ls-remote --tags origin "refs/tags/emulebb-nightly-*-${short_sha}" | wc -l | tr -d ' ')"
+          should_publish="true"
+          if [[ "${existing_for_sha}" != "0" && "${FORCE_NIGHTLY}" != "true" ]]; then
+            should_publish="false"
+          fi
+
+          if [[ "${FORCE_NIGHTLY}" == "true" ]] && git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            tag="${tag}-run${GITHUB_RUN_NUMBER}"
+          fi
+
+          {
+            echo "package_version=${package_version}"
+            echo "release_date=${release_date}"
+            echo "short_sha=${short_sha}"
+            echo "should_publish=${should_publish}"
+            echo "tag=${tag}"
+          } >> "${GITHUB_OUTPUT}"
+
+  build:
+    name: Build package (${{ matrix.asset_arch }})
+    needs: prepare
+    if: needs.prepare.outputs.should_publish == 'true'
+    runs-on: windows-2022
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: x64
+            asset_arch: x64
+          - platform: ARM64
+            asset_arch: arm64
+    steps:
+      - name: Checkout app source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Clone build orchestration
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $workspaceRoot = Join-Path $env:RUNNER_TEMP "emulebb-workspace"
+          $reposRoot = Join-Path $workspaceRoot "repos"
+          $buildRoot = Join-Path $reposRoot "emulebb-build"
+          New-Item -ItemType Directory -Force -Path $reposRoot | Out-Null
+          git clone --depth 1 https://github.com/emulebb/emulebb-build.git $buildRoot
+          "EMULE_WORKSPACE_ROOT=$workspaceRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "EMULE_BUILD_ROOT=$buildRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Install build orchestration
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python -m pip install --upgrade pip
+          python -m pip install -e "$($env:EMULE_BUILD_ROOT)[dev]"
+
+      - name: Materialize workspace
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Push-Location $env:EMULE_BUILD_ROOT
+          python -m emule_workspace materialize --workspace-root $env:EMULE_WORKSPACE_ROOT
+          Pop-Location
+
+      - name: Align app worktree to workflow commit
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $appRoot = Join-Path $env:EMULE_WORKSPACE_ROOT "workspaces\workspace\app\emulebb-main"
+          git -C $appRoot fetch origin $env:GITHUB_SHA
+          git -C $appRoot checkout main
+          git -C $appRoot reset --hard $env:GITHUB_SHA
+          git -C $appRoot status --short --branch
+
+      - name: Build release package
+        env:
+          PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Push-Location $env:EMULE_BUILD_ROOT
+          python -m emule_workspace package-release `
+            --workspace-root $env:EMULE_WORKSPACE_ROOT `
+            --config Release `
+            --platform "${{ matrix.platform }}" `
+            --clean `
+            --release-version $env:PACKAGE_VERSION
+          Pop-Location
+
+      - name: Stage release assets
+        env:
+          PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $releaseRoot = Join-Path $env:EMULE_WORKSPACE_ROOT "workspaces\workspace\state\release\emulebb-v$env:PACKAGE_VERSION"
+          $artifactRoot = Join-Path $env:GITHUB_WORKSPACE "nightly-artifacts"
+          New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
+          Copy-Item -Path (Join-Path $releaseRoot "emulebb-$env:PACKAGE_VERSION-${{ matrix.asset_arch }}.zip") -Destination $artifactRoot
+          Copy-Item -Path (Join-Path $releaseRoot "emulebb-$env:PACKAGE_VERSION-${{ matrix.asset_arch }}.manifest.json") -Destination $artifactRoot
+          Copy-Item -Path (Join-Path $releaseRoot "emulebb-$env:PACKAGE_VERSION-${{ matrix.asset_arch }}.sbom.spdx.json") -Destination $artifactRoot
+          Get-ChildItem $artifactRoot
+
+      - name: Upload package assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulebb-${{ needs.prepare.outputs.package_version }}-${{ matrix.asset_arch }}
+          path: nightly-artifacts/*
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish nightly release
+    needs:
+      - prepare
+      - build
+    if: needs.prepare.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download package assets
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
+          RELEASE_DATE: ${{ needs.prepare.outputs.release_date }}
+          SHORT_SHA: ${{ needs.prepare.outputs.short_sha }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > notes.md <<EOF
+          Automated eMuleBB nightly package from main commit ${GITHUB_SHA}.
+
+          This is a prerelease test build for the 0.7.3 RC stabilization window. Use the official RC and stable release tags for release decisions.
+
+          Package version: ${PACKAGE_VERSION}
+          EOF
+          gh release create "${TAG}" dist/* \
+            --target "${GITHUB_SHA}" \
+            --title "eMuleBB nightly ${RELEASE_DATE} (${SHORT_SHA})" \
+            --notes-file notes.md \
+            --prerelease
