@@ -73,6 +73,17 @@ struct StartupCacheSaveScheduleState
 	ULONGLONG ullDirtyTick;
 };
 
+/**
+ * @brief Stable snapshot of the immediate cache-save decision when startup hashing drains.
+ */
+struct StartupCacheHashDrainSaveState
+{
+	bool bCacheDirty;
+	bool bAppClosing;
+	bool bSaveRunning;
+	bool bDeferredHashingActive;
+};
+
 enum class StartupCacheSavePostFailureAction : unsigned char
 {
 	RetryLater,
@@ -246,6 +257,17 @@ inline bool ShouldStartStartupCacheSave(const StartupCacheSaveScheduleState &rSt
 		return false;
 
 	return rState.ullNowTick >= rState.ullDirtyTick + kStartupCacheSaveDelayIdleMs;
+}
+
+/**
+ * @brief Reports whether startup hash drain should immediately persist the warm startup cache.
+ */
+inline bool ShouldStartStartupCacheSaveAfterHashDrain(const StartupCacheHashDrainSaveState &rState)
+{
+	return rState.bCacheDirty
+		&& !rState.bAppClosing
+		&& !rState.bSaveRunning
+		&& !rState.bDeferredHashingActive;
 }
 
 inline StartupCacheSavePostFailureAction GetStartupCacheSavePostFailureAction(const StartupCacheSavePostFailureState &rState)

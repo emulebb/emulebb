@@ -1058,6 +1058,21 @@ void CSharedFileList::OnSharedHashQueuePossiblyDrained()
 		return;
 
 	NoteStartupHashingQueueDrained(::GetTickCount64());
+	bool bStartStartupCacheSave = false;
+	{
+		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+		bStartStartupCacheSave = SharedFileListSeams::ShouldStartStartupCacheSaveAfterHashDrain({
+			m_bStartupCacheDirty,
+			theApp.IsClosing(),
+			m_bStartupCacheSaveRunning,
+			m_bStartupDeferredHashingActive
+		});
+	}
+	if (bStartStartupCacheSave) {
+		if (theApp.knownfiles != NULL)
+			theApp.knownfiles->Save();
+		(void)RequestStartupCacheSave(true);
+	}
 	if (output != NULL)
 		output->FlushStartupDeferredReload();
 	if (theApp.emuledlg != NULL && theApp.emuledlg->sharedfileswnd != NULL)
