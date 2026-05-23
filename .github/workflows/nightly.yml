@@ -109,7 +109,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           python -m pip install --upgrade pip
-          python -m pip install "click>=8.1" "pydantic>=2.0"
+          python -m pip install "click>=8.1" "pydantic>=2.0" "jinja2>=3" "jsonschema>=4"
 
       - name: Materialize workspace
         shell: pwsh
@@ -157,6 +157,15 @@ jobs:
           Copy-Item -Path (Join-Path $releaseRoot "emulebb-$env:PACKAGE_VERSION-${{ matrix.asset_arch }}.manifest.json") -Destination $artifactRoot
           Copy-Item -Path (Join-Path $releaseRoot "emulebb-$env:PACKAGE_VERSION-${{ matrix.asset_arch }}.sbom.spdx.json") -Destination $artifactRoot
           Get-ChildItem $artifactRoot
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulebb-nightly-build-logs-${{ matrix.asset_arch }}
+          path: ${{ runner.temp }}/emulebb-workspace/workspaces/workspace/state/build-logs/**
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Upload package assets
         uses: actions/upload-artifact@v4
