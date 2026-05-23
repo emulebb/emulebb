@@ -20,6 +20,7 @@
 #include "DownloadProgressBarSeams.h"
 #include "DownloadListKeyboardShortcutsSeams.h"
 #include "DownloadPriorityShortcutsSeams.h"
+#include "DisplayRefreshSeams.h"
 #include "DownloadListCtrl.h"
 #include "FilenameNormalizationPolicy.h"
 #include "updownclient.h"
@@ -1063,6 +1064,10 @@ void CDownloadListCtrl::RefreshVisibleItems()
 
 	if (bPruneStaleItems)
 		PruneStaleFileItems();
+	if (IsTransferRefreshSensitiveSortColumn(TRANSFER_DISPLAY_LIST_DOWNLOADS, GetSortItem())) {
+		const int adder = GetSortItem() == 10 && m_bRemainSort ? 81 : 0;
+		SortItems(SortProc, MAKELONG(GetSortItem() + adder, !GetSortAscending()));
+	}
 	m_availableCommandsDirty = true;
 }
 

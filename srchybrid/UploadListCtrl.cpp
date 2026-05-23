@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "DisplayRefreshSeams.h"
 #include "UploadListCtrl.h"
 #include "TransferWnd.h"
 #include "TransferDlg.h"
@@ -944,6 +945,8 @@ void CUploadListCtrl::RefreshVisibleItems()
 
 	if (bPruneStaleItems)
 		PruneStaleClientItems();
+	if (IsTransferRefreshSensitiveSortColumn(TRANSFER_DISPLAY_LIST_UPLOADS, GetSortItem()))
+		SortItems(SortProc, MAKELONG(GetSortItem(), !GetSortAscending()));
 }
 
 void CUploadListCtrl::ShowSelectedUserDetails()

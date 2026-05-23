@@ -35,6 +35,15 @@ enum ETransferDisplayRefreshState : uint32_t
 	TRANSFER_DISPLAY_REFRESH_RUNNING = 1
 };
 
+enum ETransferDisplayListKind : uint32_t
+{
+	TRANSFER_DISPLAY_LIST_DOWNLOADS = 0,
+	TRANSFER_DISPLAY_LIST_UPLOADS,
+	TRANSFER_DISPLAY_LIST_DOWNLOAD_CLIENTS,
+	TRANSFER_DISPLAY_LIST_QUEUE,
+	TRANSFER_DISPLAY_LIST_CLIENTS
+};
+
 struct CPartFileDisplayUpdateRequest
 {
 	unsigned char fileHash[16];
@@ -213,6 +222,68 @@ inline uint32_t BuildExplicitTransferDisplayRefreshMask(
 inline uint32_t BuildQueuedTransferDisplayRefreshMask(uint32_t uRequestMask, bool)
 {
 	return uRequestMask;
+}
+
+inline bool IsTransferRefreshSensitiveSortColumn(ETransferDisplayListKind eListKind, int iSortColumn)
+{
+	switch (eListKind) {
+	case TRANSFER_DISPLAY_LIST_DOWNLOADS:
+		switch (iSortColumn) {
+		case 0:  // filename
+		case 1:  // size
+		case 14: // added on
+			return false;
+		default:
+			return iSortColumn >= 0;
+		}
+	case TRANSFER_DISPLAY_LIST_UPLOADS:
+		switch (iSortColumn) {
+		case 0:  // user name
+		case 1:  // file name
+		case 13: // client software
+		case 15: // IP
+		case 17: // client hash
+		case 19: // file size
+		case 21: // folder
+			return false;
+		default:
+			return iSortColumn >= 0;
+		}
+	case TRANSFER_DISPLAY_LIST_DOWNLOAD_CLIENTS:
+		switch (iSortColumn) {
+		case 0: // user name
+		case 1: // client software
+		case 2: // file name
+		case 7: // source origin
+			return false;
+		default:
+			return iSortColumn >= 0;
+		}
+	case TRANSFER_DISPLAY_LIST_QUEUE:
+		switch (iSortColumn) {
+		case 0:  // user name
+		case 1:  // file name
+		case 15: // client software
+		case 17: // IP
+		case 19: // client hash
+		case 20: // file size
+		case 21: // folder
+			return false;
+		default:
+			return iSortColumn >= 0;
+		}
+	case TRANSFER_DISPLAY_LIST_CLIENTS:
+		switch (iSortColumn) {
+		case 0: // user name
+		case 5: // client software
+		case 7: // client hash
+			return false;
+		default:
+			return iSortColumn >= 0;
+		}
+	default:
+		return false;
+	}
 }
 
 /**

@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "DisplayRefreshSeams.h"
 #include "QueueListCtrl.h"
 #include "UpDownClient.h"
 #include "MenuCmds.h"
@@ -881,6 +882,8 @@ void CQueueListCtrl::RefreshVisibleItems()
 
 	if (bPruneStaleItems)
 		PruneStaleClientItems();
+	if (IsTransferRefreshSensitiveSortColumn(TRANSFER_DISPLAY_LIST_QUEUE, GetSortItem()))
+		SortItems(SortProc, MAKELONG(GetSortItem(), !GetSortAscending()));
 }
 
 void CQueueListCtrl::ShowSelectedUserDetails()

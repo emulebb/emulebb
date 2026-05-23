@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "DisplayRefreshSeams.h"
 #include "ClientListCtrl.h"
 #include "MenuCmds.h"
 #include "MenuShortcutLabels.h"
@@ -600,6 +601,8 @@ void CClientListCtrl::RefreshVisibleItems()
 
 	if (bPruneStaleItems)
 		PruneStaleClientItems();
+	if (IsTransferRefreshSensitiveSortColumn(TRANSFER_DISPLAY_LIST_CLIENTS, GetSortItem()))
+		SortItems(SortProc, MAKELONG(GetSortItem(), !GetSortAscending()));
 }
 
 void CClientListCtrl::ShowSelectedUserDetails()
