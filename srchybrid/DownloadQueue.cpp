@@ -2173,12 +2173,6 @@ CString CDownloadQueue::GetOptimalTempDir(UINT nCat, EMFileSize nFileSize)
 	const INT_PTR iTempDirCnt = thePrefs.GetTempDirCount();
 
 	const CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> &aProtectedVolumes = GetProtectedVolumeStatusSnapshot(false, false);
-	for (INT_PTR i = 0; i < aProtectedVolumes.GetCount(); ++i) {
-		const DownloadQueueDiskSpaceSeams::ProtectedVolumeSpaceState state = { aProtectedVolumes[i].FreeBytes, aProtectedVolumes[i].RequiredBytes };
-		if (DownloadQueueDiskSpaceSeams::IsProtectedVolumeBreached(state))
-			return CString();
-	}
-
 	const Category_Struct *pCategory = thePrefs.GetCategory(nCat);
 	const CString strIncomingPath((pCategory != NULL && LongPathSeams::PathExists(pCategory->strIncomingPath))
 		? pCategory->strIncomingPath
