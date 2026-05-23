@@ -20,6 +20,7 @@ concurrency:
 
 env:
   EMULEBB_NIGHTLY_BASE_VERSION: "0.7.3"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   prepare:
