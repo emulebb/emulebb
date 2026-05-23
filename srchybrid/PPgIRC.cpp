@@ -27,7 +27,7 @@
 // FROZEN SURFACE (2026-05-17): IRC preferences receive no support, no new
 // tests, and no hardening/refactor investment. They may be removed with IRC.
 // Only touch this area to delete it or to protect supported shared
-// infrastructure. See repos/eMule-tooling/docs/active/FROZEN-SURFACES.md.
+// infrastructure. See repos/emulebb-tooling/docs/active/FROZEN-SURFACES.md.
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

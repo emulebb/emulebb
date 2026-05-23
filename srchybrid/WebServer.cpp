@@ -65,7 +65,7 @@ static char THIS_FILE[] = __FILE__;
 // support, no new tests, and no functional parity work. The supported WebServer
 // surface is JSON REST/controller routing and shared listener safety. Only
 // touch template code to remove it or to protect supported shared
-// infrastructure. See repos/eMule-tooling/docs/active/FROZEN-SURFACES.md.
+// infrastructure. See repos/emulebb-tooling/docs/active/FROZEN-SURFACES.md.
 #define WEB_SERVER_TEMPLATES_VERSION	7
 
 //SyruS CQArray-Sorting operators

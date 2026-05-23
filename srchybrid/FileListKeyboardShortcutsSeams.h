@@ -112,7 +112,7 @@ namespace FileListKeyboardShortcutsSeams
 	 * Classifies local file-list key messages into existing menu commands.
 	 *
 	 * EMULE_KEYBOARD_SHORTCUT: keep this aligned with
-	 * docs/reference/KEYBOARD-SHORTCUTS.md in eMule-tooling.
+	 * docs/reference/KEYBOARD-SHORTCUTS.md in emulebb-tooling.
 	 */
 	inline UINT ClassifyKeyMessage(EContext eContext, UINT uMessage, WPARAM wParam, bool bCtrlDown, bool bAltDown, bool bShiftDown)
 	{

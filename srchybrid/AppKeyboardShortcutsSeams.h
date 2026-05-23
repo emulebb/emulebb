@@ -26,7 +26,7 @@ namespace AppKeyboardShortcutsSeams
 	 * Commands reserved by the main eMule shell keyboard policy.
 	 *
 	 * EMULE_KEYBOARD_SHORTCUT: keep this list aligned with
-	 * docs/KEYBOARD-SHORTCUTS.md in eMule-tooling when shortcut ownership changes.
+	 * docs/KEYBOARD-SHORTCUTS.md in emulebb-tooling when shortcut ownership changes.
 	 */
 	enum class ECommand
 	{

@@ -21,7 +21,7 @@
 // FROZEN SURFACE (2026-05-17): IRC receives no support, no new tests, and no
 // hardening/refactor investment. It may be removed. Only touch this area to
 // delete it or to protect supported shared infrastructure. See
-// repos/eMule-tooling/docs/active/FROZEN-SURFACES.md.
+// repos/emulebb-tooling/docs/active/FROZEN-SURFACES.md.
 #include "stdafx.h"
 #define MMNODRV			// mmsystem: Installable driver support
 //#define MMNOSOUND		// mmsystem: Sound support

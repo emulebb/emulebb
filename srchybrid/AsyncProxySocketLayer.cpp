@@ -119,7 +119,7 @@ Version history
 // and no hardening/refactor investment. It may be removed or replaced by a
 // future deliberate transport policy. Only touch this area to delete it or to
 // protect supported shared infrastructure. See
-// repos/eMule-tooling/docs/active/FROZEN-SURFACES.md.
+// repos/emulebb-tooling/docs/active/FROZEN-SURFACES.md.
 
 #include "stdafx.h"
 #include <atlenc.h>

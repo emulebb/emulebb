@@ -47,14 +47,14 @@
     <WorkspaceRoot>$([MSBuild]::EnsureTrailingSlash('$(WorkspaceRoot)'))</WorkspaceRoot>
     <ReposRoot>$(WorkspaceRoot)repos\</ReposRoot>
     <ThirdPartyRoot>$(ReposRoot)third_party\</ThirdPartyRoot>
-    <Id3libRoot>$(ThirdPartyRoot)eMule-id3lib\</Id3libRoot>
-    <MbedTlsRoot>$(ThirdPartyRoot)eMule-mbedtls\</MbedTlsRoot>
-    <MiniUpnpRoot>$(ThirdPartyRoot)eMule-miniupnp\</MiniUpnpRoot>
-    <PcpNatPmpRoot>$(ThirdPartyRoot)eMule-libpcpnatpmp\</PcpNatPmpRoot>
-    <ResizableLibRoot>$(ThirdPartyRoot)eMule-ResizableLib\</ResizableLibRoot>
-    <CryptoPpRoot>$(ThirdPartyRoot)eMule-cryptopp\</CryptoPpRoot>
-    <NlohmannJsonRoot>$(ThirdPartyRoot)eMule-nlohmann-json\single_include\</NlohmannJsonRoot>
-    <ZlibRoot>$(ThirdPartyRoot)eMule-zlib\</ZlibRoot>
+    <Id3libRoot>$(ThirdPartyRoot)emulebb-id3lib\</Id3libRoot>
+    <MbedTlsRoot>$(ThirdPartyRoot)emulebb-mbedtls\</MbedTlsRoot>
+    <MiniUpnpRoot>$(ThirdPartyRoot)emulebb-miniupnp\</MiniUpnpRoot>
+    <PcpNatPmpRoot>$(ThirdPartyRoot)emulebb-libpcpnatpmp\</PcpNatPmpRoot>
+    <ResizableLibRoot>$(ThirdPartyRoot)emulebb-resizablelib\</ResizableLibRoot>
+    <CryptoPpRoot>$(ThirdPartyRoot)emulebb-cryptopp\</CryptoPpRoot>
+    <NlohmannJsonRoot>$(ThirdPartyRoot)emulebb-nlohmann-json\single_include\</NlohmannJsonRoot>
+    <ZlibRoot>$(ThirdPartyRoot)emulebb-zlib\</ZlibRoot>
     <EnableStartupProfiling Condition="'$(EnableStartupProfiling)'=='' and '$(Configuration)'=='Release'">true</EnableStartupProfiling>
     <StartupProfilingPreprocessorDefinition Condition="'$(EnableStartupProfiling)'=='true'">EMULE_ENABLE_STARTUP_PROFILING;</StartupProfilingPreprocessorDefinition>
   </PropertyGroup>

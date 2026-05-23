@@ -3999,17 +3999,17 @@ CString CPreferences::GetHomepageBaseURLForLevel(int nLevel)
 
 CString CPreferences::GetOnlineHelpURL()
 {
-	return _T("https://emulebb.github.io/eMule-tooling/HELP/");
+	return _T("https://emulebb.github.io/emulebb-tooling/HELP/");
 }
 
 CString CPreferences::GetVersionCheckBaseURL()
 {
-	return _T("https://github.com/eMulebb/eMule/releases");
+	return _T("https://github.com/emulebb/emulebb/releases");
 }
 
 CString CPreferences::GetVersionCheckApiURL()
 {
-	return _T("https://api.github.com/repos/eMulebb/eMule/releases/latest");
+	return _T("https://api.github.com/repos/emulebb/emulebb/releases/latest");
 }
 
 CString CPreferences::GetVersionCheckURL()

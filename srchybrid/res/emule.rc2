@@ -36,7 +36,7 @@ BEGIN
     BEGIN
         BLOCK "040904B0" // Lang=US English, CharSet=Unicode
         BEGIN
-            VALUE "CompanyName", "https://github.com/eMulebb"
+            VALUE "CompanyName", "https://github.com/emulebb"
             VALUE "FileDescription", "eMuleBB"
             VALUE "FileVersion", MOD_RELEASE_VERSION_TEXT " Unicode"
             VALUE "InternalName", "emulebb.exe"
