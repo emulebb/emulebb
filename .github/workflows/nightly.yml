@@ -104,12 +104,12 @@ jobs:
           "EMULE_WORKSPACE_ROOT=$workspaceRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "EMULE_BUILD_ROOT=$buildRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Install build orchestration
+      - name: Install build orchestration dependencies
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
           python -m pip install --upgrade pip
-          python -m pip install -e "$($env:EMULE_BUILD_ROOT)[dev]"
+          python -m pip install "click>=8.1" "pydantic>=2.0"
 
       - name: Materialize workspace
         shell: pwsh
