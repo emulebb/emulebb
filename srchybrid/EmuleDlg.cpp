@@ -1251,6 +1251,8 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, status()
 	, m_wpFirstRestore()
 	, m_hIcon()
+	, m_hLowIDIcon()
+	, m_eMainConnectionIcon(AppMainIconSeams::EConnectionIcon::Unknown)
 	, m_connicons()
 	, transicons()
 	, imicons()
@@ -1338,6 +1340,8 @@ CemuleDlg::~CemuleDlg()
 		VERIFY(::DestroyIcon(m_icoSysTrayCurrent));
 	if (m_hIcon)
 		VERIFY(::DestroyIcon(m_hIcon));
+	if (m_hLowIDIcon)
+		VERIFY(::DestroyIcon(m_hLowIDIcon));
 	DestroyIconsArr(m_connicons, _countof(m_connicons));
 	DestroyIconsArr(transicons, _countof(transicons));
 	DestroyIconsArr(imicons, _countof(imicons));
@@ -2232,14 +2236,14 @@ void CemuleDlg::OnPaint()
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
-		dc.DrawIcon(x, y, m_hIcon);
+		dc.DrawIcon(x, y, GetMainConnectionStateIcon(m_eMainConnectionIcon));
 	} else
 		CTrayDialog::OnPaint();
 }
 
 HCURSOR CemuleDlg::OnQueryDragIcon()
 {
-	return static_cast<HCURSOR>(m_hIcon);
+	return static_cast<HCURSOR>(GetMainConnectionStateIcon(m_eMainConnectionIcon));
 }
 
 void CemuleDlg::OnBnClickedConnect()
@@ -2403,6 +2407,32 @@ void CemuleDlg::ShowConnectionStateIcon()
 	statusbar->SetIcon(SBarConnected, m_connicons[uIconIdx]);
 }
 
+HICON CemuleDlg::GetMainConnectionStateIcon(AppMainIconSeams::EConnectionIcon eIcon) const
+{
+	if (eIcon == AppMainIconSeams::EConnectionIcon::LowID && m_hLowIDIcon != NULL)
+		return m_hLowIDIcon;
+	return m_hIcon;
+}
+
+void CemuleDlg::ShowMainConnectionStateIcon()
+{
+	if (!::IsWindow(m_hWnd))
+		return;
+
+	const AppMainIconSeams::EConnectionIcon eNextIcon =
+		AppMainIconSeams::SelectConnectionIcon(theApp.IsConnected(), theApp.IsFirewalled());
+	if (!AppMainIconSeams::ShouldApplyConnectionIcon(m_eMainConnectionIcon, eNextIcon))
+		return;
+
+	HICON hIcon = GetMainConnectionStateIcon(eNextIcon);
+	if (hIcon == NULL)
+		return;
+
+	SetIcon(hIcon, TRUE);
+	SetIcon(hIcon, FALSE);
+	m_eMainConnectionIcon = eNextIcon;
+}
+
 CString CemuleDlg::GetConnectionStateString()
 {
 	UINT ed2k, kad;
@@ -2452,6 +2482,7 @@ void CemuleDlg::ShowConnectionState()
 	kademliawnd->UpdateControlsState();
 
 	ShowConnectionStateIcon();
+	ShowMainConnectionStateIcon();
 	statusbar->SetText(GetConnectionStateString(), SBarConnected, 0);
 	ShowNetworkAddressState();
 
@@ -3890,11 +3921,14 @@ void CemuleDlg::SetAllIcons()
 	// application icon (although it's not customizable, we may need to load a different color resolution)
 	if (m_hIcon)
 		VERIFY(::DestroyIcon(m_hIcon));
+	if (m_hLowIDIcon)
+		VERIFY(::DestroyIcon(m_hLowIDIcon));
 	// NOTE: the application icon name is prefixed with "AAA" to make sure it's alphabetically sorted by the
 	// resource compiler as the 1st icon in the resource table!
 	m_hIcon = AfxGetApp()->LoadIcon(_T("AAAEMULEAPP"));
-	SetIcon(m_hIcon, TRUE);
-	//SetIcon(m_hIcon, FALSE);
+	m_hLowIDIcon = AfxGetApp()->LoadIcon(_T("APPLOWID"));
+	m_eMainConnectionIcon = AppMainIconSeams::EConnectionIcon::Unknown;
+	ShowMainConnectionStateIcon();
 
 	// connection state
 	DestroyIconsArr(m_connicons, _countof(m_connicons));

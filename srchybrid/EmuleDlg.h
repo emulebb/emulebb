@@ -20,6 +20,7 @@
 #include "TitledMenu.h"
 #include "TrayDialog.h"
 #include "WindowsToastNotifier.h"
+#include "AppMainIconSeams.h"
 
 namespace Kademlia
 {
@@ -185,6 +186,8 @@ public:
 protected:
 	WINDOWPLACEMENT m_wpFirstRestore;
 	HICON			m_hIcon;
+	HICON			m_hLowIDIcon;
+	AppMainIconSeams::EConnectionIcon m_eMainConnectionIcon;
 	HICON			m_connicons[9];
 	HICON			transicons[4];
 	HICON			imicons[3];
@@ -261,6 +264,8 @@ protected:
 	void MinimizeWindow(bool bForceTray = false);
 	void PostStartupMinimized();
 	void UpdateTrayIcon(int iPercent);
+	HICON GetMainConnectionStateIcon(AppMainIconSeams::EConnectionIcon eIcon) const;
+	void ShowMainConnectionStateIcon();
 	void ShowConnectionStateIcon();
 	void ShowTransferStateIcon();
 	void ShowUserStateIcon();
