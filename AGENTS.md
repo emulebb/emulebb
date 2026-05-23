@@ -2,7 +2,7 @@
 
 - this worktree is the variant-client parity harness derived from the community
   parity/regression baseline
-- the authoritative workspace policy lives in `EMULE_WORKSPACE_ROOT\repos\eMule-tooling\docs\WORKSPACE-POLICY.md`; follow it over local habit or stale branch names
+- the authoritative workspace policy lives in `EMULE_WORKSPACE_ROOT\repos\emulebb-tooling\docs\WORKSPACE-POLICY.md`; follow it over local habit or stale branch names
 - harness behavior may intentionally change runtime decisions only when needed
   for explicit parity testing
 - the first post-community commit must remain the global source-encoding normalization commit
