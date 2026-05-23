@@ -207,6 +207,7 @@ jobs:
           Package version: ${PACKAGE_VERSION}
           EOF
           gh release create "${TAG}" dist/* \
+            --repo "${GITHUB_REPOSITORY}" \
             --target "${GITHUB_SHA}" \
             --title "eMuleBB nightly ${RELEASE_DATE} (${SHORT_SHA})" \
             --notes-file notes.md \
