@@ -219,6 +219,7 @@ protected:
 	bool			m_bBindLossMonitorActive;
 	bool			m_bBindLossShutdown;
 	UINT_PTR		m_uBindLossWatchdogTimer;
+	UINT_PTR		m_uTransferRateDisplayTimer;
 	HANDLE			m_hBindLossInterfaceNotification;
 	HANDLE			m_hBindLossAddressNotification;
 #ifdef HAVE_WIN7_SDK_H
@@ -236,6 +237,8 @@ protected:
 	void DestroyStartupProgress();
 	bool ShouldShowLifecycleProgressDialog(int iMode, bool bStartup) const;
 	void ApplyDesktopUiRefreshIntervalMs(UINT uIntervalMs);
+	void StartTransferRateDisplayTimer();
+	void StopTransferRateDisplayTimer();
 	void DestroyMiniMule();
 
 	CMap<UINT, UINT, LPCTSTR, LPCTSTR> m_mapTbarCmdToIcon;

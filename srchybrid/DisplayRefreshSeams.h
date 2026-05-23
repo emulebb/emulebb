@@ -10,6 +10,7 @@
 
 enum EDesktopUiRefreshIntervalMs : uint32_t
 {
+	DESKTOP_UI_REFRESH_PAUSED_MS = 0,
 	DESKTOP_UI_REFRESH_FAST_MS = 500,
 	DESKTOP_UI_REFRESH_NORMAL_MS = 1000,
 	DESKTOP_UI_REFRESH_BELOWNORMAL_MS = 2000,
@@ -78,6 +79,7 @@ inline bool ShouldRunDisplayRefresh(bool bForce, ULONGLONG dwCurrentTick, ULONGL
 inline UINT NormalizeDesktopUiRefreshIntervalMs(UINT uIntervalMs)
 {
 	switch (uIntervalMs) {
+	case DESKTOP_UI_REFRESH_PAUSED_MS:
 	case DESKTOP_UI_REFRESH_FAST_MS:
 	case DESKTOP_UI_REFRESH_NORMAL_MS:
 	case DESKTOP_UI_REFRESH_BELOWNORMAL_MS:
@@ -94,7 +96,10 @@ inline UINT NormalizeDesktopUiRefreshIntervalMs(UINT uIntervalMs)
  */
 inline bool ShouldRunPreferenceAlignedDisplayRefresh(bool bForce, ULONGLONG dwCurrentTick, ULONGLONG dwLastRefreshTick, UINT uDesktopUiRefreshIntervalMs)
 {
-	return ShouldRunDisplayRefresh(bForce, dwCurrentTick, dwLastRefreshTick, NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs), 0);
+	const UINT uNormalizedIntervalMs = NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs);
+	if (uNormalizedIntervalMs == DESKTOP_UI_REFRESH_PAUSED_MS)
+		return bForce;
+	return ShouldRunDisplayRefresh(bForce, dwCurrentTick, dwLastRefreshTick, uNormalizedIntervalMs, 0);
 }
 
 /**
@@ -106,18 +111,35 @@ inline UINT GetTransferDisplayRefreshTimerDelayMs(UINT uDesktopUiRefreshInterval
 }
 
 /**
+ * @brief Returns the lightweight transfer-rate presentation timer cadence.
+ */
+inline UINT GetTransferRateDisplayRefreshTimerDelayMs()
+{
+	return DESKTOP_UI_REFRESH_NORMAL_MS;
+}
+
+/**
  * @brief Resolves whether routine transfer-window presentation refreshes may run.
  */
 inline ETransferDisplayRefreshState ResolveTransferDisplayRefreshState(
 	bool bAppClosing,
+	bool bDesktopUiRefreshPaused,
 	bool bTransferWindowActive,
 	bool bMainWindowVisible,
 	bool bMainWindowMinimized,
 	bool bForegroundOwnedByMainWindow)
 {
-	if (bAppClosing || !bTransferWindowActive || !bMainWindowVisible || bMainWindowMinimized || !bForegroundOwnedByMainWindow)
+	if (bAppClosing || bDesktopUiRefreshPaused || !bTransferWindowActive || !bMainWindowVisible || bMainWindowMinimized || !bForegroundOwnedByMainWindow)
 		return TRANSFER_DISPLAY_REFRESH_PAUSED;
 	return TRANSFER_DISPLAY_REFRESH_RUNNING;
+}
+
+/**
+ * @brief Resolves whether lightweight transfer-rate presentation may update.
+ */
+inline bool ShouldRefreshTransferRatePresentation(bool bAppClosing, bool bMainWindowVisible)
+{
+	return !bAppClosing && bMainWindowVisible;
 }
 
 /**

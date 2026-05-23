@@ -269,6 +269,7 @@ bool CTransferWnd::IsTransferRefreshActive() const
 		return false;
 	return ResolveTransferDisplayRefreshState(
 		theApp.IsClosing(),
+		thePrefs.GetDesktopUiRefreshIntervalMs() == DESKTOP_UI_REFRESH_PAUSED_MS,
 		theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd,
 		theApp.emuledlg->IsWindowVisible() != FALSE,
 		theApp.emuledlg->IsIconic() != FALSE,
@@ -331,9 +332,8 @@ void CTransferWnd::FlushVisibleDisplayRefreshes()
 
 void CTransferWnd::FlushExplicitDisplayRefresh()
 {
-	RefreshTransferDisplayRefreshState(false);
 	const uint32 nVisibleMask = BuildExplicitTransferDisplayRefreshMask(
-		m_eTransferDisplayRefreshState,
+		theApp.IsClosing() ? TRANSFER_DISPLAY_REFRESH_PAUSED : TRANSFER_DISPLAY_REFRESH_RUNNING,
 		theApp.emuledlg != NULL && theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd,
 		IsWindowVisible() != FALSE,
 		downloadlistctrl.IsWindowVisible() != FALSE,

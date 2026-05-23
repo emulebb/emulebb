@@ -153,6 +153,7 @@ namespace
 {
 	static const UINT_PTR kBindLossWatchdogTimerId = 0xB10D;
 	static const UINT kBindLossWatchdogIntervalMs = SEC2MS(10);
+	static const UINT_PTR kTransferRateDisplayTimerId = 0xB10E;
 
 	static bool IsKeyboardShortcutModalContext(const CWnd &wnd)
 	{
@@ -1278,6 +1279,7 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_bBindLossMonitorActive()
 	, m_bBindLossShutdown()
 	, m_uBindLossWatchdogTimer()
+	, m_uTransferRateDisplayTimer()
 	, m_hBindLossInterfaceNotification()
 	, m_hBindLossAddressNotification()
 	, m_thbButtons()
@@ -1620,6 +1622,7 @@ BOOL CemuleDlg::OnInitDialog()
 	ShowTransferRate(true);
 	UpdateTrayVisibility();
 	searchwnd->UpdateCatTabs();
+	StartTransferRateDisplayTimer();
 
 	///////////////////////////////////////////////////////////////////////////
 	// Restore saved window placement
@@ -2032,6 +2035,22 @@ void CemuleDlg::StopBindLossMonitor()
 		m_hBindLossAddressNotification = NULL;
 	}
 	m_bBindLossMonitorActive = false;
+}
+
+void CemuleDlg::StartTransferRateDisplayTimer()
+{
+	StopTransferRateDisplayTimer();
+	m_uTransferRateDisplayTimer = SetTimer(kTransferRateDisplayTimerId, GetTransferRateDisplayRefreshTimerDelayMs(), NULL);
+	if (thePrefs.GetVerbose() && m_uTransferRateDisplayTimer == 0)
+		AddDebugLogLine(true, _T("Failed to create transfer-rate display timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
+}
+
+void CemuleDlg::StopTransferRateDisplayTimer()
+{
+	if (m_uTransferRateDisplayTimer != 0) {
+		VERIFY(KillTimer(m_uTransferRateDisplayTimer));
+		m_uTransferRateDisplayTimer = 0;
+	}
 }
 
 void CemuleDlg::CheckBindLossMonitor()
@@ -3052,6 +3071,7 @@ LRESULT CemuleDlg::OnConsoleThreadEvent(WPARAM wParam, LPARAM lParam)
 void CemuleDlg::OnDestroy()
 {
 	AddDebugLogLine(DLP_VERYLOW, _T("%hs"), __FUNCTION__);
+	StopTransferRateDisplayTimer();
 	StopBindLossMonitor();
 	m_wndWindowsToastNotifier.Shutdown();
 
@@ -4305,6 +4325,9 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 		else
 			AddLogLine(false, _T("Saved preferences and config files."));
 		break;
+	case MP_HM_REFRESH_INTERVAL_PAUSED:
+		ApplyDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_PAUSED_MS);
+		break;
 	case MP_HM_REFRESH_INTERVAL_FAST:
 		ApplyDesktopUiRefreshIntervalMs(DESKTOP_UI_REFRESH_FAST_MS);
 		break;
@@ -4579,6 +4602,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		const auto getRefreshIntervalFlags = [uDesktopRefreshIntervalMs](UINT uIntervalMs) -> UINT {
 			return MF_STRING | (uDesktopRefreshIntervalMs == uIntervalMs ? MF_CHECKED : 0);
 		};
+		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_PAUSED_MS), MP_HM_REFRESH_INTERVAL_PAUSED, GetResString(IDS_REFRESH_INTERVAL_PAUSED), _T("PAUSE"));
 		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_FAST_MS), MP_HM_REFRESH_INTERVAL_FAST, GetResString(IDS_REFRESH_INTERVAL_FAST), _T("TOOLS"));
 		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_NORMAL_MS), MP_HM_REFRESH_INTERVAL_NORMAL, GetResString(IDS_REFRESH_INTERVAL_NORMAL), _T("TOOLS"));
 		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_BELOWNORMAL_MS), MP_HM_REFRESH_INTERVAL_BELOWNORMAL, GetResString(IDS_REFRESH_INTERVAL_BELOWNORMAL), _T("TOOLS"));
@@ -5725,6 +5749,11 @@ void CemuleDlg::RefreshUPnP(bool bRequestAnswer)
 
 void CemuleDlg::OnTimer(UINT_PTR nIDEvent)
 {
+	if (nIDEvent == kTransferRateDisplayTimerId) {
+		if (ShouldRefreshTransferRatePresentation(theApp.IsClosing(), IsWindowVisible() != FALSE))
+			ShowTransferRate();
+		return;
+	}
 	if (nIDEvent == kBindLossWatchdogTimerId) {
 		CheckBindLossMonitor();
 		return;
