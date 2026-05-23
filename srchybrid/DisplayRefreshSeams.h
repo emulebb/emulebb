@@ -224,9 +224,14 @@ inline uint32_t BuildQueuedTransferDisplayRefreshMask(uint32_t uRequestMask, boo
 	return uRequestMask;
 }
 
+/**
+ * @brief Keeps producer-driven "force" updates on the shared transfer timer.
+ */
 inline bool ShouldFlushForcedTransferDisplayRefresh(bool bForce, uint32_t uVisibleMask)
 {
-	return bForce && uVisibleMask != DISPLAY_REFRESH_NONE;
+	UNREFERENCED_PARAMETER(bForce);
+	UNREFERENCED_PARAMETER(uVisibleMask);
+	return false;
 }
 
 inline bool IsTransferRefreshSensitiveSortColumn(ETransferDisplayListKind eListKind, int iSortColumn)
