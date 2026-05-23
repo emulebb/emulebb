@@ -65,7 +65,8 @@ namespace Win32CallbackTimerSeams
 	 */
 	inline UINT GetQueueListRefreshTimerDelayMs(UINT uDesktopUiRefreshIntervalMs)
 	{
-		return GetTransferDisplayRefreshTimerDelayMs(uDesktopUiRefreshIntervalMs);
+		const UINT uNormalizedIntervalMs = NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs);
+		return uNormalizedIntervalMs == DESKTOP_UI_REFRESH_PAUSED_MS ? DESKTOP_UI_REFRESH_BELOWNORMAL_MS : uNormalizedIntervalMs;
 	}
 
 	/**
