@@ -84,4 +84,20 @@ inline bool ShouldLogInvalidState(const bool bIsValid)
 {
 	return !bIsValid;
 }
+
+/**
+ * @brief Returns true only after every MFC image-list drag-start step has succeeded.
+ */
+inline bool ShouldCommitCategoryDragStart(const bool bHasDragImage, const bool bBeginDragSucceeded, const bool bDragEnterSucceeded)
+{
+	return bHasDragImage && bBeginDragSucceeded && bDragEnterSucceeded;
+}
+
+/**
+ * @brief Reports whether mouse movement indicates a captured category drag was cancelled.
+ */
+inline bool ShouldCancelCategoryDragOnMouseMove(const bool bIsDragging, const bool bLeftButtonDown)
+{
+	return bIsDragging && !bLeftButtonDown;
+}
 }

@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "DisplayRefreshSeams.h"
+
 inline constexpr std::uint32_t kUploadTimerSlowLoopThresholdMs = 100u;
 
 enum UploadQueueEntryAccessState
@@ -56,4 +58,9 @@ inline bool RejectSoftQueueCandidateByCombinedScore(bool bHardQueueLimitReached,
 inline bool ShouldCountSlowUploadTimerLoop(std::uint32_t uDurationMs, std::uint32_t uSlowThresholdMs = kUploadTimerSlowLoopThresholdMs)
 {
 	return uSlowThresholdMs > 0 && uDurationMs > uSlowThresholdMs;
+}
+
+inline bool ShouldRunDesktopUiRefreshTick(std::uint64_t uCurrentTick, std::uint64_t uLastRefreshTick, std::uint32_t uDesktopUiRefreshIntervalMs)
+{
+	return uCurrentTick >= uLastRefreshTick + NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs);
 }
