@@ -81,6 +81,14 @@ inline UINT NormalizeDesktopUiRefreshIntervalMs(UINT uIntervalMs)
 }
 
 /**
+ * @brief Applies the configured desktop UI refresh interval without per-row jitter.
+ */
+inline bool ShouldRunPreferenceAlignedDisplayRefresh(bool bForce, ULONGLONG dwCurrentTick, ULONGLONG dwLastRefreshTick, UINT uDesktopUiRefreshIntervalMs)
+{
+	return ShouldRunDisplayRefresh(bForce, dwCurrentTick, dwLastRefreshTick, NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs), 0);
+}
+
+/**
  * @brief Atomically merges a refresh mask and returns the previous value.
  */
 inline LONG AccumulatePendingDisplayMask(std::atomic<LONG> &rnPendingMask, LONG nMask)

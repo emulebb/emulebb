@@ -1085,8 +1085,7 @@ void CDownloadListCtrl::DrawFileItem(CDC &dc, int nColumn, LPCRECT lpRect, UINT 
 				if (iSavedDC != 0)
 					cdcStatus.RestoreDC(iSavedDC);
 				pCtrlItem->dwUpdated = curTick
-					+ DownloadProgressBarSeams::GetStatusBitmapCacheDelayMs(thePrefs.GetDesktopUiRefreshIntervalMs())
-					+ (rand() & 0x7f);
+					+ DownloadProgressBarSeams::GetStatusBitmapCacheDelayMs(thePrefs.GetDesktopUiRefreshIntervalMs());
 			} else
 				hOldBitmap = cdcStatus.SelectObject(pCtrlItem->status);
 			dc.BitBlt(rcDraw.left, rcDraw.top, iWidth, iHeight, &cdcStatus, 0, 0, SRCCOPY);
@@ -1319,8 +1318,7 @@ void CDownloadListCtrl::DrawSourceItem(CDC &dc, int nColumn, LPCRECT lpRect, UIN
 				if (iSavedDC != 0)
 					cdcStatus.RestoreDC(iSavedDC);
 				pCtrlItem->dwUpdated = curTick
-					+ DownloadProgressBarSeams::GetStatusBitmapCacheDelayMs(thePrefs.GetDesktopUiRefreshIntervalMs())
-					+ (rand() & 0x7f);
+					+ DownloadProgressBarSeams::GetStatusBitmapCacheDelayMs(thePrefs.GetDesktopUiRefreshIntervalMs());
 			} else
 				hOldBitmap = cdcStatus.SelectObject(pCtrlItem->status);
 			dc.BitBlt(lpRect->left, lpRect->top + 1, iWidth, iHeight, &cdcStatus, 0, 0, SRCCOPY);
