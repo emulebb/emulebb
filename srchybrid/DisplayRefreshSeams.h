@@ -224,6 +224,11 @@ inline uint32_t BuildQueuedTransferDisplayRefreshMask(uint32_t uRequestMask, boo
 	return uRequestMask;
 }
 
+inline bool ShouldFlushForcedTransferDisplayRefresh(bool bForce, uint32_t uVisibleMask)
+{
+	return bForce && uVisibleMask != DISPLAY_REFRESH_NONE;
+}
+
 inline bool IsTransferRefreshSensitiveSortColumn(ETransferDisplayListKind eListKind, int iSortColumn)
 {
 	switch (eListKind) {
@@ -296,6 +301,22 @@ inline LONG AccumulatePendingDisplayMask(std::atomic<LONG> &rnPendingMask, LONG 
 		const LONG nUpdated = nCurrent | nMask;
 		if (rnPendingMask.compare_exchange_weak(nCurrent, nUpdated))
 			return nCurrent;
+	}
+}
+
+/**
+ * @brief Atomically removes selected pending bits and returns the bits that were present.
+ */
+inline LONG DrainPendingDisplayMask(std::atomic<LONG> &rnPendingMask, LONG nMask)
+{
+	LONG nCurrent = rnPendingMask.load();
+	for (;;) {
+		const LONG nDrained = nCurrent & nMask;
+		if (nDrained == 0)
+			return 0;
+		const LONG nUpdated = nCurrent & ~nMask;
+		if (rnPendingMask.compare_exchange_weak(nCurrent, nUpdated))
+			return nDrained;
 	}
 }
 

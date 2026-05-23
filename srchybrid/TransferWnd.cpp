@@ -312,6 +312,8 @@ void CTransferWnd::QueueDisplayRefresh(uint32 nMask, bool bForce)
 		return;
 
 	AccumulatePendingDisplayMask(m_nPendingDisplayRefreshMask, static_cast<LONG>(BuildQueuedTransferDisplayRefreshMask(nMask, bForce)));
+	if (ShouldFlushForcedTransferDisplayRefresh(bForce, GetVisibleDisplayRefreshMask(nMask)))
+		FlushVisibleDisplayRefreshes();
 }
 
 void CTransferWnd::FlushVisibleDisplayRefreshes()
@@ -341,8 +343,10 @@ void CTransferWnd::FlushExplicitDisplayRefresh()
 		downloadclientsctrl.IsWindowVisible() != FALSE,
 		queuelistctrl.IsWindowVisible() != FALSE,
 		clientlistctrl.IsWindowVisible() != FALSE);
-	if (nVisibleMask != DISPLAY_REFRESH_NONE)
+	if (nVisibleMask != DISPLAY_REFRESH_NONE) {
+		DrainPendingDisplayMask(m_nPendingDisplayRefreshMask, static_cast<LONG>(nVisibleMask));
 		FlushDisplayRefreshMask(nVisibleMask);
+	}
 }
 
 void CTransferWnd::FlushDisplayRefreshMask(uint32 nMask)
