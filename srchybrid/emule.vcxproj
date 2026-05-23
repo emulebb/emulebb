@@ -590,6 +590,7 @@
     <ClInclude Include="ListViewSearchDlg.h" />
     <ClInclude Include="ListViewWalkerPropertySheet.h" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="LogArtifactNames.h" />
     <ClInclude Include="MapKey.h" />
     <ClInclude Include="EmuleMD4.h" />
     <ClInclude Include="MD5Sum.h" />

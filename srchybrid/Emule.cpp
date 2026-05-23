@@ -73,6 +73,7 @@
 #include "SharedFilesWnd.h"
 #include "enbitmap.h"
 #include "StringConversion.h"
+#include "LogArtifactNames.h"
 #include "Log.h"
 #include "Collection.h"
 #include "GeoLocation.h"
@@ -960,8 +961,14 @@ CMap<const unsigned char*, const unsigned char*, UINT, UINT> g_allocations;
 int eMuleAllocHook(int mode, void *pUserData, size_t nSize, int nBlockUse, long lRequest, const unsigned char *pszFileName, int nLine) noexcept;
 
 // Cannot use a CString for that memory - it will be unavailable on application termination!
-#define APP_CRT_DEBUG_LOG_FILE _T("eMule CRT Debug Log.log")
-static TCHAR s_szCrtDebugReportFilePath[MAX_PATH] = APP_CRT_DEBUG_LOG_FILE;
+static TCHAR s_szCrtDebugReportFilePath[MAX_PATH] = {};
+
+static LPCTSTR GetCrtDebugReportFilePath()
+{
+	if (s_szCrtDebugReportFilePath[0] == _T('\0'))
+		_tcsncpy_s(s_szCrtDebugReportFilePath, LogArtifactNames::CrtDebugLogFileName(), _TRUNCATE);
+	return s_szCrtDebugReportFilePath;
+}
 #endif //_DEBUG
 
 bool CemuleApp::CanWritePartMetFiles(LPCTSTR pszPath, const bool bForceRefresh, const bool bBypassDiskSpaceFloor)
@@ -1547,10 +1554,10 @@ BOOL CemuleApp::InitInstance()
 		EnableRTLWindowsLayout();
 
 #ifdef _DEBUG
-	_sntprintf_s(s_szCrtDebugReportFilePath, _countof(s_szCrtDebugReportFilePath), _TRUNCATE, _T("%s%s"), (LPCTSTR)thePrefs.GetMuleDirectory(EMULE_LOGDIR, false), APP_CRT_DEBUG_LOG_FILE);
+	_sntprintf_s(s_szCrtDebugReportFilePath, _countof(s_szCrtDebugReportFilePath), _TRUNCATE, _T("%s%s"), (LPCTSTR)thePrefs.GetMuleDirectory(EMULE_LOGDIR, false), LogArtifactNames::CrtDebugLogFileName());
 #endif
-	VERIFY(theLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, thePrefs.GetLog2Disk()) + _T("eMule.log")));
-	VERIFY(theVerboseLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false) + _T("eMule_Verbose.log")));
+	VERIFY(theLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, thePrefs.GetLog2Disk()) + LogArtifactNames::MainLogFileName()));
+	VERIFY(theVerboseLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false) + LogArtifactNames::VerboseLogFileName()));
 	theLog.SetMaxFileSize(thePrefs.GetMaxLogFileSize());
 	theLog.SetFileFormat(thePrefs.GetLogFileFormat());
 	theVerboseLog.SetMaxFileSize(thePrefs.GetMaxLogFileSize());
@@ -2230,7 +2237,7 @@ void CemuleApp::RefreshStartupBindBlockState()
 #ifdef _DEBUG
 static int CrtDebugReportCB(int reportType, char *message, int *returnValue) noexcept
 {
-	FILE *fp = LongPathSeams::OpenFileStreamDenyWriteLongPath(s_szCrtDebugReportFilePath, _T("a"));
+	FILE *fp = LongPathSeams::OpenFileStreamDenyWriteLongPath(GetCrtDebugReportFilePath(), _T("a"));
 	if (fp) {
 		time_t tNow = time(NULL);
 		TCHAR szTime[40];

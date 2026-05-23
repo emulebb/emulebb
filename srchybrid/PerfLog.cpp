@@ -23,6 +23,7 @@
 #include "Preferences.h"
 #include "Statistics.h"
 #include "Log.h"
+#include "LogArtifactNames.h"
 #include "PerfLogSeams.h"
 #include "PreferenceUiSeams.h"
 #include "otherfunctions.h"
@@ -42,8 +43,8 @@ CString GetDefaultPerfLogFilePath(int iFileFormat)
 {
 	CString strDefFilePath(thePrefs.GetMuleDirectory(EMULE_CONFIGBASEDIR));
 	strDefFilePath += (PreferenceUiSeams::NormalizePerfLogFileFormat(iFileFormat) == 0)
-		? _T("perflog.csv")
-		: _T("perflog.mrtg");
+		? LogArtifactNames::PerformanceCsvFileName()
+		: LogArtifactNames::PerformanceMrtgFileName();
 	return strDefFilePath;
 }
 
@@ -98,8 +99,8 @@ void CPerfLog::LoadSettings()
 			m_strFilePath = strDefFilePath;
 
 		if (m_eFileFormat == MRTG) {
-			m_strMRTGDataFilePath = PerfLogSeams::BuildMrtgSidecarPath(m_strFilePath, _T("_data.mrtg"));
-			m_strMRTGOverheadFilePath = PerfLogSeams::BuildMrtgSidecarPath(m_strFilePath, _T("_overhead.mrtg"));
+			m_strMRTGDataFilePath = PerfLogSeams::BuildMrtgSidecarPath(m_strFilePath, LogArtifactNames::PerformanceMrtgDataSuffix());
+			m_strMRTGOverheadFilePath = PerfLogSeams::BuildMrtgSidecarPath(m_strFilePath, LogArtifactNames::PerformanceMrtgOverheadSuffix());
 			m_strFilePath.Empty();
 		}
 

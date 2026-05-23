@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include <dbghelp.h>
+#include "LogArtifactNames.h"
 #include "LongPathSeams.h"
 #include "PathHelpers.h"
 #include "mdump.h"
@@ -49,26 +50,6 @@ namespace
 		return static_cast<MINIDUMP_TYPE>(dwDumpType);
 	}
 
-	CString MakeManualDumpFileName(const SYSTEMTIME &rTime, DWORD dwProcessId, bool bFullMemoryDump, int iAttempt)
-	{
-		CString strFileName;
-		strFileName.Format(_T("emulebb-%04u%02u%02u-%02u%02u%02u-pid%lu-%s"),
-			rTime.wYear,
-			rTime.wMonth,
-			rTime.wDay,
-			rTime.wHour,
-			rTime.wMinute,
-			rTime.wSecond,
-			dwProcessId,
-			bFullMemoryDump ? _T("full") : _T("mini"));
-		if (iAttempt > 0) {
-			CString strSuffix;
-			strSuffix.Format(_T("-%02d"), iAttempt);
-			strFileName += strSuffix;
-		}
-		strFileName += _T(".dmp");
-		return strFileName;
-	}
 }
 
 void CMiniDumper::Enable(LPCTSTR pszAppName, bool bShowErrors, LPCTSTR pszDumpDir)
@@ -102,7 +83,7 @@ CMiniDumper::SManualDumpResult CMiniDumper::CreateManualDump(LPCTSTR, LPCTSTR ps
 	const MINIDUMP_TYPE eDumpType = GetManualDumpType(bFullMemoryDump);
 
 	for (int iAttempt = 0; iAttempt < 100; ++iAttempt) {
-		const CString strDumpPath(PathHelpers::AppendPathComponent(strDumpDir, MakeManualDumpFileName(timeNow, dwProcessId, bFullMemoryDump, iAttempt)));
+		const CString strDumpPath(PathHelpers::AppendPathComponent(strDumpDir, LogArtifactNames::BuildManualDumpFileName(timeNow, dwProcessId, bFullMemoryDump, iAttempt)));
 		HANDLE hFile = LongPathSeams::CreateFile(strDumpPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFile == INVALID_HANDLE_VALUE) {
 			const DWORD dwError = ::GetLastError();
@@ -142,15 +123,8 @@ LONG WINAPI CMiniDumper::TopLevelFilter(struct _EXCEPTION_POINTERS *pExceptionIn
 	// Ask user to confirm writing a dump file
 	// Do *NOT* localize that string (in fact, do not use MFC to load it)!
 	if (bAutoCreateDump || MessageBox(NULL, CRASHTEXT, m_strAppName, MB_ICONSTOP | MB_YESNO) == IDYES) {
-		CString strBaseName;
-		strBaseName.Format(_T("%s_%4d%02d%02d-%02d%02d%02d")
-			, (LPCTSTR)m_strAppName, t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
-		// Replace spaces and dots in file name.
-		strBaseName.Replace(_T('.'), _T('-'));
-		strBaseName.Replace(_T(' '), _T('_'));
-
 		// Create full path for the dump file
-		const CString strDumpPath(PathHelpers::AppendPathComponent(m_strDumpDir, strBaseName + _T(".dmp")));
+		const CString strDumpPath(PathHelpers::AppendPathComponent(m_strDumpDir, LogArtifactNames::BuildCrashDumpFileName(t, GetCurrentProcessId())));
 
 		CString strResult;
 		HANDLE hFile = LongPathSeams::CreateFile(strDumpPath, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);

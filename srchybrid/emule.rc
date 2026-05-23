@@ -3757,8 +3757,8 @@ BEGIN
     IDS_RESCAN_SHARED_FILES "Rescan Shared Files"
     IDS_SAVE_PREFERENCES_NOW "Save Preferences Now"
     IDS_UPDATE_SERVERMET_FROM_ADDRESSES "Update server.met from addresses.dat"
-    IDS_OPEN_EMULE_LOG      "Open eMule.log"
-    IDS_OPEN_VERBOSE_LOG    "Open eMule_Verbose.log"
+    IDS_OPEN_EMULE_LOG      "Open emulebb.log"
+    IDS_OPEN_VERBOSE_LOG    "Open emulebb-verbose.log"
     IDS_DIAG_COPY_SNAPSHOT_JSON "Copy Diagnostic Snapshot JSON"
     IDS_DIAG_COPY_REDACTED_SNAPSHOT_JSON
                             "Copy Redacted Diagnostic Snapshot JSON"
@@ -3803,9 +3803,9 @@ BEGIN
     IDS_TOOLS_STATUS_UPDATE_SERVERMET_FROM_ADDRESSES
                             "Downloads and imports server.met from the first working URL listed in addresses.dat."
     IDS_TOOLS_STATUS_OPEN_EMULE_LOG
-                            "Opens the current eMule.log file if it exists."
+                            "Opens the current emulebb.log file if it exists."
     IDS_TOOLS_STATUS_OPEN_VERBOSE_LOG
-                            "Opens the current eMule_Verbose.log file if it exists."
+                            "Opens the current emulebb-verbose.log file if it exists."
     IDS_TOOLS_STATUS_COPY_DIAGNOSTIC_SNAPSHOT_JSON
                             "Copies a raw local diagnostic JSON snapshot to the clipboard."
     IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON
