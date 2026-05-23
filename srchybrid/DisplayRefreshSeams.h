@@ -186,6 +186,14 @@ inline uint32_t BuildExplicitTransferDisplayRefreshMask(
 }
 
 /**
+ * @brief Keeps producer-driven transfer refreshes aligned to the shared transfer timer.
+ */
+inline uint32_t BuildQueuedTransferDisplayRefreshMask(uint32_t uRequestMask, bool)
+{
+	return uRequestMask;
+}
+
+/**
  * @brief Atomically merges a refresh mask and returns the previous value.
  */
 inline LONG AccumulatePendingDisplayMask(std::atomic<LONG> &rnPendingMask, LONG nMask)

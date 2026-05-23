@@ -247,22 +247,25 @@ void CTransferDlg::UpdateListCount(CTransferWnd::EWnd2 listindex, int iCount)
 
 void CTransferDlg::QueueDisplayRefresh(uint32 nMask, bool bForce)
 {
-	m_pwndTransfer->QueueDisplayRefresh(nMask, bForce);
+	if (m_pwndTransfer != NULL)
+		m_pwndTransfer->QueueDisplayRefresh(nMask, bForce);
 }
 
 bool CTransferDlg::RestartTransferDisplayRefreshTimer()
 {
-	return m_pwndTransfer->RestartTransferDisplayRefreshTimer();
+	return m_pwndTransfer != NULL && m_pwndTransfer->RestartTransferDisplayRefreshTimer();
 }
 
 void CTransferDlg::RefreshTransferDisplayRefreshState(bool bFlushIfRunning)
 {
-	m_pwndTransfer->RefreshTransferDisplayRefreshState(bFlushIfRunning);
+	if (m_pwndTransfer != NULL)
+		m_pwndTransfer->RefreshTransferDisplayRefreshState(bFlushIfRunning);
 }
 
 void CTransferDlg::FlushVisibleDisplayRefreshes()
 {
-	m_pwndTransfer->FlushVisibleDisplayRefreshes();
+	if (m_pwndTransfer != NULL)
+		m_pwndTransfer->FlushVisibleDisplayRefreshes();
 }
 
 int CTransferDlg::AddCategory(const CString &newtitle, const CString &newincoming, const CString &newcomment, const CString &newautocat, bool addTab)

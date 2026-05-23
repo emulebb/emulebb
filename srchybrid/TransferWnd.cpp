@@ -310,18 +310,7 @@ void CTransferWnd::QueueDisplayRefresh(uint32 nMask, bool bForce)
 	if (theApp.IsClosing() || nMask == DISPLAY_REFRESH_NONE)
 		return;
 
-	if (bForce) {
-		RefreshTransferDisplayRefreshState(false);
-		const uint32 nVisibleMask = GetVisibleDisplayRefreshMask(nMask);
-		const uint32 nPendingMask = nMask & ~nVisibleMask;
-		if (nVisibleMask != DISPLAY_REFRESH_NONE)
-			FlushDisplayRefreshMask(nVisibleMask);
-		if (nPendingMask != DISPLAY_REFRESH_NONE)
-			AccumulatePendingDisplayMask(m_nPendingDisplayRefreshMask, static_cast<LONG>(nPendingMask));
-		return;
-	}
-
-	AccumulatePendingDisplayMask(m_nPendingDisplayRefreshMask, static_cast<LONG>(nMask));
+	AccumulatePendingDisplayMask(m_nPendingDisplayRefreshMask, static_cast<LONG>(BuildQueuedTransferDisplayRefreshMask(nMask, bForce)));
 }
 
 void CTransferWnd::FlushVisibleDisplayRefreshes()
