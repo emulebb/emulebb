@@ -4664,28 +4664,24 @@ void CPartFile::UpdateFileRatingCommentAvail(bool bForceUpdate)
 void CPartFile::UpdateDisplayedInfo(bool force)
 {
 	if (!theApp.IsClosing()) {
-		const ULONGLONG curTick = ::GetTickCount64();
-
-		if (ShouldRunPreferenceAlignedDisplayRefresh(force, curTick, m_lastRefreshedDLDisplay, thePrefs.GetDesktopUiRefreshIntervalMs())) {
-			m_lastRefreshedDLDisplay = curTick;
-			if (ShouldQueueDisplayRefresh(::GetCurrentThreadId(), g_uMainThreadId)) {
-				if (AccumulatePendingDisplayMask(m_nPendingDisplayUpdate, 1) == 0) {
-					std::unique_ptr<CPartFileDisplayUpdateRequest> pRequest(new CPartFileDisplayUpdateRequest);
-					md4cpy(pRequest->fileHash, GetFileHash());
-					if (theApp.emuledlg == NULL || !PostOwnedDisplayRefreshRequest(theApp.emuledlg->GetSafeHwnd(), UM_PARTFILE_DISPLAY_UPDATE, pRequest))
-						m_nPendingDisplayUpdate.exchange(0);
-				}
-			} else
-				theApp.emuledlg->transferwnd->GetDownloadList()->UpdateItem(this);
-		}
+		if (ShouldQueueDisplayRefresh(::GetCurrentThreadId(), g_uMainThreadId)) {
+			if (AccumulatePendingDisplayMask(m_nPendingDisplayUpdate, 1) == 0) {
+				std::unique_ptr<CPartFileDisplayUpdateRequest> pRequest(new CPartFileDisplayUpdateRequest);
+				md4cpy(pRequest->fileHash, GetFileHash());
+				pRequest->force = force;
+				if (theApp.emuledlg == NULL || !PostOwnedDisplayRefreshRequest(theApp.emuledlg->GetSafeHwnd(), UM_PARTFILE_DISPLAY_UPDATE, pRequest))
+					m_nPendingDisplayUpdate.exchange(0);
+			}
+		} else if (theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
+			theApp.emuledlg->transferwnd->QueueDisplayRefresh(DISPLAY_REFRESH_DOWNLOAD_LIST, force);
 	}
 }
 
-void CPartFile::DispatchQueuedDisplayUpdate()
+void CPartFile::DispatchQueuedDisplayUpdate(bool force)
 {
 	m_nPendingDisplayUpdate.exchange(0);
-	if (!theApp.IsClosing())
-		theApp.emuledlg->transferwnd->GetDownloadList()->UpdateItem(this);
+	if (!theApp.IsClosing() && theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
+		theApp.emuledlg->transferwnd->QueueDisplayRefresh(DISPLAY_REFRESH_DOWNLOAD_LIST, force);
 }
 
 void CPartFile::UpdateAutoDownPriority()

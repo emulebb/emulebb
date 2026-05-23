@@ -31,6 +31,7 @@ public:
 	void	AddClient(const CUpDownClient *client);
 	void	RemoveClient(const CUpDownClient *client);
 	void	RefreshClient(const CUpDownClient *client);
+	void	RefreshVisibleItems();
 	void	Hide()			{ ShowWindow(SW_HIDE); }
 	void	Show()			{ ShowWindow(SW_SHOW); }
 	void	Localize();

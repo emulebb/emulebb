@@ -406,8 +406,8 @@ public:
 	// Barry - Process zip file as it arrives, don't need to wait until end of block
 	int				unzip(Pending_Block_Struct *block, const BYTE *zipped, uint32 lenZipped, std::vector<BYTE> &runzipped, uint32 *lenUnzipped);
 	void			UpdateDisplayedInfo(bool force = false);
-	void			QueueDisplayUpdate(uint32 nMask);
-	void			DispatchQueuedDisplayUpdate();
+	void			QueueDisplayUpdate(uint32 nMask, bool force = false);
+	void			DispatchQueuedDisplayUpdate(bool force = false);
 	int				GetFileListRequested() const					{ return m_iFileListRequested; }
 	void			SetFileListRequested(int iFileListRequested)	{ m_iFileListRequested = iFileListRequested; }
 	uint32			GetSearchID() const								{ return m_uSearchID; }

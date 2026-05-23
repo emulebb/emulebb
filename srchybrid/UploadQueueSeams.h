@@ -59,8 +59,3 @@ inline bool ShouldCountSlowUploadTimerLoop(std::uint32_t uDurationMs, std::uint3
 {
 	return uSlowThresholdMs > 0 && uDurationMs > uSlowThresholdMs;
 }
-
-inline bool ShouldRunDesktopUiRefreshTick(std::uint64_t uCurrentTick, std::uint64_t uLastRefreshTick, std::uint32_t uDesktopUiRefreshIntervalMs)
-{
-	return uCurrentTick >= uLastRefreshTick + NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs);
-}

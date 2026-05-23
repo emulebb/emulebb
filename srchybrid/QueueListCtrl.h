@@ -33,23 +33,20 @@ public:
 	void	AddClient(CUpDownClient *client, bool resetclient = true);
 	void	RemoveClient(const CUpDownClient *client);
 	void	RefreshClient(const CUpDownClient *client);
+	void	RefreshVisibleItems();
 	void	Hide()						{ ShowWindow(SW_HIDE); }
 	void	Show()						{ ShowWindow(SW_SHOW); }
 	void	Localize();
 	void	ShowSelectedUserDetails();
 	void	ShowQueueClients();
-	bool	RestartUpdateTimer();
 
 protected:
-	UINT_PTR m_hTimer;
-
 	void SetAllIcons();
 	const CUpDownClient* GetLiveClientByIndex(int iItem);
 	bool IsLiveClient(const CUpDownClient *client) const;
 	bool PruneStaleClientItems();
 	CString GetItemDisplayText(const CUpDownClient *client, int iSubItem) const;
 	static int CALLBACK SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
-	static void CALLBACK QueueUpdateTimer(HWND hwnd, UINT uiMsg, UINT_PTR idEvent, DWORD dwTime) noexcept;
 
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM);
 	virtual void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);

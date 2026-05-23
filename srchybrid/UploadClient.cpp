@@ -490,12 +490,7 @@ void CUpDownClient::UpdateUploadingStatisticsData()
 	else
 		m_nUpDatarate = 0; // not enough data to calculate trustworthy speed
 
-	// Check if it's time to update the display.
-	if (ShouldRunDisplayRefresh(false, curTick, m_lastRefreshedULDisplay, thePrefs.GetDesktopUiRefreshIntervalMs(), rand() % 800)) {
-		// Update display
-		QueueDisplayUpdate(DISPLAY_REFRESH_UPLOAD_LIST | DISPLAY_REFRESH_CLIENT_LIST);
-		m_lastRefreshedULDisplay = curTick;
-	}
+	QueueDisplayUpdate(DISPLAY_REFRESH_UPLOAD_LIST | DISPLAY_REFRESH_CLIENT_LIST);
 }
 
 void CUpDownClient::ResetSlowUploadTracking()

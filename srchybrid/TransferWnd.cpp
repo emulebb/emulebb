@@ -63,6 +63,8 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
+constexpr UINT_PTR kTransferDisplayRefreshTimerId = 0xE068;
+
 void LogInvalidTransferWndState(LPCTSTR pszContext, const UINT uValue)
 {
 	AddDebugLogLine(DLP_VERYHIGH, false, _T("*** Invalid transfer window state in %s: value=%u"), pszContext, uValue);
@@ -93,6 +95,8 @@ BEGIN_MESSAGE_MAP(CTransferWnd, CResizableFormView)
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_PAINT()
 	ON_WM_SYSCOMMAND()
+	ON_WM_DESTROY()
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 CTransferWnd::CTransferWnd(CWnd* /*pParent =NULL*/)
@@ -109,6 +113,8 @@ CTransferWnd::CTransferWnd(CWnd* /*pParent =NULL*/)
 	, m_bIsDragging()
 	, downloadlistactive()
 	, m_bLayoutInited()
+	, m_uTransferDisplayRefreshTimer()
+	, m_nPendingDisplayRefreshMask()
 {
 }
 
@@ -190,6 +196,114 @@ void CTransferWnd::OnInitialUpdate()
 
 	VerifyCatTabSize();
 	Localize();
+	RestartTransferDisplayRefreshTimer();
+}
+
+void CTransferWnd::OnDestroy()
+{
+	if (m_uTransferDisplayRefreshTimer != 0) {
+		KillTimer(m_uTransferDisplayRefreshTimer);
+		m_uTransferDisplayRefreshTimer = 0;
+	}
+	CResizableFormView::OnDestroy();
+}
+
+void CTransferWnd::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == m_uTransferDisplayRefreshTimer) {
+		FlushVisibleDisplayRefreshes();
+		return;
+	}
+	CResizableFormView::OnTimer(nIDEvent);
+}
+
+bool CTransferWnd::RestartTransferDisplayRefreshTimer()
+{
+	if (m_hWnd == NULL)
+		return false;
+
+	if (m_uTransferDisplayRefreshTimer != 0) {
+		KillTimer(m_uTransferDisplayRefreshTimer);
+		m_uTransferDisplayRefreshTimer = 0;
+	}
+
+	m_uTransferDisplayRefreshTimer = SetTimer(
+		kTransferDisplayRefreshTimerId,
+		GetTransferDisplayRefreshTimerDelayMs(thePrefs.GetDesktopUiRefreshIntervalMs()),
+		NULL);
+	if (thePrefs.GetVerbose() && m_uTransferDisplayRefreshTimer == 0)
+		AddDebugLogLine(true, _T("Failed to create transfer display refresh timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
+	return m_uTransferDisplayRefreshTimer != 0;
+}
+
+bool CTransferWnd::IsTransferRefreshActive() const
+{
+	return theApp.emuledlg != NULL
+		&& theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd
+		&& IsWindowVisible()
+		&& !theApp.IsClosing();
+}
+
+void CTransferWnd::QueueDisplayRefresh(uint32 nMask, bool bForce)
+{
+	if (theApp.IsClosing() || nMask == DISPLAY_REFRESH_NONE)
+		return;
+
+	if (bForce) {
+		FlushDisplayRefreshMask(nMask);
+		return;
+	}
+
+	AccumulatePendingDisplayMask(m_nPendingDisplayRefreshMask, static_cast<LONG>(nMask));
+}
+
+void CTransferWnd::FlushVisibleDisplayRefreshes()
+{
+	LONG nPending = m_nPendingDisplayRefreshMask.load();
+	for (;;) {
+		const uint32 nVisibleMask = FilterVisibleTransferDisplayRefreshMask(
+			static_cast<uint32>(nPending),
+			IsTransferRefreshActive(),
+			IsWindowVisible() != FALSE,
+			downloadlistctrl.IsWindowVisible() != FALSE,
+			uploadlistctrl.IsWindowVisible() != FALSE,
+			downloadclientsctrl.IsWindowVisible() != FALSE,
+			queuelistctrl.IsWindowVisible() != FALSE,
+			clientlistctrl.IsWindowVisible() != FALSE);
+		if (nVisibleMask == DISPLAY_REFRESH_NONE)
+			return;
+
+		const LONG nRemaining = nPending & ~static_cast<LONG>(nVisibleMask);
+		if (m_nPendingDisplayRefreshMask.compare_exchange_weak(nPending, nRemaining)) {
+			FlushDisplayRefreshMask(nVisibleMask);
+			return;
+		}
+	}
+}
+
+void CTransferWnd::FlushDisplayRefreshMask(uint32 nMask)
+{
+	if (nMask == DISPLAY_REFRESH_NONE || theApp.IsClosing())
+		return;
+
+	if ((nMask & DISPLAY_REFRESH_DOWNLOAD_LIST) != 0 && downloadlistctrl.IsWindowVisible())
+		downloadlistctrl.RefreshVisibleItems();
+	if ((nMask & DISPLAY_REFRESH_UPLOAD_LIST) != 0 && uploadlistctrl.IsWindowVisible())
+		uploadlistctrl.RefreshVisibleItems();
+	if ((nMask & DISPLAY_REFRESH_DOWNLOAD_CLIENTS) != 0 && downloadclientsctrl.IsWindowVisible())
+		downloadclientsctrl.RefreshVisibleItems();
+	if ((nMask & DISPLAY_REFRESH_QUEUE_LIST) != 0 && queuelistctrl.IsWindowVisible())
+		queuelistctrl.RefreshVisibleItems();
+	if ((nMask & DISPLAY_REFRESH_CLIENT_LIST) != 0 && clientlistctrl.IsWindowVisible())
+		clientlistctrl.RefreshVisibleItems();
+
+	if ((nMask & DISPLAY_REFRESH_TRANSFER_SUMMARY) != 0 && IsTransferRefreshActive()) {
+		if (!theApp.emuledlg->IsTrayIconToFlash())
+			theApp.emuledlg->ShowTransferRate();
+		if (thePrefs.ShowCatTabInfos())
+			UpdateCatTabTitles(false);
+		UpdateListCount(CTransferWnd::wnd2Uploading, -1);
+	}
 }
 
 void CTransferWnd::ShowQueueCount(INT_PTR number)
@@ -552,6 +666,7 @@ void CTransferWnd::SwitchUploadList()
 		return;
 	}
 	UpdateListCount(m_uWnd2);
+	FlushVisibleDisplayRefreshes();
 }
 
 void CTransferWnd::ShowWnd2(EWnd2 uWnd2)
@@ -600,6 +715,7 @@ void CTransferWnd::ShowWnd2(EWnd2 uWnd2)
 		SetWnd2Icon(w2iUploading);
 	}
 	UpdateListCount(m_uWnd2);
+	FlushVisibleDisplayRefreshes();
 }
 
 void CTransferWnd::SetWnd2(EWnd2 uWnd2)
@@ -1591,6 +1707,7 @@ void CTransferWnd::ShowList(uint32 dwListIDC)
 		ASSERT(0);
 	}
 	AddAnchor(dwListIDC, TOP_LEFT, BOTTOM_RIGHT);
+	FlushVisibleDisplayRefreshes();
 }
 
 void CTransferWnd::ShowSplitWindow(bool bReDraw)
@@ -1676,6 +1793,7 @@ void CTransferWnd::ShowSplitWindow(bool bReDraw)
 	GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow((m_uWnd2 == wnd2OnQueue) ? SW_SHOW : SW_HIDE);
 
 	UpdateListCount(m_uWnd2);
+	FlushVisibleDisplayRefreshes();
 }
 
 void CTransferWnd::OnDisableList()

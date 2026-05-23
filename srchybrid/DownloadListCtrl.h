@@ -95,6 +95,7 @@ public:
 	UINT	m_curTab;
 
 	void	UpdateItem(void *toupdate);
+	void	RefreshVisibleItems();
 	void	Init();
 	void	AddFile(CPartFile *toadd);
 	void	AddSource(CPartFile *owner, CUpDownClient *source, bool notavailable);

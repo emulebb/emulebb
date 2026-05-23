@@ -61,12 +61,11 @@ namespace Win32CallbackTimerSeams
 	}
 
 	/**
-	 * @brief Returns the queue-list timer cadence derived from the desktop UI refresh preference.
+	 * @brief Returns the legacy queue-list presentation cadence for compatibility tests.
 	 */
 	inline UINT GetQueueListRefreshTimerDelayMs(UINT uDesktopUiRefreshIntervalMs)
 	{
-		const UINT uNormalizedIntervalMs = NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs);
-		return uNormalizedIntervalMs < 10000u ? 10000u : uNormalizedIntervalMs;
+		return GetTransferDisplayRefreshTimerDelayMs(uDesktopUiRefreshIntervalMs);
 	}
 
 	/**

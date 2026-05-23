@@ -24,12 +24,14 @@ enum EDisplayRefreshMask : uint32_t
 	DISPLAY_REFRESH_DOWNLOAD_LIST = 1u << 1,
 	DISPLAY_REFRESH_DOWNLOAD_CLIENTS = 1u << 2,
 	DISPLAY_REFRESH_UPLOAD_LIST = 1u << 3,
-	DISPLAY_REFRESH_QUEUE_LIST = 1u << 4
+	DISPLAY_REFRESH_QUEUE_LIST = 1u << 4,
+	DISPLAY_REFRESH_TRANSFER_SUMMARY = 1u << 5
 };
 
 struct CPartFileDisplayUpdateRequest
 {
 	unsigned char fileHash[16];
+	bool force;
 };
 
 struct CPartFileProgressUpdateRequest
@@ -45,6 +47,7 @@ struct CClientDisplayUpdateRequest
 	DWORD connectIP;
 	USHORT userPort;
 	USHORT reserved;
+	bool force;
 };
 
 /**
@@ -86,6 +89,46 @@ inline UINT NormalizeDesktopUiRefreshIntervalMs(UINT uIntervalMs)
 inline bool ShouldRunPreferenceAlignedDisplayRefresh(bool bForce, ULONGLONG dwCurrentTick, ULONGLONG dwLastRefreshTick, UINT uDesktopUiRefreshIntervalMs)
 {
 	return ShouldRunDisplayRefresh(bForce, dwCurrentTick, dwLastRefreshTick, NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs), 0);
+}
+
+/**
+ * @brief Returns the transfer-window presentation timer cadence.
+ */
+inline UINT GetTransferDisplayRefreshTimerDelayMs(UINT uDesktopUiRefreshIntervalMs)
+{
+	return NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs);
+}
+
+/**
+ * @brief Keeps only transfer-window refresh work whose target list is currently visible.
+ */
+inline uint32_t FilterVisibleTransferDisplayRefreshMask(
+	uint32_t uPendingMask,
+	bool bTransferWindowActive,
+	bool bTransferWindowVisible,
+	bool bDownloadListVisible,
+	bool bUploadListVisible,
+	bool bDownloadClientsVisible,
+	bool bQueueListVisible,
+	bool bClientListVisible)
+{
+	if (!bTransferWindowActive || !bTransferWindowVisible)
+		return DISPLAY_REFRESH_NONE;
+
+	uint32_t uVisibleMask = DISPLAY_REFRESH_NONE;
+	if (bDownloadListVisible)
+		uVisibleMask |= DISPLAY_REFRESH_DOWNLOAD_LIST;
+	if (bUploadListVisible)
+		uVisibleMask |= DISPLAY_REFRESH_UPLOAD_LIST;
+	if (bDownloadClientsVisible)
+		uVisibleMask |= DISPLAY_REFRESH_DOWNLOAD_CLIENTS;
+	if (bQueueListVisible)
+		uVisibleMask |= DISPLAY_REFRESH_QUEUE_LIST;
+	if (bClientListVisible)
+		uVisibleMask |= DISPLAY_REFRESH_CLIENT_LIST;
+
+	uVisibleMask |= DISPLAY_REFRESH_TRANSFER_SUMMARY;
+	return uPendingMask & uVisibleMask;
 }
 
 /**

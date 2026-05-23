@@ -114,6 +114,8 @@ void CTransferDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 		//ShowControlBar(&m_pwndParams, bShow, TRUE);
 		DockToolbarWnd(); // Too many bug reports about vanished search parameters window. Force to dock.
 	}
+	if (bShow && m_pwndTransfer != NULL)
+		m_pwndTransfer->FlushVisibleDisplayRefreshes();
 }
 
 void CTransferDlg::OnSetFocus(CWnd *pOldWnd)
@@ -241,6 +243,21 @@ void CTransferDlg::OnDisableList()
 void CTransferDlg::UpdateListCount(CTransferWnd::EWnd2 listindex, int iCount)
 {
 	m_pwndTransfer->UpdateListCount(listindex, iCount);
+}
+
+void CTransferDlg::QueueDisplayRefresh(uint32 nMask, bool bForce)
+{
+	m_pwndTransfer->QueueDisplayRefresh(nMask, bForce);
+}
+
+bool CTransferDlg::RestartTransferDisplayRefreshTimer()
+{
+	return m_pwndTransfer->RestartTransferDisplayRefreshTimer();
+}
+
+void CTransferDlg::FlushVisibleDisplayRefreshes()
+{
+	m_pwndTransfer->FlushVisibleDisplayRefreshes();
 }
 
 int CTransferDlg::AddCategory(const CString &newtitle, const CString &newincoming, const CString &newcomment, const CString &newautocat, bool addTab)

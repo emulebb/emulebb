@@ -15,9 +15,12 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
+#include <atomic>
+
 #include "ResizableLib\ResizableFormView.h"
 #include "SplitterControl.h"
 #include "TabCtrl.hpp"
+#include "DisplayRefreshSeams.h"
 #include "UploadListCtrl.h"
 #include "DownloadListCtrl.h"
 #include "QueueListCtrl.h"
@@ -82,6 +85,9 @@ public:
 	void ResetTransToolbar(bool bShowToolbar, bool bResetLists = true);
 	void SetToolTipsDelay(DWORD dwDelay);
 	void OnDisableList();
+	void QueueDisplayRefresh(uint32 nMask, bool bForce = false);
+	bool RestartTransferDisplayRefreshTimer();
+	void FlushVisibleDisplayRefreshes();
 
 	CUploadListCtrl			uploadlistctrl;
 	CDownloadListCtrl		downloadlistctrl;
@@ -107,6 +113,8 @@ protected:
 	bool		m_bIsDragging;
 	bool		downloadlistactive;
 	bool		m_bLayoutInited;
+	UINT_PTR	m_uTransferDisplayRefreshTimer;
+	std::atomic<LONG> m_nPendingDisplayRefreshMask;
 
 	void	ShowWnd2(EWnd2 uWnd2);
 	void	SetWnd2(EWnd2 uWnd2);
@@ -130,6 +138,8 @@ protected:
 	void	ShowSplitWindow(bool bReDraw = false);
 	void	LocalizeToolbars();
 	void	CancelCategoryDrag(bool bResetTabSelection);
+	bool	IsTransferRefreshActive() const;
+	void	FlushDisplayRefreshMask(uint32 nMask);
 
 	virtual BOOL PreTranslateMessage(MSG *pMsg);
 	virtual void DoDataExchange(CDataExchange *pDX);    // DDX/DDV support
@@ -160,4 +170,6 @@ protected:
 	afx_msg void OnWnd2BtnDropDown(LPNMHDR, LRESULT*);
 	afx_msg void OnPaint();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
+	afx_msg void OnDestroy();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };

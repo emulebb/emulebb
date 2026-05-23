@@ -25,7 +25,6 @@
 #include "emuledlg.h"
 #include "FriendList.h"
 #include "UploadQueue.h"
-#include "Win32CallbackTimerSeams.h"
 #include "ClientList.h"
 #include "TransferDlg.h"
 #include "GeoLocation.h"
@@ -106,17 +105,13 @@ END_MESSAGE_MAP()
 
 CQueueListCtrl::CQueueListCtrl()
 	: CListCtrlItemWalk(this)
-	, m_hTimer(0)
 {
 	SetGeneralPurposeFind(true);
 	SetSkinKey(_T("QueuedLv"));
-
-	RestartUpdateTimer();
 }
 
 CQueueListCtrl::~CQueueListCtrl()
 {
-	VERIFY(Win32CallbackTimerSeams::StopNullWindowCallbackTimer(m_hTimer) != Win32CallbackTimerSeams::ETimerStopResult::Failed);
 }
 
 void CQueueListCtrl::Init()
@@ -867,6 +862,27 @@ void CQueueListCtrl::RefreshClient(const CUpDownClient *client)
 	}
 }
 
+void CQueueListCtrl::RefreshVisibleItems()
+{
+	if (theApp.IsClosing() || !IsWindowVisible())
+		return;
+
+	const int iItemCount = GetItemCount();
+	const int iFirst = max(0, GetTopIndex());
+	const int iLast = min(iItemCount, iFirst + max(1, GetCountPerPage()) + 1);
+	bool bPruneStaleItems = false;
+	for (int iItem = iFirst; iItem < iLast; ++iItem) {
+		if (!IsLiveClient(reinterpret_cast<CUpDownClient*>(GetItemData(iItem)))) {
+			bPruneStaleItems = true;
+			continue;
+		}
+		Update(iItem);
+	}
+
+	if (bPruneStaleItems)
+		PruneStaleClientItems();
+}
+
 void CQueueListCtrl::ShowSelectedUserDetails()
 {
 	CPoint point;
@@ -893,33 +909,4 @@ void CQueueListCtrl::ShowQueueClients()
 	DeleteAllItems();
 	for (CUpDownClient *update = NULL; (update = theApp.uploadqueue->GetNextClient(update)) != NULL;)
 		AddClient(update, false);
-}
-
-bool CQueueListCtrl::RestartUpdateTimer()
-{
-	VERIFY(Win32CallbackTimerSeams::StopNullWindowCallbackTimer(m_hTimer) != Win32CallbackTimerSeams::ETimerStopResult::Failed);
-
-	const UINT uDelayMs = Win32CallbackTimerSeams::GetQueueListRefreshTimerDelayMs(thePrefs.GetDesktopUiRefreshIntervalMs());
-	const bool bStarted = Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(m_hTimer, uDelayMs, QueueUpdateTimer);
-	if (thePrefs.GetVerbose() && !bStarted)
-		AddDebugLogLine(true, _T("Failed to create 'queue list control' timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
-	return bStarted;
-}
-
-void CALLBACK CQueueListCtrl::QueueUpdateTimer(HWND /*hwnd*/, UINT /*uiMsg*/, UINT_PTR /*idEvent*/, DWORD /*dwTime*/) noexcept
-{
-	// NOTE: Always handle all type of MFC exceptions in TimerProcs - otherwise we'll get mem leaks
-	try {
-		if (Win32CallbackTimerSeams::ShouldDispatchQueueListRefreshTimer(
-			thePrefs.GetUpdateQueueList(),
-			theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd,
-			theApp.emuledlg->transferwnd->GetQueueList()->IsWindowVisible(),
-			theApp.IsClosing())) // Don't do anything if the app is shutting down - can cause unhandled exceptions
-		{
-			const CUpDownClient *update = NULL;
-			while ((update = theApp.uploadqueue->GetNextClient(update)) != NULL)
-				theApp.emuledlg->transferwnd->GetQueueList()->RefreshClient(update);
-		}
-	}
-	CATCH_DFLT_EXCEPTIONS(_T("CQueueListCtrl::QueueUpdateTimer"))
 }

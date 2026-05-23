@@ -46,6 +46,9 @@ public:
 	void SetToolTipsDelay(DWORD dwDelay);
 	void OnDisableList();
 	void UpdateListCount(CTransferWnd::EWnd2 listindex, int iCount = -1);
+	void QueueDisplayRefresh(uint32 nMask, bool bForce = false);
+	bool RestartTransferDisplayRefreshTimer();
+	void FlushVisibleDisplayRefreshes();
 	int	 AddCategory(const CString &newtitle, const CString &newincoming, const CString &newcomment, const CString &newautocat, bool addTab = true);
 	void ShowToolbar(bool bShow);
 

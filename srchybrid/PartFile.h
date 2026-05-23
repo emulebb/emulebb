@@ -289,7 +289,7 @@ public:
 	CString GetInfoSummary(bool bNoFormatCommands = false) const;
 
 	void	UpdateDisplayedInfo(bool force = false);
-	void	DispatchQueuedDisplayUpdate();
+	void	DispatchQueuedDisplayUpdate(bool force = false);
 
 	UINT	GetCategory() const;
 	void	SetCategory(UINT cat);

@@ -925,6 +925,27 @@ void CUploadListCtrl::RefreshClient(const CUpDownClient *client)
 	}
 }
 
+void CUploadListCtrl::RefreshVisibleItems()
+{
+	if (theApp.IsClosing() || !IsWindowVisible())
+		return;
+
+	const int iItemCount = GetItemCount();
+	const int iFirst = max(0, GetTopIndex());
+	const int iLast = min(iItemCount, iFirst + max(1, GetCountPerPage()) + 1);
+	bool bPruneStaleItems = false;
+	for (int iItem = iFirst; iItem < iLast; ++iItem) {
+		if (!IsLiveClient(reinterpret_cast<CUpDownClient*>(GetItemData(iItem)))) {
+			bPruneStaleItems = true;
+			continue;
+		}
+		Update(iItem);
+	}
+
+	if (bPruneStaleItems)
+		PruneStaleClientItems();
+}
+
 void CUploadListCtrl::ShowSelectedUserDetails()
 {
 	CPoint point;

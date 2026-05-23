@@ -1035,6 +1035,37 @@ void CDownloadListCtrl::UpdateItem(void *toupdate)
 	m_availableCommandsDirty = true;
 }
 
+void CDownloadListCtrl::RefreshVisibleItems()
+{
+	if (theApp.IsClosing() || !IsWindowVisible())
+		return;
+
+	const int iItemCount = GetItemCount();
+	if (iItemCount <= 0)
+		return;
+
+	const int iFirst = max(0, GetTopIndex());
+	const int iLast = min(iItemCount, iFirst + max(1, GetCountPerPage()) + 1);
+	bool bPruneStaleItems = false;
+	for (int iItem = iFirst; iItem < iLast; ++iItem) {
+		CtrlItem_Struct *pCtrlItem = reinterpret_cast<CtrlItem_Struct*>(GetItemData(iItem));
+		if ((pCtrlItem == NULL)
+			|| (pCtrlItem->type == FILE_TYPE && !IsLiveFileItem(pCtrlItem))
+			|| (IsSourceCtrlItem(pCtrlItem) && !IsLiveSourceItem(pCtrlItem)))
+		{
+			bPruneStaleItems = true;
+			continue;
+		}
+
+		pCtrlItem->dwUpdated = 0;
+		Update(iItem);
+	}
+
+	if (bPruneStaleItems)
+		PruneStaleFileItems();
+	m_availableCommandsDirty = true;
+}
+
 void CDownloadListCtrl::DrawFileItem(CDC &dc, int nColumn, LPCRECT lpRect, UINT uDrawTextAlignment, CtrlItem_Struct *pCtrlItem)
 {
 	/*const*/ CPartFile *pPartFile = static_cast<CPartFile*>(pCtrlItem->value);

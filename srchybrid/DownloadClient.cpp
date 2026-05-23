@@ -1462,14 +1462,10 @@ void CUpDownClient::UDPReaskForDownload()
 
 void CUpDownClient::UpdateDisplayedInfo(bool force)
 {
-	const ULONGLONG curTick = ::GetTickCount64();
-	if (!ShouldRunPreferenceAlignedDisplayRefresh(force, curTick, m_lastRefreshedDLDisplay, thePrefs.GetDesktopUiRefreshIntervalMs()))
-		return;
-	m_lastRefreshedDLDisplay = curTick;
-	QueueDisplayUpdate(DISPLAY_REFRESH_DOWNLOAD_LIST | DISPLAY_REFRESH_CLIENT_LIST | DISPLAY_REFRESH_DOWNLOAD_CLIENTS);
+	QueueDisplayUpdate(DISPLAY_REFRESH_DOWNLOAD_LIST | DISPLAY_REFRESH_CLIENT_LIST | DISPLAY_REFRESH_DOWNLOAD_CLIENTS, force);
 }
 
-void CUpDownClient::QueueDisplayUpdate(uint32 nMask)
+void CUpDownClient::QueueDisplayUpdate(uint32 nMask, bool force)
 {
 	if (theApp.IsClosing() || nMask == DISPLAY_REFRESH_NONE)
 		return;
@@ -1481,29 +1477,22 @@ void CUpDownClient::QueueDisplayUpdate(uint32 nMask)
 			pRequest->connectIP = GetConnectIP();
 			pRequest->userPort = GetUserPort();
 			pRequest->reserved = 0;
+			pRequest->force = force;
 			if (theApp.emuledlg == NULL || !PostOwnedDisplayRefreshRequest(theApp.emuledlg->GetSafeHwnd(), UM_CLIENT_DISPLAY_UPDATE, pRequest))
 				m_nPendingDisplayUpdateMask.exchange(0);
 		}
 		return;
 	}
 
-	if ((nMask & DISPLAY_REFRESH_DOWNLOAD_LIST) != 0)
-		theApp.emuledlg->transferwnd->GetDownloadList()->UpdateItem(this);
-	if ((nMask & DISPLAY_REFRESH_CLIENT_LIST) != 0)
-		theApp.emuledlg->transferwnd->GetClientList()->RefreshClient(this);
-	if ((nMask & DISPLAY_REFRESH_DOWNLOAD_CLIENTS) != 0)
-		theApp.emuledlg->transferwnd->GetDownloadClientsList()->RefreshClient(this);
-	if ((nMask & DISPLAY_REFRESH_UPLOAD_LIST) != 0)
-		theApp.emuledlg->transferwnd->GetUploadList()->RefreshClient(this);
-	if ((nMask & DISPLAY_REFRESH_QUEUE_LIST) != 0)
-		theApp.emuledlg->transferwnd->GetQueueList()->RefreshClient(this);
+	if (theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
+		theApp.emuledlg->transferwnd->QueueDisplayRefresh(nMask, force);
 }
 
-void CUpDownClient::DispatchQueuedDisplayUpdate()
+void CUpDownClient::DispatchQueuedDisplayUpdate(bool force)
 {
 	const LONG nMask = m_nPendingDisplayUpdateMask.exchange(0);
 	if (nMask != 0)
-		QueueDisplayUpdate(static_cast<uint32>(nMask));
+		QueueDisplayUpdate(static_cast<uint32>(nMask), force);
 }
 
 bool CUpDownClient::IsInNoNeededList(const CPartFile *fileToCheck) const

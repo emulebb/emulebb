@@ -5329,10 +5329,11 @@ LRESULT CemuleDlg::OnPartFileDisplayUpdate(WPARAM wParam, LPARAM)
 		return 0;
 
 	CPartFile *pPartFile = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetFileByID(pRequest->fileHash) : NULL;
+	const bool bForce = pRequest->force;
 	delete pRequest;
 
 	if (pPartFile != NULL)
-		pPartFile->DispatchQueuedDisplayUpdate();
+		pPartFile->DispatchQueuedDisplayUpdate(bForce);
 	return 0;
 }
 
@@ -5343,10 +5344,11 @@ LRESULT CemuleDlg::OnClientDisplayUpdate(WPARAM wParam, LPARAM)
 		return 0;
 
 	CUpDownClient *pClient = ResolveQueuedClient(*pRequest);
+	const bool bForce = pRequest->force;
 	delete pRequest;
 
 	if (pClient != NULL)
-		pClient->DispatchQueuedDisplayUpdate();
+		pClient->DispatchQueuedDisplayUpdate(bForce);
 	return 0;
 }
 
@@ -5405,8 +5407,8 @@ LRESULT CemuleDlg::OnWebServerFileRename(WPARAM wParam, LPARAM lParam)
 void CemuleDlg::ApplyDesktopUiRefreshIntervalMs(UINT uIntervalMs)
 {
 	thePrefs.SetDesktopUiRefreshIntervalMs(uIntervalMs);
-	if (transferwnd != NULL && transferwnd->GetQueueList() != NULL)
-		transferwnd->GetQueueList()->RestartUpdateTimer();
+	if (transferwnd != NULL)
+		transferwnd->RestartTransferDisplayRefreshTimer();
 }
 
 LRESULT CemuleDlg::OnWebRestApiCommand(WPARAM, LPARAM lParam)
