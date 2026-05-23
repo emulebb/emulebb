@@ -103,6 +103,11 @@ namespace FileListKeyboardShortcutsSeams
 		}
 	}
 
+	inline bool ShouldApplySortShortcutColumn(int iColumn, bool bColumnHidden)
+	{
+		return iColumn >= 0 && !bColumnHidden;
+	}
+
 	/**
 	 * Classifies local file-list key messages into existing menu commands.
 	 *

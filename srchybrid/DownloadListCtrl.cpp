@@ -3124,7 +3124,7 @@ bool CDownloadListCtrl::HandleSortShortcut(UINT nChar)
 		return false;
 
 	const int iColumn = FileListKeyboardShortcutsSeams::GetSortShortcutColumn(FileListKeyboardShortcutsSeams::EContext::Downloads, eSortRole);
-	if (iColumn < 0) {
+	if (!FileListKeyboardShortcutsSeams::ShouldApplySortShortcutColumn(iColumn, IsColumnHidden(iColumn))) {
 		MessageBeep(MB_OK);
 		return true;
 	}
