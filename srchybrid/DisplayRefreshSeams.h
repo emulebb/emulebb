@@ -1,9 +1,13 @@
 #pragma once
 
-#include <atomic>
+#include <Windows.h>
 
-enum EDesktopUiRefreshIntervalMs : uint32
+#include <atomic>
+#include <cstdint>
+
+enum EDesktopUiRefreshIntervalMs : uint32_t
 {
+	DESKTOP_UI_REFRESH_PAUSED_MS = 0,
 	DESKTOP_UI_REFRESH_FAST_MS = 500,
 	DESKTOP_UI_REFRESH_NORMAL_MS = 1000,
 	DESKTOP_UI_REFRESH_BELOWNORMAL_MS = 2000,
@@ -11,7 +15,7 @@ enum EDesktopUiRefreshIntervalMs : uint32
 	DESKTOP_UI_REFRESH_VERYSLOW_MS = 10000
 };
 
-enum EDisplayRefreshMask : uint32
+enum EDisplayRefreshMask : uint32_t
 {
 	DISPLAY_REFRESH_NONE = 0,
 	DISPLAY_REFRESH_CLIENT_LIST = 1u << 0,
@@ -56,6 +60,7 @@ inline bool ShouldRunDisplayRefresh(bool bForce, DWORD dwCurrentTick, DWORD dwLa
 inline UINT NormalizeDesktopUiRefreshIntervalMs(UINT uIntervalMs)
 {
 	switch (uIntervalMs) {
+	case DESKTOP_UI_REFRESH_PAUSED_MS:
 	case DESKTOP_UI_REFRESH_FAST_MS:
 	case DESKTOP_UI_REFRESH_NORMAL_MS:
 	case DESKTOP_UI_REFRESH_BELOWNORMAL_MS:
@@ -65,6 +70,14 @@ inline UINT NormalizeDesktopUiRefreshIntervalMs(UINT uIntervalMs)
 	default:
 		return DESKTOP_UI_REFRESH_BELOWNORMAL_MS;
 	}
+}
+
+/**
+ * @brief Returns the transfer-window presentation timer cadence.
+ */
+inline UINT GetTransferDisplayRefreshTimerDelayMs(UINT uDesktopUiRefreshIntervalMs)
+{
+	return NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs);
 }
 
 /**
