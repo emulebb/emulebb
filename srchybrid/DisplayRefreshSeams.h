@@ -28,6 +28,12 @@ enum EDisplayRefreshMask : uint32_t
 	DISPLAY_REFRESH_TRANSFER_SUMMARY = 1u << 5
 };
 
+enum ETransferDisplayRefreshState : uint32_t
+{
+	TRANSFER_DISPLAY_REFRESH_PAUSED = 0,
+	TRANSFER_DISPLAY_REFRESH_RUNNING = 1
+};
+
 struct CPartFileDisplayUpdateRequest
 {
 	unsigned char fileHash[16];
@@ -100,10 +106,26 @@ inline UINT GetTransferDisplayRefreshTimerDelayMs(UINT uDesktopUiRefreshInterval
 }
 
 /**
+ * @brief Resolves whether routine transfer-window presentation refreshes may run.
+ */
+inline ETransferDisplayRefreshState ResolveTransferDisplayRefreshState(
+	bool bAppClosing,
+	bool bTransferWindowActive,
+	bool bMainWindowVisible,
+	bool bMainWindowMinimized,
+	bool bForegroundOwnedByMainWindow)
+{
+	if (bAppClosing || !bTransferWindowActive || !bMainWindowVisible || bMainWindowMinimized || !bForegroundOwnedByMainWindow)
+		return TRANSFER_DISPLAY_REFRESH_PAUSED;
+	return TRANSFER_DISPLAY_REFRESH_RUNNING;
+}
+
+/**
  * @brief Keeps only transfer-window refresh work whose target list is currently visible.
  */
 inline uint32_t FilterVisibleTransferDisplayRefreshMask(
 	uint32_t uPendingMask,
+	ETransferDisplayRefreshState eRefreshState,
 	bool bTransferWindowActive,
 	bool bTransferWindowVisible,
 	bool bDownloadListVisible,
@@ -112,7 +134,7 @@ inline uint32_t FilterVisibleTransferDisplayRefreshMask(
 	bool bQueueListVisible,
 	bool bClientListVisible)
 {
-	if (!bTransferWindowActive || !bTransferWindowVisible)
+	if (eRefreshState != TRANSFER_DISPLAY_REFRESH_RUNNING || !bTransferWindowActive || !bTransferWindowVisible)
 		return DISPLAY_REFRESH_NONE;
 
 	uint32_t uVisibleMask = DISPLAY_REFRESH_NONE;
@@ -129,6 +151,38 @@ inline uint32_t FilterVisibleTransferDisplayRefreshMask(
 
 	uVisibleMask |= DISPLAY_REFRESH_TRANSFER_SUMMARY;
 	return uPendingMask & uVisibleMask;
+}
+
+/**
+ * @brief Builds the explicit user-requested refresh mask for currently visible transfer UI.
+ */
+inline uint32_t BuildExplicitTransferDisplayRefreshMask(
+	ETransferDisplayRefreshState eRefreshState,
+	bool bTransferWindowActive,
+	bool bTransferWindowVisible,
+	bool bDownloadListVisible,
+	bool bUploadListVisible,
+	bool bDownloadClientsVisible,
+	bool bQueueListVisible,
+	bool bClientListVisible)
+{
+	const uint32_t uAllTransferDisplayMask =
+		DISPLAY_REFRESH_DOWNLOAD_LIST
+		| DISPLAY_REFRESH_UPLOAD_LIST
+		| DISPLAY_REFRESH_DOWNLOAD_CLIENTS
+		| DISPLAY_REFRESH_QUEUE_LIST
+		| DISPLAY_REFRESH_CLIENT_LIST
+		| DISPLAY_REFRESH_TRANSFER_SUMMARY;
+	return FilterVisibleTransferDisplayRefreshMask(
+		uAllTransferDisplayMask,
+		eRefreshState,
+		bTransferWindowActive,
+		bTransferWindowVisible,
+		bDownloadListVisible,
+		bUploadListVisible,
+		bDownloadClientsVisible,
+		bQueueListVisible,
+		bClientListVisible);
 }
 
 /**

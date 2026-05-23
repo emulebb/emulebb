@@ -1157,6 +1157,7 @@ BEGIN_MESSAGE_MAP(CemuleDlg, CTrayDialog)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_WM_ENDSESSION()
+	ON_WM_ACTIVATE()
 	ON_WM_SIZE()
 	ON_WM_CLOSE()
 	ON_WM_MENUCHAR()
@@ -2603,6 +2604,8 @@ void CemuleDlg::MinimizeWindow(bool bForceTray)
 		ShowWindow(SW_MINIMIZE);
 
 	ShowTransferRate();
+	if (transferwnd != NULL && !theApp.IsClosing())
+		transferwnd->RefreshTransferDisplayRefreshState(false);
 }
 
 void CemuleDlg::SetActiveDialog(CWnd *dlg)
@@ -2620,10 +2623,13 @@ void CemuleDlg::SetActiveDialog(CWnd *dlg)
 	if (dlg == transferwnd) {
 		if (thePrefs.ShowCatTabInfos())
 			transferwnd->UpdateCatTabTitles();
+		transferwnd->RefreshTransferDisplayRefreshState();
 	} else if (dlg == chatwnd)
 		chatwnd->chatselector.ShowChat();
 	else if (dlg == statisticswnd)
 		statisticswnd->ShowStatistics();
+	if (dlg != transferwnd && transferwnd != NULL)
+		transferwnd->RefreshTransferDisplayRefreshState(false);
 }
 
 void CemuleDlg::SetStatusBarPartsSize()
@@ -2647,8 +2653,17 @@ void CemuleDlg::OnSize(UINT nType, int cx, int cy)
 	CTrayDialog::OnSize(nType, cx, cy);
 	SetStatusBarPartsSize();
 	// we might receive this message during shutdown -> bad
-	if (transferwnd != NULL && !theApp.IsClosing())
+	if (transferwnd != NULL && !theApp.IsClosing()) {
 		transferwnd->VerifyCatTabSize();
+		transferwnd->RefreshTransferDisplayRefreshState(nType != SIZE_MINIMIZED);
+	}
+}
+
+void CemuleDlg::OnActivate(UINT nState, CWnd *pWndOther, BOOL bMinimized)
+{
+	CTrayDialog::OnActivate(nState, pWndOther, bMinimized);
+	if (transferwnd != NULL && !theApp.IsClosing())
+		transferwnd->RefreshTransferDisplayRefreshState(nState != WA_INACTIVE && !bMinimized);
 }
 
 void CemuleDlg::ProcessED2KLink(LPCTSTR pszData)
@@ -3609,6 +3624,8 @@ void CemuleDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 
 		if (bShow && activewnd == chatwnd)
 			chatwnd->chatselector.ShowChat();
+		if (transferwnd != NULL)
+			transferwnd->RefreshTransferDisplayRefreshState(bShow != FALSE);
 	}
 	CTrayDialog::OnShowWindow(bShow, nStatus);
 }
@@ -5407,8 +5424,10 @@ LRESULT CemuleDlg::OnWebServerFileRename(WPARAM wParam, LPARAM lParam)
 void CemuleDlg::ApplyDesktopUiRefreshIntervalMs(UINT uIntervalMs)
 {
 	thePrefs.SetDesktopUiRefreshIntervalMs(uIntervalMs);
-	if (transferwnd != NULL)
+	if (transferwnd != NULL) {
+		transferwnd->RefreshTransferDisplayRefreshState(false);
 		transferwnd->RestartTransferDisplayRefreshTimer();
+	}
 }
 
 LRESULT CemuleDlg::OnWebRestApiCommand(WPARAM, LPARAM lParam)

@@ -114,8 +114,8 @@ void CTransferDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 		//ShowControlBar(&m_pwndParams, bShow, TRUE);
 		DockToolbarWnd(); // Too many bug reports about vanished search parameters window. Force to dock.
 	}
-	if (bShow && m_pwndTransfer != NULL)
-		m_pwndTransfer->FlushVisibleDisplayRefreshes();
+	if (m_pwndTransfer != NULL)
+		m_pwndTransfer->RefreshTransferDisplayRefreshState(bShow != FALSE);
 }
 
 void CTransferDlg::OnSetFocus(CWnd *pOldWnd)
@@ -253,6 +253,11 @@ void CTransferDlg::QueueDisplayRefresh(uint32 nMask, bool bForce)
 bool CTransferDlg::RestartTransferDisplayRefreshTimer()
 {
 	return m_pwndTransfer->RestartTransferDisplayRefreshTimer();
+}
+
+void CTransferDlg::RefreshTransferDisplayRefreshState(bool bFlushIfRunning)
+{
+	m_pwndTransfer->RefreshTransferDisplayRefreshState(bFlushIfRunning);
 }
 
 void CTransferDlg::FlushVisibleDisplayRefreshes()

@@ -114,6 +114,7 @@ CTransferWnd::CTransferWnd(CWnd* /*pParent =NULL*/)
 	, downloadlistactive()
 	, m_bLayoutInited()
 	, m_uTransferDisplayRefreshTimer()
+	, m_eTransferDisplayRefreshState(TRANSFER_DISPLAY_REFRESH_PAUSED)
 	, m_nPendingDisplayRefreshMask()
 {
 }
@@ -196,7 +197,7 @@ void CTransferWnd::OnInitialUpdate()
 
 	VerifyCatTabSize();
 	Localize();
-	RestartTransferDisplayRefreshTimer();
+	RefreshTransferDisplayRefreshState(false);
 }
 
 void CTransferWnd::OnDestroy()
@@ -211,21 +212,31 @@ void CTransferWnd::OnDestroy()
 void CTransferWnd::OnTimer(UINT_PTR nIDEvent)
 {
 	if (nIDEvent == m_uTransferDisplayRefreshTimer) {
+		RefreshTransferDisplayRefreshState(false);
 		FlushVisibleDisplayRefreshes();
 		return;
 	}
 	CResizableFormView::OnTimer(nIDEvent);
 }
 
-bool CTransferWnd::RestartTransferDisplayRefreshTimer()
+void CTransferWnd::StopTransferDisplayRefreshTimer()
 {
-	if (m_hWnd == NULL)
-		return false;
-
 	if (m_uTransferDisplayRefreshTimer != 0) {
 		KillTimer(m_uTransferDisplayRefreshTimer);
 		m_uTransferDisplayRefreshTimer = 0;
 	}
+}
+
+bool CTransferWnd::RestartTransferDisplayRefreshTimer()
+{
+	if (m_hWnd == NULL)
+		return false;
+	if (m_eTransferDisplayRefreshState != TRANSFER_DISPLAY_REFRESH_RUNNING) {
+		StopTransferDisplayRefreshTimer();
+		return true;
+	}
+
+	StopTransferDisplayRefreshTimer();
 
 	m_uTransferDisplayRefreshTimer = SetTimer(
 		kTransferDisplayRefreshTimerId,
@@ -236,12 +247,62 @@ bool CTransferWnd::RestartTransferDisplayRefreshTimer()
 	return m_uTransferDisplayRefreshTimer != 0;
 }
 
+bool CTransferWnd::IsMainWindowForegroundOwned() const
+{
+	if (theApp.emuledlg == NULL || theApp.emuledlg->GetSafeHwnd() == NULL)
+		return false;
+
+	const HWND hMainWnd = theApp.emuledlg->GetSafeHwnd();
+	const HWND hForegroundWnd = ::GetForegroundWindow();
+	if (hForegroundWnd == NULL)
+		return false;
+	if (hForegroundWnd == hMainWnd || ::IsChild(hMainWnd, hForegroundWnd))
+		return true;
+
+	const HWND hRootOwner = ::GetAncestor(hForegroundWnd, GA_ROOTOWNER);
+	return hRootOwner == hMainWnd;
+}
+
 bool CTransferWnd::IsTransferRefreshActive() const
 {
-	return theApp.emuledlg != NULL
-		&& theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd
-		&& IsWindowVisible()
-		&& !theApp.IsClosing();
+	if (theApp.emuledlg == NULL)
+		return false;
+	return ResolveTransferDisplayRefreshState(
+		theApp.IsClosing(),
+		theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd,
+		theApp.emuledlg->IsWindowVisible() != FALSE,
+		theApp.emuledlg->IsIconic() != FALSE,
+		IsMainWindowForegroundOwned()) == TRANSFER_DISPLAY_REFRESH_RUNNING;
+}
+
+void CTransferWnd::RefreshTransferDisplayRefreshState(bool bFlushIfRunning)
+{
+	const ETransferDisplayRefreshState ePreviousState = m_eTransferDisplayRefreshState;
+	m_eTransferDisplayRefreshState = IsTransferRefreshActive()
+		? TRANSFER_DISPLAY_REFRESH_RUNNING
+		: TRANSFER_DISPLAY_REFRESH_PAUSED;
+
+	if (m_eTransferDisplayRefreshState == TRANSFER_DISPLAY_REFRESH_RUNNING) {
+		if (m_uTransferDisplayRefreshTimer == 0)
+			RestartTransferDisplayRefreshTimer();
+		if (bFlushIfRunning && ePreviousState != TRANSFER_DISPLAY_REFRESH_RUNNING)
+			FlushVisibleDisplayRefreshes();
+	} else
+		StopTransferDisplayRefreshTimer();
+}
+
+uint32 CTransferWnd::GetVisibleDisplayRefreshMask(uint32 nMask) const
+{
+	return FilterVisibleTransferDisplayRefreshMask(
+		nMask,
+		m_eTransferDisplayRefreshState,
+		theApp.emuledlg != NULL && theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd,
+		IsWindowVisible() != FALSE,
+		downloadlistctrl.IsWindowVisible() != FALSE,
+		uploadlistctrl.IsWindowVisible() != FALSE,
+		downloadclientsctrl.IsWindowVisible() != FALSE,
+		queuelistctrl.IsWindowVisible() != FALSE,
+		clientlistctrl.IsWindowVisible() != FALSE);
 }
 
 void CTransferWnd::QueueDisplayRefresh(uint32 nMask, bool bForce)
@@ -250,7 +311,13 @@ void CTransferWnd::QueueDisplayRefresh(uint32 nMask, bool bForce)
 		return;
 
 	if (bForce) {
-		FlushDisplayRefreshMask(nMask);
+		RefreshTransferDisplayRefreshState(false);
+		const uint32 nVisibleMask = GetVisibleDisplayRefreshMask(nMask);
+		const uint32 nPendingMask = nMask & ~nVisibleMask;
+		if (nVisibleMask != DISPLAY_REFRESH_NONE)
+			FlushDisplayRefreshMask(nVisibleMask);
+		if (nPendingMask != DISPLAY_REFRESH_NONE)
+			AccumulatePendingDisplayMask(m_nPendingDisplayRefreshMask, static_cast<LONG>(nPendingMask));
 		return;
 	}
 
@@ -261,15 +328,7 @@ void CTransferWnd::FlushVisibleDisplayRefreshes()
 {
 	LONG nPending = m_nPendingDisplayRefreshMask.load();
 	for (;;) {
-		const uint32 nVisibleMask = FilterVisibleTransferDisplayRefreshMask(
-			static_cast<uint32>(nPending),
-			IsTransferRefreshActive(),
-			IsWindowVisible() != FALSE,
-			downloadlistctrl.IsWindowVisible() != FALSE,
-			uploadlistctrl.IsWindowVisible() != FALSE,
-			downloadclientsctrl.IsWindowVisible() != FALSE,
-			queuelistctrl.IsWindowVisible() != FALSE,
-			clientlistctrl.IsWindowVisible() != FALSE);
+		const uint32 nVisibleMask = GetVisibleDisplayRefreshMask(static_cast<uint32>(nPending));
 		if (nVisibleMask == DISPLAY_REFRESH_NONE)
 			return;
 
@@ -279,6 +338,22 @@ void CTransferWnd::FlushVisibleDisplayRefreshes()
 			return;
 		}
 	}
+}
+
+void CTransferWnd::FlushExplicitDisplayRefresh()
+{
+	RefreshTransferDisplayRefreshState(false);
+	const uint32 nVisibleMask = BuildExplicitTransferDisplayRefreshMask(
+		m_eTransferDisplayRefreshState,
+		theApp.emuledlg != NULL && theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd,
+		IsWindowVisible() != FALSE,
+		downloadlistctrl.IsWindowVisible() != FALSE,
+		uploadlistctrl.IsWindowVisible() != FALSE,
+		downloadclientsctrl.IsWindowVisible() != FALSE,
+		queuelistctrl.IsWindowVisible() != FALSE,
+		clientlistctrl.IsWindowVisible() != FALSE);
+	if (nVisibleMask != DISPLAY_REFRESH_NONE)
+		FlushDisplayRefreshMask(nVisibleMask);
 }
 
 void CTransferWnd::FlushDisplayRefreshMask(uint32 nMask)
@@ -447,6 +522,14 @@ BOOL CTransferWnd::PreTranslateMessage(MSG *pMsg)
 		}
 		break;
 	case WM_KEYDOWN:
+		if (pMsg->wParam == VK_F5
+			&& GetKeyState(VK_CONTROL) >= 0
+			&& GetKeyState(VK_MENU) >= 0
+			&& GetKeyState(VK_SHIFT) >= 0)
+		{
+			FlushExplicitDisplayRefresh();
+			return TRUE;
+		}
 		// Don't handle Ctrl+Tab in this window. It will be handled by main window.
 		if (pMsg->wParam == VK_TAB && GetKeyState(VK_CONTROL) < 0)
 			return FALSE;

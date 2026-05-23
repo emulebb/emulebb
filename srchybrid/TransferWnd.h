@@ -87,6 +87,7 @@ public:
 	void OnDisableList();
 	void QueueDisplayRefresh(uint32 nMask, bool bForce = false);
 	bool RestartTransferDisplayRefreshTimer();
+	void RefreshTransferDisplayRefreshState(bool bFlushIfRunning = true);
 	void FlushVisibleDisplayRefreshes();
 
 	CUploadListCtrl			uploadlistctrl;
@@ -114,6 +115,7 @@ protected:
 	bool		downloadlistactive;
 	bool		m_bLayoutInited;
 	UINT_PTR	m_uTransferDisplayRefreshTimer;
+	ETransferDisplayRefreshState m_eTransferDisplayRefreshState;
 	std::atomic<LONG> m_nPendingDisplayRefreshMask;
 
 	void	ShowWnd2(EWnd2 uWnd2);
@@ -139,6 +141,10 @@ protected:
 	void	LocalizeToolbars();
 	void	CancelCategoryDrag(bool bResetTabSelection);
 	bool	IsTransferRefreshActive() const;
+	bool	IsMainWindowForegroundOwned() const;
+	uint32	GetVisibleDisplayRefreshMask(uint32 nMask) const;
+	void	StopTransferDisplayRefreshTimer();
+	void	FlushExplicitDisplayRefresh();
 	void	FlushDisplayRefreshMask(uint32 nMask);
 
 	virtual BOOL PreTranslateMessage(MSG *pMsg);
