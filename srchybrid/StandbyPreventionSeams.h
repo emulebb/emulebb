@@ -13,6 +13,14 @@ inline bool ShouldPreventSystemSleep(bool bPreventStandbyEnabled, bool bIsConnec
 }
 
 /**
+ * @brief Returns true when a previously-held assertion should be released now.
+ */
+inline bool ShouldReleaseSystemSleepAssertion(bool bAssertionActive, bool bShouldPreventSystemSleep)
+{
+	return bAssertionActive && !bShouldPreventSystemSleep;
+}
+
+/**
  * @brief Flags used while transfers or connections need the machine to stay awake.
  */
 inline EXECUTION_STATE GetPreventSystemSleepFlags()

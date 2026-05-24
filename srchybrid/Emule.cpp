@@ -3460,13 +3460,15 @@ void CemuleApp::UpdateStandbyPrevention()
 {
 	const unsigned int uUploadQueueLength = uploadqueue != NULL ? static_cast<unsigned int>(uploadqueue->GetUploadQueueLength()) : 0;
 	const unsigned int uDownloadDatarate = downloadqueue != NULL ? downloadqueue->GetDatarate() : 0;
-	if (StandbyPreventionSeams::ShouldPreventSystemSleep(thePrefs.GetPreventStandby(), IsConnected(), uUploadQueueLength, uDownloadDatarate)) {
+	const bool bShouldPreventSystemSleep = StandbyPreventionSeams::ShouldPreventSystemSleep(thePrefs.GetPreventStandby(), IsConnected(), uUploadQueueLength, uDownloadDatarate);
+	if (bShouldPreventSystemSleep) {
 		if (!m_bStandbyOff && ::SetThreadExecutionState(StandbyPreventionSeams::GetPreventSystemSleepFlags()) != 0)
 			m_bStandbyOff = true;
 		return;
 	}
 
-	ReleaseStandbyPrevention();
+	if (StandbyPreventionSeams::ShouldReleaseSystemSleepAssertion(m_bStandbyOff, bShouldPreventSystemSleep))
+		ReleaseStandbyPrevention();
 }
 
 bool CemuleApp::ReleaseStandbyPrevention()
