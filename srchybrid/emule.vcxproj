@@ -293,6 +293,7 @@
       <PrecompiledHeader />
     </ClCompile>
     <ClCompile Include="PartFile.cpp" />
+    <ClCompile Include="PartFileSourceOwnershipSeams.cpp" />
     <ClCompile Include="PartFileWriteThread.cpp" />
     <ClCompile Include="PerfLog.cpp" />
     <ClCompile Include="Pinger.cpp" />
@@ -614,6 +615,7 @@
     <ClInclude Include="Packets.h" />
     <ClInclude Include="Parser.hpp" />
     <ClInclude Include="PartFile.h" />
+    <ClInclude Include="PartFileSourceOwnershipSeams.h" />
     <ClInclude Include="PartFileWriteThread.h" />
     <ClInclude Include="PerfLog.h" />
     <ClInclude Include="Pinger.h" />
