@@ -50,6 +50,7 @@
 #include "PartFilePersistenceSeams.h"
 #include "PartFileSourceOwnershipSeams.h"
 #include "PartFileEndgameSeams.h"
+#include "UpDownClientDeleteSeams.h"
 #include "ProcessLaunchSeams.h"
 #include "SafeFile.h"
 #include "StringConversion.h"
@@ -2610,6 +2611,7 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 					} else if (curTick >= cur_src->GetLastTriedToConnectTime() + MIN2MS(20)) {
 						if (!cur_src->AskForDownload()) {
 							PartFileSourceOwnershipSeams::DetachFailedReaskSourceFromDownloadOwners(cur_src);
+							UpDownClientDeleteSeams::AssertReadyToDelete(cur_src, _T("CPartFile::Process"));
 							delete cur_src;
 							break; //I left this break here as a reminder in case of re-arranging things.
 						}

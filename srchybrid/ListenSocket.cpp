@@ -41,6 +41,7 @@
 #include "ClientUDPSocket.h"
 #include "ResourceOwnershipSeams.h"
 #include "SourceExchangeSeams.h"
+#include "UpDownClientDeleteSeams.h"
 #include "SHAHashSet.h"
 #include "Log.h"
 #include "PathHelpers.h"
@@ -200,6 +201,7 @@ void CClientReqSocket::Disconnect(LPCTSTR pszReason)
 			const CUpDownClient *temp = client;
 			client->socket = NULL;
 			client = NULL;
+			UpDownClientDeleteSeams::AssertReadyToDelete(temp, _T("CClientReqSocket::Disconnect"));
 			delete temp;
 		} else
 			client = NULL;

@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "ClientList.h"
+#include "UpDownClientDeleteSeams.h"
 #include "Kademlia/Kademlia/kademlia.h"
 #include "Kademlia/Kademlia/prefs.h"
 #include "Kademlia/Kademlia/search.h"
@@ -228,6 +229,7 @@ bool CClientList::AttachToAlreadyKnown(CUpDownClient **client, CClientReqSocket 
 	}
 	*client = NULL;
 //***	found_client->SetSourceFrom(tocheck->GetSourceFrom());
+	UpDownClientDeleteSeams::AssertReadyToDelete(tocheck, _T("CClientList::AttachToAlreadyKnown"));
 	delete tocheck;
 	*client = found_client;
 	return true;
@@ -862,6 +864,7 @@ void CClientList::CleanUpClientList()
 				&& pCurClient->socket == NULL)
 			{
 				++cDeleted;
+				UpDownClientDeleteSeams::AssertReadyToDelete(pCurClient, _T("CClientList::CleanUpClientList"));
 				delete pCurClient;
 			}
 		}
@@ -939,8 +942,10 @@ void CClientList::ProcessConnectingClientsList()
 		if (curTick >= cc.dwInserted + SEC2MS(45)) {
 			ASSERT(cc.pClient->GetConnectingState() != CCS_NONE);
 			m_liConnectingClients.RemoveAt(pos2);
-			if (cc.pClient->Disconnected(_T("Connection try timeout")))
+			if (cc.pClient->Disconnected(_T("Connection try timeout"))) {
+				UpDownClientDeleteSeams::AssertReadyToDelete(cc.pClient, _T("CClientList::ProcessConnectingClientsList"));
 				delete cc.pClient;
+			}
 		}
 	}
 }
@@ -954,6 +959,14 @@ void CClientList::RemoveConnectingClient(const CUpDownClient *pToRemove)
 			return;
 		}
 	}
+}
+
+bool CClientList::IsConnectingClient(const CUpDownClient *pToCheck) const
+{
+	for (POSITION pos = m_liConnectingClients.GetHeadPosition(); pos != NULL;)
+		if (m_liConnectingClients.GetNext(pos).pClient == pToCheck)
+			return true;
+	return false;
 }
 
 void CClientList::AddTrackCallbackRequests(uint32 dwIP)

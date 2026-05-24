@@ -44,6 +44,7 @@
 #include "Log.h"
 #include "collection.h"
 #include "UploadQueueSeams.h"
+#include "UpDownClientDeleteSeams.h"
 #include "Win32CallbackTimerSeams.h"
 
 #ifdef _DEBUG
@@ -335,8 +336,10 @@ void CUploadQueue::Process()
 		// logic evaluates the remaining active slots.
 		if (cur_client->socket == NULL) {
 			RemoveFromUploadQueue(cur_client, _T("Uploading to client without socket? (CUploadQueue::Process)"));
-			if (cur_client->Disconnected(_T("CUploadQueue::Process")))
+			if (cur_client->Disconnected(_T("CUploadQueue::Process"))) {
+				UpDownClientDeleteSeams::AssertReadyToDelete(cur_client, _T("CUploadQueue::Process"));
 				delete cur_client;
+			}
 		} else {
 			cur_client->UpdateUploadingStatisticsData();
 			if (pCurClientStruct->m_bIOError) {
@@ -643,16 +646,20 @@ void CUploadQueue::AddClientToQueue(CUpDownClient *client, bool bIgnoreTimelimit
 				if (thePrefs.GetVerbose())
 					AddDebugLogLine(false, (LPCTSTR)GetResString(IDS_SAMEUSERHASH), client->GetUserName(), cur_client->GetUserName(), _T("Both"));
 				RemoveFromWaitingQueue(pos2, true);
-				if (!cur_client->socket && cur_client->Disconnected(_T("AddClientToQueue - same userhash 2")))
+				if (!cur_client->socket && cur_client->Disconnected(_T("AddClientToQueue - same userhash 2"))) {
+					UpDownClientDeleteSeams::AssertReadyToDelete(cur_client, _T("CUploadQueue::AddClientToQueue same userhash 2"));
 					delete cur_client;
+				}
 				return;
 			}
 			//client has a valid secure hash, add him and remove the other one
 			if (thePrefs.GetVerbose())
 				AddDebugLogLine(false, (LPCTSTR)GetResString(IDS_SAMEUSERHASH), client->GetUserName(), cur_client->GetUserName(), cur_client->GetUserName());
 			RemoveFromWaitingQueue(pos2, true);
-			if (!cur_client->socket && cur_client->Disconnected(_T("AddClientToQueue - same userhash 1")))
+			if (!cur_client->socket && cur_client->Disconnected(_T("AddClientToQueue - same userhash 1"))) {
+				UpDownClientDeleteSeams::AssertReadyToDelete(cur_client, _T("CUploadQueue::AddClientToQueue same userhash 1"));
 				delete cur_client;
+			}
 		} else if (client->GetIP() == cur_client->GetIP()) {
 			// same IP, different port, different userhash
 			++cSameIP;

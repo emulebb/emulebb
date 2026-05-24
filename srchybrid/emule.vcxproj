@@ -382,6 +382,7 @@
     <ClCompile Include="TreePropSheetPgFrame.cpp" />
     <ClCompile Include="TreePropSheetPgFrameDef.cpp" />
     <ClCompile Include="UDPSocket.cpp" />
+    <ClCompile Include="UpDownClientDeleteSeams.cpp" />
     <ClCompile Include="WindowsToastNotifier.cpp" />
     <ClCompile Include="WindowsFirewallRepair.cpp" />
     <ClCompile Include="WindowsMaintenanceActions.cpp" />
@@ -721,6 +722,7 @@
     <ClInclude Include="Win32CallbackTimerSeams.h" />
     <ClInclude Include="WindowPlacementSeams.h" />
     <ClInclude Include="UpdownClient.h" />
+    <ClInclude Include="UpDownClientDeleteSeams.h" />
     <ClInclude Include="UploadBandwidthThrottler.h" />
     <ClInclude Include="UploadDiskIOThread.h" />
     <ClInclude Include="UploadListCtrl.h" />

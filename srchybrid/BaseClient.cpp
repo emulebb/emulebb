@@ -38,6 +38,7 @@
 #include "ServerConnect.h"
 #include "DownloadQueue.h"
 #include "UploadQueue.h"
+#include "UpDownClientDeleteSeams.h"
 #include "SearchFile.h"
 #include "SearchList.h"
 #include "SharedFileList.h"
@@ -1756,8 +1757,10 @@ void CUpDownClient::RequestSharedFileList()
 	if (m_iFileListRequested == 0) {
 		AddLogLine(true, GetResString(IDS_SHAREDFILES_REQUEST), GetUserName());
 		m_iFileListRequested = 1;
-		if (!TryToConnect(true))
+		if (!TryToConnect(true)) {
+			UpDownClientDeleteSeams::AssertReadyToDelete(this, _T("CUpDownClient::RequestSharedFileList"));
 			delete this;
+		}
 	} else
 		LogWarning(LOG_STATUSBAR, _T("Requesting shared files from user %s (%u) is already in progress"), GetUserName(), GetUserIDHybrid());
 }
@@ -2167,6 +2170,7 @@ bool CUpDownClient::SafeConnectAndSendPacket(Packet *packet)
 	}
 	m_WaitingPackets_list.AddTail(packet);
 	if (!TryToConnect(true)) {
+		UpDownClientDeleteSeams::AssertReadyToDelete(this, _T("CUpDownClient::SafeConnectAndSendPacket"));
 		delete this;
 		return false;
 	}

@@ -30,6 +30,7 @@
 #include "ProtocolGuards.h"
 #include "SourceExchangeSeams.h"
 #include "PartFileEndgameSeams.h"
+#include "UpDownClientDeleteSeams.h"
 #include "emuledlg.h"
 #include "UserMsgs.h"
 #include "TransferDlg.h"
@@ -1385,8 +1386,10 @@ void CUpDownClient::UDPReaskFNF()
 			/*fall through*/
 		default:
 			theApp.downloadqueue->RemoveSource(this);
-			if (!socket && Disconnected(_T("UDPReaskFNF socket=NULL")))
+			if (!socket && Disconnected(_T("UDPReaskFNF socket=NULL"))) {
+				UpDownClientDeleteSeams::AssertReadyToDelete(this, _T("CUpDownClient::UDPReaskFNF"));
 				delete this;
+			}
 		}
 	} else if (thePrefs.GetVerbose())
 		DebugLogWarning(_T("UDP FNF-Answer: %s - did not remove client because of current download state"), GetUserName());

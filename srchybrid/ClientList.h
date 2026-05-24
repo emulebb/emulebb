@@ -145,6 +145,7 @@ public:
 	// Connecting Clients
 	void	AddConnectingClient(CUpDownClient *pToAdd);
 	void	RemoveConnectingClient(const CUpDownClient *pToRemove);
+	bool	IsConnectingClient(const CUpDownClient *pToCheck) const;
 
 	void	Process();
 	bool	ContainsClientPointer(const CUpDownClient *tocheck) const;
