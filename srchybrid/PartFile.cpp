@@ -416,7 +416,7 @@ CPartFile::~CPartFile()
 		const bool bFlushedBufferedData = FlushBufferedDataForShutdown();
 		CPartFileWriteThread::RemFile(this);
 		m_hpartfile.Close();
-		if (bFlushedBufferedData) {
+		if (PartFilePersistenceSeams::ShouldSavePartMetAfterShutdownFlush(bFlushedBufferedData)) {
 			// Update met file (with the current directory entry)
 			SavePartFile();
 		} else {
@@ -2133,7 +2133,12 @@ void CPartFile::UpdateCompletedInfos()
 	uint64 allgaps = 0;
 	for (POSITION pos = m_gaplist.GetHeadPosition(); pos != NULL;) {
 		const Gap_Struct &gap = m_gaplist.GetNext(pos);
-		allgaps += gap.end - gap.start + 1;
+		uint64 gapBytes = 0;
+		if (PartFilePersistenceSeams::TryMeasureGapBytes(gap.start, gap.end, &gapBytes))
+			allgaps = PartFilePersistenceSeams::SaturatingAddBytes(allgaps, gapBytes);
+		else {
+			ASSERT(0);
+		}
 	}
 
 	UpdateCompletedInfos(allgaps);
@@ -2141,21 +2146,14 @@ void CPartFile::UpdateCompletedInfos()
 
 void CPartFile::UpdateCompletedInfos(uint64 uTotalGaps)
 {
-	if (uTotalGaps > FileSizeSeams::ToUInt64(m_nFileSize)) {
+	const PartFilePersistenceSeams::CompletedInfo completedInfo =
+		PartFilePersistenceSeams::ResolveCompletedInfo(FileSizeSeams::ToUInt64(m_nFileSize), uTotalGaps, !m_gaplist.IsEmpty());
+	if (completedInfo.ClampedInvalidTotalGaps) {
 		ASSERT(0);
-		uTotalGaps = FileSizeSeams::ToUInt64(m_nFileSize);
 	}
 
-	if (m_gaplist.IsEmpty()) {
-		m_percentcompleted = 100.0F;
-		m_completedsize = FileSizeSeams::ToUInt64(m_nFileSize);
-	} else {
-		// 'm_percentcompleted' is only used in GUI, round down to avoid showing "100%" in case
-		// we actually have only "99.9%"
-		const double completedFraction = 1.0 - static_cast<double>(uTotalGaps) / static_cast<double>(FileSizeSeams::ToUInt64(m_nFileSize));
-		m_percentcompleted = static_cast<float>(floor(completedFraction * 1000.0) / 10.0);
-		m_completedsize = FileSizeSeams::ToUInt64(m_nFileSize) - uTotalGaps;
-	}
+	m_percentcompleted = completedInfo.PercentCompleted;
+	m_completedsize = completedInfo.CompletedBytes;
 }
 
 void CPartFile::DrawShareStatusBar(CDC &dc, LPCRECT rect, bool onlygreyrect, bool bFlat) const

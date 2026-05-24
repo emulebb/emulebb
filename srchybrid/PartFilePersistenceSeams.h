@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cmath>
 #include <cstdint>
 #include <string>
 #include <tchar.h>
@@ -212,6 +213,35 @@ inline bool TryMeasureGapBytes(const uint64_t nStartByte, const uint64_t nEndByt
 	return true;
 }
 
+struct CompletedInfo
+{
+	uint64_t CompletedBytes;
+	float PercentCompleted;
+	bool ClampedInvalidTotalGaps;
+};
+
+inline CompletedInfo ResolveCompletedInfo(const uint64_t nFileSize, uint64_t nTotalGapBytes, const bool bHasGaps)
+{
+	CompletedInfo info = { nFileSize, 100.0F, false };
+	if (!bHasGaps)
+		return info;
+
+	if (nTotalGapBytes > nFileSize) {
+		nTotalGapBytes = nFileSize;
+		info.ClampedInvalidTotalGaps = true;
+	}
+
+	info.CompletedBytes = nFileSize - nTotalGapBytes;
+	if (nFileSize == 0u) {
+		info.PercentCompleted = 0.0F;
+		return info;
+	}
+
+	const double completedFraction = 1.0 - static_cast<double>(nTotalGapBytes) / static_cast<double>(nFileSize);
+	info.PercentCompleted = static_cast<float>(std::floor(completedFraction * 1000.0) / 10.0);
+	return info;
+}
+
 inline PartMetWriteGuardDecision ResolvePartMetWriteGuard(const bool bHasCachedResult, const bool bCachedCanWrite, const bool bForceRefresh, const uint64_t nFreeBytes, const uint64_t nRequiredBytes = kMinPartMetWriteFreeBytes)
 {
 	(void)bHasCachedResult;
@@ -250,6 +280,11 @@ inline void InvalidatePartMetWriteGuardState(PartMetWriteGuardState *pState)
 inline bool ShouldFlushPartFileOnDestroy(const bool bIsClosing, const bool bHasWriteThread, const bool bIsWriteThreadRunning)
 {
 	return !bIsClosing || (bHasWriteThread && bIsWriteThreadRunning);
+}
+
+inline bool ShouldSavePartMetAfterShutdownFlush(const bool bFlushedBufferedData)
+{
+	return bFlushedBufferedData;
 }
 
 inline bool PathExists(const LPCTSTR pszPath, const FileSystemOps &rOps = GetDefaultFileSystemOps())
