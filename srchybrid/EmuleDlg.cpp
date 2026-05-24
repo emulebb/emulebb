@@ -3102,6 +3102,7 @@ LRESULT CemuleDlg::OnConsoleThreadEvent(WPARAM wParam, LPARAM lParam)
 void CemuleDlg::OnDestroy()
 {
 	AddDebugLogLine(DLP_VERYLOW, _T("%hs"), __FUNCTION__);
+	DiscardPostedDisplayRefreshRequests(GetSafeHwnd());
 	StopTransferRateDisplayTimer();
 	StopBindLossMonitor();
 	m_wndWindowsToastNotifier.Shutdown();
@@ -3144,6 +3145,7 @@ void CemuleDlg::OnClose()
 		::InterlockedExchange(&closing, 0);
 		return;
 	}
+	DiscardPostedDisplayRefreshRequests(GetSafeHwnd());
 	theApp.ReleaseStandbyPrevention();
 	StopBindLossMonitor();
 	notifierenabled = false;
@@ -5399,13 +5401,12 @@ LRESULT CemuleDlg::OnWebSetCatPrio(WPARAM wParam, LPARAM lParam)
 
 LRESULT CemuleDlg::OnPartFileDisplayUpdate(WPARAM wParam, LPARAM)
 {
-	CPartFileDisplayUpdateRequest *pRequest = reinterpret_cast<CPartFileDisplayUpdateRequest*>(wParam);
-	if (pRequest == NULL)
+	std::unique_ptr<CPartFileDisplayUpdateRequest> pRequest = TakePostedDisplayRefreshRequest<CPartFileDisplayUpdateRequest>(wParam);
+	if (pRequest.get() == NULL)
 		return 0;
 
 	CPartFile *pPartFile = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetFileByID(pRequest->fileHash) : NULL;
 	const bool bForce = pRequest->force;
-	delete pRequest;
 
 	if (pPartFile != NULL)
 		pPartFile->DispatchQueuedDisplayUpdate(bForce);
@@ -5414,13 +5415,12 @@ LRESULT CemuleDlg::OnPartFileDisplayUpdate(WPARAM wParam, LPARAM)
 
 LRESULT CemuleDlg::OnClientDisplayUpdate(WPARAM wParam, LPARAM)
 {
-	CClientDisplayUpdateRequest *pRequest = reinterpret_cast<CClientDisplayUpdateRequest*>(wParam);
-	if (pRequest == NULL)
+	std::unique_ptr<CClientDisplayUpdateRequest> pRequest = TakePostedDisplayRefreshRequest<CClientDisplayUpdateRequest>(wParam);
+	if (pRequest.get() == NULL)
 		return 0;
 
 	CUpDownClient *pClient = ResolveQueuedClient(*pRequest);
 	const bool bForce = pRequest->force;
-	delete pRequest;
 
 	if (pClient != NULL)
 		pClient->DispatchQueuedDisplayUpdate(bForce);
@@ -5429,8 +5429,8 @@ LRESULT CemuleDlg::OnClientDisplayUpdate(WPARAM wParam, LPARAM)
 
 LRESULT CemuleDlg::OnPartFileProgressUpdate(WPARAM wParam, LPARAM)
 {
-	CPartFileProgressUpdateRequest *pRequest = reinterpret_cast<CPartFileProgressUpdateRequest*>(wParam);
-	if (pRequest == NULL)
+	std::unique_ptr<CPartFileProgressUpdateRequest> pRequest = TakePostedDisplayRefreshRequest<CPartFileProgressUpdateRequest>(wParam);
+	if (pRequest.get() == NULL)
 		return 0;
 
 	CPartFile *pPartFile = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetFileByID(pRequest->fileHash) : NULL;
@@ -5441,7 +5441,6 @@ LRESULT CemuleDlg::OnPartFileProgressUpdate(WPARAM wParam, LPARAM)
 		pPartFile->UpdateDisplayedInfo(true);
 	}
 
-	delete pRequest;
 	return 0;
 }
 

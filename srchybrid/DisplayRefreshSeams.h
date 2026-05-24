@@ -5,8 +5,12 @@
 #include <atomic>
 #include <cstdint>
 #include <memory>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
 
 #define EMULE_TEST_HAVE_DISPLAY_REFRESH_OWNED_POST 1
+#define EMULE_TEST_HAVE_DISPLAY_REFRESH_POST_REGISTRY 1
 
 enum EDesktopUiRefreshIntervalMs : uint32_t
 {
@@ -65,6 +69,52 @@ struct CClientDisplayUpdateRequest
 	USHORT reserved;
 	bool force;
 };
+
+namespace DisplayRefreshPostSeams
+{
+	struct SPostedPayloadEntry
+	{
+		ULONG_PTR nOwnerKey = 0;
+		void *pPayload = NULL;
+		void (*pfnDestroy)(void *) = NULL;
+	};
+
+	inline std::atomic<ULONG_PTR>& GetNextPostedPayloadToken()
+	{
+		static std::atomic<ULONG_PTR> s_nNextPostedPayloadToken(1);
+		return s_nNextPostedPayloadToken;
+	}
+
+	inline std::mutex& GetPostedPayloadMutex()
+	{
+		static std::mutex s_postedPayloadMutex;
+		return s_postedPayloadMutex;
+	}
+
+	inline std::unordered_map<ULONG_PTR, SPostedPayloadEntry>& GetPostedPayloads()
+	{
+		static std::unordered_map<ULONG_PTR, SPostedPayloadEntry> s_postedPayloads;
+		return s_postedPayloads;
+	}
+
+	inline std::unordered_multimap<ULONG_PTR, ULONG_PTR>& GetPostedPayloadOwnerIndex()
+	{
+		static std::unordered_multimap<ULONG_PTR, ULONG_PTR> s_postedPayloadOwnerIndex;
+		return s_postedPayloadOwnerIndex;
+	}
+
+	inline void RemovePostedPayloadOwnerIndexEntryUnlocked(ULONG_PTR nOwnerKey, ULONG_PTR nToken)
+	{
+		std::unordered_multimap<ULONG_PTR, ULONG_PTR> &ownerIndex = GetPostedPayloadOwnerIndex();
+		const auto range = ownerIndex.equal_range(nOwnerKey);
+		for (auto it = range.first; it != range.second; ++it) {
+			if (it->second == nToken) {
+				ownerIndex.erase(it);
+				break;
+			}
+		}
+	}
+}
 
 /**
  * @brief Reports whether the caller must marshal a display refresh back to the main thread.
@@ -326,21 +376,115 @@ inline LONG DrainPendingDisplayMask(std::atomic<LONG> &rnPendingMask, LONG nMask
 }
 
 /**
- * @brief Posts a heap-owned display refresh request and releases it only after successful delivery.
+ * @brief Converts a display target window into the owner key used for pending payload cleanup.
+ */
+inline ULONG_PTR GetDisplayRefreshPayloadOwnerKey(HWND hTargetWnd)
+{
+	return reinterpret_cast<ULONG_PTR>(hTargetWnd);
+}
+
+/**
+ * @brief Releases a queued display refresh payload with its original concrete type.
+ */
+template <typename TRequest>
+inline void DestroyPostedDisplayRefreshPayload(void *pPayload)
+{
+	delete static_cast<TRequest*>(pPayload);
+}
+
+/**
+ * @brief Removes and returns a queued display refresh request after the UI thread consumes its message.
+ */
+template <typename TRequest>
+inline std::unique_ptr<TRequest> TakePostedDisplayRefreshRequest(WPARAM wParam)
+{
+	const ULONG_PTR nToken = static_cast<ULONG_PTR>(wParam);
+
+	void *pPayload = NULL;
+	ULONG_PTR nOwnerKey = 0;
+	{
+		std::lock_guard<std::mutex> lock(DisplayRefreshPostSeams::GetPostedPayloadMutex());
+		std::unordered_map<ULONG_PTR, DisplayRefreshPostSeams::SPostedPayloadEntry> &postedPayloads = DisplayRefreshPostSeams::GetPostedPayloads();
+		const auto it = postedPayloads.find(nToken);
+		if (it == postedPayloads.end())
+			return std::unique_ptr<TRequest>();
+
+		pPayload = it->second.pPayload;
+		nOwnerKey = it->second.nOwnerKey;
+		postedPayloads.erase(it);
+		DisplayRefreshPostSeams::RemovePostedPayloadOwnerIndexEntryUnlocked(nOwnerKey, nToken);
+	}
+
+	return std::unique_ptr<TRequest>(static_cast<TRequest*>(pPayload));
+}
+
+/**
+ * @brief Drops every queued display refresh payload still owned by a window that is tearing down.
+ */
+inline void DiscardPostedDisplayRefreshRequests(HWND hTargetWnd)
+{
+	if (hTargetWnd == NULL)
+		return;
+
+	const ULONG_PTR nOwnerKey = GetDisplayRefreshPayloadOwnerKey(hTargetWnd);
+	std::vector<DisplayRefreshPostSeams::SPostedPayloadEntry> queuedPayloads;
+	{
+		std::lock_guard<std::mutex> lock(DisplayRefreshPostSeams::GetPostedPayloadMutex());
+		std::unordered_map<ULONG_PTR, DisplayRefreshPostSeams::SPostedPayloadEntry> &postedPayloads = DisplayRefreshPostSeams::GetPostedPayloads();
+		std::unordered_multimap<ULONG_PTR, ULONG_PTR> &ownerIndex = DisplayRefreshPostSeams::GetPostedPayloadOwnerIndex();
+		const auto range = ownerIndex.equal_range(nOwnerKey);
+		for (auto it = range.first; it != range.second; ++it) {
+			const auto payloadIt = postedPayloads.find(it->second);
+			if (payloadIt != postedPayloads.end()) {
+				queuedPayloads.push_back(payloadIt->second);
+				postedPayloads.erase(payloadIt);
+			}
+		}
+		ownerIndex.erase(range.first, range.second);
+	}
+
+	for (size_t i = 0; i < queuedPayloads.size(); ++i) {
+		if (queuedPayloads[i].pfnDestroy != NULL)
+			queuedPayloads[i].pfnDestroy(queuedPayloads[i].pPayload);
+	}
+}
+
+/**
+ * @brief Posts a heap-owned display refresh request through a registry token.
  */
 template <typename TRequest>
 inline bool PostOwnedDisplayRefreshRequest(HWND hTargetWnd, UINT uMessage, std::unique_ptr<TRequest> &rpRequest)
 {
-	if (hTargetWnd == NULL || rpRequest == NULL) {
+	if (hTargetWnd == NULL || rpRequest == NULL || ::IsWindow(hTargetWnd) == FALSE) {
 		rpRequest.reset();
 		return false;
 	}
 
-	if (::PostMessage(hTargetWnd, uMessage, reinterpret_cast<WPARAM>(rpRequest.get()), 0) == FALSE) {
-		rpRequest.reset();
+	const ULONG_PTR nToken = DisplayRefreshPostSeams::GetNextPostedPayloadToken().fetch_add(1, std::memory_order_relaxed);
+	const ULONG_PTR nOwnerKey = GetDisplayRefreshPayloadOwnerKey(hTargetWnd);
+	std::unique_ptr<TRequest> pRequest(std::move(rpRequest));
+	try {
+		std::lock_guard<std::mutex> lock(DisplayRefreshPostSeams::GetPostedPayloadMutex());
+		std::unordered_map<ULONG_PTR, DisplayRefreshPostSeams::SPostedPayloadEntry> &postedPayloads = DisplayRefreshPostSeams::GetPostedPayloads();
+		postedPayloads.emplace(
+			nToken,
+			DisplayRefreshPostSeams::SPostedPayloadEntry{nOwnerKey, pRequest.get(), &DestroyPostedDisplayRefreshPayload<TRequest>});
+		try {
+			DisplayRefreshPostSeams::GetPostedPayloadOwnerIndex().emplace(nOwnerKey, nToken);
+		} catch (...) {
+			postedPayloads.erase(nToken);
+			throw;
+		}
+		(void)pRequest.release();
+	} catch (...) {
 		return false;
 	}
 
-	(void)rpRequest.release();
+	if (::PostMessage(hTargetWnd, uMessage, static_cast<WPARAM>(nToken), 0) == FALSE) {
+		std::unique_ptr<TRequest> pDroppedPayload = TakePostedDisplayRefreshRequest<TRequest>(static_cast<WPARAM>(nToken));
+		(void)pDroppedPayload;
+		return false;
+	}
+
 	return true;
 }
