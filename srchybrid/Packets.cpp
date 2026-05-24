@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "Packets.h"
 #include "OtherFunctions.h"
+#include "PacketsSeams.h"
 #include "ProtocolGuards.h"
 #include "SafeFile.h"
 #include "StringConversion.h"
@@ -337,20 +338,18 @@ char* CRawPacket::DetachPacket()
 CTag::CTag(LPCSTR pszName, uint64 uVal, bool bInt64)
 	: m_sName(pszName)
 	, m_nBlobSize()
-	, m_uType(bInt64 ? TAGTYPE_UINT64 : TAGTYPE_UINT32)
+	, m_uType(PacketsSeams::SelectIntegerTagType(uVal, bInt64))
 	, m_uName()
 {
-	ASSERT(uVal <= _UI32_MAX || bInt64);
 	m_uVal = uVal;
 	ASSERT_VALID(this);
 }
 
 CTag::CTag(uint8 uName, uint64 uVal, bool bInt64)
 	: m_nBlobSize()
-	, m_uType(bInt64 ? TAGTYPE_UINT64 : TAGTYPE_UINT32)
+	, m_uType(PacketsSeams::SelectIntegerTagType(uVal, bInt64))
 	, m_uName(uName)
 {
-	ASSERT(uVal <= _UI32_MAX || bInt64);
 	m_uVal = uVal;
 	ASSERT_VALID(this);
 }
