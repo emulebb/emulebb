@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "StdAfx.h"
 #include "corruptionblackbox.h"
+#include "CorruptionBlackBoxSeams.h"
 #include "updownclient.h"
 #include "log.h"
 #include "emule.h"
@@ -124,7 +125,7 @@ void CCorruptionBlackBox::ReceivedData(uint64 nStartPos, uint64 nEndPos, const C
 
 					m_aaRecords[nPart].Add(CCBBRecord(nOldStartPos, nRelStartPos - 1, dwOldIP));
 					//prepare to add one more block
-					nRelStartPos = cbbRec.m_nEndPos + 1;
+					nRelStartPos = nRelEndPos + 1;
 					nRelEndPos = nOldEndPos;
 					dwSenderIP = dwOldIP;
 					ndbgRewritten += nRelEndPos - nRelStartPos + 1;
@@ -174,32 +175,16 @@ void CCorruptionBlackBox::VerifiedData(uint64 nStartPos, uint64 nEndPos)
 	for (INT_PTR i = 0; i < m_aaRecords[nPart].GetCount(); ++i) {
 		CCBBRecord &cbbRec(m_aaRecords[nPart][i]);
 		if (cbbRec.m_BBRStatus == BBR_NONE || cbbRec.m_BBRStatus == BBR_VERIFIED) {
-			if (cbbRec.m_nStartPos >= nRelStartPos && cbbRec.m_nEndPos <= nRelEndPos)
-				; //all this block is inside the new verified data; only set status to verified
-			else if (cbbRec.m_nStartPos < nRelStartPos && cbbRec.m_nEndPos > nRelEndPos) {
-				// new data fully within this block; split this block into 3
-				uint64 nOldStartPos = cbbRec.m_nStartPos;
-				uint64 nOldEndPos = cbbRec.m_nEndPos;
-				cbbRec.m_nStartPos = nRelStartPos;
-				cbbRec.m_nEndPos = nRelEndPos;
-				m_aaRecords[nPart].Add(CCBBRecord(nRelEndPos + 1, nOldEndPos, cbbRec.m_dwIP, cbbRec.m_BBRStatus));
-				m_aaRecords[nPart].Add(CCBBRecord(nOldStartPos, nRelStartPos - 1, cbbRec.m_dwIP, cbbRec.m_BBRStatus));
-			} else if (cbbRec.m_nStartPos >= nRelStartPos && cbbRec.m_nStartPos <= nRelEndPos) {
-				// split off the tail of this block
-				uint64 nOldEndPos = cbbRec.m_nEndPos;
-				cbbRec.m_nEndPos = nRelEndPos;
-				m_aaRecords[nPart].Add(CCBBRecord(nRelEndPos + 1, nOldEndPos, cbbRec.m_dwIP, cbbRec.m_BBRStatus));
-			} else if (cbbRec.m_nEndPos >= nRelStartPos && cbbRec.m_nEndPos <= nRelEndPos) {
-				// split off the head of this block
-				uint64 nOldStartPos = cbbRec.m_nStartPos;
-				cbbRec.m_nStartPos = nRelStartPos;
-				m_aaRecords[nPart].Add(CCBBRecord(nOldStartPos, nRelStartPos - 1, cbbRec.m_dwIP, cbbRec.m_BBRStatus));
-			} else
-				continue;
-			cbbRec.m_BBRStatus = BBR_VERIFIED;
 #ifdef _DEBUG
-			nDbgVerifiedBytes += cbbRec.m_nEndPos - cbbRec.m_nStartPos + 1;
-			mapDebug[cbbRec.m_dwIP] = 1;
+			const uint32 dwIP = cbbRec.m_dwIP;
+#endif
+			const uint64 nMarkedBytes = CorruptionBlackBoxSeams::MarkRecordOverlapAndAppendRemainders<CRecordArray, CCBBRecord>(
+				m_aaRecords[nPart], i, nRelStartPos, nRelEndPos, BBR_VERIFIED);
+			if (nMarkedBytes == 0u)
+				continue;
+#ifdef _DEBUG
+			nDbgVerifiedBytes += nMarkedBytes;
+			mapDebug[dwIP] = 1;
 #endif
 			}
 	}
@@ -229,30 +214,11 @@ void CCorruptionBlackBox::CorruptedData(uint64 nStartPos, uint64 nEndPos)
 	for (INT_PTR i = 0; i < m_aaRecords[nPart].GetCount(); ++i) {
 		CCBBRecord &cbbRec(m_aaRecords[nPart][i]);
 		if (cbbRec.m_BBRStatus == BBR_NONE) {
-			if (cbbRec.m_nStartPos >= nRelStartPos && cbbRec.m_nEndPos <= nRelEndPos)
-				;
-			else if (cbbRec.m_nStartPos < nRelStartPos && cbbRec.m_nEndPos > nRelEndPos) {
-				// need to split it 2*
-				uint64 nOldStartPos = cbbRec.m_nStartPos;
-				uint64 nOldEndPos = cbbRec.m_nEndPos;
-				cbbRec.m_nStartPos = nRelStartPos;
-				cbbRec.m_nEndPos = nRelEndPos;
-				m_aaRecords[nPart].Add(CCBBRecord(nRelEndPos + 1, nOldEndPos, cbbRec.m_dwIP, cbbRec.m_BBRStatus));
-				m_aaRecords[nPart].Add(CCBBRecord(nOldStartPos, nRelStartPos - 1, cbbRec.m_dwIP, cbbRec.m_BBRStatus));
-			} else if (cbbRec.m_nStartPos >= nRelStartPos && cbbRec.m_nStartPos <= nRelEndPos) {
-				// need to split it
-				uint64 nOldEndPos = cbbRec.m_nEndPos;
-				cbbRec.m_nEndPos = nRelEndPos;
-				m_aaRecords[nPart].Add(CCBBRecord(nRelEndPos + 1, nOldEndPos, cbbRec.m_dwIP, cbbRec.m_BBRStatus));
-			} else if (cbbRec.m_nEndPos >= nRelStartPos && cbbRec.m_nEndPos <= nRelEndPos) {
-				// need to split it
-				uint64 nOldStartPos = cbbRec.m_nStartPos;
-				cbbRec.m_nStartPos = nRelStartPos;
-				m_aaRecords[nPart].Add(CCBBRecord(nOldStartPos, nRelStartPos - 1, cbbRec.m_dwIP, cbbRec.m_BBRStatus));
-			} else
+			const uint64 nMarkedBytes = CorruptionBlackBoxSeams::MarkRecordOverlapAndAppendRemainders<CRecordArray, CCBBRecord>(
+				m_aaRecords[nPart], i, nRelStartPos, nRelEndPos, BBR_CORRUPTED);
+			if (nMarkedBytes == 0u)
 				continue;
-			cbbRec.m_BBRStatus = BBR_CORRUPTED;
-			nDbgVerifiedBytes += cbbRec.m_nEndPos - cbbRec.m_nStartPos + 1;
+			nDbgVerifiedBytes += nMarkedBytes;
 		}
 	}
 	AddDebugLogLine(DLP_HIGH, false, _T("Found and marked %I64u recorded bytes of %I64u as corrupted in the CorruptionBlackBox records"), nDbgVerifiedBytes, (nEndPos - nStartPos) + 1);
