@@ -25,6 +25,7 @@
 #include "emule.h"
 #include "KnownFileList.h"
 #include "KnownFileListSeams.h"
+#include "KnownFileHashOpenSeams.h"
 #include "SharedFileList.h"
 #include "UpDownClient.h"
 #include "ClientList.h"
@@ -81,6 +82,24 @@ void LogKnownFileOpenFailure(LPCTSTR pszFilePath, DWORD dwError)
 	if (dwError == ERROR_SUCCESS)
 		dwError = ERROR_OPEN_FAILED;
 	LogError(GetResString(IDS_ERR_FILEOPEN), pszFilePath, (LPCTSTR)GetErrorMessage(dwError));
+}
+
+FILE *OpenFileStreamSharedReadForHashing(const CString &strFilePath)
+{
+	DWORD dwLastOpenError = ERROR_SUCCESS;
+	for (unsigned uAttempt = 0; uAttempt < KnownFileHashOpenSeams::kHashOpenRetryAttempts; ++uAttempt) {
+		FILE *pFile = OpenFileStreamSharedReadLongPath(strFilePath, false);
+		if (pFile != NULL)
+			return pFile;
+
+		dwLastOpenError = ::GetLastError();
+		if (theApp.IsClosing() || !KnownFileHashOpenSeams::ShouldRetryHashOpen(dwLastOpenError, uAttempt))
+			break;
+		::Sleep(KnownFileHashOpenSeams::kHashOpenRetryDelayMs);
+	}
+
+	::SetLastError(dwLastOpenError);
+	return NULL;
 }
 
 bool QueuePartFileProgressUpdate(const CKnownFileProgressTargetSnapshot *pProgressTarget, uint32 uProgress)
@@ -415,7 +434,7 @@ bool CKnownFile::CreateFromFile(LPCTSTR in_directory, LPCTSTR in_filename, const
 		return false;
 	}
 	SetFilePath(strFilePath);
-	FILE *file = OpenFileStreamSharedReadLongPath(strFilePath, false); // can not use _SH_DENYWR because we may access a completing part file
+	FILE *file = OpenFileStreamSharedReadForHashing(strFilePath); // can not use _SH_DENYWR because we may access a completing part file
 	if (!file) {
 		const DWORD dwOpenError = ::GetLastError();
 		LogKnownFileOpenFailure(strFilePath, dwOpenError);
@@ -545,7 +564,7 @@ bool CKnownFile::CreateAICHHashSetOnly()
 {
 	ASSERT(!IsPartFile());
 
-	FILE *file = OpenFileStreamSharedReadLongPath(GetFilePath(), false); // can not use _SH_DENYWR because we may access a completing part file
+	FILE *file = OpenFileStreamSharedReadForHashing(GetFilePath()); // can not use _SH_DENYWR because we may access a completing part file
 	if (!file) {
 		const DWORD dwOpenError = ::GetLastError();
 		LogKnownFileOpenFailure(GetFilePath(), dwOpenError);
