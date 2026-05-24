@@ -5,6 +5,8 @@
 #include "DisplayRefreshSeams.h"
 
 inline constexpr std::uint32_t kUploadTimerSlowLoopThresholdMs = 100u;
+inline constexpr std::uint64_t kRetiredUploadEntryPendingIoWarningMs = 30000u;
+inline constexpr std::uint64_t kRetiredUploadEntryPendingIoWarningRepeatMs = 30000u;
 
 enum UploadQueueEntryAccessState
 {
@@ -31,6 +33,29 @@ inline UploadQueueEntryAccessState ClassifyUploadQueueEntryAccess(bool bFoundInA
 inline bool CanReclaimUploadQueueEntry(bool bRetired, int nPendingIOBlocks)
 {
 	return bRetired && nPendingIOBlocks == 0;
+}
+
+inline bool ShouldWarnRetiredUploadEntryPendingIo(
+	bool bRetired,
+	int nPendingIOBlocks,
+	std::uint64_t ullCurrentTick,
+	std::uint64_t ullRetiredTick,
+	std::uint64_t ullLastWarningTick,
+	std::uint64_t ullWarningThresholdMs = kRetiredUploadEntryPendingIoWarningMs,
+	std::uint64_t ullWarningRepeatMs = kRetiredUploadEntryPendingIoWarningRepeatMs)
+{
+	if (!bRetired || nPendingIOBlocks <= 0 || ullRetiredTick == 0 || ullWarningThresholdMs == 0)
+		return false;
+
+	const std::uint64_t ullRetiredAgeMs = ullCurrentTick >= ullRetiredTick ? ullCurrentTick - ullRetiredTick : 0;
+	if (ullRetiredAgeMs < ullWarningThresholdMs)
+		return false;
+
+	if (ullLastWarningTick == 0)
+		return true;
+
+	const std::uint64_t ullSinceLastWarningMs = ullCurrentTick >= ullLastWarningTick ? ullCurrentTick - ullLastWarningTick : 0;
+	return ullSinceLastWarningMs >= ullWarningRepeatMs;
 }
 
 inline bool PreferHigherUploadQueueScore(std::uint32_t uCandidateScore, std::uint32_t uBestScore)

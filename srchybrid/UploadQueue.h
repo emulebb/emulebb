@@ -31,6 +31,7 @@ struct UploadingToClient_Struct
 		, m_bRetired()
 		, m_nPendingIOBlocks()
 		, m_ullRetiredTick()
+		, m_ullLastRetiredPendingIOLogTick()
 	{
 	}
 	~UploadingToClient_Struct();
@@ -44,6 +45,7 @@ struct UploadingToClient_Struct
 	bool												m_bRetired;
 	std::atomic<LONG>									m_nPendingIOBlocks;
 	ULONGLONG											m_ullRetiredTick;
+	ULONGLONG											m_ullLastRetiredPendingIOLogTick;
 };
 typedef CTypedPtrList<CPtrList, UploadingToClient_Struct*> CUploadingPtrList;
 

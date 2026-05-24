@@ -783,6 +783,7 @@ CUploadQueue::RetiredUploadClientStructContext CUploadQueue::RemoveUploadClientS
 	uploadinglist.RemoveAt(pos);
 	pUploadClientStruct->m_bRetired = true;
 	pUploadClientStruct->m_ullRetiredTick = ::GetTickCount64();
+	pUploadClientStruct->m_ullLastRetiredPendingIOLogTick = 0;
 	m_retiredUploadingList.AddTail(pUploadClientStruct);
 	return {pUploadClientStruct};
 }
@@ -801,13 +802,27 @@ void CUploadQueue::ReclaimRetiredUploadClientStructs()
 	CSingleLock lockUploadList(&m_csUploadListMainThrdWriteOtherThrdsRead, TRUE);
 	ASSERT(lockUploadList.IsLocked());
 
+	const ULONGLONG ullCurrentTick = ::GetTickCount64();
 	for (POSITION pos = m_retiredUploadingList.GetHeadPosition(); pos != NULL;) {
 		POSITION curPos = pos;
 		UploadingToClient_Struct *pUploadClientStruct = m_retiredUploadingList.GetNext(pos);
 		ASSERT(pUploadClientStruct->m_bRetired);
-		if (CanReclaimUploadQueueEntry(pUploadClientStruct->m_bRetired, pUploadClientStruct->m_nPendingIOBlocks.load())) {
+		const LONG nPendingIOBlocks = pUploadClientStruct->m_nPendingIOBlocks.load();
+		if (CanReclaimUploadQueueEntry(pUploadClientStruct->m_bRetired, nPendingIOBlocks)) {
 			m_retiredUploadingList.RemoveAt(curPos);
 			delete pUploadClientStruct;
+		} else if (ShouldWarnRetiredUploadEntryPendingIo(
+			pUploadClientStruct->m_bRetired,
+			nPendingIOBlocks,
+			ullCurrentTick,
+			pUploadClientStruct->m_ullRetiredTick,
+			pUploadClientStruct->m_ullLastRetiredPendingIOLogTick))
+		{
+			const ULONGLONG ullRetiredAgeMs = ullCurrentTick >= pUploadClientStruct->m_ullRetiredTick ? ullCurrentTick - pUploadClientStruct->m_ullRetiredTick : 0;
+			pUploadClientStruct->m_ullLastRetiredPendingIOLogTick = ullCurrentTick;
+			AddDebugLogLine(DLP_HIGH, false, _T("UploadQueue: retired upload entry is still waiting for %ld pending disk I/O block(s) after %I64u ms; delaying reclaim"),
+				nPendingIOBlocks,
+				static_cast<uint64>(ullRetiredAgeMs));
 		}
 	}
 }
@@ -1006,6 +1021,7 @@ void CUploadQueue::DeleteAll()
 		UploadingToClient_Struct *pUploadClientStruct = uploadinglist.RemoveHead();
 		pUploadClientStruct->m_bRetired = true;
 		pUploadClientStruct->m_ullRetiredTick = ::GetTickCount64();
+		pUploadClientStruct->m_ullLastRetiredPendingIOLogTick = 0;
 		deletingList.AddTail(pUploadClientStruct);
 	}
 	while (!m_retiredUploadingList.IsEmpty())
