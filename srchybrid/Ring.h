@@ -16,6 +16,8 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+#include <type_traits>
+
 typedef struct {
 	uint64	datalen;
 	ULONGLONG timestamp;
@@ -23,6 +25,8 @@ typedef struct {
 
 template<class TYPE> class CRing
 {
+	static_assert(std::is_trivially_copyable<TYPE>::value, "CRing requires trivially copyable element types");
+
 	UINT_PTR m_nCount;		//the number of added items
 	UINT_PTR m_nIncrement;	//increase capacity by this number of items
 	UINT_PTR m_nSize;		//buffer capacity
