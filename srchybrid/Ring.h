@@ -35,6 +35,8 @@ template<class TYPE> class CRing
 public:
 	explicit CRing(UINT_PTR nSize = 128, UINT_PTR nIncrement = 128); //zero values default to 128
 	~CRing()								{ delete[] m_pData; }
+	CRing(const CRing&) = delete;
+	CRing& operator=(const CRing&) = delete;
 	const TYPE& operator [](UINT_PTR index) const	{ ASSERT(index < m_nCount); return m_pData[(index + (m_pHead - m_pData)) % m_nSize]; }
 
 	void AddTail(const TYPE &newElement);
