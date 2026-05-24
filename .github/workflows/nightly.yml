@@ -213,3 +213,35 @@ jobs:
             --title "eMuleBB nightly ${RELEASE_DATE} (${SHORT_SHA})" \
             --notes-file notes.md \
             --prerelease
+
+      - name: Keep only latest nightly release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NIGHTLY_TAG_PREFIX: emulebb-nightly-
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq_filter='.[] | select(.isPrerelease and (.tagName | startswith("'"${NIGHTLY_TAG_PREFIX}"'"))) | [.createdAt, .tagName] | @tsv'
+          mapfile -t old_tags < <(
+            gh release list \
+              --repo "${GITHUB_REPOSITORY}" \
+              --limit 100 \
+              --json tagName,isPrerelease,createdAt \
+              --jq "${jq_filter}" |
+            sort -r |
+            tail -n +2 |
+            cut -f2
+          )
+
+          if [[ "${#old_tags[@]}" -eq 0 ]]; then
+            echo "No older nightly releases to delete."
+            exit 0
+          fi
+
+          for tag in "${old_tags[@]}"; do
+            echo "Deleting old nightly release and tag: ${tag}"
+            gh release delete "${tag}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --cleanup-tag \
+              --yes
+          done
