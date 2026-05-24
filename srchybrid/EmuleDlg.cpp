@@ -5552,7 +5552,7 @@ LRESULT CemuleDlg::OnWebGUIInteraction(WPARAM wParam, LPARAM lParam)
 		if (!lParam)
 			theApp.serverconnect->ConnectToAnyServer();
 		else
-			theApp.serverconnect->ConnectToServer(reinterpret_cast<CServer*>(lParam));
+			theApp.serverconnect->ConnectToServer(reinterpret_cast<CServer*>(lParam), false, false, true);
 		break;
 	case WEBGUIIA_DISCONNECT:
 		if (lParam != 2)	// !KAD

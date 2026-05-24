@@ -48,7 +48,7 @@ public:
 
 	void	ConnectToAnyServer()			{ ConnectToAnyServer(0, true, true, false); }
 	void	ConnectToAnyServer(INT_PTR startAt, bool prioSort = false, bool isAuto = true, bool bNoCrypt = false);
-	void	ConnectToServer(CServer *server, bool multiconnect = false, bool bNoCrypt = false);
+	void	ConnectToServer(CServer *server, bool multiconnect = false, bool bNoCrypt = false, bool bManual = false);
 	void	StopConnectionTry();
 	static  VOID CALLBACK RetryConnectTimer(HWND hWnd, UINT nMsg, UINT_PTR nId, DWORD dwTime) noexcept;
 
@@ -74,6 +74,7 @@ public:
 
 	bool	AwaitingTestFromIP(uint32 dwIP) const;
 	bool	IsConnectedObfuscated() const;
+	bool	AwaitingConnectionToServer(const CServer *pServer) const;
 
 	uint32	m_clientid;
 	uint32	m_curuser;

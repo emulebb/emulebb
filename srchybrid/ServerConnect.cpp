@@ -33,6 +33,7 @@
 #include "ServerWnd.h"
 #include "TaskbarNotifier.h"
 #include "Log.h"
+#include "ServerConnectSeams.h"
 #include "Win32CallbackTimerSeams.h"
 #include "IPv4AddressSeams.h"
 
@@ -47,12 +48,15 @@ void CServerConnect::TryAnotherConnectionRequest()
 	if (connectionattempts.GetCount() < 2 - static_cast<INT_PTR>(thePrefs.IsSafeServerConnectEnabled())) {
 		CServer *next_server = theApp.serverlist->GetNextServer(m_bTryObfuscated);
 		if (next_server == NULL) {
-			if (connectionattempts.IsEmpty()) {
-				if (m_bTryObfuscated && !thePrefs.IsCryptLayerRequired()) {
-					// try all servers on the non-obfuscated port next
-					m_bTryObfuscated = false;
-					ConnectToAnyServer(0, true, true, true);
-				} else if (m_idRetryTimer == 0) {
+			switch (ServerConnectSeams::SelectServerListExhaustionAction(!connectionattempts.IsEmpty(), m_bTryObfuscated, thePrefs.IsCryptLayerRequired())) {
+			case ServerConnectSeams::EServerListExhaustionAction::FallbackToPlain:
+				// try all servers on the non-obfuscated port next
+				DebugLog(_T("Server retry path: falling back to non-obfuscated server connections"));
+				m_bTryObfuscated = false;
+				ConnectToAnyServer(0, true, true, true);
+				break;
+			case ServerConnectSeams::EServerListExhaustionAction::ScheduleRetry:
+				if (m_idRetryTimer == 0) {
 					// 05-Nov-2003: If we have a very short server list, we could put serious load
 					// on those few servers if we start the next connection tries without waiting.
 					LogWarning(LOG_STATUSBAR, GetResString(IDS_OUTOFSERVERS));
@@ -62,6 +66,9 @@ void CServerConnect::TryAnotherConnectionRequest()
 					if (thePrefs.GetVerbose() && !m_idRetryTimer)
 						DebugLogError(_T("Failed to create 'server connect retry' timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
 				}
+				break;
+			case ServerConnectSeams::EServerListExhaustionAction::None:
+				break;
 			}
 		} else
 			// Barry - Only auto-connect to static server option
@@ -120,10 +127,15 @@ void CServerConnect::ConnectToAnyServer(INT_PTR startAt, bool prioSort, bool isA
 	}
 }
 
-void CServerConnect::ConnectToServer(CServer *server, bool multiconnect, bool bNoCrypt)
+void CServerConnect::ConnectToServer(CServer *server, bool multiconnect, bool bNoCrypt, bool bManual)
 {
 	if (theApp.IsStartupBindBlocked()) {
 		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+		return;
+	}
+
+	if (ServerConnectSeams::ShouldSuppressDuplicateConnectRequest(bManual, IsConnecting(), AwaitingConnectionToServer(server))) {
+		DebugLog(_T("Server retry path: suppressing duplicate connection request to server already awaiting login"));
 		return;
 	}
 
@@ -375,8 +387,9 @@ void CServerConnect::ConnectionFailed(CServerSocket *sender)
 		if (!connecting)
 			break;
 		if (singleconnecting) {
-			if (pServer != NULL && sender->IsServerCryptEnabledConnection() && !thePrefs.IsCryptLayerRequired()) {
+			if (ServerConnectSeams::ShouldRetrySingleServerWithoutObfuscation(singleconnecting, pServer != NULL, sender->IsServerCryptEnabledConnection(), thePrefs.IsCryptLayerRequired())) {
 				// try reconnecting without obfuscation
+				DebugLog(_T("Server retry path: retrying single server without obfuscation after connection failure"));
 				ConnectToServer(pServer, false, true);
 				break;
 			}
@@ -438,13 +451,15 @@ void CServerConnect::CheckForTimeout()
 		if (curTick >= tmpkey + dwServerConnectTimeout) {
 			LogWarning(GetResString(IDS_ERR_CONTIMEOUT), (LPCTSTR)tmpsock->cur_server->GetListName(), tmpsock->cur_server->GetAddress(), tmpsock->cur_server->GetPort());
 			CServer *pRetryServer = NULL;
-			const bool bRetryWithoutObfuscation = singleconnecting && tmpsock->IsServerCryptEnabledConnection() && !thePrefs.IsCryptLayerRequired();
+			const bool bRetryWithoutObfuscation = ServerConnectSeams::ShouldRetrySingleServerWithoutObfuscation(singleconnecting, true, tmpsock->IsServerCryptEnabledConnection(), thePrefs.IsCryptLayerRequired());
 			if (bRetryWithoutObfuscation)
 				pRetryServer = theApp.serverlist->GetServerByAddress(tmpsock->cur_server->GetAddress(), tmpsock->cur_server->GetPort());
 			connectionattempts.RemoveKey(tmpkey);
 			DestroySocket(tmpsock);
-			if (bRetryWithoutObfuscation && pRetryServer != NULL)
+			if (bRetryWithoutObfuscation && pRetryServer != NULL) {
+				DebugLog(_T("Server retry path: retrying single server without obfuscation after timeout"));
 				ConnectToServer(pRetryServer, false, true);
+			}
 			else if (singleconnecting)
 				StopConnectionTry();
 			else
@@ -618,4 +633,16 @@ bool CServerConnect::AwaitingTestFromIP(uint32 dwIP) const
 bool CServerConnect::IsConnectedObfuscated() const
 {
 	return connectedsocket != NULL && connectedsocket->IsObfusicating();
+}
+
+bool CServerConnect::AwaitingConnectionToServer(const CServer *pServer) const
+{
+	if (pServer == NULL)
+		return false;
+
+	for (const CServerSocketMap::CPair *pair = connectionattempts.PGetFirstAssoc(); pair != NULL; pair = connectionattempts.PGetNextAssoc(pair))
+		if (pair->value && pair->value->cur_server && pair->value->cur_server->GetIP() == pServer->GetIP() && pair->value->cur_server->GetPort() == pServer->GetPort())
+			return true;
+
+	return false;
 }
