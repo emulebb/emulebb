@@ -735,10 +735,10 @@ bool CSharedFilesCtrl::IsLiveVisibleFilePointer(const CShareableFile *file) cons
 		return false;
 
 	const CKnownFile *pKnownFile = static_cast<const CKnownFile*>(file);
-	if (theApp.sharedfiles != NULL && theApp.sharedfiles->IsFilePtrInList(pKnownFile))
+	if (theApp.sharedfiles != NULL && theApp.sharedfiles->ContainsFilePointer(pKnownFile))
 		return true;
 
-	if (theApp.knownfiles != NULL && theApp.knownfiles->IsFilePtrInList(pKnownFile))
+	if (theApp.knownfiles != NULL && theApp.knownfiles->ContainsFilePointer(pKnownFile))
 		return true;
 
 	for (POSITION pos = liTempShareableFilesInDir.GetHeadPosition(); pos != NULL;) {
