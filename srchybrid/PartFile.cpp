@@ -3174,8 +3174,16 @@ BOOL CPartFile::PerformFileComplete()
 
 	const CString strCompletedFileName(NormalizeDownloadFilename(GetFileName()));
 	TCHAR *newfilename = _tcsdup(strCompletedFileName);
-	if (!newfilename)
+	if (PartFileCompletionSeams::IsMissingCompletedNameBuffer(newfilename)) {
+		DebugLogError(_T("Failed to allocate completed filename buffer for \"%s\""), (LPCTSTR)GetFileName());
+		m_paused = m_stopped = true;
+		SetStatus(PS_ERROR);
+		m_bCompletionError = true;
+		bNoNewReads = false;
+		if (!PostPartFileCompletionThreadResult(this, FILE_COMPLETION_THREAD_FAILED))
+			SetFileOp(PFOP_NONE);
 		return FALSE;
+	}
 
 	const CString &strPartfilename(RemoveFileExtension(m_fullname));
 

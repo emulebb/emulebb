@@ -71,6 +71,14 @@ inline SWorkerCompletionPostResult PostWorkerCompletion(
 	return result;
 }
 
+/**
+ * @brief Reports whether completion has no mutable target-name buffer to work with.
+ */
+inline bool IsMissingCompletedNameBuffer(const void *pCompletedNameBuffer) noexcept
+{
+	return pCompletedNameBuffer == nullptr;
+}
+
 inline bool ShouldWarnAboutDisabledLongPathSupport(const DWORD dwMoveResult, const CString &rstrDestinationPath, const bool bWin32LongPathsEnabled)
 {
 	if (bWin32LongPathsEnabled || rstrDestinationPath.GetLength() < MAX_PATH)
