@@ -207,7 +207,7 @@ public:
 	void			ProcessPreviewAnswer(const uchar *pachPacket, uint32 nSize);
 	bool			GetPreviewSupport() const						{ return m_fSupportsPreview && GetViewSharedFilesSupport(); }
 	bool			GetViewSharedFilesSupport() const				{ return m_fNoViewSharedFiles==0; }
-	bool			SafeConnectAndSendPacket(Packet *packet);
+	[[nodiscard]] bool	SafeConnectAndSendPacket(Packet *packet);
 	bool			SendPacket(Packet *packet, bool bVerifyConnection = false);
 	void			CheckForGPLEvilDoer();
 	// Encryption / Obfuscation / Connect options

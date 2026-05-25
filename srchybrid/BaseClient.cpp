@@ -2043,7 +2043,8 @@ void CUpDownClient::SendPreviewRequest(const CAbstractFile &rForFile)
 		Packet *packet = new Packet(OP_REQUESTPREVIEW, 16, OP_EMULEPROT);
 		md4cpy(packet->pBuffer, rForFile.GetFileHash());
 		theStats.AddUpDataOverheadOther(packet->size);
-		SafeConnectAndSendPacket(packet);
+		if (!SafeConnectAndSendPacket(packet))
+			return;
 	} else
 		LogWarning(LOG_STATUSBAR, GetResString(IDS_ERR_PREVIEWALREADY));
 }
@@ -2094,7 +2095,8 @@ void CUpDownClient::SendPreviewAnswer(const CKnownFile *pForFile, HBITMAP *imgFr
 	if (thePrefs.GetDebugClientTCPLevel() > 0)
 		DebugSend("OP_PreviewAnswer", this, (uchar*)packet->pBuffer);
 	theStats.AddUpDataOverheadOther(packet->size);
-	SafeConnectAndSendPacket(packet);
+	if (!SafeConnectAndSendPacket(packet))
+		return;
 }
 
 void CUpDownClient::ProcessPreviewReq(const uchar *pachPacket, uint32 nSize)
@@ -2693,7 +2695,8 @@ void CUpDownClient::ProcessChatMessage(CSafeMemFile &data, uint32 nLength)
 				Packet *packet = new Packet(OP_CHATCAPTCHARES, 1, OP_EMULEPROT, false);
 				packet->pBuffer[0] = (m_cCaptchasSent < 3) ? 1 : 2; // status response
 				theStats.AddUpDataOverheadOther(packet->size);
-				SafeConnectAndSendPacket(packet);
+				if (!SafeConnectAndSendPacket(packet))
+					return;
 				return; // nothing more todo
 			}
 
@@ -2810,7 +2813,8 @@ void CUpDownClient::SendChatMessage(const CString &strMessage)
 	data.WriteString(strMessage, GetUnicodeSupport());
 	Packet *packet = new Packet(data, OP_EDONKEYPROT, OP_MESSAGE);
 	theStats.AddUpDataOverheadOther(packet->size);
-	SafeConnectAndSendPacket(packet);
+	if (!SafeConnectAndSendPacket(packet))
+		return;
 }
 
 bool CUpDownClient::HasPassedSecureIdent(bool bPassIfUnavailable) const
@@ -2840,7 +2844,8 @@ void CUpDownClient::SendFirewallCheckUDPRequest()
 	data.WriteUInt32(Kademlia::CKademlia::GetPrefs()->GetUDPVerifyKey(GetConnectIP()));
 	Packet *packet = new Packet(data, OP_EMULEPROT, OP_FWCHECKUDPREQ);
 	theStats.AddUpDataOverheadKad(packet->size);
-	SafeConnectAndSendPacket(packet);
+	if (!SafeConnectAndSendPacket(packet))
+		return;
 }
 
 void CUpDownClient::ProcessFirewallCheckUDPRequest(CSafeMemFile &data)

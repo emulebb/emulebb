@@ -2134,7 +2134,8 @@ void CUpDownClient::SendAICHRequest(CPartFile *pForFile, uint16 nPart)
 	if (thePrefs.GetDebugClientTCPLevel() > 0)
 		DebugSend("OP_AichRequest", this, (uchar*)packet->pBuffer);
 	theStats.AddUpDataOverheadFileRequest(packet->size);
-	SafeConnectAndSendPacket(packet);
+	if (!SafeConnectAndSendPacket(packet))
+		return;
 }
 
 void CUpDownClient::ProcessAICHAnswer(const uchar *packet, UINT size)
@@ -2208,7 +2209,8 @@ void CUpDownClient::ProcessAICHRequest(const uchar *packet, UINT size)
 					DebugSend("OP_AichAnswer", this, pKnownFile->GetFileHash());
 				Packet *packAnswer = new Packet(fileResponse, OP_EMULEPROT, OP_AICHANSWER);
 				theStats.AddUpDataOverheadFileRequest(packAnswer->size);
-				SafeConnectAndSendPacket(packAnswer);
+				if (!SafeConnectAndSendPacket(packAnswer))
+					return;
 				return;
 			} else
 				AddDebugLogLine(DLP_HIGH, false, _T("AICH Packet Request: Failed to create recovery data for %s to %s"), (LPCTSTR)pKnownFile->GetFileName(), (LPCTSTR)DbgGetClientInfo());
@@ -2222,7 +2224,8 @@ void CUpDownClient::ProcessAICHRequest(const uchar *packet, UINT size)
 	Packet *packAnswer = new Packet(OP_AICHANSWER, 16, OP_EMULEPROT);
 	md4cpy(packAnswer->pBuffer, abyHash);
 	theStats.AddUpDataOverheadFileRequest(packAnswer->size);
-	SafeConnectAndSendPacket(packAnswer);
+	if (!SafeConnectAndSendPacket(packAnswer))
+		return;
 }
 
 void CUpDownClient::ProcessAICHFileHash(CSafeMemFile *data, CPartFile *file, const CAICHHash *pAICHHash)
