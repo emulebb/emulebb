@@ -532,7 +532,7 @@ uint32 CUploadQueue::GetSlowUploadRateThreshold() const
 		return 3 * 1024;
 
 	const float fFactor = max(0.05f, thePrefs.GetSlowUploadThresholdFactor());
-	return max(1024u, static_cast<uint32>(uTargetPerSlot * fFactor));
+	return max(1024u, static_cast<uint32>(static_cast<float>(uTargetPerSlot) * fFactor));
 }
 
 uint32 CUploadQueue::GetUploadBufferBlockCount(uint32 uClientDatarate) const
@@ -786,7 +786,7 @@ float CUploadQueue::GetAverageCombinedFilePrioAndCredit()
 			++count;
 		}
 
-		m_fAverageCombinedFilePrioAndCredit = count != 0 ? sum / count : 0;
+		m_fAverageCombinedFilePrioAndCredit = count != 0 ? sum / static_cast<float>(count) : 0;
 	}
 
 	return m_fAverageCombinedFilePrioAndCredit;
@@ -796,6 +796,8 @@ void CUploadQueue::InvalidateUploadClientStruct(UploadingToClient_Struct *pUploa
 {
 	ASSERT(pUploadClientStruct != NULL);
 	ASSERT(pClient != NULL);
+	if (pUploadClientStruct == NULL || pClient == NULL)
+		return;
 
 	pClient->FlushSendBlocks();
 	InvalidateUploadClientStructWithoutClient(pUploadClientStruct);
@@ -804,6 +806,8 @@ void CUploadQueue::InvalidateUploadClientStruct(UploadingToClient_Struct *pUploa
 void CUploadQueue::InvalidateUploadClientStructWithoutClient(UploadingToClient_Struct *pUploadClientStruct)
 {
 	ASSERT(pUploadClientStruct != NULL);
+	if (pUploadClientStruct == NULL)
+		return;
 
 	CSingleLock lockBlockLists(&pUploadClientStruct->m_csBlockListsLock, TRUE);
 	ASSERT(lockBlockLists.IsLocked());
@@ -1217,7 +1221,7 @@ VOID CALLBACK CUploadQueue::UploadTimer(HWND /*hwnd*/, UINT /*uMsg*/, UINT_PTR /
 				i2sec = 0;
 
 				// Update connection stats...
-				theStats.UpdateConnectionStats(theApp.uploadqueue->GetDatarate() / 1024.0f, theApp.downloadqueue->GetDatarate() / 1024.0f);
+				theStats.UpdateConnectionStats(static_cast<float>(theApp.uploadqueue->GetDatarate()) / 1024.0f, static_cast<float>(theApp.downloadqueue->GetDatarate()) / 1024.0f);
 
 #ifdef HAVE_WIN7_SDK_H
 				if (thePrefs.IsWin7TaskbarGoodiesEnabled())
@@ -1228,7 +1232,7 @@ VOID CALLBACK CUploadQueue::UploadTimer(HWND /*hwnd*/, UINT /*uMsg*/, UINT_PTR /
 			// display graphs
 			if (thePrefs.GetTrafficOMeterInterval() > 0 && ++igraph >= (uint32)thePrefs.GetTrafficOMeterInterval()) {
 				igraph = 0;
-				theApp.emuledlg->statisticswnd->SetCurrentRate(theApp.uploadqueue->GetDatarate() / 1024.0f, theApp.downloadqueue->GetDatarate() / 1024.0f);
+				theApp.emuledlg->statisticswnd->SetCurrentRate(static_cast<float>(theApp.uploadqueue->GetDatarate()) / 1024.0f, static_cast<float>(theApp.downloadqueue->GetDatarate()) / 1024.0f);
 			}
 			if (theApp.emuledlg->activewnd == theApp.emuledlg->statisticswnd
 				&& theApp.emuledlg->IsWindowVisible()
