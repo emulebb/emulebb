@@ -82,7 +82,7 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-void PostPartFileCompletionThreadResult(CPartFile *pFile, const DWORD dwResult)
+bool PostPartFileCompletionThreadResult(CPartFile *pFile, const DWORD dwResult)
 {
 	const HWND hNotifyWnd = theApp.emuledlg != NULL ? theApp.emuledlg->GetSafeHwnd() : NULL;
 	const PartFileCompletionSeams::SWorkerCompletionPostResult result =
@@ -93,6 +93,7 @@ void PostPartFileCompletionThreadResult(CPartFile *pFile, const DWORD dwResult)
 			static_cast<LPCTSTR>(strFileName),
 			result.dwLastError);
 	}
+	return result.eDelivery == PartFileCompletionSeams::EWorkerCompletionDelivery::Delivered;
 }
 }
 
@@ -3215,9 +3216,9 @@ BOOL CPartFile::PerformFileComplete()
 			m_paused = m_stopped = true;
 			SetStatus(PS_ERROR);
 			m_bCompletionError = true;
-			SetFileOp(PFOP_NONE);
-			PostPartFileCompletionThreadResult(this, FILE_COMPLETION_THREAD_FAILED);
 			bNoNewReads = false; //re-enable reading till next completion attempt
+			if (!PostPartFileCompletionThreadResult(this, FILE_COMPLETION_THREAD_FAILED))
+				SetFileOp(PFOP_NONE);
 			return FALSE;
 		}
 		// The UploadDiskIOThread might have an open handle to this file due to ongoing uploads
@@ -3271,7 +3272,6 @@ BOOL CPartFile::PerformFileComplete()
 	SetFilePath(m_fullname);
 	_SetStatus(PS_COMPLETE); // set status of CPartFile object, but do not update GUI (to avoid multi-threading problems)
 	m_paused = false;
-	SetFileOp(PFOP_NONE);
 
 	// clear the blackbox to free up memory
 	m_CorruptionBlackBox.Free();
@@ -3280,7 +3280,8 @@ BOOL CPartFile::PerformFileComplete()
 	// explicitly unlock the file before posting something to the main thread.
 	sLock.Unlock();
 
-	PostPartFileCompletionThreadResult(this, FILE_COMPLETION_THREAD_SUCCESS | (renamed ? FILE_COMPLETION_THREAD_RENAMED : 0));
+	if (!PostPartFileCompletionThreadResult(this, FILE_COMPLETION_THREAD_SUCCESS | (renamed ? FILE_COMPLETION_THREAD_RENAMED : 0)))
+		SetFileOp(PFOP_NONE);
 	return TRUE;
 }
 

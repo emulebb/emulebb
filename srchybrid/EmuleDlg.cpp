@@ -3004,9 +3004,14 @@ LRESULT CemuleDlg::OnFileAllocExc(WPARAM wParam, LPARAM lParam)
 LRESULT CemuleDlg::OnFileCompleted(WPARAM wParam, LPARAM lParam)
 {
 	CPartFile *partfile = reinterpret_cast<CPartFile*>(lParam);
-	ASSERT(partfile != NULL);
-	if (partfile)
-		partfile->PerformFileCompleteEnd((DWORD)wParam);
+	if (partfile == NULL)
+		return 0;
+	if (theApp.downloadqueue == NULL || !theApp.downloadqueue->IsPartFile(partfile)) {
+		ASSERT(0);
+		return 0;
+	}
+	partfile->SetFileOp(PFOP_NONE);
+	partfile->PerformFileCompleteEnd((DWORD)wParam);
 	return 0;
 }
 
