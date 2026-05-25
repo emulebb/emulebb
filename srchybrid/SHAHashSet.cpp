@@ -549,6 +549,8 @@ bool CAICHRecoveryHashSet::GetPartHashes(CArray<CAICHHash> &rResult) const
 	ASSERT(m_pOwner);
 	ASSERT(rResult.IsEmpty());
 	rResult.RemoveAll();
+	if (m_pOwner == NULL)
+		return false;
 	if (m_pOwner->IsPartFile() || m_eStatus != AICH_HASHSETCOMPLETE) {
 		ASSERT(0);
 		return false;
@@ -574,18 +576,27 @@ bool CAICHRecoveryHashSet::GetPartHashes(CArray<CAICHHash> &rResult) const
 const CAICHHashTree* CAICHRecoveryHashSet::FindPartHash(uint16 nPart)
 {
 	ASSERT(m_pOwner && m_pOwner->IsPartFile());
-	if (m_pOwner->GetFileSize() <= PARTSIZE)
+	if (m_pOwner == NULL || !m_pOwner->IsPartFile())
+		return NULL;
+	const uint64 uFileSize = static_cast<uint64>(m_pOwner->GetFileSize());
+	if (uFileSize <= PARTSIZE)
 		return &m_pHashTree;
-	uint64 nPartStartPos = nPart * PARTSIZE;
-	uint32 nPartSize = (uint32)(min(PARTSIZE, (uint64)m_pOwner->GetFileSize() - nPartStartPos));
+	const uint64 nPartStartPos = static_cast<uint64>(nPart) * PARTSIZE;
+	if (nPartStartPos >= uFileSize)
+		return NULL;
+	uint32 nPartSize = (uint32)(min(PARTSIZE, uFileSize - nPartStartPos));
 	const CAICHHashTree *phtResult = m_pHashTree.FindHash(nPartStartPos, nPartSize);
 	ASSERT(phtResult != NULL);
+	if (phtResult == NULL)
+		return NULL;
 	return phtResult;
 }
 
 bool CAICHRecoveryHashSet::CreatePartRecoveryData(uint64 nPartStartPos, CFileDataIO &fileDataOut, bool bDbgDontLoad)
 {
 	ASSERT(m_pOwner);
+	if (m_pOwner == NULL)
+		return false;
 	if (m_pOwner->IsPartFile() || m_eStatus != AICH_HASHSETCOMPLETE) {
 		ASSERT(0);
 		return false;
@@ -601,7 +612,10 @@ bool CAICHRecoveryHashSet::CreatePartRecoveryData(uint64 nPartStartPos, CFileDat
 	}
 	bool bResult;
 	uint8 nLevel = 0;
-	uint32 nPartSize = (uint32)min(PARTSIZE, (uint64)m_pOwner->GetFileSize() - nPartStartPos);
+	const uint64 uFileSize = static_cast<uint64>(m_pOwner->GetFileSize());
+	if (nPartStartPos >= uFileSize)
+		return false;
+	uint32 nPartSize = (uint32)min(PARTSIZE, uFileSize - nPartStartPos);
 	m_pHashTree.FindHash(nPartStartPos, nPartSize, &nLevel);
 	uint16 nHashesToWrite = (uint16)((nLevel - 1) + nPartSize / EMBLOCKSIZE + static_cast<unsigned>(nPartSize % EMBLOCKSIZE != 0));
 	const bool bUse32BitIdentifier = m_pOwner->IsLargeFile();
