@@ -21,6 +21,9 @@
 #include "KadContactHistogramCtrl.h"
 #include "KadLookupGraph.h"
 #include "KadSearchListCtrl.h"
+#ifndef CRYPTOPP_ENABLE_NAMESPACE_WEAK
+#define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
+#endif
 #include "Kademlia/Kademlia/kademlia.h"
 #include "kademlia/utils/LookupHistory.h"
 #include "kademlia/kademlia/search.h"
@@ -57,6 +60,8 @@ static char THIS_FILE[] = __FILE__;
 
 IMPLEMENT_DYNAMIC(CKademliaWnd, CDialog)
 
+#pragma warning(push)
+#pragma warning(disable:4191)
 BEGIN_MESSAGE_MAP(CKademliaWnd, CResizableDialog)
 	ON_BN_CLICKED(IDC_BOOTSTRAPBUTTON, OnBnClickedBootstrapbutton)
 	ON_BN_CLICKED(IDC_FIREWALLCHECKBUTTON, OnBnClickedFirewallcheckbutton)
@@ -76,6 +81,7 @@ BEGIN_MESSAGE_MAP(CKademliaWnd, CResizableDialog)
 	ON_NOTIFY(NM_DBLCLK, IDC_KADSEARCHLIST, OnNMDblclkSearchlist)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_KADSEARCHLIST, OnListModifiedSearchlist)
 END_MESSAGE_MAP()
+#pragma warning(pop)
 
 CKademliaWnd::CKademliaWnd(CWnd *pParent /*=NULL*/)
 	: CResizableDialog(CKademliaWnd::IDD, pParent)
@@ -416,6 +422,10 @@ void CKademliaWnd::StopUpdateContacts()
 
 bool CKademliaWnd::ContactAdd(const Kademlia::CContact *contact)
 {
+	ASSERT(contact != NULL);
+	if (contact == NULL)
+		return false;
+
 	if (contact->IsBootstrapContact() != m_bBootstrapListMode) {
 		if (contact->IsBootstrapContact()) {
 			ASSERT(0);
@@ -432,6 +442,10 @@ bool CKademliaWnd::ContactAdd(const Kademlia::CContact *contact)
 
 void CKademliaWnd::ContactRem(const Kademlia::CContact *contact)
 {
+	ASSERT(contact != NULL);
+	if (contact == NULL)
+		return;
+
 	if (contact->IsBootstrapContact() == m_bBootstrapListMode) {
 		if (!m_bBootstrapListMode)
 			m_contactHistogramCtrl->ContactRem(contact);
@@ -441,6 +455,10 @@ void CKademliaWnd::ContactRem(const Kademlia::CContact *contact)
 
 void CKademliaWnd::ContactRef(const Kademlia::CContact *contact)
 {
+	ASSERT(contact != NULL);
+	if (contact == NULL)
+		return;
+
 	if (contact->IsBootstrapContact() == m_bBootstrapListMode)
 		m_contactListCtrl->ContactRef(contact);
 }

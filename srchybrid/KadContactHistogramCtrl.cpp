@@ -70,6 +70,10 @@ inline UINT GetHistSlot(const Kademlia::CUInt128 &KadUint128)
 
 bool CKadContactHistogramCtrl::ContactAdd(const Kademlia::CContact *contact)
 {
+	ASSERT(contact != NULL);
+	if (contact == NULL)
+		return false;
+
 	Kademlia::CUInt128 distance;
 	contact->GetClientID(distance);
 	UINT uHistSlot = GetHistSlot(distance);
@@ -80,6 +84,10 @@ bool CKadContactHistogramCtrl::ContactAdd(const Kademlia::CContact *contact)
 
 void CKadContactHistogramCtrl::ContactRem(const Kademlia::CContact *contact)
 {
+	ASSERT(contact != NULL);
+	if (contact == NULL)
+		return;
+
 	Kademlia::CUInt128 distance;
 	contact->GetClientID(distance);
 	UINT uHistSlot = GetHistSlot(distance);

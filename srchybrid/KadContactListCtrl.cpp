@@ -283,6 +283,8 @@ bool CKadContactListCtrl::ContactAdd(const Kademlia::CContact *contact)
 {
 	try {
 		ASSERT(contact != NULL);
+		if (contact == NULL)
+			return false;
 		if (!IsLiveContact(contact))
 			return false;
 		PruneStaleContactItems();
@@ -309,6 +311,8 @@ void CKadContactListCtrl::ContactRem(const Kademlia::CContact *contact)
 {
 	try {
 		ASSERT(contact != NULL);
+		if (contact == NULL)
+			return;
 		LVFINDINFO find;
 		find.flags = LVFI_PARAM;
 		find.lParam = (LPARAM)contact;
@@ -331,6 +335,8 @@ void CKadContactListCtrl::ContactRef(const Kademlia::CContact *contact)
 {
 	try {
 		ASSERT(contact != NULL);
+		if (contact == NULL)
+			return;
 		if (!IsLiveContact(contact)) {
 			ContactRem(contact);
 			return;

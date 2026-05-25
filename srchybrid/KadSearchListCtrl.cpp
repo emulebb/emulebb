@@ -24,6 +24,9 @@
 #include "emuledlg.h"
 #include "DownloadQueue.h"
 #include "PartFile.h"
+#ifndef CRYPTOPP_ENABLE_NAMESPACE_WEAK
+#define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
+#endif
 #include "kademlia/kademlia/search.h"
 #include "kademlia/kademlia/SearchManager.h"
 #include "kademlia/utils/LookupHistory.h"
@@ -46,10 +49,13 @@ namespace
 
 IMPLEMENT_DYNAMIC(CKadSearchListCtrl, CMuleListCtrl)
 
+#pragma warning(push)
+#pragma warning(disable:4191)
 BEGIN_MESSAGE_MAP(CKadSearchListCtrl, CMuleListCtrl)
 	ON_NOTIFY_REFLECT(LVN_COLUMNCLICK, OnLvnColumnClick)
 	ON_WM_SYSCOLORCHANGE()
 END_MESSAGE_MAP()
+#pragma warning(pop)
 
 CKadSearchListCtrl::CKadSearchListCtrl()
 {
@@ -217,6 +223,8 @@ void CKadSearchListCtrl::SearchAdd(const Kademlia::CSearch *search)
 {
 	try {
 		ASSERT(search != NULL);
+		if (search == NULL)
+			return;
 		LVFINDINFO find;
 		find.flags = LVFI_PARAM;
 		find.lParam = (LPARAM)search;
@@ -236,6 +244,8 @@ void CKadSearchListCtrl::SearchRem(const Kademlia::CSearch *search)
 {
 	try {
 		ASSERT(search != NULL);
+		if (search == NULL)
+			return;
 		bool bRemoved = false;
 		LVFINDINFO find;
 		find.flags = LVFI_PARAM;
@@ -256,6 +266,8 @@ void CKadSearchListCtrl::SearchRef(const Kademlia::CSearch *search)
 {
 	try {
 		ASSERT(search != NULL);
+		if (search == NULL)
+			return;
 		if (!IsLiveSearch(search)) {
 			SearchRem(search);
 			return;
