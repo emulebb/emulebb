@@ -41,6 +41,7 @@ public:
 	bool	InitCollectionFromFile(const CString &sFilePath, const CString &sFileName);
 	CCollectionFile* AddFileToCollection(CAbstractFile *pAbstractFile, bool bCreateClone);
 	void	RemoveFileFromCollection(const CAbstractFile *pAbstractFile);
+	bool	ContainsFilePointer(const CAbstractFile *pAbstractFile) const;
 	void	WriteToFileAddShared(CryptoPP::RSASSA_PKCS1v15_SHA_Signer *pSignKey = NULL);
 	void	SetCollectionAuthorKey(const byte *abyCollectionAuthorKey, uint32 nSize);
 	CString	GetCollectionAuthorKeyString();

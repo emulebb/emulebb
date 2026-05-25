@@ -152,6 +152,9 @@ void CCollectionViewDialog::OnNmDblClkCollectionList(LPNMHDR, LRESULT *pResult)
 
 void CCollectionViewDialog::DownloadSelected()
 {
+	if (m_pCollection == NULL)
+		return;
+
 	int iNewIndex = 0;
 	for (INT_PTR iIndex = thePrefs.GetCatCount(); --iIndex > 0;)
 		if (!m_pCollection->m_sCollectionName.CompareNoCase(thePrefs.GetCategory(iIndex)->strTitle)) {
@@ -167,13 +170,16 @@ void CCollectionViewDialog::DownloadSelected()
 	CTypedPtrList<CPtrList, CCollectionFile*> collectionFileList;
 	for (POSITION pos = m_CollectionViewList.GetFirstSelectedItemPosition(); pos != NULL;) {
 		int index = m_CollectionViewList.GetNextSelectedItem(pos);
-		if (index >= 0)
-			collectionFileList.AddTail(reinterpret_cast<CCollectionFile*>(m_CollectionViewList.GetItemData(index)));
+		if (index >= 0) {
+			CCollectionFile *pFile = reinterpret_cast<CCollectionFile*>(m_CollectionViewList.GetItemData(index));
+			if (m_pCollection->ContainsFilePointer(pFile))
+				collectionFileList.AddTail(pFile);
+		}
 	}
 
 	while (!collectionFileList.IsEmpty()) {
 		const CCollectionFile *pFile = collectionFileList.RemoveHead();
-		if (pFile)
+		if (m_pCollection->ContainsFilePointer(pFile))
 			theApp.downloadqueue->AddSearchToDownload(pFile->GetED2kLink(), thePrefs.AddNewFilesPaused(), iNewIndex);
 	}
 }

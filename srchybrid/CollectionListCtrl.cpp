@@ -30,6 +30,53 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace
+{
+bool IsLiveCollectionListFile(CListCtrlItemWalk *pListCtrl, const CAbstractFile *pFile)
+{
+	if (pFile == NULL)
+		return false;
+
+	CCollectionListCtrl *pCollectionListCtrl = pListCtrl != NULL
+		? DYNAMIC_DOWNCAST(CCollectionListCtrl, pListCtrl->GetListCtrl())
+		: NULL;
+	return pCollectionListCtrl == NULL || pCollectionListCtrl->ContainsFilePointer(pFile);
+}
+
+void PruneStaleCollectionDetailItems(CSimpleArray<CObject*> &raItems, CListCtrlItemWalk *pListCtrl)
+{
+	for (int i = raItems.GetSize(); --i >= 0;) {
+		const CAbstractFile *pFile = static_cast<const CAbstractFile*>(raItems[i]);
+		if (!IsLiveCollectionListFile(pListCtrl, pFile))
+			raItems.RemoveAt(i);
+	}
+}
+
+CObject* WalkToLiveCollectionItem(CCollectionListCtrl &rList, int iDirection)
+{
+	const int iItemCount = rList.GetItemCount();
+	if (iItemCount < 2)
+		return NULL;
+
+	POSITION pos = rList.GetFirstSelectedItemPosition();
+	if (pos == NULL)
+		return NULL;
+
+	const int iCurSelItem = rList.GetNextSelectedItem(pos);
+	for (int iItem = iCurSelItem + iDirection; iItem >= 0 && iItem < iItemCount; iItem += iDirection) {
+		CAbstractFile *pFile = reinterpret_cast<CAbstractFile*>(rList.GetItemData(iItem));
+		if (!rList.ContainsFilePointer(pFile))
+			continue;
+
+		rList.SetItemState(iCurSelItem, 0, LVIS_SELECTED | LVIS_FOCUSED);
+		rList.SetItemState(iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+		rList.SetSelectionMark(iItem);
+		rList.EnsureVisible(iItem, FALSE);
+		return pFile;
+	}
+	return NULL;
+}
+}
 
 //////////////////////////////////////////////////////////////////////////////
 // CCollectionFileDetailsSheet
@@ -69,8 +116,11 @@ CCollectionFileDetailsSheet::CCollectionFileDetailsSheet(CTypedPtrList<CPtrList,
 	: CListViewWalkerPropertySheet(pListCtrl)
 	, m_uInvokePage(uInvokePage)
 {
-	for (POSITION pos = aFiles.GetHeadPosition(); pos != NULL;)
-		m_aItems.Add(aFiles.GetNext(pos));
+	for (POSITION pos = aFiles.GetHeadPosition(); pos != NULL;) {
+		CAbstractFile *pFile = aFiles.GetNext(pos);
+		if (IsLiveCollectionListFile(pListCtrl, pFile))
+			m_aItems.Add(pFile);
+	}
 	m_psh.dwFlags &= ~PSH_HASHELP;
 
 	m_wndMetaData.m_psp.dwFlags &= ~PSP_HASHELP;
@@ -111,14 +161,17 @@ BOOL CCollectionFileDetailsSheet::OnInitDialog()
 
 LRESULT CCollectionFileDetailsSheet::OnDataChanged(WPARAM, LPARAM)
 {
+	PruneStaleCollectionDetailItems(m_aItems, m_pListCtrl);
 	UpdateTitle();
+	if (m_wndMetaData.GetSafeHwnd() != NULL)
+		m_wndMetaData.SendMessage(UM_DATA_CHANGED);
 	return 1;
 }
 
 void CCollectionFileDetailsSheet::UpdateTitle()
 {
 	CString sTitle(GetResString(IDS_DETAILS));
-	if (m_aItems.GetSize() == 1)
+	if (m_aItems.GetSize() == 1 && IsLiveCollectionListFile(m_pListCtrl, static_cast<CAbstractFile*>(m_aItems[0])))
 		sTitle.AppendFormat(_T(": %s"), (LPCTSTR)(static_cast<CAbstractFile*>(m_aItems[0])->GetFileName()));
 	SetWindowText(sTitle);
 }
@@ -204,8 +257,11 @@ void CCollectionListCtrl::OnNmRClick(LPNMHDR, LRESULT *pResult)
 	CTypedPtrList<CPtrList, CAbstractFile*> abstractFileList;
 	for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;) {
 		int index = GetNextSelectedItem(pos);
-		if (index >= 0)
-			abstractFileList.AddTail(reinterpret_cast<CAbstractFile*>(GetItemData(index)));
+		if (index >= 0) {
+			CAbstractFile *pFile = reinterpret_cast<CAbstractFile*>(GetItemData(index));
+			if (ContainsFilePointer(pFile))
+				abstractFileList.AddTail(pFile);
+		}
 	}
 
 	if (!abstractFileList.IsEmpty()) {
@@ -233,6 +289,27 @@ void CCollectionListCtrl::AddFileToList(CAbstractFile *pAbstractFile)
 		SetItemText(iItem, colSize, CastItoXBytes(pAbstractFile->GetFileSize()));
 		SetItemText(iItem, colHash, md4str(pAbstractFile->GetFileHash()));
 	}
+}
+
+bool CCollectionListCtrl::ContainsFilePointer(const CAbstractFile *pAbstractFile) const
+{
+	if (pAbstractFile == NULL)
+		return false;
+
+	LVFINDINFO find;
+	find.flags = LVFI_PARAM;
+	find.lParam = reinterpret_cast<LPARAM>(pAbstractFile);
+	return const_cast<CCollectionListCtrl*>(this)->FindItem(&find) >= 0;
+}
+
+CObject* CCollectionListCtrl::GetPrevSelectableItem()
+{
+	return WalkToLiveCollectionItem(*this, -1);
+}
+
+CObject* CCollectionListCtrl::GetNextSelectableItem()
+{
+	return WalkToLiveCollectionItem(*this, 1);
 }
 
 void CCollectionListCtrl::RemoveFileFromList(CAbstractFile *pAbstractFile)

@@ -129,6 +129,18 @@ void CCollection::RemoveFileFromCollection(const CAbstractFile *pAbstractFile)
 	}
 }
 
+bool CCollection::ContainsFilePointer(const CAbstractFile *pAbstractFile) const
+{
+	if (pAbstractFile == NULL)
+		return false;
+
+	for (const CCollectionFilesMap::CPair *pair = m_CollectionFilesMap.PGetFirstAssoc(); pair != NULL; pair = m_CollectionFilesMap.PGetNextAssoc(pair)) {
+		if (pair->value == pAbstractFile)
+			return true;
+	}
+	return false;
+}
+
 void CCollection::SetCollectionAuthorKey(const byte *abyCollectionAuthorKey, uint32 nSize)
 {
 	delete[] m_pabyCollectionAuthorKey;

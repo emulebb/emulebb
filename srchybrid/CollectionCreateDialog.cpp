@@ -27,6 +27,7 @@
 #include "DownloadListCtrl.h"
 #include "Preferences.h"
 #include "LongPathSeams.h"
+#include "KnownFilePointerValidation.h"
 
 #include <string>
 #include <vector>
@@ -176,16 +177,25 @@ BOOL CCollectionCreateDialog::OnInitDialog()
 
 void CCollectionCreateDialog::AddSelectedFiles()
 {
+	if (m_pCollection == NULL)
+		return;
+
 	CTypedPtrList<CPtrList, CKnownFile*> knownFileList;
 	for (POSITION pos = m_CollectionAvailListCtrl.GetFirstSelectedItemPosition(); pos != NULL;) {
 		int index = m_CollectionAvailListCtrl.GetNextSelectedItem(pos);
-		if (index >= 0)
-			knownFileList.AddTail(reinterpret_cast<CKnownFile*>(m_CollectionAvailListCtrl.GetItemData(index)));
+		if (index >= 0) {
+			CKnownFile *pKnownFile = reinterpret_cast<CKnownFile*>(m_CollectionAvailListCtrl.GetItemData(index));
+			if (IsLiveKnownFilePointer(pKnownFile))
+				knownFileList.AddTail(pKnownFile);
+		}
 	}
 
 	while (!knownFileList.IsEmpty()) {
-		CAbstractFile *pAbstractFile = knownFileList.RemoveHead();
-		CCollectionFile *pCollectionFile = m_pCollection->AddFileToCollection(pAbstractFile, true);
+		CKnownFile *pKnownFile = knownFileList.RemoveHead();
+		if (!IsLiveKnownFilePointer(pKnownFile))
+			continue;
+
+		CCollectionFile *pCollectionFile = m_pCollection->AddFileToCollection(pKnownFile, true);
 		if (pCollectionFile)
 			m_CollectionListCtrl.AddFileToList(pCollectionFile);
 	}
@@ -199,15 +209,23 @@ void CCollectionCreateDialog::AddSelectedFiles()
 
 void CCollectionCreateDialog::RemoveSelectedFiles()
 {
+	if (m_pCollection == NULL)
+		return;
+
 	CTypedPtrList<CPtrList, CCollectionFile*> collectionFileList;
 	for (POSITION pos = m_CollectionListCtrl.GetFirstSelectedItemPosition(); pos != NULL;) {
 		int index = m_CollectionListCtrl.GetNextSelectedItem(pos);
-		if (index >= 0)
-			collectionFileList.AddTail(reinterpret_cast<CCollectionFile*>(m_CollectionListCtrl.GetItemData(index)));
+		if (index >= 0) {
+			CCollectionFile *pCollectionFile = reinterpret_cast<CCollectionFile*>(m_CollectionListCtrl.GetItemData(index));
+			if (m_pCollection->ContainsFilePointer(pCollectionFile))
+				collectionFileList.AddTail(pCollectionFile);
+		}
 	}
 
 	while (!collectionFileList.IsEmpty()) {
 		CCollectionFile *pCollectionFile = collectionFileList.RemoveHead();
+		if (!m_pCollection->ContainsFilePointer(pCollectionFile))
+			continue;
 		m_CollectionListCtrl.RemoveFileFromList(pCollectionFile);
 		m_pCollection->RemoveFileFromCollection(pCollectionFile);
 	}

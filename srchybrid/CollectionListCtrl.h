@@ -31,6 +31,10 @@ public:
 
 	void AddFileToList(CAbstractFile *pAbstractFile);
 	void RemoveFileFromList(CAbstractFile *pAbstractFile);
+	bool ContainsFilePointer(const CAbstractFile *pAbstractFile) const;
+
+	virtual CObject* GetNextSelectableItem();
+	virtual CObject* GetPrevSelectableItem();
 
 private:
 	enum ECols
