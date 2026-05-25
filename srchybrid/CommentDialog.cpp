@@ -19,6 +19,7 @@
 #include "CommentDialog.h"
 #include "CommentDialogSeams.h"
 #include "PartFile.h"
+#include "KnownFilePointerValidation.h"
 #include "Opcodes.h"
 #include "UpDownClient.h"
 #include "kademlia/kademlia/kademlia.h"
@@ -114,13 +115,13 @@ BOOL CCommentDialog::OnSetActive()
 		m_bMergedComment = false;
 		CString strComment;
 		for (int i = 0; i < m_paFiles->GetSize(); ++i) {
-			if (!(*m_paFiles)[i]->IsKindOf(RUNTIME_CLASS(CKnownFile)))
-				continue;
 			CKnownFile *file = static_cast<CKnownFile*>((*m_paFiles)[i]);
+			if (!IsLiveKnownFilePointer(file))
+				continue;
 			// we actually could show, add and even search for comments on KAD for known, but not shared, files,
 			// but we don't publish comments entered by the user if the file is not shared (which might be changed at some point)
 			// so make sure we don't let him think he can comment and disable the dialog for such files
-			if (theApp.sharedfiles->GetFileByID(file->GetFileHash()) == NULL)
+			if (theApp.sharedfiles == NULL || !theApp.sharedfiles->ContainsFilePointer(file))
 				continue;
 			bContainsSharedKnownFile = true;
 			if (i == 0) {
@@ -170,15 +171,15 @@ BOOL CCommentDialog::OnApply()
 		GetDlgItemText(IDC_CMT_TEXT, strComment);
 		m_iRating = m_ratebox.GetCurSel();
 		for (int i = 0; i < m_paFiles->GetSize(); ++i)
-			if ((*m_paFiles)[i]->IsKindOf(RUNTIME_CLASS(CKnownFile))) {
-				CKnownFile *file = static_cast<CKnownFile*>((*m_paFiles)[i]);
-				if (theApp.sharedfiles->GetFileByID(file->GetFileHash()) != NULL) {
-					if (CommentDialogSeams::ShouldWriteCommentText(m_bMergedComment, strComment.IsEmpty()))
-						file->SetFileComment(strComment);
-					if (CommentDialogSeams::IsValidRatingSelection(m_iRating))
-						file->SetFileRating(m_iRating);
-				}
+		{
+			CKnownFile *file = static_cast<CKnownFile*>((*m_paFiles)[i]);
+			if (IsLiveKnownFilePointer(file) && theApp.sharedfiles != NULL && theApp.sharedfiles->ContainsFilePointer(file)) {
+				if (CommentDialogSeams::ShouldWriteCommentText(m_bMergedComment, strComment.IsEmpty()))
+					file->SetFileComment(strComment);
+				if (CommentDialogSeams::IsValidRatingSelection(m_iRating))
+					file->SetFileRating(m_iRating);
 			}
+		}
 	}
 	return CResizablePage::OnApply();
 }
@@ -262,7 +263,10 @@ void CCommentDialog::RefreshData(bool deleteOld)
 
 	bool kadsearchable = true;
 	for (int i = 0; i < m_paFiles->GetSize(); ++i) {
-		CAbstractFile *file = static_cast<CAbstractFile*>((*m_paFiles)[i]);
+		CKnownFile *knownFile = static_cast<CKnownFile*>((*m_paFiles)[i]);
+		if (!IsLiveKnownFilePointer(knownFile))
+			continue;
+		CAbstractFile *file = knownFile;
 		if (file->IsPartFile()) {
 			CPartFile *partFile = static_cast<CPartFile*>(file);
 			for (POSITION pos = partFile->srclist.GetHeadPosition(); pos != NULL;) {
@@ -274,7 +278,7 @@ void CCommentDialog::RefreshData(bool deleteOld)
 			}
 		} else if (!file->IsKindOf(RUNTIME_CLASS(CKnownFile)))
 			continue;
-		else if (theApp.sharedfiles->GetFileByID(file->GetFileHash()) == NULL)
+		else if (theApp.sharedfiles == NULL || !theApp.sharedfiles->ContainsFilePointer(static_cast<CKnownFile*>(file)))
 			continue;
 
 		const CTypedPtrList<CPtrList, Kademlia::CEntry*> &list = file->getNotes();
@@ -305,10 +309,10 @@ void CCommentDialog::OnBnClickedSearchKad()
 		const int iMaxSearches = CommentDialogSeams::GetKadCommentSearchLimit(m_paFiles->GetSize(), KADEMLIATOTALFILE);
 		int iQueuedSearches = 0;
 		for (int i = 0; i < m_paFiles->GetSize(); ++i) {
-			CAbstractFile *file = static_cast<CAbstractFile*>((*m_paFiles)[i]);
-			const bool bIsKnownFile = file != NULL && file->IsKindOf(RUNTIME_CLASS(CKnownFile));
-			const bool bIsSharedKnownFile = bIsKnownFile && theApp.sharedfiles->GetFileByID(file->GetFileHash()) != NULL;
-			const bool bAlreadySearching = file != NULL && Kademlia::CSearchManager::AlreadySearchingFor(Kademlia::CUInt128(file->GetFileHash()));
+			CKnownFile *file = static_cast<CKnownFile*>((*m_paFiles)[i]);
+			const bool bIsKnownFile = IsLiveKnownFilePointer(file);
+			const bool bIsSharedKnownFile = bIsKnownFile && theApp.sharedfiles != NULL && theApp.sharedfiles->ContainsFilePointer(file);
+			const bool bAlreadySearching = bIsKnownFile && Kademlia::CSearchManager::AlreadySearchingFor(Kademlia::CUInt128(file->GetFileHash()));
 			if (CommentDialogSeams::CanQueueEditableKadCommentSearch(m_bEnabled, true, bIsKnownFile, bIsSharedKnownFile, bAlreadySearching, iQueuedSearches, iMaxSearches)) {
 				if (!Kademlia::CSearchManager::PrepareLookup(Kademlia::CSearch::NOTES, true, Kademlia::CUInt128(file->GetFileHash())))
 					bSkipped = true;
