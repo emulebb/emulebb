@@ -106,6 +106,8 @@ int CTaskbarNotifier::CreateWnd(CWnd *pWndParent)
 {
 	static LPCTSTR const s_szClassName = _T("eMule_TaskbarNotifierWndClass");
 	ASSERT(pWndParent != NULL);
+	if (pWndParent == NULL)
+		return FALSE;
 	m_pWndParent = pWndParent;
 
 	WNDCLASSEX wcx;
@@ -455,6 +457,7 @@ void CTaskbarNotifier::Show(LPCTSTR pszCaption, TbnMsg nMsgType, LPCTSTR pszLink
 		}
 		ShowWindow(SW_SHOWNOACTIVATE);
 		SetTimer(IDT_APPEARING, m_dwShowEvents, NULL);
+		[[fallthrough]];
 	case IDT_APPEARING:
 	case IDT_WAITING:
 		RedrawWindow(&m_rcText);
