@@ -352,7 +352,8 @@ void COScopeCtrl::InvalidateCtrl(bool deleteGraph)
 		// Get the background color from the parent window. This way the controls which are
 		// embedded in a dialog window can get painted with the same background color as
 		// the dialog window.
-		HBRUSH hbr = (HBRUSH)GetParent()->SendMessage(WM_CTLCOLORSTATIC, (WPARAM)dc.m_hDC, (LPARAM)m_hWnd);
+		CWnd *pParentWnd = GetParent();
+		HBRUSH hbr = pParentWnd != NULL ? (HBRUSH)pParentWnd->SendMessage(WM_CTLCOLORSTATIC, (WPARAM)dc.m_hDC, (LPARAM)m_hWnd) : NULL;
 		crLabelBk = ::GetSysColor((hbr == ::GetSysColorBrush(COLOR_WINDOW)) ? COLOR_WINDOW : COLOR_BTNFACE);
 		crLabelFg = ::GetSysColor(COLOR_WINDOWTEXT);
 	} else {
