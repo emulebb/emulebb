@@ -17,10 +17,13 @@ bool WindowsFirewallRepair::RunElevatedRepair(const CString &rstrProgramPath, co
 		return true;
 	}
 
-	if (!ElevatedPowerShellAction::PrepareTempScript(_T("eMuleBB-FirewallRepair"), _T("repair-firewall.ps1"), _T("repair-result.json"), rResult))
+	if (!ElevatedPowerShellAction::PrepareBundledScript(_T("eMuleBB-FirewallRepair"), _T("repair-firewall.ps1"), _T("repair-result.json"), rResult))
 		return false;
 
-	return ElevatedPowerShellAction::RunPreparedScript(
-		WindowsFirewallRepairSeams::BuildRepairScript(rstrProgramPath, rules, rResult.strResultPath),
-		rResult);
+	CString strArguments;
+	strArguments.Format(
+		_T("-ProgramPath %s -ResultPath %s"),
+		(LPCTSTR)ElevatedPowerShellAction::QuotePowerShellArgument(rstrProgramPath),
+		(LPCTSTR)ElevatedPowerShellAction::QuotePowerShellArgument(rResult.strResultPath));
+	return ElevatedPowerShellAction::RunBundledScript(strArguments, true, true, rResult);
 }

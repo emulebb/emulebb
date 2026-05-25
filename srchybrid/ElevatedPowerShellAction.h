@@ -26,9 +26,12 @@ namespace ElevatedPowerShellAction
 		CString strResultJson;
 	};
 
-	/** Creates the locked-down temp action directory and assigns script/result paths. */
-	bool PrepareTempScript(const CString &rstrTempPrefix, const CString &rstrScriptLeafName, const CString &rstrResultLeafName, CLaunchResult &rResult);
+	/** Quotes one value for PowerShell command-line parameter passing. */
+	CString QuotePowerShellArgument(const CString &rstrValue);
 
-	/** Writes the prepared script, runs it elevated, reads the JSON result, and cleans up temp files. */
-	bool RunPreparedScript(const CString &rstrScript, CLaunchResult &rResult);
+	/** Prepares a bundled script launch with a locked-down temp result file. */
+	bool PrepareBundledScript(const CString &rstrTempPrefix, const CString &rstrScriptLeafName, const CString &rstrResultLeafName, CLaunchResult &rResult);
+
+	/** Runs the prepared bundled script, optionally elevated, and reads the JSON result. */
+	bool RunBundledScript(const CString &rstrArguments, bool bElevated, bool bWaitForExit, CLaunchResult &rResult);
 }

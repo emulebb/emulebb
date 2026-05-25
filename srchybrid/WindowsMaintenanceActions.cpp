@@ -7,16 +7,15 @@
 //version 2 of the License, or (at your option) any later version.
 #include "stdafx.h"
 #include "WindowsMaintenanceActions.h"
-#include "WindowsMaintenanceActionsSeams.h"
 
 bool WindowsMaintenanceActions::RunElevatedEnableLongPaths(CMaintenanceLaunchResult &rResult)
 {
-	if (!ElevatedPowerShellAction::PrepareTempScript(_T("eMuleBB-LongPaths"), _T("enable-long-paths.ps1"), _T("long-paths-result.json"), rResult))
+	if (!ElevatedPowerShellAction::PrepareBundledScript(_T("eMuleBB-LongPaths"), _T("enable-long-paths.ps1"), _T("long-paths-result.json"), rResult))
 		return false;
 
-	return ElevatedPowerShellAction::RunPreparedScript(
-		WindowsMaintenanceActionsSeams::BuildEnableLongPathsScript(rResult.strResultPath),
-		rResult);
+	CString strArguments;
+	strArguments.Format(_T("-ResultPath %s"), (LPCTSTR)ElevatedPowerShellAction::QuotePowerShellArgument(rResult.strResultPath));
+	return ElevatedPowerShellAction::RunBundledScript(strArguments, true, true, rResult);
 }
 
 bool WindowsMaintenanceActions::RunElevatedDefenderExclusions(const std::vector<CString> &paths, CMaintenanceLaunchResult &rResult)
@@ -28,10 +27,15 @@ bool WindowsMaintenanceActions::RunElevatedDefenderExclusions(const std::vector<
 		return true;
 	}
 
-	if (!ElevatedPowerShellAction::PrepareTempScript(_T("eMuleBB-DefenderExclusions"), _T("defender-exclusions.ps1"), _T("defender-exclusions-result.json"), rResult))
+	if (!ElevatedPowerShellAction::PrepareBundledScript(_T("eMuleBB-DefenderExclusions"), _T("defender-exclusions.ps1"), _T("defender-exclusions-result.json"), rResult))
 		return false;
 
-	return ElevatedPowerShellAction::RunPreparedScript(
-		WindowsMaintenanceActionsSeams::BuildDefenderExclusionScript(paths, rResult.strResultPath),
-		rResult);
+	CString strArguments(_T("-Path"));
+	for (const CString &rstrPath : paths) {
+		strArguments += _T(" ");
+		strArguments += ElevatedPowerShellAction::QuotePowerShellArgument(rstrPath);
+	}
+	strArguments += _T(" -ResultPath ");
+	strArguments += ElevatedPowerShellAction::QuotePowerShellArgument(rResult.strResultPath);
+	return ElevatedPowerShellAction::RunBundledScript(strArguments, true, true, rResult);
 }

@@ -127,6 +127,7 @@
 #include "WebServerJson.h"
 #include "Mdump.h"
 #include "PathHelpers.h"
+#include "ElevatedPowerShellAction.h"
 #include "WindowsFirewallRepair.h"
 #include "WindowsMaintenanceActions.h"
 #include "Win32CallbackTimerSeams.h"
@@ -956,6 +957,24 @@ namespace
 		default:
 			return 0;
 		}
+	}
+
+	static CString BuildLocalEmulebbWebBaseUrl()
+	{
+		CString strHost(thePrefs.GetWebBindAddr());
+		strHost.Trim();
+		if (strHost.IsEmpty() || strHost == _T("0.0.0.0"))
+			strHost = _T("127.0.0.1");
+		CString strBaseUrl;
+		strBaseUrl.Format(_T("http://%s:%u"), (LPCTSTR)strHost, thePrefs.GetWSPort());
+		return strBaseUrl;
+	}
+
+	static bool LaunchBundledInteractiveScript(LPCTSTR pszScriptName, CString strArguments, ElevatedPowerShellAction::CLaunchResult &rResult)
+	{
+		if (!ElevatedPowerShellAction::PrepareBundledScript(_T("eMuleBB-Tools"), pszScriptName, CString(), rResult))
+			return false;
+		return ElevatedPowerShellAction::RunBundledScript(strArguments, false, false, rResult);
 	}
 
 	static CString GetNotifierFallbackTitle(TbnMsg nMsgType)
@@ -4276,6 +4295,12 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS:
 		ExcludeDownloadFoldersFromDefender();
 		break;
+	case MP_HM_REGISTER_PROWLARR:
+		RegisterProwlarrIntegration();
+		break;
+	case MP_HM_REGISTER_ARR_STACK:
+		RegisterArrStackIntegration();
+		break;
 	case MP_HM_VIEW_PRESET_STOCK_KEEP_WIDTHS:
 	case MP_HM_VIEW_PRESET_STOCK_RESET_WIDTHS:
 	case MP_HM_VIEW_PRESET_EXTENDED_KEEP_WIDTHS:
@@ -4683,6 +4708,9 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_UPDATE_SERVERMET_FROM_ADDRESSES, GetResString(IDS_UPDATE_SERVERMET_FROM_ADDRESSES), _T("SERVER"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_CHECK_OPEN_PORTS, GetResString(IDS_CHECK_OPEN_PORTS), _T("WEB"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_REPAIR_WINDOWS_FIREWALL, GetResString(IDS_REPAIR_WINDOWS_FIREWALL_RULES), _T("SECURITY"));
+		networkUpdates.AppendMenu(MF_SEPARATOR);
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_REGISTER_PROWLARR, _T("Register eMuleBB in Prowlarr..."), _T("WEB"));
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_REGISTER_ARR_STACK, _T("Register Radarr/Sonarr integration..."), _T("WEB"));
 		networkUpdates.AppendMenu(uGeoLocationMenuFlags, MP_HM_GEOLOCATION_DOWNLOAD, GetResString(IDS_GEOLOCATION_DOWNLOAD_DB), _T("DOWNLOAD"));
 
 		maintenance.AppendMenu(MF_STRING, MP_HM_RELOAD_IPFILTER_DAT, GetResString(IDS_RELOAD_IPFILTER_DAT), _T("IPFILTER"));
@@ -4890,6 +4918,44 @@ void CemuleDlg::ExcludeDownloadFoldersFromDefender()
 	if (strError.IsEmpty())
 		strError = GetErrorMessage(result.dwLastError != ERROR_SUCCESS ? result.dwLastError : result.dwExitCode);
 	AddLogLine(true, GetResString(IDS_DEFENDER_EXCLUSIONS_FAILURE), (LPCTSTR)strError);
+}
+
+void CemuleDlg::RegisterProwlarrIntegration()
+{
+	ElevatedPowerShellAction::CLaunchResult result;
+	CString strArguments;
+	strArguments.Format(
+		_T("-EmulebbBaseUrl %s -EmulebbApiKey %s"),
+		(LPCTSTR)ElevatedPowerShellAction::QuotePowerShellArgument(BuildLocalEmulebbWebBaseUrl()),
+		(LPCTSTR)ElevatedPowerShellAction::QuotePowerShellArgument(thePrefs.GetWSApiKey()));
+	if (LaunchBundledInteractiveScript(_T("register-prowlarr.ps1"), strArguments, result)) {
+		AddLogLine(false, _T("Started eMuleBB Prowlarr registration script."));
+		return;
+	}
+
+	CString strError(result.strErrorText);
+	if (strError.IsEmpty())
+		strError = GetErrorMessage(result.dwLastError);
+	AddLogLine(true, _T("Failed to start eMuleBB Prowlarr registration script: %s"), (LPCTSTR)strError);
+}
+
+void CemuleDlg::RegisterArrStackIntegration()
+{
+	ElevatedPowerShellAction::CLaunchResult result;
+	CString strArguments;
+	strArguments.Format(
+		_T("-EmulebbBaseUrl %s -EmulebbApiKey %s"),
+		(LPCTSTR)ElevatedPowerShellAction::QuotePowerShellArgument(BuildLocalEmulebbWebBaseUrl()),
+		(LPCTSTR)ElevatedPowerShellAction::QuotePowerShellArgument(thePrefs.GetWSApiKey()));
+	if (LaunchBundledInteractiveScript(_T("register-arr-stack.ps1"), strArguments, result)) {
+		AddLogLine(false, _T("Started eMuleBB Radarr/Sonarr registration script."));
+		return;
+	}
+
+	CString strError(result.strErrorText);
+	if (strError.IsEmpty())
+		strError = GetErrorMessage(result.dwLastError);
+	AddLogLine(true, _T("Failed to start eMuleBB Radarr/Sonarr registration script: %s"), (LPCTSTR)strError);
 }
 
 

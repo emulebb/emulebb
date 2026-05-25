@@ -9,6 +9,7 @@
 #include "ElevatedPowerShellAction.h"
 #include "LongPathSeams.h"
 #include "OtherFunctions.h"
+#include "PathHelpers.h"
 #include "ProcessLaunchSeams.h"
 
 #include <AclAPI.h>
@@ -159,22 +160,6 @@ namespace
 		return false;
 	}
 
-	bool WriteUtf16PowerShellScript(const CString &rstrPath, const CString &rstrScript, CString &rstrError)
-	{
-		CStringW strScriptW(rstrScript);
-		std::vector<unsigned char> bytes(sizeof(WCHAR) + static_cast<size_t>(strScriptW.GetLength()) * sizeof(WCHAR));
-		const WCHAR wBom = 0xFEFF;
-		memcpy(bytes.data(), &wBom, sizeof wBom);
-		if (strScriptW.GetLength() > 0)
-			memcpy(bytes.data() + sizeof(WCHAR), static_cast<LPCWSTR>(strScriptW), static_cast<size_t>(strScriptW.GetLength()) * sizeof(WCHAR));
-
-		if (!LongPathSeams::WriteAllBytes(rstrPath, bytes, CREATE_NEW, 0)) {
-			rstrError = GetErrorMessage(::GetLastError());
-			return false;
-		}
-		return true;
-	}
-
 	CString GetPowerShellPath()
 	{
 		CString strPath;
@@ -208,18 +193,49 @@ namespace
 		}
 	}
 
-	void CleanupActionTemp(const CString &rstrScriptPath, const CString &rstrResultPath, const CString &rstrTempDir)
+	CString GetBundledScriptPath(const CString &rstrScriptLeafName)
 	{
-		(void)LongPathSeams::DeleteFileIfExists(rstrScriptPath);
+		const CString strModulePath(PathHelpers::GetModuleFilePath(NULL));
+		if (strModulePath.IsEmpty())
+			return CString();
+		return PathHelpers::AppendPathComponent(
+			PathHelpers::AppendPathComponent(PathHelpers::GetDirectoryPath(strModulePath), _T("scripts")),
+			rstrScriptLeafName);
+	}
+
+	void CleanupActionTemp(const CString &rstrResultPath, const CString &rstrTempDir)
+	{
 		(void)LongPathSeams::DeleteFileIfExists(rstrResultPath);
 		if (!rstrTempDir.IsEmpty())
 			(void)LongPathSeams::RemoveDirectory(rstrTempDir);
 	}
 }
 
-bool ElevatedPowerShellAction::PrepareTempScript(const CString &rstrTempPrefix, const CString &rstrScriptLeafName, const CString &rstrResultLeafName, CLaunchResult &rResult)
+CString ElevatedPowerShellAction::QuotePowerShellArgument(const CString &rstrValue)
+{
+	CString strQuoted(_T("'"));
+	for (int i = 0; i < rstrValue.GetLength(); ++i) {
+		if (rstrValue[i] == _T('\''))
+			strQuoted += _T("''");
+		else
+			strQuoted += rstrValue[i];
+	}
+	strQuoted += _T("'");
+	return strQuoted;
+}
+
+bool ElevatedPowerShellAction::PrepareBundledScript(const CString &rstrTempPrefix, const CString &rstrScriptLeafName, const CString &rstrResultLeafName, CLaunchResult &rResult)
 {
 	rResult = CLaunchResult{};
+
+	rResult.strScriptPath = GetBundledScriptPath(rstrScriptLeafName);
+	if (rResult.strScriptPath.IsEmpty() || !LongPathSeams::PathExists(rResult.strScriptPath)) {
+		rResult.dwLastError = ERROR_FILE_NOT_FOUND;
+		rResult.strErrorText.Format(_T("Bundled eMuleBB script is missing: %s"), (LPCTSTR)rResult.strScriptPath);
+		return false;
+	}
+	if (rstrResultLeafName.IsEmpty())
+		return true;
 
 	CString strError;
 	if (!CreateActionTempDirectory(rstrTempPrefix, rResult.strTempDir, strError)) {
@@ -228,42 +244,51 @@ bool ElevatedPowerShellAction::PrepareTempScript(const CString &rstrTempPrefix, 
 		return false;
 	}
 
-	rResult.strScriptPath = rResult.strTempDir + _T("\\") + rstrScriptLeafName;
 	rResult.strResultPath = rResult.strTempDir + _T("\\") + rstrResultLeafName;
 	return true;
 }
 
-bool ElevatedPowerShellAction::RunPreparedScript(const CString &rstrScript, CLaunchResult &rResult)
+bool ElevatedPowerShellAction::RunBundledScript(const CString &rstrArguments, bool bElevated, bool bWaitForExit, CLaunchResult &rResult)
 {
-	CString strError;
-	if (!WriteUtf16PowerShellScript(rResult.strScriptPath, rstrScript, strError)) {
-		rResult.dwLastError = ::GetLastError();
-		rResult.strErrorText = strError;
-		CleanupActionTemp(rResult.strScriptPath, rResult.strResultPath, rResult.strTempDir);
+	if (rResult.strScriptPath.IsEmpty() || !LongPathSeams::PathExists(rResult.strScriptPath)) {
+		rResult.dwLastError = ERROR_FILE_NOT_FOUND;
+		rResult.strErrorText.Format(_T("Bundled eMuleBB script is missing: %s"), (LPCTSTR)rResult.strScriptPath);
+		CleanupActionTemp(rResult.strResultPath, rResult.strTempDir);
 		return false;
 	}
 
 	CString strParameters;
 	strParameters.Format(_T("-NoProfile -ExecutionPolicy Bypass -File \"%s\""), (LPCTSTR)rResult.strScriptPath);
+	if (!rstrArguments.IsEmpty()) {
+		strParameters += _T(" ");
+		strParameters += rstrArguments;
+	}
+
+	const CString strWorkingDirectory(PathHelpers::GetDirectoryPath(rResult.strScriptPath));
 
 	SHELLEXECUTEINFO sei = {};
 	sei.cbSize = sizeof(sei);
-	sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+	sei.fMask = bWaitForExit ? SEE_MASK_NOCLOSEPROCESS : 0;
 	sei.hwnd = NULL;
-	sei.lpVerb = _T("runas");
+	sei.lpVerb = bElevated ? _T("runas") : NULL;
 	sei.lpFile = GetPowerShellPath();
 	sei.lpParameters = strParameters;
-	sei.lpDirectory = rResult.strTempDir;
+	sei.lpDirectory = strWorkingDirectory;
 	sei.nShow = SW_SHOWNORMAL;
 	if (::ShellExecuteEx(&sei) == FALSE) {
 		rResult.dwLastError = ::GetLastError();
 		rResult.bCancelled = rResult.dwLastError == ERROR_CANCELLED;
 		rResult.strErrorText = GetErrorMessage(rResult.dwLastError);
-		CleanupActionTemp(rResult.strScriptPath, rResult.strResultPath, rResult.strTempDir);
+		CleanupActionTemp(rResult.strResultPath, rResult.strTempDir);
 		return false;
 	}
 
 	rResult.bStarted = true;
+	if (!bWaitForExit) {
+		rResult.bSucceeded = true;
+		return true;
+	}
+
 	const DWORD dwWaitResult = ::WaitForSingleObject(sei.hProcess, ProcessLaunchSeams::kElevatedPowerShellActionTimeoutMs);
 	const ProcessLaunchSeams::EProcessWaitResult eWaitResult = ProcessLaunchSeams::ClassifyProcessWaitResult(dwWaitResult);
 	if (eWaitResult == ProcessLaunchSeams::EProcessWaitResult::TimedOut) {
@@ -273,14 +298,14 @@ bool ElevatedPowerShellAction::RunPreparedScript(const CString &rstrScript, CLau
 		(void)::TerminateProcess(sei.hProcess, WAIT_TIMEOUT);
 		(void)::WaitForSingleObject(sei.hProcess, ProcessLaunchSeams::kTimedOutProcessTerminateWaitMs);
 		::CloseHandle(sei.hProcess);
-		CleanupActionTemp(rResult.strScriptPath, rResult.strResultPath, rResult.strTempDir);
+		CleanupActionTemp(rResult.strResultPath, rResult.strTempDir);
 		return false;
 	}
 	if (eWaitResult != ProcessLaunchSeams::EProcessWaitResult::Completed) {
 		rResult.dwLastError = eWaitResult == ProcessLaunchSeams::EProcessWaitResult::Failed ? ::GetLastError() : dwWaitResult;
 		rResult.strErrorText = GetErrorMessage(rResult.dwLastError);
 		::CloseHandle(sei.hProcess);
-		CleanupActionTemp(rResult.strScriptPath, rResult.strResultPath, rResult.strTempDir);
+		CleanupActionTemp(rResult.strResultPath, rResult.strTempDir);
 		return false;
 	}
 	if (::GetExitCodeProcess(sei.hProcess, &rResult.dwExitCode) == FALSE) {
@@ -291,6 +316,6 @@ bool ElevatedPowerShellAction::RunPreparedScript(const CString &rstrScript, CLau
 
 	ReadResultJson(rResult.strResultPath, rResult.strResultJson);
 	rResult.bSucceeded = rResult.dwExitCode == ERROR_SUCCESS;
-	CleanupActionTemp(rResult.strScriptPath, rResult.strResultPath, rResult.strTempDir);
+	CleanupActionTemp(rResult.strResultPath, rResult.strTempDir);
 	return rResult.bSucceeded;
 }

@@ -161,6 +161,10 @@ public:
 	void EnableWindowsLongPaths();
 	/// Runs the explicit elevated Microsoft Defender folder exclusion action.
 	void ExcludeDownloadFoldersFromDefender();
+	/// Launches the bundled interactive Prowlarr registration script.
+	void RegisterProwlarrIntegration();
+	/// Launches the bundled interactive Radarr/Sonarr registration script.
+	void RegisterArrStackIntegration();
 	HBRUSH GetCtlColor(CDC*, CWnd*, UINT);
 
 	virtual void OnTrayRButtonUp(CPoint pt);
