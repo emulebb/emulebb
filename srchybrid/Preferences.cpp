@@ -98,6 +98,24 @@ bool EnsureStartupDirectory(LPCTSTR pszDirectoryLabel, const CString &rstrDirect
 	RecordStartupDirectoryCreateError(pszDirectoryLabel, rstrDirectory, dwError);
 	return false;
 }
+
+CString ReadStartupConfigProfileDirectoryPreference(LPCTSTR pszPreferenceKey)
+{
+	if (!theApp.HasStartupConfigBaseDirOverride() || pszPreferenceKey == NULL || pszPreferenceKey[0] == _T('\0'))
+		return CString();
+
+	const CString strPreferencesPath(StartupConfigOverride::GetPreferencesIniPathFromBaseDir(theApp.GetStartupConfigBaseDirOverride()));
+	if (!LongPathSeams::PathExists(strPreferencesPath))
+		return CString();
+
+	CIni ini(strPreferencesPath, _T("eMule"));
+	CString strDirectory(ini.GetString(pszPreferenceKey, _T("")));
+	strDirectory.Trim();
+	if (strDirectory.IsEmpty())
+		return CString();
+
+	return PathHelpers::CanonicalizeDirectoryPath(strDirectory);
+}
 constexpr UINT kMaxFileBufferTimeLimitSeconds = 86400;
 
 UINT NormalizeCategoryPriority(UINT uPriority)
@@ -4256,6 +4274,16 @@ CString CPreferences::GetDefaultDirectory(EDefaultDirectory eDirectory, bool bCr
 		//               [EMULE_EXECUTABLEDIR] - has been set already
 		m_astrDefaultDirs[EMULE_TOOLBARDIR] = m_astrDefaultDirs[EMULE_SKINDIR];
 		m_astrDefaultDirs[EMULE_EXPANSIONDIR] = strSelectedExpansionBaseDirectory;
+
+		if (bHasStartupConfigBaseDirOverride) {
+			const CString strConfiguredIncomingDir(ReadStartupConfigProfileDirectoryPreference(_T("IncomingDir")));
+			if (!strConfiguredIncomingDir.IsEmpty())
+				m_astrDefaultDirs[EMULE_INCOMINGDIR] = strConfiguredIncomingDir;
+
+			const CString strConfiguredTempDir(ReadStartupConfigProfileDirectoryPreference(_T("TempDir")));
+			if (!strConfiguredTempDir.IsEmpty())
+				m_astrDefaultDirs[EMULE_TEMPDIR] = strConfiguredTempDir;
+		}
 
 		/*CString strDebug;
 		for (int i = 0; i < 12; ++i)
