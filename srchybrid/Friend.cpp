@@ -195,7 +195,8 @@ void CFriend::SetLinkedClient(CUpDownClient *linkedClient)
 
 		m_LinkedClient = linkedClient;
 	}
-	theApp.friendlist->RefreshFriend(this);
+	if (theApp.friendlist != NULL)
+		theApp.friendlist->RefreshFriend(this);
 }
 
 CUpDownClient* CFriend::GetLinkedClient(bool bValidCheck) const
@@ -227,6 +228,10 @@ CUpDownClient* CFriend::GetClientForChatSession()
 
 bool CFriend::TryToConnect(CFriendConnectionListener *pConnectionReport)
 {
+	ASSERT(pConnectionReport != NULL);
+	if (pConnectionReport == NULL)
+		return false;
+
 	if (m_FriendConnectState != FCS_NONE) {
 		m_liConnectionReport.AddTail(pConnectionReport);
 		return true;
