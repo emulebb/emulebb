@@ -283,6 +283,10 @@ public:
 	virtual void	RefilterFileComments();
 
 	void	AddDownloadingSource(CUpDownClient *client);
+	/**
+	 * @brief Removes a client from the active downloading-source cache without touching UI state.
+	 */
+	bool	DetachDownloadingSource(CUpDownClient *client);
 	void	RemoveDownloadingSource(CUpDownClient *client);
 
 	const CStringA GetProgressString(uint16 size) const;
@@ -371,6 +375,8 @@ private:
 	bool	FlushBufferedDataForShutdown();
 	void	NoteHashLayoutChanged();
 	bool	TryStealEndgameBlockForFastPeer(CUpDownClient *pFastPeer, bool bEndgame, ULONGLONG ullNow, uint16 *pCanceledPart);
+	bool	IsLiveDownloadingSource(const CUpDownClient *pClient) const;
+	void	RemoveStaleDownloadingSource(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext);
 	/**
 	 * @brief Returns whether an insufficient-space download may resume under the current per-volume disk-space floors.
 	 */

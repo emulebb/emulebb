@@ -290,6 +290,9 @@ CUpDownClient::~CUpDownClient()
 		CAICHRecoveryHashSet::ClientAICHRequestFailed(this);
 	}
 
+	if (m_reqfile != NULL && theApp.downloadqueue != NULL && theApp.downloadqueue->IsPartFile(m_reqfile))
+		m_reqfile->RemoveDownloadingSource(this);
+
 	if (GetFriend() != NULL) {
 		if (GetFriend()->IsTryingToConnect())
 			GetFriend()->UpdateFriendConnectionState(FCR_DELETED);

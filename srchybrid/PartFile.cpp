@@ -2419,13 +2419,47 @@ void CPartFile::AddDownloadingSource(CUpDownClient *client)
 	}
 }
 
-void CPartFile::RemoveDownloadingSource(CUpDownClient *client)
+bool CPartFile::DetachDownloadingSource(CUpDownClient *client)
 {
 	POSITION pos = m_downloadingSourceList.Find(client); // to be sure
-	if (pos != NULL) {
-		m_downloadingSourceList.RemoveAt(pos);
+	if (pos == NULL)
+		return false;
+
+	m_downloadingSourceList.RemoveAt(pos);
+	return true;
+}
+
+void CPartFile::RemoveDownloadingSource(CUpDownClient *client)
+{
+	if (DetachDownloadingSource(client) && theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
 		theApp.emuledlg->transferwnd->GetDownloadClientsList()->RemoveClient(client);
-	}
+}
+
+bool CPartFile::IsLiveDownloadingSource(const CUpDownClient *pClient) const
+{
+	if (pClient == NULL)
+		return false;
+	if (theApp.clientlist != NULL && !theApp.clientlist->ContainsClientPointer(pClient))
+		return false;
+	if (srclist.Find(const_cast<CUpDownClient*>(pClient)) == NULL)
+		return false;
+
+	return pClient->GetRequestFile() == this;
+}
+
+void CPartFile::RemoveStaleDownloadingSource(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext)
+{
+	ASSERT(pos != NULL);
+	if (pos == NULL)
+		return;
+
+	m_downloadingSourceList.RemoveAt(pos);
+	if (theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
+		theApp.emuledlg->transferwnd->GetDownloadClientsList()->RemoveClient(pClient);
+	DebugLogWarning(_T("Removed stale downloading source pointer %p from file \"%s\" (%s)"),
+		static_cast<const void*>(pClient),
+		(LPCTSTR)GetFileName(),
+		pszContext != NULL ? pszContext : _T("unknown context"));
 }
 
 uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
@@ -2456,7 +2490,12 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 	if (icounter < 10) {
 		uint32 cur_datarate;
 		for (POSITION pos = m_downloadingSourceList.GetHeadPosition(); pos != NULL;) {
+			const POSITION posCurrent = pos;
 			CUpDownClient *cur_src = m_downloadingSourceList.GetNext(pos);
+			if (!IsLiveDownloadingSource(cur_src)) {
+				RemoveStaleDownloadingSource(posCurrent, cur_src, _T("download-rate pass"));
+				continue;
+			}
 			if (thePrefs.m_iDbgHeap >= 2)
 				ASSERT_VALID(cur_src);
 			if (cur_src && cur_src->GetDownloadState() == DS_DOWNLOADING) {
@@ -2524,6 +2563,7 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 			case DS_DOWNLOADING:
 				ASSERT(cur_src->socket);
 				if (cur_src->socket) {
+					ASSERT(m_downloadingSourceList.Find(cur_src) != NULL);
 					cur_src->CheckDownloadTimeout();
 					uint32 cur_datarate = cur_src->CalculateDownloadRate();
 					m_datarate += cur_datarate;
