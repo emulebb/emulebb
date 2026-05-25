@@ -734,12 +734,14 @@ bool CSharedFilesCtrl::IsLiveVisibleFilePointer(const CShareableFile *file) cons
 	if (file == NULL)
 		return false;
 
-	const CKnownFile *pKnownFile = static_cast<const CKnownFile*>(file);
-	if (theApp.sharedfiles != NULL && theApp.sharedfiles->ContainsFilePointer(pKnownFile))
-		return true;
+	if (file->IsKindOf(RUNTIME_CLASS(CKnownFile))) {
+		const CKnownFile *pKnownFile = static_cast<const CKnownFile*>(file);
+		if (theApp.sharedfiles != NULL && theApp.sharedfiles->IsFilePtrInList(pKnownFile))
+			return true;
 
-	if (theApp.knownfiles != NULL && theApp.knownfiles->ContainsFilePointer(pKnownFile))
-		return true;
+		if (theApp.knownfiles != NULL && theApp.knownfiles->IsFilePtrInList(pKnownFile))
+			return true;
+	}
 
 	for (POSITION pos = liTempShareableFilesInDir.GetHeadPosition(); pos != NULL;) {
 		if (liTempShareableFilesInDir.GetNext(pos) == file)
@@ -904,8 +906,8 @@ void CSharedFilesCtrl::SortVisibleFiles()
 
 	const LPARAM lParamSort = MAKELONG(GetSortItem() + (GetSortSecondValue() ? 100 : 0), !GetSortAscending());
 	std::stable_sort(m_aVisibleFiles.begin(), m_aVisibleFiles.end(),
-		[this, lParamSort](const CShareableFile *pLeft, const CShareableFile *pRight) {
-			return CompareVisibleFiles(pLeft, pRight, lParamSort) < 0;
+		[lParamSort](const CShareableFile *pLeft, const CShareableFile *pRight) {
+			return CSharedFilesCtrl::SortProc(reinterpret_cast<LPARAM>(pLeft), reinterpret_cast<LPARAM>(pRight), lParamSort) < 0;
 		});
 	RebuildVisibleFileIndex();
 }
