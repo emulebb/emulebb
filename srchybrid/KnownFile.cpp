@@ -42,13 +42,13 @@
 #include "OtherFunctions.h"
 #include "PathHelpers.h"
 #include "UserMsgs.h"
+#include "EmuleMD4.h"
 #include "Kademlia/Kademlia/SearchManager.h"
 #include "Kademlia/Kademlia/Entry.h"
 #include "kademlia/kademlia/UDPFirewallTester.h"
 #include "SafeFile.h"
 #include "shahashset.h"
 #include "Log.h"
-#include "EmuleMD4.h"
 #include "Collection.h"
 #include "emuledlg.h"
 #include "SharedFilesWnd.h"
@@ -248,7 +248,7 @@ void CKnownFile::UpdateFileRatingCommentAvail(bool bForceUpdate)
 		}
 	}
 
-	m_uUserRating = uRatings ? (uint32)ROUND(uUserRatings / (float)uRatings) : 0;
+	m_uUserRating = uRatings ? (uint32)ROUND(static_cast<float>(uUserRatings) / static_cast<float>(uRatings)) : 0;
 
 	if (bOldHasComment != m_bHasComment || uOldUserRatings != m_uUserRating || bForceUpdate)
 		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.UpdateFile(this);
@@ -259,7 +259,7 @@ float CKnownFile::GetSessionUploadRatio() const
 	const uint64 nFileSize = (uint64)GetFileSize();
 	if (nFileSize == 0)
 		return 0.0f;
-	return static_cast<float>(statistic.GetTransferred() / static_cast<double>(nFileSize));
+	return static_cast<float>(static_cast<double>(statistic.GetTransferred()) / static_cast<double>(nFileSize));
 }
 
 float CKnownFile::GetAllTimeUploadRatio() const
@@ -267,7 +267,7 @@ float CKnownFile::GetAllTimeUploadRatio() const
 	const uint64 nFileSize = (uint64)GetFileSize();
 	if (nFileSize == 0)
 		return 0.0f;
-	return static_cast<float>(statistic.GetAllTimeTransferred() / static_cast<double>(nFileSize));
+	return static_cast<float>(static_cast<double>(statistic.GetAllTimeTransferred()) / static_cast<double>(nFileSize));
 }
 
 void CKnownFile::UpdatePartsInfo()
@@ -502,6 +502,10 @@ bool CKnownFile::CreateFromFile(LPCTSTR in_directory, LPCTSTR in_filename, const
 		if (togo) {
 			pBlockAICHHashTree = cAICHHashSet.m_pHashTree.FindHash(hashcount * PARTSIZE, uSize);
 			ASSERT(pBlockAICHHashTree != NULL);
+			if (pBlockAICHHashTree == NULL) {
+				fclose(file);
+				return false;
+			}
 		} else
 			pBlockAICHHashTree = NULL; // SHA hash tree doesn't take hash of zero-sized data
 
@@ -612,6 +616,10 @@ bool CKnownFile::CreateAICHHashSetOnly()
 		uint64 uSize = min(togo, PARTSIZE);
 		CAICHHashTree *pBlockAICHHashTree = cAICHHashSet.m_pHashTree.FindHash(hashcount * PARTSIZE, uSize);
 		ASSERT(pBlockAICHHashTree != NULL);
+		if (pBlockAICHHashTree == NULL) {
+			fclose(file);
+			return false;
+		}
 		if (!CreateHash(file, uSize, NULL, pBlockAICHHashTree)) {
 			if (theApp.IsClosing()) {
 				fclose(file);
@@ -1047,6 +1055,8 @@ bool CKnownFile::CreateHash(CFile *pFile, uint64 Length, uchar *pMd4HashOut, CAI
 {
 	ASSERT(!Length || pFile);
 	ASSERT(pMd4HashOut != NULL || pShaHashOut != NULL);
+	if ((Length != 0 && pFile == NULL) || (pMd4HashOut == NULL && pShaHashOut == NULL))
+		return false;
 
 	uchar   X[64 * 128];
 	uint64	posCurrentEMBlock = 0;
@@ -1105,6 +1115,10 @@ bool CKnownFile::CreateHash(CFile *pFile, uint64 Length, uchar *pMd4HashOut, CAI
 
 bool CKnownFile::CreateHash(FILE *fp, uint64 uSize, uchar *pucHash, CAICHHashTree *pShaHashOut)
 {
+	ASSERT(uSize == 0 || fp != NULL);
+	if (uSize != 0 && fp == NULL)
+		return false;
+
 	try {
 		CStdioFile file(fp);
 		return CreateHash(&file, uSize, pucHash, pShaHashOut);
@@ -1116,6 +1130,10 @@ bool CKnownFile::CreateHash(FILE *fp, uint64 uSize, uchar *pucHash, CAICHHashTre
 
 bool CKnownFile::CreateHash(const uchar *pucData, uint32 uSize, uchar *pucHash, CAICHHashTree *pShaHashOut)
 {
+	ASSERT(uSize == 0 || pucData != NULL);
+	if (uSize != 0 && pucData == NULL)
+		return false;
+
 	try {
 		CMemFile file(const_cast<uchar*>(pucData), uSize);
 		return CreateHash(&file, uSize, pucHash, pShaHashOut);
