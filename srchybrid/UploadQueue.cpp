@@ -818,6 +818,9 @@ void CUploadQueue::InvalidateUploadClientStructWithoutClient(UploadingToClient_S
 CUploadQueue::RetiredUploadClientStructContext CUploadQueue::RemoveUploadClientStructFromActiveList(POSITION pos, UploadingToClient_Struct *pUploadClientStruct)
 {
 	ASSERT(pUploadClientStruct != NULL);
+	ASSERT(pos != NULL);
+	if (pUploadClientStruct == NULL || pos == NULL)
+		return {NULL};
 
 	CSingleLock lockUploadList(&m_csUploadListMainThrdWriteOtherThrdsRead, TRUE);
 	ASSERT(lockUploadList.IsLocked());
@@ -834,20 +837,29 @@ void CUploadQueue::RetireUploadClientStruct(POSITION pos, UploadingToClient_Stru
 {
 	ASSERT(pUploadClientStruct != NULL);
 	ASSERT(pClient != NULL);
+	ASSERT(pos != NULL);
+	if (pUploadClientStruct == NULL || pClient == NULL || pos == NULL)
+		return;
 
 	const RetiredUploadClientStructContext retiredContext = RemoveUploadClientStructFromActiveList(pos, pUploadClientStruct);
-	InvalidateUploadClientStruct(retiredContext.pUploadClientStruct, pClient);
+	if (retiredContext.pUploadClientStruct != NULL)
+		InvalidateUploadClientStruct(retiredContext.pUploadClientStruct, pClient);
 }
 
 void CUploadQueue::RetireStaleUploadClientStruct(POSITION pos, UploadingToClient_Struct *pUploadClientStruct)
 {
 	ASSERT(pUploadClientStruct != NULL);
+	ASSERT(pos != NULL);
+	if (pUploadClientStruct == NULL || pos == NULL)
+		return;
 
 	if (pUploadClientStruct->m_pClient != NULL)
 		theApp.emuledlg->transferwnd->GetUploadList()->RemoveClient(pUploadClientStruct->m_pClient);
 	const RetiredUploadClientStructContext retiredContext = RemoveUploadClientStructFromActiveList(pos, pUploadClientStruct);
-	InvalidateUploadClientStructWithoutClient(retiredContext.pUploadClientStruct);
-	m_iHighestNumberOfFullyActivatedSlotsSinceLastCall = 0;
+	if (retiredContext.pUploadClientStruct != NULL) {
+		InvalidateUploadClientStructWithoutClient(retiredContext.pUploadClientStruct);
+		m_iHighestNumberOfFullyActivatedSlotsSinceLastCall = 0;
+	}
 }
 
 void CUploadQueue::ReclaimRetiredUploadClientStructs()
@@ -955,6 +967,10 @@ bool CUploadQueue::RemoveFromWaitingQueue(CUpDownClient *client, bool updatewind
 
 void CUploadQueue::RemoveFromWaitingQueue(POSITION pos, bool updatewindow)
 {
+	ASSERT(pos != NULL);
+	if (pos == NULL)
+		return;
+
 	m_bStatisticsWaitingListDirty = true;
 	CUpDownClient *todelete = waitinglist.GetAt(pos);
 	waitinglist.RemoveAt(pos);
@@ -968,6 +984,10 @@ void CUploadQueue::RemoveFromWaitingQueue(POSITION pos, bool updatewindow)
 
 void CUploadQueue::RemoveStaleWaitingClient(POSITION pos)
 {
+	ASSERT(pos != NULL);
+	if (pos == NULL)
+		return;
+
 	m_bStatisticsWaitingListDirty = true;
 	CUpDownClient *staleClient = waitinglist.GetAt(pos);
 	waitinglist.RemoveAt(pos);
@@ -1322,6 +1342,9 @@ CUpDownClient* CUploadQueue::GetNextFromUploadList(POSITION &curpos) const
 
 CUpDownClient* CUploadQueue::GetQueueClientAt(POSITION &curpos) const
 {
+	if (curpos == NULL)
+		return NULL;
+
 	const UploadingToClient_Struct *pCurClientStruct = uploadinglist.GetAt(curpos);
 	CUpDownClient *client = pCurClientStruct != NULL ? pCurClientStruct->m_pClient : NULL;
 	return IsLiveUploadQueueClient(client) ? client : NULL;
@@ -1339,6 +1362,9 @@ CUpDownClient* CUploadQueue::GetNextFromWaitingList(POSITION &curpos) const
 
 CUpDownClient* CUploadQueue::GetWaitClientAt(POSITION &curpos) const
 {
+	if (curpos == NULL)
+		return NULL;
+
 	CUpDownClient *client = waitinglist.GetAt(curpos);
 	return IsLiveUploadQueueClient(client) ? client : NULL;
 }
