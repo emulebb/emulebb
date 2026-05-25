@@ -281,8 +281,14 @@ void CListBoxST::FreeResources()
 
 int CListBoxST::ReplaceItemData(int nIndex, DWORD_PTR dwItemData, LPVOID pData, int nImage, DWORD dwFlags, BYTE byMask)
 {
+	if (nIndex < 0 || nIndex >= GetCount())
+		return LB_ERR;
+
 	// Get pointer to associated data (if any)
 	STRUCT_LBDATA *lpLBData = (STRUCT_LBDATA*)CListBox::GetItemDataPtr(nIndex);
+	if (lpLBData == (LPVOID)-1)
+		return LB_ERR;
+
 	// If no data exists, create a new one
 	if (lpLBData == NULL)
 		try {
@@ -305,13 +311,17 @@ int CListBoxST::ReplaceItemData(int nIndex, DWORD_PTR dwItemData, LPVOID pData, 
 
 void CListBoxST::DeleteItemData(int nIndex)
 {
+	if (nIndex < 0 || nIndex >= GetCount())
+		return;
+
 	// Get pointer to associated data (if any)
 	STRUCT_LBDATA *lpLBData = reinterpret_cast<STRUCT_LBDATA*>(CListBox::GetItemDataPtr(nIndex));
 	// If data exists
-	if (lpLBData != (LPVOID)-1)
+	if (lpLBData != NULL && lpLBData != (LPVOID)-1)
 		delete lpLBData;
 
-	CListBox::SetItemDataPtr(nIndex, NULL);
+	if (lpLBData != (LPVOID)-1)
+		CListBox::SetItemDataPtr(nIndex, NULL);
 } // End of DeleteItemData
 
 // Adds a string to the list box.
@@ -437,7 +447,7 @@ int CListBoxST::SetItemData(int nIndex, DWORD_PTR dwItemData)
 DWORD_PTR CListBoxST::GetItemData(int nIndex)
 {
 	STRUCT_LBDATA *lpLBData = reinterpret_cast<STRUCT_LBDATA*>(CListBox::GetItemDataPtr(nIndex));
-	if (lpLBData != (LPVOID)-1)
+	if (lpLBData != NULL && lpLBData != (LPVOID)-1)
 		return lpLBData->dwItemData;
 
 	return (DWORD_PTR)LB_ERR;
@@ -471,7 +481,7 @@ int CListBoxST::SetItemDataPtr(int nIndex, void *pData)
 void* CListBoxST::GetItemDataPtr(int nIndex)
 {
 	STRUCT_LBDATA *lpLBData = reinterpret_cast<STRUCT_LBDATA*>(CListBox::GetItemDataPtr(nIndex));
-	return (lpLBData != (LPVOID)-1) ? lpLBData->pData : (LPVOID)-1;
+	return (lpLBData != NULL && lpLBData != (LPVOID)-1) ? lpLBData->pData : (LPVOID)-1;
 } // End of GetItemDataPtr
 
 int CListBoxST::Move(int nOldIndex, int nNewIndex, BOOL bSetCurSel)
@@ -494,6 +504,9 @@ int CListBoxST::Move(int nOldIndex, int nNewIndex, BOOL bSetCurSel)
 	DeleteString(nOldIndex);
 	// Insert string at new position
 	int nInsertedIndex = InsertString(nNewIndex, sText);
+	if (nInsertedIndex == LB_ERR || nInsertedIndex == LB_ERRSPACE)
+		return nInsertedIndex;
+
 	// Restore associated data
 	ReplaceItemData(nInsertedIndex, csLBData.dwItemData, csLBData.pData, csLBData.nImage, csLBData.dwFlags, MASK_ALL);
 
