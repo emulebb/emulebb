@@ -47,6 +47,12 @@ enum class ERejectedRemoteAccessIpAction
 	StopAcceptDrain
 };
 
+enum class ESocketThreadShutdownFollowUp
+{
+	CompleteShutdown,
+	WaitWithoutTimeout
+};
+
 /**
  * @brief Reports whether one HTTP method token is supported by the web
  * dispatcher.
@@ -72,6 +78,17 @@ inline bool CanStartAcceptedClientThread(const size_t uCurrentAcceptedThreads)
 inline ERejectedRemoteAccessIpAction GetRejectedRemoteAccessIpAction()
 {
 	return ERejectedRemoteAccessIpAction::ContinueAcceptDrain;
+}
+
+/**
+ * @brief Preserves the owning WebServer lifetime after a bounded socket-thread
+ * shutdown wait times out or fails.
+ */
+inline ESocketThreadShutdownFollowUp GetSocketThreadShutdownFollowUp(const bool bBoundedWaitSucceeded)
+{
+	return bBoundedWaitSucceeded
+		? ESocketThreadShutdownFollowUp::CompleteShutdown
+		: ESocketThreadShutdownFollowUp::WaitWithoutTimeout;
 }
 
 /**

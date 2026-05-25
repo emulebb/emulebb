@@ -928,11 +928,11 @@ void StartSockets(CWebServer *pThis)
 
 void StopSockets()
 {
-	bool bCanCloseTerminate = true;
 	if (s_hTerminate)
 		VERIFY(::SetEvent(s_hTerminate));
 
 	if (s_pSocketThread) {
+		bool bListenerWaitSucceeded = true;
 		if (s_pSocketThread->m_hThread) {
 			// because we want to wait on the thread handle we must not use 'CWinThread::m_AutoDelete'.
 			// otherwise we may run into the situation that the CWinThread was already auto-deleted and
@@ -943,28 +943,33 @@ void StopSockets()
 			if (dwWaitRes == WAIT_TIMEOUT) {
 				TRACE("*** Failed to wait for websocket thread termination - Timeout\n");
 				DebugLogError(_T("Web Interface listener thread did not exit within %lu ms"), kWebSocketThreadShutdownTimeoutMs);
-				bCanCloseTerminate = false;
+				bListenerWaitSucceeded = false;
 			} else if (dwWaitRes == WAIT_FAILED) {
 				TRACE("*** Failed to wait for websocket thread termination - Error %d\n", CAsyncSocket::GetLastError());
 				DebugLogError(_T("Web Interface listener thread wait failed: %lu"), ::GetLastError());
-				bCanCloseTerminate = false;
+				bListenerWaitSucceeded = false;
 			}
 		}
-		if (bCanCloseTerminate) {
-			delete s_pSocketThread;
-			s_pSocketThread = NULL;
+		if (WebSocketHttpSeams::GetSocketThreadShutdownFollowUp(bListenerWaitSucceeded) == WebSocketHttpSeams::ESocketThreadShutdownFollowUp::WaitWithoutTimeout) {
+			DebugLogError(_T("Web Interface listener thread is still using WebServer state; waiting without a timeout before teardown."));
+			if (s_pSocketThread->m_hThread != NULL)
+				(void)::WaitForSingleObject(s_pSocketThread->m_hThread, INFINITE);
+		}
+		delete s_pSocketThread;
+		s_pSocketThread = NULL;
+	}
+
+	if (!WaitForAcceptedThreadHandles(kWebSocketThreadShutdownTimeoutMs)) {
+		if (WebSocketHttpSeams::GetSocketThreadShutdownFollowUp(false) == WebSocketHttpSeams::ESocketThreadShutdownFollowUp::WaitWithoutTimeout) {
+			DebugLogError(_T("Web Interface accepted-client thread(s) are still using WebServer state; waiting without a timeout before teardown."));
+			(void)WaitForAcceptedThreadHandles(INFINITE);
 		}
 	}
 
-	if (!WaitForAcceptedThreadHandles(kWebSocketThreadShutdownTimeoutMs))
-		bCanCloseTerminate = false;
-
-	if (bCanCloseTerminate && s_hTerminate) {
+	if (s_hTerminate) {
 		VERIFY(::CloseHandle(s_hTerminate));
 		s_hTerminate = NULL;
 		StopSSL();
-	} else if (!bCanCloseTerminate)
-		DebugLogError(_T("Web Interface termination handle kept open because socket threads are still running"));
-	else
+	} else
 		StopSSL();
 }
