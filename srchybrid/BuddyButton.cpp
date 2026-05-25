@@ -44,6 +44,22 @@ static LRESULT CALLBACK BuddyButtonSubClassedProc(HWND hWnd, UINT uMessage, WPAR
 	SBuddyData *pBuddyData = static_cast<SBuddyData*>(::GetProp(hWnd, s_szPropBuddyData));
 	ASSERT(pBuddyData != NULL);
 
+	if (pfnOldWndProc == NULL) {
+		if (uMessage == WM_NCDESTROY && pBuddyData != NULL) {
+			::RemoveProp(hWnd, s_szPropOldWndProc);
+			::RemoveProp(hWnd, s_szPropBuddyData);
+			delete pBuddyData;
+		}
+		return ::DefWindowProc(hWnd, uMessage, wParam, lParam);
+	}
+
+	if (pBuddyData == NULL) {
+		::SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)pfnOldWndProc);
+		::RemoveProp(hWnd, s_szPropOldWndProc);
+		::RemoveProp(hWnd, s_szPropBuddyData);
+		return CallWindowProc(pfnOldWndProc, hWnd, uMessage, wParam, lParam);
+	}
+
 	switch (uMessage) {
 	case WM_NCDESTROY:
 		::SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)pfnOldWndProc);
@@ -60,11 +76,14 @@ static LRESULT CALLBACK BuddyButtonSubClassedProc(HWND hWnd, UINT uMessage, WPAR
 		{
 			LRESULT lResult = CallWindowProc(pfnOldWndProc, hWnd, uMessage, wParam, lParam);
 			LPNCCALCSIZE_PARAMS lpNCCS = (LPNCCALCSIZE_PARAMS)lParam;
-			lpNCCS->rgrc[0].right -= pBuddyData->m_uButtonWidth;
+			if (lpNCCS != NULL)
+				lpNCCS->rgrc[0].right -= pBuddyData->m_uButtonWidth;
 			return lResult;
 		}
 	case WM_SIZE:
 		{
+			if (pBuddyData->m_hwndButton == NULL || !::IsWindow(pBuddyData->m_hwndButton))
+				break;
 			CRect rc;
 			::GetClientRect(hWnd, rc);
 			rc.left = rc.right;
@@ -78,9 +97,20 @@ static LRESULT CALLBACK BuddyButtonSubClassedProc(HWND hWnd, UINT uMessage, WPAR
 
 void AddBuddyButton(HWND hwndEdit, HWND hwndButton)
 {
+	ASSERT(hwndEdit != NULL && ::IsWindow(hwndEdit));
+	ASSERT(hwndButton != NULL && ::IsWindow(hwndButton));
+	if (hwndEdit == NULL || hwndButton == NULL || !::IsWindow(hwndEdit) || !::IsWindow(hwndButton))
+		return;
+
 	FARPROC lpfnOldWndProc = (FARPROC)::SetWindowLongPtr(hwndEdit, GWLP_WNDPROC, (LONG_PTR)BuddyButtonSubClassedProc);
 	ASSERT(lpfnOldWndProc != NULL);
-	VERIFY(::SetProp(hwndEdit, s_szPropOldWndProc, (HANDLE)lpfnOldWndProc));
+	if (lpfnOldWndProc == NULL)
+		return;
+
+	if (!::SetProp(hwndEdit, s_szPropOldWndProc, (HANDLE)lpfnOldWndProc)) {
+		::SetWindowLongPtr(hwndEdit, GWLP_WNDPROC, (LONG_PTR)lpfnOldWndProc);
+		return;
+	}
 
 	// Remove the 'flat' style which my have been set by 'InitWindowStyles'
 	LONG_PTR dwButtonStyle = ::GetWindowLongPtr(hwndButton, GWL_STYLE);
@@ -93,7 +123,12 @@ void AddBuddyButton(HWND hwndEdit, HWND hwndButton)
 	SBuddyData *pBuddyData = new SBuddyData;
 	pBuddyData->m_uButtonWidth = rcButton.Width();
 	pBuddyData->m_hwndButton = hwndButton;
-	VERIFY(::SetProp(hwndEdit, s_szPropBuddyData, (HANDLE)pBuddyData));
+	if (!::SetProp(hwndEdit, s_szPropBuddyData, (HANDLE)pBuddyData)) {
+		delete pBuddyData;
+		::RemoveProp(hwndEdit, s_szPropOldWndProc);
+		::SetWindowLongPtr(hwndEdit, GWLP_WNDPROC, (LONG_PTR)lpfnOldWndProc);
+		return;
+	}
 
 	::SetWindowPos(hwndEdit, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 }
