@@ -229,6 +229,7 @@ protected:
 	UINT_PTR		m_uTransferRateDisplayTimer;
 	HANDLE			m_hBindLossInterfaceNotification;
 	HANDLE			m_hBindLossAddressNotification;
+	CWinThread		*m_pAICHSyncThread;
 #ifdef HAVE_WIN7_SDK_H
 	CComPtr<ITaskbarList3>	m_pTaskbarList;
 	THUMBBUTTON		m_thbButtons[TBB_LAST + 1];
@@ -247,6 +248,8 @@ protected:
 	void StartTransferRateDisplayTimer();
 	void StopTransferRateDisplayTimer();
 	void DestroyMiniMule();
+	void StartAICHSyncThread();
+	void WaitForAICHSyncThreadShutdown();
 
 	CMap<UINT, UINT, LPCTSTR, LPCTSTR> m_mapTbarCmdToIcon;
 	void CreateToolbarCmdIconMap();

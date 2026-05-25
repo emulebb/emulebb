@@ -16,6 +16,15 @@ enum class EAICHSyncProgressDeliveryAction
 	Failed
 };
 
+enum class EAICHSyncThreadShutdownWaitAction
+{
+	Finished,
+	TimedOut,
+	Failed
+};
+
+constexpr DWORD kAICHSyncThreadShutdownWaitMs = 5000u;
+
 /**
  * @brief Reports whether AICH background hashing should wait for foreground hash work to finish.
  */
@@ -57,4 +66,13 @@ inline EAICHSyncProgressDeliveryAction GetAICHSyncProgressDeliveryAction(INT_PTR
 	default:
 		return EAICHSyncProgressDeliveryAction::Failed;
 	}
+}
+
+inline EAICHSyncThreadShutdownWaitAction GetAICHSyncThreadShutdownWaitAction(DWORD dwWait)
+{
+	if (dwWait == WAIT_OBJECT_0)
+		return EAICHSyncThreadShutdownWaitAction::Finished;
+	if (dwWait == WAIT_TIMEOUT)
+		return EAICHSyncThreadShutdownWaitAction::TimedOut;
+	return EAICHSyncThreadShutdownWaitAction::Failed;
 }

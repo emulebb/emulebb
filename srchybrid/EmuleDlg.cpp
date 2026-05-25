@@ -110,7 +110,9 @@
 #include "AppKeyboardShortcutsSeams.h"
 #include "DiagnosticSnapshotSeams.h"
 #include "TrayNotificationSeams.h"
+#include "AICHSyncThreadSeams.h"
 #include "aichsyncthread.h"
+#include "HelperThreadLaunchSeams.h"
 #include "Log.h"
 #include "UserMsgs.h"
 #include "TextToSpeech.h"
@@ -1304,6 +1306,7 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_uTransferRateDisplayTimer()
 	, m_hBindLossInterfaceNotification()
 	, m_hBindLossAddressNotification()
+	, m_pAICHSyncThread()
 	, m_thbButtons()
 	, m_currentTBP_state(TBPF_NOPROGRESS)
 	, m_prevProgress()
@@ -1325,6 +1328,45 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	toolbar = new CMuleToolbarCtrl;
 	statusbar = new CMuleStatusBarCtrl;
 	m_pDropTarget = new CMainFrameDropTarget;
+}
+
+void CemuleDlg::StartAICHSyncThread()
+{
+	if (m_pAICHSyncThread != NULL || theApp.IsClosing())
+		return;
+
+	CWinThread *pThread = AfxBeginThread(RUNTIME_CLASS(CAICHSyncThread), THREAD_PRIORITY_IDLE, 0, CREATE_SUSPENDED);
+	DWORD dwResumeError = ERROR_SUCCESS;
+	if (!HelperThreadLaunchSeams::OwnAndResumeSuspendedThread(m_pAICHSyncThread, pThread, dwResumeError)) {
+		if (dwResumeError != ERROR_SUCCESS)
+			DebugLogWarning(_T("Failed to resume AICH sync thread - Error %lu"), dwResumeError);
+		else
+			DebugLogWarning(_T("Failed to create AICH sync thread"));
+	}
+}
+
+void CemuleDlg::WaitForAICHSyncThreadShutdown()
+{
+	CWinThread *pThread = m_pAICHSyncThread;
+	if (pThread == NULL)
+		return;
+
+	const HANDLE hThread = pThread->m_hThread;
+	if (hThread != NULL) {
+		const DWORD dwWait = ::WaitForSingleObject(hThread, kAICHSyncThreadShutdownWaitMs);
+		const EAICHSyncThreadShutdownWaitAction eAction = GetAICHSyncThreadShutdownWaitAction(dwWait);
+		if (eAction == EAICHSyncThreadShutdownWaitAction::TimedOut) {
+			DebugLogError(_T("AICH sync thread exceeded shutdown wait budget; preserving shared/known-file lifetime until it exits."));
+			(void)::WaitForSingleObject(hThread, INFINITE);
+		} else if (eAction == EAICHSyncThreadShutdownWaitAction::Failed) {
+			const DWORD dwLastError = (dwWait == WAIT_FAILED) ? ::GetLastError() : ERROR_SUCCESS;
+			DebugLogWarning(_T("AICH sync thread shutdown wait failed (%lu); waiting without a timeout."), dwLastError);
+			(void)::WaitForSingleObject(hThread, INFINITE);
+		}
+	}
+
+	delete pThread;
+	m_pAICHSyncThread = NULL;
 }
 
 void CemuleDlg::SetClientIconList()
@@ -1732,8 +1774,7 @@ BOOL CemuleDlg::OnInitDialog()
 	theApp.AppendStartupProfileLine(_T("CemuleDlg::OnInitDialog complete"), theApp.GetStartupProfileElapsedUs(ullDialogInitStart));
 #endif
 
-	// start aichsyncthread
-	AfxBeginThread(RUNTIME_CLASS(CAICHSyncThread), THREAD_PRIORITY_IDLE, 0);
+	StartAICHSyncThread();
 
 	// debug info
 	DebugLog(_T("Using '%s' as config directory"), (LPCTSTR)thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
@@ -3215,6 +3256,9 @@ void CemuleDlg::OnClose()
 	};
 
 	theApp.m_app_state = APP_STATE_SHUTTINGDOWN;
+	updateShutdownPhase(3, _T("Closing eMule"), _T("Stopping AICH sync thread."), true);
+	WaitForAICHSyncThreadShutdown();
+
 	const bool bSharedHashingWasActiveOnClose = (theApp.sharedfiles != NULL && theApp.sharedfiles->HasSharedHashingWork());
 	if (theApp.sharedfiles != NULL) {
 		CString strHashLeaf;
