@@ -200,7 +200,9 @@ void CFriend::SetLinkedClient(CUpDownClient *linkedClient)
 
 CUpDownClient* CFriend::GetLinkedClient(bool bValidCheck) const
 {
-	if (bValidCheck && m_LinkedClient != NULL && !theApp.clientlist->IsValidClient(m_LinkedClient)) {
+	if (bValidCheck && m_LinkedClient != NULL
+		&& (theApp.clientlist == NULL || !theApp.clientlist->ContainsClientPointer(m_LinkedClient)))
+	{
 		ASSERT(0);
 		return NULL;
 	}
