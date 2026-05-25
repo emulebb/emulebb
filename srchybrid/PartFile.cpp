@@ -4913,8 +4913,13 @@ bool CPartFile::TryStealEndgameBlockForFastPeer(CUpDownClient *pFastPeer, bool b
 		return false;
 
 	for (POSITION pos = m_downloadingSourceList.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
 		CUpDownClient *pSlowPeer = m_downloadingSourceList.GetNext(pos);
-		if (pSlowPeer == NULL || pSlowPeer == pFastPeer || pSlowPeer->GetDownloadState() != DS_DOWNLOADING)
+		if (!IsLiveDownloadingSource(pSlowPeer)) {
+			RemoveStaleDownloadingSource(posCurrent, pSlowPeer, _T("endgame steal pass"));
+			continue;
+		}
+		if (pSlowPeer == pFastPeer || pSlowPeer->GetDownloadState() != DS_DOWNLOADING)
 			continue;
 
 		UINT uCanceledPart = (UINT)-1;
@@ -4990,8 +4995,13 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient *sender, Requested_Block_Str
 			return false;
 
 		for (POSITION pos = m_downloadingSourceList.GetHeadPosition(); pos != NULL;) {
+			const POSITION posCurrent = pos;
 			const CUpDownClient *source = m_downloadingSourceList.GetNext(pos);
-			if (source == NULL || source == sender || source->GetDownloadState() != DS_DOWNLOADING || !source->IsPartAvailable(uPart))
+			if (!IsLiveDownloadingSource(source)) {
+				RemoveStaleDownloadingSource(posCurrent, source, _T("faster-peer reservation pass"));
+				continue;
+			}
+			if (source == sender || source->GetDownloadState() != DS_DOWNLOADING || !source->IsPartAvailable(uPart))
 				continue;
 			if (PartFileEndgameSeams::IsMeaningfullyFasterPeer(senderDatarate, source->GetDownloadDatarate()))
 				return true;
