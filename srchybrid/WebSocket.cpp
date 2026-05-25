@@ -329,6 +329,8 @@ namespace
 	bool TryResolveWebBindAddr(in_addr *pAddr)
 	{
 		ASSERT(pAddr != NULL);
+		if (pAddr == NULL)
+			return false;
 		pAddr->s_addr = INADDR_ANY;
 		const CString &strWebBindAddr = thePrefs.GetWebBindAddr();
 		if (strWebBindAddr.IsEmpty())
