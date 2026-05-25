@@ -29,6 +29,7 @@
 #include "Preview.h"
 #include "ArchiveRecovery.h"
 #include "SearchFile.h"
+#include "EmuleMD4.h"
 #include "Kademlia/Kademlia/Kademlia.h"
 #include "kademlia/kademlia/search.h"
 #include "kademlia/kademlia/SearchManager.h"
@@ -6013,7 +6014,8 @@ void CPartFile::SetFileSize(EMFileSize nFileSize)
 	if (GetFileSize() != nFileSize)
 		NoteHashLayoutChanged();
 	ASSERT(m_pAICHRecoveryHashSet != NULL);
-	m_pAICHRecoveryHashSet->SetFileSize(nFileSize);
+	if (m_pAICHRecoveryHashSet != NULL)
+		m_pAICHRecoveryHashSet->SetFileSize(nFileSize);
 	CKnownFile::SetFileSize(nFileSize);
 	m_aChangedPart.SetSize((INT_PTR)(((uint64)nFileSize + PARTSIZE - 1) / PARTSIZE));
 }
