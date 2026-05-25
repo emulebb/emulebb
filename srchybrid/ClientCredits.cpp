@@ -446,6 +446,9 @@ uint8 CClientCreditsList::CreateSignature(CClientCredits *pTarget, uchar *pachOu
 	, uint32 ChallengeIP, uint8 byChaIPKind, CryptoPP::RSASSA_PKCS1v15_SHA_Signer *sigkey) const
 {
 	ASSERT(pTarget != NULL && pachOutput != NULL);
+	if (pTarget == NULL || pachOutput == NULL)
+		return GetClientCreditsSignatureFailureResult();
+
 	// sigkey param is used for debug only
 	if (sigkey == NULL)
 		sigkey = m_pSignkey;
@@ -497,6 +500,9 @@ bool CClientCreditsList::VerifyIdent(CClientCredits *pTarget, const uchar *pachS
 {
 	ASSERT(pTarget);
 	ASSERT(pachSignature);
+	if (pTarget == NULL || pachSignature == NULL)
+		return false;
+
 	if (!CryptoAvailable()) {
 		pTarget->IdentState = IS_NOTAVAILABLE;
 		return false;
