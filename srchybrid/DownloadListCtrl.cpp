@@ -892,6 +892,25 @@ bool CDownloadListCtrl::IsLiveSourceItem(const CtrlItem_Struct *pCtrlItem) const
 	return IsLiveSourceCtrlItem(pCtrlItem);
 }
 
+CPartFile* CDownloadListCtrl::GetLivePartFileByIndex(int iItem)
+{
+	if (iItem < 0 || iItem >= GetItemCount())
+		return NULL;
+
+	const CtrlItem_Struct *pCtrlItem = reinterpret_cast<CtrlItem_Struct*>(GetItemData(iItem));
+	return IsLiveFileItem(pCtrlItem) ? static_cast<CPartFile*>(pCtrlItem->value) : NULL;
+}
+
+void CDownloadListCtrl::CollectSelectedPartFiles(CTypedPtrList<CPtrList, CPartFile*> &rSelectedFiles)
+{
+	rSelectedFiles.RemoveAll();
+	for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;) {
+		CPartFile *pFile = GetLivePartFileByIndex(GetNextSelectedItem(pos));
+		if (pFile != NULL)
+			rSelectedFiles.AddTail(pFile);
+	}
+}
+
 bool CDownloadListCtrl::PruneStaleFileItems()
 {
 	bool bRemoved = false;

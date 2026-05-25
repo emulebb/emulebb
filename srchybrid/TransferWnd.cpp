@@ -1019,10 +1019,11 @@ void CTransferWnd::OnLvnBeginDragDownloadList(LPNMHDR pNMHDR, LRESULT *pResult)
 	int iSel = downloadlistctrl.GetSelectionMark();
 	if (iSel == -1)
 		return;
-	if (reinterpret_cast<CtrlItem_Struct*>(downloadlistctrl.GetItemData(iSel))->type != FILE_TYPE)
-		return;
 
 	const LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	if (downloadlistctrl.GetLivePartFileByIndex(iSel) == NULL || downloadlistctrl.GetLivePartFileByIndex(pNMLV->iItem) == NULL)
+		return;
+
 	m_nDragIndex = pNMLV->iItem;
 
 	ASSERT(m_pDragImage == NULL);
@@ -1088,14 +1089,7 @@ void CTransferWnd::OnLButtonUp(UINT /*nFlags*/, CPoint /*point*/)
 		if (nDropIndex >= 0 && (downloadlistctrl.m_curTab == 0 || (UINT)nDropIndex != downloadlistctrl.m_curTab)) {
 			// for multi-selections
 			CTypedPtrList<CPtrList, CPartFile*> selectedList;
-			for (POSITION pos = downloadlistctrl.GetFirstSelectedItemPosition(); pos != NULL;) {
-				int index = downloadlistctrl.GetNextSelectedItem(pos);
-				if (index >= 0) {
-					const CtrlItem_Struct *pItem = reinterpret_cast<CtrlItem_Struct*>(downloadlistctrl.GetItemData(index));
-					if (pItem->type == FILE_TYPE)
-						selectedList.AddTail(reinterpret_cast<CPartFile*>(pItem->value));
-				}
-			}
+			downloadlistctrl.CollectSelectedPartFiles(selectedList);
 
 			while (!selectedList.IsEmpty())
 				selectedList.RemoveHead()->SetCategory(nDropIndex);

@@ -110,6 +110,14 @@ public:
 	void	ChangeCategory(int newsel);
 	CString getTextList();
 	void	ShowSelectedFileDetails();
+	/**
+	 * @brief Resolves a visible download-list row only if it still backs a live part file.
+	 */
+	CPartFile* GetLivePartFileByIndex(int iItem);
+	/**
+	 * @brief Collects the selected live part-file rows in visible-row order.
+	 */
+	void	CollectSelectedPartFiles(CTypedPtrList<CPtrList, CPartFile*> &rSelectedFiles);
 	void	ExpandCollapseItem(int iItem, int iAction, bool bCollapseSource = false);
 	void	HideSources(CPartFile *toCollapse);
 	void	GetDisplayedFiles(CArray<CPartFile*, CPartFile*> *list);
