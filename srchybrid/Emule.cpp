@@ -2223,6 +2223,8 @@ bool CemuleApp::InitializeStartupConfigBaseDirOverride(
 	}
 
 	m_strStartupConfigBaseDir = strStartupConfigBaseDir;
+	if (rCommandLine.bHasConfigBaseDir)
+		CPreferences::ResetDefaultDirectoryCache();
 	return true;
 }
 

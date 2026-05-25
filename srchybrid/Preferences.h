@@ -787,6 +787,8 @@ public:
 	static const CString& GetFileCommentsFilePath()		{ return m_strFileCommentsFilePath; }
 	static CString	GetMuleDirectory(EDefaultDirectory eDirectory, bool bCreate = true);
 	static void		SetMuleDirectory(EDefaultDirectory eDirectory, const CString &strNewDir);
+	/// Clears cached default directories after the startup profile base directory changes.
+	static void		ResetDefaultDirectoryCache();
 	static void		ChangeUserDirMode(int nNewMode);
 
 	static bool		IsTempFile(const CString &rstrDirectory, const CString &rstrName);

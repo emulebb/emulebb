@@ -103,6 +103,21 @@ namespace StartupConfigOverride
 	}
 
 	/**
+	 * @brief Reports whether a directory path is the implicit incoming directory below the selected base directory.
+	 */
+	inline bool IsDefaultIncomingDirectoryFromBaseDir(const CString &strBaseDir, const CString &strDirectory)
+	{
+		if (strBaseDir.IsEmpty())
+			return false;
+
+		CString strExpected(GetIncomingDirectoryFromBaseDir(strBaseDir));
+		CString strActual(NormalizeBaseDir(strDirectory));
+		strExpected.MakeLower();
+		strActual.MakeLower();
+		return !strActual.IsEmpty() && strActual == strExpected;
+	}
+
+	/**
 	 * @brief Builds the effective log directory path below the selected base directory.
 	 */
 	inline CString GetLogDirectoryFromBaseDir(const CString &strBaseDir)

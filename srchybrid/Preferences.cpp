@@ -116,6 +116,7 @@ CString ReadStartupConfigProfileDirectoryPreference(LPCTSTR pszPreferenceKey)
 
 	return PathHelpers::CanonicalizeDirectoryPath(strDirectory);
 }
+
 constexpr UINT kMaxFileBufferTimeLimitSeconds = 86400;
 
 UINT NormalizeCategoryPriority(UINT uPriority)
@@ -493,6 +494,17 @@ std::wstring MakeDirectoryListLookupKey(const CString &rstrDirectory)
 bool AreDirectoryListKeysEqual(const CString &rstrLeft, const CString &rstrRight)
 {
 	return MakeDirectoryListLookupKey(rstrLeft) == MakeDirectoryListLookupKey(rstrRight);
+}
+
+bool IsStaleStartupConfigDefaultIncomingPath(const CString &rstrDirectory)
+{
+	if (!theApp.HasStartupConfigBaseDirOverride())
+		return false;
+
+	const CString strMainIncomingDir(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR, false));
+	return !strMainIncomingDir.IsEmpty()
+		&& !AreDirectoryListKeysEqual(rstrDirectory, strMainIncomingDir)
+		&& StartupConfigOverride::IsDefaultIncomingDirectoryFromBaseDir(theApp.GetStartupConfigBaseDirOverride(), rstrDirectory);
 }
 
 bool IsDirectoryLookupKeyWithin(const std::wstring &rstrDirectoryKey, const std::wstring &rstrCandidateKey)
@@ -3691,7 +3703,8 @@ void CPreferences::LoadCats()
 		newcat->strTitle = ini.GetString(_T("Title"));
 		if (i != 0) { // All category
 			newcat->strIncomingPath = PathHelpers::CanonicalizeDirectoryPath(ini.GetString(_T("Incoming")));
-			if (!IsShareableDirectory(newcat->strIncomingPath)
+			if (IsStaleStartupConfigDefaultIncomingPath(newcat->strIncomingPath)
+				|| !IsShareableDirectory(newcat->strIncomingPath)
 				|| (!LongPathSeams::PathExists(newcat->strIncomingPath) && !LongPathSeams::CreateDirectory(newcat->strIncomingPath, 0)))
 			{
 				newcat->strIncomingPath = GetMuleDirectory(EMULE_INCOMINGDIR);
@@ -4133,6 +4146,15 @@ uint16 CPreferences::GetRandomUDPPort()
 	} while (!bPortIsFree && --iMaxTests > 0);
 	free(pUDPTab);
 	return nPort;
+}
+
+void CPreferences::ResetDefaultDirectoryCache()
+{
+	for (size_t i = 0; i < _countof(m_astrDefaultDirs); ++i) {
+		m_astrDefaultDirs[i].Empty();
+		m_abDefaultDirsCreated[i] = false;
+	}
+	m_nCurrentUserDirMode = -1;
 }
 
 // General behavior:
