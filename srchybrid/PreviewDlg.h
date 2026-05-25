@@ -32,14 +32,13 @@ public:
 	explicit PreviewDlg(CWnd *pParent = NULL);   // standard constructor
 	virtual	~PreviewDlg();
 
-	void	SetFile(const CSearchFile *pFile)	{ m_pFile = pFile; Show(); }
+	void	SetFile(const CSearchFile *pFile);
 	/**
 	 * Shows a single bitmap frame that is owned by the preview dialog after this call.
 	 */
 	void	SetLocalPreview(LPCTSTR pszTitle, HBITMAP hBitmap);
 	void	Show();
 protected:
-	const CSearchFile *m_pFile;
 	CSimpleArray<HBITMAP> m_localFrames;
 	CString m_strLocalTitle;
 	int m_nCurrentImage;

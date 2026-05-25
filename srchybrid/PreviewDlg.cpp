@@ -26,6 +26,15 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace
+{
+HBITMAP ClonePreviewBitmap(HBITMAP hBitmap)
+{
+	if (hBitmap == NULL)
+		return NULL;
+	return static_cast<HBITMAP>(::CopyImage(hBitmap, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION));
+}
+}
 
 IMPLEMENT_DYNAMIC(PreviewDlg, CDialog)
 
@@ -37,7 +46,6 @@ END_MESSAGE_MAP()
 
 PreviewDlg::PreviewDlg(CWnd *pParent /*=NULL*/)
 	: CDialog(PreviewDlg::IDD, pParent)
-	, m_pFile()
 	, m_localFrames()
 	, m_strLocalTitle()
 	, m_nCurrentImage()
@@ -62,13 +70,13 @@ void PreviewDlg::DoDataExchange(CDataExchange *pDX)
 BOOL PreviewDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	if (m_pFile == NULL && m_localFrames.GetSize() == 0) {
+	if (m_localFrames.GetSize() == 0) {
 		ASSERT(0);
 		return FALSE;
 	}
 	InitWindowStyles(this);
 	CString title(GetResNoAmp(IDS_DL_PREVIEW));
-	title.AppendFormat(_T(": %s"), (LPCTSTR)(m_pFile != NULL ? m_pFile->GetFileName() : m_strLocalTitle));
+	title.AppendFormat(_T(": %s"), (LPCTSTR)m_strLocalTitle);
 	SetWindowText(title);
 
 	m_nCurrentImage = 0;
@@ -83,6 +91,25 @@ BOOL PreviewDlg::OnInitDialog()
 	return TRUE;
 }
 
+void PreviewDlg::SetFile(const CSearchFile *pFile)
+{
+	if (pFile == NULL) {
+		ASSERT(0);
+		return;
+	}
+
+	m_strLocalTitle = pFile->GetFileName();
+	const CSimpleArray<HBITMAP> &previews = pFile->GetPreviews();
+	for (int i = 0; i < previews.GetSize(); ++i) {
+		HBITMAP hBitmap = ClonePreviewBitmap(previews[i]);
+		if (hBitmap != NULL)
+			m_localFrames.Add(hBitmap);
+	}
+	if (m_localFrames.GetSize() == 0)
+		return;
+	Show();
+}
+
 void PreviewDlg::SetLocalPreview(LPCTSTR pszTitle, HBITMAP hBitmap)
 {
 	m_strLocalTitle = pszTitle;
@@ -92,12 +119,12 @@ void PreviewDlg::SetLocalPreview(LPCTSTR pszTitle, HBITMAP hBitmap)
 
 int PreviewDlg::GetPreviewCount() const
 {
-	return m_pFile != NULL ? m_pFile->GetPreviews().GetSize() : m_localFrames.GetSize();
+	return m_localFrames.GetSize();
 }
 
 HBITMAP PreviewDlg::GetPreviewBitmap(int nNumber) const
 {
-	return m_pFile != NULL ? m_pFile->GetPreviews()[nNumber] : m_localFrames[nNumber];
+	return m_localFrames[nNumber];
 }
 
 void PreviewDlg::ShowImage(int nNumber)
@@ -142,9 +169,7 @@ void PreviewDlg::OnBnClickedPvPrior()
 
 void PreviewDlg::OnClose()
 {
-	HBITMAP hbitmap = m_ImageStatic.SetBitmap(NULL);
-	if (hbitmap && m_pFile != NULL)
-		::DeleteObject(hbitmap);
+	m_ImageStatic.SetBitmap(NULL);
 	CDialog::OnClose();
 	delete this;
 }
