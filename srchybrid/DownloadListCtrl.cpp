@@ -1496,8 +1496,8 @@ void CDownloadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		dc.SetBoundsRect(&tree_rect, DCB_DISABLE);
 
 		//gather some information
-		bool hasNext = notLast
-			&& reinterpret_cast<CtrlItem_Struct*>(GetItemData(lpDrawItemStruct->itemID + 1))->type != FILE_TYPE;
+		const CtrlItem_Struct *nextContent = notLast ? reinterpret_cast<CtrlItem_Struct*>(GetItemData(lpDrawItemStruct->itemID + 1)) : NULL;
+		bool hasNext = nextContent != NULL && nextContent->type != FILE_TYPE;
 		bool isOpenRoot = hasNext && content->type == FILE_TYPE;
 		//bool isExpandable = !isChild && static_cast<CPartFile*>(content->value)->GetSourceCount() > 0;
 		//might as well calculate these now
