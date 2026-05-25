@@ -135,6 +135,8 @@ void CBarShader::FillRange(uint64 start, uint64 end, COLORREF color)
 		endpos = m_Spans.GetTailPosition();
 
 	ASSERT(endpos != NULL);
+	if (endpos == NULL)
+		return;
 
 	COLORREF endcolor = m_Spans.GetValueAt(endpos);
 	endpos = m_Spans.SetAt(end, endcolor);
