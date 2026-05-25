@@ -112,6 +112,8 @@ namespace
 	{
 		ASSERT(pKeep != NULL);
 		ASSERT(pDiscard != NULL);
+		if (pKeep == NULL || pDiscard == NULL)
+			return;
 		ASSERT(pKeep->GetFileSize() == pDiscard->GetFileSize());
 		if (pKeep->GetFileSize() == pDiscard->GetFileSize())
 			pKeep->statistic.MergeFileStats(&pDiscard->statistic);
