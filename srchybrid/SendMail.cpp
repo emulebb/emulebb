@@ -413,6 +413,8 @@ int CNotifierMailThread::write_data(mbedtls_ssl_context *ssl, const char *buf, s
 
 void CemuleDlg::SendNotificationMail(TbnMsg nMsgType, LPCTSTR pszText)
 {
+	// FROZEN: legacy notifier mail worker is retained for compatibility only.
+	// Do not include this path in RC lifetime hardening unless product unfreezes it.
 	if (!thePrefs.IsNotifierSendMailEnabled())
 		return;
 

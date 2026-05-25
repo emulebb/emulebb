@@ -1105,7 +1105,7 @@ void CArchivePreviewDlg::UpdateArchiveDisplay(bool doscan)
 	tp->curProgress = 0;
 	tp->m_bIsValid = true;
 
-	// Deprecated/frozen feature: archive preview is retained only for legacy
+	// FROZEN DEPRECATED: archive preview is retained only for legacy
 	// compatibility. Known bugs in this path are Wont-Fix unless the feature is
 	// explicitly unfrozen by product decision.
 	// start scanning thread
