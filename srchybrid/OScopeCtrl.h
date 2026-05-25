@@ -54,6 +54,7 @@ public:
 
 protected:
 	int m_NTrends;
+	bool IsValidTrendIndex(int iTrend) const;
 
 	struct CustShiftStruct  // when m_nTrendPoints > 0, this structure will contain needed vars
 	{

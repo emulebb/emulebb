@@ -107,8 +107,8 @@ COScopeCtrl::COScopeCtrl(int NTrends)
 	// G.Hayduk: NTrends is the number of trends that will be drawn on
 	// the plot. First 15 plots have predefined colors, but others will
 	// be drawn with white, unless you call SetPlotColor
-	m_PlotData = new PlotData_t[NTrends];
-	m_NTrends = NTrends;
+	m_NTrends = NTrends > 0 ? NTrends : 1;
+	m_PlotData = new PlotData_t[m_NTrends];
 	for (int iTrend = 0; iTrend < m_NTrends; ++iTrend) {
 		PlotData_t &plot = m_PlotData[iTrend];
 		plot.crPlotColor = (iTrend < 15) ? PresetColor[iTrend] : RGB(255, 255, 255);  // see also SetPlotColor
@@ -175,6 +175,11 @@ COScopeCtrl::~COScopeCtrl()
 	delete[] m_PlotData;
 }
 
+bool COScopeCtrl::IsValidTrendIndex(int iTrend) const
+{
+	return m_PlotData != NULL && iTrend >= 0 && iTrend < m_NTrends;
+}
+
 BOOL COScopeCtrl::CreateWnd(DWORD dwStyle, const CRect &rect, CWnd *pParentWnd, UINT nID)
 {
 	static const CString &className(AfxRegisterWndClass(CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW, AfxGetApp()->LoadStandardCursor(IDC_ARROW)));
@@ -183,7 +188,7 @@ BOOL COScopeCtrl::CreateWnd(DWORD dwStyle, const CRect &rect, CWnd *pParentWnd, 
 							WS_EX_STATICEDGE	// lightweight border
 							, className, NULL, dwStyle
 							, rect.left, rect.top, rect.Width() + 1, rect.Height() + 1
-							, pParentWnd->GetSafeHwnd(), (HMENU)nID);
+							, pParentWnd->GetSafeHwnd(), reinterpret_cast<HMENU>(static_cast<UINT_PTR>(nID)));
 	if (result != 0)
 		InvalidateCtrl();
 	InitWindowStyles(this);
@@ -209,7 +214,9 @@ BOOL COScopeCtrl::CreateWnd(DWORD dwStyle, const CRect &rect, CWnd *pParentWnd, 
 //
 void COScopeCtrl::SetTrendRatio(int iTrend, unsigned iRatio)
 {
-	ASSERT(iTrend < m_NTrends && iRatio > 0);	// iTrend must be a valid trend in this plot.
+	ASSERT(IsValidTrendIndex(iTrend) && iRatio > 0);	// iTrend must be a valid trend in this plot.
+	if (!IsValidTrendIndex(iTrend) || iRatio == 0)
+		return;
 
 	PlotData_t &plot = m_PlotData[iTrend];
 	if (iRatio != (unsigned)plot.iTrendRatio) {
@@ -228,19 +235,29 @@ void COScopeCtrl::SetTrendRatio(int iTrend, unsigned iRatio)
 
 void COScopeCtrl::SetLegendLabel(const CString &string, int iTrend)
 {
+	ASSERT(IsValidTrendIndex(iTrend));
+	if (!IsValidTrendIndex(iTrend))
+		return;
+
 	m_PlotData[iTrend].LegendLabel = string;
 	InvalidateCtrl(false);
 }
 
 void COScopeCtrl::SetBarsPlot(bool BarsPlot, int iTrend)
 {
+	ASSERT(IsValidTrendIndex(iTrend));
+	if (!IsValidTrendIndex(iTrend))
+		return;
+
 	m_PlotData[iTrend].BarsPlot = BarsPlot;
 	InvalidateCtrl(false);
 }
 
 void COScopeCtrl::SetRange(double dLower, double dUpper, int iTrend)
 {
-	ASSERT(dUpper > dLower);
+	ASSERT(dUpper > dLower && IsValidTrendIndex(iTrend));
+	if (dUpper <= dLower || !IsValidTrendIndex(iTrend))
+		return;
 
 	PlotData_t &plot = m_PlotData[iTrend];
 	plot.dLowerLimit = dLower;
@@ -253,6 +270,8 @@ void COScopeCtrl::SetRange(double dLower, double dUpper, int iTrend)
 void COScopeCtrl::SetRanges(double dLower, double dUpper)
 {
 	ASSERT(dUpper > dLower);
+	if (dUpper <= dLower || m_PlotData == NULL)
+		return;
 
 	for (int iTrend = 0; iTrend < m_NTrends; ++iTrend) {
 		PlotData_t &plot = m_PlotData[iTrend];
@@ -288,6 +307,10 @@ void COScopeCtrl::SetGridColor(COLORREF color)
 
 void COScopeCtrl::SetPlotColor(COLORREF color, int iTrend)
 {
+	ASSERT(IsValidTrendIndex(iTrend));
+	if (!IsValidTrendIndex(iTrend))
+		return;
+
 	PlotData_t &plot = m_PlotData[iTrend];
 	plot.crPlotColor = color;
 	plot.penPlot.DeleteObject();
@@ -297,6 +320,10 @@ void COScopeCtrl::SetPlotColor(COLORREF color, int iTrend)
 
 COLORREF COScopeCtrl::GetPlotColor(int iTrend)
 {
+	ASSERT(IsValidTrendIndex(iTrend));
+	if (!IsValidTrendIndex(iTrend))
+		return CLR_INVALID;
+
 	return m_PlotData[iTrend].crPlotColor;
 }
 
@@ -520,6 +547,10 @@ void COScopeCtrl::InvalidateCtrl(bool deleteGraph)
 
 void COScopeCtrl::AppendPoints(double dNewPoint[], bool bInvalidate, bool bAdd2List, bool bUseTrendRatio)
 {
+	ASSERT(dNewPoint != NULL);
+	if (dNewPoint == NULL || m_PlotData == NULL)
+		return;
+
 	// append a data point to the plot
 	for (int iTrend = 0; iTrend < m_NTrends; ++iTrend) {
 		PlotData_t &plot = m_PlotData[iTrend];
@@ -568,6 +599,10 @@ void COScopeCtrl::AppendPoints(double dNewPoint[], bool bInvalidate, bool bAdd2L
 //
 void COScopeCtrl::AppendEmptyPoints(double dNewPoint[], bool bInvalidate, bool bAdd2List, bool bUseTrendRatio)
 {
+	ASSERT(dNewPoint != NULL);
+	if (dNewPoint == NULL || m_PlotData == NULL)
+		return;
+
 	// append a data point to the plot
 	// return the previous point
 	for (int iTrend = 0; iTrend < m_NTrends; ++iTrend) {
@@ -894,9 +929,9 @@ void COScopeCtrl::OnMouseMove(UINT nFlags, CPoint point)
 
 		int mypos = (plotRect.Width() - point.x) + plotRect.left;
 		int shownsecs = plotRect.Width() * thePrefs.GetTrafficOMeterInterval();
-		float apixel = shownsecs / (float)plotRect.Width();
+		float apixel = static_cast<float>(shownsecs) / static_cast<float>(plotRect.Width());
 
-		DWORD dwTime = (DWORD)(mypos * apixel);
+		DWORD dwTime = static_cast<DWORD>(static_cast<float>(mypos) * apixel);
 		time_t tNow = time(NULL) - dwTime;
 		TCHAR szDate[128];
 		tm tmNow = {};
