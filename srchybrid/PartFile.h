@@ -373,6 +373,8 @@ private:
 	void	AddToSharedFiles();
 	void	DeleteWrittenItem(const POSITION pos);
 	bool	HasDirtyBufferedData() const;
+	bool	HasAsyncWriteReferences() const;
+	bool	WaitForAsyncWriteReferencesToRelease();
 	bool	FlushBufferedDataForShutdown();
 	void	NoteHashLayoutChanged();
 	bool	TryStealEndgameBlockForFastPeer(CUpDownClient *pFastPeer, bool bEndgame, ULONGLONG ullNow, uint16 *pCanceledPart);

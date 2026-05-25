@@ -439,6 +439,43 @@ bool CPartFile::HasDirtyBufferedData() const
 	return m_iWrites > 0 || m_nTotalBufferData > 0 || !m_BufferedData_list.IsEmpty();
 }
 
+bool CPartFile::HasAsyncWriteReferences() const
+{
+	bool bHasPendingBufferedWrite = false;
+	for (POSITION pos = m_BufferedData_list.GetHeadPosition(); pos != NULL;) {
+		const PartFileBufferedData *item = m_BufferedData_list.GetNext(pos);
+		if (item != NULL && item->flushed == PB_PENDING) {
+			bHasPendingBufferedWrite = true;
+			break;
+		}
+	}
+	return PartFilePersistenceSeams::HasPartFileAsyncWriteReferences(m_iWrites, bHasPendingBufferedWrite);
+}
+
+bool CPartFile::WaitForAsyncWriteReferencesToRelease()
+{
+	CPartFileWriteThread *pThread = theApp.m_pPartFileWriteThread;
+	const PartFilePersistenceSeams::PartFileDeleteAsyncWriteAction eAction =
+		PartFilePersistenceSeams::ClassifyPartFileDeleteAsyncWriteAction(
+			HasAsyncWriteReferences(),
+			pThread != NULL,
+			pThread != NULL && pThread->IsRunning());
+	if (eAction == PartFilePersistenceSeams::PartFileDeleteAsyncWriteAction::DeleteNow)
+		return true;
+	if (eAction == PartFilePersistenceSeams::PartFileDeleteAsyncWriteAction::DeferUntilWriteRelease)
+		return false;
+
+	const ULONGLONG ullStartTick = ::GetTickCount64();
+	do {
+		pThread->WakeUpCall();
+		::Sleep(kShutdownFlushPollMs);
+		if (!HasAsyncWriteReferences())
+			return true;
+	} while (pThread->IsRunning() && ::GetTickCount64() - ullStartTick < kShutdownFlushWaitMs);
+
+	return !HasAsyncWriteReferences();
+}
+
 bool CPartFile::FlushBufferedDataForShutdown()
 {
 	if (!HasDirtyBufferedData())
@@ -3399,6 +3436,14 @@ void CPartFile::DeletePartFile()
 		if (!m_bDelayDelete) {
 			LogWarning(LOG_STATUSBAR, GetResString(IDS_DELETEAFTERFILEOP), (LPCTSTR)FormatDisplayFileName(GetFileName()));
 			m_bDelayDelete = true; //signal to hashing thread
+		}
+		return;
+	}
+	if (!WaitForAsyncWriteReferencesToRelease()) {
+		if (!m_bDelayDelete) {
+			LogWarning(LOG_STATUSBAR, GetResString(IDS_DELETEAFTERFILEOP), (LPCTSTR)FormatDisplayFileName(GetFileName()));
+			DebugLogWarning(_T("Deferring part-file deletion for \"%s\" until asynchronous disk writes release the file object."), (LPCTSTR)GetFileName());
+			m_bDelayDelete = true;
 		}
 		return;
 	}

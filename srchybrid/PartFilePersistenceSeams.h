@@ -282,6 +282,27 @@ inline bool ShouldFlushPartFileOnDestroy(const bool bIsClosing, const bool bHasW
 	return !bIsClosing || (bHasWriteThread && bIsWriteThreadRunning);
 }
 
+enum class PartFileDeleteAsyncWriteAction
+{
+	DeleteNow,
+	WaitForWriteRelease,
+	DeferUntilWriteRelease
+};
+
+inline bool HasPartFileAsyncWriteReferences(const int nOutstandingWrites, const bool bHasPendingBufferedWrite)
+{
+	return nOutstandingWrites > 0 || bHasPendingBufferedWrite;
+}
+
+inline PartFileDeleteAsyncWriteAction ClassifyPartFileDeleteAsyncWriteAction(const bool bHasAsyncWriteReferences, const bool bHasWriteThread, const bool bIsWriteThreadRunning)
+{
+	if (!bHasAsyncWriteReferences)
+		return PartFileDeleteAsyncWriteAction::DeleteNow;
+	if (bHasWriteThread && bIsWriteThreadRunning)
+		return PartFileDeleteAsyncWriteAction::WaitForWriteRelease;
+	return PartFileDeleteAsyncWriteAction::DeferUntilWriteRelease;
+}
+
 inline bool ShouldSavePartMetAfterShutdownFlush(const bool bFlushedBufferedData)
 {
 	return bFlushedBufferedData;
