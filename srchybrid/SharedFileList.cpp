@@ -511,10 +511,11 @@ int CAddFileThread::Run()
 		if (newKnown->CreateFromFile(m_strDirectory, m_strFilename, pProgressTarget)) { // SLUGFILLER: SafeHash - in case of shutdown while still hashing
 			newKnown->SetPartFileHashLayoutGenerationSnapshot(nHashLayoutGeneration);
 			newKnown->SetSharedDirectory(m_strSharedDir);
-			if (m_partfile && m_partfile->GetFileOp() == PFOP_HASHING)
-				m_partfile->SetFileOp(PFOP_NONE);
-			if (!theApp.emuledlg->PostMessage(TM_FINISHEDHASHING, (m_pOwner ? 0 : (WPARAM)m_partfile), (LPARAM)newKnown))
+			if (!theApp.emuledlg->PostMessage(TM_FINISHEDHASHING, (m_pOwner ? 0 : (WPARAM)m_partfile), (LPARAM)newKnown)) {
+				if (m_partfile && m_partfile->GetFileOp() == PFOP_HASHING)
+					m_partfile->SetFileOp(PFOP_NONE);
 				delete newKnown;
+			}
 		} else {
 			if (m_partfile && m_partfile->GetFileOp() == PFOP_HASHING)
 				m_partfile->SetFileOp(PFOP_NONE);

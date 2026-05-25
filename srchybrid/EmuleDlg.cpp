@@ -2904,10 +2904,14 @@ LRESULT CemuleDlg::OnWMData(WPARAM, LPARAM lParam)
 
 LRESULT CemuleDlg::OnFileHashed(WPARAM wParam, LPARAM lParam)
 {
-	if (theApp.IsClosing())
-		return FALSE;
-
 	CKnownFile *result = reinterpret_cast<CKnownFile*>(lParam);
+	if (theApp.IsClosing()) {
+		delete result;
+		return FALSE;
+	}
+
+	if (result == NULL)
+		return FALSE;
 	ASSERT(result->IsKindOf(RUNTIME_CLASS(CKnownFile)));
 
 	if (wParam) {
@@ -2916,12 +2920,14 @@ LRESULT CemuleDlg::OnFileHashed(WPARAM wParam, LPARAM lParam)
 		// - part file was rehashed at startup because the file date of part.met did not match the part file date
 
 		CPartFile *requester = reinterpret_cast<CPartFile*>(wParam);
-		ASSERT(requester->IsKindOf(RUNTIME_CLASS(CPartFile)));
 
 		// SLUGFILLER: SafeHash - could have been cancelled
-		if (theApp.downloadqueue->IsPartFile(requester))
+		if (theApp.downloadqueue != NULL && theApp.downloadqueue->IsPartFile(requester)) {
+			ASSERT(requester->IsKindOf(RUNTIME_CLASS(CPartFile)));
+			if (requester->GetFileOp() == PFOP_HASHING)
+				requester->SetFileOp(PFOP_NONE);
 			requester->PartFileHashFinished(result);
-		else
+		} else
 			delete result;
 		// SLUGFILLER: SafeHash
 	} else {
