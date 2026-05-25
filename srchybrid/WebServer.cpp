@@ -2038,8 +2038,11 @@ CString CWebServer::_GetTransferList(const ThreadData &Data)
 	CArray<UploadUsers> UploadArray;
 
 	for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;) {
+		const CUpDownClient *pClient = theApp.uploadqueue->GetNextFromUploadList(pos);
+		if (pClient == NULL)
+			continue;
 		UploadUsers dUser;
-		const CUpDownClient &cur_client(*theApp.uploadqueue->GetNextFromUploadList(pos));
+		const CUpDownClient &cur_client(*pClient);
 		dUser.sUserHash = md4str(cur_client.GetUserHash());
 		if (cur_client.GetUploadDatarate() > 0) {
 			dUser.sActive = _T("downloading");
@@ -2110,9 +2113,12 @@ void CWebServer::_MakeTransferList(CString &Out, CWebServer *pThis, const Thread
 	int nCountQueueFriendSecure = 0;
 
 	CQArray<QueueUsers, QueueUsers> QueueArray;
-	for (POSITION pos = theApp.uploadqueue->waitinglist.GetHeadPosition(); pos != NULL;) {
+	for (POSITION pos = theApp.uploadqueue->GetFirstFromWaitingList(); pos != NULL;) {
+		const CUpDownClient *pClient = theApp.uploadqueue->GetNextFromWaitingList(pos);
+		if (pClient == NULL)
+			continue;
 		QueueUsers dUser;
-		const CUpDownClient &cur_client(*theApp.uploadqueue->waitinglist.GetNext(pos));
+		const CUpDownClient &cur_client(*pClient);
 		int iSecure = static_cast<int>(cur_client.Credits()->GetCurrentIdentState(cur_client.GetIP()) == IS_IDENTIFIED);
 		if (cur_client.IsBanned()) {
 			dUser.sClientExtra = _T("banned");
@@ -2173,7 +2179,7 @@ void CWebServer::_MakeTransferList(CString &Out, CWebServer *pThis, const Thread
 			nNextScore = QueueArray[i].nScore;
 		}
 
-	if (theApp.uploadqueue->waitinglist.GetHeadPosition() != NULL) {
+	if (QueueArray.GetCount() > 0) {
 		QueueArray[nNextPos].sClientState = _T("next");
 		QueueArray[nNextPos].sClientStateSpecial = QueueArray[nNextPos].sClientState;
 	}

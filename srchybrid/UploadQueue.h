@@ -107,12 +107,12 @@ public:
 	bool	ShouldUseBigSendBuffer(uint32 uClientDatarate) const;
 
 	POSITION GetFirstFromUploadList() const					{ return uploadinglist.GetHeadPosition(); }
-	CUpDownClient* GetNextFromUploadList(POSITION &curpos) const { return static_cast<UploadingToClient_Struct*>(uploadinglist.GetNext(curpos))->m_pClient; }
-	CUpDownClient* GetQueueClientAt(POSITION &curpos) const	{ return static_cast<UploadingToClient_Struct*>(uploadinglist.GetAt(curpos))->m_pClient; }
+	CUpDownClient* GetNextFromUploadList(POSITION &curpos) const;
+	CUpDownClient* GetQueueClientAt(POSITION &curpos) const;
 
 	POSITION GetFirstFromWaitingList() const				{ return waitinglist.GetHeadPosition(); }
-	CUpDownClient* GetNextFromWaitingList(POSITION &curpos) const { return waitinglist.GetNext(curpos); }
-	CUpDownClient* GetWaitClientAt(POSITION &curpos) const	{ return waitinglist.GetAt(curpos); }
+	CUpDownClient* GetNextFromWaitingList(POSITION &curpos) const;
+	CUpDownClient* GetWaitClientAt(POSITION &curpos) const;
 
 	CUpDownClient* GetWaitingClientByIP_UDP(uint32 dwIP, uint16 nUDPPort, bool bIgnorePortOnUniqueIP, bool *pbMultipleIPs = NULL);
 	CUpDownClient* GetWaitingClientByIP(uint32 dwIP) const;
@@ -164,9 +164,12 @@ private:
 	uint32	GetMaxClientScore() const						{ return m_imaxscore; }
 	void	UpdateActiveClientsInfo(ULONGLONG curTick);
 	void	RetireUploadClientStruct(POSITION pos, UploadingToClient_Struct *pUploadClientStruct, CUpDownClient *pClient);
+	void	RetireStaleUploadClientStruct(POSITION pos, UploadingToClient_Struct *pUploadClientStruct);
 	void	ReclaimRetiredUploadClientStructs();
 	void	InvalidateUploadClientStruct(UploadingToClient_Struct *pUploadClientStruct, CUpDownClient *pClient);
+	void	InvalidateUploadClientStructWithoutClient(UploadingToClient_Struct *pUploadClientStruct);
 	RetiredUploadClientStructContext RemoveUploadClientStructFromActiveList(POSITION pos, UploadingToClient_Struct *pUploadClientStruct);
+	void	RemoveStaleWaitingClient(POSITION pos);
 
 	void InsertInUploadingList(CUpDownClient *newclient, bool bNoLocking);
 	void InsertInUploadingList(UploadingToClient_Struct *pNewClientUploadStruct, bool bNoLocking);

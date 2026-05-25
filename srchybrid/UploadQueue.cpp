@@ -66,6 +66,13 @@ static uint32 s_uUploadTimerSlowLoopCount = 0;
 
 namespace
 {
+	bool IsLiveUploadQueueClient(const CUpDownClient *client)
+	{
+		return client != NULL
+			&& theApp.clientlist != NULL
+			&& theApp.clientlist->ContainsClientPointer(client);
+	}
+
 	void RecordUploadTimerDuration(const uint32 uDurationMs) noexcept
 	{
 		s_uUploadTimerLastDurationMs = uDurationMs;
@@ -165,6 +172,10 @@ CUpDownClient* CUploadQueue::FindBestClientInQueue()
 	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
 		POSITION pos2 = pos;
 		CUpDownClient *cur_client = waitinglist.GetNext(pos);
+		if (!IsLiveUploadQueueClient(cur_client)) {
+			RemoveStaleWaitingClient(pos2);
+			continue;
+		}
 		//While we are going through this list. Lets check if a client appears to have left the network.
 		ASSERT(cur_client->GetLastUpRequest());
 		if ((curTick >= cur_client->GetLastUpRequest() + MAX_PURGEQUEUETIME) || !theApp.sharedfiles->GetFileByID(cur_client->GetUploadFileID())) {
@@ -326,9 +337,14 @@ void CUploadQueue::Process()
 
 	// The loop that feeds the upload slots with data.
 	for (POSITION pos = uploadinglist.GetHeadPosition(); pos != NULL;) {
+		POSITION curPos = pos;
 		// Get the client. Note! Also updates pos as a side effect.
 		UploadingToClient_Struct *pCurClientStruct = uploadinglist.GetNext(pos);
 		CUpDownClient *cur_client = pCurClientStruct->m_pClient;
+		if (!IsLiveUploadQueueClient(cur_client)) {
+			RetireStaleUploadClientStruct(curPos, pCurClientStruct);
+			continue;
+		}
 		if (thePrefs.m_iDbgHeap >= 2)
 			ASSERT_VALID(cur_client);
 		// Any active uploader without a live socket is already outside the normal
@@ -557,7 +573,12 @@ CUpDownClient* CUploadQueue::GetWaitingClientByIP_UDP(uint32 dwIP, uint16 nUDPPo
 	CUpDownClient *pMatchingIPClient = NULL;
 	uint32 cMatches = 0;
 	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
+		POSITION pos2 = pos;
 		CUpDownClient *cur_client = waitinglist.GetNext(pos);
+		if (!IsLiveUploadQueueClient(cur_client)) {
+			RemoveStaleWaitingClient(pos2);
+			continue;
+		}
 		if (dwIP == cur_client->GetIP() && nUDPPort == cur_client->GetUDPPort())
 			return cur_client;
 		if (bIgnorePortOnUniqueIP) {
@@ -577,6 +598,8 @@ CUpDownClient* CUploadQueue::GetWaitingClientByIP(uint32 dwIP) const
 {
 	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
 		CUpDownClient *cur_client = waitinglist.GetNext(pos);
+		if (!IsLiveUploadQueueClient(cur_client))
+			continue;
 		if (dwIP == cur_client->GetIP())
 			return cur_client;
 	}
@@ -625,6 +648,10 @@ void CUploadQueue::AddClientToQueue(CUpDownClient *client, bool bIgnoreTimelimit
 	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
 		POSITION pos2 = pos;
 		CUpDownClient *cur_client = waitinglist.GetNext(pos);
+		if (!IsLiveUploadQueueClient(cur_client)) {
+			RemoveStaleWaitingClient(pos2);
+			continue;
+		}
 		if (cur_client == client) {
 			client->SendRankingInfo();
 			client->QueueDisplayUpdate(DISPLAY_REFRESH_QUEUE_LIST);
@@ -747,10 +774,19 @@ float CUploadQueue::GetAverageCombinedFilePrioAndCredit()
 
 		// TODO: is there a risk of overflow? I don't think so...
 		float sum = 0;
-		for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;)
-			sum += waitinglist.GetNext(pos)->GetCombinedFilePrioAndCredit();
+		UINT count = 0;
+		for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
+			POSITION pos2 = pos;
+			CUpDownClient *cur_client = waitinglist.GetNext(pos);
+			if (!IsLiveUploadQueueClient(cur_client)) {
+				RemoveStaleWaitingClient(pos2);
+				continue;
+			}
+			sum += cur_client->GetCombinedFilePrioAndCredit();
+			++count;
+		}
 
-		m_fAverageCombinedFilePrioAndCredit = sum / waitinglist.GetCount();
+		m_fAverageCombinedFilePrioAndCredit = count != 0 ? sum / count : 0;
 	}
 
 	return m_fAverageCombinedFilePrioAndCredit;
@@ -762,6 +798,12 @@ void CUploadQueue::InvalidateUploadClientStruct(UploadingToClient_Struct *pUploa
 	ASSERT(pClient != NULL);
 
 	pClient->FlushSendBlocks();
+	InvalidateUploadClientStructWithoutClient(pUploadClientStruct);
+}
+
+void CUploadQueue::InvalidateUploadClientStructWithoutClient(UploadingToClient_Struct *pUploadClientStruct)
+{
+	ASSERT(pUploadClientStruct != NULL);
 
 	CSingleLock lockBlockLists(&pUploadClientStruct->m_csBlockListsLock, TRUE);
 	ASSERT(lockBlockLists.IsLocked());
@@ -795,6 +837,17 @@ void CUploadQueue::RetireUploadClientStruct(POSITION pos, UploadingToClient_Stru
 
 	const RetiredUploadClientStructContext retiredContext = RemoveUploadClientStructFromActiveList(pos, pUploadClientStruct);
 	InvalidateUploadClientStruct(retiredContext.pUploadClientStruct, pClient);
+}
+
+void CUploadQueue::RetireStaleUploadClientStruct(POSITION pos, UploadingToClient_Struct *pUploadClientStruct)
+{
+	ASSERT(pUploadClientStruct != NULL);
+
+	if (pUploadClientStruct->m_pClient != NULL)
+		theApp.emuledlg->transferwnd->GetUploadList()->RemoveClient(pUploadClientStruct->m_pClient);
+	const RetiredUploadClientStructContext retiredContext = RemoveUploadClientStructFromActiveList(pos, pUploadClientStruct);
+	InvalidateUploadClientStructWithoutClient(retiredContext.pUploadClientStruct);
+	m_iHighestNumberOfFullyActivatedSlotsSinceLastCall = 0;
 }
 
 void CUploadQueue::ReclaimRetiredUploadClientStructs()
@@ -875,8 +928,11 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 
 			result = true;
 		} else {
-			curClientStruct->m_pClient->SetSlotNumber(slotCounter);
-			++slotCounter;
+			if (!IsLiveUploadQueueClient(curClientStruct->m_pClient)) {
+				RetireStaleUploadClientStruct(curPos, curClientStruct);
+				continue;
+			}
+			curClientStruct->m_pClient->SetSlotNumber(slotCounter++);
 		}
 	}
 	return result;
@@ -906,14 +962,30 @@ void CUploadQueue::RemoveFromWaitingQueue(POSITION pos, bool updatewindow)
 		theApp.emuledlg->transferwnd->GetQueueList()->RemoveClient(todelete);
 		theApp.emuledlg->transferwnd->ShowQueueCount(waitinglist.GetCount());
 	}
-	todelete->SetUploadState(US_NONE);
+	if (IsLiveUploadQueueClient(todelete))
+		todelete->SetUploadState(US_NONE);
+}
+
+void CUploadQueue::RemoveStaleWaitingClient(POSITION pos)
+{
+	m_bStatisticsWaitingListDirty = true;
+	CUpDownClient *staleClient = waitinglist.GetAt(pos);
+	waitinglist.RemoveAt(pos);
+	theApp.emuledlg->transferwnd->GetQueueList()->RemoveClient(staleClient);
+	theApp.emuledlg->transferwnd->ShowQueueCount(waitinglist.GetCount());
 }
 
 void CUploadQueue::UpdateMaxClientScore()
 {
 	m_imaxscore = 0;
 	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
-		uint32 score = waitinglist.GetNext(pos)->GetScore(true, false);
+		POSITION pos2 = pos;
+		CUpDownClient *cur_client = waitinglist.GetNext(pos);
+		if (!IsLiveUploadQueueClient(cur_client)) {
+			RemoveStaleWaitingClient(pos2);
+			continue;
+		}
+		uint32 score = cur_client->GetScore(true, false);
 		UpdateUploadQueueMaxScore(m_imaxscore, score);
 	}
 }
@@ -1042,12 +1114,19 @@ void CUploadQueue::DeleteAll()
 
 UINT CUploadQueue::GetWaitingPosition(CUpDownClient *client)
 {
-	if (!IsOnUploadQueue(client))
+	if (!IsLiveUploadQueueClient(client) || !IsOnUploadQueue(client))
 		return 0;
 	UINT rank = 1;
 	UINT myscore = client->GetScore(false);
-	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;)
-		rank = AddHigherUploadQueueScoreToRank(rank, waitinglist.GetNext(pos)->GetScore(false), myscore);
+	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
+		POSITION pos2 = pos;
+		CUpDownClient *cur_client = waitinglist.GetNext(pos);
+		if (!IsLiveUploadQueueClient(cur_client)) {
+			RemoveStaleWaitingClient(pos2);
+			continue;
+		}
+		rank = AddHigherUploadQueueScoreToRank(rank, cur_client->GetScore(false), myscore);
+	}
 
 	return rank;
 }
@@ -1203,15 +1282,65 @@ CUpDownClient* CUploadQueue::GetNextClient(const CUpDownClient *lastclient) cons
 {
 	if (waitinglist.IsEmpty())
 		return NULL;
-	if (!lastclient)
-		return waitinglist.GetHead();
+	if (!lastclient) {
+		for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
+			CUpDownClient *cur_client = waitinglist.GetNext(pos);
+			if (IsLiveUploadQueueClient(cur_client))
+				return cur_client;
+		}
+		return NULL;
+	}
 	POSITION pos = waitinglist.Find(const_cast<CUpDownClient*>(lastclient));
 	if (!pos) {
 		TRACE("Error: CUploadQueue::GetNextClient");
-		return waitinglist.GetHead();
+		for (POSITION fallbackPos = waitinglist.GetHeadPosition(); fallbackPos != NULL;) {
+			CUpDownClient *cur_client = waitinglist.GetNext(fallbackPos);
+			if (IsLiveUploadQueueClient(cur_client))
+				return cur_client;
+		}
+		return NULL;
 	}
 	waitinglist.GetNext(pos);
-	return pos ? waitinglist.GetAt(pos) : NULL;
+	while (pos != NULL) {
+		CUpDownClient *cur_client = waitinglist.GetNext(pos);
+		if (IsLiveUploadQueueClient(cur_client))
+			return cur_client;
+	}
+	return NULL;
+}
+
+CUpDownClient* CUploadQueue::GetNextFromUploadList(POSITION &curpos) const
+{
+	while (curpos != NULL) {
+		const UploadingToClient_Struct *pCurClientStruct = uploadinglist.GetNext(curpos);
+		CUpDownClient *client = pCurClientStruct != NULL ? pCurClientStruct->m_pClient : NULL;
+		if (IsLiveUploadQueueClient(client))
+			return client;
+	}
+	return NULL;
+}
+
+CUpDownClient* CUploadQueue::GetQueueClientAt(POSITION &curpos) const
+{
+	const UploadingToClient_Struct *pCurClientStruct = uploadinglist.GetAt(curpos);
+	CUpDownClient *client = pCurClientStruct != NULL ? pCurClientStruct->m_pClient : NULL;
+	return IsLiveUploadQueueClient(client) ? client : NULL;
+}
+
+CUpDownClient* CUploadQueue::GetNextFromWaitingList(POSITION &curpos) const
+{
+	while (curpos != NULL) {
+		CUpDownClient *client = waitinglist.GetNext(curpos);
+		if (IsLiveUploadQueueClient(client))
+			return client;
+	}
+	return NULL;
+}
+
+CUpDownClient* CUploadQueue::GetWaitClientAt(POSITION &curpos) const
+{
+	CUpDownClient *client = waitinglist.GetAt(curpos);
+	return IsLiveUploadQueueClient(client) ? client : NULL;
 }
 
 void CUploadQueue::UpdateDatarates()
@@ -1241,7 +1370,12 @@ uint32 CUploadQueue::GetWaitingUserForFileCount(const CSimpleArray<CObject*> &ra
 	m_bStatisticsWaitingListDirty = false;
 	uint32 nResult = 0;
 	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
+		POSITION pos2 = pos;
 		const CUpDownClient *cur_client = waitinglist.GetNext(pos);
+		if (!IsLiveUploadQueueClient(cur_client)) {
+			RemoveStaleWaitingClient(pos2);
+			continue;
+		}
 		for (int i = raFiles.GetSize(); --i >= 0;)
 			nResult += static_cast<uint32>(md4equ(static_cast<CKnownFile*>(raFiles[i])->GetFileHash(), cur_client->GetUploadFileID()));
 	}
@@ -1253,6 +1387,8 @@ uint32 CUploadQueue::GetDatarateForFile(const CSimpleArray<CObject*> &raFiles) c
 	uint32 nResult = 0;
 	for (POSITION pos = uploadinglist.GetHeadPosition(); pos != NULL;) {
 		const CUpDownClient *cur_client = uploadinglist.GetNext(pos)->m_pClient;
+		if (!IsLiveUploadQueueClient(cur_client))
+			continue;
 		for (int i = raFiles.GetSize(); --i >= 0;)
 			if (md4equ(static_cast<CKnownFile*>(raFiles[i])->GetFileHash(), cur_client->GetUploadFileID()))
 				nResult += cur_client->GetUploadDatarate();
