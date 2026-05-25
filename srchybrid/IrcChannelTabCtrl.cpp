@@ -372,7 +372,10 @@ void CIrcChannelTabCtrl::RemoveChannel(Channel *pChannel)
 			iIndex = iItems - 1; //the last available tab
 		SelectChannel(iIndex);
 	}
-	m_lstChannels.RemoveAt(m_lstChannels.Find(pChannel));
+	POSITION posChannel = m_lstChannels.Find(pChannel);
+	ASSERT(posChannel != NULL);
+	if (posChannel != NULL)
+		m_lstChannels.RemoveAt(posChannel);
 	m_pParent->m_wndNicks.DeleteAllNick(pChannel);
 	delete pChannel;
 }
