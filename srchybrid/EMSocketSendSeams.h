@@ -41,6 +41,8 @@ inline bool HasEMSocketQueuedPackets(unsigned nQueueState, bool bOnlyStandardPac
 inline bool ConsumeQueuedFilePayload(uint32 nActualPayloadSize, uint32 *pnRemainingPayloadBytes)
 {
 	ASSERT(pnRemainingPayloadBytes != NULL);
+	if (pnRemainingPayloadBytes == NULL)
+		return false;
 	if (nActualPayloadSize > *pnRemainingPayloadBytes)
 		return false;
 	*pnRemainingPayloadBytes -= nActualPayloadSize;
