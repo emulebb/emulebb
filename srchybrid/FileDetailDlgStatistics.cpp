@@ -19,6 +19,7 @@
 #include "filedetaildlgstatistics.h"
 #include "UserMsgs.h"
 #include "KnownFile.h"
+#include "KnownFilePointerValidation.h"
 #include "KnownFileList.h"
 #include "SharedFileList.h"
 #include "UploadQueue.h"
@@ -161,12 +162,12 @@ void CFileDetailDlgStatistics::RefreshData()
 	UINT uAccepted = 0;
 	UINT uAllTimeRequests = 0;
 	UINT uAllTimeAccepted = 0;
+	CSimpleArray<CObject*> aLiveFiles;
 	for (int i = m_paFiles->GetSize(); --i >= 0;) {
-		if (!(*m_paFiles)[i]->IsKindOf(RUNTIME_CLASS(CKnownFile)))
-			continue;
 		const CKnownFile *pFile = static_cast<CKnownFile*>((*m_paFiles)[i]);
-		if (theApp.sharedfiles->GetFileByIdentifier(pFile->GetFileIdentifierC()) == NULL)
+		if (theApp.sharedfiles == NULL || !theApp.sharedfiles->ContainsFilePointer(pFile))
 			continue;
+		aLiveFiles.Add((*m_paFiles)[i]);
 		if (!iFiles)
 			pTheFile = pFile;
 		++iFiles;
@@ -215,11 +216,11 @@ void CFileDetailDlgStatistics::RefreshData()
 		SetDlgItemText(IDC_SSESSIONRATIO, FormatUploadRatio(uTotalFileSize != 0 ? uTransferred / static_cast<double>(uTotalFileSize) : 0.0));
 		SetDlgItemText(IDC_SALLTIMERATIO, FormatUploadRatio(uTotalFileSize != 0 ? uAllTimeTransferred / static_cast<double>(uTotalFileSize) : 0.0));
 
-		uint32 nQueueCount = theApp.uploadqueue->GetWaitingUserForFileCount(*m_paFiles, !m_bDataChanged);
+		uint32 nQueueCount = theApp.uploadqueue->GetWaitingUserForFileCount(aLiveFiles, !m_bDataChanged);
 		if (nQueueCount != _UI32_MAX)
 			SetDlgItemInt(IDC_FS_ONQUEUE_VAL, nQueueCount, FALSE);
 
-		SetDlgItemText(IDC_FS_UPLOADING_VAL, CastItoXBytes(theApp.uploadqueue->GetDatarateForFile(*m_paFiles), false, true));
+		SetDlgItemText(IDC_FS_UPLOADING_VAL, CastItoXBytes(theApp.uploadqueue->GetDatarateForFile(aLiveFiles), false, true));
 
 
 		if (iFiles == 1) {

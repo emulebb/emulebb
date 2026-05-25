@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "ED2kLinkDlg.h"
 #include "partfile.h"
+#include "KnownFilePointerValidation.h"
 #include "preferences.h"
 #include "UserMsgs.h"
 
@@ -118,10 +119,11 @@ BOOL CED2kLinkDlg::OnSetActive()
 		bool bShowAICH = false;
 		bool bShowHTML = false;
 		for (int i = m_paFiles->GetSize(); --i >= 0;) {
-			if (!(*m_paFiles)[i]->IsKindOf(RUNTIME_CLASS(CKnownFile)))
+			CKnownFile *file = static_cast<CKnownFile*>((*m_paFiles)[i]);
+			if (!IsLiveKnownFilePointer(file))
 				continue;
 			bShowHTML = true;
-			const CFileIdentifier &fileid = static_cast<CKnownFile*>((*m_paFiles)[i])->GetFileIdentifier();
+			const CFileIdentifier &fileid = file->GetFileIdentifier();
 			if (fileid.GetAvailableMD4PartHashCount() > 0 && fileid.HasExpectedMD4HashCount())
 				bShowHashset = true;
 			if (fileid.HasAICHHash())
@@ -175,12 +177,14 @@ void CED2kLinkDlg::UpdateLink()
 
 	CString strLinks;
 	for (int i = 0; i != m_paFiles->GetSize(); ++i)
-		if ((*m_paFiles)[i]->IsKindOf(RUNTIME_CLASS(CKnownFile))) {
+	{
+		const CKnownFile *file = static_cast<CKnownFile*>((*m_paFiles)[i]);
+		if (IsLiveKnownFilePointer(file)) {
 			if (!strLinks.IsEmpty())
 				strLinks += _T("\r\n\r\n");
-			const CKnownFile *file = static_cast<CKnownFile*>((*m_paFiles)[i]);
 			strLinks += file->GetED2kLink(bHashset, bHTML, bHostname, bSource, theApp.GetPublicIP());
 		}
+	}
 
 	//skip update if nothing has changed
 	if (m_strLinks != strLinks) {

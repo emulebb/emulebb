@@ -20,6 +20,7 @@
 #include "CommentDialogSeams.h"
 #include "UpDownClient.h"
 #include "PartFile.h"
+#include "KnownFilePointerValidation.h"
 #include "UserMsgs.h"
 #include "kademlia/kademlia/kademlia.h"
 #include "kademlia/kademlia/SearchManager.h"
@@ -133,23 +134,22 @@ void CCommentDialogLst::RefreshData(bool deleteOld)
 
 	bool kadsearchable = true;
 	for (int i = 0; i < m_paFiles->GetSize(); ++i) {
-		CAbstractFile *file = static_cast<CAbstractFile*>((*m_paFiles)[i]);
-		if (file->IsPartFile()) {
-			CPartFile *partFile = static_cast<CPartFile*>(file);
-			for (POSITION pos = partFile->srclist.GetHeadPosition(); pos != NULL;) {
-				const CUpDownClient *cur_src = partFile->srclist.GetNext(pos);
-				if (!partFile->IsLiveSource(cur_src))
-					continue;
-				if (cur_src->HasFileRating() || !cur_src->GetFileComment().IsEmpty())
-					m_lstComments.AddItem(cur_src);
-			}
+		CPartFile *file = static_cast<CPartFile*>((*m_paFiles)[i]);
+		if (!IsLivePartFilePointer(file))
+			continue;
+
+		for (POSITION pos = file->srclist.GetHeadPosition(); pos != NULL;) {
+			const CUpDownClient *cur_src = file->srclist.GetNext(pos);
+			if (!file->IsLiveSource(cur_src))
+				continue;
+			if (cur_src->HasFileRating() || !cur_src->GetFileComment().IsEmpty())
+				m_lstComments.AddItem(cur_src);
 		}
 
 		const CTypedPtrList<CPtrList, Kademlia::CEntry*> &list = file->getNotes();
 		for (POSITION pos = list.GetHeadPosition(); pos != NULL;)
 			m_lstComments.AddItem(list.GetNext(pos));
-		if (file->IsPartFile())
-			static_cast<CPartFile*>(file)->UpdateFileRatingCommentAvail();
+		file->UpdateFileRatingCommentAvail();
 
 		// check if note searches are running for this file(s)
 		if (Kademlia::CSearchManager::AlreadySearchingFor(Kademlia::CUInt128(file->GetFileHash())))
@@ -175,7 +175,9 @@ void CCommentDialogLst::OnBnClickedSearchKad()
 		const int iMaxSearches = CommentDialogSeams::GetKadCommentSearchLimit(m_paFiles->GetSize(), KADEMLIATOTALFILE);
 		int iQueuedSearches = 0;
 		for (int i = 0; i < m_paFiles->GetSize(); ++i) {
-			CAbstractFile *file = static_cast<CAbstractFile*>((*m_paFiles)[i]);
+			CPartFile *file = static_cast<CPartFile*>((*m_paFiles)[i]);
+			if (!IsLivePartFilePointer(file))
+				continue;
 			const bool bAlreadySearching = file != NULL && Kademlia::CSearchManager::AlreadySearchingFor(Kademlia::CUInt128(file->GetFileHash()));
 			if (CommentDialogSeams::CanQueueListKadCommentSearch(true, file != NULL, bAlreadySearching, iQueuedSearches, iMaxSearches)) {
 				if (!Kademlia::CSearchManager::PrepareLookup(Kademlia::CSearch::NOTES, true, Kademlia::CUInt128(file->GetFileHash())))

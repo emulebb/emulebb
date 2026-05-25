@@ -1,6 +1,8 @@
 #pragma once
 
 #include "emule.h"
+#include "opcodes.h"
+#include "OtherFunctions.h"
 #include "DownloadQueue.h"
 #include "KnownFileList.h"
 #include "PartFile.h"

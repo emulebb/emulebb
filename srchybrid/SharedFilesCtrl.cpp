@@ -19,6 +19,7 @@
 #include "emule.h"
 #include "emuledlg.h"
 #include "SharedFilesCtrl.h"
+#include "KnownFilePointerValidation.h"
 #include "UpDownClient.h"
 #include "FileInfoDialog.h"
 #include "MetaDataDlg.h"
@@ -327,6 +328,13 @@ bool NeedArchiveInfoPage(const CSimpleArray<CObject*> *paItems);
 void UpdateFileDetailsPages(CListViewPropertySheet *pSheet
 	, CResizablePage *pArchiveInfo, CResizablePage *pMediaInfo, CResizablePage *pFileLink);
 
+void PruneStaleSharedFileItems(CSimpleArray<CObject*> &aItems)
+{
+	for (int i = aItems.GetSize(); --i >= 0;) {
+		if (!IsLiveKnownFilePointer(static_cast<CKnownFile*>(aItems[i])))
+			aItems.RemoveAt(i);
+	}
+}
 
 //////////////////////////////////////////////////////////////////////////////
 // CSharedFileDetailsSheet
@@ -387,7 +395,11 @@ CSharedFileDetailsSheet::CSharedFileDetailsSheet(CTypedPtrList<CPtrList, CSharea
 	, m_uInvokePage(uInvokePage)
 {
 	for (POSITION pos = aFiles.GetHeadPosition(); pos != NULL;)
-		m_aItems.Add(aFiles.GetNext(pos));
+	{
+		CShareableFile *file = aFiles.GetNext(pos);
+		if (IsLiveKnownFilePointer(static_cast<CKnownFile*>(file)))
+			m_aItems.Add(file);
+	}
 	m_psh.dwFlags &= ~PSH_HASHELP;
 
 	m_wndFileComments.m_psp.dwFlags &= ~PSP_HASHELP;
@@ -455,6 +467,7 @@ BOOL CSharedFileDetailsSheet::OnInitDialog()
 
 LRESULT CSharedFileDetailsSheet::OnDataChanged(WPARAM, LPARAM)
 {
+	PruneStaleSharedFileItems(m_aItems);
 	UpdateTitle();
 	UpdateFileDetailsPages(this, &m_wndArchiveInfo, &m_wndMediaInfo, &m_wndFileLink);
 	return 1;
@@ -463,7 +476,7 @@ LRESULT CSharedFileDetailsSheet::OnDataChanged(WPARAM, LPARAM)
 void CSharedFileDetailsSheet::UpdateTitle()
 {
 	CString sTitle(GetResString(IDS_DETAILS));
-	if (m_aItems.GetSize() == 1)
+	if (m_aItems.GetSize() == 1 && IsLiveKnownFilePointer(static_cast<CKnownFile*>(m_aItems[0])))
 		sTitle.AppendFormat(_T(": %s"), (LPCTSTR)(static_cast<CAbstractFile*>(m_aItems[0])->GetFileName()));
 	SetWindowText(sTitle);
 }
@@ -475,7 +488,8 @@ BOOL CSharedFileDetailsSheet::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (pSharedFilesCtrl)
 			for (int i = m_aItems.GetSize(); --i >= 0;)
 				// so, and why does this not(!) work while the sheet is open ??
-				pSharedFilesCtrl->UpdateFile(DYNAMIC_DOWNCAST(CKnownFile, m_aItems[i]));
+				if (IsLiveKnownFilePointer(static_cast<CKnownFile*>(m_aItems[i])))
+					pSharedFilesCtrl->UpdateFile(DYNAMIC_DOWNCAST(CKnownFile, m_aItems[i]));
 	}
 	return CListViewWalkerPropertySheet::OnCommand(wParam, lParam);
 }

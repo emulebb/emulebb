@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "emuleDlg.h"
 #include "SharedFilesWnd.h"
+#include "KnownFilePointerValidation.h"
 #include "SharedFilesWndSeams.h"
 #include "WorkerUiMessageSeams.h"
 #include "OtherFunctions.h"
@@ -899,7 +900,11 @@ void  CSharedFileDetailsModelessSheet::SetFiles(CTypedPtrList<CPtrList, CShareab
 {
 	m_aItems.RemoveAll();
 	for (POSITION pos = aFiles.GetHeadPosition(); pos != NULL;)
-		m_aItems.Add(aFiles.GetNext(pos));
+	{
+		CShareableFile *file = aFiles.GetNext(pos);
+		if (IsLiveKnownFilePointer(static_cast<CKnownFile*>(file)))
+			m_aItems.Add(file);
+	}
 	ChangedData();
 }
 
@@ -919,6 +924,11 @@ void CSharedFileDetailsModelessSheet::Localize()
 
 LRESULT CSharedFileDetailsModelessSheet::OnDataChanged(WPARAM, LPARAM)
 {
+	for (int i = m_aItems.GetSize(); --i >= 0;) {
+		if (!IsLiveKnownFilePointer(static_cast<CKnownFile*>(m_aItems[i])))
+			m_aItems.RemoveAt(i);
+	}
+
 	//When using up/down keys in shared files list, "Content" tab grabs focus on archives
 	CWnd *pFocused = GetFocus();
 	UpdateFileDetailsPages(this, &m_wndArchiveInfo, &m_wndMediaInfo, &m_wndFileLink);
