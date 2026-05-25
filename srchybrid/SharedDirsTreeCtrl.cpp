@@ -867,12 +867,20 @@ void CSharedDirsTreeCtrl::OnContextMenu(CWnd*, CPoint point)
 
 	CDirectoryItem *pSelectedDir = GetSelectedFilter();
 	if (pSelectedDir != NULL && pSelectedDir->m_eItemType != SDI_UNSHAREDDIRECTORY && pSelectedDir->m_eItemType != SDI_FILESYSTEMPARENT) {
-		int iSelectedItems = m_pSharedFilesCtrl->GetItemCount();
+		CTypedPtrList<CPtrList, CShareableFile*> visibleFiles;
+		m_pSharedFilesCtrl->CollectVisibleFiles(visibleFiles);
+		const int iSelectedItems = static_cast<int>(visibleFiles.GetCount());
+		int iKnownFileItems = 0;
 		int iCompleteFileSelected = -1;
 		UINT uPrioMenuItem = 0;
 		bool bFirstItem = true;
-		for (int i = 0; i < iSelectedItems; ++i) {
-			const CKnownFile *pFile = reinterpret_cast<CKnownFile*>(m_pSharedFilesCtrl->GetItemData(i));
+		for (POSITION pos = visibleFiles.GetHeadPosition(); pos != NULL;) {
+			const CShareableFile *pVisibleFile = visibleFiles.GetNext(pos);
+			if (pVisibleFile == NULL || !pVisibleFile->IsKindOf(RUNTIME_CLASS(CKnownFile)))
+				continue;
+
+			const CKnownFile *pFile = static_cast<const CKnownFile*>(pVisibleFile);
+			++iKnownFileItems;
 
 			int iCurCompleteFile = static_cast<int>(!pFile->IsPartFile());
 			if (bFirstItem)
@@ -918,14 +926,14 @@ void CSharedDirsTreeCtrl::OnContextMenu(CWnd*, CPoint point)
 		// - even if it can be done in other ways if the user really wants to do it
 		bool bWideRangeSelection = (pSelectedDir->m_nCatFilter == -1 && pSelectedDir->m_eItemType != SDI_NO);
 
-		EnableSubMenuItem(m_SharedFilesMenu, m_PrioMenu.m_hMenu, iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED);
+		EnableSubMenuItem(m_SharedFilesMenu, m_PrioMenu.m_hMenu, iKnownFileItems > 0 ? MF_ENABLED : MF_GRAYED);
 		m_PrioMenu.CheckMenuRadioItem(MP_PRIOVERYLOW, MP_PRIOAUTO, uPrioMenuItem, 0);
 
 		m_SharedFilesMenu.EnableMenuItem(MP_OPENFOLDER, !pSelectedDir->m_strFullPath.IsEmpty() || pSelectedDir->m_eItemType == SDI_INCOMING || pSelectedDir->m_eItemType == SDI_TEMP || pSelectedDir->m_eItemType == SDI_CATINCOMING ? MF_ENABLED : MF_GRAYED);
 		m_SharedFilesMenu.EnableMenuItem(MP_REMOVE, (iCompleteFileSelected > 0 && !bWideRangeSelection) ? MF_ENABLED : MF_GRAYED);
-		m_SharedFilesMenu.EnableMenuItem(MP_CMT, (iSelectedItems > 0 && !bWideRangeSelection) ? MF_ENABLED : MF_GRAYED);
+		m_SharedFilesMenu.EnableMenuItem(MP_CMT, (iKnownFileItems > 0 && !bWideRangeSelection) ? MF_ENABLED : MF_GRAYED);
 		m_SharedFilesMenu.EnableMenuItem(MP_DETAIL, iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED);
-		m_SharedFilesMenu.EnableMenuItem(thePrefs.GetShowCopyEd2kLinkCmd() ? MP_GETED2KLINK : MP_SHOWED2KLINK, iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED);
+		m_SharedFilesMenu.EnableMenuItem(thePrefs.GetShowCopyEd2kLinkCmd() ? MP_GETED2KLINK : MP_SHOWED2KLINK, iKnownFileItems > 0 ? MF_ENABLED : MF_GRAYED);
 		const bool bIsMonitoredRoot = IsMonitoredRoot(pSelectedDir->m_strFullPath);
 		const bool bIsUnderMonitoredRoot = !FindContainingMonitoredRoot(pSelectedDir->m_strFullPath, false).IsEmpty();
 		const bool bCanUnshareSubtree = !bIsMonitoredRoot && !bIsUnderMonitoredRoot
@@ -985,9 +993,8 @@ void CSharedDirsTreeCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 BOOL CSharedDirsTreeCtrl::OnCommand(WPARAM wParam, LPARAM)
 {
 	CTypedPtrList<CPtrList, CShareableFile*> selectedList;
-	int iSelectedItems = m_pSharedFilesCtrl->GetItemCount();
-	for (int i = 0; i < iSelectedItems; ++i)
-		selectedList.AddTail(reinterpret_cast<CShareableFile*>(m_pSharedFilesCtrl->GetItemData(i)));
+	m_pSharedFilesCtrl->CollectVisibleFiles(selectedList);
+	int iSelectedItems = static_cast<int>(selectedList.GetCount());
 
 	const CDirectoryItem *pSelectedDir = GetSelectedFilter();
 	if (pSelectedDir == NULL)
@@ -1030,8 +1037,9 @@ BOOL CSharedDirsTreeCtrl::OnCommand(WPARAM wParam, LPARAM)
 			{
 				CString str;
 				for (POSITION pos = selectedList.GetHeadPosition(); pos != NULL;) {
-					const CKnownFile *file = static_cast<CKnownFile*>(selectedList.GetNext(pos));
-					if (file && file->IsKindOf(RUNTIME_CLASS(CKnownFile))) {
+					const CShareableFile *pFile = selectedList.GetNext(pos);
+					if (pFile && pFile->IsKindOf(RUNTIME_CLASS(CKnownFile))) {
+						const CKnownFile *file = static_cast<const CKnownFile*>(pFile);
 						if (!str.IsEmpty())
 							str += _T("\r\n");
 						str += file->GetED2kLink();
@@ -1047,6 +1055,7 @@ BOOL CSharedDirsTreeCtrl::OnCommand(WPARAM wParam, LPARAM)
 				if (LocMessageBox(IDS_CONFIRM_FILEDELETE, MB_ICONWARNING | MB_DEFBUTTON2 | MB_YESNO, 0) != IDYES)
 					return TRUE;
 
+				m_pSharedFilesCtrl->CollectVisibleFiles(selectedList);
 				m_pSharedFilesCtrl->SetRedraw(false);
 				bool bRemovedItems = false;
 				while (!selectedList.IsEmpty()) {
@@ -1095,8 +1104,9 @@ BOOL CSharedDirsTreeCtrl::OnCommand(WPARAM wParam, LPARAM)
 		case MP_PRIOVERYHIGH:
 		case MP_PRIOAUTO:
 			for (POSITION pos = selectedList.GetHeadPosition(); pos != NULL;) {
-				CKnownFile *file = static_cast<CKnownFile*>(selectedList.GetNext(pos));
-				if (file->IsKindOf(RUNTIME_CLASS(CKnownFile))) {
+				CShareableFile *pFile = selectedList.GetNext(pos);
+				if (pFile != NULL && pFile->IsKindOf(RUNTIME_CLASS(CKnownFile))) {
+					CKnownFile *file = static_cast<CKnownFile*>(pFile);
 					uint8 pri;
 					switch (wParam) {
 					case MP_PRIOVERYLOW:

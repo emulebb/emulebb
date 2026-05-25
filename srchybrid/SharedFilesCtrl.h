@@ -101,6 +101,10 @@ public:
 	 */
 	void CollectSelectedFiles(CTypedPtrList<CPtrList, CShareableFile*> &rSelectedFiles) const;
 	/**
+	 * @brief Collects the current visible Shared Files backing objects and prunes stale rows first.
+	 */
+	void CollectVisibleFiles(CTypedPtrList<CPtrList, CShareableFile*> &rVisibleFiles);
+	/**
 	 * @brief Returns the single selected Shared Files object, or `NULL` when the selection is not singular.
 	 */
 	CShareableFile* GetSingleSelectedFile() const;

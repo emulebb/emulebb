@@ -679,6 +679,16 @@ void CSharedFilesCtrl::CollectSelectedFiles(CTypedPtrList<CPtrList, CShareableFi
 	}
 }
 
+void CSharedFilesCtrl::CollectVisibleFiles(CTypedPtrList<CPtrList, CShareableFile*> &rVisibleFiles)
+{
+	rVisibleFiles.RemoveAll();
+	PruneStaleVisibleFiles();
+	for (std::vector<CShareableFile*>::const_iterator it = m_aVisibleFiles.begin(); it != m_aVisibleFiles.end(); ++it) {
+		if (IsLiveVisibleFilePointer(*it))
+			rVisibleFiles.AddTail(*it);
+	}
+}
+
 CShareableFile* CSharedFilesCtrl::GetSingleSelectedFile() const
 {
 	if (GetSelectedCount() != 1)
