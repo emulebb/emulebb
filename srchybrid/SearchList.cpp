@@ -129,11 +129,14 @@ void CSearchList::ShowResults(uint32 nSearchID)
 void CSearchList::RemoveResult(CSearchFile *todel)
 {
 	SearchList *list = GetSearchListForID(todel->GetSearchID());
-	POSITION pos = list->Find(todel);
-	if (pos != NULL) {
-		theApp.emuledlg->searchwnd->RemoveResult(todel);
-		list->RemoveAt(pos);
-		delete todel;
+	for (POSITION pos = list->GetHeadPosition(); pos != NULL;) {
+		POSITION posCur = pos;
+		CSearchFile *pFile = list->GetNext(pos);
+		if (pFile == todel || pFile->GetListParent() == todel) {
+			theApp.emuledlg->searchwnd->RemoveResult(pFile);
+			list->RemoveAt(posCur);
+			delete pFile;
+		}
 	}
 }
 
@@ -657,6 +660,18 @@ bool CSearchList::GetVisibleResults(uint32 nSearchID, CArray<const CSearchFile*,
 			rResults.Add(pSearchFile);
 	}
 	return true;
+}
+
+bool CSearchList::ContainsSearchFilePointer(const CSearchFile *pSearchFile) const
+{
+	if (pSearchFile == NULL)
+		return false;
+	for (POSITION pos = m_listFileLists.GetHeadPosition(); pos != NULL;) {
+		const SearchListsStruct *const pList = m_listFileLists.GetNext(pos);
+		if (pList != NULL && pList->m_listSearchFiles.Find(const_cast<CSearchFile*>(pSearchFile)) != NULL)
+			return true;
+	}
+	return false;
 }
 
 CSearchFile* CSearchList::GetSearchFileByHash(const uchar *hash) const

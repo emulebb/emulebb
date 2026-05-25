@@ -163,6 +163,31 @@ CString FormatSearchEvidenceDetails(const CSearchFile &rFile, const SFakeFileRep
 	return strInfo;
 }
 
+bool IsLiveSearchFilePointer(const CSearchFile *pSearchFile)
+{
+	if (pSearchFile == NULL || theApp.searchlist == NULL || !theApp.searchlist->ContainsSearchFilePointer(pSearchFile))
+		return false;
+
+	const CSearchFile *pParent = pSearchFile->GetListParent();
+	return pParent == NULL || theApp.searchlist->ContainsSearchFilePointer(pParent);
+}
+
+void PruneStaleSearchFileItems(CSimpleArray<CObject*> &aItems)
+{
+	for (int i = aItems.GetSize(); --i >= 0;) {
+		if (!IsLiveSearchFilePointer(static_cast<CSearchFile*>(aItems[i])))
+			aItems.RemoveAt(i);
+	}
+}
+
+void NotifySearchDetailPages(CMetaDataDlg &rMetaData, CCommentDialogLst &rComments)
+{
+	if (rMetaData.GetSafeHwnd() != NULL)
+		rMetaData.SendMessage(UM_DATA_CHANGED);
+	if (rComments.GetSafeHwnd() != NULL)
+		rComments.SendMessage(UM_DATA_CHANGED);
+}
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -213,8 +238,11 @@ CSearchResultFileDetailSheet::CSearchResultFileDetailSheet(CTypedPtrList<CPtrLis
 	: CListViewWalkerPropertySheet(pListCtrl)
 	, m_uInvokePage(uInvokePage)
 {
-	for (POSITION pos = paFiles.GetHeadPosition(); pos != NULL;)
-		m_aItems.Add(paFiles.GetNext(pos));
+	for (POSITION pos = paFiles.GetHeadPosition(); pos != NULL;) {
+		CSearchFile *pFile = paFiles.GetNext(pos);
+		if (IsLiveSearchFilePointer(pFile))
+			m_aItems.Add(pFile);
+	}
 	m_psh.dwFlags &= ~PSH_HASHELP;
 	m_psh.dwFlags |= PSH_NOAPPLYNOW;
 
@@ -263,14 +291,16 @@ BOOL CSearchResultFileDetailSheet::OnInitDialog()
 
 LRESULT CSearchResultFileDetailSheet::OnDataChanged(WPARAM, LPARAM)
 {
+	PruneStaleSearchFileItems(m_aItems);
 	UpdateTitle();
+	NotifySearchDetailPages(m_wndMetaData, m_wndComments);
 	return 1;
 }
 
 void CSearchResultFileDetailSheet::UpdateTitle()
 {
 	CString sTitle(GetResString(IDS_DETAILS));
-	if (m_aItems.GetSize() == 1)
+	if (m_aItems.GetSize() == 1 && IsLiveSearchFilePointer(static_cast<CSearchFile*>(m_aItems[0])))
 		sTitle.AppendFormat(_T(": %s"), (LPCTSTR)(static_cast<CSearchFile*>(m_aItems[0])->GetFileName()));
 	SetWindowText(sTitle);
 }
@@ -468,6 +498,9 @@ void CSearchListCtrl::AddResult(const CSearchFile *toshow)
 
 void CSearchListCtrl::UpdateSources(const CSearchFile *toupdate)
 {
+	if (!IsLiveSearchFile(toupdate))
+		return;
+
 	LVFINDINFO find;
 	find.flags = LVFI_PARAM;
 	find.lParam = (LPARAM)toupdate;
@@ -505,7 +538,7 @@ void CSearchListCtrl::UpdateSources(const CSearchFile *toupdate)
 
 void CSearchListCtrl::UpdateSearch(CSearchFile *toupdate)
 {
-	if (toupdate && !theApp.IsClosing()) {
+	if (toupdate && !theApp.IsClosing() && IsLiveSearchFile(toupdate)) {
 		LVFINDINFO find;
 		find.flags = LVFI_PARAM;
 		find.lParam = (LPARAM)toupdate;
@@ -539,7 +572,63 @@ void CSearchListCtrl::UpdateTabHeader(uint32 nResultsID)
 					searchselect.HighlightItem(iItem);
 				break;
 			}
+	}
+}
+
+bool CSearchListCtrl::IsLiveSearchFile(const CSearchFile *pSearchFile) const
+{
+	if (pSearchFile == NULL || searchlist == NULL || !searchlist->ContainsSearchFilePointer(pSearchFile))
+		return false;
+
+	const CSearchFile *pParent = pSearchFile->GetListParent();
+	return pParent == NULL || searchlist->ContainsSearchFilePointer(pParent);
+}
+
+bool CSearchListCtrl::PruneStaleSearchItems()
+{
+	bool bRemoved = false;
+	for (int iItem = GetItemCount(); --iItem >= 0;) {
+		if (!IsLiveSearchFile(reinterpret_cast<CSearchFile*>(GetItemData(iItem)))) {
+			DeleteItem(iItem);
+			bRemoved = true;
 		}
+	}
+	return bRemoved;
+}
+
+static CObject *WalkToLiveSearchItem(CSearchListCtrl &rList, int iDirection)
+{
+	const int iItemCount = rList.GetItemCount();
+	if (iItemCount < 2)
+		return NULL;
+
+	POSITION pos = rList.GetFirstSelectedItemPosition();
+	if (pos == NULL)
+		return NULL;
+
+	const int iCurSelItem = rList.GetNextSelectedItem(pos);
+	for (int iItem = iCurSelItem + iDirection; iItem >= 0 && iItem < iItemCount; iItem += iDirection) {
+		CSearchFile *pSearchFile = reinterpret_cast<CSearchFile*>(rList.GetItemData(iItem));
+		if (!rList.IsLiveSearchFile(pSearchFile))
+			continue;
+
+		rList.SetItemState(iCurSelItem, 0, LVIS_SELECTED | LVIS_FOCUSED);
+		rList.SetItemState(iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+		rList.SetSelectionMark(iItem);
+		rList.EnsureVisible(iItem, FALSE);
+		return pSearchFile;
+	}
+	return NULL;
+}
+
+CObject* CSearchListCtrl::GetPrevSelectableItem()
+{
+	return WalkToLiveSearchItem(*this, -1);
+}
+
+CObject* CSearchListCtrl::GetNextSelectableItem()
+{
+	return WalkToLiveSearchItem(*this, 1);
 }
 
 bool CSearchListCtrl::IsComplete(const CSearchFile *pFile, UINT uSources) const
@@ -647,6 +736,7 @@ void CSearchListCtrl::ShowResults(uint32 nResultsID)
 
 void CSearchListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 {
+	PruneStaleSearchItems();
 	const LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 	SortByColumn(pNMLV->iSubItem);
 	*pResult = 0;
@@ -654,6 +744,8 @@ void CSearchListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 
 void CSearchListCtrl::SortByColumn(int iSubItem)
 {
+	PruneStaleSearchItems();
+
 	bool sortAscending;
 	if (GetSortItem() != iSubItem)
 		switch (iSubItem) {
@@ -677,6 +769,11 @@ int CALLBACK CSearchListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lP
 {
 	const CSearchFile *item1 = reinterpret_cast<CSearchFile*>(lParam1);
 	const CSearchFile *item2 = reinterpret_cast<CSearchFile*>(lParam2);
+	const bool bItem1Live = IsLiveSearchFilePointer(item1);
+	const bool bItem2Live = IsLiveSearchFilePointer(item2);
+	if (!bItem1Live || !bItem2Live)
+		return bItem1Live ? -1 : (bItem2Live ? 1 : 0);
+
 	bool bDirect = !HIWORD(lParamSort);
 
 	int iResult;
@@ -807,13 +904,15 @@ int CSearchListCtrl::Compare(const CSearchFile *item1, const CSearchFile *item2,
 
 void CSearchListCtrl::OnContextMenu(CWnd*, CPoint point)
 {
+	PruneStaleSearchItems();
+
 	int iSelected = 0;
 	int iToDownload = 0;
 	int iToPreview = 0;
 	bool bContainsNotSpamFile = false;
 	for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;) {
 		const CSearchFile *pFile = reinterpret_cast<CSearchFile*>(GetItemData(GetNextSelectedItem(pos)));
-		if (pFile) {
+		if (IsLiveSearchFile(pFile)) {
 			++iSelected;
 			iToPreview += static_cast<int>(pFile->IsPreviewPossible());
 			iToDownload += static_cast<int>(!theApp.downloadqueue->IsFileExisting(pFile->GetFileHash(), false));
@@ -888,11 +987,16 @@ BOOL CSearchListCtrl::OnCommand(WPARAM wParam, LPARAM)
 		return TRUE;
 	}
 
+	PruneStaleSearchItems();
+
 	CTypedPtrList<CPtrList, CSearchFile*> selectedList;
 	for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;) {
 		int index = GetNextSelectedItem(pos);
-		if (index >= 0)
-			selectedList.AddTail(reinterpret_cast<CSearchFile*>(GetItemData(index)));
+		if (index >= 0) {
+			CSearchFile *pSearchFile = reinterpret_cast<CSearchFile*>(GetItemData(index));
+			if (IsLiveSearchFile(pSearchFile))
+				selectedList.AddTail(pSearchFile);
+		}
 	}
 
 	if (!selectedList.IsEmpty()) {
@@ -980,6 +1084,8 @@ BOOL CSearchListCtrl::OnCommand(WPARAM wParam, LPARAM)
 				SetRedraw(false);
 				for (POSITION pos = selectedList.GetHeadPosition(); pos != NULL;) {
 					file = selectedList.GetNext(pos);
+					if (!IsLiveSearchFile(file))
+						continue;
 					HideSources(file);
 					theApp.searchlist->RemoveResult(file);
 				}
@@ -1130,6 +1236,13 @@ void CSearchListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 
 		if (GetSelectedCount() <= 1) {
 			const CSearchFile *file = (CSearchFile*)GetItemData(pGetInfoTip->iItem);
+			if (!IsLiveSearchFile(file)) {
+				PruneStaleSearchItems();
+				if (pGetInfoTip->pszText && pGetInfoTip->cchTextMax > 0)
+					pGetInfoTip->pszText[0] = _T('\0');
+				*pResult = 0;
+				return;
+			}
 			if (file && pGetInfoTip->pszText && pGetInfoTip->cchTextMax > 0) {
 				CString strInfo;
 				CString strHead(file->GetFileName());
@@ -1301,7 +1414,7 @@ void CSearchListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 			ULONGLONG ulTotalSize = 0;
 			for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;) {
 				const CSearchFile *pFile = (CSearchFile*)GetItemData(GetNextSelectedItem(pos));
-				if (pFile) {
+				if (IsLiveSearchFile(pFile)) {
 					++iSelected;
 					ulTotalSize += (uint64)pFile->GetFileSize();
 				}
@@ -1329,8 +1442,16 @@ void CSearchListCtrl::ExpandCollapseItem(int iItem, int iAction)
 		return;
 
 	CSearchFile *searchfile = (CSearchFile*)GetItemData(iItem);
+	if (!IsLiveSearchFile(searchfile)) {
+		PruneStaleSearchItems();
+		return;
+	}
 	if (searchfile->GetListParent() != NULL) {
 		searchfile = searchfile->GetListParent();
+		if (!IsLiveSearchFile(searchfile)) {
+			PruneStaleSearchItems();
+			return;
+		}
 
 		LVFINDINFO find;
 		find.flags = LVFI_PARAM;
@@ -1375,10 +1496,19 @@ void CSearchListCtrl::ExpandCollapseItem(int iItem, int iAction)
 
 void CSearchListCtrl::HideSources(CSearchFile *toCollapse)
 {
+	if (!IsLiveSearchFile(toCollapse))
+		return;
+
 	SetRedraw(false);
-	for (int i = GetItemCount(); --i >= 0;)
-		if (reinterpret_cast<CSearchFile*>(GetItemData(i))->GetListParent() == toCollapse)
+	for (int i = GetItemCount(); --i >= 0;) {
+		CSearchFile *pSearchFile = reinterpret_cast<CSearchFile*>(GetItemData(i));
+		if (!IsLiveSearchFile(pSearchFile)) {
 			DeleteItem(i);
+			continue;
+		}
+		if (pSearchFile->GetListParent() == toCollapse)
+			DeleteItem(i);
+	}
 	toCollapse->SetListExpanded(false);
 	SetRedraw(true);
 }
@@ -1404,12 +1534,13 @@ void CSearchListCtrl::OnNmDblClk(LPNMHDR, LRESULT*)
 			int iSel = GetNextItem(-1, LVIS_SELECTED | LVIS_FOCUSED);
 			if (iSel >= 0) {
 				/*const*/ CSearchFile *file = reinterpret_cast<CSearchFile*>(GetItemData(iSel));
-				if (file) {
+				if (IsLiveSearchFile(file)) {
 					CTypedPtrList<CPtrList, CSearchFile*> aFiles;
 					aFiles.AddTail(file);
 					CSearchResultFileDetailSheet sheet(aFiles, 0, this);
 					sheet.DoModal();
-				}
+				} else
+					PruneStaleSearchItems();
 			}
 		} else
 			theApp.emuledlg->searchwnd->DownloadSelected();
@@ -1430,6 +1561,8 @@ void CSearchListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	BOOL bCtrlFocused;
 	InitItemMemDC(dc, lpDrawItemStruct, bCtrlFocused);
 	CSearchFile *content = reinterpret_cast<CSearchFile*>(lpDrawItemStruct->itemData);
+	if (!IsLiveSearchFile(content))
+		return;
 	if (!g_bLowColorDesktop || (lpDrawItemStruct->itemState & ODS_SELECTED) == 0)
 		dc.SetTextColor(GetSearchItemColor(content));
 
@@ -1499,7 +1632,8 @@ void CSearchListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		dc.SetBoundsRect(&tree_rect, DCB_DISABLE);
 
 		//gather some information
-		bool hasNext = notLast && reinterpret_cast<CSearchFile*>(GetItemData(lpDrawItemStruct->itemID + 1))->GetListParent() != NULL;
+		const CSearchFile *pNextFile = notLast ? reinterpret_cast<CSearchFile*>(GetItemData(lpDrawItemStruct->itemID + 1)) : NULL;
+		bool hasNext = pNextFile != NULL && IsLiveSearchFile(pNextFile) && pNextFile->GetListParent() != NULL;
 		bool isOpenRoot = hasNext && !isChild;
 
 		//might as well calculate these now
@@ -1892,8 +2026,10 @@ void CSearchListCtrl::OnLvnGetDispInfo(LPNMHDR pNMHDR, LRESULT *pResult)
 		const LVITEMW &rItem = reinterpret_cast<NMLVDISPINFO*>(pNMHDR)->item;
 		if (rItem.mask & LVIF_TEXT) {
 			const CSearchFile *pSearchFile = reinterpret_cast<CSearchFile*>(rItem.lParam);
-			if (pSearchFile != NULL)
+			if (IsLiveSearchFile(pSearchFile))
 				_tcsncpy_s(rItem.pszText, rItem.cchTextMax, GetItemDisplayText(pSearchFile, rItem.iSubItem), _TRUNCATE);
+			else if (rItem.pszText != NULL && rItem.cchTextMax > 0)
+				rItem.pszText[0] = _T('\0');
 		}
 	}
 	*pResult = 0;

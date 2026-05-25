@@ -68,8 +68,12 @@ public:
 	void	NoTabs()								{ m_nResultsID = 0; }
 	void	UpdateSearch(CSearchFile *toupdate);
 	void	UpdateTabHeader(uint32 nResultsID);
+	bool	IsLiveSearchFile(const CSearchFile *pSearchFile) const;
+	bool	PruneStaleSearchItems();
 	EFileSizeFormat GetFileSizeFormat() const		{ return m_eFileSizeFormat; }
 	void	SetFileSizeFormat(EFileSizeFormat eFormat);
+	virtual CObject* GetNextSelectableItem();
+	virtual CObject* GetPrevSelectableItem();
 
 protected:
 	CTitledMenu	m_SearchFileMenu;

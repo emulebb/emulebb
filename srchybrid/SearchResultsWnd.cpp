@@ -734,16 +734,21 @@ void CSearchResultsWnd::DownloadSelected()
 void CSearchResultsWnd::DownloadSelected(bool bPaused)
 {
 	CWaitCursor curWait;
+	searchlistctrl.PruneStaleSearchItems();
 	for (POSITION pos = searchlistctrl.GetFirstSelectedItemPosition(); pos != NULL;) {
 		int iIndex = searchlistctrl.GetNextSelectedItem(pos);
 		if (iIndex >= 0) {
 			// get selected listview item (may be a child item from an expanded search result)
 			const CSearchFile *sel_file = reinterpret_cast<CSearchFile*>(searchlistctrl.GetItemData(iIndex));
+			if (!searchlistctrl.IsLiveSearchFile(sel_file))
+				continue;
 
 			// get parent
 			const CSearchFile *parent = sel_file->GetListParent();
 			if (parent == NULL)
 				parent = sel_file;
+			if (!searchlistctrl.IsLiveSearchFile(parent))
+				continue;
 
 			if (parent->IsComplete() == 0 && parent->GetSourceCount() >= 50) {
 				CString strMsg;
