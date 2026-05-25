@@ -549,7 +549,8 @@ void CSearchParamsWnd::InitFileTypesCtrl()
 	if (iItem != CB_ERR) {
 		LPCTSTR pszED2KFileType = (LPCTSTR)m_ctlFileType.GetItemDataPtr(iItem);
 		ASSERT(pszED2KFileType != NULL);
-		strCurSelFileType = pszED2KFileType;
+		if (pszED2KFileType != NULL)
+			strCurSelFileType = pszED2KFileType;
 	}
 
 	m_ctlFileType.ResetContent();
@@ -1046,7 +1047,8 @@ SSearchParams* CSearchParamsWnd::GetParameters()
 	if (iItem != CB_ERR) {
 		LPCTSTR pszED2KFileType = (LPCTSTR)m_ctlFileType.GetItemDataPtr(iItem);
 		ASSERT(pszED2KFileType != NULL);
-		strFileType = pszED2KFileType;
+		if (pszED2KFileType != NULL)
+			strFileType = pszED2KFileType;
 	}
 
 	const CString &strMinSize(m_ctlOpts.GetItemText(orMinSize, 1));
