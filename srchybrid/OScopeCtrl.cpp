@@ -22,6 +22,8 @@
 #include "UserMsgs.h"
 #include "opcodes.h"
 
+#include <vector>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -778,35 +780,56 @@ void COScopeCtrl::Reset()
 
 void COScopeCtrl::ReCreateGraph()
 {
+	if (m_NTrends <= 0 || m_PlotData == NULL) {
+		Invalidate();
+		return;
+	}
+
 	for (int iTrend = 0; iTrend < m_NTrends; ++iTrend) {
 		PlotData_t &plot = m_PlotData[iTrend];
 		plot.dPreviousPosition = 0.0;
 		plot.nPrevY = -1;
 	}
 
-	// Try to avoid to call the method AppendPoints() more than necessary
-	// Remark: the default size of the list is 1024
-	// The number of points to draw is: m_nPlotWidth / m_nShiftPixels + 1
-	INT_PTR startIndex = m_PlotData[0].lstPoints.GetCount();
-	startIndex -= min(startIndex, m_nPlotWidth / m_nShiftPixels + 1);
-
-	// Prepare to go through the elements on n lists in parallel
-	POSITION *pPosArray = new POSITION[m_NTrends];
-	for (int iTrend = 0; iTrend < m_NTrends; ++iTrend)
-		pPosArray[iTrend] = m_PlotData[iTrend].lstPoints.FindIndex(startIndex);
-
-	// We will assume that all trends have the same number of points, so we test only the first iterator
-	double *pAddPoints = new double[m_NTrends];
-	while (pPosArray[0] != NULL) {
-		for (int iTrend = 0; iTrend < m_NTrends; ++iTrend)
-			pAddPoints[iTrend] = m_PlotData[iTrend].lstPoints.GetNext(pPosArray[iTrend]);
-
-		// Pass false for new bUseTrendRatio parameter so that graph is recreated correctly...
-		AppendPoints(pAddPoints, false, false, false);
+	const int nShiftPixels = m_nShiftPixels > 0 ? m_nShiftPixels : 1;
+	INT_PTR nPointsToDraw = m_nPlotWidth / nShiftPixels + 1;
+	if (nPointsToDraw <= 0) {
+		Invalidate();
+		return;
 	}
 
-	delete[] pAddPoints;
-	delete[] pPosArray;
+	// Redraw only the common tail; legacy graph lists can drift during resizes
+	// or preference changes.
+	for (int iTrend = 0; iTrend < m_NTrends; ++iTrend)
+		nPointsToDraw = min(nPointsToDraw, m_PlotData[iTrend].lstPoints.GetCount());
+	if (nPointsToDraw <= 0) {
+		Invalidate();
+		return;
+	}
+
+	// Prepare to go through the elements on n lists in parallel
+	std::vector<POSITION> posArray(m_NTrends);
+	for (int iTrend = 0; iTrend < m_NTrends; ++iTrend) {
+		const INT_PTR startIndex = m_PlotData[iTrend].lstPoints.GetCount() - nPointsToDraw;
+		posArray[iTrend] = m_PlotData[iTrend].lstPoints.FindIndex(startIndex);
+	}
+
+	std::vector<double> addPoints(m_NTrends);
+	for (INT_PTR nPoint = 0; nPoint < nPointsToDraw; ++nPoint) {
+		bool bHasAllPoints = true;
+		for (int iTrend = 0; iTrend < m_NTrends; ++iTrend) {
+			if (posArray[iTrend] == NULL) {
+				bHasAllPoints = false;
+				break;
+			}
+			addPoints[iTrend] = m_PlotData[iTrend].lstPoints.GetNext(posArray[iTrend]);
+		}
+		if (!bHasAllPoints)
+			break;
+
+		// Pass false for new bUseTrendRatio parameter so that graph is recreated correctly...
+		AppendPoints(addPoints.data(), false, false, false);
+	}
 
 	Invalidate();
 }
