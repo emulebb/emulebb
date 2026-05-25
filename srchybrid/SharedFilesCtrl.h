@@ -150,6 +150,7 @@ protected:
 	bool HasActiveSortOrder() const;
 	bool NeedsSortReposition(int iIndex) const;
 	bool RepositionFileByCurrentSort(CShareableFile *file, int iIndex);
+	int CompareVisibleFiles(const CShareableFile *item1, const CShareableFile *item2, LPARAM lParamSort) const;
 	CString GetItemDisplayText(const CShareableFile *file, int iSubItem) const;
 	bool HandleSortShortcut(UINT nChar);
 	void SortByColumn(int iSubItem);

@@ -896,10 +896,16 @@ void CSharedFilesCtrl::SortVisibleFiles()
 		return;
 	}
 
+	PruneStaleVisibleFiles();
+	if (!HasActiveSortOrder()) {
+		RebuildVisibleFileIndex();
+		return;
+	}
+
 	const LPARAM lParamSort = MAKELONG(GetSortItem() + (GetSortSecondValue() ? 100 : 0), !GetSortAscending());
 	std::stable_sort(m_aVisibleFiles.begin(), m_aVisibleFiles.end(),
-		[lParamSort](const CShareableFile *pLeft, const CShareableFile *pRight) {
-			return SortProc(reinterpret_cast<LPARAM>(pLeft), reinterpret_cast<LPARAM>(pRight), lParamSort) < 0;
+		[this, lParamSort](const CShareableFile *pLeft, const CShareableFile *pRight) {
+			return CompareVisibleFiles(pLeft, pRight, lParamSort) < 0;
 		});
 	RebuildVisibleFileIndex();
 }
@@ -919,9 +925,9 @@ bool CSharedFilesCtrl::NeedsSortReposition(int iIndex) const
 		return false;
 
 	const LPARAM lParamSort = MAKELONG(GetSortItem() + (GetSortSecondValue() ? 100 : 0), !GetSortAscending());
-	if (iIndex > 0 && SortProc(reinterpret_cast<LPARAM>(m_aVisibleFiles[static_cast<size_t>(iIndex - 1)]), reinterpret_cast<LPARAM>(pFile), lParamSort) > 0)
+	if (iIndex > 0 && CompareVisibleFiles(m_aVisibleFiles[static_cast<size_t>(iIndex - 1)], pFile, lParamSort) > 0)
 		return true;
-	if (iIndex + 1 < static_cast<int>(m_aVisibleFiles.size()) && SortProc(reinterpret_cast<LPARAM>(pFile), reinterpret_cast<LPARAM>(m_aVisibleFiles[static_cast<size_t>(iIndex + 1)]), lParamSort) > 0)
+	if (iIndex + 1 < static_cast<int>(m_aVisibleFiles.size()) && CompareVisibleFiles(pFile, m_aVisibleFiles[static_cast<size_t>(iIndex + 1)], lParamSort) > 0)
 		return true;
 	return false;
 }
@@ -932,16 +938,16 @@ bool CSharedFilesCtrl::RepositionFileByCurrentSort(CShareableFile *file, int iIn
 		return false;
 
 	const LPARAM lParamSort = MAKELONG(GetSortItem() + (GetSortSecondValue() ? 100 : 0), !GetSortAscending());
-	const bool bMoveLeft = iIndex > 0 && SortProc(reinterpret_cast<LPARAM>(m_aVisibleFiles[static_cast<size_t>(iIndex - 1)]), reinterpret_cast<LPARAM>(file), lParamSort) > 0;
-	const bool bMoveRight = !bMoveLeft && iIndex + 1 < static_cast<int>(m_aVisibleFiles.size()) && SortProc(reinterpret_cast<LPARAM>(file), reinterpret_cast<LPARAM>(m_aVisibleFiles[static_cast<size_t>(iIndex + 1)]), lParamSort) > 0;
+	const bool bMoveLeft = iIndex > 0 && CompareVisibleFiles(m_aVisibleFiles[static_cast<size_t>(iIndex - 1)], file, lParamSort) > 0;
+	const bool bMoveRight = !bMoveLeft && iIndex + 1 < static_cast<int>(m_aVisibleFiles.size()) && CompareVisibleFiles(file, m_aVisibleFiles[static_cast<size_t>(iIndex + 1)], lParamSort) > 0;
 	if (!bMoveLeft && !bMoveRight)
 		return false;
 
 	SharedFilesRepositionState savedState;
 	CaptureSharedFilesRepositionState(*this, savedState);
 
-	auto sortFunc = [lParamSort](const CShareableFile *pLeft, const CShareableFile *pRight) {
-		return SortProc(reinterpret_cast<LPARAM>(pLeft), reinterpret_cast<LPARAM>(pRight), lParamSort) < 0;
+	auto sortFunc = [this, lParamSort](const CShareableFile *pLeft, const CShareableFile *pRight) {
+		return CompareVisibleFiles(pLeft, pRight, lParamSort) < 0;
 	};
 
 	SetRedraw(false);
@@ -1316,6 +1322,10 @@ void CSharedFilesCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	CShareableFile *file = GetFileByIndex(static_cast<int>(lpDrawItemStruct->itemID));
 	if (file == NULL || theApp.IsClosing())
 		return;
+	if (!IsLiveVisibleFilePointer(file)) {
+		ScheduleVisibleFilePrune();
+		return;
+	}
 
 	CRect rcItem(lpDrawItemStruct->rcItem);
 	CMemoryDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), rcItem);
@@ -1425,6 +1435,9 @@ void CSharedFilesCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 CString CSharedFilesCtrl::GetItemDisplayText(const CShareableFile *file, int iSubItem) const
 {
+	if (!IsLiveVisibleFilePointer(file))
+		return CString();
+
 	CString sText;
 	switch (iSubItem) {
 	case 0:
@@ -2031,10 +2044,22 @@ void CSharedFilesCtrl::SortByColumn(int iSubItem)
 	Invalidate(FALSE);
 }
 
+int CSharedFilesCtrl::CompareVisibleFiles(const CShareableFile *item1, const CShareableFile *item2, LPARAM lParamSort) const
+{
+	const bool bLiveItem1 = IsLiveVisibleFilePointer(item1);
+	const bool bLiveItem2 = IsLiveVisibleFilePointer(item2);
+	if (!bLiveItem1 || !bLiveItem2)
+		return bLiveItem1 ? -1 : (bLiveItem2 ? 1 : 0);
+
+	return SortProc(reinterpret_cast<LPARAM>(item1), reinterpret_cast<LPARAM>(item2), lParamSort);
+}
+
 int CALLBACK CSharedFilesCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
 	const CShareableFile *item1 = reinterpret_cast<CShareableFile*>(lParam1);
 	const CShareableFile *item2 = reinterpret_cast<CShareableFile*>(lParam2);
+	if (item1 == NULL || item2 == NULL)
+		return item1 != NULL ? -1 : (item2 != NULL ? 1 : 0);
 
 	bool bSortAscending = !HIWORD(lParamSort);
 
@@ -2284,8 +2309,15 @@ void CSharedFilesCtrl::OnLvnGetDispInfo(LPNMHDR pNMHDR, LRESULT *pResult)
 				theApp.AppendStartupProfileLine(strPhase, 0);
 			}
 #endif
-			if (pFile != NULL)
-				_tcsncpy_s(rItem.pszText, rItem.cchTextMax, GetItemDisplayText(pFile, rItem.iSubItem), _TRUNCATE);
+			if (pFile != NULL) {
+				if (IsLiveVisibleFilePointer(pFile))
+					_tcsncpy_s(rItem.pszText, rItem.cchTextMax, GetItemDisplayText(pFile, rItem.iSubItem), _TRUNCATE);
+				else {
+					ScheduleVisibleFilePrune();
+					if (rItem.pszText != NULL && rItem.cchTextMax > 0)
+						rItem.pszText[0] = _T('\0');
+				}
+			}
 		}
 	}
 	*pResult = 0;
