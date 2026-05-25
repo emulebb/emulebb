@@ -204,6 +204,8 @@ void DebugLogWarning(UINT uFlags, LPCTSTR pszFmt, ...)
 void AddLogLine(bool bAddToStatusBar, LPCTSTR pszLine, ...)
 {
 	ASSERT(pszLine != NULL);
+	if (pszLine == NULL)
+		return;
 
 	va_list argptr;
 	va_start(argptr, pszLine);
@@ -214,6 +216,8 @@ void AddLogLine(bool bAddToStatusBar, LPCTSTR pszLine, ...)
 void AddDebugLogLine(bool bAddToStatusBar, LPCTSTR pszLine, ...)
 {
 	ASSERT(pszLine != NULL);
+	if (pszLine == NULL)
+		return;
 
 	va_list argptr;
 	va_start(argptr, pszLine);
@@ -230,6 +234,8 @@ void AddDebugLogLine(EDebugLogPriority Priority, bool bAddToStatusBar, LPCTSTR p
 	// until there is some time todo this, It will convert DLP_VERYHIGH to ERRORs
 	// and DLP_HIGH to LOG_WARNING in order to be able using the Loglevel and color indicator
 	ASSERT(pszLine != NULL);
+	if (pszLine == NULL)
+		return;
 
 	va_list argptr;
 	va_start(argptr, pszLine);
@@ -248,6 +254,8 @@ void AddDebugLogLine(EDebugLogPriority Priority, bool bAddToStatusBar, LPCTSTR p
 void AddLogTextV(UINT uFlags, EDebugLogPriority dlpPriority, LPCTSTR pszLine, va_list argptr)
 {
 	ASSERT(pszLine != NULL);
+	if (pszLine == NULL)
+		return;
 
 	if ((uFlags & LOG_DEBUG) && !(thePrefs.GetVerbose() && dlpPriority >= thePrefs.GetVerboseLogPriority()))
 		return;
