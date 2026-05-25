@@ -39,6 +39,8 @@ protected:
 	CPartFile *m_pFile;
 	int m_nSourceType;
 
+	CPartFile *GetLiveFile() const;
+
 	virtual void DoDataExchange(CDataExchange *pDX);    // DDX/DDV support
 	virtual BOOL OnInitDialog();
 

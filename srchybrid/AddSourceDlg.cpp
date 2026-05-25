@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "AddSourceDlg.h"
 #include "AddSourceInputSeams.h"
+#include "KnownFilePointerValidation.h"
 #include "PartFile.h"
 #include "UpDownClient.h"
 #include "DownloadQueue.h"
@@ -46,6 +47,11 @@ CAddSourceDlg::CAddSourceDlg(CWnd *pParent /*= NULL*/)
 {
 }
 
+CPartFile *CAddSourceDlg::GetLiveFile() const
+{
+	return IsLivePartFilePointer(m_pFile) ? m_pFile : NULL;
+}
+
 void CAddSourceDlg::DoDataExchange(CDataExchange *pDX)
 {
 	CResizableDialog::DoDataExchange(pDX);
@@ -62,8 +68,11 @@ BOOL CAddSourceDlg::OnInitDialog()
 	AddAnchor(IDC_BUTTON1, BOTTOM_RIGHT);
 	AddAnchor(IDCANCEL, BOTTOM_RIGHT);
 
-	if (m_pFile)
-		SetWindowText(m_pFile->GetFileName());
+	CPartFile *pFile = GetLiveFile();
+	if (pFile != NULL)
+		SetWindowText(pFile->GetFileName());
+	else
+		m_pFile = NULL;
 
 	// localize
 	SetDlgItemText(IDC_BUTTON1, GetResString(IDS_ADD));
@@ -90,8 +99,11 @@ void CAddSourceDlg::OnBnClickedRadio1()
 
 void CAddSourceDlg::OnBnClickedButton1()
 {
-	if (!m_pFile)
+	CPartFile *pFile = GetLiveFile();
+	if (pFile == NULL) {
+		m_pFile = NULL;
 		return;
+	}
 
 	switch (m_nSourceType) {
 	case 0: //source client
@@ -107,9 +119,9 @@ void CAddSourceDlg::OnBnClickedButton1()
 			const uint32 ip = input.NetworkOrderAddress;
 			const uint16 port = input.Port;
 			if (ip != INADDR_NONE && IsGoodIPPort(ip, port)) {
-				CUpDownClient *toadd = new CUpDownClient(m_pFile, port, ntohl(ip), 0, 0);
+				CUpDownClient *toadd = new CUpDownClient(pFile, port, ntohl(ip), 0, 0);
 				toadd->SetSourceFrom(SF_PASSIVE);
-				theApp.downloadqueue->CheckAndAddSource(m_pFile, toadd);
+				theApp.downloadqueue->CheckAndAddSource(pFile, toadd);
 			}
 		}
 		break;
