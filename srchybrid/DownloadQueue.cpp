@@ -1400,6 +1400,11 @@ void CDownloadQueue::StopUDPRequests()
 
 bool CDownloadQueue::CompareParts(POSITION pos1, POSITION pos2)
 {
+	ASSERT(pos1 != NULL);
+	ASSERT(pos2 != NULL);
+	if (pos1 == NULL || pos2 == NULL)
+		return false;
+
 	CPartFile *file1 = filelist.GetAt(pos1);
 	CPartFile *file2 = filelist.GetAt(pos2);
 	return CPartFile::RightFileHasHigherPrio(file1, file2);
@@ -1407,6 +1412,11 @@ bool CDownloadQueue::CompareParts(POSITION pos1, POSITION pos2)
 
 void CDownloadQueue::SwapParts(POSITION pos1, POSITION pos2)
 {
+	ASSERT(pos1 != NULL);
+	ASSERT(pos2 != NULL);
+	if (pos1 == NULL || pos2 == NULL || pos1 == pos2)
+		return;
+
 	CPartFile *file1 = filelist.GetAt(pos1);
 	CPartFile *file2 = filelist.GetAt(pos2);
 	filelist.SetAt(pos1, file2);
@@ -1417,13 +1427,22 @@ void CDownloadQueue::HeapSort(UINT first, UINT last)
 {
 	UINT r;
 	POSITION pos1 = filelist.FindIndex(first);
+	ASSERT(pos1 != NULL);
+	if (pos1 == NULL)
+		return;
+
 	for (r = first; !(r & (UINT)INT_MIN) && (r << 1) < last;) {
 		UINT r2 = (r << 1) + 1;
 		POSITION pos2 = filelist.FindIndex(r2);
+		ASSERT(pos2 != NULL);
+		if (pos2 == NULL)
+			return;
+
 		if (r2 != last) {
 			POSITION pos3 = pos2;
 			filelist.GetNext(pos3);
-			if (!CompareParts(pos2, pos3)) {
+			ASSERT(pos3 != NULL);
+			if (pos3 != NULL && !CompareParts(pos2, pos3)) {
 				pos2 = pos3;
 				++r2;
 			}
@@ -1444,7 +1463,14 @@ void CDownloadQueue::SortByPriority()
 	for (UINT i = n / 2; i > 0; --i)
 		HeapSort(i - 1, n - 1);
 	for (UINT i = n; i > 1; --i) {
-		SwapParts(filelist.FindIndex(0), filelist.FindIndex(i - 1));
+		POSITION posFirst = filelist.FindIndex(0);
+		POSITION posLast = filelist.FindIndex(i - 1);
+		ASSERT(posFirst != NULL);
+		ASSERT(posLast != NULL);
+		if (posFirst == NULL || posLast == NULL)
+			break;
+
+		SwapParts(posFirst, posLast);
 		HeapSort(0, i - 2);
 	}
 }
