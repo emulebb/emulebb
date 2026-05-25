@@ -1091,7 +1091,7 @@ namespace
 	struct SVersionCheckContext
 	{
 		HWND hNotifyWnd = NULL;
-		volatile LONG *plQueued = NULL;
+		std::shared_ptr<VersionCheckLaunchSeams::SQueuedState> pQueuedState;
 		bool bManual = false;
 	};
 
@@ -1115,7 +1115,7 @@ namespace
 			pContext->hNotifyWnd,
 			UM_VERSIONCHECK_RESPONSE,
 			reinterpret_cast<LPARAM>(pResult.get()),
-			pContext->plQueued);
+			pContext->pQueuedState);
 		if (postResult.bDelivered)
 			(void)pResult.release();
 		else
@@ -1290,7 +1290,7 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_uLastSysTrayIconCookie(SYS_TRAY_ICON_COOKIE_FORCE_UPDATE)
 	, m_uUpDatarate()
 	, m_uDownDatarate()
-	, m_lVersionCheckQueued()
+	, m_pVersionCheckState(std::make_shared<VersionCheckLaunchSeams::SQueuedState>())
 	, m_bStartMinimizedChecked()
 	, m_bStartMinimized()
 	, m_bMsgBlinkState()
@@ -1797,18 +1797,18 @@ void CemuleDlg::DoVersioncheck(bool manual)
 			return;
 	}
 
-	if (!VersionCheckLaunchSeams::TryMarkQueued(m_lVersionCheckQueued))
+	if (!m_pVersionCheckState || !VersionCheckLaunchSeams::TryMarkQueued(*m_pVersionCheckState))
 		return;
 
 	const HWND hNotifyWnd = m_hWnd;
 	std::unique_ptr<SVersionCheckContext> pContext(new SVersionCheckContext);
 	pContext->hNotifyWnd = hNotifyWnd;
-	pContext->plQueued = &m_lVersionCheckQueued;
+	pContext->pQueuedState = m_pVersionCheckState;
 	pContext->bManual = manual;
 
 	CWinThread *pThread = AfxBeginThread(VersionCheckThreadProc, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
 	if (pThread == NULL) {
-		VersionCheckLaunchSeams::ClearQueued(m_lVersionCheckQueued);
+		VersionCheckLaunchSeams::ClearQueued(*m_pVersionCheckState);
 		if (manual)
 			AddLogLine(true, GetResString(IDS_NEWVERSIONFAILED));
 		else
@@ -1826,8 +1826,8 @@ void CemuleDlg::DoVersioncheck(bool manual)
 LRESULT CemuleDlg::OnVersionCheckResponse(WPARAM, LPARAM lParam)
 {
 	std::unique_ptr<SVersionCheckResult> pResult(reinterpret_cast<SVersionCheckResult*>(lParam));
-	VersionCheckLaunchSeams::ClearQueued(m_lVersionCheckQueued);
-	if (pResult.get() == NULL)
+	VersionCheckLaunchSeams::ClearQueuedOnOwnerTeardown(m_pVersionCheckState);
+	if (pResult.get() == NULL || theApp.IsClosing())
 		return 0;
 
 	switch (pResult->result.eStatus) {
@@ -3256,6 +3256,7 @@ void CemuleDlg::OnClose()
 	};
 
 	theApp.m_app_state = APP_STATE_SHUTTINGDOWN;
+	VersionCheckLaunchSeams::ClearQueuedOnOwnerTeardown(m_pVersionCheckState);
 	updateShutdownPhase(3, _T("Closing eMule"), _T("Stopping AICH sync thread."), true);
 	WaitForAICHSyncThreadShutdown();
 

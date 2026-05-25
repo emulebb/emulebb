@@ -15,6 +15,8 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
+#include <memory>
+
 #include "MeterIcon.h"
 #include "TaskbarNotifier.h"
 #include "TitledMenu.h"
@@ -29,6 +31,11 @@ namespace Kademlia
 	class CEntry;
 	class CUInt128;
 };
+
+namespace VersionCheckLaunchSeams
+{
+	struct SQueuedState;
+}
 
 class CChatWnd;
 class CIrcWnd;
@@ -213,7 +220,7 @@ protected:
 	UINT			m_uLastSysTrayIconCookie;
 	uint32			m_uUpDatarate;
 	uint32			m_uDownDatarate;
-	volatile LONG	m_lVersionCheckQueued;
+	std::shared_ptr<VersionCheckLaunchSeams::SQueuedState> m_pVersionCheckState;
 	bool			m_bStartMinimizedChecked;
 	bool			m_bStartMinimized;
 	bool			m_bMsgBlinkState;

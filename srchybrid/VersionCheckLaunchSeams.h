@@ -16,10 +16,25 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+#include <memory>
 #include <Windows.h>
 
 namespace VersionCheckLaunchSeams
 {
+	/**
+	 * @brief Shared single-flight state for update checks that may outlive the
+	 * dialog which started them.
+	 */
+	struct SQueuedState
+	{
+		SQueuedState()
+			: lQueued(0)
+		{
+		}
+
+		volatile LONG lQueued;
+	};
+
 	/**
 	 * @brief Result of handing a worker completion message back to the UI thread.
 	 */
@@ -37,12 +52,32 @@ namespace VersionCheckLaunchSeams
 		return ::InterlockedCompareExchange(&rlQueued, 1, 0) == 0;
 	}
 
+	inline bool TryMarkQueued(SQueuedState& rState)
+	{
+		return TryMarkQueued(rState.lQueued);
+	}
+
 	/**
 	 * @brief Releases the single in-flight version-check slot.
 	 */
 	inline void ClearQueued(volatile LONG &rlQueued)
 	{
 		(void)::InterlockedExchange(&rlQueued, 0);
+	}
+
+	inline void ClearQueued(SQueuedState& rState)
+	{
+		ClearQueued(rState.lQueued);
+	}
+
+	/**
+	 * @brief Drops owner-visible queued state without invalidating workers which
+	 * still own the shared state.
+	 */
+	inline void ClearQueuedOnOwnerTeardown(const std::shared_ptr<SQueuedState>& pState)
+	{
+		if (pState)
+			ClearQueued(*pState);
 	}
 
 	/**
@@ -53,17 +88,23 @@ namespace VersionCheckLaunchSeams
 		return ::InterlockedCompareExchange(const_cast<volatile LONG*>(&rlQueued), 0, 0) != 0;
 	}
 
+	inline bool IsQueued(const SQueuedState& rState)
+	{
+		return IsQueued(rState.lQueued);
+	}
+
 	/**
-	 * @brief Posts the worker completion message and clears the queue if delivery fails.
+	 * @brief Posts the worker completion message and clears shared queued state
+	 * when the owner window can no longer receive it.
 	 */
-	inline SCompletionPostResult PostCompletion(HWND hNotifyWnd, UINT uMessage, LPARAM lParam, volatile LONG *plQueued)
+	inline SCompletionPostResult PostCompletion(HWND hNotifyWnd, UINT uMessage, LPARAM lParam, const std::shared_ptr<SQueuedState>& pState)
 	{
 		SCompletionPostResult result;
 		::SetLastError(ERROR_SUCCESS);
 		result.bDelivered = hNotifyWnd != NULL && ::PostMessage(hNotifyWnd, uMessage, 0, lParam) != FALSE;
 		result.dwLastError = result.bDelivered ? ERROR_SUCCESS : ::GetLastError();
-		if (!result.bDelivered && plQueued != NULL)
-			ClearQueued(*plQueued);
+		if (!result.bDelivered)
+			ClearQueuedOnOwnerTeardown(pState);
 		return result;
 	}
 }
