@@ -1755,7 +1755,7 @@ void CUpDownClient::SetUserName(LPCTSTR pszNewName)
 	m_pszUsername = (pszNewName ? _tcsdup(pszNewName) : NULL);
 }
 
-void CUpDownClient::RequestSharedFileList()
+bool CUpDownClient::RequestSharedFileList()
 {
 	if (m_iFileListRequested == 0) {
 		AddLogLine(true, GetResString(IDS_SHAREDFILES_REQUEST), GetUserName());
@@ -1763,9 +1763,12 @@ void CUpDownClient::RequestSharedFileList()
 		if (!TryToConnect(true)) {
 			UpDownClientDeleteSeams::AssertReadyToDelete(this, _T("CUpDownClient::RequestSharedFileList"));
 			delete this;
+			return false;
 		}
+		return true;
 	} else
 		LogWarning(LOG_STATUSBAR, _T("Requesting shared files from user %s (%u) is already in progress"), GetUserName(), GetUserIDHybrid());
+	return true;
 }
 
 void CUpDownClient::ProcessSharedFileList(const uchar *pachPacket, uint32 nSize, LPCTSTR pszDirectory)

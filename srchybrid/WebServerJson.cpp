@@ -3287,8 +3287,11 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		}
 
 		const bool bAlreadyPending = pClient->GetFileListRequested() > 0;
-		if (!bAlreadyPending)
-			pClient->RequestSharedFileList();
+		if (!bAlreadyPending && !pClient->RequestSharedFileList()) {
+			rError.strCode = "EMULE_UNAVAILABLE";
+			rError.strMessage = _T("client was removed while requesting shared file list");
+			return json();
+		}
 		return json{
 			{"ok", true},
 			{"alreadyPending", bAlreadyPending},

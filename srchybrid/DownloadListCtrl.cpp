@@ -2426,7 +2426,8 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 
 			switch (wParam) {
 			case MP_SHOWLIST:
-				client->RequestSharedFileList();
+				if (!client->RequestSharedFileList())
+					return TRUE;
 				break;
 			case MP_MESSAGE:
 				theApp.emuledlg->chatwnd->StartSession(client);

@@ -150,7 +150,7 @@ public:
 	uint16			GetKadPort() const								{ return m_nKadPort; }
 	void			SetKadPort(uint16 nPort)						{ m_nKadPort = nPort; }
 	uint8			GetExtendedRequestsVersion() const				{ return m_byExtendedRequestsVer; }
-	void			RequestSharedFileList();
+	[[nodiscard]] bool	RequestSharedFileList();
 	void			ProcessSharedFileList(const uchar *pachPacket, uint32 nSize, LPCTSTR pszDirectory = NULL);
 	EConnectingState GetConnectingState() const						{ return m_eConnectingState; }
 

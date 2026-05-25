@@ -214,13 +214,16 @@ BOOL CFriendListCtrl::OnCommand(WPARAM wParam, LPARAM)
 		break;
 	case MP_SHOWLIST:
 		if (cur_friend) {
-			if (cur_friend->GetLinkedClient(true))
-				cur_friend->GetLinkedClient()->RequestSharedFileList();
+			if (CUpDownClient *linkedClient = cur_friend->GetLinkedClient(true)) {
+				if (!linkedClient->RequestSharedFileList())
+					return TRUE;
+			}
 			else {
 				CUpDownClient *newclient = new CUpDownClient(0, cur_friend->m_nLastUsedPort, cur_friend->m_dwLastUsedIP, 0, 0, true);
 				newclient->SetUserName(cur_friend->m_strName);
 				theApp.clientlist->AddClient(newclient);
-				newclient->RequestSharedFileList();
+				if (!newclient->RequestSharedFileList())
+					return TRUE;
 			}
 		}
 		break;

@@ -497,8 +497,8 @@ BOOL CClientListCtrl::OnCommand(WPARAM wParam, LPARAM)
 		const CUpDownClient *client = GetLiveClientByIndex(iSel);
 		switch (wParam) {
 		case MP_SHOWLIST:
-			if (client)
-				const_cast<CUpDownClient*>(client)->RequestSharedFileList();
+			if (client && !const_cast<CUpDownClient*>(client)->RequestSharedFileList())
+				return TRUE;
 			break;
 		case MP_MESSAGE:
 			if (client)
