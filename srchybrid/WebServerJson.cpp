@@ -668,8 +668,11 @@ json BuildSourceJson(const CUpDownClient &rClient)
 json BuildTransferSourcesJson(CPartFile &rPartFile)
 {
 	json result = json::array();
-	for (POSITION pos = rPartFile.srclist.GetHeadPosition(); pos != NULL;)
-		result.push_back(BuildSourceJson(*rPartFile.srclist.GetNext(pos)));
+	for (POSITION pos = rPartFile.srclist.GetHeadPosition(); pos != NULL;) {
+		const CUpDownClient *const pClient = rPartFile.srclist.GetNext(pos);
+		if (rPartFile.IsLiveSource(pClient))
+			result.push_back(BuildSourceJson(*pClient));
+	}
 	return result;
 }
 
@@ -690,7 +693,7 @@ json BuildTransferPartsJson(CPartFile &rPartFile)
 		UINT uAvailableSources = 0;
 		for (POSITION pos = rPartFile.srclist.GetHeadPosition(); pos != NULL;) {
 			const CUpDownClient *const pClient = rPartFile.srclist.GetNext(pos);
-			if (pClient != NULL && pClient->IsPartAvailable(uPart))
+			if (rPartFile.IsLiveSource(pClient) && pClient->IsPartAvailable(uPart))
 				++uAvailableSources;
 		}
 
@@ -2222,7 +2225,7 @@ CUpDownClient* FindTransferSourceClient(CPartFile &rPartFile, const SPipeApiClie
 {
 	for (POSITION pos = rPartFile.srclist.GetHeadPosition(); pos != NULL;) {
 		CUpDownClient *const pClient = rPartFile.srclist.GetNext(pos);
-		if (pClient != NULL && TransferSourceMatchesSelector(*pClient, rSelector))
+		if (rPartFile.IsLiveSource(pClient) && TransferSourceMatchesSelector(*pClient, rSelector))
 			return pClient;
 	}
 

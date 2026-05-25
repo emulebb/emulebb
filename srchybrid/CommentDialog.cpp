@@ -264,8 +264,11 @@ void CCommentDialog::RefreshData(bool deleteOld)
 	for (int i = 0; i < m_paFiles->GetSize(); ++i) {
 		CAbstractFile *file = static_cast<CAbstractFile*>((*m_paFiles)[i]);
 		if (file->IsPartFile()) {
-			for (POSITION pos = static_cast<CPartFile*>(file)->srclist.GetHeadPosition(); pos != NULL;) {
-				CUpDownClient *cur_src = static_cast<CPartFile*>(file)->srclist.GetNext(pos);
+			CPartFile *partFile = static_cast<CPartFile*>(file);
+			for (POSITION pos = partFile->srclist.GetHeadPosition(); pos != NULL;) {
+				CUpDownClient *cur_src = partFile->srclist.GetNext(pos);
+				if (!partFile->IsLiveSource(cur_src))
+					continue;
 				if (cur_src->HasFileRating() || !cur_src->GetFileComment().IsEmpty())
 					m_lstComments.AddItem(cur_src);
 			}

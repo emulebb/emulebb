@@ -4422,6 +4422,8 @@ CString CWebServer::_GetCommentlist(const ThreadData &Data)
 	// prepare comments info string
 	for (POSITION pos = pPartFile->srclist.GetHeadPosition(); pos != NULL;) {
 		const CUpDownClient *cur_src = pPartFile->srclist.GetNext(pos);
+		if (!pPartFile->IsLiveSource(cur_src))
+			continue;
 		if (cur_src->HasFileRating() || !cur_src->GetFileComment().IsEmpty())
 			commentlines.AppendFormat(pThis->m_Templates.sCommentListLine
 				, (LPCTSTR)_SpecialChars(cur_src->GetUserName())

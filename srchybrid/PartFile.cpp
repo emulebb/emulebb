@@ -2365,14 +2365,18 @@ void CPartFile::WriteCompleteSourcesCount(CSafeMemFile &file) const
 int CPartFile::GetValidSourcesCount() const
 {
 	int counter = 0;
-	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;)
-		switch (srclist.GetNext(pos)->GetDownloadState()) {
+	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
+		const CUpDownClient *cur_src = srclist.GetNext(pos);
+		if (!IsLiveSource(cur_src))
+			continue;
+		switch (cur_src->GetDownloadState()) {
 		case DS_ONQUEUE:
 		case DS_DOWNLOADING:
 		case DS_CONNECTED:
 		case DS_REMOTEQUEUEFULL:
 			++counter;
 		}
+	}
 
 	return counter;
 }
@@ -2380,14 +2384,18 @@ int CPartFile::GetValidSourcesCount() const
 UINT CPartFile::GetNotCurrentSourcesCount() const
 {
 	UINT counter = 0;
-	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;)
-		switch (srclist.GetNext(pos)->GetDownloadState()) {
+	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
+		const CUpDownClient *cur_src = srclist.GetNext(pos);
+		if (!IsLiveSource(cur_src))
+			continue;
+		switch (cur_src->GetDownloadState()) {
 		case DS_ONQUEUE:
 		case DS_DOWNLOADING:
 			continue;
 		default:
 			++counter;
 		}
+	}
 
 	return counter;
 }
@@ -2435,7 +2443,7 @@ void CPartFile::RemoveDownloadingSource(CUpDownClient *client)
 		theApp.emuledlg->transferwnd->GetDownloadClientsList()->RemoveClient(client);
 }
 
-bool CPartFile::IsLiveDownloadingSource(const CUpDownClient *pClient) const
+bool CPartFile::IsLiveSource(const CUpDownClient *pClient) const
 {
 	if (pClient == NULL)
 		return false;
@@ -2445,6 +2453,28 @@ bool CPartFile::IsLiveDownloadingSource(const CUpDownClient *pClient) const
 		return false;
 
 	return pClient->GetRequestFile() == this;
+}
+
+bool CPartFile::IsLiveDownloadingSource(const CUpDownClient *pClient) const
+{
+	return IsLiveSource(pClient);
+}
+
+void CPartFile::RemoveStaleSource(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext)
+{
+	ASSERT(pos != NULL);
+	if (pos == NULL)
+		return;
+
+	srclist.RemoveAt(pos);
+	if (DetachDownloadingSource(const_cast<CUpDownClient*>(pClient)) && theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
+		theApp.emuledlg->transferwnd->GetDownloadClientsList()->RemoveClient(pClient);
+	if (theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
+		theApp.emuledlg->transferwnd->GetDownloadList()->RemoveSource(const_cast<CUpDownClient*>(pClient), this);
+	DebugLogWarning(_T("Removed stale source pointer %p from file \"%s\" (%s)"),
+		static_cast<const void*>(pClient),
+		(LPCTSTR)GetFileName(),
+		pszContext != NULL ? pszContext : _T("unknown context"));
 }
 
 void CPartFile::RemoveStaleDownloadingSource(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext)
@@ -2529,7 +2559,12 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 		memset(net_stats, 0, sizeof net_stats);
 
 		for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
+			const POSITION posCurrent = pos;
 			CUpDownClient *cur_src = srclist.GetNext(pos);
+			if (!IsLiveSource(cur_src)) {
+				RemoveStaleSource(posCurrent, cur_src, _T("source-statistics pass"));
+				continue;
+			}
 			if (thePrefs.m_iDbgHeap >= 2)
 				ASSERT_VALID(cur_src);
 
@@ -2843,7 +2878,12 @@ void CPartFile::UpdatePartsInfo()
 	if (bRefresh)
 		acount.SetSize(0, srclist.GetCount());
 	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
 		const CUpDownClient *cur_src = srclist.GetNext(pos);
+		if (!IsLiveSource(cur_src)) {
+			RemoveStaleSource(posCurrent, cur_src, _T("parts-info update"));
+			continue;
+		}
 		if (cur_src->GetPartStatus()) {
 			for (INT_PTR i = GetPartCount(); --i >= 0;)
 				m_SrcPartFrequency[i] += static_cast<uint16>(cur_src->IsPartAvailable((UINT)i));
@@ -3317,7 +3357,12 @@ void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 void  CPartFile::RemoveAllSources(bool bTryToSwap)
 {
 	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
 		CUpDownClient *cli = srclist.GetNext(pos);
+		if (!IsLiveSource(cli)) {
+			RemoveStaleSource(posCurrent, cli, _T("remove-all-sources"));
+			continue;
+		}
 		if (!bTryToSwap || !cli->SwapToAnotherFile(_T("Removing source. CPartFile::RemoveAllSources()"), true, true, true, NULL, false, false)) // ZZ:DownloadManager
 			theApp.downloadqueue->RemoveSource(cli, false);
 	}
@@ -3628,7 +3673,12 @@ void CPartFile::PauseFile(bool bInsufficient, bool resort)
 		return;
 
 	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
 		CUpDownClient *cur_src = srclist.GetNext(pos);
+		if (!IsLiveSource(cur_src)) {
+			RemoveStaleSource(posCurrent, cur_src, _T("pause transition"));
+			continue;
+		}
 		if (cur_src->GetDownloadState() == DS_DOWNLOADING) {
 			cur_src->SendCancelTransfer();
 			cur_src->SetDownloadState(DS_ONQUEUE, _T("You cancelled the download. Sending OP_CANCELTRANSFER"));
@@ -3966,11 +4016,15 @@ void CPartFile::UpdateAvailablePartsCount()
 {
 	UINT availablecounter = 0;
 	for (UINT nPart = GetPartCount(); nPart-- > 0;)
-		for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;)
-			if (srclist.GetNext(pos)->IsPartAvailable(nPart)) {
+		for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
+			const CUpDownClient *cur_src = srclist.GetNext(pos);
+			if (!IsLiveSource(cur_src))
+				continue;
+			if (cur_src->IsPartAvailable(nPart)) {
 				++availablecounter;
 				break;
 			}
+		}
 
 	if (GetPartCount() == availablecounter && availablePartsCount <= availablecounter) //set lastseencomplete to the latest time, not to the earliest
 		lastseencomplete = CTime::GetCurrentTime();
@@ -4022,6 +4076,8 @@ Packet* CPartFile::CreateSrcInfoPacket(const CUpDownClient *forClient, uint8 byR
 	const uint8 *reqstatus = forClient->GetUpPartStatus();
 	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
 		const CUpDownClient *cur_src = srclist.GetNext(pos);
+		if (!IsLiveSource(cur_src))
+			continue;
 		if (cur_src->HasLowID() || !cur_src->IsValidSource())
 			continue;
 		const uint8 *srcstatus = cur_src->GetPartStatus();
@@ -4679,6 +4735,8 @@ void CPartFile::UpdateFileRatingCommentAvail(bool bForceUpdate)
 
 	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
 		const CUpDownClient *cur_src = srclist.GetNext(pos);
+		if (!IsLiveSource(cur_src))
+			continue;
 		if (!m_bHasComment && cur_src->HasFileComment())
 			m_bHasComment = true;
 		if (cur_src->HasFileRating()) {
@@ -5525,7 +5583,7 @@ bool CPartFile::GetMajoritySourceFileName(PartFileMajorityNameSeams::MajorityNam
 	std::vector<CString> sourceNames;
 	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
 		const CUpDownClient *cur_src = srclist.GetNext(pos);
-		if (cur_src == NULL || cur_src->GetRequestFile() != this)
+		if (!IsLiveSource(cur_src))
 			continue;
 
 		CString sourceName;
@@ -5697,6 +5755,8 @@ void CPartFile::RequestAICHRecovery(UINT nPart)
 	uint32 cAICHLowIDClients = 0;
 	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
 		const CUpDownClient *pCurClient = srclist.GetNext(pos);
+		if (!IsLiveSource(pCurClient))
+			continue;
 		if (pCurClient->IsSupportingAICH() && pCurClient->GetReqFileAICHHash() != NULL && !pCurClient->IsAICHReqPending()
 			&& (*pCurClient->GetReqFileAICHHash()) == m_pAICHRecoveryHashSet->GetMasterHash())
 		{
@@ -5715,6 +5775,8 @@ void CPartFile::RequestAICHRecovery(UINT nPart)
 	CUpDownClient *pClient = NULL;
 	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
 		CUpDownClient *pCurClient = srclist.GetNext(pos);
+		if (!IsLiveSource(pCurClient))
+			continue;
 		if (pCurClient->IsSupportingAICH() && pCurClient->GetReqFileAICHHash() != NULL && !pCurClient->IsAICHReqPending()
 			&& (*pCurClient->GetReqFileAICHHash()) == m_pAICHRecoveryHashSet->GetMasterHash())
 		{
@@ -5872,6 +5934,8 @@ void CPartFile::RefilterFileComments()
 		return;
 	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
 		CUpDownClient *cur_src = srclist.GetNext(pos);
+		if (!IsLiveSource(cur_src))
+			continue;
 		if (cur_src->HasFileComment()) {
 			CString strCommentLower(cur_src->GetFileComment());
 			strCommentLower.MakeLower();

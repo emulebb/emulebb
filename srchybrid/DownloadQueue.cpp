@@ -982,6 +982,8 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 		const CPartFile *cur_file = filelist.GetNext(pos);
 		for (POSITION pos2 = cur_file->srclist.GetHeadPosition(); pos2 != NULL;) {
 			CUpDownClient *cur_client = cur_file->srclist.GetNext(pos2);
+			if (!cur_file->IsLiveSource(cur_client))
+				continue;
 			if (cur_client->Compare(source, true) || cur_client->Compare(source, false)) {
 				// if this file has not this source already, set request for this source
 				if (cur_file != sender && cur_client->AddRequestForAnotherFile(sender)) {
@@ -1576,6 +1578,8 @@ CUpDownClient* CDownloadQueue::GetDownloadClientByIP(uint32 dwIP)
 		const CPartFile *cur_file = filelist.GetNext(pos);
 		for (POSITION pos2 = cur_file->srclist.GetHeadPosition(); pos2 != NULL;) {
 			CUpDownClient *cur_client = cur_file->srclist.GetNext(pos2);
+			if (!cur_file->IsLiveSource(cur_client))
+				continue;
 			if (dwIP == cur_client->GetIP())
 				return cur_client;
 		}
@@ -1592,6 +1596,8 @@ CUpDownClient* CDownloadQueue::GetDownloadClientByIP_UDP(uint32 dwIP, uint16 nUD
 		const CPartFile *cur_file = filelist.GetNext(pos);
 		for (POSITION pos2 = cur_file->srclist.GetHeadPosition(); pos2 != NULL;) {
 			CUpDownClient *cur_client = cur_file->srclist.GetNext(pos2);
+			if (!cur_file->IsLiveSource(cur_client))
+				continue;
 			if (dwIP == cur_client->GetIP() && nUDPPort == cur_client->GetUDPPort())
 				return cur_client;
 			if (dwIP == cur_client->GetIP() && bIgnorePortOnUniqueIP && cur_client != pMatchingIPClient) {

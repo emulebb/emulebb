@@ -222,6 +222,7 @@ public:
 
 	UINT	GetSourceCount() const						{ return static_cast<UINT>(srclist.GetCount()); }
 	UINT	GetSrcA4AFCount() const						{ return static_cast<UINT>(A4AFsrclist.GetCount()); }
+	bool	IsLiveSource(const CUpDownClient *pClient) const;
 	UINT	GetSrcStatisticsValue(EDownloadState nDLState) const { return m_anStates[nDLState]; } //ASSERT(nDLState < _countof(m_anStates));
 	UINT	GetTransferringSrcCount() const;
 	uint64	GetTransferred() const						{ return m_uTransferred; }
@@ -376,6 +377,7 @@ private:
 	void	NoteHashLayoutChanged();
 	bool	TryStealEndgameBlockForFastPeer(CUpDownClient *pFastPeer, bool bEndgame, ULONGLONG ullNow, uint16 *pCanceledPart);
 	bool	IsLiveDownloadingSource(const CUpDownClient *pClient) const;
+	void	RemoveStaleSource(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext);
 	void	RemoveStaleDownloadingSource(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext);
 	/**
 	 * @brief Returns whether an insufficient-space download may resume under the current per-volume disk-space floors.

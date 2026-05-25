@@ -167,7 +167,7 @@ void CFileDetailDialogName::FillSourcenameList()
 	const CPartFile *file = static_cast<CPartFile*>((*m_paFiles)[0]);
 	for (POSITION pos = file->srclist.GetHeadPosition(); pos != NULL;) {
 		CUpDownClient *cur_src = file->srclist.GetNext(pos);
-		if (cur_src->GetRequestFile() != file || cur_src->GetClientFilename().IsEmpty())
+		if (!file->IsLiveSource(cur_src) || cur_src->GetClientFilename().IsEmpty())
 			continue;
 
 		info.psz = cur_src->GetClientFilename();
