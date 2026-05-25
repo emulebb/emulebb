@@ -54,6 +54,17 @@ struct SMediaInfoThreadResult
 	CStringA strInfo;
 };
 
+struct SMediaInfoFileSnapshot
+{
+	CString strFileName;
+	CString strFilePath;
+	EMFileSize ulFileSize;
+	bool bValid = false;
+	bool bPartFile = false;
+	bool bCanInspectMimeHeader = false;
+	bool bCanInspectFullHeader = false;
+};
+
 static CString BuildMediaInfoDllHint(MediaInfoDllSeams::EMediaInfoDllStatus eStatus)
 {
 	CString strInstFolder(PathHelpers::GetDirectoryPath(PathHelpers::GetModuleFilePath(theApp.m_hInstance)));
@@ -99,14 +110,31 @@ public:
 	void SetValues(HWND hWnd, const CSimpleArray<CObject*> *paFiles, HFONT hFont)
 	{
 		m_hWndOwner = hWnd;
-		for (int i = 0; i < paFiles->GetSize(); ++i)
-			m_aFiles.Add(static_cast<CShareableFile*>((*paFiles)[i]));
+		for (int i = 0; i < paFiles->GetSize(); ++i) {
+			SMediaInfoFileSnapshot fileSnapshot;
+			const CShareableFile *pFile = static_cast<CShareableFile*>((*paFiles)[i]);
+			if (pFile != NULL) {
+				fileSnapshot.strFileName = pFile->GetFileName();
+				fileSnapshot.strFilePath = pFile->GetFilePath();
+				fileSnapshot.ulFileSize = pFile->GetFileSize();
+				fileSnapshot.bPartFile = pFile->IsPartFile();
+				fileSnapshot.bCanInspectMimeHeader = !fileSnapshot.bPartFile;
+				fileSnapshot.bCanInspectFullHeader = !fileSnapshot.bPartFile;
+				if (fileSnapshot.bPartFile) {
+					const CPartFile *pPartFile = static_cast<const CPartFile*>(pFile);
+					fileSnapshot.bCanInspectMimeHeader = pPartFile->IsCompleteBDSafe(0, 1024);
+					fileSnapshot.bCanInspectFullHeader = pPartFile->IsCompleteSafe(0, 16 * 1024);
+				}
+				fileSnapshot.bValid = !fileSnapshot.strFilePath.IsEmpty();
+			}
+			m_aFiles.Add(fileSnapshot);
+		}
 		m_hFont = hFont;
 	}
 
 private:
-	bool GetMediaInfo(HWND hWndOwner, const CShareableFile *pFile, SMediaInfo *mi, bool bSingleFile);
-	CSimpleArray<const CShareableFile*> m_aFiles;
+	bool GetMediaInfo(HWND hWndOwner, const SMediaInfoFileSnapshot &fileSnapshot, SMediaInfo *mi, bool bSingleFile);
+	CArray<SMediaInfoFileSnapshot, const SMediaInfoFileSnapshot&> m_aFiles;
 	HWND m_hWndOwner;
 	HFONT m_hFont;
 };
@@ -289,12 +317,13 @@ int CGetMediaInfoThread::Run()
 		const int arcnt = m_aFiles.GetSize();
 		paMediaInfo = new CArray<SMediaInfo>;
 		for (int i = 0; i < arcnt; ++i) {
+			const SMediaInfoFileSnapshot &fileSnapshot = m_aFiles[i];
 			SMediaInfo mi;
 			mi.bOutputFileName = arcnt > 1;
-			mi.strFileName = m_aFiles[i]->GetFileName();
+			mi.strFileName = fileSnapshot.strFileName;
 			mi.strInfo.Attach(hwndRE);
 			mi.strInfo.InitColors();
-			if (!::IsWindow(m_hWndOwner) || !GetMediaInfo(m_hWndOwner, m_aFiles[i], &mi, (arcnt == 1))) {
+			if (!::IsWindow(m_hWndOwner) || !GetMediaInfo(m_hWndOwner, fileSnapshot, &mi, (arcnt == 1))) {
 				mi.strInfo.Detach();
 				delete paMediaInfo;
 				paMediaInfo = NULL;
@@ -588,29 +617,29 @@ wchar_t* ID3_GetStringW(const ID3_Frame *frame, ID3_FieldID fldName, size_t nInd
 	return (nIndex == 0) ? ID3_GetStringW(frame, fldName) : NULL;
 }
 
-bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFile, SMediaInfo *mi, bool bSingleFile)
+bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const SMediaInfoFileSnapshot &fileSnapshot, SMediaInfo *mi, bool bSingleFile)
 {
-	if (!pFile)
+	if (!fileSnapshot.bValid)
 		return false;
-	ASSERT(!pFile->GetFilePath().IsEmpty());
+	ASSERT(!fileSnapshot.strFilePath.IsEmpty());
 
 	bool bHasDRM = false;
-	if (!pFile->IsPartFile() || static_cast<const CPartFile*>(pFile)->IsCompleteBDSafe(0, 1024)) {
-		GetMimeType(pFile->GetFilePath(), mi->strMimeType);
-		bHasDRM = GetDRM(pFile->GetFilePath());
+	if (!fileSnapshot.bPartFile || fileSnapshot.bCanInspectMimeHeader) {
+		GetMimeType(fileSnapshot.strFilePath, mi->strMimeType);
+		bHasDRM = GetDRM(fileSnapshot.strFilePath);
 		if (bHasDRM) {
 			if (!mi->strInfo.IsEmpty())
 				mi->strInfo << _T("\r\n");
 			mi->strInfo.SetSelectionCharFormat(mi->strInfo.m_cfRed);
-			mi->strInfo.AppendFormat(GetResString(IDS_MEDIAINFO_DRMWARNING), (LPCTSTR)pFile->GetFileName());
+			mi->strInfo.AppendFormat(GetResString(IDS_MEDIAINFO_DRMWARNING), (LPCTSTR)fileSnapshot.strFileName);
 			mi->strInfo.SetSelectionCharFormat(mi->strInfo.m_cfDef);
 		}
 	}
 
-	mi->ulFileSize = pFile->GetFileSize();
+	mi->ulFileSize = fileSnapshot.ulFileSize;
 
 	bool bFoundHeader = false;
-	if (pFile->IsPartFile()) {
+	if (fileSnapshot.bPartFile) {
 		// Do *not* pass a part file which does not have the beginning of file to the following code.
 		//	- The MP3 reading code will skip all 0-bytes from the beginning of the file and may block
 		//	  the main thread for a long time.
@@ -618,11 +647,11 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 		//	- The RIFF reading code will not work without the file header.
 		//
 		//	- Most (if not all) other code also will not work without the beginning of the file available.
-		if (!static_cast<const CPartFile*>(pFile)->IsCompleteSafe(0, 16 * 1024))
+		if (!fileSnapshot.bCanInspectFullHeader)
 			return bFoundHeader || !mi->strMimeType.IsEmpty();
 	}
 
-	const EED2KFileType eFileType = GetED2KFileTypeID(pFile->GetFileName());
+	const EED2KFileType eFileType = GetED2KFileTypeID(fileSnapshot.strFileName);
 	const bool bShouldInspectWithMediaInfo = thePrefs.GetInspectAllFileTypes()
 		|| eFileType == ED2KFT_AUDIO
 		|| eFileType == ED2KFT_VIDEO;
@@ -631,7 +660,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 
 	if (bShouldInspectWithMediaInfo) {
 		try {
-			bFoundHeader = GetMediaInfoDllInfo(pFile->GetFilePath(), pFile->GetFileSize(), mi, true, bSingleFile, NULL, &eMediaInfoStatus);
+			bFoundHeader = GetMediaInfoDllInfo(fileSnapshot.strFilePath, fileSnapshot.ulFileSize, mi, true, bSingleFile, NULL, &eMediaInfoStatus);
 		} catch (...) {
 			ASSERT(0);
 		}
@@ -650,7 +679,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 	//
 	try {
 		bool bIsAVI = false;
-		if (GetRIFFHeaders(pFile->GetFilePath(), mi, bIsAVI, true))
+		if (GetRIFFHeaders(fileSnapshot.strFilePath, mi, bIsAVI, true))
 			return true;
 	} catch (...) {
 		ASSERT(0);
@@ -664,7 +693,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 	//
 	try {
 		bool bIsRM = false;
-		if (GetRMHeaders(pFile->GetFilePath(), mi, bIsRM, true))
+		if (GetRMHeaders(fileSnapshot.strFilePath, mi, bIsRM, true))
 			return true;
 	} catch (...) {
 		ASSERT(0);
@@ -679,7 +708,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 #ifdef HAVE_WMSDK_H
 	try {
 		bool bIsWM = false;
-		if (GetWMHeaders(pFile->GetFilePath(), mi, bIsWM, true))
+		if (GetWMHeaders(fileSnapshot.strFilePath, mi, bIsWM, true))
 			return true;
 	} catch (...) {
 		ASSERT(0);
@@ -692,7 +721,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 	////////////////////////////////////////////////////////////////////////////
 	// Check for MPEG Audio file
 	//
-	if (KnownFileMetadataSeams::IsMpegAudioMetadataExtension(pFile->GetFileName())) {
+	if (KnownFileMetadataSeams::IsMpegAudioMetadataExtension(fileSnapshot.strFileName)) {
 		try {
 			// ID3LIB BUG: If there are ID3v2 _and_ ID3v1 tags available, id3lib
 			// destroys (actually corrupts) the Unicode strings from ID3v2 tags due to
@@ -701,7 +730,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 			// also ID3v1 tags available.
 			// Won't do: id3lib still takes an ANSI path here, so Unicode/long-path coverage remains limited.
 			ID3_Tag myTag;
-			CStringA strFilePathA(pFile->GetFilePath());
+			CStringA strFilePathA(fileSnapshot.strFilePath);
 			size_t id3Size = myTag.Link(strFilePathA, ID3TT_ID3V2);
 			if (id3Size == 0) {
 				myTag.Clear();
@@ -794,7 +823,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 				if (mp3info->time) {
 					if (!bSingleFile) {
 						mi->strInfo << _T("   ") << GetResString(IDS_LENGTH) << _T(":\t") << SecToTimeLength(mp3info->time);
-						if (pFile->IsPartFile()) {
+						if (fileSnapshot.bPartFile) {
 							mi->strInfo.SetSelectionCharFormat(mi->strInfo.m_cfRed);
 							mi->strInfo << _T(" (") << GetResString(IDS_ESTIMATED) << _T(")");
 							mi->strInfo.SetSelectionCharFormat(mi->strInfo.m_cfDef);
@@ -802,7 +831,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 						mi->strInfo << _T("\n");
 					}
 					mi->fAudioLengthSec = mp3info->time;
-					mi->bAudioLengthEstimated |= pFile->IsPartFile();
+					mi->bAudioLengthEstimated |= fileSnapshot.bPartFile;
 				}
 
 				bFoundHeader = true;
@@ -1122,7 +1151,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile *pFi
 
 	if (bShouldInspectWithMediaInfo) {
 		try {
-			bFoundHeader = GetFallbackMediaInfo(pFile->GetFilePath(), pFile->GetFileSize(), mi, true, bSingleFile);
+			bFoundHeader = GetFallbackMediaInfo(fileSnapshot.strFilePath, fileSnapshot.ulFileSize, mi, true, bSingleFile);
 		} catch (...) {
 			ASSERT(0);
 		}
