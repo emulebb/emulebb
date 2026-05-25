@@ -83,6 +83,7 @@ protected:
 	void AddTimeStamp(CChatItem *ci);
 	void SetAllIcons();
 	void GetChatSize(CRect &rcChat);
+	void CloseSessionAt(int iItem);
 
 	virtual int InsertItem(int nItem, TCITEM *pTabCtrlItem);
 	virtual BOOL DeleteItem(int nItem);

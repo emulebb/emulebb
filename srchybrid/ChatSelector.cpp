@@ -27,6 +27,7 @@
 #include "MenuCmds.h"
 #include "ClientDetailDialog.h"
 #include "FriendList.h"
+#include "ClientList.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -41,6 +42,16 @@ static char THIS_FILE[] = __FILE__;
 #define	TIME_STAMP_FORMAT		_T("[%H:%M] ")
 
 #define	IDT_CHATITEMS	20
+
+namespace
+{
+	bool IsLiveChatClient(const CUpDownClient *client)
+	{
+		return client != NULL
+			&& theApp.clientlist != NULL
+			&& theApp.clientlist->ContainsClientPointer(client);
+	}
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // CChatItem
@@ -124,6 +135,9 @@ void CChatSelector::UpdateFonts(CFont *pFont)
 
 CChatItem* CChatSelector::StartSession(CUpDownClient *client, bool show)
 {
+	if (!IsLiveChatClient(client))
+		return NULL;
+
 	if (show)
 		m_pParent->m_wndMessage.SetFocus();
 	if (GetTabByClient(client) >= 0) {
@@ -230,6 +244,8 @@ void CChatSelector::ProcessMessage(CUpDownClient *sender, const CString &message
 		if ((UINT)GetItemCount() >= thePrefs.GetMsgSessionsMax())
 			return;
 		ci = StartSession(sender, false);
+		if (ci == NULL)
+			return;
 	}
 	if (thePrefs.GetIRCAddTimeStamp())
 		AddTimeStamp(ci);
@@ -279,6 +295,11 @@ bool CChatSelector::SendText(const CString &rstrText)
 	CChatItem *ci = GetCurrentChatItem();
 	if (!ci)
 		return false;
+	CUpDownClient *client = ci->client;
+	if (!IsLiveChatClient(client)) {
+		ci->strMessagePending.Empty();
+		return false;
+	}
 
 	if (ci->history.GetCount() >= thePrefs.GetMaxChatHistoryLines())
 		ci->history.RemoveAt(0);
@@ -286,34 +307,34 @@ bool CChatSelector::SendText(const CString &rstrText)
 	ci->history_pos = ci->history.GetCount();
 
 	// advance spam filter stuff
-	ci->client->IncMessagesSent();
-	ci->client->SetSpammer(false);
-	if (ci->client->GetChatState() == MS_CONNECTING)
+	client->IncMessagesSent();
+	client->SetSpammer(false);
+	if (client->GetChatState() == MS_CONNECTING)
 		return false;
 
-	if (ci->client->GetChatCaptchaState() == CA_CAPTCHARECV)
-		ci->client->SetChatCaptchaState(CA_SOLUTIONSENT);
-	else if (ci->client->GetChatCaptchaState() == CA_SOLUTIONSENT)
+	if (client->GetChatCaptchaState() == CA_CAPTCHARECV)
+		client->SetChatCaptchaState(CA_SOLUTIONSENT);
+	else if (client->GetChatCaptchaState() == CA_SOLUTIONSENT)
 		ASSERT(0); // we responded to a captcha, but didn't hear from the client afterwards - hopefully it's just lag and this message would get through
 	else
-		ci->client->SetChatCaptchaState(CA_ACCEPTING);
+		client->SetChatCaptchaState(CA_ACCEPTING);
 
 	// there are three cases on connecting/sending the message:
-	if (ci->client->socket && ci->client->socket->IsConnected()) {
+	if (client->socket && client->socket->IsConnected()) {
 		// 1. the client is connected already - this is simple, just send
-		ci->client->SendChatMessage(rstrText);
+		client->SendChatMessage(rstrText);
 		if (thePrefs.GetIRCAddTimeStamp())
 			AddTimeStamp(ci);
 		ci->log->AppendKeyWord(thePrefs.GetUserNick(), SENT_TARGET_MSG_COLOR);
 		CString s;
 		s.Format(_T(": %s\n"), (LPCTSTR)rstrText);
 		ci->log->AppendText(s);
-	} else if (ci->client->GetFriend() != NULL) {
+	} else if (client->GetFriend() != NULL) {
 		// 2. We are not connected and this client is a friend - friends have additional ways to connect and
 		// additional checks to make sure they are really friends; let the friend class handle it
 		ci->strMessagePending = rstrText;
-		ci->client->SetChatState(MS_CONNECTING);
-		ci->client->GetFriend()->TryToConnect(this);
+		client->SetChatState(MS_CONNECTING);
+		client->GetFriend()->TryToConnect(this);
 	} else {
 		// 3. This is a normal client, who is not connected right now. Just try to
 		// connect to the given IP without any additional checks or searches.
@@ -323,8 +344,8 @@ bool CChatSelector::SendText(const CString &rstrText)
 		s.Format(_T("*** %s"), (LPCTSTR)GetResString(IDS_CONNECTING));
 		ci->log->AppendKeyWord(s, STATUS_MSG_COLOR);
 		ci->strMessagePending = rstrText;
-		ci->client->SetChatState(MS_CONNECTING);
-		ci->client->TryToConnect(true);
+		client->SetChatState(MS_CONNECTING);
+		client->TryToConnect(true);
 	}
 	return true;
 }
@@ -334,8 +355,11 @@ void CChatSelector::ConnectingResult(CUpDownClient *sender, bool success)
 	CChatItem *ci = GetItemByClient(sender);
 	if (!ci)
 		return;
+	CUpDownClient *client = ci->client;
+	if (!IsLiveChatClient(client))
+		return;
 
-	ci->client->SetChatState(MS_CHATTING);
+	client->SetChatState(MS_CHATTING);
 	if (success)
 		if (ci->strMessagePending.IsEmpty()) {
 			if (thePrefs.GetIRCAddTimeStamp())
@@ -345,7 +369,7 @@ void CChatSelector::ConnectingResult(CUpDownClient *sender, bool success)
 			CString s;
 			s.Format(_T(" ...%s\n"), (LPCTSTR)GetResString(IDS_TREEOPTIONS_OK));
 			ci->log->AppendKeyWord(s, STATUS_MSG_COLOR);
-			ci->client->SendChatMessage(ci->strMessagePending);
+			client->SendChatMessage(ci->strMessagePending);
 
 			if (thePrefs.GetIRCAddTimeStamp())
 				AddTimeStamp(ci);
@@ -478,9 +502,8 @@ BOOL CChatSelector::DeleteItem(int nItem)
 	return TRUE;
 }
 
-void CChatSelector::EndSession(CUpDownClient *client)
+void CChatSelector::CloseSessionAt(int iCurSel)
 {
-	int iCurSel = client ? GetTabByClient(client) : GetCurSel();
 	if (iCurSel == -1)
 		return;
 
@@ -489,8 +512,10 @@ void CChatSelector::EndSession(CUpDownClient *client)
 	if (!GetItem(iCurSel, &ti) || ti.lParam == 0)
 		return;
 	CChatItem *ci = reinterpret_cast<CChatItem*>(ti.lParam);
-	ci->client->SetChatState(MS_NONE);
-	ci->client->SetChatCaptchaState(CA_NONE);
+	if (IsLiveChatClient(ci->client)) {
+		ci->client->SetChatState(MS_NONE);
+		ci->client->SetChatCaptchaState(CA_NONE);
+	}
 
 	DeleteItem(iCurSel);
 	delete ci;
@@ -505,6 +530,11 @@ void CChatSelector::EndSession(CUpDownClient *client)
 			(void)SetCurSel(0);		// if still error
 		ShowChat();
 	}
+}
+
+void CChatSelector::EndSession(CUpDownClient *client)
+{
+	CloseSessionAt(client ? GetTabByClient(client) : GetCurSel());
 }
 
 void CChatSelector::GetChatSize(CRect &rcChat)
@@ -549,7 +579,7 @@ BOOL CChatSelector::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_DETAIL:
 		{
 			const CChatItem *ci = GetItemByIndex(m_iContextIndex);
-			if (ci) {
+			if (ci && IsLiveChatClient(ci->client)) {
 				CClientDetailDialog dialog(ci->client);
 				dialog.DoModal();
 			}
@@ -558,7 +588,7 @@ BOOL CChatSelector::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_ADDFRIEND:
 		{
 			const CChatItem *ci = GetItemByIndex(m_iContextIndex);
-			if (ci) {
+			if (ci && IsLiveChatClient(ci->client)) {
 				CFriend *fr = theApp.friendlist->SearchFriend(ci->client->GetUserHash(), 0, 0);
 				if (!fr)
 					theApp.friendlist->AddFriend(ci->client);
@@ -568,7 +598,7 @@ BOOL CChatSelector::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_REMOVEFRIEND:
 		{
 			const CChatItem *ci = GetItemByIndex(m_iContextIndex);
-			if (ci) {
+			if (ci && IsLiveChatClient(ci->client)) {
 				CFriend *fr = theApp.friendlist->SearchFriend(ci->client->GetUserHash(), 0, 0);
 				if (fr)
 					theApp.friendlist->RemoveFriend(fr);
@@ -579,7 +609,7 @@ BOOL CChatSelector::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			const CChatItem *ci = GetItemByIndex(m_iContextIndex);
 			if (ci)
-				EndSession(ci->client);
+				CloseSessionAt(m_iContextIndex);
 		}
 		return TRUE;
 	}
@@ -604,20 +634,21 @@ void CChatSelector::OnContextMenu(CWnd*, CPoint point)
 	const CChatItem *ci = reinterpret_cast<CChatItem*>(ti.lParam);
 	if (ci == NULL)
 		return;
+	const bool bLiveClient = IsLiveChatClient(ci->client);
 
-	CFriend *pFriend = theApp.friendlist->SearchFriend(ci->client->GetUserHash(), 0, 0);
+	CFriend *pFriend = bLiveClient ? theApp.friendlist->SearchFriend(ci->client->GetUserHash(), 0, 0) : NULL;
 
 	CTitledMenu menu;
 	menu.CreatePopupMenu();
 	menu.AddMenuTitle(GetResString(IDS_CLIENT), true);
 
-	menu.AppendMenu(MF_STRING, MP_DETAIL, GetResString(IDS_SHOWDETAILS), _T("CLIENTDETAILS"));
+	menu.AppendMenu(MF_STRING | (bLiveClient ? MF_ENABLED : MF_GRAYED), MP_DETAIL, GetResString(IDS_SHOWDETAILS), _T("CLIENTDETAILS"));
 
 	GetCurrentChatItem();
 	if (pFriend == NULL)
-		menu.AppendMenu(MF_STRING, MP_ADDFRIEND, GetResString(IDS_IRC_ADDTOFRIENDLIST), _T("ADDFRIEND"));
+		menu.AppendMenu(MF_STRING | (bLiveClient ? MF_ENABLED : MF_GRAYED), MP_ADDFRIEND, GetResString(IDS_IRC_ADDTOFRIENDLIST), _T("ADDFRIEND"));
 	else
-		menu.AppendMenu(MF_STRING, MP_REMOVEFRIEND, GetResString(IDS_REMOVEFRIEND), _T("DELETEFRIEND"));
+		menu.AppendMenu(MF_STRING | (bLiveClient ? MF_ENABLED : MF_GRAYED), MP_REMOVEFRIEND, GetResString(IDS_REMOVEFRIEND), _T("DELETEFRIEND"));
 
 	menu.AppendMenu(MF_STRING, MP_REMOVE, GetResString(IDS_FD_CLOSE));
 
