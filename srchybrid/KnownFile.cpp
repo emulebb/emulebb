@@ -1783,7 +1783,7 @@ bool CKnownFile::StartPeerPreviewFrames(CUpDownClient *pSender, HWND hNotifyWnd)
 void CKnownFile::PeerPreviewFinished(HBITMAP *imgResults, uint8 nFramesGrabbed, CUpDownClient *pSender)
 {
 	// continue processing
-	if (theApp.clientlist->IsValidClient(pSender))
+	if (theApp.clientlist != NULL && theApp.clientlist->ContainsClientPointer(pSender))
 		pSender->SendPreviewAnswer(this, imgResults, nFramesGrabbed);
 	else if (thePrefs.GetVerbose()) //probably the client got deleted while grabbing the frames
 		AddDebugLogLine(false, _T("Couldn't find sender of peer preview request"));

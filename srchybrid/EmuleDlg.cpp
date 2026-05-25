@@ -59,6 +59,7 @@
 #include "EMSocket.h"
 #include "UpDownClient.h"
 #include "KnownFileList.h"
+#include "KnownFilePointerValidation.h"
 #include "ServerList.h"
 #include "Opcodes.h"
 #include "ProtocolGuards.h"
@@ -4987,12 +4988,12 @@ LRESULT CemuleDlg::OnPeerPreviewFinished(WPARAM wParam, LPARAM lParam)
 	if (result == NULL)
 		return 0;
 
-	if (theApp.knownfiles->IsKnownFile(pOwner) || theApp.downloadqueue->IsPartFile(pOwner))
+	if (IsLiveKnownFilePointer(pOwner))
 	{
 		pOwner->PeerPreviewFinished(result->imgResults, result->nImagesGrabbed, result->pSender);
 		result->ReleaseFrames();
 	}
-	else if (theApp.clientlist->IsValidClient(result->pSender))
+	else if (theApp.clientlist != NULL && theApp.clientlist->ContainsClientPointer(result->pSender))
 		result->pSender->SendPreviewAnswer(NULL, NULL, 0);
 	else
 		ASSERT(0);
