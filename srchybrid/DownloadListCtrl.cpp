@@ -833,7 +833,7 @@ void CDownloadListCtrl::AddFile(CPartFile *toadd)
 
 void CDownloadListCtrl::AddSource(CPartFile *owner, CUpDownClient *source, bool notavailable)
 {
-	if (!IsLiveDownloadClient(source))
+	if (owner == NULL || theApp.downloadqueue == NULL || !theApp.downloadqueue->IsPartFile(owner) || !IsLiveDownloadClient(source))
 		return;
 
 	ItemType itemtype = notavailable ? UNAVAILABLE_SOURCE : AVAILABLE_SOURCE;
@@ -841,6 +841,8 @@ void CDownloadListCtrl::AddSource(CPartFile *owner, CUpDownClient *source, bool 
 	bool bFound = false;
 	for (ListItems::const_iterator it = m_ListItems.lower_bound(source); it != m_ListItems.end() && it->first == source; ++it) {
 		CtrlItem_Struct *cur_item = it->second;
+		if (cur_item == NULL)
+			continue;
 
 		// Check if this source has been already added to this file => to be sure
 		if (cur_item->owner == owner) {
@@ -861,6 +863,8 @@ void CDownloadListCtrl::AddSource(CPartFile *owner, CUpDownClient *source, bool 
 
 	ListItems::const_iterator ownerIt = m_ListItems.find(owner);
 	ASSERT(ownerIt != m_ListItems.end());
+	if (ownerIt == m_ListItems.end() || ownerIt->second == NULL || ownerIt->second->type != FILE_TYPE || ownerIt->second->value != owner)
+		return;
 	CtrlItem_Struct *ownerItem = ownerIt->second;
 	ASSERT(ownerItem->value == owner);
 
