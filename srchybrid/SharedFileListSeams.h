@@ -133,6 +133,12 @@ enum class SharedHashDrainContinuationAction : unsigned char
 	DrainInlineFallback
 };
 
+enum class PartFileHashWorkerPostAction : unsigned char
+{
+	PostToUi,
+	DropResult
+};
+
 struct SharedHashDrainContinuationState
 {
 	bool bDeferredResultsAvailable;
@@ -149,6 +155,12 @@ struct SharedHashShutdownCacheState
 	bool bQueuedJobAvailable;
 	bool bPendingCompletion;
 	bool bActiveJob;
+};
+
+struct PartFileHashWorkerPostState
+{
+	bool bAppClosing;
+	bool bWindowAvailable;
 };
 
 /**
@@ -306,6 +318,18 @@ inline SharedHashDrainContinuationAction GetSharedHashDrainContinuationAction(co
 	if (rState.bPostSucceeded)
 		return SharedHashDrainContinuationAction::WaitForPostedDrain;
 	return SharedHashDrainContinuationAction::DrainInlineFallback;
+}
+
+inline PartFileHashWorkerPostAction GetPartFileHashWorkerPostAction(const PartFileHashWorkerPostState &rState)
+{
+	if (rState.bAppClosing || !rState.bWindowAvailable)
+		return PartFileHashWorkerPostAction::DropResult;
+	return PartFileHashWorkerPostAction::PostToUi;
+}
+
+inline bool CanPartFileHashWorkerTouchPartFile(const bool bAppClosing, const bool bHasPartFile) noexcept
+{
+	return !bAppClosing && bHasPartFile;
 }
 
 /**

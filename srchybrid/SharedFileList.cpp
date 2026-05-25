@@ -51,6 +51,7 @@
 #include "LongPathSeams.h"
 #include "MD5Sum.h"
 #include "UserMsgs.h"
+#include "WorkerUiMessageSeams.h"
 #include <algorithm>
 #include <string>
 #include <unordered_map>
@@ -82,6 +83,27 @@ bool ShouldLogStartupHashFile(const ULONGLONG ullCompletedFiles, const ULONGLONG
 {
 	return !bStartupDeferredHashingActive
 		|| ShouldEmitStartupHashProfileSample(ullCompletedFiles, ullFailedFiles, 1);
+}
+
+bool PostPartFileHashWorkerResult(UINT uMessage, WPARAM wParam, LPARAM lParam)
+{
+	if (theApp.emuledlg == NULL)
+		return false;
+
+	const HWND hTargetWnd = theApp.emuledlg->GetSafeHwnd();
+	if (SharedFileListSeams::GetPartFileHashWorkerPostAction({ theApp.IsClosing(), hTargetWnd != NULL && ::IsWindow(hTargetWnd) != FALSE })
+		!= SharedFileListSeams::PartFileHashWorkerPostAction::PostToUi)
+	{
+		return false;
+	}
+
+	const SWorkerUiMessageDelivery delivery = PostWorkerUiMessage(hTargetWnd, uMessage, wParam, lParam);
+	return delivery.eDelivery == EWorkerUiMessageDelivery::Delivered;
+}
+
+bool CanTouchPartFileHashTarget(CPartFile *pPartFile)
+{
+	return SharedFileListSeams::CanPartFileHashWorkerTouchPartFile(theApp.IsClosing(), pPartFile != NULL);
 }
 
 void UpdateSharedFilesForPublishedED2KChanges(CSharedFilesCtrl *pOutput, const std::vector<CKnownFile*> &rChangedFiles)
@@ -484,6 +506,10 @@ int CAddFileThread::Run()
 	// If all those hash threads would run concurrently, the I/O system would be under
 	// very heavy load and slowly progressing
 	CSingleLock hashingLock(&theApp.hashing_mut, TRUE); // hash only one file at a time
+	if (theApp.IsClosing()) {
+		hashingLock.Unlock();
+		return 0;
+	}
 
 	CString strFilePath;
 	strFilePath = m_strDirectory;
@@ -511,21 +537,21 @@ int CAddFileThread::Run()
 		if (newKnown->CreateFromFile(m_strDirectory, m_strFilename, pProgressTarget)) { // SLUGFILLER: SafeHash - in case of shutdown while still hashing
 			newKnown->SetPartFileHashLayoutGenerationSnapshot(nHashLayoutGeneration);
 			newKnown->SetSharedDirectory(m_strSharedDir);
-			if (!theApp.emuledlg->PostMessage(TM_FINISHEDHASHING, (m_pOwner ? 0 : (WPARAM)m_partfile), (LPARAM)newKnown)) {
-				if (m_partfile && m_partfile->GetFileOp() == PFOP_HASHING)
+			if (!PostPartFileHashWorkerResult(TM_FINISHEDHASHING, (m_pOwner ? 0 : (WPARAM)m_partfile), (LPARAM)newKnown)) {
+				if (CanTouchPartFileHashTarget(m_partfile) && m_partfile->GetFileOp() == PFOP_HASHING)
 					m_partfile->SetFileOp(PFOP_NONE);
 				delete newKnown;
 			}
 		} else {
-			if (m_partfile && m_partfile->GetFileOp() == PFOP_HASHING)
+			if (CanTouchPartFileHashTarget(m_partfile) && m_partfile->GetFileOp() == PFOP_HASHING)
 				m_partfile->SetFileOp(PFOP_NONE);
 
 			// SLUGFILLER: SafeHash - inform main program of hash failure
-			if (m_pOwner) {
+			if (m_pOwner && !theApp.IsClosing()) {
 				UnknownFile_Struct *hashed = new UnknownFile_Struct;
 				hashed->strDirectory = m_strDirectory;
 				hashed->strName = m_strFilename;
-				if (!theApp.emuledlg->PostMessage(TM_HASHFAILED, 0, (LPARAM)hashed))
+				if (!PostPartFileHashWorkerResult(TM_HASHFAILED, 0, (LPARAM)hashed))
 					delete hashed;
 			}
 			// SLUGFILLER: SafeHash

@@ -2937,7 +2937,10 @@ LRESULT CemuleDlg::OnFileHashed(WPARAM wParam, LPARAM lParam)
 		// File hashing finished for a shared file (not a partfile) when:
 		//	- reading shared directories at startup and hashing files which were not found in known.met
 		//	- reading shared directories during runtime (user hit Reload button, added a shared directory, ...)
-		theApp.sharedfiles->FileHashingFinished(result);
+		if (theApp.sharedfiles != NULL)
+			theApp.sharedfiles->FileHashingFinished(result);
+		else
+			delete result;
 	}
 	return TRUE;
 }
@@ -2960,7 +2963,11 @@ LRESULT CemuleDlg::OnFileOpProgress(WPARAM wParam, LPARAM lParam)
 // SLUGFILLER: SafeHash
 LRESULT CemuleDlg::OnHashFailed(WPARAM, LPARAM lParam)
 {
-	theApp.sharedfiles->HashFailed(reinterpret_cast<UnknownFile_Struct*>(lParam));
+	UnknownFile_Struct *pHashed = reinterpret_cast<UnknownFile_Struct*>(lParam);
+	if (!theApp.IsClosing() && theApp.sharedfiles != NULL)
+		theApp.sharedfiles->HashFailed(pHashed);
+	else
+		delete pHashed;
 	return 0;
 }
 // SLUGFILLER: SafeHash
