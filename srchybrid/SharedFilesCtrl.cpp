@@ -674,7 +674,7 @@ void CSharedFilesCtrl::CollectSelectedFiles(CTypedPtrList<CPtrList, CShareableFi
 	for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;) {
 		const int iSelectedIndex = GetNextSelectedItem(pos);
 		CShareableFile *pSelectedFile = GetFileByIndex(iSelectedIndex);
-		if (pSelectedFile != NULL)
+		if (IsLiveVisibleFilePointer(pSelectedFile))
 			rSelectedFiles.AddTail(pSelectedFile);
 	}
 }
@@ -688,7 +688,8 @@ CShareableFile* CSharedFilesCtrl::GetSingleSelectedFile() const
 	if (pos == NULL)
 		return NULL;
 
-	return GetFileByIndex(GetNextSelectedItem(pos));
+	CShareableFile *pSelectedFile = GetFileByIndex(GetNextSelectedItem(pos));
+	return IsLiveVisibleFilePointer(pSelectedFile) ? pSelectedFile : NULL;
 }
 
 void CSharedFilesCtrl::RebuildVisibleFileIndex()
@@ -755,6 +756,43 @@ bool CSharedFilesCtrl::PruneStaleVisibleFiles()
 	RebuildVisibleFileIndex();
 	ApplyVisibleFileCount();
 	return true;
+}
+
+CObject* CSharedFilesCtrl::WalkToLiveVisibleFileItem(int iDirection)
+{
+	PruneStaleVisibleFiles();
+
+	const int iItemCount = GetItemCount();
+	if (iItemCount < 2)
+		return NULL;
+
+	POSITION pos = GetFirstSelectedItemPosition();
+	if (pos == NULL)
+		return NULL;
+
+	const int iCurSelItem = GetNextSelectedItem(pos);
+	for (int iItem = iCurSelItem + iDirection; iItem >= 0 && iItem < iItemCount; iItem += iDirection) {
+		CShareableFile *pFile = GetFileByIndex(iItem);
+		if (!IsLiveVisibleFilePointer(pFile))
+			continue;
+
+		SetItemState(iCurSelItem, 0, LVIS_SELECTED | LVIS_FOCUSED);
+		SetItemState(iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+		SetSelectionMark(iItem);
+		EnsureVisible(iItem, FALSE);
+		return pFile;
+	}
+	return NULL;
+}
+
+CObject* CSharedFilesCtrl::GetPrevSelectableItem()
+{
+	return WalkToLiveVisibleFileItem(-1);
+}
+
+CObject* CSharedFilesCtrl::GetNextSelectableItem()
+{
+	return WalkToLiveVisibleFileItem(1);
 }
 
 void CSharedFilesCtrl::ScheduleVisibleFilePrune()

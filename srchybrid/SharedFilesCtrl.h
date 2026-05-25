@@ -104,6 +104,8 @@ public:
 	 * @brief Returns the single selected Shared Files object, or `NULL` when the selection is not singular.
 	 */
 	CShareableFile* GetSingleSelectedFile() const;
+	virtual CObject* GetNextSelectableItem();
+	virtual CObject* GetPrevSelectableItem();
 
 protected:
 	CTitledMenu		m_SharedFilesMenu;
@@ -134,6 +136,7 @@ protected:
 	void ApplyVisibleFileCount();
 	bool IsLiveVisibleFilePointer(const CShareableFile *file) const;
 	bool PruneStaleVisibleFiles();
+	CObject* WalkToLiveVisibleFileItem(int iDirection);
 	void ScheduleVisibleFilePrune();
 	void FlushVisibleFilePrune();
 	bool ShouldPreserveVirtualListState() const;
