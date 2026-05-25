@@ -1567,6 +1567,7 @@ void CPreferences::Init()
 	prefsExt = new Preferences_Ext_Struct{};
 
 	const CString &sConfDir(GetMuleDirectory(EMULE_CONFIGDIR));
+	const bool bUsingStartupConfigBaseDirOverride = theApp.HasStartupConfigBaseDirOverride();
 	m_strFileCommentsFilePath.Format(_T("%sfileinfo.ini"), (LPCTSTR)sConfDir);
 	EnsureDefaultConfigTextFiles(sConfDir);
 	LoadSharedIgnoreRules(sConfDir);
@@ -1574,12 +1575,14 @@ void CPreferences::Init()
 	///////////////////////////////////////////////////////////////////////////
 	// Move *.log files from application directory into 'log' directory
 	//
-	(void)PathHelpers::ForEachMatchingEntry(GetMuleDirectory(EMULE_EXECUTABLEDIR) + _T("eMule*.log"),
-		[&](const WIN32_FIND_DATA &findData) -> bool {
-		if ((findData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN)) == 0)
-			(void)LongPathSeams::MoveFile(GetMuleDirectory(EMULE_EXECUTABLEDIR) + findData.cFileName, GetMuleDirectory(EMULE_LOGDIR) + findData.cFileName);
-		return true;
-	});
+	if (!bUsingStartupConfigBaseDirOverride) {
+		(void)PathHelpers::ForEachMatchingEntry(GetMuleDirectory(EMULE_EXECUTABLEDIR) + _T("eMule*.log"),
+			[&](const WIN32_FIND_DATA &findData) -> bool {
+			if ((findData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN)) == 0)
+				(void)LongPathSeams::MoveFile(GetMuleDirectory(EMULE_EXECUTABLEDIR) + findData.cFileName, GetMuleDirectory(EMULE_LOGDIR) + findData.cFileName);
+			return true;
+		});
+	}
 
 	///////////////////////////////////////////////////////////////////////////
 	// Move 'downloads.txt/bak' files from application and/or database directory
@@ -1588,9 +1591,11 @@ void CPreferences::Init()
 	static LPCTSTR const strDownloadsTxt = _T("downloads.txt");
 	static LPCTSTR const strDownloadsBak = _T("downloads.bak");
 	MovePreferences(EMULE_DATABASEDIR, strDownloadsTxt, sConfDir);
-	MovePreferences(EMULE_EXECUTABLEDIR, strDownloadsTxt, sConfDir);
+	if (!bUsingStartupConfigBaseDirOverride)
+		MovePreferences(EMULE_EXECUTABLEDIR, strDownloadsTxt, sConfDir);
 	MovePreferences(EMULE_DATABASEDIR, strDownloadsBak, sConfDir);
-	MovePreferences(EMULE_EXECUTABLEDIR, strDownloadsBak, sConfDir);
+	if (!bUsingStartupConfigBaseDirOverride)
+		MovePreferences(EMULE_EXECUTABLEDIR, strDownloadsBak, sConfDir);
 
 	// load preferences.dat or set standard values
 	CString strFullPath(sConfDir + strPreferencesDat);
@@ -4255,16 +4260,25 @@ CString CPreferences::GetDefaultDirectory(EDefaultDirectory eDirectory, bool bCr
 			::CoTaskMemFree(pszProgramData);
 		}
 
-		if (theApp.HasStartupConfigBaseDirOverride())
-			strSelectedConfigBaseDirectory = theApp.GetStartupConfigBaseDirOverride();
+		const bool bHasStartupConfigBaseDirOverride = theApp.HasStartupConfigBaseDirOverride();
+		if (bHasStartupConfigBaseDirOverride) {
+			const CString strStartupConfigBaseDir(theApp.GetStartupConfigBaseDirOverride());
+			strSelectedDataBaseDirectory = StartupConfigOverride::GetDataDirectoryFromBaseDir(strStartupConfigBaseDir);
+			strSelectedConfigBaseDirectory = strStartupConfigBaseDir;
+			strSelectedExpansionBaseDirectory = StartupConfigOverride::GetExpansionDirectoryFromBaseDir(strStartupConfigBaseDir);
+		}
 
 		// All the directories (categories also) should have a trailing backslash
-		m_astrDefaultDirs[EMULE_CONFIGDIR] = theApp.HasStartupConfigBaseDirOverride()
+		m_astrDefaultDirs[EMULE_CONFIGDIR] = bHasStartupConfigBaseDirOverride
 			? StartupConfigOverride::GetConfigDirectoryFromBaseDir(strSelectedConfigBaseDirectory)
 			: strSelectedConfigBaseDirectory + CONFIGFOLDER;
-		m_astrDefaultDirs[EMULE_TEMPDIR] = strSelectedDataBaseDirectory + _T("Temp\\");
-		m_astrDefaultDirs[EMULE_INCOMINGDIR] = strSelectedDataBaseDirectory + _T("Incoming\\");
-		m_astrDefaultDirs[EMULE_LOGDIR] = theApp.HasStartupConfigBaseDirOverride()
+		m_astrDefaultDirs[EMULE_TEMPDIR] = bHasStartupConfigBaseDirOverride
+			? StartupConfigOverride::GetTempDirectoryFromBaseDir(strSelectedDataBaseDirectory)
+			: strSelectedDataBaseDirectory + _T("Temp\\");
+		m_astrDefaultDirs[EMULE_INCOMINGDIR] = bHasStartupConfigBaseDirOverride
+			? StartupConfigOverride::GetIncomingDirectoryFromBaseDir(strSelectedDataBaseDirectory)
+			: strSelectedDataBaseDirectory + _T("Incoming\\");
+		m_astrDefaultDirs[EMULE_LOGDIR] = bHasStartupConfigBaseDirOverride
 			? StartupConfigOverride::GetLogDirectoryFromBaseDir(strSelectedConfigBaseDirectory)
 			: strSelectedConfigBaseDirectory + _T("logs\\");
 		m_astrDefaultDirs[EMULE_ADDLANGDIR] = strSelectedExpansionBaseDirectory + _T("lang\\");

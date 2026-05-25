@@ -79,11 +79,43 @@ namespace StartupConfigOverride
 	}
 
 	/**
+	 * @brief Builds the effective data base directory for the selected base directory.
+	 */
+	inline CString GetDataDirectoryFromBaseDir(const CString &strBaseDir)
+	{
+		return NormalizeBaseDir(strBaseDir);
+	}
+
+	/**
+	 * @brief Builds the default temp directory path below the selected base directory.
+	 */
+	inline CString GetTempDirectoryFromBaseDir(const CString &strBaseDir)
+	{
+		return NormalizeBaseDir(strBaseDir) + _T("Temp\\");
+	}
+
+	/**
+	 * @brief Builds the default incoming directory path below the selected base directory.
+	 */
+	inline CString GetIncomingDirectoryFromBaseDir(const CString &strBaseDir)
+	{
+		return NormalizeBaseDir(strBaseDir) + _T("Incoming\\");
+	}
+
+	/**
 	 * @brief Builds the effective log directory path below the selected base directory.
 	 */
 	inline CString GetLogDirectoryFromBaseDir(const CString &strBaseDir)
 	{
 		return NormalizeBaseDir(strBaseDir) + _T("logs\\");
+	}
+
+	/**
+	 * @brief Builds the effective expansion directory for the selected base directory.
+	 */
+	inline CString GetExpansionDirectoryFromBaseDir(const CString &strBaseDir)
+	{
+		return NormalizeBaseDir(strBaseDir);
 	}
 
 	/**
