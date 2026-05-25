@@ -80,13 +80,19 @@ CRoutingBin::~CRoutingBin()
 bool CRoutingBin::AddContact(CContact *pContact)
 {
 	ASSERT(pContact != NULL);
+	if (pContact == NULL)
+		return false;
+
 	const uint32 uIP = pContact->GetIPAddress();
 	uint32 uSameSubnets = 0;
 	// Check if we already have a contact with this ID in the list.
 	for (ContactList::const_iterator itContact = m_listEntries.begin(); itContact != m_listEntries.end(); ++itContact) {
-		if (pContact->GetClientID() == (*itContact)->m_uClientID)
+		const CContact *pExistingContact = *itContact;
+		if (pExistingContact == NULL)
+			continue;
+		if (pContact->GetClientID() == pExistingContact->m_uClientID)
 			return false;
-		uSameSubnets += static_cast<uint32>(((uIP ^ (*itContact)->GetIPAddress()) & ~0xFF) == 0);
+		uSameSubnets += static_cast<uint32>(((uIP ^ pExistingContact->GetIPAddress()) & ~0xFF) == 0);
 	}
 
 	// Several checks to make sure that we don't store multiple contacts from the same IP or too many
@@ -117,6 +123,9 @@ bool CRoutingBin::AddContact(CContact *pContact)
 void CRoutingBin::SetAlive(const CContact *pContact)
 {
 	ASSERT(pContact != NULL);
+	if (pContact == NULL)
+		return;
+
 	// Check if we already have a contact with this ID in the list.
 	CContact *pContactTest = GetContact(pContact->GetClientID());
 	ASSERT(pContact == pContactTest);
@@ -160,6 +169,10 @@ CContact* CRoutingBin::GetContact(uint32 uIP, uint16 nPort, bool bTCPPort)
 
 void CRoutingBin::RemoveContact(CContact *const pContact, bool bNoTrackingAdjust)
 {
+	ASSERT(pContact != NULL);
+	if (pContact == NULL)
+		return;
+
 	if (!bNoTrackingAdjust)
 		AdjustGlobalTracking(pContact->GetIPAddress(), false);
 	m_listEntries.remove(pContact);
@@ -301,6 +314,10 @@ void CRoutingBin::AdjustGlobalTracking(uint32 uIP, bool bIncrease)
 
 bool CRoutingBin::ChangeContactIPAddress(CContact *pContact, uint32 uNewIP)
 {
+	ASSERT(pContact != NULL);
+	if (pContact == NULL)
+		return false;
+
 	// Called if we want to update an indexed contact with a new IP. We have to check if we actually allow
 	// such a change and if adjust our tracking. Rejecting a change will in the worst case lead a node contact
 	// to become invalid and purged later, but it also protects against a flood of malicious update requests
@@ -357,6 +374,10 @@ bool CRoutingBin::ChangeContactIPAddress(CContact *pContact, uint32 uNewIP)
 
 void CRoutingBin::PushToBottom(CContact *pContact) // puts an existing contact from X to the end of the list
 {
+	ASSERT(pContact != NULL);
+	if (pContact == NULL)
+		return;
+
 	ASSERT(GetContact(pContact->GetClientID()) == pContact);
 	RemoveContact(pContact, true);
 	m_listEntries.push_back(pContact);
