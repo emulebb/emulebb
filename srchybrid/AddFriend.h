@@ -38,6 +38,7 @@ public:
 
 protected:
 	HICON m_icoWnd;
+	bool HasLiveShowFriend() const;
 	virtual BOOL OnInitDialog();
 	virtual void DoDataExchange(CDataExchange *pDX);    // DDX/DDV support
 

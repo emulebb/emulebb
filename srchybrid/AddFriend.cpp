@@ -55,10 +55,20 @@ void CAddFriend::DoDataExchange(CDataExchange *pDX)
 	CDialog::DoDataExchange(pDX);
 }
 
+bool CAddFriend::HasLiveShowFriend() const
+{
+	return m_pShowFriend != NULL && theApp.friendlist != NULL && theApp.friendlist->IsValid(m_pShowFriend);
+}
+
 BOOL CAddFriend::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	InitWindowStyles(this);
+	if (m_pShowFriend != NULL && !HasLiveShowFriend()) {
+		m_pShowFriend = NULL;
+		EndDialog(IDCANCEL);
+		return TRUE;
+	}
 	Localize();
 	if (m_pShowFriend) {
 		SetIcon(m_icoWnd = theApp.LoadIcon(_T("ClientDetails")), FALSE);
