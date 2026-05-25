@@ -1094,6 +1094,7 @@ int		CPreferences::iMaxLogBuff;
 UINT	CPreferences::uMaxLogFileSize;
 ELogFileFormat CPreferences::m_iLogFileFormat = Unicode;
 int		CPreferences::m_iCreateCrashDumpMode;
+bool	CPreferences::m_bCaptureFullCrashDump;
 bool	CPreferences::scheduler;
 bool	CPreferences::msgonlyfriends;
 bool	CPreferences::msgsecure;
@@ -2652,6 +2653,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("StartupMinimized"), startMinimized);
 	ini.WriteBool(_T("AutoStart"), m_bAutoStart);
 	ini.WriteInt(_T("CreateCrashDump"), m_iCreateCrashDumpMode);
+	ini.WriteBool(_T("CaptureFullCrashDump"), m_bCaptureFullCrashDump);
 	ini.WriteInt(_T("LastMainWndDlgID"), m_iLastMainWndDlgID);
 	ini.WriteInt(_T("LastLogPaneID"), m_iLastLogPaneID);
 	ini.WriteBool(_T("SafeServerConnect"), m_bSafeServerConnect);
@@ -3027,6 +3029,7 @@ void CPreferences::LoadPreferences()
 	m_bFirstStart = ini.GetString(_T("AppVersion")).IsEmpty();
 	m_bDisableFirstTimeWizard = ini.GetBool(_T("DisableFirstTimeWizard"), true);
 	SetCreateCrashDumpMode(ini.GetInt(_T("CreateCrashDump"), GetDefaultCreateCrashDumpMode()));
+	SetCaptureFullCrashDump(ini.GetBool(_T("CaptureFullCrashDump"), GetDefaultCaptureFullCrashDump()));
 
 #ifdef _DEBUG
 	m_iDbgHeap = ini.GetInt(_T("DebugHeap"), 1);

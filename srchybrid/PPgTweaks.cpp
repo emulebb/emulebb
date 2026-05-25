@@ -32,6 +32,7 @@
 #include "HelpIDs.h"
 #include "Log.h"
 #include "MediaInfo.h"
+#include "mdump.h"
 #include "PerfLog.h"
 #include "PreferenceUiSeams.h"
 #include "UserMsgs.h"
@@ -217,6 +218,16 @@ namespace
 	static CString GetCreateCrashDumpAlwaysLabel()
 	{
 		return GetResString(IDS_TWEAKS_CRASH_DUMP_ALWAYS);
+	}
+
+	static CString GetCaptureFullCrashDumpLabel()
+	{
+		return _T("Capture Full Dump");
+	}
+
+	static CString GetCaptureFullCrashDumpToolTip()
+	{
+		return _T("When crash dump creation is enabled, write a full memory dump instead of the default minidump.\r\n\r\nFull dumps are much larger and can contain private process memory. Share them only with trusted developers.");
 	}
 
 	static CString GetMaxLogFileSizeLabel()
@@ -497,6 +508,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_htiCreateCrashDumpDisabled()
 	, m_htiCreateCrashDumpPrompt()
 	, m_htiCreateCrashDumpAlways()
+	, m_htiCaptureFullCrashDump()
 	, m_htiDateTimeFormat()
 	, m_htiDateTimeFormat4Log()
 	, m_htiFullVerbose()
@@ -668,6 +680,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_bCloseUPnPOnExit(true)
 	, m_bConditionalTCPAccept()
 	, m_bCreditSystem()
+	, m_bCaptureFullCrashDump()
 	, m_bDebug2Disk()
 	, m_bDebugSourceExchange()
 	, m_bExtraPreviewWithMenu()
@@ -951,6 +964,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_htiCreateCrashDumpDisabled = m_ctrlTreeOptions.InsertRadioButton(GetCreateCrashDumpDisabledLabel(), m_htiCreateCrashDump, m_iCreateCrashDumpMode == 0);
 		m_htiCreateCrashDumpPrompt = m_ctrlTreeOptions.InsertRadioButton(GetCreateCrashDumpPromptLabel(), m_htiCreateCrashDump, m_iCreateCrashDumpMode == 1);
 		m_htiCreateCrashDumpAlways = m_ctrlTreeOptions.InsertRadioButton(GetCreateCrashDumpAlwaysLabel(), m_htiCreateCrashDump, m_iCreateCrashDumpMode == 2);
+		m_htiCaptureFullCrashDump = m_ctrlTreeOptions.InsertCheckBox(GetCaptureFullCrashDumpLabel(), m_htiLoggingGroup, m_bCaptureFullCrashDump);
 		m_htiMaxLogFileSize = m_ctrlTreeOptions.InsertItem(GetMaxLogFileSizeLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiLoggingGroup);
 		m_ctrlTreeOptions.AddEditBox(m_htiMaxLogFileSize, RUNTIME_CLASS(CNumTreeOptionsEdit));
 		m_htiMaxLogBuffer = m_ctrlTreeOptions.InsertItem(GetMaxLogBufferLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiLoggingGroup);
@@ -1079,6 +1093,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiCreateCrashDumpDisabled, IDS_TWEAKS_TT_CREATE_CRASH_DUMP_DISABLED);
 		SetTreeToolTip(m_htiCreateCrashDumpPrompt, IDS_TWEAKS_TT_CREATE_CRASH_DUMP_PROMPT);
 		SetTreeToolTip(m_htiCreateCrashDumpAlways, IDS_TWEAKS_TT_CREATE_CRASH_DUMP_ALWAYS);
+		SetTreeToolTip(m_htiCaptureFullCrashDump, GetCaptureFullCrashDumpToolTip());
 		SetTreeToolTip(m_htiMaxLogFileSize, IDS_TWEAKS_TT_MAX_LOG_FILE_SIZE);
 		SetTreeToolTip(m_htiMaxLogBuffer, IDS_TWEAKS_TT_MAX_LOG_BUFFER);
 		SetTreeToolTip(m_htiLogFileFormat, IDS_TWEAKS_TT_LOG_FILE_FORMAT);
@@ -1368,6 +1383,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 	// Logging group
 	//
 	DDX_TreeRadio(pDX, IDC_EXT_OPTS, m_htiCreateCrashDump, m_iCreateCrashDumpMode);
+	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiCaptureFullCrashDump, m_bCaptureFullCrashDump);
 	ExchangeTreeUInt(pDX, m_ctrlTreeOptions, m_htiMaxLogFileSize, m_uMaxLogFileSizeKiB);
 	ExchangeTreeUInt(pDX, m_ctrlTreeOptions, m_htiMaxLogBuffer, m_uMaxLogBufferKiB);
 	DDX_TreeRadio(pDX, IDC_EXT_OPTS, m_htiLogFileFormat, m_iLogFileFormat);
@@ -1475,6 +1491,7 @@ BOOL CPPgTweaks::OnInitDialog()
 		m_iLogLevel = 5 - thePrefs.m_byLogLevel;
 	}
 	m_iCreateCrashDumpMode = thePrefs.GetCreateCrashDumpMode();
+	m_bCaptureFullCrashDump = thePrefs.GetCaptureFullCrashDump();
 	m_uMaxLogFileSizeKiB = PreferenceUiSeams::LogFileSizeBytesToKiB(thePrefs.GetMaxLogFileSize());
 	m_uMaxLogBufferKiB = static_cast<UINT>(max(0, thePrefs.GetMaxLogBuff() / 1024));
 	m_iLogFileFormat = thePrefs.GetLogFileFormat();
@@ -1649,6 +1666,8 @@ BOOL CPPgTweaks::OnApply()
 	}
 
 	thePrefs.SetCreateCrashDumpMode(m_iCreateCrashDumpMode);
+	thePrefs.SetCaptureFullCrashDump(m_bCaptureFullCrashDump);
+	theCrashDumper.bCaptureFullCrashDump = thePrefs.GetCaptureFullCrashDump();
 	thePrefs.uMaxLogFileSize = PreferenceUiSeams::LogFileSizeKiBToBytes(m_uMaxLogFileSizeKiB);
 	thePrefs.iMaxLogBuff = static_cast<int>(m_uMaxLogBufferKiB * 1024u);
 	thePrefs.m_iLogFileFormat = static_cast<ELogFileFormat>(PreferenceUiSeams::NormalizeLogFileFormat(m_iLogFileFormat));
@@ -1904,6 +1923,7 @@ void CPPgTweaks::Localize()
 		m_ctrlTreeOptions.SetItemText(m_htiCreateCrashDumpDisabled, GetCreateCrashDumpDisabledLabel());
 		m_ctrlTreeOptions.SetItemText(m_htiCreateCrashDumpPrompt, GetCreateCrashDumpPromptLabel());
 		m_ctrlTreeOptions.SetItemText(m_htiCreateCrashDumpAlways, GetCreateCrashDumpAlwaysLabel());
+		m_ctrlTreeOptions.SetItemText(m_htiCaptureFullCrashDump, GetCaptureFullCrashDumpLabel());
 		m_ctrlTreeOptions.SetEditLabel(m_htiMaxLogFileSize, GetMaxLogFileSizeLabel());
 		m_ctrlTreeOptions.SetEditLabel(m_htiMaxLogBuffer, GetMaxLogBufferLabel());
 		m_ctrlTreeOptions.SetItemText(m_htiLogFileFormat, GetLogFileFormatLabel());
@@ -2015,6 +2035,7 @@ void CPPgTweaks::OnDestroy()
 	m_htiCreateCrashDumpDisabled = NULL;
 	m_htiCreateCrashDumpPrompt = NULL;
 	m_htiCreateCrashDumpAlways = NULL;
+	m_htiCaptureFullCrashDump = NULL;
 	m_htiDateTimeFormat = NULL;
 	m_htiDateTimeFormat4Log = NULL;
 	m_htiHighresTimer = NULL;

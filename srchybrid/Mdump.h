@@ -21,6 +21,7 @@ public:
 	 */
 	static SManualDumpResult CreateManualDump(LPCTSTR pszAppName, LPCTSTR pszDumpDir, bool bFullMemoryDump);
 	unsigned uCreateCrashDump; //0 - no dump; 1 - create dump if user agrees; 2 - create without asking
+	bool bCaptureFullCrashDump;
 private:
 	static CString m_strAppName;
 	static CString m_strDumpDir;

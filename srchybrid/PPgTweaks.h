@@ -60,6 +60,7 @@ protected:
 	HTREEITEM m_htiCreateCrashDumpDisabled;
 	HTREEITEM m_htiCreateCrashDumpPrompt;
 	HTREEITEM m_htiCreateCrashDumpAlways;
+	HTREEITEM m_htiCaptureFullCrashDump;
 	HTREEITEM m_htiDateTimeFormat;
 	HTREEITEM m_htiDateTimeFormat4Log;
 	HTREEITEM m_htiFullVerbose;
@@ -234,6 +235,7 @@ protected:
 	bool m_bCloseUPnPOnExit;
 	bool m_bConditionalTCPAccept;
 	bool m_bCreditSystem;
+	bool m_bCaptureFullCrashDump;
 	bool m_bDebug2Disk;
 	bool m_bDebugSourceExchange;
 	bool m_bExtraPreviewWithMenu;

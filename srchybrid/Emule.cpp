@@ -1479,6 +1479,7 @@ BOOL CemuleApp::InitInstance()
 	// Install crash dump creation
 	//
 	theCrashDumper.uCreateCrashDump = GetProfileInt(_T("eMule"), _T("CreateCrashDump"), 0);
+	theCrashDumper.bCaptureFullCrashDump = GetProfileInt(_T("eMule"), _T("CaptureFullCrashDump"), 0) != 0;
 #if !defined(_DEVBUILD)
 	if (theCrashDumper.uCreateCrashDump > 0)
 #endif

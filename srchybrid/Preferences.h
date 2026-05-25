@@ -552,6 +552,7 @@ public:
 	static UINT		uMaxLogFileSize;
 	static ELogFileFormat m_iLogFileFormat;
 	static int		m_iCreateCrashDumpMode;
+	static bool		m_bCaptureFullCrashDump;
 	static bool		scheduler;
 	static bool		msgonlyfriends;
 	static bool		msgsecure;
@@ -1580,11 +1581,14 @@ public:
 	static UINT		GetMaxLogFileSize()					{ return uMaxLogFileSize; }
 	static ELogFileFormat GetLogFileFormat()			{ return m_iLogFileFormat; }
 	static int		GetCreateCrashDumpMode()			{ return m_iCreateCrashDumpMode; }
+	static bool		GetCaptureFullCrashDump()			{ return m_bCaptureFullCrashDump; }
 	/**
 	 * @brief Returns the crash-dump mode used when no preference is stored.
 	 */
 	static int		GetDefaultCreateCrashDumpMode()		{ return 1; }
+	static bool		GetDefaultCaptureFullCrashDump()	{ return false; }
 	static void		SetCreateCrashDumpMode(int iMode);
+	static void		SetCaptureFullCrashDump(bool bEnabled) { m_bCaptureFullCrashDump = bEnabled; }
 
 	// Web Server
 	static uint16	GetWSPort()							{ return m_nWebPort; }

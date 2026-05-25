@@ -50,6 +50,11 @@ namespace
 		return static_cast<MINIDUMP_TYPE>(dwDumpType);
 	}
 
+	MINIDUMP_TYPE GetCrashDumpType(bool bFullMemoryDump)
+	{
+		return bFullMemoryDump ? GetManualDumpType(true) : MiniDumpNormal;
+	}
+
 }
 
 void CMiniDumper::Enable(LPCTSTR pszAppName, bool bShowErrors, LPCTSTR pszDumpDir)
@@ -130,7 +135,8 @@ LONG WINAPI CMiniDumper::TopLevelFilter(struct _EXCEPTION_POINTERS *pExceptionIn
 		HANDLE hFile = LongPathSeams::CreateFile(strDumpPath, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFile != INVALID_HANDLE_VALUE) {
 			_MINIDUMP_EXCEPTION_INFORMATION ExInfo = _MINIDUMP_EXCEPTION_INFORMATION{GetCurrentThreadId(), pExceptionInfo, FALSE};
-			BOOL bOK = ::MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpNormal, &ExInfo, NULL, NULL);
+			const MINIDUMP_TYPE eDumpType = GetCrashDumpType(theCrashDumper.bCaptureFullCrashDump);
+			BOOL bOK = ::MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, eDumpType, &ExInfo, NULL, NULL);
 			if (bOK) {
 				// Do *NOT* localize this string (in fact, do not use MFC to load it)!
 				strResult.Format(
