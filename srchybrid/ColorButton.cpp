@@ -23,10 +23,19 @@ static char THIS_FILE[] = __FILE__;
 
 void AFXAPI DDX_ColorButton(CDataExchange *pDX, int nIDC, COLORREF &crColour)
 {
+	ASSERT(pDX != NULL);
+	if (pDX == NULL)
+		return;
+
 	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
 	ASSERT(hWndCtrl != NULL);
+	if (hWndCtrl == NULL)
+		return;
 
-	CColorButton *pColourButton = static_cast<CColorButton*>(CWnd::FromHandlePermanent(hWndCtrl));
+	CColorButton *pColourButton = DYNAMIC_DOWNCAST(CColorButton, CWnd::FromHandlePermanent(hWndCtrl));
+	ASSERT(pColourButton != NULL);
+	if (pColourButton == NULL)
+		return;
 	if (pDX->m_bSaveAndValidate)
 		crColour = pColourButton->Color;
 	else // initializing
