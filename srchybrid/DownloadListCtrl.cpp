@@ -199,6 +199,8 @@ IMPLEMENT_DYNAMIC(CtrlItem_Struct, CObject)
 
 IMPLEMENT_DYNAMIC(CDownloadListCtrl, CMuleListCtrl)
 
+#pragma warning(push)
+#pragma warning(disable:4191)
 BEGIN_MESSAGE_MAP(CDownloadListCtrl, CMuleListCtrl)
 	ON_NOTIFY_REFLECT(LVN_COLUMNCLICK, OnLvnColumnClick)
 	ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnListModified)
@@ -216,6 +218,7 @@ BEGIN_MESSAGE_MAP(CDownloadListCtrl, CMuleListCtrl)
 	ON_WM_SYSCOLORCHANGE()
 	ON_WM_TIMER()
 END_MESSAGE_MAP()
+#pragma warning(pop)
 
 CDownloadListCtrl::CDownloadListCtrl()
 	: CDownloadListListCtrlItemWalk(this)
@@ -1005,10 +1008,12 @@ bool CDownloadListCtrl::RemoveFile(const CPartFile *toremove)
 	bool bResult = false;
 	if (theApp.IsClosing())
 		return bResult;
+	ASSERT(toremove != NULL);
+	if (toremove == NULL)
+		return bResult;
 	RemoveVideoThumbnailCache(toremove);
 	// Retrieve all entries matching the File or linked to the file
 	// Remark: The 'asked another files' clients must be removed from here
-	ASSERT(toremove != NULL);
 	for (ListItems::const_iterator it = m_ListItems.begin(); it != m_ListItems.end();) {
 		const CtrlItem_Struct *delItem = it->second;
 		if (delItem->owner == toremove || delItem->value == (void*)toremove) {
