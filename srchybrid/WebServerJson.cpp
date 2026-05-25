@@ -36,6 +36,7 @@
 #include "Friend.h"
 #include "FriendList.h"
 #include "GeoLocation.h"
+#include "HelperThreadLaunchSeams.h"
 #include "KnownFileList.h"
 #include "Log.h"
 #include "Mdump.h"
@@ -2434,7 +2435,15 @@ bool StartPartFileRecheck(CPartFile &rPartFile, SPipeApiError &rError)
 	rPartFile.SetFileOp(PFOP_HASHING);
 	rPartFile.SetFileOpProgress(0);
 	rPartFile.SetStatus(PS_HASHING);
-	pAddFileThread->ResumeThread();
+	DWORD dwResumeError = ERROR_SUCCESS;
+	if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(pAddFileThread, dwResumeError)) {
+		rPartFile.SetFileOp(PFOP_NONE);
+		rPartFile.SetStatus(PS_ERROR);
+		rError.strCode = "EMULE_ERROR";
+		rError.strMessage.Format(_T("failed to resume recheck thread (error %lu)"), dwResumeError);
+		DebugLogError(_T("Failed to resume REST part-file recheck worker - Error %lu"), dwResumeError);
+		return false;
+	}
 	return true;
 }
 
