@@ -1775,7 +1775,8 @@ void CemuleDlg::DoVersioncheck(bool manual)
 		return;
 	}
 
-	pThread->m_bAutoDelete = TRUE;
+	// AfxBeginThread starts function workers immediately with MFC auto-delete enabled.
+	// Do not mutate pThread after launch; a fast worker may already have exited.
 	thePrefs.UpdateLastVC();
 	(void)pContext.release();
 #endif
