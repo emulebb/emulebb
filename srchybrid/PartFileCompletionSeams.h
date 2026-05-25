@@ -15,6 +15,12 @@ enum class EWorkerCompletionDelivery
 	Failed
 };
 
+enum class ECompletionOwnerShutdownWaitAction
+{
+	DeleteNow,
+	WaitForWorker
+};
+
 /**
  * @brief Result of handing a part-file completion worker result to the UI thread.
  */
@@ -24,12 +30,19 @@ struct SWorkerCompletionPostResult
 	DWORD dwLastError = ERROR_SUCCESS;
 };
 
+constexpr DWORD kCompletionOwnerShutdownWaitMs = 5000u;
+
 /**
  * @brief Reports whether a part-file completion worker was created.
  */
 inline bool DidStartCompletionThread(const void *pThread) noexcept
 {
 	return pThread != nullptr;
+}
+
+inline ECompletionOwnerShutdownWaitAction GetCompletionOwnerShutdownWaitAction(const bool bCompletionLockAcquired) noexcept
+{
+	return bCompletionLockAcquired ? ECompletionOwnerShutdownWaitAction::DeleteNow : ECompletionOwnerShutdownWaitAction::WaitForWorker;
 }
 
 /**

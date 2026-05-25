@@ -435,6 +435,26 @@ CPartFile::~CPartFile()
 	delete m_pAICHRecoveryHashSet;
 }
 
+void CPartFile::WaitForFileCompletionWorkerForShutdown()
+{
+	CSingleLock lock(&m_FileCompleteMutex);
+	if (lock.Lock(0))
+		return;
+
+	if (PartFileCompletionSeams::GetCompletionOwnerShutdownWaitAction(false)
+		!= PartFileCompletionSeams::ECompletionOwnerShutdownWaitAction::WaitForWorker)
+	{
+		return;
+	}
+
+	const CString strFileName(GetFileName());
+	DebugLogWarning(_T("Waiting for part-file completion worker before deleting \"%s\" during shutdown."), (LPCTSTR)strFileName);
+	if (!lock.Lock(PartFileCompletionSeams::kCompletionOwnerShutdownWaitMs)) {
+		DebugLogError(_T("Part-file completion worker for \"%s\" exceeded shutdown wait budget; preserving owner lifetime until it exits."), (LPCTSTR)strFileName);
+		(void)lock.Lock(INFINITE);
+	}
+}
+
 bool CPartFile::HasDirtyBufferedData() const
 {
 	return m_iWrites > 0 || m_nTotalBufferData > 0 || !m_BufferedData_list.IsEmpty();
@@ -3323,9 +3343,8 @@ BOOL CPartFile::PerformFileComplete()
 	m_CorruptionBlackBox.Free();
 	m_aChangedPart.SetSize(0);
 
-	// explicitly unlock the file before posting something to the main thread.
-	sLock.Unlock();
-
+	// Hold the owner mutex until after the result is queued; shutdown waits on
+	// the same mutex before deleting this CPartFile.
 	if (!PostPartFileCompletionThreadResult(this, FILE_COMPLETION_THREAD_SUCCESS | (renamed ? FILE_COMPLETION_THREAD_RENAMED : 0)))
 		SetFileOp(PFOP_NONE);
 	return TRUE;

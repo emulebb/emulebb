@@ -308,6 +308,7 @@ public:
 	void	FlushBuffersExceptionHandler();
 
 	void	PerformFileCompleteEnd(DWORD dwResult);
+	void	WaitForFileCompletionWorkerForShutdown();
 
 	void	SetFileOp(EPartFileOp eFileOp)				{ m_eFileOp = eFileOp; }
 	EPartFileOp GetFileOp() const						{ return m_eFileOp; }

@@ -563,8 +563,12 @@ void CDownloadQueue::Init()
 CDownloadQueue::~CDownloadQueue()
 {
 	m_hostnameResolver.Stop();
-	while (!filelist.IsEmpty())
-		delete filelist.RemoveHead();
+	while (!filelist.IsEmpty()) {
+		CPartFile *pPartFile = filelist.RemoveHead();
+		if (pPartFile != NULL)
+			pPartFile->WaitForFileCompletionWorkerForShutdown();
+		delete pPartFile;
+	}
 }
 
 void CDownloadQueue::AddSearchToDownload(CSearchFile *toadd, uint8 paused, int cat)
