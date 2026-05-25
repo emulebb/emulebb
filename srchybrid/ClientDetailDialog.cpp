@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "ClientDetailDialog.h"
 #include "UpDownClient.h"
+#include "ClientList.h"
 #include "PartFile.h"
 #include "ClientCredits.h"
 #include "Server.h"
@@ -42,6 +43,36 @@ namespace
 		if (client == NULL)
 			return 0;
 		return client->GetIP() != 0 ? client->GetIP() : client->GetConnectIP();
+	}
+
+	bool IsLiveDetailClient(const CUpDownClient *client)
+	{
+		return theApp.clientlist != NULL && theApp.clientlist->ContainsClientPointer(client);
+	}
+
+	void SetDetailText(CWnd &wnd, UINT nID, LPCTSTR pszText)
+	{
+		wnd.SetDlgItemText(nID, pszText);
+	}
+
+	void SetUnavailableClientDetails(CWnd &wnd)
+	{
+		static const UINT aUnknownIds[] =
+		{
+			IDC_DNAME, IDC_DHASH, IDC_DSOFT, IDC_OBFUSCATION_STAT, IDC_DID,
+			IDC_DSIP, IDC_DSNAME, IDC_CDIDENT, IDC_CLIENTDETAIL_KADCON
+		};
+		for (unsigned i = 0; i < _countof(aUnknownIds); ++i)
+			SetDetailText(wnd, aUnknownIds[i], _T("?"));
+
+		static const UINT aEmptyIds[] =
+		{
+			IDC_DDOWNLOADING, IDC_UPLOADING, IDC_DDUP, IDC_DDOWN, IDC_DAVUR,
+			IDC_DAVDR, IDC_DUPTOTAL, IDC_DDOWNTOTAL, IDC_DRATIO, IDC_DRATING,
+			IDC_DSCORE, IDC_DLOWRATIOBONUS, IDC_DLOWIDDIVISOR, IDC_DCOOLDOWN
+		};
+		for (unsigned i = 0; i < _countof(aEmptyIds); ++i)
+			SetDetailText(wnd, aEmptyIds[i], _T("-"));
 	}
 }
 
@@ -94,7 +125,17 @@ BOOL CClientDetailPage::OnSetActive()
 		return FALSE;
 
 	if (m_bDataChanged) {
+		if (m_paClients == NULL || m_paClients->GetSize() <= 0) {
+			SetUnavailableClientDetails(*this);
+			m_bDataChanged = false;
+			return TRUE;
+		}
 		CUpDownClient *client = static_cast<CUpDownClient*>((*m_paClients)[0]);
+		if (!IsLiveDetailClient(client)) {
+			SetUnavailableClientDetails(*this);
+			m_bDataChanged = false;
+			return TRUE;
+		}
 
 		CString strClientName(client->GetUserName() ? client->GetUserName() : _T("?"));
 		if (theApp.geolocation != NULL) {
@@ -265,7 +306,8 @@ void CClientDetailDialog::Localize()
 CClientDetailDialog::CClientDetailDialog(CUpDownClient *pClient, CListCtrlItemWalk *pListCtrl)
 	: CListViewWalkerPropertySheet(pListCtrl)
 {
-	m_aItems.Add(pClient);
+	if (IsLiveDetailClient(pClient))
+		m_aItems.Add(pClient);
 	Construct();
 }
 
@@ -273,7 +315,8 @@ CClientDetailDialog::CClientDetailDialog(const CSimpleArray<CUpDownClient*> *paC
 	: CListViewWalkerPropertySheet(pListCtrl)
 {
 	for (int i = 0; i < paClients->GetSize(); ++i)
-		m_aItems.Add((*paClients)[i]);
+		if (IsLiveDetailClient((*paClients)[i]))
+			m_aItems.Add((*paClients)[i]);
 	Construct();
 }
 
