@@ -322,7 +322,7 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 			}
 			++pFile->nInUse;
 			pUploadClientStruct->m_nPendingIOBlocks.fetch_add(1);
-			pOverlappedRead->pos = m_listPendingIO.AddTail(pOverlappedRead);
+			m_listPendingIO.AddTail(pOverlappedRead);
 			DEBUG_ONLY(dbgDataReadPending += uTogo);
 
 			addedPayloadQueueSession += uTogo;
@@ -345,14 +345,21 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 		ASSERT(0);
 		return;
 	}
-	ASSERT(pOvRead->pFile && pOvRead->pos);
-
-	--pOvRead->pFile->nInUse;
-	UploadingToClient_Struct *pStruct = pOvRead->pUploadClientStruct;
 
 	CKnownFile *pKnownFile = pOvRead->pFile;
+	ASSERT(pKnownFile != NULL);
+	if (pKnownFile != NULL)
+		--pKnownFile->nInUse;
+	UploadingToClient_Struct *pStruct = pOvRead->pUploadClientStruct;
+	ASSERT(pStruct != NULL);
+
 	if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP) {
-		m_listPendingIO.RemoveAt(pOvRead->pos);
+		POSITION posPending = m_listPendingIO.Find(const_cast<OverlappedRead_Struct*>(pOvRead));
+		ASSERT(posPending != NULL);
+		if (posPending != NULL)
+			m_listPendingIO.RemoveAt(posPending);
+		else
+			theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: completed upload read was not present in the pending I/O list"));
 		bool bReadError = dwCompletionError != ERROR_SUCCESS || !dwRead;
 		if (bReadError) {
 			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Upload overlapped read failed: read %lu bytes, error %lu (%s)")
@@ -363,7 +370,7 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 				, (DWORD)(pOvRead->uEndOffset - pOvRead->uStartOffset), dwRead);
 			bReadError = true;
 		}
-		if (pKnownFile->m_hRead != INVALID_HANDLE_VALUE) { //discard data from closed files
+		if (pKnownFile != NULL && pKnownFile->m_hRead != INVALID_HANDLE_VALUE && pStruct != NULL) { //discard data from closed files
 			DEBUG_ONLY(dbgDataReadPending -= pOvRead->uEndOffset - pOvRead->uStartOffset);
 			CPacketList packetsList;
 			CClientReqSocket *pSocket = NULL;
@@ -410,10 +417,12 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 				Packet *packet = packetsList.RemoveHead();
 				pSocket->SendPacket(packet, false, packet->uStatsPayLoad);
 			}
-		}
+		} else if (pStruct == NULL)
+			theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: completed upload read has no upload entry; discarding block"));
 	} else if (pKnownFile)
 		DissociateFile(pKnownFile);
-	pStruct->m_nPendingIOBlocks.fetch_sub(1);
+	if (pStruct != NULL)
+		pStruct->m_nPendingIOBlocks.fetch_sub(1);
 
 	// cleanup
 	delete[] pOvRead->pBuffer;

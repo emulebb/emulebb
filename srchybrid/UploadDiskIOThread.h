@@ -32,7 +32,6 @@ struct OverlappedRead_Struct
 	uint64					uStartOffset;
 	uint64					uEndOffset;
 	BYTE					*pBuffer;
-	POSITION				pos;
 };
 
 class CUploadDiskIOThread : public CWinThread
