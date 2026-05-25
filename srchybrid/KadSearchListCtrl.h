@@ -40,6 +40,10 @@ public:
 	//void	Hide()		{ ShowWindow(SW_HIDE); }
 	//void	Visible()	{ ShowWindow(SW_SHOW); }
 	void	UpdateKadSearchCount();
+	/**
+	 * @brief Resolves a visible Kad search row only if its backing search is still live.
+	 */
+	const Kademlia::CSearch* GetLiveSearchByIndex(int iItem);
 
 	Kademlia::CLookupHistory* FetchAndSelectActiveSearch(bool bMark);
 
@@ -57,7 +61,6 @@ private:
 	};
 
 protected:
-	const Kademlia::CSearch* GetLiveSearchByIndex(int iItem);
 	bool IsLiveSearch(const Kademlia::CSearch *search) const;
 	bool PruneStaleSearchItems();
 	void UpdateSearch(int iItem, const Kademlia::CSearch *search);

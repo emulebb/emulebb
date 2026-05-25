@@ -536,7 +536,7 @@ void CKademliaWnd::OnNMDblclkSearchlist(LPNMHDR pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pItemInfo = (LPNMITEMACTIVATE)pNMHDR;
 	if (pItemInfo->iItem >= 0) {
-		Kademlia::CSearch *pSearch = (Kademlia::CSearch*)searchList->GetItemData(pItemInfo->iItem);
+		const Kademlia::CSearch *pSearch = searchList->GetLiveSearchByIndex(pItemInfo->iItem);
 		if (pSearch != NULL) {
 			SetSearchGraph(pSearch->GetLookupHistory(), true);
 			thePrefs.SetAutoShowLookups(false);
@@ -549,9 +549,11 @@ void CKademliaWnd::OnListModifiedSearchlist(LPNMHDR, LRESULT *pResult)
 {
 	POSITION pos = searchList->GetFirstSelectedItemPosition();
 	if (pos != NULL) {
-		Kademlia::CSearch *pSearch = (Kademlia::CSearch*)searchList->GetItemData(searchList->GetNextSelectedItem(pos));
+		const Kademlia::CSearch *pSearch = searchList->GetLiveSearchByIndex(searchList->GetNextSelectedItem(pos));
 		if (pSearch != NULL)
 			SetSearchGraph(pSearch->GetLookupHistory(), false);
+		else
+			SetSearchGraph(NULL, false);
 	}
 	*pResult = 0;
 }
