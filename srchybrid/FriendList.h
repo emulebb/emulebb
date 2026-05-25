@@ -27,7 +27,7 @@ public:
 	~CFriendList();
 
 	bool		IsAlreadyFriend(const CString &strUserHash) const;
-	bool		IsValid(CFriend *pToCheck) const;
+	bool		IsValid(const CFriend *pToCheck) const;
 	void		SaveList();
 	bool		LoadList();
 	void		RefreshFriend(const CFriend *torefresh) const;

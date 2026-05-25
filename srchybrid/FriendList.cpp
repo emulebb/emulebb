@@ -236,8 +236,7 @@ void CFriendList::Process()
 		SaveList();
 }
 
-bool CFriendList::IsValid(CFriend *pToCheck) const
+bool CFriendList::IsValid(const CFriend *pToCheck) const
 {
-	// debug/sanity check function
-	return m_listFriends.Find(pToCheck) != NULL;
+	return pToCheck != NULL && m_listFriends.Find(const_cast<CFriend*>(pToCheck)) != NULL;
 }

@@ -99,12 +99,14 @@ void CChatWnd::OnLvnItemActivateFriendList(LPNMHDR, LRESULT*)
 void CChatWnd::UpdateSelectedFriendMsgDetails()
 {
 	int iSel = m_FriendListCtrl.GetSelectionMark();
-	CFriend *pFriend = (iSel >= 0) ? reinterpret_cast<CFriend*>(m_FriendListCtrl.GetItemData(iSel)) : NULL;
-	ShowFriendMsgDetails(pFriend);
+	ShowFriendMsgDetails(m_FriendListCtrl.GetFriendAtItem(iSel));
 }
 
 void CChatWnd::ShowFriendMsgDetails(CFriend *pFriend)
 {
+	if (pFriend != NULL && (theApp.friendlist == NULL || !theApp.friendlist->IsValid(pFriend)))
+		pFriend = NULL;
+
 	if (pFriend) {
 		const CUpDownClient *linkedc = pFriend->GetLinkedClient();
 

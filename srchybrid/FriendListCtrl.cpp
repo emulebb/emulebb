@@ -95,11 +95,14 @@ void CFriendListCtrl::Localize()
 	LocaliseHeaderCtrl(uids, _countof(uids));
 
 	for (int i = GetItemCount(); --i >= 0;)
-		UpdateFriend(i, reinterpret_cast<CFriend*>(GetItemData(i)));
+		UpdateFriend(i, GetFriendAtItem(i));
 }
 
 void CFriendListCtrl::UpdateFriend(int iItem, const CFriend *pFriend)
 {
+	if (!IsLiveFriend(pFriend))
+		return;
+
 	SetItemText(iItem, 0, pFriend->m_strName.IsEmpty() ? _T('(') + GetResString(IDS_UNKNOWN) + _T(')') : pFriend->m_strName);
 
 	int iImage;
@@ -133,6 +136,9 @@ void CFriendListCtrl::RemoveFriend(const CFriend *pFriend)
 
 void CFriendListCtrl::RefreshFriend(const CFriend *pFriend)
 {
+	if (!IsLiveFriend(pFriend))
+		return;
+
 	LVFINDINFO find;
 	find.flags = LVFI_PARAM;
 	find.lParam = (LPARAM)pFriend;
@@ -150,9 +156,11 @@ void CFriendListCtrl::OnContextMenu(CWnd*, CPoint point)
 	const CFriend *cur_friend = NULL;
 	int iSel = GetNextItem(-1, LVIS_SELECTED | LVIS_FOCUSED);
 	if (iSel >= 0) {
-		cur_friend = reinterpret_cast<CFriend*>(GetItemData(iSel));
-		ClientMenu.AppendMenu(MF_STRING, MP_DETAIL, GetResString(IDS_SHOWDETAILS), _T("CLIENTDETAILS"));
-		ClientMenu.SetDefaultItem(MP_DETAIL);
+		cur_friend = GetFriendAtItem(iSel);
+		if (cur_friend != NULL) {
+			ClientMenu.AppendMenu(MF_STRING, MP_DETAIL, GetResString(IDS_SHOWDETAILS), _T("CLIENTDETAILS"));
+			ClientMenu.SetDefaultItem(MP_DETAIL);
+		}
 	}
 
 	ClientMenu.AppendMenu(MF_STRING, MP_ADDFRIEND, GetResString(IDS_ADDAFRIEND), _T("ADDFRIEND"));
@@ -174,7 +182,7 @@ BOOL CFriendListCtrl::OnCommand(WPARAM wParam, LPARAM)
 	wParam = LOWORD(wParam);
 
 	int iSel = GetNextItem(-1, LVIS_SELECTED | LVIS_FOCUSED);
-	CFriend *cur_friend = (iSel >= 0) ? reinterpret_cast<CFriend*>(GetItemData(iSel)) : NULL;
+	CFriend *cur_friend = GetFriendAtItem(iSel);
 
 	switch (wParam) {
 	case MP_MESSAGE:
@@ -233,14 +241,13 @@ BOOL CFriendListCtrl::OnCommand(WPARAM wParam, LPARAM)
 void CFriendListCtrl::OnNmDblClk(LPNMHDR, LRESULT *pResult)
 {
 	int iSel = GetNextItem(-1, LVIS_SELECTED | LVIS_FOCUSED);
-	if (iSel >= 0)
-		ShowFriendDetails(reinterpret_cast<CFriend*>(GetItemData(iSel)));
+	ShowFriendDetails(GetFriendAtItem(iSel));
 	*pResult = 0;
 }
 
 void CFriendListCtrl::ShowFriendDetails(const CFriend *pFriend)
 {
-	if (pFriend)
+	if (IsLiveFriend(pFriend))
 		if (pFriend->GetLinkedClient(true)) {
 			CClientDetailDialog dlg(pFriend->GetLinkedClient());
 			dlg.DoModal();
@@ -281,7 +288,7 @@ int CALLBACK CFriendListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lP
 {
 	const CFriend *item1 = reinterpret_cast<CFriend*>(lParam1);
 	const CFriend *item2 = reinterpret_cast<CFriend*>(lParam2);
-	if (item1 == NULL || item2 == NULL)
+	if (theApp.friendlist == NULL || !theApp.friendlist->IsValid(item1) || !theApp.friendlist->IsValid(item2))
 		return 0;
 
 	int iResult;
@@ -293,6 +300,20 @@ int CALLBACK CFriendListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lP
 		return 0;
 	}
 	return HIWORD(lParamSort) ? -iResult : iResult;
+}
+
+CFriend* CFriendListCtrl::GetFriendAtItem(int iItem) const
+{
+	if (iItem < 0 || iItem >= GetItemCount())
+		return NULL;
+
+	CFriend *pFriend = reinterpret_cast<CFriend*>(const_cast<CFriendListCtrl*>(this)->GetItemData(iItem));
+	return IsLiveFriend(pFriend) ? pFriend : NULL;
+}
+
+bool CFriendListCtrl::IsLiveFriend(const CFriend *pFriend) const
+{
+	return pFriend != NULL && theApp.friendlist != NULL && theApp.friendlist->IsValid(pFriend);
 }
 
 void CFriendListCtrl::UpdateList()

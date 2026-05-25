@@ -30,6 +30,8 @@ public:
 	void	Init();
 	void	Localize();
 	void	UpdateList();
+	CFriend*	GetFriendAtItem(int iItem) const;
+	bool	IsLiveFriend(const CFriend *pFriend) const;
 
 protected:
 	void	SetAllIcons();
