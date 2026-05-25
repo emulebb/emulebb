@@ -97,8 +97,8 @@ namespace
 		if (file == NULL)
 			return false;
 		return (theApp.downloadqueue != NULL && theApp.downloadqueue->IsPartFile(file))
-			|| (theApp.knownfiles != NULL && theApp.knownfiles->IsFilePtrInList(file))
-			|| (theApp.sharedfiles != NULL && theApp.sharedfiles->IsFilePtrInList(file));
+			|| (theApp.knownfiles != NULL && theApp.knownfiles->ContainsFilePointer(file))
+			|| (theApp.sharedfiles != NULL && theApp.sharedfiles->ContainsFilePointer(file));
 	}
 
 	bool IsLiveFileCtrlItem(const CtrlItem_Struct *item)
