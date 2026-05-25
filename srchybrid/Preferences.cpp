@@ -1552,14 +1552,6 @@ void CPreferences::SetIPFilterUpdateUrl(const CString& strUrl, bool bPersist)
 	ini.WriteString(prefini::IPFilterUpdateKeys::Url, m_strIPFilterUpdateUrl);
 }
 
-void CPreferences::MovePreferences(EDefaultDirectory eSrc, LPCTSTR const sFile, const CString &dst)
-{
-	const CString &src(GetMuleDirectory(eSrc));
-	const CString &pathTxt(src + sFile);
-	if (LongPathSeams::PathExists(pathTxt))
-		(void)LongPathSeams::MoveFile(pathTxt, dst + sFile);
-}
-
 void CPreferences::Init()
 {
 	//srand((unsigned)time(NULL)); // we need random numbers sometimes
@@ -1567,35 +1559,9 @@ void CPreferences::Init()
 	prefsExt = new Preferences_Ext_Struct{};
 
 	const CString &sConfDir(GetMuleDirectory(EMULE_CONFIGDIR));
-	const bool bUsingStartupConfigBaseDirOverride = theApp.HasStartupConfigBaseDirOverride();
 	m_strFileCommentsFilePath.Format(_T("%sfileinfo.ini"), (LPCTSTR)sConfDir);
 	EnsureDefaultConfigTextFiles(sConfDir);
 	LoadSharedIgnoreRules(sConfDir);
-
-	///////////////////////////////////////////////////////////////////////////
-	// Move *.log files from application directory into 'log' directory
-	//
-	if (!bUsingStartupConfigBaseDirOverride) {
-		(void)PathHelpers::ForEachMatchingEntry(GetMuleDirectory(EMULE_EXECUTABLEDIR) + _T("eMule*.log"),
-			[&](const WIN32_FIND_DATA &findData) -> bool {
-			if ((findData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN)) == 0)
-				(void)LongPathSeams::MoveFile(GetMuleDirectory(EMULE_EXECUTABLEDIR) + findData.cFileName, GetMuleDirectory(EMULE_LOGDIR) + findData.cFileName);
-			return true;
-		});
-	}
-
-	///////////////////////////////////////////////////////////////////////////
-	// Move 'downloads.txt/bak' files from application and/or database directory
-	// into 'config' directory
-	//
-	static LPCTSTR const strDownloadsTxt = _T("downloads.txt");
-	static LPCTSTR const strDownloadsBak = _T("downloads.bak");
-	MovePreferences(EMULE_DATABASEDIR, strDownloadsTxt, sConfDir);
-	if (!bUsingStartupConfigBaseDirOverride)
-		MovePreferences(EMULE_EXECUTABLEDIR, strDownloadsTxt, sConfDir);
-	MovePreferences(EMULE_DATABASEDIR, strDownloadsBak, sConfDir);
-	if (!bUsingStartupConfigBaseDirOverride)
-		MovePreferences(EMULE_EXECUTABLEDIR, strDownloadsBak, sConfDir);
 
 	// load preferences.dat or set standard values
 	CString strFullPath(sConfDir + strPreferencesDat);

@@ -187,7 +187,6 @@ class CPreferences
 
 	static LPCSTR	m_pszBindAddrA;
 	static LPCWSTR	m_pszBindAddrW;
-	static void		MovePreferences(EDefaultDirectory eSrc, LPCTSTR const sFile, const CString &dst);
 public:
 	static CString	strNick;
 	static uint32	m_maxupload;
