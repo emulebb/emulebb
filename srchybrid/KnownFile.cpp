@@ -285,7 +285,12 @@ void CKnownFile::UpdatePartsInfo()
 	if (bRefresh)
 		acount.SetSize(0, m_ClientUploadList.GetCount());
 	for (POSITION pos = m_ClientUploadList.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
 		CUpDownClient *cur_src = m_ClientUploadList.GetNext(pos);
+		if (!IsLiveUploadingClient(cur_src)) {
+			RemoveStaleUploadingClient(posCurrent, cur_src, _T("upload parts-info pass"));
+			continue;
+		}
 		//This could be a partfile that just completed. Many of these clients will not have this information.
 		if (cur_src->m_abyUpPartStatus && cur_src->GetUpPartCount() == GetPartCount()) {
 			for (INT_PTR i = GetPartCount(); --i > 0;)
@@ -383,6 +388,33 @@ void CKnownFile::RemoveUploadingClient(CUpDownClient *client)
 		ASSERT(!nInUse);
 		CUploadDiskIOThread::DissociateFile(this);
 	}
+}
+
+bool CKnownFile::IsLiveUploadingClient(const CUpDownClient *pClient) const
+{
+	if (pClient == NULL)
+		return false;
+	if (theApp.clientlist == NULL || !theApp.clientlist->ContainsClientPointer(pClient))
+		return false;
+
+	return md4equ(pClient->GetUploadFileID(), GetFileHash());
+}
+
+void CKnownFile::RemoveStaleUploadingClient(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext) const
+{
+	ASSERT(pos != NULL);
+	if (pos == NULL)
+		return;
+
+	CKnownFile *pMutableFile = const_cast<CKnownFile*>(this);
+	pMutableFile->m_ClientUploadList.RemoveAt(pos);
+	pMutableFile->UpdateAutoUpPriority();
+	if (pMutableFile->m_ClientUploadList.IsEmpty() && pMutableFile->nInUse == 0)
+		CUploadDiskIOThread::DissociateFile(pMutableFile);
+	DebugLogWarning(_T("Removed stale uploading client pointer %p from file \"%s\" (%s)"),
+		static_cast<const void*>(pClient),
+		(LPCTSTR)GetFileName(),
+		pszContext != NULL ? pszContext : _T("unknown context"));
 }
 
 #ifdef _DEBUG
@@ -1133,19 +1165,12 @@ Packet*	CKnownFile::CreateSrcInfoPacket(const CUpDownClient *forClient, uint8 by
 	data.WriteUInt16(nCount);
 	uint32 cDbgNoSrc = 0;
 	for (POSITION pos = m_ClientUploadList.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
 		const CUpDownClient *cur_src = m_ClientUploadList.GetNext(pos);
-/*
-		// some rare issue seen in crash dumps, hopefully fixed already, but to be sure we double check here
-		// TODO: remove check next version, as it uses resources and shouldn't be necessary
-		if (!theApp.clientlist->IsValidClient(cur_src)) {
-#if defined(_DEVBUILD)
-			throw new CUserException();
-#endif
-			ASSERT(0);
-			DebugLogError(_T("Invalid client in uploading list for file %s"), (LPCTSTR)GetFileName());
-			return NULL;
+		if (!IsLiveUploadingClient(cur_src)) {
+			RemoveStaleUploadingClient(posCurrent, cur_src, _T("source-exchange upload list pass"));
+			continue;
 		}
-*/
 		if (cur_src->HasLowID() || cur_src == forClient || !(cur_src->GetUploadState() == US_UPLOADING || cur_src->GetUploadState() == US_ONUPLOADQUEUE))
 			continue;
 		if (!cur_src->IsEd2kClient())
@@ -1247,8 +1272,15 @@ void CKnownFile::SetFileComment(LPCTSTR pszComment)
 		ini.WriteString(_T("Comment"), pszComment);
 		m_strComment = pszComment;
 
-		for (POSITION pos = m_ClientUploadList.GetHeadPosition(); pos != NULL;)
-			m_ClientUploadList.GetNext(pos)->SetCommentDirty();
+		for (POSITION pos = m_ClientUploadList.GetHeadPosition(); pos != NULL;) {
+			const POSITION posCurrent = pos;
+			CUpDownClient *pClient = m_ClientUploadList.GetNext(pos);
+			if (!IsLiveUploadingClient(pClient)) {
+				RemoveStaleUploadingClient(posCurrent, pClient, _T("comment update pass"));
+				continue;
+			}
+			pClient->SetCommentDirty();
+		}
 	}
 }
 
@@ -1260,8 +1292,15 @@ void CKnownFile::SetFileRating(UINT uRating)
 		ini.WriteInt(_T("Rate"), uRating);
 		m_uRating = uRating;
 
-		for (POSITION pos = m_ClientUploadList.GetHeadPosition(); pos != NULL;)
-			m_ClientUploadList.GetNext(pos)->SetCommentDirty();
+		for (POSITION pos = m_ClientUploadList.GetHeadPosition(); pos != NULL;) {
+			const POSITION posCurrent = pos;
+			CUpDownClient *pClient = m_ClientUploadList.GetNext(pos);
+			if (!IsLiveUploadingClient(pClient)) {
+				RemoveStaleUploadingClient(posCurrent, pClient, _T("rating update pass"));
+				continue;
+			}
+			pClient->SetCommentDirty();
+		}
 	}
 }
 

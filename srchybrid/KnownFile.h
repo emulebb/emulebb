@@ -167,6 +167,9 @@ protected:
 	static bool	CreateHash(FILE *fp, uint64 uSize, uchar *pucHash, CAICHHashTree *pShaHashOut = NULL);
 
 private:
+	bool	IsLiveUploadingClient(const CUpDownClient *pClient) const;
+	void	RemoveStaleUploadingClient(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext) const;
+
 	static CBarShader s_ShareStatusBar;
 	Kademlia::WordList wordlist;
 	time_t	m_timeLastSeen; // we only "see" files when they are in a shared directory
