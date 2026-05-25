@@ -665,8 +665,9 @@ void CTaskbarNotifier::OnLButtonUp(UINT nFlags, CPoint point)
 	// message clicked
 	if (m_rcText.PtInRect(point)) {
 		// Notify the parent window that the Notifier popup was clicked
-		LPCTSTR pszLink = m_strLink.IsEmpty() ? NULL : _tcsdup(m_strLink);
-		m_pWndParent->PostMessage(UM_TASKBARNOTIFIERCLICKED, 0, (LPARAM)pszLink);
+		LPTSTR pszLink = m_strLink.IsEmpty() ? NULL : _tcsdup(m_strLink);
+		if (!m_pWndParent->PostMessage(UM_TASKBARNOTIFIERCLICKED, 0, (LPARAM)pszLink) && pszLink != NULL)
+			free(pszLink);
 	}
 
 	CWnd::OnLButtonUp(nFlags, point);
