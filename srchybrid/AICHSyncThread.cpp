@@ -39,9 +39,9 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-	void SnapshotSharedAICHFiles(CArray<CKnownFile*, CKnownFile*> &aSharedFiles)
+	void SnapshotSharedAICHFileHashes(CArray<CSKey, const CSKey&> &aSharedFileHashes)
 	{
-		aSharedFiles.RemoveAll();
+		aSharedFileHashes.RemoveAll();
 		if (theApp.sharedfiles == NULL)
 			return;
 
@@ -49,7 +49,7 @@ namespace
 		for (POSITION pos = BEFORE_START_POSITION; pos != NULL;) {
 			CKnownFile *pFile = theApp.sharedfiles->GetFileNext(pos);
 			if (pFile != NULL && !pFile->IsPartFile())
-				aSharedFiles.Add(pFile);
+				aSharedFileHashes.Add(CSKey(pFile->GetFileHash()));
 		}
 	}
 
@@ -69,13 +69,12 @@ namespace
 		return false;
 	}
 
-	bool ResolveSharedAICHSyncFile(const uchar *pFileHash, CKnownFile *&rpResolvedFile)
+	bool ResolveSharedAICHSyncFileNoLock(const uchar *pFileHash, CKnownFile *&rpResolvedFile)
 	{
 		rpResolvedFile = NULL;
 		if (theApp.sharedfiles == NULL || pFileHash == NULL)
 			return false;
 
-		CSingleLock sharelock(&theApp.sharedfiles->m_mutWriteList, TRUE);
 		rpResolvedFile = theApp.sharedfiles->GetFileByID(pFileHash);
 		return rpResolvedFile != NULL && !rpResolvedFile->IsPartFile();
 	}
@@ -191,20 +190,23 @@ int CAICHSyncThread::Run()
 
 	// now we check that all files which are in the shared file list have a corresponding hash in the out list
 	// those who don't are added to the hashing list
-	CArray<CKnownFile*, CKnownFile*> aSharedFiles;
+	CArray<CSKey, const CSKey&> aSharedFileHashes;
 #ifdef _DEBUG
-	CArray<CKnownFile*, CKnownFile*> aUsedAICHFiles;
+	CArray<CSKey, const CSKey&> aUsedAICHFileHashes;
 #endif
 	bool bDbgMsgCreatingPartHashes = true;
 	INT_PTR nUsedKnown2HashCount = 0;
 
-	SnapshotSharedAICHFiles(aSharedFiles);
-	for (INT_PTR iFile = 0; iFile < aSharedFiles.GetCount(); ++iFile) {
+	SnapshotSharedAICHFileHashes(aSharedFileHashes);
+	for (INT_PTR iFile = 0; iFile < aSharedFileHashes.GetCount(); ++iFile) {
 		if (theApp.IsClosing()) // in case of shutdown while still hashing
 			return 0;
-		CKnownFile *pFile = aSharedFiles[iFile];
-		if (pFile == NULL)
+
+		CSingleLock sharelock(&theApp.sharedfiles->m_mutWriteList, TRUE);
+		CKnownFile *pFile = NULL;
+		if (!ResolveSharedAICHSyncFileNoLock(aSharedFileHashes[iFile].m_key, pFile))
 			continue;
+
 		CFileIdentifier &fileid = pFile->GetFileIdentifier();
 		if (fileid.HasAICHHash()) {
 			ULONGLONG nKnown2HashPosition = 0;
@@ -215,7 +217,7 @@ int CAICHSyncThread::Run()
 					++nUsedKnown2HashCount;
 				}
 #ifdef _DEBUG
-				aUsedAICHFiles.Add(pFile);
+				aUsedAICHFileHashes.Add(aSharedFileHashes[iFile]);
 #endif
 				pFile->SetAICHRecoverHashSetAvailable(true);
 				// Has the file the proper AICH Part hashset? If not, probably upgrading, create it
@@ -242,7 +244,7 @@ int CAICHSyncThread::Run()
 			}
 		}
 		pFile->SetAICHRecoverHashSetAvailable(false);
-		m_aToHash.Add(CSKey(pFile->GetFileHash()));
+		m_aToHash.Add(aSharedFileHashes[iFile]);
 	}
 
 	// remove all unused AICH hashsets from known2.met
@@ -333,9 +335,10 @@ int CAICHSyncThread::Run()
 	}
 
 #ifdef _DEBUG
-	for (INT_PTR i = 0; i < aUsedAICHFiles.GetCount() && !theApp.IsClosing(); ++i) {
-		CKnownFile *pFile = aUsedAICHFiles[i];
-		if (pFile == NULL) {
+	for (INT_PTR i = 0; i < aUsedAICHFileHashes.GetCount() && !theApp.IsClosing(); ++i) {
+		CSingleLock sharelock(&theApp.sharedfiles->m_mutWriteList, TRUE);
+		CKnownFile *pFile = NULL;
+		if (!ResolveSharedAICHSyncFileNoLock(aUsedAICHFileHashes[i].m_key, pFile)) {
 			ASSERT(0);
 			continue;
 		}
@@ -376,13 +379,16 @@ int CAICHSyncThread::Run()
 			CSingleLock hashingLock(&theApp.hashing_mut, TRUE); // only one file hash at a time
 
 			PostAICHSyncProgressCount(m_aToHash.GetCount() - iFile);
-			CKnownFile *pCurFile = NULL;
-			const bool bIsStillShared = ResolveSharedAICHSyncFile(m_aToHash[iFile].m_key, pCurFile);
-			if (!ShouldCreateAICHSyncHash(theApp.IsClosing(), bIsStillShared))
-				continue;
-			theApp.QueueLogLine(false, GetResString(IDS_AICH_CALCFILE), (LPCTSTR)pCurFile->GetFileName());
-			if (!pCurFile->CreateAICHHashSetOnly())
-				theApp.QueueDebugLogLine(false, _T("Failed to create AICH Hashset while sync. for file %s"), (LPCTSTR)pCurFile->GetFileName());
+			{
+				CSingleLock sharelock(&theApp.sharedfiles->m_mutWriteList, TRUE);
+				CKnownFile *pCurFile = NULL;
+				const bool bIsStillShared = ResolveSharedAICHSyncFileNoLock(m_aToHash[iFile].m_key, pCurFile);
+				if (!ShouldCreateAICHSyncHash(theApp.IsClosing(), bIsStillShared))
+					continue;
+				theApp.QueueLogLine(false, GetResString(IDS_AICH_CALCFILE), (LPCTSTR)pCurFile->GetFileName());
+				if (!pCurFile->CreateAICHHashSetOnly())
+					theApp.QueueDebugLogLine(false, _T("Failed to create AICH Hashset while sync. for file %s"), (LPCTSTR)pCurFile->GetFileName());
+			}
 		}
 
 		PostAICHSyncProgressCount(0);
