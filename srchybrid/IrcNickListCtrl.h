@@ -55,6 +55,9 @@ public:
 protected:
 	CIrcWnd *m_pParent;
 
+	Channel* GetCurrentChannel() const;
+	const Nick* GetLiveNickByItem(int iItem);
+
 	static int CALLBACK SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);

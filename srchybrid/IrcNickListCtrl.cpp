@@ -84,12 +84,34 @@ void CIrcNickListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 }
 
+Channel* CIrcNickListCtrl::GetCurrentChannel() const
+{
+	return m_pParent != NULL ? m_pParent->m_wndChanSel.m_pCurrentChannel : NULL;
+}
+
+const Nick* CIrcNickListCtrl::GetLiveNickByItem(int iItem)
+{
+	if (iItem < 0)
+		return NULL;
+
+	const Nick *pNick = reinterpret_cast<Nick*>(GetItemData(iItem));
+	const Channel *pChannel = GetCurrentChannel();
+	if (pNick == NULL || pChannel == NULL)
+		return NULL;
+
+	for (POSITION pos = pChannel->m_lstNicks.GetHeadPosition(); pos != NULL;) {
+		if (pChannel->m_lstNicks.GetNext(pos) == pNick)
+			return pNick;
+	}
+	return NULL;
+}
+
 void CIrcNickListCtrl::OnContextMenu(CWnd*, CPoint point)
 {
 	int iCurSel = GetNextItem(-1, LVIS_SELECTED | LVIS_FOCUSED);
 	if (iCurSel == -1)
 		return;
-	const Nick *pNick = reinterpret_cast<Nick*>(GetItemData(iCurSel));
+	const Nick *pNick = GetLiveNickByItem(iCurSel);
 	if (!pNick)
 		return;
 
@@ -128,7 +150,7 @@ void CIrcNickListCtrl::OnNmDblClk(LPNMHDR, LRESULT *pResult)
 	//We double clicked a nick. Try to open a private channel
 	int iSel = GetNextItem(-1, LVIS_SELECTED | LVIS_FOCUSED);
 	if (iSel >= 0)
-		OpenPrivateChannel(reinterpret_cast<const Nick*>(GetItemData(iSel)));
+		OpenPrivateChannel(GetLiveNickByItem(iSel));
 	*pResult = 0;
 }
 
@@ -382,11 +404,8 @@ void CIrcNickListCtrl::Localize()
 BOOL CIrcNickListCtrl::OnCommand(WPARAM wParam, LPARAM)
 {
 	int iNickItem = GetNextItem(-1, LVIS_SELECTED | LVIS_FOCUSED);
-	int iChanItem = m_pParent->m_wndChanSel.GetCurSel();
-	const Nick *pNick = (iNickItem >= 0) ? reinterpret_cast<Nick*>(GetItemData(iNickItem)) : NULL;
-	TCITEM ti;
-	ti.mask = TCIF_PARAM;
-	Channel *pChannel = (iChanItem >= 0 && m_pParent->m_wndChanSel.GetItem(iChanItem, &ti)) ? reinterpret_cast<Channel*>(ti.lParam) : NULL;
+	const Nick *pNick = GetLiveNickByItem(iNickItem);
+	Channel *pChannel = GetCurrentChannel();
 
 	switch (wParam) {
 	case Irc_Priv:
