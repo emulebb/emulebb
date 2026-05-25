@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <limits>
+#include <set>
 #include <vector>
 
 #include <atlstr.h>
@@ -231,31 +232,73 @@ inline std::vector<IPRange> NormalizeIPRanges(const std::vector<IPRange> &rrange
 	if (pStats != nullptr)
 		*pStats = NormalizationStats{};
 
-	std::vector<IPRange> ranges;
+	struct RangeEntry
+	{
+		IPRange Range;
+		size_t SortIndex = 0;
+	};
+
+	std::vector<RangeEntry> ranges;
 	ranges.reserve(rranges.size());
 	for (const IPRange &range : rranges)
-		if (range.Start <= range.End)
-			ranges.push_back(range);
+		if (range.Start <= range.End) {
+			RangeEntry entry;
+			entry.Range = range;
+			ranges.push_back(entry);
+		}
 	if (ranges.empty())
-		return ranges;
+		return std::vector<IPRange>();
 
-	std::stable_sort(ranges.begin(), ranges.end(), [](const IPRange &rLeft, const IPRange &rRight) {
-		if (rLeft.Start != rRight.Start)
-			return rLeft.Start < rRight.Start;
-		if (rLeft.End != rRight.End)
-			return rLeft.End < rRight.End;
-		return rLeft.Level < rRight.Level;
+	std::stable_sort(ranges.begin(), ranges.end(), [](const RangeEntry &rLeft, const RangeEntry &rRight) {
+		if (rLeft.Range.Start != rRight.Range.Start)
+			return rLeft.Range.Start < rRight.Range.Start;
+		if (rLeft.Range.End != rRight.Range.End)
+			return rLeft.Range.End < rRight.Range.End;
+		return rLeft.Range.Level < rRight.Range.Level;
 	});
+	for (size_t iRange = 0; iRange < ranges.size(); ++iRange)
+		ranges[iRange].SortIndex = iRange;
 
 	std::vector<uint64_t> boundaries;
 	boundaries.reserve(ranges.size() * 2u);
-	for (const IPRange &range : ranges) {
-		boundaries.push_back(range.Start);
-		boundaries.push_back(static_cast<uint64_t>(range.End) + 1ull);
+	for (const RangeEntry &entry : ranges) {
+		boundaries.push_back(entry.Range.Start);
+		boundaries.push_back(static_cast<uint64_t>(entry.Range.End) + 1ull);
 	}
 	std::sort(boundaries.begin(), boundaries.end());
 	boundaries.erase(std::unique(boundaries.begin(), boundaries.end()), boundaries.end());
 
+	struct ActiveByPriority
+	{
+		const std::vector<RangeEntry> *pRanges = nullptr;
+
+		bool operator()(size_t uLeft, size_t uRight) const
+		{
+			const RangeEntry &rLeft = (*pRanges)[uLeft];
+			const RangeEntry &rRight = (*pRanges)[uRight];
+			if (rLeft.Range.Level != rRight.Range.Level)
+				return rLeft.Range.Level < rRight.Range.Level;
+			return rLeft.SortIndex < rRight.SortIndex;
+		}
+	};
+
+	struct ActiveByEnd
+	{
+		const std::vector<RangeEntry> *pRanges = nullptr;
+
+		bool operator()(size_t uLeft, size_t uRight) const
+		{
+			const RangeEntry &rLeft = (*pRanges)[uLeft];
+			const RangeEntry &rRight = (*pRanges)[uRight];
+			if (rLeft.Range.End != rRight.Range.End)
+				return rLeft.Range.End < rRight.Range.End;
+			return rLeft.SortIndex < rRight.SortIndex;
+		}
+	};
+
+	std::set<size_t, ActiveByPriority> activeByPriority((ActiveByPriority{ &ranges }));
+	std::set<size_t, ActiveByEnd> activeByEnd((ActiveByEnd{ &ranges }));
+	size_t uNextRange = 0;
 	std::vector<IPRange> normalized;
 	for (size_t iBoundary = 0; iBoundary + 1u < boundaries.size(); ++iBoundary) {
 		const uint64_t uStart64 = boundaries[iBoundary];
@@ -265,24 +308,24 @@ inline std::vector<IPRange> NormalizeIPRanges(const std::vector<IPRange> &rrange
 
 		const uint32_t uStart = static_cast<uint32_t>(uStart64);
 		const uint32_t uEnd = static_cast<uint32_t>(uEnd64);
-		const IPRange *pWinner = nullptr;
-		size_t uCoveringRanges = 0;
-		for (const IPRange &range : ranges) {
-			if (range.Start > uStart)
-				break;
-			if (range.End < uStart)
-				continue;
-			++uCoveringRanges;
-			if (pWinner == nullptr || range.Level < pWinner->Level)
-				pWinner = &range;
+		while (uNextRange < ranges.size() && ranges[uNextRange].Range.Start <= uStart) {
+			activeByPriority.insert(uNextRange);
+			activeByEnd.insert(uNextRange);
+			++uNextRange;
+		}
+		while (!activeByEnd.empty() && ranges[*activeByEnd.begin()].Range.End < uStart) {
+			const size_t uExpiredRange = *activeByEnd.begin();
+			activeByEnd.erase(activeByEnd.begin());
+			activeByPriority.erase(uExpiredRange);
 		}
 
-		if (pWinner == nullptr)
+		if (activeByPriority.empty())
 			continue;
-		if (pStats != nullptr && uCoveringRanges > 1u)
+		if (pStats != nullptr && activeByPriority.size() > 1u)
 			++pStats->MergedCount;
 
-		if (!normalized.empty() && static_cast<uint64_t>(normalized.back().End) + 1ull == uStart && normalized.back().Level == pWinner->Level) {
+		const IPRange &rWinner = ranges[*activeByPriority.begin()].Range;
+		if (!normalized.empty() && static_cast<uint64_t>(normalized.back().End) + 1ull == uStart && normalized.back().Level == rWinner.Level) {
 			normalized.back().End = uEnd;
 			continue;
 		}
@@ -290,8 +333,8 @@ inline std::vector<IPRange> NormalizeIPRanges(const std::vector<IPRange> &rrange
 		IPRange segment;
 		segment.Start = uStart;
 		segment.End = uEnd;
-		segment.Level = pWinner->Level;
-		segment.Description = pWinner->Description;
+		segment.Level = rWinner.Level;
+		segment.Description = rWinner.Description;
 		normalized.push_back(segment);
 	}
 
