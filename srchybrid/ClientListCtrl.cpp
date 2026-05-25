@@ -162,6 +162,41 @@ bool CClientListCtrl::PruneStaleClientItems()
 	return bRemoved;
 }
 
+CObject* CClientListCtrl::WalkToLiveClientItem(int iDirection)
+{
+	const int iItemCount = GetItemCount();
+	if (iItemCount < 2)
+		return NULL;
+
+	POSITION pos = GetFirstSelectedItemPosition();
+	if (pos == NULL)
+		return NULL;
+
+	const int iCurSelItem = GetNextSelectedItem(pos);
+	for (int iItem = iCurSelItem + iDirection; iItem >= 0 && iItem < iItemCount; iItem += iDirection) {
+		CUpDownClient *client = reinterpret_cast<CUpDownClient*>(GetItemData(iItem));
+		if (!IsLiveClient(client))
+			continue;
+
+		SetItemState(iCurSelItem, 0, LVIS_SELECTED | LVIS_FOCUSED);
+		SetItemState(iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+		SetSelectionMark(iItem);
+		EnsureVisible(iItem, FALSE);
+		return client;
+	}
+	return NULL;
+}
+
+CObject* CClientListCtrl::GetPrevSelectableItem()
+{
+	return WalkToLiveClientItem(-1);
+}
+
+CObject* CClientListCtrl::GetNextSelectableItem()
+{
+	return WalkToLiveClientItem(1);
+}
+
 void CClientListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
 	if (!lpDrawItemStruct->itemData || theApp.IsClosing())
