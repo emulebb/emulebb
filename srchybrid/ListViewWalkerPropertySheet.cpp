@@ -50,6 +50,8 @@ void CListViewPropertySheet::InsertPage(int iIndex, CPropertyPage *pPage)
 {
 	ASSERT_VALID(this);
 	ASSERT(pPage != NULL);
+	if (pPage == NULL)
+		return;
 	ASSERT_KINDOF(CPropertyPage, pPage);
 	ASSERT_VALID(pPage);
 
