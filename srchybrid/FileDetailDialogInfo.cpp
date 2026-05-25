@@ -19,6 +19,7 @@
 #include "FileDetailDialogInfo.h"
 #include "UserMsgs.h"
 #include "PartFile.h"
+#include "KnownFilePointerValidation.h"
 #include "Preferences.h"
 #include "shahashset.h"
 #include "UpDownClient.h"
@@ -110,9 +111,32 @@ LRESULT CFileDetailDialogInfo::OnDataChanged(WPARAM, LPARAM)
 void CFileDetailDialogInfo::RefreshData()
 {
 	CString str;
+	CSimpleArray<CPartFile*> aLiveFiles;
+	if (m_paFiles != NULL) {
+		for (int i = 0; i < m_paFiles->GetSize(); ++i) {
+			CPartFile *file = static_cast<CPartFile*>((*m_paFiles)[i]);
+			if (IsLivePartFilePointer(file))
+				aLiveFiles.Add(file);
+		}
+	}
+	const int nLiveFileCount = aLiveFiles.GetSize();
 
-	if (m_paFiles->GetSize() == 1) {
-		CPartFile *file = static_cast<CPartFile*>((*m_paFiles)[0]);
+	if (nLiveFileCount == 0) {
+		static const UINT aUnavailableIds[] =
+		{
+			IDC_FNAME, IDC_METFILE, IDC_FHASH, IDC_PFSTATUS, IDC_PARTCOUNT,
+			IDC_FD_X11, IDC_FILECREATED, IDC_DL_ACTIVE_TIME, IDC_LASTSEENCOMPL,
+			IDC_LASTRECEIVED, IDC_FD_AICHHASH, IDC_FSIZE, IDC_HASHSET,
+			IDC_SOURCECOUNT, IDC_DATARATE, IDC_TRANSFERRED, IDC_COMPLSIZE,
+			IDC_CORRUPTED, IDC_REMAINING, IDC_RECOVERED, IDC_COMPRESSION
+		};
+		for (unsigned i = 0; i < _countof(aUnavailableIds); ++i)
+			SetDlgItemText(aUnavailableIds[i], sm_pszNotAvail);
+		return;
+	}
+
+	if (nLiveFileCount == 1) {
+		CPartFile *file = aLiveFiles[0];
 		const CString &fname(file->GetFileName());
 
 		// if file is completed, we output the 'file path' and not the 'part.met file path'
@@ -255,8 +279,8 @@ void CFileDetailDialogInfo::RefreshData()
 	UINT uValidSources = 0;
 	UINT uNNPSources = 0;
 	UINT uA4AFSources = 0;
-	for (int i = m_paFiles->GetSize(); --i >= 0;) {
-		CPartFile *file = static_cast<CPartFile*>((*m_paFiles)[i]);
+	for (int i = nLiveFileCount; --i >= 0;) {
+		CPartFile *file = aLiveFiles[i];
 
 		uFileSize += (uint64)file->GetFileSize();
 		uRealFileSize += (uint64)file->GetRealFileSize();
@@ -282,7 +306,7 @@ void CFileDetailDialogInfo::RefreshData()
 
 	if (iAICHHashsetAvailable == 0 && iMD4HashsetAvailable == 0)
 		str = GetResString(IDS_NO);
-	else if (m_paFiles->GetSize() == 1) {
+	else if (nLiveFileCount == 1) {
 		LPCTSTR p;
 		if (iAICHHashsetAvailable != 0 && iMD4HashsetAvailable != 0)
 			p = _T(" (eD2K + AICH)");
@@ -291,7 +315,7 @@ void CFileDetailDialogInfo::RefreshData()
 		else //if (iMD4HashsetAvailable != 0)
 			p = _T(" (eD2K)");
 		str = GetResString(IDS_YES) + p;
-	} else if (iMD4HashsetAvailable == m_paFiles->GetSize() && iMD4HashsetAvailable == iAICHHashsetAvailable)
+	} else if (iMD4HashsetAvailable == nLiveFileCount && iMD4HashsetAvailable == iAICHHashsetAvailable)
 		str = GetResString(IDS_YES) + _T(" (eD2K + AICH)");
 	else
 		str.Empty();

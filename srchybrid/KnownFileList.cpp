@@ -477,6 +477,18 @@ bool CKnownFileList::IsFilePtrInList(const CKnownFile *file) const
 	return file != NULL && FindKnownFileByID(file->GetFileHash()) == file;
 }
 
+bool CKnownFileList::ContainsFilePointer(const CKnownFile *file) const
+{
+	if (file == NULL)
+		return false;
+
+	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
+		if (pair->value == file)
+			return true;
+	}
+	return false;
+}
+
 void CKnownFileList::AddCancelledFileID(const uchar *hash)
 {
 	if (thePrefs.IsRememberingCancelledFiles()) {

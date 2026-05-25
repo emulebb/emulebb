@@ -19,6 +19,7 @@
 #include "FileDetailDialogName.h"
 #include "UserMsgs.h"
 #include "PartFile.h"
+#include "KnownFilePointerValidation.h"
 #include "UpDownClient.h"
 #include "TitledMenu.h"
 #include "MenuCmds.h"
@@ -106,7 +107,8 @@ BOOL CFileDetailDialogName::OnSetActive()
 		return FALSE;
 	if (m_bDataChanged) {
 		m_bSelf = true;
-		SetDlgItemText(IDC_FILENAME, static_cast<CPartFile*>((*m_paFiles)[0])->GetFileName());
+		const CPartFile *file = GetLiveFile();
+		SetDlgItemText(IDC_FILENAME, file != NULL ? (LPCTSTR)file->GetFileName() : _T(""));
 		m_bSelf = false;
 		RefreshData();
 		m_bDataChanged = false;
@@ -156,6 +158,15 @@ void CFileDetailDialogName::Localize()
 
 void CFileDetailDialogName::FillSourcenameList()
 {
+	const CPartFile *file = GetLiveFile();
+	if (file == NULL) {
+		for (int i = m_listFileNames.GetItemCount(); --i >= 0;) {
+			delete reinterpret_cast<FCtrlItem_Struct*>(m_listFileNames.GetItemData(i));
+			m_listFileNames.DeleteItem(i);
+		}
+		return;
+	}
+
 	LVFINDINFO info;
 	info.flags = LVFI_STRING;
 
@@ -164,7 +175,6 @@ void CFileDetailDialogName::FillSourcenameList()
 		reinterpret_cast<FCtrlItem_Struct*>(m_listFileNames.GetItemData(i))->count = 0;
 
 	// update
-	const CPartFile *file = static_cast<CPartFile*>((*m_paFiles)[0]);
 	for (POSITION pos = file->srclist.GetHeadPosition(); pos != NULL;) {
 		CUpDownClient *cur_src = file->srclist.GetNext(pos);
 		if (!file->IsLiveSource(cur_src) || cur_src->GetClientFilename().IsEmpty())
@@ -320,7 +330,9 @@ void CFileDetailDialogName::RenameFile()
 		CString strNewFileName;
 		GetDlgItemText(IDC_FILENAME, strNewFileName);
 		if (!strNewFileName.Trim().IsEmpty() && IsValidEd2kString(strNewFileName)) {
-			CPartFile *file = static_cast<CPartFile*>((*m_paFiles)[0]);
+			CPartFile *file = GetLiveFile();
+			if (file == NULL)
+				return;
 			file->DisableFollowMajorityFilenameForManualRename();
 			file->SetFileName(strNewFileName, true);
 			file->UpdateDisplayedInfo();
@@ -330,9 +342,20 @@ void CFileDetailDialogName::RenameFile()
 	}
 }
 
+CPartFile* CFileDetailDialogName::GetLiveFile() const
+{
+	if (m_paFiles == NULL || m_paFiles->GetSize() != 1)
+		return NULL;
+
+	CPartFile *file = static_cast<CPartFile*>((*m_paFiles)[0]);
+	return IsLivePartFilePointer(file) ? file : NULL;
+}
+
 bool CFileDetailDialogName::CanRenameFile() const
 {
-	const CPartFile *file = static_cast<CPartFile*>((*m_paFiles)[0]);
+	const CPartFile *file = GetLiveFile();
+	if (file == NULL)
+		return false;
 	return file->GetStatus() != PS_COMPLETE && file->GetStatus() != PS_COMPLETING;
 }
 

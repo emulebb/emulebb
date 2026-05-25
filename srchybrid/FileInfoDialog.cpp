@@ -20,6 +20,7 @@
 #include "FileInfoDialog.h"
 #include "OtherFunctions.h"
 #include "KnownFileMetadataSeams.h"
+#include "KnownFilePointerValidation.h"
 #include "PathHelpers.h"
 #include "HelperThreadLaunchSeams.h"
 #include "Log.h"
@@ -113,7 +114,7 @@ public:
 		for (int i = 0; i < paFiles->GetSize(); ++i) {
 			SMediaInfoFileSnapshot fileSnapshot;
 			const CShareableFile *pFile = static_cast<CShareableFile*>((*paFiles)[i]);
-			if (pFile != NULL) {
+			if (pFile != NULL && IsLiveKnownFilePointer(static_cast<const CKnownFile*>(pFile))) {
 				fileSnapshot.strFileName = pFile->GetFileName();
 				fileSnapshot.strFilePath = pFile->GetFilePath();
 				fileSnapshot.ulFileSize = pFile->GetFileSize();

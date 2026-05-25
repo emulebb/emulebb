@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "FileDetailDialog.h"
 #include "PartFile.h"
+#include "KnownFilePointerValidation.h"
 #include "HighColorTab.hpp"
 #include "UserMsgs.h"
 
@@ -34,6 +35,8 @@ static char THIS_FILE[] = __FILE__;
 bool NeedArchiveInfoPage(const CSimpleArray<CObject*> *paItems)
 {
 	if (paItems->GetSize() == 1) {
+		if (!IsLiveKnownFilePointer(static_cast<CKnownFile*>((*paItems)[0])))
+			return false;
 		CShareableFile *pFile = static_cast<CShareableFile*>((*paItems)[0]);
 		switch (GetFileTypeEx(pFile)) {
 		case ARCHIVE_ZIP:
@@ -46,6 +49,14 @@ bool NeedArchiveInfoPage(const CSimpleArray<CObject*> *paItems)
 		return ED2KFT_ARCHIVE == GetED2KFileTypeID(pFile->GetFileName());
 	}
 	return false;
+}
+
+void PruneStalePartFileItems(CSimpleArray<CObject*> &aItems)
+{
+	for (int i = aItems.GetSize(); --i >= 0;) {
+		if (!IsLivePartFilePointer(static_cast<CPartFile*>(aItems[i])))
+			aItems.RemoveAt(i);
+	}
 }
 
 void UpdateFileDetailsPages(CListViewPropertySheet *pSheet
@@ -131,7 +142,8 @@ CFileDetailDialog::CFileDetailDialog(const CSimpleArray<CPartFile*> *paFiles, UI
 	, m_uInvokePage(uInvokePage)
 {
 	for (int i = 0; i < paFiles->GetSize(); ++i)
-		m_aItems.Add((*paFiles)[i]);
+		if (IsLivePartFilePointer((*paFiles)[i]))
+			m_aItems.Add((*paFiles)[i]);
 	m_psh.dwFlags &= ~PSH_HASHELP;
 
 	m_wndInfo.m_psp.dwFlags &= ~PSP_HASHELP;
@@ -213,6 +225,7 @@ BOOL CFileDetailDialog::OnInitDialog()
 
 LRESULT CFileDetailDialog::OnDataChanged(WPARAM, LPARAM)
 {
+	PruneStalePartFileItems(m_aItems);
 	UpdateTitle();
 	UpdateFileDetailsPages(this, &m_wndArchiveInfo, &m_wndMediaInfo, &m_wndFileLink);
 	return 1;
@@ -221,7 +234,7 @@ LRESULT CFileDetailDialog::OnDataChanged(WPARAM, LPARAM)
 void CFileDetailDialog::UpdateTitle()
 {
 	CString sTitle(GetResString(IDS_DETAILS));
-	if (m_aItems.GetSize() == 1)
+	if (m_aItems.GetSize() == 1 && IsLiveKnownFilePointer(static_cast<CKnownFile*>(m_aItems[0])))
 		sTitle.AppendFormat(_T(": %s"), (LPCTSTR)(static_cast<CAbstractFile*>(m_aItems[0])->GetFileName()));
 	SetWindowText(sTitle);
 }

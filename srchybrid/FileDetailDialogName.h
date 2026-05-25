@@ -17,6 +17,8 @@
 #include "ResizableLib/ResizablePage.h"
 #include "MuleListCtrl.h"
 
+class CPartFile;
+
 struct FCtrlItem_Struct
 {
 	CString	filename;
@@ -52,6 +54,7 @@ protected:
 	void RefreshData();
 	void FillSourcenameList();
 	void Copy();
+	CPartFile* GetLiveFile() const;
 	bool CanRenameFile() const;
 	void RenameFile();
 

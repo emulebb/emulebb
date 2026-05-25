@@ -2094,6 +2094,19 @@ bool CSharedFileList::IsFilePtrInList(const CKnownFile *file) const
 	return file != NULL && GetFileByID(file->GetFileHash()) == file;
 }
 
+bool CSharedFileList::ContainsFilePointer(const CKnownFile *file)
+{
+	if (file == NULL)
+		return false;
+
+	CSingleLock listlock(&m_mutWriteList, TRUE);
+	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
+		if (pair->value == file)
+			return true;
+	}
+	return false;
+}
+
 void CSharedFileList::HashNextFile()
 {
 	if (theApp.emuledlg == NULL || !::IsWindow(theApp.emuledlg->m_hWnd))	// wait for the dialog to open

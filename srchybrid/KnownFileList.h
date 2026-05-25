@@ -43,6 +43,7 @@ public:
 	CKnownFile* FindKnownFileByPath(const CString &sFilePath) const;
 	bool	IsKnownFile(const CKnownFile *file) const;
 	bool	IsFilePtrInList(const CKnownFile *file) const;
+	bool	ContainsFilePointer(const CKnownFile *file) const;
 	void	InvalidateLookupIndex();
 
 	void	AddCancelledFileID(const uchar *hash);
