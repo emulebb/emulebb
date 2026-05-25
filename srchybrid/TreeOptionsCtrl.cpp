@@ -2453,11 +2453,31 @@ void CTreeOptionsBrowseButton::SetFontItem(const LOGFONT *pLogFont)
 	ASSERT(pLogFont);
 	m_Font = *pLogFont;
 }
+
+namespace
+{
+	CTreeOptionsCtrl *PrepareTreeOptionsDDXCtrl(CDataExchange *pDX, int nIDC)
+	{
+		ASSERT(pDX != NULL);
+		if (pDX == NULL)
+			return NULL;
+
+		HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
+		ASSERT(hWndCtrl != NULL);
+		if (hWndCtrl == NULL)
+			return NULL;
+
+		CTreeOptionsCtrl *pCtrlTreeOptions = DYNAMIC_DOWNCAST(CTreeOptionsCtrl, CWnd::FromHandlePermanent(hWndCtrl));
+		ASSERT(pCtrlTreeOptions != NULL);
+		return pCtrlTreeOptions;
+	}
+}
+
 void DDX_TreeCheck(CDataExchange *pDX, int nIDC, HTREEITEM hItem, BOOL &bCheck)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions && pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate)
 		pCtrlTreeOptions->GetCheckBox(hItem, bCheck);
@@ -2467,9 +2487,9 @@ void DDX_TreeCheck(CDataExchange *pDX, int nIDC, HTREEITEM hItem, BOOL &bCheck)
 
 void DDX_TreeRadio(CDataExchange *pDX, int nIDC, HTREEITEM hParent, int &nIndex)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions && pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate) {
 		HTREEITEM hCheckItem;
@@ -2480,9 +2500,9 @@ void DDX_TreeRadio(CDataExchange *pDX, int nIDC, HTREEITEM hParent, int &nIndex)
 
 void DDX_TreeEdit(CDataExchange *pDX, int nIDC, HTREEITEM hItem, CString &sText)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions && pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate)
 		sText = pCtrlTreeOptions->GetEditText(hItem);
@@ -2492,9 +2512,9 @@ void DDX_TreeEdit(CDataExchange *pDX, int nIDC, HTREEITEM hItem, CString &sText)
 
 void DDX_TreeEdit(CDataExchange *pDX, int nIDC, HTREEITEM hItem, int &nValue)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions && pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate)
 		nValue = _ttoi(pCtrlTreeOptions->GetEditText(hItem));
@@ -2507,9 +2527,9 @@ void DDX_TreeEdit(CDataExchange *pDX, int nIDC, HTREEITEM hItem, int &nValue)
 
 void DDX_TreeCombo(CDataExchange *pDX, int nIDC, HTREEITEM hItem, CString &sText)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions && pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate)
 		sText = pCtrlTreeOptions->GetComboText(hItem);
@@ -2519,9 +2539,9 @@ void DDX_TreeCombo(CDataExchange *pDX, int nIDC, HTREEITEM hItem, CString &sText
 
 void DDX_TreeFileEdit(CDataExchange *pDX, int nIDC, HTREEITEM hItem, CString &sText)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions && pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate)
 		sText = pCtrlTreeOptions->GetFileEditText(hItem);
@@ -2531,9 +2551,9 @@ void DDX_TreeFileEdit(CDataExchange *pDX, int nIDC, HTREEITEM hItem, CString &sT
 
 void DDX_TreeFolderEdit(CDataExchange *pDX, int nIDC, HTREEITEM hItem, CString &sText)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions && pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate)
 		sText = pCtrlTreeOptions->GetFolderEditText(hItem);
@@ -2543,9 +2563,9 @@ void DDX_TreeFolderEdit(CDataExchange *pDX, int nIDC, HTREEITEM hItem, CString &
 
 void DDX_TreeColor(CDataExchange *pDX, int nIDC, HTREEITEM hItem, COLORREF &color)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions && pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate)
 		color = pCtrlTreeOptions->GetColor(hItem);
@@ -2555,9 +2575,9 @@ void DDX_TreeColor(CDataExchange *pDX, int nIDC, HTREEITEM hItem, COLORREF &colo
 
 void DDX_TreeFont(CDataExchange *pDX, int nIDC, HTREEITEM hItem, LOGFONT *pLogFont)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions && pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate)
 		pCtrlTreeOptions->GetFontItem(hItem, pLogFont);
@@ -2567,9 +2587,9 @@ void DDX_TreeFont(CDataExchange *pDX, int nIDC, HTREEITEM hItem, LOGFONT *pLogFo
 
 void DDX_TreeDateTime(CDataExchange *pDX, int nIDC, HTREEITEM hItem, SYSTEMTIME &st)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions && pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate)
 		pCtrlTreeOptions->GetDateTime(hItem, st);
@@ -2579,9 +2599,9 @@ void DDX_TreeDateTime(CDataExchange *pDX, int nIDC, HTREEITEM hItem, SYSTEMTIME 
 
 void DDX_TreeIPAddress(CDataExchange *pDX, int nIDC, HTREEITEM hItem, DWORD &dwAddress)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions && pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate)
 		dwAddress = pCtrlTreeOptions->GetIPAddress(hItem);

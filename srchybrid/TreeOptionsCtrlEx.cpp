@@ -381,15 +381,34 @@ void CTreeOptionsCtrlEx::OnDestroy()
 //////////////////////////////////////////////////////////////////////////////
 // DDX_...
 
+namespace
+{
+	CTreeOptionsCtrl *PrepareTreeOptionsDDXCtrl(CDataExchange *pDX, int nIDC, bool bEditCtrl)
+	{
+		ASSERT(pDX != NULL);
+		if (pDX == NULL)
+			return NULL;
+
+		HWND hWndCtrl = bEditCtrl ? pDX->PrepareEditCtrl(nIDC) : pDX->PrepareCtrl(nIDC);
+		ASSERT(hWndCtrl != NULL);
+		if (hWndCtrl == NULL)
+			return NULL;
+
+		CTreeOptionsCtrl *pCtrlTreeOptions = DYNAMIC_DOWNCAST(CTreeOptionsCtrl, CWnd::FromHandlePermanent(hWndCtrl));
+		ASSERT(pCtrlTreeOptions != NULL);
+		return pCtrlTreeOptions;
+	}
+}
+
 void EditTextFloatFormat(CDataExchange *pDX, int nIDC, HTREEITEM hItem, void *pData, double value, int nSizeGcvt)
 {
 	ASSERT(pData != NULL);
+	if (pData == NULL)
+		return;
 
-	HWND hWndCtrl = pDX->PrepareEditCtrl(nIDC);
-	ASSERT(hWndCtrl != NULL);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions);
-	ASSERT(pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC, true);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate) {
 		CString sText(pCtrlTreeOptions->GetEditText(hItem));
@@ -414,14 +433,12 @@ void EditTextFloatFormat(CDataExchange *pDX, int nIDC, HTREEITEM hItem, void *pD
 // only supports windows output formats - no floating point
 void EditTextWithFormat(CDataExchange *pDX, int nIDC, HTREEITEM hItem, LPCTSTR lpszFormat, UINT nIDPrompt, ...)
 {
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC, true);
+	if (pCtrlTreeOptions == NULL)
+		return;
+
 	va_list pData;
 	va_start(pData, nIDPrompt);
-
-	HWND hWndCtrl = pDX->PrepareEditCtrl(nIDC);
-	ASSERT(hWndCtrl != NULL);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions);
-	ASSERT(pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
 
 	if (pDX->m_bSaveAndValidate) {
 		void *pResult = va_arg(pData, void*);
@@ -493,10 +510,9 @@ void DDX_Text(CDataExchange *pDX, int nIDC, HTREEITEM hItem, double &value)
 
 void DDX_Text(CDataExchange *pDX, int nIDC, HTREEITEM hItem, CString &sText)
 {
-	HWND hWndCtrl = pDX->PrepareCtrl(nIDC);
-	CTreeOptionsCtrl *pCtrlTreeOptions = static_cast<CTreeOptionsCtrl*>(CWnd::FromHandlePermanent(hWndCtrl));
-	ASSERT(pCtrlTreeOptions);
-	ASSERT(pCtrlTreeOptions->IsKindOf(RUNTIME_CLASS(CTreeOptionsCtrl)));
+	CTreeOptionsCtrl *pCtrlTreeOptions = PrepareTreeOptionsDDXCtrl(pDX, nIDC, false);
+	if (pCtrlTreeOptions == NULL)
+		return;
 
 	if (pDX->m_bSaveAndValidate)
 		sText = pCtrlTreeOptions->GetEditText(hItem);
