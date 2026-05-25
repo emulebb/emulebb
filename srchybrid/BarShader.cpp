@@ -51,6 +51,12 @@ void CBarShader::Reset()
 	Fill(0);
 }
 
+void CBarShader::EnsureSpanFallback()
+{
+	if (m_Spans.GetHeadPosition() == NULL)
+		Fill(0);
+}
+
 void CBarShader::BuildModifiers()
 {
 	delete[] m_Modifiers;
@@ -66,10 +72,10 @@ void CBarShader::BuildModifiers()
 	// m_Modifiers[count-1] will always be 1, m_Modifiers[0] depends on the value of depth
 
 	int depth = (7 - m_used3dlevel);
-	int count = HALF(m_iHeight);
+	int count = HALF(max(m_iHeight, 1));
 	double piOverDepth = M_PI / depth;
 	double base = piOverDepth * (depth / 2.0 - 1);
-	double increment = piOverDepth / (count - 1);
+	double increment = count > 1 ? piOverDepth / (count - 1) : 0.0;
 
 	m_Modifiers = new float[count];
 	for (int i = 0; i < count; ++i)
@@ -80,8 +86,9 @@ void CBarShader::SetWidth(int width)
 {
 	if (m_iWidth != width) {
 		m_iWidth = width;
-		m_dPixelsPerByte = ((uint64)m_uFileSize > 0) ? (double)m_iWidth / (uint64)m_uFileSize : 0.0;
-		m_dBytesPerPixel = (m_iWidth > 0) ? (uint64)m_uFileSize / (double)m_iWidth : 0.0;
+		const uint64 uFileSize = static_cast<uint64>(m_uFileSize);
+		m_dPixelsPerByte = (uFileSize > 0) ? static_cast<double>(m_iWidth) / static_cast<double>(uFileSize) : 0.0;
+		m_dBytesPerPixel = (m_iWidth > 0) ? static_cast<double>(uFileSize) / static_cast<double>(m_iWidth) : 0.0;
 	}
 }
 
@@ -89,8 +96,9 @@ void CBarShader::SetFileSize(EMFileSize fileSize)
 {
 	if (m_uFileSize != fileSize) {
 		m_uFileSize = fileSize;
-		m_dPixelsPerByte = ((uint64)m_uFileSize > 0) ? (double)m_iWidth / (uint64)m_uFileSize : 0.0;
-		m_dBytesPerPixel = (m_iWidth > 0) ? (uint64)m_uFileSize / (double)m_iWidth : 0.0;
+		const uint64 uFileSize = static_cast<uint64>(m_uFileSize);
+		m_dPixelsPerByte = (uFileSize > 0) ? static_cast<double>(m_iWidth) / static_cast<double>(uFileSize) : 0.0;
+		m_dBytesPerPixel = (m_iWidth > 0) ? static_cast<double>(uFileSize) / static_cast<double>(m_iWidth) : 0.0;
 	}
 }
 
@@ -117,7 +125,9 @@ void CBarShader::FillRange(uint64 start, uint64 end, COLORREF color)
 		return;
 
 	// SLUGFILLER: speedBarShader
-	POSITION endpos = m_Spans.FindFirstKeyAfter(end + 1);
+	EnsureSpanFallback();
+	const uint64 uEndLookup = end != static_cast<uint64>(-1) ? end + 1 : end;
+	POSITION endpos = m_Spans.FindFirstKeyAfter(uEndLookup);
 
 	if (endpos)
 		m_Spans.GetPrev(endpos);
@@ -153,6 +163,11 @@ void CBarShader::Fill(COLORREF color)
 
 void CBarShader::Draw(CDC &dc, int iLeft, int iTop, bool bFlat)
 {
+	if (m_iWidth <= 0 || m_iHeight <= 0)
+		return;
+
+	EnsureSpanFallback();
+
 	//FillSolidRect() is simpler and faster, though FillRect() did not alter background colour
 	//minor additional trouble: to save and restore background colour for CMuleListCtrl
 	COLORREF cBk = dc.GetBkColor();
@@ -161,16 +176,25 @@ void CBarShader::Draw(CDC &dc, int iLeft, int iTop, bool bFlat)
 	uint64 start = 0; //bsCurrent->start;
 
 	POSITION pos = m_Spans.GetHeadPosition();	// SLUGFILLER: speedBarShader
+	if (pos == NULL)
+		return;
 	COLORREF color = m_Spans.GetNextValue(pos);	// SLUGFILLER: speedBarShader
+	if (pos == NULL) {
+		rectSpan.left = rectSpan.right;
+		rectSpan.right = iLeft + m_iWidth;
+		FillBarRect(dc, &rectSpan, color, bFlat);
+		dc.SetBkColor(cBk);
+		return;
+	}
 	// SLUGFILLER: speedBarShader
 	while (pos != NULL && rectSpan.right < (iLeft + m_iWidth)) {	// SLUGFILLER: speedBarShader
 		uint64 uSpan = m_Spans.GetKeyAt(pos) - start;	// SLUGFILLER: speedBarShader
-		uint64 uPixels = (uint64)(uSpan * m_dPixelsPerByte + 0.5);
+		uint64 uPixels = static_cast<uint64>(static_cast<double>(uSpan) * m_dPixelsPerByte + 0.5);
 		if (uPixels > 0) {
 			rectSpan.left = rectSpan.right;
 			rectSpan.right += (int)uPixels;
 			FillBarRect(dc, &rectSpan, color, bFlat);	// SLUGFILLER: speedBarShader
-			start += (uint64)(uPixels * m_dBytesPerPixel + 0.5);
+			start += static_cast<uint64>(static_cast<double>(uPixels) * m_dBytesPerPixel + 0.5);
 		} else {
 			float fRed = 0;
 			float fGreen = 0;
@@ -180,7 +204,8 @@ void CBarShader::Draw(CDC &dc, int iLeft, int iTop, bool bFlat)
 			// SLUGFILLER: speedBarShader
 			do {
 				uint64 uKey = m_Spans.GetKeyAt(pos);
-				float fWeight = (float)((min(uKey, iEnd) - iLast) * m_dPixelsPerByte);
+				const uint64 uWeightBytes = min(uKey, iEnd) - iLast;
+				float fWeight = static_cast<float>(static_cast<double>(uWeightBytes) * m_dPixelsPerByte);
 				fRed += GetRValue(color) * fWeight;
 				fGreen += GetGValue(color) * fWeight;
 				fBlue += GetBValue(color) * fWeight;

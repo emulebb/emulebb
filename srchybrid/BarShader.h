@@ -50,6 +50,8 @@ protected:
 	bool	m_bIsPreview;
 
 private:
+	void EnsureSpanFallback();
+
 	UINT	m_used3dlevel;
 	CRBMap<uint64, COLORREF> m_Spans;	// SLUGFILLER: speedBarShader
 	float	*m_Modifiers;
