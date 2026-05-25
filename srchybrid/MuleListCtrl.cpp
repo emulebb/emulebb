@@ -687,6 +687,21 @@ int CMuleListCtrl::MoveItem(int iOldIndex, int iNewIndex)
 	return iNewIndex;
 }
 
+bool CMuleListCtrl::EnsureParamSnapshot(bool bForce)
+{
+	if (GetStyle() & LVS_OWNERDATA)
+		return true;
+
+	const int iItemCount = GetItemCount();
+	if (!bForce && m_Params.GetCount() == iItemCount)
+		return true;
+
+	m_Params.RemoveAll();
+	for (int i = 0; i < iItemCount; ++i)
+		m_Params.AddTail(CListCtrl::GetItemData(i));
+	return m_Params.GetCount() == iItemCount;
+}
+
 int CMuleListCtrl::UpdateLocation(int iItem)
 {
 	if (GetStyle() & LVS_OWNERDATA)
@@ -694,6 +709,8 @@ int CMuleListCtrl::UpdateLocation(int iItem)
 
 	int iItemCount = GetItemCount();
 	if (iItem >= iItemCount || iItem < 0)
+		return iItem;
+	if (!EnsureParamSnapshot())
 		return iItem;
 
 	bool notLast = iItem + 1 < iItemCount;
@@ -705,6 +722,8 @@ int CMuleListCtrl::UpdateLocation(int iItem)
 	if (iItem > 0) { //not first
 		int iNewIndex = iItem - 1;
 		POSITION pos = m_Params.FindIndex(iNewIndex);
+		if (pos == NULL)
+			return iItem;
 		int iResult = m_SortProc(dwpItemData, GetParamAt(pos, iNewIndex), m_dwParamSort);
 		if (iResult < 0) {
 			POSITION posPrev = pos;
@@ -734,6 +753,8 @@ int CMuleListCtrl::UpdateLocation(int iItem)
 	if (notLast) {
 		int iNewIndex = iItem + 1;
 		POSITION pos = m_Params.FindIndex(iNewIndex);
+		if (pos == NULL)
+			return iItem;
 		int iResult = m_SortProc(dwpItemData, GetParamAt(pos, iNewIndex), m_dwParamSort);
 		if (iResult > 0) {
 			POSITION posNext = pos;
@@ -769,10 +790,10 @@ DWORD_PTR CMuleListCtrl::GetItemData(int iItem)
 		return GetVirtualItemData(iItem);
 
 	POSITION pos = m_Params.FindIndex(iItem);
-	if (pos == NULL)
-		return 0;
+	if (pos == NULL && EnsureParamSnapshot())
+		pos = m_Params.FindIndex(iItem);
 	LPARAM lParam = GetParamAt(pos, iItem);
-	MLC_ASSERT(lParam == CListCtrl::GetItemData(iItem));
+	MLC_ASSERT(pos == NULL || lParam == CListCtrl::GetItemData(iItem));
 	return lParam;
 }
 
@@ -957,9 +978,24 @@ BOOL CMuleListCtrl::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT
 			m_Params.RemoveAll();
 		return (BOOL)(*pResult = 1);
 	case LVM_DELETEITEM:
-		MLC_ASSERT(m_Params.GetAt(m_Params.FindIndex(wParam)) == CListCtrl::GetItemData(wParam));
-		if (!CListCtrl::OnWndMsg(message, wParam, lParam, pResult) && DefWindowProc(message, wParam, lParam))
-			m_Params.RemoveAt(m_Params.FindIndex(wParam));
+		{
+			const int iItem = static_cast<int>(wParam);
+			const bool bValidItem = iItem >= 0 && iItem < GetItemCount();
+			if (bValidItem)
+				EnsureParamSnapshot();
+			POSITION pos = m_Params.FindIndex(iItem);
+			if (bValidItem && pos != NULL && m_Params.GetAt(pos) != CListCtrl::GetItemData(iItem)) {
+				EnsureParamSnapshot(true);
+				pos = m_Params.FindIndex(iItem);
+			}
+			MLC_ASSERT(!bValidItem || pos == NULL || m_Params.GetAt(pos) == CListCtrl::GetItemData(iItem));
+			if (!CListCtrl::OnWndMsg(message, wParam, lParam, pResult) && DefWindowProc(message, wParam, lParam)) {
+				if (pos != NULL)
+					m_Params.RemoveAt(pos);
+				else
+					EnsureParamSnapshot(true);
+			}
+		}
 		return (BOOL)(*pResult = 1);
 	case LVM_INSERTITEMA:
 	case LVM_INSERTITEMW:
@@ -969,60 +1005,74 @@ BOOL CMuleListCtrl::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT
 			int iItem = pItem->iItem;
 			int iItemCount = GetItemCount();
 			bool notLast = iItem < iItemCount;
+			if (!EnsureParamSnapshot()) {
+				LRESULT lResult = DefWindowProc(message, wParam, lParam);
+				if (lResult != -1)
+					EnsureParamSnapshot(true);
+				return (BOOL)(*pResult = lResult);
+			}
 
 			if (iItem > 0) { //not first
 				int iNewIndex = iItem - 1;
 				POSITION pos = m_Params.FindIndex(iNewIndex);
-				int iResult = m_SortProc(pItem->lParam, GetParamAt(pos, iNewIndex), m_dwParamSort);
-				if (iResult < 0) {
-					POSITION posPrev = pos;
-					for (int iDist = iNewIndex / 2; iDist > 1;) {
-						for (int i = 0; i < iDist; ++i)
-							m_Params.GetPrev(posPrev);
-
-						if (m_SortProc(pItem->lParam, GetParamAt(posPrev, iNewIndex - iDist), m_dwParamSort) < 0) {
-							iNewIndex = iNewIndex - iDist;
-							pos = posPrev;
-						} else
-							posPrev = pos;
-
-						iDist /= 2;
-					}
-					while (--iNewIndex >= 0) {
-						m_Params.GetPrev(pos);
-						if (m_SortProc(pItem->lParam, GetParamAt(pos, iNewIndex), m_dwParamSort) >= 0)
-							break;
-					}
-					pItem->iItem = iNewIndex + 1;
+				if (pos == NULL)
 					notLast = false;
+				else {
+					int iResult = m_SortProc(pItem->lParam, GetParamAt(pos, iNewIndex), m_dwParamSort);
+					if (iResult < 0) {
+						POSITION posPrev = pos;
+						for (int iDist = iNewIndex / 2; iDist > 1;) {
+							for (int i = 0; i < iDist; ++i)
+								m_Params.GetPrev(posPrev);
+
+							if (m_SortProc(pItem->lParam, GetParamAt(posPrev, iNewIndex - iDist), m_dwParamSort) < 0) {
+								iNewIndex = iNewIndex - iDist;
+								pos = posPrev;
+							} else
+								posPrev = pos;
+
+							iDist /= 2;
+						}
+						while (--iNewIndex >= 0) {
+							m_Params.GetPrev(pos);
+							if (m_SortProc(pItem->lParam, GetParamAt(pos, iNewIndex), m_dwParamSort) >= 0)
+								break;
+						}
+						pItem->iItem = iNewIndex + 1;
+						notLast = false;
+					}
 				}
 			}
 
 			if (notLast) {
 				int iNewIndex = iItem;
 				POSITION pos = m_Params.FindIndex(iNewIndex);
-				int iResult = m_SortProc(pItem->lParam, GetParamAt(pos, iNewIndex), m_dwParamSort);
-				if (iResult > 0) {
-					POSITION posNext = pos;
-					int iDist = (GetItemCount() - iNewIndex) / 2;
-					while (iDist > 1) {
-						for (int i = 0; i < iDist; ++i)
-							m_Params.GetNext(posNext);
+				if (pos == NULL)
+					notLast = false;
+				else {
+					int iResult = m_SortProc(pItem->lParam, GetParamAt(pos, iNewIndex), m_dwParamSort);
+					if (iResult > 0) {
+						POSITION posNext = pos;
+						int iDist = (GetItemCount() - iNewIndex) / 2;
+						while (iDist > 1) {
+							for (int i = 0; i < iDist; ++i)
+								m_Params.GetNext(posNext);
 
-						if (m_SortProc(pItem->lParam, GetParamAt(posNext, iNewIndex + iDist), m_dwParamSort) > 0) {
-							iNewIndex = iNewIndex + iDist;
-							pos = posNext;
-						} else
-							posNext = pos;
+							if (m_SortProc(pItem->lParam, GetParamAt(posNext, iNewIndex + iDist), m_dwParamSort) > 0) {
+								iNewIndex = iNewIndex + iDist;
+								pos = posNext;
+							} else
+								posNext = pos;
 
-						iDist /= 2;
+							iDist /= 2;
+						}
+						while (++iNewIndex < iItemCount) {
+							m_Params.GetNext(pos);
+							if (m_SortProc(pItem->lParam, GetParamAt(pos, iNewIndex), m_dwParamSort) <= 0)
+								break;
+						}
+						pItem->iItem = iNewIndex;
 					}
-					while (++iNewIndex < iItemCount) {
-						m_Params.GetNext(pos);
-						if (m_SortProc(pItem->lParam, GetParamAt(pos, iNewIndex), m_dwParamSort) <= 0)
-							break;
-					}
-					pItem->iItem = iNewIndex;
 				}
 			}
 
@@ -1037,8 +1087,13 @@ BOOL CMuleListCtrl::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT
 					m_Params.AddTail(pItem->lParam);
 				else if (lResult == 0)
 					m_Params.AddHead(pItem->lParam);
-				else
-					m_Params.InsertAfter(m_Params.FindIndex(lResult - 1), pItem->lParam);
+				else {
+					POSITION posInsertAfter = m_Params.FindIndex(lResult - 1);
+					if (posInsertAfter != NULL)
+						m_Params.InsertAfter(posInsertAfter, pItem->lParam);
+					else
+						EnsureParamSnapshot(true);
+				}
 			}
 			return (BOOL)(*pResult = lResult);
 		}

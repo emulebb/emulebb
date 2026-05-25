@@ -319,8 +319,13 @@ private:
 	int		  m_iRedrawCount;
 	CList<DWORD_PTR, DWORD_PTR> m_Params;
 
+	bool EnsureParamSnapshot(bool bForce = false);
+
 	DWORD_PTR GetParamAt(POSITION pos, int iPos)
 	{
+		if (pos == NULL)
+			return (iPos >= 0 && iPos < GetItemCount()) ? CListCtrl::GetItemData(iPos) : 0;
+
 		DWORD_PTR lParam = m_Params.GetAt(pos);
 		if (lParam == 0xFEEBDEEF) { //same as MLC_MAGIC!
 			lParam = CListCtrl::GetItemData(iPos);
