@@ -83,12 +83,24 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-bool PostPartFileCompletionThreadResult(CPartFile *pFile, const DWORD dwResult)
+struct SPartFileCompletionThreadResult
+{
+	CPartFile *pFile = NULL;
+	DWORD dwResult = FILE_COMPLETION_THREAD_FAILED;
+	CString strCompletedPath;
+	CString strIncomingPath;
+	time_t tLastModified = 0;
+	bool bHasLastModified = false;
+};
+
+bool PostPartFileCompletionThreadResult(SPartFileCompletionThreadResult *pResult)
 {
 	const HWND hNotifyWnd = theApp.emuledlg != NULL ? theApp.emuledlg->GetSafeHwnd() : NULL;
+	const DWORD dwResult = pResult != NULL ? pResult->dwResult : FILE_COMPLETION_THREAD_FAILED;
 	const PartFileCompletionSeams::SWorkerCompletionPostResult result =
-		PartFileCompletionSeams::PostWorkerCompletion(theApp.IsClosing(), hNotifyWnd, TM_FILECOMPLETED, dwResult, reinterpret_cast<LPARAM>(pFile));
+		PartFileCompletionSeams::PostWorkerCompletion(theApp.IsClosing(), hNotifyWnd, TM_FILECOMPLETED, dwResult, reinterpret_cast<LPARAM>(pResult));
 	if (result.eDelivery == PartFileCompletionSeams::EWorkerCompletionDelivery::Failed) {
+		CPartFile *pFile = pResult != NULL ? pResult->pFile : NULL;
 		const CString strFileName(pFile != NULL ? pFile->GetFileName() : CString(_T("<null>")));
 		DebugLogError(_T("Dropped part-file completion result for \"%s\" because TM_FILECOMPLETED could not be posted (%u)"),
 			static_cast<LPCTSTR>(strFileName),
@@ -3148,18 +3160,31 @@ void SetZoneIdentifier(LPCTSTR pszFilePath)
 	if (!thePrefs.GetCheckFileOpen())
 		return;
 	CComPtr<IZoneIdentifier> pZoneIdentifier;
-	if (SUCCEEDED(pZoneIdentifier.CoCreateInstance(CLSID_PersistentZoneIdentifier, NULL, CLSCTX_INPROC_SERVER))) {
-		CComQIPtr<IPersistFile> pPersistFile(pZoneIdentifier);
-		if (pPersistFile) {
-			// Specify the 'zone identifier' which has to be committed with 'IPersistFile::Save'
-			if (SUCCEEDED(pZoneIdentifier->SetId(URLZONE_INTERNET))) {
-				// Save the 'zone identifier'
-				// NOTE: This does not modify the file content in any way,
-				// *but* it modifies the "Last Modified" file time!
-				VERIFY(SUCCEEDED(pPersistFile->Save(pszFilePath, FALSE)));
-			}
-		}
+	HRESULT hr = pZoneIdentifier.CoCreateInstance(CLSID_PersistentZoneIdentifier, NULL, CLSCTX_INPROC_SERVER);
+	if (FAILED(hr)) {
+		DebugLogWarning(_T("Failed to create Zone.Identifier writer for \"%s\" (HRESULT 0x%08lX)"), pszFilePath, static_cast<unsigned long>(hr));
+		return;
 	}
+
+	CComQIPtr<IPersistFile> pPersistFile(pZoneIdentifier);
+	if (!pPersistFile) {
+		DebugLogWarning(_T("Failed to query Zone.Identifier persistence for \"%s\" (HRESULT 0x%08lX)"), pszFilePath, static_cast<unsigned long>(E_NOINTERFACE));
+		return;
+	}
+
+	// Specify the 'zone identifier' which has to be committed with 'IPersistFile::Save'
+	hr = pZoneIdentifier->SetId(URLZONE_INTERNET);
+	if (FAILED(hr)) {
+		DebugLogWarning(_T("Failed to set Zone.Identifier for \"%s\" (HRESULT 0x%08lX)"), pszFilePath, static_cast<unsigned long>(hr));
+		return;
+	}
+
+	// Save the 'zone identifier'
+	// NOTE: This does not modify the file content in any way,
+	// *but* it modifies the "Last Modified" file time!
+	hr = pPersistFile->Save(pszFilePath, FALSE);
+	if (FAILED(hr))
+		DebugLogWarning(_T("Failed to save Zone.Identifier for \"%s\" (HRESULT 0x%08lX)"), pszFilePath, static_cast<unsigned long>(hr));
 }
 
 DWORD CALLBACK CopyProgressRoutine(LARGE_INTEGER TotalFileSize, LARGE_INTEGER TotalBytesTransferred,
@@ -3197,11 +3222,11 @@ BOOL CPartFile::PerformFileComplete()
 	TCHAR *newfilename = _tcsdup(strCompletedFileName);
 	if (PartFileCompletionSeams::IsMissingCompletedNameBuffer(newfilename)) {
 		DebugLogError(_T("Failed to allocate completed filename buffer for \"%s\""), (LPCTSTR)GetFileName());
-		m_paused = m_stopped = true;
-		SetStatus(PS_ERROR);
-		m_bCompletionError = true;
-		bNoNewReads = false;
-		if (!PostPartFileCompletionThreadResult(this, FILE_COMPLETION_THREAD_FAILED))
+		std::unique_ptr<SPartFileCompletionThreadResult> pResult(new SPartFileCompletionThreadResult);
+		pResult->pFile = this;
+		if (PostPartFileCompletionThreadResult(pResult.get()))
+			pResult.release();
+		else
 			SetFileOp(PFOP_NONE);
 		return FALSE;
 	}
@@ -3279,12 +3304,14 @@ BOOL CPartFile::PerformFileComplete()
 				theApp.QueueLogLine(true, GetResString(IDS_ERR_COMPLETIONFAILED) + _T(" - %s: Windows long-path support is disabled; enable LongPathsEnabled to avoid failures with overlong paths")
 					, (LPCTSTR)FormatDisplayFileName(GetFileName()), (LPCTSTR)strNewname);
 
-			m_paused = m_stopped = true;
-			SetStatus(PS_ERROR);
-			m_bCompletionError = true;
-			bNoNewReads = false; //re-enable reading till next completion attempt
-			if (!PostPartFileCompletionThreadResult(this, FILE_COMPLETION_THREAD_FAILED))
+			std::unique_ptr<SPartFileCompletionThreadResult> pResult(new SPartFileCompletionThreadResult);
+			pResult->pFile = this;
+			if (PostPartFileCompletionThreadResult(pResult.get()))
+				pResult.release();
+			else {
+				bNoNewReads = false; //re-enable reading if the UI-thread result cannot be delivered
 				SetFileOp(PFOP_NONE);
+			}
 			return FALSE;
 		}
 		// The UploadDiskIOThread might have an open handle to this file due to ongoing uploads
@@ -3304,9 +3331,12 @@ BOOL CPartFile::PerformFileComplete()
 	// that file will be rehashed at next startup and there would also be a duplicate entry (hash+size)
 	// in known.met because of a different file date!
 	ASSERT((HANDLE)m_hpartfile == INVALID_HANDLE_VALUE); // the file must be closed/committed!
+	bool bHasLastModified = false;
+	time_t tLastModified = 0;
 	struct _stat64 st;
 	if (statUTC(PreparePathForLongPath(strNewname), st) == 0) {
-		m_tUtcLastModified = m_tLastModified = (time_t)st.st_mtime;
+		bHasLastModified = true;
+		tLastModified = (time_t)st.st_mtime;
 	}
 
 	static LPCTSTR const pszErrfmt = _T(" - %s");
@@ -3332,29 +3362,56 @@ BOOL CPartFile::PerformFileComplete()
 		theApp.QueueLogLine(true, sFmt, (LPCTSTR)TMPName);
 	}
 
-	// initialize 'this' part file for being a 'complete' file, this is to be done *before* releasing the file mutex.
-	m_fullname = strNewname;
-	SetPath(indir);
-	SetFilePath(m_fullname);
-	_SetStatus(PS_COMPLETE); // set status of CPartFile object, but do not update GUI (to avoid multi-threading problems)
-	m_paused = false;
-
-	// clear the blackbox to free up memory
-	m_CorruptionBlackBox.Free();
-	m_aChangedPart.SetSize(0);
-
 	// Hold the owner mutex until after the result is queued; shutdown waits on
 	// the same mutex before deleting this CPartFile.
-	if (!PostPartFileCompletionThreadResult(this, FILE_COMPLETION_THREAD_SUCCESS | (renamed ? FILE_COMPLETION_THREAD_RENAMED : 0)))
+	std::unique_ptr<SPartFileCompletionThreadResult> pResult(new SPartFileCompletionThreadResult);
+	pResult->pFile = this;
+	pResult->dwResult = FILE_COMPLETION_THREAD_SUCCESS | (renamed ? FILE_COMPLETION_THREAD_RENAMED : 0);
+	pResult->strCompletedPath = strNewname;
+	pResult->strIncomingPath = indir;
+	pResult->bHasLastModified = bHasLastModified;
+	pResult->tLastModified = tLastModified;
+	if (PostPartFileCompletionThreadResult(pResult.get()))
+		pResult.release();
+	else
 		SetFileOp(PFOP_NONE);
 	return TRUE;
 }
 
 // 'End' of file completion. To avoid multi-threading synchronization problems,
 // this is to be invoked in the main thread only!
-void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
+CPartFile *CPartFile::GetCompletionResultFile(void *pCompletionResult)
 {
+	const SPartFileCompletionThreadResult *pResult = static_cast<const SPartFileCompletionThreadResult*>(pCompletionResult);
+	return pResult != NULL ? pResult->pFile : NULL;
+}
+
+void CPartFile::DiscardCompletionResult(void *pCompletionResult)
+{
+	delete static_cast<SPartFileCompletionThreadResult*>(pCompletionResult);
+}
+
+void CPartFile::PerformFileCompleteEnd(void *pCompletionResult)
+{
+	std::unique_ptr<SPartFileCompletionThreadResult> pResult(static_cast<SPartFileCompletionThreadResult*>(pCompletionResult));
+	if (!pResult || pResult->pFile != this) {
+		ASSERT(0);
+		return;
+	}
+	const DWORD dwResult = pResult->dwResult;
 	if (dwResult & FILE_COMPLETION_THREAD_SUCCESS) {
+		// Apply the CPartFile state transition on the UI thread. The worker only
+		// commits filesystem changes and posts this result object.
+		m_fullname = pResult->strCompletedPath;
+		SetPath(pResult->strIncomingPath);
+		SetFilePath(m_fullname);
+		if (pResult->bHasLastModified)
+			m_tUtcLastModified = m_tLastModified = pResult->tLastModified;
+		_SetStatus(PS_COMPLETE);
+		m_paused = false;
+		m_CorruptionBlackBox.Free();
+		m_aChangedPart.SetSize(0);
+
 		if (!m_nCompleteSourcesCount)
 			m_nCompleteSourcesCountHi = m_nCompleteSourcesCountLo = m_nCompleteSourcesCount = 1;
 		m_tCompleteSourcesTime = 0; //force update in Shared Files
@@ -3415,6 +3472,12 @@ void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 			}
 		}
 		LaunchFileCompletionCommand(*this, nCompletedCategory);
+	} else {
+		m_paused = m_stopped = true;
+		SetStatus(PS_ERROR);
+		m_bCompletionError = true;
+		bNoNewReads = false;
+		UpdateDisplayedInfo(true);
 	}
 
 	theApp.downloadqueue->StartNextFileIfPrefs(GetCategory());

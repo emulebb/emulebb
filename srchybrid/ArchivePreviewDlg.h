@@ -26,6 +26,9 @@ static void FreeMemory(void *arg);
 ///////////////////////////////////////////////////////////////////////////////
 // CArchivePreviewDlg
 
+// FROZEN DEPRECATED SURFACE: archive preview UI remains for legacy
+// compatibility only. Avoid feature work here; remove it or contain shared
+// infrastructure risk until retirement.
 class CArchivePreviewDlg : public CResizablePage
 {
 	DECLARE_DYNAMIC(CArchivePreviewDlg)

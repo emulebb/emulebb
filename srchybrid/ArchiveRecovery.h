@@ -404,6 +404,9 @@ struct archiveScannerThreadParams_s
 	volatile bool	m_bIsValid;
 };
 
+// FROZEN DEPRECATED SURFACE: archive recovery is retained only for legacy
+// compatibility. Do not extend it; limit changes to removal or containment of
+// shared infrastructure risks until the feature is retired.
 class CArchiveRecovery
 {
 public:

@@ -3067,15 +3067,20 @@ LRESULT CemuleDlg::OnFileAllocExc(WPARAM wParam, LPARAM lParam)
 
 LRESULT CemuleDlg::OnFileCompleted(WPARAM wParam, LPARAM lParam)
 {
-	CPartFile *partfile = reinterpret_cast<CPartFile*>(lParam);
-	if (partfile == NULL)
+	(void)wParam;
+	void *pCompletionResult = reinterpret_cast<void*>(lParam);
+	CPartFile *partfile = CPartFile::GetCompletionResultFile(pCompletionResult);
+	if (partfile == NULL) {
+		CPartFile::DiscardCompletionResult(pCompletionResult);
 		return 0;
+	}
 	if (theApp.downloadqueue == NULL || !theApp.downloadqueue->IsPartFile(partfile)) {
 		ASSERT(0);
+		CPartFile::DiscardCompletionResult(pCompletionResult);
 		return 0;
 	}
 	partfile->SetFileOp(PFOP_NONE);
-	partfile->PerformFileCompleteEnd((DWORD)wParam);
+	partfile->PerformFileCompleteEnd(pCompletionResult);
 	return 0;
 }
 

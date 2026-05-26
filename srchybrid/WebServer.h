@@ -308,6 +308,9 @@ typedef struct
 	uint16	iProgressbarWidth;
 } WebTemplates;
 
+// FROZEN DEPRECATED SURFACE: this is the legacy HTML/template Web Interface.
+// New API work belongs in WebServerJson; touch CWebServer only to remove it or
+// protect shared shutdown/threading infrastructure until removal.
 class CWebServer
 {
 	friend class CWebSocket;

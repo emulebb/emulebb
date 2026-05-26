@@ -307,7 +307,9 @@ public:
 	void	FlushBuffersExceptionHandler(CFileException *ex);
 	void	FlushBuffersExceptionHandler();
 
-	void	PerformFileCompleteEnd(DWORD dwResult);
+	static CPartFile* GetCompletionResultFile(void *pCompletionResult);
+	static void	DiscardCompletionResult(void *pCompletionResult);
+	void	PerformFileCompleteEnd(void *pCompletionResult);
 	void	WaitForFileCompletionWorkerForShutdown();
 
 	void	SetFileOp(EPartFileOp eFileOp)				{ m_eFileOp = eFileOp; }

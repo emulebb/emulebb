@@ -1602,9 +1602,12 @@ void CKnownFile::UpdateMetaDataTags()
 			ApplyMediaInfoTags(mediaInfo);
 			bMetaDataApplied = true;
 		}
+	} catch (CException *ex) {
+		DebugLogWarning(_T("Unhandled exception while extracting file meta data through MediaInfo.dll from \"%s\"%s"), (LPCTSTR)strFullPath, (LPCTSTR)CExceptionStrDash(*ex));
+		ex->Delete();
+		ASSERT(0);
 	} catch (...) {
-		if (thePrefs.GetVerbose())
-			AddDebugLogLine(false, _T("Unhandled exception while extracting file meta data through MediaInfo.dll from \"%s\""), (LPCTSTR)strFullPath);
+		DebugLogWarning(_T("Unhandled exception while extracting file meta data through MediaInfo.dll from \"%s\" - unexpected exception"), (LPCTSTR)strFullPath);
 		ASSERT(0);
 	}
 
@@ -1621,9 +1624,12 @@ void CKnownFile::UpdateMetaDataTags()
 				ApplyMediaInfoTags(*mi);
 				bMetaDataApplied = true;
 			}
+		} catch (CException *ex) {
+			DebugLogWarning(_T("Unhandled exception while extracting built-in file meta data from \"%s\"%s"), (LPCTSTR)strFullPath, (LPCTSTR)CExceptionStrDash(*ex));
+			ex->Delete();
+			ASSERT(0);
 		} catch (...) {
-			if (thePrefs.GetVerbose())
-				AddDebugLogLine(false, _T("Unhandled exception while extracting built-in file meta data from \"%s\""), (LPCTSTR)strFullPath);
+			DebugLogWarning(_T("Unhandled exception while extracting built-in file meta data from \"%s\" - unexpected exception"), (LPCTSTR)strFullPath);
 			ASSERT(0);
 		}
 		delete mi;
@@ -1637,9 +1643,12 @@ void CKnownFile::UpdateMetaDataTags()
 				ApplyMediaInfoTags(mediaInfo);
 				bMetaDataApplied = true;
 			}
+		} catch (CException *ex) {
+			DebugLogWarning(_T("Unhandled exception while extracting fallback media metadata from \"%s\"%s"), (LPCTSTR)strFullPath, (LPCTSTR)CExceptionStrDash(*ex));
+			ex->Delete();
+			ASSERT(0);
 		} catch (...) {
-			if (thePrefs.GetVerbose())
-				AddDebugLogLine(false, _T("Unhandled exception while extracting fallback media metadata from \"%s\""), (LPCTSTR)strFullPath);
+			DebugLogWarning(_T("Unhandled exception while extracting fallback media metadata from \"%s\" - unexpected exception"), (LPCTSTR)strFullPath);
 			ASSERT(0);
 		}
 	}
@@ -1721,9 +1730,13 @@ void CKnownFile::UpdateMetaDataTags()
 					pszText = NULL;
 				}
 				delete iter;
+		} catch (CException *ex) {
+			DebugLogWarning(_T("Unhandled exception while extracting MP3 file meta data from \"%s\"%s"), (LPCTSTR)strFullPath, (LPCTSTR)CExceptionStrDash(*ex));
+			delete[] pszText;
+			ex->Delete();
+			ASSERT(0);
 		} catch (...) {
-			if (thePrefs.GetVerbose())
-				AddDebugLogLine(false, _T("Unhandled exception while extracting MP3 file meta data from \"%s\""), (LPCTSTR)strFullPath);
+			DebugLogWarning(_T("Unhandled exception while extracting MP3 file meta data from \"%s\" - unexpected exception"), (LPCTSTR)strFullPath);
 			delete[] pszText;
 			ASSERT(0);
 		}

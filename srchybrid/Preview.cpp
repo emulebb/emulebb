@@ -24,6 +24,7 @@
 #include "Preview.h"
 #include "MenuCmds.h"
 #include "FileCompletionCommandSeams.h"
+#include "Log.h"
 #include "LongPathSeams.h"
 #include "OtherFunctions.h"
 #include "PartFilePreviewSeams.h"
@@ -282,8 +283,10 @@ BOOL CPeerPreviewThread::Run()
 			}
 		}
 	} catch (CFileException *ex) {
+		DebugLogWarning(_T("Peer preview failed for \"%s\"%s"), (LPCTSTR)m_strInputPath, (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
 	} catch (...) {
+		DebugLogWarning(_T("Peer preview failed for \"%s\" after an unexpected exception"), (LPCTSTR)m_strInputPath);
 	}
 
 	const SWorkerUiMessageDelivery delivery = PostWorkerUiMessage(
