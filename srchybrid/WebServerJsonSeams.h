@@ -930,7 +930,8 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/transfers/operations/clear-completed", "confirmClearCompleted", ""},
 		{"GET", "/transfers/{hash}", "", ""},
 		{"PATCH", "/transfers/{hash}", "name,priority,categoryId,categoryName", ""},
-		{"DELETE", "/transfers/{hash}", "deleteFiles", ""},
+		{"DELETE", "/transfers/{hash}", "", ""},
+		{"DELETE", "/transfers/{hash}/files", "", "confirm"},
 		{"GET", "/transfers/{hash}/details", "", ""},
 		{"GET", "/transfers/{hash}/sources", "", ""},
 		{"GET", "/transfers/{hash}/sources/{clientId}", "", ""},
@@ -951,7 +952,8 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/shared-files/operations/reload", "", ""},
 		{"GET", "/shared-files/{hash}", "", ""},
 		{"PATCH", "/shared-files/{hash}", "priority,rating,comment", ""},
-		{"DELETE", "/shared-files/{hash}", "deleteFiles", ""},
+		{"DELETE", "/shared-files/{hash}", "", ""},
+		{"DELETE", "/shared-files/{hash}/file", "", "confirm"},
 		{"GET", "/shared-files/{hash}/ed2k-link", "", ""},
 		{"GET", "/shared-files/{hash}/comments", "", ""},
 		{"GET", "/shared-directories", "", ""},
@@ -990,7 +992,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/kad/operations/recheck-firewall", "", ""},
 		{"GET", "/searches", "", ""},
 		{"POST", "/searches", "query,method,type,minSizeBytes,maxSizeBytes,minAvailability,extension", ""},
-		{"DELETE", "/searches", "confirmDeleteAllSearches", ""},
+		{"DELETE", "/searches", "", "confirm"},
 		{"GET", "/searches/{searchId}", "", ""},
 		{"DELETE", "/searches/{searchId}", "", ""},
 		{"POST", "/searches/{searchId}/results/{hash}/operations/download", "categoryId,categoryName,paused", ""},
@@ -1861,37 +1863,71 @@ inline bool RequireBooleanFieldTrue(
 	return true;
 }
 
+inline bool TryParseBooleanQueryValue(
+	const std::string &rValue,
+	const char *pszFieldName,
+	bool &rValueOut,
+	std::string &rErrorCode,
+	std::string &rErrorMessage)
+{
+	if (rValue == "true") {
+		rValueOut = true;
+		return true;
+	}
+	if (rValue == "false") {
+		rValueOut = false;
+		return true;
+	}
+	SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszFieldName) + " must be true or false");
+	return false;
+}
+
+inline bool RequireQueryBooleanTrue(
+	const std::map<std::string, std::string> &rQuery,
+	const char *pszFieldName,
+	const char *pszExpectedMessage,
+	std::string &rErrorCode,
+	std::string &rErrorMessage)
+{
+	const std::map<std::string, std::string>::const_iterator it = rQuery.find(pszFieldName);
+	if (it == rQuery.end()) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, pszExpectedMessage != NULL ? pszExpectedMessage : std::string(pszFieldName) + " must be true");
+		return false;
+	}
+	bool bValue = false;
+	if (!TryParseBooleanQueryValue(it->second, pszFieldName, bValue, rErrorCode, rErrorMessage))
+		return false;
+	if (!bValue) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, pszExpectedMessage != NULL ? pszExpectedMessage : std::string(pszFieldName) + " must be true");
+		return false;
+	}
+	return true;
+}
+
+inline bool IsRouteSpec(const SApiRouteSpec &rSpec, const char *pszMethod, const char *pszPath)
+{
+	return rSpec.pszMethod != NULL
+		&& rSpec.pszPathTemplate != NULL
+		&& std::string(rSpec.pszMethod) == pszMethod
+		&& std::string(rSpec.pszPathTemplate) == pszPath;
+}
+
 /**
  * @brief Applies explicit confirmation rules for destructive native REST routes.
  */
 inline bool ValidateDestructiveConfirmationBody(const json &rBody, const SApiRouteSpec &rSpec, std::string &rErrorCode, std::string &rErrorMessage)
 {
-	const std::string strMethod(rSpec.pszMethod != NULL ? rSpec.pszMethod : "");
-	const std::string strPath(rSpec.pszPathTemplate != NULL ? rSpec.pszPathTemplate : "");
-	if (strMethod == "DELETE" && strPath == "/transfers/{hash}") {
-		if (!RequireBooleanField(rBody, "deleteFiles", "deleteFiles must be an explicit boolean", rErrorCode, rErrorMessage))
-			return false;
-		if (!rBody["deleteFiles"].get<bool>()) {
-			SetInvalidArgument(rErrorCode, rErrorMessage, "deleteFiles must be true for transfer deletes");
-			return false;
-		}
-		return true;
-	}
-	if (strMethod == "DELETE" && strPath == "/shared-files/{hash}")
-		return RequireBooleanField(rBody, "deleteFiles", "deleteFiles must be an explicit boolean", rErrorCode, rErrorMessage);
-	if (strMethod == "POST" && strPath == "/app/shutdown")
+	if (IsRouteSpec(rSpec, "POST", "/app/shutdown"))
 		return RequireBooleanFieldTrue(rBody, "confirmShutdown", "confirmShutdown must be true", rErrorCode, rErrorMessage);
-	if (strMethod == "POST" && strPath == "/diagnostics/dumps")
+	if (IsRouteSpec(rSpec, "POST", "/diagnostics/dumps"))
 		return RequireBooleanFieldTrue(rBody, "confirmDump", "confirmDump must be true", rErrorCode, rErrorMessage);
-	if (strMethod == "POST" && strPath == "/diagnostics/crash-tests")
+	if (IsRouteSpec(rSpec, "POST", "/diagnostics/crash-tests"))
 		return RequireBooleanFieldTrue(rBody, "confirmCrash", "confirmCrash must be true", rErrorCode, rErrorMessage);
-	if (strMethod == "POST" && strPath == "/transfers/operations/clear-completed")
+	if (IsRouteSpec(rSpec, "POST", "/transfers/operations/clear-completed"))
 		return RequireBooleanFieldTrue(rBody, "confirmClearCompleted", "confirmClearCompleted must be true", rErrorCode, rErrorMessage);
-	if (strMethod == "DELETE" && strPath == "/searches")
-		return RequireBooleanFieldTrue(rBody, "confirmDeleteAllSearches", "confirmDeleteAllSearches must be true", rErrorCode, rErrorMessage);
-	if (strMethod == "POST" && strPath == "/logs/operations/clear")
+	if (IsRouteSpec(rSpec, "POST", "/logs/operations/clear"))
 		return RequireBooleanFieldTrue(rBody, "confirmClearLogs", "confirmClearLogs must be true", rErrorCode, rErrorMessage);
-	if (strMethod == "PATCH" && strPath == "/shared-directories")
+	if (IsRouteSpec(rSpec, "PATCH", "/shared-directories"))
 		return RequireBooleanFieldTrue(rBody, "confirmReplaceRoots", "confirmReplaceRoots must be true", rErrorCode, rErrorMessage);
 	return true;
 }
@@ -2106,6 +2142,17 @@ inline bool ValidateQueryFields(const std::map<std::string, std::string> &rQuery
 			SetInvalidArgument(rErrorCode, rErrorMessage, kTransferStateError);
 			return false;
 		}
+		if (it->first == "confirm") {
+			bool bIgnored = false;
+			if (!TryParseBooleanQueryValue(it->second, "confirm", bIgnored, rErrorCode, rErrorMessage))
+				return false;
+		}
+	}
+	if (IsRouteSpec(rSpec, "DELETE", "/transfers/{hash}/files")
+		|| IsRouteSpec(rSpec, "DELETE", "/shared-files/{hash}/file")
+		|| IsRouteSpec(rSpec, "DELETE", "/searches"))
+	{
+		return RequireQueryBooleanTrue(rQuery, "confirm", "confirm must be true", rErrorCode, rErrorMessage);
 	}
 	return true;
 }
@@ -2286,29 +2333,6 @@ inline bool TryBuildRoute(
 		rErrorMessage = "API route not found";
 		return false;
 	}
-
-	const std::vector<std::string> route(segments.begin() + 2, segments.end());
-	std::map<std::string, std::string> query;
-	if (!TryParseQueryString(rRequestTarget, query, rErrorMessage)) {
-		rErrorCode = "INVALID_ARGUMENT";
-		return false;
-	}
-	if (!TryValidateRequestMetadata(rRequestBody, rContentType, rErrorCode, rErrorMessage))
-		return false;
-	json body;
-	if (!TryParseRequestBody(rRequestBody, body, rErrorMessage)) {
-		rErrorCode = "INVALID_ARGUMENT";
-		return false;
-	}
-	if (!body.is_object()) {
-		if (!rRequestBody.empty()) {
-			rErrorCode = "INVALID_ARGUMENT";
-			rErrorMessage = "JSON body must be an object";
-			return false;
-		}
-		body = json::object();
-	}
-
 	const bool bGet = rMethod == "GET";
 	const bool bPost = rMethod == "POST";
 	const bool bPatch = rMethod == "PATCH";
@@ -2318,6 +2342,14 @@ inline bool TryBuildRoute(
 		rErrorMessage = "only GET, POST, PATCH, and DELETE are supported";
 		return false;
 	}
+
+	const std::vector<std::string> route(segments.begin() + 2, segments.end());
+	std::map<std::string, std::string> query;
+	if (!TryParseQueryString(rRequestTarget, query, rErrorMessage)) {
+		rErrorCode = "INVALID_ARGUMENT";
+		return false;
+	}
+
 	rRoute.strMethod = rMethod;
 
 	if (route.empty()) {
@@ -2343,6 +2375,26 @@ inline bool TryBuildRoute(
 		return false;
 	if (!ValidateQueryFields(query, *pRouteSpec, rErrorCode, rErrorMessage))
 		return false;
+	if (bDelete && !TrimAsciiWhitespace(rRequestBody).empty()) {
+		rErrorCode = "INVALID_ARGUMENT";
+		rErrorMessage = "DELETE request bodies are not supported";
+		return false;
+	}
+	if (!TryValidateRequestMetadata(rRequestBody, rContentType, rErrorCode, rErrorMessage))
+		return false;
+	json body;
+	if (!TryParseRequestBody(rRequestBody, body, rErrorMessage)) {
+		rErrorCode = "INVALID_ARGUMENT";
+		return false;
+	}
+	if (!body.is_object()) {
+		if (!rRequestBody.empty()) {
+			rErrorCode = "INVALID_ARGUMENT";
+			rErrorMessage = "JSON body must be an object";
+			return false;
+		}
+		body = json::object();
+	}
 	if (!ValidateRequestBodyFields(body, *pRouteSpec, rErrorCode, rErrorMessage))
 		return false;
 
@@ -2478,7 +2530,13 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 2 && route[0] == "transfers" && bDelete) {
 		rRoute.strCommand = "transfers/delete";
-		rRoute.params = body;
+		rRoute.params["deleteFiles"] = false;
+		rRoute.params["hashes"] = json::array({route[1]});
+		return true;
+	}
+	if (route.size() == 3 && route[0] == "transfers" && route[2] == "files" && bDelete) {
+		rRoute.strCommand = "transfers/delete";
+		rRoute.params["deleteFiles"] = true;
 		rRoute.params["hashes"] = json::array({route[1]});
 		return true;
 	}
@@ -2755,7 +2813,13 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 2 && route[0] == "shared-files" && bDelete) {
 		rRoute.strCommand = "shared/remove";
-		rRoute.params = body;
+		rRoute.params["deleteFiles"] = false;
+		rRoute.params["hash"] = route[1];
+		return true;
+	}
+	if (route.size() == 3 && route[0] == "shared-files" && route[2] == "file" && bDelete) {
+		rRoute.strCommand = "shared/remove";
+		rRoute.params["deleteFiles"] = true;
 		rRoute.params["hash"] = route[1];
 		return true;
 	}
@@ -2771,7 +2835,6 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 1 && route[0] == "searches" && bDelete) {
 		rRoute.strCommand = "search/clear";
-		rRoute.params = body;
 		return true;
 	}
 	if (route.size() == 6 && route[0] == "searches" && route[2] == "results" && route[4] == "operations" && route[5] == "download" && bPost) {

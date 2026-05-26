@@ -3473,7 +3473,10 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 				const bool bDeleteFiles = request.bDeleteFiles;
 				if (pPartFile->GetStatus() == PS_COMPLETE) {
 					if (!bDeleteFiles) {
-						strErrorText = _T("completed transfer deletion requires deleteFiles=true");
+						theApp.sharedfiles->RemoveFile(pPartFile, false);
+						if (theApp.emuledlg->transferwnd->GetDownloadList() != NULL)
+							theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile(pPartFile);
+						bOk = true;
 					} else if (!ShellDeleteFile(pPartFile->GetFilePath())) {
 						strErrorText = GetErrorMessage(::GetLastError());
 					} else {
@@ -3483,7 +3486,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 						bOk = true;
 					}
 				} else if (!bDeleteFiles) {
-					strErrorText = _T("partial transfer deletion requires deleteFiles=true");
+					strErrorText = _T("partial transfer deletion requires /transfers/{hash}/files?confirm=true");
 				} else {
 					pPartFile->DeletePartFile();
 					bOk = true;
