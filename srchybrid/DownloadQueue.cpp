@@ -601,6 +601,7 @@ void CDownloadQueue::AddSearchToDownload(CSearchFile *toadd, uint8 paused, int c
 			sources.SeekToBegin();
 			newfile->AddSources(&sources, toadd->GetClientServerIP(), toadd->GetClientServerPort(), false);
 		} catch (CFileException *ex) {
+			DebugLogWarning(_T("Failed to add search-result source %u:%u for \"%s\"%s"), toadd->GetClientID(), toadd->GetClientPort(), (LPCTSTR)newfile->GetFileName(), (LPCTSTR)CExceptionStrDash(*ex));
 			ASSERT(0);
 			ex->Delete();
 		}
@@ -617,6 +618,7 @@ void CDownloadQueue::AddSearchToDownload(CSearchFile *toadd, uint8 paused, int c
 			sources.SeekToBegin();
 			newfile->AddSources(&sources, aClients[i].m_nServerIP, aClients[i].m_nServerPort, false);
 		} catch (CFileException *ex) {
+			DebugLogWarning(_T("Failed to add global UDP search-result source %u:%u for \"%s\"%s"), aClients[i].m_nIP, aClients[i].m_nPort, (LPCTSTR)newfile->GetFileName(), (LPCTSTR)CExceptionStrDash(*ex));
 			ASSERT(0);
 			ex->Delete();
 			break;
