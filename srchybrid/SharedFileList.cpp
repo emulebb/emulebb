@@ -3448,8 +3448,10 @@ bool CSharedFileList::WriteStartupCacheFile(const CString &strFullPath, const Sh
 {
 	const CString strTempPath(strFullPath + _T(".tmp"));
 	CSafeBufferedFile file;
-	if (!LongPathSeams::OpenFile(file, strTempPath, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite | CFile::typeBinary))
+	if (!LongPathSeams::OpenFile(file, strTempPath, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite | CFile::typeBinary)) {
+		DebugLogWarning(_T("Failed to open startup cache temp file \"%s\" for \"%s\" - %s"), (LPCTSTR)strTempPath, (LPCTSTR)strFullPath, (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
 		return false;
+	}
 
 	try {
 		file.WriteUInt32(SharedStartupCachePolicy::kMagic);
@@ -3482,11 +3484,13 @@ bool CSharedFileList::WriteStartupCacheFile(const CString &strFullPath, const Sh
 		}
 		CommitAndClose(file);
 		if (!LongPathSeams::MoveFileEx(strTempPath, strFullPath, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+			DebugLogWarning(_T("Failed to replace startup cache \"%s\" with temp file \"%s\" - %s"), (LPCTSTR)strFullPath, (LPCTSTR)strTempPath, (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
 			(void)LongPathSeams::DeleteFileIfExists(strTempPath);
 			return false;
 		}
 		return true;
 	} catch (CFileException *ex) {
+		DebugLogWarning(_T("Failed to write startup cache temp file \"%s\" for \"%s\"%s"), (LPCTSTR)strTempPath, (LPCTSTR)strFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
 		(void)LongPathSeams::DeleteFileIfExists(strTempPath);
 	}
@@ -3497,8 +3501,10 @@ bool CSharedFileList::WriteDuplicatePathCacheFile(const CString &strFullPath, co
 {
 	const CString strTempPath(strFullPath + _T(".tmp"));
 	CSafeBufferedFile file;
-	if (!LongPathSeams::OpenFile(file, strTempPath, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite | CFile::typeBinary))
+	if (!LongPathSeams::OpenFile(file, strTempPath, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite | CFile::typeBinary)) {
+		DebugLogWarning(_T("Failed to open duplicate path cache temp file \"%s\" for \"%s\" - %s"), (LPCTSTR)strTempPath, (LPCTSTR)strFullPath, (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
 		return false;
+	}
 
 	try {
 		file.WriteUInt32(SharedDuplicatePathCachePolicy::kMagic);
@@ -3512,11 +3518,13 @@ bool CSharedFileList::WriteDuplicatePathCacheFile(const CString &strFullPath, co
 		}
 		CommitAndClose(file);
 		if (!LongPathSeams::MoveFileEx(strTempPath, strFullPath, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+			DebugLogWarning(_T("Failed to replace duplicate path cache \"%s\" with temp file \"%s\" - %s"), (LPCTSTR)strFullPath, (LPCTSTR)strTempPath, (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
 			(void)LongPathSeams::DeleteFileIfExists(strTempPath);
 			return false;
 		}
 		return true;
 	} catch (CFileException *ex) {
+		DebugLogWarning(_T("Failed to write duplicate path cache temp file \"%s\" for \"%s\"%s"), (LPCTSTR)strTempPath, (LPCTSTR)strFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
 		(void)LongPathSeams::DeleteFileIfExists(strTempPath);
 	}
