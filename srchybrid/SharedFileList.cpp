@@ -2752,10 +2752,19 @@ bool CSharedFileList::ReadStartupCacheString(CSafeBufferedFile &file, CString &r
 	}
 
 	std::vector<WCHAR> buffer(uCharCount + 1u, L'\0');
-	file.Read(buffer.data(), uCharCount * sizeof(WCHAR));
+	ReadStartupCacheExact(file, buffer.data(), uCharCount * sizeof(WCHAR));
 	buffer[uCharCount] = L'\0';
 	rValue = CString(buffer.data());
 	return true;
+}
+
+void CSharedFileList::ReadStartupCacheExact(CSafeBufferedFile &file, void *pBuffer, const UINT uBytes)
+{
+	if (uBytes == 0)
+		return;
+	const UINT uActualRead = file.Read(pBuffer, uBytes);
+	if (uActualRead != uBytes)
+		AfxThrowFileException(CFileException::endOfFile, 0, file.GetFilePath());
 }
 
 void CSharedFileList::WriteStartupCacheString(CSafeBufferedFile &file, const CString &strValue)
@@ -3039,12 +3048,12 @@ bool CSharedFileList::TryLoadStartupCache()
 			record.bHasIdentity = (file.ReadUInt8() != 0);
 			record.identity.bHasExtendedFileId = (file.ReadUInt8() != 0);
 			record.identity.ullVolumeSerialNumber = file.ReadUInt64();
-			file.Read(record.identity.fileId.data(), static_cast<UINT>(record.identity.fileId.size()));
+			ReadStartupCacheExact(file, record.identity.fileId.data(), static_cast<UINT>(record.identity.fileId.size()));
 			record.utcDirectoryDate = static_cast<LONGLONG>(file.ReadUInt64());
 			record.eValidationMode = static_cast<SharedStartupCachePolicy::ValidationMode>(file.ReadUInt8());
 			if (!ReadStartupCacheString(file, record.volumeRecord.strVolumeKey))
 				AfxThrowFileException(CFileException::genericException);
-			file.Read(record.directoryFileReference.identifier.data(), static_cast<UINT>(record.directoryFileReference.identifier.size()));
+			ReadStartupCacheExact(file, record.directoryFileReference.identifier.data(), static_cast<UINT>(record.directoryFileReference.identifier.size()));
 			record.uCachedFileCount = file.ReadUInt32();
 			if (record.uCachedFileCount > kMaxFileCountPerDirectory)
 				AfxThrowFileException(CFileException::genericException);
@@ -3126,7 +3135,7 @@ bool CSharedFileList::TryLoadDuplicatePathCache()
 				AfxThrowFileException(CFileException::genericException);
 			record.utcFileDate = static_cast<LONGLONG>(file.ReadUInt64());
 			record.ullFileSize = file.ReadUInt64();
-			file.Read(record.canonicalFileHash.data(), static_cast<UINT>(record.canonicalFileHash.size()));
+			ReadStartupCacheExact(file, record.canonicalFileHash.data(), static_cast<UINT>(record.canonicalFileHash.size()));
 			if (!SharedDuplicatePathCachePolicy::IsStructurallyValid(record)
 				|| m_duplicateSharedPathRecords.find(MakeDuplicatePathCacheKey(record.strFilePath)) != m_duplicateSharedPathRecords.end())
 			{

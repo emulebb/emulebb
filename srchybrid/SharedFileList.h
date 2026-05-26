@@ -450,6 +450,7 @@ private:
 	 * @brief Canonicalizes one duplicate shared-file path into the sidecar key format.
 	 */
 	static std::wstring MakeDuplicatePathCacheKey(const CString &strFilePath);
+	static void ReadStartupCacheExact(CSafeBufferedFile &file, void *pBuffer, UINT uBytes);
 	static bool ReadStartupCacheString(CSafeBufferedFile &file, CString &rValue);
 	static void WriteStartupCacheString(CSafeBufferedFile &file, const CString &strValue);
 	static UINT AFX_CDECL StartupCacheSaveThreadProc(LPVOID pParam);
