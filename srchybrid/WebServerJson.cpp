@@ -3473,7 +3473,6 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 				const bool bDeleteFiles = request.bDeleteFiles;
 				if (pPartFile->GetStatus() == PS_COMPLETE) {
 					if (!bDeleteFiles) {
-						theApp.sharedfiles->RemoveFile(pPartFile, false);
 						if (theApp.emuledlg->transferwnd->GetDownloadList() != NULL)
 							theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile(pPartFile);
 						bOk = true;
