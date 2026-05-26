@@ -119,6 +119,94 @@ constexpr DWORD kShutdownFlushWaitMs = 5000;
 constexpr LPCSTR kFollowMajorityFilenameTag = "BBFollowMajorityFilename";
 constexpr DWORD kShutdownFlushPollMs = 10;
 
+COLORREF BlendColor(COLORREF crColor, COLORREF crTarget, UINT uColorWeight)
+{
+	const UINT uTargetWeight = 100U - min(uColorWeight, 100U);
+	return RGB(
+		(GetRValue(crColor) * uColorWeight + GetRValue(crTarget) * uTargetWeight) / 100U,
+		(GetGValue(crColor) * uColorWeight + GetGValue(crTarget) * uTargetWeight) / 100U,
+		(GetBValue(crColor) * uColorWeight + GetBValue(crTarget) * uTargetWeight) / 100U);
+}
+
+COLORREF InterpolateColor(COLORREF crStart, COLORREF crEnd, UINT uStep, UINT uStepCount)
+{
+	if (uStepCount == 0)
+		return crStart;
+	return RGB(
+		GetRValue(crStart) + (GetRValue(crEnd) - GetRValue(crStart)) * static_cast<int>(uStep) / static_cast<int>(uStepCount),
+		GetGValue(crStart) + (GetGValue(crEnd) - GetGValue(crStart)) * static_cast<int>(uStep) / static_cast<int>(uStepCount),
+		GetBValue(crStart) + (GetBValue(crEnd) - GetBValue(crStart)) * static_cast<int>(uStep) / static_cast<int>(uStepCount));
+}
+
+struct STransferBarColors
+{
+	COLORREF crProgress;
+	COLORREF crProgressBk;
+	COLORREF crHave;
+	COLORREF crPending;
+	COLORREF crMissing;
+	COLORREF crFileOp;
+	COLORREF crSourceBase;
+	COLORREF crSourceHot;
+};
+
+STransferBarColors BuildTransferBarColors(bool bFlat, bool bNotGrey)
+{
+	STransferBarColors colors = {};
+	if (g_bLowColorDesktop) {
+		colors.crProgress = RGB(0, 255, 0);
+		colors.crProgressBk = RGB(192, 192, 192);
+		colors.crFileOp = RGB(255, 255, 0);
+		colors.crSourceBase = RGB(0, 255, 255);
+		colors.crSourceHot = RGB(0, 0, 255);
+		if (bNotGrey) {
+			colors.crMissing = RGB(255, 0, 0);
+			colors.crHave = RGB(0, 0, 0);
+			colors.crPending = RGB(255, 255, 0);
+		} else {
+			colors.crMissing = RGB(128, 0, 0);
+			colors.crHave = RGB(128, 128, 128);
+			colors.crPending = RGB(128, 128, 0);
+			colors.crSourceBase = RGB(0, 128, 128);
+			colors.crSourceHot = RGB(0, 128, 128);
+		}
+		return colors;
+	}
+
+	colors.crProgress = RGB(0, (bFlat ? 150 : 224), 0);
+	colors.crProgressBk = RGB(224, 224, 224);
+	colors.crFileOp = RGB(255, 208, 0);
+	colors.crSourceBase = bNotGrey ? RGB(0, 210, 255) : RGB(64, 169, 191);
+	colors.crSourceHot = bNotGrey ? RGB(0, 0, 255) : RGB(64, 64, 191);
+	if (bNotGrey) {
+		colors.crMissing = RGB(255, 0, 0);
+		colors.crHave = bFlat ? RGB(0, 0, 0) : RGB(104, 104, 104);
+		colors.crPending = RGB(255, 208, 0);
+	} else {
+		colors.crMissing = RGB(191, 64, 64);
+		colors.crHave = bFlat ? RGB(64, 64, 64) : RGB(116, 116, 116);
+		colors.crPending = RGB(191, 168, 64);
+	}
+
+	theApp.LoadSkinColor(_T("TransferBarComplete"), colors.crProgress);
+	theApp.LoadSkinColor(_T("TransferBarBackground"), colors.crProgressBk);
+	theApp.LoadSkinColor(_T("TransferBarHave"), colors.crHave);
+	theApp.LoadSkinColor(_T("TransferBarMissing"), colors.crMissing);
+	theApp.LoadSkinColor(_T("TransferBarPending"), colors.crPending);
+	theApp.LoadSkinColor(_T("TransferBarFileOp"), colors.crFileOp);
+	theApp.LoadSkinColor(_T("TransferBarSourceBase"), colors.crSourceBase);
+	theApp.LoadSkinColor(_T("TransferBarSourceHot"), colors.crSourceHot);
+
+	if (!bNotGrey) {
+		colors.crMissing = BlendColor(colors.crMissing, colors.crProgressBk, 70);
+		colors.crHave = BlendColor(colors.crHave, colors.crProgressBk, 70);
+		colors.crPending = BlendColor(colors.crPending, colors.crProgressBk, 70);
+		colors.crSourceBase = BlendColor(colors.crSourceBase, colors.crProgressBk, 70);
+		colors.crSourceHot = BlendColor(colors.crSourceHot, colors.crProgressBk, 70);
+	}
+	return colors;
+}
+
 PartFilePauseResumeSeams::RuntimeStatus ResolvePauseResumeRuntimeStatus(const EPartFileStatus eStatus)
 {
 	switch (eStatus) {
@@ -2277,54 +2365,27 @@ void CPartFile::DrawShareStatusBar(CDC &dc, LPCRECT rect, bool onlygreyrect, boo
 
 void CPartFile::DrawStatusBar(CDC &dc, const CRect &rect, bool bFlat) /*const*/
 {
-	COLORREF crProgress, crProgressBk, crHave, crPending, crMissing;
-
 	EPartFileStatus eVirtualState = GetStatus();
 	bool bNotGrey = eVirtualState == PS_EMPTY || eVirtualState == PS_COMPLETE || eVirtualState == PS_READY;
-
-	if (g_bLowColorDesktop) {
+	if (g_bLowColorDesktop)
 		bFlat = true;
-		// use straight Windows colors
-		crProgress = RGB(0, 255, 0);
-		crProgressBk = RGB(192, 192, 192);
-		if (bNotGrey) {
-			crMissing = RGB(255, 0, 0);
-			crHave = RGB(0, 0, 0);
-			crPending = RGB(255, 255, 0);
-		} else {
-			crMissing = RGB(128, 0, 0);
-			crHave = RGB(128, 128, 128);
-			crPending = RGB(128, 128, 0);
-		}
-	} else {
-		crProgress = RGB(0, (bFlat ? 150 : 224), 0);
-		crProgressBk = RGB(224, 224, 224);
-		if (bNotGrey) {
-			crMissing = RGB(255, 0, 0);
-			crHave = bFlat ? RGB(0, 0, 0) : RGB(104, 104, 104);
-			crPending = RGB(255, 208, 0);
-		} else {
-			crMissing = RGB(191, 64, 64);
-			crHave = bFlat ? RGB(64, 64, 64) : RGB(116, 116, 116);
-			crPending = RGB(191, 168, 64);
-		}
-	}
+	const STransferBarColors colors = BuildTransferBarColors(bFlat, bNotGrey);
 
 	s_ChunkBar.SetRect(rect);
 	s_ChunkBar.SetFileSize(FileSizeSeams::ToUInt64(m_nFileSize));
-	s_ChunkBar.Fill(crHave);
+	s_ChunkBar.Fill(colors.crHave);
 
 	if (status == PS_COMPLETE || status == PS_COMPLETING) {
 		m_percentcompleted = 100.0F;
 		m_completedsize = FileSizeSeams::ToUInt64(m_nFileSize);
-		s_ChunkBar.FillRange(0, m_completedsize, crProgress);
+		s_ChunkBar.FillRange(0, m_completedsize, colors.crProgress);
 		s_ChunkBar.Draw(dc, rect.left, rect.top, bFlat);
 	} else if (eVirtualState == PS_INSUFFICIENT || status == PS_ERROR) {
-		int iOldBkColor = dc.SetBkColor(RGB(255, 255, 0));
+		int iOldBkColor = dc.SetBkColor(colors.crFileOp);
 		if (theApp.m_brushBackwardDiagonal.m_hObject)
 			dc.FillRect(rect, &theApp.m_brushBackwardDiagonal);
 		else
-			dc.FillSolidRect(rect, RGB(255, 255, 0));
+			dc.FillSolidRect(rect, colors.crFileOp);
 		dc.SetBkColor(iOldBkColor);
 
 		UpdateCompletedInfos();
@@ -2348,19 +2409,9 @@ void CPartFile::DrawStatusBar(CDC &dc, const CRect &rect, bool bFlat) /*const*/
 					COLORREF color;
 					if (i < (UINT)m_SrcPartFrequency.GetCount() && m_SrcPartFrequency[i]) {
 						uint16 freq = m_SrcPartFrequency[i] - 1;
-						if (g_bLowColorDesktop) {
-							if (bNotGrey)
-								color = RGB(0, (freq < 5 ? 255 : 0), 255);
-							else
-								color = RGB(0, 128, 128);
-						} else {
-							if (bNotGrey)
-								color = RGB(0, (210 - 22 * freq < 0) ? 0 : 210 - 22 * freq, 255);
-							else
-								color = RGB(64, (169 - 11 * freq < 64) ? 64 : 169 - 11 * freq, 191);
-						}
+						color = InterpolateColor(colors.crSourceBase, colors.crSourceHot, min(freq, static_cast<uint16>(10)), 10);
 					} else
-						color = crMissing;
+						color = colors.crMissing;
 					s_ChunkBar.FillRange(start, end + 1, color);
 
 					if (gapdone) // finished?
@@ -2375,7 +2426,7 @@ void CPartFile::DrawStatusBar(CDC &dc, const CRect &rect, bool bFlat) /*const*/
 		// yellow pending parts
 		for (POSITION pos = requestedblocks_list.GetHeadPosition(); pos != NULL;) {
 			const Requested_Block_Struct *block = requestedblocks_list.GetNext(pos);
-			s_ChunkBar.FillRange(block->StartOffset + block->transferred, block->EndOffset + 1, crPending);
+			s_ChunkBar.FillRange(block->StartOffset + block->transferred, block->EndOffset + 1, colors.crPending);
 		}
 
 		s_ChunkBar.Draw(dc, rect.left, rect.top, bFlat);
@@ -2385,15 +2436,15 @@ void CPartFile::DrawStatusBar(CDC &dc, const CRect &rect, bool bFlat) /*const*/
 		const float width = static_cast<float>(FileSizeSeams::ToUInt64(m_nFileSize) - allgaps) * blockpixel + 0.5f;
 		if (!bFlat) {
 			s_LoadBar.SetWidth((int)width);
-			s_LoadBar.Fill(crProgress);
+			s_LoadBar.Fill(colors.crProgress);
 			s_LoadBar.Draw(dc, rect.left, rect.top, false);
 		} else {
 			RECT gaprect{rect.left, rect.top, rect.left + (LONG)width, rect.top + PROGRESS_HEIGHT};
-			dc.FillSolidRect(&gaprect, crProgress);
+			dc.FillSolidRect(&gaprect, colors.crProgress);
 			//draw gray progress only if flat
 			gaprect.left = gaprect.right;
 			gaprect.right = rect.right;
-			dc.FillSolidRect(&gaprect, crProgressBk);
+			dc.FillSolidRect(&gaprect, colors.crProgressBk);
 		}
 
 		UpdateCompletedInfos(allgaps);
@@ -2406,14 +2457,14 @@ void CPartFile::DrawStatusBar(CDC &dc, const CRect &rect, bool bFlat) /*const*/
 		rcFileOpProgress.bottom = rcFileOpProgress.top + PROGRESS_HEIGHT;
 		if (!bFlat) {
 			s_LoadBar.SetWidth((int)width);
-			s_LoadBar.Fill(RGB(255, 208, 0));
+			s_LoadBar.Fill(colors.crFileOp);
 			s_LoadBar.Draw(dc, rcFileOpProgress.left, rcFileOpProgress.top, false);
 		} else {
 			rcFileOpProgress.right = rcFileOpProgress.left + width;
-			dc.FillSolidRect(&rcFileOpProgress, RGB(255, 208, 0));
+			dc.FillSolidRect(&rcFileOpProgress, colors.crFileOp);
 			rcFileOpProgress.left = rcFileOpProgress.right;
 			rcFileOpProgress.right = rect.right;
-			dc.FillSolidRect(&rcFileOpProgress, crProgressBk);
+			dc.FillSolidRect(&rcFileOpProgress, colors.crProgressBk);
 		}
 	}
 }

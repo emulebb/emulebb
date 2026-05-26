@@ -47,6 +47,44 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace
+{
+struct SPeerTransferBarColors
+{
+	COLORREF crNeither;
+	COLORREF crBoth;
+	COLORREF crClientOnly;
+	COLORREF crPending;
+	COLORREF crNextPending;
+};
+
+SPeerTransferBarColors BuildPeerTransferBarColors(bool bFlat)
+{
+	SPeerTransferBarColors colors = {};
+	if (g_bLowColorDesktop) {
+		colors.crNeither = RGB(192, 192, 192);
+		colors.crBoth = RGB(0, 0, 0);
+		colors.crClientOnly = RGB(0, 0, 255);
+		colors.crPending = RGB(0, 255, 0);
+		colors.crNextPending = RGB(255, 255, 0);
+		return colors;
+	}
+
+	colors.crNeither = bFlat ? RGB(224, 224, 224) : RGB(240, 240, 240);
+	colors.crBoth = bFlat ? RGB(0, 0, 0) : RGB(104, 104, 104);
+	colors.crClientOnly = RGB(0, 100, 255);
+	colors.crPending = RGB(0, 150, 0);
+	colors.crNextPending = RGB(255, 208, 0);
+
+	theApp.LoadSkinColor(_T("TransferBarBackground"), colors.crNeither);
+	theApp.LoadSkinColor(_T("TransferBarPeerBoth"), colors.crBoth);
+	theApp.LoadSkinColor(_T("TransferBarPeerOnly"), colors.crClientOnly);
+	theApp.LoadSkinColor(_T("TransferBarPeerActive"), colors.crPending);
+	theApp.LoadSkinColor(_T("TransferBarPeerNext"), colors.crNextPending);
+	return colors;
+}
+}
+
 //	members of CUpDownClient
 //	which are mainly used for downloading functions
 CBarShader CUpDownClient::s_StatusBar(16);
@@ -55,39 +93,14 @@ void CUpDownClient::DrawStatusBar(CDC &dc, const CRect &rect, bool onlygreyrect,
 	if (g_bLowColorDesktop)
 		bFlat = true;
 
-	COLORREF crNeither;
-	if (bFlat)
-		crNeither = g_bLowColorDesktop ? RGB(192, 192, 192) : RGB(224, 224, 224);
-	else
-		crNeither = RGB(240, 240, 240);
+	const SPeerTransferBarColors colors = BuildPeerTransferBarColors(bFlat);
 
 	if (m_reqfile) {
 		s_StatusBar.SetFileSize(m_reqfile->GetFileSize());
 		s_StatusBar.SetRect(rect);
-		s_StatusBar.Fill(crNeither);
+		s_StatusBar.Fill(colors.crNeither);
 
 		if (!onlygreyrect && m_abyPartStatus) {
-			COLORREF crBoth;
-			COLORREF crClientOnly;
-			COLORREF crPending;
-			COLORREF crNextPending;
-			if (g_bLowColorDesktop) {
-				crBoth = RGB(0, 0, 0);
-				crClientOnly = RGB(0, 0, 255);
-				crPending = RGB(0, 255, 0);
-				crNextPending = RGB(255, 255, 0);
-			} else if (bFlat) {
-				crBoth = RGB(0, 0, 0);
-				crClientOnly = RGB(0, 100, 255);
-				crPending = RGB(0, 150, 0);
-				crNextPending = RGB(255, 208, 0);
-			} else {
-				crBoth = RGB(104, 104, 104);
-				crClientOnly = RGB(0, 100, 255);
-				crPending = RGB(0, 150, 0);
-				crNextPending = RGB(255, 208, 0);
-			}
-
 			char *pcNextPendingBlks;
 			if (m_eDownloadState == DS_DOWNLOADING) {
 				pcNextPendingBlks = new char[m_nPartCount]{};
@@ -106,13 +119,13 @@ void CUpDownClient::DrawStatusBar(CDC &dc, const CRect &rect, bool onlygreyrect,
 
 					COLORREF colour;
 					if (m_reqfile->IsComplete(uBegin, uEnd - 1))
-						colour = crBoth;
+						colour = colors.crBoth;
 					else if (m_eDownloadState == DS_DOWNLOADING && GetSessionDown() && m_nLastBlockOffset >= uBegin && m_nLastBlockOffset < uEnd)
-						colour = crPending;
+						colour = colors.crPending;
 					else if (pcNextPendingBlks && pcNextPendingBlks[i])
-						colour = crNextPending;
+						colour = colors.crNextPending;
 					else
-						colour = crClientOnly;
+						colour = colors.crClientOnly;
 					s_StatusBar.FillRange(uBegin, uEnd, colour);
 				}
 

@@ -1855,6 +1855,8 @@ void CSearchListCtrl::SetHighlightColors()
 		m_crSearchResultDownloadStopped = m_crSearchResultDownloading;
 	theApp.LoadSkinColor(GetSkinKey() + _T("Fg_Sharing"), m_crSearchResultSharing);
 	theApp.LoadSkinColor(GetSkinKey() + _T("Fg_Known"), m_crSearchResultKnown);
+	if (!theApp.LoadSkinColor(GetSkinKey() + _T("Fg_Cancelled"), m_crSearchResultCancelled))
+		m_crSearchResultCancelled = m_crSearchResultKnown;
 	theApp.LoadSkinColor(GetSkinKey() + _T("Fg_AvblyBase"), crSearchResultAvblyBase);
 
 	// precalculate sources shades
