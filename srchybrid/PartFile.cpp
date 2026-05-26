@@ -2548,10 +2548,20 @@ EPartFileStatus CPartFile::GetStatus(bool ignorepause) const
 
 void CPartFile::AddDownloadingSource(CUpDownClient *client)
 {
+	if (client == NULL)
+		return;
+	if (client->GetRequestFile() != this) {
+		DebugLogWarning(_T("Rejected downloading source with mismatched request file for \"%s\" - %s"),
+			(LPCTSTR)GetFileName(),
+			(LPCTSTR)client->DbgGetClientInfo());
+		return;
+	}
+
 	POSITION pos = m_downloadingSourceList.Find(client); // to be sure
 	if (pos == NULL) {
 		m_downloadingSourceList.AddTail(client);
-		theApp.emuledlg->transferwnd->GetDownloadClientsList()->AddClient(client);
+		if (theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
+			theApp.emuledlg->transferwnd->GetDownloadClientsList()->AddClient(client);
 	}
 }
 
