@@ -235,16 +235,19 @@ static EBindAddressResolveResult ResolveConfiguredBinding(LPCTSTR pszBindingName
 	, CStringW &rstrBindAddrW
 	, LPCWSTR &rpszBindAddrW
 	, CStringA &rstrBindAddrA
-	, LPCSTR &rpszBindAddrA)
+	, LPCSTR &rpszBindAddrA
+	, DWORD &rdwResolvedIpv4IfIndex)
 {
 	CString strResolvedAddress;
 	CString strLiveInterfaceName;
 	const EBindAddressResolveResult eResult = CBindAddressResolver::ResolveBindAddress(strInterfaceName
-		, strConfiguredAddress, strResolvedAddress, &strLiveInterfaceName);
+		, strConfiguredAddress, strResolvedAddress, &strLiveInterfaceName, &rdwResolvedIpv4IfIndex);
 
 	rstrResolvedInterfaceName = !strLiveInterfaceName.IsEmpty() ? strLiveInterfaceName : strInterfaceName;
-	if (eResult != BARR_Resolved)
+	if (eResult != BARR_Resolved) {
 		strResolvedAddress.Empty();
+		rdwResolvedIpv4IfIndex = 0;
+	}
 
 	SetResolvedBindAddress(strResolvedAddress, rstrBindAddrW, rpszBindAddrW, rstrBindAddrA, rpszBindAddrA);
 	LogBindAddressResolution(pszBindingName, rstrResolvedInterfaceName, strConfiguredAddress, eResult, strResolvedAddress);
@@ -795,6 +798,7 @@ CString	CPreferences::m_strBindInterfaceName;
 CString	CPreferences::m_strActiveConfiguredBindAddr;
 CString	CPreferences::m_strActiveBindInterface;
 CString	CPreferences::m_strActiveBindInterfaceName;
+DWORD	CPreferences::m_dwActiveBindInterfaceIndex = 0;
 LPCSTR	CPreferences::m_pszBindAddrA;
 CStringA CPreferences::m_strBindAddrA;
 LPCWSTR	CPreferences::m_pszBindAddrW;
@@ -3101,7 +3105,8 @@ void CPreferences::LoadPreferences()
 		, m_strBindAddrW
 		, m_pszBindAddrW
 		, m_strBindAddrA
-		, m_pszBindAddrA);
+		, m_pszBindAddrA
+		, m_dwActiveBindInterfaceIndex);
 
 	port = NormalizePortPreferenceValue(ini.GetInt(_T("Port"), 0), 0, false);
 	if (port == 0)

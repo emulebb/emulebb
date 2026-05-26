@@ -199,6 +199,7 @@ public:
 	static CString	m_strActiveConfiguredBindAddr;
 	static CString	m_strActiveBindInterface;
 	static CString	m_strActiveBindInterfaceName;
+	static DWORD	m_dwActiveBindInterfaceIndex;
 	static CStringA m_strBindAddrA;
 	static CStringW m_strBindAddrW;
 	static EBindAddressResolveResult m_eActiveBindAddrResolveResult;
@@ -828,6 +829,7 @@ public:
 	static const CString& GetActiveConfiguredBindAddr()	{ return m_strActiveConfiguredBindAddr; }
 	static const CString& GetActiveBindInterface()		{ return m_strActiveBindInterface; }
 	static const CString& GetActiveBindInterfaceName()	{ return m_strActiveBindInterfaceName; }
+	static DWORD	GetActiveBindInterfaceIndex()		{ return m_dwActiveBindInterfaceIndex; }
 	static EBindAddressResolveResult GetActiveBindAddressResolveResult() { return m_eActiveBindAddrResolveResult; }
 	static bool		IsActiveStartupBindBlockEnabled()	{ return m_bActiveStartupBindBlockEnabled; }
 #ifdef UNICODE

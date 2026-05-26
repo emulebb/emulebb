@@ -282,6 +282,7 @@ protected:
 
 	// Iterate through protocols on failure
 	bool TryNextProtocol();
+	bool ApplyConfiguredIpv4UnicastInterface();
 
 	void ResendCloseNotify();
 

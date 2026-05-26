@@ -7,6 +7,7 @@ struct BindableNetworkInterface
 	CString strId;
 	CString strName;
 	CString strDisplayName;
+	DWORD dwIpv4IfIndex = 0;
 	std::vector<CString> addresses;
 };
 
@@ -31,5 +32,6 @@ public:
 	static EBindAddressResolveResult ResolveBindAddress(const CString &strInterfaceName
 		, const CString &strConfiguredAddress
 		, CString &strResolvedAddress
-		, CString *pstrResolvedInterfaceName = NULL);
+		, CString *pstrResolvedInterfaceName = NULL
+		, DWORD *pdwResolvedIpv4IfIndex = NULL);
 };

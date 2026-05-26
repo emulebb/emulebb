@@ -33,6 +33,7 @@
 #include "ServerWnd.h"
 #include "SearchDlg.h"
 #include "AsyncDnsResolveSeams.h"
+#include "BindInterfaceSocketSeams.h"
 #include "IPv4AddressSeams.h"
 #include "LockScopeSeams.h"
 #include "Log.h"
@@ -136,8 +137,23 @@ bool CUDPSocket::Create()
 		VERIFY(m_udpwnd.CreateEx(0, AfxRegisterWndClass(0), _T("eMule Async DNS Resolver Socket #1"), 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, 0));
 		m_hWndResolveMessage = m_udpwnd.m_hWnd;
 		m_udpwnd.m_pOwner = this;
-		if (CAsyncSocket::Create(thePrefs.GetServerUDPPort() == _UI16_MAX ? 0 : thePrefs.GetServerUDPPort(), SOCK_DGRAM, FD_READ | FD_WRITE, thePrefs.GetBindAddrW()))
+		if (CAsyncSocket::Create(thePrefs.GetServerUDPPort() == _UI16_MAX ? 0 : thePrefs.GetServerUDPPort(), SOCK_DGRAM, FD_READ | FD_WRITE, thePrefs.GetBindAddrW())) {
+			int nBindInterfaceError = 0;
+			if (!BindInterfaceSocketSeams::ApplyIpv4UnicastInterfaceOption(m_hSocket
+				, AF_INET
+				, !thePrefs.GetActiveBindInterface().IsEmpty()
+				, thePrefs.GetActiveBindAddressResolveResult() == BARR_Resolved
+				, thePrefs.GetActiveBindInterfaceIndex()
+				, &nBindInterfaceError)) {
+				DebugLogError(_T("Server UDP socket bind interface enforcement failed: IP_UNICAST_IF could not be applied to %s (ifIndex=%lu, error=%d)")
+					, (LPCTSTR)thePrefs.GetActiveBindInterfaceName()
+					, thePrefs.GetActiveBindInterfaceIndex()
+					, nBindInterfaceError);
+				Close();
+				return false;
+			}
 			return true;
+		}
 		LogError(LOG_STATUSBAR, _T("Error: Server UDP socket: Failed to create server UDP socket - %s"), (LPCTSTR)GetErrorMessage(CAsyncSocket::GetLastError()));
 	}
 	return false;

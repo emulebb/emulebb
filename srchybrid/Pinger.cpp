@@ -95,7 +95,9 @@
 #include "Pinger.h"
 #include "OtherFunctions.h"
 #include "Preferences.h"
+#include "BindInterfaceSocketSeams.h"
 #include "IPv4AddressSeams.h"
+#include "Log.h"
 #include "opcodes.h"
 
 #ifdef _DEBUG
@@ -135,7 +137,20 @@ Pinger::Pinger()
 	// attempt to initialize raw ICMP socket (raw sockets require an Administrator)
 	is = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (is != INVALID_SOCKET) {
-		if (bind(is, (sockaddr*)&sa, sizeof sa) == SOCKET_ERROR) {
+		int nBindInterfaceError = 0;
+		if (!BindInterfaceSocketSeams::ApplyIpv4UnicastInterfaceOption(is
+			, AF_INET
+			, !thePrefs.GetActiveBindInterface().IsEmpty()
+			, thePrefs.GetActiveBindAddressResolveResult() == BARR_Resolved
+			, thePrefs.GetActiveBindInterfaceIndex()
+			, &nBindInterfaceError)) {
+			DebugLogError(_T("Pinger raw socket bind interface enforcement failed: IP_UNICAST_IF could not be applied to %s (ifIndex=%lu, error=%d)")
+				, (LPCTSTR)thePrefs.GetActiveBindInterfaceName()
+				, thePrefs.GetActiveBindInterfaceIndex()
+				, nBindInterfaceError);
+			closesocket(is);
+			is = INVALID_SOCKET;
+		} else if (bind(is, (sockaddr*)&sa, sizeof sa) == SOCKET_ERROR) {
 			//WSAGetLastError(); - never using the value
 			closesocket(is);	// ignore return value - error close anyway
 		} else {
@@ -143,7 +158,20 @@ Pinger::Pinger()
 			us = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 			if (us == INVALID_SOCKET)
 				closesocket(is);		// ignore return value - we need to close it anyway!
-			else if (bind(us, (sockaddr*)&sa, sizeof sa) == SOCKET_ERROR) {
+			else if (!BindInterfaceSocketSeams::ApplyIpv4UnicastInterfaceOption(us
+				, AF_INET
+				, !thePrefs.GetActiveBindInterface().IsEmpty()
+				, thePrefs.GetActiveBindAddressResolveResult() == BARR_Resolved
+				, thePrefs.GetActiveBindInterfaceIndex()
+				, &nBindInterfaceError)) {
+				DebugLogError(_T("Pinger UDP socket bind interface enforcement failed: IP_UNICAST_IF could not be applied to %s (ifIndex=%lu, error=%d)")
+					, (LPCTSTR)thePrefs.GetActiveBindInterfaceName()
+					, thePrefs.GetActiveBindInterfaceIndex()
+					, nBindInterfaceError);
+				closesocket(us);
+				closesocket(is);
+				us = INVALID_SOCKET;
+			} else if (bind(us, (sockaddr*)&sa, sizeof sa) == SOCKET_ERROR) {
 				closesocket(us);		// ignore return value - error close anyway
 				closesocket(is);		// ignore return value - error close anyway
 				us = INVALID_SOCKET;

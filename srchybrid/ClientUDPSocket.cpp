@@ -29,6 +29,7 @@
 #include "ProtocolGuards.h"
 #include "ClientList.h"
 #include "ClientUDPSocketSeams.h"
+#include "BindInterfaceSocketSeams.h"
 #include "EncryptedDatagramSocket.h"
 #include "IPFilter.h"
 #include "Listensocket.h"
@@ -574,6 +575,20 @@ bool CClientUDPSocket::Create()
 	if (thePrefs.GetUDPPort()) {
 		if (!CAsyncSocket::Create(thePrefs.GetUDPPort(), SOCK_DGRAM, FD_READ | FD_WRITE, thePrefs.GetBindAddr()))
 			return false;
+		int nBindInterfaceError = 0;
+		if (!BindInterfaceSocketSeams::ApplyIpv4UnicastInterfaceOption(m_hSocket
+			, AF_INET
+			, !thePrefs.GetActiveBindInterface().IsEmpty()
+			, thePrefs.GetActiveBindAddressResolveResult() == BARR_Resolved
+			, thePrefs.GetActiveBindInterfaceIndex()
+			, &nBindInterfaceError)) {
+			DebugLogError(_T("Client UDP socket bind interface enforcement failed: IP_UNICAST_IF could not be applied to %s (ifIndex=%lu, error=%d)")
+				, (LPCTSTR)thePrefs.GetActiveBindInterfaceName()
+				, thePrefs.GetActiveBindInterfaceIndex()
+				, nBindInterfaceError);
+			Close();
+			return false;
+		}
 		m_port = thePrefs.GetUDPPort();
 		// the default socket size seems to be insufficient for this UDP socket
 		// because we tend to drop packets if several arrived at the same time

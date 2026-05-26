@@ -524,6 +524,7 @@ namespace
 				{"activeConfiguredAddress", JsonNetworkAddress(thePrefs.GetActiveConfiguredBindAddr(), ePrivacyMode)},
 				{"activeInterfaceId", JsonString(thePrefs.GetActiveBindInterface())},
 				{"activeInterfaceName", JsonString(thePrefs.GetActiveBindInterfaceName())},
+				{"activeInterfaceIndex", thePrefs.GetActiveBindInterfaceIndex()},
 				{"startupBlockEnabled", thePrefs.IsStartupBindBlockEnabled()},
 				{"activeStartupBlockEnabled", thePrefs.IsActiveStartupBindBlockEnabled()},
 				{"exitOnInterfaceLoss", thePrefs.IsExitOnBindInterfaceLossEnabled()},

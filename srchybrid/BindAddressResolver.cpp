@@ -83,6 +83,7 @@ std::vector<BindableNetworkInterface> CBindAddressResolver::GetBindableInterface
 		iface.strId = CString(CA2T(pAdapter->AdapterName));
 		iface.strName = pAdapter->FriendlyName != NULL ? CString(pAdapter->FriendlyName) : CString();
 		iface.strName.Trim();
+		iface.dwIpv4IfIndex = pAdapter->IfIndex;
 
 		for (const IP_ADAPTER_UNICAST_ADDRESS *pAddress = pAdapter->FirstUnicastAddress
 			; pAddress != NULL; pAddress = pAddress->Next) {
@@ -102,11 +103,14 @@ std::vector<BindableNetworkInterface> CBindAddressResolver::GetBindableInterface
 EBindAddressResolveResult CBindAddressResolver::ResolveBindAddress(const CString &strInterfaceName
 	, const CString &strConfiguredAddress
 	, CString &strResolvedAddress
-	, CString *pstrResolvedInterfaceName)
+	, CString *pstrResolvedInterfaceName
+	, DWORD *pdwResolvedIpv4IfIndex)
 {
 	strResolvedAddress.Empty();
 	if (pstrResolvedInterfaceName != NULL)
 		pstrResolvedInterfaceName->Empty();
+	if (pdwResolvedIpv4IfIndex != NULL)
+		*pdwResolvedIpv4IfIndex = 0;
 
 	CString strWantedInterface(strInterfaceName);
 	strWantedInterface.Trim();
@@ -126,6 +130,8 @@ EBindAddressResolveResult CBindAddressResolver::ResolveBindAddress(const CString
 				strResolvedAddress = *itAddress;
 				if (pstrResolvedInterfaceName != NULL)
 					*pstrResolvedInterfaceName = it->strName;
+				if (pdwResolvedIpv4IfIndex != NULL)
+					*pdwResolvedIpv4IfIndex = it->dwIpv4IfIndex;
 				return BARR_Resolved;
 			}
 		}
@@ -155,12 +161,16 @@ EBindAddressResolveResult CBindAddressResolver::ResolveBindAddress(const CString
 
 	if (strWantedAddress.IsEmpty()) {
 		strResolvedAddress = pMatchedInterface->addresses.front();
+		if (pdwResolvedIpv4IfIndex != NULL)
+			*pdwResolvedIpv4IfIndex = pMatchedInterface->dwIpv4IfIndex;
 		return BARR_Resolved;
 	}
 
 	for (std::vector<CString>::const_iterator itAddress = pMatchedInterface->addresses.begin(); itAddress != pMatchedInterface->addresses.end(); ++itAddress) {
 		if (!itAddress->CompareNoCase(strWantedAddress)) {
 			strResolvedAddress = *itAddress;
+			if (pdwResolvedIpv4IfIndex != NULL)
+				*pdwResolvedIpv4IfIndex = pMatchedInterface->dwIpv4IfIndex;
 			return BARR_Resolved;
 		}
 	}

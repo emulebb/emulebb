@@ -67,8 +67,10 @@ to tim.kosse@filezilla-project.org
 #include "AsyncDnsResolveSeams.h"
 #include "AsyncSocketExLayer.h"
 #include "AsyncSocketExRuntimeSeams.h"
+#include "BindInterfaceSocketSeams.h"
 #include "IPv4AddressSeams.h"
 #include "Log.h"
+#include "Preferences.h"
 
 #include <atomic>
 #include <memory>
@@ -677,6 +679,10 @@ bool CAsyncSocketEx::Create(UINT nSocketPort /*=0*/, int nSocketType /*=SOCK_STR
 		Close();
 		return false;
 	}
+	if (!ApplyConfiguredIpv4UnicastInterface()) {
+		Close();
+		return false;
+	}
 
 #ifndef NOSOCKETSTATES
 	SetState(unconnected);
@@ -952,7 +958,7 @@ bool CAsyncSocketEx::Connect(const CString &sHostAddress, UINT nHostPort)
 			AttachHandle();
 		}
 
-		if (AsyncSelect(m_lEvent) && (!newSocket || Bind(m_nSocketPort, m_sSocketAddress))) {
+		if (AsyncSelect(m_lEvent) && (!newSocket || Bind(m_nSocketPort, m_sSocketAddress)) && ApplyConfiguredIpv4UnicastInterface()) {
 			ret = Connect(m_SocketData.nextAddr->ai_addr, (int)m_SocketData.nextAddr->ai_addrlen);
 			if (ret || GetLastError() == WSAEWOULDBLOCK)
 				break;
@@ -1204,6 +1210,32 @@ BOOL CAsyncSocketEx::SetSockOpt(int nOptionName, const void *lpOptionValue, int 
 	return !setsockopt(m_SocketData.hSocket, nLevel, nOptionName, (LPSTR)lpOptionValue, nOptionLen);
 }
 
+bool CAsyncSocketEx::ApplyConfiguredIpv4UnicastInterface()
+{
+	if (m_sSocketAddress.IsEmpty())
+		return true;
+	CString strActiveBindAddress;
+	if (thePrefs.GetBindAddr() != NULL)
+		strActiveBindAddress = thePrefs.GetBindAddr();
+	if (strActiveBindAddress.IsEmpty() || m_sSocketAddress.CompareNoCase(strActiveBindAddress))
+		return true;
+
+	int nError = 0;
+	if (BindInterfaceSocketSeams::ApplyIpv4UnicastInterfaceOption(m_SocketData.hSocket
+		, m_SocketData.nFamily
+		, !thePrefs.GetActiveBindInterface().IsEmpty()
+		, thePrefs.GetActiveBindAddressResolveResult() == BARR_Resolved
+		, thePrefs.GetActiveBindInterfaceIndex()
+		, &nError))
+		return true;
+
+	DebugLogError(_T("P2P bind interface enforcement failed: IP_UNICAST_IF could not be applied to %s (ifIndex=%lu, error=%d)")
+		, (LPCTSTR)thePrefs.GetActiveBindInterfaceName()
+		, thePrefs.GetActiveBindInterfaceIndex()
+		, nError);
+	return false;
+}
+
 bool CAsyncSocketEx::SetFamily(ADDRESS_FAMILY nFamily)
 {
 	if (m_SocketData.nFamily != AF_UNSPEC)
@@ -1230,7 +1262,7 @@ bool CAsyncSocketEx::TryNextProtocol()
 
 		if (AsyncSelect(m_lEvent))
 			if (!m_pFirstLayer || !WSAAsyncSelect(m_SocketData.hSocket, GetHelperWindowHandle(), WM_SOCKETEX_NOTIFY + m_SocketData.nSocketIndex, FD_DEFAULT))
-				if (Bind(m_nSocketPort, m_sSocketAddress)) {
+				if (Bind(m_nSocketPort, m_sSocketAddress) && ApplyConfiguredIpv4UnicastInterface()) {
 					ret = Connect(m_SocketData.nextAddr->ai_addr, (int)m_SocketData.nextAddr->ai_addrlen);
 					if (ret || GetLastError() == WSAEWOULDBLOCK)
 						break;
