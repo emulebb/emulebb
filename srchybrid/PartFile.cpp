@@ -4565,7 +4565,7 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 				continue;
 			case PB_ERROR:
 				item->flushed = PB_READY; //prepare for resend
-				CFileException::ThrowOsError((LONG)item->dwError, m_hpartfile.GetFileName());
+				CFileException::ThrowOsError((LONG)(item->dwError != ERROR_SUCCESS ? item->dwError : ERROR_WRITE_FAULT), m_hpartfile.GetFileName());
 			//default:
 			case PB_WRITTEN: //success
 				DeleteWrittenItem(pos2);
