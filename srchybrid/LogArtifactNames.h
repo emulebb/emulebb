@@ -23,6 +23,11 @@ inline LPCTSTR CrtDebugLogFileName()
 	return _T("emulebb-crt-debug.log");
 }
 
+inline LPCTSTR StartupErrorLogFileName()
+{
+	return _T("emulebb-startup-errors.log");
+}
+
 inline LPCTSTR PerformanceCsvFileName()
 {
 	return _T("emulebb-performance.csv");

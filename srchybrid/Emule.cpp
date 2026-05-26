@@ -100,7 +100,6 @@ static char THIS_FILE[] = __FILE__;
 namespace
 {
 LPCTSTR const MONITOREDSHAREDJOURNALSTATE = _T("shareddir.monitor-journal.dat");
-LPCTSTR const STARTUPERRORLOG = _T("eMule-startup-errors.log");
 constexpr DWORD kMonitoredSharedFileWatchMask = FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE;
 constexpr DWORD kMonitoredSharedDirectoryWatchMask = FILE_NOTIFY_CHANGE_DIR_NAME;
 
@@ -159,18 +158,38 @@ void ReportCommandLineError(const CString &rstrError, const CString &rstrUsage, 
 	ReportCommandLineText(STD_ERROR_HANDLE, strText);
 }
 
-CString BuildStartupErrorLogPath()
+CString BuildStartupErrorLogPathInDirectory(const CString &rstrDirectory)
 {
-	CString strLogDirectory(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false));
-	if (strLogDirectory.IsEmpty())
-		strLogDirectory = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR, false);
-	if (strLogDirectory.IsEmpty())
+	if (rstrDirectory.IsEmpty())
 		return CString();
 
-	strLogDirectory = PathHelpers::EnsureTrailingSeparator(strLogDirectory);
+	CString strLogDirectory(PathHelpers::EnsureTrailingSeparator(rstrDirectory));
 	if (!LongPathSeams::CreateDirectoryPath(strLogDirectory))
 		return CString();
-	return strLogDirectory + STARTUPERRORLOG;
+	return PathHelpers::AppendPathComponent(strLogDirectory, LogArtifactNames::StartupErrorLogFileName());
+}
+
+CString BuildTempStartupErrorLogPath()
+{
+	TCHAR szTempPath[MAX_PATH + 1] = {};
+	const DWORD dwLength = ::GetTempPath(_countof(szTempPath), szTempPath);
+	if (dwLength == 0 || dwLength >= _countof(szTempPath))
+		return CString();
+
+	return BuildStartupErrorLogPathInDirectory(PathHelpers::AppendPathComponent(CString(szTempPath), _T("emulebb")));
+}
+
+CString BuildStartupErrorLogPath()
+{
+	CString strPath(BuildStartupErrorLogPathInDirectory(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false)));
+	if (!strPath.IsEmpty())
+		return strPath;
+
+	strPath = BuildStartupErrorLogPathInDirectory(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR, false));
+	if (!strPath.IsEmpty())
+		return strPath;
+
+	return BuildTempStartupErrorLogPath();
 }
 
 bool AppendStartupErrorLogLine(const CString &rstrPath, const CString &rstrMessage)
@@ -1203,8 +1222,14 @@ void CemuleApp::RecordStartupError(LPCTSTR pszMessage)
 
 	if (m_strStartupErrorLogPath.IsEmpty())
 		m_strStartupErrorLogPath = BuildStartupErrorLogPath();
-	if (!m_strStartupErrorLogPath.IsEmpty())
+	if (!m_strStartupErrorLogPath.IsEmpty() && AppendStartupErrorLogLine(m_strStartupErrorLogPath, strMessage))
+		return;
+
+	const CString strTempStartupErrorLogPath(BuildTempStartupErrorLogPath());
+	if (!strTempStartupErrorLogPath.IsEmpty() && strTempStartupErrorLogPath.CompareNoCase(m_strStartupErrorLogPath) != 0) {
+		m_strStartupErrorLogPath = strTempStartupErrorLogPath;
 		(void)AppendStartupErrorLogLine(m_strStartupErrorLogPath, strMessage);
+	}
 }
 
 void CemuleApp::FlushStartupErrorsToLog()
