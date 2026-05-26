@@ -198,10 +198,12 @@ BOOL CVideoThumbnailThread::Run()
 			}
 		}
 	} catch (CFileException *ex) {
+		DebugLogWarning(_T("Video thumbnail failed for \"%s\" cache \"%s\"%s"), (LPCTSTR)m_strInputPath, (LPCTSTR)m_strCachePath, (LPCTSTR)CExceptionStrDash(*ex));
 		pResult->eResult = PartFilePreviewSeams::VTAR_EXCEPTION;
 		pResult->dwErrorCode = static_cast<DWORD>(ex->m_lOsError);
 		ex->Delete();
 	} catch (...) {
+		DebugLogWarning(_T("Video thumbnail failed for \"%s\" cache \"%s\" after an unexpected exception"), (LPCTSTR)m_strInputPath, (LPCTSTR)m_strCachePath);
 		pResult->eResult = PartFilePreviewSeams::VTAR_EXCEPTION;
 	}
 
