@@ -1159,7 +1159,9 @@ void CDownloadListCtrl::DrawFileItem(CDC &dc, int nColumn, LPCRECT lpRect, UINT 
 			cdcStatus.SelectObject(hOldBitmap);
 
 			if (thePrefs.GetUseDwlPercentage()) {
-				COLORREF oldclr = dc.SetTextColor(RGB(255, 255, 255));
+				COLORREF crPercent = RGB(255, 255, 255);
+				theApp.LoadSkinColor(_T("TransferBarPercentFg"), crPercent);
+				COLORREF oldclr = dc.SetTextColor(crPercent);
 				int iOldBkMode = dc.SetBkMode(TRANSPARENT);
 				dc.DrawText(CPTR(sItem, sItem.ReverseFind(_T(' ')) + 1), -1, rcDraw, (MLC_DT_TEXT & ~DT_LEFT) | DT_CENTER);
 				dc.SetBkMode(iOldBkMode);
@@ -1508,8 +1510,11 @@ void CDownloadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		int middle = (rcItem.top + rcItem.bottom + 1) / 2;
 
 		//set up a new pen for drawing the tree
+		COLORREF crTreeGuide = m_crWindowText;
+		if (!g_bLowColorDesktop || (lpDrawItemStruct->itemState & ODS_SELECTED) == 0)
+			theApp.LoadSkinColorAlt(_T("DownloadsLvTreeFg"), _T("TreeGuideFg"), crTreeGuide);
 		CPen pn, *oldpn;
-		pn.CreatePen(PS_SOLID, 1, m_crWindowText);
+		pn.CreatePen(PS_SOLID, 1, crTreeGuide);
 		oldpn = dc.SelectObject(&pn);
 
 		if (isChild) {
@@ -1526,7 +1531,10 @@ void CDownloadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 			//draw circle
 			RECT circle_rec{treeCenter - 2, middle - 2, treeCenter + 3, middle + 3};
 			COLORREF crBk = dc.GetBkColor();
-			CBrush brush(m_crWindowText);
+			COLORREF crTreeBox = crTreeGuide;
+			if (!g_bLowColorDesktop || (lpDrawItemStruct->itemState & ODS_SELECTED) == 0)
+				theApp.LoadSkinColorAlt(_T("DownloadsLvTreeBoxFg"), _T("TreeBoxFg"), crTreeBox);
+			CBrush brush(crTreeBox);
 			dc.FrameRect(&circle_rec, &brush);
 			dc.SetPixelV(circle_rec.left, circle_rec.top, crBk);
 			dc.SetPixelV(circle_rec.right - 1, circle_rec.top, crBk);

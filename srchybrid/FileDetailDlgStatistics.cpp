@@ -43,6 +43,35 @@ namespace
 	}
 }
 
+void CFileDetailDlgStatistics::ApplySkinColors()
+{
+	COLORREF crStart = RGB(255, 255, 240);
+	COLORREF crEnd = RGB(255, 255, 0);
+	COLORREF crText = RGB(20, 70, 255);
+	COLORREF crBk = ::GetSysColor(COLOR_3DFACE);
+
+	theApp.LoadSkinColor(_T("DetailProgressStart"), crStart);
+	theApp.LoadSkinColor(_T("DetailProgressEnd"), crEnd);
+	theApp.LoadSkinColor(_T("DetailProgressText"), crText);
+	theApp.LoadSkinColor(_T("DetailProgressBackground"), crBk);
+
+	CProgressCtrlX *progressBars[] = {
+		&pop_bar,
+		&pop_baraccept,
+		&pop_bartrans,
+		&pop_bar2,
+		&pop_baraccept2,
+		&pop_bartrans2,
+	};
+	for (CProgressCtrlX *pProgressBar : progressBars) {
+		pProgressBar->SetGradientColors(crStart, crEnd);
+		pProgressBar->SetTextColor(crText);
+		pProgressBar->SetBkColor(crBk);
+		if (pProgressBar->GetSafeHwnd() != NULL)
+			pProgressBar->Invalidate();
+	}
+}
+
 IMPLEMENT_DYNAMIC(CFileDetailDlgStatistics, CResizablePage)
 
 BEGIN_MESSAGE_MAP(CFileDetailDlgStatistics, CResizablePage)
@@ -99,18 +128,7 @@ BOOL CFileDetailDlgStatistics::OnInitDialog()
 
 	AddAllOtherAnchors();
 
-	pop_bar.SetGradientColors(RGB(255, 255, 240), RGB(255, 255, 0));
-	pop_bar.SetTextColor(RGB(20, 70, 255));
-	pop_baraccept.SetGradientColors(RGB(255, 255, 240), RGB(255, 255, 0));
-	pop_baraccept.SetTextColor(RGB(20, 70, 255));
-	pop_bartrans.SetGradientColors(RGB(255, 255, 240), RGB(255, 255, 0));
-	pop_bartrans.SetTextColor(RGB(20, 70, 255));
-	pop_bar2.SetGradientColors(RGB(255, 255, 240), RGB(255, 255, 0));
-	pop_bar2.SetTextColor(RGB(20, 70, 255));
-	pop_baraccept2.SetGradientColors(RGB(255, 255, 240), RGB(255, 255, 0));
-	pop_baraccept2.SetTextColor(RGB(20, 70, 255));
-	pop_bartrans2.SetGradientColors(RGB(255, 255, 240), RGB(255, 255, 0));
-	pop_bartrans2.SetTextColor(RGB(20, 70, 255));
+	ApplySkinColors();
 
 	pop_baraccept.SetShowPercent();
 	pop_bar.SetShowPercent();
@@ -293,13 +311,7 @@ void CFileDetailDlgStatistics::Localize()
 
 void CFileDetailDlgStatistics::OnSysColorChange()
 {
-	const DWORD clr3Dface = ::GetSysColor(COLOR_3DFACE);
-	pop_bar.SetBkColor(clr3Dface);
-	pop_baraccept.SetBkColor(clr3Dface);
-	pop_bartrans.SetBkColor(clr3Dface);
-	pop_bar2.SetBkColor(clr3Dface);
-	pop_baraccept2.SetBkColor(clr3Dface);
-	pop_bartrans2.SetBkColor(clr3Dface);
+	ApplySkinColors();
 	CResizablePage::OnSysColorChange();
 }
 

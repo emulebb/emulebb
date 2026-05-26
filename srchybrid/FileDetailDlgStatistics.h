@@ -46,6 +46,7 @@ protected:
 	CProgressCtrlX pop_baraccept2;
 	CProgressCtrlX pop_bartrans2;
 
+	void ApplySkinColors();
 	void RefreshData();
 
 	virtual void DoDataExchange(CDataExchange *pDX);    // DDX/DDV support

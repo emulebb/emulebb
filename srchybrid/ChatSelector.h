@@ -79,8 +79,12 @@ protected:
 	int			m_iContextIndex;
 	bool		m_blinkstate;
 	bool		m_lastemptyicon;
+	COLORREF	m_crStatusMessage;
+	COLORREF	m_crSentMessage;
+	COLORREF	m_crReceivedMessage;
 
 	void AddTimeStamp(CChatItem *ci);
+	void ApplySkinColors();
 	void SetAllIcons();
 	void GetChatSize(CRect &rcChat);
 	void CloseSessionAt(int iItem);

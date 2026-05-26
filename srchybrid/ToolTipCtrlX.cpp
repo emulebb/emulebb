@@ -98,6 +98,8 @@ void CToolTipCtrlX::ResetSystemMetrics()
 
 	m_crTooltipBkColor = ::GetSysColor(COLOR_INFOBK);
 	m_crTooltipTextColor = ::GetSysColor(COLOR_INFOTEXT);
+	theApp.LoadSkinColor(_T("TooltipBk"), m_crTooltipBkColor);
+	theApp.LoadSkinColor(_T("TooltipFg"), m_crTooltipTextColor);
 	m_rcScreen = CRect(0, 0, ::GetSystemMetrics(SM_CXSCREEN), ::GetSystemMetrics(SM_CYSCREEN));
 	m_iScreenWidth4 = m_rcScreen.Width() / 4;
 }

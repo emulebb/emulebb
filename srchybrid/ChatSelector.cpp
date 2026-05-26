@@ -35,10 +35,6 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#define	STATUS_MSG_COLOR		RGB(0,128,0)		// dark green
-#define	SENT_TARGET_MSG_COLOR	RGB(0,192,0)		// bright green
-#define	RECV_SOURCE_MSG_COLOR	RGB(0,128,255)		// bright cyan/blue
-
 #define	TIME_STAMP_FORMAT		_T("[%H:%M] ")
 
 #define	IDT_CHATITEMS	20
@@ -89,6 +85,9 @@ CChatSelector::CChatSelector()
 	, m_iContextIndex(-1)
 	, m_blinkstate()
 	, m_lastemptyicon()
+	, m_crStatusMessage(RGB(0, 128, 0))
+	, m_crSentMessage(RGB(0, 192, 0))
+	, m_crReceivedMessage(RGB(0, 128, 255))
 {
 	m_bClosable = true;
 }
@@ -98,6 +97,7 @@ void CChatSelector::Init(CChatWnd *pParent)
 	m_pParent = pParent;
 
 	ModifyStyle(0, WS_CLIPCHILDREN);
+	ApplySkinColors();
 	SetAllIcons();
 
 	VERIFY((m_Timer = SetTimer(IDT_CHATITEMS, SEC2MS(3) / 2, NULL)) != 0);
@@ -106,7 +106,18 @@ void CChatSelector::Init(CChatWnd *pParent)
 void CChatSelector::OnSysColorChange()
 {
 	CClosableTabCtrl::OnSysColorChange();
+	ApplySkinColors();
 	SetAllIcons();
+}
+
+void CChatSelector::ApplySkinColors()
+{
+	m_crStatusMessage = RGB(0, 128, 0);
+	m_crSentMessage = RGB(0, 192, 0);
+	m_crReceivedMessage = RGB(0, 128, 255);
+	theApp.LoadSkinColor(_T("ChatStatusFg"), m_crStatusMessage);
+	theApp.LoadSkinColor(_T("ChatSentFg"), m_crSentMessage);
+	theApp.LoadSkinColor(_T("ChatReceivedFg"), m_crReceivedMessage);
 }
 
 void CChatSelector::SetAllIcons()
@@ -177,7 +188,7 @@ CChatItem* CChatSelector::StartSession(CUpDownClient *client, bool show)
 		AddTimeStamp(chatitem);
 	CString name;
 	name.Format(_T("%s%s\n"), (LPCTSTR)GetResString(IDS_CHAT_START), (LPCTSTR)client->GetUserName());
-	chatitem->log->AppendKeyWord(name, STATUS_MSG_COLOR);
+	chatitem->log->AppendKeyWord(name, m_crStatusMessage);
 	client->SetChatState(MS_CHATTING);
 
 	if (client->GetUserName() != NULL)
@@ -249,7 +260,7 @@ void CChatSelector::ProcessMessage(CUpDownClient *sender, const CString &message
 	}
 	if (thePrefs.GetIRCAddTimeStamp())
 		AddTimeStamp(ci);
-	ci->log->AppendKeyWord(sender->GetUserName(), RECV_SOURCE_MSG_COLOR);
+	ci->log->AppendKeyWord(sender->GetUserName(), m_crReceivedMessage);
 	CString s;
 	s.Format(_T(": %s\n"), (LPCTSTR)message);
 	ci->log->AppendText(s);
@@ -272,7 +283,7 @@ void CChatSelector::ShowCaptchaRequest(CUpDownClient *sender, HBITMAP bmpCaptcha
 			AddTimeStamp(ci);
 		CString s;
 		s.Format(_T("*** %s"), (LPCTSTR)GetResString(IDS_CAPTCHAREQUEST));
-		ci->log->AppendKeyWord(s, STATUS_MSG_COLOR);
+		ci->log->AppendKeyWord(s, m_crStatusMessage);
 		ci->log->AddCaptcha(bmpCaptcha);
 		ci->log->AddLine(_T("\n"));
 	}
@@ -286,7 +297,7 @@ void CChatSelector::ShowCaptchaResult(CUpDownClient *sender, const CString &strR
 			AddTimeStamp(ci);
 		CString s;
 		s.Format(_T("*** %s\n"), (LPCTSTR)strResult);
-		ci->log->AppendKeyWord(s, STATUS_MSG_COLOR);
+		ci->log->AppendKeyWord(s, m_crStatusMessage);
 	}
 }
 
@@ -325,7 +336,7 @@ bool CChatSelector::SendText(const CString &rstrText)
 		client->SendChatMessage(rstrText);
 		if (thePrefs.GetIRCAddTimeStamp())
 			AddTimeStamp(ci);
-		ci->log->AppendKeyWord(thePrefs.GetUserNick(), SENT_TARGET_MSG_COLOR);
+		ci->log->AppendKeyWord(thePrefs.GetUserNick(), m_crSentMessage);
 		CString s;
 		s.Format(_T(": %s\n"), (LPCTSTR)rstrText);
 		ci->log->AppendText(s);
@@ -342,7 +353,7 @@ bool CChatSelector::SendText(const CString &rstrText)
 			AddTimeStamp(ci);
 		CString s;
 		s.Format(_T("*** %s"), (LPCTSTR)GetResString(IDS_CONNECTING));
-		ci->log->AppendKeyWord(s, STATUS_MSG_COLOR);
+		ci->log->AppendKeyWord(s, m_crStatusMessage);
 		ci->strMessagePending = rstrText;
 		client->SetChatState(MS_CONNECTING);
 		client->TryToConnect(true);
@@ -364,16 +375,16 @@ void CChatSelector::ConnectingResult(CUpDownClient *sender, bool success)
 		if (ci->strMessagePending.IsEmpty()) {
 			if (thePrefs.GetIRCAddTimeStamp())
 				AddTimeStamp(ci);
-			ci->log->AppendKeyWord(_T("*** Connected\n"), STATUS_MSG_COLOR);
+			ci->log->AppendKeyWord(_T("*** Connected\n"), m_crStatusMessage);
 		} else {
 			CString s;
 			s.Format(_T(" ...%s\n"), (LPCTSTR)GetResString(IDS_TREEOPTIONS_OK));
-			ci->log->AppendKeyWord(s, STATUS_MSG_COLOR);
+			ci->log->AppendKeyWord(s, m_crStatusMessage);
 			client->SendChatMessage(ci->strMessagePending);
 
 			if (thePrefs.GetIRCAddTimeStamp())
 				AddTimeStamp(ci);
-			ci->log->AppendKeyWord(thePrefs.GetUserNick(), SENT_TARGET_MSG_COLOR);
+			ci->log->AppendKeyWord(thePrefs.GetUserNick(), m_crSentMessage);
 			s.Format(_T(": %s\n"), (LPCTSTR)ci->strMessagePending);
 			ci->log->AppendText(s);
 
@@ -383,11 +394,11 @@ void CChatSelector::ConnectingResult(CUpDownClient *sender, bool success)
 		if (ci->strMessagePending.IsEmpty()) {
 			if (thePrefs.GetIRCAddTimeStamp())
 				AddTimeStamp(ci);
-			ci->log->AppendKeyWord(GetResString(IDS_CHATDISCONNECTED) + _T('\n'), STATUS_MSG_COLOR);
+			ci->log->AppendKeyWord(GetResString(IDS_CHATDISCONNECTED) + _T('\n'), m_crStatusMessage);
 		} else {
 			CString s;
 			s.Format(_T(" ...%s\n"), (LPCTSTR)GetResString(IDS_FAILED));
-			ci->log->AppendKeyWord(s, STATUS_MSG_COLOR);
+			ci->log->AppendKeyWord(s, m_crStatusMessage);
 			ci->strMessagePending.Empty();
 		}
 }
@@ -673,7 +684,7 @@ void CChatSelector::ReportConnectionProgress(CUpDownClient *pClient, const CStri
 		return;
 	if (thePrefs.GetIRCAddTimeStamp() && !bNoTimeStamp)
 		AddTimeStamp(ci);
-	ci->log->AppendKeyWord(strProgressDesc, STATUS_MSG_COLOR);
+	ci->log->AppendKeyWord(strProgressDesc, m_crStatusMessage);
 }
 
 void CChatSelector::ClientObjectChanged(CUpDownClient *pOldClient, CUpDownClient *pNewClient)

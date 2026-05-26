@@ -47,24 +47,60 @@ static char THIS_FILE[] = __FILE__;
 
 CBarShader CUpDownClient::s_UpStatusBar(16);
 
+namespace
+{
+COLORREF BlendUploadBarColor(COLORREF crColor, COLORREF crTarget, UINT uColorWeight)
+{
+	const UINT uTargetWeight = 100U - min(uColorWeight, 100U);
+	return RGB(
+		(GetRValue(crColor) * uColorWeight + GetRValue(crTarget) * uTargetWeight) / 100U,
+		(GetGValue(crColor) * uColorWeight + GetGValue(crTarget) * uTargetWeight) / 100U,
+		(GetBValue(crColor) * uColorWeight + GetBValue(crTarget) * uTargetWeight) / 100U);
+}
+
+struct SUploadBarColors
+{
+	COLORREF crNeither;
+	COLORREF crNextSending;
+	COLORREF crBoth;
+	COLORREF crSending;
+};
+
+SUploadBarColors BuildUploadBarColors(bool bFlat, bool bActive)
+{
+	SUploadBarColors colors = {};
+	if (g_bLowColorDesktop) {
+		colors.crNeither = bActive ? RGB(224, 224, 224) : RGB(248, 248, 248);
+		colors.crNextSending = bActive ? RGB(255, 208, 0) : RGB(255, 244, 191);
+		colors.crBoth = bActive ? (bFlat ? RGB(0, 0, 0) : RGB(104, 104, 104)) : RGB(191, 191, 191);
+		colors.crSending = bActive ? RGB(0, 150, 0) : RGB(191, 229, 191);
+		return colors;
+	}
+
+	colors.crNeither = bActive ? RGB(224, 224, 224) : RGB(248, 248, 248);
+	colors.crNextSending = bActive ? RGB(255, 208, 0) : RGB(255, 244, 191);
+	colors.crBoth = bActive ? (bFlat ? RGB(0, 0, 0) : RGB(104, 104, 104)) : RGB(191, 191, 191);
+	colors.crSending = bActive ? RGB(0, 150, 0) : RGB(191, 229, 191);
+
+	theApp.LoadSkinColor(_T("UploadBarBackground"), colors.crNeither);
+	theApp.LoadSkinColor(_T("UploadBarHave"), colors.crBoth);
+	theApp.LoadSkinColor(_T("UploadBarSending"), colors.crSending);
+	theApp.LoadSkinColor(_T("UploadBarNext"), colors.crNextSending);
+
+	if (!bActive) {
+		colors.crNextSending = BlendUploadBarColor(colors.crNextSending, colors.crNeither, 55);
+		colors.crBoth = BlendUploadBarColor(colors.crBoth, colors.crNeither, 55);
+		colors.crSending = BlendUploadBarColor(colors.crSending, colors.crNeither, 55);
+	}
+	return colors;
+}
+}
+
 void CUpDownClient::DrawUpStatusBar(CDC &dc, const CRect &rect, bool onlygreyrect, bool  bFlat) const
 {
-	COLORREF crNeither, crNextSending, crBoth, crSending;
-
-	if (GetSlotNumber() <= (UINT)theApp.uploadqueue->GetActiveUploadsCount()
-		|| (GetUploadState() != US_UPLOADING && GetUploadState() != US_CONNECTING))
-	{
-		crNeither = RGB(224, 224, 224); //light grey
-		crNextSending = RGB(255, 208, 0); //dark yellow
-		crBoth = bFlat ? RGB(0, 0, 0) : RGB(104, 104, 104); //black : very dark gray
-		crSending = RGB(0, 150, 0); //dark green
-	} else {
-		// grayed out
-		crNeither = RGB(248, 248, 248); //very light grey
-		crNextSending = RGB(255, 244, 191); //pale yellow
-		crBoth = /*bFlat ? RGB(191, 191, 191) :*/ RGB(191, 191, 191); //mid-grey
-		crSending = RGB(191, 229, 191); //pale green
-	}
+	const bool bActive = GetSlotNumber() <= (UINT)theApp.uploadqueue->GetActiveUploadsCount()
+		|| (GetUploadState() != US_UPLOADING && GetUploadState() != US_CONNECTING);
+	const SUploadBarColors colors = BuildUploadBarColors(bFlat, bActive);
 
 	// wistily: UpStatusFix
 	CKnownFile *currequpfile = theApp.sharedfiles->GetFileByID(requpfileid);
@@ -75,11 +111,11 @@ void CUpDownClient::DrawUpStatusBar(CDC &dc, const CRect &rect, bool onlygreyrec
 		s_UpStatusBar.SetFileSize(filesize);
 		s_UpStatusBar.SetHeight(rect.Height());
 		s_UpStatusBar.SetWidth(rect.Width());
-		s_UpStatusBar.Fill(crNeither);
+		s_UpStatusBar.Fill(colors.crNeither);
 		if (!onlygreyrect && m_abyUpPartStatus)
 			for (UINT i = 0; i < m_nUpPartCount; ++i)
 				if (m_abyUpPartStatus[i])
-					s_UpStatusBar.FillRange(i * PARTSIZE, i * PARTSIZE + PARTSIZE, crBoth);
+					s_UpStatusBar.FillRange(i * PARTSIZE, i * PARTSIZE + PARTSIZE, colors.crBoth);
 
 		UploadingToClient_Struct *pUpClientStruct = theApp.uploadqueue->GetUploadingClientStructByClient(this);
 		//ASSERT(pUpClientStruct != NULL || theApp.uploadqueue->IsOnUploadQueue((CUpDownClient*)this) != NULL);
@@ -91,18 +127,18 @@ void CUpDownClient::DrawUpStatusBar(CDC &dc, const CRect &rect, bool onlygreyrec
 				block = pUpClientStruct->m_BlockRequests_queue.GetHead();
 				if (block) {
 					uint64 start = (block->StartOffset / PARTSIZE) * PARTSIZE;
-					s_UpStatusBar.FillRange(start, start + PARTSIZE, crNextSending);
+					s_UpStatusBar.FillRange(start, start + PARTSIZE, colors.crNextSending);
 				}
 			}
 			if (!pUpClientStruct->m_DoneBlocks_list.IsEmpty()) {
 				block = pUpClientStruct->m_DoneBlocks_list.GetHead();
 				if (block) {
 					uint64 start = (block->StartOffset / PARTSIZE) * PARTSIZE;
-					s_UpStatusBar.FillRange(start, start + PARTSIZE, crNextSending);
+					s_UpStatusBar.FillRange(start, start + PARTSIZE, colors.crNextSending);
 				}
 				for (POSITION pos = pUpClientStruct->m_DoneBlocks_list.GetHeadPosition();pos != 0;) {
 					block = pUpClientStruct->m_DoneBlocks_list.GetNext(pos);
-					s_UpStatusBar.FillRange(block->StartOffset, block->EndOffset + 1, crSending);
+					s_UpStatusBar.FillRange(block->StartOffset, block->EndOffset + 1, colors.crSending);
 				}
 			}
 			lockBlockLists.Unlock();

@@ -1641,7 +1641,10 @@ void CSearchListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		int middle = (rcItem.top + rcItem.bottom + 1) / 2;
 
 		//set up a new pen for drawing the tree
-		COLORREF crLine = (!g_bLowColorDesktop || (lpDrawItemStruct->itemState & ODS_SELECTED) == 0) ? RGB(128, 128, 128) : m_crHighlightText;
+		const bool bUseSkinnedGuide = !g_bLowColorDesktop || (lpDrawItemStruct->itemState & ODS_SELECTED) == 0;
+		COLORREF crLine = bUseSkinnedGuide ? RGB(128, 128, 128) : m_crHighlightText;
+		if (bUseSkinnedGuide)
+			theApp.LoadSkinColorAlt(_T("SearchResultsLvTreeFg"), _T("TreeGuideFg"), crLine);
 		CPen pn;
 		pn.CreatePen(PS_SOLID, 1, crLine);
 		CPen *oldpn = dc.SelectObject(&pn);
@@ -1662,7 +1665,10 @@ void CSearchListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 			CBrush brush(crLine);
 			dc.FrameRect(&circle_rec, &brush);
 			CPen penBlack;
-			penBlack.CreatePen(PS_SOLID, 1, (!g_bLowColorDesktop || (lpDrawItemStruct->itemState & ODS_SELECTED) == 0) ? m_crWindowText : m_crHighlightText);
+			COLORREF crSymbol = bUseSkinnedGuide ? m_crWindowText : m_crHighlightText;
+			if (bUseSkinnedGuide)
+				theApp.LoadSkinColorAlt(_T("SearchResultsLvTreeBoxFg"), _T("TreeBoxFg"), crSymbol);
+			penBlack.CreatePen(PS_SOLID, 1, crSymbol);
 			CPen *pOldPen2 = dc.SelectObject(&penBlack);
 			dc.MoveTo(treeCenter - 2, middle - 1);
 			dc.LineTo(treeCenter + 3, middle - 1);
@@ -1767,7 +1773,9 @@ void CSearchListCtrl::DrawSourceParent(CDC &dc, int nColumn, LPRECT lpRect, UINT
 	case 3: // complete sources
 		{
 			bool bComplete = IsComplete(src, src->GetSourceCount());
-			COLORREF crOldTextColor = (bComplete ? 0 : dc.SetTextColor(RGB(255, 0, 0)));
+			COLORREF crIncomplete = RGB(255, 0, 0);
+			theApp.LoadSkinColor(_T("SearchResultsLvFg_Incomplete"), crIncomplete);
+			COLORREF crOldTextColor = (bComplete ? 0 : dc.SetTextColor(crIncomplete));
 			dc.DrawText(sItem, lpRect, MLC_DT_TEXT | uDrawTextAlignment);
 			if (!bComplete)
 				dc.SetTextColor(crOldTextColor);

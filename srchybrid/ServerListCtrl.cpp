@@ -255,12 +255,19 @@ void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	const CServer *pConnectedServer = theApp.serverconnect->GetCurrentServer();
 	// the server which we are connected to, always has a valid numerical IP member assigned,
 	// therefore we do not need to call CServer::IsEqual which would be expensive
-	if (pConnectedServer && pConnectedServer->GetIP() == pServer->GetIP() && pConnectedServer->GetPort() == pServer->GetPort())
-		dc.SetTextColor(RGB(32, 32, 255));
-	else if (pServer->GetFailedCount() >= thePrefs.GetDeadServerRetries())
-		dc.SetTextColor(RGB(192, 192, 192));
-	else if (pServer->GetFailedCount() >= 2)
-		dc.SetTextColor(RGB(128, 128, 128));
+	if (pConnectedServer && pConnectedServer->GetIP() == pServer->GetIP() && pConnectedServer->GetPort() == pServer->GetPort()) {
+		COLORREF crConnected = RGB(32, 32, 255);
+		theApp.LoadSkinColor(_T("ServersLvFg_Connected"), crConnected);
+		dc.SetTextColor(crConnected);
+	} else if (pServer->GetFailedCount() >= thePrefs.GetDeadServerRetries()) {
+		COLORREF crFailed = RGB(192, 192, 192);
+		theApp.LoadSkinColor(_T("ServersLvFg_Failed"), crFailed);
+		dc.SetTextColor(crFailed);
+	} else if (pServer->GetFailedCount() >= 2) {
+		COLORREF crWarning = RGB(128, 128, 128);
+		theApp.LoadSkinColor(_T("ServersLvFg_Warning"), crWarning);
+		dc.SetTextColor(crWarning);
+	}
 
 	const CHeaderCtrl *pHeaderCtrl = GetHeaderCtrl();
 	int iCount = pHeaderCtrl->GetItemCount();
