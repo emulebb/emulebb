@@ -3180,7 +3180,7 @@ void CPartFile::CompleteFile(bool bIsHashingDone)
 		SetStatus(PS_COMPLETING);
 		m_datarate = 0;
 		const CString mytemppath(m_fullname, m_fullname.GetLength() - m_partmetfilename.GetLength());
-		CAddFileThread *addfilethread = CreateSuspendedPartFileHashThread(mytemppath, RemoveFileExtension(m_partmetfilename), this);
+		CAddFileThread *addfilethread = CreateSuspendedPartFileHashThread(mytemppath, RemoveFileExtension(m_partmetfilename), this, FHJP_PART_FILE_COMPLETION);
 		if (addfilethread) {
 			SetFileOp(PFOP_HASHING);
 			SetFileOpProgress(0);

@@ -70,6 +70,19 @@ constexpr ULONGLONG kStartupHashProfileSampleInterval = 256;
 constexpr unsigned int kSharedHashUiDrainBatchMax = 100;
 constexpr ULONGLONG kSharedHashUiDrainBudgetMs = 25;
 constexpr ULONGLONG kMaxVisibleDuplicateSharedFileWarnings = 25;
+constexpr DWORD kFileHashJobGateSleepMs = 25;
+
+struct SFileHashJobGateEntry
+{
+	ULONGLONG uSequence;
+	EFileHashJobPriority ePriority;
+};
+
+CCriticalSection s_fileHashJobGateSection;
+std::vector<SFileHashJobGateEntry> s_fileHashJobGateQueue;
+ULONGLONG s_uNextFileHashJobSequence = 1;
+bool s_bFileHashJobRunning = false;
+bool s_bPartFileHashStartupScheduling = false;
 
 bool ShouldEmitStartupHashProfileSample(const ULONGLONG ullCompletedFiles, const ULONGLONG ullFailedFiles, const INT_PTR iPendingFiles)
 {
@@ -78,6 +91,101 @@ bool ShouldEmitStartupHashProfileSample(const ULONGLONG ullCompletedFiles, const
 		|| (ullObservedFiles % kStartupHashProfileSampleInterval) == 0
 		|| iPendingFiles == 0;
 }
+
+int GetFileHashJobPriorityValue(const EFileHashJobPriority ePriority)
+{
+	switch (ePriority) {
+	case FHJP_PART_FILE_COMPLETION:
+		return 2;
+	case FHJP_PART_FILE_REHASH:
+		return 1;
+	case FHJP_SHARED_FILE:
+	default:
+		return 0;
+	}
+}
+
+bool ShouldFileHashJobWaitLocked(const SFileHashJobGateEntry &rJob)
+{
+	if (s_bPartFileHashStartupScheduling || s_bFileHashJobRunning)
+		return true;
+
+	const int iOwnPriority = GetFileHashJobPriorityValue(rJob.ePriority);
+	for (const SFileHashJobGateEntry &rQueuedJob : s_fileHashJobGateQueue) {
+		if (rQueuedJob.uSequence == rJob.uSequence)
+			continue;
+
+		const int iQueuedPriority = GetFileHashJobPriorityValue(rQueuedJob.ePriority);
+		if (iQueuedPriority > iOwnPriority)
+			return true;
+		if (iQueuedPriority == iOwnPriority && rQueuedJob.uSequence < rJob.uSequence)
+			return true;
+	}
+	return false;
+}
+
+void RemoveFileHashJobGateEntryLocked(const ULONGLONG uSequence)
+{
+	s_fileHashJobGateQueue.erase(
+		std::remove_if(s_fileHashJobGateQueue.begin(), s_fileHashJobGateQueue.end(),
+			[uSequence](const SFileHashJobGateEntry &rJob) { return rJob.uSequence == uSequence; }),
+		s_fileHashJobGateQueue.end());
+}
+
+bool EnterFileHashJobGate(const EFileHashJobPriority ePriority)
+{
+	SFileHashJobGateEntry job = {};
+	{
+		CSingleLock gateLock(&s_fileHashJobGateSection, TRUE);
+		job.uSequence = s_uNextFileHashJobSequence++;
+		job.ePriority = ePriority;
+		s_fileHashJobGateQueue.push_back(job);
+	}
+
+	for (;;) {
+		if (theApp.IsClosing()) {
+			CSingleLock gateLock(&s_fileHashJobGateSection, TRUE);
+			RemoveFileHashJobGateEntryLocked(job.uSequence);
+			return false;
+		}
+
+		{
+			CSingleLock gateLock(&s_fileHashJobGateSection, TRUE);
+			if (!ShouldFileHashJobWaitLocked(job)) {
+				RemoveFileHashJobGateEntryLocked(job.uSequence);
+				s_bFileHashJobRunning = true;
+				return true;
+			}
+		}
+		::Sleep(kFileHashJobGateSleepMs);
+	}
+}
+
+void LeaveFileHashJobGate()
+{
+	CSingleLock gateLock(&s_fileHashJobGateSection, TRUE);
+	s_bFileHashJobRunning = false;
+}
+
+class CScopedFileHashJobGate
+{
+public:
+	explicit CScopedFileHashJobGate(const EFileHashJobPriority ePriority)
+		: m_bEntered(EnterFileHashJobGate(ePriority))
+	{
+	}
+
+	~CScopedFileHashJobGate()
+	{
+		if (m_bEntered)
+			LeaveFileHashJobGate();
+	}
+
+	bool HasEntered() const	{ return m_bEntered; }
+
+private:
+	bool m_bEntered;
+};
 
 bool ShouldLogStartupHashFile(const ULONGLONG ullCompletedFiles, const ULONGLONG ullFailedFiles, const bool bStartupDeferredHashingActive)
 {
@@ -211,6 +319,17 @@ void NotifyStartupSharedFilesModelChanged()
 }
 }
 
+void BeginPartFileHashStartupScheduling()
+{
+	CSingleLock gateLock(&s_fileHashJobGateSection, TRUE);
+	s_bPartFileHashStartupScheduling = true;
+}
+
+void EndPartFileHashStartupScheduling()
+{
+	CSingleLock gateLock(&s_fileHashJobGateSection, TRUE);
+	s_bPartFileHashStartupScheduling = false;
+}
 
 typedef CSimpleArray<CKnownFile*> CSimpleKnownFileArray;
 #define	SHAREDFILES_FILE	_T("sharedfiles.dat")
@@ -467,23 +586,25 @@ IMPLEMENT_DYNCREATE(CAddFileThread, CWinThread)
 CAddFileThread::CAddFileThread()
 	: m_pOwner()
 	, m_partfile()
+	, m_eHashJobPriority(FHJP_SHARED_FILE)
 {
 }
 
-void CAddFileThread::SetValues(CSharedFileList *pOwner, LPCTSTR directory, LPCTSTR filename, LPCTSTR strSharedDir, CPartFile *partfile)
+void CAddFileThread::SetValues(CSharedFileList *pOwner, LPCTSTR directory, LPCTSTR filename, LPCTSTR strSharedDir, CPartFile *partfile, EFileHashJobPriority eHashJobPriority)
 {
 	m_pOwner = pOwner;
 	m_strDirectory = directory;
 	m_strFilename = filename;
 	m_partfile = partfile;
 	m_strSharedDir = strSharedDir;
+	m_eHashJobPriority = eHashJobPriority;
 }
 
-CAddFileThread *CreateSuspendedPartFileHashThread(LPCTSTR pszDirectory, LPCTSTR pszFilename, CPartFile *pPartFile)
+CAddFileThread *CreateSuspendedPartFileHashThread(LPCTSTR pszDirectory, LPCTSTR pszFilename, CPartFile *pPartFile, EFileHashJobPriority eHashJobPriority)
 {
 	CAddFileThread *pAddFileThread = static_cast<CAddFileThread*>(AfxBeginThread(RUNTIME_CLASS(CAddFileThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED));
 	if (pAddFileThread != NULL)
-		pAddFileThread->SetValues(NULL, pszDirectory, pszFilename, _T(""), pPartFile);
+		pAddFileThread->SetValues(NULL, pszDirectory, pszFilename, _T(""), pPartFile, eHashJobPriority);
 	return pAddFileThread;
 }
 
@@ -505,6 +626,10 @@ int CAddFileThread::Run()
 	// at startup when rehashing potentially corrupted downloading part files.
 	// If all those hash threads would run concurrently, the I/O system would be under
 	// very heavy load and slowly progressing
+	CScopedFileHashJobGate fileHashJobGate(m_eHashJobPriority);
+	if (!fileHashJobGate.HasEntered())
+		return 0;
+
 	CSingleLock hashingLock(&theApp.hashing_mut, TRUE); // hash only one file at a time
 	if (theApp.IsClosing()) {
 		hashingLock.Unlock();
@@ -878,6 +1003,10 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 #endif
 
 	DbgSetThreadName("Shared hashing %s", (LPCTSTR)rJob.strName);
+	CScopedFileHashJobGate fileHashJobGate(FHJP_SHARED_FILE);
+	if (!fileHashJobGate.HasEntered())
+		return;
+
 	CSingleLock hashingLock(&theApp.hashing_mut, TRUE);
 	if (!theApp.IsClosing()
 		&& ShouldLogStartupHashFile(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, IsStartupDeferredHashingActive()))

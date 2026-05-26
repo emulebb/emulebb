@@ -635,6 +635,13 @@ private:
 	ULONGLONG m_uStartupCacheSaveDirectoriesTotal;
 };
 
+enum EFileHashJobPriority
+{
+	FHJP_SHARED_FILE = 0,
+	FHJP_PART_FILE_REHASH = 1,
+	FHJP_PART_FILE_COMPLETION = 2
+};
+
 class CAddFileThread : public CWinThread
 {
 	DECLARE_DYNCREATE(CAddFileThread)
@@ -643,19 +650,30 @@ protected:
 public:
 	virtual BOOL InitInstance();
 	virtual int	Run();
-	void	SetValues(CSharedFileList *pOwner, LPCTSTR directory, LPCTSTR filename, LPCTSTR strSharedDir, CPartFile *partfile = NULL);
+	void	SetValues(CSharedFileList *pOwner, LPCTSTR directory, LPCTSTR filename, LPCTSTR strSharedDir, CPartFile *partfile = NULL, EFileHashJobPriority eHashJobPriority = FHJP_SHARED_FILE);
 private:
 	CSharedFileList	*m_pOwner;
 	CPartFile	*m_partfile;
+	EFileHashJobPriority m_eHashJobPriority;
 	CString		m_strDirectory;
 	CString		m_strFilename;
 	CString		m_strSharedDir;
 };
 
 /**
+ * @brief Holds startup part-file hash workers until all part files are classified.
+ */
+void BeginPartFileHashStartupScheduling();
+
+/**
+ * @brief Releases startup part-file hash workers to the priority gate.
+ */
+void EndPartFileHashStartupScheduling();
+
+/**
  * @brief Creates a suspended part-file hash worker and binds it to the target file.
  */
-CAddFileThread *CreateSuspendedPartFileHashThread(LPCTSTR pszDirectory, LPCTSTR pszFilename, CPartFile *pPartFile);
+CAddFileThread *CreateSuspendedPartFileHashThread(LPCTSTR pszDirectory, LPCTSTR pszFilename, CPartFile *pPartFile, EFileHashJobPriority eHashJobPriority = FHJP_PART_FILE_REHASH);
 
 /**
  * @brief App-lifetime worker that serially drains shared-file hash jobs without per-file thread churn.

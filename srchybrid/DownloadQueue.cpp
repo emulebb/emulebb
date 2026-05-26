@@ -58,6 +58,20 @@ namespace
 {
 	const ULONGLONG kProtectedVolumeStatusSnapshotMaxAgeMs = 100;
 
+	class CScopedPartFileHashStartupScheduling
+	{
+	public:
+		CScopedPartFileHashStartupScheduling()
+		{
+			BeginPartFileHashStartupScheduling();
+		}
+
+		~CScopedPartFileHashStartupScheduling()
+		{
+			EndPartFileHashStartupScheduling();
+		}
+	};
+
 	enum ProtectedDiskRoleMask : UINT
 	{
 		ProtectedDiskRoleConfig = 0x01,
@@ -495,61 +509,65 @@ void CDownloadQueue::Init()
 	// find all part files, read & hash them if needed and store into a list
 	int count = 0;
 
-	for (INT_PTR i = 0; i < thePrefs.GetTempDirCount(); ++i) {
-		const CString strTempDir(thePrefs.GetTempDir(i));
+	{
+		CScopedPartFileHashStartupScheduling startupHashScheduling;
+		for (INT_PTR i = 0; i < thePrefs.GetTempDirCount(); ++i) {
+			const CString strTempDir(thePrefs.GetTempDir(i));
 
-		//check all part.met files
-		(void)PathHelpers::ForEachMatchingEntry(PathHelpers::AppendPathComponent(strTempDir, _T("*.part.met")),
-			[&](const WIN32_FIND_DATA &findData) -> bool {
-			if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
-				return true;
+			//check all part.met files
+			(void)PathHelpers::ForEachMatchingEntry(PathHelpers::AppendPathComponent(strTempDir, _T("*.part.met")),
+				[&](const WIN32_FIND_DATA &findData) -> bool {
+				if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+					return true;
 
-			CPartFile *toadd = new CPartFile();
-			const CString strFileName(findData.cFileName);
-			EPartFileLoadResult eResult = toadd->LoadPartFile(strTempDir, strFileName);
-			if (eResult == PLR_FAILED_METFILE_CORRUPT) {
-				// .met file is corrupted, try to load the latest backup of this file
-				delete toadd;
-				toadd = new CPartFile();
-				eResult = toadd->LoadPartFile(strTempDir, strFileName + PARTMET_BAK_EXT);
-				if (eResult == PLR_LOADSUCCESS) {
-					toadd->SavePartFile(true); // don't override our just used .bak file yet
-					AddLogLine(false, GetResString(IDS_RECOVERED_PARTMET), (LPCTSTR)FormatDisplayFileName(toadd->GetFileName()));
+				CPartFile *toadd = new CPartFile();
+				const CString strFileName(findData.cFileName);
+				EPartFileLoadResult eResult = toadd->LoadPartFile(strTempDir, strFileName);
+				if (eResult == PLR_FAILED_METFILE_CORRUPT) {
+					// .met file is corrupted, try to load the latest backup of this file
+					delete toadd;
+					toadd = new CPartFile();
+					eResult = toadd->LoadPartFile(strTempDir, strFileName + PARTMET_BAK_EXT);
+					if (eResult == PLR_LOADSUCCESS) {
+						toadd->SavePartFile(true); // don't override our just used .bak file yet
+						AddLogLine(false, GetResString(IDS_RECOVERED_PARTMET), (LPCTSTR)FormatDisplayFileName(toadd->GetFileName()));
+					}
 				}
-			}
 
-			if (eResult == PLR_LOADSUCCESS) {
-				++count;
-				filelist.AddTail(toadd); // to download queue
-				if (toadd->GetStatus(true) == PS_READY)
-					theApp.sharedfiles->SafeAddKFile(toadd); // part files are always shared files
-				theApp.emuledlg->transferwnd->GetDownloadList()->AddFile(toadd); // show in download window
-			} else
-				delete toadd;
-			return true;
-		});
-
-		//try recovering any part.met files
-		(void)PathHelpers::ForEachMatchingEntry(PathHelpers::AppendPathComponent(strTempDir, _T("*.part.met.backup")),
-			[&](const WIN32_FIND_DATA &findData) -> bool {
-			if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+				if (eResult == PLR_LOADSUCCESS) {
+					++count;
+					filelist.AddTail(toadd); // to download queue
+					if (toadd->GetStatus(true) == PS_READY)
+						theApp.sharedfiles->SafeAddKFile(toadd); // part files are always shared files
+					theApp.emuledlg->transferwnd->GetDownloadList()->AddFile(toadd); // show in download window
+				} else
+					delete toadd;
 				return true;
+			});
 
-			CPartFile *toadd = new CPartFile();
-			if (toadd->LoadPartFile(strTempDir, findData.cFileName) == PLR_LOADSUCCESS) {
-				toadd->SavePartFile(true); // re-save backup, don't overwrite existing bak files yet
-				++count;
-				filelist.AddTail(toadd);			// to download queue
-				if (toadd->GetStatus(true) == PS_READY)
-					theApp.sharedfiles->SafeAddKFile(toadd); // part files are always shared files
-				theApp.emuledlg->transferwnd->GetDownloadList()->AddFile(toadd);// show in downloads window
+			//try recovering any part.met files
+			(void)PathHelpers::ForEachMatchingEntry(PathHelpers::AppendPathComponent(strTempDir, _T("*.part.met.backup")),
+				[&](const WIN32_FIND_DATA &findData) -> bool {
+				if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+					return true;
 
-				AddLogLine(false, GetResString(IDS_RECOVERED_PARTMET), (LPCTSTR)FormatDisplayFileName(toadd->GetFileName()));
-			} else
-				delete toadd;
-			return true;
-		});
+				CPartFile *toadd = new CPartFile();
+				if (toadd->LoadPartFile(strTempDir, findData.cFileName) == PLR_LOADSUCCESS) {
+					toadd->SavePartFile(true); // re-save backup, don't overwrite existing bak files yet
+					++count;
+					filelist.AddTail(toadd);			// to download queue
+					if (toadd->GetStatus(true) == PS_READY)
+						theApp.sharedfiles->SafeAddKFile(toadd); // part files are always shared files
+					theApp.emuledlg->transferwnd->GetDownloadList()->AddFile(toadd);// show in downloads window
+
+					AddLogLine(false, GetResString(IDS_RECOVERED_PARTMET), (LPCTSTR)FormatDisplayFileName(toadd->GetFileName()));
+				} else
+					delete toadd;
+				return true;
+			});
+		}
 	}
+
 	if (count == 0)
 		AddLogLine(false, GetResString(IDS_NOPARTSFOUND));
 	else {
