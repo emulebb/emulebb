@@ -28,6 +28,7 @@
 #include "DownloadQueue.h"
 #include "PartFile.h"
 #include "Log.h"
+#include "OtherFunctions.h"
 #include "UserMsgs.h"
 #include "WorkerUiMessageSeams.h"
 
@@ -180,6 +181,7 @@ int CAICHSyncThread::Run()
 					file.WriteUInt8(KNOWN2_MET_VERSION);
 				}
 			} catch (CFileException *ex2) {
+				DebugLogError(_T("Failed to truncate corrupt %s to byte %u%s"), KNOWN2_MET_FILENAME, nLastVerifiedPos, (LPCTSTR)CExceptionStrDash(*ex2));
 				ex2->Delete();
 			}
 		} else
