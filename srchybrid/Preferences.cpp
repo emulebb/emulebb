@@ -351,6 +351,7 @@ bool LoadPathListFromFile(const CString &rstrFullPath, CStringList &rOutList)
 				rOutList.AddTail(PathHelpers::CanonicalizeDirectoryPath(strPath));
 		}
 	} catch (CFileException *ex) {
+		DebugLogWarning(_T("Failed to load path list \"%s\"%s"), (LPCTSTR)rstrFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 		ASSERT(0);
 		ex->Delete();
 	}
@@ -416,6 +417,7 @@ bool LoadServerMetAddressListFromFile(const CString &rstrFullPath, CStringList &
 				rOutList.AddTail(strUrl);
 		}
 	} catch (CFileException *ex) {
+		DebugLogWarning(_T("Failed to load server.met address list \"%s\"%s"), (LPCTSTR)rstrFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 		ASSERT(0);
 		ex->Delete();
 	}
@@ -1654,6 +1656,7 @@ void CPreferences::Init()
 			}
 			ReplaceSharedDirectoryList(sharedDirs);
 		} catch (CFileException *ex) {
+			DebugLogWarning(_T("Failed to load shared directory list \"%s\"%s"), (LPCTSTR)strFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 			ASSERT(0);
 			ex->Delete();
 		}

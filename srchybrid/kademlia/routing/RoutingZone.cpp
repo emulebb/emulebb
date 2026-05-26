@@ -268,8 +268,8 @@ void CRoutingZone::ReadFile(const CString &strSpecialNodesdate)
 		}
 		file.Close();
 	} catch (CFileException *ex) {
+		DebugLogError(_T("Failed to read Kad contacts file \"%s\"%s"), (LPCTSTR)m_sFilename, (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
-		DebugLogError(_T("CFileException in CRoutingZone::readFile"));
 	}
 	if (strSpecialNodesdate.IsEmpty()) {
 		fastKad.LoadNodesMetadata(GetFastKadFilename());
@@ -407,8 +407,8 @@ void CRoutingZone::WriteFile()
 			fastKad.SaveNodesMetadata(GetFastKadFilename(), fastKadNodes);
 		AddDebugLogLine(false, _T("Wrote %ld contact%s to file."), listContacts.size(), ((listContacts.size() == 1) ? _T("") : _T("s")));
 	} catch (CFileException *ex) {
+		DebugLogError(_T("Failed to write Kad contacts file \"%s\"%s"), (LPCTSTR)m_sFilename, (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
-		AddDebugLogLine(false, _T("CFileException in CRoutingZone::writeFile"));
 	}
 }
 

@@ -111,10 +111,11 @@ void CPrefs::ReadFile()
 			m_uClientID.SetValueRandom();
 		file.Close();
 	} catch (CException *ex) {
+		DebugLogError(_T("Failed to read Kad preferences file \"%s\"%s"), (LPCTSTR)m_sFilename, (LPCTSTR)CExceptionStrDash(*ex));
 		ASSERT(0);
 		ex->Delete();
 	} catch (...) {
-		TRACE("Exception in CPrefs::ReadFile\n");
+		DebugLogError(_T("Failed to read Kad preferences file \"%s\" after an unexpected exception"), (LPCTSTR)m_sFilename);
 	}
 }
 
@@ -136,10 +137,11 @@ void CPrefs::WriteFile()
 				DebugLogError(_T("Unable to promote Kad preferences file: %s (error %u)"), (LPCTSTR)m_sFilename, dwLastError);
 		}
 	} catch (CException *ex) {
+		DebugLogError(_T("Failed to write Kad preferences file \"%s\"%s"), (LPCTSTR)m_sFilename, (LPCTSTR)CExceptionStrDash(*ex));
 		ASSERT(0);
 		ex->Delete();
 	} catch (...) {
-		TRACE("Exception in CPrefs::WriteFile\n");
+		DebugLogError(_T("Failed to write Kad preferences file \"%s\" after an unexpected exception"), (LPCTSTR)m_sFilename);
 	}
 }
 
