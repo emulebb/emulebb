@@ -1123,6 +1123,7 @@ bool CKnownFile::CreateHash(FILE *fp, uint64 uSize, uchar *pucHash, CAICHHashTre
 		CStdioFile file(fp);
 		return CreateHash(&file, uSize, pucHash, pShaHashOut);
 	} catch (CFileException *ex) {
+		DebugLogWarning(_T("CreateHash failed while reading stdio-backed data%s"), (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
 	}
 	return false;
@@ -1138,6 +1139,7 @@ bool CKnownFile::CreateHash(const uchar *pucData, uint32 uSize, uchar *pucHash, 
 		CMemFile file(const_cast<uchar*>(pucData), uSize);
 		return CreateHash(&file, uSize, pucHash, pShaHashOut);
 	} catch (CFileException *ex) {
+		DebugLogWarning(_T("CreateHash failed while reading memory-backed data%s"), (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
 	}
 	return false;

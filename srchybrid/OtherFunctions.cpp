@@ -23,6 +23,7 @@
 #include <ShlObj_core.h>
 #include <sys/stat.h>
 #include "emule.h"
+#include "OtherFunctions.h"
 #include "UpDownClient.h"
 #include "DownloadQueue.h"
 #include "Preferences.h"
@@ -624,17 +625,32 @@ void ShellDefaultVerb(LPCTSTR lpName)
 
 namespace
 {
-bool DeleteFileToRecycleBinIFileOperation(LPCTSTR pszFilePath, HWND hOwnerWindow)
+bool DeleteFileToRecycleBinIFileOperation(LPCTSTR pszFilePath, HWND hOwnerWindow, SShellDeleteFileResult *pResult)
 {
-	if (pszFilePath == NULL || pszFilePath[0] == _T('\0'))
+	if (pszFilePath == NULL || pszFilePath[0] == _T('\0')) {
+		if (pResult != NULL) {
+			pResult->dwLastError = ERROR_INVALID_PARAMETER;
+			pResult->hResult = HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER);
+		}
 		return false;
+	}
 
 	const CString strShellPath = PathHelpers::StripExtendedLengthPrefix(CString(pszFilePath));
-	if (!PathHelpers::IsShellSafePath(strShellPath))
+	if (!PathHelpers::IsShellSafePath(strShellPath)) {
+		if (pResult != NULL) {
+			pResult->dwLastError = ERROR_INVALID_NAME;
+			pResult->hResult = HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
+		}
 		return false;
+	}
 	const ComInitializationSeams::CScopedComInitialize coInitialize;
-	if (!coInitialize.IsUsable())
+	if (!coInitialize.IsUsable()) {
+		if (pResult != NULL) {
+			pResult->dwLastError = ERROR_GEN_FAILURE;
+			pResult->hResult = E_FAIL;
+		}
 		return false;
+	}
 
 	CComPtr<IFileOperation> pFileOperation;
 	HRESULT hr = pFileOperation.CoCreateInstance(CLSID_FileOperation, NULL, CLSCTX_INPROC_SERVER);
@@ -655,19 +671,63 @@ bool DeleteFileToRecycleBinIFileOperation(LPCTSTR pszFilePath, HWND hOwnerWindow
 	if (SUCCEEDED(hr))
 		hr = pFileOperation->GetAnyOperationsAborted(&bAnyOperationsAborted);
 
-	return SUCCEEDED(hr) && !bAnyOperationsAborted;
+	const bool bSucceeded = SUCCEEDED(hr) && !bAnyOperationsAborted;
+	if (pResult != NULL) {
+		pResult->bRecycleBin = true;
+		pResult->bAnyOperationsAborted = bAnyOperationsAborted;
+		pResult->hResult = hr;
+		pResult->dwLastError = bSucceeded ? ERROR_SUCCESS : (bAnyOperationsAborted ? ERROR_CANCELLED : ERROR_GEN_FAILURE);
+	}
+	return bSucceeded;
 }
 }
 
-bool ShellDeleteFile(LPCTSTR pszFilePath)
+bool ShellDeleteFileEx(LPCTSTR pszFilePath, SShellDeleteFileResult &rResult)
 {
-	return OtherFunctionsSeams::ExecuteShellDelete(
+	rResult = SShellDeleteFileResult();
+	rResult.bSucceeded = OtherFunctionsSeams::ExecuteShellDelete(
 		pszFilePath,
 		thePrefs.GetRemoveToBin(),
 		theApp.emuledlg != NULL ? theApp.emuledlg->m_hWnd : NULL,
 		[](LPCTSTR pszPath) { return LongPathSeams::PathExists(pszPath) != FALSE; },
-		[](LPCTSTR pszPath, HWND hOwnerWindow) { return DeleteFileToRecycleBinIFileOperation(pszPath, hOwnerWindow); },
-		[](LPCTSTR pszPath) { return LongPathSeams::DeleteFile(pszPath) != FALSE; });
+		[&rResult](LPCTSTR pszPath, HWND hOwnerWindow) { return DeleteFileToRecycleBinIFileOperation(pszPath, hOwnerWindow, &rResult); },
+		[&rResult](LPCTSTR pszPath) {
+			const BOOL bDeleted = LongPathSeams::DeleteFile(pszPath);
+			rResult.dwLastError = bDeleted ? ERROR_SUCCESS : ::GetLastError();
+			rResult.hResult = bDeleted ? S_OK : HRESULT_FROM_WIN32(rResult.dwLastError);
+			return bDeleted != FALSE;
+		});
+	return rResult.bSucceeded;
+}
+
+bool ShellDeleteFile(LPCTSTR pszFilePath)
+{
+	SShellDeleteFileResult result;
+	return ShellDeleteFileEx(pszFilePath, result);
+}
+
+CString GetShellDeleteFileErrorMessage(const SShellDeleteFileResult &rResult)
+{
+	if (rResult.bSucceeded)
+		return CString();
+
+	CString strError;
+	if (rResult.bAnyOperationsAborted) {
+		strError = GetErrorMessage(ERROR_CANCELLED);
+	} else if (FAILED(rResult.hResult)) {
+		const DWORD dwError = HRESULT_FACILITY(rResult.hResult) == FACILITY_WIN32
+			? HRESULT_CODE(rResult.hResult)
+			: static_cast<DWORD>(rResult.hResult);
+		strError = GetErrorMessage(dwError);
+		if (strError.IsEmpty())
+			strError = GetErrorMessage(rResult.dwLastError != ERROR_SUCCESS ? rResult.dwLastError : ERROR_GEN_FAILURE);
+	} else {
+		strError = GetErrorMessage(rResult.dwLastError != ERROR_SUCCESS ? rResult.dwLastError : ERROR_GEN_FAILURE);
+	}
+
+	if (FAILED(rResult.hResult))
+		strError.AppendFormat(_T(" (HRESULT 0x%08lX)"), static_cast<unsigned long>(rResult.hResult));
+	return strError;
 }
 
 CString ShellGetFolderPath(int iCSIDL)

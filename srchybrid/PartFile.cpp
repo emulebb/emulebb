@@ -3460,6 +3460,15 @@ void CPartFile::DeletePartFile()
 	// Barry - Need to tell any connected clients to stop sending the file
 	StopFile(true);
 
+	if (m_bPreviewing) {
+		if (!m_bDelayDelete) {
+			LogWarning(LOG_STATUSBAR, GetResString(IDS_DELETEAFTERFILEOP), (LPCTSTR)FormatDisplayFileName(GetFileName()));
+			DebugLogWarning(_T("Deferring part-file deletion for \"%s\" until preview generation releases the file object."), (LPCTSTR)GetFileName());
+			m_bDelayDelete = true;
+		}
+		return;
+	}
+
 	if (GetFileOp() != PFOP_NONE) { //hashing, copying, uncompressing
 		if (!m_bDelayDelete) {
 			LogWarning(LOG_STATUSBAR, GetResString(IDS_DELETEAFTERFILEOP), (LPCTSTR)FormatDisplayFileName(GetFileName()));

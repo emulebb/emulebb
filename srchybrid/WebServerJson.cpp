@@ -3065,9 +3065,10 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			rError.strMessage = bMustRemainShared ? _T("file belongs to a mandatory shared directory") : _T("shared file not found");
 			return json();
 		}
-		if (bDeleteFiles && !ShellDeleteFile(strFilePath)) {
+		SShellDeleteFileResult deleteResult;
+		if (bDeleteFiles && !ShellDeleteFileEx(strFilePath, deleteResult)) {
 			rError.strCode = "EMULE_ERROR";
-			rError.strMessage = GetErrorMessage(::GetLastError());
+			rError.strMessage = GetShellDeleteFileErrorMessage(deleteResult);
 			return json();
 		}
 		if (bDeleteFiles && pKnownFile != NULL)
@@ -3476,13 +3477,16 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 						if (theApp.emuledlg->transferwnd->GetDownloadList() != NULL)
 							theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile(pPartFile);
 						bOk = true;
-					} else if (!ShellDeleteFile(pPartFile->GetFilePath())) {
-						strErrorText = GetErrorMessage(::GetLastError());
 					} else {
-						theApp.sharedfiles->RemoveFile(pPartFile, true);
-						if (theApp.emuledlg->transferwnd->GetDownloadList() != NULL)
-							theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile(pPartFile);
-						bOk = true;
+						SShellDeleteFileResult deleteResult;
+						if (!ShellDeleteFileEx(pPartFile->GetFilePath(), deleteResult)) {
+							strErrorText = GetShellDeleteFileErrorMessage(deleteResult);
+						} else {
+							theApp.sharedfiles->RemoveFile(pPartFile, true);
+							if (theApp.emuledlg->transferwnd->GetDownloadList() != NULL)
+								theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile(pPartFile);
+							bOk = true;
+						}
 					}
 				} else if (!bDeleteFiles) {
 					strErrorText = _T("partial transfer deletion requires /transfers/{hash}/files?confirm=true");

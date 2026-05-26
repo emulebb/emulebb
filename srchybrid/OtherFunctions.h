@@ -243,7 +243,17 @@ HINSTANCE BrowserOpen(LPCTSTR lpURL, LPCTSTR lpDirectory);
 void ShellOpen(LPCTSTR lpName, LPCTSTR lpParameters);
 void ShellOpenFile(LPCTSTR lpName);
 void ShellDefaultVerb(LPCTSTR lpName);
+struct SShellDeleteFileResult
+{
+	bool bSucceeded = false;
+	bool bRecycleBin = false;
+	BOOL bAnyOperationsAborted = FALSE;
+	DWORD dwLastError = ERROR_SUCCESS;
+	HRESULT hResult = S_OK;
+};
+bool ShellDeleteFileEx(LPCTSTR pszFilePath, SShellDeleteFileResult &rResult);
 bool ShellDeleteFile(LPCTSTR pszFilePath);
+CString GetShellDeleteFileErrorMessage(const SShellDeleteFileResult &rResult);
 CString ShellGetFolderPath(int iCSIDL);
 bool SelectDir(CString &rstrPath, HWND hWnd, LPCTSTR pszTitle = NULL, LPCTSTR pszDlgTitle = NULL);
 BOOL DialogBrowseFile(CString &rstrPath, LPCTSTR pszFilters, LPCTSTR pszDefaultFileName = NULL, DWORD dwFlags = 0, bool openfilestyle = true, HWND hWndOwner = NULL, LPCTSTR pszDlgTitle = NULL, LPCTSTR pszDefExt = NULL);

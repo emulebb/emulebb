@@ -28,6 +28,7 @@
 #include "Preferences.h"
 #include "LongPathSeams.h"
 #include "KnownFilePointerValidation.h"
+#include "Log.h"
 
 #include <string>
 #include <vector>
@@ -310,7 +311,8 @@ void CCollectionCreateDialog::OnBnClickedOk()
 			if (LocMessageBox(IDS_COLL_REPLACEEXISTING, MB_ICONWARNING | MB_DEFBUTTON2 | MB_YESNO, 0) == IDNO)
 				return;
 
-			bool bDeleteSuccessful = ShellDeleteFile(sFilePath);
+			SShellDeleteFileResult deleteResult;
+			bool bDeleteSuccessful = ShellDeleteFileEx(sFilePath, deleteResult);
 			if (bDeleteSuccessful) {
 				CKnownFile *pKnownFile = theApp.knownfiles->FindKnownFileByPath(sFilePath);
 				if (pKnownFile) {
@@ -319,8 +321,10 @@ void CCollectionCreateDialog::OnBnClickedOk()
 						theApp.emuledlg->transferwnd->GetDownloadList()->ClearCompleted(static_cast<CPartFile*>(pKnownFile));
 				}
 				m_pCollection->WriteToFileAddShared(pSignkey);
-			} else
+			} else {
+				DebugLogWarning(_T("Failed to delete existing collection \"%s\" before replacement: %s"), (LPCTSTR)sFilePath, (LPCTSTR)GetShellDeleteFileErrorMessage(deleteResult));
 				LocMessageBox(IDS_COLL_ERR_DELETING, MB_ICONWARNING | MB_DEFBUTTON2 | MB_YESNO, 0);
+			}
 		} else
 			m_pCollection->WriteToFileAddShared(pSignkey);
 

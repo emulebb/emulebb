@@ -711,6 +711,7 @@ LRESULT CDownloadListCtrl::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
 	const bool bFileStillTracked = theApp.downloadqueue != NULL
 		&& pResult->pPartFile != NULL
 		&& theApp.downloadqueue->IsPartFile(pResult->pPartFile);
+	CPartFile *pFileToDelete = bFileStillTracked && pResult->pPartFile->IsDeleting() ? pResult->pPartFile : NULL;
 	if (bFileStillTracked)
 		pResult->pPartFile->m_bPreviewing = false;
 
@@ -742,6 +743,8 @@ LRESULT CDownloadListCtrl::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
 	}
 
 	delete pResult;
+	if (pFileToDelete != NULL)
+		pFileToDelete->DeletePartFile();
 	StartNextVideoThumbnailWorker();
 	return 0;
 }
@@ -2246,12 +2249,13 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 								break;
 							case PS_COMPLETE:
 								if (bCancelCommand) {
-									bool delsucc = ShellDeleteFile(partfile->GetFilePath());
+									SShellDeleteFileResult deleteResult;
+									bool delsucc = ShellDeleteFileEx(partfile->GetFilePath(), deleteResult);
 									if (delsucc)
 										theApp.sharedfiles->RemoveFile(partfile, true);
 									else {
 										CString strError;
-										strError.Format(GetResString(IDS_ERR_DELFILE) + _T("\r\n\r\n%s"), (LPCTSTR)partfile->GetFilePath(), (LPCTSTR)GetErrorMessage(::GetLastError()));
+										strError.Format(GetResString(IDS_ERR_DELFILE) + _T("\r\n\r\n%s"), (LPCTSTR)partfile->GetFilePath(), (LPCTSTR)GetShellDeleteFileErrorMessage(deleteResult));
 										AfxMessageBox(strError);
 									}
 								}

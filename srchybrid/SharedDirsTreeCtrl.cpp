@@ -1063,7 +1063,8 @@ BOOL CSharedDirsTreeCtrl::OnCommand(WPARAM wParam, LPARAM)
 					if (!myfile || myfile->IsPartFile())
 						continue;
 
-					bool delsucc = ShellDeleteFile(myfile->GetFilePath());
+					SShellDeleteFileResult deleteResult;
+					bool delsucc = ShellDeleteFileEx(myfile->GetFilePath(), deleteResult);
 					if (delsucc) {
 						if (myfile->IsKindOf(RUNTIME_CLASS(CKnownFile)))
 							theApp.sharedfiles->RemoveFile(static_cast<CKnownFile*>(myfile), true);
@@ -1073,7 +1074,7 @@ BOOL CSharedDirsTreeCtrl::OnCommand(WPARAM wParam, LPARAM)
 					} else {
 						CString strError;
 						strError.Format(GetResString(IDS_ERR_DELFILE), (LPCTSTR)myfile->GetFilePath());
-						strError.AppendFormat(_T("\r\n\r\n%s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
+						strError.AppendFormat(_T("\r\n\r\n%s"), (LPCTSTR)GetShellDeleteFileErrorMessage(deleteResult));
 						AfxMessageBox(strError);
 					}
 				}
