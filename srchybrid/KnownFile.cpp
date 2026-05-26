@@ -1062,16 +1062,16 @@ bool CKnownFile::CreateHash(CFile *pFile, uint64 Length, uchar *pMd4HashOut, CAI
 	uint64	posCurrentEMBlock = 0;
 	uint64	nIACHPos = 0;
 	CMD4	md4;
-	CAICHHashAlgo *pHashAlg = (pShaHashOut != NULL) ? CAICHRecoveryHashSet::GetNewHashAlgo() : NULL;
+	std::unique_ptr<CAICHHashAlgo> pHashAlg((pShaHashOut != NULL) ? CAICHRecoveryHashSet::GetNewHashAlgo() : NULL);
 
 	for (uint64 Required = Length; Required;) {
-		if (theApp.IsClosing()) {
-			delete pHashAlg;
+		if (theApp.IsClosing())
 			return false;
-		}
 		UINT len = (UINT)(min(Required, (uint64)_countof(X)) / 64);
 		UINT uRead = len ? len * 64 : (UINT)Required;
-		VERIFY(pFile->Read(X, uRead) == uRead);
+		const UINT uActualRead = pFile->Read(X, uRead);
+		if (uActualRead != uRead)
+			AfxThrowFileException(CFileException::endOfFile, 0, pFile->GetFilePath());
 
 		// SHA hash needs 180KB blocks
 		if (pShaHashOut != NULL) { // && pHashAlg != NULL - do not check again
@@ -1079,7 +1079,7 @@ bool CKnownFile::CreateHash(CFile *pFile, uint64 Length, uchar *pMd4HashOut, CAI
 				uint64 nToComplete = EMBLOCKSIZE - nIACHPos;
 				pHashAlg->Add(X, (DWORD)nToComplete);
 				ASSERT(nIACHPos + nToComplete == EMBLOCKSIZE);
-				pShaHashOut->SetBlockHash(EMBLOCKSIZE, posCurrentEMBlock, pHashAlg);
+				pShaHashOut->SetBlockHash(EMBLOCKSIZE, posCurrentEMBlock, pHashAlg.get());
 				posCurrentEMBlock += EMBLOCKSIZE;
 				pHashAlg->Reset();
 				nIACHPos = uRead - nToComplete;
@@ -1098,12 +1098,11 @@ bool CKnownFile::CreateHash(CFile *pFile, uint64 Length, uchar *pMd4HashOut, CAI
 
 	if (pShaHashOut != NULL) {
 		if (nIACHPos > 0) {
-			pShaHashOut->SetBlockHash(nIACHPos, posCurrentEMBlock, pHashAlg);
+			pShaHashOut->SetBlockHash(nIACHPos, posCurrentEMBlock, pHashAlg.get());
 			posCurrentEMBlock += nIACHPos;
 		}
 		ASSERT(posCurrentEMBlock == Length);
-		VERIFY(pShaHashOut->ReCalculateHash(pHashAlg, false));
-		delete pHashAlg;
+		VERIFY(pShaHashOut->ReCalculateHash(pHashAlg.get(), false));
 	}
 
 	if (pMd4HashOut != NULL) {
