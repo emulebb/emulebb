@@ -617,8 +617,7 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 		if (thePrefs.GetDebugClientTCPLevel() > 0)
 			DebugRecv("OP_OutOfPartReqs", client);
 		theStats.AddDownDataOverheadFileRequest(size);
-		if (client->GetDownloadState() == DS_DOWNLOADING)
-			client->SetDownloadState(DS_ONQUEUE, _T("The remote client decided to stop/complete the transfer (got OP_OutOfPartReqs)."));
+		client->ProcessInboundOutOfPartReqs();
 		return;
 	case OP_CHANGE_CLIENT_ID:
 		{

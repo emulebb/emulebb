@@ -320,6 +320,11 @@ public:
 	void			ProcessFileInfo(CSafeMemFile &data, CPartFile *file);
 	void			ProcessFileStatus(bool bUdpPacket, CSafeMemFile &data, CPartFile *file);
 	void			ProcessHashSet(const uchar *packet, uint32 size, bool bFileIdentifiers);
+	/**
+	 * Records a remote OP_OutOfPartReqs answer and moves the source out of the
+	 * active download state without changing eD2K wire semantics.
+	 */
+	void			ProcessInboundOutOfPartReqs();
 	void			ProcessAcceptUpload();
 	bool			AddRequestForAnotherFile(CPartFile *file);
 	void			CreateBlockRequests(int blockCount);
@@ -474,6 +479,14 @@ protected:
 	bool	DoSwap(CPartFile *SwapTo, bool bRemoveCompletely, LPCTSTR reason); // ZZ:DownloadManager
 	bool	RecentlySwappedForSourceExchange() const	{ return ::GetTickCount64() < lastSwapForSourceExchangeTick + SEC2MS(30); } // ZZ:DownloadManager
 	void	SetSwapForSourceExchangeTick()				{ lastSwapForSourceExchangeTick = ::GetTickCount64(); } // ZZ:DownloadManager
+	/**
+	 * Client-global, app-session guard for peers that repeatedly accept an
+	 * upload slot and immediately answer OP_OutOfPartReqs.
+	 */
+	void	ResetOutOfPartReqsLoopGuard();
+	void	NoteInboundOutOfPartReqs();
+	void	NoteOutOfPartReqsLoopSuppression();
+	bool	CanAcceptUploadSlotAfterOutOfPartReqs(CString *pReason = NULL) const;
 
 	uint32	m_nConnectIP;	// holds the supposed IP or (after we had a connection) the real IP
 	uint32	m_dwUserIP;		// holds 0 (real IP not yet available) or the real IP (after we had a connection)
@@ -634,7 +647,14 @@ protected:
 	ULONGLONG m_lastRefreshedDLDisplay;
 	ULONGLONG m_lastRefreshedULDisplay;
 	ULONGLONG m_random_update_wait;
+	ULONGLONG m_ullOutOfPartReqsShortWindowStart;
+	ULONGLONG m_ullOutOfPartReqsLongWindowStart;
+	ULONGLONG m_ullOutOfPartReqsCooldownUntil;
+	ULONGLONG m_ullOutOfPartReqsLastSuppressionLog;
 	std::atomic<LONG> m_nPendingDisplayUpdateMask;
+	UINT		m_uOutOfPartReqsShortWindowCount;
+	UINT		m_uOutOfPartReqsLongWindowCount;
+	bool		m_bOutOfPartReqsQuarantined;
 
 	// using bit fields for less important flags, to save some bytes
 	UINT m_fHashsetRequestingMD4 : 1, // we have sent a hashset request to this client in the current connection

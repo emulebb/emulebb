@@ -49,6 +49,18 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
+constexpr UINT kOutOfPartReqsCooldownThreshold = 3;
+constexpr ULONGLONG kOutOfPartReqsShortWindowMs = SEC2MS(30);
+constexpr ULONGLONG kOutOfPartReqsCooldownMs = MIN2MS(2);
+constexpr UINT kOutOfPartReqsQuarantineThreshold = 10;
+constexpr ULONGLONG kOutOfPartReqsLongWindowMs = MIN2MS(5);
+constexpr ULONGLONG kOutOfPartReqsSuppressionLogMs = SEC2MS(30);
+
+bool IsTickInsideWindow(ULONGLONG ullNow, ULONGLONG ullWindowStart, ULONGLONG ullWindowMs)
+{
+	return ullWindowStart != 0 && ullNow >= ullWindowStart && ullNow - ullWindowStart <= ullWindowMs;
+}
+
 struct SPeerTransferBarColors
 {
 	COLORREF crNeither;
@@ -2055,13 +2067,119 @@ void CUpDownClient::SetRequestFile(CPartFile *pReqFile)
 	m_reqfile = pReqFile;
 }
 
+void CUpDownClient::ResetOutOfPartReqsLoopGuard()
+{
+	m_ullOutOfPartReqsShortWindowStart = 0;
+	m_ullOutOfPartReqsLongWindowStart = 0;
+	m_ullOutOfPartReqsCooldownUntil = 0;
+	m_ullOutOfPartReqsLastSuppressionLog = 0;
+	m_uOutOfPartReqsShortWindowCount = 0;
+	m_uOutOfPartReqsLongWindowCount = 0;
+	m_bOutOfPartReqsQuarantined = false;
+}
+
+void CUpDownClient::NoteInboundOutOfPartReqs()
+{
+	const ULONGLONG ullNow = ::GetTickCount64();
+	if (!IsTickInsideWindow(ullNow, m_ullOutOfPartReqsShortWindowStart, kOutOfPartReqsShortWindowMs)) {
+		m_ullOutOfPartReqsShortWindowStart = ullNow;
+		m_uOutOfPartReqsShortWindowCount = 0;
+	}
+	++m_uOutOfPartReqsShortWindowCount;
+
+	if (!IsTickInsideWindow(ullNow, m_ullOutOfPartReqsLongWindowStart, kOutOfPartReqsLongWindowMs)) {
+		m_ullOutOfPartReqsLongWindowStart = ullNow;
+		m_uOutOfPartReqsLongWindowCount = 0;
+	}
+	++m_uOutOfPartReqsLongWindowCount;
+
+	if (!m_bOutOfPartReqsQuarantined && m_uOutOfPartReqsLongWindowCount >= kOutOfPartReqsQuarantineThreshold) {
+		m_bOutOfPartReqsQuarantined = true;
+		m_ullOutOfPartReqsCooldownUntil = 0;
+		DebugLogWarning(_T("Quarantined download source after repeated OP_OutOfPartReqs loops. User: %s, Count: %u in %I64u ms."),
+			(LPCTSTR)DbgGetClientInfo(), m_uOutOfPartReqsLongWindowCount, kOutOfPartReqsLongWindowMs);
+		return;
+	}
+
+	const bool bCooldownActive = m_ullOutOfPartReqsCooldownUntil != 0 && ullNow < m_ullOutOfPartReqsCooldownUntil;
+	if (!m_bOutOfPartReqsQuarantined && !bCooldownActive && m_uOutOfPartReqsShortWindowCount >= kOutOfPartReqsCooldownThreshold) {
+		m_ullOutOfPartReqsCooldownUntil = ullNow + kOutOfPartReqsCooldownMs;
+		DebugLogWarning(_T("Cooling down download source after repeated OP_OutOfPartReqs loops. User: %s, Count: %u in %I64u ms, CooldownUntilTick: %I64u."),
+			(LPCTSTR)DbgGetClientInfo(), m_uOutOfPartReqsShortWindowCount, kOutOfPartReqsShortWindowMs, m_ullOutOfPartReqsCooldownUntil);
+	}
+}
+
+void CUpDownClient::NoteOutOfPartReqsLoopSuppression()
+{
+	const ULONGLONG ullNow = ::GetTickCount64();
+	if (!IsTickInsideWindow(ullNow, m_ullOutOfPartReqsLongWindowStart, kOutOfPartReqsLongWindowMs)) {
+		m_ullOutOfPartReqsLongWindowStart = ullNow;
+		m_uOutOfPartReqsLongWindowCount = 0;
+	}
+	++m_uOutOfPartReqsLongWindowCount;
+
+	if (!m_bOutOfPartReqsQuarantined && m_uOutOfPartReqsLongWindowCount >= kOutOfPartReqsQuarantineThreshold) {
+		m_bOutOfPartReqsQuarantined = true;
+		m_ullOutOfPartReqsCooldownUntil = 0;
+		DebugLogWarning(_T("Quarantined download source after repeated suppressed OP_AcceptUploadReq during OP_OutOfPartReqs cooldown. User: %s, Count: %u in %I64u ms."),
+			(LPCTSTR)DbgGetClientInfo(), m_uOutOfPartReqsLongWindowCount, kOutOfPartReqsLongWindowMs);
+	}
+}
+
+bool CUpDownClient::CanAcceptUploadSlotAfterOutOfPartReqs(CString *pReason) const
+{
+	if (m_bOutOfPartReqsQuarantined) {
+		if (pReason != NULL)
+			*pReason = _T("client is quarantined after repeated OP_OutOfPartReqs loops");
+		return false;
+	}
+
+	const ULONGLONG ullNow = ::GetTickCount64();
+	if (m_ullOutOfPartReqsCooldownUntil != 0 && ullNow < m_ullOutOfPartReqsCooldownUntil) {
+		if (pReason != NULL)
+			pReason->Format(_T("client is cooling down after repeated OP_OutOfPartReqs loops until tick %I64u"), m_ullOutOfPartReqsCooldownUntil);
+		return false;
+	}
+
+	if (pReason != NULL)
+		pReason->Empty();
+	return true;
+}
+
+void CUpDownClient::ProcessInboundOutOfPartReqs()
+{
+	if (GetDownloadState() != DS_DOWNLOADING)
+		return;
+
+	NoteInboundOutOfPartReqs();
+	SetDownloadState(DS_ONQUEUE, _T("The remote client decided to stop/complete the transfer (got OP_OutOfPartReqs)."));
+}
+
 void CUpDownClient::ProcessAcceptUpload()
 {
 	m_fQueueRankPending = 1;
 	if (m_reqfile && !m_reqfile->IsStopped() && (m_reqfile->GetStatus() == PS_READY || m_reqfile->GetStatus() == PS_EMPTY)) {
-		SetSentCancelTransfer(0);
-		if (GetDownloadState() == DS_ONQUEUE)
+		if (GetDownloadState() == DS_ONQUEUE) {
+			CString strOutOfPartReqsGuardReason;
+			if (!CanAcceptUploadSlotAfterOutOfPartReqs(&strOutOfPartReqsGuardReason)) {
+				NoteOutOfPartReqsLoopSuppression();
+				CanAcceptUploadSlotAfterOutOfPartReqs(&strOutOfPartReqsGuardReason);
+				const ULONGLONG ullNow = ::GetTickCount64();
+				if (m_ullOutOfPartReqsLastSuppressionLog == 0 || ullNow < m_ullOutOfPartReqsLastSuppressionLog
+						|| ullNow - m_ullOutOfPartReqsLastSuppressionLog >= kOutOfPartReqsSuppressionLogMs)
+				{
+					DebugLog(_T("Suppressed OP_AcceptUploadReq after repeated OP_OutOfPartReqs loops. User: %s, Reason: %s."),
+						(LPCTSTR)DbgGetClientInfo(), (LPCTSTR)strOutOfPartReqsGuardReason);
+					m_ullOutOfPartReqsLastSuppressionLog = ullNow;
+				}
+				if (socket != NULL && IsEd2kClient())
+					SendCancelTransfer();
+				return;
+			}
+			SetSentCancelTransfer(0);
 			StartDownload();
+		} else
+			SetSentCancelTransfer(0);
 	} else {
 		SendCancelTransfer();
 		SetDownloadState((m_reqfile == NULL || m_reqfile->IsStopped()) ? DS_NONE : DS_ONQUEUE);

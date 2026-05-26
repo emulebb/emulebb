@@ -249,6 +249,7 @@ void CUpDownClient::Init()
 	m_lastRefreshedDLDisplay = 0;
 	m_lastRefreshedULDisplay = ::GetTickCount64();
 	m_random_update_wait = (DWORD)(rand() % SEC2MS(1));
+	ResetOutOfPartReqsLoopGuard();
 	m_nPendingDisplayUpdateMask = 0;
 
 	m_fHashsetRequestingMD4 = 0;
