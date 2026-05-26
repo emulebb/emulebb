@@ -1135,6 +1135,10 @@ void CMuleListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	case VK_DELETE:
 		PostMessage(WM_COMMAND, MPG_DELETE, 0);
 		break;
+	case VK_ESCAPE:
+		if (GetKeyState(VK_CONTROL) >= 0 && GetKeyState(VK_MENU) >= 0 && GetKeyState(VK_SHIFT) >= 0 && ClearFindTextIfActive())
+			return;
+		break;
 	case VK_F2:
 		PostMessage(WM_COMMAND, MPG_F2, 0);
 		break;
@@ -1175,6 +1179,14 @@ void CMuleListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	}
 
 	return CListCtrl::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+bool CMuleListCtrl::ClearFindTextIfActive()
+{
+	if (!m_bGeneralPurposeFind || m_strFindText.IsEmpty())
+		return false;
+	m_strFindText.Empty();
+	return true;
 }
 
 BOOL CMuleListCtrl::OnChildNotify(UINT message, WPARAM wParam, LPARAM lParam, LRESULT *pResult)

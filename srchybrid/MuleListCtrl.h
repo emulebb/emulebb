@@ -197,6 +197,7 @@ public:
 		m_bGeneralPurposeFind = bEnable;
 		m_bCanSearchInAllColumns = bCanSearchInAllColumns;
 	}
+	bool	ClearFindTextIfActive();
 	void	DoFind(int iStartItem, int iDirection /*1=down, 0 = up*/, BOOL bShowError);
 	void	DoFindNext(BOOL bShowError);
 

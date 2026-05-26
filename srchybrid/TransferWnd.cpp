@@ -515,6 +515,19 @@ BOOL CTransferWnd::PreTranslateMessage(MSG *pMsg)
 		}
 		break;
 	case WM_KEYDOWN:
+		{
+			const int iCategoryShortcut = TransferWndSeams::GetCategoryShortcutIndex(
+				pMsg->message,
+				static_cast<unsigned int>(pMsg->wParam),
+				GetKeyState(VK_CONTROL) < 0,
+				GetKeyState(VK_MENU) < 0,
+				GetKeyState(VK_SHIFT) < 0);
+			if (iCategoryShortcut >= 0) {
+				if (!SelectDownloadCategoryByShortcutIndex(iCategoryShortcut))
+					MessageBeep(MB_OK);
+				return TRUE;
+			}
+		}
 		if (pMsg->wParam == VK_F5
 			&& GetKeyState(VK_CONTROL) >= 0
 			&& GetKeyState(VK_MENU) >= 0
@@ -583,6 +596,17 @@ BOOL CTransferWnd::PreTranslateMessage(MSG *pMsg)
 	}
 
 	return CResizableFormView::PreTranslateMessage(pMsg);
+}
+
+bool CTransferWnd::SelectDownloadCategoryByShortcutIndex(int iCategory)
+{
+	if (iCategory < 0 || iCategory >= m_dlTab.GetItemCount())
+		return false;
+	if (m_dlTab.GetCurSel() == iCategory && downloadlistctrl.m_curTab == iCategory)
+		return true;
+	m_dlTab.SetCurSel(iCategory);
+	downloadlistctrl.ChangeCategory(iCategory);
+	return true;
 }
 
 int CTransferWnd::GetItemUnderMouse(CListCtrl &ctrl)

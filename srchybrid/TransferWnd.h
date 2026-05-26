@@ -146,6 +146,7 @@ protected:
 	void	StopTransferDisplayRefreshTimer();
 	void	FlushExplicitDisplayRefresh();
 	void	FlushDisplayRefreshMask(uint32 nMask);
+	bool	SelectDownloadCategoryByShortcutIndex(int iCategory);
 
 	virtual BOOL PreTranslateMessage(MSG *pMsg);
 	virtual void DoDataExchange(CDataExchange *pDX);    // DDX/DDV support

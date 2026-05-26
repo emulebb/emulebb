@@ -100,4 +100,15 @@ inline bool ShouldCancelCategoryDragOnMouseMove(const bool bIsDragging, const bo
 {
 	return bIsDragging && !bLeftButtonDown;
 }
+
+inline int GetCategoryShortcutIndex(const unsigned int uMessage, const unsigned int uKey, const bool bCtrlDown, const bool bAltDown, const bool bShiftDown)
+{
+	if (uMessage != WM_KEYDOWN || !bCtrlDown || bAltDown || bShiftDown)
+		return -1;
+	if (uKey == '0')
+		return 0;
+	if (uKey >= '1' && uKey <= '9')
+		return static_cast<int>(uKey - '0');
+	return -1;
+}
 }
