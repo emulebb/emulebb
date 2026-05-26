@@ -861,6 +861,14 @@ namespace
 		return result;
 	}
 
+	static CString FormatAllTransferCommandLabel(UINT uActionStringID)
+	{
+		CString label(GetResString(uActionStringID));
+		label += _T(" ");
+		label += GetResString(IDS_ALL);
+		return label;
+	}
+
 	static UINT GetToolsMenuStatusStringID(UINT nItemID)
 	{
 		switch (nItemID) {
@@ -4366,6 +4374,28 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_REGISTER_ARR_STACK:
 		RegisterArrStackIntegration();
 		break;
+	case MP_HM_RESUME_ALL_DOWNLOADS:
+	case MP_HM_PAUSE_ALL_DOWNLOADS:
+	case MP_HM_STOP_ALL_DOWNLOADS:
+		if (theApp.downloadqueue != NULL) {
+			const int iNewStatus = wParam == MP_HM_RESUME_ALL_DOWNLOADS ? MP_RESUME : (wParam == MP_HM_PAUSE_ALL_DOWNLOADS ? MP_PAUSE : MP_STOP);
+			theApp.downloadqueue->SetCatStatus((UINT)-1, iNewStatus);
+			if (transferwnd != NULL) {
+				transferwnd->UpdateCatTabTitles();
+				if (transferwnd->GetDownloadList() != NULL) {
+					transferwnd->GetDownloadList()->UpdateCurrentCategoryView();
+					transferwnd->GetDownloadList()->MarkAvailableCommandsDirty();
+					transferwnd->GetDownloadList()->Invalidate();
+				}
+			}
+		}
+		break;
+	case MP_HM_CLEAR_COMPLETED_DOWNLOADS:
+		if (transferwnd != NULL && transferwnd->GetDownloadList() != NULL) {
+			transferwnd->GetDownloadList()->ClearCompleted(-1);
+			transferwnd->GetDownloadList()->MarkAvailableCommandsDirty();
+		}
+		break;
 	case MP_HM_VIEW_PRESET_STOCK_KEEP_WIDTHS:
 	case MP_HM_VIEW_PRESET_STOCK_RESET_WIDTHS:
 	case MP_HM_VIEW_PRESET_EXTENDED_KEEP_WIDTHS:
@@ -4614,6 +4644,10 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	session.CreateMenu();
 	session.AddMenuTitle(NULL, true);
 
+	CTitledMenu transfers;
+	transfers.CreateMenu();
+	transfers.AddMenuTitle(NULL, true);
+
 	CTitledMenu folders;
 	folders.CreateMenu();
 	folders.AddMenuTitle(NULL, true);
@@ -4688,6 +4722,21 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 			session.AppendMenu(MF_SEPARATOR);
 			session.AppendMenu(MF_STRING, MP_MINIMIZETOTRAY, GetResString(IDS_PW_TRAY), _T("TOOLS"));
 		}
+
+		int iAllFilesToPause = 0;
+		int iAllFilesToResume = 0;
+		int iAllFilesToStop = 0;
+		int iAllFilesTotal = 0;
+		int iAllCompleted = 0;
+		if (transferwnd != NULL && transferwnd->GetDownloadList() != NULL) {
+			transferwnd->GetDownloadList()->CountTransferCommandsInCategory(-1, iAllFilesToPause, iAllFilesToResume, iAllFilesToStop);
+			iAllCompleted = transferwnd->GetDownloadList()->GetCompleteDownloads(-1, iAllFilesTotal);
+		}
+		transfers.AppendMenu(MF_STRING | (iAllFilesToResume > 0 ? MF_ENABLED : MF_GRAYED), MP_HM_RESUME_ALL_DOWNLOADS, FormatAllTransferCommandLabel(IDS_DL_RESUME), _T("RESUMEALL"));
+		transfers.AppendMenu(MF_STRING | (iAllFilesToPause > 0 ? MF_ENABLED : MF_GRAYED), MP_HM_PAUSE_ALL_DOWNLOADS, FormatAllTransferCommandLabel(IDS_DL_PAUSE), _T("PAUSEALL"));
+		transfers.AppendMenu(MF_STRING | (iAllFilesToStop > 0 ? MF_ENABLED : MF_GRAYED), MP_HM_STOP_ALL_DOWNLOADS, FormatAllTransferCommandLabel(IDS_DL_STOP), _T("STOPALL"));
+		transfers.AppendMenu(MF_SEPARATOR);
+		transfers.AppendMenu(MF_STRING | (iAllCompleted > 0 ? MF_ENABLED : MF_GRAYED), MP_HM_CLEAR_COMPLETED_DOWNLOADS, GetResString(IDS_DL_CLEAR), _T("CLEARCOMPLETE"));
 
 		const CString &kbyps(GetResString(IDS_KBYTESPERSEC));
 		CString text;
@@ -4807,6 +4856,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
 
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)transfers.m_hMenu, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(_T("Speed Quick Actions"), _T('P')), _T("SPEED"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)refreshInterval.m_hMenu, GetResString(IDS_TOOLS_REFRESH_INTERVAL), _T("TOOLS"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_FOLDERS), _T('F')), _T("OPENFOLDER"));
@@ -4837,6 +4887,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	if (bTrayMenu)
 		PostMessage(WM_NULL, 0, 0);
 	VERIFY(session.DestroyMenu());
+	VERIFY(transfers.DestroyMenu());
 	VERIFY(folders.DestroyMenu());
 	VERIFY(editConfigFiles.DestroyMenu());
 	VERIFY(networkUpdates.DestroyMenu());

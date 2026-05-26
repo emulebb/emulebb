@@ -126,6 +126,8 @@ public:
 	int		GetCompleteDownloads(int cat, int &total);
 	void	UpdateCurrentCategoryView();
 	void	UpdateCurrentCategoryView(CPartFile *thisfile);
+	void	CountTransferCommandsInCategory(int iCategory, int &riFilesToPause, int &riFilesToResume, int &riFilesToStop) const;
+	void	MarkAvailableCommandsDirty() { m_availableCommandsDirty = true; }
 	CImageList* CreateDragImage(int iItem, LPPOINT lpPoint);
 	void	FillCatsMenu(CMenu &rCatsMenu, int iFilesInCats = -1);
 	CTitledMenu* GetPrioMenu();

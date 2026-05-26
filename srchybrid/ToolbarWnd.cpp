@@ -61,7 +61,7 @@ void CToolbarWnd::DoDataExchange(CDataExchange *pDX)
 	DDX_Control(pDX, IDC_DTOOLBAR, m_btnBar);
 }
 
-#define DTOOLBAR_NUM_BUTTONS 18
+#define DTOOLBAR_NUM_BUTTONS 22
 void CToolbarWnd::FillToolbar()
 {
 	m_btnBar.DeleteAllButtons();
@@ -107,88 +107,114 @@ void CToolbarWnd::FillToolbar()
 	atb1[5].iString = -1;
 
 	atb1[6].iBitmap = 5;
-	atb1[6].idCommand = MP_OPEN;
+	atb1[6].idCommand = MP_RESUME_CATEGORY;
 	atb1[6].fsState = TBSTATE_WRAP;
 	atb1[6].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	atb1[6].iString = m_btnBar.AddString(GetResString(IDS_DL_OPEN));
+	atb1[6].iString = m_btnBar.AddString(GetResString(IDS_DL_RESUME_CATEGORY));
 
 	atb1[7].iBitmap = 6;
-	atb1[7].idCommand = MP_OPENFOLDER;
+	atb1[7].idCommand = MP_PAUSE_CATEGORY;
 	atb1[7].fsState = TBSTATE_WRAP;
 	atb1[7].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	atb1[7].iString = m_btnBar.AddString(GetResString(IDS_OPENFOLDER));
+	atb1[7].iString = m_btnBar.AddString(GetResString(IDS_DL_PAUSE_CATEGORY));
 
 	atb1[8].iBitmap = 7;
-	atb1[8].idCommand = MP_PREVIEW;
+	atb1[8].idCommand = MP_STOP_CATEGORY;
 	atb1[8].fsState = TBSTATE_WRAP;
 	atb1[8].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	atb1[8].iString = m_btnBar.AddString(GetResString(IDS_DL_PREVIEW));
+	atb1[8].iString = m_btnBar.AddString(GetResString(IDS_DL_STOP_CATEGORY));
 
 	atb1[9].iBitmap = 8;
-	atb1[9].idCommand = MP_METINFO;
+	atb1[9].idCommand = MP_CLEARCOMPLETED;
 	atb1[9].fsState = TBSTATE_WRAP;
 	atb1[9].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	atb1[9].iString = m_btnBar.AddString(GetResString(IDS_DL_INFO));
+	atb1[9].iString = m_btnBar.AddString(GetResString(IDS_DL_CLEAR));
 
-	atb1[10].iBitmap = 9;
-	atb1[10].idCommand = MP_VIEWFILECOMMENTS;
+	/////////////
+	atb1[10].iBitmap = -1;
+	//atb1[10].idCommand = 0;
 	atb1[10].fsState = TBSTATE_WRAP;
-	atb1[10].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	atb1[10].iString = m_btnBar.AddString(GetResString(IDS_CMT_SHOWALL));
+	atb1[10].fsStyle = BTNS_SEP;
+	atb1[10].iString = -1;
 
-	atb1[11].iBitmap = 10;
-	atb1[11].idCommand = MP_SHOWED2KLINK;
+	atb1[11].iBitmap = 9;
+	atb1[11].idCommand = MP_OPEN;
 	atb1[11].fsState = TBSTATE_WRAP;
 	atb1[11].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	atb1[11].iString = m_btnBar.AddString(GetResString(IDS_DL_SHOWED2KLINK));
+	atb1[11].iString = m_btnBar.AddString(GetResString(IDS_DL_OPEN));
 
-	/////////////
-	atb1[12].iBitmap = -1;
-	//atb1[12].idCommand = 0;
+	atb1[12].iBitmap = 10;
+	atb1[12].idCommand = MP_OPENFOLDER;
 	atb1[12].fsState = TBSTATE_WRAP;
-	atb1[12].fsStyle = BTNS_SEP;
-	atb1[12].iString = -1;
+	atb1[12].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
+	atb1[12].iString = m_btnBar.AddString(GetResString(IDS_OPENFOLDER));
 
 	atb1[13].iBitmap = 11;
-	atb1[13].idCommand = MP_NEWCAT;
+	atb1[13].idCommand = MP_PREVIEW;
 	atb1[13].fsState = TBSTATE_WRAP;
-	atb1[13].fsStyle = BTNS_DROPDOWN | BTNS_AUTOSIZE;
-	atb1[13].iString = m_btnBar.AddString(GetResString(IDS_TOCAT));
+	atb1[13].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
+	atb1[13].iString = m_btnBar.AddString(GetResString(IDS_DL_PREVIEW));
 
 	atb1[14].iBitmap = 12;
-	atb1[14].idCommand = MP_CLEARCOMPLETED;
+	atb1[14].idCommand = MP_METINFO;
 	atb1[14].fsState = TBSTATE_WRAP;
 	atb1[14].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	atb1[14].iString = m_btnBar.AddString(GetResString(IDS_DL_CLEAR));
+	atb1[14].iString = m_btnBar.AddString(GetResString(IDS_DL_INFO));
 
 	atb1[15].iBitmap = 13;
-	atb1[15].idCommand = MP_SEARCHRELATED;
+	atb1[15].idCommand = MP_VIEWFILECOMMENTS;
 	atb1[15].fsState = TBSTATE_WRAP;
 	atb1[15].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	atb1[15].iString = m_btnBar.AddString(GetResString(IDS_SEARCHRELATED));
+	atb1[15].iString = m_btnBar.AddString(GetResString(IDS_CMT_SHOWALL));
+
+	atb1[16].iBitmap = 14;
+	atb1[16].idCommand = MP_SHOWED2KLINK;
+	atb1[16].fsState = TBSTATE_WRAP;
+	atb1[16].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
+	atb1[16].iString = m_btnBar.AddString(GetResString(IDS_DL_SHOWED2KLINK));
 
 	/////////////
-	atb1[16].iBitmap = -1;
-	//atb1[16].idCommand = 0;
-	atb1[16].fsState = TBSTATE_ENABLED | TBSTATE_WRAP;
-	atb1[16].fsStyle = BTNS_SEP;
-	atb1[16].iString = -1;
+	atb1[17].iBitmap = -1;
+	//atb1[17].idCommand = 0;
+	atb1[17].fsState = TBSTATE_WRAP;
+	atb1[17].fsStyle = BTNS_SEP;
+	atb1[17].iString = -1;
 
-	atb1[17].iBitmap = 14;
-	atb1[17].idCommand = MP_FIND;
-	atb1[17].fsState = TBSTATE_ENABLED | TBSTATE_WRAP;
-	atb1[17].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	atb1[17].iString = m_btnBar.AddString(GetResString(IDS_FIND));
+	atb1[18].iBitmap = 15;
+	atb1[18].idCommand = MP_NEWCAT;
+	atb1[18].fsState = TBSTATE_WRAP;
+	atb1[18].fsStyle = BTNS_DROPDOWN | BTNS_AUTOSIZE;
+	atb1[18].iString = m_btnBar.AddString(GetResString(IDS_TOCAT));
+
+	atb1[19].iBitmap = 16;
+	atb1[19].idCommand = MP_SEARCHRELATED;
+	atb1[19].fsState = TBSTATE_WRAP;
+	atb1[19].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
+	atb1[19].iString = m_btnBar.AddString(GetResString(IDS_SEARCHRELATED));
+
+	/////////////
+	atb1[20].iBitmap = -1;
+	//atb1[20].idCommand = 0;
+	atb1[20].fsState = TBSTATE_ENABLED | TBSTATE_WRAP;
+	atb1[20].fsStyle = BTNS_SEP;
+	atb1[20].iString = -1;
+
+	atb1[21].iBitmap = 17;
+	atb1[21].idCommand = MP_FIND;
+	atb1[21].fsState = TBSTATE_ENABLED | TBSTATE_WRAP;
+	atb1[21].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
+	atb1[21].iString = m_btnBar.AddString(GetResString(IDS_FIND));
 
 	m_btnBar.AddButtons(_countof(atb1), atb1);
 }
 
 LRESULT CToolbarWnd::OnInitDialog(WPARAM, LPARAM)
 {
-	static LPCTSTR const sIconNames[15] = {
+	static LPCTSTR const sIconNames[18] = {
 			  _T("FILEPRIORITY"), _T("PAUSE"), _T("STOP"), _T("RESUME"), _T("DELETE")
-			, _T("OPENFILE"), _T("OPENFOLDER"), _T("PREVIEW"), _T("FILEINFO"), _T("FILECOMMENTS")
-			, _T("ED2KLINK"), _T("CATEGORY"), _T("CLEARCOMPLETE"), _T("KadFileSearch"), _T("Search") };
+			, _T("RESUMEALL"), _T("PAUSEALL"), _T("STOPALL"), _T("CLEARCOMPLETE"), _T("OPENFILE")
+			, _T("OPENFOLDER"), _T("PREVIEW"), _T("FILEINFO"), _T("FILECOMMENTS"), _T("ED2KLINK")
+			, _T("CATEGORY"), _T("KadFileSearch"), _T("Search") };
 
 	Default();
 	InitWindowStyles(this);

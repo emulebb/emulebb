@@ -1737,10 +1737,13 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			int iBatchFilesToResume = 0;
 			int iBatchFilesToStop = 0;
 			CountBatchCommandsInCurCat(iBatchFilesToPause, iBatchFilesToResume, iBatchFilesToStop);
-			EnableSubMenuItem(m_FileMenu, m_BatchMenu.m_hMenu, (iBatchFilesToPause > 0 || iBatchFilesToResume > 0 || iBatchFilesToStop > 0) ? MF_ENABLED : MF_GRAYED);
+			int total;
+			const int iCompletedInCat = GetCompleteDownloads(m_curTab, total);
+			EnableSubMenuItem(m_FileMenu, m_BatchMenu.m_hMenu, (iBatchFilesToPause > 0 || iBatchFilesToResume > 0 || iBatchFilesToStop > 0 || iCompletedInCat > 0) ? MF_ENABLED : MF_GRAYED);
 			m_BatchMenu.EnableMenuItem(MP_PAUSE_CATEGORY, iBatchFilesToPause > 0 ? MF_ENABLED : MF_GRAYED);
 			m_BatchMenu.EnableMenuItem(MP_STOP_CATEGORY, iBatchFilesToStop > 0 ? MF_ENABLED : MF_GRAYED);
 			m_BatchMenu.EnableMenuItem(MP_RESUME_CATEGORY, iBatchFilesToResume > 0 ? MF_ENABLED : MF_GRAYED);
+			m_BatchMenu.EnableMenuItem(MP_CLEARCOMPLETED, iCompletedInCat > 0 ? MF_ENABLED : MF_GRAYED);
 
 			// enable commands if there is at least one item which can be used for the action
 			m_FileMenu.EnableMenuItem(MP_CANCEL, iFilesToCancel > 0 ? MF_ENABLED : MF_GRAYED);
@@ -1783,8 +1786,6 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			m_FileMenu.EnableMenuItem(MP_VIEWFILECOMMENTS, (iSelectedItems >= 1 /*&& iFilesNotDone == 1*/) ? MF_ENABLED : MF_GRAYED);
 			m_FileMenu.EnableMenuItem(MP_FOLLOWMAJORITYFILENAME, iFilesFollowMajorityApplicable > 0 ? MF_ENABLED : MF_GRAYED);
 			m_FileMenu.CheckMenuItem(MP_FOLLOWMAJORITYFILENAME, MF_BYCOMMAND | ((iFilesFollowMajorityApplicable > 0 && iFilesFollowMajority == iFilesFollowMajorityApplicable) ? MF_CHECKED : MF_UNCHECKED));
-			int total;
-			m_FileMenu.EnableMenuItem(MP_CLEARCOMPLETED, GetCompleteDownloads(m_curTab, total) > 0 ? MF_ENABLED : MF_GRAYED);
 			EnableSubMenuItem(m_FileMenu, m_SourcesMenu.m_hMenu, MF_ENABLED);
 			m_SourcesMenu.EnableMenuItem(MP_ADDSOURCE, (iSelectedItems == 1 && iFilesToStop == 1) ? MF_ENABLED : MF_GRAYED);
 			m_SourcesMenu.EnableMenuItem(MP_SETSOURCELIMIT, (iFilesNotDone == iSelectedItems) ? MF_ENABLED : MF_GRAYED);
@@ -1901,10 +1902,12 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 		int iBatchFilesToResume = 0;
 		int iBatchFilesToStop = 0;
 		CountBatchCommandsInCurCat(iBatchFilesToPause, iBatchFilesToResume, iBatchFilesToStop);
-		EnableSubMenuItem(m_FileMenu, m_BatchMenu.m_hMenu, (iBatchFilesToPause > 0 || iBatchFilesToResume > 0 || iBatchFilesToStop > 0) ? MF_ENABLED : MF_GRAYED);
+		const int iCompletedInCat = GetCompleteDownloads(m_curTab, total);
+		EnableSubMenuItem(m_FileMenu, m_BatchMenu.m_hMenu, (iBatchFilesToPause > 0 || iBatchFilesToResume > 0 || iBatchFilesToStop > 0 || iCompletedInCat > 0) ? MF_ENABLED : MF_GRAYED);
 		m_BatchMenu.EnableMenuItem(MP_PAUSE_CATEGORY, iBatchFilesToPause > 0 ? MF_ENABLED : MF_GRAYED);
 		m_BatchMenu.EnableMenuItem(MP_STOP_CATEGORY, iBatchFilesToStop > 0 ? MF_ENABLED : MF_GRAYED);
 		m_BatchMenu.EnableMenuItem(MP_RESUME_CATEGORY, iBatchFilesToResume > 0 ? MF_ENABLED : MF_GRAYED);
+		m_BatchMenu.EnableMenuItem(MP_CLEARCOMPLETED, iCompletedInCat > 0 ? MF_ENABLED : MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_CANCEL, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_PAUSE, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_STOP, MF_GRAYED);
@@ -1924,7 +1927,6 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 		m_FileMenu.EnableMenuItem(MP_VIEWFILECOMMENTS, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_FOLLOWMAJORITYFILENAME, MF_GRAYED);
 		m_FileMenu.CheckMenuItem(MP_FOLLOWMAJORITYFILENAME, MF_BYCOMMAND | MF_UNCHECKED);
-		m_FileMenu.EnableMenuItem(MP_CLEARCOMPLETED, GetCompleteDownloads(m_curTab, total) > 0 ? MF_ENABLED : MF_GRAYED);
 		m_FileMenu.EnableMenuItem(thePrefs.GetShowCopyEd2kLinkCmd() ? MP_GETED2KLINK : MP_SHOWED2KLINK, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_PASTE, theApp.IsEd2kFileLinkInClipboard() ? MF_ENABLED : MF_GRAYED);
 		m_FileMenu.SetDefaultItem(UINT_MAX);
@@ -2889,10 +2891,15 @@ void CDownloadListCtrl::CreateMenus()
 	m_FileMenu.AppendMenu(MF_STRING, MP_CANCEL, AddMenuShortcutLabel(GetResString(IDS_MAIN_BTN_CANCEL), _T("Delete")), _T("DELETE"));
 	m_BatchMenu.CreateMenu();
 	m_BatchMenu.AddMenuTitle(NULL, true);
-	m_BatchMenu.AppendMenu(MF_STRING, MP_PAUSE_CATEGORY, AddMenuShortcutLabel(GetResString(IDS_DL_PAUSE_CATEGORY), _T("Ctrl+Shift+P")));
-	m_BatchMenu.AppendMenu(MF_STRING, MP_STOP_CATEGORY, AddMenuShortcutLabel(GetResString(IDS_DL_STOP_CATEGORY), _T("Ctrl+Shift+T")));
-	m_BatchMenu.AppendMenu(MF_STRING, MP_RESUME_CATEGORY, AddMenuShortcutLabel(GetResString(IDS_DL_RESUME_CATEGORY), _T("Ctrl+Shift+S")));
-	m_FileMenu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)m_BatchMenu.m_hMenu, GetResString(IDS_DL_BATCH));
+	m_BatchMenu.AppendMenu(MF_STRING, MP_RESUME_CATEGORY, AddMenuShortcutLabel(GetResString(IDS_DL_RESUME_CATEGORY), _T("Ctrl+Shift+S")), _T("RESUMEALL"));
+	m_BatchMenu.AppendMenu(MF_STRING, MP_PAUSE_CATEGORY, AddMenuShortcutLabel(GetResString(IDS_DL_PAUSE_CATEGORY), _T("Ctrl+Shift+P")), _T("PAUSEALL"));
+	m_BatchMenu.AppendMenu(MF_STRING, MP_STOP_CATEGORY, AddMenuShortcutLabel(GetResString(IDS_DL_STOP_CATEGORY), _T("Ctrl+Shift+T")), _T("STOPALL"));
+	m_BatchMenu.AppendMenu(MF_SEPARATOR);
+	m_BatchMenu.AppendMenu(MF_STRING, MP_CLEARCOMPLETED, GetResString(IDS_DL_CLEAR), _T("CLEARCOMPLETE"));
+	CString sCategoryActions(GetResString(IDS_CAT));
+	sCategoryActions += _T(" ");
+	sCategoryActions += GetResString(IDS_WEB_ACTIONS);
+	m_FileMenu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)m_BatchMenu.m_hMenu, sCategoryActions, _T("CATEGORY"));
 	m_FileMenu.AppendMenu(MF_SEPARATOR);
 
 	m_FileMenu.AppendMenu(MF_STRING, MP_OPEN, AddMenuShortcutLabel(GetResString(IDS_DL_OPEN), _T("Ctrl+O")), _T("OPENFILE"));
@@ -2910,8 +2917,6 @@ void CDownloadListCtrl::CreateMenus()
 	m_FileMenu.AppendMenu(MF_STRING, MP_VIEWFILECOMMENTS, GetResString(IDS_CMT_SHOWALL), _T("FILECOMMENTS"));
 	m_FileMenu.AppendMenu(MF_STRING, MP_FOLLOWMAJORITYFILENAME, GetResString(IDS_FOLLOW_MAJORITY_FILENAME), _T("FILERENAME"));
 	m_FileMenu.AppendMenu(MF_SEPARATOR);
-
-	m_FileMenu.AppendMenu(MF_STRING, MP_CLEARCOMPLETED, GetResString(IDS_DL_CLEAR), _T("CLEARCOMPLETE"));
 
 	// Add (extended user mode) 'Source Handling' sub menu
 	//
@@ -2984,23 +2989,30 @@ int CDownloadListCtrl::GetFilesCountInCurCat()
 	return iCount;
 }
 
-void CDownloadListCtrl::CountBatchCommandsInCurCat(int &riFilesToPause, int &riFilesToResume, int &riFilesToStop) const
+void CDownloadListCtrl::CountTransferCommandsInCategory(int iCategory, int &riFilesToPause, int &riFilesToResume, int &riFilesToStop) const
 {
 	riFilesToPause = 0;
 	riFilesToResume = 0;
 	riFilesToStop = 0;
+	if (iCategory == -2)
+		iCategory = m_curTab;
 
 	for (ListItems::const_iterator it = m_ListItems.begin(); it != m_ListItems.end(); ++it) {
 		const CtrlItem_Struct *cur_item = it->second;
 		if (IsLiveFileItem(cur_item)) {
 			CPartFile *file = static_cast<CPartFile*>(cur_item->value);
-			if (file->CheckShowItemInGivenCat(m_curTab)) {
+			if (iCategory == -1 || file->CheckShowItemInGivenCat(iCategory)) {
 				riFilesToPause += static_cast<int>(file->CanPauseFile());
 				riFilesToResume += static_cast<int>(file->CanResumeFile());
 				riFilesToStop += static_cast<int>(file->CanStopFile());
 			}
 		}
 	}
+}
+
+void CDownloadListCtrl::CountBatchCommandsInCurCat(int &riFilesToPause, int &riFilesToResume, int &riFilesToStop) const
+{
+	CountTransferCommandsInCategory(-2, riFilesToPause, riFilesToResume, riFilesToStop);
 }
 
 CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, int iSubItem)
