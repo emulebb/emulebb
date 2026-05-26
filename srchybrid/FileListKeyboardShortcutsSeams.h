@@ -38,7 +38,13 @@ namespace FileListKeyboardShortcutsSeams
 		Name,
 		Type,
 		Date,
-		Size
+		Size,
+		Status,
+		Progress,
+		Sources,
+		Speed,
+		Priority,
+		Category
 	};
 
 	inline ESortRole ClassifySortKeyMessage(UINT uMessage, WPARAM wParam, bool bCtrlDown, bool bAltDown, bool bShiftDown)
@@ -55,6 +61,18 @@ namespace FileListKeyboardShortcutsSeams
 			return ESortRole::Date;
 		case VK_F6:
 			return ESortRole::Size;
+		case VK_F7:
+			return ESortRole::Status;
+		case VK_F8:
+			return ESortRole::Progress;
+		case VK_F9:
+			return ESortRole::Sources;
+		case VK_F10:
+			return ESortRole::Speed;
+		case VK_F11:
+			return ESortRole::Priority;
+		case VK_F12:
+			return ESortRole::Category;
 		default:
 			return ESortRole::None;
 		}
@@ -71,6 +89,18 @@ namespace FileListKeyboardShortcutsSeams
 				return 14; // Added On
 			case ESortRole::Size:
 				return 1;
+			case ESortRole::Status:
+				return 8;
+			case ESortRole::Progress:
+				return 5;
+			case ESortRole::Sources:
+				return 6;
+			case ESortRole::Speed:
+				return 4;
+			case ESortRole::Priority:
+				return 7;
+			case ESortRole::Category:
+				return 13;
 			default:
 				return -1;
 			}
@@ -82,6 +112,12 @@ namespace FileListKeyboardShortcutsSeams
 				return 4;
 			case ESortRole::Size:
 				return 1;
+			case ESortRole::Status:
+				return 2; // Availability
+			case ESortRole::Progress:
+				return 3; // Complete sources
+			case ESortRole::Sources:
+				return 1; // Size
 			default:
 				return -1;
 			}
@@ -95,6 +131,8 @@ namespace FileListKeyboardShortcutsSeams
 				return 6; // Last Request
 			case ESortRole::Size:
 				return 1;
+			case ESortRole::Priority:
+				return 3;
 			default:
 				return -1;
 			}

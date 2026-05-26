@@ -3139,12 +3139,25 @@ void CDownloadListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	if (HandleSortShortcut(nChar))
 		return;
 
+	const bool bCtrlDown = GetKeyState(VK_CONTROL) < 0;
+	const bool bAltDown = GetKeyState(VK_MENU) < 0;
+	const bool bShiftDown = GetKeyState(VK_SHIFT) < 0;
+	if (nChar == VK_F10 && bShiftDown && !bCtrlDown && !bAltDown) {
+		SendMessage(WM_CONTEXTMENU, (WPARAM)m_hWnd, MAKELPARAM(-1, -1));
+		return;
+	}
+	if (DownloadListKeyboardShortcutsSeams::IsCategoryMenuShortcut(WM_KEYDOWN, nChar, bCtrlDown, bAltDown, bShiftDown)) {
+		if (!ShowCategoryShortcutMenu())
+			MessageBeep(MB_OK);
+		return;
+	}
+
 	const UINT uCommand = DownloadListKeyboardShortcutsSeams::ClassifyKeyMessage(
 		WM_KEYDOWN,
 		nChar,
-		GetKeyState(VK_CONTROL) < 0,
-		GetKeyState(VK_MENU) < 0,
-		GetKeyState(VK_SHIFT) < 0);
+		bCtrlDown,
+		bAltDown,
+		bShiftDown);
 	if (uCommand != 0) {
 		SendMessage(WM_COMMAND, uCommand);
 		return;
@@ -3170,6 +3183,33 @@ bool CDownloadListCtrl::HandleSortShortcut(UINT nChar)
 		return true;
 	}
 	SortByColumn(iColumn);
+	return true;
+}
+
+bool CDownloadListCtrl::ShowCategoryShortcutMenu()
+{
+	int iFilesInCats = 0;
+	bool bHasSelectedFile = false;
+	for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;) {
+		const CtrlItem_Struct *content = reinterpret_cast<CtrlItem_Struct*>(GetItemData(GetNextSelectedItem(pos)));
+		if (!IsLiveFileItem(content))
+			continue;
+		const CPartFile *pFile = static_cast<CPartFile*>(content->value);
+		bHasSelectedFile = true;
+		iFilesInCats += static_cast<int>(!pFile->HasDefaultCategory());
+	}
+	if (!bHasSelectedFile) {
+		PruneStaleFileItems();
+		return false;
+	}
+
+	CMenu CatsMenu;
+	CatsMenu.CreateMenu();
+	FillCatsMenu(CatsMenu, iFilesInCats);
+	CPoint point(-1, -1);
+	GetPopupMenuPos(*this, point);
+	CatsMenu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+	VERIFY(CatsMenu.DestroyMenu());
 	return true;
 }
 

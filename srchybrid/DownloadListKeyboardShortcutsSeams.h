@@ -37,6 +37,11 @@ namespace DownloadListKeyboardShortcutsSeams
 		return wParam == VK_OEM_MINUS || wParam == VK_SUBTRACT;
 	}
 
+	inline bool IsCategoryMenuShortcut(UINT uMessage, WPARAM wParam, bool bCtrlDown, bool bAltDown, bool bShiftDown)
+	{
+		return uMessage == WM_KEYDOWN && wParam == _T('M') && bCtrlDown && !bAltDown && !bShiftDown;
+	}
+
 	/**
 	 * Classifies local Downloads list key messages into existing file commands.
 	 *

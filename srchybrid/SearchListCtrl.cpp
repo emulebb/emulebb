@@ -1780,19 +1780,34 @@ void CSearchListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	if (HandleSortShortcut(nChar))
 		return;
 
+	const bool bCtrlDown = GetKeyState(VK_CONTROL) < 0;
+	const bool bAltDown = GetKeyState(VK_MENU) < 0;
+	const bool bShiftDown = GetKeyState(VK_SHIFT) < 0;
+	if (nChar == VK_RETURN && !bAltDown) {
+		if (bCtrlDown && !bShiftDown)
+			SendMessage(WM_COMMAND, MP_DETAIL);
+		else if (!bCtrlDown && bShiftDown)
+			SendMessage(WM_COMMAND, MP_RESUMEPAUSED);
+		else if (!bCtrlDown)
+			SendMessage(WM_COMMAND, MP_RESUME);
+		else
+			MessageBeep(MB_OK);
+		return;
+	}
+
 	const UINT uCommand = FileListKeyboardShortcutsSeams::ClassifyKeyMessage(
 		FileListKeyboardShortcutsSeams::EContext::SearchResults,
 		WM_KEYDOWN,
 		nChar,
-		GetKeyState(VK_CONTROL) < 0,
-		GetKeyState(VK_MENU) < 0,
-		GetKeyState(VK_SHIFT) < 0);
+		bCtrlDown,
+		bAltDown,
+		bShiftDown);
 	if (uCommand != 0) {
 		SendMessage(WM_COMMAND, uCommand);
 		return;
 	}
 
-	if (nChar == 'C' && GetKeyState(VK_CONTROL) < 0) {
+	if (nChar == 'C' && bCtrlDown) {
 		// Ctrl+C: Copy listview items to clipboard
 		SendMessage(WM_COMMAND, MP_GETED2KLINK);
 		return;

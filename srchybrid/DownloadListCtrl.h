@@ -201,6 +201,7 @@ protected:
 	CString GetFileItemDisplayText(const CPartFile *lpPartFile, int iSubItem);
 	CString GetSourceItemDisplayText(const CtrlItem_Struct *pCtrlItem, int iSubItem);
 	bool HandleSortShortcut(UINT nChar);
+	bool ShowCategoryShortcutMenu();
 	void SortByColumn(int iSubItem);
 	void InitializeVideoThumbnailCache();
 	void ClearVideoThumbnailCache();
