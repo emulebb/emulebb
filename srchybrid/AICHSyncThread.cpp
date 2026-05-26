@@ -32,6 +32,9 @@
 #include "UserMsgs.h"
 #include "WorkerUiMessageSeams.h"
 
+#include <limits>
+#include <vector>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -79,6 +82,24 @@ namespace
 
 		rpResolvedFile = pSharedFiles->GetFileByID(pFileHash);
 		return rpResolvedFile != NULL && !rpResolvedFile->IsPartFile();
+	}
+
+	UINT GetAICHHashsetPayloadByteCount(CFile &file, const uint32 nHashCount)
+	{
+		const ULONGLONG ullHashsetBytes = static_cast<ULONGLONG>(nHashCount) * CAICHHash::GetHashSize();
+		if (ullHashsetBytes > static_cast<ULONGLONG>((std::numeric_limits<UINT>::max)()))
+			AfxThrowFileException(CFileException::genericException, 0, file.GetFilePath());
+		return static_cast<UINT>(ullHashsetBytes);
+	}
+
+	void ReadAICHHashsetPayloadExact(CFile &file, std::vector<BYTE> &rBuffer, const UINT uBytes)
+	{
+		rBuffer.resize(uBytes);
+		if (uBytes == 0)
+			return;
+		const UINT uActualRead = file.Read(rBuffer.data(), uBytes);
+		if (uActualRead != uBytes)
+			AfxThrowFileException(CFileException::endOfFile, 0, file.GetFilePath());
 	}
 
 	HWND GetAICHSyncProgressWindow()
@@ -297,14 +318,15 @@ int CAICHSyncThread::Run()
 					posTmp = CAICHRecoveryHashSet::AddStoredAICHHash(aichHash, nCurrentHashsetPos);
 				} else {
 					// used Hashset, move position in file
-					BYTE *buffer = new BYTE[nHashCount * (size_t)CAICHHash::GetHashSize()];
-					file.Read(buffer, nHashCount * CAICHHash::GetHashSize());
+					const UINT uHashsetBytes = GetAICHHashsetPayloadByteCount(file, nHashCount);
+					std::vector<BYTE> buffer;
+					ReadAICHHashsetPayloadExact(file, buffer, uHashsetBytes);
 					posReadPos = file.GetPosition();
 					file.Seek(posWritePos, CFile::begin);
 					file.Write(aichHash.GetRawHashC(), CAICHHash::GetHashSize());
 					file.WriteUInt32(nHashCount);
-					file.Write(buffer, nHashCount * CAICHHash::GetHashSize());
-					delete[] buffer;
+					if (!buffer.empty())
+						file.Write(buffer.data(), uHashsetBytes);
 					posTmp = CAICHRecoveryHashSet::AddStoredAICHHash(aichHash, posWritePos);
 
 					posWritePos = file.GetPosition();
@@ -457,12 +479,13 @@ bool CAICHSyncThread::ConvertKnown2ToKnown264(CSafeFile &TargetFile)
 			if (oldfile.GetPosition() + nHashCount * (ULONGLONG)CAICHHash::GetHashSize() > oldfile.GetLength())
 				AfxThrowFileException(CFileException::endOfFile, 0, oldfile.GetFileName());
 
-			BYTE *buffer = new BYTE[nHashCount * (size_t)CAICHHash::GetHashSize()];
-			oldfile.Read(buffer, nHashCount * CAICHHash::GetHashSize());
+			const UINT uHashsetBytes = GetAICHHashsetPayloadByteCount(oldfile, nHashCount);
+			std::vector<BYTE> buffer;
+			ReadAICHHashsetPayloadExact(oldfile, buffer, uHashsetBytes);
 			TargetFile.Write(aichHash.GetRawHash(), CAICHHash::GetHashSize());
 			TargetFile.WriteUInt32(nHashCount);
-			TargetFile.Write(buffer, nHashCount * CAICHHash::GetHashSize());
-			delete[] buffer;
+			if (!buffer.empty())
+				TargetFile.Write(buffer.data(), uHashsetBytes);
 		}
 		TargetFile.Flush();
 		oldfile.Close();
