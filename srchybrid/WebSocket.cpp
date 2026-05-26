@@ -168,8 +168,10 @@ namespace
 		for (std::vector<AcceptedThreadState>::iterator it = s_acceptedThreads.begin(); it != s_acceptedThreads.end();) {
 			const DWORD dwWaitResult = ::WaitForSingleObject(it->pThread->m_hThread, 0);
 			if (dwWaitResult == WAIT_OBJECT_0 || dwWaitResult == WAIT_FAILED) {
-				if (dwWaitResult == WAIT_FAILED)
-					DebugLogWarning(_T("Web Interface accepted-client thread wait failed while reaping finished threads: %lu"), ::GetLastError());
+				if (dwWaitResult == WAIT_FAILED) {
+					const DWORD dwWaitError = ::GetLastError();
+					DebugLogWarning(_T("Web Interface accepted-client thread wait failed while reaping finished threads: %s"), (LPCTSTR)GetErrorMessage(dwWaitError, 1));
+				}
 				CloseTrackedThread(it);
 			} else
 				++it;
@@ -233,8 +235,10 @@ namespace
 				DebugLogError(_T("Web Interface shutdown timed out with %u accepted-client thread(s) still running"), static_cast<unsigned int>(s_acceptedThreads.size()));
 				return false;
 			}
-			if (dwWaitResult == WAIT_FAILED)
-				DebugLogWarning(_T("Web Interface accepted-client thread wait failed during shutdown: %lu"), ::GetLastError());
+			if (dwWaitResult == WAIT_FAILED) {
+				const DWORD dwWaitError = ::GetLastError();
+				DebugLogWarning(_T("Web Interface accepted-client thread wait failed during shutdown: %s"), (LPCTSTR)GetErrorMessage(dwWaitError, 1));
+			}
 
 			CSingleLock lock(&s_acceptedThreadLock, TRUE);
 			for (std::vector<AcceptedThreadState>::iterator it = s_acceptedThreads.begin(); it != s_acceptedThreads.end(); ++it) {
@@ -256,8 +260,10 @@ namespace
 					delete s_pSocketThread;
 					s_pSocketThread = NULL;
 				} else {
-					if (dwWaitRes == WAIT_FAILED)
-						DebugLogWarning(_T("Web Interface listener thread wait failed while completing deferred shutdown: %lu"), ::GetLastError());
+					if (dwWaitRes == WAIT_FAILED) {
+						const DWORD dwWaitError = ::GetLastError();
+						DebugLogWarning(_T("Web Interface listener thread wait failed while completing deferred shutdown: %s"), (LPCTSTR)GetErrorMessage(dwWaitError, 1));
+					}
 					bCanCloseTerminate = false;
 				}
 			} else {
@@ -945,8 +951,9 @@ void StopSockets()
 				DebugLogError(_T("Web Interface listener thread did not exit within %lu ms"), kWebSocketThreadShutdownTimeoutMs);
 				bListenerWaitSucceeded = false;
 			} else if (dwWaitRes == WAIT_FAILED) {
-				TRACE("*** Failed to wait for websocket thread termination - Error %d\n", CAsyncSocket::GetLastError());
-				DebugLogError(_T("Web Interface listener thread wait failed: %lu"), ::GetLastError());
+				const DWORD dwWaitError = ::GetLastError();
+				TRACE("*** Failed to wait for websocket thread termination - Error %lu\n", dwWaitError);
+				DebugLogError(_T("Web Interface listener thread wait failed: %s"), (LPCTSTR)GetErrorMessage(dwWaitError, 1));
 				bListenerWaitSucceeded = false;
 			}
 		}

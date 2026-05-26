@@ -5524,8 +5524,17 @@ bool CPartFile::CopyPartFile(CArray<Gap_Struct> &raFilled, const CString &tempFi
 		m_bPreviewing = false;
 		return true;
 	} catch (CFileException *ex) {
+		m_bPreviewing = false;
+		DebugLogError(_T("Failed to copy part-file data from \"%s\" to \"%s\"%s"),
+			(LPCTSTR)GetFileName(),
+			(LPCTSTR)tempFileName,
+			(LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
 	} catch (...) {
+		m_bPreviewing = false;
+		DebugLogError(_T("Failed to copy part-file data from \"%s\" to \"%s\" - unexpected exception"),
+			(LPCTSTR)GetFileName(),
+			(LPCTSTR)tempFileName);
 		ASSERT(0);
 	}
 	m_bPreviewing = false;

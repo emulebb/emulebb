@@ -4074,7 +4074,8 @@ json ExecuteUiThreadCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 	rError.strCode = "EMULE_UNAVAILABLE";
-	rError.strMessage.Format(_T("failed to wait for REST UI dispatch completion - Error %lu"), ::GetLastError());
+	const DWORD dwWaitError = ::GetLastError();
+	rError.strMessage.Format(_T("failed to wait for REST UI dispatch completion - %s"), (LPCTSTR)GetErrorMessage(dwWaitError, 1));
 	return json();
 }
 }
