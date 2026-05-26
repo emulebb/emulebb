@@ -118,12 +118,12 @@ Version history
 #include "AsyncSocketExLayer.h"
 
 /**
- * @brief Legacy proxy transport layer retained for compatibility with existing settings.
+ * @brief Deprecated frozen proxy transport layer retained only until removal.
  *
- * New privacy-sensitive features must not depend on proxy support here. For new
- * direct-update features such as geolocation database refresh, proxy-backed
- * transport is considered deprecated and a VPN is the preferred modern privacy
- * path.
+ * Proxy support receives no support, no new tests, and no hardening/refactor
+ * investment. It is targeted for removal in the next release. New
+ * privacy-sensitive features must not depend on proxy support here; a VPN is
+ * the preferred modern privacy path.
  */
 class CAsyncProxySocketLayer : public CAsyncSocketExLayer
 {
