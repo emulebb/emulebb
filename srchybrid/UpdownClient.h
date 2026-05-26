@@ -654,6 +654,7 @@ protected:
 	std::atomic<LONG> m_nPendingDisplayUpdateMask;
 	UINT		m_uOutOfPartReqsShortWindowCount;
 	UINT		m_uOutOfPartReqsLongWindowCount;
+	UINT		m_uOutOfPartReqsCooldownBurstCount;
 	bool		m_bOutOfPartReqsQuarantined;
 
 	// using bit fields for less important flags, to save some bytes

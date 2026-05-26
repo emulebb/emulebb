@@ -52,6 +52,7 @@ namespace
 constexpr UINT kOutOfPartReqsCooldownThreshold = 3;
 constexpr ULONGLONG kOutOfPartReqsShortWindowMs = SEC2MS(30);
 constexpr ULONGLONG kOutOfPartReqsCooldownMs = MIN2MS(2);
+constexpr UINT kOutOfPartReqsCooldownBurstQuarantineThreshold = 2;
 constexpr UINT kOutOfPartReqsQuarantineThreshold = 10;
 constexpr ULONGLONG kOutOfPartReqsLongWindowMs = MIN2MS(5);
 constexpr ULONGLONG kOutOfPartReqsSuppressionLogMs = SEC2MS(30);
@@ -2075,6 +2076,7 @@ void CUpDownClient::ResetOutOfPartReqsLoopGuard()
 	m_ullOutOfPartReqsLastSuppressionLog = 0;
 	m_uOutOfPartReqsShortWindowCount = 0;
 	m_uOutOfPartReqsLongWindowCount = 0;
+	m_uOutOfPartReqsCooldownBurstCount = 0;
 	m_bOutOfPartReqsQuarantined = false;
 }
 
@@ -2103,6 +2105,14 @@ void CUpDownClient::NoteInboundOutOfPartReqs()
 
 	const bool bCooldownActive = m_ullOutOfPartReqsCooldownUntil != 0 && ullNow < m_ullOutOfPartReqsCooldownUntil;
 	if (!m_bOutOfPartReqsQuarantined && !bCooldownActive && m_uOutOfPartReqsShortWindowCount >= kOutOfPartReqsCooldownThreshold) {
+		++m_uOutOfPartReqsCooldownBurstCount;
+		if (m_uOutOfPartReqsCooldownBurstCount >= kOutOfPartReqsCooldownBurstQuarantineThreshold) {
+			m_bOutOfPartReqsQuarantined = true;
+			m_ullOutOfPartReqsCooldownUntil = 0;
+			DebugLogWarning(_T("Quarantined download source after repeated OP_OutOfPartReqs cooldown bursts. User: %s, Bursts: %u in app session."),
+				(LPCTSTR)DbgGetClientInfo(), m_uOutOfPartReqsCooldownBurstCount);
+			return;
+		}
 		m_ullOutOfPartReqsCooldownUntil = ullNow + kOutOfPartReqsCooldownMs;
 		DebugLogWarning(_T("Cooling down download source after repeated OP_OutOfPartReqs loops. User: %s, Count: %u in %I64u ms, CooldownUntilTick: %I64u."),
 			(LPCTSTR)DbgGetClientInfo(), m_uOutOfPartReqsShortWindowCount, kOutOfPartReqsShortWindowMs, m_ullOutOfPartReqsCooldownUntil);
