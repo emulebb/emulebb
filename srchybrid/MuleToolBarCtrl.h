@@ -40,6 +40,10 @@ public:
 	void UpdateBackground();
 	void PressMuleButton(int nID);
 	BOOL GetMaxSize(LPSIZE pSize) const;
+	void AppendToolbarBitmapMenu(CMenu &menuBitmaps);
+	void AppendSkinProfileMenu(CMenu &menuSkins);
+	void AppendTextLabelMenu(CMenu &menuTextLabels);
+	BOOL ExecuteCommand(WPARAM wParam);
 
 	static int GetDefaultLabelType()		{ return (int)LabelsBelow; }
 

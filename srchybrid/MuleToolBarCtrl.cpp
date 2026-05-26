@@ -317,6 +317,43 @@ void CMuleToolbarCtrl::OnNmRClick(LPNMHDR, LRESULT *pResult)
 	//
 	CMenu menuBitmaps;
 	menuBitmaps.CreateMenu();
+	AppendToolbarBitmapMenu(menuBitmaps);
+
+
+	///////////////////////////////////////////////////////////////////////////
+	// "Skin Profile" sub menu
+	//
+	CMenu menuSkins;
+	menuSkins.CreateMenu();
+	AppendSkinProfileMenu(menuSkins);
+
+
+	///////////////////////////////////////////////////////////////////////////
+	// "Text Label" sub menu
+	//
+	CMenu menuTextLabels;
+	menuTextLabels.CreateMenu();
+	AppendTextLabelMenu(menuTextLabels);
+
+
+	///////////////////////////////////////////////////////////////////////////
+	// Toolbar context menu
+	//
+	CMenu menuToolbar;
+	menuToolbar.CreatePopupMenu();
+	menuToolbar.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)menuBitmaps.m_hMenu, GetResString(IDS_TOOLBARSKINS));
+	menuToolbar.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)menuSkins.m_hMenu, GetResString(IDS_SKIN_PROF));
+	menuToolbar.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)menuTextLabels.m_hMenu, GetResString(IDS_TEXTLABELS));
+	menuToolbar.AppendMenu(MF_STRING, MP_CUSTOMIZETOOLBAR, GetResString(IDS_CUSTOMIZETOOLBAR));
+	CPoint point;
+	::GetCursorPos(&point);
+	menuToolbar.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+
+	*pResult = 1;
+}
+
+void CMuleToolbarCtrl::AppendToolbarBitmapMenu(CMenu &menuBitmaps)
+{
 	menuBitmaps.AppendMenu(MF_STRING, MP_SELECTTOOLBARBITMAP, GetResString(IDS_SELECTTOOLBARBITMAP));
 	menuBitmaps.AppendMenu(MF_STRING, MP_SELECTTOOLBARBITMAPDIR, GetResString(IDS_SELECTTOOLBARBITMAPDIR));
 	menuBitmaps.AppendMenu(MF_SEPARATOR);
@@ -359,19 +396,16 @@ void CMuleToolbarCtrl::OnNmRClick(LPNMHDR, LRESULT *pResult)
 		}
 		ASSERT(i - 1 == astrToolbarFiles.GetCount());
 	}
-	if (!checked) {
+	if (!checked && !currentBitmapSettings.IsEmpty()) {
 		menuBitmaps.AppendMenu(MF_STRING, MP_TOOLBARBITMAP + i, currentBitmapSettings);
 		menuBitmaps.CheckMenuItem(MP_TOOLBARBITMAP + i, MF_CHECKED);
 		menuBitmaps.EnableMenuItem(MP_TOOLBARBITMAP + i, MF_DISABLED);
 		m_astrToolbarPaths.Add(currentBitmapSettings);
 	}
+}
 
-
-	///////////////////////////////////////////////////////////////////////////
-	// "Skin Profile" sub menu
-	//
-	CMenu menuSkins;
-	menuSkins.CreateMenu();
+void CMuleToolbarCtrl::AppendSkinProfileMenu(CMenu &menuSkins)
+{
 	menuSkins.AppendMenu(MF_STRING, MP_SELECT_SKIN_FILE, GetResString(IDS_SEL_SKIN));
 	menuSkins.AppendMenu(MF_STRING, MP_SELECT_SKIN_DIR, GetResString(IDS_SEL_SKINDIR));
 	menuSkins.AppendMenu(MF_SEPARATOR);
@@ -379,13 +413,13 @@ void CMuleToolbarCtrl::OnNmRClick(LPNMHDR, LRESULT *pResult)
 
 	m_astrSkinPaths.RemoveAll();
 	const CString &currentSkin(thePrefs.GetSkinProfile());
-	checked = currentSkin.IsEmpty();
+	bool checked = currentSkin.IsEmpty();
 	if (checked) {
 		menuSkins.CheckMenuItem(MP_SKIN_PROFILE, MF_CHECKED);
 		menuSkins.EnableMenuItem(MP_SKIN_PROFILE, MF_DISABLED);
 	}
 	m_astrSkinPaths.Add(_T("")); // dummy entry for 'Default' menu item
-	i = 1;
+	int i = 1;
 	if (!thePrefs.GetMuleDirectory(EMULE_SKINDIR, false).IsEmpty()) {
 		CStringArray astrSkinFiles;
 		for (unsigned f = 0; f < _countof(s_apszSkinFiles); ++f) {
@@ -414,51 +448,12 @@ void CMuleToolbarCtrl::OnNmRClick(LPNMHDR, LRESULT *pResult)
 		}
 		ASSERT(i - 1 == astrSkinFiles.GetCount());
 	}
-	if (!checked) {
+	if (!checked && !currentSkin.IsEmpty()) {
 		menuSkins.AppendMenu(MF_STRING, MP_SKIN_PROFILE + i, currentSkin);
 		menuSkins.CheckMenuItem(MP_SKIN_PROFILE + i, MF_CHECKED);
 		menuSkins.EnableMenuItem(MP_SKIN_PROFILE + i, MF_DISABLED);
 		m_astrSkinPaths.Add(currentSkin);
 	}
-
-
-	///////////////////////////////////////////////////////////////////////////
-	// "Text Label" sub menu
-	//
-	CMenu menuTextLabels;
-	menuTextLabels.CreateMenu();
-	ASSERT(MP_NOTEXTLABELS == MP_TEXTLABELS - 1 && MP_NOTEXTLABELS == MP_TEXTLABELSONRIGHT - 2);
-	ASSERT(MP_NOTEXTLABELS + (int)NoLabels == MP_NOTEXTLABELS);
-	ASSERT(MP_NOTEXTLABELS + (int)LabelsBelow == MP_TEXTLABELS);
-	ASSERT(MP_NOTEXTLABELS + (int)LabelsRight == MP_TEXTLABELSONRIGHT);
-	menuTextLabels.AppendMenu(MF_STRING | MF_ENABLED, MP_NOTEXTLABELS, GetResString(IDS_NOTEXTLABELS));
-	menuTextLabels.AppendMenu(MF_STRING | MF_ENABLED, MP_TEXTLABELS, GetResString(IDS_ENABLETEXTLABELS));
-	menuTextLabels.AppendMenu(MF_STRING | MF_ENABLED, MP_TEXTLABELSONRIGHT, GetResString(IDS_TEXTLABELSONRIGHT));
-	menuTextLabels.CheckMenuRadioItem(MP_NOTEXTLABELS, MP_TEXTLABELSONRIGHT, MP_NOTEXTLABELS + (int)thePrefs.GetToolbarLabelSettings(), MF_BYCOMMAND);
-	menuTextLabels.EnableMenuItem(MP_NOTEXTLABELS + (int)thePrefs.GetToolbarLabelSettings(), MF_BYCOMMAND | MF_DISABLED);
-
-	menuTextLabels.AppendMenu(MF_SEPARATOR);
-	menuTextLabels.AppendMenu(MF_STRING, MP_LARGEICONS, GetResString(IDS_LARGEICONS));
-	menuTextLabels.AppendMenu(MF_STRING, MP_SMALLICONS, GetResString(IDS_SMALLICONS));
-	ASSERT(MP_LARGEICONS == MP_SMALLICONS - 1);
-	menuTextLabels.CheckMenuRadioItem(MP_LARGEICONS, MP_SMALLICONS, m_sizBtnBmp.cx == 16 ? MP_SMALLICONS : MP_LARGEICONS, MF_BYCOMMAND);
-	menuTextLabels.EnableMenuItem(m_sizBtnBmp.cx == 16 ? MP_SMALLICONS : MP_LARGEICONS, MF_BYCOMMAND | MF_DISABLED);
-
-
-	///////////////////////////////////////////////////////////////////////////
-	// Toolbar context menu
-	//
-	CMenu menuToolbar;
-	menuToolbar.CreatePopupMenu();
-	menuToolbar.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)menuBitmaps.m_hMenu, GetResString(IDS_TOOLBARSKINS));
-	menuToolbar.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)menuSkins.m_hMenu, GetResString(IDS_SKIN_PROF));
-	menuToolbar.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)menuTextLabels.m_hMenu, GetResString(IDS_TEXTLABELS));
-	menuToolbar.AppendMenu(MF_STRING, MP_CUSTOMIZETOOLBAR, GetResString(IDS_CUSTOMIZETOOLBAR));
-	CPoint point;
-	::GetCursorPos(&point);
-	menuToolbar.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
-
-	*pResult = 1;
 }
 
 void CMuleToolbarCtrl::OnTbnQueryDelete(LPNMHDR, LRESULT *pResult)
@@ -561,7 +556,34 @@ void CMuleToolbarCtrl::ChangeToolbarBitmap(const CString &path, bool bRefresh)
 	}
 }
 
-BOOL CMuleToolbarCtrl::OnCommand(WPARAM wParam, LPARAM)
+void CMuleToolbarCtrl::AppendTextLabelMenu(CMenu &menuTextLabels)
+{
+	ASSERT(MP_NOTEXTLABELS == MP_TEXTLABELS - 1 && MP_NOTEXTLABELS == MP_TEXTLABELSONRIGHT - 2);
+	ASSERT(MP_NOTEXTLABELS + (int)NoLabels == MP_NOTEXTLABELS);
+	ASSERT(MP_NOTEXTLABELS + (int)LabelsBelow == MP_TEXTLABELS);
+	ASSERT(MP_NOTEXTLABELS + (int)LabelsRight == MP_TEXTLABELSONRIGHT);
+	menuTextLabels.AppendMenu(MF_STRING | MF_ENABLED, MP_NOTEXTLABELS, GetResString(IDS_NOTEXTLABELS));
+	menuTextLabels.AppendMenu(MF_STRING | MF_ENABLED, MP_TEXTLABELS, GetResString(IDS_ENABLETEXTLABELS));
+	menuTextLabels.AppendMenu(MF_STRING | MF_ENABLED, MP_TEXTLABELSONRIGHT, GetResString(IDS_TEXTLABELSONRIGHT));
+	menuTextLabels.CheckMenuRadioItem(MP_NOTEXTLABELS, MP_TEXTLABELSONRIGHT, MP_NOTEXTLABELS + (int)thePrefs.GetToolbarLabelSettings(), MF_BYCOMMAND);
+	menuTextLabels.EnableMenuItem(MP_NOTEXTLABELS + (int)thePrefs.GetToolbarLabelSettings(), MF_BYCOMMAND | MF_DISABLED);
+
+	menuTextLabels.AppendMenu(MF_SEPARATOR);
+	menuTextLabels.AppendMenu(MF_STRING, MP_LARGEICONS, GetResString(IDS_LARGEICONS));
+	menuTextLabels.AppendMenu(MF_STRING, MP_SMALLICONS, GetResString(IDS_SMALLICONS));
+	ASSERT(MP_LARGEICONS == MP_SMALLICONS - 1);
+	menuTextLabels.CheckMenuRadioItem(MP_LARGEICONS, MP_SMALLICONS, m_sizBtnBmp.cx == 16 ? MP_SMALLICONS : MP_LARGEICONS, MF_BYCOMMAND);
+	menuTextLabels.EnableMenuItem(m_sizBtnBmp.cx == 16 ? MP_SMALLICONS : MP_LARGEICONS, MF_BYCOMMAND | MF_DISABLED);
+}
+
+BOOL CMuleToolbarCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	if (ExecuteCommand(wParam))
+		return TRUE;
+	return CToolBarCtrl::OnCommand(wParam, lParam);
+}
+
+BOOL CMuleToolbarCtrl::ExecuteCommand(WPARAM wParam)
 {
 	switch (wParam) {
 	case MP_SELECTTOOLBARBITMAPDIR:
@@ -574,7 +596,7 @@ BOOL CMuleToolbarCtrl::OnCommand(WPARAM wParam, LPARAM)
 	case MP_CUSTOMIZETOOLBAR:
 		Customize();
 		break;
-		case MP_SELECTTOOLBARBITMAP:
+	case MP_SELECTTOOLBARBITMAP:
 		{
 			// we could also load "*.jpg" here, but because of the typical non solid background of JPGs this
 			// doesn't make sense here.
@@ -652,14 +674,21 @@ BOOL CMuleToolbarCtrl::OnCommand(WPARAM wParam, LPARAM)
 		break;
 	default:
 		if (wParam >= MP_TOOLBARBITMAP && wParam < MP_TOOLBARBITMAP + MAX_TOOLBAR_FILES) {
-			if (!EqualPaths(thePrefs.GetToolbarBitmapSettings(), m_astrToolbarPaths[wParam - MP_TOOLBARBITMAP])) {
-				ChangeToolbarBitmap(m_astrToolbarPaths[wParam - MP_TOOLBARBITMAP], true);
-				thePrefs.SetToolbarBitmapSettings(m_astrToolbarPaths[wParam - MP_TOOLBARBITMAP]);
+			const INT_PTR iPath = wParam - MP_TOOLBARBITMAP;
+			if (iPath < 0 || iPath >= m_astrToolbarPaths.GetCount())
+				return FALSE;
+			if (!EqualPaths(thePrefs.GetToolbarBitmapSettings(), m_astrToolbarPaths[iPath])) {
+				ChangeToolbarBitmap(m_astrToolbarPaths[iPath], true);
+				thePrefs.SetToolbarBitmapSettings(m_astrToolbarPaths[iPath]);
 			}
 		} else if (wParam >= MP_SKIN_PROFILE && wParam < MP_SKIN_PROFILE + MAX_SKIN_FILES) {
-			if (!EqualPaths(thePrefs.GetSkinProfile(), m_astrSkinPaths[wParam - MP_SKIN_PROFILE]))
-				theApp.ApplySkin(m_astrSkinPaths[wParam - MP_SKIN_PROFILE]);
-		}
+			const INT_PTR iPath = wParam - MP_SKIN_PROFILE;
+			if (iPath < 0 || iPath >= m_astrSkinPaths.GetCount())
+				return FALSE;
+			if (!EqualPaths(thePrefs.GetSkinProfile(), m_astrSkinPaths[iPath]))
+				theApp.ApplySkin(m_astrSkinPaths[iPath]);
+		} else
+			return FALSE;
 	}
 
 	return TRUE;
