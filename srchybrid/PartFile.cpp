@@ -2569,6 +2569,9 @@ void CPartFile::AddDownloadingSource(CUpDownClient *client)
 
 bool CPartFile::DetachDownloadingSource(CUpDownClient *client)
 {
+	if (!IsDownloadingSourceListStructurallyValid())
+		RecoverDownloadingSourceList(_T("detach downloading source"));
+
 	POSITION pos = m_downloadingSourceList.Find(client); // to be sure
 	if (pos == NULL)
 		return false;
@@ -2686,6 +2689,8 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 	// calculate data rate, set limit etc.
 	if (icounter < 10) {
 		uint32 cur_datarate;
+		if (!IsDownloadingSourceListStructurallyValid())
+			RecoverDownloadingSourceList(_T("download-rate pass"));
 		for (POSITION pos = m_downloadingSourceList.GetHeadPosition(); pos != NULL;) {
 			const POSITION posCurrent = pos;
 			CUpDownClient *cur_src = m_downloadingSourceList.GetNext(pos);
@@ -5212,6 +5217,8 @@ bool CPartFile::TryStealEndgameBlockForFastPeer(CUpDownClient *pFastPeer, bool b
 	if (!bEndgame || pFastPeer == NULL || pFastPeer->GetDownloadState() != DS_DOWNLOADING)
 		return false;
 
+	if (!IsDownloadingSourceListStructurallyValid())
+		RecoverDownloadingSourceList(_T("endgame steal pass"));
 	for (POSITION pos = m_downloadingSourceList.GetHeadPosition(); pos != NULL;) {
 		const POSITION posCurrent = pos;
 		CUpDownClient *pSlowPeer = m_downloadingSourceList.GetNext(pos);
@@ -5294,6 +5301,8 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient *sender, Requested_Block_Str
 		if (!lateDownload)
 			return false;
 
+		if (!IsDownloadingSourceListStructurallyValid())
+			RecoverDownloadingSourceList(_T("faster-peer reservation pass"));
 		for (POSITION pos = m_downloadingSourceList.GetHeadPosition(); pos != NULL;) {
 			const POSITION posCurrent = pos;
 			const CUpDownClient *source = m_downloadingSourceList.GetNext(pos);
@@ -5478,6 +5487,8 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient *sender, Requested_Block_Str
 				const bool sameChunk = (cur_chunk.part == sender->m_lastPartAsked);
 
 				// Criterion 6. The more transferring clients that has this part, the better (i.e. lower).
+				if (!IsDownloadingSourceListStructurallyValid())
+					RecoverDownloadingSourceList(_T("chunk selection pass"));
 				uint16 transferringClientsScore = (uint16)m_downloadingSourceList.GetCount();
 
 				// Criterion 7. Sooner to completion (how much of a part is completed, how fast can be transferred to this part, if all currently transferring clients with this part are put on it. Lower is better.)
