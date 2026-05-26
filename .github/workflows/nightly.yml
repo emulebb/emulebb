@@ -145,6 +145,55 @@ jobs:
             --release-version $env:PACKAGE_VERSION
           Pop-Location
 
+      - name: Verify packaged display themes
+        env:
+          PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+          $releaseRoot = Join-Path $env:EMULE_WORKSPACE_ROOT "workspaces\workspace\state\release\emulebb-v$env:PACKAGE_VERSION"
+          $zipPath = Join-Path $releaseRoot "emulebb-$env:PACKAGE_VERSION-${{ matrix.asset_arch }}.zip"
+          if (-not (Test-Path -LiteralPath $zipPath)) {
+            throw "Release package not found: $zipPath"
+          }
+
+          $expectedBaseNames = @(
+            "emulebb-slate",
+            "emulebb-graphite",
+            "emulebb-midnight",
+            "emulebb-steel",
+            "emulebb-moss",
+            "emulebb-daylight-soft",
+            "emulebb-retro-teal",
+            "emulebb-phosphor-green"
+          )
+
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+          try {
+            $entries = @($archive.Entries | ForEach-Object { $_.FullName })
+            foreach ($baseName in $expectedBaseNames) {
+              foreach ($suffix in @(".eMuleSkin.ini", ".eMuleToolbar.kad02.bmp")) {
+                $entryName = "eMule/skins/$baseName$suffix"
+                if ($entries -notcontains $entryName) {
+                  throw "Missing packaged display theme asset: $entryName"
+                }
+              }
+            }
+
+            $retiredTerms = @("classic", "muted", ("bor" + "land"), ("mat" + "rix"))
+            $retiredEntries = @($entries | Where-Object {
+              $entryName = $_
+              ($entryName -like "eMule/skins/*") -and ($retiredTerms | Where-Object { $entryName -match $_ })
+            })
+            if ($retiredEntries.Count -gt 0) {
+              throw "Unexpected retired display theme assets in package: $($retiredEntries -join ', ')"
+            }
+          } finally {
+            $archive.Dispose()
+          }
+
       - name: Stage release assets
         env:
           PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
