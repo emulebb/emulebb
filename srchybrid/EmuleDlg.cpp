@@ -5980,8 +5980,11 @@ void CemuleDlg::StartUPnP(bool bReset, uint16 nForceTCPPort, uint16 nForceUDPPor
 			Log(GetResString(IDS_UPNPSETUP));
 			DebugLog(_T("NAT mapping backend mode: %s"), pszBackendMode);
 		}
+		CString strImplementationName(_T("<unknown>"));
 		try {
 			CUPnPImpl *impl = theApp.m_pUPnPFinder->GetImplementation();
+			if (impl != NULL)
+				strImplementationName = impl->GetImplementationName();
 			if (impl->IsReady()) {
 				DebugLog(_T("Attempting NAT mapping backend '%s'"), impl->GetImplementationName());
 				impl->SetMessageOnResult(this, UM_UPNP_RESULT);
@@ -5993,8 +5996,9 @@ void CemuleDlg::StartUPnP(bool bReset, uint16 nForceTCPPort, uint16 nForceUDPPor
 			} else
 				/*theApp.emuledlg->*/PostMessage(UM_UPNP_RESULT, (WPARAM)CUPnPImpl::UPNP_FAILED, 0);
 		} catch (const CUPnPImpl::UPnPError&) {
-			//ignore
+			DebugLogWarning(_T("NAT mapping startup failed in backend '%s'"), (LPCTSTR)strImplementationName);
 		} catch (CException *ex) {
+			DebugLogWarning(_T("NAT mapping startup failed in backend '%s'%s"), (LPCTSTR)strImplementationName, (LPCTSTR)CExceptionStrDash(*ex));
 			ex->Delete();
 		}
 	} else
@@ -6008,8 +6012,11 @@ void CemuleDlg::RefreshUPnP(bool bRequestAnswer)
 	if (!thePrefs.IsUPnPEnabled())
 		return;
 	if (theApp.m_pUPnPFinder != NULL && m_hUPnPTimeOutTimer == 0) {
+		CString strImplementationName(_T("<unknown>"));
 		try {
 			CUPnPImpl *impl = theApp.m_pUPnPFinder->GetImplementation();
+			if (impl != NULL)
+				strImplementationName = impl->GetImplementationName();
 			if (impl->IsReady()) {
 				if (bRequestAnswer)
 					impl->SetMessageOnResult(this, UM_UPNP_RESULT);
@@ -6020,8 +6027,9 @@ void CemuleDlg::RefreshUPnP(bool bRequestAnswer)
 			} else
 				DebugLogWarning(_T("RefreshUPnP, implementation not ready"));
 		} catch (const CUPnPImpl::UPnPError&) {
-			//ignore
+			DebugLogWarning(_T("NAT mapping refresh failed in backend '%s'"), (LPCTSTR)strImplementationName);
 		} catch (CException *ex) {
+			DebugLogWarning(_T("NAT mapping refresh failed in backend '%s'%s"), (LPCTSTR)strImplementationName, (LPCTSTR)CExceptionStrDash(*ex));
 			ex->Delete();
 		}
 	} else
