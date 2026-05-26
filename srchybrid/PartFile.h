@@ -384,6 +384,8 @@ private:
 	bool	IsLiveDownloadingSource(const CUpDownClient *pClient) const;
 	void	RemoveStaleSource(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext);
 	void	RemoveStaleDownloadingSource(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext);
+	bool	IsDownloadingSourceListStructurallyValid() const;
+	void	RecoverDownloadingSourceList(LPCTSTR pszContext);
 	/**
 	 * @brief Returns whether an insufficient-space download may resume under the current per-volume disk-space floors.
 	 */

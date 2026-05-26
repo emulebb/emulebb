@@ -2556,6 +2556,8 @@ void CPartFile::AddDownloadingSource(CUpDownClient *client)
 			(LPCTSTR)client->DbgGetClientInfo());
 		return;
 	}
+	if (!IsDownloadingSourceListStructurallyValid())
+		RecoverDownloadingSourceList(_T("add downloading source"));
 
 	POSITION pos = m_downloadingSourceList.Find(client); // to be sure
 	if (pos == NULL) {
@@ -2596,6 +2598,33 @@ bool CPartFile::IsLiveSource(const CUpDownClient *pClient) const
 bool CPartFile::IsLiveDownloadingSource(const CUpDownClient *pClient) const
 {
 	return IsLiveSource(pClient);
+}
+
+bool CPartFile::IsDownloadingSourceListStructurallyValid() const
+{
+	const INT_PTR nCount = m_downloadingSourceList.GetCount();
+	const POSITION posHead = m_downloadingSourceList.GetHeadPosition();
+	const POSITION posTail = m_downloadingSourceList.GetTailPosition();
+	if (nCount < 0)
+		return false;
+	if (nCount == 0)
+		return posHead == NULL && posTail == NULL;
+	return posHead != NULL && posTail != NULL;
+}
+
+void CPartFile::RecoverDownloadingSourceList(LPCTSTR pszContext)
+{
+	const INT_PTR nCount = m_downloadingSourceList.GetCount();
+	const POSITION posHead = m_downloadingSourceList.GetHeadPosition();
+	const POSITION posTail = m_downloadingSourceList.GetTailPosition();
+	DebugLogError(_T("Recovering corrupt downloading-source list for \"%s\" (%s, partmet=\"%s\", count=%Id, head=%p, tail=%p)"),
+		(LPCTSTR)GetFileName(),
+		pszContext != NULL ? pszContext : _T("unknown context"),
+		(LPCTSTR)m_partmetfilename,
+		nCount,
+		static_cast<void*>(posHead),
+		static_cast<void*>(posTail));
+	m_downloadingSourceList.RemoveAll();
 }
 
 void CPartFile::RemoveStaleSource(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext)
