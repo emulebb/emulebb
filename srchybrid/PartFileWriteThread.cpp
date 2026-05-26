@@ -207,7 +207,7 @@ void CPartFileWriteThread::WriteBuffers()
 					if (item.pBuffer->data) { //check for an allocation request
 						item.pBuffer->dwError = dwError;
 						item.pBuffer->flushed = PB_ERROR;
-						theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: %lu"), dwError);
+						theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
 					}
 					RemFile(pFile);
 					return;
@@ -249,15 +249,16 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 			}
 		}
 	} else {
+		const DWORD dwEffectiveError = dwCompletionError != ERROR_SUCCESS ? dwCompletionError : ERROR_WRITE_FAULT;
 		if (pFile)
 			--pFile->m_iWrites;
 		if (pBuffer->data) {
-			pBuffer->dwError = dwCompletionError != ERROR_SUCCESS ? dwCompletionError : ERROR_WRITE_FAULT;
+			pBuffer->dwError = dwEffectiveError;
 			pBuffer->flushed = PB_ERROR;
 		} else
 			delete pBuffer;
 		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Part-file overlapped write failed: expected %lu, written %lu, error %lu (%s)")
-			, dwWrite, dwBytesWritten, dwCompletionError, (LPCTSTR)GetErrorMessage(dwCompletionError, 1));
+			, dwWrite, dwBytesWritten, dwEffectiveError, (LPCTSTR)GetErrorMessage(dwEffectiveError, 1));
 	}
 
 	if (HelperThreadLaunchSeams::GetState(m_Run) == RUN_STOP && pFile)

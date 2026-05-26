@@ -314,7 +314,7 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 						theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadFile failed, possibly too many pending requests, trying again later"));
 						return; // make this a recoverable error, as it might just be that we have too many requests in which case we just need to wait
 					}
-					throw _T("ReadFile Error: ") + GetErrorMessage(::GetLastError());
+					throw _T("ReadFile Error: ") + GetErrorMessage(dwError, 1);
 				}
 			}
 			++pFile->nInUse;
@@ -359,8 +359,9 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 	if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP) {
 		bool bReadError = dwCompletionError != ERROR_SUCCESS || !dwRead;
 		if (bReadError) {
+			const DWORD dwEffectiveError = dwCompletionError != ERROR_SUCCESS ? dwCompletionError : ERROR_READ_FAULT;
 			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Upload overlapped read failed: read %lu bytes, error %lu (%s)")
-				, dwRead, dwCompletionError, (LPCTSTR)GetErrorMessage(dwCompletionError, 1));
+				, dwRead, dwEffectiveError, (LPCTSTR)GetErrorMessage(dwEffectiveError, 1));
 		}
 		else if (dwRead != pOvRead->uEndOffset - pOvRead->uStartOffset) {
 			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("ReadCompletionRoutine: Didn't read requested data count - wanted: %lu, read: %lu")
