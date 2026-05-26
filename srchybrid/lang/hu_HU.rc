@@ -2194,6 +2194,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Azt szabályozza, hogy a eMule mikor jelenítsen meg egy leállítási folyamat párbeszédpanelt. U Mindig, hogy megjelenjen akkor is, ha a eMule el van rejtve a tálcán."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Napi konfigurációs mentés"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Naponta egyszer indításkor pillanatképet készít a konfigurációs és állapotfájlokról, mielőtt a normál betöltés folytatódik."
+    IDS_DL_EXPAND_ALL_SOURCES                         "Összes forrás kibontása"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "Összes forrás összecsukása"
 END
 // eMuleBB managed translation block: end
 

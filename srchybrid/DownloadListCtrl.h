@@ -119,6 +119,10 @@ public:
 	 */
 	void	CollectSelectedPartFiles(CTypedPtrList<CPtrList, CPartFile*> &rSelectedFiles);
 	void	ExpandCollapseItem(int iItem, int iAction, bool bCollapseSource = false);
+	void	ExpandAllSourcesInView();
+	void	CollapseAllSourcesInView();
+	bool	CanExpandAllSourcesInView();
+	bool	CanCollapseAllSourcesInView();
 	void	HideSources(CPartFile *toCollapse);
 	void	GetDisplayedFiles(CArray<CPartFile*, CPartFile*> *list);
 	void	MoveCompletedfilesCat(UINT from, UINT to);
@@ -196,6 +200,9 @@ protected:
 	 */
 	bool PruneStaleFileItems();
 	bool PruneStaleSourceItems();
+	bool HasLiveSources(const CPartFile *pPartFile) const;
+	int ShowSourcesNoRedraw(CPartFile *pPartFile, int iFileItem);
+	void HideSourcesNoRedraw(CPartFile *pPartFile);
 	int GetFilesCountInCurCat();
 	void CountBatchCommandsInCurCat(int &riFilesToPause, int &riFilesToResume, int &riFilesToStop) const;
 	CString GetFileItemDisplayText(const CPartFile *lpPartFile, int iSubItem);

@@ -2173,6 +2173,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "控制 eMule 何時顯示關機進度對話框。 使用 始終顯示它，即使 eMule 隱藏在托盤中也是如此。"
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "每日設定備份"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "每天啟動時建立一次設定與狀態檔案快照，然後繼續正常載入。"
+    IDS_DL_EXPAND_ALL_SOURCES                         "展開所有來源"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "摺疊所有來源"
 END
 // eMuleBB managed translation block: end
 

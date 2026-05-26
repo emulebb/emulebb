@@ -916,6 +916,7 @@
     <Image Include="res\NoAccessFolderOvl.ico" />
     <Image Include="res\Notifications.ico" />
     <Image Include="res\Pause.ico" />
+    <Image Include="res\PauseAll.ico" />
     <Image Include="res\Preferences.gif" />
     <Image Include="res\Preferences.ico" />
     <Image Include="res\Preview.ico" />
@@ -969,6 +970,7 @@
     <Image Include="res\SpeedMin.ico" />
     <Image Include="res\SplitWindow.ico" />
     <Image Include="res\Start.ico" />
+    <Image Include="res\StartAll.ico" />
     <Image Include="res\Statistics.ico" />
     <Image Include="res\StatisticsDetail.ico" />
     <Image Include="res\StatsCumulative.ico" />
@@ -979,6 +981,7 @@
     <Image Include="res\StatsTime.ico" />
     <Image Include="res\StatsYear.ico" />
     <Image Include="res\Stop.ico" />
+    <Image Include="res\StopAll.ico" />
     <Image Include="res\TaskbarNotifier.gif" />
     <Image Include="res\Tools.ico" />
     <Image Include="res\Transfer.ico" />

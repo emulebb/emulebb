@@ -2155,6 +2155,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "eMule تاقاش ئىلگىرىلەش دىئالوگىنى كۆرسەتكەندە كونترول قىلىدۇ. ھەمىشە eMule تەخسىگە يوشۇرۇنغاندىمۇ ئۇنى كۆرسىتىش ئۈچۈن ئىشلىتىڭ."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "كۈندىلىك سەپلىمە زاپاسلىمىسى"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "نورمال يۈكلەش داۋاملىشىشتىن بۇرۇن ھەر كۈنى قوزغالغاندا سەپلىمە ۋە ھالەت ھۆججەتلىرىنىڭ بىر پارچە كۆرۈنۈشىنى قۇرىدۇ."
+    IDS_DL_EXPAND_ALL_SOURCES                         "بارلىق مەنبەلەرنى ياي"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "بارلىق مەنبەلەرنى قاتلا"
 END
 // eMuleBB managed translation block: end
 

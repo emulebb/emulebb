@@ -2185,6 +2185,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Kiểm soát thời điểm eMule hiển thị hộp thoại tiến trình tắt máy. Sử dụng Luôn hiển thị hộp thoại ngay cả khi eMule bị ẩn vào khay."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Sao lưu cấu hình hằng ngày"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Tạo một ảnh chụp khi khởi động của các tệp cấu hình và trạng thái mỗi ngày trước khi tiếp tục tải bình thường."
+    IDS_DL_EXPAND_ALL_SOURCES                         "Mở rộng tất cả nguồn"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "Thu gọn tất cả nguồn"
 END
 // eMuleBB managed translation block: end
 

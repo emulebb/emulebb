@@ -2182,6 +2182,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Jikkontrolla meta eMule juri djalogu dwar il-progress tal-għeluq. Use Dejjem turih anke meta eMule ikun moħbi mat-trej."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Kopja ta' sigurtà ta' kuljum tal-konfigurazzjoni"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Joħloq stampa waħda tal-bidu tal-fajls tal-konfigurazzjoni u tal-istat kuljum qabel ikompli t-tagħbija normali."
+    IDS_DL_EXPAND_ALL_SOURCES                         "Espandi s-sorsi kollha"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "Ikkollassa s-sorsi kollha"
 END
 // eMuleBB managed translation block: end
 

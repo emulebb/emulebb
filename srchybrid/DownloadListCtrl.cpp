@@ -1552,21 +1552,145 @@ void CDownloadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	}
 }
 
-void CDownloadListCtrl::HideSources(CPartFile *toCollapse)
+bool CDownloadListCtrl::HasLiveSources(const CPartFile *pPartFile) const
 {
-	if (!toCollapse->srcarevisible)
+	if (pPartFile == NULL)
+		return false;
+	for (ListItems::const_iterator it = m_ListItems.begin(); it != m_ListItems.end(); ++it) {
+		const CtrlItem_Struct *cur_item = it->second;
+		if (cur_item->owner == pPartFile && (!IsSourceCtrlItem(cur_item) || IsLiveSourceItem(cur_item)))
+			return true;
+	}
+	return false;
+}
+
+int CDownloadListCtrl::ShowSourcesNoRedraw(CPartFile *pPartFile, int iFileItem)
+{
+	if (pPartFile == NULL || pPartFile->srcarevisible)
+		return 0;
+
+	int iInserted = 0;
+	for (ListItems::const_iterator it = m_ListItems.begin(); it != m_ListItems.end(); ++it) {
+		const CtrlItem_Struct *cur_item = it->second;
+		if (cur_item->owner == pPartFile && (!IsSourceCtrlItem(cur_item) || IsLiveSourceItem(cur_item))) {
+			pPartFile->srcarevisible = true;
+			InsertItem(LVIF_TEXT | LVIF_PARAM, iFileItem + 1, LPSTR_TEXTCALLBACK, 0, 0, 0, (LPARAM)cur_item);
+			++iInserted;
+		}
+	}
+	return iInserted;
+}
+
+void CDownloadListCtrl::HideSourcesNoRedraw(CPartFile *pPartFile)
+{
+	if (pPartFile == NULL || !pPartFile->srcarevisible)
 		return;
-	SetRedraw(false);
+
 	for (int i = GetItemCount(); --i >= 0;) {
 		CtrlItem_Struct *item = reinterpret_cast<CtrlItem_Struct*>(GetItemData(i));
-		if (item != NULL && item->owner == toCollapse) {
+		if (item != NULL && item->owner == pPartFile) {
 			item->dwUpdated = 0;
 			item->status.DeleteObject();
 			DeleteItem(i);
 		}
 	}
-	toCollapse->srcarevisible = false;
+	pPartFile->srcarevisible = false;
+}
+
+void CDownloadListCtrl::HideSources(CPartFile *toCollapse)
+{
+	if (toCollapse == NULL || !toCollapse->srcarevisible)
+		return;
+	SetRedraw(false);
+	HideSourcesNoRedraw(toCollapse);
 	SetRedraw(true);
+}
+
+void CDownloadListCtrl::ExpandAllSourcesInView()
+{
+	PruneStaleSourceItems();
+	PruneStaleFileItems();
+
+	bool bChanged = false;
+	SetRedraw(false);
+	for (int i = 0; i < GetItemCount(); ++i) {
+		const CtrlItem_Struct *content = reinterpret_cast<CtrlItem_Struct*>(GetItemData(i));
+		if (!IsLiveFileItem(content))
+			continue;
+
+		CPartFile *partfile = static_cast<CPartFile*>(content->value);
+		const int iInserted = ShowSourcesNoRedraw(partfile, i);
+		if (iInserted > 0) {
+			i += iInserted;
+			bChanged = true;
+		}
+	}
+	SetRedraw(true);
+
+	if (bChanged) {
+		m_availableCommandsDirty = true;
+		Invalidate();
+	}
+}
+
+void CDownloadListCtrl::CollapseAllSourcesInView()
+{
+	PruneStaleSourceItems();
+	PruneStaleFileItems();
+
+	bool bChanged = false;
+	SetRedraw(false);
+	for (int i = GetItemCount(); --i >= 0;) {
+		const CtrlItem_Struct *content = reinterpret_cast<CtrlItem_Struct*>(GetItemData(i));
+		if (!IsLiveFileItem(content))
+			continue;
+
+		CPartFile *partfile = static_cast<CPartFile*>(content->value);
+		if (partfile != NULL && partfile->srcarevisible) {
+			HideSourcesNoRedraw(partfile);
+			bChanged = true;
+		}
+	}
+	SetRedraw(true);
+
+	if (bChanged) {
+		m_availableCommandsDirty = true;
+		Invalidate();
+	}
+}
+
+bool CDownloadListCtrl::CanExpandAllSourcesInView()
+{
+	PruneStaleSourceItems();
+	PruneStaleFileItems();
+
+	for (int i = 0; i < GetItemCount(); ++i) {
+		const CtrlItem_Struct *content = reinterpret_cast<CtrlItem_Struct*>(GetItemData(i));
+		if (!IsLiveFileItem(content))
+			continue;
+
+		const CPartFile *partfile = static_cast<const CPartFile*>(content->value);
+		if (partfile != NULL && !partfile->srcarevisible && HasLiveSources(partfile))
+			return true;
+	}
+	return false;
+}
+
+bool CDownloadListCtrl::CanCollapseAllSourcesInView()
+{
+	PruneStaleSourceItems();
+	PruneStaleFileItems();
+
+	for (int i = 0; i < GetItemCount(); ++i) {
+		const CtrlItem_Struct *content = reinterpret_cast<CtrlItem_Struct*>(GetItemData(i));
+		if (!IsLiveFileItem(content))
+			continue;
+
+		const CPartFile *partfile = static_cast<const CPartFile*>(content->value);
+		if (partfile != NULL && partfile->srcarevisible)
+			return true;
+	}
+	return false;
 }
 
 void CDownloadListCtrl::ExpandCollapseItem(int iItem, int iAction, bool bCollapseSource)
@@ -1617,15 +1741,9 @@ void CDownloadListCtrl::ExpandCollapseItem(int iItem, int iAction, bool bCollaps
 		if (iAction > COLLAPSE_ONLY) {
 			SetRedraw(false);
 
-			// Go through the whole list to find out the sources for this file
-			// Remark: don't use GetSourceCount() => UNAVAILABLE_SOURCE
-			for (ListItems::const_iterator it = m_ListItems.begin(); it != m_ListItems.end(); ++it) {
-				const CtrlItem_Struct *cur_item = it->second;
-				if (cur_item->owner == partfile && (!IsSourceCtrlItem(cur_item) || IsLiveSourceItem(cur_item))) {
-					partfile->srcarevisible = true;
-					InsertItem(LVIF_TEXT | LVIF_PARAM, iItem + 1, LPSTR_TEXTCALLBACK, 0, 0, 0, (LPARAM)cur_item);
-				}
-			}
+			// Go through the whole list to find out the sources for this file.
+			// Remark: don't use GetSourceCount() => UNAVAILABLE_SOURCE.
+			ShowSourcesNoRedraw(partfile, iItem);
 
 			SetRedraw(true);
 		}
@@ -1739,11 +1857,13 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			CountBatchCommandsInCurCat(iBatchFilesToPause, iBatchFilesToResume, iBatchFilesToStop);
 			int total;
 			const int iCompletedInCat = GetCompleteDownloads(m_curTab, total);
-			EnableSubMenuItem(m_FileMenu, m_BatchMenu.m_hMenu, (iBatchFilesToPause > 0 || iBatchFilesToResume > 0 || iBatchFilesToStop > 0 || iCompletedInCat > 0) ? MF_ENABLED : MF_GRAYED);
+			EnableSubMenuItem(m_FileMenu, m_BatchMenu.m_hMenu, (iBatchFilesToPause > 0 || iBatchFilesToResume > 0 || iBatchFilesToStop > 0 || iCompletedInCat > 0 || iSelectedItems > 0) ? MF_ENABLED : MF_GRAYED);
 			m_BatchMenu.EnableMenuItem(MP_PAUSE_CATEGORY, iBatchFilesToPause > 0 ? MF_ENABLED : MF_GRAYED);
 			m_BatchMenu.EnableMenuItem(MP_STOP_CATEGORY, iBatchFilesToStop > 0 ? MF_ENABLED : MF_GRAYED);
 			m_BatchMenu.EnableMenuItem(MP_RESUME_CATEGORY, iBatchFilesToResume > 0 ? MF_ENABLED : MF_GRAYED);
 			m_BatchMenu.EnableMenuItem(MP_CLEARCOMPLETED, iCompletedInCat > 0 ? MF_ENABLED : MF_GRAYED);
+			m_FileMenu.EnableMenuItem(MP_EXPAND_ALL_SOURCES, CanExpandAllSourcesInView() ? MF_ENABLED : MF_GRAYED);
+			m_FileMenu.EnableMenuItem(MP_COLLAPSE_ALL_SOURCES, CanCollapseAllSourcesInView() ? MF_ENABLED : MF_GRAYED);
 
 			// enable commands if there is at least one item which can be used for the action
 			m_FileMenu.EnableMenuItem(MP_CANCEL, iFilesToCancel > 0 ? MF_ENABLED : MF_GRAYED);
@@ -1817,11 +1937,9 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			UINT flag = (iWebMenuEntries == 0 || iSelectedItems != 1) ? MF_GRAYED : MF_ENABLED;
 			m_FileMenu.AppendMenu(MF_POPUP | flag, (UINT_PTR)WebMenu.m_hMenu, GetResString(IDS_WEBSERVICES), _T("WEB"));
 
-			// create cat-submenu
-			CMenu CatsMenu;
-			CatsMenu.CreateMenu();
-			FillCatsMenu(CatsMenu, iFilesInCats);
-			m_FileMenu.AppendMenu(MF_POPUP, (UINT_PTR)CatsMenu.m_hMenu, GetResString(IDS_TOCAT), _T("CATEGORY"));
+			const int iBatchMenuStaticCount = m_BatchMenu.GetMenuItemCount();
+			m_BatchMenu.AppendMenu(MF_SEPARATOR);
+			FillCatsMenu(m_BatchMenu, iFilesInCats);
 
 			bool bToolbarItem = !thePrefs.IsDownloadToolbarEnabled();
 			if (bToolbarItem) {
@@ -1837,7 +1955,8 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			}
 			VERIFY(m_FileMenu.RemoveMenu(m_FileMenu.GetMenuItemCount() - 1, MF_BYPOSITION));
 			VERIFY(m_FileMenu.RemoveMenu(m_FileMenu.GetMenuItemCount() - 1, MF_BYPOSITION));
-			VERIFY(m_FileMenu.RemoveMenu(m_FileMenu.GetMenuItemCount() - 1, MF_BYPOSITION));
+			while (m_BatchMenu.GetMenuItemCount() > iBatchMenuStaticCount)
+				VERIFY(m_BatchMenu.RemoveMenu(m_BatchMenu.GetMenuItemCount() - 1, MF_BYPOSITION));
 			if (iPreviewMenuEntries)
 				if (!thePrefs.GetExtraPreviewWithMenu())
 					VERIFY(RemoveSubMenuItem(m_PreviewMenu, PreviewWithMenu.m_hMenu));
@@ -1846,7 +1965,6 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 
 			VERIFY(WebMenu.DestroyMenu());
 			VERIFY(CopyMenu.DestroyMenu());
-			VERIFY(CatsMenu.DestroyMenu());
 			VERIFY(PreviewWithMenu.DestroyMenu());
 		} else {
 			const CUpDownClient *client = (content != NULL && IsLiveSourceItem(content)) ? static_cast<CUpDownClient*>(content->value) : NULL;
@@ -1908,6 +2026,8 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 		m_BatchMenu.EnableMenuItem(MP_STOP_CATEGORY, iBatchFilesToStop > 0 ? MF_ENABLED : MF_GRAYED);
 		m_BatchMenu.EnableMenuItem(MP_RESUME_CATEGORY, iBatchFilesToResume > 0 ? MF_ENABLED : MF_GRAYED);
 		m_BatchMenu.EnableMenuItem(MP_CLEARCOMPLETED, iCompletedInCat > 0 ? MF_ENABLED : MF_GRAYED);
+		m_FileMenu.EnableMenuItem(MP_EXPAND_ALL_SOURCES, CanExpandAllSourcesInView() ? MF_ENABLED : MF_GRAYED);
+		m_FileMenu.EnableMenuItem(MP_COLLAPSE_ALL_SOURCES, CanCollapseAllSourcesInView() ? MF_ENABLED : MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_CANCEL, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_PAUSE, MF_GRAYED);
 		m_FileMenu.EnableMenuItem(MP_STOP, MF_GRAYED);
@@ -2056,6 +2176,12 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 	case MP_TOGGLEDTOOLBAR:
 		thePrefs.SetDownloadToolbar(true);
 		theApp.emuledlg->transferwnd->ShowToolbar(true);
+		return TRUE;
+	case MP_EXPAND_ALL_SOURCES:
+		ExpandAllSourcesInView();
+		return TRUE;
+	case MP_COLLAPSE_ALL_SOURCES:
+		CollapseAllSourcesInView();
 		return TRUE;
 	}
 
@@ -2896,10 +3022,10 @@ void CDownloadListCtrl::CreateMenus()
 	m_BatchMenu.AppendMenu(MF_STRING, MP_STOP_CATEGORY, AddMenuShortcutLabel(GetResString(IDS_DL_STOP_CATEGORY), _T("Ctrl+Shift+T")), _T("STOPALL"));
 	m_BatchMenu.AppendMenu(MF_SEPARATOR);
 	m_BatchMenu.AppendMenu(MF_STRING, MP_CLEARCOMPLETED, GetResString(IDS_DL_CLEAR), _T("CLEARCOMPLETE"));
-	CString sCategoryActions(GetResString(IDS_CAT));
-	sCategoryActions += _T(" ");
-	sCategoryActions += GetResString(IDS_WEB_ACTIONS);
-	m_FileMenu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)m_BatchMenu.m_hMenu, sCategoryActions, _T("CATEGORY"));
+	m_FileMenu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)m_BatchMenu.m_hMenu, GetResString(IDS_CAT), _T("CATEGORY"));
+	m_FileMenu.AppendMenu(MF_SEPARATOR);
+	m_FileMenu.AppendMenu(MF_STRING, MP_EXPAND_ALL_SOURCES, GetResString(IDS_DL_EXPAND_ALL_SOURCES), _T("EXPANDALL"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_COLLAPSE_ALL_SOURCES, GetResString(IDS_DL_COLLAPSE_ALL_SOURCES), _T("COLLAPSE"));
 	m_FileMenu.AppendMenu(MF_SEPARATOR);
 
 	m_FileMenu.AppendMenu(MF_STRING, MP_OPEN, AddMenuShortcutLabel(GetResString(IDS_DL_OPEN), _T("Ctrl+O")), _T("OPENFILE"));
@@ -3812,6 +3938,10 @@ bool CDownloadListCtrl::ReportAvailableCommands(CList<int> &liAvailableCommands)
 		liAvailableCommands.AddTail(MP_RESUME_CATEGORY);
 	if (iBatchFilesToStop > 0)
 		liAvailableCommands.AddTail(MP_STOP_CATEGORY);
+	if (CanExpandAllSourcesInView())
+		liAvailableCommands.AddTail(MP_EXPAND_ALL_SOURCES);
+	if (CanCollapseAllSourcesInView())
+		liAvailableCommands.AddTail(MP_COLLAPSE_ALL_SOURCES);
 	if (GetItemCount() > 0)
 		liAvailableCommands.AddTail(MP_FIND);
 	return true;

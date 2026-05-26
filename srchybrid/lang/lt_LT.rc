@@ -2192,6 +2192,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Valdo, kada eMule rodo išjungimo eigos dialogo langą. U Visada, kad jis būtų rodomas, net kai eMule paslėptas dėkle."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Kasdienė konfigūracijos atsarginė kopija"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Kartą per dieną paleidimo metu sukuria konfigūracijos ir būsenos failų momentinę kopiją prieš tęsiant įprastą įkėlimą."
+    IDS_DL_EXPAND_ALL_SOURCES                         "Išskleisti visus šaltinius"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "Suskleisti visus šaltinius"
 END
 // eMuleBB managed translation block: end
 

@@ -2185,6 +2185,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Kontrolē, kad eMule parāda izslēgšanas norises dialoglodziņu. UIzmantojiet Vienmēr, lai to rādītu pat tad, ja eMule ir paslēpts teknē."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Ikdienas konfigurācijas dublējums"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Reizi dienā palaišanas laikā izveido konfigurācijas un stāvokļa failu momentuzņēmumu, pirms turpinās parastā ielāde."
+    IDS_DL_EXPAND_ALL_SOURCES                         "Izvērst visus avotus"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "Sakļaut visus avotus"
 END
 // eMuleBB managed translation block: end
 

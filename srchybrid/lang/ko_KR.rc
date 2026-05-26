@@ -2154,6 +2154,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "eMule가 종료 진행 대화 상자를 표시하는 시기를 제어합니다. eMule가 트레이에 숨겨진 경우에도 표시하려면 항상을 사용합니다."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "일일 설정 백업"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "정상 로딩을 계속하기 전에 하루에 한 번 시작 시 설정 및 상태 파일의 스냅샷을 만듭니다."
+    IDS_DL_EXPAND_ALL_SOURCES                         "모든 소스 펼치기"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "모든 소스 접기"
 END
 // eMuleBB managed translation block: end
 

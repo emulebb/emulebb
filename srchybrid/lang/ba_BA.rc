@@ -2188,6 +2188,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "eMulek itzaltze-aurrerapeneko elkarrizketa-koadroa noiz erakusten duen kontrolatzen du. Use Beti erakusteko eMule erretiluan ezkutatuta dagoenean ere."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Dnevna sigurnosna kopija konfiguracije"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Pravi jedan snimak konfiguracijskih i statusnih datoteka pri pokretanju svaki dan prije nastavka normalnog učitavanja."
+    IDS_DL_EXPAND_ALL_SOURCES                         "Zabaldu iturri guztiak"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "Tolestu iturri guztiak"
 END
 // eMuleBB managed translation block: end
 

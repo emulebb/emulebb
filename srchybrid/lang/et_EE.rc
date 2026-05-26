@@ -2187,6 +2187,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Määrab, millal eMule kuvab sulgemise edenemise dialoogi. U Kasutage seda alati, et seda näidata ka siis, kui eMule on salve peidetud."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Igapäevane seadistuse varukoopia"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Loob kord päevas käivitamisel seadistus- ja olekufailidest hetktõmmise enne tavapärase laadimise jätkumist."
+    IDS_DL_EXPAND_ALL_SOURCES                         "Laienda kõik allikad"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "Ahenda kõik allikad"
 END
 // eMuleBB managed translation block: end
 

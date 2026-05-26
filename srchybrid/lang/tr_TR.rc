@@ -2788,6 +2788,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                     "eMule'nun kapatma ilerleme durumu iletişim kutusunu ne zaman görüntüleyeceğini kontrol eder. eMule tepside gizlendiğinde bile bunu göstermek için Her Zaman seçeneğini kullanın."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                             "Günlük yapılandırma yedeği"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                          "Normal yükleme devam etmeden önce günde bir kez başlangıçta yapılandırma ve durum dosyalarının anlık görüntüsünü oluşturur."
+    IDS_DL_EXPAND_ALL_SOURCES                         "Tüm kaynakları genişlet"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "Tüm kaynakları daralt"
 END
 // eMuleBB managed translation block: end
 

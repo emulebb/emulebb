@@ -2184,6 +2184,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "שולט כאשר eMule מציג תיבת דו-שיח של התקדמות כיבוי. השתמש ב-Always כדי להציג אותו גם כאשר eMule מוסתר במגש."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "גיבוי יומי של התצורה"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "יוצר פעם ביום בעת ההפעלה תמונת מצב של קובצי התצורה והמצב לפני שהטעינה הרגילה ממשיכה."
+    IDS_DL_EXPAND_ALL_SOURCES                         "הרחב את כל המקורות"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "כווץ את כל המקורות"
 END
 // eMuleBB managed translation block: end
 

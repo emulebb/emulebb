@@ -2762,6 +2762,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                     "Kontroluje, kiedy eMule wyświetla okno dialogowe postępu zamykania. Użyj opcji Zawsze, aby wyświetlać je nawet wtedy, gdy eMule jest ukryty w zasobniku."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                             "Codzienna kopia zapasowa konfiguracji"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                          "Tworzy raz dziennie podczas startu migawkę plików konfiguracji i stanu przed kontynuowaniem normalnego ładowania."
+    IDS_DL_EXPAND_ALL_SOURCES                         "Rozwiń wszystkie źródła"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "Zwiń wszystkie źródła"
 END
 // eMuleBB managed translation block: end
 

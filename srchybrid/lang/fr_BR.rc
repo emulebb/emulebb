@@ -2159,6 +2159,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Contrôle quand eMule affiche une boîte de dialogue de progression de l'arrêt. Utilisez Toujours pour l'afficher même lorsque eMule est masqué dans la barre d'état."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Sauvegarde quotidienne de la configuration"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Crée une fois par jour au démarrage un instantané des fichiers de configuration et d'état avant la poursuite du chargement normal."
+    IDS_DL_EXPAND_ALL_SOURCES                         "Ledanaat an holl darzhioù"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "Serriñ an holl darzhioù"
 END
 // eMuleBB managed translation block: end
 

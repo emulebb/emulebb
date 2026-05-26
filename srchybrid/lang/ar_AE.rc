@@ -2182,6 +2182,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "التحكم عندما يعرض eMule مربع حوار تقدم إيقاف التشغيل. Use دائمًا لإظهاره حتى عندما يكون eMule مخفيًا في الدرج."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "نسخ احتياطي يومي للإعدادات"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "ينشئ لقطة بدء تشغيل واحدة من ملفات الإعدادات والحالة كل يوم قبل متابعة التحميل العادي."
+    IDS_DL_EXPAND_ALL_SOURCES                         "توسيع كل المصادر"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "طي كل المصادر"
 END
 // eMuleBB managed translation block: end
 

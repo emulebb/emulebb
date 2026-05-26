@@ -2171,6 +2171,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Controla cuándo eMule muestra un cuadro de diálogo de progreso de apagado. Uuse Siempre para mostrarlo incluso cuando eMule esté oculto en la bandeja."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Copia diaria de seguridá de la configuración"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Crea cada día una instantánea d'aniciu de los ficheros de configuración y estáu enantes de siguir cola carga normal."
+    IDS_DL_EXPAND_ALL_SOURCES                         "Espander toles fontes"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "Contrayer toles fontes"
 END
 // eMuleBB managed translation block: end
 

@@ -4771,19 +4771,19 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedUpload.m_hMenu, GetResString(IDS_SPEED_ACTION_UPLOAD), _T("UPLOAD"));
 		speedQuickActions.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedDownload.m_hMenu, GetResString(IDS_SPEED_ACTION_DOWNLOAD), _T("DOWNLOAD"));
 		speedQuickActions.AppendMenu(MF_SEPARATOR);
-		speedQuickActions.AppendMenu(MF_STRING, MP_QS_PA, GetResString(IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC), _T("STOP"));
-		speedQuickActions.AppendMenu(MF_STRING, MP_QS_UA, GetResString(IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC), _T("CONNECT"));
+		speedQuickActions.AppendMenu(MF_STRING, MP_QS_PA, GetResString(IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC), _T("SPEEDMIN"));
+		speedQuickActions.AppendMenu(MF_STRING, MP_QS_UA, GetResString(IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC), _T("SPEEDMAX"));
 
 		const UINT uDesktopRefreshIntervalMs = thePrefs.GetDesktopUiRefreshIntervalMs();
 		const auto getRefreshIntervalFlags = [uDesktopRefreshIntervalMs](UINT uIntervalMs) -> UINT {
 			return MF_STRING | (uDesktopRefreshIntervalMs == uIntervalMs ? MF_CHECKED : 0);
 		};
 		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_PAUSED_MS), MP_HM_REFRESH_INTERVAL_PAUSED, GetResString(IDS_REFRESH_INTERVAL_PAUSED), _T("PAUSE"));
-		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_FAST_MS), MP_HM_REFRESH_INTERVAL_FAST, GetResString(IDS_REFRESH_INTERVAL_FAST), _T("TOOLS"));
-		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_NORMAL_MS), MP_HM_REFRESH_INTERVAL_NORMAL, GetResString(IDS_REFRESH_INTERVAL_NORMAL), _T("TOOLS"));
-		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_BELOWNORMAL_MS), MP_HM_REFRESH_INTERVAL_BELOWNORMAL, GetResString(IDS_REFRESH_INTERVAL_BELOWNORMAL), _T("TOOLS"));
-		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_SLOW_MS), MP_HM_REFRESH_INTERVAL_SLOW, GetResString(IDS_REFRESH_INTERVAL_SLOW), _T("TOOLS"));
-		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_VERYSLOW_MS), MP_HM_REFRESH_INTERVAL_VERYSLOW, GetResString(IDS_REFRESH_INTERVAL_VERYSLOW), _T("TOOLS"));
+		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_FAST_MS), MP_HM_REFRESH_INTERVAL_FAST, GetResString(IDS_REFRESH_INTERVAL_FAST), _T("STATSTIME"));
+		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_NORMAL_MS), MP_HM_REFRESH_INTERVAL_NORMAL, GetResString(IDS_REFRESH_INTERVAL_NORMAL), _T("STATSTIME"));
+		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_BELOWNORMAL_MS), MP_HM_REFRESH_INTERVAL_BELOWNORMAL, GetResString(IDS_REFRESH_INTERVAL_BELOWNORMAL), _T("STATSTIME"));
+		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_SLOW_MS), MP_HM_REFRESH_INTERVAL_SLOW, GetResString(IDS_REFRESH_INTERVAL_SLOW), _T("STATSTIME"));
+		refreshInterval.AppendMenu(getRefreshIntervalFlags(DESKTOP_UI_REFRESH_VERYSLOW_MS), MP_HM_REFRESH_INTERVAL_VERYSLOW, GetResString(IDS_REFRESH_INTERVAL_VERYSLOW), _T("STATSTIME"));
 
 		folders.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
 		folders.AppendMenu(MF_STRING, MP_HM_OPEN_TEMPDIR, GetResString(IDS_OPEN_TEMP_DIR) + _T("..."), _T("OPENFOLDER"));
@@ -4859,7 +4859,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)transfers.m_hMenu, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(_T("Speed Quick Actions"), _T('P')), _T("SPEED"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)refreshInterval.m_hMenu, GetResString(IDS_TOOLS_REFRESH_INTERVAL), _T("TOOLS"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)refreshInterval.m_hMenu, GetResString(IDS_TOOLS_REFRESH_INTERVAL), _T("STATSTIME"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_FOLDERS), _T('F')), _T("OPENFOLDER"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)categories.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_CATEGORIES), _T('C')), _T("CATEGORY"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T('E')), _T("PREFERENCES"));

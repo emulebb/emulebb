@@ -1538,9 +1538,9 @@ KADCONTACTLIST          ICON                    "res\\KadContactList.ico"
 KADBOOTSTRAP            ICON                    "res\\KadBootstrap.ico"
 IPFILTER                ICON                    "res\\IPFilter.ico"
 PAUSE                   ICON                    "res\\Pause.ico"
-PAUSEALL                ICON                    "res\\Pause.ico"
-RESUMEALL               ICON                    "res\\Start.ico"
-STOPALL                 ICON                    "res\\Stop.ico"
+PAUSEALL                ICON                    "res\\PauseAll.ico"
+RESUMEALL               ICON                    "res\\StartAll.ico"
+STOPALL                 ICON                    "res\\StopAll.ico"
 PREVIEW                 ICON                    "res\\Preview.ico"
 RESUME                  ICON                    "res\\Start.ico"
 STOP                    ICON                    "res\\Stop.ico"
@@ -5032,6 +5032,8 @@ BEGIN
     IDS_DL_RESUME_CATEGORY                 "Resume All in This Category"
     IDS_PRIO_INCREASE                      "Increase Priority"
     IDS_PRIO_DECREASE                      "Decrease Priority"
+    IDS_DL_EXPAND_ALL_SOURCES              "Expand All Sources"
+    IDS_DL_COLLAPSE_ALL_SOURCES            "Collapse All Sources"
 END
 
 #endif    // English (United States) resources

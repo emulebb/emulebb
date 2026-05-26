@@ -2194,6 +2194,8 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "eMule がシャットダウン進行状況ダイアログを表示するタイミングを制御します。 eMule がトレイで非表示になっている場合でも表示するには、[常に] を使用します。"
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "毎日の設定バックアップ"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "通常の読み込みを続行する前に、起動時に設定ファイルと状態ファイルのスナップショットを1日1回作成します。"
+    IDS_DL_EXPAND_ALL_SOURCES                         "すべてのソースを展開"
+    IDS_DL_COLLAPSE_ALL_SOURCES                       "すべてのソースを折りたたむ"
 END
 // eMuleBB managed translation block: end
 
