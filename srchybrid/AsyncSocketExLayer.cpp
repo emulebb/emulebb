@@ -327,7 +327,7 @@ bool CAsyncSocketExLayer::ConnectNext(const CString &sHostAddress, UINT nHostPor
 					::PostMessage(m_pOwnerSocket->GetHelperWindowHandle(), WM_SOCKETEX_CALLBACK, (WPARAM)m_pOwnerSocket->m_SocketData.nSocketIndex, 0);
 
 				m_pOwnerSocket->m_SocketData.nFamily = m_nFamily = (ADDRESS_FAMILY)res1->ai_family;
-				if (!m_pOwnerSocket->Bind(m_nSocketPort, m_sSocketAddress)) {
+				if (!m_pOwnerSocket->Bind(m_nSocketPort, m_sSocketAddress) || !m_pOwnerSocket->ApplyConfiguredIpv4UnicastInterface()) {
 					m_pOwnerSocket->m_SocketData.nFamily = m_nFamily = AF_UNSPEC;
 					Close();
 					continue;
@@ -613,7 +613,7 @@ bool CAsyncSocketExLayer::CreateNext(UINT nSocketPort, int nSocketType, long lEv
 			m_pOwnerSocket->SetSockOpt(SO_REUSEADDR, reinterpret_cast<const void*>(&value), sizeof value);
 		}
 
-		if (!m_pOwnerSocket->Bind(nSocketPort, sSocketAddress)) {
+		if (!m_pOwnerSocket->Bind(nSocketPort, sSocketAddress) || !m_pOwnerSocket->ApplyConfiguredIpv4UnicastInterface()) {
 			m_pOwnerSocket->Close();
 			return false;
 		}
@@ -745,7 +745,7 @@ bool CAsyncSocketExLayer::TryNextProtocol()
 		if (m_pOwnerSocket->AsyncSelect(m_lEvent))
 			if (!m_pOwnerSocket->m_pFirstLayer || !WSAAsyncSelect(m_pOwnerSocket->m_SocketData.hSocket, m_pOwnerSocket->GetHelperWindowHandle(), WM_SOCKETEX_NOTIFY + m_pOwnerSocket->m_SocketData.nSocketIndex, FD_DEFAULT)) {
 				m_pOwnerSocket->m_SocketData.nFamily = m_nFamily = (ADDRESS_FAMILY)m_nextAddr->ai_family;
-				if (m_pOwnerSocket->Bind(m_nSocketPort, m_sSocketAddress)) {
+				if (m_pOwnerSocket->Bind(m_nSocketPort, m_sSocketAddress) && m_pOwnerSocket->ApplyConfiguredIpv4UnicastInterface()) {
 					ret = !connect(m_pOwnerSocket->GetSocketHandle(), m_nextAddr->ai_addr, (int)m_nextAddr->ai_addrlen) || WSAGetLastError() == WSAEWOULDBLOCK;
 					if (ret) {
 						SetLayerState(connecting);
