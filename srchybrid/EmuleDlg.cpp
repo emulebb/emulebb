@@ -1904,6 +1904,9 @@ void CemuleDlg::OnStartupTimer() noexcept
 #endif
 			try {
 				theApp.serverlist->Init();
+			} catch (CException *ex) {
+				LogError(LOG_STATUSBAR, _T("Failed to initialize server list%s"), (LPCTSTR)CExceptionStrDash(*ex));
+				ex->Delete();
 			} catch (...) {
 				ASSERT(0);
 				LogError(LOG_STATUSBAR, _T("Failed to initialize server list - Unknown exception"));
@@ -1926,6 +1929,10 @@ void CemuleDlg::OnStartupTimer() noexcept
 				// and the creation of the TCP and the UDP socket will not be done -> client will get a LowID!
 				try {
 					theApp.downloadqueue->Init();
+				} catch (CException *ex) {
+					LogError(LOG_STATUSBAR, _T("Failed to initialize download queue%s"), (LPCTSTR)CExceptionStrDash(*ex));
+					ex->Delete();
+					bError = true;
 				} catch (...) {
 					ASSERT(0);
 					LogError(LOG_STATUSBAR, _T("Failed to initialize download queue - Unknown exception"));
