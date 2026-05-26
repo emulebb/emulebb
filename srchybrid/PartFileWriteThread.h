@@ -59,6 +59,8 @@ private:
 
 	void	WriteBuffers();
 	void	WriteCompletionRoutine(DWORD dwBytesWritten, const OverlappedWrite_Struct *pOvWrite, DWORD dwCompletionError);
+	void	CancelPendingWrites();
+	void	DrainPendingWrites();
 
 	CList<ToWrite>	m_listToWrite;
 	CTypedPtrList<CPtrList, OverlappedWrite_Struct*>	m_listPendingIO;

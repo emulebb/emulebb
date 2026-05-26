@@ -170,10 +170,7 @@ UINT CPartFileWriteThread::RunInternal()
 	}
 	HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 
-	//Improper termination of asynchronous I/O follows...
-	//close file handles to release I/O completion port
-	while (!m_listPendingIO.IsEmpty())
-		WriteCompletionRoutine(0, m_listPendingIO.RemoveHead(), ERROR_OPERATION_ABORTED);
+	DrainPendingWrites();
 
 	HelperThreadLaunchSeams::CloseIocpPort(m_hPort);
 
@@ -230,40 +227,74 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 		return;
 	}
 	CPartFile *pFile = pOvWrite->pFile;
-	if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP) {
-		PartFileBufferedData *pBuffer = pOvWrite->pBuffer;
-		const DWORD dwWrite = (DWORD)(pBuffer->end - pBuffer->start + 1);
+	PartFileBufferedData *pBuffer = pOvWrite->pBuffer;
+	const DWORD dwWrite = (DWORD)(pBuffer->end - pBuffer->start + 1);
 
-		ASSERT(pOvWrite->pos);
+	if (pOvWrite->pos != NULL)
 		m_listPendingIO.RemoveAt(pOvWrite->pos);
-		if (dwCompletionError == ERROR_SUCCESS && dwBytesWritten && dwWrite == dwBytesWritten) {
-			if (pFile) {
-				--pFile->m_iWrites;
-				if (pBuffer->data) { //write data
-					ASSERT(pBuffer->flushed = PB_PENDING && pFile->m_iWrites >= 0);
-					pBuffer->flushed = PB_WRITTEN;
-				} else { //full file allocation
-					ASSERT(dwBytesWritten == 1);
-					::FlushFileBuffers(pFile->m_hWrite);
-					pFile->m_hpartfile.SetLength(pBuffer->start); //truncate the extra byte
-					delete pBuffer;
-				}
-			}
-		} else {
-			if (pFile)
-				--pFile->m_iWrites;
-			if (pBuffer->data) {
-				pBuffer->dwError = dwCompletionError != ERROR_SUCCESS ? dwCompletionError : ERROR_WRITE_FAULT;
-				pBuffer->flushed = PB_ERROR;
-			} else
+	else
+		ASSERT(HelperThreadLaunchSeams::GetState(m_Run) == RUN_STOP);
+
+	if (dwCompletionError == ERROR_SUCCESS && dwBytesWritten && dwWrite == dwBytesWritten) {
+		if (pFile) {
+			--pFile->m_iWrites;
+			if (pBuffer->data) { //write data
+				ASSERT(pBuffer->flushed = PB_PENDING && pFile->m_iWrites >= 0);
+				pBuffer->flushed = PB_WRITTEN;
+			} else { //full file allocation
+				ASSERT(dwBytesWritten == 1);
+				::FlushFileBuffers(pFile->m_hWrite);
+				pFile->m_hpartfile.SetLength(pBuffer->start); //truncate the extra byte
 				delete pBuffer;
-			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Part-file overlapped write failed: expected %lu, written %lu, error %lu (%s)")
-				, dwWrite, dwBytesWritten, dwCompletionError, (LPCTSTR)GetErrorMessage(dwCompletionError, 1));
+			}
 		}
-	} else if (pFile)
+	} else {
+		if (pFile)
+			--pFile->m_iWrites;
+		if (pBuffer->data) {
+			pBuffer->dwError = dwCompletionError != ERROR_SUCCESS ? dwCompletionError : ERROR_WRITE_FAULT;
+			pBuffer->flushed = PB_ERROR;
+		} else
+			delete pBuffer;
+		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Part-file overlapped write failed: expected %lu, written %lu, error %lu (%s)")
+			, dwWrite, dwBytesWritten, dwCompletionError, (LPCTSTR)GetErrorMessage(dwCompletionError, 1));
+	}
+
+	if (HelperThreadLaunchSeams::GetState(m_Run) == RUN_STOP && pFile)
 		RemFile(pFile);
 
 	delete pOvWrite;
+}
+
+void CPartFileWriteThread::CancelPendingWrites()
+{
+	for (POSITION pos = m_listPendingIO.GetHeadPosition(); pos != NULL;) {
+		const OverlappedWrite_Struct *pOvWrite = m_listPendingIO.GetNext(pos);
+		CPartFile *pFile = pOvWrite != NULL ? pOvWrite->pFile : NULL;
+		if (pFile == NULL || pFile->m_hWrite == INVALID_HANDLE_VALUE)
+			continue;
+
+		if (!::CancelIoEx(pFile->m_hWrite, const_cast<LPOVERLAPPED>(&pOvWrite->oOverlap))) {
+			const DWORD dwError = ::GetLastError();
+			if (dwError != ERROR_NOT_FOUND)
+				theApp.QueueDebugLogLineEx(LOG_WARNING, _T("Failed to cancel part-file overlapped write during shutdown: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
+		}
+	}
+}
+
+void CPartFileWriteThread::DrainPendingWrites()
+{
+	CancelPendingWrites();
+
+	while (!m_listPendingIO.IsEmpty()) {
+		DWORD dwBytesWritten = 0;
+		ULONG_PTR completionKey = 0;
+		OverlappedWrite_Struct *pCurIO = NULL;
+		const BOOL bCompletionReceived = ::GetQueuedCompletionStatus(m_hPort, &dwBytesWritten, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE);
+		const DWORD dwCompletionError = bCompletionReceived != FALSE ? ERROR_SUCCESS : ::GetLastError();
+		if (pCurIO != NULL)
+			WriteCompletionRoutine(dwBytesWritten, pCurIO, dwCompletionError);
+	}
 }
 
 bool CPartFileWriteThread::AddFile(CPartFile *pFile)

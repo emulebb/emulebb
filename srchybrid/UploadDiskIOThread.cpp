@@ -190,10 +190,7 @@ UINT CUploadDiskIOThread::RunInternal()
 	}
 	HelperThreadLaunchSeams::SetState(m_Run, RUN_STOP);
 
-	//Improper termination of asynchronous I/O follows...
-	//close file handles to release the I/O completion port
-	while (!m_listPendingIO.IsEmpty())
-		ReadCompletionRoutine(0, m_listPendingIO.RemoveHead(), ERROR_OPERATION_ABORTED);
+	DrainPendingReads();
 
 	HelperThreadLaunchSeams::CloseIocpPort(m_hPort);
 
@@ -353,13 +350,13 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 	UploadingToClient_Struct *pStruct = pOvRead->pUploadClientStruct;
 	ASSERT(pStruct != NULL);
 
+	POSITION posPending = m_listPendingIO.Find(const_cast<OverlappedRead_Struct*>(pOvRead));
+	if (posPending != NULL)
+		m_listPendingIO.RemoveAt(posPending);
+	else if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP)
+		theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: completed upload read was not present in the pending I/O list"));
+
 	if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP) {
-		POSITION posPending = m_listPendingIO.Find(const_cast<OverlappedRead_Struct*>(pOvRead));
-		ASSERT(posPending != NULL);
-		if (posPending != NULL)
-			m_listPendingIO.RemoveAt(posPending);
-		else
-			theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: completed upload read was not present in the pending I/O list"));
 		bool bReadError = dwCompletionError != ERROR_SUCCESS || !dwRead;
 		if (bReadError) {
 			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Upload overlapped read failed: read %lu bytes, error %lu (%s)")
@@ -427,6 +424,37 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 	// cleanup
 	delete[] pOvRead->pBuffer;
 	delete pOvRead;
+}
+
+void CUploadDiskIOThread::CancelPendingReads()
+{
+	for (POSITION pos = m_listPendingIO.GetHeadPosition(); pos != NULL;) {
+		const OverlappedRead_Struct *pOvRead = m_listPendingIO.GetNext(pos);
+		CKnownFile *pKnownFile = pOvRead != NULL ? pOvRead->pFile : NULL;
+		if (pKnownFile == NULL || pKnownFile->m_hRead == INVALID_HANDLE_VALUE)
+			continue;
+
+		if (!::CancelIoEx(pKnownFile->m_hRead, const_cast<LPOVERLAPPED>(&pOvRead->oOverlap))) {
+			const DWORD dwError = ::GetLastError();
+			if (dwError != ERROR_NOT_FOUND)
+				theApp.QueueDebugLogLineEx(LOG_WARNING, _T("Failed to cancel upload overlapped read during shutdown: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
+		}
+	}
+}
+
+void CUploadDiskIOThread::DrainPendingReads()
+{
+	CancelPendingReads();
+
+	while (!m_listPendingIO.IsEmpty()) {
+		DWORD dwRead = 0;
+		ULONG_PTR completionKey = 0;
+		OverlappedRead_Struct *pCurIO = NULL;
+		const BOOL bCompletionReceived = ::GetQueuedCompletionStatus(m_hPort, &dwRead, &completionKey, (LPOVERLAPPED*)&pCurIO, INFINITE);
+		const DWORD dwCompletionError = bCompletionReceived != FALSE ? ERROR_SUCCESS : ::GetLastError();
+		if (pCurIO != NULL)
+			ReadCompletionRoutine(dwRead, pCurIO, dwCompletionError);
+	}
 }
 
 bool CUploadDiskIOThread::ShouldCompressBasedOnFilename(const CString &strFileName)
