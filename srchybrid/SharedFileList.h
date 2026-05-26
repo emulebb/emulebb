@@ -229,6 +229,7 @@ public:
 	 * @brief Drops a worker-produced startup-cache save completion without applying it to an owner.
 	 */
 	static void	DiscardStartupCacheSaveCompletion(void *pCompletion);
+	static void	*TakeStartupCacheSaveCompletion(WPARAM wParam);
 	/**
 	 * @brief Stops waiting for startup-cache persistence during shutdown and reports whether this object must stay alive.
 	 */
@@ -393,6 +394,7 @@ private:
 	struct StartupCacheSaveThreadRequest
 	{
 		HWND hNotifyWnd = NULL;
+		ULONG_PTR nCompletionOwnerKey = 0;
 		std::shared_ptr<StartupCacheSaveOperation> pOperation;
 		StartupCacheSaveSnapshot snapshot;
 	};
@@ -402,6 +404,10 @@ private:
 	 */
 	struct StartupCacheSaveThreadCompletion
 	{
+		~StartupCacheSaveThreadCompletion();
+
+		void DiscardPendingResult();
+
 		std::shared_ptr<StartupCacheSaveOperation> pOperation;
 		StartupCacheSaveResult *pResult = NULL;
 	};

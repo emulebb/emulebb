@@ -731,6 +731,7 @@ CSharedFileList::~CSharedFileList()
 	}
 	if (HasPendingStartupCacheSaveWork())
 		(void)AbandonStartupCacheSaveForShutdown();
+	DiscardPostedWorkerUiPayloadsForOwner(GetWorkerUiPayloadOwnerKey(this));
 	ASSERT(!HasPendingStartupCacheSaveWork());
 	if (m_hSharedHashQueueEvent != NULL) {
 		VERIFY(::CloseHandle(m_hSharedHashQueueEvent));
@@ -2564,6 +2565,7 @@ bool CSharedFileList::RequestStartupCacheSave(bool /*bImmediate*/)
 
 		std::unique_ptr<StartupCacheSaveThreadRequest> pRequest(new StartupCacheSaveThreadRequest{});
 		pRequest->hNotifyWnd = (theApp.emuledlg != NULL) ? theApp.emuledlg->GetSafeHwnd() : NULL;
+		pRequest->nCompletionOwnerKey = GetWorkerUiPayloadOwnerKey(this);
 		pRequest->pOperation = pOperation;
 		pRequest->snapshot = std::move(snapshot);
 
@@ -3602,14 +3604,12 @@ UINT AFX_CDECL CSharedFileList::StartupCacheSaveThreadProc(LPVOID pParam)
 	pCompletion->pOperation = pRequest ? pRequest->pOperation : std::shared_ptr<StartupCacheSaveOperation>();
 	pCompletion->pResult = pResult.release();
 	const HWND hNotifyWnd = pRequest ? pRequest->hNotifyWnd : NULL;
-	if (hNotifyWnd != NULL && ::IsWindow(hNotifyWnd))
-		bPosted = (::PostMessage(hNotifyWnd, UM_STARTUP_CACHE_SAVE_COMPLETE, 0, reinterpret_cast<LPARAM>(pCompletion.get())) != FALSE);
+	const ULONG_PTR nCompletionOwnerKey = pRequest ? pRequest->nCompletionOwnerKey : 0;
+	if (hNotifyWnd != NULL)
+		bPosted = TryPostWorkerUiPayloadMessage(hNotifyWnd, NULL, nCompletionOwnerKey, UM_STARTUP_CACHE_SAVE_COMPLETE, std::move(pCompletion));
 
-	if (!bPosted) {
+	if (!bPosted && pCompletion != NULL)
 		DiscardStartupCacheSaveCompletion(pCompletion.release());
-	} else {
-		(void)pCompletion.release();
-	}
 
 	return 0;
 }
@@ -3694,20 +3694,36 @@ void CSharedFileList::HandleStartupCacheSaveCompletion(void *pResultVoid)
 	}
 }
 
+void CSharedFileList::StartupCacheSaveThreadCompletion::DiscardPendingResult()
+{
+	std::unique_ptr<StartupCacheSaveResult> pDiscardedResult(pResult);
+	pResult = NULL;
+	if (pDiscardedResult != NULL && pOperation) {
+		if (pDiscardedResult->bWriteSucceeded)
+			(void)LongPathSeams::DeleteFileIfExists(pOperation->strCachePath);
+		if (pDiscardedResult->bDuplicatePathWriteSucceeded)
+			(void)LongPathSeams::DeleteFileIfExists(pOperation->strDuplicatePathCachePath);
+		UpdateStartupCacheSaveOperationProgress(pOperation, StartupCacheSavePhase::Idle, 0, 0);
+	}
+}
+
+CSharedFileList::StartupCacheSaveThreadCompletion::~StartupCacheSaveThreadCompletion()
+{
+	DiscardPendingResult();
+}
+
 void CSharedFileList::DiscardStartupCacheSaveCompletion(void *pCompletionVoid)
 {
 	std::unique_ptr<StartupCacheSaveThreadCompletion> pCompletion(static_cast<StartupCacheSaveThreadCompletion*>(pCompletionVoid));
 	if (pCompletion == NULL)
 		return;
-	std::unique_ptr<StartupCacheSaveResult> pResult(pCompletion->pResult);
-	pCompletion->pResult = NULL;
-	if (pResult != NULL && pCompletion->pOperation) {
-		if (pResult->bWriteSucceeded)
-			(void)LongPathSeams::DeleteFileIfExists(pCompletion->pOperation->strCachePath);
-		if (pResult->bDuplicatePathWriteSucceeded)
-			(void)LongPathSeams::DeleteFileIfExists(pCompletion->pOperation->strDuplicatePathCachePath);
-		UpdateStartupCacheSaveOperationProgress(pCompletion->pOperation, StartupCacheSavePhase::Idle, 0, 0);
-	}
+	pCompletion->DiscardPendingResult();
+}
+
+void *CSharedFileList::TakeStartupCacheSaveCompletion(WPARAM wParam)
+{
+	std::unique_ptr<StartupCacheSaveThreadCompletion> pCompletion = TakePostedWorkerUiPayload<StartupCacheSaveThreadCompletion>(wParam);
+	return pCompletion.release();
 }
 
 void CSharedFileList::Save() const
