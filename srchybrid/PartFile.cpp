@@ -2628,6 +2628,17 @@ void CPartFile::RecoverDownloadingSourceList(LPCTSTR pszContext)
 		static_cast<void*>(posHead),
 		static_cast<void*>(posTail));
 	m_downloadingSourceList.RemoveAll();
+	UINT uRecoveredSources = 0;
+	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;) {
+		CUpDownClient *pSource = srclist.GetNext(pos);
+		if (pSource != NULL && pSource->GetRequestFile() == this && pSource->GetDownloadState() == DS_DOWNLOADING) {
+			m_downloadingSourceList.AddTail(pSource);
+			++uRecoveredSources;
+		}
+	}
+	DebugLogWarning(_T("Rebuilt downloading-source list for \"%s\" from live sources (recovered=%u)"),
+		(LPCTSTR)GetFileName(),
+		uRecoveredSources);
 }
 
 void CPartFile::RemoveStaleSource(POSITION pos, const CUpDownClient *pClient, LPCTSTR pszContext)
