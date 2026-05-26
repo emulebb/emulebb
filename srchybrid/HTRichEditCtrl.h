@@ -2,6 +2,7 @@
 
 #include <deque>
 
+#include "RollingLogWindowSeams.h"
 #include "TitledMenu.h"
 
 class CHTRichEditCtrl : public CRichEditCtrl
@@ -55,13 +56,6 @@ public:
 	CFont* GetFont() const;
 
 protected:
-	struct SRollingLogEntry
-	{
-		CString strText;
-		UINT uMsgType = 0;
-		bool bTyped = false;
-	};
-
 	CHARFORMAT2 m_cfDefault;
 	CStringArray m_astrBuff;
 	CString m_strSkinKey;
@@ -89,7 +83,9 @@ protected:
 	int m_iUpdateBatchDepth;
 	size_t m_uRollingMaxEntries;
 	int m_iRollingMaxLineChars;
-	std::deque<SRollingLogEntry> m_aRollingEntries;
+	std::deque<RollingLogWindowSeams::SRollingLogEntry> m_aRollingEntries;
+	std::deque<RollingLogWindowSeams::SRollingLogEntry> m_aRollingPendingEntries;
+	int m_iRollingPendingTrimChars;
 	static int sm_iSmileyClients;
 	static CComPtr<IStorage> sm_pIStorageSmileys;
 	static CMapStringToPtr sm_aSmileyBitmaps;
@@ -107,6 +103,9 @@ protected:
 	void RemoveTextFromHead(int iCharsToRemove);
 	void RebuildRollingWindow();
 	void EnsureRollingWindowMaterialized();
+	void ClearRollingPendingDisplay();
+	void FlushRollingBatchUpdate();
+	void AppendRollingEntriesToWindow(const std::deque<RollingLogWindowSeams::SRollingLogEntry> &rEntries);
 	bool InsertSmiley(LPCTSTR pszSmileyID, COLORREF bk);
 	HBITMAP GetSmileyBitmap(LPCTSTR pszSmileyID, COLORREF bk);
 	void AddSmileys(LPCTSTR pszLine);

@@ -73,6 +73,7 @@ CHTRichEditCtrl::CHTRichEditCtrl()
 	, m_iUpdateBatchDepth()
 	, m_uRollingMaxEntries()
 	, m_iRollingMaxLineChars()
+	, m_iRollingPendingTrimChars()
 {
 	m_cfDefault.cbSize = (UINT)sizeof(CHARFORMAT2);
 }
@@ -118,10 +119,7 @@ void CHTRichEditCtrl::EnableRollingLogWindow(const size_t uMaxEntries, const int
 	if (!m_bRollingLogWindow)
 		return;
 
-	const ULONGLONG ullDesiredLimit = static_cast<ULONGLONG>(m_uRollingMaxEntries) * static_cast<ULONGLONG>(max(m_iRollingMaxLineChars, 128));
-	const ULONGLONG ullLimit = ullDesiredLimit + 4096ui64;
-	const DWORD dwLimit = static_cast<DWORD>(ullLimit > 0x7fffffffu ? 0x7fffffffu : ullLimit);
-	LimitText(dwLimit);
+	LimitText(RollingLogWindowSeams::BuildRichEditTextLimit(m_uRollingMaxEntries, m_iRollingMaxLineChars));
 	m_iLimitText = GetLimitText();
 }
 
@@ -275,16 +273,17 @@ void CHTRichEditCtrl::TrimRollingEntries()
 	if (!m_bRollingLogWindow || m_uRollingMaxEntries == 0)
 		return;
 
-	int iCharsToRemove = 0;
-	while (m_aRollingEntries.size() > m_uRollingMaxEntries) {
-		const int iEntryLength = m_aRollingEntries.front().strText.GetLength();
-		if (iCharsToRemove <= INT_MAX - iEntryLength)
-			iCharsToRemove += iEntryLength;
-		else
-			iCharsToRemove = INT_MAX;
-		m_aRollingEntries.pop_front();
-	}
-	if (m_hWnd != NULL && IsWindowVisible() && !m_bRollingWindowNeedsRebuild)
+	const int iCharsToRemove = RollingLogWindowSeams::ApplyTrimPlan(
+		m_aRollingEntries,
+		m_aRollingPendingEntries,
+		m_uRollingMaxEntries,
+		[](const RollingLogWindowSeams::SRollingLogEntry &rEntry) { return rEntry.strText.GetLength(); });
+
+	if (iCharsToRemove <= 0)
+		return;
+	if (m_iUpdateBatchDepth > 0)
+		m_iRollingPendingTrimChars = RollingLogWindowSeams::SaturatingAddChars(m_iRollingPendingTrimChars, iCharsToRemove);
+	else if (m_hWnd != NULL && IsWindowVisible() && !m_bRollingWindowNeedsRebuild)
 		RemoveTextFromHead(iCharsToRemove);
 	else if (m_hWnd != NULL)
 		m_bRollingWindowNeedsRebuild = true;
@@ -308,15 +307,10 @@ void CHTRichEditCtrl::RebuildRollingWindow()
 	m_bNoPaint = true;
 
 	SetWindowText(_T(""));
-	for (const SRollingLogEntry &rEntry : m_aRollingEntries) {
-		if (rEntry.bTyped)
-			AddLine(rEntry.strText, rEntry.strText.GetLength(), false, GetLogLineColor(rEntry.uMsgType & LOGMSGTYPEMASK));
-		else
-			AddLine(rEntry.strText, rEntry.strText.GetLength());
-	}
+	m_bRollingWindowNeedsRebuild = false;
+	AppendRollingEntriesToWindow(m_aRollingEntries);
 
 	m_bNoPaint = bOldNoPaint;
-	m_bRollingWindowNeedsRebuild = false;
 	if (bIsVisible && !m_bNoPaint) {
 		SetRedraw();
 		Invalidate();
@@ -325,23 +319,33 @@ void CHTRichEditCtrl::RebuildRollingWindow()
 
 void CHTRichEditCtrl::AppendRollingEntry(const CString &strText, const bool bTyped, const UINT uMsgType)
 {
-	SRollingLogEntry entry;
+	RollingLogWindowSeams::SRollingLogEntry entry;
 	entry.strText = strText;
 	entry.bTyped = bTyped;
 	entry.uMsgType = uMsgType & LOGMSGTYPEMASK;
 	m_aRollingEntries.push_back(entry);
+
+	if (m_hWnd != NULL && IsWindowVisible() && !m_bRollingWindowNeedsRebuild && m_iUpdateBatchDepth > 0)
+		m_aRollingPendingEntries.push_back(entry);
+
 	TrimRollingEntries();
 
 	if (m_hWnd == NULL)
 		return;
 	if (!IsWindowVisible()) {
 		m_bRollingWindowNeedsRebuild = true;
+		ClearRollingPendingDisplay();
 		return;
 	}
 	if (m_bRollingWindowNeedsRebuild) {
-		RebuildRollingWindow();
+		if (m_iUpdateBatchDepth > 0)
+			ClearRollingPendingDisplay();
+		else
+			RebuildRollingWindow();
 		return;
 	}
+	if (m_iUpdateBatchDepth > 0)
+		return;
 
 	FlushBuffer();
 	if (bTyped)
@@ -375,6 +379,8 @@ void CHTRichEditCtrl::EndUpdateBatch()
 
 	const BOOL bWasVisible = m_bUpdateBatchWasVisible;
 	const bool bNeedsInvalidate = m_bUpdateBatchNeedsInvalidate;
+	if (m_bRollingLogWindow)
+		FlushRollingBatchUpdate();
 	m_bNoPaint = m_bUpdateBatchOldNoPaint;
 	m_bUpdateBatchWasVisible = FALSE;
 	m_bUpdateBatchNeedsInvalidate = false;
@@ -383,6 +389,99 @@ void CHTRichEditCtrl::EndUpdateBatch()
 		if (bNeedsInvalidate)
 			Invalidate();
 	}
+}
+
+void CHTRichEditCtrl::ClearRollingPendingDisplay()
+{
+	m_aRollingPendingEntries.clear();
+	m_iRollingPendingTrimChars = 0;
+}
+
+void CHTRichEditCtrl::FlushRollingBatchUpdate()
+{
+	if (m_hWnd == NULL) {
+		ClearRollingPendingDisplay();
+		return;
+	}
+	if (!IsWindowVisible()) {
+		m_bRollingWindowNeedsRebuild = true;
+		ClearRollingPendingDisplay();
+		return;
+	}
+	if (m_bRollingWindowNeedsRebuild) {
+		ClearRollingPendingDisplay();
+		RebuildRollingWindow();
+		m_bUpdateBatchNeedsInvalidate = true;
+		return;
+	}
+
+	if (m_iRollingPendingTrimChars > 0) {
+		RemoveTextFromHead(m_iRollingPendingTrimChars);
+		m_bUpdateBatchNeedsInvalidate = true;
+	}
+	m_iRollingPendingTrimChars = 0;
+
+	if (m_aRollingPendingEntries.empty())
+		return;
+
+	int iPendingChars = 0;
+	for (const RollingLogWindowSeams::SRollingLogEntry &rEntry : m_aRollingPendingEntries)
+		iPendingChars = RollingLogWindowSeams::SaturatingAddChars(iPendingChars, rEntry.strText.GetLength());
+	if (GetWindowTextLength() > m_iLimitText - iPendingChars) {
+		ClearRollingPendingDisplay();
+		RebuildRollingWindow();
+		m_bUpdateBatchNeedsInvalidate = true;
+		return;
+	}
+
+	AppendRollingEntriesToWindow(m_aRollingPendingEntries);
+	m_aRollingPendingEntries.clear();
+	m_bUpdateBatchNeedsInvalidate = true;
+}
+
+void CHTRichEditCtrl::AppendRollingEntriesToWindow(const std::deque<RollingLogWindowSeams::SRollingLogEntry> &rEntries)
+{
+	if (rEntries.empty() || m_hWnd == NULL)
+		return;
+
+	FlushBuffer();
+
+	long lStartChar = 0;
+	long lEndChar = 0;
+	GetSel(lStartChar, lEndChar);
+	bool bAutoAutoScroll = m_bAutoScroll;
+	SCROLLINFO si;
+	si.cbSize = (UINT)sizeof si;
+	si.fMask = SIF_ALL;
+	if ((GetStyle() & WS_VSCROLL) && GetScrollInfo(SB_VERT, &si))
+		bAutoAutoScroll = (si.nPos >= (int)(si.nMax - si.nPage - 20));
+
+	POINT ptScrollPos;
+	SendMessage(EM_GETSCROLLPOS, 0, (LPARAM)&ptScrollPos);
+
+	int iSize = GetWindowTextLength();
+	for (const RollingLogWindowSeams::SRollingLogEntry &rEntry : rEntries) {
+		const int iLen = rEntry.strText.GetLength();
+		if (iLen <= 0)
+			continue;
+		SafeAddLine(
+			iSize,
+			rEntry.strText,
+			iLen,
+			lStartChar,
+			lEndChar,
+			false,
+			rEntry.bTyped ? GetLogLineColor(rEntry.uMsgType & LOGMSGTYPEMASK) : CLR_DEFAULT,
+			CLR_DEFAULT,
+			0);
+		iSize = GetWindowTextLength();
+	}
+
+	SetSel(lStartChar, lEndChar);
+	if (bAutoAutoScroll)
+		ScrollToLastLine();
+	else
+		SendMessage(EM_SETSCROLLPOS, 0, (LPARAM)&ptScrollPos);
 }
 
 void CHTRichEditCtrl::FlushBuffer()
@@ -697,6 +796,7 @@ void CHTRichEditCtrl::Reset()
 {
 	m_astrBuff.RemoveAll();
 	m_aRollingEntries.clear();
+	ClearRollingPendingDisplay();
 	m_bRollingWindowNeedsRebuild = false;
 	SetRedraw(FALSE);
 	SetWindowText(_T(""));
@@ -824,7 +924,7 @@ CString CHTRichEditCtrl::GetAllLogEntries()
 {
 	if (m_bRollingLogWindow) {
 		CString strLog;
-		for (const SRollingLogEntry &rEntry : m_aRollingEntries)
+		for (const RollingLogWindowSeams::SRollingLogEntry &rEntry : m_aRollingEntries)
 			strLog += rEntry.strText;
 		return strLog;
 	}

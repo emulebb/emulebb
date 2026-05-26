@@ -655,6 +655,7 @@
     <ClInclude Include="RichEditCtrlX.h" />
     <ClInclude Include="RichEditStream.h" />
     <ClInclude Include="Ring.h" />
+    <ClInclude Include="RollingLogWindowSeams.h" />
     <ClInclude Include="SafeFile.h" />
     <ClInclude Include="Scanner.h" />
     <ClInclude Include="Scheduler.h" />
