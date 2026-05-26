@@ -4308,7 +4308,7 @@ CString CPreferences::GetDefaultDirectory(EDefaultDirectory eDirectory, bool bCr
 		m_astrDefaultDirs[EMULE_ADDLANGDIR] = strSelectedExpansionBaseDirectory + _T("lang\\");
 		m_astrDefaultDirs[EMULE_INSTLANGDIR] = m_astrDefaultDirs[EMULE_EXECUTABLEDIR] + _T("lang\\");
 		m_astrDefaultDirs[EMULE_WEBSERVERDIR] = m_astrDefaultDirs[EMULE_EXECUTABLEDIR] + _T("webserver\\");
-		m_astrDefaultDirs[EMULE_SKINDIR] = strSelectedExpansionBaseDirectory + _T("skins\\");
+		m_astrDefaultDirs[EMULE_SKINDIR] = m_astrDefaultDirs[EMULE_EXECUTABLEDIR] + _T("skins\\");
 		m_astrDefaultDirs[EMULE_DATABASEDIR] = strSelectedDataBaseDirectory;
 		m_astrDefaultDirs[EMULE_CONFIGBASEDIR] = strSelectedConfigBaseDirectory;
 		//               [EMULE_EXECUTABLEDIR] - has been set already

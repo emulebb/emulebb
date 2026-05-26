@@ -4282,6 +4282,7 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_TEXTLABELSONRIGHT:
 	case MP_SELECT_SKIN_DIR:
 	case MP_SELECT_SKIN_FILE:
+	case MP_HM_RESET_DISPLAY:
 		if (toolbar != NULL)
 			toolbar->ExecuteCommand(wParam);
 		break;
@@ -4832,6 +4833,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 			display.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)skinProfiles.m_hMenu, GetResString(IDS_SKIN_PROF), _T("DISPLAY"));
 			display.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)textLabels.m_hMenu, GetResString(IDS_TEXTLABELS), _T("DISPLAY"));
 			display.AppendMenu(MF_SEPARATOR);
+			display.AppendMenu(MF_STRING, MP_HM_RESET_DISPLAY, GetResString(IDS_PW_RESET), _T("RESETFORMAT"));
 			display.AppendMenu(MF_STRING, MP_CUSTOMIZETOOLBAR, GetResString(IDS_CUSTOMIZETOOLBAR), _T("TOOLS"));
 		}
 

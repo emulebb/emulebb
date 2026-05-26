@@ -301,55 +301,7 @@ void CMuleToolbarCtrl::SetAllButtonsWidth()
 
 void CMuleToolbarCtrl::OnNmRClick(LPNMHDR, LRESULT *pResult)
 {
-	if (GetKeyState(VK_CONTROL) < 0) {
-		if (!thePrefs.GetToolbarBitmapSettings().IsEmpty())
-			ChangeToolbarBitmap(thePrefs.GetToolbarBitmapSettings(), true);
-		if (!thePrefs.GetSkinProfile().IsEmpty())
-			theApp.ApplySkin(thePrefs.GetSkinProfile());
-
-		*pResult = 1;
-		return;
-	}
-
-
-	///////////////////////////////////////////////////////////////////////////
-	// "Toolbar Bitmap" sub menu
-	//
-	CMenu menuBitmaps;
-	menuBitmaps.CreateMenu();
-	AppendToolbarBitmapMenu(menuBitmaps);
-
-
-	///////////////////////////////////////////////////////////////////////////
-	// "Skin Profile" sub menu
-	//
-	CMenu menuSkins;
-	menuSkins.CreateMenu();
-	AppendSkinProfileMenu(menuSkins);
-
-
-	///////////////////////////////////////////////////////////////////////////
-	// "Text Label" sub menu
-	//
-	CMenu menuTextLabels;
-	menuTextLabels.CreateMenu();
-	AppendTextLabelMenu(menuTextLabels);
-
-
-	///////////////////////////////////////////////////////////////////////////
-	// Toolbar context menu
-	//
-	CMenu menuToolbar;
-	menuToolbar.CreatePopupMenu();
-	menuToolbar.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)menuBitmaps.m_hMenu, GetResString(IDS_TOOLBARSKINS));
-	menuToolbar.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)menuSkins.m_hMenu, GetResString(IDS_SKIN_PROF));
-	menuToolbar.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)menuTextLabels.m_hMenu, GetResString(IDS_TEXTLABELS));
-	menuToolbar.AppendMenu(MF_STRING, MP_CUSTOMIZETOOLBAR, GetResString(IDS_CUSTOMIZETOOLBAR));
-	CPoint point;
-	::GetCursorPos(&point);
-	menuToolbar.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
-
-	*pResult = 1;
+	*pResult = 0;
 }
 
 void CMuleToolbarCtrl::AppendToolbarBitmapMenu(CMenu &menuBitmaps)
@@ -592,6 +544,15 @@ BOOL CMuleToolbarCtrl::ExecuteCommand(WPARAM wParam)
 			if (SelectDir(strToolbarDir, m_hWnd, GetResString(IDS_SELECTTOOLBARBITMAPDIR)))
 				thePrefs.SetMuleDirectory(EMULE_TOOLBARDIR, strToolbarDir);
 		}
+		break;
+	case MP_HM_RESET_DISPLAY:
+		m_sizBtnBmp.cx = m_sizBtnBmp.cy = 32;
+		ChangeToolbarBitmap(_T(""), true);
+		thePrefs.SetToolbarBitmapSettings(_T(""));
+		ChangeTextLabelStyle(LabelsBelow, true, true);
+		thePrefs.SetToolbarLabelSettings(LabelsBelow);
+		thePrefs.SetToolbarIconSize(m_sizBtnBmp);
+		theApp.ApplySkin(_T(""));
 		break;
 	case MP_CUSTOMIZETOOLBAR:
 		Customize();
