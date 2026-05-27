@@ -176,6 +176,11 @@ public:
 	 * completions have released their raw CKnownFile pointers.
 	 */
 	static void ProcessDeferredUploadReadDeletes();
+	/**
+	 * @brief Performs the shutdown pass for duplicate completed part files that
+	 * were detached while upload-read IOCP completions still held raw pointers.
+	 */
+	static void DrainDeferredUploadReadDeletesForShutdown();
 	EPartFileLoadResult	LoadPartFile(LPCTSTR in_directory, LPCTSTR in_filename, EPartFileFormat *pOutCheckFileFormat = NULL); //filename = *.part.met
 	EPartFileLoadResult	ImportShareazaTempfile(LPCTSTR in_directory, LPCTSTR in_filename, EPartFileFormat *pOutCheckFileFormat = NULL);
 

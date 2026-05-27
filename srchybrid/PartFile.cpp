@@ -151,6 +151,56 @@ void QueueDeferredUploadReadDelete(CPartFile *pFile, LPCTSTR pszFileName)
 		(LPCTSTR)entry.strFileName);
 }
 
+void ProcessDeferredUploadReadDeletesImpl(const bool bShutdown)
+{
+	const ULONGLONG ullNow = ::GetTickCount64();
+	UINT uRetainedForShutdown = 0;
+	for (POSITION pos = s_deferredUploadReadDeletes.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
+		DeferredUploadReadDelete &entry = s_deferredUploadReadDeletes.GetNext(pos);
+		CPartFile *const pFile = entry.pFile;
+		if (pFile == NULL) {
+			s_deferredUploadReadDeletes.RemoveAt(posCurrent);
+			continue;
+		}
+
+		const LONG nRefs = pFile->GetUploadReadReferenceCount();
+		if (nRefs == 0) {
+			const CString strFileName(entry.strFileName);
+			s_deferredUploadReadDeletes.RemoveAt(posCurrent);
+			DebugLogWarning(_T("Deleting deferred duplicate completed part file \"%s\" after upload read references drained."),
+				(LPCTSTR)strFileName);
+			delete pFile;
+			continue;
+		}
+
+		// WHY: the queued object has already been detached from download/shared
+		// lists and marked bNoNewReads. The only remaining owners should be
+		// outstanding overlapped upload reads, so normal queue ticks wake the
+		// IOCP worker and delete only after those raw pointers disappear. During
+		// shutdown we do not free through live refs; we log the retained object
+		// explicitly so this safety-preserve path is visible in diagnostics.
+		if (theApp.m_pUploadDiskIOThread != NULL)
+			theApp.m_pUploadDiskIOThread->WakeUpCall();
+		if (bShutdown)
+			++uRetainedForShutdown;
+		if (bShutdown || ullNow >= entry.ullLastLogTick + kDeferredUploadReadDeleteLogMs) {
+			entry.ullLastLogTick = ullNow;
+			const ULONGLONG ullQueuedAgeMs = ullNow >= entry.ullQueuedTick ? ullNow - entry.ullQueuedTick : 0;
+			DebugLogWarning(_T("Still deferring deletion of duplicate completed part file \"%s\"; %ld upload read reference(s) remain after %I64u ms%s."),
+				(LPCTSTR)entry.strFileName,
+				nRefs,
+				static_cast<uint64>(ullQueuedAgeMs),
+				bShutdown ? _T(" at shutdown") : _T(""));
+		}
+	}
+
+	if (bShutdown && uRetainedForShutdown > 0) {
+		DebugLogError(_T("Shutdown retained %u duplicate completed part file object(s) because upload read references were still active; preserving them avoids use-after-free."),
+			uRetainedForShutdown);
+	}
+}
+
 bool WaitForUploadReadReferencesToRelease(CKnownFile *pFile, LPCTSTR pszContext)
 {
 	if (pFile == NULL || pFile->GetUploadReadReferenceCount() == 0)
@@ -601,39 +651,12 @@ CPartFile::~CPartFile()
 
 void CPartFile::ProcessDeferredUploadReadDeletes()
 {
-	const ULONGLONG ullNow = ::GetTickCount64();
-	for (POSITION pos = s_deferredUploadReadDeletes.GetHeadPosition(); pos != NULL;) {
-		const POSITION posCurrent = pos;
-		DeferredUploadReadDelete &entry = s_deferredUploadReadDeletes.GetNext(pos);
-		CPartFile *const pFile = entry.pFile;
-		if (pFile == NULL) {
-			s_deferredUploadReadDeletes.RemoveAt(posCurrent);
-			continue;
-		}
+	ProcessDeferredUploadReadDeletesImpl(false);
+}
 
-		const LONG nRefs = pFile->GetUploadReadReferenceCount();
-		if (nRefs == 0) {
-			const CString strFileName(entry.strFileName);
-			s_deferredUploadReadDeletes.RemoveAt(posCurrent);
-			DebugLogWarning(_T("Deleting deferred duplicate completed part file \"%s\" after upload read references drained."),
-				(LPCTSTR)strFileName);
-			delete pFile;
-			continue;
-		}
-
-		// WHY: the queued object has already been detached from download/shared
-		// lists and marked bNoNewReads. The only remaining owners should be
-		// outstanding overlapped upload reads, so the periodic queue tick wakes
-		// the IOCP worker and deletes only after those raw pointers disappear.
-		if (theApp.m_pUploadDiskIOThread != NULL)
-			theApp.m_pUploadDiskIOThread->WakeUpCall();
-		if (ullNow >= entry.ullLastLogTick + kDeferredUploadReadDeleteLogMs) {
-			entry.ullLastLogTick = ullNow;
-			DebugLogWarning(_T("Still deferring deletion of duplicate completed part file \"%s\"; %ld upload read reference(s) remain."),
-				(LPCTSTR)entry.strFileName,
-				nRefs);
-		}
-	}
+void CPartFile::DrainDeferredUploadReadDeletesForShutdown()
+{
+	ProcessDeferredUploadReadDeletesImpl(true);
 }
 
 void CPartFile::WaitForFileCompletionWorkerForShutdown()

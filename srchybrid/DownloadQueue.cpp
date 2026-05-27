@@ -581,6 +581,11 @@ void CDownloadQueue::Init()
 CDownloadQueue::~CDownloadQueue()
 {
 	m_hostnameResolver.Stop();
+	// WHY: duplicate completed part files can be detached from all visible
+	// queues while upload-read IOCP completions still hold raw CKnownFile
+	// pointers. Give that quarantine one final drain/report pass during
+	// download queue teardown so rare retained objects are explicit in logs.
+	CPartFile::DrainDeferredUploadReadDeletesForShutdown();
 	while (!filelist.IsEmpty()) {
 		CPartFile *pPartFile = filelist.RemoveHead();
 		if (pPartFile != NULL)
