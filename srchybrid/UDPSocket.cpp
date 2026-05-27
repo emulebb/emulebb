@@ -809,7 +809,11 @@ void CUDPSocket::SendBuffer(uint32 nIP, uint16 nPort, BYTE *pPacket, UINT uSize)
 		std::unique_ptr<SServerUDPPacket, ServerUdpPacketDeleter> newpending(new SServerUDPPacket);
 		newpending->dwIP = nIP;
 		newpending->nPort = nPort;
-		newpending->packet = packetOwner.get();
+		// WHY: ServerUdpPacketDeleter owns newpending->packet on every failure
+		// path after this assignment. Transfer pPacket out of packetOwner before
+		// any later queue check/AddTail can return or throw, otherwise both smart
+		// owners would delete the same datagram.
+		newpending->packet = packetOwner.release();
 		newpending->size = uSize;
 		{
 			CSingleLock sendLock(&sendLocker, TRUE);
@@ -824,7 +828,6 @@ void CUDPSocket::SendBuffer(uint32 nIP, uint16 nPort, BYTE *pPacket, UINT uSize)
 			// cross-thread UDP queue. Keep the packet in a smart owner until AddTail
 			// succeeds so low-memory failure cannot leak pPacket or wedge the lock.
 			controlpacket_queue.AddTail(newpending.get());
-			packetOwner.release();
 			newpending.release();
 		}
 	} catch (CException *pException) {
