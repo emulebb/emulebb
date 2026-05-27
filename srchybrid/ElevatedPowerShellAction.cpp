@@ -108,6 +108,30 @@ namespace
 		return strPath;
 	}
 
+	CString GetSystemDirectoryPath()
+	{
+		DWORD dwCapacity = MAX_PATH;
+		CString strPath;
+		for (;;) {
+			LPTSTR pszPath = strPath.GetBuffer(dwCapacity);
+			const UINT uLength = ::GetSystemDirectory(pszPath, dwCapacity);
+			if (uLength == 0) {
+				strPath.ReleaseBuffer(0);
+				return CString();
+			}
+			if (uLength < dwCapacity) {
+				strPath.ReleaseBuffer(uLength);
+				return strPath;
+			}
+			strPath.ReleaseBuffer(0);
+			if (uLength >= PathHelpers::kMaxDynamicPathChars) {
+				::SetLastError(ERROR_BUFFER_OVERFLOW);
+				return CString();
+			}
+			dwCapacity = uLength + 1;
+		}
+	}
+
 	CString GuidToLeaf()
 	{
 		GUID guid = {};
@@ -162,18 +186,16 @@ namespace
 
 	CString GetPowerShellPath()
 	{
-		CString strPath;
-		LPTSTR pszWindowsDir = strPath.GetBuffer(MAX_PATH);
-		const UINT uLength = ::GetWindowsDirectory(pszWindowsDir, MAX_PATH);
-		strPath.ReleaseBuffer(uLength);
-		if (uLength != 0 && uLength < MAX_PATH) {
-			if (strPath.Right(1) != _T("\\"))
-				strPath += _T("\\");
-			strPath += _T("System32\\WindowsPowerShell\\v1.0\\powershell.exe");
-			if (LongPathSeams::PathExists(strPath))
-				return strPath;
-		}
-		return _T("powershell.exe");
+		const CString strSystemDir(GetSystemDirectoryPath());
+		if (strSystemDir.IsEmpty())
+			return CString();
+
+		const CString strPath(PathHelpers::AppendPathComponent(strSystemDir, _T("WindowsPowerShell\\v1.0\\powershell.exe")));
+		if (LongPathSeams::PathExists(strPath))
+			return strPath;
+
+		::SetLastError(ERROR_FILE_NOT_FOUND);
+		return CString();
 	}
 
 	void ReadResultJson(const CString &rstrResultPath, CString &rstrResultJson)
@@ -265,13 +287,20 @@ bool ElevatedPowerShellAction::RunBundledScript(const CString &rstrArguments, bo
 	}
 
 	const CString strWorkingDirectory(PathHelpers::GetDirectoryPath(rResult.strScriptPath));
+	const CString strPowerShellPath(GetPowerShellPath());
+	if (strPowerShellPath.IsEmpty()) {
+		rResult.dwLastError = ::GetLastError();
+		rResult.strErrorText = GetErrorMessage(rResult.dwLastError);
+		CleanupActionTemp(rResult.strResultPath, rResult.strTempDir);
+		return false;
+	}
 
 	SHELLEXECUTEINFO sei = {};
 	sei.cbSize = sizeof(sei);
 	sei.fMask = bWaitForExit ? SEE_MASK_NOCLOSEPROCESS : 0;
 	sei.hwnd = NULL;
 	sei.lpVerb = bElevated ? _T("runas") : NULL;
-	sei.lpFile = GetPowerShellPath();
+	sei.lpFile = strPowerShellPath;
 	sei.lpParameters = strParameters;
 	sei.lpDirectory = strWorkingDirectory;
 	sei.nShow = SW_SHOWNORMAL;
