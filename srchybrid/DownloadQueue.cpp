@@ -1165,8 +1165,11 @@ bool CDownloadQueue::RemoveSource(CUpDownClient *toremove, bool bDoStatsUpdate)
 		if (pos2) {
 			pfile->A4AFsrclist.RemoveAt(pos2);
 			theApp.emuledlg->transferwnd->GetDownloadList()->RemoveSource(toremove, pfile);
-			toremove->m_OtherRequests_list.RemoveAt(pos1);
-		}
+		} else
+			DebugLogWarning(_T("CDownloadQueue::RemoveSource: A4AF request mirror was already missing source %s on file \"%s\""), (LPCTSTR)toremove->DbgGetClientInfo(), (LPCTSTR)pfile->GetFileName());
+		// The client list is the later swap input; drop it even if the file-side
+		// mirror was already out of sync so DoSwap cannot see stale A4AF state.
+		toremove->m_OtherRequests_list.RemoveAt(pos1);
 	}
 	for (POSITION pos = toremove->m_OtherNoNeeded_list.GetHeadPosition(); pos != NULL;) {
 		const POSITION pos1 = pos;
@@ -1180,8 +1183,11 @@ bool CDownloadQueue::RemoveSource(CUpDownClient *toremove, bool bDoStatsUpdate)
 		if (pos2) {
 			pfile->A4AFsrclist.RemoveAt(pos2);
 			theApp.emuledlg->transferwnd->GetDownloadList()->RemoveSource(toremove, pfile);
-			toremove->m_OtherNoNeeded_list.RemoveAt(pos1);
-		}
+		} else
+			DebugLogWarning(_T("CDownloadQueue::RemoveSource: A4AF no-needed mirror was already missing source %s on file \"%s\""), (LPCTSTR)toremove->DbgGetClientInfo(), (LPCTSTR)pfile->GetFileName());
+		// The client list is the later swap input; drop it even if the file-side
+		// mirror was already out of sync so DoSwap cannot see stale A4AF state.
+		toremove->m_OtherNoNeeded_list.RemoveAt(pos1);
 	}
 
 	if (bRemovedSrcFromPartFile && (toremove->HasFileRating() || !toremove->GetFileComment().IsEmpty())) {
