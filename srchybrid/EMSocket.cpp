@@ -1012,22 +1012,7 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 								::InterlockedAdd64((LONG64*)&m_numberOfSentBytesCompleteFile, pCurBuf.len);
 						}
 
-					if (m_aBufferSend.GetCount() > 0) {
-						// all right, prepare to send our collected buffers
-						memset(&m_PendingSendOperation, 0, sizeof WSAOVERLAPPED);
-						m_PendingSendOperation.hEvent = theApp.uploadBandwidthThrottler->GetSocketAvailableEvent();
-						m_bPendingSendOv = true;
-						if (CEncryptedStreamSocket::SendOv(m_aBufferSend, &m_PendingSendOperation) == 0)
-							CleanUpOverlappedSendOperation(false);
-						else {
-							int nError = WSAGetLastError();
-							if (nError != WSA_IO_PENDING) {
-								ret.success = false;
-								theApp.QueueDebugLogLineEx(ERROR, _T("WSASend() Error: %u, %s"), nError, (LPCTSTR)GetErrorMessage(nError));
-								CleanUpOverlappedSendOperation(false);
-							}
-						}
-					}
+					StartPreparedOverlappedSend(ret);
 				}
 			}
 
@@ -1043,25 +1028,11 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 				pException->Delete();
 			ret.success = false;
 			bSignalSocketError = true;
-			m_bPendingSendOv = false;
-			DiscardPreparedOverlappedSendBuffers();
-			// WHY: preparation failed before WSASend accepted ownership. Drop
-			// any partially-published sendbuffer while the socket lock is still
-			// held; the caller below closes the socket so stream semantics are
-			// retried through normal peer teardown instead of resuming mid-frame.
-			delete[] sendbuffer;
-			sendbuffer = NULL;
-			sendblen = 0;
-			sent = 0;
+			FailPreparedOverlappedSend();
 		} catch (const std::bad_alloc&) {
 			ret.success = false;
 			bSignalSocketError = true;
-			m_bPendingSendOv = false;
-			DiscardPreparedOverlappedSendBuffers();
-			delete[] sendbuffer;
-			sendbuffer = NULL;
-			sendblen = 0;
-			sent = 0;
+			FailPreparedOverlappedSend();
 		}
 	}
 
@@ -1076,6 +1047,47 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 uint32 CEMSocket::GetNextFragSize(uint32 current, uint32 minFragSize)
 {
 	return (min(_I32_MAX, current + minFragSize - 1) / minFragSize) * minFragSize;
+}
+
+//sendLock must be locked by the caller!
+void CEMSocket::StartPreparedOverlappedSend(SocketSentBytes &sentBytes)
+{
+	if (m_aBufferSend.GetCount() == 0)
+		return;
+
+	// WHY: this is the ownership boundary for prepared WSABUF entries. Before
+	// this call, SendOv owns staged buffers and failure paths must discard them
+	// directly. After WSASend accepts or returns a synchronous result,
+	// CleanUpOverlappedSendOperation owns cancellation/completion cleanup.
+	memset(&m_PendingSendOperation, 0, sizeof WSAOVERLAPPED);
+	m_PendingSendOperation.hEvent = theApp.uploadBandwidthThrottler->GetSocketAvailableEvent();
+	m_bPendingSendOv = true;
+	if (CEncryptedStreamSocket::SendOv(m_aBufferSend, &m_PendingSendOperation) == 0) {
+		CleanUpOverlappedSendOperation(false);
+		return;
+	}
+
+	const int nError = WSAGetLastError();
+	if (nError != WSA_IO_PENDING) {
+		sentBytes.success = false;
+		theApp.QueueDebugLogLineEx(ERROR, _T("WSASend() Error: %u, %s"), nError, (LPCTSTR)GetErrorMessage(nError));
+		CleanUpOverlappedSendOperation(false);
+	}
+}
+
+//sendLock must be locked by the caller!
+void CEMSocket::FailPreparedOverlappedSend()
+{
+	m_bPendingSendOv = false;
+	DiscardPreparedOverlappedSendBuffers();
+	// WHY: preparation failed before WSASend accepted ownership. Drop any
+	// partially-published sendbuffer while the socket lock is still held; the
+	// caller closes the socket so stream semantics restart through peer teardown
+	// instead of resuming mid-frame.
+	delete[] sendbuffer;
+	sendbuffer = NULL;
+	sendblen = 0;
+	sent = 0;
 }
 
 /**
