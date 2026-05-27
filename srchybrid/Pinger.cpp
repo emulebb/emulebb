@@ -129,7 +129,9 @@ namespace
 }
 
 Pinger::Pinger()
-	: us(INVALID_SOCKET)
+	: hICMP(INVALID_HANDLE_VALUE)
+	, us(INVALID_SOCKET)
+	, is(INVALID_SOCKET)
 	, udpStarted()
 {
 	// udp start
@@ -212,7 +214,7 @@ Pinger::~Pinger()
 // UDPing reworked cleanup end <--
 
 	// Close the ICMP handle
-	if (!IcmpCloseHandle(hICMP)) {
+	if (hICMP != INVALID_HANDLE_VALUE && !IcmpCloseHandle(hICMP)) {
 		DWORD nErr = ::GetLastError();
 		CString sErr;
 		sErr.Format(_T("Closing ICMP handle failed, err: %lu "), nErr);
@@ -386,6 +388,22 @@ PingStatus Pinger::PingUDP(uint32 lAddr, DWORD ttl, bool doLog)
 
 PingStatus Pinger::PingICMP(uint32 lAddr, DWORD ttl, bool doLog)
 {
+	if (hICMP == INVALID_HANDLE_VALUE) {
+		// WHY: IcmpCreateFile can fail on locked-down hosts. Passing the
+		// sentinel handle to IcmpSendEcho just turns that setup failure into a
+		// later API misuse; report the unavailable backend at the call boundary.
+		if (doLog)
+			theApp.QueueDebugLogLine(false, _T("Pinger: skipped ICMP API ping because IcmpCreateFile did not return a valid handle"));
+		PingStatus returnValue = {};
+		returnValue.fDelay = TIMEOUT;
+		returnValue.destinationAddress = lAddr;
+		returnValue.status = IP_GENERAL_FAILURE;
+		returnValue.error = ERROR_INVALID_HANDLE;
+		returnValue.ttl = (UCHAR)ttl;
+		returnValue.bSuccess = false;
+		return returnValue;
+	}
+
 	char achRepData[sizeof(ICMP_ECHO_REPLY) + BUFSIZE];
 
 	// Address is assumed to be OK
@@ -410,8 +428,13 @@ PingStatus Pinger::PingICMP(uint32 lAddr, DWORD ttl, bool doLog)
 	if (dwReplyCount > 0) {
 		const ICMP_ECHO_REPLY &Reply = *reinterpret_cast<PICMP_ECHO_REPLY>(achRepData);
 		long pingTime = Reply.RoundTripTime;
+		const float fPingTime = static_cast<float>(pingTime);
+		const bool bUseMeasuredElapsed =
+			c_time.isPerformanceCounter()
+			&& (pingTime <= 20 || pingTime % 10 == 0)
+			&& (fPingTime + 10.0f > usResTime && usResTime + 10.0f > fPingTime);
 
-		returnValue.fDelay = (c_time.isPerformanceCounter() && (pingTime <= 20 || pingTime % 10 == 0) && (pingTime + 10 > usResTime && usResTime + 10 > pingTime)) ? usResTime : pingTime;
+		returnValue.fDelay = bUseMeasuredElapsed ? usResTime : fPingTime;
 		returnValue.destinationAddress = Reply.Address;
 		returnValue.status = Reply.Status;
 		returnValue.error = 0;
