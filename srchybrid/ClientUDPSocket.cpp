@@ -585,18 +585,21 @@ bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, boo
 	else
 		md4clr(newpending->pachTargetClientHashORKadID);
 // ZZ:UploadBandWithThrottler (UDP) -->
-	sendLocker.Lock();
-	if (!ClientUDPSocketSeams::CanQueueOutgoingClientUdpControlPacket(static_cast<size_t>(controlpacket_queue.GetCount()))) {
-		const unsigned long uQueuedPackets = static_cast<unsigned long>(controlpacket_queue.GetCount());
-		sendLocker.Unlock();
-		if (thePrefs.GetVerbose())
-			DebugLogWarning(_T("Client UDP socket: dropped outgoing control packet because the queue is full (%lu packets)"), uQueuedPackets);
-		return false;
+	{
+		CSingleLock sendLock(&sendLocker, TRUE);
+		if (!ClientUDPSocketSeams::CanQueueOutgoingClientUdpControlPacket(static_cast<size_t>(controlpacket_queue.GetCount()))) {
+			const unsigned long uQueuedPackets = static_cast<unsigned long>(controlpacket_queue.GetCount());
+			sendLock.Unlock();
+			if (thePrefs.GetVerbose())
+				DebugLogWarning(_T("Client UDP socket: dropped outgoing control packet because the queue is full (%lu packets)"), uQueuedPackets);
+			return false;
+		}
+		// WHY: controlpacket_queue is an MFC list and can allocate while the
+		// cross-thread send lock is held. Keep newpending owned until AddTail
+		// succeeds so a low-memory exception releases both the packet and lock.
+		controlpacket_queue.AddTail(newpending.get());
+		newpending.release();
 	}
-	controlpacket_queue.AddTail(newpending.get());
-	sendLocker.Unlock();
-	newpending.release();
-
 	theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this);
 	return true;
 // <-- ZZ:UploadBandWithThrottler (UDP)

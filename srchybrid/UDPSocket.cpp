@@ -59,6 +59,17 @@ struct SServerUDPPacket
 };
 #pragma pack(pop)
 
+struct ServerUdpPacketDeleter
+{
+	void operator()(SServerUDPPacket *pPacket) const
+	{
+		if (pPacket != NULL) {
+			delete[] pPacket->packet;
+			delete pPacket;
+		}
+	}
+};
+
 struct SRawServerPacket
 {
 	SRawServerPacket(BYTE *pPacket, UINT uSize, uint16 nPort)
@@ -715,27 +726,37 @@ SocketSentBytes CUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend, uint3
 	// NOTE: *** This function is invoked from a *different* thread!
 	uint32 sentBytes = 0;
 
-	sendLocker.Lock();
+	CSingleLock sendLock(&sendLocker, TRUE);
 
 // <-- ZZ:UploadBandWithThrottler (UDP)
-	while (!controlpacket_queue.IsEmpty() && !IsBusy() && sentBytes < maxNumberOfBytesToSend) { // ZZ:UploadBandWithThrottler (UDP)
-		SServerUDPPacket *packet = controlpacket_queue.RemoveHead();
-		int iLen = SendTo(packet->packet, packet->size, packet->dwIP, packet->nPort);
-		if (iLen >= 0) {
-			sentBytes += iLen; // ZZ:UploadBandWithThrottler (UDP)
-			delete[] packet->packet;
-			delete packet;
-		} else {
-			controlpacket_queue.AddHead(packet); //try to resend
-			if (ShouldYieldAfterUdpControlRequeue(iLen))
-				break;
+	try {
+		while (!controlpacket_queue.IsEmpty() && !IsBusy() && sentBytes < maxNumberOfBytesToSend) { // ZZ:UploadBandWithThrottler (UDP)
+			std::unique_ptr<SServerUDPPacket, ServerUdpPacketDeleter> packet(controlpacket_queue.RemoveHead());
+			int iLen = SendTo(packet->packet, packet->size, packet->dwIP, packet->nPort);
+			if (iLen >= 0) {
+				sentBytes += iLen; // ZZ:UploadBandWithThrottler (UDP)
+				packet.reset();
+			} else {
+				// WHY: AddHead may allocate after the packet was removed from
+				// the queue. Keep packet ownership local until the retry node is
+				// relinked so a low-memory exception cannot leak the datagram or
+				// leave sendLocker held.
+				controlpacket_queue.AddHead(packet.get()); //try to resend
+				(void)packet.release();
+				if (ShouldYieldAfterUdpControlRequeue(iLen))
+					break;
+			}
 		}
+	} catch (CException *pException) {
+		if (pException != NULL)
+			pException->Delete();
+		theApp.QueueDebugLogLine(false, _T("Server UDP socket: control send aborted by MFC exception"));
 	}
 
 // ZZ:UploadBandWithThrottler (UDP) -->
 	const UdpControlQueueSignalAction eSignalAction = ClassifyUdpControlQueueSignal(m_bWouldBlock, controlpacket_queue.IsEmpty());
 
-	sendLocker.Unlock();
+	sendLock.Unlock();
 
 	if (eSignalAction == udpControlQueueSignalAfterUnlock)
 		theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this);
@@ -774,23 +795,26 @@ void CUDPSocket::SendBuffer(uint32 nIP, uint16 nPort, BYTE *pPacket, UINT uSize)
 			theApp.QueueDebugLogLine(false, _T("Server UDP socket: dropped outgoing raw packet because the datagram size is not representable (%u bytes)"), uSize);
 		return;
 	}
-	SServerUDPPacket *newpending = new SServerUDPPacket;
+	std::unique_ptr<SServerUDPPacket, ServerUdpPacketDeleter> newpending(new SServerUDPPacket);
 	newpending->dwIP = nIP;
 	newpending->nPort = nPort;
 	newpending->packet = pPacket;
 	newpending->size = uSize;
-	sendLocker.Lock();
-	if (!UDPSocketSeams::CanQueueOutgoingServerUdpControlPacket(static_cast<size_t>(controlpacket_queue.GetCount()))) {
-		const unsigned long uQueuedPackets = static_cast<unsigned long>(controlpacket_queue.GetCount());
-		sendLocker.Unlock();
-		delete[] pPacket;
-		delete newpending;
-		if (thePrefs.GetVerbose())
-			theApp.QueueDebugLogLine(false, _T("Server UDP socket: dropped outgoing control packet because the queue is full (%lu packets)"), uQueuedPackets);
-		return;
+	{
+		CSingleLock sendLock(&sendLocker, TRUE);
+		if (!UDPSocketSeams::CanQueueOutgoingServerUdpControlPacket(static_cast<size_t>(controlpacket_queue.GetCount()))) {
+			const unsigned long uQueuedPackets = static_cast<unsigned long>(controlpacket_queue.GetCount());
+			sendLock.Unlock();
+			if (thePrefs.GetVerbose())
+				theApp.QueueDebugLogLine(false, _T("Server UDP socket: dropped outgoing control packet because the queue is full (%lu packets)"), uQueuedPackets);
+			return;
+		}
+		// WHY: queue insertion can allocate while sendLocker is protecting the
+		// cross-thread UDP queue. Keep the packet in a smart owner until AddTail
+		// succeeds so low-memory failure cannot leak pPacket or wedge the lock.
+		controlpacket_queue.AddTail(newpending.get());
+		newpending.release();
 	}
-	controlpacket_queue.AddTail(newpending);
-	sendLocker.Unlock();
 	theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this);
 // <-- ZZ:UploadBandWithThrottler (UDP)
 }
