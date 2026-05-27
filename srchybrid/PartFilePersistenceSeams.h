@@ -311,7 +311,7 @@ enum class PartFileDeleteAsyncWriteAction
 	DeferUntilWriteRelease
 };
 
-inline bool HasPartFileAsyncWriteReferences(const int nOutstandingWrites, const bool bHasPendingBufferedWrite)
+inline bool HasPartFileAsyncWriteReferences(const LONG nOutstandingWrites, const bool bHasPendingBufferedWrite)
 {
 	return nOutstandingWrites > 0 || bHasPendingBufferedWrite;
 }

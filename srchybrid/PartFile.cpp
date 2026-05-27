@@ -681,7 +681,7 @@ void CPartFile::WaitForFileCompletionWorkerForShutdown()
 
 bool CPartFile::HasDirtyBufferedData() const
 {
-	return m_iWrites > 0 || m_nTotalBufferData > 0 || !m_BufferedData_list.IsEmpty();
+	return GetAsyncWriteCount() > 0 || m_nTotalBufferData > 0 || !m_BufferedData_list.IsEmpty();
 }
 
 bool CPartFile::HasAsyncWriteReferences() const
@@ -689,12 +689,12 @@ bool CPartFile::HasAsyncWriteReferences() const
 	bool bHasPendingBufferedWrite = false;
 	for (POSITION pos = m_BufferedData_list.GetHeadPosition(); pos != NULL;) {
 		const PartFileBufferedData *item = m_BufferedData_list.GetNext(pos);
-		if (item != NULL && item->flushed == PB_PENDING) {
+		if (item != NULL && GetPartFileBufferedDataFlushState(*item) == PB_PENDING) {
 			bHasPendingBufferedWrite = true;
 			break;
 		}
 	}
-	return PartFilePersistenceSeams::HasPartFileAsyncWriteReferences(m_iWrites, bHasPendingBufferedWrite);
+	return PartFilePersistenceSeams::HasPartFileAsyncWriteReferences(GetAsyncWriteCount(), bHasPendingBufferedWrite);
 }
 
 bool CPartFile::WaitForAsyncWriteReferencesToRelease()
@@ -739,7 +739,7 @@ bool CPartFile::FlushBufferedDataForShutdown()
 	if (bIsWriteThreadRunning) {
 		const ULONGLONG ullStartTick = ::GetTickCount64();
 		do {
-			if (m_iWrites > 0) {
+			if (GetAsyncWriteCount() > 0) {
 				pThread->WakeUpCall();
 				::Sleep(kShutdownFlushPollMs);
 			}
@@ -1876,7 +1876,7 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak, bool bBypassDiskSpaceGuard)
 		for (POSITION pos = m_BufferedData_list.GetHeadPosition(); pos != NULL;) {
 			POSITION pos2 = pos;
 			const PartFileBufferedData *item = m_BufferedData_list.GetNext(pos);
-			if (item->flushed == PB_WRITTEN) {
+			if (GetPartFileBufferedDataFlushState(*item) == PB_WRITTEN) {
 				DeleteWrittenItem(pos2);
 				continue;
 			}
@@ -1885,7 +1885,7 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak, bool bBypassDiskSpaceGuard)
 			while (pos != NULL) { // merge if obvious
 				pos2 = pos;
 				item = m_BufferedData_list.GetNext(pos);
-				if (item->flushed == PB_WRITTEN) {
+				if (GetPartFileBufferedDataFlushState(*item) == PB_WRITTEN) {
 					pos = pos2; //step back; the outer loop will delete this item
 					break;
 				}
@@ -3289,7 +3289,7 @@ bool CPartFile::RemoveBlockFromList(uint64 start, uint64 end)
 
 void CPartFile::CompleteFile(bool bIsHashingDone)
 {
-	ASSERT(m_iWrites <= 0 && m_gaplist.IsEmpty() && m_BufferedData_list.IsEmpty());
+	ASSERT(GetAsyncWriteCount() <= 0 && m_gaplist.IsEmpty() && m_BufferedData_list.IsEmpty());
 	CPartFileWriteThread::RemFile(this);
 	m_nFileFlushTime = 0;
 
@@ -4885,27 +4885,44 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 		//pass data to the writing thread
 		CPartFileWriteThread *pThread = theApp.m_pPartFileWriteThread;
 		if (pThread && pThread->IsRunning()) {
-			bool bLocked = false;
+			std::unique_ptr<PartFileBufferedData> pAllocationSentinel;
+			if (uAllocate == 1)
+				pAllocationSentinel.reset(new PartFileBufferedData{FileSizeSeams::ToUInt64(m_nFileSize), FileSizeSeams::ToUInt64(m_nFileSize)});
+			bool bWakeThread = false;
 			for (POSITION pos = m_BufferedData_list.GetHeadPosition(); pos != NULL;) {
 				PartFileBufferedData *item = m_BufferedData_list.GetNext(pos);
-				if (item->flushed == PB_READY) {
-					if (!bLocked) {
-						bLocked = true;
-						pThread->m_lockFlushList.Lock();
-						if (uAllocate == 1) //an extra byte to allocate
-							pThread->m_FlushList.AddHead(ToWrite{ this, new PartFileBufferedData{FileSizeSeams::ToUInt64(m_nFileSize), FileSizeSeams::ToUInt64(m_nFileSize)} });
-					}
+				if (GetPartFileBufferedDataFlushState(*item) == PB_READY) {
+					CSingleLock lockFlushList(&pThread->m_lockFlushList, TRUE);
+					POSITION posQueuedBuffer = NULL;
 					if (uAllocate == 2 && pos == NULL) //using the last item for allocation
-						pThread->m_FlushList.AddHead(ToWrite{this, item});
+						posQueuedBuffer = pThread->m_FlushList.AddHead(ToWrite{this, item});
 					else
-						pThread->m_FlushList.AddTail(ToWrite{this, item});
+						posQueuedBuffer = pThread->m_FlushList.AddTail(ToWrite{this, item});
+					if (pAllocationSentinel != NULL) {
+						try {
+							// WHY: the extra-byte allocation sentinel must precede
+							// data writes, but CList may allocate while linking it.
+							// Queue the real buffer first without publishing
+							// PB_PENDING; if linking the sentinel fails, remove the
+							// buffer and let the caller retry with all state intact.
+							pThread->m_FlushList.AddHead(ToWrite{ this, pAllocationSentinel.get() });
+							pAllocationSentinel.release();
+						} catch (...) {
+							if (posQueuedBuffer != NULL)
+								pThread->m_FlushList.RemoveAt(posQueuedBuffer);
+							throw;
+						}
+					}
 					item->dwError = 0; //reset error (this could be a retry)
-					item->flushed = PB_PENDING;
+					// WHY: PB_PENDING is the deletion guard for buffers owned by
+					// the async write helper. Set it only after the buffer is
+					// actually linked, so an allocation failure in CList keeps the
+					// buffer retryable instead of making cleanup wait on phantom IO.
+					SetPartFileBufferedDataFlushState(*item, PB_PENDING);
+					bWakeThread = true;
 				}
 			}
-			if (bLocked)
-				pThread->m_lockFlushList.Unlock();
-			if (!pThread->m_FlushList.IsEmpty()) //let it sleep if nothing to do
+			if (bWakeThread) //let it sleep if nothing to do
 				pThread->WakeUpCall();
 		}
 
@@ -4913,14 +4930,14 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 		for (POSITION pos = m_BufferedData_list.GetHeadPosition(); pos != NULL;) {
 			POSITION pos2 = pos;
 			PartFileBufferedData *item = m_BufferedData_list.GetNext(pos);
-			switch (item->flushed) {
+			switch (GetPartFileBufferedDataFlushState(*item)) {
 			case PB_READY:
 				ASSERT(!pThread || !pThread->IsRunning());
 				[[fallthrough]];
 			case PB_PENDING:
 				continue;
 			case PB_ERROR:
-				item->flushed = PB_READY; //prepare for resend
+				SetPartFileBufferedDataFlushState(*item, PB_READY); //prepare for resend
 				CFileException::ThrowOsError((LONG)(item->dwError != ERROR_SUCCESS ? item->dwError : ERROR_WRITE_FAULT), m_hpartfile.GetFileName());
 			//default:
 			case PB_WRITTEN: //success
@@ -5027,7 +5044,7 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 
 			// Is this file finished?
 			if (m_gaplist.IsEmpty()) {
-				if (m_iWrites <= 0 && m_BufferedData_list.IsEmpty() && GetStatus() != PS_COMPLETING)
+				if (GetAsyncWriteCount() <= 0 && m_BufferedData_list.IsEmpty() && GetStatus() != PS_COMPLETING)
 					CompleteFile(false);
 				else
 					m_nLastBufferFlushTime -= thePrefs.GetFileBufferTimeLimit() - 211; //try again shortly

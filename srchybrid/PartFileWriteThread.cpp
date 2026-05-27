@@ -43,7 +43,7 @@ void MarkWriteDispatchFailed(PartFileBufferedData *pBuffer, DWORD dwError)
 		// The write thread already removed this item from its queue; mark it
 		// failed so the part file does not wait forever on PB_PENDING.
 		pBuffer->dwError = dwError;
-		pBuffer->flushed = PB_ERROR;
+		SetPartFileBufferedDataFlushState(*pBuffer, PB_ERROR);
 	} else {
 		// Allocation sentinels are not tracked in the part-file buffer list.
 		delete pBuffer;
@@ -161,12 +161,25 @@ UINT CPartFileWriteThread::RunInternal()
 
 		HelperThreadLaunchSeams::SetState(m_Run, RUN_WORK);
 		//move buffer lists into the local storage
-		if (!m_FlushList.IsEmpty()) {
-			m_lockFlushList.Lock();
-			while (!m_FlushList.IsEmpty())
-				m_listToWrite.AddTail(m_FlushList.RemoveHead());
-			HelperThreadLaunchSeams::ClearFlag(m_bNewData);
-			m_lockFlushList.Unlock();
+		try {
+			CSingleLock lockFlushList(&m_lockFlushList, TRUE);
+			bool bMovedQueuedWrites = false;
+			while (!m_FlushList.IsEmpty()) {
+				// WHY: CList::AddTail can allocate. Copy into the private list
+				// before removing from the shared queue so a low-memory throw
+				// leaves the write request visible for a later wake instead of
+				// dropping a PB_PENDING buffer on the floor.
+				const ToWrite item = m_FlushList.GetHead();
+				m_listToWrite.AddTail(item);
+				m_FlushList.RemoveHead();
+				bMovedQueuedWrites = true;
+			}
+			if (bMovedQueuedWrites)
+				HelperThreadLaunchSeams::ClearFlag(m_bNewData);
+		} catch (CMemoryException *ex) {
+			if (ex != NULL)
+				ex->Delete();
+			theApp.QueueDebugLogLineEx(LOG_WARNING, _T("Part-file write helper could not move queued writes because memory is low; retrying on the next wake"));
 		}
 		//start new I/O
 		WriteBuffers();
@@ -212,36 +225,56 @@ void CPartFileWriteThread::WriteBuffers()
 {
 	//process internal list
 	while (!m_listToWrite.IsEmpty() && HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP) {
-		const ToWrite &item = m_listToWrite.RemoveHead();
+		const ToWrite item = m_listToWrite.RemoveHead();
 		PartFileBufferedData *pBuffer = item.pBuffer;
 		ASSERT(pBuffer->end >= pBuffer->start && (pBuffer->data || pBuffer->end == pBuffer->start)); //verifies allocation requests too
 
 		CPartFile *pFile = item.pFile;
 		if (AddFile(pFile)) {
-			//initiate write
-			OverlappedWrite_Struct *pOvWrite = new OverlappedWrite_Struct;
-			pOvWrite->oOverlap.Internal = 0;
-			pOvWrite->oOverlap.InternalHigh = 0;
-			//pOvWrite->oOverlap.Offset = LODWORD(currentblock->StartOffset);
-			//pOvWrite->oOverlap.OffsetHigh = HIDWORD(currentblock->StartOffset);
-			*(uint64*)&pOvWrite->oOverlap.Offset = pBuffer->start;
-			pOvWrite->oOverlap.hEvent = 0;
-			pOvWrite->pFile = pFile;
-			pOvWrite->pBuffer = pBuffer;
+			OverlappedWrite_Struct *pOvWrite = NULL;
+			try {
+				//initiate write
+				pOvWrite = new OverlappedWrite_Struct;
+				pOvWrite->oOverlap.Internal = 0;
+				pOvWrite->oOverlap.InternalHigh = 0;
+				//pOvWrite->oOverlap.Offset = LODWORD(currentblock->StartOffset);
+				//pOvWrite->oOverlap.OffsetHigh = HIDWORD(currentblock->StartOffset);
+				*(uint64*)&pOvWrite->oOverlap.Offset = pBuffer->start;
+				pOvWrite->oOverlap.hEvent = 0;
+				pOvWrite->pFile = pFile;
+				pOvWrite->pBuffer = pBuffer;
+				pOvWrite->pos = NULL;
 
-			static const BYTE zero = 0;
-			if (!::WriteFile(pFile->m_hWrite, pBuffer->data ? pBuffer->data : &zero, (DWORD)(pBuffer->end - pBuffer->start + 1), NULL, (LPOVERLAPPED)pOvWrite)) {
-				DWORD dwError = ::GetLastError();
-				if (dwError != ERROR_IO_PENDING) {
-					delete pOvWrite;
-					MarkWriteDispatchFailed(item.pBuffer, dwError);
-					theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
-					RemFile(pFile);
-					return;
+				// WHY: once WriteFile sees this OVERLAPPED, the IOCP completion
+				// can return it even if the call completes synchronously or later
+				// fails. Register the object and raise the file's delete guard
+				// before submission so completion, cancellation, and part-file
+				// lifetime checks all observe the same ownership state.
+				pOvWrite->pos = m_listPendingIO.AddTail(pOvWrite);
+				pFile->IncrementAsyncWriteCount();
+
+				static const BYTE zero = 0;
+				if (!::WriteFile(pFile->m_hWrite, pBuffer->data ? pBuffer->data : &zero, (DWORD)(pBuffer->end - pBuffer->start + 1), NULL, (LPOVERLAPPED)pOvWrite)) {
+					DWORD dwError = ::GetLastError();
+					if (dwError != ERROR_IO_PENDING) {
+						m_listPendingIO.RemoveAt(pOvWrite->pos);
+						pOvWrite->pos = NULL;
+						pFile->DecrementAsyncWriteCount();
+						delete pOvWrite;
+						MarkWriteDispatchFailed(item.pBuffer, dwError);
+						theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
+						RemFile(pFile);
+						return;
+					}
 				}
+			} catch (CMemoryException *ex) {
+				if (ex != NULL)
+					ex->Delete();
+				delete pOvWrite;
+				MarkWriteDispatchFailed(item.pBuffer, ERROR_NOT_ENOUGH_MEMORY);
+				theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: not enough memory while registering overlapped write"));
+				return;
 			}
-			pOvWrite->pos = m_listPendingIO.AddTail(pOvWrite);
-			++pFile->m_iWrites;
 		} else {
 			MarkWriteDispatchFailed(item.pBuffer, ERROR_INVALID_HANDLE);
 			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("WriteBuffers error: CPartFile cannot be written"));
@@ -266,13 +299,13 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 
 	if (dwCompletionError == ERROR_SUCCESS && dwBytesWritten && dwWrite == dwBytesWritten) {
 		if (pFile) {
-			--pFile->m_iWrites;
+			const LONG nRemainingWrites = pFile->DecrementAsyncWriteCount();
 			if (pBuffer->data) { //write data
 				// WHY: completion must only observe buffers already handed to the
 				// write thread. Assigning here hides state-machine bugs in Debug
 				// and can make later cleanup believe an invalid buffer was pending.
-				ASSERT(pBuffer->flushed == PB_PENDING && pFile->m_iWrites >= 0);
-				pBuffer->flushed = PB_WRITTEN;
+				ASSERT(GetPartFileBufferedDataFlushState(*pBuffer) == PB_PENDING && nRemainingWrites >= 0);
+				SetPartFileBufferedDataFlushState(*pBuffer, PB_WRITTEN);
 			} else { //full file allocation
 				ASSERT(dwBytesWritten == 1);
 				::FlushFileBuffers(pFile->m_hWrite);
@@ -283,10 +316,10 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 	} else {
 		const DWORD dwEffectiveError = dwCompletionError != ERROR_SUCCESS ? dwCompletionError : ERROR_WRITE_FAULT;
 		if (pFile)
-			--pFile->m_iWrites;
+			pFile->DecrementAsyncWriteCount();
 		if (pBuffer->data) {
 			pBuffer->dwError = dwEffectiveError;
-			pBuffer->flushed = PB_ERROR;
+			SetPartFileBufferedDataFlushState(*pBuffer, PB_ERROR);
 		} else
 			delete pBuffer;
 		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Part-file overlapped write failed: expected %lu, written %lu, error %lu (%s)")
@@ -319,10 +352,12 @@ void CPartFileWriteThread::ReleaseQueuedWritesForShutdown()
 {
 	ReleaseQueuedWriteListForShutdown(m_listToWrite);
 
-	m_lockFlushList.Lock();
+	CSingleLock lockFlushList(&m_lockFlushList, TRUE);
+	// WHY: shutdown may race a foreground FlushBuffer enqueue. RAII keeps the
+	// flush-list lock balanced if CList cleanup or future diagnostics throw
+	// while we are converting queued PB_PENDING buffers back to error state.
 	ReleaseQueuedWriteListForShutdown(m_FlushList);
 	HelperThreadLaunchSeams::ClearFlag(m_bNewData);
-	m_lockFlushList.Unlock();
 }
 
 void CPartFileWriteThread::DrainPendingWrites()

@@ -21,6 +21,7 @@
 #include "DisplayRefreshSeams.h"
 #include "PartFileMajorityNameSeams.h"
 #include "SafeFile.h"
+#include <atomic>
 #include <memory>
 
 enum EPartFileStatus : uint8
@@ -105,10 +106,10 @@ struct Gap_Struct
 };
 
 //part file buffer write status (in PartFileBufferedData.flushed)
-#define PB_READY 0
-#define PB_PENDING 1
-#define PB_ERROR 2
-#define PB_WRITTEN 3
+#define PB_READY 0L
+#define PB_PENDING 1L
+#define PB_ERROR 2L
+#define PB_WRITTEN 3L
 
 struct PartFileBufferedData
 {
@@ -117,8 +118,22 @@ struct PartFileBufferedData
 	BYTE *data;						// Barry - This is the data to be written
 	Requested_Block_Struct *block;	// Barry - This is the requested block that this data relates to
 	DWORD dwError;					// returned from the writing thread
-	byte flushed;					// 0 - ready; 1 - sent to writing thread; 2 - error; 3 - written
+	volatile LONG flushed;			// interlocked PB_* state shared by main and write-helper threads
 };
+
+inline LONG GetPartFileBufferedDataFlushState(const PartFileBufferedData &rBuffer)
+{
+	// WHY: FlushBuffer owns the list on the main thread while IOCP completion
+	// owns state transitions on the helper thread. Interlocked reads/writes keep
+	// the deletion/retry state out of C++ data-race territory without widening
+	// the old lock graph around disk completions.
+	return ::InterlockedCompareExchange(const_cast<volatile LONG*>(&rBuffer.flushed), 0, 0);
+}
+
+inline void SetPartFileBufferedDataFlushState(PartFileBufferedData &rBuffer, LONG nState)
+{
+	(void)::InterlockedExchange(&rBuffer.flushed, nState);
+}
 
 typedef CTypedPtrList<CPtrList, CUpDownClient*> CUpDownClientPtrList;
 
@@ -363,7 +378,14 @@ public:
 	CSafeFile m_hpartfile;				// permanent opened handle to avoid write conflicts
 	CMutex	m_FileCompleteMutex;		// Lord KiRon - Mutex for file completion
 	HANDLE	m_hWrite;					// asynchronous part file writing
-	int		m_iWrites;					// outstanding I/O counter - read only in the main thread
+	volatile LONG m_iWrites;			// interlocked outstanding async writes; read by main and write-helper threads
+	// WHY: part-file deletion/completion runs on the main thread, but IOCP
+	// completion raises and lowers this guard on the write helper. Interlocked
+	// access preserves the existing lifetime contract without making helper
+	// completions take the broader part-file locks.
+	LONG	GetAsyncWriteCount() const		{ return ::InterlockedCompareExchange(const_cast<volatile LONG*>(&m_iWrites), 0, 0); }
+	LONG	IncrementAsyncWriteCount()		{ return ::InterlockedIncrement(&m_iWrites); }
+	LONG	DecrementAsyncWriteCount()		{ return ::InterlockedDecrement(&m_iWrites); }
 	ULONGLONG m_LastSearchTime;
 	ULONGLONG m_LastSearchTimeKad;
 	uint16	src_stats[4];
