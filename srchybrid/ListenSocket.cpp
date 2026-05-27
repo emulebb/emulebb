@@ -42,6 +42,7 @@
 #include "ResourceOwnershipSeams.h"
 #include "SourceExchangeSeams.h"
 #include "UpDownClientDeleteSeams.h"
+#include "ClientSocketLifetimeSeams.h"
 #include "SHAHashSet.h"
 #include "Log.h"
 #include "PathHelpers.h"
@@ -76,8 +77,12 @@ CClientReqSocket::CClientReqSocket(CUpDownClient *in_client)
 	, m_nUploadDiskPacketDeliveryRefs()
 	, m_bPortTestCon()
 {
-	SetClient(in_client);
+	// WHY: AddSocket publishes this socket to the listener-owned lifetime list
+	// and can allocate an MFC list node. Do not publish client->socket until that
+	// succeeds; otherwise constructor failure leaves the client pointing at
+	// partially constructed storage whose derived destructor will not run.
 	theApp.listensocket->AddSocket(this);
+	SetClient(in_client);
 	ResetTimeOutTimer();
 }
 
@@ -126,9 +131,7 @@ CClientReqSocket::~CClientReqSocket()
 
 void CClientReqSocket::SetClient(CUpDownClient *pClient)
 {
-	client = pClient;
-	if (client)
-		client->socket = this;
+	LinkClientSocketPair(pClient, this);
 }
 
 void CClientReqSocket::ResetTimeOutTimer()
@@ -2146,7 +2149,16 @@ void CListenSocket::OnAccept(int nErrorCode)
 				newclient = new CClientReqSocket;
 				VERIFY(newclient->InitAsyncSocketExInstance());
 				newclient->m_SocketData.hSocket = sNew;
-				newclient->AttachHandle();
+				if (!newclient->AttachHandle()) {
+					// WHY: accepted sockets must have a helper-window slot before
+					// async routing is enabled. If slot publication fails, close the
+					// raw SOCKET and retire the listener-owned CClientReqSocket
+					// instead of leaving it with nSocketIndex == -1.
+					closesocket(sNew);
+					newclient->m_SocketData.hSocket = INVALID_SOCKET;
+					newclient->Safe_Delete();
+					continue;
+				}
 				newclient->m_bAcceptedIncomingSocket = true;
 
 				AddConnection();
@@ -2288,25 +2300,32 @@ void CListenSocket::KillAllSockets()
 	while (!socket_list.IsEmpty()) {
 		bool bDeletedSocket = false;
 		bool bWaitingForDeliveryRef = false;
-		for (POSITION pos = socket_list.GetHeadPosition(); pos != NULL;) {
-			const CClientReqSocket *cur_socket = socket_list.GetNext(pos);
-			if (cur_socket->HasUploadDiskPacketDeliveryRefs()) {
-				// WHY: upload disk completions may legally hold a short-lived
-				// delivery reference after they release the upload-list lock.
-				// Delete_Timed honors that reference; KillAllSockets must do
-				// the same because Rebind() can reach this path outside normal
-				// shutdown while the helper thread is still delivering packets.
-				bWaitingForDeliveryRef = true;
-				continue;
-			}
+		CUpDownClient *pClientToDelete = NULL;
+		{
+			CSingleLock lockSocketList(&m_socketListLock, TRUE);
+			for (POSITION pos = socket_list.GetHeadPosition(); pos != NULL;) {
+				CClientReqSocket *cur_socket = socket_list.GetNext(pos);
+				if (cur_socket->HasUploadDiskPacketDeliveryRefs()) {
+					// WHY: upload disk completions may legally hold a short-lived
+					// delivery reference after they release the upload-list lock.
+					// Hold m_socketListLock while checking refs and committing a
+					// socket to deletion so TryAddUploadDiskPacketDeliveryRef cannot
+					// convert the same raw pointer into a new ref between the check
+					// and reclaim during Rebind()/shutdown.
+					bWaitingForDeliveryRef = true;
+					continue;
+				}
 
-			if (cur_socket->client)
-				delete cur_socket->client;
-			else
-				delete cur_socket;
-			bDeletedSocket = true;
-			break;
+				if (cur_socket->client) {
+					pClientToDelete = cur_socket->client;
+					cur_socket->Safe_Delete();
+				} else
+					delete cur_socket;
+				bDeletedSocket = true;
+				break;
+			}
 		}
+		delete pClientToDelete;
 
 		if (bDeletedSocket)
 			continue;
