@@ -537,7 +537,7 @@ int CClientUDPSocket::SendTo(uchar *lpBuf, int nBufLen, uint32 dwIP, uint16 nPor
 
 bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar *pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey)
 {
-	UDPPack *newpending = new UDPPack;
+	std::unique_ptr<UDPPack, UdpPackDeleter> newpending(new UDPPack);
 	newpending->dwIP = dwIP;
 	newpending->nPort = nPort;
 	newpending->packet = packet;
@@ -562,8 +562,16 @@ bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, boo
 		md4clr(newpending->pachTargetClientHashORKadID);
 // ZZ:UploadBandWithThrottler (UDP) -->
 	sendLocker.Lock();
-	controlpacket_queue.AddTail(newpending);
+	if (!ClientUDPSocketSeams::CanQueueOutgoingClientUdpControlPacket(static_cast<size_t>(controlpacket_queue.GetCount()))) {
+		const unsigned long uQueuedPackets = static_cast<unsigned long>(controlpacket_queue.GetCount());
+		sendLocker.Unlock();
+		if (thePrefs.GetVerbose())
+			DebugLogWarning(_T("Client UDP socket: dropped outgoing control packet because the queue is full (%lu packets)"), uQueuedPackets);
+		return false;
+	}
+	controlpacket_queue.AddTail(newpending.get());
 	sendLocker.Unlock();
+	newpending.release();
 
 	theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this);
 	return true;

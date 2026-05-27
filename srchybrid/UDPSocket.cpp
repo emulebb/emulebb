@@ -757,6 +757,15 @@ void CUDPSocket::SendBuffer(uint32 nIP, uint16 nPort, BYTE *pPacket, UINT uSize)
 	newpending->packet = pPacket;
 	newpending->size = uSize;
 	sendLocker.Lock();
+	if (!UDPSocketSeams::CanQueueOutgoingServerUdpControlPacket(static_cast<size_t>(controlpacket_queue.GetCount()))) {
+		const unsigned long uQueuedPackets = static_cast<unsigned long>(controlpacket_queue.GetCount());
+		sendLocker.Unlock();
+		delete[] pPacket;
+		delete newpending;
+		if (thePrefs.GetVerbose())
+			theApp.QueueDebugLogLine(false, _T("Server UDP socket: dropped outgoing control packet because the queue is full (%lu packets)"), uQueuedPackets);
+		return;
+	}
 	controlpacket_queue.AddTail(newpending);
 	sendLocker.Unlock();
 	theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this);

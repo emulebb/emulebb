@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #define EMULE_TEST_HAVE_CLIENT_UDP_SOCKET_FAILURE_SEAMS 1
 
 /**
@@ -7,6 +9,8 @@
  */
 namespace ClientUDPSocketSeams
 {
+static const size_t kMaxOutgoingClientUdpControlQueuePackets = 4096u;
+
 /**
  * @brief Logging policy for packet failures after UDP decryption succeeds.
  */
@@ -74,5 +78,14 @@ inline bool ShouldApplyOutgoingClientUdpEncryptionOverhead(
 	const bool bKad)
 {
 	return bQueuedForEncryption && bCryptLayerEnabled && (bHasPublicIP || bKad);
+}
+
+/**
+ * @brief Reports whether another outgoing client/Kad UDP control packet may
+ *        be queued without exceeding the memory budget.
+ */
+inline bool CanQueueOutgoingClientUdpControlPacket(const size_t uCurrentQueuedPackets)
+{
+	return uCurrentQueuedPackets < kMaxOutgoingClientUdpControlQueuePackets;
 }
 }
