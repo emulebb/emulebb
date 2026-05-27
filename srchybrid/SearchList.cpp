@@ -37,6 +37,8 @@
 #include "Log.h"
 #include "OtherFunctions.h"
 
+#include <memory>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -283,8 +285,6 @@ UINT CSearchList::ProcessSearchAnswer(const uchar *in_packet, uint32 size, bool 
 
 UINT CSearchList::ProcessUDPSearchAnswer(CFileDataIO &packet, bool bOptUTF8, uint32 nServerIP, uint16 nServerPort)
 {
-	CSearchFile *toadd = new CSearchFile(packet, bOptUTF8, m_nCurED2KSearchID, nServerIP, nServerPort, NULL, false, true);
-
 	bool bFound = false;
 	for (INT_PTR i = m_aCurED2KSentRequestsIPs.GetCount(); --i >= 0;)
 		if (m_aCurED2KSentRequestsIPs[i] == nServerIP) {
@@ -294,9 +294,14 @@ UINT CSearchList::ProcessUDPSearchAnswer(CFileDataIO &packet, bool bOptUTF8, uin
 
 	if (!bFound) {
 		DebugLogError(_T("Unrequested or delayed Server UDP Searchresult received from IP %s, ignoring"), (LPCTSTR)ipstr(nServerIP));
-		delete toadd;
 		return 0;
 	}
+
+	// WHY: server UDP search answers are unauthenticated datagrams. Check that
+	// this IP was actually queried before constructing CSearchFile, because tag
+	// parsing can allocate and should not be reachable from spoofed responses we
+	// already know will be discarded.
+	CSearchFile *toadd = new CSearchFile(packet, bOptUTF8, m_nCurED2KSearchID, nServerIP, nServerPort, NULL, false, true);
 
 	bool bNewResponse = true;
 	for (INT_PTR i = m_aCurED2KSentReceivedIPs.GetCount(); --i >= 0;)
@@ -398,8 +403,8 @@ void CSearchList::AddFileToDownloadByHash(const uchar *hash, int cat)
 
 bool CSearchList::AddToList(CSearchFile *toadd, bool bClientResponse, uint32 dwFromUDPServerIP)
 {
+	std::unique_ptr<CSearchFile> toaddOwner(toadd);
 	if (!bClientResponse && !m_strResultFileType.IsEmpty() && m_strResultFileType != toadd->GetFileType()) {
-		delete toadd;
 		return false;
 	}
 	SearchList *list = GetSearchListForID(toadd->GetSearchID());
@@ -438,14 +443,19 @@ bool CSearchList::AddToList(CSearchFile *toadd, bool bClientResponse, uint32 dwF
 			// if this parent does not have any child entries yet, create one child entry
 			// which is equal to the current parent entry (needed for GUI when expanding the child list).
 			if (!parent->GetListChildCount()) {
-				CSearchFile *child = new CSearchFile(parent);
+				std::unique_ptr<CSearchFile> child(new CSearchFile(parent));
 				child->m_flags.nowrite = 1; //will not save
 				child->SetListParent(parent);
 				int iSources = parent->GetSourceCount();
 				if (iSources == 0)
 					iSources = 1;
 				child->SetListChildCount(iSources);
-				list->AddTail(child);
+				// WHY: the search result list owns child entries after AddTail,
+				// but CList can allocate the node. Keep the synthetic child in a
+				// local owner until the node exists so low-memory failure cannot
+				// leak a copied search result.
+				list->AddTail(child.get());
+				child.release();
 				parent->SetListChildCount(1);
 			}
 
@@ -508,7 +518,10 @@ bool CSearchList::AddToList(CSearchFile *toadd, bool bClientResponse, uint32 dwF
 				toadd->SetListChildCount(uAvail);
 				if (!toadd->m_flags.noshow)
 					parent->AddListChildCount(1);
-				list->AddTail(toadd);
+				// WHY: toadd is a raw parsed result until the MFC list node is
+				// linked. Release ownership only after AddTail succeeds.
+				list->AddTail(toaddOwner.get());
+				toaddOwner.release();
 			}
 
 			// copy possible available sources from new search result entry to parent
@@ -608,7 +621,10 @@ bool CSearchList::AddToList(CSearchFile *toadd, bool bClientResponse, uint32 dwF
 
 			if (bFound) {
 				toadd->m_flags.noshow = 1; //hide in GUI
-				list->AddTail(toadd);
+				// WHY: keep duplicate/merged results owned locally until the
+				// hidden child entry is linked into the search result list.
+				list->AddTail(toaddOwner.get());
+				toaddOwner.release();
 			}
 			return true;
 		}
@@ -617,7 +633,8 @@ bool CSearchList::AddToList(CSearchFile *toadd, bool bClientResponse, uint32 dwF
 	// no bounded result found yet -> add as parent to list
 	toadd->SetListParent(NULL);
 	UINT uAvail = toadd->GetSourceCount();
-	if (list->AddTail(toadd)) {
+	if (list->AddTail(toaddOwner.get())) {
+		toaddOwner.release();
 		UINT tempValue;
 		if (!m_foundFilesCount.Lookup(toadd->GetSearchID(), tempValue))
 			tempValue = 0;

@@ -30,12 +30,16 @@
 #include "DebugHelpers.h"
 #endif
 
+#include <memory>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
 
+
+static const uint32 MAX_SEARCH_RESULT_TAGS = 256;
 
 bool IsValidSearchResultClientIPPort(uint32 nIP, uint16 nPort)
 {
@@ -47,6 +51,15 @@ bool IsValidSearchResultClientIPPort(uint32 nIP, uint16 nPort)
 			&& ((nIP & 0x0000FF00) != 0)
 			&& ((nIP & 0x00FF0000) != 0)
 			&& ((nIP & 0xFF000000) != 0);*/
+}
+
+static bool HasSaneSearchResultTagCount(CFileDataIO &data, uint32 tagcount)
+{
+	const ULONGLONG uPosition = data.GetPosition();
+	const ULONGLONG uLength = data.GetLength();
+	return uPosition <= uLength
+		&& tagcount <= MAX_SEARCH_RESULT_TAGS
+		&& static_cast<ULONGLONG>(tagcount) <= (uLength - uPosition);
 }
 
 void ConvertED2KTag(CTag *&pTag)
@@ -162,6 +175,7 @@ CSearchFile::CSearchFile(CFileDataIO &in_data, bool bOptUTF8, uint32 nSearchID, 
 	, m_nSpamRating()
 	, m_list_childcount()
 	, m_list_parent()
+	, m_pszDirectory()
 	, m_eKnown(NotDetermined)
 	, m_bPreviewPossible()
 	, m_list_bExpanded()
@@ -183,9 +197,21 @@ CSearchFile::CSearchFile(CFileDataIO &in_data, bool bOptUTF8, uint32 nSearchID, 
 		server.m_uAvail = GetIntTagValue(FT_SOURCES);
 		AddServer(server);
 	}
-	m_pszDirectory = pszDirectory ? _tcsdup(pszDirectory) : NULL;
-
 	uint32 tagcount = in_data.ReadUInt32();
+	if (!HasSaneSearchResultTagCount(in_data, tagcount)) {
+		// WHY: tagcount is remote-controlled and each tag parser may allocate.
+		// Bound both the count and the minimum possible remaining bytes before
+		// entering the loop so hostile search results cannot drive unbounded tag
+		// construction or parse past EOF.
+		CString strError;
+		strError.Format(_T("Malformed search result tag count: %u"), tagcount);
+		throw strError;
+	}
+	std::unique_ptr<TCHAR, decltype(&free)> directoryOwner(NULL, &free);
+	if (pszDirectory != NULL) {
+		directoryOwner.reset(_tcsdup(pszDirectory));
+		m_pszDirectory = directoryOwner.get();
+	}
 	// NSERVER2.EXE (lugdunum v16.38 patched for Win32) returns the ClientIP+Port of the client which offered that
 	// file, even if that client has not filled the according fields in the OP_OFFERFILES packet with its IP+Port.
 	//
@@ -199,10 +225,15 @@ CSearchFile::CSearchFile(CFileDataIO &in_data, bool bOptUTF8, uint32 nSearchID, 
 	// Copy/Convert ED2K-server tags to local tags
 	//
 	for (uint32 i = 0; i < tagcount; ++i) {
-		CTag *tag = new CTag(in_data, bOptUTF8);
+		std::unique_ptr<CTag> tagOwner(new CTag(in_data, bOptUTF8));
+		CTag *tag = tagOwner.get();
 		if (thePrefs.GetDebugServerSearchesLevel() > 1)
 			Debug(_T("  %s\n"), (LPCTSTR)tag->GetFullInfo(DbgGetFileMetaTagName));
 		ConvertED2KTag(tag);
+		if (tag != tagOwner.get()) {
+			tagOwner.release();
+			tagOwner.reset(tag);
+		}
 		if (tag) {
 			// Convert ED2K-server file rating tag
 			//
@@ -234,7 +265,7 @@ CSearchFile::CSearchFile(CFileDataIO &in_data, bool bOptUTF8, uint32 nSearchID, 
 						m_FileIdentifier.SetAICHHash(hash);
 					else
 						ASSERT(0);
-					delete tag;
+					tagOwner.reset();
 
 					continue;
 				}
@@ -248,10 +279,16 @@ CSearchFile::CSearchFile(CFileDataIO &in_data, bool bOptUTF8, uint32 nSearchID, 
 					m_nCompleteSources = tag->GetInt();
 				break;
 			case FT_FOLDERNAME:
-				if (!bKademlia && !m_pszDirectory && tag->IsStr() && !tag->GetStr().IsEmpty())
-					m_pszDirectory = _tcsdup(tag->GetStr());
+				if (!bKademlia && !m_pszDirectory && tag->IsStr() && !tag->GetStr().IsEmpty()) {
+					directoryOwner.reset(_tcsdup(tag->GetStr()));
+					m_pszDirectory = directoryOwner.get();
+				}
 			}
-			m_taglist.Add(tag);
+			// WHY: CArray::Add can allocate after the tag has been parsed and
+			// possibly converted. Keep the tag locally owned until the array slot
+			// exists so malformed or memory-pressure paths cannot leak CTag.
+			m_taglist.Add(tagOwner.get());
+			tagOwner.release();
 		}
 	}
 
@@ -297,6 +334,7 @@ CSearchFile::CSearchFile(CFileDataIO &in_data, bool bOptUTF8, uint32 nSearchID, 
 		} else
 			CSearchFile::SetFileType(rstrFileType);
 	AddObservedName(GetFileName());
+	directoryOwner.release();
 }
 
 CSearchFile::~CSearchFile()
