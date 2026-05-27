@@ -1,6 +1,12 @@
 #pragma once
 
+#include <cstddef>
 #include "types.h"
+
+static const size_t kMaxEMSocketQueuedControlPackets = 1024u;
+static const uint64 kMaxEMSocketQueuedControlBytes = 8ull * 1024ull * 1024ull;
+static const size_t kMaxEMSocketQueuedStandardPackets = 2048u;
+static const uint64 kMaxEMSocketQueuedStandardBytes = 16ull * 1024ull * 1024ull;
 
 enum EMSocketQueueStateFlags
 {
@@ -55,4 +61,42 @@ inline bool ConsumeQueuedFilePayload(uint32 nActualPayloadSize, uint32 *pnRemain
 inline bool ShouldRetryOverlappedCleanupProbe(int nLastError, int nRemainingRetries)
 {
 	return nLastError == ERROR_IO_INCOMPLETE && nRemainingRetries > 0;
+}
+
+/**
+ * @brief Reports whether one more packet can be accepted into a TCP send queue
+ *        without exceeding the per-peer memory budget.
+ */
+inline bool CanQueueEMSocketPacket(
+	const size_t nCurrentPackets,
+	const uint64 nCurrentBytes,
+	const uint32 nPacketBytes,
+	const size_t nMaxPackets,
+	const uint64 nMaxBytes)
+{
+	if (nCurrentPackets >= nMaxPackets)
+		return false;
+	if (nPacketBytes > nMaxBytes)
+		return false;
+	return nCurrentBytes <= nMaxBytes - nPacketBytes;
+}
+
+inline bool CanQueueEMSocketControlPacket(const size_t nCurrentPackets, const uint64 nCurrentBytes, const uint32 nPacketBytes)
+{
+	return CanQueueEMSocketPacket(
+		nCurrentPackets,
+		nCurrentBytes,
+		nPacketBytes,
+		kMaxEMSocketQueuedControlPackets,
+		kMaxEMSocketQueuedControlBytes);
+}
+
+inline bool CanQueueEMSocketStandardPacket(const size_t nCurrentPackets, const uint64 nCurrentBytes, const uint32 nPacketBytes)
+{
+	return CanQueueEMSocketPacket(
+		nCurrentPackets,
+		nCurrentBytes,
+		nPacketBytes,
+		kMaxEMSocketQueuedStandardPackets,
+		kMaxEMSocketQueuedStandardBytes);
 }

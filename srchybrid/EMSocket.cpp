@@ -22,6 +22,7 @@
 #include <timeapi.h>
 #include "emsocket.h"
 #include "AsyncProxySocketLayer.h"
+#include "EMSocketSendSeams.h"
 #include "Packets.h"
 #include "SocketIoSeams.h"
 #include "LongPathSeams.h"
@@ -100,6 +101,8 @@ CEMSocket::CEMSocket()
 	, sendbuffer()
 	, sendblen()
 	, sent()
+	, m_nQueuedControlPacketBytes()
+	, m_nQueuedStandardPacketBytes()
 	, m_numberOfSentBytesCompleteFile()
 	, m_numberOfSentBytesPartFile()
 	//, m_numberOfSentBytesControlPacket()
@@ -203,9 +206,11 @@ void CEMSocket::ClearQueues()
 	sendLocker.Lock();
 	while (!controlpacket_queue.IsEmpty())
 		delete controlpacket_queue.RemoveHead();
+	m_nQueuedControlPacketBytes = 0;
 
 	while (!standardpacket_queue.IsEmpty())
 		delete standardpacket_queue.RemoveHead().packet;
+	m_nQueuedStandardPacketBytes = 0;
 	sendLocker.Unlock();
 
 	// Download (pseudo) rate control
@@ -437,19 +442,17 @@ void CEMSocket::DisableDownloadLimit()
 /**
  * Queues up the packet to be sent. Another thread will actually send the packet.
  *
- * If the packet is not a control packet, and if the socket decides that its queue is
- * full and forceAdd is false, then the socket is allowed to refuse to add the packet
- * to its queue. It will then return false and it is up to the calling thread to try
- * to call SendPacket for that packet again at a later time.
+ * TCP queues are bounded as a per-peer memory backstop. The caller transfers
+ * packet ownership to this method, so packets rejected by the budget are deleted
+ * here instead of being returned to old call sites that cannot observe a result.
  *
  * @param packet address to the packet that should be added to the queue
  *
  * @param controlpacket the packet is a controlpacket
  *
- * @param forceAdd this packet must be added to the queue, even if it is full. If this flag is true
- *					then the method can not refuse to add the packet, and therefore not return false.
- *
- * @return true if the packet was added to the queue, false otherwise
+ * @param bForceImmediateSend drains a queued control packet immediately after
+ *        successful queueing. It does not bypass the memory budget because
+ *        peer-driven control packet storms must stay bounded.
  */
 void CEMSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayloadSize, bool bForceImmediateSend)
 {
@@ -464,14 +467,41 @@ void CEMSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayl
 	//	m_lastSendLatency = timeGetTime() - m_startSendTick;
 	//}
 	sendLocker.Lock();
+	const uint32 nPacketBytes = packet->GetRealPacketSize();
 	if (controlpacket) {
+		if (!CanQueueEMSocketControlPacket(
+				static_cast<size_t>(controlpacket_queue.GetCount()),
+				m_nQueuedControlPacketBytes,
+				nPacketBytes)) {
+			sendLocker.Unlock();
+			if (thePrefs.GetVerbose())
+				DebugLogWarning(_T("EMSocket: dropped outgoing control packet because the queue is full (%u packets, %I64u bytes)"),
+					static_cast<unsigned>(controlpacket_queue.GetCount()),
+					m_nQueuedControlPacketBytes);
+			delete packet;
+			return;
+		}
 		controlpacket_queue.AddTail(packet);
+		m_nQueuedControlPacketBytes += nPacketBytes;
 
 		// queue up for controlpacket
 		theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this, m_hasSent);
 	} else {
+		if (!CanQueueEMSocketStandardPacket(
+				static_cast<size_t>(standardpacket_queue.GetCount()),
+				m_nQueuedStandardPacketBytes,
+				nPacketBytes)) {
+			sendLocker.Unlock();
+			if (thePrefs.GetVerbose())
+				DebugLogWarning(_T("EMSocket: dropped outgoing standard packet because the queue is full (%u packets, %I64u bytes)"),
+					static_cast<unsigned>(standardpacket_queue.GetCount()),
+					m_nQueuedStandardPacketBytes);
+			delete packet;
+			return;
+		}
 		bool first = !((sendbuffer && !m_currentPacket_is_controlpacket) || !standardpacket_queue.IsEmpty());
 		standardpacket_queue.AddTail(StandardPacketQueueEntry{packet, actualPayloadSize});
+		m_nQueuedStandardPacketBytes += nPacketBytes;
 
 		// reset timeout for the first time
 		if (first) {
@@ -582,10 +612,12 @@ SocketSentBytes CEMSocket::SendStd(uint32 maxNumberOfBytesToSend, uint32 minFrag
 			if (sendbuffer == NULL) {
 				Packet *curPacket = NULL;
 				m_currentPacket_is_controlpacket = !controlpacket_queue.IsEmpty();
-				if (m_currentPacket_is_controlpacket)
+				if (m_currentPacket_is_controlpacket) {
 					// There's a control packet to send
 					curPacket = controlpacket_queue.RemoveHead();
-				else {
+					const uint32 nPacketBytes = curPacket->GetRealPacketSize();
+					m_nQueuedControlPacketBytes = (m_nQueuedControlPacketBytes > nPacketBytes) ? m_nQueuedControlPacketBytes - nPacketBytes : 0;
+				} else {
 					if (standardpacket_queue.IsEmpty()) {
 						// Just to be safe. Shouldn't happen?
 						sendLocker.Unlock();
@@ -599,6 +631,8 @@ SocketSentBytes CEMSocket::SendStd(uint32 maxNumberOfBytesToSend, uint32 minFrag
 					// There's a standard packet to send
 					StandardPacketQueueEntry queueEntry = standardpacket_queue.RemoveHead();
 					curPacket = queueEntry.packet;
+					const uint32 nPacketBytes = curPacket->GetRealPacketSize();
+					m_nQueuedStandardPacketBytes = (m_nQueuedStandardPacketBytes > nPacketBytes) ? m_nQueuedStandardPacketBytes - nPacketBytes : 0;
 					m_actualPayloadSize = queueEntry.actualPayloadSize;
 
 					// remember this for statistics purposes.
@@ -782,6 +816,8 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 				// never split control packets, ignore going over the limit by a few bytes
 				WSABUF pCurBuf;
 				Packet *curPacket = controlpacket_queue.RemoveHead();
+				const uint32 nQueuedPacketBytes = curPacket->GetRealPacketSize();
+				m_nQueuedControlPacketBytes = (m_nQueuedControlPacketBytes > nQueuedPacketBytes) ? m_nQueuedControlPacketBytes - nQueuedPacketBytes : 0;
 				pCurBuf.len = curPacket->GetRealPacketSize();
 				pCurBuf.buf = curPacket->DetachPacket();
 				delete curPacket;
@@ -798,6 +834,8 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 					StandardPacketQueueEntry queueEntry = standardpacket_queue.RemoveHead();
 					WSABUF pCurBuf;
 					Packet *curPacket = queueEntry.packet;
+					const uint32 nQueuedPacketBytes = curPacket->GetRealPacketSize();
+					m_nQueuedStandardPacketBytes = (m_nQueuedStandardPacketBytes > nQueuedPacketBytes) ? m_nQueuedStandardPacketBytes - nQueuedPacketBytes : 0;
 					m_currentPackageIsFromPartFile = curPacket->IsFromPF();
 
 					// can we send it right away or only a part of it?
@@ -1035,6 +1073,7 @@ void CEMSocket::TruncateQueues()
 	// Please note! There may still be a standardpacket in the sendbuffer variable!
 	while (!standardpacket_queue.IsEmpty())
 		delete standardpacket_queue.RemoveHead().packet;
+	m_nQueuedStandardPacketBytes = 0;
 
 	sendLocker.Unlock();
 }
