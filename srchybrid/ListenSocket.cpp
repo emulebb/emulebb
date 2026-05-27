@@ -1879,6 +1879,13 @@ SocketSentBytes CClientReqSocket::SendFileAndControlData(uint32 maxNumberOfBytes
 
 void CClientReqSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayloadSize, bool bForceImmediateSend)
 {
+	if (deletethis) {
+		// Safe_Delete leaves the object alive for MFC callbacks, but callers may
+		// still hold raw socket pointers; drop packets instead of re-queueing
+		// work on a socket that is already committed to deletion.
+		delete packet;
+		return;
+	}
 	ResetTimeOutTimer();
 	CEMSocket::SendPacket(packet, controlpacket, actualPayloadSize, bForceImmediateSend);
 }
