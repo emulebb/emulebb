@@ -1058,7 +1058,10 @@ bool CKnownFile::CreateHash(CFile *pFile, uint64 Length, uchar *pMd4HashOut, CAI
 	if ((Length != 0 && pFile == NULL) || (pMd4HashOut == NULL && pShaHashOut == NULL))
 		return false;
 
-	uchar   X[64 * 128];
+	static const UINT kHashReadBufferBytes = 64u * 1024u;
+	static_assert(kHashReadBufferBytes < EMBLOCKSIZE, "hash read buffer must not span multiple AICH blocks");
+
+	uchar   X[kHashReadBufferBytes];
 	uint64	posCurrentEMBlock = 0;
 	uint64	nIACHPos = 0;
 	CMD4	md4;
