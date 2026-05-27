@@ -75,7 +75,7 @@ private:
 	bool m_bAcquired;
 };
 
-bool RunVideoThumbnailCommand(const CString &rstrCommand, const CString &rstrWorkingDirectory, DWORD &rdwExitCode)
+bool RunVideoThumbnailCommand(const CString &rstrApplicationPath, const CString &rstrCommand, const CString &rstrWorkingDirectory, DWORD &rdwExitCode)
 {
 	CScopedVideoThumbnailProcessSlot slot;
 	if (!slot.IsAcquired()) {
@@ -84,6 +84,7 @@ bool RunVideoThumbnailCommand(const CString &rstrCommand, const CString &rstrWor
 	}
 
 	const ProcessLaunchSeams::BoundedProcessResult result = ProcessLaunchSeams::RunProcessWithTimeout(
+		rstrApplicationPath,
 		rstrCommand,
 		rstrWorkingDirectory.IsEmpty() ? NULL : (LPCTSTR)rstrWorkingDirectory,
 		SW_HIDE,
@@ -170,7 +171,7 @@ BOOL CVideoThumbnailThread::Run()
 				pResult->dwErrorCode = ::GetLastError();
 			} else {
 				const CString strCommandLine(PartFilePreviewSeams::BuildFfmpegThumbnailCommandLine(m_strFfmpegPath, m_strInputPath, m_strCachePath, uStartSecond));
-				if (!RunVideoThumbnailCommand(strCommandLine, m_strWorkingDirectory, dwExitCode)) {
+				if (!RunVideoThumbnailCommand(m_strFfmpegPath, strCommandLine, m_strWorkingDirectory, dwExitCode)) {
 					pResult->dwErrorCode = dwExitCode;
 					if (dwExitCode == ERROR_BUSY)
 						pResult->eResult = PartFilePreviewSeams::VTAR_FFMPEG_BUSY;
@@ -274,7 +275,7 @@ BOOL CPeerPreviewThread::Run()
 				DWORD dwExitCode = 0;
 				const CString strCommandLine(PartFilePreviewSeams::BuildFfmpegPeerPreviewFrameCommandLine(
 					m_strFfmpegPath, m_strInputPath, strOutputPath, PartFilePreviewSeams::GetPeerPreviewFrameSecond(i)));
-				if (RunVideoThumbnailCommand(strCommandLine, m_strWorkingDirectory, dwExitCode) && dwExitCode == 0
+				if (RunVideoThumbnailCommand(m_strFfmpegPath, strCommandLine, m_strWorkingDirectory, dwExitCode) && dwExitCode == 0
 					&& LongPathSeams::GetFileAttributes(strOutputPath) != INVALID_FILE_ATTRIBUTES)
 				{
 					HBITMAP hBitmap = NULL;

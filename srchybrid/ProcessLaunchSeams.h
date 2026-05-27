@@ -101,7 +101,7 @@ inline DetachedLaunchResult LaunchDetachedProcess(LPCTSTR pszApplicationName, CS
 /**
  * @brief Starts a child process, waits for a bounded interval, and optionally terminates on timeout.
  */
-inline BoundedProcessResult RunProcessWithTimeout(CString strCommandLine, LPCTSTR pszWorkingDirectory, WORD wShowWindow, DWORD dwCreationFlags, DWORD dwTimeoutMs, bool bTerminateOnTimeout, DWORD dwTerminateWaitMs)
+inline BoundedProcessResult RunProcessWithTimeout(LPCTSTR pszApplicationName, CString strCommandLine, LPCTSTR pszWorkingDirectory, WORD wShowWindow, DWORD dwCreationFlags, DWORD dwTimeoutMs, bool bTerminateOnTimeout, DWORD dwTerminateWaitMs)
 {
 	STARTUPINFO startupInfo = {};
 	startupInfo.cb = sizeof(startupInfo);
@@ -109,11 +109,13 @@ inline BoundedProcessResult RunProcessWithTimeout(CString strCommandLine, LPCTST
 	startupInfo.wShowWindow = wShowWindow;
 
 	PROCESS_INFORMATION processInfo = {};
+	const CString strPreparedApplicationName(PrepareOptionalCreateProcessPath(pszApplicationName));
 	const CString strPreparedWorkingDirectory(PrepareOptionalCreateProcessPath(pszWorkingDirectory));
+	LPCTSTR pszPreparedApplicationName = pszApplicationName != NULL && pszApplicationName[0] != _T('\0') ? static_cast<LPCTSTR>(strPreparedApplicationName) : pszApplicationName;
 	LPCTSTR pszPreparedWorkingDirectory = pszWorkingDirectory != NULL && pszWorkingDirectory[0] != _T('\0') ? static_cast<LPCTSTR>(strPreparedWorkingDirectory) : pszWorkingDirectory;
 	LPTSTR pszCommandLine = strCommandLine.GetBuffer();
 	const BOOL bStarted = ::CreateProcess(
-		NULL,
+		pszPreparedApplicationName,
 		pszCommandLine,
 		NULL,
 		NULL,
@@ -150,5 +152,10 @@ inline BoundedProcessResult RunProcessWithTimeout(CString strCommandLine, LPCTST
 	(void)::CloseHandle(processInfo.hThread);
 	(void)::CloseHandle(processInfo.hProcess);
 	return result;
+}
+
+inline BoundedProcessResult RunProcessWithTimeout(CString strCommandLine, LPCTSTR pszWorkingDirectory, WORD wShowWindow, DWORD dwCreationFlags, DWORD dwTimeoutMs, bool bTerminateOnTimeout, DWORD dwTerminateWaitMs)
+{
+	return RunProcessWithTimeout(NULL, strCommandLine, pszWorkingDirectory, wShowWindow, dwCreationFlags, dwTimeoutMs, bTerminateOnTimeout, dwTerminateWaitMs);
 }
 }
