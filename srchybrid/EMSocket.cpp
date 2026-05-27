@@ -459,15 +459,20 @@ void CEMSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayl
 {
 	//EMTrace("CEMSocket::OnSenPacked1 controlcount %i, standardcount %i, isbusy: %i", controlpacket_queue.GetCount(), standardpacket_queue.GetCount(), IsBusy());
 
-	if (byConnected == EMS_DISCONNECTED) {
-		delete packet;
-		return;
-	}
-
 	//if(m_startSendTick > 0) {
 	//	m_lastSendLatency = timeGetTime() - m_startSendTick;
 	//}
 	sendLocker.Lock();
+	if (byConnected == EMS_DISCONNECTED) {
+		sendLocker.Unlock();
+		// WHY: upload/read helper threads can race a disconnect between their
+		// call into SendPacket and the queue mutation below. The disconnected
+		// check must be protected by the same lock as ClearQueues/OnClose so the
+		// caller-transferred Packet is either queued on a live socket or deleted.
+		delete packet;
+		return;
+	}
+
 	const uint32 nPacketBytes = packet->GetRealPacketSize();
 	if (controlpacket) {
 		if (!CanQueueEMSocketControlPacket(
