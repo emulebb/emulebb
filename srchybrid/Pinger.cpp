@@ -120,6 +120,12 @@ namespace
 		uint32_t ulBindAddr = 0;
 		return IPv4AddressSeams::TryParseIPv4Address(thePrefs.GetBindAddr(), ulBindAddr) ? ulBindAddr : INADDR_ANY;
 	}
+
+	bool ShouldBlockIcmpApiForExplicitBind()
+	{
+		return !thePrefs.GetActiveBindInterface().IsEmpty()
+			&& thePrefs.GetActiveBindAddressResolveResult() == BARR_Resolved;
+	}
 }
 
 Pinger::Pinger()
@@ -217,7 +223,27 @@ Pinger::~Pinger()
 
 PingStatus Pinger::Ping(uint32 lAddr, uint32 ttl, bool doLog, bool useUdp)
 {
-	return (useUdp && udpStarted) ? PingUDP(lAddr, ttl, doLog) : PingICMP(lAddr, ttl, doLog);
+	if (useUdp && udpStarted)
+		return PingUDP(lAddr, ttl, doLog);
+
+	if (ShouldBlockIcmpApiForExplicitBind()) {
+		// WHY: IcmpSendEcho has no socket handle, so it cannot be bound through
+		// BindAddr/IP_UNICAST_IF. Falling back to it after an explicit resolved
+		// interface bind would send diagnostic traffic on an arbitrary route.
+		if (doLog)
+			theApp.QueueDebugLogLine(false
+				, _T("Pinger: skipped ICMP API fallback because bind interface %s (ifIndex=%lu) is active")
+				, (LPCTSTR)thePrefs.GetActiveBindInterfaceName()
+				, thePrefs.GetActiveBindInterfaceIndex());
+		PingStatus returnValue = {};
+		returnValue.fDelay = TIMEOUT;
+		returnValue.status = IP_GENERAL_FAILURE;
+		returnValue.error = ERROR_NOT_SUPPORTED;
+		returnValue.bSuccess = false;
+		return returnValue;
+	}
+
+	return PingICMP(lAddr, ttl, doLog);
 }
 
 PingStatus Pinger::PingUDP(uint32 lAddr, DWORD ttl, bool doLog)
