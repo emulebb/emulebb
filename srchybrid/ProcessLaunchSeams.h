@@ -3,6 +3,8 @@
 #include <atlstr.h>
 #include <Windows.h>
 
+#include "LongPathSeams.h"
+
 namespace ProcessLaunchSeams
 {
 constexpr DWORD kElevatedPowerShellActionTimeoutMs = 30u * 60u * 1000u;
@@ -48,6 +50,13 @@ inline EProcessWaitResult ClassifyProcessWaitResult(DWORD dwWaitResult)
 	}
 }
 
+inline CString PrepareOptionalCreateProcessPath(LPCTSTR pszPath)
+{
+	if (pszPath == NULL || pszPath[0] == _T('\0'))
+		return CString();
+	return CString(LongPathSeams::PreparePathForLongPath(pszPath).c_str());
+}
+
 /**
  * @brief Starts a detached child process and always closes the returned process handles.
  */
@@ -59,16 +68,20 @@ inline DetachedLaunchResult LaunchDetachedProcess(LPCTSTR pszApplicationName, CS
 	startupInfo.wShowWindow = wShowWindow;
 
 	PROCESS_INFORMATION processInfo = {};
+	const CString strPreparedApplicationName(PrepareOptionalCreateProcessPath(pszApplicationName));
+	const CString strPreparedWorkingDirectory(PrepareOptionalCreateProcessPath(pszWorkingDirectory));
+	LPCTSTR pszPreparedApplicationName = pszApplicationName != NULL && pszApplicationName[0] != _T('\0') ? static_cast<LPCTSTR>(strPreparedApplicationName) : pszApplicationName;
+	LPCTSTR pszPreparedWorkingDirectory = pszWorkingDirectory != NULL && pszWorkingDirectory[0] != _T('\0') ? static_cast<LPCTSTR>(strPreparedWorkingDirectory) : pszWorkingDirectory;
 	LPTSTR pszCommandLine = strCommandLine.GetBuffer();
 	const BOOL bStarted = ::CreateProcess(
-		pszApplicationName,
+		pszPreparedApplicationName,
 		pszCommandLine,
 		NULL,
 		NULL,
 		FALSE,
 		dwCreationFlags,
 		NULL,
-		pszWorkingDirectory,
+		pszPreparedWorkingDirectory,
 		&startupInfo,
 		&processInfo);
 	const DWORD dwError = bStarted ? ERROR_SUCCESS : ::GetLastError();
@@ -96,6 +109,8 @@ inline BoundedProcessResult RunProcessWithTimeout(CString strCommandLine, LPCTST
 	startupInfo.wShowWindow = wShowWindow;
 
 	PROCESS_INFORMATION processInfo = {};
+	const CString strPreparedWorkingDirectory(PrepareOptionalCreateProcessPath(pszWorkingDirectory));
+	LPCTSTR pszPreparedWorkingDirectory = pszWorkingDirectory != NULL && pszWorkingDirectory[0] != _T('\0') ? static_cast<LPCTSTR>(strPreparedWorkingDirectory) : pszWorkingDirectory;
 	LPTSTR pszCommandLine = strCommandLine.GetBuffer();
 	const BOOL bStarted = ::CreateProcess(
 		NULL,
@@ -105,7 +120,7 @@ inline BoundedProcessResult RunProcessWithTimeout(CString strCommandLine, LPCTST
 		FALSE,
 		dwCreationFlags,
 		NULL,
-		pszWorkingDirectory,
+		pszPreparedWorkingDirectory,
 		&startupInfo,
 		&processInfo);
 	const DWORD dwError = bStarted ? ERROR_SUCCESS : ::GetLastError();
