@@ -33,6 +33,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 static const DWORD kMaxZipCentralDirectoryBytes = 64u * 1024u * 1024u;
+static const uint64 kMaxZipExtractMemberBytes = 512ull * 1024ull * 1024ull;
 
 /////////////////////////////////////////////////////////////////////////////
 // CZIPFile construction
@@ -419,6 +420,13 @@ bool CZIPFile::File::Extract(LPCTSTR pszFile)
 {
 	z_stream pStream;
 	HANDLE hFile;
+
+	// WHY: this ZIP helper is used for trusted-size utility imports, not for
+	// arbitrary multi-gigabyte payload extraction. Reject oversized declared
+	// member output before creating the destination so a crafted ZIP cannot
+	// force unbounded disk growth through a tiny compressed stream.
+	if (m_nSize > kMaxZipExtractMemberBytes)
+		return false;
 
 	hFile = LongPathSeams::CreateFile(pszFile, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
