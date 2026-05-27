@@ -1103,7 +1103,15 @@ BOOL CAsyncSocketEx::Attach(SOCKET hSocket, long lEvent /*= FD_DEFAULT*/)
 {
 	if (hSocket == INVALID_SOCKET)
 		return FALSE;
-	VERIFY(InitAsyncSocketExInstance());
+	if (!InitAsyncSocketExInstance()) {
+		// WHY: VERIFY evaluates away to a best-effort boolean in release builds.
+		// AttachHandle requires initialized thread-local socket data, so fail
+		// before publishing the raw SOCKET when the helper window slot cannot be
+		// prepared.
+		ASSERT(0);
+		WSASetLastError(WSANOTINITIALISED);
+		return FALSE;
+	}
 	m_SocketData.hSocket = hSocket;
 	if (!AttachHandle()) {
 		closesocket(m_SocketData.hSocket);
@@ -1152,7 +1160,16 @@ BOOL CAsyncSocketEx::Accept(CAsyncSocketEx &rConnectedSocket, LPSOCKADDR lpSockA
 	SOCKET hTemp = accept(m_SocketData.hSocket, lpSockAddr, lpSockAddrLen);
 	if (hTemp == INVALID_SOCKET)
 		return FALSE;
-	VERIFY(rConnectedSocket.InitAsyncSocketExInstance());
+	if (!rConnectedSocket.InitAsyncSocketExInstance()) {
+		// WHY: accepted sockets are owned by this function until AttachHandle
+		// publishes them to the async helper window. Release builds must close
+		// the raw SOCKET instead of continuing into AttachHandle with missing
+		// thread-local socket data.
+		ASSERT(0);
+		closesocket(hTemp);
+		WSASetLastError(WSANOTINITIALISED);
+		return FALSE;
+	}
 	rConnectedSocket.m_SocketData.hSocket = hTemp;
 	if (!rConnectedSocket.AttachHandle()) {
 		closesocket(hTemp);

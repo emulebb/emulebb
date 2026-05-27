@@ -2147,7 +2147,16 @@ void CListenSocket::OnAccept(int nErrorCode)
 					continue;
 				}
 				newclient = new CClientReqSocket;
-				VERIFY(newclient->InitAsyncSocketExInstance());
+				if (!newclient->InitAsyncSocketExInstance()) {
+					// WHY: the listener owns both the freshly accepted SOCKET and
+					// CClientReqSocket until the socket has an async helper-window
+					// slot. Release builds must retire both here instead of
+					// falling through to AttachHandle with uninitialized thread data.
+					ASSERT(0);
+					closesocket(sNew);
+					newclient->Safe_Delete();
+					continue;
+				}
 				newclient->m_SocketData.hSocket = sNew;
 				if (!newclient->AttachHandle()) {
 					// WHY: accepted sockets must have a helper-window slot before

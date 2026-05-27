@@ -689,7 +689,16 @@ BOOL CAsyncSocketExLayer::AcceptNext(CAsyncSocketEx &rConnectedSocket, LPSOCKADD
 	SOCKET hTemp = accept(m_pOwnerSocket->m_SocketData.hSocket, lpSockAddr, lpSockAddrLen);
 	if (hTemp == INVALID_SOCKET)
 		return FALSE;
-	VERIFY(rConnectedSocket.InitAsyncSocketExInstance());
+	if (!rConnectedSocket.InitAsyncSocketExInstance()) {
+		// WHY: the layer accept path owns hTemp until the connected socket is
+		// registered with the async helper window. In release builds a VERIFY
+		// would still fall through, and AttachHandle would dereference missing
+		// thread-local socket data.
+		ASSERT(0);
+		closesocket(hTemp);
+		WSASetLastError(WSANOTINITIALISED);
+		return FALSE;
+	}
 	rConnectedSocket.m_SocketData.hSocket = hTemp;
 	if (!rConnectedSocket.AttachHandle()) {
 		closesocket(hTemp);
