@@ -1362,6 +1362,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 	}
 
 	if (HasLowID() && GetKadState() != KS_CONNECTING_FWCHECK) {
+		const bool bCanKadCallback = HasValidBuddyID() && Kademlia::CKademlia::IsConnected() && m_reqfile != NULL;
 		ASSERT(pClassSocket == NULL);
 		if (!theApp.CanDoCallback(this)) { // lowid2lowid check used for the whole function, don't remove
 			// We cannot reach this client, so we hard fail to connect, if this client should be kept,
@@ -1382,7 +1383,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 
 		// Is any callback available?
 		if (!((SupportsDirectUDPCallback() && thePrefs.GetUDPPort() != 0 && GetConnectIP() != 0) // Direct Callback
-			|| (HasValidBuddyID() && Kademlia::CKademlia::IsConnected() && ((GetBuddyIP() && GetBuddyPort()) || m_reqfile != NULL)) // Kad Callback
+			|| bCanKadCallback // Kad Callback
 			|| theApp.serverconnect->IsLocalServer(GetServerIP(), GetServerPort()))) // Server Callback
 		{
 			// Nope
@@ -1451,7 +1452,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 		theApp.serverconnect->SendPacket(packet);
 		return true;
 	}
-	if (HasValidBuddyID() && Kademlia::CKademlia::IsConnected() && ((GetBuddyIP() && GetBuddyPort()) || m_reqfile != NULL)) {
+	if (HasValidBuddyID() && Kademlia::CKademlia::IsConnected() && m_reqfile != NULL) {
 		if (GetBuddyIP() && GetBuddyPort()) {
 			CSafeMemFile bio(34);
 			bio.WriteUInt128(Kademlia::CUInt128(GetBuddyID()));
