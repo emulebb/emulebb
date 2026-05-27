@@ -385,6 +385,15 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 			}
 		case OP_FOUNDSOURCES_OBFU:
 		case OP_FOUNDSOURCES:
+			if (size < 17) {
+				// WHY: both the debug path and the real parser need the 16-byte
+				// file hash plus one source-count byte. Check that before logging
+				// packet[16] or formatting the hash so a malformed server packet
+				// cannot trigger an out-of-bounds debug read.
+				if (thePrefs.GetDebugServerTCPLevel() > 0)
+					Debug(_T("ServerMsg - OP_FoundSources%s malformed; size=%u\n"), (opcode == OP_FOUNDSOURCES_OBFU) ? _T("_OBFU") : _T(""), size);
+				break;
+			}
 			if (thePrefs.GetDebugServerTCPLevel() > 0)
 				Debug(_T("ServerMsg - OP_FoundSources%s; Sources=%u  %s\n"), (opcode == OP_FOUNDSOURCES_OBFU) ? _T("_OBFU") : _T(""), (UINT)packet[16], (LPCTSTR)DbgGetFileInfo(packet));
 
