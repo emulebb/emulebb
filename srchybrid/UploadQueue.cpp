@@ -848,11 +848,16 @@ CUploadQueue::RetiredUploadClientStructContext CUploadQueue::RemoveUploadClientS
 	CSingleLock lockUploadList(&m_csUploadListMainThrdWriteOtherThrdsRead, TRUE);
 	ASSERT(lockUploadList.IsLocked());
 
+	// WHY: upload disk completions keep raw UploadingToClient_Struct pointers
+	// and rely on either uploadinglist or m_retiredUploadingList to find/reclaim
+	// them. Link the retired owner first because AddTail can allocate; RemoveAt
+	// cannot. A low-memory failure must leave the entry discoverable in the
+	// active list instead of in no list at all.
+	m_retiredUploadingList.AddTail(pUploadClientStruct);
 	uploadinglist.RemoveAt(pos);
 	pUploadClientStruct->m_bRetired = true;
 	pUploadClientStruct->m_ullRetiredTick = ::GetTickCount64();
 	pUploadClientStruct->m_ullLastRetiredPendingIOLogTick = 0;
-	m_retiredUploadingList.AddTail(pUploadClientStruct);
 	return {pUploadClientStruct};
 }
 
