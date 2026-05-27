@@ -299,49 +299,92 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 				throwCStr(_T("StartCreateNextBlockPackage: cannot open CKnownFile"));
 
 			// initiate read
-			OverlappedRead_Struct *pOverlappedRead = new OverlappedRead_Struct;
-			pOverlappedRead->oOverlap.Internal = 0;
-			pOverlappedRead->oOverlap.InternalHigh = 0;
-			//pOverlappedRead->oOverlap.Offset = LODWORD(currentblock->StartOffset);
-			//pOverlappedRead->oOverlap.OffsetHigh = HIDWORD(currentblock->StartOffset);
-			*(uint64*)&pOverlappedRead->oOverlap.Offset = currentblock->StartOffset;
-			pOverlappedRead->oOverlap.hEvent = 0;
-			pOverlappedRead->pFile = pFile;
-			pOverlappedRead->pUploadClientStruct = pUploadClientStruct;
-			pOverlappedRead->uStartOffset = currentblock->StartOffset;
-			pOverlappedRead->uEndOffset = currentblock->EndOffset;
-			pOverlappedRead->pBuffer = new byte[(size_t)uTogo];
+			OverlappedRead_Struct *pOverlappedRead = NULL;
+			bool bReadReferenceAdded = false;
+			bool bPendingBlockCounted = false;
+			bool bPendingListLinked = false;
 
-			// WHY: ReadFile captures pOverlappedRead, which contains the raw
-			// CKnownFile pointer. The lifetime reference must be visible before
-			// the kernel can report completion or another thread can delete the
-			// file object after closing/dissociating its read handle.
-			pFile->AddUploadReadReference();
-			if (!::ReadFile(pFile->m_hRead, pOverlappedRead->pBuffer, (DWORD)uTogo, NULL, (LPOVERLAPPED)pOverlappedRead)) {
-				DWORD dwError = ::GetLastError();
-				if (dwError != ERROR_IO_PENDING) {
-					pFile->ReleaseUploadReadReference();
-					delete[] pOverlappedRead->pBuffer;
-					delete pOverlappedRead;
+			try {
+				pOverlappedRead = new OverlappedRead_Struct;
+				pOverlappedRead->oOverlap.Internal = 0;
+				pOverlappedRead->oOverlap.InternalHigh = 0;
+				//pOverlappedRead->oOverlap.Offset = LODWORD(currentblock->StartOffset);
+				//pOverlappedRead->oOverlap.OffsetHigh = HIDWORD(currentblock->StartOffset);
+				*(uint64*)&pOverlappedRead->oOverlap.Offset = currentblock->StartOffset;
+				pOverlappedRead->oOverlap.hEvent = 0;
+				pOverlappedRead->pFile = pFile;
+				pOverlappedRead->pUploadClientStruct = pUploadClientStruct;
+				pOverlappedRead->uStartOffset = currentblock->StartOffset;
+				pOverlappedRead->uEndOffset = currentblock->EndOffset;
+				pOverlappedRead->pBuffer = NULL;
+				pOverlappedRead->pos = NULL;
+				pOverlappedRead->pBuffer = new byte[(size_t)uTogo];
 
-					if (dwError == ERROR_INVALID_USER_BUFFER || dwError == ERROR_NOT_ENOUGH_MEMORY || dwError == ERROR_NOT_ENOUGH_QUOTA) {
-						theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadFile failed, possibly too many pending requests, trying again later"));
-						return; // make this a recoverable error, as it might just be that we have too many requests in which case we just need to wait
+				// WHY: ReadFile captures pOverlappedRead, which contains raw
+				// CKnownFile and upload-entry pointers. The lifetime reference,
+				// per-client pending count, and IOCP tracking list must all be
+				// established before kernel submission; otherwise a low-memory
+				// failure in CList after ReadFile would leave completion holding
+				// an untracked OVERLAPPED and mismatched deletion guards.
+				pFile->AddUploadReadReference();
+				bReadReferenceAdded = true;
+				pUploadClientStruct->m_nPendingIOBlocks.fetch_add(1);
+				bPendingBlockCounted = true;
+				pOverlappedRead->pos = m_listPendingIO.AddTail(pOverlappedRead);
+				bPendingListLinked = true;
+
+				if (!::ReadFile(pFile->m_hRead, pOverlappedRead->pBuffer, (DWORD)uTogo, NULL, (LPOVERLAPPED)pOverlappedRead)) {
+					DWORD dwError = ::GetLastError();
+					if (dwError != ERROR_IO_PENDING) {
+						m_listPendingIO.RemoveAt(pOverlappedRead->pos);
+						bPendingListLinked = false;
+						pOverlappedRead->pos = NULL;
+						pUploadClientStruct->m_nPendingIOBlocks.fetch_sub(1);
+						bPendingBlockCounted = false;
+						pFile->ReleaseUploadReadReference();
+						bReadReferenceAdded = false;
+						delete[] pOverlappedRead->pBuffer;
+						delete pOverlappedRead;
+
+						if (dwError == ERROR_INVALID_USER_BUFFER || dwError == ERROR_NOT_ENOUGH_MEMORY || dwError == ERROR_NOT_ENOUGH_QUOTA) {
+							theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadFile failed, possibly too many pending requests, trying again later"));
+							return; // make this a recoverable error, as it might just be that we have too many requests in which case we just need to wait
+						}
+						throw _T("ReadFile Error: ") + GetErrorMessage(dwError, 1);
 					}
-					throw _T("ReadFile Error: ") + GetErrorMessage(dwError, 1);
 				}
+			} catch (CMemoryException *ex) {
+				if (bPendingListLinked)
+					m_listPendingIO.RemoveAt(pOverlappedRead->pos);
+				if (bPendingBlockCounted)
+					pUploadClientStruct->m_nPendingIOBlocks.fetch_sub(1);
+				if (bReadReferenceAdded)
+					pFile->ReleaseUploadReadReference();
+				if (ex != NULL)
+					ex->Delete();
+				if (pOverlappedRead != NULL)
+					delete[] pOverlappedRead->pBuffer;
+				delete pOverlappedRead;
+				throwCStr(_T("Upload disk read dispatch ran out of memory"));
 			}
-			pUploadClientStruct->m_nPendingIOBlocks.fetch_add(1);
-			m_listPendingIO.AddTail(pOverlappedRead);
 			DEBUG_ONLY(dbgDataReadPending += uTogo);
 
+			// WHY: AddHead can allocate. Link the request into the done list
+			// before removing it from the pending queue so a low-memory throw
+			// cannot lose the block while an already submitted read completes.
+			Requested_Block_Struct *pDoneBlock = pUploadClientStruct->m_BlockRequests_queue.GetHead();
+			pUploadClientStruct->m_DoneBlocks_list.AddHead(pDoneBlock);
+			pUploadClientStruct->m_BlockRequests_queue.RemoveHead();
 			addedPayloadQueueSession += uTogo;
 			pClient->SetQueueSessionUploadAdded(addedPayloadQueueSession);
-			pUploadClientStruct->m_DoneBlocks_list.AddHead(pUploadClientStruct->m_BlockRequests_queue.RemoveHead());
 		}
 		return; //no errors
 	} catch (const CString &ex) {
 		theApp.QueueDebugLogLineEx(LOG_ERROR, GetResString(IDS_ERR_CLIENTERRORED), pClient->GetUserName(), (LPCTSTR)ex);
+	} catch (CMemoryException *ex) {
+		if (ex != NULL)
+			ex->Delete();
+		theApp.QueueDebugLogLineEx(LOG_ERROR, GetResString(IDS_ERR_CLIENTERRORED), pClient->GetUserName(), _T("upload disk read dispatch ran out of memory"));
 	} catch (CFileException *ex) {
 		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed to create upload package for %s%s"), pClient->GetUserName(), (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
@@ -361,9 +404,8 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 	UploadingToClient_Struct *pStruct = pOvRead->pUploadClientStruct;
 	ASSERT(pStruct != NULL);
 
-	POSITION posPending = m_listPendingIO.Find(const_cast<OverlappedRead_Struct*>(pOvRead));
-	if (posPending != NULL)
-		m_listPendingIO.RemoveAt(posPending);
+	if (pOvRead->pos != NULL)
+		m_listPendingIO.RemoveAt(pOvRead->pos);
 	else if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP)
 		theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: completed upload read was not present in the pending I/O list"));
 
@@ -392,7 +434,13 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 				ASSERT(lockUploadListRead.IsLocked());
 				const bool bFound = (rUploadList.Find(pStruct) != NULL);
 				const UploadQueueEntryAccessState entryState = ClassifyUploadQueueEntryAccess(bFound, pStruct->m_bRetired, pStruct->m_pClient != NULL);
-				completionAction = ClassifyUploadDiskReadCompletion(entryState, bReadError);
+				// WHY: dispatch-side bookkeeping can fail after ReadFile has
+				// accepted the OVERLAPPED. Once the upload entry is marked I/O
+				// errored, late completions must drain their references without
+				// delivering packets for a request the queue is already retiring.
+				completionAction = pStruct->m_bIOError
+					? uploadDiskReadCompletionDiscard
+					: ClassifyUploadDiskReadCompletion(entryState, bReadError);
 
 				if (completionAction == uploadDiskReadCompletionSendPackets) {
 					CUpDownClient *pClient = pStruct->m_pClient;
@@ -418,8 +466,12 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 
 				if (completionAction == uploadDiskReadCompletionMarkIoError)
 					pStruct->m_bIOError = true;
-				else if (completionAction == uploadDiskReadCompletionDiscard && !bLoggedCompletionDiscard)
-					theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: Client not found in uploadlist when reading finished; discarding block"));
+				else if (completionAction == uploadDiskReadCompletionDiscard && !bLoggedCompletionDiscard) {
+					if (pStruct->m_bIOError)
+						theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: upload entry already has a disk I/O error; discarding block"));
+					else
+						theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: Client not found in uploadlist when reading finished; discarding block"));
+				}
 			}
 
 			while (!packetsList.IsEmpty() && pSocket != NULL) {
