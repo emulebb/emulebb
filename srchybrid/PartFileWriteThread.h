@@ -60,6 +60,7 @@ private:
 	void	WriteBuffers();
 	void	WriteCompletionRoutine(DWORD dwBytesWritten, const OverlappedWrite_Struct *pOvWrite, DWORD dwCompletionError);
 	void	CancelPendingWrites();
+	void	ReleaseQueuedWritesForShutdown();
 	void	DrainPendingWrites();
 
 	CList<ToWrite>	m_listToWrite;

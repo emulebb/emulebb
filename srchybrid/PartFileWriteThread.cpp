@@ -49,6 +49,18 @@ void MarkWriteDispatchFailed(PartFileBufferedData *pBuffer, DWORD dwError)
 		delete pBuffer;
 	}
 }
+
+void ReleaseQueuedWriteListForShutdown(CList<ToWrite> &rWriteList)
+{
+	while (!rWriteList.IsEmpty()) {
+		const ToWrite item = rWriteList.RemoveHead();
+		// WHY: queued-but-undispatched items were already marked PB_PENDING by
+		// FlushBuffer, but they never incremented m_iWrites or reached IOCP.
+		// Marking them aborted wakes part-file cleanup without fabricating a
+		// completion for a write that the kernel never owned.
+		MarkWriteDispatchFailed(item.pBuffer, ERROR_OPERATION_ABORTED);
+	}
+}
 }
 
 IMPLEMENT_DYNCREATE(CPartFileWriteThread, CWinThread)
@@ -300,8 +312,19 @@ void CPartFileWriteThread::CancelPendingWrites()
 	}
 }
 
+void CPartFileWriteThread::ReleaseQueuedWritesForShutdown()
+{
+	ReleaseQueuedWriteListForShutdown(m_listToWrite);
+
+	m_lockFlushList.Lock();
+	ReleaseQueuedWriteListForShutdown(m_FlushList);
+	HelperThreadLaunchSeams::ClearFlag(m_bNewData);
+	m_lockFlushList.Unlock();
+}
+
 void CPartFileWriteThread::DrainPendingWrites()
 {
+	ReleaseQueuedWritesForShutdown();
 	CancelPendingWrites();
 
 	while (!m_listPendingIO.IsEmpty()) {
