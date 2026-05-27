@@ -996,89 +996,151 @@ bool CSharedFileList::WaitForSharedHashJob(SharedHashJob &rJob)
 
 void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 {
-	CString strFilePath(BuildSharedHashFilePath(rJob.strDirectory, rJob.strName));
-#if EMULE_COMPILED_STARTUP_PROFILING
-	const bool bEmitStartupHashProfileSample = theApp.IsStartupProfilingEnabled()
-		&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, GetHashingCount());
-	if (bEmitStartupHashProfileSample && rJob.ullQueuedTimestampUs != 0) {
-		const ULONGLONG ullHashStartUs = theApp.GetStartupProfileTimestampUs();
-		CString strPhase;
-		strPhase.Format(_T("shared.hash.file.queue_wait (%s)"), (LPCTSTR)strFilePath);
-		theApp.AppendStartupProfileLine(
-			strPhase,
-			(ullHashStartUs >= rJob.ullQueuedTimestampUs) ? (ullHashStartUs - rJob.ullQueuedTimestampUs) : 0ui64,
-			rJob.ullQueuedTimestampUs);
-	}
-	const ULONGLONG ullHashStartUs = theApp.GetStartupProfileTimestampUs();
-#endif
-
-	DbgSetThreadName("Shared hashing %s", (LPCTSTR)rJob.strName);
-	CScopedFileHashJobGate fileHashJobGate(FHJP_SHARED_FILE);
-	if (!fileHashJobGate.HasEntered())
-		return;
-
-	CSingleLock hashingLock(&theApp.hashing_mut, TRUE);
-	if (!theApp.IsClosing()
-		&& ShouldLogStartupHashFile(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, IsStartupDeferredHashingActive()))
-	{
-		Log(_T("%s \"%s\""), (LPCTSTR)GetResString(IDS_HASHINGFILE), (LPCTSTR)strFilePath);
-	}
-
+	CString strFilePath;
 	CKnownFile *pKnownFile = NULL;
-	bool bSuccess = false;
-	if (!theApp.IsClosing()) {
-		pKnownFile = new CKnownFile();
-		if (pKnownFile->CreateFromFile(rJob.strDirectory, rJob.strName, NULL)) {
-			pKnownFile->SetSharedDirectory(rJob.strSharedDirectory);
-			bSuccess = true;
-		} else {
-			delete pKnownFile;
-			pKnownFile = NULL;
+	CSharedFileHashResult *pResult = NULL;
+	bool bPendingCompletion = false;
+
+	try {
+		strFilePath = BuildSharedHashFilePath(rJob.strDirectory, rJob.strName);
+#if EMULE_COMPILED_STARTUP_PROFILING
+		const bool bEmitStartupHashProfileSample = theApp.IsStartupProfilingEnabled()
+			&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, GetHashingCount());
+		if (bEmitStartupHashProfileSample && rJob.ullQueuedTimestampUs != 0) {
+			const ULONGLONG ullHashStartUs = theApp.GetStartupProfileTimestampUs();
+			CString strPhase;
+			strPhase.Format(_T("shared.hash.file.queue_wait (%s)"), (LPCTSTR)strFilePath);
+			theApp.AppendStartupProfileLine(
+				strPhase,
+				(ullHashStartUs >= rJob.ullQueuedTimestampUs) ? (ullHashStartUs - rJob.ullQueuedTimestampUs) : 0ui64,
+				rJob.ullQueuedTimestampUs);
 		}
-	}
-#if EMULE_COMPILED_STARTUP_PROFILING
-	if (bEmitStartupHashProfileSample) {
-		CString strPhase;
-		strPhase.Format(_T("shared.hash.file.run (%s)"), (LPCTSTR)strFilePath);
-		theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullHashStartUs), ullHashStartUs);
-	}
-#endif
-	hashingLock.Unlock();
-
-	MoveActiveSharedHashToPendingCompletion(rJob);
-
-	CSharedFileHashResult *pResult = new CSharedFileHashResult;
-	pResult->pOwner = this;
-	pResult->pKnownFile = pKnownFile;
-	pResult->bSuccess = bSuccess;
-	pResult->strName = rJob.strName;
-	pResult->strDirectory = rJob.strDirectory;
-	pResult->strSharedDirectory = rJob.strSharedDirectory;
-	pResult->strFilePathKey = rJob.strFilePathKey;
-#if EMULE_COMPILED_STARTUP_PROFILING
-	pResult->ullQueuedTimestampUs = rJob.ullQueuedTimestampUs;
+		const ULONGLONG ullHashStartUs = theApp.GetStartupProfileTimestampUs();
 #endif
 
-	if (QueueDeferredSharedHashResult(pResult))
-		return;
+		DbgSetThreadName("Shared hashing %s", (LPCTSTR)rJob.strName);
+		CScopedFileHashJobGate fileHashJobGate(FHJP_SHARED_FILE);
+		if (!fileHashJobGate.HasEntered()) {
+			// WHY: WaitForSharedHashJob has already marked this file active. If the
+			// global hash gate refuses entry, no UI completion will be posted, so
+			// clear the active/in-flight markers here instead of leaving startup or
+			// shutdown waiting on a phantom hash.
+			AbandonActiveSharedHashJob(rJob);
+			return;
+		}
 
-	if (!theApp.IsClosing())
-		DebugLog(_T("Failed to deliver shared-file hash completion for \"%s\" during shutdown; discarding result."), (LPCTSTR)strFilePath);
-	delete pKnownFile;
-	delete pResult;
-	CompleteSharedHashCompletion(rJob.strFilePathKey);
-	if (GetHashingCount() == 0)
-		NoteStartupHashingQueueDrained(::GetTickCount64());
+		CSingleLock hashingLock(&theApp.hashing_mut, TRUE);
+		if (!theApp.IsClosing()
+			&& ShouldLogStartupHashFile(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, IsStartupDeferredHashingActive()))
+		{
+			Log(_T("%s \"%s\""), (LPCTSTR)GetResString(IDS_HASHINGFILE), (LPCTSTR)strFilePath);
+		}
+
+		bool bSuccess = false;
+		if (!theApp.IsClosing()) {
+			pKnownFile = new CKnownFile();
+			if (pKnownFile->CreateFromFile(rJob.strDirectory, rJob.strName, NULL)) {
+				pKnownFile->SetSharedDirectory(rJob.strSharedDirectory);
+				bSuccess = true;
+			} else {
+				delete pKnownFile;
+				pKnownFile = NULL;
+			}
+		}
+#if EMULE_COMPILED_STARTUP_PROFILING
+		if (bEmitStartupHashProfileSample) {
+			CString strPhase;
+			strPhase.Format(_T("shared.hash.file.run (%s)"), (LPCTSTR)strFilePath);
+			theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullHashStartUs), ullHashStartUs);
+		}
+#endif
+		hashingLock.Unlock();
+
+		bPendingCompletion = MoveActiveSharedHashToPendingCompletion(rJob);
+
+		pResult = new CSharedFileHashResult;
+		pResult->pOwner = this;
+		pResult->pKnownFile = pKnownFile;
+		pResult->bSuccess = bSuccess;
+		pResult->strName = rJob.strName;
+		pResult->strDirectory = rJob.strDirectory;
+		pResult->strSharedDirectory = rJob.strSharedDirectory;
+		pResult->strFilePathKey = rJob.strFilePathKey;
+#if EMULE_COMPILED_STARTUP_PROFILING
+		pResult->ullQueuedTimestampUs = rJob.ullQueuedTimestampUs;
+#endif
+
+		if (QueueDeferredSharedHashResult(pResult))
+			return;
+
+		if (!theApp.IsClosing())
+			DebugLog(_T("Failed to deliver shared-file hash completion for \"%s\" during shutdown; discarding result."), (LPCTSTR)strFilePath);
+		delete pKnownFile;
+		pKnownFile = NULL;
+		delete pResult;
+		pResult = NULL;
+		CompleteSharedHashCompletion(rJob.strFilePathKey);
+		bPendingCompletion = false;
+		if (GetHashingCount() == 0)
+			NoteStartupHashingQueueDrained(::GetTickCount64());
+	} catch (CException *ex) {
+		ex->Delete();
+		// WHY: this worker owns pKnownFile until the deferred result is queued.
+		// If any allocation or file exception escapes before that handoff, retire
+		// the queue bookkeeping here so GetHashingCount cannot stay nonzero.
+		delete pKnownFile;
+		delete pResult;
+		if (bPendingCompletion)
+			CompleteSharedHashCompletion(rJob.strFilePathKey);
+		else
+			AbandonActiveSharedHashJob(rJob);
+		if (!theApp.IsClosing())
+			DebugLog(_T("Shared-file hash job for \"%s\" failed before completion could be posted; retired active hash state."), (LPCTSTR)strFilePath);
+		if (GetHashingCount() == 0)
+			NoteStartupHashingQueueDrained(::GetTickCount64());
+	} catch (...) {
+		// WHY: keep non-MFC failures from terminating the shared-hash worker with
+		// an active/pending job still registered. The file will be discovered
+		// again by a later scan once the duplicate-suppression key is cleared.
+		delete pKnownFile;
+		delete pResult;
+		if (bPendingCompletion)
+			CompleteSharedHashCompletion(rJob.strFilePathKey);
+		else
+			AbandonActiveSharedHashJob(rJob);
+		if (!theApp.IsClosing())
+			DebugLog(_T("Shared-file hash job for \"%s\" failed before completion could be posted; retired active hash state."), (LPCTSTR)strFilePath);
+		if (GetHashingCount() == 0)
+			NoteStartupHashingQueueDrained(::GetTickCount64());
+	}
 }
 
-void CSharedFileList::MoveActiveSharedHashToPendingCompletion(const SharedHashJob &rJob)
+bool CSharedFileList::MoveActiveSharedHashToPendingCompletion(const SharedHashJob &rJob)
 {
 	CSingleLock lock(&m_mutSharedHashQueue, TRUE);
 	if (m_bSharedHashActive && m_sharedHashActiveJob.strFilePathKey.CompareNoCase(rJob.strFilePathKey) == 0) {
+		// WHY: deque::push_back can allocate. Keep the job marked active until
+		// the pending-completion node exists, so an exception leaves a precise
+		// active job for RunSharedHashJob's catch path to retire.
+		m_sharedHashPendingCompletions.push_back(rJob);
 		m_bSharedHashActive = false;
 		m_sharedHashActiveJob = SharedHashJob{};
-		m_sharedHashPendingCompletions.push_back(rJob);
+		return true;
 	}
+	return false;
+}
+
+void CSharedFileList::AbandonActiveSharedHashJob(const SharedHashJob &rJob)
+{
+	CSingleLock lock(&m_mutSharedHashQueue, TRUE);
+	if (m_bSharedHashActive && m_sharedHashActiveJob.strFilePathKey.CompareNoCase(rJob.strFilePathKey) == 0) {
+		// WHY: this worker-owned job cannot produce a UI completion. Clearing
+		// both the active slot and duplicate-suppression key prevents startup
+		// hashing, rescans, and shutdown from waiting forever on stale state.
+		m_bSharedHashActive = false;
+		m_sharedHashActiveJob = SharedHashJob{};
+	}
+	m_sharedHashInFlightKeys.erase(MakeSharedHashInFlightLookupKey(rJob.strFilePathKey));
 }
 
 void CSharedFileList::CompleteSharedHashCompletion(const CString &strFilePathKey)

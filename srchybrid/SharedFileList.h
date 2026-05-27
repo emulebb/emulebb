@@ -514,7 +514,11 @@ private:
 	/**
 	 * @brief Tracks one worker-posted hash completion until the UI thread consumes it.
 	 */
-	void	MoveActiveSharedHashToPendingCompletion(const SharedHashJob &rJob);
+	bool	MoveActiveSharedHashToPendingCompletion(const SharedHashJob &rJob);
+	/**
+	 * @brief Retires an active hash job that cannot produce a UI completion.
+	 */
+	void	AbandonActiveSharedHashJob(const SharedHashJob &rJob);
 	/**
 	 * @brief Clears one worker-posted hash completion after the UI thread consumed or discarded it.
 	 */
