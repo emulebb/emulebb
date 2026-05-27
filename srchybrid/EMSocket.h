@@ -150,4 +150,5 @@ private:
 	bool	m_bUseBigSendBuffers;
 	bool	m_bUseOverlappedSend;
 	bool	m_bPendingSendOv;
+	bool	m_bOverlappedSendBorrowsSendBuffer;
 };

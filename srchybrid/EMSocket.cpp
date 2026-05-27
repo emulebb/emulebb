@@ -117,6 +117,7 @@ CEMSocket::CEMSocket()
 	, m_bUseBigSendBuffers()
 	, m_bUseOverlappedSend(true)
 	, m_bPendingSendOv()
+	, m_bOverlappedSendBorrowsSendBuffer()
 {
 	// Keep timeGetTime() intentionally for upload send pacing. Measurement on
 	// 2026-05-02 showed 1 ms deltas here, while GetTickCount64 stayed at
@@ -790,15 +791,33 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 			if (sendbuffer != NULL) {
 				WSABUF pCurBuf;
 				pCurBuf.len = min(sendblen - sent, (uint32)nBytesLeft);
-				pCurBuf.buf = new CHAR[pCurBuf.len];
-				memcpy(pCurBuf.buf, sendbuffer + sent, pCurBuf.len);
+				bool bBorrowedSendBuffer = false;
+				// Borrowing avoids an extra allocation/copy for a partial TCP
+				// packet. The borrowed slice is safe only because sendbuffer is
+				// kept alive until CleanUpOverlappedSendOperation observes the
+				// overlapped send completion.
+				if (CanBorrowOverlappedSendBufferSlice(sent, pCurBuf.len, sendblen)) {
+					pCurBuf.buf = sendbuffer + sent;
+					m_bOverlappedSendBorrowsSendBuffer = true;
+					bBorrowedSendBuffer = true;
+				} else {
+					pCurBuf.buf = new CHAR[pCurBuf.len];
+					memcpy(pCurBuf.buf, sendbuffer + sent, pCurBuf.len);
+				}
 				m_aBufferSend.Add(pCurBuf);
 				sent += pCurBuf.len;
 				nBytesLeft -= pCurBuf.len;
 				if (sent == sendblen) { //finished the buffer
-					delete[] sendbuffer;
-					sendbuffer = NULL;
-					sendblen = 0;
+					if (bBorrowedSendBuffer) {
+						// Do not append more WSABUF entries after borrowing a
+						// just-finished sendbuffer; sendbuffer must remain the
+						// stable owner until overlapped completion cleanup.
+						nBytesLeft = 0;
+					} else {
+						delete[] sendbuffer;
+						sendbuffer = NULL;
+						sendblen = 0;
+					}
 				}
 				ret.sentBytesStandardPackets += pCurBuf.len; // Sendbuffer is always a standard packet in this method
 				lastFinishedStandard = timeGetTime();
@@ -855,8 +874,17 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 						sent = 0;
 						CryptPrepareSendData((uchar*)sendbuffer, sendblen); //  encryption cannot be done transparently in the base class
 						pCurBuf.len = min(sendblen - sent, (uint32)nBytesLeft);
-						pCurBuf.buf = new CHAR[pCurBuf.len];
-						memcpy(pCurBuf.buf, sendbuffer, pCurBuf.len);
+						// See the sendbuffer slice comment above. This avoids
+						// copying the first overlapped fragment of a standard
+						// packet while preserving the packet buffer until the
+						// overlapped operation is cleaned up.
+						if (CanBorrowOverlappedSendBufferSlice(sent, pCurBuf.len, sendblen)) {
+							pCurBuf.buf = sendbuffer + sent;
+							m_bOverlappedSendBorrowsSendBuffer = true;
+						} else {
+							pCurBuf.buf = new CHAR[pCurBuf.len];
+							memcpy(pCurBuf.buf, sendbuffer, pCurBuf.len);
+						}
 						sent += pCurBuf.len;
 						ASSERT(sent < sendblen);
 						m_currentPacket_is_controlpacket = false;
@@ -1215,9 +1243,18 @@ void CEMSocket::CleanUpOverlappedSendOperation(bool bCancel)
 				::Sleep(20);
 			};
 
-		for (INT_PTR i = m_aBufferSend.GetCount(); --i >= 0;)
-			delete[] m_aBufferSend[i].buf;
+		for (INT_PTR i = m_aBufferSend.GetCount(); --i >= 0;) {
+			if (!IsBorrowedOverlappedSendBufferSlice(m_aBufferSend[i].buf, sendbuffer, sendblen))
+				delete[] m_aBufferSend[i].buf;
+		}
 		m_aBufferSend.RemoveAll();
+		if (m_bOverlappedSendBorrowsSendBuffer && sent == sendblen) {
+			delete[] sendbuffer;
+			sendbuffer = NULL;
+			sendblen = 0;
+			sent = 0;
+		}
+		m_bOverlappedSendBorrowsSendBuffer = false;
 	}
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include "types.h"
 
 static const size_t kMaxEMSocketQueuedControlPackets = 1024u;
@@ -99,4 +100,25 @@ inline bool CanQueueEMSocketStandardPacket(const size_t nCurrentPackets, const u
 		nPacketBytes,
 		kMaxEMSocketQueuedStandardPackets,
 		kMaxEMSocketQueuedStandardBytes);
+}
+
+/**
+ * @brief Reports whether an overlapped send may reference an existing
+ *        sendbuffer slice directly instead of allocating a copy.
+ */
+inline bool CanBorrowOverlappedSendBufferSlice(const uint32 nSentOffset, const uint32 nSliceBytes, const uint32 nBufferBytes)
+{
+	return nSliceBytes > 0 && nSentOffset <= nBufferBytes && nSliceBytes <= nBufferBytes - nSentOffset;
+}
+
+/**
+ * @brief Detects WSABUF slices that borrow storage from the socket sendbuffer.
+ */
+inline bool IsBorrowedOverlappedSendBufferSlice(const char *pCandidate, const char *pSendBuffer, const uint32 nSendBufferBytes)
+{
+	if (pCandidate == NULL || pSendBuffer == NULL || nSendBufferBytes == 0)
+		return false;
+	const uintptr_t uCandidate = reinterpret_cast<uintptr_t>(pCandidate);
+	const uintptr_t uStart = reinterpret_cast<uintptr_t>(pSendBuffer);
+	return uCandidate >= uStart && uCandidate < uStart + nSendBufferBytes;
 }
