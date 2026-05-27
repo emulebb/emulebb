@@ -7,6 +7,8 @@
 #include <tchar.h>
 #include <windows.h>
 
+#include "LongPathSeams.h"
+
 namespace PartFilePersistenceSeams
 {
 constexpr uint64_t kDiskSpaceFloorUnitBytes = 1024ull * 1024ull * 1024ull;
@@ -171,9 +173,29 @@ struct FileSystemOps
 	GetLastErrorFn GetLastError;
 };
 
+inline BOOL WINAPI CopyFileLongPath(LPCTSTR pszExistingPath, LPCTSTR pszNewPath, BOOL bFailIfExists)
+{
+	return LongPathSeams::CopyFile(pszExistingPath, pszNewPath, bFailIfExists);
+}
+
+inline BOOL WINAPI DeleteFileLongPath(LPCTSTR pszPath)
+{
+	return LongPathSeams::DeleteFile(pszPath);
+}
+
+inline BOOL WINAPI MoveFileExLongPath(LPCTSTR pszExistingPath, LPCTSTR pszNewPath, DWORD dwFlags)
+{
+	return LongPathSeams::MoveFileEx(pszExistingPath, pszNewPath, dwFlags);
+}
+
+inline DWORD WINAPI GetFileAttributesLongPath(LPCTSTR pszPath)
+{
+	return LongPathSeams::GetFileAttributes(pszPath);
+}
+
 inline FileSystemOps GetDefaultFileSystemOps()
 {
-	FileSystemOps ops = { ::CopyFile, ::DeleteFile, ::MoveFileEx, ::GetFileAttributes, ::GetLastError };
+	FileSystemOps ops = { CopyFileLongPath, DeleteFileLongPath, MoveFileExLongPath, GetFileAttributesLongPath, ::GetLastError };
 	return ops;
 }
 
