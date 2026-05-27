@@ -525,10 +525,19 @@ void CEMSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayl
 			m_bAccelerateUpload = true;	// Always accelerate first packet in a block
 		}
 	}
+#ifdef _DEBUG
+	if (bForceImmediateSend) {
+		// WHY: the immediate-send request is only meaningful for a control
+		// packet that was just queued. Check that invariant while sendLocker
+		// still protects the control queue; after unlock the throttler can drain
+		// or requeue control work and make queue-count assertions racy.
+		ASSERT(controlpacket);
+		ASSERT(!controlpacket_queue.IsEmpty());
+	}
+#endif
 	sendLocker.Unlock();
 
 	if (bForceImmediateSend) {
-		ASSERT(controlpacket_queue.GetCount() == 1);
 		SendEM(1024, 0, true);
 	}
 }
