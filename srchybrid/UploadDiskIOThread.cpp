@@ -34,6 +34,8 @@
 #include "UploadBandwidthThrottler.h"
 #include "zlib.h"
 
+#include <new>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -44,6 +46,15 @@ static char THIS_FILE[] = __FILE__;
 #define RUN_IDLE	1
 #define RUN_WORK	2
 #define WAKEUP		((ULONG_PTR)(~0))
+
+namespace
+{
+void DeletePacketList(CPacketList &rPacketList)
+{
+	while (!rPacketList.IsEmpty())
+		delete rPacketList.RemoveHead();
+}
+}
 
 IMPLEMENT_DYNCREATE(CUploadDiskIOThread, CWinThread)
 
@@ -150,11 +161,23 @@ UINT CUploadDiskIOThread::RunInternal()
 		//start new I/O
 		CCriticalSection *pcsUploadListRead = NULL;
 		const CUploadingPtrList &rUploadList = theApp.uploadqueue->GetUploadListTS(&pcsUploadListRead);
-		pcsUploadListRead->Lock();
-		for (POSITION pos = rUploadList.GetHeadPosition(); pos != NULL;)
-			StartCreateNextBlockPackage(rUploadList.GetNext(pos));
-		HelperThreadLaunchSeams::ClearFlag(m_bNewData);
-		pcsUploadListRead->Unlock();
+		try {
+			CSingleLock lockUploadListRead(pcsUploadListRead, TRUE);
+			ASSERT(lockUploadListRead.IsLocked());
+			// WHY: StartCreateNextBlockPackage is expected to catch normal disk
+			// dispatch errors, but it still performs heap/list work. RAII keeps
+			// the upload-list read lock balanced if a low-memory exception slips
+			// through while the disk helper is walking active upload entries.
+			for (POSITION pos = rUploadList.GetHeadPosition(); pos != NULL;)
+				StartCreateNextBlockPackage(rUploadList.GetNext(pos));
+			HelperThreadLaunchSeams::ClearFlag(m_bNewData);
+		} catch (CException *pException) {
+			if (pException != NULL)
+				pException->Delete();
+			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Upload disk I/O helper aborted dispatch pass by MFC exception"));
+		} catch (const std::bad_alloc&) {
+			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Upload disk I/O helper ran out of memory during dispatch pass"));
+		}
 
 		//completed I/O
 		bool bStopCompletion = false;
@@ -260,6 +283,11 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 	if (addedPayloadQueueSession > nCurQueueSessionPayloadUp && addedPayloadQueueSession - nCurQueueSessionPayloadUp >= nBufferLimit)
 		return; // the buffered data is large enough already
 
+	// WHY: packet construction and socket queueing below allocate after the
+	// kernel has already completed the read and while this routine still owns
+	// the CKnownFile read reference, upload pending-block count, read buffer,
+	// and OVERLAPPED object. Keep a hard exception boundary so those lifetime
+	// guards are released even if packet/list allocation fails.
 	try {
 		// Get more data if currently buffered was less than nBufferLimit Bytes
 		while (!pUploadClientStruct->m_BlockRequests_queue.IsEmpty()
@@ -403,12 +431,14 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 	ASSERT(pKnownFile != NULL);
 	UploadingToClient_Struct *pStruct = pOvRead->pUploadClientStruct;
 	ASSERT(pStruct != NULL);
+	CPacketList packetsList;
 
 	if (pOvRead->pos != NULL)
 		m_listPendingIO.RemoveAt(pOvRead->pos);
 	else if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP)
 		theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: completed upload read was not present in the pending I/O list"));
 
+	try {
 	if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP) {
 		bool bReadError = dwCompletionError != ERROR_SUCCESS || !dwRead;
 		if (bReadError) {
@@ -423,7 +453,6 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 		}
 		if (pKnownFile != NULL && pKnownFile->m_hRead != INVALID_HANDLE_VALUE && pStruct != NULL) { //discard data from closed files
 			DEBUG_ONLY(dbgDataReadPending -= pOvRead->uEndOffset - pOvRead->uStartOffset);
-			CPacketList packetsList;
 			CClientReqSocket *pSocket = NULL;
 			UploadDiskReadCompletionAction completionAction = uploadDiskReadCompletionDiscard;
 			bool bLoggedCompletionDiscard = false;
@@ -493,6 +522,19 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 			theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: completed upload read has no upload entry; discarding block"));
 	} else if (pKnownFile)
 		DissociateFile(pKnownFile);
+	} catch (CException *pException) {
+		if (pException != NULL)
+			pException->Delete();
+		DeletePacketList(packetsList);
+		if (pStruct != NULL)
+			pStruct->m_bIOError = true;
+		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("ReadCompletionRoutine: upload read completion aborted by MFC exception; discarding block and marking upload entry failed"));
+	} catch (const std::bad_alloc&) {
+		DeletePacketList(packetsList);
+		if (pStruct != NULL)
+			pStruct->m_bIOError = true;
+		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("ReadCompletionRoutine: upload read completion ran out of memory; discarding block and marking upload entry failed"));
+	}
 	if (pKnownFile != NULL) {
 		// Keep nInUse raised until every completion-path access to pKnownFile is done.
 		// Delete paths use this counter as their release-build lifetime barrier.
