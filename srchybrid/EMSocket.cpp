@@ -31,6 +31,7 @@
 #include "Preferences.h"
 #include "Log.h"
 
+#include <memory>
 #include <new>
 
 #ifdef _DEBUG
@@ -494,80 +495,92 @@ void CEMSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayl
 	//if(m_startSendTick > 0) {
 	//	m_lastSendLatency = timeGetTime() - m_startSendTick;
 	//}
-	sendLocker.Lock();
-	if (byConnected == EMS_DISCONNECTED) {
-		sendLocker.Unlock();
-		// WHY: upload/read helper threads can race a disconnect between their
-		// call into SendPacket and the queue mutation below. The disconnected
-		// check must be protected by the same lock as ClearQueues/OnClose so the
-		// caller-transferred Packet is either queued on a live socket or deleted.
-		delete packet;
+	std::unique_ptr<Packet> ownedPacket(packet);
+	bool bQueueControlPacket = false;
+	bool bCloseForQueueLimit = false;
+	unsigned uQueuedPacketsAtLimit = 0;
+	uint64 uQueuedBytesAtLimit = 0;
+
+	{
+		CSingleLock lockSend(&sendLocker, TRUE);
+		if (byConnected == EMS_DISCONNECTED) {
+			// WHY: upload/read helper threads can race a disconnect between
+			// their call into SendPacket and the queue mutation below. The
+			// disconnected check must be protected by the same lock as
+			// ClearQueues/OnClose so caller-transferred Packet ownership is
+			// either queued on a live socket or destroyed here.
+			return;
+		}
+
+		const uint32 nPacketBytes = ownedPacket->GetRealPacketSize();
+		if (controlpacket) {
+			if (!CanQueueEMSocketControlPacket(
+					static_cast<size_t>(controlpacket_queue.GetCount()),
+					m_nQueuedControlPacketBytes,
+					nPacketBytes)) {
+				uQueuedPacketsAtLimit = static_cast<unsigned>(controlpacket_queue.GetCount());
+				uQueuedBytesAtLimit = m_nQueuedControlPacketBytes;
+				bCloseForQueueLimit = true;
+			} else {
+				// WHY: CTypedPtrList::AddTail may allocate while sendLocker is
+				// held. RAII unlocks on MFC memory exceptions, and ownedPacket
+				// keeps caller-transferred ownership until the queue link exists.
+				controlpacket_queue.AddTail(ownedPacket.get());
+				ownedPacket.release();
+				m_nQueuedControlPacketBytes += nPacketBytes;
+				bQueueControlPacket = true;
+			}
+		} else {
+			if (!CanQueueEMSocketStandardPacket(
+					static_cast<size_t>(standardpacket_queue.GetCount()),
+					m_nQueuedStandardPacketBytes,
+					nPacketBytes)) {
+				uQueuedPacketsAtLimit = static_cast<unsigned>(standardpacket_queue.GetCount());
+				uQueuedBytesAtLimit = m_nQueuedStandardPacketBytes;
+				bCloseForQueueLimit = true;
+			} else {
+				const bool first = !((sendbuffer && !m_currentPacket_is_controlpacket) || !standardpacket_queue.IsEmpty());
+				// WHY: CList::AddTail can allocate. Publish Packet ownership
+				// only after the list node is linked so low-memory failure
+				// cannot leak the packet or leave sendLocker held.
+				standardpacket_queue.AddTail(StandardPacketQueueEntry{ownedPacket.get(), actualPayloadSize});
+				ownedPacket.release();
+				m_nQueuedStandardPacketBytes += nPacketBytes;
+
+				// reset timeout for the first time
+				if (first) {
+					lastFinishedStandard = timeGetTime();
+					m_bAccelerateUpload = true;	// Always accelerate first packet in a block
+				}
+			}
+		}
+#ifdef _DEBUG
+		if (bForceImmediateSend && !bCloseForQueueLimit) {
+			// WHY: the immediate-send request is only meaningful for a control
+			// packet that was just queued. Check that invariant while sendLocker
+			// still protects the control queue; after unlock the throttler can
+			// drain or requeue control work and make queue-count assertions racy.
+			ASSERT(controlpacket);
+			ASSERT(!controlpacket_queue.IsEmpty());
+		}
+#endif
+	}
+
+	if (bCloseForQueueLimit) {
+		DebugLogWarning(controlpacket
+			? _T("EMSocket: closing peer after rejecting outgoing control packet because the queue is full (%u packets, %I64u bytes)")
+			: _T("EMSocket: closing peer after rejecting outgoing standard packet because the queue is full (%u packets, %I64u bytes)"),
+			uQueuedPacketsAtLimit,
+			uQueuedBytesAtLimit);
+		// WHY: callers transfer packet ownership here and cannot observe a
+		// false return. Closing the peer makes queue exhaustion explicit instead
+		// of silently losing protocol/control data.
+		OnError(WSAENOBUFS);
 		return;
 	}
 
-	const uint32 nPacketBytes = packet->GetRealPacketSize();
-	if (controlpacket) {
-		if (!CanQueueEMSocketControlPacket(
-				static_cast<size_t>(controlpacket_queue.GetCount()),
-				m_nQueuedControlPacketBytes,
-				nPacketBytes)) {
-			const unsigned uQueuedPackets = static_cast<unsigned>(controlpacket_queue.GetCount());
-			const uint64 uQueuedBytes = m_nQueuedControlPacketBytes;
-			sendLocker.Unlock();
-			DebugLogWarning(_T("EMSocket: closing peer after rejecting outgoing control packet because the queue is full (%u packets, %I64u bytes)"),
-				uQueuedPackets,
-				uQueuedBytes);
-			// WHY: callers transfer packet ownership here and cannot observe a
-			// false return. Closing the peer makes queue exhaustion explicit
-			// instead of silently losing protocol/control data.
-			delete packet;
-			OnError(WSAENOBUFS);
-			return;
-		}
-		controlpacket_queue.AddTail(packet);
-		m_nQueuedControlPacketBytes += nPacketBytes;
-
-		// queue up for controlpacket
+	if (bQueueControlPacket)
 		theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this, m_hasSent);
-	} else {
-		if (!CanQueueEMSocketStandardPacket(
-				static_cast<size_t>(standardpacket_queue.GetCount()),
-				m_nQueuedStandardPacketBytes,
-				nPacketBytes)) {
-			const unsigned uQueuedPackets = static_cast<unsigned>(standardpacket_queue.GetCount());
-			const uint64 uQueuedBytes = m_nQueuedStandardPacketBytes;
-			sendLocker.Unlock();
-			DebugLogWarning(_T("EMSocket: closing peer after rejecting outgoing standard packet because the queue is full (%u packets, %I64u bytes)"),
-				uQueuedPackets,
-				uQueuedBytes);
-			// WHY: a missing file-data packet corrupts the stream semantics for
-			// the current upload block. Fail the socket visibly so upper layers
-			// retry/requeue through normal peer lifecycle handling.
-			delete packet;
-			OnError(WSAENOBUFS);
-			return;
-		}
-		bool first = !((sendbuffer && !m_currentPacket_is_controlpacket) || !standardpacket_queue.IsEmpty());
-		standardpacket_queue.AddTail(StandardPacketQueueEntry{packet, actualPayloadSize});
-		m_nQueuedStandardPacketBytes += nPacketBytes;
-
-		// reset timeout for the first time
-		if (first) {
-			lastFinishedStandard = timeGetTime();
-			m_bAccelerateUpload = true;	// Always accelerate first packet in a block
-		}
-	}
-#ifdef _DEBUG
-	if (bForceImmediateSend) {
-		// WHY: the immediate-send request is only meaningful for a control
-		// packet that was just queued. Check that invariant while sendLocker
-		// still protects the control queue; after unlock the throttler can drain
-		// or requeue control work and make queue-count assertions racy.
-		ASSERT(controlpacket);
-		ASSERT(!controlpacket_queue.IsEmpty());
-	}
-#endif
-	sendLocker.Unlock();
 
 	if (bForceImmediateSend) {
 		SendEM(1024, 0, true);
@@ -828,161 +841,231 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 	//EMTrace("CEMSocket::Send controlcount %i, standardcount %i, isbusy: %i", controlpacket_queue.GetCount(), standardpacket_queue.GetCount(), IsBusy());
 	ASSERT(m_pProxyLayer == NULL);
 	SocketSentBytes ret = {0, 0, true};
+	bool bQueueControlPacket = false;
+	bool bSignalSocketError = false;
 
-	sendLocker.Lock();
-	if (byConnected == EMS_CONNECTED && IsEncryptionLayerReady() && !IsBusyExtensiveCheck() && maxNumberOfBytesToSend > 0) {
-		if (minFragSize < 1)
-			minFragSize = 1;
+	{
+		CSingleLock lockSend(&sendLocker, TRUE);
+		try {
+			if (byConnected == EMS_CONNECTED && IsEncryptionLayerReady() && !IsBusyExtensiveCheck() && maxNumberOfBytesToSend > 0) {
+				if (minFragSize < 1)
+					minFragSize = 1;
 
-		maxNumberOfBytesToSend = GetNextFragSize(maxNumberOfBytesToSend, minFragSize);
-		lastCalledSend = timeGetTime();
-		ASSERT(!m_bPendingSendOv && m_aBufferSend.IsEmpty());
-		if (sendbuffer != NULL || !controlpacket_queue.IsEmpty() || (!standardpacket_queue.IsEmpty() && !onlyAllowedToSendControlPacket)) {
-			// WSASend takes multiple buffers which is quite nice for our case, as we have to call send
-			// only once regardless how many packets we want to ship without moving memory.
-			// But before we can do this, collect all buffers we want to send in this call
+				maxNumberOfBytesToSend = GetNextFragSize(maxNumberOfBytesToSend, minFragSize);
+				lastCalledSend = timeGetTime();
+				ASSERT(!m_bPendingSendOv && m_aBufferSend.IsEmpty());
+				if (sendbuffer != NULL || !controlpacket_queue.IsEmpty() || (!standardpacket_queue.IsEmpty() && !onlyAllowedToSendControlPacket)) {
+					// WSASend takes multiple buffers which is quite nice for our case, as we have to call send
+					// only once regardless how many packets we want to ship without moving memory.
+					// But before we can do this, collect all buffers we want to send in this call
 
-			sint32 nBytesLeft = maxNumberOfBytesToSend;
-			// first send the existing sendbuffer (already started packet)
-			if (sendbuffer != NULL) {
-				WSABUF pCurBuf;
-				pCurBuf.len = min(sendblen - sent, (uint32)nBytesLeft);
-				bool bBorrowedSendBuffer = false;
-				// Borrowing avoids an extra allocation/copy for a partial TCP
-				// packet. The borrowed slice is safe only because sendbuffer is
-				// kept alive until CleanUpOverlappedSendOperation observes the
-				// overlapped send completion.
-				if (CanBorrowOverlappedSendBufferSlice(sent, pCurBuf.len, sendblen)) {
-					pCurBuf.buf = sendbuffer + sent;
-					m_bOverlappedSendBorrowsSendBuffer = true;
-					bBorrowedSendBuffer = true;
-				} else {
-					pCurBuf.buf = new CHAR[pCurBuf.len];
-					memcpy(pCurBuf.buf, sendbuffer + sent, pCurBuf.len);
-				}
-				m_aBufferSend.Add(pCurBuf);
-				sent += pCurBuf.len;
-				nBytesLeft -= pCurBuf.len;
-				if (sent == sendblen) { //finished the buffer
-					if (bBorrowedSendBuffer) {
-						// Do not append more WSABUF entries after borrowing a
-						// just-finished sendbuffer; sendbuffer must remain the
-						// stable owner until overlapped completion cleanup.
-						nBytesLeft = 0;
-					} else {
-						delete[] sendbuffer;
-						sendbuffer = NULL;
-						sendblen = 0;
-					}
-				}
-				ret.sentBytesStandardPackets += pCurBuf.len; // Sendbuffer is always a standard packet in this method
-				lastFinishedStandard = timeGetTime();
-				m_bAccelerateUpload = false;
-				::InterlockedAdd((LONG*)&m_actualPayloadSizeSent, m_actualPayloadSize);
-				m_actualPayloadSize = 0;
-				if (m_currentPackageIsFromPartFile)
-					::InterlockedAdd64((LONG64*)&m_numberOfSentBytesPartFile, pCurBuf.len);
-				else
-					::InterlockedAdd64((LONG64*)&m_numberOfSentBytesCompleteFile, pCurBuf.len);
-			}
-
-			// next send all control packets if there are any and we have bytes left
-			while (!controlpacket_queue.IsEmpty() && nBytesLeft > 0) {
-				// never split control packets, ignore going over the limit by a few bytes
-				WSABUF pCurBuf;
-				Packet *curPacket = controlpacket_queue.RemoveHead();
-				const uint32 nQueuedPacketBytes = curPacket->GetRealPacketSize();
-				m_nQueuedControlPacketBytes = (m_nQueuedControlPacketBytes > nQueuedPacketBytes) ? m_nQueuedControlPacketBytes - nQueuedPacketBytes : 0;
-				pCurBuf.len = curPacket->GetRealPacketSize();
-				pCurBuf.buf = curPacket->DetachPacket();
-				delete curPacket;
-				// encrypting which cannot be done transparently in the base class
-				CryptPrepareSendData((uchar*)pCurBuf.buf, pCurBuf.len);
-				m_aBufferSend.Add(pCurBuf);
-				nBytesLeft -= pCurBuf.len;
-				ret.sentBytesControlPackets += pCurBuf.len;
-			}
-
-			// and now finally the standard packets if there are any, and we have bytes left, and we are allowed to
-			if (!onlyAllowedToSendControlPacket)
-				while (!standardpacket_queue.IsEmpty() && nBytesLeft > 0) {
-					StandardPacketQueueEntry queueEntry = standardpacket_queue.RemoveHead();
-					WSABUF pCurBuf;
-					Packet *curPacket = queueEntry.packet;
-					const uint32 nQueuedPacketBytes = curPacket->GetRealPacketSize();
-					m_nQueuedStandardPacketBytes = (m_nQueuedStandardPacketBytes > nQueuedPacketBytes) ? m_nQueuedStandardPacketBytes - nQueuedPacketBytes : 0;
-					m_currentPackageIsFromPartFile = curPacket->IsFromPF();
-
-					// can we send it right away or only a part of it?
-					if (queueEntry.packet->GetRealPacketSize() <= (uint32)nBytesLeft) {
-						// yay
-						pCurBuf.len = curPacket->GetRealPacketSize();
-						pCurBuf.buf = curPacket->DetachPacket();
-						CryptPrepareSendData((uchar*)pCurBuf.buf, pCurBuf.len);// encryption cannot be done transparently in the base class
-						::InterlockedAdd((LONG*)&m_actualPayloadSizeSent, queueEntry.actualPayloadSize);
-						lastFinishedStandard = timeGetTime();
-						m_bAccelerateUpload = false;
-					} else {	// aww, well first stuff everything into the sendbuffer and then send what we can of it
-						ASSERT(sendbuffer == NULL);
-						m_actualPayloadSize = queueEntry.actualPayloadSize;
-						sendblen = curPacket->GetRealPacketSize();
-						sendbuffer = curPacket->DetachPacket();
-						sent = 0;
-						CryptPrepareSendData((uchar*)sendbuffer, sendblen); //  encryption cannot be done transparently in the base class
+					sint32 nBytesLeft = maxNumberOfBytesToSend;
+					// first send the existing sendbuffer (already started packet)
+					if (sendbuffer != NULL) {
+						WSABUF pCurBuf = {};
 						pCurBuf.len = min(sendblen - sent, (uint32)nBytesLeft);
-						// See the sendbuffer slice comment above. This avoids
-						// copying the first overlapped fragment of a standard
-						// packet while preserving the packet buffer until the
-						// overlapped operation is cleaned up.
+						bool bBorrowedSendBuffer = false;
+						std::unique_ptr<CHAR[]> copiedSlice;
+						// Borrowing avoids an extra allocation/copy for a partial TCP
+						// packet. The borrowed slice is safe only because sendbuffer is
+						// kept alive until CleanUpOverlappedSendOperation observes the
+						// overlapped send completion.
 						if (CanBorrowOverlappedSendBufferSlice(sent, pCurBuf.len, sendblen)) {
 							pCurBuf.buf = sendbuffer + sent;
-							m_bOverlappedSendBorrowsSendBuffer = true;
+							bBorrowedSendBuffer = true;
 						} else {
-							pCurBuf.buf = new CHAR[pCurBuf.len];
-							memcpy(pCurBuf.buf, sendbuffer, pCurBuf.len);
+							copiedSlice.reset(new CHAR[pCurBuf.len]);
+							memcpy(copiedSlice.get(), sendbuffer + sent, pCurBuf.len);
+							pCurBuf.buf = copiedSlice.get();
 						}
+						// WHY: CArray::Add can allocate. Keep copiedSlice owned
+						// until the WSABUF is actually linked; for borrowed slices,
+						// do not publish the borrow flag until cleanup can see the
+						// linked entry.
+						m_aBufferSend.Add(pCurBuf);
+						if (!bBorrowedSendBuffer)
+							copiedSlice.release();
+						else
+							m_bOverlappedSendBorrowsSendBuffer = true;
 						sent += pCurBuf.len;
-						ASSERT(sent < sendblen);
-						m_currentPacket_is_controlpacket = false;
+						nBytesLeft -= pCurBuf.len;
+						if (sent == sendblen) { //finished the buffer
+							if (bBorrowedSendBuffer) {
+								// Do not append more WSABUF entries after borrowing a
+								// just-finished sendbuffer; sendbuffer must remain the
+								// stable owner until overlapped completion cleanup.
+								nBytesLeft = 0;
+							} else {
+								delete[] sendbuffer;
+								sendbuffer = NULL;
+								sendblen = 0;
+							}
+						}
+						ret.sentBytesStandardPackets += pCurBuf.len; // Sendbuffer is always a standard packet in this method
+						lastFinishedStandard = timeGetTime();
+						m_bAccelerateUpload = false;
+						::InterlockedAdd((LONG*)&m_actualPayloadSizeSent, m_actualPayloadSize);
+						m_actualPayloadSize = 0;
+						if (m_currentPackageIsFromPartFile)
+							::InterlockedAdd64((LONG64*)&m_numberOfSentBytesPartFile, pCurBuf.len);
+						else
+							::InterlockedAdd64((LONG64*)&m_numberOfSentBytesCompleteFile, pCurBuf.len);
 					}
-					delete curPacket;
-					m_aBufferSend.Add(pCurBuf);
-					nBytesLeft -= pCurBuf.len;
-					ret.sentBytesStandardPackets += pCurBuf.len;
-					if (m_currentPackageIsFromPartFile)
-						::InterlockedAdd64((LONG64*)&m_numberOfSentBytesPartFile, pCurBuf.len);
-					else
-						::InterlockedAdd64((LONG64*)&m_numberOfSentBytesCompleteFile, pCurBuf.len);
-				}
 
-			if (m_aBufferSend.GetCount() > 0) {
-				// all right, prepare to send our collected buffers
-				memset(&m_PendingSendOperation, 0, sizeof WSAOVERLAPPED);
-				m_PendingSendOperation.hEvent = theApp.uploadBandwidthThrottler->GetSocketAvailableEvent();
-				m_bPendingSendOv = true;
-				if (CEncryptedStreamSocket::SendOv(m_aBufferSend, &m_PendingSendOperation) == 0)
-					CleanUpOverlappedSendOperation(false);
-				else {
-					int nError = WSAGetLastError();
-					if (nError != WSA_IO_PENDING) {
-						ret.success = false;
-						theApp.QueueDebugLogLineEx(ERROR, _T("WSASend() Error: %u, %s"), nError, (LPCTSTR)GetErrorMessage(nError));
-						CleanUpOverlappedSendOperation(false);
+					// next send all control packets if there are any and we have bytes left
+					while (!controlpacket_queue.IsEmpty() && nBytesLeft > 0) {
+						// never split control packets, ignore going over the limit by a few bytes
+						WSABUF pCurBuf = {};
+						std::unique_ptr<Packet> curPacket(controlpacket_queue.RemoveHead());
+						const uint32 nQueuedPacketBytes = curPacket->GetRealPacketSize();
+						m_nQueuedControlPacketBytes = (m_nQueuedControlPacketBytes > nQueuedPacketBytes) ? m_nQueuedControlPacketBytes - nQueuedPacketBytes : 0;
+						pCurBuf.len = curPacket->GetRealPacketSize();
+						std::unique_ptr<char[]> detachedBuffer(curPacket->DetachPacket());
+						pCurBuf.buf = detachedBuffer.get();
+						curPacket.reset();
+						// encrypting which cannot be done transparently in the base class
+						CryptPrepareSendData((uchar*)pCurBuf.buf, pCurBuf.len);
+						// WHY: after DetachPacket, this stack frame owns the raw
+						// packet bytes until the WSABUF is linked into
+						// m_aBufferSend. If Add throws, detachedBuffer releases
+						// the bytes and the socket is failed below instead of
+						// leaking a buffer from a removed queue entry.
+						m_aBufferSend.Add(pCurBuf);
+						detachedBuffer.release();
+						nBytesLeft -= pCurBuf.len;
+						ret.sentBytesControlPackets += pCurBuf.len;
+					}
+
+					// and now finally the standard packets if there are any, and we have bytes left, and we are allowed to
+					if (!onlyAllowedToSendControlPacket)
+						while (!standardpacket_queue.IsEmpty() && nBytesLeft > 0) {
+							StandardPacketQueueEntry queueEntry = standardpacket_queue.RemoveHead();
+							WSABUF pCurBuf = {};
+							std::unique_ptr<Packet> curPacket(queueEntry.packet);
+							const uint32 nQueuedPacketBytes = curPacket->GetRealPacketSize();
+							m_nQueuedStandardPacketBytes = (m_nQueuedStandardPacketBytes > nQueuedPacketBytes) ? m_nQueuedStandardPacketBytes - nQueuedPacketBytes : 0;
+							m_currentPackageIsFromPartFile = curPacket->IsFromPF();
+
+							// can we send it right away or only a part of it?
+							if (queueEntry.packet->GetRealPacketSize() <= (uint32)nBytesLeft) {
+								// yay
+								pCurBuf.len = curPacket->GetRealPacketSize();
+								std::unique_ptr<char[]> detachedBuffer(curPacket->DetachPacket());
+								pCurBuf.buf = detachedBuffer.get();
+								CryptPrepareSendData((uchar*)pCurBuf.buf, pCurBuf.len);// encryption cannot be done transparently in the base class
+								// WHY: m_aBufferSend becomes the owner boundary
+								// for detached packet bytes. Keep the buffer in
+								// a local owner until CArray::Add succeeds.
+								m_aBufferSend.Add(pCurBuf);
+								detachedBuffer.release();
+								curPacket.reset();
+								::InterlockedAdd((LONG*)&m_actualPayloadSizeSent, queueEntry.actualPayloadSize);
+								lastFinishedStandard = timeGetTime();
+								m_bAccelerateUpload = false;
+							} else {	// aww, well first stuff everything into the sendbuffer and then send what we can of it
+								ASSERT(sendbuffer == NULL);
+								const uint32 nPacketBytes = curPacket->GetRealPacketSize();
+								std::unique_ptr<char[]> detachedPacket(curPacket->DetachPacket());
+								CryptPrepareSendData((uchar*)detachedPacket.get(), nPacketBytes); //  encryption cannot be done transparently in the base class
+								pCurBuf.len = min(nPacketBytes, (uint32)nBytesLeft);
+								bool bBorrowedSendBuffer = false;
+								std::unique_ptr<CHAR[]> copiedSlice;
+								// See the sendbuffer slice comment above. This avoids
+								// copying the first overlapped fragment of a standard
+								// packet while preserving the packet buffer until the
+								// overlapped operation is cleaned up.
+								if (CanBorrowOverlappedSendBufferSlice(0, pCurBuf.len, nPacketBytes)) {
+									pCurBuf.buf = detachedPacket.get();
+									bBorrowedSendBuffer = true;
+								} else {
+									copiedSlice.reset(new CHAR[pCurBuf.len]);
+									memcpy(copiedSlice.get(), detachedPacket.get(), pCurBuf.len);
+									pCurBuf.buf = copiedSlice.get();
+								}
+								// WHY: partial standard packets publish a new
+								// sendbuffer owner only after the first WSABUF is
+								// linked. If Add throws, detachedPacket/copy
+								// clean up without leaving a half-published
+								// sendbuffer behind a locked socket.
+								m_aBufferSend.Add(pCurBuf);
+								if (!bBorrowedSendBuffer)
+									copiedSlice.release();
+								else
+									m_bOverlappedSendBorrowsSendBuffer = true;
+								sendbuffer = detachedPacket.release();
+								sendblen = nPacketBytes;
+								sent = pCurBuf.len;
+								ASSERT(sent < sendblen);
+								m_actualPayloadSize = queueEntry.actualPayloadSize;
+								m_currentPacket_is_controlpacket = false;
+								curPacket.reset();
+							}
+							nBytesLeft -= pCurBuf.len;
+							ret.sentBytesStandardPackets += pCurBuf.len;
+							if (m_currentPackageIsFromPartFile)
+								::InterlockedAdd64((LONG64*)&m_numberOfSentBytesPartFile, pCurBuf.len);
+							else
+								::InterlockedAdd64((LONG64*)&m_numberOfSentBytesCompleteFile, pCurBuf.len);
+						}
+
+					if (m_aBufferSend.GetCount() > 0) {
+						// all right, prepare to send our collected buffers
+						memset(&m_PendingSendOperation, 0, sizeof WSAOVERLAPPED);
+						m_PendingSendOperation.hEvent = theApp.uploadBandwidthThrottler->GetSocketAvailableEvent();
+						m_bPendingSendOv = true;
+						if (CEncryptedStreamSocket::SendOv(m_aBufferSend, &m_PendingSendOperation) == 0)
+							CleanUpOverlappedSendOperation(false);
+						else {
+							int nError = WSAGetLastError();
+							if (nError != WSA_IO_PENDING) {
+								ret.success = false;
+								theApp.QueueDebugLogLineEx(ERROR, _T("WSASend() Error: %u, %s"), nError, (LPCTSTR)GetErrorMessage(nError));
+								CleanUpOverlappedSendOperation(false);
+							}
+						}
 					}
 				}
 			}
+
+			if (onlyAllowedToSendControlPacket && !controlpacket_queue.IsEmpty()) {
+				// enter control packet send queue
+				// we might enter control packet queue several times for the same package,
+				// but that costs very little overhead. Less overhead than trying to make sure
+				// that we only enter the queue once.
+				bQueueControlPacket = true;
+			}
+		} catch (CException *pException) {
+			if (pException != NULL)
+				pException->Delete();
+			ret.success = false;
+			bSignalSocketError = true;
+			m_bPendingSendOv = false;
+			DiscardPreparedOverlappedSendBuffers();
+			// WHY: preparation failed before WSASend accepted ownership. Drop
+			// any partially-published sendbuffer while the socket lock is still
+			// held; the caller below closes the socket so stream semantics are
+			// retried through normal peer teardown instead of resuming mid-frame.
+			delete[] sendbuffer;
+			sendbuffer = NULL;
+			sendblen = 0;
+			sent = 0;
+		} catch (const std::bad_alloc&) {
+			ret.success = false;
+			bSignalSocketError = true;
+			m_bPendingSendOv = false;
+			DiscardPreparedOverlappedSendBuffers();
+			delete[] sendbuffer;
+			sendbuffer = NULL;
+			sendblen = 0;
+			sent = 0;
 		}
 	}
 
-	if (onlyAllowedToSendControlPacket && !controlpacket_queue.IsEmpty()) {
-		// enter control packet send queue
-		// we might enter control packet queue several times for the same package,
-		// but that costs very little overhead. Less overhead than trying to make sure
-		// that we only enter the queue once.
+	if (bSignalSocketError)
+		OnError(WSAENOBUFS);
+	else if (bQueueControlPacket)
 		theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this, m_hasSent);
-	}
 
-	sendLocker.Unlock();
 	return ret;
 }
 
@@ -1282,6 +1365,22 @@ bool CEMSocket::IsBusyExtensiveCheck()
 bool CEMSocket::IsBusyQuickCheck() const
 {
 	return m_bUseOverlappedSend ? m_bPendingSendOv : m_bBusy;
+}
+
+//sendLock must be locked by the caller!
+void CEMSocket::DiscardPreparedOverlappedSendBuffers()
+{
+	// WHY: SendOv builds m_aBufferSend before WSASend accepts ownership. If
+	// allocation fails during that staging phase, m_bPendingSendOv is still
+	// false, so CleanUpOverlappedSendOperation intentionally does nothing. This
+	// helper releases only the staged WSABUF storage and leaves sendbuffer
+	// lifetime decisions to the failing caller.
+	for (INT_PTR i = m_aBufferSend.GetCount(); --i >= 0;) {
+		if (!IsBorrowedOverlappedSendBufferSlice(m_aBufferSend[i].buf, sendbuffer, sendblen))
+			delete[] m_aBufferSend[i].buf;
+	}
+	m_aBufferSend.RemoveAll();
+	m_bOverlappedSendBorrowsSendBuffer = false;
 }
 
 //sendLock must be locked by the caller!

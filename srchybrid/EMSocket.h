@@ -105,6 +105,7 @@ private:
 	SocketSentBytes SendStd(uint32 maxNumberOfBytesToSend, uint32 minFragSize, bool onlyAllowedToSendControlPacket);
 	SocketSentBytes SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragSize, bool onlyAllowedToSendControlPacket);
 	void	ClearQueues();
+	void	DiscardPreparedOverlappedSendBuffers();
 	void	CleanUpOverlappedSendOperation(bool bCancel);
 
 	static uint32 GetNextFragSize(uint32 current, uint32 minFragSize);
