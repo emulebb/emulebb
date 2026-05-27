@@ -1431,12 +1431,20 @@ void CEMSocket::CleanUpOverlappedSendOperation(bool bCancel)
 
 bool CEMSocket::HasQueues(bool bOnlyStandardPackets) const
 {
-	// not trustworthy threaded? but it's OK if we don't get the correct result now and then
+	// WHY: the throttler thread asks this while upload-disk completions and
+	// socket callbacks can enqueue or dequeue packets. A stale answer is fine,
+	// but walking MFC lists concurrently is not; take the same lock that guards
+	// the queue mutations and return a short snapshot.
+	CSingleLock lockSend(&const_cast<CEMSocket*>(this)->sendLocker, TRUE);
 	return sendbuffer != NULL || !standardpacket_queue.IsEmpty() || (!controlpacket_queue.IsEmpty() && !bOnlyStandardPackets);
 }
 
 bool CEMSocket::IsLowOnFileDataQueued(uint32 nMinFilePayloadBytes) const
 {
+	// WHY: standardpacket_queue is mutated under sendLocker by SendPacket and
+	// SendEM. The upload throttler calls this from its worker thread, so the
+	// queue walk must take sendLocker instead of relying on best-effort reads.
+	CSingleLock lockSend(&const_cast<CEMSocket*>(this)->sendLocker, TRUE);
 	// check we have at least nMinFilePayloadBytes Payload data in our standardqueue
 	for (POSITION pos = standardpacket_queue.GetHeadPosition(); pos != NULL;) {
 		uint32 actualsize = standardpacket_queue.GetNext(pos).actualPayloadSize;
