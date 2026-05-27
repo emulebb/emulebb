@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <limits>
 #include <string>
 
 #include "WebServerJsonSeams.h"
@@ -276,5 +277,33 @@ inline bool IsCompleteHttpRequestBuffered(
 		return true;
 
 	return static_cast<uint64_t>(uHeaderLength) + static_cast<uint64_t>(uContentLength) <= nBufferedBytes;
+}
+
+/**
+ * @brief Calculates the next receive-buffer size without DWORD wraparound.
+ *
+ * The socket stores receive-buffer lengths in DWORDs because the surrounding
+ * MFC socket API does. HTTP header and body parsing already apply protocol
+ * limits, but this allocation boundary still needs its own checked arithmetic:
+ * if a future caller changes read sizes or preserves pipelined bytes, the heap
+ * size must not wrap before the later parser limits run.
+ */
+inline bool TryCalculateReceiveBufferSize(
+	const uint32_t uBufferedBytes,
+	const uint32_t uIncomingBytes,
+	const uint32_t uPreserveBytes,
+	uint32_t &ruBufferSize)
+{
+	const uint64_t uRequiredBytes = static_cast<uint64_t>(uBufferedBytes) + static_cast<uint64_t>(uIncomingBytes);
+	const uint64_t uAllocatedBytes = uRequiredBytes + static_cast<uint64_t>(uPreserveBytes);
+	if (uRequiredBytes > static_cast<uint64_t>((std::numeric_limits<uint32_t>::max)())
+		|| uAllocatedBytes > static_cast<uint64_t>((std::numeric_limits<uint32_t>::max)()))
+	{
+		ruBufferSize = 0;
+		return false;
+	}
+
+	ruBufferSize = static_cast<uint32_t>(uAllocatedBytes);
+	return true;
 }
 }

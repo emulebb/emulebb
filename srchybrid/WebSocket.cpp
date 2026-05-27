@@ -418,11 +418,22 @@ void CWebSocket::OnReceived(const void *pData, DWORD dwSize, const in_addr inad)
 {
 	static const DWORD SIZE_PRESERVE = 0x1000u;
 
-	if (m_dwBufSize < dwSize + m_dwRecv) {
+	uint32_t uRequiredBufSize = 0;
+	if (!WebSocketHttpSeams::TryCalculateReceiveBufferSize(m_dwRecv, dwSize, 0u, uRequiredBufSize)) {
+		m_bValid = false;
+		return;
+	}
+
+	if (m_dwBufSize < uRequiredBufSize) {
 		// reallocate
 		char *pNewBuf;
 		try {
-			m_dwBufSize = dwSize + m_dwRecv + SIZE_PRESERVE;
+			uint32_t uNewBufSize = 0;
+			if (!WebSocketHttpSeams::TryCalculateReceiveBufferSize(m_dwRecv, dwSize, SIZE_PRESERVE, uNewBufSize)) {
+				m_bValid = false;
+				return;
+			}
+			m_dwBufSize = static_cast<DWORD>(uNewBufSize);
 			pNewBuf = new char[m_dwBufSize];
 		} catch (...) {
 			m_bValid = false; // internal problem

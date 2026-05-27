@@ -99,7 +99,10 @@ Packet::Packet(uint8 in_opcode, uint32 in_size, uint8 protocol, bool bFromPartFi
 {
 	init();
 	if (in_size) {
-		completebuffer = new char[in_size + 10]{};
+		size_t nAllocationSize = 0;
+		if (!PacketsSeams::TryGetTcpPacketAllocationSize(in_size, &nAllocationSize))
+			AfxThrowMemoryException();
+		completebuffer = new char[nAllocationSize]{};
 		pBuffer = completebuffer + PACKET_HEADER_SIZE;
 	} else {
 		completebuffer = NULL;
@@ -116,7 +119,10 @@ Packet::Packet(CSafeMemFile &datafile, uint8 protocol, uint8 ucOpcode)
 	, m_bFromPF()
 {
 	init();
-	completebuffer = new char[size + 10];
+	size_t nAllocationSize = 0;
+	if (!PacketsSeams::TryGetTcpPacketAllocationSize(size, &nAllocationSize))
+		AfxThrowMemoryException();
+	completebuffer = new char[nAllocationSize];
 	pBuffer = completebuffer + PACKET_HEADER_SIZE;
 	BYTE *tmp = datafile.Detach();
 	memcpy(pBuffer, tmp, size);
@@ -133,7 +139,10 @@ Packet::Packet(const CStringA &str, uint8 protocol, uint8 ucOpcode)
 	, m_bFromPF()
 {
 	init();
-	completebuffer = new char[size + 10];
+	size_t nAllocationSize = 0;
+	if (!PacketsSeams::TryGetTcpPacketAllocationSize(size, &nAllocationSize))
+		AfxThrowMemoryException();
+	completebuffer = new char[nAllocationSize];
 	pBuffer = completebuffer + PACKET_HEADER_SIZE;
 	memcpy(pBuffer, (LPCSTR)str, size);
 }
@@ -150,7 +159,10 @@ Packet::Packet(const Packet &old)
 {
 	ASSERT(!old.m_bSplitted); //for non-split packets only
 	memcpy(head, old.head, PACKET_HEADER_SIZE);
-	completebuffer = new char[size + 10];
+	size_t nAllocationSize = 0;
+	if (!PacketsSeams::TryGetTcpPacketAllocationSize(size, &nAllocationSize))
+		AfxThrowMemoryException();
+	completebuffer = new char[nAllocationSize];
 	pBuffer = completebuffer + PACKET_HEADER_SIZE;
 	memcpy(completebuffer, old.completebuffer, size + PACKET_HEADER_SIZE);
 }
@@ -173,7 +185,10 @@ char* Packet::GetPacket()
 	}
 	delete[] tempbuffer;
 	tempbuffer = NULL; // 'new' may throw an exception
-	tempbuffer = new char[size + 10];
+	size_t nAllocationSize = 0;
+	if (!PacketsSeams::TryGetTcpPacketAllocationSize(size, &nAllocationSize))
+		AfxThrowMemoryException();
+	tempbuffer = new char[nAllocationSize];
 	memcpy(tempbuffer, GetHeader(), PACKET_HEADER_SIZE);
 	memcpy(tempbuffer + PACKET_HEADER_SIZE, pBuffer, size);
 	return tempbuffer;
@@ -191,7 +206,10 @@ char* Packet::DetachPacket()
 	}
 	delete[] tempbuffer;
 	tempbuffer = NULL;
-	char *result = new char[size + 10]; // 'new' may throw an exception
+	size_t nAllocationSize = 0;
+	if (!PacketsSeams::TryGetTcpPacketAllocationSize(size, &nAllocationSize))
+		AfxThrowMemoryException();
+	char *result = new char[nAllocationSize]; // 'new' may throw an exception
 	memcpy(result, GetHeader(), PACKET_HEADER_SIZE);
 	memcpy(result + PACKET_HEADER_SIZE, pBuffer, size);
 	return result;
@@ -200,7 +218,10 @@ char* Packet::DetachPacket()
 char* Packet::GetHeader()
 {
 	ASSERT(!m_bSplitted);
-	*reinterpret_cast<Header_Struct*>(head) = Header_Struct{prot, size + 1, opcode};
+	uint32 nPacketLength = 0;
+	if (!PacketsSeams::TryGetTcpPacketLengthField(size, &nPacketLength))
+		AfxThrowMemoryException();
+	*reinterpret_cast<Header_Struct*>(head) = Header_Struct{prot, nPacketLength, opcode};
 	return head;
 }
 
@@ -403,10 +424,15 @@ CTag::CTag(uint8 uName, const BYTE *pucHash)
 }
 
 CTag::CTag(uint8 uName, size_t nSize, const BYTE *pucData)
-	: m_nBlobSize((uint32)nSize)
+	: m_nBlobSize()
 	, m_uType(TAGTYPE_BLOB)
 	, m_uName(uName)
 {
+	// Blob lengths are serialized as uint32. Reject impossible local producers
+	// before the stored size truncates and later writes a different length than
+	// the buffer that was allocated here.
+	if (!PacketsSeams::TryGetBlobPayloadSize(nSize, &m_nBlobSize))
+		AfxThrowMemoryException();
 	m_pData = new BYTE[nSize];
 	memcpy(m_pData, pucData, nSize);
 	ASSERT_VALID(this);

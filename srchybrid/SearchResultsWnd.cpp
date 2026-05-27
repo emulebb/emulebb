@@ -24,6 +24,7 @@
 #include "SearchParams.h"
 #include "SearchParamsPolicy.h"
 #include "Packets.h"
+#include "PacketsSeams.h"
 #include "SearchFile.h"
 #include "SearchList.h"
 #include "ServerConnect.h"
@@ -450,15 +451,22 @@ void CSearchResultsWnd::OnTimer(UINT_PTR nIDEvent)
 					data.WriteUInt32(nTagCount);
 					CTag tagFlags(CT_SERVER_UDPSEARCH_FLAGS, SRVCAP_UDP_NEWTAGS_LARGEFILES);
 					tagFlags.WriteNewEd2kTag(data);
-					Packet *pExtSearchPacket = new Packet(OP_GLOBSEARCHREQ3, m_searchpacket->size + (uint32)data.GetLength());
-					data.SeekToBegin();
-					data.Read(pExtSearchPacket->pBuffer, (uint32)data.GetLength());
-					memcpy(pExtSearchPacket->pBuffer + (uint32)data.GetLength(), m_searchpacket->pBuffer, m_searchpacket->size);
-					theStats.AddUpDataOverheadServer(pExtSearchPacket->size);
-					theApp.serverconnect->SendUDPPacket(pExtSearchPacket, toask, true);
-					bRequestSent = true;
-					if (thePrefs.GetDebugServerUDPLevel() > 0)
-						Debug(_T(">>> Sending %s  to server %-21s (%3u of %3u)\n"), _T("OP_GlobSearchReq3"), (LPCTSTR)ipstr(toask->GetAddress(), toask->GetPort()), m_servercount, (unsigned)theApp.serverlist->GetServerCount());
+					const size_t nExtensionSize = static_cast<size_t>(data.GetLength());
+					uint32 nSearchPacketSize = 0;
+					if (!PacketsSeams::TryAddPacketPayloadSizes(m_searchpacket->size, nExtensionSize, &nSearchPacketSize)) {
+						DebugLogWarning(_T("Global UDP search request was not sent because the packet size would exceed the eD2K packet length limit"));
+					} else {
+						const uint32 nExtensionBytes = static_cast<uint32>(nExtensionSize);
+						Packet *pExtSearchPacket = new Packet(OP_GLOBSEARCHREQ3, nSearchPacketSize);
+						data.SeekToBegin();
+						data.Read(pExtSearchPacket->pBuffer, nExtensionBytes);
+						memcpy(pExtSearchPacket->pBuffer + nExtensionBytes, m_searchpacket->pBuffer, m_searchpacket->size);
+						theStats.AddUpDataOverheadServer(pExtSearchPacket->size);
+						theApp.serverconnect->SendUDPPacket(pExtSearchPacket, toask, true);
+						bRequestSent = true;
+						if (thePrefs.GetDebugServerUDPLevel() > 0)
+							Debug(_T(">>> Sending %s  to server %-21s (%3u of %3u)\n"), _T("OP_GlobSearchReq3"), (LPCTSTR)ipstr(toask->GetAddress(), toask->GetPort()), m_servercount, (unsigned)theApp.serverlist->GetServerCount());
+					}
 
 				} else if (toask->GetUDPFlags() & SRV_UDPFLG_EXT_GETFILES) {
 					if (!m_b64BitSearchPacket || toask->SupportsLargeFilesUDP()) {
