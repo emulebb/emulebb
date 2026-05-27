@@ -1771,9 +1771,7 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM)
 			break;
 		case MP_OPENFOLDER:
 			if (file && !file->IsPartFile()) {
-				CString sParam;
-				sParam.Format(_T("/select,\"%s\""), (LPCTSTR)file->GetFilePath());
-				ShellOpen(_T("explorer"), sParam);
+				ShellOpenContainingFolderAndSelect(file->GetFilePath());
 			}
 			break;
 		case MP_RENAME:

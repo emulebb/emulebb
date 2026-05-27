@@ -883,7 +883,7 @@ BOOL CUploadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 			if (client) {
 				const CKnownFile *file = GetUploadClientFile(client);
 				if (file != NULL && !file->IsPartFile())
-					ShellOpen(_T("explorer"), _T("/select,\"") + file->GetFilePath() + _T('\"'));
+					ShellOpenContainingFolderAndSelect(file->GetFilePath());
 			}
 			break;
 		case MP_DETAIL:

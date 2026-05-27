@@ -663,6 +663,25 @@ void ShellOpenFile(LPCTSTR lpName)
 	ShellOpen(lpName, NULL);
 }
 
+void ShellOpenContainingFolderAndSelect(LPCTSTR lpName)
+{
+	if (lpName == NULL || lpName[0] == _T('\0'))
+		return;
+
+	const CString strShellPath(NormalizeShellExecutePath(lpName));
+	const CString strSelectedPath(strShellPath.IsEmpty() ? CString(lpName) : strShellPath);
+	if (!PathHelpers::IsShellSafePath(strSelectedPath)) {
+		const CString strDirectory(PathHelpers::GetDirectoryPath(strSelectedPath));
+		if (!strDirectory.IsEmpty())
+			ShellOpenFile(strDirectory);
+		return;
+	}
+
+	CString strParameters;
+	strParameters.Format(_T("/select,\"%s\""), (LPCTSTR)strSelectedPath);
+	ShellOpen(_T("explorer"), strParameters);
+}
+
 void ShellDefaultVerb(LPCTSTR lpName)
 {
 	ShellLaunch(NULL, NULL, lpName, NULL, NULL, SW_SHOW);

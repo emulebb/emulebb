@@ -243,6 +243,7 @@ BOOL ShellExecuteExNormalized(SHELLEXECUTEINFO &rInfo);
 HINSTANCE BrowserOpen(LPCTSTR lpURL, LPCTSTR lpDirectory);
 void ShellOpen(LPCTSTR lpName, LPCTSTR lpParameters);
 void ShellOpenFile(LPCTSTR lpName);
+void ShellOpenContainingFolderAndSelect(LPCTSTR lpName);
 void ShellDefaultVerb(LPCTSTR lpName);
 struct SShellDeleteFileResult
 {
