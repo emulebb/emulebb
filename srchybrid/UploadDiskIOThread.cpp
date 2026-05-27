@@ -28,6 +28,7 @@
 #include "listensocket.h"
 #include "LockScopeSeams.h"
 #include "HelperThreadLaunchSeams.h"
+#include "UploadDiskIOThreadSeams.h"
 #include "packets.h"
 #include "Statistics.h"
 #include "UploadBandwidthThrottler.h"
@@ -264,6 +265,13 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 		while (!pUploadClientStruct->m_BlockRequests_queue.IsEmpty()
 			&& (addedPayloadQueueSession <= nCurQueueSessionPayloadUp || addedPayloadQueueSession - nCurQueueSessionPayloadUp < nBufferLimit))
 		{
+			if (!UploadDiskIOThreadSeams::CanIssuePendingUploadRead(
+					pUploadClientStruct->m_nPendingIOBlocks.load(),
+					m_listPendingIO.GetCount()))
+			{
+				return;
+			}
+
 			Requested_Block_Struct *currentblock = pUploadClientStruct->m_BlockRequests_queue.GetHead();
 			if (!md4equ(currentblock->FileID, pClient->GetUploadFileID())) {
 				// the UploadFileID differs. That's normally not a problem, we just switch it, but
