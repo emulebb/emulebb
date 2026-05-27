@@ -2283,12 +2283,45 @@ void CListenSocket::ReleaseUploadDiskPacketDeliveryRef(CClientReqSocket *pSocket
 
 void CListenSocket::KillAllSockets()
 {
+	const ULONGLONG ullWaitStart = ::GetTickCount64();
+	bool bLoggedDeliveryRefWait = false;
 	while (!socket_list.IsEmpty()) {
-		const CClientReqSocket *cur_socket = socket_list.GetHead();
-		if (cur_socket->client)
-			delete cur_socket->client;
-		else
-			delete cur_socket;
+		bool bDeletedSocket = false;
+		bool bWaitingForDeliveryRef = false;
+		for (POSITION pos = socket_list.GetHeadPosition(); pos != NULL;) {
+			const CClientReqSocket *cur_socket = socket_list.GetNext(pos);
+			if (cur_socket->HasUploadDiskPacketDeliveryRefs()) {
+				// WHY: upload disk completions may legally hold a short-lived
+				// delivery reference after they release the upload-list lock.
+				// Delete_Timed honors that reference; KillAllSockets must do
+				// the same because Rebind() can reach this path outside normal
+				// shutdown while the helper thread is still delivering packets.
+				bWaitingForDeliveryRef = true;
+				continue;
+			}
+
+			if (cur_socket->client)
+				delete cur_socket->client;
+			else
+				delete cur_socket;
+			bDeletedSocket = true;
+			break;
+		}
+
+		if (bDeletedSocket)
+			continue;
+		if (!bWaitingForDeliveryRef)
+			break;
+
+		if (!bLoggedDeliveryRefWait) {
+			DebugLogWarning(_T("Listen socket: waiting for upload disk delivery reference before deleting client socket"));
+			bLoggedDeliveryRefWait = true;
+		}
+		if (::GetTickCount64() >= ullWaitStart + SEC2MS(7)) {
+			DebugLogWarning(_T("Listen socket: timed out waiting for upload disk delivery reference; leaving socket for deferred cleanup"));
+			break;
+		}
+		::Sleep(20);
 	}
 }
 
