@@ -1198,6 +1198,8 @@ bool CDownloadQueue::RemoveSource(CUpDownClient *toremove, bool bDoStatsUpdate)
 
 void CDownloadQueue::RemoveFile(CPartFile *toremove)
 {
+	if (theApp.clientlist != NULL)
+		theApp.clientlist->ClearPartFileHistory(toremove);
 	RemoveLocalServerRequest(toremove);
 
 	POSITION pos = filelist.Find(toremove);

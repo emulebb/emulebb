@@ -1959,6 +1959,21 @@ void CUpDownClient::DontSwapTo(/*const*/ CPartFile *file)
 	m_DontSwap_list.AddHead(PartFileStamp{file, curTick});
 }
 
+void CUpDownClient::ClearPartFileHistory(const CPartFile *file)
+{
+	if (file == NULL)
+		return;
+
+	for (POSITION pos = m_DontSwap_list.GetHeadPosition(); pos != NULL;) {
+		const POSITION curPos = pos;
+		const PartFileStamp &pfs = m_DontSwap_list.GetNext(pos);
+		if (pfs.file == file)
+			m_DontSwap_list.RemoveAt(curPos);
+	}
+	m_fileReaskTimes.RemoveKey(file);
+	m_fileEndgameCancelTimes.RemoveKey(file);
+}
+
 bool CUpDownClient::IsSwapSuspended(const CPartFile *file, const bool allowShortReaskTime, const bool fileIsNNP)
 {
 	if (file == m_reqfile)

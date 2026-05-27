@@ -712,6 +712,18 @@ bool CClientList::ContainsClientPointer(const CUpDownClient *tocheck) const
 	return tocheck != NULL && list.Find(const_cast<CUpDownClient*>(tocheck)) != NULL;
 }
 
+void CClientList::ClearPartFileHistory(const CPartFile *file)
+{
+	if (file == NULL)
+		return;
+
+	for (POSITION pos = list.GetHeadPosition(); pos != NULL;) {
+		CUpDownClient *cur_client = list.GetNext(pos);
+		if (cur_client != NULL)
+			cur_client->ClearPartFileHistory(file);
+	}
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Kad client list

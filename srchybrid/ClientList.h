@@ -18,6 +18,7 @@
 #include "DeadSourceList.h"
 
 class CClientReqSocket;
+class CPartFile;
 class CUpDownClient;
 namespace Kademlia
 {
@@ -149,6 +150,7 @@ public:
 
 	void	Process();
 	bool	ContainsClientPointer(const CUpDownClient *tocheck) const;
+	void	ClearPartFileHistory(const CPartFile *file);
 	bool	IsValidClient(CUpDownClient *tocheck) const;
 	void	Debug_SocketDeleted(CClientReqSocket *deleted) const;
 	void	ProcessA4AFClients() const; // ZZ:DownloadManager
