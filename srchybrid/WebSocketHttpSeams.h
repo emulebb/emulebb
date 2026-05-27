@@ -17,6 +17,11 @@ static const uint64_t kMaxHttpContentLength = 16ui64 * 1024ui64 * 1024ui64;
 static const uint64_t kMaxHttpHeaderLength = 64ui64 * 1024ui64;
 static const uint32_t kAcceptedClientIoTimeoutMs = 30000u;
 static const size_t kAcceptedClientReadBufferBytes = 4u * 1024u;
+// WHY: accepted web workers still share CWebServer request/session state, most
+// visibly m_uCurIP and broad _ProcessURL access to main-thread eMule objects.
+// Keep this at one until those fields are made per-connection or explicitly
+// protected; raising only the thread budget would turn the resource cap into
+// wrong-IP logging/session races and wider UI-state data races.
 static const size_t kMaxAcceptedClientThreads = 1u;
 
 #define EMULE_WEBSOCKET_HTTP_SEAMS_HAS_REJECTED_IP_ACTION 1
