@@ -619,7 +619,17 @@ void CEMSocket::OnSend(int nErrorCode)
 		theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this, m_hasSent);
 	}
 
-	if (!m_bUseOverlappedSend && (!standardpacket_queue.IsEmpty() || sendbuffer != NULL))
+	bool bNotifySocketAvailable = false;
+	if (!m_bUseOverlappedSend) {
+		CSingleLock lockSend(&sendLocker, TRUE);
+		// WHY: SendPacket mutates the standard queue and sendbuffer under
+		// sendLocker from the upload disk helper thread. OnSend runs on the
+		// socket callback thread, so even this small availability snapshot must
+		// take the same lock to avoid racing CTypedPtrList internals.
+		bNotifySocketAvailable = !standardpacket_queue.IsEmpty() || sendbuffer != NULL;
+	}
+
+	if (bNotifySocketAvailable)
 		theApp.uploadBandwidthThrottler->SocketAvailable();
 }
 
