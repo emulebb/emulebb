@@ -135,14 +135,7 @@ bool RemovePathsWithinDirectory(CStringList &rList, const CString &rstrPath, boo
 
 bool IsAccessibleDirectoryForSharedTree(const CString &rstrDirectory)
 {
-	const LongPathSeams::PathString strNormalized = LongPathSeams::NormalizeAbsolutePathSeparators(rstrDirectory);
-	const LongPathSeams::PathString strLogical = LongPathSeams::StripLongPathPrefixRaw(strNormalized);
-	const bool bRequiresExactNamePrefix = LongPathSeams::RequiresExtendedLengthPathForExactNameRaw(strLogical);
-	const LongPathSeams::PathString strPrepared = LongPathSeams::HasLongPathPrefix(strNormalized.c_str())
-		? strNormalized
-		: LongPathSeams::PreparePathForLongPathRaw(strNormalized, strNormalized, bRequiresExactNamePrefix);
-	const DWORD dwAttributes = ::GetFileAttributes(strPrepared.c_str());
-	return dwAttributes != INVALID_FILE_ATTRIBUTES && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+	return LongPathSeams::DirectoryExists(rstrDirectory);
 }
 
 CDirectoryItem* InsertSharedDirectoryItem(CSharedDirsTreeCtrl *pTreeCtrl, CDirectoryItem *pParentItem, const CString &rstrPath, bool bTopFolder, bool bAccessible, bool &rbShowWarning)
