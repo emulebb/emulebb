@@ -853,6 +853,7 @@ void CDownloadQueue::Process()
 	m_ullDownloadQueueProcessTick = curTick;
 	m_bDownloadQueueProcessActive = true;
 
+	CPartFile::ProcessDeferredUploadReadDeletes();
 	m_hostnameResolver.DrainResolved(*this);
 	ProcessLocalRequests(); // send src requests to local server
 

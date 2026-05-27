@@ -122,6 +122,34 @@ constexpr LPCSTR kFollowMajorityFilenameTag = "BBFollowMajorityFilename";
 constexpr DWORD kShutdownFlushPollMs = 10;
 constexpr DWORD kUploadReadDeleteWaitMs = 5000;
 constexpr DWORD kUploadReadDeletePollMs = 50;
+constexpr DWORD kDeferredUploadReadDeleteLogMs = 5000;
+
+struct DeferredUploadReadDelete
+{
+	CPartFile *pFile;
+	CString strFileName;
+	ULONGLONG ullQueuedTick;
+	ULONGLONG ullLastLogTick;
+};
+
+CList<DeferredUploadReadDelete, const DeferredUploadReadDelete&> s_deferredUploadReadDeletes;
+
+void QueueDeferredUploadReadDelete(CPartFile *pFile, LPCTSTR pszFileName)
+{
+	if (pFile == NULL)
+		return;
+
+	for (POSITION pos = s_deferredUploadReadDeletes.GetHeadPosition(); pos != NULL;) {
+		if (s_deferredUploadReadDeletes.GetNext(pos).pFile == pFile)
+			return;
+	}
+
+	const ULONGLONG ullNow = ::GetTickCount64();
+	DeferredUploadReadDelete entry = {pFile, pszFileName != NULL ? pszFileName : pFile->GetFileName(), ullNow, ullNow};
+	s_deferredUploadReadDeletes.AddTail(entry);
+	DebugLogWarning(_T("Deferred deletion of duplicate completed part file \"%s\" until upload read references drain."),
+		(LPCTSTR)entry.strFileName);
+}
 
 bool WaitForUploadReadReferencesToRelease(CKnownFile *pFile, LPCTSTR pszContext)
 {
@@ -569,6 +597,43 @@ CPartFile::~CPartFile()
 		delete item;
 	}
 	delete m_pAICHRecoveryHashSet;
+}
+
+void CPartFile::ProcessDeferredUploadReadDeletes()
+{
+	const ULONGLONG ullNow = ::GetTickCount64();
+	for (POSITION pos = s_deferredUploadReadDeletes.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
+		DeferredUploadReadDelete &entry = s_deferredUploadReadDeletes.GetNext(pos);
+		CPartFile *const pFile = entry.pFile;
+		if (pFile == NULL) {
+			s_deferredUploadReadDeletes.RemoveAt(posCurrent);
+			continue;
+		}
+
+		const LONG nRefs = pFile->GetUploadReadReferenceCount();
+		if (nRefs == 0) {
+			const CString strFileName(entry.strFileName);
+			s_deferredUploadReadDeletes.RemoveAt(posCurrent);
+			DebugLogWarning(_T("Deleting deferred duplicate completed part file \"%s\" after upload read references drained."),
+				(LPCTSTR)strFileName);
+			delete pFile;
+			continue;
+		}
+
+		// WHY: the queued object has already been detached from download/shared
+		// lists and marked bNoNewReads. The only remaining owners should be
+		// outstanding overlapped upload reads, so the periodic queue tick wakes
+		// the IOCP worker and deletes only after those raw pointers disappear.
+		if (theApp.m_pUploadDiskIOThread != NULL)
+			theApp.m_pUploadDiskIOThread->WakeUpCall();
+		if (ullNow >= entry.ullLastLogTick + kDeferredUploadReadDeleteLogMs) {
+			entry.ullLastLogTick = ullNow;
+			DebugLogWarning(_T("Still deferring deletion of duplicate completed part file \"%s\"; %ld upload read reference(s) remain."),
+				(LPCTSTR)entry.strFileName,
+				nRefs);
+		}
+	}
 }
 
 void CPartFile::WaitForFileCompletionWorkerForShutdown()
@@ -3576,10 +3641,14 @@ void CPartFile::PerformFileCompleteEnd(void *pCompletionResult)
 		if (!bKnownFileAdded) {
 			if (!WaitForUploadReadReferencesToRelease(this, _T("duplicate completed part file"))) {
 				// WHY: deleting here while an IOCP completion still owns `this` is
-				// a UAF. This duplicate-completion path is rare, so preserving the
-				// detached object is safer than a UI hang or a freed-pointer crash.
+				// a UAF. The object is already detached from the download queue, so
+				// keep it out of visible lists and let the queue tick delete it once
+				// the upload-read raw pointers have drained.
+				if (theApp.sharedfiles != NULL && theApp.sharedfiles->IsFilePtrInList(this))
+					theApp.sharedfiles->RemoveFile(this);
 				theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile(this);
 				theApp.emuledlg->transferwnd->GetDownloadList()->ShowFilesCount();
+				QueueDeferredUploadReadDelete(this, strCompletedFileName);
 				theApp.downloadqueue->StartNextFileIfPrefs(static_cast<int>(nCompletedCategory));
 				return;
 			}

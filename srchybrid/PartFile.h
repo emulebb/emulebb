@@ -171,6 +171,11 @@ public:
 
 	void	InitializeFromLink(const CED2KFileLink &fileLink, UINT cat = 0);
 	uint32	Process(uint32 reducedownload, UINT icounter);
+	/**
+	 * @brief Deletes duplicate completed part files after upload-read IOCP
+	 * completions have released their raw CKnownFile pointers.
+	 */
+	static void ProcessDeferredUploadReadDeletes();
 	EPartFileLoadResult	LoadPartFile(LPCTSTR in_directory, LPCTSTR in_filename, EPartFileFormat *pOutCheckFileFormat = NULL); //filename = *.part.met
 	EPartFileLoadResult	ImportShareazaTempfile(LPCTSTR in_directory, LPCTSTR in_filename, EPartFileFormat *pOutCheckFileFormat = NULL);
 
