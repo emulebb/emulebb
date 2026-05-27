@@ -22,6 +22,8 @@
 #include "log.h"
 #include "HelperThreadLaunchSeams.h"
 
+#include <new>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -273,6 +275,16 @@ void CPartFileWriteThread::WriteBuffers()
 				delete pOvWrite;
 				MarkWriteDispatchFailed(item.pBuffer, ERROR_NOT_ENOUGH_MEMORY);
 				theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: not enough memory while registering overlapped write"));
+				return;
+			} catch (const std::bad_alloc&) {
+				// WHY: MSVC throws std::bad_alloc for plain C++ new while MFC
+				// containers throw CMemoryException. pBuffer was already removed
+				// from the private write queue and marked PB_PENDING by FlushBuffer;
+				// mark it failed here so no part-file waits forever on a write the
+				// kernel never received.
+				delete pOvWrite;
+				MarkWriteDispatchFailed(item.pBuffer, ERROR_NOT_ENOUGH_MEMORY);
+				theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: not enough memory while allocating overlapped write"));
 				return;
 			}
 		} else {
