@@ -332,6 +332,7 @@ void CKnownFileList::Clear()
 		delete pFile;
 	}
 	m_Files_map.RemoveAll();
+	m_filePointers.clear();
 }
 
 void CKnownFileList::AddToLookupIndex(CKnownFile *pFile)
@@ -377,6 +378,7 @@ bool CKnownFileList::SafeAddKFile(CKnownFile *toadd)
 		TRACE(_T("%hs: Incoming known file:   %s %I64u \"%s\"\n"), __FUNCTION__, (LPCTSTR)md4str(toadd->GetFileHash()), (uint64)toadd->GetFileSize(), (LPCTSTR)toadd->GetFileName());
 
 		if (pFileInMap == toadd) {
+			m_filePointers.insert(toadd);
 			if (toadd->GetFileIdentifier().HasAICHHash())
 				m_mapKnownFilesByAICH[toadd->GetFileIdentifier().GetAICHHash()] = toadd;
 			return true;
@@ -409,6 +411,7 @@ bool CKnownFileList::SafeAddKFile(CKnownFile *toadd)
 
 		RemoveFromLookupIndex(pFileInMap);
 		m_Files_map.RemoveKey(CCKey(pFileInMap->GetFileHash()));
+		m_filePointers.erase(pFileInMap);
 		if (pFileInMap->GetFileIdentifier().HasAICHHash())
 			m_mapKnownFilesByAICH.RemoveKey(pFileInMap->GetFileIdentifier().GetAICHHash());
 
@@ -422,6 +425,7 @@ bool CKnownFileList::SafeAddKFile(CKnownFile *toadd)
 		delete pFileInMap;
 	}
 	m_Files_map[key] = toadd;
+	m_filePointers.insert(toadd);
 	AddToLookupIndex(toadd);
 
 	if (toadd->GetFileIdentifier().HasAICHHash())
@@ -481,14 +485,13 @@ bool CKnownFileList::IsFilePtrInList(const CKnownFile *file) const
 
 bool CKnownFileList::ContainsFilePointer(const CKnownFile *file) const
 {
-	if (file == NULL)
-		return false;
-
-	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
-		if (pair->value == file)
-			return true;
-	}
-	return false;
+	// WHY: UI row hardening must be able to ask whether an arbitrary raw
+	// pointer is still owned without dereferencing it. A hash lookup would need
+	// file->GetFileHash(), which is exactly the UAF hazard this path avoids;
+	// scanning the whole known-file map made startup liveness pruning quadratic
+	// on large real profiles. This side index is maintained with m_Files_map and
+	// answers the pointer-identity question in constant time.
+	return file != NULL && m_filePointers.find(file) != m_filePointers.end();
 }
 
 void CKnownFileList::AddCancelledFileID(const uchar *hash)

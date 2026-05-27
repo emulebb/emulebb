@@ -567,6 +567,7 @@ private:
 	void	RemoveSingleExcludedFileRuleKey(const CString &strFilePath);
 
 	CKnownFilesMap m_Files_map;
+	std::unordered_set<const CKnownFile*> m_filePointers;
 	CMap<CSKey, const CSKey&, bool, bool>		 m_UnsharedFiles_map;
 	CMapStringToString m_mapPseudoDirNames;
 	CPublishKeywordList *m_keywords;

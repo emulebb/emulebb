@@ -18,6 +18,7 @@
 #include "KnownFileLookupIndex.h"
 #include "MapKey.h"
 #include "SHAHashset.h"
+#include <unordered_set>
 
 class CKnownFile;
 typedef CMap<CCKey, const CCKey&, CKnownFile*, CKnownFile*> CKnownFilesMap;
@@ -68,6 +69,7 @@ private:
 
 	uint64	transferred;
 	CKnownFilesMap		m_Files_map;
+	std::unordered_set<const CKnownFile*> m_filePointers;
 	CancelledFilesMap	m_mapCancelledFiles;
 	// map of files is indexed by AICH-hash for faster access,
 	// not guaranteed to be complete at this point (!)

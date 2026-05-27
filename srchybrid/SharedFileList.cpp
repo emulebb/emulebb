@@ -1480,6 +1480,7 @@ void CSharedFileList::FindSharedFiles(const bool bAllowStartupCache)
 				m_UnsharedFiles_map[CSKey(cur_file->GetFileHash())] = true;
 				listlock.Lock();
 				m_Files_map.RemoveKey(key);
+				m_filePointers.erase(cur_file);
 				listlock.Unlock();
 			}
 		}
@@ -1764,6 +1765,8 @@ bool CSharedFileList::AddFile(CKnownFile *pFile)
 	CCKey key(pFile->GetFileHash());
 	CKnownFile *pFileInMap;
 	if (m_Files_map.Lookup(key, pFileInMap)) {
+		if (pFileInMap == pFile)
+			m_filePointers.insert(pFile);
 		TRACE(_T("%hs: File already in shared file list: %s \"%s\" \"%s\"\n"), __FUNCTION__, (LPCTSTR)md4str(pFileInMap->GetFileHash()), (LPCTSTR)pFileInMap->GetFileName(), (LPCTSTR)pFileInMap->GetFilePath());
 		TRACE(_T("%hs: File to add:                      %s \"%s\" \"%s\"\n"), __FUNCTION__, (LPCTSTR)md4str(pFile->GetFileHash()), (LPCTSTR)pFile->GetFileName(), (LPCTSTR)pFile->GetFilePath());
 		const CString strExistingFileKey(MakeSharedFileLookupKey(pFileInMap->GetFilePath()));
@@ -1788,6 +1791,7 @@ bool CSharedFileList::AddFile(CKnownFile *pFile)
 
 	CSingleLock listlock(&m_mutWriteList, TRUE);
 	m_Files_map[key] = pFile;
+	m_filePointers.insert(pFile);
 	listlock.Unlock();
 
 	bool bKeywordsNeedUpdated = true;
@@ -1915,6 +1919,8 @@ bool CSharedFileList::RemoveFile(CKnownFile *pFile, bool bDeleted)
 {
 	CSingleLock listlock(&m_mutWriteList, TRUE);
 	bool bResult = (m_Files_map.RemoveKey(CCKey(pFile->GetFileHash())) != FALSE);
+	if (bResult)
+		m_filePointers.erase(pFile);
 	listlock.Unlock();
 
 	output->RemoveFile(pFile, bDeleted);
@@ -2326,15 +2332,17 @@ bool CSharedFileList::IsFilePtrInList(const CKnownFile *file) const
 
 bool CSharedFileList::ContainsFilePointer(const CKnownFile *file)
 {
+	// WHY: shared-file UI rows intentionally keep raw model pointers for MFC
+	// virtual-list callbacks. Liveness checks must therefore be pointer-identity
+	// only: reading file->GetFileHash() would reintroduce UAF when a stale row is
+	// pruned. The old safe implementation scanned m_Files_map for every row and
+	// turned startup into a UI-thread O(visible rows * shared files) loop on large
+	// profiles. This side index is updated under the same write lock as
+	// m_Files_map, preserving the safety contract while making the hot check O(1).
 	if (file == NULL)
 		return false;
-
 	CSingleLock listlock(&m_mutWriteList, TRUE);
-	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
-		if (pair->value == file)
-			return true;
-	}
-	return false;
+	return m_filePointers.find(file) != m_filePointers.end();
 }
 
 void CSharedFileList::HashNextFile()
