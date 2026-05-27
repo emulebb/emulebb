@@ -397,7 +397,7 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 				if (completionAction == uploadDiskReadCompletionSendPackets) {
 					CUpDownClient *pClient = pStruct->m_pClient;
 					pSocket = pClient != NULL ? pClient->socket : NULL;
-					if (pClient != NULL && pSocket != NULL && pSocket->IsConnected()) {
+					if (pClient != NULL && pSocket != NULL && pSocket->CanAcceptUploadDiskPacketDelivery()) {
 						if (pKnownFile->bCompress)
 							CreatePackedPackets(*pOvRead, packetsList);
 						else
@@ -424,6 +424,17 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 
 			while (!packetsList.IsEmpty() && pSocket != NULL) {
 				Packet *packet = packetsList.RemoveHead();
+				if (!pSocket->CanAcceptUploadDiskPacketDelivery()) {
+					delete packet;
+					continue;
+				}
+				// WHY: the upload-list lock protects the upload entry while we
+				// snapshot its socket, but packet delivery happens after that
+				// lock is released to avoid blocking queue teardown on socket I/O.
+				// CClientReqSocket::Safe_Delete keeps the socket object alive for
+				// delayed MFC callbacks; this late check makes the helper honor
+				// that same "committed to delete" state before using the raw
+				// pointer captured from the upload entry.
 				pSocket->SendPacket(packet, false, packet->uStatsPayLoad);
 			}
 		} else if (pStruct == NULL)

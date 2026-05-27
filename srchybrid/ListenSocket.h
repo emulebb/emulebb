@@ -49,6 +49,11 @@ public:
 	virtual void SendPacket(Packet *packet, bool controlpacket = true, uint32 actualPayloadSize = 0, bool bForceImmediateSend = false);
 	virtual SocketSentBytes SendControlData(uint32 maxNumberOfBytesToSend, uint32 overchargeMaxBytesToSend);
 	virtual SocketSentBytes SendFileAndControlData(uint32 maxNumberOfBytesToSend, uint32 overchargeMaxBytesToSend);
+	// WHY: upload disk completions can hold a raw socket pointer briefly after
+	// releasing the upload-list lock. Safe_Delete keeps the object alive for
+	// delayed MFC callbacks; this predicate exposes the same "do not enqueue
+	// more work" boundary without requiring helper threads to touch internals.
+	bool	CanAcceptUploadDiskPacketDelivery() const	{ return !deletethis && IsConnected(); }
 
 	void		 OnClose(int nErrorCode);
 	virtual void OnConnect(int nErrorCode);
