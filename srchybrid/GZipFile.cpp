@@ -85,13 +85,14 @@ CString CGZIPFile::GetUncompressedFileName() const
 	return strUncompressedFileName;
 }
 
-bool CGZIPFile::Extract(LPCTSTR pszFilePath)
+bool CGZIPFile::Extract(LPCTSTR pszFilePath, ULONGLONG ullMaxOutputBytes)
 {
 	const int fdOut = LongPathSeams::OpenCrtWriteOnlyLongPath(pszFilePath, CREATE_ALWAYS, FILE_SHARE_READ);
 	if (fdOut == -1)
 		return false;
 
 	bool bResult = true;
+	ULONGLONG ullWrittenTotal = 0;
 	const int iBuffSize = 32768;
 	BYTE *pucBuff = new BYTE[iBuffSize];
 	while (!gzeof(m_gzFile)) {
@@ -102,10 +103,17 @@ bool CGZIPFile::Extract(LPCTSTR pszFilePath)
 			bResult = false;
 			break;
 		}
+		if (ullMaxOutputBytes != 0
+			&& static_cast<ULONGLONG>(iRead) > ullMaxOutputBytes - ullWrittenTotal)
+		{
+			bResult = false;
+			break;
+		}
 		if (_write(fdOut, pucBuff, iRead) != iRead) {
 			bResult = false;
 			break;
 		}
+		ullWrittenTotal += static_cast<ULONGLONG>(iRead);
 	}
 	delete[] pucBuff;
 	_close(fdOut);

@@ -23,13 +23,15 @@ typedef void *gzFile;
 class CGZIPFile
 {
 public:
+	static constexpr ULONGLONG kDefaultMaxExtractBytes = 512ull * 1024ull * 1024ull;
+
 	CGZIPFile();
 
 	bool Open(LPCTSTR pszFilePath);
 	void Close();
 	CString GetUncompressedFileName() const;
 	CString GetUncompressedFilePath() const;
-	bool Extract(LPCTSTR pszFilePath);
+	bool Extract(LPCTSTR pszFilePath, ULONGLONG ullMaxOutputBytes = kDefaultMaxExtractBytes);
 
 protected:
 	CString m_strGzFilePath;

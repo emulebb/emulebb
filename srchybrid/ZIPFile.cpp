@@ -24,12 +24,15 @@
 #include "LongPathSeams.h"
 #include "zlib.h"
 
+#include <vector>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
 
+static const DWORD kMaxZipCentralDirectoryBytes = 64u * 1024u * 1024u;
 
 /////////////////////////////////////////////////////////////////////////////
 // CZIPFile construction
@@ -157,18 +160,29 @@ typedef struct
 
 bool CZIPFile::LocateCentralDirectory()
 {
-	BYTE pBuffer[4096];
-	DWORD nBuffer;
-
-	SetFilePointer(m_hFile, -(LONG)sizeof pBuffer, NULL, FILE_END);
-	if (!::ReadFile(m_hFile, pBuffer, sizeof pBuffer, &nBuffer, NULL))
+	LARGE_INTEGER fileSize = {};
+	if (!::GetFileSizeEx(m_hFile, &fileSize) || fileSize.QuadPart < static_cast<LONGLONG>(sizeof(ZIP_DIRECTORY_LOC)))
 		return false;
 
-	ZIP_DIRECTORY_LOC *pLoc = NULL;
+	const ULONGLONG ullFileSize = static_cast<ULONGLONG>(fileSize.QuadPart);
+	const ULONGLONG ullMaxSearchSize = sizeof(ZIP_DIRECTORY_LOC) + 0xffffull;
+	const DWORD nSearchSize = static_cast<DWORD>(ullFileSize < ullMaxSearchSize ? ullFileSize : ullMaxSearchSize);
+
+	LARGE_INTEGER searchOffset = {};
+	searchOffset.QuadPart = fileSize.QuadPart - nSearchSize;
+	if (!::SetFilePointerEx(m_hFile, searchOffset, NULL, FILE_BEGIN))
+		return false;
+
+	std::vector<BYTE> buffer(nSearchSize);
+	DWORD nBuffer = 0;
+	if (!::ReadFile(m_hFile, buffer.data(), nSearchSize, &nBuffer, NULL) || nBuffer < sizeof(ZIP_DIRECTORY_LOC))
+		return false;
+
+	const ZIP_DIRECTORY_LOC *pLoc = NULL;
 	for (INT_PTR nScan = nBuffer - sizeof(ZIP_DIRECTORY_LOC) + 1; --nScan >= 0;) {
-		DWORD *pnSignature = (DWORD*)&pBuffer[nScan];
+		const DWORD *pnSignature = reinterpret_cast<const DWORD*>(&buffer[static_cast<size_t>(nScan)]);
 		if (*pnSignature == 0x06054b50) {
-			pLoc = (ZIP_DIRECTORY_LOC*)pnSignature;
+			pLoc = reinterpret_cast<const ZIP_DIRECTORY_LOC*>(pnSignature);
 			break;
 		}
 	}
@@ -176,14 +190,26 @@ bool CZIPFile::LocateCentralDirectory()
 		return false;
 	ASSERT(pLoc->nSignature == 0x06054b50);
 
-	if (GetFileSize(m_hFile, NULL) < pLoc->nDirectorySize)
+	if (pLoc->nThisDisk != 0 || pLoc->nDirectoryDisk != 0 || pLoc->nFilesThisDisk != pLoc->nTotalFiles)
 		return false;
 
-	if (SetFilePointer(m_hFile, pLoc->nDirectoryOffset, NULL, FILE_BEGIN) != pLoc->nDirectoryOffset)
+	const ULONGLONG ullDirectoryOffset = pLoc->nDirectoryOffset;
+	const ULONGLONG ullDirectorySize = pLoc->nDirectorySize;
+	if (ullDirectorySize > kMaxZipCentralDirectoryBytes
+		|| ullDirectoryOffset > ullFileSize
+		|| ullDirectorySize > ullFileSize - ullDirectoryOffset)
+	{
+		return false;
+	}
+
+	LARGE_INTEGER directoryOffset = {};
+	directoryOffset.QuadPart = static_cast<LONGLONG>(ullDirectoryOffset);
+	if (!::SetFilePointerEx(m_hFile, directoryOffset, NULL, FILE_BEGIN))
 		return false;
 
 	BYTE *pDirectory = new BYTE[pLoc->nDirectorySize];
-	VERIFY(::ReadFile(m_hFile, pDirectory, pLoc->nDirectorySize, &nBuffer, NULL));
+	if (!::ReadFile(m_hFile, pDirectory, pLoc->nDirectorySize, &nBuffer, NULL))
+		nBuffer = 0;
 
 	if (nBuffer == pLoc->nDirectorySize) {
 		m_nFile = (int)pLoc->nTotalFiles;
@@ -409,6 +435,7 @@ bool CZIPFile::File::Extract(LPCTSTR pszFile)
 
 	if (m_nCompression == Z_DEFLATED) {
 		BYTE *pBufferIn = new BYTE[BUFFER_IN_SIZE];
+		bool bStreamComplete = false;
 
 		for (uint64 nCompressed = 0; nCompressed < m_nCompressedSize || nUncompressed < m_nSize;) {
 			if (pStream.avail_in == 0) {
@@ -425,21 +452,36 @@ bool CZIPFile::File::Extract(LPCTSTR pszFile)
 			pStream.avail_out = BUFFER_OUT_SIZE;
 			pStream.next_out = pBufferOut;
 
-			if (inflate(&pStream, Z_SYNC_FLUSH) == Z_MEM_ERROR)
+			const uInt nAvailInBefore = pStream.avail_in;
+			const int nInflateResult = inflate(&pStream, Z_SYNC_FLUSH);
+			if (nInflateResult == Z_MEM_ERROR)
 				break;
 
 			if (pStream.avail_out < BUFFER_OUT_SIZE) {
 				DWORD nWrite = BUFFER_OUT_SIZE - pStream.avail_out;
 				DWORD nWritten;
+				if (static_cast<uint64>(nWrite) > m_nSize - nUncompressed)
+					break;
 				if (!::WriteFile(hFile, pBufferOut, nWrite, &nWritten, NULL) || nWritten != nWrite)
 					break;
 				nUncompressed += nWrite;
 			}
+
+			if (nInflateResult == Z_STREAM_END) {
+				bStreamComplete = true;
+				break;
+			}
+			if (nInflateResult != Z_OK)
+				break;
+			if (nAvailInBefore == pStream.avail_in && pStream.avail_out == BUFFER_OUT_SIZE)
+				break;
 		}
 
 		delete[] pBufferIn;
 
 		inflateEnd(&pStream);
+		if (!bStreamComplete)
+			nUncompressed = 0;
 	} else
 		while (nUncompressed < m_nSize) {
 			DWORD nChunk = (DWORD)min(m_nSize - nUncompressed, BUFFER_OUT_SIZE);
