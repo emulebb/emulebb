@@ -304,9 +304,15 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 			pOverlappedRead->uEndOffset = currentblock->EndOffset;
 			pOverlappedRead->pBuffer = new byte[(size_t)uTogo];
 
+			// WHY: ReadFile captures pOverlappedRead, which contains the raw
+			// CKnownFile pointer. The lifetime reference must be visible before
+			// the kernel can report completion or another thread can delete the
+			// file object after closing/dissociating its read handle.
+			pFile->AddUploadReadReference();
 			if (!::ReadFile(pFile->m_hRead, pOverlappedRead->pBuffer, (DWORD)uTogo, NULL, (LPOVERLAPPED)pOverlappedRead)) {
 				DWORD dwError = ::GetLastError();
 				if (dwError != ERROR_IO_PENDING) {
+					pFile->ReleaseUploadReadReference();
 					delete[] pOverlappedRead->pBuffer;
 					delete pOverlappedRead;
 
@@ -317,7 +323,6 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 					throw _T("ReadFile Error: ") + GetErrorMessage(dwError, 1);
 				}
 			}
-			++pFile->nInUse;
 			pUploadClientStruct->m_nPendingIOBlocks.fetch_add(1);
 			m_listPendingIO.AddTail(pOverlappedRead);
 			DEBUG_ONLY(dbgDataReadPending += uTogo);
@@ -420,8 +425,8 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 	if (pKnownFile != NULL) {
 		// Keep nInUse raised until every completion-path access to pKnownFile is done.
 		// Delete paths use this counter as their release-build lifetime barrier.
-		ASSERT(pKnownFile->nInUse > 0);
-		--pKnownFile->nInUse;
+		ASSERT(pKnownFile->GetUploadReadReferenceCount() > 0);
+		pKnownFile->ReleaseUploadReadReference();
 	}
 	if (pStruct != NULL)
 		pStruct->m_nPendingIOBlocks.fetch_sub(1);

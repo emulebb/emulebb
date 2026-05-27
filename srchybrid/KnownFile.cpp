@@ -152,7 +152,7 @@ CKnownFile::CKnownFile()
 
 CKnownFile::~CKnownFile()
 {
-	ASSERT(!nInUse);
+	ASSERT(GetUploadReadReferenceCount() == 0);
 	CUploadDiskIOThread::DissociateFile(this);
 	delete m_pCollection;
 }
@@ -385,7 +385,7 @@ void CKnownFile::RemoveUploadingClient(CUpDownClient *client)
 		UpdateAutoUpPriority();
 	}
 	if (m_ClientUploadList.IsEmpty()) {
-		ASSERT(!nInUse);
+		ASSERT(GetUploadReadReferenceCount() == 0);
 		CUploadDiskIOThread::DissociateFile(this);
 	}
 }
@@ -409,7 +409,7 @@ void CKnownFile::RemoveStaleUploadingClient(POSITION pos, const CUpDownClient *p
 	CKnownFile *pMutableFile = const_cast<CKnownFile*>(this);
 	pMutableFile->m_ClientUploadList.RemoveAt(pos);
 	pMutableFile->UpdateAutoUpPriority();
-	if (pMutableFile->m_ClientUploadList.IsEmpty() && pMutableFile->nInUse == 0)
+	if (pMutableFile->m_ClientUploadList.IsEmpty() && pMutableFile->GetUploadReadReferenceCount() == 0)
 		CUploadDiskIOThread::DissociateFile(pMutableFile);
 	DebugLogWarning(_T("Removed stale uploading client pointer %p from file \"%s\" (%s)"),
 		static_cast<const void*>(pClient),

@@ -118,26 +118,39 @@ namespace
 constexpr DWORD kShutdownFlushWaitMs = 5000;
 constexpr LPCSTR kFollowMajorityFilenameTag = "BBFollowMajorityFilename";
 constexpr DWORD kShutdownFlushPollMs = 10;
+constexpr DWORD kUploadReadDeleteWaitMs = 5000;
+constexpr DWORD kUploadReadDeletePollMs = 50;
 
-void WaitForUploadReadReferencesToRelease(CKnownFile *pFile, LPCTSTR pszContext)
+bool WaitForUploadReadReferencesToRelease(CKnownFile *pFile, LPCTSTR pszContext)
 {
-	if (pFile == NULL || pFile->nInUse == 0)
-		return;
+	if (pFile == NULL || pFile->GetUploadReadReferenceCount() == 0)
+		return true;
 
 	const CString strFileName(pFile->GetFileName());
 	DebugLogWarning(_T("Waiting for upload read references before deleting \"%s\" (%s)."),
 		(LPCTSTR)strFileName,
 		pszContext != NULL ? pszContext : _T("unknown context"));
 
-	// Block new reads and close the current read handle so outstanding IOCP
-	// completions can drain before the raw CKnownFile pointer becomes invalid.
+	// WHY: upload reads retain raw CKnownFile pointers until the IOCP completion
+	// consumes them. Closing the read handle forces cancellation/drain, but we
+	// still bound the UI-thread wait so a broken completion path cannot freeze
+	// the process while a duplicate completed file is being discarded.
 	pFile->bNoNewReads = true;
 	CUploadDiskIOThread::DissociateFile(pFile);
-	while (pFile->nInUse != 0) {
+	const ULONGLONG ullDeadline = ::GetTickCount64() + kUploadReadDeleteWaitMs;
+	while (pFile->GetUploadReadReferenceCount() != 0) {
 		if (theApp.m_pUploadDiskIOThread != NULL)
 			theApp.m_pUploadDiskIOThread->WakeUpCall();
-		::Sleep(50);
+		if (::GetTickCount64() >= ullDeadline) {
+			DebugLogError(_T("Timed out waiting for %ld upload read reference(s) before deleting \"%s\" (%s). Preserving the object to avoid use-after-free."),
+				pFile->GetUploadReadReferenceCount(),
+				(LPCTSTR)strFileName,
+				pszContext != NULL ? pszContext : _T("unknown context"));
+			return false;
+		}
+		::Sleep(kUploadReadDeletePollMs);
 	}
+	return true;
 }
 
 COLORREF BlendColor(COLORREF crColor, COLORREF crTarget, UINT uColorWeight)
@@ -3554,12 +3567,20 @@ void CPartFile::PerformFileCompleteEnd(void *pCompletionResult)
 		const UINT nCompletedCategory = GetCategory();
 		const CString strCompletedFileName(GetFileName());
 		const bool bKnownFileAdded = theApp.knownfiles->SafeAddKFile(this);
-		ASSERT(!nInUse);
+		ASSERT(GetUploadReadReferenceCount() == 0);
 		theApp.downloadqueue->RemoveFile(this);
 		CUploadDiskIOThread::DissociateFile(this); //file has moved, a new handle would be required
 		bNoNewReads = false; //ready for uploading - enable reading
 		if (!bKnownFileAdded) {
-			WaitForUploadReadReferencesToRelease(this, _T("duplicate completed part file"));
+			if (!WaitForUploadReadReferencesToRelease(this, _T("duplicate completed part file"))) {
+				// WHY: deleting here while an IOCP completion still owns `this` is
+				// a UAF. This duplicate-completion path is rare, so preserving the
+				// detached object is safer than a UI hang or a freed-pointer crash.
+				theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile(this);
+				theApp.emuledlg->transferwnd->GetDownloadList()->ShowFilesCount();
+				theApp.downloadqueue->StartNextFileIfPrefs(static_cast<int>(nCompletedCategory));
+				return;
+			}
 			if (theApp.sharedfiles != NULL && theApp.sharedfiles->IsFilePtrInList(this))
 				theApp.sharedfiles->RemoveFile(this);
 			theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile(this);

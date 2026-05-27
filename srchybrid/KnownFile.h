@@ -151,9 +151,15 @@ public:
 	CCollection *m_pCollection;
 	//overlapped disk reads
 	HANDLE		m_hRead;
-	int			nInUse; //count outstanding I/O (reads) to know if the file is in use
+	volatile LONG	nInUse; //count outstanding I/O (reads) to know if the file is in use
 	bool		bCompress;
 	bool		bNoNewReads; //blocks new overlapped reads
+	// WHY: upload disk completions run on the helper thread after ReadFile has
+	// captured this raw CKnownFile pointer, so delete paths need an interlocked
+	// release-build lifetime barrier rather than a debug-only plain int check.
+	LONG		GetUploadReadReferenceCount() const	{ return ::InterlockedCompareExchange(const_cast<volatile LONG*>(&nInUse), 0, 0); }
+	LONG		AddUploadReadReference()			{ return ::InterlockedIncrement(&nInUse); }
+	LONG		ReleaseUploadReadReference()		{ return ::InterlockedDecrement(&nInUse); }
 #ifdef _DEBUG
 	// Diagnostic Support
 	virtual void AssertValid() const;
