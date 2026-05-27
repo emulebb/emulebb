@@ -320,8 +320,26 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 				SetPartFileBufferedDataFlushState(*pBuffer, PB_WRITTEN);
 			} else { //full file allocation
 				ASSERT(dwBytesWritten == 1);
-				::FlushFileBuffers(pFile->m_hWrite);
-				pFile->m_hpartfile.SetLength(pBuffer->start); //truncate the extra byte
+				DWORD dwAllocationError = ERROR_SUCCESS;
+				if (!::FlushFileBuffers(pFile->m_hWrite))
+					dwAllocationError = ::GetLastError();
+				try {
+					// WHY: allocation sentinels are not tracked in the normal
+					// part-buffer list, but they still decrement the async-write
+					// count above. SetLength can throw a CFileException at this
+					// completion boundary; contain it here so the write thread can
+					// delete the sentinel, retire the OVERLAPPED record, and keep
+					// shutdown signaling balanced.
+					pFile->m_hpartfile.SetLength(pBuffer->start); //truncate the extra byte
+				} catch (CFileException *ex) {
+					dwAllocationError = ex->m_lOsError != 0 ? static_cast<DWORD>(ex->m_lOsError) : ERROR_WRITE_FAULT;
+					ex->Delete();
+				} catch (CException *ex) {
+					dwAllocationError = ERROR_WRITE_FAULT;
+					ex->Delete();
+				}
+				if (dwAllocationError != ERROR_SUCCESS)
+					theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Part-file allocation completion failed while truncating sentinel byte: %s"), (LPCTSTR)GetErrorMessage(dwAllocationError, 1));
 				delete pBuffer;
 			}
 		}
