@@ -1030,7 +1030,8 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 	//our new source is really new, but maybe it is already uploading to us?
 	//if yes the known client will be attached to the var "source"
 	//and the old source client will be deleted
-	if (theApp.clientlist->AttachToAlreadyKnown(&source, NULL)) {
+	const bool bAttachedKnownClient = theApp.clientlist->AttachToAlreadyKnown(&source, NULL);
+	if (bAttachedKnownClient) {
 #ifdef _DEBUG
 		const CPartFile *srcfile = source->GetRequestFile();
 		if (thePrefs.GetVerbose() && srcfile) {
@@ -1043,7 +1044,6 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 				AddDebugLogLine(false, _T("*** CDownloadQueue::CheckAndAddSource -- added potentially wrong source (%u)(diff. partcount) to file \"%s\""), source->GetUserIDHybrid(), (LPCTSTR)sender->GetFileName());
 		}
 #endif
-		source->SetRequestFile(sender);
 	} else {
 		// here we know that the client instance 'source' is a new created client instance (see callers)
 		// which is therefore not already in the client list, we can avoid the check for duplicate
@@ -1056,7 +1056,24 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 		DEBUG_ONLY(AddDebugLogLine(false, _T("*** CDownloadQueue::CheckAndAddSource -- New added source (%u, %s) had still value in partcount"), source->GetUserIDHybrid(), (LPCTSTR)sender->GetFileName()));
 #endif
 
-	sender->srclist.AddTail(source);
+	CPartFile *pPreviousRequestFile = source->GetRequestFile();
+	try {
+		// WHY: source->SetRequestFile publishes a raw CPartFile pointer that
+		// CUpDownClient teardown later uses to detach from sender->srclist.
+		// Link the source into srclist first because AddTail can allocate; a
+		// failed list-node allocation must not leave a client pointing at a part
+		// file that does not own it as a source.
+		sender->srclist.AddTail(source);
+		source->SetRequestFile(sender);
+	} catch (...) {
+		if (bAttachedKnownClient)
+			source->SetRequestFile(pPreviousRequestFile);
+		else {
+			theApp.clientlist->RemoveClient(source, _T("CDownloadQueue::CheckAndAddSource rollback"));
+			delete source;
+		}
+		throw;
+	}
 	theApp.emuledlg->transferwnd->GetDownloadList()->AddSource(sender, source, false);
 	return true;
 }
@@ -1123,8 +1140,17 @@ bool CDownloadQueue::CheckAndAddKnownSource(CPartFile *sender, CUpDownClient *so
 			AddDebugLogLine(false, _T("*** CDownloadQueue::CheckAndAddKnownSource -- added potential wrong source (%u)(diff. partcount) to file \"%s\""), source->GetUserIDHybrid(), (LPCTSTR)sender->GetFileName());
 	}
 #endif
-	source->SetRequestFile(sender);
-	sender->srclist.AddTail(source);
+	CPartFile *pPreviousRequestFile = source->GetRequestFile();
+	try {
+		// WHY: keep the existing client's request-file pointer consistent with
+		// sender->srclist. AddTail can allocate, so publish SetRequestFile only
+		// after the part file owns the source-list link.
+		sender->srclist.AddTail(source);
+		source->SetRequestFile(sender);
+	} catch (...) {
+		source->SetRequestFile(pPreviousRequestFile);
+		throw;
+	}
 	source->SetSourceFrom(SF_PASSIVE);
 	if (thePrefs.GetDebugSourceExchange())
 		AddDebugLogLine(false, _T("SXRecv: Passively added source; %s, File=\"%s\""), (LPCTSTR)source->DbgGetClientInfo(), (LPCTSTR)sender->GetFileName());
