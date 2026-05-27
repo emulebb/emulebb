@@ -54,6 +54,37 @@ void DeletePacketList(CPacketList &rPacketList)
 	while (!rPacketList.IsEmpty())
 		delete rPacketList.RemoveHead();
 }
+
+class CUploadDiskSocketDeliveryRef
+{
+public:
+	~CUploadDiskSocketDeliveryRef()
+	{
+		Release();
+	}
+
+	void Attach(CClientReqSocket *pSocket)
+	{
+		Release();
+		m_pSocket = pSocket;
+	}
+
+	void Release()
+	{
+		if (m_pSocket != NULL) {
+			theApp.listensocket->ReleaseUploadDiskPacketDeliveryRef(m_pSocket);
+			m_pSocket = NULL;
+		}
+	}
+
+	CClientReqSocket *Get() const
+	{
+		return m_pSocket;
+	}
+
+private:
+	CClientReqSocket *m_pSocket = NULL;
+};
 }
 
 IMPLEMENT_DYNCREATE(CUploadDiskIOThread, CWinThread)
@@ -453,7 +484,7 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 		}
 		if (pKnownFile != NULL && pKnownFile->m_hRead != INVALID_HANDLE_VALUE && pStruct != NULL) { //discard data from closed files
 			DEBUG_ONLY(dbgDataReadPending -= pOvRead->uEndOffset - pOvRead->uStartOffset);
-			CClientReqSocket *pSocket = NULL;
+			CUploadDiskSocketDeliveryRef socketDeliveryRef;
 			UploadDiskReadCompletionAction completionAction = uploadDiskReadCompletionDiscard;
 			bool bLoggedCompletionDiscard = false;
 			{
@@ -473,8 +504,9 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 
 				if (completionAction == uploadDiskReadCompletionSendPackets) {
 					CUpDownClient *pClient = pStruct->m_pClient;
-					pSocket = pClient != NULL ? pClient->socket : NULL;
-					if (pClient != NULL && pSocket != NULL && pSocket->CanAcceptUploadDiskPacketDelivery()) {
+					CClientReqSocket *pSocket = pClient != NULL ? pClient->socket : NULL;
+					if (pClient != NULL && theApp.listensocket->TryAddUploadDiskPacketDeliveryRef(pSocket)) {
+						socketDeliveryRef.Attach(pSocket);
 						if (pKnownFile->bCompress)
 							CreatePackedPackets(*pOvRead, packetsList);
 						else
@@ -484,7 +516,6 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 					} else if (pClient != NULL) {
 						theApp.QueueDebugLogLineEx(LOG_ERROR, _T("ReadCompletionRoutine: Client has no connected socket, %s"), (LPCTSTR)pClient->DbgGetClientInfo(true));
 						completionAction = uploadDiskReadCompletionDiscard;
-						pSocket = NULL;
 						bLoggedCompletionDiscard = true;
 					} else {
 						theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: Upload entry retired before packet delivery; discarding block"));
@@ -503,19 +534,18 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 				}
 			}
 
+			CClientReqSocket *pSocket = socketDeliveryRef.Get();
 			while (!packetsList.IsEmpty() && pSocket != NULL) {
 				Packet *packet = packetsList.RemoveHead();
 				if (!pSocket->CanAcceptUploadDiskPacketDelivery()) {
 					delete packet;
 					continue;
 				}
-				// WHY: the upload-list lock protects the upload entry while we
-				// snapshot its socket, but packet delivery happens after that
-				// lock is released to avoid blocking queue teardown on socket I/O.
-				// CClientReqSocket::Safe_Delete keeps the socket object alive for
-				// delayed MFC callbacks; this late check makes the helper honor
-				// that same "committed to delete" state before using the raw
-				// pointer captured from the upload entry.
+				// WHY: packet delivery must not run under the upload-list lock;
+				// queue-limit errors can disconnect the peer and re-enter upload
+				// queue teardown. socketDeliveryRef is the lifetime bridge that
+				// keeps the Safe_Delete timed-reclaim path from freeing pSocket
+				// after the helper releases the upload-list lock.
 				pSocket->SendPacket(packet, false, packet->uStatsPayLoad);
 			}
 		} else if (pStruct == NULL)

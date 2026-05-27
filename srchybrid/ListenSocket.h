@@ -53,7 +53,7 @@ public:
 	// releasing the upload-list lock. Safe_Delete keeps the object alive for
 	// delayed MFC callbacks; this predicate exposes the same "do not enqueue
 	// more work" boundary without requiring helper threads to touch internals.
-	bool	CanAcceptUploadDiskPacketDelivery() const	{ return !deletethis && IsConnected(); }
+	bool	CanAcceptUploadDiskPacketDelivery() const;
 
 	void		 OnClose(int nErrorCode);
 	virtual void OnConnect(int nErrorCode);
@@ -68,6 +68,10 @@ public:
 protected:
 	virtual	~CClientReqSocket();
 	void	Delete_Timed();
+	bool	TryAddUploadDiskPacketDeliveryRef();
+	void	ReleaseUploadDiskPacketDeliveryRef();
+	bool	HasUploadDiskPacketDeliveryRefs() const;
+	bool	IsCommittedToDelete() const;
 
 	void		 OnError(int nErrorCode);
 
@@ -84,7 +88,8 @@ protected:
 	bool	m_bAcceptedIncomingSocket;
 	bool	m_bReceivedFirstPacket;
 	bool	m_bTCPErrorFloodReported;
-	bool	deletethis;
+	volatile LONG deletethis;
+	volatile LONG m_nUploadDiskPacketDeliveryRefs;
 	bool	m_bPortTestCon;
 };
 
@@ -103,6 +108,8 @@ public:
 	void	Process();
 	void	RemoveSocket(CClientReqSocket *todel);
 	void	AddSocket(CClientReqSocket *toadd);
+	bool	TryAddUploadDiskPacketDeliveryRef(CClientReqSocket *pSocket);
+	void	ReleaseUploadDiskPacketDeliveryRef(CClientReqSocket *pSocket);
 	UINT	GetOpenSockets()			{ return static_cast<UINT>(socket_list.GetCount()); }
 	void	KillAllSockets();
 	bool	TooManySockets(bool bIgnoreInterval = false);
@@ -127,6 +134,7 @@ public:
 
 private:
 	bool bListening;
+	CCriticalSection m_socketListLock;
 	CTypedPtrList<CPtrList, CClientReqSocket*> socket_list;
 	uint16	m_OpenSocketsInterval;
 	uint32	maxconnectionreached;

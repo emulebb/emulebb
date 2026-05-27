@@ -73,6 +73,7 @@ CClientReqSocket::CClientReqSocket(CUpDownClient *in_client)
 	, m_bReceivedFirstPacket()
 	, m_bTCPErrorFloodReported()
 	, deletethis()
+	, m_nUploadDiskPacketDeliveryRefs()
 	, m_bPortTestCon()
 {
 	SetClient(in_client);
@@ -112,6 +113,7 @@ void CClientReqSocket::WaitForOnConnect()
 
 CClientReqSocket::~CClientReqSocket()
 {
+	ASSERT(!HasUploadDiskPacketDeliveryRefs());
 	//This will update our statistics.
 	SetConState(SS_Other);
 	if (client)
@@ -214,8 +216,16 @@ void CClientReqSocket::Delete_Timed()
 // it seems that MFC Sockets call socket functions after they are deleted, even if the socket is closed
 // and select(0) is set. So we need to wait some time to make sure this doesn't happen
 // we currently also rely on this for multithreading; rework synchronization if this ever changes
-	if (::GetTickCount64() >= deltimer + SEC2MS(10))
+	if (::GetTickCount64() >= deltimer + SEC2MS(10)) {
+		CSingleLock lockSocketList(&theApp.listensocket->m_socketListLock, TRUE);
+		// WHY: upload disk completions can briefly hold a socket reference after
+		// the upload-list lock is released. The timed-delete path is the only
+		// normal place that frees Safe_Delete'd sockets, so it must honor that
+		// explicit helper-thread reference before reclaiming the object.
+		if (HasUploadDiskPacketDeliveryRefs())
+			return;
 		delete this;
+	}
 }
 
 void CClientReqSocket::Safe_Delete()
@@ -230,7 +240,40 @@ void CClientReqSocket::Safe_Delete()
 		client->socket = NULL;
 		client = NULL;
 	}
-	deletethis = true;
+	::InterlockedExchange(&deletethis, 1);
+}
+
+bool CClientReqSocket::IsCommittedToDelete() const
+{
+	return ::InterlockedCompareExchange(const_cast<volatile LONG*>(&deletethis), 0, 0) != 0;
+}
+
+bool CClientReqSocket::CanAcceptUploadDiskPacketDelivery() const
+{
+	return !IsCommittedToDelete() && IsConnected();
+}
+
+bool CClientReqSocket::TryAddUploadDiskPacketDeliveryRef()
+{
+	if (!CanAcceptUploadDiskPacketDelivery())
+		return false;
+	::InterlockedIncrement(&m_nUploadDiskPacketDeliveryRefs);
+	if (!CanAcceptUploadDiskPacketDelivery()) {
+		ReleaseUploadDiskPacketDeliveryRef();
+		return false;
+	}
+	return true;
+}
+
+void CClientReqSocket::ReleaseUploadDiskPacketDeliveryRef()
+{
+	const LONG nRefs = ::InterlockedDecrement(&m_nUploadDiskPacketDeliveryRefs);
+	ASSERT(nRefs >= 0);
+}
+
+bool CClientReqSocket::HasUploadDiskPacketDeliveryRefs() const
+{
+	return ::InterlockedCompareExchange(const_cast<volatile LONG*>(&m_nUploadDiskPacketDeliveryRefs), 0, 0) > 0;
 }
 
 void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcode)
@@ -1879,7 +1922,7 @@ SocketSentBytes CClientReqSocket::SendFileAndControlData(uint32 maxNumberOfBytes
 
 void CClientReqSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayloadSize, bool bForceImmediateSend)
 {
-	if (deletethis) {
+	if (IsCommittedToDelete()) {
 		// Safe_Delete leaves the object alive for MFC callbacks, but callers may
 		// still hold raw socket pointers; drop packets instead of re-queueing
 		// work on a socket that is already committed to deletion.
@@ -1911,6 +1954,7 @@ bool CListenSocket::SendPortTestReply(char result, bool disconnect)
 
 CListenSocket::CListenSocket()
 	: bListening()
+	, m_socketListLock()
 	, m_OpenSocketsInterval()
 	, maxconnectionreached()
 	, m_ConnectionStates()
@@ -2172,7 +2216,7 @@ void CListenSocket::Process()
 	m_OpenSocketsInterval = 0;
 	for (POSITION pos = socket_list.GetHeadPosition(); pos != NULL;) {
 		CClientReqSocket *cur_sock = socket_list.GetNext(pos);
-		if (cur_sock->deletethis) {
+		if (cur_sock->IsCommittedToDelete()) {
 			if (cur_sock->m_SocketData.hSocket != INVALID_SOCKET)
 				cur_sock->Close();			// calls 'closesocket'
 			else
@@ -2203,14 +2247,38 @@ void CListenSocket::RecalculateStats()
 
 void CListenSocket::AddSocket(CClientReqSocket *toadd)
 {
+	CSingleLock lockSocketList(&m_socketListLock, TRUE);
 	socket_list.AddTail(toadd);
 }
 
 void CListenSocket::RemoveSocket(CClientReqSocket *todel)
 {
+	CSingleLock lockSocketList(&m_socketListLock, TRUE);
 	POSITION pos = socket_list.Find(todel);
 	if (pos != NULL)
 		socket_list.RemoveAt(pos);
+}
+
+bool CListenSocket::TryAddUploadDiskPacketDeliveryRef(CClientReqSocket *pSocket)
+{
+	if (pSocket == NULL)
+		return false;
+
+	CSingleLock lockSocketList(&m_socketListLock, TRUE);
+	if (socket_list.Find(pSocket) == NULL)
+		return false;
+	// WHY: the upload disk helper can only obtain a raw socket pointer from the
+	// upload entry. Pairing the liveness check with the socket-list lock closes
+	// the race against Delete_Timed reclaiming a Safe_Delete'd socket before the
+	// helper has converted that raw pointer into an explicit delivery reference.
+	return pSocket->TryAddUploadDiskPacketDeliveryRef();
+}
+
+void CListenSocket::ReleaseUploadDiskPacketDeliveryRef(CClientReqSocket *pSocket)
+{
+	ASSERT(pSocket != NULL);
+	if (pSocket != NULL)
+		pSocket->ReleaseUploadDiskPacketDeliveryRef();
 }
 
 void CListenSocket::KillAllSockets()
@@ -2233,6 +2301,7 @@ bool CListenSocket::TooManySockets(bool bIgnoreInterval)
 
 bool CListenSocket::IsValidSocket(CClientReqSocket *totest)
 {
+	CSingleLock lockSocketList(&m_socketListLock, TRUE);
 	return socket_list.Find(totest) != NULL;
 }
 
