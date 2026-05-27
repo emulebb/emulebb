@@ -27,6 +27,8 @@
 #include "log.h"
 #include "HelperThreadLaunchSeams.h"
 
+#include <new>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -180,16 +182,22 @@ bool UploadBandwidthThrottler::RemoveFromStandardListNoLock(ThrottledFileSocket 
 void UploadBandwidthThrottler::QueueForSendingControlPacket(ThrottledControlSocket *socket, const bool hasSent)
 {
 	if (HelperThreadLaunchSeams::IsFlagSet(m_bRun)) {
-		CSingleLock lockTempQueue(&tempQueueLocker, TRUE);
+		try {
+			CSingleLock lockTempQueue(&tempQueueLocker, TRUE);
 
-		// WHY: std::list::push_back may allocate. This path is called from
-		// socket send code and UDP/TCP event callbacks; RAII prevents an
-		// allocation failure from permanently blocking control-queue removal or
-		// throttler shutdown.
-		if (hasSent)
-			m_TempControlQueueFirst_list.push_back(socket);
-		else
-			m_TempControlQueue_list.push_back(socket);
+			// WHY: std::list::push_back may allocate. This helper is called after
+			// socket queues have accepted packet ownership; letting bad_alloc
+			// escape would unwind through socket callbacks and leave ownership
+			// decisions half-complete. Contain allocation failure here: the socket
+			// remains queued and future send readiness will retry notification.
+			if (hasSent)
+				m_TempControlQueueFirst_list.push_back(socket);
+			else
+				m_TempControlQueue_list.push_back(socket);
+		} catch (const std::bad_alloc&) {
+			if (thePrefs.GetVerbose())
+				DebugLogWarning(_T("Upload throttler: could not queue control socket notification because memory is low"));
+		}
 	}
 }
 
