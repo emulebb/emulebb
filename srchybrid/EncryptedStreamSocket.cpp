@@ -85,6 +85,7 @@ Basic Obfuscated Handshake Protocol Client <-> Server:
 #include "ServerConnect.h"
 #include "EncryptedStreamSocketSeams.h"
 #include <osrng.h>
+#include <memory>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -219,10 +220,15 @@ int CEncryptedStreamSocket::SendOv(CArray<WSABUF> &aBuffer, LPWSAOVERLAPPED lpOv
 		// The delayed server handshake should stay bounded even when coalesced
 		// with first payload bytes; prove the length before narrowing for WSASend.
 		WSABUF wbuf = {static_cast<ULONG>(uBufferedSendBytes)};
-		wbuf.buf = new CHAR[wbuf.len];
+		std::unique_ptr<CHAR[]> delayedSendBuffer(new CHAR[wbuf.len]);
+		wbuf.buf = delayedSendBuffer.get();
 		m_pfiSendBuffer->SeekToBegin();
 		m_pfiSendBuffer->Read(wbuf.buf, wbuf.len);
+		// WHY: CArray::InsertAt can allocate after the delayed handshake bytes
+		// have been copied. Keep the buffer in a local owner until the WSABUF is
+		// actually linked so low-memory failure cannot leak the coalesced prefix.
 		aBuffer.InsertAt(0, wbuf);
+		delayedSendBuffer.release();
 		m_NegotiatingState = ONS_COMPLETE;
 		delete m_pfiSendBuffer;
 		m_pfiSendBuffer = NULL;
