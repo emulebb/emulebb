@@ -474,12 +474,17 @@ void CEMSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayl
 				static_cast<size_t>(controlpacket_queue.GetCount()),
 				m_nQueuedControlPacketBytes,
 				nPacketBytes)) {
+			const unsigned uQueuedPackets = static_cast<unsigned>(controlpacket_queue.GetCount());
+			const uint64 uQueuedBytes = m_nQueuedControlPacketBytes;
 			sendLocker.Unlock();
-			if (thePrefs.GetVerbose())
-				DebugLogWarning(_T("EMSocket: dropped outgoing control packet because the queue is full (%u packets, %I64u bytes)"),
-					static_cast<unsigned>(controlpacket_queue.GetCount()),
-					m_nQueuedControlPacketBytes);
+			DebugLogWarning(_T("EMSocket: closing peer after rejecting outgoing control packet because the queue is full (%u packets, %I64u bytes)"),
+				uQueuedPackets,
+				uQueuedBytes);
+			// WHY: callers transfer packet ownership here and cannot observe a
+			// false return. Closing the peer makes queue exhaustion explicit
+			// instead of silently losing protocol/control data.
 			delete packet;
+			OnError(WSAENOBUFS);
 			return;
 		}
 		controlpacket_queue.AddTail(packet);
@@ -492,12 +497,17 @@ void CEMSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayl
 				static_cast<size_t>(standardpacket_queue.GetCount()),
 				m_nQueuedStandardPacketBytes,
 				nPacketBytes)) {
+			const unsigned uQueuedPackets = static_cast<unsigned>(standardpacket_queue.GetCount());
+			const uint64 uQueuedBytes = m_nQueuedStandardPacketBytes;
 			sendLocker.Unlock();
-			if (thePrefs.GetVerbose())
-				DebugLogWarning(_T("EMSocket: dropped outgoing standard packet because the queue is full (%u packets, %I64u bytes)"),
-					static_cast<unsigned>(standardpacket_queue.GetCount()),
-					m_nQueuedStandardPacketBytes);
+			DebugLogWarning(_T("EMSocket: closing peer after rejecting outgoing standard packet because the queue is full (%u packets, %I64u bytes)"),
+				uQueuedPackets,
+				uQueuedBytes);
+			// WHY: a missing file-data packet corrupts the stream semantics for
+			// the current upload block. Fail the socket visibly so upper layers
+			// retry/requeue through normal peer lifecycle handling.
 			delete packet;
+			OnError(WSAENOBUFS);
 			return;
 		}
 		bool first = !((sendbuffer && !m_currentPacket_is_controlpacket) || !standardpacket_queue.IsEmpty());
