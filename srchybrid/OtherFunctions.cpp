@@ -598,9 +598,41 @@ bool CopyFileToTempAndReplace(const CString &strSrc, const CString &strDst, cons
 	return PartFilePersistenceSeams::TryCopyFileToTempAndReplace(strPreparedSrc, strPreparedDst, strPreparedTmp, bDontOverride, pdwLastError);
 }
 
+bool LooksLikeShellUri(LPCTSTR pszValue)
+{
+	if (pszValue == NULL || pszValue[0] == _T('\0'))
+		return false;
+
+	for (int i = 0; pszValue[i] != _T('\0'); ++i) {
+		const TCHAR ch = pszValue[i];
+		if (ch == _T(':'))
+			return i > 1;
+		if (PathHelpers::IsPathSeparator(ch))
+			return false;
+		if (!_istalnum(ch) && ch != _T('+') && ch != _T('-') && ch != _T('.'))
+			return false;
+	}
+	return false;
+}
+
+CString NormalizeShellExecutePath(LPCTSTR pszPath)
+{
+	if (pszPath == NULL || pszPath[0] == _T('\0') || LooksLikeShellUri(pszPath))
+		return CString();
+	return PathHelpers::NormalizePathSeparators(PathHelpers::StripExtendedLengthPrefix(CString(pszPath)));
+}
+
 HINSTANCE ShellLaunch(HWND hWnd, LPCTSTR lpVerb, LPCTSTR lpTarget, LPCTSTR lpParameters, LPCTSTR lpDirectory, int nShowCmd)
 {
-	return ShellExecute(hWnd, lpVerb, lpTarget, lpParameters, lpDirectory, nShowCmd);
+	const CString strTarget(NormalizeShellExecutePath(lpTarget));
+	const CString strDirectory(NormalizeShellExecutePath(lpDirectory));
+	return ShellExecute(
+		hWnd,
+		lpVerb,
+		strTarget.IsEmpty() ? lpTarget : static_cast<LPCTSTR>(strTarget),
+		lpParameters,
+		strDirectory.IsEmpty() ? lpDirectory : static_cast<LPCTSTR>(strDirectory),
+		nShowCmd);
 }
 
 HINSTANCE BrowserOpen(LPCTSTR lpURL, LPCTSTR lpDirectory)
