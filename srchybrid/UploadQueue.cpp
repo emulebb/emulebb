@@ -1129,7 +1129,15 @@ void CUploadQueue::DeleteAll()
 		CUpDownClient *pClient = pUploadClientStruct->m_pClient;
 		if (pClient != NULL)
 			InvalidateUploadClientStruct(pUploadClientStruct, pClient);
-		ASSERT(CanReclaimUploadQueueEntry(pUploadClientStruct->m_bRetired, pUploadClientStruct->m_nPendingIOBlocks.load()));
+		const LONG nPendingIOBlocks = pUploadClientStruct->m_nPendingIOBlocks.load();
+		if (!CanReclaimUploadQueueEntry(pUploadClientStruct->m_bRetired, nPendingIOBlocks)) {
+			AddDebugLogLine(DLP_HIGH, false, _T("UploadQueue: shutdown retained retired upload entry with %ld pending disk I/O block(s); delaying reclaim"),
+				nPendingIOBlocks);
+			CSingleLock lockRetiredUploadList(&m_csUploadListMainThrdWriteOtherThrdsRead, TRUE);
+			ASSERT(lockRetiredUploadList.IsLocked());
+			m_retiredUploadingList.AddTail(pUploadClientStruct);
+			continue;
+		}
 		delete pUploadClientStruct;
 	}
 	// Normal slot teardown detaches sockets from the throttler. DeleteAll only
