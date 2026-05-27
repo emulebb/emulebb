@@ -1895,49 +1895,71 @@ bool CUpDownClient::SwapToAnotherFile(LPCTSTR reason, bool bIgnoreNoNeeded, bool
 bool CUpDownClient::DoSwap(CPartFile *SwapTo, bool bRemoveCompletely, LPCTSTR reason)
 {
 	ASSERT(m_reqfile);
+	ASSERT(SwapTo != m_reqfile);
 	if (thePrefs.GetLogA4AF())
 		AddDebugLogLine(DLP_LOW, false, _T("ooo Swapped source %s Remove = %s '%s'   -->   %s Reason: %s"), (LPCTSTR)DbgGetClientInfo(), (bRemoveCompletely ? _T("Yes") : _T("No")), (LPCTSTR)m_reqfile->GetFileName(), (LPCTSTR)SwapTo->GetFileName(), reason);
+
+	CPartFile *pOldRequestFile = m_reqfile;
 
 	// 17-Dez-2003 [bc]: This "m_reqfile->srclists[sourcesslot].Find(this)" was the only place where
 	// the usage of the "CPartFile::srclists[100]" is more efficient than using one list. If this
 	// function here is still (again) a performance problem, there is a more efficient way to handle
 	// the 'Find' situation. Hint: usage of a node ptr which is stored in the CUpDownClient.
-	POSITION pos = m_reqfile->srclist.Find(this);
-	if (pos) {
-		m_reqfile->srclist.RemoveAt(pos);
-		m_reqfile->RemoveSourceFileName(this);
-	} else
-		AddDebugLogLine(DLP_HIGH, true, _T("o-o Unsync between partfile->srclist and client otherfiles list. Swapping client where client has file as reqfile, but file doesn't have client in srclist. %s Remove = %s '%s'   -->   '%s'  SwapReason: %s"), (LPCTSTR)DbgGetClientInfo(), (bRemoveCompletely ? _T("Yes") : _T("No")), (LPCTSTR)m_reqfile->GetFileName(), (LPCTSTR)SwapTo->GetFileName(), reason);
+	POSITION pos = pOldRequestFile->srclist.Find(this);
 
 	// remove this client from the A4AF list of our new reqfile
 	POSITION pos2 = SwapTo->A4AFsrclist.Find(this);
+
+	POSITION posOldA4AF = NULL;
+	POSITION posOldOther = NULL;
+	POSITION posNewSource = NULL;
+	CTypedPtrList<CPtrList, CPartFile*> *pOldOtherList = NULL;
+	try {
+		if (!bRemoveCompletely) {
+			// WHY: CList::AddTail allocates a node. Publish all new reciprocal
+			// list memberships before removing the old ones and before changing
+			// m_reqfile, so allocation failure cannot leave the client pointing
+			// at a part file that does not own it in srclist.
+			posOldA4AF = pOldRequestFile->A4AFsrclist.AddTail(this);
+			pOldOtherList = (GetDownloadState() == DS_NONEEDEDPARTS) ? &m_OtherNoNeeded_list : &m_OtherRequests_list;
+			posOldOther = pOldOtherList->AddTail(pOldRequestFile);
+		}
+		posNewSource = SwapTo->srclist.AddTail(this);
+	} catch (...) {
+		if (posNewSource != NULL)
+			SwapTo->srclist.RemoveAt(posNewSource);
+		if (posOldOther != NULL && pOldOtherList != NULL)
+			pOldOtherList->RemoveAt(posOldOther);
+		if (posOldA4AF != NULL)
+			pOldRequestFile->A4AFsrclist.RemoveAt(posOldA4AF);
+		throw;
+	}
+
+	if (pos) {
+		pOldRequestFile->srclist.RemoveAt(pos);
+		pOldRequestFile->RemoveSourceFileName(this);
+	} else
+		AddDebugLogLine(DLP_HIGH, true, _T("o-o Unsync between partfile->srclist and client otherfiles list. Swapping client where client has file as reqfile, but file doesn't have client in srclist. %s Remove = %s '%s'   -->   '%s'  SwapReason: %s"), (LPCTSTR)DbgGetClientInfo(), (bRemoveCompletely ? _T("Yes") : _T("No")), (LPCTSTR)pOldRequestFile->GetFileName(), (LPCTSTR)SwapTo->GetFileName(), reason);
+
 	if (pos2)
 		SwapTo->A4AFsrclist.RemoveAt(pos2);
 	else
-		AddDebugLogLine(DLP_HIGH, true, _T("o-o Unsync between partfile->srclist and client otherfiles list. Swapping client where client has file in another list, but file doesn't have client in a4af srclist. %s Remove = %s '%s'   -->   '%s'  SwapReason: %s"), (LPCTSTR)DbgGetClientInfo(), (bRemoveCompletely ? _T("Yes") : _T("No")), (LPCTSTR)m_reqfile->GetFileName(), (LPCTSTR)SwapTo->GetFileName(), reason);
+		AddDebugLogLine(DLP_HIGH, true, _T("o-o Unsync between partfile->srclist and client otherfiles list. Swapping client where client has file in another list, but file doesn't have client in a4af srclist. %s Remove = %s '%s'   -->   '%s'  SwapReason: %s"), (LPCTSTR)DbgGetClientInfo(), (bRemoveCompletely ? _T("Yes") : _T("No")), (LPCTSTR)pOldRequestFile->GetFileName(), (LPCTSTR)SwapTo->GetFileName(), reason);
 
 	theApp.emuledlg->transferwnd->GetDownloadList()->RemoveSource(this, SwapTo);
 
-	m_reqfile->RemoveDownloadingSource(this);
+	pOldRequestFile->RemoveDownloadingSource(this);
 
-	if (!bRemoveCompletely) {
-		m_reqfile->A4AFsrclist.AddTail(this);
-		if (GetDownloadState() == DS_NONEEDEDPARTS)
-			m_OtherNoNeeded_list.AddTail(m_reqfile);
-		else
-			m_OtherRequests_list.AddTail(m_reqfile);
-
-		theApp.emuledlg->transferwnd->GetDownloadList()->AddSource(m_reqfile, this, true);
-	} else
-		m_fileReaskTimes.RemoveKey(m_reqfile);
+	if (!bRemoveCompletely)
+		theApp.emuledlg->transferwnd->GetDownloadList()->AddSource(pOldRequestFile, this, true);
+	else
+		m_fileReaskTimes.RemoveKey(pOldRequestFile);
 
 	SetDownloadState(DS_NONE);
-	CPartFile *pOldRequestFile = m_reqfile;
 	SetRequestFile(SwapTo);
 	pOldRequestFile->UpdatePartsInfo();
 	pOldRequestFile->UpdateAvailablePartsCount();
 
-	SwapTo->srclist.AddTail(this);
 	SwapTo->UpdateSourceFileName(this);
 	theApp.emuledlg->transferwnd->GetDownloadList()->AddSource(SwapTo, this, false);
 
