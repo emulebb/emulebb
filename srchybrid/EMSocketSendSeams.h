@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include "types.h"
 
 static const size_t kMaxEMSocketQueuedControlPackets = 1024u;
@@ -100,6 +101,29 @@ inline bool CanQueueEMSocketStandardPacket(const size_t nCurrentPackets, const u
 		nPacketBytes,
 		kMaxEMSocketQueuedStandardPackets,
 		kMaxEMSocketQueuedStandardBytes);
+}
+
+/**
+ * @brief Computes the receive buffer allocation for one incoming TCP packet.
+ *
+ * CEMSocket caps peer-controlled packet payloads before constructing Packet,
+ * but the allocation still needs its own checked +1 byte for the legacy
+ * trailing slack. Keeping this as a boolean seam lets the receive loop close
+ * the socket on impossible sizes or allocation pressure instead of unwinding
+ * through socket callbacks.
+ */
+inline bool TryGetIncomingPacketAllocationSize(
+	const uint32 nPayloadBytes,
+	const size_t nMaxPayloadBytes,
+	size_t *pnAllocationBytes)
+{
+	if (pnAllocationBytes == NULL)
+		return false;
+	if (nPayloadBytes > nMaxPayloadBytes || static_cast<size_t>(nPayloadBytes) > (std::numeric_limits<size_t>::max)() - 1u)
+		return false;
+
+	*pnAllocationBytes = static_cast<size_t>(nPayloadBytes) + 1u;
+	return true;
 }
 
 /**

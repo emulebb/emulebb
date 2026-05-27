@@ -31,6 +31,8 @@
 #include "Preferences.h"
 #include "Log.h"
 
+#include <new>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -380,7 +382,37 @@ void CEMSocket::OnReceive(int nErrorCode)
 			// Init data buffer
 			pendingPacket = new Packet(rptr);	// Create new packet container.
 			rptr += PACKET_HEADER_SIZE;			// Only the header is initialized so far
-			pendingPacket->pBuffer = new char[pendingPacket->size + 1];
+			size_t nPacketAllocationSize = 0;
+			if (!TryGetIncomingPacketAllocationSize(pendingPacket->size, sizeof GlobalReadBuffer, &nPacketAllocationSize)) {
+				delete pendingPacket;
+				pendingPacket = NULL;
+				OnError(ERR_TOOBIG);
+				return;
+			}
+			try {
+				// WHY: the payload length is peer-controlled but protocol-capped. A
+				// valid-length packet can still fail allocation under memory pressure;
+				// treat that as a socket failure so the receive callback unwinds in the
+				// normal connection-error path instead of throwing through MFC socket code.
+				pendingPacket->pBuffer = new char[nPacketAllocationSize];
+			} catch (CMemoryException *ex) {
+				if (ex != NULL)
+					ex->Delete();
+				delete pendingPacket;
+				pendingPacket = NULL;
+				OnError(WSAENOBUFS);
+				return;
+			} catch (const std::bad_alloc &) {
+				delete pendingPacket;
+				pendingPacket = NULL;
+				OnError(WSAENOBUFS);
+				return;
+			} catch (...) {
+				delete pendingPacket;
+				pendingPacket = NULL;
+				OnError(WSAENOBUFS);
+				return;
+			}
 			pendingPacketSize = 0;
 		}
 
