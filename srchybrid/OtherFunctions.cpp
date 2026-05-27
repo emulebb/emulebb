@@ -585,17 +585,12 @@ void CommitAndClose(CStdioFile &file)
 
 bool ReplaceFileAtomically(const CString &strSrc, const CString &strDst, DWORD *pdwLastError)
 {
-	const CString strPreparedSrc(LongPathSeams::PreparePathForLongPath(strSrc).c_str());
-	const CString strPreparedDst(LongPathSeams::PreparePathForLongPath(strDst).c_str());
-	return PartFilePersistenceSeams::TryReplaceFileAtomically(strPreparedSrc, strPreparedDst, pdwLastError);
+	return PartFilePersistenceSeams::TryReplaceFileAtomically(strSrc, strDst, pdwLastError);
 }
 
 bool CopyFileToTempAndReplace(const CString &strSrc, const CString &strDst, const CString &strTmp, const bool bDontOverride, DWORD *pdwLastError)
 {
-	const CString strPreparedSrc(LongPathSeams::PreparePathForLongPath(strSrc).c_str());
-	const CString strPreparedDst(LongPathSeams::PreparePathForLongPath(strDst).c_str());
-	const CString strPreparedTmp(LongPathSeams::PreparePathForLongPath(strTmp).c_str());
-	return PartFilePersistenceSeams::TryCopyFileToTempAndReplace(strPreparedSrc, strPreparedDst, strPreparedTmp, bDontOverride, pdwLastError);
+	return PartFilePersistenceSeams::TryCopyFileToTempAndReplace(strSrc, strDst, strTmp, bDontOverride, pdwLastError);
 }
 
 bool LooksLikeShellUri(LPCTSTR pszValue)
