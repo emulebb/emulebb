@@ -93,6 +93,10 @@ public:
 	 */
 	CShareableFile* GetFileByIndex(int iItem) const;
 	/**
+	 * @brief Resolves one visible row only when the backing object is still owned by a live file list.
+	 */
+	CShareableFile* GetLiveFileByIndex(int iItem) const;
+	/**
 	 * @brief Resolves one backing file object to its current visible row index, or `-1` when hidden.
 	 */
 	int FindFile(const CShareableFile *pFile);
