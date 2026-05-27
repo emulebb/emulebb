@@ -41,6 +41,7 @@
 #include "UDPSocketSeams.h"
 
 #include <memory>
+#include <new>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -729,6 +730,7 @@ SocketSentBytes CUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend, uint3
 // ZZ:UploadBandWithThrottler (UDP) -->
 	// NOTE: *** This function is invoked from a *different* thread!
 	uint32 sentBytes = 0;
+	bool bSuccess = true;
 
 	CSingleLock sendLock(&sendLocker, TRUE);
 
@@ -754,7 +756,11 @@ SocketSentBytes CUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend, uint3
 	} catch (CException *pException) {
 		if (pException != NULL)
 			pException->Delete();
+		bSuccess = false;
 		theApp.QueueDebugLogLine(false, _T("Server UDP socket: control send aborted by MFC exception"));
+	} catch (const std::bad_alloc&) {
+		bSuccess = false;
+		theApp.QueueDebugLogLine(false, _T("Server UDP socket: control send aborted by out-of-memory exception"));
 	}
 
 // ZZ:UploadBandWithThrottler (UDP) -->
@@ -765,7 +771,7 @@ SocketSentBytes CUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend, uint3
 	if (eSignalAction == udpControlQueueSignalAfterUnlock)
 		theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this);
 
-	return SocketSentBytes{0, sentBytes, true};
+	return SocketSentBytes{0, sentBytes, bSuccess};
 // <-- ZZ:UploadBandWithThrottler (UDP)
 }
 
@@ -790,34 +796,47 @@ int CUDPSocket::SendTo(BYTE *lpBuf, int nBufLen, uint32 dwIP, uint16 nPort)
 void CUDPSocket::SendBuffer(uint32 nIP, uint16 nPort, BYTE *pPacket, UINT uSize)
 {
 // ZZ:UploadBandWithThrottler (UDP) -->
+	std::unique_ptr<BYTE[]> packetOwner(pPacket);
 	if (!UDPSocketSeams::CanQueueRawServerUdpPacketSize(uSize)) {
 		// WHY: SServerUDPPacket keeps the queued size as int because SendTo does.
 		// Drop an unrepresentable raw datagram at the queue boundary rather than
 		// letting UINT-to-int truncation choose the socket length later.
-		delete[] pPacket;
 		if (thePrefs.GetVerbose())
 			theApp.QueueDebugLogLine(false, _T("Server UDP socket: dropped outgoing raw packet because the datagram size is not representable (%u bytes)"), uSize);
 		return;
 	}
-	std::unique_ptr<SServerUDPPacket, ServerUdpPacketDeleter> newpending(new SServerUDPPacket);
-	newpending->dwIP = nIP;
-	newpending->nPort = nPort;
-	newpending->packet = pPacket;
-	newpending->size = uSize;
-	{
-		CSingleLock sendLock(&sendLocker, TRUE);
-		if (!UDPSocketSeams::CanQueueOutgoingServerUdpControlPacket(static_cast<size_t>(controlpacket_queue.GetCount()))) {
-			const unsigned long uQueuedPackets = static_cast<unsigned long>(controlpacket_queue.GetCount());
-			sendLock.Unlock();
-			if (thePrefs.GetVerbose())
-				theApp.QueueDebugLogLine(false, _T("Server UDP socket: dropped outgoing control packet because the queue is full (%lu packets)"), uQueuedPackets);
-			return;
+	try {
+		std::unique_ptr<SServerUDPPacket, ServerUdpPacketDeleter> newpending(new SServerUDPPacket);
+		newpending->dwIP = nIP;
+		newpending->nPort = nPort;
+		newpending->packet = packetOwner.get();
+		newpending->size = uSize;
+		{
+			CSingleLock sendLock(&sendLocker, TRUE);
+			if (!UDPSocketSeams::CanQueueOutgoingServerUdpControlPacket(static_cast<size_t>(controlpacket_queue.GetCount()))) {
+				const unsigned long uQueuedPackets = static_cast<unsigned long>(controlpacket_queue.GetCount());
+				sendLock.Unlock();
+				if (thePrefs.GetVerbose())
+					theApp.QueueDebugLogLine(false, _T("Server UDP socket: dropped outgoing control packet because the queue is full (%lu packets)"), uQueuedPackets);
+				return;
+			}
+			// WHY: queue insertion can allocate while sendLocker is protecting the
+			// cross-thread UDP queue. Keep the packet in a smart owner until AddTail
+			// succeeds so low-memory failure cannot leak pPacket or wedge the lock.
+			controlpacket_queue.AddTail(newpending.get());
+			packetOwner.release();
+			newpending.release();
 		}
-		// WHY: queue insertion can allocate while sendLocker is protecting the
-		// cross-thread UDP queue. Keep the packet in a smart owner until AddTail
-		// succeeds so low-memory failure cannot leak pPacket or wedge the lock.
-		controlpacket_queue.AddTail(newpending.get());
-		newpending.release();
+	} catch (CException *pException) {
+		if (pException != NULL)
+			pException->Delete();
+		if (thePrefs.GetVerbose())
+			theApp.QueueDebugLogLine(false, _T("Server UDP socket: dropped outgoing control packet because queueing raised an MFC exception"));
+		return;
+	} catch (const std::bad_alloc&) {
+		if (thePrefs.GetVerbose())
+			theApp.QueueDebugLogLine(false, _T("Server UDP socket: dropped outgoing control packet because queueing ran out of memory"));
+		return;
 	}
 	theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this);
 // <-- ZZ:UploadBandWithThrottler (UDP)

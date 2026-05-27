@@ -44,6 +44,7 @@
 #include "zlib.h"
 
 #include <memory>
+#include <new>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -561,44 +562,58 @@ int CClientUDPSocket::SendTo(uchar *lpBuf, int nBufLen, uint32 dwIP, uint16 nPor
 
 bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar *pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey)
 {
-	std::unique_ptr<UDPPack, UdpPackDeleter> newpending(new UDPPack);
-	newpending->dwIP = dwIP;
-	newpending->nPort = nPort;
-	newpending->packet = packet;
-	newpending->dwTime = ::GetTickCount64();
-	newpending->bEncrypt = ClientUDPSocketSeams::ShouldQueueOutgoingClientUdpEncryption(
-		thePrefs.IsCryptLayerEnabled(),
-		bEncrypt,
-		pachTargetClientHashORKadID != NULL,
-		bKad,
-		nReceiverVerifyKey);
-	newpending->bKad = bKad;
-	newpending->nReceiverVerifyKey = nReceiverVerifyKey;
+	std::unique_ptr<Packet> packetOwner(packet);
+// ZZ:UploadBandWithThrottler (UDP) -->
+	try {
+		std::unique_ptr<UDPPack, UdpPackDeleter> newpending(new UDPPack);
+		newpending->dwIP = dwIP;
+		newpending->nPort = nPort;
+		newpending->packet = packetOwner.get();
+		packetOwner.release();
+		newpending->dwTime = ::GetTickCount64();
+		newpending->bEncrypt = ClientUDPSocketSeams::ShouldQueueOutgoingClientUdpEncryption(
+			thePrefs.IsCryptLayerEnabled(),
+			bEncrypt,
+			pachTargetClientHashORKadID != NULL,
+			bKad,
+			nReceiverVerifyKey);
+		newpending->bKad = bKad;
+		newpending->nReceiverVerifyKey = nReceiverVerifyKey;
 
 #ifdef _DEBUG
-	if (newpending->packet->size > UDP_KAD_MAXFRAGMENT)
-		DebugLogWarning(_T("Sending UDP packet > UDP_KAD_MAXFRAGMENT, opcode: %X, size: %u"), packet->opcode, packet->size);
+		if (newpending->packet->size > UDP_KAD_MAXFRAGMENT)
+			DebugLogWarning(_T("Sending UDP packet > UDP_KAD_MAXFRAGMENT, opcode: %X, size: %u"), packet->opcode, packet->size);
 #endif
 
-	if (newpending->bEncrypt && pachTargetClientHashORKadID != NULL)
-		md4cpy(newpending->pachTargetClientHashORKadID, pachTargetClientHashORKadID);
-	else
-		md4clr(newpending->pachTargetClientHashORKadID);
-// ZZ:UploadBandWithThrottler (UDP) -->
-	{
-		CSingleLock sendLock(&sendLocker, TRUE);
-		if (!ClientUDPSocketSeams::CanQueueOutgoingClientUdpControlPacket(static_cast<size_t>(controlpacket_queue.GetCount()))) {
-			const unsigned long uQueuedPackets = static_cast<unsigned long>(controlpacket_queue.GetCount());
-			sendLock.Unlock();
-			if (thePrefs.GetVerbose())
-				DebugLogWarning(_T("Client UDP socket: dropped outgoing control packet because the queue is full (%lu packets)"), uQueuedPackets);
-			return false;
+		if (newpending->bEncrypt && pachTargetClientHashORKadID != NULL)
+			md4cpy(newpending->pachTargetClientHashORKadID, pachTargetClientHashORKadID);
+		else
+			md4clr(newpending->pachTargetClientHashORKadID);
+		{
+			CSingleLock sendLock(&sendLocker, TRUE);
+			if (!ClientUDPSocketSeams::CanQueueOutgoingClientUdpControlPacket(static_cast<size_t>(controlpacket_queue.GetCount()))) {
+				const unsigned long uQueuedPackets = static_cast<unsigned long>(controlpacket_queue.GetCount());
+				sendLock.Unlock();
+				if (thePrefs.GetVerbose())
+					DebugLogWarning(_T("Client UDP socket: dropped outgoing control packet because the queue is full (%lu packets)"), uQueuedPackets);
+				return false;
+			}
+			// WHY: controlpacket_queue is an MFC list and can allocate while the
+			// cross-thread send lock is held. Keep newpending owned until AddTail
+			// succeeds so a low-memory exception releases both the packet and lock.
+			controlpacket_queue.AddTail(newpending.get());
+			newpending.release();
 		}
-		// WHY: controlpacket_queue is an MFC list and can allocate while the
-		// cross-thread send lock is held. Keep newpending owned until AddTail
-		// succeeds so a low-memory exception releases both the packet and lock.
-		controlpacket_queue.AddTail(newpending.get());
-		newpending.release();
+	} catch (CException *pException) {
+		if (pException != NULL)
+			pException->Delete();
+		if (thePrefs.GetVerbose())
+			DebugLogWarning(_T("Client UDP socket: dropped outgoing control packet because queueing raised an MFC exception"));
+		return false;
+	} catch (const std::bad_alloc&) {
+		if (thePrefs.GetVerbose())
+			DebugLogWarning(_T("Client UDP socket: dropped outgoing control packet because queueing ran out of memory"));
+		return false;
 	}
 	theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this);
 	return true;
