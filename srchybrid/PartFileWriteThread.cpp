@@ -33,6 +33,24 @@ static char THIS_FILE[] = __FILE__;
 #define RUN_WORK	2
 #define WAKEUP		((ULONG_PTR)(~0))
 
+namespace
+{
+void MarkWriteDispatchFailed(PartFileBufferedData *pBuffer, DWORD dwError)
+{
+	if (pBuffer == NULL)
+		return;
+	if (pBuffer->data != NULL) {
+		// The write thread already removed this item from its queue; mark it
+		// failed so the part file does not wait forever on PB_PENDING.
+		pBuffer->dwError = dwError;
+		pBuffer->flushed = PB_ERROR;
+	} else {
+		// Allocation sentinels are not tracked in the part-file buffer list.
+		delete pBuffer;
+	}
+}
+}
+
 IMPLEMENT_DYNCREATE(CPartFileWriteThread, CWinThread)
 
 CPartFileWriteThread::CPartFileWriteThread()
@@ -204,19 +222,18 @@ void CPartFileWriteThread::WriteBuffers()
 				DWORD dwError = ::GetLastError();
 				if (dwError != ERROR_IO_PENDING) {
 					delete pOvWrite;
-					if (item.pBuffer->data) { //check for an allocation request
-						item.pBuffer->dwError = dwError;
-						item.pBuffer->flushed = PB_ERROR;
-						theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
-					}
+					MarkWriteDispatchFailed(item.pBuffer, dwError);
+					theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
 					RemFile(pFile);
 					return;
 				}
 			}
 			pOvWrite->pos = m_listPendingIO.AddTail(pOvWrite);
 			++pFile->m_iWrites;
-		} else
+		} else {
+			MarkWriteDispatchFailed(item.pBuffer, ERROR_INVALID_HANDLE);
 			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("WriteBuffers error: CPartFile cannot be written"));
+		}
 	}
 }
 
