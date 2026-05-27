@@ -258,7 +258,7 @@ protected:
 	HWND GetHelperWindowHandle();
 
 	//Attaches socket handle to helper window
-	void AttachHandle(/*SOCKET hSocket*/);
+	BOOL AttachHandle(/*SOCKET hSocket*/);
 
 	//Detaches socket handle from helper window
 	void DetachHandle();

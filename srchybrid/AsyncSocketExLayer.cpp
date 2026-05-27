@@ -315,7 +315,11 @@ bool CAsyncSocketExLayer::ConnectNext(const CString &sHostAddress, UINT nHostPor
 
 			if (m_nFamily == AF_UNSPEC) {
 				m_pOwnerSocket->m_SocketData.hSocket = hSocket;
-				m_pOwnerSocket->AttachHandle();
+				if (!m_pOwnerSocket->AttachHandle()) {
+					closesocket(m_pOwnerSocket->m_SocketData.hSocket);
+					m_pOwnerSocket->m_SocketData.hSocket = INVALID_SOCKET;
+					continue;
+				}
 				if (!m_pOwnerSocket->AsyncSelect(m_lEvent)
 					|| (m_pOwnerSocket->m_pFirstLayer && WSAAsyncSelect(m_pOwnerSocket->m_SocketData.hSocket, m_pOwnerSocket->GetHelperWindowHandle(), WM_SOCKETEX_NOTIFY + m_pOwnerSocket->m_SocketData.nSocketIndex, FD_DEFAULT)))
 				{
@@ -598,7 +602,11 @@ bool CAsyncSocketExLayer::CreateNext(UINT nSocketPort, int nSocketType, long lEv
 			return false;
 		}
 		m_pOwnerSocket->m_SocketData.hSocket = hSocket;
-		m_pOwnerSocket->AttachHandle();
+		if (!m_pOwnerSocket->AttachHandle()) {
+			closesocket(m_pOwnerSocket->m_SocketData.hSocket);
+			m_pOwnerSocket->m_SocketData.hSocket = INVALID_SOCKET;
+			return false;
+		}
 		if (!m_pOwnerSocket->AsyncSelect(lEvent)) {
 			m_pOwnerSocket->Close();
 			return false;
@@ -683,7 +691,11 @@ BOOL CAsyncSocketExLayer::AcceptNext(CAsyncSocketEx &rConnectedSocket, LPSOCKADD
 		return FALSE;
 	VERIFY(rConnectedSocket.InitAsyncSocketExInstance());
 	rConnectedSocket.m_SocketData.hSocket = hTemp;
-	rConnectedSocket.AttachHandle();
+	if (!rConnectedSocket.AttachHandle()) {
+		closesocket(hTemp);
+		rConnectedSocket.m_SocketData.hSocket = INVALID_SOCKET;
+		return FALSE;
+	}
 	rConnectedSocket.SetFamily(GetFamily());
 #ifndef NOSOCKETSTATES
 	rConnectedSocket.SetState(connected);
@@ -740,7 +752,11 @@ bool CAsyncSocketExLayer::TryNextProtocol()
 		if (m_pOwnerSocket->m_SocketData.hSocket == INVALID_SOCKET)
 			continue;
 
-		m_pOwnerSocket->AttachHandle();
+		if (!m_pOwnerSocket->AttachHandle()) {
+			closesocket(m_pOwnerSocket->m_SocketData.hSocket);
+			m_pOwnerSocket->m_SocketData.hSocket = INVALID_SOCKET;
+			continue;
+		}
 
 		if (m_pOwnerSocket->AsyncSelect(m_lEvent))
 			if (!m_pOwnerSocket->m_pFirstLayer || !WSAAsyncSelect(m_pOwnerSocket->m_SocketData.hSocket, m_pOwnerSocket->GetHelperWindowHandle(), WM_SOCKETEX_NOTIFY + m_pOwnerSocket->m_SocketData.nSocketIndex, FD_DEFAULT)) {

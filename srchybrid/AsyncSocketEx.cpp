@@ -74,6 +74,7 @@ to tim.kosse@filezilla-project.org
 
 #include <atomic>
 #include <memory>
+#include <new>
 
 // This legacy helper-window socket backend intentionally stays on WSAAsyncSelect
 // until the broader async-socket transport replacement is scheduled.
@@ -657,7 +658,11 @@ bool CAsyncSocketEx::Create(UINT nSocketPort /*=0*/, int nSocketType /*=SOCK_STR
 	if (hSocket == INVALID_SOCKET)
 		return false;
 	m_SocketData.hSocket = hSocket;
-	AttachHandle();
+	if (!AttachHandle()) {
+		closesocket(m_SocketData.hSocket);
+		m_SocketData.hSocket = INVALID_SOCKET;
+		return false;
+	}
 
 	if (m_pFirstLayer) {
 		m_lEvent = lEvent;
@@ -771,13 +776,33 @@ BOOL CAsyncSocketEx::Bind(const LPSOCKADDR lpSockAddr, int nSockAddrLen)
 	return !bind(m_SocketData.hSocket, lpSockAddr, nSockAddrLen);
 }
 
-void CAsyncSocketEx::AttachHandle(/*SOCKET hSocket*/)
+BOOL CAsyncSocketEx::AttachHandle(/*SOCKET hSocket*/)
 {
 	ASSERT(m_pLocalAsyncSocketExThreadData);
-	VERIFY(m_pLocalAsyncSocketExThreadData->m_pHelperWindow->AddSocket(this, m_SocketData.nSocketIndex));
+	try {
+		// WHY: release builds compile VERIFY to a plain expression; a failed
+		// helper-window slot allocation must not leave the socket attached with
+		// nSocketIndex == -1 because async messages and DetachHandle depend on
+		// that index. Return failure so callers can close the raw SOCKET before
+		// it becomes an unroutable async endpoint.
+		if (!m_pLocalAsyncSocketExThreadData->m_pHelperWindow->AddSocket(this, m_SocketData.nSocketIndex)) {
+			WSASetLastError(WSAENOBUFS);
+			ASSERT(0);
+			return FALSE;
+		}
+	} catch (CMemoryException *ex) {
+		if (ex != NULL)
+			ex->Delete();
+		WSASetLastError(WSAENOBUFS);
+		return FALSE;
+	} catch (const std::bad_alloc&) {
+		WSASetLastError(WSAENOBUFS);
+		return FALSE;
+	}
 #ifndef NOSOCKETSTATES
 	SetState(attached);
 #endif //NOSOCKETSTATES
+	return TRUE;
 }
 
 void CAsyncSocketEx::DetachHandle()
@@ -955,7 +980,12 @@ bool CAsyncSocketEx::Connect(const CString &sHostAddress, UINT nHostPort)
 
 		if (newSocket) {
 			m_SocketData.nFamily = (ADDRESS_FAMILY)m_SocketData.nextAddr->ai_family;
-			AttachHandle();
+			if (!AttachHandle()) {
+				m_SocketData.nFamily = AF_UNSPEC;
+				closesocket(m_SocketData.hSocket);
+				m_SocketData.hSocket = INVALID_SOCKET;
+				continue;
+			}
 		}
 
 		if (AsyncSelect(m_lEvent) && (!newSocket || Bind(m_nSocketPort, m_sSocketAddress)) && ApplyConfiguredIpv4UnicastInterface()) {
@@ -1075,7 +1105,11 @@ BOOL CAsyncSocketEx::Attach(SOCKET hSocket, long lEvent /*= FD_DEFAULT*/)
 		return FALSE;
 	VERIFY(InitAsyncSocketExInstance());
 	m_SocketData.hSocket = hSocket;
-	AttachHandle();
+	if (!AttachHandle()) {
+		closesocket(m_SocketData.hSocket);
+		m_SocketData.hSocket = INVALID_SOCKET;
+		return FALSE;
+	}
 
 	if (m_pFirstLayer) {
 		m_lEvent = lEvent;
@@ -1120,7 +1154,11 @@ BOOL CAsyncSocketEx::Accept(CAsyncSocketEx &rConnectedSocket, LPSOCKADDR lpSockA
 		return FALSE;
 	VERIFY(rConnectedSocket.InitAsyncSocketExInstance());
 	rConnectedSocket.m_SocketData.hSocket = hTemp;
-	rConnectedSocket.AttachHandle();
+	if (!rConnectedSocket.AttachHandle()) {
+		closesocket(hTemp);
+		rConnectedSocket.m_SocketData.hSocket = INVALID_SOCKET;
+		return FALSE;
+	}
 	rConnectedSocket.SetFamily(GetFamily());
 #ifndef NOSOCKETSTATES
 	rConnectedSocket.SetState(connected);
@@ -1258,7 +1296,11 @@ bool CAsyncSocketEx::TryNextProtocol()
 			continue;
 
 		m_SocketData.nFamily = (ADDRESS_FAMILY)m_SocketData.nextAddr->ai_family;
-		AttachHandle();
+		if (!AttachHandle()) {
+			closesocket(m_SocketData.hSocket);
+			m_SocketData.hSocket = INVALID_SOCKET;
+			continue;
+		}
 
 		if (AsyncSelect(m_lEvent))
 			if (!m_pFirstLayer || !WSAAsyncSelect(m_SocketData.hSocket, GetHelperWindowHandle(), WM_SOCKETEX_NOTIFY + m_SocketData.nSocketIndex, FD_DEFAULT))
