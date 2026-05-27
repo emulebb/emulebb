@@ -776,7 +776,11 @@ SocketSentBytes CEMSocket::SendStd(uint32 maxNumberOfBytesToSend, uint32 minFrag
 					}
 
 					sent = nUpdatedSent;
-					sentBytes = result;
+					// WHY: sentBytes is the per-call budget consumed across the
+					// whole SendStd loop. Assigning the last send result here
+					// lets a later fragment forget earlier bytes and overspend
+					// the throttler's allowance on the non-overlapped TCP path.
+					sentBytes += result;
 					// Log send bytes in correct class
 					if (!m_currentPacket_is_controlpacket) {
 						ret.sentBytesStandardPackets += result;
