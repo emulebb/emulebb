@@ -82,6 +82,7 @@ struct SServerDNSRequest
 		: m_dwCreated(::GetTickCount64())
 		, m_uRequestId(uRequestId)
 		, m_pServer(pServer)
+		, m_uQueuedPacketBytes()
 	{
 	}
 	~SServerDNSRequest()
@@ -90,9 +91,22 @@ struct SServerDNSRequest
 		while (!m_aPackets.IsEmpty())
 			delete m_aPackets.RemoveHead();
 	}
+	bool CanQueuePacket(UINT uPacketSize) const
+	{
+		return UDPSocketSeams::CanQueueServerUdpDnsPacket(
+			static_cast<size_t>(m_aPackets.GetCount()),
+			m_uQueuedPacketBytes,
+			uPacketSize);
+	}
+	void QueuePacket(SRawServerPacket *pPacket)
+	{
+		m_uQueuedPacketBytes += pPacket->m_uSize;
+		m_aPackets.AddTail(pPacket);
+	}
 	ULONGLONG m_dwCreated;
 	UINT m_uRequestId;
 	CServer *m_pServer;
+	uint64_t m_uQueuedPacketBytes;
 	CTypedPtrList<CPtrList, SRawServerPacket*> m_aPackets;
 };
 
@@ -751,6 +765,15 @@ int CUDPSocket::SendTo(BYTE *lpBuf, int nBufLen, uint32 dwIP, uint16 nPort)
 void CUDPSocket::SendBuffer(uint32 nIP, uint16 nPort, BYTE *pPacket, UINT uSize)
 {
 // ZZ:UploadBandWithThrottler (UDP) -->
+	if (!UDPSocketSeams::CanQueueRawServerUdpPacketSize(uSize)) {
+		// WHY: SServerUDPPacket keeps the queued size as int because SendTo does.
+		// Drop an unrepresentable raw datagram at the queue boundary rather than
+		// letting UINT-to-int truncation choose the socket length later.
+		delete[] pPacket;
+		if (thePrefs.GetVerbose())
+			theApp.QueueDebugLogLine(false, _T("Server UDP socket: dropped outgoing raw packet because the datagram size is not representable (%u bytes)"), uSize);
+		return;
+	}
 	SServerUDPPacket *newpending = new SServerUDPPacket;
 	newpending->dwIP = nIP;
 	newpending->nPort = nPort;
@@ -791,10 +814,21 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 	uint32 uRawPacketSize;
 	uint16 nPort = nSpecialPort;
 	if (packet != NULL) {
-		uRawPacketSize = packet->size + 2;
-		size_t iLen = thePrefs.IsCryptLayerEnabled() && pServer->GetServerKeyUDP() && pServer->SupportsObfuscationUDP()
+		const size_t iLen = thePrefs.IsCryptLayerEnabled() && pServer->GetServerKeyUDP() && pServer->SupportsObfuscationUDP()
 			? EncryptOverheadSize(false) : 0;
-		pRawPacket = new BYTE[uRawPacketSize + iLen];
+		size_t uAllocationSize = 0;
+		int nSocketSendSize = 0;
+		if (!UDPSocketSeams::TryGetOutgoingServerUdpPacketSize(packet->size, iLen, &uRawPacketSize, &uAllocationSize, &nSocketSendSize)) {
+			if (thePrefs.GetVerbose())
+				DebugLogWarning(_T("Server UDP socket: dropped outgoing packet because the datagram size is not representable (%u payload bytes)"), packet->size);
+			return;
+		}
+		ASSERT(nSocketSendSize == static_cast<int>(uRawPacketSize));
+
+		// WHY: this packet is assembled before DNS resolution and may be queued as
+		// raw bytes. Prove the protocol header, optional obfuscation prefix, and
+		// later SendTo int length together before allocating the backing buffer.
+		pRawPacket = new BYTE[uAllocationSize];
 		memcpy(pRawPacket + iLen, packet->GetUDPHeader(), 2);
 		memcpy(pRawPacket + iLen + 2, packet->pBuffer, packet->size);
 		if (iLen) {
@@ -806,6 +840,11 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 		}
 	} else if (pInRawPacket != 0) {
 		// we don't encrypt raw packets (!)
+		if (!UDPSocketSeams::CanQueueRawServerUdpPacketSize(nRawLen)) {
+			if (thePrefs.GetVerbose())
+				DebugLogWarning(_T("Server UDP socket: dropped outgoing raw packet because the datagram size is not representable (%u bytes)"), nRawLen);
+			return;
+		}
 		pRawPacket = new BYTE[nRawLen];
 		memcpy(pRawPacket, pInRawPacket, nRawLen);
 		uRawPacketSize = nRawLen;
@@ -827,8 +866,18 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 		for (POSITION reqpos = m_aDNSReqs.GetHeadPosition(); reqpos != NULL;) {
 			SServerDNSRequest *pDNSReq = m_aDNSReqs.GetNext(reqpos);
 			if (_tcsicmp(pDNSReq->m_pServer->GetAddress(), pServer->GetAddress()) == 0) {
+				if (!pDNSReq->CanQueuePacket(uRawPacketSize)) {
+					// WHY: DNS-delayed packets bypass the normal outgoing control queue
+					// until the hostname resolves. Bound the per-host raw buffer list
+					// here so repeated sends to a stalled name cannot retain memory
+					// outside the throttled queue.
+					delete[] pRawPacket;
+					if (thePrefs.GetVerbose())
+						DebugLogWarning(_T("Server UDP socket: dropped packet for unresolved server '%s' because the DNS packet queue is full"), pServer->GetAddress());
+					return;
+				}
 				SRawServerPacket *pServerPacket = new SRawServerPacket(pRawPacket, uRawPacketSize, nPort);
-				pDNSReq->m_aPackets.AddTail(pServerPacket);
+				pDNSReq->QueuePacket(pServerPacket);
 				return;
 			}
 		}
@@ -837,8 +886,15 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 		// posts only an immutable result, while queued UDP packets stay UI-thread owned.
 		const UINT uRequestId = AllocateDnsRequestId();
 		SServerDNSRequest *pDNSReq = new SServerDNSRequest(uRequestId, new CServer(pServer));
+		if (!pDNSReq->CanQueuePacket(uRawPacketSize)) {
+			delete[] pRawPacket;
+			delete pDNSReq;
+			if (thePrefs.GetVerbose())
+				DebugLogWarning(_T("Server UDP socket: dropped packet for unresolved server '%s' because the DNS packet queue budget is too small"), pServer->GetAddress());
+			return;
+		}
 		SRawServerPacket *pServerPacket = new SRawServerPacket(pRawPacket, uRawPacketSize, nPort);
-		pDNSReq->m_aPackets.AddTail(pServerPacket);
+		pDNSReq->QueuePacket(pServerPacket);
 		m_aDNSReqs.AddTail(pDNSReq);
 
 		std::unique_ptr<AsyncDnsResolveSeams::SHostnameResolveWork> pWork = AsyncDnsResolveSeams::MakeHostnameResolveWork(

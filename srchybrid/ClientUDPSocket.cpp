@@ -238,12 +238,17 @@ bool CClientUDPSocket::ProcessPacket(const BYTE *packet, UINT size, uint8 opcode
 				/** Preserve the fixed 10-byte callback prefix before rewriting and forwarding the payload. */
 				const UINT nCallbackPayloadSize = size - 10;
 				if (md4equ(packet, buddy->GetBuddyID())) {
-					PokeUInt32(const_cast<BYTE*>(packet) + 10, ip);
-					PokeUInt16(const_cast<BYTE*>(packet) + 14, port);
 					Packet *response = new Packet(OP_EMULEPROT);
 					response->opcode = OP_REASKCALLBACKTCP;
 					response->pBuffer = new char[nCallbackPayloadSize];
-					memcpy(response->pBuffer, packet + 10, nCallbackPayloadSize);
+					// WHY: the datagram parser receives const packet storage that may be a
+					// decrypt/replay buffer owned by a lower layer. Build the forwarded TCP
+					// payload in the response buffer instead of mutating the source bytes
+					// through const_cast; this preserves the wire payload while keeping
+					// ownership and aliasing explicit.
+					PokeUInt32(reinterpret_cast<BYTE*>(response->pBuffer), ip);
+					PokeUInt16(reinterpret_cast<BYTE*>(response->pBuffer) + 4, port);
+					memcpy(response->pBuffer + 6, packet + 16, nCallbackPayloadSize - 6);
 					response->size = nCallbackPayloadSize;
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugSend("OP_ReaskCallbackTCP", buddy);
@@ -470,14 +475,33 @@ SocketSentBytes CClientUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend,
 		while (!controlpacket_queue.IsEmpty() && !IsBusy() && sentBytes < maxNumberOfBytesToSend) { // ZZ:UploadBandWithThrottler (UDP)
 			std::unique_ptr<UDPPack, UdpPackDeleter> cur_packet(controlpacket_queue.RemoveHead());
 			if (curTick < cur_packet->dwTime + UDPMAXQUEUETIME) {
-				int nLen = (int)cur_packet->packet->size + 2;
-				int iLen = ClientUDPSocketSeams::ShouldApplyOutgoingClientUdpEncryptionOverhead(
+				const size_t nEncryptionOverhead = ClientUDPSocketSeams::ShouldApplyOutgoingClientUdpEncryptionOverhead(
 					cur_packet->bEncrypt,
 					thePrefs.IsCryptLayerEnabled(),
 					theApp.GetPublicIP() > 0,
 					cur_packet->bKad)
 					? EncryptOverheadSize(cur_packet->bKad) : 0;
-				std::unique_ptr<uchar[]> sendbuffer(new uchar[nLen + iLen]);
+				uint32_t uPlainPacketSize = 0;
+				size_t uAllocationSize = 0;
+				int nLen = 0;
+				if (!ClientUDPSocketSeams::TryGetOutgoingClientUdpPacketSize(
+					cur_packet->packet->size,
+					nEncryptionOverhead,
+					&uPlainPacketSize,
+					&uAllocationSize,
+					&nLen)) {
+					if (thePrefs.GetVerbose())
+						DebugLogWarning(_T("Client UDP socket: dropped outgoing control packet because the datagram size is not representable (%u payload bytes)"), cur_packet->packet->size);
+					continue;
+				}
+
+				// WHY: the send API consumes an int length, while packet->size is
+				// protocol-width and the encryption layer prepends bytes in-place. The
+				// seam above proves the allocation span and socket-visible length before
+				// either value is narrowed or used for pointer arithmetic.
+				const size_t iLen = nEncryptionOverhead;
+				ASSERT(static_cast<int>(uPlainPacketSize) == nLen);
+				std::unique_ptr<uchar[]> sendbuffer(new uchar[uAllocationSize]);
 				memcpy(&sendbuffer[iLen], cur_packet->packet->GetUDPHeader(), 2);
 				memcpy(&sendbuffer[iLen + 2], cur_packet->packet->pBuffer, cur_packet->packet->size);
 
@@ -485,9 +509,9 @@ SocketSentBytes CClientUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend,
 					nLen = EncryptSendClient(sendbuffer.get(), nLen, cur_packet->pachTargetClientHashORKadID, cur_packet->bKad, cur_packet->nReceiverVerifyKey, (cur_packet->bKad ? Kademlia::CPrefs::GetUDPVerifyKey(cur_packet->dwIP) : 0u));
 					//DEBUG_ONLY(  AddDebugLogLine(DLP_VERYLOW, false, _T("Sent obfuscated UDP packet to clientIP: %s, Kad: %s, ReceiverKey: %u"), (LPCTSTR)ipstr(cur_packet->dwIP), cur_packet->bKad ? _T("Yes") : _T("No"), cur_packet->nReceiverVerifyKey) );
 				}
-				iLen = SendTo(sendbuffer.get(), nLen, cur_packet->dwIP, cur_packet->nPort);
-				if (iLen >= 0) {
-					sentBytes += iLen; // ZZ:UploadBandWithThrottler (UDP)
+				const int nSentLen = SendTo(sendbuffer.get(), nLen, cur_packet->dwIP, cur_packet->nPort);
+				if (nSentLen >= 0) {
+					sentBytes += nSentLen; // ZZ:UploadBandWithThrottler (UDP)
 					cur_packet.reset();
 				} else {
 					controlpacket_queue.AddHead(cur_packet.get()); //try to resend

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
+#include <limits>
 
 #define EMULE_TEST_HAVE_CLIENT_UDP_SOCKET_FAILURE_SEAMS 1
 
@@ -87,5 +89,38 @@ inline bool ShouldApplyOutgoingClientUdpEncryptionOverhead(
 inline bool CanQueueOutgoingClientUdpControlPacket(const size_t uCurrentQueuedPackets)
 {
 	return uCurrentQueuedPackets < kMaxOutgoingClientUdpControlQueuePackets;
+}
+
+/**
+ * @brief Computes one outgoing UDP datagram span before allocation or int casts.
+ *
+ * The UDP send path eventually hands an int length to Winsock and historically
+ * formed that length with packet->size + 2. Keep the eMule UDP wire shape
+ * unchanged, but reject spans that cannot represent the protocol/opcode header,
+ * optional obfuscation overhead, and final socket length in the same number.
+ */
+inline bool TryGetOutgoingClientUdpPacketSize(
+	const uint32_t uPayloadSize,
+	const size_t uEncryptionOverhead,
+	uint32_t *puPlainPacketSize,
+	size_t *puAllocationSize,
+	int *pnSocketSendSize)
+{
+	if (puPlainPacketSize == nullptr || puAllocationSize == nullptr || pnSocketSendSize == nullptr)
+		return false;
+	if (uPayloadSize > (std::numeric_limits<uint32_t>::max)() - 2u)
+		return false;
+
+	const uint32_t uPlainPacketSize = uPayloadSize + 2u;
+	if (uEncryptionOverhead > static_cast<size_t>((std::numeric_limits<int>::max)())
+		|| static_cast<size_t>(uPlainPacketSize) > static_cast<size_t>((std::numeric_limits<int>::max)()) - uEncryptionOverhead)
+	{
+		return false;
+	}
+
+	*puPlainPacketSize = uPlainPacketSize;
+	*puAllocationSize = static_cast<size_t>(uPlainPacketSize) + uEncryptionOverhead;
+	*pnSocketSendSize = static_cast<int>(uPlainPacketSize);
+	return true;
 }
 }
