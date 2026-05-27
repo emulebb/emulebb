@@ -118,6 +118,30 @@ inline CString GetCurrentDirectoryPath()
 	}
 }
 
+inline CString GetSystemDirectoryPath()
+{
+	DWORD dwCapacity = MAX_PATH;
+	CString strPath;
+	for (;;) {
+		LPTSTR pszBuffer = strPath.GetBuffer(dwCapacity);
+		const UINT uLength = ::GetSystemDirectory(pszBuffer, dwCapacity);
+		if (uLength == 0) {
+			strPath.ReleaseBuffer(0);
+			return CString();
+		}
+		if (uLength < dwCapacity) {
+			strPath.ReleaseBuffer(uLength);
+			return strPath;
+		}
+		strPath.ReleaseBuffer(0);
+		if (uLength >= kMaxDynamicPathChars) {
+			::SetLastError(ERROR_BUFFER_OVERFLOW);
+			return CString();
+		}
+		dwCapacity = uLength + 1;
+	}
+}
+
 /**
  * @brief Restores the process current directory through the long-path-aware namespace when needed.
  */

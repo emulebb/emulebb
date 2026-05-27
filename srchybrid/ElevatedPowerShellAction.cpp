@@ -108,30 +108,6 @@ namespace
 		return strPath;
 	}
 
-	CString GetSystemDirectoryPath()
-	{
-		DWORD dwCapacity = MAX_PATH;
-		CString strPath;
-		for (;;) {
-			LPTSTR pszPath = strPath.GetBuffer(dwCapacity);
-			const UINT uLength = ::GetSystemDirectory(pszPath, dwCapacity);
-			if (uLength == 0) {
-				strPath.ReleaseBuffer(0);
-				return CString();
-			}
-			if (uLength < dwCapacity) {
-				strPath.ReleaseBuffer(uLength);
-				return strPath;
-			}
-			strPath.ReleaseBuffer(0);
-			if (uLength >= PathHelpers::kMaxDynamicPathChars) {
-				::SetLastError(ERROR_BUFFER_OVERFLOW);
-				return CString();
-			}
-			dwCapacity = uLength + 1;
-		}
-	}
-
 	CString GuidToLeaf()
 	{
 		GUID guid = {};
@@ -186,7 +162,7 @@ namespace
 
 	CString GetPowerShellPath()
 	{
-		const CString strSystemDir(GetSystemDirectoryPath());
+		const CString strSystemDir(PathHelpers::GetSystemDirectoryPath());
 		if (strSystemDir.IsEmpty())
 			return CString();
 
