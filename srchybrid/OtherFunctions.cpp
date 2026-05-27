@@ -635,6 +635,19 @@ HINSTANCE ShellLaunch(HWND hWnd, LPCTSTR lpVerb, LPCTSTR lpTarget, LPCTSTR lpPar
 		nShowCmd);
 }
 
+BOOL ShellExecuteExNormalized(SHELLEXECUTEINFO &rInfo)
+{
+	const CString strFile(NormalizeShellExecutePath(rInfo.lpFile));
+	const CString strDirectory(NormalizeShellExecutePath(rInfo.lpDirectory));
+	SHELLEXECUTEINFO info = rInfo;
+	info.lpFile = strFile.IsEmpty() ? rInfo.lpFile : static_cast<LPCTSTR>(strFile);
+	info.lpDirectory = strDirectory.IsEmpty() ? rInfo.lpDirectory : static_cast<LPCTSTR>(strDirectory);
+	const BOOL bSucceeded = ::ShellExecuteEx(&info);
+	rInfo.hInstApp = info.hInstApp;
+	rInfo.hProcess = info.hProcess;
+	return bSucceeded;
+}
+
 HINSTANCE BrowserOpen(LPCTSTR lpURL, LPCTSTR lpDirectory)
 {
 	return ShellLaunch(NULL, NULL, lpURL, NULL, lpDirectory, SW_SHOWDEFAULT);

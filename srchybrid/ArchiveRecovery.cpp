@@ -200,7 +200,7 @@ bool CArchiveRecovery::performRecovery(CPartFile *partFile, CArray<Gap_Struct> *
 				SE.lpFile = outputFileName;
 				SE.nShow = SW_SHOW;
 				SE.cbSize = (DWORD)sizeof SE;
-				ShellExecuteEx(&SE);
+				ShellExecuteExNormalized(SE);
 				bool bDeletePreviewOutput = true;
 				if (SE.hProcess) {
 					const DWORD dwWaitResult = ::WaitForSingleObject(SE.hProcess, ProcessLaunchSeams::kArchiveRecoveryPreviewTimeoutMs);

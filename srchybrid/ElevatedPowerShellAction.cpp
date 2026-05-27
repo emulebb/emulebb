@@ -304,7 +304,7 @@ bool ElevatedPowerShellAction::RunBundledScript(const CString &rstrArguments, bo
 	sei.lpParameters = strParameters;
 	sei.lpDirectory = strWorkingDirectory;
 	sei.nShow = SW_SHOWNORMAL;
-	if (::ShellExecuteEx(&sei) == FALSE) {
+	if (ShellExecuteExNormalized(sei) == FALSE) {
 		rResult.dwLastError = ::GetLastError();
 		rResult.bCancelled = rResult.dwLastError == ERROR_CANCELLED;
 		rResult.strErrorText = GetErrorMessage(rResult.dwLastError);

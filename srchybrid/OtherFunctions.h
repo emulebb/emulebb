@@ -239,6 +239,7 @@ void InstallSkin(LPCTSTR pszSkinPackage);
  * @brief Launches a file, URL, or shell verb through the common ShellExecute boundary.
  */
 HINSTANCE ShellLaunch(HWND hWnd, LPCTSTR lpVerb, LPCTSTR lpTarget, LPCTSTR lpParameters, LPCTSTR lpDirectory, int nShowCmd);
+BOOL ShellExecuteExNormalized(SHELLEXECUTEINFO &rInfo);
 HINSTANCE BrowserOpen(LPCTSTR lpURL, LPCTSTR lpDirectory);
 void ShellOpen(LPCTSTR lpName, LPCTSTR lpParameters);
 void ShellOpenFile(LPCTSTR lpName);
