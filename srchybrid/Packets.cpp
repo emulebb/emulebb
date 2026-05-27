@@ -111,7 +111,7 @@ Packet::Packet(uint8 in_opcode, uint32 in_size, uint8 protocol, bool bFromPartFi
 }
 
 Packet::Packet(CSafeMemFile &datafile, uint8 protocol, uint8 ucOpcode)
-	: size(static_cast<uint32>(datafile.GetLength()))
+	: size()
 	, opcode(ucOpcode)
 	, prot(protocol)
 	, m_bSplitted()
@@ -119,6 +119,12 @@ Packet::Packet(CSafeMemFile &datafile, uint8 protocol, uint8 ucOpcode)
 	, m_bFromPF()
 {
 	init();
+	// WHY: CSafeMemFile length is wider than the eD2K payload field. Narrow only
+	// after proving that both the serialized length and legacy allocation slack
+	// are representable, otherwise a large producer could truncate before the
+	// allocation guard sees the real span.
+	if (!PacketsSeams::TryGetTcpPacketPayloadSizeFromSpan(datafile.GetLength(), &size))
+		AfxThrowMemoryException();
 	size_t nAllocationSize = 0;
 	if (!PacketsSeams::TryGetTcpPacketAllocationSize(size, &nAllocationSize))
 		AfxThrowMemoryException();
@@ -130,7 +136,7 @@ Packet::Packet(CSafeMemFile &datafile, uint8 protocol, uint8 ucOpcode)
 }
 
 Packet::Packet(const CStringA &str, uint8 protocol, uint8 ucOpcode)
-	: size(str.GetLength())
+	: size()
 	, opcode(ucOpcode)
 	, prot(protocol)
 	, completebuffer()
@@ -139,6 +145,12 @@ Packet::Packet(const CStringA &str, uint8 protocol, uint8 ucOpcode)
 	, m_bFromPF()
 {
 	init();
+	// WHY: CStringA currently exposes an int length, but Packet::size is a
+	// protocol field. Keep the constructor honest at the wire boundary so a
+	// future string implementation or caller cannot bypass the packet checks by
+	// narrowing in the initializer list.
+	if (!PacketsSeams::TryGetTcpPacketPayloadSizeFromSpan(static_cast<uint64_t>(str.GetLength()), &size))
+		AfxThrowMemoryException();
 	size_t nAllocationSize = 0;
 	if (!PacketsSeams::TryGetTcpPacketAllocationSize(size, &nAllocationSize))
 		AfxThrowMemoryException();
@@ -235,7 +247,13 @@ char* Packet::GetUDPHeader()
 void Packet::PackPacket()
 {
 	ASSERT(!m_bSplitted);
-	uLongf newsize = size + 300;
+	// WHY: compression is optional. If the zlib scratch span cannot be expressed
+	// without wrapping the historical payload + 300 estimate, leave the packet
+	// uncompressed instead of presenting zlib with a mismatched length/buffer pair.
+	size_t nCompressionWorkSize = 0;
+	if (!PacketsSeams::TryGetPacketCompressionWorkSize(size, &nCompressionWorkSize))
+		return;
+	uLongf newsize = static_cast<uLongf>(nCompressionWorkSize);
 	Bytef *output = new BYTE[newsize];
 	int result = compress2(output, &newsize, (Bytef*)pBuffer, size, Z_BEST_COMPRESSION);
 	if (result == Z_OK && newsize < size) {
@@ -298,7 +316,11 @@ CRawPacket::CRawPacket(const CStringA &rstr)
 	ASSERT(tempbuffer == NULL);
 
 	prot = 0x00;
-	size = rstr.GetLength();
+	// WHY: CRawPacket skips TCP headers, but it still stores size in the same
+	// 32-bit packet field. Prove the CString span before assigning it so the raw
+	// packet constructor cannot silently truncate a future oversized source.
+	if (!PacketsSeams::TryGetRawPacketPayloadSizeFromSpan(static_cast<uint64_t>(rstr.GetLength()), &size))
+		AfxThrowMemoryException();
 	pBuffer = new char[size];
 	memcpy(pBuffer, (LPCSTR)rstr, size);
 }
