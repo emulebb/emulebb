@@ -4794,6 +4794,11 @@ uint32 CPartFile::QueueBufferWrite(uint64 transize, const BYTE *sourceData, std:
 	else
 		m_BufferedData_list.AddHead(newitem.get());
 
+	// WHY: ownership is deliberately handed to m_BufferedData_list below, which
+	// clears the unique_ptr. Keep the immutable range locally so the gap map is
+	// updated from valid state instead of dereferencing the released owner.
+	const uint64 uGapStart = newitem->start;
+	const uint64 uGapEnd = newitem->end;
 	newitem.release();
 	data.release();
 
@@ -4801,7 +4806,7 @@ uint32 CPartFile::QueueBufferWrite(uint64 transize, const BYTE *sourceData, std:
 	m_nTotalBufferData += lenData;
 
 	// Mark this small section of the file as filled
-	FillGap(newitem->start, newitem->end);
+	FillGap(uGapStart, uGapEnd);
 
 	// If client is known, the caller updates the flush mark on the requested block
 	// Otherwise, update here (for imported parts)
