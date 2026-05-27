@@ -379,8 +379,17 @@ void CRoutingBin::PushToBottom(CContact *pContact) // puts an existing contact f
 		return;
 
 	ASSERT(GetContact(pContact->GetClientID()) == pContact);
-	RemoveContact(pContact, true);
-	m_listEntries.push_back(pContact);
+	for (ContactList::iterator itContact = m_listEntries.begin(); itContact != m_listEntries.end(); ++itContact) {
+		if (*itContact == pContact) {
+			// WHY: this is only a recency reorder of an existing contact. Removing
+			// and push_back-ing allocates a new std::list node; if that allocation
+			// fails, the contact is no longer in the bin. splice moves the existing
+			// node to the tail without allocation and preserves ownership/tracking.
+			m_listEntries.splice(m_listEntries.end(), m_listEntries, itContact);
+			return;
+		}
+	}
+	ASSERT(0);
 }
 
 CContact* CRoutingBin::GetRandomContact(uint32 nMaxType, uint32 nMinKadVersion)
