@@ -79,7 +79,7 @@ UploadBandwidthThrottler::~UploadBandwidthThrottler()
  */
 INT_PTR UploadBandwidthThrottler::GetHighestNumberOfFullyActivatedSlotsSinceLastCallAndReset()
 {
-	queueLocker.Lock();
+	CSingleLock lockQueue(&queueLocker, TRUE);
 	//if(m_highestNumberOfFullyActivatedSlots > GetStandardListSize())
 	//	theApp.QueueDebugLogLine(true, _T("UploadBandwidthThrottler: Throttler wants new slot when get-method called. m_highestNumberOfFullyActivatedSlots: %i GetStandardListSize(): %i tick: %i"), m_highestNumberOfFullyActivatedSlots, GetStandardListSize(), timeGetTime());
 
@@ -89,7 +89,6 @@ INT_PTR UploadBandwidthThrottler::GetHighestNumberOfFullyActivatedSlotsSinceLast
 #else
 		= (INT_PTR)::InterlockedExchange((LONG*)&m_highestNumberOfFullyActivatedSlots, 0);
 #endif
-	queueLocker.Unlock();
 
 	return highestNumberOfFullyActivatedSlots;
 }
@@ -113,12 +112,13 @@ INT_PTR UploadBandwidthThrottler::GetHighestNumberOfFullyActivatedSlotsSinceLast
 void UploadBandwidthThrottler::AddToStandardList(INT_PTR index, ThrottledFileSocket *socket)
 {
 	if (socket != NULL) {
-		queueLocker.Lock();
+		CSingleLock lockQueue(&queueLocker, TRUE);
 
 		RemoveFromStandardListNoLock(socket);
+		// WHY: CArray::InsertAt can allocate while the throttler queue lock is
+		// held. RAII keeps the lock balanced on low-memory exceptions so socket
+		// teardown cannot block behind a wedged throttler list.
 		m_StandardOrder_list.InsertAt(min(index, GetStandardListSize()), socket);
-
-		queueLocker.Unlock();
 	}
 //	else if (thePrefs.GetVerbose())
 //		theApp.QueueDebugLogLine(true, _T("UploadBandwidthThrottler: prevented adding a NULL socket to the Standard list!"));
@@ -135,11 +135,9 @@ void UploadBandwidthThrottler::AddToStandardList(INT_PTR index, ThrottledFileSoc
  */
 bool UploadBandwidthThrottler::RemoveFromStandardList(ThrottledFileSocket *socket)
 {
-	queueLocker.Lock();
+	CSingleLock lockQueue(&queueLocker, TRUE);
 
 	bool returnValue = RemoveFromStandardListNoLock(socket);
-
-	queueLocker.Unlock();
 
 	return returnValue;
 }
@@ -182,14 +180,16 @@ bool UploadBandwidthThrottler::RemoveFromStandardListNoLock(ThrottledFileSocket 
 void UploadBandwidthThrottler::QueueForSendingControlPacket(ThrottledControlSocket *socket, const bool hasSent)
 {
 	if (HelperThreadLaunchSeams::IsFlagSet(m_bRun)) {
-		tempQueueLocker.Lock();
+		CSingleLock lockTempQueue(&tempQueueLocker, TRUE);
 
+		// WHY: std::list::push_back may allocate. This path is called from
+		// socket send code and UDP/TCP event callbacks; RAII prevents an
+		// allocation failure from permanently blocking control-queue removal or
+		// throttler shutdown.
 		if (hasSent)
 			m_TempControlQueueFirst_list.push_back(socket);
 		else
 			m_TempControlQueue_list.push_back(socket);
-
-		tempQueueLocker.Unlock();
 	}
 }
 
@@ -206,32 +206,28 @@ void UploadBandwidthThrottler::RemoveFromAllQueuesNoLock(ThrottledControlSocket 
 	m_ControlQueue_list.remove(socket);
 	m_ControlQueueFirst_list.remove(socket);
 
-	tempQueueLocker.Lock();
+	CSingleLock lockTempQueue(&tempQueueLocker, TRUE);
 	m_TempControlQueue_list.remove(socket);
 	m_TempControlQueueFirst_list.remove(socket);
-	tempQueueLocker.Unlock();
 }
 
 void UploadBandwidthThrottler::RemoveFromAllQueues(ThrottledFileSocket *socket)
 {
 	if (HelperThreadLaunchSeams::IsFlagSet(m_bRun)) {
-		queueLocker.Lock(); // Get critical section
+		CSingleLock lockQueue(&queueLocker, TRUE); // Get critical section
 
 		RemoveFromAllQueuesNoLock(socket);
 
 		// And remove it from upload slots
 		RemoveFromStandardListNoLock(socket);
-
-		queueLocker.Unlock(); // End critical section
 	}
 }
 
 void UploadBandwidthThrottler::RemoveFromAllQueuesLocked(ThrottledControlSocket *socket)
 {
 	if (HelperThreadLaunchSeams::IsFlagSet(m_bRun)) {
-		queueLocker.Lock();
+		CSingleLock lockQueue(&queueLocker, TRUE);
 		RemoveFromAllQueuesNoLock(socket);
-		queueLocker.Unlock();
 	}
 }
 
@@ -371,17 +367,18 @@ UINT UploadBandwidthThrottler::RunInternal()
 		uint32 nBusy = 0;
 		uint32 nCanSend = 0;
 
-		queueLocker.Lock();
-		m_eventDataAvailable.ResetEvent();
-		m_eventSocketAvailable.ResetEvent();
-		for (INT_PTR i = mini(GetStandardListSize(), (INT_PTR)max(GetSlotLimit(theApp.uploadqueue->GetDatarate()), 3u)); --i >= 0;) {
-			ThrottledFileSocket *pSocket = m_StandardOrder_list[i];
-			if (pSocket != NULL && pSocket->HasQueues()) {
-				++nCanSend;
-				nBusy += static_cast<uint32>(pSocket->IsBusyExtensiveCheck());
+		{
+			CSingleLock lockQueue(&queueLocker, TRUE);
+			m_eventDataAvailable.ResetEvent();
+			m_eventSocketAvailable.ResetEvent();
+			for (INT_PTR i = mini(GetStandardListSize(), (INT_PTR)max(GetSlotLimit(theApp.uploadqueue->GetDatarate()), 3u)); --i >= 0;) {
+				ThrottledFileSocket *pSocket = m_StandardOrder_list[i];
+				if (pSocket != NULL && pSocket->HasQueues()) {
+					++nCanSend;
+					nBusy += static_cast<uint32>(pSocket->IsBusyExtensiveCheck());
+				}
 			}
 		}
-		queueLocker.Unlock();
 
 		// if this is kept, the loop above can be optimized a little (don't count nCanSend,
 		// just use nCanSend = GetSlotLimit(theApp.uploadqueue->GetDatarate())
@@ -468,13 +465,18 @@ UINT UploadBandwidthThrottler::RunInternal()
 			uint64 spentOverhead = 0;
 			bool bNeedMoreData = false;
 
-			queueLocker.Lock();
+			{
+			CSingleLock lockQueue(&queueLocker, TRUE);
 
-			tempQueueLocker.Lock();
-			// Move all sockets from m_TempControlQueue_list to normal m_ControlQueue_list
-			m_ControlQueueFirst_list.splice(m_ControlQueueFirst_list.cend(), m_TempControlQueueFirst_list);
-			m_ControlQueue_list.splice(m_ControlQueue_list.cend(), m_TempControlQueue_list);
-			tempQueueLocker.Unlock();
+			{
+				CSingleLock lockTempQueue(&tempQueueLocker, TRUE);
+				// Move all sockets from m_TempControlQueue_list to normal m_ControlQueue_list.
+				// WHY: keep lock ordering explicit while using RAII for both
+				// queue locks; socket removal takes queueLocker and then
+				// tempQueueLocker, so the throttler loop must preserve that order.
+				m_ControlQueueFirst_list.splice(m_ControlQueueFirst_list.cend(), m_TempControlQueueFirst_list);
+				m_ControlQueue_list.splice(m_ControlQueue_list.cend(), m_TempControlQueue_list);
+			}
 
 			// Send any queued up control packets first
 			while ((bytesToSpend > 0 && spentBytes < (uint64)bytesToSpend || allowedDataRate == 0 && spentBytes < 500)
@@ -582,7 +584,7 @@ UINT UploadBandwidthThrottler::RunInternal()
 				}
 			} else
 				lastTickReachedBandwidth = thisLoopTick;
-			queueLocker.Unlock();
+			}
 
 			// save info about how much data we've spent since the last time someone polled us about used bandwidth
 			InterlockedAdd64((LONG64*)&m_SentBytesSinceLastCall, (LONG64)spentBytes);
@@ -593,15 +595,17 @@ UINT UploadBandwidthThrottler::RunInternal()
 		}
 	}
 
-	queueLocker.Lock();
-	tempQueueLocker.Lock();
-	m_TempControlQueue_list.clear();
-	m_TempControlQueueFirst_list.clear();
-	tempQueueLocker.Unlock();
+	{
+		CSingleLock lockQueue(&queueLocker, TRUE);
+		{
+			CSingleLock lockTempQueue(&tempQueueLocker, TRUE);
+			m_TempControlQueue_list.clear();
+			m_TempControlQueueFirst_list.clear();
+		}
 
-	m_ControlQueue_list.clear();
-	m_StandardOrder_list.RemoveAll();
-	queueLocker.Unlock();
+		m_ControlQueue_list.clear();
+		m_StandardOrder_list.RemoveAll();
+	}
 
 	m_eventThreadEnded.SetEvent();
 	return 0;
