@@ -83,6 +83,7 @@ Basic Obfuscated Handshake Protocol Client <-> Server:
 #include "opcodes.h"
 #include "clientlist.h"
 #include "ServerConnect.h"
+#include "EncryptedStreamSocketSeams.h"
 #include <osrng.h>
 
 #ifdef _DEBUG
@@ -208,7 +209,16 @@ int CEncryptedStreamSocket::SendOv(CArray<WSABUF> &aBuffer, LPWSAOVERLAPPED lpOv
 		ASSERT(m_NegotiatingState == ONS_BASIC_SERVER_DELAYEDSENDING);
 		// handshake data was delayed to put it into one frame with the first payload to the server
 		// attach it now to the sendbuffer
-		WSABUF wbuf = {(ULONG)m_pfiSendBuffer->GetLength()};
+		uint32_t uBufferedSendBytes = 0;
+		if (!EncryptedStreamSocketSeams::TryGetNegotiationSendBufferLength(m_pfiSendBuffer->GetLength(), &uBufferedSendBytes)) {
+			FailEncryptedStream(_T("Delayed negotiation send buffer exceeded the bounded send span"));
+			return SOCKET_ERROR;
+		}
+
+		// WHY: CSafeMemFile reports a 64-bit length while WSABUF uses ULONG.
+		// The delayed server handshake should stay bounded even when coalesced
+		// with first payload bytes; prove the length before narrowing for WSASend.
+		WSABUF wbuf = {static_cast<ULONG>(uBufferedSendBytes)};
 		wbuf.buf = new CHAR[wbuf.len];
 		m_pfiSendBuffer->SeekToBegin();
 		m_pfiSendBuffer->Read(wbuf.buf, wbuf.len);
@@ -679,6 +689,14 @@ int CEncryptedStreamSocket::SendNegotiatingData(const void *lpBuf, int nBufLen, 
 	ASSERT(m_StreamCryptState == ECS_NEGOTIATING || m_StreamCryptState == ECS_ENCRYPTING);
 	ASSERT(nStartCryptFromByte <= nBufLen);
 	ASSERT(m_NegotiatingState == ONS_BASIC_SERVER_DELAYEDSENDING || !bDelaySend);
+	if (!EncryptedStreamSocketSeams::IsNegotiationSendSpanValid(nBufLen, nStartCryptFromByte)) {
+		// WHY: assertions disappear in release builds, but this function performs
+		// malloc, pointer arithmetic, RC4 length casts, and CSafeMemFile writes
+		// from caller-provided int spans. Reject impossible or over-budget spans
+		// before any of those operations can reinterpret the values.
+		FailEncryptedStream(_T("Negotiation send span is invalid or exceeds the bounded send budget"));
+		return SOCKET_ERROR;
+	}
 
 	BYTE *pBuffer;
 	if (lpBuf == NULL)
@@ -697,6 +715,13 @@ int CEncryptedStreamSocket::SendNegotiatingData(const void *lpBuf, int nBufLen, 
 				m_NegotiatingState = ONS_COMPLETE;
 			else
 				ASSERT(0);
+			if (!EncryptedStreamSocketSeams::CanAppendNegotiationSendBuffer(
+				m_pfiSendBuffer->GetLength(),
+				static_cast<uint32_t>(nBufLen))) {
+				free(pBuffer);
+				FailEncryptedStream(_T("Negotiation send buffer append would exceed the bounded send budget"));
+				return SOCKET_ERROR;
+			}
 			m_pfiSendBuffer->SeekToEnd();
 			m_pfiSendBuffer->Write(pBuffer, nBufLen);
 			free(pBuffer);
@@ -711,7 +736,12 @@ int CEncryptedStreamSocket::SendNegotiatingData(const void *lpBuf, int nBufLen, 
 			ASSERT(0);
 			return 0;							// or not
 		}
-		nBufLen = (uint32)m_pfiSendBuffer->GetLength();
+		uint32_t uBufferedSendBytes = 0;
+		if (!EncryptedStreamSocketSeams::TryGetNegotiationSendBufferLength(m_pfiSendBuffer->GetLength(), &uBufferedSendBytes)) {
+			FailEncryptedStream(_T("Pending negotiation send buffer exceeded the bounded send span"));
+			return SOCKET_ERROR;
+		}
+		nBufLen = static_cast<int>(uBufferedSendBytes);
 		pBuffer = m_pfiSendBuffer->Detach();
 		delete m_pfiSendBuffer;
 		m_pfiSendBuffer = NULL;
@@ -719,11 +749,22 @@ int CEncryptedStreamSocket::SendNegotiatingData(const void *lpBuf, int nBufLen, 
 	ASSERT(m_pfiSendBuffer == NULL);
 	int result = bDelaySend ? 0 : CAsyncSocketEx::Send(pBuffer, nBufLen);
 	if (result == SOCKET_ERROR || bDelaySend) {
+		if (!EncryptedStreamSocketSeams::CanAppendNegotiationSendBuffer(0u, static_cast<uint32_t>(nBufLen))) {
+			free(pBuffer);
+			FailEncryptedStream(_T("Negotiation send buffer would exceed the bounded send budget"));
+			return SOCKET_ERROR;
+		}
 		m_pfiSendBuffer = new CSafeMemFile(128);
 		m_pfiSendBuffer->Write(pBuffer, nBufLen);
 	} else if (result < nBufLen) {
+		const int nRemainingBytes = nBufLen - result;
+		if (!EncryptedStreamSocketSeams::CanAppendNegotiationSendBuffer(0u, static_cast<uint32_t>(nRemainingBytes))) {
+			free(pBuffer);
+			FailEncryptedStream(_T("Partial negotiation send buffer would exceed the bounded send budget"));
+			return SOCKET_ERROR;
+		}
 		m_pfiSendBuffer = new CSafeMemFile(128);
-		m_pfiSendBuffer->Write(pBuffer + result, nBufLen - result);
+		m_pfiSendBuffer->Write(pBuffer + result, nRemainingBytes);
 	}
 	free(pBuffer);
 	return result;
