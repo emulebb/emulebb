@@ -940,9 +940,19 @@ void CSharedFileList::QueueSharedFileForHash(const CString &strDirectory, const 
 		CSingleLock lock(&m_mutSharedHashQueue, TRUE);
 		if (m_bSharedHashWorkerExitRequested)
 			return;
-		if (!m_sharedHashInFlightKeys.insert(MakeSharedHashInFlightLookupKey(job.strFilePathKey)).second)
+		const auto strInFlightKey = MakeSharedHashInFlightLookupKey(job.strFilePathKey);
+		if (!m_sharedHashInFlightKeys.insert(strInFlightKey).second)
 			return;
-		m_sharedHashQueue.push_back(job);
+		try {
+			// WHY: the in-flight key suppresses duplicate hash jobs. If the queue
+			// node allocation fails after inserting that key, future scans would
+			// believe the file is already pending and never hash it. Roll the key
+			// back unless the job is actually linked.
+			m_sharedHashQueue.push_back(job);
+		} catch (...) {
+			m_sharedHashInFlightKeys.erase(strInFlightKey);
+			throw;
+		}
 	}
 	SignalSharedHashWorker();
 }
