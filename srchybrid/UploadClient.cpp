@@ -35,6 +35,8 @@
 #include "Collection.h"
 #include "UploadDiskIOThread.h"
 
+#include <memory>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -373,10 +375,10 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 	// UploadDiskIOThread will handle those later on
 
 	if (reqblock != NULL) {
+		std::unique_ptr<Requested_Block_Struct> reqblockOwner(reqblock);
 		if (GetUploadState() != US_UPLOADING) {
 			if (thePrefs.GetLogUlDlEvents())
 				AddDebugLogLine(DLP_LOW, false, _T("UploadClient: Client tried to add req block when not in upload slot! Prevented req blocks from being added. %s"), (LPCTSTR)DbgGetClientInfo());
-			delete reqblock;
 			return;
 		}
 
@@ -388,7 +390,6 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 			if (pDownloadingFile != NULL) {
 				if (!CCollection::HasCollectionExtention(pDownloadingFile->GetFileName()) || pDownloadingFile->GetFileSize() > (uint64)MAXPRIORITYCOLL_SIZE) {
 					AddDebugLogLine(DLP_HIGH, false, _T("UploadClient: Client tried to add req block for non-collection while having a collection slot! Prevented req blocks from being added. %s"), (LPCTSTR)DbgGetClientInfo());
-					delete reqblock;
 					return;
 				}
 			} else
@@ -398,45 +399,38 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 		CKnownFile *srcfile = theApp.sharedfiles->GetFileByID(reqblock->FileID);
 		if (srcfile == NULL) {
 			DebugLogWarning(GetResString(IDS_ERR_REQ_FNF));
-			delete reqblock;
 			return;
 		}
 
 		UploadingToClient_Struct *pUploadingClientStruct = theApp.uploadqueue->GetUploadingClientStructByClient(this);
 		if (pUploadingClientStruct == NULL) {
 			DebugLogError(_T("AddReqBlock: Uploading client not found in Uploadlist, %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)srcfile->GetFileName());
-			delete reqblock;
 			return;
 		}
 
 		if (pUploadingClientStruct->m_bIOError) {
 			DebugLogWarning(_T("AddReqBlock: Uploading client has pending IO Error, %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)srcfile->GetFileName());
-			delete reqblock;
 			return;
 		}
 
 		if (srcfile->IsPartFile() && !static_cast<CPartFile*>(srcfile)->IsCompleteBDSafe(reqblock->StartOffset, reqblock->EndOffset - 1)) {
 			DebugLogWarning(_T("AddReqBlock: %s, %s"), (LPCTSTR)GetResString(IDS_ERR_INCOMPLETEBLOCK), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)srcfile->GetFileName());
-			delete reqblock;
 			return;
 		}
 
 		if (reqblock->StartOffset >= reqblock->EndOffset || reqblock->EndOffset > srcfile->GetFileSize()) {
 			DebugLogError(_T("AddReqBlock: Invalid Block requests (negative or bytes to read, read after EOF), %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)srcfile->GetFileName());
-			delete reqblock;
 			return;
 		}
 
 		if (reqblock->EndOffset - reqblock->StartOffset > EMBLOCKSIZE * 3) {
 			DebugLogWarning(_T("AddReqBlock: %s, %s"), (LPCTSTR)GetResString(IDS_ERR_LARGEREQBLOCK), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)srcfile->GetFileName());
-			delete reqblock;
 			return;
 		}
 
 		CSingleLock lockBlockLists(&pUploadingClientStruct->m_csBlockListsLock, TRUE);
 		if (!lockBlockLists.IsLocked()) {
 			ASSERT(0);
-			delete reqblock;
 			return;
 		}
 
@@ -446,7 +440,6 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 				&& reqblock->EndOffset == cur_reqblock->EndOffset
 				&& md4equ(reqblock->FileID, cur_reqblock->FileID))
 			{
-				delete reqblock;
 				return;
 			}
 		}
@@ -456,11 +449,15 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 				&& reqblock->EndOffset == cur_reqblock->EndOffset
 				&& md4equ(reqblock->FileID, cur_reqblock->FileID))
 			{
-				delete reqblock;
 				return;
 			}
 		}
-		pUploadingClientStruct->m_BlockRequests_queue.AddTail(reqblock);
+		// WHY: m_BlockRequests_queue is an MFC list. This function receives
+		// ownership of reqblock from packet parsing; keep it locally owned until
+		// AddTail succeeds so a low-memory list-node failure cannot leak the
+		// requested upload block.
+		pUploadingClientStruct->m_BlockRequests_queue.AddTail(reqblockOwner.get());
+		reqblockOwner.release();
 		dbgLastQueueCount = pUploadingClientStruct->m_BlockRequests_queue.GetCount();
 		lockBlockLists.Unlock(); // not needed, just to make it visible
 	}
