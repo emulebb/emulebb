@@ -106,6 +106,7 @@ END_MESSAGE_MAP()
 
 CQueueListCtrl::CQueueListCtrl()
 	: CListCtrlItemWalk(this)
+	, m_ullLastRefreshSortTick()
 {
 	SetGeneralPurposeFind(true);
 	SetSkinKey(_T("QueuedLv"));
@@ -917,7 +918,7 @@ void CQueueListCtrl::RefreshVisibleItems()
 
 	if (bPruneStaleItems)
 		PruneStaleClientItems();
-	if (IsTransferRefreshSensitiveSortColumn(TRANSFER_DISPLAY_LIST_QUEUE, GetSortItem()))
+	if (ShouldRunTransferRefreshSensitiveSort(TRANSFER_DISPLAY_LIST_QUEUE, GetSortItem(), m_ullLastRefreshSortTick, ::GetTickCount64()))
 		SortItems(SortProc, MAKELONG(GetSortItem(), !GetSortAscending()));
 }
 

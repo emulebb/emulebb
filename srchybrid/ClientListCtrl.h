@@ -42,6 +42,8 @@ public:
 	virtual CObject* GetPrevSelectableItem();
 
 protected:
+	ULONGLONG m_ullLastRefreshSortTick;
+
 	void SetAllIcons();
 	const CUpDownClient* GetLiveClientByIndex(int iItem);
 	bool IsLiveClient(const CUpDownClient *client) const;

@@ -346,6 +346,23 @@ inline bool IsTransferRefreshSensitiveSortColumn(ETransferDisplayListKind eListK
 	}
 }
 
+inline bool ShouldRunTransferRefreshSensitiveSort(ETransferDisplayListKind eListKind, int iSortColumn, ULONGLONG &rullLastSortTick, ULONGLONG ullNowTick)
+{
+	if (!IsTransferRefreshSensitiveSortColumn(eListKind, iSortColumn))
+		return false;
+
+	constexpr ULONGLONG kMinRefreshSensitiveSortIntervalMs = 1000;
+	if (rullLastSortTick != 0 && ullNowTick - rullLastSortTick < kMinRefreshSensitiveSortIntervalMs)
+		return false;
+
+	// WHY: transfer rows update on a high-frequency refresh timer, while list
+	// sorting is O(n log n) and touches many volatile client/file fields. Keep
+	// ordering reasonably fresh without doing a full sort on every paint-facing
+	// refresh tick when a speed/progress/queue-position column is selected.
+	rullLastSortTick = ullNowTick;
+	return true;
+}
+
 /**
  * @brief Atomically merges a refresh mask and returns the previous value.
  */

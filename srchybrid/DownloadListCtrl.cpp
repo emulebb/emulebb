@@ -229,6 +229,7 @@ CDownloadListCtrl::CDownloadListCtrl()
 	, m_bVideoThumbnailWorkerActive()
 	, m_bVideoThumbnailCacheInitialized()
 	, m_dwLastAvailableCommandsCheck()
+	, m_ullLastRefreshSortTick()
 	, m_bRemainSort()
 	, m_availableCommandsDirty(true)
 {
@@ -1095,7 +1096,7 @@ void CDownloadListCtrl::RefreshVisibleItems()
 
 	if (bPruneStaleItems)
 		PruneStaleFileItems();
-	if (IsTransferRefreshSensitiveSortColumn(TRANSFER_DISPLAY_LIST_DOWNLOADS, GetSortItem())) {
+	if (ShouldRunTransferRefreshSensitiveSort(TRANSFER_DISPLAY_LIST_DOWNLOADS, GetSortItem(), m_ullLastRefreshSortTick, ::GetTickCount64())) {
 		const int adder = GetSortItem() == 10 && m_bRemainSort ? 81 : 0;
 		SortItems(SortProc, MAKELONG(GetSortItem() + adder, !GetSortAscending()));
 	}

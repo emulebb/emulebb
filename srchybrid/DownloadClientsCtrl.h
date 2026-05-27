@@ -41,6 +41,7 @@ public:
 
 protected:
 	CImageList	*m_pImageList;
+	ULONGLONG	m_ullLastRefreshSortTick;
 
 	void SetAllIcons();
 	const CUpDownClient* GetLiveClientByIndex(int iItem);

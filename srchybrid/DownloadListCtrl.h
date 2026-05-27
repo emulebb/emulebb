@@ -180,6 +180,7 @@ protected:
 	bool		m_bVideoThumbnailWorkerActive;
 	bool		m_bVideoThumbnailCacheInitialized;
 	ULONGLONG	m_dwLastAvailableCommandsCheck;
+	ULONGLONG	m_ullLastRefreshSortTick;
 	bool		m_bRemainSort;
 	bool		m_availableCommandsDirty;
 

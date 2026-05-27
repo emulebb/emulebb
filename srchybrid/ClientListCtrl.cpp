@@ -69,6 +69,7 @@ END_MESSAGE_MAP()
 
 CClientListCtrl::CClientListCtrl()
 	: CListCtrlItemWalk(this)
+	, m_ullLastRefreshSortTick()
 {
 	SetGeneralPurposeFind(true);
 	SetSkinKey(_T("ClientsLv"));
@@ -636,7 +637,7 @@ void CClientListCtrl::RefreshVisibleItems()
 
 	if (bPruneStaleItems)
 		PruneStaleClientItems();
-	if (IsTransferRefreshSensitiveSortColumn(TRANSFER_DISPLAY_LIST_CLIENTS, GetSortItem()))
+	if (ShouldRunTransferRefreshSensitiveSort(TRANSFER_DISPLAY_LIST_CLIENTS, GetSortItem(), m_ullLastRefreshSortTick, ::GetTickCount64()))
 		SortItems(SortProc, MAKELONG(GetSortItem(), !GetSortAscending()));
 }
 

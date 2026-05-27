@@ -123,6 +123,7 @@ END_MESSAGE_MAP()
 
 CUploadListCtrl::CUploadListCtrl()
 	: CListCtrlItemWalk(this)
+	, m_ullLastRefreshSortTick()
 {
 	SetGeneralPurposeFind(true);
 	SetSkinKey(_T("UploadsLv"));
@@ -980,7 +981,7 @@ void CUploadListCtrl::RefreshVisibleItems()
 
 	if (bPruneStaleItems)
 		PruneStaleClientItems();
-	if (IsTransferRefreshSensitiveSortColumn(TRANSFER_DISPLAY_LIST_UPLOADS, GetSortItem()))
+	if (ShouldRunTransferRefreshSensitiveSort(TRANSFER_DISPLAY_LIST_UPLOADS, GetSortItem(), m_ullLastRefreshSortTick, ::GetTickCount64()))
 		SortItems(SortProc, MAKELONG(GetSortItem(), !GetSortAscending()));
 }
 
