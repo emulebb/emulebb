@@ -110,10 +110,16 @@ struct SServerDNSRequest
 			m_uQueuedPacketBytes,
 			uPacketSize);
 	}
-	void QueuePacket(SRawServerPacket *pPacket)
+	void QueuePacket(std::unique_ptr<SRawServerPacket> &rpPacket)
 	{
-		m_uQueuedPacketBytes += pPacket->m_uSize;
-		m_aPackets.AddTail(pPacket);
+		const UINT uPacketSize = rpPacket->m_uSize;
+		// WHY: AddTail can allocate after the raw datagram has been wrapped in
+		// SRawServerPacket. Keep rpPacket as the only owner until the DNS queue
+		// node exists, then update byte accounting so a failed link cannot leak
+		// the datagram or leave stale queue-budget state behind.
+		m_aPackets.AddTail(rpPacket.get());
+		rpPacket.release();
+		m_uQueuedPacketBytes += uPacketSize;
 	}
 	ULONGLONG m_dwCreated;
 	UINT m_uRequestId;
@@ -926,7 +932,9 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 						DebugLogWarning(_T("Server UDP socket: dropped packet for unresolved server '%s' because the DNS packet queue is full"), pServer->GetAddress());
 					return;
 				}
-				SRawServerPacket *pServerPacket = new SRawServerPacket(pRawPacket, uRawPacketSize, nPort);
+				std::unique_ptr<BYTE[]> rawPacketOwner(pRawPacket);
+				std::unique_ptr<SRawServerPacket> pServerPacket(new SRawServerPacket(rawPacketOwner.get(), uRawPacketSize, nPort));
+				rawPacketOwner.release();
 				pDNSReq->QueuePacket(pServerPacket);
 				return;
 			}
@@ -935,17 +943,25 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 		// Create a new DNS query for this server. Resolution runs on a worker and
 		// posts only an immutable result, while queued UDP packets stay UI-thread owned.
 		const UINT uRequestId = AllocateDnsRequestId();
-		SServerDNSRequest *pDNSReq = new SServerDNSRequest(uRequestId, new CServer(pServer));
+		// WHY: building the request copies the server object and can allocate before
+		// SRawServerPacket exists. Own the raw datagram first so every construction
+		// failure between here and QueuePacket unwinds without leaking pRawPacket.
+		std::unique_ptr<BYTE[]> rawPacketOwner(pRawPacket);
+		std::unique_ptr<SServerDNSRequest> pDNSReqOwner(new SServerDNSRequest(uRequestId, new CServer(pServer)));
+		SServerDNSRequest *pDNSReq = pDNSReqOwner.get();
 		if (!pDNSReq->CanQueuePacket(uRawPacketSize)) {
-			delete[] pRawPacket;
-			delete pDNSReq;
 			if (thePrefs.GetVerbose())
 				DebugLogWarning(_T("Server UDP socket: dropped packet for unresolved server '%s' because the DNS packet queue budget is too small"), pServer->GetAddress());
 			return;
 		}
-		SRawServerPacket *pServerPacket = new SRawServerPacket(pRawPacket, uRawPacketSize, nPort);
+		std::unique_ptr<SRawServerPacket> pServerPacket(new SRawServerPacket(rawPacketOwner.get(), uRawPacketSize, nPort));
+		rawPacketOwner.release();
 		pDNSReq->QueuePacket(pServerPacket);
+		// WHY: the request owns the queued packet, but m_aDNSReqs is still an
+		// MFC list. Keep pDNSReqOwner live until AddTail succeeds so a list-node
+		// allocation failure tears down both the request and the packet.
 		m_aDNSReqs.AddTail(pDNSReq);
+		pDNSReqOwner.release();
 
 		std::unique_ptr<AsyncDnsResolveSeams::SHostnameResolveWork> pWork = AsyncDnsResolveSeams::MakeHostnameResolveWork(
 			m_hWndResolveMessage,
