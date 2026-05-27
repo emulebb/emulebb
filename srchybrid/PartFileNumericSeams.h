@@ -101,4 +101,41 @@ inline uint16 CalculateChunkCompletionPercent(const uint64 nCompletedBytes, cons
 
 	return ClampUInt64ToUInt16(((nBoundedCompletedBytes * kChunkCompletionPercentMax) + nRoundingBias) / nFullPartSize);
 }
+
+/**
+ * @brief Returns the legacy "flush at twice the configured buffer" threshold without overflow.
+ */
+inline uint64 GetBufferedDataFlushThreshold(const uint64 nEffectiveFileBufferSize)
+{
+	const uint64 nMax = (std::numeric_limits<uint64>::max)();
+	return nEffectiveFileBufferSize > nMax / 2u ? nMax : nEffectiveFileBufferSize * 2u;
+}
+
+/**
+ * @brief Reports whether already queued part-file data is beyond the flush budget.
+ */
+inline bool ShouldFlushBufferedData(const uint64 nCurrentBufferedBytes, const uint64 nEffectiveFileBufferSize)
+{
+	return nCurrentBufferedBytes > GetBufferedDataFlushThreshold(nEffectiveFileBufferSize);
+}
+
+/**
+ * @brief Reports whether the current queue should be flushed before another buffer is allocated.
+ *
+ * The post-write flush keeps behavior compatible, but it still permits one more
+ * download block allocation beyond the budget. This preflight check lets the
+ * caller drain existing data first, reducing peak heap use without rejecting the
+ * block being received from the peer.
+ */
+inline bool ShouldFlushBeforeBufferedWrite(
+	const uint64 nCurrentBufferedBytes,
+	const uint64 nIncomingBufferedBytes,
+	const uint64 nEffectiveFileBufferSize)
+{
+	if (nCurrentBufferedBytes == 0)
+		return false;
+
+	const uint64 nThreshold = GetBufferedDataFlushThreshold(nEffectiveFileBufferSize);
+	return nCurrentBufferedBytes > nThreshold || nIncomingBufferedBytes > nThreshold - nCurrentBufferedBytes;
+}
 }

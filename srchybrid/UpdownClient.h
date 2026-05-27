@@ -22,6 +22,7 @@
 #include "OtherFunctions.h"
 #include "UploadScoreSeams.h"
 #include "ring.h"
+#include <memory>
 #include <vector>
 
 class CClientReqSocket;
@@ -410,7 +411,7 @@ public:
 	void			SetFileRating(uint8 uRating)					{ m_uFileRating = uRating; }
 
 	// Barry - Process zip file as it arrives, don't need to wait until end of block
-	int				unzip(Pending_Block_Struct *block, const BYTE *zipped, uint32 lenZipped, std::vector<BYTE> &runzipped, uint32 *lenUnzipped);
+	int				unzip(Pending_Block_Struct *block, const BYTE *zipped, uint32 lenZipped, std::unique_ptr<BYTE[]> &runzipped, size_t &rnUnzippedCapacity, uint32 *lenUnzipped);
 	void			UpdateDisplayedInfo(bool force = false);
 	void			QueueDisplayUpdate(uint32 nMask, bool force = false);
 	void			DispatchQueuedDisplayUpdate(bool force = false);

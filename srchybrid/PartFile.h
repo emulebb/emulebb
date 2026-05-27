@@ -21,6 +21,7 @@
 #include "DisplayRefreshSeams.h"
 #include "PartFileMajorityNameSeams.h"
 #include "SafeFile.h"
+#include <memory>
 
 enum EPartFileStatus : uint8
 {
@@ -237,6 +238,7 @@ public:
 
 	// Barry - Added as replacement for BlockReceived to buffer data before writing to disk
 	uint32	WriteToBuffer(uint64 transize, const BYTE *data, uint64 start, uint64 end, Requested_Block_Struct *block, const CUpDownClient *client, bool bCopyData);
+	uint32	WriteToBuffer(uint64 transize, std::unique_ptr<BYTE[]> data, uint64 start, uint64 end, Requested_Block_Struct *block, const CUpDownClient *client);
 	void	FlushBuffer(bool bForceICH = false, bool bNoAICH = false);
 	// Barry - This will invert the gap list, up to the caller to delete gaps when done
 	// 'Gaps' returned are really the filled areas, and guaranteed to be in order
@@ -379,6 +381,7 @@ private:
 	bool	HasAsyncWriteReferences() const;
 	bool	WaitForAsyncWriteReferencesToRelease();
 	bool	FlushBufferedDataForShutdown();
+	uint32	QueueBufferWrite(uint64 transize, const BYTE *sourceData, std::unique_ptr<BYTE[]> ownedData, bool bCopyData, uint64 start, uint64 end, Requested_Block_Struct *block, const CUpDownClient *client);
 	void	NoteHashLayoutChanged();
 	bool	TryStealEndgameBlockForFastPeer(CUpDownClient *pFastPeer, bool bEndgame, ULONGLONG ullNow, uint16 *pCanceledPart);
 	bool	IsLiveDownloadingSource(const CUpDownClient *pClient) const;

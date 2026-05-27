@@ -50,3 +50,23 @@ inline std::unique_ptr<unsigned char[]> MakeOwnedByteBufferCopy(const std::vecto
 	std::memcpy(pCopy.get(), rSource.data(), nCopiedSize);
 	return pCopy;
 }
+
+/**
+ * @brief Grows a legacy-owned byte buffer while preserving already-inflated bytes.
+ *
+ * Download decompression ultimately queues a `new[]` buffer into CPartFile,
+ * whose buffered-data cleanup still uses `delete[]`. Growing this ownership
+ * type directly avoids the previous vector-to-new[] copy at the hot handoff
+ * while keeping the old deletion contract unchanged.
+ */
+inline bool TryGrowOwnedByteBuffer(std::unique_ptr<unsigned char[]> &rpBuffer, const size_t nCurrentBytes, const size_t nNextCapacity)
+{
+	if (!rpBuffer || nNextCapacity < nCurrentBytes)
+		return false;
+
+	std::unique_ptr<unsigned char[]> pNext(new unsigned char[nNextCapacity]);
+	if (nCurrentBytes > 0)
+		std::memcpy(pNext.get(), rpBuffer.get(), nCurrentBytes);
+	rpBuffer.swap(pNext);
+	return true;
+}

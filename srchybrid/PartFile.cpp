@@ -44,6 +44,7 @@
 #include "Preferences.h"
 #include "PartFileHashSeams.h"
 #include "PartFileCompletionSeams.h"
+#include "PartFileNumericSeams.h"
 #include "FileCompletionCommandSeams.h"
 #include "FileSizeSeams.h"
 #include "PartFilePauseResumeSeams.h"
@@ -74,6 +75,7 @@
 #include "uploaddiskiothread.h"
 #include "PartFileWriteThread.h"
 #include <urlmon.h>
+#include <utility>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -4603,7 +4605,24 @@ void CPartFile::AddEd2kLinkSources(CSafeMemFile *sources)
 uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start, uint64 end
 	, Requested_Block_Struct *block, const CUpDownClient *client, bool bCopyData)
 {
+	return QueueBufferWrite(transize, data, std::unique_ptr<BYTE[]>(), bCopyData, start, end, block, client);
+}
+
+uint32 CPartFile::WriteToBuffer(uint64 transize, std::unique_ptr<BYTE[]> data, uint64 start, uint64 end
+	, Requested_Block_Struct *block, const CUpDownClient *client)
+{
+	return QueueBufferWrite(transize, NULL, std::move(data), false, start, end, block, client);
+}
+
+uint32 CPartFile::QueueBufferWrite(uint64 transize, const BYTE *sourceData, std::unique_ptr<BYTE[]> ownedData, bool bCopyData, uint64 start, uint64 end
+	, Requested_Block_Struct *block, const CUpDownClient *client)
+{
 	ASSERT((sint64)transize > 0 && end < FileSizeSeams::ToUInt64(m_nFileSize) && start <= end);
+	if ((bCopyData && sourceData == NULL) || (!bCopyData && sourceData == NULL && !ownedData)) {
+		ASSERT(0);
+		return 0;
+	}
+
 	// Increment transferred bytes counter for this file
 	if (client) //Imported Parts are not counted as transferred
 		m_uTransferred += transize;
@@ -4642,16 +4661,28 @@ uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start,
 	// log transfer information in our "blackbox"
 	m_CorruptionBlackBox.ReceivedData(start, end, client);
 
-	// Copy data to a new buffer if necessary
-	BYTE *buffer;
+	const uint64 uEffectiveFileBufferSize = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes() : thePrefs.GetFileBufferSize();
+	if (!m_BufferedData_list.IsEmpty()
+		&& PartFileNumericSeams::ShouldFlushBeforeBufferedWrite(m_nTotalBufferData, static_cast<uint64>(lenData), uEffectiveFileBufferSize))
+	{
+		FlushBuffer();
+	}
+
+	std::unique_ptr<BYTE[]> data;
 	if (bCopyData) {
-		buffer = new BYTE[lenData];
-		memcpy(buffer, data, lenData);
-	} else
-		buffer = const_cast<BYTE*>(data);
+		data.reset(new BYTE[lenData]);
+		memcpy(data.get(), sourceData, lenData);
+	} else if (ownedData)
+		data = std::move(ownedData);
+	else {
+		// Legacy callers pass bCopyData=false only when the buffer was heap
+		// allocated specifically for CPartFile. Wrap it after all early exits so
+		// duplicate blocks and exceptions release the handoff buffer correctly.
+		data.reset(const_cast<BYTE*>(sourceData));
+	}
 
 	// Create a new buffered queue entry
-	PartFileBufferedData *newitem = new PartFileBufferedData{start, end, buffer, block};
+	std::unique_ptr<PartFileBufferedData> newitem(new PartFileBufferedData{start, end, data.get(), block});
 
 	// Add to the queue at the correct position (most likely the end)
 	POSITION after = NULL;
@@ -4667,9 +4698,12 @@ uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start,
 		}
 	}
 	if (after)
-		m_BufferedData_list.InsertAfter(after, newitem);
+		m_BufferedData_list.InsertAfter(after, newitem.get());
 	else
-		m_BufferedData_list.AddHead(newitem);
+		m_BufferedData_list.AddHead(newitem.get());
+
+	newitem.release();
+	data.release();
 
 	// Increment buffer size marker
 	m_nTotalBufferData += lenData;
@@ -4683,10 +4717,9 @@ uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start,
 		block->transferred += lenData;
 	// We prefer to flush the buffer on timer, but if we get over our limit too far
 	// (high speed upload), flush here to save memory and time on list processing
-	const uint64 uEffectiveFileBufferSize = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes() : thePrefs.GetFileBufferSize();
 	if (m_gaplist.IsEmpty()
 		|| !inSet(GetStatus(), PS_READY, PS_EMPTY) //import parts
-		|| (m_nTotalBufferData > uEffectiveFileBufferSize * 2ull))
+		|| PartFileNumericSeams::ShouldFlushBufferedData(m_nTotalBufferData, uEffectiveFileBufferSize))
 	{
 		FlushBuffer();
 	}

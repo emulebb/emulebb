@@ -40,6 +40,7 @@
 #include "Log.h"
 #include "zlib.h"
 #include <limits>
+#include <utility>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1116,11 +1117,12 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 			// Create space to store unzipped data, the size is only an initial guess, will be resized in unzip() if not big enough.
 			size_t nInitialUnzippedSize = 0;
 			TryDeriveZlibBufferSize(static_cast<size_t>(size), 2u, 0u, EMBLOCKSIZE + 300u, &nInitialUnzippedSize);
-			std::vector<BYTE> unzipped(nInitialUnzippedSize);
-			uint32 lenUnzipped = static_cast<uint32>(unzipped.size());
+			std::unique_ptr<BYTE[]> unzipped(new BYTE[nInitialUnzippedSize]);
+			size_t nUnzippedCapacity = nInitialUnzippedSize;
+			uint32 lenUnzipped = static_cast<uint32>(nUnzippedCapacity);
 
 			// Try to unzip the packet
-			int result = unzip(cur_block, &packet[nHeaderSize], uTransferredFileDataSize, unzipped, &lenUnzipped);
+			int result = unzip(cur_block, &packet[nHeaderSize], uTransferredFileDataSize, unzipped, nUnzippedCapacity, &lenUnzipped);
 			// no block can be uncompressed to >2GB, 'lenUnzipped' is obviously erroneous.
 			if (result == Z_OK && (int)lenUnzipped >= 0) {
 				if (lenUnzipped > 0) { // Write any unzipped data to disk
@@ -1135,8 +1137,7 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 						m_reqfile->RemoveBlockFromList(cur_block->block->StartOffset, cur_block->block->EndOffset);
 						// There is no chance to recover from this error
 					} else {
-						std::unique_ptr<unsigned char[]> pOwnedUnzipped = MakeOwnedByteBufferCopy(unzipped, lenUnzipped);
-						if (!pOwnedUnzipped) {
+						if (!unzipped) {
 							DebugLogError(_T("PrcBlkPkt: Failed to stage the uncompressed packet buffer for file \"%s\""), (LPCTSTR)m_reqfile->GetFileName());
 							m_reqfile->RemoveBlockFromList(cur_block->block->StartOffset, cur_block->block->EndOffset);
 							return;
@@ -1144,14 +1145,11 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 
 						// Write uncompressed data to file
 						lenWritten = m_reqfile->WriteToBuffer(uTransferredFileDataSize
-							, pOwnedUnzipped.get()
+							, std::move(unzipped)
 							, nStartPos
 							, nEndPos
 							, cur_block->block
-							, this
-							, false); //use the given buffer, no copy
-						if (lenWritten)
-							pOwnedUnzipped.release(); // WriteToBuffer(..., false) now owns the buffer.
+							, this);
 					}
 				}
 			} else {
@@ -1212,14 +1210,14 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 	TRACE("%s - Dropping packet\n", __FUNCTION__);
 }
 
-int CUpDownClient::unzip(Pending_Block_Struct *block, const BYTE *zipped, uint32 lenZipped, std::vector<BYTE> &runzipped, uint32 *lenUnzipped)
+int CUpDownClient::unzip(Pending_Block_Struct *block, const BYTE *zipped, uint32 lenZipped, std::unique_ptr<BYTE[]> &runzipped, size_t &rnUnzippedCapacity, uint32 *lenUnzipped)
 {
 //#define TRACE_UNZIP	TRACE
 #define TRACE_UNZIP	__noop
 	TRACE_UNZIP("unzip: Zipd=%6u Unzd=%6u", lenZipped, *lenUnzipped);
 	int err = Z_DATA_ERROR;
 	try {
-		if (lenUnzipped == NULL || runzipped.empty()) {
+		if (lenUnzipped == NULL || !runzipped || rnUnzippedCapacity == 0) {
 			ASSERT(0);
 			return Z_BUF_ERROR;
 		}
@@ -1256,13 +1254,13 @@ int CUpDownClient::unzip(Pending_Block_Struct *block, const BYTE *zipped, uint32
 
 		for (;;) {
 			const size_t nAlreadyUnzipped = static_cast<size_t>(zS->total_out - block->totalUnzipped);
-			if (nAlreadyUnzipped > runzipped.size()) {
+			if (nAlreadyUnzipped > rnUnzippedCapacity) {
 				err = Z_DATA_ERROR;
 				break;
 			}
 
-			zS->next_out = runzipped.data() + nAlreadyUnzipped;
-			zS->avail_out = static_cast<uInt>(runzipped.size() - nAlreadyUnzipped);
+			zS->next_out = runzipped.get() + nAlreadyUnzipped;
+			zS->avail_out = static_cast<uInt>(rnUnzippedCapacity - nAlreadyUnzipped);
 
 			TRACE_UNZIP("; inflate(ain=%6u tin=%6u aout=%6u tout=%6u)", zS->avail_in, zS->total_in, zS->avail_out, zS->total_out);
 			err = inflate(zS, Z_SYNC_FLUSH);
@@ -1287,11 +1285,12 @@ int CUpDownClient::unzip(Pending_Block_Struct *block, const BYTE *zipped, uint32
 			if ((err == Z_OK) && (zS->avail_out == 0) && (zS->avail_in != 0)) {
 				TRACE_UNZIP("; output array not big enough (ain=%u)\n", zS->avail_in);
 				size_t nNextSize = 0;
-				if (!TryGrowZlibBufferSize(runzipped.size(), EMBLOCKSIZE + 300u, &nNextSize)) {
+				if (!TryGrowZlibBufferSize(rnUnzippedCapacity, EMBLOCKSIZE + 300u, &nNextSize)
+					|| !TryGrowOwnedByteBuffer(runzipped, nAlreadyUnzipped, nNextSize)) {
 					err = Z_BUF_ERROR;
 					break;
 				}
-				runzipped.resize(nNextSize);
+				rnUnzippedCapacity = nNextSize;
 				continue;
 			}
 
