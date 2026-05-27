@@ -707,13 +707,17 @@ void CUDPSocket::OnSend(int nErrorCode)
 			DebugLogError(_T("Error: Server UDP socket: Failed to send packet - %s"), (LPCTSTR)GetErrorMessage(nErrorCode, 1));
 		return;
 	}
-	m_bWouldBlock = false;
 
 // ZZ:UploadBandWithThrottler (UDP) -->
-	sendLocker.Lock();
+	CSingleLock sendLock(&sendLocker, TRUE);
+	// WHY: SendControlData reads and writes m_bWouldBlock on the throttler
+	// thread under sendLocker. OnSend is the socket-event side of the same
+	// state machine, so clear the flag under the same lock instead of racing
+	// the worker's retry/yield decision.
+	m_bWouldBlock = false;
 	const UdpControlQueueSignalAction eSignalAction = ClassifyUdpControlQueueSignal(m_bWouldBlock, controlpacket_queue.IsEmpty());
 
-	sendLocker.Unlock();
+	sendLock.Unlock();
 
 	if (eSignalAction == udpControlQueueSignalAfterUnlock)
 		theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this);
