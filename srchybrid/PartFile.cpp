@@ -3614,6 +3614,10 @@ void  CPartFile::RemoveAllSources(bool bTryToSwap)
 	// remove all links A4AF in sources to this file
 	while (!A4AFsrclist.IsEmpty()) {
 		CUpDownClient *cli = A4AFsrclist.RemoveHead();
+		if (theApp.clientlist == NULL || !theApp.clientlist->ContainsClientPointer(cli)) {
+			DebugLogWarning(_T("CPartFile::RemoveAllSources: dropping stale A4AF client pointer %p for file \"%s\""), cli, (LPCTSTR)GetFileName());
+			continue;
+		}
 		POSITION pos = cli->m_OtherRequests_list.Find(this);
 		if (pos)
 			cli->m_OtherRequests_list.RemoveAt(pos);

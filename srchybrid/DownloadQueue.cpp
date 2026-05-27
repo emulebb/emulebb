@@ -1156,6 +1156,11 @@ bool CDownloadQueue::RemoveSource(CUpDownClient *toremove, bool bDoStatsUpdate)
 	for (POSITION pos = toremove->m_OtherRequests_list.GetHeadPosition(); pos != NULL;) {
 		const POSITION pos1 = pos;
 		CPartFile *pfile = toremove->m_OtherRequests_list.GetNext(pos);
+		if (!IsPartFile(pfile)) {
+			DebugLogWarning(_T("CDownloadQueue::RemoveSource: dropping stale A4AF request file pointer %p for source %s"), pfile, (LPCTSTR)toremove->DbgGetClientInfo());
+			toremove->m_OtherRequests_list.RemoveAt(pos1);
+			continue;
+		}
 		POSITION pos2 = pfile->A4AFsrclist.Find(toremove);
 		if (pos2) {
 			pfile->A4AFsrclist.RemoveAt(pos2);
@@ -1166,6 +1171,11 @@ bool CDownloadQueue::RemoveSource(CUpDownClient *toremove, bool bDoStatsUpdate)
 	for (POSITION pos = toremove->m_OtherNoNeeded_list.GetHeadPosition(); pos != NULL;) {
 		const POSITION pos1 = pos;
 		CPartFile *pfile = toremove->m_OtherNoNeeded_list.GetNext(pos);
+		if (!IsPartFile(pfile)) {
+			DebugLogWarning(_T("CDownloadQueue::RemoveSource: dropping stale A4AF no-needed file pointer %p for source %s"), pfile, (LPCTSTR)toremove->DbgGetClientInfo());
+			toremove->m_OtherNoNeeded_list.RemoveAt(pos1);
+			continue;
+		}
 		POSITION pos2 = pfile->A4AFsrclist.Find(toremove);
 		if (pos2) {
 			pfile->A4AFsrclist.RemoveAt(pos2);
