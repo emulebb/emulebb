@@ -22,6 +22,8 @@
 #include "kademlia/kademlia/Kademlia.h"
 #include "kademlia/net/PacketTracking.h"
 
+#include <memory>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -160,10 +162,21 @@ int CPacketTracking::InTrackListIsAllowedPacket(uint32 uIP, uint8 byOpcode, bool
 	// check for existing entries
 	TrackPacketsIn_Struct *pTrackEntry;
 	if (!m_mapTrackPacketsIn.Lookup(uIP, pTrackEntry)) {
-		pTrackEntry = new TrackPacketsIn_Struct();
-		pTrackEntry->m_uIP = uIP;
-		m_mapTrackPacketsIn[uIP] = pTrackEntry;
-		m_liTrackPacketsIn.AddHead(pTrackEntry);
+		std::unique_ptr<TrackPacketsIn_Struct> pNewTrackEntry(new TrackPacketsIn_Struct());
+		pNewTrackEntry->m_uIP = uIP;
+		// WHY: the cleanup path owns TrackPacketsIn_Struct through
+		// m_liTrackPacketsIn, while lookup uses m_mapTrackPacketsIn. AddHead can
+		// allocate and CMap assignment can allocate; keep a local owner and roll
+		// back the list link so failure cannot leave either container with the
+		// only reference to an unreachable tracking object.
+		POSITION posLinked = m_liTrackPacketsIn.AddHead(pNewTrackEntry.get());
+		try {
+			m_mapTrackPacketsIn[uIP] = pNewTrackEntry.get();
+		} catch (...) {
+			m_liTrackPacketsIn.RemoveAt(posLinked);
+			throw;
+		}
+		pTrackEntry = pNewTrackEntry.release();
 	}
 
 	INT_PTR i = pTrackEntry->m_aTrackedRequests.GetCount();
