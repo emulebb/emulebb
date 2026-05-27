@@ -13,6 +13,7 @@
 #include "DownloadQueue.h"
 #include "emule.h"
 #include "ListenSocket.h"
+#include "PartFile.h"
 #include "UploadQueue.h"
 #include "UpdownClient.h"
 
@@ -40,6 +41,41 @@ void UpDownClientDeleteSeams::AssertReadyToDelete(const CUpDownClient *pClient, 
 	}
 #else
 	UNREFERENCED_PARAMETER(pClient);
+	UNREFERENCED_PARAMETER(pszContext);
+#endif
+}
+
+void UpDownClientDeleteSeams::AssertTemporarySourceReadyToDelete(const CUpDownClient *pClient, const CPartFile *pInitialRequestFile, const TCHAR *pszContext)
+{
+#ifdef _DEBUG
+	UNREFERENCED_PARAMETER(pszContext);
+	ASSERT(pClient != NULL);
+	if (pClient == NULL || theApp.IsClosing())
+		return;
+
+	ASSERT(pClient->socket == NULL);
+	ASSERT(pClient->GetConnectingState() == CCS_NONE);
+	// Temporary source probes are born with a request file; the key lifetime
+	// check is that no external owner has inserted the client into that file.
+	ASSERT(pClient->GetRequestFile() == NULL || pClient->GetRequestFile() == pInitialRequestFile);
+	ASSERT(pClient->m_OtherRequests_list.IsEmpty());
+	ASSERT(pClient->m_OtherNoNeeded_list.IsEmpty());
+	ASSERT(pInitialRequestFile == NULL || pInitialRequestFile->srclist.Find(const_cast<CUpDownClient*>(pClient)) == NULL);
+	ASSERT(pInitialRequestFile == NULL || pInitialRequestFile->A4AFsrclist.Find(const_cast<CUpDownClient*>(pClient)) == NULL);
+
+	if (theApp.clientlist != NULL) {
+		ASSERT(!theApp.clientlist->ContainsClientPointer(pClient));
+		ASSERT(!theApp.clientlist->IsConnectingClient(pClient));
+	}
+	if (theApp.downloadqueue != NULL)
+		ASSERT(!theApp.downloadqueue->IsInList(pClient));
+	if (theApp.uploadqueue != NULL) {
+		ASSERT(!theApp.uploadqueue->IsDownloading(pClient));
+		ASSERT(!theApp.uploadqueue->IsOnUploadQueue(const_cast<CUpDownClient*>(pClient)));
+	}
+#else
+	UNREFERENCED_PARAMETER(pClient);
+	UNREFERENCED_PARAMETER(pInitialRequestFile);
 	UNREFERENCED_PARAMETER(pszContext);
 #endif
 }

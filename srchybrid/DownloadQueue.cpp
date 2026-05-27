@@ -966,7 +966,7 @@ bool CDownloadQueue::IsPartFile(const CKnownFile *file) const
 bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 {
 	if (sender->IsStopped()) {
-		UpDownClientDeleteSeams::AssertReadyToDelete(source, _T("CDownloadQueue::CheckAndAddSource stopped file"));
+		UpDownClientDeleteSeams::AssertTemporarySourceReadyToDelete(source, sender, _T("CDownloadQueue::CheckAndAddSource stopped file"));
 		delete source;
 		return false;
 	}
@@ -974,7 +974,7 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 	if (source->HasValidHash() && md4equ(source->GetUserHash(), thePrefs.GetUserHash())) {
 		if (thePrefs.GetVerbose())
 			AddDebugLogLine(false, _T("Tried to add source with a hash matching your own."));
-		UpDownClientDeleteSeams::AssertReadyToDelete(source, _T("CDownloadQueue::CheckAndAddSource own hash"));
+		UpDownClientDeleteSeams::AssertTemporarySourceReadyToDelete(source, sender, _T("CDownloadQueue::CheckAndAddSource own hash"));
 		delete source;
 		return false;
 	}
@@ -984,7 +984,7 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 		//if (thePrefs.GetLogFilteredIPs())
 		//	AddDebugLogLine(DLP_DEFAULT, false, _T("Rejected source because it was found on the DeadSourcesList (%s) for file %s : %s")
 		//	,sender->m_DeadSourceList.IsDeadSource(source)? _T("Local") : _T("Global"), (LPCTSTR)sender->GetFileName(), (LPCTSTR)source->DbgGetClientInfo() );
-		UpDownClientDeleteSeams::AssertReadyToDelete(source, _T("CDownloadQueue::CheckAndAddSource dead source"));
+		UpDownClientDeleteSeams::AssertTemporarySourceReadyToDelete(source, sender, _T("CDownloadQueue::CheckAndAddSource dead source"));
 		delete source;
 		return false;
 	}
@@ -994,7 +994,7 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 #if defined(_DEBUG) || defined(_DEVBUILD)
 		AddDebugLogLine(DLP_DEFAULT, false, _T("Rejected source because CryptLayer-Setting (Obfuscation) was incompatible for file %s : %s"), (LPCTSTR)sender->GetFileName(), (LPCTSTR)source->DbgGetClientInfo());
 #endif
-		UpDownClientDeleteSeams::AssertReadyToDelete(source, _T("CDownloadQueue::CheckAndAddSource incompatible crypt"));
+		UpDownClientDeleteSeams::AssertTemporarySourceReadyToDelete(source, sender, _T("CDownloadQueue::CheckAndAddSource incompatible crypt"));
 		delete source;
 		return false;
 	}
@@ -1015,7 +1015,7 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 					if (cur_client->GetDownloadState() != DS_CONNECTED)
 						cur_client->SwapToAnotherFile(_T("New A4AF source found. CDownloadQueue::CheckAndAddSource()"), false, false, false, NULL, true, false); // ZZ:DownloadManager
 				}
-				UpDownClientDeleteSeams::AssertReadyToDelete(source, _T("CDownloadQueue::CheckAndAddSource duplicate source"));
+				UpDownClientDeleteSeams::AssertTemporarySourceReadyToDelete(source, sender, _T("CDownloadQueue::CheckAndAddSource duplicate source"));
 				delete source;
 				return false;
 			}
