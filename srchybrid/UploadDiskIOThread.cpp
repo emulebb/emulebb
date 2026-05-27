@@ -345,8 +345,6 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 
 	CKnownFile *pKnownFile = pOvRead->pFile;
 	ASSERT(pKnownFile != NULL);
-	if (pKnownFile != NULL)
-		--pKnownFile->nInUse;
 	UploadingToClient_Struct *pStruct = pOvRead->pUploadClientStruct;
 	ASSERT(pStruct != NULL);
 
@@ -419,6 +417,12 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 			theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: completed upload read has no upload entry; discarding block"));
 	} else if (pKnownFile)
 		DissociateFile(pKnownFile);
+	if (pKnownFile != NULL) {
+		// Keep nInUse raised until every completion-path access to pKnownFile is done.
+		// Delete paths use this counter as their release-build lifetime barrier.
+		ASSERT(pKnownFile->nInUse > 0);
+		--pKnownFile->nInUse;
+	}
 	if (pStruct != NULL)
 		pStruct->m_nPendingIOBlocks.fetch_sub(1);
 

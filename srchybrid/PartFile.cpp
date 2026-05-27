@@ -119,6 +119,27 @@ constexpr DWORD kShutdownFlushWaitMs = 5000;
 constexpr LPCSTR kFollowMajorityFilenameTag = "BBFollowMajorityFilename";
 constexpr DWORD kShutdownFlushPollMs = 10;
 
+void WaitForUploadReadReferencesToRelease(CKnownFile *pFile, LPCTSTR pszContext)
+{
+	if (pFile == NULL || pFile->nInUse == 0)
+		return;
+
+	const CString strFileName(pFile->GetFileName());
+	DebugLogWarning(_T("Waiting for upload read references before deleting \"%s\" (%s)."),
+		(LPCTSTR)strFileName,
+		pszContext != NULL ? pszContext : _T("unknown context"));
+
+	// Block new reads and close the current read handle so outstanding IOCP
+	// completions can drain before the raw CKnownFile pointer becomes invalid.
+	pFile->bNoNewReads = true;
+	CUploadDiskIOThread::DissociateFile(pFile);
+	while (pFile->nInUse != 0) {
+		if (theApp.m_pUploadDiskIOThread != NULL)
+			theApp.m_pUploadDiskIOThread->WakeUpCall();
+		::Sleep(50);
+	}
+}
+
 COLORREF BlendColor(COLORREF crColor, COLORREF crTarget, UINT uColorWeight)
 {
 	const UINT uTargetWeight = 100U - min(uColorWeight, 100U);
@@ -3538,6 +3559,7 @@ void CPartFile::PerformFileCompleteEnd(void *pCompletionResult)
 		CUploadDiskIOThread::DissociateFile(this); //file has moved, a new handle would be required
 		bNoNewReads = false; //ready for uploading - enable reading
 		if (!bKnownFileAdded) {
+			WaitForUploadReadReferencesToRelease(this, _T("duplicate completed part file"));
 			if (theApp.sharedfiles != NULL && theApp.sharedfiles->IsFilePtrInList(this))
 				theApp.sharedfiles->RemoveFile(this);
 			theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile(this);
