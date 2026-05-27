@@ -116,6 +116,7 @@ namespace
 						if (nRes > 0) {
 							rWebSocket.m_pHead->m_pToSend += nRes;
 							rWebSocket.m_pHead->m_dwSize -= nRes;
+							rWebSocket.m_uQueuedSendBytes = WebSocketHttpSeams::ConsumeQueuedResponseBytes(rWebSocket.m_uQueuedSendBytes, static_cast<size_t>(nRes));
 							if (rWebSocket.m_pHead->m_dwSize)
 								continue;
 						}
@@ -136,11 +137,13 @@ namespace
 							if ((nRes > 0) && (nRes < static_cast<int>(rWebSocket.m_pHead->m_dwSize))) {
 								rWebSocket.m_pHead->m_pToSend += nRes;
 								rWebSocket.m_pHead->m_dwSize -= nRes;
+								rWebSocket.m_uQueuedSendBytes = WebSocketHttpSeams::ConsumeQueuedResponseBytes(rWebSocket.m_uQueuedSendBytes, static_cast<size_t>(nRes));
 							} else if (WSAEWOULDBLOCK != WSAGetLastError())
 								rWebSocket.m_bValid = false;
 						}
 						break;
 					}
+					rWebSocket.m_uQueuedSendBytes = WebSocketHttpSeams::ConsumeQueuedResponseBytes(rWebSocket.m_uQueuedSendBytes, rWebSocket.m_pHead->m_dwSize);
 				}
 			} else if (shutdown(hSocket, SD_SEND)) {
 				rWebSocket.m_bValid = false;
@@ -530,6 +533,14 @@ void CWebSocket::SendData(const void *pData, DWORD dwDataSize)
 		}
 
 		if (dwDataSize && m_bValid) {
+			// WHY: a single accepted web client can still apply backpressure by
+			// requesting data and then not reading it. Request-size limits do not
+			// bound response memory, so cap queued CChunk bytes before allocating.
+			if (!WebSocketHttpSeams::CanQueueResponseBytes(m_uQueuedSendBytes, dwDataSize)) {
+				m_bValid = false;
+				return;
+			}
+
 			// push it to our tails
 			CChunk *pChunk = NULL;
 			try {
@@ -557,6 +568,7 @@ void CWebSocket::SendData(const void *pData, DWORD dwDataSize)
 			else
 				m_pHead = pChunk;
 			m_pTail = pChunk;
+			m_uQueuedSendBytes += dwDataSize;
 		}
 	}
 }
@@ -625,6 +637,7 @@ UINT AFX_CDECL WebSocketAcceptedFunc(LPVOID pD)
 			stWebSocket.SetParent(pThis);
 			stWebSocket.m_pHead = NULL;
 			stWebSocket.m_pTail = NULL;
+			stWebSocket.m_uQueuedSendBytes = 0;
 			stWebSocket.m_bValid = true;
 			stWebSocket.m_bCanRecv = true;
 			stWebSocket.m_bCanSend = true;
@@ -712,6 +725,7 @@ thread_exit:
 				delete stWebSocket.m_pHead;
 				stWebSocket.m_pHead = pNext;
 			}
+			stWebSocket.m_uQueuedSendBytes = 0;
 			delete[] stWebSocket.m_pBuf;
 			if (thePrefs.GetWebUseHttps()) {
 				int ret;

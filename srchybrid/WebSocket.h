@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 class CWebServer;
 
 void StartSockets(CWebServer *pThis);
@@ -32,6 +34,7 @@ public:
 
 	CChunk *m_pHead; // tails of what has to be sent
 	CChunk *m_pTail;
+	uint64_t m_uQueuedSendBytes;
 
 	char *m_pBuf;
 	void *m_ssl; //mbedtls_ssl_context *

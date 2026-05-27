@@ -15,6 +15,7 @@ namespace WebSocketHttpSeams
 {
 static const uint64_t kMaxHttpContentLength = 16ui64 * 1024ui64 * 1024ui64;
 static const uint64_t kMaxHttpHeaderLength = 64ui64 * 1024ui64;
+static const uint64_t kMaxQueuedResponseBytes = 16ui64 * 1024ui64 * 1024ui64;
 static const uint32_t kAcceptedClientIoTimeoutMs = 30000u;
 static const size_t kAcceptedClientReadBufferBytes = 4u * 1024u;
 // WHY: accepted web workers still share CWebServer request/session state, most
@@ -75,6 +76,29 @@ inline bool IsSupportedDispatchMethod(const std::string &rMethod)
 inline bool CanStartAcceptedClientThread(const size_t uCurrentAcceptedThreads)
 {
 	return uCurrentAcceptedThreads < kMaxAcceptedClientThreads;
+}
+
+/**
+ * @brief Reports whether a stalled accepted client may retain more response bytes.
+ *
+ * The listener accepts one web client at a time, but that client can still stop
+ * reading after causing the server to generate a response. Bound queued response
+ * bytes separately from request-body limits so backpressure cannot retain
+ * unbounded CChunk buffers until the accepted-client timeout fires.
+ */
+inline bool CanQueueResponseBytes(const uint64_t uCurrentQueuedBytes, const uint32_t uAddingBytes)
+{
+	if (uAddingBytes > kMaxQueuedResponseBytes)
+		return false;
+	return uCurrentQueuedBytes <= kMaxQueuedResponseBytes - uAddingBytes;
+}
+
+/**
+ * @brief Accounts for response bytes that have left the queued send chunks.
+ */
+inline uint64_t ConsumeQueuedResponseBytes(const uint64_t uCurrentQueuedBytes, const size_t uSentBytes)
+{
+	return uSentBytes >= uCurrentQueuedBytes ? 0u : uCurrentQueuedBytes - uSentBytes;
 }
 
 /**
