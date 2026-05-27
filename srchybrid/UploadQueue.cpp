@@ -47,6 +47,8 @@
 #include "UpDownClientDeleteSeams.h"
 #include "Win32CallbackTimerSeams.h"
 
+#include <memory>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -198,21 +200,38 @@ CUpDownClient* CUploadQueue::FindBestClientInQueue()
 
 void CUploadQueue::InsertInUploadingList(CUpDownClient *newclient, bool bNoLocking)
 {
-	UploadingToClient_Struct *pNewClientUploadStruct = new UploadingToClient_Struct;
+	std::unique_ptr<UploadingToClient_Struct> pNewClientUploadStruct(new UploadingToClient_Struct);
 	pNewClientUploadStruct->m_pClient = newclient;
-	InsertInUploadingList(pNewClientUploadStruct, bNoLocking);
+	InsertInUploadingList(pNewClientUploadStruct.release(), bNoLocking);
 }
 
 void CUploadQueue::InsertInUploadingList(UploadingToClient_Struct *pNewClientUploadStruct, bool bNoLocking)
 {
+	std::unique_ptr<UploadingToClient_Struct> pOwnedUploadStruct(pNewClientUploadStruct);
+	CEMSocket *pSocket = pOwnedUploadStruct->m_pClient->GetFileUploadSocket();
+	bool bAddedToThrottler = false;
 	// Add it last
-	theApp.uploadBandwidthThrottler->AddToStandardList(uploadinglist.GetCount(), pNewClientUploadStruct->m_pClient->GetFileUploadSocket());
-
-	if (!bNoLocking)
-		m_csUploadListMainThrdWriteOtherThrdsRead.Lock();
-	uploadinglist.AddTail(pNewClientUploadStruct);
-	if (!bNoLocking)
-		m_csUploadListMainThrdWriteOtherThrdsRead.Unlock();
+	theApp.uploadBandwidthThrottler->AddToStandardList(uploadinglist.GetCount(), pSocket);
+	bAddedToThrottler = true;
+	try {
+		CSingleLock lockUploadList(&m_csUploadListMainThrdWriteOtherThrdsRead);
+		if (!bNoLocking)
+			lockUploadList.Lock();
+		// WHY: CList::AddTail can allocate while publishing a new active upload
+		// entry. Keep ownership local until the list node exists, and let
+		// CSingleLock balance the upload-list lock if MFC reports low memory.
+		uploadinglist.AddTail(pOwnedUploadStruct.get());
+		pOwnedUploadStruct.release();
+		if (!bNoLocking)
+			lockUploadList.Unlock();
+	} catch (...) {
+		// WHY: the throttler stores only the socket pointer. If publishing the
+		// matching upload-list entry fails, roll that side effect back so the
+		// helper thread cannot later drive a slot that uploadqueue does not own.
+		if (bAddedToThrottler)
+			theApp.uploadBandwidthThrottler->RemoveFromStandardList(pSocket);
+		throw;
+	}
 
 	pNewClientUploadStruct->m_pClient->SetSlotNumber((UINT)uploadinglist.GetCount());
 }
