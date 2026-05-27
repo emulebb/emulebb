@@ -34,6 +34,7 @@
 #include "UploadBandwidthThrottler.h"
 #include "zlib.h"
 
+#include <memory>
 #include <new>
 
 #ifdef _DEBUG
@@ -650,9 +651,9 @@ void CUploadDiskIOThread::CreateStandardPackets(const OverlappedRead_Struct &Ove
 		uint64 startpos = endpos - nPacketSize;
 
 		LPCTSTR sOp;
-		Packet *packet;
+		std::unique_ptr<Packet> packet;
 		if (endpos > _UI32_MAX) {
-			packet = new Packet(OP_SENDINGPART_I64, nPacketSize + 32, OP_EMULEPROT, bIsPartFile);
+			packet.reset(new Packet(OP_SENDINGPART_I64, nPacketSize + 32, OP_EMULEPROT, bIsPartFile));
 			md4cpy(&packet->pBuffer[0], pucMD4FileHash);
 			PokeUInt64(&packet->pBuffer[16], startpos);
 			PokeUInt64(&packet->pBuffer[24], endpos);
@@ -660,7 +661,7 @@ void CUploadDiskIOThread::CreateStandardPackets(const OverlappedRead_Struct &Ove
 			theStats.AddUpDataOverheadFileRequest(32);
 			sOp = _T("OP_SendingPart_I64");
 		} else {
-			packet = new Packet(OP_SENDINGPART, nPacketSize + 24, OP_EDONKEYPROT, bIsPartFile);
+			packet.reset(new Packet(OP_SENDINGPART, nPacketSize + 24, OP_EDONKEYPROT, bIsPartFile));
 			md4cpy(&packet->pBuffer[0], pucMD4FileHash);
 			PokeUInt32(&packet->pBuffer[16], (uint32)startpos);
 			PokeUInt32(&packet->pBuffer[20], (uint32)endpos);
@@ -673,7 +674,11 @@ void CUploadDiskIOThread::CreateStandardPackets(const OverlappedRead_Struct &Ove
 			Debug(_T("  Start=%I64u  End=%I64u  Size=%u\n"), startpos, endpos, nPacketSize);
 		}
 		packet->uStatsPayLoad = nPacketSize;
-		rOutPacketList.AddTail(packet);
+		// WHY: CPacketList is an MFC list and AddTail can allocate after the
+		// packet buffer is filled. Keep packet locally owned until the list node
+		// exists so a low-memory exception cannot leak the upload block packet.
+		rOutPacketList.AddTail(packet.get());
+		packet.release();
 	}
 }
 
@@ -686,15 +691,14 @@ void CUploadDiskIOThread::CreatePackedPackets(const OverlappedRead_Struct &Overl
 
 	uint32 togo = (uint32)(uEndOffset - uStartOffset);
 	uLongf newsize = togo + 300;
-	BYTE *output = new BYTE[newsize];
+	std::unique_ptr<BYTE[]> output(new BYTE[newsize]);
 
 	// Use the lowest compression level 1 instead of the highest 9 because typically for 10240 blocks:
 	// - compressed size difference is usually small enough (~4% for .exe, .avi, .pdf and 12% for .c text)
 	// - time was 1.5-2.5 better
 	// Of course, throughput of the deflate() routine depends on processor and data bytes,
 	// but should not be the bottleneck because 50-70 MB/s rates were seen when using one CPU core.
-	if (compress2(output, &newsize, OverlappedRead.pBuffer, togo, 1) != Z_OK || togo <= newsize) {
-		delete[] output;
+	if (compress2(output.get(), &newsize, OverlappedRead.pBuffer, togo, 1) != Z_OK || togo <= newsize) {
 		CreateStandardPackets(OverlappedRead, rOutPacketList);
 		return;
 	}
@@ -702,7 +706,7 @@ void CUploadDiskIOThread::CreatePackedPackets(const OverlappedRead_Struct &Overl
 	if (thePrefs.GetDebugClientTCPLevel() > 0)
 		sDbgClientInfo = OverlappedRead.pUploadClientStruct->m_pClient->DbgGetClientInfo(true);
 
-	CMemFile memfile(output, newsize);
+	CMemFile memfile(output.get(), newsize);
 	uint32 oldSize = togo;
 	togo = newsize;
 
@@ -711,17 +715,17 @@ void CUploadDiskIOThread::CreatePackedPackets(const OverlappedRead_Struct &Overl
 	while (togo) {
 		uint32 nPacketSize = (togo < 13000) ? togo : 10240u;
 		togo -= nPacketSize;
-		Packet *packet;
+		std::unique_ptr<Packet> packet;
 		LPCTSTR sOp;
 		if (uEndOffset > UINT32_MAX) {
-			packet = new Packet(OP_COMPRESSEDPART_I64, nPacketSize + 28, OP_EMULEPROT, bIsPartFile);
+			packet.reset(new Packet(OP_COMPRESSEDPART_I64, nPacketSize + 28, OP_EMULEPROT, bIsPartFile));
 			md4cpy(&packet->pBuffer[0], pucMD4FileHash);
 			PokeUInt64(&packet->pBuffer[16], uStartOffset);
 			PokeUInt32(&packet->pBuffer[24], newsize);
 			memfile.Read(&packet->pBuffer[28], nPacketSize);
 			sOp = _T("OP_CompressedPart_I64");
 		} else {
-			packet = new Packet(OP_COMPRESSEDPART, nPacketSize + 24, OP_EMULEPROT, bIsPartFile);
+			packet.reset(new Packet(OP_COMPRESSEDPART, nPacketSize + 24, OP_EMULEPROT, bIsPartFile));
 			md4cpy(&packet->pBuffer[0], pucMD4FileHash);
 			PokeUInt32(&packet->pBuffer[16], (uint32)uStartOffset);
 			PokeUInt32(&packet->pBuffer[20], newsize);
@@ -740,10 +744,13 @@ void CUploadDiskIOThread::CreatePackedPackets(const OverlappedRead_Struct &Overl
 
 		theStats.AddUpDataOverheadFileRequest(24);
 		packet->uStatsPayLoad = payloadSize;
-		rOutPacketList.AddTail(packet);
+		// WHY: the compressed packet owns heap storage while MFC links a list
+		// node. Keep it in a local owner until AddTail succeeds; output remains
+		// separately owned by output so both buffers unwind cleanly on failure.
+		rOutPacketList.AddTail(packet.get());
+		packet.release();
 	}
 	memfile.Close();
-	delete[] output;
 }
 
 void CUploadDiskIOThread::WakeUpCall()
