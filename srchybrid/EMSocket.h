@@ -105,6 +105,7 @@ private:
 	SocketSentBytes SendStd(uint32 maxNumberOfBytesToSend, uint32 minFragSize, bool onlyAllowedToSendControlPacket);
 	SocketSentBytes SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragSize, bool onlyAllowedToSendControlPacket);
 	void	ClearQueues();
+	void	AddPreparedOverlappedSendBuffer(const WSABUF &buffer, bool bOwnsBuffer);
 	void	StartPreparedOverlappedSend(SocketSentBytes &sentBytes);
 	void	FailPreparedOverlappedSend();
 	void	DiscardPreparedOverlappedSendBuffers();
@@ -131,6 +132,7 @@ private:
 	uint32	sent;
 	WSAOVERLAPPED m_PendingSendOperation;
 	CArray<WSABUF> m_aBufferSend;
+	CArray<bool, bool> m_aBufferSendOwnsBuffer;
 
 	CTypedPtrList<CPtrList, Packet*> controlpacket_queue;
 	CList<StandardPacketQueueEntry> standardpacket_queue;

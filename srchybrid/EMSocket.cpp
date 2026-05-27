@@ -896,7 +896,7 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 						// until the WSABUF is actually linked; for borrowed slices,
 						// do not publish the borrow flag until cleanup can see the
 						// linked entry.
-						m_aBufferSend.Add(pCurBuf);
+						AddPreparedOverlappedSendBuffer(pCurBuf, !bBorrowedSendBuffer);
 						if (!bBorrowedSendBuffer)
 							copiedSlice.release();
 						else
@@ -944,7 +944,7 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 						// m_aBufferSend. If Add throws, detachedBuffer releases
 						// the bytes and the socket is failed below instead of
 						// leaking a buffer from a removed queue entry.
-						m_aBufferSend.Add(pCurBuf);
+						AddPreparedOverlappedSendBuffer(pCurBuf, true);
 						detachedBuffer.release();
 						nBytesLeft -= pCurBuf.len;
 						ret.sentBytesControlPackets += pCurBuf.len;
@@ -970,7 +970,7 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 								// WHY: m_aBufferSend becomes the owner boundary
 								// for detached packet bytes. Keep the buffer in
 								// a local owner until CArray::Add succeeds.
-								m_aBufferSend.Add(pCurBuf);
+								AddPreparedOverlappedSendBuffer(pCurBuf, true);
 								detachedBuffer.release();
 								curPacket.reset();
 								::InterlockedAdd((LONG*)&m_actualPayloadSizeSent, queueEntry.actualPayloadSize);
@@ -1001,7 +1001,7 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 								// linked. If Add throws, detachedPacket/copy
 								// clean up without leaving a half-published
 								// sendbuffer behind a locked socket.
-								m_aBufferSend.Add(pCurBuf);
+								AddPreparedOverlappedSendBuffer(pCurBuf, !bBorrowedSendBuffer);
 								if (!bBorrowedSendBuffer)
 									copiedSlice.release();
 								else
@@ -1057,6 +1057,23 @@ SocketSentBytes CEMSocket::SendOv(uint32 maxNumberOfBytesToSend, uint32 minFragS
 uint32 CEMSocket::GetNextFragSize(uint32 current, uint32 minFragSize)
 {
 	return (min(_I32_MAX, current + minFragSize - 1) / minFragSize) * minFragSize;
+}
+
+//sendLock must be locked by the caller!
+void CEMSocket::AddPreparedOverlappedSendBuffer(const WSABUF &buffer, bool bOwnsBuffer)
+{
+	// WHY: a WSABUF can either own a detached heap block or borrow a slice from
+	// sendbuffer. Inferring that later by comparing raw addresses to the current
+	// sendbuffer is not stable during socket teardown: the owner can be cleared
+	// before cleanup sees a borrowed interior pointer. Keep ownership metadata
+	// beside the WSABUF so cleanup never calls delete[] on a non-base address.
+	const INT_PTR iBufferIndex = m_aBufferSend.Add(buffer);
+	try {
+		m_aBufferSendOwnsBuffer.Add(bOwnsBuffer);
+	} catch (...) {
+		m_aBufferSend.RemoveAt(iBufferIndex);
+		throw;
+	}
 }
 
 //sendLock must be locked by the caller!
@@ -1402,10 +1419,12 @@ void CEMSocket::DiscardPreparedOverlappedSendBuffers()
 	// helper releases only the staged WSABUF storage and leaves sendbuffer
 	// lifetime decisions to the failing caller.
 	for (INT_PTR i = m_aBufferSend.GetCount(); --i >= 0;) {
-		if (!IsBorrowedOverlappedSendBufferSlice(m_aBufferSend[i].buf, sendbuffer, sendblen))
+		const bool bOwnsBuffer = i < m_aBufferSendOwnsBuffer.GetCount() ? m_aBufferSendOwnsBuffer[i] : false;
+		if (bOwnsBuffer)
 			delete[] m_aBufferSend[i].buf;
 	}
 	m_aBufferSend.RemoveAll();
+	m_aBufferSendOwnsBuffer.RemoveAll();
 	m_bOverlappedSendBorrowsSendBuffer = false;
 }
 
@@ -1414,22 +1433,37 @@ void CEMSocket::CleanUpOverlappedSendOperation(bool bCancel)
 {
 	if (m_bPendingSendOv) {
 		m_bPendingSendOv = false;
-		if (bCancel && CancelIo((HANDLE)GetSocketHandle()))
-			for (int i = 5; --i >= 0;) { //use counter and sleep(), because this may loop forever
-				DWORD dwTransferred, dwFlags;
-				if (WSAGetOverlappedResult(GetSocketHandle(), &m_PendingSendOperation, &dwTransferred, FALSE, &dwFlags))
-					break;
-				if (WSAGetLastError() != WSA_IO_INCOMPLETE)
-					break;
-				::Sleep(20);
-			};
+		if (bCancel && GetSocketHandle() != INVALID_SOCKET) {
+			// WHY: overlapped sends can be issued by the upload throttler thread
+			// and later cleaned up by the UI timed-delete path. CancelIo only
+			// cancels I/O issued by the current thread, which leaves the kernel
+			// free to keep referencing WSABUF memory after teardown. CancelIoEx
+			// targets this exact operation regardless of the issuing thread.
+			const BOOL bCancelIssued = ::CancelIoEx(reinterpret_cast<HANDLE>(GetSocketHandle()), &m_PendingSendOperation);
+			const DWORD dwCancelError = bCancelIssued ? ERROR_SUCCESS : ::GetLastError();
+			if (bCancelIssued || dwCancelError == ERROR_NOT_FOUND || dwCancelError == ERROR_OPERATION_ABORTED)
+				for (int i = 100; --i >= 0;) { // bounded wait; normally completes immediately after close/cancel
+					DWORD dwTransferred, dwFlags;
+					if (WSAGetOverlappedResult(GetSocketHandle(), &m_PendingSendOperation, &dwTransferred, FALSE, &dwFlags))
+						break;
+					if (WSAGetLastError() != WSA_IO_INCOMPLETE)
+						break;
+					::Sleep(20);
+				}
+		}
 
 		for (INT_PTR i = m_aBufferSend.GetCount(); --i >= 0;) {
-			if (!IsBorrowedOverlappedSendBufferSlice(m_aBufferSend[i].buf, sendbuffer, sendblen))
+			const bool bOwnsBuffer = i < m_aBufferSendOwnsBuffer.GetCount() ? m_aBufferSendOwnsBuffer[i] : false;
+			// WHY: ownership metadata is the authoritative guard against
+			// freeing borrowed interior pointers. If the metadata is ever
+			// missing, leaking a staged send buffer is safer than corrupting the
+			// process heap during socket teardown.
+			if (bOwnsBuffer)
 				delete[] m_aBufferSend[i].buf;
 		}
 		m_aBufferSend.RemoveAll();
-		if (m_bOverlappedSendBorrowsSendBuffer && sent == sendblen) {
+		m_aBufferSendOwnsBuffer.RemoveAll();
+		if (m_bOverlappedSendBorrowsSendBuffer && sent == sendblen && sendbuffer != NULL) {
 			delete[] sendbuffer;
 			sendbuffer = NULL;
 			sendblen = 0;
