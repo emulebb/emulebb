@@ -281,7 +281,7 @@ public:
 	void			ResetSessionDown()								{ m_nCurSessionDown = m_nTransferredDown; m_nCurSessionPayloadDown = 0; }
 	uint64			GetQueueSessionPayloadUp() const				{ return m_nCurQueueSessionPayloadUp; } // Data uploaded/transmitted
 	uint64			GetQueueSessionUploadAdded() const				{ return m_addedPayloadQueueSession; } // Data put into upload buffers
-	uint64			GetPayloadInBuffer() const						{ return m_addedPayloadQueueSession - m_nCurQueueSessionPayloadUp; }
+	uint64			GetPayloadInBuffer() const						{ return m_addedPayloadQueueSession >= m_nCurQueueSessionPayloadUp ? m_addedPayloadQueueSession - m_nCurQueueSessionPayloadUp : 0; }
 	void			SetQueueSessionUploadAdded(uint64 uVal)			{ m_addedPayloadQueueSession = uVal; }
 
 	bool			ProcessExtendedInfo(CSafeMemFile &data, CKnownFile *tempreqfile);
