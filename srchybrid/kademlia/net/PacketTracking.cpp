@@ -168,7 +168,7 @@ int CPacketTracking::InTrackListIsAllowedPacket(uint32 uIP, uint8 byOpcode, bool
 
 	INT_PTR i = pTrackEntry->m_aTrackedRequests.GetCount();
 	// search for the specific request track
-	while (--i >= 0 && pTrackEntry->m_aTrackedRequests[i].m_byOpcode == byOpcode);
+	while (--i >= 0 && pTrackEntry->m_aTrackedRequests[i].m_byOpcode != byOpcode);
 
 	if (i >= 0) {
 		// already tracking requests with this opcode
