@@ -57,6 +57,8 @@ their client on the eMule forum.
 #include "kademlia/utils/KadUDPKey.h"
 #include "kademlia/utils/KadClientSearcher.h"
 
+#include <memory>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -1872,7 +1874,7 @@ void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, uint
 		ASSERT(0);
 		return;
 	}
-	Packet *pPacket = new Packet(OP_KADEMLIAHEADER);
+	std::unique_ptr<Packet> pPacket(new Packet(OP_KADEMLIAHEADER));
 	pPacket->opcode = pbyData[1];
 	pPacket->pBuffer = new char[uLenData + 8];
 	memcpy(pPacket->pBuffer, pbyData + 2, uLenData - 2);
@@ -1881,14 +1883,18 @@ void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, uint
 		pPacket->PackPacket();
 	theStats.AddUpDataOverheadKad(pPacket->size);
 	AddTrackedOutPacket(uDestinationHost, pbyData[1]);
-	theApp.clientudp->SendPacket(pPacket, ntohl(uDestinationHost), uDestinationPort, true
+	// WHY: PackPacket and AddTrackedOutPacket can allocate before the client UDP
+	// queue takes ownership. Keep the Packet owned locally until the call begins;
+	// CClientUDPSocket::SendPacket owns and deletes it on both success and
+	// reported queue failure.
+	theApp.clientudp->SendPacket(pPacket.release(), ntohl(uDestinationHost), uDestinationPort, true
 		, (uCryptTargetID != NULL) ? uCryptTargetID->GetData() : NULL
 		, true, targetUDPKey.GetKeyValue(theApp.GetPublicIP()));
 }
 
 void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, byte byOpcode, uint32 uDestinationHost, uint16 uDestinationPort, const CKadUDPKey &targetUDPKey, const CUInt128 *uCryptTargetID)
 {
-	Packet *pPacket = new Packet(OP_KADEMLIAHEADER);
+	std::unique_ptr<Packet> pPacket(new Packet(OP_KADEMLIAHEADER));
 	pPacket->opcode = byOpcode;
 	pPacket->pBuffer = new char[uLenData];
 	memcpy(pPacket->pBuffer, pbyData, uLenData);
@@ -1897,20 +1903,24 @@ void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, byte
 		pPacket->PackPacket();
 	theStats.AddUpDataOverheadKad(pPacket->size);
 	AddTrackedOutPacket(uDestinationHost, byOpcode);
-	theApp.clientudp->SendPacket(pPacket, ntohl(uDestinationHost), uDestinationPort, true
+	// WHY: keep Packet ownership local across packing/tracking allocations; the
+	// client UDP send path assumes ownership as soon as it is entered.
+	theApp.clientudp->SendPacket(pPacket.release(), ntohl(uDestinationHost), uDestinationPort, true
 		, (uCryptTargetID != NULL) ? uCryptTargetID->GetData() : NULL
 		, true, targetUDPKey.GetKeyValue(theApp.GetPublicIP()));
 }
 
 void CKademliaUDPListener::SendPacket(CSafeMemFile &pbyData, byte byOpcode, uint32 uDestinationHost, uint16 uDestinationPort, const CKadUDPKey &targetUDPKey, const CUInt128 *uCryptTargetID)
 {
-	Packet *pPacket = new Packet(pbyData, OP_KADEMLIAHEADER);
+	std::unique_ptr<Packet> pPacket(new Packet(pbyData, OP_KADEMLIAHEADER));
 	pPacket->opcode = byOpcode;
 	if (pPacket->size > 200)
 		pPacket->PackPacket();
 	theStats.AddUpDataOverheadKad(pPacket->size);
 	AddTrackedOutPacket(uDestinationHost, byOpcode);
-	theApp.clientudp->SendPacket(pPacket, htonl(uDestinationHost), uDestinationPort, true
+	// WHY: keep Packet ownership local across packing/tracking allocations; the
+	// client UDP send path assumes ownership as soon as it is entered.
+	theApp.clientudp->SendPacket(pPacket.release(), htonl(uDestinationHost), uDestinationPort, true
 		, (uCryptTargetID != NULL) ? uCryptTargetID->GetData() : NULL
 		, true, targetUDPKey.GetKeyValue(theApp.GetPublicIP()));
 }
