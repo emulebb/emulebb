@@ -268,7 +268,10 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 		if (pFile) {
 			--pFile->m_iWrites;
 			if (pBuffer->data) { //write data
-				ASSERT(pBuffer->flushed = PB_PENDING && pFile->m_iWrites >= 0);
+				// WHY: completion must only observe buffers already handed to the
+				// write thread. Assigning here hides state-machine bugs in Debug
+				// and can make later cleanup believe an invalid buffer was pending.
+				ASSERT(pBuffer->flushed == PB_PENDING && pFile->m_iWrites >= 0);
 				pBuffer->flushed = PB_WRITTEN;
 			} else { //full file allocation
 				ASSERT(dwBytesWritten == 1);
