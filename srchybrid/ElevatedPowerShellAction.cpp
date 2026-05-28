@@ -11,6 +11,7 @@
 #include "OtherFunctions.h"
 #include "PathHelpers.h"
 #include "ProcessLaunchSeams.h"
+#include "resource.h"
 
 #include <AclAPI.h>
 #include <vector>
@@ -229,7 +230,7 @@ bool ElevatedPowerShellAction::PrepareBundledScript(const CString &rstrTempPrefi
 	rResult.strScriptPath = GetBundledScriptPath(rstrScriptLeafName);
 	if (rResult.strScriptPath.IsEmpty() || !LongPathSeams::PathExists(rResult.strScriptPath)) {
 		rResult.dwLastError = ERROR_FILE_NOT_FOUND;
-		rResult.strErrorText.Format(_T("Bundled eMuleBB script is missing: %s"), (LPCTSTR)rResult.strScriptPath);
+		rResult.strErrorText.Format(GetResString(IDS_BUNDLED_SCRIPT_MISSING), (LPCTSTR)rResult.strScriptPath);
 		return false;
 	}
 	if (rstrResultLeafName.IsEmpty())
@@ -250,7 +251,7 @@ bool ElevatedPowerShellAction::RunBundledScript(const CString &rstrArguments, bo
 {
 	if (rResult.strScriptPath.IsEmpty() || !LongPathSeams::PathExists(rResult.strScriptPath)) {
 		rResult.dwLastError = ERROR_FILE_NOT_FOUND;
-		rResult.strErrorText.Format(_T("Bundled eMuleBB script is missing: %s"), (LPCTSTR)rResult.strScriptPath);
+		rResult.strErrorText.Format(GetResString(IDS_BUNDLED_SCRIPT_MISSING), (LPCTSTR)rResult.strScriptPath);
 		CleanupActionTemp(rResult.strResultPath, rResult.strTempDir);
 		return false;
 	}
@@ -299,7 +300,7 @@ bool ElevatedPowerShellAction::RunBundledScript(const CString &rstrArguments, bo
 	if (eWaitResult == ProcessLaunchSeams::EProcessWaitResult::TimedOut) {
 		rResult.dwLastError = WAIT_TIMEOUT;
 		rResult.dwExitCode = WAIT_TIMEOUT;
-		rResult.strErrorText = _T("Elevated PowerShell action timed out.");
+		rResult.strErrorText = GetResString(IDS_ELEVATED_PS_TIMEOUT);
 		(void)::TerminateProcess(sei.hProcess, WAIT_TIMEOUT);
 		(void)::WaitForSingleObject(sei.hProcess, ProcessLaunchSeams::kTimedOutProcessTerminateWaitMs);
 		::CloseHandle(sei.hProcess);

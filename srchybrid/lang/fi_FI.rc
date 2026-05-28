@@ -1831,7 +1831,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_SHAREEMULEWARNING   "Tämän asetuksen muuttaminen sallii eMulen käyttävän muitakin asetuksia. Tämän hetkiset asetuksesi ohitetaan, ja aloitetut lataukset saattavat hävitä näkyvistä.  Voit palauttaa nykyiset asetuksesi takaisin muuttamalla tätä valintaa uudelleen.\r\neMule on käynnistettävä uudelleen, jotta muutokset astuvat voimaan."
+    IDS_SHAREEMULEWARNING   "Tämän asetuksen muuttaminen sallii eMulen käyttävän muitakin asetuksia. Tämän hetkiset asetuksesi ohitetaan, ja aloitetut lataukset saattavat hävitä näkyvistä.  Voit palauttaa nykyiset asetuksesi takaisin muuttamalla tätä valintaa uudelleen.\n\neMule on käynnistettävä uudelleen, jotta muutokset astuvat voimaan."
 	IDS_SPAM                "Spam (roska)"
     IDS_MARKSPAM            "Merkitse roskaksi"
     IDS_MARKNOTSPAM         "Poista roska -merkintä"

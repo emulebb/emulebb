@@ -918,7 +918,7 @@ BEGIN
     IDS_STARTUP             "Inici"
     IDS_NEWVERSIONAVL       "A new version of eMuleBB is available. Check GitHub Releases for more information."
     IDS_NEWVERSIONAVLPOPUP  "A new version of eMuleBB is available. Click here to read about the new version."
-    IDS_NEWVERSIONFAILED    "No s'ha pogut comprovar si n'hi ha versions  \nnoves."
+    IDS_NEWVERSIONFAILED    "No s'ha pogut comprovar si n'hi ha versions  noves."
 END
 
 STRINGTABLE

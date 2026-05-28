@@ -1865,7 +1865,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_SHAREEMULEWARNING   "Ved å forandre dette alternativet vil eMule bruke en annen konfigurasjon. Din gjeldende instilling vil bli ignorert og gjeldende nedlastinger vil kanskje ikke vises mer. Du kan gå tilbake til din gjeldene instilling ved å forandre dette alternativ når som helst.\n\nDu må starte eMule på nytt for.\n\nDu må starte eMule på nytt for at denne endringen skal tre i kraft."
+    IDS_SHAREEMULEWARNING   "Ved å forandre dette alternativet vil eMule bruke en annen konfigurasjon. Din gjeldende instilling vil bli ignorert og gjeldende nedlastinger vil kanskje ikke vises mer. Du kan gå tilbake til din gjeldene instilling ved å forandre dette alternativ når som helst. Du må starte eMule på nytt for.\n\nDu må starte eMule på nytt for at denne endringen skal tre i kraft."
     IDS_SPAM                "Søppel"
     IDS_MARKSPAM            "Marker som søppel"
     IDS_MARKNOTSPAM         "Marker som ikke søppel"

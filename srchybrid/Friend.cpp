@@ -294,7 +294,7 @@ void CFriend::UpdateFriendConnectionState(EFriendConnectReport eEvent)
 			for (POSITION pos = m_liConnectionReport.GetHeadPosition(); pos != NULL;) {
 				CFriendConnectionListener *flistener = m_liConnectionReport.GetNext(pos);
 				flistener->ReportConnectionProgress(GetLinkedClient(), _T(" ...") + GetResString(IDS_TREEOPTIONS_OK) + _T('\n'), true);
-				flistener->ReportConnectionProgress(GetLinkedClient(), _T("*** ") + CString(_T("Authenticating friend")) /*to stringlist*/, false);
+				flistener->ReportConnectionProgress(GetLinkedClient(), _T("*** ") + GetResString(IDS_FRIEND_AUTHENTICATING) /*to stringlist*/, false);
 			}
 			if (m_FriendConnectState == FCS_CONNECTING)
 				m_FriendConnectState = FCS_AUTH;

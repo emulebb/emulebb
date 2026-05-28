@@ -74,16 +74,16 @@ static CString BuildMediaInfoDllHint(MediaInfoDllSeams::EMediaInfoDllStatus eSta
 
 	switch (eStatus) {
 	case MediaInfoDllSeams::MediaInfoDll_Incompatible:
-		strHint += _T("\r\nMediaInfo.dll was found, but eMuleBB requires version 26.01 or newer.");
+		strHint += _T("\r\n") + GetResString(IDS_MEDIAINFO_DLL_INCOMPATIBLE);
 		break;
 	case MediaInfoDllSeams::MediaInfoDll_BadExports:
-		strHint += _T("\r\nA MediaInfo.dll candidate was found, but it does not expose the required MediaInfo API exports.");
+		strHint += _T("\r\n") + GetResString(IDS_MEDIAINFO_DLL_BADEXPORTS);
 		break;
 	case MediaInfoDllSeams::MediaInfoDll_LoadFailed:
-		strHint += _T("\r\nA MediaInfo.dll candidate was found, but Windows could not load it or one of its dependencies.");
+		strHint += _T("\r\n") + GetResString(IDS_MEDIAINFO_DLL_LOADFAILED);
 		break;
 	case MediaInfoDllSeams::MediaInfoDll_Missing:
-		strHint += _T("\r\nLookup also checks the MediaInfo.dll path from Preferences > Tweaks, MediaInfo registry install paths, and %ProgramFiles%\\MediaInfo\\MEDIAINFO.DLL.");
+		strHint += _T("\r\n") + GetResString(IDS_MEDIAINFO_DLL_SEARCHHINT);
 		break;
 	default:
 		break;
