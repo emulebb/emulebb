@@ -4702,17 +4702,6 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	Links.InsertMenu(3, MF_BYPOSITION | MF_SEPARATOR);
 	Links.AppendMenu(MF_STRING, MP_WEBSVC_EDIT, GetResString(IDS_WEBSVEDIT));
 
-	CMenu scheduler;
-	scheduler.CreateMenu();
-	const CString &schedonoff(GetResString(thePrefs.IsSchedulerEnabled() ? IDS_HM_SCHED_OFF : IDS_HM_SCHED_ON));
-
-	scheduler.AppendMenu(MF_STRING, MP_HM_SCHEDONOFF, schedonoff);
-	if (theApp.scheduler->GetCount() > 0) {
-		scheduler.AppendMenu(MF_SEPARATOR);
-		for (INT_PTR i = 0; i < theApp.scheduler->GetCount(); ++i)
-			scheduler.AppendMenu(MF_STRING, MP_SCHACTIONS + i, theApp.scheduler->GetSchedule(i)->title);
-	}
-
 	const auto appendConnectionItem = [](CTitledMenu &targetMenu) {
 		if (theApp.serverconnect->IsConnected())
 			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, GetResString(IDS_MAIN_BTN_DISCONNECT), _T("DISCONNECT"));
@@ -4957,8 +4946,6 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_FILEINFO_INI, GetResString(IDS_EDIT_FILEINFO_INI), _T("FILECOMMENTS"));
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_STATISTICS_INI, GetResString(IDS_EDIT_STATISTICS_INI), _T("STATISTICS"));
 
-		if (!bExpandedToolsMenu)
-			networkUpdates.AppendMenu(MF_STRING, MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
 		networkUpdates.AppendMenu(MF_SEPARATOR);
@@ -5020,14 +5007,6 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 			theWebServices.GetGeneralMenuEntries(&helpLegacy);
 			helpLegacy.InsertMenu(3, MF_BYPOSITION | MF_SEPARATOR);
 			helpLegacy.AppendMenu(MF_STRING, MP_WEBSVC_EDIT, GetResString(IDS_WEBSVEDIT));
-			helpLegacy.AppendMenu(MF_SEPARATOR);
-			helpLegacy.AppendMenu(MF_STRING, MP_HM_SCHEDONOFF, schedonoff, _T("SCHEDULER"));
-			if (theApp.scheduler->GetCount() > 0) {
-				for (INT_PTR i = 0; i < theApp.scheduler->GetCount(); ++i)
-					helpLegacy.AppendMenu(MF_STRING, MP_SCHACTIONS + i, theApp.scheduler->GetSchedule(i)->title, _T("SCHEDULER"));
-			}
-			helpLegacy.AppendMenu(MF_SEPARATOR);
-			helpLegacy.AppendMenu(MF_STRING, MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
 
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)transfers.m_hMenu, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
@@ -5040,7 +5019,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)diagnostics.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_DIAGNOSTICS), _T('D')), _T("DIAGNOSTICS"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)displayViews.m_hMenu, WithMenuMnemonic(FormatCompoundMenuLabel(IDS_PW_DISPLAY, IDS_TOOLS_VIEW_PRESETS), _T('V')), _T("DISPLAY"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T('E')), _T("PREFERENCES"));
-			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)helpLegacy.m_hMenu, WithMenuMnemonic(FormatCompoundMenuLabel(IDS_LINKS, IDS_SCHEDULER), _T('H')), _T("HELP"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)helpLegacy.m_hMenu, WithMenuMnemonic(GetResString(IDS_LINKS), _T('H')), _T("HELP"));
 		} else {
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)transfers.m_hMenu, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
@@ -5065,14 +5044,11 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB"));
 		menu.AppendMenu(MF_SEPARATOR);
 		menu.AppendMenu(MF_STRING, MP_HM_IRC, GetResString(IDS_IRC), _T("IRC"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)scheduler.m_hMenu, GetResString(IDS_SCHEDULER), _T("SCHEDULER"));
-		menu.AppendMenu(MF_STRING, MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
 	}
 
 	if (bTrayMenu) {
 		menu.AppendMenu(MF_SEPARATOR);
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)scheduler.m_hMenu, GetResString(IDS_SCHEDULER), _T("SCHEDULER"));
 	}
 
 	menu.AppendMenu(MF_SEPARATOR);
@@ -5099,7 +5075,6 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	VERIFY(refreshInterval.DestroyMenu());
 	VERIFY(helpLegacy.DestroyMenu());
 	VERIFY(Links.DestroyMenu());
-	VERIFY(scheduler.DestroyMenu());
 	VERIFY(menu.DestroyMenu());
 }
 
