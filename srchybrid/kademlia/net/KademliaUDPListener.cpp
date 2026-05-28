@@ -41,6 +41,7 @@ their client on the eMule forum.
 #include "Log.h"
 #include "opcodes.h"
 #include "Packets.h"
+#include "ProtocolGuards.h"
 #include "Statistics.h"
 #include "updownclient.h"
 #include "IPv4AddressSeams.h"
@@ -67,6 +68,30 @@ static char THIS_FILE[] = __FILE__;
 
 extern LPCSTR g_aszInvKadKeywordCharsA;
 extern LPCWSTR g_awszInvKadKeywordChars;
+
+namespace
+{
+constexpr UINT kKadSearchResultMinimumRecordSize = 17u; // answer ID + tag count
+constexpr UINT kKadPublishKeyMinimumRecordSize = 17u; // source ID + tag count
+
+void ThrowMalformedKadCount(LPCSTR pszFunction, unsigned uCount, UINT uAvailable, UINT uMinimumRecordSize)
+{
+	CString strError;
+	strError.Format(
+		_T("***NOTE: Received impossible count (%u, available %u, minimum record size %u) in %hs"),
+		uCount,
+		uAvailable,
+		uMinimumRecordSize,
+		pszFunction);
+	throw strError;
+}
+
+void RequireSaneKadCount(LPCSTR pszFunction, unsigned uCount, UINT uAvailable, UINT uMinimumRecordSize)
+{
+	if (!HasSaneCountedRecords(uAvailable, uCount, uMinimumRecordSize))
+		ThrowMalformedKadCount(pszFunction, uCount, uAvailable, uMinimumRecordSize);
+}
+}
 
 using namespace Kademlia;
 
@@ -1118,7 +1143,9 @@ void CKademliaUDPListener::Process_KADEMLIA_SEARCH_RES(const byte *pbyPacketData
 
 	// How many results. Not supported yet.
 	CUInt128 uAnswer;
-	for (unsigned uCount = byteIO.ReadUInt16(); uCount > 0; --uCount) {
+	unsigned uCount = byteIO.ReadUInt16();
+	RequireSaneKadCount(__FUNCTION__, uCount, byteIO.GetAvailable(), kKadSearchResultMinimumRecordSize);
+	for (; uCount > 0; --uCount) {
 		// What is the answer
 		byteIO.ReadUInt128(uAnswer);
 
@@ -1155,7 +1182,9 @@ void CKademliaUDPListener::Process_KADEMLIA2_SEARCH_RES(const byte *pbyPacketDat
 
 	// Total results.
 	CUInt128 uAnswer;
-	for (unsigned uCount = byteIO.ReadUInt16(); uCount > 0; --uCount) {
+	unsigned uCount = byteIO.ReadUInt16();
+	RequireSaneKadCount(__FUNCTION__, uCount, byteIO.GetAvailable(), kKadSearchResultMinimumRecordSize);
+	for (; uCount > 0; --uCount) {
 		// What is the answer
 		byteIO.ReadUInt128(uAnswer);
 
@@ -1199,7 +1228,9 @@ void CKademliaUDPListener::Process_KADEMLIA2_PUBLISH_KEY_REQ(const byte *pbyPack
 	bool bDbgInfo = (thePrefs.GetDebugClientKadUDPLevel() > 0);
 	uint8 uLoad = 0;
 	CUInt128 uTarget;
-	for (unsigned uCount = byteIO.ReadUInt16(); uCount > 0; --uCount) {
+	unsigned uCount = byteIO.ReadUInt16();
+	RequireSaneKadCount(__FUNCTION__, uCount, byteIO.GetAvailable(), kKadPublishKeyMinimumRecordSize);
+	for (; uCount > 0; --uCount) {
 		CKadTag *pTag = NULL;
 		CKeyEntry *pEntry = NULL;
 		try {
@@ -1485,7 +1516,9 @@ void CKademliaUDPListener::Process_KADEMLIA_SEARCH_NOTES_RES(const byte *pbyPack
 	byteIO.ReadUInt128(uTarget);
 
 	CUInt128 uAnswer;
-	for (unsigned uCount = byteIO.ReadUInt16(); uCount > 0; --uCount) {
+	unsigned uCount = byteIO.ReadUInt16();
+	RequireSaneKadCount(__FUNCTION__, uCount, byteIO.GetAvailable(), kKadSearchResultMinimumRecordSize);
+	for (; uCount > 0; --uCount) {
 		// What is the answer
 		byteIO.ReadUInt128(uAnswer);
 

@@ -161,11 +161,36 @@ inline bool HasUdpReaskAckBase(size_t payloadLength)
 }
 
 /**
+ * Reports whether OP_REASKACK still has the queue-rank field after optional
+ * variable-length file-status parsing consumed its prefix.
+ */
+inline bool HasUdpReaskAckQueueRank(ULONGLONG position, ULONGLONG length)
+{
+	return position <= length && length - position >= 2u;
+}
+
+/**
  * Reports whether OP_DIRECTCALLBACKREQ contains tcp port, user hash, and options.
  */
 inline bool HasUdpDirectCallbackRequest(size_t payloadLength)
 {
 	return payloadLength >= 19u;
+}
+
+/**
+ * Reports whether OP_CALLBACK contains Kad check ID, file ID, IP, and TCP port.
+ */
+inline bool HasTcpKadCallbackPayload(size_t payloadLength)
+{
+	return payloadLength >= 38u;
+}
+
+/**
+ * Reports whether OP_REASKCALLBACKTCP contains destination IP, TCP port, and file hash.
+ */
+inline bool HasTcpBuddyReaskCallbackPayload(size_t payloadLength)
+{
+	return payloadLength >= 22u;
 }
 
 /**
@@ -185,6 +210,17 @@ inline uint32 GetDownloadBlockPacketHeaderSize(const bool bPacked, const bool bI
 inline bool HasDownloadBlockPacketHeader(size_t packetSize, const bool bPacked, const bool bI64Offsets)
 {
 	return packetSize >= GetDownloadBlockPacketHeaderSize(bPacked, bI64Offsets);
+}
+
+/**
+ * Reports whether a peer-supplied item count can fit when every remaining item
+ * has at least a fixed record prefix. Variable tag payloads may still need
+ * deeper parsing, but impossible counts are rejected before entering the loop.
+ */
+inline bool HasSaneCountedRecords(size_t remainingBytes, uint32 recordCount, size_t minimumRecordSize)
+{
+	return minimumRecordSize == 0u
+		|| recordCount <= remainingBytes / minimumRecordSize;
 }
 
 /**

@@ -46,6 +46,7 @@
 #include "SHAHashSet.h"
 #include "Log.h"
 #include "PathHelpers.h"
+#include "ProtocolGuards.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -60,6 +61,15 @@ CString BuildSharedBrowseDirectoryKey(const CString &rstrDirectory)
 	CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
 	strKey.MakeLower();
 	return strKey;
+}
+
+bool RejectMalformedClientTcpPacket(LPCTSTR pszOpcodeName, uint32 uSize, CUpDownClient *pClient)
+{
+	DebugLogWarning(_T("Client TCP socket: rejected malformed %s packet from %s (payload size %u)"),
+		pszOpcodeName,
+		pClient != NULL ? (LPCTSTR)pClient->DbgGetClientInfo() : _T("(unknown client)"),
+		uSize);
+	return false;
 }
 }
 
@@ -1408,6 +1418,10 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 
 			if (!Kademlia::CKademlia::IsRunning())
 				return;
+			if (!HasTcpKadCallbackPayload(size)) {
+				(void)RejectMalformedClientTcpPacket(_T("OP_CALLBACK"), size, client);
+				return;
+			}
 			CSafeMemFile data(packet, size);
 			Kademlia::CUInt128 check;
 			data.ReadUInt128(check);
@@ -1473,6 +1487,10 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 				if (thePrefs.GetDebugClientTCPLevel() > 0)
 					DebugRecv("OP_ReaskCallbackTCP", client, NULL);
 				//This callback was not from our buddy. Ignore.
+				return;
+			}
+			if (!HasTcpBuddyReaskCallbackPayload(size)) {
+				(void)RejectMalformedClientTcpPacket(_T("OP_REASKCALLBACKTCP"), size, client);
 				return;
 			}
 			CSafeMemFile data_in(packet, size);

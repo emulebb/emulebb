@@ -386,6 +386,9 @@ bool CClientUDPSocket::ProcessPacket(const BYTE *packet, UINT size, uint8 opcode
 				if (sender->GetUDPVersion() > 3)
 					sender->ProcessFileStatus(true, data_in, sender->GetRequestFile());
 
+				if (!HasUdpReaskAckQueueRank(data_in.GetPosition(), data_in.GetLength()))
+					return RejectMalformedClientUdpPacket(_T("OP_REASKACK"), size, ip, port);
+
 				uint16 nRank = data_in.ReadUInt16();
 				sender->SetRemoteQueueFull(false);
 				sender->UDPReaskACK(nRank);
