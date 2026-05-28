@@ -4723,16 +4723,19 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	if (!toolsonly) {
 		appendConnectionItem(menu);
 
+		menu.AppendMenu(MF_SEPARATOR);
 		menu.AppendMenu(MF_STRING, MP_HM_KAD, GetResString(IDS_EM_KADEMLIA), _T("KADEMLIA"));
 		menu.AppendMenu(MF_STRING, MP_HM_SRVR, GetResString(IDS_EM_SERVER), _T("SERVER"));
 		menu.AppendMenu(MF_STRING, MP_HM_TRANSFER, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
 		menu.AppendMenu(MF_STRING, MP_HM_SEARCH, GetResString(IDS_EM_SEARCH), _T("SEARCH"));
 		menu.AppendMenu(MF_STRING, MP_HM_FILES, GetResString(IDS_EM_FILES), _T("SharedFiles"));
 		menu.AppendMenu(MF_STRING, MP_HM_MSGS, GetResString(IDS_EM_MESSAGES), _T("MESSAGES"));
-		menu.AppendMenu(MF_STRING, MP_HM_IRC, GetResString(IDS_IRC), _T("IRC"));
 		menu.AppendMenu(MF_STRING, MP_HM_STATS, GetResString(IDS_EM_STATISTIC), _T("STATISTICS"));
 		menu.AppendMenu(MF_STRING, MP_HM_PREFS, GetResString(IDS_EM_PREFS), _T("PREFERENCES"));
 		menu.AppendMenu(MF_STRING, MP_HM_HELP, GetResString(IDS_EM_HELP), _T("HELP"));
+		menu.AppendMenu(MF_SEPARATOR);
+		menu.AppendMenu(MF_STRING, MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
+		menu.AppendMenu(MF_STRING, MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
 		menu.AppendMenu(MF_SEPARATOR);
 	}
 
@@ -5066,12 +5069,15 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		menu.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
 		menu.AppendMenu(MF_STRING, MP_HM_OPENCONFIGDIR, GetResString(IDS_OPENCONFIGDIR) + _T("..."), _T("OPENFOLDER"));
 		menu.AppendMenu(MF_STRING, MP_HM_OPENLOGDIR, GetResString(IDS_OPENLOGDIR) + _T("..."), _T("OPENFOLDER"));
+		menu.AppendMenu(MF_SEPARATOR);
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB"));
+		menu.AppendMenu(MF_SEPARATOR);
+		menu.AppendMenu(MF_STRING, MP_HM_IRC, GetResString(IDS_IRC), _T("IRC"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)scheduler.m_hMenu, GetResString(IDS_SCHEDULER), _T("SCHEDULER"));
 		menu.AppendMenu(MF_STRING, MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
-		menu.AppendMenu(MF_STRING, MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
-		menu.AppendMenu(MF_STRING, MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
 	}
 
-	if (!toolsonly || bTrayMenu) {
+	if (bTrayMenu) {
 		menu.AppendMenu(MF_SEPARATOR);
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB"));
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)scheduler.m_hMenu, GetResString(IDS_SCHEDULER), _T("SCHEDULER"));
