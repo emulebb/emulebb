@@ -45,6 +45,19 @@ void UpDownClientDeleteSeams::AssertReadyToDelete(const CUpDownClient *pClient, 
 #endif
 }
 
+bool UpDownClientDeleteSeams::TryToConnectOrDelete(CUpDownClient *pClient, const TCHAR *pszContext, const bool bIgnoreMaxCon, const bool bNoCallbacks)
+{
+	ASSERT(pClient != NULL);
+	if (pClient == NULL)
+		return false;
+	if (pClient->TryToConnect(bIgnoreMaxCon, bNoCallbacks))
+		return true;
+
+	AssertReadyToDelete(pClient, pszContext);
+	delete pClient;
+	return false;
+}
+
 void UpDownClientDeleteSeams::AssertTemporarySourceReadyToDelete(const CUpDownClient *pClient, const CPartFile *pInitialRequestFile, const TCHAR *pszContext)
 {
 #ifdef _DEBUG

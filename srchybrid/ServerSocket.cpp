@@ -31,6 +31,7 @@
 #include "SafeFile.h"
 #include "PartFile.h"
 #include "Packets.h"
+#include "UpDownClientDeleteSeams.h"
 #include "emuleDlg.h"
 #include "ServerWnd.h"
 #include "SearchDlg.h"
@@ -595,7 +596,7 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 					}
 				}
 
-				client->TryToConnect();
+				(void)UpDownClientDeleteSeams::TryToConnectOrDelete(client, _T("CServerSocket::ProcessPacket OP_CALLBACKREQUESTED"));
 			}
 			break;
 		case OP_CALLBACK_FAIL:

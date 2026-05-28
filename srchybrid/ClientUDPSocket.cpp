@@ -24,6 +24,7 @@
 #include "PartFile.h"
 #include "SharedFileList.h"
 #include "UploadQueue.h"
+#include "UpDownClientDeleteSeams.h"
 #include "Preferences.h"
 #include "CompressionBufferSeams.h"
 #include "ProtocolGuards.h"
@@ -426,7 +427,7 @@ bool CClientUDPSocket::ProcessPacket(const BYTE *packet, UINT size, uint8 opcode
 				pRequester->SetConnectOptions(byConnectOptions, true, false);
 				pRequester->SetDirectUDPCallbackSupport(false);
 				DEBUG_ONLY(DebugLog(_T("Accepting incoming DirectCallbackRequest from %s"), (LPCTSTR)pRequester->DbgGetClientInfo()));
-				pRequester->TryToConnect();
+				(void)UpDownClientDeleteSeams::TryToConnectOrDelete(pRequester, _T("CClientUDPSocket::ProcessPacket OP_DIRECTCALLBACKREQ"));
 			} else
 				DebugLogWarning(_T("Ignored DirectCallback Request because we do not accept DirectCall backs at all (%s)"), (LPCTSTR)ipstr(ip));
 		}

@@ -25,6 +25,7 @@
 #include "ListenSocket.h"
 #include "Kademlia/Kademlia/Kademlia.h"
 #include "Log.h"
+#include "UpDownClientDeleteSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -259,8 +260,7 @@ bool CFriend::TryToConnect(CFriendConnectionListener *pConnectionReport)
 	}
 	// otherwise (standard case) try to connect
 	pConnectionReport->ReportConnectionProgress(m_LinkedClient, _T("*** ") + GetResString(IDS_CONNECTING), false);
-	m_LinkedClient->TryToConnect(true);
-	return true;
+	return UpDownClientDeleteSeams::TryToConnectOrDelete(m_LinkedClient, _T("CFriend::TryToConnect"), true);
 }
 
 void CFriend::UpdateFriendConnectionState(EFriendConnectReport eEvent)
@@ -428,7 +428,8 @@ void CFriend::KadSearchIPByNodeIDResult(Kademlia::EKadClientSearchRes eStatus, u
 				m_nLastUsedPort = nPort;
 				m_LinkedClient->SetConnectIP(dwIP);
 				m_LinkedClient->SetUserPort(nPort);
-				m_LinkedClient->TryToConnect(true);
+				if (!UpDownClientDeleteSeams::TryToConnectOrDelete(m_LinkedClient, _T("CFriend::KadSearchIPByNodeIDResult"), true))
+					m_FriendConnectState = FCS_NONE;
 				return;
 			}
 			DebugLog(_T("KadSearchIPByNodeIDResult: Result IP is the same as known (not working) IP (%s)"), (LPCTSTR)ipstr(dwIP));

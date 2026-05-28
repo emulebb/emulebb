@@ -16,6 +16,15 @@ namespace UpDownClientDeleteSeams
 void AssertReadyToDelete(const CUpDownClient *pClient, const TCHAR *pszContext);
 
 /**
+ * @brief Calls CUpDownClient::TryToConnect and owns the false/delete contract.
+ *
+ * TryToConnect returns false only when the client has already been detached
+ * enough for explicit deletion. Fire-and-forget callers use this wrapper so a
+ * rejected immediate connect cannot leave a dead client pointer in owner lists.
+ */
+bool TryToConnectOrDelete(CUpDownClient *pClient, const TCHAR *pszContext, bool bIgnoreMaxCon = false, bool bNoCallbacks = false);
+
+/**
  * @brief Debug-checks temporary source reject paths before the source is published.
  *
  * Server and source-exchange probes are constructed with an initial request

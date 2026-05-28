@@ -1431,7 +1431,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 					theApp.clientlist->AddClient(callback);
 				}
 
-				callback->TryToConnect(true);
+				(void)UpDownClientDeleteSeams::TryToConnectOrDelete(callback, _T("CClientReqSocket::ProcessPacket OP_CALLBACK"), true);
 			}
 		}
 		return;

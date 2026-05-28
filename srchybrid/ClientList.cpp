@@ -540,7 +540,7 @@ void CClientList::Process()
 		case KS_QUEUED_FWCHECK:
 		case KS_QUEUED_FWCHECK_UDP:
 			//Another client asked us to try to connect to them to check their firewalled status.
-			cur_client->TryToConnect(true, true);
+			(void)UpDownClientDeleteSeams::TryToConnectOrDelete(cur_client, _T("CClientList::Process Kad firewall check"), true, true);
 			break;
 		case KS_CONNECTING_FWCHECK:
 			//Ignore this state as we are just waiting for results.
@@ -585,8 +585,13 @@ void CClientList::Process()
 				buddy = Connecting;
 				m_nBuddyStatus = Connecting;
 				cur_client->SetKadState(KS_CONNECTING_BUDDY);
-				cur_client->TryToConnect(true, true);
-				theApp.emuledlg->serverwnd->UpdateMyInfo();
+				if (UpDownClientDeleteSeams::TryToConnectOrDelete(cur_client, _T("CClientList::Process Kad buddy connect"), true, true)) {
+					theApp.emuledlg->serverwnd->UpdateMyInfo();
+				} else {
+					buddy = Disconnected;
+					m_nBuddyStatus = Disconnected;
+					theApp.emuledlg->serverwnd->UpdateMyInfo();
+				}
 			} else if (m_nBuddyStatus == Connected)
 				cur_client->SetKadState(KS_NONE);
 			break;

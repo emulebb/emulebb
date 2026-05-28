@@ -28,6 +28,7 @@
 #include "ClientDetailDialog.h"
 #include "FriendList.h"
 #include "ClientList.h"
+#include "UpDownClientDeleteSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -356,7 +357,7 @@ bool CChatSelector::SendText(const CString &rstrText)
 		ci->log->AppendKeyWord(s, m_crStatusMessage);
 		ci->strMessagePending = rstrText;
 		client->SetChatState(MS_CONNECTING);
-		client->TryToConnect(true);
+		(void)UpDownClientDeleteSeams::TryToConnectOrDelete(client, _T("CChatSelector::SendMessage"), true);
 	}
 	return true;
 }
