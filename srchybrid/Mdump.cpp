@@ -101,6 +101,9 @@ CMiniDumper::SManualDumpResult CMiniDumper::CreateManualDump(LPCTSTR, LPCTSTR ps
 		const BOOL bWritten = ::MiniDumpWriteDump(GetCurrentProcess(), dwProcessId, hFile, eDumpType, NULL, NULL, NULL);
 		const DWORD dwError = bWritten ? ERROR_SUCCESS : ::GetLastError();
 		::CloseHandle(hFile);
+		// MiniDumpWriteDump can leave a partial file on failure; do not advertise or retain it as evidence.
+		if (!bWritten)
+			(void)LongPathSeams::DeleteFileIfExists(strDumpPath);
 
 		result.strDumpPath = strDumpPath;
 		result.dwError = dwError;
@@ -137,6 +140,7 @@ LONG WINAPI CMiniDumper::TopLevelFilter(struct _EXCEPTION_POINTERS *pExceptionIn
 			_MINIDUMP_EXCEPTION_INFORMATION ExInfo = _MINIDUMP_EXCEPTION_INFORMATION{GetCurrentThreadId(), pExceptionInfo, FALSE};
 			const MINIDUMP_TYPE eDumpType = GetCrashDumpType(theCrashDumper.bCaptureFullCrashDump);
 			BOOL bOK = ::MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, eDumpType, &ExInfo, NULL, NULL);
+			const DWORD dwDumpError = bOK ? ERROR_SUCCESS : ::GetLastError();
 			if (bOK) {
 				// Do *NOT* localize this string (in fact, do not use MFC to load it)!
 				strResult.Format(
@@ -150,9 +154,12 @@ LONG WINAPI CMiniDumper::TopLevelFilter(struct _EXCEPTION_POINTERS *pExceptionIn
 			} else {
 				// Do *NOT* localize this string (in fact, do not use MFC to load it)!
 				strResult.Format(_T("Failed to save dump file to \"%s\".\r\n\r\nError: %lu")
-					, (LPCTSTR)strDumpPath, ::GetLastError());
+					, (LPCTSTR)strDumpPath, dwDumpError);
 			}
 			::CloseHandle(hFile);
+			// Keep crash folders clean when dbghelp creates the file but cannot complete the stream.
+			if (!bOK)
+				(void)LongPathSeams::DeleteFileIfExists(strDumpPath);
 		} else {
 			// Do *NOT* localize this string (in fact, do not use MFC to load it)!
 			strResult.Format(_T("Failed to create dump file \"%s\".\r\n\r\nError: %lu")

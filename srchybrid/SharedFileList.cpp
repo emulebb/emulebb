@@ -3960,10 +3960,14 @@ void *CSharedFileList::TakeStartupCacheSaveCompletion(WPARAM wParam)
 
 void CSharedFileList::Save() const
 {
-	const CString &strFullPath(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + SHAREDFILES_FILE);
+	const CString strFullPath(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + SHAREDFILES_FILE);
+	const CString strTempPath(strFullPath + _T(".tmp"));
+	(void)LongPathSeams::DeleteFileIfExists(strTempPath);
+
 	CSafeBufferedFile file;
-	if (LongPathSeams::OpenFile(file, strFullPath, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite | CFile::typeBinary)) {
+	if (LongPathSeams::OpenFile(file, strTempPath, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite | CFile::typeBinary)) {
 		try {
+			// Persist through a sibling temp file so a failed save never truncates the last good shared-dir list.
 			// write Unicode byte order mark 0xFEFF
 			static const WORD wBOM = u'\xFEFF';
 			file.Write(&wBOM, sizeof(wBOM));
@@ -3980,9 +3984,20 @@ void CSharedFileList::Save() const
 		} catch (CFileException *ex) {
 			DebugLogError(_T("Failed to save %s%s"), (LPCTSTR)strFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 			ex->Delete();
+			file.Abort();
+			(void)LongPathSeams::DeleteFileIfExists(strTempPath);
+			return;
 		}
-	} else
+	} else {
 		DebugLogError(_T("Failed to save %s"), (LPCTSTR)strFullPath);
+		return;
+	}
+
+	DWORD dwReplaceError = ERROR_SUCCESS;
+	if (!ReplaceFileAtomically(strTempPath, strFullPath, &dwReplaceError)) {
+		(void)LongPathSeams::DeleteFileIfExists(strTempPath);
+		DebugLogError(_T("Failed to save %s - %s"), (LPCTSTR)strFullPath, (LPCTSTR)GetErrorMessage(dwReplaceError));
+	}
 }
 
 void CSharedFileList::LoadSingleSharedFilesList()
