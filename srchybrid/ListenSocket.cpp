@@ -624,7 +624,9 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 		if (thePrefs.GetDebugClientTCPLevel() > 0)
 			DebugRecv("OP_EndOfDownload", client, (size >= 16) ? packet : NULL);
 		theStats.AddDownDataOverheadFileRequest(size);
-		if (size >= 16 && md4equ(client->GetUploadFileID(), packet))
+		if (size != 16)
+			throw GetResString(IDS_ERR_WRONGPACKETSIZE);
+		if (md4equ(client->GetUploadFileID(), packet))
 			theApp.uploadqueue->RemoveFromUploadQueue(client, _T("Remote client ended transfer."));
 		else
 			client->CheckFailedFileIdReqs(packet);

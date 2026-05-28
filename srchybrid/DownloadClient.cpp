@@ -820,6 +820,8 @@ void CUpDownClient::ProcessHashSet(const uchar *packet, uint32 size, bool bFileI
 				m_reqfile->SetAICHHashSetNeeded(true);
 			}
 	} else {
+		if (size < 16)
+			throw GetResString(IDS_ERR_WRONGPACKETSIZE);
 		if (!m_reqfile || !md4equ(packet, m_reqfile->GetFileHash())) {
 			CheckFailedFileIdReqs(packet);
 			throw GetResString(IDS_ERR_WRONGFILEID) + _T(" (ProcessHashSet)");
