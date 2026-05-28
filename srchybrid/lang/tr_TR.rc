@@ -2798,6 +2798,13 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_RADARR                           "Etkileşimli Radarr qBittorrent uyumlu indirme istemcisi kayıt yardımcısını başlatır."
     IDS_TOOLS_STATUS_REGISTER_SONARR                           "Etkileşimli Sonarr qBittorrent uyumlu indirme istemcisi kayıt yardımcısını başlatır."
     IDS_TOOLS_SPEED_QUICK_ACTIONS                              "Hızlı İşlemleri Hızlandırın"
+    IDS_MEDIAINFO_DLL_INCOMPATIBLE                             "MediaInfo.dll bulundu ancak eMuleBB, 26.01 veya daha yeni bir sürümü gerektiriyor."
+    IDS_MEDIAINFO_DLL_BADEXPORTS                               "Bir MediaInfo.dll adayı bulundu, ancak gerekli MediaInfo API dışa aktarımlarını göstermiyor."
+    IDS_MEDIAINFO_DLL_LOADFAILED                               "Bir MediaInfo.dll adayı bulundu, ancak Windows onu veya bağımlılıklarından birini yükleyemedi."
+    IDS_MEDIAINFO_DLL_SEARCHHINT                               "Arama ayrıca Tercihler > İnce Ayarlar'dan MediaInfo.dll yolunu, MediaInfo kayıt defteri yükleme yollarını ve %ProgramFiles%\\MediaInfo\\MEDIAINFO.DLL'yu da kontrol eder."
+    IDS_FRIEND_AUTHENTICATING                                  "Arkadaşın kimliği doğrulanıyor"
+    IDS_BUNDLED_SCRIPT_MISSING                                 "Paketlenmiş eMuleBB komut dosyası eksik: %s"
+    IDS_ELEVATED_PS_TIMEOUT                                    "Yükseltilmiş PowerShell eylemi zaman aşımına uğradı."
 END
 // eMuleBB managed translation block: end
 

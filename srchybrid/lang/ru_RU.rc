@@ -2805,6 +2805,13 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_RADARR                           "Запускает интерактивный помощник регистрации клиента загрузки, совместимого с qBittorrent."
     IDS_TOOLS_STATUS_REGISTER_SONARR                           "Запускает интерактивный помощник регистрации загружаемого клиента, совместимого с qBittorrent, Sonarr."
     IDS_TOOLS_SPEED_QUICK_ACTIONS                              "Скорость быстрых действий"
+    IDS_MEDIAINFO_DLL_INCOMPATIBLE                             "MediaInfo.dll найден, но для eMuleBB требуется версия 26.01 или новее."
+    IDS_MEDIAINFO_DLL_BADEXPORTS                               "Кандидат MediaInfo.dll был найден, но он не предоставляет необходимые экспорты API MediaInfo."
+    IDS_MEDIAINFO_DLL_LOADFAILED                               "Кандидат MediaInfo.dll был найден, но Windows не смог загрузить его или одну из его зависимостей."
+    IDS_MEDIAINFO_DLL_SEARCHHINT                               "Поиск также проверяет путь MediaInfo.dll из «Настройки» > «Настройки», пути установки реестра MediaInfo и %ProgramFiles%\\MediaInfo\\MEDIAINFO.DLL."
+    IDS_FRIEND_AUTHENTICATING                                  "Аутентификация друга"
+    IDS_BUNDLED_SCRIPT_MISSING                                 "В комплекте поставки скрипта eMuleBB отсутствует: %s."
+    IDS_ELEVATED_PS_TIMEOUT                                    "Время ожидания действия PowerShell с повышенными правами истекло."
 END
 // eMuleBB managed translation block: end
 
