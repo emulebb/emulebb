@@ -284,6 +284,10 @@
 #define	MP_PREVIEW_APP_MAX		(MP_PREVIEW_APP_MIN + 49)
 #define MP_FILTERCOLUMNS		11300	// reserve 50 entries for filter columns
 
+// Frozen surface: these legacy IRC command IDs intentionally keep their stock
+// numeric values even though they overlap older MP_* ranges. IRC command
+// routing depends on the owning IRC controls, so do not renumber this block as
+// a generic duplicate-ID cleanup without a dedicated IRC compatibility pass.
 #define Irc_Join				10240
 #define Irc_Close				10241
 #define Irc_Priv				10242
