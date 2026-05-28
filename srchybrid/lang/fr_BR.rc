@@ -328,8 +328,8 @@ BEGIN
 	IDS_ERR_ALREADY_DOWNLOADED	"Pellgarget eo bet ganeoc'h dija ar restr : %s"
 	IDS_ERR_SERVERMET_BAD	"Faziet eo ar restr known.met, n'haller ket he c'hargañ"
 	IDS_ERR_SERVERMET_UNKNOWN	"Fazi lenn dianav gant known.met : %s, n'haller ket e gargañ"
-	IDS_ERR_CONNECTIONERROR	"Fazi e-pad ar c'hennaksañ ouzh %s (%s:%u) : %u"
-	IDS_ERR_SOCKET	"Fazi e-barzh serversocket : %s (%s:%u) : %u"
+	IDS_ERR_CONNECTIONERROR	"Fazi e-pad ar c'hennaksañ ouzh %s (%s:%u) : %s"
+	IDS_ERR_SOCKET	"Fazi e-barzh serversocket : %s (%s:%u) : %s"
 	IDS_SHAREDFOUND	"%u restr eskemmet anavezet zo bet kavet"
 	IDS_SHAREDFOUNDHASHING	"%u restr eskemmet anavezet zo bet kavet, hachage %u nouveaux fichiers"
 END

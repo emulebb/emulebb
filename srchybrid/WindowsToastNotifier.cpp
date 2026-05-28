@@ -18,6 +18,7 @@
 #include "ComInitializationSeams.h"
 #include "WindowsToastNotifier.h"
 #include "Log.h"
+#include "PathHelpers.h"
 #include "UserMsgs.h"
 #include <map>
 #include <propkey.h>
@@ -156,8 +157,8 @@ namespace
 		strShortcutPath += L"\\Programs\\";
 		strShortcutPath += kToastShortcutName;
 
-		WCHAR szModulePath[MAX_PATH] = {};
-		if (::GetModuleFileNameW(NULL, szModulePath, _countof(szModulePath)) == 0)
+		const CStringW strModulePath(PathHelpers::GetModuleFilePath(NULL));
+		if (strModulePath.IsEmpty())
 			return false;
 
 		const ComInitializationSeams::CScopedComInitialize coInitialize(COINIT_APARTMENTTHREADED);
@@ -167,8 +168,8 @@ namespace
 		CComPtr<IShellLinkW> pShellLink;
 		if (FAILED(pShellLink.CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER)) || pShellLink == NULL)
 			return false;
-		pShellLink->SetPath(szModulePath);
-		pShellLink->SetIconLocation(szModulePath, 0);
+		pShellLink->SetPath(strModulePath);
+		pShellLink->SetIconLocation(strModulePath, 0);
 		pShellLink->SetDescription(L"eMuleBB");
 
 		CComPtr<IPropertyStore> pPropertyStore;
