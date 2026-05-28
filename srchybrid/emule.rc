@@ -3651,7 +3651,7 @@ BEGIN
     IDS_NEEDFREEDISKSPACE   "%s (you need to free %s!)"
     IDS_SERVERKEEPALIVETIMEOUT "Server connection refresh interval [min.]"
     IDS_MORE                "&More"
-    IDS_TOOLS               "&Tools"
+    IDS_TOOLS               "Tools"
     IDS_DIAG_CAPTURE_MINIDUMP "Capture &Mini Dump..."
     IDS_DIAG_CAPTURE_FULLDUMP "Capture &Full Memory Dump..."
     IDS_DIAG_DUMP_KIND_MINI "mini"

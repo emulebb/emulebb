@@ -31,10 +31,20 @@ namespace AppKeyboardShortcutsSeams
 	enum class ECommand
 	{
 		None,
+		ShowConnect,
+		ShowKad,
+		ShowServer,
+		ShowTransfers,
+		ShowSearch,
+		ShowSharedFiles,
+		ShowMessages,
+		ShowIrc,
+		ShowStatistics,
+		ShowOptions,
+		ShowHelp,
 		ExitApp,
 		ShowHotMenu,
-		ShowToolsMenu,
-		ShowOptions
+		ShowToolsMenu
 	};
 
 	/**
@@ -98,8 +108,13 @@ namespace AppKeyboardShortcutsSeams
 	/**
 	 * Classifies `SC_KEYMENU` events forwarded from modeless child panes.
 	 *
-	 * EMULE_KEYBOARD_SHORTCUT: Alt+X is reserved for app exit; Alt+U owns the
-	 * floating hotmenu; Alt+T owns the Tools popup.
+	 * EMULE_KEYBOARD_SHORTCUT: main-shell pane shortcuts intentionally reuse the
+	 * reviewed English toolbar mnemonics here instead of reading translated '&'
+	 * markers. That gives keyboard users the same app-level chords in every
+	 * language while preserving modal dialogs and Search-local mnemonics.
+	 *
+	 * Alt+T belongs to Transfers. Tools uses Alt+W so it cannot collide with the
+	 * baseline Transfers mnemonic or the Search pane's local Alt-key controls.
 	 */
 	inline ECommand ClassifySystemKeyMenu(UINT nID, LPARAM lParam, bool bModalContext)
 	{
@@ -107,14 +122,34 @@ namespace AppKeyboardShortcutsSeams
 			return ECommand::None;
 
 		const TCHAR ch = NormalizeAsciiShortcutChar(static_cast<TCHAR>(lParam));
+		if (ch == _T('c'))
+			return ECommand::ShowConnect;
+		if (ch == _T('k'))
+			return ECommand::ShowKad;
+		if (ch == _T('v'))
+			return ECommand::ShowServer;
+		if (ch == _T('t'))
+			return ECommand::ShowTransfers;
+		if (ch == _T('s'))
+			return ECommand::ShowSearch;
+		if (ch == _T('f'))
+			return ECommand::ShowSharedFiles;
+		if (ch == _T('m'))
+			return ECommand::ShowMessages;
+		if (ch == _T('i'))
+			return ECommand::ShowIrc;
+		if (ch == _T('a'))
+			return ECommand::ShowStatistics;
+		if (ch == _T('o'))
+			return ECommand::ShowOptions;
+		if (ch == _T('h'))
+			return ECommand::ShowHelp;
 		if (ch == _T('x'))
 			return ECommand::ExitApp;
 		if (ch == _T('u'))
 			return ECommand::ShowHotMenu;
-		if (ch == _T('t'))
+		if (ch == _T('w'))
 			return ECommand::ShowToolsMenu;
-		if (ch == _T('o'))
-			return ECommand::ShowOptions;
 		return ECommand::None;
 	}
 

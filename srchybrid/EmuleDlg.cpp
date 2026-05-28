@@ -164,6 +164,42 @@ namespace
 		return wnd.GetSafeHwnd() != NULL && !::IsWindowEnabled(wnd.GetSafeHwnd());
 	}
 
+	static UINT GetMainShellShortcutCommandId(AppKeyboardShortcutsSeams::ECommand eShortcutCommand)
+	{
+		// Keep app-level keyboard policy testable and resource-free in
+		// AppKeyboardShortcutsSeams.h. The real dialog maps policy commands onto
+		// the same toolbar command IDs used by mouse clicks so button state,
+		// help routing, and existing side effects stay in one command path.
+		switch (eShortcutCommand) {
+		case AppKeyboardShortcutsSeams::ECommand::ShowConnect:
+			return TBBTN_CONNECT;
+		case AppKeyboardShortcutsSeams::ECommand::ShowKad:
+			return TBBTN_KAD;
+		case AppKeyboardShortcutsSeams::ECommand::ShowServer:
+			return TBBTN_SERVER;
+		case AppKeyboardShortcutsSeams::ECommand::ShowTransfers:
+			return TBBTN_TRANSFERS;
+		case AppKeyboardShortcutsSeams::ECommand::ShowSearch:
+			return TBBTN_SEARCH;
+		case AppKeyboardShortcutsSeams::ECommand::ShowSharedFiles:
+			return TBBTN_SHARED;
+		case AppKeyboardShortcutsSeams::ECommand::ShowMessages:
+			return TBBTN_MESSAGES;
+		case AppKeyboardShortcutsSeams::ECommand::ShowIrc:
+			return TBBTN_IRC;
+		case AppKeyboardShortcutsSeams::ECommand::ShowStatistics:
+			return TBBTN_STATS;
+		case AppKeyboardShortcutsSeams::ECommand::ShowOptions:
+			return TBBTN_OPTIONS;
+		case AppKeyboardShortcutsSeams::ECommand::ShowHelp:
+			return TBBTN_HELP;
+		case AppKeyboardShortcutsSeams::ECommand::ShowToolsMenu:
+			return TBBTN_TOOLS;
+		default:
+			return 0;
+		}
+	}
+
 	static BindStartupPolicy::CBindStartupPolicyText GetBindStartupPolicyText()
 	{
 		BindStartupPolicy::CBindStartupPolicyText text;
@@ -2212,12 +2248,9 @@ void CemuleDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		OnBnClickedHotmenu();
 		return;
 	}
-	if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowToolsMenu) {
-		ShowToolPopup(true);
-		return;
-	}
-	if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowOptions) {
-		ShowPreferences();
+	const UINT uCommandId = GetMainShellShortcutCommandId(eShortcutCommand);
+	if (uCommandId != 0) {
+		OnCommand(static_cast<WPARAM>(uCommandId), 0);
 		return;
 	}
 

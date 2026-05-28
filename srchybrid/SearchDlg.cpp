@@ -259,13 +259,10 @@ void CSearchDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	if ((nID & 0xFFF0) == SC_KEYMENU) {
 		const AppKeyboardShortcutsSeams::ECommand eShortcutCommand =
 			AppKeyboardShortcutsSeams::ClassifySystemKeyMenu(nID, lParam, false);
-		if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ExitApp)
-			theApp.emuledlg->SendMessage(WM_COMMAND, IDC_EXIT);
-		else if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowHotMenu)
-			theApp.emuledlg->SendMessage(WM_COMMAND, IDC_HOTMENU);
-		else if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowToolsMenu)
-			theApp.emuledlg->SendMessage(WM_COMMAND, TBBTN_TOOLS);
-		else if (m_wndParams.HandleSearchKeyMenu(nID, lParam))
+		if (eShortcutCommand != AppKeyboardShortcutsSeams::ECommand::None) {
+			theApp.emuledlg->SendMessage(WM_SYSCOMMAND, nID, lParam);
+			return;
+		} else if (m_wndParams.HandleSearchKeyMenu(nID, lParam))
 			return;
 		else
 			theApp.emuledlg->SendMessage(WM_SYSCOMMAND, nID, lParam);
