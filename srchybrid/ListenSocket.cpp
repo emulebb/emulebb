@@ -68,7 +68,9 @@ CString BuildSharedBrowseDirectoryKey(const CString &rstrDirectory)
 IMPLEMENT_DYNCREATE(CClientReqSocket, CEMSocket)
 
 CClientReqSocket::CClientReqSocket(CUpDownClient *in_client)
-	: deltimer()
+	: client(NULL)
+	, timeout_timer()
+	, deltimer()
 	, m_nOnConnect(SS_Other)
 	, m_bAcceptedIncomingSocket()
 	, m_bReceivedFirstPacket()
@@ -78,9 +80,13 @@ CClientReqSocket::CClientReqSocket(CUpDownClient *in_client)
 	, m_bPortTestCon()
 {
 	// WHY: AddSocket publishes this socket to the listener-owned lifetime list
-	// and can allocate an MFC list node. Do not publish client->socket until that
-	// succeeds; otherwise constructor failure leaves the client pointing at
-	// partially constructed storage whose derived destructor will not run.
+	// and can allocate an MFC list node. Fields that shutdown can read from that
+	// list must already be in a detached/zero state before publication: a Debug
+	// shutdown dump caught KillAllSockets calling Safe_Delete on a just-published
+	// socket whose client link still contained the CRT 0xCD fill pattern. Do not
+	// publish client->socket until AddSocket succeeds; otherwise constructor
+	// failure leaves the client pointing at partially constructed storage whose
+	// derived destructor will not run.
 	theApp.listensocket->AddSocket(this);
 	SetClient(in_client);
 	ResetTimeOutTimer();
@@ -272,6 +278,7 @@ void CClientReqSocket::ReleaseUploadDiskPacketDeliveryRef()
 {
 	const LONG nRefs = ::InterlockedDecrement(&m_nUploadDiskPacketDeliveryRefs);
 	ASSERT(nRefs >= 0);
+	(void)nRefs;
 }
 
 bool CClientReqSocket::HasUploadDiskPacketDeliveryRefs() const
@@ -2356,7 +2363,7 @@ void CListenSocket::KillAllSockets()
 bool CListenSocket::TooManySockets(bool bIgnoreInterval)
 {
 	return GetOpenSockets() > thePrefs.GetMaxConnections()
-		|| (m_OpenSocketsInterval > thePrefs.GetMaxConperFive() * GetMaxConperFiveModifier() && !bIgnoreInterval)
+		|| (static_cast<float>(m_OpenSocketsInterval) > static_cast<float>(thePrefs.GetMaxConperFive()) * GetMaxConperFiveModifier() && !bIgnoreInterval)
 		|| (m_nHalfOpen >= thePrefs.GetMaxHalfConnections() && !bIgnoreInterval);
 }
 
@@ -2398,7 +2405,7 @@ void CListenSocket::UpdateConnectionsStatus()
 
 		// Get a weight for the 'avg. connections' value. The longer we run the higher
 		// gets the weight (the percent of 'avg. connections' we use).
-		float fPercent = (totalconnectionchecks - 1) / (float)totalconnectionchecks;
+		float fPercent = static_cast<float>(totalconnectionchecks - 1) / static_cast<float>(totalconnectionchecks);
 		if (fPercent > 0.99f)
 			fPercent = 0.99f;
 
@@ -2406,7 +2413,7 @@ void CListenSocket::UpdateConnectionsStatus()
 		// use the 'active connections' value. However, if we are running quite some time
 		// without any connections (except the server connection) we will eventually create
 		// a floating point underflow exception.
-		averageconnections = averageconnections * fPercent + activeconnections * (1.0f - fPercent);
+		averageconnections = averageconnections * fPercent + static_cast<float>(activeconnections) * (1.0f - fPercent);
 		if (averageconnections < 0.001f)
 			averageconnections = 0.001f;	// avoid floating point underflow
 	}
@@ -2414,8 +2421,8 @@ void CListenSocket::UpdateConnectionsStatus()
 
 float CListenSocket::GetMaxConperFiveModifier()
 {
-	float SpikeSize = max(1.0f, GetOpenSockets() - averageconnections);
-	float SpikeTolerance = 25.0f * thePrefs.GetMaxConperFive() / 10.0f;
+	float SpikeSize = max(1.0f, static_cast<float>(GetOpenSockets()) - averageconnections);
+	float SpikeTolerance = 25.0f * static_cast<float>(thePrefs.GetMaxConperFive()) / 10.0f;
 
 	return (SpikeSize > SpikeTolerance) ? 0.0f : 1.0f - SpikeSize / SpikeTolerance;
 }
