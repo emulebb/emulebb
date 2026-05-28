@@ -603,7 +603,7 @@ CUpDownClient* CUploadQueue::GetWaitingClientByIP_UDP(uint32 dwIP, uint16 nUDPPo
 		}
 		if (dwIP == cur_client->GetIP() && nUDPPort == cur_client->GetUDPPort())
 			return cur_client;
-		if (bIgnorePortOnUniqueIP) {
+		if (dwIP == cur_client->GetIP() && bIgnorePortOnUniqueIP && cur_client != pMatchingIPClient) {
 			pMatchingIPClient = cur_client;
 			++cMatches;
 		}
