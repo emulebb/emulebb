@@ -34,14 +34,6 @@ namespace AppKeyboardShortcutsSeams
 		ExitApp,
 		ShowHotMenu,
 		ShowToolsMenu,
-		ShowKad,
-		ShowServer,
-		ShowTransfers,
-		ShowSearch,
-		ShowSharedFiles,
-		ShowMessages,
-		ShowIrc,
-		ShowStatistics,
 		ShowOptions
 	};
 
@@ -106,11 +98,8 @@ namespace AppKeyboardShortcutsSeams
 	/**
 	 * Classifies `SC_KEYMENU` events forwarded from modeless child panes.
 	 *
-	 * EMULE_KEYBOARD_SHORTCUT: numbered Alt mnemonics own the primary toolbar
-	 * navigation because localized labels and legacy English labels collide on
-	 * common letters such as T.  Alt+T is intentionally unclaimed here so it no
-	 * longer fights between Transfers and Tools; Tools uses Alt+W as an
-	 * app-command mnemonic, and Alt+O remains a direct Options command.
+	 * EMULE_KEYBOARD_SHORTCUT: Alt+X is reserved for app exit; Alt+U owns the
+	 * floating hotmenu; Alt+T owns the Tools popup.
 	 */
 	inline ECommand ClassifySystemKeyMenu(UINT nID, LPARAM lParam, bool bModalContext)
 	{
@@ -122,26 +111,8 @@ namespace AppKeyboardShortcutsSeams
 			return ECommand::ExitApp;
 		if (ch == _T('u'))
 			return ECommand::ShowHotMenu;
-		if (ch == _T('w'))
+		if (ch == _T('t'))
 			return ECommand::ShowToolsMenu;
-		if (ch == _T('1'))
-			return ECommand::ShowKad;
-		if (ch == _T('2'))
-			return ECommand::ShowServer;
-		if (ch == _T('3'))
-			return ECommand::ShowTransfers;
-		if (ch == _T('4'))
-			return ECommand::ShowSearch;
-		if (ch == _T('5'))
-			return ECommand::ShowSharedFiles;
-		if (ch == _T('6'))
-			return ECommand::ShowMessages;
-		if (ch == _T('7'))
-			return ECommand::ShowIrc;
-		if (ch == _T('8'))
-			return ECommand::ShowStatistics;
-		if (ch == _T('9'))
-			return ECommand::ShowOptions;
 		if (ch == _T('o'))
 			return ECommand::ShowOptions;
 		return ECommand::None;

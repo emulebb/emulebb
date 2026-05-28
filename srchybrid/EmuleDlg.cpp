@@ -164,39 +164,6 @@ namespace
 		return wnd.GetSafeHwnd() != NULL && !::IsWindowEnabled(wnd.GetSafeHwnd());
 	}
 
-	static UINT GetMainShellShortcutCommandId(AppKeyboardShortcutsSeams::ECommand eShortcutCommand)
-	{
-		// Keep resource IDs out of AppKeyboardShortcutsSeams.h so the shared
-		// seam tests can verify keyboard policy without depending on MFC UI
-		// resources.  The main dialog maps policy commands back onto the same
-		// toolbar command IDs used by mouse clicks, preserving checked-button
-		// state and existing command side effects.
-		switch (eShortcutCommand) {
-		case AppKeyboardShortcutsSeams::ECommand::ShowToolsMenu:
-			return TBBTN_TOOLS;
-		case AppKeyboardShortcutsSeams::ECommand::ShowKad:
-			return TBBTN_KAD;
-		case AppKeyboardShortcutsSeams::ECommand::ShowServer:
-			return TBBTN_SERVER;
-		case AppKeyboardShortcutsSeams::ECommand::ShowTransfers:
-			return TBBTN_TRANSFERS;
-		case AppKeyboardShortcutsSeams::ECommand::ShowSearch:
-			return TBBTN_SEARCH;
-		case AppKeyboardShortcutsSeams::ECommand::ShowSharedFiles:
-			return TBBTN_SHARED;
-		case AppKeyboardShortcutsSeams::ECommand::ShowMessages:
-			return TBBTN_MESSAGES;
-		case AppKeyboardShortcutsSeams::ECommand::ShowIrc:
-			return TBBTN_IRC;
-		case AppKeyboardShortcutsSeams::ECommand::ShowStatistics:
-			return TBBTN_STATS;
-		case AppKeyboardShortcutsSeams::ECommand::ShowOptions:
-			return TBBTN_OPTIONS;
-		default:
-			return 0;
-		}
-	}
-
 	static BindStartupPolicy::CBindStartupPolicyText GetBindStartupPolicyText()
 	{
 		BindStartupPolicy::CBindStartupPolicyText text;
@@ -2245,9 +2212,12 @@ void CemuleDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		OnBnClickedHotmenu();
 		return;
 	}
-	const UINT uCommandId = GetMainShellShortcutCommandId(eShortcutCommand);
-	if (uCommandId != 0) {
-		OnCommand(static_cast<WPARAM>(uCommandId), 0);
+	if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowToolsMenu) {
+		ShowToolPopup(true);
+		return;
+	}
+	if (eShortcutCommand == AppKeyboardShortcutsSeams::ECommand::ShowOptions) {
+		ShowPreferences();
 		return;
 	}
 

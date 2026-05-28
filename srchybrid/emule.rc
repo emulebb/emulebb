@@ -60,8 +60,6 @@ CAPTION "eMule"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     // EMULE_KEYBOARD_SHORTCUT: native hidden mnemonics own Alt+X Exit and Alt+U floating menu.
-    // Main toolbar navigation is handled in AppKeyboardShortcutsSeams.h as Alt+1..Alt+9 so
-    // localized toolbar labels do not create letter collisions such as Tools vs Transfers on T.
     PUSHBUTTON      "^&x",IDC_EXIT,2,16,19,17,NOT WS_VISIBLE
     PUSHBUTTON      "^&u",IDC_HOTMENU,2,34,19,17,NOT WS_VISIBLE
     CONTROL         "",IDC_STATUSBAR,"msctls_statusbar32",0x3,0,322,515,18
@@ -2716,17 +2714,17 @@ BEGIN
     IDS_PW_NOONE            "Nobody"
     IDS_PW_RESET            "Reset"
     IDS_PW_APPLY            "Apply"
-    IDS_EM_TRANS            "Transfers"
-    IDS_EM_SERVER           "Servers"
-    IDS_EM_SEARCH           "Search"
-    IDS_EM_FILES            "Shared Files"
+    IDS_EM_TRANS            "&Transfers"
+    IDS_EM_SERVER           "Ser&vers"
+    IDS_EM_SEARCH           "&Search"
+    IDS_EM_FILES            "Shared &Files"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_EM_MESSAGES         "Messages"
-    IDS_EM_STATISTIC        "Statistics"
-    IDS_EM_PREFS            "Options"
+    IDS_EM_MESSAGES         "&Messages"
+    IDS_EM_STATISTIC        "St&atistics"
+    IDS_EM_PREFS            "&Options"
     IDS_MB_LANGUAGEINFO     "The language was set to 'English'.\r\n\r\nYou can use the 'Options' dialog at any time to select a different language."
     IDS_FD_GENERAL          "General"
     IDS_FD_MET              "part.met file:"
@@ -4031,7 +4029,7 @@ BEGIN
     IDS_SRV_UDPSR           "Extended UDP protocol for source requests"
     IDS_SRV_UDPFR           "Extended UDP protocol for file requests"
     IDS_MINLENGTH           "Min. Length [hh:mm:ss]"
-    IDS_EM_HELP             "Help"
+    IDS_EM_HELP             "&Help"
     IDS_WRN_FRIENDDUPLIPPORT
                             "Friend not added.\r\n\r\nThere is already a friend with same IP address and port available."
     IDS_KADOVERHEAD         "Kad Overhead (Packets): %s (%s)"
@@ -4052,7 +4050,7 @@ BEGIN
     IDS_DELETE              "Delete From Disk"
     IDS_BOOTSTRAP           "Bootstrap"
     IDS_VIAED2KSQ           "via eD2K Server"
-    IDS_EM_KADEMLIA         "Kad"
+    IDS_EM_KADEMLIA         "&Kad"
     IDS_VIAKAD              "via Kad"
     IDS_VIASE               "via Source Exchange"
     IDS_SELECTTOOLBARBITMAP "Select Toolbar Bitmap..."
