@@ -29,6 +29,7 @@ their client on the eMule forum.
 #include "Preferences.h"
 #include "Log.h"
 #include "HelperThreadLaunchSeams.h"
+#include "OtherFunctions.h"
 #include "kademlia/kademlia/Entry.h"
 #include "kademlia/kademlia/Indexed.h"
 #include "kademlia/kademlia/KadIndexedLoadThreadSeams.h"
@@ -38,6 +39,7 @@ their client on the eMule forum.
 #include "kademlia/io/ByteIO.h"
 #include "kademlia/io/IOException.h"
 #include "kademlia/net/KademliaUDPListener.h"
+#include "kademlia/utils/KadPersistenceSeams.h"
 #include "kademlia/utils/KadUDPKey.h"
 
 #ifdef _DEBUG
@@ -49,6 +51,17 @@ static char THIS_FILE[] = __FILE__;
 using namespace Kademlia;
 
 //void DebugSend(LPCTSTR pszMsg, uint32 uIP, uint16 uPort);
+
+static bool PromotePreparedKadIndexFile(CBufferedFileIO &file, LPCTSTR pszTempFileName, LPCTSTR pszTargetFileName)
+{
+	CommitAndClose(file);
+	DWORD dwLastError = ERROR_SUCCESS;
+	if (PromotePreparedKadFile(pszTempFileName, pszTargetFileName, &dwLastError))
+		return true;
+
+	DebugLogError(_T("Unable to promote Kad file: %s (error %u)"), pszTargetFileName, dwLastError);
+	return false;
+}
 
 CString CIndexed::m_sKeyFileName;
 CString CIndexed::m_sSourceFileName;
@@ -162,7 +175,8 @@ CIndexed::~CIndexed()
 			uint32 uTotalLoad = 0;
 
 			CBufferedFileIO fileLoad;
-			if (LongPathSeams::OpenFile(fileLoad, m_sLoadFileName, CFile::modeWrite | CFile::modeCreate | CFile::typeBinary | CFile::shareDenyWrite)) {
+			const CString strLoadTempFileName(BuildKadPersistenceTempFilename(m_sLoadFileName));
+			if (LongPathSeams::OpenFile(fileLoad, strLoadTempFileName, CFile::modeWrite | CFile::modeCreate | CFile::typeBinary | CFile::shareDenyWrite)) {
 				::setvbuf(fileLoad.m_pStream, NULL, _IOFBF, 32768);
 				static const uint32 uVersion = 1;
 				fileLoad.WriteUInt32(uVersion);
@@ -177,12 +191,13 @@ CIndexed::~CIndexed()
 					++uTotalLoad;
 					delete pLoad;
 				}
-				fileLoad.Close();
+				PromotePreparedKadIndexFile(fileLoad, strLoadTempFileName, m_sLoadFileName);
 			} else
 				DebugLogError(_T("Unable to store Kad file: %s"), (LPCTSTR)m_sLoadFileName);
 
 			CBufferedFileIO fileSource;
-			if (LongPathSeams::OpenFile(fileSource, m_sSourceFileName, CFile::modeWrite | CFile::modeCreate | CFile::typeBinary | CFile::shareDenyWrite)) {
+			const CString strSourceTempFileName(BuildKadPersistenceTempFilename(m_sSourceFileName));
+			if (LongPathSeams::OpenFile(fileSource, strSourceTempFileName, CFile::modeWrite | CFile::modeCreate | CFile::typeBinary | CFile::shareDenyWrite)) {
 				::setvbuf(fileSource.m_pStream, NULL, _IOFBF, 32768);
 				static const uint32 uVersion = 2;
 				fileSource.WriteUInt32(uVersion);
@@ -211,12 +226,13 @@ CIndexed::~CIndexed()
 					}
 					delete pCurrSrcHash;
 				}
-				fileSource.Close();
+				PromotePreparedKadIndexFile(fileSource, strSourceTempFileName, m_sSourceFileName);
 			} else
 				DebugLogError(_T("Unable to store Kad file: %s"), (LPCTSTR)m_sSourceFileName);
 
 			CBufferedFileIO fileKey;
-			if (LongPathSeams::OpenFile(fileKey, m_sKeyFileName, CFile::modeWrite | CFile::modeCreate | CFile::typeBinary | CFile::shareDenyWrite)) {
+			const CString strKeyTempFileName(BuildKadPersistenceTempFilename(m_sKeyFileName));
+			if (LongPathSeams::OpenFile(fileKey, strKeyTempFileName, CFile::modeWrite | CFile::modeCreate | CFile::typeBinary | CFile::shareDenyWrite)) {
 				::setvbuf(fileKey.m_pStream, NULL, _IOFBF, 32768);
 				uint32 uVersion = 4;
 				fileKey.WriteUInt32(uVersion);
@@ -250,7 +266,7 @@ CIndexed::~CIndexed()
 					}
 					delete pCurrKeyHash;
 				}
-				fileKey.Close();
+				PromotePreparedKadIndexFile(fileKey, strKeyTempFileName, m_sKeyFileName);
 			} else
 				DebugLogError(_T("Unable to store Kad file: %s"), (LPCTSTR)m_sKeyFileName);
 

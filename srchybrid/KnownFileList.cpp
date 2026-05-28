@@ -32,6 +32,7 @@
 #include "PathHelpers.h"
 #include "SharedFilesWnd.h"
 #include "SharedFilesCtrl.h"
+#include <algorithm>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -350,6 +351,29 @@ void CKnownFileList::RemoveFromLookupIndex(const CKnownFile *pFile)
 		m_bLookupIndexDirty = true;
 }
 
+void CKnownFileList::AddKnownFileAICHHash(const CAICHHash &rAICHHash, const CKnownFile *pFile)
+{
+	if (pFile == NULL)
+		return;
+	KnownFilesByAICHOwners owners;
+	(void)m_mapKnownFilesByAICH.Lookup(rAICHHash, owners);
+	if (std::find(owners.begin(), owners.end(), pFile) == owners.end())
+		owners.push_back(pFile);
+	m_mapKnownFilesByAICH[rAICHHash] = owners;
+}
+
+void CKnownFileList::RemoveKnownFileAICHHash(const CAICHHash &rAICHHash, const CKnownFile *pFile)
+{
+	KnownFilesByAICHOwners owners;
+	if (!m_mapKnownFilesByAICH.Lookup(rAICHHash, owners))
+		return;
+	owners.erase(std::remove(owners.begin(), owners.end(), pFile), owners.end());
+	if (owners.empty())
+		m_mapKnownFilesByAICH.RemoveKey(rAICHHash);
+	else
+		m_mapKnownFilesByAICH[rAICHHash] = owners;
+}
+
 void CKnownFileList::RebuildLookupIndex()
 {
 	m_lookupIndex.Clear();
@@ -380,7 +404,7 @@ bool CKnownFileList::SafeAddKFile(CKnownFile *toadd)
 		if (pFileInMap == toadd) {
 			m_filePointers.insert(toadd);
 			if (toadd->GetFileIdentifier().HasAICHHash())
-				m_mapKnownFilesByAICH[toadd->GetFileIdentifier().GetAICHHash()] = toadd;
+				AddKnownFileAICHHash(toadd->GetFileIdentifier().GetAICHHash(), toadd);
 			return true;
 		}
 
@@ -413,7 +437,7 @@ bool CKnownFileList::SafeAddKFile(CKnownFile *toadd)
 		m_Files_map.RemoveKey(CCKey(pFileInMap->GetFileHash()));
 		m_filePointers.erase(pFileInMap);
 		if (pFileInMap->GetFileIdentifier().HasAICHHash())
-			m_mapKnownFilesByAICH.RemoveKey(pFileInMap->GetFileIdentifier().GetAICHHash());
+			RemoveKnownFileAICHHash(pFileInMap->GetFileIdentifier().GetAICHHash(), pFileInMap);
 
 		// Quick fix: If we downloaded already downloaded files again, and if those files had the same
 		// file names, and were renamed during file completion, we have a pending ptr in transfer window.
@@ -429,7 +453,7 @@ bool CKnownFileList::SafeAddKFile(CKnownFile *toadd)
 	AddToLookupIndex(toadd);
 
 	if (toadd->GetFileIdentifier().HasAICHHash())
-		m_mapKnownFilesByAICH[toadd->GetFileIdentifier().GetAICHHash()] = toadd;
+		AddKnownFileAICHHash(toadd->GetFileIdentifier().GetAICHHash(), toadd);
 	return true;
 }
 
@@ -536,12 +560,21 @@ bool CKnownFileList::ShouldPurgeAICHHashset(const CAICHHash &rAICHHash) const
 		TRACE(_T("Purging orphaned AICH hashset %s because it is no longer indexed by known files\n"), (LPCTSTR)rAICHHash.GetString());
 		return ShouldPurgeKnownAICHHashset(false, false);
 	}
-	return ShouldPurgeKnownAICHHashset(true, pair->value->ShouldPartiallyPurgeFile());
+	bool bHasLiveOwner = false;
+	bool bAllOwnersPurgeable = true;
+	for (const CKnownFile *pFile : pair->value) {
+		if (pFile == NULL || !ContainsFilePointer(pFile))
+			continue;
+		bHasLiveOwner = true;
+		if (!pFile->ShouldPartiallyPurgeFile())
+			bAllOwnersPurgeable = false;
+	}
+	return ShouldPurgeKnownAICHHashset(bHasLiveOwner, bAllOwnersPurgeable);
 }
 
 void CKnownFileList::AICHHashChanged(const CAICHHash *pOldAICHHash, const CAICHHash &rNewAICHHash, CKnownFile *pFile)
 {
 	if (pOldAICHHash != NULL)
-		m_mapKnownFilesByAICH.RemoveKey(*pOldAICHHash);
-	m_mapKnownFilesByAICH[rNewAICHHash] = pFile;
+		RemoveKnownFileAICHHash(*pOldAICHHash, pFile);
+	AddKnownFileAICHHash(rNewAICHHash, pFile);
 }

@@ -607,8 +607,18 @@ bool CUpDownClient::AddRequestForAnotherFile(CPartFile *file)
 	if (m_OtherNoNeeded_list.Find(file) || m_OtherRequests_list.Find(file))
 		return false;
 
-	m_OtherRequests_list.AddTail(file);
-	file->A4AFsrclist.AddTail(this); // [enkeyDEV(Ottavio84) -A4AF-]
+	POSITION posOtherRequest = NULL;
+	POSITION posFileA4AF = NULL;
+	try {
+		posOtherRequest = m_OtherRequests_list.AddTail(file);
+		posFileA4AF = file->A4AFsrclist.AddTail(this); // [enkeyDEV(Ottavio84) -A4AF-]
+	} catch (...) {
+		if (posFileA4AF != NULL)
+			file->A4AFsrclist.RemoveAt(posFileA4AF);
+		if (posOtherRequest != NULL)
+			m_OtherRequests_list.RemoveAt(posOtherRequest);
+		throw;
+	}
 	return true;
 }
 

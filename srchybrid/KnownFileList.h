@@ -18,12 +18,14 @@
 #include "KnownFileLookupIndex.h"
 #include "MapKey.h"
 #include "SHAHashset.h"
+#include <vector>
 #include <unordered_set>
 
 class CKnownFile;
 typedef CMap<CCKey, const CCKey&, CKnownFile*, CKnownFile*> CKnownFilesMap;
 typedef CMap<CSKey, const CSKey&, int, int> CancelledFilesMap;
-typedef CMap<CAICHHash, const CAICHHash&, const CKnownFile*, const CKnownFile*> KnonwFilesByAICHMap;
+typedef std::vector<const CKnownFile*> KnownFilesByAICHOwners;
+typedef CMap<CAICHHash, const CAICHHash&, KnownFilesByAICHOwners, const KnownFilesByAICHOwners&> KnonwFilesByAICHMap;
 
 class CKnownFileList
 {
@@ -65,6 +67,8 @@ private:
 	bool	LoadCancelledFiles();
 	void	AddToLookupIndex(CKnownFile *pFile);
 	void	RemoveFromLookupIndex(const CKnownFile *pFile);
+	void	AddKnownFileAICHHash(const CAICHHash &rAICHHash, const CKnownFile *pFile);
+	void	RemoveKnownFileAICHHash(const CAICHHash &rAICHHash, const CKnownFile *pFile);
 	void	RebuildLookupIndex();
 
 	uint64	transferred;
