@@ -171,12 +171,20 @@ CString BuildStartupErrorLogPathInDirectory(const CString &rstrDirectory)
 
 CString BuildTempStartupErrorLogPath()
 {
-	TCHAR szTempPath[MAX_PATH + 1] = {};
-	const DWORD dwLength = ::GetTempPath(_countof(szTempPath), szTempPath);
-	if (dwLength == 0 || dwLength >= _countof(szTempPath))
+	const DWORD dwRequiredLength = ::GetTempPath(0, NULL);
+	if (dwRequiredLength == 0)
 		return CString();
 
-	return BuildStartupErrorLogPathInDirectory(PathHelpers::AppendPathComponent(CString(szTempPath), _T("emulebb")));
+	CString strTempPath;
+	LPTSTR pszTempPath = strTempPath.GetBuffer(dwRequiredLength + 1);
+	const DWORD dwLength = ::GetTempPath(dwRequiredLength + 1, pszTempPath);
+	if (dwLength == 0 || dwLength > dwRequiredLength) {
+		strTempPath.ReleaseBuffer(0);
+		return CString();
+	}
+	strTempPath.ReleaseBuffer(dwLength);
+
+	return BuildStartupErrorLogPathInDirectory(PathHelpers::AppendPathComponent(strTempPath, _T("emulebb")));
 }
 
 CString BuildStartupErrorLogPath()

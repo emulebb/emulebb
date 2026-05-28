@@ -698,8 +698,10 @@ bool DeleteFileToRecycleBinIFileOperation(LPCTSTR pszFilePath, HWND hOwnerWindow
 	const CString strShellPath = PathHelpers::StripExtendedLengthPrefix(CString(pszFilePath));
 	if (!PathHelpers::IsShellSafePath(strShellPath)) {
 		if (pResult != NULL) {
-			pResult->dwLastError = ERROR_INVALID_NAME;
-			pResult->hResult = HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
+			// Recycle-bin deletes are undoable shell operations; do not silently fall back to permanent deletion here.
+			pResult->bRecycleBin = true;
+			pResult->dwLastError = ERROR_FILENAME_EXCED_RANGE;
+			pResult->hResult = HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
 		}
 		return false;
 	}
