@@ -137,6 +137,38 @@ inline bool HasUdpCallbackPayload(size_t payloadLength)
 }
 
 /**
+ * Reports whether OP_REASKFILEPING contains the mandatory file hash.
+ */
+inline bool HasUdpReaskFilePingBase(size_t payloadLength)
+{
+	return payloadLength >= 16u;
+}
+
+/**
+ * Reports whether legacy UDP reask extended-info contains the complete-source count.
+ */
+inline bool HasUdpLegacyReaskCompleteSourceCount(size_t payloadLength)
+{
+	return payloadLength >= 18u;
+}
+
+/**
+ * Reports whether OP_REASKACK contains the mandatory queue-rank field.
+ */
+inline bool HasUdpReaskAckBase(size_t payloadLength)
+{
+	return payloadLength >= 2u;
+}
+
+/**
+ * Reports whether OP_DIRECTCALLBACKREQ contains tcp port, user hash, and options.
+ */
+inline bool HasUdpDirectCallbackRequest(size_t payloadLength)
+{
+	return payloadLength >= 19u;
+}
+
+/**
  * Returns the minimum serialized block-packet header length for the current
  * offset width and compression mode.
  */

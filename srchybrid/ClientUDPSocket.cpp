@@ -65,6 +65,15 @@ struct UdpPackDeleter
 		}
 	}
 };
+
+bool RejectMalformedClientUdpPacket(LPCTSTR pszOpcodeName, UINT uSize, uint32 uIP, uint16 uPort)
+{
+	if (thePrefs.GetDebugClientUDPLevel() > 0) {
+		DebugLogWarning(_T("Rejected malformed client UDP packet %s from %s:%u with %u byte(s)"),
+			pszOpcodeName, (LPCTSTR)ipstr(uIP), uPort, uSize);
+	}
+	return false;
+}
 }
 
 // CClientUDPSocket
@@ -263,6 +272,9 @@ bool CClientUDPSocket::ProcessPacket(const BYTE *packet, UINT size, uint8 opcode
 	case OP_REASKFILEPING:
 		{
 			theStats.AddDownDataOverheadFileRequest(size);
+			if (!HasUdpReaskFilePingBase(size))
+				return RejectMalformedClientUdpPacket(_T("OP_REASKFILEPING"), size, ip, port);
+
 			CSafeMemFile data_in(packet, size);
 			uchar reqfilehash[MDX_DIGEST_SIZE];
 			data_in.ReadHash16(reqfilehash);
@@ -303,6 +315,9 @@ bool CClientUDPSocket::ProcessPacket(const BYTE *packet, UINT size, uint8 opcode
 
 					//Update our complete source counts.
 					else if (sender->GetUDPVersion() > 2) {
+						if (!HasUdpLegacyReaskCompleteSourceCount(size))
+							return RejectMalformedClientUdpPacket(_T("OP_REASKFILEPING"), size, ip, port);
+
 						uint16 nCompleteCountLast = sender->GetUpCompleteSourcesCount();
 						uint16 nCompleteCountNew = data_in.ReadUInt16();
 						sender->SetUpCompleteSourcesCount(nCompleteCountNew);
@@ -360,6 +375,9 @@ bool CClientUDPSocket::ProcessPacket(const BYTE *packet, UINT size, uint8 opcode
 	case OP_REASKACK:
 		{
 			theStats.AddDownDataOverheadFileRequest(size);
+			if (!HasUdpReaskAckBase(size))
+				return RejectMalformedClientUdpPacket(_T("OP_REASKACK"), size, ip, port);
+
 			CUpDownClient *sender = theApp.downloadqueue->GetDownloadClientByIP_UDP(ip, port, true);
 			if (thePrefs.GetDebugClientUDPLevel() > 0)
 				DebugRecv("OP_ReaskAck", sender, NULL, ip);
@@ -403,6 +421,9 @@ bool CClientUDPSocket::ProcessPacket(const BYTE *packet, UINT size, uint8 opcode
 		{
 			if (thePrefs.GetDebugClientUDPLevel() > 0)
 				DebugRecv("OP_DIRECTCALLBACKREQ", NULL, NULL, ip);
+			if (!HasUdpDirectCallbackRequest(size))
+				return RejectMalformedClientUdpPacket(_T("OP_DIRECTCALLBACKREQ"), size, ip, port);
+
 			if (!theApp.clientlist->AllowCalbackRequest(ip)) {
 				DebugLogWarning(_T("Ignored DirectCallback Request because this IP (%s) has sent too many request within a short time"), (LPCTSTR)ipstr(ip));
 				break;
