@@ -2193,6 +2193,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "משיק את עוזר הרישום האינטראקטיבי של Prowlarr Generic Torznab indexer."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "משיק את העוזר האינטראקטיבי של Radarr qBittorrent תואם הורדות-רישום לקוח."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "משיק את העוזר האינטראקטיבי של Sonarr qBittorrent תואם הורדות-רישום לקוח."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "מהירות פעולות מהירות"
 END
 // eMuleBB managed translation block: end
 

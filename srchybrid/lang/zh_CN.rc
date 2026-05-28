@@ -2174,6 +2174,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "启动交互式 Prowlarr Generic Torznab 索引器注册帮助程序。"
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "启动交互式 Radarr qBittorrent 兼容下载客户端注册帮助程序。"
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "启动交互式 Sonarr qBittorrent 兼容下载客户端注册帮助程序。"
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "速度快速行动"
 END
 // eMuleBB managed translation block: end
 

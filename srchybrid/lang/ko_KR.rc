@@ -2163,6 +2163,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "대화형 Prowlarr Generic Torznab 인덱서 등록 도우미를 시작합니다."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "대화형 Radarr qBittorrent 호환 다운로드 클라이언트 등록 도우미를 시작합니다."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "대화형 Sonarr qBittorrent 호환 다운로드 클라이언트 등록 도우미를 시작합니다."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "속도 빠른 작업"
 END
 // eMuleBB managed translation block: end
 

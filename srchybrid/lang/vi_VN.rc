@@ -2194,6 +2194,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Ra mắt trình trợ giúp đăng ký bộ chỉ mục Prowlarr Generic Torznab tương tác."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "Ra mắt trình trợ giúp đăng ký ứng dụng khách tải xuống tương thích với Radarr qBittorrent."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "Ra mắt trình trợ giúp đăng ký ứng dụng khách tải xuống tương thích với Sonarr qBittorrent."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "Tốc độ hành động nhanh"
 END
 // eMuleBB managed translation block: end
 

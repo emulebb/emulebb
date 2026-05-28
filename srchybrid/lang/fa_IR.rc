@@ -2165,6 +2165,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "راهنمای ثبت نمایه ساز تعاملی Prowlarr Generic Torznab را راه اندازی می کند."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "کمکی را برای ثبت نام مشتری دانلود-سازگار با Radarr qBittorrent تعاملی راه اندازی می کند."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "کمکی برای ثبت نام مشتری دانلود-سازگار با Sonarr qBittorrent تعاملی راه اندازی می کند."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "سرعت اقدامات سریع"
 END
 // eMuleBB managed translation block: end
 

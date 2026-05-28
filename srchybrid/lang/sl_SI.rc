@@ -2198,6 +2198,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Zažene interaktivni pomočnik za registracijo indekserja Prowlarr Generic Torznab."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "Zažene interaktivni pomočnik za registracijo odjemalca za prenos, združljiv s Radarr qBittorrent."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "Zažene interaktivni pomočnik za registracijo odjemalca za prenos Sonarr qBittorrent."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "Hitra hitra dejanja"
 END
 // eMuleBB managed translation block: end
 

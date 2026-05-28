@@ -2164,6 +2164,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "ئۆز-ئارا تەسىر كۆرسىتىدىغان Prowlarr Generic Torznab كۆرسەتكۈچ تىزىملاش ياردەمچىسىنى قوزغىتىدۇ."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "ئۆز-ئارا تەسىر كۆرسىتىدىغان Radarr qBittorrent ماس كېلىدىغان چۈشۈرۈش-خېرىدار تىزىملاش ياردەمچىسىنى قوزغىتىدۇ."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "ئۆز-ئارا تەسىر كۆرسىتىدىغان Sonarr qBittorrent ماس كېلىدىغان چۈشۈرۈش-خېرىدار تىزىملاش ياردەمچىسىنى قوزغىتىدۇ."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "تېز ھەرىكەت"
 END
 // eMuleBB managed translation block: end
 

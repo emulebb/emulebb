@@ -5010,7 +5010,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)transfers.m_hMenu, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
-			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(_T("Speed Quick Actions"), _T('P')), _T("SPEED"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SPEED_QUICK_ACTIONS), _T('P')), _T("SPEED"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)refreshInterval.m_hMenu, GetResString(IDS_TOOLS_REFRESH_INTERVAL), _T("STATSTIME"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)filesCategories.m_hMenu, WithMenuMnemonic(FormatCompoundMenuLabel(IDS_TOOLS_FOLDERS, IDS_TOOLS_CATEGORIES), _T('F')), _T("FOLDERS"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_NETWORK_UPDATES), _T('N')), _T("SERVER"));
@@ -5023,7 +5023,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		} else {
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)transfers.m_hMenu, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
-			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(_T("Speed Quick Actions"), _T('P')), _T("SPEED"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SPEED_QUICK_ACTIONS), _T('P')), _T("SPEED"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)refreshInterval.m_hMenu, GetResString(IDS_TOOLS_REFRESH_INTERVAL), _T("STATSTIME"));
 			if (toolbar != NULL)
 				menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)display.m_hMenu, WithMenuMnemonic(GetResString(IDS_PW_DISPLAY), _T('D')), _T("DISPLAY"));

@@ -2169,6 +2169,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Käynnistää interaktiivisen Prowlarr Generic Torznab -indeksoijan rekisteröintiapuohjelman."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "Käynnistää interaktiivisen Radarr qBittorrent -yhteensopivan latausasiakasrekisteröintiapuohjelman."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "Käynnistää interaktiivisen Sonarr qBittorrent -yhteensopivan latausasiakasrekisteröintiapuohjelman."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "Nopeus Nopeat toiminnot"
 END
 // eMuleBB managed translation block: end
 

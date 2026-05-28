@@ -2197,6 +2197,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Prowlarr Generic Torznab indizea erregistratzeko laguntzaile interaktiboa abiarazten du."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "Radarr qBittorrent-ekin bateragarria deskargatzeko bezeroak erregistratzeko laguntzaile interaktiboa abiarazten du."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "Sonarr qBittorrent-ekin bateragarria den deskarga-bezeroa erregistratzeko laguntzaile interaktiboa abiarazten du."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "Abiadura Ekintza Azkarrak"
 END
 // eMuleBB managed translation block: end
 

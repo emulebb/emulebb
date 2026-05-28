@@ -810,6 +810,7 @@
     <Image Include="res\ConnectedNotNot.ico" />
     <Image Include="res\Connection.ico" />
     <Image Include="res\ConnectStop.ico" />
+    <Image Include="res\Controllers.ico" />
     <Image Include="res\Contact0.ico" />
     <Image Include="res\Contact1.ico" />
     <Image Include="res\Contact2.ico" />
@@ -921,7 +922,9 @@
     <Image Include="res\Preferences.ico" />
     <Image Include="res\Preview.ico" />
     <Image Include="res\Priority.ico" />
+    <Image Include="res\Prowlarr.ico" />
     <Image Include="res\Proxy.ico" />
+    <Image Include="res\Radarr.ico" />
     <Image Include="res\Records.ico" />
     <Image Include="res\Rename.ico" />
     <Image Include="res\resetformat.ico" />
@@ -948,6 +951,7 @@
     <Image Include="res\SharedFilesList.ico" />
     <Image Include="res\SharedFolderOvl.ico" />
     <Image Include="res\Smiley_Cry.ico" />
+    <Image Include="res\Sonarr.ico" />
     <Image Include="res\Smiley_Disgust.ico" />
     <Image Include="res\Smiley_Happy.ico" />
     <Image Include="res\Smiley_Interest.ico" />

@@ -2196,6 +2196,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Käivitab interaktiivse Prowlarr Generic Torznabi indekseerija registreerimisabi."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "Käivitab interaktiivse Radarr qBittorrentiga ühilduva allalaadimiskliendi registreerimisabi."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "Käivitab interaktiivse Sonarr qBittorrentiga ühilduva allalaadimiskliendi registreerimisabi."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "Kiirus Kiired toimingud"
 END
 // eMuleBB managed translation block: end
 

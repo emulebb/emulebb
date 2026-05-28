@@ -2191,6 +2191,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Tniedi l-helper interattiv tar-reġistrazzjoni tal-indiċjar Prowlarr Generic Torznab."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "Tniedi l-helper interattiv tar-reġistrazzjoni tal-klijenti tat-tniżżil ta' Radarr qBittorrent kompatibbli."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "Tniedi l-helper interattiv tar-reġistrazzjoni tal-klijent Sonarr qBittorrent kompatibbli mat-tniżżil."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "Veloċità Azzjonijiet Quick"
 END
 // eMuleBB managed translation block: end
 

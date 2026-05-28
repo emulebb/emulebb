@@ -3757,6 +3757,7 @@ BEGIN
     IDS_TOOLS_DIAGNOSTICS   "Diagnostics"
     IDS_TOOLS_MAINTENANCE   "Maintenance"
     IDS_TOOLS_SESSION       "Session"
+    IDS_TOOLS_SPEED_QUICK_ACTIONS "Speed Quick Actions"
     IDS_REGISTER_PROWLARR_INTEGRATION "Register eMuleBB in Prowlarr..."
     IDS_REGISTER_RADARR_INTEGRATION "Register Radarr integration..."
     IDS_REGISTER_SONARR_INTEGRATION "Register Sonarr integration..."

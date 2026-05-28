@@ -2191,6 +2191,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "إطلاق مساعد التسجيل التفاعلي لمفهرس Prowlar Generic Torznab."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "إطلاق مساعد تسجيل عميل التنزيل المتوافق مع Radarr qBittorrent."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "إطلاق المساعد التفاعلي لتسجيل عميل التنزيل المتوافق مع Sonarr qBittorrent."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "سرعة الإجراءات السريعة"
 END
 // eMuleBB managed translation block: end
 

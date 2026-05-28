@@ -2797,6 +2797,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                         "Etkileşimli Prowlarr Generic Torznab indeksleyici kayıt yardımcısını başlatır."
     IDS_TOOLS_STATUS_REGISTER_RADARR                           "Etkileşimli Radarr qBittorrent uyumlu indirme istemcisi kayıt yardımcısını başlatır."
     IDS_TOOLS_STATUS_REGISTER_SONARR                           "Etkileşimli Sonarr qBittorrent uyumlu indirme istemcisi kayıt yardımcısını başlatır."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                              "Hızlı İşlemleri Hızlandırın"
 END
 // eMuleBB managed translation block: end
 

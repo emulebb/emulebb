@@ -2767,6 +2767,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                         "Avvia l'assistente interattivo per la registrazione dell'indicizzatore Prowlarr Generic Torznab."
     IDS_TOOLS_STATUS_REGISTER_RADARR                           "Avvia l'assistente interattivo per la registrazione del client di download compatibile con Radarr qBittorrent."
     IDS_TOOLS_STATUS_REGISTER_SONARR                           "Avvia l'assistente interattivo per la registrazione del client di download compatibile con Sonarr qBittorrent."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                              "Velocizza le azioni rapide"
 END
 // eMuleBB managed translation block: end
 

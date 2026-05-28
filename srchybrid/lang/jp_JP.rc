@@ -2203,6 +2203,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "インタラクティブな Prowlarr Generic Torznab インデクサー登録ヘルパーを起動します。"
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "インタラクティブな Radarr qBittorrent 互換のダウンロード クライアント登録ヘルパーを起動します。"
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "インタラクティブな Sonarr qBittorrent 互換のダウンロード クライアント登録ヘルパーを起動します。"
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "クイックアクションをスピードアップする"
 END
 // eMuleBB managed translation block: end
 

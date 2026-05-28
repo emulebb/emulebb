@@ -2194,6 +2194,7 @@ BEGIN
     IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Palaiž interaktīvo Prowlarr Generic Torznab indeksētāja reģistrācijas palīgu."
     IDS_TOOLS_STATUS_REGISTER_RADARR                        "Palaiž interaktīvo ar Radarr qBittorrent saderīgu lejupielādes klienta reģistrācijas palīgu."
     IDS_TOOLS_STATUS_REGISTER_SONARR                        "Palaiž interaktīvo Sonarr qBittorrent saderīgu lejupielādes klienta reģistrācijas palīgu."
+    IDS_TOOLS_SPEED_QUICK_ACTIONS                           "Ātrums Ātrās darbības"
 END
 // eMuleBB managed translation block: end
 
