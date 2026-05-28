@@ -361,7 +361,13 @@ void CHTRichEditCtrl::BeginUpdateBatch()
 
 	m_bUpdateBatchNeedsInvalidate = false;
 	m_bUpdateBatchOldNoPaint = m_bNoPaint;
-	m_bUpdateBatchWasVisible = IsWindowVisible();
+	// Startup progress pumping can dispatch timer/log work while CemuleDlg already
+	// exists but the server log child controls have not created their HWNDs yet.
+	// Keep the Begin/End depth balanced so queued log entries still take the
+	// buffered path, but avoid MFC CWnd visibility helpers until the HWND is live:
+	// debug MFC asserts on those helpers and release builds would still be making
+	// an invalid window-state query.
+	m_bUpdateBatchWasVisible = ::IsWindow(m_hWnd) ? ::IsWindowVisible(m_hWnd) : FALSE;
 	m_bNoPaint = true;
 	if (m_bUpdateBatchWasVisible)
 		SetRedraw(FALSE);
@@ -384,7 +390,7 @@ void CHTRichEditCtrl::EndUpdateBatch()
 	m_bNoPaint = m_bUpdateBatchOldNoPaint;
 	m_bUpdateBatchWasVisible = FALSE;
 	m_bUpdateBatchNeedsInvalidate = false;
-	if (bWasVisible && !m_bNoPaint) {
+	if (bWasVisible && !m_bNoPaint && ::IsWindow(m_hWnd)) {
 		SetRedraw();
 		if (bNeedsInvalidate)
 			Invalidate();
