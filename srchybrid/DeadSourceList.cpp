@@ -68,6 +68,8 @@ bool operator==(const CDeadSource &ds1, const CDeadSource &ds2)
 {
 	//ASSERT((ds1.m_dwID + ds1.m_dwServerIP) ^ isnulmd4(ds1.m_aucHash));
 	//ASSERT((ds2.m_dwID + ds2.m_dwServerIP) ^ isnulmd4(ds2.m_aucHash));
+	if (!ds1.HasValidKey() || !ds2.HasValidKey())
+		return false;
 	return
 		// lowid ed2k and highid kad + ed2k check
 		((ds1.m_dwID != 0 && ds1.m_dwID == ds2.m_dwID)
@@ -88,6 +90,11 @@ CDeadSource& CDeadSource::operator=(const CDeadSource &ds)
 	return *this;
 }
 
+bool CDeadSource::HasValidKey() const
+{
+	return m_dwID != 0 || !isnulmd4(m_aucHash);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //// CDeadSourceList
 
@@ -106,7 +113,10 @@ void CDeadSourceList::Init(bool bGlobalList)
 
 bool CDeadSourceList::IsDeadSource(const CUpDownClient &client) const
 {
-	const CDeadSourcesMap::CPair *pair = m_mapDeadSources.PLookup(CDeadSource(client));
+	const CDeadSource deadSource(client);
+	if (!deadSource.HasValidKey())
+		return false;
+	const CDeadSourcesMap::CPair *pair = m_mapDeadSources.PLookup(deadSource);
 	return pair && ::GetTickCount64() < pair->value;
 }
 
@@ -118,7 +128,17 @@ void CDeadSourceList::AddDeadSource(const CUpDownClient &client)
 	//		, (pToAdd->GetRequestFile() != NULL) ? (LPCTSTR)pToAdd->GetRequestFile()->GetFileName() : _T("???")
 	//		, (LPCTSTR)pToAdd->DbgGetClientInfo());
 	ULONGLONG curTick = ::GetTickCount64();
-	m_mapDeadSources[CDeadSource(client)] = curTick + (client.HasLowID() ? BLOCKTIMEFW : BLOCKTIME);
+	const CDeadSource deadSource(client);
+	if (!deadSource.HasValidKey()) {
+		// Some live-network low-ID peers disconnect before eMuleBB learns a
+		// server-scoped ID or a callback-capable hash. Those peers cannot be
+		// matched later, and inserting their all-zero key trips MFC's CMap hash
+		// assertion in Debug builds. Skipping them preserves dead-source
+		// semantics for identifiable peers while avoiding a non-actionable
+		// debug assertion on transient incomplete clients.
+		return;
+	}
+	m_mapDeadSources[deadSource] = curTick + (client.HasLowID() ? BLOCKTIMEFW : BLOCKTIME);
 
 	if (curTick >= m_dwLastCleanUp + CLEANUPTIME)
 		CleanUp();
@@ -126,7 +146,9 @@ void CDeadSourceList::AddDeadSource(const CUpDownClient &client)
 
 void CDeadSourceList::RemoveDeadSource(const CUpDownClient &client)
 {
-	m_mapDeadSources.RemoveKey(CDeadSource(client));
+	const CDeadSource deadSource(client);
+	if (deadSource.HasValidKey())
+		m_mapDeadSources.RemoveKey(deadSource);
 }
 
 void CDeadSourceList::CleanUp()

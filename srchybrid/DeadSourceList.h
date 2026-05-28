@@ -28,6 +28,7 @@ public:
 	CDeadSource(const CDeadSource &ds)			{ *this = ds; }
 
 	CDeadSource& operator=(const CDeadSource &ds);
+	bool HasValidKey() const;
 	friend bool operator==(const CDeadSource &ds1, const CDeadSource &ds2);
 
 	uchar			m_aucHash[MDX_DIGEST_SIZE];
@@ -45,7 +46,8 @@ template<> inline UINT AFXAPI HashKey(const CDeadSource &ds)
 			hash ^= ds.m_dwServerIP;
 		return hash;
 	}
-	ASSERT(!isnulmd4(ds.m_aucHash));
+	if (isnulmd4(ds.m_aucHash))
+		return 0;
 	for (int i = MDX_DIGEST_SIZE; --i >= 0;)
 		hash += (ds.m_aucHash[i] + 1) * (i * i + 1);
 	return hash + 1;
