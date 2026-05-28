@@ -744,12 +744,20 @@ bool CSharedFilesCtrl::IsLiveVisibleFilePointer(const CShareableFile *file) cons
 			return true;
 	}
 
-	const CKnownFile *pKnownFile = reinterpret_cast<const CKnownFile*>(file);
+	const CKnownFile *pKnownFile = static_cast<const CKnownFile*>(file);
 	// WHY: visible rows may briefly retain raw pointers after the shared/known file
 	// owners remove an object. Pointer equality against owner containers is safe here;
 	// virtual RTTI or casts that inspect the pointee would turn a stale UI row into UAF.
-	if (theApp.sharedfiles != NULL && theApp.sharedfiles->ContainsFilePointer(pKnownFile))
-		return true;
+	if (theApp.sharedfiles != NULL) {
+		bool bSharedFileContainsPointer = false;
+		// Busy means sharedfiles is doing startup hash/publish work under its
+		// write lock. Treat the row as live for this prune pass: deferring a stale
+		// row is harmless, but blocking the UI here recreates the startup freeze.
+		if (!theApp.sharedfiles->TryContainsFilePointer(pKnownFile, bSharedFileContainsPointer))
+			return true;
+		if (bSharedFileContainsPointer)
+			return true;
+	}
 
 	if (theApp.knownfiles != NULL && theApp.knownfiles->ContainsFilePointer(pKnownFile))
 		return true;

@@ -2339,10 +2339,33 @@ bool CSharedFileList::ContainsFilePointer(const CKnownFile *file)
 	// turned startup into a UI-thread O(visible rows * shared files) loop on large
 	// profiles. This side index is updated under the same write lock as
 	// m_Files_map, preserving the safety contract while making the hot check O(1).
-	if (file == NULL)
-		return false;
+	bool bContains = false;
+	if (TryContainsFilePointer(file, bContains))
+		return bContains;
+
 	CSingleLock listlock(&m_mutWriteList, TRUE);
 	return m_filePointers.find(file) != m_filePointers.end();
+}
+
+bool CSharedFileList::TryContainsFilePointer(const CKnownFile *file, bool &rbContains)
+{
+	rbContains = false;
+	if (file == NULL)
+		return true;
+
+	// WHY: startup server publish can ask the shared-files UI to sort/prune rows
+	// while the AICH sync thread holds m_mutWriteList for expensive hashset work.
+	// The UI path only needs a best-effort stale-row prune; blocking here freezes
+	// the main window, while returning "busy" lets the caller defer pruning without
+	// dereferencing the potentially stale row pointer.
+	// MFC's CCriticalSection::Lock(DWORD) asserts unless the timeout is INFINITE,
+	// so use the underlying Win32 try-enter primitive for the nonblocking probe.
+	CRITICAL_SECTION *pSection = m_mutWriteList;
+	if (!::TryEnterCriticalSection(pSection))
+		return false;
+	rbContains = m_filePointers.find(file) != m_filePointers.end();
+	::LeaveCriticalSection(pSection);
+	return true;
 }
 
 void CSharedFileList::HashNextFile()

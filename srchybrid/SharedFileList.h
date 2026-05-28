@@ -260,6 +260,7 @@ public:
 
 	bool	IsFilePtrInList(const CKnownFile *file) const;
 	bool	ContainsFilePointer(const CKnownFile *file);
+	bool	TryContainsFilePointer(const CKnownFile *file, bool &rbContains);
 	bool	IsUnsharedFile(const uchar *auFileHash) const;
 	bool	ShouldBeShared(const CString &sDirPath, LPCTSTR const pFilePath, bool bMustBeShared) const;
 	bool	ContainsSingleSharedFiles(const CString &strDirectory) const; // includes subdirs
