@@ -21,6 +21,7 @@
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
+#include <limits>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -1101,6 +1102,26 @@ json ItemsEnvelopeIfRequested(const json &rParams, const json &rItems)
 	};
 }
 
+size_t GetListPageOffset(const json &rParams)
+{
+	return static_cast<size_t>(max(0, rParams.value("_offset", 0)));
+}
+
+size_t GetListPageLimit(const json &rParams)
+{
+	return static_cast<size_t>(max(1, min(1000, rParams.value("_limit", 100))));
+}
+
+json BuildPagedItemsEnvelope(const json &rItems, const size_t uTotal, const size_t uOffset, const size_t uLimit)
+{
+	return json{
+		{"items", rItems},
+		{"total", uTotal},
+		{"offset", uOffset},
+		{"limit", uLimit}
+	};
+}
+
 /**
  * Reports the compile-time build flavor for REST identity responses.
  */
@@ -1150,18 +1171,43 @@ json BuildAppJson(const char *pszBuildFlavor)
 }
 
 /**
- * Builds the complete shared-file collection without changing UI state.
+ * Builds a bounded shared-file collection without changing UI state.
+ *
+ * REST controllers poll this route against real user libraries. Applying the
+ * page window while walking the shared-file snapshot avoids serializing every
+ * shared file only to discard most rows in the response envelope.
  */
-json BuildSharedFilesListJson()
+json BuildSharedFilesListJson(
+	const size_t uOffset = 0,
+	const size_t uLimit = (std::numeric_limits<size_t>::max)(),
+	size_t *const pTotal = NULL)
 {
 	CKnownFilesMap sharedFiles;
 	theApp.sharedfiles->CopySharedFileMap(sharedFiles);
 	json result = json::array();
+	size_t uSeen = 0;
 	for (const CKnownFilesMap::CPair *pair = sharedFiles.PGetFirstAssoc(); pair != NULL; pair = sharedFiles.PGetNextAssoc(pair)) {
-		if (pair->value != NULL)
+		if (pair->value == NULL)
+			continue;
+		if (pTotal != NULL)
+			++(*pTotal);
+		if (uSeen++ < uOffset)
+			continue;
+		if (result.size() < uLimit)
 			result.push_back(BuildSharedFileJson(*pair->value));
+		else if (pTotal == NULL)
+			break;
 	}
 	return result;
+}
+
+json BuildSharedFilesPageEnvelopeJson(const json &rParams)
+{
+	size_t uTotal = 0;
+	const size_t uOffset = GetListPageOffset(rParams);
+	const size_t uLimit = GetListPageLimit(rParams);
+	const json items = BuildSharedFilesListJson(uOffset, uLimit, &uTotal);
+	return BuildPagedItemsEnvelope(items, uTotal, uOffset, uLimit);
 }
 
 /**
@@ -1221,7 +1267,7 @@ json BuildSharedDirectoriesJson()
 /**
  * Builds the active upload or waiting queue collection for REST polling.
  */
-json BuildUploadsListJson(const bool bWaitingQueue)
+json BuildUploadsListJson(const bool bWaitingQueue, const size_t uLimit = (std::numeric_limits<size_t>::max)())
 {
 	json result = json::array();
 	if (!bWaitingQueue) {
@@ -1229,12 +1275,16 @@ json BuildUploadsListJson(const bool bWaitingQueue)
 			CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromUploadList(pos);
 			if (pClient != NULL)
 				result.push_back(BuildUploadJson(*pClient, false));
+			if (result.size() >= uLimit)
+				break;
 		}
 	} else {
 		for (POSITION pos = theApp.uploadqueue->GetFirstFromWaitingList(); pos != NULL;) {
 			CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromWaitingList(pos);
 			if (pClient != NULL)
 				result.push_back(BuildUploadJson(*pClient, true));
+			if (result.size() >= uLimit)
+				break;
 		}
 	}
 	return result;
@@ -1314,7 +1364,11 @@ json BuildLogEntriesJson(const size_t maxEntries)
  * Builds the transfer collection with the same selector semantics as the list
  * endpoint.
  */
-json BuildTransfersListJson(const json &rParams, SPipeApiError &rError, const bool bRejectSharedHashingBusy = true)
+json BuildTransfersListJson(
+	const json &rParams,
+	SPipeApiError &rError,
+	const bool bRejectSharedHashingBusy = true,
+	const size_t uLimit = (std::numeric_limits<size_t>::max)())
 {
 	if (bRejectSharedHashingBusy && TryRejectSharedHashingBusy(rError))
 		return json();
@@ -1347,6 +1401,8 @@ json BuildTransfersListJson(const json &rParams, SPipeApiError &rError, const bo
 				continue;
 		}
 		result.push_back(BuildTransferJson(*pPartFile));
+		if (result.size() >= uLimit)
+			break;
 	}
 	return result;
 }
@@ -2643,7 +2699,12 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 
 	if (strCommand == "snapshot/get") {
 		SPipeApiError listError;
-		json transfers = BuildTransfersListJson(json::object(), listError, false);
+		const size_t maxEntries = static_cast<size_t>(max(1, min(1000, params.value("limit", 100))));
+
+		// Snapshot is a polling summary, not a bulk export. Apply the same
+		// caller-visible limit to each live collection so one controller refresh
+		// cannot serialize an entire large profile on the UI-owned state path.
+		json transfers = BuildTransfersListJson(json::object(), listError, false, maxEntries);
 		if (!listError.strCode.IsEmpty()) {
 			rError = listError;
 			return json();
@@ -2656,16 +2717,15 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 				servers.push_back(BuildServerJson(*pServer));
 		}
 
-		const size_t maxEntries = static_cast<size_t>(max(1, params.value("limit", 200)));
 		const json status = BuildStatusJson();
 		const bool bSharedFilesReady = status["stats"].value("sharedFilesReady", true);
 		return json{
 			{"app", BuildAppJson(GetRestBuildFlavor())},
 			{"status", status},
 			{"transfers", transfers},
-			{"sharedFiles", bSharedFilesReady ? BuildSharedFilesListJson() : json::array()},
-			{"uploads", BuildUploadsListJson(false)},
-			{"uploadQueue", BuildUploadsListJson(true)},
+			{"sharedFiles", bSharedFilesReady ? BuildSharedFilesListJson(0, maxEntries) : json::array()},
+			{"uploads", BuildUploadsListJson(false, maxEntries)},
+			{"uploadQueue", BuildUploadsListJson(true, maxEntries)},
 			{"servers", servers},
 			{"kad", BuildKadStatusJson()},
 			{"logs", BuildLogEntriesJson(maxEntries)}
@@ -2900,6 +2960,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 	if (strCommand == "shared/list") {
+		if (params.value("_paged_items_envelope", false))
+			return BuildSharedFilesPageEnvelopeJson(params);
 		return ItemsEnvelopeIfRequested(params, BuildSharedFilesListJson());
 	}
 
