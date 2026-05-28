@@ -677,14 +677,18 @@ bool CTag::WriteNewEd2kTag(CFileDataIO &data, EUTF8str eStrEncode) const
 	} else {
 		data.WriteUInt8(uType);
 		UINT uTagNameLen = (UINT)m_sName.GetLength();
-		data.WriteUInt16((uint16)uTagNameLen);
+		if (!CanWriteUInt16Length(uTagNameLen))
+			return false;
+		data.WriteUInt16Length(uTagNameLen);
 		data.Write(m_sName, uTagNameLen);
 	}
 
 	// Write tag data
 	switch (uType) {
 	case TAGTYPE_STRING:
-		data.WriteUInt16((uint16)uStrValLen);
+		if (!CanWriteUInt16Length(uStrValLen))
+			return false;
+		data.WriteUInt16Length(uStrValLen);
 		data.Write((void*)(LPCSTR)strValA, uStrValLen);
 		break;
 	case TAGTYPE_UINT64:
@@ -735,7 +739,9 @@ bool CTag::WriteTagToFile(CFileDataIO &file, EUTF8str eStrEncode) const
 			file.WriteUInt8(m_uName);
 		} else {
 			UINT taglen = (UINT)m_sName.GetLength();
-			file.WriteUInt16((uint16)taglen);
+			if (!CanWriteUInt16Length(taglen))
+				return false;
+			file.WriteUInt16Length(taglen);
 			file.Write(m_sName, taglen);
 		}
 

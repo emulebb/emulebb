@@ -26,6 +26,18 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+bool CanWriteUInt16Length(size_t nLength)
+{
+	return nLength <= 0xFFFFu;
+}
+
+namespace
+{
+void ThrowUInt16LengthOverflow()
+{
+	AfxThrowFileException(CFileException::genericException, ERROR_INVALID_DATA);
+}
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // CFileDataIO
@@ -147,6 +159,13 @@ void CFileDataIO::WriteUInt16(uint16 nVal)
 	Write(&nVal, sizeof nVal);
 }
 
+void CFileDataIO::WriteUInt16Length(size_t nLength)
+{
+	if (!CanWriteUInt16Length(nLength))
+		ThrowUInt16LengthOverflow();
+	WriteUInt16(static_cast<uint16>(nLength));
+}
+
 void CFileDataIO::WriteUInt32(uint32 nVal)
 {
 	Write(&nVal, sizeof nVal);
@@ -169,33 +188,31 @@ void CFileDataIO::WriteHash16(const uchar *pVal)
 
 void CFileDataIO::WriteString(const CString &rstr, EUTF8str eEncode)
 {
-#define	WRITE_STR_LEN(n)	WriteUInt16((uint16)(n))
 	if (eEncode == UTF8strRaw) {
 		CUnicodeToUTF8 utf8(rstr);
-		WRITE_STR_LEN(utf8.GetLength());
+		WriteUInt16Length(utf8.GetLength());
 		Write((LPCSTR)utf8, utf8.GetLength());
 	} else if (eEncode == UTF8strOptBOM) {
 		if (NeedUTF8String(rstr)) {
 			CUnicodeToBOMUTF8 bomutf8(rstr);
-			WRITE_STR_LEN(bomutf8.GetLength());
+			WriteUInt16Length(bomutf8.GetLength());
 			Write((LPCSTR)bomutf8, bomutf8.GetLength());
 		} else {
 			CUnicodeToMultiByte mb(rstr);
-			WRITE_STR_LEN(mb.GetLength());
+			WriteUInt16Length(mb.GetLength());
 			Write((LPCSTR)mb, mb.GetLength());
 		}
 	} else {
 		CUnicodeToMultiByte mb(rstr);
-		WRITE_STR_LEN(mb.GetLength());
+		WriteUInt16Length(mb.GetLength());
 		Write((LPCSTR)mb, mb.GetLength());
 	}
-#undef WRITE_STR_LEN
 }
 
 void CFileDataIO::WriteString(LPCSTR const psz)
 {
 	size_t uLen = strlen(psz);
-	WriteUInt16((uint16)uLen);
+	WriteUInt16Length(uLen);
 	Write(psz, (UINT)uLen);
 }
 
@@ -294,7 +311,8 @@ uint16 CSafeMemFile::ReadUInt16()
 {
 	if (m_nPosition + sizeof(uint16) > m_nFileSize)
 		AfxThrowFileException(CFileException::endOfFile, 0, GetFileName());
-	uint16 nResult = *(uint16*)&m_lpBuffer[m_nPosition];
+	uint16 nResult;
+	memcpy(&nResult, &m_lpBuffer[m_nPosition], sizeof nResult);
 	m_nPosition += sizeof(uint16);
 	return nResult;
 }
@@ -303,7 +321,8 @@ uint32 CSafeMemFile::ReadUInt32()
 {
 	if (m_nPosition + sizeof(uint32) > m_nFileSize)
 		AfxThrowFileException(CFileException::endOfFile, 0, GetFileName());
-	uint32 nResult = *(uint32*)&m_lpBuffer[m_nPosition];
+	uint32 nResult;
+	memcpy(&nResult, &m_lpBuffer[m_nPosition], sizeof nResult);
 	m_nPosition += sizeof(uint32);
 	return nResult;
 }
@@ -312,7 +331,8 @@ uint64 CSafeMemFile::ReadUInt64()
 {
 	if (m_nPosition + sizeof(uint64) > m_nFileSize)
 		AfxThrowFileException(CFileException::endOfFile, 0, GetFileName());
-	uint64 nResult = *(uint64*)&m_lpBuffer[m_nPosition];
+	uint64 nResult;
+	memcpy(&nResult, &m_lpBuffer[m_nPosition], sizeof nResult);
 	m_nPosition += sizeof(uint64);
 	return nResult;
 }
@@ -343,7 +363,7 @@ void CSafeMemFile::WriteUInt16(uint16 nVal)
 {
 	if (m_nPosition + sizeof(uint16) > m_nBufferSize)
 		GrowFile(m_nPosition + sizeof(uint16));
-	*(uint16*)&m_lpBuffer[m_nPosition] = nVal;
+	memcpy(&m_lpBuffer[m_nPosition], &nVal, sizeof nVal);
 	m_nPosition += sizeof(uint16);
 	if (m_nPosition > m_nFileSize)
 		m_nFileSize = m_nPosition;
@@ -353,7 +373,7 @@ void CSafeMemFile::WriteUInt32(uint32 nVal)
 {
 	if (m_nPosition + sizeof(uint32) > m_nBufferSize)
 		GrowFile(m_nPosition + sizeof(uint32));
-	*(uint32*)&m_lpBuffer[m_nPosition] = nVal;
+	memcpy(&m_lpBuffer[m_nPosition], &nVal, sizeof nVal);
 	m_nPosition += sizeof(uint32);
 	if (m_nPosition > m_nFileSize)
 		m_nFileSize = m_nPosition;
@@ -363,7 +383,7 @@ void CSafeMemFile::WriteUInt64(uint64 nVal)
 {
 	if (m_nPosition + sizeof(uint64) > m_nBufferSize)
 		GrowFile(m_nPosition + sizeof(uint64));
-	*(uint64*)&m_lpBuffer[m_nPosition] = nVal;
+	memcpy(&m_lpBuffer[m_nPosition], &nVal, sizeof nVal);
 	m_nPosition += sizeof(uint64);
 	if (m_nPosition > m_nFileSize)
 		m_nFileSize = m_nPosition;

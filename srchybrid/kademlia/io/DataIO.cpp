@@ -46,6 +46,21 @@ static char THIS_FILE[] = __FILE__;
 
 using namespace Kademlia;
 
+namespace
+{
+bool CanWriteKadUInt16Length(size_t uLength)
+{
+	return uLength <= 0xFFFFu;
+}
+
+void WriteKadUInt16Length(CDataIO &rData, size_t uLength)
+{
+	if (!CanWriteKadUInt16Length(uLength))
+		throw new CIOException(ERR_BUFFER_TOO_SMALL);
+	rData.WriteUInt16(static_cast<uint16>(uLength));
+}
+}
+
 byte CDataIO::ReadByte()
 {
 	byte byRetVal;
@@ -301,7 +316,7 @@ void CDataIO::WriteTag(const CKadTag &Tag)
 		WriteByte(uType);
 
 		const CKadTagNameString &name(Tag.m_name);
-		WriteUInt16((uint16)name.GetLength());
+		WriteKadUInt16Length(*this, name.GetLength());
 		WriteArray((LPCSTR)name, name.GetLength());
 
 		switch (uType) {
@@ -313,7 +328,7 @@ void CDataIO::WriteTag(const CKadTag &Tag)
 		case TAGTYPE_STRING:
 			{
 				CUnicodeToUTF8 utf8(Tag.GetStr());
-				WriteUInt16((uint16)utf8.GetLength());
+				WriteKadUInt16Length(*this, utf8.GetLength());
 				WriteArray(utf8, utf8.GetLength());
 			}
 			break;
@@ -380,7 +395,7 @@ void CDataIO::WriteTagList(const TagList &tagList)
 void CDataIO::WriteString(const CStringW &strVal)
 {
 	CUnicodeToUTF8 utf8(strVal);
-	WriteUInt16((uint16)utf8.GetLength());
+	WriteKadUInt16Length(*this, utf8.GetLength());
 	WriteArray(utf8, utf8.GetLength());
 }
 

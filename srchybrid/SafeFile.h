@@ -16,10 +16,14 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+#include <cstring>
+
 namespace Kademlia
 {
 	class CUInt128;
 };
+
+bool CanWriteUInt16Length(size_t nLength);
 
 enum EUTF8str : uint8
 {
@@ -55,6 +59,7 @@ public:
 
 	virtual void WriteUInt8(uint8 nVal);
 	virtual void WriteUInt16(uint16 nVal);
+	void WriteUInt16Length(size_t nLength);
 	virtual void WriteUInt32(uint32 nVal);
 	virtual void WriteUInt64(uint64 nVal);
 	virtual void WriteUInt128(const Kademlia::CUInt128 &Val);
@@ -186,17 +191,23 @@ inline uint8 PeekUInt8(const void *p)
 
 inline uint16 PeekUInt16(const void *p)
 {
-	return *((uint16*)p);
+	uint16 nVal;
+	memcpy(&nVal, p, sizeof nVal);
+	return nVal;
 }
 
 inline uint32 PeekUInt32(const void *p)
 {
-	return *((uint32*)p);
+	uint32 nVal;
+	memcpy(&nVal, p, sizeof nVal);
+	return nVal;
 }
 
 inline uint64 PeekUInt64(const void *p)
 {
-	return *((uint64*)p);
+	uint64 nVal;
+	memcpy(&nVal, p, sizeof nVal);
+	return nVal;
 }
 
 
@@ -211,17 +222,17 @@ inline void PokeUInt8(void *p, uint8 nVal)
 
 inline void PokeUInt16(void *p, uint16 nVal)
 {
-	*((uint16*)p) = nVal;
+	memcpy(p, &nVal, sizeof nVal);
 }
 
 inline void PokeUInt32(void *p, uint32 nVal)
 {
-	*((uint32*)p) = nVal;
+	memcpy(p, &nVal, sizeof nVal);
 }
 
 inline void PokeUInt64(void *p, uint64 nVal)
 {
-	*((uint64*)p) = nVal;
+	memcpy(p, &nVal, sizeof nVal);
 }
 
 
