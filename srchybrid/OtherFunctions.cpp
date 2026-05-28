@@ -22,6 +22,7 @@
 #include <ShObjIdl_core.h>
 #include <ShlObj_core.h>
 #include <sys/stat.h>
+#include <vector>
 #include "emule.h"
 #include "OtherFunctions.h"
 #include "UpDownClient.h"
@@ -1044,10 +1045,72 @@ UINT GetMaxWindowsTCPConnections()
 	return UNLIMITED;
 }
 
+namespace
+{
+bool TryGetFreeDiskSpaceForPath(LPCTSTR pszPath, ULARGE_INTEGER &rnFreeDiskSpace)
+{
+	return pszPath != NULL && pszPath[0] != _T('\0') && ::GetDiskFreeSpaceEx(pszPath, &rnFreeDiskSpace, NULL, NULL) != FALSE;
+}
+
+bool TryGetVolumePathNameForPath(LPCTSTR pszPath, CString &rstrVolumePath)
+{
+	rstrVolumePath.Empty();
+	if (pszPath == NULL || pszPath[0] == _T('\0'))
+		return false;
+
+	std::vector<TCHAR> volumePathBuffer(PathHelpers::kMaxDynamicPathChars, _T('\0'));
+	if (!::GetVolumePathName(pszPath, volumePathBuffer.data(), static_cast<DWORD>(volumePathBuffer.size())))
+		return false;
+
+	volumePathBuffer.back() = _T('\0');
+	rstrVolumePath = volumePathBuffer.data();
+	return !rstrVolumePath.IsEmpty();
+}
+
+bool TryGetVolumeNameForMountPointPath(LPCTSTR pszVolumePath, CString &rstrVolumeName)
+{
+	rstrVolumeName.Empty();
+	if (pszVolumePath == NULL || pszVolumePath[0] == _T('\0'))
+		return false;
+
+	std::vector<TCHAR> volumeNameBuffer(PathHelpers::kMaxDynamicPathChars, _T('\0'));
+	if (!::GetVolumeNameForVolumeMountPoint(pszVolumePath, volumeNameBuffer.data(), static_cast<DWORD>(volumeNameBuffer.size())))
+		return false;
+
+	volumeNameBuffer.back() = _T('\0');
+	rstrVolumeName = volumeNameBuffer.data();
+	return !rstrVolumeName.IsEmpty();
+}
+
+bool TryBuildVolumeRootFallback(LPCTSTR pszPath, CString &rstrVolumeRoot)
+{
+	rstrVolumeRoot.Empty();
+	const CString strLogicalPath(LongPathSeams::GetLogicalPathText(pszPath).c_str());
+	const PathHelpers::ParsedPathRoot parsedRoot(PathHelpers::ParsePathRoot(strLogicalPath));
+	if (!parsedRoot.bAbsolute || parsedRoot.strPrefix.IsEmpty())
+		return false;
+
+	rstrVolumeRoot = PathHelpers::EnsureTrailingSeparator(parsedRoot.strPrefix);
+	rstrVolumeRoot.MakeLower();
+	return !rstrVolumeRoot.IsEmpty();
+}
+}
+
 uint64 GetFreeDiskSpaceX(LPCTSTR pDirectory)
 {
-	ULARGE_INTEGER nFreeDiskSpace;
-	return ::GetDiskFreeSpaceEx(pDirectory, &nFreeDiskSpace, NULL, NULL) ? nFreeDiskSpace.QuadPart : 0;
+	if (pDirectory == NULL || pDirectory[0] == _T('\0'))
+		return 0;
+
+	ULARGE_INTEGER nFreeDiskSpace = {};
+	const CString strPreparedPath(LongPathSeams::PreparePathForLongPath(pDirectory).c_str());
+	if (TryGetFreeDiskSpaceForPath(strPreparedPath, nFreeDiskSpace))
+		return nFreeDiskSpace.QuadPart;
+
+	const CString strLogicalPath(LongPathSeams::GetLogicalPathText(pDirectory).c_str());
+	if (strLogicalPath.CompareNoCase(strPreparedPath) != 0 && TryGetFreeDiskSpaceForPath(strLogicalPath, nFreeDiskSpace))
+		return nFreeDiskSpace.QuadPart;
+
+	return TryGetFreeDiskSpaceForPath(pDirectory, nFreeDiskSpace) ? nFreeDiskSpace.QuadPart : 0;
 }
 
 bool TryGetVolumeIdentityPath(LPCTSTR pszPath, CString &rstrVolumeIdentity)
@@ -1056,25 +1119,24 @@ bool TryGetVolumeIdentityPath(LPCTSTR pszPath, CString &rstrVolumeIdentity)
 	if (pszPath == NULL || pszPath[0] == _T('\0'))
 		return false;
 
-	TCHAR szVolumePath[MAX_PATH] = {};
-	if (!::GetVolumePathName(pszPath, szVolumePath, _countof(szVolumePath))) {
-		CString strFallback(pszPath);
-		LPTSTR pszVolumeRoot = strFallback.GetBuffer();
-		const BOOL bHasRoot = ::PathStripToRoot(pszVolumeRoot);
-		strFallback.ReleaseBuffer();
-		if (!bHasRoot || strFallback.IsEmpty())
+	CString strVolumePath;
+	const CString strPreparedPath(LongPathSeams::PreparePathForLongPath(pszPath).c_str());
+	const bool bHasVolumePath = TryGetVolumePathNameForPath(strPreparedPath, strVolumePath)
+		|| TryGetVolumePathNameForPath(LongPathSeams::GetLogicalPathText(pszPath).c_str(), strVolumePath)
+		|| TryGetVolumePathNameForPath(pszPath, strVolumePath);
+	if (!bHasVolumePath) {
+		CString strFallbackRoot;
+		if (!TryBuildVolumeRootFallback(pszPath, strFallbackRoot))
 			return false;
 
-		strFallback = PathHelpers::EnsureTrailingSeparator(strFallback);
-		strFallback.MakeLower();
-		rstrVolumeIdentity = strFallback;
+		rstrVolumeIdentity = strFallbackRoot;
 		return true;
 	}
 
-	CString strVolumePath(PathHelpers::EnsureTrailingSeparator(szVolumePath));
-	TCHAR szVolumeName[MAX_PATH] = {};
-	if (::GetVolumeNameForVolumeMountPoint(strVolumePath, szVolumeName, _countof(szVolumeName))) {
-		CString strVolumeName(PathHelpers::EnsureTrailingSeparator(szVolumeName));
+	strVolumePath = PathHelpers::EnsureTrailingSeparator(strVolumePath);
+	CString strVolumeName;
+	if (TryGetVolumeNameForMountPointPath(strVolumePath, strVolumeName)) {
+		strVolumeName = PathHelpers::EnsureTrailingSeparator(strVolumeName);
 		strVolumeName.MakeLower();
 		rstrVolumeIdentity = strVolumeName;
 		return true;
