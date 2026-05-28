@@ -267,8 +267,11 @@ bool CUploadQueue::AddUpNextClient(LPCTSTR pszReason, CUpDownClient *directadd)
 	// tell the client that we are now ready to upload
 	if (!newclient->socket || !newclient->socket->IsConnected() || !newclient->CheckHandshakeFinished()) {
 		newclient->SetUploadState(US_CONNECTING);
-		if (!newclient->TryToConnect(true))
+		if (!newclient->TryToConnect(true)) {
+			UpDownClientDeleteSeams::AssertReadyToDelete(newclient, _T("CUploadQueue::AddUpNextClient TryToConnect"));
+			delete newclient;
 			return false;
+		}
 	} else {
 		if (thePrefs.GetDebugClientTCPLevel() > 0)
 			DebugSend("OP_AcceptUploadReq", newclient);
