@@ -2086,7 +2086,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "&Vše do min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "Vše na ma&ximum"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pozastaveno"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&Pozastaveno"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2189,8 +2189,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Ovládá, kdy eMule zobrazuje dialogové okno průběhu vypínání. Pomocí Vždy jej zobrazíte, i když je eMule skrytý v zásobníku."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Denní záloha konfigurace"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Každý den před pokračováním běžného načítání vytvoří jeden spouštěcí snímek konfiguračních a stavových souborů."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Rozbalit všechny zdroje"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Sbalit všechny zdroje"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Rozbalit všechny zdroje"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Sbalit všechny zdroje"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Kontroléry a integrace"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Zaregistrujte eMuleBB v Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Registrovat integraci Radaru..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Zaregistrujte integraci Sonarru..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Spouští interaktivního pomocníka pro registraci indexátoru Prowlarr Generic Torznab."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Spouští interaktivního pomocníka pro registraci klienta ke stažení kompatibilního s qBittorrentem Radarr."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Spouští interaktivního pomocníka pro registraci klienta pro stahování kompatibilního se systémem Sonarr qBittorrent."
 END
 // eMuleBB managed translation block: end
 

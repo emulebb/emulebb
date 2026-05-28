@@ -2082,7 +2082,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "Tất cả về &tối thiểu"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "Tất cả lên tối đ&a"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "Tạm &dừng"
+    IDS_REFRESH_INTERVAL_PAUSED                             "Tạm &dừng"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2185,8 +2185,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Kiểm soát thời điểm eMule hiển thị hộp thoại tiến trình tắt máy. Sử dụng Luôn hiển thị hộp thoại ngay cả khi eMule bị ẩn vào khay."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Sao lưu cấu hình hằng ngày"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Tạo một ảnh chụp khi khởi động của các tệp cấu hình và trạng thái mỗi ngày trước khi tiếp tục tải bình thường."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Mở rộng tất cả nguồn"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Thu gọn tất cả nguồn"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Mở rộng tất cả nguồn"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Thu gọn tất cả nguồn"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Bộ điều khiển và tích hợp"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Đăng ký eMuleBB trong Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Đăng ký tích hợp Radarr..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Đăng ký tích hợp Sonarr..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Ra mắt trình trợ giúp đăng ký bộ chỉ mục Prowlarr Generic Torznab tương tác."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Ra mắt trình trợ giúp đăng ký ứng dụng khách tải xuống tương thích với Radarr qBittorrent."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Ra mắt trình trợ giúp đăng ký ứng dụng khách tải xuống tương thích với Sonarr qBittorrent."
 END
 // eMuleBB managed translation block: end
 

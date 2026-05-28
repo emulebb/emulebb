@@ -1991,7 +1991,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Alles naar &minimum"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Alles naar ma&ximum"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Gepauzeerd"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Gepauzeerd"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2789,8 +2789,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                     "Bepaalt wanneer eMule een dialoogvenster voor de voortgang van het afsluiten weergeeft. Gebruik Altijd om dit weer te geven, zelfs als eMule verborgen is in de lade."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                             "Dagelijkse configuratieback-up"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                          "Maakt eenmaal per dag bij het opstarten een momentopname van configuratie- en statusbestanden voordat normaal laden doorgaat."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Alle bronnen uitklappen"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Alle bronnen inklappen"
+    IDS_DL_EXPAND_ALL_SOURCES                                  "Alle bronnen uitklappen"
+    IDS_DL_COLLAPSE_ALL_SOURCES                                "Alle bronnen inklappen"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                         "Controllers en integraties"
+    IDS_REGISTER_PROWLARR_INTEGRATION                          "Registreer eMuleBB in Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                            "Registreer Radarr-integratie..."
+    IDS_REGISTER_SONARR_INTEGRATION                            "Sonarr-integratie registreren..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                         "Start de interactieve Prowlarr Generieke Torznab-indexer-registratiehelper."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                           "Start de interactieve Radarr qBittorrent-compatibele download-client registratiehulp."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                           "Start de interactieve Sonarr qBittorrent-compatibele download-client registratiehulp."
 END
 // eMuleBB managed translation block: end
 

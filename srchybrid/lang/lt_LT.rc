@@ -2089,7 +2089,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "Visus į &minimumą"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "Visus į ma&ksimumą"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pristabdyta"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&Pristabdyta"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2192,8 +2192,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Valdo, kada eMule rodo išjungimo eigos dialogo langą. U Visada, kad jis būtų rodomas, net kai eMule paslėptas dėkle."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Kasdienė konfigūracijos atsarginė kopija"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Kartą per dieną paleidimo metu sukuria konfigūracijos ir būsenos failų momentinę kopiją prieš tęsiant įprastą įkėlimą."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Išskleisti visus šaltinius"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Suskleisti visus šaltinius"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Išskleisti visus šaltinius"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Suskleisti visus šaltinius"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Valdikliai ir integracijos"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Užregistruokite eMuleBB Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Registruokis „Radarr“ integracija..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Užregistruoti „Sonarr“ integraciją..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Paleidžia interaktyvų Prowlarr Generic Torznab indeksavimo priemonės registracijos pagalbinę priemonę."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Paleidžia interaktyvų „Radarr qBittorrent“ suderinamą atsisiuntimo kliento registracijos pagalbinę priemonę."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Paleidžia interaktyvų „Sonarr qBittorrent“ atsisiuntimo kliento registracijos pagalbininką."
 END
 // eMuleBB managed translation block: end
 

@@ -2094,7 +2094,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "&Todo a min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "&Todo a Max"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pausado"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&Pausado"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2197,8 +2197,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Controla cando eMule mostra un diálogo de progreso de apagado. Use Mostrar sempre aínda que eMule estea oculto na bandexa."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Copia de seguranza diaria da configuración"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Crea unha instantánea de inicio dos ficheiros de configuración e estado unha vez ao día antes de continuar a carga normal."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Expandir todas as fontes"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Contraer todas as fontes"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Expandir todas as fontes"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Contraer todas as fontes"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Controladores e Integracións"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Rexistrar eMuleBB en Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Rexistrar a integración de Radarr..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Rexistrar a integración de Sonarr..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Lanza o axudante interactivo de rexistro do indexador Prowlarr Generic Torznab."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Lanza o axudante interactivo de rexistro de clientes de descarga compatible con Radarr qBittorrent."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Inicia o axudante interactivo de rexistro de clientes de descarga compatible con Sonarr qBittorrent."
 END
 // eMuleBB managed translation block: end
 

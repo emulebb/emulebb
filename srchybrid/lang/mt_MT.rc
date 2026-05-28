@@ -2079,7 +2079,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "Kollha għall-&Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "Kollha għall-Ma&ss"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Imwaqqaf temporanjament"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&Imwaqqaf temporanjament"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2182,8 +2182,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Jikkontrolla meta eMule juri djalogu dwar il-progress tal-għeluq. Use Dejjem turih anke meta eMule ikun moħbi mat-trej."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Kopja ta' sigurtà ta' kuljum tal-konfigurazzjoni"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Joħloq stampa waħda tal-bidu tal-fajls tal-konfigurazzjoni u tal-istat kuljum qabel ikompli t-tagħbija normali."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Espandi s-sorsi kollha"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Ikkollassa s-sorsi kollha"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Espandi s-sorsi kollha"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Ikkollassa s-sorsi kollha"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Kontrolluri u Integrazzjonijiet"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Irreġistra eMuleBB fi Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Irreġistra l-integrazzjoni tar-radar..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Irreġistra l-integrazzjoni Sonarr..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Tniedi l-helper interattiv tar-reġistrazzjoni tal-indiċjar Prowlarr Generic Torznab."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Tniedi l-helper interattiv tar-reġistrazzjoni tal-klijenti tat-tniżżil ta' Radarr qBittorrent kompatibbli."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Tniedi l-helper interattiv tar-reġistrazzjoni tal-klijent Sonarr qBittorrent kompatibbli mat-tniżżil."
 END
 // eMuleBB managed translation block: end
 

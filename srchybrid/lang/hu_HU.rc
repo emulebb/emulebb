@@ -2091,7 +2091,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "&Minden Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "&Minden Max"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Szüneteltetve"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&Szüneteltetve"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2194,8 +2194,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Azt szabályozza, hogy a eMule mikor jelenítsen meg egy leállítási folyamat párbeszédpanelt. U Mindig, hogy megjelenjen akkor is, ha a eMule el van rejtve a tálcán."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Napi konfigurációs mentés"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Naponta egyszer indításkor pillanatképet készít a konfigurációs és állapotfájlokról, mielőtt a normál betöltés folytatódik."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Összes forrás kibontása"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Összes forrás összecsukása"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Összes forrás kibontása"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Összes forrás összecsukása"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Vezérlők és integrációk"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Regisztrálja a eMuleBB-t a Prowlarrban..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Regisztráció Radarr integráció..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Regisztrálja a Sonarr integrációt..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Elindítja az interaktív Prowlarr Generic Torznab indexelő regisztrációs segédprogramot."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Elindítja az interaktív Radarr qBittorrent-kompatibilis letöltési kliens regisztrációs segédprogramot."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Elindítja az interaktív Sonarr qBittorrent-kompatibilis letöltési kliens regisztrációs segédprogramot."
 END
 // eMuleBB managed translation block: end
 

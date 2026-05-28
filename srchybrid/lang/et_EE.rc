@@ -2084,7 +2084,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "Kõik &miinimumile"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "Kõik &maksimumile"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Peatatud"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&Peatatud"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2187,8 +2187,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Määrab, millal eMule kuvab sulgemise edenemise dialoogi. U Kasutage seda alati, et seda näidata ka siis, kui eMule on salve peidetud."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Igapäevane seadistuse varukoopia"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Loob kord päevas käivitamisel seadistus- ja olekufailidest hetktõmmise enne tavapärase laadimise jätkumist."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Laienda kõik allikad"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Ahenda kõik allikad"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Laienda kõik allikad"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Ahenda kõik allikad"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Kontrollerid ja integratsioonid"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Registreeri eMuleBB Prowlarris..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Registreeri Radarri integreerimine..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Registreeri Sonar integratsioon..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Käivitab interaktiivse Prowlarr Generic Torznabi indekseerija registreerimisabi."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Käivitab interaktiivse Radarr qBittorrentiga ühilduva allalaadimiskliendi registreerimisabi."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Käivitab interaktiivse Sonarr qBittorrentiga ühilduva allalaadimiskliendi registreerimisabi."
 END
 // eMuleBB managed translation block: end
 

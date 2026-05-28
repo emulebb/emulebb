@@ -170,8 +170,8 @@ public:
 	void ExcludeDownloadFoldersFromDefender();
 	/// Launches the bundled interactive Prowlarr registration script.
 	void RegisterProwlarrIntegration();
-	/// Launches the bundled interactive Radarr/Sonarr registration script.
-	void RegisterArrStackIntegration();
+	/// Launches the bundled interactive Radarr or Sonarr registration script.
+	void RegisterArrIntegration(LPCTSTR pszTargetName);
 	HBRUSH GetCtlColor(CDC*, CWnd*, UINT);
 
 	virtual void OnTrayRButtonUp(CPoint pt);

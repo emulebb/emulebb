@@ -1990,7 +1990,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Tümü &minimuma"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Tümü ma&ksimuma"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Duraklatıldı"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Duraklatıldı"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2788,8 +2788,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                     "eMule'nun kapatma ilerleme durumu iletişim kutusunu ne zaman görüntüleyeceğini kontrol eder. eMule tepside gizlendiğinde bile bunu göstermek için Her Zaman seçeneğini kullanın."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                             "Günlük yapılandırma yedeği"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                          "Normal yükleme devam etmeden önce günde bir kez başlangıçta yapılandırma ve durum dosyalarının anlık görüntüsünü oluşturur."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Tüm kaynakları genişlet"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Tüm kaynakları daralt"
+    IDS_DL_EXPAND_ALL_SOURCES                                  "Tüm kaynakları genişlet"
+    IDS_DL_COLLAPSE_ALL_SOURCES                                "Tüm kaynakları daralt"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                         "Kontrolörler ve Entegrasyonlar"
+    IDS_REGISTER_PROWLARR_INTEGRATION                          "eMuleBB'yu Prowlarr'a kaydedin..."
+    IDS_REGISTER_RADARR_INTEGRATION                            "Radarr entegrasyonuna kaydolun..."
+    IDS_REGISTER_SONARR_INTEGRATION                            "Sonarr entegrasyonunu kaydedin..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                         "Etkileşimli Prowlarr Generic Torznab indeksleyici kayıt yardımcısını başlatır."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                           "Etkileşimli Radarr qBittorrent uyumlu indirme istemcisi kayıt yardımcısını başlatır."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                           "Etkileşimli Sonarr qBittorrent uyumlu indirme istemcisi kayıt yardımcısını başlatır."
 END
 // eMuleBB managed translation block: end
 

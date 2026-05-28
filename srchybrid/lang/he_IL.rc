@@ -2081,7 +2081,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "הכול ל&מינימום"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "הכול ל&מקסימום"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&מושהה"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&מושהה"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2184,8 +2184,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "שולט כאשר eMule מציג תיבת דו-שיח של התקדמות כיבוי. השתמש ב-Always כדי להציג אותו גם כאשר eMule מוסתר במגש."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "גיבוי יומי של התצורה"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "יוצר פעם ביום בעת ההפעלה תמונת מצב של קובצי התצורה והמצב לפני שהטעינה הרגילה ממשיכה."
-    IDS_DL_EXPAND_ALL_SOURCES                         "הרחב את כל המקורות"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "כווץ את כל המקורות"
+    IDS_DL_EXPAND_ALL_SOURCES                               "הרחב את כל המקורות"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "כווץ את כל המקורות"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "בקרים ואינטגרציות"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "רשום eMuleBB ב-Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "רשום את שילוב Radarr..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "רשום את שילוב Sonarr..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "משיק את עוזר הרישום האינטראקטיבי של Prowlarr Generic Torznab indexer."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "משיק את העוזר האינטראקטיבי של Radarr qBittorrent תואם הורדות-רישום לקוח."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "משיק את העוזר האינטראקטיבי של Sonarr qBittorrent תואם הורדות-רישום לקוח."
 END
 // eMuleBB managed translation block: end
 

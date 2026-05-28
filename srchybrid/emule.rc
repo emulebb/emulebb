@@ -1430,6 +1430,9 @@ TOOLS                   ICON                    "res\\Tools.ico"
 HELP                    ICON                    "res\\Help.ico"
 CONTROLLERS             ICON                    "res\\Controllers.ico"
 DIAGNOSTICS             ICON                    "res\\Diagnostics.ico"
+PROWLARR                ICON                    "res\\Prowlarr.ico"
+RADARR                  ICON                    "res\\Radarr.ico"
+SONARR                  ICON                    "res\\Sonarr.ico"
 DUMP                    ICON                    "res\\Dump.ico"
 LONGPATHS               ICON                    "res\\LongPaths.ico"
 FIREWALL                ICON                    "res\\Firewall.ico"
@@ -3750,9 +3753,13 @@ BEGIN
     IDS_TOOLS_FOLDERS       "Folders"
     IDS_TOOLS_EDIT_CONFIG_FILES "Edit Config Files"
     IDS_TOOLS_NETWORK_UPDATES "Network && Updates"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS "Controllers and Integrations"
     IDS_TOOLS_DIAGNOSTICS   "Diagnostics"
     IDS_TOOLS_MAINTENANCE   "Maintenance"
     IDS_TOOLS_SESSION       "Session"
+    IDS_REGISTER_PROWLARR_INTEGRATION "Register eMuleBB in Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION "Register Radarr integration..."
+    IDS_REGISTER_SONARR_INTEGRATION "Register Sonarr integration..."
     IDS_EDIT_PREFERENCES_INI "Edit preferences.ini"
     IDS_EDIT_IPFILTER_DAT   "Edit ipfilter.dat"
     IDS_RELOAD_IPFILTER_DAT "Reload ipfilter.dat"
@@ -3832,6 +3839,12 @@ BEGIN
                             "Copies a redacted diagnostic JSON snapshot to the clipboard for sharing."
     IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES
                             "Launches an elevated one-time repair for eMuleBB TCP, UDP, and externally reachable REST firewall rules."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR
+                            "Launches the interactive Prowlarr Generic Torznab indexer registration helper."
+    IDS_TOOLS_STATUS_REGISTER_RADARR
+                            "Launches the interactive Radarr qBittorrent-compatible download-client registration helper."
+    IDS_TOOLS_STATUS_REGISTER_SONARR
+                            "Launches the interactive Sonarr qBittorrent-compatible download-client registration helper."
     IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS
                             "Launches an elevated one-time action to enable the Windows long path policy."
     IDS_TOOLS_STATUS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS

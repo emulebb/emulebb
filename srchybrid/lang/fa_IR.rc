@@ -2053,7 +2053,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "&همه به حداقل"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "&همه به مکس"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&مکث شده"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&مکث شده"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2156,8 +2156,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "زمانی را کنترل می‌کند که eMule یک گفتگوی پیشرفت خاموش شدن را نشان می‌دهد."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "پشتیبان‌گیری روزانه از پیکربندی"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "هر روز پیش از ادامه بارگذاری عادی، یک تصویر لحظه‌ای هنگام شروع از فایل‌های پیکربندی و وضعیت ایجاد می‌کند."
-    IDS_DL_EXPAND_ALL_SOURCES                         "گسترش همه منابع"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "جمع کردن همه منابع"
+    IDS_DL_EXPAND_ALL_SOURCES                               "گسترش همه منابع"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "جمع کردن همه منابع"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "کنترل کننده ها و ادغام ها"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "ثبت eMuleBB در Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "ثبت ادغام رادار..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "ثبت ادغام Sonarr..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "راهنمای ثبت نمایه ساز تعاملی Prowlarr Generic Torznab را راه اندازی می کند."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "کمکی را برای ثبت نام مشتری دانلود-سازگار با Radarr qBittorrent تعاملی راه اندازی می کند."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "کمکی برای ثبت نام مشتری دانلود-سازگار با Sonarr qBittorrent تعاملی راه اندازی می کند."
 END
 // eMuleBB managed translation block: end
 

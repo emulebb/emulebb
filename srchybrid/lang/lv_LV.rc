@@ -2082,7 +2082,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "Visi uz &min."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "Visi uz &maks."
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pauzēts"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&Pauzēts"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2185,8 +2185,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Kontrolē, kad eMule parāda izslēgšanas norises dialoglodziņu. UIzmantojiet Vienmēr, lai to rādītu pat tad, ja eMule ir paslēpts teknē."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Ikdienas konfigurācijas dublējums"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Reizi dienā palaišanas laikā izveido konfigurācijas un stāvokļa failu momentuzņēmumu, pirms turpinās parastā ielāde."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Izvērst visus avotus"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Sakļaut visus avotus"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Izvērst visus avotus"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Sakļaut visus avotus"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Kontrolieri un integrācijas"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Reģistrējiet eMuleBB pakalpojumā Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Reģistrēt Radarr integrāciju..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Reģistrēt Sonar integrāciju..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Palaiž interaktīvo Prowlarr Generic Torznab indeksētāja reģistrācijas palīgu."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Palaiž interaktīvo ar Radarr qBittorrent saderīgu lejupielādes klienta reģistrācijas palīgu."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Palaiž interaktīvo Sonarr qBittorrent saderīgu lejupielādes klienta reģistrācijas palīgu."
 END
 // eMuleBB managed translation block: end
 

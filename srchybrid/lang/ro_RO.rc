@@ -2091,7 +2091,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "&Toate la min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "&Toate la Max"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pauzat"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&Pauzat"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2194,8 +2194,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Controlează când eMule afișează un dialog de progres de închidere. Use afișează întotdeauna chiar și atunci când eMule este ascuns în tavă."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Copie de siguranță zilnică a configurației"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Creează o captură de pornire a fișierelor de configurare și stare o dată pe zi înainte ca încărcarea normală să continue."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Extinde toate sursele"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Restrânge toate sursele"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Extinde toate sursele"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Restrânge toate sursele"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Controlere și integrări"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Înregistrați eMuleBB în Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Înregistrați integrarea Radarr..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Înregistrați integrarea Sonarr..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Lansează ajutorul interactiv pentru înregistrarea indexatorului Prowlarr Generic Torznab."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Lansează ajutorul interactiv Radarr qBittorrent, compatibil cu descărcarea și înregistrarea clientului."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Lansează ajutorul interactiv pentru înregistrarea clientului Sonarr qBittorrent compatibil cu descărcare."
 END
 // eMuleBB managed translation block: end
 

@@ -2085,7 +2085,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "Denak &minimora"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "Denak ma&ximora"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pauzirano"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&Pauzirano"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2188,8 +2188,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "eMulek itzaltze-aurrerapeneko elkarrizketa-koadroa noiz erakusten duen kontrolatzen du. Use Beti erakusteko eMule erretiluan ezkutatuta dagoenean ere."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Dnevna sigurnosna kopija konfiguracije"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Pravi jedan snimak konfiguracijskih i statusnih datoteka pri pokretanju svaki dan prije nastavka normalnog učitavanja."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Zabaldu iturri guztiak"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Tolestu iturri guztiak"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Zabaldu iturri guztiak"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Tolestu iturri guztiak"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Kontrolatzaileak eta Integrazioak"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Erregistratu eMuleBB Prowlarr-en..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Erregistratu Radarr integrazioa..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Erregistratu Sonarr integrazioa..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Prowlarr Generic Torznab indizea erregistratzeko laguntzaile interaktiboa abiarazten du."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Radarr qBittorrent-ekin bateragarria deskargatzeko bezeroak erregistratzeko laguntzaile interaktiboa abiarazten du."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Sonarr qBittorrent-ekin bateragarria den deskarga-bezeroa erregistratzeko laguntzaile interaktiboa abiarazten du."
 END
 // eMuleBB managed translation block: end
 

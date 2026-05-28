@@ -2079,7 +2079,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "الكل إلى &الحد الأدنى"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "الكل إلى الحد الأ&قصى"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&متوقف مؤقتًا"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&متوقف مؤقتًا"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2182,8 +2182,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "التحكم عندما يعرض eMule مربع حوار تقدم إيقاف التشغيل. Use دائمًا لإظهاره حتى عندما يكون eMule مخفيًا في الدرج."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "نسخ احتياطي يومي للإعدادات"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "ينشئ لقطة بدء تشغيل واحدة من ملفات الإعدادات والحالة كل يوم قبل متابعة التحميل العادي."
-    IDS_DL_EXPAND_ALL_SOURCES                         "توسيع كل المصادر"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "طي كل المصادر"
+    IDS_DL_EXPAND_ALL_SOURCES                               "توسيع كل المصادر"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "طي كل المصادر"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "وحدات التحكم والتكامل"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "سجل eMuleBB في Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "تسجيل تكامل الرادار..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "تسجيل تكامل سونار..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "إطلاق مساعد التسجيل التفاعلي لمفهرس Prowlar Generic Torznab."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "إطلاق مساعد تسجيل عميل التنزيل المتوافق مع Radarr qBittorrent."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "إطلاق المساعد التفاعلي لتسجيل عميل التنزيل المتوافق مع Sonarr qBittorrent."
 END
 // eMuleBB managed translation block: end
 

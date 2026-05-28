@@ -2051,7 +2051,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "모두 최소로(&M)"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "모두 최대로(&X)"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&일시 중지"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&일시 중지"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2154,8 +2154,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "eMule가 종료 진행 대화 상자를 표시하는 시기를 제어합니다. eMule가 트레이에 숨겨진 경우에도 표시하려면 항상을 사용합니다."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "일일 설정 백업"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "정상 로딩을 계속하기 전에 하루에 한 번 시작 시 설정 및 상태 파일의 스냅샷을 만듭니다."
-    IDS_DL_EXPAND_ALL_SOURCES                         "모든 소스 펼치기"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "모든 소스 접기"
+    IDS_DL_EXPAND_ALL_SOURCES                               "모든 소스 펼치기"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "모든 소스 접기"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "컨트롤러 및 통합"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Prowlarr에 eMuleBB를 등록하세요..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Radarr 통합 등록..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Sonarr 통합 등록..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "대화형 Prowlarr Generic Torznab 인덱서 등록 도우미를 시작합니다."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "대화형 Radarr qBittorrent 호환 다운로드 클라이언트 등록 도우미를 시작합니다."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "대화형 Sonarr qBittorrent 호환 다운로드 클라이언트 등록 도우미를 시작합니다."
 END
 // eMuleBB managed translation block: end
 

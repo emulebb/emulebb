@@ -2057,7 +2057,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "&Kaikki Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "&Kaikki Maxille"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Keskeytetty"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&Keskeytetty"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2160,8 +2160,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Ohjaa, milloin eMule näyttää sammutuksen edistymisikkunan. UAina näyttääksesi sen, vaikka eMule olisi piilotettu lokeroon."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Päivittäinen määritysten varmuuskopio"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Luo käynnistyksen yhteydessä kerran päivässä vedoksen määritys- ja tilatiedostoista ennen normaalin latauksen jatkumista."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Laajenna kaikki lähteet"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Kutista kaikki lähteet"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Laajenna kaikki lähteet"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Kutista kaikki lähteet"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Ohjaimet ja integraatiot"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Rekisteröi eMuleBB Prowlarriin..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Rekisteröidy Radarr-integraatio..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Rekisteröi Sonarr-integraatio..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Käynnistää interaktiivisen Prowlarr Generic Torznab -indeksoijan rekisteröintiapuohjelman."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Käynnistää interaktiivisen Radarr qBittorrent -yhteensopivan latausasiakasrekisteröintiapuohjelman."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Käynnistää interaktiivisen Sonarr qBittorrent -yhteensopivan latausasiakasrekisteröintiapuohjelman."
 END
 // eMuleBB managed translation block: end
 

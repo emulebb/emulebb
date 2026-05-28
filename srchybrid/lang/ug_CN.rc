@@ -2052,7 +2052,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "ھەممىسى ئەڭ &تۆۋەنگە"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "ھەممىسى ئەڭ يۇ&قىرىغا"
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&توختىتىلغان"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&توختىتىلغان"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2155,8 +2155,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "eMule تاقاش ئىلگىرىلەش دىئالوگىنى كۆرسەتكەندە كونترول قىلىدۇ. ھەمىشە eMule تەخسىگە يوشۇرۇنغاندىمۇ ئۇنى كۆرسىتىش ئۈچۈن ئىشلىتىڭ."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "كۈندىلىك سەپلىمە زاپاسلىمىسى"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "نورمال يۈكلەش داۋاملىشىشتىن بۇرۇن ھەر كۈنى قوزغالغاندا سەپلىمە ۋە ھالەت ھۆججەتلىرىنىڭ بىر پارچە كۆرۈنۈشىنى قۇرىدۇ."
-    IDS_DL_EXPAND_ALL_SOURCES                         "بارلىق مەنبەلەرنى ياي"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "بارلىق مەنبەلەرنى قاتلا"
+    IDS_DL_EXPAND_ALL_SOURCES                               "بارلىق مەنبەلەرنى ياي"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "بارلىق مەنبەلەرنى قاتلا"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "كونتروللىغۇچ ۋە بىرلەشتۈرۈش"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Prowlarr دا eMuleBB نى تىزىملىتىڭ ..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Radarr بىرلەشتۈرۈشنى تىزىملىتىڭ ..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Sonarr بىرلەشتۈرۈشنى تىزىملىتىڭ ..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "ئۆز-ئارا تەسىر كۆرسىتىدىغان Prowlarr Generic Torznab كۆرسەتكۈچ تىزىملاش ياردەمچىسىنى قوزغىتىدۇ."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "ئۆز-ئارا تەسىر كۆرسىتىدىغان Radarr qBittorrent ماس كېلىدىغان چۈشۈرۈش-خېرىدار تىزىملاش ياردەمچىسىنى قوزغىتىدۇ."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "ئۆز-ئارا تەسىر كۆرسىتىدىغان Sonarr qBittorrent ماس كېلىدىغان چۈشۈرۈش-خېرىدار تىزىملاش ياردەمچىسىنى قوزغىتىدۇ."
 END
 // eMuleBB managed translation block: end
 

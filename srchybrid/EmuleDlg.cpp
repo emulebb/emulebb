@@ -1013,6 +1013,12 @@ namespace
 			return IDS_TOOLS_STATUS_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON;
 		case MP_HM_REPAIR_WINDOWS_FIREWALL:
 			return IDS_TOOLS_STATUS_REPAIR_WINDOWS_FIREWALL_RULES;
+		case MP_HM_REGISTER_PROWLARR:
+			return IDS_TOOLS_STATUS_REGISTER_PROWLARR;
+		case MP_HM_REGISTER_RADARR:
+			return IDS_TOOLS_STATUS_REGISTER_RADARR;
+		case MP_HM_REGISTER_SONARR:
+			return IDS_TOOLS_STATUS_REGISTER_SONARR;
 		case MP_HM_ENABLE_WINDOWS_LONG_PATHS:
 			return IDS_TOOLS_STATUS_ENABLE_WINDOWS_LONG_PATHS;
 		case MP_HM_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS:
@@ -4455,8 +4461,11 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_REGISTER_PROWLARR:
 		RegisterProwlarrIntegration();
 		break;
-	case MP_HM_REGISTER_ARR_STACK:
-		RegisterArrStackIntegration();
+	case MP_HM_REGISTER_RADARR:
+		RegisterArrIntegration(_T("Radarr"));
+		break;
+	case MP_HM_REGISTER_SONARR:
+		RegisterArrIntegration(_T("Sonarr"));
 		break;
 	case MP_HM_RESUME_ALL_DOWNLOADS:
 	case MP_HM_PAUSE_ALL_DOWNLOADS:
@@ -4760,6 +4769,10 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	networkUpdates.CreateMenu();
 	networkUpdates.AddMenuTitle(NULL, true);
 
+	CTitledMenu controllersIntegrations;
+	controllersIntegrations.CreateMenu();
+	controllersIntegrations.AddMenuTitle(NULL, true);
+
 	CTitledMenu maintenance;
 	maintenance.CreateMenu();
 	maintenance.AddMenuTitle(NULL, true);
@@ -4953,9 +4966,11 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_CHECK_OPEN_PORTS, GetResString(IDS_CHECK_OPEN_PORTS), _T("WEB"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_REPAIR_WINDOWS_FIREWALL, GetResString(IDS_REPAIR_WINDOWS_FIREWALL_RULES), _T("FIREWALL"));
 		networkUpdates.AppendMenu(MF_SEPARATOR);
-		networkUpdates.AppendMenu(MF_STRING, MP_HM_REGISTER_PROWLARR, _T("Register eMuleBB in Prowlarr..."), _T("CONTROLLERS"));
-		networkUpdates.AppendMenu(MF_STRING, MP_HM_REGISTER_ARR_STACK, _T("Register Radarr/Sonarr integration..."), _T("CONTROLLERS"));
 		networkUpdates.AppendMenu(uGeoLocationMenuFlags, MP_HM_GEOLOCATION_DOWNLOAD, GetResString(IDS_GEOLOCATION_DOWNLOAD_DB), _T("DOWNLOAD"));
+
+		controllersIntegrations.AppendMenu(MF_STRING, MP_HM_REGISTER_PROWLARR, GetResString(IDS_REGISTER_PROWLARR_INTEGRATION), _T("PROWLARR"));
+		controllersIntegrations.AppendMenu(MF_STRING, MP_HM_REGISTER_RADARR, GetResString(IDS_REGISTER_RADARR_INTEGRATION), _T("RADARR"));
+		controllersIntegrations.AppendMenu(MF_STRING, MP_HM_REGISTER_SONARR, GetResString(IDS_REGISTER_SONARR_INTEGRATION), _T("SONARR"));
 
 		maintenance.AppendMenu(MF_STRING, MP_HM_RELOAD_IPFILTER_DAT, GetResString(IDS_RELOAD_IPFILTER_DAT), _T("IPFILTER"));
 		maintenance.AppendMenu(MF_STRING, MP_HM_RELOAD_FAKEFILEFILTER, GetResString(IDS_RELOADFAKEFILEFILTER), _T("TOOLS"));
@@ -5019,7 +5034,8 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(_T("Speed Quick Actions"), _T('P')), _T("SPEED"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)refreshInterval.m_hMenu, GetResString(IDS_TOOLS_REFRESH_INTERVAL), _T("STATSTIME"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)filesCategories.m_hMenu, WithMenuMnemonic(FormatCompoundMenuLabel(IDS_TOOLS_FOLDERS, IDS_TOOLS_CATEGORIES), _T('F')), _T("FOLDERS"));
-			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_NETWORK_UPDATES), _T('N')), _T("CONTROLLERS"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_NETWORK_UPDATES), _T('N')), _T("SERVER"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)controllersIntegrations.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_CONTROLLERS_INTEGRATIONS), _T('I')), _T("CONTROLLERS"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)maintenance.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_MAINTENANCE), _T('M')), _T("TOOLS"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)diagnostics.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_DIAGNOSTICS), _T('D')), _T("DIAGNOSTICS"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)displayViews.m_hMenu, WithMenuMnemonic(FormatCompoundMenuLabel(IDS_PW_DISPLAY, IDS_TOOLS_VIEW_PRESETS), _T('V')), _T("DISPLAY"));
@@ -5035,7 +5051,8 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_FOLDERS), _T('F')), _T("OPENFOLDER"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)categories.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_CATEGORIES), _T('C')), _T("CATEGORY"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T('E')), _T("PREFERENCES"));
-			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_NETWORK_UPDATES), _T('N')), _T("WEB"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_NETWORK_UPDATES), _T('N')), _T("SERVER"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)controllersIntegrations.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_CONTROLLERS_INTEGRATIONS), _T('I')), _T("CONTROLLERS"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)maintenance.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_MAINTENANCE), _T('M')), _T("TOOLS"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)viewPresets.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_VIEW_PRESETS), _T('V')), _T("VIEW_PRESETS"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)diagnostics.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_DIAGNOSTICS), _T('D')), _T("DIAGNOSTICS"));
@@ -5072,6 +5089,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	VERIFY(filesCategories.DestroyMenu());
 	VERIFY(editConfigFiles.DestroyMenu());
 	VERIFY(networkUpdates.DestroyMenu());
+	VERIFY(controllersIntegrations.DestroyMenu());
 	VERIFY(maintenance.DestroyMenu());
 	VERIFY(viewPresets.DestroyMenu());
 	VERIFY(display.DestroyMenu());
@@ -5236,23 +5254,24 @@ void CemuleDlg::RegisterProwlarrIntegration()
 	AddLogLine(true, _T("Failed to start eMuleBB Prowlarr registration script: %s"), (LPCTSTR)strError);
 }
 
-void CemuleDlg::RegisterArrStackIntegration()
+void CemuleDlg::RegisterArrIntegration(LPCTSTR pszTargetName)
 {
 	ElevatedPowerShellAction::CLaunchResult result;
 	CString strArguments;
 	strArguments.Format(
-		_T("-EmulebbBaseUrl %s -EmulebbApiKey %s"),
+		_T("-Target %s -EmulebbBaseUrl %s -EmulebbApiKey %s"),
+		(LPCTSTR)ElevatedPowerShellAction::QuotePowerShellArgument(pszTargetName),
 		(LPCTSTR)ElevatedPowerShellAction::QuotePowerShellArgument(BuildLocalEmulebbWebBaseUrl()),
 		(LPCTSTR)ElevatedPowerShellAction::QuotePowerShellArgument(thePrefs.GetWSApiKey()));
 	if (LaunchBundledInteractiveScript(_T("register-arr-stack.ps1"), strArguments, result)) {
-		AddLogLine(false, _T("Started eMuleBB Radarr/Sonarr registration script."));
+		AddLogLine(false, _T("Started eMuleBB %s registration script."), pszTargetName);
 		return;
 	}
 
 	CString strError(result.strErrorText);
 	if (strError.IsEmpty())
 		strError = GetErrorMessage(result.dwLastError);
-	AddLogLine(true, _T("Failed to start eMuleBB Radarr/Sonarr registration script: %s"), (LPCTSTR)strError);
+	AddLogLine(true, _T("Failed to start eMuleBB %s registration script: %s"), pszTargetName, (LPCTSTR)strError);
 }
 
 

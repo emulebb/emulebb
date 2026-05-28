@@ -2086,7 +2086,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                    "Vse na &min."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                    "Vse na ma&ks."
     IDS_TOOLS_REFRESH_INTERVAL                              "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Začasno ustavljeno"
+    IDS_REFRESH_INTERVAL_PAUSED                             "&Začasno ustavljeno"
     IDS_REFRESH_INTERVAL_FAST                               "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                             "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                        "&Below normal (2s)"
@@ -2189,8 +2189,15 @@ BEGIN
     IDS_TWEAKS_TT_SHUTDOWN_PROGRESS_DIALOG                  "Nadzoruje, kdaj eMule prikaže pogovorno okno o napredku zaustavitve. Uporabite možnost Vedno, da ga prikažete, tudi če je eMule skrit v pladnju."
     IDS_TWEAKS_DAILY_CONFIG_BACKUP                          "Dnevna varnostna kopija konfiguracije"
     IDS_TWEAKS_TT_DAILY_CONFIG_BACKUP                       "Enkrat na dan ob zagonu ustvari posnetek konfiguracijskih in stanjskih datotek, preden se nadaljuje običajno nalaganje."
-    IDS_DL_EXPAND_ALL_SOURCES                         "Razširi vse vire"
-    IDS_DL_COLLAPSE_ALL_SOURCES                       "Strni vse vire"
+    IDS_DL_EXPAND_ALL_SOURCES                               "Razširi vse vire"
+    IDS_DL_COLLAPSE_ALL_SOURCES                             "Strni vse vire"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS                      "Krmilniki in integracije"
+    IDS_REGISTER_PROWLARR_INTEGRATION                       "Registrirajte eMuleBB v Prowlarr..."
+    IDS_REGISTER_RADARR_INTEGRATION                         "Registracija integracije Radarr ..."
+    IDS_REGISTER_SONARR_INTEGRATION                         "Registracija integracije Sonarr ..."
+    IDS_TOOLS_STATUS_REGISTER_PROWLARR                      "Zažene interaktivni pomočnik za registracijo indekserja Prowlarr Generic Torznab."
+    IDS_TOOLS_STATUS_REGISTER_RADARR                        "Zažene interaktivni pomočnik za registracijo odjemalca za prenos, združljiv s Radarr qBittorrent."
+    IDS_TOOLS_STATUS_REGISTER_SONARR                        "Zažene interaktivni pomočnik za registracijo odjemalca za prenos Sonarr qBittorrent."
 END
 // eMuleBB managed translation block: end
 
