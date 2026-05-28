@@ -52,6 +52,32 @@ struct SQBitHashMutationRequest
 static const size_t kMaxHashMutationCount = 100;
 
 /**
+ * @brief Maps native REST transfer states to qBittorrent queue states.
+ *
+ * Arr clients do not treat qBit's `state` as cosmetic text. They use it to
+ * distinguish paused, failed, queued, missing, and complete rows in their queue
+ * logic, so the compatibility bridge must preserve native REST meaning instead
+ * of collapsing everything into `downloading`.
+ */
+inline const char* GetQBitStateForNativeTransferState(const std::string &rNativeState, const bool bStopped)
+{
+	const std::string strState(WebServerJsonSeams::ToLowerAscii(rNativeState));
+	if (strState == "completed")
+		return "pausedUP";
+	if (strState == "checking" || strState == "completing")
+		return "checkingDL";
+	if (strState == "error")
+		return "error";
+	if (strState == "missingfiles")
+		return "missingFiles";
+	if (strState == "paused" || bStopped)
+		return "pausedDL";
+	if (strState == "queued")
+		return "queuedDL";
+	return "downloading";
+}
+
+/**
  * @brief Declares the intentionally supported qBittorrent-compatible REST
  * surface used by Radarr and Sonarr.
  */

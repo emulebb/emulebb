@@ -180,14 +180,8 @@ double JsonDoubleValue(const json &rObject, const char *pszName)
 
 std::string BuildQBitStateFromNativeTransfer(const json &rTransfer)
 {
-	const std::string strState(WebServerJsonSeams::ToLowerAscii(JsonStringValue(rTransfer, "state")));
-	if (strState == "completed")
-		return "pausedUP";
-	if (strState == "checking")
-		return "checkingDL";
-	if (strState == "paused" || (rTransfer.contains("stopped") && rTransfer["stopped"].is_boolean() && rTransfer["stopped"].get<bool>()))
-		return "pausedDL";
-	return "downloading";
+	const bool bStopped = rTransfer.contains("stopped") && rTransfer["stopped"].is_boolean() && rTransfer["stopped"].get<bool>();
+	return WebServerQBitCompatSeams::GetQBitStateForNativeTransferState(JsonStringValue(rTransfer, "state"), bStopped);
 }
 
 json BuildQBitTorrentJsonFromNativeTransfer(
