@@ -635,7 +635,7 @@ bool SaveMonitoredSharedRootJournalStateFile(const CString &rstrFullPath, const 
 			strLine.Format(_T("%s\t%I64u\t%I64d\r\n"), (LPCTSTR)rStates[i].strRootPath, rStates[i].ullUsnJournalId, rStates[i].llCheckpointUsn);
 			file.CStdioFile::WriteString(strLine);
 		}
-		file.Close();
+		CommitAndClose(file);
 		bSaveSucceeded = LongPathSeams::MoveFileEx(strTempPath, rstrFullPath, SharedDirectoryMonitorSeams::GetJournalReplaceFlags()) != 0;
 	} catch (CFileException *ex) {
 		if (thePrefs.GetVerbose())
@@ -2243,15 +2243,18 @@ bool CemuleApp::InitializeStartupConfigBaseDirOverride(
 		const CString strConfigDir(StartupConfigOverride::GetConfigDirectoryFromBaseDir(strStartupConfigBaseDir));
 		const CString strLogDir(StartupConfigOverride::GetLogDirectoryFromBaseDir(strStartupConfigBaseDir));
 		if (!LongPathSeams::CreateDirectoryPath(strStartupConfigBaseDir, NULL)) {
-			rstrError.Format(_T("The -c base directory could not be created: %s"), (LPCTSTR)strStartupConfigBaseDir);
+			const DWORD dwError = ::GetLastError();
+			rstrError.Format(_T("The -c base directory could not be created: %s - %s"), (LPCTSTR)strStartupConfigBaseDir, (LPCTSTR)GetErrorMessage(dwError));
 			return false;
 		}
 		if (!LongPathSeams::CreateDirectoryPath(strConfigDir, NULL)) {
-			rstrError.Format(_T("The -c config directory could not be created: %s"), (LPCTSTR)strConfigDir);
+			const DWORD dwError = ::GetLastError();
+			rstrError.Format(_T("The -c config directory could not be created: %s - %s"), (LPCTSTR)strConfigDir, (LPCTSTR)GetErrorMessage(dwError));
 			return false;
 		}
 		if (!LongPathSeams::CreateDirectoryPath(strLogDir, NULL)) {
-			rstrError.Format(_T("The -c log directory could not be created: %s"), (LPCTSTR)strLogDir);
+			const DWORD dwError = ::GetLastError();
+			rstrError.Format(_T("The -c log directory could not be created: %s - %s"), (LPCTSTR)strLogDir, (LPCTSTR)GetErrorMessage(dwError));
 			return false;
 		}
 	}

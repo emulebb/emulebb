@@ -3735,6 +3735,7 @@ bool CSharedFileList::WriteStartupCacheFile(const CString &strFullPath, const Sh
 	} catch (CFileException *ex) {
 		DebugLogWarning(_T("Failed to write startup cache temp file \"%s\" for \"%s\"%s"), (LPCTSTR)strTempPath, (LPCTSTR)strFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
+		file.Abort();
 		(void)LongPathSeams::DeleteFileIfExists(strTempPath);
 	}
 	return false;
@@ -3769,6 +3770,7 @@ bool CSharedFileList::WriteDuplicatePathCacheFile(const CString &strFullPath, co
 	} catch (CFileException *ex) {
 		DebugLogWarning(_T("Failed to write duplicate path cache temp file \"%s\" for \"%s\"%s"), (LPCTSTR)strTempPath, (LPCTSTR)strFullPath, (LPCTSTR)CExceptionStrDash(*ex));
 		ex->Delete();
+		file.Abort();
 		(void)LongPathSeams::DeleteFileIfExists(strTempPath);
 	}
 	return false;
