@@ -51,6 +51,7 @@ CString GetInstalledUnRarDllPath()
 CRARFile::CRARFile()
 	: m_hLibUnRar()
 	, m_hArchive()
+	, m_ullCurrentFileUnpackedSize()
 	, m_pfnRAROpenArchiveEx()
 	, m_pfnRARCloseArchive()
 	, m_pfnRARReadHeaderEx()
@@ -166,6 +167,7 @@ void CRARFile::Close()
 			}
 		}
 		m_hArchive = NULL;
+		m_ullCurrentFileUnpackedSize = 0;
 	}
 	m_strArchiveFilePath.Empty();
 }
@@ -186,14 +188,19 @@ bool CRARFile::GetNextFile(CString &strFile) const
 	}
 	if (iReadHeaderResult != 0)
 		return false;
+	m_ullCurrentFileUnpackedSize = (static_cast<ULONGLONG>(HeaderData.UnpSizeHigh) << 32) | HeaderData.UnpSize;
 	strFile = HeaderData.FileNameW;
 	return !strFile.IsEmpty();
 }
 
-bool CRARFile::Extract(LPCTSTR pszDstFilePath) const
+bool CRARFile::Extract(LPCTSTR pszDstFilePath, ULONGLONG ullMaxOutputBytes) const
 {
 	if (m_hLibUnRar == NULL || m_pfnRARProcessFileW == NULL || m_hArchive == NULL) {
 		ASSERT(0);
+		return false;
+	}
+	if (ullMaxOutputBytes != 0 && m_ullCurrentFileUnpackedSize > ullMaxOutputBytes) {
+		::SetLastError(ERROR_FILE_TOO_LARGE);
 		return false;
 	}
 

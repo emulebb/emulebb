@@ -69,7 +69,7 @@ CString CGZIPFile::GetUncompressedFilePath() const
 	LPCTSTR pDot = ::PathFindExtension(m_strGzFilePath);
 	if (_tcsicmp(pDot, _T(".gz")) != 0)
 		pDot = m_strGzFilePath; //return an empty string if not .gz
-	return m_strGzFilePath.Left((int)((LPCTSTR)m_strGzFilePath - pDot));
+	return m_strGzFilePath.Left(static_cast<int>(pDot - static_cast<LPCTSTR>(m_strGzFilePath)));
 }
 
 CString CGZIPFile::GetUncompressedFileName() const

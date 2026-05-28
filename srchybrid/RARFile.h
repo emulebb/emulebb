@@ -145,13 +145,15 @@ struct RARHeaderDataEx
 class CRARFile
 {
 public:
+	static constexpr ULONGLONG kDefaultMaxExtractBytes = 512ull * 1024ull * 1024ull;
+
 	CRARFile();
 	~CRARFile();
 
 	bool Open(LPCTSTR pszArchiveFilePath);
 	void Close();
 	bool GetNextFile(CString &strFile) const;
-	bool Extract(LPCTSTR pszDstFilePath) const;
+	bool Extract(LPCTSTR pszDstFilePath, ULONGLONG ullMaxOutputBytes = kDefaultMaxExtractBytes) const;
 	bool Skip() const;
 
 	static LPCTSTR sUnrar_download;
@@ -160,6 +162,7 @@ protected:
 	CString m_strArchiveFilePath;
 	HMODULE m_hLibUnRar;
 	HANDLE m_hArchive;
+	mutable ULONGLONG m_ullCurrentFileUnpackedSize;
 
 	bool InitUnRarLib();
 	HANDLE(WINAPI *m_pfnRAROpenArchiveEx)(struct RAROpenArchiveDataEx *ArchiveData) noexcept(false);

@@ -3367,6 +3367,32 @@ void DisableAutoSelect(CRichEditCtrl &re)
 	re.SetOptions(ECOOP_OR, ECO_SAVESEL);
 }
 
+static bool IsSafeSkinPackageMemberName(const CString &rstrFileName)
+{
+	return !rstrFileName.IsEmpty()
+		&& rstrFileName[0] != _T('\\')
+		&& rstrFileName[0] != _T('/')
+		&& rstrFileName.Find(_T(':')) < 0
+		&& rstrFileName.Find(_T("..\\")) < 0
+		&& rstrFileName.Find(_T("../")) < 0;
+}
+
+static bool RarSkinPackageContainsSkinIni(CRARFile &rar, LPCTSTR pszSkinSuffix, bool &rbFoundSkinINIFile)
+{
+	rbFoundSkinINIFile = false;
+	CString strFileName;
+	while (rar.GetNextFile(strFileName)) {
+		if (IsSafeSkinPackageMemberName(strFileName)
+			&& strFileName.Right(static_cast<int>(_tcslen(pszSkinSuffix))).CompareNoCase(pszSkinSuffix) == 0)
+		{
+			rbFoundSkinINIFile = true;
+		}
+		if (!rar.Skip())
+			return false;
+	}
+	return true;
+}
+
 void InstallSkin(LPCTSTR pszSkinPackage)
 {
 	if (thePrefs.GetMuleDirectory(EMULE_SKINDIR).IsEmpty() || !LongPathSeams::PathExists(thePrefs.GetMuleDirectory(EMULE_SKINDIR))) {
@@ -3437,24 +3463,29 @@ void InstallSkin(LPCTSTR pszSkinPackage)
 			uid = IDS_INSTALL_SKIN_PKG_ERROR;
 	} else if (_tcsicmp(pszExt, _T("rar")) == 0) {
 		CRARFile rar;
+		bool bShouldExtractRar = false;
 		if (rar.Open(pszSkinPackage)) {
-			bool bError = false;
 			bool bFoundSkinINIFile = false;
+			const bool bPackageReadable = RarSkinPackageContainsSkinIni(rar, _szSkinSuffix, bFoundSkinINIFile);
+			rar.Close();
+
+			if (!bPackageReadable || !bFoundSkinINIFile)
+				uid = IDS_INSTALL_SKIN_PKG_ERROR;
+			else
+				bShouldExtractRar = true;
+		} else {
+			CString strError;
+			strError.Format(_T("%s\r\n\r\n%s"), (LPCTSTR)GetResString(IDS_INSTALL_SKIN_PKG_ERROR), CRARFile::sUnrar_download);
+			AfxMessageBox(strError, MB_ICONERROR);
+		}
+
+		if (bShouldExtractRar && rar.Open(pszSkinPackage)) {
 			CString strFileName;
 			while (rar.GetNextFile(strFileName)) {
-				if (strFileName.IsEmpty()
-					|| strFileName[0] == _T('\\')
-					|| strFileName[0] == _T('/')
-					|| strFileName.Find(_T(':')) >= 0
-					|| strFileName.Find(_T("..\\")) >= 0
-					|| strFileName.Find(_T("../")) >= 0)
-				{
+				if (!IsSafeSkinPackageMemberName(strFileName)) {
 					rar.Skip();
 					continue;
 				}
-
-				if (!bFoundSkinINIFile && strFileName.Right(_countof(_szSkinSuffix) - 1).CompareNoCase(_szSkinSuffix) == 0)
-					bFoundSkinINIFile = true;
 
 				// No need to care about possible available sub-directories. UnRAR.DLL cares about that automatically.
 				CString strDstFilePath(thePrefs.GetMuleDirectory(EMULE_SKINDIR));
@@ -3466,16 +3497,12 @@ void InstallSkin(LPCTSTR pszSkinPackage)
 					CString strError;
 					strError.Format(GetResString(IDS_INSTALL_SKIN_FILE_ERROR), (LPCTSTR)strFileName, (LPCTSTR)strDstFilePath, (LPCTSTR)GetErrorMessage(dwError));
 					AfxMessageBox(strError, MB_ICONERROR);
-					bError = true;
 					break;
 				}
 			}
 
-			if (!bError && !bFoundSkinINIFile)
-				uid = IDS_INSTALL_SKIN_PKG_ERROR;
-
 			rar.Close();
-		} else {
+		} else if (bShouldExtractRar) {
 			CString strError;
 			strError.Format(_T("%s\r\n\r\n%s"), (LPCTSTR)GetResString(IDS_INSTALL_SKIN_PKG_ERROR), CRARFile::sUnrar_download);
 			AfxMessageBox(strError, MB_ICONERROR);
