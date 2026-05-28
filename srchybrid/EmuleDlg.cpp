@@ -898,11 +898,42 @@ namespace
 		return result;
 	}
 
+	static CString StripMenuMnemonics(const CString &label)
+	{
+		CString result;
+		for (int i = 0; i < label.GetLength(); ++i) {
+			if (label[i] != _T('&')) {
+				result.AppendChar(label[i]);
+				continue;
+			}
+			if (i + 1 < label.GetLength() && label[i + 1] == _T('&')) {
+				result.AppendChar(_T('&'));
+				++i;
+			}
+		}
+		return result;
+	}
+
+	static CString FormatCompoundMenuLabel(UINT uFirstStringID, UINT uSecondStringID)
+	{
+		CString label(StripMenuMnemonics(GetResString(uFirstStringID)));
+		label += _T(" / ");
+		label += StripMenuMnemonics(GetResString(uSecondStringID));
+		return label;
+	}
+
 	static CString FormatAllTransferCommandLabel(UINT uActionStringID)
 	{
 		CString label(GetResString(uActionStringID));
 		label += _T(" ");
 		label += GetResString(IDS_ALL);
+		return label;
+	}
+
+	static CString FormatViewPresetGroupLabel(UINT uKeepWidthsStringID)
+	{
+		CString label(GetResString(uKeepWidthsStringID).SpanExcluding(_T("(")));
+		label.TrimRight();
 		return label;
 	}
 
@@ -4713,6 +4744,10 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	transfers.CreateMenu();
 	transfers.AddMenuTitle(NULL, true);
 
+	CTitledMenu transfersSpeed;
+	transfersSpeed.CreateMenu();
+	transfersSpeed.AddMenuTitle(NULL, true);
+
 	CTitledMenu folders;
 	folders.CreateMenu();
 	folders.AddMenuTitle(NULL, true);
@@ -4720,6 +4755,10 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	CTitledMenu categories;
 	categories.CreateMenu();
 	categories.AddMenuTitle(NULL, true);
+
+	CTitledMenu filesCategories;
+	filesCategories.CreateMenu();
+	filesCategories.AddMenuTitle(NULL, true);
 
 	CTitledMenu editConfigFiles;
 	editConfigFiles.CreateMenu();
@@ -4737,9 +4776,25 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	viewPresets.CreateMenu();
 	viewPresets.AddMenuTitle(NULL, true);
 
+	CTitledMenu viewPresetStock;
+	viewPresetStock.CreateMenu();
+	viewPresetStock.AddMenuTitle(NULL, true);
+
+	CTitledMenu viewPresetExtended;
+	viewPresetExtended.CreateMenu();
+	viewPresetExtended.AddMenuTitle(NULL, true);
+
+	CTitledMenu viewPresetFull;
+	viewPresetFull.CreateMenu();
+	viewPresetFull.AddMenuTitle(NULL, true);
+
 	CTitledMenu display;
 	display.CreateMenu();
 	display.AddMenuTitle(NULL, true);
+
+	CTitledMenu displayViews;
+	displayViews.CreateMenu();
+	displayViews.AddMenuTitle(NULL, true);
 
 	CTitledMenu toolbarBitmaps;
 	toolbarBitmaps.CreateMenu();
@@ -4777,7 +4832,12 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	refreshInterval.CreateMenu();
 	refreshInterval.AddMenuTitle(NULL, true);
 
+	CTitledMenu helpLegacy;
+	helpLegacy.CreateMenu();
+	helpLegacy.AddMenuTitle(NULL, true);
+
 	if (toolsonly) {
+		const bool bExpandedToolsMenu = !bTrayMenu;
 		UINT uGeoLocationMenuFlags = MF_STRING;
 		if (!thePrefs.IsGeoLocationEnabled())
 			uGeoLocationMenuFlags |= MF_GRAYED;
@@ -4869,12 +4929,12 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 			toolbar->AppendToolbarBitmapMenu(toolbarBitmaps);
 			toolbar->AppendSkinProfileMenu(skinProfiles);
 			toolbar->AppendTextLabelMenu(textLabels);
-			display.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)toolbarBitmaps.m_hMenu, GetResString(IDS_TOOLBARSKINS), _T("DISPLAY"));
-			display.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)skinProfiles.m_hMenu, GetResString(IDS_SKIN_PROF), _T("DISPLAY"));
-			display.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)textLabels.m_hMenu, GetResString(IDS_TEXTLABELS), _T("DISPLAY"));
+			display.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)toolbarBitmaps.m_hMenu, GetResString(IDS_TOOLBARSKINS), _T("TOOLBAR_SKINS"));
+			display.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)skinProfiles.m_hMenu, GetResString(IDS_SKIN_PROF), _T("SKIN_PROFILE"));
+			display.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)textLabels.m_hMenu, GetResString(IDS_TEXTLABELS), _T("TEXT_LABELS"));
 			display.AppendMenu(MF_SEPARATOR);
-			display.AppendMenu(MF_STRING, MP_HM_RESET_DISPLAY, GetResString(IDS_PW_RESET), _T("RESETFORMAT"));
-			display.AppendMenu(MF_STRING, MP_CUSTOMIZETOOLBAR, GetResString(IDS_CUSTOMIZETOOLBAR), _T("TOOLS"));
+			display.AppendMenu(MF_STRING, MP_HM_RESET_DISPLAY, GetResString(IDS_PW_RESET), _T("DISPLAY_RESET"));
+			display.AppendMenu(MF_STRING, MP_CUSTOMIZETOOLBAR, GetResString(IDS_CUSTOMIZETOOLBAR), _T("CUSTOMIZE_TOOLBAR"));
 		}
 
 		folders.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
@@ -4908,16 +4968,17 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_FILEINFO_INI, GetResString(IDS_EDIT_FILEINFO_INI), _T("FILECOMMENTS"));
 		editConfigFiles.AppendMenu(MF_STRING, MP_HM_EDIT_STATISTICS_INI, GetResString(IDS_EDIT_STATISTICS_INI), _T("STATISTICS"));
 
-		networkUpdates.AppendMenu(MF_STRING, MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
+		if (!bExpandedToolsMenu)
+			networkUpdates.AppendMenu(MF_STRING, MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
 		networkUpdates.AppendMenu(MF_SEPARATOR);
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_UPDATE_SERVERMET_FROM_ADDRESSES, GetResString(IDS_UPDATE_SERVERMET_FROM_ADDRESSES), _T("SERVER"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_CHECK_OPEN_PORTS, GetResString(IDS_CHECK_OPEN_PORTS), _T("WEB"));
-		networkUpdates.AppendMenu(MF_STRING, MP_HM_REPAIR_WINDOWS_FIREWALL, GetResString(IDS_REPAIR_WINDOWS_FIREWALL_RULES), _T("SECURITY"));
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_REPAIR_WINDOWS_FIREWALL, GetResString(IDS_REPAIR_WINDOWS_FIREWALL_RULES), _T("FIREWALL"));
 		networkUpdates.AppendMenu(MF_SEPARATOR);
-		networkUpdates.AppendMenu(MF_STRING, MP_HM_REGISTER_PROWLARR, _T("Register eMuleBB in Prowlarr..."), _T("WEB"));
-		networkUpdates.AppendMenu(MF_STRING, MP_HM_REGISTER_ARR_STACK, _T("Register Radarr/Sonarr integration..."), _T("WEB"));
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_REGISTER_PROWLARR, _T("Register eMuleBB in Prowlarr..."), _T("CONTROLLERS"));
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_REGISTER_ARR_STACK, _T("Register Radarr/Sonarr integration..."), _T("CONTROLLERS"));
 		networkUpdates.AppendMenu(uGeoLocationMenuFlags, MP_HM_GEOLOCATION_DOWNLOAD, GetResString(IDS_GEOLOCATION_DOWNLOAD_DB), _T("DOWNLOAD"));
 
 		maintenance.AppendMenu(MF_STRING, MP_HM_RELOAD_IPFILTER_DAT, GetResString(IDS_RELOAD_IPFILTER_DAT), _T("IPFILTER"));
@@ -4927,40 +4988,80 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		maintenance.AppendMenu(MF_STRING, MP_HM_RESCAN_SHARED_FILES, GetResString(IDS_RESCAN_SHARED_FILES), _T("SharedFiles"));
 		maintenance.AppendMenu(MF_STRING, MP_HM_SAVE_PREFERENCES_NOW, GetResString(IDS_SAVE_PREFERENCES_NOW), _T("PREFERENCES"));
 		maintenance.AppendMenu(MF_SEPARATOR);
-		maintenance.AppendMenu(MF_STRING, MP_HM_ENABLE_WINDOWS_LONG_PATHS, GetResString(IDS_ENABLE_WINDOWS_LONG_PATHS), _T("OPENFOLDER"));
+		maintenance.AppendMenu(MF_STRING, MP_HM_ENABLE_WINDOWS_LONG_PATHS, GetResString(IDS_ENABLE_WINDOWS_LONG_PATHS), _T("LONGPATHS"));
 		maintenance.AppendMenu(MF_STRING, MP_HM_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS, GetResString(IDS_DEFENDER_EXCLUDE_DOWNLOAD_FOLDERS), _T("SECURITY"));
 
-		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_STOCK_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_STOCK_KEEP_WIDTHS), _T("PREFERENCES"));
-		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_STOCK_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_STOCK_RESET_WIDTHS), _T("PREFERENCES"));
-		viewPresets.AppendMenu(MF_SEPARATOR);
-		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_EXTENDED_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_EXTENDED_KEEP_WIDTHS), _T("PREFERENCES"));
-		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_EXTENDED_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_EXTENDED_RESET_WIDTHS), _T("PREFERENCES"));
-		viewPresets.AppendMenu(MF_SEPARATOR);
-		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_FULL_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_FULL_KEEP_WIDTHS), _T("PREFERENCES"));
-		viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_FULL_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_FULL_RESET_WIDTHS), _T("PREFERENCES"));
+		if (bExpandedToolsMenu) {
+			viewPresetStock.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_STOCK_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_STOCK_KEEP_WIDTHS), _T("WIDTH_KEEP"));
+			viewPresetStock.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_STOCK_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_STOCK_RESET_WIDTHS), _T("WIDTH_RESET"));
+			viewPresetExtended.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_EXTENDED_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_EXTENDED_KEEP_WIDTHS), _T("WIDTH_KEEP"));
+			viewPresetExtended.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_EXTENDED_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_EXTENDED_RESET_WIDTHS), _T("WIDTH_RESET"));
+			viewPresetFull.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_FULL_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_FULL_KEEP_WIDTHS), _T("WIDTH_KEEP"));
+			viewPresetFull.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_FULL_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_FULL_RESET_WIDTHS), _T("WIDTH_RESET"));
+			viewPresets.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)viewPresetStock.m_hMenu, FormatViewPresetGroupLabel(IDS_VIEW_PRESET_STOCK_KEEP_WIDTHS), _T("VIEW_STOCK"));
+			viewPresets.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)viewPresetExtended.m_hMenu, FormatViewPresetGroupLabel(IDS_VIEW_PRESET_EXTENDED_KEEP_WIDTHS), _T("VIEW_EXTENDED"));
+			viewPresets.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)viewPresetFull.m_hMenu, FormatViewPresetGroupLabel(IDS_VIEW_PRESET_FULL_KEEP_WIDTHS), _T("VIEW_FULL"));
+		} else {
+			viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_STOCK_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_STOCK_KEEP_WIDTHS), _T("VIEW_STOCK"));
+			viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_STOCK_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_STOCK_RESET_WIDTHS), _T("WIDTH_RESET"));
+			viewPresets.AppendMenu(MF_SEPARATOR);
+			viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_EXTENDED_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_EXTENDED_KEEP_WIDTHS), _T("VIEW_EXTENDED"));
+			viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_EXTENDED_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_EXTENDED_RESET_WIDTHS), _T("WIDTH_RESET"));
+			viewPresets.AppendMenu(MF_SEPARATOR);
+			viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_FULL_KEEP_WIDTHS, GetResString(IDS_VIEW_PRESET_FULL_KEEP_WIDTHS), _T("VIEW_FULL"));
+			viewPresets.AppendMenu(MF_STRING, MP_HM_VIEW_PRESET_FULL_RESET_WIDTHS, GetResString(IDS_VIEW_PRESET_FULL_RESET_WIDTHS), _T("WIDTH_RESET"));
+		}
 
 		diagnostics.AppendMenu(GetExistingFileMenuFlags(theLog.GetFilePath()), MP_HM_OPEN_EMULE_LOG, GetResString(IDS_OPEN_EMULE_LOG), _T("LOG"));
 		diagnostics.AppendMenu(GetExistingFileMenuFlags(theVerboseLog.GetFilePath()), MP_HM_OPEN_VERBOSE_LOG, GetResString(IDS_OPEN_VERBOSE_LOG), _T("LOG"));
 		diagnostics.AppendMenu(MF_SEPARATOR);
-		diagnostics.AppendMenu(MF_STRING, MP_HM_COPY_DIAGNOSTIC_SNAPSHOT_JSON, GetResString(IDS_DIAG_COPY_SNAPSHOT_JSON), _T("COPY"));
-		diagnostics.AppendMenu(MF_STRING, MP_HM_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON, GetResString(IDS_DIAG_COPY_REDACTED_SNAPSHOT_JSON), _T("COPY"));
+		diagnostics.AppendMenu(MF_STRING, MP_HM_COPY_DIAGNOSTIC_SNAPSHOT_JSON, GetResString(IDS_DIAG_COPY_SNAPSHOT_JSON), _T("DIAGNOSTICS"));
+		diagnostics.AppendMenu(MF_STRING, MP_HM_COPY_REDACTED_DIAGNOSTIC_SNAPSHOT_JSON, GetResString(IDS_DIAG_COPY_REDACTED_SNAPSHOT_JSON), _T("DIAGNOSTICS"));
 		diagnostics.AppendMenu(MF_SEPARATOR);
-		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("TOOLS"));
-		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("TOOLS"));
+		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_MINIDUMP, GetResString(IDS_DIAG_CAPTURE_MINIDUMP), _T("DUMP"));
+		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("DUMP"));
 
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)transfers.m_hMenu, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(_T("Speed Quick Actions"), _T('P')), _T("SPEED"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)refreshInterval.m_hMenu, GetResString(IDS_TOOLS_REFRESH_INTERVAL), _T("STATSTIME"));
-		if (toolbar != NULL)
-			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)display.m_hMenu, WithMenuMnemonic(GetResString(IDS_PW_DISPLAY), _T('D')), _T("DISPLAY"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_FOLDERS), _T('F')), _T("OPENFOLDER"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)categories.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_CATEGORIES), _T('C')), _T("CATEGORY"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T('E')), _T("PREFERENCES"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_NETWORK_UPDATES), _T('N')), _T("WEB"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)maintenance.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_MAINTENANCE), _T('M')), _T("TOOLS"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)viewPresets.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_VIEW_PRESETS), _T('V')), _T("PREFERENCES"));
-		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)diagnostics.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_DIAGNOSTICS), _T('D')), _T("TOOLS"));
+		if (bExpandedToolsMenu) {
+			transfersSpeed.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)transfers.m_hMenu, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
+			transfersSpeed.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(_T("Speed Quick Actions"), _T('P')), _T("SPEED"));
+			transfersSpeed.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)refreshInterval.m_hMenu, GetResString(IDS_TOOLS_REFRESH_INTERVAL), _T("STATSTIME"));
+
+			filesCategories.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_FOLDERS), _T('F')), _T("FOLDERS"));
+			filesCategories.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)categories.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_CATEGORIES), _T('C')), _T("CATEGORY"));
+
+			if (toolbar != NULL)
+				displayViews.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)display.m_hMenu, WithMenuMnemonic(GetResString(IDS_PW_DISPLAY), _T('D')), _T("DISPLAY"));
+			displayViews.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)viewPresets.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_VIEW_PRESETS), _T('V')), _T("VIEW_PRESETS"));
+
+			helpLegacy.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB"));
+			helpLegacy.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)scheduler.m_hMenu, GetResString(IDS_SCHEDULER), _T("SCHEDULER"));
+			helpLegacy.AppendMenu(MF_SEPARATOR);
+			helpLegacy.AppendMenu(MF_STRING, MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
+
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)transfersSpeed.m_hMenu, WithMenuMnemonic(FormatCompoundMenuLabel(IDS_EM_TRANS, IDS_SPEED_LIMITS), _T('T')), _T("TRANSFERUPDOWN"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)filesCategories.m_hMenu, WithMenuMnemonic(FormatCompoundMenuLabel(IDS_TOOLS_FOLDERS, IDS_TOOLS_CATEGORIES), _T('F')), _T("FOLDERS"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_NETWORK_UPDATES), _T('N')), _T("CONTROLLERS"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)maintenance.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_MAINTENANCE), _T('M')), _T("TOOLS"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)diagnostics.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_DIAGNOSTICS), _T('D')), _T("DIAGNOSTICS"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)displayViews.m_hMenu, WithMenuMnemonic(FormatCompoundMenuLabel(IDS_PW_DISPLAY, IDS_TOOLS_VIEW_PRESETS), _T('V')), _T("DISPLAY"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T('E')), _T("PREFERENCES"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)helpLegacy.m_hMenu, WithMenuMnemonic(FormatCompoundMenuLabel(IDS_LINKS, IDS_SCHEDULER), _T('H')), _T("HELP"));
+		} else {
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)transfers.m_hMenu, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)speedQuickActions.m_hMenu, WithMenuMnemonic(_T("Speed Quick Actions"), _T('P')), _T("SPEED"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)refreshInterval.m_hMenu, GetResString(IDS_TOOLS_REFRESH_INTERVAL), _T("STATSTIME"));
+			if (toolbar != NULL)
+				menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)display.m_hMenu, WithMenuMnemonic(GetResString(IDS_PW_DISPLAY), _T('D')), _T("DISPLAY"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)folders.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_FOLDERS), _T('F')), _T("OPENFOLDER"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)categories.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_CATEGORIES), _T('C')), _T("CATEGORY"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)editConfigFiles.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_EDIT_CONFIG_FILES), _T('E')), _T("PREFERENCES"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)networkUpdates.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_NETWORK_UPDATES), _T('N')), _T("WEB"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)maintenance.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_MAINTENANCE), _T('M')), _T("TOOLS"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)viewPresets.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_VIEW_PRESETS), _T('V')), _T("VIEW_PRESETS"));
+			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)diagnostics.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_DIAGNOSTICS), _T('D')), _T("DIAGNOSTICS"));
+		}
 	} else {
 		menu.AppendMenu(MF_STRING, MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
 		menu.AppendMenu(MF_STRING, MP_HM_OPENCONFIGDIR, GetResString(IDS_OPENCONFIGDIR) + _T("..."), _T("OPENFOLDER"));
@@ -4970,9 +5071,11 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		menu.AppendMenu(MF_STRING, MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
 	}
 
-	menu.AppendMenu(MF_SEPARATOR);
-	menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB"));
-	menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)scheduler.m_hMenu, GetResString(IDS_SCHEDULER), _T("SCHEDULER"));
+	if (!toolsonly || bTrayMenu) {
+		menu.AppendMenu(MF_SEPARATOR);
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB"));
+		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)scheduler.m_hMenu, GetResString(IDS_SCHEDULER), _T("SCHEDULER"));
+	}
 
 	menu.AppendMenu(MF_SEPARATOR);
 	menu.AppendMenu(MF_STRING, MP_HM_EXIT, GetResString(IDS_EXIT) + _T("\tAlt+X"), _T("EXIT"));
@@ -4983,12 +5086,19 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		PostMessage(WM_NULL, 0, 0);
 	VERIFY(session.DestroyMenu());
 	VERIFY(transfers.DestroyMenu());
+	VERIFY(transfersSpeed.DestroyMenu());
 	VERIFY(folders.DestroyMenu());
+	VERIFY(categories.DestroyMenu());
+	VERIFY(filesCategories.DestroyMenu());
 	VERIFY(editConfigFiles.DestroyMenu());
 	VERIFY(networkUpdates.DestroyMenu());
 	VERIFY(maintenance.DestroyMenu());
 	VERIFY(viewPresets.DestroyMenu());
+	VERIFY(viewPresetStock.DestroyMenu());
+	VERIFY(viewPresetExtended.DestroyMenu());
+	VERIFY(viewPresetFull.DestroyMenu());
 	VERIFY(display.DestroyMenu());
+	VERIFY(displayViews.DestroyMenu());
 	VERIFY(toolbarBitmaps.DestroyMenu());
 	VERIFY(skinProfiles.DestroyMenu());
 	VERIFY(textLabels.DestroyMenu());
@@ -4998,6 +5108,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	VERIFY(speedUpload.DestroyMenu());
 	VERIFY(speedDownload.DestroyMenu());
 	VERIFY(speedBoth.DestroyMenu());
+	VERIFY(helpLegacy.DestroyMenu());
 	VERIFY(Links.DestroyMenu());
 	VERIFY(scheduler.DestroyMenu());
 	VERIFY(menu.DestroyMenu());
