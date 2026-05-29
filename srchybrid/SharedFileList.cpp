@@ -56,6 +56,7 @@
 #include "UserMsgs.h"
 #include "WorkerUiMessageSeams.h"
 #include <algorithm>
+#include <new>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -325,6 +326,13 @@ void NotifyStartupSharedFilesModelChanged()
 	if (theApp.emuledlg != NULL && theApp.emuledlg->sharedfileswnd != NULL)
 		theApp.emuledlg->sharedfileswnd->OnStartupSharedFilesModelChanged();
 #endif
+}
+
+bool HasRemainingFileBytes(CFile &file, const ULONGLONG ullNeededBytes)
+{
+	const ULONGLONG ullLength = file.GetLength();
+	const ULONGLONG ullPosition = file.GetPosition();
+	return ullPosition <= ullLength && ullNeededBytes <= ullLength - ullPosition;
 }
 }
 
@@ -3283,13 +3291,18 @@ bool CSharedFileList::TryLoadStartupCache()
 		constexpr uint32 kMaxVolumeCount = 1024u;
 		constexpr uint32 kMaxDirectoryCount = 100000u;
 		constexpr uint32 kMaxFileCountPerDirectory = 1000000u;
+		constexpr ULONGLONG kMinStartupCacheVolumeRecordBytes = sizeof(uint32) + (3ui64 * sizeof(uint64));
+		constexpr ULONGLONG kMinStartupCacheFileRecordBytes = sizeof(uint32) + (2ui64 * sizeof(uint64));
 
 		if (file.ReadUInt32() != SharedStartupCachePolicy::kMagic || file.ReadUInt16() != SharedStartupCachePolicy::kVersion)
 			AfxThrowFileException(CFileException::genericException);
 
 		const uint32 uVolumeCount = file.ReadUInt32();
-		if (uVolumeCount > kMaxVolumeCount)
+		if (uVolumeCount > kMaxVolumeCount
+			|| !HasRemainingFileBytes(file, static_cast<ULONGLONG>(uVolumeCount) * kMinStartupCacheVolumeRecordBytes))
+		{
 			AfxThrowFileException(CFileException::genericException);
+		}
 		for (uint32 i = 0; i < uVolumeCount; ++i) {
 			SharedStartupCachePolicy::VolumeRecord volumeRecord = {};
 			if (!ReadStartupCacheString(file, volumeRecord.strVolumeKey))
@@ -3327,8 +3340,11 @@ bool CSharedFileList::TryLoadStartupCache()
 				AfxThrowFileException(CFileException::genericException);
 			ReadStartupCacheExact(file, record.directoryFileReference.identifier.data(), static_cast<UINT>(record.directoryFileReference.identifier.size()));
 			record.uCachedFileCount = file.ReadUInt32();
-			if (record.uCachedFileCount > kMaxFileCountPerDirectory)
+			if (record.uCachedFileCount > kMaxFileCountPerDirectory
+				|| !HasRemainingFileBytes(file, static_cast<ULONGLONG>(record.uCachedFileCount) * kMinStartupCacheFileRecordBytes))
+			{
 				AfxThrowFileException(CFileException::genericException);
+			}
 
 			if (record.eValidationMode == SharedStartupCachePolicy::ValidationMode::LocalNtfsJournalFastPath) {
 				const auto itVolume = m_startupCacheVolumes.find(MakeStartupCacheVolumeKey(record.volumeRecord.strVolumeKey));
@@ -3337,6 +3353,9 @@ bool CSharedFileList::TryLoadStartupCache()
 				record.volumeRecord = itVolume->second;
 			}
 
+			// WHY: this count is read from a local cache file, not trusted
+			// process state. A corrupt count must be rejected before reserve()
+			// can turn a malformed cache into a large startup allocation.
 			record.files.reserve(record.uCachedFileCount);
 			for (uint32 j = 0; j < record.uCachedFileCount; ++j) {
 				SharedStartupCachePolicy::FileRecord fileRecord = {};
@@ -3371,6 +3390,28 @@ bool CSharedFileList::TryLoadStartupCache()
 			if (!bRemoved)
 				DebugLogWarning(_T("Unable to remove malformed %s"), SharedStartupCachePolicy::GetFileName());
 		}
+	} catch (CMemoryException *ex) {
+		if (ex != NULL)
+			ex->Delete();
+		file.Abort();
+		m_startupCacheRecords.clear();
+		m_startupCacheVolumes.clear();
+		m_startupCacheVolumeValidation.clear();
+		const bool bRemoved = LongPathSeams::DeleteFileIfExists(strFullPath);
+		NoteStartupCacheLoadResult(true, false, true, bRemoved, "allocation_failed", 0, 0);
+		DebugLogWarning(_T("Ignoring %s after an allocation failure while loading it"), SharedStartupCachePolicy::GetFileName());
+		if (!bRemoved)
+			DebugLogWarning(_T("Unable to remove allocation-heavy %s"), SharedStartupCachePolicy::GetFileName());
+	} catch (const std::bad_alloc&) {
+		file.Abort();
+		m_startupCacheRecords.clear();
+		m_startupCacheVolumes.clear();
+		m_startupCacheVolumeValidation.clear();
+		const bool bRemoved = LongPathSeams::DeleteFileIfExists(strFullPath);
+		NoteStartupCacheLoadResult(true, false, true, bRemoved, "allocation_failed", 0, 0);
+		DebugLogWarning(_T("Ignoring %s after a standard allocation failure while loading it"), SharedStartupCachePolicy::GetFileName());
+		if (!bRemoved)
+			DebugLogWarning(_T("Unable to remove allocation-heavy %s"), SharedStartupCachePolicy::GetFileName());
 	}
 	return false;
 }
@@ -3394,12 +3435,16 @@ bool CSharedFileList::TryLoadDuplicatePathCache()
 
 	try {
 		constexpr uint32 kMaxRecordCount = 1000000u;
+		constexpr ULONGLONG kMinDuplicatePathRecordBytes = sizeof(uint32) + (2ui64 * sizeof(uint64)) + MDX_DIGEST_SIZE;
 		if (file.ReadUInt32() != SharedDuplicatePathCachePolicy::kMagic || file.ReadUInt16() != SharedDuplicatePathCachePolicy::kVersion)
 			AfxThrowFileException(CFileException::genericException);
 
 		const uint32 uRecordCount = file.ReadUInt32();
-		if (uRecordCount > kMaxRecordCount)
+		if (uRecordCount > kMaxRecordCount
+			|| !HasRemainingFileBytes(file, static_cast<ULONGLONG>(uRecordCount) * kMinDuplicatePathRecordBytes))
+		{
 			AfxThrowFileException(CFileException::genericException);
+		}
 
 		for (uint32 i = 0; i < uRecordCount; ++i) {
 			SharedDuplicatePathCachePolicy::PathRecord record = {};
@@ -3427,6 +3472,24 @@ bool CSharedFileList::TryLoadDuplicatePathCache()
 		DebugLogWarning(_T("Ignoring malformed %s"), SharedDuplicatePathCachePolicy::GetFileName());
 		if (!bRemoved)
 			DebugLogWarning(_T("Unable to remove malformed %s"), SharedDuplicatePathCachePolicy::GetFileName());
+	} catch (CMemoryException *ex) {
+		if (ex != NULL)
+			ex->Delete();
+		file.Abort();
+		m_duplicateSharedPathRecords.clear();
+		const bool bRemoved = LongPathSeams::DeleteFileIfExists(strFullPath);
+		NoteDuplicatePathCacheLoadResult(false, true, bRemoved, "allocation_failed", 0);
+		DebugLogWarning(_T("Ignoring %s after an allocation failure while loading it"), SharedDuplicatePathCachePolicy::GetFileName());
+		if (!bRemoved)
+			DebugLogWarning(_T("Unable to remove allocation-heavy %s"), SharedDuplicatePathCachePolicy::GetFileName());
+	} catch (const std::bad_alloc&) {
+		file.Abort();
+		m_duplicateSharedPathRecords.clear();
+		const bool bRemoved = LongPathSeams::DeleteFileIfExists(strFullPath);
+		NoteDuplicatePathCacheLoadResult(false, true, bRemoved, "allocation_failed", 0);
+		DebugLogWarning(_T("Ignoring %s after a standard allocation failure while loading it"), SharedDuplicatePathCachePolicy::GetFileName());
+		if (!bRemoved)
+			DebugLogWarning(_T("Unable to remove allocation-heavy %s"), SharedDuplicatePathCachePolicy::GetFileName());
 	}
 	return false;
 }

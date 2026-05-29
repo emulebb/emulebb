@@ -33,6 +33,7 @@
 #include "SharedFilesWnd.h"
 #include "SharedFilesCtrl.h"
 #include <algorithm>
+#include <new>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -100,6 +101,13 @@ namespace
 		return pFile != NULL
 			&& theApp.downloadqueue != NULL
 			&& theApp.downloadqueue->IsPartFile(pFile);
+	}
+
+	bool HasRemainingFileBytes(CFile &file, const ULONGLONG ullNeededBytes)
+	{
+		const ULONGLONG ullLength = file.GetLength();
+		const ULONGLONG ullPosition = file.GetPosition();
+		return ullPosition <= ullLength && ullNeededBytes <= ullLength - ullPosition;
 	}
 
 	CString MakeKnownFilePathLookupKey(const CString &rstrPath)
@@ -183,6 +191,16 @@ bool CKnownFileList::LoadKnownFiles()
 		AddDebugLogLine(false, _T("Known.met file version is %u (%s support 64-bit tags)"), header, (header == MET_HEADER) ? _T("doesn't") : _T("does"));
 
 		uint32 uRecordsNumber = file.ReadUInt32();
+		constexpr ULONGLONG kMinKnownMetRecordBytes = sizeof(uint32) + MDX_DIGEST_SIZE + sizeof(uint16) + sizeof(uint32);
+		if (!HasRemainingFileBytes(file, static_cast<ULONGLONG>(uRecordsNumber) * kMinKnownMetRecordBytes))
+			AfxThrowFileException(CFileException::genericException);
+
+		// WHY: known.met is user-local metadata and may be truncated or
+		// corrupted. The record count has to agree with the remaining file
+		// length before we start allocating CKnownFile objects and MD4 part
+		// hash arrays from it, otherwise one bad count can turn startup into a
+		// memory-pressure loop before normal EOF validation gets a chance to
+		// reject the file.
 		for (uint32 i = 0; i < uRecordsNumber; ++i) {
 			pRecord = new CKnownFile();
 			if (!pRecord->LoadFromFile(file)) {
@@ -202,6 +220,18 @@ bool CKnownFileList::LoadKnownFiles()
 			LogError(LOG_STATUSBAR, GetResString(IDS_ERR_SERVERMET_UNKNOWN), (LPCTSTR)CExceptionStr(*ex));
 		ex->Delete();
 		delete pRecord;
+		return false;
+	} catch (CMemoryException *ex) {
+		if (ex != NULL)
+			ex->Delete();
+		file.Abort();
+		delete pRecord;
+		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDTOLOAD), KNOWN_MET_FILENAME, _T("out of memory"));
+		return false;
+	} catch (const std::bad_alloc&) {
+		file.Abort();
+		delete pRecord;
+		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDTOLOAD), KNOWN_MET_FILENAME, _T("out of memory"));
 		return false;
 	}
 
