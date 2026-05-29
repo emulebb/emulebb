@@ -3466,6 +3466,17 @@ void CemuleDlg::OnClose()
 	theApp.m_pPartFileWriteThread->EndThread();
 
 	// saving data & stuff
+	updateShutdownPhase(40, _T("Closing eMule"), _T("Finalizing completed part files before saving known-file state."), true);
+	if (theApp.downloadqueue != NULL) {
+		// WHY: completion workers move the finished file and delete .part.met
+		// before posting TM_FILECOMPLETED back to the UI thread. Saving known.met
+		// before those success results are applied can make durable metadata lag
+		// behind the filesystem on shutdown, so drain the workers and pump their
+		// posted finalization messages before known-file persistence starts.
+		theApp.downloadqueue->DrainFileCompletionWorkersForShutdown();
+		PumpLifecycleProgressMessages(&shutdownProgress);
+	}
+
 	updateShutdownPhase(42, _T("Closing eMule"), _T("Saving known-file state and user interface settings."));
 	theApp.emuledlg->preferenceswnd->m_wndSecurity.DeleteDDB();
 

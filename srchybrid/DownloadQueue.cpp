@@ -594,6 +594,15 @@ CDownloadQueue::~CDownloadQueue()
 	}
 }
 
+void CDownloadQueue::DrainFileCompletionWorkersForShutdown()
+{
+	for (POSITION pos = filelist.GetHeadPosition(); pos != NULL;) {
+		CPartFile *pPartFile = filelist.GetNext(pos);
+		if (pPartFile != NULL)
+			pPartFile->WaitForFileCompletionWorkerForShutdown();
+	}
+}
+
 void CDownloadQueue::AddSearchToDownload(CSearchFile *toadd, uint8 paused, int cat)
 {
 	if (!(uint64)toadd->GetFileSize() || IsFileExisting(toadd->GetFileHash()))
