@@ -1608,6 +1608,11 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 					if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(addfilethread, dwResumeError)) {
 						LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FILECOMPLETIONTHREAD));
 						DebugLogError(_T("Failed to resume part-file rehash worker - Error %lu"), dwResumeError);
+						// The file-op flag gates delete/cancel paths. If the
+						// suspended helper never starts, no completion callback
+						// will clear PFOP_HASHING, so clear it before surfacing
+						// the error state.
+						SetFileOp(PFOP_NONE);
 						SetStatus(PS_ERROR);
 					}
 				} else
@@ -1990,6 +1995,10 @@ void CPartFile::PartFileHashFinished(CKnownFile *result)
 				if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(addfilethread, dwResumeError)) {
 					LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FILECOMPLETIONTHREAD));
 					DebugLogError(_T("Failed to resume part-file completion hash worker - Error %lu"), dwResumeError);
+					// Resume failure means no worker owns this file operation.
+					// Leave the transfer in error, but do not leave PFOP_HASHING
+					// set forever and make delete defer until restart.
+					SetFileOp(PFOP_NONE);
 					SetStatus(PS_ERROR);
 				}
 			} else
@@ -3312,6 +3321,10 @@ void CPartFile::CompleteFile(bool bIsHashingDone)
 			if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(addfilethread, dwResumeError)) {
 				LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FILECOMPLETIONTHREAD));
 				DebugLogError(_T("Failed to resume part-file completion hash worker - Error %lu"), dwResumeError);
+				// The completion hash did not launch, therefore no worker will
+				// report back and clear PFOP_HASHING. Clear it here so the error
+				// transfer remains controllable.
+				SetFileOp(PFOP_NONE);
 				SetStatus(PS_ERROR);
 			}
 		} else {
@@ -3331,6 +3344,10 @@ void CPartFile::CompleteFile(bool bIsHashingDone)
 			if (!HelperThreadLaunchSeams::ResumeAutoDeleteSuspendedThread(pThread, dwResumeError)) {
 				LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FILECOMPLETIONTHREAD));
 				DebugLogError(_T("Failed to resume part-file completion worker - Error %lu"), dwResumeError);
+				// The copy worker owns PFOP_COPYING only after it is running.
+				// Without this reset, a rare launch failure leaves the file
+				// permanently protected from delete/cancel by GetFileOp().
+				SetFileOp(PFOP_NONE);
 				SetStatus(PS_ERROR);
 				return;
 			}
