@@ -94,14 +94,11 @@ void CCorruptionBlackBox::ReceivedData(uint64 nStartPos, uint64 nEndPos, const C
 		ReceivedData(nStart + PARTSIZE, nEndPos, pSender);
 	}
 
-	INT_PTR posMerge = -1;
 	uint64 ndbgRewritten = 0;
 	for (INT_PTR i = 0; i < m_aaRecords[nPart].GetCount(); ++i) {
 		CCBBRecord &cbbRec(m_aaRecords[nPart][i]);
-		if (cbbRec.CanMerge(nRelStartPos, nRelEndPos, dwSenderIP, BBR_NONE))
-			posMerge = i;
 		// check if there is already a pending entry and overwrite it
-		else if (cbbRec.m_BBRStatus == BBR_NONE) {
+		if (cbbRec.m_BBRStatus == BBR_NONE) {
 			if (cbbRec.m_nStartPos >= nRelStartPos && cbbRec.m_nEndPos <= nRelEndPos) {
 				// old one is included into the new one -> delete
 				ndbgRewritten += (cbbRec.m_nEndPos - cbbRec.m_nStartPos) + 1;
@@ -133,20 +130,29 @@ void CCorruptionBlackBox::ReceivedData(uint64 nStartPos, uint64 nEndPos, const C
 				}
 			} else if (cbbRec.m_nStartPos >= nRelStartPos && cbbRec.m_nStartPos <= nRelEndPos) {
 				// old one overlaps the new one on the right side
-				ASSERT(nRelEndPos > cbbRec.m_nStartPos);
-				ndbgRewritten += nRelEndPos - cbbRec.m_nStartPos;
+				ndbgRewritten += nRelEndPos - cbbRec.m_nStartPos + 1;
 				cbbRec.m_nStartPos = nRelEndPos + 1;
 			} else if (cbbRec.m_nEndPos >= nRelStartPos && cbbRec.m_nEndPos <= nRelEndPos) {
 				// old one overlaps the new one on the left side
-				ASSERT(cbbRec.m_nEndPos > nRelStartPos);
-				ndbgRewritten += cbbRec.m_nEndPos - nRelStartPos;
+				ndbgRewritten += cbbRec.m_nEndPos - nRelStartPos + 1;
 				cbbRec.m_nEndPos = nRelStartPos - 1;
 			}
 		}
 	}
-	if (posMerge >= 0)
-		VERIFY(m_aaRecords[nPart][posMerge].Merge(nRelStartPos, nRelEndPos, dwSenderIP, BBR_NONE));
-	else
+
+	INT_PTR posMerge = -1;
+	// WHY: live peers can resend or rewrite overlapping bytes while the loop
+	// above is deleting, trimming, or splitting older records. Any merge index
+	// found before those mutations can point at the wrong CArray element after
+	// RemoveAt/Add reallocates or shifts records, so locate the final adjacent
+	// record only after normalization is complete.
+	for (INT_PTR i = 0; i < m_aaRecords[nPart].GetCount(); ++i) {
+		if (m_aaRecords[nPart][i].CanMerge(nRelStartPos, nRelEndPos, dwSenderIP, BBR_NONE)) {
+			posMerge = i;
+			break;
+		}
+	}
+	if (posMerge < 0 || !m_aaRecords[nPart][posMerge].Merge(nRelStartPos, nRelEndPos, dwSenderIP, BBR_NONE))
 		m_aaRecords[nPart].Add(CCBBRecord(nRelStartPos, nRelEndPos, dwSenderIP, BBR_NONE));
 
 	if (ndbgRewritten > 0)
