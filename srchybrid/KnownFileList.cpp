@@ -48,6 +48,8 @@ static char THIS_FILE[] = __FILE__;
 #define CANCELLED_HEADER_OLD	MET_HEADER
 #define CANCELLED_HEADER		MET_HEADER_I64TAGS
 #define CANCELLED_VERSION		0x01
+constexpr uint32 kMaxCancelledMetRecords = 1000000u;
+constexpr ULONGLONG kMinCancelledMetRecordBytes = MD5_DIGEST_SIZE + sizeof(uint8);
 
 namespace
 {
@@ -277,8 +279,16 @@ bool CKnownFileList::LoadCancelledFiles()
 			m_dwCancelledFilesSeed = (GetRandomUInt32() % 0xFFFFFFFEu) + 1;
 		}
 
+		const uint32 uRecordCount = file.ReadUInt32(); //number of records
+		// WHY: cancelled.met is local metadata and its record count is not
+		// trustworthy after truncation or corruption. Bound the count and verify
+		// the minimum remaining bytes before the loop so a bad file cannot drive
+		// unbounded map growth or thousands of exception-based EOF probes.
+		if (uRecordCount > kMaxCancelledMetRecords || !HasRemainingFileBytes(file, static_cast<ULONGLONG>(uRecordCount) * kMinCancelledMetRecordBytes))
+			AfxThrowFileException(CFileException::genericException, 0, file.GetFilePath());
+
 		uchar ucHash[MD5_DIGEST_SIZE];
-		for (uint32 i = file.ReadUInt32(); i > 0; --i) { //number of records
+		for (uint32 i = uRecordCount; i > 0; --i) {
 			file.ReadHash16(ucHash);
 			// for compatibility with future versions which may add more data than just the hash
 			for (uint8 j = file.ReadUInt8(); j > 0; --j) //number of tags
@@ -302,6 +312,17 @@ bool CKnownFileList::LoadCancelledFiles()
 		else
 			LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDTOLOAD), CANCELLED_MET_FILENAME, (LPCTSTR)CExceptionStr(*ex));
 		ex->Delete();
+		m_mapCancelledFiles.RemoveAll();
+	} catch (CMemoryException *ex) {
+		if (ex != NULL)
+			ex->Delete();
+		file.Abort();
+		m_mapCancelledFiles.RemoveAll();
+		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDTOLOAD), CANCELLED_MET_FILENAME, _T("out of memory"));
+	} catch (const std::bad_alloc&) {
+		file.Abort();
+		m_mapCancelledFiles.RemoveAll();
+		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FAILEDTOLOAD), CANCELLED_MET_FILENAME, _T("out of memory"));
 	}
 	return false;
 }
