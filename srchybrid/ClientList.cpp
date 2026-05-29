@@ -874,12 +874,12 @@ void CClientList::CleanUpClientList()
 		uint32 cDeleted = 0;
 		for (POSITION pos = list.GetHeadPosition(); pos != NULL;) {
 			const CUpDownClient *pCurClient = list.GetNext(pos);
-			if ((pCurClient->GetUploadState() == US_NONE || (pCurClient->GetUploadState() == US_BANNED && !pCurClient->IsBanned()))
-				&& pCurClient->GetDownloadState() == DS_NONE
-				&& pCurClient->GetChatState() == MS_NONE
-				&& pCurClient->GetKadState() == KS_NONE
-				&& pCurClient->socket == NULL)
-			{
+			// WHY: state enums can temporarily say "idle" while request-file,
+			// A4AF, connecting, or queue ownership is still being unwound. The
+			// client list is allowed to delete only after those external owners
+			// are detached; otherwise cleanup can turn a stale request pointer
+			// into a use-after-free on the next queue pass.
+			if (UpDownClientDeleteSeams::IsReadyForClientListCleanup(pCurClient)) {
 				++cDeleted;
 				UpDownClientDeleteSeams::AssertReadyToDelete(pCurClient, _T("CClientList::CleanUpClientList"));
 				delete pCurClient;

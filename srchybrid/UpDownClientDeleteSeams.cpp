@@ -17,6 +17,38 @@
 #include "UploadQueue.h"
 #include "UpdownClient.h"
 
+bool UpDownClientDeleteSeams::IsReadyForClientListCleanup(const CUpDownClient *pClient)
+{
+	if (pClient == NULL)
+		return false;
+
+	if (!((pClient->GetUploadState() == US_NONE) || (pClient->GetUploadState() == US_BANNED && !pClient->IsBanned()))
+		|| pClient->GetDownloadState() != DS_NONE
+		|| pClient->GetChatState() != MS_NONE
+		|| pClient->GetKadState() != KS_NONE
+		|| pClient->socket != NULL
+		|| pClient->GetConnectingState() != CCS_NONE
+		|| pClient->GetRequestFile() != NULL
+		|| !pClient->m_OtherRequests_list.IsEmpty()
+		|| !pClient->m_OtherNoNeeded_list.IsEmpty())
+	{
+		return false;
+	}
+
+	if (theApp.clientlist != NULL && theApp.clientlist->IsConnectingClient(pClient))
+		return false;
+	if (theApp.downloadqueue != NULL && theApp.downloadqueue->IsInList(pClient))
+		return false;
+	if (theApp.uploadqueue != NULL) {
+		if (theApp.uploadqueue->IsDownloading(pClient))
+			return false;
+		if (theApp.uploadqueue->IsOnUploadQueue(const_cast<CUpDownClient*>(pClient)))
+			return false;
+	}
+
+	return true;
+}
+
 void UpDownClientDeleteSeams::AssertReadyToDelete(const CUpDownClient *pClient, const TCHAR *pszContext)
 {
 #ifdef _DEBUG

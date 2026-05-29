@@ -8,6 +8,15 @@ class CPartFile;
 namespace UpDownClientDeleteSeams
 {
 /**
+ * @brief Reports whether periodic client-list cleanup may delete this client.
+ *
+ * The client list is the owner performing the deletion, so this check only
+ * verifies that every other owner/queue/request relationship has already been
+ * detached.
+ */
+bool IsReadyForClientListCleanup(const CUpDownClient *pClient);
+
+/**
  * @brief Debug-checks that normal external client owners were detached before explicit deletion.
  *
  * The client list remains the canonical lifetime root and is intentionally not
