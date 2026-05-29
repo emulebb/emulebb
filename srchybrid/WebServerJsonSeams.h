@@ -993,7 +993,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"GET", "/searches", "", ""},
 		{"POST", "/searches", "query,method,type,minSizeBytes,maxSizeBytes,minAvailability,extension", ""},
 		{"DELETE", "/searches", "", "confirm"},
-		{"GET", "/searches/{searchId}", "", ""},
+		{"GET", "/searches/{searchId}", "", "offset,limit"},
 		{"DELETE", "/searches/{searchId}", "", ""},
 		{"POST", "/searches/{searchId}/results/{hash}/operations/download", "categoryId,categoryName,paused", ""},
 		{"GET", "/friends", "", ""},
@@ -2847,6 +2847,7 @@ inline bool TryBuildRoute(
 	if (route.size() == 2 && route[0] == "searches" && bGet) {
 		rRoute.strCommand = "search/results";
 		rRoute.params["searchId"] = route[1];
+		CopyPagingQueryParams(query, rRoute.params);
 		return true;
 	}
 	if (route.size() == 2 && route[0] == "searches" && bDelete) {

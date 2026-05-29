@@ -1182,21 +1182,17 @@ json BuildSharedFilesListJson(
 	const size_t uLimit = (std::numeric_limits<size_t>::max)(),
 	size_t *const pTotal = NULL)
 {
-	CKnownFilesMap sharedFiles;
-	theApp.sharedfiles->CopySharedFileMap(sharedFiles);
+	std::vector<CKnownFile*> sharedFiles;
+	size_t uTotal = 0;
+	theApp.sharedfiles->CopySharedFilePage(sharedFiles, uOffset, uLimit, uTotal);
+	if (pTotal != NULL)
+		*pTotal = uTotal;
+
 	json result = json::array();
-	size_t uSeen = 0;
-	for (const CKnownFilesMap::CPair *pair = sharedFiles.PGetFirstAssoc(); pair != NULL; pair = sharedFiles.PGetNextAssoc(pair)) {
-		if (pair->value == NULL)
+	for (CKnownFile *pFile : sharedFiles) {
+		if (pFile == NULL)
 			continue;
-		if (pTotal != NULL)
-			++(*pTotal);
-		if (uSeen++ < uOffset)
-			continue;
-		if (result.size() < uLimit)
-			result.push_back(BuildSharedFileJson(*pair->value));
-		else if (pTotal == NULL)
-			break;
+		result.push_back(BuildSharedFileJson(*pFile));
 	}
 	return result;
 }
@@ -1666,10 +1662,9 @@ std::string GetSearchTypeName(const CString &rFileType)
 /**
  * Serializes one top-level search result entry into the pipe payload shape.
  */
-json BuildSearchResultJson(const CSearchFile &rSearchFile, const SSearchParams *const pSearchParams = NULL)
+json BuildSearchResultJson(const CSearchFile &rSearchFile, const SSearchParams *const pSearchParams = NULL, const bool bIncludeEvidence = true)
 {
 	const int iComplete = rSearchFile.IsComplete();
-	const SFakeFileReport fakeReport(FakeFileDetector::GetSearchFileReportSnapshot(rSearchFile));
 	json result = json{
 		{"searchId", StdUtf8FromCString(FormatSearchId(rSearchFile.GetSearchID()))},
 		{"hash", StdUtf8FromCString(HashToHex(rSearchFile.GetFileHash()))},
@@ -1690,9 +1685,12 @@ json BuildSearchResultJson(const CSearchFile &rSearchFile, const SSearchParams *
 		{"kadPublishInfo", rSearchFile.GetKadPublishInfo()},
 		{"rating", rSearchFile.UserRating()},
 		{"hasComment", rSearchFile.HasComment()},
-		{"spam", rSearchFile.IsConsideredSpam()},
-		{"evidence", BuildSearchEvidenceJson(rSearchFile, fakeReport)}
+		{"spam", rSearchFile.IsConsideredSpam()}
 	};
+	if (bIncludeEvidence) {
+		const SFakeFileReport fakeReport(FakeFileDetector::GetSearchFileReportSnapshot(rSearchFile));
+		result["evidence"] = BuildSearchEvidenceJson(rSearchFile, fakeReport);
+	}
 	if (pSearchParams != NULL) {
 		result["method"] = GetSearchMethodName(pSearchParams->eType);
 		result["type"] = GetSearchTypeName(pSearchParams->strFileType);
@@ -3827,9 +3825,16 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			}
 		}
 
+		const size_t uOffset = GetListPageOffset(params);
+		const size_t uLimit = GetListPageLimit(params);
+		const bool bIncludeEvidence = params.value("includeEvidence", true);
+		const size_t uTotal = static_cast<size_t>(aResults.GetCount());
 		json results = json::array();
-		for (INT_PTR i = 0; i < aResults.GetCount(); ++i)
-			results.push_back(BuildSearchResultJson(*aResults[i], pSearchParams));
+		for (size_t i = uOffset; i < uTotal && results.size() < uLimit; ++i) {
+			const CSearchFile *const pResult = aResults[static_cast<INT_PTR>(i)];
+			if (pResult != NULL)
+				results.push_back(BuildSearchResultJson(*pResult, pSearchParams, bIncludeEvidence));
+		}
 
 		return json{
 			{"id", StdUtf8FromCString(FormatSearchId(uSearchID))},
@@ -3837,6 +3842,9 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			{"method", GetSearchMethodName(pSearchParams->eType)},
 			{"type", GetSearchTypeName(pSearchParams->strFileType)},
 			{"status", theApp.emuledlg->searchwnd->m_pwndResults->IsSearchRunning(uSearchID) ? "running" : "complete"},
+			{"total", uTotal},
+			{"offset", uOffset},
+			{"limit", uLimit},
 			{"results", results}
 		};
 	}

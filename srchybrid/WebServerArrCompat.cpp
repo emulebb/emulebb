@@ -386,7 +386,17 @@ std::vector<SArrCompatResult> RunOneNativeSearch(
 	const std::string strSearchId(startResult["id"].get<std::string>());
 	while (::GetTickCount64() < ullDeadline) {
 		json pollResult;
-		if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("search/results", json{{"searchId", strSearchId}}), pollResult))
+		// Arr only needs compact rows for Torznab conversion and may poll while
+		// a native search is still filling. Keep every poll bounded to the
+		// remaining rows so broad searches do not rebuild fake-file evidence for
+		// thousands of results that the compatibility layer will discard.
+		const size_t uRemaining = 100 - results.size();
+		if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("search/results", json{
+				{"searchId", strSearchId},
+				{"_offset", 0},
+				{"_limit", static_cast<int>((std::min)(uRemaining, static_cast<size_t>(100)))},
+				{"includeEvidence", false}
+			}), pollResult))
 			break;
 		AppendResultsFromJson(pollResult, eFamily, results, rSeenHashes);
 		if (pollResult.contains("status") && pollResult["status"].is_string() && pollResult["status"].get<std::string>() == "complete")

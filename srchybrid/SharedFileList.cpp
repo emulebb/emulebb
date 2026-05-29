@@ -16,6 +16,9 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+
+#include <algorithm>
+
 #include "ComInitializationSeams.h"
 #include "KnownFileList.h"
 #include "SharedFileList.h"
@@ -884,6 +887,28 @@ void CSharedFileList::CopySharedFileMap(CKnownFilesMap &Files_Map)
 	CSingleLock listlock(&m_mutWriteList, TRUE);
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair))
 		Files_Map[pair->key] = pair->value;
+}
+
+void CSharedFileList::CopySharedFilePage(std::vector<CKnownFile*> &rFiles, const size_t uOffset, const size_t uLimit, size_t &ruTotal)
+{
+	rFiles.clear();
+	ruTotal = 0;
+	if (uLimit > 0)
+		rFiles.reserve((std::min)(uLimit, static_cast<size_t>(1000)));
+
+	CSingleLock listlock(&m_mutWriteList, TRUE);
+	size_t uSeen = 0;
+	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
+		if (pair->value == NULL)
+			continue;
+
+		++ruTotal;
+		if (uSeen++ < uOffset)
+			continue;
+
+		if (rFiles.size() < uLimit)
+			rFiles.push_back(pair->value);
+	}
 }
 
 CKnownFile* CSharedFileList::GetFileByPath(const CString &strFilePath)

@@ -248,6 +248,16 @@ public:
 
 	void	CopySharedFileMap(CKnownFilesMap &Files_Map);
 	/**
+	 * @brief Copies only the shared-file page needed by REST list responses.
+	 *
+	 * REST and snapshot polling may ask for a small page from very large share
+	 * sets. Copying the whole hash map first keeps the lock hold short, but it
+	 * still allocates and walks every entry before the caller can discard most
+	 * rows. This helper keeps the same snapshot-by-pointer contract while
+	 * bounding allocation to the requested response window.
+	 */
+	void	CopySharedFilePage(std::vector<CKnownFile*> &rFiles, size_t uOffset, size_t uLimit, size_t &ruTotal);
+	/**
 	 * @brief Finds one shared file by canonical full-path key without copying the shared-file map.
 	 */
 	CKnownFile*	GetFileByPath(const CString &strFilePath);
