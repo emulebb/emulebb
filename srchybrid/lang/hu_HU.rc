@@ -1646,8 +1646,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "A Windows Common Controls library (COMCTL32.DLL) túl régi!\r\n\r\nÉszrevettem, hogy a ""Windows Common Controls library (COMCTL32.DLL)"" olyan régi, hogy nem tudom megfelelően használni. A teljes és zökkenőmentes működés érdekében nagyon ajánlott, hogy frissítsd a ""Windows Common Controls library (COMCTL32.DLL)"" fájlt legalább 5.8-as verzióra.\r\n\r\nA ""Windows Common Controls library (COMCTL32.DLL)"" a Microsoft (R) Letöltőközpontban elérhető. Meglátogatod az oldalt?"
     IDS_ASREGEXPR           "mint reguláris kifejezés"
     IDS_STATIC_REGEXP       "Reguláris kifejezés a nézetszűrőben:"
     IDS_CARE4ALL            "Minden fájl kiértékelése"

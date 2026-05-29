@@ -1668,8 +1668,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "L’archivu Windows Common Controls library (COMCTL32.DLL) ye enforma vieyu!\r\n\r\n eMule detectó que la versión ""Windows Common Controls library (COMCTL32.DLL)"" ye enforma vieya pa furrular correctamente con eMule. P’asegurase un funcionamientu perfectu, encamentámoste qu’actualices cola cabera versión 5.8 de ""Windows Common Controls library (COMCTL32.DLL)"" \r\n\r\n Baxa y instala l’actualización de ""Windows Common Controls library (COMCTL32.DLL)"" dende Microsoft (R) Download Center. ¿Quies baxalu agora?"
     IDS_ASREGEXPR           "Espresiones regulares"
     IDS_STATIC_REGEXP       "Espresión regular pa la vista de filtros:"
     IDS_CARE4ALL            "Evaluar tolos archivos"

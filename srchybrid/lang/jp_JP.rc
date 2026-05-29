@@ -1652,8 +1652,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Windows Common Controls library (COMCTL32.DLL)のバージョンが古すぎます!\r\n\r\neMuleは適切な使用に耐えない程古いバージョンの""Windows Common Controls library (COMCTL32.DLL)""を検出しました。eMuleの機能を完全に利用する為には、""Windows Common Controls library (COMCTL32.DLL)""のバージョンを5.8以降のものにアップデートすることをお勧めします。\r\n\r\nMicrosoft (R)ダウンロードセンターで""Windows Common Controls library (COMCTL32.DLL)""のアップデータを入手/インストールして下さい。ダウンロードセンターを訪問しますか?"
     IDS_ASREGEXPR           "正規表現として使用"
     IDS_STATIC_REGEXP       "表示フィルタ用正規表現:"
     IDS_CARE4ALL            "全ファイルを評価"

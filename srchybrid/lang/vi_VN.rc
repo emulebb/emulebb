@@ -1670,8 +1670,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Thư viện (COMCTL32.DLL) quá cũ!\r\n\r\neMule phát hiện phiên bản ""Thư viện Các điều khiển chung của Windows (COMCTL32.DLL)"" quá cũ và không thể dùng được. Để chắc chắn eMule hoạt động đầy đủ chức năng và không có lỗ hổng, bạn nên cập nhật ""Thư viện Các điều khiển chung của Windows (COMCTL32.DLL)"" lên phiên bản tối thiểu là 5.8.\r\n\r\nTải xuống và cài đặt cập nhật ""Thư viện Các điều khiển chung của Windows (COMCTL32.DLL)"" tại Trung âm Tải xuống Microsoft (R). Bạn có muốn truy cập trang mạng này không?"
     IDS_ASREGEXPR           "Là biểu thức hợp lệ - Regular Expression"
     IDS_STATIC_REGEXP       "Biểu thức hợp lệ - Regular Expression cho bộ lọc khung nhìn:"
     IDS_CARE4ALL            "Đánh giá Tất cả Tập tin"

@@ -1652,8 +1652,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Windows Genel Denetimler kütüphane dosyası (COMCTL32.DLL) çok eski!\r\n\r\neMule tarafından tamamen kullanılan bu çok eski ""Windows Genel Denetimler kütüphane dosyası (COMCTL32.DLL)"" sürümü saptandı. eMule'un işlevselliğini tam ve kusursuz sağlamak için ""Windows Genel Denetimler kütüphane dosyasının (COMCTL32.DLL)"" en az 5.8 sürümüne güncellenmesini ısrarla öneririz.\r\n\r\n""Windows Genel Denetimler kütüphane dosyasının (COMCTL32.DLL)"" güncellemesini Microsoft (R) İndirme Merkezinden indirin ve kurun. İlgili URL'yi ziyaret etmek istiyor musunuz?"
     IDS_ASREGEXPR           "Kurallı İfadeler Olarak"
     IDS_STATIC_REGEXP       "Görünüm süzgeci için kurallı ifade:"
     IDS_CARE4ALL            "Tüm Dosyaları Değerlendir"

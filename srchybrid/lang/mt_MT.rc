@@ -1669,8 +1669,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Il-Windows Common Controls library (COMCTL32.DLL) hija antika wisq!\r\n\r\nL-eMule sab verżjoni tal-""Windows Common Controls library (COMCTL32.DLL)"" li hija antika wisq biex tintuża kif suppost mal-eMule. Biex ikollok funzjonalita' sħiħa u mingħajr problemi nissuġġerixxu li tapdetja ""Windows Common Controls library (COMCTL32.DLL)"" minn tal-inqas għall-verżjoni 5.8.\r\n\r\nNiżżel u nstalla update tal-""Windows Common Controls library (COMCTL32.DLL)"" fil-Microsoft (R) Download Center. Tixtieq tidħol f'din il-paġna?"
     IDS_ASREGEXPR           "Bħala 'Regular Expression'"
     IDS_STATIC_REGEXP       "'Regular expression' għall-filter:"
     IDS_CARE4ALL            "Evalwa il-files kollha"

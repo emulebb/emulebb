@@ -1647,8 +1647,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Windows-en kontrol arrunten fitxategia (COMCTL32.DLL) zaharregia da!\r\n\r\neMulek fitxategi honen bertsioa zaharregia dela antzeman du bere funtzionamendu egokirako. Funtzionamenduak perfektua izan dezan, ""Windows-en kontrol arrunten fitxategia (COMCTL32.DLL)""-en azkena den 5.8 bertsiora eguneratzea gomendatzen da.\r\n\r\nJaitsi eta instalatu egunerapena Microsoft(R)-en Jaitsiera Zentrutik. Orain jaitsi nahi al duzu?"
     IDS_ASREGEXPR           "Adierazpen erregular gisa"
     IDS_STATIC_REGEXP       "Iragazkien ikuspenerako ohizko adierazpena:"
     IDS_CARE4ALL            "Fitxategi guztiak ebaluatu"

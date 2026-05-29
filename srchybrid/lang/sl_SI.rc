@@ -1635,8 +1635,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Knjižica 'Windows Common Controls (COMCTL32.DLL)' je prestara!\r\n\r\neMule je zaznal različico knjižice ""Windows Common Controls (COMCTL32.DLL)"" ki je prestara, da bi omogočila pravilno delovanje eMule. Za zagotovitev polne in brezhibne funkcionalnosti eMule vam močno priporočamo nadgradnjo knjižice ""Windows Common Controls (COMCTL32.DLL)"" vsaj na različico 5.8 \r\n\r\nPrenesite in namestite nadgradnjo knjižice ""Windows Common Controls (COMCTL32.DLL)"" iz Microsoftovega(R) centra prenosov. Ali želite obiskati ustrezno spletno stran?"
     IDS_ASREGEXPR           "Kot regularen izraz"
     IDS_STATIC_REGEXP       "Regularen izraz za filtriran prikaz:"
     IDS_CARE4ALL            "Ovrednoti vse datoteke"

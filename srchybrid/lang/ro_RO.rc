@@ -1648,8 +1648,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Biblioteca Windows Common Controls (COMCTL32.DLL) e prea veche!\r\n\r\neMule a detectat o versiune a ""bibliotecii Windows Common Controls (COMCTL32.DLL)"" prea veche pentru buna funcţionare a eMule. Pentru ca eMule să funcţioneze perfect la întreaga capacitate, îţi recomandăm insistent să updatezi ""biblioteca Windows Common Controls (COMCTL32.DLL)"" minim la versiunea 5.8.\r\n\r\nDescarcă şi instalează un update la ""biblioteca Windows Common Controls (COMCTL32.DLL)"" de la Microsoft (R) Download Center. Vrei să vizitezi adresa URL respectivă?"
     IDS_ASREGEXPR           "Ca Expresie Obişnuită"
     IDS_STATIC_REGEXP       "Expresia Obişnuită pentru filtrul de afişare:"
     IDS_CARE4ALL            "Evaluează toate fişierele"

@@ -1653,8 +1653,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "مكتبة ملفات ويندوز المشتركة (COMCTL32.DLL) قديمة جدا!\r\n\r\nايمول وجد اصدار جديد لهذه الملفات"" انه قديم جدا لاستخدام ايمول. ل التاكد مب عمل كامل و بدون تصدع ايمول ينصح بتحديث هذه الملفات ""Windows Common Controls library (COMCTL32.DLL)"" لاخر اصدار 5.8.\r\n\r\nحمل و نصب و حدث ملفات ال  ""Windows Common Controls library (COMCTL32.DLL)"" في صفحة ماكيروسوفت. هل تريد بالذهاب مباشرة لتلك الصفحة؟?"
     IDS_ASREGEXPR           "كضغظ عادي"
     IDS_STATIC_REGEXP       "ضغط عادي لاظهار الفلتر:"
     IDS_CARE4ALL            "قيم كل الملفات"

@@ -1641,8 +1641,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Knihovna společných ovládacích prvků Windows (COMCTL32.DLL) je příliš stará!\r\n\r\neMule detekovalo novou verzi ""Windows Common Controls library (COMCTL32.DLL)"", jenž je již příliš stará pro použití v eMule. K zajištění plné a bezchybné funkčnosti eMule důrazně doporučujeme updatovat ""Windows Common Controls library (COMCTL32.DLL)"" alespoň na verzi 5.8.\r\n\r\nDownloadujte a nainstalujte update ""Windows Common Controls library (COMCTL32.DLL)"" z Microsoft (R) Download Centra. Máte zájem navštívit příslušnou URL?"
     IDS_ASREGEXPR           "Jako pravidelný výraz"
     IDS_STATIC_REGEXP       "Pravidelný výraz pro prohlížecí filtr:"
     IDS_CARE4ALL            "Ohodnotit všechny soubory"

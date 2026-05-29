@@ -1645,8 +1645,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "A livraria de Controlos Comuns do Windows (COMCTL32.DLL) é demasiado antiga!\r\n\r\nO eMule detectou uma versão da ""livraria de Controlos Comuns do Windows (COMCTL32.DLL)"" que é demasiado antiga para ser devidamente utilizada pelo eMule. De forma a assegurar o funcionamento total e fiável do eMule, recomendamos vivamente que actualize a ""livraria de Controlos Comuns do Windows (COMCTL32.DLL)"" para a versão 5.8 ou superior.\r\n\r\nDescarregue e instale a actualização da ""livraria de Controlos Comuns do Windows (COMCTL32.DLL)"" no centro de downloads da Microsoft(R). Deseja visitar o URL correspondente?"
     IDS_ASREGEXPR           "Como Expressão Regular"
     IDS_STATIC_REGEXP       "Expressão Regular para o filtro de visualização:"
     IDS_CARE4ALL            "Avaliar Todos os Ficheiros"

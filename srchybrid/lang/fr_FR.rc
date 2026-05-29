@@ -1641,8 +1641,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                           "Votre bibliothèque Windows COMCTL32.DLL est obsolète!\r\n\r\neMule a détecté une version obsolète. Pour assurer le bon fonctionnement d'eMule, nous vous recommandons vivement de mettre à jour votre version actuelle vers au minimum la version 5.8.\r\n\r\nInstallez une mise à jour de la bibliothèque COMCTL32.DLL après l'avoir téléchargée sur le Centre de Téléchargement de Microsoft ®. Voulez-vous visiter le site correspondant ?"
     IDS_ASREGEXPR          "En tant qu'expression régulière"
     IDS_STATIC_REGEXP      "Expression régulière pour filtre de visualisation :"
     IDS_CARE4ALL           "Tester tous les fichiers"

@@ -1644,8 +1644,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Windows Common Controls library (COMCTL32.DLL) yra per senos!\r\n\r\neMule aptiko ""Windows Common Controls library (COMCTL32.DLL)"" versiją, kuri yra per sena ir netinka eMule eMule. Norėdami užtikrinti sklandų eMule veikimą, rekomenduojame atnaujinti ""Windows Common Controls library (COMCTL32.DLL)"" nors iji 5.8 versijos.\r\n\r\nAtsisiųskite ir instaliuokite atnaujinimą ""Windows Common Controls library (COMCTL32.DLL)"" iš Microsoft (R) Download Centro. Ar norite ten dabar apsilankyti?"
     IDS_ASREGEXPR           "Reguliarios išraiškos"
     IDS_STATIC_REGEXP       "Reguliari išraiška vaizdavimo filtrui:"
     IDS_CARE4ALL            "Įvertinti visus failus"

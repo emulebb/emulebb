@@ -1630,8 +1630,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Windows 通用控制項程式庫 (COMCTL32.DLL) 太舊!\r\n\r\neMule 偵測到 ""Windows 通用控制項程式庫 (COMCTL32.DLL)"" 的版本太舊不能被 eMule 恰當的使用. 為確保 eMule 的完整且無缺陷的功能我們強烈建議更新 ""Windows 通用控制項程式庫 (COMCTL32.DLL)"" 到最新版本 5.8.\r\n\r\n請在 Microsoft (R) 下載中心 下載及安裝 ""Windows 通用控制項程式庫 (COMCTL32.DLL)"". 您想要拜訪相對應的網址嗎?"
     IDS_ASREGEXPR           "使用正規表示式"
     IDS_STATIC_REGEXP       "檢視過濾器的正規表示式:"
     IDS_CARE4ALL            "評估所有檔案"

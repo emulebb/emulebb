@@ -1616,8 +1616,6 @@ END
 
 STRINGTABLE
 BEGIN
-	IDS_COMCTRL32_DLL_TOOOLD
-	"Windows Common Controls library (COMCTL32.DLL) is too old!\r\n\r\neMule detected a version of the ""Windows Common Controls library (COMCTL32.DLL)"" which is too old to be properly used by eMule. To ensure full and flawless functionality of eMule we strongly recommend to update the ""Windows Common Controls library (COMCTL32.DLL)"" to at least version 5.8.\r\n\r\nDownload and install an update of the ""Windows Common Controls library (COMCTL32.DLL)"" at Microsoft (R) Download Center. Do you want to visit the corresponding URL?"
 	IDS_ASREGEXPR	"Evel riñvenn reizh"
 	IDS_STATIC_REGEXP	"Riñvenn reizh evit sil gwereañ :"
 	IDS_CARE4ALL	"Jediñ pep restr"

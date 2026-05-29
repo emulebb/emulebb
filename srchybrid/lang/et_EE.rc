@@ -1638,8 +1638,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Windows Common juhtimis kogu (COMCTL32.DLL) on vana!\n\neMule avstatas versiooni ""Windows Common juhtimise kogu (COMCTL32.DLL)"" on vana et korralikult kasutada eMule. Tagada täis ja veatu funktsioneerimine eMule-s me soovitame uuentada ""Windows Common juhtimis kogumit (COMCTL32.DLL)"" uuemat kui version 5.8.\n\nlae ja installi uuendus ""Windows Common juhtimis kogu (COMCTL32.DLL)"" at Microsoft (R) Download Center. Kas soovid külastada kirjavahetuse URL?"
     IDS_ASREGEXPR           "Korrapärane avaldis"
     IDS_STATIC_REGEXP       "Korrapärane avaldis filtri vaatluseks:"
     IDS_CARE4ALL            "Väärtusta kõik Failid"

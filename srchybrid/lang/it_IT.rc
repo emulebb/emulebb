@@ -1658,8 +1658,6 @@ BEGIN
     IDS_RESPONSES           "Risposte"
     IDS_EXTRACT_META_DATA   "Estrai i meta dati"
     IDS_META_DATA_ID3LIB    "Librerie ID3 (solo per i file audio MPEG)"
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "La ""common controls library (COMCTL32.DLL)"" di Windows è troppo vecchia!\r\n\r\nPer garantire il corretto funzionamento di eMule è vivamente consigliato l'aggiornamento di questa libreria alla versione 5.8 o superiore.\r\n\r\nVuoi visitare il sito di Microsoft (R) per scaricarla?"
     IDS_ASREGEXPR           "Come espressione regolare"
     IDS_STATIC_REGEXP       "Espressione regolare per i filtri visuali:"
     IDS_CARE4ALL            "Valuta tutti i file"

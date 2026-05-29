@@ -1642,8 +1642,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "ספריית Windows Common Controls (COMCTL32.DLL) יותר מידיי ישנה!\r\n\r\nאימיול איתר גירסה של ""ספריית Windows Common Controls (COMCTL32.DLL)"" שישנה מידיי לשימוש תקין באימיול. לוידוי שימוש מלא ותקין של אימיול אנו ממליצים לעדכן את ""ספרייתWindows Common Controls (COMCTL32.DLL)"" לפחות לגירסה 5.8.\r\n\r\nהורד והתקן את העדכון של ""ספריית Windows Common Controls (COMCTL32.DLL)"" במרכז ההורדות של מיקרוסופט (R). האם ברצונך לבקר בכתובת המתאימה?"
     IDS_ASREGEXPR           "כביטוי רגולרי"
     IDS_STATIC_REGEXP       "ביטוי רגולרי עבור סינון תצוגה:"
     IDS_CARE4ALL            "הערכה של כל הקבצים"

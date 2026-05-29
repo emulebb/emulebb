@@ -1659,8 +1659,6 @@ BEGIN
     IDS_RESPONSES           "Vastauksia"
     IDS_EXTRACT_META_DATA   "Kaiva metadata esiin (esim. ID3-tagit)"
     IDS_META_DATA_ID3LIB    "ID3 Library (vain MPEG-äänitiedostoille (esim. mp3))"
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Windows-kontrollien yleiskirjasto (COMCTL32.DLL) on liian vanha!\r\n\r\neMule havaitsi ""Windows Common Controls (COMCTL32.DLL)"" kirjastosta version, joka on liian vanha eMulen käytettäväksi. Suosittelemme päivittämään sen, jotta eMule toimisi kunnolla. Päivitetty versio on saatavilla Microsoftin lataussivuilta. Haluatko avata sen osoitteen selaimeesi?"
     IDS_ASREGEXPR           "Tavallisena ilmauksena (REG EX.)"
     IDS_STATIC_REGEXP       "Säännöllinen lauseke näkymän suodattamiseen:"
     IDS_CARE4ALL            "Tarkista kaikki tiedostot"

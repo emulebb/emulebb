@@ -1640,8 +1640,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "La biblioteca de Controls Comuns de Windows (COMCTL32.DLL) és massa antiga!\r\n\r\neMule ha detectat una versió de la ""biblioteca de Controls Comuns de Windows (COMCTL32.DLL)"" que és massa antiga per a ser emprada adientment per l'eMule. Per a assegurar el funcionament complet i correcte de l'eMule, recomanem vivament que actualitzis la ""biblioteca de Controls Comuns de Windows (COMCTL32.DLL)"" a la versió 5.8 o superior.\r\n\r\nBaixa i instal·la una actualització de la ""biblioteca de Controls Comuns de Windows (COMCTL32.DLL)"" al Centre de Decàrregues de Microsoft (R). Vols visitar la URL que hi correspon?"
     IDS_ASREGEXPR           "Com a Expressió Regular"
     IDS_STATIC_REGEXP       "Expressió regular per al filtre de visió:"
     IDS_CARE4ALL            "Evalua Tots els Fitxers"

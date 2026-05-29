@@ -1650,8 +1650,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "L'archiu Windows Common Controls (COMCTL32.DLL) es molt vell\r\n\r\neMule ha detectat que la versió de ""Windows Common Controls library (COMCTL32.DLL)"" es molt vella per a funcionar correctament en l'eMule. Per a assegurar-se un funcionament perfecte de l'eMule se recomana encaridament actualisar a la versio 5.8 de ""Windows Common Controls library (COMCTL32.DLL)"".\r\n\r\nDescarregar i instalar l'actualisació de ""Windows Common Controls library (COMCTL32.DLL)"" des de Microsoft (R) Download Center ¿Vols visitar la seua pagina web?"
     IDS_ASREGEXPR           "Expressions regulars"
     IDS_STATIC_REGEXP       "Expressió regular per a la vista de filtres:"
     IDS_CARE4ALL            "Evaluar tots els archius"

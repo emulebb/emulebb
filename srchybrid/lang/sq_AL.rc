@@ -1668,8 +1668,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_COMCTRL32_DLL_TOOOLD
-                            "Libraria e Kontrolleve të Zakonshme të Windows-it (COMCTL32.DLL) është tepër e vjetër!\r\n\r\neMule diktoi një version të ""Librarisë së Kontrolleve të Zakonshme të Windows-it (COMCTL32.DLL)"" që është tepër i vjetër për t'u përdorur siç duhet prej tij. Për të siguruar një funksionim të plotë dhe të pametë të eMule, rekomandojmë që ta ridatoni ""Librarinë e Kontrolleve të Zakonshme të Windows-it (COMCTL32.DLL)"", të paktën në versionin 5.8.\r\n\r\nShkarkoni dhe instaloni ridatimin e ""Librarisë së Kontrolleve të Zakonshme të Windows-it (COMCTL32.DLL)"" në Qendrën e Shkarkimit Microsoft (R). A doni të vizitoni URL-në korrespondues?"
     IDS_ASREGEXPR           "Si Shprehje e Rregullt"
     IDS_STATIC_REGEXP       "Shprehje e Rregullt për filtrin e shikimit:"
     IDS_CARE4ALL            "Vlerëso Gjithë Skedat"
