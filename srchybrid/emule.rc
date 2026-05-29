@@ -59,7 +59,7 @@ EXSTYLE WS_EX_CONTROLPARENT | WS_EX_APPWINDOW
 CAPTION "eMule"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    // EMULE_KEYBOARD_SHORTCUT: native hidden mnemonics own Alt+X Exit and Alt+U floating menu.
+    // EMULEBB_KEYBOARD_SHORTCUT: native hidden mnemonics own Alt+X Exit and Alt+U floating menu.
     PUSHBUTTON      "^&x",IDC_EXIT,2,16,19,17,NOT WS_VISIBLE
     PUSHBUTTON      "^&u",IDC_HOTMENU,2,34,19,17,NOT WS_VISIBLE
     CONTROL         "",IDC_STATUSBAR,"msctls_statusbar32",0x3,0,322,515,18

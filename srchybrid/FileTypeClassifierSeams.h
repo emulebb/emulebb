@@ -6,8 +6,8 @@
 #include <Shlwapi.h>
 #include <tchar.h>
 
-#ifndef EMULE_EFILETYPE_DEFINED
-#define EMULE_EFILETYPE_DEFINED
+#ifndef EMULEBB_EFILETYPE_DEFINED
+#define EMULEBB_EFILETYPE_DEFINED
 enum EFileType : unsigned char
 {
 	FILETYPE_UNKNOWN,

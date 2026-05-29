@@ -45,7 +45,7 @@ namespace DownloadListKeyboardShortcutsSeams
 	/**
 	 * Classifies local Downloads list key messages into existing file commands.
 	 *
-	 * EMULE_KEYBOARD_SHORTCUT: keep this aligned with the Downloads list section
+	 * EMULEBB_KEYBOARD_SHORTCUT: keep this aligned with the Downloads list section
 	 * in docs/reference/KEYBOARD-SHORTCUTS.md in emulebb-tooling.
 	 */
 	inline UINT ClassifyKeyMessage(UINT uMessage, WPARAM wParam, bool bCtrlDown, bool bAltDown, bool bShiftDown)

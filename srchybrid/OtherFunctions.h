@@ -27,8 +27,8 @@ class CSafeBufferedFile;
 class CSafeFile;
 class CShareableFile;
 
-#ifndef EMULE_EFILETYPE_DEFINED
-#define EMULE_EFILETYPE_DEFINED
+#ifndef EMULEBB_EFILETYPE_DEFINED
+#define EMULEBB_EFILETYPE_DEFINED
 enum EFileType : uint8
 {
 	FILETYPE_UNKNOWN,

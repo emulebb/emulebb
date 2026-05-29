@@ -25,7 +25,7 @@ namespace AppKeyboardShortcutsSeams
 	/**
 	 * Commands reserved by the main eMule shell keyboard policy.
 	 *
-	 * EMULE_KEYBOARD_SHORTCUT: keep this list aligned with
+	 * EMULEBB_KEYBOARD_SHORTCUT: keep this list aligned with
 	 * docs/KEYBOARD-SHORTCUTS.md in emulebb-tooling when shortcut ownership changes.
 	 */
 	enum class ECommand
@@ -50,7 +50,7 @@ namespace AppKeyboardShortcutsSeams
 	/**
 	 * Commands owned by the Search parameter pane's local mnemonic policy.
 	 *
-	 * EMULE_KEYBOARD_SHORTCUT: these mnemonics intentionally avoid the
+	 * EMULEBB_KEYBOARD_SHORTCUT: these mnemonics intentionally avoid the
 	 * main-shell toolbar and hotmenu letters documented in KEYBOARD-SHORTCUTS.md.
 	 */
 	enum class ESearchCommand
@@ -108,7 +108,7 @@ namespace AppKeyboardShortcutsSeams
 	/**
 	 * Classifies `SC_KEYMENU` events forwarded from modeless child panes.
 	 *
-	 * EMULE_KEYBOARD_SHORTCUT: main-shell pane shortcuts intentionally reuse the
+	 * EMULEBB_KEYBOARD_SHORTCUT: main-shell pane shortcuts intentionally reuse the
 	 * reviewed English toolbar mnemonics here instead of reading translated '&'
 	 * markers. That gives keyboard users the same app-level chords in every
 	 * language while preserving modal dialogs and Search-local mnemonics.
