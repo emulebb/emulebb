@@ -1030,6 +1030,13 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 	//our new source is really new, but maybe it is already uploading to us?
 	//if yes the known client will be attached to the var "source"
 	//and the old source client will be deleted
+	// WHY: server/source-exchange probes are constructed with sender as their
+	// request file before they are published in sender->srclist.  If this probe
+	// turns out to be a duplicate of an already-known client, AttachToAlreadyKnown
+	// deletes the temporary probe immediately.  Drop the constructor-time request
+	// pointer first so the delete path cannot leave a stale part-file edge; the
+	// surviving client is linked to sender below after srclist.AddTail succeeds.
+	source->SetRequestFile(NULL);
 	const bool bAttachedKnownClient = theApp.clientlist->AttachToAlreadyKnown(&source, NULL);
 	if (bAttachedKnownClient) {
 #ifdef _DEBUG
