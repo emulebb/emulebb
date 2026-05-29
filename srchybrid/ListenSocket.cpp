@@ -74,7 +74,7 @@ bool RejectMalformedClientTcpPacket(LPCTSTR pszOpcodeName, uint32 uSize, CUpDown
 	return false;
 }
 
-CClientReqSocket *CreateClientReqSocketForAcceptedSocket(SOCKET hAcceptedSocket)
+CClientReqSocket *CreateClientReqSocketForAccept(SOCKET hAcceptedSocket)
 {
 	try {
 		return new CClientReqSocket;
@@ -84,13 +84,14 @@ CClientReqSocket *CreateClientReqSocketForAcceptedSocket(SOCKET hAcceptedSocket)
 	} catch (const std::bad_alloc&) {
 	}
 
-	// WHY: the conditional-accept branch owns a raw SOCKET before the MFC
-	// CClientReqSocket wrapper is allocated. If low memory prevents wrapper
-	// construction, leaving that raw handle open leaks an accepted peer and can
-	// keep the listener near its connection limits after memory pressure clears.
+	// WHY: the accept path publishes CClientReqSocket during construction, and
+	// that MFC list insertion can fail under memory pressure. Conditional accept
+	// may already own a raw SOCKET at that point, so close it here; normal accept
+	// passes INVALID_SOCKET and simply skips the backlog item without escaping
+	// the accept handler.
 	if (hAcceptedSocket != INVALID_SOCKET)
 		closesocket(hAcceptedSocket);
-	DebugLogError(LOG_STATUSBAR, _T("Rejected accepted TCP connection because the client socket wrapper could not be allocated"));
+	DebugLogError(LOG_STATUSBAR, _T("Rejected TCP connection because the client socket wrapper could not be allocated"));
 	return NULL;
 }
 }
@@ -2195,7 +2196,7 @@ void CListenSocket::OnAccept(int nErrorCode)
 
 					continue;
 				}
-				newclient = CreateClientReqSocketForAcceptedSocket(sNew);
+				newclient = CreateClientReqSocketForAccept(sNew);
 				if (newclient == NULL)
 					continue;
 				if (!newclient->InitAsyncSocketExInstance()) {
@@ -2223,7 +2224,9 @@ void CListenSocket::OnAccept(int nErrorCode)
 
 				AddConnection();
 			} else {
-				newclient = new CClientReqSocket;
+				newclient = CreateClientReqSocketForAccept(INVALID_SOCKET);
+				if (newclient == NULL)
+					continue;
 				if (!Accept(*newclient, (LPSOCKADDR)&SockAddr, &iSockAddrLen)) {
 					newclient->Safe_Delete();
 					DWORD nError = CAsyncSocket::GetLastError();

@@ -37,6 +37,9 @@
 #include "Win32CallbackTimerSeams.h"
 #include "IPv4AddressSeams.h"
 
+#include <memory>
+#include <new>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -147,8 +150,30 @@ void CServerConnect::ConnectToServer(CServer *server, bool multiconnect, bool bN
 	singleconnecting = !multiconnect;
 	theApp.emuledlg->ShowConnectionState();
 
-	CServerSocket *newsocket = new CServerSocket(this, !multiconnect);
-	m_lstOpenSockets.AddTail((void*)newsocket);
+	std::unique_ptr<CServerSocket> socketOwner;
+	try {
+		socketOwner.reset(new CServerSocket(this, !multiconnect));
+		m_lstOpenSockets.AddTail((void*)socketOwner.get());
+	} catch (CMemoryException *ex) {
+		if (ex != NULL)
+			ex->Delete();
+		// WHY: connection state is flipped before the socket is allocated and
+		// published. If allocation or MFC list insertion fails, no async socket
+		// will ever report failure, so rollback state here and let the UI show
+		// the real idle state instead of a stuck "connecting" indicator.
+		connecting = false;
+		singleconnecting = false;
+		theApp.emuledlg->ShowConnectionState();
+		DebugLogError(_T("Server connection socket allocation failed"));
+		return;
+	} catch (const std::bad_alloc&) {
+		connecting = false;
+		singleconnecting = false;
+		theApp.emuledlg->ShowConnectionState();
+		DebugLogError(_T("Server connection socket allocation failed"));
+		return;
+	}
+	CServerSocket *newsocket = socketOwner.release();
 	if (!newsocket->Create(0, SOCK_STREAM, FD_READ | FD_WRITE | FD_CLOSE | FD_CONNECT, thePrefs.GetBindAddr())) {
 		const DWORD dwError = CAsyncSocket::GetLastError();
 		// WHY: Create() failure means the socket never reached the async
