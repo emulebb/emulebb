@@ -259,6 +259,18 @@ bool BuildQBitTorrentsJson(const std::string &rCategory, json &rTorrents, CStrin
 	return true;
 }
 
+void InvalidateQBitTorrentInfoCache()
+{
+	CSingleLock cacheLock(&g_qbitTorrentInfoCacheLock, TRUE);
+	// WHY: Arr reconciles qBit queue state immediately after add/delete/pause
+	// and category mutations. The one-second poll cache is useful for steady
+	// polling, but successful mutations must invalidate it so controllers do not
+	// observe stale transfer state right after they changed it.
+	g_qbitTorrentInfoCache = json::array();
+	g_qbitTorrentInfoCacheCategory.clear();
+	g_ullQBitTorrentInfoCacheTick = 0;
+}
+
 void HandleLogin(const ThreadData &rData)
 {
 	if (thePrefs.GetWSApiKey().IsEmpty()) {
@@ -317,6 +329,7 @@ void HandleTorrentAdd(const ThreadData &rData)
 		return;
 	}
 
+	InvalidateQBitTorrentInfoCache();
 	SendTextResponse(rData.pSocket, 200, "OK", WebServerQBitCompatSeams::kQBitSuccessBody);
 }
 
@@ -342,6 +355,7 @@ void HandleTorrentDelete(const ThreadData &rData)
 		SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 		return;
 	}
+	InvalidateQBitTorrentInfoCache();
 	SendTextResponse(rData.pSocket, 200, "OK", WebServerQBitCompatSeams::kQBitSuccessBody);
 }
 
@@ -367,6 +381,7 @@ void HandleTorrentSetCategory(const ThreadData &rData)
 			return;
 		}
 	}
+	InvalidateQBitTorrentInfoCache();
 	SendTextResponse(rData.pSocket, 200, "OK", WebServerQBitCompatSeams::kQBitSuccessBody);
 }
 
@@ -384,6 +399,7 @@ void HandleTorrentStateMutation(const ThreadData &rData, const char *pszCommand)
 		SendTextResponse(rData.pSocket, 400, "Bad Request", WebServerQBitCompatSeams::kQBitFailureBody);
 		return;
 	}
+	InvalidateQBitTorrentInfoCache();
 	SendTextResponse(rData.pSocket, 200, "OK", WebServerQBitCompatSeams::kQBitSuccessBody);
 }
 
