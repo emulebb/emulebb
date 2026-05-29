@@ -1240,6 +1240,25 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 	if (!bDelete)
 		QueueDisplayUpdate(DISPLAY_REFRESH_CLIENT_LIST);
 
+	if (bDelete && theApp.uploadqueue != NULL) {
+		if (theApp.uploadqueue->IsDownloading(this)) {
+			// WHY: disconnect can be reached from download-side connect failure paths
+			// while the same CUpDownClient is still the upload slot owner.  Returning
+			// "delete me" in that state hands CPartFile::Process a pointer that the
+			// upload queue will keep using, which is a real UAF.  The upload queue owns
+			// the active slot teardown, so preserve the object and let that owner finish.
+			bDelete = false;
+		} else if (theApp.uploadqueue->IsOnUploadQueue(this)) {
+			// WHY: a client can be banned after it entered the waiting queue.  Banning
+			// changes the upload state to US_BANNED, so the old state-only delete test
+			// no longer saw upload-side ownership and a failed download reask could
+			// delete the client while waitinglist still contained the raw pointer.
+			// Removing the waiting-list edge first keeps the existing caller-delete
+			// contract without leaving a dangling queue entry behind.
+			theApp.uploadqueue->RemoveFromWaitingQueue(this, true);
+		}
+	}
+
 	if (bDelete && m_reqfile != NULL) {
 		// WHY: live disconnect dumps showed a client in DS_NONE/US_NONE with no
 		// socket or connecting state, but still carrying m_reqfile.  That state

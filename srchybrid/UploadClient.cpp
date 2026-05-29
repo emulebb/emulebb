@@ -764,6 +764,15 @@ void CUpDownClient::Ban(LPCTSTR pszReason)
 	}
 #endif
 	theApp.clientlist->AddBannedClient(GetIP());
+	if (theApp.uploadqueue != NULL && theApp.uploadqueue->IsOnUploadQueue(this)) {
+		// WHY: the waiting queue stores raw CUpDownClient pointers and does not own
+		// a separate lifetime token.  If a queued peer is banned, keeping that queue
+		// entry while marking the client US_BANNED lets unrelated download cleanup
+		// paths conclude that no upload-side owner remains and delete the object.
+		// Drop the waiting-list edge before setting US_BANNED so the final state is
+		// still visible as banned and no queue entry can later dereference freed memory.
+		theApp.uploadqueue->RemoveFromWaitingQueue(this, true);
+	}
 	SetUploadState(US_BANNED);
 	theApp.emuledlg->transferwnd->ShowQueueCount(theApp.uploadqueue->GetWaitingUserCount());
 	QueueDisplayUpdate(DISPLAY_REFRESH_QUEUE_LIST);
