@@ -14,8 +14,10 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
+#include <chrono>
 #include <condition_variable>
 #include <deque>
+#include <memory>
 #include <mutex>
 #include <thread>
 
@@ -50,6 +52,8 @@ public:
 	void Stop();
 
 private:
+	struct SharedState;
+
 	struct HostnameResolveRequest
 	{
 		uchar fileid[MDX_DIGEST_SIZE];
@@ -67,13 +71,9 @@ private:
 	};
 
 	static bool TryResolveHostnameIPv4(const CStringA &rstrHostname, uint32 &rnAddress);
-	void WorkerMain();
+	static void WorkerMain(std::shared_ptr<SharedState> pState);
 
-	std::deque<HostnameResolveRequest> m_pending;
-	std::deque<HostnameResolveResult> m_resolved;
-	std::mutex m_mutex;
-	std::condition_variable m_workAvailable;
-	bool m_bStopping;
+	std::shared_ptr<SharedState> m_pState;
 	std::thread m_worker;
 };
 

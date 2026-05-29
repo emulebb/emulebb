@@ -2029,9 +2029,20 @@ int CDownloadQueue::GetDownloadFilesStats(uint64 &rui64TotalFileSize
 ///////////////////////////////////////////////////////////////////////////////
 // CSourceHostnameResolver
 
+struct CSourceHostnameResolver::SharedState
+{
+	std::deque<HostnameResolveRequest> pending;
+	std::deque<HostnameResolveResult> resolved;
+	std::mutex mutex;
+	std::condition_variable workAvailable;
+	std::condition_variable workerExited;
+	bool bStopping = false;
+	bool bWorkerExited = false;
+};
+
 CSourceHostnameResolver::CSourceHostnameResolver()
-	: m_bStopping(false)
-	, m_worker(&CSourceHostnameResolver::WorkerMain, this)
+	: m_pState(std::make_shared<SharedState>())
+	, m_worker(&CSourceHostnameResolver::WorkerMain, m_pState)
 {
 }
 
@@ -2042,14 +2053,33 @@ CSourceHostnameResolver::~CSourceHostnameResolver()
 
 void CSourceHostnameResolver::Stop()
 {
+	const std::shared_ptr<SharedState> pState = m_pState;
+	if (!pState)
+		return;
 	{
-		std::lock_guard<std::mutex> lock(m_mutex);
-		m_bStopping = true;
-		m_pending.clear();
+		std::lock_guard<std::mutex> lock(pState->mutex);
+		pState->bStopping = true;
+		pState->pending.clear();
 	}
-	m_workAvailable.notify_one();
-	if (m_worker.joinable())
-		m_worker.join();
+	pState->workAvailable.notify_one();
+	if (m_worker.joinable()) {
+		(void)::CancelSynchronousIo(static_cast<HANDLE>(m_worker.native_handle()));
+		bool bExited = false;
+		{
+			std::unique_lock<std::mutex> lock(pState->mutex);
+			// WHY: Windows DNS resolution can block inside getaddrinfo after the
+			// app has requested shutdown. The worker owns only SharedState, so a
+			// bounded wait can detach on a stuck resolver without leaving a raw
+			// CSourceHostnameResolver `this` pointer behind.
+			bExited = pState->workerExited.wait_for(lock, std::chrono::seconds(5), [&]() { return pState->bWorkerExited; });
+		}
+		if (bExited)
+			m_worker.join();
+		else {
+			DebugLogWarning(_T("Detaching source hostname resolver after timed-out shutdown wait; a blocking DNS lookup is still unwinding."));
+			m_worker.detach();
+		}
+	}
 }
 
 void CSourceHostnameResolver::AddToResolve(const uchar *fileid, LPCSTR pszHostname, uint16 port)
@@ -2062,23 +2092,29 @@ void CSourceHostnameResolver::AddToResolve(const uchar *fileid, LPCSTR pszHostna
 	entry.strHostname = pszHostname;
 	entry.port = port;
 
+	const std::shared_ptr<SharedState> pState = m_pState;
+	if (!pState)
+		return;
 	{
-		std::lock_guard<std::mutex> lock(m_mutex);
-		if (m_bStopping)
+		std::lock_guard<std::mutex> lock(pState->mutex);
+		if (pState->bStopping)
 			return;
-		m_pending.push_back(entry);
+		pState->pending.push_back(entry);
 	}
-	m_workAvailable.notify_one();
+	pState->workAvailable.notify_one();
 }
 
 void CSourceHostnameResolver::DrainResolved(CDownloadQueue &downloadQueue)
 {
+	const std::shared_ptr<SharedState> pState = m_pState;
+	if (!pState)
+		return;
 	std::deque<HostnameResolveResult> resolvedEntries;
 	{
-		std::lock_guard<std::mutex> lock(m_mutex);
-		if (m_resolved.empty())
+		std::lock_guard<std::mutex> lock(pState->mutex);
+		if (pState->resolved.empty())
 			return;
-		resolvedEntries.swap(m_resolved);
+		resolvedEntries.swap(pState->resolved);
 	}
 
 	while (!resolvedEntries.empty()) {
@@ -2126,18 +2162,20 @@ bool CSourceHostnameResolver::TryResolveHostnameIPv4(const CStringA &rstrHostnam
 	return bHasIpv4Address;
 }
 
-void CSourceHostnameResolver::WorkerMain()
+void CSourceHostnameResolver::WorkerMain(std::shared_ptr<SharedState> pState)
 {
+	if (!pState)
+		return;
 	for (;;) {
 		HostnameResolveRequest request = {};
 		{
-			std::unique_lock<std::mutex> lock(m_mutex);
-			m_workAvailable.wait(lock, [this]() { return m_bStopping || !m_pending.empty(); });
-			if (m_bStopping)
+			std::unique_lock<std::mutex> lock(pState->mutex);
+			pState->workAvailable.wait(lock, [&]() { return pState->bStopping || !pState->pending.empty(); });
+			if (pState->bStopping)
 				break;
 
-			request = m_pending.front();
-			m_pending.pop_front();
+			request = pState->pending.front();
+			pState->pending.pop_front();
 		}
 
 		HostnameResolveResult resolved = {};
@@ -2146,10 +2184,15 @@ void CSourceHostnameResolver::WorkerMain()
 		resolved.bLookupSucceeded = TryResolveHostnameIPv4(request.strHostname, resolved.nIP);
 		resolved.bHasIpv4Address = resolved.bLookupSucceeded;
 
-		std::lock_guard<std::mutex> lock(m_mutex);
-		if (!m_bStopping)
-			m_resolved.push_back(resolved);
+		std::lock_guard<std::mutex> lock(pState->mutex);
+		if (!pState->bStopping)
+			pState->resolved.push_back(resolved);
 	}
+	{
+		std::lock_guard<std::mutex> lock(pState->mutex);
+		pState->bWorkerExited = true;
+	}
+	pState->workerExited.notify_all();
 }
 
 void CDownloadQueue::RefreshBroadbandIoBufferSnapshot()

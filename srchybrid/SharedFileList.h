@@ -417,6 +417,7 @@ private:
 	 */
 	struct StartupCacheSaveThreadRequest
 	{
+		CSharedFileList *pOwner = NULL;
 		HWND hNotifyWnd = NULL;
 		ULONG_PTR nCompletionOwnerKey = 0;
 		std::shared_ptr<StartupCacheSaveOperation> pOperation;
@@ -487,6 +488,7 @@ private:
 	 */
 	static bool	WriteDuplicatePathCacheFile(const CString &strFullPath, const std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rRecords);
 	void	UpdateStartupCacheSaveProgress(StartupCacheSavePhase ePhase, ULONGLONG uCompletedDirectories, ULONGLONG uTotalDirectories);
+	void	HandleStartupCacheSavePostFailure(const std::shared_ptr<StartupCacheSaveOperation> &pOperation);
 	static void	UpdateStartupCacheSaveOperationProgress(const std::shared_ptr<StartupCacheSaveOperation> &pOperation, StartupCacheSavePhase ePhase, ULONGLONG uCompletedDirectories, ULONGLONG uTotalDirectories);
 	/**
 	 * @brief Loads the duplicate shared-path sidecar if it is present and well-formed.

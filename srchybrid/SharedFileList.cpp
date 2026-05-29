@@ -667,37 +667,74 @@ int CAddFileThread::Run()
 		Log(_T("%s \"%s\""), (LPCTSTR)GetResString(IDS_HASHINGFILE), (LPCTSTR)strFilePath);
 
 	if (!theApp.IsClosing()) {
-		CKnownFile *newKnown = new CKnownFile();
-		CKnownFileProgressTargetSnapshot progressTarget{};
-		const CKnownFileProgressTargetSnapshot *pProgressTarget = NULL;
-		uint32 nHashLayoutGeneration = 0;
-		if (m_partfile != NULL) {
-			progressTarget = MakePartFileProgressTargetSnapshot(*m_partfile);
-			pProgressTarget = &progressTarget;
-			nHashLayoutGeneration = m_partfile->GetHashLayoutGeneration();
-		}
-		if (newKnown->CreateFromFile(m_strDirectory, m_strFilename, pProgressTarget)) { // SLUGFILLER: SafeHash - in case of shutdown while still hashing
-			newKnown->SetPartFileHashLayoutGenerationSnapshot(nHashLayoutGeneration);
-			newKnown->SetSharedDirectory(m_strSharedDir);
-			if (!PostPartFileHashWorkerResult(TM_FINISHEDHASHING, (m_pOwner ? 0 : (WPARAM)m_partfile), (LPARAM)newKnown)) {
+		auto clearPartFileHashStateAfterException = [&]() {
+			// WHY: the UI hash-completion message normally clears PFOP_HASHING.
+			// If allocation or hashing throws before that message is queued,
+			// the worker still owns the recovery path and must not leave a
+			// completed/rehashed part file permanently protected by file-op state.
+			if (CanTouchPartFileHashTarget(m_partfile) && m_partfile->GetFileOp() == PFOP_HASHING) {
+				m_partfile->SetFileOp(PFOP_NONE);
+				m_partfile->SetStatus(PS_ERROR);
+			}
+		};
+		auto postSharedHashFailure = [&]() {
+			try {
+				if (m_pOwner && !theApp.IsClosing()) {
+					std::unique_ptr<UnknownFile_Struct> hashed(new UnknownFile_Struct);
+					hashed->strDirectory = m_strDirectory;
+					hashed->strName = m_strFilename;
+					if (PostPartFileHashWorkerResult(TM_HASHFAILED, 0, (LPARAM)hashed.get()))
+						(void)hashed.release();
+				}
+			} catch (...) {
+				DebugLogError(_T("Failed to post shared hash failure for \"%s\" after worker exception"), (LPCTSTR)strFilePath);
+			}
+		};
+		try {
+			std::unique_ptr<CKnownFile> newKnown(new CKnownFile());
+			CKnownFileProgressTargetSnapshot progressTarget{};
+			const CKnownFileProgressTargetSnapshot *pProgressTarget = NULL;
+			uint32 nHashLayoutGeneration = 0;
+			if (m_partfile != NULL) {
+				progressTarget = MakePartFileProgressTargetSnapshot(*m_partfile);
+				pProgressTarget = &progressTarget;
+				nHashLayoutGeneration = m_partfile->GetHashLayoutGeneration();
+			}
+			if (newKnown->CreateFromFile(m_strDirectory, m_strFilename, pProgressTarget)) { // SLUGFILLER: SafeHash - in case of shutdown while still hashing
+				newKnown->SetPartFileHashLayoutGenerationSnapshot(nHashLayoutGeneration);
+				newKnown->SetSharedDirectory(m_strSharedDir);
+				if (PostPartFileHashWorkerResult(TM_FINISHEDHASHING, (m_pOwner ? 0 : (WPARAM)m_partfile), (LPARAM)newKnown.get()))
+					(void)newKnown.release();
+				else if (CanTouchPartFileHashTarget(m_partfile) && m_partfile->GetFileOp() == PFOP_HASHING)
+					m_partfile->SetFileOp(PFOP_NONE);
+			} else {
 				if (CanTouchPartFileHashTarget(m_partfile) && m_partfile->GetFileOp() == PFOP_HASHING)
 					m_partfile->SetFileOp(PFOP_NONE);
-				delete newKnown;
-			}
-		} else {
-			if (CanTouchPartFileHashTarget(m_partfile) && m_partfile->GetFileOp() == PFOP_HASHING)
-				m_partfile->SetFileOp(PFOP_NONE);
 
-			// SLUGFILLER: SafeHash - inform main program of hash failure
-			if (m_pOwner && !theApp.IsClosing()) {
-				UnknownFile_Struct *hashed = new UnknownFile_Struct;
-				hashed->strDirectory = m_strDirectory;
-				hashed->strName = m_strFilename;
-				if (!PostPartFileHashWorkerResult(TM_HASHFAILED, 0, (LPARAM)hashed))
-					delete hashed;
+				// SLUGFILLER: SafeHash - inform main program of hash failure
+				postSharedHashFailure();
+				// SLUGFILLER: SafeHash
 			}
-			// SLUGFILLER: SafeHash
-			delete newKnown;
+		} catch (CMemoryException *ex) {
+			if (ex != NULL)
+				ex->Delete();
+			clearPartFileHashStateAfterException();
+			postSharedHashFailure();
+			DebugLogError(_T("Part-file/shared hash worker ran out of MFC heap while hashing \"%s\""), (LPCTSTR)strFilePath);
+		} catch (const std::bad_alloc&) {
+			clearPartFileHashStateAfterException();
+			postSharedHashFailure();
+			DebugLogError(_T("Part-file/shared hash worker ran out of standard heap while hashing \"%s\""), (LPCTSTR)strFilePath);
+		} catch (CException *ex) {
+			if (ex != NULL)
+				ex->Delete();
+			clearPartFileHashStateAfterException();
+			postSharedHashFailure();
+			DebugLogError(_T("Part-file/shared hash worker caught an MFC exception while hashing \"%s\""), (LPCTSTR)strFilePath);
+		} catch (...) {
+			clearPartFileHashStateAfterException();
+			postSharedHashFailure();
+			DebugLogError(_T("Part-file/shared hash worker caught an unknown exception while hashing \"%s\""), (LPCTSTR)strFilePath);
 		}
 	}
 
@@ -2846,6 +2883,7 @@ bool CSharedFileList::RequestStartupCacheSave(bool /*bImmediate*/)
 		}
 
 		std::unique_ptr<StartupCacheSaveThreadRequest> pRequest(new StartupCacheSaveThreadRequest{});
+		pRequest->pOwner = this;
 		pRequest->hNotifyWnd = (theApp.emuledlg != NULL) ? theApp.emuledlg->GetSafeHwnd() : NULL;
 		pRequest->nCompletionOwnerKey = GetWorkerUiPayloadOwnerKey(this);
 		pRequest->pOperation = pOperation;
@@ -3958,8 +3996,13 @@ UINT AFX_CDECL CSharedFileList::StartupCacheSaveThreadProc(LPVOID pParam)
 	if (hNotifyWnd != NULL && pCompletion)
 		bPosted = TryPostWorkerUiPayloadMessage(hNotifyWnd, NULL, nCompletionOwnerKey, UM_STARTUP_CACHE_SAVE_COMPLETE, std::move(pCompletion));
 
-	if (!bPosted && pCompletion != NULL)
+	if (!bPosted && pCompletion != NULL) {
+		CSharedFileList *const pOwner = pRequest ? pRequest->pOwner : NULL;
+		const std::shared_ptr<StartupCacheSaveOperation> pOperation = pCompletion->pOperation;
 		DiscardStartupCacheSaveCompletion(pCompletion.release());
+		if (!theApp.IsClosing() && pOwner != NULL)
+			pOwner->HandleStartupCacheSavePostFailure(pOperation);
+	}
 
 	return 0;
 }
@@ -4071,6 +4114,27 @@ void CSharedFileList::StartupCacheSaveThreadCompletion::DiscardPendingResult()
 			(void)LongPathSeams::DeleteFileIfExists(pOperation->strDuplicatePathCachePath);
 		UpdateStartupCacheSaveOperationProgress(pOperation, StartupCacheSavePhase::Idle, 0, 0);
 	}
+}
+
+void CSharedFileList::HandleStartupCacheSavePostFailure(const std::shared_ptr<StartupCacheSaveOperation> &pOperation)
+{
+	CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+	if (pOperation != m_pStartupCacheSaveOperation)
+		return;
+
+	// WHY: when PostMessage fails outside shutdown, the UI completion handler
+	// will never run. The worker has already discarded any persisted temp
+	// result, so clear only the matching operation token and leave the cache
+	// dirty for a later save attempt instead of wedging m_bStartupCacheSaveRunning.
+	m_bStartupCacheSaveRunning = false;
+	m_bStartupCacheSaveRunAfterCurrent = false;
+	m_pStartupCacheSaveOperation.reset();
+	m_eStartupCacheSavePhase = StartupCacheSavePhase::Idle;
+	m_uStartupCacheSaveDirectoriesDone = 0;
+	m_uStartupCacheSaveDirectoriesTotal = 0;
+	m_bStartupCacheDirty = true;
+	m_nStartupCacheDirtyTick = ::GetTickCount64();
+	UpdateStartupCacheSaveOperationProgress(pOperation, StartupCacheSavePhase::Idle, 0, 0);
 }
 
 CSharedFileList::StartupCacheSaveThreadCompletion::~StartupCacheSaveThreadCompletion()
