@@ -83,6 +83,7 @@ void CKadSearchListCtrl::Init()
 	LoadSettings();
 	SetSortArrow();
 	SortItems(SortProc, MAKELONG(GetSortItem(), !GetSortAscending()));
+	RebuildSearchItemIndex();
 }
 
 void CKadSearchListCtrl::UpdateKadSearchCount()
@@ -154,9 +155,39 @@ bool CKadSearchListCtrl::PruneStaleSearchItems()
 			bRemoved = true;
 		}
 	}
-	if (bRemoved)
+	if (bRemoved) {
+		RebuildSearchItemIndex();
 		UpdateKadSearchCount();
+	}
 	return bRemoved;
+}
+
+int CKadSearchListCtrl::FindSearchItem(const Kademlia::CSearch *search)
+{
+	int iItem = -1;
+	if (m_mapSearchItems.Lookup(search, iItem) && iItem >= 0 && iItem < GetItemCount() && GetItemData(iItem) == reinterpret_cast<DWORD_PTR>(search))
+		return iItem;
+
+	LVFINDINFO find;
+	find.flags = LVFI_PARAM;
+	find.lParam = reinterpret_cast<LPARAM>(search);
+	iItem = FindItem(&find);
+	if (iItem >= 0)
+		m_mapSearchItems[search] = iItem;
+	else
+		m_mapSearchItems.RemoveKey(search);
+	return iItem;
+}
+
+void CKadSearchListCtrl::RebuildSearchItemIndex()
+{
+	m_mapSearchItems.RemoveAll();
+	const int iItemCount = GetItemCount();
+	for (int iItem = 0; iItem < iItemCount; ++iItem) {
+		const Kademlia::CSearch *search = reinterpret_cast<Kademlia::CSearch*>(GetItemData(iItem));
+		if (search != NULL && IsLiveSearch(search))
+			m_mapSearchItems[search] = iItem;
+	}
 }
 
 void CKadSearchListCtrl::UpdateSearch(int iItem, const Kademlia::CSearch *search)
@@ -225,13 +256,11 @@ void CKadSearchListCtrl::SearchAdd(const Kademlia::CSearch *search)
 		ASSERT(search != NULL);
 		if (search == NULL)
 			return;
-		LVFINDINFO find;
-		find.flags = LVFI_PARAM;
-		find.lParam = (LPARAM)search;
-		if (FindItem(&find) >= 0)
+		if (FindSearchItem(search) >= 0)
 			return;
 		int iItem = InsertItem(LVIF_TEXT | LVIF_PARAM, GetItemCount(), _T(""), 0, 0, 0, (LPARAM)search);
 		if (iItem >= 0) {
+			m_mapSearchItems[search] = iItem;
 			UpdateSearch(iItem, search);
 			UpdateKadSearchCount();
 		}
@@ -247,16 +276,15 @@ void CKadSearchListCtrl::SearchRem(const Kademlia::CSearch *search)
 		if (search == NULL)
 			return;
 		bool bRemoved = false;
-		LVFINDINFO find;
-		find.flags = LVFI_PARAM;
-		find.lParam = (LPARAM)search;
 		int iItem;
-		while ((iItem = FindItem(&find)) >= 0) {
+		while ((iItem = FindSearchItem(search)) >= 0) {
 			DeleteItem(iItem);
 			bRemoved = true;
 		}
-		if (bRemoved)
+		if (bRemoved) {
+			RebuildSearchItemIndex();
 			UpdateKadSearchCount();
+		}
 	} catch (...) {
 		ASSERT(0);
 	}
@@ -272,10 +300,12 @@ void CKadSearchListCtrl::SearchRef(const Kademlia::CSearch *search)
 			SearchRem(search);
 			return;
 		}
-		LVFINDINFO find;
-		find.flags = LVFI_PARAM;
-		find.lParam = (LPARAM)search;
-		int iItem = FindItem(&find);
+		// WHY: Kad search progress can refresh from packet-processing hot paths
+		// many times per second. CListCtrl::FindItem sends an LV message and, in
+		// Debug MFC, showed up as the dominant UI-thread CPU cost in live-profile
+		// spike dumps. Keep a pointer-to-row index for the common case and fall
+		// back to FindItem only if list ordering changed behind the cache.
+		int iItem = FindSearchItem(search);
 		if (iItem >= 0)
 			UpdateSearch(iItem, search);
 	} catch (...) {
@@ -303,6 +333,7 @@ void CKadSearchListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 	UpdateSortHistory(MAKELONG(iSortItem, !bSortAscending));
 	SetSortArrow(iSortItem, bSortAscending);
 	SortItems(SortProc, MAKELONG(iSortItem, !bSortAscending));
+	RebuildSearchItemIndex();
 	*pResult = 0;
 }
 

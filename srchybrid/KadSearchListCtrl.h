@@ -63,6 +63,8 @@ private:
 protected:
 	bool IsLiveSearch(const Kademlia::CSearch *search) const;
 	bool PruneStaleSearchItems();
+	int FindSearchItem(const Kademlia::CSearch *search);
+	void RebuildSearchItemIndex();
 	void UpdateSearch(int iItem, const Kademlia::CSearch *search);
 	void SetAllIcons();
 
@@ -74,4 +76,6 @@ protected:
 	afx_msg void OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult);
 //	afx_msg void OnNmDblClk(LPNMHDR pNMHDR, LRESULT *pResult);
 	afx_msg void OnSysColorChange();
+
+	CMap<const Kademlia::CSearch*, const Kademlia::CSearch*, int, int> m_mapSearchItems;
 };
