@@ -48,6 +48,8 @@
 #include "PathHelpers.h"
 #include "ProtocolGuards.h"
 
+#include <new>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -70,6 +72,26 @@ bool RejectMalformedClientTcpPacket(LPCTSTR pszOpcodeName, uint32 uSize, CUpDown
 		pClient != NULL ? (LPCTSTR)pClient->DbgGetClientInfo() : _T("(unknown client)"),
 		uSize);
 	return false;
+}
+
+CClientReqSocket *CreateClientReqSocketForAcceptedSocket(SOCKET hAcceptedSocket)
+{
+	try {
+		return new CClientReqSocket;
+	} catch (CMemoryException *ex) {
+		if (ex != NULL)
+			ex->Delete();
+	} catch (const std::bad_alloc&) {
+	}
+
+	// WHY: the conditional-accept branch owns a raw SOCKET before the MFC
+	// CClientReqSocket wrapper is allocated. If low memory prevents wrapper
+	// construction, leaving that raw handle open leaks an accepted peer and can
+	// keep the listener near its connection limits after memory pressure clears.
+	if (hAcceptedSocket != INVALID_SOCKET)
+		closesocket(hAcceptedSocket);
+	DebugLogError(LOG_STATUSBAR, _T("Rejected accepted TCP connection because the client socket wrapper could not be allocated"));
+	return NULL;
 }
 }
 
@@ -2173,7 +2195,9 @@ void CListenSocket::OnAccept(int nErrorCode)
 
 					continue;
 				}
-				newclient = new CClientReqSocket;
+				newclient = CreateClientReqSocketForAcceptedSocket(sNew);
+				if (newclient == NULL)
+					continue;
 				if (!newclient->InitAsyncSocketExInstance()) {
 					// WHY: the listener owns both the freshly accepted SOCKET and
 					// CClientReqSocket until the socket has an async helper-window
