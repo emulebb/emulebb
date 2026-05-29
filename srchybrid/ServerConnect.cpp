@@ -427,13 +427,18 @@ void CServerConnect::ConnectionFailed(CServerSocket *sender)
 	theApp.emuledlg->ShowConnectionState();
 }
 
-VOID CALLBACK CServerConnect::RetryConnectTimer(HWND /*hWnd*/, UINT /*nMsg*/, UINT_PTR /*nId*/, DWORD /*dwTime*/) noexcept
+VOID CALLBACK CServerConnect::RetryConnectTimer(HWND /*hWnd*/, UINT /*nMsg*/, UINT_PTR nId, DWORD /*dwTime*/) noexcept
 {
 	// NOTE: Always handle all type of MFC exceptions in TimerProcs - otherwise we'll get mem leaks
 	try {
 		CServerConnect *_this = theApp.serverconnect;
 		ASSERT(_this);
-		if (Win32CallbackTimerSeams::ShouldDispatchServerRetryTimer(_this != NULL)) {
+		if (Win32CallbackTimerSeams::ShouldDispatchServerRetryTimer(_this != NULL, _this != NULL ? _this->m_idRetryTimer : 0, nId)) {
+			// WHY: a retry callback can already be in the UI queue when
+			// StopConnectionTry kills and clears the timer. Validate and consume
+			// the live id before reconnecting so stale callbacks cannot restart a
+			// server connection after an explicit stop or a newer retry schedule.
+			(void)Win32CallbackTimerSeams::StopNullWindowCallbackTimer(_this->m_idRetryTimer);
 			_this->StopConnectionTry();
 			if (_this->IsConnected())
 				return;

@@ -80,16 +80,16 @@ namespace Win32CallbackTimerSeams
 	/**
 	 * @brief Reports whether the server retry timer has a live controller to dispatch to.
 	 */
-	inline bool ShouldDispatchServerRetryTimer(bool bHasServerConnect)
+	inline bool ShouldDispatchServerRetryTimer(bool bHasServerConnect, UINT_PTR uLiveTimerId, UINT_PTR uCallbackTimerId)
 	{
-		return bHasServerConnect;
+		return bHasServerConnect && uLiveTimerId != 0 && uLiveTimerId == uCallbackTimerId;
 	}
 
 	/**
 	 * @brief Reports whether the UPnP timeout callback can safely notify the dialog.
 	 */
-	inline bool ShouldDispatchUPnPTimeoutTimer(bool bHasMainDialog, bool bAppClosing)
+	inline bool ShouldDispatchUPnPTimeoutTimer(bool bHasMainDialog, bool bAppClosing, UINT_PTR uLiveTimerId, UINT_PTR uCallbackTimerId)
 	{
-		return bHasMainDialog && !bAppClosing;
+		return bHasMainDialog && !bAppClosing && uLiveTimerId != 0 && uLiveTimerId == uCallbackTimerId;
 	}
 }

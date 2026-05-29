@@ -6014,10 +6014,15 @@ void CemuleDlg::SetToolTipsDelay(UINT uMilliseconds)
 	sharedfileswnd->SetToolTipsDelay(uMilliseconds);
 }
 
-void CALLBACK CemuleDlg::UPnPTimeOutTimer(HWND /*hwnd*/, UINT /*uiMsg*/, UINT_PTR /*idEvent*/, DWORD /*dwTime*/) noexcept
+void CALLBACK CemuleDlg::UPnPTimeOutTimer(HWND /*hwnd*/, UINT /*uiMsg*/, UINT_PTR idEvent, DWORD /*dwTime*/) noexcept
 {
-	if (!Win32CallbackTimerSeams::ShouldDispatchUPnPTimeoutTimer(theApp.emuledlg != NULL, theApp.IsClosing()))
+	const UINT_PTR uLiveTimerId = theApp.emuledlg != NULL ? theApp.emuledlg->m_hUPnPTimeOutTimer : 0;
+	if (!Win32CallbackTimerSeams::ShouldDispatchUPnPTimeoutTimer(theApp.emuledlg != NULL, theApp.IsClosing(), uLiveTimerId, idEvent))
 		return;
+	// WHY: null-window timer callbacks can already be queued when KillTimer
+	// clears m_hUPnPTimeOutTimer and a fallback backend starts. Only the current
+	// live timer may stop the current NAT backend; stale callbacks belong to an
+	// older attempt and must be ignored.
 	theApp.emuledlg->PostMessage(UM_UPNP_RESULT, (WPARAM)CUPnPImpl::UPNP_TIMEOUT, 0);
 }
 
