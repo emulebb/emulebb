@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-#define EMULE_TEST_HAVE_UPNP_DISCOVERY_THREAD_SEAMS 1
+#define EMULEBB_TEST_HAVE_UPNP_DISCOVERY_THREAD_SEAMS 1
 
 namespace UPnPDiscoveryThreadSeams
 {

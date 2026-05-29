@@ -8,7 +8,7 @@
 #include "ProtocolGuards.h"
 #include "types.h"
 
-#define EMULE_TEST_HAVE_AICH_HASH_INDEX_BUCKET_ESTIMATE 1
+#define EMULEBB_TEST_HAVE_AICH_HASH_INDEX_BUCKET_ESTIMATE 1
 
 /**
  * @brief Captures the current foreground hashing state that can block background AICH sync work.

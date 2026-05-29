@@ -25,7 +25,7 @@ static const size_t kAcceptedClientReadBufferBytes = 4u * 1024u;
 // wrong-IP logging/session races and wider UI-state data races.
 static const size_t kMaxAcceptedClientThreads = 1u;
 
-#define EMULE_WEBSOCKET_HTTP_SEAMS_HAS_REJECTED_IP_ACTION 1
+#define EMULEBB_WEBSOCKET_HTTP_SEAMS_HAS_REJECTED_IP_ACTION 1
 
 enum class EHttpHeaderScanResult
 {

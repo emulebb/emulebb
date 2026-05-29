@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#define EMULE_TEST_HAVE_SERVER_SOCKET_FAILURE_POLICY_SEAMS 1
+#define EMULEBB_TEST_HAVE_SERVER_SOCKET_FAILURE_POLICY_SEAMS 1
 
 /**
  * @brief Testable policy helpers for server TCP packet failure handling.

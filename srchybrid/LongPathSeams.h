@@ -23,7 +23,7 @@ class CSafeFile;
 namespace Kademlia { class CBufferedFileIO; }
 #endif
 
-#define EMULE_LONG_PATH_SEAMS_HAS_NTFS_JOURNAL_HELPERS 1
+#define EMULEBB_LONG_PATH_SEAMS_HAS_NTFS_JOURNAL_HELPERS 1
 
 namespace LongPathSeams
 {

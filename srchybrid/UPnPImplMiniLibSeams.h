@@ -6,8 +6,8 @@
 
 #include "UPnPDiscoveryThreadSeams.h"
 
-#define EMULE_TEST_HAVE_UPNP_MINILIB_SEAMS 1
-#define EMULE_TEST_HAVE_UPNP_MINILIB_ADD_FAILURE_SEAM 1
+#define EMULEBB_TEST_HAVE_UPNP_MINILIB_SEAMS 1
+#define EMULEBB_TEST_HAVE_UPNP_MINILIB_ADD_FAILURE_SEAM 1
 
 /**
  * @brief Reports whether a queried MiniUPnP mapping already targets the requested LAN IP and internal port.

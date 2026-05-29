@@ -381,4 +381,4 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules)
 }
 }
 
-#define EMULE_TEST_HAVE_FAKE_FILE_DETECTOR_SEAMS 1
+#define EMULEBB_TEST_HAVE_FAKE_FILE_DETECTOR_SEAMS 1

@@ -39,4 +39,4 @@ bool Match(const std::basic_string<TChar> &rText, const std::basic_string<TChar>
 }
 }
 
-#define EMULE_TEST_HAVE_REGEX_MATCH_SEAMS 1
+#define EMULEBB_TEST_HAVE_REGEX_MATCH_SEAMS 1

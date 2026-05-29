@@ -5,7 +5,7 @@
 #include <vector>
 #include "LongPathSeams.h"
 
-#define EMULE_SHARED_STARTUP_CACHE_POLICY_HAS_NTFS_FAST_PATH 1
+#define EMULEBB_SHARED_STARTUP_CACHE_POLICY_HAS_NTFS_FAST_PATH 1
 
 /**
  * \brief Policy and wire-format helpers for the shared startup warm cache.

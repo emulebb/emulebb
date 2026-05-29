@@ -2,7 +2,7 @@
 
 #include <tchar.h>
 
-#define EMULE_TEST_HAVE_WEB_SERVER_LEGACY_SEARCH_SEAMS 1
+#define EMULEBB_TEST_HAVE_WEB_SERVER_LEGACY_SEARCH_SEAMS 1
 
 /**
  * @brief Testable policy helpers for legacy WebServer page handling.

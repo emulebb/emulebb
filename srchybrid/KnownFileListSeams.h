@@ -1,7 +1,7 @@
 #pragma once
 
-#define EMULE_TESTS_HAS_KNOWN_FILE_COLLISION_SEAMS 1
-#define EMULE_TESTS_HAS_KNOWN_FILE_PUBLISH_SEAMS 1
+#define EMULEBB_TESTS_HAS_KNOWN_FILE_COLLISION_SEAMS 1
+#define EMULEBB_TESTS_HAS_KNOWN_FILE_PUBLISH_SEAMS 1
 
 /**
  * @brief Determines whether a stored AICH hashset should be purged from known2.met.

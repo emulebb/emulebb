@@ -101,4 +101,4 @@ inline bool ExecuteShellDelete(
 }
 }
 
-#define EMULE_TEST_HAVE_OTHER_FUNCTIONS_SEAMS 1
+#define EMULEBB_TEST_HAVE_OTHER_FUNCTIONS_SEAMS 1

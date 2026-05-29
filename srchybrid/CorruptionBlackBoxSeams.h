@@ -4,7 +4,7 @@
 
 #include "types.h"
 
-#define EMULE_TEST_HAVE_CORRUPTION_BLACK_BOX_SEAMS 1
+#define EMULEBB_TEST_HAVE_CORRUPTION_BLACK_BOX_SEAMS 1
 
 namespace CorruptionBlackBoxSeams
 {

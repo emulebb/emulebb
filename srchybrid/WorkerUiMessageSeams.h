@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 
-#define EMULE_TEST_HAVE_WORKER_UI_MESSAGE_DELIVERY 1
+#define EMULEBB_TEST_HAVE_WORKER_UI_MESSAGE_DELIVERY 1
 
 namespace WorkerUiMessageSeams
 {

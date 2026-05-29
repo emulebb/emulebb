@@ -649,4 +649,4 @@ inline CString BuildModuleResourceBaseUrl(HMODULE hModule)
 }
 }
 
-#define EMULE_TEST_HAVE_PATH_HELPERS 1
+#define EMULEBB_TEST_HAVE_PATH_HELPERS 1

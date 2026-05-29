@@ -292,4 +292,4 @@ inline HeaderProbeSummary SummarizeHeaderProbe(const EFileType eDetectedType, co
 }
 }
 
-#define EMULE_TEST_HAVE_FILE_TYPE_CLASSIFIER_SEAMS 1
+#define EMULEBB_TEST_HAVE_FILE_TYPE_CLASSIFIER_SEAMS 1

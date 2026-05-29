@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#define EMULE_BB_SEARCH_NETWORK_DEFAULTS 1
+#define EMULEBB_SEARCH_NETWORK_DEFAULTS 1
 
 namespace SearchParamsPolicy
 {

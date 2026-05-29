@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-#define EMULE_TESTS_HAS_SHARED_DIRECTORY_MONITOR_SEAMS 1
+#define EMULEBB_TESTS_HAS_SHARED_DIRECTORY_MONITOR_SEAMS 1
 
 /**
  * @brief Testable policy helpers for shared-directory monitor shutdown and persistence ownership.

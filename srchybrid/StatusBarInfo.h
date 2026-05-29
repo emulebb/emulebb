@@ -3,7 +3,7 @@
 #include <atlstr.h>
 #include "types.h"
 
-#define EMULE_STATUS_BAR_INFO_USES_EXTERNAL_TEXT 1
+#define EMULEBB_STATUS_BAR_INFO_USES_EXTERNAL_TEXT 1
 
 namespace StatusBarInfo
 {

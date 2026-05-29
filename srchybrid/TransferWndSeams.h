@@ -4,7 +4,7 @@
 
 #include "Resource.h"
 
-#define EMULE_TEST_HAVE_TRANSFER_WND_SEAMS 1
+#define EMULEBB_TEST_HAVE_TRANSFER_WND_SEAMS 1
 
 /**
  * @brief Testable policy helpers for Transfer window view-state recovery.

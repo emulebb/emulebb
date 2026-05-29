@@ -3,7 +3,7 @@
 #include <atlstr.h>
 #include "BindStartupPolicy.h"
 
-#define EMULE_BIND_RUNTIME_LOSS_POLICY_USES_EXTERNAL_TEXT 1
+#define EMULEBB_BIND_RUNTIME_LOSS_POLICY_USES_EXTERNAL_TEXT 1
 
 namespace BindRuntimeLossPolicy
 {

@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <limits>
 
-#define EMULE_TEST_HAVE_SERVER_UDP_SOCKET_FAILURE_SEAMS 1
-#define EMULE_TEST_HAVE_SERVER_UDP_DNS_SEAMS 1
+#define EMULEBB_TEST_HAVE_SERVER_UDP_SOCKET_FAILURE_SEAMS 1
+#define EMULEBB_TEST_HAVE_SERVER_UDP_DNS_SEAMS 1
 
 /**
  * @brief Testable policy helpers for server UDP packet failure diagnostics.

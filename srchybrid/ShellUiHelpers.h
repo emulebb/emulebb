@@ -239,4 +239,4 @@ inline CString ResolveSkinResourcePath(const CString &rstrSkinProfile, const CSt
 }
 }
 
-#define EMULE_TEST_HAVE_SHELL_UI_HELPERS 1
+#define EMULEBB_TEST_HAVE_SHELL_UI_HELPERS 1

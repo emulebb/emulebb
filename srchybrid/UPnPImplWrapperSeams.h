@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#define EMULE_TEST_HAVE_UPNP_WRAPPER_SEAMS 1
+#define EMULEBB_TEST_HAVE_UPNP_WRAPPER_SEAMS 1
 
 enum ENatMappingBackendMode : uint8_t
 {

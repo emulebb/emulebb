@@ -4,7 +4,7 @@
 
 #include "LongPathSeams.h"
 
-#define EMULE_TEST_HAVE_WEB_SOCKET_TLS_SEAMS 1
+#define EMULEBB_TEST_HAVE_WEB_SOCKET_TLS_SEAMS 1
 
 /**
  * @brief Testable TLS file-loading helpers for the native WebServer socket.

@@ -127,4 +127,4 @@ inline TransitionResult ApplyStopTransition(const State &rState)
 }
 }
 
-#define EMULE_TEST_HAVE_PART_FILE_PAUSE_RESUME_SEAMS 1
+#define EMULEBB_TEST_HAVE_PART_FILE_PAUSE_RESUME_SEAMS 1

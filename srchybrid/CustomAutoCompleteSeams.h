@@ -3,7 +3,7 @@
 #include <atlstr.h>
 #include <objbase.h>
 
-#define EMULE_CUSTOM_AUTO_COMPLETE_SEAMS_HAS_ENUM_STRING_COPY 1
+#define EMULEBB_CUSTOM_AUTO_COMPLETE_SEAMS_HAS_ENUM_STRING_COPY 1
 
 namespace CustomAutoCompleteSeams
 {

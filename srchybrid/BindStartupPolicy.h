@@ -3,7 +3,7 @@
 #include <atlstr.h>
 #include "BindAddressResolver.h"
 
-#define EMULE_BIND_STARTUP_POLICY_USES_EXTERNAL_TEXT 1
+#define EMULEBB_BIND_STARTUP_POLICY_USES_EXTERNAL_TEXT 1
 
 namespace BindStartupPolicy
 {

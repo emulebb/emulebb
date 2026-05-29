@@ -1,6 +1,6 @@
 #pragma once
 
-#define EMULE_TEST_HAVE_KAD_INDEXED_LOAD_THREAD_SEAMS 1
+#define EMULEBB_TEST_HAVE_KAD_INDEXED_LOAD_THREAD_SEAMS 1
 
 namespace KadIndexedLoadThreadSeams
 {

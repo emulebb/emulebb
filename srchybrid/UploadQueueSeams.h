@@ -4,7 +4,7 @@
 
 #include "DisplayRefreshSeams.h"
 
-#define EMULE_TEST_HAVE_RETIRED_UPLOAD_ENTRY_PENDING_IO_WARNING_SEAM 1
+#define EMULEBB_TEST_HAVE_RETIRED_UPLOAD_ENTRY_PENDING_IO_WARNING_SEAM 1
 
 inline constexpr std::uint32_t kUploadTimerSlowLoopThresholdMs = 100u;
 inline constexpr std::uint64_t kRetiredUploadEntryPendingIoWarningMs = 30000u;
