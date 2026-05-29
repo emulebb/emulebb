@@ -400,17 +400,6 @@ private:
 	};
 
 	/**
-	 * @brief Carries one immutable snapshot into the background save worker.
-	 */
-	struct StartupCacheSaveThreadRequest
-	{
-		HWND hNotifyWnd = NULL;
-		ULONG_PTR nCompletionOwnerKey = 0;
-		std::shared_ptr<StartupCacheSaveOperation> pOperation;
-		StartupCacheSaveSnapshot snapshot;
-	};
-
-	/**
 	 * @brief Transfers one owner-independent worker completion to the UI thread.
 	 */
 	struct StartupCacheSaveThreadCompletion
@@ -421,6 +410,19 @@ private:
 
 		std::shared_ptr<StartupCacheSaveOperation> pOperation;
 		StartupCacheSaveResult *pResult = NULL;
+	};
+
+	/**
+	 * @brief Carries one immutable snapshot into the background save worker.
+	 */
+	struct StartupCacheSaveThreadRequest
+	{
+		HWND hNotifyWnd = NULL;
+		ULONG_PTR nCompletionOwnerKey = 0;
+		std::shared_ptr<StartupCacheSaveOperation> pOperation;
+		StartupCacheSaveSnapshot snapshot;
+		std::unique_ptr<StartupCacheSaveResult> pResult;
+		std::unique_ptr<StartupCacheSaveThreadCompletion> pCompletion;
 	};
 
 	void	AddDirectory(const CString &strDir, CStringList &dirlist, std::unordered_set<std::wstring> &rAddedDirectoryKeys, bool bAllowStartupCache);

@@ -2819,16 +2819,20 @@ bool CSharedFileList::RequestStartupCacheSave(bool /*bImmediate*/)
 		m_uStartupCacheSaveDirectoriesTotal = 0;
 	}
 
-	StartupCacheSaveSnapshot snapshot = {};
-	if (!CaptureStartupCacheSaveSnapshot(snapshot)) {
-		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
-		m_bStartupCacheSaveRunning = false;
-		m_eStartupCacheSavePhase = StartupCacheSavePhase::Idle;
-		m_nStartupCacheDirtyTick = ::GetTickCount64();
-		return false;
-	}
-
 	try {
+		StartupCacheSaveSnapshot snapshot = {};
+		// WHY: m_bStartupCacheSaveRunning is set before capture so concurrent
+		// callers cannot start a second save. Snapshot construction allocates,
+		// so it must live inside the guarded starter path that resets that flag
+		// on failure instead of leaving startup-cache saves permanently wedged.
+		if (!CaptureStartupCacheSaveSnapshot(snapshot)) {
+			CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+			m_bStartupCacheSaveRunning = false;
+			m_eStartupCacheSavePhase = StartupCacheSavePhase::Idle;
+			m_nStartupCacheDirtyTick = ::GetTickCount64();
+			return false;
+		}
+
 		std::shared_ptr<StartupCacheSaveOperation> pOperation(new StartupCacheSaveOperation{});
 		pOperation->strCachePath = snapshot.strCachePath;
 		pOperation->strDuplicatePathCachePath = snapshot.strDuplicatePathCachePath;
@@ -2846,6 +2850,13 @@ bool CSharedFileList::RequestStartupCacheSave(bool /*bImmediate*/)
 		pRequest->nCompletionOwnerKey = GetWorkerUiPayloadOwnerKey(this);
 		pRequest->pOperation = pOperation;
 		pRequest->snapshot = std::move(snapshot);
+		// WHY: the UI completion is the only normal path that clears
+		// m_bStartupCacheSaveRunning. Allocate both payload objects before
+		// AfxBeginThread so low-memory failure remains on this starter thread,
+		// where the state can still be reset synchronously.
+		pRequest->pResult.reset(new StartupCacheSaveResult{});
+		pRequest->pCompletion.reset(new StartupCacheSaveThreadCompletion{});
+		pRequest->pCompletion->pOperation = pOperation;
 
 		CWinThread *pThread = AfxBeginThread(&CSharedFileList::StartupCacheSaveThreadProc, pRequest.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
 		if (pThread != NULL) {
@@ -2855,6 +2866,8 @@ bool CSharedFileList::RequestStartupCacheSave(bool /*bImmediate*/)
 	} catch (CMemoryException *ex) {
 		ex->Delete();
 		DebugLogError(_T("Failed to start startup cache save worker after a memory exception"));
+	} catch (const std::bad_alloc&) {
+		DebugLogError(_T("Failed to start startup cache save worker after a standard memory exception"));
 	} catch (CException *ex) {
 		ex->Delete();
 		DebugLogError(_T("Failed to start startup cache save worker after an MFC exception"));
@@ -3919,13 +3932,16 @@ void CSharedFileList::RunStartupCacheSaveWorker(const StartupCacheSaveSnapshot &
 UINT AFX_CDECL CSharedFileList::StartupCacheSaveThreadProc(LPVOID pParam)
 {
 	std::unique_ptr<StartupCacheSaveThreadRequest> pRequest(static_cast<StartupCacheSaveThreadRequest*>(pParam));
-	std::unique_ptr<StartupCacheSaveResult> pResult(new StartupCacheSaveResult{});
-	if (pRequest) {
+	std::unique_ptr<StartupCacheSaveResult> pResult(pRequest ? pRequest->pResult.release() : NULL);
+	std::unique_ptr<StartupCacheSaveThreadCompletion> pCompletion(pRequest ? pRequest->pCompletion.release() : NULL);
+	if (pRequest && pResult) {
 		try {
 			RunStartupCacheSaveWorker(pRequest->snapshot, pRequest->pOperation, *pResult);
 		} catch (CMemoryException *ex) {
 			ex->Delete();
 			DebugLogError(_T("Startup cache save worker aborted after a memory exception"));
+		} catch (const std::bad_alloc&) {
+			DebugLogError(_T("Startup cache save worker aborted after a standard memory exception"));
 		} catch (CException *ex) {
 			ex->Delete();
 			DebugLogError(_T("Startup cache save worker aborted after an MFC exception"));
@@ -3935,12 +3951,11 @@ UINT AFX_CDECL CSharedFileList::StartupCacheSaveThreadProc(LPVOID pParam)
 	}
 
 	bool bPosted = false;
-	std::unique_ptr<StartupCacheSaveThreadCompletion> pCompletion(new StartupCacheSaveThreadCompletion{});
-	pCompletion->pOperation = pRequest ? pRequest->pOperation : std::shared_ptr<StartupCacheSaveOperation>();
-	pCompletion->pResult = pResult.release();
+	if (pCompletion)
+		pCompletion->pResult = pResult.release();
 	const HWND hNotifyWnd = pRequest ? pRequest->hNotifyWnd : NULL;
 	const ULONG_PTR nCompletionOwnerKey = pRequest ? pRequest->nCompletionOwnerKey : 0;
-	if (hNotifyWnd != NULL)
+	if (hNotifyWnd != NULL && pCompletion)
 		bPosted = TryPostWorkerUiPayloadMessage(hNotifyWnd, NULL, nCompletionOwnerKey, UM_STARTUP_CACHE_SAVE_COMPLETE, std::move(pCompletion));
 
 	if (!bPosted && pCompletion != NULL)
@@ -3955,8 +3970,24 @@ void CSharedFileList::HandleStartupCacheSaveCompletion(void *pResultVoid)
 	if (pCompletion == NULL)
 		return;
 	StartupCacheSaveResult *pResult = pCompletion->pResult;
-	if (pResult == NULL)
+	if (pResult == NULL) {
+		// WHY: the worker request preallocates this result before thread start.
+		// A null result therefore means an abnormal completion payload reached
+		// the UI thread; still clear the matching running operation so startup
+		// cache saving does not remain stuck forever after a defensive fallback.
+		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+		if (pCompletion->pOperation == m_pStartupCacheSaveOperation) {
+			m_bStartupCacheSaveRunning = false;
+			m_bStartupCacheSaveRunAfterCurrent = false;
+			m_pStartupCacheSaveOperation.reset();
+			m_eStartupCacheSavePhase = StartupCacheSavePhase::Idle;
+			m_uStartupCacheSaveDirectoriesDone = 0;
+			m_uStartupCacheSaveDirectoriesTotal = 0;
+			m_bStartupCacheDirty = true;
+			m_nStartupCacheDirtyTick = ::GetTickCount64();
+		}
 		return;
+	}
 	pCompletion->pResult = NULL;
 	std::unique_ptr<StartupCacheSaveResult> resultGuard(pResult);
 
