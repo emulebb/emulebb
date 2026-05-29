@@ -926,7 +926,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"GET", "/categories/{categoryId}", "", ""},
 		{"PATCH", "/categories/{categoryId}", "name,path,comment,color,priority", ""},
 		{"DELETE", "/categories/{categoryId}", "", ""},
-		{"GET", "/transfers", "", "state,categoryId"},
+		{"GET", "/transfers", "", "state,categoryId,offset,limit"},
 		{"POST", "/transfers", "link,links,categoryId,categoryName,paused", ""},
 		{"POST", "/transfers/operations/clear-completed", "confirmClearCompleted", ""},
 		{"GET", "/transfers/{hash}", "", ""},
@@ -2470,7 +2470,8 @@ inline bool TryBuildRoute(
 	if (route.size() == 1 && route[0] == "transfers" && bGet) {
 		rRoute.strCommand = "transfers/list";
 		CopyTransferListQueryParams(query, rRoute.params);
-		RequestItemsEnvelope(rRoute.params);
+		CopyPagingQueryParams(query, rRoute.params);
+		RequestPagedItemsEnvelope(rRoute.params);
 		return true;
 	}
 	if (route.size() == 1 && route[0] == "transfers" && bPost) {

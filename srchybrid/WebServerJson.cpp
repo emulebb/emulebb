@@ -1263,27 +1263,53 @@ json BuildSharedDirectoriesJson()
 /**
  * Builds the active upload or waiting queue collection for REST polling.
  */
-json BuildUploadsListJson(const bool bWaitingQueue, const size_t uLimit = (std::numeric_limits<size_t>::max)())
+json BuildUploadsListJson(
+	const bool bWaitingQueue,
+	const size_t uLimit = (std::numeric_limits<size_t>::max)(),
+	const size_t uOffset = 0,
+	size_t *const pTotal = NULL)
 {
 	json result = json::array();
+	size_t uMatched = 0;
 	if (!bWaitingQueue) {
 		for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;) {
 			CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromUploadList(pos);
-			if (pClient != NULL)
+			if (pClient == NULL)
+				continue;
+			++uMatched;
+			if (uMatched > uOffset && result.size() < uLimit)
 				result.push_back(BuildUploadJson(*pClient, false));
-			if (result.size() >= uLimit)
+			if (pTotal == NULL && result.size() >= uLimit)
 				break;
 		}
 	} else {
 		for (POSITION pos = theApp.uploadqueue->GetFirstFromWaitingList(); pos != NULL;) {
 			CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromWaitingList(pos);
-			if (pClient != NULL)
+			if (pClient == NULL)
+				continue;
+			++uMatched;
+			if (uMatched > uOffset && result.size() < uLimit)
 				result.push_back(BuildUploadJson(*pClient, true));
-			if (result.size() >= uLimit)
+			if (pTotal == NULL && result.size() >= uLimit)
 				break;
 		}
 	}
+	if (pTotal != NULL)
+		*pTotal = uMatched;
 	return result;
+}
+
+json BuildUploadsPageEnvelopeJson(const bool bWaitingQueue, const json &rParams)
+{
+	const size_t uOffset = GetListPageOffset(rParams);
+	const size_t uLimit = GetListPageLimit(rParams);
+	size_t uTotal = 0;
+	// WHY: /upload-queue is polled from management UIs and can contain many
+	// waiting peers on a live profile. Count the matching rows in one list walk
+	// but serialize only the requested page so REST polling cannot spend most
+	// of its UI-thread time building JSON the HTTP layer will discard.
+	const json items = BuildUploadsListJson(bWaitingQueue, uLimit, uOffset, &uTotal);
+	return BuildPagedItemsEnvelope(items, uTotal, uOffset, uLimit);
 }
 
 json BuildFriendJson(const CFriend &rFriend)
@@ -1364,7 +1390,9 @@ json BuildTransfersListJson(
 	const json &rParams,
 	SPipeApiError &rError,
 	const bool bRejectSharedHashingBusy = true,
-	const size_t uLimit = (std::numeric_limits<size_t>::max)())
+	const size_t uLimit = (std::numeric_limits<size_t>::max)(),
+	const size_t uOffset = 0,
+	size_t *const pTotal = NULL)
 {
 	if (bRejectSharedHashingBusy && TryRejectSharedHashingBusy(rError))
 		return json();
@@ -1384,6 +1412,7 @@ json BuildTransfersListJson(
 
 	const CString strStateFilter(CStringFromStdUtf8(request.strState));
 	json result = json::array();
+	size_t uMatched = 0;
 	POSITION pos = NULL;
 	for (INT_PTR i = 0, iCount = theApp.downloadqueue->GetFileCount(); i < iCount; ++i) {
 		CPartFile *pPartFile = theApp.downloadqueue->GetFileNext(pos);
@@ -1396,11 +1425,31 @@ json BuildTransfersListJson(
 			if (strState != strStateFilter)
 				continue;
 		}
-		result.push_back(BuildTransferJson(*pPartFile));
-		if (result.size() >= uLimit)
+		++uMatched;
+		if (uMatched > uOffset && result.size() < uLimit)
+			result.push_back(BuildTransferJson(*pPartFile));
+		if (pTotal == NULL && result.size() >= uLimit)
 			break;
 	}
+	if (pTotal != NULL)
+		*pTotal = uMatched;
 	return result;
+}
+
+json BuildTransfersPageEnvelopeJson(const json &rParams, SPipeApiError &rError)
+{
+	const size_t uOffset = GetListPageOffset(rParams);
+	const size_t uLimit = GetListPageLimit(rParams);
+	size_t uTotal = 0;
+	// WHY: transfer rows are expensive: each BuildTransferJson call reaches
+	// live part-file state and emits progress, category, file-op, and timing
+	// fields. Paging has to happen during the download-queue walk, not after a
+	// full JSON array is built, otherwise large profiles still pay the old hot
+	// path cost for every REST poll.
+	const json items = BuildTransfersListJson(rParams, rError, true, uLimit, uOffset, &uTotal);
+	if (!rError.strCode.IsEmpty())
+		return json();
+	return BuildPagedItemsEnvelope(items, uTotal, uOffset, uLimit);
 }
 
 std::string JoinQBitContentPath(const std::string &rSavePath, const std::string &rName)
@@ -3259,6 +3308,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 
 	if (strCommand == "uploads/list" || strCommand == "uploads/queue") {
 		const bool bWaitingQueue = strCommand == "uploads/queue";
+		if (params.value("_paged_items_envelope", false))
+			return BuildUploadsPageEnvelopeJson(bWaitingQueue, params);
 		return ItemsEnvelopeIfRequested(params, BuildUploadsListJson(bWaitingQueue));
 	}
 
@@ -3392,6 +3443,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 	if (strCommand == "transfers/list") {
+		if (params.value("_paged_items_envelope", false))
+			return BuildTransfersPageEnvelopeJson(params, rError);
 		const json result = BuildTransfersListJson(params, rError);
 		if (!rError.strCode.IsEmpty())
 			return json();
