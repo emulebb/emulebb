@@ -157,6 +157,12 @@ void CKademlia::Start(CPrefs *pPrefs)
 		// Create our Kad objects.
 		std::unique_ptr<CKademlia> pNewInstance(new CKademlia());
 		pNewInstance->m_pPrefs = pPrefsOwner.release();
+		// WHY: CIndexed starts an async loader from its constructor and that
+		// loader validates persisted keys against CKademlia::GetPrefs(). Publish
+		// the not-yet-running instance once prefs exist, but keep unique_ptr
+		// ownership until every Kad component is constructed so startup failure
+		// still cleans up partial state and leaves later starts possible.
+		m_pInstance = pNewInstance.get();
 		pNewInstance->m_pIndexed = new CIndexed();
 		pNewInstance->m_pRoutingZone = new CRoutingZone();
 		pNewInstance->m_pUDPListener = new CKademliaUDPListener();
