@@ -21,6 +21,7 @@
 #include "UPnPImplPcpNatPmp.h"
 #include "UPnPImplWrapperSeams.h"
 #include "Preferences.h"
+#include "Log.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -45,10 +46,32 @@ CUPnPImplWrapper::~CUPnPImplWrapper()
 
 void CUPnPImplWrapper::ClearImplementations()
 {
-	while (!m_liAvailable.IsEmpty())
-		delete m_liAvailable.RemoveHead();
-	while (!m_liUsed.IsEmpty())
-		delete m_liUsed.RemoveHead();
+	while (!m_liAvailable.IsEmpty()) {
+		CUPnPImpl *pImpl = m_liAvailable.RemoveHead();
+		if (pImpl != NULL) {
+			pImpl->StopAsyncFind();
+			if (pImpl->MustAbandonForShutdown()) {
+				// WHY: a timed-out discovery worker still owns raw access to the
+				// implementation. During process exit the safe choice is a bounded
+				// leak, not deleting the owner and turning a slow router into UAF.
+				DebugLogError(_T("Abandoning NAT mapping implementation '%s' because its discovery worker is still running"), pImpl->GetImplementationName());
+			} else
+				delete pImpl;
+		}
+	}
+	while (!m_liUsed.IsEmpty()) {
+		CUPnPImpl *pImpl = m_liUsed.RemoveHead();
+		if (pImpl != NULL) {
+			pImpl->StopAsyncFind();
+			if (pImpl->MustAbandonForShutdown()) {
+				// WHY: a timed-out discovery worker still owns raw access to the
+				// implementation. During process exit the safe choice is a bounded
+				// leak, not deleting the owner and turning a slow router into UAF.
+				DebugLogError(_T("Abandoning NAT mapping implementation '%s' because its discovery worker is still running"), pImpl->GetImplementationName());
+			} else
+				delete pImpl;
+		}
+	}
 	m_pActiveImpl = NULL;
 }
 

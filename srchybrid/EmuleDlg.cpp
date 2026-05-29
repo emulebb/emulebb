@@ -3530,7 +3530,7 @@ void CemuleDlg::OnClose()
 
 	// close uPnP Ports
 	theApp.m_pUPnPFinder->GetImplementation()->StopAsyncFind();
-	if (thePrefs.CloseUPnPOnExit())
+	if (thePrefs.CloseUPnPOnExit() && !theApp.m_pUPnPFinder->GetImplementation()->MustAbandonForShutdown())
 		theApp.m_pUPnPFinder->GetImplementation()->DeletePorts();
 
 	thePrefs.Save();

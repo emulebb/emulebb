@@ -934,10 +934,11 @@ void CSharedFileList::CopySharedFileMap(CKnownFilesMap &Files_Map)
 		Files_Map[pair->key] = pair->value;
 }
 
-void CSharedFileList::CopySharedFilePage(std::vector<CKnownFile*> &rFiles, const size_t uOffset, const size_t uLimit, size_t &ruTotal)
+void CSharedFileList::CopySharedFilePage(std::vector<CKnownFile*> &rFiles, const size_t uOffset, const size_t uLimit, size_t *const pTotal)
 {
 	rFiles.clear();
-	ruTotal = 0;
+	if (pTotal != NULL)
+		*pTotal = 0;
 	if (uLimit > 0)
 		rFiles.reserve((std::min)(uLimit, static_cast<size_t>(1000)));
 
@@ -947,12 +948,21 @@ void CSharedFileList::CopySharedFilePage(std::vector<CKnownFile*> &rFiles, const
 		if (pair->value == NULL)
 			continue;
 
-		++ruTotal;
+		if (pTotal != NULL)
+			++*pTotal;
 		if (uSeen++ < uOffset)
 			continue;
 
-		if (rFiles.size() < uLimit)
+		if (rFiles.size() < uLimit) {
 			rFiles.push_back(pair->value);
+			continue;
+		}
+
+		// WHY: snapshot polling does not need an exact total. Once the requested
+		// page is full, continuing to walk a huge shared map only burns UI-thread
+		// time under the shared-list lock without changing the response body.
+		if (pTotal == NULL)
+			break;
 	}
 }
 

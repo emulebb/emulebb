@@ -1194,7 +1194,7 @@ json BuildSharedFilesListJson(
 {
 	std::vector<CKnownFile*> sharedFiles;
 	size_t uTotal = 0;
-	theApp.sharedfiles->CopySharedFilePage(sharedFiles, uOffset, uLimit, uTotal);
+	theApp.sharedfiles->CopySharedFilePage(sharedFiles, uOffset, uLimit, pTotal != NULL ? &uTotal : NULL);
 	if (pTotal != NULL)
 		*pTotal = uTotal;
 
@@ -1567,6 +1567,13 @@ json BuildQBitTransfersInfoJson(const json &rParams)
 		if (!strCategory.empty() && strPartCategory != strCategory)
 			continue;
 		result.push_back(BuildQBitTransferInfoJson(*pPartFile, categorySavePaths));
+		if (result.size() >= WebServerJsonSeams::kMaxQBitTorrentInfoRows) {
+			// WHY: Arr-compatible qBit polling runs on a short cadence through
+			// the UI-owned download queue. A hard row cap prevents one oversized
+			// queue snapshot from monopolizing the UI thread and socket buffers.
+			DebugLogWarning(_T("qBit torrent-info snapshot reached the %Iu row cap"), WebServerJsonSeams::kMaxQBitTorrentInfoRows);
+			break;
+		}
 	}
 	return result;
 }

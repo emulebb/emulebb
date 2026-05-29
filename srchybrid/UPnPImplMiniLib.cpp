@@ -21,6 +21,7 @@
 #include "FormatSafetySeams.h"
 #include "Log.h"
 #include "Otherfunctions.h"
+#include "emule.h"
 #include "miniupnpc\include\miniupnpc.h"
 #include "miniupnpc\include\upnpcommands.h"
 #include "opcodes.h"
@@ -44,6 +45,7 @@ CUPnPImplMiniLib::CUPnPImplMiniLib()
 	, m_pIGDData()
 	, m_pDiscoveryThread()
 	, m_bSucceededOnce()
+	, m_bAbandonForShutdown()
 	, m_bAbortDiscovery()
 {
 	m_nOldUDPPort = 0;
@@ -70,6 +72,9 @@ bool CUPnPImplMiniLib::IsReady()
 
 void CUPnPImplMiniLib::StopAsyncFind()
 {
+	if (m_bAbandonForShutdown)
+		return;
+
 	ReapDiscoveryThreadIfFinished();
 	if (m_pDiscoveryThread != NULL) {
 		DWORD dwLastError = ERROR_SUCCESS;
@@ -77,7 +82,21 @@ void CUPnPImplMiniLib::StopAsyncFind()
 			UPnPDiscoveryThreadSeams::RequestDiscoveryThreadStop(m_pDiscoveryThread, m_bAbortDiscovery, dwLastError);
 		if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::WaitCooperatively) {
 			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread to quit timed out; preserving owner lifetime until cooperative exit"));
-			if (UPnPDiscoveryThreadSeams::WaitForDiscoveryThreadOwnerLifetime(m_pDiscoveryThread, dwLastError) == UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction::ReleaseAfterWaitFailure)
+			const UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction eOwnerAction = UPnPDiscoveryThreadSeams::WaitForDiscoveryThreadOwnerLifetime(
+				m_pDiscoveryThread,
+				theApp.IsClosing() ? UPnPDiscoveryThreadSeams::kShutdownOwnerLifetimeWaitMs : INFINITE,
+				dwLastError);
+			if (eOwnerAction == UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction::KeepOwnerAlive) {
+				// WHY: discovery workers dereference this implementation while inside
+				// third-party UPnP calls. At process shutdown a router/library hang
+				// must not block exit forever, so keep both owner and thread wrapper
+				// alive intentionally instead of deleting through a raw worker owner.
+				DebugLogError(_T("Abandoning UPnP StartDiscoveryThread owner during shutdown after timed-out owner-lifetime wait"));
+				m_bAbandonForShutdown = true;
+				m_pDiscoveryThread = NULL;
+				return;
+			}
+			if (eOwnerAction == UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction::ReleaseAfterWaitFailure)
 				DebugLogError(_T("Final UPnP StartDiscoveryThread owner-lifetime wait failed (%u); releasing stale thread wrapper"), dwLastError);
 		} else if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::ReleaseAfterWaitFailure)
 			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread failed (%u); releasing stale thread wrapper"), dwLastError);

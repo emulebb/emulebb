@@ -20,6 +20,7 @@
 #include "UPnPDiscoveryThreadSeams.h"
 #include "Log.h"
 #include "OtherFunctions.h"
+#include "emule.h"
 
 #include <pcpnatpmp.h>
 
@@ -66,6 +67,7 @@ CUPnPImplPcpNatPmp::CUPnPImplPcpNatPmp()
 	, m_sourceAddress()
 	, m_nSourceAddressLen()
 	, m_bSucceededOnce()
+	, m_bAbandonForShutdown()
 	, m_bAbortDiscovery()
 {
 	memset(&m_sourceAddress, 0, sizeof(m_sourceAddress));
@@ -117,6 +119,9 @@ bool CUPnPImplPcpNatPmp::IsReady()
 
 void CUPnPImplPcpNatPmp::StopAsyncFind()
 {
+	if (m_bAbandonForShutdown)
+		return;
+
 	ReapDiscoveryThreadIfFinished();
 	if (m_pDiscoveryThread != NULL) {
 		DWORD dwLastError = ERROR_SUCCESS;
@@ -124,7 +129,21 @@ void CUPnPImplPcpNatPmp::StopAsyncFind()
 			UPnPDiscoveryThreadSeams::RequestDiscoveryThreadStop(m_pDiscoveryThread, m_bAbortDiscovery, dwLastError);
 		if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::WaitCooperatively) {
 			DebugLogError(_T("Waiting for PCP/NAT-PMP discovery thread to quit timed out; preserving owner lifetime until cooperative exit"));
-			if (UPnPDiscoveryThreadSeams::WaitForDiscoveryThreadOwnerLifetime(m_pDiscoveryThread, dwLastError) == UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction::ReleaseAfterWaitFailure)
+			const UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction eOwnerAction = UPnPDiscoveryThreadSeams::WaitForDiscoveryThreadOwnerLifetime(
+				m_pDiscoveryThread,
+				theApp.IsClosing() ? UPnPDiscoveryThreadSeams::kShutdownOwnerLifetimeWaitMs : INFINITE,
+				dwLastError);
+			if (eOwnerAction == UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction::KeepOwnerAlive) {
+				// WHY: discovery workers dereference this implementation while inside
+				// third-party PCP/NAT-PMP calls. At process shutdown a gateway/library
+				// hang must not block exit forever, so keep both owner and thread
+				// wrapper alive intentionally instead of deleting through the worker.
+				DebugLogError(_T("Abandoning PCP/NAT-PMP discovery owner during shutdown after timed-out owner-lifetime wait"));
+				m_bAbandonForShutdown = true;
+				m_pDiscoveryThread = NULL;
+				return;
+			}
+			if (eOwnerAction == UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction::ReleaseAfterWaitFailure)
 				DebugLogError(_T("Final PCP/NAT-PMP discovery owner-lifetime wait failed (%u); releasing stale thread wrapper"), dwLastError);
 		} else if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::ReleaseAfterWaitFailure)
 			DebugLogError(_T("Waiting for PCP/NAT-PMP discovery thread failed (%u); releasing stale thread wrapper"), dwLastError);

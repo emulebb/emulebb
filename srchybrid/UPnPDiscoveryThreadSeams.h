@@ -32,6 +32,7 @@ enum class EStopWaitAction
 enum class EOwnerLifetimeWaitAction
 {
 	ReleaseFinished,
+	KeepOwnerAlive,
 	ReleaseAfterWaitFailure
 };
 
@@ -39,6 +40,7 @@ enum class EOwnerLifetimeWaitAction
  * @brief Timeout used when first waiting for a cooperative discovery-thread stop.
  */
 constexpr DWORD kCooperativeStopWaitMs = 7000;
+constexpr DWORD kShutdownOwnerLifetimeWaitMs = 3000;
 
 /**
  * @brief Atomically requests cooperative cancellation for discovery workers.
@@ -103,7 +105,11 @@ inline EStopWaitAction ClassifyStopWait(DWORD dwWait)
  */
 inline EOwnerLifetimeWaitAction ClassifyOwnerLifetimeWait(DWORD dwWait)
 {
-	return dwWait == WAIT_OBJECT_0 ? EOwnerLifetimeWaitAction::ReleaseFinished : EOwnerLifetimeWaitAction::ReleaseAfterWaitFailure;
+	if (dwWait == WAIT_OBJECT_0)
+		return EOwnerLifetimeWaitAction::ReleaseFinished;
+	if (dwWait == WAIT_FAILED)
+		return EOwnerLifetimeWaitAction::ReleaseAfterWaitFailure;
+	return EOwnerLifetimeWaitAction::KeepOwnerAlive;
 }
 
 /**
@@ -136,17 +142,23 @@ inline ENonblockingWaitAction ReapDiscoveryThreadIfFinished(TThread *&rpThread, 
  * same lifetime policy.
  */
 template <typename TThread>
-inline EOwnerLifetimeWaitAction WaitForDiscoveryThreadOwnerLifetime(TThread *pThread, DWORD &rdwLastError)
+inline EOwnerLifetimeWaitAction WaitForDiscoveryThreadOwnerLifetime(TThread *pThread, DWORD dwTimeoutMs, DWORD &rdwLastError)
 {
 	rdwLastError = ERROR_SUCCESS;
 	if (pThread == NULL)
 		return EOwnerLifetimeWaitAction::ReleaseFinished;
 
-	const DWORD dwWait = ::WaitForSingleObject(pThread->m_hThread, INFINITE);
+	const DWORD dwWait = ::WaitForSingleObject(pThread->m_hThread, dwTimeoutMs);
 	const EOwnerLifetimeWaitAction eAction = ClassifyOwnerLifetimeWait(dwWait);
 	if (eAction == EOwnerLifetimeWaitAction::ReleaseAfterWaitFailure)
 		rdwLastError = ::GetLastError();
 	return eAction;
+}
+
+template <typename TThread>
+inline EOwnerLifetimeWaitAction WaitForDiscoveryThreadOwnerLifetime(TThread *pThread, DWORD &rdwLastError)
+{
+	return WaitForDiscoveryThreadOwnerLifetime(pThread, INFINITE, rdwLastError);
 }
 
 /**

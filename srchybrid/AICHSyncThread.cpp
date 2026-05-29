@@ -163,7 +163,7 @@ int CAICHSyncThread::Run()
 			return 0;
 		}
 
-	uint32 nLastVerifiedPos = 0;
+	ULONGLONG ullLastVerifiedPos = 0;
 	try {
 		if (file.GetLength() >= 1) {
 			uint8 header = file.ReadUInt8();
@@ -187,7 +187,7 @@ int CAICHSyncThread::Run()
 
 				// skip the rest of this hashset
 				file.Seek(nHashCount * (LONGLONG)CAICHHash::GetHashSize(), CFile::current);
-				nLastVerifiedPos = (uint32)file.GetPosition();
+				ullLastVerifiedPos = file.GetPosition();
 			}
 		} else
 			file.WriteUInt8(KNOWN2_MET_VERSION);
@@ -196,13 +196,17 @@ int CAICHSyncThread::Run()
 			LogError(LOG_STATUSBAR, GetResString(IDS_ERR_MET_BAD), KNOWN2_MET_FILENAME);
 			// truncate the file to the last verified valid position
 			try {
-				file.SetLength(nLastVerifiedPos);
+				// WHY: known2_64.met can exceed 4 GiB on very large libraries.
+				// Corruption repair must truncate to the last verified 64-bit
+				// record boundary, not a wrapped 32-bit offset that discards
+				// unrelated valid AICH metadata.
+				file.SetLength(ullLastVerifiedPos);
 				if (file.GetLength() == 0) {
 					file.SeekToBegin();
 					file.WriteUInt8(KNOWN2_MET_VERSION);
 				}
 			} catch (CFileException *ex2) {
-				DebugLogError(_T("Failed to truncate corrupt %s to byte %u%s"), KNOWN2_MET_FILENAME, nLastVerifiedPos, (LPCTSTR)CExceptionStrDash(*ex2));
+				DebugLogError(_T("Failed to truncate corrupt %s to byte %I64u%s"), KNOWN2_MET_FILENAME, ullLastVerifiedPos, (LPCTSTR)CExceptionStrDash(*ex2));
 				ex2->Delete();
 			}
 		} else

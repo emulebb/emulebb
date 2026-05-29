@@ -25,6 +25,8 @@ static const size_t kMaxSearchQueryLength = 160;
 static const size_t kMaxCategoryNameLength = 128;
 static const size_t kMaxPublicFileNameLength = 255;
 static const size_t kMaxUrlImportLength = 2048;
+static const size_t kMaxTransferAddLinks = 100;
+static const size_t kMaxQBitTorrentInfoRows = 2000;
 static const UINT kRestUiDispatchTimeoutMs = 15000u;
 static const char *const kRestRouteExecutionDirect = "direct";
 static const char *const kRestRouteExecutionUiThread = "ui-thread";
@@ -1183,11 +1185,10 @@ inline bool TryParseTransferAddLink(const json &rParams, std::string &rLink, std
 	}
 
 	rLink = TrimAsciiWhitespace(rParams["link"].get<std::string>());
-	if (rLink.empty()) {
-		rError = "link must not be empty";
+	std::string strNormalized;
+	if (!TryValidateUrlImportText(rLink, "link", strNormalized, rError))
 		return false;
-	}
-
+	rLink = strNormalized;
 	return true;
 }
 
@@ -1231,6 +1232,10 @@ inline bool ValidateTransferAddBody(json &rBody, std::string &rErrorCode, std::s
 		}
 		if (rBody["links"].empty()) {
 			SetInvalidArgument(rErrorCode, rErrorMessage, "links must not be empty");
+			return false;
+		}
+		if (rBody["links"].size() > kMaxTransferAddLinks) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, "links contains too many items");
 			return false;
 		}
 		for (json &rLinkValue : rBody["links"]) {

@@ -39,6 +39,7 @@ public:
 	virtual bool IsReady();
 	virtual int GetImplementationID()				{ return UPNP_IMPL_PCPNATPMP; }
 	virtual LPCTSTR GetImplementationName() const	{ return _T("PCP/NAT-PMP"); }
+	virtual bool MustAbandonForShutdown() const		{ return m_bAbandonForShutdown; }
 
 	/**
 	 * Background worker which discovers the PCP/NAT-PMP gateway and maintains the active mappings.
@@ -86,6 +87,7 @@ private:
 	int m_nSourceAddressLen;
 
 	bool m_bSucceededOnce;
+	bool m_bAbandonForShutdown;
 	/**
 	 * Interlocked cooperative-cancellation flag read by the discovery worker.
 	 */

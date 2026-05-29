@@ -33,6 +33,7 @@ public:
 	virtual bool IsReady();
 	virtual int GetImplementationID()				{ return UPNP_IMPL_MINIUPNPLIB; }
 	virtual LPCTSTR GetImplementationName() const	{ return _T("UPnP IGD (MiniUPnP)"); }
+	virtual bool MustAbandonForShutdown() const		{ return m_bAbandonForShutdown; }
 
 	class CStartDiscoveryThread : public CWinThread
 	{
@@ -69,6 +70,7 @@ private:
 	char m_achWanIP[40];
 
 	bool m_bSucceededOnce;
+	bool m_bAbandonForShutdown;
 	/**
 	 * Interlocked cooperative-cancellation flag read by the discovery worker.
 	 */

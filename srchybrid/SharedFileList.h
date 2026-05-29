@@ -256,7 +256,7 @@ public:
 	 * rows. This helper keeps the same snapshot-by-pointer contract while
 	 * bounding allocation to the requested response window.
 	 */
-	void	CopySharedFilePage(std::vector<CKnownFile*> &rFiles, size_t uOffset, size_t uLimit, size_t &ruTotal);
+	void	CopySharedFilePage(std::vector<CKnownFile*> &rFiles, size_t uOffset, size_t uLimit, size_t *pTotal);
 	/**
 	 * @brief Finds one shared file by canonical full-path key without copying the shared-file map.
 	 */
