@@ -44,6 +44,7 @@ namespace Kademlia
 	{
 	public:
 		CKademlia();
+		~CKademlia();
 
 		static void Start();
 		static void	Start(CPrefs *pPrefs);

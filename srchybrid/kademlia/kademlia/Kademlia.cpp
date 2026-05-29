@@ -51,6 +51,9 @@ their client on the eMule forum.
 #include "kademlia/utils/KadClientSearcher.h"
 #include "kademlia/kademlia/tag.h"
 
+#include <memory>
+#include <new>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -86,6 +89,14 @@ CKademlia::CKademlia()
 {
 }
 
+CKademlia::~CKademlia()
+{
+	delete m_pUDPListener;
+	delete m_pRoutingZone;
+	delete m_pIndexed;
+	delete m_pPrefs;
+}
+
 void CKademlia::Start()
 {
 	if (theApp.IsStartupBindBlocked()) {
@@ -105,10 +116,10 @@ void CKademlia::Start(CPrefs *pPrefs)
 		return;
 	}
 
+	std::unique_ptr<CPrefs> pPrefsOwner(pPrefs);
 	try {
 		// If we already have an instance, something is wrong.
 		if (m_pInstance) {
-			delete pPrefs;
 			ASSERT(m_pInstance->m_bRunning);
 			ASSERT(m_pInstance->m_pPrefs);
 			return;
@@ -144,20 +155,29 @@ void CKademlia::Start(CPrefs *pPrefs)
 		// Init our random seed.
 		//srand((unsigned)tNow); not needed, KAD is in the main thread
 		// Create our Kad objects.
-		m_pInstance = new CKademlia();
-		m_pInstance->m_pPrefs = pPrefs;
-		m_pInstance->m_pIndexed = new CIndexed();
-		m_pInstance->m_pRoutingZone = new CRoutingZone();
-		m_pInstance->m_pUDPListener = new CKademliaUDPListener();
+		std::unique_ptr<CKademlia> pNewInstance(new CKademlia());
+		pNewInstance->m_pPrefs = pPrefsOwner.release();
+		pNewInstance->m_pIndexed = new CIndexed();
+		pNewInstance->m_pRoutingZone = new CRoutingZone();
+		pNewInstance->m_pUDPListener = new CKademliaUDPListener();
+		m_pInstance = pNewInstance.release();
 		// Mark Kad as running state.
 		m_bRunning = true;
 	} catch (CException *ex) {
-		// Although this has never been an issue, maybe some code needs
-		// to be created here just in case things go real bad. But if things
-		// went real bad, the entire client most likely is in bad shape, so this may
-		// not be something to worry about as the client most likely will crap out anyway.
+		// WHY: allocation can fail after some Kad singletons are constructed but
+		// before m_bRunning is set. Keep ownership local until startup is complete
+		// so a partial attempt cannot leave m_pInstance populated and block every
+		// later Kad start in the same process.
+		m_bRunning = false;
+		m_pInstance = NULL;
 		AddDebugLogLine(false, _T("%s"), (LPCTSTR)CExceptionStr(*ex));
 		ex->Delete();
+	} catch (const std::bad_alloc&) {
+		// WHY: see the CException path above; C++ allocation failures must leave
+		// the static Kad lifecycle in the same clean, restartable state.
+		m_bRunning = false;
+		m_pInstance = NULL;
+		AddDebugLogLine(false, _T("Failed to start Kademlia: out of memory"));
 	}
 }
 
