@@ -144,6 +144,15 @@ namespace
 		if (GetAICHSyncProgressDeliveryAction(nRemainingHashes, delivery.eDelivery) == EAICHSyncProgressDeliveryAction::Failed && thePrefs.GetVerbose())
 			AddDebugLogLine(false, _T("AICH sync progress update could not be posted to the shared-files window (%u)"), delivery.dwLastError);
 	}
+
+#ifdef _DEBUG
+	bool IsDebugAICHHashSetVerifierEnabled()
+	{
+		TCHAR szValue[16] = {};
+		const DWORD dwChars = ::GetEnvironmentVariable(_T("EMULEBB_DEBUG_AICH_VERIFY"), szValue, _countof(szValue));
+		return dwChars > 0 && dwChars < _countof(szValue) && _tcscmp(szValue, _T("0")) != 0;
+	}
+#endif
 }
 
 
@@ -241,6 +250,7 @@ int CAICHSyncThread::Run()
 	// those who don't are added to the hashing list
 	CArray<CSKey, const CSKey&> aSharedFileHashes;
 #ifdef _DEBUG
+	const bool bDebugVerifyStoredAICHHashSets = IsDebugAICHHashSetVerifierEnabled();
 	CArray<CSKey, const CSKey&> aUsedAICHFileHashes;
 #endif
 	bool bDbgMsgCreatingPartHashes = true;
@@ -270,7 +280,8 @@ int CAICHSyncThread::Run()
 					++nUsedKnown2HashCount;
 				}
 #ifdef _DEBUG
-				aUsedAICHFileHashes.Add(aSharedFileHashes[iFile]);
+				if (bDebugVerifyStoredAICHHashSets)
+					aUsedAICHFileHashes.Add(aSharedFileHashes[iFile]);
 #endif
 				pFile->SetAICHRecoverHashSetAvailable(true);
 				// Has the file the proper AICH Part hashset? If not, probably upgrading, create it
@@ -389,22 +400,31 @@ int CAICHSyncThread::Run()
 	}
 
 #ifdef _DEBUG
-	for (INT_PTR i = 0; i < aUsedAICHFileHashes.GetCount() && !theApp.IsClosing(); ++i) {
-		CSharedFileList *pSharedFiles = theApp.sharedfiles;
-		if (pSharedFiles == NULL)
-			return 0;
+	if (bDebugVerifyStoredAICHHashSets) {
+		// WHY: Loading every used AICH hashset a second time is a debug-only
+		// corruption verifier, not startup work required by the client. Large
+		// live profiles can contain enough AICH metadata that this O(n) extra
+		// disk pass dominates Debug startup and produces CPU-spike dumps before
+		// the UI is usable. Keep the expensive verifier available for targeted
+		// investigations via EMULEBB_DEBUG_AICH_VERIFY=1, but keep normal Debug
+		// live-profile tests on the same operational path as Release.
+		for (INT_PTR i = 0; i < aUsedAICHFileHashes.GetCount() && !theApp.IsClosing(); ++i) {
+			CSharedFileList *pSharedFiles = theApp.sharedfiles;
+			if (pSharedFiles == NULL)
+				return 0;
 
-		CSingleLock sharelock(&pSharedFiles->m_mutWriteList, TRUE);
-		CKnownFile *pFile = NULL;
-		if (!ResolveSharedAICHSyncFileNoLock(pSharedFiles, aUsedAICHFileHashes[i].m_key, pFile)) {
-			ASSERT(0);
-			continue;
+			CSingleLock sharelock(&pSharedFiles->m_mutWriteList, TRUE);
+			CKnownFile *pFile = NULL;
+			if (!ResolveSharedAICHSyncFileNoLock(pSharedFiles, aUsedAICHFileHashes[i].m_key, pFile)) {
+				ASSERT(0);
+				continue;
+			}
+			CAICHRecoveryHashSet *pTempHashSet = new CAICHRecoveryHashSet(pFile);
+			pTempHashSet->SetFileSize(pFile->GetFileSize());
+			pTempHashSet->SetMasterHash(pFile->GetFileIdentifier().GetAICHHash(), AICH_HASHSETCOMPLETE);
+			ASSERT(pTempHashSet->LoadHashSet());
+			delete pTempHashSet;
 		}
-		CAICHRecoveryHashSet *pTempHashSet = new CAICHRecoveryHashSet(pFile);
-		pTempHashSet->SetFileSize(pFile->GetFileSize());
-		pTempHashSet->SetMasterHash(pFile->GetFileIdentifier().GetAICHHash(), AICH_HASHSETCOMPLETE);
-		ASSERT(pTempHashSet->LoadHashSet());
-		delete pTempHashSet;
 	}
 #endif
 
