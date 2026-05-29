@@ -363,6 +363,30 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 			bool bReadReferenceAdded = false;
 			bool bPendingBlockCounted = false;
 			bool bPendingListLinked = false;
+			auto cleanupFailedReadDispatch = [&]() {
+				// WHY: The upload read submission path has three separate raw
+				// lifetime contracts: the pending IO list owns completion
+				// discovery, the per-client counter gates teardown, and the
+				// shared file read reference prevents completion from racing a
+				// close. Any allocation failure before ReadFile succeeds must
+				// unwind those contracts in reverse order, or the upload helper
+				// can leave stale OVERLAPPED state or pin a file indefinitely.
+				if (bPendingListLinked) {
+					m_listPendingIO.RemoveAt(pOverlappedRead->pos);
+					bPendingListLinked = false;
+				}
+				if (bPendingBlockCounted) {
+					pUploadClientStruct->m_nPendingIOBlocks.fetch_sub(1);
+					bPendingBlockCounted = false;
+				}
+				if (bReadReferenceAdded) {
+					pFile->ReleaseUploadReadReference();
+					bReadReferenceAdded = false;
+				}
+				if (pOverlappedRead != NULL)
+					delete[] pOverlappedRead->pBuffer;
+				delete pOverlappedRead;
+			};
 
 			try {
 				pOverlappedRead = new OverlappedRead_Struct;
@@ -414,17 +438,12 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 					}
 				}
 			} catch (CMemoryException *ex) {
-				if (bPendingListLinked)
-					m_listPendingIO.RemoveAt(pOverlappedRead->pos);
-				if (bPendingBlockCounted)
-					pUploadClientStruct->m_nPendingIOBlocks.fetch_sub(1);
-				if (bReadReferenceAdded)
-					pFile->ReleaseUploadReadReference();
+				cleanupFailedReadDispatch();
 				if (ex != NULL)
 					ex->Delete();
-				if (pOverlappedRead != NULL)
-					delete[] pOverlappedRead->pBuffer;
-				delete pOverlappedRead;
+				throwCStr(_T("Upload disk read dispatch ran out of memory"));
+			} catch (const std::bad_alloc&) {
+				cleanupFailedReadDispatch();
 				throwCStr(_T("Upload disk read dispatch ran out of memory"));
 			}
 			DEBUG_ONLY(dbgDataReadPending += uTogo);
