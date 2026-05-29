@@ -372,7 +372,9 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 				// unwind those contracts in reverse order, or the upload helper
 				// can leave stale OVERLAPPED state or pin a file indefinitely.
 				if (bPendingListLinked) {
-					m_listPendingIO.RemoveAt(pOverlappedRead->pos);
+					POSITION posPending = m_listPendingIO.Find(pOverlappedRead);
+					if (posPending != NULL)
+						m_listPendingIO.RemoveAt(posPending);
 					bPendingListLinked = false;
 				}
 				if (bPendingBlockCounted) {
@@ -401,7 +403,6 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 				pOverlappedRead->uStartOffset = currentblock->StartOffset;
 				pOverlappedRead->uEndOffset = currentblock->EndOffset;
 				pOverlappedRead->pBuffer = NULL;
-				pOverlappedRead->pos = NULL;
 				pOverlappedRead->pBuffer = new byte[(size_t)uTogo];
 
 				// WHY: ReadFile captures pOverlappedRead, which contains raw
@@ -414,15 +415,16 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 				bReadReferenceAdded = true;
 				pUploadClientStruct->m_nPendingIOBlocks.fetch_add(1);
 				bPendingBlockCounted = true;
-				pOverlappedRead->pos = m_listPendingIO.AddTail(pOverlappedRead);
+				m_listPendingIO.AddTail(pOverlappedRead);
 				bPendingListLinked = true;
 
 				if (!::ReadFile(pFile->m_hRead, pOverlappedRead->pBuffer, (DWORD)uTogo, NULL, (LPOVERLAPPED)pOverlappedRead)) {
 					DWORD dwError = ::GetLastError();
 					if (dwError != ERROR_IO_PENDING) {
-						m_listPendingIO.RemoveAt(pOverlappedRead->pos);
+						POSITION posPending = m_listPendingIO.Find(pOverlappedRead);
+						if (posPending != NULL)
+							m_listPendingIO.RemoveAt(posPending);
 						bPendingListLinked = false;
-						pOverlappedRead->pos = NULL;
 						pUploadClientStruct->m_nPendingIOBlocks.fetch_sub(1);
 						bPendingBlockCounted = false;
 						pFile->ReleaseUploadReadReference();
@@ -484,8 +486,9 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 	ASSERT(pStruct != NULL);
 	CPacketList packetsList;
 
-	if (pOvRead->pos != NULL)
-		m_listPendingIO.RemoveAt(pOvRead->pos);
+	POSITION posPending = m_listPendingIO.Find(const_cast<OverlappedRead_Struct*>(pOvRead));
+	if (posPending != NULL)
+		m_listPendingIO.RemoveAt(posPending);
 	else if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP)
 		theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: completed upload read was not present in the pending I/O list"));
 
