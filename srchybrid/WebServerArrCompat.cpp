@@ -380,12 +380,12 @@ void AppendResultsFromJson(const json &rResultPayload, const WebServerArrCompatS
 	}
 }
 
-void StopNativeSearch(const std::string &rSearchId)
+void DeleteNativeSearch(const std::string &rSearchId)
 {
 	if (rSearchId.empty())
 		return;
 	json ignored;
-	(void)ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("search/stop", json{{"searchId", rSearchId}}), ignored);
+	(void)ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("search/delete", json{{"searchId", rSearchId}}), ignored);
 }
 
 std::vector<SArrCompatResult> RunOneNativeSearch(
@@ -425,6 +425,7 @@ std::vector<SArrCompatResult> RunOneNativeSearch(
 				{"searchId", strSearchId},
 				{"_offset", 0},
 				{"_limit", static_cast<int>((std::min)(uRemaining, static_cast<size_t>(100)))},
+				{"exactTotal", false},
 				{"includeEvidence", false}
 			}), pollResult))
 			break;
@@ -436,7 +437,7 @@ std::vector<SArrCompatResult> RunOneNativeSearch(
 		::Sleep(ARR_COMPAT_POLL_SLEEP_MS);
 	}
 
-	StopNativeSearch(strSearchId);
+	DeleteNativeSearch(strSearchId);
 	return results;
 }
 

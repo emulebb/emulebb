@@ -679,6 +679,32 @@ bool CSearchList::GetVisibleResults(uint32 nSearchID, CArray<const CSearchFile*,
 	return true;
 }
 
+bool CSearchList::GetVisibleResultsPage(uint32 nSearchID, size_t uOffset, size_t uLimit, bool bExactTotal, CArray<const CSearchFile*, const CSearchFile*> &rResults, size_t &ruTotal) const
+{
+	rResults.RemoveAll();
+	ruTotal = 0;
+	const SearchList *const pList = FindSearchListForID(nSearchID);
+	if (pList == NULL)
+		return false;
+
+	for (POSITION pos = pList->GetHeadPosition(); pos != NULL;) {
+		const CSearchFile *const pSearchFile = pList->GetNext(pos);
+		if (pSearchFile == NULL || pSearchFile->GetListParent() != NULL || pSearchFile->m_flags.noshow)
+			continue;
+
+		if (ruTotal >= uOffset && static_cast<size_t>(rResults.GetCount()) < uLimit)
+			rResults.Add(pSearchFile);
+		++ruTotal;
+		if (!bExactTotal && static_cast<size_t>(rResults.GetCount()) >= uLimit) {
+			// WHY: controller-facing polling paths only need the requested page.
+			// Continuing the walk just to compute an exact total recreates the
+			// broad-search stall that offset/limit are supposed to avoid.
+			break;
+		}
+	}
+	return true;
+}
+
 bool CSearchList::ContainsSearchFilePointer(const CSearchFile *pSearchFile) const
 {
 	if (pSearchFile == NULL)

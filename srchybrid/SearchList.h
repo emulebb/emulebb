@@ -79,6 +79,7 @@ public:
 	void	ShowResults(uint32 nSearchID);
 	void	GetWebList(CQArray<SearchFileStruct, SearchFileStruct> *SearchFileArray, int iSortBy) const;
 	bool	GetVisibleResults(uint32 nSearchID, CArray<const CSearchFile*, const CSearchFile*> &rResults) const;
+	bool	GetVisibleResultsPage(uint32 nSearchID, size_t uOffset, size_t uLimit, bool bExactTotal, CArray<const CSearchFile*, const CSearchFile*> &rResults, size_t &ruTotal) const;
 	bool	ContainsSearchFilePointer(const CSearchFile *pSearchFile) const;
 
 	void	AddFileToDownloadByHash(const uchar *hash)	{ AddFileToDownloadByHash(hash, 0); }

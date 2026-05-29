@@ -4003,8 +4003,13 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 
+		const size_t uOffset = GetListPageOffset(params);
+		const size_t uLimit = GetListPageLimit(params);
+		const bool bIncludeEvidence = params.value("includeEvidence", true);
+		const bool bExactTotal = params.value("exactTotal", true);
 		CArray<const CSearchFile*, const CSearchFile*> aResults;
-		if (!theApp.searchlist->GetVisibleResults(uSearchID, aResults)) {
+		size_t uTotal = 0;
+		if (!theApp.searchlist->GetVisibleResultsPage(uSearchID, uOffset, uLimit, bExactTotal, aResults, uTotal)) {
 			if (!theApp.emuledlg->searchwnd->m_pwndResults->IsSearchQueued(uSearchID)) {
 				rError.strCode = "NOT_FOUND";
 				rError.strMessage = _T("search not found");
@@ -4012,13 +4017,9 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			}
 		}
 
-		const size_t uOffset = GetListPageOffset(params);
-		const size_t uLimit = GetListPageLimit(params);
-		const bool bIncludeEvidence = params.value("includeEvidence", true);
-		const size_t uTotal = static_cast<size_t>(aResults.GetCount());
 		json results = json::array();
-		for (size_t i = uOffset; i < uTotal && results.size() < uLimit; ++i) {
-			const CSearchFile *const pResult = aResults[static_cast<INT_PTR>(i)];
+		for (INT_PTR i = 0; i < aResults.GetCount() && results.size() < uLimit; ++i) {
+			const CSearchFile *const pResult = aResults[i];
 			if (pResult != NULL)
 				results.push_back(BuildSearchResultJson(*pResult, pSearchParams, bIncludeEvidence));
 		}
@@ -4053,6 +4054,29 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		}
 
 		theApp.emuledlg->searchwnd->m_pwndResults->CancelSearch(uSearchID);
+		return json{{"ok", true}};
+	}
+
+	if (strCommand == "search/delete") {
+		if (theApp.emuledlg->searchwnd == NULL || theApp.emuledlg->searchwnd->m_pwndResults == NULL) {
+			rError.strCode = "EMULE_UNAVAILABLE";
+			rError.strMessage = _T("search window is not available");
+			return json();
+		}
+
+		uint32 uSearchID = 0;
+		if (!TryGetSearchId(params.contains("searchId") ? params["searchId"] : json(), uSearchID, rError))
+			return json();
+		if (theApp.emuledlg->searchwnd->m_pwndResults->GetSearchResultsParams(uSearchID) == NULL) {
+			rError.strCode = "NOT_FOUND";
+			rError.strMessage = _T("search not found");
+			return json();
+		}
+
+		// WHY: Arr-created searches are temporary controller probes. Stopping the
+		// network query is not enough because the native tab/result bucket remains
+		// in memory and slows later REST enumeration.
+		theApp.emuledlg->searchwnd->m_pwndResults->DeleteSearch(uSearchID);
 		return json{{"ok", true}};
 	}
 
