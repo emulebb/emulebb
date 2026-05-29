@@ -3376,24 +3376,10 @@ UINT CPartFile::CompleteThreadProc(LPVOID pvParams)
 	} catch (CMemoryException *ex) {
 		if (ex != NULL)
 			ex->Delete();
-		// WHY: the UI-thread completion message is normally what clears
-		// PFOP_COPYING. If the worker runs out of memory before it can even
-		// allocate/post that message, leaving the operation flag set makes the
-		// transfer undeletable until restart. This is the last-resort state
-		// repair path for failures which happen before ownership is handed back.
-		pFile->bNoNewReads = false;
-		pFile->SetFileOp(PFOP_NONE);
-		pFile->SetStatus(PS_ERROR);
-		DebugLogError(_T("Part-file completion worker ran out of MFC heap while completing \"%s\""), (LPCTSTR)pFile->GetFileName());
+		DebugLogError(_T("Part-file completion worker low-memory exception escaped the guarded completion body."));
 		return UINT_MAX;
 	} catch (const std::bad_alloc&) {
-		// WHY: standard-library allocations do not throw CMemoryException.
-		// Treat them like the MFC low-memory case so the worker cannot strand
-		// the file in the in-progress completion state without a posted result.
-		pFile->bNoNewReads = false;
-		pFile->SetFileOp(PFOP_NONE);
-		pFile->SetStatus(PS_ERROR);
-		DebugLogError(_T("Part-file completion worker ran out of standard heap while completing \"%s\""), (LPCTSTR)pFile->GetFileName());
+		DebugLogError(_T("Part-file completion worker standard low-memory exception escaped the guarded completion body."));
 		return UINT_MAX;
 	}
 	return 0;
@@ -3494,6 +3480,19 @@ BOOL CPartFile::PerformFileComplete()
 {
 	// If that function is invoked from within the file completion thread, it's OK if we wait (and block) the thread.
 	CSingleLock sLock(&m_FileCompleteMutex, TRUE);
+	auto repairLowMemoryCompletionFailure = [&](LPCTSTR pszHeapName) {
+		// WHY: shutdown waits on m_FileCompleteMutex before it can delete this
+		// CPartFile. Low-memory recovery must therefore happen while this mutex
+		// is still held; repairing state from CompleteThreadProc after this
+		// function unwinds can race shutdown and touch a freed part-file object.
+		bNoNewReads = false;
+		SetFileOp(PFOP_NONE);
+		SetStatus(PS_ERROR);
+		DebugLogError(_T("Part-file completion worker ran out of %s heap while completing \"%s\""),
+			pszHeapName != NULL ? pszHeapName : _T("unknown"),
+			(LPCTSTR)GetFileName());
+	};
+	try {
 	std::unique_ptr<SPartFileCompletionThreadResult> pFailureResult(new SPartFileCompletionThreadResult);
 	pFailureResult->pFile = this;
 	auto postCompletionFailure = [&]() {
@@ -3658,6 +3657,15 @@ BOOL CPartFile::PerformFileComplete()
 	else
 		SetFileOp(PFOP_NONE);
 	return TRUE;
+	} catch (CMemoryException *ex) {
+		if (ex != NULL)
+			ex->Delete();
+		repairLowMemoryCompletionFailure(_T("MFC"));
+		return FALSE;
+	} catch (const std::bad_alloc&) {
+		repairLowMemoryCompletionFailure(_T("standard"));
+		return FALSE;
+	}
 }
 
 // 'End' of file completion. To avoid multi-threading synchronization problems,
@@ -3706,8 +3714,11 @@ void CPartFile::PerformFileCompleteEnd(void *pCompletionResult)
 		ASSERT(GetUploadReadReferenceCount() == 0);
 		theApp.downloadqueue->RemoveFile(this);
 		CUploadDiskIOThread::DissociateFile(this); //file has moved, a new handle would be required
-		bNoNewReads = false; //ready for uploading - enable reading
 		if (!bKnownFileAdded) {
+			// WHY: duplicate completion discards this CPartFile. Reopening
+			// upload reads before the duplicate branch drains IOCP references
+			// lets UploadDiskIOThread reacquire raw pointers to an object that
+			// this branch is about to remove from all visible lists and delete.
 			if (!WaitForUploadReadReferencesToRelease(this, _T("duplicate completed part file"))) {
 				// WHY: deleting here while an IOCP completion still owns `this` is
 				// a UAF. The object is already detached from the download queue, so
@@ -3730,6 +3741,7 @@ void CPartFile::PerformFileCompleteEnd(void *pCompletionResult)
 			theApp.downloadqueue->StartNextFileIfPrefs(static_cast<int>(nCompletedCategory));
 			return;
 		}
+		bNoNewReads = false; //ready for uploading - enable reading
 		if (thePrefs.GetRemoveFinishedDownloads())
 			theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile(this);
 		else
@@ -3842,6 +3854,24 @@ void CPartFile::DeletePartFile()
 		if (!m_bDelayDelete) {
 			LogWarning(LOG_STATUSBAR, GetResString(IDS_DELETEAFTERFILEOP), (LPCTSTR)FormatDisplayFileName(GetFileName()));
 			DebugLogWarning(_T("Deferring part-file deletion for \"%s\" until asynchronous disk writes release the file object."), (LPCTSTR)GetFileName());
+			m_bDelayDelete = true;
+		}
+		return;
+	}
+	// WHY: even when no upload-read completion is currently outstanding, the
+	// delete path must close the admission gate before it removes the file from
+	// global lists; otherwise a concurrent upload lookup can enqueue a fresh
+	// raw CPartFile pointer just before this function reaches `delete this`.
+	bNoNewReads = true;
+	CUploadDiskIOThread::DissociateFile(this);
+	if (!WaitForUploadReadReferencesToRelease(this, _T("part-file delete"))) {
+		// WHY: upload reads are IOCP completions that retain raw CPartFile
+		// pointers independently from async write references. DeletePartFile()
+		// owns the final `delete this`, so it must also close the upload-read
+		// admission gate and retry later instead of freeing through live reads.
+		if (!m_bDelayDelete) {
+			LogWarning(LOG_STATUSBAR, GetResString(IDS_DELETEAFTERFILEOP), (LPCTSTR)FormatDisplayFileName(GetFileName()));
+			DebugLogWarning(_T("Deferring part-file deletion for \"%s\" until upload read references release the file object."), (LPCTSTR)GetFileName());
 			m_bDelayDelete = true;
 		}
 		return;
