@@ -1438,8 +1438,11 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 		SetDownloadState(DS_WAITCALLBACK);
 
 	if (GetUploadState() == US_CONNECTING) {
-		ASSERT(0); // we should never try to connect in this case, but wait for the LowID to connect to us
-		DebugLogError(_T("LowID and US_CONNECTING (%s)"), (LPCTSTR)DbgGetClientInfo());
+		// WHY: Upload admission deliberately marks a not-yet-connected slot as
+		// US_CONNECTING before calling TryToConnect. For LowID peers the only
+		// reachable path is a server/Kad callback, so the slot must remain in
+		// US_CONNECTING until ConnectionEstablished sends OP_ACCEPTUPLOADREQ.
+		DebugLogWarning(_T("LowID upload callback while US_CONNECTING (%s)"), (LPCTSTR)DbgGetClientInfo());
 	}
 
 	if (theApp.serverconnect->IsLocalServer(m_dwServerIP, m_nServerPort)) {
