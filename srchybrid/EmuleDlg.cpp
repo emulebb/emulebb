@@ -6028,13 +6028,26 @@ void CALLBACK CemuleDlg::UPnPTimeOutTimer(HWND /*hwnd*/, UINT /*uiMsg*/, UINT_PT
 
 LRESULT CemuleDlg::OnUPnPResult(WPARAM wParam, LPARAM lParam)
 {
-	bool bWasRefresh = lParam != 0;
-	CUPnPImpl *impl = theApp.m_pUPnPFinder->GetImplementation();
+	CUPnPImpl::SResultMessage *pPostedResult = reinterpret_cast<CUPnPImpl::SResultMessage*>(lParam);
+	bool bWasRefresh = pPostedResult != NULL && pPostedResult->bWasRefresh;
+	int nResult = pPostedResult != NULL ? pPostedResult->nResult : static_cast<int>(wParam);
+	CUPnPImpl *impl = theApp.m_pUPnPFinder != NULL ? theApp.m_pUPnPFinder->GetImplementation() : NULL;
+	if (pPostedResult != NULL && pPostedResult->pImplementation != impl) {
+		// WHY: asynchronous NAT discovery results can arrive after the wrapper
+		// has failed over to another backend. Applying an old backend result to
+		// the active backend can stop/delete the wrong mappings or report success
+		// for a backend which never completed.
+		delete pPostedResult;
+		return 0;
+	}
+	delete pPostedResult;
+	if (impl == NULL)
+		return 0;
 
 //>>> WiZaRd - handle "UPNP_TIMEOUT" events!
-	if (!bWasRefresh && wParam != CUPnPImpl::UPNP_OK) {
+	if (!bWasRefresh && nResult != CUPnPImpl::UPNP_OK) {
 		//just to be sure, stop any running services and also delete the forwarded ports (if necessary)
-		if (wParam == CUPnPImpl::UPNP_TIMEOUT) {
+		if (nResult == CUPnPImpl::UPNP_TIMEOUT) {
 			impl->StopAsyncFind();
 			if (!impl->MustAbandonDiscoveryOwner())
 				impl->DeletePorts();
@@ -6058,7 +6071,7 @@ LRESULT CemuleDlg::OnUPnPResult(WPARAM wParam, LPARAM lParam)
 		VERIFY(Win32CallbackTimerSeams::StopNullWindowCallbackTimer(m_hUPnPTimeOutTimer) != Win32CallbackTimerSeams::ETimerStopResult::Failed);
 	}
 	if (!bWasRefresh)
-		if (wParam == CUPnPImpl::UPNP_OK) {
+		if (nResult == CUPnPImpl::UPNP_OK) {
 			Log(GetResString(IDS_UPNPSUCCESS), impl->GetUsedTCPPort(), impl->GetUsedUDPPort());
 		} else
 			LogWarning(GetResString(IDS_UPNPFAILED));

@@ -38,6 +38,13 @@ class CUPnPImpl
 	UINT m_nResultMessageID;
 
 public:
+	struct SResultMessage
+	{
+		CUPnPImpl *pImplementation;
+		int nResult;
+		bool bWasRefresh;
+	};
+
 	CUPnPImpl();
 	virtual	~CUPnPImpl() = default;
 	struct UPnPError : public std::exception	{};

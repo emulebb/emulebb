@@ -17,6 +17,8 @@
 #include "StdAfx.h"
 #include "UPnPImpl.h"
 
+#include <new>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -51,8 +53,24 @@ void CUPnPImpl::ClearResultMessage()
 
 void CUPnPImpl::SendResultMessage()
 {
-	if (m_wndResultMessage != NULL && m_nResultMessageID != 0)
-		m_wndResultMessage->PostMessage(m_nResultMessageID, (WPARAM)(m_bUPnPPortsForwarded == TRIS_TRUE ? UPNP_OK : UPNP_FAILED), (LPARAM)m_bCheckAndRefresh);
+	if (m_wndResultMessage != NULL && m_nResultMessageID != 0) {
+		SResultMessage *pResult = NULL;
+		try {
+			pResult = new SResultMessage{ this, (m_bUPnPPortsForwarded == TRIS_TRUE ? UPNP_OK : UPNP_FAILED), m_bCheckAndRefresh };
+		} catch (CMemoryException *ex) {
+			if (ex != NULL)
+				ex->Delete();
+		} catch (const std::bad_alloc&) {
+		}
+		if (pResult != NULL) {
+			// WHY: backend discovery can finish after the wrapper has already
+			// switched to a fallback implementation. The UI handler needs the
+			// originating implementation pointer to reject stale results instead
+			// of applying them to the current backend's state.
+			if (!m_wndResultMessage->PostMessage(m_nResultMessageID, 0, reinterpret_cast<LPARAM>(pResult)))
+				delete pResult;
+		}
+	}
 	ClearResultMessage();
 }
 
