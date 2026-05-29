@@ -144,6 +144,7 @@ inline ERestLifecyclePolicy GetLifecyclePolicyForCommand(const std::string &rCom
 		|| rCommand == "categories/list"
 		|| rCommand == "categories/get"
 		|| rCommand == "shared_directories/get"
+		|| rCommand == "qbit/transfers/info"
 		|| rCommand == "transfers/list"
 		|| rCommand == "transfers/get"
 		|| rCommand == "transfers/sources"

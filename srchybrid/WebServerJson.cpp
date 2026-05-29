@@ -1403,6 +1403,115 @@ json BuildTransfersListJson(
 	return result;
 }
 
+std::string JoinQBitContentPath(const std::string &rSavePath, const std::string &rName)
+{
+	if (rSavePath.empty())
+		return rName;
+	const char chLast = rSavePath[rSavePath.size() - 1];
+	if (chLast == '\\' || chLast == '/')
+		return rSavePath + rName;
+	return rSavePath + "\\" + rName;
+}
+
+std::string GetQBitStateName(const CPartFile &rPartFile)
+{
+	switch (rPartFile.GetStatus()) {
+	case PS_WAITINGFORHASH:
+	case PS_HASHING:
+		return "checkingDL";
+	case PS_ERROR:
+		return "error";
+	case PS_INSUFFICIENT:
+		return "missingFiles";
+	case PS_PAUSED:
+		return "pausedDL";
+	case PS_COMPLETING:
+		return "checkingDL";
+	case PS_COMPLETE:
+		return "pausedUP";
+	case PS_READY:
+	case PS_EMPTY:
+	default:
+		if (rPartFile.IsStopped())
+			return "pausedDL";
+		return rPartFile.GetTransferringSrcCount() > 0 ? "downloading" : "queuedDL";
+	}
+}
+
+std::string GetQBitCategoryName(const CPartFile &rPartFile)
+{
+	return StdUtf8FromCString(GetCategoryName(rPartFile.GetCategory()));
+}
+
+std::map<std::string, std::string> BuildQBitCategorySavePathMap()
+{
+	std::map<std::string, std::string> paths;
+	for (INT_PTR i = 0; i < thePrefs.GetCatCount(); ++i) {
+		const Category_Struct *const pCategory = thePrefs.GetCategory(i);
+		if (pCategory == NULL)
+			continue;
+		paths[StdUtf8FromCString(GetCategoryName(static_cast<UINT>(i)))] = StdUtf8FromCString(pCategory->strIncomingPath);
+	}
+	return paths;
+}
+
+json BuildQBitTransferInfoJson(const CPartFile &rPartFile, const std::map<std::string, std::string> &rCategorySavePaths)
+{
+	const std::string strName(StdUtf8FromCString(rPartFile.GetFileName()));
+	const std::string strCategory(GetQBitCategoryName(rPartFile));
+	const auto pathIt = rCategorySavePaths.find(strCategory);
+	const std::string strSavePath(pathIt != rCategorySavePaths.end() ? pathIt->second : std::string());
+	const uint64_t ullSize = static_cast<uint64_t>(rPartFile.GetFileSize());
+	const uint64_t ullCompleted = static_cast<uint64_t>(rPartFile.GetCompletedSize());
+	const double dProgress = ullSize > 0 ? static_cast<double>(ullCompleted) / static_cast<double>(ullSize) : 0.0;
+
+	return json{
+		{"hash", StdUtf8FromCString(HashToHex(rPartFile.GetFileHash()))},
+		{"name", strName},
+		{"size", ullSize},
+		{"progress", dProgress},
+		{"eta", -1},
+		{"state", GetQBitStateName(rPartFile)},
+		{"label", strCategory},
+		{"category", strCategory},
+		{"save_path", strSavePath},
+		{"content_path", JoinQBitContentPath(strSavePath, strName)},
+		{"ratio", 0},
+		{"ratio_limit", 0},
+		{"seeding_time", 0},
+		{"seeding_time_limit", 0},
+		{"inactive_seeding_time_limit", 0},
+		{"downloaded", ullCompleted},
+		{"completed", ullCompleted},
+		{"dlspeed", static_cast<uint64_t>(rPartFile.GetDatarate())},
+		{"upspeed", 0},
+		{"num_leechs", static_cast<uint64_t>(rPartFile.GetSourceCount())},
+		{"num_incomplete", static_cast<uint64_t>(rPartFile.GetSourceCount())},
+		{"num_seeds", 0},
+		{"num_complete", 0}
+	};
+}
+
+json BuildQBitTransfersInfoJson(const json &rParams)
+{
+	if (theApp.downloadqueue == NULL)
+		return json::array();
+	const std::string strCategory(rParams.value("category", std::string()));
+	const std::map<std::string, std::string> categorySavePaths(BuildQBitCategorySavePathMap());
+	json result = json::array();
+	POSITION pos = NULL;
+	for (INT_PTR i = 0, iCount = theApp.downloadqueue->GetFileCount(); i < iCount; ++i) {
+		const CPartFile *const pPartFile = theApp.downloadqueue->GetFileNext(pos);
+		if (pPartFile == NULL)
+			break;
+		const std::string strPartCategory(GetQBitCategoryName(*pPartFile));
+		if (!strCategory.empty() && strPartCategory != strCategory)
+			continue;
+		result.push_back(BuildQBitTransferInfoJson(*pPartFile, categorySavePaths));
+	}
+	return result;
+}
+
 /**
  * Applies the curated mutable preferences and persists them through the
  * normal preferences save path.
@@ -3272,6 +3381,14 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		}
 		theApp.emuledlg->SendMessage(WEB_CLEAR_COMPLETED, static_cast<WPARAM>(0), static_cast<LPARAM>(-1));
 		return json{{"ok", true}};
+	}
+
+	if (strCommand == "qbit/transfers/info") {
+		// qBittorrent-compatible queue polling enters on a WebSocket worker
+		// thread, but the download queue is UI-owned. Keep the lightweight qBit
+		// row shape here, on the existing REST UI-dispatch path, so controller
+		// polling does not trade JSON cost for an unsafe cross-thread list walk.
+		return BuildQBitTransfersInfoJson(params);
 	}
 
 	if (strCommand == "transfers/list") {

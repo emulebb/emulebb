@@ -22,10 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "emule.h"
 #include "Log.h"
-#include "PartFile.h"
-#include "DownloadQueue.h"
 #include "OtherFunctions.h"
 #include "Preferences.h"
 #include "WebServerHttpResponse.h"
@@ -187,88 +184,6 @@ std::string BuildQBitStateFromNativeTransfer(const json &rTransfer)
 	return WebServerQBitCompatSeams::GetQBitStateForNativeTransferState(JsonStringValue(rTransfer, "state"), bStopped);
 }
 
-std::string BuildNativeStateNameForQBit(const CPartFile &rPartFile)
-{
-	switch (rPartFile.GetStatus()) {
-	case PS_WAITINGFORHASH:
-	case PS_HASHING:
-		return "checking";
-	case PS_ERROR:
-		return "error";
-	case PS_INSUFFICIENT:
-		return "missingfiles";
-	case PS_PAUSED:
-		return "paused";
-	case PS_COMPLETING:
-		return "completing";
-	case PS_COMPLETE:
-		return "completed";
-	case PS_READY:
-	case PS_EMPTY:
-	default:
-		if (rPartFile.IsStopped())
-			return "paused";
-		return rPartFile.GetTransferringSrcCount() > 0 ? "downloading" : "queued";
-	}
-}
-
-std::string BuildQBitCategoryName(const CPartFile &rPartFile)
-{
-	const UINT uCategory = rPartFile.GetCategory();
-	if (uCategory == 0)
-		return "Default";
-
-	const Category_Struct *const pCategory = thePrefs.GetCategory(uCategory);
-	CString strTitle(pCategory != NULL ? pCategory->strTitle : CString());
-	strTitle.Trim();
-	if (pCategory == NULL || strTitle.IsEmpty()) {
-		CString strFallback;
-		strFallback.Format(_T("Category %u"), uCategory);
-		return WebServerJson::ToStdUtf8(strFallback);
-	}
-
-	return WebServerJson::ToStdUtf8(strTitle);
-}
-
-json BuildQBitTorrentJsonFromPartFile(
-	const CPartFile &rPartFile,
-	const std::map<std::string, std::string> &rCategorySavePaths)
-{
-	const std::string strName(WebServerJson::ToStdUtf8(rPartFile.GetFileName()));
-	const std::string strCategory(BuildQBitCategoryName(rPartFile));
-	const auto pathIt = rCategorySavePaths.find(strCategory);
-	const std::string strSavePath(pathIt != rCategorySavePaths.end() ? pathIt->second : std::string());
-	const uint64_t ullSize = static_cast<uint64_t>(rPartFile.GetFileSize());
-	const uint64_t ullCompleted = static_cast<uint64_t>(rPartFile.GetCompletedSize());
-	const double dProgress = ullSize > 0 ? static_cast<double>(ullCompleted) / static_cast<double>(ullSize) : 0.0;
-
-	return json{
-		{"hash", LowerBase16(rPartFile.GetFileHash(), MDX_DIGEST_SIZE)},
-		{"name", strName},
-		{"size", ullSize},
-		{"progress", dProgress},
-		{"eta", -1},
-		{"state", WebServerQBitCompatSeams::GetQBitStateForNativeTransferState(BuildNativeStateNameForQBit(rPartFile), rPartFile.IsStopped())},
-		{"label", strCategory},
-		{"category", strCategory},
-		{"save_path", strSavePath},
-		{"content_path", JoinQBitContentPath(strSavePath, strName)},
-		{"ratio", 0},
-		{"ratio_limit", 0},
-		{"seeding_time", 0},
-		{"seeding_time_limit", 0},
-		{"inactive_seeding_time_limit", 0},
-		{"downloaded", ullCompleted},
-		{"completed", ullCompleted},
-		{"dlspeed", static_cast<uint64_t>(rPartFile.GetDatarate())},
-		{"upspeed", 0},
-		{"num_leechs", static_cast<uint64_t>(rPartFile.GetSourceCount())},
-		{"num_incomplete", static_cast<uint64_t>(rPartFile.GetSourceCount())},
-		{"num_seeds", 0},
-		{"num_complete", 0}
-	};
-}
-
 json BuildQBitTorrentJsonFromNativeTransfer(
 	const json &rTransfer,
 	const std::map<std::string, std::string> &rCategorySavePaths)
@@ -309,29 +224,10 @@ json BuildQBitTorrentJsonFromNativeTransfer(
 
 bool BuildQBitTorrentsJson(const std::string &rCategory, json &rTorrents, CString &rErrorMessage)
 {
-	if (theApp.downloadqueue == NULL) {
-		rErrorMessage = _T("download queue is not available");
-		return false;
-	}
-
-	const std::map<std::string, std::string> categorySavePaths(BuildQBitCategorySavePathMap());
-	rTorrents = json::array();
-	POSITION pos = NULL;
-	for (INT_PTR i = 0, iCount = theApp.downloadqueue->GetFileCount(); i < iCount; ++i) {
-		const CPartFile *const pPartFile = theApp.downloadqueue->GetFileNext(pos);
-		if (pPartFile == NULL)
-			break;
-
-		// qBit queue polling is a high-frequency Arr path. Build only the
-		// qBit fields here instead of routing through native transfer JSON,
-		// because the native payload intentionally carries heavier eMuleBB-only
-		// diagnostics such as fake-file evidence.
-		const std::string strCategory(BuildQBitCategoryName(*pPartFile));
-		if (!rCategory.empty() && strCategory != rCategory)
-			continue;
-		rTorrents.push_back(BuildQBitTorrentJsonFromPartFile(*pPartFile, categorySavePaths));
-	}
-	return true;
+	json params = json::object();
+	if (!rCategory.empty())
+		params["category"] = rCategory;
+	return ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("qbit/transfers/info", params), rTorrents, rErrorMessage) && rTorrents.is_array();
 }
 
 void HandleLogin(const ThreadData &rData)
