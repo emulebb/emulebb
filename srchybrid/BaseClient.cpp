@@ -1240,6 +1240,18 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 	if (!bDelete)
 		QueueDisplayUpdate(DISPLAY_REFRESH_CLIENT_LIST);
 
+	if (bDelete && m_reqfile != NULL) {
+		// WHY: live disconnect dumps showed a client in DS_NONE/US_NONE with no
+		// socket or connecting state, but still carrying m_reqfile.  That state
+		// can be reached after the download state was cleared earlier than the
+		// request-file mirror (for example a rejected/stopped request path).  If
+		// we return "delete me" with that pointer still set, the socket owner can
+		// free the client while the part-file/A4AF side still has stale ownership
+		// edges.  RemoveSource is the central mirror cleanup and also clears
+		// m_reqfile when the client is no longer present in any source list.
+		theApp.downloadqueue->RemoveSource(this);
+	}
+
 	// finally, remove the client from the timeout timer and reset the connecting state
 	m_eConnectingState = CCS_NONE;
 	theApp.clientlist->RemoveConnectingClient(this);
