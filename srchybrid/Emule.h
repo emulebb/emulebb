@@ -28,11 +28,11 @@
 
 #define PORTTESTURL			_T("https://porttest.emule-project.net/connectiontest.php?tcpport=%i&udpport=%i&lang=%i")
 
-#ifndef EMULE_COMPILED_STARTUP_PROFILING
-	#if defined(_DEBUG) || defined(EMULE_ENABLE_STARTUP_PROFILING)
-	#define EMULE_COMPILED_STARTUP_PROFILING 1
+#ifndef EMULEBB_HAS_STARTUP_PROFILING
+	#if defined(_DEBUG) || defined(EMULEBB_ENABLE_STARTUP_PROFILING)
+	#define EMULEBB_HAS_STARTUP_PROFILING 1
 	#else
-	#define EMULE_COMPILED_STARTUP_PROFILING 0
+	#define EMULEBB_HAS_STARTUP_PROFILING 0
 	#endif
 #endif
 
@@ -69,7 +69,7 @@ namespace AppCommandLineSeams
 	struct SParseResult;
 }
 
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 /**
  * @brief One Chrome Trace Event row captured for startup profiling.
  */
@@ -145,7 +145,7 @@ public:
 	/**
 	 * @brief Returns whether env-gated startup phase profiling is enabled for this process.
 	 */
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	bool IsStartupProfilingEnabled() const						{ return m_bStartupProfilingEnabled; }
 #else
 	bool IsStartupProfilingEnabled() const						{ return false; }
@@ -153,7 +153,7 @@ public:
 	/**
 	 * @brief Reports whether the startup timer already emitted the canonical startup-complete milestone.
 	 */
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	bool HasStartupProfileReachedStartupComplete() const		{ return m_bStartupProfileStartupComplete; }
 #else
 	bool HasStartupProfileReachedStartupComplete() const		{ return false; }
@@ -161,7 +161,7 @@ public:
 	/**
 	 * @brief Resets the startup phase profiler output and timing baseline.
 	 */
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	void ResetStartupProfile();
 #else
 	void ResetStartupProfile()									{}
@@ -169,7 +169,7 @@ public:
 	/**
 	 * @brief Returns one startup-profile timestamp in microseconds derived from QueryPerformanceCounter.
 	 */
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	ULONGLONG GetStartupProfileTimestampUs() const;
 #else
 	ULONGLONG GetStartupProfileTimestampUs() const				{ return 0; }
@@ -177,7 +177,7 @@ public:
 	/**
 	 * @brief Returns one startup-profile elapsed duration in microseconds from a previously captured timestamp.
 	 */
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	ULONGLONG GetStartupProfileElapsedUs(ULONGLONG ullStartTimestampUs) const;
 #else
 	ULONGLONG GetStartupProfileElapsedUs(ULONGLONG) const		{ return 0; }
@@ -185,7 +185,7 @@ public:
 	/**
 	 * @brief Appends one startup phase timing sample when profiling is enabled.
 	 */
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	void AppendStartupProfileLine(LPCTSTR pszPhase, ULONGLONG ullDurationUs, ULONGLONG ullAbsoluteUs = static_cast<ULONGLONG>(-1));
 #else
 	void AppendStartupProfileLine(LPCTSTR, ULONGLONG, ULONGLONG = static_cast<ULONGLONG>(-1)) {}
@@ -193,7 +193,7 @@ public:
 	/**
 	 * @brief Appends one numeric startup profiling counter sample when profiling is enabled.
 	 */
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	void AppendStartupProfileCounter(LPCTSTR pszCounterName, ULONGLONG ullValue, LPCTSTR pszValueKey = _T("value"));
 #else
 	void AppendStartupProfileCounter(LPCTSTR, ULONGLONG, LPCTSTR = _T("value")) {}
@@ -201,7 +201,7 @@ public:
 	/**
 	 * @brief Rewrites the startup profiling trace with the samples captured so far.
 	 */
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	void FlushStartupProfileTrace();
 #else
 	void FlushStartupProfileTrace()								{}
@@ -424,7 +424,7 @@ protected:
 	afx_msg void OnHelp();
 
 private:
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	bool WriteStartupProfileTrace() const;
 	void FinalizeStartupProfileTrace();
 #endif
@@ -436,7 +436,7 @@ private:
 	bool SaveSharedDirectoryMonitorJournalState() const;
 	UINT		m_wTimerRes;
 	bool		m_bStandbyOff;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	bool		m_bStartupProfilingEnabled;
 	bool		m_bStartupProfileStartupComplete;
 	bool		m_bStartupProfileCompleted;

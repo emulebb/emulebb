@@ -39,76 +39,15 @@ static char THIS_FILE[] = __FILE__;
 
 namespace Kademlia
 {
-#ifdef DEBUG
-	static void RaiseThreadNameException(DWORD dwThreadID, LPCSTR pszThreadName)
-	{
-		THREADNAME_INFO info;
-		info.dwType = 0x1000;
-		info.szName = pszThreadName;
-		info.dwThreadID = dwThreadID;
-		info.dwFlags = 0;
-		__try {
-			RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
-		} __except (EXCEPTION_CONTINUE_EXECUTION) {
-		}
-	}
-#endif
-
 	void SetThreadName(DWORD dwThreadID, LPCSTR szThreadName, ...)
 	{
-#ifdef DEBUG
-		if (dwThreadID == NULL)
-			return;
-#pragma warning(push)
-#pragma warning(disable: 6320 6322)
-		__try {
-			va_list args;
-			va_start(args, szThreadName);
-			const int iLenResult = _vscprintf(szThreadName, args);
-			va_end(args);
-			if (iLenResult >= 0) {
-				const size_t nBufferLen = static_cast<size_t>(iLenResult) + 1;
-				char *pcharBuffer = new char[nBufferLen];
-				va_start(args, szThreadName);
-				_vsnprintf_s(pcharBuffer, nBufferLen, _TRUNCATE, szThreadName, args);
-				va_end(args);
-				RaiseThreadNameException(dwThreadID, pcharBuffer);
-				delete[] pcharBuffer;
-			}
-		} __except (EXCEPTION_CONTINUE_EXECUTION) {
-		}
-#pragma warning(pop)
-#else
 		UNREFERENCED_PARAMETER(dwThreadID);
 		UNREFERENCED_PARAMETER(szThreadName);
-#endif
 
 	}
 
 	void SetThreadName(LPCSTR szThreadName, ...)
 	{
-#ifdef DEBUG
-#pragma warning(push)
-#pragma warning(disable: 6320 6322)
-		__try {
-			va_list args;
-			va_start(args, szThreadName);
-			const int iLenResult = _vscprintf(szThreadName, args);
-			va_end(args);
-			if (iLenResult >= 0) {
-				const size_t nBufferLen = static_cast<size_t>(iLenResult) + 1;
-				char *pcharBuffer = new char[nBufferLen];
-				va_start(args, szThreadName);
-				_vsnprintf_s(pcharBuffer, nBufferLen, _TRUNCATE, szThreadName, args);
-				va_end(args);
-				RaiseThreadNameException(_UI32_MAX, pcharBuffer);
-				delete[] pcharBuffer;
-			}
-		} __except (EXCEPTION_CONTINUE_EXECUTION) {
-		}
-#pragma warning(pop)
-#else
 		UNREFERENCED_PARAMETER(szThreadName);
-#endif
 	}
 }

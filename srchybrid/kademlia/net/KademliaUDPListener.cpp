@@ -1093,7 +1093,7 @@ void CKademliaUDPListener::Process_KADEMLIA2_SEARCH_KEY_REQ(const byte *pbyPacke
 	SSearchTerm *pSearchTerms = NULL;
 	if (bRestrictive) {
 		try {
-#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
 			s_pstrDbgSearchExpr = (thePrefs.GetDebugServerSearchesLevel() > 0) ? new CString() : NULL;
 #endif
 			pSearchTerms = CreateSearchExpressionTree(fileIO, 0);

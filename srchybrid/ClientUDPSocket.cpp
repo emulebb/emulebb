@@ -670,7 +670,7 @@ bool CClientUDPSocket::Create()
 		int val = static_cast<int>(kBroadbandUdpReceiveBufferBytes);
 		if (!SetSockOpt(SO_RCVBUF, &val, sizeof val))
 			DebugLogError(_T("Failed to increase socket size on UDP socket"));
-#if defined(_DEBUG) || defined(_DEVBUILD)
+#if defined(_DEBUG) || defined(EMULEBB_DEV_BUILD)
 		else {
 			int actual = 0;
 			int actualLen = sizeof actual;

@@ -322,7 +322,7 @@ CKnownFileProgressTargetSnapshot MakePartFileProgressTargetSnapshot(const CPartF
 
 void NotifyStartupSharedFilesModelChanged()
 {
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	if (theApp.emuledlg != NULL && theApp.emuledlg->sharedfileswnd != NULL)
 		theApp.emuledlg->sharedfileswnd->OnStartupSharedFilesModelChanged();
 #endif
@@ -658,7 +658,7 @@ int CAddFileThread::Run()
 	if (!strFilePath.IsEmpty() && strFilePath[strFilePath.GetLength() - 1] != _T('\\'))
 		strFilePath += _T('\\');
 	strFilePath += m_strFilename;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const ULONGLONG ullHashStartUs = theApp.GetStartupProfileTimestampUs();
 #endif
 	if (m_partfile)
@@ -738,7 +738,7 @@ int CAddFileThread::Run()
 		}
 	}
 
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	if (theApp.IsStartupProfilingEnabled()) {
 		CString strPhase;
 		strPhase.Format(_T("shared.hash.file.run (%s)"), (LPCTSTR)strFilePath);
@@ -863,7 +863,7 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 {
 	m_Files_map.InitHashTable(1031);
 	m_keywords = new CPublishKeywordList;
-#if defined(_DEVBUILD)
+#if defined(EMULEBB_DEV_BUILD)
 	// In development versions we create a test file which is published in order to make
 	// testing easier by allowing easily find files which are published and shared by "new" nodes
 	// Compose the name of the test file
@@ -872,32 +872,32 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	const MD5Sum md5(m_strBetaFileName + CemuleApp::m_sPlatform);
 	m_strBetaFileName.AppendFormat(_T("%s.txt"), (LPCTSTR)md5.GetHashString().Left(6));
 #endif
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const ULONGLONG ullSingleSharedLoadStartUs = theApp.IsStartupProfilingEnabled() ? theApp.GetStartupProfileTimestampUs() : 0ui64;
 #endif
 	LoadSingleSharedFilesList();
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	if (theApp.IsStartupProfilingEnabled()) {
 		theApp.AppendStartupProfileCounter(_T("shared.single_file_rules.loaded"), static_cast<ULONGLONG>(m_liSingleSharedFiles.GetCount()), _T("files"));
 		theApp.AppendStartupProfileCounter(_T("shared.single_file_excludes.loaded"), static_cast<ULONGLONG>(m_liSingleExcludedFiles.GetCount()), _T("files"));
 		theApp.AppendStartupProfileLine(_T("shared.single_file_rules.load"), theApp.GetStartupProfileElapsedUs(ullSingleSharedLoadStartUs), ullSingleSharedLoadStartUs);
 	}
 #endif
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const ULONGLONG ullStartupCacheLoadStartUs = theApp.IsStartupProfilingEnabled() ? theApp.GetStartupProfileTimestampUs() : 0ui64;
 #endif
 	(void)TryLoadStartupCache();
 	(void)TryLoadDuplicatePathCache();
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	if (theApp.IsStartupProfilingEnabled())
 		theApp.AppendStartupProfileLine(_T("shared.startup_caches.load"), theApp.GetStartupProfileElapsedUs(ullStartupCacheLoadStartUs), ullStartupCacheLoadStartUs);
 #endif
 	m_nLastStartupCacheSave = ::GetTickCount64();
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const ULONGLONG ullInitialScanStartUs = theApp.IsStartupProfilingEnabled() ? theApp.GetStartupProfileTimestampUs() : 0ui64;
 #endif
 	FindSharedFiles(true);
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	if (theApp.IsStartupProfilingEnabled())
 		theApp.AppendStartupProfileLine(_T("shared.scan.initial_total"), theApp.GetStartupProfileElapsedUs(ullInitialScanStartUs), ullInitialScanStartUs);
 #endif
@@ -918,7 +918,7 @@ CSharedFileList::~CSharedFileList()
 	}
 	delete m_keywords;
 
-#if defined(_DEVBUILD)
+#if defined(EMULEBB_DEV_BUILD)
 	//Delete the test file
 	CString sTest(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
 	sTest += m_strBetaFileName;
@@ -1018,7 +1018,7 @@ void CSharedFileList::QueueSharedFileForHash(const CString &strDirectory, const 
 	job.strName = strName;
 	job.strSharedDirectory = strSharedDirectory;
 	job.strFilePathKey = MakeSharedHashFilePathKey(strDirectory, strName);
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	job.ullQueuedTimestampUs = theApp.IsStartupProfilingEnabled() ? theApp.GetStartupProfileTimestampUs() : 0ui64;
 #endif
 
@@ -1060,7 +1060,7 @@ bool CSharedFileList::WaitForSharedHashJob(SharedHashJob &rJob)
 				m_sharedHashQueue.pop_front();
 				m_sharedHashActiveJob = rJob;
 				m_bSharedHashActive = true;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 				const INT_PTR iPendingHashFiles = static_cast<INT_PTR>(m_sharedHashQueue.size() + m_sharedHashPendingCompletions.size() + 1);
 				if (theApp.IsStartupProfilingEnabled()
 					&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iPendingHashFiles))
@@ -1089,7 +1089,7 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 
 	try {
 		strFilePath = BuildSharedHashFilePath(rJob.strDirectory, rJob.strName);
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 		const bool bEmitStartupHashProfileSample = theApp.IsStartupProfilingEnabled()
 			&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, GetHashingCount());
 		if (bEmitStartupHashProfileSample && rJob.ullQueuedTimestampUs != 0) {
@@ -1133,7 +1133,7 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 				pKnownFile = NULL;
 			}
 		}
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 		if (bEmitStartupHashProfileSample) {
 			CString strPhase;
 			strPhase.Format(_T("shared.hash.file.run (%s)"), (LPCTSTR)strFilePath);
@@ -1152,7 +1152,7 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 		pResult->strDirectory = rJob.strDirectory;
 		pResult->strSharedDirectory = rJob.strSharedDirectory;
 		pResult->strFilePathKey = rJob.strFilePathKey;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 		pResult->ullQueuedTimestampUs = rJob.ullQueuedTimestampUs;
 #endif
 
@@ -1585,7 +1585,7 @@ void CSharedFileList::FindSharedFiles(const bool bAllowStartupCache)
 	std::unordered_set<std::wstring> addedDirectoryKeys;
 	const CString &tempDir(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
 
-#if defined(_DEVBUILD)
+#if defined(EMULEBB_DEV_BUILD)
 	//Create the test file (before adding the Incoming directory)
 	CSafeBufferedFile f;
 	if (!LongPathSeams::OpenFile(f, tempDir + m_strBetaFileName, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite))
@@ -1626,7 +1626,7 @@ void CSharedFileList::FindSharedFiles(const bool bAllowStartupCache)
 
 	MarkStartupCacheDirty();
 	HashNextFile();
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	if (theApp.IsStartupProfilingEnabled()) {
 		theApp.AppendStartupProfileCounter(_T("shared.scan.requested_directories"), m_startupScanStats.uRequestedDirectories, _T("directories"));
 		theApp.AppendStartupProfileCounter(_T("shared.scan.deduped_directories"), m_startupScanStats.uDedupedDirectories, _T("directories"));
@@ -1977,7 +1977,7 @@ void CSharedFileList::FileHashingFinished(CKnownFile *file)
 	}
 
 	++m_uStartupHashCompletedFiles;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const INT_PTR iHashingCount = GetHashingCount();
 	if (theApp.IsStartupProfilingEnabled()
 		&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iHashingCount))
@@ -2537,7 +2537,7 @@ void CSharedFileList::HashFailed(UnknownFile_Struct *hashed)
 	delete hashed;
 	MarkStartupCacheDirty();
 	++m_uStartupHashFailedFiles;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const INT_PTR iHashingCount = GetHashingCount();
 	if (theApp.IsStartupProfilingEnabled()
 		&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iHashingCount))
@@ -2560,7 +2560,7 @@ void CSharedFileList::HashFailed(CSharedFileHashResult *pResult)
 	CompleteSharedHashCompletion(pResult->strFilePathKey);
 	MarkStartupCacheDirty();
 	++m_uStartupHashFailedFiles;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const INT_PTR iHashingCount = GetHashingCount();
 	if (theApp.IsStartupProfilingEnabled()
 		&& ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iHashingCount))

@@ -45,7 +45,7 @@ namespace
 {
 	inline void EMTrace(char *fmt, ...)
 	{
-#ifdef EMSOCKET_DEBUG
+#ifdef EMULEBB_DEBUG_EMSOCKET
 		va_list argptr;
 		char bufferline[512];
 		va_start(argptr, fmt);
@@ -83,7 +83,7 @@ namespace
 		//va_start(argptr, fmt);
 		//va_end(argptr);
 		UNREFERENCED_PARAMETER(fmt);
-#endif //EMSOCKET_DEBUG
+#endif //EMULEBB_DEBUG_EMSOCKET
 	}
 }
 
@@ -255,7 +255,7 @@ void CEMSocket::OnClose(int nErrorCode)
 
 BOOL CEMSocket::AsyncSelect(long lEvent)
 {
-#ifdef EMSOCKET_DEBUG
+#ifdef EMULEBB_DEBUG_EMSOCKET
 	if (lEvent & FD_READ)
 		EMTrace("  FD_READ");
 	if (lEvent & FD_CLOSE)
@@ -429,7 +429,7 @@ void CEMSocket::OnReceive(int nErrorCode)
 		// Check if packet is complete
 		ASSERT(pendingPacket->size >= pendingPacketSize);
 		if (pendingPacket->size == pendingPacketSize) {
-#ifdef EMSOCKET_DEBUG
+#ifdef EMULEBB_DEBUG_EMSOCKET
 			EMTrace("CEMSocket::PacketReceived on %u, opcode=%X, realSize=%d"
 				, (SOCKET)this, pendingPacket->opcode, pendingPacket->GetRealPacketSize());
 #endif
@@ -1367,7 +1367,7 @@ bool CEMSocket::UseBigSendBuffer()
 				SetSockOpt(SO_SNDBUF, &val, sizeof val);
 				vallen = sizeof val;
 				m_bUseBigSendBuffers = (GetSockOpt(SO_SNDBUF, &val, &vallen) && val > oldval);
-#if defined(_DEBUG) || defined(_DEVBUILD)
+#if defined(_DEBUG) || defined(EMULEBB_DEV_BUILD)
 				if (m_bUseBigSendBuffers && val >= static_cast<int>(kBroadbandTcpUploadSendBufferBytes))
 					theApp.QueueDebugLogLine(false, _T("Increased Sendbuffer for uploading socket from %u KiB to %u KiB"), oldval / 1024, val / 1024);
 				else if (m_bUseBigSendBuffers)

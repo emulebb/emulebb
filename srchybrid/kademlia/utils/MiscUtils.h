@@ -36,8 +36,5 @@ namespace Kademlia
 	{
 	public:
 		static void IPAddressToString(uint32 uIP, CString &sAddr);
-#ifdef DEBUG
-		static void DebugHexDump(const byte *pbyData, uint32 uLenData);
-#endif
 	};
 }

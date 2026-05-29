@@ -266,7 +266,7 @@ public:
 					switch (nEvent) {
 					case FD_READ:
 					case FD_FORCEREAD: //Forceread does not check if there's data waiting
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->GetState() == connecting && !nErrorCode) {
 							pSocket->m_nPendingEvents |= nEvent;
 							break;
@@ -281,12 +281,12 @@ public:
 							break;
 						if (nErrorCode)
 							pSocket->SetState(aborted);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->m_lEvent & FD_READ)
 							pSocket->OnReceive(nErrorCode);
 						break;
 					case FD_WRITE:
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->GetState() == connecting && !nErrorCode) {
 							pSocket->m_nPendingEvents |= FD_WRITE;
 							break;
@@ -297,12 +297,12 @@ public:
 							break;
 						if (nErrorCode)
 							pSocket->SetState(aborted);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->m_lEvent & FD_WRITE)
 							pSocket->OnSend(nErrorCode);
 						break;
 					case FD_CONNECT:
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->GetState() == connecting) {
 							if (nErrorCode && pSocket->m_SocketData.nextAddr && pSocket->TryNextProtocol())
 								break;
@@ -310,11 +310,11 @@ public:
 							pSocket->SetState(connected);
 						} else if (pSocket->GetState() == attached && !nErrorCode)
 							pSocket->SetState(connected);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->m_lEvent & FD_CONNECT)
 							pSocket->OnConnect(nErrorCode);
 
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						// netfinity: Check that socket is still valid. It might have got deleted.
 						if (!nErrorCode && pWnd->m_pAsyncSocketExWindowData	&& pSocket == pWnd->m_pAsyncSocketExWindowData[message - WM_SOCKETEX_NOTIFY].m_pSocket) {
 							if ((pSocket->m_nPendingEvents & (FD_READ | FD_FORCEREAD)) && pSocket->GetState() == connected)
@@ -326,15 +326,15 @@ public:
 #endif
 						break;
 					case FD_ACCEPT:
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->GetState() != listening && pSocket->GetState() != attached)
 							break;
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->m_lEvent & FD_ACCEPT)
 							pSocket->OnAccept(nErrorCode);
 						break;
 					case FD_CLOSE:
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->GetState() != connected && pSocket->GetState() != attached)
 							break;
 
@@ -350,7 +350,7 @@ public:
 						}
 
 						pSocket->SetState(nErrorCode ? aborted : closed);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 						pSocket->OnClose(nErrorCode);
 						break;
 					}
@@ -408,7 +408,7 @@ public:
 					switch (nEvent) {
 					case FD_READ:
 					case FD_FORCEREAD: //Forceread does not check if there's data waiting
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->GetState() == connecting && !nErrorCode) {
 							pSocket->m_nPendingEvents |= nEvent;
 							break;
@@ -419,12 +419,12 @@ public:
 							break;
 						if (nErrorCode)
 							pSocket->SetState(aborted);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->m_lEvent & FD_READ)
 							pSocket->OnReceive(nErrorCode);
 						break;
 					case FD_WRITE:
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->GetState() == connecting && !nErrorCode) {
 							pSocket->m_nPendingEvents |= FD_WRITE;
 							break;
@@ -435,21 +435,21 @@ public:
 							break;
 						if (nErrorCode)
 							pSocket->SetState(aborted);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->m_lEvent & FD_WRITE)
 							pSocket->OnSend(nErrorCode);
 						break;
 					case FD_CONNECT:
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->GetState() == connecting)
 							pSocket->SetState(connected);
 						else if (pSocket->GetState() == attached && !nErrorCode)
 							pSocket->SetState(connected);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 						if (pSocket->m_lEvent & FD_CONNECT)
 							pSocket->OnConnect(nErrorCode);
 
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						if (!nErrorCode && pSocket->GetState() == connected) {
 							if ((pSocket->m_nPendingEvents & FD_READ) && pSocket->m_lEvent & FD_READ)
 								pSocket->OnReceive(0);
@@ -459,24 +459,24 @@ public:
 								pSocket->OnSend(0);
 						}
 						pSocket->m_nPendingEvents = 0;
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 						break;
 					case FD_ACCEPT:
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						if ((pSocket->GetState() == listening || pSocket->GetState() == attached) && (pSocket->m_lEvent & FD_ACCEPT))
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 						{
 							pSocket->OnAccept(nErrorCode);
 						}
 						break;
 					case FD_CLOSE:
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 						if ((pSocket->GetState() == connected || pSocket->GetState() == attached) && (pSocket->m_lEvent & FD_CLOSE))
 						{
 							pSocket->SetState(nErrorCode ? aborted : closed);
 #else
 						{
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 							pSocket->OnClose(nErrorCode);
 						}
 						break;
@@ -595,10 +595,10 @@ IMPLEMENT_DYNAMIC(CAsyncSocketEx, CObject)
 CAsyncSocketEx::CAsyncSocketEx()
 	: m_pLocalAsyncSocketExThreadData()
 	, m_uAsyncResolveRequestId()
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 	, m_nState(notsock)
 	, m_nPendingEvents()
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 	, m_pFirstLayer()
 	, m_pLastLayer()
 	, m_nSocketPort()
@@ -637,17 +637,17 @@ bool CAsyncSocketEx::Create(UINT nSocketPort /*=0*/, int nSocketType /*=SOCK_STR
 
 	if (m_pFirstLayer) {
 		bool res = m_pFirstLayer->Create(nSocketPort, nSocketType, lEvent, sSocketAddress, nFamily, reusable);
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 		if (res)
 			SetState(unconnected);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 		return res;
 	}
 
 	if (m_SocketData.nFamily == AF_UNSPEC) {
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 		SetState(unconnected);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 		m_lEvent = lEvent;
 		m_nSocketPort = nSocketPort;
 		m_sSocketAddress = sSocketAddress;
@@ -689,9 +689,9 @@ bool CAsyncSocketEx::Create(UINT nSocketPort /*=0*/, int nSocketType /*=SOCK_STR
 		return false;
 	}
 
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 	SetState(unconnected);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 
 	return true;
 }
@@ -799,9 +799,9 @@ BOOL CAsyncSocketEx::AttachHandle(/*SOCKET hSocket*/)
 		WSASetLastError(WSAENOBUFS);
 		return FALSE;
 	}
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 	SetState(attached);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 	return TRUE;
 }
 
@@ -817,16 +817,16 @@ void CAsyncSocketEx::DetachHandle()
 		return;
 	}
 	VERIFY(m_pLocalAsyncSocketExThreadData->m_pHelperWindow->RemoveSocket(this, m_SocketData.nSocketIndex));
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 	SetState(notsock);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 }
 
 void CAsyncSocketEx::Close()
 {
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 	m_nPendingEvents = 0;
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 	if (m_pFirstLayer)
 		m_pFirstLayer->Close();
 	if (m_SocketData.hSocket != INVALID_SOCKET) {
@@ -911,10 +911,10 @@ bool CAsyncSocketEx::Connect(const CString &sHostAddress, UINT nHostPort)
 {
 	if (m_pFirstLayer) {
 		bool res = m_pFirstLayer->Connect(sHostAddress, nHostPort);
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 		if (res || GetLastError() == WSAEWOULDBLOCK)
 			SetState(connecting);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 		return res;
 	}
 
@@ -939,9 +939,9 @@ bool CAsyncSocketEx::Connect(const CString &sHostAddress, UINT nHostPort)
 			m_uAsyncResolveRequestId = uRequestId;
 
 			if (AsyncDnsResolveSeams::StartHostnameResolveThread(pWork)) {
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 				SetState(connecting);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 				WSASetLastError(WSAEWOULDBLOCK);
 				return false;
 			}
@@ -1020,10 +1020,10 @@ BOOL CAsyncSocketEx::Connect(const LPSOCKADDR lpSockAddr, int nSockAddrLen)
 	else
 		res = !connect(m_SocketData.hSocket, lpSockAddr, nSockAddrLen);
 
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 	if (res || GetLastError() == WSAEWOULDBLOCK)
 		SetState(connecting);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 	return res;
 }
 
@@ -1143,9 +1143,9 @@ BOOL CAsyncSocketEx::Listen(int nConnectionBacklog /*=5*/)
 		return m_pFirstLayer->Listen(nConnectionBacklog);
 
 	if (!listen(m_SocketData.hSocket, nConnectionBacklog)) {
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 		SetState(listening);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 		return TRUE;
 	}
 	return FALSE;
@@ -1177,9 +1177,9 @@ BOOL CAsyncSocketEx::Accept(CAsyncSocketEx &rConnectedSocket, LPSOCKADDR lpSockA
 		return FALSE;
 	}
 	rConnectedSocket.SetFamily(GetFamily());
-#ifndef NOSOCKETSTATES
+#ifndef EMULEBB_DISABLE_SOCKET_STATES
 	rConnectedSocket.SetState(connected);
-#endif //NOSOCKETSTATES
+#endif //EMULEBB_DISABLE_SOCKET_STATES
 	return TRUE;
 }
 

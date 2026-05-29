@@ -240,7 +240,7 @@ CString CastItoXBytes(uint64 count, bool isK, bool isPerSec, uint32 decimal)
 	return CastItoXBytes((double)count, isK, isPerSec, decimal);
 }
 
-#if defined(_DEBUG) && defined(USE_DEBUG_EMFILESIZE)
+#if defined(_DEBUG) && defined(EMULEBB_DEBUG_FILESIZE_TYPE)
 CString CastItoXBytes(EMFileSize count, bool isK, bool isPerSec, uint32 decimal)
 {
 	return CastItoXBytes((double)count, isK, isPerSec, decimal);
@@ -2477,53 +2477,7 @@ CString DbgGetHexDump(const uint8 *data, UINT size)
 
 void DbgSetThreadName(LPCSTR szThreadName, ...)
 {
-#ifdef DEBUG
-
-#ifndef MS_VC_EXCEPTION
-#define MS_VC_EXCEPTION 0x406d1388
-
-#pragma pack(push, 8)
-	typedef struct tagTHREADNAME_INFO
-	{
-		DWORD dwType;		// must be 0x1000
-		LPCSTR szName;		// pointer to name (in same addr space)
-		DWORD dwThreadID;	// thread ID (-1 caller thread)
-		DWORD dwFlags;		// reserved for future use, must be zero
-	} THREADNAME_INFO;
-#endif
-#pragma pack(pop)
-
-#pragma warning(push)
-#pragma warning(disable: 6320 6322)
-	__try {
-		va_list args;
-		va_start(args, szThreadName);
-		int lenBuf = 0;
-		char *buffer = NULL;
-		int lenResult;
-		do { // the VS debugger truncates the string to 31 characters anyway!
-			lenBuf += 128;
-			delete[] buffer;
-			buffer = new char[lenBuf];
-			lenResult = vsnprintf(buffer, lenBuf, szThreadName, args);
-		} while (lenResult == -1);
-		va_end(args);
-		THREADNAME_INFO info;
-		info.dwType = 0x1000;
-		info.szName = buffer;
-		info.dwThreadID = _UI32_MAX;
-		info.dwFlags = 0;
-		__try {
-			RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
-		} __except (EXCEPTION_CONTINUE_EXECUTION) {
-		}
-		delete[] buffer;
-	} __except (EXCEPTION_CONTINUE_EXECUTION) {
-	}
-#pragma warning(pop)
-#else
 	UNREFERENCED_PARAMETER(szThreadName);
-#endif
 }
 
 CString RemoveFileExtension(const CString &rstrFilePath)

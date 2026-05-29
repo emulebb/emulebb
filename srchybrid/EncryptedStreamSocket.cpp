@@ -312,7 +312,7 @@ int CEncryptedStreamSocket::Receive(void *lpBuf, int nBufLen, int nFlags)
 			if (thePrefs.IsCryptLayerRequiredStrict() || (!theApp.serverconnect->AwaitingTestFromIP(sockAddr.sin_addr.s_addr)
 				&& !theApp.clientlist->IsKadFirewallCheckIP(sockAddr.sin_addr.s_addr)))
 			{
-#if defined(_DEBUG) || defined(_DEVBUILD)
+#if defined(_DEBUG) || defined(EMULEBB_DEV_BUILD)
 				// TODO: Remove after testing
 				AddDebugLogLine(DLP_DEFAULT, false, _T("Rejected incoming connection because Obfuscation was required but not used %s"), (LPCTSTR)DbgGetIPString());
 #endif

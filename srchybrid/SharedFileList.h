@@ -26,11 +26,11 @@
 #include "MapKey.h"
 #include "FileIdentifier.h"
 
-#ifndef EMULE_COMPILED_STARTUP_PROFILING
-	#if defined(_DEBUG) || defined(EMULE_ENABLE_STARTUP_PROFILING)
-	#define EMULE_COMPILED_STARTUP_PROFILING 1
+#ifndef EMULEBB_HAS_STARTUP_PROFILING
+	#if defined(_DEBUG) || defined(EMULEBB_ENABLE_STARTUP_PROFILING)
+	#define EMULEBB_HAS_STARTUP_PROFILING 1
 	#else
-	#define EMULE_COMPILED_STARTUP_PROFILING 0
+	#define EMULEBB_HAS_STARTUP_PROFILING 0
 	#endif
 #endif
 
@@ -51,7 +51,7 @@ struct UnknownFile_Struct
 	CString strName;
 	CString strDirectory;
 	CString strSharedDirectory;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	ULONGLONG ullQueuedTimestampUs = 0;
 #endif
 };
@@ -68,7 +68,7 @@ struct CSharedFileHashResult
 	CString strDirectory;
 	CString strSharedDirectory;
 	CString strFilePathKey;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	ULONGLONG ullQueuedTimestampUs = 0;
 #endif
 };
@@ -322,7 +322,7 @@ private:
 		CString strDirectory;
 		CString strSharedDirectory;
 		CString strFilePathKey;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 		ULONGLONG ullQueuedTimestampUs = 0;
 #endif
 	};
@@ -593,7 +593,7 @@ private:
 	std::unordered_set<std::wstring> m_singleSharedFileRuleKeys;
 	std::unordered_set<std::wstring> m_singleExcludedFileRuleKeys;
 	std::vector<std::wstring> m_sortedSingleSharedFileRuleKeys;
-#if defined(_DEVBUILD)
+#if defined(EMULEBB_DEV_BUILD)
 	CString			m_strBetaFileName; //beta test file name
 #endif
 

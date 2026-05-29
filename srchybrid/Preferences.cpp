@@ -1045,7 +1045,7 @@ bool	CPreferences::m_bLogFilteredIPs;
 bool	CPreferences::m_bLogFileSaving;
 bool	CPreferences::m_bLogA4AF; // ZZ:DownloadManager
 bool	CPreferences::m_bLogUlDlEvents;
-#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
 bool	CPreferences::m_bUseDebugDevice = true;
 #else
 bool	CPreferences::m_bUseDebugDevice = false;
@@ -2759,7 +2759,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("LogFileSaving"), m_bLogFileSaving);				// do *not* use the according 'Get...' function here!
 	ini.WriteBool(_T("LogA4AF"), m_bLogA4AF);                           // do *not* use the according 'Get...' function here!
 	ini.WriteBool(_T("LogUlDlEvents"), m_bLogUlDlEvents);
-#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
 	// following options are for debugging or when using an external debug device viewer only.
 	ini.WriteInt(_T("DebugServerTCP"), m_iDebugServerTCPLevel);
 	ini.WriteInt(_T("DebugServerUDP"), m_iDebugServerUDPLevel);
@@ -3331,7 +3331,7 @@ void CPreferences::LoadPreferences()
 			m_iLastLogPaneID = 1;
 	}
 
-#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
 	// following options are for debugging or when using an external debug device viewer only.
 	m_iDebugServerTCPLevel = ini.GetInt(_T("DebugServerTCP"), 0);
 	m_iDebugServerUDPLevel = ini.GetInt(_T("DebugServerUDP"), 0);

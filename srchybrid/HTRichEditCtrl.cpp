@@ -148,11 +148,7 @@ void CHTRichEditCtrl::PurgeSmileyCaches()
 	for (POSITION pos = sm_aSmileyBitmaps.GetStartPosition(); pos != NULL;) {
 		void *pValue;
 		sm_aSmileyBitmaps.GetNextAssoc(pos, strKey, pValue);
-#ifdef USE_METAFILE
-		VERIFY(::DeleteEnhMetaFile((HENHMETAFILE)pValue));
-#else
 		VERIFY(::DeleteObject((HBITMAP)pValue));
-#endif
 	}
 	sm_aSmileyBitmaps.RemoveAll();
 	sm_pIStorageSmileys.Release();
@@ -1270,13 +1266,8 @@ STDMETHODIMP_(ULONG) CBitmapDataObject::XDataObject::Release() NOEXCEPT
 STDMETHODIMP CBitmapDataObject::XDataObject::GetData(FORMATETC *pformatetcIn, STGMEDIUM *pmedium) noexcept
 {
 	METHOD_PROLOGUE(CBitmapDataObject, DataObject);
-#ifdef USE_METAFILE
-	pmedium->tymed = TYMED_ENHMF;
-	pmedium->hEnhMetaFile = (HENHMETAFILE)pThis->m_hBitmap;
-#else
 	pmedium->tymed = TYMED_GDI;
 	pmedium->hBitmap = (HBITMAP)CopyImage(pThis->m_hBitmap, IMAGE_BITMAP, 0, 0, 0);
-#endif
 	pmedium->pUnkForRelease = NULL;
 	return S_OK;
 }
@@ -1492,23 +1483,6 @@ HBITMAP IconToBitmap(HICON hIcon, COLORREF crBackground, int cx = 16, int cy = 1
 		//}
 		//Gdiplus::GdiplusShutdown(gdiplusToken);
 
-#ifdef USE_METAFILE
-		{
-			HDC hdc = ::GetDC(HWND_DESKTOP);
-			int iWidthMM = ::GetDeviceCaps(hdc, HORZSIZE);
-			int iHeightMM = ::GetDeviceCaps(hdc, VERTSIZE);
-			int iWidthPels = ::GetDeviceCaps(hdc, HORZRES);
-			int iHeightPels = ::GetDeviceCaps(hdc, VERTRES);
-			RECT rcMF{0, 0, ((cx + 1) * iWidthMM * 100) / iWidthPels, ((cy + 1) * iHeightMM * 100) / iHeightPels};
-			HDC hdcEnhMF = ::CreateEnhMetaFile(NULL, NULL, &rcMF, NULL);
-			if (hdcEnhMF) {
-				::SetBkColor(hdcEnhMF, crBackground);
-				::DrawIconEx(hdcEnhMF, 0, 0, hIcon, cx, cy, 0, 0, DI_NORMAL);
-				hBitmap = (HBITMAP)::CloseEnhMetaFile(hdcEnhMF);
-			}
-			::ReleaseDC(HWND_DESKTOP, hdc);
-		}
-#else
 		CClientDC dcScreen(CWnd::GetDesktopWindow());
 		CDC dcMem;
 		if (dcMem.CreateCompatibleDC(&dcScreen)) {
@@ -1521,7 +1495,6 @@ HBITMAP IconToBitmap(HICON hIcon, COLORREF crBackground, int cx = 16, int cy = 1
 				hBitmap = (HBITMAP)bmp.Detach();
 			}
 		}
-#endif
 	} catch (CException *ex) {
 		ASSERT(0);
 		ex->Delete();
@@ -1606,19 +1579,11 @@ bool CHTRichEditCtrl::InsertSmiley(LPCTSTR pszSmileyID, COLORREF bk)
 	}
 
 	FORMATETC FormatEtc;
-#ifdef USE_METAFILE
-	FormatEtc.cfFormat = CF_ENHMETAFILE;
-#else
 	FormatEtc.cfFormat = CF_BITMAP;
-#endif
 	FormatEtc.ptd = NULL;
 	FormatEtc.dwAspect = DVASPECT_CONTENT;
 	FormatEtc.lindex = -1;
-#ifdef USE_METAFILE
-	FormatEtc.tymed = TYMED_ENHMF;
-#else
 	FormatEtc.tymed = TYMED_GDI;
-#endif
 
 	CComPtr<IOleObject> pIOleObject;
 	if (S_OK != OleCreateStaticFromData(pIDataObject, __uuidof(pIOleObject), OLERENDER_FORMAT, &FormatEtc, pIOleClientSite, sm_pIStorageSmileys, (void**)&pIOleObject))
@@ -1668,19 +1633,11 @@ bool CHTRichEditCtrl::AddCaptcha(HBITMAP hbmp)
 	}
 
 	FORMATETC FormatEtc;
-#ifdef USE_METAFILE
-	FormatEtc.cfFormat = CF_ENHMETAFILE;
-#else
 	FormatEtc.cfFormat = CF_BITMAP;
-#endif
 	FormatEtc.ptd = NULL;
 	FormatEtc.dwAspect = DVASPECT_CONTENT;
 	FormatEtc.lindex = -1;
-#ifdef USE_METAFILE
-	FormatEtc.tymed = TYMED_ENHMF;
-#else
 	FormatEtc.tymed = TYMED_GDI;
-#endif
 
 	CComPtr<IOleObject> pIOleObject;
 	if (OleCreateStaticFromData(pIDataObject, __uuidof(pIOleObject), OLERENDER_FORMAT, &FormatEtc, pIOleClientSite, m_pIStorageCaptchas, (void**)&pIOleObject) != S_OK)

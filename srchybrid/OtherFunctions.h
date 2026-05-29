@@ -132,7 +132,7 @@ CString CastItoXBytes(uint32 count, bool isK = false, bool isPerSec = false, uin
 CString CastItoXBytes(uint64 count, bool isK = false, bool isPerSec = false, uint32 decimal = 2);
 CString CastItoXBytes(float count, bool isK = false, bool isPerSec = false, uint32 decimal = 2);
 CString CastItoXBytes(double count, bool isK = false, bool isPerSec = false, uint32 decimal = 2);
-#if defined(_DEBUG) && defined(USE_DEBUG_EMFILESIZE)
+#if defined(_DEBUG) && defined(EMULEBB_DEBUG_FILESIZE_TYPE)
 CString CastItoXBytes(EMFileSize count, bool isK = false, bool isPerSec = false, uint32 decimal = 2);
 #endif
 CString CastItoIShort(uint16 count, bool isK = false, uint32 decimal = 2);
@@ -276,17 +276,10 @@ bool PointInClient(const CWnd &wnd, const CPoint &point);
 ///////////////////////////////////////////////////////////////////////////////
 // Resource strings
 //
-#ifdef USE_STRING_IDS
-#define	RESSTRIDTYPE		LPCTSTR
-#define	IDS2RESIDTYPE(id)	#id
-#define GetResString(id)	_GetResString(#id)
-CString _GetResString(RESSTRIDTYPE StringID);
-#else//USE_STRING_IDS
 #define	RESSTRIDTYPE		UINT
 #define	IDS2RESIDTYPE(id)	id
 CString GetResString(RESSTRIDTYPE uStringID);
 #define _GetResString(id)	GetResString(id)
-#endif//!USE_STRING_IDS
 void InitThreadLocale();
 int LocMessageBox(UINT uId, UINT nType = MB_OK, UINT nIDHelp = 0); //localize and call AfxMessageBox(UINT, UINT, UINT)
 CString GetResNoAmp(RESSTRIDTYPE uStringID);

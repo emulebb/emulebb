@@ -29,11 +29,11 @@
 #include "FileInfoDialog.h"
 #include "MetaDataDlg.h"
 
-#ifndef EMULE_COMPILED_STARTUP_PROFILING
-	#if defined(_DEBUG) || defined(EMULE_ENABLE_STARTUP_PROFILING)
-	#define EMULE_COMPILED_STARTUP_PROFILING 1
+#ifndef EMULEBB_HAS_STARTUP_PROFILING
+	#if defined(_DEBUG) || defined(EMULEBB_ENABLE_STARTUP_PROFILING)
+	#define EMULEBB_HAS_STARTUP_PROFILING 1
 	#else
-	#define EMULE_COMPILED_STARTUP_PROFILING 0
+	#define EMULEBB_HAS_STARTUP_PROFILING 0
 	#endif
 #endif
 
@@ -89,7 +89,7 @@ public:
 	void OnSingleFileShareStatusChanged();
 	void ShowSelectedFilesDetails(bool bForce = false);
 	void ShowDetailsPanel(bool bShow);
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	void OnStartupSharedFilesModelChanged();
 	void OnStartupProfileStartupComplete();
 #endif
@@ -125,7 +125,7 @@ private:
 	std::atomic_bool m_bWorkerUiClosing;
 	bool			m_bDetailsVisible;
 	bool			m_bSharedTreeInitialized;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	bool			m_bStartupSharedTreePopulatedReported;
 	bool			m_bStartupSharedModelPopulatedReported;
 	bool			m_bStartupSharedFilesReadyReported;
@@ -140,7 +140,7 @@ protected:
 	void SetAllIcons();
 	void DoResize(int iDelta);
 	void EnsureSharedTreeInitialized();
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	void ReportStartupSharedFilesReadinessIfReady();
 #endif
 	/**

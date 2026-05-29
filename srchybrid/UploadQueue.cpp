@@ -141,11 +141,11 @@ CUploadQueue::CUploadQueue()
 	, m_bStatisticsWaitingListDirty(true)
 {
 	i1sec = i2sec = i5sec = i60sec = 0;
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 #endif
 	VERIFY(Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(h_timer, SEC2MS(1)/10, UploadTimer));
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("broadband.upload_queue.timer_ready"), theApp.GetStartupProfileElapsedUs(ullPhaseStart), ullPhaseStart);
 #endif
 	if (thePrefs.GetVerbose() && !h_timer)

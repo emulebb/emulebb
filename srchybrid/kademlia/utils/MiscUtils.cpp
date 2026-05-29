@@ -45,35 +45,3 @@ void CMiscUtils::IPAddressToString(uint32 uIP, CString &sAddr)
 	const BYTE *pucIP = (BYTE*)&uIP;
 	sAddr.Format(_T("%u.%u.%u.%u"), pucIP[3], pucIP[2], pucIP[1], pucIP[0]);
 }
-
-
-#ifdef DEBUG
-void CMiscUtils::DebugHexDump(const byte *pbyData, uint32 uLenData)
-{
-	try {
-		int iLenLine = 16;
-
-		for (UINT uPos = 0; uPos < uLenData; uPos += iLenLine) {
-			CStringA sLine;
-			CStringA sSingle;
-			sLine.Format("%08X ", uPos);
-			iLenLine = min((uLenData - uPos), 16);
-			for (int i = 0; i < iLenLine; ++i) {
-				sSingle.Format(" %02X", pbyData[uPos + i]);
-				sLine += sSingle;
-				if (i == 7)
-					sLine += " ";
-			}
-			sLine += CStringA(' ', 60 - sLine.GetLength());
-			for (int i = 0; i < iLenLine; ++i) {
-				byte byC = pbyData[uPos + i];
-				sSingle.Format("%c", (((byC > 31) && (byC < 127)) ? byC : '.'));
-				sLine += sSingle;
-			}
-			AddDebugLogLine(false, _T("%hs"), (LPCSTR)sLine);
-		}
-	} catch (...) {
-		AddDebugLogLine(false, _T("Exception in CMiscUtils::debugHexDump"));
-	}
-}
-#endif

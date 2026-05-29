@@ -23,7 +23,7 @@ VS_VERSION_INFO VERSIONINFO
         FILEFLAGSMASK       VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
         FILEFLAGS           VS_FF_DEBUG | VS_FF_PRIVATEBUILD | VS_FF_PRERELEASE
-#elif defined(_DEVBUILD)
+#elif defined(EMULEBB_DEV_BUILD)
         FILEFLAGS           VS_FF_PRERELEASE
 #else
         FILEFLAGS           0x0L // final version

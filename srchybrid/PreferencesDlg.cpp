@@ -54,7 +54,7 @@ CPreferencesDlg::CPreferencesDlg()
 	m_wndScheduler.m_psp.dwFlags &= ~PSP_HASHELP;
 	m_wndProxy.m_psp.dwFlags &= ~PSP_HASHELP;
 	m_wndMessages.m_psp.dwFlags &= ~PSP_HASHELP;
-#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
 	m_wndDebug.m_psp.dwFlags &= ~PSP_HASHELP;
 #endif
 
@@ -73,7 +73,7 @@ CPreferencesDlg::CPreferencesDlg()
 	CTreePropSheet::SetPageIcon(&m_wndWebServer, _T("WEB"));
 	CTreePropSheet::SetPageIcon(&m_wndTweaks, _T("TWEAK"));
 	CTreePropSheet::SetPageIcon(&m_wndMessages, _T("MESSAGES"));
-#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
 	CTreePropSheet::SetPageIcon(&m_wndDebug, _T("Preferences"));
 #endif
 
@@ -92,7 +92,7 @@ CPreferencesDlg::CPreferencesDlg()
 	AddPage(&m_wndScheduler);
 	AddPage(&m_wndWebServer);
 	AddPage(&m_wndTweaks);
-#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
 	AddPage(&m_wndDebug);
 #endif
 
@@ -176,7 +176,7 @@ void CPreferencesDlg::Localize()
 		int c;
 		for (c = 0; c < (int)_countof(uids); ++c)
 			LocalizeItemText(c, uids[c]);
-#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
 		GetPageTreeControl()->SetItemText(GetPageTreeItem(c), _T("Debug"));
 #endif
 	}

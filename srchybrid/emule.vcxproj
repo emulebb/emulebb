@@ -56,7 +56,7 @@
     <NlohmannJsonRoot>$(ThirdPartyRoot)emulebb-nlohmann-json\single_include\</NlohmannJsonRoot>
     <ZlibRoot>$(ThirdPartyRoot)emulebb-zlib\</ZlibRoot>
     <EnableStartupProfiling Condition="'$(EnableStartupProfiling)'=='' and '$(Configuration)'=='Release'">true</EnableStartupProfiling>
-    <StartupProfilingPreprocessorDefinition Condition="'$(EnableStartupProfiling)'=='true'">EMULE_ENABLE_STARTUP_PROFILING;</StartupProfilingPreprocessorDefinition>
+    <StartupProfilingPreprocessorDefinition Condition="'$(EnableStartupProfiling)'=='true'">EMULEBB_ENABLE_STARTUP_PROFILING;</StartupProfilingPreprocessorDefinition>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
     <PcpNatPmpLibRoot Condition="'$(PcpNatPmpLibRoot)'==''">$(PcpNatPmpRoot)cmake-build-x64\lib</PcpNatPmpLibRoot>
@@ -109,8 +109,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <AdditionalIncludeDirectories>.;..;$(ZlibRoot);$(CryptoPpRoot);$(Id3libRoot)include;$(MiniUpnpRoot);$(PcpNatPmpRoot)lib\include;$(MbedTlsRoot)include;$(MbedTlsRoot)tf-psa-crypto\include;$(MbedTlsRoot)tf-psa-crypto\drivers\builtin\include;$(ResizableLibRoot);$(NlohmannJsonRoot);$(VC_ATLMFC_SourcePath);$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\cppwinrt\;$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\um\;$(UniversalCRTSdkDir)Include\$(WindowsTargetPlatformVersion)\shared;</AdditionalIncludeDirectories>
-      <AdditionalOptions Condition="'$(Platform)'!='ARM64'">/external:anglebrackets /external:I$(ThirdPartyRoot) /Zc:throwingNew /FS %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Platform)'=='ARM64'">/external:anglebrackets /external:I$(ThirdPartyRoot) /Zc:enumTypes /Zc:throwingNew /FS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Platform)'!='ARM64'">/Gw /external:anglebrackets /external:I$(ThirdPartyRoot) /Zc:throwingNew /FS %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Platform)'=='ARM64'">/Gw /external:anglebrackets /external:I$(ThirdPartyRoot) /Zc:enumTypes /Zc:throwingNew /FS %(AdditionalOptions)</AdditionalOptions>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <SDLCheck>true</SDLCheck>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -124,6 +124,7 @@
       <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;NDEBUG;$(StartupProfilingPreprocessorDefinition)MBEDTLS_ALLOW_PRIVATE_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>EnableAllWarnings</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
       <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>

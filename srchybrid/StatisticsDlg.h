@@ -111,8 +111,6 @@ private:
 	HTREEITEM h_debug, h_blocks, debug1, debug2, debug3, debug4, debug5;
 	CMap<const unsigned char*, const unsigned char*, HTREEITEM*, HTREEITEM*> blockFiles;
 #endif
-	HTREEITEM h_allocs;
-	HTREEITEM h_allocSizes[32];
 
 protected:
 	void SetAllIcons();

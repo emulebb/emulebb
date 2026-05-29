@@ -1347,7 +1347,7 @@ void CSearchListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 				const SFakeFileReport fakeReport = FakeFileDetector::GetSearchFileReportSnapshot(*file);
 				strInfo += FormatSearchEvidenceDetails(*file, fakeReport);
 
-#ifdef USE_DEBUG_DEVICE
+#ifdef EMULEBB_ENABLE_DEBUG_DEVICE
 				if (file->GetClientsCount()) {
 					bool bFirst = true;
 					if (file->GetClientID() && file->GetClientPort()) {

@@ -317,7 +317,7 @@ namespace
 
 	void NotifyStartupSharedFilesModelChanged()
 	{
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 		if (theApp.emuledlg != NULL && theApp.emuledlg->sharedfileswnd != NULL)
 			theApp.emuledlg->sharedfileswnd->OnStartupSharedFilesModelChanged();
 #endif
@@ -848,7 +848,7 @@ void CSharedFilesCtrl::ApplyVisibleFileCount()
 	if (CListCtrl::GetItemCount() == iVisibleFileCount)
 		return;
 	SetItemCountEx(iVisibleFileCount, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	if (!theApp.IsClosing()) {
 		CString strPhase;
 		strPhase.Format(_T("CSharedFilesCtrl::ApplyVisibleFileCount model=%d control=%d"),
@@ -1191,12 +1191,12 @@ void CSharedFilesCtrl::EnsureModelBound()
 	if (m_bModelBound)
 		return;
 
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 #endif
 	m_bModelBound = true;
 	ReloadFileList();
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	{
 		CString strPhase;
 		strPhase.Format(_T("CSharedFilesCtrl model bind (%u shared, %d visible)"),
@@ -1248,7 +1248,7 @@ void CSharedFilesCtrl::ReloadFileList()
 		KillTimer(kStartupDeferredReloadTimerId);
 		m_bStartupDeferredReloadPending = false;
 	}
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const ULONGLONG ullReloadStart = theApp.GetStartupProfileTimestampUs();
 	ULONGLONG ullPhaseStart = ullReloadStart;
 #endif
@@ -1264,7 +1264,7 @@ void CSharedFilesCtrl::ReloadFileList()
 
 	for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair))
 		AppendVisibleFile(pair->value, false);
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	{
 		CString strPhase;
 		strPhase.Format(_T("CSharedFilesCtrl::ReloadFileList shared map append (%u shared -> %d visible pre-extra)"),
@@ -1282,7 +1282,7 @@ void CSharedFilesCtrl::ReloadFileList()
 	else
 		while (!liTempShareableFilesInDir.IsEmpty())	// clear temp file list
 			delete liTempShareableFilesInDir.RemoveHead();
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	{
 		CString strPhase;
 		strPhase.Format(_T("CSharedFilesCtrl::ReloadFileList extra view append (filter=%d rows=%d)"),
@@ -1305,7 +1305,7 @@ void CSharedFilesCtrl::ReloadFileList()
 	Invalidate(FALSE);
 	theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails(false);
 	ShowFilesCount();
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	{
 		CString strPhase;
 		strPhase.Format(_T("CSharedFilesCtrl::ReloadFileList sort/apply complete (%d rows)"), static_cast<int>(m_aVisibleFiles.size()));
@@ -2338,7 +2338,7 @@ void CSharedFilesCtrl::OnLvnGetDispInfo(LPNMHDR pNMHDR, LRESULT *pResult)
 		const LVITEMW &rItem = reinterpret_cast<NMLVDISPINFO*>(pNMHDR)->item;
 		if (rItem.mask & LVIF_TEXT) {
 			const CShareableFile *pFile = GetLiveFileByIndex(rItem.iItem);
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 			if (rItem.iItem == 0 && rItem.iSubItem == 0) {
 				CString strPhase;
 				strPhase.Format(_T("CSharedFilesCtrl::OnLvnGetDispInfo first row requested (rows=%d file=%d)"),

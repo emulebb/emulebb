@@ -49,7 +49,7 @@ UploadBandwidthThrottler::UploadBandwidthThrottler()
 	, m_bThreadStarted()
 	, m_bRun(true)
 {
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 #endif
 	CWinThread *pThread = AfxBeginThread(RunProc, (LPVOID)this);
@@ -59,7 +59,7 @@ UploadBandwidthThrottler::UploadBandwidthThrottler()
 		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed to start upload bandwidth throttler helper thread"));
 		m_eventThreadEnded.SetEvent();
 	}
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("broadband.throttler.launch_thread"), theApp.GetStartupProfileElapsedUs(ullPhaseStart), ullPhaseStart);
 #endif
 }
@@ -318,7 +318,7 @@ uint32 UploadBandwidthThrottler::CalculateChangeDelta(uint32 numberOfConsecutive
  */
 UINT AFX_CDECL UploadBandwidthThrottler::RunProc(LPVOID pParam)
 {
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	if (theApp.IsStartupProfilingEnabled())
 		theApp.AppendStartupProfileLine(_T("broadband.throttler.thread_enter"), 0);
 #endif
@@ -340,7 +340,7 @@ UINT AFX_CDECL UploadBandwidthThrottler::RunProc(LPVOID pParam)
  */
 UINT UploadBandwidthThrottler::RunInternal()
 {
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	const ULONGLONG ullThreadStartUs = theApp.GetStartupProfileTimestampUs();
 #endif
 	static const bool estimateChangedLog = false;
@@ -361,7 +361,7 @@ UINT UploadBandwidthThrottler::RunInternal()
 	// 2026-05-02 showed 1 ms deltas here, while GetTickCount64 stayed at
 	// 15-16 ms on the same host; the throttler depends on that finer cadence.
 	lastTickReachedBandwidth = lastLoopTick = timeGetTime();
-#if EMULE_COMPILED_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_PROFILING
 	theApp.AppendStartupProfileLine(_T("broadband.throttler.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
 #endif
 	while (HelperThreadLaunchSeams::IsFlagSet(m_bRun)) {

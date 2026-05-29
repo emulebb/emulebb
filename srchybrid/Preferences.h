@@ -1754,7 +1754,7 @@ public:
 	static bool		GetLogKadSecurityEvents()			{ return m_bVerbose; }
 	static bool		GetUseDebugDevice()					{ return m_bUseDebugDevice; }
 	static int		GetVerboseLogPriority()				{ return m_byLogLevel; }
-#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
 	static int		GetDebugServerTCPLevel()			{ return m_iDebugServerTCPLevel; }
 	static int		GetDebugServerUDPLevel()			{ return m_iDebugServerUDPLevel; }
 	static int		GetDebugServerSourcesLevel()		{ return m_iDebugServerSourcesLevel; }
