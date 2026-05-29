@@ -23,5 +23,5 @@ parity testing.
 ## Build And Test
 
 Builds are driven from the canonical workspace materialized under
-`EMULE_WORKSPACE_ROOT`, using the paired `emulebb-setup` and `emulebb-build`
+`EMULEBB_WORKSPACE_ROOT`, using the paired `emulebb-setup` and `emulebb-build`
 repos rather than a machine-local cleanroom path.
