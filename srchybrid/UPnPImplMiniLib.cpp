@@ -45,7 +45,7 @@ CUPnPImplMiniLib::CUPnPImplMiniLib()
 	, m_pIGDData()
 	, m_pDiscoveryThread()
 	, m_bSucceededOnce()
-	, m_bAbandonForShutdown()
+	, m_bAbandonDiscoveryOwner()
 	, m_bAbortDiscovery()
 {
 	m_nOldUDPPort = 0;
@@ -72,7 +72,7 @@ bool CUPnPImplMiniLib::IsReady()
 
 void CUPnPImplMiniLib::StopAsyncFind()
 {
-	if (m_bAbandonForShutdown)
+	if (m_bAbandonDiscoveryOwner)
 		return;
 
 	ReapDiscoveryThreadIfFinished();
@@ -84,15 +84,18 @@ void CUPnPImplMiniLib::StopAsyncFind()
 			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread to quit timed out; preserving owner lifetime until cooperative exit"));
 			const UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction eOwnerAction = UPnPDiscoveryThreadSeams::WaitForDiscoveryThreadOwnerLifetime(
 				m_pDiscoveryThread,
-				theApp.IsClosing() ? UPnPDiscoveryThreadSeams::kShutdownOwnerLifetimeWaitMs : INFINITE,
+				theApp.IsClosing() ? UPnPDiscoveryThreadSeams::kShutdownOwnerLifetimeWaitMs : UPnPDiscoveryThreadSeams::kRuntimeOwnerLifetimeWaitMs,
 				dwLastError);
 			if (eOwnerAction == UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction::KeepOwnerAlive) {
 				// WHY: discovery workers dereference this implementation while inside
-				// third-party UPnP calls. At process shutdown a router/library hang
-				// must not block exit forever, so keep both owner and thread wrapper
-				// alive intentionally instead of deleting through a raw worker owner.
-				DebugLogError(_T("Abandoning UPnP StartDiscoveryThread owner during shutdown after timed-out owner-lifetime wait"));
-				m_bAbandonForShutdown = true;
+				// third-party UPnP calls. A router/library hang must not block the
+				// UI during timeout fallback or process exit, so keep both owner and
+				// thread wrapper alive intentionally instead of deleting through a
+				// raw worker owner; clearing the result target also suppresses stale
+				// success/failure posts after another backend has already started.
+				ClearResultMessage();
+				DebugLogError(_T("Abandoning UPnP StartDiscoveryThread owner after timed-out owner-lifetime wait"));
+				m_bAbandonDiscoveryOwner = true;
 				m_pDiscoveryThread = NULL;
 				return;
 			}

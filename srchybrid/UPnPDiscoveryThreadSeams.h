@@ -41,6 +41,7 @@ enum class EOwnerLifetimeWaitAction
  */
 constexpr DWORD kCooperativeStopWaitMs = 7000;
 constexpr DWORD kShutdownOwnerLifetimeWaitMs = 3000;
+constexpr DWORD kRuntimeOwnerLifetimeWaitMs = 3000;
 
 /**
  * @brief Atomically requests cooperative cancellation for discovery workers.

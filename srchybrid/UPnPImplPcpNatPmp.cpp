@@ -67,7 +67,7 @@ CUPnPImplPcpNatPmp::CUPnPImplPcpNatPmp()
 	, m_sourceAddress()
 	, m_nSourceAddressLen()
 	, m_bSucceededOnce()
-	, m_bAbandonForShutdown()
+	, m_bAbandonDiscoveryOwner()
 	, m_bAbortDiscovery()
 {
 	memset(&m_sourceAddress, 0, sizeof(m_sourceAddress));
@@ -119,7 +119,7 @@ bool CUPnPImplPcpNatPmp::IsReady()
 
 void CUPnPImplPcpNatPmp::StopAsyncFind()
 {
-	if (m_bAbandonForShutdown)
+	if (m_bAbandonDiscoveryOwner)
 		return;
 
 	ReapDiscoveryThreadIfFinished();
@@ -131,15 +131,18 @@ void CUPnPImplPcpNatPmp::StopAsyncFind()
 			DebugLogError(_T("Waiting for PCP/NAT-PMP discovery thread to quit timed out; preserving owner lifetime until cooperative exit"));
 			const UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction eOwnerAction = UPnPDiscoveryThreadSeams::WaitForDiscoveryThreadOwnerLifetime(
 				m_pDiscoveryThread,
-				theApp.IsClosing() ? UPnPDiscoveryThreadSeams::kShutdownOwnerLifetimeWaitMs : INFINITE,
+				theApp.IsClosing() ? UPnPDiscoveryThreadSeams::kShutdownOwnerLifetimeWaitMs : UPnPDiscoveryThreadSeams::kRuntimeOwnerLifetimeWaitMs,
 				dwLastError);
 			if (eOwnerAction == UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction::KeepOwnerAlive) {
 				// WHY: discovery workers dereference this implementation while inside
-				// third-party PCP/NAT-PMP calls. At process shutdown a gateway/library
-				// hang must not block exit forever, so keep both owner and thread
-				// wrapper alive intentionally instead of deleting through the worker.
-				DebugLogError(_T("Abandoning PCP/NAT-PMP discovery owner during shutdown after timed-out owner-lifetime wait"));
-				m_bAbandonForShutdown = true;
+				// third-party PCP/NAT-PMP calls. A gateway/library hang must not block
+				// the UI during timeout fallback or process exit, so keep both owner
+				// and thread wrapper alive intentionally instead of deleting through
+				// the worker; clearing the result target also suppresses stale posts
+				// after another backend has already started.
+				ClearResultMessage();
+				DebugLogError(_T("Abandoning PCP/NAT-PMP discovery owner after timed-out owner-lifetime wait"));
+				m_bAbandonDiscoveryOwner = true;
 				m_pDiscoveryThread = NULL;
 				return;
 			}

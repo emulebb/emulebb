@@ -55,11 +55,12 @@ public:
 	virtual bool IsReady() = 0;
 	virtual int GetImplementationID() = 0;
 	virtual LPCTSTR GetImplementationName() const = 0;
-	virtual bool MustAbandonForShutdown() const		{ return false; }
+	virtual bool MustAbandonDiscoveryOwner() const	{ return false; }
 
 	void LateEnableWebServerPort(uint16 nPort);	// Add Web Server port to already existing port mapping
 
 	void SetMessageOnResult(CWnd *cwnd, UINT nMessageID);
+	void ClearResultMessage();
 	TRISTATE ArePortsForwarded() const					{ return m_bUPnPPortsForwarded; }
 	uint16 GetUsedTCPPort() const						{ return m_nTCPPort; }
 	uint16 GetUsedUDPPort() const						{ return m_nUDPPort; }
@@ -89,5 +90,5 @@ public:
 	virtual bool IsReady()								{ return false; }
 	virtual int GetImplementationID()					{ return UPNP_IMPL_NONE; }
 	virtual LPCTSTR GetImplementationName() const		{ return _T("None"); }
-	virtual bool MustAbandonForShutdown() const			{ return false; }
+	virtual bool MustAbandonDiscoveryOwner() const		{ return false; }
 };

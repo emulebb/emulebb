@@ -3541,7 +3541,7 @@ void CemuleDlg::OnClose()
 
 	// close uPnP Ports
 	theApp.m_pUPnPFinder->GetImplementation()->StopAsyncFind();
-	if (thePrefs.CloseUPnPOnExit() && !theApp.m_pUPnPFinder->GetImplementation()->MustAbandonForShutdown())
+	if (thePrefs.CloseUPnPOnExit() && !theApp.m_pUPnPFinder->GetImplementation()->MustAbandonDiscoveryOwner())
 		theApp.m_pUPnPFinder->GetImplementation()->DeletePorts();
 
 	thePrefs.Save();
@@ -6031,11 +6031,16 @@ LRESULT CemuleDlg::OnUPnPResult(WPARAM wParam, LPARAM lParam)
 		//just to be sure, stop any running services and also delete the forwarded ports (if necessary)
 		if (wParam == CUPnPImpl::UPNP_TIMEOUT) {
 			impl->StopAsyncFind();
-			impl->DeletePorts();
+			if (!impl->MustAbandonDiscoveryOwner())
+				impl->DeletePorts();
 		}
 		DebugLogWarning(_T("NAT mapping backend '%s' did not complete successfully"), impl->GetImplementationName());
 		// NAT mapping failed, check if we can retry it with another backend
 		if (theApp.m_pUPnPFinder->SwitchImplentation()) {
+			// WHY: fallback is a fresh backend attempt. Reusing the expired timer
+			// from the previous backend can immediately fire another timeout, while
+			// leaving no timer at all would hide a stuck fallback discovery.
+			VERIFY(Win32CallbackTimerSeams::StopNullWindowCallbackTimer(m_hUPnPTimeOutTimer) != Win32CallbackTimerSeams::ETimerStopResult::Failed);
 			DebugLog(_T("Trying fallback NAT mapping backend '%s'"), theApp.m_pUPnPFinder->GetImplementation()->GetImplementationName());
 			StartUPnP(false);
 			return 0;
@@ -6112,7 +6117,7 @@ void CemuleDlg::StartUPnP(bool bReset, uint16 nForceTCPPort, uint16 nForceUDPPor
 			if (impl->IsReady()) {
 				DebugLog(_T("Attempting NAT mapping backend '%s'"), impl->GetImplementationName());
 				impl->SetMessageOnResult(this, UM_UPNP_RESULT);
-				if (bReset)
+				if (m_hUPnPTimeOutTimer == 0)
 					VERIFY(Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(m_hUPnPTimeOutTimer, SEC2MS(40), UPnPTimeOutTimer));
 				impl->StartDiscovery((nForceTCPPort ? nForceTCPPort : thePrefs.GetPort())
 					, (nForceUDPPort ? nForceUDPPort : thePrefs.GetUDPPort())

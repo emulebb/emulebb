@@ -43,12 +43,17 @@ void CUPnPImpl::SetMessageOnResult(CWnd *cwnd, UINT nMessageID)
 	m_nResultMessageID = nMessageID;
 }
 
+void CUPnPImpl::ClearResultMessage()
+{
+	m_nResultMessageID = 0;
+	m_wndResultMessage = NULL;
+}
+
 void CUPnPImpl::SendResultMessage()
 {
 	if (m_wndResultMessage != NULL && m_nResultMessageID != 0)
 		m_wndResultMessage->PostMessage(m_nResultMessageID, (WPARAM)(m_bUPnPPortsForwarded == TRIS_TRUE ? UPNP_OK : UPNP_FAILED), (LPARAM)m_bCheckAndRefresh);
-	m_nResultMessageID = 0;
-	m_wndResultMessage = NULL;
+	ClearResultMessage();
 }
 
 void CUPnPImpl::LateEnableWebServerPort(uint16 nPort)

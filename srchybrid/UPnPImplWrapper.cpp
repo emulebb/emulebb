@@ -50,10 +50,10 @@ void CUPnPImplWrapper::ClearImplementations()
 		CUPnPImpl *pImpl = m_liAvailable.RemoveHead();
 		if (pImpl != NULL) {
 			pImpl->StopAsyncFind();
-			if (pImpl->MustAbandonForShutdown()) {
+			if (pImpl->MustAbandonDiscoveryOwner()) {
 				// WHY: a timed-out discovery worker still owns raw access to the
-				// implementation. During process exit the safe choice is a bounded
-				// leak, not deleting the owner and turning a slow router into UAF.
+				// implementation. The safe choice is a bounded leak, not deleting
+				// the owner and turning a slow router into UAF.
 				DebugLogError(_T("Abandoning NAT mapping implementation '%s' because its discovery worker is still running"), pImpl->GetImplementationName());
 			} else
 				delete pImpl;
@@ -63,10 +63,10 @@ void CUPnPImplWrapper::ClearImplementations()
 		CUPnPImpl *pImpl = m_liUsed.RemoveHead();
 		if (pImpl != NULL) {
 			pImpl->StopAsyncFind();
-			if (pImpl->MustAbandonForShutdown()) {
+			if (pImpl->MustAbandonDiscoveryOwner()) {
 				// WHY: a timed-out discovery worker still owns raw access to the
-				// implementation. During process exit the safe choice is a bounded
-				// leak, not deleting the owner and turning a slow router into UAF.
+				// implementation. The safe choice is a bounded leak, not deleting
+				// the owner and turning a slow router into UAF.
 				DebugLogError(_T("Abandoning NAT mapping implementation '%s' because its discovery worker is still running"), pImpl->GetImplementationName());
 			} else
 				delete pImpl;
