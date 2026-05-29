@@ -683,6 +683,22 @@ json BuildTransferPartsJson(CPartFile &rPartFile)
 	json parts = json::array();
 	const uint64 uFileSize = static_cast<uint64>(rPartFile.GetFileSize());
 	const UINT uPartCount = rPartFile.GetPartCount();
+	std::vector<UINT> availableSourcesByPart(uPartCount, 0);
+	// WHY: transfer details is dispatched on the UI thread because CPartFile and
+	// source lists are UI-owned. Counting availability by scanning the source
+	// list once avoids the previous parts*sources CList traversal pattern, which
+	// could stall the UI on large real files with many sources.
+	for (POSITION pos = rPartFile.srclist.GetHeadPosition(); pos != NULL;) {
+		const CUpDownClient *const pClient = rPartFile.srclist.GetNext(pos);
+		if (!rPartFile.IsLiveSource(pClient) || pClient->GetPartStatus() == NULL)
+			continue;
+		const UINT uClientPartCount = min(static_cast<UINT>(pClient->GetPartCount()), uPartCount);
+		const uint8 *const pPartStatus = pClient->GetPartStatus();
+		for (UINT uPart = 0; uPart < uClientPartCount; ++uPart) {
+			if (pPartStatus[uPart] != 0)
+				++availableSourcesByPart[uPart];
+		}
+	}
 	for (UINT uPart = 0; uPart < uPartCount; ++uPart) {
 		const uint64 uStart = static_cast<uint64>(uPart) * PARTSIZE;
 		const uint64 uEndExclusive = min(uStart + static_cast<uint64>(PARTSIZE), uFileSize);
@@ -692,12 +708,6 @@ json BuildTransferPartsJson(CPartFile &rPartFile)
 		const uint64 uEnd = uEndExclusive - 1;
 		const uint64 uSize = uEnd - uStart + 1;
 		const uint64 uGapBytes = rPartFile.GetTotalGapSizeInRange(uStart, uEnd);
-		UINT uAvailableSources = 0;
-		for (POSITION pos = rPartFile.srclist.GetHeadPosition(); pos != NULL;) {
-			const CUpDownClient *const pClient = rPartFile.srclist.GetNext(pos);
-			if (rPartFile.IsLiveSource(pClient) && pClient->IsPartAvailable(uPart))
-				++uAvailableSources;
-		}
 
 		parts.push_back(json{
 			{"index", uPart},
@@ -709,7 +719,7 @@ json BuildTransferPartsJson(CPartFile &rPartFile)
 			{"complete", uGapBytes == 0},
 			{"requested", rPartFile.IsAlreadyRequested(uStart, uEnd, true)},
 			{"corrupted", rPartFile.IsCorruptedPart(uPart)},
-			{"availableSources", uAvailableSources}
+			{"availableSources", availableSourcesByPart[uPart]}
 		});
 	}
 	return parts;

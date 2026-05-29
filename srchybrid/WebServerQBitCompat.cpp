@@ -36,6 +36,10 @@ using json = nlohmann::json;
 namespace
 {
 CCriticalSection g_qbitSessionIdLock;
+CCriticalSection g_qbitTorrentInfoCacheLock;
+json g_qbitTorrentInfoCache = json::array();
+ULONGLONG g_ullQBitTorrentInfoCacheTick = 0;
+constexpr ULONGLONG kQBitTorrentInfoCacheTtlMs = 1000;
 
 void SendTextResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, const CStringA &rBody, LPCSTR pszExtraHeaders = NULL)
 {
@@ -224,10 +228,43 @@ json BuildQBitTorrentJsonFromNativeTransfer(
 
 bool BuildQBitTorrentsJson(const std::string &rCategory, json &rTorrents, CString &rErrorMessage)
 {
-	json params = json::object();
-	if (!rCategory.empty())
-		params["category"] = rCategory;
-	return ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("qbit/transfers/info", params), rTorrents, rErrorMessage) && rTorrents.is_array();
+	auto filterCategory = [&rCategory](const json &rSource) {
+		if (rCategory.empty())
+			return rSource;
+		json filtered = json::array();
+		if (!rSource.is_array())
+			return filtered;
+		for (const json &rTorrent : rSource) {
+			if (rTorrent.is_object() && rTorrent.value("category", std::string()) == rCategory)
+				filtered.push_back(rTorrent);
+		}
+		return filtered;
+	};
+
+	const ULONGLONG ullNow = ::GetTickCount64();
+	{
+		CSingleLock cacheLock(&g_qbitTorrentInfoCacheLock, TRUE);
+		if (g_qbitTorrentInfoCache.is_array() && g_ullQBitTorrentInfoCacheTick != 0 && ullNow - g_ullQBitTorrentInfoCacheTick <= kQBitTorrentInfoCacheTtlMs) {
+			rTorrents = filterCategory(g_qbitTorrentInfoCache);
+			return true;
+		}
+	}
+
+	json freshTorrents;
+	// WHY: Arr-compatible qBit polling can run once per second and the native
+	// queue is UI-owned. Always refresh the unfiltered snapshot once, then serve
+	// category-specific requests from the worker-side cache so one controller
+	// cannot force repeated full UI-thread queue walks in the same polling tick.
+	if (!ExecuteBridgeCommand(WebServerJson::BuildInternalCommand("qbit/transfers/info", json::object()), freshTorrents, rErrorMessage) || !freshTorrents.is_array())
+		return false;
+
+	{
+		CSingleLock cacheLock(&g_qbitTorrentInfoCacheLock, TRUE);
+		g_qbitTorrentInfoCache = freshTorrents;
+		g_ullQBitTorrentInfoCacheTick = ullNow;
+	}
+	rTorrents = filterCategory(freshTorrents);
+	return true;
 }
 
 void HandleLogin(const ThreadData &rData)
