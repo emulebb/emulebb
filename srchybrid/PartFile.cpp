@@ -42,6 +42,7 @@
 #include "Packets.h"
 #include "PathHelpers.h"
 #include "Preferences.h"
+#include "ProtocolGuards.h"
 #include "PartFileHashSeams.h"
 #include "PartFileCompletionSeams.h"
 #include "PartFileNumericSeams.h"
@@ -99,8 +100,14 @@ bool PostPartFileCompletionThreadResult(SPartFileCompletionThreadResult *pResult
 {
 	const HWND hNotifyWnd = theApp.emuledlg != NULL ? theApp.emuledlg->GetSafeHwnd() : NULL;
 	const DWORD dwResult = pResult != NULL ? pResult->dwResult : FILE_COMPLETION_THREAD_FAILED;
+	const bool bSuccessResult = (dwResult & FILE_COMPLETION_THREAD_SUCCESS) != 0;
+	// WHY: success completion is posted after the completed file has been moved
+	// and the .part.met sidecars have been removed. Skipping that post only
+	// because shutdown started loses the UI-thread finalization and known-file
+	// bookkeeping. Failure results may still be skipped during close because
+	// they do not follow a destructive filesystem commit.
 	const PartFileCompletionSeams::SWorkerCompletionPostResult result =
-		PartFileCompletionSeams::PostWorkerCompletion(theApp.IsClosing(), hNotifyWnd, TM_FILECOMPLETED, dwResult, reinterpret_cast<LPARAM>(pResult));
+		PartFileCompletionSeams::PostWorkerCompletion(theApp.IsClosing() && !bSuccessResult, hNotifyWnd, TM_FILECOMPLETED, dwResult, reinterpret_cast<LPARAM>(pResult));
 	if (result.eDelivery == PartFileCompletionSeams::EWorkerCompletionDelivery::Failed) {
 		CPartFile *pFile = pResult != NULL ? pResult->pFile : NULL;
 		const CString strFileName(pFile != NULL ? pFile->GetFileName() : CString(_T("<null>")));
@@ -1224,7 +1231,17 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 		}
 
 		bool bHadAICHHashSetTag = false;
-		for (uint32 tagcount = metFile.ReadUInt32(); tagcount > 0; --tagcount) {
+		const uint32 uTagCount = metFile.ReadUInt32();
+		// WHY: .part.met is local persisted state and can be truncated or
+		// corrupt. Validate the per-record tag count before constructing CTag
+		// objects so startup cannot allocate from an impossible count before the
+		// later file-size and gap validation gets control.
+		if (!HasSanePersistentMetadataTagCount(metFile.GetPosition(), metFile.GetLength(), uTagCount)) {
+			LogError(LOG_STATUSBAR, GetResString(IDS_ERR_METCORRUPT), (LPCTSTR)m_partmetfilename, (LPCTSTR)FormatDisplayFileName(GetFileName()));
+			return PLR_FAILED_METFILE_CORRUPT;
+		}
+		UINT uRetainedUnknownTags = 0;
+		for (uint32 tagcount = uTagCount; tagcount > 0; --tagcount) {
 			CTag *newtag = new CTag(metFile, false);
 			if (pOutCheckFileFormat == NULL || newtag->GetNameID() == FT_FILESIZE || newtag->GetNameID() == FT_FILENAME) {
 				switch (newtag->GetNameID()) {
@@ -1244,8 +1261,15 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 					break;
 				case FT_FILESIZE:
 					ASSERT(newtag->IsInt64(true));
-					if (newtag->IsInt64(true))
-						SetFileSize(newtag->GetInt64());
+					if (newtag->IsInt64(true)) {
+						const uint64 ullFileSize = newtag->GetInt64();
+						if (!FileSizeSeams::IsSupportedNetworkFileSize(ullFileSize)) {
+							LogError(LOG_STATUSBAR, GetResString(IDS_ERR_FILEERROR), (LPCTSTR)m_partmetfilename, (LPCTSTR)FormatDisplayFileName(GetFileName()), _T("File size exceeds supported limit"));
+							delete newtag;
+							return PLR_FAILED_METFILE_CORRUPT;
+						}
+						SetFileSize(FileSizeSeams::FromUInt64(ullFileSize));
+					}
 					break;
 				case FT_TRANSFERRED:
 					ASSERT(newtag->IsInt64(true));
@@ -1435,8 +1459,11 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 								pair->value.end = newtag->GetInt64() - 1;
 						}
 					} else {
-						m_taglist.Add(newtag);
-						newtag = NULL;
+						if (uRetainedUnknownTags < 256u) {
+							++uRetainedUnknownTags;
+							m_taglist.Add(newtag);
+							newtag = NULL;
+						}
 					}
 				}
 			}

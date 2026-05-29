@@ -571,9 +571,13 @@ CTag::CTag(CFileDataIO &data, bool bOptUTF8)
 			m_pData = new BYTE[m_nBlobSize];
 			data.Read(m_pData, m_nBlobSize);
 		} else {
+			// WHY: the tag stream is length-delimited. If a blob advertises more
+			// bytes than remain, leaving the file position unchanged makes the
+			// next tag parse consume payload bytes as a new header. Treat the
+			// record as truncated instead of desynchronizing local metadata or a
+			// malformed packet.
 			ASSERT(0);
-			m_nBlobSize = 0;
-			m_pData = NULL;
+			AfxThrowFileException(CFileException::endOfFile);
 		}
 		break;
 	default:

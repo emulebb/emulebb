@@ -38,6 +38,14 @@ namespace FileSizeSeams
 	}
 
 	/**
+	 * @brief Reports whether an unsigned persisted/network file-size value is representable by eMuleBB.
+	 */
+	inline bool IsSupportedNetworkFileSize(uint64 ullFileSize)
+	{
+		return ullFileSize <= MAX_EMULE_FILE_SIZE;
+	}
+
+	/**
 	 * @brief Creates an EMFileSize from a known unsigned network file-size value.
 	 */
 	inline EMFileSize FromUInt64(uint64 ullFileSize)

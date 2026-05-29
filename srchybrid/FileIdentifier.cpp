@@ -20,6 +20,13 @@
 #include "safefile.h"
 #include "knownfile.h"
 #include "log.h"
+#include "ProtocolGuards.h"
+
+namespace
+{
+constexpr uint16 kMaxSupportedMD4PartHashes = static_cast<uint16>(MAX_EMULE_FILE_SIZE / PARTSIZE + 1u);
+constexpr uint16 kMaxSupportedAICHPartHashes = static_cast<uint16>((MAX_EMULE_FILE_SIZE + PARTSIZE - 1u) / PARTSIZE);
+}
 
 // File size       Data parts      ED2K parts      ED2K part hashes		AICH part hashes
 // -------------------------------------------------------------------------------------------
@@ -187,6 +194,12 @@ bool CFileIdentifier::LoadMD4HashsetFromFile(CFileDataIO &file, bool bVerifyExis
 
 	uint16 parts = file.ReadUInt16();
 	//TRACE("Nr. hashes: %u\n", (UINT)parts);
+	// WHY: persisted hashset counts are allocation drivers. The theoretical
+	// count is checked when the file size is already known, but known.met reads
+	// MD4 hashsets before its size tag; cap against the maximum supported eD2K
+	// file size so corrupt metadata cannot allocate arbitrary hash arrays.
+	if (parts > kMaxSupportedMD4PartHashes || !CanReadBlobPayload(file.GetPosition(), file.GetLength(), static_cast<uint32>(parts) * MDX_DIGEST_SIZE))
+		AfxThrowFileException(CFileException::endOfFile);
 	if (bVerifyExistingHash && (!md4equ(m_abyMD4Hash, checkid) || parts != GetTheoreticalMD4PartHashCount()))
 		return false;
 	for (UINT i = 0; i < parts; ++i) {
@@ -377,7 +390,18 @@ bool CFileIdentifier::LoadAICHHashsetFromFile(CFileDataIO &file, bool bVerify)
 		DebugLogError(_T("Loading AICH Part Hashset error: HashSet Masterhash doesn't match with existing masterhash - hashset not loaded"));
 		return false;
 	}
-	for (int i = file.ReadUInt16(); --i >= 0;)
+	const uint16 uParts = file.ReadUInt16();
+	const uint16 uExpectedParts = GetTheoreticalAICHPartHashCount();
+	// WHY: AICH part hashes are read from local metadata blobs after the file
+	// size is known. Reject counts that cannot match this file, or cannot fit in
+	// the remaining blob, before pushing per-part hash objects into the array.
+	if (uParts > kMaxSupportedAICHPartHashes
+		|| uParts != uExpectedParts
+		|| !CanReadBlobPayload(file.GetPosition(), file.GetLength(), static_cast<uint32>(uParts) * CAICHHash::GetHashSize()))
+	{
+		AfxThrowFileException(CFileException::endOfFile);
+	}
+	for (int i = uParts; --i >= 0;)
 		m_aAICHPartHashSet.Add(CAICHHash(file));
 	if (bVerify)
 		return VerifyAICHHashSet();

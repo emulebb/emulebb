@@ -223,6 +223,19 @@ inline bool HasSaneCountedRecords(size_t remainingBytes, uint32 recordCount, siz
 		|| recordCount <= remainingBytes / minimumRecordSize;
 }
 
+constexpr uint32 kMaxPersistentMetadataTags = 4096u;
+constexpr size_t kMinPersistentMetadataTagBytes = sizeof(uint8) + sizeof(uint8) + sizeof(uint8);
+
+/**
+ * Reports whether a local persisted tag count can fit before tag parsing starts.
+ */
+inline bool HasSanePersistentMetadataTagCount(ULONGLONG position, ULONGLONG length, uint32 tagCount)
+{
+	return position <= length
+		&& tagCount <= kMaxPersistentMetadataTags
+		&& HasSaneCountedRecords(static_cast<size_t>(length - position), tagCount, kMinPersistentMetadataTagBytes);
+}
+
 /**
  * Reports whether a blob payload can be read without underflowing the
  * remaining-byte calculation first.

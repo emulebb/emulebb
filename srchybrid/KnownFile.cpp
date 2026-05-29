@@ -662,6 +662,17 @@ bool CKnownFile::CreateAICHHashSetOnly()
 
 void CKnownFile::SetFileSize(EMFileSize nFileSize)
 {
+	if (!FileSizeSeams::IsSupportedNetworkFileSize(FileSizeSeams::ToUInt64(nFileSize))) {
+		// WHY: part-count fields are uint16 and several local metadata loaders
+		// resize arrays from this value. Keep the invariant runtime-enforced so
+		// a corrupt caller cannot turn an ASSERT-only size check into oversized
+		// allocations before later validation runs.
+		ASSERT(0);
+		CAbstractFile::SetFileSize(FileSizeSeams::FromUInt64(0));
+		m_iPartCount = 0;
+		m_iED2KPartCount = 0;
+		return;
+	}
 	const bool bKnownFile = theApp.knownfiles && theApp.knownfiles->IsKnownFile(this);
 	CAbstractFile::SetFileSize(nFileSize);
 
@@ -742,7 +753,15 @@ void CKnownFile::SetFileSize(EMFileSize nFileSize)
 bool CKnownFile::LoadTagsFromFile(CFileDataIO &file)
 {
 	bool bHadAICHHashSetTag = false;
-	for (uint32 j = file.ReadUInt32(); j > 0; --j) {
+	const uint32 uTagCount = file.ReadUInt32();
+	// WHY: known.met records are local persisted state and may be corrupt.
+	// Bound the per-record tag count before constructing CTag objects so one
+	// bad record cannot drive unbounded allocations or rely on EOF exceptions
+	// as the normal loop terminator.
+	if (!HasSanePersistentMetadataTagCount(file.GetPosition(), file.GetLength(), uTagCount))
+		return false;
+	UINT uRetainedUnknownTags = 0;
+	for (uint32 j = uTagCount; j > 0; --j) {
 		CTag *newtag = new CTag(file, false);
 		switch (newtag->GetNameID()) {
 		case FT_FILENAME:
@@ -753,7 +772,12 @@ bool CKnownFile::LoadTagsFromFile(CFileDataIO &file)
 		case FT_FILESIZE:
 			ASSERT(newtag->IsInt64(true));
 			if (newtag->IsInt64(true)) {
-				SetFileSize(newtag->GetInt64());
+				const uint64 ullFileSize = newtag->GetInt64();
+				if (!FileSizeSeams::IsSupportedNetworkFileSize(ullFileSize)) {
+					delete newtag;
+					return false;
+				}
+				SetFileSize(FileSizeSeams::FromUInt64(ullFileSize));
 				m_AvailPartFrequency.SetSize(GetPartCount());
 				if (GetPartCount())
 					memset(&m_AvailPartFrequency[0], 0, GetPartCount() * sizeof m_AvailPartFrequency[0]);
@@ -856,8 +880,11 @@ bool CKnownFile::LoadTagsFromFile(CFileDataIO &file)
 			} else {
 				ConvertED2KTag(newtag);
 				if (newtag) {
-					m_taglist.Add(newtag);
-					newtag = NULL;
+					if (uRetainedUnknownTags < 256u) {
+						++uRetainedUnknownTags;
+						m_taglist.Add(newtag);
+						newtag = NULL;
+					}
 				}
 			}
 		}
