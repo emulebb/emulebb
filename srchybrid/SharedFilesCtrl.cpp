@@ -1006,6 +1006,26 @@ void CSharedFilesCtrl::AppendVisibleFile(CShareableFile *file, const bool bUpdat
 		m_mapVisibleFileIndex.SetAt(file, static_cast<int>(m_aVisibleFiles.size() - 1));
 }
 
+void CSharedFilesCtrl::InsertVisibleFileByCurrentSort(CShareableFile *file)
+{
+	if (file == NULL)
+		return;
+
+	if (GetSortItem() == -1 || m_aVisibleFiles.empty()) {
+		m_aVisibleFiles.push_back(file);
+		m_mapVisibleFileIndex.SetAt(file, static_cast<int>(m_aVisibleFiles.size() - 1));
+		return;
+	}
+
+	const LPARAM lParamSort = MAKELONG(GetSortItem() + (GetSortSecondValue() ? 100 : 0), !GetSortAscending());
+	std::vector<CShareableFile*>::iterator itInsert = std::upper_bound(m_aVisibleFiles.begin(), m_aVisibleFiles.end(), file,
+		[this, lParamSort](const CShareableFile *pNewFile, const CShareableFile *pExistingFile) {
+			return CompareVisibleFiles(pNewFile, pExistingFile, lParamSort) < 0;
+		});
+	m_aVisibleFiles.insert(itInsert, file);
+	RebuildVisibleFileIndex();
+}
+
 void CSharedFilesCtrl::AddFile(const CShareableFile *file)
 {
 	if (!m_bModelBound)
@@ -1047,8 +1067,12 @@ void CSharedFilesCtrl::AddFile(const CShareableFile *file)
 	if (bPreserveState)
 		CaptureSharedFilesRepositionState(*this, savedState);
 
-	m_aVisibleFiles.push_back(const_cast<CShareableFile*>(file));
-	SortVisibleFiles();
+	// WHY: live CPU dumps from large-profile startup showed the UI thread
+	// repeatedly running stable_sort/CompareStringW from this per-file AddFile
+	// path.  The existing visible vector is already in the current column order,
+	// so one binary insertion preserves the same order for a new row without
+	// turning startup intake into O(files * visible-files log visible-files).
+	InsertVisibleFileByCurrentSort(const_cast<CShareableFile*>(file));
 	ApplyVisibleFileCount();
 	if (bPreserveState) {
 		CSharedFilesSelectionRestoreGuard guard(*this);
