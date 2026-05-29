@@ -149,7 +149,23 @@ void CServerConnect::ConnectToServer(CServer *server, bool multiconnect, bool bN
 
 	CServerSocket *newsocket = new CServerSocket(this, !multiconnect);
 	m_lstOpenSockets.AddTail((void*)newsocket);
-	newsocket->Create(0, SOCK_STREAM, FD_READ | FD_WRITE | FD_CLOSE | FD_CONNECT, thePrefs.GetBindAddr());
+	if (!newsocket->Create(0, SOCK_STREAM, FD_READ | FD_WRITE | FD_CLOSE | FD_CONNECT, thePrefs.GetBindAddr())) {
+		const DWORD dwError = CAsyncSocket::GetLastError();
+		// WHY: Create() failure means the socket never reached the async
+		// connect state that normally drives ConnectionFailed cleanup. Leaving it
+		// in m_lstOpenSockets lets later stop/retry code skip or revisit a socket
+		// that cannot deliver events, especially after bind-interface/VPN churn.
+		DebugLogError(_T("Server connection socket creation failed for %s:%hu (%s)"),
+			server->GetAddress(),
+			server->GetPort(),
+			(LPCTSTR)GetErrorMessage(dwError));
+		DestroySocket(newsocket);
+		if (singleconnecting)
+			StopConnectionTry();
+		else
+			TryAnotherConnectionRequest();
+		return;
+	}
 	newsocket->ConnectTo(server, bNoCrypt);
 	connectionattempts[::GetTickCount64()] = newsocket;
 }
