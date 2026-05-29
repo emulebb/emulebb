@@ -41,6 +41,7 @@ constexpr ULONGLONG ARR_COMPAT_BUSY_WAIT_MS = 15ULL * 1000ULL;
 constexpr DWORD ARR_COMPAT_POLL_SLEEP_MS = 750;
 constexpr DWORD ARR_COMPAT_BUSY_POLL_SLEEP_MS = 250;
 constexpr size_t ARR_COMPAT_MAX_RETURNED_PAGE_ITEMS = 100U;
+constexpr size_t ARR_COMPAT_MAX_CACHE_ENTRIES = 32U;
 
 struct SArrCompatResult
 {
@@ -247,16 +248,45 @@ bool TryGetCachedResults(const std::string &rCacheKey, std::vector<SArrCompatRes
 	return true;
 }
 
+void PurgeExpiredCachedResults(const ULONGLONG ullNow)
+{
+	for (auto it = g_arrCompatCache.begin(); it != g_arrCompatCache.end();) {
+		if (ullNow - it->second.ullTick > ARR_COMPAT_CACHE_TTL_MS)
+			it = g_arrCompatCache.erase(it);
+		else
+			++it;
+	}
+}
+
+void EnforceCacheEntryLimit()
+{
+	while (g_arrCompatCache.size() > ARR_COMPAT_MAX_CACHE_ENTRIES) {
+		auto itOldest = g_arrCompatCache.begin();
+		for (auto it = g_arrCompatCache.begin(); it != g_arrCompatCache.end(); ++it) {
+			if (it->second.ullTick < itOldest->second.ullTick)
+				itOldest = it;
+		}
+		g_arrCompatCache.erase(itOldest);
+	}
+}
+
 void StoreCachedResults(const std::string &rCacheKey, const std::vector<SArrCompatResult> &rResults)
 {
 	CSingleLock lock(&g_arrCompatCacheLock, TRUE);
+	const ULONGLONG ullNow = ::GetTickCount64();
+	// WHY: Arr controllers can issue many distinct query keys during long
+	// sessions. Key-local expiry on lookup does not reclaim cold stale vectors,
+	// so stores are the central mutation point that can bound memory regardless
+	// of which searches are repeated.
+	PurgeExpiredCachedResults(ullNow);
 	if (!WebServerArrCompatSeams::ShouldCacheTorznabResults(rResults.size())) {
 		g_arrCompatCache.erase(rCacheKey);
 		return;
 	}
 	SArrCompatCacheEntry &rEntry = g_arrCompatCache[rCacheKey];
-	rEntry.ullTick = ::GetTickCount64();
+	rEntry.ullTick = ullNow;
 	rEntry.results = rResults;
+	EnforceCacheEntryLimit();
 }
 
 bool ExecuteBridgeCommand(const json &rCommand, json &rResult)
