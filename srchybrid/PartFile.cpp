@@ -3371,7 +3371,31 @@ UINT CPartFile::CompleteThreadProc(LPVOID pvParams)
 	if (!pFile)
 		return UINT_MAX;
 	const ComInitializationSeams::CScopedComInitialize coInitialize;
-	pFile->PerformFileComplete();
+	try {
+		pFile->PerformFileComplete();
+	} catch (CMemoryException *ex) {
+		if (ex != NULL)
+			ex->Delete();
+		// WHY: the UI-thread completion message is normally what clears
+		// PFOP_COPYING. If the worker runs out of memory before it can even
+		// allocate/post that message, leaving the operation flag set makes the
+		// transfer undeletable until restart. This is the last-resort state
+		// repair path for failures which happen before ownership is handed back.
+		pFile->bNoNewReads = false;
+		pFile->SetFileOp(PFOP_NONE);
+		pFile->SetStatus(PS_ERROR);
+		DebugLogError(_T("Part-file completion worker ran out of MFC heap while completing \"%s\""), (LPCTSTR)pFile->GetFileName());
+		return UINT_MAX;
+	} catch (const std::bad_alloc&) {
+		// WHY: standard-library allocations do not throw CMemoryException.
+		// Treat them like the MFC low-memory case so the worker cannot strand
+		// the file in the in-progress completion state without a posted result.
+		pFile->bNoNewReads = false;
+		pFile->SetFileOp(PFOP_NONE);
+		pFile->SetStatus(PS_ERROR);
+		DebugLogError(_T("Part-file completion worker ran out of standard heap while completing \"%s\""), (LPCTSTR)pFile->GetFileName());
+		return UINT_MAX;
+	}
 	return 0;
 }
 
@@ -3470,17 +3494,22 @@ BOOL CPartFile::PerformFileComplete()
 {
 	// If that function is invoked from within the file completion thread, it's OK if we wait (and block) the thread.
 	CSingleLock sLock(&m_FileCompleteMutex, TRUE);
+	std::unique_ptr<SPartFileCompletionThreadResult> pFailureResult(new SPartFileCompletionThreadResult);
+	pFailureResult->pFile = this;
+	auto postCompletionFailure = [&]() {
+		if (PostPartFileCompletionThreadResult(pFailureResult.get())) {
+			pFailureResult.release();
+			return true;
+		}
+		SetFileOp(PFOP_NONE);
+		return false;
+	};
 
 	const CString strCompletedFileName(NormalizeDownloadFilename(GetFileName()));
 	TCHAR *newfilename = _tcsdup(strCompletedFileName);
 	if (PartFileCompletionSeams::IsMissingCompletedNameBuffer(newfilename)) {
 		DebugLogError(_T("Failed to allocate completed filename buffer for \"%s\""), (LPCTSTR)GetFileName());
-		std::unique_ptr<SPartFileCompletionThreadResult> pResult(new SPartFileCompletionThreadResult);
-		pResult->pFile = this;
-		if (PostPartFileCompletionThreadResult(pResult.get()))
-			pResult.release();
-		else
-			SetFileOp(PFOP_NONE);
+		postCompletionFailure();
 		return FALSE;
 	}
 
@@ -3544,6 +3573,16 @@ BOOL CPartFile::PerformFileComplete()
 	}
 	free(newfilename);
 
+	std::unique_ptr<SPartFileCompletionThreadResult> pSuccessResult(new SPartFileCompletionThreadResult);
+	pSuccessResult->pFile = this;
+	pSuccessResult->dwResult = FILE_COMPLETION_THREAD_SUCCESS | (renamed ? FILE_COMPLETION_THREAD_RENAMED : 0);
+	pSuccessResult->strCompletedPath = strNewname;
+	pSuccessResult->strIncomingPath = indir;
+	// WHY: once MoveFileWithProgress succeeds and the .part.met files are
+	// removed below, there is no cheap retry path left for this download. The
+	// UI-thread result object must therefore be allocated and populated before
+	// the destructive filesystem phase so a low-memory allocation cannot leave
+	// the completed file moved while PFOP_COPYING stays set forever.
 	bNoNewReads = true; //this file is on the move and cannot be read
 	CPartFileCopyProgressContext copyProgressContext{MakePartFileProgressTargetSnapshot(*this), 0u};
 	for (bool bFirstTry = true; ;) {
@@ -3557,13 +3596,8 @@ BOOL CPartFile::PerformFileComplete()
 				theApp.QueueLogLine(true, GetResString(IDS_ERR_COMPLETIONFAILED) + _T(" - %s: Windows long-path support is disabled; enable LongPathsEnabled to avoid failures with overlong paths")
 					, (LPCTSTR)FormatDisplayFileName(GetFileName()), (LPCTSTR)strNewname);
 
-			std::unique_ptr<SPartFileCompletionThreadResult> pResult(new SPartFileCompletionThreadResult);
-			pResult->pFile = this;
-			if (PostPartFileCompletionThreadResult(pResult.get()))
-				pResult.release();
-			else {
+			if (!postCompletionFailure()) {
 				bNoNewReads = false; //re-enable reading if the UI-thread result cannot be delivered
-				SetFileOp(PFOP_NONE);
 			}
 			return FALSE;
 		}
@@ -3617,15 +3651,10 @@ BOOL CPartFile::PerformFileComplete()
 
 	// Hold the owner mutex until after the result is queued; shutdown waits on
 	// the same mutex before deleting this CPartFile.
-	std::unique_ptr<SPartFileCompletionThreadResult> pResult(new SPartFileCompletionThreadResult);
-	pResult->pFile = this;
-	pResult->dwResult = FILE_COMPLETION_THREAD_SUCCESS | (renamed ? FILE_COMPLETION_THREAD_RENAMED : 0);
-	pResult->strCompletedPath = strNewname;
-	pResult->strIncomingPath = indir;
-	pResult->bHasLastModified = bHasLastModified;
-	pResult->tLastModified = tLastModified;
-	if (PostPartFileCompletionThreadResult(pResult.get()))
-		pResult.release();
+	pSuccessResult->bHasLastModified = bHasLastModified;
+	pSuccessResult->tLastModified = tLastModified;
+	if (PostPartFileCompletionThreadResult(pSuccessResult.get()))
+		pSuccessResult.release();
 	else
 		SetFileOp(PFOP_NONE);
 	return TRUE;
