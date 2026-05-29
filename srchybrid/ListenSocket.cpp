@@ -94,6 +94,22 @@ CClientReqSocket *CreateClientReqSocketForAccept(SOCKET hAcceptedSocket)
 	DebugLogError(LOG_STATUSBAR, _T("Rejected TCP connection because the client socket wrapper could not be allocated"));
 	return NULL;
 }
+
+bool DrainAcceptedSocketAfterWrapperAllocationFailure(SOCKET hListenSocket)
+{
+	SOCKADDR_IN sockAddr = {};
+	int iSockAddrLen = sizeof sockAddr;
+	const SOCKET hAcceptedSocket = accept(hListenSocket, reinterpret_cast<LPSOCKADDR>(&sockAddr), &iSockAddrLen);
+	if (hAcceptedSocket == INVALID_SOCKET) {
+		const DWORD dwError = CAsyncSocket::GetLastError();
+		if (dwError != WSAEWOULDBLOCK)
+			DebugLogError(LOG_STATUSBAR, _T("Failed to drain TCP backlog after client socket allocation failure: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
+		return false;
+	}
+
+	closesocket(hAcceptedSocket);
+	return true;
+}
 }
 
 // CClientReqSocket
@@ -2041,7 +2057,7 @@ bool CListenSocket::Rebind()
 
 bool CListenSocket::StartListening()
 {
-	bListening = true;
+	bListening = false;
 
 	// Creating the socket with SO_REUSEADDR may solve LowID issues if emule was restarted
 	// quickly or started after a crash, but(!) it will also create another problem. If the
@@ -2090,10 +2106,17 @@ bool CListenSocket::StartListening()
 	//	VERIFY( SetSockOpt(SO_CONDITIONAL_ACCEPT, &iOptVal, sizeof iOptVal) );
 	//}
 
-	if (!Listen())
+	if (!Listen()) {
+		// WHY: bListening is used later as the runtime truth for whether accept
+		// callbacks can be restarted. If listen() fails after socket creation,
+		// leaving an open but non-listening socket makes status/UI code report a
+		// live TCP listener and can keep restart paths pointed at the bad handle.
+		Close();
 		return false;
+	}
 
 	m_port = thePrefs.GetPort();
+	bListening = true;
 	return true;
 }
 
@@ -2225,8 +2248,18 @@ void CListenSocket::OnAccept(int nErrorCode)
 				AddConnection();
 			} else {
 				newclient = CreateClientReqSocketForAccept(INVALID_SOCKET);
-				if (newclient == NULL)
+				if (newclient == NULL) {
+					// WHY: the normal MFC Accept path only removes a connection
+					// from the kernel backlog after a CClientReqSocket exists. If
+					// wrapper allocation fails, explicitly accept-and-close one
+					// pending SOCKET so low memory does not leave the same backlog
+					// item triggering a tight accept loop.
+					if (!DrainAcceptedSocketAfterWrapperAllocationFailure(m_SocketData.hSocket)) {
+						m_nPendingConnections = 0;
+						break;
+					}
 					continue;
+				}
 				if (!Accept(*newclient, (LPSOCKADDR)&SockAddr, &iSockAddrLen)) {
 					newclient->Safe_Delete();
 					DWORD nError = CAsyncSocket::GetLastError();
