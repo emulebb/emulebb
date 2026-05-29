@@ -341,7 +341,12 @@ void CKnownFileList::Save()
 			INT_PTR iRecordsNumber = 0;
 			for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
 				CKnownFile *pFile = pair->value;
-				if (thePrefs.IsRememberingDownloadedFiles() || theApp.sharedfiles->IsFilePtrInList(pFile)) {
+				// WHY: shutdown may intentionally abandon the shared-file owner
+				// after a hash worker exceeds its wait budget. known.met still has
+				// to be saved later in the same shutdown, so preserve metadata by
+				// writing all known records when the shared-file list is unavailable
+				// instead of dereferencing a deliberately nulled global pointer.
+				if (thePrefs.IsRememberingDownloadedFiles() || theApp.sharedfiles == NULL || theApp.sharedfiles->IsFilePtrInList(pFile)) {
 					pFile->WriteToFile(file);
 					++iRecordsNumber;
 				}

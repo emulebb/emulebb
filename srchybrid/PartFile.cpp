@@ -3786,7 +3786,14 @@ void CPartFile::PerformFileCompleteEnd(void *pCompletionResult)
 		UpdateMetaDataTags();
 
 		// republish that file to the ed2k-server to update the 'FT_COMPLETE_SOURCES' counter on the server.
-		theApp.sharedfiles->RepublishFile(this);
+		if (theApp.sharedfiles != NULL)
+			theApp.sharedfiles->RepublishFile(this);
+		else
+			// WHY: shutdown can abandon shared-file ownership after a stuck hash
+			// worker. Completion finalization still has to make the file durable,
+			// but server republish is optional and must not dereference the
+			// deliberately unavailable shared-file list during process exit.
+			DebugLogWarning(_T("Skipped completed-file republish for \"%s\" because shared-file state is unavailable during shutdown."), (LPCTSTR)GetFileName());
 
 		// give visual response
 		const CString strDisplayFileName(FormatDisplayFileName(GetFileName()));

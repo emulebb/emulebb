@@ -416,7 +416,16 @@ int CAICHSyncThread::Run()
 				::Sleep(action.dwSleepMilliseconds);
 			}
 
-			CSingleLock hashingLock(&theApp.hashing_mut, TRUE); // only one file hash at a time
+			CSingleLock hashingLock(&theApp.hashing_mut); // only one file hash at a time
+			while (!hashingLock.Lock(kAICHSyncHashingLockPollMs)) {
+				// WHY: the UI shutdown path waits for AICH before it starts the
+				// bounded shared-hash shutdown. If AICH blocks indefinitely inside
+				// CSingleLock while another hash owner is stuck, it cannot observe
+				// IsClosing() and the UI thread falls back to its final infinite
+				// wait. Poll the hash mutex so shutdown remains close-aware.
+				if (theApp.IsClosing())
+					return 0;
+			}
 			if (theApp.IsClosing())
 				return 0;
 

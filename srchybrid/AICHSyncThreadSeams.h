@@ -24,6 +24,7 @@ enum class EAICHSyncThreadShutdownWaitAction
 };
 
 constexpr DWORD kAICHSyncThreadShutdownWaitMs = 5000u;
+constexpr DWORD kAICHSyncHashingLockPollMs = 100u;
 
 /**
  * @brief Reports whether AICH background hashing should wait for foreground hash work to finish.
