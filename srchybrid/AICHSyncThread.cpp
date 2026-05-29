@@ -84,6 +84,27 @@ namespace
 		return rpResolvedFile != NULL && !rpResolvedFile->IsPartFile();
 	}
 
+	bool SnapshotSharedAICHSyncFileNoLock(CSharedFileList *pSharedFiles, const uchar *pFileHash, CString &rstrFilePath, CString &rstrFileName, EMFileSize &rnFileSize, time_t &rtUtcLastModified)
+	{
+		CKnownFile *pFile = NULL;
+		if (!ResolveSharedAICHSyncFileNoLock(pSharedFiles, pFileHash, pFile))
+			return false;
+
+		rstrFilePath = pFile->GetFilePath();
+		rstrFileName = pFile->GetFileName();
+		rnFileSize = pFile->GetFileSize();
+		rtUtcLastModified = pFile->GetUtcFileDate();
+		return true;
+	}
+
+	bool IsMatchingSharedAICHSyncTargetNoLock(CKnownFile *pFile, const CString &rstrFilePath, EMFileSize nFileSize, time_t tUtcLastModified)
+	{
+		return pFile != NULL
+			&& pFile->GetFilePath() == rstrFilePath
+			&& pFile->GetFileSize() == nFileSize
+			&& pFile->GetUtcFileDate() == tUtcLastModified;
+	}
+
 	UINT GetAICHHashsetPayloadByteCount(CFile &file, const uint32 nHashCount)
 	{
 		const ULONGLONG ullHashsetBytes = static_cast<ULONGLONG>(nHashCount) * CAICHHash::GetHashSize();
@@ -430,20 +451,54 @@ int CAICHSyncThread::Run()
 				return 0;
 
 			PostAICHSyncProgressCount(m_aToHash.GetCount() - iFile);
+			CString strFilePath;
+			CString strFileName;
+			EMFileSize nFileSize = 0ull;
+			time_t tUtcLastModified = 0;
 			{
 				CSharedFileList *pSharedFiles = theApp.sharedfiles;
 				if (pSharedFiles == NULL)
 					return 0;
 
 				CSingleLock sharelock(&pSharedFiles->m_mutWriteList, TRUE);
-				CKnownFile *pCurFile = NULL;
-				const bool bIsStillShared = ResolveSharedAICHSyncFileNoLock(pSharedFiles, m_aToHash[iFile].m_key, pCurFile);
+				const bool bIsStillShared = SnapshotSharedAICHSyncFileNoLock(pSharedFiles, m_aToHash[iFile].m_key, strFilePath, strFileName, nFileSize, tUtcLastModified);
 				if (!ShouldCreateAICHSyncHash(theApp.IsClosing(), bIsStillShared))
 					continue;
-				theApp.QueueLogLine(false, GetResString(IDS_AICH_CALCFILE), (LPCTSTR)pCurFile->GetFileName());
-				if (!pCurFile->CreateAICHHashSetOnly())
-					theApp.QueueDebugLogLine(false, _T("Failed to create AICH Hashset while sync. for file %s"), (LPCTSTR)pCurFile->GetFileName());
 			}
+
+			theApp.QueueLogLine(false, GetResString(IDS_AICH_CALCFILE), (LPCTSTR)strFileName);
+			CAICHRecoveryHashSet aichHashSet(NULL, nFileSize);
+			// WHY: hashing can spend seconds reading a large file. Holding the
+			// shared-file write lock over that I/O stalls startup/UI work and
+			// lets shutdown wait on a worker that still owns list metadata. Hash
+			// from an immutable path/size snapshot, then reacquire the list only
+			// long enough to publish the result if the same shared file is still
+			// present.
+			if (!CKnownFile::CreateAICHHashSetForFile(strFilePath, nFileSize, aichHashSet)) {
+				theApp.QueueDebugLogLine(false, _T("Failed to create AICH Hashset while sync. for file %s"), (LPCTSTR)strFileName);
+				continue;
+			}
+			if (theApp.IsClosing())
+				return 0;
+
+			CSharedFileList *pSharedFiles = theApp.sharedfiles;
+			if (pSharedFiles == NULL)
+				return 0;
+
+			CSingleLock sharelock(&pSharedFiles->m_mutWriteList, TRUE);
+			CKnownFile *pCurFile = NULL;
+			if (!ResolveSharedAICHSyncFileNoLock(pSharedFiles, m_aToHash[iFile].m_key, pCurFile))
+				continue;
+			if (!IsMatchingSharedAICHSyncTargetNoLock(pCurFile, strFilePath, nFileSize, tUtcLastModified)) {
+				// WHY: the worker hashes outside the shared-file lock. A rescan can
+				// remove or replace the file while the I/O is in flight, so the
+				// computed AICH tree must be dropped unless the metadata identity we
+				// snapped before hashing still matches the live shared-file object.
+				theApp.QueueDebugLogLine(false, _T("Dropped stale AICH Hashset while sync. for file %s"), (LPCTSTR)strFileName);
+				continue;
+			}
+			if (!pCurFile->ApplyAICHHashSetOnly(aichHashSet))
+				theApp.QueueDebugLogLine(false, _T("Failed to apply AICH Hashset while sync. for file %s"), (LPCTSTR)strFileName);
 		}
 
 		PostAICHSyncProgressCount(0);

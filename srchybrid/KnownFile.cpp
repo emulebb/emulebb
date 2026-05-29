@@ -599,22 +599,29 @@ bool CKnownFile::CreateFromFile(LPCTSTR in_directory, LPCTSTR in_filename, const
 bool CKnownFile::CreateAICHHashSetOnly()
 {
 	ASSERT(!IsPartFile());
+	CAICHRecoveryHashSet cAICHHashSet(this, m_nFileSize);
+	if (!CreateAICHHashSetForFile(GetFilePath(), m_nFileSize, cAICHHashSet))
+		return false;
+	return ApplyAICHHashSetOnly(cAICHHashSet);
+}
 
-	FILE *file = OpenFileStreamSharedReadForHashing(GetFilePath()); // can not use _SH_DENYWR because we may access a completing part file
+bool CKnownFile::CreateAICHHashSetForFile(LPCTSTR pszFilePath, EMFileSize nFileSize, CAICHRecoveryHashSet &rAICHHashSet)
+{
+	FILE *file = OpenFileStreamSharedReadForHashing(pszFilePath); // can not use _SH_DENYWR because we may access a completing part file
 	if (!file) {
 		const DWORD dwOpenError = ::GetLastError();
-		LogKnownFileOpenFailure(GetFilePath(), dwOpenError);
+		LogKnownFileOpenFailure(pszFilePath, dwOpenError);
 		return false;
 	}
 	// we are reading the file data later in 8K blocks, adjust the internal file stream buffer accordingly
 	::setvbuf(file, NULL, _IOFBF, 1024 * 8 * 2);
 
 	// create aich hashset
-	CAICHRecoveryHashSet cAICHHashSet(this, m_nFileSize);
-	uint64 togo = FileSizeSeams::ToUInt64(m_nFileSize);
+	rAICHHashSet.SetFileSize(nFileSize);
+	uint64 togo = FileSizeSeams::ToUInt64(nFileSize);
 	for (UINT hashcount = 0; togo; ++hashcount) {
 		uint64 uSize = min(togo, PARTSIZE);
-		CAICHHashTree *pBlockAICHHashTree = cAICHHashSet.m_pHashTree.FindHash(hashcount * PARTSIZE, uSize);
+		CAICHHashTree *pBlockAICHHashTree = rAICHHashSet.m_pHashTree.FindHash(hashcount * PARTSIZE, uSize);
 		ASSERT(pBlockAICHHashTree != NULL);
 		if (pBlockAICHHashTree == NULL) {
 			fclose(file);
@@ -625,7 +632,7 @@ bool CKnownFile::CreateAICHHashSetOnly()
 				fclose(file);
 				return false;
 			}
-			LogError(_T("Failed to hash file \"%s\" - %s"), (LPCTSTR)GetFilePath(), (LPCTSTR)GetCrtErrorString(errno));
+			LogError(_T("Failed to hash file \"%s\" - %s"), pszFilePath, (LPCTSTR)GetCrtErrorString(errno));
 			fclose(file);
 			return false;
 		}
@@ -637,26 +644,41 @@ bool CKnownFile::CreateAICHHashSetOnly()
 	}
 	fclose(file);
 
-	cAICHHashSet.ReCalculateHash(false);
-	if (cAICHHashSet.VerifyHashTree(true)) {
-		cAICHHashSet.SetStatus(AICH_HASHSETCOMPLETE);
-		const CAICHHash *pHash = (m_FileIdentifier.HasAICHHash() && m_FileIdentifier.GetAICHHash() != cAICHHashSet.GetMasterHash())
-			? &m_FileIdentifier.GetAICHHash() : NULL;
-		theApp.knownfiles->AICHHashChanged(pHash, cAICHHashSet.GetMasterHash(), this);
-		m_FileIdentifier.SetAICHHash(cAICHHashSet.GetMasterHash());
-		if (!m_FileIdentifier.SetAICHHashSet(cAICHHashSet)) {
-			ASSERT(0);
-			DebugLogError(_T("CreateAICHHashSetOnly() - failed to create AICH PartHashSet out of RecoveryHashSet - %s"), (LPCTSTR)GetFileName());
-		}
-		if (!cAICHHashSet.SaveHashSet())
-			LogError(LOG_STATUSBAR, GetResString(IDS_SAVEACFAILED));
-		else
-			SetAICHRecoverHashSetAvailable(true);
+	rAICHHashSet.ReCalculateHash(false);
+	if (rAICHHashSet.VerifyHashTree(true)) {
+		rAICHHashSet.SetStatus(AICH_HASHSETCOMPLETE);
 	} else {
 		// now something went pretty wrong
-		DebugLogError(LOG_STATUSBAR, _T("Failed to calculate AICH Hashset from file %s"), (LPCTSTR)GetFileName());
+		DebugLogError(LOG_STATUSBAR, _T("Failed to calculate AICH Hashset from file %s"), pszFilePath);
+		return false;
 	}
 
+	return true;
+}
+
+bool CKnownFile::ApplyAICHHashSetOnly(CAICHRecoveryHashSet &rAICHHashSet)
+{
+	ASSERT(!IsPartFile());
+	if (theApp.knownfiles == NULL)
+		return false;
+	if (rAICHHashSet.GetStatus() != AICH_HASHSETCOMPLETE || !rAICHHashSet.HasValidMasterHash()) {
+		ASSERT(0);
+		return false;
+	}
+
+	rAICHHashSet.SetOwner(this);
+	const CAICHHash *pHash = (m_FileIdentifier.HasAICHHash() && m_FileIdentifier.GetAICHHash() != rAICHHashSet.GetMasterHash())
+		? &m_FileIdentifier.GetAICHHash() : NULL;
+	theApp.knownfiles->AICHHashChanged(pHash, rAICHHashSet.GetMasterHash(), this);
+	m_FileIdentifier.SetAICHHash(rAICHHashSet.GetMasterHash());
+	if (!m_FileIdentifier.SetAICHHashSet(rAICHHashSet)) {
+		ASSERT(0);
+		DebugLogError(_T("CreateAICHHashSetOnly() - failed to create AICH PartHashSet out of RecoveryHashSet - %s"), (LPCTSTR)GetFileName());
+	}
+	if (!rAICHHashSet.SaveHashSet())
+		LogError(LOG_STATUSBAR, GetResString(IDS_SAVEACFAILED));
+	else
+		SetAICHRecoverHashSetAvailable(true);
 	return true;
 }
 

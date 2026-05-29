@@ -44,6 +44,8 @@ public:
 	bool	LoadFromFile(CFileDataIO &file);	//load date, hashset and tags from a .met file
 	bool	WriteToFile(CFileDataIO &file);
 	bool	CreateAICHHashSetOnly();
+	static bool	CreateAICHHashSetForFile(LPCTSTR pszFilePath, EMFileSize nFileSize, CAICHRecoveryHashSet &rAICHHashSet);
+	bool	ApplyAICHHashSetOnly(CAICHRecoveryHashSet &rAICHHashSet);
 
 	// last file modification time in (DST corrected, if NTFS) real UTC format
 	// NOTE: this value can *not* be compared with NT's version of the UTC time
