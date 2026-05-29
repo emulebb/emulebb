@@ -167,6 +167,12 @@ void LeaveFileHashJobGate()
 	s_bFileHashJobRunning = false;
 }
 
+bool IsFileHashJobGateBusy()
+{
+	CSingleLock gateLock(&s_fileHashJobGateSection, TRUE);
+	return s_bFileHashJobRunning || !s_fileHashJobGateQueue.empty() || s_bPartFileHashStartupScheduling;
+}
+
 class CScopedFileHashJobGate
 {
 public:
@@ -1447,11 +1453,18 @@ void CSharedFileList::NoteStartupHashingQueueDrained(const ULONGLONG ullNowTick)
 bool CSharedFileList::ShouldStartStartupCacheSaveNow(const ULONGLONG ullNowTick) const
 {
 	CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+	// WHY: the startup-cache snapshot walks all shared directories and known
+	// files on the UI thread. If it starts while file hash jobs are still
+	// running or queued, large live profiles repeatedly normalize paths and
+	// allocate snapshot records while the hash workers are still changing the
+	// same model. Defer persistence until the global hash gate is idle so the
+	// snapshot is both stable and outside the startup CPU hot path.
+	const bool bDeferredHashingActive = m_bStartupDeferredHashingActive || IsFileHashJobGateBusy();
 	const SharedFileListSeams::StartupCacheSaveScheduleState scheduleState = {
 		m_bStartupCacheDirty,
 		theApp.IsClosing(),
 		m_bStartupCacheSaveRunning,
-		m_bStartupDeferredHashingActive,
+		bDeferredHashingActive,
 		ullNowTick,
 		m_nStartupCacheDirtyTick
 	};
