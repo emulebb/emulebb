@@ -19,6 +19,7 @@
 #include "emule.h"
 #include "MemDC.h"
 #include "MuleListCtrl.h"
+#include "MuleListKeyboardShortcutsSeams.h"
 #include "MuleListCtrlSeams.h"
 #include "Ini2.h"
 #include "SharedFilesCtrl.h"
@@ -1152,7 +1153,17 @@ void CMuleListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 				OnFindNext();
 		break;
 	default:
-		if (GetKeyState(VK_CONTROL) < 0)
+		if (GetKeyState(VK_CONTROL) < 0) {
+			const UINT uCommonCommand = MuleListKeyboardShortcutsSeams::ClassifyCommonKeyMessage(
+				WM_KEYDOWN,
+				nChar,
+				true,
+				GetKeyState(VK_MENU) < 0,
+				GetKeyState(VK_SHIFT) < 0);
+			if (uCommonCommand != 0) {
+				SendMessage(WM_COMMAND, uCommonCommand);
+				break;
+			}
 			switch (nChar) {
 			case 'A': // Ctrl+A: Select all items
 				LVITEM theItem;
@@ -1176,6 +1187,7 @@ void CMuleListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 			case 'X': // Ctrl+X: Cut key combo
 				SendMessage(WM_COMMAND, MP_CUT);
 			}
+		}
 	}
 
 	return CListCtrl::OnKeyDown(nChar, nRepCnt, nFlags);

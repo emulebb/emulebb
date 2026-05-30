@@ -63,7 +63,10 @@ namespace AppKeyboardShortcutsSeams
 		SearchMore,
 		ResetSearch,
 		CancelSearch,
-		ToggleNameResults
+		ToggleNameResults,
+		SelectPreviousResultTab,
+		SelectNextResultTab,
+		CloseSelectedResultTab
 	};
 
 	/** Returns `ch` normalized for ASCII accelerator comparisons. */
@@ -98,10 +101,16 @@ namespace AppKeyboardShortcutsSeams
 	 */
 	inline ESearchCommand ClassifySearchKeyMessage(UINT uMessage, WPARAM wParam, bool bCtrlDown, bool bAltDown, bool bShiftDown, bool bModalContext)
 	{
-		if (bModalContext || uMessage != WM_KEYDOWN || bCtrlDown || bAltDown || bShiftDown)
+		if (bModalContext || uMessage != WM_KEYDOWN || bAltDown)
 			return ESearchCommand::None;
-		if (wParam == VK_F6)
+		if (!bCtrlDown && !bShiftDown && wParam == VK_F6)
 			return ESearchCommand::ToggleNameResults;
+		if (bCtrlDown && !bShiftDown && wParam == VK_PRIOR)
+			return ESearchCommand::SelectPreviousResultTab;
+		if (bCtrlDown && !bShiftDown && wParam == VK_NEXT)
+			return ESearchCommand::SelectNextResultTab;
+		if (bCtrlDown && !bShiftDown && (wParam == _T('W') || wParam == VK_F4))
+			return ESearchCommand::CloseSelectedResultTab;
 		return ESearchCommand::None;
 	}
 

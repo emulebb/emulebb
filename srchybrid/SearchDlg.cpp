@@ -288,29 +288,39 @@ void CSearchDlg::SearchRelatedFiles(CPtrList &listFiles)
 
 BOOL CSearchDlg::PreTranslateMessage(MSG *pMsg)
 {
-	if (AppKeyboardShortcutsSeams::ClassifySearchKeyMessage(
+	const AppKeyboardShortcutsSeams::ESearchCommand eSearchCommand =
+		AppKeyboardShortcutsSeams::ClassifySearchKeyMessage(
 			pMsg->message,
 			pMsg->wParam,
 			GetKeyState(VK_CONTROL) < 0,
 			GetKeyState(VK_MENU) < 0,
 			GetKeyState(VK_SHIFT) < 0,
-			false) == AppKeyboardShortcutsSeams::ESearchCommand::ToggleNameResults
-		&& ToggleSearchFocus())
+			false);
+	switch (eSearchCommand) {
+	case AppKeyboardShortcutsSeams::ESearchCommand::ToggleNameResults:
+		if (ToggleSearchFocus())
+			return TRUE;
+		break;
+	case AppKeyboardShortcutsSeams::ESearchCommand::SelectPreviousResultTab:
+	case AppKeyboardShortcutsSeams::ESearchCommand::SelectNextResultTab:
+		if (m_pwndResults != NULL && m_pwndResults->SelectAdjacentSearchResultTab(eSearchCommand == AppKeyboardShortcutsSeams::ESearchCommand::SelectPreviousResultTab ? -1 : 1))
+			return TRUE;
+		MessageBeep(MB_OK);
 		return TRUE;
+	case AppKeyboardShortcutsSeams::ESearchCommand::CloseSelectedResultTab:
+		if (m_pwndResults != NULL)
+			m_pwndResults->DeleteSelectedSearch();
+		return TRUE;
+	default:
+		break;
+	}
 
 	if (pMsg->message == WM_KEYDOWN && GetKeyState(VK_CONTROL) < 0) {
 		if (pMsg->wParam == VK_TAB) {
-			if (m_pwndResults != NULL && m_pwndResults->SelectAdjacentSearchResultTab(GetKeyState(VK_SHIFT) < 0 ? -1 : 1))
-				return TRUE;
-			// Let the main window handle Ctrl+Tab when there is no local result tab to select.
 			// UGLY: Because this window is a 'CFrameWnd' (rather than a 'CDialog' like
 			// the other eMule main windows) we can not use MFC's message routing.
 			// Need to explicitly send that message to the main window.
 			theApp.emuledlg->PostMessage(pMsg->message, pMsg->wParam, pMsg->lParam);
-			return TRUE;
-		}
-		if (pMsg->wParam == 'W') {
-			m_pwndResults->DeleteSelectedSearch();
 			return TRUE;
 		}
 	}

@@ -607,6 +607,7 @@
     <ClInclude Include="MeterIcon.h" />
     <ClInclude Include="MiniMuleDlg.h" />
     <ClInclude Include="MuleListCtrl.h" />
+    <ClInclude Include="MuleListKeyboardShortcutsSeams.h" />
     <ClInclude Include="MuleStatusBarCtrl.h" />
     <ClInclude Include="MuleSystrayDlg.h" />
     <ClInclude Include="MuleToolBarCtrl.h" />

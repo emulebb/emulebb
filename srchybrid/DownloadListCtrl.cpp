@@ -3077,7 +3077,7 @@ void CDownloadListCtrl::CreateMenus()
 		m_FileMenu.AppendMenu(MF_STRING, MP_GETED2KLINK, AddMenuShortcutLabel(GetResString(IDS_DL_LINK1), _T("Ctrl+L")), _T("ED2KLINK"));
 	else
 		m_FileMenu.AppendMenu(MF_STRING, MP_SHOWED2KLINK, GetResString(IDS_DL_SHOWED2KLINK), _T("ED2KLINK"));
-	m_FileMenu.AppendMenu(MF_STRING, MP_PASTE, GetResString(IDS_SW_DIRECTDOWNLOAD), _T("PASTELINK"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_PASTE, AddMenuShortcutLabel(GetResString(IDS_SW_DIRECTDOWNLOAD), _T("Ctrl+V")), _T("PASTELINK"));
 	m_FileMenu.AppendMenu(MF_SEPARATOR);
 
 	// Search commands

@@ -573,6 +573,9 @@ bool CTransferWnd::ActivateTransferListShortcut(TransferWndSeams::ETransferListS
 	uint32 dwListIDC = 0;
 	EWnd2 eWnd2 = wnd2Uploading;
 	switch (eCommand) {
+	case TransferWndSeams::ETransferListShortcutCommand::Downloads:
+		dwListIDC = IDC_DOWNLOADLIST;
+		break;
 	case TransferWndSeams::ETransferListShortcutCommand::Uploading:
 		dwListIDC = IDC_UPLOADLIST;
 		eWnd2 = wnd2Uploading;
@@ -593,12 +596,20 @@ bool CTransferWnd::ActivateTransferListShortcut(TransferWndSeams::ETransferListS
 		dwListIDC = IDC_CLIENTLIST;
 		eWnd2 = wnd2Clients;
 		break;
+	case TransferWndSeams::ETransferListShortcutCommand::DownloadingClients:
+		dwListIDC = IDC_DOWNLOADCLIENTS;
+		eWnd2 = wnd2Downloading;
+		break;
 	default:
 		return false;
 	}
 
-	if (m_dwShowListIDC == IDC_DOWNLOADLIST + IDC_UPLOADLIST)
-		ShowWnd2(eWnd2);
+	if (m_dwShowListIDC == IDC_DOWNLOADLIST + IDC_UPLOADLIST) {
+		if (dwListIDC == IDC_DOWNLOADLIST)
+			downloadlistctrl.SetFocus();
+		else
+			ShowWnd2(eWnd2);
+	}
 	else
 		ShowList(dwListIDC);
 
