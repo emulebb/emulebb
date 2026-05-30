@@ -2,7 +2,7 @@
 
 - this worktree is the seam-enabled parity and regression baseline; it is not a
   product release or public tag/package target
-- the authoritative workspace policy lives in `EMULE_WORKSPACE_ROOT\repos\emulebb-tooling\docs\WORKSPACE-POLICY.md`; follow it over local habit or stale branch names
+- the authoritative workspace policy lives in `EMULEBB_WORKSPACE_ROOT\repos\emulebb-tooling\docs\WORKSPACE-POLICY.md`; follow it over local habit or stale branch names
 - baseline maintenance is limited to inert seams, deterministic probes,
   required test tracing, and buildability fixes
 - the first post-community commit must remain the global source-encoding normalization commit
