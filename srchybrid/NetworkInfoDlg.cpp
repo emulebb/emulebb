@@ -5,6 +5,7 @@
 #include "OtherFunctions.h"
 #include "ServerConnect.h"
 #include "Preferences.h"
+#include "ListenSocket.h"
 #include "ServerList.h"
 #include "Server.h"
 #include "kademlia/kademlia/kademlia.h"
@@ -22,8 +23,8 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-constexpr int kNetworkInfoDialogMinWidth = 800;
-constexpr int kNetworkInfoDialogMinHeight = 600;
+constexpr int kNetworkInfoDialogMinWidth = 900;
+constexpr int kNetworkInfoDialogMinHeight = 700;
 }
 
 IMPLEMENT_DYNAMIC(CNetworkInfoDlg, CDialog)
@@ -103,6 +104,29 @@ void CreateNetworkInfo(CRichEditCtrlX &rCtrl, CHARFORMAT &rcfDef, CHARFORMAT &rc
 		rCtrl << GetResString(IDS_CD_UHASH) << _T("\t") << md4str(thePrefs.GetUserHash()) << _T("\r\n");
 		rCtrl << _T("TCP ") << GetResString(IDS_PORT) << _T(":\t") << thePrefs.GetPort() << _T("\r\n");
 		rCtrl << _T("UDP ") << GetResString(IDS_PORT) << _T(":\t") << thePrefs.GetUDPPort() << _T("\r\n");
+		rCtrl << _T("\r\n");
+
+		///////////////////////////////////////////////////////////////////////////
+		// Connection Pressure Info
+		///////////////////////////////////////////////////////////////////////////
+		rCtrl.SetSelectionCharFormat(rcfBold);
+		rCtrl << GetResString(IDS_CONNECTIONS) << _T("\r\n");
+		rCtrl.SetSelectionCharFormat(rcfDef);
+
+		const UINT uOpenSockets = theApp.listensocket->GetOpenSockets();
+		const UINT uHalfOpen = theApp.listensocket->GetTotalHalfCon();
+		const UINT uCompleted = theApp.listensocket->GetTotalComp();
+		const UINT uKnownPressureSockets = uHalfOpen + uCompleted;
+		const UINT uOtherSockets = uOpenSockets > uKnownPressureSockets ? uOpenSockets - uKnownPressureSockets : 0;
+
+		rCtrl << GetResString(IDS_SF_ACTIVECON) << _T(":\t") << uOpenSockets << _T(" / ") << thePrefs.GetMaxConnections() << _T("\r\n");
+		rCtrl << GetResString(IDS_HALF) << _T(":\t") << uHalfOpen << _T(" / ") << thePrefs.GetMaxHalfConnections() << _T("\r\n");
+		rCtrl << GetResString(IDS_CONCOMPL) << _T(":\t") << uCompleted << _T("\r\n");
+		rCtrl << GetResString(IDS_STATS_PRTOTHER) << _T(":\t") << uOtherSockets << _T("\r\n");
+		rCtrl << GetResString(IDS_LIMITCONS5SEC) << _T(":\t") << thePrefs.GetMaxConperFive() << _T("\r\n");
+		rCtrl << GetResString(IDS_SF_AVGCON) << _T(":\t") << static_cast<UINT>(theApp.listensocket->GetAverageConnections()) << _T("\r\n");
+		rCtrl << GetResString(IDS_SF_PEAKCON) << _T(":\t") << theApp.listensocket->GetPeakConnections() << _T("\r\n");
+		rCtrl << GetResString(IDS_SF_MAXCONLIMITREACHED) << _T(":\t") << theApp.listensocket->GetMaxConnectionReached() << _T("\r\n");
 		rCtrl << _T("\r\n");
 	}
 
