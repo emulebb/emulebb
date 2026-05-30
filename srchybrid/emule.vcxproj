@@ -787,6 +787,7 @@
     <Image Include="res\CloseTab.ico" />
     <Image Include="res\CloseTabSelected.ico" />
     <Image Include="res\Collapse.ico" />
+    <Image Include="res\CollapseSources.ico" />
     <Image Include="res\colour.ico" />
     <Image Include="res\ConnectDo.ico" />
     <Image Include="res\ConnectDrop.ico" />
@@ -841,6 +842,7 @@
     <Image Include="res\Exit.ico" />
     <Image Include="res\ExpandAll.ico" />
     <Image Include="res\ExpandAll2.ico" />
+    <Image Include="res\ExpandSources.ico" />
     <Image Include="res\ExportAll.ico" />
     <Image Include="res\FileComments.ico" />
     <Image Include="res\FileCommentsOvl.ico" />

@@ -33,6 +33,7 @@ constexpr UINT kVideoThumbnailMaxIntervalSeconds = PreferenceValidationSeams::kV
 constexpr std::uint64_t kVideoThumbnailRefreshDeltaPermille = 50;
 constexpr std::uint64_t kVideoThumbnailRefreshMaxDeltaBytes = 128ull * 1024ull * 1024ull;
 constexpr int kVideoThumbnailDisplayMaxWidth = 480;
+constexpr int kVideoThumbnailDisplayMaxHeight = 270;
 constexpr int kVideoThumbnailWorkerThreadPriority = THREAD_PRIORITY_LOWEST;
 constexpr DWORD kFfmpegThumbnailTimeoutMs = 30u * 1000u;
 constexpr std::uint8_t kPeerPreviewFrameCount = 4;
@@ -238,7 +239,9 @@ inline CString BuildFfmpegThumbnailCommandLine(const CString &rstrFfmpegPath, co
 	strCommandLine += _T(" -fflags +genpts+discardcorrupt -err_detect ignore_err -analyzeduration 5M -probesize 5M -i ");
 	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(rstrInputPath);
 	strCommandLine += _T(" -an -frames:v 1 -vf ");
-	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(_T("scale=480:-2:force_original_aspect_ratio=decrease"));
+	CString strScaleFilter;
+	strScaleFilter.Format(_T("scale=%d:%d:force_original_aspect_ratio=decrease"), kVideoThumbnailDisplayMaxWidth, kVideoThumbnailDisplayMaxHeight);
+	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(strScaleFilter);
 	strCommandLine += _T(" ");
 	strCommandLine += FileCompletionCommandSeams::QuoteCommandLineArgument(rstrOutputPath);
 	return strCommandLine;

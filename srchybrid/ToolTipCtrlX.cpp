@@ -44,6 +44,7 @@ CToolTipCtrlX::CToolTipCtrlX()
 	: m_bCol1Bold(true)
 	, m_hPreviewBitmap()
 	, m_iPreviewMaxWidth()
+	, m_iPreviewMaxHeight()
 	, m_bShowFileIcon()
 {
 	ResetSystemMetrics();
@@ -60,10 +61,11 @@ void CToolTipCtrlX::SetCol2DrawTextFlags(DWORD dwFlags)
 	m_dwCol2DrawTextFlags = DFLT_DRAWTEXT_FLAGS | dwFlags;
 }
 
-void CToolTipCtrlX::SetPreviewBitmap(HBITMAP hBitmap, int iMaxWidth)
+void CToolTipCtrlX::SetPreviewBitmap(HBITMAP hBitmap, int iMaxWidth, int iMaxHeight)
 {
 	m_hPreviewBitmap = hBitmap;
 	m_iPreviewMaxWidth = iMaxWidth;
+	m_iPreviewMaxHeight = iMaxHeight;
 }
 
 void CToolTipCtrlX::RefreshCurrentTool()
@@ -362,12 +364,17 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 			sizPreviewSource.cx = bitmap.bmWidth;
 			sizPreviewSource.cy = bitmap.bmHeight;
 			const int iMaxPreviewWidth = max(1, min(m_iPreviewMaxWidth, m_iScreenWidth4 * 3));
+			const int iMaxPreviewHeight = m_iPreviewMaxHeight > 0 ? max(1, min(m_iPreviewMaxHeight, m_rcScreen.Height() / 2)) : 0;
 			if (bitmap.bmWidth > iMaxPreviewWidth) {
 				sizPreview.cx = iMaxPreviewWidth;
 				sizPreview.cy = max(1, MulDiv(bitmap.bmHeight, iMaxPreviewWidth, bitmap.bmWidth));
 			} else {
 				sizPreview.cx = bitmap.bmWidth;
 				sizPreview.cy = bitmap.bmHeight;
+			}
+			if (iMaxPreviewHeight > 0 && sizPreview.cy > iMaxPreviewHeight) {
+				sizPreview.cx = max(1, MulDiv(sizPreview.cx, iMaxPreviewHeight, sizPreview.cy));
+				sizPreview.cy = iMaxPreviewHeight;
 			}
 		}
 	}

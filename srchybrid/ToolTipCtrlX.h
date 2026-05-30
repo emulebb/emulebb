@@ -28,7 +28,7 @@ public:
 	void SetCol1DrawTextFlags(DWORD dwFlags);
 	void SetCol2DrawTextFlags(DWORD dwFlags);
 	void SetFileIconToolTip(bool bEnable)		{ m_bShowFileIcon = bEnable; }
-	void SetPreviewBitmap(HBITMAP hBitmap, int iMaxWidth);
+	void SetPreviewBitmap(HBITMAP hBitmap, int iMaxWidth, int iMaxHeight = 0);
 	/**
 	 * Requests the common-control tooltip to recalculate and repaint the active tool.
 	 */
@@ -47,6 +47,7 @@ protected:
 	int m_iScreenWidth4;
 	HBITMAP m_hPreviewBitmap;
 	int m_iPreviewMaxWidth;
+	int m_iPreviewMaxHeight;
 	bool m_bCol1Bold;
 	bool m_bShowFileIcon;
 

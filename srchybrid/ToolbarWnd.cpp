@@ -224,8 +224,8 @@ LRESULT CToolbarWnd::OnInitDialog(WPARAM, LPARAM)
 {
 	static LPCTSTR const sIconNames[20] = {
 			  _T("FILEPRIORITY"), _T("PAUSE"), _T("STOP"), _T("RESUME"), _T("DELETE")
-			, _T("RESUMEALL"), _T("PAUSEALL"), _T("STOPALL"), _T("CLEARCOMPLETE"), _T("EXPANDALL")
-			, _T("COLLAPSE"), _T("OPENFILE"), _T("OPENFOLDER"), _T("PREVIEW"), _T("FILEINFO")
+			, _T("RESUMEALL"), _T("PAUSEALL"), _T("STOPALL"), _T("CLEARCOMPLETE"), _T("EXPANDSOURCES")
+			, _T("COLLAPSESOURCES"), _T("OPENFILE"), _T("OPENFOLDER"), _T("PREVIEW"), _T("FILEINFO")
 			, _T("FILECOMMENTS"), _T("ED2KLINK"), _T("CATEGORY"), _T("KadFileSearch"), _T("Search") };
 
 	Default();

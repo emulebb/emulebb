@@ -665,7 +665,10 @@ void CDownloadListCtrl::OnMouseMove(UINT nFlags, CPoint point)
 		HBITMAP hBitmap = GetCachedVideoThumbnail(pHoveredFile);
 		const bool bBitmapChanged = hBitmap != m_hHoveredVideoThumbnailBitmap;
 		m_hHoveredVideoThumbnailBitmap = hBitmap;
-		m_tooltip.SetPreviewBitmap(hBitmap, hBitmap != NULL ? PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth : 0);
+		m_tooltip.SetPreviewBitmap(
+			hBitmap,
+			hBitmap != NULL ? PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth : 0,
+			hBitmap != NULL ? PartFilePreviewSeams::kVideoThumbnailDisplayMaxHeight : 0);
 		if (hBitmap != NULL && bBitmapChanged && ::IsWindowVisible(m_tooltip.GetSafeHwnd()))
 			m_tooltip.RefreshCurrentTool();
 		QueueVideoThumbnail(pHoveredFile, true);
@@ -738,7 +741,10 @@ LRESULT CDownloadListCtrl::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
 		pEntry->ullCompletedSize = pResult->ullCompletedSize;
 		if (m_pHoveredVideoThumbnailFile == pResult->pPartFile) {
 			m_hHoveredVideoThumbnailBitmap = pEntry->hBitmap;
-			m_tooltip.SetPreviewBitmap(pEntry->hBitmap, PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth);
+			m_tooltip.SetPreviewBitmap(
+				pEntry->hBitmap,
+				PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth,
+				PartFilePreviewSeams::kVideoThumbnailDisplayMaxHeight);
 			m_tooltip.RefreshCurrentTool();
 		}
 	}
@@ -3037,8 +3043,8 @@ void CDownloadListCtrl::CreateMenus()
 	m_BatchMenu.AppendMenu(MF_STRING, MP_CLEARCOMPLETED, GetResString(IDS_DL_CLEAR), _T("CLEARCOMPLETE"));
 	m_FileMenu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)m_BatchMenu.m_hMenu, GetResString(IDS_CAT), _T("CATEGORY"));
 	m_FileMenu.AppendMenu(MF_SEPARATOR);
-	m_FileMenu.AppendMenu(MF_STRING, MP_EXPAND_ALL_SOURCES, GetResString(IDS_DL_EXPAND_ALL_SOURCES), _T("EXPANDALL"));
-	m_FileMenu.AppendMenu(MF_STRING, MP_COLLAPSE_ALL_SOURCES, GetResString(IDS_DL_COLLAPSE_ALL_SOURCES), _T("COLLAPSE"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_EXPAND_ALL_SOURCES, GetResString(IDS_DL_EXPAND_ALL_SOURCES), _T("EXPANDSOURCES"));
+	m_FileMenu.AppendMenu(MF_STRING, MP_COLLAPSE_ALL_SOURCES, GetResString(IDS_DL_COLLAPSE_ALL_SOURCES), _T("COLLAPSESOURCES"));
 	m_FileMenu.AppendMenu(MF_SEPARATOR);
 
 	m_FileMenu.AppendMenu(MF_STRING, MP_OPEN, AddMenuShortcutLabel(GetResString(IDS_DL_OPEN), _T("Ctrl+O")), _T("OPENFILE"));
@@ -3610,7 +3616,10 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 					&& PartFilePreviewSeams::IsValidConfiguredFfmpegPath(thePrefs.GetVideoThumbnailFfmpegPath())) {
 					HBITMAP hBitmap = GetCachedVideoThumbnail(pPartFile);
 					if (hBitmap != NULL)
-						m_tooltip.SetPreviewBitmap(hBitmap, PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth);
+						m_tooltip.SetPreviewBitmap(
+							hBitmap,
+							PartFilePreviewSeams::kVideoThumbnailDisplayMaxWidth,
+							PartFilePreviewSeams::kVideoThumbnailDisplayMaxHeight);
 					else
 						m_tooltip.SetPreviewBitmap(NULL, 0);
 					bPreviewBitmapHandled = true;
