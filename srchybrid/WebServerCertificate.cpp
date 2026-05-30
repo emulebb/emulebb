@@ -147,6 +147,21 @@ void SetServerAuthOid(mbedtls_asn1_sequence &rSequence)
 	rSequence.buf.p = reinterpret_cast<unsigned char*>(const_cast<char*>(MBEDTLS_OID_SERVER_AUTH));
 	rSequence.buf.tag = MBEDTLS_ASN1_OID;
 }
+
+std::array<unsigned char, 2> BuildSerialBytes(uint16 uSerial, size_t &ruLength)
+{
+	const uint16 uSafeSerial = uSerial != 0 ? uSerial : 1;
+	std::array<unsigned char, 2> abySerial = {};
+	if (uSafeSerial > 0xff) {
+		abySerial[0] = static_cast<unsigned char>((uSafeSerial >> 8) & 0xff);
+		abySerial[1] = static_cast<unsigned char>(uSafeSerial & 0xff);
+		ruLength = 2;
+	} else {
+		abySerial[0] = static_cast<unsigned char>(uSafeSerial & 0xff);
+		ruLength = 1;
+	}
+	return abySerial;
+}
 }
 
 void WebServerCertificate::BuildDefaultValidityWindow(CStringA &rstrNotBefore, CStringA &rstrNotAfter)
@@ -165,7 +180,7 @@ WebServerCertificate::SGenerationRequest WebServerCertificate::BuildDefaultLocal
 	request.strSubjectName = "CN=eMuleBB WebServer,O=eMuleBB,OU=REST";
 	request.strIssuerName = request.strSubjectName;
 	BuildDefaultValidityWindow(request.strNotBefore, request.strNotAfter);
-	request.uSerial = _byteswap_ushort(rand() & 0x0fff);
+	request.uSerial = static_cast<uint16>((rand() & 0x0fff) + 1);
 	if (request.uSerial == 0)
 		++request.uSerial;
 	request.astrIpAddresses.push_back("127.0.0.1");
@@ -206,7 +221,13 @@ int WebServerCertificate::CreateSelfSignedCertificate(const SGenerationRequest &
 	mbedtls_x509write_crt_set_version(&certificate, MBEDTLS_X509_CRT_VERSION_3);
 	mbedtls_x509write_crt_set_md_alg(&certificate, MBEDTLS_MD_SHA256);
 
-	iResult = mbedtls_x509write_crt_set_serial_raw(&certificate, reinterpret_cast<const unsigned char*>(&request.uSerial), 1 + static_cast<size_t>(request.uSerial > 0xff));
+	{
+		size_t uSerialLength = 0;
+		const std::array<unsigned char, 2> abySerial = BuildSerialBytes(request.uSerial, uSerialLength);
+		// WHY: mbedtls_x509write_crt_set_serial_raw requires RFC5280 big-endian serial bytes.
+		// Host-endian bytes can produce non-minimal DER that Python/OpenSSL refuses as a trust anchor.
+		iResult = mbedtls_x509write_crt_set_serial_raw(&certificate, abySerial.data(), uSerialLength);
+	}
 	if (iResult != 0) {
 		pszMessage = _T("mbedtls_x509write_crt_set_serial_raw");
 		goto exit;
