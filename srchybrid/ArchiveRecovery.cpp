@@ -21,6 +21,7 @@
 #include "PathHelpers.h"
 #include "ProcessLaunchSeams.h"
 #include "Log.h"
+#include "OtherFunctions.h"
 #include "PartFile.h"
 #include "zlib.h"
 
@@ -73,7 +74,7 @@ void CArchiveRecovery::recover(CPartFile *partFile, bool preview, bool bCreatePa
 		return;
 	partFile->m_bRecoveringArchive = true;
 
-	AddLogLine(true, _T("%s \"%s\""), (LPCTSTR)GetResString(IDS_ATTEMPTING_RECOVERY), (LPCTSTR)partFile->GetFileName());
+	AddLogLine(true, _T("%s %s"), (LPCTSTR)GetResString(IDS_ATTEMPTING_RECOVERY), (LPCTSTR)FormatDisplayFileName(partFile->GetFileName()));
 
 	// Get the current filled list for this file
 	CArray<Gap_Struct> *filled = new CArray<Gap_Struct>;
@@ -95,7 +96,7 @@ void CArchiveRecovery::recover(CPartFile *partFile, bool preview, bool bCreatePa
 	// - do NOT use Windows API 'CreateThread' to create a thread which uses MFC/CRT -> lot of mem leaks!
 	if (!AfxBeginThread(run, (LPVOID)tp, THREAD_PRIORITY_IDLE)) {
 		partFile->m_bRecoveringArchive = false;
-		LogError(LOG_STATUSBAR, _T("%s \"%s\""), (LPCTSTR)GetResString(IDS_RECOVERY_FAILED), (LPCTSTR)partFile->GetFileName());
+		LogError(LOG_STATUSBAR, _T("%s %s"), (LPCTSTR)GetResString(IDS_RECOVERY_FAILED), (LPCTSTR)FormatDisplayFileName(partFile->GetFileName()));
 		// Need to delete the memory here as it wouldn't be done in the thread
 		DeleteMemory(tp);
 	}
@@ -108,7 +109,7 @@ UINT AFX_CDECL CArchiveRecovery::run(LPVOID lpParam)
 	InitThreadLocale();
 
 	if (!performRecovery(tp->partFile, tp->filled, tp->preview, tp->bCreatePartFileCopy))
-		theApp.QueueLogLine(true, _T("%s \"%s\""), (LPCTSTR)GetResString(IDS_RECOVERY_FAILED), (LPCTSTR)tp->partFile->GetFileName());
+		theApp.QueueLogLine(true, _T("%s %s"), (LPCTSTR)GetResString(IDS_RECOVERY_FAILED), (LPCTSTR)FormatDisplayFileName(tp->partFile->GetFileName()));
 
 	tp->partFile->m_bRecoveringArchive = false;
 
@@ -189,8 +190,8 @@ bool CArchiveRecovery::performRecovery(CPartFile *partFile, CArray<Gap_Struct> *
 
 		// Report success
 		if (success) {
-			theApp.QueueLogLine(true, _T("%s \"%s\""), (LPCTSTR)GetResString(IDS_RECOVERY_SUCCESSFUL), (LPCTSTR)partFile->GetFileName());
-			theApp.QueueDebugLogLine(false, _T("Archive recovery: Part file size: %s, temp. archive file size: %s (%.1f%%)"), (LPCTSTR)CastItoXBytes(partFile->GetFileSize()), (LPCTSTR)CastItoXBytes(ulTempFileSize), partFile->GetFileSize() > 0ull ? (ulTempFileSize * 100.0 / (uint64)partFile->GetFileSize()) : 0.0);
+			theApp.QueueLogLine(true, _T("%s %s"), (LPCTSTR)GetResString(IDS_RECOVERY_SUCCESSFUL), (LPCTSTR)FormatDisplayFileName(partFile->GetFileName()));
+			theApp.QueueDebugLogLine(false, _T("Archive recovery: Part file size: %s, temp. archive file size: %s (%.1f%%)"), (LPCTSTR)CastItoXBytes(partFile->GetFileSize()), (LPCTSTR)CastItoXBytes(ulTempFileSize), partFile->GetFileSize() > 0ull ? (static_cast<double>(ulTempFileSize) * 100.0 / static_cast<double>((uint64)partFile->GetFileSize())) : 0.0);
 
 			// Preview file if required
 			if (preview) {

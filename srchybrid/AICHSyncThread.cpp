@@ -294,10 +294,10 @@ int CAICHSyncThread::Run()
 					tempHashSet.SetMasterHash(fileid.GetAICHHash(), AICH_HASHSETCOMPLETE);
 					if (!tempHashSet.LoadHashSet()) {
 						ASSERT(0);
-						DebugLogError(_T("Failed to load full AICH recovery Hashset - known2.met might be corrupt. Unable to create AICH Part Hashset - %s"), (LPCTSTR)pFile->GetFileName());
+						DebugLogError(_T("Failed to load full AICH recovery Hashset - known2.met might be corrupt. Unable to create AICH Part Hashset - %s"), (LPCTSTR)FormatDisplayFileName(pFile->GetFileName()));
 					} else {
 						if (!fileid.SetAICHHashSet(tempHashSet)) {
-							DebugLogError(_T("Failed to create AICH Part Hashset out of full AICH recovery Hashset - %s"), (LPCTSTR)pFile->GetFileName());
+							DebugLogError(_T("Failed to create AICH Part Hashset out of full AICH recovery Hashset - %s"), (LPCTSTR)FormatDisplayFileName(pFile->GetFileName()));
 							ASSERT(0);
 						}
 						ASSERT(fileid.HasExpectedAICHHashCount());
@@ -486,7 +486,7 @@ int CAICHSyncThread::Run()
 					continue;
 			}
 
-			theApp.QueueLogLine(false, GetResString(IDS_AICH_CALCFILE), (LPCTSTR)strFileName);
+			theApp.QueueLogLine(false, GetResString(IDS_AICH_CALCFILE), (LPCTSTR)FormatDisplayFileName(strFileName));
 			CAICHRecoveryHashSet aichHashSet(NULL, nFileSize);
 			// WHY: hashing can spend seconds reading a large file. Holding the
 			// shared-file write lock over that I/O stalls startup/UI work and
@@ -495,7 +495,7 @@ int CAICHSyncThread::Run()
 			// long enough to publish the result if the same shared file is still
 			// present.
 			if (!CKnownFile::CreateAICHHashSetForFile(strFilePath, nFileSize, aichHashSet)) {
-				theApp.QueueDebugLogLine(false, _T("Failed to create AICH Hashset while sync. for file %s"), (LPCTSTR)strFileName);
+				theApp.QueueDebugLogLine(false, _T("Failed to create AICH Hashset while sync. for file %s"), (LPCTSTR)FormatDisplayFileName(strFileName));
 				continue;
 			}
 			if (theApp.IsClosing())
@@ -514,11 +514,11 @@ int CAICHSyncThread::Run()
 				// remove or replace the file while the I/O is in flight, so the
 				// computed AICH tree must be dropped unless the metadata identity we
 				// snapped before hashing still matches the live shared-file object.
-				theApp.QueueDebugLogLine(false, _T("Dropped stale AICH Hashset while sync. for file %s"), (LPCTSTR)strFileName);
+				theApp.QueueDebugLogLine(false, _T("Dropped stale AICH Hashset while sync. for file %s"), (LPCTSTR)FormatDisplayFileName(strFileName));
 				continue;
 			}
 			if (!pCurFile->ApplyAICHHashSetOnly(aichHashSet))
-				theApp.QueueDebugLogLine(false, _T("Failed to apply AICH Hashset while sync. for file %s"), (LPCTSTR)strFileName);
+				theApp.QueueDebugLogLine(false, _T("Failed to apply AICH Hashset while sync. for file %s"), (LPCTSTR)FormatDisplayFileName(strFileName));
 		}
 
 		PostAICHSyncProgressCount(0);

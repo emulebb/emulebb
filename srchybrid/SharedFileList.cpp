@@ -662,7 +662,7 @@ int CAddFileThread::Run()
 	const ULONGLONG ullHashStartUs = theApp.GetStartupProfileTimestampUs();
 #endif
 	if (m_partfile)
-		Log(_T("%s \"%s\" \"%s\""), (LPCTSTR)GetResString(IDS_HASHINGFILE), (LPCTSTR)m_partfile->GetFileName(), (LPCTSTR)strFilePath);
+		Log(_T("%s %s \"%s\""), (LPCTSTR)GetResString(IDS_HASHINGFILE), (LPCTSTR)FormatDisplayFileName(m_partfile->GetFileName()), (LPCTSTR)strFilePath);
 	else
 		Log(_T("%s \"%s\""), (LPCTSTR)GetResString(IDS_HASHINGFILE), (LPCTSTR)strFilePath);
 

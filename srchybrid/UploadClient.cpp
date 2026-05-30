@@ -34,6 +34,7 @@
 #include "Log.h"
 #include "Collection.h"
 #include "UploadDiskIOThread.h"
+#include "OtherFunctions.h"
 
 #include <memory>
 
@@ -404,27 +405,27 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 
 		UploadingToClient_Struct *pUploadingClientStruct = theApp.uploadqueue->GetUploadingClientStructByClient(this);
 		if (pUploadingClientStruct == NULL) {
-			DebugLogError(_T("AddReqBlock: Uploading client not found in Uploadlist, %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)srcfile->GetFileName());
+			DebugLogError(_T("AddReqBlock: Uploading client not found in Uploadlist, %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)FormatDisplayFileName(srcfile->GetFileName()));
 			return;
 		}
 
 		if (pUploadingClientStruct->m_bIOError) {
-			DebugLogWarning(_T("AddReqBlock: Uploading client has pending IO Error, %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)srcfile->GetFileName());
+			DebugLogWarning(_T("AddReqBlock: Uploading client has pending IO Error, %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)FormatDisplayFileName(srcfile->GetFileName()));
 			return;
 		}
 
 		if (srcfile->IsPartFile() && !static_cast<CPartFile*>(srcfile)->IsCompleteBDSafe(reqblock->StartOffset, reqblock->EndOffset - 1)) {
-			DebugLogWarning(_T("AddReqBlock: %s, %s"), (LPCTSTR)GetResString(IDS_ERR_INCOMPLETEBLOCK), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)srcfile->GetFileName());
+			DebugLogWarning(_T("AddReqBlock: %s, %s"), (LPCTSTR)GetResString(IDS_ERR_INCOMPLETEBLOCK), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)FormatDisplayFileName(srcfile->GetFileName()));
 			return;
 		}
 
 		if (reqblock->StartOffset >= reqblock->EndOffset || reqblock->EndOffset > srcfile->GetFileSize()) {
-			DebugLogError(_T("AddReqBlock: Invalid Block requests (negative or bytes to read, read after EOF), %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)srcfile->GetFileName());
+			DebugLogError(_T("AddReqBlock: Invalid Block requests (negative or bytes to read, read after EOF), %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)FormatDisplayFileName(srcfile->GetFileName()));
 			return;
 		}
 
 		if (reqblock->EndOffset - reqblock->StartOffset > EMBLOCKSIZE * 3) {
-			DebugLogWarning(_T("AddReqBlock: %s, %s"), (LPCTSTR)GetResString(IDS_ERR_LARGEREQBLOCK), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)srcfile->GetFileName());
+			DebugLogWarning(_T("AddReqBlock: %s, %s"), (LPCTSTR)GetResString(IDS_ERR_LARGEREQBLOCK), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)FormatDisplayFileName(srcfile->GetFileName()));
 			return;
 		}
 
@@ -643,7 +644,7 @@ void CUpDownClient::SendHashsetPacket(const uchar *pData, uint32 nSize, bool bFi
 		bool bAICH = (byOptions & 0x02) > 0;
 		if (!bMD4 && !bAICH) {
 			DebugLogWarning(_T("Client sent HashSet request with none or unknown HashSet type requested (%u) - file: %s, client %s")
-				, byOptions, (LPCTSTR)file->GetFileName(), (LPCTSTR)DbgGetClientInfo());
+				, byOptions, (LPCTSTR)FormatDisplayFileName(file->GetFileName()), (LPCTSTR)DbgGetClientInfo());
 			return;
 		}
 		const CFileIdentifier &fileid = file->GetFileIdentifier();
