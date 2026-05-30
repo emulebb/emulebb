@@ -539,6 +539,47 @@ inline bool TryValidateUrlImportText(
 	return true;
 }
 
+/**
+ * @brief Validates and trims one public eD2K link token before the UI thread
+ * parses the legacy link object.
+ */
+inline bool TryValidateEd2kLinkText(
+	const std::string &rValue,
+	const char *pszFieldName,
+	std::string &rNormalized,
+	std::string &rErrorMessage)
+{
+	const std::string strFieldName(pszFieldName != NULL && pszFieldName[0] != '\0' ? pszFieldName : "link");
+	rNormalized = TrimAsciiWhitespace(rValue);
+	if (rNormalized.empty()) {
+		rErrorMessage = strFieldName + " must not be empty";
+		return false;
+	}
+
+	size_t uWideCharacters = 0;
+	if (!TryMeasureStrictUtf8AsUtf16(rNormalized, uWideCharacters)) {
+		rErrorMessage = strFieldName + " must be valid UTF-8 without control characters";
+		return false;
+	}
+	if (uWideCharacters > kMaxUrlImportLength) {
+		rErrorMessage = strFieldName + " must be at most 2048 characters";
+		return false;
+	}
+	for (const char ch : rNormalized) {
+		if (std::isspace(static_cast<unsigned char>(ch)) != 0) {
+			rErrorMessage = strFieldName + " must not contain whitespace";
+			return false;
+		}
+	}
+
+	const std::string strLower(ToLowerAscii(rNormalized));
+	if (strLower.find("ed2k://") != 0) {
+		rErrorMessage = strFieldName + " must start with ed2k://";
+		return false;
+	}
+	return true;
+}
+
 inline int HexNibble(const char ch)
 {
 	if (ch >= '0' && ch <= '9')
@@ -1186,7 +1227,7 @@ inline bool TryParseTransferAddLink(const json &rParams, std::string &rLink, std
 
 	rLink = TrimAsciiWhitespace(rParams["link"].get<std::string>());
 	std::string strNormalized;
-	if (!TryValidateUrlImportText(rLink, "link", strNormalized, rError))
+	if (!TryValidateEd2kLinkText(rLink, "link", strNormalized, rError))
 		return false;
 	rLink = strNormalized;
 	return true;
