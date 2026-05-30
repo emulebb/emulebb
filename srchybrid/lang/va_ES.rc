@@ -341,8 +341,8 @@ BEGIN
     IDS_ERR_SAVEMET         "S'ha produït un error en alçar el fitxer de parts: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "S'ha trobat una part malmesa (%u) a %s"
     IDS_HASHINGDONE         "S'ha finalitzat el recàlcul de sumes de %s; pareix ser que el fitxer és correcte"
-    IDS_ERR_PARTCORRUPT     "La part baixada %u està malmesa:(  (%s)"
-    IDS_ICHWORKED           "ICH: La part %u malmesa s'ha recuperat (%s); alçada: %s"
+    IDS_ERR_PARTCORRUPT     "La part baixada %u està malmesa %s"
+    IDS_ICHWORKED           "ICH: La part %u malmesa s'ha recuperat %s; alçada: %s"
     IDS_ERR_OUTOFSPACE      "No disposeu de prou espai al disc per a baixar %s."
     IDS_SE                  "Intercanvi de fonts"
 END

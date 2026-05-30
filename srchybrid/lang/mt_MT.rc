@@ -391,8 +391,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Problema waqt li qed nissejvjaw il-'Part file': %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Sibna parti problematika (%u) ġo %s"
     IDS_HASHINGDONE         "Erġajna ġġenerajna il-hash ta' %s, il-file jidher li hu ok"
-    IDS_ERR_PARTCORRUPT     "Il-parti tad-download %u hija problematika :(  (%s)"
-    IDS_ICHWORKED           "I.C.H.: Irranġajna il-parti problematika %u (%s), Issejvjata: %s"
+    IDS_ERR_PARTCORRUPT     "Il-parti tad-download %u hija problematika %s"
+    IDS_ICHWORKED           "I.C.H.: Irranġajna il-parti problematika %u %s, Issejvjata: %s"
     IDS_ERR_OUTOFSPACE      "M'għandekx spazju biżżejjed biex tniżżel ""%s""!"
     IDS_SE                  "Skambju ta' sorsi"
 END

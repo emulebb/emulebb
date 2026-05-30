@@ -899,8 +899,8 @@ BEGIN
     IDS_ERR_SAVEMET         "שגיאה בעת שמירת חלק קובץ: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "נמצא חלק פגום (%u) בקובץ %s"
     IDS_HASHINGDONE         "סיים לבצע האשינג ב-%s, הקובץ נראה תקין"
-    IDS_ERR_PARTCORRUPT     "חלק שהורד %u פגום (%s) :("
-    IDS_ICHWORKED           "ICH: שוחזר חלק פגום %u  (%s), נשמר: %s"
+    IDS_ERR_PARTCORRUPT     "חלק שהורד %u פגום %s"
+    IDS_ICHWORKED           "ICH: שוחזר חלק פגום %u %s, נשמר: %s"
     IDS_ERR_OUTOFSPACE      "אין מספיק מקום בכונן להוריד את %s!"
     IDS_SE                  "החלפת מקורות"
 END

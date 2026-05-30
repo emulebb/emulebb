@@ -380,8 +380,8 @@ BEGIN
     IDS_ERR_SAVEMET         "CHYBA během ukládání .part souboru: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Nalezen poškozený díl (%u) v %s"
     IDS_HASHINGDONE         "Dokončeno rehashování %s, soubor vypadá ok"
-    IDS_ERR_PARTCORRUPT     "Stažený díl %u je poškozen :(  (%s)"
-    IDS_ICHWORKED           "ICH: Obnovena poškozená část %u  (%s), Zachráněno: %s"
+    IDS_ERR_PARTCORRUPT     "Stažený díl %u je poškozen %s"
+    IDS_ICHWORKED           "ICH: Obnovena poškozená část %u %s, Zachráněno: %s"
     IDS_ERR_OUTOFSPACE      "Nemáte dostatek místa na disku pro stáhnutí %s!"
     IDS_SE                  "Výměna zdrojů"
 END

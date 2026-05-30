@@ -392,8 +392,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Lỗi khi lưu tập tin tạm : %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Tìm thấy phần bị hư (%u) trong %s"
     IDS_HASHINGDONE         "Hoàn tất lấy mã Hash lại %s, tập tin có vẻ ổn"
-    IDS_ERR_PARTCORRUPT     "Phần đã tải xuống %u đã bị hư :(  (%s)"
-    IDS_ICHWORKED           "I.C.H.: Phần bị hỏng được phục hồi %u (%s), Đã lưu: %s"
+    IDS_ERR_PARTCORRUPT     "Phần đã tải xuống %u đã bị hư %s"
+    IDS_ICHWORKED           "I.C.H.: Phần bị hỏng được phục hồi %u %s, Đã lưu: %s"
     IDS_ERR_OUTOFSPACE      "Bạn không đủ dung lượng đĩa trống để tải xuống tập tin ""%s""!"
     IDS_SE                  "Trao đổi Nguồn"
 END

@@ -116,8 +116,8 @@ BEGIN
 	IDS_ERR_SAVEMET	"Fazi enrollañ: %s (%s)"
 	IDS_ERR_FOUNDCORRUPTION	"Lodenn direizh kavet (%u) e-barzh %s"
 	IDS_HASHINGDONE	"Drailherezh kaset a-benn %s, reizh eo ar restr war ar seblant"
-	IDS_ERR_PARTCORRUPT	"Lodenn bellgarget %u direizh (%s)"
-	IDS_ICHWORKED	"Lodenn direizh erlec'hiet %u  (%s), Dastumet: %s"
+	IDS_ERR_PARTCORRUPT	"Lodenn bellgarget %u direizh %s"
+	IDS_ICHWORKED	"Lodenn direizh erlec'hiet %u %s, Dastumet: %s"
 	IDS_ERR_OUTOFSPACE	"Egor kantenn re vihan a-benn pellgargañ %s!"
 	IDS_SE	"Eskemm orinoù"
 END

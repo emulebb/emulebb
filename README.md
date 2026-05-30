@@ -16,8 +16,8 @@ For most users, use the ZIP package:
 1. Open <https://github.com/emulebb/emulebb/releases>.
 2. Download the intended eMuleBB ZIP. For RC1, use
    `emulebb-0.7.3-rc.1-x64.zip` once it is published.
-3. Extract the ZIP into a new folder, for example
-   `C:\Apps\eMuleBB\0.7.3-rc.1`.
+3. Extract the ZIP into a new version-specific folder, for example
+   `eMuleBB-0.7.3-rc.1`.
 4. Run `emulebb.exe`.
 
 Keep each version in its own application folder. For release candidates,

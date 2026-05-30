@@ -391,8 +391,8 @@ BEGIN
     IDS_ERR_SAVEMET         "خطأ اثناء حفظ جزء الملف %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "جزء معطب (%u) في %s"
     IDS_HASHINGDONE         "كمل اعادة المزج %s, الملف جاهز"
-    IDS_ERR_PARTCORRUPT     "تحميل جزءt %u معطب :(  (%s)"
-    IDS_ICHWORKED           "I.C.H.: تغطية الملف المعطب %u (%s), حفظ %s"
+    IDS_ERR_PARTCORRUPT     "تحميل جزءt %u معطب %s"
+    IDS_ICHWORKED           "I.C.H.: تغطية الملف المعطب %u %s, حفظ %s"
     IDS_ERR_OUTOFSPACE      "ليس عندك مساحة كافية للتحميل ""%s""!"
     IDS_SE                  "تبديل المصدر"
 END

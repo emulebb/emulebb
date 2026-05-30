@@ -341,8 +341,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Napaka med shranjevanjem delne datoteke: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Najden pokvarjen del (%u) v %s"
     IDS_HASHINGDONE         "Končano ponovno ustvarjanje hasa za %s, datoteka je brez napak"
-    IDS_ERR_PARTCORRUPT     "Prenesen del %u je pokvarjen :-(  (%s)"
-    IDS_ICHWORKED           "IRN: Rešen pokvarjen del %u  (%s), Rešeno: %s"
+    IDS_ERR_PARTCORRUPT     "Prenesen del %u je pokvarjen %s"
+    IDS_ICHWORKED           "IRN: Rešen pokvarjen del %u %s, Rešeno: %s"
     IDS_ERR_OUTOFSPACE      "Na disku nimate dovolj prostora za prenos %s!"
     IDS_SE                  "Izmenjava virov"
 END

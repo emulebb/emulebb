@@ -341,8 +341,8 @@ BEGIN
     IDS_ERR_SAVEMET         "ERROR en desar el fitxer de parts: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "S'ha trobat una part corrupta (%u) a %s"
     IDS_HASHINGDONE         "Finalitzat el recàlcul de sumes de %s, sembla que el fitxer està bé"
-    IDS_ERR_PARTCORRUPT     "La part baixada %u és corrupta:(  (%s)"
-    IDS_ICHWORKED           "ICH: La part %u corrupta s'ha recuperat (%s), Desada: %s"
+    IDS_ERR_PARTCORRUPT     "La part baixada %u és corrupta %s"
+    IDS_ICHWORKED           "ICH: La part %u corrupta s'ha recuperat %s, Desada: %s"
     IDS_ERR_OUTOFSPACE      "No disposeu de prou espai de disc per baixar %s!"
     IDS_SE                  "Intercanvi de Fonts"
 END

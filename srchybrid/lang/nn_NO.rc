@@ -330,8 +330,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Mislukka freisting på å lagre delfil: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Funne korrupt del (%u) in %s"
     IDS_HASHINGDONE         "Omhashing ferdig %s. Fila ser ut til å vere ok"
-    IDS_ERR_PARTCORRUPT     "Nedlasta del %u er feil:(  (%s)"
-    IDS_ICHWORKED           "AICH: Restituerte del %u (%s), lagra: %s"
+    IDS_ERR_PARTCORRUPT     "Nedlasta del %u er feil %s"
+    IDS_ICHWORKED           "AICH: Restituerte del %u %s, lagra: %s"
     IDS_ERR_OUTOFSPACE      "Du har ikkje nok diskplass til å laste ned %s!"
     IDS_SE                  "Kjeldeutveksling"
 END

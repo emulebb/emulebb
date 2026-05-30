@@ -392,8 +392,8 @@ BEGIN
     IDS_ERR_SAVEMET         "KĻŪDA saglabājot daļas datni: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Atrasta bojāta daļa (%u) in %s"
     IDS_HASHINGDONE         "Pabeigts rehashings %s, izskatās, ka ar datni viss ir kārtībā"
-    IDS_ERR_PARTCORRUPT     "Lejupielādētā daļa %u ir bojāta :(  (%s)"
-    IDS_ICHWORKED           "I.C.H.: salabota bojātā daļa %u (%s), Saglabāts: %s"
+    IDS_ERR_PARTCORRUPT     "Lejupielādētā daļa %u ir bojāta %s"
+    IDS_ICHWORKED           "I.C.H.: salabota bojātā daļa %u %s, Saglabāts: %s"
     IDS_ERR_OUTOFSPACE      "Tev ir nepietiekoša brīva vieta uz diska, lai lejupielādētu ""%s""!"
     IDS_SE                  "Avota maiņa"
 END

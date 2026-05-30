@@ -390,8 +390,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Error demientres se guardaba l’archivu: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Parte corrupta (%u) en %s"
     IDS_HASHINGDONE         "Finó la recodificación en %s, l’archivu paez tar bien"
-    IDS_ERR_PARTCORRUPT     "La parte baxada %u ta corrupta :(  (%s)"
-    IDS_ICHWORKED           "I.C.H.: La parte corrupta recuperó %u (%s), Saved: %s"
+    IDS_ERR_PARTCORRUPT     "La parte baxada %u ta corrupta %s"
+    IDS_ICHWORKED           "I.C.H.: La parte corrupta recuperó %u %s, Saved: %s"
     IDS_ERR_OUTOFSPACE      "Nun tines espaciu abondo nel discu pa descargar ""%s""!"
     IDS_SE                  "Intercambiu de fontes"
 END

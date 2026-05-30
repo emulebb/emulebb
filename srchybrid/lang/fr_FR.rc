@@ -340,8 +340,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Erreur d'enregistrement : %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Partie invalide trouvée (%u) dans %s"
     IDS_HASHINGDONE         "Hachage terminé %s, le fichier semble correct"
-    IDS_ERR_PARTCORRUPT     "Partie téléchargée %u invalide (%s)"
-    IDS_ICHWORKED           "Partie invalide remplacée %u  (%s), Récupérée : %s"
+    IDS_ERR_PARTCORRUPT     "Partie téléchargée %u invalide %s"
+    IDS_ICHWORKED           "Partie invalide remplacée %u %s, Récupérée : %s"
     IDS_ERR_OUTOFSPACE      "Espace disque insuffisant pour télécharger %s !"
     IDS_SE                  "Echange Sources"
 END

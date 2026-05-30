@@ -346,8 +346,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Error al guardar el archivo .part: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Parte corrupta (%u) en %s"
     IDS_HASHINGDONE         "Finalizado recodificación del hash en %s, el archivo parece estar bien"
-    IDS_ERR_PARTCORRUPT     "Parte descargada %u corrupta :(  (%s)"
-    IDS_ICHWORKED           "ICH: Recuperada parte corrupta %u (%s), Salvado: %s"
+    IDS_ERR_PARTCORRUPT     "Parte descargada %u corrupta %s"
+    IDS_ICHWORKED           "ICH: Recuperada parte corrupta %u %s, Salvado: %s"
     IDS_ERR_OUTOFSPACE      "¡Insuficiente espacio en disco para descargar %s!"
     IDS_SE                  "Intercambio de fuentes"
 END

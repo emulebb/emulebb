@@ -341,8 +341,8 @@ BEGIN
     IDS_ERR_SAVEMET         "KLAIDA išsaugant .part failą: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Rasta pažeista dalis (%u) faile %s"
     IDS_HASHINGDONE         "Baigtas naujas hašinimas %s, failas dabar turi būti geras"
-    IDS_ERR_PARTCORRUPT     "Gauta dalis %u yra pažeista :(  (%s)"
-    IDS_ICHWORKED           "IKT: atstatyta pažeista dalis %u  (%s), išsaugota: %s"
+    IDS_ERR_PARTCORRUPT     "Gauta dalis %u yra pažeista %s"
+    IDS_ICHWORKED           "IKT: atstatyta pažeista dalis %u %s, išsaugota: %s"
     IDS_ERR_OUTOFSPACE      "Neužtenka tuščios vietos failui %s!"
     IDS_SE                  "Šaltinių apsikeitimas"
 END

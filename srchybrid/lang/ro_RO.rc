@@ -110,8 +110,8 @@ BEGIN
     IDS_ERR_SAVEMET         "EROARE la salvarea fişierului .part: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Am găsit coruptă partea (%u) în %s"
     IDS_HASHINGDONE         "Re-hash-ul %s terminat. Fişierul pare OK"
-    IDS_ERR_PARTCORRUPT     "Partea %u descărcată e coruptă :(  (%s)"
-    IDS_ICHWORKED           "G.I.C.: Am recuperat partea coruptă %u (%s), Salvat: %s"
+    IDS_ERR_PARTCORRUPT     "Partea %u descărcată e coruptă %s"
+    IDS_ICHWORKED           "G.I.C.: Am recuperat partea coruptă %u %s, Salvat: %s"
     IDS_ERR_OUTOFSPACE      "Spaţiu insuficient pentru descărcarea %s!"
     IDS_SE                  "Schimb surse"
 END

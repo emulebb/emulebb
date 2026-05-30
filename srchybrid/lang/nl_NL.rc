@@ -342,8 +342,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Fout bij het opslaan van bestandsdeel: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Corrupt bestandsdeel (%u) in %s gevonden"
     IDS_HASHINGDONE         "Opnieuw hashen van %s is afgerond, het bestand lijkt in orde"
-    IDS_ERR_PARTCORRUPT     "Gedownload bestandsdeel %u is corrupt :(  (%s)"
-    IDS_ICHWORKED           "ICH: herstelt corrupt bestandsdeel %u  (%s), opgeslagen: %s"
+    IDS_ERR_PARTCORRUPT     "Gedownload bestandsdeel %u is corrupt %s"
+    IDS_ICHWORKED           "ICH: herstelt corrupt bestandsdeel %u %s, opgeslagen: %s"
     IDS_ERR_OUTOFSPACE      "U heeft onvoldoende schijfruimte om ""%s"" te downloaden!"
     IDS_SE                  "Bronuitwisseling"
 END

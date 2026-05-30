@@ -390,8 +390,8 @@ BEGIN
     IDS_ERR_SAVEMET         "GABIM gjatë ruajtjes të pjesës së skedës: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Pjesa (%u) duket e korruptuar në %s"
     IDS_HASHINGDONE         "Mbaron rigrirja e %s, skeda me sa duket është OK"
-    IDS_ERR_PARTCORRUPT     "Pjesë e shkarkuar %u është korruptuar :(  (%s)"
-    IDS_ICHWORKED           "I.C.H.: Rikthimi i pjesës së korruptuar %u (%s), ruhet: %s"
+    IDS_ERR_PARTCORRUPT     "Pjesë e shkarkuar %u është korruptuar %s"
+    IDS_ICHWORKED           "I.C.H.: Rikthimi i pjesës së korruptuar %u %s, ruhet: %s"
     IDS_ERR_OUTOFSPACE      "Nuk ka hapësirë të mjaftueshme për të shkarkuar ""%s""!"
     IDS_SE                  "Shkëmbim Burimi"
 END

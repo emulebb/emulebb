@@ -340,8 +340,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Feil ved forsøk på å lagre partfil: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Funnet feil del (%u) i %s"
     IDS_HASHINGDONE         "Rehashing ferdig %s, filen er tilsynelatende ok"
-    IDS_ERR_PARTCORRUPT     "Nedlastet del %u er feil:(  (%s)"
-    IDS_ICHWORKED           "ICH: Gjenopprettet del %u (%s), Lagret: %s"
+    IDS_ERR_PARTCORRUPT     "Nedlastet del %u er feil %s"
+    IDS_ICHWORKED           "ICH: Gjenopprettet del %u %s, Lagret: %s"
     IDS_ERR_OUTOFSPACE      "Du har ikke nok diskplass til å laste ned %s!"
     IDS_SE                  "Utveksling av kilder"
 END

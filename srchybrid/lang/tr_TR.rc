@@ -354,8 +354,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Kaydedilirken HATA olan parça dosyası: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Bozulmuş parça (%u), %s dosyasında bulundu"
     IDS_HASHINGDONE         "%s dosyasının yeniden adreslenmesi bitti, dosyanın durumu iyi görünüyor"
-    IDS_ERR_PARTCORRUPT     "İndirilmiş parça %u bozuk :(  (%s)"
-    IDS_ICHWORKED           "I.C.H.: Bozulan parça %u (%s) onarıldı, Kaydedilen: %s"
+    IDS_ERR_PARTCORRUPT     "İndirilmiş parça %u bozuk %s"
+    IDS_ICHWORKED           "I.C.H.: Bozulan parça %u %s onarıldı, Kaydedilen: %s"
     IDS_ERR_OUTOFSPACE      """%s"" dosyasını indirmek için yeterli disk alanınız yok!"
     IDS_SE                  "Kaynak Değişimi"
 END

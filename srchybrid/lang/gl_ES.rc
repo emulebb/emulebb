@@ -381,8 +381,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Hubo un erro ao gardar o arquivo .part: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Atopouse unha parte corrupta (%u) en %s"
     IDS_HASHINGDONE         "Rematada a recodificación do hash %s, o arquivo semella estar ben"
-    IDS_ERR_PARTCORRUPT     "A parte baixada %u está corrupta :(  (%s)"
-    IDS_ICHWORKED           "ICH: Parte corrupta recuperada %u  (%s), Salvado: %s"
+    IDS_ERR_PARTCORRUPT     "A parte baixada %u está corrupta %s"
+    IDS_ICHWORKED           "ICH: Parte corrupta recuperada %u %s, Salvado: %s"
     IDS_ERR_OUTOFSPACE      "Non tes espacio no teu disco duro para baixar %s!"
     IDS_SE                  "Intercambio de Fontes"
 END

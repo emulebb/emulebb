@@ -338,8 +338,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Viga partfaili salvestamisel: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Leitud vigane osa (%u) failis %s"
     IDS_HASHINGDONE         "Lõpetasin faili %s hashimise, tundub korras olevat"
-    IDS_ERR_PARTCORRUPT     "Tõmmatud osa %u on vigane :(  (%s)"
-    IDS_ICHWORKED           "ICH: Taastasin vigase osa %u  (%s), Saved: %s"
+    IDS_ERR_PARTCORRUPT     "Tõmmatud osa %u on vigane %s"
+    IDS_ICHWORKED           "ICH: Taastasin vigase osa %u %s, Saved: %s"
     IDS_ERR_OUTOFSPACE      "Sinu kõvakettal on liiga vähe ruumi %s tõmbamiseks!"
     IDS_SE                  "Allikavahetus"
 END

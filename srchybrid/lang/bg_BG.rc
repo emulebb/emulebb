@@ -389,8 +389,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Грешка при записване на .part файла: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Намерена е повредена част (%u) в %s"
     IDS_HASHINGDONE         "Приключи повторната проверка на хеша за %s, файлът е ОК"
-    IDS_ERR_PARTCORRUPT     "Свалената част %u е повредена:(  (%s)"
-    IDS_ICHWORKED           "ICH: Възстановена е повредената част %u (%s), Записана: %s"
+    IDS_ERR_PARTCORRUPT     "Свалената част %u е повредена %s"
+    IDS_ICHWORKED           "ICH: Възстановена е повредената част %u %s, Записана: %s"
     IDS_ERR_OUTOFSPACE      "Вие нямате достатъчно място на диска за да сваляте %s!"
     IDS_SE                  "Обмен"
 END

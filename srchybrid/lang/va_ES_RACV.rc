@@ -347,8 +347,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Erro gravant l'archiu de parts: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "S'ha trobat una part corrupta (%u) a %s"
     IDS_HASHINGDONE         "Finalisat el hash de %s, l'archiu pareix  \nestar be"
-    IDS_ERR_PARTCORRUPT     "La part descarregada %u està corrupta:(  (%s)"
-    IDS_ICHWORKED           "ICH: La part %u corrupta s'ha recuperat (%s), Guardat: %s"
+    IDS_ERR_PARTCORRUPT     "La part descarregada %u està corrupta %s"
+    IDS_ICHWORKED           "ICH: La part %u corrupta s'ha recuperat %s, Guardat: %s"
     IDS_ERR_OUTOFSPACE      "No tens prou d'espai en el disc per a  \ndescarregar %s!"
     IDS_SE                  "Intercanvi de Fonts"
 END

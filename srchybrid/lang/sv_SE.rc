@@ -338,8 +338,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Fel när delfilen sparades: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Fann korrupta delar (%u) in %s"
     IDS_HASHINGDONE         "Avslutade omhashning %s, filen verkar vara ok"
-    IDS_ERR_PARTCORRUPT     "Nedladdad del %u är korrupt :(  (%s)"
-    IDS_ICHWORKED           "ICH: återställde korrupt del %u  (%s), Saved: %s"
+    IDS_ERR_PARTCORRUPT     "Nedladdad del %u är korrupt %s"
+    IDS_ICHWORKED           "ICH: återställde korrupt del %u %s, Saved: %s"
     IDS_ERR_OUTOFSPACE      "Du har inte tillräckligt diskutrymme för att ladda hem %s!"
     IDS_SE                  "Källubytning"
 END

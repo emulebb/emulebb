@@ -344,8 +344,8 @@ BEGIN
     IDS_ERR_SAVEMET         "ERRO ao guardar ficheiro .part: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Foi encontrada parte corrupta (%u) dentro %s"
     IDS_HASHINGDONE         "Foi finalizado o recálculo do hash de %s, ficheiro parece estar ok"
-    IDS_ERR_PARTCORRUPT     "Parte recebida %u está corrupta :(  (%s)"
-    IDS_ICHWORKED           "RIC: Recuperada parte corrupta %u  (%s), Saved: %s"
+    IDS_ERR_PARTCORRUPT     "Parte recebida %u está corrupta %s"
+    IDS_ICHWORKED           "RIC: Recuperada parte corrupta %u %s, Saved: %s"
     IDS_ERR_OUTOFSPACE      "Não tem espaço suficiente no disco para receber %s!"
     IDS_SE                  "Troca de Fonte"
 END

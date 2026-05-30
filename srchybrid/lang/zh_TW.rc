@@ -117,8 +117,8 @@ BEGIN
     IDS_ERR_SAVEMET         "錯誤 當儲存部分檔時: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "發現已損壞部分 (%u) 在 %s"
     IDS_HASHINGDONE         "檔案重新切細完成 %s, 檔案看來似乎完整"
-    IDS_ERR_PARTCORRUPT     "已下載部分 %u 損壞了 :(  (%s)"
-    IDS_ICHWORKED           "I.C.H.: 重新恢復損壞部分 %u (%s), 儲存: %s"
+    IDS_ERR_PARTCORRUPT     "已下載部分 %u 損壞了 %s"
+    IDS_ICHWORKED           "I.C.H.: 重新恢復損壞部分 %u %s, 儲存: %s"
     IDS_ERR_OUTOFSPACE      "您的磁碟空間已不足夠來下載 ""%s""!"
     IDS_SE                  "來源交換"
 END

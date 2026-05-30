@@ -346,8 +346,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Errorea .part fitxategia gordetzerakoan: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Zati akatsduna (%u) fitxategi honetan: %s"
     IDS_HASHINGDONE         "%s-ren hash-aren birkodetze lana amaitu da, fitxategia ongi dagoela dirudi"
-    IDS_ERR_PARTCORRUPT     "%u zatia akatsekin jaitsi da :(  (%s)"
-    IDS_ICHWORKED           "ICH: %u zati akatsduna berreskuratu da (%s), Gordeta: %s"
+    IDS_ERR_PARTCORRUPT     "%u zatia akatsekin jaitsi da %s"
+    IDS_ICHWORKED           "ICH: %u zati akatsduna berreskuratu da %s, Gordeta: %s"
     IDS_ERR_OUTOFSPACE      "%s jaisteko lekurik ez dago disko gogorrean!"
     IDS_SE                  "Iturrien trukea"
 END

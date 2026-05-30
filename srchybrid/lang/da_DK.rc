@@ -346,8 +346,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Fejl ved forsøg på at gemme partfil: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Fundet fejlbehæftet del (%u) in %s"
     IDS_HASHINGDONE         "Rehashing færdig %s, fil er tilsyneladende ok"
-    IDS_ERR_PARTCORRUPT     "Downloadet del %u er fejlbehæftet:(  (%s)"
-    IDS_ICHWORKED           "ICH: Genskabt fejlbehæftet del %u (%s), Saved: %s"
+    IDS_ERR_PARTCORRUPT     "Downloadet del %u er fejlbehæftet %s"
+    IDS_ICHWORKED           "ICH: Genskabt fejlbehæftet del %u %s, Saved: %s"
     IDS_ERR_OUTOFSPACE      "Du har ikke nok diskplads til at downloade %s!"
     IDS_SE                  "Kilde Udveksling"
 END

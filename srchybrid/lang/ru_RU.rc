@@ -392,8 +392,8 @@ BEGIN
     IDS_ERR_SAVEMET         "Ошибка во время записи временного файла: %s (%s)"
     IDS_ERR_FOUNDCORRUPTION "Найдена повреждённая часть (%u) в %s"
     IDS_HASHINGDONE         "Завершено хеширование %s. Похоже, с файлом все в порядке"
-    IDS_ERR_PARTCORRUPT     "Загруженная часть %u повреждена :(  (%s)"
-    IDS_ICHWORKED           "ICH: Восстановлена повреждённая часть %u (%s). Сохранено: %s"
+    IDS_ERR_PARTCORRUPT     "Загруженная часть %u повреждена %s"
+    IDS_ICHWORKED           "ICH: Восстановлена повреждённая часть %u %s. Сохранено: %s"
     IDS_ERR_OUTOFSPACE      "Недостаточно места на диске ""%s""!"
     IDS_SE                  "Обмен источниками"
 END
