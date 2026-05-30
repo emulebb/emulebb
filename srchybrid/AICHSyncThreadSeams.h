@@ -4,6 +4,7 @@
 #include "WorkerUiMessageSeams.h"
 
 #define EMULEBB_TEST_HAVE_AICH_SYNC_PROGRESS_DELIVERY_ACTION 1
+#define EMULEBB_TEST_HAVE_AICH_SYNC_SHUTDOWN_WAIT_ACTION 1
 
 /**
  * @brief UI delivery outcome for AICH background progress updates.

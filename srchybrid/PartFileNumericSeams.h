@@ -6,6 +6,8 @@
 #include "ProtocolGuards.h"
 #include "types.h"
 
+#define EMULEBB_TEST_HAVE_PART_FILE_BUFFERED_WRITE_PREFLIGHT 1
+
 namespace PartFileNumericSeams
 {
 /**

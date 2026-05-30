@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <limits>
 
+#define EMULEBB_TEST_HAVE_ENCRYPTED_STREAM_NEGOTIATION_BUFFER_LIMITS 1
+
 namespace EncryptedStreamSocketSeams
 {
 static const uint64_t kMaxNegotiationSendBufferBytes = 16ui64 * 1024ui64 * 1024ui64;

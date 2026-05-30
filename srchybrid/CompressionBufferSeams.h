@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 
+#define EMULEBB_TEST_HAVE_OWNED_BYTE_BUFFER_GROWTH 1
+
 /**
  * @brief Derives an initial zlib work-buffer size and caps it to the caller's maximum.
  */

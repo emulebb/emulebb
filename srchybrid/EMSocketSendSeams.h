@@ -5,6 +5,8 @@
 #include <limits>
 #include "types.h"
 
+#define EMULEBB_HAS_EMSOCKET_SEND_BUDGET_SEAMS 1
+
 static const size_t kMaxEMSocketQueuedControlPackets = 1024u;
 static const uint64 kMaxEMSocketQueuedControlBytes = 8ull * 1024ull * 1024ull;
 static const size_t kMaxEMSocketQueuedStandardPackets = 2048u;
