@@ -2188,9 +2188,9 @@ void CemuleDlg::StopBindLossMonitor()
 void CemuleDlg::StartTransferRateDisplayTimer()
 {
 	StopTransferRateDisplayTimer();
-	m_uTransferRateDisplayTimer = SetTimer(kTransferRateDisplayTimerId, GetTransferRateDisplayRefreshTimerDelayMs(), NULL);
+	m_uTransferRateDisplayTimer = SetTimer(kTransferRateDisplayTimerId, GetDesktopPresentationTimerDelayMs(thePrefs.GetDesktopUiRefreshIntervalMs()), NULL);
 	if (thePrefs.GetVerbose() && m_uTransferRateDisplayTimer == 0)
-		AddDebugLogLine(true, _T("Failed to create transfer-rate display timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
+		AddDebugLogLine(true, _T("Failed to create desktop presentation timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
 }
 
 void CemuleDlg::StopTransferRateDisplayTimer()
@@ -2724,7 +2724,7 @@ CString CemuleDlg::GetTransferRateString()
 	return szBuff;
 }
 
-void CemuleDlg::ShowTransferRate(bool bForceAll)
+void CemuleDlg::ShowTransferRate(bool bForceAll, bool bTitleOnly)
 {
 	if (bForceAll)
 		m_uLastSysTrayIconCookie = SYS_TRAY_ICON_COOKIE_FORCE_UPDATE;
@@ -2733,7 +2733,7 @@ void CemuleDlg::ShowTransferRate(bool bForceAll)
 	m_uUpDatarate = theApp.uploadqueue->GetDatarate();
 
 	const CString &strTransferRate = GetTransferRateString();
-	if (TrayIconVisible() || bForceAll) {
+	if (!bTitleOnly && (TrayIconVisible() || bForceAll)) {
 		// set tray icon
 		int iDownRatePercent = (int)ceil((m_uDownDatarate / 10.24) / thePrefs.GetMaxGraphDownloadRate());
 		UpdateTrayIcon(min(iDownRatePercent, 100));
@@ -2748,7 +2748,7 @@ void CemuleDlg::ShowTransferRate(bool bForceAll)
 		TraySetToolTip(buffer);
 	}
 
-	if (IsWindowVisible() || bForceAll) {
+	if (!bTitleOnly && (IsWindowVisible() || bForceAll)) {
 		statusbar->SetText(strTransferRate, SBarUpDown, 0);
 		ShowTransferStateIcon();
 	}
@@ -2757,7 +2757,7 @@ void CemuleDlg::ShowTransferRate(bool bForceAll)
 		szBuff.Format(_T("(U:%.1f D:%.1f) %s %s"), m_uUpDatarate / 1024.0f, m_uDownDatarate / 1024.0f, MOD_RELEASE_PRODUCT_NAME, (LPCTSTR)theApp.m_strCurVersionLong);
 		SetWindowText(szBuff);
 	}
-	if (m_pMiniMule != NULL && m_pMiniMule->GetSafeHwnd() != NULL && m_pMiniMule->IsWindowVisible())
+	if (!bTitleOnly && m_pMiniMule != NULL && m_pMiniMule->GetSafeHwnd() != NULL && m_pMiniMule->IsWindowVisible())
 		m_pMiniMule->UpdateContent(m_uUpDatarate, m_uDownDatarate);
 }
 
@@ -5857,10 +5857,22 @@ LRESULT CemuleDlg::OnWebServerFileRename(WPARAM wParam, LPARAM lParam)
 void CemuleDlg::ApplyDesktopUiRefreshIntervalMs(UINT uIntervalMs)
 {
 	thePrefs.SetDesktopUiRefreshIntervalMs(uIntervalMs);
-	if (transferwnd != NULL) {
+	StartTransferRateDisplayTimer();
+	if (transferwnd != NULL)
 		transferwnd->RefreshTransferDisplayRefreshState(false);
-		transferwnd->RestartTransferDisplayRefreshTimer();
-	}
+}
+
+void CemuleDlg::RunDesktopPresentationTick()
+{
+	const UINT uDesktopRefreshIntervalMs = thePrefs.GetDesktopUiRefreshIntervalMs();
+	if (ShouldRefreshRoutineDesktopPresentation(theApp.IsClosing(), IsWindowVisible() != FALSE, uDesktopRefreshIntervalMs)) {
+		if (transferwnd != NULL) {
+			transferwnd->RefreshTransferDisplayRefreshState(false);
+			transferwnd->FlushVisibleDisplayRefreshes();
+		}
+		ShowTransferRate();
+	} else if (ShouldRefreshPausedTitlePresentation(theApp.IsClosing(), IsWindowVisible() != FALSE, uDesktopRefreshIntervalMs))
+		ShowTransferRate(false, true);
 }
 
 LRESULT CemuleDlg::OnWebRestApiCommand(WPARAM, LPARAM lParam)
@@ -6190,8 +6202,7 @@ void CemuleDlg::RefreshUPnP(bool bRequestAnswer)
 void CemuleDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	if (nIDEvent == kTransferRateDisplayTimerId) {
-		if (ShouldRefreshTransferRatePresentation(theApp.IsClosing(), IsWindowVisible() != FALSE))
-			ShowTransferRate();
+		RunDesktopPresentationTick();
 		return;
 	}
 	if (nIDEvent == kBindLossWatchdogTimerId) {

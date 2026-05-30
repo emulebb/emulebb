@@ -93,7 +93,7 @@ public:
 	void ShowMessageState(UINT nIcon);
 	void SetActiveDialog(CWnd *dlg);
 	CWnd* GetActiveDialog() const				{ return activewnd; }
-	void ShowTransferRate(bool bForceAll = false);
+	void ShowTransferRate(bool bForceAll = false, bool bTitleOnly = false);
 	void UpdateTrayVisibility();
 	void Localize();
 	bool IsTransientDialogActive() const		{ return m_bTransientDialogActive; }
@@ -254,6 +254,7 @@ protected:
 	void ApplyDesktopUiRefreshIntervalMs(UINT uIntervalMs);
 	void StartTransferRateDisplayTimer();
 	void StopTransferRateDisplayTimer();
+	void RunDesktopPresentationTick();
 	void DestroyMiniMule();
 	void StartAICHSyncThread();
 	void WaitForAICHSyncThreadShutdown();

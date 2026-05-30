@@ -11,6 +11,7 @@
 
 #define EMULEBB_TEST_HAVE_DISPLAY_REFRESH_OWNED_POST 1
 #define EMULEBB_TEST_HAVE_DISPLAY_REFRESH_POST_REGISTRY 1
+#define EMULEBB_TEST_HAVE_UNIFIED_DESKTOP_PRESENTATION_TIMER 1
 
 enum EDesktopUiRefreshIntervalMs : uint32_t
 {
@@ -21,6 +22,8 @@ enum EDesktopUiRefreshIntervalMs : uint32_t
 	DESKTOP_UI_REFRESH_SLOW_MS = 5000,
 	DESKTOP_UI_REFRESH_VERYSLOW_MS = 10000
 };
+
+static constexpr UINT DESKTOP_UI_REFRESH_PAUSED_TITLE_MS = DESKTOP_UI_REFRESH_VERYSLOW_MS;
 
 enum EDisplayRefreshMask : uint32_t
 {
@@ -162,19 +165,14 @@ inline bool ShouldRunPreferenceAlignedDisplayRefresh(bool bForce, ULONGLONG dwCu
 }
 
 /**
- * @brief Returns the transfer-window presentation timer cadence.
+ * @brief Returns the unified desktop presentation timer cadence.
  */
-inline UINT GetTransferDisplayRefreshTimerDelayMs(UINT uDesktopUiRefreshIntervalMs)
+inline UINT GetDesktopPresentationTimerDelayMs(UINT uDesktopUiRefreshIntervalMs)
 {
-	return NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs);
-}
-
-/**
- * @brief Returns the lightweight transfer-rate presentation timer cadence.
- */
-inline UINT GetTransferRateDisplayRefreshTimerDelayMs()
-{
-	return DESKTOP_UI_REFRESH_NORMAL_MS;
+	const UINT uNormalizedIntervalMs = NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs);
+	return uNormalizedIntervalMs == DESKTOP_UI_REFRESH_PAUSED_MS
+		? DESKTOP_UI_REFRESH_PAUSED_TITLE_MS
+		: uNormalizedIntervalMs;
 }
 
 /**
@@ -194,11 +192,23 @@ inline ETransferDisplayRefreshState ResolveTransferDisplayRefreshState(
 }
 
 /**
- * @brief Resolves whether lightweight transfer-rate presentation may update.
+ * @brief Resolves whether routine desktop presentation may refresh this tick.
  */
-inline bool ShouldRefreshTransferRatePresentation(bool bAppClosing, bool bMainWindowVisible)
+inline bool ShouldRefreshRoutineDesktopPresentation(bool bAppClosing, bool bMainWindowVisible, UINT uDesktopUiRefreshIntervalMs)
 {
-	return !bAppClosing && bMainWindowVisible;
+	return !bAppClosing
+		&& bMainWindowVisible
+		&& NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs) != DESKTOP_UI_REFRESH_PAUSED_MS;
+}
+
+/**
+ * @brief Resolves whether the paused-mode title-speed exception may refresh this tick.
+ */
+inline bool ShouldRefreshPausedTitlePresentation(bool bAppClosing, bool bMainWindowVisible, UINT uDesktopUiRefreshIntervalMs)
+{
+	return !bAppClosing
+		&& bMainWindowVisible
+		&& NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs) == DESKTOP_UI_REFRESH_PAUSED_MS;
 }
 
 /**

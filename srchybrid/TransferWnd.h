@@ -86,7 +86,6 @@ public:
 	void SetToolTipsDelay(DWORD dwDelay);
 	void OnDisableList();
 	void QueueDisplayRefresh(uint32 nMask, bool bForce = false);
-	bool RestartTransferDisplayRefreshTimer();
 	void RefreshTransferDisplayRefreshState(bool bFlushIfRunning = true);
 	void FlushVisibleDisplayRefreshes();
 
@@ -114,7 +113,6 @@ protected:
 	bool		m_bIsDragging;
 	bool		downloadlistactive;
 	bool		m_bLayoutInited;
-	UINT_PTR	m_uTransferDisplayRefreshTimer;
 	ETransferDisplayRefreshState m_eTransferDisplayRefreshState;
 	std::atomic<LONG> m_nPendingDisplayRefreshMask;
 
@@ -143,7 +141,6 @@ protected:
 	bool	IsTransferRefreshActive() const;
 	bool	IsMainWindowForegroundOwned() const;
 	uint32	GetVisibleDisplayRefreshMask(uint32 nMask) const;
-	void	StopTransferDisplayRefreshTimer();
 	void	FlushExplicitDisplayRefresh();
 	void	FlushDisplayRefreshMask(uint32 nMask);
 	bool	SelectDownloadCategoryByShortcutIndex(int iCategory);
@@ -178,5 +175,4 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnDestroy();
-	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };

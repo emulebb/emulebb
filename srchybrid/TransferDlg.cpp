@@ -248,11 +248,6 @@ void CTransferDlg::QueueDisplayRefresh(uint32 nMask, bool bForce)
 		m_pwndTransfer->QueueDisplayRefresh(nMask, bForce);
 }
 
-bool CTransferDlg::RestartTransferDisplayRefreshTimer()
-{
-	return m_pwndTransfer != NULL && m_pwndTransfer->RestartTransferDisplayRefreshTimer();
-}
-
 void CTransferDlg::RefreshTransferDisplayRefreshState(bool bFlushIfRunning)
 {
 	if (m_pwndTransfer != NULL)
