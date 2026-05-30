@@ -1,27 +1,75 @@
 # eMuleBB
 
-This repo is the canonical app source for eMule broadband edition, compactly
-branded as eMuleBB. Public product releases use the independent eMuleBB
-version line while the workspace keeps explicit community `0.72a` baselines for
-parity testing.
+eMuleBB is eMule broadband edition: a native Windows eMule client for long
+sessions, large libraries, broadband-era transfer behavior, and trusted local
+automation.
 
-## Refs
+The 0.7.3 release line preserves stock-compatible eD2K/Kad behavior and keeps
+selected legacy eMule features frozen for compatibility. After 0.7.3 establishes
+the first stable eMuleBB baseline, future releases can evolve more aggressively
+while keeping protocol compatibility explicit.
 
-- `main`: maintained eMuleBB integration line and beta `0.7.3` release
-  source after reviewed release proof passes
+## Download And Install
+
+For most users, use the ZIP package:
+
+1. Open <https://github.com/emulebb/emulebb/releases>.
+2. Download the intended eMuleBB ZIP. For RC1, use
+   `emulebb-0.7.3-rc.1-x64.zip` once it is published.
+3. Extract the ZIP into a new folder, for example
+   `C:\Apps\eMuleBB\0.7.3-rc.1`.
+4. Run `emulebb.exe`.
+
+Keep each version in its own application folder. For release candidates,
+nightlies, or support testing, use a backed-up profile or launch with an
+explicit disposable profile:
+
+```powershell
+emulebb.exe -c "$env:TEMP\eMuleBB-TestProfile"
+```
+
+Use the x64 package for ordinary Windows desktop installs. Use ARM64 only for
+ARM64 Windows testing.
+
+The full suite PowerShell bootstrapper is the second install path. Use it when
+you want the eMuleBB suite installer flow instead of only unpacking and running
+the desktop app.
+
+## Documentation
+
+- Setup guide:
+  <https://emulebb.github.io/emulebb-tooling/reference/GUIDE-SETUP/>
+- Product guide:
+  <https://emulebb.github.io/emulebb-tooling/reference/GUIDE-EMULEBB/>
+- FAQ:
+  <https://emulebb.github.io/faq/>
+- Release notes:
+  <https://emulebb.github.io/emulebb-tooling/active/RELEASE-0.7.3-NOTES/>
+- Full documentation:
+  <https://emulebb.github.io/emulebb-tooling/>
+
+## Current Branches
+
+- `main`: maintained eMuleBB integration line and 0.7.3 release source after
+  reviewed release proof passes
 - `baseline/community-0.72a`: seam-enabled parity and regression baseline,
   test-only
-- `tracing-harness/community-0.72a`: variant-client parity harness
-- accepted release refs are cut from reviewed commits on `main`
+- `tracing-harness/community-0.72a`: deterministic parity harness derived from
+  the community baseline
 
-## Working Model
+Accepted release tags are cut from reviewed commits on `main`.
 
-- the first post-community commit is full source encoding normalization
-- active work lands on `main` unless the workspace policy names an exception
-- release stabilization is tracked through the workspace release policy
+## Contributors
 
-## Build And Test
+App-source changes are made in the canonical eMuleBB workspace, not from an
+ad hoc local checkout. Start with the workspace policy and developer docs:
 
-Builds are driven from the canonical workspace materialized under
-`EMULEBB_WORKSPACE_ROOT`, using the paired `emulebb-setup` and `emulebb-build`
-repos rather than a machine-local cleanroom path.
+- Workspace policy:
+  <https://emulebb.github.io/emulebb-tooling/WORKSPACE-POLICY/>
+- Development guide:
+  <https://emulebb.github.io/emulebb-tooling/reference/DEVELOPMENT-GUIDE/>
+- Agent checklist:
+  <https://emulebb.github.io/emulebb-tooling/reference/AGENT-CHECKLIST/>
+
+Build, validation, test, and packaging orchestration lives in the paired
+`emulebb-build` repository.
