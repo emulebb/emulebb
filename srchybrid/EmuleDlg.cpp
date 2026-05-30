@@ -3605,6 +3605,10 @@ void CemuleDlg::OnClose()
 		shutdownProgress.DestroyWindow();
 		m_bTransientDialogActive = false;
 	}
+	// WHY: The tray icon can hold one of the dialog-owned HICON handles until a
+	// NIM_DELETE reaches Explorer. Remove it while the main HWND and icons are
+	// still valid so clean exits do not leave a stale shell icon behind.
+	TrayHide();
 	thePrefs.Uninit();
 	theApp.m_app_state = APP_STATE_DONE;
 	CTrayDialog::OnCancel();

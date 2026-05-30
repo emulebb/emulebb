@@ -83,11 +83,11 @@ int CTrayDialog::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CTrayDialog::OnDestroy()
 {
 	KillSingleClickTimer();
+	// WHY: Shell tray entries are keyed by this window handle. Delete the icon
+	// before base destruction can invalidate the owner HWND and leave a stale
+	// notification-area entry behind after a clean shutdown.
+	TrayHide();
 	CTrayDialogBase::OnDestroy();
-
-	// shouldn't that be done before passing the message to DefWinProc?
-	if (m_nidIconData.hWnd && m_nidIconData.uID > 0 && TrayIconVisible())
-		VERIFY(Shell_NotifyIcon(NIM_DELETE, &m_nidIconData));
 }
 
 void CTrayDialog::TraySetIcon(HICON hIcon, bool bDelete)
