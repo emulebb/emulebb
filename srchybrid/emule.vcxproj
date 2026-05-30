@@ -299,6 +299,7 @@
     <ClCompile Include="PerfLog.cpp" />
     <ClCompile Include="Pinger.cpp" />
     <ClCompile Include="BindAddressResolver.cpp" />
+    <ClCompile Include="PublicIpProbe.cpp" />
     <ClCompile Include="PPgConnection.cpp" />
     <ClCompile Include="PPgDebug.cpp" />
     <ClCompile Include="PPgDirectories.cpp" />
@@ -643,6 +644,8 @@
     <ClInclude Include="PreferencesDlg.h" />
     <ClInclude Include="Preview.h" />
     <ClInclude Include="ProcessLaunchSeams.h" />
+    <ClInclude Include="PublicIpProbe.h" />
+    <ClInclude Include="PublicIpProbeSeams.h" />
     <ClInclude Include="PreviewDlg.h" />
     <ClInclude Include="ProgressCtrlX.h" />
     <ClInclude Include="QArray.h" />

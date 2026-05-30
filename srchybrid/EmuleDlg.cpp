@@ -63,6 +63,7 @@
 #include "ServerList.h"
 #include "Opcodes.h"
 #include "ProtocolGuards.h"
+#include "PublicIpProbe.h"
 #include "SharedFileList.h"
 #include "SharedFileListSeams.h"
 #include "ED2KLink.h"
@@ -2056,6 +2057,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 						if (thePrefs.GetNotifierOnImportantError())
 							theApp.emuledlg->ShowNotifier(strError, TBN_IMPORTANTEVENT);
 					}
+					PublicIpProbe::StartBoundPublicIpv4Probe();
 				}
 #if EMULEBB_HAS_STARTUP_PROFILING
 				theApp.AppendStartupProfileLine(_T("StartupTimer stage 4: socket startup"), theApp.GetStartupProfileElapsedUs(ullSocketInitStart));
