@@ -757,7 +757,22 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 			return 0;
 		}
 
-		if (!bind(hSocket, (LPSOCKADDR)&stAddr, sizeof stAddr) && !listen(hSocket, SOMAXCONN)) {
+		if (bind(hSocket, (LPSOCKADDR)&stAddr, sizeof stAddr)) {
+			const int nBindError = WSAGetLastError();
+			DebugLogError(_T("Web Interface start failed: bind %s:%u failed: %s")
+				, (LPCTSTR)ipstr(stAddr.sin_addr.s_addr)
+				, ntohs(stAddr.sin_port)
+				, (LPCTSTR)GetErrorMessage(nBindError, 1));
+		} else if (listen(hSocket, SOMAXCONN)) {
+			const int nListenError = WSAGetLastError();
+			DebugLogError(_T("Web Interface start failed: listen %s:%u failed: %s")
+				, (LPCTSTR)ipstr(stAddr.sin_addr.s_addr)
+				, ntohs(stAddr.sin_port)
+				, (LPCTSTR)GetErrorMessage(nListenError, 1));
+		} else {
+			DebugLog(_T("Web Interface listening on %s:%u")
+				, (LPCTSTR)ipstr(stAddr.sin_addr.s_addr)
+				, ntohs(stAddr.sin_port));
 			HANDLE hEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 			if (hEvent) {
 				if (!WSAEventSelect(hSocket, hEvent, FD_ACCEPT)) {
