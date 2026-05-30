@@ -11,6 +11,14 @@
  */
 namespace TransferWndSeams
 {
+enum class ETransferListShortcutCommand
+{
+	None,
+	Uploading,
+	OnQueue,
+	KnownClients
+};
+
 constexpr int kSecondaryPaneDownloading = 0;
 constexpr int kSecondaryPaneUploading = 1;
 constexpr int kSecondaryPaneOnQueue = 2;
@@ -110,5 +118,18 @@ inline int GetCategoryShortcutIndex(const unsigned int uMessage, const unsigned 
 	if (uKey >= '1' && uKey <= '9')
 		return static_cast<int>(uKey - '0');
 	return -1;
+}
+
+inline ETransferListShortcutCommand ClassifyTransferListShortcut(const unsigned int uMessage, const unsigned int uKey, const bool bCtrlDown, const bool bAltDown, const bool bShiftDown)
+{
+	if (uMessage != WM_KEYDOWN || !bCtrlDown || bAltDown || bShiftDown)
+		return ETransferListShortcutCommand::None;
+	if (uKey == 'U')
+		return ETransferListShortcutCommand::Uploading;
+	if (uKey == 'Q')
+		return ETransferListShortcutCommand::OnQueue;
+	if (uKey == 'K')
+		return ETransferListShortcutCommand::KnownClients;
+	return ETransferListShortcutCommand::None;
 }
 }

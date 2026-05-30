@@ -26,6 +26,7 @@
 #include "UploadQueue.h"
 #include "DownloadQueue.h"
 #include "MenuCmds.h"
+#include "MenuShortcutLabels.h"
 #include "PartFile.h"
 #include "CatDialog.h"
 #include "UserMsgs.h"
@@ -476,6 +477,15 @@ BOOL CTransferWnd::PreTranslateMessage(MSG *pMsg)
 					MessageBeep(MB_OK);
 				return TRUE;
 			}
+
+			const TransferWndSeams::ETransferListShortcutCommand eListShortcut = TransferWndSeams::ClassifyTransferListShortcut(
+				pMsg->message,
+				static_cast<unsigned int>(pMsg->wParam),
+				GetKeyState(VK_CONTROL) < 0,
+				GetKeyState(VK_MENU) < 0,
+				GetKeyState(VK_SHIFT) < 0);
+			if (eListShortcut != TransferWndSeams::ETransferListShortcutCommand::None)
+				return ActivateTransferListShortcut(eListShortcut) ? TRUE : FALSE;
 		}
 		if (pMsg->wParam == VK_F5
 			&& GetKeyState(VK_CONTROL) >= 0
@@ -555,6 +565,46 @@ bool CTransferWnd::SelectDownloadCategoryByShortcutIndex(int iCategory)
 		return true;
 	m_dlTab.SetCurSel(iCategory);
 	downloadlistctrl.ChangeCategory(iCategory);
+	return true;
+}
+
+bool CTransferWnd::ActivateTransferListShortcut(TransferWndSeams::ETransferListShortcutCommand eCommand)
+{
+	uint32 dwListIDC = 0;
+	EWnd2 eWnd2 = wnd2Uploading;
+	switch (eCommand) {
+	case TransferWndSeams::ETransferListShortcutCommand::Uploading:
+		dwListIDC = IDC_UPLOADLIST;
+		eWnd2 = wnd2Uploading;
+		break;
+	case TransferWndSeams::ETransferListShortcutCommand::OnQueue:
+		if (thePrefs.IsQueueListDisabled()) {
+			MessageBeep(MB_OK);
+			return true;
+		}
+		dwListIDC = IDC_QUEUELIST;
+		eWnd2 = wnd2OnQueue;
+		break;
+	case TransferWndSeams::ETransferListShortcutCommand::KnownClients:
+		if (thePrefs.IsKnownClientListDisabled()) {
+			MessageBeep(MB_OK);
+			return true;
+		}
+		dwListIDC = IDC_CLIENTLIST;
+		eWnd2 = wnd2Clients;
+		break;
+	default:
+		return false;
+	}
+
+	if (m_dwShowListIDC == IDC_DOWNLOADLIST + IDC_UPLOADLIST)
+		ShowWnd2(eWnd2);
+	else
+		ShowList(dwListIDC);
+
+	CWnd *pTargetList = GetDlgItem(static_cast<int>(dwListIDC));
+	if (pTargetList != NULL)
+		pTargetList->SetFocus();
 	return true;
 }
 
@@ -1865,12 +1915,12 @@ void CTransferWnd::OnWnd1BtnDropDown(LPNMHDR, LRESULT*)
 	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_DOWNLOADLIST + IDC_UPLOADLIST ? MF_GRAYED : 0), MP_VIEW1_SPLIT_WINDOW, GetResString(IDS_SPLIT_WINDOW), _T("SplitWindow"));
 	menu.AppendMenu(MF_SEPARATOR);
 	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_DOWNLOADLIST ? MF_GRAYED : 0), MP_VIEW1_DOWNLOADS, GetResString(IDS_TW_DOWNLOADS), _T("DownloadFiles"));
-	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_UPLOADLIST ? MF_GRAYED : 0), MP_VIEW1_UPLOADING, GetResString(IDS_UPLOADING), _T("Upload"));
+	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_UPLOADLIST ? MF_GRAYED : 0), MP_VIEW1_UPLOADING, AddMenuShortcutLabel(GetResString(IDS_UPLOADING), _T("Ctrl+U")), _T("Upload"));
 	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_DOWNLOADCLIENTS ? MF_GRAYED : 0), MP_VIEW1_DOWNLOADING, GetResString(IDS_DOWNLOADING), _T("Download"));
 	if (!thePrefs.IsQueueListDisabled())
-		menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_QUEUELIST ? MF_GRAYED : 0), MP_VIEW1_ONQUEUE, GetResString(IDS_ONQUEUE), _T("ClientsOnQueue"));
+		menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_QUEUELIST ? MF_GRAYED : 0), MP_VIEW1_ONQUEUE, AddMenuShortcutLabel(GetResString(IDS_ONQUEUE), _T("Ctrl+Q")), _T("ClientsOnQueue"));
 	if (!thePrefs.IsKnownClientListDisabled())
-		menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_CLIENTLIST ? MF_GRAYED : 0), MP_VIEW1_CLIENTS, GetResString(IDS_CLIENTLIST), _T("ClientsKnown"));
+		menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_CLIENTLIST ? MF_GRAYED : 0), MP_VIEW1_CLIENTS, AddMenuShortcutLabel(GetResString(IDS_CLIENTLIST), _T("Ctrl+K")), _T("ClientsKnown"));
 
 	RECT rcBtn1;
 	m_btnWnd1.GetWindowRect(&rcBtn1);
@@ -1883,12 +1933,12 @@ void CTransferWnd::OnWnd2BtnDropDown(LPNMHDR, LRESULT*)
 	menu.CreatePopupMenu();
 	menu.EnableIcons();
 
-	menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2Uploading ? MF_GRAYED : 0), MP_VIEW2_UPLOADING, GetResString(IDS_UPLOADING), _T("Upload"));
+	menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2Uploading ? MF_GRAYED : 0), MP_VIEW2_UPLOADING, AddMenuShortcutLabel(GetResString(IDS_UPLOADING), _T("Ctrl+U")), _T("Upload"));
 	menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2Downloading ? MF_GRAYED : 0), MP_VIEW2_DOWNLOADING, GetResString(IDS_DOWNLOADING), _T("Download"));
 	if (!thePrefs.IsQueueListDisabled())
-		menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2OnQueue ? MF_GRAYED : 0), MP_VIEW2_ONQUEUE, GetResString(IDS_ONQUEUE), _T("ClientsOnQueue"));
+		menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2OnQueue ? MF_GRAYED : 0), MP_VIEW2_ONQUEUE, AddMenuShortcutLabel(GetResString(IDS_ONQUEUE), _T("Ctrl+Q")), _T("ClientsOnQueue"));
 	if (!thePrefs.IsKnownClientListDisabled())
-		menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2Clients ? MF_GRAYED : 0), MP_VIEW2_CLIENTS, GetResString(IDS_CLIENTLIST), _T("ClientsKnown"));
+		menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2Clients ? MF_GRAYED : 0), MP_VIEW2_CLIENTS, AddMenuShortcutLabel(GetResString(IDS_CLIENTLIST), _T("Ctrl+K")), _T("ClientsKnown"));
 
 	RECT rcBtn2;
 	m_btnWnd2.GetWindowRect(&rcBtn2);

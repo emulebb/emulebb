@@ -21,6 +21,7 @@
 #include "SplitterControl.h"
 #include "TabCtrl.hpp"
 #include "DisplayRefreshSeams.h"
+#include "TransferWndSeams.h"
 #include "UploadListCtrl.h"
 #include "DownloadListCtrl.h"
 #include "QueueListCtrl.h"
@@ -144,6 +145,7 @@ protected:
 	void	FlushExplicitDisplayRefresh();
 	void	FlushDisplayRefreshMask(uint32 nMask);
 	bool	SelectDownloadCategoryByShortcutIndex(int iCategory);
+	bool	ActivateTransferListShortcut(TransferWndSeams::ETransferListShortcutCommand eCommand);
 
 	virtual BOOL PreTranslateMessage(MSG *pMsg);
 	virtual void DoDataExchange(CDataExchange *pDX);    // DDX/DDV support
