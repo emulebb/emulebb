@@ -3372,6 +3372,10 @@ void CemuleDlg::OnClose()
 	};
 
 	theApp.m_app_state = APP_STATE_SHUTTINGDOWN;
+	// WHY: The notification-area entry belongs to this HWND. Once shutdown is
+	// committed, remove it before long teardown work or pumped messages can
+	// leave Explorer with a stale icon after a clean close.
+	TrayHide();
 	VersionCheckLaunchSeams::ClearQueuedOnOwnerTeardown(m_pVersionCheckState);
 	updateShutdownPhase(3, _T("Closing eMule"), _T("Stopping AICH sync thread."), true);
 	WaitForAICHSyncThreadShutdown();

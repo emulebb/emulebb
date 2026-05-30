@@ -126,6 +126,7 @@ void CSearchDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 		CRect rcResults;
 		m_pwndResults->GetClientRect(&rcResults);
 		m_pwndResults->SendMessage(WM_SIZE, SIZE_RESTORED, MAKELPARAM(rcResults.Width(), rcResults.Height()));
+		m_pwndResults->RefreshResultLayout();
 	}
 }
 

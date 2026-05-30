@@ -116,6 +116,8 @@ public:
 	bool	FocusResultsList();
 	/** Refreshes the visible queued/searching/empty status for the active result tab. */
 	void	RefreshSearchActivity();
+	/** Re-applies the resizable layout after hidden/tray search-result changes. */
+	void	RefreshResultLayout();
 	void	ShowSearchSelector(bool visible);
 	int		GetSelectedCat() const				{ return m_cattabs.GetCurSel(); }
 	void	UpdateCatTabs();

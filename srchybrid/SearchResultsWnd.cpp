@@ -936,6 +936,18 @@ void CSearchResultsWnd::RefreshSearchActivity()
 		searchprogress.SetPos(0);
 }
 
+void CSearchResultsWnd::RefreshResultLayout()
+{
+	if (GetSafeHwnd() == NULL)
+		return;
+
+	// WHY: Public/API searches can add result tabs while the main frame is hidden
+	// in the tray. On restore, the resizable anchor cache may not get a fresh
+	// visible-size pass, leaving the bottom action row over the result list.
+	ArrangeLayout();
+	PositionSearchStatusOverlay();
+}
+
 void CSearchResultsWnd::OnBnClickedClearAll()
 {
 	DeleteAllSearches();
@@ -1709,10 +1721,13 @@ bool CSearchResultsWnd::CreateNewTab(SSearchParams *pParams, bool bActiveIcon)
 	int itemnr = searchselect.InsertItem(INT_MAX, &ti);
 	if (!searchselect.IsWindowVisible())
 		ShowSearchSelector(true);
+	else
+		RefreshResultLayout();
 	LRESULT lResult;
 	OnSelChangingTab(NULL, &lResult);
 	searchselect.SetCurSel(itemnr);
 	searchlistctrl.ShowResults(pParams->dwSearchID);
+	RefreshResultLayout();
 	return true;
 }
 
@@ -1885,6 +1900,7 @@ void CSearchResultsWnd::ShowResults(const SSearchParams *pParams)
 
 	searchlistctrl.ShowResults(pParams->dwSearchID);
 	RefreshSearchActivity();
+	RefreshResultLayout();
 }
 
 void CSearchResultsWnd::OnSelChangeTab(LPNMHDR, LRESULT *pResult)
@@ -2006,7 +2022,7 @@ void CSearchResultsWnd::ShowSearchSelector(bool visible)
 	rcInvalidate.UnionRect(&rcListOld, &rcListNew);
 	InvalidateRect(&rcInvalidate, TRUE);
 	RedrawWindow(&rcInvalidate, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
-	PositionSearchStatusOverlay();
+	RefreshResultLayout();
 }
 
 void CSearchResultsWnd::OnDestroy()
