@@ -108,6 +108,7 @@
 #include "BindStartupPolicy.h"
 #include "BindRuntimeLossPolicy.h"
 #include "AppKeyboardShortcutsSeams.h"
+#include "AppWebLinksSeams.h"
 #include "DiagnosticSnapshotSeams.h"
 #include "TrayNotificationSeams.h"
 #include "AICHSyncThreadSeams.h"
@@ -928,6 +929,35 @@ namespace
 		label += _T(" ");
 		label += GetResString(IDS_ALL);
 		return label;
+	}
+
+	static LPCTSTR GetDocumentationLinkURL(UINT uCommandID)
+	{
+		size_t uLinkCount = 0;
+		const AppWebLinksSeams::SWebLink *pLinks = AppWebLinksSeams::GetDocumentationLinks(uLinkCount);
+		for (size_t i = 0; i < uLinkCount; ++i) {
+			if (pLinks[i].uCommandID == uCommandID)
+				return pLinks[i].pszUrl;
+		}
+		return NULL;
+	}
+
+	static void AppendLinksMenuEntries(CTitledMenu &rMenu)
+	{
+		rMenu.AppendMenu(MF_STRING, MP_HM_LINK1, GetResString(IDS_HM_LINKHP), _T("WEB"));
+		rMenu.AppendMenu(MF_STRING, MP_HM_LINK2, GetResString(IDS_HM_LINKFAQ), _T("WEB"));
+		rMenu.AppendMenu(MF_STRING, MP_HM_LINK3, GetResString(IDS_HM_LINKVC), _T("WEB"));
+		rMenu.AppendMenu(MF_SEPARATOR);
+
+		size_t uLinkCount = 0;
+		const AppWebLinksSeams::SWebLink *pLinks = AppWebLinksSeams::GetDocumentationLinks(uLinkCount);
+		for (size_t i = 0; i < uLinkCount; ++i)
+			rMenu.AppendMenu(MF_STRING, pLinks[i].uCommandID, GetResString(pLinks[i].uLabelStringID), _T("WEB"));
+
+		rMenu.AppendMenu(MF_SEPARATOR);
+		theWebServices.GetGeneralMenuEntries(&rMenu);
+		rMenu.AppendMenu(MF_SEPARATOR);
+		rMenu.AppendMenu(MF_STRING, MP_WEBSVC_EDIT, GetResString(IDS_WEBSVEDIT));
 	}
 
 	static UINT GetToolsMenuStatusStringID(UINT nItemID)
@@ -4539,6 +4569,16 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_LINK3:
 		BrowserOpen(thePrefs.GetVersionCheckURL(), thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));
 		break;
+	case MP_HM_LINK_DOC_FAQ:
+	case MP_HM_LINK_DOC_SETUP:
+	case MP_HM_LINK_DOC_NETWORK:
+	case MP_HM_LINK_DOC_SHARING:
+	case MP_HM_LINK_DOC_DOWNLOADS_SEARCH:
+	case MP_HM_LINK_DOC_TOOLS_MENU:
+	case MP_HM_LINK_DOC_CONTROLLERS_REST:
+	case MP_HM_LINK_DOC_TROUBLESHOOTING:
+		BrowserOpen(GetDocumentationLinkURL((UINT)wParam), thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));
+		break;
 	case MP_WEBSVC_EDIT:
 		theWebServices.Edit();
 		break;
@@ -4710,12 +4750,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	CTitledMenu Links;
 	Links.CreateMenu();
 	Links.AddMenuTitle(NULL, true);
-	Links.AppendMenu(MF_STRING, MP_HM_LINK1, GetResString(IDS_HM_LINKHP), _T("WEB"));
-	Links.AppendMenu(MF_STRING, MP_HM_LINK2, GetResString(IDS_HM_LINKFAQ), _T("WEB"));
-	Links.AppendMenu(MF_STRING, MP_HM_LINK3, GetResString(IDS_HM_LINKVC), _T("WEB"));
-	theWebServices.GetGeneralMenuEntries(&Links);
-	Links.InsertMenu(3, MF_BYPOSITION | MF_SEPARATOR);
-	Links.AppendMenu(MF_STRING, MP_WEBSVC_EDIT, GetResString(IDS_WEBSVEDIT));
+	AppendLinksMenuEntries(Links);
 
 	const auto appendConnectionItem = [](CTitledMenu &targetMenu) {
 		if (theApp.serverconnect->IsConnected())
@@ -5016,12 +5051,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		diagnostics.AppendMenu(MF_STRING, MP_HM_CAPTURE_FULLDUMP, GetResString(IDS_DIAG_CAPTURE_FULLDUMP), _T("DUMP"));
 
 		if (bExpandedToolsMenu) {
-			helpLegacy.AppendMenu(MF_STRING, MP_HM_LINK1, GetResString(IDS_HM_LINKHP), _T("WEB"));
-			helpLegacy.AppendMenu(MF_STRING, MP_HM_LINK2, GetResString(IDS_HM_LINKFAQ), _T("WEB"));
-			helpLegacy.AppendMenu(MF_STRING, MP_HM_LINK3, GetResString(IDS_HM_LINKVC), _T("WEB"));
-			theWebServices.GetGeneralMenuEntries(&helpLegacy);
-			helpLegacy.InsertMenu(3, MF_BYPOSITION | MF_SEPARATOR);
-			helpLegacy.AppendMenu(MF_STRING, MP_WEBSVC_EDIT, GetResString(IDS_WEBSVEDIT));
+			AppendLinksMenuEntries(helpLegacy);
 
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)session.m_hMenu, WithMenuMnemonic(GetResString(IDS_TOOLS_SESSION), _T('S')), _T("CONNECT"));
 			menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)transfers.m_hMenu, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
