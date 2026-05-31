@@ -535,6 +535,21 @@ json BuildNetworkStatusJson()
 	};
 }
 
+bool IsP2PConnectionCommandBlocked()
+{
+	if (theApp.emuledlg != NULL)
+		return !theApp.emuledlg->CanUseP2PConnectionCommands();
+	return theApp.IsStartupBindBlocked();
+}
+
+json BuildP2PConnectionCommandBlockedJson(json result)
+{
+	result["operationQueued"] = false;
+	result["blockedByVpnGuard"] = true;
+	result["network"] = BuildNetworkStatusJson();
+	return result;
+}
+
 json BuildStringArrayJson(const std::vector<CString> &rValues)
 {
 	json result = json::array();
@@ -3108,6 +3123,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		return BuildKadStatusJson();
 
 	if (strCommand == "kad/connect") {
+		if (IsP2PConnectionCommandBlocked())
+			return BuildP2PConnectionCommandBlockedJson(BuildKadStatusJson());
 		InvokeWebGuiInteraction(WEBGUIIA_KAD_START);
 		return BuildKadStatusJson();
 	}
@@ -3129,6 +3146,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 	if (strCommand == "kad/bootstrap") {
+		if (IsP2PConnectionCommandBlocked())
+			return BuildP2PConnectionCommandBlockedJson(BuildKadStatusJson());
 		if (params.contains("address") || params.contains("port")) {
 			if (!params.contains("address") || !params["address"].is_string() || !params.contains("port") || !params["port"].is_number_unsigned()) {
 				rError.strCode = "INVALID_ARGUMENT";
