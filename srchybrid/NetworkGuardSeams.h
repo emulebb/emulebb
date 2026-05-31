@@ -23,6 +23,9 @@ static constexpr TRequestFlags kRequestPeer = 0x10u;
 static constexpr TRequestFlags kRequestClientUdp = 0x20u;
 static constexpr TRequestFlags kRequestServerUdp = 0x40u;
 
+static constexpr const char* kStatusJsonSessionBlockedKey = "sessionBlocked";
+static constexpr const char* kStatusJsonSessionBlockReasonKey = "sessionBlockReason";
+
 inline TRequestFlags GetReplayFlags(TRequestFlags uRequestFlags)
 {
 	return uRequestFlags & (kRequestFullConnect | kRequestEd2k | kRequestKad);

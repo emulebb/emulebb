@@ -623,8 +623,8 @@ namespace
 			{"networkGuard", nlohmann::json{
 				{"mode", JsonString(NetworkGuardSeams::GetModePreferenceText(thePrefs.GetNetworkGuardMode()))},
 				{"allowedCIDRs", JsonString(thePrefs.GetNetworkGuardAllowedCIDRs())},
-				{"sessionBlocked", theApp.IsP2PNetworkingBlockedForSession()},
-				{"sessionBlockReason", JsonString(theApp.GetP2PNetworkingBlockReason())}
+				{NetworkGuardSeams::kStatusJsonSessionBlockedKey, theApp.IsP2PNetworkingBlockedForSession()},
+				{NetworkGuardSeams::kStatusJsonSessionBlockReasonKey, JsonString(theApp.GetP2PNetworkingBlockReason())}
 			}},
 			{"ed2k", nlohmann::json{
 				{"connected", theApp.serverconnect != NULL && theApp.serverconnect->IsConnected()},
