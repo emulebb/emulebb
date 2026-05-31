@@ -9,7 +9,9 @@
 #include "stdafx.h"
 #include "PublicIpProbe.h"
 
+#include <atomic>
 #include <memory>
+#include <mutex>
 #include <ws2tcpip.h>
 #include "BindInterfaceSocketSeams.h"
 #include "emule.h"
@@ -34,6 +36,26 @@ namespace
 		CString strBindInterfaceName;
 		CStringA strBindAddress;
 		DWORD dwBindInterfaceIndex = 0;
+	};
+
+	struct SAsyncProbeState
+	{
+		std::atomic<long> nRefs{1};
+		std::atomic<long> nRemaining{0};
+		std::atomic<bool> bCompleted{false};
+		std::mutex mutex;
+		HWND hNotifyWnd = NULL;
+		UINT uNotifyMessage = 0;
+		uint32 uGeneration = 0;
+		CString strPurpose;
+		SProbeContext context;
+		CString strAttempts;
+	};
+
+	struct SProviderProbeContext
+	{
+		SAsyncProbeState* pState = NULL;
+		PublicIpProbeSeams::SPublicIpv4ProbeProvider provider = {};
 	};
 
 	class CSocketHandle
@@ -221,59 +243,172 @@ namespace
 		return false;
 	}
 
-	UINT PublicIpv4ProbeThreadProc(LPVOID pvContext)
+	bool BuildProbeContext(SProbeContext& rContext)
 	{
-		std::unique_ptr<SProbeContext> pContext(static_cast<SProbeContext*>(pvContext));
-		size_t nProviderCount = 0;
-		const PublicIpProbeSeams::SPublicIpv4ProbeProvider* pProviders = PublicIpProbeSeams::GetPublicIpv4ProbeProviders(nProviderCount);
-		CString strAttempts;
-		for (size_t i = 0; i < nProviderCount; ++i) {
-			CStringA strPublicAddress;
-			CString strError;
-			if (FetchProvider(pProviders[i], *pContext, strPublicAddress, strError)) {
-				DebugLog(_T("VPN public IPv4 probe: provider=%S bindInterface=%s localBind=%S ifIndex=%lu publicIp=%S"),
-					pProviders[i].pszUrl,
-					(LPCTSTR)pContext->strBindInterfaceName,
-					pContext->strBindAddress.GetString(),
-					pContext->dwBindInterfaceIndex,
-					strPublicAddress.GetString());
-				return 0;
+		if (thePrefs.GetActiveBindInterface().IsEmpty()
+			|| thePrefs.GetActiveBindAddressResolveResult() != BARR_Resolved
+			|| thePrefs.GetActiveBindInterfaceIndex() == 0
+			|| thePrefs.GetBindAddrA() == NULL
+			|| *thePrefs.GetBindAddrA() == '\0')
+			return false;
+
+		rContext.strBindInterfaceName = thePrefs.GetActiveBindInterfaceName();
+		rContext.strBindAddress = thePrefs.GetBindAddrA();
+		rContext.dwBindInterfaceIndex = thePrefs.GetActiveBindInterfaceIndex();
+		return true;
+	}
+
+	void AddRef(SAsyncProbeState* pState)
+	{
+		pState->nRefs.fetch_add(1, std::memory_order_relaxed);
+	}
+
+	void Release(SAsyncProbeState* pState)
+	{
+		if (pState->nRefs.fetch_sub(1, std::memory_order_acq_rel) == 1)
+			delete pState;
+	}
+
+	std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> CreateProbeResult(const SAsyncProbeState& state)
+	{
+		std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult(new PublicIpProbe::SBoundPublicIpv4ProbeResult);
+		pResult->bAttempted = true;
+		pResult->uGeneration = state.uGeneration;
+		pResult->strPurpose = state.strPurpose;
+		pResult->strBindInterfaceName = state.context.strBindInterfaceName;
+		pResult->strBindAddress = state.context.strBindAddress;
+		pResult->dwBindInterfaceIndex = state.context.dwBindInterfaceIndex;
+		return pResult;
+	}
+
+	void PostProbeResult(SAsyncProbeState* pState, std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult)
+	{
+		if (pState->hNotifyWnd != NULL && ::IsWindow(pState->hNotifyWnd)
+			&& ::PostMessage(pState->hNotifyWnd, pState->uNotifyMessage, pResult->uGeneration, reinterpret_cast<LPARAM>(pResult.get())) != FALSE) {
+			(void)pResult.release();
+		}
+	}
+
+	UINT AFX_CDECL ProviderProbeThreadProc(LPVOID pvContext)
+	{
+		std::unique_ptr<SProviderProbeContext> pContext(static_cast<SProviderProbeContext*>(pvContext));
+		SAsyncProbeState* pState = pContext->pState;
+
+		CStringA strPublicAddress;
+		CString strError;
+		bool bSuccess = false;
+		uint32 uAddress = 0;
+		if (FetchProvider(pContext->provider, pState->context, strPublicAddress, strError)) {
+			if (!IPv4AddressSeams::TryParseIPv4Address(CString(CA2T(strPublicAddress)), uAddress)) {
+				strError = _T("response did not contain a strict IPv4 literal");
+			} else {
+				bSuccess = true;
 			}
-			if (!strAttempts.IsEmpty())
-				strAttempts.Append(_T("; "));
-			strAttempts.AppendFormat(_T("%S: %s"), pProviders[i].pszUrl, (LPCTSTR)strError);
 		}
 
-		DebugLogWarning(_T("VPN public IPv4 probe failed: bindInterface=%s localBind=%S attempts=%s"),
-			(LPCTSTR)pContext->strBindInterfaceName,
-			pContext->strBindAddress.GetString(),
-			(LPCTSTR)strAttempts);
+		if (bSuccess) {
+			if (!pState->bCompleted.exchange(true, std::memory_order_acq_rel)) {
+				std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult = CreateProbeResult(*pState);
+				pResult->bSucceeded = true;
+				pResult->strPublicAddress = strPublicAddress;
+				pResult->uPublicAddress = uAddress;
+				pResult->strProviderUrl = CString(pContext->provider.pszUrl);
+				PostProbeResult(pState, std::move(pResult));
+			}
+			DebugLog(_T("VPN public IPv4 probe: provider=%s bindInterface=%s localBind=%S ifIndex=%lu publicIp=%S"),
+				(LPCTSTR)CString(pContext->provider.pszUrl),
+				(LPCTSTR)pState->context.strBindInterfaceName,
+				pState->context.strBindAddress.GetString(),
+				pState->context.dwBindInterfaceIndex,
+				strPublicAddress.GetString());
+			Release(pState);
+			return 0;
+		}
+
+		CString strAttempt;
+		strAttempt.Format(_T("%S: %s"), pContext->provider.pszUrl, (LPCTSTR)strError);
+		{
+			std::lock_guard<std::mutex> lock(pState->mutex);
+			if (!pState->strAttempts.IsEmpty())
+				pState->strAttempts.Append(_T("; "));
+			pState->strAttempts.Append(strAttempt);
+		}
+		if (pState->nRemaining.fetch_sub(1, std::memory_order_acq_rel) == 1
+			&& !pState->bCompleted.exchange(true, std::memory_order_acq_rel)) {
+			std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult = CreateProbeResult(*pState);
+			{
+				std::lock_guard<std::mutex> lock(pState->mutex);
+				pResult->strAttempts = pState->strAttempts;
+			}
+			pResult->strError = pResult->strAttempts.IsEmpty() ? CString(_T("all public IPv4 providers failed")) : pResult->strAttempts;
+			DebugLogWarning(_T("VPN public IPv4 probe failed: bindInterface=%s localBind=%S attempts=%s"),
+				(LPCTSTR)pState->context.strBindInterfaceName,
+				pState->context.strBindAddress.GetString(),
+				(LPCTSTR)pResult->strAttempts);
+			PostProbeResult(pState, std::move(pResult));
+		}
+		Release(pState);
 		return 1;
 	}
 }
 
 void PublicIpProbe::StartBoundPublicIpv4Probe()
 {
-	if (thePrefs.GetActiveBindInterface().IsEmpty()
-		|| thePrefs.GetActiveBindAddressResolveResult() != BARR_Resolved
-		|| thePrefs.GetActiveBindInterfaceIndex() == 0
-		|| thePrefs.GetBindAddrA() == NULL
-		|| *thePrefs.GetBindAddrA() == '\0')
-		return;
+	CString strError;
+	if (!StartBoundPublicIpv4Probe(NULL, 0, 0, _T("log"), strError) && !strError.IsEmpty())
+		DebugLogWarning(_T("VPN public IPv4 probe failed: %s"), (LPCTSTR)strError);
+}
 
-	std::unique_ptr<SProbeContext> pContext(new SProbeContext);
-	pContext->strBindInterfaceName = thePrefs.GetActiveBindInterfaceName();
-	pContext->strBindAddress = thePrefs.GetBindAddrA();
-	pContext->dwBindInterfaceIndex = thePrefs.GetActiveBindInterfaceIndex();
-
-	CWinThread* pThread = AfxBeginThread(PublicIpv4ProbeThreadProc, pContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
-	if (pThread == NULL) {
-		DebugLogWarning(_T("VPN public IPv4 probe failed: could not start worker for bindInterface=%s localBind=%S ifIndex=%lu"),
-			(LPCTSTR)pContext->strBindInterfaceName,
-			pContext->strBindAddress.GetString(),
-			pContext->dwBindInterfaceIndex);
-		return;
+bool PublicIpProbe::StartBoundPublicIpv4Probe(HWND hNotifyWnd, UINT uNotifyMessage, uint32 uGeneration, const CString& strPurpose, CString& rstrError)
+{
+	SProbeContext context;
+	if (!BuildProbeContext(context)) {
+		rstrError = _T("active bind interface is not resolved");
+		return false;
 	}
 
-	(void)pContext.release();
+	size_t nProviderCount = 0;
+	const PublicIpProbeSeams::SPublicIpv4ProbeProvider* pProviders = PublicIpProbeSeams::GetPublicIpv4ProbeProviders(nProviderCount);
+	if (nProviderCount == 0) {
+		rstrError = _T("no public IPv4 providers are configured");
+		return false;
+	}
+
+	SAsyncProbeState* pState = new SAsyncProbeState;
+	pState->hNotifyWnd = hNotifyWnd;
+	pState->uNotifyMessage = uNotifyMessage;
+	pState->uGeneration = uGeneration;
+	pState->strPurpose = strPurpose;
+	pState->context = context;
+	pState->nRemaining = static_cast<long>(nProviderCount);
+
+	long nStarted = 0;
+	for (size_t i = 0; i < nProviderCount; ++i) {
+		std::unique_ptr<SProviderProbeContext> pProviderContext(new SProviderProbeContext);
+		pProviderContext->pState = pState;
+		pProviderContext->provider = pProviders[i];
+		AddRef(pState);
+		CWinThread* pThread = AfxBeginThread(ProviderProbeThreadProc, pProviderContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
+		if (pThread == NULL) {
+			Release(pState);
+			pState->nRemaining.fetch_sub(1, std::memory_order_acq_rel);
+			{
+				std::lock_guard<std::mutex> lock(pState->mutex);
+				if (!pState->strAttempts.IsEmpty())
+					pState->strAttempts.Append(_T("; "));
+				pState->strAttempts.AppendFormat(_T("%S: could not start worker"), pProviders[i].pszUrl);
+			}
+			continue;
+		}
+		(void)pProviderContext.release();
+		++nStarted;
+	}
+
+	if (nStarted == 0) {
+		rstrError = pState->strAttempts.IsEmpty() ? CString(_T("could not start public IPv4 probe workers")) : pState->strAttempts;
+		Release(pState);
+		return false;
+	}
+	Release(pState);
+	return true;
 }
