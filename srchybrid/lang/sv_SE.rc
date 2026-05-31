@@ -1091,7 +1091,7 @@ BEGIN
     IDS_AUTOSCROLL          "Autoscroll" //!
     IDS_WIZ1_WELCOME_TITLE  "Välkommen till eMuleBB"
     IDS_WIZ1_WELCOME_ACTIONS
-                            "Denna wizard kommer hjälpa dig med dom första stegen i att konfigurera eMule."
+                            "Denna wizard kommer hjälpa dig med dom första stegen i att konfigurera eMuleBB."
     IDS_WIZ1_WELCOME_BTN_HINT "För att forsätta, klicka på nästa."
     IDS_WIZ1_END_TITLE      "Slutför wizard:en"
     IDS_WIZ1                "eMuleBB förstagången-wizard"
@@ -1386,7 +1386,7 @@ BEGIN
     IDS_KADUDPPORTERR       "Kads UDP port är i konflikt med antingen eMules Ext UDP port eller eMules Server UDP port. Porten ändrades till %u."
     IDS_CONFIRM_FILEDELETE  "Är du säker på att du vill radera alla markerade filer från hårddisken?"
     IDS_OPENFOLDER          "Öppna mapp"
-    IDS_RUNASUSER           "Kör eMule som oprivilegierad användare"
+    IDS_RUNASUSER           "Kör eMuleBB som oprivilegierad användare"
     IDS_DELETE              "Radera från hårddisk"
     IDS_BOOTSTRAP           "Bootstrap" //!
     IDS_VIAED2KSQ           "via ED2K-server/kö"
@@ -1524,7 +1524,7 @@ BEGIN
     IDS_TESTINFO            "Här kan du testa om dina TCP- och UDP-portar kan anslutas av andra klienter. Testet lyckas om servrar och klienter kan ansluta till dig. Testet av TCP-porten måste lyckas!"
     IDS_CONNECTIONTEST      "Anslutningstest"
     IDS_NOPORTCHANGEPOSSIBLE
-                            "Portarna går inte att ändra efter att du är ansluten till andra klienter eller om du är ansluten till en server/Kad!\n\nStarta om eMule med din nya portkonfigurering."
+                            "Portarna går inte att ändra efter att du är ansluten till andra klienter eller om du är ansluten till en server/Kad!\n\nStarta om eMuleBB med din nya portkonfigurering."
     IDS_NETWORK_INFO        "Nätverksinformation"
     IDS_SP_TOTALUL          "Totalt antal uppladdningar"
     IDS_SP_ULFRIENDS        "Ladda upp kompis-slots"
@@ -1548,7 +1548,7 @@ STRINGTABLE
 BEGIN
     IDS_MAXHALFOPENCONS     "Max. Halvöppna anslutningar"
     IDS_WIZ_STARTWITHWINDOWS
-                            "Aktivera så att eMule startar när windows startar. (avaktiverad som standard)"
+                            "Aktivera så att eMuleBB startar när windows startar. (avaktiverad som standard)"
     IDS_KAD_WAITCBK         "Vänta på svar från Kad"
     IDS_KAD_TOOMANDYKADLKPS "För många Kad Lookups"
 //    IDS_PCDS_CLIENTWAIT     "ClientWait" //!
@@ -1858,7 +1858,7 @@ BEGIN
     IDS_FO_PREFBUTTON_NEW   "Öppna portar i WinXP SP1 brandvägg"
     IDS_UPNP_NOSERVICE      "UPnP Device Host service körs inte, hoppar över UPnP-inställning"
     IDS_DELAYEDBYUPNP       "Anslutning till nätverket är fördröjt på grund av att UPnP är upptagen med att ställa in vidarebefordringar av portar."
-    IDS_DELAYEDBYUPNP2      "Var god vänta ett par sekunder, eMule kommer att ansluta när UPnP är färdig."
+    IDS_DELAYEDBYUPNP2      "Var god vänta ett par sekunder, eMuleBB kommer att ansluta när UPnP är färdig."
     IDS_UPNP                "UPnP" //!
     IDS_UPNPCLOSEONEXIT     "Ta bort UPnP port-vidarebefordring vid nedstängning"
     IDS_UPNPSKIPWANIP       "Hoppa över WAN IP inställningar"
@@ -1871,7 +1871,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_SHAREEMULEWARNING   "Om du använder denna inställning kommer eMule att använda en annan konfiguration. Dina nuvarande inställningar kommer att ignoreras och startade nedladdningar kommer att försvinna. Du kan gå tillbaka till din nuvarande konfiguration när som helst genom ändra denna inställning.\n\nDu måste starta om eMule innan denna inställning fungerar."
+    IDS_SHAREEMULEWARNING   "Om du använder denna inställning kommer eMuleBB att använda en annan konfiguration. Dina nuvarande inställningar kommer att ignoreras och startade nedladdningar kommer att försvinna. Du kan gå tillbaka till din nuvarande konfiguration när som helst genom ändra denna inställning.\n\nDu måste starta om eMuleBB innan denna inställning fungerar."
     IDS_SPAM                "Skräp"
     IDS_MARKSPAM            "Markera som skräp"
     IDS_MARKNOTSPAM         "Markera som icke skräp"
@@ -1891,10 +1891,10 @@ BEGIN
     IDS_FOUND               "hittade"
     IDS_EXTERNUDPPORT       "Extern UDP-port"
     IDS_STORESEARCHES       "Kom ihåg öppna sökningar mellan omstarterna"
-    IDS_WRN_INCFILE_EXISTS  "Du har valt en katalog för inkommande filer som inte är tom. Alla filer som ligger i denna katalog kommer automatiskt att delas ut av eMule."
+    IDS_WRN_INCFILE_EXISTS  "Du har valt en katalog för inkommande filer som inte är tom. Alla filer som ligger i denna katalog kommer automatiskt att delas ut av eMuleBB."
     IDS_EDITSPAMFILTER      "Redigera skräp-filter..."
     IDS_EDITSPAMFILTERCOMMENTS "Redigera skräp-filter för kommentarer"
-    IDS_WIZZARDOBFUSCATION  "Aktivera denna inställning om du vill använda protokoll-kryptering\n\nOm din internetleverantör blockerar eMule kan du kanske kringå detta genom att aktivera inställning."
+    IDS_WIZZARDOBFUSCATION  "Aktivera denna inställning om du vill använda protokoll-kryptering\n\nOm din internetleverantör blockerar eMuleBB kan du kanske kringå detta genom att aktivera inställning."
     IDS_CONFIRMNODESDOWNLOAD
                             "Vill du ladda ned och använda Kad-kontakter (nodes.dat) från denna adress:\n%s ?"
     IDS_AUTOMATIC           "Automatisk"
@@ -2456,7 +2456,7 @@ BEGIN
     IDS_TWEAKS_TT_DOWNLOAD_TIMEOUT                             "Hur länge en nedladdningskälla kan förbli inaktiv innan eMuleBB släpper den som avstannad.\r\n\r\nLägre värden rensar upp döda källor snabbare, men mycket låga värden kan skada långsamma kamrater. Lämna standard om du inte diagnostiserar stall."
     IDS_TWEAKS_TT_SERVER_KEEP_ALIVE_TIMEOUT                    "Hur ofta eMuleBB uppdaterar en annars inaktiv serveranslutning.\r\n\r\nAnvänd minuter. Ställ in 0 för att inaktivera keepalives. Lämna standardinställningen om du inte löser ett specifikt problem med server-idle-frånkoppling."
     IDS_TWEAKS_TT_SEARCH_ED2K_MAX_RESULTS                      "Maximalt antal resultat som begärs från en eD2K-server för en sökning.\r\n\r\nHögre värden kan hitta fler filer men öka serverarbetet och UI-bruset. Håll dig nära standarden om du inte har en specifik anledning."
-    IDS_TWEAKS_TT_SEARCH_ED2K_MAX_MORE_REQUESTS                "Maximalt antal uppföljningsresultatsidor eMule-förfrågningar från en eD2K-sökning.\r\n\r\nHögre värden kan dra in fler resultat men kostar mer servertrafik och tid. Konservativa värden rekommenderas."
+    IDS_TWEAKS_TT_SEARCH_ED2K_MAX_MORE_REQUESTS                "Maximalt antal uppföljningsresultatsidor eMuleBB-förfrågningar från en eD2K-sökning.\r\n\r\nHögre värden kan dra in fler resultat men kostar mer servertrafik och tid. Konservativa värden rekommenderas."
     IDS_TWEAKS_TT_SEARCH_KAD_FILE_TOTAL                        "Mål antal resultat för Kad filsökningar.\r\n\r\nHögre värden söker bredare men håller Kad-sökningar vid liv längre. Håll dig nära standarden om du inte vill ha djupare sökningar."
     IDS_TWEAKS_TT_SEARCH_KAD_KEYWORD_TOTAL                     "Inrikta antalet resultat för Kad nyckelordssökningar.\r\n\r\nHögre värden kan hitta fler matchningar men öka Kad frågebelastning och UI-brus. Standard är vanligtvis rätt balans."
     IDS_TWEAKS_TT_SEARCH_KAD_FILE_LIFETIME                     "Maximal livslängd för en Kad-filsökning på sekunder.\r\n\r\nHöj den endast om du medvetet vill ha längre Kad-sökningar."
@@ -2540,13 +2540,13 @@ BEGIN
     IDS_TWEAKS_TT_TCP_ERROR_FLOODER_THRESHOLD                  "Antal TCP-fel inom intervallet som utlöser flooder-hantering.\r\n\r\nLägre värden är strängare. Höj den endast om din miljö producerar ofarliga frekventa TCP-fel."
     IDS_TWEAKS_TT_SHAREE_MULE                                  "Styr hur eMuleBB lagrar och delar tillstånd per användare på denna Windows-maskin.\r\n\r\nLämna det aktuella läget om du inte avsiktligt ändrar hur flera lokala användare delar konfiguration och data."
     IDS_TWEAKS_TT_TCP_GROUP                                    "Avancerade TCP-anslutningsburst-, timeout- och keepalive-kontroller.\r\n\r\nDessa inställningar påverkar anslutningsbeteende snarare än överföringsgränser. Standardvärden rekommenderas om du inte diagnostiserar nätverksinstallationsproblem."
-    IDS_TWEAKS_TT_SEARCH_GROUP                                 "Avancerade gränser för hur brett och hur länge eMule söker på eD2K och Kad.\r\n\r\nHögre värden kan ge fler resultat, men de lägger också till mer nätverkstrafik och UI-brus."
+    IDS_TWEAKS_TT_SEARCH_GROUP                                 "Avancerade gränser för hur brett och hur länge eMuleBB söker på eD2K och Kad.\r\n\r\nHögre värden kan ge fler resultat, men de lägger också till mer nätverkstrafik och UI-brus."
     IDS_TWEAKS_TT_SEARCH_ED2K_GROUP                            "Serverbaserade eD2K sökgränser.\r\n\r\nAnvänd konservativa värden om du inte medvetet vill ha djupare serversökningar."
     IDS_TWEAKS_TT_SEARCH_KAD_GROUP                             "Kad sökbredd och livstidskontroller.\r\n\r\nHögre värden håller distribuerade sökningar vid liv längre och kan hitta fler resultat, men de kostar mer bakgrundsaktivitet."
     IDS_TWEAKS_TT_BROADBAND                                    "Avancerad uppladdningsplatsåtervinning och köpoängpolicy för uppladdningsbeteende i bredbandsstil.\r\n\r\nDessa inställningar är till för avsiktlig justering. Lämna dem på standardvärdena om du inte justerar rättvisa uppladdningar eller slotomsättning."
     IDS_TWEAKS_TT_UPLOAD_POLICY_MAX_UPLOAD_CLIENTS             "Soft cap för samtidigt aktiva uppladdningsklienter under bredbandsschemaläggaren.\r\n\r\nHögre värden sprider bandbredd över fler peers men gör varje plats tunnare. Lägre värden håller färre, starkare platser."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_THRESHOLD                 "Bråkdel av måluppladdningshastigheten per plats under vilken en plats anses vara långsam.\r\n\r\nLägre värden tolererar svagare platser längre. Högre värden återvinner underpresterande slots mer aggressivt."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_GRACE                     "Hur länge en plats kan förbli under den långsamma tröskeln innan eMule överväger att återvinna den.\r\n\r\nLängre nåd är mer tålmodig med svaga kamrater; kortare grace vänder över svaga luckor tidigare."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_GRACE                     "Hur länge en plats kan förbli under den långsamma tröskeln innan eMuleBB överväger att återvinna den.\r\n\r\nLängre nåd är mer tålmodig med svaga kamrater; kortare grace vänder över svaga luckor tidigare."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_WARMUP                    "Uppvärmningsperiod för en ny uppladdningsplats innan detektering av långsam plats startar.\r\n\r\nDetta undviker att straffa nya uppladdningar för startljud och uppgångstid."
     IDS_TWEAKS_TT_UPLOAD_POLICY_ZERO_RATE_GRACE                "Respitperiod för slots som i princip inte levererar någon uppladdningsdata alls.\r\n\r\nLägre värden reagerar snabbare på döda eller avstannade platser."
     IDS_TWEAKS_TT_UPLOAD_POLICY_COOLDOWN                       "Hur länge en återvunnen långsam slot förblir straffad i köpoängen innan den kan tävla normalt igen.\r\n\r\nLängre nedkylning minskar omedelbart omval av nyligen svaga klienter."
@@ -2554,13 +2554,13 @@ BEGIN
     IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_THRESHOLD            "Uppladdningsgränsen under vilken kö-poängökningen med lågt förhållande gäller.\r\n\r\nLägre värden begränsar ökningen till filer som är kraftigare underbetjänade."
     IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_RATIO_BONUS                "Ytterligare effektiva köpoäng ges när boosten med låg kvot utlöses.\r\n\r\nHögre värden gör att boosten spelar en större roll i uppladdningsordningen."
     IDS_TWEAKS_TT_UPLOAD_POLICY_LOW_ID_DIVISOR                 "Straffdelare tillämpas på LowID-klienter under uppladdningsköns poängsättning.\r\n\r\nHögre värden minskar LowID-prioriteten mer aggressivt. Ställ in 1 för att inaktivera den extra LowID-straffen."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER               "Begränsar hur mycket en uppladdningssession kan överföra innan eMule överväger att rotera den luckan.\r\n\r\nRotation sker endast när en annan klient faktiskt behöver luckan."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER               "Begränsar hur mycket en uppladdningssession kan överföra innan eMuleBB överväger att rotera den luckan.\r\n\r\nRotation sker endast när en annan klient faktiskt behöver luckan."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_DISABLED      "Återvinn inte uppladdningssessioner baserat på överfört nyttolastbelopp."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_PERCENT       "Begränsa varje uppladdningssession till en procentandel av den begärda filstorleken."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_PERCENT_VALUE "Procent som används när sessionsöverföringsgränsen är konfigurerad som en andel av filstorleken."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_MI_B          "Begränsa varje uppladdningssession till ett fast MiB-belopp oavsett filstorlek."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TRANSFER_MI_B_VALUE    "Absolut MiB-belopp som används när sessionsöverföringsgränsen är konfigurerad som en fast storlek."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TIME_LIMIT             "Maximal längd på en uppladdningssession innan eMule överväger att rotera luckan.\r\n\r\nSätt in 0 för att inaktivera den tidsbaserade gränsen."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_SESSION_TIME_LIMIT             "Maximal längd på en uppladdningssession innan eMuleBB överväger att rotera luckan.\r\n\r\nSätt in 0 för att inaktivera den tidsbaserade gränsen."
     IDS_TWEAKS_TT_A4_AF_SAVE_CPU                               "Minskar upprepade A4AF-källkontroller (Asked For Another File) för att spara CPU-tid.\r\n\r\nAnvändbart på upptagna klienter, men det kan göra det mindre ivrigt att byta källa med samma klient."
     IDS_TWEAKS_TT_EXTRACT_META_DATA_NEVER                      "Extrahera inte metadata från filer.\r\n\r\nLättaste alternativet. Använd den om du inte vill ha någon bakgrundsmetadatasondering."
     IDS_TWEAKS_TT_EXTRACT_META_DATA_ID3_LIB                    "Extrahera metadata endast via ID3-bibliotekssökvägen för MPEG-ljudfiler.\r\n\r\nBalanserad standard för grundläggande musiktaggar utan bredare medieinspektion."
@@ -2569,7 +2569,7 @@ BEGIN
     IDS_TWEAKS_TT_SHOW_ACTIVE_DOWNLOADS_BOLD                   "Ritar aktivt överföra nedladdningar i fet stil i nedladdningslistan.\r\n\r\nRent visuellt. Aktivera det om du vill att aktiva objekt ska framträda tydligare."
     IDS_TWEAKS_TT_USE_SYSTEM_FONT_FOR_MAIN_CONTROLS            "Använder det normala Windows UI-teckensnittet för huvudkontroller och listvyer istället för eMules anpassade teckensnittsinställning.\r\n\r\nByggt om du föredrar text som ser naturligt ut eller behöver bättre kompatibilitet med dina systemteckensnittsinställningar."
     IDS_TWEAKS_TT_FILTER_LANI_PS                               "Ignorerar server- och klientadresser från privata/LAN-områden.\r\n\r\nRekommenderas: aktiverad. Detta undviker att försöka använda icke-dirigerbara peer-adresser från det offentliga nätverket."
-    IDS_TWEAKS_TT_GEO_LOCATION_CHECK_DAYS                      "Hur ofta eMule söker efter uppdaterat innehåll i databasen för geolokalisering.\r\n\r\nStäll in 0 för att inaktivera automatiska uppdateringskontroller. Större värden minskar bakgrundsuppdateringsaktiviteten."
+    IDS_TWEAKS_TT_GEO_LOCATION_CHECK_DAYS                      "Hur ofta eMuleBB söker efter uppdaterat innehåll i databasen för geolokalisering.\r\n\r\nStäll in 0 för att inaktivera automatiska uppdateringskontroller. Större värden minskar bakgrundsuppdateringsaktiviteten."
     IDS_TWEAKS_TT_VERBOSE                                      "Huvudströmbrytare för de utförliga loggningskontrollerna nedan.\r\n\r\nInaktivera den för normal användning. Aktivera det endast när du undersöker ett specifikt problem."
     IDS_TWEAKS_TT_FULL_VERBOSE                                 "Spelar in den mest omfattande tillgängliga spårningen när utförlig loggning är aktiverad.\r\n\r\nDetta kan bli mycket bullriga och bör endast användas för fokuserad felsökning."
     IDS_TWEAKS_TT_LOG_LEVEL                                    "Verbositetströskel för diagnostisk loggutgång.\r\n\r\nHögre nivåer registrerar fler detaljer men skapar mer brus."
