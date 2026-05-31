@@ -4070,7 +4070,12 @@ void CemuleDlg::StartConnection()
 
 void CemuleDlg::CloseConnection()
 {
-	CloseP2PNetworkStack(_T("user requested disconnect"));
+	InvalidateNetworkGuardProbeState();
+	theApp.serverconnect->StopConnectionTry();
+	theApp.serverconnect->Disconnect();
+
+	Kademlia::CKademlia::Stop();
+	theApp.OnlineSig(); // Added By Bouc7
 	ShowConnectionState();
 }
 
@@ -4106,13 +4111,7 @@ bool CemuleDlg::EnsureP2PSocketsStarted()
 void CemuleDlg::CloseP2PNetworkStack(const CString& strReason)
 {
 	DebugLog(_T("Closing P2P network stack: %s"), (LPCTSTR)strReason);
-	m_bNetworkGuardProbePending = false;
-	m_bNetworkGuardRuntimeProbePending = false;
-	m_uNetworkGuardQueuedConnectFlags = 0;
-	m_strNetworkGuardApprovedTransportKey.Empty();
-	m_uNetworkGuardReplayAuthorizedFlags = 0;
-	m_strNetworkGuardProbeKey.Empty();
-	++m_uNetworkGuardProbeGeneration;
+	InvalidateNetworkGuardProbeState();
 	theApp.serverconnect->StopConnectionTry();
 	theApp.serverconnect->Disconnect();
 	theApp.serverconnect->CloseUDPSocket();
