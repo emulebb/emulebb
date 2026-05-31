@@ -2057,7 +2057,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "모두 최소로(&M)"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "모두 최대로(&X)"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&일시 중지"
+    IDS_REFRESH_INTERVAL_PAUSED "&일시 중지"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

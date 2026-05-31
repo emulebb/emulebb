@@ -2095,7 +2095,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Visus į &minimumą"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Visus į ma&ksimumą"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Pristabdyta"
+    IDS_REFRESH_INTERVAL_PAUSED "&Pristabdyta"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
