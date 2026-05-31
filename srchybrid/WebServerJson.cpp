@@ -3146,8 +3146,6 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 	if (strCommand == "kad/bootstrap") {
-		if (IsP2PConnectionCommandBlocked())
-			return BuildP2PConnectionCommandBlockedJson(BuildKadStatusJson());
 		if (params.contains("address") || params.contains("port")) {
 			if (!params.contains("address") || !params["address"].is_string() || !params.contains("port") || !params["port"].is_number_unsigned()) {
 				rError.strCode = "INVALID_ARGUMENT";
@@ -3162,9 +3160,14 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			}
 			CString strDest;
 			strDest.Format(_T("%s:%u"), static_cast<LPCTSTR>(CStringFromStdUtf8(params["address"].get<std::string>())), uPort);
+			if (IsP2PConnectionCommandBlocked())
+				return BuildP2PConnectionCommandBlockedJson(BuildKadStatusJson());
 			InvokeWebGuiInteraction(WEBGUIIA_KAD_BOOTSTRAP, reinterpret_cast<LPARAM>(static_cast<LPCTSTR>(strDest)));
-		} else
+		} else {
+			if (IsP2PConnectionCommandBlocked())
+				return BuildP2PConnectionCommandBlockedJson(BuildKadStatusJson());
 			InvokeWebGuiInteraction(WEBGUIIA_KAD_START);
+		}
 		return BuildKadStatusJson();
 	}
 
