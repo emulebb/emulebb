@@ -2301,7 +2301,7 @@ void CemuleDlg::LogP2PConnectionCommandBlocked() const
 		return;
 	}
 	if (VpnGuardPolicySeams::IsRuntimeMonitorRequired(thePrefs.GetVpnGuardMode(), false) && !m_bBindLossMonitorActive)
-		LogWarning(LOG_STATUSBAR, _T("VPN Guard is enabled but runtime monitoring is not armed; P2P connection commands are blocked for this session."));
+		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)GetResString(IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR));
 }
 
 void CemuleDlg::UpdateBindLossMonitor(bool bForceVpnGuardHttpProbe)
@@ -2425,6 +2425,15 @@ bool CemuleDlg::StartVpnGuardProbe(const CString& strPurpose, bool bRuntime)
 			theApp.BlockStartupNetworkingForSession(strReason);
 		return false;
 	}
+	if (ranges.empty()) {
+		DebugLog(_T("VPN Guard %s public IP check skipped: no allowed CIDRs configured; bind-interface guard remains active for %s at %s"),
+			(LPCTSTR)strPurpose,
+			(LPCTSTR)thePrefs.GetActiveBindInterfaceName(),
+			thePrefs.GetBindAddr());
+		if (!bRuntime)
+			m_bVpnGuardStartupApproved = true;
+		return false;
+	}
 
 	const uint32 uGeneration = ++m_uVpnGuardProbeGeneration;
 	if (!PublicIpProbe::StartBoundPublicIpv4Probe(m_hWnd, UM_VPN_GUARD_PROBE_RESULT, uGeneration, strPurpose, strError)) {
@@ -2492,9 +2501,12 @@ LRESULT CemuleDlg::OnVpnGuardProbeResult(WPARAM wParam, LPARAM lParam)
 
 	std::vector<VpnGuardSeams::SAllowedPublicIpv4Range> ranges;
 	CString strError;
-	const bool bPublicIpAllowed = TryLoadVpnGuardAllowedRanges(ranges, strError)
+	const bool bRangesLoaded = TryLoadVpnGuardAllowedRanges(ranges, strError);
+	const bool bPublicIpCheckRequired = bRangesLoaded && !ranges.empty();
+	const bool bPublicIpAllowed = bPublicIpCheckRequired
 		&& VpnGuardSeams::IsPublicIpv4Allowed(pResult->uPublicAddress, ranges);
-	const bool bAllowed = VpnGuardPolicySeams::IsProbeResultAllowed(pResult->bSucceeded, bPublicIpAllowed);
+	const bool bAllowed = bRangesLoaded
+		&& VpnGuardPolicySeams::IsProbeResultAllowed(bPublicIpCheckRequired, pResult->bSucceeded, bPublicIpAllowed);
 	if (bAllowed) {
 		DebugLog(_T("VPN Guard %s check passed: provider=%s publicIp=%S allowedCIDRs=%s"),
 			(LPCTSTR)pResult->strPurpose,
@@ -4087,7 +4099,7 @@ void CemuleDlg::StartConnection()
 
 void CemuleDlg::CloseConnection()
 {
-	AddLogLine(false, _T("Disconnect requested: using stock eMule soft disconnect; active transfer queues and listener sockets are not hard-reset."));
+	AddLogLine(false, GetResString(IDS_DISCONNECT_SOFT_STACK_NOTICE));
 	theApp.serverconnect->StopConnectionTry();
 	theApp.serverconnect->Disconnect();
 
@@ -6281,6 +6293,8 @@ LRESULT CemuleDlg::OnWebGUIInteraction(WPARAM wParam, LPARAM lParam)
 			theApp.serverconnect->ConnectToServer(reinterpret_cast<CServer*>(lParam), false, false, true);
 		break;
 	case WEBGUIIA_DISCONNECT:
+		AddLogLine(false, GetResString(IDS_DISCONNECT_SOFT_STACK_NOTICE));
+		theApp.serverconnect->StopConnectionTry();
 		if (lParam != 2)	// !KAD
 			theApp.serverconnect->Disconnect();
 		if (lParam != 1)	// !ED2K
@@ -6317,6 +6331,10 @@ LRESULT CemuleDlg::OnWebGUIInteraction(WPARAM wParam, LPARAM lParam)
 		theApp.emuledlg->searchwnd->DeleteAllSearches();
 		break;
 	case WEBGUIIA_KAD_BOOTSTRAP:
+		if (!CanUseP2PConnectionCommands()) {
+			LogP2PConnectionCommandBlocked();
+			break;
+		}
 		{
 			CString ip((LPCTSTR)lParam);
 			int pos = ip.Find(_T(':'));

@@ -20,6 +20,11 @@ inline bool IsProbeResultAllowed(bool bProbeSucceeded, bool bPublicIpAllowed)
 	return bProbeSucceeded && bPublicIpAllowed;
 }
 
+inline bool IsProbeResultAllowed(bool bPublicIpCheckRequired, bool bProbeSucceeded, bool bPublicIpAllowed)
+{
+	return !bPublicIpCheckRequired || IsProbeResultAllowed(bProbeSucceeded, bPublicIpAllowed);
+}
+
 inline bool IsRuntimeMonitorRequired(VpnGuardSeams::EMode eMode, bool bStartupBlocked)
 {
 	return eMode == VpnGuardSeams::EMode::Block && !bStartupBlocked;

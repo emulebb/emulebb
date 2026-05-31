@@ -2821,7 +2821,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Включить VPN-защиту"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Разрешенные общедоступные CIDR IP"
     IDS_CONNECTION_TT_VPN_GUARD                                "Блокирует запуск P2P до перезапуска, если выбранный интерфейс привязки VPN недоступен или обнаруженный общедоступный IPv4 находится за пределами разрешенных CIDR. После успешного запуска завершает работу eMule, если VPN Guard дает сбой."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Общедоступные CIDR IPv4 разрешены для адреса выхода VPN. Разделяйте несколько диапазонов запятыми, точками с запятой или пробелами."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Дополнительный общедоступный IPv4 CIDRs разрешен для адреса выхода VPN. Оставьте пустым, чтобы защитить только выбранный интерфейс VPN."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard требует выбранного интерфейса привязки."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard заблокировал запуск P2P для этого сеанса, поскольку обнаруженный общедоступный IPv4 %S из %s находится за пределами разрешенных CIDR %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard заблокировал запуск P2P для этого сеанса, поскольку связанная общедоступная проверка IPv4 не удалась для разрешенных CIDR %s: %s"
@@ -2829,6 +2829,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Выход из eMule, поскольку VPN Guard не смог обнаружить привязанный общедоступный IPv4 для разрешенных CIDR %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Выход из eMule, поскольку интерфейс привязки VPN Guard изменил адрес с %s на %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Выход из eMule, поскольку интерфейс привязки VPN Guard больше не доступен."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard включен, но мониторинг времени выполнения не включен; Команды подключения P2P заблокированы для этого сеанса."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Запрошено отключение: с использованием штатного мягкого отключения eMule; активные очереди передачи и сокеты прослушивателей не подлежат аппаратному сбросу."
 END
 // eMuleBB managed translation block: end
 

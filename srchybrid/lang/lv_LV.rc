@@ -2809,7 +2809,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Iespējot VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Atļauti publiskie IP CIDR"
     IDS_CONNECTION_TT_VPN_GUARD                                "Bloķē P2P startēšanu līdz restartēšanai, ja atlasītais VPN saistīšanas interfeiss nav pieejams vai atklātais publiskais IPv4 ir ārpus atļautajiem CIDR. Pēc veiksmīgas startēšanas iziet no eMule, ja VPN aizsargs neizdodas."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "VPN izejas adresei ir atļauti publiskie IPv4 CIDR. Atdaliet vairākus diapazonus ar komatiem, semikolu vai atstarpēm."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "VPN izejas adresei ir atļauta izvēles publiska IPv4 CIDRs. Atstājiet tukšu, lai aizsargātu tikai atlasīto VPN saskarni."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard ir nepieciešams atlasīts saistīšanas interfeiss."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard bloķēja P2P startēšanu šai sesijai, jo atklātais publiskais IPv4 %S no %s ir ārpus atļautajiem CIDR %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard bloķēja P2P startēšanu šai sesijai, jo saistītā publiskā IPv4 zonde neizdevās attiecībā uz atļautajiem CIDR %s: %s"
@@ -2817,6 +2817,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Notiek iziešana no eMule, jo VPN Guard nevarēja noteikt saistīto publisko IPv4 atļautajiem CIDR %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Notiek iziešana no eMule, jo VPN Guard saistīšanas interfeiss mainīja adresi no %s uz %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Notiek eMule aizvēršana, jo VPN Guard saistīšanas interfeiss vairs nav pieejams."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard ir iespējots, bet izpildlaika uzraudzība nav bruņota; Šai sesijai ir bloķētas P2P savienojuma komandas."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Nepieciešams atvienot: izmantojot akciju eMule mīksto atvienošanu; aktīvās pārsūtīšanas rindas un klausītāju ligzdas netiek pilnībā atiestatītas."
 END
 // eMuleBB managed translation block: end
 

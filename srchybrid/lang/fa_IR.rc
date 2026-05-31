@@ -2780,7 +2780,7 @@ BEGIN
     IDS_VPN_GUARD                                              "VPN Guard را فعال کنید"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "IP CIDRهای عمومی مجاز"
     IDS_CONNECTION_TT_VPN_GUARD                                "اگر رابط اتصال VPN انتخابی در دسترس نباشد یا IPv4 عمومی شناسایی شده خارج از CIDR های مجاز باشد، راه اندازی P2P را تا راه اندازی مجدد مسدود می کند. پس از موفقیت آمیز بودن راه‌اندازی، در صورت شکست VPN Guard از eMule خارج می‌شوید."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "CIDRهای عمومی IPv4 برای آدرس خروج VPN مجاز است. چندین محدوده را با کاما، نقطه ویرگول یا فاصله جدا کنید."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "IPv4 CIDRs عمومی اختیاری برای آدرس خروج VPN مجاز است. خالی بگذارید تا فقط از رابط VPN انتخاب شده محافظت کنید."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard به یک رابط پیوند انتخاب شده نیاز دارد."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard راه اندازی P2P را برای این جلسه مسدود کرد زیرا IPv4 %S عمومی شناسایی شده از %s خارج از CIDR های مجاز %s است."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard راه اندازی P2P را برای این جلسه مسدود کرد زیرا پروب عمومی IPv4 برای CIDR های مجاز ناموفق بود %s: %s"
@@ -2788,6 +2788,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "خروج از eMule زیرا VPN Guard نتوانست IPv4 عمومی محدود شده را برای CIDR های مجاز تشخیص دهد %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "خروج از eMule زیرا رابط اتصال VPN Guard آدرس را از %s به %s تغییر داد: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "خروج از eMule زیرا رابط اتصال VPN Guard دیگر در دسترس نیست."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard فعال است اما نظارت بر زمان اجرا مسلح نیست. دستورات اتصال P2P برای این جلسه مسدود شده است."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "قطع اتصال درخواستی: با استفاده از استوک eMule قطع نرم. صف های انتقال فعال و سوکت های شنونده هارد ریست نمی شوند."
 END
 // eMuleBB managed translation block: end
 

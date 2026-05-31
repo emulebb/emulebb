@@ -2767,7 +2767,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Ενεργοποίηση VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Επιτρεπόμενα δημόσια IP CIDR"
     IDS_CONNECTION_TT_VPN_GUARD                                "Αποκλείει την εκκίνηση του P2P μέχρι την επανεκκίνηση, εάν η επιλεγμένη διεπαφή σύνδεσης VPN δεν είναι διαθέσιμη ή το ανιχνευμένο δημόσιο IPv4 βρίσκεται εκτός των επιτρεπόμενων CIDR. Μετά την επιτυχή εκκίνηση, βγαίνει από το eMule εάν αποτύχει το VPN Guard."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Επιτρέπονται δημόσια IPv4 CIDR για τη διεύθυνση εξόδου VPN. Διαχωρίστε πολλαπλά εύρη με κόμματα, ερωτηματικά ή κενά."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Επιτρέπεται προαιρετικό δημόσιο IPv4 CIDRs για τη διεύθυνση εξόδου VPN. Αφήστε το κενό για να προστατεύσετε μόνο την επιλεγμένη διεπαφή VPN."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "Το VPN Guard απαιτεί μια επιλεγμένη διεπαφή σύνδεσης."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "Το VPN Guard απέκλεισε την εκκίνηση του P2P για αυτήν την περίοδο λειτουργίας, επειδή το ανιχνευμένο δημόσιο IPv4 %S από το %s είναι εκτός των επιτρεπόμενων CIDR %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "Το VPN Guard απέκλεισε την εκκίνηση του P2P για αυτήν την περίοδο λειτουργίας επειδή ο δεσμευμένος δημόσιος ανιχνευτής IPv4 απέτυχε για επιτρεπόμενα CIDR %s: %s"
@@ -2775,6 +2775,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Έξοδος από το eMule επειδή το VPN Guard δεν μπόρεσε να εντοπίσει το δεσμευμένο δημόσιο IPv4 για επιτρεπόμενα CIDR %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Έξοδος από το eMule επειδή η διεπαφή σύνδεσης VPN Guard άλλαξε τη διεύθυνση από %s σε %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Έξοδος από το eMule επειδή η διεπαφή σύνδεσης VPN Guard δεν είναι πλέον διαθέσιμη."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "Το VPN Guard είναι ενεργοποιημένο, αλλά η παρακολούθηση χρόνου εκτέλεσης δεν είναι οπλισμένη. Οι εντολές σύνδεσης P2P είναι αποκλεισμένες για αυτήν την περίοδο λειτουργίας."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Ζητείται αποσύνδεση: με χρήση μαλακής αποσύνδεσης stock eMule. Οι ενεργές ουρές μεταφοράς και οι υποδοχές ακροατή δεν επαναφέρονται με σκληρό τρόπο."
 END
 // eMuleBB managed translation block: end
 

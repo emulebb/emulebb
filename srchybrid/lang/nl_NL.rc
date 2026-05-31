@@ -2815,7 +2815,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Schakel VPN Guard in"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Toegestane openbare IP CIDR's"
     IDS_CONNECTION_TT_VPN_GUARD                                "Blokkeert het opstarten van P2P tot opnieuw opstarten als de geselecteerde VPN-bindinterface niet beschikbaar is of de gedetecteerde openbare IPv4 buiten de toegestane CIDR's valt. Nadat het opstarten is gelukt, wordt eMule afgesloten als de VPN Guard faalt."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Openbare IPv4 CIDR's toegestaan ​​voor het VPN-uitgangsadres. Scheid meerdere bereiken met komma's, puntkomma's of spaties."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Optioneel openbaar IPv4 CIDRs toegestaan ​​voor het VPN-uitgangsadres. Laat dit leeg om alleen de geselecteerde VPN-interface te bewaken."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard vereist een geselecteerde bindinterface."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard blokkeerde het opstarten van P2P voor deze sessie omdat gedetecteerde openbare IPv4 %S van %s zich buiten de toegestane CIDR's %s bevindt."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard blokkeerde het opstarten van P2P voor deze sessie omdat de gebonden openbare IPv4-test mislukte voor toegestane CIDR's %s: %s"
@@ -2823,6 +2823,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "eMule afsluiten omdat VPN Guard de gebonden openbare IPv4 voor toegestane CIDR's %s niet kon detecteren: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "eMule afsluiten omdat de VPN Guard-bindinterface het adres heeft gewijzigd van %s in %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "eMule wordt afgesloten omdat de VPN Guard-bindinterface niet langer beschikbaar is."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard is ingeschakeld, maar runtimebewaking is niet ingeschakeld; P2P-verbindingsopdrachten zijn geblokkeerd voor deze sessie."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Ontkoppelen aangevraagd: gebruik van standaard eMule zachte ontkoppeling; actieve overdrachtswachtrijen en luisteraarsockets worden niet hard gereset."
 END
 // eMuleBB managed translation block: end
 

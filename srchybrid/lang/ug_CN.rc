@@ -2779,7 +2779,7 @@ BEGIN
     IDS_VPN_GUARD                                              "VPN قوغدىغۇچىنى قوزغىتىڭ"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "ئاممىۋى IP CIDR لارغا رۇخسەت قىلىندى"
     IDS_CONNECTION_TT_VPN_GUARD                                "ئەگەر تاللانغان VPN باغلانما كۆرۈنمە يۈزى بولمىسا ياكى بايقالغان ئاممىۋى IPv4 رۇخسەت قىلىنغان CIDR لارنىڭ سىرتىدا بولسا P2P قوزغىتىشنى قايتا قوزغىتىدۇ. قوزغالغاندىن كېيىن ، VPN قوغدىغۇچى مەغلۇپ بولسا eMule دىن چېكىنىدۇ."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "ئاممىۋى IPv4 CIDR لار VPN چىقىش ئادرېسىغا يول قويدى. پەش ، يېرىم چېكىت ياكى بوشلۇق بىلەن كۆپ دائىرىنى ئايرىڭ."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "ئىختىيارىي ئاممىۋى IPv4 CIDRs VPN چىقىش ئادرېسىغا رۇخسەت قىلىنغان. پەقەت تاللانغان VPN كۆرۈنمە يۈزىنى قوغداش ئۈچۈن بوش قويۇڭ."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN قوغدىغۇچى تاللانغان باغلىنىش كۆرۈنمە يۈزىنى تەلەپ قىلىدۇ."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN قوغدىغۇچىسى بۇ يىغىن ئۈچۈن P2P قوزغىتىشنى توستى ، چۈنكى %S دىن بايقالغان ئاممىۋى IPv4 %s سىرتتا CIDRs %s رۇخسەت قىلىنغان."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN قوغدىغۇچىسى بۇ يىغىن ئۈچۈن P2P قوزغىلىشىنى توستى ، چۈنكى چەكلەنگەن ئاممىۋى IPv4 تەكشۈرۈشى رۇخسەت قىلىنغان CIDRs %s: %s"
@@ -2787,6 +2787,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "eMule دىن چېكىنىدۇ ، چۈنكى VPN قوغدىغۇچىسى رۇخسەت قىلىنغان CIDRs IPv4 چەكلەنگەن ئاممىۋى IPv4 نى بايقىيالمىدى: %s %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "eMule دىن چېكىنىش ، چۈنكى VPN قوغدىغۇچى باغلاش ئېغىزى ئادرېسىنى %s دىن %s غا ئۆزگەرتتى: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "eMule دىن چېكىنىدۇ ، چۈنكى VPN قوغدىغۇچى باغلاش كۆرۈنمە يۈزى ئەمدى يوق."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard قوزغىتىلغان ، ئەمما ئىجرا ۋاقتىنى نازارەت قىلىش قوراللانمىغان. بۇ يىغىن ئۈچۈن P2P ئۇلىنىش بۇيرۇقلىرى چەكلەنگەن."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "تەلەپ قىلىنغان ئۈزۈشنى تەلەپ قىلىڭ: پاي eMule يۇمشاق دېتالنى ئۈزۈش; ئاكتىپ يۆتكەش ئۆچرەتلىرى ۋە ئۈندىدار ئېغىزى قاتتىق ئەسلىگە كەلمەيدۇ."
 END
 // eMuleBB managed translation block: end
 

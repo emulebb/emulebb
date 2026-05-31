@@ -2808,7 +2808,7 @@ BEGIN
     IDS_VPN_GUARD                                              "הפעל VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "IP CIDRs ציבוריים מותרים"
     IDS_CONNECTION_TT_VPN_GUARD                                "חוסם את ההפעלה של P2P עד להפעלה מחדש אם ממשק ה-VPN הנבחר אינו זמין או שה-IPv4 הציבורי שזוהה נמצא מחוץ ל-CIDRs המותרים. לאחר שההפעלה הצליחה, צא מ-eMule אם ה-VPN Guard נכשל."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "CIDRs ציבוריים של IPv4 מותרים עבור כתובת היציאה של VPN. הפרד טווחים מרובים באמצעות פסיקים, נקודות פסיק או רווחים."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "IPv4 ציבורי אופציונלי CIDRs מותר עבור כתובת היציאה של VPN. השאר ריק כדי לשמור רק על ממשק ה-VPN שנבחר."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard דורש ממשק חיבור נבחר."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard חסם את ההפעלה של P2P להפעלה זו מכיוון שזוהה IPv4 %S ציבורי מ-%s הוא מחוץ ל-CIDRs המותרים %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard חסם את ההפעלה של P2P עבור הפעלה זו מכיוון שהבדיקה הציבורית המחוברת IPv4 נכשלה עבור CIDRs מותרים %s: %s"
@@ -2816,6 +2816,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "יוצא מ-eMule מכיוון ש-VPN Guard לא הצליח לזהות את ה-IPv4 הציבורי המחובר עבור CIDRs מותרים %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "יוצא מ-eMule מכיוון שממשק VPN Guard הכריכה שינה כתובת מ-%s ל-%s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "יוצא מ-eMule מכיוון שממשק VPN Guard לא זמין עוד."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard מופעל אך ניטור זמן הריצה אינו מופעל; פקודות חיבור P2P חסומות עבור הפעלה זו."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "ניתוק מבוקש: באמצעות ניתוק רך eMule במלאי; תורי העברה פעילים ושקעי מאזין אינם מאופסים קשה."
 END
 // eMuleBB managed translation block: end
 

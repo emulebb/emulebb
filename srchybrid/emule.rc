@@ -4856,7 +4856,7 @@ BEGIN
     IDS_CONNECTION_TT_BIND_INTERFACE       "Optional Windows network interface name used for P2P socket binding.\r\n\r\nMatch is by friendly interface name, not adapter number. Changes take effect after restart."
     IDS_CONNECTION_TT_BIND_ADDRESS         "Optional IPv4 address used for P2P socket binding.\r\n\r\nLeave it empty to use the first IPv4 on the selected interface, or the default routing choice when no interface is selected."
     IDS_CONNECTION_TT_VPN_GUARD            "Blocks P2P startup until restart if the selected VPN bind interface is unavailable or the detected public IPv4 is outside the allowed CIDRs. After startup succeeds, exits eMule if the VPN Guard fails."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS      "Public IPv4 CIDRs allowed for the VPN exit address. Separate multiple ranges with commas, semicolons, or spaces."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS      "Optional public IPv4 CIDRs allowed for the VPN exit address. Leave empty to guard only the selected VPN interface."
     IDS_WEBSERVER_TT_WEBBINDADDR           "Local bind address for the built-in WebServer and REST API.\r\n\r\nLeave it empty or as 0.0.0.0 to listen on all interfaces. Set a specific IPv4 only if you deliberately want to restrict where the service listens."
     IDS_WEBSERVER_TT_WSAPIKEY              "Plaintext REST API key used by clients in the X-API-Key header.\r\n\r\nRecommended: keep the generated random value unless you need a specific token. Anyone with this key has full API access."
 END
@@ -4893,6 +4893,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT "Exiting eMule because VPN Guard could not detect the bound public IPv4 for allowed CIDRs %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT "Exiting eMule because VPN Guard bind interface changed address from %s to %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE "Exiting eMule because VPN Guard bind interface is no longer available."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR "VPN Guard is enabled but runtime monitoring is not armed; P2P connection commands are blocked for this session."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE       "Disconnect requested: using stock eMule soft disconnect; active transfer queues and listener sockets are not hard-reset."
     IDS_STATUS_BIND_IP_COMPACT_LABEL       "B"
     IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     "P"
     IDS_STATUS_ANY_COMPACT                 "Any"

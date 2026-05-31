@@ -2808,7 +2808,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Aktivizo VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "IP CIDR publike të lejuara"
     IDS_CONNECTION_TT_VPN_GUARD                                "Bllokon nisjen e P2P deri në rinisjen nëse ndërfaqja e zgjedhur e lidhjes VPN nuk është e disponueshme ose IPv4 publike e zbuluar është jashtë CIDR-ve të lejuara. Pasi nisja të ketë sukses, del nga eMule nëse VPN Guard dështon."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "IPv4 CIDR publike të lejuara për adresën e daljes VPN. Ndani vargje të shumta me presje, pikëpresje ose hapësira."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Opsionale publike IPv4 CIDRs e lejuar për adresën e daljes VPN. Lëreni bosh për të ruajtur vetëm ndërfaqen e zgjedhur VPN."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard kërkon një ndërfaqe të zgjedhur të lidhjes."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard bllokoi fillimin e P2P për këtë sesion sepse IPv4 %S publik i zbuluar nga %s është jashtë CIDR-ve të lejuara %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard bllokoi fillimin e P2P për këtë seancë sepse sonda publike e lidhur IPv4 dështoi për CIDR-të e lejuara %s: %s"
@@ -2816,6 +2816,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Po dilni nga eMule sepse VPN Guard nuk mund të zbulonte IPv4 publike të lidhur për CIDR-të e lejuara %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Po dilni nga eMule sepse ndërfaqja lidhëse VPN Guard ndryshoi adresën nga %s në %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Po del nga eMule sepse ndërfaqja lidhëse VPN Guard nuk është më e disponueshme."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard është aktivizuar, por monitorimi i kohës së funksionimit nuk është i armatosur; Komandat e lidhjes P2P janë të bllokuara për këtë sesion."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Kërkohet shkëputja: duke përdorur shkëputjen e butë të stokut eMule; Radhët aktive të transferimit dhe prizat e dëgjuesit nuk rivendosen me vështirësi."
 END
 // eMuleBB managed translation block: end
 

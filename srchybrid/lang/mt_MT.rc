@@ -2807,7 +2807,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Ippermetti VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "IP CIDRs pubbliċi permessi"
     IDS_CONNECTION_TT_VPN_GUARD                                "Jimblokka l-istartjar tal-P2P sakemm jerġa' jibda jekk l-interface ta' rabta VPN magħżula ma tkunx disponibbli jew il-IPv4 pubbliku misjub ikun barra s-CIDRs permessi. Wara li l-istartjar jirnexxi, joħroġ eMule jekk il-VPN Guard tfalli."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "IPv4 CIDRs pubbliċi permessi għall-indirizz tal-ħruġ VPN. Issepara firxiet multipli b'virgoli, virgoli, jew spazji."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "IPv4 pubbliku fakultattiv CIDRs permess għall-indirizz tal-ħruġ VPN. Ħalli vojta biex tħares biss l-interface VPN magħżula."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard teħtieġ interface ta' rabta magħżula."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard imblukkat l-istartjar P2P għal din is-sessjoni għaliex IPv4 %S pubbliku misjub minn %s huwa barra mis-CIDR permessi %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard imblukkat l-istartjar P2P għal din is-sessjoni minħabba li s-sonda pubblika marbuta IPv4 falliet għal CIDRs permessi %s: %s"
@@ -2815,6 +2815,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Ħruġ minn eMule minħabba li VPN Guard ma setgħetx tiskopri l-pubbliku marbut IPv4 għal CIDRs permessi %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Ħruġ minn eMule minħabba li l-interface tal-bind tal-VPN Guard bidlet l-indirizz minn %s għal %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Ħruġ minn eMule minħabba li l-interface tal-bind tal-VPN Guard m'għadhiex disponibbli."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard huwa attivat iżda l-monitoraġġ tar-runtime mhuwiex armat; Kmandi tal-konnessjoni P2P huma mblukkati għal din is-sessjoni."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Skonnettja mitluba: bl-użu ta 'stokk eMule skonnettjar artab; kjuwijiet ta 'trasferiment attivi u sokits tas-semmiegħa mhumiex hard-reset."
 END
 // eMuleBB managed translation block: end
 

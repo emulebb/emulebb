@@ -2784,7 +2784,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Ota VPN Guard käyttöön"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Sallitut julkiset IP CIDR:t"
     IDS_CONNECTION_TT_VPN_GUARD                                "Estää P2P-käynnistyksen uudelleenkäynnistykseen asti, jos valittu VPN-sidosliitäntä ei ole käytettävissä tai havaittu julkinen IPv4 on sallittujen CIDR-arvojen ulkopuolella. Kun käynnistys on onnistunut, sulkee eMule, jos VPN Guard epäonnistuu."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "VPN-poistumisosoitteelle sallitaan julkiset IPv4 CIDR:t. Erottele useat alueet pilkuilla, puolipisteillä tai välilyönneillä."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Valinnainen julkinen IPv4 CIDRs sallitaan VPN-lähtöosoitteelle. Jätä tyhjäksi suojataksesi vain valittua VPN-liitäntää."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard vaatii valitun sidosliittymän."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard esti P2P-käynnistyksen tälle istunnolle, koska %S:n havaittu julkinen IPv4 %s on sallittujen CIDR-tiedostojen %s ulkopuolella."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard esti P2P-käynnistyksen tälle istunnolle, koska sidottu julkinen IPv4-anturi epäonnistui sallittujen CIDR-tiedostojen osalta %s: %s"
@@ -2792,6 +2792,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Poistutaan eMule:sta, koska VPN Guard ei pystynyt havaitsemaan sidottua julkista IPv4 sallituille CIDR:ille %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "eMule:sta poistuminen, koska VPN Guard -sidosliitäntä vaihtoi osoitteen %s:sta %s:ksi: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Poistutaan eMule:sta, koska VPN Guard -sidosliittymä ei ole enää käytettävissä."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard on käytössä, mutta ajonaikainen valvonta ei ole viritetty; P2P-yhteyskomennot on estetty tälle istunnolle."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Katkaiseminen pyydetään: käyttämällä varastossa eMule pehmeä katkaisu; aktiivisia siirtojonoja ja kuuntelijapistokkeita ei ole nollattu."
 END
 // eMuleBB managed translation block: end
 

@@ -2811,7 +2811,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Luba VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Lubatud avalikud IP CIDR-id"
     IDS_CONNECTION_TT_VPN_GUARD                                "Blokeerib P2P käivitamise kuni taaskäivitamiseni, kui valitud VPN-i sidumisliides pole saadaval või tuvastatud avalik IPv4 on väljaspool lubatud CIDR-e. Pärast käivitamise õnnestumist väljub eMule, kui VPN Guard ebaõnnestub."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "VPN-i väljumisaadressi jaoks on lubatud avalikud IPv4 CIDR-id. Eraldage mitu vahemikku koma, semikooloni või tühikutega."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "VPN-i väljumisaadressi jaoks on lubatud valikuline avalik IPv4 CIDRs. Ainult valitud VPN-liidese kaitsmiseks jätke tühjaks."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard nõuab valitud sidumisliidest."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard blokeeris selle seansi jaoks P2P käivitamise, kuna %S avalik IPv4 %s on väljaspool lubatud CIDR-e %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard blokeeris selle seansi jaoks P2P käivitamise, kuna seotud avalik IPv4 sond nurjus lubatud CIDR-ide puhul %s: %s"
@@ -2819,6 +2819,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "eMule-st väljumine, kuna VPN Guard ei tuvastanud lubatud CIDR-ide jaoks seotud avalikku IPv4 %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "eMule-st väljumine, kuna VPN Guard sidumisliides muutis aadressi %s asemel %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "eMule-st väljumine, kuna VPN Guard sidumisliides pole enam saadaval."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard on lubatud, kuid käitusaja jälgimine pole valves; P2P ühenduse käsud on selle seansi jaoks blokeeritud."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Ühenduse katkestamine on nõutav: varude eMule pehme lahtiühendamine; aktiivseid edastusjärjekordi ja kuulari pesasid ei lähtestata."
 END
 // eMuleBB managed translation block: end
 

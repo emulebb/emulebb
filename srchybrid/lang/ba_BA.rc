@@ -2813,7 +2813,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Gaitu VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Baimendutako IP CIDR publikoak"
     IDS_CONNECTION_TT_VPN_GUARD                                "P2P abiaraztea blokeatzen du berrabiarazi arte, hautatutako VPN lotzeko interfazea erabilgarri ez badago edo detektaturiko IPv4 publikoa baimendutako CIDRetatik kanpo badago. Abian jarri ondoren, eMule irteten da VPN Guard-ek huts egiten badu."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "IPv4 CIDR publikoak onartzen dira VPN irteera-helbiderako. Banatu hainbat barruti koma, puntu eta koma edo zuriuneekin."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Aukerako IPv4 CIDRs publikoa VPN irteera helbidea onartzen da. Utzi hutsik hautatutako VPN interfazea soilik babesteko."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard-ek hautatutako lotura-interfazea behar du."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard-ek P2P abiaraztea blokeatu du saio honetarako, %S IPv4 %s publiko detektatuta dagoelako baimendutako CIDR %s kanpo."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard-ek P2P abiaraztea blokeatu du saio honetarako, lotuta dagoen IPv4 zunda publikoak huts egin duelako baimendutako CIDRetarako %s: %s"
@@ -2821,6 +2821,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "eMule irteten, VPN Guard-ek ezin izan duelako detektatu baimendutako CIDRetarako IPv4 publiko lotuta dagoen %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "eMule irteten, VPN Guard bind interfazeak helbidea aldatu duelako %stik %sra: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "eMule irteten, VPN Guard bind interfazea jada ez dagoelako erabilgarri."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard gaituta dago baina exekuzio denboraren jarraipena ez dago armatuta; P2P konexio komandoak blokeatuta daude saio honetarako."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Deskonexioa eskatuta: stock eMule deskonexio biguna erabiliz; transferentzia-ilara aktiboak eta entzule-socketak ez dira berrezartzen."
 END
 // eMuleBB managed translation block: end
 

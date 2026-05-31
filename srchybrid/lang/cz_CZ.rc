@@ -2813,7 +2813,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Povolit ochranu VPN"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Povolené veřejné IP CIDR"
     IDS_CONNECTION_TT_VPN_GUARD                                "Blokuje spouštění P2P až do restartu, pokud je vybrané rozhraní vazby VPN nedostupné nebo je zjištěné veřejné IPv4 mimo povolené CIDR. Po úspěšném spuštění ukončí eMule, pokud VPN Guard selže."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Veřejné IPv4 CIDR povolené pro výstupní adresu VPN. Více rozsahů oddělte čárkami, středníky nebo mezerami."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Volitelná veřejná IPv4 CIDRs povolená pro výstupní adresu VPN. Ponechte prázdné, chcete-li chránit pouze vybrané rozhraní VPN."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard vyžaduje vybrané rozhraní vazby."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard zablokoval spuštění P2P pro tuto relaci, protože detekovaná veřejná IPv4 %S z %s je mimo povolené CIDR %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard zablokoval spuštění P2P pro tuto relaci, protože vázaná veřejná sonda IPv4 selhala pro povolené CIDR %s: %s"
@@ -2821,6 +2821,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Ukončení eMule, protože VPN Guard nedokázal detekovat navázané veřejné IPv4 pro povolené CIDR %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Ukončení eMule, protože rozhraní vazby VPN Guard změnilo adresu z %s na %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Ukončení eMule, protože rozhraní VPN Guard již není k dispozici."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard je povoleno, ale monitorování za běhu není aktivováno; Příkazy připojení P2P jsou pro tuto relaci blokovány."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Požadováno odpojení: pomocí standardního měkkého odpojení eMule; aktivní přenosové fronty a naslouchací sokety nejsou natvrdo resetovány."
 END
 // eMuleBB managed translation block: end
 

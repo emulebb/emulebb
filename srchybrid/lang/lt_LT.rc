@@ -2816,7 +2816,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Įgalinti VPN apsaugą"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Leidžiami vieši IP CIDR"
     IDS_CONNECTION_TT_VPN_GUARD                                "Blokuoja P2P paleidimą iki paleidimo iš naujo, jei pasirinkta VPN susiejimo sąsaja nepasiekiama arba aptiktas viešasis IPv4 yra už leidžiamų CIDR ribų. Sėkmingai paleidus, išeina eMule, jei nepavyksta VPN apsaugos."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "VPN išėjimo adresui leidžiami vieši IPv4 CIDR. Atskirkite kelis diapazonus kableliais, kabliataškiais arba tarpais."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Pasirinktinai viešasis IPv4 CIDRs leidžiamas VPN išėjimo adresui. Palikite tuščią, kad apsaugotumėte tik pasirinktą VPN sąsają."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN apsaugai reikalinga pasirinkta susiejimo sąsaja."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN apsauga užblokavo P2P paleidimą šiam seansui, nes aptiktas viešas IPv4 %S iš %s nepatenka į leidžiamus CIDR %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN apsauga užblokavo P2P paleidimą šiai seansui, nes susietas viešasis IPv4 zondas nepavyko dėl leidžiamų CIDR %s: %s"
@@ -2824,6 +2824,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Išeinama iš eMule, nes VPN apsauga negalėjo aptikti susieto viešojo IPv4 leidžiamų CIDR %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Išeinama iš eMule, nes VPN Guard susiejimo sąsaja pakeitė adresą iš %s į %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Išeinama iš eMule, nes VPN Guard susiejimo sąsaja nebepasiekiama."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard įjungtas, bet vykdymo laiko stebėjimas neįjungtas; Šiam seansui užblokuotos P2P ryšio komandos."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Reikalingas atjungimas: naudojant atsarginį eMule minkštą atjungimą; aktyvios perdavimo eilės ir klausytojų lizdai nėra sunkiai nustatomi iš naujo."
 END
 // eMuleBB managed translation block: end
 

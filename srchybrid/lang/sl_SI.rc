@@ -2813,7 +2813,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Omogoči VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Dovoljeni javni IP CIDR-ji"
     IDS_CONNECTION_TT_VPN_GUARD                                "Blokira zagon P2P do ponovnega zagona, če izbrani povezovalni vmesnik VPN ni na voljo ali je zaznan javni IPv4 zunaj dovoljenih CIDR-jev. Po uspešnem zagonu zapusti eMule, če VPN Guard ne uspe."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Javni IPv4 CIDR-ji so dovoljeni za izhodni naslov VPN. Več obsegov ločite z vejicami, podpičji ali presledki."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Izbirni javni IPv4 CIDRs dovoljen za izhodni naslov VPN. Pustite prazno, da zaščitite samo izbrani vmesnik VPN."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard zahteva izbran povezovalni vmesnik."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard je blokiral zagon P2P za to sejo, ker je zaznan javni IPv4 %S iz %s zunaj dovoljenih CIDR-jev %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard je blokiral zagon P2P za to sejo, ker vezana javna sonda IPv4 ni uspela za dovoljene CIDR %s: %s"
@@ -2821,6 +2821,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Izhod iz eMule, ker VPN Guard ni mogel zaznati vezanega javnega IPv4 za dovoljene CIDR-je %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Izhod iz eMule, ker je povezovalni vmesnik VPN Guard spremenil naslov iz %s v %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Izhod iz eMule, ker povezovalni vmesnik VPN Guard ni več na voljo."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard je omogočen, vendar nadzor med izvajanjem ni vklopljen; Ukazi za povezavo P2P so blokirani za to sejo."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Zahtevan odklop: z mehkim odklopom standardne eMule; aktivne čakalne vrste za prenos in vtičnice poslušalcev niso trdo ponastavljene."
 END
 // eMuleBB managed translation block: end
 

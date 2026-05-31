@@ -2784,7 +2784,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Abilita la protezione VPN"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "CIDR IP pubblici consentiti"
     IDS_CONNECTION_TT_VPN_GUARD                                "Blocca l'avvio P2P fino al riavvio se l'interfaccia di associazione VPN selezionata non è disponibile o il IPv4 pubblico rilevato non rientra nei CIDR consentiti. Dopo che l'avvio ha avuto esito positivo, esce da eMule se VPN Guard fallisce."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "CIDR IPv4 pubblici consentiti per l'indirizzo di uscita VPN. Separa più intervalli con virgole, punto e virgola o spazi."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "IPv4 pubblico facoltativo CIDRs consentito per l'indirizzo di uscita VPN. Lascia vuoto per proteggere solo l'interfaccia VPN selezionata."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard richiede un'interfaccia di collegamento selezionata."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard ha bloccato l'avvio P2P per questa sessione perché il IPv4 pubblico %S rilevato da %s è esterno ai CIDR consentiti %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard ha bloccato l'avvio P2P per questa sessione perché l'analisi IPv4 pubblica associata non è riuscita per i CIDR consentiti %s: %s"
@@ -2792,6 +2792,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Uscita da eMule perché VPN Guard non è riuscita a rilevare il IPv4 pubblico associato per i CIDR consentiti %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Uscita da eMule perché l'interfaccia di associazione VPN Guard ha cambiato indirizzo da %s a %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Uscita da eMule perché l'interfaccia di associazione VPN Guard non è più disponibile."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard è abilitato ma il monitoraggio del runtime non è armato; I comandi di connessione P2P sono bloccati per questa sessione."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Disconnessione richiesta: utilizzando la disconnessione morbida eMule di serie; le code di trasferimento attive e i socket di ascolto non vengono reimpostati a freddo."
 END
 // eMuleBB managed translation block: end
 

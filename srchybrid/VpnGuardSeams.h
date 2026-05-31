@@ -153,6 +153,9 @@ inline bool TryParseAllowedPublicIpv4Ranges(CString strText, std::vector<SAllowe
 {
 	rRanges.clear();
 	rstrError.Empty();
+	strText.Trim();
+	if (strText.IsEmpty())
+		return true;
 
 	CString strToken;
 	for (int i = 0; i <= strText.GetLength(); ++i) {
@@ -171,10 +174,6 @@ inline bool TryParseAllowedPublicIpv4Ranges(CString strText, std::vector<SAllowe
 		}
 	}
 
-	if (rRanges.empty()) {
-		rstrError = _T("at least one public IPv4 CIDR or address is required");
-		return false;
-	}
 	return true;
 }
 

@@ -2815,7 +2815,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Aktiver VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Tillatte offentlige IP CIDR-er"
     IDS_CONNECTION_TT_VPN_GUARD                                "Blokkerer P2P-oppstart til omstart hvis det valgte VPN-bindingsgrensesnittet er utilgjengelig eller den oppdagede offentlige IPv4 er utenfor de tillatte CIDRene. Etter at oppstarten er vellykket, avslutter du eMule hvis VPN Guard mislykkes."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Offentlige IPv4 CIDR-er tillatt for VPN-utgangsadressen. Skill flere områder med komma, semikolon eller mellomrom."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Valgfri offentlig IPv4 CIDRs tillatt for VPN-utgangsadressen. La stå tomt for å beskytte bare det valgte VPN-grensesnittet."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard krever et valgt bindingsgrensesnitt."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard blokkerte P2P-oppstart for denne økten fordi oppdaget offentlig IPv4 %S fra %s er utenfor tillatte CIDR-er %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard blokkerte P2P-oppstart for denne økten fordi den bundne offentlige IPv4-sonden mislyktes for tillatte CIDR-er %s: %s"
@@ -2823,6 +2823,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Avslutter eMule fordi VPN Guard ikke kunne oppdage den bundne offentlige IPv4 for tillatte CIDRer %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Avslutter eMule fordi VPN Guard-bindingsgrensesnitt endret adresse fra %s til %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Avslutter eMule fordi VPN Guard-bindingsgrensesnittet ikke lenger er tilgjengelig."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard er aktivert, men kjøretidsovervåking er ikke tilkoblet; P2P tilkoblingskommandoer er blokkert for denne økten."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Frakobling forespurt: ved hjelp av standard eMule myk frakobling; aktive overføringskøer og lytterkontakter er ikke hardt tilbakestilt."
 END
 // eMuleBB managed translation block: end
 

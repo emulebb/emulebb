@@ -2818,7 +2818,7 @@ BEGIN
     IDS_VPN_GUARD                                              "VPN Guard engedélyezése"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Engedélyezett nyilvános IP CIDR-ek"
     IDS_CONNECTION_TT_VPN_GUARD                                "Letiltja a P2P indítást az újraindításig, ha a kiválasztott VPN-kötési interfész nem érhető el, vagy az észlelt nyilvános IPv4 kívül esik az engedélyezett CIDR-eken. Sikeres indítás után kilép eMule-ból, ha a VPN Guard meghibásodik."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Nyilvános IPv4 CIDR-ek engedélyezettek a VPN-kilépési címhez. A több tartományt vesszővel, pontosvesszővel vagy szóközzel válassza el."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Opcionális nyilvános IPv4 CIDRs engedélyezett a VPN kilépési címhez. Hagyja üresen, ha csak a kiválasztott VPN interfészt szeretné védeni."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "A VPN Guard egy kiválasztott kötési felületet igényel."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "A VPN Guard letiltotta a P2P indítást ennél a munkamenetnél, mert a %S által észlelt nyilvános IPv4 %s kívül esik a %s engedélyezett CIDR-eken."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "A VPN Guard blokkolta a P2P indítást ennél a munkamenetnél, mert a kötött nyilvános IPv4 vizsgálat meghiúsult az engedélyezett CIDR-eknél %s: %s"
@@ -2826,6 +2826,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Kilépés a eMule-ból, mert a VPN Guard nem tudta észlelni a kötött nyilvános IPv4-t az engedélyezett CIDR-ekhez %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Kilépés a eMule-ból, mert a VPN Guard kötési felülete megváltoztatta a címet %s-ról %s-ra: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Kilépés a eMule-ból, mert a VPN Guard kötési felület már nem érhető el."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "A VPN Guard engedélyezve van, de a futásidejű megfigyelés nincs élesítve; A P2P csatlakozási parancsok le vannak tiltva ebben a munkamenetben."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Leválasztás kérése: készlet eMule lágy leválasztással; az aktív átviteli várólisták és a figyelő socketek nincsenek visszaállítva."
 END
 // eMuleBB managed translation block: end
 

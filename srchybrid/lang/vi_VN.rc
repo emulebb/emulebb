@@ -2809,7 +2809,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Kích hoạt tính năng bảo vệ VPN"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "CIDR IP công khai được phép"
     IDS_CONNECTION_TT_VPN_GUARD                                "Chặn khởi động P2P cho đến khi khởi động lại nếu giao diện liên kết VPN đã chọn không khả dụng hoặc IPv4 công khai được phát hiện nằm ngoài CIDR được phép. Sau khi khởi động thành công, thoát eMule nếu VPN Guard không thành công."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "CIDR IPv4 công khai được phép cho địa chỉ thoát VPN. Phân tách nhiều phạm vi bằng dấu phẩy, dấu chấm phẩy hoặc dấu cách."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "IPv4 công khai tùy chọn CIDRs được phép cho địa chỉ thoát VPN. Để trống để chỉ bảo vệ giao diện VPN đã chọn."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard yêu cầu giao diện liên kết đã chọn."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard đã chặn khởi động P2P cho phiên này vì IPv4 %S công khai được phát hiện từ %s nằm ngoài CIDR %s được cho phép."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard đã chặn khởi động P2P cho phiên này vì thăm dò IPv4 công khai bị ràng buộc không thành công đối với các CIDR được phép %s: %s"
@@ -2817,6 +2817,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Thoát eMule vì VPN Guard không thể phát hiện IPv4 công khai bị ràng buộc đối với các CIDR được phép %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Thoát eMule vì giao diện liên kết VPN Guard đã thay đổi địa chỉ từ %s thành %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Đang thoát eMule vì giao diện liên kết VPN Guard không còn khả dụng."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard được bật nhưng tính năng giám sát thời gian chạy không được trang bị; Các lệnh kết nối P2P bị chặn trong phiên này."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Yêu cầu ngắt kết nối: sử dụng ngắt kết nối mềm stock eMule; hàng đợi truyền đang hoạt động và ổ cắm trình nghe không được thiết lập lại cứng."
 END
 // eMuleBB managed translation block: end
 

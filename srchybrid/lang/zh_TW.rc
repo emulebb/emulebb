@@ -2797,7 +2797,7 @@ BEGIN
     IDS_VPN_GUARD                                              "啟用 VPN 防護"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "允許的公共 IP CIDR"
     IDS_CONNECTION_TT_VPN_GUARD                                "如果所選 VPN 綁定介面不可用或偵測到的公用 IPv4 超出允許的 CIDR，則阻止 P2P 啟動直到重新啟動。啟動成功後，如果 VPN Guard 失敗，則退出 eMule。"
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "允許 VPN 出口位址使用公共 IPv4 CIDR。使用逗號、分號或空格分隔多個範圍。"
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "VPN 出口位址允許使用可選的公共 IPv4 CIDRs。留空以僅保護選定的 VPN 介面。"
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard 需要選定的綁定介面。"
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard 阻止了此會話的 P2P 啟動，因為偵測到來自 %S 的公共 IPv4 %s 位於允許的 CIDR %s 之外。"
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard 阻止了此會話的 P2P 啟動，因為對於允許的 CIDR %s：%s，綁定的公共 IPv4 探測失​​敗"
@@ -2805,6 +2805,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "退出 eMule，因為 VPN Guard 無法偵測到允許的 CIDR %s 的綁定公共 IPv4：%s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "退出 eMule，因為 VPN Guard 綁定介面將位址從 %s 變更為 %s：%s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "退出 eMule，因為 VPN Guard 綁定介面不再可用。"
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard 已啟用，但運行時監控未佈防；此會話的 P2P 連線命令被阻止。"
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "斷開請求：使用庫存 eMule 軟斷開；活動傳輸佇列和偵聽器套接字不會被硬重置。"
 END
 // eMuleBB managed translation block: end
 

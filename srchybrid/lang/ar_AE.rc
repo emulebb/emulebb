@@ -2806,7 +2806,7 @@ BEGIN
     IDS_VPN_GUARD                                              "تمكين VPN الحرس"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "يُسمح بأرقام IP CIDRs العامة"
     IDS_CONNECTION_TT_VPN_GUARD                                "يحظر بدء تشغيل P2P حتى إعادة التشغيل إذا كانت واجهة ربط VPN المحددة غير متاحة أو كان IPv4 العام المكتشف خارج CIDRs المسموح بها. بعد نجاح بدء التشغيل، قم بالخروج من eMule إذا فشل VPN Guard."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "يسمح IPv4 CIDRs العام لعنوان خروج VPN. افصل بين النطاقات المتعددة بفواصل أو فواصل منقوطة أو مسافات."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "يسمح IPv4 CIDRs العام الاختياري لعنوان خروج VPN. اتركه فارغًا لحماية واجهة VPN المحددة فقط."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "يتطلب VPN Guard واجهة ربط محددة."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "قام VPN Guard بحظر بدء تشغيل P2P لهذه الجلسة لأنه تم اكتشاف IPv4 %S العام من %s خارج نطاق CIDRs %s المسموح به."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "قام VPN Guard بحظر بدء تشغيل P2P لهذه الجلسة بسبب فشل مسبار IPv4 العام المنضم لـ CIDRs المسموح بها %s: %s"
@@ -2814,6 +2814,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "الخروج من eMule لأن VPN Guard لم يتمكن من اكتشاف IPv4 العام المنضم لـ CIDRs المسموح بها %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "الخروج من eMule لأن واجهة ربط VPN Guard غيرت العنوان من %s إلى %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "الخروج من eMule لأن واجهة ربط VPN Guard لم تعد متوفرة."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "تم تمكين VPN Guard ولكن مراقبة وقت التشغيل غير مفعلة؛ تم حظر أوامر اتصال P2P لهذه الجلسة."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "قطع الاتصال المطلوب: باستخدام قطع الاتصال الناعم eMule؛ لا تتم إعادة ضبط قوائم انتظار النقل النشطة ومآخذ المستمع."
 END
 // eMuleBB managed translation block: end
 

@@ -2788,7 +2788,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Włącz funkcję VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Dozwolone publiczne CIDR IP"
     IDS_CONNECTION_TT_VPN_GUARD                                "Blokuje uruchamianie P2P do czasu ponownego uruchomienia, jeśli wybrany interfejs wiązania VPN jest niedostępny lub wykryty publiczny IPv4 znajduje się poza dozwolonymi CIDR. Po pomyślnym uruchomieniu zamyka eMule, jeśli VPN Guard zawiedzie."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Publiczne identyfikatory CIDR IPv4 dozwolone dla adresu wyjściowego VPN. Oddziel poszczególne zakresy przecinkami, średnikami lub spacjami."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Opcjonalne publiczne IPv4 CIDRs dozwolone dla adresu wyjściowego VPN. Pozostaw puste, aby chronić tylko wybrany interfejs VPN."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard wymaga wybranego interfejsu powiązania."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard zablokował uruchomienie P2P dla tej sesji, ponieważ wykryty publiczny IPv4 %S z %s znajduje się poza dozwolonymi CIDR %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard zablokował uruchomienie P2P dla tej sesji, ponieważ powiązana publiczna sonda IPv4 nie powiodła się dla dozwolonych CIDR %s: %s"
@@ -2796,6 +2796,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Wychodzenie z eMule, ponieważ VPN Guard nie mógł wykryć powiązanego publicznego IPv4 dla dozwolonych CIDR %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Wychodzenie z eMule, ponieważ interfejs powiązania VPN Guard zmienił adres z %s na %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Zamykam eMule, ponieważ interfejs wiązania VPN Guard nie jest już dostępny."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard jest włączone, ale monitorowanie w czasie wykonywania nie jest uzbrojone; Polecenia połączenia P2P są blokowane dla tej sesji."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Zażądano rozłączenia: przy użyciu standardowego miękkiego rozłączenia eMule; aktywne kolejki transferu i gniazda odbiorników nie są resetowane w sposób twardy."
 END
 // eMuleBB managed translation block: end
 

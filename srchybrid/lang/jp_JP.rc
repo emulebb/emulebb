@@ -2818,7 +2818,7 @@ BEGIN
     IDS_VPN_GUARD                                              "VPN ガードを有効にする"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "許可されたパブリック IP CIDR"
     IDS_CONNECTION_TT_VPN_GUARD                                "選択した VPN バインド インターフェイスが使用できない場合、または検出されたパブリック IPv4 が許可された CIDR の範囲外にある場合、再起動するまで P2P の起動をブロックします。起動が成功した後、VPN Guard が失敗した場合は eMule を終了します。"
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "パブリック IPv4 CIDR が VPN 出口アドレスに許可されます。複数の範囲はカンマ、セミコロン、またはスペースで区切ります。"
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "オプションのパブリック IPv4 CIDRs は、VPN 出口アドレスとして許可されます。選択した VPN インターフェイスのみを保護するには、空のままにします。"
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard には、選択されたバインド インターフェイスが必要です。"
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "%S から検出されたパブリック IPv4 %s が許可された CIDR %s の範囲外であるため、VPN ガードはこのセッションの P2P 起動をブロックしました。"
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "バインドされたパブリック IPv4 プローブが許可された CIDR %s: %s に対して失敗したため、VPN ガードはこのセッションの P2P 起動をブロックしました"
@@ -2826,6 +2826,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "VPN Guard が許可された CIDR にバインドされたパブリック IPv4 を検出できなかったため、eMule を終了します %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "VPN Guard バインド インターフェイスのアドレスが %s から %s に変更されたため、eMule を終了します: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "VPN Guard バインド インターフェイスが使用できなくなったため、eMule を終了します。"
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard は有効ですが、ランタイム監視は有効になっていません。 P2P 接続コマンドは、このセッションではブロックされます。"
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "切断要求: 純正 eMule ソフト切断を使用。アクティブな転送キューとリスナー ソケットはハード リセットされません。"
 END
 // eMuleBB managed translation block: end
 

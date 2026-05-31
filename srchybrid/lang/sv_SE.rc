@@ -2815,7 +2815,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Aktivera VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Tillåtna offentliga IP CIDRs"
     IDS_CONNECTION_TT_VPN_GUARD                                "Blockerar P2P-start tills omstart om det valda VPN-bindningsgränssnittet inte är tillgängligt eller om den upptäckta offentliga IPv4 är utanför de tillåtna CIDR:erna. Efter att uppstarten lyckats avslutas eMule om VPN Guard misslyckas."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Offentliga IPv4 CIDR:er tillåtna för VPN-utgångsadressen. Separera flera intervall med kommatecken, semikolon eller blanksteg."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Valfri offentlig IPv4 CIDRs tillåts för VPN-utgångsadressen. Lämna tomt för att skydda endast det valda VPN-gränssnittet."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard kräver ett valt bindningsgränssnitt."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard blockerade P2P-start för denna session eftersom detekterade offentliga IPv4 %S från %s är utanför tillåtna CIDR:er %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard blockerade P2P-start för den här sessionen eftersom den bundna offentliga IPv4-sonden misslyckades för tillåtna CIDR:er %s: %s"
@@ -2823,6 +2823,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Avslutar eMule eftersom VPN Guard inte kunde upptäcka den bundna offentliga IPv4 för tillåtna CIDR %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "Avslutar eMule eftersom VPN Guard bindningsgränssnitt ändrade adress från %s till %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Avslutar eMule eftersom VPN Guard bindningsgränssnitt inte längre är tillgängligt."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard är aktiverat men körtidsövervakning är inte aktiverad; P2P anslutningskommandon är blockerade för denna session."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Koppling begärd: använder vanliga eMule mjuk urkoppling; aktiva överföringsköer och lyssnaruttag är inte hårdåterställda."
 END
 // eMuleBB managed translation block: end
 

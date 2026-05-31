@@ -2814,7 +2814,7 @@ BEGIN
     IDS_VPN_GUARD                                              "VPN Guard'ı etkinleştirin"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "İzin verilen genel IP CIDR'ler"
     IDS_CONNECTION_TT_VPN_GUARD                                "Seçilen VPN bağlama arayüzü kullanılamıyorsa veya algılanan genel IPv4, izin verilen CIDR'lerin dışındaysa, P2P başlatmayı yeniden başlatılıncaya kadar engeller. Başlatma başarılı olduktan sonra, VPN Guard başarısız olursa eMule'dan çıkar."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "VPN çıkış adresi için izin verilen genel IPv4 CIDR'ler. Birden fazla aralığı virgül, noktalı virgül veya boşlukla ayırın."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "VPN çıkış adresi için isteğe bağlı genel IPv4 CIDRs'ya izin verilir. Yalnızca seçilen VPN arayüzünü korumak için boş bırakın."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard seçili bir bağlama arayüzü gerektirir."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard, %S'dan genel IPv4 %s'nun izin verilen %s CIDR'lerinin dışında olduğu algılandığından bu oturum için P2P başlatmayı engelledi."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "Bağlantılı genel IPv4 araştırması izin verilen CIDR'ler %s: %s için başarısız olduğundan VPN Guard bu oturum için P2P başlatmayı engelledi"
@@ -2822,6 +2822,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "VPN Guard, izin verilen CIDR'ler için bağlı genel IPv4'yu algılayamadığı için eMule'dan çıkılıyor %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "VPN Guard bağlama arayüzü adresi %s'dan %s'ya değiştirdiği için eMule'dan çıkılıyor: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "VPN Guard bağlama arayüzü artık mevcut olmadığından eMule'dan çıkılıyor."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard etkinleştirildi ancak çalışma zamanı izleme etkinleştirilmedi; Bu oturum için P2P bağlantı komutları engellendi."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Bağlantının kesilmesi talep edildi: stok eMule yumuşak bağlantı kesme kullanılarak; etkin aktarım kuyrukları ve dinleyici yuvaları donanımdan sıfırlanmaz."
 END
 // eMuleBB managed translation block: end
 

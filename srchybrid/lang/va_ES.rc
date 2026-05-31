@@ -2817,7 +2817,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Activa VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "CIDR IP públics permesos"
     IDS_CONNECTION_TT_VPN_GUARD                                "Bloqueja l'inici P2P fins al reinici si la interfície d'enllaç VPN seleccionada no està disponible o si el IPv4 públic detectat està fora dels CIDR permesos. Un cop l'inici tingui èxit, surt de eMule si la VPN Guard falla."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Els CIDR públics IPv4 permesos per a l'adreça de sortida de VPN. Separeu diversos intervals amb comes, punt i coma o espais."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "IPv4 CIDRs públic opcional per a l'adreça de sortida de VPN. Deixeu buit per protegir només la interfície VPN seleccionada."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard requereix una interfície d'enllaç seleccionada."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard ha bloquejat l'inici P2P per a aquesta sessió perquè s'ha detectat IPv4 %S públic de %s fora dels CIDR permesos %s."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard ha bloquejat l'inici P2P per a aquesta sessió perquè la sonda pública vinculada IPv4 ha fallat per als CIDR permesos %s: %s"
@@ -2825,6 +2825,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "S'està sortint de eMule perquè VPN Guard no ha pogut detectar el IPv4 públic enllaçat per als CIDR permesos %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "S'està sortint de eMule perquè la interfície d'enllaç de VPN Guard ha canviat l'adreça de %s a %s: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "S'està sortint de eMule perquè la interfície d'enllaç VPN Guard ja no està disponible."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard està habilitat però la supervisió del temps d'execució no està armada; Les ordres de connexió P2P estan bloquejades per a aquesta sessió."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Desconnexió sol·licitada: utilitzant la desconnexió suau d'estoc eMule; les cues de transferència actives i els endolls d'escolta no es reinicien."
 END
 // eMuleBB managed translation block: end
 

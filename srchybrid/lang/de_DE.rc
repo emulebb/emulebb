@@ -2790,7 +2790,7 @@ BEGIN
     IDS_VPN_GUARD                                              "Aktivieren Sie VPN Guard"
     IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS                      "Zulässige öffentliche IP CIDRs"
     IDS_CONNECTION_TT_VPN_GUARD                                "Blockiert den P2P-Start bis zum Neustart, wenn die ausgewählte VPN-Bindungsschnittstelle nicht verfügbar ist oder der erkannte öffentliche IPv4 außerhalb der zulässigen CIDRs liegt. Nach erfolgreichem Start wird eMule beendet, wenn der VPN Guard fehlschlägt."
-    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Für die VPN-Exit-Adresse sind öffentliche IPv4-CIDRs zulässig. Trennen Sie mehrere Bereiche durch Kommas, Semikolons oder Leerzeichen."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS                          "Optionales öffentliches IPv4 CIDRs für die VPN-Exit-Adresse zulässig. Lassen Sie das Feld leer, um nur die ausgewählte VPN-Schnittstelle zu schützen."
     IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED                      "VPN Guard erfordert eine ausgewählte Bind-Schnittstelle."
     IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT               "VPN Guard hat den P2P-Start für diese Sitzung blockiert, weil erkannt wurde, dass das öffentliche IPv4 %S von %s außerhalb der zulässigen CIDRs %s liegt."
     IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT                     "VPN Guard hat den P2P-Start für diese Sitzung blockiert, weil die gebundene öffentliche IPv4-Prüfung für die zulässigen CIDRs %s: %s fehlgeschlagen ist"
@@ -2798,6 +2798,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT                     "Beenden von eMule, da VPN Guard das gebundene öffentliche IPv4 für die zulässigen CIDRs %s: %s nicht erkennen konnte"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT                "eMule wird beendet, weil die Adresse der VPN Guard-Bindungsschnittstelle von %s in %s geändert wurde: %s"
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "eMule wird beendet, da die VPN Guard-Bindungsschnittstelle nicht mehr verfügbar ist."
+    IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard ist aktiviert, aber die Laufzeitüberwachung ist nicht aktiviert. P2P-Verbindungsbefehle sind für diese Sitzung blockiert."
+    IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Abtrennung erforderlich: Verwendung der serienmäßigen Soft-Abtrennung eMule; Aktive Übertragungswarteschlangen und Listener-Sockets werden nicht hart zurückgesetzt."
 END
 // eMuleBB managed translation block: end
 
