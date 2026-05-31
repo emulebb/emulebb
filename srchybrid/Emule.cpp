@@ -2737,11 +2737,6 @@ bool CemuleApp::IsConnected(bool bIgnoreEd2k, bool bIgnoreKad)
 	return (!bIgnoreEd2k && theApp.serverconnect->IsConnected()) || (!bIgnoreKad && Kademlia::CKademlia::IsConnected());
 }
 
-bool CemuleApp::IsPortchangeAllowed()
-{
-	return theApp.clientlist->GetClientCount() == 0 && !IsConnected();
-}
-
 uint32 CemuleApp::GetID()
 {
 	if (Kademlia::CKademlia::IsConnected() && !Kademlia::CKademlia::IsFirewalled())

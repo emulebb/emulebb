@@ -2052,13 +2052,9 @@ CListenSocket::~CListenSocket()
 
 bool CListenSocket::Rebind()
 {
-	if (thePrefs.GetPort() == m_port)
-		return false;
-
-	Close();
-	KillAllSockets();
-
-	return StartListening();
+	// WHY: live rebind can reopen P2P listeners after Disconnect or a guard
+	// teardown. TCP port changes are saved and applied only on process restart.
+	return false;
 }
 
 bool CListenSocket::StartListening()

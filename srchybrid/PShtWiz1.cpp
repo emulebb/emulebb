@@ -332,13 +332,11 @@ uint16 CPPgWiz1Ports::GetUDPPort()
 
 void CPPgWiz1Ports::OnPortChange()
 {
-	bool bEnable = (theApp.IsPortchangeAllowed()
-		&&
-		(  theApp.listensocket->GetConnectedPort() != GetTCPPort()
-		|| theApp.listensocket->GetConnectedPort() == 0
-		|| theApp.clientudp->GetConnectedPort() != GetUDPPort()
-		|| theApp.clientudp->GetConnectedPort() == 0
-		));
+	const uint16 uTcp = GetTCPPort();
+	const uint16 uUdp = GetUDPPort();
+	bool bEnable = uTcp != 0
+		&& theApp.listensocket->GetConnectedPort() == uTcp
+		&& theApp.clientudp->GetConnectedPort() == uUdp;
 
 	GetDlgItem(IDC_STARTTEST)->EnableWindow(bEnable);
 }
@@ -415,17 +413,8 @@ void CPPgWiz1Ports::OnStartConTest()
 	uint16 udp = GetUDPPort();
 
 	if (tcp != theApp.listensocket->GetConnectedPort() || udp != theApp.clientudp->GetConnectedPort()) {
-		if (!theApp.IsPortchangeAllowed()) {
-			LocMessageBox(IDS_NOPORTCHANGEPOSSIBLE, MB_OK, 0);
-			return;
-		}
-
-		// set new ports
-		thePrefs.port = tcp;
-		thePrefs.udpport = udp;
-
-		theApp.listensocket->Rebind();
-		theApp.clientudp->Rebind();
+		LocMessageBox(IDS_SETTINGCHANGED_RESTART, MB_OK, 0);
+		return;
 	}
 
 	TriggerPortTest(tcp, udp);
@@ -810,8 +799,6 @@ BOOL FirstTimeWizard()
 		// restore port settings?
 		thePrefs.port = oldtcpport;
 		thePrefs.udpport = oldudpport;
-		theApp.listensocket->Rebind();
-		theApp.clientudp->Rebind();
 
 		return FALSE;
 	}
@@ -848,12 +835,7 @@ BOOL FirstTimeWizard()
 	if (thePrefs.udpport == 0 + 10)
 		thePrefs.udpport = thePrefs.GetRandomUDPPort();
 	if ((thePrefs.port != theApp.listensocket->GetConnectedPort()) || (thePrefs.udpport != theApp.clientudp->GetConnectedPort()))
-		if (!theApp.IsPortchangeAllowed())
-			LocMessageBox(IDS_NOPORTCHANGEPOSSIBLE, MB_OK, 0);
-		else {
-			theApp.listensocket->Rebind();
-			theApp.clientudp->Rebind();
-		}
+		LocMessageBox(IDS_SETTINGCHANGED_RESTART, MB_OK, 0);
 
 	return TRUE;
 }

@@ -327,7 +327,6 @@ public:
 	void		CreateBackwardDiagonalBrush();
 	void		CreateAllFonts();
 	const CString& GetDefaultFontFaceName();
-	bool		IsPortchangeAllowed();
 	bool		IsConnected(bool bIgnoreEd2k = false, bool bIgnoreKad = false);
 	bool		IsFirewalled();
 	bool		CanDoCallback(CUpDownClient *client);

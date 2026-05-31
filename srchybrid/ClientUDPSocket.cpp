@@ -702,8 +702,7 @@ bool CClientUDPSocket::Create()
 
 bool CClientUDPSocket::Rebind()
 {
-	if (thePrefs.GetUDPPort() == m_port)
-		return false;
-	Close();
-	return Create();
+	// WHY: live rebind can reopen P2P UDP after Disconnect or a guard teardown.
+	// UDP port changes are saved and applied only on process restart.
+	return false;
 }

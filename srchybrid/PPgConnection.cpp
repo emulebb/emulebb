@@ -284,6 +284,20 @@ void CPPgConnection::UpdateRestartRequiredNotice()
 			strRestartNote.Append(GetResString(IDS_BIND_RESTART_FALLBACK_DEFAULT));
 		}
 	}
+	uint16 nPendingTcp = 0;
+	const bool bValidTcp = TryGetPortValue(this, IDC_PORT, false, nPendingTcp);
+	uint16 nPendingUdp = 0;
+	const bool bAllowZeroUdp = IsDlgButtonChecked(IDC_UDPDISABLE) != 0;
+	const bool bValidUdp = TryGetPortValue(this, IDC_UDPPORT, bAllowZeroUdp, nPendingUdp);
+	const bool bPortsChangedFromSaved = (bValidTcp && nPendingTcp != thePrefs.GetPort())
+		|| (bValidUdp && nPendingUdp != thePrefs.GetUDPPort());
+	const bool bPortsDifferFromActive = (bValidTcp && theApp.listensocket != NULL && theApp.listensocket->GetConnectedPort() != 0 && nPendingTcp != theApp.listensocket->GetConnectedPort())
+		|| (bValidUdp && theApp.clientudp != NULL && theApp.clientudp->GetConnectedPort() != 0 && nPendingUdp != theApp.clientudp->GetConnectedPort());
+	if (bPortsChangedFromSaved || bPortsDifferFromActive) {
+		if (!strRestartNote.IsEmpty())
+			strRestartNote.Append(_T(" "));
+		strRestartNote.Append(GetResString(IDS_SETTINGCHANGED_RESTART));
+	}
 
 	SetDlgItemText(IDC_BIND_RESTART_NOTE, strRestartNote);
 	if (CWnd *pRestartNote = GetDlgItem(IDC_BIND_RESTART_NOTE))
@@ -499,10 +513,7 @@ BOOL CPPgConnection::OnApply()
 		return FALSE;
 	if (nNewPort && nNewPort != thePrefs.port) {
 		thePrefs.port = nNewPort;
-		if (theApp.IsPortchangeAllowed())
-			theApp.listensocket->Rebind();
-		else
-			bRestartApp = true;
+		bRestartApp = true;
 	}
 
 	if (IsDlgButtonChecked(IDC_UDPDISABLE) != 0)
@@ -511,10 +522,7 @@ BOOL CPPgConnection::OnApply()
 		return FALSE;
 	if (nNewPort != thePrefs.udpport) {
 		thePrefs.udpport = nNewPort;
-		if (theApp.IsPortchangeAllowed())
-			theApp.clientudp->Rebind();
-		else
-			bRestartApp = true;
+		bRestartApp = true;
 	}
 
 	const CString strBindInterface = GetBindInterfaceText();
@@ -634,7 +642,7 @@ BOOL CPPgConnection::OnApply()
 	theApp.emuledlg->ShowConnectionState();
 
 	if (bRestartApp)
-		LocMessageBox(IDS_NOPORTCHANGEPOSSIBLE, MB_OK, 0);
+		LocMessageBox(IDS_SETTINGCHANGED_RESTART, MB_OK, 0);
 
 	ChangePorts(2);	//"Test ports" button enable/disable
 
