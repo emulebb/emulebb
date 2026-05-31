@@ -4248,9 +4248,9 @@ CString CPreferences::GetDefaultDirectory(EDefaultDirectory eDirectory, bool bCr
 
 				if (nRegistrySetting == _UI32_MAX) {
 					// no registry default, check if we find a preferences.ini to use
-					if (LongPathSeams::PathExists(strLocalAppData + _T("eMule\\") CONFIGFOLDER _T("preferences.ini")))
+					if (LongPathSeams::PathExists(strLocalAppData + _T("eMuleBB\\") CONFIGFOLDER _T("preferences.ini")))
 						m_nCurrentUserDirMode = 0;
-					else if (LongPathSeams::PathExists(strProgramData + _T("eMule\\") CONFIGFOLDER _T("preferences.ini")))
+					else if (LongPathSeams::PathExists(strProgramData + _T("eMuleBB\\") CONFIGFOLDER _T("preferences.ini")))
 						m_nCurrentUserDirMode = 1;
 					else if (bConfigAvailableExecutable)
 						m_nCurrentUserDirMode = 2;
@@ -4261,14 +4261,14 @@ CString CPreferences::GetDefaultDirectory(EDefaultDirectory eDirectory, bool bCr
 
 				switch (m_nCurrentUserDirMode) {
 				case 0: //multiuser
-					strSelectedDataBaseDirectory = strPersonalDownloads + _T("eMule\\");
-					strSelectedConfigBaseDirectory = strLocalAppData + _T("eMule\\");
-					strSelectedExpansionBaseDirectory = strProgramData + _T("eMule\\");
+					strSelectedDataBaseDirectory = strPersonalDownloads + _T("eMuleBB\\");
+					strSelectedConfigBaseDirectory = strLocalAppData + _T("eMuleBB\\");
+					strSelectedExpansionBaseDirectory = strProgramData + _T("eMuleBB\\");
 					break;
 				case 1: //public user
-					strSelectedDataBaseDirectory = strPublicDownloads + _T("eMule\\");
-					strSelectedConfigBaseDirectory = strProgramData + _T("eMule\\");
-					strSelectedExpansionBaseDirectory = strProgramData + _T("eMule\\");
+					strSelectedDataBaseDirectory = strPublicDownloads + _T("eMuleBB\\");
+					strSelectedConfigBaseDirectory = strProgramData + _T("eMuleBB\\");
+					strSelectedExpansionBaseDirectory = strProgramData + _T("eMuleBB\\");
 					[[fallthrough]];
 				case 2: //program directory
 					break;
