@@ -2327,7 +2327,7 @@ BEGIN
     IDS_MAIN_POPUP_RESTORE  "Restore"
     IDS_CONNECTTOANYSERVER  "Connect To Any Server"
     IDS_EXIT                "E&xit"
-    IDS_RESTART_EMULE       "Restart eMule"
+    IDS_RESTART_EMULE       "&Restart"
     IDS_RESTARTING_EMULE    "Restarting eMule."
     IDS_CONNECTING          "Connecting"
     IDS_FAILED              "failed"

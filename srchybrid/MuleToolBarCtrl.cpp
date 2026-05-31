@@ -387,7 +387,7 @@ void CMuleToolbarCtrl::AppendSkinProfileMenu(CMenu &menuSkins)
 			for (INT_PTR f = 0; f < astrSkinFiles.GetCount(); ++f) {
 				const CString &skinFileName(astrSkinFiles[f]);
 				LPCTSTR pSkinBaseExt = stristr(skinFileName, _T(".") EMULSKIN_BASEEXT _T(".ini"));
-				int iBaseLen = pSkinBaseExt ? (int)(pSkinBaseExt - (LPCTSTR)skinFileName - 1) : skinFileName.GetLength();
+				int iBaseLen = pSkinBaseExt ? (int)(pSkinBaseExt - (LPCTSTR)skinFileName) : skinFileName.GetLength();
 				menuSkins.AppendMenu(MF_STRING, MP_SKIN_PROFILE + i, CString(skinFileName, iBaseLen));
 				m_astrSkinPaths.Add(thePrefs.GetMuleDirectory(EMULE_SKINDIR, false) + skinFileName);
 				if (!checked && EqualPaths(currentSkin, m_astrSkinPaths[i])) {
