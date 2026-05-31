@@ -54,7 +54,7 @@ namespace AppCommandLineSeams
 			_T("  emulebb.exe [options] [ed2k-link|collection-file|command]\r\n")
 			_T("\r\n")
 			_T("Options:\r\n")
-			_T("  -c <base-dir>                         Use an isolated eMule base directory.\r\n")
+			_T("  -c <base-dir>                         Use an isolated eMuleBB base directory.\r\n")
 			_T("  -ignoreinstances                      Start without enforcing the running-instance guard.\r\n")
 			_T("  -AutoStart                            Mark this startup as an automatic startup.\r\n")
 			_T("  -assertfile                           Debug builds write CRT assertion output to a file.\r\n")
@@ -290,7 +290,7 @@ namespace AppCommandLineSeams
 				}
 				if (!StartupConfigOverride::IsAbsoluteBaseDirPath(strValue)) {
 					result.eMode = EMode::Invalid;
-					result.strError = _T("The -c option requires a canonical absolute eMule base directory like C:\\path.");
+					result.strError = _T("The -c option requires a canonical absolute eMuleBB base directory like C:\\path.");
 					return result;
 				}
 				result.bHasConfigBaseDir = true;

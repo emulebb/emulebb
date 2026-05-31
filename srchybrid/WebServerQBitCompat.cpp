@@ -471,7 +471,7 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 	}
 
 	if (pRouteSpec->bRequiresAuth && thePrefs.GetWSApiKey().IsEmpty()) {
-		SendTextResponse(rData.pSocket, 503, "Service Unavailable", "eMule REST API key is not configured");
+		SendTextResponse(rData.pSocket, 503, "Service Unavailable", "eMuleBB REST API key is not configured");
 		return;
 	}
 

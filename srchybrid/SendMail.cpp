@@ -364,7 +364,7 @@ void CNotifierMailThread::sendmail()
 		goto failed;
 
 	sBufA.Format(
-		"From: eMule <%s>\r\n"
+		"From: eMuleBB <%s>\r\n"
 		"Subject: %s\r\n"
 		"To: <%s>\r\n"
 		"MIME-Version: 1.0\r\n"

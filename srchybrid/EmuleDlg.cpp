@@ -3595,7 +3595,7 @@ bool CemuleDlg::TryStartRestartSidecar()
 {
 	CString strExecutablePath;
 	if (!TryGetModuleFilePath(strExecutablePath)) {
-		AddLogLine(false, _T("Failed to restart eMule: could not resolve the executable path."));
+		AddLogLine(false, _T("Failed to restart eMuleBB: could not resolve the executable path."));
 		return false;
 	}
 
@@ -3612,7 +3612,7 @@ bool CemuleDlg::TryStartRestartSidecar()
 
 	CString strError;
 	if (!TryWriteRestartRequest(strRequestPath, strExecutablePath, strWorkingDirectory, restartArguments, strError)) {
-		AddLogLine(false, _T("Failed to restart eMule: %s."), (LPCTSTR)strError);
+		AddLogLine(false, _T("Failed to restart eMuleBB: %s."), (LPCTSTR)strError);
 		return false;
 	}
 
@@ -3626,7 +3626,7 @@ bool CemuleDlg::TryStartRestartSidecar()
 		ProcessLaunchSeams::LaunchDetachedProcess(strExecutablePath, strSidecarCommandLine, strWorkingDirectory, SW_HIDE, CREATE_NO_WINDOW);
 	if (!result.Started) {
 		(void)::DeleteFile(strRequestPath);
-		AddLogLine(false, _T("Failed to restart eMule: restart sidecar launch failed with error %lu."), result.LastError);
+		AddLogLine(false, _T("Failed to restart eMuleBB: restart sidecar launch failed with error %lu."), result.LastError);
 		return false;
 	}
 	return true;
@@ -3662,7 +3662,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 		m_bTransientDialogActive = true;
 		shutdownProgress.CenterWindow();
 		shutdownProgress.ShowWindow(SW_SHOW);
-		shutdownProgress.SetPhase(2, _T("Closing eMule"), _T("Preparing shutdown."), false);
+		shutdownProgress.SetPhase(2, _T("Closing eMuleBB"), _T("Preparing shutdown."), false);
 		PumpLifecycleProgressMessages(&shutdownProgress);
 	}
 
@@ -3686,7 +3686,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 	// leave Explorer with a stale icon after a clean close.
 	TrayHide();
 	VersionCheckLaunchSeams::ClearQueuedOnOwnerTeardown(m_pVersionCheckState);
-	updateShutdownPhase(3, _T("Closing eMule"), _T("Stopping AICH sync thread."), true);
+	updateShutdownPhase(3, _T("Closing eMuleBB"), _T("Stopping AICH sync thread."), true);
 	WaitForAICHSyncThreadShutdown();
 
 	const bool bSharedHashingWasActiveOnClose = (theApp.sharedfiles != NULL && theApp.sharedfiles->HasSharedHashingWork());
@@ -3699,7 +3699,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 			strHashDetail.Format(GetResString(IDS_SHAREDHASHWAITINGFILE), (LPCTSTR)strHashLeaf);
 			DebugLog(_T("Shutdown waiting for shared-file hashing: \"%s\""), (LPCTSTR)strHashPath);
 		}
-		updateShutdownPhase(4, _T("Closing eMule"), strHashDetail, true);
+		updateShutdownPhase(4, _T("Closing eMuleBB"), strHashDetail, true);
 		const ULONGLONG ullHashShutdownStartTick = ::GetTickCount64();
 		ULONGLONG ullLastHashWaitUpdate = ullHashShutdownStartTick;
 		CString strLastHashPath(strHashPath);
@@ -3714,7 +3714,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 				DebugLogError(_T("Timed out waiting %lu ms for shared-file hash worker shutdown; abandoning shared-file state for process exit."), SharedFileListSeams::kSharedHashShutdownWaitMs);
 				if (!strHashPath.IsEmpty())
 					DebugLogError(_T("Shared-file hash worker still active on \"%s\""), (LPCTSTR)strHashPath);
-				updateShutdownPhase(4, _T("Closing eMule"), _T("Shared-file hashing did not stop in time; abandoning shared-file cleanup for process exit."), true);
+				updateShutdownPhase(4, _T("Closing eMuleBB"), _T("Shared-file hashing did not stop in time; abandoning shared-file cleanup for process exit."), true);
 				theApp.sharedfiles = NULL;
 				break;
 			}
@@ -3729,7 +3729,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 						strLastHashPath = strHashPath;
 					}
 				}
-				updateShutdownPhase(4, _T("Closing eMule"), strHashDetail, true);
+				updateShutdownPhase(4, _T("Closing eMuleBB"), strHashDetail, true);
 				ullLastHashWaitUpdate = ullNow;
 			}
 			sleepAndPumpSharedShutdownPoll({
@@ -3739,15 +3739,15 @@ void CemuleDlg::CloseApp(bool bRestart)
 			});
 		}
 		if (bSharedHashShutdownTimedOut)
-			updateShutdownPhase(6, _T("Closing eMule"), _T("Continuing shutdown without shared-file cleanup after hash-worker timeout."));
+			updateShutdownPhase(6, _T("Closing eMuleBB"), _T("Continuing shutdown without shared-file cleanup after hash-worker timeout."));
 	}
 
 	//flush queued messages
 	theApp.HandleDebugLogQueue();
 	theApp.HandleLogQueue();
 
-	updateShutdownPhase(6, _T("Closing eMule"), _T("Disconnecting network services and revoking shell integration."));
-	Log(_T("Closing eMule"));
+	updateShutdownPhase(6, _T("Closing eMuleBB"), _T("Disconnecting network services and revoking shell integration."));
+	Log(_T("Closing eMuleBB"));
 	CloseTTS();
 	m_pDropTarget->Revoke();
 	theApp.serverconnect->Disconnect();
@@ -3795,23 +3795,23 @@ void CemuleDlg::CloseApp(bool bRestart)
 		}
 	}
 
-	updateShutdownPhase(18, _T("Closing eMule"), _T("Starting background shared startup-cache save."));
+	updateShutdownPhase(18, _T("Closing eMuleBB"), _T("Starting background shared startup-cache save."));
 	if (theApp.sharedfiles != NULL && SharedFileListSeams::ShouldPersistStartupCacheOnShutdown(bSharedHashingWasActiveOnClose))
 		(void)theApp.sharedfiles->RequestStartupCacheSave(true);
 
-	updateShutdownPhase(22, _T("Closing eMule"), _T("Stopping Kad and waiting for the hashing thread to acknowledge shutdown."));
+	updateShutdownPhase(22, _T("Closing eMuleBB"), _T("Stopping Kad and waiting for the hashing thread to acknowledge shutdown."));
 	Kademlia::CKademlia::Stop();	// couple of data files are written
 
 	// try to wait until the hashing thread notices that we are shutting down
 	CSingleLock sLock1(&theApp.hashing_mut); // only one file hash at a time
 	sLock1.Lock(SEC2MS(2));
 
-	updateShutdownPhase(30, _T("Closing eMule"), _T("Stopping upload disk and part-file write threads."));
+	updateShutdownPhase(30, _T("Closing eMuleBB"), _T("Stopping upload disk and part-file write threads."));
 	theApp.m_pUploadDiskIOThread->EndThread();
 	theApp.m_pPartFileWriteThread->EndThread();
 
 	// saving data & stuff
-	updateShutdownPhase(40, _T("Closing eMule"), _T("Finalizing completed part files before saving known-file state."), true);
+	updateShutdownPhase(40, _T("Closing eMuleBB"), _T("Finalizing completed part files before saving known-file state."), true);
 	if (theApp.downloadqueue != NULL) {
 		// WHY: completion workers move the finished file and delete .part.met
 		// before posting TM_FILECOMPLETED back to the UI thread. Saving known.met
@@ -3822,7 +3822,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 		PumpLifecycleProgressMessages(&shutdownProgress);
 	}
 
-	updateShutdownPhase(42, _T("Closing eMule"), _T("Saving known-file state and user interface settings."));
+	updateShutdownPhase(42, _T("Closing eMuleBB"), _T("Saving known-file state and user interface settings."));
 	theApp.emuledlg->preferenceswnd->m_wndSecurity.DeleteDDB();
 
 	theApp.knownfiles->Save();
@@ -3836,7 +3836,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 
 				CSharedFileList::StartupCacheSaveProgress progress = {};
 				theApp.sharedfiles->GetStartupCacheSaveProgress(progress);
-				updateShutdownPhase(54, _T("Closing eMule"), FormatStartupCacheShutdownDetail(progress), true);
+				updateShutdownPhase(54, _T("Closing eMuleBB"), FormatStartupCacheShutdownDetail(progress), true);
 				const ULONGLONG ullNow = ::GetTickCount64();
 				const SharedFileListSeams::StartupCacheSaveShutdownWaitState waitState = {
 					(ullNow >= ullStartupCacheSaveShutdownStartTick) ? (ullNow - ullStartupCacheSaveShutdownStartTick) : 0ui64,
@@ -3848,10 +3848,10 @@ void CemuleDlg::CloseApp(bool bRestart)
 					DebugLogError(_T("Timed out waiting %lu ms for shared startup-cache save shutdown; abandoning startup-cache persistence state."), SharedFileListSeams::kStartupCacheSaveShutdownWaitMs);
 					if (bKeepSharedFilesAlive) {
 						DebugLogError(_T("Shared startup-cache save worker is still active; abandoning shared-file cleanup for process exit."));
-						updateShutdownPhase(54, _T("Closing eMule"), _T("Shared startup-cache save did not stop in time; abandoning shared-file cleanup for process exit."), true);
+						updateShutdownPhase(54, _T("Closing eMuleBB"), _T("Shared startup-cache save did not stop in time; abandoning shared-file cleanup for process exit."), true);
 						theApp.sharedfiles = NULL;
 					} else {
-						updateShutdownPhase(54, _T("Closing eMule"), _T("Shared startup-cache save did not finish in time; continuing shutdown without waiting for it."), false);
+						updateShutdownPhase(54, _T("Closing eMuleBB"), _T("Shared startup-cache save did not finish in time; continuing shutdown without waiting for it."), false);
 					}
 					break;
 				}
@@ -3862,14 +3862,14 @@ void CemuleDlg::CloseApp(bool bRestart)
 				});
 			}
 			if (bStartupCacheSaveShutdownTimedOut && theApp.sharedfiles == NULL)
-				updateShutdownPhase(58, _T("Closing eMule"), _T("Continuing shutdown without shared-file cleanup after startup-cache save timeout."));
+				updateShutdownPhase(58, _T("Closing eMuleBB"), _T("Continuing shutdown without shared-file cleanup after startup-cache save timeout."));
 		} else {
-			updateShutdownPhase(54, _T("Closing eMule"), _T("Skipping shared startup-cache save because shutdown interrupted hashing."), false);
+			updateShutdownPhase(54, _T("Closing eMuleBB"), _T("Skipping shared startup-cache save because shutdown interrupted hashing."), false);
 		}
 		if (theApp.sharedfiles != NULL) {
 			if (bSharedHashingWasActiveOnClose)
 				theApp.sharedfiles->PurgeInterruptedHashStartupCaches();
-			updateShutdownPhase(62, _T("Closing eMule"), _T("Saving shared file list configuration."));
+			updateShutdownPhase(62, _T("Closing eMuleBB"), _T("Saving shared file list configuration."));
 			theApp.sharedfiles->Save();
 		}
 	}
@@ -3877,7 +3877,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 	serverwnd->SaveAllSettings();
 	kademliawnd->SaveAllSettings();
 
-	updateShutdownPhase(72, _T("Closing eMule"), _T("Saving preferences and tearing down service integrations."));
+	updateShutdownPhase(72, _T("Closing eMuleBB"), _T("Saving preferences and tearing down service integrations."));
 	theApp.scheduler->RestoreOriginals();
 	theApp.searchlist->SaveSpamFilter();
 	FakeFileDetector::SaveCache();
@@ -3894,7 +3894,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 
 	// explicitly delete all listview items which may hold ptrs to objects which will get deleted
 	// by the dtors (some lines below) to avoid potential problems during application shutdown.
-	updateShutdownPhase(82, _T("Closing eMule"), _T("Clearing UI lists and pending conversion jobs."));
+	updateShutdownPhase(82, _T("Closing eMuleBB"), _T("Clearing UI lists and pending conversion jobs."));
 	const auto deleteAllListItemsIfLive = [](CListCtrl *pCtrl) {
 		if (pCtrl != NULL && ::IsWindow(pCtrl->GetSafeHwnd()))
 			pCtrl->DeleteAllItems();
@@ -3911,7 +3911,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 	deleteAllListItemsIfLive(transferwnd->GetDownloadClientsList());
 	deleteAllListItemsIfLive(&serverwnd->serverlistctrl);
 
-	updateShutdownPhase(90, _T("Closing eMule"), _T("Stopping bandwidth throttling and closing remaining child windows."));
+	updateShutdownPhase(90, _T("Closing eMuleBB"), _T("Stopping bandwidth throttling and closing remaining child windows."));
 	theApp.uploadBandwidthThrottler->EndThread();
 
 	if (theApp.sharedfiles != NULL)
@@ -3945,7 +3945,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 	delete theApp.m_pUploadDiskIOThread;	theApp.m_pUploadDiskIOThread = NULL;
 	delete theApp.m_pPartFileWriteThread;	theApp.m_pPartFileWriteThread = NULL;
 
-	updateShutdownPhase(100, _T("Closing eMule"), _T("Finalizing shutdown."));
+	updateShutdownPhase(100, _T("Closing eMuleBB"), _T("Finalizing shutdown."));
 	if (shutdownProgress.GetSafeHwnd() != NULL) {
 		shutdownProgress.DestroyWindow();
 		m_bTransientDialogActive = false;
@@ -3960,7 +3960,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 	//flush queued messages
 	theApp.HandleDebugLogQueue();
 	theApp.HandleLogQueue();
-	AddDebugLogLine(DLP_VERYLOW, _T("Closed eMule"));
+	AddDebugLogLine(DLP_VERYLOW, _T("Closed eMuleBB"));
 }
 
 void CemuleDlg::OnTrayLButtonUp()
@@ -6038,7 +6038,7 @@ BOOL CemuleDlg::OnChevronPushed(UINT id, LPNMHDR pNMHDR, LRESULT *plResult)
 	BOOL bLastMenuItemIsSep = TRUE;
 	CTitledMenu menu;
 	menu.CreatePopupMenu();
-	menu.AddMenuTitle(_T("eMule"), true);
+	menu.AddMenuTitle(_T("eMuleBB"), true);
 
 	TCHAR szString[256];
 	TBBUTTONINFO tbbi;
@@ -6801,7 +6801,7 @@ void CemuleDlg::UpdateStatusBarProgress()
 
 			if (m_ovlIcon != newicon) {
 				m_ovlIcon = newicon;
-				m_pTaskbarList->SetOverlayIcon(m_hWnd, m_ovlIcon, _T("eMule Up/Down Indicator"));
+				m_pTaskbarList->SetOverlayIcon(m_hWnd, m_ovlIcon, _T("eMuleBB Up/Down Indicator"));
 			}
 		}
 	}

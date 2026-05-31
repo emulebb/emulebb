@@ -510,7 +510,7 @@ void CStatisticsTree::ExportHTML()
 	// Save/Restore the current directory
 	const CString strCurDir = PathHelpers::GetCurrentDirectoryPath();
 
-	CString strSavePath(_T("eMule Statistics.html"));
+	CString strSavePath(_T("eMuleBB Statistics.html"));
 	if (DialogBrowseFile(strSavePath, _T("HTML Files (*.html)|*.html|All Files (*.*)|*.*||"), strSavePath, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_EXPLORER, false, GetSafeHwnd(), NULL, _T("html"))) {
 		theApp.emuledlg->statisticswnd->ShowStatistics(true); //force update
 
@@ -518,7 +518,7 @@ void CStatisticsTree::ExportHTML()
 		strHTML.Format(CString("<!DOCTYPE HTML SYSTEM>\r\n"
 			"<html>\r\n<head>\r\n"
 			"<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\">\r\n"
-			"<title>eMule %s[%s]</title>\r\n"
+			"<title>eMuleBB %s[%s]</title>\r\n"
 			"<style type=\"text/css\">\r\n"
 			"#pghdr { color: #000F80; font: bold 12pt/14pt Verdana, Courier New, Helvetica; }\r\n"
 			"#pghdr2 { color: #000F80; font: bold 10pt/12pt Verdana, Courier New, Helvetica; }\r\n"
@@ -550,7 +550,7 @@ void CStatisticsTree::ExportHTML()
 			"</script>\r\n"
 			"</head>\r\n"
 			"<body id=\"bdy\">\r\n"
-			"<span id=\"pghdr\"><b>eMule %s</b></span><br><span id=\"pghdr2\">%s %s</span>\r\n<br><br>\r\n"
+			"<span id=\"pghdr\"><b>eMuleBB %s</b></span><br><span id=\"pghdr2\">%s %s</span>\r\n<br><br>\r\n"
 			"%s</body></html>")
 			, (LPCTSTR)GetResString(IDS_SF_STATISTICS), (LPCTSTR)thePrefs.GetUserNick()
 			, (LPCTSTR)GetResString(IDS_SF_STATISTICS), (LPCTSTR)GetResString(IDS_CD_UNAME), (LPCTSTR)thePrefs.GetUserNick()

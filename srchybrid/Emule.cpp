@@ -1336,7 +1336,7 @@ void CemuleApp::RecordStartupError(LPCTSTR pszMessage)
 	m_aStartupErrorLines.push_back(strMessage);
 
 	CString strDebugLine;
-	strDebugLine.Format(_T("eMule startup error: %s\r\n"), (LPCTSTR)strMessage);
+	strDebugLine.Format(_T("eMuleBB startup error: %s\r\n"), (LPCTSTR)strMessage);
 	::OutputDebugString(strDebugLine);
 
 	if (m_strStartupErrorLogPath.IsEmpty())
@@ -1356,7 +1356,7 @@ void CemuleApp::FlushStartupErrorsToLog()
 	if (m_aStartupErrorLines.empty())
 		return;
 
-	LogError(LOG_STATUSBAR, _T("Recoverable startup errors were logged; eMule will continue with fallback paths where possible."));
+	LogError(LOG_STATUSBAR, _T("Recoverable startup errors were logged; eMuleBB will continue with fallback paths where possible."));
 	for (const CString &rstrLine : m_aStartupErrorLines)
 		LogError(LOG_STATUSBAR, _T("Startup: %s"), (LPCTSTR)rstrLine);
 
@@ -1393,7 +1393,7 @@ void CemuleApp::WarnAboutStartupStoragePlacement()
 			pszPath);
 	};
 
-	warnIfRisky(_T("eMule profile directory"), thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
+	warnIfRisky(_T("eMuleBB profile directory"), thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
 	for (INT_PTR i = 0; i < thePrefs.GetTempDirCount(); ++i)
 		warnIfRisky(_T("Temporary Files directory"), thePrefs.GetTempDir(i));
 	warnIfRisky(_T("Incoming Files directory"), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
@@ -1464,7 +1464,7 @@ bool CemuleApp::WriteStartupProfileTrace() const
 	std::string strJson;
 	strJson.reserve(32768);
 	strJson += "{\n  \"displayTimeUnit\": \"ms\",\n  \"traceEvents\": [\n    ";
-	AppendTraceMetadataEvent(&strJson, "process_name", ::GetCurrentProcessId(), ::GetCurrentThreadId(), _T("eMule startup"));
+	AppendTraceMetadataEvent(&strJson, "process_name", ::GetCurrentProcessId(), ::GetCurrentThreadId(), _T("eMuleBB startup"));
 	strJson += ",\n    ";
 	AppendTraceMetadataEvent(&strJson, "thread_name", ::GetCurrentProcessId(), ::GetCurrentThreadId(), _T("main"));
 	for (size_t i = 0; i < m_aStartupProfileTraceEvents.size(); ++i) {
@@ -1726,7 +1726,7 @@ BOOL CemuleApp::InitInstance()
 	if (!IsWin32LongPathsEnabled())
 		QueueLogLineEx(LOG_WARNING, _T("Windows long-path support is disabled. Enable LongPathsEnabled to avoid failures with overlong paths."));
 	if (IsCurrentProcessElevated())
-		QueueLogLineEx(LOG_WARNING, _T("eMule is running with administrator privileges. This is not recommended for normal P2P use; restart without elevation unless required."));
+		QueueLogLineEx(LOG_WARNING, _T("eMuleBB is running with administrator privileges. This is not recommended for normal P2P use; restart without elevation unless required."));
 	FlushStartupErrorsToLog();
 	WarnAboutStartupStoragePlacement();
 

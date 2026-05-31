@@ -4326,9 +4326,9 @@ bool TryRejectRestCommandForLifecycle(WebServerJsonSeams::ERestLifecyclePolicy e
 
 	rError.strCode = "EMULE_UNAVAILABLE";
 	if (lifecycle.bShutdownInProgress)
-		rError.strMessage = _T("eMule is shutting down");
+		rError.strMessage = _T("eMuleBB is shutting down");
 	else
-		rError.strMessage = _T("eMule is still starting");
+		rError.strMessage = _T("eMuleBB is still starting");
 	return true;
 }
 
