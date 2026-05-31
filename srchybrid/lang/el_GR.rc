@@ -481,7 +481,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Μηνύματα"
     IDS_EM_STATISTIC        "Σ&τατιστικά"
     IDS_EM_PREFS            "&Προτιμήσεις"
-    IDS_MB_LANGUAGEINFO     "Η γλώσσα του συστήματός σας επιλέχτηκε. Μπορείτε να την αλλάξετε οποιαδήποτε στιγμή από την σελίδα των επιλογών."
+    IDS_MB_LANGUAGEINFO     "Η γλώσσα του συστήματός σας επιλέχτηκε.\r\n\r\nΜπορείτε να την αλλάξετε οποιαδήποτε στιγμή από την σελίδα των επιλογών."
 END
 
 STRINGTABLE
@@ -1598,7 +1598,7 @@ BEGIN
     IDS_USERSIP             "IP χρηστών"
     IDS_FEATURES            "Χαρακτηριστικά"
     IDS_IRC_NEWNICK         "Επιλέξτε ένα ψευδώνυμο για το IRC"
-    IDS_IRC_NEWNICKDESC     "Πρέπει να είναι μία λέξη μικρότερη των 20 χαρακτήρων μεταξύ των (A-Z, 0-9). Μπορείτε να το αλλάξετε ξανά στις Προτιμήσεις->IRC."
+    IDS_IRC_NEWNICKDESC     "Πρέπει να είναι μία λέξη μικρότερη των 20 χαρακτήρων μεταξύ των (A-Z, 0-9).\rΜπορείτε να το αλλάξετε ξανά στις Προτιμήσεις->IRC."
 END
 
 STRINGTABLE
@@ -2046,7 +2046,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Όλα στο &ελάχιστο"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Όλα στο &μέγιστο"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Σε παύση"
+    IDS_REFRESH_INTERVAL_PAUSED "&Σε παύση"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

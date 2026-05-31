@@ -1648,7 +1648,7 @@ BEGIN
     IDS_USERSIP             "IP клиента"
     IDS_FEATURES            "поддерживает"
     IDS_IRC_NEWNICK         "Выберите имя для IRC."
-    IDS_IRC_NEWNICKDESC     "Слово должно содержать не более 20 символов из диапазона (A-Z,0-9). Имя можно менять в Настройки->IRC."
+    IDS_IRC_NEWNICKDESC     "Слово должно содержать не более 20 символов из диапазона (A-Z,0-9).\rИмя можно менять в Настройки->IRC."
 END
 
 STRINGTABLE
@@ -2005,7 +2005,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Все на &минимум"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Все на ма&ксимум"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Приостановлено"
+    IDS_REFRESH_INTERVAL_PAUSED "&Приостановлено"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

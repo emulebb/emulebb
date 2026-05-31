@@ -500,7 +500,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Mensagens"
     IDS_EM_STATISTIC        "&Estatísticas"
     IDS_EM_PREFS            "Pre&ferências"
-    IDS_MB_LANGUAGEINFO     "Um idioma padrão foi selecionado. Você pode mudar as configurações de idioma a qualquer momento na seção Geral em Preferências."
+    IDS_MB_LANGUAGEINFO     "Um idioma padrão foi selecionado.\r\n\r\nVocê pode mudar as configurações de idioma a qualquer momento na seção Geral em Preferências."
     IDS_FD_GENERAL          "Geral"
     IDS_FD_MET              "Arquivo part.met:"
     IDS_FD_HASH             "Hash:"//!
@@ -1012,7 +1012,7 @@ BEGIN
     IDS_AUTOMATIC           "Automático"
     IDS_FIRSTSAFECON        "Marque esta opção se você deseja que o eMule se conecte usando Conexão Segura.\n\nDesativar esta função permitirá ao eMule se conectar aos servidores um pouco mais rapidamente, mas você poderá ter mais conexões falsas com um ID Baixo."
     IDS_FIRSTAUTOCON        "Marque esta opção se você deseja que o eMule se conecte ao iniciar o Windows."
-    IDS_FIRSTCOMPLETE       "Você completou com sucesso o Assistente.\r\rTodos estes ajustes e outros podem ser alterados clicando no ícone Preferências. Para maiores informações e suporte verifique a Ajuda pressionando F1 no eMule!"
+    IDS_FIRSTCOMPLETE       "Você completou com sucesso o Assistente.\n\nTodos estes ajustes e outros podem ser alterados clicando no ícone Preferências. Para maiores informações e suporte verifique a Ajuda pressionando F1 no eMule!"
     IDS_ENTERUSERNAME       "Por favor digite o seu nome de usuário:"
     IDS_STATIC_CPUMEM       "Diminuir uso de CPU e Memória"
     IDS_KAD_SEARCH_KEYWORD_TOO_SHORT
@@ -1614,7 +1614,7 @@ BEGIN
     IDS_USERSIP             "IP"
     IDS_FEATURES            "Características"
     IDS_IRC_NEWNICK         "Escolha seu apelido para usar no IRC."
-    IDS_IRC_NEWNICKDESC     "Deve ser uma palavra com menos de 20 caracteres contendo (A-Z, 0-9). Pode ser alterado em Preferências->Irc."
+    IDS_IRC_NEWNICKDESC     "Deve ser uma palavra com menos de 20 caracteres contendo (A-Z, 0-9).\rPode ser alterado em Preferências->Irc."
     IDS_SPARSEPARTFILES     "Criar novos arquivos .part como 'esparsos' (somente NTFS)"
     IDS_ASPECTRATIO         "Formato de Tela"
     IDS_NEGATEFILTER        "Negar filtro"
@@ -1669,7 +1669,7 @@ BEGIN
     IDS_WEB_ALLOWHILEVFUNC  "Permitir finalizar o eMule e reiniciar ou desligar o pc"
     IDS_SETPFSLIMIT         "Limite de fontes..."
     IDS_SETPFSLIMITEXPLAINED
-                            "Por favor digite o novo limite de fontes para o(s) arquivo(s) selecionado(s)! (Digite 0 para usar o valor da configuração global)"
+                            "Por favor digite o novo limite de fontes para o(s) arquivo(s) selecionado(s)!\n(Digite 0 para usar o valor da configuração global)"
     IDS_UPDATECATINCOMINGDIRS
                             "Você deseja que as pastas completas (incoming) de categorias que estão incluídas na antiga pastas completas (incoming) sejam atualizadas para o novo local?"
     IDS_USESPEECH           "Ler a mensagem de notificação"
@@ -1989,7 +1989,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Tudo no &mínimo"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Tudo no má&ximo"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Pausado"
+    IDS_REFRESH_INTERVAL_PAUSED "&Pausado"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

@@ -490,7 +490,7 @@ BEGIN
     IDS_EM_MESSAGES         "Berichten"
     IDS_EM_STATISTIC        "Statistieken"
     IDS_EM_PREFS            "Instellingen"
-    IDS_MB_LANGUAGEINFO     "Een standaardtaal is geselecteerd. U kunt de taal altijd wijzigen via de Instellingen-knop."
+    IDS_MB_LANGUAGEINFO     "Een standaardtaal is geselecteerd.\r\n\r\nU kunt de taal altijd wijzigen via de Instellingen-knop."
 END
 
 STRINGTABLE
@@ -1627,7 +1627,7 @@ BEGIN
     IDS_USERSIP             "Gebruikers-IP"
     IDS_FEATURES            "Functies"
     IDS_IRC_NEWNICK         "Selecteer een IRC-bijnaam."
-    IDS_IRC_NEWNICKDESC     "Het moet een woord zijn van minder dan 20 karakters en kan (A-Z, 0-9) bevatten. Het kan weer aangepast worden via Instellingen -> IRC."
+    IDS_IRC_NEWNICKDESC     "Het moet een woord zijn van minder dan 20 karakters en kan (A-Z, 0-9) bevatten.\rHet kan weer aangepast worden via Instellingen -> IRC."
 END
 
 STRINGTABLE
@@ -1997,7 +1997,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Alles naar &minimum"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Alles naar ma&ximum"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Gepauzeerd"
+    IDS_REFRESH_INTERVAL_PAUSED "&Gepauzeerd"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

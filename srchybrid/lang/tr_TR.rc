@@ -502,7 +502,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Mesajlar"
     IDS_EM_STATISTIC        "İs&tatistikler"
     IDS_EM_PREFS            "S&eçenekler"
-    IDS_MB_LANGUAGEINFO     "Varsayılan bir dil seçildi. Dil ayarını istediğiniz zaman seçenekler sekmesinden değiştirebilirsiniz."
+    IDS_MB_LANGUAGEINFO     "Varsayılan bir dil seçildi.\r\n\r\nDil ayarını istediğiniz zaman seçenekler sekmesinden değiştirebilirsiniz."
 END
 
 STRINGTABLE
@@ -1636,7 +1636,7 @@ BEGIN
     IDS_USERSIP             "Kullanıcı IP"
     IDS_FEATURES            "Özellikler"
     IDS_IRC_NEWNICK         "IRC takma adı seçin."
-    IDS_IRC_NEWNICKDESC     "(A-Z, 0-9) içeren 20 karakterden az, bir kelime olmalı. Tekrar Seçenekler->Sohbet 'ten değiştirilebilir."
+    IDS_IRC_NEWNICKDESC     "(A-Z, 0-9) içeren 20 karakterden az, bir kelime olmalı.\rTekrar Seçenekler->Sohbet 'ten değiştirilebilir."
 END
 
 STRINGTABLE
@@ -1996,7 +1996,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Tümü &minimuma"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Tümü ma&ksimuma"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Duraklatıldı"
+    IDS_REFRESH_INTERVAL_PAUSED "&Duraklatıldı"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

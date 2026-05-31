@@ -280,7 +280,7 @@ BEGIN
 		IDS_TRAYDLG_SPEED			"Tizh eMule"
 	IDS_FSTATUS_FRIENDSONLY	"Nemet mignoned"
 		IDS_VIAPASSIVE			"Dre c'houzañv"
-	IDS_ERR_RENAMESF	"N'haller ket adenvel\r\n	""%s""\r\ne\r\n	""%s""\r\n\r\n%s"
+	IDS_ERR_RENAMESF	"N'haller ket adenvel\r\n\r\n""%s""\r\ne\r\n\r\n""%s"" %s"
 	IDS_AVAILABLE	"vak"
 END
 
@@ -458,7 +458,7 @@ BEGIN
 	IDS_EM_MESSAGES	"Ke&mennadoù"
 	IDS_EM_STATISTIC	"&Feurioù"
 	IDS_EM_PREFS	"&Dibaboù"
-	IDS_MB_LANGUAGEINFO	"Dibabet eo bet ar yezh dre-ziouer. Gallout a rit dibab unan all en ivinenn "" Dibaboù gwellañ ""."
+	IDS_MB_LANGUAGEINFO	"Dibabet eo bet ar yezh dre-ziouer.\r\n\r\nGallout a rit dibab unan all en ivinenn "" Dibaboù gwellañ ""."
 END
 
 STRINGTABLE FIXED IMPURE
@@ -691,7 +691,7 @@ BEGIN
 	IDS_IRC_ADDTOFRIENDLIST	"Ouzhpennañ d'ar roll mignoned"
 	IDS_IRC_LOADCHANNELLISTONCON	"Kargañ ar rollad saloñsoù pa vez kennasket"
 	IDS_IRC_ADDASFRIEND	"en deus ouzhpennet ac'hanoc'h evel mignon !"
-  	IDS_PW_WARNING	"Re vras eo ar werzhiad ho peus dibabet ""%s"" evit bezañ skoret gant ho reizhiad korvoiñ : %u\nGallout a ra lakaat ho   \nreizhiad da vezañ distabil.\n\nHa fellout a ra deoc'h ober an dra-mañ evelkent ?"
+	IDS_PW_WARNING	"Re vras eo ar werzhiad ho peus dibabet ""%s"" evit bezañ skoret gant ho reizhiad korvoiñ : %u\nGallout a ra lakaat ho   \nreizhiad da vezañ distabil.\n Ha fellout a ra deoc'h ober an dra-mañ evelkent ?"
 	IDS_TAKEOVER	"Adgolloiñ"
 	IDS_CLEANUP	"Naetaat"
 	IDS_RENAME	"Adenvel"
@@ -815,7 +815,7 @@ BEGIN
 	IDS_ADD	"Ouzhpennañ"
 	IDS_RECOVERED_PARTMET	"Restr part.met dastumet evit : %s"
 	IDS_CMT_QUEST	"Reiñ un evezhiadenn d'ar restr-mañ (Gwelet e vo an destenn-mañ gant an holl implijourien)"
-	IDS_CMT_AIDE			"Evit ur film e c'hellit reiñ e ditl, e zeiziad embann, e galite (a-zivout ar film pe e enbonegañ memestra), e yezh ...\nHa mard eo ar restr-mañ un drevezadenn anezhi e c'hellit kemenn implijourien eMule diwar he fenn."
+	IDS_CMT_AIDE			"Evit ur film e c'hellit reiñ e ditl, e zeiziad embann, e galite (a-zivout ar film pe e enbonegañ memestra), e yezh ... Ha mard eo ar restr-mañ un drevezadenn anezhi e c'hellit kemenn implijourien eMule diwar he fenn."
 	IDS_CMT_ADD	"Kemmañ evezhiadenn ar restr..."
 	IDS_CMT_NONE	"Hep evezhiadenn"
 	IDS_CMT_READ	"Evezhiadenn ar restr :"
@@ -972,7 +972,7 @@ BEGIN
     IDS_FIRSTAUTOUP	"Aotreañ an dibab-mañ ma fell deoc’h ma vefe meret gant eMule an tevetoù diskargañ.\n\nTurning this on will allow eMule to boost rare files meaning popular files will be harder for other people to get. Turning this off will allow eMule to upload popular files more often meaning rare files will be harder for other people to get. This option will only affect future shared files."
     IDS_FIRSTSAFECON	"Aotreañ an dibab-mañ ma fell deoc’h ma vefe kennasket eMule en ur implijout ur c’hennaskañ sur.\n\nGant an dibab-mañ e vo herrekoc’h kennaskañ eMule ouzh ar servijerioù, met muioc’h a LowIDoù fals a c’hell bezañ dastumet ivez."
     IDS_FIRSTAUTOCON	"Aotreañ an dibab-mañ ma fell deoc’h ma vefe kennasket ent-emgefreek eMule e penn-kentañ."
-	IDS_FIRSTCOMPLETE	"Echu eo gant ar skoazeller-mañ.\r\rGallout a reer kemmañ an holl zibaboù-mañ ha lod all er voest Dibaboù Gwellañ. Evit lenn muioc'h a zisplegadennoù, sellit ouzh ar skoazell en ur bouezañ war F1 e-barzh eMule !"
+	IDS_FIRSTCOMPLETE	"Echu eo gant ar skoazeller-mañ.\n\nGallout a reer kemmañ an holl zibaboù-mañ ha lod all er voest Dibaboù Gwellañ. Evit lenn muioc'h a zisplegadennoù, sellit ouzh ar skoazell en ur bouezañ war F1 e-barzh eMule !"
 END
 
 STRINGTABLE FIXED IMPURE
@@ -1127,7 +1127,7 @@ BEGIN
 	IDS_SHAREDANSW2	"Kaset en deus an implijour %s (%u) ur rollad kavlec'hioù eskemmet ha n'eo ket bet goulennet - laosket a-gostez"
 	IDS_SHAREDINFO1	"Kaset en deus an implijour %s (%u) rollad ar restroù eskemmet evit ar c'havlec'h '%s'"
 	IDS_SHAREDINFO2	"Echu eo gant an implijour %s (%u) kas rollad e restroù eskemmet"
-	IDS_SHAREDANSW3	"Kaset en deus an implijour %s (%u) ur rollad restroù eskemmet evit ar c'havlec'h '%s' ha n'eo ket be goulennet - laosket   \na-gostez"
+	IDS_SHAREDANSW3	"Kaset en deus an implijour %s (%u) ur rollad restroù eskemmet evit ar c'havlec'h '%s' ha n'eo ket be goulennet - laosket a-gostez"
 END
 
 STRINGTABLE FIXED IMPURE
@@ -1600,7 +1600,7 @@ BEGIN
 	IDS_USERSIP	"IP implijourien"
 	IDS_FEATURES	"Arc'hwelioù"
 	IDS_IRC_NEWNICK	"Dibab ur moranv IRC."
-	IDS_IRC_NEWNICKDESC	"Hennezh a zlefe bezañ ur ger gant neubeutoc'h a 20 arouezenn (A-Z, 0-9) ennañ. Gallout a rit e gemmañ er voest Dibaboù gwellañ->IRC."
+	IDS_IRC_NEWNICKDESC	"Hennezh a zlefe bezañ ur ger gant neubeutoc'h a 20 arouezenn (A-Z, 0-9) ennañ.\rGallout a rit e gemmañ er voest Dibaboù gwellañ->IRC."
 END
 
 STRINGTABLE FIXED IMPURE
@@ -2062,7 +2062,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Holl betek Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&An holl betek ar muiañ"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&En pause"
+    IDS_REFRESH_INTERVAL_PAUSED "&En pause"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

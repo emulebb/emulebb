@@ -540,7 +540,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Thông Điệp"
     IDS_EM_STATISTIC        "T&hống Kê"
     IDS_EM_PREFS            "Tùy &Chọn"
-    IDS_MB_LANGUAGEINFO     "Ngôn ngữ mặc định đã được chọn. Bạn có thể chọn lại ngôn ngữ bất cứ lúc nào trong cửa sổ Tùy Chọn."
+    IDS_MB_LANGUAGEINFO     "Ngôn ngữ mặc định đã được chọn.\r\n\r\nBạn có thể chọn lại ngôn ngữ bất cứ lúc nào trong cửa sổ Tùy Chọn."
 END
 
 STRINGTABLE
@@ -1654,7 +1654,7 @@ BEGIN
     IDS_USERSIP             "IP Người dùng"
     IDS_FEATURES            "Tính năng"
     IDS_IRC_NEWNICK         "Chọn biệt danh IRC."
-    IDS_IRC_NEWNICKDESC     "Một từ có 20 ký tự chứa các ký tự (A-Z, 0-9). Có thể thay đổi bằng cách vào Tùy chọn->Irc."
+    IDS_IRC_NEWNICKDESC     "Một từ có 20 ký tự chứa các ký tự (A-Z, 0-9).\rCó thể thay đổi bằng cách vào Tùy chọn->Irc."
 END
 
 STRINGTABLE
@@ -2088,7 +2088,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Tất cả về &tối thiểu"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Tất cả lên tối đ&a"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "Tạm &dừng"
+    IDS_REFRESH_INTERVAL_PAUSED "Tạm &dừng"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

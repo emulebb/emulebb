@@ -494,7 +494,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Mezuak"
     IDS_EM_STATISTIC        "Est&atistikak"
     IDS_EM_PREFS            "&Hobespenak"
-    IDS_MB_LANGUAGEINFO     "Hizkuntza bat aukeratu egin da. Hau aldatzeko aukera daukazu 'Hobespenak' atalean."
+    IDS_MB_LANGUAGEINFO     "Hizkuntza bat aukeratu egin da.\r\n\r\nHau aldatzeko aukera daukazu 'Hobespenak' atalean."
 END
 
 STRINGTABLE
@@ -1631,7 +1631,7 @@ BEGIN
     IDS_USERSIP             "Erabiltzaileen IP-ak"
     IDS_FEATURES            "Ezaugarriak"
     IDS_IRC_NEWNICK         "IRC ezizen bat aukeratu."
-    IDS_IRC_NEWNICKDESC     "20 karaktere (A-Z, 0-9) baina gutxiago dituen hitz bat izan beharko litzateke. Hau 'Hobespenak->IRC'-n alda daiteke."
+    IDS_IRC_NEWNICKDESC     "20 karaktere (A-Z, 0-9) baina gutxiago dituen hitz bat izan beharko litzateke.\rHau 'Hobespenak->IRC'-n alda daiteke."
 END
 
 STRINGTABLE
@@ -2091,7 +2091,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Denak &minimora"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Denak ma&ximora"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Pauzirano"
+    IDS_REFRESH_INTERVAL_PAUSED "&Pauzirano"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

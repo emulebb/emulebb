@@ -489,7 +489,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Missatges"
     IDS_EM_STATISTIC        "Estadístiques"
     IDS_EM_PREFS            "Preferències"
-    IDS_MB_LANGUAGEINFO     "S'ha triat un idioma per defecte. Pots canviar l'idioma en qualsevol moment en la pestanya de preferències."
+    IDS_MB_LANGUAGEINFO     "S'ha triat un idioma per defecte.\r\n\r\nPots canviar l'idioma en qualsevol moment en la pestanya de preferències."
 END
 
 STRINGTABLE
@@ -928,8 +928,8 @@ BEGIN
     IDS_IDHIGH              "ID alta"
     IDS_UPSTATUS            "Parts"
     IDS_TOVERHEAD           "Total per tràfic excedent (Paquets): %s (%s)"
-    IDS_FROVERHEAD          "Excedent per peticions d'arxiu (Paquets): %s  \n(%s)"
-    IDS_SSOVERHEAD          "Excedent d'intercanvi de fonts (Paquets): %s  \n(%s)"
+    IDS_FROVERHEAD          "Excedent per peticions d'arxiu (Paquets): %s (%s)"
+    IDS_SSOVERHEAD          "Excedent d'intercanvi de fonts (Paquets): %s (%s)"
     IDS_SOVERHEAD           "Tràfic excedent de servidors (Paquets): %s (%s)"
 END
 
@@ -1396,7 +1396,7 @@ BEGIN
     IDS_MINLENGTH           "Duració mín.[hh:mm:ss]"
     IDS_EM_HELP             "A&juda"
     IDS_WRN_FRIENDDUPLIPPORT
-                            "Amic no afegit.\r\n\r\Ja existeix un amic amb la mateixa adreça IP i port disponible."
+                            "Amic no afegit.\r\n\r\nJa existeix un amic amb la mateixa adreça IP i port disponible."
     IDS_KADOVERHEAD         "Tràfic excedent Kad (Paquets): %s (%s)"
     IDS_FIND                "Trobar..."
     IDS_LOG_BANNED_CLIENTS  "Registrar clients exclosos"
@@ -1624,7 +1624,7 @@ BEGIN
     IDS_USERSIP             "IP dels usuaris"
     IDS_FEATURES            "Funcionalitats"
     IDS_IRC_NEWNICK         "Seleccionar un àlies d'IRC."
-    IDS_IRC_NEWNICKDESC     "Ha de ser una paraula de menys de 20 caràcters, formada per (A-Z, 0-9). Pots canviar-ho més tard a Preferències->Irc."
+    IDS_IRC_NEWNICKDESC     "Ha de ser una paraula de menys de 20 caràcters, formada per (A-Z, 0-9).\rPots canviar-ho més tard a Preferències->Irc."
 END
 
 STRINGTABLE
@@ -1800,7 +1800,7 @@ BEGIN
     IDS_SUPPORTED           "Suportat"
     IDS_ESTIMATED           "estimat"
     IDS_MEDIAINFO_DLLMISSING
-                            "No hi ha cap biblioteca de MediaInfo instal·lada. Si vols obtindre més informació sobre fitxers d'àudio/video en aquest formulari,\r\baixa la biblioteca MediaInfo d'https://mediaarea.net/es/MediaInfo i copiïs el fitxer MediaInfo.dll dins\r\nla carpeta d'instal·lació de l'eMule: ""%s"".\r\n"
+                            "No hi ha cap biblioteca de MediaInfo instal·lada. Si vols obtindre més informació sobre fitxers d'àudio/video en aquest formulari,\r\nbaixa la biblioteca MediaInfo d'https://mediaarea.net/es/MediaInfo i copiïs el fitxer MediaInfo.dll dins\r\nla carpeta d'instal·lació de l'eMule: ""%s"".\r\n"
     IDS_WARNING_WRONGFILEEXTENTION
                             "Avís: L'extensió de fitxer ""%s"" no correspon l'extensió de fitxer\r\nque s'empra habitualment per a aquest format de fitxer. Potser vulguis reanomenar el fitxer per que\r\ntingui una d'aquestes extensions ""%s""\r\nper tal d'emprar o visualitzar aquest fitxer adientment.\r\n"
     IDS_MEDIAINFO_DRMWARNING
@@ -2096,7 +2096,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Tot al &mínim"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Tot al mà&xim"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Pausat"
+    IDS_REFRESH_INTERVAL_PAUSED "&Pausat"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

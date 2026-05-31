@@ -486,7 +486,7 @@ BEGIN
     IDS_EM_MESSAGES         "Meddelanden"
     IDS_EM_STATISTIC        "Statistik"
     IDS_EM_PREFS            "Inställningar"
-    IDS_MB_LANGUAGEINFO     "Ett förinställt språk markerades. Du kan ändra språkinställningarna när som helst i inställnings fliken."
+    IDS_MB_LANGUAGEINFO     "Ett förinställt språk markerades.\r\n\r\nDu kan ändra språkinställningarna när som helst i inställnings fliken."
 END
 
 STRINGTABLE
@@ -1624,7 +1624,7 @@ BEGIN
     IDS_USERSIP             "Användares IP"
     IDS_FEATURES            "Finesser"
     IDS_IRC_NEWNICK         "Välj ett IRC-användarnamn."
-    IDS_IRC_NEWNICKDESC     "Skall vara ett ord under 20 tecken som innehåller (A-Z, 0-9). Det kan ändras senare i Inställningar->IRC."
+    IDS_IRC_NEWNICKDESC     "Skall vara ett ord under 20 tecken som innehåller (A-Z, 0-9).\rDet kan ändras senare i Inställningar->IRC."
 END
 
 STRINGTABLE
@@ -2094,7 +2094,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Alla till &min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Alla till ma&x"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Pausad"
+    IDS_REFRESH_INTERVAL_PAUSED "&Pausad"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

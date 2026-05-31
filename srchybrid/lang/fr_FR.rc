@@ -488,7 +488,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Messages" //!
     IDS_EM_STATISTIC        "St&atistiques"
     IDS_EM_PREFS            "Pré&férences"
-    IDS_MB_LANGUAGEINFO     "La langue par défaut a été choisie. Vous pouvez la changer par l'onglet Préférences."
+    IDS_MB_LANGUAGEINFO     "La langue par défaut a été choisie.\r\n\r\nVous pouvez la changer par l'onglet Préférences."
 END
 
 STRINGTABLE
@@ -1625,7 +1625,7 @@ BEGIN
     IDS_USERSIP             "IP Utilisateurs"
     IDS_FEATURES            "Fonctions"
     IDS_IRC_NEWNICK         "Choisir un pseudo IRC"
-    IDS_IRC_NEWNICKDESC     "Devrait être un mot de moins de 20 caractères contenant (A-Z, 0-9). Il peut être changé dans Préférences->IRC"
+    IDS_IRC_NEWNICKDESC     "Devrait être un mot de moins de 20 caractères contenant (A-Z, 0-9).\rIl peut être changé dans Préférences->IRC"
 END
 
 STRINGTABLE
@@ -1996,7 +1996,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Tout au &minimum"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Tout au ma&ximum"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&En pause"
+    IDS_REFRESH_INTERVAL_PAUSED "&En pause"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

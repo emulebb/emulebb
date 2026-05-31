@@ -478,7 +478,7 @@ BEGIN
     IDS_EM_MESSAGES         "Meldingar"
     IDS_EM_STATISTIC        "Statistikk"
     IDS_EM_PREFS            "Innstillingar"
-    IDS_MB_LANGUAGEINFO     "Standardspråk valt. Du kan skifte språk under innstillingar"
+    IDS_MB_LANGUAGEINFO     "Standardspråk valt.\r\n\r\nDu kan skifte språk under innstillingar"
 END
 
 STRINGTABLE
@@ -1596,7 +1596,7 @@ BEGIN
     IDS_USERSIP             "Brukerane sin IP"
     IDS_FEATURES            "Eigenskapar"
     IDS_IRC_NEWNICK         "Oppgje eit IRC kallenamn"
-    IDS_IRC_NEWNICKDESC     "Skal være eit ord på færre enn 20 karakterar innehaldande (A-Z, 0-9). Det kan endrast att i eMule sine innstillingar - Irc."
+    IDS_IRC_NEWNICKDESC     "Skal være eit ord på færre enn 20 karakterar innehaldande (A-Z, 0-9).\rDet kan endrast att i eMule sine innstillingar - Irc."
 END
 
 STRINGTABLE
@@ -2056,7 +2056,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Alle til &min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Alle til ma&ks"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Pausa"
+    IDS_REFRESH_INTERVAL_PAUSED "&Pausa"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

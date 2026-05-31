@@ -485,7 +485,7 @@ BEGIN
     IDS_EM_MESSAGES         "Sõnu&mid"
     IDS_EM_STATISTIC        "S&tatistika"
     IDS_EM_PREFS            "Sea&ded"
-    IDS_MB_LANGUAGEINFO     "Valisin keele Sinu arvuti seadete järgi. Keelt saad Sa alati muuta seadete ekraanil."
+    IDS_MB_LANGUAGEINFO     "Valisin keele Sinu arvuti seadete järgi.\r\n\r\nKeelt saad Sa alati muuta seadete ekraanil."
 END
 
 STRINGTABLE
@@ -1622,7 +1622,7 @@ BEGIN
     IDS_USERSIP             "Kasutaja IP"
     IDS_FEATURES            "Eriomadused"
     IDS_IRC_NEWNICK         "Vali IRC signatuur."
-    IDS_IRC_NEWNICKDESC     "Should be one word less then 20 characters containing (A-Z, 0-9). It can be changed again in Preferences->Irc."
+    IDS_IRC_NEWNICKDESC     "Should be one word less then 20 characters containing (A-Z, 0-9).\rIt can be changed again in Preferences->Irc."
 END
 
 STRINGTABLE
@@ -1632,7 +1632,7 @@ BEGIN
     IDS_NEGATEFILTER        "eitamis filter"
     IDS_SEENCOMPL           "Kunagi ei ole nähtud tervikuna"
     IDS_SELSKINPROFILEDIR   "Märgitud rüü profiili katloog"
-    IDS_ASKDLINCOMPLETE     "Potentsiaalselt ebatäielik fail:\n\n%s\n\nsee fail on arvatavalt ebatäielik ja seepärast soovitav mitte allaladida ! Kas sa tõesti soovid seda allalaadida?"
+    IDS_ASKDLINCOMPLETE     "Potentsiaalselt ebatäielik fail:\r\n\r\n%s\r\n\r\nsee fail on arvatavalt ebatäielik ja seepärast soovitav mitte allaladida ! Kas sa tõesti soovid seda allalaadida?"
     IDS_DEADSOURCES         "Surnud allikad"
     IDS_LARGEICONS          "Suured ikoonid"
     IDS_SMALLICONS          "Väiksed ikoonid"
@@ -2090,7 +2090,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Kõik &miinimumile"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Kõik &maksimumile"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Peatatud"
+    IDS_REFRESH_INTERVAL_PAUSED "&Peatatud"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

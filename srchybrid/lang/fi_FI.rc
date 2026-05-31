@@ -558,7 +558,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Viestit"
     IDS_EM_STATISTIC        "&Tilastot"
     IDS_EM_PREFS            "&Asetukset"
-    IDS_MB_LANGUAGEINFO     "Valitsin oletuskieleksi suomen. Voit vaihtaa sen Asetukset-ikkunasta."
+    IDS_MB_LANGUAGEINFO     "Valitsin oletuskieleksi suomen.\r\n\r\nVoit vaihtaa sen Asetukset-ikkunasta."
     IDS_FD_GENERAL          "Yleistä"
     IDS_FD_MET              ".met-tiedosto:"
     IDS_FD_HASH             "Hash:" //!
@@ -1647,7 +1647,7 @@ BEGIN
     IDS_USERSIP             "Käyttäjän IP-osoite"
     IDS_FEATURES            "Ominaisuudet"
     IDS_IRC_NEWNICK         "Valitse IRC-nimimerkki."
-    IDS_IRC_NEWNICKDESC     "Nimimerkin tulee olla yksi sana, joka on alle 20 merkkiä pitkä ja sisältää vain merkkejä A-Z ja 0-9. Sen voi vaihtaa asetuksista IRC-välilehdellä."
+    IDS_IRC_NEWNICKDESC     "Nimimerkin tulee olla yksi sana, joka on alle 20 merkkiä pitkä ja sisältää vain merkkejä A-Z ja 0-9.\rSen voi vaihtaa asetuksista IRC-välilehdellä."
     IDS_SPARSEPARTFILES     "Luo uudet tiedostot lennosta (vain NTFS)"
     IDS_ASPECTRATIO         "Kuvasuhde"
     IDS_NEGATEFILTER        "käännä suotimen merkitys"
@@ -1780,7 +1780,7 @@ BEGIN
     IDS_MEDIAINFO_DLLMISSING
                             "MediaInfo -kirjastoa ei ole asennettu. Jos haluat saada siitä lisätietoja näistä ääni- tai videotiedostoista, \r\nlataa MediaInfo -kirjasto osoitteesta https://mediaarea.net/en/MediaInfo and ja kopioi MediaInfo.dll -tiedosto\r\neMulen asennushakemistoon ""%s"".\r\n"
     IDS_WARNING_WRONGFILEEXTENTION
-                            "Varoitus: tiedoston ""%s"" tiedostopääte ei vastaa tälle\r\ntiedostotyypille yleensä käytettävää muotoa. Kannattaa nimetä tiedosto ""%s"" uudelleen käyttäen jotain yleistä\r\ntiedostopäätettä, jotta käyttöjärjestelmä käsittelee sitä oikein.\r\n"
+                            "Varoitus: tiedoston ""%s"" tiedostopääte ei vastaa tälle\r\ntiedostotyypille yleensä käytettävää muotoa. Kannattaa nimetä tiedosto ""%s"" uudelleen käyttäen jotain yleistä\r\ntiedostopäätettä, jotta käyttöjärjestelmä käsittelee sitä oikein.\r\n\r\n"
     IDS_MEDIAINFO_DRMWARNING
                             "Varoitus: tiedostossa ""%s"" käytetään Digital Rights Management -suojausta.\r\nEt todennäköisesti voi toistaa tiedostoa ilman voimassa olevaa lisenssiä tiedoston luojalta.\r\n"
     IDS_ARCHPREV_ATTRIBINFO "Tiedosto-ominaisuuksia voi olla seuraavat:\r\n\r\nP\tTiedosto on suojattu salasanalla\r\nD\tSe on hakemisto\r\nC\tKommentti\r\nLx\tPakkausaste x\r\nM\tPakattua tiedostoa ei ole vielä ladattu loppuun\r\n<\tTiedosto on jatkoa edellisestä arkistotiedostosta\r\n>\tTiedosto jatkuu seuraavassa arkistotiedostossa\r\n"
@@ -2063,7 +2063,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Kaikki Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&Kaikki Maxille"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Keskeytetty"
+    IDS_REFRESH_INTERVAL_PAUSED "&Keskeytetty"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

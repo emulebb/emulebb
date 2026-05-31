@@ -540,7 +540,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Ziņojumi"
     IDS_EM_STATISTIC        "St&atistkas"
     IDS_EM_PREFS            "&Iespējas"
-    IDS_MB_LANGUAGEINFO     "Noklusētā valoda tika izvēlēta. Tu vari nomainīt valodu iespējas jebkurā laikā, iestatījumu tabulā."
+    IDS_MB_LANGUAGEINFO     "Noklusētā valoda tika izvēlēta.\r\n\r\nTu vari nomainīt valodu iespējas jebkurā laikā, iestatījumu tabulā."
 END
 
 STRINGTABLE
@@ -1651,7 +1651,7 @@ BEGIN
     IDS_USERSIP             "Users IP"
     IDS_FEATURES            "Features"
     IDS_IRC_NEWNICK         "Select a IRC nick."
-    IDS_IRC_NEWNICKDESC     "Should be one word less than 20 characters containing (A-Z, 0-9). It can be changed again in Preferences->Irc."
+    IDS_IRC_NEWNICKDESC     "Should be one word less than 20 characters containing (A-Z, 0-9).\rIt can be changed again in Preferences->Irc."
 END
 
 STRINGTABLE
@@ -2088,7 +2088,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Visi uz &min."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Visi uz &maks."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Pauzēts"
+    IDS_REFRESH_INTERVAL_PAUSED "&Pauzēts"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

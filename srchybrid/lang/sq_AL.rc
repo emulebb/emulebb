@@ -538,7 +538,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Bisedo"
     IDS_EM_STATISTIC        "St&atistikë"
     IDS_EM_PREFS            "&Mundësi"
-    IDS_MB_LANGUAGEINFO     "Zgjodhët një gjuhë tipike. Vendosjet e gjuhës mund t'i ndryshoni çdo kohë në tabelën e pëlqimeve."
+    IDS_MB_LANGUAGEINFO     "Zgjodhët një gjuhë tipike.\r\n\r\nVendosjet e gjuhës mund t'i ndryshoni çdo kohë në tabelën e pëlqimeve."
 END
 
 STRINGTABLE
@@ -1652,7 +1652,7 @@ BEGIN
     IDS_USERSIP             "IP i Përdoruesve"
     IDS_FEATURES            "Veçori"
     IDS_IRC_NEWNICK         "Zgjidheni nofkën që do përdorni në IRC"
-    IDS_IRC_NEWNICKDESC     "Fjala duhet të ketë më pak se 20 shkronja, ku futen (A-Z, 0-9). Kjo mund të ndryshohet edhe te Mundësi->Irc."
+    IDS_IRC_NEWNICKDESC     "Fjala duhet të ketë më pak se 20 shkronja, ku futen (A-Z, 0-9).\rKjo mund të ndryshohet edhe te Mundësi->Irc."
 END
 
 STRINGTABLE
@@ -2087,7 +2087,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Të gjitha në &min."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Të gjitha në ma&ks."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Në pauzë"
+    IDS_REFRESH_INTERVAL_PAUSED "&Në pauzë"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

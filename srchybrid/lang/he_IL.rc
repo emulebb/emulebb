@@ -782,7 +782,7 @@ BEGIN
     IDS_EM_MESSAGES         "הודעות"
     IDS_EM_STATISTIC        "סטטיסטיקות"
     IDS_EM_PREFS            "העדפות"
-    IDS_MB_LANGUAGEINFO     "שפת ברירת מחדל נבחרה. באפשרותך לשנות שפה בכל עת דרך חלון העדפות"
+    IDS_MB_LANGUAGEINFO     "שפת ברירת מחדל נבחרה.\r\n\r\nבאפשרותך לשנות שפה בכל עת דרך חלון העדפות"
 END
 
 STRINGTABLE
@@ -1626,7 +1626,7 @@ BEGIN
     IDS_USERSIP             "איי פי משתמשים"
     IDS_FEATURES            "אפשרויות"
     IDS_IRC_NEWNICK         "בחר כינוי IRC."
-    IDS_IRC_NEWNICKDESC     "צריך להיות מילה אחת עם פחות מ-20 תווים המכילים (A-Z, 0-9). ניתן לשנותו שוב בהעדפות -> IRC."
+    IDS_IRC_NEWNICKDESC     "צריך להיות מילה אחת עם פחות מ-20 תווים המכילים (A-Z, 0-9).\rניתן לשנותו שוב בהעדפות -> IRC."
 END
 
 STRINGTABLE
@@ -2087,7 +2087,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "הכול ל&מינימום"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "הכול ל&מקסימום"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&מושהה"
+    IDS_REFRESH_INTERVAL_PAUSED "&מושהה"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

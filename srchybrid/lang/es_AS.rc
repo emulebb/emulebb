@@ -538,7 +538,7 @@ BEGIN
     IDS_EM_MESSAGES         "Mensaxes"
     IDS_EM_STATISTIC        "Estadístiques"
     IDS_EM_PREFS            "Preferencies"
-    IDS_MB_LANGUAGEINFO     "Escoyóse una llingua por defeutu. Pués camudar la llingua en cualquier momentu nes preferencies."
+    IDS_MB_LANGUAGEINFO     "Escoyóse una llingua por defeutu.\r\n\r\nPués camudar la llingua en cualquier momentu nes preferencies."
 END
 
 STRINGTABLE
@@ -1652,7 +1652,7 @@ BEGIN
     IDS_USERSIP             "IP usuariu"
     IDS_FEATURES            "Característiques"
     IDS_IRC_NEWNICK         "Seleccionar un nomatu IRC."
-    IDS_IRC_NEWNICKDESC     "Habría ser una pallabra que caltenga menos de 20 caracteres (A-Z, 0-9). Esto pue camudase otra vegada en Preferencies ->Irc."
+    IDS_IRC_NEWNICKDESC     "Habría ser una pallabra que caltenga menos de 20 caracteres (A-Z, 0-9).\rEsto pue camudase otra vegada en Preferencies ->Irc."
 END
 
 STRINGTABLE
@@ -2074,7 +2074,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Todo al &mín."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Todo al má&x."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Pausado"
+    IDS_REFRESH_INTERVAL_PAUSED "&Pausado"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

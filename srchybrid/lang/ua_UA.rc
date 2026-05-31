@@ -539,7 +539,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Повідомлення"
     IDS_EM_STATISTIC        "Ст&атистика"
     IDS_EM_PREFS            "&Опції"
-    IDS_MB_LANGUAGEINFO     "Вибрано мову за замовчуванням. Ви можете змінити мову в будь-який час у Налаштуваннях."
+    IDS_MB_LANGUAGEINFO     "Вибрано мову за замовчуванням.\r\n\r\nВи можете змінити мову в будь-який час у Налаштуваннях."
 END
 
 STRINGTABLE
@@ -1653,7 +1653,7 @@ BEGIN
     IDS_USERSIP             "IP Користувачів"
     IDS_FEATURES            "Можливості"
     IDS_IRC_NEWNICK         "Оберіть псевдо для Балачки"
-    IDS_IRC_NEWNICKDESC     "Має бути слово з не більш як 20 символів в діапазоні (A-Z,0-9). Щоб зберегти ім'я, впишіть його також в Опції->Балачка->Псевдо"
+    IDS_IRC_NEWNICKDESC     "Має бути слово з не більш як 20 символів в діапазоні (A-Z,0-9).\rЩоб зберегти ім'я, впишіть його також в Опції->Балачка->Псевдо"
 END
 
 STRINGTABLE
@@ -2087,7 +2087,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Все до мін"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&Усе на макс."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Призупинено"
+    IDS_REFRESH_INTERVAL_PAUSED "&Призупинено"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

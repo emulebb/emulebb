@@ -541,7 +541,7 @@ BEGIN
     IDS_EM_MESSAGES         "メッセージ"
     IDS_EM_STATISTIC        "統計"
     IDS_EM_PREFS            "設定"
-    IDS_MB_LANGUAGEINFO     "デフォルト言語が変更されました。設定タブでいつでも言語設定を変更することができます"
+    IDS_MB_LANGUAGEINFO     "デフォルト言語が変更されました。\r\n\r\n設定タブでいつでも言語設定を変更することができます"
 END
 
 STRINGTABLE
@@ -787,7 +787,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_FO_PREF_EXISTED     "eMuleは選択されたポート用の既存規則を検出し、これを上書き又は置換できませんでした。\n不足していた規則の追加には成功しています。\nサードパーティ製のデスクトップ用ファイアーウォールやルータがこれを妨げることのないように注意して下さい!"
+    IDS_FO_PREF_EXISTED     "eMuleは選択されたポート用の既存規則を検出し、これを上書き又は置換できませんでした。\n不足していた規則の追加には成功しています。 サードパーティ製のデスクトップ用ファイアーウォールやルータがこれを妨げることのないように注意して下さい!"
     IDS_FO_PREF_FAILED      "選択されたポート用のWinXP内蔵ファイアーウォールの構成に失敗しました!"
     IDS_FO_PREF_STARTUP     "eMuleの開始/終了時にWinXPのファイアーウォール上のポートを開く/閉じる"
     IDS_LOG_LEVEL           "ログレベル"
@@ -1543,9 +1543,9 @@ BEGIN
     IDS_IMP_ERR_BADFORMAT   "未知または不正な一時ファイルフォーマットです。"
     IDS_SEARCH_INVALIDCHAR  "検索式に使用できない文字が含まれています。文字'?'か、このネットワーク内で使用できない文字が入力されている可能性があります。"
     IDS_PORTSCON            "ポートと接続"
-    IDS_PORTINFO            "eMuleはサーバー用とクライアント用で2つのポートを使用します。これらのポートはリモートホストから自由に利用できなければなりません。\nまた、eMuleの主要な機能を確実に利用するにはTCPポートが利用可能になっていなければなりません。\nUDPポートはKad(サーバー無しネットワーク)と、ネットワークの使用率(オーバーヘッド)を軽減させる目的で使用されます。\n\nネットワークへの接続を開始していない場合はここでポート設定を変更することができます。"
+    IDS_PORTINFO            "eMuleはサーバー用とクライアント用で2つのポートを使用します。これらのポートはリモートホストから自由に利用できなければなりません。\nまた、eMuleの主要な機能を確実に利用するにはTCPポートが利用可能になっていなければなりません。\nUDPポートはKad(サーバー無しネットワーク)と、ネットワークの使用率(オーバーヘッド)を軽減させる目的で使用されます。 ネットワークへの接続を開始していない場合はここでポート設定を変更することができます。"
     IDS_STARTTEST           "ポートのテスト"
-    IDS_TESTINFO            "TCPとUDPポートがリモートから接続可能かどうかここでテストすることができます。\nサーバーへ接続したり、クライアントがあなたに接続できるようにするためにはこのテストに成功している必要があります。  \n特にTCPポートのテストは確実に成功していなければなりません!"
+    IDS_TESTINFO            "TCPとUDPポートがリモートから接続可能かどうかここでテストすることができます。 サーバーへ接続したり、クライアントがあなたに接続できるようにするためにはこのテストに成功している必要があります。 特にTCPポートのテストは確実に成功していなければなりません!"
     IDS_CONNECTIONTEST      "接続テスト"
     IDS_NOPORTCHANGEPOSSIBLE
                             "クライアントと接続した後や、サーバー/Kadへの接続中にはポートを変更することができません!\n\n設定を変更するにはeMuleを再起動して下さい。"
@@ -1636,7 +1636,7 @@ BEGIN
     IDS_USERSIP             "ユーザーIP"
     IDS_FEATURES            "機能"
     IDS_IRC_NEWNICK         "IRCニックネームを選択"
-    IDS_IRC_NEWNICKDESC     "ニックネームは英数字(A-Z, 0-9)で20文字以下でなければなりません。 設定→IRCでこの設定を変更することができます。"
+    IDS_IRC_NEWNICKDESC     "ニックネームは英数字(A-Z, 0-9)で20文字以下でなければなりません。\r設定→IRCでこの設定を変更することができます。"
 END
 
 STRINGTABLE
@@ -1812,9 +1812,9 @@ BEGIN
     IDS_SUPPORTED           "サポート"
     IDS_ESTIMATED           "概算"
     IDS_MEDIAINFO_DLLMISSING
-                            "このマシンにはMediaInfoライブラリがインストールされていません。\r\nこのダイアログでオーディオやビデオファイルについての詳細な情報を表示させたいなら\r\nhttps://mediaarea.net/ja/MediaInfo からMediaInfoライブラリをダウンロードし、\r\neMuleインストールフォルダ""%s""にコピーしてください。\r\n"
+                            "このマシンにはMediaInfoライブラリがインストールされていません。\r\nこのダイアログでオーディオやビデオファイルについての詳細な情報を表示させたいなら\r\nhttps://mediaarea.net/ja/MediaInfo からMediaInfoライブラリをダウンロードし、\r\neMuleインストールフォルダ""%s""にコピーしてください。"
     IDS_WARNING_WRONGFILEEXTENTION
-                            "警告: ファイル拡張子""%s""はこの種のファイル形式で通常使用されるファイル拡張子ではありません。\r\nこれらのファイル拡張子""%s""を正しく使用したり、表示したい場合はファイルをリネームする必要があります。\r\n"
+                            "警告: ファイル拡張子""%s""はこの種のファイル形式で通常使用されるファイル拡張子ではありません。\r\nこれらのファイル拡張子""%s""を正しく使用したり、表示したい場合はファイルをリネームする必要があります。\r\n\r\n\r\n"
     IDS_MEDIAINFO_DRMWARNING
                             "警告: ファイル""%s""はデジタル著作権管理技術によって保護されている可能性があります。\r\nその場合、このファイルの著作者からライセンスを受けない限りファイルを使用することはできません。\r\n"
     IDS_LOADFILTER_EMTOOLBAR "eMuleツールバー 画像ファイル"
@@ -2097,7 +2097,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "すべて最小へ(&M)"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "すべて最大へ(&X)"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&一時停止"
+    IDS_REFRESH_INTERVAL_PAUSED "&一時停止"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

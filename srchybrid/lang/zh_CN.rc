@@ -560,7 +560,7 @@ BEGIN
     IDS_EM_MESSAGES         "消息(&M)"
     IDS_EM_STATISTIC        "统计信息(&A)"
     IDS_EM_PREFS            "选项(&O)"
-    IDS_MB_LANGUAGEINFO     "默认语言被选择,你可以在选项标签中更改语言设置."
+    IDS_MB_LANGUAGEINFO     "默认语言被选择,你可以在选项标签中更改语言设置.\r\n\r\n"
     IDS_FD_GENERAL          "常规"
     IDS_FD_MET              "part.met 文件:"
     IDS_FD_HASH             "Hash:" //!
@@ -1648,7 +1648,7 @@ BEGIN
     IDS_USERSIP             "用户 IP"
     IDS_FEATURES            "特性"
     IDS_IRC_NEWNICK         "选择一个 IRC 昵称."
-    IDS_IRC_NEWNICKDESC     "一个昵称应该少于20个字符,可以使用(A-Z,0-9).你可以在 设置->IRC 中更改它."
+    IDS_IRC_NEWNICKDESC     "一个昵称应该少于20个字符,可以使用(A-Z,0-9).\r你可以在 设置->IRC 中更改它."
     IDS_SPARSEPARTFILES     "建立新的Part文件为""稀疏文件""(仅限 NTFS 使用)"
     IDS_ASPECTRATIO         "约束比例"
     IDS_NEGATEFILTER        "取消过滤"
@@ -1781,10 +1781,10 @@ BEGIN
     IDS_SUPPORTED           "支持" //"Supported"
     IDS_ESTIMATED           "评价" //"estimated"
     IDS_MEDIAINFO_DLLMISSING
-				"媒体信息库未安装.如果需要在此对话框获得到更多有关声音/视频文件的信息,\r\从https://mediaarea.net/zh-CN/MediaInfo下载媒体信息库文件 MediaInfo.dll 并拷贝到\r\neMule安装目录 ""%s"".\r\n"
+				"媒体信息库未安装.如果需要在此对话框获得到更多有关声音/视频文件的信息,\r\n从https://mediaarea.net/zh-CN/MediaInfo下载媒体信息库文件 MediaInfo.dll 并拷贝到\r\neMule安装目录 ""%s"".\r\n"
     // "There is no MediaInfo library installed. If you want to get more information about audio/video files in this dialog,\r\ndownload the MediaInfo library from https://mediaarea.net/en/MediaInfo and copy the MediaInfo.dll file into\r\neMule's installation folder ""%s"".\r\n"
     IDS_WARNING_WRONGFILEEXTENTION
-                            "警告: 文件扩展名""%s""和用于该文件格式的标准的文件扩展名不符\r\n你可能要使用""%s""中的一个文件扩展名来重新命名该文件,才能正确地使用或者浏览它. \r\n"
+                            "警告: 文件扩展名""%s""和用于该文件格式的标准的文件扩展名不符\r\n你可能要使用""%s""中的一个文件扩展名来重新命名该文件,才能正确地使用或者浏览它. \r\n\r\n\r\n"
 	//"Warning: The file extension of ""%s"" does not match the file extension\r\ntypically used for that file format. You may want to rename the file to\r\nuse one of those file extensions ""%s""\r\nfor properly using or viewing that file format.\r\n"
     IDS_MEDIAINFO_DRMWARNING
                            "警告: 文件 ""%s"" 似乎为DRM所保护.\r\n除非拥有许可,否则不应使用该文件.\r\n"
@@ -2068,7 +2068,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "全部设为最小(&M)"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "全部设为最大(&X)"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "已&暂停"
+    IDS_REFRESH_INTERVAL_PAUSED "已&暂停"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

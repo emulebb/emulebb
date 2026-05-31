@@ -528,7 +528,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Zprávy"
     IDS_EM_STATISTIC        "S&tatistika"
     IDS_EM_PREFS            "&Možnosti"
-    IDS_MB_LANGUAGEINFO     "Byl vybrán implicitní jazyk. Nastavení jazyka můžete kdykoliv měnit v záložce Možnosti."
+    IDS_MB_LANGUAGEINFO     "Byl vybrán implicitní jazyk.\r\n\r\nNastavení jazyka můžete kdykoliv měnit v záložce Možnosti."
 END
 
 STRINGTABLE
@@ -1625,7 +1625,7 @@ BEGIN
     IDS_USERSIP             "IP uživatelů"
     IDS_FEATURES            "Vlastnosti"
     IDS_IRC_NEWNICK         "Vyberte si přezdívku pro IRC."
-    IDS_IRC_NEWNICKDESC     "Měla by sestávat z jednoho slova kratšího 20 znaků obsahujících jenom (A-Z, 0-9). Později může být změněna v nabídce Možnosti -> Irc."
+    IDS_IRC_NEWNICKDESC     "Měla by sestávat z jednoho slova kratšího 20 znaků obsahujících jenom (A-Z, 0-9).\rPozději může být změněna v nabídce Možnosti -> Irc."
 END
 
 STRINGTABLE
@@ -1892,7 +1892,7 @@ BEGIN
     IDS_WRN_INCFILE_EXISTS  "Nový adresář pro příchozí soubory, který jste zvolili, není prázdný. Všechny soubory v něm obsažené bude eMule automaticky sdílet."
     IDS_EDITSPAMFILTER      "Upravit spam filtr..."
     IDS_EDITSPAMFILTERCOMMENTS "Upravit spam filtr komentářů"
-    IDS_WIZZARDOBFUSCATION  "Povolte tuto možnost, pokud máte zájem o šifrování protokolu. Pokud váš poskytovatel selektivně zpomaluje eMule, můžete použít šifrování protokolu, abyste se tomuto omezení vyhnuli."
+    IDS_WIZZARDOBFUSCATION  "Povolte tuto možnost, pokud máte zájem o šifrování protokolu.\n\nPokud váš poskytovatel selektivně zpomaluje eMule, můžete použít šifrování protokolu, abyste se tomuto omezení vyhnuli."
     IDS_CONFIRMNODESDOWNLOAD
                             "Přejete si stáhnout a použít Kad kontakty (nodes.dat) z této adresy:\n%s ?"
     IDS_AUTOMATIC           "Automatický"
@@ -2092,7 +2092,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Vše do min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Vše na ma&ximum"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Pozastaveno"
+    IDS_REFRESH_INTERVAL_PAUSED "&Pozastaveno"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

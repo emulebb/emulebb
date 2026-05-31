@@ -497,7 +497,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Nachrichten"
     IDS_EM_STATISTIC        "St&atistik"
     IDS_EM_PREFS            "&Optionen"
-    IDS_MB_LANGUAGEINFO     "Deutsch wurde als Standardsprache festgelegt. Dies kannst Du jederzeit in den Einstellungen ändern."
+    IDS_MB_LANGUAGEINFO     "Deutsch wurde als Standardsprache festgelegt.\r\n\r\nDies kannst Du jederzeit in den Einstellungen ändern."
     IDS_FD_GENERAL          "Allgemein"
     IDS_FD_MET              "met-Datei:"
     IDS_FD_HASH             "Hash:" //!
@@ -1610,7 +1610,7 @@ BEGIN
     IDS_USERSIP             "Nutzers IP"
     IDS_FEATURES            "Features"	//!
     IDS_IRC_NEWNICK         "Wähle einen IRC Nutzernamen"
-    IDS_IRC_NEWNICKDESC     "Der Nutzername sollte nur ein Wort mit weniger als 20 Zeichen sein, mit den Zeichen (A-Z, 0-9). Der Name kann auch in den Einstellungen (->IRC) geändert werden."
+    IDS_IRC_NEWNICKDESC     "Der Nutzername sollte nur ein Wort mit weniger als 20 Zeichen sein, mit den Zeichen (A-Z, 0-9).\rDer Name kann auch in den Einstellungen (->IRC) geändert werden."
     IDS_SPARSEPARTFILES     "Erstelle neue Tempdateien als 'sparse' (nur NTFS)"
     IDS_ASPECTRATIO         "Bildratio"
     IDS_NEGATEFILTER        "Negiere Filter"
@@ -1789,7 +1789,7 @@ BEGIN
     IDS_MEDIAINFO_DLLMISSING
                             "Es ist keine MediaInfo-Bibliothek installiert. Wenn du in diesem Dialog mehr Informationen über Audio- und Videodateien erhalten möchtest,\r\nlade die MediaInfo-Bibliothek von https://mediaarea.net/de/MediaInfo herunter und kopiere die Datei ""MediaInfo.dll"" in\r\ndas eMule-Installationsverzeichnis ""%s"".\r\n"
     IDS_WARNING_WRONGFILEEXTENTION
-                            "Warnung: Die Dateiendung von ""%s"" stimmt nicht mit der typischen Dateiendung für dieses Dateiformat überein.\r\nUm diese Datei korrekt zu nutzen oder anzusehen ist es empfehlenswert, die Datei umzubenennen\r\nund eine der folgenden Dateiendungen zu nutzen: ""%s"".\r\n"
+                            "Warnung: Die Dateiendung von ""%s"" stimmt nicht mit der typischen Dateiendung für dieses Dateiformat überein.\r\nUm diese Datei korrekt zu nutzen oder anzusehen ist es empfehlenswert, die Datei umzubenennen\r\nund eine der folgenden Dateiendungen zu nutzen: ""%s"".\r\n\r\n"
     IDS_MEDIAINFO_DRMWARNING
                             "Warnung: Die Datei ""%s"" scheint mit Digitalem Rechtemanagement geschützt zu sein.\r\nWahrscheinlich kann die Datei ohne eine Lizenz vom Inhaber nicht benutzt werden!\r\n"
     IDS_ARCHPREV_ATTRIBINFO "Erklärung möglicher Dateiattribute:\r\n\r\nP\tDatei ist passwortgeschützt\r\nD\tist ein Verzeichnis\r\nC\tbesitzt Kommentar\r\nLx\tKompressionsstufe x\r\nM\tkomprimierte Daten liegen noch nicht komplett vor\r\n<\tDatei wird aus vorigem Teilarchiv fortgeführt\r\n>\tDatei wird im nächsten Teilarchiv fortgesetzt\r\n"
@@ -1871,7 +1871,7 @@ BEGIN
     IDS_EDITSPAMFILTERCOMMENTS "Ändere Spam-Filter für Kommentare"
     IDS_WIZZARDOBFUSCATION  "Aktiviere diese Einstellung, wenn du Protokoll-Obfuskation einschalten willst.\n\nFalls dein Provider versucht eMule zu blockieren oder einzuschränken, kann diese Funktion helfen, solche Einschränkungen zu umgehen."
     IDS_CONFIRMNODESDOWNLOAD
-                            "Möchtest du Kad-Kontakte (nodes.dat) von der folgenden Adresse herunterladen und benutzen: %s ?"
+                            "Möchtest du Kad-Kontakte (nodes.dat) von der folgenden Adresse herunterladen und benutzen: %s ?\n"
     IDS_AUTOMATIC           "Automatisch"
     IDS_NOTCONNECTEDANY     "Du bist weder zu einem Server noch zum Kad-Netzwerk verbunden!"
     IDS_ERR_SHARED_DIR      "Das folgende freigegebene Verzeichnis konnte nicht gelesen werden: ""%s"" - %s"
@@ -1972,7 +1972,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Alles auf &Minimum"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Alles auf Ma&ximum"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Pausiert"
+    IDS_REFRESH_INTERVAL_PAUSED "&Pausiert"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

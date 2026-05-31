@@ -558,7 +558,7 @@ BEGIN
     IDS_EM_MESSAGES         "&پيغامها"
     IDS_EM_STATISTIC        "آمار و ارقام"
     IDS_EM_PREFS            "&تنظيمات"
-    IDS_MB_LANGUAGEINFO     "زبان پيش فرض انتخاب شده.شما ميتوانيد در پنجره تنظيمات هر زماني زبان را تغيير بدهيد "
+    IDS_MB_LANGUAGEINFO     "زبان پيش فرض انتخاب شده.\r\n\r\nشما ميتوانيد در پنجره تنظيمات هر زماني زبان را تغيير بدهيد"
     IDS_FD_GENERAL          "عمومي"
     IDS_FD_MET              "part.met فايل:"
     IDS_FD_HASH             "كدگذاري:"
@@ -1489,7 +1489,7 @@ BEGIN
     IDS_SAVELOG             "ذخيره کردن گزارش"
     IDS_CMT_COPYCLIPBOARD   "کپي کردن نظرات"
     IDS_DELETESELECTED      "حذف"
-    IDS_ERR_BADFOLDER       "پوشه بي اعتبار.\ساختن فولدر جديد امکان ندارد. لطفا نام و محل ان را چک کنيد.َ"
+    IDS_ERR_BADFOLDER       "پوشه بي اعتبار.\n\ساختن فولدر جديد امکان ندارد. لطفا نام و محل ان را چک کنيد.َ"
     IDS_AUTOREMOVEFD        "دانلود هاي کامل شده بصورت خودکار حذف شوند"
 END
 
@@ -1559,7 +1559,7 @@ BEGIN
     IDS_TESTINFO            "مي توانند از دوراتصال پيدا کنند TCP و UDPدر اينجا مي توانيد امتحان کنيد که آيا ورودي . موفقيت اين آزمايش براي سرويس دهنده ها و مراجعين براي اتصال به شما لازم است.با موفقيت روبرو شود! TCP  ورودي "
     IDS_CONNECTIONTEST      "آزمايش اتصال"
     IDS_NOPORTCHANGEPOSSIBLE
-                            "لطفاً ايمول با تنظيمات تغيير کرده ي پورت را دوباره راه اندازي کنيد امکان پذير نيستKad/n/nتغيير پورت پس از اتصال شما به کلاينت ها يا هنگام ارتباط با سرور"
+                            "لطفاً ايمول با تنظيمات تغيير کرده ي پورت را دوباره راه اندازي کنيد امکان پذير نيستKad/n/nتغيير پورت\n\nپس از اتصال شما به کلاينت ها يا هنگام ارتباط با سرور"
     IDS_NETWORK_INFO        "اطلاعات شبکه"
     IDS_SP_TOTALUL          "همه آپلود ها"
     IDS_SP_ULFRIENDS        "ها را آپلود کنيد friend slots"
@@ -1646,7 +1646,7 @@ BEGIN
     IDS_USERSIP             "کاربران IP"
     IDS_FEATURES            "خصوصيات"
     IDS_IRC_NEWNICK         "انتخاب کنيد. IRC  يک اسم مستعار "
-    IDS_IRC_NEWNICKDESC     " باشد.(A-Z, 0-9)بايد يک کلمه کمتر از 20 کاراکتر شامل.تغيير کند Preferences->Irc ميتواند در"
+    IDS_IRC_NEWNICKDESC     "باشد.(A-Z, 0-9)بايد يک کلمه کمتر از 20 کاراکتر شامل.\rتغيير کند Preferences->Irc ميتواند در"
     IDS_SPARSEPARTFILES     "('sparse')فايل هاي جديد قسمتي به صورت پراکنده ايجاد کنيد(NTFS فقط)"
     IDS_ASPECTRATIO         "نسبت اندازه تصوير"
     IDS_NEGATEFILTER        "فيلتر معکوس"
@@ -1777,9 +1777,9 @@ BEGIN
     IDS_SUPPORTED           "پشتيباني شده"
     IDS_ESTIMATED           "تخمين زده شده"
     IDS_MEDIAINFO_DLLMISSING
-                            "نصب نشده است MediaInfo libraryهيچ گونه. اگر شما مايليد که اطلاعات بيشتري در مورد فايل هاي شنيداري/تصويري در اين مباحث به دست اوريد,\r\ راکپي کنيدMediaInfo.dll  از  دريافت کرده و  https://mediaarea.net/fa/MediaInfoرا از MediaInfo library\r\n ايمول installationدر فولدر""%s"".\r\n"
+                            "نصب نشده است MediaInfo libraryهيچ گونه. اگر شما مايليد که اطلاعات بيشتري در مورد فايل هاي شنيداري/تصويري در اين مباحث به دست اوريد,\r\n راکپي کنيدMediaInfo.dll  از  دريافت کرده و  https://mediaarea.net/fa/MediaInfoرا از MediaInfo library\r\n ايمول installationدر فولدر""%s"".\r\n"
     IDS_WARNING_WRONGFILEEXTENTION
-                            "اخطار: حدود فايل ""%s"" با حدود فايلي که عموما براي اندازه فايل به کار مي رود همخواني ندارد.\r\ممکن است شما مايل باشيد فايل را نام گذاري کنيد \r\يکي از اندازه فايل ها ""%s""\r\nبراي مشاهده يا استفاده مناسب فايل .\r\n"
+                            "اخطار: حدود فايل ""%s"" با حدود فايلي که عموما براي اندازه فايل به کار مي رود همخواني ندارد.\r\nممکن است شما مايل باشيد فايل را نام گذاري کنيد \r\nيکي از اندازه فايل ها ""%s""\r\nبراي مشاهده يا استفاده مناسب فايل .\r\n"
     IDS_MEDIAINFO_DRMWARNING
                             "اخطار: فايل  به نظر مي رسد""%s""توسط اداره حقوق ديجيتال محافظت مي شود. توسط\r\nشما احتمالا قادر نخواهيد بود که بدون مجوزي از طرف سازنده آن فايل از آن استفاده کنيد..\r\n"
     IDS_ARCHPREV_ATTRIBINFO "اجزاي فايل مي تواند حاوي اين مطالب باشد:\r\n\r\nP\tفايل با پسوورد محافظت مي شود\r\nD\tيک پوشه است\r\nC\tنظرات\r\nLx\tدرجه فشرده سازي x\r\nM\tاطلاعات فشرده شده هنوز به صورت کامل دانلود نشده اند\r\n<\tادامه فايل از قسمت قبلي\r\n>\tادامه فايل از قسمت بعدي\r\n"
@@ -2059,7 +2059,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&همه به حداقل"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&همه به مکس"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&مکث شده"
+    IDS_REFRESH_INTERVAL_PAUSED "&مکث شده"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

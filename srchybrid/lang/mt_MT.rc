@@ -540,7 +540,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Messaġġi"
     IDS_EM_STATISTIC        "St&atistiċi"
     IDS_EM_PREFS            "&Għażliet"
-    IDS_MB_LANGUAGEINFO     "Lingwa intgħazlet awtomatikament. Tista tbiddel il-lingwa permezz tal-buttuna tal-Għażliet"
+    IDS_MB_LANGUAGEINFO     "Lingwa intgħazlet awtomatikament.\r\n\r\nTista tbiddel il-lingwa permezz tal-buttuna tal-Għażliet"
 END
 
 STRINGTABLE
@@ -1653,7 +1653,7 @@ BEGIN
     IDS_USERSIP             "IP tal-users"
     IDS_FEATURES            "Għamla"
     IDS_IRC_NEWNICK         "Agħżel laqam għall-IRC."
-    IDS_IRC_NEWNICKDESC     "Irid ikun kelma waħda inqas minn 20 ittra magħmula minn (A-Z, 0-9). Tista tiġi mibdula mill-Preferenzi>IRC."
+    IDS_IRC_NEWNICKDESC     "Irid ikun kelma waħda inqas minn 20 ittra magħmula minn (A-Z, 0-9).\rTista tiġi mibdula mill-Preferenzi>IRC."
 END
 
 STRINGTABLE
@@ -2085,7 +2085,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Kollha għall-&Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Kollha għall-Ma&ss"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Imwaqqaf temporanjament"
+    IDS_REFRESH_INTERVAL_PAUSED "&Imwaqqaf temporanjament"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

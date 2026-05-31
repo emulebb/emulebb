@@ -531,7 +531,7 @@ BEGIN
     IDS_EM_MESSAGES         "&Mesaje"
     IDS_EM_STATISTIC        "St&atistici"
     IDS_EM_PREFS            "&Preferinţe"
-    IDS_MB_LANGUAGEINFO     "A fost selectată limba implicită. Poate fi schimbată oricînd din Preferinţe -> General."
+    IDS_MB_LANGUAGEINFO     "A fost selectată limba implicită.\r\n\r\nPoate fi schimbată oricînd din Preferinţe -> General."
 END
 
 STRINGTABLE
@@ -1632,7 +1632,7 @@ BEGIN
     IDS_USERSIP             "IP useri"
     IDS_FEATURES            "Opţiuni"
     IDS_IRC_NEWNICK         "Alege o poreclă  ptr. IRC."
-    IDS_IRC_NEWNICKDESC     "Trebuie să fie un cuvînt pînă în 20 de caractere, conţinînd (A-Z, 0-9). Poate fi oricînd schimbat din Preferinţe->IRC."
+    IDS_IRC_NEWNICKDESC     "Trebuie să fie un cuvînt pînă în 20 de caractere, conţinînd (A-Z, 0-9).\rPoate fi oricînd schimbat din Preferinţe->IRC."
 END
 
 STRINGTABLE
@@ -2097,7 +2097,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Toate la min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&Toate la Max"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Pauzat"
+    IDS_REFRESH_INTERVAL_PAUSED "&Pauzat"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

@@ -463,7 +463,7 @@ BEGIN
     IDS_EM_MESSAGES         "訊息"
     IDS_EM_STATISTIC        "統計"
     IDS_EM_PREFS            "選項"
-    IDS_MB_LANGUAGEINFO     "已經選用預設語言. 您能在任何時候於選項中設定使用的語言."
+    IDS_MB_LANGUAGEINFO     "已經選用預設語言.\r\n\r\n您能在任何時候於選項中設定使用的語言."
 END
 
 STRINGTABLE
@@ -1614,7 +1614,7 @@ BEGIN
     IDS_USERSIP             "使用者 IP"
     IDS_FEATURES            "特徵"
     IDS_IRC_NEWNICK         "選擇一個 IRC 暱稱."
-    IDS_IRC_NEWNICKDESC     "一個暱稱應該少於 20 個字元包含 (A-Z, 0-9). 能在 選項->IRC 再次改變它."
+    IDS_IRC_NEWNICKDESC     "一個暱稱應該少於 20 個字元包含 (A-Z, 0-9).\r能在 選項->IRC 再次改變它."
 END
 
 STRINGTABLE
@@ -2076,7 +2076,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "全部設為最小(&M)"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "全部設為最大(&X)"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "已&暫停"
+    IDS_REFRESH_INTERVAL_PAUSED "已&暫停"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

@@ -539,7 +539,7 @@ BEGIN
     IDS_EM_MESSAGES         "&رسائل"
     IDS_EM_STATISTIC        "احصائيات"
     IDS_EM_PREFS            "&خيارات"
-    IDS_MB_LANGUAGEINFO     "اللغة حددت, تستطيع تغيير اللغة  في اي وقت من  قائمة الأفضلية"
+    IDS_MB_LANGUAGEINFO     "اللغة حددت,\r\n\r\nتستطيع تغيير اللغة في اي وقت من قائمة الأفضلية"
 END
 
 STRINGTABLE
@@ -1637,7 +1637,7 @@ BEGIN
     IDS_USERSIP             "ايبي المستخدم"
     IDS_FEATURES            "ميزات"
     IDS_IRC_NEWNICK         "اختر اسم للدردشة."
-    IDS_IRC_NEWNICKDESC     "يجب ان تكون كلمة واحدة اقل من 20 حرف يتضمن (A-Z, 0-9). يمكن تغييرها لاحقا من  اّفضليات->Irc."
+    IDS_IRC_NEWNICKDESC     "يجب ان تكون كلمة واحدة اقل من 20 حرف يتضمن (A-Z, 0-9).\rيمكن تغييرها لاحقا من اّفضليات->Irc."
 END
 
 STRINGTABLE
@@ -2085,7 +2085,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "الكل إلى &الحد الأدنى"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "الكل إلى الحد الأ&قصى"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&متوقف مؤقتًا"
+    IDS_REFRESH_INTERVAL_PAUSED "&متوقف مؤقتًا"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

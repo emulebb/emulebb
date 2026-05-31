@@ -1644,7 +1644,7 @@ BEGIN
     IDS_USERSIP             "사용자 IP"
     IDS_FEATURES            "기능"
     IDS_IRC_NEWNICK         "IRC 대화명 선택."
-    IDS_IRC_NEWNICKDESC     "20자 이내의 (A-Z, 0-9)만을 포함한 한 단어이어야 합니다. 설정->IRC 에서 변경할 수 있습니다."
+    IDS_IRC_NEWNICKDESC     "20자 이내의 (A-Z, 0-9)만을 포함한 한 단어이어야 합니다.\r설정->IRC 에서 변경할 수 있습니다."
     IDS_SPARSEPARTFILES     "새 Part 파일을 'sparse'로 생성 (NFTS에서만 가능)"
     IDS_ASPECTRATIO         "화면 비율"
     IDS_NEGATEFILTER        "부전 필터"
@@ -1777,7 +1777,7 @@ BEGIN
     IDS_MEDIAINFO_DLLMISSING
                             "MediaInfo 라이브러리가 설치되지 않았습니다. 이 대화창의 오디오/비디오 파일에 대해 더 자세한 정보를 얻으려면\r\nhttps://mediaarea.net/ko/MediaInfo 에서 MediaInfo 라이브러리를 다운로드한 후,\r\nMediaInfo.dll 파일을 eMule 폴더 ""%s""에 설치하십시오.\r\n"
     IDS_WARNING_WRONGFILEEXTENTION
-                            "경고: ""%s"" 확장자는 일반적으로 이 파일 형식과 맞지 않습니다.\r\n이러한 형식의 파일을 사용하려면\r\n""%s"" 확장자를 올바른 형식으로 변경해야 합니다.\r\n"
+                            "경고: ""%s"" 확장자는 일반적으로 이 파일 형식과 맞지 않습니다.\r\n이러한 형식의 파일을 사용하려면\r\n""%s"" 확장자를 올바른 형식으로 변경해야 합니다.\r\n\r\n"
     IDS_MEDIAINFO_DRMWARNING
                             "경고: ""%s"" 파일은 디지털 저작권의 보호를 받습니다.\r\n정당한 권리없이 이 파일을 사용할 수 없습니다.\r\n"
     IDS_ARCHPREV_ATTRIBINFO "파일 속성 포함 가능 항목:\r\n\r\nP\t비밀번호 보호\r\nD\t디렉토리 정보\r\nC\t주석\r\nLx\t압축 수준 x\r\nM\t다운로드 완료되지 않은 압축 데이터\r\n<\t이번 볼륨과 접속됨\r\n>\t다음 볼륨과 접속됨\r\n"
@@ -2057,7 +2057,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "모두 최소로(&M)"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "모두 최대로(&X)"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&일시 중지"
+    IDS_REFRESH_INTERVAL_PAUSED "&일시 중지"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"

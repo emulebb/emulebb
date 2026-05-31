@@ -489,7 +489,7 @@ BEGIN
     IDS_EM_MESSAGES         "Ü&zenetek"
     IDS_EM_STATISTIC        "&Statisztika"
     IDS_EM_PREFS            "&Beállítások"
-    IDS_MB_LANGUAGEINFO     "Alapértelmezett nyelv kiválasztva. Ezt a beállítást bármikor megváltoztathatja a beállítások fülben."
+    IDS_MB_LANGUAGEINFO     "Alapértelmezett nyelv kiválasztva.\r\n\r\nEzt a beállítást bármikor megváltoztathatja a beállítások fülben."
 END
 
 STRINGTABLE
@@ -1630,7 +1630,7 @@ BEGIN
     IDS_USERSIP             "Felhasználók IP-je"
     IDS_FEATURES            "Tulajdonságok"
     IDS_IRC_NEWNICK         "Válassz egy IRC becenevet"
-    IDS_IRC_NEWNICKDESC     "Egy szóból állhat, 20 betűnél legyen rövidebb, ezeket használhatod: (A-Z, 0-9). Megváltoztatni később a Beállítások->Irc-ben lehet."
+    IDS_IRC_NEWNICKDESC     "Egy szóból állhat, 20 betűnél legyen rövidebb, ezeket használhatod: (A-Z, 0-9).\rMegváltoztatni később a Beállítások->Irc-ben lehet."
 END
 
 STRINGTABLE
@@ -2097,7 +2097,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Minden Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&Minden Max"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED                                "&Szüneteltetve"
+    IDS_REFRESH_INTERVAL_PAUSED "&Szüneteltetve"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
