@@ -2179,12 +2179,16 @@ void CemuleDlg::OnStartupTimer() noexcept
 					AddLogLine(true, GetResString(IDS_MAIN_READY), (LPCTSTR)theApp.m_strCurVersionLong);
 
 				theApp.m_app_state = APP_STATE_RUNNING; //initialization completed
-				toolbar->EnableButton(TBBTN_CONNECT, !theApp.IsStartupBindBlocked());
-				m_SysMenuOptions.EnableMenuItem(MP_CONNECT, theApp.IsStartupBindBlocked() ? MF_GRAYED : MF_ENABLED);
-				serverwnd->GetDlgItem(IDC_ED2KCONNECT)->EnableWindow(!theApp.IsStartupBindBlocked());
+				UpdateBindLossMonitor(false);
+				const bool bStartupConnectionCommandsEnabled = VpnGuardPolicySeams::CanUseStartupConnectionCommands(
+					thePrefs.GetVpnGuardMode(), theApp.IsStartupBindBlocked(), m_bBindLossMonitorActive);
+				toolbar->EnableButton(TBBTN_CONNECT, bStartupConnectionCommandsEnabled);
+				m_SysMenuOptions.EnableMenuItem(MP_CONNECT, bStartupConnectionCommandsEnabled ? MF_ENABLED : MF_GRAYED);
+				serverwnd->GetDlgItem(IDC_ED2KCONNECT)->EnableWindow(bStartupConnectionCommandsEnabled);
 				kademliawnd->UpdateControlsState(); //application state change is not tracked - force update
 
-				if (!theApp.IsStartupBindBlocked() && thePrefs.DoAutoConnect())
+				if (VpnGuardPolicySeams::CanPostStartupAutoConnect(thePrefs.DoAutoConnect()
+					, thePrefs.GetVpnGuardMode(), theApp.IsStartupBindBlocked(), m_bBindLossMonitorActive))
 					PostMessage(WM_COMMAND, MP_CONNECT, 0);
 
 #ifdef HAVE_WIN7_SDK_H
@@ -2270,7 +2274,7 @@ void CemuleDlg::StopTimer()
 		theApp.m_strPendingLink.Empty();
 	}
 
-	UpdateBindLossMonitor();
+	UpdateBindLossMonitor(false);
 }
 
 bool CemuleDlg::IsBindLossMonitorConfigured() const
@@ -2284,7 +2288,7 @@ bool CemuleDlg::IsBindLossMonitorConfigured() const
 		&& *thePrefs.GetBindAddr() != _T('\0');
 }
 
-void CemuleDlg::UpdateBindLossMonitor()
+void CemuleDlg::UpdateBindLossMonitor(bool bForceVpnGuardHttpProbe)
 {
 	StopBindLossMonitor();
 	if (!IsBindLossMonitorConfigured())
@@ -2310,7 +2314,7 @@ void CemuleDlg::UpdateBindLossMonitor()
 		|| m_hBindLossInterfaceNotification != NULL
 		|| m_hBindLossAddressNotification != NULL;
 	CheckBindLossMonitor();
-	CheckVpnGuardHttpMonitor(true);
+	CheckVpnGuardHttpMonitor(bForceVpnGuardHttpProbe);
 }
 
 void CemuleDlg::StopBindLossMonitor()

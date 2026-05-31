@@ -147,7 +147,7 @@ public:
 	void StopTimer();
 	void DoVersioncheck(bool manual);
 	/// Starts or stops the runtime bind-loss monitor according to the current preferences.
-	void UpdateBindLossMonitor();
+	void UpdateBindLossMonitor(bool bForceVpnGuardHttpProbe = true);
 	void ApplyHyperTextFont(LPLOGFONT pFont);
 	void ApplyLogFont(LPLOGFONT pFont);
 	void ProcessED2KLink(LPCTSTR pszData);
