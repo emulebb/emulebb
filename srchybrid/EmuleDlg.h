@@ -154,6 +154,7 @@ public:
 	void CloseP2PNetworkStack(const CString& strReason);
 	bool EnsureNetworkGuardAllowsConnect(const CString& strRequestName);
 	bool IsP2PTransportAllowedForNetworkGuard(const CString& strRequestName);
+	void HandleNetworkGuardTransportViolation(const CString& strRequestName);
 	void HandleNetworkGuardProtocolPublicIp(const CString& strSource, uint32 uNetworkOrderAddress);
 	void ApplyHyperTextFont(LPLOGFONT pFont);
 	void ApplyLogFont(LPLOGFONT pFont);

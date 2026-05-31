@@ -2488,6 +2488,11 @@ void CemuleDlg::ExitForNetworkGuardFailure(const CString &strReason)
 	m_bBindLossShutdown = true;
 	StopBindLossMonitor();
 	LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
+	if (thePrefs.DoAutoConnect()) {
+		thePrefs.SetAutoConnect(false);
+		if (thePrefs.Save())
+			LogWarning(LOG_STATUSBAR, _T("Network Guard failed to persist disabled auto-connect before shutdown."));
+	}
 	CloseP2PNetworkStack(strReason);
 	PostMessage(WM_CLOSE);
 }
@@ -4160,6 +4165,14 @@ bool CemuleDlg::IsP2PTransportAllowedForNetworkGuard(const CString& strRequestNa
 		, IsNetworkGuardCurrentKeyApproved()
 		, m_uNetworkGuardReplayAuthorizedFlags
 		, uRequestFlags);
+}
+
+void CemuleDlg::HandleNetworkGuardTransportViolation(const CString& strRequestName)
+{
+	CString strReason;
+	strReason.Format(_T("Network Guard runtime failed: blocked P2P transport reached %s without an approved public IP check"),
+		(LPCTSTR)strRequestName);
+	ExitForNetworkGuardFailure(strReason);
 }
 
 void CemuleDlg::HandleNetworkGuardProtocolPublicIp(const CString& strSource, uint32 uNetworkOrderAddress)
