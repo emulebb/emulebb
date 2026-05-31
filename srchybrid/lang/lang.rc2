@@ -35,11 +35,11 @@ BEGIN
     BEGIN
         BLOCK "040904B0" // Lang=US English, CharSet=Unicode
         BEGIN
-            VALUE "CompanyName", "http://www.emule-project.net"
-            VALUE "FileDescription", "eMule Language DLL"
+            VALUE "CompanyName", "https://github.com/emulebb"
+            VALUE "FileDescription", "eMuleBB Language DLL"
             VALUE "FileVersion", SZ_VERSION_NAME
             VALUE "LegalCopyright", "Copyright © 2002-2026 Merkur - read license.txt for more infos"
-            VALUE "ProductName", "eMule"
+            VALUE "ProductName", "eMule broadband edition"
             VALUE "ProductVersion", SZ_VERSION_NAME
         END
     END
