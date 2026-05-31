@@ -64,6 +64,7 @@
 #include "Opcodes.h"
 #include "ProtocolGuards.h"
 #include "PublicIpProbe.h"
+#include "NetworkGuardSeams.h"
 #include "SharedFileList.h"
 #include "SharedFileListSeams.h"
 #include "ED2KLink.h"
@@ -160,6 +161,11 @@ namespace
 	static const UINT_PTR kBindLossWatchdogTimerId = 0xB10D;
 	static const UINT kBindLossWatchdogIntervalMs = SEC2MS(10);
 	static const UINT_PTR kTransferRateDisplayTimerId = 0xB10E;
+	static const UINT kNetworkGuardHttpIntervalMs = MIN2MS(15);
+	static const UINT kNetworkGuardQueuedFullConnect = 0x01;
+	static const UINT kNetworkGuardQueuedEd2k = 0x02;
+	static const UINT kNetworkGuardQueuedKad = 0x04;
+	static const UINT kNetworkGuardQueuedRuntime = 0x08;
 
 	static bool IsKeyboardShortcutModalContext(const CWnd &wnd)
 	{
@@ -223,6 +229,51 @@ namespace
 		text.strStartupDisabledPrefix = GetResString(IDS_BIND_STARTUP_DISABLED_PREFIX);
 		text.strRuntimeExitPrefix = GetResString(IDS_BIND_EXIT_PREFIX);
 		return text;
+	}
+
+	static bool IsNetworkGuardP2PActive()
+	{
+		return (theApp.serverconnect != NULL && (theApp.serverconnect->IsConnected() || theApp.serverconnect->IsConnecting()))
+			|| (theApp.serverconnect != NULL && theApp.serverconnect->IsUDPSocketAvailable())
+			|| Kademlia::CKademlia::IsRunning()
+			|| (theApp.clientudp != NULL && theApp.clientudp->GetConnectedPort() != 0)
+			|| (theApp.listensocket != NULL && theApp.listensocket->IsListening())
+			|| (theApp.listensocket != NULL && theApp.listensocket->GetOpenSockets() > 0);
+	}
+
+	static bool TryLoadNetworkGuardAllowedRanges(std::vector<NetworkGuardSeams::SAllowedIpv4Range>& rRanges, CString& rstrError)
+	{
+		return NetworkGuardSeams::TryParseAllowedIpv4Ranges(thePrefs.GetNetworkGuardAllowedCIDRs(), rRanges, rstrError);
+	}
+
+	static CString FormatNetworkGuardPublicIpFailure(const CString& strContext, const PublicIpProbe::SBoundPublicIpv4ProbeResult& result, const CString& strDetail)
+	{
+		CString strReason;
+		if (result.bSucceeded) {
+			strReason.Format(_T("Network Guard %s failed: public IPv4 %S from %s is not allowed by CIDRs %s%s%s"),
+				(LPCTSTR)strContext,
+				result.strPublicAddress.GetString(),
+				(LPCTSTR)result.strProviderUrl,
+				(LPCTSTR)thePrefs.GetNetworkGuardAllowedCIDRs(),
+				strDetail.IsEmpty() ? _T("") : _T(" - "),
+				(LPCTSTR)strDetail);
+		} else {
+			strReason.Format(_T("Network Guard %s failed: bound public IPv4 probe failed for CIDRs %s%s%s"),
+				(LPCTSTR)strContext,
+				(LPCTSTR)thePrefs.GetNetworkGuardAllowedCIDRs(),
+				strDetail.IsEmpty() ? _T("") : _T(" - "),
+				(LPCTSTR)(strDetail.IsEmpty() ? result.strError : strDetail));
+		}
+		return strReason;
+	}
+
+	static UINT GetNetworkGuardQueueFlagsForRequest(const CString& strRequestName)
+	{
+		if (strRequestName.Find(_T("Kad")) >= 0)
+			return kNetworkGuardQueuedKad;
+		if (strRequestName.Find(_T("eD2K")) >= 0)
+			return kNetworkGuardQueuedEd2k;
+		return kNetworkGuardQueuedFullConnect;
 	}
 
 	static CString GetConfigFilePath(LPCTSTR pszLeafName)
@@ -565,8 +616,13 @@ namespace
 				{"activeInterfaceIndex", thePrefs.GetActiveBindInterfaceIndex()},
 				{"startupBlockEnabled", thePrefs.IsStartupBindBlockEnabled()},
 				{"activeStartupBlockEnabled", thePrefs.IsActiveStartupBindBlockEnabled()},
-				{"exitOnInterfaceLoss", thePrefs.IsExitOnBindInterfaceLossEnabled()},
 				{"resolveResult", static_cast<int>(thePrefs.GetActiveBindAddressResolveResult())}
+			}},
+			{"networkGuard", nlohmann::json{
+				{"mode", JsonString(NetworkGuardSeams::GetModePreferenceText(thePrefs.GetNetworkGuardMode()))},
+				{"allowedCIDRs", JsonString(thePrefs.GetNetworkGuardAllowedCIDRs())},
+				{"startupBlocked", theApp.IsStartupBindBlocked()},
+				{"startupBlockReason", JsonString(theApp.GetStartupBindBlockReason())}
 			}},
 			{"ed2k", nlohmann::json{
 				{"connected", theApp.serverconnect != NULL && theApp.serverconnect->IsConnected()},
@@ -1302,6 +1358,7 @@ BEGIN_MESSAGE_MAP(CemuleDlg, CTrayDialog)
 	ON_MESSAGE(UM_GEOLOCATION_UPDATED, OnGeoLocationUpdated)
 	ON_MESSAGE(UM_IPFILTER_UPDATED, OnIPFilterUpdated)
 	ON_MESSAGE(UM_BIND_INTERFACE_CHANGED, OnBindInterfaceChanged)
+	ON_MESSAGE(UM_NETWORK_GUARD_PROBE_RESULT, OnNetworkGuardProbeResult)
 	ON_WM_SHOWWINDOW()
 	ON_WM_DESTROY()
 	ON_WM_SETTINGCHANGE()
@@ -1408,6 +1465,11 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_bInitedCOM()
 	, m_bBindLossMonitorActive()
 	, m_bBindLossShutdown()
+	, m_bNetworkGuardProbePending()
+	, m_bNetworkGuardProbePassForReplay()
+	, m_uNetworkGuardQueuedConnectFlags()
+	, m_uNetworkGuardProbeGeneration()
+	, m_ullLastNetworkGuardRuntimeProbeTick()
 	, m_uBindLossWatchdogTimer()
 	, m_uTransferRateDisplayTimer()
 	, m_hBindLossInterfaceNotification()
@@ -2041,7 +2103,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 #endif
 				if (theApp.IsStartupBindBlocked()) {
 					LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
-				} else {
+				} else if (thePrefs.GetNetworkGuardMode() != NetworkGuardSeams::EMode::Block) {
 					if (!theApp.listensocket->StartListening()) {
 						CString strError;
 						strError.Format(GetResString(IDS_MAIN_SOCKETERROR), thePrefs.GetPort());
@@ -2057,8 +2119,9 @@ void CemuleDlg::OnStartupTimer() noexcept
 						if (thePrefs.GetNotifierOnImportantError())
 							theApp.emuledlg->ShowNotifier(strError, TBN_IMPORTANTEVENT);
 					}
-					PublicIpProbe::StartBoundPublicIpv4Probe();
 				}
+				if (!theApp.IsStartupBindBlocked() && thePrefs.GetNetworkGuardMode() != NetworkGuardSeams::EMode::Off)
+					StartNetworkGuardProbe(_T("startup"), 0);
 #if EMULEBB_HAS_STARTUP_PROFILING
 				theApp.AppendStartupProfileLine(_T("StartupTimer stage 4: socket startup"), theApp.GetStartupProfileElapsedUs(ullSocketInitStart));
 #endif
@@ -2164,7 +2227,7 @@ void CemuleDlg::StopTimer()
 bool CemuleDlg::IsBindLossMonitorConfigured() const
 {
 	return theApp.IsRunning()
-		&& thePrefs.IsExitOnBindInterfaceLossEnabled()
+		&& thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Block
 		&& !theApp.IsStartupBindBlocked()
 		&& !thePrefs.GetActiveBindInterface().IsEmpty()
 		&& thePrefs.GetActiveBindAddressResolveResult() == BARR_Resolved
@@ -2192,12 +2255,13 @@ void CemuleDlg::UpdateBindLossMonitor()
 
 	m_uBindLossWatchdogTimer = SetTimer(kBindLossWatchdogTimerId, kBindLossWatchdogIntervalMs, NULL);
 	if (m_uBindLossWatchdogTimer == 0)
-		DebugLogWarning(_T("Bind-loss protection: failed to start the watchdog timer."));
+		DebugLogWarning(_T("Network Guard: failed to start the watchdog timer."));
 
 	m_bBindLossMonitorActive = m_uBindLossWatchdogTimer != 0
 		|| m_hBindLossInterfaceNotification != NULL
 		|| m_hBindLossAddressNotification != NULL;
 	CheckBindLossMonitor();
+	CheckNetworkGuardHttpMonitor(true);
 }
 
 void CemuleDlg::StopBindLossMonitor()
@@ -2258,10 +2322,141 @@ void CemuleDlg::CheckBindLossMonitor()
 		, strResolvedAddress
 		, strActiveBindAddress
 		, GetBindRuntimeLossPolicyText());
-	ExitForBindLoss(strReason);
+	ExitForNetworkGuardFailure(strReason);
 }
 
-void CemuleDlg::ExitForBindLoss(const CString &strReason)
+void CemuleDlg::CheckNetworkGuardHttpMonitor(bool bForce)
+{
+	if (m_bBindLossShutdown
+		|| thePrefs.GetNetworkGuardMode() != NetworkGuardSeams::EMode::Block
+		|| theApp.IsStartupBindBlocked()
+		|| !IsNetworkGuardP2PActive())
+		return;
+
+	const ULONGLONG ullNow = ::GetTickCount64();
+	if (!bForce && m_ullLastNetworkGuardRuntimeProbeTick != 0 && ullNow - m_ullLastNetworkGuardRuntimeProbeTick < kNetworkGuardHttpIntervalMs)
+		return;
+	m_ullLastNetworkGuardRuntimeProbeTick = ullNow;
+
+	(void)StartNetworkGuardProbe(_T("runtime"), kNetworkGuardQueuedRuntime);
+}
+
+void CemuleDlg::InvalidateNetworkGuardProbeState()
+{
+	m_bNetworkGuardProbePending = false;
+	m_bNetworkGuardProbePassForReplay = false;
+	m_uNetworkGuardQueuedConnectFlags = 0;
+	m_strNetworkGuardProbeKey.Empty();
+	++m_uNetworkGuardProbeGeneration;
+}
+
+CString CemuleDlg::BuildNetworkGuardProbeKey(CString& rstrError) const
+{
+	rstrError.Empty();
+	std::vector<NetworkGuardSeams::SAllowedIpv4Range> ranges;
+	if (!TryLoadNetworkGuardAllowedRanges(ranges, rstrError))
+		return CString();
+	if (thePrefs.GetActiveBindInterface().IsEmpty()
+		|| thePrefs.GetActiveBindAddressResolveResult() != BARR_Resolved
+		|| thePrefs.GetActiveBindInterfaceIndex() == 0
+		|| thePrefs.GetBindAddr() == NULL
+		|| *thePrefs.GetBindAddr() == _T('\0')) {
+		rstrError = _T("active bind interface is not resolved");
+		return CString();
+	}
+
+	CString strKey;
+	strKey.Format(_T("%s|%s|%s|%s|%lu"),
+		NetworkGuardSeams::GetModePreferenceText(thePrefs.GetNetworkGuardMode()),
+		(LPCTSTR)thePrefs.GetNetworkGuardAllowedCIDRs(),
+		(LPCTSTR)thePrefs.GetActiveBindInterface(),
+		thePrefs.GetBindAddr(),
+		thePrefs.GetActiveBindInterfaceIndex());
+	return strKey;
+}
+
+bool CemuleDlg::StartNetworkGuardProbe(const CString& strPurpose, UINT uQueuedConnectFlags)
+{
+	if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Off || theApp.IsStartupBindBlocked())
+		return false;
+
+	CString strError;
+	const CString strKey = BuildNetworkGuardProbeKey(strError);
+	if (strKey.IsEmpty()) {
+		const CString strReason = FormatNetworkGuardPublicIpFailure(strPurpose, PublicIpProbe::SBoundPublicIpv4ProbeResult(), strError);
+		if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Block) {
+			if ((uQueuedConnectFlags & kNetworkGuardQueuedRuntime) != 0 || IsNetworkGuardP2PActive())
+				ExitForNetworkGuardFailure(strReason);
+			else
+				ApplyNetworkGuardSessionBlock(strReason);
+		} else {
+			LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
+		}
+		return false;
+	}
+
+	if (m_bNetworkGuardProbePending && m_strNetworkGuardProbeKey.Compare(strKey) == 0) {
+		m_uNetworkGuardQueuedConnectFlags |= uQueuedConnectFlags;
+		return true;
+	}
+
+	m_bNetworkGuardProbePending = true;
+	m_bNetworkGuardProbePassForReplay = false;
+	m_uNetworkGuardQueuedConnectFlags = uQueuedConnectFlags;
+	m_strNetworkGuardProbeKey = strKey;
+	const uint32 uGeneration = ++m_uNetworkGuardProbeGeneration;
+
+	if (!PublicIpProbe::StartBoundPublicIpv4Probe(m_hWnd, UM_NETWORK_GUARD_PROBE_RESULT, uGeneration, strPurpose, strError)) {
+		m_bNetworkGuardProbePending = false;
+		const CString strReason = FormatNetworkGuardPublicIpFailure(strPurpose, PublicIpProbe::SBoundPublicIpv4ProbeResult(), strError);
+		if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Block) {
+			if ((uQueuedConnectFlags & kNetworkGuardQueuedRuntime) != 0 || IsNetworkGuardP2PActive())
+				ExitForNetworkGuardFailure(strReason);
+			else
+				ApplyNetworkGuardSessionBlock(strReason);
+		} else {
+			LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
+		}
+		return false;
+	}
+
+	DebugLog(_T("Network Guard %s check pending: allowedCIDRs=%s bindInterface=%s localBind=%s"),
+		(LPCTSTR)strPurpose,
+		(LPCTSTR)thePrefs.GetNetworkGuardAllowedCIDRs(),
+		(LPCTSTR)thePrefs.GetActiveBindInterfaceName(),
+		thePrefs.GetBindAddr());
+	return true;
+}
+
+void CemuleDlg::ApplyNetworkGuardSessionBlock(const CString& strReason)
+{
+	theApp.BlockStartupNetworkingForSession(strReason);
+	LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
+	if (toolbar != NULL)
+		toolbar->EnableButton(TBBTN_CONNECT, false);
+	m_SysMenuOptions.EnableMenuItem(MP_CONNECT, MF_GRAYED);
+	if (serverwnd != NULL && serverwnd->GetSafeHwnd() != NULL)
+		serverwnd->GetDlgItem(IDC_ED2KCONNECT)->EnableWindow(FALSE);
+	if (kademliawnd != NULL)
+		kademliawnd->UpdateControlsState();
+	ShowConnectionState();
+}
+
+void CemuleDlg::ReplayNetworkGuardQueuedConnect(UINT uQueuedConnectFlags)
+{
+	if ((uQueuedConnectFlags & kNetworkGuardQueuedRuntime) != 0)
+		return;
+	if ((uQueuedConnectFlags & kNetworkGuardQueuedFullConnect) != 0) {
+		StartConnection();
+		return;
+	}
+	if ((uQueuedConnectFlags & kNetworkGuardQueuedEd2k) != 0 && theApp.serverconnect != NULL)
+		theApp.serverconnect->ConnectToAnyServer();
+	if ((uQueuedConnectFlags & kNetworkGuardQueuedKad) != 0)
+		Kademlia::CKademlia::Start();
+}
+
+void CemuleDlg::ExitForNetworkGuardFailure(const CString &strReason)
 {
 	if (m_bBindLossShutdown)
 		return;
@@ -2269,6 +2464,7 @@ void CemuleDlg::ExitForBindLoss(const CString &strReason)
 	m_bBindLossShutdown = true;
 	StopBindLossMonitor();
 	LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
+	CloseP2PNetworkStack(strReason);
 	PostMessage(WM_CLOSE);
 }
 
@@ -2280,7 +2476,52 @@ LRESULT CemuleDlg::OnStartupNextStage(WPARAM, LPARAM)
 
 LRESULT CemuleDlg::OnBindInterfaceChanged(WPARAM, LPARAM)
 {
+	InvalidateNetworkGuardProbeState();
 	CheckBindLossMonitor();
+	CheckNetworkGuardHttpMonitor(true);
+	return 0;
+}
+
+LRESULT CemuleDlg::OnNetworkGuardProbeResult(WPARAM wParam, LPARAM lParam)
+{
+	std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult(reinterpret_cast<PublicIpProbe::SBoundPublicIpv4ProbeResult*>(lParam));
+	if (pResult.get() == NULL || static_cast<uint32>(wParam) != m_uNetworkGuardProbeGeneration || pResult->uGeneration != m_uNetworkGuardProbeGeneration)
+		return 0;
+
+	const UINT uQueuedConnectFlags = m_uNetworkGuardQueuedConnectFlags;
+	m_bNetworkGuardProbePending = false;
+	m_uNetworkGuardQueuedConnectFlags = 0;
+
+	std::vector<NetworkGuardSeams::SAllowedIpv4Range> ranges;
+	CString strError;
+	const bool bAllowed = TryLoadNetworkGuardAllowedRanges(ranges, strError)
+		&& pResult->bSucceeded
+		&& NetworkGuardSeams::IsIpv4Allowed(pResult->uPublicAddress, ranges);
+	const bool bRuntime = (uQueuedConnectFlags & kNetworkGuardQueuedRuntime) != 0;
+	if (bAllowed) {
+		DebugLog(_T("Network Guard %s check passed: provider=%s publicIp=%S allowedCIDRs=%s"),
+			(LPCTSTR)pResult->strPurpose,
+			(LPCTSTR)pResult->strProviderUrl,
+			pResult->strPublicAddress.GetString(),
+			(LPCTSTR)thePrefs.GetNetworkGuardAllowedCIDRs());
+		if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Block && !bRuntime && uQueuedConnectFlags != 0) {
+			m_bNetworkGuardProbePassForReplay = true;
+			ReplayNetworkGuardQueuedConnect(uQueuedConnectFlags);
+			m_bNetworkGuardProbePassForReplay = false;
+			m_strNetworkGuardProbeKey.Empty();
+		}
+		return 0;
+	}
+
+	const CString strReason = FormatNetworkGuardPublicIpFailure(pResult->strPurpose, *pResult, strError);
+	if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Warn) {
+		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
+		return 0;
+	}
+	if (IsNetworkGuardP2PActive())
+		ExitForNetworkGuardFailure(strReason);
+	else
+		ApplyNetworkGuardSessionBlock(strReason);
 	return 0;
 }
 
@@ -3758,6 +3999,10 @@ void CemuleDlg::StartConnection()
 		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
 		return;
 	}
+	if (!EnsureNetworkGuardAllowsConnect(_T("connect")))
+		return;
+	if (!EnsureP2PSocketsStarted())
+		return;
 
 	if ((!theApp.serverconnect->IsConnecting() && !theApp.serverconnect->IsConnected()) || !Kademlia::CKademlia::IsRunning()) {
 		// UPnP is still trying to open the ports. In order to not get a LowID by connecting to the servers / kad before
@@ -3790,12 +4035,96 @@ void CemuleDlg::StartConnection()
 
 void CemuleDlg::CloseConnection()
 {
+	CloseP2PNetworkStack(_T("user requested disconnect"));
+	ShowConnectionState();
+}
+
+bool CemuleDlg::EnsureP2PSocketsStarted()
+{
+	if (theApp.listensocket != NULL && !theApp.listensocket->IsListening()) {
+		if (!theApp.listensocket->StartListening()) {
+			CString strError;
+			strError.Format(GetResString(IDS_MAIN_SOCKETERROR), thePrefs.GetPort());
+			LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strError);
+			if (thePrefs.GetNotifierOnImportantError())
+				ShowNotifier(strError, TBN_IMPORTANTEVENT);
+			return false;
+		}
+	}
+	if (theApp.clientudp != NULL && theApp.clientudp->GetConnectedPort() == 0) {
+		if (!theApp.clientudp->Create()) {
+			CString strError;
+			strError.Format(GetResString(IDS_MAIN_SOCKETERROR), thePrefs.GetUDPPort());
+			LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strError);
+			if (thePrefs.GetNotifierOnImportantError())
+				ShowNotifier(strError, TBN_IMPORTANTEVENT);
+			return false;
+		}
+	}
+	if (theApp.serverconnect != NULL && !theApp.serverconnect->EnsureUDPSocket()) {
+		LogError(LOG_STATUSBAR, _T("Failed to open the eD2K server UDP socket."));
+		return false;
+	}
+	return true;
+}
+
+void CemuleDlg::CloseP2PNetworkStack(const CString& strReason)
+{
+	DebugLog(_T("Closing P2P network stack: %s"), (LPCTSTR)strReason);
 	theApp.serverconnect->StopConnectionTry();
 	theApp.serverconnect->Disconnect();
+	theApp.serverconnect->CloseUDPSocket();
 
 	Kademlia::CKademlia::Stop();
+	if (theApp.downloadqueue != NULL)
+		theApp.downloadqueue->StopUDPRequests();
+	if (theApp.clientlist != NULL)
+		theApp.clientlist->DeleteAll();
+	if (theApp.listensocket != NULL) {
+		theApp.listensocket->StopListening();
+		theApp.listensocket->Close();
+		theApp.listensocket->KillAllSockets();
+	}
+	if (theApp.clientudp != NULL)
+		theApp.clientudp->CloseAndClear();
 	theApp.OnlineSig(); // Added By Bouc7
-	ShowConnectionState();
+}
+
+bool CemuleDlg::EnsureNetworkGuardAllowsConnect(const CString& strRequestName)
+{
+	const NetworkGuardSeams::EMode eMode = thePrefs.GetNetworkGuardMode();
+	if (eMode == NetworkGuardSeams::EMode::Off)
+		return true;
+	if (eMode == NetworkGuardSeams::EMode::Warn) {
+		(void)StartNetworkGuardProbe(strRequestName, 0);
+		return true;
+	}
+	if (m_bNetworkGuardProbePassForReplay)
+		return true;
+	(void)StartNetworkGuardProbe(strRequestName, GetNetworkGuardQueueFlagsForRequest(strRequestName));
+	return false;
+}
+
+void CemuleDlg::HandleNetworkGuardProtocolPublicIp(const CString& strSource, uint32 uNetworkOrderAddress)
+{
+	if (uNetworkOrderAddress == 0 || thePrefs.GetNetworkGuardMode() != NetworkGuardSeams::EMode::Block || theApp.IsStartupBindBlocked())
+		return;
+
+	std::vector<NetworkGuardSeams::SAllowedIpv4Range> ranges;
+	CString strError;
+	if (!TryLoadNetworkGuardAllowedRanges(ranges, strError)) {
+		ExitForNetworkGuardFailure(FormatNetworkGuardPublicIpFailure(strSource, PublicIpProbe::SBoundPublicIpv4ProbeResult(), strError));
+		return;
+	}
+	if (NetworkGuardSeams::IsIpv4Allowed(uNetworkOrderAddress, ranges))
+		return;
+
+	CString strReason;
+	strReason.Format(_T("Network Guard runtime failed: %s reported public IPv4 %s outside allowed CIDRs %s"),
+		(LPCTSTR)strSource,
+		(LPCTSTR)ipstr(uNetworkOrderAddress),
+		(LPCTSTR)thePrefs.GetNetworkGuardAllowedCIDRs());
+	ExitForNetworkGuardFailure(strReason);
 }
 
 void CemuleDlg::RestoreWindow()
@@ -6243,6 +6572,7 @@ void CemuleDlg::OnTimer(UINT_PTR nIDEvent)
 	}
 	if (nIDEvent == kBindLossWatchdogTimerId) {
 		CheckBindLossMonitor();
+		CheckNetworkGuardHttpMonitor(false);
 		return;
 	}
 	__super::OnTimer(nIDEvent);

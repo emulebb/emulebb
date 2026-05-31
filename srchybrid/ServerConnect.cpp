@@ -36,6 +36,7 @@
 #include "ServerConnectSeams.h"
 #include "Win32CallbackTimerSeams.h"
 #include "IPv4AddressSeams.h"
+#include "NetworkGuardSeams.h"
 
 #include <memory>
 #include <new>
@@ -87,6 +88,8 @@ void CServerConnect::ConnectToAnyServer(INT_PTR startAt, bool prioSort, bool isA
 			LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
 		return;
 	}
+	if (theApp.emuledlg != NULL && (!theApp.emuledlg->EnsureNetworkGuardAllowsConnect(_T("eD2K server connect")) || !theApp.emuledlg->EnsureP2PSocketsStarted()))
+		return;
 
 	StopConnectionTry();
 	Disconnect();
@@ -136,6 +139,8 @@ void CServerConnect::ConnectToServer(CServer *server, bool multiconnect, bool bN
 		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
 		return;
 	}
+	if (theApp.emuledlg != NULL && (!theApp.emuledlg->EnsureNetworkGuardAllowsConnect(_T("eD2K server connect")) || !theApp.emuledlg->EnsureP2PSocketsStarted()))
+		return;
 
 	if (ServerConnectSeams::ShouldSuppressDuplicateConnectRequest(bManual, IsConnecting(), AwaitingConnectionToServer(server))) {
 		DebugLog(_T("Server retry path: suppressing duplicate connection request to server already awaiting login"));
@@ -545,7 +550,7 @@ CServerConnect::CServerConnect()
 	, connected()
 	, m_bTryObfuscated()
 {
-	if (thePrefs.GetServerUDPPort() != 0) {
+	if (thePrefs.GetNetworkGuardMode() != NetworkGuardSeams::EMode::Block && thePrefs.GetServerUDPPort() != 0) {
 		udpsocket = new CUDPSocket(); // initialize socket for udp packets
 		if (!udpsocket->Create()) {
 			delete udpsocket;
@@ -554,6 +559,28 @@ CServerConnect::CServerConnect()
 	} else
 		udpsocket = NULL;
 	InitLocalIP();
+}
+
+bool CServerConnect::EnsureUDPSocket()
+{
+	if (udpsocket != NULL || thePrefs.GetServerUDPPort() == 0)
+		return true;
+	udpsocket = new CUDPSocket();
+	if (!udpsocket->Create()) {
+		delete udpsocket;
+		udpsocket = NULL;
+		return false;
+	}
+	return true;
+}
+
+void CServerConnect::CloseUDPSocket()
+{
+	if (udpsocket == NULL)
+		return;
+	udpsocket->Close();
+	delete udpsocket;
+	udpsocket = NULL;
 }
 
 CServerConnect::~CServerConnect()

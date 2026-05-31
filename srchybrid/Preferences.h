@@ -21,6 +21,7 @@
 
 #include "BindAddressResolver.h"
 #include "DisplayRefreshSeams.h"
+#include "NetworkGuardSeams.h"
 #include "PartFilePersistenceSeams.h"
 #include "PreferenceValidationSeams.h"
 #include "Opcodes.h"
@@ -205,7 +206,8 @@ public:
 	static EBindAddressResolveResult m_eActiveBindAddrResolveResult;
 	static bool		m_bBlockNetworkWhenBindUnavailableAtStartup;
 	static bool		m_bActiveStartupBindBlockEnabled;
-	static bool		m_bExitOnBindInterfaceLoss;
+	static NetworkGuardSeams::EMode m_eNetworkGuardMode;
+	static CString	m_strNetworkGuardAllowedCIDRs;
 	static bool		m_bRandomizePortsOnStartup;
 	static uint16	port;
 	static uint16	udpport;
@@ -822,10 +824,10 @@ public:
 	static const CString& GetBindInterfaceName()		{ return m_strBindInterfaceName; }
 	static EBindAddressResolveResult GetBindAddressResolveResult() { return m_eActiveBindAddrResolveResult; }
 	static bool		IsStartupBindBlockEnabled()			{ return m_bBlockNetworkWhenBindUnavailableAtStartup; }
-	/// Returns whether eMule should exit when the configured bind interface disappears after startup.
-	static bool		IsExitOnBindInterfaceLossEnabled()	{ return m_bExitOnBindInterfaceLoss; }
-	/// Configures whether eMule should exit when the configured bind interface disappears after startup.
-	static void		SetExitOnBindInterfaceLossEnabled(bool bEnabled) { m_bExitOnBindInterfaceLoss = bEnabled; }
+	static NetworkGuardSeams::EMode GetNetworkGuardMode() { return m_eNetworkGuardMode; }
+	static void		SetNetworkGuardMode(NetworkGuardSeams::EMode eMode) { m_eNetworkGuardMode = eMode; }
+	static const CString& GetNetworkGuardAllowedCIDRs() { return m_strNetworkGuardAllowedCIDRs; }
+	static void		SetNetworkGuardAllowedCIDRs(const CString& strAllowedCIDRs) { m_strNetworkGuardAllowedCIDRs = strAllowedCIDRs; }
 	static const CString& GetActiveConfiguredBindAddr()	{ return m_strActiveConfiguredBindAddr; }
 	static const CString& GetActiveBindInterface()		{ return m_strActiveBindInterface; }
 	static const CString& GetActiveBindInterfaceName()	{ return m_strActiveBindInterfaceName; }

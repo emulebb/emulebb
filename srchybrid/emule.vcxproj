@@ -613,6 +613,7 @@
     <ClInclude Include="MuleSystrayDlg.h" />
     <ClInclude Include="MuleToolBarCtrl.h" />
     <ClInclude Include="NetworkInfoDlg.h" />
+    <ClInclude Include="NetworkGuardSeams.h" />
     <ClInclude Include="Opcodes.h" />
     <ClInclude Include="OScopeCtrl.h" />
     <ClInclude Include="OtherFunctions.h" />

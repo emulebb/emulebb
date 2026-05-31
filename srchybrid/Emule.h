@@ -127,6 +127,7 @@ public:
 	bool IsClosing() const	{ return IsAppStateClosing(m_app_state); }
 	bool IsStartupBindBlocked() const						{ return m_bStartupBindBlocked; }
 	const CString& GetStartupBindBlockReason() const		{ return m_strStartupBindBlockReason; }
+	void BlockStartupNetworkingForSession(const CString& strReason);
 	/**
 	 * @brief Reports whether the startup timer completed all UI/runtime setup stages.
 	 */

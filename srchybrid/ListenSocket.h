@@ -104,6 +104,7 @@ public:
 
 	bool	StartListening();
 	void	StopListening();
+	bool	IsListening() const		{ return bListening; }
 	virtual void OnAccept(int nErrorCode);
 	void	Process();
 	void	RemoveSocket(CClientReqSocket *todel);

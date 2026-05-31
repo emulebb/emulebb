@@ -378,8 +378,10 @@ BEGIN
     EDITTEXT        IDC_BIND_ADDRESS,11,269,114,12,ES_AUTOHSCROLL
     CONTROL         "Keep networking offline if the bind target is unavailable at startup",IDC_STARTUP_BIND_BLOCK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,286,370,18
-    CONTROL         "Exit eMule if the selected bind/VPN interface is lost",IDC_EXIT_ON_BIND_LOSS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,306,370,18
+    LTEXT           "Network Guard",IDC_NETWORK_GUARD_MODE_LABEL,11,306,70,8
+    COMBOBOX        IDC_NETWORK_GUARD_MODE,84,304,88,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Allowed public IPv4 CIDRs/IPs",IDC_NETWORK_GUARD_CIDRS_LABEL,180,306,120,8
+    EDITTEXT        IDC_NETWORK_GUARD_CIDRS,302,304,79,12,ES_AUTOHSCROLL
     LTEXT           "",IDC_BIND_STATUS,11,326,370,16
     LTEXT           "",IDC_BIND_RESTART_NOTE,11,344,370,28
 END
@@ -3466,6 +3468,15 @@ BEGIN
     IDS_HM_LINK_DOC_TOOLS_MENU           "Tools menu guide"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Controllers and REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Troubleshooting"
+    IDS_NETWORK_GUARD                    "Network Guard"
+    IDS_NETWORK_GUARD_ALLOWED_CIDRS      "Allowed public IPv4 CIDRs/IPs"
+    IDS_NETWORK_GUARD_MODE_OFF           "Off"
+    IDS_NETWORK_GUARD_MODE_WARN          "Warn"
+    IDS_NETWORK_GUARD_MODE_BLOCK         "Block"
+    IDS_CONNECTION_TT_NETWORK_GUARD_MODE "Controls VPN public-IP guard behavior for P2P networking."
+    IDS_CONNECTION_TT_NETWORK_GUARD_CIDRS "Comma-separated public IPv4 CIDRs or single public IPv4 addresses allowed for P2P networking."
+    IDS_NETWORK_GUARD_BIND_REQUIRED      "Network Guard Block mode requires a specific bind interface."
+    IDS_NETWORK_GUARD_BIND_UNRESOLVED    "Network Guard Block mode requires the selected bind interface to resolve to a usable IPv4 address."
     IDS_DEBUG_SOURCE_EXCHANGE
                             "Log client source exchange and server source queries/answers"
     IDS_SHAREDREQ1          "User %s (%u) requested your list of shared directories -> %s"

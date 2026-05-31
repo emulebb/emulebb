@@ -147,6 +147,7 @@ void CPrefs::WriteFile()
 
 void CPrefs::SetIPAddress(uint32 uVal)
 {
+	const uint32 uOldIP = m_uIP;
 	//This is our first check on connect, init our IP.
 	if (!uVal || !m_uIPLast)
 		m_uIPLast = uVal;
@@ -157,6 +158,8 @@ void CPrefs::SetIPAddress(uint32 uVal)
 		m_uIP = uVal;
 	else
 		m_uIPLast = uVal;
+	if (m_uIP != 0 && m_uIP != uOldIP && theApp.emuledlg != NULL)
+		theApp.emuledlg->HandleNetworkGuardProtocolPublicIp(_T("Kad"), htonl(m_uIP));
 }
 
 

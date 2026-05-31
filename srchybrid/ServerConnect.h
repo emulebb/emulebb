@@ -50,6 +50,8 @@ public:
 	void	ConnectToAnyServer(INT_PTR startAt, bool prioSort = false, bool isAuto = true, bool bNoCrypt = false);
 	void	ConnectToServer(CServer *server, bool multiconnect = false, bool bNoCrypt = false, bool bManual = false);
 	void	StopConnectionTry();
+	bool	EnsureUDPSocket();
+	void	CloseUDPSocket();
 	static  VOID CALLBACK RetryConnectTimer(HWND hWnd, UINT nMsg, UINT_PTR nId, DWORD dwTime) noexcept;
 
 	void	CheckForTimeout();

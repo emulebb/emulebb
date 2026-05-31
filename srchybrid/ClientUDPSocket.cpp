@@ -94,6 +94,18 @@ CClientUDPSocket::~CClientUDPSocket()
 	}
 }
 
+void CClientUDPSocket::CloseAndClear()
+{
+	Close();
+	m_port = 0;
+	theApp.uploadBandwidthThrottler->RemoveFromAllQueuesLocked(this);
+	while (!controlpacket_queue.IsEmpty()) {
+		const UDPPack *p = controlpacket_queue.RemoveHead();
+		delete p->packet;
+		delete p;
+	}
+}
+
 void CClientUDPSocket::OnReceive(int nErrorCode)
 {
 	if (nErrorCode) {

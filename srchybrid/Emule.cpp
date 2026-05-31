@@ -2271,6 +2271,12 @@ void CemuleApp::RefreshStartupBindBlockState()
 		, thePrefs.GetActiveBindInterface(), thePrefs.GetActiveConfiguredBindAddr(), thePrefs.GetActiveBindAddressResolveResult(), GetBindStartupPolicyText());
 }
 
+void CemuleApp::BlockStartupNetworkingForSession(const CString& strReason)
+{
+	m_bStartupBindBlocked = true;
+	m_strStartupBindBlockReason = strReason;
+}
+
 #ifdef _DEBUG
 static int CrtDebugReportCB(int reportType, char *message, int *returnValue) noexcept
 {
@@ -2774,8 +2780,10 @@ void CemuleApp::SetPublicIP(const uint32 dwIP)
 	} else
 		m_dwPublicIP = dwIP;
 
-	if (emuledlg != NULL)
+	if (emuledlg != NULL) {
+		emuledlg->HandleNetworkGuardProtocolPublicIp(_T("eD2K"), dwIP);
 		emuledlg->ShowNetworkAddressState();
+	}
 }
 
 bool CemuleApp::IsFirewalled()

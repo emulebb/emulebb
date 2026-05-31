@@ -158,7 +158,8 @@ BEGIN_MESSAGE_MAP(CPPgConnection, CPropertyPage)
 	ON_BN_CLICKED(IDC_PREF_UPNPONSTART, OnSettingsChange)
 	ON_BN_CLICKED(IDC_RANDOMIZE_PORTS_ON_STARTUP, OnSettingsChange)
 	ON_BN_CLICKED(IDC_STARTUP_BIND_BLOCK, OnSettingsChange)
-	ON_BN_CLICKED(IDC_EXIT_ON_BIND_LOSS, OnSettingsChange)
+	ON_CBN_SELCHANGE(IDC_NETWORK_GUARD_MODE, OnSettingsChange)
+	ON_EN_CHANGE(IDC_NETWORK_GUARD_CIDRS, OnSettingsChange)
 	ON_CBN_SELCHANGE(IDC_BIND_INTERFACE, OnCbnSelChangeBindInterface)
 	ON_CBN_EDITCHANGE(IDC_BIND_INTERFACE, OnSettingsChange)
 	ON_EN_CHANGE(IDC_BIND_ADDRESS, OnSettingsChange)
@@ -252,12 +253,11 @@ void CPPgConnection::UpdateBindStatus()
 void CPPgConnection::UpdateBindProtectionControls()
 {
 	const bool bHasSpecificInterface = !GetBindInterfaceText().IsEmpty();
-	if (!bHasSpecificInterface) {
+	if (!bHasSpecificInterface)
 		CheckDlgButton(IDC_STARTUP_BIND_BLOCK, 0);
-		CheckDlgButton(IDC_EXIT_ON_BIND_LOSS, 0);
-	}
 	GetDlgItem(IDC_STARTUP_BIND_BLOCK)->EnableWindow(bHasSpecificInterface);
-	GetDlgItem(IDC_EXIT_ON_BIND_LOSS)->EnableWindow(bHasSpecificInterface);
+	const int iMode = static_cast<CComboBox*>(GetDlgItem(IDC_NETWORK_GUARD_MODE))->GetCurSel();
+	GetDlgItem(IDC_NETWORK_GUARD_CIDRS)->EnableWindow(iMode > 0);
 }
 
 void CPPgConnection::UpdateRestartRequiredNotice()
@@ -379,6 +379,11 @@ BOOL CPPgConnection::OnInitDialog()
 	static_cast<CEdit*>(GetDlgItem(IDC_PORT))->SetLimitText(5);
 	static_cast<CEdit*>(GetDlgItem(IDC_UDPPORT))->SetLimitText(5);
 	static_cast<CEdit*>(GetDlgItem(IDC_BIND_ADDRESS))->SetLimitText(15);
+	static_cast<CEdit*>(GetDlgItem(IDC_NETWORK_GUARD_CIDRS))->SetLimitText(512);
+	CComboBox* pGuardMode = static_cast<CComboBox*>(GetDlgItem(IDC_NETWORK_GUARD_MODE));
+	pGuardMode->AddString(GetResString(IDS_NETWORK_GUARD_MODE_OFF));
+	pGuardMode->AddString(GetResString(IDS_NETWORK_GUARD_MODE_WARN));
+	pGuardMode->AddString(GetResString(IDS_NETWORK_GUARD_MODE_BLOCK));
 
 	LoadBindableInterfaces();
 	LoadSettings();
@@ -417,7 +422,8 @@ void CPPgConnection::UpdateToolTips()
 	m_toolTip.SetTool(this, IDC_BIND_INTERFACE, GetResString(IDS_CONNECTION_TT_BIND_INTERFACE));
 	m_toolTip.SetTool(this, IDC_BIND_ADDRESS, GetResString(IDS_CONNECTION_TT_BIND_ADDRESS));
 	m_toolTip.SetTool(this, IDC_STARTUP_BIND_BLOCK, GetResString(IDS_CONNECTION_TT_STARTUP_BIND_BLOCK));
-	m_toolTip.SetTool(this, IDC_EXIT_ON_BIND_LOSS, GetResString(IDS_CONNECTION_TT_EXIT_ON_BIND_LOSS));
+	m_toolTip.SetTool(this, IDC_NETWORK_GUARD_MODE, GetResString(IDS_CONNECTION_TT_NETWORK_GUARD_MODE));
+	m_toolTip.SetTool(this, IDC_NETWORK_GUARD_CIDRS, GetResString(IDS_CONNECTION_TT_NETWORK_GUARD_CIDRS));
 }
 
 void CPPgConnection::LoadSettings()
@@ -452,7 +458,8 @@ void CPPgConnection::LoadSettings()
 		FillBindInterfaceCombo();
 		SetDlgItemText(IDC_BIND_ADDRESS, thePrefs.GetConfiguredBindAddr());
 		CheckDlgButton(IDC_STARTUP_BIND_BLOCK, static_cast<UINT>(thePrefs.IsStartupBindBlockEnabled()));
-		CheckDlgButton(IDC_EXIT_ON_BIND_LOSS, static_cast<UINT>(thePrefs.IsExitOnBindInterfaceLossEnabled()));
+		static_cast<CComboBox*>(GetDlgItem(IDC_NETWORK_GUARD_MODE))->SetCurSel(static_cast<int>(thePrefs.GetNetworkGuardMode()));
+		SetDlgItemText(IDC_NETWORK_GUARD_CIDRS, thePrefs.GetNetworkGuardAllowedCIDRs());
 		UpdateBindProtectionControls();
 
 		ShowLimitValues();
@@ -529,7 +536,41 @@ BOOL CPPgConnection::OnApply()
 		thePrefs.m_bBlockNetworkWhenBindUnavailableAtStartup = bStartupBindBlock;
 		bBindRestartRequired = true;
 	}
-	thePrefs.SetExitOnBindInterfaceLossEnabled(bHasSpecificBindInterface && (IsDlgButtonChecked(IDC_EXIT_ON_BIND_LOSS) != 0));
+	CComboBox* pGuardMode = static_cast<CComboBox*>(GetDlgItem(IDC_NETWORK_GUARD_MODE));
+	const int iGuardMode = pGuardMode->GetCurSel() < 0 ? 0 : pGuardMode->GetCurSel();
+	const NetworkGuardSeams::EMode eGuardMode = static_cast<NetworkGuardSeams::EMode>(iGuardMode);
+	CString strGuardCIDRs;
+	GetDlgItemText(IDC_NETWORK_GUARD_CIDRS, strGuardCIDRs);
+	strGuardCIDRs.Trim();
+	if (eGuardMode != NetworkGuardSeams::EMode::Off) {
+		std::vector<NetworkGuardSeams::SAllowedIpv4Range> ranges;
+		CString strGuardError;
+		if (!NetworkGuardSeams::TryParseAllowedIpv4Ranges(strGuardCIDRs, ranges, strGuardError)) {
+			AfxMessageBox(strGuardError, MB_ICONWARNING | MB_OK);
+			GetDlgItem(IDC_NETWORK_GUARD_CIDRS)->SetFocus();
+			static_cast<CEdit*>(GetDlgItem(IDC_NETWORK_GUARD_CIDRS))->SetSel(0, -1);
+			return FALSE;
+		}
+		if (eGuardMode == NetworkGuardSeams::EMode::Block) {
+			if (strBindInterface.IsEmpty()) {
+				AfxMessageBox(GetResString(IDS_NETWORK_GUARD_BIND_REQUIRED), MB_ICONWARNING | MB_OK);
+				GetDlgItem(IDC_BIND_INTERFACE)->SetFocus();
+				return FALSE;
+			}
+			CString strResolvedAddress;
+			CString strResolvedInterfaceName;
+			DWORD dwResolvedIfIndex = 0;
+			const EBindAddressResolveResult eGuardBindResult = CBindAddressResolver::ResolveBindAddress(strBindInterface
+				, strBindAddress, strResolvedAddress, &strResolvedInterfaceName, &dwResolvedIfIndex);
+			if (eGuardBindResult != BARR_Resolved || dwResolvedIfIndex == 0 || strResolvedAddress.IsEmpty()) {
+				AfxMessageBox(GetResString(IDS_NETWORK_GUARD_BIND_UNRESOLVED), MB_ICONWARNING | MB_OK);
+				GetDlgItem(IDC_BIND_INTERFACE)->SetFocus();
+				return FALSE;
+			}
+		}
+	}
+	thePrefs.SetNetworkGuardMode(eGuardMode);
+	thePrefs.SetNetworkGuardAllowedCIDRs(strGuardCIDRs);
 
 	if (thePrefs.m_bshowoverhead != (IsDlgButtonChecked(IDC_SHOWOVERHEAD) != 0)) {
 		thePrefs.m_bshowoverhead = !thePrefs.m_bshowoverhead;
@@ -587,6 +628,7 @@ BOOL CPPgConnection::OnApply()
 	SetModified(FALSE);
 	UpdateBindStatus();
 	UpdateRestartRequiredNotice();
+	theApp.emuledlg->InvalidateNetworkGuardProbeState();
 	theApp.emuledlg->UpdateBindLossMonitor();
 
 	theApp.emuledlg->ShowConnectionState();
@@ -627,7 +669,8 @@ void CPPgConnection::Localize()
 		SetDlgItemText(IDC_BIND_INTERFACE_LABEL, GetResString(IDS_BIND_INTERFACE));
 		SetDlgItemText(IDC_BIND_ADDRESS_LABEL, GetResString(IDS_BIND_ADDRESS));
 		SetDlgItemText(IDC_STARTUP_BIND_BLOCK, GetResString(IDS_STARTUP_BIND_BLOCK));
-		SetDlgItemText(IDC_EXIT_ON_BIND_LOSS, GetResString(IDS_EXIT_ON_BIND_LOSS));
+		SetDlgItemText(IDC_NETWORK_GUARD_MODE_LABEL, GetResString(IDS_NETWORK_GUARD));
+		SetDlgItemText(IDC_NETWORK_GUARD_CIDRS_LABEL, GetResString(IDS_NETWORK_GUARD_ALLOWED_CIDRS));
 		ShowLimitValues();
 	}
 }

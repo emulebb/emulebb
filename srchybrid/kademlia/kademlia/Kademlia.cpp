@@ -103,6 +103,8 @@ void CKademlia::Start()
 		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
 		return;
 	}
+	if (theApp.emuledlg != NULL && (!theApp.emuledlg->EnsureNetworkGuardAllowsConnect(_T("Kad start")) || !theApp.emuledlg->EnsureP2PSocketsStarted()))
+		return;
 
 	// Create a new default pref object.
 	Start(new CPrefs());
@@ -113,6 +115,10 @@ void CKademlia::Start(CPrefs *pPrefs)
 	if (theApp.IsStartupBindBlocked()) {
 		delete pPrefs;
 		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+		return;
+	}
+	if (theApp.emuledlg != NULL && (!theApp.emuledlg->EnsureNetworkGuardAllowsConnect(_T("Kad start")) || !theApp.emuledlg->EnsureP2PSocketsStarted())) {
+		delete pPrefs;
 		return;
 	}
 

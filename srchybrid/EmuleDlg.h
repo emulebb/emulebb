@@ -148,6 +148,11 @@ public:
 	void DoVersioncheck(bool manual);
 	/// Starts or stops the runtime bind-loss monitor according to the current preferences.
 	void UpdateBindLossMonitor();
+	void InvalidateNetworkGuardProbeState();
+	bool EnsureP2PSocketsStarted();
+	void CloseP2PNetworkStack(const CString& strReason);
+	bool EnsureNetworkGuardAllowsConnect(const CString& strRequestName);
+	void HandleNetworkGuardProtocolPublicIp(const CString& strSource, uint32 uNetworkOrderAddress);
 	void ApplyHyperTextFont(LPLOGFONT pFont);
 	void ApplyLogFont(LPLOGFONT pFont);
 	void ProcessED2KLink(LPCTSTR pszData);
@@ -232,6 +237,12 @@ protected:
 	bool			m_bInitedCOM;
 	bool			m_bBindLossMonitorActive;
 	bool			m_bBindLossShutdown;
+	bool			m_bNetworkGuardProbePending;
+	bool			m_bNetworkGuardProbePassForReplay;
+	UINT			m_uNetworkGuardQueuedConnectFlags;
+	uint32			m_uNetworkGuardProbeGeneration;
+	ULONGLONG		m_ullLastNetworkGuardRuntimeProbeTick;
+	CString			m_strNetworkGuardProbeKey;
 	UINT_PTR		m_uBindLossWatchdogTimer;
 	UINT_PTR		m_uTransferRateDisplayTimer;
 	HANDLE			m_hBindLossInterfaceNotification;
@@ -267,8 +278,13 @@ protected:
 	void OnStartupTimer() noexcept;
 	void StopBindLossMonitor();
 	void CheckBindLossMonitor();
-	void ExitForBindLoss(const CString &strReason);
+	void ExitForNetworkGuardFailure(const CString &strReason);
 	bool IsBindLossMonitorConfigured() const;
+	void CheckNetworkGuardHttpMonitor(bool bForce);
+	bool StartNetworkGuardProbe(const CString& strPurpose, UINT uQueuedConnectFlags);
+	void ApplyNetworkGuardSessionBlock(const CString& strReason);
+	void ReplayNetworkGuardQueuedConnect(UINT uQueuedConnectFlags);
+	CString BuildNetworkGuardProbeKey(CString& rstrError) const;
 
 	// UPnP TimeOutTimer
 	UINT_PTR m_hUPnPTimeOutTimer;
@@ -323,6 +339,7 @@ protected:
 	afx_msg LRESULT OnGeoLocationUpdated(WPARAM, LPARAM);
 	afx_msg LRESULT OnIPFilterUpdated(WPARAM, LPARAM);
 	afx_msg LRESULT OnBindInterfaceChanged(WPARAM, LPARAM);
+	afx_msg LRESULT OnNetworkGuardProbeResult(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnBnClickedConnect();
