@@ -83,9 +83,9 @@ void CServerConnect::TryAnotherConnectionRequest()
 
 void CServerConnect::ConnectToAnyServer(INT_PTR startAt, bool prioSort, bool isAuto, bool bNoCrypt)
 {
-	if (theApp.IsStartupBindBlocked()) {
+	if (theApp.IsP2PNetworkingBlockedForSession()) {
 		if (!isAuto)
-			LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+			LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetP2PNetworkingBlockReason());
 		return;
 	}
 	if (theApp.emuledlg != NULL && (!theApp.emuledlg->EnsureNetworkGuardAllowsConnect(_T("eD2K server connect")) || !theApp.emuledlg->EnsureP2PSocketsStarted()))
@@ -135,8 +135,8 @@ void CServerConnect::ConnectToAnyServer(INT_PTR startAt, bool prioSort, bool isA
 
 void CServerConnect::ConnectToServer(CServer *server, bool multiconnect, bool bNoCrypt, bool bManual)
 {
-	if (theApp.IsStartupBindBlocked()) {
-		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+	if (theApp.IsP2PNetworkingBlockedForSession()) {
+		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetP2PNetworkingBlockReason());
 		return;
 	}
 	if (theApp.emuledlg != NULL && (!theApp.emuledlg->EnsureNetworkGuardAllowsConnect(_T("eD2K server connect")) || !theApp.emuledlg->EnsureP2PSocketsStarted()))

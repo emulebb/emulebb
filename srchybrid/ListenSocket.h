@@ -104,7 +104,8 @@ public:
 
 	bool	StartListening();
 	void	StopListening();
-	bool	IsListening() const		{ return bListening; }
+	void	HardStopListening();
+	bool	IsListening() const		{ return bListening && GetSocketHandle() != INVALID_SOCKET; }
 	virtual void OnAccept(int nErrorCode);
 	void	Process();
 	void	RemoveSocket(CClientReqSocket *todel);
@@ -135,6 +136,7 @@ public:
 
 private:
 	bool bListening;
+	bool m_bHardStopped;
 	CCriticalSection m_socketListLock;
 	CTypedPtrList<CPtrList, CClientReqSocket*> socket_list;
 	uint16	m_OpenSocketsInterval;

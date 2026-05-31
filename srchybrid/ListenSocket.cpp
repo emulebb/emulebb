@@ -2023,6 +2023,7 @@ bool CListenSocket::SendPortTestReply(char result, bool disconnect)
 
 CListenSocket::CListenSocket()
 	: bListening()
+	, m_bHardStopped()
 	, m_socketListLock()
 	, m_OpenSocketsInterval()
 	, maxconnectionreached()
@@ -2057,6 +2058,7 @@ bool CListenSocket::Rebind()
 
 bool CListenSocket::StartListening()
 {
+	m_bHardStopped = false;
 	bListening = false;
 
 	// Creating the socket with SO_REUSEADDR may solve LowID issues if emule was restarted
@@ -2122,6 +2124,12 @@ bool CListenSocket::StartListening()
 
 void CListenSocket::ReStartListening()
 {
+	if (m_bHardStopped)
+		return;
+	if (GetSocketHandle() == INVALID_SOCKET) {
+		(void)StartListening();
+		return;
+	}
 	bListening = true;
 
 	ASSERT(m_nPendingConnections >= 0);
@@ -2135,6 +2143,18 @@ void CListenSocket::StopListening()
 {
 	bListening = false;
 	++maxconnectionreached;
+}
+
+void CListenSocket::HardStopListening()
+{
+	// WHY: a user disconnect or Network Guard block intentionally tears down the
+	// whole P2P stack. The normal listener restart path may flip bListening back
+	// on without recreating a socket, so record that only an explicit reconnect
+	// may start accepting again.
+	m_bHardStopped = true;
+	bListening = false;
+	Close();
+	KillAllSockets();
 }
 
 static int s_iAcceptConnectionCondRejected;
@@ -2333,7 +2353,7 @@ void CListenSocket::Process()
 			cur_sock->CheckTimeOut();		// may call 'shutdown'
 	}
 
-	if ((GetOpenSockets() + 5 < thePrefs.GetMaxConnections() || theApp.serverconnect->IsConnecting()) && !bListening)
+	if ((GetOpenSockets() + 5 < thePrefs.GetMaxConnections() || theApp.serverconnect->IsConnecting()) && !IsListening())
 		ReStartListening();
 }
 

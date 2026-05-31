@@ -621,8 +621,8 @@ namespace
 			{"networkGuard", nlohmann::json{
 				{"mode", JsonString(NetworkGuardSeams::GetModePreferenceText(thePrefs.GetNetworkGuardMode()))},
 				{"allowedCIDRs", JsonString(thePrefs.GetNetworkGuardAllowedCIDRs())},
-				{"startupBlocked", theApp.IsStartupBindBlocked()},
-				{"startupBlockReason", JsonString(theApp.GetStartupBindBlockReason())}
+				{"sessionBlocked", theApp.IsP2PNetworkingBlockedForSession()},
+				{"sessionBlockReason", JsonString(theApp.GetP2PNetworkingBlockReason())}
 			}},
 			{"ed2k", nlohmann::json{
 				{"connected", theApp.serverconnect != NULL && theApp.serverconnect->IsConnected()},
@@ -1925,7 +1925,7 @@ BOOL CemuleDlg::OnInitDialog()
 		AddDebugLogLine(false, _T("Queued startup stage sequencer message."));
 
 	// Start UPnP port forwarding
-	if (thePrefs.IsUPnPEnabled() && !theApp.IsStartupBindBlocked())
+	if (thePrefs.IsUPnPEnabled() && !theApp.IsP2PNetworkingBlockedForSession())
 		StartUPnP();
 
 	if (thePrefs.IsFirstStart() && !thePrefs.IsFirstTimeWizardDisabled()) {
@@ -2101,8 +2101,8 @@ void CemuleDlg::OnStartupTimer() noexcept
 				theApp.AppendStartupProfileLine(_T("StartupTimer stage 4: downloadqueue->Init"), theApp.GetStartupProfileElapsedUs(ullDownloadInitStart));
 				const ULONGLONG ullSocketInitStart = theApp.GetStartupProfileTimestampUs();
 #endif
-				if (theApp.IsStartupBindBlocked()) {
-					LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+				if (theApp.IsP2PNetworkingBlockedForSession()) {
+					LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetP2PNetworkingBlockReason());
 				} else if (thePrefs.GetNetworkGuardMode() != NetworkGuardSeams::EMode::Block) {
 					if (!theApp.listensocket->StartListening()) {
 						CString strError;
@@ -2120,7 +2120,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 							theApp.emuledlg->ShowNotifier(strError, TBN_IMPORTANTEVENT);
 					}
 				}
-				if (!theApp.IsStartupBindBlocked() && thePrefs.GetNetworkGuardMode() != NetworkGuardSeams::EMode::Off)
+				if (!theApp.IsP2PNetworkingBlockedForSession() && thePrefs.GetNetworkGuardMode() != NetworkGuardSeams::EMode::Off)
 					StartNetworkGuardProbe(_T("startup"), 0);
 #if EMULEBB_HAS_STARTUP_PROFILING
 				theApp.AppendStartupProfileLine(_T("StartupTimer stage 4: socket startup"), theApp.GetStartupProfileElapsedUs(ullSocketInitStart));
@@ -2130,12 +2130,12 @@ void CemuleDlg::OnStartupTimer() noexcept
 					AddLogLine(true, GetResString(IDS_MAIN_READY), (LPCTSTR)theApp.m_strCurVersionLong);
 
 				theApp.m_app_state = APP_STATE_RUNNING; //initialization completed
-				toolbar->EnableButton(TBBTN_CONNECT, !theApp.IsStartupBindBlocked());
-				m_SysMenuOptions.EnableMenuItem(MP_CONNECT, theApp.IsStartupBindBlocked() ? MF_GRAYED : MF_ENABLED);
-				serverwnd->GetDlgItem(IDC_ED2KCONNECT)->EnableWindow(!theApp.IsStartupBindBlocked());
+				toolbar->EnableButton(TBBTN_CONNECT, !theApp.IsP2PNetworkingBlockedForSession());
+				m_SysMenuOptions.EnableMenuItem(MP_CONNECT, theApp.IsP2PNetworkingBlockedForSession() ? MF_GRAYED : MF_ENABLED);
+				serverwnd->GetDlgItem(IDC_ED2KCONNECT)->EnableWindow(!theApp.IsP2PNetworkingBlockedForSession());
 				kademliawnd->UpdateControlsState(); //application state change is not tracked - force update
 
-				if (!theApp.IsStartupBindBlocked() && thePrefs.DoAutoConnect())
+				if (!theApp.IsP2PNetworkingBlockedForSession() && thePrefs.DoAutoConnect())
 					PostMessage(WM_COMMAND, MP_CONNECT, 0);
 
 #ifdef HAVE_WIN7_SDK_H
@@ -2228,7 +2228,7 @@ bool CemuleDlg::IsBindLossMonitorConfigured() const
 {
 	return theApp.IsRunning()
 		&& thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Block
-		&& !theApp.IsStartupBindBlocked()
+		&& !theApp.IsP2PNetworkingBlockedForSession()
 		&& !thePrefs.GetActiveBindInterface().IsEmpty()
 		&& thePrefs.GetActiveBindAddressResolveResult() == BARR_Resolved
 		&& thePrefs.GetBindAddr() != NULL
@@ -2329,7 +2329,7 @@ void CemuleDlg::CheckNetworkGuardHttpMonitor(bool bForce)
 {
 	if (m_bBindLossShutdown
 		|| thePrefs.GetNetworkGuardMode() != NetworkGuardSeams::EMode::Block
-		|| theApp.IsStartupBindBlocked()
+		|| theApp.IsP2PNetworkingBlockedForSession()
 		|| !IsNetworkGuardP2PActive())
 		return;
 
@@ -2377,7 +2377,7 @@ CString CemuleDlg::BuildNetworkGuardProbeKey(CString& rstrError) const
 
 bool CemuleDlg::StartNetworkGuardProbe(const CString& strPurpose, UINT uQueuedConnectFlags)
 {
-	if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Off || theApp.IsStartupBindBlocked())
+	if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Off || theApp.IsP2PNetworkingBlockedForSession())
 		return false;
 
 	CString strError;
@@ -2430,7 +2430,8 @@ bool CemuleDlg::StartNetworkGuardProbe(const CString& strPurpose, UINT uQueuedCo
 
 void CemuleDlg::ApplyNetworkGuardSessionBlock(const CString& strReason)
 {
-	theApp.BlockStartupNetworkingForSession(strReason);
+	CloseP2PNetworkStack(strReason);
+	theApp.BlockP2PNetworkingForSession(strReason);
 	LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
 	if (toolbar != NULL)
 		toolbar->EnableButton(TBBTN_CONNECT, false);
@@ -3995,8 +3996,8 @@ void CemuleDlg::AddSpeedSelectorMenus(CMenu *addToMenu)
 
 void CemuleDlg::StartConnection()
 {
-	if (theApp.IsStartupBindBlocked()) {
-		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+	if (theApp.IsP2PNetworkingBlockedForSession()) {
+		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetP2PNetworkingBlockReason());
 		return;
 	}
 	if (!EnsureNetworkGuardAllowsConnect(_T("connect")))
@@ -4081,9 +4082,7 @@ void CemuleDlg::CloseP2PNetworkStack(const CString& strReason)
 	if (theApp.clientlist != NULL)
 		theApp.clientlist->DeleteAll();
 	if (theApp.listensocket != NULL) {
-		theApp.listensocket->StopListening();
-		theApp.listensocket->Close();
-		theApp.listensocket->KillAllSockets();
+		theApp.listensocket->HardStopListening();
 	}
 	if (theApp.clientudp != NULL)
 		theApp.clientudp->CloseAndClear();
@@ -4107,7 +4106,7 @@ bool CemuleDlg::EnsureNetworkGuardAllowsConnect(const CString& strRequestName)
 
 void CemuleDlg::HandleNetworkGuardProtocolPublicIp(const CString& strSource, uint32 uNetworkOrderAddress)
 {
-	if (uNetworkOrderAddress == 0 || thePrefs.GetNetworkGuardMode() != NetworkGuardSeams::EMode::Block || theApp.IsStartupBindBlocked())
+	if (uNetworkOrderAddress == 0 || thePrefs.GetNetworkGuardMode() != NetworkGuardSeams::EMode::Block || theApp.IsP2PNetworkingBlockedForSession())
 		return;
 
 	std::vector<NetworkGuardSeams::SAllowedIpv4Range> ranges;
@@ -6487,7 +6486,7 @@ LRESULT CemuleDlg::OnPowerBroadcast(WPARAM wParam, LPARAM lParam)
 
 void CemuleDlg::StartUPnP(bool bReset, uint16 nForceTCPPort, uint16 nForceUDPPort)
 {
-	if (theApp.IsStartupBindBlocked())
+	if (theApp.IsP2PNetworkingBlockedForSession())
 		return;
 
 	if (theApp.m_pUPnPFinder != NULL && (m_hUPnPTimeOutTimer == 0 || !bReset)) {
@@ -6535,7 +6534,7 @@ void CemuleDlg::StartUPnP(bool bReset, uint16 nForceTCPPort, uint16 nForceUDPPor
 
 void CemuleDlg::RefreshUPnP(bool bRequestAnswer)
 {
-	if (theApp.IsStartupBindBlocked())
+	if (theApp.IsP2PNetworkingBlockedForSession())
 		return;
 	if (!thePrefs.IsUPnPEnabled())
 		return;

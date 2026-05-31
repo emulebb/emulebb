@@ -1154,11 +1154,11 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	, m_uDroppedDebugLogEntries()
 	, m_uDroppedLogEntries()
 	, m_dwPublicIP()
-	, m_strStartupBindBlockReason()
+	, m_strP2PNetworkingBlockReason()
 	, m_strStartupErrorLogPath()
 	, m_bGuardClipboardPrompt()
 	, m_bAutoStart()
-	, m_bStartupBindBlocked()
+	, m_bP2PNetworkingBlockedForSession()
 	, m_bStartupComplete()
 	, m_bStartupErrorLogOpened()
 	, m_pEarlyStartupProgressDlg()
@@ -2265,16 +2265,16 @@ bool CemuleApp::InitializeStartupConfigBaseDirOverride(
 
 void CemuleApp::RefreshStartupBindBlockState()
 {
-	m_bStartupBindBlocked = BindStartupPolicy::ShouldBlockSessionNetworking(thePrefs.IsActiveStartupBindBlockEnabled()
+	m_bP2PNetworkingBlockedForSession = BindStartupPolicy::ShouldBlockSessionNetworking(thePrefs.IsActiveStartupBindBlockEnabled()
 		, thePrefs.GetActiveBindInterface(), thePrefs.GetActiveConfiguredBindAddr(), thePrefs.GetActiveBindAddressResolveResult());
-	m_strStartupBindBlockReason = BindStartupPolicy::FormatStartupBlockReason(thePrefs.GetActiveBindInterfaceName()
+	m_strP2PNetworkingBlockReason = BindStartupPolicy::FormatStartupBlockReason(thePrefs.GetActiveBindInterfaceName()
 		, thePrefs.GetActiveBindInterface(), thePrefs.GetActiveConfiguredBindAddr(), thePrefs.GetActiveBindAddressResolveResult(), GetBindStartupPolicyText());
 }
 
-void CemuleApp::BlockStartupNetworkingForSession(const CString& strReason)
+void CemuleApp::BlockP2PNetworkingForSession(const CString& strReason)
 {
-	m_bStartupBindBlocked = true;
-	m_strStartupBindBlockReason = strReason;
+	m_bP2PNetworkingBlockedForSession = true;
+	m_strP2PNetworkingBlockReason = strReason;
 }
 
 #ifdef _DEBUG

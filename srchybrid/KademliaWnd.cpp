@@ -308,8 +308,8 @@ void CKademliaWnd::OnBnClickedFirewallcheckbutton()
 
 void CKademliaWnd::OnBnConnect()
 {
-	if (theApp.IsStartupBindBlocked()) {
-		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+	if (theApp.IsP2PNetworkingBlockedForSession()) {
+		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetP2PNetworkingBlockReason());
 		return;
 	}
 
@@ -378,7 +378,7 @@ void CKademliaWnd::UpdateControlsState()
 	else
 		uid = IDS_MAIN_BTN_CONNECT;
 	SetDlgItemText(IDC_KADCONNECT, GetResNoAmp(uid));
-	GetDlgItem(IDC_KADCONNECT)->EnableWindow(theApp.IsRunning() && !theApp.IsStartupBindBlocked());
+	GetDlgItem(IDC_KADCONNECT)->EnableWindow(theApp.IsRunning() && !theApp.IsP2PNetworkingBlockedForSession());
 	GetDlgItem(IDC_FIREWALLCHECKBUTTON)->EnableWindow(Kademlia::CKademlia::IsConnected());
 
 	CString strBootstrapIP;

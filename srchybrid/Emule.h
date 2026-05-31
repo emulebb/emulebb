@@ -125,9 +125,12 @@ public:
 	// Barry - To find out if app is running or shutting/shut down
 	bool IsRunning() const	{ return IsAppStateRunning(m_app_state); }
 	bool IsClosing() const	{ return IsAppStateClosing(m_app_state); }
-	bool IsStartupBindBlocked() const						{ return m_bStartupBindBlocked; }
-	const CString& GetStartupBindBlockReason() const		{ return m_strStartupBindBlockReason; }
-	void BlockStartupNetworkingForSession(const CString& strReason);
+	bool IsP2PNetworkingBlockedForSession() const			{ return m_bP2PNetworkingBlockedForSession; }
+	const CString& GetP2PNetworkingBlockReason() const		{ return m_strP2PNetworkingBlockReason; }
+	void BlockP2PNetworkingForSession(const CString& strReason);
+	bool IsStartupBindBlocked() const						{ return IsP2PNetworkingBlockedForSession(); }
+	const CString& GetStartupBindBlockReason() const		{ return GetP2PNetworkingBlockReason(); }
+	void BlockStartupNetworkingForSession(const CString& strReason) { BlockP2PNetworkingForSession(strReason); }
 	/**
 	 * @brief Reports whether the startup timer completed all UI/runtime setup stages.
 	 */
@@ -411,12 +414,12 @@ protected:
 	WSADATA		m_wsaData;
 	uint32		m_dwPublicIP;
 	CString		m_strStartupConfigBaseDir;
-	CString		m_strStartupBindBlockReason;
+	CString		m_strP2PNetworkingBlockReason;
 	CString		m_strStartupErrorLogPath;
 	std::vector<CString> m_aStartupErrorLines;
 	bool		m_bGuardClipboardPrompt;
 	bool		m_bAutoStart;
-	bool		m_bStartupBindBlocked;
+	bool		m_bP2PNetworkingBlockedForSession;
 	bool		m_bStartupComplete;
 	bool		m_bStartupErrorLogOpened;
 	CLifecycleProgressDlg *m_pEarlyStartupProgressDlg;

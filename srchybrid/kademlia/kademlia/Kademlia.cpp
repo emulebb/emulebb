@@ -99,8 +99,8 @@ CKademlia::~CKademlia()
 
 void CKademlia::Start()
 {
-	if (theApp.IsStartupBindBlocked()) {
-		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+	if (theApp.IsP2PNetworkingBlockedForSession()) {
+		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetP2PNetworkingBlockReason());
 		return;
 	}
 	if (theApp.emuledlg != NULL && (!theApp.emuledlg->EnsureNetworkGuardAllowsConnect(_T("Kad start")) || !theApp.emuledlg->EnsureP2PSocketsStarted()))
@@ -112,9 +112,9 @@ void CKademlia::Start()
 
 void CKademlia::Start(CPrefs *pPrefs)
 {
-	if (theApp.IsStartupBindBlocked()) {
+	if (theApp.IsP2PNetworkingBlockedForSession()) {
 		delete pPrefs;
-		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetP2PNetworkingBlockReason());
 		return;
 	}
 	if (theApp.emuledlg != NULL && (!theApp.emuledlg->EnsureNetworkGuardAllowsConnect(_T("Kad start")) || !theApp.emuledlg->EnsureP2PSocketsStarted())) {

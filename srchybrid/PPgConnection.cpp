@@ -234,8 +234,8 @@ CString CPPgConnection::GetBindAddressText() const
 void CPPgConnection::UpdateBindStatus()
 {
 	CString strStatus;
-	if (theApp.IsStartupBindBlocked())
-		strStatus = theApp.GetStartupBindBlockReason();
+	if (theApp.IsP2PNetworkingBlockedForSession())
+		strStatus = theApp.GetP2PNetworkingBlockReason();
 	else if (thePrefs.GetActiveBindAddressResolveResult() == BARR_Default)
 		strStatus = GetResString(IDS_BIND_STATUS_ACTIVE_ANY);
 	else if (thePrefs.GetActiveBindAddressResolveResult() == BARR_Resolved) {
