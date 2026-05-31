@@ -771,6 +771,11 @@ void CServerSocket::SetConnectionState(int newstate)
 
 void CServerSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayloadSize, bool bForceImmediateSend)
 {
+	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("eD2K server socket packet"))) {
+		theApp.emuledlg->HandleNetworkGuardTransportViolation(_T("eD2K server socket packet"));
+		delete packet;
+		return;
+	}
 	m_dwLastTransmission = ::GetTickCount64();
 	CEMSocket::SendPacket(packet, controlpacket, actualPayloadSize, bForceImmediateSend);
 }

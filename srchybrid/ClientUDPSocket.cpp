@@ -601,8 +601,10 @@ int CClientUDPSocket::SendTo(uchar *lpBuf, int nBufLen, uint32 dwIP, uint16 nPor
 bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar *pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey)
 {
 	std::unique_ptr<Packet> packetOwner(packet);
-	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("client UDP packet")))
+	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("client UDP packet"))) {
+		theApp.emuledlg->HandleNetworkGuardTransportViolation(_T("client UDP packet"));
 		return false;
+	}
 // ZZ:UploadBandWithThrottler (UDP) -->
 	try {
 		std::unique_ptr<UDPPack, UdpPackDeleter> newpending(new UDPPack);

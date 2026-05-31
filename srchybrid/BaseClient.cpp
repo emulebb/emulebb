@@ -1327,9 +1327,8 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 	// hard-refuse here instead of relying on top-level connection buttons.
 	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("peer connect"))) {
 		m_eConnectingState = CCS_PRECONDITIONS;
-		if (Disconnected(_T("Network Guard blocked")))
-			return false;
-		return true;
+		theApp.emuledlg->HandleNetworkGuardTransportViolation(_T("peer connect"));
+		return false;
 	}
 
 	if (GetKadState() == KS_QUEUED_FWCHECK)
@@ -2219,6 +2218,7 @@ void CUpDownClient::ProcessPreviewAnswer(const uchar *pachPacket, uint32 nSize)
 bool CUpDownClient::SafeConnectAndSendPacket(Packet *packet)
 {
 	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("peer packet"))) {
+		theApp.emuledlg->HandleNetworkGuardTransportViolation(_T("peer packet"));
 		delete packet;
 		return false;
 	}
@@ -2238,6 +2238,7 @@ bool CUpDownClient::SafeConnectAndSendPacket(Packet *packet)
 bool CUpDownClient::SendPacket(Packet *packet, bool bVerifyConnection)
 {
 	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("peer packet"))) {
+		theApp.emuledlg->HandleNetworkGuardTransportViolation(_T("peer packet"));
 		delete packet;
 		return false;
 	}

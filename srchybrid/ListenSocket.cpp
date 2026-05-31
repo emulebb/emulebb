@@ -1998,6 +1998,11 @@ void CClientReqSocket::SendPacket(Packet *packet, bool controlpacket, uint32 act
 		delete packet;
 		return;
 	}
+	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("client TCP packet"))) {
+		theApp.emuledlg->HandleNetworkGuardTransportViolation(_T("client TCP packet"));
+		delete packet;
+		return;
+	}
 	ResetTimeOutTimer();
 	CEMSocket::SendPacket(packet, controlpacket, actualPayloadSize, bForceImmediateSend);
 }
