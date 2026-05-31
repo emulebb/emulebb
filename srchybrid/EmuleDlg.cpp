@@ -162,10 +162,6 @@ namespace
 	static const UINT kBindLossWatchdogIntervalMs = SEC2MS(10);
 	static const UINT_PTR kTransferRateDisplayTimerId = 0xB10E;
 	static const UINT kNetworkGuardHttpIntervalMs = MIN2MS(15);
-	static const UINT kNetworkGuardQueuedFullConnect = 0x01;
-	static const UINT kNetworkGuardQueuedEd2k = 0x02;
-	static const UINT kNetworkGuardQueuedKad = 0x04;
-	static const UINT kNetworkGuardQueuedRuntime = 0x08;
 
 	static bool IsKeyboardShortcutModalContext(const CWnd &wnd)
 	{
@@ -267,13 +263,19 @@ namespace
 		return strReason;
 	}
 
-	static UINT GetNetworkGuardQueueFlagsForRequest(const CString& strRequestName)
+	static NetworkGuardSeams::TRequestFlags GetNetworkGuardQueueFlagsForRequest(const CString& strRequestName)
 	{
 		if (strRequestName.Find(_T("Kad")) >= 0)
-			return kNetworkGuardQueuedKad;
+			return NetworkGuardSeams::kRequestKad;
 		if (strRequestName.Find(_T("eD2K")) >= 0)
-			return kNetworkGuardQueuedEd2k;
-		return kNetworkGuardQueuedFullConnect;
+			return NetworkGuardSeams::kRequestEd2k;
+		if (strRequestName.Find(_T("server UDP")) >= 0)
+			return NetworkGuardSeams::kRequestServerUdp;
+		if (strRequestName.Find(_T("client UDP")) >= 0)
+			return NetworkGuardSeams::kRequestClientUdp;
+		if (strRequestName.Find(_T("peer")) >= 0)
+			return NetworkGuardSeams::kRequestPeer;
+		return NetworkGuardSeams::kRequestFullConnect;
 	}
 
 	static CString GetConfigFilePath(LPCTSTR pszLeafName)
@@ -1466,8 +1468,9 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_bBindLossMonitorActive()
 	, m_bBindLossShutdown()
 	, m_bNetworkGuardProbePending()
-	, m_bNetworkGuardProbePassForReplay()
+	, m_bNetworkGuardRuntimeProbePending()
 	, m_uNetworkGuardQueuedConnectFlags()
+	, m_uNetworkGuardReplayAuthorizedFlags()
 	, m_uNetworkGuardProbeGeneration()
 	, m_ullLastNetworkGuardRuntimeProbeTick()
 	, m_uBindLossWatchdogTimer()
@@ -2338,15 +2341,17 @@ void CemuleDlg::CheckNetworkGuardHttpMonitor(bool bForce)
 		return;
 	m_ullLastNetworkGuardRuntimeProbeTick = ullNow;
 
-	(void)StartNetworkGuardProbe(_T("runtime"), kNetworkGuardQueuedRuntime);
+	(void)StartNetworkGuardProbe(_T("runtime"), NetworkGuardSeams::kRequestRuntime);
 }
 
 void CemuleDlg::InvalidateNetworkGuardProbeState()
 {
 	m_bNetworkGuardProbePending = false;
-	m_bNetworkGuardProbePassForReplay = false;
+	m_bNetworkGuardRuntimeProbePending = false;
 	m_uNetworkGuardQueuedConnectFlags = 0;
+	m_uNetworkGuardReplayAuthorizedFlags = 0;
 	m_strNetworkGuardProbeKey.Empty();
+	m_strNetworkGuardApprovedTransportKey.Empty();
 	++m_uNetworkGuardProbeGeneration;
 }
 
@@ -2375,17 +2380,27 @@ CString CemuleDlg::BuildNetworkGuardProbeKey(CString& rstrError) const
 	return strKey;
 }
 
-bool CemuleDlg::StartNetworkGuardProbe(const CString& strPurpose, UINT uQueuedConnectFlags)
+bool CemuleDlg::IsNetworkGuardCurrentKeyApproved() const
+{
+	if (m_strNetworkGuardApprovedTransportKey.IsEmpty())
+		return false;
+	CString strError;
+	return m_strNetworkGuardApprovedTransportKey.Compare(BuildNetworkGuardProbeKey(strError)) == 0;
+}
+
+bool CemuleDlg::StartNetworkGuardProbe(const CString& strPurpose, NetworkGuardSeams::TRequestFlags uRequestFlags)
 {
 	if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Off || theApp.IsP2PNetworkingBlockedForSession())
 		return false;
 
+	const bool bRuntimeRequest = (uRequestFlags & NetworkGuardSeams::kRequestRuntime) != 0;
+	const NetworkGuardSeams::TRequestFlags uReplayFlags = NetworkGuardSeams::GetReplayFlags(uRequestFlags);
 	CString strError;
 	const CString strKey = BuildNetworkGuardProbeKey(strError);
 	if (strKey.IsEmpty()) {
 		const CString strReason = FormatNetworkGuardPublicIpFailure(strPurpose, PublicIpProbe::SBoundPublicIpv4ProbeResult(), strError);
 		if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Block) {
-			if ((uQueuedConnectFlags & kNetworkGuardQueuedRuntime) != 0 || IsNetworkGuardP2PActive())
+			if (bRuntimeRequest || IsNetworkGuardP2PActive())
 				ExitForNetworkGuardFailure(strReason);
 			else
 				ApplyNetworkGuardSessionBlock(strReason);
@@ -2396,21 +2411,31 @@ bool CemuleDlg::StartNetworkGuardProbe(const CString& strPurpose, UINT uQueuedCo
 	}
 
 	if (m_bNetworkGuardProbePending && m_strNetworkGuardProbeKey.Compare(strKey) == 0) {
-		m_uNetworkGuardQueuedConnectFlags |= uQueuedConnectFlags;
+		m_uNetworkGuardQueuedConnectFlags |= uReplayFlags;
+		m_bNetworkGuardRuntimeProbePending = m_bNetworkGuardRuntimeProbePending || bRuntimeRequest;
 		return true;
+	}
+	// WHY: a queued connect was approved only for the bind/probe key that was
+	// sampled when the workers started. If that key changes before completion,
+	// replaying or silently dropping the request both violate Block semantics.
+	if (m_bNetworkGuardProbePending && m_uNetworkGuardQueuedConnectFlags != 0) {
+		ApplyNetworkGuardSessionBlock(_T("Network Guard failed: bind or guard configuration changed while connect validation was pending"));
+		return false;
 	}
 
 	m_bNetworkGuardProbePending = true;
-	m_bNetworkGuardProbePassForReplay = false;
-	m_uNetworkGuardQueuedConnectFlags = uQueuedConnectFlags;
+	m_bNetworkGuardRuntimeProbePending = bRuntimeRequest;
+	m_uNetworkGuardQueuedConnectFlags = uReplayFlags;
+	m_uNetworkGuardReplayAuthorizedFlags = 0;
 	m_strNetworkGuardProbeKey = strKey;
 	const uint32 uGeneration = ++m_uNetworkGuardProbeGeneration;
 
 	if (!PublicIpProbe::StartBoundPublicIpv4Probe(m_hWnd, UM_NETWORK_GUARD_PROBE_RESULT, uGeneration, strPurpose, strError)) {
 		m_bNetworkGuardProbePending = false;
+		m_bNetworkGuardRuntimeProbePending = false;
 		const CString strReason = FormatNetworkGuardPublicIpFailure(strPurpose, PublicIpProbe::SBoundPublicIpv4ProbeResult(), strError);
 		if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Block) {
-			if ((uQueuedConnectFlags & kNetworkGuardQueuedRuntime) != 0 || IsNetworkGuardP2PActive())
+			if (bRuntimeRequest || IsNetworkGuardP2PActive())
 				ExitForNetworkGuardFailure(strReason);
 			else
 				ApplyNetworkGuardSessionBlock(strReason);
@@ -2443,17 +2468,15 @@ void CemuleDlg::ApplyNetworkGuardSessionBlock(const CString& strReason)
 	ShowConnectionState();
 }
 
-void CemuleDlg::ReplayNetworkGuardQueuedConnect(UINT uQueuedConnectFlags)
+void CemuleDlg::ReplayNetworkGuardQueuedConnect(NetworkGuardSeams::TRequestFlags uQueuedConnectFlags)
 {
-	if ((uQueuedConnectFlags & kNetworkGuardQueuedRuntime) != 0)
-		return;
-	if ((uQueuedConnectFlags & kNetworkGuardQueuedFullConnect) != 0) {
+	if ((uQueuedConnectFlags & NetworkGuardSeams::kRequestFullConnect) != 0) {
 		StartConnection();
 		return;
 	}
-	if ((uQueuedConnectFlags & kNetworkGuardQueuedEd2k) != 0 && theApp.serverconnect != NULL)
+	if ((uQueuedConnectFlags & NetworkGuardSeams::kRequestEd2k) != 0 && theApp.serverconnect != NULL)
 		theApp.serverconnect->ConnectToAnyServer();
-	if ((uQueuedConnectFlags & kNetworkGuardQueuedKad) != 0)
+	if ((uQueuedConnectFlags & NetworkGuardSeams::kRequestKad) != 0)
 		Kademlia::CKademlia::Start();
 }
 
@@ -2477,6 +2500,12 @@ LRESULT CemuleDlg::OnStartupNextStage(WPARAM, LPARAM)
 
 LRESULT CemuleDlg::OnBindInterfaceChanged(WPARAM, LPARAM)
 {
+	// WHY: a bind notification during a pending connect means the sampled local
+	// interface may no longer be the route used by the eventual P2P sockets.
+	if (m_bNetworkGuardProbePending && m_uNetworkGuardQueuedConnectFlags != 0) {
+		ApplyNetworkGuardSessionBlock(_T("Network Guard failed: bind interface changed while connect validation was pending"));
+		return 0;
+	}
 	InvalidateNetworkGuardProbeState();
 	CheckBindLossMonitor();
 	CheckNetworkGuardHttpMonitor(true);
@@ -2486,11 +2515,16 @@ LRESULT CemuleDlg::OnBindInterfaceChanged(WPARAM, LPARAM)
 LRESULT CemuleDlg::OnNetworkGuardProbeResult(WPARAM wParam, LPARAM lParam)
 {
 	std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult(reinterpret_cast<PublicIpProbe::SBoundPublicIpv4ProbeResult*>(lParam));
+	if (m_bBindLossShutdown || theApp.IsP2PNetworkingBlockedForSession())
+		return 0;
 	if (pResult.get() == NULL || static_cast<uint32>(wParam) != m_uNetworkGuardProbeGeneration || pResult->uGeneration != m_uNetworkGuardProbeGeneration)
 		return 0;
 
-	const UINT uQueuedConnectFlags = m_uNetworkGuardQueuedConnectFlags;
+	const NetworkGuardSeams::TRequestFlags uQueuedConnectFlags = m_uNetworkGuardQueuedConnectFlags;
+	const bool bRuntime = m_bNetworkGuardRuntimeProbePending;
+	const CString strProbeKey = m_strNetworkGuardProbeKey;
 	m_bNetworkGuardProbePending = false;
+	m_bNetworkGuardRuntimeProbePending = false;
 	m_uNetworkGuardQueuedConnectFlags = 0;
 
 	std::vector<NetworkGuardSeams::SAllowedIpv4Range> ranges;
@@ -2498,19 +2532,19 @@ LRESULT CemuleDlg::OnNetworkGuardProbeResult(WPARAM wParam, LPARAM lParam)
 	const bool bAllowed = TryLoadNetworkGuardAllowedRanges(ranges, strError)
 		&& pResult->bSucceeded
 		&& NetworkGuardSeams::IsIpv4Allowed(pResult->uPublicAddress, ranges);
-	const bool bRuntime = (uQueuedConnectFlags & kNetworkGuardQueuedRuntime) != 0;
 	if (bAllowed) {
+		m_strNetworkGuardApprovedTransportKey = strProbeKey;
 		DebugLog(_T("Network Guard %s check passed: provider=%s publicIp=%S allowedCIDRs=%s"),
 			(LPCTSTR)pResult->strPurpose,
 			(LPCTSTR)pResult->strProviderUrl,
 			pResult->strPublicAddress.GetString(),
 			(LPCTSTR)thePrefs.GetNetworkGuardAllowedCIDRs());
-		if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Block && !bRuntime && uQueuedConnectFlags != 0) {
-			m_bNetworkGuardProbePassForReplay = true;
+		if (thePrefs.GetNetworkGuardMode() == NetworkGuardSeams::EMode::Block && uQueuedConnectFlags != 0) {
+			m_uNetworkGuardReplayAuthorizedFlags = uQueuedConnectFlags;
 			ReplayNetworkGuardQueuedConnect(uQueuedConnectFlags);
-			m_bNetworkGuardProbePassForReplay = false;
-			m_strNetworkGuardProbeKey.Empty();
+			m_uNetworkGuardReplayAuthorizedFlags = 0;
 		}
+		m_strNetworkGuardProbeKey.Empty();
 		return 0;
 	}
 
@@ -4072,6 +4106,13 @@ bool CemuleDlg::EnsureP2PSocketsStarted()
 void CemuleDlg::CloseP2PNetworkStack(const CString& strReason)
 {
 	DebugLog(_T("Closing P2P network stack: %s"), (LPCTSTR)strReason);
+	m_bNetworkGuardProbePending = false;
+	m_bNetworkGuardRuntimeProbePending = false;
+	m_uNetworkGuardQueuedConnectFlags = 0;
+	m_strNetworkGuardApprovedTransportKey.Empty();
+	m_uNetworkGuardReplayAuthorizedFlags = 0;
+	m_strNetworkGuardProbeKey.Empty();
+	++m_uNetworkGuardProbeGeneration;
 	theApp.serverconnect->StopConnectionTry();
 	theApp.serverconnect->Disconnect();
 	theApp.serverconnect->CloseUDPSocket();
@@ -4091,6 +4132,10 @@ void CemuleDlg::CloseP2PNetworkStack(const CString& strReason)
 
 bool CemuleDlg::EnsureNetworkGuardAllowsConnect(const CString& strRequestName)
 {
+	if (theApp.IsP2PNetworkingBlockedForSession()) {
+		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetP2PNetworkingBlockReason());
+		return false;
+	}
 	const NetworkGuardSeams::EMode eMode = thePrefs.GetNetworkGuardMode();
 	if (eMode == NetworkGuardSeams::EMode::Off)
 		return true;
@@ -4098,10 +4143,26 @@ bool CemuleDlg::EnsureNetworkGuardAllowsConnect(const CString& strRequestName)
 		(void)StartNetworkGuardProbe(strRequestName, 0);
 		return true;
 	}
-	if (m_bNetworkGuardProbePassForReplay)
+	const NetworkGuardSeams::TRequestFlags uRequestFlags = GetNetworkGuardQueueFlagsForRequest(strRequestName);
+	if (NetworkGuardSeams::IsReplayAuthorized(m_uNetworkGuardReplayAuthorizedFlags, uRequestFlags)
+		|| IsNetworkGuardCurrentKeyApproved())
 		return true;
-	(void)StartNetworkGuardProbe(strRequestName, GetNetworkGuardQueueFlagsForRequest(strRequestName));
+	(void)StartNetworkGuardProbe(strRequestName, uRequestFlags);
 	return false;
+}
+
+bool CemuleDlg::IsP2PTransportAllowedForNetworkGuard(const CString& strRequestName)
+{
+	// WHY: downloads, uploads, callbacks, and UDP responses can originate below
+	// StartConnection. This guard is the low-level refusal point for those paths.
+	if (theApp.IsP2PNetworkingBlockedForSession())
+		return false;
+	const NetworkGuardSeams::EMode eMode = thePrefs.GetNetworkGuardMode();
+	if (eMode != NetworkGuardSeams::EMode::Block)
+		return true;
+	const NetworkGuardSeams::TRequestFlags uRequestFlags = GetNetworkGuardQueueFlagsForRequest(strRequestName);
+	return NetworkGuardSeams::IsReplayAuthorized(m_uNetworkGuardReplayAuthorizedFlags, uRequestFlags)
+		|| IsNetworkGuardCurrentKeyApproved();
 }
 
 void CemuleDlg::HandleNetworkGuardProtocolPublicIp(const CString& strSource, uint32 uNetworkOrderAddress)

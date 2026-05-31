@@ -13,6 +13,31 @@ enum class EMode
 	Block
 };
 
+using TRequestFlags = unsigned int;
+
+static constexpr TRequestFlags kRequestFullConnect = 0x01u;
+static constexpr TRequestFlags kRequestEd2k = 0x02u;
+static constexpr TRequestFlags kRequestKad = 0x04u;
+static constexpr TRequestFlags kRequestRuntime = 0x08u;
+static constexpr TRequestFlags kRequestPeer = 0x10u;
+static constexpr TRequestFlags kRequestClientUdp = 0x20u;
+static constexpr TRequestFlags kRequestServerUdp = 0x40u;
+
+inline TRequestFlags GetReplayFlags(TRequestFlags uRequestFlags)
+{
+	return uRequestFlags & (kRequestFullConnect | kRequestEd2k | kRequestKad);
+}
+
+inline bool IsReplayAuthorized(TRequestFlags uAuthorizedFlags, TRequestFlags uRequestFlags)
+{
+	const TRequestFlags uReplayRequest = GetReplayFlags(uRequestFlags);
+	if (uReplayRequest == 0)
+		return false;
+	if ((uAuthorizedFlags & kRequestFullConnect) != 0)
+		return (uReplayRequest & (kRequestFullConnect | kRequestEd2k | kRequestKad)) != 0;
+	return (uAuthorizedFlags & uReplayRequest) != 0;
+}
+
 struct SAllowedIpv4Range
 {
 	uint32_t uNetworkOrderAddress;

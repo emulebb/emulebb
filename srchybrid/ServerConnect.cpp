@@ -326,6 +326,10 @@ void CServerConnect::ConnectionEstablished(CServerSocket *sender)
 
 bool CServerConnect::SendPacket(Packet *packet, CServerSocket *to)
 {
+	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("eD2K server packet"))) {
+		delete packet;
+		return false;
+	}
 	if (!to) {
 		if (!connected) {
 			delete packet;
@@ -340,6 +344,14 @@ bool CServerConnect::SendPacket(Packet *packet, CServerSocket *to)
 
 bool CServerConnect::SendUDPPacket(Packet *packet, CServer *host, bool bDelPacket, uint16 nSpecialPort, BYTE *pRawPacket, uint32 nLen)
 {
+	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("server UDP packet"))) {
+		if (bDelPacket) {
+			delete packet;
+			delete[] pRawPacket;
+		}
+		return false;
+	}
+
 	if (theApp.IsConnected() && udpsocket != NULL)
 		udpsocket->SendPacket(packet, host, nSpecialPort, pRawPacket, nLen);
 

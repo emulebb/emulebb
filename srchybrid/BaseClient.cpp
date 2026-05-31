@@ -1322,6 +1322,16 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 	//		This client is firewalled, but has a Kad buddy. We sent the buddy a callback request to forward to the client
 	//		and hope for the best
 
+	// WHY: Network Guard block is a whole-stack invariant. Source, upload, and
+	// callback paths can enter below eD2K/Kad start gates, so peer connects must
+	// hard-refuse here instead of relying on top-level connection buttons.
+	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("peer connect"))) {
+		m_eConnectingState = CCS_PRECONDITIONS;
+		if (Disconnected(_T("Network Guard blocked")))
+			return false;
+		return true;
+	}
+
 	if (GetKadState() == KS_QUEUED_FWCHECK)
 		SetKadState(KS_CONNECTING_FWCHECK);
 	else if (GetKadState() == KS_QUEUED_FWCHECK_UDP)
@@ -2208,6 +2218,10 @@ void CUpDownClient::ProcessPreviewAnswer(const uchar *pachPacket, uint32 nSize)
 // wrapper performs the explicit delete to preserve the legacy caller contract.
 bool CUpDownClient::SafeConnectAndSendPacket(Packet *packet)
 {
+	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("peer packet"))) {
+		delete packet;
+		return false;
+	}
 	if (socket != NULL && socket->IsConnected()) {
 		socket->SendPacket(packet, true);
 		return true;
@@ -2223,6 +2237,10 @@ bool CUpDownClient::SafeConnectAndSendPacket(Packet *packet)
 
 bool CUpDownClient::SendPacket(Packet *packet, bool bVerifyConnection)
 {
+	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("peer packet"))) {
+		delete packet;
+		return false;
+	}
 	if (socket != NULL && (!bVerifyConnection || socket->IsConnected())) {
 		socket->SendPacket(packet, true);
 		return true;

@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "emuledlg.h"
 #include "ClientUDPSocket.h"
 #include "Packets.h"
 #include "UpDownClient.h"
@@ -600,6 +601,8 @@ int CClientUDPSocket::SendTo(uchar *lpBuf, int nBufLen, uint32 dwIP, uint16 nPor
 bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar *pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey)
 {
 	std::unique_ptr<Packet> packetOwner(packet);
+	if (theApp.emuledlg != NULL && !theApp.emuledlg->IsP2PTransportAllowedForNetworkGuard(_T("client UDP packet")))
+		return false;
 // ZZ:UploadBandWithThrottler (UDP) -->
 	try {
 		std::unique_ptr<UDPPack, UdpPackDeleter> newpending(new UDPPack);

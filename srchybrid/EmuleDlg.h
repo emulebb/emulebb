@@ -23,6 +23,7 @@
 #include "TrayDialog.h"
 #include "WindowsToastNotifier.h"
 #include "AppMainIconSeams.h"
+#include "NetworkGuardSeams.h"
 
 namespace Kademlia
 {
@@ -152,6 +153,7 @@ public:
 	bool EnsureP2PSocketsStarted();
 	void CloseP2PNetworkStack(const CString& strReason);
 	bool EnsureNetworkGuardAllowsConnect(const CString& strRequestName);
+	bool IsP2PTransportAllowedForNetworkGuard(const CString& strRequestName);
 	void HandleNetworkGuardProtocolPublicIp(const CString& strSource, uint32 uNetworkOrderAddress);
 	void ApplyHyperTextFont(LPLOGFONT pFont);
 	void ApplyLogFont(LPLOGFONT pFont);
@@ -238,11 +240,13 @@ protected:
 	bool			m_bBindLossMonitorActive;
 	bool			m_bBindLossShutdown;
 	bool			m_bNetworkGuardProbePending;
-	bool			m_bNetworkGuardProbePassForReplay;
-	UINT			m_uNetworkGuardQueuedConnectFlags;
+	bool			m_bNetworkGuardRuntimeProbePending;
+	NetworkGuardSeams::TRequestFlags m_uNetworkGuardQueuedConnectFlags;
+	NetworkGuardSeams::TRequestFlags m_uNetworkGuardReplayAuthorizedFlags;
 	uint32			m_uNetworkGuardProbeGeneration;
 	ULONGLONG		m_ullLastNetworkGuardRuntimeProbeTick;
 	CString			m_strNetworkGuardProbeKey;
+	CString			m_strNetworkGuardApprovedTransportKey;
 	UINT_PTR		m_uBindLossWatchdogTimer;
 	UINT_PTR		m_uTransferRateDisplayTimer;
 	HANDLE			m_hBindLossInterfaceNotification;
@@ -281,10 +285,11 @@ protected:
 	void ExitForNetworkGuardFailure(const CString &strReason);
 	bool IsBindLossMonitorConfigured() const;
 	void CheckNetworkGuardHttpMonitor(bool bForce);
-	bool StartNetworkGuardProbe(const CString& strPurpose, UINT uQueuedConnectFlags);
+	bool StartNetworkGuardProbe(const CString& strPurpose, NetworkGuardSeams::TRequestFlags uRequestFlags);
 	void ApplyNetworkGuardSessionBlock(const CString& strReason);
-	void ReplayNetworkGuardQueuedConnect(UINT uQueuedConnectFlags);
+	void ReplayNetworkGuardQueuedConnect(NetworkGuardSeams::TRequestFlags uQueuedConnectFlags);
 	CString BuildNetworkGuardProbeKey(CString& rstrError) const;
+	bool IsNetworkGuardCurrentKeyApproved() const;
 
 	// UPnP TimeOutTimer
 	UINT_PTR m_hUPnPTimeOutTimer;
