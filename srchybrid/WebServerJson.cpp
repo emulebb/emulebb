@@ -1225,7 +1225,7 @@ const char *GetRestBuildFlavor()
 json BuildAppJson(const char *pszBuildFlavor)
 {
 	return json{
-		{"name", "eMule"},
+		{"name", "eMuleBB"},
 		{"version", StdUtf8FromCString(theApp.m_strCurVersionLong)},
 		{"apiVersion", "v1"},
 		{"build", pszBuildFlavor},
