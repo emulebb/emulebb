@@ -30,6 +30,7 @@
 #include "PreferencesDlg.h"
 #include "PPgWebServer.h"
 #include "BindStartupPolicy.h"
+#include "VpnGuardSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -157,8 +158,8 @@ BEGIN_MESSAGE_MAP(CPPgConnection, CPropertyPage)
 	ON_WM_HELPINFO()
 	ON_BN_CLICKED(IDC_PREF_UPNPONSTART, OnSettingsChange)
 	ON_BN_CLICKED(IDC_RANDOMIZE_PORTS_ON_STARTUP, OnSettingsChange)
-	ON_BN_CLICKED(IDC_STARTUP_BIND_BLOCK, OnSettingsChange)
-	ON_BN_CLICKED(IDC_EXIT_ON_BIND_LOSS, OnSettingsChange)
+	ON_BN_CLICKED(IDC_VPN_GUARD_ENABLED, OnSettingsChange)
+	ON_EN_CHANGE(IDC_VPN_GUARD_CIDRS, OnSettingsChange)
 	ON_CBN_SELCHANGE(IDC_BIND_INTERFACE, OnCbnSelChangeBindInterface)
 	ON_CBN_EDITCHANGE(IDC_BIND_INTERFACE, OnSettingsChange)
 	ON_EN_CHANGE(IDC_BIND_ADDRESS, OnSettingsChange)
@@ -252,12 +253,12 @@ void CPPgConnection::UpdateBindStatus()
 void CPPgConnection::UpdateBindProtectionControls()
 {
 	const bool bHasSpecificInterface = !GetBindInterfaceText().IsEmpty();
-	if (!bHasSpecificInterface) {
-		CheckDlgButton(IDC_STARTUP_BIND_BLOCK, 0);
-		CheckDlgButton(IDC_EXIT_ON_BIND_LOSS, 0);
-	}
-	GetDlgItem(IDC_STARTUP_BIND_BLOCK)->EnableWindow(bHasSpecificInterface);
-	GetDlgItem(IDC_EXIT_ON_BIND_LOSS)->EnableWindow(bHasSpecificInterface);
+	if (!bHasSpecificInterface)
+		CheckDlgButton(IDC_VPN_GUARD_ENABLED, 0);
+	const bool bGuardEnabled = IsDlgButtonChecked(IDC_VPN_GUARD_ENABLED) != 0;
+	GetDlgItem(IDC_VPN_GUARD_ENABLED)->EnableWindow(bHasSpecificInterface);
+	GetDlgItem(IDC_VPN_GUARD_CIDRS_LABEL)->EnableWindow(bHasSpecificInterface && bGuardEnabled);
+	GetDlgItem(IDC_VPN_GUARD_CIDRS)->EnableWindow(bHasSpecificInterface && bGuardEnabled);
 }
 
 void CPPgConnection::UpdateRestartRequiredNotice()
@@ -265,23 +266,24 @@ void CPPgConnection::UpdateRestartRequiredNotice()
 	CString strRestartNote;
 	const CString strPendingInterface = GetBindInterfaceText();
 	const CString strPendingAddress = GetBindAddressText();
-	const bool bPendingStartupBlock = !strPendingInterface.IsEmpty() && (IsDlgButtonChecked(IDC_STARTUP_BIND_BLOCK) != 0);
+	const bool bPendingVpnGuard = !strPendingInterface.IsEmpty() && (IsDlgButtonChecked(IDC_VPN_GUARD_ENABLED) != 0);
+	CString strPendingCidrs;
+	GetDlgItemText(IDC_VPN_GUARD_CIDRS, strPendingCidrs);
+	strPendingCidrs.Trim();
 	if (thePrefs.GetActiveBindInterface().CompareNoCase(strPendingInterface)
 		|| thePrefs.GetActiveConfiguredBindAddr().CompareNoCase(strPendingAddress)
-		|| thePrefs.IsActiveStartupBindBlockEnabled() != bPendingStartupBlock) {
+		|| thePrefs.IsActiveStartupBindBlockEnabled() != bPendingVpnGuard
+		|| thePrefs.GetVpnGuardAllowedPublicIpCidrs().CompareNoCase(strPendingCidrs)) {
 		CString strResolvedAddress;
 		CString strResolvedInterfaceName;
 		const EBindAddressResolveResult ePendingResult = CBindAddressResolver::ResolveBindAddress(strPendingInterface
 			, strPendingAddress, strResolvedAddress, &strResolvedInterfaceName);
 		strRestartNote = GetResString(IDS_BIND_RESTART_REQUIRED);
-		if (BindStartupPolicy::ShouldBlockSessionNetworking(bPendingStartupBlock, strPendingInterface, strPendingAddress, ePendingResult)) {
+		if (BindStartupPolicy::ShouldBlockSessionNetworking(bPendingVpnGuard, strPendingInterface, strPendingAddress, ePendingResult)) {
 			CString strReason = BindStartupPolicy::FormatStartupBlockReason(strResolvedInterfaceName.IsEmpty() ? strPendingInterface : strResolvedInterfaceName
 				, strPendingInterface, strPendingAddress, ePendingResult, GetBindStartupPolicyText());
 			if (!strReason.IsEmpty())
 				strRestartNote.AppendFormat(_T(" %s"), (LPCTSTR)strReason);
-		} else if (ePendingResult != BARR_Default && ePendingResult != BARR_Resolved) {
-			strRestartNote.Append(_T(" "));
-			strRestartNote.Append(GetResString(IDS_BIND_RESTART_FALLBACK_DEFAULT));
 		}
 	}
 
@@ -379,6 +381,7 @@ BOOL CPPgConnection::OnInitDialog()
 	static_cast<CEdit*>(GetDlgItem(IDC_PORT))->SetLimitText(5);
 	static_cast<CEdit*>(GetDlgItem(IDC_UDPPORT))->SetLimitText(5);
 	static_cast<CEdit*>(GetDlgItem(IDC_BIND_ADDRESS))->SetLimitText(15);
+	static_cast<CEdit*>(GetDlgItem(IDC_VPN_GUARD_CIDRS))->SetLimitText(512);
 
 	LoadBindableInterfaces();
 	LoadSettings();
@@ -416,8 +419,8 @@ void CPPgConnection::UpdateToolTips()
 	m_toolTip.SetTool(this, IDC_STARTTEST, GetResString(IDS_CONNECTION_TT_STARTTEST));
 	m_toolTip.SetTool(this, IDC_BIND_INTERFACE, GetResString(IDS_CONNECTION_TT_BIND_INTERFACE));
 	m_toolTip.SetTool(this, IDC_BIND_ADDRESS, GetResString(IDS_CONNECTION_TT_BIND_ADDRESS));
-	m_toolTip.SetTool(this, IDC_STARTUP_BIND_BLOCK, GetResString(IDS_CONNECTION_TT_STARTUP_BIND_BLOCK));
-	m_toolTip.SetTool(this, IDC_EXIT_ON_BIND_LOSS, GetResString(IDS_CONNECTION_TT_EXIT_ON_BIND_LOSS));
+	m_toolTip.SetTool(this, IDC_VPN_GUARD_ENABLED, GetResString(IDS_CONNECTION_TT_VPN_GUARD));
+	m_toolTip.SetTool(this, IDC_VPN_GUARD_CIDRS, GetResString(IDS_CONNECTION_TT_VPN_GUARD_CIDRS));
 }
 
 void CPPgConnection::LoadSettings()
@@ -451,8 +454,8 @@ void CPPgConnection::LoadSettings()
 
 		FillBindInterfaceCombo();
 		SetDlgItemText(IDC_BIND_ADDRESS, thePrefs.GetConfiguredBindAddr());
-		CheckDlgButton(IDC_STARTUP_BIND_BLOCK, static_cast<UINT>(thePrefs.IsStartupBindBlockEnabled()));
-		CheckDlgButton(IDC_EXIT_ON_BIND_LOSS, static_cast<UINT>(thePrefs.IsExitOnBindInterfaceLossEnabled()));
+		CheckDlgButton(IDC_VPN_GUARD_ENABLED, static_cast<UINT>(thePrefs.IsVpnGuardEnabled()));
+		SetDlgItemText(IDC_VPN_GUARD_CIDRS, thePrefs.GetVpnGuardAllowedPublicIpCidrs());
 		UpdateBindProtectionControls();
 
 		ShowLimitValues();
@@ -524,12 +527,37 @@ BOOL CPPgConnection::OnApply()
 		bBindRestartRequired = true;
 	}
 	const bool bHasSpecificBindInterface = !strBindInterface.IsEmpty();
-	const bool bStartupBindBlock = bHasSpecificBindInterface && (IsDlgButtonChecked(IDC_STARTUP_BIND_BLOCK) != 0);
-	if (thePrefs.IsStartupBindBlockEnabled() != bStartupBindBlock) {
-		thePrefs.m_bBlockNetworkWhenBindUnavailableAtStartup = bStartupBindBlock;
+	const bool bVpnGuardEnabled = bHasSpecificBindInterface && (IsDlgButtonChecked(IDC_VPN_GUARD_ENABLED) != 0);
+	CString strVpnGuardCidrs;
+	GetDlgItemText(IDC_VPN_GUARD_CIDRS, strVpnGuardCidrs);
+	strVpnGuardCidrs.Trim();
+	if (bVpnGuardEnabled) {
+		std::vector<VpnGuardSeams::SAllowedPublicIpv4Range> ranges;
+		CString strGuardError;
+		if (!VpnGuardSeams::TryParseAllowedPublicIpv4Ranges(strVpnGuardCidrs, ranges, strGuardError)) {
+			AfxMessageBox(strGuardError, MB_ICONWARNING | MB_OK);
+			GetDlgItem(IDC_VPN_GUARD_CIDRS)->SetFocus();
+			static_cast<CEdit*>(GetDlgItem(IDC_VPN_GUARD_CIDRS))->SetSel(0, -1);
+			return FALSE;
+		}
+		CString strResolvedAddress;
+		CString strResolvedInterfaceName;
+		const EBindAddressResolveResult ePendingResult = CBindAddressResolver::ResolveBindAddress(strBindInterface
+			, strBindAddress, strResolvedAddress, &strResolvedInterfaceName);
+		if (ePendingResult != BARR_Resolved) {
+			CString strReason = BindStartupPolicy::FormatStartupBlockReason(strResolvedInterfaceName.IsEmpty() ? strBindInterface : strResolvedInterfaceName
+				, strBindInterface, strBindAddress, ePendingResult, GetBindStartupPolicyText());
+			AfxMessageBox(strReason.IsEmpty() ? GetResString(IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED) : strReason, MB_ICONWARNING | MB_OK);
+			GetDlgItem(IDC_BIND_INTERFACE)->SetFocus();
+			return FALSE;
+		}
+	}
+	if (thePrefs.GetVpnGuardMode() != (bVpnGuardEnabled ? VpnGuardSeams::EMode::Block : VpnGuardSeams::EMode::Off)
+		|| thePrefs.GetVpnGuardAllowedPublicIpCidrs().CompareNoCase(strVpnGuardCidrs)) {
+		thePrefs.SetVpnGuardMode(bVpnGuardEnabled ? VpnGuardSeams::EMode::Block : VpnGuardSeams::EMode::Off);
+		thePrefs.SetVpnGuardAllowedPublicIpCidrs(strVpnGuardCidrs);
 		bBindRestartRequired = true;
 	}
-	thePrefs.SetExitOnBindInterfaceLossEnabled(bHasSpecificBindInterface && (IsDlgButtonChecked(IDC_EXIT_ON_BIND_LOSS) != 0));
 
 	if (thePrefs.m_bshowoverhead != (IsDlgButtonChecked(IDC_SHOWOVERHEAD) != 0)) {
 		thePrefs.m_bshowoverhead = !thePrefs.m_bshowoverhead;
@@ -626,8 +654,8 @@ void CPPgConnection::Localize()
 		SetDlgItemText(IDC_RANDOMIZE_PORTS_ON_STARTUP, GetResString(IDS_RANDOMIZE_PORTS_ON_STARTUP));
 		SetDlgItemText(IDC_BIND_INTERFACE_LABEL, GetResString(IDS_BIND_INTERFACE));
 		SetDlgItemText(IDC_BIND_ADDRESS_LABEL, GetResString(IDS_BIND_ADDRESS));
-		SetDlgItemText(IDC_STARTUP_BIND_BLOCK, GetResString(IDS_STARTUP_BIND_BLOCK));
-		SetDlgItemText(IDC_EXIT_ON_BIND_LOSS, GetResString(IDS_EXIT_ON_BIND_LOSS));
+		SetDlgItemText(IDC_VPN_GUARD_ENABLED, GetResString(IDS_VPN_GUARD));
+		SetDlgItemText(IDC_VPN_GUARD_CIDRS_LABEL, GetResString(IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS));
 		ShowLimitValues();
 	}
 }

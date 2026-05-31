@@ -139,6 +139,8 @@
 #include "WindowsMaintenanceActions.h"
 #include "Win32CallbackTimerSeams.h"
 #include "LifecycleProgressDlg.h"
+#include "VpnGuardPolicySeams.h"
+#include "VpnGuardSeams.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -162,6 +164,7 @@ namespace
 	static const UINT_PTR kBindLossWatchdogTimerId = 0xB10D;
 	static const UINT kBindLossWatchdogIntervalMs = SEC2MS(10);
 	static const UINT_PTR kTransferRateDisplayTimerId = 0xB10E;
+	static const UINT kVpnGuardHttpIntervalMs = MIN2MS(5);
 
 	static bool IsKeyboardShortcutModalContext(const CWnd &wnd)
 	{
@@ -220,11 +223,32 @@ namespace
 	{
 		BindRuntimeLossPolicy::CBindRuntimeLossPolicyText text;
 		text.startupText = GetBindStartupPolicyText();
-		text.strInterfaceChangedFormat = GetResString(IDS_BIND_EXIT_INTERFACE_CHANGED_FMT);
-		text.strInterfaceUnavailable = GetResString(IDS_BIND_EXIT_INTERFACE_UNAVAILABLE);
+		text.strInterfaceChangedFormat = GetResString(IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT);
+		text.strInterfaceUnavailable = GetResString(IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE);
 		text.strStartupDisabledPrefix = GetResString(IDS_BIND_STARTUP_DISABLED_PREFIX);
 		text.strRuntimeExitPrefix = GetResString(IDS_BIND_EXIT_PREFIX);
 		return text;
+	}
+
+	static bool TryLoadVpnGuardAllowedRanges(std::vector<VpnGuardSeams::SAllowedPublicIpv4Range>& rRanges, CString& rstrError)
+	{
+		return VpnGuardSeams::TryParseAllowedPublicIpv4Ranges(thePrefs.GetVpnGuardAllowedPublicIpCidrs(), rRanges, rstrError);
+	}
+
+	static CString FormatVpnGuardPublicIpFailure(bool bRuntime, const PublicIpProbe::SBoundPublicIpv4ProbeResult& result, const CString& strDetail)
+	{
+		CString strReason;
+		if (result.bSucceeded) {
+			strReason.Format(GetResString(bRuntime ? IDS_VPN_GUARD_RUNTIME_PUBLIC_IP_MISMATCH_FMT : IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT),
+				result.strPublicAddress.GetString(),
+				(LPCTSTR)result.strProviderUrl,
+				(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs());
+		} else {
+			strReason.Format(GetResString(bRuntime ? IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT : IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT),
+				(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs(),
+				(LPCTSTR)(strDetail.IsEmpty() ? result.strError : strDetail));
+		}
+		return strReason;
 	}
 
 	static CString GetConfigFilePath(LPCTSTR pszLeafName)
@@ -632,10 +656,14 @@ namespace
 				{"activeInterfaceId", JsonString(thePrefs.GetActiveBindInterface())},
 				{"activeInterfaceName", JsonString(thePrefs.GetActiveBindInterfaceName())},
 				{"activeInterfaceIndex", thePrefs.GetActiveBindInterfaceIndex()},
-				{"startupBlockEnabled", thePrefs.IsStartupBindBlockEnabled()},
-				{"activeStartupBlockEnabled", thePrefs.IsActiveStartupBindBlockEnabled()},
-				{"exitOnInterfaceLoss", thePrefs.IsExitOnBindInterfaceLossEnabled()},
 				{"resolveResult", static_cast<int>(thePrefs.GetActiveBindAddressResolveResult())}
+			}},
+			{"vpnGuard", nlohmann::json{
+				{"enabled", thePrefs.IsVpnGuardEnabled()},
+				{"mode", JsonString(VpnGuardSeams::GetModePreferenceText(thePrefs.GetVpnGuardMode()))},
+				{"allowedPublicIpCidrs", JsonString(thePrefs.GetVpnGuardAllowedPublicIpCidrs())},
+				{"startupBlocked", theApp.IsStartupBindBlocked()},
+				{"startupBlockReason", JsonString(theApp.GetStartupBindBlockReason())}
 			}},
 			{"ed2k", nlohmann::json{
 				{"connected", theApp.serverconnect != NULL && theApp.serverconnect->IsConnected()},
@@ -1373,6 +1401,7 @@ BEGIN_MESSAGE_MAP(CemuleDlg, CTrayDialog)
 	ON_MESSAGE(UM_GEOLOCATION_UPDATED, OnGeoLocationUpdated)
 	ON_MESSAGE(UM_IPFILTER_UPDATED, OnIPFilterUpdated)
 	ON_MESSAGE(UM_BIND_INTERFACE_CHANGED, OnBindInterfaceChanged)
+	ON_MESSAGE(UM_VPN_GUARD_PROBE_RESULT, OnVpnGuardProbeResult)
 	ON_WM_SHOWWINDOW()
 	ON_WM_DESTROY()
 	ON_WM_SETTINGCHANGE()
@@ -1479,6 +1508,11 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_bInitedCOM()
 	, m_bBindLossMonitorActive()
 	, m_bBindLossShutdown()
+	, m_bVpnGuardStartupProbePending()
+	, m_bVpnGuardStartupApproved()
+	, m_bVpnGuardRuntimeProbePending()
+	, m_uVpnGuardProbeGeneration()
+	, m_ullLastVpnGuardRuntimeProbeTick()
 	, m_uBindLossWatchdogTimer()
 	, m_uTransferRateDisplayTimer()
 	, m_hBindLossInterfaceNotification()
@@ -1934,7 +1968,7 @@ BOOL CemuleDlg::OnInitDialog()
 		AddDebugLogLine(false, _T("Queued startup stage sequencer message."));
 
 	// Start UPnP port forwarding
-	if (thePrefs.IsUPnPEnabled() && !theApp.IsStartupBindBlocked())
+	if (thePrefs.IsUPnPEnabled() && !theApp.IsStartupBindBlocked() && !thePrefs.IsVpnGuardEnabled())
 		StartUPnP();
 
 	if (thePrefs.IsFirstStart() && !thePrefs.IsFirstTimeWizardDisabled()) {
@@ -2087,6 +2121,10 @@ void CemuleDlg::OnStartupTimer() noexcept
 		case 4:
 			{
 				UpdateStartupProgress(74, IDS_STARTUP_PROGRESS_STARTING_NETWORK, IDS_STARTUP_PROGRESS_LOADING_DOWNLOADS);
+				if (VpnGuardPolicySeams::ShouldRunStartupProbe(thePrefs.GetVpnGuardMode(), theApp.IsStartupBindBlocked(), m_bVpnGuardStartupApproved)) {
+					if (m_bVpnGuardStartupProbePending || StartVpnGuardProbe(_T("startup"), false))
+						return;
+				}
 				status = 5;
 				bool bError = false;
 #if EMULEBB_HAS_STARTUP_PROFILING
@@ -2128,7 +2166,10 @@ void CemuleDlg::OnStartupTimer() noexcept
 						if (thePrefs.GetNotifierOnImportantError())
 							theApp.emuledlg->ShowNotifier(strError, TBN_IMPORTANTEVENT);
 					}
-					PublicIpProbe::StartBoundPublicIpv4Probe();
+					if (!thePrefs.IsVpnGuardEnabled())
+						PublicIpProbe::StartBoundPublicIpv4Probe();
+					else if (thePrefs.IsUPnPEnabled())
+						StartUPnP();
 				}
 #if EMULEBB_HAS_STARTUP_PROFILING
 				theApp.AppendStartupProfileLine(_T("StartupTimer stage 4: socket startup"), theApp.GetStartupProfileElapsedUs(ullSocketInitStart));
@@ -2235,7 +2276,7 @@ void CemuleDlg::StopTimer()
 bool CemuleDlg::IsBindLossMonitorConfigured() const
 {
 	return theApp.IsRunning()
-		&& thePrefs.IsExitOnBindInterfaceLossEnabled()
+		&& thePrefs.IsVpnGuardEnabled()
 		&& !theApp.IsStartupBindBlocked()
 		&& !thePrefs.GetActiveBindInterface().IsEmpty()
 		&& thePrefs.GetActiveBindAddressResolveResult() == BARR_Resolved
@@ -2269,6 +2310,7 @@ void CemuleDlg::UpdateBindLossMonitor()
 		|| m_hBindLossInterfaceNotification != NULL
 		|| m_hBindLossAddressNotification != NULL;
 	CheckBindLossMonitor();
+	CheckVpnGuardHttpMonitor(true);
 }
 
 void CemuleDlg::StopBindLossMonitor()
@@ -2329,6 +2371,63 @@ void CemuleDlg::CheckBindLossMonitor()
 		, strResolvedAddress
 		, strActiveBindAddress
 		, GetBindRuntimeLossPolicyText());
+	ExitForVpnGuardFailure(strReason);
+}
+
+void CemuleDlg::CheckVpnGuardHttpMonitor(bool bForce)
+{
+	if (m_bBindLossShutdown
+		|| m_bVpnGuardRuntimeProbePending
+		|| thePrefs.GetVpnGuardMode() != VpnGuardSeams::EMode::Block
+		|| theApp.IsStartupBindBlocked()
+		|| !m_bVpnGuardStartupApproved)
+		return;
+
+	const ULONGLONG ullNow = ::GetTickCount64();
+	if (!bForce && m_ullLastVpnGuardRuntimeProbeTick != 0 && ullNow - m_ullLastVpnGuardRuntimeProbeTick < kVpnGuardHttpIntervalMs)
+		return;
+	m_ullLastVpnGuardRuntimeProbeTick = ullNow;
+	(void)StartVpnGuardProbe(_T("runtime"), true);
+}
+
+bool CemuleDlg::StartVpnGuardProbe(const CString& strPurpose, bool bRuntime)
+{
+	if (thePrefs.GetVpnGuardMode() != VpnGuardSeams::EMode::Block || theApp.IsStartupBindBlocked())
+		return false;
+
+	std::vector<VpnGuardSeams::SAllowedPublicIpv4Range> ranges;
+	CString strError;
+	if (!TryLoadVpnGuardAllowedRanges(ranges, strError)) {
+		const CString strReason = FormatVpnGuardPublicIpFailure(bRuntime, PublicIpProbe::SBoundPublicIpv4ProbeResult(), strError);
+		if (bRuntime)
+			ExitForVpnGuardFailure(strReason);
+		else
+			theApp.BlockStartupNetworkingForSession(strReason);
+		return false;
+	}
+
+	const uint32 uGeneration = ++m_uVpnGuardProbeGeneration;
+	if (!PublicIpProbe::StartBoundPublicIpv4Probe(m_hWnd, UM_VPN_GUARD_PROBE_RESULT, uGeneration, strPurpose, strError)) {
+		const CString strReason = FormatVpnGuardPublicIpFailure(bRuntime, PublicIpProbe::SBoundPublicIpv4ProbeResult(), strError);
+		if (bRuntime)
+			ExitForVpnGuardFailure(strReason);
+		else
+			theApp.BlockStartupNetworkingForSession(strReason);
+		return false;
+	}
+
+	m_bVpnGuardStartupProbePending = !bRuntime;
+	m_bVpnGuardRuntimeProbePending = bRuntime;
+	DebugLog(_T("VPN Guard %s check pending: allowedCIDRs=%s bindInterface=%s localBind=%s"),
+		(LPCTSTR)strPurpose,
+		(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs(),
+		(LPCTSTR)thePrefs.GetActiveBindInterfaceName(),
+		thePrefs.GetBindAddr());
+	return true;
+}
+
+void CemuleDlg::ExitForVpnGuardFailure(const CString &strReason)
+{
 	ExitForBindLoss(strReason);
 }
 
@@ -2339,6 +2438,8 @@ void CemuleDlg::ExitForBindLoss(const CString &strReason)
 
 	m_bBindLossShutdown = true;
 	StopBindLossMonitor();
+	m_bVpnGuardStartupProbePending = false;
+	m_bVpnGuardRuntimeProbePending = false;
 	LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
 	PostMessage(WM_CLOSE);
 }
@@ -2352,6 +2453,51 @@ LRESULT CemuleDlg::OnStartupNextStage(WPARAM, LPARAM)
 LRESULT CemuleDlg::OnBindInterfaceChanged(WPARAM, LPARAM)
 {
 	CheckBindLossMonitor();
+	CheckVpnGuardHttpMonitor(true);
+	return 0;
+}
+
+LRESULT CemuleDlg::OnVpnGuardProbeResult(WPARAM wParam, LPARAM lParam)
+{
+	std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult(reinterpret_cast<PublicIpProbe::SBoundPublicIpv4ProbeResult*>(lParam));
+	if (m_bBindLossShutdown || pResult.get() == NULL)
+		return 0;
+	if (static_cast<uint32>(wParam) != m_uVpnGuardProbeGeneration || pResult->uGeneration != m_uVpnGuardProbeGeneration)
+		return 0;
+
+	const bool bRuntime = m_bVpnGuardRuntimeProbePending;
+	const bool bStartup = m_bVpnGuardStartupProbePending;
+	m_bVpnGuardStartupProbePending = false;
+	m_bVpnGuardRuntimeProbePending = false;
+
+	std::vector<VpnGuardSeams::SAllowedPublicIpv4Range> ranges;
+	CString strError;
+	const bool bPublicIpAllowed = TryLoadVpnGuardAllowedRanges(ranges, strError)
+		&& VpnGuardSeams::IsPublicIpv4Allowed(pResult->uPublicAddress, ranges);
+	const bool bAllowed = VpnGuardPolicySeams::IsProbeResultAllowed(pResult->bSucceeded, bPublicIpAllowed);
+	if (bAllowed) {
+		DebugLog(_T("VPN Guard %s check passed: provider=%s publicIp=%S allowedCIDRs=%s"),
+			(LPCTSTR)pResult->strPurpose,
+			(LPCTSTR)pResult->strProviderUrl,
+			pResult->strPublicAddress.GetString(),
+			(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs());
+		if (bStartup) {
+			m_bVpnGuardStartupApproved = true;
+			m_ullLastVpnGuardRuntimeProbeTick = ::GetTickCount64();
+			VERIFY(PostMessage(UM_STARTUP_NEXT_STAGE) != 0);
+		}
+		return 0;
+	}
+
+	const CString strReason = FormatVpnGuardPublicIpFailure(bRuntime, *pResult, strError);
+	if (bRuntime)
+		ExitForVpnGuardFailure(strReason);
+	else {
+		theApp.BlockStartupNetworkingForSession(strReason);
+		LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
+		if (bStartup)
+			VERIFY(PostMessage(UM_STARTUP_NEXT_STAGE) != 0);
+	}
 	return 0;
 }
 
@@ -6378,6 +6524,7 @@ void CemuleDlg::OnTimer(UINT_PTR nIDEvent)
 	}
 	if (nIDEvent == kBindLossWatchdogTimerId) {
 		CheckBindLossMonitor();
+		CheckVpnGuardHttpMonitor(false);
 		return;
 	}
 	__super::OnTimer(nIDEvent);

@@ -24,6 +24,7 @@
 #include "PartFilePersistenceSeams.h"
 #include "PreferenceValidationSeams.h"
 #include "Opcodes.h"
+#include "VpnGuardSeams.h"
 
 class CIni;
 
@@ -203,9 +204,9 @@ public:
 	static CStringA m_strBindAddrA;
 	static CStringW m_strBindAddrW;
 	static EBindAddressResolveResult m_eActiveBindAddrResolveResult;
-	static bool		m_bBlockNetworkWhenBindUnavailableAtStartup;
 	static bool		m_bActiveStartupBindBlockEnabled;
-	static bool		m_bExitOnBindInterfaceLoss;
+	static VpnGuardSeams::EMode m_eVpnGuardMode;
+	static CString	m_strVpnGuardAllowedPublicIpCidrs;
 	static bool		m_bRandomizePortsOnStartup;
 	static uint16	port;
 	static uint16	udpport;
@@ -821,11 +822,12 @@ public:
 	static const CString& GetBindInterface()			{ return m_strBindInterface; }
 	static const CString& GetBindInterfaceName()		{ return m_strBindInterfaceName; }
 	static EBindAddressResolveResult GetBindAddressResolveResult() { return m_eActiveBindAddrResolveResult; }
-	static bool		IsStartupBindBlockEnabled()			{ return m_bBlockNetworkWhenBindUnavailableAtStartup; }
-	/// Returns whether eMule should exit when the configured bind interface disappears after startup.
-	static bool		IsExitOnBindInterfaceLossEnabled()	{ return m_bExitOnBindInterfaceLoss; }
-	/// Configures whether eMule should exit when the configured bind interface disappears after startup.
-	static void		SetExitOnBindInterfaceLossEnabled(bool bEnabled) { m_bExitOnBindInterfaceLoss = bEnabled; }
+	static bool		IsVpnGuardEnabled()					{ return m_eVpnGuardMode == VpnGuardSeams::EMode::Block; }
+	static VpnGuardSeams::EMode GetVpnGuardMode()		{ return m_eVpnGuardMode; }
+	static void		SetVpnGuardMode(VpnGuardSeams::EMode eMode) { m_eVpnGuardMode = eMode; }
+	static const CString& GetVpnGuardAllowedPublicIpCidrs() { return m_strVpnGuardAllowedPublicIpCidrs; }
+	static void		SetVpnGuardAllowedPublicIpCidrs(const CString& strCidrs) { m_strVpnGuardAllowedPublicIpCidrs = strCidrs; }
+	static bool		IsStartupBindBlockEnabled()			{ return IsVpnGuardEnabled(); }
 	static const CString& GetActiveConfiguredBindAddr()	{ return m_strActiveConfiguredBindAddr; }
 	static const CString& GetActiveBindInterface()		{ return m_strActiveBindInterface; }
 	static const CString& GetActiveBindInterfaceName()	{ return m_strActiveBindInterfaceName; }

@@ -234,6 +234,11 @@ protected:
 	bool			m_bInitedCOM;
 	bool			m_bBindLossMonitorActive;
 	bool			m_bBindLossShutdown;
+	bool			m_bVpnGuardStartupProbePending;
+	bool			m_bVpnGuardStartupApproved;
+	bool			m_bVpnGuardRuntimeProbePending;
+	uint32			m_uVpnGuardProbeGeneration;
+	ULONGLONG		m_ullLastVpnGuardRuntimeProbeTick;
 	UINT_PTR		m_uBindLossWatchdogTimer;
 	UINT_PTR		m_uTransferRateDisplayTimer;
 	HANDLE			m_hBindLossInterfaceNotification;
@@ -269,6 +274,9 @@ protected:
 	void OnStartupTimer() noexcept;
 	void StopBindLossMonitor();
 	void CheckBindLossMonitor();
+	void CheckVpnGuardHttpMonitor(bool bForce);
+	bool StartVpnGuardProbe(const CString& strPurpose, bool bRuntime);
+	void ExitForVpnGuardFailure(const CString &strReason);
 	void ExitForBindLoss(const CString &strReason);
 	bool IsBindLossMonitorConfigured() const;
 
@@ -327,6 +335,7 @@ protected:
 	afx_msg LRESULT OnGeoLocationUpdated(WPARAM, LPARAM);
 	afx_msg LRESULT OnIPFilterUpdated(WPARAM, LPARAM);
 	afx_msg LRESULT OnBindInterfaceChanged(WPARAM, LPARAM);
+	afx_msg LRESULT OnVpnGuardProbeResult(WPARAM, LPARAM);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnBnClickedConnect();

@@ -2386,6 +2386,12 @@ void CemuleApp::RefreshStartupBindBlockState()
 		, thePrefs.GetActiveBindInterface(), thePrefs.GetActiveConfiguredBindAddr(), thePrefs.GetActiveBindAddressResolveResult(), GetBindStartupPolicyText());
 }
 
+void CemuleApp::BlockStartupNetworkingForSession(const CString& strReason)
+{
+	m_bStartupBindBlocked = true;
+	m_strStartupBindBlockReason = strReason;
+}
+
 #ifdef _DEBUG
 static int CrtDebugReportCB(int reportType, char *message, int *returnValue) noexcept
 {

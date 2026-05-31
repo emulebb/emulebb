@@ -376,12 +376,12 @@ BEGIN
     COMBOBOX        IDC_BIND_INTERFACE,11,242,208,120,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Bind address",IDC_BIND_ADDRESS_LABEL,11,260,90,8
     EDITTEXT        IDC_BIND_ADDRESS,11,269,114,12,ES_AUTOHSCROLL
-    CONTROL         "Keep networking offline if the bind target is unavailable at startup",IDC_STARTUP_BIND_BLOCK,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,286,370,18
-    CONTROL         "Exit eMule if the selected bind/VPN interface is lost",IDC_EXIT_ON_BIND_LOSS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,306,370,18
-    LTEXT           "",IDC_BIND_STATUS,11,326,370,16
-    LTEXT           "",IDC_BIND_RESTART_NOTE,11,344,370,28
+    CONTROL         "Enable VPN Guard",IDC_VPN_GUARD_ENABLED,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,286,370,10
+    LTEXT           "Allowed public IP CIDRs",IDC_VPN_GUARD_CIDRS_LABEL,11,302,180,8
+    EDITTEXT        IDC_VPN_GUARD_CIDRS,11,312,370,12,ES_AUTOHSCROLL
+    LTEXT           "",IDC_BIND_STATUS,11,332,370,16
+    LTEXT           "",IDC_BIND_RESTART_NOTE,11,350,370,28
 END
 
 IDD_WIZARD DIALOGEX 0, 0, 257, 223
@@ -4614,8 +4614,8 @@ STRINGTABLE
 BEGIN
     IDS_UNIT_KIB_PER_SEC                   "KiB/s"
     IDS_RANDOMIZE_PORTS_ON_STARTUP         "Randomize listen ports on startup"
-    IDS_STARTUP_BIND_BLOCK                 "Keep networking offline if the bind target is unavailable at startup"
-    IDS_EXIT_ON_BIND_LOSS                  "Exit eMule if the selected bind/VPN interface is lost"
+    IDS_VPN_GUARD                          "Enable VPN Guard"
+    IDS_VPN_GUARD_ALLOWED_PUBLIC_IP_CIDRS  "Allowed public IP CIDRs"
     IDS_SPEED_MIB_PER_SEC_FMT              "%.2f MiB/s"
     IDS_WEB_MAX_UPLOAD_MIB_LABEL           "Max upload MiB:"
     IDS_WEB_ALLOWED_IPS_LABEL              "Allowed IPs:"
@@ -4855,8 +4855,8 @@ BEGIN
     IDS_CONNECTION_TT_STARTTEST            "Launches the external connectivity test for the currently configured TCP and UDP ports.\r\n\r\nUse it after changing ports, bind settings, or router mapping rules."
     IDS_CONNECTION_TT_BIND_INTERFACE       "Optional Windows network interface name used for P2P socket binding.\r\n\r\nMatch is by friendly interface name, not adapter number. Changes take effect after restart."
     IDS_CONNECTION_TT_BIND_ADDRESS         "Optional IPv4 address used for P2P socket binding.\r\n\r\nLeave it empty to use the first IPv4 on the selected interface, or the default routing choice when no interface is selected."
-    IDS_CONNECTION_TT_STARTUP_BIND_BLOCK   "Keeps P2P networking offline for the session if the configured bind target cannot be resolved at startup.\r\n\r\nAvailable only when a bind interface is selected. Recommended when you explicitly bind to a named interface and do not want silent fallback."
-    IDS_CONNECTION_TT_EXIT_ON_BIND_LOSS    "Exits eMule if the selected bind/VPN interface disappears after startup.\r\n\r\nAvailable only when a bind interface is selected. Use this as VPN protection so P2P networking never silently falls back to a non-VPN route."
+    IDS_CONNECTION_TT_VPN_GUARD            "Blocks P2P startup until restart if the selected VPN bind interface is unavailable or the detected public IPv4 is outside the allowed CIDRs. After startup succeeds, exits eMule if the VPN Guard fails."
+    IDS_CONNECTION_TT_VPN_GUARD_CIDRS      "Public IPv4 CIDRs allowed for the VPN exit address. Separate multiple ranges with commas, semicolons, or spaces."
     IDS_WEBSERVER_TT_WEBBINDADDR           "Local bind address for the built-in WebServer and REST API.\r\n\r\nLeave it empty or as 0.0.0.0 to listen on all interfaces. Set a specific IPv4 only if you deliberately want to restrict where the service listens."
     IDS_WEBSERVER_TT_WSAPIKEY              "Plaintext REST API key used by clients in the X-API-Key header.\r\n\r\nRecommended: keep the generated random value unless you need a specific token. Anyone with this key has full API access."
 END
@@ -4886,6 +4886,13 @@ BEGIN
     IDS_BIND_EXIT_INTERFACE_UNAVAILABLE    "Exiting eMule because the selected bind interface is no longer available."
     IDS_BIND_STARTUP_DISABLED_PREFIX       "Networking disabled for this session"
     IDS_BIND_EXIT_PREFIX                   "Exiting eMule"
+    IDS_VPN_GUARD_BIND_INTERFACE_REQUIRED  "VPN Guard requires a selected bind interface."
+    IDS_VPN_GUARD_STARTUP_PUBLIC_IP_MISMATCH_FMT "VPN Guard blocked P2P startup for this session because detected public IPv4 %S from %s is outside allowed CIDRs %s."
+    IDS_VPN_GUARD_STARTUP_PROBE_FAILED_FMT "VPN Guard blocked P2P startup for this session because the bound public IPv4 probe failed for allowed CIDRs %s: %s"
+    IDS_VPN_GUARD_RUNTIME_PUBLIC_IP_MISMATCH_FMT "Exiting eMule because VPN Guard detected public IPv4 %S from %s outside allowed CIDRs %s."
+    IDS_VPN_GUARD_RUNTIME_PROBE_FAILED_FMT "Exiting eMule because VPN Guard could not detect the bound public IPv4 for allowed CIDRs %s: %s"
+    IDS_VPN_GUARD_RUNTIME_INTERFACE_CHANGED_FMT "Exiting eMule because VPN Guard bind interface changed address from %s to %s: %s"
+    IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE "Exiting eMule because VPN Guard bind interface is no longer available."
     IDS_STATUS_BIND_IP_COMPACT_LABEL       "B"
     IDS_STATUS_PUBLIC_IP_COMPACT_LABEL     "P"
     IDS_STATUS_ANY_COMPACT                 "Any"
