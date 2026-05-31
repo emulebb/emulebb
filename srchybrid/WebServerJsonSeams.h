@@ -2229,6 +2229,9 @@ inline void CopyLogQueryParams(const std::map<std::string, std::string> &rQuery,
 
 inline void CopyPagingQueryParams(const std::map<std::string, std::string> &rQuery, json &rParams)
 {
+	rParams["_offset"] = 0;
+	rParams["_limit"] = 100;
+
 	uint64_t ullLimit = 0;
 	if (TryParseUnsignedQueryValue(rQuery, "limit", ullLimit))
 		rParams["_limit"] = ullLimit > 1000 ? 1000 : static_cast<int>(ullLimit);
