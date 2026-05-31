@@ -213,6 +213,17 @@ public:
 		return TRUE;
 	}
 
+	bool IsCurrentSocket(const CAsyncSocketEx *pSocket, int nSocketIndex, SOCKET hSocket) const
+	{
+		return pSocket != NULL
+			&& hSocket != INVALID_SOCKET
+			&& m_pAsyncSocketExWindowData != NULL
+			&& nSocketIndex >= 0
+			&& nSocketIndex < m_nWindowDataSize
+			&& m_pAsyncSocketExWindowData[nSocketIndex].m_pSocket == pSocket
+			&& pSocket->m_SocketData.hSocket == hSocket;
+	}
+
 	void RemoveLayers(const CAsyncSocketEx *pOrigSocket)
 	{
 		// Remove all layer messages from old socket
@@ -250,7 +261,8 @@ public:
 
 			if (message < static_cast<UINT>(WM_SOCKETEX_NOTIFY + pWnd->m_nWindowDataSize)) { //Index is within socket storage
 				//Lookup socket and verify if it is valid
-				CAsyncSocketEx *pSocket = pWnd->m_pAsyncSocketExWindowData[message - WM_SOCKETEX_NOTIFY].m_pSocket;
+				const int nSocketIndex = message - WM_SOCKETEX_NOTIFY;
+				CAsyncSocketEx *pSocket = pWnd->m_pAsyncSocketExWindowData[nSocketIndex].m_pSocket;
 				if (!pSocket)
 					return 0;
 				SOCKET hSocket = wParam;
@@ -311,18 +323,31 @@ public:
 						} else if (pSocket->GetState() == attached && !nErrorCode)
 							pSocket->SetState(connected);
 #endif //EMULEBB_DISABLE_SOCKET_STATES
-						if (pSocket->m_lEvent & FD_CONNECT)
+						if (pSocket->m_lEvent & FD_CONNECT) {
 							pSocket->OnConnect(nErrorCode);
+							// WHY: server connect failures can synchronously
+							// delete the socket from OnConnect(). The helper
+							// window slot is the only valid owner check before
+							// touching pending state or replaying callbacks.
+							if (!pWnd->IsCurrentSocket(pSocket, nSocketIndex, hSocket))
+								break;
+						}
 
 #ifndef EMULEBB_DISABLE_SOCKET_STATES
-						// netfinity: Check that socket is still valid. It might have got deleted.
-						if (!nErrorCode && pWnd->m_pAsyncSocketExWindowData	&& pSocket == pWnd->m_pAsyncSocketExWindowData[message - WM_SOCKETEX_NOTIFY].m_pSocket) {
-							if ((pSocket->m_nPendingEvents & (FD_READ | FD_FORCEREAD)) && pSocket->GetState() == connected)
+						if (!nErrorCode && pWnd->IsCurrentSocket(pSocket, nSocketIndex, hSocket)) {
+							if ((pSocket->m_nPendingEvents & (FD_READ | FD_FORCEREAD)) && pSocket->GetState() == connected) {
 								pSocket->OnReceive(0);
-							if ((pSocket->m_nPendingEvents & FD_WRITE) && pSocket->GetState() == connected)
+								if (!pWnd->IsCurrentSocket(pSocket, nSocketIndex, hSocket))
+									break;
+							}
+							if ((pSocket->m_nPendingEvents & FD_WRITE) && pSocket->GetState() == connected) {
 								pSocket->OnSend(0);
+								if (!pWnd->IsCurrentSocket(pSocket, nSocketIndex, hSocket))
+									break;
+							}
 						}
-						pSocket->m_nPendingEvents = 0;
+						if (pWnd->IsCurrentSocket(pSocket, nSocketIndex, hSocket))
+							pSocket->m_nPendingEvents = 0;
 #endif
 						break;
 					case FD_ACCEPT:
@@ -391,7 +416,8 @@ public:
 				if (!pWnd || wParam >= static_cast<WPARAM>(pWnd->m_nWindowDataSize)) //Index is within socket storage
 					return 0;
 
-				CAsyncSocketEx *pSocket = pWnd->m_pAsyncSocketExWindowData[wParam].m_pSocket;
+				const int nSocketIndex = static_cast<int>(wParam);
+				CAsyncSocketEx *pSocket = pWnd->m_pAsyncSocketExWindowData[nSocketIndex].m_pSocket;
 				CAsyncSocketExLayer::t_LayerNotifyMsg *pMsg = reinterpret_cast<CAsyncSocketExLayer::t_LayerNotifyMsg*>(lParam);
 				if (!pMsg || !pSocket || pSocket->m_SocketData.hSocket == INVALID_SOCKET || pSocket->m_SocketData.hSocket != pMsg->hSocket) {
 					delete pMsg;
@@ -446,19 +472,36 @@ public:
 						else if (pSocket->GetState() == attached && !nErrorCode)
 							pSocket->SetState(connected);
 #endif //EMULEBB_DISABLE_SOCKET_STATES
-						if (pSocket->m_lEvent & FD_CONNECT)
+						if (pSocket->m_lEvent & FD_CONNECT) {
 							pSocket->OnConnect(nErrorCode);
+							// WHY: OnConnect handlers may close and delete
+							// their socket synchronously. Layer-triggered
+							// connect completion must revalidate the helper
+							// window slot before replaying pending events.
+							if (!pWnd->IsCurrentSocket(pSocket, nSocketIndex, pMsg->hSocket))
+								break;
+						}
 
 #ifndef EMULEBB_DISABLE_SOCKET_STATES
-						if (!nErrorCode && pSocket->GetState() == connected) {
-							if ((pSocket->m_nPendingEvents & FD_READ) && pSocket->m_lEvent & FD_READ)
+						if (!nErrorCode && pWnd->IsCurrentSocket(pSocket, nSocketIndex, pMsg->hSocket) && pSocket->GetState() == connected) {
+							if ((pSocket->m_nPendingEvents & FD_READ) && pSocket->m_lEvent & FD_READ) {
 								pSocket->OnReceive(0);
-							if ((pSocket->m_nPendingEvents & FD_FORCEREAD) && pSocket->m_lEvent & FD_READ)
+								if (!pWnd->IsCurrentSocket(pSocket, nSocketIndex, pMsg->hSocket))
+									break;
+							}
+							if ((pSocket->m_nPendingEvents & FD_FORCEREAD) && pSocket->m_lEvent & FD_READ) {
 								pSocket->OnReceive(0);
-							if (pSocket->m_nPendingEvents & FD_WRITE && pSocket->m_lEvent & FD_WRITE)
+								if (!pWnd->IsCurrentSocket(pSocket, nSocketIndex, pMsg->hSocket))
+									break;
+							}
+							if (pSocket->m_nPendingEvents & FD_WRITE && pSocket->m_lEvent & FD_WRITE) {
 								pSocket->OnSend(0);
+								if (!pWnd->IsCurrentSocket(pSocket, nSocketIndex, pMsg->hSocket))
+									break;
+							}
 						}
-						pSocket->m_nPendingEvents = 0;
+						if (pWnd->IsCurrentSocket(pSocket, nSocketIndex, pMsg->hSocket))
+							pSocket->m_nPendingEvents = 0;
 #endif //EMULEBB_DISABLE_SOCKET_STATES
 						break;
 					case FD_ACCEPT:
