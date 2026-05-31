@@ -504,6 +504,33 @@ json BuildKadStatusJson()
 	};
 }
 
+const char *GetVpnGuardModeRestToken(VpnGuardSeams::EMode eMode)
+{
+	return eMode == VpnGuardSeams::EMode::Block ? "block" : "off";
+}
+
+const char *GetBindAddressResolveResultRestToken(EBindAddressResolveResult eResult)
+{
+	switch (eResult) {
+	case BARR_Default:
+		return "default";
+	case BARR_Resolved:
+		return "resolved";
+	case BARR_InterfaceNotFound:
+		return "interfacenotfound";
+	case BARR_InterfaceNameAmbiguous:
+		return "interfacenameambiguous";
+	case BARR_InterfaceHasNoAddress:
+		return "interfacehasnoaddress";
+	case BARR_AddressNotFoundOnInterface:
+		return "addressnotfoundoninterface";
+	case BARR_AddressNotFound:
+		return "addressnotfound";
+	default:
+		return "unknown";
+	}
+}
+
 /**
  * Serializes the network binding and VPN Guard state shared by status and snapshot routes.
  */
@@ -523,11 +550,11 @@ json BuildNetworkStatusJson()
 			{"activeInterfaceId", StdUtf8FromCString(thePrefs.GetActiveBindInterface())},
 			{"activeInterfaceName", StdUtf8FromCString(thePrefs.GetActiveBindInterfaceName())},
 			{"activeInterfaceIndex", thePrefs.GetActiveBindInterfaceIndex()},
-			{"resolveResult", static_cast<int>(thePrefs.GetActiveBindAddressResolveResult())}
+			{"resolveResult", GetBindAddressResolveResultRestToken(thePrefs.GetActiveBindAddressResolveResult())}
 		}},
 		{"vpnGuard", json{
 			{"enabled", thePrefs.IsVpnGuardEnabled()},
-			{"mode", StdUtf8FromCString(CString(VpnGuardSeams::GetModePreferenceText(thePrefs.GetVpnGuardMode())))},
+			{"mode", GetVpnGuardModeRestToken(thePrefs.GetVpnGuardMode())},
 			{"allowedPublicIpCidrs", StdUtf8FromCString(thePrefs.GetVpnGuardAllowedPublicIpCidrs())},
 			{"startupBlocked", theApp.IsStartupBindBlocked()},
 			{"startupBlockReason", StdUtf8FromCString(theApp.GetStartupBindBlockReason())}
