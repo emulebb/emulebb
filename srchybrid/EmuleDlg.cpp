@@ -2288,6 +2288,22 @@ bool CemuleDlg::IsBindLossMonitorConfigured() const
 		&& *thePrefs.GetBindAddr() != _T('\0');
 }
 
+bool CemuleDlg::CanUseP2PConnectionCommands() const
+{
+	return VpnGuardPolicySeams::CanUseP2PConnectionCommands(
+		thePrefs.GetVpnGuardMode(), theApp.IsStartupBindBlocked(), m_bBindLossMonitorActive);
+}
+
+void CemuleDlg::LogP2PConnectionCommandBlocked() const
+{
+	if (theApp.IsStartupBindBlocked()) {
+		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+		return;
+	}
+	if (VpnGuardPolicySeams::IsRuntimeMonitorRequired(thePrefs.GetVpnGuardMode(), false) && !m_bBindLossMonitorActive)
+		LogWarning(LOG_STATUSBAR, _T("VPN Guard is enabled but runtime monitoring is not armed; P2P connection commands are blocked for this session."));
+}
+
 void CemuleDlg::UpdateBindLossMonitor(bool bForceVpnGuardHttpProbe)
 {
 	StopBindLossMonitor();
@@ -4035,8 +4051,8 @@ void CemuleDlg::AddSpeedSelectorMenus(CMenu *addToMenu)
 
 void CemuleDlg::StartConnection()
 {
-	if (theApp.IsStartupBindBlocked()) {
-		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+	if (!CanUseP2PConnectionCommands()) {
+		LogP2PConnectionCommandBlocked();
 		return;
 	}
 
@@ -4071,6 +4087,7 @@ void CemuleDlg::StartConnection()
 
 void CemuleDlg::CloseConnection()
 {
+	AddLogLine(false, _T("Disconnect requested: using stock eMule soft disconnect; active transfer queues and listener sockets are not hard-reset."));
 	theApp.serverconnect->StopConnectionTry();
 	theApp.serverconnect->Disconnect();
 

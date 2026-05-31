@@ -82,9 +82,13 @@ void CServerConnect::TryAnotherConnectionRequest()
 
 void CServerConnect::ConnectToAnyServer(INT_PTR startAt, bool prioSort, bool isAuto, bool bNoCrypt)
 {
-	if (theApp.IsStartupBindBlocked()) {
-		if (!isAuto)
-			LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+	if (theApp.emuledlg != NULL ? !theApp.emuledlg->CanUseP2PConnectionCommands() : theApp.IsStartupBindBlocked()) {
+		if (!isAuto) {
+			if (theApp.emuledlg == NULL)
+				LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+			else
+				theApp.emuledlg->LogP2PConnectionCommandBlocked();
+		}
 		return;
 	}
 
@@ -132,8 +136,11 @@ void CServerConnect::ConnectToAnyServer(INT_PTR startAt, bool prioSort, bool isA
 
 void CServerConnect::ConnectToServer(CServer *server, bool multiconnect, bool bNoCrypt, bool bManual)
 {
-	if (theApp.IsStartupBindBlocked()) {
-		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+	if (theApp.emuledlg != NULL ? !theApp.emuledlg->CanUseP2PConnectionCommands() : theApp.IsStartupBindBlocked()) {
+		if (theApp.emuledlg == NULL)
+			LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+		else
+			theApp.emuledlg->LogP2PConnectionCommandBlocked();
 		return;
 	}
 

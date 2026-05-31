@@ -2854,7 +2854,7 @@ bool CemuleApp::IsConnected(bool bIgnoreEd2k, bool bIgnoreKad)
 
 bool CemuleApp::IsPortchangeAllowed()
 {
-	return theApp.clientlist->GetClientCount() == 0 && !IsConnected();
+	return !IsRunning() && theApp.clientlist->GetClientCount() == 0 && !IsConnected();
 }
 
 uint32 CemuleApp::GetID()

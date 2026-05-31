@@ -46,6 +46,7 @@
 #include "SHAHashSet.h"
 #include "Log.h"
 #include "PathHelpers.h"
+#include "PortRebindPolicySeams.h"
 #include "ProtocolGuards.h"
 
 #include <new>
@@ -2047,6 +2048,9 @@ CListenSocket::~CListenSocket()
 bool CListenSocket::Rebind()
 {
 	if (thePrefs.GetPort() == m_port)
+		return false;
+
+	if (!PortRebindPolicySeams::CanApplyRuntimePortRebind())
 		return false;
 
 	Close();

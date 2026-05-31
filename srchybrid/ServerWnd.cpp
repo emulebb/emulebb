@@ -692,13 +692,17 @@ void CServerWnd::UpdateControlsState()
 	else
 		uid = IDS_MAIN_BTN_CONNECT;
 	SetDlgItemText(IDC_ED2KCONNECT, GetResNoAmp(uid));
-	GetDlgItem(IDC_ED2KCONNECT)->EnableWindow(!theApp.IsStartupBindBlocked());
+	const bool bCanStopOrCancel = theApp.serverconnect->IsConnected() || theApp.serverconnect->IsConnecting();
+	GetDlgItem(IDC_ED2KCONNECT)->EnableWindow(bCanStopOrCancel || (theApp.emuledlg != NULL && theApp.emuledlg->CanUseP2PConnectionCommands()));
 }
 
 void CServerWnd::OnBnConnect()
 {
-	if (theApp.IsStartupBindBlocked()) {
-		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+	if (!theApp.serverconnect->IsConnected()
+		&& !theApp.serverconnect->IsConnecting()
+		&& theApp.emuledlg != NULL
+		&& !theApp.emuledlg->CanUseP2PConnectionCommands()) {
+		theApp.emuledlg->LogP2PConnectionCommandBlocked();
 		return;
 	}
 

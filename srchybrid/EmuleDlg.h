@@ -148,6 +148,8 @@ public:
 	void DoVersioncheck(bool manual);
 	/// Starts or stops the runtime bind-loss monitor according to the current preferences.
 	void UpdateBindLossMonitor(bool bForceVpnGuardHttpProbe = true);
+	bool CanUseP2PConnectionCommands() const;
+	void LogP2PConnectionCommandBlocked() const;
 	void ApplyHyperTextFont(LPLOGFONT pFont);
 	void ApplyLogFont(LPLOGFONT pFont);
 	void ProcessED2KLink(LPCTSTR pszData);

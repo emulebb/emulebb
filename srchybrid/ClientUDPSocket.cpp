@@ -36,6 +36,7 @@
 #include "Listensocket.h"
 #include "LockScopeSeams.h"
 #include "Log.h"
+#include "PortRebindPolicySeams.h"
 #include "SafeFile.h"
 #include "SocketIoSeams.h"
 #include "kademlia/kademlia/Kademlia.h"
@@ -686,6 +687,8 @@ bool CClientUDPSocket::Create()
 bool CClientUDPSocket::Rebind()
 {
 	if (thePrefs.GetUDPPort() == m_port)
+		return false;
+	if (!PortRebindPolicySeams::CanApplyRuntimePortRebind())
 		return false;
 	Close();
 	return Create();

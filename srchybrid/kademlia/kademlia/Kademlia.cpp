@@ -99,8 +99,11 @@ CKademlia::~CKademlia()
 
 void CKademlia::Start()
 {
-	if (theApp.IsStartupBindBlocked()) {
-		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+	if (theApp.emuledlg != NULL ? !theApp.emuledlg->CanUseP2PConnectionCommands() : theApp.IsStartupBindBlocked()) {
+		if (theApp.emuledlg == NULL)
+			LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+		else
+			theApp.emuledlg->LogP2PConnectionCommandBlocked();
 		return;
 	}
 
@@ -110,9 +113,12 @@ void CKademlia::Start()
 
 void CKademlia::Start(CPrefs *pPrefs)
 {
-	if (theApp.IsStartupBindBlocked()) {
+	if (theApp.emuledlg != NULL ? !theApp.emuledlg->CanUseP2PConnectionCommands() : theApp.IsStartupBindBlocked()) {
 		delete pPrefs;
-		LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+		if (theApp.emuledlg == NULL)
+			LogWarning(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
+		else
+			theApp.emuledlg->LogP2PConnectionCommandBlocked();
 		return;
 	}
 

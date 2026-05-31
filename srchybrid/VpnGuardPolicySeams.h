@@ -25,14 +25,19 @@ inline bool IsRuntimeMonitorRequired(VpnGuardSeams::EMode eMode, bool bStartupBl
 	return eMode == VpnGuardSeams::EMode::Block && !bStartupBlocked;
 }
 
-inline bool CanUseStartupConnectionCommands(VpnGuardSeams::EMode eMode, bool bStartupBlocked, bool bRuntimeMonitorArmed)
+inline bool CanUseP2PConnectionCommands(VpnGuardSeams::EMode eMode, bool bStartupBlocked, bool bRuntimeMonitorArmed)
 {
 	return !bStartupBlocked && (!IsRuntimeMonitorRequired(eMode, bStartupBlocked) || bRuntimeMonitorArmed);
 }
 
+inline bool CanUseStartupConnectionCommands(VpnGuardSeams::EMode eMode, bool bStartupBlocked, bool bRuntimeMonitorArmed)
+{
+	return CanUseP2PConnectionCommands(eMode, bStartupBlocked, bRuntimeMonitorArmed);
+}
+
 inline bool CanPostStartupAutoConnect(bool bAutoConnect, VpnGuardSeams::EMode eMode, bool bStartupBlocked, bool bRuntimeMonitorArmed)
 {
-	return bAutoConnect && CanUseStartupConnectionCommands(eMode, bStartupBlocked, bRuntimeMonitorArmed);
+	return bAutoConnect && CanUseP2PConnectionCommands(eMode, bStartupBlocked, bRuntimeMonitorArmed);
 }
 
 inline EFailureAction GetFailureAction(bool bRuntimeProbe)

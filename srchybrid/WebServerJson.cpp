@@ -69,6 +69,7 @@
 #include "UserMsgs.h"
 #include "WebServer.h"
 #include "WebServerHttpResponse.h"
+#include "VpnGuardSeams.h"
 #include "DownloadQueue.h"
 #include "Opcodes.h"
 #include "kademlia/kademlia/Kademlia.h"
@@ -500,6 +501,37 @@ json BuildKadStatusJson()
 		{"lanMode", Kademlia::CKademlia::IsRunningInLANMode()},
 		{"users", bConnected ? json(Kademlia::CKademlia::GetKademliaUsers()) : json(nullptr)},
 		{"files", bConnected ? json(Kademlia::CKademlia::GetKademliaFiles()) : json(nullptr)}
+	};
+}
+
+/**
+ * Serializes the network binding and VPN Guard state shared by status and snapshot routes.
+ */
+json BuildNetworkStatusJson()
+{
+	return json{
+		{"ports", json{
+			{"tcp", thePrefs.GetPort()},
+			{"udp", thePrefs.GetUDPPort()},
+			{"serverUdp", thePrefs.GetServerUDPPort()}
+		}},
+		{"binding", json{
+			{"configuredAddress", StdUtf8FromCString(thePrefs.GetConfiguredBindAddr())},
+			{"configuredInterfaceId", StdUtf8FromCString(thePrefs.GetBindInterface())},
+			{"configuredInterfaceName", StdUtf8FromCString(thePrefs.GetBindInterfaceName())},
+			{"activeConfiguredAddress", StdUtf8FromCString(thePrefs.GetActiveConfiguredBindAddr())},
+			{"activeInterfaceId", StdUtf8FromCString(thePrefs.GetActiveBindInterface())},
+			{"activeInterfaceName", StdUtf8FromCString(thePrefs.GetActiveBindInterfaceName())},
+			{"activeInterfaceIndex", thePrefs.GetActiveBindInterfaceIndex()},
+			{"resolveResult", static_cast<int>(thePrefs.GetActiveBindAddressResolveResult())}
+		}},
+		{"vpnGuard", json{
+			{"enabled", thePrefs.IsVpnGuardEnabled()},
+			{"mode", StdUtf8FromCString(CString(VpnGuardSeams::GetModePreferenceText(thePrefs.GetVpnGuardMode())))},
+			{"allowedPublicIpCidrs", StdUtf8FromCString(thePrefs.GetVpnGuardAllowedPublicIpCidrs())},
+			{"startupBlocked", theApp.IsStartupBindBlocked()},
+			{"startupBlockReason", StdUtf8FromCString(theApp.GetStartupBindBlockReason())}
+		}}
 	};
 }
 
@@ -1052,6 +1084,7 @@ json BuildStatusJson()
 		{"stats", BuildGlobalStatsJson()},
 		{"servers", BuildServerStatusJson()},
 		{"kad", BuildKadStatusJson()},
+		{"network", BuildNetworkStatusJson()},
 		{"sharedStartupCache", BuildSharedStartupCacheJson()},
 		{"runtimeDiagnostics", BuildRuntimeDiagnosticsJson()}
 	};
@@ -2901,6 +2934,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			{"uploadQueue", BuildUploadsListJson(true, maxEntries)},
 			{"servers", servers},
 			{"kad", BuildKadStatusJson()},
+			{"network", status["network"]},
 			{"logs", BuildLogEntriesJson(maxEntries)}
 		};
 	}
