@@ -2090,7 +2090,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Kõik &miinimumile"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Kõik &maksimumile"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Peatatud"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Peatatud"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2808,6 +2808,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Importige osad faili..."
     IDS_IMPORTPARTS_STOP                                       "Peata osade importimine faili"
     IDS_BOOTSTRAPFAILED                                        "Kad alglaadimine ebaõnnestus. Teie nodes.dat võib olla aegunud või ühenduses on probleem."
+    IDS_MAIN_RESTART                                           "Kas soovite tõesti eMule'i taaskäivitada?"
+    IDS_RESTART_EMULE                                          "Taaskäivita eMule"
+    IDS_RESTARTING_EMULE                                       "eMule'i taaskäivitatakse."
+    IDS_TOOLS_STATUS_RESTART                                   "Sulgeb eMule'i ja käivitab selle uuesti."
 END
 // eMuleBB managed translation block: end
 

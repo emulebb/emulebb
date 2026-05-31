@@ -2933,6 +2933,10 @@
 #define IDS_HM_LINK_DOC_TOOLS_MENU             3317
 #define IDS_HM_LINK_DOC_CONTROLLERS_REST       3318
 #define IDS_HM_LINK_DOC_TROUBLESHOOTING        3319
+#define IDS_RESTART_EMULE                      3320
+#define IDS_MAIN_RESTART                       3321
+#define IDS_RESTARTING_EMULE                   3322
+#define IDS_TOOLS_STATUS_RESTART               3323
 #define IDS_ENABLE_IPFILTER                    2222
 #define IDS_IPFILTER_EXPLANATION               2223
 #define IDS_PPG_SECURITY_TT_ENABLE_IPFILTER    2224
@@ -3263,6 +3267,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        3057
 #define _APS_NEXT_COMMAND_VALUE         32773
 #define _APS_NEXT_CONTROL_VALUE         3130
-#define _APS_NEXT_SYMED_VALUE           3320
+#define _APS_NEXT_SYMED_VALUE           3324
 #endif
 #endif

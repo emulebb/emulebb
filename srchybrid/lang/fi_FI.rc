@@ -2063,7 +2063,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Kaikki Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&Kaikki Maxille"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Keskeytetty"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Keskeytetty"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2781,6 +2781,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Tuo osat tiedostoon..."
     IDS_IMPORTPARTS_STOP                                       "Lopeta osien tuonti tiedostoon"
     IDS_BOOTSTRAPFAILED                                        "Kad:n käynnistys epäonnistui. nodes.dat saattaa olla vanhentunut tai siinä on yhteysongelma."
+    IDS_MAIN_RESTART                                           "Haluatko varmasti käynnistää eMulen uudelleen?"
+    IDS_RESTART_EMULE                                          "Käynnistä eMule uudelleen"
+    IDS_RESTARTING_EMULE                                       "eMule käynnistyy uudelleen."
+    IDS_TOOLS_STATUS_RESTART                                   "Sulkee eMulen ja käynnistää sen uudelleen."
 END
 // eMuleBB managed translation block: end
 

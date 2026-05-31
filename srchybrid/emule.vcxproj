@@ -656,6 +656,7 @@
     <ClInclude Include="RegexMatchSeams.h" />
     <ClInclude Include="ReleaseUpdateCheck.h" />
     <ClInclude Include="ReleaseUpdateCheckSeams.h" />
+    <ClInclude Include="RestartAppSeams.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RichEditCtrlX.h" />
     <ClInclude Include="RichEditStream.h" />

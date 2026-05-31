@@ -172,6 +172,8 @@ public:
 	void RegisterProwlarrIntegration();
 	/// Launches the bundled interactive Radarr or Sonarr registration script.
 	void RegisterArrIntegration(LPCTSTR pszTargetName);
+	/// Starts a clean app restart through the hidden same-executable sidecar.
+	void RestartApp();
 	HBRUSH GetCtlColor(CDC*, CWnd*, UINT);
 
 	virtual void OnTrayRButtonUp(CPoint pt);
@@ -298,7 +300,9 @@ protected:
 	void ShowTrayToolPopup(CPoint pt);
 	void ApplyViewPresetCommand(UINT uCommandId);
 	void SetAllIcons();
-	bool CanClose();
+	bool CanClose(UINT uPromptStringID = IDS_MAIN_EXIT);
+	void CloseApp(bool bRestart);
+	bool TryStartRestartSidecar();
 	int MapWindowToToolbarButton(CWnd *pWnd) const;
 	CWnd* MapToolbarButtonToWindow(int iButtonID) const;
 	int GetNextWindowToolbarButton(int iButtonID, int iDirection = 1) const;

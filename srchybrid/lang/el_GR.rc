@@ -2046,7 +2046,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Όλα στο &ελάχιστο"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Όλα στο &μέγιστο"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Σε παύση"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Σε παύση"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2764,6 +2764,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Εισαγωγή εξαρτημάτων σε αρχείο..."
     IDS_IMPORTPARTS_STOP                                       "Διακοπή Εισαγωγής εξαρτημάτων σε αρχείο"
     IDS_BOOTSTRAPFAILED                                        "Απέτυχε η εκκίνηση του Kad. Το nodes.dat μπορεί να είναι παλιό ή να υπάρχει πρόβλημα σύνδεσης."
+    IDS_MAIN_RESTART                                           "Θέλετε πραγματικά να επανεκκινήσετε το eMule;"
+    IDS_RESTART_EMULE                                          "Επανεκκίνηση eMule"
+    IDS_RESTARTING_EMULE                                       "Γίνεται επανεκκίνηση του eMule."
+    IDS_TOOLS_STATUS_RESTART                                   "Κλείνει και ξεκινά ξανά το eMule."
 END
 // eMuleBB managed translation block: end
 

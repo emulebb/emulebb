@@ -2095,7 +2095,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Visus į &minimumą"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Visus į ma&ksimumą"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pristabdyta"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pristabdyta"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2813,6 +2813,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Importuoti dalis į failą..."
     IDS_IMPORTPARTS_STOP                                       "Sustabdyti dalių importavimą į failą"
     IDS_BOOTSTRAPFAILED                                        "Nepavyko įkelti Kad. Jūsų nodes.dat gali būti pasenęs arba iškilo ryšio problema."
+    IDS_MAIN_RESTART                                           "Ar tikrai norite paleisti eMule iš naujo?"
+    IDS_RESTART_EMULE                                          "Paleisti eMule iš naujo"
+    IDS_RESTARTING_EMULE                                       "eMule paleidžiama iš naujo."
+    IDS_TOOLS_STATUS_RESTART                                   "Uždaro ir vėl paleidžia eMule."
 END
 // eMuleBB managed translation block: end
 

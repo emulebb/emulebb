@@ -2058,7 +2058,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "ھەممىسى ئەڭ &تۆۋەنگە"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "ھەممىسى ئەڭ يۇ&قىرىغا"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&توختىتىلغان"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&توختىتىلغان"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2776,6 +2776,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "زاپچاسلارنى ھۆججەتكە ئەكىرىڭ ..."
     IDS_IMPORTPARTS_STOP                                       "بۆلەكلەرنى ھۆججەتكە ئەكىرىشنى توختىتىڭ"
     IDS_BOOTSTRAPFAILED                                        "Kad نى قوزغىتىش مەغلۇب بولدى. nodes.dat ۋاقتىڭىز كونا ياكى ئۇلىنىش مەسىلىسى بولۇشى مۇمكىن."
+    IDS_MAIN_RESTART                                           "eMule نى راستلا قايتا قوزغىتىشنى خالامسىز؟"
+    IDS_RESTART_EMULE                                          "eMule نى قايتا قوزغات"
+    IDS_RESTARTING_EMULE                                       "eMule قايتا قوزغىتىلىۋاتىدۇ."
+    IDS_TOOLS_STATUS_RESTART                                   "eMule نى تاقاپ قايتا قوزغىتىدۇ."
 END
 // eMuleBB managed translation block: end
 

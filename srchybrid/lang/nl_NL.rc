@@ -1997,7 +1997,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Alles naar &minimum"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Alles naar ma&ximum"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Gepauzeerd"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Gepauzeerd"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2812,6 +2812,10 @@ BEGIN
     IDS_FRIEND_AUTHENTICATING                                  "Authenticerende vriend"
     IDS_BUNDLED_SCRIPT_MISSING                                 "Het gebundelde eMuleBB-script ontbreekt: %s"
     IDS_ELEVATED_PS_TIMEOUT                                    "Er is een time-out opgetreden voor de verhoogde PowerShell-actie."
+    IDS_MAIN_RESTART                                           "Wilt u eMule echt opnieuw starten?"
+    IDS_RESTART_EMULE                                          "eMule opnieuw starten"
+    IDS_RESTARTING_EMULE                                       "eMule wordt opnieuw gestart."
+    IDS_TOOLS_STATUS_RESTART                                   "Sluit eMule af en start het opnieuw."
 END
 // eMuleBB managed translation block: end
 

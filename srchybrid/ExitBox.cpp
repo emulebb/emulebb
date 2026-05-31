@@ -34,9 +34,10 @@ BEGIN_MESSAGE_MAP(ExitBox, CDialog)
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
-ExitBox::ExitBox(CWnd *pParent)
+ExitBox::ExitBox(CWnd *pParent, UINT uPromptStringID)
 	: CDialog(ExitBox::IDD, pParent)
 	, m_cancel(true)
+	, m_uPromptStringID(uPromptStringID)
 {
 	m_brush.CreateSolidBrush(::GetSysColor(COLOR_WINDOW));
 }
@@ -62,7 +63,7 @@ BOOL ExitBox::OnInitDialog()
 	pic->SetIcon(::LoadIcon(NULL, IDI_QUESTION));
 
 	SetWindowText(GetResString(IDS_CLOSEEMULE));
-	SetDlgItemText(IDC_MAIN_EXIT, GetResString(IDS_MAIN_EXIT));
+	SetDlgItemText(IDC_MAIN_EXIT, GetResString(m_uPromptStringID));
 	SetDlgItemText(IDOK, GetResString(IDS_YES) );
 	SetDlgItemText(IDCANCEL, GetResString(IDS_NO));
 	SetDlgItemText(IDC_DONOTASKAGAIN, GetResString(IDS_DONOTASKAGAIN));

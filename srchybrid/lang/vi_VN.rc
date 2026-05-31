@@ -2088,7 +2088,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Tất cả về &tối thiểu"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Tất cả lên tối đ&a"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "Tạm &dừng"
+    IDS_REFRESH_INTERVAL_PAUSED                                "Tạm &dừng"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2806,6 +2806,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Nhập các bộ phận vào tập tin..."
     IDS_IMPORTPARTS_STOP                                       "Dừng nhập các bộ phận vào tập tin"
     IDS_BOOTSTRAPFAILED                                        "Không thể khởi động Kad. nodes.dat của bạn có thể đã lỗi thời hoặc có sự cố kết nối."
+    IDS_MAIN_RESTART                                           "Bạn có thật sự muốn khởi động lại eMule không?"
+    IDS_RESTART_EMULE                                          "Khởi động lại eMule"
+    IDS_RESTARTING_EMULE                                       "Đang khởi động lại eMule."
+    IDS_TOOLS_STATUS_RESTART                                   "Đóng và khởi động lại eMule."
 END
 // eMuleBB managed translation block: end
 

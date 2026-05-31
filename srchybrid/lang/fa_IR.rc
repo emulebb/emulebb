@@ -2059,7 +2059,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&همه به حداقل"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&همه به مکس"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&مکث شده"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&مکث شده"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2777,6 +2777,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "وارد کردن قطعات به فایل..."
     IDS_IMPORTPARTS_STOP                                       "توقف واردات قطعات به فایل"
     IDS_BOOTSTRAPFAILED                                        "بوت استرپ Kad انجام نشد. ممکن است nodes.dat شما قدیمی باشد یا مشکل اتصال وجود داشته باشد."
+    IDS_MAIN_RESTART                                           "آیا واقعاً می‌خواهید eMule را دوباره راه‌اندازی کنید؟"
+    IDS_RESTART_EMULE                                          "راه‌اندازی دوباره eMule"
+    IDS_RESTARTING_EMULE                                       "در حال راه‌اندازی دوباره eMule."
+    IDS_TOOLS_STATUS_RESTART                                   "eMule را می‌بندد و دوباره اجرا می‌کند."
 END
 // eMuleBB managed translation block: end
 

@@ -2096,7 +2096,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Tot al &mínim"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Tot al mà&xim"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pausat"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pausat"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2814,6 +2814,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Importa peces al fitxer..."
     IDS_IMPORTPARTS_STOP                                       "Atura la importació de peces al fitxer"
     IDS_BOOTSTRAPFAILED                                        "No s'ha pogut arrencar Kad. És possible que el vostre nodes.dat estigui obsolet o hi hagi un problema de connexió."
+    IDS_MAIN_RESTART                                           "Segur que voleu reiniciar l'eMule?"
+    IDS_RESTART_EMULE                                          "Reinicia l'eMule"
+    IDS_RESTARTING_EMULE                                       "S'està reiniciant l'eMule."
+    IDS_TOOLS_STATUS_RESTART                                   "Tanca i torna a iniciar l'eMule."
 END
 // eMuleBB managed translation block: end
 

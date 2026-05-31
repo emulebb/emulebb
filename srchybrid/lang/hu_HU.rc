@@ -2097,7 +2097,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Minden Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&Minden Max"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Szüneteltetve"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Szüneteltetve"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2815,6 +2815,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Alkatrészek importálása fájlba..."
     IDS_IMPORTPARTS_STOP                                       "Állítsa le az alkatrészek importálását a fájlba"
     IDS_BOOTSTRAPFAILED                                        "Nem sikerült a Kad rendszerindítása. Előfordulhat, hogy a nodes.dat elavult, vagy csatlakozási probléma van."
+    IDS_MAIN_RESTART                                           "Valóban újra szeretné indítani az eMule-t?"
+    IDS_RESTART_EMULE                                          "eMule újraindítása"
+    IDS_RESTARTING_EMULE                                       "Az eMule újraindul."
+    IDS_TOOLS_STATUS_RESTART                                   "Bezárja, majd újra elindítja az eMule-t."
 END
 // eMuleBB managed translation block: end
 

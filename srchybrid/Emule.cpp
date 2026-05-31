@@ -82,6 +82,8 @@
 #include "PartFileWriteThread.h"
 #include "OtherFunctions.h"
 #include "PartFilePersistenceSeams.h"
+#include "ProcessLaunchSeams.h"
+#include "RestartAppSeams.h"
 #include "SharedDirectoryOps.h"
 #include "SharedDirectoryMonitorSeams.h"
 #include "UserMsgs.h"
@@ -256,6 +258,117 @@ int HandleHeadlessWebServerCertificateCommandLine(const AppCommandLineSeams::SPa
 std::string CommandLineUtf8(const CString &rstrValue)
 {
 	return std::string(CW2A(rstrValue, CP_UTF8));
+}
+
+CString CommandLineFromUtf8(const std::string &rstrValue)
+{
+	return OptUtf8ToStr(CStringA(rstrValue.c_str(), static_cast<int>(rstrValue.size())));
+}
+
+struct SRestartSidecarRequest
+{
+	DWORD dwParentProcessId = 0;
+	CString strExecutablePath;
+	CString strWorkingDirectory;
+	std::vector<CString> astrArguments;
+};
+
+bool TryReadRestartSidecarRequest(const CString &strRequestPath, SRestartSidecarRequest &rRequest, CString &rstrError)
+{
+	rstrError.Empty();
+	CFile file;
+	if (!file.Open(strRequestPath, CFile::modeRead | CFile::shareDenyWrite | CFile::typeBinary)) {
+		rstrError.Format(_T("Could not open restart request: %s"), (LPCTSTR)strRequestPath);
+		return false;
+	}
+
+	const ULONGLONG ullLength = file.GetLength();
+	if (ullLength == 0 || ullLength > 64u * 1024u) {
+		rstrError.Format(_T("Restart request has an invalid size: %s"), (LPCTSTR)strRequestPath);
+		return false;
+	}
+
+	std::string strPayload(static_cast<size_t>(ullLength), '\0');
+	const UINT uRead = file.Read(&strPayload[0], static_cast<UINT>(strPayload.size()));
+	if (uRead != strPayload.size()) {
+		rstrError.Format(_T("Could not read restart request: %s"), (LPCTSTR)strRequestPath);
+		return false;
+	}
+
+	try {
+		const nlohmann::json request = nlohmann::json::parse(strPayload);
+		if (!request.is_object()
+			|| !request.contains("parentProcessId")
+			|| !request.contains("executablePath")
+			|| !request.contains("workingDirectory")
+			|| !request.contains("arguments")
+			|| !request["parentProcessId"].is_number_unsigned()
+			|| !request["executablePath"].is_string()
+			|| !request["workingDirectory"].is_string()
+			|| !request["arguments"].is_array()) {
+			rstrError = _T("Restart request has an invalid shape.");
+			return false;
+		}
+
+		const std::uint64_t ullParentProcessId = request["parentProcessId"].get<std::uint64_t>();
+		if (ullParentProcessId == 0 || ullParentProcessId > MAXDWORD) {
+			rstrError = _T("Restart request has an invalid parent process id.");
+			return false;
+		}
+		rRequest.dwParentProcessId = static_cast<DWORD>(ullParentProcessId);
+		rRequest.strExecutablePath = CommandLineFromUtf8(request["executablePath"].get<std::string>());
+		rRequest.strWorkingDirectory = CommandLineFromUtf8(request["workingDirectory"].get<std::string>());
+		rRequest.astrArguments.clear();
+		for (const nlohmann::json &argument : request["arguments"]) {
+			if (!argument.is_string()) {
+				rstrError = _T("Restart request arguments must be strings.");
+				return false;
+			}
+			rRequest.astrArguments.push_back(CommandLineFromUtf8(argument.get<std::string>()));
+		}
+	} catch (const nlohmann::json::exception &rException) {
+		rstrError.Format(_T("Restart request JSON is invalid: %hs"), rException.what());
+		return false;
+	}
+
+	if (!RestartAppSeams::IsCanonicalAbsoluteWin32Path(rRequest.strExecutablePath)) {
+		rstrError = _T("Restart request executable path is not absolute.");
+		return false;
+	}
+	if (!RestartAppSeams::IsCanonicalAbsoluteWin32Path(rRequest.strWorkingDirectory)) {
+		rstrError = _T("Restart request working directory is not absolute.");
+		return false;
+	}
+	return true;
+}
+
+int HandleRestartSidecarCommandLine(const AppCommandLineSeams::SParseResult &rCommandLine)
+{
+	SRestartSidecarRequest request;
+	CString strError;
+	if (!TryReadRestartSidecarRequest(rCommandLine.strRestartRequestFile, request, strError)) {
+		ReportCommandLineError(strError, rCommandLine.strUsage, false);
+		return 2;
+	}
+	(void)::DeleteFile(rCommandLine.strRestartRequestFile);
+
+	bool bLaunchRestart = false;
+	HANDLE hParentProcess = ::OpenProcess(SYNCHRONIZE, FALSE, request.dwParentProcessId);
+	if (hParentProcess != NULL) {
+		const DWORD dwWait = ::WaitForSingleObject(hParentProcess, RestartAppSeams::kRestartSidecarShutdownWaitMs);
+		bLaunchRestart = RestartAppSeams::GetRestartActionAfterParentWait(dwWait) == RestartAppSeams::ERestartSidecarAction::LaunchRestart;
+		(void)::CloseHandle(hParentProcess);
+	} else {
+		bLaunchRestart = RestartAppSeams::GetRestartActionAfterOpenParentFailure(::GetLastError()) == RestartAppSeams::ERestartSidecarAction::LaunchRestart;
+	}
+
+	if (!bLaunchRestart)
+		return 1;
+
+	const CString strCommandLine(RestartAppSeams::BuildCommandLine(request.strExecutablePath, request.astrArguments));
+	const ProcessLaunchSeams::DetachedLaunchResult result =
+		ProcessLaunchSeams::LaunchDetachedProcess(request.strExecutablePath, strCommandLine, request.strWorkingDirectory, SW_SHOWNORMAL, 0);
+	return result.Started ? 0 : 1;
 }
 
 nlohmann::json BuildMetadataVariantJson(const MediaMetadataFallbackSeams::SVariantSummary &rVariant)
@@ -1483,6 +1596,8 @@ BOOL CemuleApp::InitInstance()
 		ReportCommandLineError(commandLine.strError, commandLine.strUsage, true);
 		::ExitProcess(2);
 	}
+	if (commandLine.eMode == AppCommandLineSeams::EMode::RestartSidecar)
+		::ExitProcess(static_cast<UINT>(HandleRestartSidecarCommandLine(commandLine)));
 
 	CString strStartupConfigError;
 	if (!InitializeStartupConfigBaseDirOverride(commandLine, strStartupConfigError)) {

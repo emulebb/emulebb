@@ -2094,7 +2094,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Alle til &min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Alle til ma&ks"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pauset"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pauset"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2812,6 +2812,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Importer deler til fil..."
     IDS_IMPORTPARTS_STOP                                       "Stopp Importer deler til fil"
     IDS_BOOTSTRAPFAILED                                        "Kunne ikke starte opp Kad. Din nodes.dat kan være utdatert eller det er et tilkoblingsproblem."
+    IDS_MAIN_RESTART                                           "Vil du virkelig starte eMule på nytt?"
+    IDS_RESTART_EMULE                                          "Start eMule på nytt"
+    IDS_RESTARTING_EMULE                                       "Starter eMule på nytt."
+    IDS_TOOLS_STATUS_RESTART                                   "Lukker og starter eMule på nytt."
 END
 // eMuleBB managed translation block: end
 

@@ -2087,7 +2087,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Të gjitha në &min."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Të gjitha në ma&ks."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Në pauzë"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Në pauzë"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2805,6 +2805,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Importo pjesë në skedar..."
     IDS_IMPORTPARTS_STOP                                       "Ndalo importimin e pjesëve në skedar"
     IDS_BOOTSTRAPFAILED                                        "Ngritja e Kad dështoi. nodes.dat juaj mund të jetë i vjetëruar ose ka një problem lidhjeje."
+    IDS_MAIN_RESTART                                           "A dëshironi vërtet të rindizni eMule?"
+    IDS_RESTART_EMULE                                          "Rindiz eMule"
+    IDS_RESTARTING_EMULE                                       "eMule po rindizet."
+    IDS_TOOLS_STATUS_RESTART                                   "Mbyll dhe nis përsëri eMule."
 END
 // eMuleBB managed translation block: end
 

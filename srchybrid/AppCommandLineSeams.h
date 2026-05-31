@@ -4,6 +4,7 @@
 #include <tchar.h>
 #include <vector>
 
+#include "RestartAppSeams.h"
 #include "StartupConfigOverride.h"
 
 namespace AppCommandLineSeams
@@ -17,6 +18,7 @@ namespace AppCommandLineSeams
 		Help,
 		GenerateWebServerCertificate,
 		DiagnoseMediaMetadata,
+		RestartSidecar,
 		Invalid
 	};
 
@@ -36,6 +38,7 @@ namespace AppCommandLineSeams
 		CString strKeyFile;
 		CString strMetadataInputFile;
 		CString strMetadataOutputFile;
+		CString strRestartRequestFile;
 		std::vector<CStringA> astrCertDnsNames;
 		std::vector<CStringA> astrCertIpAddresses;
 		CString strError;
@@ -220,7 +223,9 @@ namespace AppCommandLineSeams
 			|| strName == _T("host")
 			|| strName == _T("diagnose-media-metadata")
 			|| strName == _T("input")
-			|| strName == _T("output");
+			|| strName == _T("output")
+			|| strName == _T("restart-sidecar")
+			|| strName == _T("request");
 	}
 
 	/**
@@ -237,10 +242,12 @@ namespace AppCommandLineSeams
 		bool bSeenAssertFile = false;
 		bool bSeenGenerate = false;
 		bool bSeenMetadataDiagnostic = false;
+		bool bSeenRestartSidecar = false;
 		bool bSeenCert = false;
 		bool bSeenKey = false;
 		bool bSeenInput = false;
 		bool bSeenOutput = false;
+		bool bSeenRestartRequest = false;
 		bool bSawCertificateHost = false;
 
 		for (size_t i = 1; i < raTokens.size(); ++i) {
@@ -344,6 +351,16 @@ namespace AppCommandLineSeams
 				continue;
 			}
 
+			if (strName == _T("restart-sidecar")) {
+				if (bHasInlineValue || !TrySetSingleton(bSeenRestartSidecar, _T("--restart-sidecar"), result.strError)) {
+					result.eMode = EMode::Invalid;
+					if (result.strError.IsEmpty())
+						result.strError = _T("The --restart-sidecar option does not accept a value.");
+					return result;
+				}
+				continue;
+			}
+
 			if (strName == _T("cert")) {
 				if (!TrySetSingleton(bSeenCert, _T("--cert"), result.strError)
 					|| !TryReadOptionValue(raTokens, i, _T("--cert"), bHasInlineValue, strInlineValue, result.strCertFile, result.strError)) {
@@ -390,14 +407,49 @@ namespace AppCommandLineSeams
 				}
 				continue;
 			}
+
+			if (strName == _T("request")) {
+				if (!TrySetSingleton(bSeenRestartRequest, _T("--request"), result.strError)
+					|| !TryReadOptionValue(raTokens, i, _T("--request"), bHasInlineValue, strInlineValue, result.strRestartRequestFile, result.strError)) {
+					result.eMode = EMode::Invalid;
+					return result;
+				}
+				if (!RestartAppSeams::IsAbsoluteRequestFilePath(result.strRestartRequestFile)) {
+					result.eMode = EMode::Invalid;
+					result.strError = _T("The --request option requires a canonical absolute restart request file path.");
+					return result;
+				}
+				continue;
+			}
 		}
 
 		if (result.eMode == EMode::Help)
 			return result;
 
-		if (bSeenGenerate && bSeenMetadataDiagnostic) {
+		const int iHeadlessModes = (bSeenGenerate ? 1 : 0) + (bSeenMetadataDiagnostic ? 1 : 0) + (bSeenRestartSidecar ? 1 : 0);
+		if (iHeadlessModes > 1) {
 			result.eMode = EMode::Invalid;
 			result.strError = _T("Only one headless command may be specified.");
+			return result;
+		}
+
+		if (bSeenRestartSidecar) {
+			if (result.strRestartRequestFile.IsEmpty()) {
+				result.eMode = EMode::Invalid;
+				result.strError = _T("The --restart-sidecar command requires --request.");
+				return result;
+			}
+			if (!result.strPositional.IsEmpty()) {
+				result.eMode = EMode::Invalid;
+				result.strError = _T("The --restart-sidecar command does not accept a positional argument.");
+				return result;
+			}
+			if (bSeenConfig || bSeenIgnoreInstances || bSeenAutoStart || bSeenAssertFile) {
+				result.eMode = EMode::Invalid;
+				result.strError = _T("The --restart-sidecar command does not accept normal startup options.");
+				return result;
+			}
+			result.eMode = EMode::RestartSidecar;
 			return result;
 		}
 
@@ -440,6 +492,12 @@ namespace AppCommandLineSeams
 		if (bSeenInput || bSeenOutput) {
 			result.eMode = EMode::Invalid;
 			result.strError = _T("The --input and --output options require --diagnose-media-metadata.");
+			return result;
+		}
+
+		if (bSeenRestartRequest) {
+			result.eMode = EMode::Invalid;
+			result.strError = _T("The --request option requires --restart-sidecar.");
 			return result;
 		}
 

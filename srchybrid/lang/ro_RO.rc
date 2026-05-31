@@ -2097,7 +2097,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Toate la min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&Toate la Max"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pauzat"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pauzat"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2815,6 +2815,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Importați piese în fișier..."
     IDS_IMPORTPARTS_STOP                                       "Opriți importarea pieselor în fișier"
     IDS_BOOTSTRAPFAILED                                        "Nu s-a putut porni Kad. nodes.dat dvs. poate fi învechit sau există o problemă de conexiune."
+    IDS_MAIN_RESTART                                           "Sigur doriți să reporniți eMule?"
+    IDS_RESTART_EMULE                                          "Repornește eMule"
+    IDS_RESTARTING_EMULE                                       "eMule se repornește."
+    IDS_TOOLS_STATUS_RESTART                                   "Închide și pornește din nou eMule."
 END
 // eMuleBB managed translation block: end
 

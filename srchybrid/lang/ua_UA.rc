@@ -2087,7 +2087,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Все до мін"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&Усе на макс."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Призупинено"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Призупинено"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2805,6 +2805,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Імпорт частин у файл..."
     IDS_IMPORTPARTS_STOP                                       "Зупинити імпорт частин у файл"
     IDS_BOOTSTRAPFAILED                                        "Не вдалося завантажити Kad. Можливо, ваш nodes.dat застарів або виникла проблема з підключенням."
+    IDS_MAIN_RESTART                                           "Ви справді хочете перезапустити eMule?"
+    IDS_RESTART_EMULE                                          "Перезапустити eMule"
+    IDS_RESTARTING_EMULE                                       "eMule перезапускається."
+    IDS_TOOLS_STATUS_RESTART                                   "Закриває і знову запускає eMule."
 END
 // eMuleBB managed translation block: end
 

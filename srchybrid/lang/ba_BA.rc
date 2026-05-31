@@ -2091,7 +2091,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Denak &minimora"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Denak ma&ximora"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pauzirano"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pauzirano"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2810,6 +2810,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Inportatu piezak fitxategira..."
     IDS_IMPORTPARTS_STOP                                       "Gelditu piezak fitxategira inportatzea"
     IDS_BOOTSTRAPFAILED                                        "Ezin izan da Kad abiarazi. Baliteke zure nodes.dat zaharkitua egotea edo konexio-arazo bat egotea."
+    IDS_MAIN_RESTART                                           "Da li zaista želite ponovo pokrenuti eMule?"
+    IDS_RESTART_EMULE                                          "Ponovo pokreni eMule"
+    IDS_RESTARTING_EMULE                                       "Ponovno pokretanje eMule-a."
+    IDS_TOOLS_STATUS_RESTART                                   "Zatvara i ponovo pokreće eMule."
 END
 // eMuleBB managed translation block: end
 

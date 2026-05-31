@@ -2092,7 +2092,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Vse na &min."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Vse na ma&ks."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Začasno ustavljeno"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Začasno ustavljeno"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2810,6 +2810,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Uvozi dele v datoteko ..."
     IDS_IMPORTPARTS_STOP                                       "Ustavi uvoz delov v datoteko"
     IDS_BOOTSTRAPFAILED                                        "Zagon Kad ni uspel. Vaš nodes.dat je morda zastarel ali pa je prišlo do težave s povezavo."
+    IDS_MAIN_RESTART                                           "Ali res želite znova zagnati eMule?"
+    IDS_RESTART_EMULE                                          "Znova zaženi eMule"
+    IDS_RESTARTING_EMULE                                       "eMule se znova zaganja."
+    IDS_TOOLS_STATUS_RESTART                                   "Zapre in znova zažene eMule."
 END
 // eMuleBB managed translation block: end
 

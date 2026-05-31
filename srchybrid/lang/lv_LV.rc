@@ -2088,7 +2088,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Visi uz &min."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Visi uz &maks."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pauzēts"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pauzēts"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2806,6 +2806,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Importēt daļas failā..."
     IDS_IMPORTPARTS_STOP                                       "Apturēt daļu importēšanu failā"
     IDS_BOOTSTRAPFAILED                                        "Neizdevās palaist Kad. Jūsu nodes.dat var būt novecojis vai radusies savienojuma problēma."
+    IDS_MAIN_RESTART                                           "Vai tiešām vēlaties restartēt eMule?"
+    IDS_RESTART_EMULE                                          "Restartēt eMule"
+    IDS_RESTARTING_EMULE                                       "eMule tiek restartēts."
+    IDS_TOOLS_STATUS_RESTART                                   "Aizver un vēlreiz palaiž eMule."
 END
 // eMuleBB managed translation block: end
 

@@ -2085,7 +2085,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "الكل إلى &الحد الأدنى"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "الكل إلى الحد الأ&قصى"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&متوقف مؤقتًا"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&متوقف مؤقتًا"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2803,6 +2803,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "استيراد الأجزاء إلى الملف..."
     IDS_IMPORTPARTS_STOP                                       "إيقاف استيراد الأجزاء إلى الملف"
     IDS_BOOTSTRAPFAILED                                        "فشل تمهيد Kad. قد يكون جهاز nodes.dat قديمًا أو أن هناك مشكلة في الاتصال."
+    IDS_MAIN_RESTART                                           "هل تريد حقاً إعادة تشغيل eMule؟"
+    IDS_RESTART_EMULE                                          "إعادة تشغيل eMule"
+    IDS_RESTARTING_EMULE                                       "تتم إعادة تشغيل eMule."
+    IDS_TOOLS_STATUS_RESTART                                   "يغلق eMule ويشغله مرة أخرى."
 END
 // eMuleBB managed translation block: end
 

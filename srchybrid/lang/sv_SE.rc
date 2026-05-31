@@ -2094,7 +2094,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Alla till &min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Alla till ma&x"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pausad"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pausad"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2812,6 +2812,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "Importera delar till fil..."
     IDS_IMPORTPARTS_STOP                                       "Stoppa Importera delar till fil"
     IDS_BOOTSTRAPFAILED                                        "Det gick inte att starta upp Kad. Din nodes.dat kan vara föråldrad eller så finns det ett anslutningsproblem."
+    IDS_MAIN_RESTART                                           "Vill du verkligen starta om eMule?"
+    IDS_RESTART_EMULE                                          "Starta om eMule"
+    IDS_RESTARTING_EMULE                                       "Startar om eMule."
+    IDS_TOOLS_STATUS_RESTART                                   "Stänger och startar eMule igen."
 END
 // eMuleBB managed translation block: end
 

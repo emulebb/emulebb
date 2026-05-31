@@ -2005,7 +2005,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Все на &минимум"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Все на ма&ксимум"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Приостановлено"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Приостановлено"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2818,6 +2818,10 @@ BEGIN
     IDS_FRIEND_AUTHENTICATING                                  "Аутентификация друга"
     IDS_BUNDLED_SCRIPT_MISSING                                 "В комплекте поставки скрипта eMuleBB отсутствует: %s."
     IDS_ELEVATED_PS_TIMEOUT                                    "Время ожидания действия PowerShell с повышенными правами истекло."
+    IDS_MAIN_RESTART                                           "Вы действительно хотите перезапустить eMule?"
+    IDS_RESTART_EMULE                                          "Перезапустить eMule"
+    IDS_RESTARTING_EMULE                                       "eMule перезапускается."
+    IDS_TOOLS_STATUS_RESTART                                   "Закрывает и снова запускает eMule."
 END
 // eMuleBB managed translation block: end
 

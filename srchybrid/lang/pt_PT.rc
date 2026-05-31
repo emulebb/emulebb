@@ -2003,7 +2003,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Tudo no &mínimo"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Tudo no má&ximo"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pausado"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pausado"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2818,6 +2818,10 @@ BEGIN
     IDS_FRIEND_AUTHENTICATING                                  "Autenticando amigo"
     IDS_BUNDLED_SCRIPT_MISSING                                 "O script eMuleBB incluído está ausente: %s"
     IDS_ELEVATED_PS_TIMEOUT                                    "A ação elevada do PowerShell expirou."
+    IDS_MAIN_RESTART                                           "Deseja realmente reiniciar o eMule?"
+    IDS_RESTART_EMULE                                          "Reiniciar eMule"
+    IDS_RESTARTING_EMULE                                       "A reiniciar o eMule."
+    IDS_TOOLS_STATUS_RESTART                                   "Fecha e inicia o eMule novamente."
 END
 // eMuleBB managed translation block: end
 

@@ -2068,7 +2068,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "全部设为最小(&M)"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "全部设为最大(&X)"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "已&暂停"
+    IDS_REFRESH_INTERVAL_PAUSED                                "已&暂停"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2786,6 +2786,10 @@ BEGIN
     IDS_IMPORTPARTS                                            "将零件导入到文件..."
     IDS_IMPORTPARTS_STOP                                       "停止将零件导入到文件"
     IDS_BOOTSTRAPFAILED                                        "无法引导 Kad。您的 nodes.dat 可能已过时或存在连接问题。"
+    IDS_MAIN_RESTART                                           "真的要重新启动 eMule 吗?"
+    IDS_RESTART_EMULE                                          "重新启动 eMule"
+    IDS_RESTARTING_EMULE                                       "正在重新启动 eMule。"
+    IDS_TOOLS_STATUS_RESTART                                   "关闭并重新启动 eMule。"
 END
 // eMuleBB managed translation block: end
 

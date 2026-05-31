@@ -116,6 +116,8 @@
 #include "aichsyncthread.h"
 #include "HelperThreadLaunchSeams.h"
 #include "Log.h"
+#include "ProcessLaunchSeams.h"
+#include "RestartAppSeams.h"
 #include "UserMsgs.h"
 #include "TextToSpeech.h"
 #include "Collection.h"
@@ -233,6 +235,73 @@ namespace
 	static UINT GetExistingFileMenuFlags(const CString &rstrPath)
 	{
 		return MF_STRING | (LongPathSeams::PathExists(rstrPath) ? 0 : MF_GRAYED);
+	}
+
+	static bool TryGetModuleFilePath(CString &rstrPath)
+	{
+		rstrPath.Empty();
+		DWORD dwCapacity = MAX_PATH;
+		for (;;) {
+			LPTSTR pszBuffer = rstrPath.GetBuffer(dwCapacity);
+			const DWORD dwLength = ::GetModuleFileName(NULL, pszBuffer, dwCapacity);
+			if (dwLength == 0) {
+				rstrPath.ReleaseBuffer(0);
+				return false;
+			}
+			if (dwLength < dwCapacity - 1) {
+				rstrPath.ReleaseBuffer(dwLength);
+				return true;
+			}
+			rstrPath.ReleaseBuffer(0);
+			dwCapacity *= 2;
+			if (dwCapacity > 32768)
+				return false;
+		}
+	}
+
+	static std::string JsonUtf8FromCString(const CString &rstrValue)
+	{
+		const CStringA strUtf8(StrToUtf8(rstrValue));
+		return std::string(strUtf8.GetString(), static_cast<size_t>(strUtf8.GetLength()));
+	}
+
+	static bool TryWriteRestartRequest(
+		const CString &rstrRequestPath,
+		const CString &rstrExecutablePath,
+		const CString &rstrWorkingDirectory,
+		const std::vector<CString> &raRestartArguments,
+		CString &rstrError)
+	{
+		try {
+			nlohmann::json arguments = nlohmann::json::array();
+			for (const CString &rArgument : raRestartArguments)
+				arguments.push_back(JsonUtf8FromCString(rArgument));
+
+			const nlohmann::json request = {
+				{"schema", "emulebb.restartRequest.v1"},
+				{"parentProcessId", static_cast<unsigned long>(::GetCurrentProcessId())},
+				{"executablePath", JsonUtf8FromCString(rstrExecutablePath)},
+				{"workingDirectory", JsonUtf8FromCString(rstrWorkingDirectory)},
+				{"arguments", arguments}
+			};
+			const std::string strSerialized = request.dump(2) + "\n";
+
+			CFile file;
+			if (!file.Open(rstrRequestPath, CFile::modeCreate | CFile::modeWrite | CFile::shareDenyWrite | CFile::typeBinary)) {
+				rstrError.Format(_T("could not write restart request %s"), (LPCTSTR)rstrRequestPath);
+				return false;
+			}
+			file.Write(strSerialized.data(), static_cast<UINT>(strSerialized.size()));
+		} catch (CFileException *ex) {
+			const LONG lOsError = ex->m_lOsError;
+			ex->Delete();
+			rstrError.Format(_T("could not write restart request %s (error %ld)"), (LPCTSTR)rstrRequestPath, lOsError);
+			return false;
+		} catch (const nlohmann::json::exception &rException) {
+			rstrError.Format(_T("could not build restart request JSON: %hs"), rException.what());
+			return false;
+		}
+		return true;
 	}
 
 	static std::string JsonString(const CString &rstrText)
@@ -990,6 +1059,8 @@ namespace
 		case MP_HM_REFRESH_INTERVAL_SLOW:
 		case MP_HM_REFRESH_INTERVAL_VERYSLOW:
 			return IDS_TOOLS_STATUS_REFRESH_INTERVAL;
+		case MP_HM_RESTART_APP:
+			return IDS_TOOLS_STATUS_RESTART;
 		case MP_HM_EXIT:
 			return IDS_TOOLS_STATUS_EXIT;
 		case MP_HM_EDIT_PREFERENCES_INI:
@@ -3313,7 +3384,7 @@ void CemuleDlg::OnDestroy()
 	CTrayDialog::OnDestroy();
 }
 
-bool CemuleDlg::CanClose()
+bool CemuleDlg::CanClose(UINT uPromptStringID)
 {
 	if (m_bBindLossShutdown)
 		return true;
@@ -3321,7 +3392,7 @@ bool CemuleDlg::CanClose()
 	if (theApp.m_app_state == APP_STATE_RUNNING && thePrefs.IsConfirmExitEnabled()) {
 		theApp.m_app_state = APP_STATE_ASKCLOSE; //disable tray menu
 		RestoreWindow(); // make sure the window is in foreground for this prompt
-		ExitBox request;
+		ExitBox request(this, uPromptStringID);
 		request.DoModal();
 		if (request.WasCancelled()) {
 			if (theApp.m_app_state == APP_STATE_ASKCLOSE) //if the application state has not changed
@@ -3334,13 +3405,73 @@ bool CemuleDlg::CanClose()
 
 void CemuleDlg::OnClose()
 {
+	CloseApp(false);
+}
+
+void CemuleDlg::RestartApp()
+{
+	CloseApp(true);
+}
+
+bool CemuleDlg::TryStartRestartSidecar()
+{
+	CString strExecutablePath;
+	if (!TryGetModuleFilePath(strExecutablePath)) {
+		AddLogLine(false, _T("Failed to restart eMule: could not resolve the executable path."));
+		return false;
+	}
+
+	const CString strWorkingDirectory(thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));
+	CString strRequestPath;
+	strRequestPath.Format(_T("%semulebb-restart-request-pid%lu.json"),
+		(LPCTSTR)thePrefs.GetMuleDirectory(EMULE_CONFIGDIR),
+		static_cast<unsigned long>(::GetCurrentProcessId()));
+
+	const std::vector<CString> restartArguments =
+		RestartAppSeams::BuildProfileRestartArguments(
+			theApp.HasStartupConfigBaseDirOverride(),
+			theApp.GetStartupConfigBaseDirOverride());
+
+	CString strError;
+	if (!TryWriteRestartRequest(strRequestPath, strExecutablePath, strWorkingDirectory, restartArguments, strError)) {
+		AddLogLine(false, _T("Failed to restart eMule: %s."), (LPCTSTR)strError);
+		return false;
+	}
+
+	const std::vector<CString> sidecarArguments = {
+		CString(_T("--restart-sidecar")),
+		CString(_T("--request")),
+		strRequestPath
+	};
+	const CString strSidecarCommandLine(RestartAppSeams::BuildCommandLine(strExecutablePath, sidecarArguments));
+	const ProcessLaunchSeams::DetachedLaunchResult result =
+		ProcessLaunchSeams::LaunchDetachedProcess(strExecutablePath, strSidecarCommandLine, strWorkingDirectory, SW_HIDE, CREATE_NO_WINDOW);
+	if (!result.Started) {
+		(void)::DeleteFile(strRequestPath);
+		AddLogLine(false, _T("Failed to restart eMule: restart sidecar launch failed with error %lu."), result.LastError);
+		return false;
+	}
+	return true;
+}
+
+void CemuleDlg::CloseApp(bool bRestart)
+{
 	static LONG closing = 0;
 	if (::InterlockedExchange(&closing, 1))
 		return; //already closing
-	if (!CanClose()) {
+	if (!CanClose(bRestart ? IDS_MAIN_RESTART : IDS_MAIN_EXIT)) {
 		::InterlockedExchange(&closing, 0);
 		return;
 	}
+	if (bRestart && !TryStartRestartSidecar()) {
+		if (theApp.m_app_state == APP_STATE_ASKCLOSE)
+			theApp.m_app_state = APP_STATE_RUNNING;
+		::InterlockedExchange(&closing, 0);
+		return;
+	}
+	if (bRestart)
+		AddLogLine(true, GetResString(IDS_RESTARTING_EMULE));
+
 	DiscardPostedDisplayRefreshRequests(GetSafeHwnd());
 	theApp.ReleaseStandbyPrevention();
 	StopBindLossMonitor();
@@ -4566,6 +4697,9 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_HM_EXIT:
 		OnClose();
 		break;
+	case MP_HM_RESTART_APP:
+		RestartApp();
+		break;
 	case MP_HM_LINK1: // MOD: don't remove!
 		BrowserOpen(thePrefs.GetHomepageBaseURL(), thePrefs.GetMuleDirectory(EMULE_EXECUTABLEDIR));
 		break;
@@ -5103,6 +5237,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	}
 
 	menu.AppendMenu(MF_SEPARATOR);
+	menu.AppendMenu(MF_STRING, MP_HM_RESTART_APP, GetResString(IDS_RESTART_EMULE), _T("TOOLS"));
 	menu.AppendMenu(MF_STRING, MP_HM_EXIT, GetResString(IDS_EXIT) + _T("\tAlt+X"), _T("EXIT"));
 	if (bTrayMenu)
 		SetForegroundWindow();

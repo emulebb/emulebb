@@ -2323,9 +2323,12 @@ BEGIN
     IDS_CONNECTED           "Connected"
     IDS_LINKNOTADDED        "Could not add link"
     IDS_MAIN_EXIT           "Do you really want to exit eMule?"
+    IDS_MAIN_RESTART        "Do you really want to restart eMule?"
     IDS_MAIN_POPUP_RESTORE  "Restore"
     IDS_CONNECTTOANYSERVER  "Connect To Any Server"
     IDS_EXIT                "E&xit"
+    IDS_RESTART_EMULE       "Restart eMule"
+    IDS_RESTARTING_EMULE    "Restarting eMule."
     IDS_CONNECTING          "Connecting"
     IDS_FAILED              "failed"
     IDS_ERR_BADSERVERREPLY  "Corrupt or invalid login answer from server received"
@@ -3880,6 +3883,7 @@ BEGIN
                             "Opens eMule options."
     IDS_TOOLS_STATUS_MINIMIZE_TO_TRAY
                             "Minimizes eMule to the system tray."
+    IDS_TOOLS_STATUS_RESTART "Closes and starts eMule again."
     IDS_TOOLS_STATUS_EXIT   "Closes eMule."
     IDS_DIAG_SNAPSHOT_COPY_SUCCESS
                             "Copied %s diagnostic snapshot JSON to the clipboard."

@@ -25,9 +25,10 @@ class ExitBox : public CDialog
 		IDD = IDD_EXITBOX
 	};
 	bool	m_cancel;
+	UINT	m_uPromptStringID;
 
 public:
-	explicit ExitBox(CWnd *pParent = NULL);   // standard constructor
+	explicit ExitBox(CWnd *pParent = NULL, UINT uPromptStringID = IDS_MAIN_EXIT);   // standard constructor
 
 	bool	WasCancelled() const		{ return m_cancel;}
 
