@@ -4155,14 +4155,12 @@ bool CemuleDlg::IsP2PTransportAllowedForNetworkGuard(const CString& strRequestNa
 {
 	// WHY: downloads, uploads, callbacks, and UDP responses can originate below
 	// StartConnection. This guard is the low-level refusal point for those paths.
-	if (theApp.IsP2PNetworkingBlockedForSession())
-		return false;
-	const NetworkGuardSeams::EMode eMode = thePrefs.GetNetworkGuardMode();
-	if (eMode != NetworkGuardSeams::EMode::Block)
-		return true;
 	const NetworkGuardSeams::TRequestFlags uRequestFlags = GetNetworkGuardQueueFlagsForRequest(strRequestName);
-	return NetworkGuardSeams::IsReplayAuthorized(m_uNetworkGuardReplayAuthorizedFlags, uRequestFlags)
-		|| IsNetworkGuardCurrentKeyApproved();
+	return NetworkGuardSeams::IsTransportAllowed(thePrefs.GetNetworkGuardMode()
+		, theApp.IsP2PNetworkingBlockedForSession()
+		, IsNetworkGuardCurrentKeyApproved()
+		, m_uNetworkGuardReplayAuthorizedFlags
+		, uRequestFlags);
 }
 
 void CemuleDlg::HandleNetworkGuardProtocolPublicIp(const CString& strSource, uint32 uNetworkOrderAddress)

@@ -38,6 +38,15 @@ inline bool IsReplayAuthorized(TRequestFlags uAuthorizedFlags, TRequestFlags uRe
 	return (uAuthorizedFlags & uReplayRequest) != 0;
 }
 
+inline bool IsTransportAllowed(EMode eMode, bool bSessionBlocked, bool bCurrentKeyApproved, TRequestFlags uAuthorizedReplayFlags, TRequestFlags uRequestFlags)
+{
+	if (bSessionBlocked)
+		return false;
+	if (eMode != EMode::Block)
+		return true;
+	return bCurrentKeyApproved || IsReplayAuthorized(uAuthorizedReplayFlags, uRequestFlags);
+}
+
 struct SAllowedIpv4Range
 {
 	uint32_t uNetworkOrderAddress;
