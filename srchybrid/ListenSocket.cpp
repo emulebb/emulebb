@@ -1922,12 +1922,21 @@ bool CClientReqSocket::PacketReceived(Packet *packet)
 					client->SetDownloadState(DS_ERROR, _T("Unknown protocol"));
 				Disconnect(_T("Unknown protocol"));
 			}
+		} catch (CClientException *) {
+			throw;
 		} catch (CFileException *ex) {
 			ex->Delete();
 			throw GetResString(IDS_ERR_INVALIDPACKET);
 		} catch (CMemoryException *ex) {
 			ex->Delete();
 			throwCStr(_T("Memory exception"));
+		} catch (CException *ex) {
+			CString strError;
+			strError.Format(_T("%s%s"), (LPCTSTR)GetResString(IDS_ERR_INVALIDPACKET), (LPCTSTR)CExceptionStrDash(*ex));
+			ex->Delete();
+			throw strError;
+		} catch (const CString &) {
+			throw;
 #ifndef _DEBUG
 		} catch (...) {
 			throwCStr(_T("Unknown exception"));
