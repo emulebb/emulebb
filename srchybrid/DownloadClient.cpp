@@ -1298,7 +1298,7 @@ int CUpDownClient::unzip(Pending_Block_Struct *block, const BYTE *zipped, uint32
 				TRACE_UNZIP("; output array not big enough (ain=%u)\n", zS->avail_in);
 				size_t nNextSize = 0;
 				if (!TryGrowZlibBufferSize(rnUnzippedCapacity, EMBLOCKSIZE + 300u, &nNextSize)
-					|| !TryGrowOwnedByteBuffer(runzipped, nAlreadyUnzipped, nNextSize)) {
+					|| !TryGrowOwnedByteBufferAfterInflate(runzipped, static_cast<size_t>(zS->total_out), static_cast<size_t>(block->totalUnzipped), nNextSize)) {
 					err = Z_BUF_ERROR;
 					break;
 				}

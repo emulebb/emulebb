@@ -72,3 +72,14 @@ inline bool TryGrowOwnedByteBuffer(std::unique_ptr<unsigned char[]> &rpBuffer, c
 	rpBuffer.swap(pNext);
 	return true;
 }
+
+inline bool TryGrowOwnedByteBufferAfterInflate(
+	std::unique_ptr<unsigned char[]> &rpBuffer,
+	const size_t nInflateTotalOut,
+	const size_t nBlockTotalOutCheckpoint,
+	const size_t nNextCapacity)
+{
+	if (nInflateTotalOut < nBlockTotalOutCheckpoint)
+		return false;
+	return TryGrowOwnedByteBuffer(rpBuffer, nInflateTotalOut - nBlockTotalOutCheckpoint, nNextCapacity);
+}
