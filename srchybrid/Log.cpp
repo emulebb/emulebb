@@ -39,10 +39,12 @@ static char THIS_FILE[] = __FILE__;
 namespace
 {
 constexpr int kMaxFileLogLineChars = 64 * 1024;
+constexpr int kMaxRecentLogEntryChars = 4 * 1024;
 constexpr size_t kMaxRecentLogEntries = 200;
 CCriticalSection g_recentLogLock;
 std::deque<SRecentLogEntry> g_recentLogEntries;
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+constexpr UINT kMaxPacketDiagnosticsPayloadHexBytes = 4 * 1024;
 CCriticalSection g_packetDiagnosticsLogLock;
 volatile LONGLONG g_llPacketDiagnosticsEventSeq = 0;
 #endif
@@ -70,8 +72,9 @@ CString TruncateLogLine(const CString &rstrLine, const int iMaxChars)
 
 void AddRecentLogEntry(UINT uFlags, LPCTSTR pszText)
 {
+	const CString strText(TruncateLogLine(CString(pszText != NULL ? pszText : _T("")), kMaxRecentLogEntryChars));
 	CSingleLock lock(&g_recentLogLock, TRUE);
-	g_recentLogEntries.push_back(SRecentLogEntry{CTime::GetCurrentTime(), uFlags, pszText});
+	g_recentLogEntries.push_back(SRecentLogEntry{CTime::GetCurrentTime(), uFlags, strText});
 	while (g_recentLogEntries.size() > kMaxRecentLogEntries)
 		g_recentLogEntries.pop_front();
 }
@@ -174,6 +177,12 @@ std::vector<SRecentLogEntry> GetRecentLogEntries(size_t maxEntries)
 	return entries;
 }
 
+void ClearRecentLogEntries()
+{
+	CSingleLock lock(&g_recentLogLock, TRUE);
+	g_recentLogEntries.clear();
+}
+
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 void PacketDiagnosticsLogInvalidSubOpcode(
 	LPCTSTR pszPacketFamily,
@@ -205,13 +214,15 @@ void PacketDiagnosticsLogInvalidSubOpcode(
 	const LPCTSTR pszProtocolName = PacketDiagnosticsProtocolName(byProtocol);
 	const CString strProtocol = pszProtocolName != NULL ? BuildPacketDiagnosticsJsonStringField(pszProtocolName) : CString(_T("null"));
 	const CString strOuterOpcodeName = DbgGetClientTCPOpcode(byProtocol, byOuterOpcode);
-	const CString strPayloadHex = BuildPacketDiagnosticsHexString(pPayload, uPayloadLen);
+	const UINT uPayloadHexLen = (pPayload != NULL) ? min(uPayloadLen, kMaxPacketDiagnosticsPayloadHexBytes) : 0;
+	const bool bPayloadHexTruncated = pPayload != NULL && uPayloadLen > uPayloadHexLen;
+	const CString strPayloadHex = BuildPacketDiagnosticsHexString(pPayload, uPayloadHexLen);
 	const CString strContextHex = BuildPacketDiagnosticsHexString(pPayload != NULL ? pPayload + uContextStart : NULL, uContextLen);
 	const ULONGLONG ullEventSeq = static_cast<ULONGLONG>(::InterlockedIncrement64(&g_llPacketDiagnosticsEventSeq));
 
 	CString strJson;
 	strJson.Format(
-		_T("{\"schema\":\"ed2k_invalid_sub_opcode_v1\",\"source\":\"emulebb\",\"ts_utc\":\"%s\",\"event_seq\":%I64u,\"packet_family\":\"%s\",\"remote_addr\":\"%s\",\"transport_mode\":\"%s\",\"protocol\":%s,\"protocol_marker\":%u,\"outer_opcode\":%u,\"outer_opcode_name\":\"%s\",\"invalid_sub_opcode\":%u,\"previous_sub_opcode\":%s,\"payload_len\":%u,\"invalid_offset\":%I64u,\"bytes_remaining\":%I64u,\"context_offset\":%u,\"context_len\":%u,\"context_hex\":\"%s\",\"payload_hex\":\"%s\"}\r\n"),
+		_T("{\"schema\":\"ed2k_invalid_sub_opcode_v1\",\"source\":\"emulebb\",\"ts_utc\":\"%s\",\"event_seq\":%I64u,\"packet_family\":\"%s\",\"remote_addr\":\"%s\",\"transport_mode\":\"%s\",\"protocol\":%s,\"protocol_marker\":%u,\"outer_opcode\":%u,\"outer_opcode_name\":\"%s\",\"invalid_sub_opcode\":%u,\"previous_sub_opcode\":%s,\"payload_len\":%u,\"invalid_offset\":%I64u,\"bytes_remaining\":%I64u,\"context_offset\":%u,\"context_len\":%u,\"context_hex\":\"%s\",\"payload_hex_truncated\":%s,\"payload_hex\":\"%s\"}\r\n"),
 		(LPCTSTR)EscapePacketDiagnosticsJson(BuildPacketDiagnosticsTimestampUtc()),
 		ullEventSeq,
 		(LPCTSTR)EscapePacketDiagnosticsJson(pszPacketFamily != NULL ? CString(pszPacketFamily) : CString(_T("unknown"))),
@@ -229,6 +240,7 @@ void PacketDiagnosticsLogInvalidSubOpcode(
 		uContextStart,
 		uContextLen,
 		(LPCTSTR)strContextHex,
+		bPayloadHexTruncated ? _T("true") : _T("false"),
 		(LPCTSTR)strPayloadHex);
 
 	CSingleLock lock(&g_packetDiagnosticsLogLock, TRUE);
@@ -445,6 +457,7 @@ CLogFile::CLogFile()
 	, m_uBytesWritten()
 	, m_uMaxFileSize(_UI32_MAX)
 	, m_bInOpenCall()
+	, m_bFlushOnWrite(true)
 	, m_eFileFormat(Unicode)
 {
 	ASSERT(Unicode == 0);
@@ -483,6 +496,14 @@ bool CLogFile::SetFileFormat(const ELogFileFormat eFileFormat)
 	return true;
 }
 
+bool CLogFile::SetFlushOnWrite(bool bFlushOnWrite)
+{
+	if (m_fp != NULL)
+		return false;
+	m_bFlushOnWrite = bFlushOnWrite;
+	return true;
+}
+
 bool CLogFile::Create(LPCTSTR pszFilePath, UINT uMaxFileSize, const ELogFileFormat eFileFormat)
 {
 	Close();
@@ -499,6 +520,8 @@ bool CLogFile::Open()
 
 	m_fp = LongPathSeams::OpenFileStreamDenyWriteLongPath(m_strFilePath, _T("a+b"));
 	if (m_fp != NULL) {
+		if (!m_bFlushOnWrite)
+			::setvbuf(m_fp, NULL, _IOFBF, 64 * 1024);
 		m_tStarted = time(NULL);
 		m_uBytesWritten = _filelength(_fileno(m_fp));
 		if (m_uBytesWritten == 0) {
@@ -575,7 +598,7 @@ bool CLogFile::Log(LPCTSTR pszMsg, int iLen)
 
 	if (m_uBytesWritten >= m_uMaxFileSize)
 		StartNewLogFile();
-	else
+	else if (m_bFlushOnWrite)
 		fflush(m_fp);
 
 	return bResult;

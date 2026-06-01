@@ -60,6 +60,7 @@ struct SRecentLogEntry
 };
 
 std::vector<SRecentLogEntry> GetRecentLogEntries(size_t maxEntries);
+void ClearRecentLogEntries();
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -82,6 +83,7 @@ public:
 	bool SetFilePath(LPCTSTR pszFilePath);
 	void SetMaxFileSize(UINT uMaxFileSize);
 	bool SetFileFormat(const ELogFileFormat eFileFormat);
+	bool SetFlushOnWrite(bool bFlushOnWrite);
 
 	bool Create(LPCTSTR pszFilePath, UINT uMaxFileSize = 1024 * 1024, const ELogFileFormat eFileFormat = Unicode);
 	bool Open();
@@ -97,6 +99,7 @@ protected:
 	size_t	m_uBytesWritten;
 	size_t	m_uMaxFileSize;
 	bool	m_bInOpenCall;
+	bool	m_bFlushOnWrite;
 	ELogFileFormat m_eFileFormat;
 };
 

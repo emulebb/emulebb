@@ -1703,6 +1703,7 @@ BOOL CemuleApp::InitInstance()
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 	thePacketDiagnosticsLog.SetMaxFileSize(thePrefs.GetMaxLogFileSize());
 	thePacketDiagnosticsLog.SetFileFormat(Utf8);
+	VERIFY(thePacketDiagnosticsLog.SetFlushOnWrite(false));
 #endif
 	if (thePrefs.GetLog2Disk()) {
 		theLog.Open();

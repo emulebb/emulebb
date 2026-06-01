@@ -4280,6 +4280,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			theApp.emuledlg->ResetLog();
 			theApp.emuledlg->ResetDebugLog();
 		}
+		ClearRecentLogEntries();
 		return json{{"ok", true}};
 	}
 
