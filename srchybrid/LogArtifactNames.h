@@ -18,6 +18,13 @@ inline LPCTSTR VerboseLogFileName()
 	return _T("emulebb-verbose.log");
 }
 
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+inline LPCTSTR PacketDiagnosticsLogFileName()
+{
+	return _T("emulebb-packet-diagnostics.log");
+}
+#endif
+
 inline LPCTSTR CrtDebugLogFileName()
 {
 	return _T("emulebb-crt-debug.log");

@@ -29,14 +29,6 @@
 #include "FileInfoDialog.h"
 #include "MetaDataDlg.h"
 
-#ifndef EMULEBB_HAS_STARTUP_PROFILING
-	#if defined(_DEBUG) || defined(EMULEBB_ENABLE_STARTUP_PROFILING)
-	#define EMULEBB_HAS_STARTUP_PROFILING 1
-	#else
-	#define EMULEBB_HAS_STARTUP_PROFILING 0
-	#endif
-#endif
-
 /////////////////////////////////////////////////////////////////////////////////////////////
 // CSharedFileDetailsModelessSheet
 class CSharedFileDetailsModelessSheet : public CListViewPropertySheet

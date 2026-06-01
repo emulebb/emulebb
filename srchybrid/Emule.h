@@ -28,14 +28,6 @@
 
 #define PORTTESTURL			_T("https://porttest.emule-project.net/connectiontest.php?tcpport=%i&udpport=%i&lang=%i")
 
-#ifndef EMULEBB_HAS_STARTUP_PROFILING
-	#if defined(_DEBUG) || defined(EMULEBB_ENABLE_STARTUP_PROFILING)
-	#define EMULEBB_HAS_STARTUP_PROFILING 1
-	#else
-	#define EMULEBB_HAS_STARTUP_PROFILING 0
-	#endif
-#endif
-
 class CSearchList;
 class CUploadQueue;
 class CListenSocket;
@@ -143,14 +135,6 @@ public:
 	 *        write-guard cache to avoid repeated Win32 volume probes.
 	 */
 	bool TryResolvePartMetWriteGuardVolume(LPCTSTR pszPath, bool bForceRefresh, CString &rstrVolumeRoot);
-	/**
-	 * @brief Returns whether env-gated startup phase profiling is enabled for this process.
-	 */
-#if EMULEBB_HAS_STARTUP_PROFILING
-	bool IsStartupProfilingEnabled() const						{ return m_bStartupProfilingEnabled; }
-#else
-	bool IsStartupProfilingEnabled() const						{ return false; }
-#endif
 	/**
 	 * @brief Reports whether the startup timer already emitted the canonical startup-complete milestone.
 	 */
@@ -438,7 +422,6 @@ private:
 	UINT		m_wTimerRes;
 	bool		m_bStandbyOff;
 #if EMULEBB_HAS_STARTUP_PROFILING
-	bool		m_bStartupProfilingEnabled;
 	bool		m_bStartupProfileStartupComplete;
 	bool		m_bStartupProfileCompleted;
 	CCriticalSection m_startupProfileLock;

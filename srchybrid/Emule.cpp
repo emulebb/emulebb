@@ -1084,6 +1084,9 @@ std::string BuildStartupTraceEventJson(const SStartupProfileTraceEvent &rEvent, 
 
 CLogFile theLog;
 CLogFile theVerboseLog;
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+CLogFile thePacketDiagnosticsLog;
+#endif
 bool g_bLowColorDesktop = false;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1277,7 +1280,6 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	, m_pEarlyStartupProgressDlg()
 	, m_bStandbyOff()
 #if EMULEBB_HAS_STARTUP_PROFILING
-	, m_bStartupProfilingEnabled(::GetEnvironmentVariable(_T("EMULEBB_STARTUP_PROFILE"), NULL, 0) > 0)
 	, m_bStartupProfileStartupComplete()
 	, m_bStartupProfileCompleted()
 	, m_ullStartupProfileBeginQpc()
@@ -1304,7 +1306,7 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	// create a public mod release string while keeping the upstream base version for protocol checks
 	ASSERT(CemuleApp::m_nVersionUpd + 'a' <= 'f');
 	m_strCurVersionLongDbg.Format(_T("%s %s (base %u.%u%c.%u)"), MOD_RELEASE_PRODUCT_NAME, MOD_RELEASE_VERSION_TEXT, CemuleApp::m_nVersionMjr, CemuleApp::m_nVersionMin, _T('a') + CemuleApp::m_nVersionUpd, CemuleApp::m_nVersionBld);
-#if defined( _DEBUG) || defined(EMULEBB_DEV_BUILD)
+#ifdef _DEBUG
 	m_strCurVersionLong = m_strCurVersionLongDbg;
 #else
 	m_strCurVersionLong = MOD_RELEASE_VERSION_TEXT;
@@ -1313,9 +1315,6 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 
 #if defined( _DEBUG)
 	m_strCurVersionLong += _T(" DEBUG");
-#endif
-#ifdef EMULEBB_DEV_BUILD
-	m_strCurVersionLong += _T(" DEVBUILD");
 #endif
 
 	// create the protocol version number
@@ -1402,9 +1401,6 @@ void CemuleApp::WarnAboutStartupStoragePlacement()
 #if EMULEBB_HAS_STARTUP_PROFILING
 void CemuleApp::ResetStartupProfile()
 {
-	if (!m_bStartupProfilingEnabled)
-		return;
-
 	CSingleLock lock(&m_startupProfileLock, TRUE);
 	m_bStartupProfileStartupComplete = false;
 	m_bStartupProfileCompleted = false;
@@ -1417,7 +1413,7 @@ void CemuleApp::ResetStartupProfile()
 
 ULONGLONG CemuleApp::GetStartupProfileTimestampUs() const
 {
-	if (!m_bStartupProfilingEnabled || m_ullStartupProfileFrequency == 0 || m_ullStartupProfileBeginQpc == 0)
+	if (m_ullStartupProfileFrequency == 0 || m_ullStartupProfileBeginQpc == 0)
 		return 0;
 
 	const ULONGLONG ullNowQpc = QueryPerformanceCounterValue();
@@ -1435,9 +1431,6 @@ ULONGLONG CemuleApp::GetStartupProfileElapsedUs(const ULONGLONG ullStartTimestam
 
 void CemuleApp::FinalizeStartupProfileTrace()
 {
-	if (!m_bStartupProfilingEnabled)
-		return;
-
 	CSingleLock lock(&m_startupProfileLock, TRUE);
 	m_bStartupProfileCompleted = true;
 	(void)WriteStartupProfileTrace();
@@ -1445,9 +1438,6 @@ void CemuleApp::FinalizeStartupProfileTrace()
 
 void CemuleApp::FlushStartupProfileTrace()
 {
-	if (!m_bStartupProfilingEnabled)
-		return;
-
 	CSingleLock lock(&m_startupProfileLock, TRUE);
 	(void)WriteStartupProfileTrace();
 }
@@ -1480,7 +1470,7 @@ bool CemuleApp::WriteStartupProfileTrace() const
 
 void CemuleApp::AppendStartupProfileLine(LPCTSTR pszPhase, const ULONGLONG ullDurationUs, ULONGLONG ullAbsoluteUs)
 {
-	if (!m_bStartupProfilingEnabled || pszPhase == NULL || pszPhase[0] == _T('\0'))
+	if (pszPhase == NULL || pszPhase[0] == _T('\0'))
 		return;
 
 	const SStartupTraceDescriptor descriptor(DescribeStartupTracePhase(pszPhase));
@@ -1506,7 +1496,7 @@ void CemuleApp::AppendStartupProfileLine(LPCTSTR pszPhase, const ULONGLONG ullDu
 
 void CemuleApp::AppendStartupProfileCounter(LPCTSTR pszCounterName, const ULONGLONG ullValue, LPCTSTR pszValueKey)
 {
-	if (!m_bStartupProfilingEnabled || pszCounterName == NULL || pszCounterName[0] == _T('\0'))
+	if (pszCounterName == NULL || pszCounterName[0] == _T('\0'))
 		return;
 
 	const bool bFlushTrace = ShouldFlushStartupProfileAfterCounter(pszCounterName);
@@ -1626,9 +1616,7 @@ BOOL CemuleApp::InitInstance()
 	//
 	theCrashDumper.uCreateCrashDump = GetProfileInt(_T("eMule"), _T("CreateCrashDump"), 0);
 	theCrashDumper.bCaptureFullCrashDump = GetProfileInt(_T("eMule"), _T("CaptureFullCrashDump"), 0) != 0;
-#if !defined(EMULEBB_DEV_BUILD)
 	if (theCrashDumper.uCreateCrashDump > 0)
-#endif
 		theCrashDumper.Enable(m_strCurVersionLongDbg, true, sConfDir);
 
 	///////////////////////////////////////////////////////////////////////////
@@ -1705,10 +1693,17 @@ BOOL CemuleApp::InitInstance()
 #endif
 	VERIFY(theLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, thePrefs.GetLog2Disk()) + LogArtifactNames::MainLogFileName()));
 	VERIFY(theVerboseLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false) + LogArtifactNames::VerboseLogFileName()));
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+	VERIFY(thePacketDiagnosticsLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false) + LogArtifactNames::PacketDiagnosticsLogFileName()));
+#endif
 	theLog.SetMaxFileSize(thePrefs.GetMaxLogFileSize());
 	theLog.SetFileFormat(thePrefs.GetLogFileFormat());
 	theVerboseLog.SetMaxFileSize(thePrefs.GetMaxLogFileSize());
 	theVerboseLog.SetFileFormat(thePrefs.GetLogFileFormat());
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+	thePacketDiagnosticsLog.SetMaxFileSize(thePrefs.GetMaxLogFileSize());
+	thePacketDiagnosticsLog.SetFileFormat(Utf8);
+#endif
 	if (thePrefs.GetLog2Disk()) {
 		theLog.Open();
 		theLog.Log(_T("\r\n"));
@@ -1717,6 +1712,10 @@ BOOL CemuleApp::InitInstance()
 		theVerboseLog.Open();
 		theVerboseLog.Log(_T("\r\n"));
 	}
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+	if (thePacketDiagnosticsLog.Open())
+		thePacketDiagnosticsLog.Log(_T("\r\n"));
+#endif
 	Log(_T("Starting %s %s"), MOD_RELEASE_PRODUCT_NAME, (LPCTSTR)m_strCurVersionLong);
 	LogStartupConfigBackupResult();
 #if EMULEBB_HAS_STARTUP_PROFILING

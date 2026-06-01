@@ -14,7 +14,7 @@
 #include "PPgScheduler.h"
 #include "PPgProxy.h"
 #include "PPgMessages.h"
-#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
+#ifdef _DEBUG
 #include "PPgDebug.h"
 #endif
 #include "otherfunctions.h"
@@ -44,7 +44,7 @@ public:
 	CPPgScheduler	m_wndScheduler;
 	CPPgProxy		m_wndProxy;
 	CPPgMessages	m_wndMessages;
-#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
+#ifdef _DEBUG
 	CPPgDebug		m_wndDebug;
 #endif
 

@@ -20,6 +20,9 @@
 #include "emule.h"
 #include "Log.h"
 #include "LogFileSeams.h"
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+#include "Opcodes.h"
+#endif
 #include "OtherFunctions.h"
 #include "Preferences.h"
 #include "emuledlg.h"
@@ -39,6 +42,10 @@ constexpr int kMaxFileLogLineChars = 64 * 1024;
 constexpr size_t kMaxRecentLogEntries = 200;
 CCriticalSection g_recentLogLock;
 std::deque<SRecentLogEntry> g_recentLogEntries;
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+CCriticalSection g_packetDiagnosticsLogLock;
+volatile LONGLONG g_llPacketDiagnosticsEventSeq = 0;
+#endif
 
 CString TruncateLogLine(const CString &rstrLine, const int iMaxChars)
 {
@@ -68,6 +75,90 @@ void AddRecentLogEntry(UINT uFlags, LPCTSTR pszText)
 	while (g_recentLogEntries.size() > kMaxRecentLogEntries)
 		g_recentLogEntries.pop_front();
 }
+
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+CString BuildPacketDiagnosticsTimestampUtc()
+{
+	SYSTEMTIME st = {};
+	::GetSystemTime(&st);
+	CString strTimestamp;
+	strTimestamp.Format(_T("%04u-%02u-%02uT%02u:%02u:%02u.%03uZ"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+	return strTimestamp;
+}
+
+CString BuildPacketDiagnosticsHexString(const BYTE *pPayload, UINT uPayloadLen)
+{
+	if (pPayload == NULL || uPayloadLen == 0)
+		return CString();
+
+	CString strHex;
+	LPTSTR pszHex = strHex.GetBuffer(static_cast<int>(uPayloadLen * 2));
+	static const TCHAR s_szDigits[] = _T("0123456789ABCDEF");
+	for (UINT uIndex = 0; uIndex < uPayloadLen; ++uIndex) {
+		const BYTE byValue = pPayload[uIndex];
+		pszHex[uIndex * 2] = s_szDigits[(byValue >> 4) & 0x0F];
+		pszHex[uIndex * 2 + 1] = s_szDigits[byValue & 0x0F];
+	}
+	strHex.ReleaseBuffer(static_cast<int>(uPayloadLen * 2));
+	return strHex;
+}
+
+CString EscapePacketDiagnosticsJson(const CString &strValue)
+{
+	CString strEscaped;
+	for (int i = 0; i < strValue.GetLength(); ++i) {
+		const TCHAR ch = strValue[i];
+		switch (ch) {
+		case _T('\\'):
+			strEscaped += _T("\\\\");
+			break;
+		case _T('"'):
+			strEscaped += _T("\\\"");
+			break;
+		case _T('\r'):
+			strEscaped += _T("\\r");
+			break;
+		case _T('\n'):
+			strEscaped += _T("\\n");
+			break;
+		case _T('\t'):
+			strEscaped += _T("\\t");
+			break;
+		default:
+			if (static_cast<unsigned int>(ch) < 0x20u) {
+				CString strCodePoint;
+				strCodePoint.Format(_T("\\u%04X"), static_cast<unsigned int>(ch));
+				strEscaped += strCodePoint;
+			} else {
+				strEscaped.AppendChar(ch);
+			}
+		}
+	}
+	return strEscaped;
+}
+
+LPCTSTR PacketDiagnosticsProtocolName(uint8 byProtocol)
+{
+	switch (byProtocol) {
+	case OP_EDONKEYPROT:
+		return _T("ed2k");
+	case OP_EMULEPROT:
+		return _T("emule");
+	case OP_PACKEDPROT:
+		return _T("packed");
+	default:
+		return NULL;
+	}
+}
+
+CString BuildPacketDiagnosticsJsonStringField(LPCTSTR pszValue)
+{
+	CString strField(_T("\""));
+	strField += EscapePacketDiagnosticsJson(pszValue != NULL ? CString(pszValue) : CString());
+	strField += _T("\"");
+	return strField;
+}
+#endif
 }
 
 std::vector<SRecentLogEntry> GetRecentLogEntries(size_t maxEntries)
@@ -82,6 +173,68 @@ std::vector<SRecentLogEntry> GetRecentLogEntries(size_t maxEntries)
 		entries.push_back(g_recentLogEntries[i]);
 	return entries;
 }
+
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+void PacketDiagnosticsLogInvalidSubOpcode(
+	LPCTSTR pszPacketFamily,
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	uint8 byProtocol,
+	uint8 byOuterOpcode,
+	uint8 byInvalidSubOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen,
+	ULONGLONG ullInvalidOffset,
+	ULONGLONG ullBytesRemaining,
+	int iPreviousSubOpcode)
+{
+	if (!thePacketDiagnosticsLog.IsOpen())
+		return;
+
+	const UINT uContextStart = (ullInvalidOffset > 32) ? static_cast<UINT>(ullInvalidOffset - 32) : 0;
+	UINT uContextLen = 0;
+	if (pPayload != NULL && ullInvalidOffset < uPayloadLen) {
+		const ULONGLONG ullContextEnd = min(static_cast<ULONGLONG>(uPayloadLen), ullInvalidOffset + 33);
+		uContextLen = static_cast<UINT>(ullContextEnd - uContextStart);
+	}
+
+	CString strPreviousSubOpcode(_T("null"));
+	if (iPreviousSubOpcode >= 0)
+		strPreviousSubOpcode.Format(_T("%u"), static_cast<UINT>(iPreviousSubOpcode));
+
+	const LPCTSTR pszProtocolName = PacketDiagnosticsProtocolName(byProtocol);
+	const CString strProtocol = pszProtocolName != NULL ? BuildPacketDiagnosticsJsonStringField(pszProtocolName) : CString(_T("null"));
+	const CString strOuterOpcodeName = DbgGetClientTCPOpcode(byProtocol, byOuterOpcode);
+	const CString strPayloadHex = BuildPacketDiagnosticsHexString(pPayload, uPayloadLen);
+	const CString strContextHex = BuildPacketDiagnosticsHexString(pPayload != NULL ? pPayload + uContextStart : NULL, uContextLen);
+	const ULONGLONG ullEventSeq = static_cast<ULONGLONG>(::InterlockedIncrement64(&g_llPacketDiagnosticsEventSeq));
+
+	CString strJson;
+	strJson.Format(
+		_T("{\"schema\":\"ed2k_invalid_sub_opcode_v1\",\"source\":\"emulebb\",\"ts_utc\":\"%s\",\"event_seq\":%I64u,\"packet_family\":\"%s\",\"remote_addr\":\"%s\",\"transport_mode\":\"%s\",\"protocol\":%s,\"protocol_marker\":%u,\"outer_opcode\":%u,\"outer_opcode_name\":\"%s\",\"invalid_sub_opcode\":%u,\"previous_sub_opcode\":%s,\"payload_len\":%u,\"invalid_offset\":%I64u,\"bytes_remaining\":%I64u,\"context_offset\":%u,\"context_len\":%u,\"context_hex\":\"%s\",\"payload_hex\":\"%s\"}\r\n"),
+		(LPCTSTR)EscapePacketDiagnosticsJson(BuildPacketDiagnosticsTimestampUtc()),
+		ullEventSeq,
+		(LPCTSTR)EscapePacketDiagnosticsJson(pszPacketFamily != NULL ? CString(pszPacketFamily) : CString(_T("unknown"))),
+		(LPCTSTR)EscapePacketDiagnosticsJson(pszPeerLabel != NULL ? CString(pszPeerLabel) : CString(_T("unknown"))),
+		(LPCTSTR)EscapePacketDiagnosticsJson(pszTransportMode != NULL ? CString(pszTransportMode) : CString(_T("unknown"))),
+		(LPCTSTR)strProtocol,
+		static_cast<UINT>(byProtocol),
+		static_cast<UINT>(byOuterOpcode),
+		(LPCTSTR)EscapePacketDiagnosticsJson(strOuterOpcodeName),
+		static_cast<UINT>(byInvalidSubOpcode),
+		(LPCTSTR)strPreviousSubOpcode,
+		uPayloadLen,
+		ullInvalidOffset,
+		ullBytesRemaining,
+		uContextStart,
+		uContextLen,
+		(LPCTSTR)strContextHex,
+		(LPCTSTR)strPayloadHex);
+
+	CSingleLock lock(&g_packetDiagnosticsLogLock, TRUE);
+	thePacketDiagnosticsLog.Log(strJson);
+}
+#endif
 
 
 void LogV(UINT uFlags, LPCTSTR pszFmt, va_list argp)

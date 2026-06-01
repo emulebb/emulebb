@@ -10,6 +10,7 @@
 #endif
 
 #include "emule_site_config.h"
+#include "BuildFeatures.h"
 
 #ifndef WINVER
 #define WINVER 0x0600			// Windows Vista or later

@@ -319,8 +319,7 @@ uint32 UploadBandwidthThrottler::CalculateChangeDelta(uint32 numberOfConsecutive
 UINT AFX_CDECL UploadBandwidthThrottler::RunProc(LPVOID pParam)
 {
 #if EMULEBB_HAS_STARTUP_PROFILING
-	if (theApp.IsStartupProfilingEnabled())
-		theApp.AppendStartupProfileLine(_T("broadband.throttler.thread_enter"), 0);
+	theApp.AppendStartupProfileLine(_T("broadband.throttler.thread_enter"), 0);
 #endif
 	DbgSetThreadName("UploadBandwidthThrottler");
 	InitThreadLocale();

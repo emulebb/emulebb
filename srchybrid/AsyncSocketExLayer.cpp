@@ -481,9 +481,7 @@ void CAsyncSocketExLayer::Init(CAsyncSocketExLayer *pPrevLayer, CAsyncSocketEx *
 	m_pPrevLayer = pPrevLayer;
 	m_pOwnerSocket = pOwnerSocket;
 	m_pNextLayer = NULL;
-#ifndef EMULEBB_DISABLE_SOCKET_STATES
 	SetLayerState(pOwnerSocket->GetState());
-#endif //EMULEBB_DISABLE_SOCKET_STATES
 }
 
 void CAsyncSocketExLayer::SetLayerState(AsyncSocketExState nLayerState)
@@ -706,9 +704,7 @@ BOOL CAsyncSocketExLayer::AcceptNext(CAsyncSocketEx &rConnectedSocket, LPSOCKADD
 		return FALSE;
 	}
 	rConnectedSocket.SetFamily(GetFamily());
-#ifndef EMULEBB_DISABLE_SOCKET_STATES
 	rConnectedSocket.SetState(connected);
-#endif //EMULEBB_DISABLE_SOCKET_STATES
 	return TRUE;
 }
 

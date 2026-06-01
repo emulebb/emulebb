@@ -292,13 +292,11 @@ protected:
 	// Async hostname resolution
 	UINT_PTR m_uAsyncResolveRequestId; // Current worker request id; zero means no pending hostname result.
 
-#ifndef EMULEBB_DISABLE_SOCKET_STATES
 	AsyncSocketExState m_nState;
 	int m_nPendingEvents;
 
 	AsyncSocketExState GetState() const			{ return m_nState; }
 	void SetState(AsyncSocketExState nState)	{ m_nState = nState; }
-#endif //EMULEBB_DISABLE_SOCKET_STATES
 
 	//Layer chain
 	CAsyncSocketExLayer *m_pFirstLayer;

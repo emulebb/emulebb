@@ -1998,7 +1998,6 @@ BOOL CemuleDlg::OnInitDialog()
 
 void CemuleDlg::DoVersioncheck(bool manual)
 {
-#ifndef EMULEBB_DEV_BUILD
 	if (!manual && thePrefs.GetLastVC() != 0) {
 		CTime last(thePrefs.GetLastVC());
 		struct tm tmTemp;
@@ -2031,7 +2030,6 @@ void CemuleDlg::DoVersioncheck(bool manual)
 	// Do not mutate pThread after launch; a fast worker may already have exited.
 	thePrefs.UpdateLastVC();
 	(void)pContext.release();
-#endif
 }
 
 LRESULT CemuleDlg::OnVersionCheckResponse(WPARAM, LPARAM lParam)
@@ -2080,11 +2078,9 @@ void CemuleDlg::OnStartupTimer() noexcept
 	try {
 #if EMULEBB_HAS_STARTUP_PROFILING
 		const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
-		if (theApp.IsStartupProfilingEnabled()) {
-			CString strPhase;
-			strPhase.Format(_T("StartupTimer enter status=%u"), static_cast<unsigned>(status));
-			theApp.AppendStartupProfileLine(strPhase, 0);
-		}
+		CString strPhase;
+		strPhase.Format(_T("StartupTimer enter status=%u"), static_cast<unsigned>(status));
+		theApp.AppendStartupProfileLine(strPhase, 0);
 #endif
 		switch (status) {
 		case 0:
@@ -2232,13 +2228,11 @@ void CemuleDlg::OnStartupTimer() noexcept
 	}
 	catch (CException *e) {
 #if EMULEBB_HAS_STARTUP_PROFILING
-		if (theApp.IsStartupProfilingEnabled()) {
-			TCHAR szError[1024];
-			GetExceptionMessage(*e, szError, _countof(szError));
-			CString strPhase;
-			strPhase.Format(_T("StartupTimer CException status=%u (%s)"), static_cast<unsigned>(status), szError);
-			theApp.AppendStartupProfileLine(strPhase, 0);
-		}
+		TCHAR szError[1024];
+		GetExceptionMessage(*e, szError, _countof(szError));
+		CString strPhase;
+		strPhase.Format(_T("StartupTimer CException status=%u (%s)"), static_cast<unsigned>(status), szError);
+		theApp.AppendStartupProfileLine(strPhase, 0);
 #endif
 		if (thePrefs.GetVerbose())
 			DebugLogError(LOG_STATUSBAR, _T("Unknown CException in CemuleDlg::OnStartupTimer"));
@@ -2246,11 +2240,9 @@ void CemuleDlg::OnStartupTimer() noexcept
 	}
 	catch (const CString &sError) {
 #if EMULEBB_HAS_STARTUP_PROFILING
-		if (theApp.IsStartupProfilingEnabled()) {
-			CString strPhase;
-			strPhase.Format(_T("StartupTimer CStringException status=%u (%s)"), static_cast<unsigned>(status), (LPCTSTR)sError);
-			theApp.AppendStartupProfileLine(strPhase, 0);
-		}
+		CString strPhase;
+		strPhase.Format(_T("StartupTimer CStringException status=%u (%s)"), static_cast<unsigned>(status), (LPCTSTR)sError);
+		theApp.AppendStartupProfileLine(strPhase, 0);
 #endif
 		if (thePrefs.GetVerbose())
 			DebugLogError(LOG_STATUSBAR, _T("Unknown CString exception in CemuleDlg::OnStartupTimer - %s"), (LPCTSTR)sError);
@@ -2720,7 +2712,7 @@ void CemuleDlg::AddLogText(UINT uFlags, LPCTSTR pszText, const CTime *pTimestamp
 		} else
 			AfxMessageBox(pszText);
 	}
-#if defined(_DEBUG) || defined(EMULEBB_ENABLE_DEBUG_DEVICE)
+#ifdef _DEBUG
 	Debug(_T("%s\n"), pszText);
 #endif
 
@@ -5832,7 +5824,7 @@ LRESULT CemuleDlg::OnKickIdle(WPARAM, LPARAM lIdleCount)
 {
 	LRESULT lResult = 0;
 #if EMULEBB_HAS_STARTUP_PROFILING
-	const ULONGLONG ullPhaseStart = theApp.IsStartupProfilingEnabled() ? theApp.GetStartupProfileTimestampUs() : 0;
+	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 	static bool s_bLoggedFirstKickIdle = false;
 #endif
 
@@ -5857,16 +5849,14 @@ LRESULT CemuleDlg::OnKickIdle(WPARAM, LPARAM lIdleCount)
 	}
 
 	#if EMULEBB_HAS_STARTUP_PROFILING
-	if (theApp.IsStartupProfilingEnabled()) {
-		const ULONGLONG ullDuration = theApp.GetStartupProfileElapsedUs(ullPhaseStart);
-		if (!s_bLoggedFirstKickIdle) {
-			s_bLoggedFirstKickIdle = true;
-			theApp.AppendStartupProfileLine(_T("CemuleDlg::OnKickIdle first"), ullDuration);
-		} else if (ullDuration >= 250000) {
-			CString strPhase;
-			strPhase.Format(_T("CemuleDlg::OnKickIdle long (idle=%Id)"), lIdleCount);
-			theApp.AppendStartupProfileLine(strPhase, ullDuration);
-		}
+	const ULONGLONG ullDuration = theApp.GetStartupProfileElapsedUs(ullPhaseStart);
+	if (!s_bLoggedFirstKickIdle) {
+		s_bLoggedFirstKickIdle = true;
+		theApp.AppendStartupProfileLine(_T("CemuleDlg::OnKickIdle first"), ullDuration);
+	} else if (ullDuration >= 250000) {
+		CString strPhase;
+		strPhase.Format(_T("CemuleDlg::OnKickIdle long (idle=%Id)"), lIdleCount);
+		theApp.AppendStartupProfileLine(strPhase, ullDuration);
 	}
 	#endif
 

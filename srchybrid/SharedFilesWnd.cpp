@@ -231,7 +231,7 @@ void CSharedFilesWnd::EnsureSharedTreeInitialized()
 #endif
 
 #if EMULEBB_HAS_STARTUP_PROFILING
-	if (theApp.IsStartupProfilingEnabled() && !m_bStartupSharedTreePopulatedReported) {
+	if (!m_bStartupSharedTreePopulatedReported) {
 		theApp.AppendStartupProfileLine(_T("shared.tree.populated"), 0);
 		theApp.AppendStartupProfileCounter(_T("shared.tree.visible_rows"), static_cast<ULONGLONG>(sharedfilesctrl.GetItemCount()), _T("rows"));
 		m_bStartupSharedTreePopulatedReported = true;
@@ -255,7 +255,7 @@ void CSharedFilesWnd::OnStartupProfileStartupComplete()
 
 void CSharedFilesWnd::ReportStartupSharedFilesReadinessIfReady()
 {
-	if (!theApp.IsStartupProfilingEnabled() || (m_bStartupSharedFilesReadyReported && m_bStartupSharedFilesHashingDoneReported))
+	if (m_bStartupSharedFilesReadyReported && m_bStartupSharedFilesHashingDoneReported)
 		return;
 	if (!theApp.HasStartupProfileReachedStartupComplete())
 		return;

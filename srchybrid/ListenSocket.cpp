@@ -111,6 +111,53 @@ bool DrainAcceptedSocketAfterWrapperAllocationFailure(SOCKET hListenSocket)
 	closesocket(hAcceptedSocket);
 	return true;
 }
+
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+CString BuildPacketDiagnosticsPeerLabel(const CUpDownClient *pClient)
+{
+	if (pClient == NULL)
+		return CString(_T("unknown"));
+
+	const uint32 dwPeerIP = pClient->GetConnectIP() != 0 ? pClient->GetConnectIP() : pClient->GetIP();
+	CString strPeer;
+	strPeer.Format(_T("%s:%u"), (LPCTSTR)ipstr(dwPeerIP), pClient->GetUserPort());
+	return strPeer;
+}
+
+LPCTSTR GetPacketDiagnosticsTransportMode(const CUpDownClient *pClient)
+{
+	return (pClient != NULL && pClient->IsObfuscatedConnectionEstablished()) ? _T("user_hash") : _T("plaintext");
+}
+
+void LogInvalidMultipacketSubOpcode(
+	LPCTSTR pszPacketFamily,
+	const CUpDownClient *pClient,
+	UINT uOuterOpcode,
+	const BYTE *pPayload,
+	uint32 uPayloadLen,
+	uint8 byInvalidSubOpcode,
+	const CSafeMemFile &rData,
+	int iPreviousSubOpcode)
+{
+	const ULONGLONG ullPosition = rData.GetPosition();
+	const ULONGLONG ullLength = rData.GetLength();
+	const ULONGLONG ullInvalidOffset = (ullPosition > 0) ? (ullPosition - 1) : 0;
+	const ULONGLONG ullBytesRemaining = (ullLength > ullPosition) ? (ullLength - ullPosition) : 0;
+
+	PacketDiagnosticsLogInvalidSubOpcode(
+		pszPacketFamily,
+		BuildPacketDiagnosticsPeerLabel(pClient),
+		GetPacketDiagnosticsTransportMode(pClient),
+		OP_EMULEPROT,
+		static_cast<uint8>(uOuterOpcode),
+		byInvalidSubOpcode,
+		pPayload,
+		uPayloadLen,
+		ullInvalidOffset,
+		ullBytesRemaining,
+		iPreviousSubOpcode);
+}
+#endif
 }
 
 // CClientReqSocket
@@ -1062,6 +1109,9 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 			else
 				data_out.WriteHash16(reqfile->GetFileHash());
 			bool bAnswerFNF = false;
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+			int iPreviousSubOpcode = -1;
+#endif
 			while (data_in.GetLength() > data_in.GetPosition() && !bAnswerFNF) {
 				uint8 opcode_in = data_in.ReadUInt8();
 				switch (opcode_in) {
@@ -1082,6 +1132,9 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 						data_out.WriteUInt8(OP_REQFILENAMEANSWER);
 						data_out.WriteString(reqfile->GetFileName(), client->GetUnicodeSupport());
 					}
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+					iPreviousSubOpcode = opcode_in;
+#endif
 					break;
 				case OP_AICHFILEHASHREQ:
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
@@ -1093,6 +1146,9 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 						data_out.WriteUInt8(OP_AICHFILEHASHANS);
 						reqfile->GetFileIdentifier().GetAICHHash().Write(data_out);
 					}
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+					iPreviousSubOpcode = opcode_in;
+#endif
 					break;
 				case OP_SETREQFILEID:
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
@@ -1103,6 +1159,9 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 						static_cast<CPartFile*>(reqfile)->WritePartStatus(data_out);
 					else
 						data_out.WriteUInt16(0);
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+					iPreviousSubOpcode = opcode_in;
+#endif
 					break;
 				//We still send the source packet separately.
 				case OP_REQUESTSOURCES2:
@@ -1142,9 +1201,15 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 							*/
 						}
 					}
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+					iPreviousSubOpcode = opcode_in;
+#endif
 					break;
 				default:
 					{
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+						LogInvalidMultipacketSubOpcode(_T("multipacket_request"), client, opcode, packet, size, opcode_in, data_in, iPreviousSubOpcode);
+#endif
 						CString strError;
 						strError.Format(_T("Invalid sub opcode 0x%02x received"), opcode_in);
 						throw strError;
@@ -1202,6 +1267,9 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 				throw GetResString(IDS_ERR_WRONGFILEID) + _T(" (OP_MULTIPACKETANSWER; client->GetRequestFile()==NULL)");
 			if (reqfile != client->GetRequestFile())
 				throw GetResString(IDS_ERR_WRONGFILEID) + _T(" (OP_MULTIPACKETANSWER; reqfile!=client->GetRequestFile())");
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+			int iPreviousSubOpcode = -1;
+#endif
 			while (data_in.GetLength() > data_in.GetPosition()) {
 				uint8 opcode_in = data_in.ReadUInt8();
 				switch (opcode_in) {
@@ -1210,21 +1278,33 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 						DebugRecv("OP_MPReqFileNameAns", client, packet);
 
 					client->ProcessFileInfo(data_in, reqfile);
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+					iPreviousSubOpcode = opcode_in;
+#endif
 					break;
 				case OP_FILESTATUS:
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugRecv("OP_MPFileStatus", client, packet);
 
 					client->ProcessFileStatus(false, data_in, reqfile);
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+					iPreviousSubOpcode = opcode_in;
+#endif
 					break;
 				case OP_AICHFILEHASHANS:
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugRecv("OP_MPAichFileHashAns", client);
 
 					client->ProcessAICHFileHash(&data_in, reqfile, NULL);
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+					iPreviousSubOpcode = opcode_in;
+#endif
 					break;
 				default:
 					{
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+						LogInvalidMultipacketSubOpcode(_T("multipacket_answer"), client, opcode, packet, size, opcode_in, data_in, iPreviousSubOpcode);
+#endif
 						CString strError;
 						strError.Format(_T("Invalid sub opcode 0x%02x received"), opcode_in);
 						throw strError;

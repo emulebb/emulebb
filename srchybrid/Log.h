@@ -102,3 +102,19 @@ protected:
 
 extern CLogFile theLog;
 extern CLogFile theVerboseLog;
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+extern CLogFile thePacketDiagnosticsLog;
+
+void PacketDiagnosticsLogInvalidSubOpcode(
+	LPCTSTR pszPacketFamily,
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	uint8 byProtocol,
+	uint8 byOuterOpcode,
+	uint8 byInvalidSubOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen,
+	ULONGLONG ullInvalidOffset,
+	ULONGLONG ullBytesRemaining,
+	int iPreviousSubOpcode);
+#endif

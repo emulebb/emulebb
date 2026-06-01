@@ -97,8 +97,7 @@ CPartFileWriteThread::~CPartFileWriteThread()
 UINT AFX_CDECL CPartFileWriteThread::RunProc(LPVOID pParam)
 {
 #if EMULEBB_HAS_STARTUP_PROFILING
-	if (theApp.IsStartupProfilingEnabled())
-		theApp.AppendStartupProfileLine(_T("broadband.partfile_write.thread_enter"), 0);
+	theApp.AppendStartupProfileLine(_T("broadband.partfile_write.thread_enter"), 0);
 #endif
 	DbgSetThreadName("PartWriteThread");
 	InitThreadLocale();

@@ -40,53 +40,6 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-
-namespace
-{
-	inline void EMTrace(char *fmt, ...)
-	{
-#ifdef EMULEBB_DEBUG_EMSOCKET
-		va_list argptr;
-		char bufferline[512];
-		va_start(argptr, fmt);
-		vsnprintf(bufferline, _countof(bufferline), fmt, argptr);
-		va_end(argptr);
-		//(Ornis+)
-		char osDate[30], osTime[30];
-		char temp[1024];
-		_strtime(osTime);
-		_strdate(osDate);
-		int len = snprintf(temp, _countof(temp), "%s %s: %s\r\n", osDate, osTime, bufferline);
-		if (len > 0) {
-			HANDLE hFile = LongPathSeams::CreateFile(_T("c:\\tmp\\EMSocket.log")	// ensure valid path to a writable location
-				, GENERIC_WRITE			// open for writing
-				, FILE_SHARE_READ		// share for reading
-				, NULL					// no security
-				, OPEN_ALWAYS			// open existing or create new
-				, FILE_ATTRIBUTE_NORMAL // normal file
-				, NULL);				// no template file
-
-			if (hFile != INVALID_HANDLE_VALUE) {
-				DWORD nbBytesWritten;
-				SetFilePointer(hFile, 0, NULL, FILE_END);
-				::WriteFile(hFile	// handle to file
-					, temp				// data buffer
-					, len				// number of bytes to write
-					, &nbBytesWritten	// number of bytes written
-					, NULL				// overlapped buffer
-				);
-				::CloseHandle(hFile);
-			}
-		}
-#else
-		//va_list argptr;
-		//va_start(argptr, fmt);
-		//va_end(argptr);
-		UNREFERENCED_PARAMETER(fmt);
-#endif //EMULEBB_DEBUG_EMSOCKET
-	}
-}
-
 IMPLEMENT_DYNAMIC(CEMSocket, CEncryptedStreamSocket)
 
 CEMSocket::CEMSocket()
@@ -132,8 +85,6 @@ CEMSocket::CEMSocket()
 
 CEMSocket::~CEMSocket()
 {
-	EMTrace("CEMSocket::~CEMSocket() on %u", (SOCKET)this);
-
 	// need to be locked here to know that the other methods
 	// won't be in the middle of things
 	sendLocker.Lock();
@@ -205,8 +156,6 @@ void CEMSocket::InitProxySupport()
 
 void CEMSocket::ClearQueues()
 {
-	EMTrace("CEMSocket::ClearQueues on %u", (SOCKET)this);
-
 	sendLocker.Lock();
 	while (!controlpacket_queue.IsEmpty())
 		delete controlpacket_queue.RemoveHead();
@@ -255,14 +204,6 @@ void CEMSocket::OnClose(int nErrorCode)
 
 BOOL CEMSocket::AsyncSelect(long lEvent)
 {
-#ifdef EMULEBB_DEBUG_EMSOCKET
-	if (lEvent & FD_READ)
-		EMTrace("  FD_READ");
-	if (lEvent & FD_CLOSE)
-		EMTrace("  FD_CLOSE");
-	if (lEvent & FD_WRITE)
-		EMTrace("  FD_WRITE");
-#endif
 	// deadlake changed to AsyncSocketEx PROXYSUPPORT
 	return (m_SocketData.hSocket == INVALID_SOCKET) || CEncryptedStreamSocket::AsyncSelect(lEvent);
 }
@@ -286,7 +227,6 @@ void CEMSocket::OnReceive(int nErrorCode)
 
 	// CPU load improvement
 	if (downloadLimitEnable && downloadLimit == 0 && nErrorCode != WSAESHUTDOWN) {
-		EMTrace("CEMSocket::OnReceive blocked by limit");
 		pendingOnReceive = true;
 		return;
 	}
@@ -362,7 +302,6 @@ void CEMSocket::OnReceive(int nErrorCode)
 			case OP_EMULEPROT:
 				break;
 			default:
-				EMTrace("CEMSocket::OnReceive ERROR Wrong header");
 				OnError(ERR_WRONGHEADER);
 				return;
 			}
@@ -429,10 +368,6 @@ void CEMSocket::OnReceive(int nErrorCode)
 		// Check if packet is complete
 		ASSERT(pendingPacket->size >= pendingPacketSize);
 		if (pendingPacket->size == pendingPacketSize) {
-#ifdef EMULEBB_DEBUG_EMSOCKET
-			EMTrace("CEMSocket::PacketReceived on %u, opcode=%X, realSize=%d"
-				, (SOCKET)this, pendingPacket->opcode, pendingPacket->GetRealPacketSize());
-#endif
 			// Process packet
 			bool bPacketResult = PacketReceived(pendingPacket);
 			delete pendingPacket;
@@ -1192,7 +1127,6 @@ int CEMSocket::Receive(void *lpBuf, int nBufLen, int nFlags)
 		switch (CAsyncSocket::GetLastError()) {
 		case WSANOTINITIALISED:
 			ASSERT(0);
-			EMTrace("%sA successful AfxSocketInit must occur before using this API.");
 			break;
 		case WSAENETDOWN:
 			ASSERT(true);
@@ -1224,10 +1158,8 @@ int CEMSocket::Receive(void *lpBuf, int nBufLen, int nFlags)
 			p = "%sThe socket %u has not been bound";
 			break;
 		default:
-			EMTrace("CEMSocket::OnReceive: Unexpected socket error %x on socket %u", CAsyncSocket::GetLastError(), (SOCKET)this);
+			break;
 		}
-		if (p)
-			EMTrace(p, "CEMSocket::OnReceive: ", (SOCKET)this);
 //		break;
 //	default:
 //		EMTrace("CEMSocket::OnReceive on %u, receivedSize=%d", (SOCKET)this, recvRetCode);
@@ -1367,7 +1299,7 @@ bool CEMSocket::UseBigSendBuffer()
 				SetSockOpt(SO_SNDBUF, &val, sizeof val);
 				vallen = sizeof val;
 				m_bUseBigSendBuffers = (GetSockOpt(SO_SNDBUF, &val, &vallen) && val > oldval);
-#if defined(_DEBUG) || defined(EMULEBB_DEV_BUILD)
+#ifdef _DEBUG
 				if (m_bUseBigSendBuffers && val >= static_cast<int>(kBroadbandTcpUploadSendBufferBytes))
 					theApp.QueueDebugLogLine(false, _T("Increased Sendbuffer for uploading socket from %u KiB to %u KiB"), oldval / 1024, val / 1024);
 				else if (m_bUseBigSendBuffers)
