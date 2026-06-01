@@ -52,6 +52,7 @@ jobs:
     with:
       app_ref: ${{ github.sha }}
       runs_on: windows-2022
+      node_version: "24"
       timeout_minutes: 360
       artifact_name: emulebb-controlled-smoke-${{ needs.prepare.outputs.package_version }}
       artifact_path: |
@@ -87,6 +88,13 @@ jobs:
         } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $ciLiveWireInputs -Encoding utf8
 
         python -m emule_workspace package-release `
+          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
+          --config Release `
+          --platform x64 `
+          --clean `
+          --release-version $packageVersion
+
+        python -m emule_workspace package-amutorrent `
           --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
           --config Release `
           --platform x64 `
