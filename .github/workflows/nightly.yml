@@ -83,7 +83,7 @@ jobs:
     uses: emulebb/emulebb-build/.github/workflows/reusable-workspace-command.yml@main
     with:
       app_ref: ${{ github.sha }}
-      runs_on: windows-2025-vs2026
+      runs_on: windows-2022
       timeout_minutes: 360
       artifact_name: emulebb-${{ needs.prepare.outputs.package_version }}-${{ matrix.asset_arch }}
       artifact_path: nightly-artifacts/*
