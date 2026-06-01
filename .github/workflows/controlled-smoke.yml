@@ -67,6 +67,23 @@ jobs:
         workspaces/workspace/state/build-logs/**
       command: |
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
+        $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_ROOT "repos\emulebb-build-tests\live-wire-inputs.ci.json"
+        $ciInstallRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\ci-suite-install-root"
+        $p2pBindInterface = (Get-NetAdapter |
+          Where-Object { $_.Status -eq "Up" } |
+          Select-Object -First 1 -ExpandProperty Name)
+        if (-not $p2pBindInterface) {
+          $p2pBindInterface = "Ethernet"
+        }
+        @{
+          schema = "emulebb-build-tests.live-wire-inputs.v1"
+          local_package_install = @{
+            target_path = $ciInstallRoot
+            p2p_bind_interface = $p2pBindInterface
+            enable_rest = $true
+            enable_crash_dumps = $true
+          }
+        } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $ciLiveWireInputs -Encoding utf8
 
         python -m emule_workspace package-release `
           --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
@@ -88,6 +105,7 @@ jobs:
           --materialize-test-install `
           --materialize-test-install-release-version $packageVersion `
           --materialize-test-install-skip-build `
+          --live-wire-inputs-file $ciLiveWireInputs `
           --suite command-line-smoke `
           --test-network offline `
           --fail-fast
@@ -99,6 +117,7 @@ jobs:
           --materialize-test-install `
           --materialize-test-install-release-version $packageVersion `
           --materialize-test-install-skip-build `
+          --live-wire-inputs-file $ciLiveWireInputs `
           --suite deterministic-two-client-transfer `
           --test-network lan `
           --fail-fast
