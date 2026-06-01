@@ -34,7 +34,7 @@ jobs:
       tag: ${{ steps.meta.outputs.tag }}
     steps:
       - name: Checkout app source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -72,8 +72,6 @@ jobs:
     name: Build package (${{ matrix.asset_arch }})
     needs: prepare
     if: needs.prepare.outputs.should_publish == 'true'
-    runs-on: windows-2022
-    timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix:
@@ -82,148 +80,72 @@ jobs:
             asset_arch: x64
           - platform: ARM64
             asset_arch: arm64
-    steps:
-      - name: Checkout app source
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    uses: emulebb/emulebb-build/.github/workflows/reusable-workspace-command.yml@main
+    with:
+      app_ref: ${{ github.sha }}
+      runs_on: windows-2025-vs2026
+      timeout_minutes: 360
+      artifact_name: emulebb-${{ needs.prepare.outputs.package_version }}-${{ matrix.asset_arch }}
+      artifact_path: nightly-artifacts/*
+      failure_artifact_name: emulebb-nightly-build-logs-${{ matrix.asset_arch }}
+      failure_artifact_path: workspaces/workspace/state/build-logs/**
+      command: |
+        $packageVersion = "${{ needs.prepare.outputs.package_version }}"
+        python -m emule_workspace package-release `
+          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
+          --config Release `
+          --platform "${{ matrix.platform }}" `
+          --clean `
+          --release-version $packageVersion
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $releaseRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\release\emulebb-v$packageVersion"
+        $zipPath = Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.zip"
+        if (-not (Test-Path -LiteralPath $zipPath)) {
+          throw "Release package not found: $zipPath"
+        }
 
-      - name: Clone build orchestration
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          $workspaceRoot = Join-Path $env:RUNNER_TEMP "emulebb-workspace"
-          $reposRoot = Join-Path $workspaceRoot "repos"
-          $buildRoot = Join-Path $reposRoot "emulebb-build"
-          New-Item -ItemType Directory -Force -Path $reposRoot | Out-Null
-          git clone --depth 1 https://github.com/emulebb/emulebb-build.git $buildRoot
-          "EMULE_WORKSPACE_ROOT=$workspaceRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "EMULE_BUILD_ROOT=$buildRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        $expectedBaseNames = @(
+          "emulebb-slate",
+          "emulebb-graphite",
+          "emulebb-midnight",
+          "emulebb-steel",
+          "emulebb-moss",
+          "emulebb-daylight-soft",
+          "emulebb-retro-teal",
+          "emulebb-phosphor-green"
+        )
 
-      - name: Install build orchestration dependencies
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          python -m pip install --upgrade pip
-          python -m pip install "click>=8.1" "pydantic>=2.0" "jinja2>=3" "jsonschema>=4"
-
-      - name: Materialize workspace
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          Push-Location $env:EMULE_BUILD_ROOT
-          python -m emule_workspace materialize --workspace-root $env:EMULE_WORKSPACE_ROOT
-          Pop-Location
-
-      - name: Align app worktree to workflow commit
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          $appRoot = Join-Path $env:EMULE_WORKSPACE_ROOT "workspaces\workspace\app\emulebb-main"
-          git -C $appRoot fetch origin $env:GITHUB_SHA
-          git -C $appRoot checkout main
-          git -C $appRoot reset --hard $env:GITHUB_SHA
-          git -C $appRoot status --short --branch
-
-      - name: Build release package
-        env:
-          PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          Push-Location $env:EMULE_BUILD_ROOT
-          python -m emule_workspace package-release `
-            --workspace-root $env:EMULE_WORKSPACE_ROOT `
-            --config Release `
-            --platform "${{ matrix.platform }}" `
-            --clean `
-            --release-version $env:PACKAGE_VERSION
-          Pop-Location
-
-      - name: Verify packaged display themes
-        env:
-          PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-
-          $releaseRoot = Join-Path $env:EMULE_WORKSPACE_ROOT "workspaces\workspace\state\release\emulebb-v$env:PACKAGE_VERSION"
-          $zipPath = Join-Path $releaseRoot "emulebb-$env:PACKAGE_VERSION-${{ matrix.asset_arch }}.zip"
-          if (-not (Test-Path -LiteralPath $zipPath)) {
-            throw "Release package not found: $zipPath"
-          }
-
-          $expectedBaseNames = @(
-            "emulebb-slate",
-            "emulebb-graphite",
-            "emulebb-midnight",
-            "emulebb-steel",
-            "emulebb-moss",
-            "emulebb-daylight-soft",
-            "emulebb-retro-teal",
-            "emulebb-phosphor-green"
-          )
-
-          $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
-          try {
-            $entries = @($archive.Entries | ForEach-Object { $_.FullName })
-            foreach ($baseName in $expectedBaseNames) {
-              foreach ($suffix in @(".eMuleSkin.ini", ".eMuleToolbar.kad02.bmp")) {
-                $entryName = "eMuleBB/skins/$baseName$suffix"
-                if ($entries -notcontains $entryName) {
-                  throw "Missing packaged display theme asset: $entryName"
-                }
+        $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+        try {
+          $entries = @($archive.Entries | ForEach-Object { $_.FullName })
+          foreach ($baseName in $expectedBaseNames) {
+            foreach ($suffix in @(".eMuleSkin.ini", ".eMuleToolbar.kad02.bmp")) {
+              $entryName = "eMuleBB/skins/$baseName$suffix"
+              if ($entries -notcontains $entryName) {
+                throw "Missing packaged display theme asset: $entryName"
               }
             }
-
-            $retiredTerms = @("classic", "muted", ("bor" + "land"), ("mat" + "rix"))
-            $retiredEntries = @($entries | Where-Object {
-              $entryName = $_
-              ($entryName -like "eMuleBB/skins/*") -and ($retiredTerms | Where-Object { $entryName -match $_ })
-            })
-            if ($retiredEntries.Count -gt 0) {
-              throw "Unexpected retired display theme assets in package: $($retiredEntries -join ', ')"
-            }
-          } finally {
-            $archive.Dispose()
           }
 
-      - name: Stage release assets
-        env:
-          PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          $releaseRoot = Join-Path $env:EMULE_WORKSPACE_ROOT "workspaces\workspace\state\release\emulebb-v$env:PACKAGE_VERSION"
-          $artifactRoot = Join-Path $env:GITHUB_WORKSPACE "nightly-artifacts"
-          New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
-          Copy-Item -Path (Join-Path $releaseRoot "emulebb-$env:PACKAGE_VERSION-${{ matrix.asset_arch }}.zip") -Destination $artifactRoot
-          Copy-Item -Path (Join-Path $releaseRoot "emulebb-$env:PACKAGE_VERSION-${{ matrix.asset_arch }}.manifest.json") -Destination $artifactRoot
-          Copy-Item -Path (Join-Path $releaseRoot "emulebb-$env:PACKAGE_VERSION-${{ matrix.asset_arch }}.sbom.spdx.json") -Destination $artifactRoot
-          Get-ChildItem $artifactRoot
+          $retiredTerms = @("classic", "muted", ("bor" + "land"), ("mat" + "rix"))
+          $retiredEntries = @($entries | Where-Object {
+            $entryName = $_
+            ($entryName -like "eMuleBB/skins/*") -and ($retiredTerms | Where-Object { $entryName -match $_ })
+          })
+          if ($retiredEntries.Count -gt 0) {
+            throw "Unexpected retired display theme assets in package: $($retiredEntries -join ', ')"
+          }
+        } finally {
+          $archive.Dispose()
+        }
 
-      - name: Upload build logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: emulebb-nightly-build-logs-${{ matrix.asset_arch }}
-          path: ${{ runner.temp }}/emulebb-workspace/workspaces/workspace/state/build-logs/**
-          if-no-files-found: ignore
-          retention-days: 14
-
-      - name: Upload package assets
-        uses: actions/upload-artifact@v4
-        with:
-          name: emulebb-${{ needs.prepare.outputs.package_version }}-${{ matrix.asset_arch }}
-          path: nightly-artifacts/*
-          if-no-files-found: error
-          retention-days: 14
+        $artifactRoot = Join-Path $env:GITHUB_WORKSPACE "nightly-artifacts"
+        New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
+        Copy-Item -Path (Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.zip") -Destination $artifactRoot
+        Copy-Item -Path (Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.manifest.json") -Destination $artifactRoot
+        Copy-Item -Path (Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.sbom.spdx.json") -Destination $artifactRoot
+        Get-ChildItem $artifactRoot
 
   publish:
     name: Publish nightly release

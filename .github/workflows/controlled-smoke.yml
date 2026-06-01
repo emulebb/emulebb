@@ -1,0 +1,104 @@
+name: Controlled Smoke
+
+on:
+  schedule:
+    - cron: "47 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: emulebb-controlled-smoke
+  cancel-in-progress: false
+
+env:
+  EMULEBB_NIGHTLY_BASE_VERSION: "0.7.3"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  prepare:
+    name: Prepare smoke metadata
+    runs-on: ubuntu-latest
+    outputs:
+      package_version: ${{ steps.meta.outputs.package_version }}
+      release_date: ${{ steps.meta.outputs.release_date }}
+      short_sha: ${{ steps.meta.outputs.short_sha }}
+    steps:
+      - name: Checkout app source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compute smoke metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          short_sha="${GITHUB_SHA::7}"
+          release_date="$(date -u +%Y%m%d)"
+          package_version="${EMULEBB_NIGHTLY_BASE_VERSION}-nightly.${release_date}.${short_sha}"
+
+          {
+            echo "package_version=${package_version}"
+            echo "release_date=${release_date}"
+            echo "short_sha=${short_sha}"
+          } >> "${GITHUB_OUTPUT}"
+
+  smoke:
+    name: Package and smoke (x64)
+    needs: prepare
+    uses: emulebb/emulebb-build/.github/workflows/reusable-workspace-command.yml@main
+    with:
+      app_ref: ${{ github.sha }}
+      runs_on: windows-2025-vs2026
+      timeout_minutes: 360
+      artifact_name: emulebb-controlled-smoke-${{ needs.prepare.outputs.package_version }}
+      artifact_path: |
+        workspaces/workspace/state/release/emulebb-v${{ needs.prepare.outputs.package_version }}/**
+        workspaces/workspace/state/test-reports/live-e2e-suite/**
+        workspaces/workspace/state/test-artifacts/live-e2e-suite/**
+        workspaces/workspace/state/build-logs/**
+      failure_artifact_name: emulebb-controlled-smoke-failure-${{ needs.prepare.outputs.short_sha }}
+      failure_artifact_path: |
+        workspaces/workspace/state/release/**
+        workspaces/workspace/state/test-reports/live-e2e-suite/**
+        workspaces/workspace/state/test-artifacts/live-e2e-suite/**
+        workspaces/workspace/state/build-logs/**
+      command: |
+        $packageVersion = "${{ needs.prepare.outputs.package_version }}"
+
+        python -m emule_workspace package-release `
+          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
+          --config Release `
+          --platform x64 `
+          --clean `
+          --release-version $packageVersion
+
+        python -m emule_workspace build app `
+          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
+          --config Release `
+          --platform x64 `
+          --variant tracing-harness
+
+        python -m emule_workspace test live-e2e `
+          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
+          --config Release `
+          --platform x64 `
+          --materialize-test-install `
+          --materialize-test-install-release-version $packageVersion `
+          --materialize-test-install-skip-build `
+          --suite command-line-smoke `
+          --test-network offline `
+          --fail-fast
+
+        python -m emule_workspace test live-e2e `
+          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
+          --config Release `
+          --platform x64 `
+          --materialize-test-install `
+          --materialize-test-install-release-version $packageVersion `
+          --materialize-test-install-skip-build `
+          --suite deterministic-two-client-transfer `
+          --test-network lan `
+          --fail-fast
