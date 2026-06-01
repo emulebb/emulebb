@@ -67,8 +67,9 @@ jobs:
         workspaces/workspace/state/build-logs/**
       command: |
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
-        $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_ROOT "repos\emulebb-build-tests\live-wire-inputs.ci.json"
+        $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\ci\live-wire-inputs.ci.json"
         $ciInstallRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\ci-suite-install-root"
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ciLiveWireInputs) | Out-Null
         $p2pBindInterface = (Get-NetAdapter |
           Where-Object { $_.Status -eq "Up" } |
           Select-Object -First 1 -ExpandProperty Name)
