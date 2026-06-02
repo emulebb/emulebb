@@ -88,23 +88,20 @@ jobs:
           }
 
           $vcToolsRoot = Join-Path $installPath "VC\Tools\MSVC"
-          $mfcHeader = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter afxwin.h -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -like "*\atlmfc\include\afxwin.h" } |
+          $v143Compiler = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter cl.exe -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\bin\Hostx64\x64\cl.exe" } |
             Select-Object -First 1
-          $latestStaticMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter nafxcw.lib -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -like "*\atlmfc\lib\x64\nafxcw.lib" } |
+          $v143StaticMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter nafxcw.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\x64\nafxcw.lib" } |
             Select-Object -First 1
-          $v141StaticMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter nafxcw.lib -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -like "*\14.16.*\atlmfc\lib\x64\nafxcw.lib" } |
+          $v143Toolset = Get-ChildItem -LiteralPath (Join-Path $installPath "MSBuild\Microsoft\VC") -Recurse -Filter Toolset.props -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\PlatformToolsets\v143\Toolset.props" } |
             Select-Object -First 1
-          $v141XpToolset = Get-ChildItem -LiteralPath (Join-Path $installPath "MSBuild\Microsoft\VC") -Recurse -Filter Toolset.props -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -like "*\PlatformToolsets\v141_xp\Toolset.props" } |
-            Select-Object -First 1
-          if ($mfcHeader -and $latestStaticMfc -and $v141StaticMfc -and $v141XpToolset) {
-            Write-Host "Required ATL/MFC components already available."
-            Write-Host "Latest MFC: $($latestStaticMfc.FullName)"
-            Write-Host "v141 MFC: $($v141StaticMfc.FullName)"
-            Write-Host "v141_xp toolset: $($v141XpToolset.FullName)"
+          if ($v143Compiler -and $v143StaticMfc -and $v143Toolset) {
+            Write-Host "Required v143 ATL/MFC components already available."
+            Write-Host "v143 compiler: $($v143Compiler.FullName)"
+            Write-Host "v143 MFC: $($v143StaticMfc.FullName)"
+            Write-Host "v143 toolset: $($v143Toolset.FullName)"
             return
           }
 
@@ -113,18 +110,16 @@ jobs:
             throw "ATL/MFC is missing and Visual Studio Installer was not found: $installer"
           }
 
-          Write-Host "ATL/MFC is missing on this hosted runner. Installing Visual Studio ATL/MFC components."
+          Write-Host "v143 ATL/MFC is missing on this hosted runner. Installing Visual Studio v143 components."
           & $installer modify `
             --installPath $installPath `
             --quiet `
             --norestart `
             --wait `
-            --add Microsoft.VisualStudio.Component.VC.ATLMFC `
-            --add Microsoft.VisualStudio.Component.VC.v141.x86.x64 `
-            --add Microsoft.VisualStudio.Component.VC.v141.MFC `
-            --add Microsoft.VisualStudio.Component.WinXP
+            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.x86.x64 `
+            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.MFC
           if ($LASTEXITCODE -ne 0) {
-            throw "Visual Studio Installer failed while adding ATL/MFC components: exit $LASTEXITCODE"
+            throw "Visual Studio Installer failed while adding v143 ATL/MFC components: exit $LASTEXITCODE"
           }
         }
 
