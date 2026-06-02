@@ -2081,6 +2081,10 @@ void CSharedFileList::SendListToServer()
 
 	CServer *pCurServer = server->GetCurrentServer();
 	CSafeMemFile files(1024);
+	uint32 limit = pCurServer ? pCurServer->GetSoftFiles() : 0;
+	if (limit == 0 || limit > 200)
+		limit = 200;
+
 	struct ServerOfferCandidate
 	{
 		CKnownFile *pFile;
@@ -2099,23 +2103,25 @@ void CSharedFileList::SendListToServer()
 		++uSequence;
 	}
 
-	std::sort(offerCandidates.begin(), offerCandidates.end(),
-		[](const ServerOfferCandidate &left, const ServerOfferCandidate &right) {
-			return IsPublishFileRankBetter(left.rank, right.rank);
-		});
+	if (offerCandidates.empty()) {
+		m_lastPublishED2KFlag = false;
+		return;
+	}
+
+	if (offerCandidates.size() > static_cast<size_t>(limit))
+		std::partial_sort(offerCandidates.begin(), offerCandidates.begin() + limit, offerCandidates.end(),
+			[](const ServerOfferCandidate &left, const ServerOfferCandidate &right) {
+				return IsPublishFileRankBetter(left.rank, right.rank);
+			});
+	else {
+		limit = static_cast<uint32>(offerCandidates.size());
+		std::sort(offerCandidates.begin(), offerCandidates.end(),
+			[](const ServerOfferCandidate &left, const ServerOfferCandidate &right) {
+				return IsPublishFileRankBetter(left.rank, right.rank);
+			});
+	}
 
 	// add to packet
-	uint32 limit = pCurServer ? pCurServer->GetSoftFiles() : 0;
-	if (limit == 0 || limit > 200)
-		limit = 200;
-
-	if (offerCandidates.size() < limit) {
-		limit = static_cast<uint32>(offerCandidates.size());
-		if (limit == 0) {
-			m_lastPublishED2KFlag = false;
-			return;
-		}
-	}
 	files.WriteUInt32(limit);
 	std::vector<CKnownFile*> publishedFilesChanged;
 	publishedFilesChanged.reserve(static_cast<size_t>(limit));
