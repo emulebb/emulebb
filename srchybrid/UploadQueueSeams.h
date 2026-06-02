@@ -189,3 +189,19 @@ inline bool ShouldCooldownShortFailedUploadSlot(
 		&& ullSessionAgeMs <= ullMaxAgeMs
 		&& ullQueueSessionPayloadBytes <= ullMaxPayloadBytes;
 }
+
+inline bool ShouldCooldownNoSocketUploadSlot(
+	bool bNoSocketRemoval,
+	bool bFriendSlot,
+	std::uint32_t uPeerIP,
+	std::uint64_t ullSessionAgeMs,
+	std::uint64_t ullQueueSessionPayloadBytes,
+	std::uint64_t ullMaxAgeMs = kShortFailedUploadCooldownMaxAgeMs,
+	std::uint64_t ullMaxPayloadBytes = kShortFailedUploadCooldownMaxPayloadBytes)
+{
+	return bNoSocketRemoval
+		&& !bFriendSlot
+		&& uPeerIP != 0
+		&& ullSessionAgeMs <= ullMaxAgeMs
+		&& ullQueueSessionPayloadBytes <= ullMaxPayloadBytes;
+}

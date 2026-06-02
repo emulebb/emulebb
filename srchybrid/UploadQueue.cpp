@@ -517,6 +517,23 @@ void CUploadQueue::Process()
 		// slot lifecycle and must be retired before broadband recycle/rotation
 		// logic evaluates the remaining active slots.
 		if (cur_client->socket == NULL) {
+			if (ShouldCooldownNoSocketUploadSlot(
+					true,
+					cur_client->GetFriendSlot(),
+					GetUploadRetryCooldownIP(cur_client),
+					cur_client->GetUpStartTimeDelay(),
+					cur_client->GetQueueSessionPayloadUp()))
+			{
+				// WHY: peers which reach the upload list without a socket are
+				// removed immediately, but without a retry cooldown they can keep
+				// re-consuming broadband admission attempts while contributing no
+				// upload capacity.
+				const ULONGLONG ullCooldownUntil = curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+				cur_client->SetSlowUploadCooldownUntil(ullCooldownUntil);
+				SetUploadRetryCooldown(cur_client, ullCooldownUntil);
+				if (thePrefs.GetLogUlDlEvents())
+					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after no-socket upload slot removal."), cur_client->GetUserName());
+			}
 			RemoveFromUploadQueue(cur_client, _T("Uploading to client without socket? (CUploadQueue::Process)"));
 			if (cur_client->Disconnected(_T("CUploadQueue::Process"))) {
 				UpDownClientDeleteSeams::AssertReadyToDelete(cur_client, _T("CUploadQueue::Process"));
