@@ -44,7 +44,15 @@ simple ZIP package.
 1. Open <https://github.com/emulebb/emulebb/releases>.
 2. Download `Bootstrap-eMuleBBSuite.ps1` for the release you want.
 3. Open PowerShell in the download folder.
-4. Run:
+4. Run the bootstrapper.
+
+For the latest nightly or prerelease:
+
+```powershell
+.\Bootstrap-eMuleBBSuite.ps1 -IncludePrerelease
+```
+
+For RC1 after it is published:
 
 ```powershell
 .\Bootstrap-eMuleBBSuite.ps1 -Version 0.7.3-rc.1 -IncludePrerelease
@@ -54,9 +62,9 @@ The bootstrapper downloads and verifies the matching release package, extracts
 the suite installer, and starts the install flow. Advanced options and
 verification details are in the Setup guide.
 
-Nightly ZIP, manifest, and SBOM assets are published with GitHub artifact
-attestations. After downloading a nightly asset, you can verify its provenance
-with:
+Nightly ZIP, manifest, SBOM, and suite bootstrapper assets are published with
+GitHub artifact attestations. After downloading a nightly asset, you can verify
+its provenance with:
 
 ```powershell
 gh attestation verify PATH_TO_ASSET -R emulebb/emulebb

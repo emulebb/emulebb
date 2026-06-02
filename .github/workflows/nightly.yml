@@ -149,6 +149,10 @@ jobs:
         Copy-Item -Path (Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.zip") -Destination $artifactRoot
         Copy-Item -Path (Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.manifest.json") -Destination $artifactRoot
         Copy-Item -Path (Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.sbom.spdx.json") -Destination $artifactRoot
+        if ("${{ matrix.asset_arch }}" -eq "x64") {
+          Copy-Item -Path (Join-Path $releaseRoot "Bootstrap-eMuleBBSuite.ps1") -Destination $artifactRoot
+          Copy-Item -Path (Join-Path $releaseRoot "Bootstrap-eMuleBBSuite.ps1.sha256") -Destination $artifactRoot
+        }
         Get-ChildItem $artifactRoot
 
   publish:
@@ -187,7 +191,7 @@ jobs:
 
           Package version: ${PACKAGE_VERSION}
 
-          Nightly ZIP, manifest, and SBOM assets are published with GitHub artifact attestations.
+          Nightly ZIP, manifest, SBOM, and suite bootstrapper assets are published with GitHub artifact attestations.
 
           Verify a downloaded nightly asset with:
 
