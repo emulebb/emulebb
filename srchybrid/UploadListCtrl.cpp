@@ -53,9 +53,14 @@ namespace
 		return client->GetIP() != 0 ? client->GetIP() : client->GetConnectIP();
 	}
 
-	const CKnownFile* GetUploadClientFile(const CUpDownClient* client)
+	CKnownFile* GetUploadClientFile(const CUpDownClient* client)
 	{
-		return client != NULL ? theApp.sharedfiles->GetFileByID(client->GetUploadFileID()) : NULL;
+		return (client != NULL && theApp.sharedfiles != NULL) ? theApp.sharedfiles->GetFileByID(client->GetUploadFileID()) : NULL;
+	}
+
+	bool IsCompleteSharedUploadFile(const CKnownFile *file)
+	{
+		return file != NULL && !file->IsPartFile();
 	}
 
 	bool IsLiveUploadingClient(const CUpDownClient *client)
@@ -106,6 +111,15 @@ namespace
 		if (fLeft > fRight)
 			return 1;
 		return 0;
+	}
+
+	bool ContainsKnownFile(const std::vector<CKnownFile*> &files, const CKnownFile *file)
+	{
+		for (const CKnownFile *existingFile : files) {
+			if (existingFile == file)
+				return true;
+		}
+		return false;
 	}
 }
 
@@ -265,6 +279,73 @@ CObject* CUploadListCtrl::GetPrevSelectableItem()
 CObject* CUploadListCtrl::GetNextSelectableItem()
 {
 	return WalkToLiveClientItem(1);
+}
+
+void CUploadListCtrl::CollectSelectedCompleteFiles(std::vector<CKnownFile*> &files)
+{
+	files.clear();
+	for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;) {
+		const int iItem = GetNextSelectedItem(pos);
+		const CUpDownClient *client = GetLiveClientByIndex(iItem);
+		CKnownFile *file = GetUploadClientFile(client);
+		if (IsCompleteSharedUploadFile(file) && !ContainsKnownFile(files, file))
+			files.push_back(file);
+	}
+}
+
+void CUploadListCtrl::RemoveUploadingClientsForFile(const CKnownFile *file)
+{
+	if (file == NULL || theApp.uploadqueue == NULL)
+		return;
+
+	std::vector<CUpDownClient*> clients;
+	for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;) {
+		CUpDownClient *client = theApp.uploadqueue->GetNextFromUploadList(pos);
+		if (IsLiveClient(client) && md4equ(client->GetUploadFileID(), file->GetFileHash()))
+			clients.push_back(client);
+	}
+
+	for (CUpDownClient *client : clients) {
+		if (IsLiveClient(client))
+			theApp.uploadqueue->RemoveFromUploadQueue(client, _T("File deleted from disk from Uploading list"), true, true);
+	}
+}
+
+void CUploadListCtrl::DeleteSelectedCompleteFilesFromDisk()
+{
+	std::vector<CKnownFile*> files;
+	CollectSelectedCompleteFiles(files);
+	if (files.empty()) {
+		MessageBeep(MB_OK);
+		return;
+	}
+
+	if (LocMessageBox(IDS_CONFIRM_FILEDELETE, MB_ICONWARNING | MB_DEFBUTTON2 | MB_YESNO, 0) != IDYES)
+		return;
+
+	SetRedraw(false);
+	bool bRemovedItems = false;
+	for (CKnownFile *file : files) {
+		if (!IsCompleteSharedUploadFile(file))
+			continue;
+
+		RemoveUploadingClientsForFile(file);
+
+		SShellDeleteFileResult deleteResult;
+		const bool bDeleteSucceeded = ShellDeleteFileEx(file->GetFilePath(), deleteResult);
+		if (bDeleteSucceeded) {
+			theApp.sharedfiles->RemoveFile(file, true);
+			bRemovedItems = true;
+		} else {
+			CString strError;
+			strError.Format(GetResString(IDS_ERR_DELFILE), (LPCTSTR)file->GetFilePath());
+			strError.AppendFormat(_T("\r\n\r\n%s"), (LPCTSTR)GetShellDeleteFileErrorMessage(deleteResult));
+			AfxMessageBox(strError);
+		}
+	}
+	SetRedraw(true);
+	if (bRemovedItems)
+		theApp.emuledlg->transferwnd->m_pwndTransfer->UpdateListCount(CTransferWnd::wnd2Uploading);
 }
 
 void CUploadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
@@ -738,8 +819,13 @@ void CUploadListCtrl::OnNmDblClk(LPNMHDR, LRESULT *pResult)
 	if (iSel >= 0) {
 		const CUpDownClient *client = GetLiveClientByIndex(iSel);
 		if (client) {
-			CClientDetailDialog dialog(const_cast<CUpDownClient*>(client), this);
-			dialog.DoModal();
+			const CKnownFile *file = GetUploadClientFile(client);
+			if (IsCompleteSharedUploadFile(file))
+				ShellDefaultVerb(file->GetFilePath());
+			else {
+				CClientDetailDialog dialog(const_cast<CUpDownClient*>(client), this);
+				dialog.DoModal();
+			}
 		}
 	}
 	*pResult = 0;
@@ -756,15 +842,19 @@ void CUploadListCtrl::OnContextMenu(CWnd*, CPoint point)
 	ClientMenu.CreatePopupMenu();
 	ClientMenu.AddMenuTitle(GetResString(IDS_CLIENTS), true);
 	ClientMenu.AppendMenu(MF_STRING | (client ? MF_ENABLED : MF_GRAYED), MP_DETAIL, AddMenuShortcutLabel(GetResString(IDS_SHOWDETAILS), _T("Ctrl+I")), _T("CLIENTDETAILS"));
-	ClientMenu.SetDefaultItem(MP_DETAIL);
 	ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && !client->IsFriend()) ? MF_ENABLED : MF_GRAYED), MP_ADDFRIEND, GetResString(IDS_ADDFRIEND), _T("ADDFRIEND"));
 	ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && client->IsFriend()) ? MF_ENABLED : MF_GRAYED), MP_REMOVEFRIEND, GetResString(IDS_REMOVEFRIEND), _T("DELETEFRIEND"));
 	ClientMenu.AppendMenu(MF_STRING | (is_ed2k ? MF_ENABLED : MF_GRAYED), MP_MESSAGE, GetResString(IDS_SEND_MSG), _T("SENDMESSAGE"));
 	ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && client->GetViewSharedFilesSupport()) ? MF_ENABLED : MF_GRAYED), MP_SHOWLIST, GetResString(IDS_VIEWFILES), _T("VIEWFILES"));
 	const CKnownFile *file = GetUploadClientFile(client);
-	const bool bCanOpenFile = (file != NULL && !file->IsPartFile());
+	const bool bCanOpenFile = IsCompleteSharedUploadFile(file);
+	std::vector<CKnownFile*> selectedFiles;
+	CollectSelectedCompleteFiles(selectedFiles);
+	const bool bCanDeleteFiles = !selectedFiles.empty();
 	ClientMenu.AppendMenu(MF_STRING | (bCanOpenFile ? MF_ENABLED : MF_GRAYED), MP_OPEN, GetResString(IDS_OPENFILE), _T("OPENFILE"));
 	ClientMenu.AppendMenu(MF_STRING | (bCanOpenFile ? MF_ENABLED : MF_GRAYED), MP_OPENFOLDER, GetResString(IDS_OPENFOLDER), _T("OPENFOLDER"));
+	ClientMenu.AppendMenu(MF_STRING | (bCanDeleteFiles ? MF_ENABLED : MF_GRAYED), MP_REMOVE, AddMenuShortcutLabel(GetResString(IDS_DELETE), _T("Delete")), _T("DELETE"));
+	ClientMenu.SetDefaultItem(bCanOpenFile ? MP_OPEN : MP_DETAIL);
 	CTitledMenu CopyMenu;
 	CopyMenu.CreateMenu();
 	CopyMenu.AddMenuTitle(NULL, true);
@@ -885,6 +975,10 @@ BOOL CUploadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 				if (file != NULL && !file->IsPartFile())
 					ShellOpenContainingFolderAndSelect(file->GetFilePath());
 			}
+			break;
+		case MP_REMOVE:
+		case MPG_DELETE:
+			DeleteSelectedCompleteFilesFromDisk();
 			break;
 		case MP_DETAIL:
 		case MPG_ALTENTER:

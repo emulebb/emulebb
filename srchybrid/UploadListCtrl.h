@@ -18,8 +18,10 @@
 #include "MuleListCtrl.h"
 #include "ListCtrlItemWalk.h"
 #include "ToolTipCtrlX.h"
+#include <vector>
 
 class CUpDownClient;
+class CKnownFile;
 
 class CUploadListCtrl : public CMuleListCtrl, public CListCtrlItemWalk
 {
@@ -52,6 +54,9 @@ protected:
 	bool IsLiveClient(const CUpDownClient *client) const;
 	bool PruneStaleClientItems();
 	CObject* WalkToLiveClientItem(int iDirection);
+	void CollectSelectedCompleteFiles(std::vector<CKnownFile*> &files);
+	void DeleteSelectedCompleteFilesFromDisk();
+	void RemoveUploadingClientsForFile(const CKnownFile *file);
 	CString GetItemDisplayText(const CUpDownClient *client, int iSubItem) const;
 	static int CALLBACK SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
