@@ -1,0 +1,86 @@
+name: VS2026 v145 Probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: emulebb-vs2026-v145-probe
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  probe:
+    name: Build probe (windows-2025-vs2026, v145)
+    uses: emulebb/emulebb-build/.github/workflows/reusable-workspace-command.yml@main
+    with:
+      app_ref: ${{ github.sha }}
+      runs_on: windows-2025-vs2026
+      timeout_minutes: 240
+      artifact_name: emulebb-vs2026-v145-probe-${{ github.sha }}
+      artifact_path: |
+        workspaces/workspace/state/v145-probe/**
+        workspaces/workspace/state/build-logs/**
+      command: |
+        $probeRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\v145-probe"
+        New-Item -ItemType Directory -Force -Path $probeRoot | Out-Null
+
+        $status = "success"
+        $errorMessage = ""
+        $env:EMULEBB_VS_PLATFORM_TOOLSET = "v145"
+        $env:EMULEBB_CMAKE_GENERATOR = "Visual Studio 18 2026"
+
+        try {
+          python -m emule_workspace build libs `
+            --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
+            --config Release `
+            --platform x64 `
+            --clean `
+            --build-output-mode ErrorsOnly
+
+          python -m emule_workspace build app `
+            --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
+            --config Release `
+            --platform x64 `
+            --variant main `
+            --build-output-mode ErrorsOnly
+        } catch {
+          $status = "failure"
+          $errorMessage = $_.Exception.Message
+          Write-Warning "VS2026 v145 probe failed: $errorMessage"
+        } finally {
+          $result = [ordered]@{
+            status = $status
+            runner = "windows-2025-vs2026"
+            platform_toolset = $env:EMULEBB_VS_PLATFORM_TOOLSET
+            cmake_generator = $env:EMULEBB_CMAKE_GENERATOR
+            app_ref = "${{ github.sha }}"
+            error = $errorMessage
+          }
+          $resultJson = $result | ConvertTo-Json -Depth 4
+          $resultJson | Set-Content -LiteralPath (Join-Path $probeRoot "result.json") -Encoding utf8
+
+          @(
+            "# VS2026 v145 Probe"
+            ""
+            "Status: $status"
+            "Runner: windows-2025-vs2026"
+            "PlatformToolset: $($env:EMULEBB_VS_PLATFORM_TOOLSET)"
+            "CMake generator: $($env:EMULEBB_CMAKE_GENERATOR)"
+            "Commit: ${{ github.sha }}"
+            ""
+            "Commands:"
+            "- build libs Release x64 clean"
+            "- build app main Release x64"
+            ""
+            "Error: $errorMessage"
+          ) -join "`n" | Set-Content -LiteralPath (Join-Path $probeRoot "summary.md") -Encoding utf8
+
+          if ($env:GITHUB_STEP_SUMMARY) {
+            Get-Content -LiteralPath (Join-Path $probeRoot "summary.md") | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+          }
+        }
