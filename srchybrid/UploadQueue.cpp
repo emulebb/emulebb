@@ -1281,9 +1281,10 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 			client->ResetSlowUploadTracking();
 			return true;
 		}
-	} else {
-		client->ResetSlowUploadTracking();
 	}
+	// The non-full-cap idle recycle path above owns its own tracking/reset
+	// decisions. Resetting here would erase zero-rate progress whenever the
+	// waiting list is non-empty, leaving drained slots stuck during underfill.
 
 	const CKnownFile *pUploadingFile = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
 	const uint64 uSessionTransferLimit = ResolveSessionTransferLimitBytes(pUploadingFile);
