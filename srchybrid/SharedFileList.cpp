@@ -1847,11 +1847,12 @@ bool CSharedFileList::SafeAddKFile(CKnownFile *toadd, bool bOnlyAdd)
 	bool bAdded = AddFile(toadd);
 	if (!bOnlyAdd) {
 		if (bAdded && output) {
-			if (IsStartupDeferredHashingActive() || HasSharedHashingWork())
+			if (IsStartupDeferredHashingActive() || HasSharedHashingWork()) {
 				output->ScheduleStartupDeferredReload();
-			else
+			} else {
 				output->AddFile(toadd);
-			output->ShowFilesCount();
+				output->ShowFilesCount();
+			}
 		}
 		m_lastPublishED2KFlag = true;
 	}
