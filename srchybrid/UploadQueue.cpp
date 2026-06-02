@@ -390,12 +390,28 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		INT_PTR iReqBlocks = 0;
 		INT_PTR iDoneBlocks = 0;
 		LONG nPendingIOBlocks = 0;
+		ULONGLONG ullReqBlocksAccepted = 0;
+		ULONGLONG ullReqBlocksDuplicateDone = 0;
+		ULONGLONG ullReqBlocksDuplicateQueued = 0;
+		ULONGLONG ullReqBlocksRejected = 0;
+		ULONGLONG ullReqBlockPacketSignals = 0;
+		ULONGLONG ullLastReqBlockAgeMs = 0;
+		ULONGLONG ullLastAcceptedReqBlockAgeMs = 0;
 		if (pCurClientStruct != NULL) {
 			CSingleLock lockBlockLists(&const_cast<UploadingToClient_Struct*>(pCurClientStruct)->m_csBlockListsLock, TRUE);
 			ASSERT(lockBlockLists.IsLocked());
 			iReqBlocks = pCurClientStruct->m_BlockRequests_queue.GetCount();
 			iDoneBlocks = pCurClientStruct->m_DoneBlocks_list.GetCount();
 			nPendingIOBlocks = pCurClientStruct->m_nPendingIOBlocks.load();
+			ullReqBlocksAccepted = pCurClientStruct->m_ullReqBlocksAccepted.load();
+			ullReqBlocksDuplicateDone = pCurClientStruct->m_ullReqBlocksDuplicateDone.load();
+			ullReqBlocksDuplicateQueued = pCurClientStruct->m_ullReqBlocksDuplicateQueued.load();
+			ullReqBlocksRejected = pCurClientStruct->m_ullReqBlocksRejected.load();
+			ullReqBlockPacketSignals = pCurClientStruct->m_ullReqBlockPacketSignals.load();
+			const ULONGLONG ullLastReqBlockTick = pCurClientStruct->m_ullLastReqBlockTick.load();
+			const ULONGLONG ullLastAcceptedReqBlockTick = pCurClientStruct->m_ullLastAcceptedReqBlockTick.load();
+			ullLastReqBlockAgeMs = ullLastReqBlockTick != 0 && curTick >= ullLastReqBlockTick ? curTick - ullLastReqBlockTick : 0;
+			ullLastAcceptedReqBlockAgeMs = ullLastAcceptedReqBlockTick != 0 && curTick >= ullLastAcceptedReqBlockTick ? curTick - ullLastAcceptedReqBlockTick : 0;
 		}
 
 		CEMSocket *sock = client->GetFileUploadSocket(false);
@@ -404,7 +420,7 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		const ULONGLONG ullAgeMs = client->GetUpStartTimeDelay();
 
 		AddDebugLogLine(DLP_DEFAULT, false,
-			_T("UploadSlotInstrumentation: slot=%u live=1 client=%s state=%s socket=%p socketConnected=%u handshake=%u rateBytesPerSec=%u ageMs=%I64u sessionUp=%s queuePayload=%s queueAdded=%s payloadInBuffer=%s reqBlocks=%Id doneBlocks=%Id pendingIO=%ld socketStdQueue=%Id slowMs=%I64u zeroMs=%I64u cooldownMs=%I64u fileKnown=%u"),
+			_T("UploadSlotInstrumentation: slot=%u live=1 client=%s state=%s socket=%p socketConnected=%u handshake=%u rateBytesPerSec=%u ageMs=%I64u sessionUp=%s queuePayload=%s queueAdded=%s payloadInBuffer=%s reqBlocks=%Id doneBlocks=%Id pendingIO=%ld socketStdQueue=%Id reqAccepted=%I64u reqDupDone=%I64u reqDupQueued=%I64u reqRejected=%I64u reqSignals=%I64u reqLastAgeMs=%I64u reqLastAcceptedAgeMs=%I64u slowMs=%I64u zeroMs=%I64u cooldownMs=%I64u fileKnown=%u"),
 			uSlot,
 			(LPCTSTR)client->DbgGetClientInfo(),
 			client->DbgGetUploadState(),
@@ -421,6 +437,13 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 			iDoneBlocks,
 			nPendingIOBlocks,
 			iSocketQueue,
+			static_cast<uint64>(ullReqBlocksAccepted),
+			static_cast<uint64>(ullReqBlocksDuplicateDone),
+			static_cast<uint64>(ullReqBlocksDuplicateQueued),
+			static_cast<uint64>(ullReqBlocksRejected),
+			static_cast<uint64>(ullReqBlockPacketSignals),
+			static_cast<uint64>(ullLastReqBlockAgeMs),
+			static_cast<uint64>(ullLastAcceptedReqBlockAgeMs),
 			static_cast<uint64>(client->GetAccumulatedSlowUploadMs()),
 			static_cast<uint64>(client->GetAccumulatedZeroUploadMs()),
 			static_cast<uint64>(client->GetSlowUploadCooldownRemaining()),

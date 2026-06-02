@@ -53,17 +53,49 @@ CBarShader CUpDownClient::s_UpStatusBar(16);
 namespace
 {
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+bool IsUploadReqBlockHighVolumeReason(LPCTSTR pszReason)
+{
+	return _tcscmp(pszReason, _T("accept-queued-block")) == 0
+		|| _tcscmp(pszReason, _T("reject-duplicate-done-block")) == 0
+		|| _tcscmp(pszReason, _T("reject-duplicate-queued-block")) == 0
+		|| _tcscmp(pszReason, _T("request-packet-complete-signal")) == 0;
+}
+
+void CountUploadReqBlockInstrumentation(UploadingToClient_Struct *pUploadingClientStruct, LPCTSTR pszReason)
+{
+	if (pUploadingClientStruct == NULL || pszReason == NULL)
+		return;
+
+	const ULONGLONG curTick = ::GetTickCount64();
+	pUploadingClientStruct->m_ullLastReqBlockTick.store(curTick);
+	if (_tcscmp(pszReason, _T("accept-queued-block")) == 0) {
+		pUploadingClientStruct->m_ullReqBlocksAccepted.fetch_add(1);
+		pUploadingClientStruct->m_ullLastAcceptedReqBlockTick.store(curTick);
+	} else if (_tcscmp(pszReason, _T("reject-duplicate-done-block")) == 0)
+		pUploadingClientStruct->m_ullReqBlocksDuplicateDone.fetch_add(1);
+	else if (_tcscmp(pszReason, _T("reject-duplicate-queued-block")) == 0)
+		pUploadingClientStruct->m_ullReqBlocksDuplicateQueued.fetch_add(1);
+	else if (_tcscmp(pszReason, _T("request-packet-complete-signal")) == 0)
+		pUploadingClientStruct->m_ullReqBlockPacketSignals.fetch_add(1);
+	else
+		pUploadingClientStruct->m_ullReqBlocksRejected.fetch_add(1);
+}
+
 void LogUploadReqBlockInstrumentation(
 	CUpDownClient *client,
 	LPCTSTR pszReason,
 	const Requested_Block_Struct *reqblock,
-	const UploadingToClient_Struct *pUploadingClientStruct,
+	UploadingToClient_Struct *pUploadingClientStruct,
 	INT_PTR iReqBlocks,
 	INT_PTR iDoneBlocks)
 {
 	ASSERT(client != NULL);
 	ASSERT(pszReason != NULL);
 	if (client == NULL || pszReason == NULL)
+		return;
+
+	CountUploadReqBlockInstrumentation(pUploadingClientStruct, pszReason);
+	if (IsUploadReqBlockHighVolumeReason(pszReason))
 		return;
 
 	CEMSocket *sock = client->GetFileUploadSocket(false);
