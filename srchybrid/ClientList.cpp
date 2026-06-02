@@ -155,8 +155,11 @@ void CClientList::AddClient(CUpDownClient *toadd, bool bSkipDupTest)
 	// function has ensured that this client instance is not already within the list -> there are never duplicate
 	// client instances in this list.
 	if (bSkipDupTest || list.Find(toadd) == NULL) {
-		theApp.emuledlg->transferwnd->GetClientList()->AddClient(toadd);
+		// WHY: the Known Clients control rejects pointers that are not already
+		// owned by this list. Publish ownership first so the incremental UI row
+		// is not pruned as stale during AddClient.
 		list.AddTail(toadd);
+		theApp.emuledlg->transferwnd->GetClientList()->AddClient(toadd);
 	}
 }
 
