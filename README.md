@@ -31,6 +31,14 @@ emulebb.exe -c "$env:TEMP\eMuleBB-TestProfile"
 Use the x64 package for ordinary Windows desktop installs. Use ARM64 only for
 ARM64 Windows testing.
 
+Nightly ZIP, manifest, and SBOM assets are published with GitHub artifact
+attestations. After downloading a nightly asset, you can verify its provenance
+with:
+
+```powershell
+gh attestation verify PATH_TO_ASSET -R emulebb/emulebb
+```
+
 The full suite PowerShell bootstrapper is the second install path. Use it when
 you want the eMuleBB suite installer flow instead of only unpacking and running
 the desktop app.

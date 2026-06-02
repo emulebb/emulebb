@@ -12,7 +12,10 @@ on:
         type: boolean
 
 permissions:
+  attestations: write
+  artifact-metadata: write
   contents: write
+  id-token: write
   issues: write
 
 concurrency:
@@ -162,6 +165,11 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Generate artifact attestations
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/*
+
       - name: Publish GitHub prerelease
         env:
           GH_TOKEN: ${{ github.token }}
@@ -178,6 +186,12 @@ jobs:
           This is a prerelease test build for the 0.7.3 RC stabilization window. Use the official RC and stable release tags for release decisions.
 
           Package version: ${PACKAGE_VERSION}
+
+          Nightly ZIP, manifest, and SBOM assets are published with GitHub artifact attestations.
+
+          Verify a downloaded nightly asset with:
+
+              gh attestation verify PATH_TO_ASSET -R ${GITHUB_REPOSITORY}
           EOF
           gh release create "${TAG}" dist/* \
             --repo "${GITHUB_REPOSITORY}" \
