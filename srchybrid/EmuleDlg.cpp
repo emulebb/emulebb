@@ -6714,7 +6714,16 @@ void CemuleDlg::UpdateThumbBarButtons(bool initialAddToDlg)
 		}
 		// set tooltips in widechar
 		if (uid) {
-			const CString &tooltip(GetResNoAmp(uid));
+			CString tooltip(GetResNoAmp(uid));
+			if (i == TBB_THROTTLE) {
+				tooltip.Format(
+					GetResString(IDS_SPEED_LIMIT_BOTH_FMT),
+					10u,
+					SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxUpload(), 10u),
+					(LPCTSTR)GetResString(IDS_KBYTESPERSEC),
+					SpeedQuickActionsSeams::CalculatePercentLimitKiB(thePrefs.GetConfiguredMaxDownload(), 10u),
+					(LPCTSTR)GetResString(IDS_KBYTESPERSEC));
+			}
 			wcscpy_s(m_thbButtons[i].szTip, _countof(m_thbButtons[i].szTip), tooltip);
 			m_thbButtons[i].dwMask |= THB_TOOLTIP;
 		}
@@ -6741,7 +6750,7 @@ void CemuleDlg::OnTBBPressed(UINT id)
 		CloseConnection();
 		break;
 	case TBB_THROTTLE:
-		QuickSpeedOther(MP_QS_PA);
+		QuickSpeedBoth(MP_QS_B10);
 		break;
 	case TBB_UNTHROTTLE:
 		QuickSpeedOther(MP_QS_UA);
