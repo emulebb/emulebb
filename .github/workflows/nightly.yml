@@ -172,7 +172,7 @@ jobs:
 
       - name: Publish GitHub prerelease
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.NIGHTLY_RELEASE_TOKEN || github.token }}
           PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
           RELEASE_DATE: ${{ needs.prepare.outputs.release_date }}
           SHORT_SHA: ${{ needs.prepare.outputs.short_sha }}
@@ -202,7 +202,7 @@ jobs:
 
       - name: Keep only latest nightly release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.NIGHTLY_RELEASE_TOKEN || github.token }}
           NIGHTLY_TAG_PREFIX: emulebb-nightly-
         shell: bash
         run: |
