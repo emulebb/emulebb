@@ -1,0 +1,45 @@
+name: Weekly Workspace Validation
+
+on:
+  schedule:
+    - cron: "37 4 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: emulebb-weekly-workspace-validation
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  validate:
+    name: Validate workspace policy
+    uses: emulebb/emulebb-build/.github/workflows/reusable-workspace-command.yml@main
+    with:
+      app_ref: ${{ github.sha }}
+      runs_on: windows-2025-vs2026
+      timeout_minutes: 120
+      artifact_name: emulebb-weekly-workspace-validation-${{ github.run_number }}
+      artifact_path: workspace-validation-summary.md
+      failure_artifact_name: emulebb-weekly-workspace-validation-failure-${{ github.run_number }}
+      failure_artifact_path: |
+        workspaces/workspace/state/build-logs/**
+        workspaces/workspace/state/test-reports/**
+      command: |
+        python -m emule_workspace validate `
+          --workspace-root $env:EMULEBB_WORKSPACE_ROOT
+
+        $summary = Join-Path $env:GITHUB_WORKSPACE "workspace-validation-summary.md"
+        @(
+          "# eMuleBB Weekly Workspace Validation",
+          "",
+          "Result: success",
+          "Commit: $env:GITHUB_SHA",
+          "Run: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID",
+          "",
+          "Validated workspace policy, dependency contract, documentation paths, PowerShell boundaries, project entrypoints, warning policy, localization policy, and normalization policy."
+        ) | Set-Content -LiteralPath $summary -Encoding utf8

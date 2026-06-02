@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: emulebb-nightly
@@ -216,3 +217,83 @@ jobs:
               --cleanup-tag \
               --yes
           done
+
+  report:
+    name: Report nightly status
+    needs:
+      - prepare
+      - build
+      - publish
+    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.should_publish == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update nightly failure issue
+        uses: actions/github-script@v8
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          PUBLISH_RESULT: ${{ needs.publish.result }}
+          PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const title = "[CI] Nightly failure";
+            const { owner, repo } = context.repo;
+            const issueList = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: "open",
+              per_page: 100,
+            });
+            const existing = issueList.data.find((issue) => issue.title === title);
+            const buildResult = process.env.BUILD_RESULT;
+            const publishResult = process.env.PUBLISH_RESULT;
+            const runUrl = process.env.RUN_URL;
+            const packageVersion = process.env.PACKAGE_VERSION;
+            const tag = process.env.TAG;
+            const passed = buildResult === "success" && publishResult === "success";
+
+            if (passed) {
+              if (existing) {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: existing.number,
+                  body: `Nightly recovered on ${context.sha}.\n\nRun: ${runUrl}`,
+                });
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: existing.number,
+                  state: "closed",
+                });
+              }
+              return;
+            }
+
+            const body = [
+              "Nightly failed or did not complete.",
+              "",
+              `Build result: ${buildResult}`,
+              `Publish result: ${publishResult}`,
+              `Commit: ${context.sha}`,
+              `Package version: ${packageVersion}`,
+              `Tag: ${tag}`,
+              `Run: ${runUrl}`,
+            ].join("\n");
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+              });
+            }
