@@ -157,6 +157,7 @@ protected:
 	bool RepositionFileByCurrentSort(CShareableFile *file, int iIndex);
 	int CompareVisibleFiles(const CShareableFile *item1, const CShareableFile *item2, LPARAM lParamSort) const;
 	CString GetItemDisplayText(const CShareableFile *file, int iSubItem) const;
+	CString FormatFilesCountText() const;
 	bool HandleSortShortcut(UINT nChar);
 	void SortByColumn(int iSubItem);
 	bool IsFilteredOut(const CShareableFile *pKnownFile) const;

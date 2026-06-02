@@ -293,8 +293,10 @@ void UpdateSharedFilesForPublishedED2KChanges(CSharedFilesCtrl *pOutput, const s
 
 	if (SharedFileListSeams::ShouldBatchPublishedED2KUiRefresh(static_cast<unsigned int>(rChangedFiles.size())))
 		pOutput->UpdateFilesAfterPublishedED2KBatch();
-	else
+	else {
 		pOutput->UpdateFile(rChangedFiles.front());
+		pOutput->ShowFilesCount();
+	}
 }
 
 CString NormalizeSharedFilePath(const CString &rstrPath)
@@ -2701,9 +2703,14 @@ void CSharedFileList::Publish()
 				}
 				++uSequence;
 			}
-			if (pCurKnownFile && pCurKnownFile->PublishSrc())
+			if (pCurKnownFile && pCurKnownFile->PublishSrc()) {
 				if (Kademlia::CSearchManager::PrepareLookup(Kademlia::CSearch::STOREFILE, true, Kademlia::CUInt128(pCurKnownFile->GetFileHash())) == NULL)
 					pCurKnownFile->SetLastPublishTimeKadSrc(0, 0);
+				if (output != NULL) {
+					output->UpdateFile(pCurKnownFile);
+					output->ShowFilesCount();
+				}
+			}
 
 			// even if we did not publish a source, reset the timer so that this list is processed
 			// only every KADEMLIAPUBLISHTIME seconds.

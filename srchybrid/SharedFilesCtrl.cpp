@@ -187,6 +187,64 @@ namespace
 		return theApp.sharedfiles != NULL && theApp.sharedfiles->HasSharedHashingWork();
 	}
 
+	struct SharedFilesKadPublishContext
+	{
+		time_t tNow = 0;
+		bool bKadConnected = false;
+		bool bKadFirewalled = false;
+		bool bKadRunning = false;
+		bool bKadUdpVerifiedOpen = false;
+		uint32 uBuddyIP = 0;
+	};
+
+	struct SharedFilesSummary
+	{
+		unsigned int uFileCount = 0;
+		uint64 uTotalSize = 0;
+		unsigned int uPublishedED2KCount = 0;
+		unsigned int uPublishedKadCount = 0;
+	};
+
+	SharedFilesKadPublishContext BuildSharedFilesKadPublishContext()
+	{
+		SharedFilesKadPublishContext context;
+		context.tNow = time(NULL);
+		context.bKadConnected = Kademlia::CKademlia::IsConnected();
+		if (!context.bKadConnected)
+			return context;
+		context.bKadFirewalled = Kademlia::CKademlia::IsFirewalled();
+		if (context.bKadFirewalled) {
+			context.bKadRunning = Kademlia::CKademlia::IsRunning();
+			context.bKadUdpVerifiedOpen = context.bKadRunning && !Kademlia::CUDPFirewallTester::IsFirewalledUDP(true) && Kademlia::CUDPFirewallTester::IsVerified();
+			context.uBuddyIP = (theApp.clientlist != NULL && theApp.clientlist->GetBuddy() != NULL) ? theApp.clientlist->GetBuddy()->GetIP() : 0;
+		}
+		return context;
+	}
+
+	bool IsSharedInKadWithContext(const CKnownFile *file, const SharedFilesKadPublishContext &context)
+	{
+		if (file == NULL || !context.bKadConnected || context.tNow >= file->GetLastPublishTimeKadSrc())
+			return false;
+		if (!context.bKadFirewalled)
+			return true;
+		return (context.uBuddyIP != 0 && file->GetLastPublishBuddy() == context.uBuddyIP)
+			|| (context.bKadRunning && context.bKadUdpVerifiedOpen);
+	}
+
+	CString FormatSharedFilesSummary(const SharedFilesSummary &summary, INT_PTR iHashingCount)
+	{
+		CString str;
+		str.Format(_T(" (%u, %s, eD2K %u, Kad %u"),
+			summary.uFileCount,
+			(LPCTSTR)CastItoXBytes(summary.uTotalSize),
+			summary.uPublishedED2KCount,
+			summary.uPublishedKadCount);
+		if (iHashingCount > 0)
+			str.AppendFormat(_T(", %s %i"), (LPCTSTR)GetResString(IDS_HASHING), (int)iHashingCount);
+		str += _T(")");
+		return str;
+	}
+
 	struct SharedFilesRepositionState
 	{
 		CArray<CShareableFile*, CShareableFile*> aSelectedItems;
@@ -512,6 +570,28 @@ BEGIN_MESSAGE_MAP(CSharedFilesCtrl, CMuleListCtrl)
 	ON_WM_MOUSEMOVE()
 	ON_WM_TIMER()
 END_MESSAGE_MAP()
+
+CString CSharedFilesCtrl::FormatFilesCountText() const
+{
+	SharedFilesSummary summary;
+	INT_PTR iHashingCount = nAICHHashing;
+	if (theApp.sharedfiles != NULL) {
+		iHashingCount += theApp.sharedfiles->GetHashingCount();
+		const SharedFilesKadPublishContext kadContext = BuildSharedFilesKadPublishContext();
+		for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair)) {
+			const CKnownFile *file = pair->value;
+			if (file == NULL)
+				continue;
+			++summary.uFileCount;
+			summary.uTotalSize += static_cast<uint64>(file->GetFileSize());
+			if (file->GetPublishedED2K())
+				++summary.uPublishedED2KCount;
+			if (IsSharedInKadWithContext(file, kadContext))
+				++summary.uPublishedKadCount;
+		}
+	}
+	return FormatSharedFilesSummary(summary, iHashingCount);
+}
 
 CSharedFilesCtrl::CSharedFilesCtrl()
 	: CListCtrlItemWalk(this)
@@ -1159,8 +1239,10 @@ void CSharedFilesCtrl::UpdateFilesAfterPublishedED2KBatch()
 		return;
 	if (theApp.IsClosing())
 		return;
-	if (m_aVisibleFiles.empty())
+	if (m_aVisibleFiles.empty()) {
+		ShowFilesCount();
 		return;
+	}
 
 	SharedFilesRepositionState savedState;
 	const bool bPreserveState = ShouldPreserveVirtualListState() && HasActiveSortOrder();
@@ -1178,6 +1260,7 @@ void CSharedFilesCtrl::UpdateFilesAfterPublishedED2KBatch()
 	Invalidate(FALSE);
 	if (GetFirstSelectedItemPosition() != NULL)
 		theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails(true);
+	ShowFilesCount();
 }
 
 int CSharedFilesCtrl::FindFile(const CShareableFile *pFile)
@@ -1342,11 +1425,7 @@ void CSharedFilesCtrl::ShowFilesCount()
 {
 	if (!m_bModelBound)
 		return;
-	CString str;
-	if (theApp.sharedfiles->GetHashingCount() + nAICHHashing > 0)
-		str.Format(_T(" (%i, %s %i)"), (int)theApp.sharedfiles->GetCount(), (LPCTSTR)GetResString(IDS_HASHING), (int)(theApp.sharedfiles->GetHashingCount() + nAICHHashing));
-	else
-		str.Format(_T(" (%i)"), (int)theApp.sharedfiles->GetCount());
+	const CString str(FormatFilesCountText());
 	theApp.emuledlg->sharedfileswnd->SetDlgItemText(IDC_TRAFFIC_TEXT, GetResString(IDS_SF_FILES) + str);
 	theApp.emuledlg->sharedfileswnd->UpdateReloadButtonState();
 }
@@ -2490,12 +2569,7 @@ void CSharedFilesCtrl::SetToolTipsDelay(DWORD dwDelay)
 
 bool CSharedFilesCtrl::IsSharedInKad(const CKnownFile *file) const
 {
-	if (!Kademlia::CKademlia::IsConnected() || time(NULL) >= file->GetLastPublishTimeKadSrc())
-		return false;
-	if (!Kademlia::CKademlia::IsFirewalled())
-		return true;
-	return (theApp.clientlist->GetBuddy() && (file->GetLastPublishBuddy() == theApp.clientlist->GetBuddy()->GetIP()))
-		|| (Kademlia::CKademlia::IsRunning() && !Kademlia::CUDPFirewallTester::IsFirewalledUDP(true) && Kademlia::CUDPFirewallTester::IsVerified());
+	return IsSharedInKadWithContext(file, BuildSharedFilesKadPublishContext());
 }
 
 void CSharedFilesCtrl::AddShareableFiles(const CString &strFromDir)
