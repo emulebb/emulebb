@@ -739,31 +739,54 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		&& iReqBlocks == 0
 		&& nPendingIOBlocks == 0
 		&& iSocketQueue == 0;
-	if (bLocalSendPipelineIdle)
+	const bool bLocalSendPipelineStalled = client->GetUploadDatarate() == 0
+		&& nPendingIOBlocks == 0
+		&& (client->GetPayloadInBuffer() > 0 || iReqBlocks > 0 || iSocketQueue > 0);
+	// WHY: under sustained broadband underfill, a zero-rate slot with either no
+	// local work or unsent queued work is not contributing capacity. Keep disk IO
+	// in flight out of this path, but let the normal zero-rate grace protect
+	// short socket stalls before replacing the peer.
+	if (bLocalSendPipelineIdle || bLocalSendPipelineStalled)
 		client->UpdateSlowUploadTracking(curTick, GetSlowUploadRateThreshold());
 	else
 		client->ResetSlowUploadTracking();
 
-	if (!ShouldRecycleIdleBroadbandUploadSlot(
-			true,
-			true,
-			false,
-			client->GetUploadDatarate(),
-			client->GetPayloadInBuffer(),
-			iReqBlocks,
-			nPendingIOBlocks,
-			iSocketQueue,
-			client->GetAccumulatedZeroUploadMs(),
-			SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds())))
-	{
+	const bool bShouldRecycleIdle = ShouldRecycleIdleBroadbandUploadSlot(
+		true,
+		true,
+		false,
+		client->GetUploadDatarate(),
+		client->GetPayloadInBuffer(),
+		iReqBlocks,
+		nPendingIOBlocks,
+		iSocketQueue,
+		client->GetAccumulatedZeroUploadMs(),
+		SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()));
+	const bool bShouldRecycleStalled = ShouldRecycleStalledBroadbandUploadSlot(
+		true,
+		true,
+		false,
+		!waitinglist.IsEmpty(),
+		client->GetUploadDatarate(),
+		client->GetPayloadInBuffer(),
+		iReqBlocks,
+		nPendingIOBlocks,
+		iSocketQueue,
+		client->GetAccumulatedZeroUploadMs(),
+		SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()));
+	if (!bShouldRecycleIdle && !bShouldRecycleStalled)
 		return false;
-	}
 
 	client->SetSlowUploadCooldownUntil(curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds()));
-	if (thePrefs.GetLogUlDlEvents())
-		AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled because the peer stopped requesting parts during broadband underfill."), client->GetUserName());
+	if (thePrefs.GetLogUlDlEvents()) {
+		AddDebugLogLine(DLP_LOW, false,
+			bShouldRecycleIdle
+				? _T("%s: Upload slot recycled because the peer stopped requesting parts during broadband underfill.")
+				: _T("%s: Upload slot recycled because queued upload data made no progress during broadband underfill."),
+			client->GetUserName());
+	}
 	if (pstrReason != NULL)
-		*pstrReason = _T("Broadband idle no-request recycle");
+		*pstrReason = bShouldRecycleIdle ? _T("Broadband idle no-request recycle") : _T("Broadband stalled zero-rate recycle");
 	client->ResetSlowUploadTracking();
 	return true;
 }

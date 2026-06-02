@@ -109,3 +109,26 @@ inline bool ShouldRecycleIdleBroadbandUploadSlot(
 		&& iSocketQueueEntries == 0
 		&& ullAccumulatedZeroUploadMs >= ullZeroGraceMs;
 }
+
+inline bool ShouldRecycleStalledBroadbandUploadSlot(
+	bool bSustainedUnderfill,
+	bool bWarmupComplete,
+	bool bFriendSlot,
+	bool bHasWaitingClients,
+	std::uint32_t uRateBytesPerSec,
+	std::uint64_t ullPayloadInBuffer,
+	std::int64_t iRequestBlocks,
+	std::int64_t iPendingIOBlocks,
+	std::int64_t iSocketQueueEntries,
+	std::uint64_t ullAccumulatedZeroUploadMs,
+	std::uint64_t ullZeroGraceMs)
+{
+	return bSustainedUnderfill
+		&& bWarmupComplete
+		&& !bFriendSlot
+		&& bHasWaitingClients
+		&& uRateBytesPerSec == 0
+		&& iPendingIOBlocks == 0
+		&& (ullPayloadInBuffer > 0 || iRequestBlocks > 0 || iSocketQueueEntries > 0)
+		&& ullAccumulatedZeroUploadMs >= ullZeroGraceMs;
+}
