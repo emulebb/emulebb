@@ -97,10 +97,14 @@ jobs:
           $v143Toolset = Get-ChildItem -LiteralPath (Join-Path $installPath "MSBuild\Microsoft\VC") -Recurse -Filter Toolset.props -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -like "*\PlatformToolsets\v143\Toolset.props" } |
             Select-Object -First 1
-          if ($v143Compiler -and $v143StaticMfc -and $v143Toolset) {
+          $v143DynamicMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter mfc140.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\x64\mfc140.lib" } |
+            Select-Object -First 1
+          if ($v143Compiler -and $v143StaticMfc -and $v143DynamicMfc -and $v143Toolset) {
             Write-Host "Required v143 ATL/MFC components already available."
             Write-Host "v143 compiler: $($v143Compiler.FullName)"
-            Write-Host "v143 MFC: $($v143StaticMfc.FullName)"
+            Write-Host "v143 static MFC: $($v143StaticMfc.FullName)"
+            Write-Host "v143 dynamic MFC: $($v143DynamicMfc.FullName)"
             Write-Host "v143 toolset: $($v143Toolset.FullName)"
             return
           }
@@ -116,10 +120,25 @@ jobs:
             --quiet `
             --norestart `
             --wait `
+            --add Microsoft.VisualStudio.ComponentGroup.VC.Tools.143.x86.x64 `
             --add Microsoft.VisualStudio.Component.VC.14.44.17.14.x86.x64 `
+            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.ATL `
             --add Microsoft.VisualStudio.Component.VC.14.44.17.14.MFC
           if ($LASTEXITCODE -ne 0) {
             throw "Visual Studio Installer failed while adding v143 ATL/MFC components: exit $LASTEXITCODE"
+          }
+
+          $postInstallCompiler = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter cl.exe -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\bin\Hostx64\x64\cl.exe" } |
+            Select-Object -First 1
+          $postInstallStaticMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter nafxcw.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\x64\nafxcw.lib" } |
+            Select-Object -First 1
+          $postInstallDynamicMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter mfc140.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\x64\mfc140.lib" } |
+            Select-Object -First 1
+          if (-not ($postInstallCompiler -and $postInstallStaticMfc -and $postInstallDynamicMfc)) {
+            throw "Visual Studio Installer completed but v143 ATL/MFC files are still missing under $vcToolsRoot"
           }
         }
 
