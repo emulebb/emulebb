@@ -138,8 +138,8 @@ double GetPublishAgeScore(const time_t tLastPublish, const time_t tNow)
 {
 	if (tLastPublish <= 0)
 		return 80.0;
-	const double dHoursSincePublish = std::max(0.0, std::difftime(tNow, tLastPublish) / 3600.0);
-	return std::min(dHoursSincePublish * 2.0, 80.0);
+	const double dHoursSincePublish = (std::max)(0.0, std::difftime(tNow, tLastPublish) / 3600.0);
+	return (std::min)(dHoursSincePublish * 2.0, 80.0);
 }
 
 double GetPublishUnderSharedScore(const CKnownFile *pFile, const float fAllTimeUploadRatio, const float fSessionUploadRatio)
@@ -161,8 +161,8 @@ double GetPublishRecentRequestScore(const CKnownFile *pFile, const time_t tNow)
 	const uint64 uLastRequest = pFile->statistic.GetAllTimeLastRequest();
 	if (uLastRequest == 0)
 		return 0.0;
-	const double dHoursSinceRequest = std::max(0.0, std::difftime(tNow, static_cast<time_t>(uLastRequest)) / 3600.0);
-	return std::max(0.0, 60.0 - dHoursSinceRequest * 2.0);
+	const double dHoursSinceRequest = (std::max)(0.0, std::difftime(tNow, static_cast<time_t>(uLastRequest)) / 3600.0);
+	return (std::max)(0.0, 60.0 - dHoursSinceRequest * 2.0);
 }
 
 double GetPublishDemandScore(const CKnownFile *pFile, const time_t tNow)
