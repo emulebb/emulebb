@@ -76,6 +76,44 @@ jobs:
         workspaces/workspace/state/test-artifacts/live-e2e-suite/**
         workspaces/workspace/state/build-logs/**
       command: |
+        function Ensure-MfcForHostedRunner {
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path -LiteralPath $vswhere)) {
+            return
+          }
+
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installPath) {
+            return
+          }
+
+          $mfcHeader = Get-ChildItem -LiteralPath (Join-Path $installPath "VC\Tools\MSVC") -Recurse -Filter afxwin.h -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\atlmfc\include\afxwin.h" } |
+            Select-Object -First 1
+          if ($mfcHeader) {
+            Write-Host "ATL/MFC already available at $($mfcHeader.FullName)"
+            return
+          }
+
+          $installer = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe"
+          if (-not (Test-Path -LiteralPath $installer)) {
+            throw "ATL/MFC is missing and Visual Studio Installer was not found: $installer"
+          }
+
+          Write-Host "ATL/MFC is missing on this hosted runner. Installing Visual Studio ATL/MFC components."
+          & $installer modify `
+            --installPath $installPath `
+            --quiet `
+            --norestart `
+            --wait `
+            --add Microsoft.VisualStudio.Component.VC.ATLMFC
+          if ($LASTEXITCODE -ne 0) {
+            throw "Visual Studio Installer failed while adding ATL/MFC components: exit $LASTEXITCODE"
+          }
+        }
+
+        Ensure-MfcForHostedRunner
+
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
         $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\ci\live-wire-inputs.ci.json"
         $ciInstallRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\ci-suite-install-root"
