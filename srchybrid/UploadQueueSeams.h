@@ -93,6 +93,14 @@ inline bool IsUploadQueueAdmissionCandidate(bool bSlowUploadCooldownActive)
 }
 
 /**
+ * @brief Reports whether the scheduler should try to open an upload slot from the waiting queue.
+ */
+inline bool ShouldAttemptUploadSlotAdmission(bool bAllowEmptyWaitingQueue, bool bWaitingListEmpty, bool bHasAdmissionCandidate)
+{
+	return bAllowEmptyWaitingQueue || (!bWaitingListEmpty && bHasAdmissionCandidate);
+}
+
+/**
  * @brief Reports whether an IP-scoped upload retry cooldown should suppress a peer.
  */
 inline bool ShouldApplyUploadRetryCooldown(bool bFriendSlot, std::uint32_t uPeerIP, std::uint64_t ullCurrentTick, std::uint64_t ullCooldownUntil)

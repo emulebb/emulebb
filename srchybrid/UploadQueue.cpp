@@ -358,12 +358,25 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 	const ULONGLONG ullUnderfillAgeMs = m_ullBroadbandUnderfillSince != 0 && curTick >= m_ullBroadbandUnderfillSince
 		? curTick - m_ullBroadbandUnderfillSince
 		: 0;
+	INT_PTR iEligibleWaitingClients = 0;
+	INT_PTR iCooldownWaitingClients = 0;
+	for (POSITION waitPos = waitinglist.GetHeadPosition(); waitPos != NULL;) {
+		const CUpDownClient *pWaitingClient = waitinglist.GetNext(waitPos);
+		if (!IsLiveUploadQueueClient(pWaitingClient))
+			continue;
+		if (IsUploadQueueAdmissionCandidate(pWaitingClient->IsInSlowUploadCooldown()))
+			++iEligibleWaitingClients;
+		else
+			++iCooldownWaitingClients;
+	}
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
+		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
 		uploadinglist.GetCount(),
 		m_retiredUploadingList.GetCount(),
 		waitinglist.GetCount(),
+		iEligibleWaitingClients,
+		iCooldownWaitingClients,
 		iThrottlerSlots,
 		m_MaxActiveClientsShortTime,
 		GetBroadbandSlotCap(),
@@ -584,14 +597,15 @@ uint32 CUploadQueue::GetTargetClientDataRate(bool bMinDatarate) const
 
 bool CUploadQueue::ForceNewClient(bool allowEmptyWaitingQueue)
 {
-	if (!allowEmptyWaitingQueue && waitinglist.IsEmpty())
+	const ULONGLONG curTick = ::GetTickCount64();
+	if (!ShouldAttemptUploadSlotAdmission(allowEmptyWaitingQueue, waitinglist.IsEmpty(), HasUploadAdmissionCandidate(curTick)))
 		return false;
 
 	INT_PTR curUploadSlots = uploadinglist.GetCount();
 	if (curUploadSlots < MIN_UP_CLIENTS_ALLOWED)
 		return true;
 
-	if (::GetTickCount64() < m_nLastStartUpload + SEC2MS(1) && datarate < 102400)
+	if (curTick < m_nLastStartUpload + SEC2MS(1) && datarate < 102400)
 		return false;
 
 	// Underfill no longer opens overflow slots on this branch. It only helps
@@ -736,6 +750,21 @@ bool CUploadQueue::ApplyUploadRetryCooldown(CUpDownClient *client, ULONGLONG cur
 
 	client->SetSlowUploadCooldownUntil(itCooldown->second);
 	return true;
+}
+
+bool CUploadQueue::HasUploadAdmissionCandidate(ULONGLONG curTick)
+{
+	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
+		POSITION pos2 = pos;
+		CUpDownClient *cur_client = waitinglist.GetNext(pos);
+		if (!IsLiveUploadQueueClient(cur_client)) {
+			RemoveStaleWaitingClient(pos2);
+			continue;
+		}
+		if (IsUploadQueueAdmissionCandidate(ApplyUploadRetryCooldown(cur_client, curTick) || cur_client->IsInSlowUploadCooldown()))
+			return true;
+	}
+	return false;
 }
 
 void CUploadQueue::SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil)

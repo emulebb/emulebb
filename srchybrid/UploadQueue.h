@@ -182,6 +182,7 @@ private:
 	bool	ShouldTrackSlowUploadSlots() const;
 	static uint32 GetUploadRetryCooldownIP(const CUpDownClient *client);
 	bool	ApplyUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick);
+	bool	HasUploadAdmissionCandidate(ULONGLONG curTick);
 	void	SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil);
 	void	PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick);
 	void	UpdateMaxClientScore();
