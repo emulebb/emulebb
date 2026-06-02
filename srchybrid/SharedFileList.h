@@ -586,8 +586,6 @@ private:
 	std::unordered_set<std::wstring> m_singleExcludedFileRuleKeys;
 	std::vector<std::wstring> m_sortedSingleSharedFileRuleKeys;
 
-	INT_PTR	m_currFileSrc;
-	INT_PTR	m_currFileNotes;
 	time_t	m_lastPublishKadSrc;
 	time_t	m_lastPublishKadNotes;
 	ULONGLONG m_lastPublishED2K;

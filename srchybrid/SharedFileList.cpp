@@ -18,6 +18,7 @@
 #include "emule.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "ComInitializationSeams.h"
 #include "KnownFileList.h"
@@ -55,7 +56,6 @@
 #include "MD5Sum.h"
 #include "UserMsgs.h"
 #include "WorkerUiMessageSeams.h"
-#include <algorithm>
 #include <new>
 #include <string>
 #include <unordered_map>
@@ -80,6 +80,15 @@ struct SFileHashJobGateEntry
 {
 	ULONGLONG uSequence;
 	EFileHashJobPriority ePriority;
+};
+
+struct SPublishFileRank
+{
+	int iPriority;
+	float fAllTimeUploadRatio;
+	float fSessionUploadRatio;
+	time_t tLastPublish;
+	size_t uSequence;
 };
 
 CCriticalSection s_fileHashJobGateSection;
@@ -107,6 +116,59 @@ int GetFileHashJobPriorityValue(const EFileHashJobPriority ePriority)
 	default:
 		return 0;
 	}
+}
+
+float GetPublishRatioValue(const float fRatio)
+{
+	if (!std::isfinite(fRatio) || fRatio < 0.0f)
+		return 0.0f;
+	return fRatio;
+}
+
+SPublishFileRank MakePublishFileRank(const CKnownFile *pFile, const int iPriority, const time_t tLastPublish, const size_t uSequence)
+{
+	return SPublishFileRank{
+		iPriority,
+		GetPublishRatioValue(pFile->GetAllTimeUploadRatio()),
+		GetPublishRatioValue(pFile->GetSessionUploadRatio()),
+		tLastPublish,
+		uSequence
+	};
+}
+
+bool IsPublishFileRankBetter(const SPublishFileRank &rLeft, const SPublishFileRank &rRight)
+{
+	if (rLeft.iPriority != rRight.iPriority)
+		return rLeft.iPriority > rRight.iPriority;
+	if (rLeft.fAllTimeUploadRatio != rRight.fAllTimeUploadRatio)
+		return rLeft.fAllTimeUploadRatio < rRight.fAllTimeUploadRatio;
+	if (rLeft.fSessionUploadRatio != rRight.fSessionUploadRatio)
+		return rLeft.fSessionUploadRatio < rRight.fSessionUploadRatio;
+	if (rLeft.tLastPublish != rRight.tLastPublish)
+		return rLeft.tLastPublish < rRight.tLastPublish;
+	return rLeft.uSequence > rRight.uSequence;
+}
+
+bool IsKadSourcePublishDue(const CKnownFile *pFile, const time_t tNow)
+{
+	// Keep candidate ranking side-effect-free; CKnownFile::PublishSrc applies the mutation after selection.
+	if (theApp.IsFirewalled()
+		&& (Kademlia::CUDPFirewallTester::IsFirewalledUDP(true) || !Kademlia::CUDPFirewallTester::IsVerified()))
+	{
+		CUpDownClient *buddy = theApp.clientlist->GetBuddy();
+		if (!buddy)
+			return false;
+		if (buddy->GetIP() != pFile->GetLastPublishBuddy())
+			return true;
+	}
+
+	return tNow >= pFile->GetLastPublishTimeKadSrc();
+}
+
+bool IsKadNotesPublishDue(CKnownFile *pFile, const time_t tNow)
+{
+	return tNow >= pFile->GetLastPublishTimeKadNotes()
+		&& (!pFile->GetFileComment().IsEmpty() || pFile->GetFileRating() > 0);
 }
 
 bool ShouldFileHashJobWaitLocked(const SFileHashJobGateEntry &rJob)
@@ -812,8 +874,6 @@ void CSharedFileList::AddDirectory(const CString &strDir, CStringList &dirlist, 
 CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	: server(in_server)
 	, output()
-	, m_currFileSrc()
-	, m_currFileNotes()
 	, m_lastPublishKadSrc()
 	, m_lastPublishKadNotes()
 	, m_lastPublishED2K()
@@ -2021,8 +2081,7 @@ void CSharedFileList::SendListToServer()
 	struct ServerOfferCandidate
 	{
 		CKnownFile *pFile;
-		int iPriority;
-		size_t uSequence;
+		SPublishFileRank rank;
 	};
 	std::vector<ServerOfferCandidate> offerCandidates;
 	offerCandidates.reserve(static_cast<size_t>(m_Files_map.GetCount()));
@@ -2031,7 +2090,7 @@ void CSharedFileList::SendListToServer()
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
 		CKnownFile *cur_file = pair->value;
 		if ((!cur_file->GetPublishedED2K() || cur_file->IsED2KRepublishPending()) && (!cur_file->IsLargeFile() || (pCurServer != NULL && pCurServer->SupportsLargeFilesTCP()))) {
-			ServerOfferCandidate candidate = { cur_file, GetRealPrio(cur_file->GetUpPriority()), uSequence };
+			ServerOfferCandidate candidate = { cur_file, MakePublishFileRank(cur_file, GetRealPrio(cur_file->GetUpPriority()), 0, uSequence) };
 			offerCandidates.push_back(candidate);
 		}
 		++uSequence;
@@ -2039,9 +2098,7 @@ void CSharedFileList::SendListToServer()
 
 	std::sort(offerCandidates.begin(), offerCandidates.end(),
 		[](const ServerOfferCandidate &left, const ServerOfferCandidate &right) {
-			if (left.iPriority != right.iPriority)
-				return left.iPriority > right.iPriority;
-			return left.uSequence > right.uSequence;
+			return IsPublishFileRankBetter(left.rank, right.rank);
 		});
 
 	// add to packet
@@ -2624,14 +2681,29 @@ void CSharedFileList::Publish()
 
 	if (Kademlia::CKademlia::GetTotalStoreSrc() < KADEMLIATOTALSTORESRC) {
 		if (tNow >= m_lastPublishKadSrc) {
-			if (m_currFileSrc >= GetCount())
-				m_currFileSrc = 0;
-			CKnownFile *pCurKnownFile = GetFileByIndex(m_currFileSrc);
+			CKnownFile *pCurKnownFile = NULL;
+			SPublishFileRank selectedRank{};
+			bool bSelectedRank = false;
+			size_t uSequence = 0;
+			for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
+				CKnownFile *pCandidate = pair->value;
+				if (IsKadSourcePublishDue(pCandidate, tNow)) {
+					const SPublishFileRank candidateRank = MakePublishFileRank(
+						pCandidate,
+						GetRealPrio(pCandidate->GetUpPriority()),
+						pCandidate->GetLastPublishTimeKadSrc(),
+						uSequence);
+					if (!bSelectedRank || IsPublishFileRankBetter(candidateRank, selectedRank)) {
+						pCurKnownFile = pCandidate;
+						selectedRank = candidateRank;
+						bSelectedRank = true;
+					}
+				}
+				++uSequence;
+			}
 			if (pCurKnownFile && pCurKnownFile->PublishSrc())
 				if (Kademlia::CSearchManager::PrepareLookup(Kademlia::CSearch::STOREFILE, true, Kademlia::CUInt128(pCurKnownFile->GetFileHash())) == NULL)
 					pCurKnownFile->SetLastPublishTimeKadSrc(0, 0);
-
-			++m_currFileSrc;
 
 			// even if we did not publish a source, reset the timer so that this list is processed
 			// only every KADEMLIAPUBLISHTIME seconds.
@@ -2641,14 +2713,29 @@ void CSharedFileList::Publish()
 
 	if (Kademlia::CKademlia::GetTotalStoreNotes() < KADEMLIATOTALSTORENOTES) {
 		if (tNow >= m_lastPublishKadNotes) {
-			if (m_currFileNotes >= GetCount())
-				m_currFileNotes = 0;
-			CKnownFile *pCurKnownFile = GetFileByIndex(m_currFileNotes);
+			CKnownFile *pCurKnownFile = NULL;
+			SPublishFileRank selectedRank{};
+			bool bSelectedRank = false;
+			size_t uSequence = 0;
+			for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
+				CKnownFile *pCandidate = pair->value;
+				if (IsKadNotesPublishDue(pCandidate, tNow)) {
+					const SPublishFileRank candidateRank = MakePublishFileRank(
+						pCandidate,
+						GetRealPrio(pCandidate->GetUpPriority()),
+						pCandidate->GetLastPublishTimeKadNotes(),
+						uSequence);
+					if (!bSelectedRank || IsPublishFileRankBetter(candidateRank, selectedRank)) {
+						pCurKnownFile = pCandidate;
+						selectedRank = candidateRank;
+						bSelectedRank = true;
+					}
+				}
+				++uSequence;
+			}
 			if (pCurKnownFile && pCurKnownFile->PublishNotes())
 				if (Kademlia::CSearchManager::PrepareLookup(Kademlia::CSearch::STORENOTES, true, Kademlia::CUInt128(pCurKnownFile->GetFileHash())) == NULL)
 					pCurKnownFile->SetLastPublishTimeKadNotes(0);
-
-			++m_currFileNotes;
 
 			// even if we did not publish a source, reset the timer so that this list is processed
 			// only every KADEMLIAPUBLISHTIME seconds.
