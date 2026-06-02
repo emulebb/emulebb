@@ -74,7 +74,7 @@ public:
 	// This has lost its meaning here. This is the total clients we know that want this file.
 	// Right now this number is used for auto priorities.
 	// This may be replaced with total complete source known in the network.
-	INT_PTR	GetQueuedCount()							{ return m_ClientUploadList.GetCount(); }
+	INT_PTR	GetQueuedCount() const						{ return m_ClientUploadList.GetCount(); }
 
 	void	AddUploadingClient(CUpDownClient *client);
 	void	RemoveUploadingClient(CUpDownClient *client);

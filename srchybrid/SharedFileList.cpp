@@ -86,6 +86,7 @@ struct SFileHashJobGateEntry
 struct SPublishFileRank
 {
 	int iPriority;
+	double dBalancedScore;
 	float fAllTimeUploadRatio;
 	float fSessionUploadRatio;
 	time_t tLastPublish;
@@ -126,12 +127,83 @@ float GetPublishRatioValue(const float fRatio)
 	return fRatio;
 }
 
-SPublishFileRank MakePublishFileRank(const CKnownFile *pFile, const int iPriority, const time_t tLastPublish, const size_t uSequence)
+double GetPublishLogScore(const uint64 uValue, const double dWeight)
 {
+	if (uValue == 0)
+		return 0.0;
+	return std::log1p(static_cast<double>(uValue)) * dWeight;
+}
+
+double GetPublishAgeScore(const time_t tLastPublish, const time_t tNow)
+{
+	if (tLastPublish <= 0)
+		return 80.0;
+	const double dHoursSincePublish = std::max(0.0, std::difftime(tNow, tLastPublish) / 3600.0);
+	return std::min(dHoursSincePublish * 2.0, 80.0);
+}
+
+double GetPublishUnderSharedScore(const CKnownFile *pFile, const float fAllTimeUploadRatio, const float fSessionUploadRatio)
+{
+	double dScore = 0.0;
+	if (fAllTimeUploadRatio < 1.0f)
+		dScore += (1.0 - static_cast<double>(fAllTimeUploadRatio)) * 70.0;
+	if (fSessionUploadRatio < 1.0f)
+		dScore += (1.0 - static_cast<double>(fSessionUploadRatio)) * 35.0;
+	if (pFile->statistic.GetAllTimeTransferred() == 0)
+		dScore += 35.0;
+	if (pFile->statistic.GetAllTimeRequests() > 0 && pFile->statistic.GetAllTimeAccepts() == 0)
+		dScore += 20.0;
+	return dScore;
+}
+
+double GetPublishRecentRequestScore(const CKnownFile *pFile, const time_t tNow)
+{
+	const uint64 uLastRequest = pFile->statistic.GetAllTimeLastRequest();
+	if (uLastRequest == 0)
+		return 0.0;
+	const double dHoursSinceRequest = std::max(0.0, std::difftime(tNow, static_cast<time_t>(uLastRequest)) / 3600.0);
+	return std::max(0.0, 60.0 - dHoursSinceRequest * 2.0);
+}
+
+double GetPublishDemandScore(const CKnownFile *pFile, const time_t tNow)
+{
+	double dScore = 0.0;
+	dScore += GetPublishLogScore(static_cast<uint64>(pFile->GetQueuedCount()), 70.0);
+	dScore += GetPublishLogScore(static_cast<uint64>(pFile->statistic.GetRequests()), 45.0);
+	dScore += GetPublishLogScore(static_cast<uint64>(pFile->statistic.GetAccepts()), 30.0);
+	dScore += GetPublishLogScore(static_cast<uint64>(pFile->statistic.GetAllTimeRequests()), 20.0);
+	dScore += GetPublishLogScore(static_cast<uint64>(pFile->statistic.GetAllTimeAccepts()), 12.0);
+	dScore += GetPublishRecentRequestScore(pFile, tNow);
+	return dScore;
+}
+
+double GetPublishDeterministicJitter(const CKnownFile *pFile, const time_t tNow, const size_t uSequence)
+{
+	uint32 uHash = 2166136261u ^ static_cast<uint32>(tNow / KADEMLIAPUBLISHTIME);
+	const uchar *pFileHash = pFile->GetFileHash();
+	for (size_t i = 0; i < 16; ++i)
+		uHash = (uHash ^ pFileHash[i]) * 16777619u;
+	uHash = (uHash ^ static_cast<uint32>(uSequence)) * 16777619u;
+	return static_cast<double>(uHash % 1000u) / 1000.0 * 15.0;
+}
+
+double GetPublishBalancedScore(const CKnownFile *pFile, const time_t tLastPublish, const time_t tNow, const size_t uSequence, const float fAllTimeUploadRatio, const float fSessionUploadRatio)
+{
+	return GetPublishDemandScore(pFile, tNow)
+		+ GetPublishUnderSharedScore(pFile, fAllTimeUploadRatio, fSessionUploadRatio)
+		+ GetPublishAgeScore(tLastPublish, tNow)
+		+ GetPublishDeterministicJitter(pFile, tNow, uSequence);
+}
+
+SPublishFileRank MakePublishFileRank(const CKnownFile *pFile, const int iPriority, const time_t tLastPublish, const size_t uSequence, const time_t tNow)
+{
+	const float fAllTimeUploadRatio = GetPublishRatioValue(pFile->GetAllTimeUploadRatio());
+	const float fSessionUploadRatio = GetPublishRatioValue(pFile->GetSessionUploadRatio());
 	return SPublishFileRank{
 		iPriority,
-		GetPublishRatioValue(pFile->GetAllTimeUploadRatio()),
-		GetPublishRatioValue(pFile->GetSessionUploadRatio()),
+		GetPublishBalancedScore(pFile, tLastPublish, tNow, uSequence, fAllTimeUploadRatio, fSessionUploadRatio),
+		fAllTimeUploadRatio,
+		fSessionUploadRatio,
 		tLastPublish,
 		uSequence
 	};
@@ -141,6 +213,8 @@ bool IsPublishFileRankBetter(const SPublishFileRank &rLeft, const SPublishFileRa
 {
 	if (rLeft.iPriority != rRight.iPriority)
 		return rLeft.iPriority > rRight.iPriority;
+	if (rLeft.dBalancedScore != rRight.dBalancedScore)
+		return rLeft.dBalancedScore > rRight.dBalancedScore;
 	if (rLeft.fAllTimeUploadRatio != rRight.fAllTimeUploadRatio)
 		return rLeft.fAllTimeUploadRatio < rRight.fAllTimeUploadRatio;
 	if (rLeft.fSessionUploadRatio != rRight.fSessionUploadRatio)
@@ -2094,11 +2168,12 @@ void CSharedFileList::SendListToServer()
 	std::vector<ServerOfferCandidate> offerCandidates;
 	offerCandidates.reserve(static_cast<size_t>(m_Files_map.GetCount()));
 
+	const time_t tNow = time(NULL);
 	size_t uSequence = 0;
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
 		CKnownFile *cur_file = pair->value;
 		if ((!cur_file->GetPublishedED2K() || cur_file->IsED2KRepublishPending()) && (!cur_file->IsLargeFile() || (pCurServer != NULL && pCurServer->SupportsLargeFilesTCP()))) {
-			ServerOfferCandidate candidate = { cur_file, MakePublishFileRank(cur_file, GetRealPrio(cur_file->GetUpPriority()), 0, uSequence) };
+			ServerOfferCandidate candidate = { cur_file, MakePublishFileRank(cur_file, GetRealPrio(cur_file->GetUpPriority()), 0, uSequence, tNow) };
 			offerCandidates.push_back(candidate);
 		}
 		++uSequence;
@@ -2673,7 +2748,7 @@ void CSharedFileList::Publish()
 							if (!aFiles[f]->IsPartFile() && IsFilePtrInList(aFiles[f])) {
 								KeywordPublishCandidate candidate = {
 									aFiles[f],
-									MakePublishFileRank(aFiles[f], GetRealPrio(aFiles[f]->GetUpPriority()), 0, static_cast<size_t>(f))
+									MakePublishFileRank(aFiles[f], GetRealPrio(aFiles[f]->GetUpPriority()), 0, static_cast<size_t>(f), tNow)
 								};
 								publishCandidates.push_back(candidate);
 							}
@@ -2725,7 +2800,8 @@ void CSharedFileList::Publish()
 						pCandidate,
 						GetRealPrio(pCandidate->GetUpPriority()),
 						pCandidate->GetLastPublishTimeKadSrc(),
-						uSequence);
+						uSequence,
+						tNow);
 					if (!bSelectedRank || IsPublishFileRankBetter(candidateRank, selectedRank)) {
 						pCurKnownFile = pCandidate;
 						selectedRank = candidateRank;
@@ -2762,7 +2838,8 @@ void CSharedFileList::Publish()
 						pCandidate,
 						GetRealPrio(pCandidate->GetUpPriority()),
 						pCandidate->GetLastPublishTimeKadNotes(),
-						uSequence);
+						uSequence,
+						tNow);
 					if (!bSelectedRank || IsPublishFileRankBetter(candidateRank, selectedRank)) {
 						pCurKnownFile = pCandidate;
 						selectedRank = candidateRank;
