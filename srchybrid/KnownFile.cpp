@@ -251,7 +251,7 @@ void CKnownFile::UpdateFileRatingCommentAvail(bool bForceUpdate)
 	m_uUserRating = uRatings ? (uint32)ROUND(static_cast<float>(uUserRatings) / static_cast<float>(uRatings)) : 0;
 
 	if (bOldHasComment != m_bHasComment || uOldUserRatings != m_uUserRating || bForceUpdate)
-		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.UpdateFile(this);
+		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.QueueFileDisplayRefresh(this);
 }
 
 float CKnownFile::GetSessionUploadRatio() const
@@ -366,7 +366,7 @@ void CKnownFile::UpdatePartsInfo()
 		m_tCompleteSourcesTime = tNow + MIN2S(1);
 	}
 	if (theApp.emuledlg->sharedfileswnd->m_hWnd && ::GetCurrentThreadId() == g_uMainThreadId)
-		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.UpdateFile(this);
+		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.QueueFileDisplayRefresh(this);
 }
 
 void CKnownFile::AddUploadingClient(CUpDownClient *client)
@@ -1388,7 +1388,7 @@ void CKnownFile::UpdateAutoUpPriority()
 			newPri = PR_HIGH;
 		if (newPri != curPri) {
 			SetUpPriority(newPri);
-			theApp.emuledlg->sharedfileswnd->sharedfilesctrl.UpdateFile(this);
+			theApp.emuledlg->sharedfileswnd->sharedfilesctrl.QueueFileDisplayRefresh(this);
 		}
 	}
 }
@@ -1799,8 +1799,10 @@ bool CKnownFile::SetPublishedED2K(bool val, bool bUpdateUi)
 	if (!ShouldNotifyPublishedED2KChange(m_PublishedED2K, val))
 		return false;
 	m_PublishedED2K = val;
-	if (bUpdateUi)
-		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.UpdateFile(this);
+	if (bUpdateUi) {
+		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.QueueFileDisplayRefresh(this);
+		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.QueueFilesCountRefresh();
+	}
 	return true;
 }
 

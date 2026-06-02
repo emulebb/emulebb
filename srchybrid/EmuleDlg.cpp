@@ -6257,6 +6257,8 @@ void CemuleDlg::RunDesktopPresentationTick()
 			transferwnd->RefreshTransferDisplayRefreshState(false);
 			transferwnd->FlushVisibleDisplayRefreshes();
 		}
+		if (sharedfileswnd != NULL)
+			sharedfileswnd->sharedfilesctrl.FlushDisplayRefreshes();
 		ShowTransferRate();
 	} else if (ShouldRefreshPausedTitlePresentation(theApp.IsClosing(), IsWindowVisible() != FALSE, uDesktopRefreshIntervalMs))
 		ShowTransferRate(false, true);

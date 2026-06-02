@@ -71,6 +71,22 @@ public:
 	void	UpdateFile(const CShareableFile *file, bool bUpdateFileSummary = true);
 	void	UpdateFilesAfterPublishedED2KBatch();
 	/**
+	 * @brief Queues a routine Shared Files row refresh for the desktop UI refresh tick.
+	 */
+	void	QueueFileDisplayRefresh(const CShareableFile *file, bool bUpdateSelectedDetails = true);
+	/**
+	 * @brief Queues a coalesced Shared Files summary label refresh for the desktop UI refresh tick.
+	 */
+	void	QueueFilesCountRefresh();
+	/**
+	 * @brief Queues a coalesced published-state refresh for the desktop UI refresh tick.
+	 */
+	void	QueuePublishedFilesDisplayRefresh();
+	/**
+	 * @brief Flushes queued routine Shared Files UI refreshes.
+	 */
+	void	FlushDisplayRefreshes();
+	/**
 	 * @brief Queues one coalesced Shared Files list reload for startup-deferred hash intake.
 	 */
 	void	ScheduleStartupDeferredReload();
@@ -133,6 +149,11 @@ protected:
 	bool			m_bSelectionRestoreInProgress;
 	bool			m_bStartupDeferredReloadPending;
 	bool			m_bVisibleFilePrunePending;
+	std::vector<const CShareableFile*> m_aPendingDisplayRefreshFiles;
+	CMap<const CShareableFile*, const CShareableFile*, int, int> m_mapPendingDisplayRefreshFiles;
+	bool			m_bPendingFullDisplayRefresh;
+	bool			m_bPendingSelectedDetailsRefresh;
+	bool			m_bPendingFilesCountRefresh;
 
 	static int CALLBACK SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	void OpenFile(const CShareableFile *file);
@@ -142,6 +163,9 @@ protected:
 	void UpdateVisibleFileIndexRange(int iStartIndex, int iEndIndex);
 	void ClearVisibleFiles();
 	void ApplyVisibleFileCount();
+	void ClearPendingDisplayRefreshes();
+	bool ApplyFileDisplayRefresh(const CShareableFile *file, bool bUpdateSelectedDetails);
+	void ApplyPublishedFilesDisplayRefresh();
 	bool IsLiveVisibleFilePointer(const CShareableFile *file) const;
 	bool PruneStaleVisibleFiles();
 	CObject* WalkToLiveVisibleFileItem(int iDirection);

@@ -367,10 +367,10 @@ void UpdateSharedFilesForPublishedED2KChanges(CSharedFilesCtrl *pOutput, const s
 		return;
 
 	if (SharedFileListSeams::ShouldBatchPublishedED2KUiRefresh(static_cast<unsigned int>(rChangedFiles.size())))
-		pOutput->UpdateFilesAfterPublishedED2KBatch();
+		pOutput->QueuePublishedFilesDisplayRefresh();
 	else {
-		pOutput->UpdateFile(rChangedFiles.front());
-		pOutput->ShowFilesCount();
+		pOutput->QueueFileDisplayRefresh(rChangedFiles.front());
+		pOutput->QueueFilesCountRefresh();
 	}
 }
 
@@ -2562,7 +2562,7 @@ void CSharedFileList::HashNextFile()
 	if (theApp.emuledlg == NULL || !::IsWindow(theApp.emuledlg->m_hWnd))	// wait for the dialog to open
 		return;
 	if (!theApp.IsClosing())
-		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.ShowFilesCount();
+		theApp.emuledlg->sharedfileswnd->sharedfilesctrl.QueueFilesCountRefresh();
 	SignalSharedHashWorker();
 }
 
@@ -2672,7 +2672,8 @@ void CSharedFileList::HashFailed(CSharedFileHashResult *pResult)
 
 void CSharedFileList::UpdateFile(const CKnownFile *toupdate)
 {
-	output->UpdateFile(toupdate);
+	if (output != NULL)
+		output->QueueFileDisplayRefresh(toupdate);
 }
 
 void CSharedFileList::Process()
@@ -2814,8 +2815,8 @@ void CSharedFileList::Publish()
 				if (Kademlia::CSearchManager::PrepareLookup(Kademlia::CSearch::STOREFILE, true, Kademlia::CUInt128(pCurKnownFile->GetFileHash())) == NULL)
 					pCurKnownFile->SetLastPublishTimeKadSrc(0, 0);
 				if (output != NULL) {
-					output->UpdateFile(pCurKnownFile);
-					output->ShowFilesCount();
+					output->QueueFileDisplayRefresh(pCurKnownFile);
+					output->QueueFilesCountRefresh();
 				}
 			}
 

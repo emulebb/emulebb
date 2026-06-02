@@ -75,6 +75,7 @@ namespace
 	constexpr UINT kStartupDeferredReloadDelayMs = 500;
 	constexpr UINT_PTR kVisibleFilePruneTimerId = 0x5347;
 	constexpr UINT kVisibleFilePruneDelayMs = 250;
+	constexpr size_t kMaxPendingDisplayRefreshFiles = 4096;
 
 	int FindSubMenuItemPosition(CMenu &menu, HMENU hSubMenu)
 	{
@@ -603,6 +604,9 @@ CSharedFilesCtrl::CSharedFilesCtrl()
 	, m_bSelectionRestoreInProgress(false)
 	, m_bStartupDeferredReloadPending(false)
 	, m_bVisibleFilePrunePending(false)
+	, m_bPendingFullDisplayRefresh(false)
+	, m_bPendingSelectedDetailsRefresh(false)
+	, m_bPendingFilesCountRefresh(false)
 {
 	SetGeneralPurposeFind(true);
 	m_pToolTip = new CToolTipCtrlX;
@@ -810,8 +814,18 @@ void CSharedFilesCtrl::ClearVisibleFiles()
 		KillTimer(kVisibleFilePruneTimerId);
 		m_bVisibleFilePrunePending = false;
 	}
+	ClearPendingDisplayRefreshes();
 	m_aVisibleFiles.clear();
 	m_mapVisibleFileIndex.RemoveAll();
+}
+
+void CSharedFilesCtrl::ClearPendingDisplayRefreshes()
+{
+	m_aPendingDisplayRefreshFiles.clear();
+	m_mapPendingDisplayRefreshFiles.RemoveAll();
+	m_bPendingFullDisplayRefresh = false;
+	m_bPendingSelectedDetailsRefresh = false;
+	m_bPendingFilesCountRefresh = false;
 }
 
 bool CSharedFilesCtrl::IsLiveVisibleFilePointer(const CShareableFile *file) const
@@ -1204,20 +1218,26 @@ void CSharedFilesCtrl::RemoveFile(const CShareableFile *file, bool bDeletedFromD
 
 void CSharedFilesCtrl::UpdateFile(const CShareableFile *file, bool bUpdateFileSummary)
 {
+	if (ApplyFileDisplayRefresh(file, bUpdateFileSummary))
+		theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails(true); //force update
+}
+
+bool CSharedFilesCtrl::ApplyFileDisplayRefresh(const CShareableFile *file, bool bUpdateSelectedDetails)
+{
 	if (!m_bModelBound)
-		return;
+		return false;
 	if (theApp.IsClosing())
-		return;
+		return false;
 	if (IsLiveVisibleFilePointer(file)) {
 		int iItem = FindFile(file);
 		if (!ShouldDisplayFile(file)) {
 			if (iItem >= 0)
 				RemoveFile(file, false);
-			return;
+			return false;
 		}
 		if (iItem < 0) {
 			AddFile(file);
-			return;
+			return false;
 		}
 		if (iItem >= 0) {
 			bool bItemMoved = false;
@@ -1227,13 +1247,19 @@ void CSharedFilesCtrl::UpdateFile(const CShareableFile *file, bool bUpdateFileSu
 				RedrawItems(iItem, iItem);
 			else
 				iItem = FindFile(file);
-			if (bUpdateFileSummary && iItem >= 0 && GetItemState(iItem, LVIS_SELECTED))
-				theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails(true); //force update
+			if (bUpdateSelectedDetails && iItem >= 0 && GetItemState(iItem, LVIS_SELECTED))
+				return true;
 		}
 	}
+	return false;
 }
 
 void CSharedFilesCtrl::UpdateFilesAfterPublishedED2KBatch()
+{
+	ApplyPublishedFilesDisplayRefresh();
+}
+
+void CSharedFilesCtrl::ApplyPublishedFilesDisplayRefresh()
 {
 	if (!m_bModelBound)
 		return;
@@ -1261,6 +1287,82 @@ void CSharedFilesCtrl::UpdateFilesAfterPublishedED2KBatch()
 	if (GetFirstSelectedItemPosition() != NULL)
 		theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails(true);
 	ShowFilesCount();
+}
+
+void CSharedFilesCtrl::QueueFileDisplayRefresh(const CShareableFile *file, bool bUpdateSelectedDetails)
+{
+	if (!m_bModelBound || theApp.IsClosing())
+		return;
+	if (file == NULL)
+		return;
+
+	if (bUpdateSelectedDetails)
+		m_bPendingSelectedDetailsRefresh = true;
+	if (m_bPendingFullDisplayRefresh)
+		return;
+
+	int iQueued = 0;
+	if (m_mapPendingDisplayRefreshFiles.Lookup(file, iQueued))
+		return;
+
+	if (m_aPendingDisplayRefreshFiles.size() >= kMaxPendingDisplayRefreshFiles) {
+		m_aPendingDisplayRefreshFiles.clear();
+		m_mapPendingDisplayRefreshFiles.RemoveAll();
+		m_bPendingFullDisplayRefresh = true;
+		return;
+	}
+
+	m_aPendingDisplayRefreshFiles.push_back(file);
+	m_mapPendingDisplayRefreshFiles.SetAt(file, 1);
+}
+
+void CSharedFilesCtrl::QueueFilesCountRefresh()
+{
+	if (!m_bModelBound || theApp.IsClosing())
+		return;
+	m_bPendingFilesCountRefresh = true;
+}
+
+void CSharedFilesCtrl::QueuePublishedFilesDisplayRefresh()
+{
+	if (!m_bModelBound || theApp.IsClosing())
+		return;
+	m_bPendingFullDisplayRefresh = true;
+	m_bPendingFilesCountRefresh = true;
+	m_bPendingSelectedDetailsRefresh = true;
+	m_aPendingDisplayRefreshFiles.clear();
+	m_mapPendingDisplayRefreshFiles.RemoveAll();
+}
+
+void CSharedFilesCtrl::FlushDisplayRefreshes()
+{
+	if (!m_bModelBound || theApp.IsClosing()) {
+		ClearPendingDisplayRefreshes();
+		return;
+	}
+
+	const bool bRunFullRefresh = m_bPendingFullDisplayRefresh;
+	const bool bUpdateSelectedDetails = m_bPendingSelectedDetailsRefresh;
+	const bool bUpdateFilesCount = m_bPendingFilesCountRefresh;
+	std::vector<const CShareableFile*> aPendingFiles;
+	aPendingFiles.swap(m_aPendingDisplayRefreshFiles);
+	m_mapPendingDisplayRefreshFiles.RemoveAll();
+	m_bPendingFullDisplayRefresh = false;
+	m_bPendingSelectedDetailsRefresh = false;
+	m_bPendingFilesCountRefresh = false;
+
+	bool bSelectedDetailsChanged = false;
+	if (bRunFullRefresh) {
+		ApplyPublishedFilesDisplayRefresh();
+		return;
+	}
+
+	for (std::vector<const CShareableFile*>::const_iterator it = aPendingFiles.begin(); it != aPendingFiles.end(); ++it)
+		bSelectedDetailsChanged |= ApplyFileDisplayRefresh(*it, bUpdateSelectedDetails);
+	if (bSelectedDetailsChanged)
+		theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails(true);
+	if (bUpdateFilesCount)
+		ShowFilesCount();
 }
 
 int CSharedFilesCtrl::FindFile(const CShareableFile *pFile)
@@ -1433,7 +1535,7 @@ void CSharedFilesCtrl::ShowFilesCount()
 void CSharedFilesCtrl::ApplyAICHHashingCount(INT_PTR nVal)
 {
 	SetAICHHashing(nVal);
-	ShowFilesCount();
+	QueueFilesCountRefresh();
 }
 
 void CSharedFilesCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
