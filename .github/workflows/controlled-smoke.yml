@@ -87,11 +87,15 @@ jobs:
             return
           }
 
-          $mfcHeader = Get-ChildItem -LiteralPath (Join-Path $installPath "VC\Tools\MSVC") -Recurse -Filter afxwin.h -ErrorAction SilentlyContinue |
+          $vcToolsRoot = Join-Path $installPath "VC\Tools\MSVC"
+          $mfcHeader = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter afxwin.h -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -like "*\atlmfc\include\afxwin.h" } |
             Select-Object -First 1
-          if ($mfcHeader) {
-            Write-Host "ATL/MFC already available at $($mfcHeader.FullName)"
+          $mfcLibrary = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter mfc*.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\atlmfc\lib\x64\mfc*.lib" } |
+            Select-Object -First 1
+          if ($mfcHeader -and $mfcLibrary) {
+            Write-Host "ATL/MFC already available at $($mfcHeader.FullName) and $($mfcLibrary.FullName)"
             return
           }
 
