@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 #include <atomic>
+#include <map>
 #include "ring.h"
 
 struct Requested_Block_Struct;
@@ -179,6 +180,10 @@ private:
 	uint32	GetSlowUploadRateThreshold() const;
 	bool	ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG curTick, CString *pstrReason);
 	bool	ShouldTrackSlowUploadSlots() const;
+	static uint32 GetUploadRetryCooldownIP(const CUpDownClient *client);
+	bool	ApplyUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick);
+	void	SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil);
+	void	PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick);
 	void	UpdateMaxClientScore();
 	uint32	GetMaxClientScore() const						{ return m_imaxscore; }
 	void	UpdateActiveClientsInfo(ULONGLONG curTick);
@@ -222,6 +227,7 @@ private:
 
 	ULONGLONG m_dwLastCalculatedAverageCombinedFilePrioAndCredit;
 	float	m_fAverageCombinedFilePrioAndCredit;
+	std::map<uint32, ULONGLONG> m_uploadRetryCooldownByIP;
 	ULONGLONG m_ullBroadbandUnderfillSince;
 	INT_PTR	m_iHighestNumberOfFullyActivatedSlotsSinceLastCall;
 	INT_PTR	m_MaxActiveClients;

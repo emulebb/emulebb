@@ -84,6 +84,24 @@ inline bool RejectSoftQueueCandidateByCombinedScore(bool bHardQueueLimitReached,
 		|| (bSoftQueueLimitReached && !bHasFriendSlot && fClientCombinedFilePrioAndCredit < fAverageCombinedFilePrioAndCredit);
 }
 
+/**
+ * @brief Reports whether a waiting client may influence upload-slot admission decisions.
+ */
+inline bool IsUploadQueueAdmissionCandidate(bool bSlowUploadCooldownActive)
+{
+	return !bSlowUploadCooldownActive;
+}
+
+/**
+ * @brief Reports whether an IP-scoped upload retry cooldown should suppress a peer.
+ */
+inline bool ShouldApplyUploadRetryCooldown(bool bFriendSlot, std::uint32_t uPeerIP, std::uint64_t ullCurrentTick, std::uint64_t ullCooldownUntil)
+{
+	return !bFriendSlot
+		&& uPeerIP != 0
+		&& ullCooldownUntil > ullCurrentTick;
+}
+
 inline bool ShouldCountSlowUploadTimerLoop(std::uint32_t uDurationMs, std::uint32_t uSlowThresholdMs = kUploadTimerSlowLoopThresholdMs)
 {
 	return uSlowThresholdMs > 0 && uDurationMs > uSlowThresholdMs;

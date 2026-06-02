@@ -184,6 +184,10 @@ CUpDownClient* CUploadQueue::FindBestClientInQueue()
 			//This client has either not been seen in a long time, or we no longer share the file he wanted any more.
 			cur_client->ClearWaitStartTime();
 			RemoveFromWaitingQueue(pos2, true);
+		} else if (!IsUploadQueueAdmissionCandidate(ApplyUploadRetryCooldown(cur_client, curTick) || cur_client->IsInSlowUploadCooldown())) {
+			// WHY: recycled or short-failed peers stay on the protocol queue, but
+			// must not burn another broadband slot until their local cooldown ends.
+			continue;
 		} else {
 			// finished clearing
 			uint32 cur_score = cur_client->GetScore(false);
@@ -462,6 +466,7 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 void CUploadQueue::Process()
 {
 	const ULONGLONG curTick = ::GetTickCount64();
+	PurgeExpiredUploadRetryCooldowns(curTick);
 	UpdateActiveClientsInfo(curTick);
 	UpdateBroadbandUnderfillState(curTick);
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
@@ -705,6 +710,51 @@ bool CUploadQueue::ShouldTrackSlowUploadSlots() const
 	return HasSustainedBroadbandUnderfill(::GetTickCount64());
 }
 
+uint32 CUploadQueue::GetUploadRetryCooldownIP(const CUpDownClient *client)
+{
+	if (client == NULL)
+		return 0;
+	const uint32 dwConnectIP = client->GetConnectIP();
+	return dwConnectIP != 0 ? dwConnectIP : client->GetIP();
+}
+
+bool CUploadQueue::ApplyUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick)
+{
+	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
+	if (dwCooldownIP == 0)
+		return false;
+
+	const std::map<uint32, ULONGLONG>::iterator itCooldown = m_uploadRetryCooldownByIP.find(dwCooldownIP);
+	if (itCooldown == m_uploadRetryCooldownByIP.end())
+		return false;
+
+	if (!ShouldApplyUploadRetryCooldown(client->GetFriendSlot(), dwCooldownIP, curTick, itCooldown->second)) {
+		if (itCooldown->second <= curTick)
+			m_uploadRetryCooldownByIP.erase(itCooldown);
+		return false;
+	}
+
+	client->SetSlowUploadCooldownUntil(itCooldown->second);
+	return true;
+}
+
+void CUploadQueue::SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil)
+{
+	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
+	if (ShouldApplyUploadRetryCooldown(client != NULL && client->GetFriendSlot(), dwCooldownIP, ::GetTickCount64(), ullCooldownUntil))
+		m_uploadRetryCooldownByIP[dwCooldownIP] = ullCooldownUntil;
+}
+
+void CUploadQueue::PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick)
+{
+	for (std::map<uint32, ULONGLONG>::iterator itCooldown = m_uploadRetryCooldownByIP.begin(); itCooldown != m_uploadRetryCooldownByIP.end();) {
+		if (itCooldown->second <= curTick)
+			itCooldown = m_uploadRetryCooldownByIP.erase(itCooldown);
+		else
+			++itCooldown;
+	}
+}
+
 bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG curTick, CString *pstrReason)
 {
 	if (client == NULL || client->GetUploadState() != US_UPLOADING)
@@ -777,7 +827,9 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 	if (!bShouldRecycleIdle && !bShouldRecycleStalled)
 		return false;
 
-	client->SetSlowUploadCooldownUntil(curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds()));
+	const ULONGLONG ullCooldownUntil = curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+	client->SetSlowUploadCooldownUntil(ullCooldownUntil);
+	SetUploadRetryCooldown(client, ullCooldownUntil);
 	if (thePrefs.GetLogUlDlEvents()) {
 		AddDebugLogLine(DLP_LOW, false,
 			bShouldRecycleIdle
@@ -962,6 +1014,7 @@ void CUploadQueue::AddClientToQueue(CUpDownClient *client, bool bIgnoreTimelimit
 		client->SendPacket(packet);
 		return;
 	}
+	ApplyUploadRetryCooldown(client, ::GetTickCount64());
 	if (client->IsInSlowUploadCooldown()) {
 		if (thePrefs.GetLogUlDlEvents())
 			AddDebugLogLine(DLP_LOW, false, _T("%s: Broadband direct admission blocked by slow-upload cooldown."), client->GetUserName());
@@ -1005,6 +1058,8 @@ float CUploadQueue::GetAverageCombinedFilePrioAndCredit()
 				RemoveStaleWaitingClient(pos2);
 				continue;
 			}
+			if (!IsUploadQueueAdmissionCandidate(ApplyUploadRetryCooldown(cur_client, curTick) || cur_client->IsInSlowUploadCooldown()))
+				continue;
 			sum += cur_client->GetCombinedFilePrioAndCredit();
 			++count;
 		}
@@ -1177,7 +1232,9 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 				// keep winning queue selection and consume replacement attempts while
 				// broadband upload stays underfilled. Reusing the local upload cooldown
 				// suppresses that peer's score without changing protocol messages.
-				client->SetSlowUploadCooldownUntil(::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds()));
+				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+				client->SetSlowUploadCooldownUntil(ullCooldownUntil);
+				SetUploadRetryCooldown(client, ullCooldownUntil);
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after a short failed upload slot."), client->GetUserName());
 			}
@@ -1247,6 +1304,7 @@ void CUploadQueue::RemoveStaleWaitingClient(POSITION pos)
 void CUploadQueue::UpdateMaxClientScore()
 {
 	m_imaxscore = 0;
+	const ULONGLONG curTick = ::GetTickCount64();
 	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
 		POSITION pos2 = pos;
 		CUpDownClient *cur_client = waitinglist.GetNext(pos);
@@ -1254,6 +1312,8 @@ void CUploadQueue::UpdateMaxClientScore()
 			RemoveStaleWaitingClient(pos2);
 			continue;
 		}
+		if (!IsUploadQueueAdmissionCandidate(ApplyUploadRetryCooldown(cur_client, curTick) || cur_client->IsInSlowUploadCooldown()))
+			continue;
 		uint32 score = cur_client->GetScore(true, false);
 		UpdateUploadQueueMaxScore(m_imaxscore, score);
 	}
@@ -1306,7 +1366,9 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 		if (!HasCompletedSlowUploadWarmup(client)) {
 			client->ResetSlowUploadTracking();
 		} else if (client->ShouldRecycleSlowUpload(SEC2MS(thePrefs.GetSlowUploadGraceSeconds()), SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()))) {
-			client->SetSlowUploadCooldownUntil(::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds()));
+			const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+			client->SetSlowUploadCooldownUntil(ullCooldownUntil);
+			SetUploadRetryCooldown(client, ullCooldownUntil);
 			if (thePrefs.GetLogUlDlEvents()) {
 				if (client->GetAccumulatedZeroUploadMs() >= SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()))
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled due to zero upload during broadband underfill."), client->GetUserName());
@@ -1403,6 +1465,7 @@ UINT CUploadQueue::GetWaitingPosition(CUpDownClient *client)
 {
 	if (!IsLiveUploadQueueClient(client) || !IsOnUploadQueue(client))
 		return 0;
+	const ULONGLONG curTick = ::GetTickCount64();
 	UINT rank = 1;
 	UINT myscore = client->GetScore(false);
 	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
@@ -1412,6 +1475,8 @@ UINT CUploadQueue::GetWaitingPosition(CUpDownClient *client)
 			RemoveStaleWaitingClient(pos2);
 			continue;
 		}
+		if (cur_client != client && !IsUploadQueueAdmissionCandidate(ApplyUploadRetryCooldown(cur_client, curTick) || cur_client->IsInSlowUploadCooldown()))
+			continue;
 		rank = AddHigherUploadQueueScoreToRank(rank, cur_client->GetScore(false), myscore);
 	}
 
