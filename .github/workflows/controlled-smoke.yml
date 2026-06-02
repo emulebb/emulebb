@@ -47,21 +47,29 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
   smoke:
-    name: Package and smoke (x64)
+    name: Package and smoke (x64, ${{ matrix.runner.label }})
     needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        runner:
+          - label: windows-2022
+            summary: Windows Server 2022 hosted runner
+          - label: windows-2025-vs2026
+            summary: Windows Server 2025 hosted runner with VS 2026
     uses: emulebb/emulebb-build/.github/workflows/reusable-workspace-command.yml@main
     with:
       app_ref: ${{ github.sha }}
-      runs_on: windows-2022
+      runs_on: ${{ matrix.runner.label }}
       node_version: "24"
       timeout_minutes: 360
-      artifact_name: emulebb-controlled-smoke-${{ needs.prepare.outputs.package_version }}
+      artifact_name: emulebb-controlled-smoke-${{ needs.prepare.outputs.package_version }}-${{ matrix.runner.label }}
       artifact_path: |
         workspaces/workspace/state/release/emulebb-v${{ needs.prepare.outputs.package_version }}/**
         workspaces/workspace/state/test-reports/live-e2e-suite/**
         workspaces/workspace/state/test-artifacts/live-e2e-suite/**
         workspaces/workspace/state/build-logs/**
-      failure_artifact_name: emulebb-controlled-smoke-failure-${{ needs.prepare.outputs.short_sha }}
+      failure_artifact_name: emulebb-controlled-smoke-failure-${{ needs.prepare.outputs.short_sha }}-${{ matrix.runner.label }}
       failure_artifact_path: |
         workspaces/workspace/state/release/**
         workspaces/workspace/state/test-reports/live-e2e-suite/**
@@ -159,6 +167,7 @@ jobs:
           Run: ${RUN_URL}
 
           Coverage:
+          - Hosted runner matrix: windows-2022, windows-2025-vs2026
           - Release x64 eMuleBB package
           - Release x64 aMuTorrent package
           - Release x64 tracing harness build
@@ -221,7 +230,7 @@ jobs:
               `Package version: ${packageVersion}`,
               `Run: ${runUrl}`,
               "",
-              "This workflow covers package-release, package-amutorrent, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer.",
+              "This workflow covers package-release, package-amutorrent, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the hosted Windows runner matrix.",
             ].join("\n");
 
             if (existing) {
