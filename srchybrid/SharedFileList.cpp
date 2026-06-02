@@ -75,6 +75,7 @@ constexpr unsigned int kSharedHashUiDrainBatchMax = 100;
 constexpr ULONGLONG kSharedHashUiDrainBudgetMs = 25;
 constexpr ULONGLONG kMaxVisibleDuplicateSharedFileWarnings = 25;
 constexpr DWORD kFileHashJobGateSleepMs = 25;
+constexpr size_t kKadKeywordPublishFileLimit = 150;
 
 struct SFileHashJobGateEntry
 {
@@ -2651,9 +2652,15 @@ void CSharedFileList::Publish()
 						//This sets the filename into the search object so we can show it in the GUI.
 						pSearch->SetGUIName(pPubKw->GetKeyword());
 
-						//Add all file IDs which relate to the current keyword to be published
+						//Add the best ranked file IDs which relate to the current keyword to be published
 						const CSimpleKnownFileArray &aFiles = pPubKw->GetReferences();
-						uint32 count = 0;
+						struct KeywordPublishCandidate
+						{
+							CKnownFile *pFile;
+							SPublishFileRank rank;
+						};
+						std::vector<KeywordPublishCandidate> publishCandidates;
+						publishCandidates.reserve(static_cast<size_t>(aFiles.GetSize()));
 						for (int f = 0; f < aFiles.GetSize(); ++f) {
 							//Debug check to make sure things are working well.
 							ASSERT_VALID(aFiles[f]);
@@ -2664,15 +2671,32 @@ void CSharedFileList::Publish()
 							//Only publish complete files as someone else should have the full file to publish these keywords.
 							//As a side effect, this may help reduce people finding incomplete files in the network.
 							if (!aFiles[f]->IsPartFile() && IsFilePtrInList(aFiles[f])) {
-								//We only publish up to 150 files per keyword, then rotate the list.
-								if (++count >= 150) {
-									pPubKw->RotateReferences(f);
-									break;
-								}
-								pSearch->AddFileID(Kademlia::CUInt128(aFiles[f]->GetFileHash()));
+								KeywordPublishCandidate candidate = {
+									aFiles[f],
+									MakePublishFileRank(aFiles[f], GetRealPrio(aFiles[f]->GetUpPriority()), 0, static_cast<size_t>(f))
+								};
+								publishCandidates.push_back(candidate);
 							}
 						}
 
+						size_t uPublishCount = publishCandidates.size();
+						const auto isBetterKeywordCandidate = [](const KeywordPublishCandidate &left, const KeywordPublishCandidate &right) {
+							return IsPublishFileRankBetter(left.rank, right.rank);
+						};
+						if (uPublishCount > kKadKeywordPublishFileLimit) {
+							uPublishCount = kKadKeywordPublishFileLimit;
+							std::partial_sort(
+								publishCandidates.begin(),
+								publishCandidates.begin() + uPublishCount,
+								publishCandidates.end(),
+								isBetterKeywordCandidate);
+						} else {
+							std::sort(publishCandidates.begin(), publishCandidates.end(), isBetterKeywordCandidate);
+						}
+						for (size_t i = 0; i < uPublishCount; ++i)
+							pSearch->AddFileID(Kademlia::CUInt128(publishCandidates[i].pFile->GetFileHash()));
+
+						const uint32 count = static_cast<uint32>(uPublishCount);
 						if (count) {
 							//Start our keyword publish
 							pPubKw->SetNextPublishTime(tNow + KADEMLIAREPUBLISHTIMEK);
