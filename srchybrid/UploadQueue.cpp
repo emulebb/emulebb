@@ -340,6 +340,95 @@ void CUploadQueue::UpdateActiveClientsInfo(ULONGLONG curTick)
 	}
 }
 
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
+{
+	static ULONGLONG s_ullLastUploadSlotInstrumentationLogTick = 0;
+	if (s_ullLastUploadSlotInstrumentationLogTick != 0 && curTick < s_ullLastUploadSlotInstrumentationLogTick + SEC2MS(10))
+		return;
+	s_ullLastUploadSlotInstrumentationLogTick = curTick;
+
+	const INT_PTR iThrottlerSlots = theApp.uploadBandwidthThrottler != NULL
+		? theApp.uploadBandwidthThrottler->GetStandardListSize()
+		: -1;
+	const ULONGLONG ullUnderfillAgeMs = m_ullBroadbandUnderfillSince != 0 && curTick >= m_ullBroadbandUnderfillSince
+		? curTick - m_ullBroadbandUnderfillSince
+		: 0;
+
+	AddDebugLogLine(DLP_DEFAULT, false,
+		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
+		uploadinglist.GetCount(),
+		m_retiredUploadingList.GetCount(),
+		waitinglist.GetCount(),
+		iThrottlerSlots,
+		m_MaxActiveClientsShortTime,
+		GetBroadbandSlotCap(),
+		GetConfiguredUploadBudgetBytesPerSec(),
+		GetTargetClientDataRateBroadband(),
+		GetToNetworkDatarate(),
+		GetDatarate(),
+		static_cast<UINT>(IsBroadbandUploadUnderfilled()),
+		static_cast<uint64>(ullUnderfillAgeMs),
+		static_cast<UINT>(ShouldTrackSlowUploadSlots()));
+
+	UINT uSlot = 0;
+	for (POSITION pos = uploadinglist.GetHeadPosition(); pos != NULL;) {
+		++uSlot;
+		const UploadingToClient_Struct *pCurClientStruct = uploadinglist.GetNext(pos);
+		CUpDownClient *client = pCurClientStruct != NULL ? pCurClientStruct->m_pClient : NULL;
+		if (!IsLiveUploadQueueClient(client)) {
+			AddDebugLogLine(DLP_DEFAULT, false,
+				_T("UploadSlotInstrumentation: slot=%u live=0 client=%p struct=%p retired=%u pendingIO=%ld"),
+				uSlot,
+				static_cast<const void*>(client),
+				static_cast<const void*>(pCurClientStruct),
+				pCurClientStruct != NULL ? static_cast<UINT>(pCurClientStruct->m_bRetired) : 0,
+				pCurClientStruct != NULL ? pCurClientStruct->m_nPendingIOBlocks.load() : 0L);
+			continue;
+		}
+
+		INT_PTR iReqBlocks = 0;
+		INT_PTR iDoneBlocks = 0;
+		LONG nPendingIOBlocks = 0;
+		if (pCurClientStruct != NULL) {
+			CSingleLock lockBlockLists(&const_cast<UploadingToClient_Struct*>(pCurClientStruct)->m_csBlockListsLock, TRUE);
+			ASSERT(lockBlockLists.IsLocked());
+			iReqBlocks = pCurClientStruct->m_BlockRequests_queue.GetCount();
+			iDoneBlocks = pCurClientStruct->m_DoneBlocks_list.GetCount();
+			nPendingIOBlocks = pCurClientStruct->m_nPendingIOBlocks.load();
+		}
+
+		CEMSocket *sock = client->GetFileUploadSocket(false);
+		const INT_PTR iSocketQueue = sock != NULL ? sock->DbgGetStdQueueCount() : -1;
+		const bool bSocketConnected = sock != NULL && sock->IsConnected();
+		const ULONGLONG ullAgeMs = client->GetUpStartTimeDelay();
+
+		AddDebugLogLine(DLP_DEFAULT, false,
+			_T("UploadSlotInstrumentation: slot=%u live=1 client=%s state=%s socket=%p socketConnected=%u handshake=%u rateBytesPerSec=%u ageMs=%I64u sessionUp=%s queuePayload=%s queueAdded=%s payloadInBuffer=%s reqBlocks=%Id doneBlocks=%Id pendingIO=%ld socketStdQueue=%Id slowMs=%I64u zeroMs=%I64u cooldownMs=%I64u fileKnown=%u"),
+			uSlot,
+			(LPCTSTR)client->DbgGetClientInfo(),
+			client->DbgGetUploadState(),
+			static_cast<void*>(sock),
+			static_cast<UINT>(bSocketConnected),
+			static_cast<UINT>(client->CheckHandshakeFinished()),
+			client->GetUploadDatarate(),
+			static_cast<uint64>(ullAgeMs),
+			(LPCTSTR)CastItoXBytes(client->GetSessionUp()),
+			(LPCTSTR)CastItoXBytes(client->GetQueueSessionPayloadUp()),
+			(LPCTSTR)CastItoXBytes(client->GetQueueSessionUploadAdded()),
+			(LPCTSTR)CastItoXBytes(client->GetPayloadInBuffer()),
+			iReqBlocks,
+			iDoneBlocks,
+			nPendingIOBlocks,
+			iSocketQueue,
+			static_cast<uint64>(client->GetAccumulatedSlowUploadMs()),
+			static_cast<uint64>(client->GetAccumulatedZeroUploadMs()),
+			static_cast<uint64>(client->GetSlowUploadCooldownRemaining()),
+			static_cast<UINT>(theApp.sharedfiles->GetFileByID(client->GetUploadFileID()) != NULL));
+	}
+}
+#endif
+
 /**
  * Maintenance method for the uploading slots. It adds and removes clients to the
  * uploading list. It also makes sure that all the uploading slots' Sockets
@@ -352,6 +441,9 @@ void CUploadQueue::Process()
 	const ULONGLONG curTick = ::GetTickCount64();
 	UpdateActiveClientsInfo(curTick);
 	UpdateBroadbandUnderfillState(curTick);
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+	LogUploadSlotInstrumentation(curTick);
+#endif
 
 	if (ForceNewClient())
 		// There's not enough open uploads. Open another one.

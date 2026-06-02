@@ -52,6 +52,51 @@ CBarShader CUpDownClient::s_UpStatusBar(16);
 
 namespace
 {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+void LogUploadReqBlockInstrumentation(
+	CUpDownClient *client,
+	LPCTSTR pszReason,
+	const Requested_Block_Struct *reqblock,
+	const UploadingToClient_Struct *pUploadingClientStruct,
+	INT_PTR iReqBlocks,
+	INT_PTR iDoneBlocks)
+{
+	ASSERT(client != NULL);
+	ASSERT(pszReason != NULL);
+	if (client == NULL || pszReason == NULL)
+		return;
+
+	CEMSocket *sock = client->GetFileUploadSocket(false);
+	const uint64 uStartOffset = reqblock != NULL ? reqblock->StartOffset : 0;
+	const uint64 uEndOffset = reqblock != NULL ? reqblock->EndOffset : 0;
+	const uint64 uLength = uEndOffset > uStartOffset ? uEndOffset - uStartOffset : 0;
+
+	AddDebugLogLine(DLP_DEFAULT, false,
+		_T("UploadSlotInstrumentation: reqblock reason=%s client=%s state=%s socket=%p socketConnected=%u handshake=%u rateBytesPerSec=%u ageMs=%I64u sessionUp=%s queuePayload=%s queueAdded=%s payloadInBuffer=%s requestPresent=%u start=%I64u end=%I64u length=%I64u reqBlocks=%Id doneBlocks=%Id pendingIO=%ld socketStdQueue=%Id fileKnown=%u"),
+		pszReason,
+		(LPCTSTR)client->DbgGetClientInfo(),
+		client->DbgGetUploadState(),
+		static_cast<void*>(sock),
+		static_cast<UINT>(sock != NULL && sock->IsConnected()),
+		static_cast<UINT>(client->CheckHandshakeFinished()),
+		client->GetUploadDatarate(),
+		static_cast<uint64>(client->GetUpStartTimeDelay()),
+		(LPCTSTR)CastItoXBytes(client->GetSessionUp()),
+		(LPCTSTR)CastItoXBytes(client->GetQueueSessionPayloadUp()),
+		(LPCTSTR)CastItoXBytes(client->GetQueueSessionUploadAdded()),
+		(LPCTSTR)CastItoXBytes(client->GetPayloadInBuffer()),
+		static_cast<UINT>(reqblock != NULL),
+		uStartOffset,
+		uEndOffset,
+		uLength,
+		iReqBlocks,
+		iDoneBlocks,
+		pUploadingClientStruct != NULL ? pUploadingClientStruct->m_nPendingIOBlocks.load() : 0L,
+		sock != NULL ? sock->DbgGetStdQueueCount() : -1,
+		static_cast<UINT>(reqblock != NULL && theApp.sharedfiles->GetFileByID(reqblock->FileID) != NULL));
+}
+#endif
+
 COLORREF BlendUploadBarColor(COLORREF crColor, COLORREF crTarget, UINT uColorWeight)
 {
 	const UINT uTargetWeight = 100U - min(uColorWeight, 100U);
@@ -378,6 +423,9 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 	if (reqblock != NULL) {
 		std::unique_ptr<Requested_Block_Struct> reqblockOwner(reqblock);
 		if (GetUploadState() != US_UPLOADING) {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+			LogUploadReqBlockInstrumentation(this, _T("reject-not-uploading"), reqblock, NULL, -1, -1);
+#endif
 			if (thePrefs.GetLogUlDlEvents())
 				AddDebugLogLine(DLP_LOW, false, _T("UploadClient: Client tried to add req block when not in upload slot! Prevented req blocks from being added. %s"), (LPCTSTR)DbgGetClientInfo());
 			return;
@@ -390,6 +438,9 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 			CKnownFile *pDownloadingFile = theApp.sharedfiles->GetFileByID(reqblock->FileID);
 			if (pDownloadingFile != NULL) {
 				if (!CCollection::HasCollectionExtention(pDownloadingFile->GetFileName()) || pDownloadingFile->GetFileSize() > (uint64)MAXPRIORITYCOLL_SIZE) {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+					LogUploadReqBlockInstrumentation(this, _T("reject-collection-slot-file-switch"), reqblock, NULL, -1, -1);
+#endif
 					AddDebugLogLine(DLP_HIGH, false, _T("UploadClient: Client tried to add req block for non-collection while having a collection slot! Prevented req blocks from being added. %s"), (LPCTSTR)DbgGetClientInfo());
 					return;
 				}
@@ -399,38 +450,59 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 
 		CKnownFile *srcfile = theApp.sharedfiles->GetFileByID(reqblock->FileID);
 		if (srcfile == NULL) {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+			LogUploadReqBlockInstrumentation(this, _T("reject-file-not-shared"), reqblock, NULL, -1, -1);
+#endif
 			DebugLogWarning(GetResString(IDS_ERR_REQ_FNF));
 			return;
 		}
 
 		UploadingToClient_Struct *pUploadingClientStruct = theApp.uploadqueue->GetUploadingClientStructByClient(this);
 		if (pUploadingClientStruct == NULL) {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+			LogUploadReqBlockInstrumentation(this, _T("reject-upload-struct-missing"), reqblock, NULL, -1, -1);
+#endif
 			DebugLogError(_T("AddReqBlock: Uploading client not found in Uploadlist, %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)FormatDisplayFileName(srcfile->GetFileName()));
 			return;
 		}
 
 		if (pUploadingClientStruct->m_bIOError) {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+			LogUploadReqBlockInstrumentation(this, _T("reject-pending-io-error"), reqblock, pUploadingClientStruct, -1, -1);
+#endif
 			DebugLogWarning(_T("AddReqBlock: Uploading client has pending IO Error, %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)FormatDisplayFileName(srcfile->GetFileName()));
 			return;
 		}
 
 		if (srcfile->IsPartFile() && !static_cast<CPartFile*>(srcfile)->IsCompleteBDSafe(reqblock->StartOffset, reqblock->EndOffset - 1)) {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+			LogUploadReqBlockInstrumentation(this, _T("reject-incomplete-local-block"), reqblock, pUploadingClientStruct, -1, -1);
+#endif
 			DebugLogWarning(_T("AddReqBlock: %s, %s"), (LPCTSTR)GetResString(IDS_ERR_INCOMPLETEBLOCK), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)FormatDisplayFileName(srcfile->GetFileName()));
 			return;
 		}
 
 		if (reqblock->StartOffset >= reqblock->EndOffset || reqblock->EndOffset > srcfile->GetFileSize()) {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+			LogUploadReqBlockInstrumentation(this, _T("reject-invalid-range"), reqblock, pUploadingClientStruct, -1, -1);
+#endif
 			DebugLogError(_T("AddReqBlock: Invalid Block requests (negative or bytes to read, read after EOF), %s, %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)FormatDisplayFileName(srcfile->GetFileName()));
 			return;
 		}
 
 		if (reqblock->EndOffset - reqblock->StartOffset > EMBLOCKSIZE * 3) {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+			LogUploadReqBlockInstrumentation(this, _T("reject-too-large"), reqblock, pUploadingClientStruct, -1, -1);
+#endif
 			DebugLogWarning(_T("AddReqBlock: %s, %s"), (LPCTSTR)GetResString(IDS_ERR_LARGEREQBLOCK), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)FormatDisplayFileName(srcfile->GetFileName()));
 			return;
 		}
 
 		CSingleLock lockBlockLists(&pUploadingClientStruct->m_csBlockListsLock, TRUE);
 		if (!lockBlockLists.IsLocked()) {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+			LogUploadReqBlockInstrumentation(this, _T("reject-block-list-lock-failed"), reqblock, pUploadingClientStruct, -1, -1);
+#endif
 			ASSERT(0);
 			return;
 		}
@@ -441,6 +513,9 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 				&& reqblock->EndOffset == cur_reqblock->EndOffset
 				&& md4equ(reqblock->FileID, cur_reqblock->FileID))
 			{
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+				LogUploadReqBlockInstrumentation(this, _T("reject-duplicate-done-block"), reqblock, pUploadingClientStruct, pUploadingClientStruct->m_BlockRequests_queue.GetCount(), pUploadingClientStruct->m_DoneBlocks_list.GetCount());
+#endif
 				return;
 			}
 		}
@@ -450,6 +525,9 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 				&& reqblock->EndOffset == cur_reqblock->EndOffset
 				&& md4equ(reqblock->FileID, cur_reqblock->FileID))
 			{
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+				LogUploadReqBlockInstrumentation(this, _T("reject-duplicate-queued-block"), reqblock, pUploadingClientStruct, pUploadingClientStruct->m_BlockRequests_queue.GetCount(), pUploadingClientStruct->m_DoneBlocks_list.GetCount());
+#endif
 				return;
 			}
 		}
@@ -460,9 +538,22 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 		pUploadingClientStruct->m_BlockRequests_queue.AddTail(reqblockOwner.get());
 		reqblockOwner.release();
 		dbgLastQueueCount = pUploadingClientStruct->m_BlockRequests_queue.GetCount();
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+		LogUploadReqBlockInstrumentation(this, _T("accept-queued-block"), pUploadingClientStruct->m_BlockRequests_queue.GetTail(), pUploadingClientStruct, pUploadingClientStruct->m_BlockRequests_queue.GetCount(), pUploadingClientStruct->m_DoneBlocks_list.GetCount());
+#endif
 		lockBlockLists.Unlock(); // not needed, just to make it visible
 	}
 	if (bSignalIOThread && theApp.m_pUploadDiskIOThread != NULL) {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+		if (reqblock == NULL) {
+			UploadingToClient_Struct *pUploadingClientStruct = theApp.uploadqueue->GetUploadingClientStructByClient(this);
+			if (pUploadingClientStruct != NULL) {
+				CSingleLock lockBlockLists(&pUploadingClientStruct->m_csBlockListsLock, TRUE);
+				LogUploadReqBlockInstrumentation(this, _T("request-packet-complete-signal"), NULL, pUploadingClientStruct, pUploadingClientStruct->m_BlockRequests_queue.GetCount(), pUploadingClientStruct->m_DoneBlocks_list.GetCount());
+			} else
+				LogUploadReqBlockInstrumentation(this, _T("request-packet-complete-signal-no-upload-struct"), NULL, NULL, -1, -1);
+		}
+#endif
 		/*DebugLog(_T("BlockRequest Packet received, we have currently %u waiting requests and %s data in buffer (%u in ready packets, %s in pending IO Disk read), socket busy: %s")
 			, dbgLastQueueCount
 			, (LPCTSTR)CastItoXBytes(GetQueueSessionUploadAdded() - (GetQueueSessionPayloadUp() + socket->GetSentPayloadSinceLastCall(false)), false, false, 2)

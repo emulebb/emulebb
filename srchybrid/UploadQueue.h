@@ -163,6 +163,9 @@ private:
 	void	UpdateMaxClientScore();
 	uint32	GetMaxClientScore() const						{ return m_imaxscore; }
 	void	UpdateActiveClientsInfo(ULONGLONG curTick);
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+	void	LogUploadSlotInstrumentation(ULONGLONG curTick) const;
+#endif
 	void	RetireUploadClientStruct(POSITION pos, UploadingToClient_Struct *pUploadClientStruct, CUpDownClient *pClient);
 	void	RetireStaleUploadClientStruct(POSITION pos, UploadingToClient_Struct *pUploadClientStruct);
 	void	ReclaimRetiredUploadClientStructs();

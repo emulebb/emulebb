@@ -58,6 +58,7 @@
     <EnableStartupProfiling Condition="'$(EnableStartupProfiling)'==''">false</EnableStartupProfiling>
     <StartupProfilingPreprocessorDefinition Condition="'$(EnableStartupProfiling)'=='true'">EMULEBB_ENABLE_STARTUP_PROFILING;</StartupProfilingPreprocessorDefinition>
     <PacketDiagnosticsPreprocessorDefinition Condition="'$(EnablePacketDiagnostics)'=='true'">EMULEBB_ENABLE_PACKET_DIAGNOSTICS;</PacketDiagnosticsPreprocessorDefinition>
+    <UploadSlotInstrumentationPreprocessorDefinition Condition="'$(EnableUploadSlotInstrumentation)'=='true'">EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION;</UploadSlotInstrumentationPreprocessorDefinition>
     <ExperimentalCoroutinePreprocessorDefinition Condition="'$(PlatformToolset)'=='v145'">_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS;</ExperimentalCoroutinePreprocessorDefinition>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
@@ -86,7 +87,7 @@
       <MultiProcessorCompilation Condition="'$(Platform)'=='ARM64'">false</MultiProcessorCompilation>
       <Optimization>Disabled</Optimization>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;$(PacketDiagnosticsPreprocessorDefinition)$(ExperimentalCoroutinePreprocessorDefinition)MBEDTLS_ALLOW_PRIVATE_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;$(PacketDiagnosticsPreprocessorDefinition)$(UploadSlotInstrumentationPreprocessorDefinition)$(ExperimentalCoroutinePreprocessorDefinition)MBEDTLS_ALLOW_PRIVATE_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
@@ -123,7 +124,7 @@
       <Optimization>MaxSpeed</Optimization>
       <OmitFramePointers>true</OmitFramePointers>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;NDEBUG;$(StartupProfilingPreprocessorDefinition)$(PacketDiagnosticsPreprocessorDefinition)$(ExperimentalCoroutinePreprocessorDefinition)MBEDTLS_ALLOW_PRIVATE_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;NDEBUG;$(StartupProfilingPreprocessorDefinition)$(PacketDiagnosticsPreprocessorDefinition)$(UploadSlotInstrumentationPreprocessorDefinition)$(ExperimentalCoroutinePreprocessorDefinition)MBEDTLS_ALLOW_PRIVATE_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
