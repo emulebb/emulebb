@@ -1164,6 +1164,23 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 				requestedFile->UpdatePartsInfo();
 
 			theApp.clientlist->AddTrackClient(client); // Keep track of this client
+			const bool bDisconnectedRemoval = pszReason != NULL
+				&& (_tcsstr(pszReason, _T("CUpDownClient::Disconnected:")) != NULL
+					|| _tcsstr(pszReason, _T("Remote client cancelled transfer")) != NULL);
+			if (ShouldCooldownShortFailedUploadSlot(
+					bDisconnectedRemoval,
+					client->GetFriendSlot(),
+					client->GetUpStartTimeDelay(),
+					client->GetQueueSessionPayloadUp()))
+			{
+				// WHY: a peer which repeatedly disconnects seconds after admission can
+				// keep winning queue selection and consume replacement attempts while
+				// broadband upload stays underfilled. Reusing the local upload cooldown
+				// suppresses that peer's score without changing protocol messages.
+				client->SetSlowUploadCooldownUntil(::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds()));
+				if (thePrefs.GetLogUlDlEvents())
+					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after a short failed upload slot."), client->GetUserName());
+			}
 			client->ResetSlowUploadTracking();
 			client->SetUploadState(US_NONE);
 			client->SetCollectionUploadSlot(false);

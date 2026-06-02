@@ -9,6 +9,8 @@
 inline constexpr std::uint32_t kUploadTimerSlowLoopThresholdMs = 100u;
 inline constexpr std::uint64_t kRetiredUploadEntryPendingIoWarningMs = 30000u;
 inline constexpr std::uint64_t kRetiredUploadEntryPendingIoWarningRepeatMs = 30000u;
+inline constexpr std::uint64_t kShortFailedUploadCooldownMaxAgeMs = 30000u;
+inline constexpr std::uint64_t kShortFailedUploadCooldownMaxPayloadBytes = 1024u * 1024u;
 
 enum UploadQueueEntryAccessState
 {
@@ -131,4 +133,18 @@ inline bool ShouldRecycleStalledBroadbandUploadSlot(
 		&& iPendingIOBlocks == 0
 		&& (ullPayloadInBuffer > 0 || iRequestBlocks > 0 || iSocketQueueEntries > 0)
 		&& ullAccumulatedZeroUploadMs >= ullZeroGraceMs;
+}
+
+inline bool ShouldCooldownShortFailedUploadSlot(
+	bool bDisconnectedRemoval,
+	bool bFriendSlot,
+	std::uint64_t ullSessionAgeMs,
+	std::uint64_t ullQueueSessionPayloadBytes,
+	std::uint64_t ullMaxAgeMs = kShortFailedUploadCooldownMaxAgeMs,
+	std::uint64_t ullMaxPayloadBytes = kShortFailedUploadCooldownMaxPayloadBytes)
+{
+	return bDisconnectedRemoval
+		&& !bFriendSlot
+		&& ullSessionAgeMs <= ullMaxAgeMs
+		&& ullQueueSessionPayloadBytes <= ullMaxPayloadBytes;
 }
