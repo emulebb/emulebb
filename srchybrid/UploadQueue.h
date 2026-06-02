@@ -159,6 +159,7 @@ private:
 	/** Returns whether a slot has aged enough to be judged for broadband slow-slot recycling. */
 	bool	HasCompletedSlowUploadWarmup(const CUpDownClient *client) const;
 	uint32	GetSlowUploadRateThreshold() const;
+	bool	ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG curTick, CString *pstrReason);
 	bool	ShouldTrackSlowUploadSlots() const;
 	void	UpdateMaxClientScore();
 	uint32	GetMaxClientScore() const						{ return m_imaxscore; }

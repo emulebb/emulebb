@@ -86,3 +86,26 @@ inline bool ShouldCountSlowUploadTimerLoop(std::uint32_t uDurationMs, std::uint3
 {
 	return uSlowThresholdMs > 0 && uDurationMs > uSlowThresholdMs;
 }
+
+inline bool ShouldRecycleIdleBroadbandUploadSlot(
+	bool bSustainedUnderfill,
+	bool bWarmupComplete,
+	bool bFriendSlot,
+	std::uint32_t uRateBytesPerSec,
+	std::uint64_t ullPayloadInBuffer,
+	std::int64_t iRequestBlocks,
+	std::int64_t iPendingIOBlocks,
+	std::int64_t iSocketQueueEntries,
+	std::uint64_t ullAccumulatedZeroUploadMs,
+	std::uint64_t ullZeroGraceMs)
+{
+	return bSustainedUnderfill
+		&& bWarmupComplete
+		&& !bFriendSlot
+		&& uRateBytesPerSec == 0
+		&& ullPayloadInBuffer == 0
+		&& iRequestBlocks == 0
+		&& iPendingIOBlocks == 0
+		&& iSocketQueueEntries == 0
+		&& ullAccumulatedZeroUploadMs >= ullZeroGraceMs;
+}

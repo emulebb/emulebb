@@ -682,6 +682,69 @@ bool CUploadQueue::ShouldTrackSlowUploadSlots() const
 	return HasSustainedBroadbandUnderfill(::GetTickCount64());
 }
 
+bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG curTick, CString *pstrReason)
+{
+	if (client == NULL || client->GetUploadState() != US_UPLOADING)
+		return false;
+	if (client->GetFriendSlot())
+		return false;
+
+	if (!HasSustainedBroadbandUnderfill(curTick) || !HasCompletedSlowUploadWarmup(client)) {
+		client->ResetSlowUploadTracking();
+		return false;
+	}
+
+	UploadingToClient_Struct *pUploadingClientStruct = GetUploadingClientStructByClient(client);
+	if (pUploadingClientStruct == NULL) {
+		client->ResetSlowUploadTracking();
+		return false;
+	}
+
+	INT_PTR iReqBlocks = 0;
+	LONG nPendingIOBlocks = 0;
+	{
+		CSingleLock lockBlockLists(&pUploadingClientStruct->m_csBlockListsLock, TRUE);
+		ASSERT(lockBlockLists.IsLocked());
+		iReqBlocks = pUploadingClientStruct->m_BlockRequests_queue.GetCount();
+		nPendingIOBlocks = pUploadingClientStruct->m_nPendingIOBlocks.load();
+	}
+
+	CEMSocket *sock = client->GetFileUploadSocket(false);
+	const INT_PTR iSocketQueue = sock != NULL ? sock->DbgGetStdQueueCount() : -1;
+	const bool bLocalSendPipelineIdle = client->GetUploadDatarate() == 0
+		&& client->GetPayloadInBuffer() == 0
+		&& iReqBlocks == 0
+		&& nPendingIOBlocks == 0
+		&& iSocketQueue == 0;
+	if (bLocalSendPipelineIdle)
+		client->UpdateSlowUploadTracking(curTick, GetSlowUploadRateThreshold());
+	else
+		client->ResetSlowUploadTracking();
+
+	if (!ShouldRecycleIdleBroadbandUploadSlot(
+			true,
+			true,
+			false,
+			client->GetUploadDatarate(),
+			client->GetPayloadInBuffer(),
+			iReqBlocks,
+			nPendingIOBlocks,
+			iSocketQueue,
+			client->GetAccumulatedZeroUploadMs(),
+			SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds())))
+	{
+		return false;
+	}
+
+	client->SetSlowUploadCooldownUntil(curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds()));
+	if (thePrefs.GetLogUlDlEvents())
+		AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled because the peer stopped requesting parts during broadband underfill."), client->GetUserName());
+	if (pstrReason != NULL)
+		*pstrReason = _T("Broadband idle no-request recycle");
+	client->ResetSlowUploadTracking();
+	return true;
+}
+
 CUpDownClient* CUploadQueue::GetWaitingClientByIP_UDP(uint32 dwIP, uint16 nUDPPort, bool bIgnorePortOnUniqueIP, bool *pbMultipleIPs)
 {
 	CUpDownClient *pMatchingIPClient = NULL;
@@ -1140,10 +1203,16 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 	if (pbRequeue != NULL)
 		*pbRequeue = true;
 
-	//If we have nobody in the queue, do NOT remove the current uploads.
-	//This will save some bandwidth and some unneeded swapping from upload/queue/upload.
-	if (waitinglist.IsEmpty() || client->GetFriendSlot())
+	if (client->GetFriendSlot())
 		return false;
+
+	// WHY: the stock empty-queue guard keeps useful uploads stable, but on a
+	// broadband underfill it also lets a peer which stopped requesting parts
+	// hold a connected slot for minutes until the TCP-side timeout notices.
+	if (waitinglist.IsEmpty()) {
+		const ULONGLONG curTick = ::GetTickCount64();
+		return ShouldRecycleIdleUploadSlot(client, curTick, pstrReason);
+	}
 
 	// Friend slots remain the one deliberate scheduling exception on this
 	// branch. Collection handling is reduced to correctness checks only: reject
