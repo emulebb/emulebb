@@ -2878,16 +2878,19 @@ uint32 CemuleApp::GetPublicIP() const
 
 void CemuleApp::SetPublicIP(const uint32 dwIP)
 {
+	const uint32 dwOldPublicIP = m_dwPublicIP;
 	if (dwIP != 0) {
 		ASSERT(!::IsLowID(dwIP));
 
-		if (GetPublicIP() == 0)
-			AddDebugLogLine(DLP_VERYLOW, false, _T("My public IP Address is: %s"), (LPCTSTR)ipstr(dwIP));
+		if (dwOldPublicIP == 0)
+			Log(_T("Detected public IP address: %s"), (LPCTSTR)ipstr(dwIP));
+		else if (dwOldPublicIP != dwIP)
+			Log(_T("Updated public IP address: %s -> %s"), (LPCTSTR)ipstr(dwOldPublicIP), (LPCTSTR)ipstr(dwIP));
 		else if (Kademlia::CKademlia::IsConnected() && Kademlia::CKademlia::GetPrefs()->GetIPAddress())
 			if (htonl(Kademlia::CKademlia::GetIPAddress()) != dwIP)
-				AddDebugLogLine(DLP_DEFAULT, false, _T("Public IP Address reported by Kademlia (%s) differs from new-found (%s)"), (LPCTSTR)ipstr(htonl(Kademlia::CKademlia::GetIPAddress())), (LPCTSTR)ipstr(dwIP));
-	} else
-		AddDebugLogLine(DLP_VERYLOW, false, _T("Deleted public IP"));
+				LogWarning(_T("Public IP address reported by Kademlia (%s) differs from new-found (%s)"), (LPCTSTR)ipstr(htonl(Kademlia::CKademlia::GetIPAddress())), (LPCTSTR)ipstr(dwIP));
+	} else if (dwOldPublicIP != 0)
+		Log(_T("Cleared detected public IP address."));
 
 	if (dwIP != 0 && dwIP != m_dwPublicIP && serverlist != NULL) {
 		m_dwPublicIP = dwIP;

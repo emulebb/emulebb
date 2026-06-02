@@ -1178,6 +1178,40 @@ namespace
 		return strBaseUrl;
 	}
 
+	static CString FormatLogDefault(const CString& strValue, LPCTSTR pszDefault)
+	{
+		CString strText(strValue);
+		strText.Trim();
+		return strText.IsEmpty() ? CString(pszDefault) : strText;
+	}
+
+	static CString FormatActiveP2PBindAddress()
+	{
+		if (thePrefs.GetBindAddr() == NULL || *thePrefs.GetBindAddr() == _T('\0'))
+			return _T("default");
+		return thePrefs.GetBindAddr();
+	}
+
+	static void LogStartupNetworkGuardSummary()
+	{
+		AddLogLine(false, _T("Active P2P binding: interface=%s configuredAddress=%s resolvedAddress=%s resolveResult=%u"),
+			(LPCTSTR)FormatLogDefault(thePrefs.GetActiveBindInterfaceName(), _T("default")),
+			(LPCTSTR)FormatLogDefault(thePrefs.GetActiveConfiguredBindAddr(), _T("auto")),
+			(LPCTSTR)FormatActiveP2PBindAddress(),
+			static_cast<UINT>(thePrefs.GetActiveBindAddressResolveResult()));
+
+		CString strAllowedCidrs(thePrefs.GetVpnGuardAllowedPublicIpCidrs());
+		strAllowedCidrs.Trim();
+		const bool bHasAllowedCidrs = !strAllowedCidrs.IsEmpty();
+		const CString strAllowedCidrsDisplay(bHasAllowedCidrs ? strAllowedCidrs : CString(_T("none")));
+		AddLogLine(false, _T("VPN Guard: mode=%s allowedCIDRs=%s behavior=%s"),
+			(LPCTSTR)VpnGuardSeams::GetModePreferenceText(thePrefs.GetVpnGuardMode()),
+			(LPCTSTR)strAllowedCidrsDisplay,
+			bHasAllowedCidrs
+				? _T("block P2P startup/runtime when the detected public IP is outside the allowed ranges")
+				: _T("bind-interface guard only; public IP range check disabled"));
+	}
+
 	static bool LaunchBundledInteractiveScript(LPCTSTR pszScriptName, CString strArguments, ElevatedPowerShellAction::CLaunchResult &rResult)
 	{
 		if (!ElevatedPowerShellAction::PrepareBundledScript(_T("eMuleBB-Tools"), pszScriptName, CString(), rResult))
@@ -1989,6 +2023,7 @@ BOOL CemuleDlg::OnInitDialog()
 
 	// debug info
 	DebugLog(_T("Using '%s' as config directory"), (LPCTSTR)thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
+	LogStartupNetworkGuardSummary();
 
 	if (!thePrefs.HasCustomTaskIconColor())
 		SetTaskbarIconColor();
@@ -2413,15 +2448,18 @@ bool CemuleDlg::StartVpnGuardProbe(const CString& strPurpose, bool bRuntime)
 		const CString strReason = FormatVpnGuardPublicIpFailure(bRuntime, PublicIpProbe::SBoundPublicIpv4ProbeResult(), strError);
 		if (bRuntime)
 			ExitForVpnGuardFailure(strReason);
-		else
+		else {
 			theApp.BlockStartupNetworkingForSession(strReason);
+			LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
+		}
 		return false;
 	}
 	if (ranges.empty()) {
-		DebugLog(_T("VPN Guard %s public IP check skipped: no allowed CIDRs configured; bind-interface guard remains active for %s at %s"),
+		LPCTSTR pszLocalBind = thePrefs.GetBindAddr() != NULL ? thePrefs.GetBindAddr() : _T("default");
+		Log(_T("VPN Guard %s public IP check skipped: no allowed CIDRs configured; bind-interface guard remains active for interface=%s localBind=%s"),
 			(LPCTSTR)strPurpose,
 			(LPCTSTR)thePrefs.GetActiveBindInterfaceName(),
-			thePrefs.GetBindAddr());
+			pszLocalBind);
 		if (!bRuntime)
 			m_bVpnGuardStartupApproved = true;
 		return false;
@@ -2432,18 +2470,21 @@ bool CemuleDlg::StartVpnGuardProbe(const CString& strPurpose, bool bRuntime)
 		const CString strReason = FormatVpnGuardPublicIpFailure(bRuntime, PublicIpProbe::SBoundPublicIpv4ProbeResult(), strError);
 		if (bRuntime)
 			ExitForVpnGuardFailure(strReason);
-		else
+		else {
 			theApp.BlockStartupNetworkingForSession(strReason);
+			LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
+		}
 		return false;
 	}
 
 	m_bVpnGuardStartupProbePending = !bRuntime;
 	m_bVpnGuardRuntimeProbePending = bRuntime;
-	DebugLog(_T("VPN Guard %s check pending: allowedCIDRs=%s bindInterface=%s localBind=%s"),
+	LPCTSTR pszLocalBind = thePrefs.GetBindAddr() != NULL ? thePrefs.GetBindAddr() : _T("default");
+	Log(_T("VPN Guard %s public IP check pending: allowedCIDRs=%s bindInterface=%s localBind=%s"),
 		(LPCTSTR)strPurpose,
 		(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs(),
 		(LPCTSTR)thePrefs.GetActiveBindInterfaceName(),
-		thePrefs.GetBindAddr());
+		pszLocalBind);
 	return true;
 }
 
@@ -2500,7 +2541,7 @@ LRESULT CemuleDlg::OnVpnGuardProbeResult(WPARAM wParam, LPARAM lParam)
 	const bool bAllowed = bRangesLoaded
 		&& VpnGuardPolicySeams::IsProbeResultAllowed(bPublicIpCheckRequired, pResult->bSucceeded, bPublicIpAllowed);
 	if (bAllowed) {
-		DebugLog(_T("VPN Guard %s check passed: provider=%s publicIp=%S allowedCIDRs=%s"),
+		Log(_T("VPN Guard %s public IP check passed: provider=%s publicIp=%S allowedCIDRs=%s"),
 			(LPCTSTR)pResult->strPurpose,
 			(LPCTSTR)pResult->strProviderUrl,
 			pResult->strPublicAddress.GetString(),
@@ -2791,6 +2832,12 @@ CString CemuleDlg::GetServerInfoText()
 
 void CemuleDlg::AddServerMessageLine(UINT uFlags, LPCTSTR pszLine)
 {
+	if (pszLine == NULL)
+		return;
+	CString strTrimmedLine(pszLine);
+	strTrimmedLine.Trim();
+	if (strTrimmedLine.IsEmpty())
+		return;
 	CString strMsgLine(pszLine);
 	strMsgLine += _T('\n');
 	if ((uFlags & LOGMSGTYPEMASK) == LOG_INFO)

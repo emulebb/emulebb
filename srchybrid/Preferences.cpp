@@ -193,31 +193,34 @@ static void LogBindAddressResolution(LPCTSTR pszBindingName
 	switch (eResult) {
 	case BARR_Default:
 		if (strInterfaceName.IsEmpty() && strConfiguredAddress.IsEmpty())
-			DebugLog(_T("%s binding uses the default interface selection"), pszBindingName);
+			Log(_T("%s binding uses the default interface selection"), pszBindingName);
 		break;
 	case BARR_Resolved:
 		if (!strResolvedAddress.IsEmpty())
-			DebugLog(_T("%s binding resolved to %s"), pszBindingName, (LPCTSTR)strResolvedAddress);
+			Log(_T("%s binding resolved to %s (interface=%s, configuredAddress=%s)"), pszBindingName
+				, (LPCTSTR)strResolvedAddress
+				, strInterfaceName.IsEmpty() ? _T("default") : (LPCTSTR)strInterfaceName
+				, strConfiguredAddress.IsEmpty() ? _T("auto") : (LPCTSTR)strConfiguredAddress);
 		break;
 	case BARR_InterfaceNotFound:
-		DebugLogWarning(_T("%s binding interface not found; using the default interface selection instead (%s)"), pszBindingName
+		LogWarning(_T("%s binding interface not found; using the default interface selection instead (%s)"), pszBindingName
 			, (LPCTSTR)strInterfaceName);
 		break;
 	case BARR_InterfaceNameAmbiguous:
-		DebugLogWarning(_T("%s binding interface name is ambiguous across multiple live adapters; using the default interface selection instead (%s)"), pszBindingName
+		LogWarning(_T("%s binding interface name is ambiguous across multiple live adapters; using the default interface selection instead (%s)"), pszBindingName
 			, (LPCTSTR)strInterfaceName);
 		break;
 	case BARR_InterfaceHasNoAddress:
-		DebugLogWarning(_T("%s binding interface has no usable IPv4 address; using the default interface selection instead (%s)"), pszBindingName
+		LogWarning(_T("%s binding interface has no usable IPv4 address; using the default interface selection instead (%s)"), pszBindingName
 			, (LPCTSTR)strInterfaceName);
 		break;
 	case BARR_AddressNotFoundOnInterface:
-		DebugLogWarning(_T("%s binding address %s was not found on interface %s; using the default interface selection instead"), pszBindingName
+		LogWarning(_T("%s binding address %s was not found on interface %s; using the default interface selection instead"), pszBindingName
 			, (LPCTSTR)strConfiguredAddress
 			, (LPCTSTR)strInterfaceName);
 		break;
 	case BARR_AddressNotFound:
-		DebugLogWarning(_T("%s binding address %s is no longer present on any live interface; using the default interface selection instead"), pszBindingName
+		LogWarning(_T("%s binding address %s is no longer present on any live interface; using the default interface selection instead"), pszBindingName
 			, (LPCTSTR)strConfiguredAddress);
 		break;
 	default:

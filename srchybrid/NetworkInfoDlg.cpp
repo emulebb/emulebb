@@ -336,10 +336,10 @@ void CreateNetworkInfo(CRichEditCtrlX &rCtrl, CHARFORMAT &rcfDef, CHARFORMAT &rc
 		sTemp.Format(_T("%d %s"), static_cast<int>(theApp.webserver->GetSessionCount()), (LPCTSTR)GetResString(IDS_ACTSESSIONS));
 		rCtrl << _T("\t") << sTemp << _T("\r\n"); //count
 
-		if (thePrefs.GetYourHostname().IsEmpty() || thePrefs.GetYourHostname().Find(_T('.')) < 0)
-			sTemp = ipstr(theApp.serverconnect->GetLocalIP());
-		else
-			sTemp = thePrefs.GetYourHostname();
+		sTemp = thePrefs.GetWebBindAddr();
+		sTemp.Trim();
+		if (sTemp.IsEmpty() || sTemp == _T("0.0.0.0"))
+			sTemp = _T("127.0.0.1");
 		rCtrl << _T("URL:\t") << (thePrefs.GetWebUseHttps() ? _T("https://") : _T("http://"));
 		rCtrl << sTemp << _T(":") << thePrefs.GetWSPort() << _T("/\r\n"); //web interface host name
 	}
