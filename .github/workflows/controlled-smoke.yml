@@ -54,9 +54,7 @@ jobs:
       matrix:
         runner:
           - label: windows-2022
-            summary: Windows Server 2022 hosted runner
-          - label: windows-2025-vs2026
-            summary: Windows Server 2025 hosted runner with VS 2026
+            summary: Windows Server 2022 hosted runner with v143 ATL/MFC
     uses: emulebb/emulebb-build/.github/workflows/reusable-workspace-command.yml@main
     with:
       app_ref: ${{ github.sha }}
@@ -235,7 +233,7 @@ jobs:
           Run: ${RUN_URL}
 
           Coverage:
-          - Hosted runner matrix: windows-2022, windows-2025-vs2026
+          - Hosted runner: windows-2022 with v143 ATL/MFC policy
           - Release x64 eMuleBB package
           - Release x64 aMuTorrent package
           - Release x64 tracing harness build
@@ -298,7 +296,7 @@ jobs:
               `Package version: ${packageVersion}`,
               `Run: ${runUrl}`,
               "",
-              "This workflow covers package-release, package-amutorrent, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the hosted Windows runner matrix.",
+              "This workflow covers package-release, package-amutorrent, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC policy.",
             ].join("\n");
 
             if (existing) {
