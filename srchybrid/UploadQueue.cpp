@@ -272,6 +272,17 @@ bool CUploadQueue::AddUpNextClient(LPCTSTR pszReason, CUpDownClient *directadd)
 	if (!newclient->socket || !newclient->socket->IsConnected() || !newclient->CheckHandshakeFinished()) {
 		newclient->SetUploadState(US_CONNECTING);
 		if (!newclient->TryToConnect(true)) {
+			if (ShouldCooldownFailedUploadAdmission(true, newclient->GetFriendSlot(), GetUploadRetryCooldownIP(newclient))) {
+				// WHY: a peer whose upload admission cannot even establish the
+				// upload connection can repeatedly consume broadband slot-open
+				// attempts. Keep the suppression local and temporary by reusing
+				// the upload retry cooldown keyed by peer IP.
+				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+				newclient->SetSlowUploadCooldownUntil(ullCooldownUntil);
+				SetUploadRetryCooldown(newclient, ullCooldownUntil);
+				if (thePrefs.GetLogUlDlEvents())
+					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after failed upload admission."), newclient->GetUserName());
+			}
 			UpDownClientDeleteSeams::AssertReadyToDelete(newclient, _T("CUploadQueue::AddUpNextClient TryToConnect"));
 			delete newclient;
 			return false;

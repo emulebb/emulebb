@@ -110,6 +110,16 @@ inline bool ShouldApplyUploadRetryCooldown(bool bFriendSlot, std::uint32_t uPeer
 		&& ullCooldownUntil > ullCurrentTick;
 }
 
+/**
+ * @brief Reports whether a failed upload admission should seed retry cooldown.
+ */
+inline bool ShouldCooldownFailedUploadAdmission(bool bConnectionAttemptFailed, bool bFriendSlot, std::uint32_t uPeerIP)
+{
+	return bConnectionAttemptFailed
+		&& !bFriendSlot
+		&& uPeerIP != 0;
+}
+
 inline bool ShouldCountSlowUploadTimerLoop(std::uint32_t uDurationMs, std::uint32_t uSlowThresholdMs = kUploadTimerSlowLoopThresholdMs)
 {
 	return uSlowThresholdMs > 0 && uDurationMs > uSlowThresholdMs;
