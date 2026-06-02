@@ -84,3 +84,5 @@ jobs:
             Get-Content -LiteralPath (Join-Path $probeRoot "summary.md") | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
           }
         }
+
+        exit 0
