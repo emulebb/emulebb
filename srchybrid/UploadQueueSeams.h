@@ -112,11 +112,16 @@ inline bool ShouldRecycleIdleBroadbandUploadSlot(
 		&& ullAccumulatedZeroUploadMs >= ullZeroGraceMs;
 }
 
+inline bool HasStalledUploadReplacementPressure(bool bHasWaitingClients, std::int64_t iUploadSlots, std::int64_t iSoftMaxUploadSlots)
+{
+	return bHasWaitingClients || iUploadSlots < iSoftMaxUploadSlots;
+}
+
 inline bool ShouldRecycleStalledBroadbandUploadSlot(
 	bool bSustainedUnderfill,
 	bool bWarmupComplete,
 	bool bFriendSlot,
-	bool bHasWaitingClients,
+	bool bCanReplaceOrKeepOpenCapacity,
 	std::uint32_t uRateBytesPerSec,
 	std::uint64_t ullPayloadInBuffer,
 	std::int64_t iRequestBlocks,
@@ -128,7 +133,7 @@ inline bool ShouldRecycleStalledBroadbandUploadSlot(
 	return bSustainedUnderfill
 		&& bWarmupComplete
 		&& !bFriendSlot
-		&& bHasWaitingClients
+		&& bCanReplaceOrKeepOpenCapacity
 		&& uRateBytesPerSec == 0
 		&& iPendingIOBlocks == 0
 		&& (ullPayloadInBuffer > 0 || iRequestBlocks > 0 || iSocketQueueEntries > 0)

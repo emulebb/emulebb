@@ -745,7 +745,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 	// WHY: under sustained broadband underfill, a zero-rate slot with either no
 	// local work or unsent queued work is not contributing capacity. Keep disk IO
 	// in flight out of this path, but let the normal zero-rate grace protect
-	// short socket stalls before replacing the peer.
+	// short socket stalls before replacing the peer or reopening admission room.
 	if (bLocalSendPipelineIdle || bLocalSendPipelineStalled)
 		client->UpdateSlowUploadTracking(curTick, GetSlowUploadRateThreshold());
 	else
@@ -766,7 +766,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		true,
 		true,
 		false,
-		!waitinglist.IsEmpty(),
+		HasStalledUploadReplacementPressure(!waitinglist.IsEmpty(), uploadinglist.GetCount(), GetSoftMaxUploadSlots()),
 		client->GetUploadDatarate(),
 		client->GetPayloadInBuffer(),
 		iReqBlocks,
