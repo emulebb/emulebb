@@ -11,13 +11,18 @@ while keeping protocol compatibility explicit.
 
 ## Download And Install
 
-For most users, use the ZIP package:
+Choose one install path:
+
+### Basic ZIP Install
+
+Use this path for normal desktop use, RC testing, and nightlies.
 
 1. Open <https://github.com/emulebb/emulebb/releases>.
 2. Download the intended eMuleBB ZIP. For RC1, use
-   `emulebb-0.7.3-rc.1-x64.zip` once it is published.
+   `emulebb-0.7.3-rc.1-x64.zip` once it is published, or use the nightly asset
+   that is actually present on GitHub Releases.
 3. Extract the ZIP into a new version-specific folder, for example
-   `eMuleBB-0.7.3-rc.1`.
+   `C:\Apps\eMuleBB\0.7.3-rc.1`.
 4. Run `emulebb.exe`.
 
 Keep each version in its own application folder. For release candidates,
@@ -31,6 +36,29 @@ emulebb.exe -c "$env:TEMP\eMuleBB-TestProfile"
 Use the x64 package for ordinary Windows desktop installs. Use ARM64 only for
 ARM64 Windows testing.
 
+### Full Suite PowerShell Install
+
+Use this path only when you want the bundled suite installer flow instead of
+only unpacking and running the desktop app. Run it after the matching release
+assets exist:
+
+```powershell
+$version = '0.7.3-rc.1'
+$releaseUrl = "https://github.com/emulebb/emulebb/releases/download/emulebb-v$version"
+$workRoot = Join-Path $env:TEMP "emulebb-suite-$version"
+New-Item -ItemType Directory -Force -Path $workRoot | Out-Null
+$scriptPath = Join-Path $workRoot 'Bootstrap-eMuleBBSuite.ps1'
+iwr -UseBasicParsing "$releaseUrl/Bootstrap-eMuleBBSuite.ps1" -OutFile $scriptPath
+$expected = ((irm "$releaseUrl/Bootstrap-eMuleBBSuite.ps1.sha256") -split '\s+')[0]
+$actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $scriptPath).Hash.ToLowerInvariant()
+if ($actual -ne $expected) { throw "Bootstrapper SHA256 mismatch: $actual" }
+& $scriptPath -Version $version -IncludePrerelease
+```
+
+If split-tunnel VPN software breaks loopback on the machine, set
+`X_LOCAL_IP` to the machine's LAN IPv4 address before running the
+bootstrapper.
+
 Nightly ZIP, manifest, and SBOM assets are published with GitHub artifact
 attestations. After downloading a nightly asset, you can verify its provenance
 with:
@@ -38,10 +66,6 @@ with:
 ```powershell
 gh attestation verify PATH_TO_ASSET -R emulebb/emulebb
 ```
-
-The full suite PowerShell bootstrapper is the second install path. Use it when
-you want the eMuleBB suite installer flow instead of only unpacking and running
-the desktop app.
 
 ## Documentation
 
