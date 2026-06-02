@@ -38,26 +38,21 @@ ARM64 Windows testing.
 
 ### Full Suite PowerShell Install
 
-Use this path only when you want the bundled suite installer flow instead of
-only unpacking and running the desktop app. Run it after the matching release
-assets exist:
+Use this path when you want the bundled eMuleBB suite installer instead of the
+simple ZIP package.
+
+1. Open <https://github.com/emulebb/emulebb/releases>.
+2. Download `Bootstrap-eMuleBBSuite.ps1` for the release you want.
+3. Open PowerShell in the download folder.
+4. Run:
 
 ```powershell
-$version = '0.7.3-rc.1'
-$releaseUrl = "https://github.com/emulebb/emulebb/releases/download/emulebb-v$version"
-$workRoot = Join-Path $env:TEMP "emulebb-suite-$version"
-New-Item -ItemType Directory -Force -Path $workRoot | Out-Null
-$scriptPath = Join-Path $workRoot 'Bootstrap-eMuleBBSuite.ps1'
-iwr -UseBasicParsing "$releaseUrl/Bootstrap-eMuleBBSuite.ps1" -OutFile $scriptPath
-$expected = ((irm "$releaseUrl/Bootstrap-eMuleBBSuite.ps1.sha256") -split '\s+')[0]
-$actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $scriptPath).Hash.ToLowerInvariant()
-if ($actual -ne $expected) { throw "Bootstrapper SHA256 mismatch: $actual" }
-& $scriptPath -Version $version -IncludePrerelease
+.\Bootstrap-eMuleBBSuite.ps1 -Version 0.7.3-rc.1 -IncludePrerelease
 ```
 
-If split-tunnel VPN software breaks loopback on the machine, set
-`X_LOCAL_IP` to the machine's LAN IPv4 address before running the
-bootstrapper.
+The bootstrapper downloads and verifies the matching release package, extracts
+the suite installer, and starts the install flow. Advanced options and
+verification details are in the Setup guide.
 
 Nightly ZIP, manifest, and SBOM assets are published with GitHub artifact
 attestations. After downloading a nightly asset, you can verify its provenance
