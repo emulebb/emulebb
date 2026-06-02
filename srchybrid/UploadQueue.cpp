@@ -1229,13 +1229,17 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 	if (client->GetFriendSlot())
 		return false;
 
-	// WHY: the stock empty-queue guard keeps useful uploads stable, but on a
-	// broadband underfill it also lets a peer which stopped requesting parts
-	// hold a connected slot for minutes until the TCP-side timeout notices.
-	if (waitinglist.IsEmpty()) {
-		const ULONGLONG curTick = ::GetTickCount64();
-		return ShouldRecycleIdleUploadSlot(client, curTick, pstrReason);
-	}
+	// WHY: stock session rotation waits for queue pressure before replacing a
+	// slot, but a peer with an empty local send pipeline and no fresh part
+	// requests is not useful work. Recycle it under sustained broadband
+	// underfill even when the waiting list is empty or below the normal cap.
+	const ULONGLONG curTick = ::GetTickCount64();
+	const bool bShouldTrackSlowUploadSlots = ShouldTrackSlowUploadSlots();
+	if (!bShouldTrackSlowUploadSlots && ShouldRecycleIdleUploadSlot(client, curTick, pstrReason))
+		return true;
+
+	if (waitinglist.IsEmpty())
+		return false;
 
 	// Friend slots remain the one deliberate scheduling exception on this
 	// branch. Collection handling is reduced to correctness checks only: reject
@@ -1257,8 +1261,7 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 		}
 	}
 
-	if (ShouldTrackSlowUploadSlots()) {
-		const ULONGLONG curTick = ::GetTickCount64();
+	if (bShouldTrackSlowUploadSlots) {
 		client->UpdateSlowUploadTracking(curTick, GetSlowUploadRateThreshold());
 		if (!HasCompletedSlowUploadWarmup(client)) {
 			client->ResetSlowUploadTracking();
