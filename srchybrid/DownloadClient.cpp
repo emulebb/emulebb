@@ -63,7 +63,7 @@ constexpr ULONGLONG kDownloadNoDataSlotWindowMs = MIN2MS(5);
 constexpr ULONGLONG kDownloadNoDataSlotCooldownMs = MIN2MS(3);
 constexpr ULONGLONG kDownloadNoDataSlotSuppressionLogMs = SEC2MS(30);
 constexpr uint64 kDownloadNoDataSlotPayloadThresholdBytes = EMBLOCKSIZE;
-constexpr ULONGLONG kDownloadFirstPayloadTimeoutMs = SEC2MS(30);
+constexpr ULONGLONG kDownloadFirstPayloadTimeoutMs = SEC2MS(60);
 
 ULONGLONG GetDownloadSlotInstrumentationAgeMs(ULONGLONG ullNow, ULONGLONG ullTick)
 {
