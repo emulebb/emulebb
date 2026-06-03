@@ -167,6 +167,11 @@ private:
 	{
 		UploadingToClient_Struct *pUploadClientStruct;
 	};
+	struct NoRequestUploadRetryCooldownState
+	{
+		ULONGLONG ullCooldownUntil;
+		bool bQueuedRequestClearUsed;
+	};
 	INT_PTR	GetSoftMaxUploadSlots() const;
 	/** Returns the minimum headroom required before underfill may recycle a weak slot. */
 	uint32	GetBroadbandUnderfillMarginBytesPerSec() const;
@@ -185,6 +190,7 @@ private:
 	bool	ApplyUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick);
 	bool	HasUploadAdmissionCandidate(ULONGLONG curTick);
 	void	SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil);
+	void	SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil);
 	void	PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick);
 	void	UpdateMaxClientScore();
 	uint32	GetMaxClientScore() const						{ return m_imaxscore; }
@@ -230,6 +236,7 @@ private:
 	ULONGLONG m_dwLastCalculatedAverageCombinedFilePrioAndCredit;
 	float	m_fAverageCombinedFilePrioAndCredit;
 	std::map<uint32, ULONGLONG> m_uploadRetryCooldownByIP;
+	std::map<uint32, NoRequestUploadRetryCooldownState> m_noRequestUploadRetryCooldownByIP;
 	ULONGLONG m_ullBroadbandUnderfillSince;
 	INT_PTR	m_iHighestNumberOfFullyActivatedSlotsSinceLastCall;
 	INT_PTR	m_MaxActiveClients;

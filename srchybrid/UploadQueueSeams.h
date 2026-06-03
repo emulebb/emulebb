@@ -193,6 +193,11 @@ inline bool ShouldClearUploadRetryCooldownOnQueuedRequest(
 		&& bRequestRangeValid;
 }
 
+inline bool ShouldAllowNoRequestCooldownClear(bool bNoRequestCooldownTracked, bool bQueuedRequestClearAlreadyUsed)
+{
+	return !bNoRequestCooldownTracked || !bQueuedRequestClearAlreadyUsed;
+}
+
 inline bool HasStalledUploadReplacementPressure(bool bHasWaitingClients, std::int64_t iUploadSlots, std::int64_t iSoftMaxUploadSlots)
 {
 	return bHasWaitingClients || iUploadSlots < iSoftMaxUploadSlots;
