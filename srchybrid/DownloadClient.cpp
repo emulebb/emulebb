@@ -57,10 +57,21 @@ constexpr UINT kOutOfPartReqsCooldownBurstQuarantineThreshold = 2;
 constexpr UINT kOutOfPartReqsQuarantineThreshold = 10;
 constexpr ULONGLONG kOutOfPartReqsLongWindowMs = MIN2MS(5);
 constexpr ULONGLONG kOutOfPartReqsSuppressionLogMs = SEC2MS(30);
+constexpr ULONGLONG kDownloadSlotInstrumentationHighVolumeLogMs = SEC2MS(2);
 
 ULONGLONG GetDownloadSlotInstrumentationAgeMs(ULONGLONG ullNow, ULONGLONG ullTick)
 {
 	return ullTick != 0 && ullNow >= ullTick ? ullNow - ullTick : 0;
+}
+
+bool IsDownloadSlotInstrumentationHighVolumeReason(LPCTSTR pszReason)
+{
+	return pszReason != NULL
+		&& (_tcscmp(pszReason, _T("block-complete")) == 0
+			|| _tcscmp(pszReason, _T("block-reserved")) == 0
+			|| _tcscmp(pszReason, _T("block-reserve-skipped-pending-growth")) == 0
+			|| _tcscmp(pszReason, _T("request-sent")) == 0
+			|| _tcscmp(pszReason, _T("request-skipped-no-new-batch")) == 0);
 }
 
 bool IsTickInsideWindow(ULONGLONG ullNow, ULONGLONG ullWindowStart, ULONGLONG ullWindowMs)
@@ -112,6 +123,19 @@ CBarShader CUpDownClient::s_StatusBar(16);
 void CUpDownClient::LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iRequestBatchCount, uint32 uPacketBytes, uint32 uWrittenBytes) const
 {
 	const ULONGLONG ullNow = ::GetTickCount64();
+	static ULONGLONG s_ullLastHighVolumeLogTick = 0;
+	static ULONGLONG s_ullSuppressedHighVolumeLogs = 0;
+	ULONGLONG ullSuppressedHighVolumeLogs = 0;
+	if (IsDownloadSlotInstrumentationHighVolumeReason(pszReason)) {
+		if (s_ullLastHighVolumeLogTick != 0 && ullNow < s_ullLastHighVolumeLogTick + kDownloadSlotInstrumentationHighVolumeLogMs) {
+			++s_ullSuppressedHighVolumeLogs;
+			return;
+		}
+		s_ullLastHighVolumeLogTick = ullNow;
+		ullSuppressedHighVolumeLogs = s_ullSuppressedHighVolumeLogs;
+		s_ullSuppressedHighVolumeLogs = 0;
+	}
+
 	INT_PTR iQueuedBlocks = 0;
 	for (POSITION pos = m_PendingBlocks_list.GetHeadPosition(); pos != NULL;) {
 		const Pending_Block_Struct *pending = m_PendingBlocks_list.GetNext(pos);
@@ -127,7 +151,7 @@ void CUpDownClient::LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iR
 	const ULONGLONG ullAgeMs = m_dwDownStartTime != 0 && ullNow >= m_dwDownStartTime ? ullNow - m_dwDownStartTime : 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: client reason=%s client=%s state=%s fileKnown=%u file=\"%s\" rateBytesPerSec=%u ageMs=%I64u sessionDown=%s sessionPayload=%s pendingBlocks=%Id queuedBlocks=%Id requestBatch=%Id packetBytes=%u writtenBytes=%u reqReserved=%I64u reqSent=%I64u reqCompleted=%I64u reqCleared=%I64u packets=%I64u payloadReceived=%I64u payloadWritten=%I64u lastRequestAgeMs=%I64u lastReceivedAgeMs=%I64u lastCompleteAgeMs=%I64u nnpTransitions=%u outOfPart=%u suppressedAccept=%u queueRank=%u remoteFull=%u partsAvailable=%u/%u socket=%p socketConnected=%u socketStdQueue=%Id handshake=%u"),
+		_T("DownloadSlotInstrumentation: client reason=%s client=%s state=%s fileKnown=%u file=\"%s\" rateBytesPerSec=%u ageMs=%I64u sessionDown=%s sessionPayload=%s pendingBlocks=%Id queuedBlocks=%Id requestBatch=%Id packetBytes=%u writtenBytes=%u reqReserved=%I64u reqSent=%I64u reqCompleted=%I64u reqCleared=%I64u packets=%I64u payloadReceived=%I64u payloadWritten=%I64u lastRequestAgeMs=%I64u lastReceivedAgeMs=%I64u lastCompleteAgeMs=%I64u nnpTransitions=%u outOfPart=%u suppressedAccept=%u highVolumeSuppressed=%I64u queueRank=%u remoteFull=%u partsAvailable=%u/%u socket=%p socketConnected=%u socketStdQueue=%Id handshake=%u"),
 		pszReason != NULL ? pszReason : _T("unspecified"),
 		(LPCTSTR)DbgGetClientInfo(),
 		DbgGetDownloadState(),
@@ -155,6 +179,7 @@ void CUpDownClient::LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iR
 		m_uDownloadNoNeededPartTransitions,
 		m_uDownloadOutOfPartReqsEvents,
 		m_uDownloadOutOfPartReqsSuppressions,
+		static_cast<uint64>(ullSuppressedHighVolumeLogs),
 		GetRemoteQueueRank(),
 		static_cast<UINT>(IsRemoteQueueFull()),
 		uAvailableParts,
