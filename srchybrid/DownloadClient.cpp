@@ -77,6 +77,7 @@ bool IsDownloadSlotInstrumentationHighVolumeReason(LPCTSTR pszReason)
 			|| _tcscmp(pszReason, _T("block-reserved")) == 0
 			|| _tcscmp(pszReason, _T("block-reserve-empty")) == 0
 			|| _tcscmp(pszReason, _T("block-reserve-skipped-pending-growth")) == 0
+			|| _tcscmp(pszReason, _T("request-empty-nnp")) == 0
 			|| _tcscmp(pszReason, _T("request-sent")) == 0
 			|| _tcscmp(pszReason, _T("request-skipped-no-new-batch")) == 0
 			|| _tcscmp(pszReason, _T("start-download")) == 0
