@@ -12,6 +12,7 @@ inline constexpr std::uint64_t kRetiredUploadEntryPendingIoWarningRepeatMs = 300
 inline constexpr std::uint64_t kShortFailedUploadCooldownMaxAgeMs = 30000u;
 inline constexpr std::uint64_t kShortFailedUploadCooldownMaxPayloadBytes = 1024u * 1024u;
 inline constexpr std::uint32_t kNoRequestUploadCooldownMaxSeconds = 30u;
+inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = kShortFailedUploadCooldownMaxPayloadBytes;
 
 enum UploadQueueEntryAccessState
 {
@@ -186,15 +187,21 @@ inline bool ShouldCooldownNoRequestUploadRecycle(bool bFriendSlot)
 	return !bFriendSlot;
 }
 
+inline bool IsProductiveNoRequestUploadRecycle(std::uint64_t ullQueueSessionPayloadBytes, std::uint64_t ullProductivePayloadBytes = kProductiveNoRequestCooldownPayloadBytes)
+{
+	return ullQueueSessionPayloadBytes >= ullProductivePayloadBytes;
+}
+
 /**
  * @brief Returns the bounded cooldown used after a no-request upload recycle.
  */
 inline std::uint32_t GetNoRequestUploadRetryCooldownSeconds(
 	std::uint32_t uConfiguredCooldownSeconds,
 	bool bRecentNoRequestRecycle,
+	bool bProductiveNoRequestRecycle = false,
 	std::uint32_t uMaxNoRequestCooldownSeconds = kNoRequestUploadCooldownMaxSeconds)
 {
-	if (bRecentNoRequestRecycle)
+	if (bRecentNoRequestRecycle && !bProductiveNoRequestRecycle)
 		return uConfiguredCooldownSeconds;
 	return uConfiguredCooldownSeconds < uMaxNoRequestCooldownSeconds
 		? uConfiguredCooldownSeconds
