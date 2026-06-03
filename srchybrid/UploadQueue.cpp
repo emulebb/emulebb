@@ -955,6 +955,7 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
 	const bool bHadClientCooldown = client != NULL && client->IsInSlowUploadCooldown();
 	bool bHadIPCooldown = false;
+	bool bHadNoRequestCooldown = false;
 	if (dwCooldownIP != 0) {
 		const ULONGLONG curTick = ::GetTickCount64();
 		std::map<uint32, NoRequestUploadRetryCooldownState>::iterator itNoRequest = m_noRequestUploadRetryCooldownByIP.find(dwCooldownIP);
@@ -962,6 +963,7 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 			if (itNoRequest->second.ullTrackUntil <= curTick) {
 				m_noRequestUploadRetryCooldownByIP.erase(itNoRequest);
 			} else if (itNoRequest->second.ullCooldownUntil > curTick) {
+				bHadNoRequestCooldown = true;
 				if (!ShouldAllowNoRequestCooldownClear(true, itNoRequest->second.bQueuedRequestClearUsed)) {
 					if (ppszInstrumentationReason != NULL)
 						*ppszInstrumentationReason = _T("reject-not-uploading-no-request-clear-used");
@@ -988,7 +990,11 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 	}
 	if (client != NULL)
 		client->ClearSlowUploadCooldown();
-	return bHadClientCooldown || bHadIPCooldown;
+	if (bHadClientCooldown || bHadIPCooldown)
+		return true;
+	if (ppszInstrumentationReason != NULL)
+		*ppszInstrumentationReason = bHadNoRequestCooldown ? _T("reject-not-uploading-no-request-only-cooldown") : _T("reject-not-uploading-no-active-cooldown");
+	return false;
 }
 
 QueuedBlockRequestAdmissionResult CUploadQueue::TryAdmitQueuedBlockRequestClient(CUpDownClient *client, bool bQueuedRequestCooldownCleared)
