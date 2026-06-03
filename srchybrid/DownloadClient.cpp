@@ -63,6 +63,7 @@ constexpr ULONGLONG kDownloadNoDataSlotWindowMs = MIN2MS(5);
 constexpr ULONGLONG kDownloadNoDataSlotCooldownMs = MIN2MS(3);
 constexpr ULONGLONG kDownloadNoDataSlotSuppressionLogMs = SEC2MS(30);
 constexpr uint64 kDownloadNoDataSlotPayloadThresholdBytes = EMBLOCKSIZE;
+constexpr ULONGLONG kDownloadFirstPayloadTimeoutMs = SEC2MS(30);
 
 ULONGLONG GetDownloadSlotInstrumentationAgeMs(ULONGLONG ullNow, ULONGLONG ullTick)
 {
@@ -1575,7 +1576,28 @@ uint32 CUpDownClient::CalculateDownloadRate()
 
 void CUpDownClient::CheckDownloadTimeout()
 {
-	if (::GetTickCount64() - m_dwLastBlockReceived >= thePrefs.GetDownloadTimeout()) {
+	const ULONGLONG ullNow = ::GetTickCount64();
+	const ULONGLONG ullIdleMs = m_dwLastBlockReceived != 0 && ullNow >= m_dwLastBlockReceived ? ullNow - m_dwLastBlockReceived : 0;
+	if (!m_PendingBlocks_list.IsEmpty()
+		&& GetSessionPayloadDown() == 0
+		&& GetSessionDown() == 0
+		&& thePrefs.GetDownloadTimeout() > kDownloadFirstPayloadTimeoutMs
+		&& ullIdleMs >= kDownloadFirstPayloadTimeoutMs)
+	{
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		LogDownloadSlotInstrumentation(_T("timeout-first-payload"));
+#endif
+		if (socket != NULL && !socket->IsRawDataMode())
+			SendCancelTransfer();
+		else
+			ASSERT(0);
+		CString strReason;
+		strReason.Format(_T("Timeout. More than %u seconds since the first requested block without payload."), thePrefs.TimeoutMsToSeconds(kDownloadFirstPayloadTimeoutMs));
+		SetDownloadState(DS_ONQUEUE, strReason);
+		return;
+	}
+
+	if (ullIdleMs >= thePrefs.GetDownloadTimeout()) {
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 		LogDownloadSlotInstrumentation(_T("timeout"));
 #endif
