@@ -50,9 +50,9 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-constexpr UINT kOutOfPartReqsCooldownThreshold = 3;
+constexpr UINT kOutOfPartReqsCooldownThreshold = 2;
 constexpr ULONGLONG kOutOfPartReqsShortWindowMs = SEC2MS(30);
-constexpr ULONGLONG kOutOfPartReqsCooldownMs = MIN2MS(2);
+constexpr ULONGLONG kOutOfPartReqsCooldownMs = MIN2MS(3);
 constexpr UINT kOutOfPartReqsCooldownBurstQuarantineThreshold = 2;
 constexpr UINT kOutOfPartReqsQuarantineThreshold = 10;
 constexpr ULONGLONG kOutOfPartReqsLongWindowMs = MIN2MS(5);
