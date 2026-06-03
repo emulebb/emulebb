@@ -972,6 +972,23 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client)
 	return bHadClientCooldown || bHadIPCooldown;
 }
 
+bool CUploadQueue::TryAdmitQueuedBlockRequestClient(CUpDownClient *client, bool bQueuedRequestCooldownCleared)
+{
+	if (!ShouldAdmitQueuedBlockRequestToUploadSlot(
+			bQueuedRequestCooldownCleared,
+			client != NULL && IsOnUploadQueue(client),
+			client != NULL && IsDownloading(client),
+			AcceptNewClient(uploadinglist.GetCount())))
+	{
+		return false;
+	}
+
+	if (!ForceNewClient(true))
+		return false;
+
+	return AddUpNextClient(_T("Direct add after queued block request."), client);
+}
+
 void CUploadQueue::PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick)
 {
 	for (std::map<uint32, UploadRetryCooldownState>::iterator itCooldown = m_uploadRetryCooldownByIP.begin(); itCooldown != m_uploadRetryCooldownByIP.end();) {

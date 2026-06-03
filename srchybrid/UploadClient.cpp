@@ -78,6 +78,8 @@ void CountUploadReqBlockInstrumentation(UploadingToClient_Struct *pUploadingClie
 		pUploadingClientStruct->m_ullReqBlocksDuplicateQueued.fetch_add(1);
 	else if (_tcscmp(pszReason, _T("request-packet-complete-signal")) == 0)
 		pUploadingClientStruct->m_ullReqBlockPacketSignals.fetch_add(1);
+	else if (_tcscmp(pszReason, _T("accept-queued-request-direct-admit")) == 0)
+		return;
 	else
 		pUploadingClientStruct->m_ullReqBlocksRejected.fetch_add(1);
 }
@@ -462,6 +464,7 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 			&& reqblock->EndOffset - reqblock->StartOffset <= EMBLOCKSIZE * 3
 			&& (!srcfile->IsPartFile() || static_cast<CPartFile*>(srcfile)->IsCompleteBDSafe(reqblock->StartOffset, reqblock->EndOffset - 1));
 		if (GetUploadState() != US_UPLOADING) {
+			bool bQueuedRequestDirectAdmitted = false;
 			if (ShouldClearUploadRetryCooldownOnQueuedRequest(
 					GetUploadState() == US_ONUPLOADQUEUE,
 					IsInSlowUploadCooldown(),
@@ -470,18 +473,25 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 			{
 				// WHY: a no-request recycle can race a late OP_REQUESTPARTS and
 				// leave a now-requesting peer locally suppressed. Keep the stock
-				// rule that queued clients do not accumulate block requests, but
-				// clear the local retry cooldown so normal admission can refill
-				// broadband capacity on the next scheduler pass.
-				if (theApp.uploadqueue->ClearUploadRetryCooldown(this) && thePrefs.GetLogUlDlEvents())
+				// rule that queued clients do not accumulate block requests unless
+				// the normal broadband cap can immediately reopen the slot.
+				const bool bCooldownCleared = theApp.uploadqueue->ClearUploadRetryCooldown(this);
+				bQueuedRequestDirectAdmitted = theApp.uploadqueue->TryAdmitQueuedBlockRequestClient(this, bCooldownCleared);
+				if (bCooldownCleared && thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooldown cleared after queued block request."), GetUserName());
 			}
+			if (bQueuedRequestDirectAdmitted && GetUploadState() == US_UPLOADING) {
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
-			LogUploadReqBlockInstrumentation(this, _T("reject-not-uploading"), reqblock, NULL, -1, -1);
+				LogUploadReqBlockInstrumentation(this, _T("accept-queued-request-direct-admit"), reqblock, theApp.uploadqueue->GetUploadingClientStructByClient(this), -1, -1);
 #endif
-			if (thePrefs.GetLogUlDlEvents())
-				AddDebugLogLine(DLP_LOW, false, _T("UploadClient: Client tried to add req block when not in upload slot! Prevented req blocks from being added. %s"), (LPCTSTR)DbgGetClientInfo());
-			return;
+			} else {
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+				LogUploadReqBlockInstrumentation(this, _T("reject-not-uploading"), reqblock, NULL, -1, -1);
+#endif
+				if (thePrefs.GetLogUlDlEvents())
+					AddDebugLogLine(DLP_LOW, false, _T("UploadClient: Client tried to add req block when not in upload slot! Prevented req blocks from being added. %s"), (LPCTSTR)DbgGetClientInfo());
+				return;
+			}
 		}
 
 		if (HasCollectionUploadSlot()) {

@@ -245,6 +245,18 @@ inline bool ShouldAllowUploadRetryCooldownClear(bool bRetryCooldownTracked, bool
 	return !bRetryCooldownTracked || !bQueuedRequestClearAlreadyUsed;
 }
 
+inline bool ShouldAdmitQueuedBlockRequestToUploadSlot(
+	bool bQueuedRequestCooldownCleared,
+	bool bOnUploadQueue,
+	bool bAlreadyUploading,
+	bool bCanOpenUploadSlot)
+{
+	return bQueuedRequestCooldownCleared
+		&& bOnUploadQueue
+		&& !bAlreadyUploading
+		&& bCanOpenUploadSlot;
+}
+
 inline bool HasStalledUploadReplacementPressure(bool bHasWaitingClients, std::int64_t iUploadSlots, std::int64_t iSoftMaxUploadSlots)
 {
 	return bHasWaitingClients || iUploadSlots < iSoftMaxUploadSlots;
