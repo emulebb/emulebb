@@ -13,6 +13,7 @@ inline constexpr std::uint64_t kShortFailedUploadCooldownMaxAgeMs = 30000u;
 inline constexpr std::uint64_t kRemoteCancelledUploadCooldownMaxAgeMs = 90000u;
 inline constexpr std::uint64_t kShortFailedUploadCooldownMaxPayloadBytes = 1024u * 1024u;
 inline constexpr std::uint32_t kNoRequestUploadCooldownMaxSeconds = 30u;
+inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = 120u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = kShortFailedUploadCooldownMaxPayloadBytes;
 
 enum UploadQueueEntryAccessState
@@ -200,10 +201,13 @@ inline std::uint32_t GetNoRequestUploadRetryCooldownSeconds(
 	std::uint32_t uConfiguredCooldownSeconds,
 	bool bRecentNoRequestRecycle,
 	bool bProductiveNoRequestRecycle = false,
-	std::uint32_t uMaxNoRequestCooldownSeconds = kNoRequestUploadCooldownMaxSeconds)
+	std::uint32_t uMaxNoRequestCooldownSeconds = kNoRequestUploadCooldownMaxSeconds,
+	std::uint32_t uMaxRepeatedNoRequestCooldownSeconds = kRepeatedNoRequestUploadCooldownMaxSeconds)
 {
 	if (bRecentNoRequestRecycle && !bProductiveNoRequestRecycle)
-		return uConfiguredCooldownSeconds;
+		return uConfiguredCooldownSeconds < uMaxRepeatedNoRequestCooldownSeconds
+			? uConfiguredCooldownSeconds
+			: uMaxRepeatedNoRequestCooldownSeconds;
 	return uConfiguredCooldownSeconds < uMaxNoRequestCooldownSeconds
 		? uConfiguredCooldownSeconds
 		: uMaxNoRequestCooldownSeconds;
