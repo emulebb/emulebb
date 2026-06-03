@@ -1925,9 +1925,9 @@ void CTransferWnd::OnWnd1BtnDropDown(LPNMHDR, LRESULT*)
 
 	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_DOWNLOADLIST + IDC_UPLOADLIST ? MF_GRAYED : 0), MP_VIEW1_SPLIT_WINDOW, GetResString(IDS_SPLIT_WINDOW), _T("SplitWindow"));
 	menu.AppendMenu(MF_SEPARATOR);
-	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_DOWNLOADLIST ? MF_GRAYED : 0), MP_VIEW1_DOWNLOADS, GetResString(IDS_TW_DOWNLOADS), _T("DownloadFiles"));
+	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_DOWNLOADLIST ? MF_GRAYED : 0), MP_VIEW1_DOWNLOADS, AddMenuShortcutLabel(GetResString(IDS_TW_DOWNLOADS), _T("Ctrl+D")), _T("DownloadFiles"));
 	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_UPLOADLIST ? MF_GRAYED : 0), MP_VIEW1_UPLOADING, AddMenuShortcutLabel(GetResString(IDS_UPLOADING), _T("Ctrl+U")), _T("Upload"));
-	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_DOWNLOADCLIENTS ? MF_GRAYED : 0), MP_VIEW1_DOWNLOADING, GetResString(IDS_DOWNLOADING), _T("Download"));
+	menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_DOWNLOADCLIENTS ? MF_GRAYED : 0), MP_VIEW1_DOWNLOADING, AddMenuShortcutLabel(GetResString(IDS_DOWNLOADING), _T("Ctrl+Shift+D")), _T("Download"));
 	if (!thePrefs.IsQueueListDisabled())
 		menu.AppendMenu(MF_STRING | (m_dwShowListIDC == IDC_QUEUELIST ? MF_GRAYED : 0), MP_VIEW1_ONQUEUE, AddMenuShortcutLabel(GetResString(IDS_ONQUEUE), _T("Ctrl+Q")), _T("ClientsOnQueue"));
 	if (!thePrefs.IsKnownClientListDisabled())
@@ -1945,7 +1945,7 @@ void CTransferWnd::OnWnd2BtnDropDown(LPNMHDR, LRESULT*)
 	menu.EnableIcons();
 
 	menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2Uploading ? MF_GRAYED : 0), MP_VIEW2_UPLOADING, AddMenuShortcutLabel(GetResString(IDS_UPLOADING), _T("Ctrl+U")), _T("Upload"));
-	menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2Downloading ? MF_GRAYED : 0), MP_VIEW2_DOWNLOADING, GetResString(IDS_DOWNLOADING), _T("Download"));
+	menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2Downloading ? MF_GRAYED : 0), MP_VIEW2_DOWNLOADING, AddMenuShortcutLabel(GetResString(IDS_DOWNLOADING), _T("Ctrl+Shift+D")), _T("Download"));
 	if (!thePrefs.IsQueueListDisabled())
 		menu.AppendMenu(MF_STRING | (m_uWnd2 == wnd2OnQueue ? MF_GRAYED : 0), MP_VIEW2_ONQUEUE, AddMenuShortcutLabel(GetResString(IDS_ONQUEUE), _T("Ctrl+Q")), _T("ClientsOnQueue"));
 	if (!thePrefs.IsKnownClientListDisabled())

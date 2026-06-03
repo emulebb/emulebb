@@ -97,6 +97,7 @@
 #include "StatusBarInfo.h"
 #include "Scheduler.h"
 #include "MenuCmds.h"
+#include "MenuShortcutLabels.h"
 #include "Ini2.h"
 #include "MiniMuleDlg.h"
 #include "MuleSystrayDlg.h"
@@ -5103,7 +5104,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 {
 	CTitledMenu menu;
 	menu.CreatePopupMenu();
-	menu.AddMenuTitle(GetResString(toolsonly ? IDS_TOOLS : IDS_HOTMENU), true);
+	menu.AddMenuTitle(toolsonly ? AddMenuShortcutLabel(GetResString(IDS_TOOLS), _T("Alt+W")) : GetResString(IDS_HOTMENU), true);
 
 	CTitledMenu Links;
 	Links.CreateMenu();

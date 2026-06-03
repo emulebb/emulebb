@@ -124,6 +124,8 @@ namespace AppKeyboardShortcutsSeams
 	 *
 	 * Alt+T belongs to Transfers. Tools uses Alt+W so it cannot collide with the
 	 * baseline Transfers mnemonic or the Search pane's local Alt-key controls.
+	 * Alt+1 through Alt+9 plus Alt+0 mirror the visible main toolbar order for
+	 * users who prefer positional navigation over mnemonic letters.
 	 */
 	inline ECommand ClassifySystemKeyMenu(UINT nID, LPARAM lParam, bool bModalContext)
 	{
@@ -131,6 +133,26 @@ namespace AppKeyboardShortcutsSeams
 			return ECommand::None;
 
 		const TCHAR ch = NormalizeAsciiShortcutChar(static_cast<TCHAR>(lParam));
+		if (ch == _T('1'))
+			return ECommand::ShowConnect;
+		if (ch == _T('2'))
+			return ECommand::ShowKad;
+		if (ch == _T('3'))
+			return ECommand::ShowServer;
+		if (ch == _T('4'))
+			return ECommand::ShowTransfers;
+		if (ch == _T('5'))
+			return ECommand::ShowSearch;
+		if (ch == _T('6'))
+			return ECommand::ShowSharedFiles;
+		if (ch == _T('7'))
+			return ECommand::ShowMessages;
+		if (ch == _T('8'))
+			return ECommand::ShowIrc;
+		if (ch == _T('9'))
+			return ECommand::ShowStatistics;
+		if (ch == _T('0'))
+			return ECommand::ShowOptions;
 		if (ch == _T('c'))
 			return ECommand::ShowConnect;
 		if (ch == _T('k'))
