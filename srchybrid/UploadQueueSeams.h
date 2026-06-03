@@ -13,7 +13,8 @@ inline constexpr std::uint64_t kShortFailedUploadCooldownMaxAgeMs = 30000u;
 inline constexpr std::uint64_t kRemoteCancelledUploadCooldownMaxAgeMs = 90000u;
 inline constexpr std::uint64_t kShortFailedUploadCooldownMaxPayloadBytes = 1024u * 1024u;
 inline constexpr std::uint32_t kNoRequestUploadCooldownMaxSeconds = 30u;
-inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = 120u;
+inline constexpr std::uint32_t kUploadChurnRetryCooldownMaxSeconds = 120u;
+inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = kUploadChurnRetryCooldownMaxSeconds;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = kShortFailedUploadCooldownMaxPayloadBytes;
 
 enum UploadQueueEntryAccessState
@@ -130,6 +131,15 @@ inline bool ShouldCooldownFailedUploadAdmission(bool bConnectionAttemptFailed, b
 	return bConnectionAttemptFailed
 		&& !bFriendSlot
 		&& uPeerIP != 0;
+}
+
+inline std::uint32_t GetUploadChurnRetryCooldownSeconds(
+	std::uint32_t uConfiguredCooldownSeconds,
+	std::uint32_t uMaxChurnCooldownSeconds = kUploadChurnRetryCooldownMaxSeconds)
+{
+	return uConfiguredCooldownSeconds < uMaxChurnCooldownSeconds
+		? uConfiguredCooldownSeconds
+		: uMaxChurnCooldownSeconds;
 }
 
 inline bool ShouldCountSlowUploadTimerLoop(std::uint32_t uDurationMs, std::uint32_t uSlowThresholdMs = kUploadTimerSlowLoopThresholdMs)

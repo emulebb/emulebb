@@ -294,7 +294,7 @@ bool CUploadQueue::AddUpNextClient(LPCTSTR pszReason, CUpDownClient *directadd)
 				// upload connection can repeatedly consume broadband slot-open
 				// attempts. Keep the suppression local and temporary by reusing
 				// the upload retry cooldown keyed by peer IP.
-				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(GetUploadChurnRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
 				newclient->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(newclient, ullCooldownUntil);
 				if (thePrefs.GetLogUlDlEvents())
@@ -584,7 +584,7 @@ void CUploadQueue::Process()
 				// removed immediately, but without a retry cooldown they can keep
 				// re-consuming broadband admission attempts while contributing no
 				// upload capacity.
-				const ULONGLONG ullCooldownUntil = curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+				const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetUploadChurnRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
 				cur_client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(cur_client, ullCooldownUntil);
 				if (thePrefs.GetLogUlDlEvents())
@@ -1497,7 +1497,7 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 				// suppresses that peer's score without changing protocol messages. Remote
 				// cancels get a slightly longer low-payload window because they otherwise
 				// re-enter as bad replacements after burning most of the warmup period.
-				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(GetUploadChurnRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
 				client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(client, ullCooldownUntil);
 				if (thePrefs.GetLogUlDlEvents())
