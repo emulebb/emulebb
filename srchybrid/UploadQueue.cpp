@@ -62,6 +62,8 @@ static uint32 igraph, istats;
 static uint32 s_uUploadTimerLastDurationMs = 0;
 static uint32 s_uUploadTimerMaxDurationMs = 0;
 static uint32 s_uUploadTimerSlowLoopCount = 0;
+static ULONGLONG s_ullLastBroadbandRetainedSlotLogTick = 0;
+static UINT s_uSuppressedBroadbandRetainedSlotLogs = 0;
 
 #define HIGHSPEED_UPLOADRATE_START	(500*1024)
 #define HIGHSPEED_UPLOADRATE_END	(300*1024)
@@ -82,6 +84,21 @@ namespace
 			s_uUploadTimerMaxDurationMs = uDurationMs;
 		if (ShouldCountSlowUploadTimerLoop(uDurationMs))
 			++s_uUploadTimerSlowLoopCount;
+	}
+
+	bool ShouldLogBroadbandRetainedSlot(UINT &uSuppressedLogs)
+	{
+		constexpr ULONGLONG ullLogIntervalMs = SEC2MS(30);
+		const ULONGLONG ullNow = ::GetTickCount64();
+		if (s_ullLastBroadbandRetainedSlotLogTick != 0 && ullNow < s_ullLastBroadbandRetainedSlotLogTick + ullLogIntervalMs) {
+			++s_uSuppressedBroadbandRetainedSlotLogs;
+			return false;
+		}
+
+		uSuppressedLogs = s_uSuppressedBroadbandRetainedSlotLogs;
+		s_uSuppressedBroadbandRetainedSlotLogs = 0;
+		s_ullLastBroadbandRetainedSlotLogTick = ullNow;
+		return true;
 	}
 
 	class CUploadTimerDurationScope
@@ -1618,11 +1635,14 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 					*pstrReason = _T("Broadband session transfer limit");
 				return true;
 			} else if (thePrefs.GetLogUlDlEvents()) {
+				UINT uSuppressedLogs = 0;
+				if (!ShouldLogBroadbandRetainedSlot(uSuppressedLogs))
+					return false;
 				AddDebugLogLine(DLP_LOW, false,
 					bNeedsReplacement
-						? _T("%s: Broadband transfer limit reached but productive slot retained during underfill.")
-						: _T("%s: Broadband transfer limit reached but slot retained because no replacement is needed."),
-					client->GetUserName());
+						? _T("%s: Broadband transfer limit reached but productive slot retained during underfill. Suppressed retained-slot logs: %u.")
+						: _T("%s: Broadband transfer limit reached but slot retained because no replacement is needed. Suppressed retained-slot logs: %u."),
+					client->GetUserName(), uSuppressedLogs);
 			}
 		}
 	}
@@ -1645,11 +1665,14 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 				*pstrReason = _T("Broadband session time limit");
 			return true;
 		} else if (thePrefs.GetLogUlDlEvents()) {
+			UINT uSuppressedLogs = 0;
+			if (!ShouldLogBroadbandRetainedSlot(uSuppressedLogs))
+				return false;
 			AddDebugLogLine(DLP_LOW, false,
 				bNeedsReplacement
-					? _T("%s: Broadband time limit reached but productive slot retained during underfill.")
-					: _T("%s: Broadband time limit reached but slot retained because no replacement is needed."),
-				client->GetUserName());
+					? _T("%s: Broadband time limit reached but productive slot retained during underfill. Suppressed retained-slot logs: %u.")
+					: _T("%s: Broadband time limit reached but slot retained because no replacement is needed. Suppressed retained-slot logs: %u."),
+				client->GetUserName(), uSuppressedLogs);
 		}
 	}
 
