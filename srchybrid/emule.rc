@@ -3765,8 +3765,8 @@ BEGIN
                             "Category ""%s"" still has %u assigned download(s). Move or clear those downloads before removing it."
     IDS_TOOLS_FOLDERS       "Folders"
     IDS_TOOLS_EDIT_CONFIG_FILES "Edit Config Files"
-    IDS_TOOLS_NETWORK_UPDATES "Network && Updates"
-    IDS_TOOLS_CONTROLLERS_INTEGRATIONS "Controllers and Integrations"
+    IDS_TOOLS_NETWORK_UPDATES "Network / Updates"
+    IDS_TOOLS_CONTROLLERS_INTEGRATIONS "Controllers / Integrations"
     IDS_TOOLS_DIAGNOSTICS   "Diagnostics"
     IDS_TOOLS_MAINTENANCE   "Maintenance"
     IDS_TOOLS_SESSION       "Session"
@@ -3920,7 +3920,7 @@ BEGIN
     IDS_SPEED_LIMIT_BOTH_FMT
                             "Limit: Both %u%%\tU %u %s / D %u %s"
     IDS_SPEED_ACTION_BOTH_UPLOAD_DOWNLOAD
-                            "&Both Upload + Download"
+                            "&Both Upload / Download"
     IDS_SPEED_ACTION_UPLOAD "&Upload"
     IDS_SPEED_ACTION_DOWNLOAD
                             "&Download"
