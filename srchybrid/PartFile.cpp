@@ -124,7 +124,10 @@ bool PostPartFileCompletionThreadResult(SPartFileCompletionThreadResult *pResult
 
 namespace
 {
-constexpr DWORD kShutdownFlushWaitMs = 5000;
+// WHY: Heavy broadband sessions can leave multiple part files with queued async
+// writes during shutdown; a short wait skips .part.met saves and forces costly
+// rehashes on the next launch even when the writer only needed a few seconds.
+constexpr DWORD kShutdownFlushWaitMs = 15000;
 constexpr LPCSTR kFollowMajorityFilenameTag = "BBFollowMajorityFilename";
 constexpr DWORD kShutdownFlushPollMs = 10;
 constexpr DWORD kUploadReadDeleteWaitMs = 5000;
