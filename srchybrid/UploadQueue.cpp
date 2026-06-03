@@ -1113,7 +1113,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 	if (!bShouldRecycleIdle && !bShouldRecycleStalled)
 		return false;
 
-	const ULONGLONG ullCooldownUntil = curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+	const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetUploadChurnRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
 	client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 	SetUploadRetryCooldown(client, ullCooldownUntil, bShouldRecycleIdle ? uploadRetryCooldownIdle : uploadRetryCooldownStalled);
 	if (thePrefs.GetLogUlDlEvents()) {
