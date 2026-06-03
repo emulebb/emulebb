@@ -121,6 +121,19 @@ struct PartFileBufferedData
 	volatile LONG flushed;			// interlocked PB_* state shared by main and write-helper threads
 };
 
+struct PartFileBufferedDataStateSnapshot
+{
+	uint64 uReadyBytes;
+	uint64 uPendingBytes;
+	uint64 uWrittenBytes;
+	uint64 uErrorBytes;
+	UINT uReadyCount;
+	UINT uPendingCount;
+	UINT uWrittenCount;
+	UINT uErrorCount;
+	LONG nAsyncWriteCount;
+};
+
 inline LONG GetPartFileBufferedDataFlushState(const PartFileBufferedData &rBuffer)
 {
 	// WHY: FlushBuffer owns the list on the main thread while IOCP completion
@@ -172,6 +185,7 @@ public:
 	EMFileSize	GetRealFileSize() const					{ return GetDiskFileSize(GetFilePath()); }
 	void	GetLeftToTransferAndAdditionalNeededSpace(uint64 &rui64LeftToTransfer, uint64 &rui64AdditionalNeededSpace) const;
 	uint64	GetBufferedDataBytes() const				{ return m_nTotalBufferData; }
+	void	GetBufferedDataStateSnapshot(PartFileBufferedDataStateSnapshot &rSnapshot) const;
 	uint64	GetNeededSpace() const;
 	virtual void SetFileSize(EMFileSize nFileSize);
 

@@ -878,6 +878,19 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 	UINT uRemoteQueueFullSources = 0;
 	UINT uTooManyConnectionSources = 0;
 	UINT uErrorSources = 0;
+	uint64 uBufferedReadyBytes = 0;
+	uint64 uBufferedPendingBytes = 0;
+	uint64 uBufferedWrittenBytes = 0;
+	uint64 uBufferedErrorBytes = 0;
+	UINT uBufferedReadyItems = 0;
+	UINT uBufferedPendingItems = 0;
+	UINT uBufferedWrittenItems = 0;
+	UINT uBufferedErrorItems = 0;
+	UINT uBufferedReadyFiles = 0;
+	UINT uBufferedPendingFiles = 0;
+	UINT uBufferedWrittenFiles = 0;
+	UINT uBufferedErrorFiles = 0;
+	INT_PTR iAsyncWriteRefs = 0;
 
 	for (POSITION pos = filelist.GetHeadPosition(); pos != NULL;) {
 		const CPartFile *cur_file = filelist.GetNext(pos);
@@ -898,10 +911,30 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		uTooManyConnectionSources += cur_file->GetSrcStatisticsValue(DS_TOOMANYCONNS);
 		uTooManyConnectionSources += cur_file->GetSrcStatisticsValue(DS_TOOMANYCONNSKAD);
 		uErrorSources += cur_file->GetSrcStatisticsValue(DS_ERROR);
+
+		PartFileBufferedDataStateSnapshot bufferSnapshot = {};
+		cur_file->GetBufferedDataStateSnapshot(bufferSnapshot);
+		uBufferedReadyBytes += bufferSnapshot.uReadyBytes;
+		uBufferedPendingBytes += bufferSnapshot.uPendingBytes;
+		uBufferedWrittenBytes += bufferSnapshot.uWrittenBytes;
+		uBufferedErrorBytes += bufferSnapshot.uErrorBytes;
+		uBufferedReadyItems += bufferSnapshot.uReadyCount;
+		uBufferedPendingItems += bufferSnapshot.uPendingCount;
+		uBufferedWrittenItems += bufferSnapshot.uWrittenCount;
+		uBufferedErrorItems += bufferSnapshot.uErrorCount;
+		if (bufferSnapshot.uReadyCount > 0)
+			++uBufferedReadyFiles;
+		if (bufferSnapshot.uPendingCount > 0)
+			++uBufferedPendingFiles;
+		if (bufferSnapshot.uWrittenCount > 0)
+			++uBufferedWrittenFiles;
+		if (bufferSnapshot.uErrorCount > 0)
+			++uBufferedErrorFiles;
+		iAsyncWriteRefs += bufferSnapshot.nAsyncWriteCount;
 	}
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u errorSources=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u protectedDiskBlocked=%u"),
+		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u errorSources=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u asyncWriteRefs=%Id protectedDiskBlocked=%u"),
 		filelist.GetCount(),
 		uReadyFiles,
 		uActiveFiles,
@@ -916,6 +949,19 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		GetDatarate(),
 		static_cast<uint64>(GetBufferedDownloadBytes()),
 		GetBufferedDownloadFileCount(),
+		uBufferedReadyBytes,
+		uBufferedPendingBytes,
+		uBufferedWrittenBytes,
+		uBufferedErrorBytes,
+		uBufferedReadyItems,
+		uBufferedPendingItems,
+		uBufferedWrittenItems,
+		uBufferedErrorItems,
+		uBufferedReadyFiles,
+		uBufferedPendingFiles,
+		uBufferedWrittenFiles,
+		uBufferedErrorFiles,
+		iAsyncWriteRefs,
 		static_cast<UINT>(IsProtectedDiskSpaceBlocked()));
 }
 #endif

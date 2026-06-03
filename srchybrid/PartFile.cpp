@@ -694,6 +694,39 @@ bool CPartFile::HasDirtyBufferedData() const
 	return GetAsyncWriteCount() > 0 || m_nTotalBufferData > 0 || !m_BufferedData_list.IsEmpty();
 }
 
+void CPartFile::GetBufferedDataStateSnapshot(PartFileBufferedDataStateSnapshot &rSnapshot) const
+{
+	rSnapshot = {};
+	rSnapshot.nAsyncWriteCount = GetAsyncWriteCount();
+
+	for (POSITION pos = m_BufferedData_list.GetHeadPosition(); pos != NULL;) {
+		const PartFileBufferedData *item = m_BufferedData_list.GetNext(pos);
+		if (item == NULL)
+			continue;
+
+		const uint64 uBytes = item->end >= item->start ? item->end - item->start + 1 : 0;
+		switch (GetPartFileBufferedDataFlushState(*item)) {
+		case PB_READY:
+			rSnapshot.uReadyBytes += uBytes;
+			++rSnapshot.uReadyCount;
+			break;
+		case PB_PENDING:
+			rSnapshot.uPendingBytes += uBytes;
+			++rSnapshot.uPendingCount;
+			break;
+		case PB_WRITTEN:
+			rSnapshot.uWrittenBytes += uBytes;
+			++rSnapshot.uWrittenCount;
+			break;
+		case PB_ERROR:
+		default:
+			rSnapshot.uErrorBytes += uBytes;
+			++rSnapshot.uErrorCount;
+			break;
+		}
+	}
+}
+
 bool CPartFile::HasAsyncWriteReferences() const
 {
 	bool bHasPendingBufferedWrite = false;
