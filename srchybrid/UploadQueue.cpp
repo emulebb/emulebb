@@ -398,9 +398,45 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 	INT_PTR iRetryStalledWaitingClients = 0;
 	INT_PTR iRetrySlowWaitingClients = 0;
 	INT_PTR iRetryUnknownWaitingClients = 0;
+	INT_PTR iActiveZeroRateClients = 0;
+	INT_PTR iActiveNoRequestClients = 0;
+	INT_PTR iActiveQueuedRequestClients = 0;
+	INT_PTR iActivePendingIOClients = 0;
+	INT_PTR iActiveBufferedPayloadClients = 0;
+	INT_PTR iActiveSocketBacklogClients = 0;
 	ULONGLONG ullCooldownMinMs = 0;
 	ULONGLONG ullCooldownMaxMs = 0;
 	ULONGLONG ullCooldownSumMs = 0;
+	for (POSITION uploadPos = uploadinglist.GetHeadPosition(); uploadPos != NULL;) {
+		const UploadingToClient_Struct *pUploadingClient = uploadinglist.GetNext(uploadPos);
+		CUpDownClient *pActiveClient = pUploadingClient != NULL ? pUploadingClient->m_pClient : NULL;
+		if (pActiveClient == NULL)
+			continue;
+		INT_PTR iReqBlocks = 0;
+		LONG nPendingIOBlocks = 0;
+		{
+			CSingleLock lockBlockLists(&const_cast<UploadingToClient_Struct*>(pUploadingClient)->m_csBlockListsLock, TRUE);
+			ASSERT(lockBlockLists.IsLocked());
+			iReqBlocks = pUploadingClient->m_BlockRequests_queue.GetCount();
+			nPendingIOBlocks = pUploadingClient->m_nPendingIOBlocks.load();
+		}
+		CEMSocket *pUploadSocket = pActiveClient->GetFileUploadSocket(false);
+		const INT_PTR iSocketQueue = pUploadSocket != NULL
+			? pUploadSocket->DbgGetStdQueueCount()
+			: -1;
+		if (pActiveClient->GetUploadDatarate() == 0)
+			++iActiveZeroRateClients;
+		if (iReqBlocks == 0)
+			++iActiveNoRequestClients;
+		else
+			++iActiveQueuedRequestClients;
+		if (nPendingIOBlocks > 0)
+			++iActivePendingIOClients;
+		if (pActiveClient->GetPayloadInBuffer() > 0)
+			++iActiveBufferedPayloadClients;
+		if (iSocketQueue > 0)
+			++iActiveSocketBacklogClients;
+	}
 	for (POSITION waitPos = waitinglist.GetHeadPosition(); waitPos != NULL;) {
 		const CUpDownClient *pWaitingClient = waitinglist.GetNext(waitPos);
 		if (!IsLiveUploadQueueClient(pWaitingClient))
@@ -464,7 +500,7 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		: 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
+		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id activeZeroRate=%Id activeNoRequest=%Id activeQueuedRequests=%Id activePendingIO=%Id activeBufferedPayload=%Id activeSocketBacklog=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
 		uploadinglist.GetCount(),
 		m_retiredUploadingList.GetCount(),
 		waitinglist.GetCount(),
@@ -480,6 +516,12 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		iRetryStalledWaitingClients,
 		iRetrySlowWaitingClients,
 		iRetryUnknownWaitingClients,
+		iActiveZeroRateClients,
+		iActiveNoRequestClients,
+		iActiveQueuedRequestClients,
+		iActivePendingIOClients,
+		iActiveBufferedPayloadClients,
+		iActiveSocketBacklogClients,
 		static_cast<uint64>(ullCooldownMinMs),
 		static_cast<uint64>(ullCooldownAvgMs),
 		static_cast<uint64>(ullCooldownMaxMs),
