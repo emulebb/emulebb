@@ -3129,7 +3129,7 @@ void CPreferences::LoadPreferences()
 					break;
 			}
 			if (udpport == port)
-				udpport = static_cast<uint16>((port > 4096) ? port - 1 : port + 1);
+				udpport = PreferenceValidationSeams::GetAdjacentRandomListenerPort(port);
 		}
 	}
 
@@ -4109,13 +4109,13 @@ uint16 CPreferences::GetRandomTCPPort()
 		}
 	}
 
-	static const UINT uValidPortRange = 61000;
+	static const UINT uValidPortRange = PreferenceValidationSeams::kRandomListenerPortRange;
 	int iMaxTests = uValidPortRange; // just in case, avoid endless loop
 	uint16 nPort;
 	bool bPortIsFree;
 	do {
 		// Get random port
-		nPort = 4096 + (GetRandomUInt16() % uValidPortRange);
+		nPort = static_cast<uint16>(PreferenceValidationSeams::kRandomListenerPortMin + (GetRandomUInt16() % uValidPortRange));
 
 		// The port is assumed to be available by default. If we got a table of currently
 		// used TCP ports, verify that the port is not in this table.
@@ -4152,13 +4152,13 @@ uint16 CPreferences::GetRandomUDPPort()
 		}
 	}
 
-	static const UINT uValidPortRange = 61000;
+	static const UINT uValidPortRange = PreferenceValidationSeams::kRandomListenerPortRange;
 	int iMaxTests = uValidPortRange; // just in case, avoid endless loop
 	uint16 nPort;
 	bool bPortIsFree;
 	do {
 		// Get random port
-		nPort = 4096 + (GetRandomUInt16() % uValidPortRange);
+		nPort = static_cast<uint16>(PreferenceValidationSeams::kRandomListenerPortMin + (GetRandomUInt16() % uValidPortRange));
 
 		// The port is assumed to be available by default. If we got a table of currently
 		// used UDP ports, verify that the port is not in this table.

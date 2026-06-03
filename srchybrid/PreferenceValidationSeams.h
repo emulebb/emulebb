@@ -53,6 +53,9 @@ constexpr std::uint32_t kVideoThumbnailDefaultIntervalSeconds = 0u;
 constexpr std::uint32_t kVideoThumbnailMinIntervalSeconds = 30u;
 constexpr std::uint32_t kVideoThumbnailRecommendedIntervalSeconds = 90u;
 constexpr std::uint32_t kVideoThumbnailMaxIntervalSeconds = 900u;
+constexpr std::uint16_t kRandomListenerPortMin = 49152u;
+constexpr std::uint16_t kRandomListenerPortMax = 65535u;
+constexpr std::uint32_t kRandomListenerPortRange = static_cast<std::uint32_t>(kRandomListenerPortMax) - kRandomListenerPortMin + 1u;
 
 /**
  * @brief Returns the fallback for negative persisted integers, otherwise the unsigned value.
@@ -359,6 +362,22 @@ inline std::uint16_t NormalizePortValue(const int value, const std::uint16_t uDe
 	if (value == 0 && !bAllowZero)
 		return uDefault;
 	return static_cast<std::uint16_t>(value);
+}
+
+/**
+ * @brief Reports whether an automatically selected listener port is in the high dynamic-private range.
+ */
+inline bool IsRandomListenerPort(const std::uint16_t uPort)
+{
+	return uPort >= kRandomListenerPortMin && uPort <= kRandomListenerPortMax;
+}
+
+/**
+ * @brief Chooses an adjacent in-range port when randomized TCP and UDP collide.
+ */
+inline std::uint16_t GetAdjacentRandomListenerPort(const std::uint16_t uPort)
+{
+	return uPort > kRandomListenerPortMin ? static_cast<std::uint16_t>(uPort - 1u) : static_cast<std::uint16_t>(uPort + 1u);
 }
 
 /**
