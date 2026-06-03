@@ -1593,7 +1593,7 @@ void CUpDownClient::CheckDownloadTimeout()
 		else
 			ASSERT(0);
 		CString strReason;
-		strReason.Format(_T("Timeout. More than %u seconds since the first requested block without payload."), thePrefs.TimeoutMsToSeconds(kDownloadFirstPayloadTimeoutMs));
+		strReason.Format(_T("First payload timeout. More than %u seconds since the first requested block without payload."), thePrefs.TimeoutMsToSeconds(kDownloadFirstPayloadTimeoutMs));
 		SetDownloadState(DS_ONQUEUE, strReason);
 		return;
 	}
