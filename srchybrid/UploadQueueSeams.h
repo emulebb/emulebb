@@ -11,6 +11,7 @@ inline constexpr std::uint64_t kRetiredUploadEntryPendingIoWarningMs = 30000u;
 inline constexpr std::uint64_t kRetiredUploadEntryPendingIoWarningRepeatMs = 30000u;
 inline constexpr std::uint64_t kShortFailedUploadCooldownMaxAgeMs = 30000u;
 inline constexpr std::uint64_t kShortFailedUploadCooldownMaxPayloadBytes = 1024u * 1024u;
+inline constexpr std::uint32_t kNoRequestUploadCooldownMaxSeconds = 30u;
 
 enum UploadQueueEntryAccessState
 {
@@ -179,6 +180,18 @@ inline bool ShouldCooldownNoRequestUploadRecycle(
 {
 	return !bFriendSlot
 		&& ullQueueSessionPayloadBytes <= ullMaxPayloadBytes;
+}
+
+/**
+ * @brief Returns the bounded cooldown used after a low-payload no-request upload recycle.
+ */
+inline std::uint32_t GetNoRequestUploadRetryCooldownSeconds(
+	std::uint32_t uConfiguredCooldownSeconds,
+	std::uint32_t uMaxNoRequestCooldownSeconds = kNoRequestUploadCooldownMaxSeconds)
+{
+	return uConfiguredCooldownSeconds < uMaxNoRequestCooldownSeconds
+		? uConfiguredCooldownSeconds
+		: uMaxNoRequestCooldownSeconds;
 }
 
 inline bool ShouldClearUploadRetryCooldownOnQueuedRequest(

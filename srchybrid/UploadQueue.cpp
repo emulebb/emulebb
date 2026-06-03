@@ -921,7 +921,11 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			// starts without filling capacity. Productive sessions are still
 			// recycled when drained, but can compete again instead of starving a
 			// sparse queue behind a long cooldown.
-			const ULONGLONG ullCooldownUntil = curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+			// WHY: no-request peers are already constrained to one queued-request
+			// cooldown clear per window. Keep their retry suppression short so a
+			// sparse public queue can refill capacity, while harder failures still
+			// use the full configured slow-upload cooldown.
+			const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetNoRequestUploadRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
 			client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 			SetUploadRetryCooldown(client, ullCooldownUntil);
 			SetNoRequestUploadRetryCooldown(client, ullCooldownUntil);
