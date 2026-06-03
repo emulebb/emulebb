@@ -802,7 +802,18 @@ void CUploadQueue::SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCo
 		m_uploadRetryCooldownByIP[dwCooldownIP] = ullCooldownUntil;
 }
 
-void CUploadQueue::SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil)
+bool CUploadQueue::HasRecentNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick) const
+{
+	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
+	if (dwCooldownIP == 0)
+		return false;
+
+	std::map<uint32, NoRequestUploadRetryCooldownState>::const_iterator itNoRequest = m_noRequestUploadRetryCooldownByIP.find(dwCooldownIP);
+	return itNoRequest != m_noRequestUploadRetryCooldownByIP.end()
+		&& itNoRequest->second.ullTrackUntil > curTick;
+}
+
+void CUploadQueue::SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, ULONGLONG ullTrackUntil)
 {
 	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
 	if (dwCooldownIP == 0)
@@ -811,11 +822,12 @@ void CUploadQueue::SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGL
 	const ULONGLONG curTick = ::GetTickCount64();
 	bool bQueuedRequestClearUsed = false;
 	std::map<uint32, NoRequestUploadRetryCooldownState>::const_iterator itNoRequest = m_noRequestUploadRetryCooldownByIP.find(dwCooldownIP);
-	if (itNoRequest != m_noRequestUploadRetryCooldownByIP.end() && itNoRequest->second.ullCooldownUntil > curTick)
+	if (itNoRequest != m_noRequestUploadRetryCooldownByIP.end() && itNoRequest->second.ullTrackUntil > curTick)
 		bQueuedRequestClearUsed = itNoRequest->second.bQueuedRequestClearUsed;
 
 	NoRequestUploadRetryCooldownState state = {};
 	state.ullCooldownUntil = ullCooldownUntil;
+	state.ullTrackUntil = ullTrackUntil;
 	state.bQueuedRequestClearUsed = bQueuedRequestClearUsed;
 	m_noRequestUploadRetryCooldownByIP[dwCooldownIP] = state;
 }
@@ -829,9 +841,9 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client)
 		const ULONGLONG curTick = ::GetTickCount64();
 		std::map<uint32, NoRequestUploadRetryCooldownState>::iterator itNoRequest = m_noRequestUploadRetryCooldownByIP.find(dwCooldownIP);
 		if (itNoRequest != m_noRequestUploadRetryCooldownByIP.end()) {
-			if (itNoRequest->second.ullCooldownUntil <= curTick) {
+			if (itNoRequest->second.ullTrackUntil <= curTick) {
 				m_noRequestUploadRetryCooldownByIP.erase(itNoRequest);
-			} else {
+			} else if (itNoRequest->second.ullCooldownUntil > curTick) {
 				if (!ShouldAllowNoRequestCooldownClear(true, itNoRequest->second.bQueuedRequestClearUsed))
 					return false;
 				itNoRequest->second.bQueuedRequestClearUsed = true;
@@ -857,7 +869,7 @@ void CUploadQueue::PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick)
 			++itCooldown;
 	}
 	for (std::map<uint32, NoRequestUploadRetryCooldownState>::iterator itCooldown = m_noRequestUploadRetryCooldownByIP.begin(); itCooldown != m_noRequestUploadRetryCooldownByIP.end();) {
-		if (itCooldown->second.ullCooldownUntil <= curTick)
+		if (itCooldown->second.ullTrackUntil <= curTick)
 			itCooldown = m_noRequestUploadRetryCooldownByIP.erase(itCooldown);
 		else
 			++itCooldown;
@@ -923,12 +935,15 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			// sparse queue behind a long cooldown.
 			// WHY: no-request peers are already constrained to one queued-request
 			// cooldown clear per window. Keep their retry suppression short so a
-			// sparse public queue can refill capacity, while harder failures still
-			// use the full configured slow-upload cooldown.
-			const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetNoRequestUploadRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
+			// sparse public queue can refill capacity, but escalate repeat
+			// no-request recycles to the full configured cooldown.
+			const UINT uConfiguredCooldownSeconds = thePrefs.GetSlowUploadCooldownSeconds();
+			const bool bRecentNoRequestRecycle = HasRecentNoRequestUploadRetryCooldown(client, curTick);
+			const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetNoRequestUploadRetryCooldownSeconds(uConfiguredCooldownSeconds, bRecentNoRequestRecycle));
+			const ULONGLONG ullTrackUntil = curTick + SEC2MS(uConfiguredCooldownSeconds);
 			client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 			SetUploadRetryCooldown(client, ullCooldownUntil);
-			SetNoRequestUploadRetryCooldown(client, ullCooldownUntil);
+			SetNoRequestUploadRetryCooldown(client, ullCooldownUntil, ullTrackUntil);
 		}
 		if (thePrefs.GetLogUlDlEvents())
 			AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled because the peer stopped requesting parts during broadband underfill."), client->GetUserName());

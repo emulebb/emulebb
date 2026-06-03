@@ -170,6 +170,7 @@ private:
 	struct NoRequestUploadRetryCooldownState
 	{
 		ULONGLONG ullCooldownUntil;
+		ULONGLONG ullTrackUntil;
 		bool bQueuedRequestClearUsed;
 	};
 	INT_PTR	GetSoftMaxUploadSlots() const;
@@ -190,7 +191,8 @@ private:
 	bool	ApplyUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick);
 	bool	HasUploadAdmissionCandidate(ULONGLONG curTick);
 	void	SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil);
-	void	SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil);
+	bool	HasRecentNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick) const;
+	void	SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, ULONGLONG ullTrackUntil);
 	void	PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick);
 	void	UpdateMaxClientScore();
 	uint32	GetMaxClientScore() const						{ return m_imaxscore; }

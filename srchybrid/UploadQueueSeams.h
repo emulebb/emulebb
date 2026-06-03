@@ -187,8 +187,11 @@ inline bool ShouldCooldownNoRequestUploadRecycle(
  */
 inline std::uint32_t GetNoRequestUploadRetryCooldownSeconds(
 	std::uint32_t uConfiguredCooldownSeconds,
+	bool bRecentNoRequestRecycle,
 	std::uint32_t uMaxNoRequestCooldownSeconds = kNoRequestUploadCooldownMaxSeconds)
 {
+	if (bRecentNoRequestRecycle)
+		return uConfiguredCooldownSeconds;
 	return uConfiguredCooldownSeconds < uMaxNoRequestCooldownSeconds
 		? uConfiguredCooldownSeconds
 		: uMaxNoRequestCooldownSeconds;
