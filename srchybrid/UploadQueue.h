@@ -33,6 +33,7 @@ struct UploadingToClient_Struct
 		, m_nPendingIOBlocks()
 		, m_ullRetiredTick()
 		, m_ullLastRetiredPendingIOLogTick()
+		, m_ullLastAcceptedReqBlockTick()
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
 		, m_ullReqBlocksAccepted()
 		, m_ullReqBlocksDuplicateDone()
@@ -40,7 +41,6 @@ struct UploadingToClient_Struct
 		, m_ullReqBlocksRejected()
 		, m_ullReqBlockPacketSignals()
 		, m_ullLastReqBlockTick()
-		, m_ullLastAcceptedReqBlockTick()
 #endif
 	{
 	}
@@ -56,6 +56,7 @@ struct UploadingToClient_Struct
 	std::atomic<LONG>									m_nPendingIOBlocks;
 	ULONGLONG											m_ullRetiredTick;
 	ULONGLONG											m_ullLastRetiredPendingIOLogTick;
+	std::atomic<ULONGLONG>								m_ullLastAcceptedReqBlockTick;
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
 	std::atomic<ULONGLONG>								m_ullReqBlocksAccepted;
 	std::atomic<ULONGLONG>								m_ullReqBlocksDuplicateDone;
@@ -63,7 +64,6 @@ struct UploadingToClient_Struct
 	std::atomic<ULONGLONG>								m_ullReqBlocksRejected;
 	std::atomic<ULONGLONG>								m_ullReqBlockPacketSignals;
 	std::atomic<ULONGLONG>								m_ullLastReqBlockTick;
-	std::atomic<ULONGLONG>								m_ullLastAcceptedReqBlockTick;
 #endif
 };
 typedef CTypedPtrList<CPtrList, UploadingToClient_Struct*> CUploadingPtrList;

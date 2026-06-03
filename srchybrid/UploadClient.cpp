@@ -590,6 +590,7 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 		pUploadingClientStruct->m_BlockRequests_queue.AddTail(reqblockOwner.get());
 		reqblockOwner.release();
 		dbgLastQueueCount = pUploadingClientStruct->m_BlockRequests_queue.GetCount();
+		pUploadingClientStruct->m_ullLastAcceptedReqBlockTick.store(::GetTickCount64());
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
 		LogUploadReqBlockInstrumentation(this, _T("accept-queued-block"), pUploadingClientStruct->m_BlockRequests_queue.GetTail(), pUploadingClientStruct, pUploadingClientStruct->m_BlockRequests_queue.GetCount(), pUploadingClientStruct->m_DoneBlocks_list.GetCount());
 #endif
