@@ -340,6 +340,9 @@ public:
 	void			SendOutOfPartReqsAndAddToWaitingQueue();
 	UINT			CalculateDownloadRate();
 	uint16			GetAvailablePartCount() const;
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	void			LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iRequestBatchCount = -1, uint32 uPacketBytes = 0, uint32 uWrittenBytes = 0) const;
+#endif
 	bool			SwapToAnotherFile(LPCTSTR reason, bool bIgnoreNoNeeded, bool ignoreSuspensions, bool bRemoveCompletely, CPartFile *toFile = NULL, bool allowSame = true, bool isAboutToAsk = false, bool debug = false); // ZZ:DownloadManager
 	void			DontSwapTo(/*const*/ CPartFile *file);
 	bool			IsSwapSuspended(const CPartFile *file, const bool allowShortReaskTime = false, const bool fileIsNNP = false) /*const*/; // ZZ:DownloadManager
@@ -634,6 +637,21 @@ protected:
 	CRing<TransferredData> m_AverageDDR_hist;
 	UINT		m_nDownDatarate;
 	UINT		m_nDownDataRateMS;
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	ULONGLONG	m_ullDownloadBlockRequestsReserved;
+	ULONGLONG	m_ullDownloadBlockRequestsSent;
+	ULONGLONG	m_ullDownloadBlockRequestsCompleted;
+	ULONGLONG	m_ullDownloadBlockRequestsCleared;
+	ULONGLONG	m_ullDownloadBlockPacketsReceived;
+	ULONGLONG	m_ullDownloadBlockPayloadBytesReceived;
+	ULONGLONG	m_ullDownloadBlockPayloadBytesWritten;
+	ULONGLONG	m_ullDownloadLastRequestTick;
+	ULONGLONG	m_ullDownloadLastReceivedTick;
+	ULONGLONG	m_ullDownloadLastCompletedBlockTick;
+	UINT		m_uDownloadNoNeededPartTransitions;
+	UINT		m_uDownloadOutOfPartReqsEvents;
+	UINT		m_uDownloadOutOfPartReqsSuppressions;
+#endif
 
 	//////////////////////////////////////////////////////////
 	// GUI helpers

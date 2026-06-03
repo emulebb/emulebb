@@ -245,6 +245,21 @@ void CUpDownClient::Init()
 	m_nDownDatarate = 0;
 	m_nDownDataRateMS = 0;
 	m_nSumForAvgDownDataRate = 0;
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	m_ullDownloadBlockRequestsReserved = 0;
+	m_ullDownloadBlockRequestsSent = 0;
+	m_ullDownloadBlockRequestsCompleted = 0;
+	m_ullDownloadBlockRequestsCleared = 0;
+	m_ullDownloadBlockPacketsReceived = 0;
+	m_ullDownloadBlockPayloadBytesReceived = 0;
+	m_ullDownloadBlockPayloadBytesWritten = 0;
+	m_ullDownloadLastRequestTick = 0;
+	m_ullDownloadLastReceivedTick = 0;
+	m_ullDownloadLastCompletedBlockTick = 0;
+	m_uDownloadNoNeededPartTransitions = 0;
+	m_uDownloadOutOfPartReqsEvents = 0;
+	m_uDownloadOutOfPartReqsSuppressions = 0;
+#endif
 
 	m_lastRefreshedDLDisplay = 0;
 	m_lastRefreshedULDisplay = ::GetTickCount64();
@@ -1150,6 +1165,9 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 
 	if (GetDownloadState() == DS_DOWNLOADING) {
 		ASSERT(m_eConnectingState == CCS_NONE);
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		LogDownloadSlotInstrumentation(_T("disconnect-downloading"));
+#endif
 		SetDownloadState(DS_ONQUEUE, CString(_T("Disconnected: ")) + pszReason);
 	} else {
 		// ensure that all possible block requests are removed from the partfile

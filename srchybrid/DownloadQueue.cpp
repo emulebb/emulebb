@@ -860,6 +860,66 @@ bool CDownloadQueue::IsFileExisting(const uchar *fileid, bool bLogWarnings) cons
 	return true;
 }
 
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
+{
+	static ULONGLONG s_ullLastDownloadSlotInstrumentationLogTick = 0;
+	if (s_ullLastDownloadSlotInstrumentationLogTick != 0 && curTick < s_ullLastDownloadSlotInstrumentationLogTick + SEC2MS(10))
+		return;
+	s_ullLastDownloadSlotInstrumentationLogTick = curTick;
+
+	UINT uReadyFiles = 0;
+	UINT uActiveFiles = 0;
+	UINT uSources = 0;
+	UINT uValidSources = 0;
+	UINT uDownloadingSources = 0;
+	UINT uOnQueueSources = 0;
+	UINT uNoNeededPartSources = 0;
+	UINT uRemoteQueueFullSources = 0;
+	UINT uTooManyConnectionSources = 0;
+	UINT uErrorSources = 0;
+
+	for (POSITION pos = filelist.GetHeadPosition(); pos != NULL;) {
+		const CPartFile *cur_file = filelist.GetNext(pos);
+		if (cur_file == NULL)
+			continue;
+
+		if (inSet(cur_file->GetStatus(), PS_READY, PS_EMPTY))
+			++uReadyFiles;
+		if (cur_file->GetTransferringSrcCount() > 0)
+			++uActiveFiles;
+
+		uSources += cur_file->GetSourceCount();
+		uValidSources += cur_file->GetValidSourcesCount();
+		uDownloadingSources += cur_file->GetSrcStatisticsValue(DS_DOWNLOADING);
+		uOnQueueSources += cur_file->GetSrcStatisticsValue(DS_ONQUEUE);
+		uNoNeededPartSources += cur_file->GetSrcStatisticsValue(DS_NONEEDEDPARTS);
+		uRemoteQueueFullSources += cur_file->GetSrcStatisticsValue(DS_REMOTEQUEUEFULL);
+		uTooManyConnectionSources += cur_file->GetSrcStatisticsValue(DS_TOOMANYCONNS);
+		uTooManyConnectionSources += cur_file->GetSrcStatisticsValue(DS_TOOMANYCONNSKAD);
+		uErrorSources += cur_file->GetSrcStatisticsValue(DS_ERROR);
+	}
+
+	AddDebugLogLine(DLP_DEFAULT, false,
+		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u errorSources=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u protectedDiskBlocked=%u"),
+		filelist.GetCount(),
+		uReadyFiles,
+		uActiveFiles,
+		uSources,
+		uValidSources,
+		uDownloadingSources,
+		uOnQueueSources,
+		uNoNeededPartSources,
+		uRemoteQueueFullSources,
+		uTooManyConnectionSources,
+		uErrorSources,
+		GetDatarate(),
+		static_cast<uint64>(GetBufferedDownloadBytes()),
+		GetBufferedDownloadFileCount(),
+		static_cast<UINT>(IsProtectedDiskSpaceBlocked()));
+}
+#endif
+
 //This method is called every 100 ms
 void CDownloadQueue::Process()
 {
@@ -920,6 +980,9 @@ void CDownloadQueue::Process()
 
 	average_dr_hist.AddTail(TransferredData{datarateX, curTick});
 	m_datarateMS += datarateX;
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	LogDownloadSlotInstrumentation(curTick);
+#endif
 
 	if (m_udcounter == 5) {
 		if (theApp.serverconnect->IsUDPSocketAvailable()

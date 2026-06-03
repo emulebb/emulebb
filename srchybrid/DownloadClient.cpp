@@ -58,6 +58,11 @@ constexpr UINT kOutOfPartReqsQuarantineThreshold = 10;
 constexpr ULONGLONG kOutOfPartReqsLongWindowMs = MIN2MS(5);
 constexpr ULONGLONG kOutOfPartReqsSuppressionLogMs = SEC2MS(30);
 
+ULONGLONG GetDownloadSlotInstrumentationAgeMs(ULONGLONG ullNow, ULONGLONG ullTick)
+{
+	return ullTick != 0 && ullNow >= ullTick ? ullNow - ullTick : 0;
+}
+
 bool IsTickInsideWindow(ULONGLONG ullNow, ULONGLONG ullWindowStart, ULONGLONG ullWindowMs)
 {
 	return ullWindowStart != 0 && ullNow >= ullWindowStart && ullNow - ullWindowStart <= ullWindowMs;
@@ -102,6 +107,65 @@ SPeerTransferBarColors BuildPeerTransferBarColors(bool bFlat)
 //	members of CUpDownClient
 //	which are mainly used for downloading functions
 CBarShader CUpDownClient::s_StatusBar(16);
+
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+void CUpDownClient::LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iRequestBatchCount, uint32 uPacketBytes, uint32 uWrittenBytes) const
+{
+	const ULONGLONG ullNow = ::GetTickCount64();
+	INT_PTR iQueuedBlocks = 0;
+	for (POSITION pos = m_PendingBlocks_list.GetHeadPosition(); pos != NULL;) {
+		const Pending_Block_Struct *pending = m_PendingBlocks_list.GetNext(pos);
+		if (pending != NULL && pending->fQueued)
+			++iQueuedBlocks;
+	}
+
+	const LPCTSTR pszFileName = m_reqfile != NULL ? m_reqfile->GetFileName() : _T("");
+	const uint16 uAvailableParts = m_reqfile != NULL ? GetAvailablePartCount() : 0;
+	const uint16 uPartCount = m_nPartCount;
+	const INT_PTR iSocketQueue = socket != NULL ? socket->DbgGetStdQueueCount() : -1;
+	const bool bSocketConnected = socket != NULL && socket->IsConnected();
+	const ULONGLONG ullAgeMs = m_dwDownStartTime != 0 && ullNow >= m_dwDownStartTime ? ullNow - m_dwDownStartTime : 0;
+
+	AddDebugLogLine(DLP_DEFAULT, false,
+		_T("DownloadSlotInstrumentation: client reason=%s client=%s state=%s fileKnown=%u file=\"%s\" rateBytesPerSec=%u ageMs=%I64u sessionDown=%s sessionPayload=%s pendingBlocks=%Id queuedBlocks=%Id requestBatch=%Id packetBytes=%u writtenBytes=%u reqReserved=%I64u reqSent=%I64u reqCompleted=%I64u reqCleared=%I64u packets=%I64u payloadReceived=%I64u payloadWritten=%I64u lastRequestAgeMs=%I64u lastReceivedAgeMs=%I64u lastCompleteAgeMs=%I64u nnpTransitions=%u outOfPart=%u suppressedAccept=%u queueRank=%u remoteFull=%u partsAvailable=%u/%u socket=%p socketConnected=%u socketStdQueue=%Id handshake=%u"),
+		pszReason != NULL ? pszReason : _T("unspecified"),
+		(LPCTSTR)DbgGetClientInfo(),
+		DbgGetDownloadState(),
+		static_cast<UINT>(m_reqfile != NULL),
+		pszFileName,
+		GetDownloadDatarate(),
+		static_cast<uint64>(ullAgeMs),
+		(LPCTSTR)CastItoXBytes(GetSessionDown()),
+		(LPCTSTR)CastItoXBytes(GetSessionPayloadDown()),
+		m_PendingBlocks_list.GetCount(),
+		iQueuedBlocks,
+		iRequestBatchCount,
+		uPacketBytes,
+		uWrittenBytes,
+		static_cast<uint64>(m_ullDownloadBlockRequestsReserved),
+		static_cast<uint64>(m_ullDownloadBlockRequestsSent),
+		static_cast<uint64>(m_ullDownloadBlockRequestsCompleted),
+		static_cast<uint64>(m_ullDownloadBlockRequestsCleared),
+		static_cast<uint64>(m_ullDownloadBlockPacketsReceived),
+		static_cast<uint64>(m_ullDownloadBlockPayloadBytesReceived),
+		static_cast<uint64>(m_ullDownloadBlockPayloadBytesWritten),
+		static_cast<uint64>(GetDownloadSlotInstrumentationAgeMs(ullNow, m_ullDownloadLastRequestTick)),
+		static_cast<uint64>(GetDownloadSlotInstrumentationAgeMs(ullNow, m_ullDownloadLastReceivedTick)),
+		static_cast<uint64>(GetDownloadSlotInstrumentationAgeMs(ullNow, m_ullDownloadLastCompletedBlockTick)),
+		m_uDownloadNoNeededPartTransitions,
+		m_uDownloadOutOfPartReqsEvents,
+		m_uDownloadOutOfPartReqsSuppressions,
+		GetRemoteQueueRank(),
+		static_cast<UINT>(IsRemoteQueueFull()),
+		uAvailableParts,
+		uPartCount,
+		static_cast<void*>(socket),
+		static_cast<UINT>(bSocketConnected),
+		iSocketQueue,
+		static_cast<UINT>(CheckHandshakeFinished()));
+}
+#endif
+
 void CUpDownClient::DrawStatusBar(CDC &dc, const CRect &rect, bool onlygreyrect, bool  bFlat) const
 {
 	if (g_bLowColorDesktop)
@@ -624,6 +688,9 @@ bool CUpDownClient::AddRequestForAnotherFile(CPartFile *file)
 
 void CUpDownClient::ClearPendingBlockRequest(const Pending_Block_Struct *pending)
 {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	++m_ullDownloadBlockRequestsCleared;
+#endif
 	if (m_reqfile)
 		m_reqfile->RemoveBlockFromList(pending->block->StartOffset, pending->block->EndOffset);
 
@@ -686,6 +753,9 @@ bool CUpDownClient::CancelEndgameReservationForFasterPeer(const CPartFile *file,
 void CUpDownClient::SetDownloadState(EDownloadState nNewState, LPCTSTR pszReason)
 {
 	if (m_eDownloadState != nNewState) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		const EDownloadState eOldState = m_eDownloadState;
+#endif
 		switch (nNewState) {
 		case DS_CONNECTING:
 			SetLastTriedToConnectTime();
@@ -726,6 +796,9 @@ void CUpDownClient::SetDownloadState(EDownloadState nNewState, LPCTSTR pszReason
 			socket->SetTimeOut(thePrefs.GetConnectionTimeout() * 4);
 
 		if (m_eDownloadState == DS_DOWNLOADING) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+			LogDownloadSlotInstrumentation(nNewState == DS_NONEEDEDPARTS ? _T("state-leave-downloading-nnp") : _T("state-leave-downloading"));
+#endif
 			if (socket)
 				socket->SetTimeOut(thePrefs.GetConnectionTimeout());
 
@@ -774,6 +847,13 @@ void CUpDownClient::SetDownloadState(EDownloadState nNewState, LPCTSTR pszReason
 				socket->DisableDownloadLimit();
 		} else
 			m_eDownloadState = nNewState;
+
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		if (nNewState == DS_DOWNLOADING)
+			LogDownloadSlotInstrumentation(_T("state-enter-downloading"));
+		else if (eOldState != DS_DOWNLOADING)
+			LogDownloadSlotInstrumentation(_T("state-transition"));
+#endif
 
 		if (GetDownloadState() == DS_DOWNLOADING) {
 			if (IsEmuleClient())
@@ -849,23 +929,43 @@ void CUpDownClient::ProcessHashSet(const uchar *packet, uint32 size, bool bFileI
 void CUpDownClient::CreateBlockRequests(int blockCount)
 {
 	ASSERT(blockCount > 0 && blockCount <= 9);
+	const int iRequestedBlockCount = blockCount;
 	//prevent uncontrolled growth
-	if ((int)m_PendingBlocks_list.GetCount() > 2 * blockCount)
+	if ((int)m_PendingBlocks_list.GetCount() > 2 * blockCount) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		LogDownloadSlotInstrumentation(_T("block-reserve-skipped-pending-growth"), iRequestedBlockCount);
+#endif
 		return;
+	}
 
 	//count out unprocessed blocks
 	for (POSITION pos = m_PendingBlocks_list.GetHeadPosition(); pos != NULL;)
 		blockCount -= static_cast<int>(m_PendingBlocks_list.GetNext(pos)->fQueued == 0);
 
-	if (blockCount <= 0)
+	if (blockCount <= 0) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		LogDownloadSlotInstrumentation(_T("block-reserve-skipped-unqueued-pending"), iRequestedBlockCount);
+#endif
 		return;
+	}
 
 	Requested_Block_Struct **toadd = new Requested_Block_Struct*[blockCount];
+	int iReserved = 0;
 	if (m_reqfile->GetNextRequestedBlock(this, toadd, blockCount))
 		for (int i = 0; i < blockCount; ++i)
+		{
 			m_PendingBlocks_list.AddTail(new Pending_Block_Struct{toadd[i]});
+			++iReserved;
+		}
 
 	delete[] toadd;
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	if (iReserved > 0) {
+		m_ullDownloadBlockRequestsReserved += static_cast<ULONGLONG>(iReserved);
+		LogDownloadSlotInstrumentation(_T("block-reserved"), iReserved);
+	} else
+		LogDownloadSlotInstrumentation(_T("block-reserve-empty"), iRequestedBlockCount);
+#endif
 }
 
 void CUpDownClient::SendBlockRequests()
@@ -893,6 +993,10 @@ void CUpDownClient::SendBlockRequests()
 
 	CreateBlockRequests(blockCount);
 	if (m_PendingBlocks_list.IsEmpty()) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		++m_uDownloadNoNeededPartTransitions;
+		LogDownloadSlotInstrumentation(_T("request-empty-nnp"), blockCount);
+#endif
 		SendCancelTransfer();
 		SetDownloadState(DS_NONEEDEDPARTS);
 		SwapToAnotherFile(_T("A4AF for NNP file. CUpDownClient::SendBlockRequests()"), true, false, false, NULL, true, true);
@@ -944,6 +1048,9 @@ void CUpDownClient::SendBlockRequests()
 		// so it's just overhead (and it's not protocol standard, but we used to do so since forever)
 		// by adding a range of min to max pending blocks
 		// this means we do not send a request after every received packet any more
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		LogDownloadSlotInstrumentation(_T("request-skipped-no-new-batch"), blockCount);
+#endif
 		return;
 	}
 
@@ -989,6 +1096,12 @@ void CUpDownClient::SendBlockRequests()
 	theStats.AddUpDataOverheadFileRequest(packet->size);
 	if (thePrefs.GetDebugClientTCPLevel() > 0)
 		DebugSend("OP_RequestParts", this, m_reqfile->GetFileHash());
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	const INT_PTR iRequestBatchCount = listToRequest.GetCount();
+	m_ullDownloadBlockRequestsSent += static_cast<ULONGLONG>(iRequestBatchCount);
+	m_ullDownloadLastRequestTick = ::GetTickCount64();
+	LogDownloadSlotInstrumentation(_T("request-sent"), iRequestBatchCount, packet->size);
+#endif
 	SendPacket(packet, true);
 	// we want this packet to get out ASAP, especially for high-speed downloads
 	// so wake up the throttler if it was idle and fell asleep
@@ -1027,12 +1140,19 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 
 	// Ignore if no data required
 	if (GetDownloadState() != DS_DOWNLOADING && GetDownloadState() != DS_NONEEDEDPARTS) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		LogDownloadSlotInstrumentation(_T("packet-dropped-invalid-state"), -1, size);
+#endif
 		TRACE("%s - Invalid download state\n", __FUNCTION__);
 		return;
 	}
 
 	// Update stats
 	m_dwLastBlockReceived = ::GetTickCount64();
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	++m_ullDownloadBlockPacketsReceived;
+	m_ullDownloadLastReceivedTick = m_dwLastBlockReceived;
+#endif
 
 	// Read data from packet
 	CSafeMemFile data(packet, size);
@@ -1066,6 +1186,9 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 		nHeaderSize += 4;
 	}
 	uint32 uTransferredFileDataSize = size - nHeaderSize;
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	m_ullDownloadBlockPayloadBytesReceived += uTransferredFileDataSize;
+#endif
 
 	// Check that packet size matches the declared data size + header size (24)
 	if (nEndPos <= nStartPos || size != ((nEndPos - nStartPos) + nHeaderSize))
@@ -1096,6 +1219,9 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 		if (cur_block->fZStreamError) {
 			if (thePrefs.GetVerbose())
 				AddDebugLogLine(false, _T("PrcBlkPkt: Ignoring %u bytes of block starting at %I64u because of erroneous zstream state for file \"%s\" - %s"), uTransferredFileDataSize, nStartPos, (LPCTSTR)m_reqfile->GetFileName(), (LPCTSTR)DbgGetClientInfo());
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+			LogDownloadSlotInstrumentation(_T("packet-ignored-zstream-error"), -1, uTransferredFileDataSize);
+#endif
 			m_reqfile->RemoveBlockFromList(cur_block->block->StartOffset, cur_block->block->EndOffset);
 			return;
 		}
@@ -1113,6 +1239,9 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 			if (nEndPos > cur_block->block->EndOffset) {
 				DebugLogError(_T("Received Blockpacket exceeds requested boundaries (requested end: %I64u, Part %u, received end  %I64u, Part %u), file %s, client %s"), cur_block->block->EndOffset
 					, (uint32)(cur_block->block->EndOffset / PARTSIZE), nEndPos, (uint32)(nEndPos / PARTSIZE), (LPCTSTR)m_reqfile->GetFileName(), (LPCTSTR)DbgGetClientInfo());
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+				LogDownloadSlotInstrumentation(_T("packet-exceeds-request"), -1, uTransferredFileDataSize);
+#endif
 				m_reqfile->RemoveBlockFromList(cur_block->block->StartOffset, cur_block->block->EndOffset);
 				return;
 			}
@@ -1146,11 +1275,17 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 
 					if (nStartPos > cur_block->block->EndOffset || nEndPos > cur_block->block->EndOffset) {
 						DebugLogError(_T("PrcBlkPkt: ") + GetResString(IDS_ERR_CORRUPTCOMPRPKG), (LPCTSTR)m_reqfile->GetFileName(), 666);
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+						LogDownloadSlotInstrumentation(_T("packet-corrupt-compressed-range"), -1, uTransferredFileDataSize);
+#endif
 						m_reqfile->RemoveBlockFromList(cur_block->block->StartOffset, cur_block->block->EndOffset);
 						// There is no chance to recover from this error
 					} else {
 						if (!unzipped) {
 							DebugLogError(_T("PrcBlkPkt: Failed to stage the uncompressed packet buffer for file \"%s\""), (LPCTSTR)m_reqfile->GetFileName());
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+							LogDownloadSlotInstrumentation(_T("packet-unzip-buffer-missing"), -1, uTransferredFileDataSize);
+#endif
 							m_reqfile->RemoveBlockFromList(cur_block->block->StartOffset, cur_block->block->EndOffset);
 							return;
 						}
@@ -1176,6 +1311,9 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 					DebugLogError(_T("PrcBlkPkt: ") + GetResString(IDS_ERR_CORRUPTCOMPRPKG) + strZipError, (LPCTSTR)m_reqfile->GetFileName(), result);
 				}
 				m_reqfile->RemoveBlockFromList(cur_block->block->StartOffset, cur_block->block->EndOffset);
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+				LogDownloadSlotInstrumentation(_T("packet-zstream-error"), -1, uTransferredFileDataSize);
+#endif
 
 				// If we had a zstream error, there is no chance that we could recover from it,
 				// nor that we could use the current zstream (which is in error state) any longer.
@@ -1200,11 +1338,19 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 		if (lenWritten > 0 && !m_PendingBlocks_list.IsEmpty() && cur_block->block) {
 			m_nTransferredDown += uTransferredFileDataSize;
 			m_nCurSessionPayloadDown += lenWritten;
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+			m_ullDownloadBlockPayloadBytesWritten += lenWritten;
+#endif
 			cur_block->block->transferred += lenWritten; //cur_block->block was invalid!
 			SetTransferredDownMini();
 
 			// If finished reserved block
 			if (nEndPos == cur_block->block->EndOffset) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+				++m_ullDownloadBlockRequestsCompleted;
+				m_ullDownloadLastCompletedBlockTick = ::GetTickCount64();
+				LogDownloadSlotInstrumentation(_T("block-complete"), -1, uTransferredFileDataSize, lenWritten);
+#endif
 				m_PendingBlocks_list.RemoveAt(posLast);
 				ClearPendingBlockRequest(cur_block);
 
@@ -1220,6 +1366,9 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 	}
 
 	TRACE("%s - Dropping packet\n", __FUNCTION__);
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	LogDownloadSlotInstrumentation(_T("packet-dropped-no-pending-block"), -1, size);
+#endif
 }
 
 int CUpDownClient::unzip(Pending_Block_Struct *block, const BYTE *zipped, uint32 lenZipped, std::unique_ptr<BYTE[]> &runzipped, size_t &rnUnzippedCapacity, uint32 *lenUnzipped)
@@ -1374,6 +1523,9 @@ uint32 CUpDownClient::CalculateDownloadRate()
 void CUpDownClient::CheckDownloadTimeout()
 {
 	if (::GetTickCount64() - m_dwLastBlockReceived >= thePrefs.GetDownloadTimeout()) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		LogDownloadSlotInstrumentation(_T("timeout"));
+#endif
 		if (socket != NULL && !socket->IsRawDataMode())
 			SendCancelTransfer();
 		else
@@ -2087,6 +2239,9 @@ void CUpDownClient::StartDownload()
 	SetDownloadState(DS_DOWNLOADING);
 	InitTransferredDownMini();
 	SetDownStartTime();
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	LogDownloadSlotInstrumentation(_T("start-download"));
+#endif
 	m_lastPartAsked = _UI16_MAX;
 	SendBlockRequests();
 }
@@ -2209,6 +2364,10 @@ void CUpDownClient::ProcessInboundOutOfPartReqs()
 	if (GetDownloadState() != DS_DOWNLOADING)
 		return;
 
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+	++m_uDownloadOutOfPartReqsEvents;
+	LogDownloadSlotInstrumentation(_T("out-of-part-reqs"));
+#endif
 	NoteInboundOutOfPartReqs();
 	SetDownloadState(DS_ONQUEUE, _T("The remote client decided to stop/complete the transfer (got OP_OutOfPartReqs)."));
 }
@@ -2220,6 +2379,10 @@ void CUpDownClient::ProcessAcceptUpload()
 		if (GetDownloadState() == DS_ONQUEUE) {
 			CString strOutOfPartReqsGuardReason;
 			if (!CanAcceptUploadSlotAfterOutOfPartReqs(&strOutOfPartReqsGuardReason)) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+				++m_uDownloadOutOfPartReqsSuppressions;
+				LogDownloadSlotInstrumentation(_T("accept-suppressed-out-of-part-cooldown"));
+#endif
 				NoteOutOfPartReqsLoopSuppression();
 				CanAcceptUploadSlotAfterOutOfPartReqs(&strOutOfPartReqsGuardReason);
 				const ULONGLONG ullNow = ::GetTickCount64();
