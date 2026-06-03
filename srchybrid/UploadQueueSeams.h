@@ -205,3 +205,13 @@ inline bool ShouldCooldownNoSocketUploadSlot(
 		&& ullSessionAgeMs <= ullMaxAgeMs
 		&& ullQueueSessionPayloadBytes <= ullMaxPayloadBytes;
 }
+
+inline bool ShouldRotateBroadbandLimitedUploadSession(
+	bool bNeedsReplacement,
+	bool bBroadbandUnderfilled,
+	std::uint32_t uUploadRateBytesPerSec,
+	std::uint32_t uProductiveRateThresholdBytesPerSec)
+{
+	return bNeedsReplacement
+		&& (!bBroadbandUnderfilled || uUploadRateBytesPerSec < uProductiveRateThresholdBytesPerSec);
+}

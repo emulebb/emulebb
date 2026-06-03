@@ -1451,14 +1451,26 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 		// Allow the client to download a specified amount per session, but only rotate when another slot is needed.
 		if (client->GetQueueSessionPayloadUp() > uSessionTransferLimit) {
 			const bool bNeedsReplacement = ForceNewClient();
-			if (bNeedsReplacement) {
+			// WHY: rotating a productive slot during broadband underfill can
+			// trade known upload throughput for a cooldown-only/bad replacement
+			// pool. Keep productive sessions until capacity is filled again.
+			if (ShouldRotateBroadbandLimitedUploadSession(
+					bNeedsReplacement,
+					IsBroadbandUploadUnderfilled(),
+					client->GetUploadDatarate(),
+					GetSlowUploadRateThreshold()))
+			{
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_DEFAULT, false, _T("%s: Upload session ended due to broadband transfer limit (%s)"), client->GetUserName(), (LPCTSTR)CastItoXBytes(uSessionTransferLimit));
 				if (pstrReason != NULL)
 					*pstrReason = _T("Broadband session transfer limit");
 				return true;
 			} else if (thePrefs.GetLogUlDlEvents()) {
-				AddDebugLogLine(DLP_LOW, false, _T("%s: Broadband transfer limit reached but slot retained because no replacement is needed."), client->GetUserName());
+				AddDebugLogLine(DLP_LOW, false,
+					bNeedsReplacement
+						? _T("%s: Broadband transfer limit reached but productive slot retained during underfill.")
+						: _T("%s: Broadband transfer limit reached but slot retained because no replacement is needed."),
+					client->GetUserName());
 			}
 		}
 	}
@@ -1466,14 +1478,26 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 	const UINT uSessionTimeLimitSeconds = thePrefs.GetSessionTimeLimitSeconds();
 	if (uSessionTimeLimitSeconds > 0 && client->GetUpStartTimeDelay() > SEC2MS(uSessionTimeLimitSeconds)) {
 		const bool bNeedsReplacement = ForceNewClient();
-		if (bNeedsReplacement) {
+		// WHY: time-limit fairness should not evict an active contributor while
+		// the broadband upload line is already underfilled and replacements are
+		// likely to reduce capacity further.
+		if (ShouldRotateBroadbandLimitedUploadSession(
+				bNeedsReplacement,
+				IsBroadbandUploadUnderfilled(),
+				client->GetUploadDatarate(),
+				GetSlowUploadRateThreshold()))
+		{
 			if (thePrefs.GetLogUlDlEvents())
 				AddDebugLogLine(DLP_LOW, false, _T("%s: Upload session ended due to broadband time limit %s."), client->GetUserName(), (LPCTSTR)CastSecondsToHM(uSessionTimeLimitSeconds));
 			if (pstrReason != NULL)
 				*pstrReason = _T("Broadband session time limit");
 			return true;
 		} else if (thePrefs.GetLogUlDlEvents()) {
-			AddDebugLogLine(DLP_LOW, false, _T("%s: Broadband time limit reached but slot retained because no replacement is needed."), client->GetUserName());
+			AddDebugLogLine(DLP_LOW, false,
+				bNeedsReplacement
+					? _T("%s: Broadband time limit reached but productive slot retained during underfill.")
+					: _T("%s: Broadband time limit reached but slot retained because no replacement is needed."),
+				client->GetUserName());
 		}
 	}
 
