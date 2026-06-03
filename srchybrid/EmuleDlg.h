@@ -259,6 +259,7 @@ protected:
 	void ShowStartupProgress();
 	void UpdateStartupProgress(UINT uPercent, UINT uStepStringId, UINT uDetailStringId, bool bMarquee = false);
 	void DestroyStartupProgress();
+	void CloseStartupProgressIfRunning();
 	bool ShouldShowLifecycleProgressDialog(int iMode, bool bStartup) const;
 	void ApplyDesktopUiRefreshIntervalMs(UINT uIntervalMs);
 	void StartTransferRateDisplayTimer();

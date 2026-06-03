@@ -2570,6 +2570,7 @@ void CemuleDlg::ExitForBindLoss(const CString &strReason)
 LRESULT CemuleDlg::OnStartupNextStage(WPARAM, LPARAM)
 {
 	OnStartupTimer();
+	CloseStartupProgressIfRunning();
 	return 0;
 }
 
@@ -5899,6 +5900,16 @@ void CemuleDlg::DestroyStartupProgress()
 	}
 }
 
+void CemuleDlg::CloseStartupProgressIfRunning()
+{
+	if (m_pStartupProgressDlg != NULL && theApp.IsRunning()) {
+		// WHY: Startup progress is only valid before APP_STATE_RUNNING. If a nested
+		// message pump or failed sequencer hop leaves it alive, close it on the next
+		// normal UI turn instead of letting a stale lifecycle dialog cover the app.
+		DestroyStartupProgress();
+	}
+}
+
 BOOL CemuleApp::IsIdleMessage(MSG *pMsg)
 {
 	// This function is closely related to 'CemuleDlg::OnKickIdle'.
@@ -6669,6 +6680,8 @@ void CemuleDlg::RefreshUPnP(bool bRequestAnswer)
 
 void CemuleDlg::OnTimer(UINT_PTR nIDEvent)
 {
+	CloseStartupProgressIfRunning();
+
 	if (nIDEvent == kTransferRateDisplayTimerId) {
 		RunDesktopPresentationTick();
 		return;

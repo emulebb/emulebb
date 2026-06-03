@@ -10,6 +10,7 @@
 #include "LifecycleProgressDlg.h"
 #include "OtherFunctions.h"
 #include "resource.h"
+#include "UserMsgs.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -64,7 +65,11 @@ bool CLifecycleProgressDlg::IsMarqueeEnabled() const
 void PumpLifecycleProgressMessages(CDialog *pDialog)
 {
 	MSG msg = {};
-	while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+	while (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+		if (msg.message == UM_STARTUP_NEXT_STAGE)
+			break;
+		if (!::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			break;
 		if (pDialog != NULL && pDialog->GetSafeHwnd() != NULL && pDialog->IsDialogMessage(&msg))
 			continue;
 		::TranslateMessage(&msg);
