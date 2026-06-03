@@ -490,16 +490,16 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 				GetUploadState() == US_ONUPLOADQUEUE
 					? queuedBlockRequestCooldownNotCleared
 					: queuedBlockRequestNotOnQueue;
-			if (ShouldClearUploadRetryCooldownOnQueuedRequest(
+			if (ShouldAttemptUploadRetryCooldownClearOnQueuedRequest(
 					GetUploadState() == US_ONUPLOADQUEUE,
-					IsInSlowUploadCooldown(),
 					srcfile != NULL,
 					bRequestRangeValid))
 			{
-				// WHY: a no-request recycle can race a late OP_REQUESTPARTS and
-				// leave a now-requesting peer locally suppressed. Keep the stock
-				// rule that queued clients do not accumulate block requests unless
-				// the normal broadband cap can immediately reopen the slot.
+				// WHY: a no-request recycle or IP-level retry cooldown can race a
+				// late OP_REQUESTPARTS and leave a now-requesting peer locally
+				// suppressed. Keep the stock rule that queued clients do not
+				// accumulate block requests unless the normal broadband cap can
+				// immediately reopen the slot.
 				const bool bCooldownCleared = theApp.uploadqueue->ClearUploadRetryCooldown(this);
 				eQueuedRequestAdmissionResult = theApp.uploadqueue->TryAdmitQueuedBlockRequestClient(this, bCooldownCleared);
 				if (bCooldownCleared && thePrefs.GetLogUlDlEvents())
