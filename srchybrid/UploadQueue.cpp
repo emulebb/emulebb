@@ -766,17 +766,17 @@ bool CUploadQueue::ApplyUploadRetryCooldown(CUpDownClient *client, ULONGLONG cur
 	if (dwCooldownIP == 0)
 		return false;
 
-	const std::map<uint32, ULONGLONG>::iterator itCooldown = m_uploadRetryCooldownByIP.find(dwCooldownIP);
+	const std::map<uint32, UploadRetryCooldownState>::iterator itCooldown = m_uploadRetryCooldownByIP.find(dwCooldownIP);
 	if (itCooldown == m_uploadRetryCooldownByIP.end())
 		return false;
 
-	if (!ShouldApplyUploadRetryCooldown(client->GetFriendSlot(), dwCooldownIP, curTick, itCooldown->second)) {
-		if (itCooldown->second <= curTick)
+	if (!ShouldApplyUploadRetryCooldown(client->GetFriendSlot(), dwCooldownIP, curTick, itCooldown->second.ullCooldownUntil)) {
+		if (itCooldown->second.ullTrackUntil <= curTick)
 			m_uploadRetryCooldownByIP.erase(itCooldown);
 		return false;
 	}
 
-	client->SetSlowUploadCooldownUntil(itCooldown->second);
+	client->SetSlowUploadCooldownUntil(itCooldown->second.ullCooldownUntil);
 	return true;
 }
 
@@ -798,8 +798,24 @@ bool CUploadQueue::HasUploadAdmissionCandidate(ULONGLONG curTick)
 void CUploadQueue::SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil)
 {
 	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
-	if (ShouldApplyUploadRetryCooldown(client != NULL && client->GetFriendSlot(), dwCooldownIP, ::GetTickCount64(), ullCooldownUntil))
-		m_uploadRetryCooldownByIP[dwCooldownIP] = ullCooldownUntil;
+	const ULONGLONG curTick = ::GetTickCount64();
+	if (!ShouldApplyUploadRetryCooldown(client != NULL && client->GetFriendSlot(), dwCooldownIP, curTick, ullCooldownUntil))
+		return;
+
+	bool bQueuedRequestClearUsed = false;
+	std::map<uint32, UploadRetryCooldownState>::const_iterator itCooldown = m_uploadRetryCooldownByIP.find(dwCooldownIP);
+	if (itCooldown != m_uploadRetryCooldownByIP.end() && itCooldown->second.ullTrackUntil > curTick)
+		bQueuedRequestClearUsed = itCooldown->second.bQueuedRequestClearUsed;
+
+	// WHY: stalled, no-socket, and failed-admission peers can otherwise clear a
+	// retry cooldown with one valid queued request, immediately churn another
+	// bad slot, and repeat. Preserve the clear-used marker for the active
+	// cooldown window while still allowing one proof-of-demand retry.
+	UploadRetryCooldownState state = {};
+	state.ullCooldownUntil = ullCooldownUntil;
+	state.ullTrackUntil = ullCooldownUntil;
+	state.bQueuedRequestClearUsed = bQueuedRequestClearUsed;
+	m_uploadRetryCooldownByIP[dwCooldownIP] = state;
 }
 
 bool CUploadQueue::HasRecentNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick) const
@@ -849,10 +865,17 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client)
 				itNoRequest->second.bQueuedRequestClearUsed = true;
 			}
 		}
-		std::map<uint32, ULONGLONG>::iterator itCooldown = m_uploadRetryCooldownByIP.find(dwCooldownIP);
+		std::map<uint32, UploadRetryCooldownState>::iterator itCooldown = m_uploadRetryCooldownByIP.find(dwCooldownIP);
 		if (itCooldown != m_uploadRetryCooldownByIP.end()) {
-			bHadIPCooldown = true;
-			m_uploadRetryCooldownByIP.erase(itCooldown);
+			if (itCooldown->second.ullTrackUntil <= curTick) {
+				m_uploadRetryCooldownByIP.erase(itCooldown);
+			} else if (itCooldown->second.ullCooldownUntil > curTick) {
+				if (!ShouldAllowUploadRetryCooldownClear(true, itCooldown->second.bQueuedRequestClearUsed))
+					return false;
+				itCooldown->second.bQueuedRequestClearUsed = true;
+				itCooldown->second.ullCooldownUntil = curTick;
+				bHadIPCooldown = true;
+			}
 		}
 	}
 	if (client != NULL)
@@ -862,8 +885,8 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client)
 
 void CUploadQueue::PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick)
 {
-	for (std::map<uint32, ULONGLONG>::iterator itCooldown = m_uploadRetryCooldownByIP.begin(); itCooldown != m_uploadRetryCooldownByIP.end();) {
-		if (itCooldown->second <= curTick)
+	for (std::map<uint32, UploadRetryCooldownState>::iterator itCooldown = m_uploadRetryCooldownByIP.begin(); itCooldown != m_uploadRetryCooldownByIP.end();) {
+		if (itCooldown->second.ullTrackUntil <= curTick)
 			itCooldown = m_uploadRetryCooldownByIP.erase(itCooldown);
 		else
 			++itCooldown;

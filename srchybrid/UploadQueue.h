@@ -173,6 +173,12 @@ private:
 		ULONGLONG ullTrackUntil;
 		bool bQueuedRequestClearUsed;
 	};
+	struct UploadRetryCooldownState
+	{
+		ULONGLONG ullCooldownUntil;
+		ULONGLONG ullTrackUntil;
+		bool bQueuedRequestClearUsed;
+	};
 	INT_PTR	GetSoftMaxUploadSlots() const;
 	/** Returns the minimum headroom required before underfill may recycle a weak slot. */
 	uint32	GetBroadbandUnderfillMarginBytesPerSec() const;
@@ -237,7 +243,7 @@ private:
 
 	ULONGLONG m_dwLastCalculatedAverageCombinedFilePrioAndCredit;
 	float	m_fAverageCombinedFilePrioAndCredit;
-	std::map<uint32, ULONGLONG> m_uploadRetryCooldownByIP;
+	std::map<uint32, UploadRetryCooldownState> m_uploadRetryCooldownByIP;
 	std::map<uint32, NoRequestUploadRetryCooldownState> m_noRequestUploadRetryCooldownByIP;
 	ULONGLONG m_ullBroadbandUnderfillSince;
 	INT_PTR	m_iHighestNumberOfFullyActivatedSlotsSinceLastCall;
