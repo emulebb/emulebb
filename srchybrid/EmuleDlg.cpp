@@ -2280,7 +2280,6 @@ void CemuleDlg::OnStartupTimer() noexcept
 			}
 			break;
 		case 5:
-			UpdateStartupProgress(88, IDS_STARTUP_PROGRESS_LOADING_SEARCHES, IDS_STARTUP_PROGRESS_LOADING_STORED_SEARCHES);
 			status = 6;
 			// WHY: Stored-search restore is optional post-running UI hydration. Keep the
 			// startup lifecycle dialog from surviving while a large restore populates tabs.
@@ -2289,8 +2288,16 @@ void CemuleDlg::OnStartupTimer() noexcept
 #if EMULEBB_HAS_STARTUP_PROFILING
 				const ULONGLONG ullStoredSearchesStart = theApp.GetStartupProfileTimestampUs();
 #endif
-			if (thePrefs.IsStoringSearchesEnabled())
-				theApp.searchlist->LoadSearches();
+			try {
+				if (thePrefs.IsStoringSearchesEnabled())
+					theApp.searchlist->LoadSearches();
+			} catch (CException *ex) {
+				LogError(LOG_STATUSBAR, _T("Failed to restore stored searches%s"), (LPCTSTR)CExceptionStrDash(*ex));
+				ex->Delete();
+			} catch (...) {
+				ASSERT(0);
+				LogError(LOG_STATUSBAR, _T("Failed to restore stored searches - Unknown exception"));
+			}
 #if EMULEBB_HAS_STARTUP_PROFILING
 				theApp.AppendStartupProfileLine(_T("StartupTimer stage 5: stored searches"), theApp.GetStartupProfileElapsedUs(ullStoredSearchesStart));
 #endif
@@ -5885,6 +5892,7 @@ void CemuleDlg::DestroyStartupProgress()
 		delete m_pStartupProgressDlg;
 		m_pStartupProgressDlg = NULL;
 		m_bTransientDialogActive = false;
+		PumpLifecycleProgressMessages(NULL);
 #if EMULEBB_HAS_STARTUP_PROFILING
 		theApp.AppendStartupProfileLine(_T("CemuleDlg::DestroyStartupProgress"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
 #endif

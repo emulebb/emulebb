@@ -2483,6 +2483,7 @@ void CemuleApp::DestroyEarlyStartupProgress()
 			m_pEarlyStartupProgressDlg->DestroyWindow();
 		delete m_pEarlyStartupProgressDlg;
 		m_pEarlyStartupProgressDlg = NULL;
+		PumpLifecycleProgressMessages(NULL);
 #if EMULEBB_HAS_STARTUP_PROFILING
 		AppendStartupProfileLine(_T("CemuleApp::DestroyEarlyStartupProgress"), 0);
 #endif
