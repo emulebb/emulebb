@@ -10,6 +10,7 @@ inline constexpr std::uint32_t kUploadTimerSlowLoopThresholdMs = 100u;
 inline constexpr std::uint64_t kRetiredUploadEntryPendingIoWarningMs = 30000u;
 inline constexpr std::uint64_t kRetiredUploadEntryPendingIoWarningRepeatMs = 30000u;
 inline constexpr std::uint64_t kShortFailedUploadCooldownMaxAgeMs = 30000u;
+inline constexpr std::uint64_t kRemoteCancelledUploadCooldownMaxAgeMs = 90000u;
 inline constexpr std::uint64_t kShortFailedUploadCooldownMaxPayloadBytes = 1024u * 1024u;
 inline constexpr std::uint32_t kNoRequestUploadCooldownMaxSeconds = 30u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = kShortFailedUploadCooldownMaxPayloadBytes;
@@ -255,15 +256,18 @@ inline bool ShouldRecycleStalledBroadbandUploadSlot(
 
 inline bool ShouldCooldownShortFailedUploadSlot(
 	bool bDisconnectedRemoval,
+	bool bRemoteCancelledRemoval,
 	bool bFriendSlot,
 	std::uint64_t ullSessionAgeMs,
 	std::uint64_t ullQueueSessionPayloadBytes,
 	std::uint64_t ullMaxAgeMs = kShortFailedUploadCooldownMaxAgeMs,
+	std::uint64_t ullRemoteCancelledMaxAgeMs = kRemoteCancelledUploadCooldownMaxAgeMs,
 	std::uint64_t ullMaxPayloadBytes = kShortFailedUploadCooldownMaxPayloadBytes)
 {
 	return bDisconnectedRemoval
 		&& !bFriendSlot
-		&& ullSessionAgeMs <= ullMaxAgeMs
+		&& (ullSessionAgeMs <= ullMaxAgeMs
+			|| (bRemoteCancelledRemoval && ullSessionAgeMs <= ullRemoteCancelledMaxAgeMs))
 		&& ullQueueSessionPayloadBytes <= ullMaxPayloadBytes;
 }
 

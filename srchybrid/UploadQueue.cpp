@@ -1403,8 +1403,11 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 			const bool bDisconnectedRemoval = pszReason != NULL
 				&& (_tcsstr(pszReason, _T("CUpDownClient::Disconnected:")) != NULL
 					|| _tcsstr(pszReason, _T("Remote client cancelled transfer")) != NULL);
+			const bool bRemoteCancelledRemoval = pszReason != NULL
+				&& _tcsstr(pszReason, _T("Remote client cancelled transfer")) != NULL;
 			if (ShouldCooldownShortFailedUploadSlot(
 					bDisconnectedRemoval,
+					bRemoteCancelledRemoval,
 					client->GetFriendSlot(),
 					client->GetUpStartTimeDelay(),
 					client->GetQueueSessionPayloadUp()))
@@ -1412,7 +1415,9 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 				// WHY: a peer which repeatedly disconnects seconds after admission can
 				// keep winning queue selection and consume replacement attempts while
 				// broadband upload stays underfilled. Reusing the local upload cooldown
-				// suppresses that peer's score without changing protocol messages.
+				// suppresses that peer's score without changing protocol messages. Remote
+				// cancels get a slightly longer low-payload window because they otherwise
+				// re-enter as bad replacements after burning most of the warmup period.
 				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
 				client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(client, ullCooldownUntil);
