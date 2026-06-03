@@ -2292,7 +2292,9 @@ void CemuleDlg::OnStartupTimer() noexcept
 				theApp.AppendStartupProfileLine(_T("StartupTimer stage 5: stored searches"), theApp.GetStartupProfileElapsedUs(ullStoredSearchesStart));
 #endif
 			}
-			break;
+			// WHY: Stored searches are the final blocking startup load. Finish the sequence
+			// here so a stale progress dialog cannot survive behind a missed queued hop.
+			[[fallthrough]];
 		default:
 			UpdateStartupProgress(96, IDS_STARTUP_PROGRESS_FINISHING, IDS_STARTUP_PROGRESS_STARTING_BACKGROUND_WORK);
 			serverwnd->serverlistctrl.Visible();
