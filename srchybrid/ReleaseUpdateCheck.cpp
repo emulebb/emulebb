@@ -85,10 +85,12 @@ ReleaseUpdateCheck::SUpdateCheckResult ReleaseUpdateCheck::CheckLatestRelease()
 		result.eStatus = EUpdateCheckStatus::NewerVersionAvailable;
 		break;
 	case ReleaseUpdateCheckSeams::EReleaseEvaluationStatus::NotNewer:
+	case ReleaseUpdateCheckSeams::EReleaseEvaluationStatus::IgnoredRelease:
+		// GitHub's latest stable release can be a historical non-eMuleBB tag
+		// until the first stable eMuleBB release exists; that is not a failure.
 		result.eStatus = EUpdateCheckStatus::NoNewerVersion;
 		break;
 	case ReleaseUpdateCheckSeams::EReleaseEvaluationStatus::MissingAsset:
-	case ReleaseUpdateCheckSeams::EReleaseEvaluationStatus::IgnoredRelease:
 	case ReleaseUpdateCheckSeams::EReleaseEvaluationStatus::ParseFailed:
 	default:
 		result.eStatus = EUpdateCheckStatus::Failed;

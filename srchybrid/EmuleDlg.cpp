@@ -1102,8 +1102,8 @@ namespace
 			rMenu.AppendMenu(MF_STRING, pLinks[i].uCommandID, GetResString(pLinks[i].uLabelStringID), _T("WEB"));
 
 		rMenu.AppendMenu(MF_SEPARATOR);
-		theWebServices.GetGeneralMenuEntries(&rMenu);
-		rMenu.AppendMenu(MF_SEPARATOR);
+		if (theWebServices.GetGeneralMenuEntries(&rMenu) > 0)
+			rMenu.AppendMenu(MF_SEPARATOR);
 		rMenu.AppendMenu(MF_STRING, MP_WEBSVC_EDIT, GetResString(IDS_WEBSVEDIT));
 	}
 
@@ -2887,7 +2887,7 @@ void CemuleDlg::AddServerMessageLine(UINT uFlags, LPCTSTR pszLine)
 	strTrimmedLine.Trim();
 	if (strTrimmedLine.IsEmpty())
 		return;
-	CString strMsgLine(pszLine);
+	CString strMsgLine(strTrimmedLine);
 	strMsgLine += _T('\n');
 	if ((uFlags & LOGMSGTYPEMASK) == LOG_INFO)
 		serverwnd->servermsgbox->AppendText(strMsgLine);

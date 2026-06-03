@@ -4038,7 +4038,14 @@ CString CPreferences::GetVersionCheckApiURL()
 
 CString CPreferences::GetVersionCheckURL()
 {
-	return thePrefs.GetVersionCheckBaseURL() + _T("/latest");
+	return thePrefs.GetVersionCheckLandingURL();
+}
+
+CString CPreferences::GetVersionCheckLandingURL()
+{
+	// Current public testing is nightly-first. Once the release line moves past
+	// RC status, this landing link should return GetVersionCheckBaseURL().
+	return thePrefs.GetVersionCheckBaseURL() + _T("?q=nightly&expanded=true");
 }
 
 bool CPreferences::IsDefaultNick(const CString &strCheck)
