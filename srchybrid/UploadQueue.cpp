@@ -1080,6 +1080,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		// blocks during broadband underfill cannot fill capacity. Recycle that
 		// no-request slot promptly without weakening the broader slow-upload
 		// warmup used for peers that still have local work queued.
+		const bool bProductiveNoRequestRecycle = IsProductiveNoRequestUploadRecycle(client->GetQueueSessionPayloadUp());
 		if (ShouldCooldownNoRequestUploadRecycle(false)) {
 			// WHY: no-request sessions can make an initial burst, drain their
 			// pipeline, then immediately re-enter as 0-byte slots. Seed a short
@@ -1091,7 +1092,6 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			// no-request recycles to the full configured cooldown.
 			const UINT uConfiguredCooldownSeconds = thePrefs.GetSlowUploadCooldownSeconds();
 			const bool bRecentNoRequestRecycle = HasRecentNoRequestUploadRetryCooldown(client, curTick);
-			const bool bProductiveNoRequestRecycle = IsProductiveNoRequestUploadRecycle(client->GetQueueSessionPayloadUp());
 			const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetNoRequestUploadRetryCooldownSeconds(uConfiguredCooldownSeconds, bRecentNoRequestRecycle, bProductiveNoRequestRecycle));
 			const ULONGLONG ullTrackUntil = curTick + SEC2MS(uConfiguredCooldownSeconds);
 			client->SetSlowUploadCooldownUntil(ullCooldownUntil);
@@ -1099,9 +1099,11 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			SetNoRequestUploadRetryCooldown(client, ullCooldownUntil, ullTrackUntil, bProductiveNoRequestRecycle);
 		}
 		if (thePrefs.GetLogUlDlEvents())
-			AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled because the peer stopped requesting parts during broadband underfill."), client->GetUserName());
+			AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled because the peer stopped requesting parts during broadband underfill (%s)."),
+				client->GetUserName(),
+				bProductiveNoRequestRecycle ? _T("productive") : _T("unproductive"));
 		if (pstrReason != NULL)
-			*pstrReason = _T("Broadband no-request recycle");
+			*pstrReason = bProductiveNoRequestRecycle ? _T("Broadband productive no-request recycle") : _T("Broadband unproductive no-request recycle");
 		client->ResetSlowUploadTracking();
 		return true;
 	}
