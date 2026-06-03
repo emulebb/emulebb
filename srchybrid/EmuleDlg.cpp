@@ -1558,6 +1558,7 @@ END_MESSAGE_MAP()
 CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	: CTrayDialog(CemuleDlg::IDD, pParent)
 	, m_pStartupProgressDlg()
+	, m_bStartupProgressFinished()
 	, activewnd()
 	, status()
 	, m_wpFirstRestore()
@@ -2283,6 +2284,8 @@ void CemuleDlg::OnStartupTimer() noexcept
 			status = 6;
 			// WHY: Stored-search restore is optional post-running UI hydration. Keep the
 			// startup lifecycle dialog from surviving while a large restore populates tabs.
+			m_bStartupProgressFinished = true;
+			theApp.DestroyEarlyStartupProgress();
 			DestroyStartupProgress();
 			{
 #if EMULEBB_HAS_STARTUP_PROFILING
@@ -2306,6 +2309,8 @@ void CemuleDlg::OnStartupTimer() noexcept
 			// here so a stale progress dialog cannot survive behind a missed queued hop.
 			[[fallthrough]];
 		default:
+			m_bStartupProgressFinished = true;
+			theApp.DestroyEarlyStartupProgress();
 			UpdateStartupProgress(96, IDS_STARTUP_PROGRESS_FINISHING, IDS_STARTUP_PROGRESS_STARTING_BACKGROUND_WORK);
 			serverwnd->serverlistctrl.Visible();
 			theApp.sharedfiles->StartDeferredHashing();
@@ -5844,6 +5849,8 @@ bool CemuleDlg::ShouldShowLifecycleProgressDialog(int iMode, bool bStartup) cons
 
 void CemuleDlg::ShowStartupProgress()
 {
+	if (m_bStartupProgressFinished)
+		return;
 	if (m_pStartupProgressDlg != NULL)
 		return;
 	if (!ShouldShowLifecycleProgressDialog(thePrefs.GetStartupProgressDialogMode(), true)) {
@@ -5875,6 +5882,8 @@ void CemuleDlg::ShowStartupProgress()
 
 void CemuleDlg::UpdateStartupProgress(UINT uPercent, UINT uStepStringId, UINT uDetailStringId, bool bMarquee)
 {
+	if (m_bStartupProgressFinished)
+		return;
 	if (m_pStartupProgressDlg == NULL)
 		return;
 
@@ -5902,12 +5911,17 @@ void CemuleDlg::DestroyStartupProgress()
 
 void CemuleDlg::CloseStartupProgressIfRunning()
 {
-	if (m_pStartupProgressDlg != NULL && theApp.IsRunning()) {
+	if (!theApp.IsRunning())
+		return;
+
+	if (!m_bStartupProgressFinished) {
 		// WHY: Startup progress is only valid before APP_STATE_RUNNING. If a nested
 		// message pump or failed sequencer hop leaves it alive, close it on the next
 		// normal UI turn instead of letting a stale lifecycle dialog cover the app.
-		DestroyStartupProgress();
+		m_bStartupProgressFinished = true;
+		theApp.DestroyEarlyStartupProgress();
 	}
+	DestroyStartupProgress();
 }
 
 BOOL CemuleApp::IsIdleMessage(MSG *pMsg)

@@ -195,6 +195,7 @@ public:
 	CMuleToolbarCtrl *toolbar;
 	CKademliaWnd	*kademliawnd;
 	CDialog			*m_pStartupProgressDlg;
+	bool			m_bStartupProgressFinished;
 	CWnd			*activewnd;
 	uint8			status;
 
