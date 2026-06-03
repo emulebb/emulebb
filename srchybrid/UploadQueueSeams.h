@@ -172,6 +172,15 @@ inline bool ShouldRecycleNoRequestBroadbandUploadSlot(
 		&& (!bHasAcceptedRequest || ullLastAcceptedRequestAgeMs >= ullNoRequestGraceMs);
 }
 
+inline bool ShouldCooldownNoRequestUploadRecycle(
+	bool bFriendSlot,
+	std::uint64_t ullQueueSessionPayloadBytes,
+	std::uint64_t ullMaxPayloadBytes = kShortFailedUploadCooldownMaxPayloadBytes)
+{
+	return !bFriendSlot
+		&& ullQueueSessionPayloadBytes <= ullMaxPayloadBytes;
+}
+
 inline bool HasStalledUploadReplacementPressure(bool bHasWaitingClients, std::int64_t iUploadSlots, std::int64_t iSoftMaxUploadSlots)
 {
 	return bHasWaitingClients || iUploadSlots < iSoftMaxUploadSlots;

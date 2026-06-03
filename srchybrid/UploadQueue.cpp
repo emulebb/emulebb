@@ -864,9 +864,15 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		// blocks during broadband underfill cannot fill capacity. Recycle that
 		// no-request slot promptly without weakening the broader slow-upload
 		// warmup used for peers that still have local work queued.
-		const ULONGLONG ullCooldownUntil = curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
-		client->SetSlowUploadCooldownUntil(ullCooldownUntil);
-		SetUploadRetryCooldown(client, ullCooldownUntil);
+		if (ShouldCooldownNoRequestUploadRecycle(false, client->GetQueueSessionPayloadUp())) {
+			// WHY: very low-payload no-request sessions repeatedly burn upload
+			// starts without filling capacity. Productive sessions are still
+			// recycled when drained, but can compete again instead of starving a
+			// sparse queue behind a long cooldown.
+			const ULONGLONG ullCooldownUntil = curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+			client->SetSlowUploadCooldownUntil(ullCooldownUntil);
+			SetUploadRetryCooldown(client, ullCooldownUntil);
+		}
 		if (thePrefs.GetLogUlDlEvents())
 			AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled because the peer stopped requesting parts during broadband underfill."), client->GetUserName());
 		if (pstrReason != NULL)
