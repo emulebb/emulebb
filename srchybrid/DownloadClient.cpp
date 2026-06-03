@@ -77,6 +77,7 @@ bool IsDownloadSlotInstrumentationHighVolumeReason(LPCTSTR pszReason)
 			|| _tcscmp(pszReason, _T("block-reserved")) == 0
 			|| _tcscmp(pszReason, _T("block-reserve-empty")) == 0
 			|| _tcscmp(pszReason, _T("block-reserve-skipped-pending-growth")) == 0
+			|| _tcscmp(pszReason, _T("packet-zero-write")) == 0
 			|| _tcscmp(pszReason, _T("request-empty-nnp")) == 0
 			|| _tcscmp(pszReason, _T("request-sent")) == 0
 			|| _tcscmp(pszReason, _T("request-skipped-no-new-batch")) == 0
@@ -1427,6 +1428,10 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 				SendBlockRequests();
 			}
 		}
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		else if (lenWritten == 0)
+			LogDownloadSlotInstrumentation(_T("packet-zero-write"), -1, uTransferredFileDataSize, lenWritten);
+#endif
 
 		// Stop looping and exit
 		return;
