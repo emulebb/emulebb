@@ -174,6 +174,7 @@ private:
 		ULONGLONG ullCooldownUntil;
 		ULONGLONG ullTrackUntil;
 		bool bQueuedRequestClearUsed;
+		bool bProductiveRecycle;
 	};
 	enum UploadRetryCooldownReason
 	{
@@ -213,7 +214,7 @@ private:
 	bool	HasUploadAdmissionCandidate(ULONGLONG curTick);
 	void	SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, UploadRetryCooldownReason eReason);
 	bool	HasRecentNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick) const;
-	void	SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, ULONGLONG ullTrackUntil);
+	void	SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, ULONGLONG ullTrackUntil, bool bProductiveRecycle);
 	void	PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick);
 	void	UpdateMaxClientScore();
 	uint32	GetMaxClientScore() const						{ return m_imaxscore; }

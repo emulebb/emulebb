@@ -390,6 +390,8 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 	INT_PTR iCooldownWaitingClients = 0;
 	INT_PTR iRetryCooldownWaitingClients = 0;
 	INT_PTR iNoRequestCooldownWaitingClients = 0;
+	INT_PTR iProductiveNoRequestCooldownWaitingClients = 0;
+	INT_PTR iUnproductiveNoRequestCooldownWaitingClients = 0;
 	INT_PTR iClientOnlyCooldownWaitingClients = 0;
 	INT_PTR iRetryNoRequestWaitingClients = 0;
 	INT_PTR iRetryChurnWaitingClients = 0;
@@ -446,8 +448,13 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 					break;
 				}
 			}
-			if (bNoRequestCooldownActive)
+			if (bNoRequestCooldownActive) {
 				++iNoRequestCooldownWaitingClients;
+				if (itNoRequestCooldown->second.bProductiveRecycle)
+					++iProductiveNoRequestCooldownWaitingClients;
+				else
+					++iUnproductiveNoRequestCooldownWaitingClients;
+			}
 			if (!bRetryCooldownActive && !bNoRequestCooldownActive)
 				++iClientOnlyCooldownWaitingClients;
 		}
@@ -457,7 +464,7 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		: 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
+		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
 		uploadinglist.GetCount(),
 		m_retiredUploadingList.GetCount(),
 		waitinglist.GetCount(),
@@ -465,6 +472,8 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		iCooldownWaitingClients,
 		iRetryCooldownWaitingClients,
 		iNoRequestCooldownWaitingClients,
+		iProductiveNoRequestCooldownWaitingClients,
+		iUnproductiveNoRequestCooldownWaitingClients,
 		iClientOnlyCooldownWaitingClients,
 		iRetryNoRequestWaitingClients,
 		iRetryChurnWaitingClients,
@@ -918,7 +927,7 @@ bool CUploadQueue::HasRecentNoRequestUploadRetryCooldown(CUpDownClient *client, 
 		&& itNoRequest->second.ullTrackUntil > curTick;
 }
 
-void CUploadQueue::SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, ULONGLONG ullTrackUntil)
+void CUploadQueue::SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, ULONGLONG ullTrackUntil, bool bProductiveRecycle)
 {
 	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
 	if (dwCooldownIP == 0)
@@ -934,6 +943,7 @@ void CUploadQueue::SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGL
 	state.ullCooldownUntil = ullCooldownUntil;
 	state.ullTrackUntil = ullTrackUntil;
 	state.bQueuedRequestClearUsed = bQueuedRequestClearUsed;
+	state.bProductiveRecycle = bProductiveRecycle;
 	m_noRequestUploadRetryCooldownByIP[dwCooldownIP] = state;
 }
 
@@ -1086,7 +1096,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			const ULONGLONG ullTrackUntil = curTick + SEC2MS(uConfiguredCooldownSeconds);
 			client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 			SetUploadRetryCooldown(client, ullCooldownUntil, uploadRetryCooldownNoRequest);
-			SetNoRequestUploadRetryCooldown(client, ullCooldownUntil, ullTrackUntil);
+			SetNoRequestUploadRetryCooldown(client, ullCooldownUntil, ullTrackUntil, bProductiveNoRequestRecycle);
 		}
 		if (thePrefs.GetLogUlDlEvents())
 			AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled because the peer stopped requesting parts during broadband underfill."), client->GetUserName());
