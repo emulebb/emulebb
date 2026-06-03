@@ -257,6 +257,13 @@ void CKademliaWnd::OnEnSetfocusBootstrapNodesdat()
 
 void CKademliaWnd::OnBnClickedBootstrapbutton()
 {
+	if (!Kademlia::CKademlia::IsConnected()
+		&& theApp.emuledlg != NULL
+		&& !theApp.emuledlg->CanUseP2PConnectionCommands()) {
+		theApp.emuledlg->LogP2PConnectionCommandBlocked();
+		return;
+	}
+
 	if (IsDlgButtonChecked(IDC_RADIP)) {
 		CString strIP;
 		GetDlgItemText(IDC_BOOTSTRAPIP, strIP);
@@ -392,8 +399,11 @@ void CKademliaWnd::UpdateControlsState()
 	GetDlgItemText(IDC_BOOTSTRAPPORT, strBootstrapPort);
 	CString strBootstrapUrl;
 	GetDlgItemText(IDC_BOOTSTRAPURL, strBootstrapUrl);
+	const bool bCanBootstrap = theApp.emuledlg != NULL && theApp.emuledlg->CanUseP2PConnectionCommands();
 
 	GetDlgItem(IDC_BOOTSTRAPBUTTON)->EnableWindow(
+		bCanBootstrap
+		&&
 		!Kademlia::CKademlia::IsConnected()
 		&& ((IsDlgButtonChecked(IDC_RADIP) && !strBootstrapIP.IsEmpty()
 			&& (strBootstrapIP.Find(_T(':')) >= 0 || !strBootstrapPort.IsEmpty()))

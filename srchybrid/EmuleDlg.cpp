@@ -3025,6 +3025,11 @@ void CemuleDlg::ShowConnectionState()
 			theApp.emuledlg->m_SysMenuOptions.ModifyMenuW(MP_DISCONNECT, MF_STRING, MP_CONNECT, strPane);
 		}
 	}
+	const bool bCanStopOrCancel = theApp.IsConnected() || theApp.serverconnect->IsConnecting() || Kademlia::CKademlia::IsRunning();
+	const bool bCanUseConnectionCommand = bCanStopOrCancel || CanUseP2PConnectionCommands();
+	toolbar->EnableButton(TBBTN_CONNECT, bCanUseConnectionCommand);
+	theApp.emuledlg->m_SysMenuOptions.EnableMenuItem(bCanStopOrCancel ? MP_DISCONNECT : MP_CONNECT,
+		bCanUseConnectionCommand ? MF_ENABLED : MF_GRAYED);
 	ShowUserCount();
 #ifdef HAVE_WIN7_SDK_H
 	UpdateThumbBarButtons();
@@ -5159,13 +5164,16 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 	Links.AddMenuTitle(NULL, true);
 	AppendLinksMenuEntries(Links);
 
-	const auto appendConnectionItem = [](CTitledMenu &targetMenu) {
+	const auto appendConnectionItem = [this](CTitledMenu &targetMenu) {
 		if (theApp.serverconnect->IsConnected())
 			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, AddMainShellShortcutLabel(GetResString(IDS_MAIN_BTN_DISCONNECT), MP_HM_CON), _T("DISCONNECT"));
 		else if (theApp.serverconnect->IsConnecting())
 			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, AddMainShellShortcutLabel(GetResString(IDS_MAIN_BTN_CANCEL), MP_HM_CON), _T("STOPCONNECTING"));
 		else
-			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, AddMainShellShortcutLabel(GetResString(IDS_MAIN_BTN_CONNECT), MP_HM_CON), _T("CONNECT"));
+			targetMenu.AppendMenu(MF_STRING | (CanUseP2PConnectionCommands() ? MF_ENABLED : MF_GRAYED),
+				MP_HM_CON,
+				AddMainShellShortcutLabel(GetResString(IDS_MAIN_BTN_CONNECT), MP_HM_CON),
+				_T("CONNECT"));
 	};
 
 	if (!toolsonly) {

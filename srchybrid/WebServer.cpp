@@ -862,8 +862,9 @@ CString CWebServer::_GetHeader(const ThreadData &Data, long lSession)
 	CString HTTPHelpV(_T('0'));
 	CString HTTPHelpF(_T('0'));
 	const CString &sCmd(_ParseURL(Data.sURL, _T("c")));
+	const bool bCanUseP2PConnectionCommands = theApp.emuledlg != NULL && theApp.emuledlg->CanUseP2PConnectionCommands();
 	bool disconnectissued = (sCmd == _T("disconnect"));
-	bool connectissued = (sCmd == _T("connect"));
+	bool connectissued = bCanUseP2PConnectionCommands && (sCmd == _T("connect"));
 
 	CString HTTPConState, HTTPConText, HTTPHelp;
 	if ((theApp.serverconnect->IsConnecting() && !disconnectissued) || connectissued) {
@@ -895,7 +896,7 @@ CString CWebServer::_GetHeader(const ThreadData &Data, long lSession)
 	} else {
 		HTTPConState = _T("disconnected");
 		HTTPConText = _GetPlainResString(IDS_DISCONNECTED);
-		if (bAdmin)
+		if (bAdmin && bCanUseP2PConnectionCommands)
 			HTTPConText.AppendFormat(_T(" (<a href=\"?ses=%s&amp;w=server&amp;c=connect\">%s</a>)"), (LPCTSTR)sSession, (LPCTSTR)_GetPlainResString(IDS_CONNECTTOANYSERVER));
 	}
 	uint32 allUsers = 0;
@@ -925,7 +926,8 @@ CString CWebServer::_GetHeader(const ThreadData &Data, long lSession)
 			HTTPConText = GetResString(IDS_CONNECTING);
 		else {
 			HTTPConText = GetResString(IDS_DISCONNECTED);
-			HTTPConText.AppendFormat(_T(" (<a href=\"?ses=%s&amp;w=kad&amp;c=connect\">%s</a>)"), (LPCTSTR)sSession, (LPCTSTR)GetResString(IDS_IRC_CONNECT));
+			if (bCanUseP2PConnectionCommands)
+				HTTPConText.AppendFormat(_T(" (<a href=\"?ses=%s&amp;w=kad&amp;c=connect\">%s</a>)"), (LPCTSTR)sSession, (LPCTSTR)GetResString(IDS_IRC_CONNECT));
 		}
 	}
 	Out.Replace(_T("[KadConText]"), HTTPConText);
@@ -3256,8 +3258,13 @@ CString CWebServer::_GetAddServerBox(const ThreadData &Data)
 	CString s;
 	s.Format(_T("?ses=%s&amp;w=server&amp;c=disconnect"), (LPCTSTR)sSession);
 	Out.Replace(_T("[URL_Disconnect]"), s);
-	s.Format(_T("?ses=%s&amp;w=server&amp;c=connect"), (LPCTSTR)sSession);
+	const bool bCanUseP2PConnectionCommands = theApp.emuledlg != NULL && theApp.emuledlg->CanUseP2PConnectionCommands();
+	if (bCanUseP2PConnectionCommands)
+		s.Format(_T("?ses=%s&amp;w=server&amp;c=connect"), (LPCTSTR)sSession);
+	else
+		s = _T("#");
 	Out.Replace(_T("[URL_Connect]"), s);
+	Out.Replace(_T("[ConnectDisabled]"), bCanUseP2PConnectionCommands ? _T("") : _T(" disabled"));
 
 	Out.Replace(_T("[Disconnect]"), _GetPlainResString(IDS_IRC_DISCONNECT));
 	Out.Replace(_T("[Connect]"), _GetPlainResString(IDS_CONNECTTOANYSERVER));
@@ -3389,7 +3396,10 @@ CString CWebServer::_GetKadDlg(const ThreadData &Data)
 			buffer.Format(_T("<a href=\"?ses=%s&amp;w=kad&amp;c=disconnect\">%s</a>"), (LPCTSTR)sSession, (LPCTSTR)GetResString(IDS_IRC_DISCONNECT));
 		} else {
 			Out.Replace(_T("[KADSTATUS]"), GetResString(IDS_DISCONNECTED));
-			buffer.Format(_T("<a href=\"?ses=%s&amp;w=kad&amp;c=connect\">%s</a>"), (LPCTSTR)sSession, (LPCTSTR)GetResString(IDS_IRC_CONNECT));
+			if (theApp.emuledlg != NULL && theApp.emuledlg->CanUseP2PConnectionCommands())
+				buffer.Format(_T("<a href=\"?ses=%s&amp;w=kad&amp;c=connect\">%s</a>"), (LPCTSTR)sSession, (LPCTSTR)GetResString(IDS_IRC_CONNECT));
+			else
+				buffer.Empty();
 		}
 
 		Out.Replace(_T("[KADACTION]"), buffer);

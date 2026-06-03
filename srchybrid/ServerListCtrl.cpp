@@ -436,8 +436,11 @@ void CServerListCtrl::OnContextMenu(CWnd*, CPoint point)
 	ServerMenu.CreatePopupMenu();
 	ServerMenu.AddMenuTitle(GetResString(IDS_EM_SERVER), true);
 
-	ServerMenu.AppendMenu(MF_STRING | (iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED), MP_CONNECTTO, GetResString(IDS_CONNECTTHIS), _T("CONNECT"));
-	ServerMenu.SetDefaultItem(iSelectedItems > 0 ? MP_CONNECTTO : -1);
+	const bool bCanConnectToSelectedServer = iSelectedItems > 0
+		&& theApp.emuledlg != NULL
+		&& theApp.emuledlg->CanUseP2PConnectionCommands();
+	ServerMenu.AppendMenu(MF_STRING | (bCanConnectToSelectedServer ? MF_ENABLED : MF_GRAYED), MP_CONNECTTO, GetResString(IDS_CONNECTTHIS), _T("CONNECT"));
+	ServerMenu.SetDefaultItem(bCanConnectToSelectedServer ? MP_CONNECTTO : -1);
 
 	CMenu ServerPrioMenu;
 	ServerPrioMenu.CreateMenu();
@@ -485,6 +488,10 @@ BOOL CServerListCtrl::OnCommand(WPARAM wParam, LPARAM)
 	switch (wParam) {
 	case MP_CONNECTTO:
 	case IDA_ENTER:
+		if (theApp.emuledlg != NULL && !theApp.emuledlg->CanUseP2PConnectionCommands()) {
+			theApp.emuledlg->LogP2PConnectionCommandBlocked();
+			return TRUE;
+		}
 		if (GetSelectedCount() > 1) {
 			theApp.serverconnect->Disconnect();
 			for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;) {

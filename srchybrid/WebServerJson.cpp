@@ -3015,6 +3015,9 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 	if (strCommand == "servers/connect") {
+		if (IsP2PConnectionCommandBlocked())
+			return BuildP2PConnectionCommandBlockedJson(BuildServerStatusJson());
+
 		SPipeApiServerEndpoint endpoint;
 		bool bHasEndpoint = false;
 		if (!TryGetServerEndpoint(params, endpoint, bHasEndpoint, rError))
@@ -3075,8 +3078,11 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 				rError.strMessage = _T("connect must be a boolean");
 				return json();
 			}
-			if (params.value("connect", false))
+			if (params.value("connect", false)) {
+				if (IsP2PConnectionCommandBlocked())
+					return BuildP2PConnectionCommandBlockedJson(BuildServerJson(*pServer));
 				InvokeWebGuiInteraction(WEBGUIIA_CONNECTTOSERVER, reinterpret_cast<LPARAM>(pServer));
+			}
 			return BuildServerJson(*pServer);
 		}
 
