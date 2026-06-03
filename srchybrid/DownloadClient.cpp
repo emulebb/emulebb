@@ -78,7 +78,8 @@ bool IsDownloadSlotInstrumentationHighVolumeReason(LPCTSTR pszReason)
 			|| _tcscmp(pszReason, _T("block-reserve-empty")) == 0
 			|| _tcscmp(pszReason, _T("block-reserve-skipped-pending-growth")) == 0
 			|| _tcscmp(pszReason, _T("request-sent")) == 0
-			|| _tcscmp(pszReason, _T("request-skipped-no-new-batch")) == 0);
+			|| _tcscmp(pszReason, _T("request-skipped-no-new-batch")) == 0
+			|| _tcscmp(pszReason, _T("state-transition")) == 0);
 }
 
 bool IsTickInsideWindow(ULONGLONG ullNow, ULONGLONG ullWindowStart, ULONGLONG ullWindowMs)
