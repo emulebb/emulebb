@@ -181,6 +181,18 @@ inline bool ShouldCooldownNoRequestUploadRecycle(
 		&& ullQueueSessionPayloadBytes <= ullMaxPayloadBytes;
 }
 
+inline bool ShouldClearUploadRetryCooldownOnQueuedRequest(
+	bool bOnUploadQueue,
+	bool bSlowUploadCooldownActive,
+	bool bRequestFileKnown,
+	bool bRequestRangeValid)
+{
+	return bOnUploadQueue
+		&& bSlowUploadCooldownActive
+		&& bRequestFileKnown
+		&& bRequestRangeValid;
+}
+
 inline bool HasStalledUploadReplacementPressure(bool bHasWaitingClients, std::int64_t iUploadSlots, std::int64_t iSoftMaxUploadSlots)
 {
 	return bHasWaitingClients || iUploadSlots < iSoftMaxUploadSlots;

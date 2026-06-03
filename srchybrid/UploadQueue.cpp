@@ -802,6 +802,23 @@ void CUploadQueue::SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCo
 		m_uploadRetryCooldownByIP[dwCooldownIP] = ullCooldownUntil;
 }
 
+bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client)
+{
+	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
+	const bool bHadClientCooldown = client != NULL && client->IsInSlowUploadCooldown();
+	bool bHadIPCooldown = false;
+	if (dwCooldownIP != 0) {
+		std::map<uint32, ULONGLONG>::iterator itCooldown = m_uploadRetryCooldownByIP.find(dwCooldownIP);
+		if (itCooldown != m_uploadRetryCooldownByIP.end()) {
+			bHadIPCooldown = true;
+			m_uploadRetryCooldownByIP.erase(itCooldown);
+		}
+	}
+	if (client != NULL)
+		client->ClearSlowUploadCooldown();
+	return bHadClientCooldown || bHadIPCooldown;
+}
+
 void CUploadQueue::PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick)
 {
 	for (std::map<uint32, ULONGLONG>::iterator itCooldown = m_uploadRetryCooldownByIP.begin(); itCooldown != m_uploadRetryCooldownByIP.end();) {

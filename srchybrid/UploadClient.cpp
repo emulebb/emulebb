@@ -20,6 +20,7 @@
 #include "Opcodes.h"
 #include "Packets.h"
 #include "UploadQueue.h"
+#include "UploadQueueSeams.h"
 #include "Statistics.h"
 #include "ClientList.h"
 #include "SharedFileList.h"
@@ -454,7 +455,27 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 
 	if (reqblock != NULL) {
 		std::unique_ptr<Requested_Block_Struct> reqblockOwner(reqblock);
+		CKnownFile *srcfile = theApp.sharedfiles->GetFileByID(reqblock->FileID);
+		const bool bRequestRangeValid = srcfile != NULL
+			&& reqblock->StartOffset < reqblock->EndOffset
+			&& reqblock->EndOffset <= srcfile->GetFileSize()
+			&& reqblock->EndOffset - reqblock->StartOffset <= EMBLOCKSIZE * 3
+			&& (!srcfile->IsPartFile() || static_cast<CPartFile*>(srcfile)->IsCompleteBDSafe(reqblock->StartOffset, reqblock->EndOffset - 1));
 		if (GetUploadState() != US_UPLOADING) {
+			if (ShouldClearUploadRetryCooldownOnQueuedRequest(
+					GetUploadState() == US_ONUPLOADQUEUE,
+					IsInSlowUploadCooldown(),
+					srcfile != NULL,
+					bRequestRangeValid))
+			{
+				// WHY: a no-request recycle can race a late OP_REQUESTPARTS and
+				// leave a now-requesting peer locally suppressed. Keep the stock
+				// rule that queued clients do not accumulate block requests, but
+				// clear the local retry cooldown so normal admission can refill
+				// broadband capacity on the next scheduler pass.
+				if (theApp.uploadqueue->ClearUploadRetryCooldown(this) && thePrefs.GetLogUlDlEvents())
+					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooldown cleared after queued block request."), GetUserName());
+			}
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
 			LogUploadReqBlockInstrumentation(this, _T("reject-not-uploading"), reqblock, NULL, -1, -1);
 #endif
@@ -480,7 +501,6 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 				ASSERT(0);
 		}
 
-		CKnownFile *srcfile = theApp.sharedfiles->GetFileByID(reqblock->FileID);
 		if (srcfile == NULL) {
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
 			LogUploadReqBlockInstrumentation(this, _T("reject-file-not-shared"), reqblock, NULL, -1, -1);

@@ -150,6 +150,7 @@ public:
 
 	CUpDownClient* FindBestClientInQueue();
 	static UploadTimerRuntimeStats GetUploadTimerRuntimeStats();
+	bool ClearUploadRetryCooldown(CUpDownClient *client);
 
 	CUpDownClientPtrList waitinglist;
 
