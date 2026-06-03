@@ -257,6 +257,38 @@ inline bool ShouldAdmitQueuedBlockRequestToUploadSlot(
 		&& bCanOpenUploadSlot;
 }
 
+enum QueuedBlockRequestAdmissionResult
+{
+	queuedBlockRequestAdmitted,
+	queuedBlockRequestCooldownNotCleared,
+	queuedBlockRequestNotOnQueue,
+	queuedBlockRequestAlreadyUploading,
+	queuedBlockRequestCapFull,
+	queuedBlockRequestAdmissionDeferred,
+	queuedBlockRequestDirectAddFailed
+};
+
+inline QueuedBlockRequestAdmissionResult ClassifyQueuedBlockRequestAdmission(
+	bool bQueuedRequestCooldownCleared,
+	bool bOnUploadQueue,
+	bool bAlreadyUploading,
+	bool bCanOpenUploadSlot,
+	bool bAdmissionGateOpen,
+	bool bDirectAddSucceeded)
+{
+	if (!bQueuedRequestCooldownCleared)
+		return queuedBlockRequestCooldownNotCleared;
+	if (!bOnUploadQueue)
+		return queuedBlockRequestNotOnQueue;
+	if (bAlreadyUploading)
+		return queuedBlockRequestAlreadyUploading;
+	if (!bCanOpenUploadSlot)
+		return queuedBlockRequestCapFull;
+	if (!bAdmissionGateOpen)
+		return queuedBlockRequestAdmissionDeferred;
+	return bDirectAddSucceeded ? queuedBlockRequestAdmitted : queuedBlockRequestDirectAddFailed;
+}
+
 inline bool HasStalledUploadReplacementPressure(bool bHasWaitingClients, std::int64_t iUploadSlots, std::int64_t iSoftMaxUploadSlots)
 {
 	return bHasWaitingClients || iUploadSlots < iSoftMaxUploadSlots;

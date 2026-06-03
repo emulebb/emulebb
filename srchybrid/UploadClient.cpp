@@ -84,6 +84,28 @@ void CountUploadReqBlockInstrumentation(UploadingToClient_Struct *pUploadingClie
 		pUploadingClientStruct->m_ullReqBlocksRejected.fetch_add(1);
 }
 
+LPCTSTR GetQueuedBlockRequestAdmissionInstrumentationReason(QueuedBlockRequestAdmissionResult eResult)
+{
+	switch (eResult) {
+	case queuedBlockRequestAdmitted:
+		return _T("accept-queued-request-direct-admit");
+	case queuedBlockRequestCooldownNotCleared:
+		return _T("reject-not-uploading-cooldown-not-cleared");
+	case queuedBlockRequestNotOnQueue:
+		return _T("reject-not-uploading-not-on-queue");
+	case queuedBlockRequestAlreadyUploading:
+		return _T("reject-not-uploading-already-uploading");
+	case queuedBlockRequestCapFull:
+		return _T("reject-not-uploading-cap-full");
+	case queuedBlockRequestAdmissionDeferred:
+		return _T("reject-not-uploading-admission-deferred");
+	case queuedBlockRequestDirectAddFailed:
+		return _T("reject-not-uploading-direct-add-failed");
+	default:
+		return _T("reject-not-uploading-unknown-admission-result");
+	}
+}
+
 void LogUploadReqBlockInstrumentation(
 	CUpDownClient *client,
 	LPCTSTR pszReason,
@@ -464,7 +486,10 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 			&& reqblock->EndOffset - reqblock->StartOffset <= EMBLOCKSIZE * 3
 			&& (!srcfile->IsPartFile() || static_cast<CPartFile*>(srcfile)->IsCompleteBDSafe(reqblock->StartOffset, reqblock->EndOffset - 1));
 		if (GetUploadState() != US_UPLOADING) {
-			bool bQueuedRequestDirectAdmitted = false;
+			QueuedBlockRequestAdmissionResult eQueuedRequestAdmissionResult =
+				GetUploadState() == US_ONUPLOADQUEUE
+					? queuedBlockRequestCooldownNotCleared
+					: queuedBlockRequestNotOnQueue;
 			if (ShouldClearUploadRetryCooldownOnQueuedRequest(
 					GetUploadState() == US_ONUPLOADQUEUE,
 					IsInSlowUploadCooldown(),
@@ -476,17 +501,17 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 				// rule that queued clients do not accumulate block requests unless
 				// the normal broadband cap can immediately reopen the slot.
 				const bool bCooldownCleared = theApp.uploadqueue->ClearUploadRetryCooldown(this);
-				bQueuedRequestDirectAdmitted = theApp.uploadqueue->TryAdmitQueuedBlockRequestClient(this, bCooldownCleared);
+				eQueuedRequestAdmissionResult = theApp.uploadqueue->TryAdmitQueuedBlockRequestClient(this, bCooldownCleared);
 				if (bCooldownCleared && thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooldown cleared after queued block request."), GetUserName());
 			}
-			if (bQueuedRequestDirectAdmitted && GetUploadState() == US_UPLOADING) {
+			if (eQueuedRequestAdmissionResult == queuedBlockRequestAdmitted && GetUploadState() == US_UPLOADING) {
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
 				LogUploadReqBlockInstrumentation(this, _T("accept-queued-request-direct-admit"), reqblock, theApp.uploadqueue->GetUploadingClientStructByClient(this), -1, -1);
 #endif
 			} else {
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
-				LogUploadReqBlockInstrumentation(this, _T("reject-not-uploading"), reqblock, NULL, -1, -1);
+				LogUploadReqBlockInstrumentation(this, GetQueuedBlockRequestAdmissionInstrumentationReason(eQueuedRequestAdmissionResult), reqblock, NULL, -1, -1);
 #endif
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("UploadClient: Client tried to add req block when not in upload slot! Prevented req blocks from being added. %s"), (LPCTSTR)DbgGetClientInfo());

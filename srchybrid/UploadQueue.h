@@ -18,6 +18,7 @@
 #include <atomic>
 #include <map>
 #include "ring.h"
+#include "UploadQueueSeams.h"
 
 struct Requested_Block_Struct;
 class CUpDownClient;
@@ -151,7 +152,7 @@ public:
 	CUpDownClient* FindBestClientInQueue();
 	static UploadTimerRuntimeStats GetUploadTimerRuntimeStats();
 	bool ClearUploadRetryCooldown(CUpDownClient *client);
-	bool TryAdmitQueuedBlockRequestClient(CUpDownClient *client, bool bQueuedRequestCooldownCleared);
+	QueuedBlockRequestAdmissionResult TryAdmitQueuedBlockRequestClient(CUpDownClient *client, bool bQueuedRequestCooldownCleared);
 
 	CUpDownClientPtrList waitinglist;
 

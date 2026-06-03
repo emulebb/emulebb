@@ -972,21 +972,34 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client)
 	return bHadClientCooldown || bHadIPCooldown;
 }
 
-bool CUploadQueue::TryAdmitQueuedBlockRequestClient(CUpDownClient *client, bool bQueuedRequestCooldownCleared)
+QueuedBlockRequestAdmissionResult CUploadQueue::TryAdmitQueuedBlockRequestClient(CUpDownClient *client, bool bQueuedRequestCooldownCleared)
 {
+	const bool bOnUploadQueue = client != NULL && IsOnUploadQueue(client);
+	const bool bAlreadyUploading = client != NULL && IsDownloading(client);
+	const bool bCanOpenUploadSlot = AcceptNewClient(uploadinglist.GetCount());
 	if (!ShouldAdmitQueuedBlockRequestToUploadSlot(
 			bQueuedRequestCooldownCleared,
-			client != NULL && IsOnUploadQueue(client),
-			client != NULL && IsDownloading(client),
-			AcceptNewClient(uploadinglist.GetCount())))
-	{
-		return false;
-	}
+			bOnUploadQueue,
+			bAlreadyUploading,
+			bCanOpenUploadSlot))
+		return ClassifyQueuedBlockRequestAdmission(
+			bQueuedRequestCooldownCleared,
+			bOnUploadQueue,
+			bAlreadyUploading,
+			bCanOpenUploadSlot,
+			false,
+			false);
 
 	if (!ForceNewClient(true))
-		return false;
+		return queuedBlockRequestAdmissionDeferred;
 
-	return AddUpNextClient(_T("Direct add after queued block request."), client);
+	return ClassifyQueuedBlockRequestAdmission(
+		bQueuedRequestCooldownCleared,
+		bOnUploadQueue,
+		bAlreadyUploading,
+		bCanOpenUploadSlot,
+		true,
+		AddUpNextClient(_T("Direct add after queued block request."), client));
 }
 
 void CUploadQueue::PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick)
