@@ -6012,8 +6012,10 @@ BOOL CemuleDlg::PreTranslateMessage(MSG *pMsg)
 				int iNextButtonID = GetNextWindowToolbarButton(iButtonID, GetKeyState(VK_SHIFT) < 0 ? -1 : 1);
 				if (iNextButtonID != -1) {
 					CWnd *pWndNext = MapToolbarButtonToWindow(iNextButtonID);
-					if (pWndNext)
+					if (pWndNext) {
 						SetActiveDialog(pWndNext);
+						return TRUE;
+					}
 				}
 			}
 		}
