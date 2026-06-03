@@ -947,8 +947,11 @@ void CUploadQueue::SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGL
 	m_noRequestUploadRetryCooldownByIP[dwCooldownIP] = state;
 }
 
-bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client)
+bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppszInstrumentationReason)
 {
+	if (ppszInstrumentationReason != NULL)
+		*ppszInstrumentationReason = NULL;
+
 	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
 	const bool bHadClientCooldown = client != NULL && client->IsInSlowUploadCooldown();
 	bool bHadIPCooldown = false;
@@ -959,8 +962,11 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client)
 			if (itNoRequest->second.ullTrackUntil <= curTick) {
 				m_noRequestUploadRetryCooldownByIP.erase(itNoRequest);
 			} else if (itNoRequest->second.ullCooldownUntil > curTick) {
-				if (!ShouldAllowNoRequestCooldownClear(true, itNoRequest->second.bQueuedRequestClearUsed))
+				if (!ShouldAllowNoRequestCooldownClear(true, itNoRequest->second.bQueuedRequestClearUsed)) {
+					if (ppszInstrumentationReason != NULL)
+						*ppszInstrumentationReason = _T("reject-not-uploading-no-request-clear-used");
 					return false;
+				}
 				itNoRequest->second.bQueuedRequestClearUsed = true;
 			}
 		}
@@ -969,8 +975,11 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client)
 			if (itCooldown->second.ullTrackUntil <= curTick) {
 				m_uploadRetryCooldownByIP.erase(itCooldown);
 			} else if (itCooldown->second.ullCooldownUntil > curTick) {
-				if (!ShouldAllowUploadRetryCooldownClear(true, itCooldown->second.bQueuedRequestClearUsed))
+				if (!ShouldAllowUploadRetryCooldownClear(true, itCooldown->second.bQueuedRequestClearUsed)) {
+					if (ppszInstrumentationReason != NULL)
+						*ppszInstrumentationReason = _T("reject-not-uploading-retry-clear-used");
 					return false;
+				}
 				itCooldown->second.bQueuedRequestClearUsed = true;
 				itCooldown->second.ullCooldownUntil = curTick;
 				bHadIPCooldown = true;

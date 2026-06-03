@@ -490,6 +490,7 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 				GetUploadState() == US_ONUPLOADQUEUE
 					? queuedBlockRequestCooldownNotCleared
 					: queuedBlockRequestNotOnQueue;
+			LPCTSTR pszCooldownClearInstrumentationReason = NULL;
 			if (ShouldAttemptUploadRetryCooldownClearOnQueuedRequest(
 					GetUploadState() == US_ONUPLOADQUEUE,
 					srcfile != NULL,
@@ -500,7 +501,7 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 				// suppressed. Keep the stock rule that queued clients do not
 				// accumulate block requests unless the normal broadband cap can
 				// immediately reopen the slot.
-				const bool bCooldownCleared = theApp.uploadqueue->ClearUploadRetryCooldown(this);
+				const bool bCooldownCleared = theApp.uploadqueue->ClearUploadRetryCooldown(this, &pszCooldownClearInstrumentationReason);
 				eQueuedRequestAdmissionResult = theApp.uploadqueue->TryAdmitQueuedBlockRequestClient(this, bCooldownCleared);
 				if (bCooldownCleared && thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooldown cleared after queued block request."), GetUserName());
@@ -511,7 +512,11 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 #endif
 			} else {
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
-				LogUploadReqBlockInstrumentation(this, GetQueuedBlockRequestAdmissionInstrumentationReason(eQueuedRequestAdmissionResult), reqblock, NULL, -1, -1);
+				LogUploadReqBlockInstrumentation(this,
+					eQueuedRequestAdmissionResult == queuedBlockRequestCooldownNotCleared && pszCooldownClearInstrumentationReason != NULL
+						? pszCooldownClearInstrumentationReason
+						: GetQueuedBlockRequestAdmissionInstrumentationReason(eQueuedRequestAdmissionResult),
+					reqblock, NULL, -1, -1);
 #endif
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("UploadClient: Client tried to add req block when not in upload slot! Prevented req blocks from being added. %s"), (LPCTSTR)DbgGetClientInfo());

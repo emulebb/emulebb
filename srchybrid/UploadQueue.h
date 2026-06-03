@@ -151,7 +151,7 @@ public:
 
 	CUpDownClient* FindBestClientInQueue();
 	static UploadTimerRuntimeStats GetUploadTimerRuntimeStats();
-	bool ClearUploadRetryCooldown(CUpDownClient *client);
+	bool ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppszInstrumentationReason = NULL);
 	QueuedBlockRequestAdmissionResult TryAdmitQueuedBlockRequestClient(CUpDownClient *client, bool bQueuedRequestCooldownCleared);
 
 	CUpDownClientPtrList waitinglist;
