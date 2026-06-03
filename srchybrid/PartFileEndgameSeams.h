@@ -133,9 +133,11 @@ inline bool ShouldStealEndgameReservation(const bool endgame, const bool fasterP
 	const uint32 slowPeerDatarate, const uint32 fastPeerDatarate, const uint64 nowTick,
 	const uint64 cooldownUntilTick, const uint64 transferredBytes)
 {
-	(void)transferredBytes;
+	// WHY: Once a peer has started delivering the reserved block, canceling it
+	// wastes in-flight payload and can turn useful trailing packets into drops.
 	return endgame
 		&& fasterPeerCanServePart
+		&& transferredBytes == 0
 		&& IsEndgameStealCooldownExpired(nowTick, cooldownUntilTick)
 		&& IsMeaningfullyFasterPeer(slowPeerDatarate, fastPeerDatarate);
 }
