@@ -388,23 +388,41 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		: 0;
 	INT_PTR iEligibleWaitingClients = 0;
 	INT_PTR iCooldownWaitingClients = 0;
+	ULONGLONG ullCooldownMinMs = 0;
+	ULONGLONG ullCooldownMaxMs = 0;
+	ULONGLONG ullCooldownSumMs = 0;
 	for (POSITION waitPos = waitinglist.GetHeadPosition(); waitPos != NULL;) {
 		const CUpDownClient *pWaitingClient = waitinglist.GetNext(waitPos);
 		if (!IsLiveUploadQueueClient(pWaitingClient))
 			continue;
-		if (IsUploadQueueAdmissionCandidate(pWaitingClient->IsInSlowUploadCooldown()))
+		const ULONGLONG ullCooldownRemainingMs = pWaitingClient->GetSlowUploadCooldownRemaining();
+		if (IsUploadQueueAdmissionCandidate(ullCooldownRemainingMs != 0))
 			++iEligibleWaitingClients;
-		else
+		else {
 			++iCooldownWaitingClients;
+			ullCooldownSumMs += ullCooldownRemainingMs;
+			if (ullCooldownMinMs == 0 || ullCooldownRemainingMs < ullCooldownMinMs)
+				ullCooldownMinMs = ullCooldownRemainingMs;
+			if (ullCooldownRemainingMs > ullCooldownMaxMs)
+				ullCooldownMaxMs = ullCooldownRemainingMs;
+		}
 	}
+	const ULONGLONG ullCooldownAvgMs = iCooldownWaitingClients > 0
+		? ullCooldownSumMs / static_cast<ULONGLONG>(iCooldownWaitingClients)
+		: 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
+		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
 		uploadinglist.GetCount(),
 		m_retiredUploadingList.GetCount(),
 		waitinglist.GetCount(),
 		iEligibleWaitingClients,
 		iCooldownWaitingClients,
+		static_cast<uint64>(ullCooldownMinMs),
+		static_cast<uint64>(ullCooldownAvgMs),
+		static_cast<uint64>(ullCooldownMaxMs),
+		static_cast<UINT>(m_uploadRetryCooldownByIP.size()),
+		static_cast<UINT>(m_noRequestUploadRetryCooldownByIP.size()),
 		iThrottlerSlots,
 		m_MaxActiveClientsShortTime,
 		GetBroadbandSlotCap(),
