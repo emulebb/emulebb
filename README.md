@@ -22,7 +22,7 @@ Use this path for normal desktop use, RC testing, and nightlies.
    `emulebb-0.7.3-rc.1-x64.zip` once it is published, or use the nightly asset
    that is actually present on GitHub Releases.
 3. Extract the ZIP into a new version-specific folder, for example
-   `C:\Apps\eMuleBB\0.7.3-rc.1`.
+   `eMuleBB-0.7.3-rc.1`.
 4. Run `emulebb.exe`.
 
 Keep each version in its own application folder. For release candidates,
