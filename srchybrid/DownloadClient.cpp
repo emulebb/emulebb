@@ -748,6 +748,12 @@ bool CUpDownClient::CancelEndgameReservationForFasterPeer(const CPartFile *file,
 	if (file == NULL || fastPeer == NULL || fastPeer == this || m_reqfile != file || GetDownloadState() != DS_DOWNLOADING)
 		return false;
 
+	// WHY: Canceling a downloading source clears every pending request for that
+	// peer, not only the chosen block; keep active streams intact once payload
+	// has arrived so already in-flight packets are not converted into drops.
+	if (GetSessionPayloadDown() > 0 || GetSessionDown() > 0)
+		return false;
+
 	ULONGLONG ullCooldownUntil = 0;
 	m_fileEndgameCancelTimes.Lookup(file, ullCooldownUntil);
 	for (POSITION pos = m_PendingBlocks_list.GetHeadPosition(); pos != NULL;) {
