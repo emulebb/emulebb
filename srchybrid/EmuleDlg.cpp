@@ -2282,6 +2282,9 @@ void CemuleDlg::OnStartupTimer() noexcept
 		case 5:
 			UpdateStartupProgress(88, IDS_STARTUP_PROGRESS_LOADING_SEARCHES, IDS_STARTUP_PROGRESS_LOADING_STORED_SEARCHES);
 			status = 6;
+			// WHY: Stored-search restore is optional post-running UI hydration. Keep the
+			// startup lifecycle dialog from surviving while a large restore populates tabs.
+			DestroyStartupProgress();
 			{
 #if EMULEBB_HAS_STARTUP_PROFILING
 				const ULONGLONG ullStoredSearchesStart = theApp.GetStartupProfileTimestampUs();
