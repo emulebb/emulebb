@@ -1199,9 +1199,16 @@ void CUploadQueue::AddClientToQueue(CUpDownClient *client, bool bIgnoreTimelimit
 		client->SendRankingInfo();
 		return;
 	}
-	if (waitinglist.IsEmpty() && ForceNewClient(true)) {
+	const bool bHasWaitingAdmissionCandidate = HasUploadAdmissionCandidate(::GetTickCount64());
+	const bool bWaitingListEmpty = waitinglist.IsEmpty();
+	const bool bQueueHadNoAdmissionCandidate = ShouldDirectAdmitBehindCooldownOnlyWaitingList(
+		bWaitingListEmpty,
+		bHasWaitingAdmissionCandidate);
+	if ((bWaitingListEmpty || bQueueHadNoAdmissionCandidate) && ForceNewClient(true)) {
 		client->SetWaitStartTime();
-		AddUpNextClient(_T("Direct add with empty queue."), client);
+		AddUpNextClient(
+			bQueueHadNoAdmissionCandidate ? _T("Direct add behind cooldown-only queue.") : _T("Direct add with empty queue."),
+			client);
 	} else {
 		if (waitinglist.IsEmpty() && thePrefs.GetLogUlDlEvents() && !AcceptNewClient(uploadinglist.GetCount()))
 			AddDebugLogLine(DLP_LOW, false, _T("%s: Broadband direct admission denied because the fixed slot cap is full."), client->GetUserName());

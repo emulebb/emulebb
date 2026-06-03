@@ -102,6 +102,14 @@ inline bool ShouldAttemptUploadSlotAdmission(bool bAllowEmptyWaitingQueue, bool 
 }
 
 /**
+ * @brief Reports whether a new upload requester may bypass a queue which has no locally admissible peers.
+ */
+inline bool ShouldDirectAdmitBehindCooldownOnlyWaitingList(bool bWaitingListEmpty, bool bHasAdmissionCandidate)
+{
+	return !bWaitingListEmpty && !bHasAdmissionCandidate;
+}
+
+/**
  * @brief Reports whether an IP-scoped upload retry cooldown should suppress a peer.
  */
 inline bool ShouldApplyUploadRetryCooldown(bool bFriendSlot, std::uint32_t uPeerIP, std::uint64_t ullCurrentTick, std::uint64_t ullCooldownUntil)
