@@ -998,6 +998,54 @@ namespace
 		return result;
 	}
 
+	static LPCTSTR GetMainShellShortcutHint(UINT uCommandId)
+	{
+		switch (uCommandId) {
+		case TBBTN_CONNECT:
+		case MP_HM_CON:
+			return _T("Alt+1 / Alt+C");
+		case TBBTN_KAD:
+		case MP_HM_KAD:
+			return _T("Alt+2 / Alt+K");
+		case TBBTN_SERVER:
+		case MP_HM_SRVR:
+			return _T("Alt+3 / Alt+V");
+		case TBBTN_TRANSFERS:
+		case MP_HM_TRANSFER:
+			return _T("Alt+4 / Alt+T");
+		case TBBTN_SEARCH:
+		case MP_HM_SEARCH:
+			return _T("Alt+5 / Alt+S");
+		case TBBTN_SHARED:
+		case MP_HM_FILES:
+			return _T("Alt+6 / Alt+F");
+		case TBBTN_MESSAGES:
+		case MP_HM_MSGS:
+			return _T("Alt+7 / Alt+M");
+		case TBBTN_IRC:
+		case MP_HM_IRC:
+			return _T("Alt+8 / Alt+I");
+		case TBBTN_STATS:
+		case MP_HM_STATS:
+			return _T("Alt+9 / Alt+A");
+		case TBBTN_OPTIONS:
+		case MP_HM_PREFS:
+			return _T("Alt+0 / Alt+O");
+		case TBBTN_TOOLS:
+			return _T("Alt+W");
+		case TBBTN_HELP:
+		case MP_HM_HELP:
+			return _T("Alt+H");
+		default:
+			return NULL;
+		}
+	}
+
+	static CString AddMainShellShortcutLabel(const CString &label, UINT uCommandId)
+	{
+		return AddMenuShortcutLabel(label, GetMainShellShortcutHint(uCommandId));
+	}
+
 	static CString StripMenuMnemonics(const CString &label)
 	{
 		CString result;
@@ -5113,26 +5161,26 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 
 	const auto appendConnectionItem = [](CTitledMenu &targetMenu) {
 		if (theApp.serverconnect->IsConnected())
-			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, GetResString(IDS_MAIN_BTN_DISCONNECT), _T("DISCONNECT"));
+			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, AddMainShellShortcutLabel(GetResString(IDS_MAIN_BTN_DISCONNECT), MP_HM_CON), _T("DISCONNECT"));
 		else if (theApp.serverconnect->IsConnecting())
-			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, GetResString(IDS_MAIN_BTN_CANCEL), _T("STOPCONNECTING"));
+			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, AddMainShellShortcutLabel(GetResString(IDS_MAIN_BTN_CANCEL), MP_HM_CON), _T("STOPCONNECTING"));
 		else
-			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, GetResString(IDS_MAIN_BTN_CONNECT), _T("CONNECT"));
+			targetMenu.AppendMenu(MF_STRING, MP_HM_CON, AddMainShellShortcutLabel(GetResString(IDS_MAIN_BTN_CONNECT), MP_HM_CON), _T("CONNECT"));
 	};
 
 	if (!toolsonly) {
 		appendConnectionItem(menu);
 
 		menu.AppendMenu(MF_SEPARATOR);
-		menu.AppendMenu(MF_STRING, MP_HM_KAD, GetResString(IDS_EM_KADEMLIA), _T("KADEMLIA"));
-		menu.AppendMenu(MF_STRING, MP_HM_SRVR, GetResString(IDS_EM_SERVER), _T("SERVER"));
-		menu.AppendMenu(MF_STRING, MP_HM_TRANSFER, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
-		menu.AppendMenu(MF_STRING, MP_HM_SEARCH, GetResString(IDS_EM_SEARCH), _T("SEARCH"));
-		menu.AppendMenu(MF_STRING, MP_HM_FILES, GetResString(IDS_EM_FILES), _T("SharedFiles"));
-		menu.AppendMenu(MF_STRING, MP_HM_MSGS, GetResString(IDS_EM_MESSAGES), _T("MESSAGES"));
-		menu.AppendMenu(MF_STRING, MP_HM_STATS, GetResString(IDS_EM_STATISTIC), _T("STATISTICS"));
-		menu.AppendMenu(MF_STRING, MP_HM_PREFS, GetResString(IDS_EM_PREFS), _T("PREFERENCES"));
-		menu.AppendMenu(MF_STRING, MP_HM_HELP, GetResString(IDS_EM_HELP), _T("HELP"));
+		menu.AppendMenu(MF_STRING, MP_HM_KAD, AddMainShellShortcutLabel(GetResString(IDS_EM_KADEMLIA), MP_HM_KAD), _T("KADEMLIA"));
+		menu.AppendMenu(MF_STRING, MP_HM_SRVR, AddMainShellShortcutLabel(GetResString(IDS_EM_SERVER), MP_HM_SRVR), _T("SERVER"));
+		menu.AppendMenu(MF_STRING, MP_HM_TRANSFER, AddMainShellShortcutLabel(GetResString(IDS_EM_TRANS), MP_HM_TRANSFER), _T("TRANSFER"));
+		menu.AppendMenu(MF_STRING, MP_HM_SEARCH, AddMainShellShortcutLabel(GetResString(IDS_EM_SEARCH), MP_HM_SEARCH), _T("SEARCH"));
+		menu.AppendMenu(MF_STRING, MP_HM_FILES, AddMainShellShortcutLabel(GetResString(IDS_EM_FILES), MP_HM_FILES), _T("SharedFiles"));
+		menu.AppendMenu(MF_STRING, MP_HM_MSGS, AddMainShellShortcutLabel(GetResString(IDS_EM_MESSAGES), MP_HM_MSGS), _T("MESSAGES"));
+		menu.AppendMenu(MF_STRING, MP_HM_STATS, AddMainShellShortcutLabel(GetResString(IDS_EM_STATISTIC), MP_HM_STATS), _T("STATISTICS"));
+		menu.AppendMenu(MF_STRING, MP_HM_PREFS, AddMainShellShortcutLabel(GetResString(IDS_EM_PREFS), MP_HM_PREFS), _T("PREFERENCES"));
+		menu.AppendMenu(MF_STRING, MP_HM_HELP, AddMainShellShortcutLabel(GetResString(IDS_EM_HELP), MP_HM_HELP), _T("HELP"));
 		menu.AppendMenu(MF_SEPARATOR);
 		menu.AppendMenu(MF_STRING, MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
 		menu.AppendMenu(MF_STRING, MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
@@ -5218,14 +5266,14 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 			appendConnectionItem(session);
 			session.AppendMenu(MF_SEPARATOR);
 		}
-		session.AppendMenu(MF_STRING, MP_HM_SRVR, GetResString(IDS_EM_SERVER), _T("SERVER"));
-		session.AppendMenu(MF_STRING, MP_HM_TRANSFER, GetResString(IDS_EM_TRANS), _T("TRANSFER"));
-		session.AppendMenu(MF_STRING, MP_HM_SEARCH, GetResString(IDS_EM_SEARCH), _T("SEARCH"));
-		session.AppendMenu(MF_STRING, MP_HM_FILES, GetResString(IDS_EM_FILES), _T("SharedFiles"));
-		session.AppendMenu(MF_STRING, MP_HM_MSGS, GetResString(IDS_EM_MESSAGES), _T("MESSAGES"));
-		session.AppendMenu(MF_STRING, MP_HM_IRC, GetResString(IDS_IRC), _T("IRC"));
-		session.AppendMenu(MF_STRING, MP_HM_STATS, GetResString(IDS_EM_STATISTIC), _T("STATISTICS"));
-		session.AppendMenu(MF_STRING, MP_HM_PREFS, GetResString(IDS_EM_PREFS), _T("PREFERENCES"));
+		session.AppendMenu(MF_STRING, MP_HM_SRVR, AddMainShellShortcutLabel(GetResString(IDS_EM_SERVER), MP_HM_SRVR), _T("SERVER"));
+		session.AppendMenu(MF_STRING, MP_HM_TRANSFER, AddMainShellShortcutLabel(GetResString(IDS_EM_TRANS), MP_HM_TRANSFER), _T("TRANSFER"));
+		session.AppendMenu(MF_STRING, MP_HM_SEARCH, AddMainShellShortcutLabel(GetResString(IDS_EM_SEARCH), MP_HM_SEARCH), _T("SEARCH"));
+		session.AppendMenu(MF_STRING, MP_HM_FILES, AddMainShellShortcutLabel(GetResString(IDS_EM_FILES), MP_HM_FILES), _T("SharedFiles"));
+		session.AppendMenu(MF_STRING, MP_HM_MSGS, AddMainShellShortcutLabel(GetResString(IDS_EM_MESSAGES), MP_HM_MSGS), _T("MESSAGES"));
+		session.AppendMenu(MF_STRING, MP_HM_IRC, AddMainShellShortcutLabel(GetResString(IDS_IRC), MP_HM_IRC), _T("IRC"));
+		session.AppendMenu(MF_STRING, MP_HM_STATS, AddMainShellShortcutLabel(GetResString(IDS_EM_STATISTIC), MP_HM_STATS), _T("STATISTICS"));
+		session.AppendMenu(MF_STRING, MP_HM_PREFS, AddMainShellShortcutLabel(GetResString(IDS_EM_PREFS), MP_HM_PREFS), _T("PREFERENCES"));
 		if (!bTrayMenu) {
 			session.AppendMenu(MF_SEPARATOR);
 			session.AppendMenu(MF_STRING, MP_MINIMIZETOTRAY, GetResString(IDS_PW_TRAY), _T("TOOLS"));
@@ -5447,7 +5495,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		menu.AppendMenu(MF_SEPARATOR);
 		menu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB"));
 		menu.AppendMenu(MF_SEPARATOR);
-		menu.AppendMenu(MF_STRING, MP_HM_IRC, GetResString(IDS_IRC), _T("IRC"));
+		menu.AppendMenu(MF_STRING, MP_HM_IRC, AddMainShellShortcutLabel(GetResString(IDS_IRC), MP_HM_IRC), _T("IRC"));
 	}
 
 	if (bTrayMenu) {
@@ -6092,7 +6140,7 @@ BOOL CemuleDlg::OnChevronPushed(UINT id, LPNMHDR pNMHDR, LRESULT *plResult)
 			if (tbbi.fsStyle & TBSTYLE_SEP) {
 				if (!bLastMenuItemIsSep)
 					bLastMenuItemIsSep = menu.AppendMenu(MF_SEPARATOR, 0, (LPCTSTR)NULL);
-			} else if (*szString && menu.AppendMenu(MF_STRING, tbbi.idCommand, szString, GetIconFromCmdId(tbbi.idCommand))) {
+			} else if (*szString && menu.AppendMenu(MF_STRING, tbbi.idCommand, AddMainShellShortcutLabel(szString, tbbi.idCommand), GetIconFromCmdId(tbbi.idCommand))) {
 				bLastMenuItemIsSep = FALSE;
 				if (tbbi.fsState & TBSTATE_CHECKED)
 					menu.CheckMenuItem(tbbi.idCommand, MF_BYCOMMAND | MF_CHECKED);
