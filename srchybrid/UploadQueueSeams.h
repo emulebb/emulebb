@@ -173,17 +173,13 @@ inline bool ShouldRecycleNoRequestBroadbandUploadSlot(
 		&& (!bHasAcceptedRequest || ullLastAcceptedRequestAgeMs >= ullNoRequestGraceMs);
 }
 
-inline bool ShouldCooldownNoRequestUploadRecycle(
-	bool bFriendSlot,
-	std::uint64_t ullQueueSessionPayloadBytes,
-	std::uint64_t ullMaxPayloadBytes = kShortFailedUploadCooldownMaxPayloadBytes)
+inline bool ShouldCooldownNoRequestUploadRecycle(bool bFriendSlot)
 {
-	return !bFriendSlot
-		&& ullQueueSessionPayloadBytes <= ullMaxPayloadBytes;
+	return !bFriendSlot;
 }
 
 /**
- * @brief Returns the bounded cooldown used after a low-payload no-request upload recycle.
+ * @brief Returns the bounded cooldown used after a no-request upload recycle.
  */
 inline std::uint32_t GetNoRequestUploadRetryCooldownSeconds(
 	std::uint32_t uConfiguredCooldownSeconds,

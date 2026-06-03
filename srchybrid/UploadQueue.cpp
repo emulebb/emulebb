@@ -928,11 +928,11 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		// blocks during broadband underfill cannot fill capacity. Recycle that
 		// no-request slot promptly without weakening the broader slow-upload
 		// warmup used for peers that still have local work queued.
-		if (ShouldCooldownNoRequestUploadRecycle(false, client->GetQueueSessionPayloadUp())) {
-			// WHY: very low-payload no-request sessions repeatedly burn upload
-			// starts without filling capacity. Productive sessions are still
-			// recycled when drained, but can compete again instead of starving a
-			// sparse queue behind a long cooldown.
+		if (ShouldCooldownNoRequestUploadRecycle(false)) {
+			// WHY: no-request sessions can make an initial burst, drain their
+			// pipeline, then immediately re-enter as 0-byte slots. Seed a short
+			// retry cooldown for every drained no-request recycle so other
+			// candidates get a chance to fill the broadband line.
 			// WHY: no-request peers are already constrained to one queued-request
 			// cooldown clear per window. Keep their retry suppression short so a
 			// sparse public queue can refill capacity, but escalate repeat
