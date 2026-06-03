@@ -763,6 +763,12 @@ bool CUpDownClient::CancelEndgameReservationForFasterPeer(const CPartFile *file,
 		if (pending == NULL || pending->block == NULL)
 			continue;
 
+		// WHY: A queued pending block has already been requested on the wire.
+		// Canceling it for an endgame steal can turn a valid in-flight block
+		// response into packet-dropped-invalid-state after the request is cleared.
+		if (pending->fQueued)
+			continue;
+
 		const UINT uPart = (UINT)(pending->block->StartOffset / PARTSIZE);
 		if (!fastPeer->IsPartAvailable(uPart))
 			continue;
