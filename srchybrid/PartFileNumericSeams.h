@@ -10,6 +10,8 @@
 
 namespace PartFileNumericSeams
 {
+inline constexpr uint64 kBroadbandActiveBufferFlushTimeLimitMs = 10u * 1000u;
+
 /**
  * @brief Maximum bounded completion percentage used by the chunk ranking logic.
  */
@@ -119,6 +121,27 @@ inline uint64 GetBufferedDataFlushThreshold(const uint64 nEffectiveFileBufferSiz
 inline bool ShouldFlushBufferedData(const uint64 nCurrentBufferedBytes, const uint64 nEffectiveFileBufferSize)
 {
 	return nCurrentBufferedBytes > GetBufferedDataFlushThreshold(nEffectiveFileBufferSize);
+}
+
+/**
+ * @brief Selects the periodic part-file buffer flush interval for active downloads.
+ *
+ * Auto Broadband I/O keeps larger per-file buffers for throughput, but an
+ * active file should still hand ready buffers to the write helper regularly so
+ * the disk pipeline does not sit idle while memory accumulates data.
+ */
+inline uint64 SelectBufferedDataFlushTimeLimitMs(
+	const bool bAutoBroadbandIoEnabled,
+	const uint64 nConfiguredTimeLimitMs,
+	const uint64 nCurrentBufferedBytes,
+	const UINT nTransferringSourceCount)
+{
+	if (!bAutoBroadbandIoEnabled || nCurrentBufferedBytes == 0 || nTransferringSourceCount == 0)
+		return nConfiguredTimeLimitMs;
+
+	return nConfiguredTimeLimitMs < kBroadbandActiveBufferFlushTimeLimitMs
+		? nConfiguredTimeLimitMs
+		: kBroadbandActiveBufferFlushTimeLimitMs;
 }
 
 /**

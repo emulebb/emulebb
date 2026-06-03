@@ -2883,7 +2883,12 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 
 	// If buffer size exceeds limit, or if not written within time limit, flush data
 	const uint64 uEffectiveFileBufferSize = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes() : thePrefs.GetFileBufferSize();
-	if (m_nTotalBufferData > uEffectiveFileBufferSize || curTick >= m_nLastBufferFlushTime + thePrefs.GetFileBufferTimeLimit())
+	const uint64 uBufferFlushTimeLimit = PartFileNumericSeams::SelectBufferedDataFlushTimeLimitMs(
+		thePrefs.IsAutoBroadbandIOEnabled(),
+		thePrefs.GetFileBufferTimeLimit(),
+		m_nTotalBufferData,
+		GetTransferringSrcCount());
+	if (m_nTotalBufferData > uEffectiveFileBufferSize || curTick >= m_nLastBufferFlushTime + uBufferFlushTimeLimit)
 		FlushBuffer();
 	//If data keeps arriving, flush to disk sometimes for extra safety
 	if (m_nFileFlushTime && curTick >= m_nFileFlushTime + SEC2MS(31) && m_hWrite != INVALID_HANDLE_VALUE) {
