@@ -296,7 +296,7 @@ bool CUploadQueue::AddUpNextClient(LPCTSTR pszReason, CUpDownClient *directadd)
 				// the upload retry cooldown keyed by peer IP.
 				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(GetUploadChurnRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
 				newclient->SetSlowUploadCooldownUntil(ullCooldownUntil);
-				SetUploadRetryCooldown(newclient, ullCooldownUntil);
+				SetUploadRetryCooldown(newclient, ullCooldownUntil, uploadRetryCooldownFailedAdmission);
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after failed upload admission."), newclient->GetUserName());
 			}
@@ -391,6 +391,11 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 	INT_PTR iRetryCooldownWaitingClients = 0;
 	INT_PTR iNoRequestCooldownWaitingClients = 0;
 	INT_PTR iClientOnlyCooldownWaitingClients = 0;
+	INT_PTR iRetryNoRequestWaitingClients = 0;
+	INT_PTR iRetryChurnWaitingClients = 0;
+	INT_PTR iRetryStalledWaitingClients = 0;
+	INT_PTR iRetrySlowWaitingClients = 0;
+	INT_PTR iRetryUnknownWaitingClients = 0;
 	ULONGLONG ullCooldownMinMs = 0;
 	ULONGLONG ullCooldownMaxMs = 0;
 	ULONGLONG ullCooldownSumMs = 0;
@@ -417,8 +422,30 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 				&& itRetryCooldown->second.ullCooldownUntil > curTick;
 			const bool bNoRequestCooldownActive = itNoRequestCooldown != m_noRequestUploadRetryCooldownByIP.end()
 				&& itNoRequestCooldown->second.ullCooldownUntil > curTick;
-			if (bRetryCooldownActive)
+			if (bRetryCooldownActive) {
 				++iRetryCooldownWaitingClients;
+				switch (itRetryCooldown->second.eReason) {
+				case uploadRetryCooldownNoRequest:
+					++iRetryNoRequestWaitingClients;
+					break;
+				case uploadRetryCooldownFailedAdmission:
+				case uploadRetryCooldownNoSocket:
+				case uploadRetryCooldownShortFailed:
+					++iRetryChurnWaitingClients;
+					break;
+				case uploadRetryCooldownIdle:
+				case uploadRetryCooldownStalled:
+					++iRetryStalledWaitingClients;
+					break;
+				case uploadRetryCooldownZeroUpload:
+				case uploadRetryCooldownSlowUpload:
+					++iRetrySlowWaitingClients;
+					break;
+				default:
+					++iRetryUnknownWaitingClients;
+					break;
+				}
+			}
 			if (bNoRequestCooldownActive)
 				++iNoRequestCooldownWaitingClients;
 			if (!bRetryCooldownActive && !bNoRequestCooldownActive)
@@ -430,7 +457,7 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		: 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingClientOnlyCooldown=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
+		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
 		uploadinglist.GetCount(),
 		m_retiredUploadingList.GetCount(),
 		waitinglist.GetCount(),
@@ -439,6 +466,11 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		iRetryCooldownWaitingClients,
 		iNoRequestCooldownWaitingClients,
 		iClientOnlyCooldownWaitingClients,
+		iRetryNoRequestWaitingClients,
+		iRetryChurnWaitingClients,
+		iRetryStalledWaitingClients,
+		iRetrySlowWaitingClients,
+		iRetryUnknownWaitingClients,
 		static_cast<uint64>(ullCooldownMinMs),
 		static_cast<uint64>(ullCooldownAvgMs),
 		static_cast<uint64>(ullCooldownMaxMs),
@@ -586,7 +618,7 @@ void CUploadQueue::Process()
 				// upload capacity.
 				const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetUploadChurnRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
 				cur_client->SetSlowUploadCooldownUntil(ullCooldownUntil);
-				SetUploadRetryCooldown(cur_client, ullCooldownUntil);
+				SetUploadRetryCooldown(cur_client, ullCooldownUntil, uploadRetryCooldownNoSocket);
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after no-socket upload slot removal."), cur_client->GetUserName());
 			}
@@ -851,7 +883,7 @@ bool CUploadQueue::HasUploadAdmissionCandidate(ULONGLONG curTick)
 	return false;
 }
 
-void CUploadQueue::SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil)
+void CUploadQueue::SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, UploadRetryCooldownReason eReason)
 {
 	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
 	const ULONGLONG curTick = ::GetTickCount64();
@@ -871,6 +903,7 @@ void CUploadQueue::SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCo
 	state.ullCooldownUntil = ullCooldownUntil;
 	state.ullTrackUntil = ullCooldownUntil;
 	state.bQueuedRequestClearUsed = bQueuedRequestClearUsed;
+	state.eReason = eReason;
 	m_uploadRetryCooldownByIP[dwCooldownIP] = state;
 }
 
@@ -1022,7 +1055,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetNoRequestUploadRetryCooldownSeconds(uConfiguredCooldownSeconds, bRecentNoRequestRecycle, bProductiveNoRequestRecycle));
 			const ULONGLONG ullTrackUntil = curTick + SEC2MS(uConfiguredCooldownSeconds);
 			client->SetSlowUploadCooldownUntil(ullCooldownUntil);
-			SetUploadRetryCooldown(client, ullCooldownUntil);
+			SetUploadRetryCooldown(client, ullCooldownUntil, uploadRetryCooldownNoRequest);
 			SetNoRequestUploadRetryCooldown(client, ullCooldownUntil, ullTrackUntil);
 		}
 		if (thePrefs.GetLogUlDlEvents())
@@ -1082,7 +1115,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 
 	const ULONGLONG ullCooldownUntil = curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
 	client->SetSlowUploadCooldownUntil(ullCooldownUntil);
-	SetUploadRetryCooldown(client, ullCooldownUntil);
+	SetUploadRetryCooldown(client, ullCooldownUntil, bShouldRecycleIdle ? uploadRetryCooldownIdle : uploadRetryCooldownStalled);
 	if (thePrefs.GetLogUlDlEvents()) {
 		AddDebugLogLine(DLP_LOW, false,
 			bShouldRecycleIdle
@@ -1499,7 +1532,7 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 				// re-enter as bad replacements after burning most of the warmup period.
 				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(GetUploadChurnRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
 				client->SetSlowUploadCooldownUntil(ullCooldownUntil);
-				SetUploadRetryCooldown(client, ullCooldownUntil);
+				SetUploadRetryCooldown(client, ullCooldownUntil, uploadRetryCooldownShortFailed);
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after a short failed upload slot."), client->GetUserName());
 			}
@@ -1633,7 +1666,10 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 		} else if (client->ShouldRecycleSlowUpload(SEC2MS(thePrefs.GetSlowUploadGraceSeconds()), SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()))) {
 			const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
 			client->SetSlowUploadCooldownUntil(ullCooldownUntil);
-			SetUploadRetryCooldown(client, ullCooldownUntil);
+			SetUploadRetryCooldown(client, ullCooldownUntil,
+				client->GetAccumulatedZeroUploadMs() >= SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds())
+					? uploadRetryCooldownZeroUpload
+					: uploadRetryCooldownSlowUpload);
 			if (thePrefs.GetLogUlDlEvents()) {
 				if (client->GetAccumulatedZeroUploadMs() >= SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()))
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled due to zero upload during broadband underfill."), client->GetUserName());

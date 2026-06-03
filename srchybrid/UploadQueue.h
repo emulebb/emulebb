@@ -173,11 +173,24 @@ private:
 		ULONGLONG ullTrackUntil;
 		bool bQueuedRequestClearUsed;
 	};
+	enum UploadRetryCooldownReason
+	{
+		uploadRetryCooldownUnknown,
+		uploadRetryCooldownFailedAdmission,
+		uploadRetryCooldownNoSocket,
+		uploadRetryCooldownNoRequest,
+		uploadRetryCooldownIdle,
+		uploadRetryCooldownStalled,
+		uploadRetryCooldownShortFailed,
+		uploadRetryCooldownZeroUpload,
+		uploadRetryCooldownSlowUpload
+	};
 	struct UploadRetryCooldownState
 	{
 		ULONGLONG ullCooldownUntil;
 		ULONGLONG ullTrackUntil;
 		bool bQueuedRequestClearUsed;
+		UploadRetryCooldownReason eReason;
 	};
 	INT_PTR	GetSoftMaxUploadSlots() const;
 	/** Returns the minimum headroom required before underfill may recycle a weak slot. */
@@ -196,7 +209,7 @@ private:
 	static uint32 GetUploadRetryCooldownIP(const CUpDownClient *client);
 	bool	ApplyUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick);
 	bool	HasUploadAdmissionCandidate(ULONGLONG curTick);
-	void	SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil);
+	void	SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, UploadRetryCooldownReason eReason);
 	bool	HasRecentNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick) const;
 	void	SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, ULONGLONG ullTrackUntil);
 	void	PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick);
