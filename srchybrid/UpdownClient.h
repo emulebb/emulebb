@@ -492,6 +492,14 @@ protected:
 	void	NoteInboundOutOfPartReqs();
 	void	NoteOutOfPartReqsLoopSuppression();
 	bool	CanAcceptUploadSlotAfterOutOfPartReqs(CString *pReason = NULL) const;
+	/**
+	 * Client-global, app-session guard for peers that repeatedly grant slots
+	 * but deliver less than one useful block before timeout or disconnect.
+	 */
+	void	ResetDownloadNoDataSlotGuard();
+	void	NoteDownloadNoDataSlotFailure(LPCTSTR pszReason);
+	void	NoteDownloadNoDataSlotSuppression();
+	bool	CanAcceptUploadSlotAfterDownloadNoData(CString *pReason = NULL) const;
 
 	uint32	m_nConnectIP;	// holds the supposed IP or (after we had a connection) the real IP
 	uint32	m_dwUserIP;		// holds 0 (real IP not yet available) or the real IP (after we had a connection)
@@ -671,10 +679,15 @@ protected:
 	ULONGLONG m_ullOutOfPartReqsLongWindowStart;
 	ULONGLONG m_ullOutOfPartReqsCooldownUntil;
 	ULONGLONG m_ullOutOfPartReqsLastSuppressionLog;
+	ULONGLONG m_ullDownloadNoDataSlotWindowStart;
+	ULONGLONG m_ullDownloadNoDataSlotCooldownUntil;
+	ULONGLONG m_ullDownloadNoDataSlotLastSuppressionLog;
 	std::atomic<LONG> m_nPendingDisplayUpdateMask;
 	UINT		m_uOutOfPartReqsShortWindowCount;
 	UINT		m_uOutOfPartReqsLongWindowCount;
 	UINT		m_uOutOfPartReqsCooldownBurstCount;
+	UINT		m_uDownloadNoDataSlotWindowCount;
+	UINT		m_uDownloadNoDataSlotSuppressionCount;
 	bool		m_bOutOfPartReqsQuarantined;
 
 	// using bit fields for less important flags, to save some bytes

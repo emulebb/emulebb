@@ -58,6 +58,11 @@ constexpr UINT kOutOfPartReqsQuarantineThreshold = 10;
 constexpr ULONGLONG kOutOfPartReqsLongWindowMs = MIN2MS(5);
 constexpr ULONGLONG kOutOfPartReqsSuppressionLogMs = SEC2MS(30);
 constexpr ULONGLONG kDownloadSlotInstrumentationHighVolumeLogMs = SEC2MS(2);
+constexpr UINT kDownloadNoDataSlotCooldownThreshold = 2;
+constexpr ULONGLONG kDownloadNoDataSlotWindowMs = MIN2MS(5);
+constexpr ULONGLONG kDownloadNoDataSlotCooldownMs = MIN2MS(3);
+constexpr ULONGLONG kDownloadNoDataSlotSuppressionLogMs = SEC2MS(30);
+constexpr uint64 kDownloadNoDataSlotPayloadThresholdBytes = EMBLOCKSIZE;
 
 ULONGLONG GetDownloadSlotInstrumentationAgeMs(ULONGLONG ullNow, ULONGLONG ullTick)
 {
@@ -151,7 +156,7 @@ void CUpDownClient::LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iR
 	const ULONGLONG ullAgeMs = m_dwDownStartTime != 0 && ullNow >= m_dwDownStartTime ? ullNow - m_dwDownStartTime : 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: client reason=%s client=%s state=%s fileKnown=%u file=\"%s\" rateBytesPerSec=%u ageMs=%I64u sessionDown=%s sessionPayload=%s pendingBlocks=%Id queuedBlocks=%Id requestBatch=%Id packetBytes=%u writtenBytes=%u reqReserved=%I64u reqSent=%I64u reqCompleted=%I64u reqCleared=%I64u packets=%I64u payloadReceived=%I64u payloadWritten=%I64u lastRequestAgeMs=%I64u lastReceivedAgeMs=%I64u lastCompleteAgeMs=%I64u nnpTransitions=%u outOfPart=%u suppressedAccept=%u highVolumeSuppressed=%I64u queueRank=%u remoteFull=%u partsAvailable=%u/%u socket=%p socketConnected=%u socketStdQueue=%Id handshake=%u"),
+		_T("DownloadSlotInstrumentation: client reason=%s client=%s state=%s fileKnown=%u file=\"%s\" rateBytesPerSec=%u ageMs=%I64u sessionDown=%s sessionPayload=%s pendingBlocks=%Id queuedBlocks=%Id requestBatch=%Id packetBytes=%u writtenBytes=%u reqReserved=%I64u reqSent=%I64u reqCompleted=%I64u reqCleared=%I64u packets=%I64u payloadReceived=%I64u payloadWritten=%I64u lastRequestAgeMs=%I64u lastReceivedAgeMs=%I64u lastCompleteAgeMs=%I64u nnpTransitions=%u outOfPart=%u suppressedAccept=%u highVolumeSuppressed=%I64u noDataSuppressions=%u queueRank=%u remoteFull=%u partsAvailable=%u/%u socket=%p socketConnected=%u socketStdQueue=%Id handshake=%u"),
 		pszReason != NULL ? pszReason : _T("unspecified"),
 		(LPCTSTR)DbgGetClientInfo(),
 		DbgGetDownloadState(),
@@ -180,6 +185,7 @@ void CUpDownClient::LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iR
 		m_uDownloadOutOfPartReqsEvents,
 		m_uDownloadOutOfPartReqsSuppressions,
 		static_cast<uint64>(ullSuppressedHighVolumeLogs),
+		m_uDownloadNoDataSlotSuppressionCount,
 		GetRemoteQueueRank(),
 		static_cast<UINT>(IsRemoteQueueFull()),
 		uAvailableParts,
@@ -840,6 +846,21 @@ void CUpDownClient::SetDownloadState(EDownloadState nNewState, LPCTSTR pszReason
 					, (LPCTSTR)CastItoXBytes(GetSessionPayloadDown())
 					, (LPCTSTR)CastItoXBytes(GetSessionDown())
 					, m_PendingBlocks_list.GetCount());
+			}
+
+			// WHY: Repeated accepted slots that deliver less than one block consume
+			// scarce download grants without useful progress; cool down only repeat
+			// offenders while preserving normal one-off disconnect behavior.
+			if (nNewState != DS_NONEEDEDPARTS
+				&& GetSessionPayloadDown() < kDownloadNoDataSlotPayloadThresholdBytes
+				&& GetSessionDown() < kDownloadNoDataSlotPayloadThresholdBytes)
+			{
+				NoteDownloadNoDataSlotFailure(pszReason);
+			} else if (GetSessionPayloadDown() >= kDownloadNoDataSlotPayloadThresholdBytes
+				|| GetSessionDown() >= kDownloadNoDataSlotPayloadThresholdBytes)
+			{
+				m_ullDownloadNoDataSlotWindowStart = 0;
+				m_uDownloadNoDataSlotWindowCount = 0;
 			}
 
 			ResetSessionDown();
@@ -2384,6 +2405,55 @@ bool CUpDownClient::CanAcceptUploadSlotAfterOutOfPartReqs(CString *pReason) cons
 	return true;
 }
 
+void CUpDownClient::ResetDownloadNoDataSlotGuard()
+{
+	m_ullDownloadNoDataSlotWindowStart = 0;
+	m_ullDownloadNoDataSlotCooldownUntil = 0;
+	m_ullDownloadNoDataSlotLastSuppressionLog = 0;
+	m_uDownloadNoDataSlotWindowCount = 0;
+	m_uDownloadNoDataSlotSuppressionCount = 0;
+}
+
+void CUpDownClient::NoteDownloadNoDataSlotFailure(LPCTSTR pszReason)
+{
+	const ULONGLONG ullNow = ::GetTickCount64();
+	if (!IsTickInsideWindow(ullNow, m_ullDownloadNoDataSlotWindowStart, kDownloadNoDataSlotWindowMs)) {
+		m_ullDownloadNoDataSlotWindowStart = ullNow;
+		m_uDownloadNoDataSlotWindowCount = 0;
+	}
+	++m_uDownloadNoDataSlotWindowCount;
+
+	const bool bCooldownActive = m_ullDownloadNoDataSlotCooldownUntil != 0 && ullNow < m_ullDownloadNoDataSlotCooldownUntil;
+	if (!bCooldownActive && m_uDownloadNoDataSlotWindowCount >= kDownloadNoDataSlotCooldownThreshold) {
+		m_ullDownloadNoDataSlotCooldownUntil = ullNow + kDownloadNoDataSlotCooldownMs;
+		DebugLogWarning(_T("Cooling down download source after repeated no-data download slots. User: %s, Count: %u in %I64u ms, Reason: %s, CooldownUntilTick: %I64u."),
+			(LPCTSTR)DbgGetClientInfo(),
+			m_uDownloadNoDataSlotWindowCount,
+			kDownloadNoDataSlotWindowMs,
+			pszReason != NULL ? pszReason : _T("Unspecified"),
+			m_ullDownloadNoDataSlotCooldownUntil);
+	}
+}
+
+void CUpDownClient::NoteDownloadNoDataSlotSuppression()
+{
+	++m_uDownloadNoDataSlotSuppressionCount;
+}
+
+bool CUpDownClient::CanAcceptUploadSlotAfterDownloadNoData(CString *pReason) const
+{
+	const ULONGLONG ullNow = ::GetTickCount64();
+	if (m_ullDownloadNoDataSlotCooldownUntil != 0 && ullNow < m_ullDownloadNoDataSlotCooldownUntil) {
+		if (pReason != NULL)
+			pReason->Format(_T("client is cooling down after repeated no-data download slots until tick %I64u"), m_ullDownloadNoDataSlotCooldownUntil);
+		return false;
+	}
+
+	if (pReason != NULL)
+		pReason->Empty();
+	return true;
+}
+
 void CUpDownClient::ProcessInboundOutOfPartReqs()
 {
 	if (GetDownloadState() != DS_DOWNLOADING)
@@ -2417,6 +2487,24 @@ void CUpDownClient::ProcessAcceptUpload()
 					DebugLog(_T("Suppressed OP_AcceptUploadReq after repeated OP_OutOfPartReqs loops. User: %s, Reason: %s."),
 						(LPCTSTR)DbgGetClientInfo(), (LPCTSTR)strOutOfPartReqsGuardReason);
 					m_ullOutOfPartReqsLastSuppressionLog = ullNow;
+				}
+				if (socket != NULL && IsEd2kClient())
+					SendCancelTransfer();
+				return;
+			}
+			CString strNoDataGuardReason;
+			if (!CanAcceptUploadSlotAfterDownloadNoData(&strNoDataGuardReason)) {
+				NoteDownloadNoDataSlotSuppression();
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+				LogDownloadSlotInstrumentation(_T("accept-suppressed-no-data-cooldown"));
+#endif
+				const ULONGLONG ullNow = ::GetTickCount64();
+				if (m_ullDownloadNoDataSlotLastSuppressionLog == 0 || ullNow < m_ullDownloadNoDataSlotLastSuppressionLog
+						|| ullNow - m_ullDownloadNoDataSlotLastSuppressionLog >= kDownloadNoDataSlotSuppressionLogMs)
+				{
+					DebugLog(_T("Suppressed OP_AcceptUploadReq after repeated no-data download slots. User: %s, Reason: %s."),
+						(LPCTSTR)DbgGetClientInfo(), (LPCTSTR)strNoDataGuardReason);
+					m_ullDownloadNoDataSlotLastSuppressionLog = ullNow;
 				}
 				if (socket != NULL && IsEd2kClient())
 					SendCancelTransfer();
