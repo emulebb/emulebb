@@ -819,7 +819,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 	if (client->GetFriendSlot())
 		return false;
 
-	if (!HasSustainedBroadbandUnderfill(curTick) || !HasCompletedSlowUploadWarmup(client)) {
+	if (!HasSustainedBroadbandUnderfill(curTick)) {
 		client->ResetSlowUploadTracking();
 		return false;
 	}
@@ -832,15 +832,53 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 
 	INT_PTR iReqBlocks = 0;
 	LONG nPendingIOBlocks = 0;
+	bool bHasAcceptedReqBlock = false;
+	ULONGLONG ullLastAcceptedReqBlockAgeMs = 0;
 	{
 		CSingleLock lockBlockLists(&pUploadingClientStruct->m_csBlockListsLock, TRUE);
 		ASSERT(lockBlockLists.IsLocked());
 		iReqBlocks = pUploadingClientStruct->m_BlockRequests_queue.GetCount();
 		nPendingIOBlocks = pUploadingClientStruct->m_nPendingIOBlocks.load();
+		const ULONGLONG ullLastAcceptedReqBlockTick = pUploadingClientStruct->m_ullLastAcceptedReqBlockTick.load();
+		bHasAcceptedReqBlock = ullLastAcceptedReqBlockTick != 0;
+		ullLastAcceptedReqBlockAgeMs = ullLastAcceptedReqBlockTick != 0 && curTick >= ullLastAcceptedReqBlockTick ? curTick - ullLastAcceptedReqBlockTick : 0;
 	}
 
 	CEMSocket *sock = client->GetFileUploadSocket(false);
 	const INT_PTR iSocketQueue = sock != NULL ? sock->DbgGetStdQueueCount() : -1;
+	const ULONGLONG ullZeroGraceMs = SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds());
+	if (ShouldRecycleNoRequestBroadbandUploadSlot(
+			true,
+			false,
+			client->GetUploadDatarate(),
+			client->GetPayloadInBuffer(),
+			iReqBlocks,
+			nPendingIOBlocks,
+			iSocketQueue,
+			client->GetUpStartTimeDelay(),
+			bHasAcceptedReqBlock,
+			ullLastAcceptedReqBlockAgeMs,
+			ullZeroGraceMs))
+	{
+		// WHY: a peer that drains its local send pipeline and stops asking for
+		// blocks during broadband underfill cannot fill capacity. Recycle that
+		// no-request slot promptly without weakening the broader slow-upload
+		// warmup used for peers that still have local work queued.
+		const ULONGLONG ullCooldownUntil = curTick + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+		client->SetSlowUploadCooldownUntil(ullCooldownUntil);
+		SetUploadRetryCooldown(client, ullCooldownUntil);
+		if (thePrefs.GetLogUlDlEvents())
+			AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled because the peer stopped requesting parts during broadband underfill."), client->GetUserName());
+		if (pstrReason != NULL)
+			*pstrReason = _T("Broadband no-request recycle");
+		client->ResetSlowUploadTracking();
+		return true;
+	}
+	if (!HasCompletedSlowUploadWarmup(client)) {
+		client->ResetSlowUploadTracking();
+		return false;
+	}
+
 	const bool bLocalSendPipelineIdle = client->GetUploadDatarate() == 0
 		&& client->GetPayloadInBuffer() == 0
 		&& iReqBlocks == 0
@@ -868,7 +906,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		nPendingIOBlocks,
 		iSocketQueue,
 		client->GetAccumulatedZeroUploadMs(),
-		SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()));
+		ullZeroGraceMs);
 	const bool bShouldRecycleStalled = ShouldRecycleStalledBroadbandUploadSlot(
 		true,
 		true,
@@ -880,7 +918,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		nPendingIOBlocks,
 		iSocketQueue,
 		client->GetAccumulatedZeroUploadMs(),
-		SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()));
+		ullZeroGraceMs);
 	if (!bShouldRecycleIdle && !bShouldRecycleStalled)
 		return false;
 
