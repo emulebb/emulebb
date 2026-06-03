@@ -388,6 +388,9 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		: 0;
 	INT_PTR iEligibleWaitingClients = 0;
 	INT_PTR iCooldownWaitingClients = 0;
+	INT_PTR iRetryCooldownWaitingClients = 0;
+	INT_PTR iNoRequestCooldownWaitingClients = 0;
+	INT_PTR iClientOnlyCooldownWaitingClients = 0;
 	ULONGLONG ullCooldownMinMs = 0;
 	ULONGLONG ullCooldownMaxMs = 0;
 	ULONGLONG ullCooldownSumMs = 0;
@@ -405,6 +408,21 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 				ullCooldownMinMs = ullCooldownRemainingMs;
 			if (ullCooldownRemainingMs > ullCooldownMaxMs)
 				ullCooldownMaxMs = ullCooldownRemainingMs;
+			const uint32 dwCooldownIP = GetUploadRetryCooldownIP(pWaitingClient);
+			const std::map<uint32, UploadRetryCooldownState>::const_iterator itRetryCooldown =
+				dwCooldownIP != 0 ? m_uploadRetryCooldownByIP.find(dwCooldownIP) : m_uploadRetryCooldownByIP.end();
+			const std::map<uint32, NoRequestUploadRetryCooldownState>::const_iterator itNoRequestCooldown =
+				dwCooldownIP != 0 ? m_noRequestUploadRetryCooldownByIP.find(dwCooldownIP) : m_noRequestUploadRetryCooldownByIP.end();
+			const bool bRetryCooldownActive = itRetryCooldown != m_uploadRetryCooldownByIP.end()
+				&& itRetryCooldown->second.ullCooldownUntil > curTick;
+			const bool bNoRequestCooldownActive = itNoRequestCooldown != m_noRequestUploadRetryCooldownByIP.end()
+				&& itNoRequestCooldown->second.ullCooldownUntil > curTick;
+			if (bRetryCooldownActive)
+				++iRetryCooldownWaitingClients;
+			if (bNoRequestCooldownActive)
+				++iNoRequestCooldownWaitingClients;
+			if (!bRetryCooldownActive && !bNoRequestCooldownActive)
+				++iClientOnlyCooldownWaitingClients;
 		}
 	}
 	const ULONGLONG ullCooldownAvgMs = iCooldownWaitingClients > 0
@@ -412,12 +430,15 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		: 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
+		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingClientOnlyCooldown=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
 		uploadinglist.GetCount(),
 		m_retiredUploadingList.GetCount(),
 		waitinglist.GetCount(),
 		iEligibleWaitingClients,
 		iCooldownWaitingClients,
+		iRetryCooldownWaitingClients,
+		iNoRequestCooldownWaitingClients,
+		iClientOnlyCooldownWaitingClients,
 		static_cast<uint64>(ullCooldownMinMs),
 		static_cast<uint64>(ullCooldownAvgMs),
 		static_cast<uint64>(ullCooldownMaxMs),
