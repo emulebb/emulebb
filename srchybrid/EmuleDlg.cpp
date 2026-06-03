@@ -3899,9 +3899,8 @@ void CemuleDlg::CloseApp(bool bRestart)
 	CSingleLock sLock1(&theApp.hashing_mut); // only one file hash at a time
 	sLock1.Lock(SEC2MS(2));
 
-	updateShutdownPhase(30, _T("Closing eMuleBB"), _T("Stopping upload disk and part-file write threads."));
+	updateShutdownPhase(30, _T("Closing eMuleBB"), _T("Stopping upload disk thread; keeping part-file writer alive for download teardown."));
 	theApp.m_pUploadDiskIOThread->EndThread();
-	theApp.m_pPartFileWriteThread->EndThread();
 
 	// saving data & stuff
 	updateShutdownPhase(40, _T("Closing eMuleBB"), _T("Finalizing completed part files before saving known-file state."), true);
@@ -4025,6 +4024,8 @@ void CemuleDlg::CloseApp(bool bRestart)
 	delete theApp.searchlist;				theApp.searchlist = NULL;
 	delete theApp.clientcredits;			theApp.clientcredits = NULL;	// CClientCreditsList::SaveList
 	delete theApp.downloadqueue;			theApp.downloadqueue = NULL;	// N * (CPartFile::FlushBuffer + CPartFile::SavePartFile)
+	if (theApp.m_pPartFileWriteThread != NULL)
+		theApp.m_pPartFileWriteThread->EndThread();
 	delete theApp.uploadqueue;				theApp.uploadqueue = NULL;
 	delete theApp.clientlist;				theApp.clientlist = NULL;
 	delete theApp.friendlist;				theApp.friendlist = NULL;		// CFriendList::SaveList
