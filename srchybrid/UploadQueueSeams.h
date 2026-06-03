@@ -251,9 +251,14 @@ inline bool ShouldAttemptUploadRetryCooldownClearOnQueuedRequest(
 		&& bRequestRangeValid;
 }
 
-inline bool ShouldAllowNoRequestCooldownClear(bool bNoRequestCooldownTracked, bool bQueuedRequestClearAlreadyUsed)
+inline bool ShouldAllowNoRequestCooldownClear(
+	bool bNoRequestCooldownTracked,
+	bool bQueuedRequestClearAlreadyUsed,
+	bool bProductiveNoRequestRecycle)
 {
-	return !bNoRequestCooldownTracked || !bQueuedRequestClearAlreadyUsed;
+	return !bNoRequestCooldownTracked
+		|| !bQueuedRequestClearAlreadyUsed
+		|| bProductiveNoRequestRecycle;
 }
 
 inline bool ShouldAllowUploadRetryCooldownClear(bool bRetryCooldownTracked, bool bQueuedRequestClearAlreadyUsed)

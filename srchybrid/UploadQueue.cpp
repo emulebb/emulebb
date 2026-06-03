@@ -956,6 +956,7 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 	const bool bHadClientCooldown = client != NULL && client->IsInSlowUploadCooldown();
 	bool bHadIPCooldown = false;
 	bool bHadNoRequestCooldown = false;
+	bool bClearedProductiveNoRequestCooldown = false;
 	if (dwCooldownIP != 0) {
 		const ULONGLONG curTick = ::GetTickCount64();
 		std::map<uint32, NoRequestUploadRetryCooldownState>::iterator itNoRequest = m_noRequestUploadRetryCooldownByIP.find(dwCooldownIP);
@@ -964,12 +965,17 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 				m_noRequestUploadRetryCooldownByIP.erase(itNoRequest);
 			} else if (itNoRequest->second.ullCooldownUntil > curTick) {
 				bHadNoRequestCooldown = true;
-				if (!ShouldAllowNoRequestCooldownClear(true, itNoRequest->second.bQueuedRequestClearUsed)) {
+				const bool bProductiveNoRequestRecycle = itNoRequest->second.bProductiveRecycle;
+				if (!ShouldAllowNoRequestCooldownClear(true, itNoRequest->second.bQueuedRequestClearUsed, bProductiveNoRequestRecycle)) {
 					if (ppszInstrumentationReason != NULL)
-						*ppszInstrumentationReason = _T("reject-not-uploading-no-request-clear-used");
+						*ppszInstrumentationReason = _T("reject-not-uploading-unproductive-no-request-clear-used");
 					return false;
 				}
 				itNoRequest->second.bQueuedRequestClearUsed = true;
+				if (bProductiveNoRequestRecycle) {
+					itNoRequest->second.ullCooldownUntil = curTick;
+					bClearedProductiveNoRequestCooldown = true;
+				}
 			}
 		}
 		std::map<uint32, UploadRetryCooldownState>::iterator itCooldown = m_uploadRetryCooldownByIP.find(dwCooldownIP);
@@ -990,7 +996,7 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 	}
 	if (client != NULL)
 		client->ClearSlowUploadCooldown();
-	if (bHadClientCooldown || bHadIPCooldown)
+	if (bHadClientCooldown || bHadIPCooldown || bClearedProductiveNoRequestCooldown)
 		return true;
 	if (ppszInstrumentationReason != NULL)
 		*ppszInstrumentationReason = bHadNoRequestCooldown ? _T("reject-not-uploading-no-request-only-cooldown") : _T("reject-not-uploading-no-active-cooldown");
