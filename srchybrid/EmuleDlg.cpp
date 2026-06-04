@@ -2260,6 +2260,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 					AddLogLine(true, GetResString(IDS_MAIN_READY), (LPCTSTR)theApp.m_strCurVersionLong);
 
 				theApp.m_app_state = APP_STATE_RUNNING; //initialization completed
+				CloseStartupProgressIfRunning();
 				UpdateBindLossMonitor(false);
 				const bool bStartupConnectionCommandsEnabled = VpnGuardPolicySeams::CanUseStartupConnectionCommands(
 					thePrefs.GetVpnGuardMode(), theApp.IsStartupBindBlocked(), m_bBindLossMonitorActive);
