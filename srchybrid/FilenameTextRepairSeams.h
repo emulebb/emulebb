@@ -8,6 +8,7 @@ namespace FilenameTextRepairSeams
 {
 constexpr int kMaxEntityNameLength = 32;
 constexpr int kMaxMojibakeSegmentLength = 24;
+constexpr int kMaxMojibakeRepairPasses = 3;
 
 inline bool IsSurrogateCodePoint(const DWORD dwCodePoint)
 {
@@ -82,6 +83,34 @@ inline bool TryDecodeNamedEntity(const CString &rstrEntity, DWORD &rdwCodePoint)
 		rdwCodePoint = _T('\'');
 	else if (rstrEntity.CompareNoCase(_T("nbsp")) == 0)
 		rdwCodePoint = 0x00A0u;
+	else if (rstrEntity.CompareNoCase(_T("agrave")) == 0)
+		rdwCodePoint = 0x00E0u;
+	else if (rstrEntity.CompareNoCase(_T("egrave")) == 0)
+		rdwCodePoint = 0x00E8u;
+	else if (rstrEntity.CompareNoCase(_T("eacute")) == 0)
+		rdwCodePoint = 0x00E9u;
+	else if (rstrEntity.CompareNoCase(_T("igrave")) == 0)
+		rdwCodePoint = 0x00ECu;
+	else if (rstrEntity.CompareNoCase(_T("ograve")) == 0)
+		rdwCodePoint = 0x00F2u;
+	else if (rstrEntity.CompareNoCase(_T("ugrave")) == 0)
+		rdwCodePoint = 0x00F9u;
+	else if (rstrEntity.CompareNoCase(_T("ntilde")) == 0)
+		rdwCodePoint = 0x00F1u;
+	else if (rstrEntity.CompareNoCase(_T("lsquo")) == 0)
+		rdwCodePoint = 0x2018u;
+	else if (rstrEntity.CompareNoCase(_T("rsquo")) == 0)
+		rdwCodePoint = 0x2019u;
+	else if (rstrEntity.CompareNoCase(_T("ldquo")) == 0)
+		rdwCodePoint = 0x201Cu;
+	else if (rstrEntity.CompareNoCase(_T("rdquo")) == 0)
+		rdwCodePoint = 0x201Du;
+	else if (rstrEntity.CompareNoCase(_T("ndash")) == 0)
+		rdwCodePoint = 0x2013u;
+	else if (rstrEntity.CompareNoCase(_T("mdash")) == 0)
+		rdwCodePoint = 0x2014u;
+	else if (rstrEntity.CompareNoCase(_T("hellip")) == 0)
+		rdwCodePoint = 0x2026u;
 	else
 		return false;
 	return true;
@@ -142,6 +171,7 @@ inline bool IsMojibakeStartMarker(const TCHAR ch)
 {
 	return ch == static_cast<TCHAR>(0x00C3u)
 		|| ch == static_cast<TCHAR>(0x00C2u)
+		|| ch == static_cast<TCHAR>(0x00CCu)
 		|| ch == static_cast<TCHAR>(0x00E2u)
 		|| ch == static_cast<TCHAR>(0x00F0u)
 		|| ch == static_cast<TCHAR>(0x00EFu);
@@ -286,14 +316,49 @@ inline CString RepairWindows1252Mojibake(const CString &rstrInput)
 	return CountMojibakeMarkers(strOutput) < CountMojibakeMarkers(rstrInput) ? strOutput : rstrInput;
 }
 
+inline CString RepairWindows1252MojibakeBounded(const CString &rstrInput)
+{
+	CString strCurrent(rstrInput);
+	for (int i = 0; i < kMaxMojibakeRepairPasses; ++i) {
+		const CString strRepaired(RepairWindows1252Mojibake(strCurrent));
+		if (strRepaired == strCurrent)
+			break;
+		if (CountMojibakeMarkers(strRepaired) >= CountMojibakeMarkers(strCurrent))
+			break;
+		strCurrent = strRepaired;
+	}
+	return strCurrent;
+}
+
+inline CString PrecomposeUnicodeText(const CString &rstrInput)
+{
+	if (rstrInput.IsEmpty())
+		return rstrInput;
+
+	const CStringW wstrInput(rstrInput);
+	const int nRequired = ::FoldStringW(MAP_PRECOMPOSED, wstrInput, wstrInput.GetLength(), NULL, 0);
+	if (nRequired <= 0)
+		return rstrInput;
+
+	CStringW wstrOutput;
+	LPWSTR pszOutput = wstrOutput.GetBuffer(nRequired);
+	const int nWritten = ::FoldStringW(MAP_PRECOMPOSED, wstrInput, wstrInput.GetLength(), pszOutput, nRequired);
+	if (nWritten <= 0) {
+		wstrOutput.ReleaseBuffer(0);
+		return rstrInput;
+	}
+	wstrOutput.ReleaseBuffer(nWritten);
+	return CString(wstrOutput);
+}
+
 /**
  * @brief Repairs conservative filename-only entity escaping and mojibake from remote intake text.
  */
 inline CString RepairIncomingFilenameText(const CString &rstrInput)
 {
 	CString strRepaired(DecodeHtmlEntitiesBounded(rstrInput));
-	strRepaired = RepairWindows1252Mojibake(strRepaired);
-	return strRepaired;
+	strRepaired = RepairWindows1252MojibakeBounded(strRepaired);
+	return PrecomposeUnicodeText(strRepaired);
 }
 
 inline CString RepairIncomingSearchFilename(const CString &rstrInput)
@@ -302,6 +367,11 @@ inline CString RepairIncomingSearchFilename(const CString &rstrInput)
 }
 
 inline CString RepairIncomingEd2kLinkFilename(const CString &rstrInput)
+{
+	return RepairIncomingFilenameText(rstrInput);
+}
+
+inline CString RepairIncomingCollectionFilename(const CString &rstrInput)
 {
 	return RepairIncomingFilenameText(rstrInput);
 }

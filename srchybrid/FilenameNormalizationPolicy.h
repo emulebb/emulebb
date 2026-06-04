@@ -26,6 +26,35 @@ inline void TrimWin32TrailingFilenameChars(CString &rstrFileName)
 	}
 }
 
+inline bool IsFilenameBasenameEdgePunctuation(const TCHAR ch)
+{
+	return ch == _T('.')
+		|| ch == _T(',')
+		|| ch == _T(';')
+		|| ch == _T(':')
+		|| ch == _T('!')
+		|| ch == _T('?')
+		|| ch == _T('-')
+		|| ch == static_cast<TCHAR>(0x2013)
+		|| ch == static_cast<TCHAR>(0x2014);
+}
+
+inline void TrimFilenameBasenameEdges(CString &rstrBaseName)
+{
+	while (!rstrBaseName.IsEmpty()) {
+		const TCHAR chFirst = rstrBaseName[0];
+		if (!IsNormalizedFilenameWhitespace(chFirst) && !IsFilenameBasenameEdgePunctuation(chFirst))
+			break;
+		rstrBaseName.Delete(0, 1);
+	}
+	while (!rstrBaseName.IsEmpty()) {
+		const TCHAR chLast = rstrBaseName[rstrBaseName.GetLength() - 1];
+		if (!IsNormalizedFilenameWhitespace(chLast) && !IsFilenameBasenameEdgePunctuation(chLast))
+			break;
+		rstrBaseName.Truncate(rstrBaseName.GetLength() - 1);
+	}
+}
+
 inline int FindFilenameExtensionSeparator(const CString &rstrFileName)
 {
 	const int iDot = rstrFileName.ReverseFind(_T('.'));
@@ -103,6 +132,7 @@ inline CString NormalizeDownloadFilename(const CString &strText)
 	}
 
 	strBaseName = CollapseFilenameWhitespace(strBaseName, true);
+	TrimFilenameBasenameEdges(strBaseName);
 	strExtension = CollapseFilenameWhitespace(strExtension, false);
 
 	if (strBaseName.IsEmpty() && !strExtension.IsEmpty())
@@ -150,6 +180,7 @@ inline bool TryNormalizeDownloadFilenameCandidate(const CString &strText, CStrin
 	}
 
 	strBaseName = CollapseFilenameWhitespace(strBaseName, true);
+	TrimFilenameBasenameEdges(strBaseName);
 	if (strBaseName.IsEmpty())
 		return false;
 

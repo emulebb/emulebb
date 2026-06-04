@@ -1,5 +1,7 @@
 #pragma once
 
+#include "FilenameNormalizationPolicy.h"
+#include "FilenameTextRepairSeams.h"
 #include "FilenameTokenizationSeams.h"
 
 #include <atlstr.h>
@@ -39,6 +41,15 @@ inline bool HasRequiredAgreement(UINT candidateVotes, UINT totalVotes, UINT requ
 	if (candidateVotes == 0 || totalVotes == 0 || candidateVotes > totalVotes)
 		return false;
 	return static_cast<uint64_t>(candidateVotes) * 100u >= static_cast<uint64_t>(NormalizeRequiredPercent(requiredPercent)) * totalVotes;
+}
+
+/**
+ * @brief Repairs and normalizes one source-provided filename before majority voting.
+ */
+inline bool TryPrepareMajoritySourceFilename(const CString &rstrSourceName, CString &rstrPreparedName)
+{
+	const CString strRepaired(FilenameTextRepairSeams::RepairIncomingFilenameText(rstrSourceName));
+	return FilenameNormalizationPolicy::TryNormalizeDownloadFilenameCandidate(strRepaired, rstrPreparedName);
 }
 
 /**

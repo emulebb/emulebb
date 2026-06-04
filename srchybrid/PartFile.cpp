@@ -6260,7 +6260,7 @@ bool CPartFile::GetMajoritySourceFileName(PartFileMajorityNameSeams::MajorityNam
 			continue;
 
 		CString sourceName;
-		if (!FilenameNormalizationPolicy::TryNormalizeDownloadFilenameCandidate(cur_src->GetClientFilename(), sourceName))
+		if (!PartFileMajorityNameSeams::TryPrepareMajoritySourceFilename(cur_src->GetClientFilename(), sourceName))
 			continue;
 		sourceName.Trim();
 		if (sourceName.IsEmpty() || !IsValidEd2kString(sourceName))

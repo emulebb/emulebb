@@ -19,6 +19,7 @@
 #include "CollectionSeams.h"
 #include "Packets.h"
 #include "Ed2kLink.h"
+#include "FilenameTextRepairSeams.h"
 #include "resource.h"
 #include "Log.h"
 #include "OtherFunctions.h"
@@ -88,7 +89,11 @@ CCollectionFile::CCollectionFile(CFileDataIO &in_data)
 	// to avoid using 'wrong' file types for part files when adding a search result to the download queue,
 	// in no case we will use the received file type (this has to be handled when creating the part files)
 	const CString &rstrFileType(GetStrTagValue(FT_FILETYPE));
-	CCollectionFile::SetAFileName(GetStrTagValue(FT_FILENAME), false, rstrFileType.IsEmpty());
+	const CString strOriginalFileName(GetStrTagValue(FT_FILENAME));
+	const CString strRepairedFileName(FilenameTextRepairSeams::RepairIncomingCollectionFilename(strOriginalFileName));
+	if (!strOriginalFileName.IsEmpty() && strRepairedFileName != strOriginalFileName)
+		SetStrTagValue(FT_FILENAME, strRepairedFileName);
+	CCollectionFile::SetAFileName(strRepairedFileName, false, rstrFileType.IsEmpty());
 	CCollectionFile::SetFileSize(GetInt64TagValue(FT_FILESIZE));
 	if (!rstrFileType.IsEmpty())
 		if (rstrFileType == _T(ED2KFTSTR_PROGRAM)) {
