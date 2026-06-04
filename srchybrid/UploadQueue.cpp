@@ -1024,11 +1024,12 @@ bool CUploadQueue::CanProbeUploadCooldownCandidate(CUpDownClient *client, ULONGL
 		&& itNoRequest->second.ullCooldownUntil > curTick
 		&& !itNoRequest->second.bProductiveRecycle)
 	{
+		const ULONGLONG ullCooldownRemainingMs = itNoRequest->second.ullCooldownUntil - curTick;
 		// WHY: an unproductive no-request recycle means the peer consumed a
-		// broadband slot without ever proving block demand. Let valid queued
-		// block requests clear this cooldown, but do not spend underfill probe
-		// slots on the same peer before it asks for work.
-		return false;
+		// broadband slot without ever proving block demand. Keep that cooldown
+		// meaningful, but when a sustained underfill probe is already allowed,
+		// let the last few seconds refill otherwise-idle broadband capacity.
+		return ShouldProbeUnproductiveNoRequestCooldownCandidate(true, ullCooldownRemainingMs);
 	}
 
 	return true;
