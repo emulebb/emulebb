@@ -17,7 +17,7 @@ inline constexpr std::uint32_t kProductiveNoRequestUploadCooldownMaxSeconds = 10
 inline constexpr std::uint32_t kNoRequestUploadRecycleGraceMaxSeconds = 5u;
 inline constexpr std::uint32_t kStalledUploadRecycleGraceMaxSeconds = 15u;
 inline constexpr std::uint32_t kUploadChurnRetryCooldownMaxSeconds = 120u;
-inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = kNoRequestUploadCooldownMaxSeconds;
+inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = kUploadChurnRetryCooldownMaxSeconds;
 inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 1000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = 184320u;
 
@@ -149,6 +149,27 @@ inline bool ShouldApplyUploadRetryCooldown(bool bFriendSlot, std::uint32_t uPeer
 }
 
 /**
+ * @brief Returns the strongest active upload retry cooldown across retry domains.
+ */
+inline std::uint64_t SelectUploadRetryCooldownUntil(
+	bool bFriendSlot,
+	std::uint32_t uPeerIP,
+	std::uint64_t ullCurrentTick,
+	std::uint64_t ullRetryCooldownUntil,
+	std::uint64_t ullNoRequestCooldownUntil)
+{
+	std::uint64_t ullSelectedCooldownUntil = 0;
+	if (ShouldApplyUploadRetryCooldown(bFriendSlot, uPeerIP, ullCurrentTick, ullRetryCooldownUntil))
+		ullSelectedCooldownUntil = ullRetryCooldownUntil;
+	if (ShouldApplyUploadRetryCooldown(bFriendSlot, uPeerIP, ullCurrentTick, ullNoRequestCooldownUntil)
+		&& ullNoRequestCooldownUntil > ullSelectedCooldownUntil)
+	{
+		ullSelectedCooldownUntil = ullNoRequestCooldownUntil;
+	}
+	return ullSelectedCooldownUntil;
+}
+
+/**
  * @brief Reports whether a failed upload admission should seed retry cooldown.
  */
 inline bool ShouldCooldownFailedUploadAdmission(bool bConnectionAttemptFailed, bool bFriendSlot, std::uint32_t uPeerIP)
@@ -275,12 +296,20 @@ inline std::uint32_t GetNoRequestUploadRetryCooldownSeconds(
 			? uConfiguredCooldownSeconds
 			: uMaxProductiveNoRequestCooldownSeconds;
 	if (bRecentNoRequestRecycle && !bProductiveNoRequestRecycle)
-		return uConfiguredCooldownSeconds < uMaxRepeatedNoRequestCooldownSeconds
-			? uConfiguredCooldownSeconds
-			: uMaxRepeatedNoRequestCooldownSeconds;
+		return uMaxRepeatedNoRequestCooldownSeconds;
 	return uConfiguredCooldownSeconds < uMaxNoRequestCooldownSeconds
 		? uConfiguredCooldownSeconds
 		: uMaxNoRequestCooldownSeconds;
+}
+
+/**
+ * @brief Returns how long a no-request recycle should remain visible for repeat detection.
+ */
+inline std::uint64_t GetNoRequestUploadRetryTrackSeconds(
+	std::uint32_t uCooldownSeconds,
+	std::uint32_t uConfiguredCooldownSeconds)
+{
+	return static_cast<std::uint64_t>(uCooldownSeconds) + uConfiguredCooldownSeconds;
 }
 
 inline bool ShouldClearUploadRetryCooldownOnQueuedRequest(
