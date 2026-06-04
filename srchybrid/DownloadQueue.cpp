@@ -2136,6 +2136,7 @@ void CDownloadQueue::ProcessLocalRequests()
 			// find the file with the longest waiting time
 			ULONGLONG ullBestWaitTime = _UI64_MAX;
 			int iBestValidSources = (std::numeric_limits<int>::max)();
+			UINT uBestSourceCount = _UI32_MAX;
 			POSITION posNextRequest = NULL;
 			for (POSITION pos = m_localServerReqQueue.GetHeadPosition(); pos != NULL;) {
 				POSITION pos2 = pos;
@@ -2149,11 +2150,15 @@ void CDownloadQueue::ProcessLocalRequests()
 
 					const ULONGLONG ullWaitTime = cur_file->m_LastSearchTime + (PR_HIGH - nPriority);
 					const int iValidSources = cur_file->GetValidSourcesCount();
+					const UINT uSourceCount = cur_file->GetSourceCount();
 					if (ullWaitTime < ullBestWaitTime
-						|| (ullWaitTime == ullBestWaitTime && iValidSources < iBestValidSources))
+						|| (ullWaitTime == ullBestWaitTime
+							&& (iValidSources < iBestValidSources
+								|| (iValidSources == iBestValidSources && uSourceCount < uBestSourceCount))))
 					{
 						ullBestWaitTime = ullWaitTime;
 						iBestValidSources = iValidSources;
+						uBestSourceCount = uSourceCount;
 						posNextRequest = pos2;
 					}
 				} else {
