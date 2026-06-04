@@ -343,6 +343,8 @@ public:
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 	void			LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iRequestBatchCount = -1, uint32 uPacketBytes = 0, uint32 uWrittenBytes = 0) const;
 	void			NoteDownloadDuplicateZeroWrite(uint64 uPayloadBytes) const;
+	ULONGLONG		GetDownloadDuplicateZeroWritePackets() const	{ return m_ullDownloadDuplicateZeroWritePackets; }
+	ULONGLONG		GetDownloadDuplicateZeroWriteBytes() const		{ return m_ullDownloadDuplicateZeroWriteBytes; }
 #endif
 	bool			SwapToAnotherFile(LPCTSTR reason, bool bIgnoreNoNeeded, bool ignoreSuspensions, bool bRemoveCompletely, CPartFile *toFile = NULL, bool allowSame = true, bool isAboutToAsk = false, bool debug = false); // ZZ:DownloadManager
 	void			DontSwapTo(/*const*/ CPartFile *file);
