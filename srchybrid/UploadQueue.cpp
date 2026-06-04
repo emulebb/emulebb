@@ -1766,7 +1766,7 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 	// underfill even when the waiting list is empty or below the normal cap.
 	const ULONGLONG curTick = ::GetTickCount64();
 	const bool bShouldTrackSlowUploadSlots = ShouldTrackSlowUploadSlots();
-	if (!bShouldTrackSlowUploadSlots && ShouldRecycleIdleUploadSlot(client, curTick, pstrReason))
+	if (ShouldRecycleIdleUploadSlot(client, curTick, pstrReason))
 		return true;
 
 	if (waitinglist.IsEmpty())
@@ -1818,7 +1818,7 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 			return true;
 		}
 	}
-	// The non-full-cap idle recycle path above owns its own tracking/reset
+	// The drained no-request recycle path above owns its own tracking/reset
 	// decisions. Resetting here would erase zero-rate progress whenever the
 	// waiting list is non-empty, leaving drained slots stuck during underfill.
 
