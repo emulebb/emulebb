@@ -374,15 +374,18 @@ UINT UploadBandwidthThrottler::RunInternal()
 		// check busy level for all the slots (WSAEWOULDBLOCK status)
 		uint32 nBusy = 0;
 		uint32 nCanSend = 0;
+		INT_PTR iQueuedSlotLimit = 0;
 
 		{
 			CSingleLock lockQueue(&queueLocker, TRUE);
 			m_eventDataAvailable.ResetEvent();
 			m_eventSocketAvailable.ResetEvent();
-			for (INT_PTR i = mini(GetStandardListSize(), (INT_PTR)max(GetSlotLimit(theApp.uploadqueue->GetDatarate()), 3u)); --i >= 0;) {
+			const INT_PTR iStandardListSize = GetStandardListSize();
+			for (INT_PTR i = 0; i < iStandardListSize; ++i) {
 				ThrottledFileSocket *pSocket = m_StandardOrder_list[i];
 				if (pSocket != NULL && pSocket->HasQueues()) {
 					++nCanSend;
+					iQueuedSlotLimit = i + 1;
 					nBusy += static_cast<uint32>(pSocket->IsBusyExtensiveCheck());
 				}
 			}
@@ -531,8 +534,15 @@ UINT UploadBandwidthThrottler::RunInternal()
 			}
 
 			// Equal bandwidth for all slots
-			uint32 targetDataRate = theApp.uploadqueue->GetTargetClientDataRate(true);
-			INT_PTR maxSlot = min(GetStandardListSize(), (INT_PTR)(allowedDataRate / targetDataRate));
+			const uint32 targetDataRate = theApp.uploadqueue->GetTargetClientDataRate(true);
+			const INT_PTR iStandardListSize = GetStandardListSize();
+			const INT_PTR iNominalShareSlots = targetDataRate > 0
+				? static_cast<INT_PTR>(allowedDataRate / targetDataRate)
+				: iStandardListSize;
+			const INT_PTR maxSlot = static_cast<INT_PTR>(UploadBandwidthThrottlerSeams::CalculateEqualShareSlotLimit(
+				static_cast<std::size_t>(iStandardListSize),
+				static_cast<std::size_t>(iNominalShareSlots),
+				static_cast<std::size_t>(iQueuedSlotLimit)));
 
 			if (maxSlot > m_highestNumberOfFullyActivatedSlots)
 				m_highestNumberOfFullyActivatedSlots = maxSlot;

@@ -13,10 +13,22 @@
 
 #pragma once
 
+#include <cstddef>
 #include <list>
 
 namespace UploadBandwidthThrottlerSeams
 {
+	/**
+	 * @brief Returns the standard-list span the equal-share pass should rotate across.
+	 */
+	inline std::size_t CalculateEqualShareSlotLimit(std::size_t nStandardListSize, std::size_t nNominalShareSlots, std::size_t nQueuedSlotLimit)
+	{
+		const std::size_t nRequestedSlots = nNominalShareSlots > nQueuedSlotLimit
+			? nNominalShareSlots
+			: nQueuedSlotLimit;
+		return nRequestedSlots < nStandardListSize ? nRequestedSlots : nStandardListSize;
+	}
+
 	/**
 	 * @brief Removes every queued instance of a socket from a single control queue.
 	 *
