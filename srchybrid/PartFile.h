@@ -423,6 +423,7 @@ private:
 	void	CharFillRange(CStringA &buffer, uint32 start, uint32 end, char color) const;
 	void	AddToSharedFiles();
 	void	DeleteWrittenItem(const POSITION pos);
+	void	DeleteWrittenItems();
 	bool	HasDirtyBufferedData() const;
 	bool	HasAsyncWriteReferences() const;
 	bool	WaitForAsyncWriteReferencesToRelease();

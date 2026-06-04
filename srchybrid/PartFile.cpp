@@ -4986,6 +4986,12 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 	//	AddDebugLogLine(false, _T("Flushing file %s - buffer size = %ld bytes (%ld queued items) transferred = %ld [time = %ld]"), (LPCTSTR)GetFileName(), m_nTotalBufferData, m_BufferedData_list.GetCount(), m_uTransferred, m_nLastBufferFlushTime);
 
 	try {
+		// WHY: async completions can leave PB_WRITTEN buffers counted in
+		// m_nTotalBufferData until a later flush pass. Retiring them before
+		// sizing/free-space decisions keeps the broadband buffer budget tied to
+		// actual unwritten data without changing the downloaded block contents.
+		DeleteWrittenItems();
+
 		ULONGLONG cursize = m_hpartfile.GetLength();
 		const ULONGLONG uMinFreeDiskSpace = theApp.downloadqueue != NULL
 			? theApp.downloadqueue->GetRequiredFreeDiskSpaceForPath(GetTmpPath())
@@ -5510,6 +5516,16 @@ void CPartFile::DeleteWrittenItem(const POSITION pos)
 
 	if (!m_nFileFlushTime)
 		m_nFileFlushTime = ::GetTickCount64();
+}
+
+void CPartFile::DeleteWrittenItems()
+{
+	for (POSITION pos = m_BufferedData_list.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
+		const PartFileBufferedData *item = m_BufferedData_list.GetNext(pos);
+		if (GetPartFileBufferedDataFlushState(*item) == PB_WRITTEN)
+			DeleteWrittenItem(posCurrent);
+	}
 }
 
 void CPartFile::SetCategory(UINT cat)
