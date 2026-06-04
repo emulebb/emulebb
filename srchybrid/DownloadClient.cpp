@@ -78,6 +78,7 @@ bool IsDownloadSlotInstrumentationHighVolumeReason(LPCTSTR pszReason)
 			|| _tcscmp(pszReason, _T("block-reserved")) == 0
 			|| _tcscmp(pszReason, _T("block-reserve-empty")) == 0
 			|| _tcscmp(pszReason, _T("block-reserve-skipped-pending-growth")) == 0
+			|| _tcscmp(pszReason, _T("block-advanced-duplicate-complete")) == 0
 			|| _tcscmp(pszReason, _T("block-cleared-duplicate-complete")) == 0
 			|| _tcscmp(pszReason, _T("packet-zero-write")) == 0
 			|| _tcscmp(pszReason, _T("request-empty-nnp")) == 0
@@ -1397,21 +1398,22 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 			}
 		}
 
-		// WHY: Another faster source or buffered write can complete the whole
-		// reserved range while this peer is still sending a previously valid
-		// request. Retire the stale pending request as soon as a duplicate
-		// packet proves that the reservation is complete locally, so the slot
-		// can ask for useful data immediately.
-		const bool bCompletedDuplicateBlock = !packed
+		// WHY: Another faster source or buffered write can complete a prefix of
+		// the reserved range while this peer is still sending a previously
+		// valid request. Treat that already-complete prefix as local progress so
+		// the stale pending request can be retired when the duplicate stream
+		// reaches its requested tail.
+		const bool bCompletedDuplicateRange = !packed
 			&& lenWritten == 0
 			&& cur_block->block != NULL
-			&& m_reqfile->IsComplete(cur_block->block->StartOffset, cur_block->block->EndOffset);
+			&& m_reqfile->IsComplete(cur_block->block->StartOffset, nEndPos);
+		const bool bCompletedDuplicateBlock = bCompletedDuplicateRange && nEndPos == cur_block->block->EndOffset;
 
 		// These checks only need to be done if any data was written or if a
-		// duplicate packet proves that the pending block is already complete.
-		// Also, asynchronous writing allows tricks such as disconnecting from
-		// client while file data is being in buffers. Hence additional checks.
-		if ((lenWritten > 0 || bCompletedDuplicateBlock) && !m_PendingBlocks_list.IsEmpty() && cur_block->block) {
+		// duplicate packet proves progress through the pending block. Also,
+		// asynchronous writing allows tricks such as disconnecting from client
+		// while file data is being in buffers. Hence additional checks.
+		if ((lenWritten > 0 || bCompletedDuplicateRange) && !m_PendingBlocks_list.IsEmpty() && cur_block->block) {
 			if (lenWritten > 0) {
 				m_nTransferredDown += uTransferredFileDataSize;
 				m_nCurSessionPayloadDown += lenWritten;
@@ -1420,10 +1422,17 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 #endif
 				cur_block->block->transferred += lenWritten; //cur_block->block was invalid!
 				SetTransferredDownMini();
+			} else {
+				const uint64 uDuplicateProgressBytes = nEndPos - cur_block->block->StartOffset + 1u;
+				if (uDuplicateProgressBytes > cur_block->block->transferred)
+					cur_block->block->transferred = uDuplicateProgressBytes;
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+				LogDownloadSlotInstrumentation(_T("block-advanced-duplicate-complete"), -1, uTransferredFileDataSize, 0);
+#endif
 			}
 
 			// If finished reserved block
-			if (nEndPos == cur_block->block->EndOffset) {
+			if (lenWritten > 0 ? nEndPos == cur_block->block->EndOffset : bCompletedDuplicateBlock) {
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 				if (lenWritten > 0) {
 					++m_ullDownloadBlockRequestsCompleted;
