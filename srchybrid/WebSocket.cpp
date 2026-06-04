@@ -600,6 +600,11 @@ void CWebSocket::SendContent(LPCSTR szStdResponse, const CString &rstr)
 void CWebSocket::Disconnect()
 {
 	if (m_bValid && m_bCanSend) {
+		// WHY: HTTP responses advertise Connection: close and the listener is
+		// intentionally capped to one accepted worker. After a complete request
+		// has been answered, waiting for the peer FIN keeps the worker counted
+		// active and the listener resets the next client instead of serving it.
+		m_bCanRecv = false;
 		m_bCanSend = false;
 		if (m_pTail)
 			try {
