@@ -2676,6 +2676,54 @@ void CSharedFileList::UpdateFile(const CKnownFile *toupdate)
 		output->QueueFileDisplayRefresh(toupdate);
 }
 
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+void CSharedFileList::GetPublishInstrumentationSnapshot(SharedPublishInstrumentationSnapshot &rSnapshot) const
+{
+	rSnapshot = {};
+	rSnapshot.iSharedFiles = m_Files_map.GetCount();
+	rSnapshot.uKadSourceSearchCap = KADEMLIATOTALSTORESRC;
+	rSnapshot.uKadKeywordSearchCap = KADEMLIATOTALSTOREKEY;
+	rSnapshot.uKadNotesSearchCap = KADEMLIATOTALSTORENOTES;
+	rSnapshot.uKadSourceSearches = Kademlia::CKademlia::GetTotalStoreSrc();
+	rSnapshot.uKadKeywordSearches = Kademlia::CKademlia::GetTotalStoreKey();
+	rSnapshot.uKadNotesSearches = Kademlia::CKademlia::GetTotalStoreNotes();
+
+	const bool bServerConnected = server != NULL && server->IsConnected();
+	const CServer *pCurServer = bServerConnected ? server->GetCurrentServer() : NULL;
+	uint32 uED2KOfferLimit = pCurServer != NULL ? pCurServer->GetSoftFiles() : 0;
+	if (uED2KOfferLimit == 0 || uED2KOfferLimit > 200)
+		uED2KOfferLimit = 200;
+	rSnapshot.uED2KOfferLimit = uED2KOfferLimit;
+
+	const bool bKadPublishReady = Kademlia::CKademlia::IsConnected()
+		&& rSnapshot.iSharedFiles > 0
+		&& Kademlia::CKademlia::GetPublish()
+		&& (!theApp.IsFirewalled()
+			|| theApp.clientlist->GetBuddyStatus() == Connected
+			|| (!Kademlia::CUDPFirewallTester::IsFirewalledUDP(true) && Kademlia::CUDPFirewallTester::IsVerified()));
+	rSnapshot.uKadPublishReady = static_cast<UINT>(bKadPublishReady);
+
+	const time_t tNow = time(NULL);
+	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
+		const CKnownFile *pFile = pair->value;
+		if (pFile == NULL)
+			continue;
+
+		if (pFile->GetPublishedED2K() && !pFile->IsED2KRepublishPending())
+			++rSnapshot.uED2KPublishedFiles;
+		else if (pFile->IsLargeFile() && (pCurServer == NULL || !pCurServer->SupportsLargeFilesTCP()))
+			++rSnapshot.uED2KPendingLargeUnsupportedFiles;
+		else
+			++rSnapshot.uED2KPendingFiles;
+
+		if (IsKadSourcePublishDue(pFile, tNow))
+			++rSnapshot.uKadSourceDueFiles;
+		else
+			++rSnapshot.uKadSourceBackoffFiles;
+	}
+}
+#endif
+
 void CSharedFileList::Process()
 {
 	DrainDeferredSharedHashResults();

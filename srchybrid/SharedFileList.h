@@ -140,6 +140,29 @@ public:
 		bool bReady = true;
 	};
 
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+	/**
+	 * @brief Captures shared-file publish backlog and live Kad/server publish headroom for upload tuning.
+	 */
+	struct SharedPublishInstrumentationSnapshot
+	{
+		INT_PTR iSharedFiles = 0;
+		UINT uED2KPublishedFiles = 0;
+		UINT uED2KPendingFiles = 0;
+		UINT uED2KPendingLargeUnsupportedFiles = 0;
+		UINT uED2KOfferLimit = 0;
+		UINT uKadPublishReady = 0;
+		UINT uKadSourceDueFiles = 0;
+		UINT uKadSourceBackoffFiles = 0;
+		UINT uKadSourceSearches = 0;
+		UINT uKadSourceSearchCap = 0;
+		UINT uKadKeywordSearches = 0;
+		UINT uKadKeywordSearchCap = 0;
+		UINT uKadNotesSearches = 0;
+		UINT uKadNotesSearchCap = 0;
+	};
+#endif
+
 	explicit CSharedFileList(CServerConnect *in_server);
 	~CSharedFileList();
 	CSharedFileList(const CSharedFileList&) = delete;
@@ -213,6 +236,9 @@ public:
 	 * @brief Copies the latest shared-files startup-cache diagnostics for REST and operator status.
 	 */
 	void	GetStartupCacheStatus(StartupCacheStatus &rStatus) const;
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+	void	GetPublishInstrumentationSnapshot(SharedPublishInstrumentationSnapshot &rSnapshot) const;
+#endif
 	/**
 	 * @brief Applies one worker-produced startup-cache save result on the UI thread.
 	 */

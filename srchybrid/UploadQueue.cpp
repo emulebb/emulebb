@@ -539,9 +539,12 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 	const ULONGLONG ullCooldownAvgMs = iCooldownWaitingClients > 0
 		? ullCooldownSumMs / static_cast<ULONGLONG>(iCooldownWaitingClients)
 		: 0;
+	CSharedFileList::SharedPublishInstrumentationSnapshot sharedPublish = {};
+	if (theApp.sharedfiles != NULL)
+		theApp.sharedfiles->GetPublishInstrumentationSnapshot(sharedPublish);
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id activeZeroRate=%Id activeNoRequest=%Id activeNoRequestDrained=%Id activeNoRequestDrainedZeroRate=%Id activeNoRequestDrainedNonzeroRate=%Id activeNoRequestPendingIO=%Id activeNoRequestBufferedPayload=%Id activeNoRequestSocketBacklog=%Id activeQueuedRequests=%Id activePendingIO=%Id activeBufferedPayload=%Id activeSocketBacklog=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
+		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id activeZeroRate=%Id activeNoRequest=%Id activeNoRequestDrained=%Id activeNoRequestDrainedZeroRate=%Id activeNoRequestDrainedNonzeroRate=%Id activeNoRequestPendingIO=%Id activeNoRequestBufferedPayload=%Id activeNoRequestSocketBacklog=%Id activeQueuedRequests=%Id activePendingIO=%Id activeBufferedPayload=%Id activeSocketBacklog=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u sharedFiles=%Id ed2kPublishedFiles=%u ed2kPendingFiles=%u ed2kPendingLargeUnsupportedFiles=%u ed2kOfferLimit=%u kadPublishReady=%u kadSourceDueFiles=%u kadSourceBackoffFiles=%u kadSourceSearches=%u kadSourceSearchCap=%u kadKeywordSearches=%u kadKeywordSearchCap=%u kadNotesSearches=%u kadNotesSearchCap=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
 		uploadinglist.GetCount(),
 		m_retiredUploadingList.GetCount(),
 		waitinglist.GetCount(),
@@ -574,6 +577,20 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		static_cast<uint64>(ullCooldownMaxMs),
 		static_cast<UINT>(m_uploadRetryCooldownByIP.size()),
 		static_cast<UINT>(m_noRequestUploadRetryCooldownByIP.size()),
+		sharedPublish.iSharedFiles,
+		sharedPublish.uED2KPublishedFiles,
+		sharedPublish.uED2KPendingFiles,
+		sharedPublish.uED2KPendingLargeUnsupportedFiles,
+		sharedPublish.uED2KOfferLimit,
+		sharedPublish.uKadPublishReady,
+		sharedPublish.uKadSourceDueFiles,
+		sharedPublish.uKadSourceBackoffFiles,
+		sharedPublish.uKadSourceSearches,
+		sharedPublish.uKadSourceSearchCap,
+		sharedPublish.uKadKeywordSearches,
+		sharedPublish.uKadKeywordSearchCap,
+		sharedPublish.uKadNotesSearches,
+		sharedPublish.uKadNotesSearchCap,
 		iThrottlerSlots,
 		m_MaxActiveClientsShortTime,
 		GetBroadbandSlotCap(),
