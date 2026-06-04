@@ -1040,16 +1040,29 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 	}
 
 	UINT uLocalServerQueueReadyFiles = 0;
+	UINT uLocalServerQueueEligibleFiles = 0;
+	UINT uLocalServerQueueSourceStarvedEligibleFiles = 0;
+	ULONGLONG ullLocalServerQueueDueAgeMaxMs = 0;
+	const CServer *pCurrentServer = theApp.serverconnect != NULL ? theApp.serverconnect->GetCurrentServer() : NULL;
 	for (POSITION localReqPos = m_localServerReqQueue.GetHeadPosition(); localReqPos != NULL;) {
 		const CPartFile *pQueuedFile = m_localServerReqQueue.GetNext(localReqPos);
-		if (pQueuedFile != NULL && inSet(pQueuedFile->GetStatus(), PS_READY, PS_EMPTY))
+		if (pQueuedFile != NULL && inSet(pQueuedFile->GetStatus(), PS_READY, PS_EMPTY)) {
 			++uLocalServerQueueReadyFiles;
+			if (ShouldSendLocalServerSourceRequest(pQueuedFile, pCurrentServer)) {
+				++uLocalServerQueueEligibleFiles;
+				if (pQueuedFile->GetValidSourcesCount() <= 0)
+					++uLocalServerQueueSourceStarvedEligibleFiles;
+				const ULONGLONG ullDueTick = pQueuedFile->m_LastSearchTime != 0 ? pQueuedFile->m_LastSearchTime + SERVERREASKTIME : 0;
+				const ULONGLONG ullDueAgeMs = curTick >= ullDueTick ? curTick - ullDueTick : 0;
+				ullLocalServerQueueDueAgeMaxMs = max(ullLocalServerQueueDueAgeMaxMs, ullDueAgeMs);
+			}
+		}
 	}
 	const ULONGLONG ullNextTcpSourceRequestWaitMs = m_dwNextTCPSrcReq > curTick ? m_dwNextTCPSrcReq - curTick : 0;
 	const ULONGLONG ullLastUdpSearchAgeMs = m_lastudpsearchtime != 0 && curTick >= m_lastudpsearchtime ? curTick - m_lastudpsearchtime : 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceStarvedLocalQueuedReadyFiles=%u sourceStarvedKadSearchingReadyFiles=%u sourceStarvedKadEligibleReadyFiles=%u sourceStarvedKadDueReadyFiles=%u sourceStarvedKadBackoffReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u effectiveFileBufferBytes=%I64u autoBroadbandIO=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u maxBufferedReadyBytes=%I64u maxBufferedPendingBytes=%I64u maxBufferedWrittenBytes=%I64u maxBufferedReadyItems=%u maxBufferedPendingItems=%u maxBufferedWrittenItems=%u asyncWriteFiles=%u maxAsyncWriteRefsPerFile=%ld asyncWriteRefs=%Id protectedDiskBlocked=%u"),
+		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceStarvedLocalQueuedReadyFiles=%u sourceStarvedKadSearchingReadyFiles=%u sourceStarvedKadEligibleReadyFiles=%u sourceStarvedKadDueReadyFiles=%u sourceStarvedKadBackoffReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerQueuedEligibleFiles=%u localServerQueuedSourceStarvedEligibleFiles=%u localServerQueuedDueAgeMaxMs=%I64u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u effectiveFileBufferBytes=%I64u autoBroadbandIO=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u maxBufferedReadyBytes=%I64u maxBufferedPendingBytes=%I64u maxBufferedWrittenBytes=%I64u maxBufferedReadyItems=%u maxBufferedPendingItems=%u maxBufferedWrittenItems=%u asyncWriteFiles=%u maxAsyncWriteRefsPerFile=%ld asyncWriteRefs=%Id protectedDiskBlocked=%u"),
 		filelist.GetCount(),
 		uReadyFiles,
 		uActiveFiles,
@@ -1079,6 +1092,9 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		uIdleSources,
 		m_localServerReqQueue.GetCount(),
 		uLocalServerQueueReadyFiles,
+		uLocalServerQueueEligibleFiles,
+		uLocalServerQueueSourceStarvedEligibleFiles,
+		static_cast<uint64>(ullLocalServerQueueDueAgeMaxMs),
 		uLocalServerQueuedReadyFiles,
 		static_cast<uint64>(ullNextTcpSourceRequestWaitMs),
 		static_cast<UINT>(cur_udpserver != NULL),
