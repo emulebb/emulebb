@@ -2793,12 +2793,21 @@ namespace
 {
 constexpr int kMaxUiLogLineChars = 1000;
 
-CString BuildUiLogLine(const CTime &timestamp, LPCTSTR pszText)
+CString BuildLogLine(const CTime &timestamp, LPCTSTR pszText)
 {
 	CString strLogLine;
 	strLogLine.Format(_T("%s: %s\r\n"), (LPCTSTR)timestamp.Format(thePrefs.GetDateTimeFormat4Log()), pszText != NULL ? pszText : _T(""));
+	return strLogLine;
+}
+
+CString BuildUiLogLine(const CTime &timestamp, LPCTSTR pszText)
+{
+	CString strLogLine(BuildLogLine(timestamp, pszText));
 	if (strLogLine.GetLength() > kMaxUiLogLineChars)
-		strLogLine.Truncate(kMaxUiLogLineChars);
+	{
+		strLogLine.Truncate(kMaxUiLogLineChars - 2);
+		strLogLine += _T("\r\n");
+	}
 	return strLogLine;
 }
 }
@@ -2825,26 +2834,28 @@ void CemuleDlg::AddLogText(UINT uFlags, LPCTSTR pszText, const CTime *pTimestamp
 		return;
 
 	const CTime timestamp = (pTimestamp != NULL) ? *pTimestamp : CTime::GetCurrentTime();
-	const CString strLogLine(BuildUiLogLine(timestamp, pszText));
-	const int iLen = strLogLine.GetLength();
-	if (iLen > 0) {
+	const CString strUiLogLine(BuildUiLogLine(timestamp, pszText));
+	const CString strDiskLogLine(BuildLogLine(timestamp, pszText));
+	const int iUiLen = strUiLogLine.GetLength();
+	const int iDiskLen = strDiskLogLine.GetLength();
+	if (iUiLen > 0) {
 		if (!(uFlags & LOG_DEBUG)) {
-			serverwnd->logbox->AddTyped(strLogLine, iLen, uFlags & LOGMSGTYPEMASK);
+			serverwnd->logbox->AddTyped(strUiLogLine, iUiLen, uFlags & LOGMSGTYPEMASK);
 			if (::IsWindow(serverwnd->StatusSelector) && serverwnd->StatusSelector.GetCurSel() != CServerWnd::PaneLog)
 				serverwnd->StatusSelector.HighlightItem(CServerWnd::PaneLog, TRUE);
 			if (!(uFlags & LOG_DONTNOTIFY) && status) //status!=0 means this dialog has been created
 				ShowNotifier(pszText, TBN_LOG);
-			if (thePrefs.GetLog2Disk())
-				theLog.Log(strLogLine, iLen);
+			if (thePrefs.GetLog2Disk() && iDiskLen > 0)
+				theLog.Log(strDiskLogLine, iDiskLen);
 		}
 
 		if (thePrefs.GetVerbose() && ((uFlags & LOG_DEBUG) || thePrefs.GetFullVerbose())) {
-			serverwnd->debuglog->AddTyped(strLogLine, iLen, uFlags & LOGMSGTYPEMASK);
+			serverwnd->debuglog->AddTyped(strUiLogLine, iUiLen, uFlags & LOGMSGTYPEMASK);
 			if (::IsWindow(serverwnd->StatusSelector) && serverwnd->StatusSelector.GetCurSel() != CServerWnd::PaneVerboseLog)
 				serverwnd->StatusSelector.HighlightItem(CServerWnd::PaneVerboseLog, TRUE);
 
-			if (thePrefs.GetDebug2Disk())
-				theVerboseLog.Log(strLogLine, iLen);
+			if (thePrefs.GetDebug2Disk() && iDiskLen > 0)
+				theVerboseLog.Log(strDiskLogLine, iDiskLen);
 		}
 	}
 }
