@@ -2285,9 +2285,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 			status = 6;
 			// WHY: Stored-search restore is optional post-running UI hydration. Keep the
 			// startup lifecycle dialog from surviving while a large restore populates tabs.
-			m_bStartupProgressFinished = true;
-			theApp.DestroyEarlyStartupProgress();
-			DestroyStartupProgress();
+			CloseStartupProgressIfRunning();
 			{
 #if EMULEBB_HAS_STARTUP_PROFILING
 				const ULONGLONG ullStoredSearchesStart = theApp.GetStartupProfileTimestampUs();
@@ -2310,9 +2308,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 			// here so a stale progress dialog cannot survive behind a missed queued hop.
 			[[fallthrough]];
 		default:
-			m_bStartupProgressFinished = true;
-			theApp.DestroyEarlyStartupProgress();
-			UpdateStartupProgress(96, IDS_STARTUP_PROGRESS_FINISHING, IDS_STARTUP_PROGRESS_STARTING_BACKGROUND_WORK);
+			CloseStartupProgressIfRunning();
 			serverwnd->serverlistctrl.Visible();
 			theApp.sharedfiles->StartDeferredHashing();
 			theApp.MarkStartupComplete();
