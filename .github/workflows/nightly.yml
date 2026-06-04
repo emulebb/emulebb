@@ -54,13 +54,13 @@ jobs:
           tag="emulebb-nightly-${release_date}-${short_sha}"
           package_version="${EMULEBB_NIGHTLY_BASE_VERSION}-nightly.${release_date}.${short_sha}"
 
-          existing_for_sha="$(git ls-remote --tags origin "refs/tags/emulebb-nightly-*-${short_sha}" | wc -l | tr -d ' ')"
+          existing_for_sha="$(git ls-remote --tags origin "refs/tags/emulebb-nightly-*-${short_sha}*" | wc -l | tr -d ' ')"
           should_publish="true"
           if [[ "${existing_for_sha}" != "0" && "${FORCE_NIGHTLY}" != "true" ]]; then
             should_publish="false"
           fi
 
-          if [[ "${FORCE_NIGHTLY}" == "true" ]] && git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+          if [[ "${FORCE_NIGHTLY}" == "true" && "${existing_for_sha}" != "0" ]]; then
             tag="${tag}-run${GITHUB_RUN_NUMBER}"
           fi
 
