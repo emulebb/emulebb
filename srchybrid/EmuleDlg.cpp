@@ -5836,6 +5836,39 @@ void InitWindowStyles(CWnd *pWnd)
 	}
 }
 
+struct SStartupProgressWindowCleanupContext
+{
+	HWND hMainWnd;
+	CString strTitle;
+};
+
+static BOOL CALLBACK DestroyOrphanedStartupProgressWindowProc(HWND hWnd, LPARAM lParam)
+{
+	SStartupProgressWindowCleanupContext *pContext = reinterpret_cast<SStartupProgressWindowCleanupContext*>(lParam);
+	if (pContext == NULL || hWnd == NULL || hWnd == pContext->hMainWnd)
+		return TRUE;
+	if (::GetDlgItem(hWnd, IDC_SHUTDOWN_STEP) == NULL || ::GetDlgItem(hWnd, IDC_PROGRESS1) == NULL)
+		return TRUE;
+
+	TCHAR szTitle[256] = {};
+	(void)::GetWindowText(hWnd, szTitle, _countof(szTitle));
+	if (pContext->strTitle.Compare(szTitle) != 0)
+		return TRUE;
+
+	::ShowWindow(hWnd, SW_HIDE);
+	(void)::DestroyWindow(hWnd);
+	return TRUE;
+}
+
+static void DestroyOrphanedStartupProgressWindows(HWND hMainWnd)
+{
+	SStartupProgressWindowCleanupContext context = { hMainWnd, GetResString(IDS_STARTING_EMULE) };
+	if (context.strTitle.IsEmpty())
+		return;
+
+	(void)::EnumThreadWindows(::GetCurrentThreadId(), DestroyOrphanedStartupProgressWindowProc, reinterpret_cast<LPARAM>(&context));
+}
+
 bool CemuleDlg::ShouldShowLifecycleProgressDialog(int iMode, bool bStartup) const
 {
 	switch (CPreferences::NormalizeLifecycleProgressDialogMode(iMode)) {
@@ -5898,8 +5931,10 @@ void CemuleDlg::DestroyStartupProgress()
 #if EMULEBB_HAS_STARTUP_PROFILING
 		const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 #endif
-		if (m_pStartupProgressDlg->GetSafeHwnd() != NULL)
+		if (m_pStartupProgressDlg->GetSafeHwnd() != NULL) {
+			m_pStartupProgressDlg->ShowWindow(SW_HIDE);
 			m_pStartupProgressDlg->DestroyWindow();
+		}
 		delete m_pStartupProgressDlg;
 		m_pStartupProgressDlg = NULL;
 		m_bTransientDialogActive = false;
@@ -5923,6 +5958,10 @@ void CemuleDlg::CloseStartupProgressIfRunning()
 		theApp.DestroyEarlyStartupProgress();
 	}
 	DestroyStartupProgress();
+	// WHY: a lost modeless progress pointer or missed queued startup hop can leave
+	// the lifecycle dialog visible after APP_STATE_RUNNING. Sweep only same-thread
+	// startup progress dialogs with the expected controls.
+	DestroyOrphanedStartupProgressWindows(m_hWnd);
 }
 
 BOOL CemuleApp::IsIdleMessage(MSG *pMsg)

@@ -2479,8 +2479,10 @@ void CemuleApp::UpdateEarlyStartupProgress(UINT uPercent, UINT uStepStringId, UI
 void CemuleApp::DestroyEarlyStartupProgress()
 {
 	if (m_pEarlyStartupProgressDlg != NULL) {
-		if (m_pEarlyStartupProgressDlg->GetSafeHwnd() != NULL)
+		if (m_pEarlyStartupProgressDlg->GetSafeHwnd() != NULL) {
+			m_pEarlyStartupProgressDlg->ShowWindow(SW_HIDE);
 			m_pEarlyStartupProgressDlg->DestroyWindow();
+		}
 		delete m_pEarlyStartupProgressDlg;
 		m_pEarlyStartupProgressDlg = NULL;
 		PumpLifecycleProgressMessages(NULL);
