@@ -1404,10 +1404,10 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 
 		// WHY: Another faster source or buffered write can complete a prefix of
 		// the reserved range while this peer is still sending a previously
-		// valid request. Treat that already-complete prefix as local progress so
-		// the stale pending request can be retired when the duplicate stream
-		// reaches its requested tail. If the whole request is already complete,
-		// retire it immediately instead of waiting for this peer to send the tail.
+		// valid request. Keep accounting in sync so the stale pending request can
+		// be retired when the duplicate stream reaches its requested tail. The
+		// duplicate payload itself is not useful download progress unless it
+		// clears the reservation.
 		const bool bCompletedDuplicateRange = !packed
 			&& lenWritten == 0
 			&& cur_block->block != NULL
@@ -1443,7 +1443,6 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 					: nEndPos - cur_block->block->StartOffset + 1u;
 				if (uDuplicateProgressBytes > cur_block->block->transferred) {
 					cur_block->block->transferred = uDuplicateProgressBytes;
-					bProgressedPendingBlock = true;
 				}
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 				if (!bCompletedDuplicateWholeBlock)
