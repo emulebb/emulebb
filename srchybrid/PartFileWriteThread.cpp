@@ -21,6 +21,7 @@
 #include "partfile.h"
 #include "log.h"
 #include "HelperThreadLaunchSeams.h"
+#include "PartFileWriteThreadSeams.h"
 
 #include <new>
 
@@ -225,8 +226,24 @@ UINT CPartFileWriteThread::RunInternal()
 void CPartFileWriteThread::WriteBuffers()
 {
 	//process internal list
-	while (!m_listToWrite.IsEmpty() && HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP) {
+	size_t nDispatchedWrites = 0u;
+	const auto requestFollowUpWakeIfNeeded = [&]() {
+		if (PartFileWriteThreadSeams::ShouldWakeForUndispatchedWrites(
+				!m_listToWrite.IsEmpty(),
+				HelperThreadLaunchSeams::GetState(m_Run) == RUN_STOP))
+		{
+			// WHY: private queued writes are invisible to WakeUpCall callers.
+			// Marking m_bNewData reuses the IOCP self-wake path once the current
+			// pending burst drains, so accepted buffers cannot sit PB_PENDING.
+			HelperThreadLaunchSeams::SetFlag(m_bNewData);
+		}
+	};
+	while (!m_listToWrite.IsEmpty()
+		&& HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP
+		&& PartFileWriteThreadSeams::CanDispatchWriteInCurrentWake(nDispatchedWrites, PartFileWriteThreadSeams::kMaxWriteDispatchesPerWake))
+	{
 		const ToWrite item = m_listToWrite.RemoveHead();
+		++nDispatchedWrites;
 		PartFileBufferedData *pBuffer = item.pBuffer;
 		ASSERT(pBuffer->end >= pBuffer->start && (pBuffer->data || pBuffer->end == pBuffer->start)); //verifies allocation requests too
 
@@ -265,6 +282,7 @@ void CPartFileWriteThread::WriteBuffers()
 						MarkWriteDispatchFailed(item.pBuffer, dwError);
 						theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: %s"), (LPCTSTR)GetErrorMessage(dwError, 1));
 						RemFile(pFile);
+						requestFollowUpWakeIfNeeded();
 						return;
 					}
 				}
@@ -274,6 +292,7 @@ void CPartFileWriteThread::WriteBuffers()
 				delete pOvWrite;
 				MarkWriteDispatchFailed(item.pBuffer, ERROR_NOT_ENOUGH_MEMORY);
 				theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: not enough memory while registering overlapped write"));
+				requestFollowUpWakeIfNeeded();
 				return;
 			} catch (const std::bad_alloc&) {
 				// WHY: MSVC throws std::bad_alloc for plain C++ new while MFC
@@ -284,12 +303,22 @@ void CPartFileWriteThread::WriteBuffers()
 				delete pOvWrite;
 				MarkWriteDispatchFailed(item.pBuffer, ERROR_NOT_ENOUGH_MEMORY);
 				theApp.QueueDebugLogLineEx(LOG_WARNING, _T("WriteBuffers error: not enough memory while allocating overlapped write"));
+				requestFollowUpWakeIfNeeded();
 				return;
 			}
 		} else {
 			MarkWriteDispatchFailed(item.pBuffer, ERROR_INVALID_HANDLE);
 			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("WriteBuffers error: CPartFile cannot be written"));
 		}
+	}
+
+	if (PartFileWriteThreadSeams::ShouldDeferRemainingWrites(
+			!m_listToWrite.IsEmpty(),
+			HelperThreadLaunchSeams::GetState(m_Run) == RUN_STOP,
+			nDispatchedWrites,
+			PartFileWriteThreadSeams::kMaxWriteDispatchesPerWake))
+	{
+		requestFollowUpWakeIfNeeded();
 	}
 }
 
@@ -316,6 +345,7 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 				// write thread. Assigning here hides state-machine bugs in Debug
 				// and can make later cleanup believe an invalid buffer was pending.
 				ASSERT(GetPartFileBufferedDataFlushState(*pBuffer) == PB_PENDING && nRemainingWrites >= 0);
+				(void)nRemainingWrites;
 				SetPartFileBufferedDataFlushState(*pBuffer, PB_WRITTEN);
 			} else { //full file allocation
 				ASSERT(dwBytesWritten == 1);

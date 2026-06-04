@@ -627,6 +627,7 @@
     <ClInclude Include="PartFile.h" />
     <ClInclude Include="PartFileSourceOwnershipSeams.h" />
     <ClInclude Include="PartFileWriteThread.h" />
+    <ClInclude Include="PartFileWriteThreadSeams.h" />
     <ClInclude Include="PerfLog.h" />
     <ClInclude Include="Pinger.h" />
     <ClInclude Include="PPgConnection.h" />
