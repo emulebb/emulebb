@@ -217,14 +217,14 @@ jobs:
       artifact_name: emulebb-controlled-smoke-arm64-${{ needs.prepare.outputs.package_version }}
       artifact_path: |
         workspaces/workspace/state/release/emulebb-v${{ needs.prepare.outputs.package_version }}/**
-        workspaces/workspace/state/test-reports/live-e2e-suite/**
-        workspaces/workspace/state/test-artifacts/live-e2e-suite/**
+        workspaces/workspace/state/test-reports/command-line-smoke/**
+        workspaces/workspace/state/test-artifacts/command-line-smoke/**
         workspaces/workspace/state/build-logs/**
       failure_artifact_name: emulebb-controlled-smoke-arm64-failure-${{ needs.prepare.outputs.short_sha }}
       failure_artifact_path: |
         workspaces/workspace/state/release/**
-        workspaces/workspace/state/test-reports/live-e2e-suite/**
-        workspaces/workspace/state/test-artifacts/live-e2e-suite/**
+        workspaces/workspace/state/test-reports/command-line-smoke/**
+        workspaces/workspace/state/test-artifacts/command-line-smoke/**
         workspaces/workspace/state/build-logs/**
       command: |
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
@@ -236,16 +236,22 @@ jobs:
           --clean `
           --release-version $packageVersion
 
-        python -m emule_workspace test live-e2e `
-          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
-          --config Release `
-          --platform ARM64 `
-          --materialize-test-install `
-          --materialize-test-install-release-version $packageVersion `
-          --materialize-test-install-skip-build `
-          --suite command-line-smoke `
-          --test-network offline `
-          --fail-fast
+        $releaseRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\release\emulebb-v$packageVersion"
+        $packageZip = Join-Path $releaseRoot "emulebb-$packageVersion-arm64.zip"
+        $installRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\test-installs\controlled-smoke-arm64"
+        if (Test-Path -LiteralPath $installRoot) {
+          Remove-Item -LiteralPath $installRoot -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $installRoot -Force | Out-Null
+        Expand-Archive -LiteralPath $packageZip -DestinationPath $installRoot -Force
+
+        $appRoot = Join-Path $installRoot "eMuleBB"
+        $appExe = Join-Path $appRoot "emulebb.exe"
+        python $env:EMULEBB_WORKSPACE_ROOT\repos\emulebb-build-tests\scripts\command-line-smoke.py `
+          --workspace-root $env:EMULEBB_WORKSPACE_ROOT\workspaces\workspace `
+          --app-root $appRoot `
+          --app-exe $appExe `
+          --configuration Release
 
   report:
     name: Report controlled smoke status
