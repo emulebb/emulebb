@@ -2260,7 +2260,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 					AddLogLine(true, GetResString(IDS_MAIN_READY), (LPCTSTR)theApp.m_strCurVersionLong);
 
 				theApp.m_app_state = APP_STATE_RUNNING; //initialization completed
-				CloseStartupProgressIfRunning();
+				FinishStartupProgress();
 				UpdateBindLossMonitor(false);
 				const bool bStartupConnectionCommandsEnabled = VpnGuardPolicySeams::CanUseStartupConnectionCommands(
 					thePrefs.GetVpnGuardMode(), theApp.IsStartupBindBlocked(), m_bBindLossMonitorActive);
@@ -2285,7 +2285,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 			status = 6;
 			// WHY: Stored-search restore is optional post-running UI hydration. Keep the
 			// startup lifecycle dialog from surviving while a large restore populates tabs.
-			CloseStartupProgressIfRunning();
+			FinishStartupProgress();
 			{
 #if EMULEBB_HAS_STARTUP_PROFILING
 				const ULONGLONG ullStoredSearchesStart = theApp.GetStartupProfileTimestampUs();
@@ -2308,7 +2308,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 			// here so a stale progress dialog cannot survive behind a missed queued hop.
 			[[fallthrough]];
 		default:
-			CloseStartupProgressIfRunning();
+			FinishStartupProgress();
 			serverwnd->serverlistctrl.Visible();
 			theApp.sharedfiles->StartDeferredHashing();
 			theApp.MarkStartupComplete();
@@ -2319,7 +2319,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 				sharedfileswnd->OnStartupProfileStartupComplete();
 #endif
 			StopTimer();
-			DestroyStartupProgress();
+			FinishStartupProgress();
 			return;
 		}
 		VERIFY(PostMessage(UM_STARTUP_NEXT_STAGE) != 0);
@@ -5881,6 +5881,8 @@ static void DestroyOrphanedStartupProgressWindows(HWND hMainWnd)
 		return;
 
 	(void)::EnumWindows(DestroyOrphanedStartupProgressWindowProc, reinterpret_cast<LPARAM>(&context));
+	if (hMainWnd != NULL)
+		(void)::EnumChildWindows(hMainWnd, DestroyOrphanedStartupProgressWindowProc, reinterpret_cast<LPARAM>(&context));
 }
 
 bool CemuleDlg::ShouldShowLifecycleProgressDialog(int iMode, bool bStartup) const
@@ -5967,23 +5969,28 @@ void CemuleDlg::DestroyStartupProgress()
 	}
 }
 
-void CemuleDlg::CloseStartupProgressIfRunning()
+void CemuleDlg::FinishStartupProgress()
 {
-	if (!theApp.IsRunning())
-		return;
-
 	if (!m_bStartupProgressFinished) {
 		// WHY: Startup progress is only valid before APP_STATE_RUNNING. If a nested
-		// message pump or failed sequencer hop leaves it alive, close it on the next
-		// normal UI turn instead of letting a stale lifecycle dialog cover the app.
+		// message pump or failed sequencer hop leaves it alive, finish the lifecycle
+		// before post-running UI hydration so a stale dialog cannot cover the app.
 		m_bStartupProgressFinished = true;
-		theApp.DestroyEarlyStartupProgress();
 	}
+	theApp.DestroyEarlyStartupProgress();
 	DestroyStartupProgress();
 	// WHY: a lost modeless progress pointer or missed queued startup hop can leave
 	// the lifecycle dialog visible after APP_STATE_RUNNING. Sweep same-process
 	// startup progress dialogs with the expected controls.
 	DestroyOrphanedStartupProgressWindows(m_hWnd);
+}
+
+void CemuleDlg::CloseStartupProgressIfRunning()
+{
+	if (!theApp.IsRunning())
+		return;
+
+	FinishStartupProgress();
 }
 
 BOOL CemuleApp::IsIdleMessage(MSG *pMsg)
