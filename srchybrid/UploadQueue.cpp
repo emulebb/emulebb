@@ -401,6 +401,8 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 	INT_PTR iActiveZeroRateClients = 0;
 	INT_PTR iActiveNoRequestClients = 0;
 	INT_PTR iActiveNoRequestDrainedClients = 0;
+	INT_PTR iActiveNoRequestDrainedZeroRateClients = 0;
+	INT_PTR iActiveNoRequestDrainedNonzeroRateClients = 0;
 	INT_PTR iActiveNoRequestPendingIOClients = 0;
 	INT_PTR iActiveNoRequestBufferedPayloadClients = 0;
 	INT_PTR iActiveNoRequestSocketBacklogClients = 0;
@@ -438,8 +440,13 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 				++iActiveNoRequestBufferedPayloadClients;
 			if (iSocketQueue > 0)
 				++iActiveNoRequestSocketBacklogClients;
-			if (nPendingIOBlocks == 0 && pActiveClient->GetPayloadInBuffer() == 0 && iSocketQueue == 0)
+			if (nPendingIOBlocks == 0 && pActiveClient->GetPayloadInBuffer() == 0 && iSocketQueue == 0) {
 				++iActiveNoRequestDrainedClients;
+				if (pActiveClient->GetUploadDatarate() == 0)
+					++iActiveNoRequestDrainedZeroRateClients;
+				else
+					++iActiveNoRequestDrainedNonzeroRateClients;
+			}
 		} else
 			++iActiveQueuedRequestClients;
 		if (nPendingIOBlocks > 0)
@@ -512,7 +519,7 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		: 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id activeZeroRate=%Id activeNoRequest=%Id activeNoRequestDrained=%Id activeNoRequestPendingIO=%Id activeNoRequestBufferedPayload=%Id activeNoRequestSocketBacklog=%Id activeQueuedRequests=%Id activePendingIO=%Id activeBufferedPayload=%Id activeSocketBacklog=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
+		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id activeZeroRate=%Id activeNoRequest=%Id activeNoRequestDrained=%Id activeNoRequestDrainedZeroRate=%Id activeNoRequestDrainedNonzeroRate=%Id activeNoRequestPendingIO=%Id activeNoRequestBufferedPayload=%Id activeNoRequestSocketBacklog=%Id activeQueuedRequests=%Id activePendingIO=%Id activeBufferedPayload=%Id activeSocketBacklog=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
 		uploadinglist.GetCount(),
 		m_retiredUploadingList.GetCount(),
 		waitinglist.GetCount(),
@@ -531,6 +538,8 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		iActiveZeroRateClients,
 		iActiveNoRequestClients,
 		iActiveNoRequestDrainedClients,
+		iActiveNoRequestDrainedZeroRateClients,
+		iActiveNoRequestDrainedNonzeroRateClients,
 		iActiveNoRequestPendingIOClients,
 		iActiveNoRequestBufferedPayloadClients,
 		iActiveNoRequestSocketBacklogClients,
