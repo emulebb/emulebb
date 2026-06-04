@@ -1052,9 +1052,11 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 				++uLocalServerQueueEligibleFiles;
 				if (pQueuedFile->GetValidSourcesCount() <= 0)
 					++uLocalServerQueueSourceStarvedEligibleFiles;
-				const ULONGLONG ullDueTick = pQueuedFile->m_LastSearchTime != 0 ? pQueuedFile->m_LastSearchTime + SERVERREASKTIME : 0;
-				const ULONGLONG ullDueAgeMs = curTick >= ullDueTick ? curTick - ullDueTick : 0;
-				ullLocalServerQueueDueAgeMaxMs = max(ullLocalServerQueueDueAgeMaxMs, ullDueAgeMs);
+				if (pQueuedFile->m_LastSearchTime != 0) {
+					const ULONGLONG ullDueTick = pQueuedFile->m_LastSearchTime + SERVERREASKTIME;
+					const ULONGLONG ullDueAgeMs = curTick >= ullDueTick ? curTick - ullDueTick : 0;
+					ullLocalServerQueueDueAgeMaxMs = max(ullLocalServerQueueDueAgeMaxMs, ullDueAgeMs);
+				}
 			}
 		}
 	}
