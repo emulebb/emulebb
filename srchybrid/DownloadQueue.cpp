@@ -874,10 +874,17 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 	UINT uValidSources = 0;
 	UINT uDownloadingSources = 0;
 	UINT uOnQueueSources = 0;
+	UINT uConnectedSources = 0;
+	UINT uConnectingSources = 0;
+	UINT uCallbackSources = 0;
+	UINT uHashsetSources = 0;
 	UINT uNoNeededPartSources = 0;
 	UINT uRemoteQueueFullSources = 0;
 	UINT uTooManyConnectionSources = 0;
+	UINT uLowToLowIPSources = 0;
+	UINT uBannedSources = 0;
 	UINT uErrorSources = 0;
+	UINT uIdleSources = 0;
 	uint64 uBufferedReadyBytes = 0;
 	uint64 uBufferedPendingBytes = 0;
 	uint64 uBufferedWrittenBytes = 0;
@@ -906,11 +913,19 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		uValidSources += cur_file->GetValidSourcesCount();
 		uDownloadingSources += cur_file->GetSrcStatisticsValue(DS_DOWNLOADING);
 		uOnQueueSources += cur_file->GetSrcStatisticsValue(DS_ONQUEUE);
+		uConnectedSources += cur_file->GetSrcStatisticsValue(DS_CONNECTED);
+		uConnectingSources += cur_file->GetSrcStatisticsValue(DS_CONNECTING);
+		uCallbackSources += cur_file->GetSrcStatisticsValue(DS_WAITCALLBACK);
+		uCallbackSources += cur_file->GetSrcStatisticsValue(DS_WAITCALLBACKKAD);
+		uHashsetSources += cur_file->GetSrcStatisticsValue(DS_REQHASHSET);
 		uNoNeededPartSources += cur_file->GetSrcStatisticsValue(DS_NONEEDEDPARTS);
 		uRemoteQueueFullSources += cur_file->GetSrcStatisticsValue(DS_REMOTEQUEUEFULL);
 		uTooManyConnectionSources += cur_file->GetSrcStatisticsValue(DS_TOOMANYCONNS);
 		uTooManyConnectionSources += cur_file->GetSrcStatisticsValue(DS_TOOMANYCONNSKAD);
+		uLowToLowIPSources += cur_file->GetSrcStatisticsValue(DS_LOWTOLOWIP);
+		uBannedSources += cur_file->GetSrcStatisticsValue(DS_BANNED);
 		uErrorSources += cur_file->GetSrcStatisticsValue(DS_ERROR);
+		uIdleSources += cur_file->GetSrcStatisticsValue(DS_NONE);
 
 		PartFileBufferedDataStateSnapshot bufferSnapshot = {};
 		cur_file->GetBufferedDataStateSnapshot(bufferSnapshot);
@@ -934,7 +949,7 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 	}
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u errorSources=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u asyncWriteRefs=%Id protectedDiskBlocked=%u"),
+		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u asyncWriteRefs=%Id protectedDiskBlocked=%u"),
 		filelist.GetCount(),
 		uReadyFiles,
 		uActiveFiles,
@@ -942,10 +957,17 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		uValidSources,
 		uDownloadingSources,
 		uOnQueueSources,
+		uConnectedSources,
+		uConnectingSources,
+		uCallbackSources,
+		uHashsetSources,
 		uNoNeededPartSources,
 		uRemoteQueueFullSources,
 		uTooManyConnectionSources,
+		uLowToLowIPSources,
+		uBannedSources,
 		uErrorSources,
+		uIdleSources,
 		GetDatarate(),
 		static_cast<uint64>(GetBufferedDownloadBytes()),
 		GetBufferedDownloadFileCount(),
