@@ -46,6 +46,7 @@
 #include "DownloadQueueOverviewSeams.h"
 #include "UpDownClientDeleteSeams.h"
 
+#include <limits>
 #include <vector>
 
 #ifdef _DEBUG
@@ -2078,6 +2079,7 @@ void CDownloadQueue::ProcessLocalRequests()
 		while (!m_localServerReqQueue.IsEmpty() && iFiles < iMaxFilesPerTcpFrame) {
 			// find the file with the longest waiting time
 			ULONGLONG ullBestWaitTime = _UI64_MAX;
+			int iBestValidSources = (std::numeric_limits<int>::max)();
 			POSITION posNextRequest = NULL;
 			for (POSITION pos = m_localServerReqQueue.GetHeadPosition(); pos != NULL;) {
 				POSITION pos2 = pos;
@@ -2090,8 +2092,12 @@ void CDownloadQueue::ProcessLocalRequests()
 					}
 
 					const ULONGLONG ullWaitTime = cur_file->m_LastSearchTime + (PR_HIGH - nPriority);
-					if (ullWaitTime < ullBestWaitTime) {
+					const int iValidSources = cur_file->GetValidSourcesCount();
+					if (ullWaitTime < ullBestWaitTime
+						|| (ullWaitTime == ullBestWaitTime && iValidSources < iBestValidSources))
+					{
 						ullBestWaitTime = ullWaitTime;
+						iBestValidSources = iValidSources;
 						posNextRequest = pos2;
 					}
 				} else {
