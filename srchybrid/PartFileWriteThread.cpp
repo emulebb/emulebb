@@ -226,7 +226,6 @@ UINT CPartFileWriteThread::RunInternal()
 void CPartFileWriteThread::WriteBuffers()
 {
 	//process internal list
-	size_t nDispatchedWrites = 0u;
 	const auto requestFollowUpWakeIfNeeded = [&]() {
 		if (PartFileWriteThreadSeams::ShouldWakeForUndispatchedWrites(
 				!m_listToWrite.IsEmpty(),
@@ -240,10 +239,11 @@ void CPartFileWriteThread::WriteBuffers()
 	};
 	while (!m_listToWrite.IsEmpty()
 		&& HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP
-		&& PartFileWriteThreadSeams::CanDispatchWriteInCurrentWake(nDispatchedWrites, PartFileWriteThreadSeams::kMaxWriteDispatchesPerWake))
+		&& PartFileWriteThreadSeams::CanDispatchWriteInCurrentWake(
+			static_cast<size_t>(m_listPendingIO.GetCount()),
+			PartFileWriteThreadSeams::kMaxWriteDispatchesPerWake))
 	{
 		const ToWrite item = m_listToWrite.RemoveHead();
-		++nDispatchedWrites;
 		PartFileBufferedData *pBuffer = item.pBuffer;
 		ASSERT(pBuffer->end >= pBuffer->start && (pBuffer->data || pBuffer->end == pBuffer->start)); //verifies allocation requests too
 
@@ -315,7 +315,7 @@ void CPartFileWriteThread::WriteBuffers()
 	if (PartFileWriteThreadSeams::ShouldDeferRemainingWrites(
 			!m_listToWrite.IsEmpty(),
 			HelperThreadLaunchSeams::GetState(m_Run) == RUN_STOP,
-			nDispatchedWrites,
+			static_cast<size_t>(m_listPendingIO.GetCount()),
 			PartFileWriteThreadSeams::kMaxWriteDispatchesPerWake))
 	{
 		requestFollowUpWakeIfNeeded();

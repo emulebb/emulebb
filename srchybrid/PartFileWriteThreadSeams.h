@@ -11,9 +11,9 @@ inline constexpr size_t kMaxWriteDispatchesPerWake = 128u;
 /**
  * @brief Reports whether the part-file write helper may submit another overlapped write in this wake.
  */
-inline bool CanDispatchWriteInCurrentWake(const size_t nDispatchedWrites, const size_t nDispatchLimit)
+inline bool CanDispatchWriteInCurrentWake(const size_t nPendingWrites, const size_t nDispatchLimit)
 {
-	return nDispatchLimit == 0u || nDispatchedWrites < nDispatchLimit;
+	return nDispatchLimit == 0u || nPendingWrites < nDispatchLimit;
 }
 
 /**
@@ -22,13 +22,13 @@ inline bool CanDispatchWriteInCurrentWake(const size_t nDispatchedWrites, const 
 inline bool ShouldDeferRemainingWrites(
 	const bool bHasQueuedWrites,
 	const bool bStopRequested,
-	const size_t nDispatchedWrites,
+	const size_t nPendingWrites,
 	const size_t nDispatchLimit)
 {
 	return bHasQueuedWrites
 		&& !bStopRequested
 		&& nDispatchLimit != 0u
-		&& nDispatchedWrites >= nDispatchLimit;
+		&& nPendingWrites >= nDispatchLimit;
 }
 
 /**
