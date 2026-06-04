@@ -1868,15 +1868,18 @@ void CSharedFileList::CheckAndAddSingleFileFromNormalizedDirectory(const CString
 			AddDebugLogLine(false, _T("Failed to get file date of \"%s\""), (LPCTSTR)strFoundFilePath);
 	}
 
+	if (TryReuseRememberedDuplicateSharedPath(strFoundFilePath, static_cast<LONGLONG>(fdate), ullFoundFileSize)) {
+		++m_startupScanStats.uDuplicatePathsReused;
+		++m_startupScanStats.uFilesIgnored;
+		return;
+	}
+
 	CKnownFile *toadd = theApp.knownfiles->FindKnownFile(strFoundFileName, fdate, ullFoundFileSize);
 	if (toadd) {
 		if (AddKnownSharedFile(toadd, strFoundDirectory, strFoundFilePath))
 			++m_startupScanStats.uKnownFilesAccepted;
 		else
 			++m_startupScanStats.uFilesIgnored;
-	} else if (TryReuseRememberedDuplicateSharedPath(strFoundFilePath, static_cast<LONGLONG>(fdate), ullFoundFileSize)) {
-		++m_startupScanStats.uDuplicatePathsReused;
-		++m_startupScanStats.uFilesIgnored;
 	} else {
 		if (!IsSharedHashInFlight(strFoundDirectory, strFoundFileName) && !thePrefs.IsTempFile(strFoundDirectory, strFoundFileName)) {
 			QueueSharedFileForHash(strFoundDirectory, strFoundFileName, CString());
