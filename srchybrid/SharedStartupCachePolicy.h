@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <vector>
 #include "LongPathSeams.h"
+#include "PathHelpers.h"
 
 #define EMULEBB_SHARED_STARTUP_CACHE_POLICY_HAS_NTFS_FAST_PATH 1
 
@@ -24,6 +25,20 @@ constexpr std::uint16_t kVersion = 4;
 inline const wchar_t* GetFileName() noexcept
 {
 	return L"sharedcache.dat";
+}
+
+/**
+ * \brief Builds the case-insensitive in-memory lookup key for a shared-directory cache block.
+ *
+ * The on-disk record still carries the canonical path used for validation.
+ * This key is only for cache-map lookup, so it deliberately avoids filesystem
+ * canonicalization and strips the optional extended-length prefix lexically.
+ */
+inline CString MakeDirectoryLookupKey(const CString &rstrDirectory)
+{
+	CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
+	strKey.MakeLower();
+	return strKey;
 }
 
 /**

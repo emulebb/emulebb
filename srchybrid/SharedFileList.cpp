@@ -442,7 +442,7 @@ std::wstring MakeSharedHashInFlightLookupKey(const CString &strFilePathKey)
 
 std::wstring MakeStartupCacheSnapshotKey(const CString &strDirectory)
 {
-	return std::wstring(LexicallyNormalizeSharedDirectoryPath(strDirectory));
+	return std::wstring(SharedStartupCachePolicy::MakeDirectoryLookupKey(strDirectory));
 }
 
 bool HasSameDirectoryTextFast(const CString &strLeft, const CString &strRight)
@@ -3225,7 +3225,7 @@ CString CSharedFileList::GetDuplicatePathCachePath()
 
 std::wstring CSharedFileList::MakeStartupCacheKey(const CString &strDirectory)
 {
-	return std::wstring(NormalizeSharedDirectoryPath(strDirectory));
+	return std::wstring(SharedStartupCachePolicy::MakeDirectoryLookupKey(strDirectory));
 }
 
 std::wstring CSharedFileList::MakeStartupCacheVolumeKey(const CString &strVolumeKey)
@@ -3236,7 +3236,7 @@ std::wstring CSharedFileList::MakeStartupCacheVolumeKey(const CString &strVolume
 
 std::wstring CSharedFileList::MakeDuplicatePathCacheKey(const CString &strFilePath)
 {
-	return std::wstring(NormalizeSharedFilePath(strFilePath));
+	return std::wstring(SharedDuplicatePathCachePolicy::MakePathLookupKey(strFilePath));
 }
 
 void CSharedFileList::CollectSharedDirectories(CStringList &dirlist) const

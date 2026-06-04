@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include "PathHelpers.h"
 
 /**
  * \brief Policy and wire-format helpers for the shared duplicate-path startup cache.
@@ -22,6 +23,20 @@ constexpr std::uint16_t kVersion = 1;
 inline const wchar_t* GetFileName() noexcept
 {
 	return L"shareddups.dat";
+}
+
+/**
+ * \brief Builds the case-insensitive in-memory lookup key for a duplicate shared-file path.
+ *
+ * Duplicate records keep their validated path spelling on disk. This lookup key
+ * is intentionally lexical so startup cache map operations do not hit the
+ * filesystem just to find an already-loaded sidecar record.
+ */
+inline CString MakePathLookupKey(const CString &rstrFilePath)
+{
+	CString strKey(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrFilePath)));
+	strKey.MakeLower();
+	return strKey;
 }
 
 /**
