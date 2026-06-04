@@ -1287,7 +1287,6 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 			continue;
 
 		// Found the reserved block
-		ResetDownloadStaleBlockPacketGuard();
 		if (cur_block->fZStreamError) {
 			if (thePrefs.GetVerbose())
 				AddDebugLogLine(false, _T("PrcBlkPkt: Ignoring %u bytes of block starting at %I64u because of erroneous zstream state for file \"%s\" - %s"), uTransferredFileDataSize, nStartPos, (LPCTSTR)m_reqfile->GetFileName(), (LPCTSTR)DbgGetClientInfo());
@@ -1418,12 +1417,18 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 			&& lenWritten == 0
 			&& cur_block->block != NULL
 			&& m_reqfile->IsComplete(cur_block->block->StartOffset, cur_block->block->EndOffset);
+		const bool bDuplicateZeroWrite = !packed
+			&& lenWritten == 0
+			&& cur_block->block != NULL
+			&& m_reqfile->IsComplete(nStartPos, nEndPos);
+		bool bProgressedPendingBlock = false;
 
 		// These checks only need to be done if any data was written or if a
 		// duplicate packet proves progress through the pending block. Also,
 		// asynchronous writing allows tricks such as disconnecting from client
 		// while file data is being in buffers. Hence additional checks.
 		if ((lenWritten > 0 || bCompletedDuplicateRange || bCompletedDuplicateWholeBlock) && !m_PendingBlocks_list.IsEmpty() && cur_block->block) {
+			bProgressedPendingBlock = lenWritten > 0;
 			if (lenWritten > 0) {
 				m_nTransferredDown += uTransferredFileDataSize;
 				m_nCurSessionPayloadDown += lenWritten;
@@ -1436,8 +1441,10 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 				const uint64 uDuplicateProgressBytes = bCompletedDuplicateWholeBlock
 					? cur_block->block->EndOffset - cur_block->block->StartOffset + 1u
 					: nEndPos - cur_block->block->StartOffset + 1u;
-				if (uDuplicateProgressBytes > cur_block->block->transferred)
+				if (uDuplicateProgressBytes > cur_block->block->transferred) {
 					cur_block->block->transferred = uDuplicateProgressBytes;
+					bProgressedPendingBlock = true;
+				}
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 				if (!bCompletedDuplicateWholeBlock)
 					LogDownloadSlotInstrumentation(_T("block-advanced-duplicate-complete"), -1, uTransferredFileDataSize, 0);
@@ -1459,6 +1466,7 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 						-1, uTransferredFileDataSize, lenWritten);
 				}
 #endif
+				bProgressedPendingBlock = true;
 				m_PendingBlocks_list.RemoveAt(posLast);
 				ClearPendingBlockRequest(cur_block);
 
@@ -1472,6 +1480,25 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 		else if (lenWritten == 0)
 			LogDownloadSlotInstrumentation(_T("packet-zero-write"), -1, uTransferredFileDataSize, lenWritten);
 #endif
+		if (bProgressedPendingBlock)
+			ResetDownloadStaleBlockPacketGuard();
+		else if (bDuplicateZeroWrite) {
+			CString strReason;
+			if (ShouldAbortAfterStaleBlockPacket(&strReason)) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+				LogDownloadSlotInstrumentation(_T("stale-duplicate-block-packet-abort"), -1, uTransferredFileDataSize, lenWritten);
+#endif
+				// WHY: a source that repeatedly sends already-complete payload for
+				// an old reservation can hold a download slot without advancing the
+				// file. Cancelling returns it to queue using stock transfer control.
+				if (socket != NULL && !socket->IsRawDataMode())
+					SendCancelTransfer();
+				else
+					ASSERT(0);
+				SetDownloadState(DS_ONQUEUE, strReason);
+			}
+		} else if (lenWritten == 0)
+			ResetDownloadStaleBlockPacketGuard();
 
 		// Stop looping and exit
 		return;
@@ -2579,7 +2606,7 @@ bool CUpDownClient::ShouldAbortAfterStaleBlockPacket(CString *pReason)
 
 	if (pReason != NULL) {
 		pReason->Format(
-			_T("Sustained stale block packets. %u packets in %I64u ms did not match any pending request."),
+			_T("Sustained stale block packets. %u packets in %I64u ms did not make useful download progress."),
 			m_uDownloadStaleBlockPacketWindowCount,
 			kDownloadStaleBlockPacketWindowMs);
 	}
