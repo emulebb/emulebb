@@ -25,6 +25,7 @@
 #include "Statistics.h"
 #include "ClientCredits.h"
 #include "DownloadQueue.h"
+#include "DownloadRequestSeams.h"
 #include "ClientUDPSocket.h"
 #include "CompressionBufferSeams.h"
 #include "ProtocolGuards.h"
@@ -996,7 +997,7 @@ void CUpDownClient::ProcessHashSet(const uchar *packet, uint32 size, bool bFileI
 
 void CUpDownClient::CreateBlockRequests(int blockCount)
 {
-	ASSERT(blockCount > 0 && blockCount <= 9);
+	ASSERT(DownloadRequestSeams::IsValidDownloadBlockRequestReserve(blockCount));
 	const int iRequestedBlockCount = blockCount;
 	//prevent uncontrolled growth
 	if ((int)m_PendingBlocks_list.GetCount() > 2 * blockCount) {
@@ -1051,13 +1052,9 @@ void CUpDownClient::SendBlockRequests()
 
 	// Restrict the number of requested blocks when we are on a slow/standby/trickle slot or
 	// download is limited on our side.
-	int blockCount; // max pending block requests
-	if (IsEmuleClient() && m_byCompatibleClient == 0 && GetDownloadDatarate() < 9 * 1024)
-		blockCount = (GetDownloadDatarate() < 4 * 1024) ? 1 : 2;
-	else if (GetDownloadDatarate() > 75 * 1024)
-		blockCount = (GetDownloadDatarate() > 150 * 1024) ? 9 : 6;
-	else
-		blockCount = 3;
+	const int blockCount = DownloadRequestSeams::SelectDownloadBlockRequestReserve(
+		GetDownloadDatarate(),
+		IsEmuleClient() && m_byCompatibleClient == 0);
 
 	CreateBlockRequests(blockCount);
 	if (m_PendingBlocks_list.IsEmpty()) {
