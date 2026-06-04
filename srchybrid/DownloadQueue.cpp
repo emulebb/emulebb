@@ -890,6 +890,11 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 	UINT uBannedSources = 0;
 	UINT uErrorSources = 0;
 	UINT uIdleSources = 0;
+	UINT uLocalServerQueuedReadyFiles = 0;
+	UINT uKadSearchingReadyFiles = 0;
+	UINT uKadEligibleReadyFiles = 0;
+	UINT uKadDueReadyFiles = 0;
+	UINT uKadBackoffReadyFiles = 0;
 	uint64 uBufferedReadyBytes = 0;
 	uint64 uBufferedPendingBytes = 0;
 	uint64 uBufferedWrittenBytes = 0;
@@ -921,6 +926,17 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 				++uSourceRichReadyFiles;
 			if (cur_file->GetSrcA4AFCount() > 0)
 				++uA4AFReadyFiles;
+			if (cur_file->m_bLocalSrcReqQueued)
+				++uLocalServerQueuedReadyFiles;
+			if (cur_file->GetKadFileSearchID() != 0)
+				++uKadSearchingReadyFiles;
+			else if (cur_file->GetMaxSourcePerFileUDP() > cur_file->GetSourceCount()) {
+				++uKadEligibleReadyFiles;
+				if (curTick >= cur_file->m_LastSearchTimeKad)
+					++uKadDueReadyFiles;
+				else
+					++uKadBackoffReadyFiles;
+			}
 		}
 		if (cur_file->GetTransferringSrcCount() > 0)
 			++uActiveFiles;
@@ -964,8 +980,17 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		iAsyncWriteRefs += bufferSnapshot.nAsyncWriteCount;
 	}
 
+	UINT uLocalServerQueueReadyFiles = 0;
+	for (POSITION localReqPos = m_localServerReqQueue.GetHeadPosition(); localReqPos != NULL;) {
+		const CPartFile *pQueuedFile = m_localServerReqQueue.GetNext(localReqPos);
+		if (pQueuedFile != NULL && inSet(pQueuedFile->GetStatus(), PS_READY, PS_EMPTY))
+			++uLocalServerQueueReadyFiles;
+	}
+	const ULONGLONG ullNextTcpSourceRequestWaitMs = m_dwNextTCPSrcReq > curTick ? m_dwNextTCPSrcReq - curTick : 0;
+	const ULONGLONG ullLastUdpSearchAgeMs = m_lastudpsearchtime != 0 && curTick >= m_lastudpsearchtime ? curTick - m_lastudpsearchtime : 0;
+
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u asyncWriteRefs=%Id protectedDiskBlocked=%u"),
+		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u asyncWriteRefs=%Id protectedDiskBlocked=%u"),
 		filelist.GetCount(),
 		uReadyFiles,
 		uActiveFiles,
@@ -988,6 +1013,22 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		uBannedSources,
 		uErrorSources,
 		uIdleSources,
+		m_localServerReqQueue.GetCount(),
+		uLocalServerQueueReadyFiles,
+		uLocalServerQueuedReadyFiles,
+		static_cast<uint64>(ullNextTcpSourceRequestWaitMs),
+		static_cast<UINT>(cur_udpserver != NULL),
+		m_iSearchedServers,
+		m_cRequestsSentToServer,
+		m_nUDPFileReasks,
+		m_nFailedUDPFileReasks,
+		static_cast<uint64>(ullLastUdpSearchAgeMs),
+		static_cast<UINT>(Kademlia::CKademlia::IsConnected()),
+		Kademlia::CKademlia::GetTotalFile(),
+		uKadSearchingReadyFiles,
+		uKadEligibleReadyFiles,
+		uKadDueReadyFiles,
+		uKadBackoffReadyFiles,
 		GetDatarate(),
 		static_cast<uint64>(GetBufferedDownloadBytes()),
 		GetBufferedDownloadFileCount(),
