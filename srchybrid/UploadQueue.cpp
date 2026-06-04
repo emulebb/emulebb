@@ -1126,6 +1126,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 	CEMSocket *sock = client->GetFileUploadSocket(false);
 	const INT_PTR iSocketQueue = sock != NULL ? sock->DbgGetStdQueueCount() : -1;
 	const ULONGLONG ullZeroGraceMs = SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds());
+	const ULONGLONG ullNoRequestGraceMs = GetNoRequestUploadRecycleGraceMs(thePrefs.GetZeroUploadRateGraceSeconds());
 	if (ShouldRecycleNoRequestBroadbandUploadSlot(
 			true,
 			false,
@@ -1137,7 +1138,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			client->GetUpStartTimeDelay(),
 			bHasAcceptedReqBlock,
 			ullLastAcceptedReqBlockAgeMs,
-			ullZeroGraceMs))
+			ullNoRequestGraceMs))
 	{
 		// WHY: a peer that drains its local send pipeline and stops asking for
 		// blocks during broadband underfill cannot fill capacity. Recycle that
