@@ -599,35 +599,32 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 			return;
 		}
 
-		for (POSITION pos = pUploadingClientStruct->m_DoneBlocks_list.GetHeadPosition(); pos != NULL;) {
-			const Requested_Block_Struct *cur_reqblock = pUploadingClientStruct->m_DoneBlocks_list.GetNext(pos);
-			if (reqblock->StartOffset == cur_reqblock->StartOffset
-				&& reqblock->EndOffset == cur_reqblock->EndOffset
-				&& md4equ(reqblock->FileID, cur_reqblock->FileID))
-			{
+		const UploadBlockRequestSeams::SUploadBlockRequestKey requestKey =
+			UploadBlockRequestSeams::BuildUploadBlockRequestKey(reqblock->StartOffset, reqblock->EndOffset, reqblock->FileID);
+		if (pUploadingClientStruct->m_DoneBlocks_keys.find(requestKey) != pUploadingClientStruct->m_DoneBlocks_keys.end()) {
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
-				LogUploadReqBlockInstrumentation(this, _T("reject-duplicate-done-block"), reqblock, pUploadingClientStruct, pUploadingClientStruct->m_BlockRequests_queue.GetCount(), pUploadingClientStruct->m_DoneBlocks_list.GetCount());
+			LogUploadReqBlockInstrumentation(this, _T("reject-duplicate-done-block"), reqblock, pUploadingClientStruct, pUploadingClientStruct->m_BlockRequests_queue.GetCount(), pUploadingClientStruct->m_DoneBlocks_list.GetCount());
 #endif
-				return;
-			}
+			return;
 		}
-		for (POSITION pos = pUploadingClientStruct->m_BlockRequests_queue.GetHeadPosition(); pos != NULL;) {
-			const Requested_Block_Struct *cur_reqblock = pUploadingClientStruct->m_BlockRequests_queue.GetNext(pos);
-			if (reqblock->StartOffset == cur_reqblock->StartOffset
-				&& reqblock->EndOffset == cur_reqblock->EndOffset
-				&& md4equ(reqblock->FileID, cur_reqblock->FileID))
-			{
+		if (pUploadingClientStruct->m_BlockRequests_keys.find(requestKey) != pUploadingClientStruct->m_BlockRequests_keys.end()) {
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
-				LogUploadReqBlockInstrumentation(this, _T("reject-duplicate-queued-block"), reqblock, pUploadingClientStruct, pUploadingClientStruct->m_BlockRequests_queue.GetCount(), pUploadingClientStruct->m_DoneBlocks_list.GetCount());
+			LogUploadReqBlockInstrumentation(this, _T("reject-duplicate-queued-block"), reqblock, pUploadingClientStruct, pUploadingClientStruct->m_BlockRequests_queue.GetCount(), pUploadingClientStruct->m_DoneBlocks_list.GetCount());
 #endif
-				return;
-			}
+			return;
 		}
 		// WHY: m_BlockRequests_queue is an MFC list. This function receives
 		// ownership of reqblock from packet parsing; keep it locally owned until
 		// AddTail succeeds so a low-memory list-node failure cannot leak the
-		// requested upload block.
-		pUploadingClientStruct->m_BlockRequests_queue.AddTail(reqblockOwner.get());
+		// requested upload block. Roll the duplicate key back if list insertion
+		// fails so later requests are not falsely classified as queued.
+		pUploadingClientStruct->m_BlockRequests_keys.insert(requestKey);
+		try {
+			pUploadingClientStruct->m_BlockRequests_queue.AddTail(reqblockOwner.get());
+		} catch (...) {
+			pUploadingClientStruct->m_BlockRequests_keys.erase(requestKey);
+			throw;
+		}
 		reqblockOwner.release();
 		dbgLastQueueCount = pUploadingClientStruct->m_BlockRequests_queue.GetCount();
 		pUploadingClientStruct->m_ullLastAcceptedReqBlockTick.store(::GetTickCount64());

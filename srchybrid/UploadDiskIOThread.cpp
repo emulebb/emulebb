@@ -453,7 +453,16 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 			// before removing it from the pending queue so a low-memory throw
 			// cannot lose the block while an already submitted read completes.
 			Requested_Block_Struct *pDoneBlock = pUploadClientStruct->m_BlockRequests_queue.GetHead();
-			pUploadClientStruct->m_DoneBlocks_list.AddHead(pDoneBlock);
+			const UploadBlockRequestSeams::SUploadBlockRequestKey doneKey =
+				UploadBlockRequestSeams::BuildUploadBlockRequestKey(pDoneBlock->StartOffset, pDoneBlock->EndOffset, pDoneBlock->FileID);
+			pUploadClientStruct->m_DoneBlocks_keys.insert(doneKey);
+			try {
+				pUploadClientStruct->m_DoneBlocks_list.AddHead(pDoneBlock);
+			} catch (...) {
+				pUploadClientStruct->m_DoneBlocks_keys.erase(doneKey);
+				throw;
+			}
+			pUploadClientStruct->m_BlockRequests_keys.erase(doneKey);
 			pUploadClientStruct->m_BlockRequests_queue.RemoveHead();
 			addedPayloadQueueSession += uTogo;
 			pClient->SetQueueSessionUploadAdded(addedPayloadQueueSession);

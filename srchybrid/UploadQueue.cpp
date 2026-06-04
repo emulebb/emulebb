@@ -1493,6 +1493,8 @@ void CUploadQueue::InvalidateUploadClientStructWithoutClient(UploadingToClient_S
 		delete pUploadClientStruct->m_BlockRequests_queue.RemoveHead();
 	while (!pUploadClientStruct->m_DoneBlocks_list.IsEmpty())
 		delete pUploadClientStruct->m_DoneBlocks_list.RemoveHead();
+	pUploadClientStruct->m_BlockRequests_keys.clear();
+	pUploadClientStruct->m_DoneBlocks_keys.clear();
 	pUploadClientStruct->m_pClient = NULL;
 }
 
@@ -2221,5 +2223,7 @@ UploadingToClient_Struct::~UploadingToClient_Struct()
 
 	while (!m_DoneBlocks_list.IsEmpty())
 		delete m_DoneBlocks_list.RemoveHead();
+	m_BlockRequests_keys.clear();
+	m_DoneBlocks_keys.clear();
 	m_csBlockListsLock.Unlock();
 }

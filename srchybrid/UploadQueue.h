@@ -17,7 +17,9 @@
 #pragma once
 #include <atomic>
 #include <map>
+#include <set>
 #include "ring.h"
+#include "UploadBlockRequestSeams.h"
 #include "UploadQueueSeams.h"
 
 struct Requested_Block_Struct;
@@ -50,6 +52,8 @@ struct UploadingToClient_Struct
 	CUpDownClient										*m_pClient;
 	CTypedPtrList<CPtrList, Requested_Block_Struct*>	m_BlockRequests_queue;
 	CTypedPtrList<CPtrList, Requested_Block_Struct*>	m_DoneBlocks_list;
+	std::set<UploadBlockRequestSeams::SUploadBlockRequestKey> m_BlockRequests_keys;
+	std::set<UploadBlockRequestSeams::SUploadBlockRequestKey> m_DoneBlocks_keys;
 	CCriticalSection									m_csBlockListsLock; // don't acquire other locks while having this one in any thread other than UploadDiskIOThread or make sure deadlocks are impossible
 	bool												m_bIOError;
 	bool												m_bDisableCompression;

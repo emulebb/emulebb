@@ -736,6 +736,7 @@
     <ClInclude Include="UpdownClient.h" />
     <ClInclude Include="UpDownClientDeleteSeams.h" />
     <ClInclude Include="UploadBandwidthThrottler.h" />
+    <ClInclude Include="UploadBlockRequestSeams.h" />
     <ClInclude Include="UploadDiskIOThread.h" />
     <ClInclude Include="UploadListCtrl.h" />
     <ClInclude Include="UploadQueue.h" />
