@@ -577,6 +577,10 @@ private:
 	 */
 	bool	PostSharedHashResultsDrain();
 	/**
+	 * @brief Emits sanitized aggregate shared-hash queue progress for live startup diagnosis.
+	 */
+	void	LogSharedHashProgress(LPCTSTR pszReason, bool bForce = false);
+	/**
 	 * @brief Handles shared hash queue drain side effects on the UI thread.
 	 */
 	void	OnSharedHashQueuePossiblyDrained();
@@ -632,6 +636,8 @@ private:
 	ULONGLONG m_nStartupCacheDirtyTick;
 	ULONGLONG m_uStartupHashCompletedFiles;
 	ULONGLONG m_uStartupHashFailedFiles;
+	ULONGLONG m_ullLastSharedHashProgressLogTick;
+	ULONGLONG m_uLastSharedHashProgressObservedFiles;
 	ULONGLONG m_uDuplicateSharedFileWarningsShown;
 	ULONGLONG m_uDuplicateSharedFileWarningsSuppressed;
 	HANDLE m_hSharedHashQueueEvent;

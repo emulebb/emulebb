@@ -963,6 +963,8 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	, m_nStartupCacheDirtyTick()
 	, m_uStartupHashCompletedFiles()
 	, m_uStartupHashFailedFiles()
+	, m_ullLastSharedHashProgressLogTick()
+	, m_uLastSharedHashProgressObservedFiles()
 	, m_uDuplicateSharedFileWarningsShown()
 	, m_uDuplicateSharedFileWarningsSuppressed()
 	, m_hSharedHashQueueEvent(::CreateEvent(NULL, FALSE, FALSE, NULL))
@@ -1202,6 +1204,7 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 	bool bPendingCompletion = false;
 
 	try {
+		LogSharedHashProgress(_T("start"));
 		strFilePath = BuildSharedHashFilePath(rJob.strDirectory, rJob.strName);
 #if EMULEBB_HAS_STARTUP_PROFILING
 		const bool bEmitStartupHashProfileSample = ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, GetHashingCount());
@@ -1494,6 +1497,7 @@ void CSharedFileList::OnSharedHashQueuePossiblyDrained()
 	if (GetHashingCount() != 0)
 		return;
 
+	LogSharedHashProgress(_T("drained"), true);
 	NoteStartupHashingQueueDrained(::GetTickCount64());
 	bool bStartStartupCacheSave = false;
 	{
@@ -1644,6 +1648,47 @@ INT_PTR CSharedFileList::GetHashingCount() const
 	return static_cast<INT_PTR>(m_sharedHashQueue.size() + m_sharedHashPendingCompletions.size() + (m_bSharedHashActive ? 1 : 0));
 }
 
+void CSharedFileList::LogSharedHashProgress(LPCTSTR pszReason, const bool bForce)
+{
+	ULONGLONG ullWaiting = 0;
+	ULONGLONG ullPending = 0;
+	ULONGLONG ullDeferred = 0;
+	UINT uActive = 0;
+	{
+		CSingleLock lock(&m_mutSharedHashQueue, TRUE);
+		ullWaiting = static_cast<ULONGLONG>(m_sharedHashQueue.size());
+		ullPending = static_cast<ULONGLONG>(m_sharedHashPendingCompletions.size());
+		ullDeferred = static_cast<ULONGLONG>(m_sharedHashDeferredResults.size());
+		uActive = m_bSharedHashActive ? 1 : 0;
+	}
+
+	const ULONGLONG ullCompleted = m_uStartupHashCompletedFiles;
+	const ULONGLONG ullFailed = m_uStartupHashFailedFiles;
+	const ULONGLONG ullObserved = ullCompleted + ullFailed;
+	const ULONGLONG ullTotal = ullWaiting + ullPending + uActive;
+	const ULONGLONG ullNowTick = ::GetTickCount64();
+	if (!bForce
+		&& !ShouldEmitStartupHashProfileSample(ullCompleted, ullFailed, static_cast<INT_PTR>(ullTotal))
+		&& (ullNowTick - m_ullLastSharedHashProgressLogTick) < 15000
+		&& ullObserved == m_uLastSharedHashProgressObservedFiles)
+	{
+		return;
+	}
+
+	m_ullLastSharedHashProgressLogTick = ullNowTick;
+	m_uLastSharedHashProgressObservedFiles = ullObserved;
+	DebugLog(_T("Shared hash progress: reason=%s waiting=%I64u pending=%I64u deferred=%I64u active=%u total=%I64u completed=%I64u failed=%I64u gateBusy=%u"),
+		pszReason != NULL ? pszReason : _T("unknown"),
+		ullWaiting,
+		ullPending,
+		ullDeferred,
+		uActive,
+		ullTotal,
+		ullCompleted,
+		ullFailed,
+		IsFileHashJobGateBusy() ? 1 : 0);
+}
+
 bool CSharedFileList::IsStartupDeferredHashingActive() const
 {
 	CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
@@ -1697,6 +1742,8 @@ void CSharedFileList::FindSharedFiles(const bool bAllowStartupCache)
 	m_startupScanStats = StartupScanStats();
 	m_uStartupHashCompletedFiles = 0;
 	m_uStartupHashFailedFiles = 0;
+	m_ullLastSharedHashProgressLogTick = 0;
+	m_uLastSharedHashProgressObservedFiles = 0;
 	m_bStartupDuplicateReuseActive = bAllowStartupCache;
 	ResetStartupCacheSchedulingState(::GetTickCount64());
 	if (!m_Files_map.IsEmpty() && theApp.downloadqueue) {
@@ -1748,6 +1795,7 @@ void CSharedFileList::FindSharedFiles(const bool bAllowStartupCache)
 
 	MarkStartupCacheDirty();
 	HashNextFile();
+	LogSharedHashProgress(_T("startup-scan"), true);
 #if EMULEBB_HAS_STARTUP_PROFILING
 	theApp.AppendStartupProfileCounter(_T("shared.scan.requested_directories"), m_startupScanStats.uRequestedDirectories, _T("directories"));
 	theApp.AppendStartupProfileCounter(_T("shared.scan.deduped_directories"), m_startupScanStats.uDedupedDirectories, _T("directories"));
@@ -2111,6 +2159,7 @@ void CSharedFileList::FileHashingFinished(CKnownFile *file)
 		theApp.AppendStartupProfileCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
 	}
 #endif
+	LogSharedHashProgress(_T("complete"));
 	OnSharedHashQueuePossiblyDrained();
 	NotifyStartupSharedFilesModelChanged();
 }
@@ -2674,6 +2723,7 @@ void CSharedFileList::HashFailed(UnknownFile_Struct *hashed)
 		theApp.AppendStartupProfileCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
 	}
 #endif
+	LogSharedHashProgress(_T("failed"));
 	OnSharedHashQueuePossiblyDrained();
 	NotifyStartupSharedFilesModelChanged();
 }
@@ -2696,6 +2746,7 @@ void CSharedFileList::HashFailed(CSharedFileHashResult *pResult)
 		theApp.AppendStartupProfileCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
 	}
 #endif
+	LogSharedHashProgress(_T("failed"));
 	OnSharedHashQueuePossiblyDrained();
 	NotifyStartupSharedFilesModelChanged();
 	SignalSharedHashWorker();
@@ -2758,6 +2809,8 @@ void CSharedFileList::GetPublishInstrumentationSnapshot(SharedPublishInstrumenta
 void CSharedFileList::Process()
 {
 	DrainDeferredSharedHashResults();
+	if (HasSharedHashingWork())
+		LogSharedHashProgress(_T("heartbeat"));
 	Publish();
 	if (m_lastPublishED2KFlag && ::GetTickCount64() >= m_lastPublishED2K + ED2KREPUBLISHTIME) {
 		SendListToServer();
