@@ -40,3 +40,11 @@ inline bool ShouldAcceptMiniUPnPExistingMappingAfterAddFailure(
 {
 	return bMappingQuerySucceeded && DoesMiniUPnPMappingMatchRequest(pachMappedLanIp, pachMappedInternalPort, pachExpectedLanIp, nExpectedPort);
 }
+
+/**
+ * @brief Reports whether cleanup owns enough state to delete one MiniUPnP mapping.
+ */
+inline bool ShouldDeleteMiniUPnPPortMapping(uint16_t nPort, bool bCreatedByThisProcess) noexcept
+{
+	return nPort != 0 && bCreatedByThisProcess;
+}

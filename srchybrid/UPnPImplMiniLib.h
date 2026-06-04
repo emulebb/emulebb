@@ -58,6 +58,7 @@ private:
 	void Cleanup();
 	void DeletePort(uint16 port, LPCTSTR prot);
 	void GetOldPorts();
+	void MarkCreatedPortMapping(uint16 nPort, bool bTCP);
 	void ReapDiscoveryThreadIfFinished();
 	void StartThread();
 
@@ -70,6 +71,12 @@ private:
 	char m_achWanIP[40];
 
 	bool m_bSucceededOnce;
+	bool m_bCreatedTCPPortMapping;
+	bool m_bCreatedUDPPortMapping;
+	bool m_bCreatedTCPWebPortMapping;
+	bool m_bCreatedOldTCPPortMapping;
+	bool m_bCreatedOldUDPPortMapping;
+	bool m_bCreatedOldTCPWebPortMapping;
 	bool m_bAbandonDiscoveryOwner;
 	/**
 	 * Interlocked cooperative-cancellation flag read by the discovery worker.

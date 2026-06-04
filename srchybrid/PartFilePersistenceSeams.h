@@ -325,9 +325,9 @@ inline PartFileDeleteAsyncWriteAction ClassifyPartFileDeleteAsyncWriteAction(con
 	return PartFileDeleteAsyncWriteAction::DeferUntilWriteRelease;
 }
 
-inline bool ShouldSavePartMetAfterShutdownFlush(const bool bFlushedBufferedData)
+inline bool ShouldSavePartMetAfterShutdownFlush(const bool bFlushedBufferedData, const bool bHadDirtyBufferedData, const bool bMetUpdatePending)
 {
-	return bFlushedBufferedData;
+	return bFlushedBufferedData && (bHadDirtyBufferedData || bMetUpdatePending);
 }
 
 inline bool PathExists(const LPCTSTR pszPath, const FileSystemOps &rOps = GetDefaultFileSystemOps())

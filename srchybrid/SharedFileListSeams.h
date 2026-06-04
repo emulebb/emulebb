@@ -172,6 +172,7 @@ constexpr ULONGLONG kStartupCacheSaveDelayIdleMs = 15000ui64;
 constexpr DWORD kSharedHashShutdownWaitMs = 5000u;
 constexpr DWORD kStartupCacheSaveShutdownWaitMs = 5000u;
 constexpr DWORD kSharedShutdownPollIntervalMs = 15u;
+constexpr DWORD kSharedHashMutexShutdownPollMs = 15u;
 constexpr unsigned int kSharedHashCompletionPostRetries = 20u;
 constexpr DWORD kSharedHashCompletionPostRetryDelayMs = 25u;
 

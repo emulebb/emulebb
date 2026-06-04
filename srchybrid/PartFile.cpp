@@ -641,13 +641,15 @@ CPartFile::~CPartFile()
 {
 	// Barry - Ensure all buffered data is written
 	if ((HANDLE)m_hpartfile != INVALID_HANDLE_VALUE) {
+		const bool bHadDirtyBufferedData = HasDirtyBufferedData();
+		const bool bMetUpdatePending = m_bUpdateMet;
 		const bool bFlushedBufferedData = FlushBufferedDataForShutdown();
 		CPartFileWriteThread::RemFile(this);
 		m_hpartfile.Close();
-		if (PartFilePersistenceSeams::ShouldSavePartMetAfterShutdownFlush(bFlushedBufferedData)) {
+		if (PartFilePersistenceSeams::ShouldSavePartMetAfterShutdownFlush(bFlushedBufferedData, bHadDirtyBufferedData, bMetUpdatePending)) {
 			// Update met file (with the current directory entry)
 			SavePartFile();
-		} else {
+		} else if (!bFlushedBufferedData) {
 			theApp.QueueDebugLogLineEx(LOG_WARNING, _T("Skipping part.met save for \"%s\" because buffered part data could not be flushed during shutdown."), (LPCTSTR)GetFileName());
 		}
 	} else

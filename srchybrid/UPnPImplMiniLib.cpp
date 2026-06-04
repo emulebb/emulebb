@@ -45,6 +45,12 @@ CUPnPImplMiniLib::CUPnPImplMiniLib()
 	, m_pIGDData()
 	, m_pDiscoveryThread()
 	, m_bSucceededOnce()
+	, m_bCreatedTCPPortMapping()
+	, m_bCreatedUDPPortMapping()
+	, m_bCreatedTCPWebPortMapping()
+	, m_bCreatedOldTCPPortMapping()
+	, m_bCreatedOldUDPPortMapping()
+	, m_bCreatedOldTCPWebPortMapping()
 	, m_bAbandonDiscoveryOwner()
 	, m_bAbortDiscovery()
 {
@@ -116,6 +122,9 @@ void CUPnPImplMiniLib::DeletePorts()
 	m_nUDPPort = 0;
 	m_nTCPPort = 0;
 	m_nTCPWebPort = 0;
+	m_bCreatedTCPPortMapping = false;
+	m_bCreatedUDPPortMapping = false;
+	m_bCreatedTCPWebPortMapping = false;
 	m_bUPnPPortsForwarded = TRIS_FALSE;
 	DeletePorts(false);
 }
@@ -138,10 +147,16 @@ void CUPnPImplMiniLib::GetOldPorts()
 		m_nOldUDPPort = m_nUDPPort;
 		m_nOldTCPPort = m_nTCPPort;
 		m_nOldTCPWebPort = m_nTCPWebPort;
+		m_bCreatedOldUDPPortMapping = m_bCreatedUDPPortMapping;
+		m_bCreatedOldTCPPortMapping = m_bCreatedTCPPortMapping;
+		m_bCreatedOldTCPWebPortMapping = m_bCreatedTCPWebPortMapping;
 	} else {
 		m_nOldUDPPort = 0;
 		m_nOldTCPPort = 0;
 		m_nOldTCPWebPort = 0;
+		m_bCreatedOldUDPPortMapping = false;
+		m_bCreatedOldTCPPortMapping = false;
+		m_bCreatedOldTCPWebPortMapping = false;
 	}
 }
 
@@ -154,13 +169,25 @@ void CUPnPImplMiniLib::DeletePorts(bool bSkipLock)
 		if (m_pURLs == NULL || m_pURLs->controlURL == NULL || m_pIGDData == NULL) {
 			DebugLogWarning(_T("Skipping UPnP port removal because no valid IGD control endpoint is available"));
 		} else {
-			DeletePort(m_nOldTCPPort, sTCP);
-			DeletePort(m_nOldUDPPort, sUDP);
-			DeletePort(m_nOldTCPWebPort, sTCP);
+			if (ShouldDeleteMiniUPnPPortMapping(m_nOldTCPPort, m_bCreatedOldTCPPortMapping))
+				DeletePort(m_nOldTCPPort, sTCP);
+			else if (m_nOldTCPPort != 0)
+				DebugLog(_T("Skipping UPnP TCP port %hu removal because this process reused an existing mapping"), m_nOldTCPPort);
+			if (ShouldDeleteMiniUPnPPortMapping(m_nOldUDPPort, m_bCreatedOldUDPPortMapping))
+				DeletePort(m_nOldUDPPort, sUDP);
+			else if (m_nOldUDPPort != 0)
+				DebugLog(_T("Skipping UPnP UDP port %hu removal because this process reused an existing mapping"), m_nOldUDPPort);
+			if (ShouldDeleteMiniUPnPPortMapping(m_nOldTCPWebPort, m_bCreatedOldTCPWebPortMapping))
+				DeletePort(m_nOldTCPWebPort, sTCP);
+			else if (m_nOldTCPWebPort != 0)
+				DebugLog(_T("Skipping UPnP TCP web port %hu removal because this process reused an existing mapping"), m_nOldTCPWebPort);
 		}
 		m_nOldTCPPort = 0;
 		m_nOldUDPPort = 0;
 		m_nOldTCPWebPort = 0;
+		m_bCreatedOldTCPPortMapping = false;
+		m_bCreatedOldUDPPortMapping = false;
+		m_bCreatedOldTCPWebPortMapping = false;
 	} else
 		DebugLogError(_T("Unable to remove port mappings - implementation still busy"));
 }
@@ -174,6 +201,9 @@ void CUPnPImplMiniLib::StartDiscovery(uint16 nTCPPort, uint16 nUDPPort, uint16 n
 	m_nUDPPort = nUDPPort;
 	m_nTCPPort = nTCPPort;
 	m_nTCPWebPort = nTCPWebPort;
+	m_bCreatedTCPPortMapping = false;
+	m_bCreatedUDPPortMapping = false;
+	m_bCreatedTCPWebPortMapping = false;
 	m_bUPnPPortsForwarded = TRIS_UNKNOWN;
 	m_bCheckAndRefresh = false;
 
@@ -398,6 +428,7 @@ bool CUPnPImplMiniLib::CStartDiscoveryThread::OpenPort(uint16 nPort, bool bTCP, 
 
 	if (nResult == UPNPCOMMAND_SUCCESS && achOutIP[0] != 0) {
 		DebugLog(_T("Successfully added mapping for port %hu (%s) on local IP %S"), nPort, (bTCP ? sTCP : sUDP), achOutIP);
+		m_pOwner->MarkCreatedPortMapping(nPort, bTCP);
 		return true;
 	}
 
@@ -405,6 +436,16 @@ bool CUPnPImplMiniLib::CStartDiscoveryThread::OpenPort(uint16 nPort, bool bTCP, 
 	// maybe counting this as error is a bit harsh as this may lead to false negatives, however if we would risk false positives
 	// this would mean that the fallback implementations are not tried because eMule thinks it worked out fine
 	return false;
+}
+
+void CUPnPImplMiniLib::MarkCreatedPortMapping(uint16 nPort, bool bTCP)
+{
+	if (bTCP && nPort == m_nTCPWebPort && nPort != m_nTCPPort)
+		m_bCreatedTCPWebPortMapping = true;
+	else if (bTCP && nPort == m_nTCPPort)
+		m_bCreatedTCPPortMapping = true;
+	else if (!bTCP && nPort == m_nUDPPort)
+		m_bCreatedUDPPortMapping = true;
 }
 
 void CUPnPImplMiniLib::Cleanup()

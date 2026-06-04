@@ -1228,7 +1228,16 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 			return;
 		}
 
-		CSingleLock hashingLock(&theApp.hashing_mut, TRUE);
+		CSingleLock hashingLock(&theApp.hashing_mut);
+		while (!hashingLock.Lock(SharedFileListSeams::kSharedHashMutexShutdownPollMs)) {
+			if (theApp.IsClosing() || IsSharedHashWorkerShuttingDown()) {
+				// WHY: the shared worker can be marked active before another hash
+				// job releases the process-wide hash mutex. On shutdown, retire
+				// this active job promptly instead of waiting for unrelated hash I/O.
+				AbandonActiveSharedHashJob(rJob);
+				return;
+			}
+		}
 		if (!theApp.IsClosing()
 			&& ShouldLogStartupHashFile(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, IsStartupDeferredHashingActive()))
 		{
