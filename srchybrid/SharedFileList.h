@@ -497,6 +497,10 @@ private:
 	 * @brief Captures duplicate shared-path candidates for worker-side sidecar validation.
 	 */
 	bool	CaptureDuplicatePathCacheSnapshot(std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rSnapshot) const;
+	/**
+	 * @brief Persists the duplicate shared-path sidecar when the main warm startup cache is invalidated.
+	 */
+	bool	PersistDuplicatePathCacheAfterInterruptedHashing();
 	static bool	BuildStartupCacheRecordFromSnapshot(const StartupCacheSaveDirectorySnapshot &rDirectory, SharedStartupCachePolicy::DirectoryRecord &rRecord, SharedStartupCacheVolumeRecordMap &rVolumeRecords);
 	static void	BuildDuplicatePathCacheRecordsFromSnapshot(const std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rCandidates, std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rRecords);
 	static void	RunStartupCacheSaveWorker(const StartupCacheSaveSnapshot &rSnapshot, const std::shared_ptr<StartupCacheSaveOperation> &pOperation, StartupCacheSaveResult &rResult);

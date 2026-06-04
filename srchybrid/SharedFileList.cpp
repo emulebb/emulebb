@@ -1527,11 +1527,9 @@ void CSharedFileList::InvalidateStartupCachesAfterInterruptedHashing()
 	m_startupCacheRecords.clear();
 	m_startupCacheVolumes.clear();
 	m_startupCacheVolumeValidation.clear();
-	m_duplicateSharedPathRecords.clear();
+	(void)PersistDuplicatePathCacheAfterInterruptedHashing();
 	const bool bStartupCacheRemoved = LongPathSeams::DeleteFileIfExists(GetStartupCachePath());
-	const bool bDuplicatePathCacheRemoved = LongPathSeams::DeleteFileIfExists(GetDuplicatePathCachePath());
 	NoteStartupCacheLoadResult(false, false, true, bStartupCacheRemoved, "interrupted_hashing", 0, 0);
-	NoteDuplicatePathCacheLoadResult(false, true, bDuplicatePathCacheRemoved, "interrupted_hashing", 0);
 }
 
 bool CSharedFileList::IsSharedHashInFlight(const CString &strDirectory, const CString &strName) const
@@ -3911,6 +3909,30 @@ bool CSharedFileList::CaptureDuplicatePathCacheSnapshot(std::vector<SharedDuplic
 
 		rSnapshot.push_back(record);
 	}
+	return true;
+}
+
+bool CSharedFileList::PersistDuplicatePathCacheAfterInterruptedHashing()
+{
+	std::vector<SharedDuplicatePathCachePolicy::PathRecord> snapshot;
+	if (!CaptureDuplicatePathCacheSnapshot(snapshot))
+		return false;
+
+	std::vector<SharedDuplicatePathCachePolicy::PathRecord> records;
+	BuildDuplicatePathCacheRecordsFromSnapshot(snapshot, records);
+	if (records.empty()) {
+		m_duplicateSharedPathRecords.clear();
+		(void)LongPathSeams::DeleteFileIfExists(GetDuplicatePathCachePath());
+		return false;
+	}
+
+	if (!WriteDuplicatePathCacheFile(GetDuplicatePathCachePath(), records))
+		return false;
+
+	SharedDuplicatePathRecordMap persistedRecords;
+	for (const SharedDuplicatePathCachePolicy::PathRecord &record : records)
+		persistedRecords.emplace(MakeDuplicatePathCacheKey(record.strFilePath), record);
+	m_duplicateSharedPathRecords = std::move(persistedRecords);
 	return true;
 }
 
