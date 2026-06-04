@@ -936,6 +936,14 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 	UINT uBufferedPendingFiles = 0;
 	UINT uBufferedWrittenFiles = 0;
 	UINT uBufferedErrorFiles = 0;
+	uint64 uMaxBufferedReadyBytes = 0;
+	uint64 uMaxBufferedPendingBytes = 0;
+	uint64 uMaxBufferedWrittenBytes = 0;
+	UINT uMaxBufferedReadyItems = 0;
+	UINT uMaxBufferedPendingItems = 0;
+	UINT uMaxBufferedWrittenItems = 0;
+	LONG nMaxAsyncWriteRefsPerFile = 0;
+	UINT uAsyncWriteFiles = 0;
 	INT_PTR iAsyncWriteRefs = 0;
 
 	for (POSITION pos = filelist.GetHeadPosition(); pos != NULL;) {
@@ -1019,6 +1027,15 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 			++uBufferedWrittenFiles;
 		if (bufferSnapshot.uErrorCount > 0)
 			++uBufferedErrorFiles;
+		uMaxBufferedReadyBytes = max(uMaxBufferedReadyBytes, bufferSnapshot.uReadyBytes);
+		uMaxBufferedPendingBytes = max(uMaxBufferedPendingBytes, bufferSnapshot.uPendingBytes);
+		uMaxBufferedWrittenBytes = max(uMaxBufferedWrittenBytes, bufferSnapshot.uWrittenBytes);
+		uMaxBufferedReadyItems = max(uMaxBufferedReadyItems, bufferSnapshot.uReadyCount);
+		uMaxBufferedPendingItems = max(uMaxBufferedPendingItems, bufferSnapshot.uPendingCount);
+		uMaxBufferedWrittenItems = max(uMaxBufferedWrittenItems, bufferSnapshot.uWrittenCount);
+		if (bufferSnapshot.nAsyncWriteCount > 0)
+			++uAsyncWriteFiles;
+		nMaxAsyncWriteRefsPerFile = max(nMaxAsyncWriteRefsPerFile, bufferSnapshot.nAsyncWriteCount);
 		iAsyncWriteRefs += bufferSnapshot.nAsyncWriteCount;
 	}
 
@@ -1032,7 +1049,7 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 	const ULONGLONG ullLastUdpSearchAgeMs = m_lastudpsearchtime != 0 && curTick >= m_lastudpsearchtime ? curTick - m_lastudpsearchtime : 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceStarvedLocalQueuedReadyFiles=%u sourceStarvedKadSearchingReadyFiles=%u sourceStarvedKadEligibleReadyFiles=%u sourceStarvedKadDueReadyFiles=%u sourceStarvedKadBackoffReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u asyncWriteRefs=%Id protectedDiskBlocked=%u"),
+		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceStarvedLocalQueuedReadyFiles=%u sourceStarvedKadSearchingReadyFiles=%u sourceStarvedKadEligibleReadyFiles=%u sourceStarvedKadDueReadyFiles=%u sourceStarvedKadBackoffReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u effectiveFileBufferBytes=%I64u autoBroadbandIO=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u maxBufferedReadyBytes=%I64u maxBufferedPendingBytes=%I64u maxBufferedWrittenBytes=%I64u maxBufferedReadyItems=%u maxBufferedPendingItems=%u maxBufferedWrittenItems=%u asyncWriteFiles=%u maxAsyncWriteRefsPerFile=%ld asyncWriteRefs=%Id protectedDiskBlocked=%u"),
 		filelist.GetCount(),
 		uReadyFiles,
 		uActiveFiles,
@@ -1077,6 +1094,8 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		uKadDueReadyFiles,
 		uKadBackoffReadyFiles,
 		GetDatarate(),
+		static_cast<uint64>(GetEffectiveFileBufferSizeBytes()),
+		static_cast<UINT>(thePrefs.IsAutoBroadbandIOEnabled()),
 		static_cast<uint64>(GetBufferedDownloadBytes()),
 		GetBufferedDownloadFileCount(),
 		uBufferedReadyBytes,
@@ -1091,6 +1110,14 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		uBufferedPendingFiles,
 		uBufferedWrittenFiles,
 		uBufferedErrorFiles,
+		uMaxBufferedReadyBytes,
+		uMaxBufferedPendingBytes,
+		uMaxBufferedWrittenBytes,
+		uMaxBufferedReadyItems,
+		uMaxBufferedPendingItems,
+		uMaxBufferedWrittenItems,
+		uAsyncWriteFiles,
+		nMaxAsyncWriteRefsPerFile,
 		iAsyncWriteRefs,
 		static_cast<UINT>(IsProtectedDiskSpaceBlocked()));
 }
