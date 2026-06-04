@@ -49,7 +49,7 @@ simple ZIP package.
 For the latest nightly or prerelease:
 
 ```powershell
-.\Bootstrap-eMuleBBSuite.ps1 -IncludePrerelease
+.\Bootstrap-eMuleBBSuite.ps1 -IncludePrerelease -Bundle Full
 ```
 
 For RC1 after it is published:
@@ -59,8 +59,10 @@ For RC1 after it is published:
 ```
 
 The bootstrapper downloads and verifies the matching release package, extracts
-the suite installer, and starts the install flow. Advanced options and
-verification details are in the Setup guide.
+the suite installer, and starts the install flow. Full installs require the
+matching aMuTorrent release asset and download pinned public Node, Prowlarr,
+Radarr, and Sonarr payloads by default. Advanced options and verification
+details are in the Setup guide.
 
 Nightly ZIP, manifest, SBOM, and suite bootstrapper assets are published with
 GitHub artifact attestations. After downloading a nightly asset, you can verify
