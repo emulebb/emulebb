@@ -206,11 +206,53 @@ jobs:
           --test-network lan `
           --fail-fast
 
+  arm64_smoke:
+    name: Package and smoke (ARM64, windows-11-arm)
+    needs: prepare
+    uses: emulebb/emulebb-build/.github/workflows/reusable-workspace-command.yml@main
+    with:
+      app_ref: ${{ github.sha }}
+      runs_on: windows-11-arm
+      timeout_minutes: 360
+      artifact_name: emulebb-controlled-smoke-arm64-${{ needs.prepare.outputs.package_version }}
+      artifact_path: |
+        workspaces/workspace/state/release/emulebb-v${{ needs.prepare.outputs.package_version }}/**
+        workspaces/workspace/state/test-reports/live-e2e-suite/**
+        workspaces/workspace/state/test-artifacts/live-e2e-suite/**
+        workspaces/workspace/state/build-logs/**
+      failure_artifact_name: emulebb-controlled-smoke-arm64-failure-${{ needs.prepare.outputs.short_sha }}
+      failure_artifact_path: |
+        workspaces/workspace/state/release/**
+        workspaces/workspace/state/test-reports/live-e2e-suite/**
+        workspaces/workspace/state/test-artifacts/live-e2e-suite/**
+        workspaces/workspace/state/build-logs/**
+      command: |
+        $packageVersion = "${{ needs.prepare.outputs.package_version }}"
+
+        python -m emule_workspace package-release `
+          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
+          --config Release `
+          --platform ARM64 `
+          --clean `
+          --release-version $packageVersion
+
+        python -m emule_workspace test live-e2e `
+          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
+          --config Release `
+          --platform ARM64 `
+          --materialize-test-install `
+          --materialize-test-install-release-version $packageVersion `
+          --materialize-test-install-skip-build `
+          --suite command-line-smoke `
+          --test-network offline `
+          --fail-fast
+
   report:
     name: Report controlled smoke status
     needs:
       - prepare
       - smoke
+      - arm64_smoke
     if: ${{ always() && needs.prepare.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
@@ -219,14 +261,21 @@ jobs:
         env:
           PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
           SHORT_SHA: ${{ needs.prepare.outputs.short_sha }}
-          SMOKE_RESULT: ${{ needs.smoke.result }}
+          X64_SMOKE_RESULT: ${{ needs.smoke.result }}
+          ARM64_SMOKE_RESULT: ${{ needs.arm64_smoke.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
+          smoke_result="success"
+          if [[ "${X64_SMOKE_RESULT}" != "success" || "${ARM64_SMOKE_RESULT}" != "success" ]]; then
+            smoke_result="x64=${X64_SMOKE_RESULT}, arm64=${ARM64_SMOKE_RESULT}"
+          fi
           cat > controlled-smoke-summary.md <<EOF
           # eMuleBB Controlled Smoke
 
-          Result: ${SMOKE_RESULT}
+          Result: ${smoke_result}
+          x64 result: ${X64_SMOKE_RESULT}
+          ARM64 result: ${ARM64_SMOKE_RESULT}
           Package version: ${PACKAGE_VERSION}
           Commit: ${GITHUB_SHA}
           Short SHA: ${SHORT_SHA}
@@ -239,6 +288,9 @@ jobs:
           - Release x64 tracing harness build
           - Offline command-line smoke
           - LAN deterministic two-client transfer
+          - Hosted runner: windows-11-arm
+          - Release ARM64 eMuleBB package
+          - ARM64 offline command-line smoke
           EOF
           cat controlled-smoke-summary.md >> "${GITHUB_STEP_SUMMARY}"
 
@@ -252,7 +304,8 @@ jobs:
       - name: Update smoke failure issue
         uses: actions/github-script@v8
         env:
-          SMOKE_RESULT: ${{ needs.smoke.result }}
+          X64_SMOKE_RESULT: ${{ needs.smoke.result }}
+          ARM64_SMOKE_RESULT: ${{ needs.arm64_smoke.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
         with:
@@ -266,7 +319,11 @@ jobs:
               per_page: 100,
             });
             const existing = issueList.data.find((issue) => issue.title === title);
-            const result = process.env.SMOKE_RESULT;
+            const x64Result = process.env.X64_SMOKE_RESULT;
+            const arm64Result = process.env.ARM64_SMOKE_RESULT;
+            const result = x64Result === "success" && arm64Result === "success"
+              ? "success"
+              : `x64=${x64Result}, arm64=${arm64Result}`;
             const runUrl = process.env.RUN_URL;
             const packageVersion = process.env.PACKAGE_VERSION;
 
@@ -296,7 +353,7 @@ jobs:
               `Package version: ${packageVersion}`,
               `Run: ${runUrl}`,
               "",
-              "This workflow covers package-release, package-amutorrent, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC policy.",
+              "This workflow covers x64 package-release, package-amutorrent, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC policy. It also covers ARM64 package-release and offline command-line smoke on the windows-11-arm hosted runner.",
             ].join("\n");
 
             if (existing) {
