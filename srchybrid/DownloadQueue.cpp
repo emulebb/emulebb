@@ -2146,10 +2146,10 @@ void CDownloadQueue::ProcessLocalRequests()
 		const int iMaxFilesPerTcpFrame = 15;
 		int iFiles = 0;
 		while (!m_localServerReqQueue.IsEmpty() && iFiles < iMaxFilesPerTcpFrame) {
-			// find the file with the longest waiting time
-			ULONGLONG ullBestWaitTime = _UI64_MAX;
+			// find the source-starved file that can make the best use of the next paced request
 			int iBestValidSources = (std::numeric_limits<int>::max)();
 			UINT uBestSourceCount = _UI32_MAX;
+			ULONGLONG ullBestWaitTime = _UI64_MAX;
 			POSITION posNextRequest = NULL;
 			for (POSITION pos = m_localServerReqQueue.GetHeadPosition(); pos != NULL;) {
 				POSITION pos2 = pos;
@@ -2161,17 +2161,20 @@ void CDownloadQueue::ProcessLocalRequests()
 						nPriority = PR_HIGH;
 					}
 
-					const ULONGLONG ullWaitTime = cur_file->m_LastSearchTime + (PR_HIGH - nPriority);
 					const int iValidSources = cur_file->GetValidSourcesCount();
 					const UINT uSourceCount = cur_file->GetSourceCount();
-					if (ullWaitTime < ullBestWaitTime
-						|| (ullWaitTime == ullBestWaitTime
-							&& (iValidSources < iBestValidSources
-								|| (iValidSources == iBestValidSources && uSourceCount < uBestSourceCount))))
+					const ULONGLONG ullWaitTime = cur_file->m_LastSearchTime + (PR_HIGH - nPriority);
+					if (iValidSources < iBestValidSources
+						|| (iValidSources == iBestValidSources
+							&& (uSourceCount < uBestSourceCount
+								|| (uSourceCount == uBestSourceCount && ullWaitTime < ullBestWaitTime))))
 					{
-						ullBestWaitTime = ullWaitTime;
+						// WHY: the server pacing budget is fixed; spending each
+						// frame on files with the fewest usable sources improves
+						// broadband ramp-up without increasing network load.
 						iBestValidSources = iValidSources;
 						uBestSourceCount = uSourceCount;
+						ullBestWaitTime = ullWaitTime;
 						posNextRequest = pos2;
 					}
 				} else {
