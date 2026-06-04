@@ -500,6 +500,12 @@ protected:
 	void	NoteDownloadNoDataSlotFailure(LPCTSTR pszReason);
 	void	NoteDownloadNoDataSlotSuppression();
 	bool	CanAcceptUploadSlotAfterDownloadNoData(CString *pReason = NULL) const;
+	/**
+	 * Download-slot guard for peers that keep sending block packets which no
+	 * longer map to any outstanding block request in the active session.
+	 */
+	void	ResetDownloadStaleBlockPacketGuard();
+	bool	ShouldAbortAfterStaleBlockPacket(CString *pReason = NULL);
 
 	uint32	m_nConnectIP;	// holds the supposed IP or (after we had a connection) the real IP
 	uint32	m_dwUserIP;		// holds 0 (real IP not yet available) or the real IP (after we had a connection)
@@ -682,12 +688,14 @@ protected:
 	ULONGLONG m_ullDownloadNoDataSlotWindowStart;
 	ULONGLONG m_ullDownloadNoDataSlotCooldownUntil;
 	ULONGLONG m_ullDownloadNoDataSlotLastSuppressionLog;
+	ULONGLONG m_ullDownloadStaleBlockPacketWindowStart;
 	std::atomic<LONG> m_nPendingDisplayUpdateMask;
 	UINT		m_uOutOfPartReqsShortWindowCount;
 	UINT		m_uOutOfPartReqsLongWindowCount;
 	UINT		m_uOutOfPartReqsCooldownBurstCount;
 	UINT		m_uDownloadNoDataSlotWindowCount;
 	UINT		m_uDownloadNoDataSlotSuppressionCount;
+	UINT		m_uDownloadStaleBlockPacketWindowCount;
 	bool		m_bOutOfPartReqsQuarantined;
 
 	// using bit fields for less important flags, to save some bytes

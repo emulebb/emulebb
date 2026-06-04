@@ -65,6 +65,8 @@ constexpr ULONGLONG kDownloadNoDataSlotCooldownMs = MIN2MS(3);
 constexpr ULONGLONG kDownloadNoDataSlotSuppressionLogMs = SEC2MS(30);
 constexpr uint64 kDownloadNoDataSlotPayloadThresholdBytes = EMBLOCKSIZE;
 constexpr ULONGLONG kDownloadFirstPayloadTimeoutMs = SEC2MS(60);
+constexpr UINT kDownloadStaleBlockPacketThreshold = 32;
+constexpr ULONGLONG kDownloadStaleBlockPacketWindowMs = SEC2MS(15);
 
 ULONGLONG GetDownloadSlotInstrumentationAgeMs(ULONGLONG ullNow, ULONGLONG ullTick)
 {
@@ -81,6 +83,7 @@ bool IsDownloadSlotInstrumentationHighVolumeReason(LPCTSTR pszReason)
 			|| _tcscmp(pszReason, _T("block-advanced-duplicate-complete")) == 0
 			|| _tcscmp(pszReason, _T("block-cleared-duplicate-complete")) == 0
 			|| _tcscmp(pszReason, _T("block-cleared-duplicate-whole-complete")) == 0
+			|| _tcscmp(pszReason, _T("packet-dropped-no-pending-block")) == 0
 			|| _tcscmp(pszReason, _T("packet-zero-write")) == 0
 			|| _tcscmp(pszReason, _T("request-empty-nnp")) == 0
 			|| _tcscmp(pszReason, _T("request-sent")) == 0
@@ -1284,6 +1287,7 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 			continue;
 
 		// Found the reserved block
+		ResetDownloadStaleBlockPacketGuard();
 		if (cur_block->fZStreamError) {
 			if (thePrefs.GetVerbose())
 				AddDebugLogLine(false, _T("PrcBlkPkt: Ignoring %u bytes of block starting at %I64u because of erroneous zstream state for file \"%s\" - %s"), uTransferredFileDataSize, nStartPos, (LPCTSTR)m_reqfile->GetFileName(), (LPCTSTR)DbgGetClientInfo());
@@ -1477,6 +1481,20 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 	LogDownloadSlotInstrumentation(_T("packet-dropped-no-pending-block"), -1, size);
 #endif
+	CString strReason;
+	if (ShouldAbortAfterStaleBlockPacket(&strReason)) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		LogDownloadSlotInstrumentation(_T("stale-block-packet-abort"), -1, size);
+#endif
+		// WHY: a source that keeps sending payload outside our pending request
+		// set can occupy a scarce download slot without useful progress. A
+		// standard cancel returns it to queue while preserving protocol semantics.
+		if (socket != NULL && !socket->IsRawDataMode())
+			SendCancelTransfer();
+		else
+			ASSERT(0);
+		SetDownloadState(DS_ONQUEUE, strReason);
+	}
 }
 
 int CUpDownClient::unzip(Pending_Block_Struct *block, const BYTE *zipped, uint32 lenZipped, std::unique_ptr<BYTE[]> &runzipped, size_t &rnUnzippedCapacity, uint32 *lenUnzipped)
@@ -2365,6 +2383,7 @@ bool CUpDownClient::IsValidSource() const
 
 void CUpDownClient::StartDownload()
 {
+	ResetDownloadStaleBlockPacketGuard();
 	SetDownloadState(DS_DOWNLOADING);
 	InitTransferredDownMini();
 	SetDownStartTime();
@@ -2534,6 +2553,36 @@ bool CUpDownClient::CanAcceptUploadSlotAfterDownloadNoData(CString *pReason) con
 
 	if (pReason != NULL)
 		pReason->Empty();
+	return true;
+}
+
+void CUpDownClient::ResetDownloadStaleBlockPacketGuard()
+{
+	m_ullDownloadStaleBlockPacketWindowStart = 0;
+	m_uDownloadStaleBlockPacketWindowCount = 0;
+}
+
+bool CUpDownClient::ShouldAbortAfterStaleBlockPacket(CString *pReason)
+{
+	if (GetDownloadState() != DS_DOWNLOADING || m_reqfile == NULL || m_PendingBlocks_list.IsEmpty())
+		return false;
+
+	const ULONGLONG ullNow = ::GetTickCount64();
+	if (!IsTickInsideWindow(ullNow, m_ullDownloadStaleBlockPacketWindowStart, kDownloadStaleBlockPacketWindowMs)) {
+		m_ullDownloadStaleBlockPacketWindowStart = ullNow;
+		m_uDownloadStaleBlockPacketWindowCount = 0;
+	}
+	++m_uDownloadStaleBlockPacketWindowCount;
+
+	if (m_uDownloadStaleBlockPacketWindowCount < kDownloadStaleBlockPacketThreshold)
+		return false;
+
+	if (pReason != NULL) {
+		pReason->Format(
+			_T("Sustained stale block packets. %u packets in %I64u ms did not match any pending request."),
+			m_uDownloadStaleBlockPacketWindowCount,
+			kDownloadStaleBlockPacketWindowMs);
+	}
 	return true;
 }
 

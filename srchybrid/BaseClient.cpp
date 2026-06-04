@@ -266,6 +266,7 @@ void CUpDownClient::Init()
 	m_random_update_wait = (DWORD)(rand() % SEC2MS(1));
 	ResetOutOfPartReqsLoopGuard();
 	ResetDownloadNoDataSlotGuard();
+	ResetDownloadStaleBlockPacketGuard();
 	m_nPendingDisplayUpdateMask = 0;
 
 	m_fHashsetRequestingMD4 = 0;
