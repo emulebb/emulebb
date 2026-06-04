@@ -1516,8 +1516,20 @@ void CSharedFileList::OnSharedHashQueuePossiblyDrained()
 		theApp.emuledlg->sharedfileswnd->OnSharedHashingDrained();
 }
 
-void CSharedFileList::InvalidateStartupCachesAfterInterruptedHashing()
+void CSharedFileList::InvalidateStartupCachesAfterInterruptedHashing(const std::unordered_set<std::wstring> &rInterruptedDirectoryKeys)
 {
+	{
+		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
+		if (m_bStartupCacheInvalidatedByInterruptedHashing)
+			return;
+	}
+
+	// WHY: interrupted hash directories have incomplete known-file coverage, but
+	// unrelated shared directories are already fully scanned. Persisting only the
+	// stable records lets the next launch reuse the warm cache without trusting a
+	// directory whose new hash work was discarded during shutdown.
+	const bool bPartialStartupCachePersisted = PersistStartupCacheAfterInterruptedHashing(rInterruptedDirectoryKeys);
+
 	{
 		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
 		m_bStartupCacheInvalidatedByInterruptedHashing = true;
@@ -1528,8 +1540,8 @@ void CSharedFileList::InvalidateStartupCachesAfterInterruptedHashing()
 	m_startupCacheVolumes.clear();
 	m_startupCacheVolumeValidation.clear();
 	(void)PersistDuplicatePathCacheAfterInterruptedHashing();
-	const bool bStartupCacheRemoved = LongPathSeams::DeleteFileIfExists(GetStartupCachePath());
-	NoteStartupCacheLoadResult(false, false, true, bStartupCacheRemoved, "interrupted_hashing", 0, 0);
+	const bool bStartupCacheRemoved = bPartialStartupCachePersisted ? false : LongPathSeams::DeleteFileIfExists(GetStartupCachePath());
+	NoteStartupCacheLoadResult(false, false, true, bStartupCacheRemoved, bPartialStartupCachePersisted ? "interrupted_hashing_partial" : "interrupted_hashing", 0, 0);
 }
 
 bool CSharedFileList::IsSharedHashInFlight(const CString &strDirectory, const CString &strName) const
@@ -1542,6 +1554,7 @@ bool CSharedFileList::IsSharedHashInFlight(const CString &strDirectory, const CS
 void CSharedFileList::SignalSharedHashWorkerShutdown()
 {
 	bool bInvalidateStartupCaches = false;
+	std::unordered_set<std::wstring> interruptedDirectoryKeys;
 	std::deque<CSharedFileHashResult*> deferredResults;
 	{
 		CSingleLock lock(&m_mutSharedHashQueue, TRUE);
@@ -1553,6 +1566,14 @@ void CSharedFileList::SignalSharedHashWorkerShutdown()
 			m_bSharedHashActive
 		};
 		bInvalidateStartupCaches = SharedFileListSeams::ShouldInvalidateStartupCacheAfterSharedHashShutdown(shutdownState);
+		if (bInvalidateStartupCaches) {
+			for (const SharedHashJob &job : m_sharedHashQueue)
+				interruptedDirectoryKeys.insert(MakeStartupCacheSnapshotKey(job.strDirectory));
+			for (const SharedHashJob &job : m_sharedHashPendingCompletions)
+				interruptedDirectoryKeys.insert(MakeStartupCacheSnapshotKey(job.strDirectory));
+			if (m_bSharedHashActive)
+				interruptedDirectoryKeys.insert(MakeStartupCacheSnapshotKey(m_sharedHashActiveJob.strDirectory));
+		}
 		m_bSharedHashShutdownSignaled = true;
 		m_bSharedHashWorkerExitRequested = true;
 		m_bSharedHashWorkerCanHash = true;
@@ -1568,7 +1589,7 @@ void CSharedFileList::SignalSharedHashWorkerShutdown()
 		delete pResult;
 	}
 	if (bInvalidateStartupCaches)
-		InvalidateStartupCachesAfterInterruptedHashing();
+		InvalidateStartupCachesAfterInterruptedHashing(interruptedDirectoryKeys);
 	SignalSharedHashWorker();
 }
 
@@ -3936,6 +3957,29 @@ bool CSharedFileList::PersistDuplicatePathCacheAfterInterruptedHashing()
 	for (const SharedDuplicatePathCachePolicy::PathRecord &record : records)
 		persistedRecords.emplace(MakeDuplicatePathCacheKey(record.strFilePath), record);
 	m_duplicateSharedPathRecords = std::move(persistedRecords);
+	return true;
+}
+
+bool CSharedFileList::PersistStartupCacheAfterInterruptedHashing(const std::unordered_set<std::wstring> &rInterruptedDirectoryKeys)
+{
+	if (rInterruptedDirectoryKeys.empty())
+		return false;
+
+	StartupCacheSaveSnapshot snapshot = {};
+	if (!CaptureStartupCacheSaveSnapshot(snapshot))
+		return false;
+	for (StartupCacheSaveDirectorySnapshot &directory : snapshot.directories) {
+		if (rInterruptedDirectoryKeys.find(MakeStartupCacheSnapshotKey(directory.strDirectoryPath)) != rInterruptedDirectoryKeys.end())
+			directory.bHasPendingHash = true;
+	}
+
+	StartupCacheSaveResult result = {};
+	RunStartupCacheSaveWorker(snapshot, std::shared_ptr<StartupCacheSaveOperation>(), result);
+	if (!result.bWriteSucceeded)
+		return false;
+
+	if (result.bDuplicatePathWriteSucceeded)
+		m_duplicateSharedPathRecords = std::move(result.duplicatePathRecords);
 	return true;
 }
 

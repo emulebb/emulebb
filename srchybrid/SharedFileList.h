@@ -501,6 +501,10 @@ private:
 	 * @brief Persists the duplicate shared-path sidecar when the main warm startup cache is invalidated.
 	 */
 	bool	PersistDuplicatePathCacheAfterInterruptedHashing();
+	/**
+	 * @brief Persists stable shared-directory startup-cache records while excluding interrupted hash directories.
+	 */
+	bool	PersistStartupCacheAfterInterruptedHashing(const std::unordered_set<std::wstring> &rInterruptedDirectoryKeys);
 	static bool	BuildStartupCacheRecordFromSnapshot(const StartupCacheSaveDirectorySnapshot &rDirectory, SharedStartupCachePolicy::DirectoryRecord &rRecord, SharedStartupCacheVolumeRecordMap &rVolumeRecords);
 	static void	BuildDuplicatePathCacheRecordsFromSnapshot(const std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rCandidates, std::vector<SharedDuplicatePathCachePolicy::PathRecord> &rRecords);
 	static void	RunStartupCacheSaveWorker(const StartupCacheSaveSnapshot &rSnapshot, const std::shared_ptr<StartupCacheSaveOperation> &pOperation, StartupCacheSaveResult &rResult);
@@ -583,7 +587,7 @@ private:
 	/**
 	 * @brief Invalidates warm shared startup caches after shutdown discards queued or active hashing work.
 	 */
-	void	InvalidateStartupCachesAfterInterruptedHashing();
+	void	InvalidateStartupCachesAfterInterruptedHashing(const std::unordered_set<std::wstring> &rInterruptedDirectoryKeys = std::unordered_set<std::wstring>());
 	/**
 	 * @brief Reports whether the given file path is currently being hashed or awaiting completion.
 	 */
