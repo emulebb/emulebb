@@ -3103,7 +3103,7 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 			NotifyStatusChange();
 
 		if (GetMaxSourcePerFileUDP() > GetSourceCount()) {
-			if (theApp.downloadqueue->DoKademliaFileRequest() && (Kademlia::CKademlia::GetTotalFile() < KADEMLIATOTALFILE) && (curTick >= m_LastSearchTimeKad) && Kademlia::CKademlia::IsConnected() && theApp.IsConnected() && !m_stopped) { //Once we can handle lowID users in Kad, we remove the second IsConnected
+			if (theApp.downloadqueue->DoKademliaFileRequest() && (Kademlia::CKademlia::GetTotalFile() < KADEMLIATOTALFILE) && Kademlia::CKademlia::IsConnected() && theApp.IsConnected() && theApp.downloadqueue->IsBestKademliaFileRequestCandidate(this, curTick)) { //Once we can handle lowID users in Kad, we remove the second IsConnected
 				//Kademlia
 				theApp.downloadqueue->SetLastKademliaFileRequest();
 				if (!GetKadFileSearchID()) {

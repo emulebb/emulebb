@@ -170,6 +170,7 @@ public:
 	// searching in Kad
 	void	SetLastKademliaFileRequest()					{ m_lastkademliafilerequest = ::GetTickCount64(); }
 	bool	DoKademliaFileRequest() const;
+	bool	IsBestKademliaFileRequestCandidate(const CPartFile *pCandidate, ULONGLONG curTick) const;
 	void	KademliaSearchFile(uint32 nSearchID, const Kademlia::CUInt128 *pcontactID, const Kademlia::CUInt128 *pbuddyID, uint8 type, uint32 ip, uint16 tcp, uint16 udp, uint32 dwBuddyIP, uint16 dwBuddyPort, uint8 byCryptOptions);
 
 	// searching on global servers

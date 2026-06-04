@@ -138,6 +138,19 @@ namespace
 			return false;
 		return !pFile->IsLargeFile() || (pCurrentServer != NULL && pCurrentServer->SupportsLargeFilesTCP());
 	}
+
+	bool IsKademliaFileRequestCandidate(const CPartFile *pFile, const ULONGLONG curTick)
+	{
+		if (pFile == NULL)
+			return false;
+		if (!inSet(pFile->GetStatus(), PS_READY, PS_EMPTY))
+			return false;
+		if (pFile->IsStopped() || pFile->GetKadFileSearchID() != 0)
+			return false;
+		if (pFile->GetMaxSourcePerFileUDP() <= pFile->GetSourceCount())
+			return false;
+		return curTick >= pFile->m_LastSearchTimeKad;
+	}
 }
 
 CDownloadQueue::CDownloadQueue()
@@ -2451,6 +2464,32 @@ uint64 CDownloadQueue::GetEffectiveFileBufferSizeBytes() const
 bool CDownloadQueue::DoKademliaFileRequest() const
 {
 	return ::GetTickCount64() >= m_lastkademliafilerequest + KADEMLIAASKTIME;
+}
+
+bool CDownloadQueue::IsBestKademliaFileRequestCandidate(const CPartFile *pCandidate, const ULONGLONG curTick) const
+{
+	if (!IsKademliaFileRequestCandidate(pCandidate, curTick))
+		return false;
+
+	const int iCandidateValidSources = pCandidate->GetValidSourcesCount();
+	const UINT uCandidateSourceCount = pCandidate->GetSourceCount();
+	for (POSITION pos = filelist.GetHeadPosition(); pos != NULL;) {
+		const CPartFile *cur_file = filelist.GetNext(pos);
+		if (cur_file == pCandidate)
+			return true;
+		if (!IsKademliaFileRequestCandidate(cur_file, curTick))
+			continue;
+
+		const int iValidSources = cur_file->GetValidSourcesCount();
+		const UINT uSourceCount = cur_file->GetSourceCount();
+		// WHY: The Kad search budget is intentionally small for network health.
+		// Spend the next standard source-search slot on the most source-starved
+		// eligible file while preserving file-list order as the tie-breaker.
+		if (iValidSources < iCandidateValidSources
+			|| (iValidSources == iCandidateValidSources && uSourceCount <= uCandidateSourceCount))
+			return false;
+	}
+	return false;
 }
 
 void CDownloadQueue::KademliaSearchFile(uint32 nSearchID, const Kademlia::CUInt128 *pcontactID, const Kademlia::CUInt128 *pbuddyID, uint8 type, uint32 ip, uint16 tcp, uint16 udp, uint32 dwBuddyIP, uint16 dwBuddyPort, uint8 byCryptOptions)
