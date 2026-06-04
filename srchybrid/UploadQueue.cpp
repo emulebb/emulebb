@@ -185,8 +185,15 @@ CUploadQueue::~CUploadQueue()
 CUpDownClient* CUploadQueue::FindBestClientInQueue()
 {
 	uint32 bestscore = 0;
+	uint32 bestCooldownProbeScore = 0;
+	ULONGLONG ullBestCooldownProbeRemaining = _UI64_MAX;
 	CUpDownClient *newclient = NULL;
+	CUpDownClient *cooldownProbeClient = NULL;
 	const ULONGLONG curTick = ::GetTickCount64();
+	const bool bAllowCooldownProbe = ShouldProbeUploadCooldownCandidate(
+		HasSustainedBroadbandUnderfill(curTick),
+		uploadinglist.GetCount(),
+		GetSoftMaxUploadSlots());
 
 	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
 		POSITION pos2 = pos;
@@ -201,11 +208,26 @@ CUpDownClient* CUploadQueue::FindBestClientInQueue()
 			//This client has either not been seen in a long time, or we no longer share the file he wanted any more.
 			cur_client->ClearWaitStartTime();
 			RemoveFromWaitingQueue(pos2, true);
-		} else if (!IsUploadQueueAdmissionCandidate(ApplyUploadRetryCooldown(cur_client, curTick) || cur_client->IsInSlowUploadCooldown())) {
-			// WHY: recycled or short-failed peers stay on the protocol queue, but
-			// must not burn another broadband slot until their local cooldown ends.
-			continue;
 		} else {
+			const bool bCooldownActive = ApplyUploadRetryCooldown(cur_client, curTick) || cur_client->IsInSlowUploadCooldown();
+			if (!IsUploadQueueAdmissionCandidate(bCooldownActive)) {
+				// WHY: recycled or short-failed peers stay on the protocol queue,
+				// but should only be retried early when spare broadband capacity
+				// would otherwise stay idle behind a cooldown-only waiting list.
+				const ULONGLONG ullCooldownRemaining = cur_client->GetSlowUploadCooldownRemaining();
+				const uint32 cur_score = cur_client->GetScore(false);
+				if (bAllowCooldownProbe
+					&& ullCooldownRemaining != 0
+					&& (ullCooldownRemaining < ullBestCooldownProbeRemaining
+						|| (ullCooldownRemaining == ullBestCooldownProbeRemaining && PreferHigherUploadQueueScore(cur_score, bestCooldownProbeScore))))
+				{
+					ullBestCooldownProbeRemaining = ullCooldownRemaining;
+					bestCooldownProbeScore = cur_score;
+					cooldownProbeClient = cur_client;
+				}
+				continue;
+			}
+
 			// finished clearing
 			uint32 cur_score = cur_client->GetScore(false);
 
@@ -216,7 +238,7 @@ CUpDownClient* CUploadQueue::FindBestClientInQueue()
 		}
 	}
 
-	return newclient;
+	return newclient != NULL ? newclient : cooldownProbeClient;
 }
 
 void CUploadQueue::InsertInUploadingList(CUpDownClient *newclient, bool bNoLocking)
@@ -790,7 +812,9 @@ uint32 CUploadQueue::GetTargetClientDataRate(bool bMinDatarate) const
 bool CUploadQueue::ForceNewClient(bool allowEmptyWaitingQueue)
 {
 	const ULONGLONG curTick = ::GetTickCount64();
-	if (!ShouldAttemptUploadSlotAdmission(allowEmptyWaitingQueue, waitinglist.IsEmpty(), HasUploadAdmissionCandidate(curTick)))
+	const bool bHasAdmissionCandidate = HasUploadAdmissionCandidate(curTick);
+	const bool bHasCooldownProbeCandidate = !bHasAdmissionCandidate && HasUploadCooldownProbeCandidate(curTick);
+	if (!ShouldAttemptUploadSlotAdmission(allowEmptyWaitingQueue, waitinglist.IsEmpty(), bHasAdmissionCandidate || bHasCooldownProbeCandidate))
 		return false;
 
 	INT_PTR curUploadSlots = uploadinglist.GetCount();
@@ -955,6 +979,32 @@ bool CUploadQueue::HasUploadAdmissionCandidate(ULONGLONG curTick)
 		}
 		if (IsUploadQueueAdmissionCandidate(ApplyUploadRetryCooldown(cur_client, curTick) || cur_client->IsInSlowUploadCooldown()))
 			return true;
+	}
+	return false;
+}
+
+bool CUploadQueue::HasUploadCooldownProbeCandidate(ULONGLONG curTick)
+{
+	if (!ShouldProbeUploadCooldownCandidate(
+			HasSustainedBroadbandUnderfill(curTick),
+			uploadinglist.GetCount(),
+			GetSoftMaxUploadSlots()))
+	{
+		return false;
+	}
+
+	for (POSITION pos = waitinglist.GetHeadPosition(); pos != NULL;) {
+		POSITION pos2 = pos;
+		CUpDownClient *cur_client = waitinglist.GetNext(pos);
+		if (!IsLiveUploadQueueClient(cur_client)) {
+			RemoveStaleWaitingClient(pos2);
+			continue;
+		}
+		if (!IsUploadQueueAdmissionCandidate(ApplyUploadRetryCooldown(cur_client, curTick) || cur_client->IsInSlowUploadCooldown())
+			&& cur_client->GetSlowUploadCooldownRemaining() != 0)
+		{
+			return true;
+		}
 	}
 	return false;
 }

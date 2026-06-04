@@ -108,6 +108,15 @@ inline bool ShouldAttemptUploadSlotAdmission(bool bAllowEmptyWaitingQueue, bool 
 }
 
 /**
+ * @brief Reports whether sustained underfill may probe a cooldown-only waiting queue.
+ */
+inline bool ShouldProbeUploadCooldownCandidate(bool bSustainedUnderfill, std::int64_t iUploadSlots, std::int64_t iSoftMaxUploadSlots)
+{
+	return bSustainedUnderfill
+		&& iUploadSlots < iSoftMaxUploadSlots;
+}
+
+/**
  * @brief Reports whether a new upload requester may bypass a queue which has no locally admissible peers.
  */
 inline bool ShouldDirectAdmitBehindCooldownOnlyWaitingList(bool bWaitingListEmpty, bool bHasAdmissionCandidate)
