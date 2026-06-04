@@ -5846,14 +5846,21 @@ void InitWindowStyles(CWnd *pWnd)
 struct SStartupProgressWindowCleanupContext
 {
 	HWND hMainWnd;
+	DWORD dwProcessId;
 	CString strTitle;
 };
 
-static BOOL CALLBACK DestroyOrphanedStartupProgressWindowProc(HWND hWnd, LPARAM lParam)
+static BOOL CALLBACK DestroyOrphanedStartupProgressWindowProc(HWND hWnd, LPARAM lParam) noexcept
 {
 	SStartupProgressWindowCleanupContext *pContext = reinterpret_cast<SStartupProgressWindowCleanupContext*>(lParam);
 	if (pContext == NULL || hWnd == NULL || hWnd == pContext->hMainWnd)
 		return TRUE;
+
+	DWORD dwWindowProcessId = 0;
+	(void)::GetWindowThreadProcessId(hWnd, &dwWindowProcessId);
+	if (dwWindowProcessId != pContext->dwProcessId)
+		return TRUE;
+
 	if (::GetDlgItem(hWnd, IDC_SHUTDOWN_STEP) == NULL || ::GetDlgItem(hWnd, IDC_PROGRESS1) == NULL)
 		return TRUE;
 
@@ -5869,11 +5876,11 @@ static BOOL CALLBACK DestroyOrphanedStartupProgressWindowProc(HWND hWnd, LPARAM 
 
 static void DestroyOrphanedStartupProgressWindows(HWND hMainWnd)
 {
-	SStartupProgressWindowCleanupContext context = { hMainWnd, GetResString(IDS_STARTING_EMULE) };
+	SStartupProgressWindowCleanupContext context = { hMainWnd, ::GetCurrentProcessId(), GetResString(IDS_STARTING_EMULE) };
 	if (context.strTitle.IsEmpty())
 		return;
 
-	(void)::EnumThreadWindows(::GetCurrentThreadId(), DestroyOrphanedStartupProgressWindowProc, reinterpret_cast<LPARAM>(&context));
+	(void)::EnumWindows(DestroyOrphanedStartupProgressWindowProc, reinterpret_cast<LPARAM>(&context));
 }
 
 bool CemuleDlg::ShouldShowLifecycleProgressDialog(int iMode, bool bStartup) const
@@ -5890,6 +5897,10 @@ bool CemuleDlg::ShouldShowLifecycleProgressDialog(int iMode, bool bStartup) cons
 
 void CemuleDlg::ShowStartupProgress()
 {
+	if (theApp.IsRunning()) {
+		CloseStartupProgressIfRunning();
+		return;
+	}
 	if (m_bStartupProgressFinished)
 		return;
 	if (m_pStartupProgressDlg != NULL)
@@ -5923,6 +5934,10 @@ void CemuleDlg::ShowStartupProgress()
 
 void CemuleDlg::UpdateStartupProgress(UINT uPercent, UINT uStepStringId, UINT uDetailStringId, bool bMarquee)
 {
+	if (theApp.IsRunning()) {
+		CloseStartupProgressIfRunning();
+		return;
+	}
 	if (m_bStartupProgressFinished)
 		return;
 	if (m_pStartupProgressDlg == NULL)
@@ -5966,7 +5981,7 @@ void CemuleDlg::CloseStartupProgressIfRunning()
 	}
 	DestroyStartupProgress();
 	// WHY: a lost modeless progress pointer or missed queued startup hop can leave
-	// the lifecycle dialog visible after APP_STATE_RUNNING. Sweep only same-thread
+	// the lifecycle dialog visible after APP_STATE_RUNNING. Sweep same-process
 	// startup progress dialogs with the expected controls.
 	DestroyOrphanedStartupProgressWindows(m_hWnd);
 }
