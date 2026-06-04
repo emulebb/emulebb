@@ -1397,15 +1397,15 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 			}
 		}
 
-		// WHY: Another faster source or buffered write can complete the range
-		// while this peer is still sending a previously valid request. If the
-		// duplicate stream reaches the reserved block tail, retire the stale
-		// pending request so the slot can ask for useful data immediately.
+		// WHY: Another faster source or buffered write can complete the whole
+		// reserved range while this peer is still sending a previously valid
+		// request. Retire the stale pending request as soon as a duplicate
+		// packet proves that the reservation is complete locally, so the slot
+		// can ask for useful data immediately.
 		const bool bCompletedDuplicateBlock = !packed
 			&& lenWritten == 0
 			&& cur_block->block != NULL
-			&& nEndPos == cur_block->block->EndOffset
-			&& m_reqfile->IsComplete(nStartPos, nEndPos);
+			&& m_reqfile->IsComplete(cur_block->block->StartOffset, cur_block->block->EndOffset);
 
 		// These checks only need to be done if any data was written or if a
 		// duplicate packet proves that the pending block is already complete.
