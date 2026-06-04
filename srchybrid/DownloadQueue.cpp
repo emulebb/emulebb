@@ -870,6 +870,10 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 
 	UINT uReadyFiles = 0;
 	UINT uActiveFiles = 0;
+	UINT uSourceStarvedReadyFiles = 0;
+	UINT uSourceThinReadyFiles = 0;
+	UINT uSourceRichReadyFiles = 0;
+	UINT uA4AFReadyFiles = 0;
 	UINT uSources = 0;
 	UINT uValidSources = 0;
 	UINT uDownloadingSources = 0;
@@ -904,13 +908,24 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		if (cur_file == NULL)
 			continue;
 
-		if (inSet(cur_file->GetStatus(), PS_READY, PS_EMPTY))
+		const bool bReadyFile = inSet(cur_file->GetStatus(), PS_READY, PS_EMPTY);
+		const int iFileValidSources = cur_file->GetValidSourcesCount();
+		if (bReadyFile) {
 			++uReadyFiles;
+			if (iFileValidSources <= 0)
+				++uSourceStarvedReadyFiles;
+			else if (iFileValidSources < 3)
+				++uSourceThinReadyFiles;
+			else
+				++uSourceRichReadyFiles;
+			if (cur_file->GetSrcA4AFCount() > 0)
+				++uA4AFReadyFiles;
+		}
 		if (cur_file->GetTransferringSrcCount() > 0)
 			++uActiveFiles;
 
 		uSources += cur_file->GetSourceCount();
-		uValidSources += cur_file->GetValidSourcesCount();
+		uValidSources += iFileValidSources;
 		uDownloadingSources += cur_file->GetSrcStatisticsValue(DS_DOWNLOADING);
 		uOnQueueSources += cur_file->GetSrcStatisticsValue(DS_ONQUEUE);
 		uConnectedSources += cur_file->GetSrcStatisticsValue(DS_CONNECTED);
@@ -949,10 +964,14 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 	}
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u asyncWriteRefs=%Id protectedDiskBlocked=%u"),
+		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u asyncWriteRefs=%Id protectedDiskBlocked=%u"),
 		filelist.GetCount(),
 		uReadyFiles,
 		uActiveFiles,
+		uSourceStarvedReadyFiles,
+		uSourceThinReadyFiles,
+		uSourceRichReadyFiles,
+		uA4AFReadyFiles,
 		uSources,
 		uValidSources,
 		uDownloadingSources,
