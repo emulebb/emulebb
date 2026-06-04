@@ -2260,7 +2260,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 					AddLogLine(true, GetResString(IDS_MAIN_READY), (LPCTSTR)theApp.m_strCurVersionLong);
 
 				theApp.m_app_state = APP_STATE_RUNNING; //initialization completed
-				CloseStartupProgressIfRunning();
+				FinishStartupProgress();
 				UpdateBindLossMonitor(false);
 				const bool bStartupConnectionCommandsEnabled = VpnGuardPolicySeams::CanUseStartupConnectionCommands(
 					thePrefs.GetVpnGuardMode(), theApp.IsStartupBindBlocked(), m_bBindLossMonitorActive);
@@ -2285,7 +2285,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 			status = 6;
 			// WHY: Stored-search restore is optional post-running UI hydration. Keep the
 			// startup lifecycle dialog from surviving while a large restore populates tabs.
-			CloseStartupProgressIfRunning();
+			FinishStartupProgress();
 			{
 #if EMULEBB_HAS_STARTUP_PROFILING
 				const ULONGLONG ullStoredSearchesStart = theApp.GetStartupProfileTimestampUs();
