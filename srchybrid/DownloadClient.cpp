@@ -173,7 +173,7 @@ void CUpDownClient::LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iR
 	const ULONGLONG ullAgeMs = m_dwDownStartTime != 0 && ullNow >= m_dwDownStartTime ? ullNow - m_dwDownStartTime : 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: client reason=%s client=%s state=%s fileKnown=%u file=\"%s\" rateBytesPerSec=%u ageMs=%I64u sessionDown=%s sessionPayload=%s pendingBlocks=%Id queuedBlocks=%Id requestBatch=%Id packetBytes=%u writtenBytes=%u reqReserved=%I64u reqSent=%I64u reqCompleted=%I64u reqCleared=%I64u packets=%I64u payloadReceived=%I64u payloadWritten=%I64u lastRequestAgeMs=%I64u lastReceivedAgeMs=%I64u lastCompleteAgeMs=%I64u nnpTransitions=%u outOfPart=%u suppressedAccept=%u highVolumeSuppressed=%I64u noDataSuppressions=%u queueRank=%u remoteFull=%u partsAvailable=%u/%u socket=%p socketConnected=%u socketStdQueue=%Id handshake=%u"),
+		_T("DownloadSlotInstrumentation: client reason=%s client=%s state=%s fileKnown=%u file=\"%s\" rateBytesPerSec=%u ageMs=%I64u sessionDown=%s sessionPayload=%s pendingBlocks=%Id queuedBlocks=%Id requestBatch=%Id packetBytes=%u writtenBytes=%u reqReserved=%I64u reqSent=%I64u reqCompleted=%I64u reqCleared=%I64u packets=%I64u payloadReceived=%I64u payloadWritten=%I64u duplicateZeroWritePackets=%I64u duplicateZeroWriteBytes=%I64u lastRequestAgeMs=%I64u lastReceivedAgeMs=%I64u lastCompleteAgeMs=%I64u nnpTransitions=%u outOfPart=%u suppressedAccept=%u highVolumeSuppressed=%I64u noDataSuppressions=%u queueRank=%u remoteFull=%u partsAvailable=%u/%u socket=%p socketConnected=%u socketStdQueue=%Id handshake=%u"),
 		pszReason != NULL ? pszReason : _T("unspecified"),
 		(LPCTSTR)DbgGetClientInfo(),
 		DbgGetDownloadState(),
@@ -195,6 +195,8 @@ void CUpDownClient::LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iR
 		static_cast<uint64>(m_ullDownloadBlockPacketsReceived),
 		static_cast<uint64>(m_ullDownloadBlockPayloadBytesReceived),
 		static_cast<uint64>(m_ullDownloadBlockPayloadBytesWritten),
+		static_cast<uint64>(m_ullDownloadDuplicateZeroWritePackets),
+		static_cast<uint64>(m_ullDownloadDuplicateZeroWriteBytes),
 		static_cast<uint64>(GetDownloadSlotInstrumentationAgeMs(ullNow, m_ullDownloadLastRequestTick)),
 		static_cast<uint64>(GetDownloadSlotInstrumentationAgeMs(ullNow, m_ullDownloadLastReceivedTick)),
 		static_cast<uint64>(GetDownloadSlotInstrumentationAgeMs(ullNow, m_ullDownloadLastCompletedBlockTick)),
@@ -211,6 +213,12 @@ void CUpDownClient::LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iR
 		static_cast<UINT>(bSocketConnected),
 		iSocketQueue,
 		static_cast<UINT>(CheckHandshakeFinished()));
+}
+
+void CUpDownClient::NoteDownloadDuplicateZeroWrite(uint64 uPayloadBytes) const
+{
+	++m_ullDownloadDuplicateZeroWritePackets;
+	m_ullDownloadDuplicateZeroWriteBytes += uPayloadBytes;
 }
 #endif
 

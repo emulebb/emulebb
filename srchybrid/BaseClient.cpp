@@ -253,6 +253,8 @@ void CUpDownClient::Init()
 	m_ullDownloadBlockPacketsReceived = 0;
 	m_ullDownloadBlockPayloadBytesReceived = 0;
 	m_ullDownloadBlockPayloadBytesWritten = 0;
+	m_ullDownloadDuplicateZeroWritePackets = 0;
+	m_ullDownloadDuplicateZeroWriteBytes = 0;
 	m_ullDownloadLastRequestTick = 0;
 	m_ullDownloadLastReceivedTick = 0;
 	m_ullDownloadLastCompletedBlockTick = 0;

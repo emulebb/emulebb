@@ -342,6 +342,7 @@ public:
 	uint16			GetAvailablePartCount() const;
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 	void			LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iRequestBatchCount = -1, uint32 uPacketBytes = 0, uint32 uWrittenBytes = 0) const;
+	void			NoteDownloadDuplicateZeroWrite(uint64 uPayloadBytes) const;
 #endif
 	bool			SwapToAnotherFile(LPCTSTR reason, bool bIgnoreNoNeeded, bool ignoreSuspensions, bool bRemoveCompletely, CPartFile *toFile = NULL, bool allowSame = true, bool isAboutToAsk = false, bool debug = false); // ZZ:DownloadManager
 	void			DontSwapTo(/*const*/ CPartFile *file);
@@ -659,6 +660,8 @@ protected:
 	ULONGLONG	m_ullDownloadBlockPacketsReceived;
 	ULONGLONG	m_ullDownloadBlockPayloadBytesReceived;
 	ULONGLONG	m_ullDownloadBlockPayloadBytesWritten;
+	mutable ULONGLONG m_ullDownloadDuplicateZeroWritePackets;
+	mutable ULONGLONG m_ullDownloadDuplicateZeroWriteBytes;
 	ULONGLONG	m_ullDownloadLastRequestTick;
 	ULONGLONG	m_ullDownloadLastReceivedTick;
 	ULONGLONG	m_ullDownloadLastCompletedBlockTick;

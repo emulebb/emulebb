@@ -4905,7 +4905,13 @@ uint32 CPartFile::QueueBufferWrite(uint64 transize, const BYTE *sourceData, std:
 	static LPCTSTR const sImport = _T("(import)");
 	// Occasionally packets are duplicated, no point to write it twice
 	if (IsComplete(start, end)) {
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+		if (client != NULL)
+			client->NoteDownloadDuplicateZeroWrite(transize);
+		if (thePrefs.GetVerbose() && client == NULL)
+#else
 		if (thePrefs.GetVerbose())
+#endif
 			AddDebugLogLine(false, _T("PrcBlkPkt: Already written block %s; File=%s; %s"), (LPCTSTR)DbgGetBlockInfo(start, end), (LPCTSTR)GetFileName(), client ? (LPCTSTR)client->DbgGetClientInfo() : sImport);
 		return 0;
 	}
