@@ -574,6 +574,7 @@ void CPartFile::Init()
 	lastseencomplete = 0;
 	m_hWrite = INVALID_HANDLE_VALUE;
 	m_iWrites = 0;
+	m_bBufferedWriteCompletionsPending = 0;
 	m_LastSearchTime = 0;
 	m_LastSearchTimeKad = 0;
 	memset(src_stats, 0, sizeof src_stats);
@@ -601,6 +602,7 @@ void CPartFile::Init()
 	lastSwapForSourceExchangeTick = m_lastpurgetime = ::GetTickCount64();
 	m_lastRefreshedDLDisplay = 0;
 	m_nLastBufferFlushTime = 0;
+	m_nLastCompletedBufferCleanupTime = 0;
 	m_nNextMetFlushTime = 0;
 	m_nFileFlushTime = 0; //nothing to flush
 	m_dwFileAttributes = 0;
@@ -834,6 +836,7 @@ void CPartFile::AssertValid() const
 	(void)m_iLastPausePurge;
 	(void)m_lastRefreshedDLDisplay;
 	(void)m_nLastBufferFlushTime;
+	(void)m_nLastCompletedBufferCleanupTime;
 	(void)m_dwFileAttributes;
 	(void)m_anStates;
 	(void)m_category;
@@ -2888,8 +2891,28 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 		thePrefs.GetFileBufferTimeLimit(),
 		m_nTotalBufferData,
 		GetTransferringSrcCount());
-	if (m_nTotalBufferData > uEffectiveFileBufferSize || curTick >= m_nLastBufferFlushTime + uBufferFlushTimeLimit)
+	bool bFlushedBufferThisTick = false;
+	if (PartFileNumericSeams::ShouldCleanupCompletedBufferedWrites(
+			HasBufferedWriteCompletionsPending(),
+			thePrefs.IsAutoBroadbandIOEnabled(),
+			curTick,
+			m_nLastCompletedBufferCleanupTime,
+			PartFileNumericSeams::kBroadbandCompletedWriteCleanupTimeLimitMs))
+	{
+		// WHY: completed async writes can otherwise keep broadband buffer memory
+		// occupied until the next normal data flush. Consume the completion hint
+		// before flushing so completions racing with this cleanup keep their own
+		// pending hint for the next main-thread tick.
+		(void)ConsumeBufferedWriteCompletionsPending();
 		FlushBuffer();
+		m_nLastCompletedBufferCleanupTime = curTick;
+		bFlushedBufferThisTick = true;
+	}
+	if (!bFlushedBufferThisTick && (m_nTotalBufferData > uEffectiveFileBufferSize || curTick >= m_nLastBufferFlushTime + uBufferFlushTimeLimit)) {
+		(void)ConsumeBufferedWriteCompletionsPending();
+		FlushBuffer();
+		m_nLastCompletedBufferCleanupTime = curTick;
+	}
 	//If data keeps arriving, flush to disk sometimes for extra safety
 	if (m_nFileFlushTime && curTick >= m_nFileFlushTime + SEC2MS(31) && m_hWrite != INVALID_HANDLE_VALUE) {
 		::FlushFileBuffers(m_hWrite);
@@ -5526,6 +5549,16 @@ void CPartFile::DeleteWrittenItems()
 		if (GetPartFileBufferedDataFlushState(*item) == PB_WRITTEN)
 			DeleteWrittenItem(posCurrent);
 	}
+}
+
+bool CPartFile::HasBufferedWriteCompletionsPending() const
+{
+	return ::InterlockedCompareExchange(const_cast<volatile LONG*>(&m_bBufferedWriteCompletionsPending), 0, 0) != 0;
+}
+
+bool CPartFile::ConsumeBufferedWriteCompletionsPending()
+{
+	return ::InterlockedExchange(&m_bBufferedWriteCompletionsPending, 0) != 0;
 }
 
 void CPartFile::SetCategory(UINT cat)

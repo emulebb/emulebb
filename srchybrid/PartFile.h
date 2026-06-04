@@ -393,6 +393,7 @@ public:
 	CMutex	m_FileCompleteMutex;		// Lord KiRon - Mutex for file completion
 	HANDLE	m_hWrite;					// asynchronous part file writing
 	volatile LONG m_iWrites;			// interlocked outstanding async writes; read by main and write-helper threads
+	volatile LONG m_bBufferedWriteCompletionsPending;
 	// WHY: part-file deletion/completion runs on the main thread, but IOCP
 	// completion raises and lowers this guard on the write helper. Interlocked
 	// access preserves the existing lifetime contract without making helper
@@ -400,6 +401,7 @@ public:
 	LONG	GetAsyncWriteCount() const		{ return ::InterlockedCompareExchange(const_cast<volatile LONG*>(&m_iWrites), 0, 0); }
 	LONG	IncrementAsyncWriteCount()		{ return ::InterlockedIncrement(&m_iWrites); }
 	LONG	DecrementAsyncWriteCount()		{ return ::InterlockedDecrement(&m_iWrites); }
+	void	NoteBufferedWriteCompletion()	{ ::InterlockedExchange(&m_bBufferedWriteCompletionsPending, 1); }
 	ULONGLONG m_LastSearchTime;
 	ULONGLONG m_LastSearchTimeKad;
 	uint16	src_stats[4];
@@ -424,6 +426,8 @@ private:
 	void	AddToSharedFiles();
 	void	DeleteWrittenItem(const POSITION pos);
 	void	DeleteWrittenItems();
+	bool	HasBufferedWriteCompletionsPending() const;
+	bool	ConsumeBufferedWriteCompletionsPending();
 	bool	HasDirtyBufferedData() const;
 	bool	HasAsyncWriteReferences() const;
 	bool	WaitForAsyncWriteReferencesToRelease();
@@ -473,6 +477,7 @@ private:
 	ULONGLONG m_lastRefreshedDLDisplay;
 	ULONGLONG m_ullEndgameFastPeerWaitStart;
 	ULONGLONG m_nLastBufferFlushTime;
+	ULONGLONG m_nLastCompletedBufferCleanupTime;
 	ULONGLONG m_nNextMetFlushTime; //update .part.met file
 	ULONGLONG m_nFileFlushTime; //if file is idle long enough, flush new data to disk
 	DWORD	m_dwFileAttributes;

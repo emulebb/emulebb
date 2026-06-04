@@ -347,6 +347,7 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 				ASSERT(GetPartFileBufferedDataFlushState(*pBuffer) == PB_PENDING && nRemainingWrites >= 0);
 				(void)nRemainingWrites;
 				SetPartFileBufferedDataFlushState(*pBuffer, PB_WRITTEN);
+				pFile->NoteBufferedWriteCompletion();
 			} else { //full file allocation
 				ASSERT(dwBytesWritten == 1);
 				DWORD dwAllocationError = ERROR_SUCCESS;

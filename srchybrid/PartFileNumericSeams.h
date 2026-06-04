@@ -11,6 +11,7 @@
 namespace PartFileNumericSeams
 {
 inline constexpr uint64 kBroadbandActiveBufferFlushTimeLimitMs = 10u * 1000u;
+inline constexpr uint64 kBroadbandCompletedWriteCleanupTimeLimitMs = 2u * 1000u;
 
 /**
  * @brief Maximum bounded completion percentage used by the chunk ranking logic.
@@ -162,5 +163,22 @@ inline bool ShouldFlushBeforeBufferedWrite(
 
 	const uint64 nThreshold = GetBufferedDataFlushThreshold(nEffectiveFileBufferSize);
 	return nCurrentBufferedBytes > nThreshold || nIncomingBufferedBytes > nThreshold - nCurrentBufferedBytes;
+}
+
+/**
+ * @brief Reports whether completed async writes should be retired on the current part-file tick.
+ */
+inline bool ShouldCleanupCompletedBufferedWrites(
+	const bool bHasCompletedBufferedWrites,
+	const bool bAutoBroadbandIoEnabled,
+	const uint64 nCurrentTickMs,
+	const uint64 nLastCleanupTickMs,
+	const uint64 nCleanupIntervalMs)
+{
+	if (!bHasCompletedBufferedWrites || !bAutoBroadbandIoEnabled)
+		return false;
+	if (nCleanupIntervalMs == 0 || nLastCleanupTickMs == 0 || nCurrentTickMs < nLastCleanupTickMs)
+		return true;
+	return nCurrentTickMs - nLastCleanupTickMs >= nCleanupIntervalMs;
 }
 }
