@@ -433,6 +433,9 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 	INT_PTR iActiveBufferedPayloadClients = 0;
 	INT_PTR iActiveSocketBacklogClients = 0;
 	INT_PTR iActiveNoRequestNeverAcceptedClients = 0;
+	INT_PTR iActiveNoRequestRecycleEligibleClients = 0;
+	INT_PTR iActiveNoRequestRecycleGraceBlockedClients = 0;
+	INT_PTR iActiveNoRequestRecycleUnderfillBlockedClients = 0;
 	ULONGLONG ullActiveNoRequestAgeSumMs = 0;
 	ULONGLONG ullActiveNoRequestAgeMaxMs = 0;
 	ULONGLONG ullActiveNoRequestLastAcceptedAgeMaxMs = 0;
@@ -440,6 +443,8 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 	ULONGLONG ullCooldownMinMs = 0;
 	ULONGLONG ullCooldownMaxMs = 0;
 	ULONGLONG ullCooldownSumMs = 0;
+	const bool bSustainedBroadbandUnderfill = HasSustainedBroadbandUnderfill(curTick);
+	const ULONGLONG ullNoRequestGraceMs = GetNoRequestUploadRecycleGraceMs(thePrefs.GetZeroUploadRateGraceSeconds());
 	for (POSITION uploadPos = uploadinglist.GetHeadPosition(); uploadPos != NULL;) {
 		const UploadingToClient_Struct *pUploadingClient = uploadinglist.GetNext(uploadPos);
 		CUpDownClient *pActiveClient = pUploadingClient != NULL ? pUploadingClient->m_pClient : NULL;
@@ -447,6 +452,8 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 			continue;
 		INT_PTR iReqBlocks = 0;
 		LONG nPendingIOBlocks = 0;
+		bool bHasAcceptedReqBlock = false;
+		ULONGLONG ullLastAcceptedReqBlockAgeMs = 0;
 		{
 			CSingleLock lockBlockLists(&const_cast<UploadingToClient_Struct*>(pUploadingClient)->m_csBlockListsLock, TRUE);
 			ASSERT(lockBlockLists.IsLocked());
@@ -461,7 +468,8 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 					++iActiveNoRequestNeverAcceptedClients;
 				else {
 					const ULONGLONG ullLastAcceptedReqBlockTick = pUploadingClient->m_ullLastAcceptedReqBlockTick.load();
-					const ULONGLONG ullLastAcceptedReqBlockAgeMs = curTick >= ullLastAcceptedReqBlockTick ? curTick - ullLastAcceptedReqBlockTick : 0;
+					bHasAcceptedReqBlock = true;
+					ullLastAcceptedReqBlockAgeMs = curTick >= ullLastAcceptedReqBlockTick ? curTick - ullLastAcceptedReqBlockTick : 0;
 					if (ullLastAcceptedReqBlockAgeMs > ullActiveNoRequestLastAcceptedAgeMaxMs)
 						ullActiveNoRequestLastAcceptedAgeMaxMs = ullLastAcceptedReqBlockAgeMs;
 				}
@@ -486,9 +494,28 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 				++iActiveNoRequestSocketBacklogClients;
 			if (nPendingIOBlocks == 0 && pActiveClient->GetPayloadInBuffer() == 0 && iSocketQueue == 0) {
 				++iActiveNoRequestDrainedClients;
-				if (pActiveClient->GetUploadDatarate() == 0)
+				if (pActiveClient->GetUploadDatarate() == 0) {
 					++iActiveNoRequestDrainedZeroRateClients;
-				else
+					if (ShouldRecycleNoRequestBroadbandUploadSlot(
+							bSustainedBroadbandUnderfill,
+							pActiveClient->GetFriendSlot(),
+							pActiveClient->GetUploadDatarate(),
+							pActiveClient->GetPayloadInBuffer(),
+							iReqBlocks,
+							nPendingIOBlocks,
+							iSocketQueue,
+							pActiveClient->GetUpStartTimeDelay(),
+							bHasAcceptedReqBlock,
+							ullLastAcceptedReqBlockAgeMs,
+							ullNoRequestGraceMs))
+					{
+						++iActiveNoRequestRecycleEligibleClients;
+					} else if (!bSustainedBroadbandUnderfill) {
+						++iActiveNoRequestRecycleUnderfillBlockedClients;
+					} else if (!pActiveClient->GetFriendSlot()) {
+						++iActiveNoRequestRecycleGraceBlockedClients;
+					}
+				} else
 					++iActiveNoRequestDrainedNonzeroRateClients;
 			}
 		} else
@@ -569,7 +596,7 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		theApp.sharedfiles->GetPublishInstrumentationSnapshot(sharedPublish);
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id activeZeroRate=%Id activeNoRequest=%Id activeNoRequestDrained=%Id activeNoRequestDrainedZeroRate=%Id activeNoRequestDrainedNonzeroRate=%Id activeNoRequestPendingIO=%Id activeNoRequestBufferedPayload=%Id activeNoRequestSocketBacklog=%Id activeNoRequestNeverAccepted=%Id activeNoRequestAgeAvgMs=%I64u activeNoRequestAgeMaxMs=%I64u activeNoRequestLastAcceptedAgeMaxMs=%I64u activeNoRequestZeroMaxMs=%I64u activeQueuedRequests=%Id activePendingIO=%Id activeBufferedPayload=%Id activeSocketBacklog=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u sharedFiles=%Id ed2kPublishedFiles=%u ed2kPendingFiles=%u ed2kPendingLargeUnsupportedFiles=%u ed2kOfferLimit=%u kadPublishReady=%u kadSourceDueFiles=%u kadSourceBackoffFiles=%u kadSourceSearches=%u kadSourceSearchCap=%u kadKeywordSearches=%u kadKeywordSearchCap=%u kadNotesSearches=%u kadNotesSearchCap=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
+		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id activeZeroRate=%Id activeNoRequest=%Id activeNoRequestDrained=%Id activeNoRequestDrainedZeroRate=%Id activeNoRequestDrainedNonzeroRate=%Id activeNoRequestPendingIO=%Id activeNoRequestBufferedPayload=%Id activeNoRequestSocketBacklog=%Id activeNoRequestNeverAccepted=%Id activeNoRequestRecycleEligible=%Id activeNoRequestRecycleGraceBlocked=%Id activeNoRequestRecycleUnderfillBlocked=%Id activeNoRequestAgeAvgMs=%I64u activeNoRequestAgeMaxMs=%I64u activeNoRequestLastAcceptedAgeMaxMs=%I64u activeNoRequestZeroMaxMs=%I64u activeQueuedRequests=%Id activePendingIO=%Id activeBufferedPayload=%Id activeSocketBacklog=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u sharedFiles=%Id ed2kPublishedFiles=%u ed2kPendingFiles=%u ed2kPendingLargeUnsupportedFiles=%u ed2kOfferLimit=%u kadPublishReady=%u kadSourceDueFiles=%u kadSourceBackoffFiles=%u kadSourceSearches=%u kadSourceSearchCap=%u kadKeywordSearches=%u kadKeywordSearchCap=%u kadNotesSearches=%u kadNotesSearchCap=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
 		uploadinglist.GetCount(),
 		m_retiredUploadingList.GetCount(),
 		waitinglist.GetCount(),
@@ -594,6 +621,9 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		iActiveNoRequestBufferedPayloadClients,
 		iActiveNoRequestSocketBacklogClients,
 		iActiveNoRequestNeverAcceptedClients,
+		iActiveNoRequestRecycleEligibleClients,
+		iActiveNoRequestRecycleGraceBlockedClients,
+		iActiveNoRequestRecycleUnderfillBlockedClients,
 		static_cast<uint64>(ullActiveNoRequestAgeAvgMs),
 		static_cast<uint64>(ullActiveNoRequestAgeMaxMs),
 		static_cast<uint64>(ullActiveNoRequestLastAcceptedAgeMaxMs),
