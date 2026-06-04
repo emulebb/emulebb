@@ -248,6 +248,18 @@ inline bool IsProductiveNoRequestUploadRecycle(std::uint64_t ullQueueSessionPayl
 }
 
 /**
+ * @brief Returns the payload floor for treating a drained no-request recycle as productive.
+ */
+inline std::uint64_t GetProductiveNoRequestCooldownPayloadBytes(
+	std::uint32_t uTargetPerSlotBytesPerSec,
+	std::uint64_t ullBasePayloadBytes = kProductiveNoRequestCooldownPayloadBytes)
+{
+	return uTargetPerSlotBytesPerSec > ullBasePayloadBytes
+		? uTargetPerSlotBytesPerSec
+		: ullBasePayloadBytes;
+}
+
+/**
  * @brief Returns the bounded cooldown used after a no-request upload recycle.
  */
 inline std::uint32_t GetNoRequestUploadRetryCooldownSeconds(

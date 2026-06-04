@@ -1323,7 +1323,9 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		// blocks during broadband underfill cannot fill capacity. Recycle that
 		// no-request slot promptly without weakening the broader slow-upload
 		// warmup used for peers that still have local work queued.
-		const bool bProductiveNoRequestRecycle = IsProductiveNoRequestUploadRecycle(client->GetQueueSessionPayloadUp());
+		const bool bProductiveNoRequestRecycle = IsProductiveNoRequestUploadRecycle(
+			client->GetQueueSessionPayloadUp(),
+			GetProductiveNoRequestCooldownPayloadBytes(GetTargetClientDataRateBroadband()));
 		if (ShouldCooldownNoRequestUploadRecycle(false)) {
 			// WHY: no-request sessions can make an initial burst, drain their
 			// pipeline, then immediately re-enter as 0-byte slots. Seed a short
