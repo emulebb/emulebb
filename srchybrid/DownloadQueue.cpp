@@ -58,6 +58,9 @@ static char THIS_FILE[] = __FILE__;
 namespace
 {
 	const ULONGLONG kProtectedVolumeStatusSnapshotMaxAgeMs = 100;
+	constexpr int kLocalServerSourceRequestsPerTcpFrame = 15;
+	constexpr ULONGLONG kLocalServerSourceRequestTcpFrameIntervalMs =
+		SEC2MS(kLocalServerSourceRequestsPerTcpFrame * (16 + 4));
 
 	class CScopedPartFileHashStartupScheduling
 	{
@@ -137,6 +140,14 @@ namespace
 		if (pFile->GetMaxSourcePerFileSoft() <= pFile->GetSourceCount())
 			return false;
 		return !pFile->IsLargeFile() || (pCurrentServer != NULL && pCurrentServer->SupportsLargeFilesTCP());
+	}
+
+	ULONGLONG EstimateLocalServerSourceRequestQueueDrainMs(UINT uEligibleFiles, ULONGLONG ullNextTcpSourceRequestWaitMs)
+	{
+		if (uEligibleFiles == 0)
+			return 0;
+		const UINT uRemainingFrames = (uEligibleFiles - 1) / kLocalServerSourceRequestsPerTcpFrame;
+		return ullNextTcpSourceRequestWaitMs + static_cast<ULONGLONG>(uRemainingFrames) * kLocalServerSourceRequestTcpFrameIntervalMs;
 	}
 
 	bool IsKademliaFileRequestCandidate(const CPartFile *pFile, const ULONGLONG curTick)
@@ -1061,10 +1072,13 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		}
 	}
 	const ULONGLONG ullNextTcpSourceRequestWaitMs = m_dwNextTCPSrcReq > curTick ? m_dwNextTCPSrcReq - curTick : 0;
+	const ULONGLONG ullLocalServerQueueEstimatedDrainMs = EstimateLocalServerSourceRequestQueueDrainMs(
+		uLocalServerQueueEligibleFiles,
+		ullNextTcpSourceRequestWaitMs);
 	const ULONGLONG ullLastUdpSearchAgeMs = m_lastudpsearchtime != 0 && curTick >= m_lastudpsearchtime ? curTick - m_lastudpsearchtime : 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceStarvedLocalQueuedReadyFiles=%u sourceStarvedKadSearchingReadyFiles=%u sourceStarvedKadEligibleReadyFiles=%u sourceStarvedKadDueReadyFiles=%u sourceStarvedKadBackoffReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerQueuedEligibleFiles=%u localServerQueuedSourceStarvedEligibleFiles=%u localServerQueuedDueAgeMaxMs=%I64u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u effectiveFileBufferBytes=%I64u autoBroadbandIO=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u maxBufferedReadyBytes=%I64u maxBufferedPendingBytes=%I64u maxBufferedWrittenBytes=%I64u maxBufferedReadyItems=%u maxBufferedPendingItems=%u maxBufferedWrittenItems=%u asyncWriteFiles=%u maxAsyncWriteRefsPerFile=%ld asyncWriteRefs=%Id protectedDiskBlocked=%u"),
+		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceStarvedLocalQueuedReadyFiles=%u sourceStarvedKadSearchingReadyFiles=%u sourceStarvedKadEligibleReadyFiles=%u sourceStarvedKadDueReadyFiles=%u sourceStarvedKadBackoffReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerQueuedEligibleFiles=%u localServerQueuedSourceStarvedEligibleFiles=%u localServerQueuedDueAgeMaxMs=%I64u localServerQueuedEstimatedDrainMs=%I64u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u effectiveFileBufferBytes=%I64u autoBroadbandIO=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u maxBufferedReadyBytes=%I64u maxBufferedPendingBytes=%I64u maxBufferedWrittenBytes=%I64u maxBufferedReadyItems=%u maxBufferedPendingItems=%u maxBufferedWrittenItems=%u asyncWriteFiles=%u maxAsyncWriteRefsPerFile=%ld asyncWriteRefs=%Id protectedDiskBlocked=%u"),
 		filelist.GetCount(),
 		uReadyFiles,
 		uActiveFiles,
@@ -1097,6 +1111,7 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		uLocalServerQueueEligibleFiles,
 		uLocalServerQueueSourceStarvedEligibleFiles,
 		static_cast<uint64>(ullLocalServerQueueDueAgeMaxMs),
+		static_cast<uint64>(ullLocalServerQueueEstimatedDrainMs),
 		uLocalServerQueuedReadyFiles,
 		static_cast<uint64>(ullNextTcpSourceRequestWaitMs),
 		static_cast<UINT>(cur_udpserver != NULL),
@@ -2211,9 +2226,8 @@ void CDownloadQueue::ProcessLocalRequests()
 			return;
 
 		CSafeMemFile dataTcpFrame(22);
-		const int iMaxFilesPerTcpFrame = 15;
 		int iFiles = 0;
-		while (!m_localServerReqQueue.IsEmpty() && iFiles < iMaxFilesPerTcpFrame) {
+		while (!m_localServerReqQueue.IsEmpty() && iFiles < kLocalServerSourceRequestsPerTcpFrame) {
 			// find the source-starved file that can make the best use of the next paced request
 			int iBestValidSources = (std::numeric_limits<int>::max)();
 			UINT uBestSourceCount = _UI32_MAX;
@@ -2283,7 +2297,7 @@ void CDownloadQueue::ProcessLocalRequests()
 
 				Packet packet(smPacket, OP_EDONKEYPROT, byOpcode);
 				if (thePrefs.GetDebugServerTCPLevel() > 0)
-					Debug(_T(">>> Sending OP_GetSources%s(%2u/%2u); %s\n"), (byOpcode == OP_GETSOURCES) ? _T("") : _T("_OBFU"), iFiles, iMaxFilesPerTcpFrame, (LPCTSTR)DbgGetFileInfo(cur_file->GetFileHash()));
+					Debug(_T(">>> Sending OP_GetSources%s(%2u/%2u); %s\n"), (byOpcode == OP_GETSOURCES) ? _T("") : _T("_OBFU"), iFiles, kLocalServerSourceRequestsPerTcpFrame, (LPCTSTR)DbgGetFileInfo(cur_file->GetFileHash()));
 				dataTcpFrame.Write(packet.GetPacket(), packet.GetRealPacketSize());
 
 				if (thePrefs.GetDebugSourceExchange())
@@ -2294,7 +2308,7 @@ void CDownloadQueue::ProcessLocalRequests()
 		int iSize = (int)dataTcpFrame.GetLength();
 		if (iSize > 0) {
 			// create one 'packet' which contains all buffered OP_GETSOURCES eD2K packets to be sent with one TCP frame
-			// server credits: 16 * iMaxFilesPerTcpFrame + 1 = 241
+			// server credits: 16 * kLocalServerSourceRequestsPerTcpFrame + 1 = 241
 			Packet *packet = new Packet(new char[iSize], (uint32)dataTcpFrame.GetLength(), true, false);
 			dataTcpFrame.Seek(0, CFile::begin);
 			dataTcpFrame.Read(packet->GetPacket(), iSize);
@@ -2304,7 +2318,7 @@ void CDownloadQueue::ProcessLocalRequests()
 
 		if (iFiles > 0) {
 			// next TCP frame with up to 15 source requests is allowed to be sent in
-			m_dwNextTCPSrcReq = curTick + SEC2MS(iMaxFilesPerTcpFrame * (16 + 4));
+			m_dwNextTCPSrcReq = curTick + kLocalServerSourceRequestTcpFrameIntervalMs;
 		}
 	}
 }
