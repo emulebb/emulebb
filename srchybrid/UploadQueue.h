@@ -217,6 +217,7 @@ private:
 	bool	ApplyUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick);
 	bool	HasUploadAdmissionCandidate(ULONGLONG curTick);
 	bool	HasUploadCooldownProbeCandidate(ULONGLONG curTick);
+	bool	CanProbeUploadCooldownCandidate(CUpDownClient *client, ULONGLONG curTick) const;
 	void	SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, UploadRetryCooldownReason eReason);
 	bool	HasRecentNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick) const;
 	void	SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, ULONGLONG ullTrackUntil, bool bProductiveRecycle);

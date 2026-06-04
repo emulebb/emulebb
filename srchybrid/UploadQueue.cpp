@@ -217,7 +217,7 @@ CUpDownClient* CUploadQueue::FindBestClientInQueue()
 				const ULONGLONG ullCooldownRemaining = cur_client->GetSlowUploadCooldownRemaining();
 				const uint32 cur_score = cur_client->GetScore(false);
 				if (bAllowCooldownProbe
-					&& ullCooldownRemaining != 0
+					&& CanProbeUploadCooldownCandidate(cur_client, curTick)
 					&& (ullCooldownRemaining < ullBestCooldownProbeRemaining
 						|| (ullCooldownRemaining == ullBestCooldownProbeRemaining && PreferHigherUploadQueueScore(cur_score, bestCooldownProbeScore))))
 				{
@@ -1001,12 +1001,37 @@ bool CUploadQueue::HasUploadCooldownProbeCandidate(ULONGLONG curTick)
 			continue;
 		}
 		if (!IsUploadQueueAdmissionCandidate(ApplyUploadRetryCooldown(cur_client, curTick) || cur_client->IsInSlowUploadCooldown())
-			&& cur_client->GetSlowUploadCooldownRemaining() != 0)
+			&& CanProbeUploadCooldownCandidate(cur_client, curTick))
 		{
 			return true;
 		}
 	}
 	return false;
+}
+
+bool CUploadQueue::CanProbeUploadCooldownCandidate(CUpDownClient *client, ULONGLONG curTick) const
+{
+	if (client == NULL || client->GetSlowUploadCooldownRemaining() == 0)
+		return false;
+
+	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
+	if (dwCooldownIP == 0)
+		return true;
+
+	const std::map<uint32, NoRequestUploadRetryCooldownState>::const_iterator itNoRequest =
+		m_noRequestUploadRetryCooldownByIP.find(dwCooldownIP);
+	if (itNoRequest != m_noRequestUploadRetryCooldownByIP.end()
+		&& itNoRequest->second.ullCooldownUntil > curTick
+		&& !itNoRequest->second.bProductiveRecycle)
+	{
+		// WHY: an unproductive no-request recycle means the peer consumed a
+		// broadband slot without ever proving block demand. Let valid queued
+		// block requests clear this cooldown, but do not spend underfill probe
+		// slots on the same peer before it asks for work.
+		return false;
+	}
+
+	return true;
 }
 
 void CUploadQueue::SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, UploadRetryCooldownReason eReason)
