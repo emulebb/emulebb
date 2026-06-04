@@ -16,7 +16,7 @@ inline constexpr std::uint32_t kNoRequestUploadCooldownMaxSeconds = 30u;
 inline constexpr std::uint32_t kProductiveNoRequestUploadCooldownMaxSeconds = 10u;
 inline constexpr std::uint32_t kNoRequestUploadRecycleGraceMaxSeconds = 5u;
 inline constexpr std::uint32_t kUploadChurnRetryCooldownMaxSeconds = 120u;
-inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = kUploadChurnRetryCooldownMaxSeconds;
+inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = kNoRequestUploadCooldownMaxSeconds;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = 184320u;
 
 enum UploadQueueEntryAccessState
