@@ -15,6 +15,7 @@ inline constexpr std::uint64_t kShortFailedUploadCooldownMaxPayloadBytes = 1024u
 inline constexpr std::uint32_t kNoRequestUploadCooldownMaxSeconds = 30u;
 inline constexpr std::uint32_t kProductiveNoRequestUploadCooldownMaxSeconds = 10u;
 inline constexpr std::uint32_t kNoRequestUploadRecycleGraceMaxSeconds = 5u;
+inline constexpr std::uint32_t kStalledUploadRecycleGraceMaxSeconds = 15u;
 inline constexpr std::uint32_t kUploadChurnRetryCooldownMaxSeconds = 120u;
 inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = kNoRequestUploadCooldownMaxSeconds;
 inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 5000u;
@@ -230,6 +231,15 @@ inline std::uint64_t GetNoRequestUploadRecycleGraceMs(
 	return static_cast<std::uint64_t>(uConfiguredGraceSeconds < uMaxNoRequestGraceSeconds
 		? uConfiguredGraceSeconds
 		: uMaxNoRequestGraceSeconds) * 1000ui64;
+}
+
+inline std::uint64_t GetStalledUploadRecycleGraceMs(
+	std::uint32_t uConfiguredGraceSeconds,
+	std::uint32_t uMaxStalledGraceSeconds = kStalledUploadRecycleGraceMaxSeconds)
+{
+	return static_cast<std::uint64_t>(uConfiguredGraceSeconds < uMaxStalledGraceSeconds
+		? uConfiguredGraceSeconds
+		: uMaxStalledGraceSeconds) * 1000ui64;
 }
 
 inline bool IsProductiveNoRequestUploadRecycle(std::uint64_t ullQueueSessionPayloadBytes, std::uint64_t ullProductivePayloadBytes = kProductiveNoRequestCooldownPayloadBytes)

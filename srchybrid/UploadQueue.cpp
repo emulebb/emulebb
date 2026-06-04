@@ -1305,6 +1305,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 	const INT_PTR iSocketQueue = sock != NULL ? sock->DbgGetStdQueueCount() : -1;
 	const ULONGLONG ullZeroGraceMs = SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds());
 	const ULONGLONG ullNoRequestGraceMs = GetNoRequestUploadRecycleGraceMs(thePrefs.GetZeroUploadRateGraceSeconds());
+	const ULONGLONG ullStalledGraceMs = GetStalledUploadRecycleGraceMs(thePrefs.GetZeroUploadRateGraceSeconds());
 	if (ShouldRecycleNoRequestBroadbandUploadSlot(
 			true,
 			false,
@@ -1349,10 +1350,6 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		client->ResetSlowUploadTracking();
 		return true;
 	}
-	if (!HasCompletedSlowUploadWarmup(client)) {
-		client->ResetSlowUploadTracking();
-		return false;
-	}
 
 	const bool bLocalSendPipelineIdle = client->GetUploadDatarate() == 0
 		&& client->GetPayloadInBuffer() == 0
@@ -1364,16 +1361,19 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		&& (client->GetPayloadInBuffer() > 0 || iReqBlocks > 0 || iSocketQueue > 0);
 	// WHY: under sustained broadband underfill, a zero-rate slot with either no
 	// local work or unsent queued work is not contributing capacity. Keep disk IO
-	// in flight out of this path, but let the normal zero-rate grace protect
-	// short socket stalls before replacing the peer or reopening admission room.
+	// in flight out of this path. Stalled queued data uses a bounded broadband
+	// grace so bad peers cannot hold capacity for the full generic warmup window.
 	if (bLocalSendPipelineIdle || bLocalSendPipelineStalled)
 		client->UpdateSlowUploadTracking(curTick, GetSlowUploadRateThreshold());
 	else
 		client->ResetSlowUploadTracking();
 
+	const bool bSlowUploadWarmupComplete = HasCompletedSlowUploadWarmup(client);
+	const bool bStalledRecycleWarmupComplete = bSlowUploadWarmupComplete
+		|| (bLocalSendPipelineStalled && client->GetAccumulatedZeroUploadMs() >= ullStalledGraceMs);
 	const bool bShouldRecycleIdle = ShouldRecycleIdleBroadbandUploadSlot(
 		true,
-		true,
+		bSlowUploadWarmupComplete,
 		false,
 		client->GetUploadDatarate(),
 		client->GetPayloadInBuffer(),
@@ -1384,7 +1384,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		ullZeroGraceMs);
 	const bool bShouldRecycleStalled = ShouldRecycleStalledBroadbandUploadSlot(
 		true,
-		true,
+		bStalledRecycleWarmupComplete,
 		false,
 		HasStalledUploadReplacementPressure(!waitinglist.IsEmpty(), uploadinglist.GetCount(), GetSoftMaxUploadSlots()),
 		client->GetUploadDatarate(),
@@ -1393,7 +1393,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		nPendingIOBlocks,
 		iSocketQueue,
 		client->GetAccumulatedZeroUploadMs(),
-		ullZeroGraceMs);
+		ullStalledGraceMs);
 	if (!bShouldRecycleIdle && !bShouldRecycleStalled)
 		return false;
 

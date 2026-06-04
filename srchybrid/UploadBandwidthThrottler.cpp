@@ -26,6 +26,7 @@
 #include "UploadDiskIOThread.h"
 #include "log.h"
 #include "HelperThreadLaunchSeams.h"
+#include "UploadBandwidthThrottlerSeams.h"
 
 #include <new>
 
@@ -210,13 +211,13 @@ void UploadBandwidthThrottler::QueueForSendingControlPacket(ThrottledControlSock
  */
 void UploadBandwidthThrottler::RemoveFromAllQueuesNoLock(ThrottledControlSocket *socket)
 {
-	// Remove this socket from control packet queue
-	m_ControlQueue_list.remove(socket);
-	m_ControlQueueFirst_list.remove(socket);
-
 	CSingleLock lockTempQueue(&tempQueueLocker, TRUE);
-	m_TempControlQueue_list.remove(socket);
-	m_TempControlQueueFirst_list.remove(socket);
+	(void)UploadBandwidthThrottlerSeams::RemoveSocketFromAllControlQueues(
+		m_ControlQueueFirst_list,
+		m_ControlQueue_list,
+		m_TempControlQueueFirst_list,
+		m_TempControlQueue_list,
+		socket);
 }
 
 void UploadBandwidthThrottler::RemoveFromAllQueues(ThrottledFileSocket *socket)
@@ -481,22 +482,21 @@ UINT UploadBandwidthThrottler::RunInternal()
 				// WHY: keep lock ordering explicit while using RAII for both
 				// queue locks; socket removal takes queueLocker and then
 				// tempQueueLocker, so the throttler loop must preserve that order.
-				m_ControlQueueFirst_list.splice(m_ControlQueueFirst_list.cend(), m_TempControlQueueFirst_list);
-				m_ControlQueue_list.splice(m_ControlQueue_list.cend(), m_TempControlQueue_list);
+				UploadBandwidthThrottlerSeams::MergePendingControlQueues(
+					m_ControlQueueFirst_list,
+					m_ControlQueue_list,
+					m_TempControlQueueFirst_list,
+					m_TempControlQueue_list);
 			}
 
 			// Send any queued up control packets first
 			while ((bytesToSpend > 0 && spentBytes < (uint64)bytesToSpend || allowedDataRate == 0 && spentBytes < 500)
 				&& (!m_ControlQueueFirst_list.empty() || !m_ControlQueue_list.empty()))
 			{
-				ThrottledControlSocket *socket;
-				if (!m_ControlQueueFirst_list.empty()) {
-					socket = m_ControlQueueFirst_list.front();
-					m_ControlQueueFirst_list.pop_front();
-				} else if (!m_ControlQueue_list.empty()) {
-					socket = m_ControlQueue_list.front();
-					m_ControlQueue_list.pop_front();
-				} else
+				ThrottledControlSocket *socket = UploadBandwidthThrottlerSeams::PopNextControlSocket(
+					m_ControlQueueFirst_list,
+					m_ControlQueue_list);
+				if (socket == NULL)
 					break;
 
 				if (socket != NULL) {
@@ -606,11 +606,13 @@ UINT UploadBandwidthThrottler::RunInternal()
 		CSingleLock lockQueue(&queueLocker, TRUE);
 		{
 			CSingleLock lockTempQueue(&tempQueueLocker, TRUE);
-			m_TempControlQueue_list.clear();
-			m_TempControlQueueFirst_list.clear();
+			UploadBandwidthThrottlerSeams::ClearAllControlQueues(
+				m_ControlQueueFirst_list,
+				m_ControlQueue_list,
+				m_TempControlQueueFirst_list,
+				m_TempControlQueue_list);
 		}
 
-		m_ControlQueue_list.clear();
 		m_StandardOrder_list.RemoveAll();
 	}
 
