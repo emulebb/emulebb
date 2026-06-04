@@ -896,6 +896,11 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 	UINT uReadyFiles = 0;
 	UINT uActiveFiles = 0;
 	UINT uSourceStarvedReadyFiles = 0;
+	UINT uSourceStarvedLocalQueuedReadyFiles = 0;
+	UINT uSourceStarvedKadSearchingReadyFiles = 0;
+	UINT uSourceStarvedKadEligibleReadyFiles = 0;
+	UINT uSourceStarvedKadDueReadyFiles = 0;
+	UINT uSourceStarvedKadBackoffReadyFiles = 0;
 	UINT uSourceThinReadyFiles = 0;
 	UINT uSourceRichReadyFiles = 0;
 	UINT uA4AFReadyFiles = 0;
@@ -942,7 +947,8 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		const int iFileValidSources = cur_file->GetValidSourcesCount();
 		if (bReadyFile) {
 			++uReadyFiles;
-			if (iFileValidSources <= 0)
+			const bool bSourceStarvedFile = iFileValidSources <= 0;
+			if (bSourceStarvedFile)
 				++uSourceStarvedReadyFiles;
 			else if (iFileValidSources < 3)
 				++uSourceThinReadyFiles;
@@ -950,16 +956,28 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 				++uSourceRichReadyFiles;
 			if (cur_file->GetSrcA4AFCount() > 0)
 				++uA4AFReadyFiles;
-			if (cur_file->m_bLocalSrcReqQueued)
+			if (cur_file->m_bLocalSrcReqQueued) {
 				++uLocalServerQueuedReadyFiles;
-			if (cur_file->GetKadFileSearchID() != 0)
+				if (bSourceStarvedFile)
+					++uSourceStarvedLocalQueuedReadyFiles;
+			}
+			if (cur_file->GetKadFileSearchID() != 0) {
 				++uKadSearchingReadyFiles;
-			else if (cur_file->GetMaxSourcePerFileUDP() > cur_file->GetSourceCount()) {
+				if (bSourceStarvedFile)
+					++uSourceStarvedKadSearchingReadyFiles;
+			} else if (cur_file->GetMaxSourcePerFileUDP() > cur_file->GetSourceCount()) {
 				++uKadEligibleReadyFiles;
-				if (curTick >= cur_file->m_LastSearchTimeKad)
+				if (bSourceStarvedFile)
+					++uSourceStarvedKadEligibleReadyFiles;
+				if (curTick >= cur_file->m_LastSearchTimeKad) {
 					++uKadDueReadyFiles;
-				else
+					if (bSourceStarvedFile)
+						++uSourceStarvedKadDueReadyFiles;
+				} else {
 					++uKadBackoffReadyFiles;
+					if (bSourceStarvedFile)
+						++uSourceStarvedKadBackoffReadyFiles;
+				}
 			}
 		}
 		if (cur_file->GetTransferringSrcCount() > 0)
@@ -1014,11 +1032,16 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 	const ULONGLONG ullLastUdpSearchAgeMs = m_lastudpsearchtime != 0 && curTick >= m_lastudpsearchtime ? curTick - m_lastudpsearchtime : 0;
 
 	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u asyncWriteRefs=%Id protectedDiskBlocked=%u"),
+		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceStarvedLocalQueuedReadyFiles=%u sourceStarvedKadSearchingReadyFiles=%u sourceStarvedKadEligibleReadyFiles=%u sourceStarvedKadDueReadyFiles=%u sourceStarvedKadBackoffReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u asyncWriteRefs=%Id protectedDiskBlocked=%u"),
 		filelist.GetCount(),
 		uReadyFiles,
 		uActiveFiles,
 		uSourceStarvedReadyFiles,
+		uSourceStarvedLocalQueuedReadyFiles,
+		uSourceStarvedKadSearchingReadyFiles,
+		uSourceStarvedKadEligibleReadyFiles,
+		uSourceStarvedKadDueReadyFiles,
+		uSourceStarvedKadBackoffReadyFiles,
 		uSourceThinReadyFiles,
 		uSourceRichReadyFiles,
 		uA4AFReadyFiles,
