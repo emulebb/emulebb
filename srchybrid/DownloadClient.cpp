@@ -78,6 +78,7 @@ bool IsDownloadSlotInstrumentationHighVolumeReason(LPCTSTR pszReason)
 			|| _tcscmp(pszReason, _T("block-reserved")) == 0
 			|| _tcscmp(pszReason, _T("block-reserve-empty")) == 0
 			|| _tcscmp(pszReason, _T("block-reserve-skipped-pending-growth")) == 0
+			|| _tcscmp(pszReason, _T("block-cleared-duplicate-complete")) == 0
 			|| _tcscmp(pszReason, _T("packet-zero-write")) == 0
 			|| _tcscmp(pszReason, _T("request-empty-nnp")) == 0
 			|| _tcscmp(pszReason, _T("request-sent")) == 0
@@ -1396,25 +1397,40 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 			}
 		}
 
-		// These checks only need to be done if any data was written
-		// Also, asynchronous writing allows tricks such as disconnecting from client while
-		// file data is being in buffers.
-		// Hence additional checks.
-		if (lenWritten > 0 && !m_PendingBlocks_list.IsEmpty() && cur_block->block) {
-			m_nTransferredDown += uTransferredFileDataSize;
-			m_nCurSessionPayloadDown += lenWritten;
+		// WHY: Another faster source or buffered write can complete the range
+		// while this peer is still sending a previously valid request. If the
+		// duplicate stream reaches the reserved block tail, retire the stale
+		// pending request so the slot can ask for useful data immediately.
+		const bool bCompletedDuplicateBlock = !packed
+			&& lenWritten == 0
+			&& cur_block->block != NULL
+			&& nEndPos == cur_block->block->EndOffset
+			&& m_reqfile->IsComplete(nStartPos, nEndPos);
+
+		// These checks only need to be done if any data was written or if a
+		// duplicate packet proves that the pending block is already complete.
+		// Also, asynchronous writing allows tricks such as disconnecting from
+		// client while file data is being in buffers. Hence additional checks.
+		if ((lenWritten > 0 || bCompletedDuplicateBlock) && !m_PendingBlocks_list.IsEmpty() && cur_block->block) {
+			if (lenWritten > 0) {
+				m_nTransferredDown += uTransferredFileDataSize;
+				m_nCurSessionPayloadDown += lenWritten;
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
-			m_ullDownloadBlockPayloadBytesWritten += lenWritten;
+				m_ullDownloadBlockPayloadBytesWritten += lenWritten;
 #endif
-			cur_block->block->transferred += lenWritten; //cur_block->block was invalid!
-			SetTransferredDownMini();
+				cur_block->block->transferred += lenWritten; //cur_block->block was invalid!
+				SetTransferredDownMini();
+			}
 
 			// If finished reserved block
 			if (nEndPos == cur_block->block->EndOffset) {
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
-				++m_ullDownloadBlockRequestsCompleted;
-				m_ullDownloadLastCompletedBlockTick = ::GetTickCount64();
-				LogDownloadSlotInstrumentation(_T("block-complete"), -1, uTransferredFileDataSize, lenWritten);
+				if (lenWritten > 0) {
+					++m_ullDownloadBlockRequestsCompleted;
+					m_ullDownloadLastCompletedBlockTick = ::GetTickCount64();
+					LogDownloadSlotInstrumentation(_T("block-complete"), -1, uTransferredFileDataSize, lenWritten);
+				} else
+					LogDownloadSlotInstrumentation(_T("block-cleared-duplicate-complete"), -1, uTransferredFileDataSize, lenWritten);
 #endif
 				m_PendingBlocks_list.RemoveAt(posLast);
 				ClearPendingBlockRequest(cur_block);
