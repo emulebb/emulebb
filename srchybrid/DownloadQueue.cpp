@@ -127,6 +127,17 @@ namespace
 			DownloadQueueDiskSpaceSeams::NormalizeRequiredFreeSpacePathCacheKey(static_cast<LPCTSTR>(strPath));
 		return CString(strKey.c_str());
 	}
+
+	bool ShouldSendLocalServerSourceRequest(const CPartFile *pFile, const CServer *pCurrentServer)
+	{
+		if (pFile == NULL)
+			return false;
+		if (!inSet(pFile->GetStatus(), PS_READY, PS_EMPTY))
+			return false;
+		if (pFile->GetMaxSourcePerFileSoft() <= pFile->GetSourceCount())
+			return false;
+		return !pFile->IsLargeFile() || (pCurrentServer != NULL && pCurrentServer->SupportsLargeFilesTCP());
+	}
 }
 
 CDownloadQueue::CDownloadQueue()
@@ -2114,6 +2125,10 @@ void CDownloadQueue::ProcessLocalRequests()
 {
 	const ULONGLONG curTick = ::GetTickCount64();
 	if (!m_localServerReqQueue.IsEmpty() && curTick >= m_dwNextTCPSrcReq) {
+		const CServer *pCurrentServer = theApp.serverconnect->GetCurrentServer();
+		if (!theApp.serverconnect->IsConnected() || pCurrentServer == NULL)
+			return;
+
 		CSafeMemFile dataTcpFrame(22);
 		const int iMaxFilesPerTcpFrame = 15;
 		int iFiles = 0;
@@ -2125,7 +2140,7 @@ void CDownloadQueue::ProcessLocalRequests()
 			for (POSITION pos = m_localServerReqQueue.GetHeadPosition(); pos != NULL;) {
 				POSITION pos2 = pos;
 				CPartFile *cur_file = m_localServerReqQueue.GetNext(pos);
-				if (cur_file->GetStatus() == PS_READY || cur_file->GetStatus() == PS_EMPTY) {
+				if (ShouldSendLocalServerSourceRequest(cur_file, pCurrentServer)) {
 					uint8 nPriority = cur_file->GetDownPriority();
 					if (nPriority > PR_HIGH) {
 						ASSERT(0);
@@ -2145,7 +2160,11 @@ void CDownloadQueue::ProcessLocalRequests()
 					m_localServerReqQueue.RemoveAt(pos2);
 					cur_file->m_bLocalSrcReqQueued = false;
 					if (thePrefs.GetDebugSourceExchange())
-						AddDebugLogLine(false, _T("SXSend: Local server source request for file \"%s\" not sent because of status '%s'"), (LPCTSTR)cur_file->GetFileName(), (LPCTSTR)cur_file->getPartfileStatus());
+						AddDebugLogLine(false, _T("SXSend: Local server source request for file \"%s\" not sent because it is no longer eligible (status '%s', sources %u/%u)"),
+							(LPCTSTR)cur_file->GetFileName(),
+							(LPCTSTR)cur_file->getPartfileStatus(),
+							cur_file->GetSourceCount(),
+							cur_file->GetMaxSourcePerFileSoft());
 				}
 			}
 
@@ -2154,12 +2173,6 @@ void CDownloadQueue::ProcessLocalRequests()
 				cur_file->m_bLocalSrcReqQueued = false;
 				cur_file->m_LastSearchTime = curTick;
 				m_localServerReqQueue.RemoveAt(posNextRequest);
-
-				if (cur_file->IsLargeFile() && (theApp.serverconnect->GetCurrentServer() == NULL || !theApp.serverconnect->GetCurrentServer()->SupportsLargeFilesTCP())) {
-					ASSERT(0);
-					DebugLogError(_T("Large file (%s) on local request queue for server without support for large files"), (LPCTSTR)cur_file->GetFileName());
-					continue;
-				}
 
 				++iFiles;
 
@@ -2200,8 +2213,10 @@ void CDownloadQueue::ProcessLocalRequests()
 			theApp.serverconnect->SendPacket(packet);
 		}
 
-		// next TCP frame with up to 15 source requests is allowed to be sent in
-		m_dwNextTCPSrcReq = curTick + SEC2MS(iMaxFilesPerTcpFrame * (16 + 4));
+		if (iFiles > 0) {
+			// next TCP frame with up to 15 source requests is allowed to be sent in
+			m_dwNextTCPSrcReq = curTick + SEC2MS(iMaxFilesPerTcpFrame * (16 + 4));
+		}
 	}
 }
 
