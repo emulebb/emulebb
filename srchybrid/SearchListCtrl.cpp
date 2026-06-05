@@ -1803,6 +1803,12 @@ void CSearchListCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		return;
 	}
 
+	if (nChar == VK_INSERT && !bCtrlDown && !bAltDown && !bShiftDown) {
+		theApp.emuledlg->searchwnd->DownloadSelected();
+		GetNextSelectableItem();
+		return;
+	}
+
 	const UINT uCommand = FileListKeyboardShortcutsSeams::ClassifyKeyMessage(
 		FileListKeyboardShortcutsSeams::EContext::SearchResults,
 		WM_KEYDOWN,
