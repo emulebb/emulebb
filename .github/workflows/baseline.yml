@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   baseline:
     uses: emulebb/emulebb-tooling/.github/workflows/reusable-baseline.yml@ci/v8
