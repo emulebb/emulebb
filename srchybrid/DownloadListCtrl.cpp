@@ -69,12 +69,62 @@ namespace
 	constexpr int DOWNLOAD_COLUMN_TRUST = 9;
 	const UINT_PTR kVideoThumbnailTimerId = 0xE072;
 	const TCHAR kVideoThumbnailCacheFolder[] = _T("VideoThumbnails\\");
+	const int kDownloadInfoTipMaxLineChars = 120;
 
 	uint32 GetClientGeoIP(const CUpDownClient* client)
 	{
 		if (client == NULL)
 			return 0;
 		return client->GetIP() != 0 ? client->GetIP() : client->GetConnectIP();
+	}
+
+	CString WrapDownloadInfoTipLine(const CString &rstrLine)
+	{
+		if (rstrLine.GetLength() <= kDownloadInfoTipMaxLineChars
+			|| rstrLine == _T("<br>")
+			|| rstrLine == _T("<br_head>"))
+		{
+			return rstrLine;
+		}
+
+		CString strWrapped;
+		int iStart = 0;
+		while (rstrLine.GetLength() - iStart > kDownloadInfoTipMaxLineChars) {
+			const int iLimit = iStart + kDownloadInfoTipMaxLineChars;
+			int iBreak = -1;
+			for (int i = iLimit; i > iStart + (kDownloadInfoTipMaxLineChars / 2); --i) {
+				const TCHAR ch = rstrLine[i];
+				if (_istspace(ch) != 0 || ch == _T('-') || ch == _T(',') || ch == _T(')')) {
+					iBreak = i;
+					break;
+				}
+			}
+			if (iBreak < 0)
+				iBreak = iLimit;
+
+			const bool bSkipBreakChar = _istspace(rstrLine[iBreak]) != 0;
+			const int iSegmentEnd = bSkipBreakChar ? iBreak : iBreak + 1;
+			strWrapped += rstrLine.Mid(iStart, iSegmentEnd - iStart);
+			strWrapped.TrimRight();
+			strWrapped += _T('\n');
+
+			iStart = iSegmentEnd;
+			while (iStart < rstrLine.GetLength() && _istspace(rstrLine[iStart]) != 0)
+				++iStart;
+		}
+		strWrapped += rstrLine.Mid(iStart);
+		return strWrapped;
+	}
+
+	CString WrapDownloadInfoTipText(const CString &rstrInfo)
+	{
+		CString strWrapped;
+		for (int iPos = 0; iPos >= 0;) {
+			if (!strWrapped.IsEmpty())
+				strWrapped += _T('\n');
+			strWrapped += WrapDownloadInfoTipLine(GetNextString(rstrInfo, _T('\n'), iPos));
+		}
+		return strWrapped;
 	}
 
 	bool IsSourceCtrlItem(const CtrlItem_Struct *item)
@@ -3705,6 +3755,7 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 			if (!bPreviewBitmapHandled)
 				m_tooltip.SetPreviewBitmap(NULL, 0);
 
+			info = WrapDownloadInfoTipText(info);
 			info += TOOLTIP_AUTOFORMAT_SUFFIX_CH;
 			_tcsncpy_s(pGetInfoTip->pszText, pGetInfoTip->cchTextMax, info, _TRUNCATE);
 		}
