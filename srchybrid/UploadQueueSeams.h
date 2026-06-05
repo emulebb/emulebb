@@ -17,8 +17,8 @@ inline constexpr std::uint32_t kProductiveNoRequestUploadCooldownMaxSeconds = 10
 inline constexpr std::uint32_t kNoRequestUploadRecycleGraceMaxSeconds = 5u;
 inline constexpr std::uint32_t kStalledUploadRecycleGraceMaxSeconds = 15u;
 inline constexpr std::uint32_t kUploadChurnRetryCooldownMaxSeconds = 120u;
-inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = 360u;
-inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 1000u;
+inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = 180u;
+inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 30000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownProbeRemainingMs = 5000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = 184320u;
 
