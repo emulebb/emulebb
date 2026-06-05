@@ -1522,17 +1522,12 @@ void CSharedFileList::OnSharedHashQueuePossiblyDrained()
 
 void CSharedFileList::InvalidateStartupCachesAfterInterruptedHashing(const std::unordered_set<std::wstring> &rInterruptedDirectoryKeys)
 {
+	UNREFERENCED_PARAMETER(rInterruptedDirectoryKeys);
 	{
 		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
 		if (m_bStartupCacheInvalidatedByInterruptedHashing)
 			return;
 	}
-
-	// WHY: interrupted hash directories have incomplete known-file coverage, but
-	// unrelated shared directories are already fully scanned. Persisting only the
-	// stable records lets the next launch reuse the warm cache without trusting a
-	// directory whose new hash work was discarded during shutdown.
-	const bool bPartialStartupCachePersisted = PersistStartupCacheAfterInterruptedHashing(rInterruptedDirectoryKeys);
 
 	{
 		CSingleLock stateLock(&m_mutStartupCacheSave, TRUE);
@@ -1543,9 +1538,10 @@ void CSharedFileList::InvalidateStartupCachesAfterInterruptedHashing(const std::
 	m_startupCacheRecords.clear();
 	m_startupCacheVolumes.clear();
 	m_startupCacheVolumeValidation.clear();
-	(void)PersistDuplicatePathCacheAfterInterruptedHashing();
-	const bool bStartupCacheRemoved = bPartialStartupCachePersisted ? false : LongPathSeams::DeleteFileIfExists(GetStartupCachePath());
-	NoteStartupCacheLoadResult(false, false, true, bStartupCacheRemoved, bPartialStartupCachePersisted ? "interrupted_hashing_partial" : "interrupted_hashing", 0, 0);
+	m_duplicateSharedPathRecords.clear();
+	const bool bStartupCacheRemoved = LongPathSeams::DeleteFileIfExists(GetStartupCachePath());
+	(void)LongPathSeams::DeleteFileIfExists(GetDuplicatePathCachePath());
+	NoteStartupCacheLoadResult(false, false, true, bStartupCacheRemoved, "interrupted_hashing", 0, 0);
 }
 
 bool CSharedFileList::IsSharedHashInFlight(const CString &strDirectory, const CString &strName) const
