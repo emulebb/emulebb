@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_set>
 #include <vector>
 
 #include <afxtempl.h>
@@ -41,6 +42,102 @@ inline bool ListContainsEquivalentPath(const CStringList &rList, const CString &
 inline bool IsSharedDirectoryListed(const CStringList &rList, const CString &rstrPath)
 {
 	return ListContainsEquivalentPath(rList, rstrPath);
+}
+
+struct SharedDirectoryResponseState
+{
+	std::unordered_set<std::wstring> sharedDirectoryKeys;
+	std::unordered_set<std::wstring> emittedDirectoryKeys;
+	std::unordered_set<std::wstring> emittedPseudoNameKeys;
+	UINT uDuplicateDirectoryCount = 0;
+	UINT uPseudoNameCollisionCount = 0;
+	UINT uUnlistedDirectoryCount = 0;
+};
+
+/**
+ * @brief Builds the exact lexical key used by shared-directory response generation.
+ */
+inline std::wstring MakeSharedDirectoryResponseLookupKey(const CString &rstrDirectory)
+{
+	return std::wstring(MakeSharedDirectoryLookupKey(rstrDirectory));
+}
+
+/**
+ * @brief Builds the uniqueness key for one pseudo directory name.
+ */
+inline std::wstring MakeSharedDirectoryResponsePseudoNameKey(CString strPseudoName)
+{
+	return std::wstring(strPseudoName);
+}
+
+/**
+ * @brief Adds one directory that may be advertised in a shared-directory response.
+ */
+inline void AddSharedDirectoryResponseRoot(SharedDirectoryResponseState &rState, const CString &rstrDirectory)
+{
+	if (rstrDirectory.IsEmpty())
+		return;
+	rState.sharedDirectoryKeys.insert(MakeSharedDirectoryResponseLookupKey(rstrDirectory));
+}
+
+/**
+ * @brief Reports whether a directory is part of the request-local shared-directory response snapshot.
+ */
+inline bool IsSharedDirectoryResponseRootListed(const SharedDirectoryResponseState &rState, const CString &rstrDirectory)
+{
+	return rState.sharedDirectoryKeys.find(MakeSharedDirectoryResponseLookupKey(rstrDirectory)) != rState.sharedDirectoryKeys.end();
+}
+
+/**
+ * @brief Generates one peer-visible pseudo-directory name without filesystem identity probes.
+ */
+inline CString BuildSharedDirectoryResponsePseudoName(SharedDirectoryResponseState &rState, const CString &rstrDirectory)
+{
+	if (!IsSharedDirectoryResponseRootListed(rState, rstrDirectory)) {
+		++rState.uUnlistedDirectoryCount;
+		return CString();
+	}
+
+	const std::wstring strDirectoryKey(MakeSharedDirectoryResponseLookupKey(rstrDirectory));
+	if (!rState.emittedDirectoryKeys.insert(strDirectoryKey).second) {
+		++rState.uDuplicateDirectoryCount;
+		return CString();
+	}
+
+	CString strDirectoryTmp(PathHelpers::TrimTrailingSeparatorForLeaf(rstrDirectory));
+	CString strPseudoName;
+	int iPos = 0;
+	while ((iPos = strDirectoryTmp.ReverseFind(_T('\\'))) >= 0) {
+		strPseudoName = strDirectoryTmp.Right(strDirectoryTmp.GetLength() - iPos) + strPseudoName;
+		strDirectoryTmp.Truncate(iPos);
+		if (!IsSharedDirectoryResponseRootListed(rState, strDirectoryTmp))
+			break;
+	}
+	if (strPseudoName.IsEmpty()) {
+		strPseudoName = strDirectoryTmp;
+	} else {
+		if (strPseudoName[0] == _T('\\'))
+			strPseudoName.Delete(0, 1);
+	}
+
+	if (!rState.emittedPseudoNameKeys.insert(MakeSharedDirectoryResponsePseudoNameKey(strPseudoName)).second) {
+		CString strUnique;
+		for (iPos = 2; ; ++iPos) {
+			strUnique.Format(_T("%s_%i"), (LPCTSTR)strPseudoName, iPos);
+			if (rState.emittedPseudoNameKeys.insert(MakeSharedDirectoryResponsePseudoNameKey(strUnique)).second) {
+				strPseudoName = strUnique;
+				++rState.uPseudoNameCollisionCount;
+				break;
+			}
+			if (iPos > 200) {
+				rState.emittedDirectoryKeys.erase(strDirectoryKey);
+				++rState.uPseudoNameCollisionCount;
+				return CString();
+			}
+		}
+	}
+
+	return strPseudoName;
 }
 
 inline bool ListContainsEquivalentDirectoryObject(const CStringList &rList, const CString &rstrPath, const LongPathSeams::FileSystemObjectIdentity *pIdentity = NULL)

@@ -42,6 +42,7 @@
 #include "SearchFile.h"
 #include "SearchList.h"
 #include "SharedFileList.h"
+#include "SharedDirectoryOps.h"
 #include "Kademlia/Kademlia/Kademlia.h"
 #include "Kademlia/Kademlia/Search.h"
 #include "Kademlia/Kademlia/SearchManager.h"
@@ -2962,20 +2963,37 @@ void CUpDownClient::SendSharedDirectories()
 {
 	//TODO: Don't send empty shared directories
 	theApp.sharedfiles->ResetPseudoDirNames(); //purge stale data
+	// WHY: Remote shared-directory requests can touch thousands of entries; this snapshot keeps response serialization out of filesystem identity probes.
+	SharedDirectoryOps::SharedDirectoryResponseState sharedDirectoryResponseState;
+	CStringList responseDirectories;
+
 	// add shared directories
 	CStringArray arFolders;
 	CStringList sharedDirs;
 	thePrefs.CopySharedDirectoryList(sharedDirs);
 	for (POSITION pos = sharedDirs.GetHeadPosition(); pos != NULL;) {
-		const CString &strDir(theApp.sharedfiles->GetPseudoDirName(sharedDirs.GetNext(pos)));
-		if (!strDir.IsEmpty())
-			arFolders.Add(strDir);
+		const CString strDirectory(sharedDirs.GetNext(pos));
+		SharedDirectoryOps::AddSharedDirectoryResponseRoot(sharedDirectoryResponseState, strDirectory);
+		responseDirectories.AddTail(strDirectory);
 	}
 	//add categories
 	for (INT_PTR iCat = 0; iCat < thePrefs.GetCatCount(); ++iCat) {
-		const CString &strDir(theApp.sharedfiles->GetPseudoDirName(thePrefs.GetCategory(iCat)->strIncomingPath));
+		const Category_Struct *const pCategory = thePrefs.GetCategory(iCat);
+		if (pCategory == NULL)
+			continue;
+		SharedDirectoryOps::AddSharedDirectoryResponseRoot(sharedDirectoryResponseState, pCategory->strIncomingPath);
+		responseDirectories.AddTail(pCategory->strIncomingPath);
+	}
+
+	for (POSITION pos = responseDirectories.GetHeadPosition(); pos != NULL;) {
+		const CString strDirectory(responseDirectories.GetNext(pos));
+		const CString strDir(SharedDirectoryOps::BuildSharedDirectoryResponsePseudoName(sharedDirectoryResponseState, strDirectory));
 		if (!strDir.IsEmpty())
+		{
+			DebugLog(_T("Using Pseudoname %s for directory %s"), (LPCTSTR)strDir, (LPCTSTR)strDirectory);
+			theApp.sharedfiles->RecordPseudoDirName(strDir, strDirectory);
 			arFolders.Add(strDir);
+		}
 	}
 
 	// add temporary folder if there are any temp files

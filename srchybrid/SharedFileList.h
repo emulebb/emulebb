@@ -293,6 +293,10 @@ public:
 	bool	ShouldBeShared(const CString &sDirPath, LPCTSTR const pFilePath, bool bMustBeShared) const;
 	bool	ContainsSingleSharedFiles(const CString &strDirectory) const; // includes subdirs
 	CString	GetPseudoDirName(const CString &strDirectoryName);
+	/**
+	 * @brief Stores one outbound pseudo-directory mapping for later peer file-list requests.
+	 */
+	void	RecordPseudoDirName(const CString &strPseudoName, const CString &strDirectoryName) { m_mapPseudoDirNames[strPseudoName] = strDirectoryName; }
 	CString	GetDirNameByPseudo(const CString &strPseudoName) const;
 
 	uint64	GetDatasize(uint64 &pbytesLargest) const;
