@@ -183,6 +183,7 @@ bool UploadBandwidthThrottler::RemoveFromStandardListNoLock(ThrottledFileSocket 
 void UploadBandwidthThrottler::QueueForSendingControlPacket(ThrottledControlSocket *socket, const bool hasSent)
 {
 	if (HelperThreadLaunchSeams::IsFlagSet(m_bRun)) {
+		bool bQueuedControlPacket = false;
 		try {
 			CSingleLock lockTempQueue(&tempQueueLocker, TRUE);
 
@@ -195,9 +196,18 @@ void UploadBandwidthThrottler::QueueForSendingControlPacket(ThrottledControlSock
 				m_TempControlQueueFirst_list.push_back(socket);
 			else
 				m_TempControlQueue_list.push_back(socket);
+			bQueuedControlPacket = true;
 		} catch (const std::bad_alloc&) {
 			if (thePrefs.GetVerbose())
 				DebugLogWarning(_T("Upload throttler: could not queue control socket notification because memory is low"));
+		}
+		if (bQueuedControlPacket) {
+			// WHY: control work can arrive while the throttler is waiting for
+			// file data, socket availability, or pacing credit. Wake both wait
+			// domains so low-rate or idle profiles do not hold protocol packets
+			// behind the next timeout tick.
+			m_eventDataAvailable.SetEvent();
+			m_eventSocketAvailable.SetEvent();
 		}
 	}
 }
@@ -437,7 +447,7 @@ UINT UploadBandwidthThrottler::RunInternal()
 			} else if (nCanSend <= nBusy)
 				::WaitForSingleObject(m_eventSocketAvailable, dwSleep);
 			else
-				::Sleep(dwSleep);
+				::WaitForSingleObject(m_eventDataAvailable, dwSleep);
 		}
 		if (!HelperThreadLaunchSeams::IsFlagSet(m_bRun))
 			break;
