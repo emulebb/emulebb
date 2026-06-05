@@ -285,7 +285,9 @@ void CSharedFilesWnd::ReportStartupSharedFilesReadinessIfReady()
 		m_bStartupSharedFilesReadyReported = true;
 	}
 
-	if (!m_bStartupSharedFilesHashingDoneReported && ullPendingHashes == 0) {
+	// WHY: shutdown can clear shared-hash bookkeeping before the UI has accepted
+	// every deferred result; the startup marker must only mean a live, caught-up list.
+	if (!m_bStartupSharedFilesHashingDoneReported && ullPendingHashes == 0 && !theApp.IsClosing()) {
 		theApp.AppendStartupProfileCounter(_T("shared.model.hashing_done_shared_files"), ullSharedFileCount, _T("files"));
 		theApp.AppendStartupProfileCounter(_T("shared.model.hashing_done_visible_rows"), ullVisibleRowCount, _T("rows"));
 		theApp.AppendStartupProfileLine(_T("ui.shared_files_hashing_done"), 0);

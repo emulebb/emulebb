@@ -3841,6 +3841,11 @@ void CemuleDlg::CloseApp(bool bRestart)
 		PumpLifecycleProgressMessages(&shutdownProgress);
 	};
 
+	// WHY: setting APP_STATE_SHUTTINGDOWN can make shared-hash workers retire
+	// their active bookkeeping while earlier shutdown phases are still running.
+	// Capture the operator-visible close interruption before that state change
+	// so partial warm-cache sidecars are purged at final shared-file save.
+	const bool bSharedHashingWasActiveOnClose = (theApp.sharedfiles != NULL && theApp.sharedfiles->HasSharedHashingWork());
 	theApp.m_app_state = APP_STATE_SHUTTINGDOWN;
 	// WHY: The notification-area entry belongs to this HWND. Once shutdown is
 	// committed, remove it before long teardown work or pumped messages can
@@ -3850,7 +3855,6 @@ void CemuleDlg::CloseApp(bool bRestart)
 	updateShutdownPhase(3, _T("Closing eMuleBB"), _T("Stopping AICH sync thread."), true);
 	WaitForAICHSyncThreadShutdown();
 
-	const bool bSharedHashingWasActiveOnClose = (theApp.sharedfiles != NULL && theApp.sharedfiles->HasSharedHashingWork());
 	if (theApp.sharedfiles != NULL) {
 		CString strHashLeaf;
 		CString strHashPath;
