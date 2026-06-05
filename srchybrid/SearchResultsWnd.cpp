@@ -120,6 +120,7 @@ CSearchResultsWnd::CSearchResultsWnd(CWnd* /*pParent*/)
 	, m_nNextSearchID(0x80000000u)
 	, m_nEd2kSearchID(0x80000000u)
 	, m_nFilterColumn()
+	, m_crSearchStatusBackground(CLR_DEFAULT)
 	, m_servercount()
 	, m_iSentMoreReq()
 	, m_b64BitSearchPacket()
@@ -2240,9 +2241,15 @@ BOOL CSearchResultsWnd::OnCommand(WPARAM wParam, LPARAM lParam)
 HBRUSH CSearchResultsWnd::OnCtlColor(CDC *pDC, CWnd *pWnd, UINT nCtlColor)
 {
 	if (pWnd != NULL && pWnd->GetSafeHwnd() == m_ctlSearchStatus.GetSafeHwnd()) {
+		const COLORREF crBackground = searchlistctrl.GetBkColor();
+		if (m_brSearchStatusBackground.GetSafeHandle() == NULL || m_crSearchStatusBackground != crBackground) {
+			m_brSearchStatusBackground.DeleteObject();
+			m_crSearchStatusBackground = crBackground;
+			VERIFY(m_brSearchStatusBackground.CreateSolidBrush(m_crSearchStatusBackground));
+		}
 		pDC->SetTextColor(::GetSysColor(COLOR_GRAYTEXT));
-		pDC->SetBkColor(::GetSysColor(COLOR_WINDOW));
-		return ::GetSysColorBrush(COLOR_WINDOW);
+		pDC->SetBkColor(m_crSearchStatusBackground);
+		return m_brSearchStatusBackground.GetSafeHandle() != NULL ? (HBRUSH)m_brSearchStatusBackground.GetSafeHandle() : ::GetSysColorBrush(COLOR_WINDOW);
 	}
 
 	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);

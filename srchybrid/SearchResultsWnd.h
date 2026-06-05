@@ -129,6 +129,7 @@ public:
 protected:
 	CProgressCtrl searchprogress;
 	CStatic		m_ctlSearchStatus;
+	CBrush		m_brSearchStatusBackground;
 	CHeaderCtrl m_ctlSearchListHeader;
 	CEditDelayed m_ctlFilter;
 	CButton		m_ctlOpenParamsWnd;
@@ -143,6 +144,7 @@ protected:
 	uint32		m_nNextSearchID;
 	uint32		m_nEd2kSearchID;
 	uint32		m_nFilterColumn;
+	COLORREF	m_crSearchStatusBackground;
 	unsigned	m_servercount;
 	int			m_iSentMoreReq;
 	bool		m_b64BitSearchPacket;
