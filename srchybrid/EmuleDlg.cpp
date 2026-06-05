@@ -3063,6 +3063,11 @@ void CemuleDlg::ShowConnectionState()
 	ShowMainConnectionStateIcon();
 	statusbar->SetText(GetConnectionStateString(), SBarConnected, 0);
 	ShowNetworkAddressState();
+	if (m_icoSysTrayConnected != NULL && m_icoSysTrayDisconnected != NULL && m_icoSysTrayLowID != NULL) {
+		// Connection changes can arrive while the main window is hidden, where the
+		// normal presentation timer is paused. Keep the tray icon state current.
+		ShowTransferRate(true);
+	}
 
 	TBBUTTONINFO tbbi;
 	tbbi.cbSize = (UINT)sizeof(TBBUTTONINFO);
