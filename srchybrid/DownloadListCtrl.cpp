@@ -432,6 +432,20 @@ HBITMAP CDownloadListCtrl::GetCachedVideoThumbnail(CPartFile *pPartFile)
 	return pEntry->hBitmap;
 }
 
+bool CDownloadListCtrl::HasCachedVideoThumbnail(const CPartFile *pPartFile) const
+{
+	const CString strKey(GetVideoThumbnailCacheKey(pPartFile));
+	if (strKey.IsEmpty())
+		return false;
+
+	void *pEntry = NULL;
+	if (!m_videoThumbnailCache.Lookup(strKey, pEntry))
+		return false;
+
+	const VideoThumbnailCacheEntry *pCacheEntry = static_cast<const VideoThumbnailCacheEntry*>(pEntry);
+	return pCacheEntry != NULL && pCacheEntry->hBitmap != NULL;
+}
+
 bool CDownloadListCtrl::IsVideoThumbnailCandidate(const CPartFile *pPartFile) const
 {
 	return pPartFile != NULL && pPartFile->IsReadyForVideoThumbnail();
@@ -747,6 +761,8 @@ LRESULT CDownloadListCtrl::OnVideoThumbnailFinished(WPARAM, LPARAM lParam)
 				PartFilePreviewSeams::kVideoThumbnailDisplayMaxHeight);
 			m_tooltip.RefreshCurrentTool();
 		}
+		if (pFileToDelete == NULL)
+			UpdateItem(pResult->pPartFile);
 	}
 
 	delete pResult;
@@ -3166,6 +3182,10 @@ CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, i
 	switch (iSubItem) {
 	case 0: //file name
 		sText = lpPartFile->GetFileName();
+		if (HasCachedVideoThumbnail(lpPartFile)) {
+			sText.AppendChar(_T(' '));
+			sText.AppendChar(static_cast<TCHAR>(0x25A3));
+		}
 		break;
 	case 1: //size
 		sText = CastItoXBytes(lpPartFile->GetFileSize());

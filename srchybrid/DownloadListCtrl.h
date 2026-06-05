@@ -219,6 +219,7 @@ protected:
 	VideoThumbnailCacheEntry* GetVideoThumbnailCacheEntry(const CString &rstrKey);
 	CPartFile* FindVideoThumbnailFileByKey(const CString &rstrKey) const;
 	HBITMAP GetCachedVideoThumbnail(CPartFile *pPartFile);
+	bool HasCachedVideoThumbnail(const CPartFile *pPartFile) const;
 	bool IsVideoThumbnailCandidate(const CPartFile *pPartFile) const;
 	/**
 	 * Returns whether a thumbnail attempt is due for the current file progress.
