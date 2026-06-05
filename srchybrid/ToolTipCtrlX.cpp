@@ -518,7 +518,7 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 							siz = pdc->TabbedTextOut(iLineLeft, ptText.y, _T(" "), 1, NULL, 0);
 						else
 							siz = pdc->TabbedTextOut(iLineLeft, ptText.y, strLine, strLine.GetLength(), NULL, 0);
-						ptText.y += siz.cy + iLineHeightOff;
+						ptText.y += iTextHeight;
 					}
 				}
 			}
