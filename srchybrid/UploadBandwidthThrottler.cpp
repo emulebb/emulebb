@@ -358,6 +358,7 @@ UINT UploadBandwidthThrottler::RunInternal()
 
 	sint64 spendingRate = 0; //bytes per second
 	INT_PTR rememberedSlotCounter = 0;
+	std::size_t rememberedSurplusSlotCounter = 0;
 	DWORD nUploadStartTime = 0;
 	DWORD lastLoopTick, lastTickReachedBandwidth;
 	uint32 nEstiminatedDataRate = 0;
@@ -576,8 +577,13 @@ UINT UploadBandwidthThrottler::RunInternal()
 				++rememberedSlotCounter;
 			}
 
-			// Any remaining bandwidth will be used - from first to last.
-			for (INT_PTR slotCounter = 0; slotCounter < GetStandardListSize() && bytesToSpend > 0 && spentBytes < (uint64)bytesToSpend; ++slotCounter) {
+			// Any remaining bandwidth will be used with a rotating start slot so
+			// early fast sockets cannot permanently monopolize surplus capacity.
+			const INT_PTR iSurplusListSize = GetStandardListSize();
+			for (INT_PTR surplusCounter = 0; surplusCounter < iSurplusListSize && bytesToSpend > 0 && spentBytes < (uint64)bytesToSpend; ++surplusCounter) {
+				const INT_PTR slotCounter = static_cast<INT_PTR>(UploadBandwidthThrottlerSeams::PopRotatingSlotIndex(
+					rememberedSurplusSlotCounter,
+					static_cast<std::size_t>(iSurplusListSize)));
 				ThrottledFileSocket *socket = m_StandardOrder_list[slotCounter];
 				if (!socket)
 					theApp.QueueDebugLogLine(false, _T("UploadBandwidthThrottler: a NULL socket in the Standard list (fully activated)! Prevented usage. Index: %u Size: %u"), (unsigned)slotCounter, (unsigned)GetStandardListSize());

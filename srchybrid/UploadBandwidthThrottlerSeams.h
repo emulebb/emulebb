@@ -30,6 +30,24 @@ namespace UploadBandwidthThrottlerSeams
 	}
 
 	/**
+	 * @brief Returns the next socket slot for a rotating pass and advances the cursor.
+	 */
+	inline std::size_t PopRotatingSlotIndex(std::size_t &nNextSlot, std::size_t nSlotCount)
+	{
+		if (nSlotCount == 0) {
+			nNextSlot = 0;
+			return 0;
+		}
+		if (nNextSlot >= nSlotCount)
+			nNextSlot = 0;
+		const std::size_t nSlot = nNextSlot;
+		++nNextSlot;
+		if (nNextSlot >= nSlotCount)
+			nNextSlot = 0;
+		return nSlot;
+	}
+
+	/**
 	 * @brief Removes every queued instance of a socket from a single control queue.
 	 *
 	 * @return true when the queue contained at least one matching entry.
