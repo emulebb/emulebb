@@ -284,7 +284,7 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 					pdc->SelectObject(pOldFont);
 			}
 			iMaxCol1Width = maxi(iMaxCol1Width, (int)(siz.cx + ((bShowFileIcon && iPos <= iCaptionEnd + strLine.GetLength()) ? iIconDrawingWidth : 0)));
-			iTextHeight = siz.cy + iLineHeightOff; // update height with 'col1' string, because 'col2' string might be empty and therefore has no height
+			iTextHeight = max(iTextHeight, siz.cy + iLineHeightOff); // update height with 'col1' string, because 'col2' string might be empty and therefore has no height
 			if (iPos <= iCaptionEnd)
 				iCaptionHeight += siz.cy + iLineHeightOff;
 			else
@@ -316,6 +316,7 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 					pdc->SelectObject(pOldFont);
 			}
 			iMaxSingleLineWidth = max(iMaxSingleLineWidth, siz.cx + iIconDrawingWidth);
+			iTextHeight = max(iTextHeight, siz.cy + iLineHeightOff);
 			iCaptionHeight += siz.cy + iLineHeightOff;
 		} else if (!strLine.IsEmpty() && strLine.Compare(_T("<br>")) != 0 && strLine.Compare(_T("<br_head>")) != 0) {
 			if (hTheme && bUseEmbeddedThemeFonts) {
@@ -326,6 +327,7 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 				siz = pdc->GetTextExtent(strLine);
 
 			iMaxSingleLineWidth = maxi(iMaxSingleLineWidth, (int)(siz.cx + ((bShowFileIcon && iPos <= iCaptionEnd) ? iIconDrawingWidth : 0)));
+			iTextHeight = max(iTextHeight, siz.cy + iLineHeightOff);
 			if (bShowFileIcon && iPos <= iCaptionEnd + strLine.GetLength())
 				iCaptionHeight += siz.cy + iLineHeightOff;
 			else
@@ -339,6 +341,7 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 				// TODO: Would need to use 'GetTabbedTextExtent' here, but do we actually use 'tabbed' text here at all ??
 				siz = pdc->GetTextExtent(_T(" "), 1);
 			}
+			iTextHeight = max(iTextHeight, siz.cy + iLineHeightOff);
 			sizText.cy += siz.cy + iLineHeightOff;
 		}
 	}

@@ -69,26 +69,6 @@ namespace
 	constexpr int DOWNLOAD_COLUMN_TRUST = 9;
 	const UINT_PTR kVideoThumbnailTimerId = 0xE072;
 	const TCHAR kVideoThumbnailCacheFolder[] = _T("VideoThumbnails\\");
-	const int kDownloadInfoTipMaxFileNameChars = 160;
-
-	CString CompactDownloadInfoTipFileName(const CString &rstrFileName)
-	{
-		if (rstrFileName.GetLength() <= kDownloadInfoTipMaxFileNameChars)
-			return rstrFileName;
-
-		CString strExtension;
-		const int iExtensionStart = rstrFileName.ReverseFind(_T('.'));
-		if (iExtensionStart > 0 && rstrFileName.GetLength() - iExtensionStart <= 12)
-			strExtension = rstrFileName.Mid(iExtensionStart);
-
-		static const TCHAR szEllipsis[] = _T("...");
-		const int iEllipsisChars = _countof(szEllipsis) - 1;
-		const int iPrefixChars = max(1, kDownloadInfoTipMaxFileNameChars - iEllipsisChars - strExtension.GetLength());
-		CString strCompacted(rstrFileName.Left(iPrefixChars));
-		strCompacted += szEllipsis;
-		strCompacted += strExtension;
-		return strCompacted;
-	}
 
 	uint32 GetClientGeoIP(const CUpDownClient* client)
 	{
@@ -3640,7 +3620,6 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 				}
 				CPartFile *pPartFile = static_cast<CPartFile*>(content->value);
 				info = pPartFile->GetInfoSummary();
-				info.Replace(pPartFile->GetFileName() + _T('\n'), CompactDownloadInfoTipFileName(pPartFile->GetFileName()) + _T('\n'));
 				const SFakeFileReport fakeReport = FakeFileDetector::GetPartFileReportSnapshot(*pPartFile);
 				const CString strTrustText = FakeFileDetector::FormatTrustHint(BuildDownloadTrustHint(*pPartFile, fakeReport));
 				CString strTrustLine;
