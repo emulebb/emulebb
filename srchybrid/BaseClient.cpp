@@ -2962,6 +2962,7 @@ void CUpDownClient::SetConnectOptions(uint8 byOptions, bool bEncryption, bool bC
 void CUpDownClient::SendSharedDirectories()
 {
 	//TODO: Don't send empty shared directories
+	const ULONGLONG ullResponseStartTick = ::GetTickCount64();
 	theApp.sharedfiles->ResetPseudoDirNames(); //purge stale data
 	// WHY: Remote shared-directory requests can touch thousands of entries; this snapshot keeps response serialization out of filesystem identity probes.
 	SharedDirectoryOps::SharedDirectoryResponseState sharedDirectoryResponseState;
@@ -2985,14 +2986,14 @@ void CUpDownClient::SendSharedDirectories()
 		responseDirectories.AddTail(pCategory->strIncomingPath);
 	}
 
+	UINT uPseudoDirectoryCount = 0;
 	for (POSITION pos = responseDirectories.GetHeadPosition(); pos != NULL;) {
 		const CString strDirectory(responseDirectories.GetNext(pos));
 		const CString strDir(SharedDirectoryOps::BuildSharedDirectoryResponsePseudoName(sharedDirectoryResponseState, strDirectory));
-		if (!strDir.IsEmpty())
-		{
-			DebugLog(_T("Using Pseudoname %s for directory %s"), (LPCTSTR)strDir, (LPCTSTR)strDirectory);
+		if (!strDir.IsEmpty()) {
 			theApp.sharedfiles->RecordPseudoDirName(strDir, strDirectory);
 			arFolders.Add(strDir);
+			++uPseudoDirectoryCount;
 		}
 	}
 
@@ -3002,6 +3003,17 @@ void CUpDownClient::SendSharedDirectories()
 	// add "Other" folder (for single shared files) if there are any single shared files
 	if (theApp.sharedfiles->ProbablyHaveSingleSharedFiles())
 		arFolders.Add(_T(OP_OTHER_SHARED_FILES));
+	const ULONGLONG ullResponseElapsedMs = ::GetTickCount64() - ullResponseStartTick;
+	DebugLog(
+		_T("Shared-directory response built for %s: candidates=%u pseudoDirs=%u folders=%u duplicateDirs=%u pseudoNameCollisions=%u unlistedDirs=%u elapsedMs=%I64u"),
+		(LPCTSTR)DbgGetClientInfo(),
+		static_cast<UINT>(responseDirectories.GetCount()),
+		uPseudoDirectoryCount,
+		static_cast<UINT>(arFolders.GetCount()),
+		sharedDirectoryResponseState.uDuplicateDirectoryCount,
+		sharedDirectoryResponseState.uPseudoNameCollisionCount,
+		sharedDirectoryResponseState.uUnlistedDirectoryCount,
+		ullResponseElapsedMs);
 
 	// build packet
 	EUTF8str eUnicode = GetUnicodeSupport();
