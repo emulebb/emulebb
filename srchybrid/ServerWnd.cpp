@@ -133,7 +133,7 @@ BOOL CServerWnd::OnInitDialog()
 		servermsgbox->SetAutoURLDetect(TRUE);
 		servermsgbox->AppendHyperLink(m_strClickNewVersion, NULL, thePrefs.GetVersionCheckURL(), NULL);
 		// MOD Note: end
-		servermsgbox->AppendText(_T("\n\n"));
+		servermsgbox->AppendText(_T("\n"));
 	}
 
 	GetDlgItem(IDC_LOGBOX)->GetWindowRect(&rect);

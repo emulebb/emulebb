@@ -97,7 +97,9 @@ CString CMuleStatusBarCtrl::GetPaneToolTipText(EStatusBarPane iPane) const
 			, GetResString(IDS_STATUS_PUBLIC_IP_LABEL)
 			, GetResString(IDS_BIND_ANY_INTERFACE)
 			, GetResString(IDS_UNKNOWN)
-			, GetResString(IDS_STATUS_NETWORK_ADDRESS_TOOLTIP_FMT));
+			, GetResString(IDS_STATUS_NETWORK_ADDRESS_TOOLTIP_FMT)
+			, thePrefs.GetPort()
+			, theApp.emuledlg != NULL && theApp.emuledlg->IsNetworkAddressBlocked());
 	}
 	if (iPane == SBarConnected && theApp.serverconnect && theApp.serverconnect->IsConnected()) {
 		const CServer *cur_server = theApp.serverconnect->GetCurrentServer();

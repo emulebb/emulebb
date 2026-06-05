@@ -140,6 +140,7 @@
 #include "WindowsMaintenanceActions.h"
 #include "Win32CallbackTimerSeams.h"
 #include "LifecycleProgressDlg.h"
+#include "ServerInfoSeams.h"
 #include "VpnGuardPolicySeams.h"
 #include "VpnGuardSeams.h"
 
@@ -250,6 +251,20 @@ namespace
 				(LPCTSTR)(strDetail.IsEmpty() ? result.strError : strDetail));
 		}
 		return strReason;
+	}
+
+	static CString FormatVpnGuardServerInfoPassed(LPCTSTR pszDetail)
+	{
+		CString strMessage;
+		strMessage.Format(_T("VPN Guard passed: %s"), pszDetail != NULL ? pszDetail : _T(""));
+		return strMessage;
+	}
+
+	static CString FormatVpnGuardServerInfoBlocked(const CString& strReason)
+	{
+		CString strMessage;
+		strMessage.Format(_T("VPN Guard blocked: %s"), (LPCTSTR)strReason);
+		return strMessage;
 	}
 
 	static CString GetConfigFilePath(LPCTSTR pszLeafName)
@@ -2230,6 +2245,8 @@ void CemuleDlg::OnStartupTimer() noexcept
 				const ULONGLONG ullSocketInitStart = theApp.GetStartupProfileTimestampUs();
 #endif
 				if (theApp.IsStartupBindBlocked()) {
+					if (thePrefs.IsVpnGuardEnabled())
+						AddServerMessageLine(LOG_ERROR, FormatVpnGuardServerInfoBlocked(theApp.GetStartupBindBlockReason()));
 					LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)theApp.GetStartupBindBlockReason());
 				} else {
 					if (!theApp.listensocket->StartListening()) {
@@ -2519,6 +2536,13 @@ bool CemuleDlg::StartVpnGuardProbe(const CString& strPurpose, bool bRuntime)
 	}
 	if (ranges.empty()) {
 		LPCTSTR pszLocalBind = thePrefs.GetBindAddr() != NULL ? thePrefs.GetBindAddr() : _T("default");
+		if (!bRuntime) {
+			CString strDetail;
+			strDetail.Format(_T("bind-interface guard active; public IP range check disabled; interface=%s localBind=%s"),
+				(LPCTSTR)thePrefs.GetActiveBindInterfaceName(),
+				pszLocalBind);
+			AddServerMessageLine(LOG_SUCCESS, FormatVpnGuardServerInfoPassed(strDetail));
+		}
 		Log(_T("VPN Guard %s public IP check skipped: no allowed CIDRs configured; bind-interface guard remains active for interface=%s localBind=%s"),
 			(LPCTSTR)strPurpose,
 			(LPCTSTR)thePrefs.GetActiveBindInterfaceName(),
@@ -2565,6 +2589,8 @@ void CemuleDlg::ExitForBindLoss(const CString &strReason)
 	StopBindLossMonitor();
 	m_bVpnGuardStartupProbePending = false;
 	m_bVpnGuardRuntimeProbePending = false;
+	if (thePrefs.GetVpnGuardMode() == VpnGuardSeams::EMode::Block)
+		AddServerMessageLine(LOG_ERROR, FormatVpnGuardServerInfoBlocked(strReason));
 	LogError(LOG_STATUSBAR, _T("%s"), (LPCTSTR)strReason);
 	PostMessage(WM_CLOSE);
 }
@@ -2605,6 +2631,14 @@ LRESULT CemuleDlg::OnVpnGuardProbeResult(WPARAM wParam, LPARAM lParam)
 	const bool bAllowed = bRangesLoaded
 		&& VpnGuardPolicySeams::IsProbeResultAllowed(bPublicIpCheckRequired, pResult->bSucceeded, bPublicIpAllowed);
 	if (bAllowed) {
+		if (bStartup) {
+			CString strDetail;
+			strDetail.Format(_T("provider=%s publicIp=%S allowedCIDRs=%s"),
+				(LPCTSTR)pResult->strProviderUrl,
+				pResult->strPublicAddress.GetString(),
+				(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs());
+			AddServerMessageLine(LOG_SUCCESS, FormatVpnGuardServerInfoPassed(strDetail));
+		}
 		Log(_T("VPN Guard %s public IP check passed: provider=%s publicIp=%S allowedCIDRs=%s"),
 			(LPCTSTR)pResult->strPurpose,
 			(LPCTSTR)pResult->strProviderUrl,
@@ -2909,16 +2943,17 @@ void CemuleDlg::AddServerMessageLine(UINT uFlags, LPCTSTR pszLine)
 {
 	if (pszLine == NULL)
 		return;
-	CString strTrimmedLine(pszLine);
-	strTrimmedLine.Trim();
-	if (strTrimmedLine.IsEmpty())
+	const std::vector<CString> lines = ServerInfoSeams::SplitServerInfoMessageLines(pszLine);
+	if (lines.empty())
 		return;
-	CString strMsgLine(strTrimmedLine);
-	strMsgLine += _T('\n');
-	if ((uFlags & LOGMSGTYPEMASK) == LOG_INFO)
-		serverwnd->servermsgbox->AppendText(strMsgLine);
-	else
-		serverwnd->servermsgbox->AddTyped(strMsgLine, strMsgLine.GetLength(), uFlags & LOGMSGTYPEMASK);
+	for (const CString& strLine : lines) {
+		CString strMsgLine(strLine);
+		strMsgLine += _T('\n');
+		if ((uFlags & LOGMSGTYPEMASK) == LOG_INFO)
+			serverwnd->servermsgbox->AppendText(strMsgLine);
+		else
+			serverwnd->servermsgbox->AddTyped(strMsgLine, strMsgLine.GetLength(), uFlags & LOGMSGTYPEMASK);
+	}
 	if (::IsWindow(serverwnd->StatusSelector) && serverwnd->StatusSelector.GetCurSel() != CServerWnd::PaneServerInfo)
 		serverwnd->StatusSelector.HighlightItem(CServerWnd::PaneServerInfo, TRUE);
 }
@@ -2987,6 +3022,11 @@ CString CemuleDlg::GetConnectionStateString()
 	return state;
 }
 
+bool CemuleDlg::IsNetworkAddressBlocked() const
+{
+	return thePrefs.IsVpnGuardEnabled() && (theApp.IsStartupBindBlocked() || m_bBindLossShutdown);
+}
+
 CString CemuleDlg::GetNetworkAddressStateString() const
 {
 	CString strBindAddress;
@@ -2998,7 +3038,9 @@ CString CemuleDlg::GetNetworkAddressStateString() const
 		, GetResString(IDS_STATUS_PUBLIC_IP_COMPACT_LABEL)
 		, GetResString(IDS_STATUS_ANY_COMPACT)
 		, GetResString(IDS_STATUS_UNKNOWN_COMPACT)
-		, GetResString(IDS_STATUS_NETWORK_ADDRESS_TEXT_FMT));
+		, GetResString(IDS_STATUS_NETWORK_ADDRESS_TEXT_FMT)
+		, thePrefs.GetPort()
+		, IsNetworkAddressBlocked());
 }
 
 void CemuleDlg::ShowNetworkAddressState()
@@ -3229,7 +3271,7 @@ void CemuleDlg::SetStatusBarPartsSize()
 	statusbar->GetClientRect(&rect);
 	int aiWidths[6] =
 	{
-		rect.right - 940,
+		rect.right - 1040,
 		rect.right - 695,
 		rect.right - 450,
 		rect.right - 250,

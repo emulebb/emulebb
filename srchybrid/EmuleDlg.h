@@ -138,6 +138,7 @@ public:
 	CString GetServerInfoText();
 
 	CString	GetConnectionStateString();
+	bool IsNetworkAddressBlocked() const;
 	CString	GetNetworkAddressStateString() const;
 	UINT GetConnectionStateIconIndex() const;
 	CString	GetTransferRateString();

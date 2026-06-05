@@ -34,6 +34,7 @@
 #include "UpDownClientDeleteSeams.h"
 #include "emuleDlg.h"
 #include "ServerWnd.h"
+#include "ServerInfoSeams.h"
 #include "SearchDlg.h"
 #include "IPFilter.h"
 #include "Log.h"
@@ -188,10 +189,8 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 
 				// 16.40 servers do not send separate OP_SERVERMESSAGE packets for each line;
 				// instead, they are sending all text lines in one OP_SERVERMESSAGE packet.
-				for (int iPos = 0; iPos >= 0;) {
-					const CString &message(strMessages.Tokenize(_T("\r\n"), iPos));
-					if (message.IsEmpty())
-						break;
+				const std::vector<CString> messages = ServerInfoSeams::SplitServerInfoMessageLines(strMessages);
+				for (const CString& message : messages) {
 					bool bOutputMessage = true;
 					if (_tcsnicmp(message, _T("server version"), 14) == 0) {
 						if (pServer) {
@@ -253,7 +252,6 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 					if (bOutputMessage) {
 						if (m_bStartNewMessageLog) {
 							m_bStartNewMessageLog = false;
-							theApp.emuledlg->AddServerMessageLine(LOG_INFO, _T(""));
 							if (cur_server) {
 								CString strMsg(CTime::GetCurrentTime().Format(thePrefs.GetDateTimeFormat4Log()));
 								strMsg += _T(": ");
