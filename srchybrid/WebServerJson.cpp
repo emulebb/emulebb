@@ -1352,7 +1352,8 @@ json BuildUploadsListJson(
 	const bool bWaitingQueue,
 	const size_t uLimit = (std::numeric_limits<size_t>::max)(),
 	const size_t uOffset = 0,
-	size_t *const pTotal = NULL)
+	size_t *const pTotal = NULL,
+	const bool bIncludeScoreBreakdown = false)
 {
 	json result = json::array();
 	size_t uMatched = 0;
@@ -1363,7 +1364,7 @@ json BuildUploadsListJson(
 				continue;
 			++uMatched;
 			if (uMatched > uOffset && result.size() < uLimit)
-				result.push_back(BuildUploadJson(*pClient, false));
+				result.push_back(BuildUploadJson(*pClient, false, bIncludeScoreBreakdown));
 			if (pTotal == NULL && result.size() >= uLimit)
 				break;
 		}
@@ -1374,7 +1375,7 @@ json BuildUploadsListJson(
 				continue;
 			++uMatched;
 			if (uMatched > uOffset && result.size() < uLimit)
-				result.push_back(BuildUploadJson(*pClient, true));
+				result.push_back(BuildUploadJson(*pClient, true, bIncludeScoreBreakdown));
 			if (pTotal == NULL && result.size() >= uLimit)
 				break;
 		}
@@ -1388,12 +1389,13 @@ json BuildUploadsPageEnvelopeJson(const bool bWaitingQueue, const json &rParams)
 {
 	const size_t uOffset = GetListPageOffset(rParams);
 	const size_t uLimit = GetListPageLimit(rParams);
+	const bool bIncludeScoreBreakdown = rParams.value("includeScoreBreakdown", false);
 	size_t uTotal = 0;
 	// WHY: /upload-queue is polled from management UIs and can contain many
 	// waiting peers on a live profile. Count the matching rows in one list walk
 	// but serialize only the requested page so REST polling cannot spend most
 	// of its UI-thread time building JSON the HTTP layer will discard.
-	const json items = BuildUploadsListJson(bWaitingQueue, uLimit, uOffset, &uTotal);
+	const json items = BuildUploadsListJson(bWaitingQueue, uLimit, uOffset, &uTotal, bIncludeScoreBreakdown);
 	return BuildPagedItemsEnvelope(items, uTotal, uOffset, uLimit);
 }
 

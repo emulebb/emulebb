@@ -1011,7 +1011,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/uploads/{clientId}/operations/remove-friend", "", ""},
 		{"POST", "/uploads/{clientId}/operations/ban", "", ""},
 		{"POST", "/uploads/{clientId}/operations/unban", "", ""},
-		{"GET", "/upload-queue", "", "offset,limit"},
+		{"GET", "/upload-queue", "", "offset,limit,includeScoreBreakdown"},
 		{"GET", "/upload-queue/{clientId}", "", ""},
 		{"POST", "/upload-queue/{clientId}/operations/remove", "", ""},
 		{"POST", "/upload-queue/{clientId}/operations/release-slot", "", ""},
@@ -2194,6 +2194,11 @@ inline bool ValidateQueryFields(const std::map<std::string, std::string> &rQuery
 			if (!TryParseBooleanQueryValue(it->second, "confirm", bIgnored, rErrorCode, rErrorMessage))
 				return false;
 		}
+		if (it->first == "includeScoreBreakdown") {
+			bool bIgnored = false;
+			if (!TryParseBooleanQueryValue(it->second, "includeScoreBreakdown", bIgnored, rErrorCode, rErrorMessage))
+				return false;
+		}
 	}
 	if (IsRouteSpec(rSpec, "DELETE", "/transfers/{hash}/files")
 		|| IsRouteSpec(rSpec, "DELETE", "/shared-files/{hash}/file")
@@ -2238,6 +2243,14 @@ inline void CopyPagingQueryParams(const std::map<std::string, std::string> &rQue
 	uint64_t ullOffset = 0;
 	if (TryParseUnsignedQueryValue(rQuery, "offset", ullOffset))
 		rParams["_offset"] = ullOffset > INT_MAX ? INT_MAX : static_cast<int>(ullOffset);
+}
+
+inline void CopyUploadQueueQueryParams(const std::map<std::string, std::string> &rQuery, json &rParams)
+{
+	CopyPagingQueryParams(rQuery, rParams);
+	const std::map<std::string, std::string>::const_iterator itIncludeScoreBreakdown = rQuery.find("includeScoreBreakdown");
+	if (itIncludeScoreBreakdown != rQuery.end())
+		rParams["includeScoreBreakdown"] = itIncludeScoreBreakdown->second == "true";
 }
 
 /**
@@ -2627,7 +2640,7 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 1 && route[0] == "upload-queue" && bGet) {
 		rRoute.strCommand = "uploads/queue";
-		CopyPagingQueryParams(query, rRoute.params);
+		CopyUploadQueueQueryParams(query, rRoute.params);
 		RequestPagedItemsEnvelope(rRoute.params);
 		return true;
 	}
