@@ -1367,7 +1367,8 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			// WHY: no-request peers are already constrained to one queued-request
 			// cooldown clear per window. Keep their retry suppression short so a
 			// sparse public queue can refill capacity, but escalate repeat
-			// unproductive no-request recycles to the broader churn cooldown.
+			// unproductive no-request recycles to the configured slow-upload
+			// cooldown so persistent 0-byte peers stop consuming refill probes.
 			const UINT uConfiguredCooldownSeconds = thePrefs.GetSlowUploadCooldownSeconds();
 			const bool bRecentNoRequestRecycle = HasRecentNoRequestUploadRetryCooldown(client, curTick);
 			const UINT uCooldownSeconds = GetNoRequestUploadRetryCooldownSeconds(uConfiguredCooldownSeconds, bRecentNoRequestRecycle, bProductiveNoRequestRecycle);

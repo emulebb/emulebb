@@ -12,12 +12,12 @@ inline constexpr std::uint64_t kRetiredUploadEntryPendingIoWarningRepeatMs = 300
 inline constexpr std::uint64_t kShortFailedUploadCooldownMaxAgeMs = 30000u;
 inline constexpr std::uint64_t kRemoteCancelledUploadCooldownMaxAgeMs = 90000u;
 inline constexpr std::uint64_t kShortFailedUploadCooldownMaxPayloadBytes = 1024u * 1024u;
-inline constexpr std::uint32_t kNoRequestUploadCooldownMaxSeconds = 30u;
+inline constexpr std::uint32_t kNoRequestUploadCooldownMaxSeconds = 60u;
 inline constexpr std::uint32_t kProductiveNoRequestUploadCooldownMaxSeconds = 10u;
 inline constexpr std::uint32_t kNoRequestUploadRecycleGraceMaxSeconds = 5u;
 inline constexpr std::uint32_t kStalledUploadRecycleGraceMaxSeconds = 15u;
 inline constexpr std::uint32_t kUploadChurnRetryCooldownMaxSeconds = 120u;
-inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = kUploadChurnRetryCooldownMaxSeconds;
+inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = 360u;
 inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 1000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = 184320u;
 
@@ -296,7 +296,9 @@ inline std::uint32_t GetNoRequestUploadRetryCooldownSeconds(
 			? uConfiguredCooldownSeconds
 			: uMaxProductiveNoRequestCooldownSeconds;
 	if (bRecentNoRequestRecycle && !bProductiveNoRequestRecycle)
-		return uMaxRepeatedNoRequestCooldownSeconds;
+		return uConfiguredCooldownSeconds < uMaxRepeatedNoRequestCooldownSeconds
+			? uConfiguredCooldownSeconds
+			: uMaxRepeatedNoRequestCooldownSeconds;
 	return uConfiguredCooldownSeconds < uMaxNoRequestCooldownSeconds
 		? uConfiguredCooldownSeconds
 		: uMaxNoRequestCooldownSeconds;
