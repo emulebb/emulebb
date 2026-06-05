@@ -69,7 +69,7 @@ namespace
 	constexpr int DOWNLOAD_COLUMN_TRUST = 9;
 	const UINT_PTR kVideoThumbnailTimerId = 0xE072;
 	const TCHAR kVideoThumbnailCacheFolder[] = _T("VideoThumbnails\\");
-	const int kDownloadInfoTipMaxLineChars = 120;
+	const int kDownloadInfoTipMaxLineChars = 240;
 
 	uint32 GetClientGeoIP(const CUpDownClient* client)
 	{

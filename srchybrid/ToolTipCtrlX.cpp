@@ -271,6 +271,8 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 	CSize siz, sizText;
 	CRect rcExtent;
 	static const RECT rcBounding{0, 0, 32767, 32767};
+	static const int iMiddleMargin = 6;
+	const int iMaxTooltipWidth = max(1, m_rcScreen.Width() - 48);
 	for (int iPos = 0; iPos >= 0;) {
 		const CString &strLine(GetNextString(strText, _T('\n'), iPos));
 		int iColon = bAutoFormatText ? strLine.Find(_T(':')) : -1;
@@ -356,11 +358,10 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 		sizText.cy += 2; // extra bottom margin for Vista Theme
 
 	iMaxCol1Width = min(m_iScreenWidth4, iMaxCol1Width);
-	iMaxCol2Width = min(m_iScreenWidth4 * 2, iMaxCol2Width);
+	iMaxCol2Width = min(max(1, iMaxTooltipWidth - iMaxCol1Width - iMiddleMargin), iMaxCol2Width);
 
-	static const int iMiddleMargin = 6;
 	iMaxSingleLineWidth = maxi(iMaxSingleLineWidth, iMaxCol1Width + iMiddleMargin + iMaxCol2Width);
-	iMaxSingleLineWidth = min(m_iScreenWidth4 * 3, iMaxSingleLineWidth);
+	iMaxSingleLineWidth = min(iMaxTooltipWidth, iMaxSingleLineWidth);
 	sizText.cx = iMaxSingleLineWidth;
 
 	CSize sizPreview;
@@ -370,7 +371,7 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 		if (::GetObject(m_hPreviewBitmap, sizeof(bitmap), &bitmap) != 0 && bitmap.bmWidth > 0 && bitmap.bmHeight > 0) {
 			sizPreviewSource.cx = bitmap.bmWidth;
 			sizPreviewSource.cy = bitmap.bmHeight;
-			const int iMaxPreviewWidth = max(1, min(m_iPreviewMaxWidth, m_iScreenWidth4 * 3));
+			const int iMaxPreviewWidth = max(1, min(m_iPreviewMaxWidth, iMaxTooltipWidth));
 			const int iMaxPreviewHeight = m_iPreviewMaxHeight > 0 ? max(1, min(m_iPreviewMaxHeight, m_rcScreen.Height() / 2)) : 0;
 			if (bitmap.bmWidth > iMaxPreviewWidth) {
 				sizPreview.cx = iMaxPreviewWidth;
