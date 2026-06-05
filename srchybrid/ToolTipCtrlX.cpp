@@ -260,6 +260,8 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 	int iMaxCol2Width = 0;
 	int iMaxSingleLineWidth = 0;
 	int iCaptionHeight = 0;
+	int iCaptionLineCount = 0;
+	int iTextLineCount = 0;
 	static const int iLineHeightOff = 1;
 	const int iCaptionEnd = bShowFileIcon ? maxi(strText.Find(_T("\n<br_head>\n")), 0) : 0; // special tooltip with file icon
 	const int iIconMinYBorder = bShowFileIcon ? 3 : 0;
@@ -286,9 +288,9 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 			iMaxCol1Width = maxi(iMaxCol1Width, (int)(siz.cx + ((bShowFileIcon && iPos <= iCaptionEnd + strLine.GetLength()) ? iIconDrawingWidth : 0)));
 			iTextHeight = max(iTextHeight, siz.cy + iLineHeightOff); // update height with 'col1' string, because 'col2' string might be empty and therefore has no height
 			if (iPos <= iCaptionEnd)
-				iCaptionHeight += siz.cy + iLineHeightOff;
+				++iCaptionLineCount;
 			else
-				sizText.cy += siz.cy + iLineHeightOff;
+				++iTextLineCount;
 
 			LPCTSTR pszCol2 = (LPCTSTR)strLine + iColon + 1;
 			while (_istspace(*pszCol2))
@@ -317,7 +319,7 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 			}
 			iMaxSingleLineWidth = max(iMaxSingleLineWidth, siz.cx + iIconDrawingWidth);
 			iTextHeight = max(iTextHeight, siz.cy + iLineHeightOff);
-			iCaptionHeight += siz.cy + iLineHeightOff;
+			++iCaptionLineCount;
 		} else if (!strLine.IsEmpty() && strLine.Compare(_T("<br>")) != 0 && strLine.Compare(_T("<br_head>")) != 0) {
 			if (hTheme && bUseEmbeddedThemeFonts) {
 				::GetThemeTextExtent(hTheme, *pdc, TTP_STANDARD, TTSS_NORMAL, strLine, strLine.GetLength(), m_dwCol2DrawTextFlags, &rcBounding, &rcExtent);
@@ -329,9 +331,9 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 			iMaxSingleLineWidth = maxi(iMaxSingleLineWidth, (int)(siz.cx + ((bShowFileIcon && iPos <= iCaptionEnd) ? iIconDrawingWidth : 0)));
 			iTextHeight = max(iTextHeight, siz.cy + iLineHeightOff);
 			if (bShowFileIcon && iPos <= iCaptionEnd + strLine.GetLength())
-				iCaptionHeight += siz.cy + iLineHeightOff;
+				++iCaptionLineCount;
 			else
-				sizText.cy += siz.cy + iLineHeightOff;
+				++iTextLineCount;
 		} else {
 			if (hTheme && bUseEmbeddedThemeFonts) {
 				::GetThemeTextExtent(hTheme, *pdc, TTP_STANDARD, TTSS_NORMAL, _T(" "), 1, m_dwCol2DrawTextFlags, &rcBounding, &rcExtent);
@@ -342,9 +344,11 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 				siz = pdc->GetTextExtent(_T(" "), 1);
 			}
 			iTextHeight = max(iTextHeight, siz.cy + iLineHeightOff);
-			sizText.cy += siz.cy + iLineHeightOff;
+			++iTextLineCount;
 		}
 	}
+	iCaptionHeight = iCaptionLineCount * iTextHeight;
+	sizText.cy = iTextLineCount * iTextHeight;
 	if (bShowFileIcon && iCaptionEnd > 0)
 		iCaptionHeight = maxi(iCaptionHeight, (int)(theApp.GetBigSytemIconSize().cy + (2 * iIconMinYBorder)));
 	sizText.cy += iCaptionHeight;
@@ -502,17 +506,18 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 					pdc->SelectObject(pOP);
 					pen.DeleteObject();
 				} else {
+					const int iLineLeft = (bShowFileIcon && iPos <= iCaptionEnd + strLine.GetLength()) ? ptText.x + iIconDrawingWidth : ptText.x;
 					if (hTheme && bUseEmbeddedThemeFonts) {
-						const RECT rcLine{ptText.x, ptText.y, 32767, 32767};
+						const RECT rcLine{iLineLeft, ptText.y, 32767, 32767};
 						::DrawThemeText(hTheme, pdc->m_hDC, TTP_STANDARD, TTSS_NORMAL, strLine, strLine.GetLength(), DT_EXPANDTABS | m_dwCol2DrawTextFlags, 0, &rcLine);
 						ptText.y += iTextHeight;
 					} else {
 						// Text is written in the currently selected font. If 'nTabPositions' is 0 and 'lpnTabStopPositions' is NULL,
 						// tabs are expanded to eight times the average character width.
 						if (strLine.IsEmpty())
-							siz = pdc->TabbedTextOut(ptText.x, ptText.y, _T(" "), 1, NULL, 0);
+							siz = pdc->TabbedTextOut(iLineLeft, ptText.y, _T(" "), 1, NULL, 0);
 						else
-							siz = pdc->TabbedTextOut(ptText.x, ptText.y, strLine, strLine.GetLength(), NULL, 0);
+							siz = pdc->TabbedTextOut(iLineLeft, ptText.y, strLine, strLine.GetLength(), NULL, 0);
 						ptText.y += siz.cy + iLineHeightOff;
 					}
 				}
