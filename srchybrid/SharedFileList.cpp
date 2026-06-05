@@ -1567,6 +1567,7 @@ void CSharedFileList::SignalSharedHashWorkerShutdown()
 		const SharedFileListSeams::SharedHashShutdownCacheState shutdownState = {
 			!m_sharedHashQueue.empty(),
 			!m_sharedHashPendingCompletions.empty(),
+			!m_sharedHashDeferredResults.empty(),
 			m_bSharedHashActive
 		};
 		bInvalidateStartupCaches = SharedFileListSeams::ShouldInvalidateStartupCacheAfterSharedHashShutdown(shutdownState);
@@ -1575,6 +1576,10 @@ void CSharedFileList::SignalSharedHashWorkerShutdown()
 				interruptedDirectoryKeys.insert(MakeStartupCacheSnapshotKey(job.strDirectory));
 			for (const SharedHashJob &job : m_sharedHashPendingCompletions)
 				interruptedDirectoryKeys.insert(MakeStartupCacheSnapshotKey(job.strDirectory));
+			for (const CSharedFileHashResult *pResult : m_sharedHashDeferredResults) {
+				if (pResult != NULL)
+					interruptedDirectoryKeys.insert(MakeStartupCacheSnapshotKey(pResult->strDirectory));
+			}
 			if (m_bSharedHashActive)
 				interruptedDirectoryKeys.insert(MakeStartupCacheSnapshotKey(m_sharedHashActiveJob.strDirectory));
 		}
@@ -1645,7 +1650,7 @@ bool CSharedFileList::ShutdownSharedHashWorkerStep(DWORD dwWaitMilliseconds)
 INT_PTR CSharedFileList::GetHashingCount() const
 {
 	CSingleLock lock(&m_mutSharedHashQueue, TRUE);
-	return static_cast<INT_PTR>(m_sharedHashQueue.size() + m_sharedHashPendingCompletions.size() + (m_bSharedHashActive ? 1 : 0));
+	return static_cast<INT_PTR>(m_sharedHashQueue.size() + m_sharedHashPendingCompletions.size() + m_sharedHashDeferredResults.size() + (m_bSharedHashActive ? 1 : 0));
 }
 
 void CSharedFileList::LogSharedHashProgress(LPCTSTR pszReason, const bool bForce)

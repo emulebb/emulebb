@@ -154,6 +154,7 @@ struct SharedHashShutdownCacheState
 {
 	bool bQueuedJobAvailable;
 	bool bPendingCompletion;
+	bool bDeferredCompletion;
 	bool bActiveJob;
 };
 
@@ -338,7 +339,7 @@ inline bool CanPartFileHashWorkerTouchPartFile(const bool bAppClosing, const boo
  */
 inline bool ShouldInvalidateStartupCacheAfterSharedHashShutdown(const SharedHashShutdownCacheState &rState)
 {
-	return rState.bQueuedJobAvailable || rState.bPendingCompletion || rState.bActiveJob;
+	return rState.bQueuedJobAvailable || rState.bPendingCompletion || rState.bDeferredCompletion || rState.bActiveJob;
 }
 
 /**
