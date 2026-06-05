@@ -41,10 +41,10 @@ BEGIN_MESSAGE_MAP(CToolTipCtrlX, CToolTipCtrl)
 END_MESSAGE_MAP()
 
 CToolTipCtrlX::CToolTipCtrlX()
-	: m_bCol1Bold(true)
-	, m_hPreviewBitmap()
+	: m_hPreviewBitmap()
 	, m_iPreviewMaxWidth()
 	, m_iPreviewMaxHeight()
+	, m_bCol1Bold(true)
 	, m_bShowFileIcon()
 {
 	ResetSystemMetrics();
@@ -499,16 +499,18 @@ void CToolTipCtrlX::CustomPaint(LPNMTTCUSTOMDRAW pNMCD)
 					pdc->SelectObject(pOP);
 					pen.DeleteObject();
 				} else {
-					CRect rcLine(ptText.x, ptText.y, ptText.x + iMaxSingleLineWidth, ptText.y + iTextHeight);
 					if (hTheme && bUseEmbeddedThemeFonts) {
+						const RECT rcLine{ptText.x, ptText.y, 32767, 32767};
 						::DrawThemeText(hTheme, pdc->m_hDC, TTP_STANDARD, TTSS_NORMAL, strLine, strLine.GetLength(), DT_EXPANDTABS | m_dwCol2DrawTextFlags, 0, &rcLine);
 						ptText.y += iTextHeight;
 					} else {
+						// Text is written in the currently selected font. If 'nTabPositions' is 0 and 'lpnTabStopPositions' is NULL,
+						// tabs are expanded to eight times the average character width.
 						if (strLine.IsEmpty())
-							pdc->DrawText(_T(" "), 1, &rcLine, DT_EXPANDTABS | m_dwCol2DrawTextFlags);
+							siz = pdc->TabbedTextOut(ptText.x, ptText.y, _T(" "), 1, NULL, 0);
 						else
-							pdc->DrawText(strLine, strLine.GetLength(), &rcLine, DT_EXPANDTABS | m_dwCol2DrawTextFlags);
-						ptText.y += iTextHeight;
+							siz = pdc->TabbedTextOut(ptText.x, ptText.y, strLine, strLine.GetLength(), NULL, 0);
+						ptText.y += siz.cy + iLineHeightOff;
 					}
 				}
 			}
