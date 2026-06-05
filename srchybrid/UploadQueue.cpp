@@ -1127,11 +1127,11 @@ bool CUploadQueue::CanProbeUploadCooldownCandidate(CUpDownClient *client, ULONGL
 		&& itNoRequest->second.ullCooldownUntil > curTick)
 	{
 		const ULONGLONG ullCooldownRemainingMs = itNoRequest->second.ullCooldownUntil - curTick;
-		// WHY: a no-request recycle means the peer drained its local pipeline
-		// and stopped asking for blocks. Keep that cooldown meaningful even for
-		// peers that made an initial burst; a queued block request can still
-		// prove renewed demand and clear the cooldown through the explicit path.
-		return ShouldProbeUnproductiveNoRequestCooldownCandidate(true, ullCooldownRemainingMs);
+		// WHY: productive no-request peers have already contributed payload and
+		// often ask for another burst shortly after draining. Under severe
+		// broadband underfill, probe them before zero-byte peers while keeping
+		// unproductive cooldowns strict.
+		return ShouldProbeNoRequestCooldownCandidate(itNoRequest->second.bProductiveRecycle, ullCooldownRemainingMs);
 	}
 
 	return true;

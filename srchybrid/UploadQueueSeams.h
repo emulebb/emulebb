@@ -19,6 +19,7 @@ inline constexpr std::uint32_t kStalledUploadRecycleGraceMaxSeconds = 15u;
 inline constexpr std::uint32_t kUploadChurnRetryCooldownMaxSeconds = 120u;
 inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = 360u;
 inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 1000u;
+inline constexpr std::uint64_t kProductiveNoRequestCooldownProbeRemainingMs = 5000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = 184320u;
 
 enum UploadQueueEntryAccessState
@@ -128,6 +129,20 @@ inline bool ShouldProbeUnproductiveNoRequestCooldownCandidate(
 {
 	return bUnproductiveNoRequestCooldown
 		&& ullCooldownRemainingMs <= ullMaxProbeRemainingMs;
+}
+
+/**
+ * @brief Reports whether a drained no-request peer may be probed as a last-resort underfill refill.
+ */
+inline bool ShouldProbeNoRequestCooldownCandidate(
+	bool bProductiveNoRequestCooldown,
+	std::uint64_t ullCooldownRemainingMs,
+	std::uint64_t ullMaxProductiveProbeRemainingMs = kProductiveNoRequestCooldownProbeRemainingMs,
+	std::uint64_t ullMaxUnproductiveProbeRemainingMs = kUnproductiveNoRequestCooldownProbeRemainingMs)
+{
+	return bProductiveNoRequestCooldown
+		? ullCooldownRemainingMs <= ullMaxProductiveProbeRemainingMs
+		: ShouldProbeUnproductiveNoRequestCooldownCandidate(true, ullCooldownRemainingMs, ullMaxUnproductiveProbeRemainingMs);
 }
 
 /**
