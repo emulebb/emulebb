@@ -1202,6 +1202,7 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 	bool bHadIPCooldown = false;
 	bool bHadNoRequestCooldown = false;
 	bool bClearedProductiveNoRequestCooldown = false;
+	bool bClearedUnderfilledNoRequestCooldown = false;
 	if (dwCooldownIP != 0) {
 		const ULONGLONG curTick = ::GetTickCount64();
 		std::map<uint32, NoRequestUploadRetryCooldownState>::iterator itNoRequest = m_noRequestUploadRetryCooldownByIP.find(dwCooldownIP);
@@ -1220,10 +1221,24 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 				if (bProductiveNoRequestRecycle) {
 					itNoRequest->second.ullCooldownUntil = curTick;
 					bClearedProductiveNoRequestCooldown = true;
+				} else if (ShouldClearActiveNoRequestCooldownOnQueuedRequest(
+						true,
+						false,
+						HasSustainedBroadbandUnderfill(curTick),
+						uploadinglist.GetCount(),
+						GetSoftMaxUploadSlots()))
+				{
+					// WHY: a zero-byte no-request peer is still poor evidence, but
+					// a later valid block request during open-cap underfill proves
+					// fresh demand. Allow one immediate retry per tracking window;
+					// another drained slot will re-enter the stricter repeated
+					// no-request cooldown path.
+					itNoRequest->second.ullCooldownUntil = curTick;
+					bClearedUnderfilledNoRequestCooldown = true;
 				}
 			}
 		}
-		if (ShouldBlockQueuedRequestRetryClearForActiveNoRequest(bHadNoRequestCooldown, bClearedProductiveNoRequestCooldown)) {
+		if (ShouldBlockQueuedRequestRetryClearForActiveNoRequest(bHadNoRequestCooldown, bClearedProductiveNoRequestCooldown, bClearedUnderfilledNoRequestCooldown)) {
 			// WHY: unproductive no-request slots have not proven renewed upload
 			// demand. Do not let a queued block request clear the paired generic
 			// retry cooldown and bypass the still-active no-request throttle.
@@ -1249,7 +1264,7 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 	}
 	if (client != NULL)
 		client->ClearSlowUploadCooldown();
-	if (bHadClientCooldown || bHadIPCooldown || bClearedProductiveNoRequestCooldown)
+	if (bHadClientCooldown || bHadIPCooldown || bClearedProductiveNoRequestCooldown || bClearedUnderfilledNoRequestCooldown)
 		return true;
 	if (ppszInstrumentationReason != NULL)
 		*ppszInstrumentationReason = bHadNoRequestCooldown ? _T("reject-not-uploading-no-request-only-cooldown") : _T("reject-not-uploading-no-active-cooldown");

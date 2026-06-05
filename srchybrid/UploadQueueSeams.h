@@ -362,13 +362,30 @@ inline bool ShouldAllowNoRequestCooldownClear(
 }
 
 /**
+ * @brief Reports whether one valid queued request may prove renewed demand from an active no-request cooldown.
+ */
+inline bool ShouldClearActiveNoRequestCooldownOnQueuedRequest(
+	bool bHadNoRequestCooldown,
+	bool bClearedProductiveNoRequestCooldown,
+	bool bSustainedUnderfill,
+	std::int64_t iUploadSlots,
+	std::int64_t iSoftMaxUploadSlots)
+{
+	return bHadNoRequestCooldown
+		&& !bClearedProductiveNoRequestCooldown
+		&& bSustainedUnderfill
+		&& iUploadSlots < iSoftMaxUploadSlots;
+}
+
+/**
  * @brief Reports whether an active no-request cooldown still blocks queued-request retry clears.
  */
 inline bool ShouldBlockQueuedRequestRetryClearForActiveNoRequest(
 	bool bHadNoRequestCooldown,
-	bool bClearedProductiveNoRequestCooldown)
+	bool bClearedProductiveNoRequestCooldown,
+	bool bClearedUnderfilledNoRequestCooldown = false)
 {
-	return bHadNoRequestCooldown && !bClearedProductiveNoRequestCooldown;
+	return bHadNoRequestCooldown && !bClearedProductiveNoRequestCooldown && !bClearedUnderfilledNoRequestCooldown;
 }
 
 inline bool ShouldAllowUploadRetryCooldownClear(bool bRetryCooldownTracked, bool bQueuedRequestClearAlreadyUsed)
