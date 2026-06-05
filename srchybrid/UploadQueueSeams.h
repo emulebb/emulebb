@@ -344,6 +344,16 @@ inline bool ShouldAllowNoRequestCooldownClear(
 		|| bProductiveNoRequestRecycle;
 }
 
+/**
+ * @brief Reports whether an active no-request cooldown still blocks queued-request retry clears.
+ */
+inline bool ShouldBlockQueuedRequestRetryClearForActiveNoRequest(
+	bool bHadNoRequestCooldown,
+	bool bClearedProductiveNoRequestCooldown)
+{
+	return bHadNoRequestCooldown && !bClearedProductiveNoRequestCooldown;
+}
+
 inline bool ShouldAllowUploadRetryCooldownClear(bool bRetryCooldownTracked, bool bQueuedRequestClearAlreadyUsed)
 {
 	return !bRetryCooldownTracked || !bQueuedRequestClearAlreadyUsed;

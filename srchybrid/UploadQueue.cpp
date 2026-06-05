@@ -1223,6 +1223,14 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 				}
 			}
 		}
+		if (ShouldBlockQueuedRequestRetryClearForActiveNoRequest(bHadNoRequestCooldown, bClearedProductiveNoRequestCooldown)) {
+			// WHY: unproductive no-request slots have not proven renewed upload
+			// demand. Do not let a queued block request clear the paired generic
+			// retry cooldown and bypass the still-active no-request throttle.
+			if (ppszInstrumentationReason != NULL)
+				*ppszInstrumentationReason = _T("reject-not-uploading-unproductive-no-request-active");
+			return false;
+		}
 		std::map<uint32, UploadRetryCooldownState>::iterator itCooldown = m_uploadRetryCooldownByIP.find(dwCooldownIP);
 		if (itCooldown != m_uploadRetryCooldownByIP.end()) {
 			if (itCooldown->second.ullTrackUntil <= curTick) {
