@@ -232,7 +232,7 @@ public:
 	ULONGLONG		GetWaitStartTime() const;
 	void			SetWaitStartTime();
 	void			ClearWaitStartTime();
-	ULONGLONG		GetWaitTime() const								{ return m_dwUploadTime - GetWaitStartTime(); }
+	ULONGLONG		GetWaitTime() const;
 	bool			IsDownloading() const							{ return (m_eUploadState == US_UPLOADING); }
 	UINT			GetUploadDatarate() const						{ return m_nUpDatarate; }
 	UINT			GetScore(bool sysvalue, bool isdownloading = false, bool onlybasevalue = false) const;

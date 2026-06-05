@@ -979,6 +979,19 @@ ULONGLONG CUpDownClient::GetWaitStartTime() const
 	return dwResult;
 }
 
+ULONGLONG CUpDownClient::GetWaitTime() const
+{
+	const ULONGLONG ullWaitStart = GetWaitStartTime();
+	if (ullWaitStart == 0)
+		return 0;
+
+	const ULONGLONG ullWaitEnd = IsDownloading() ? m_dwUploadTime : ::GetTickCount64();
+	// WHY: queued clients do not have an upload-start timestamp yet. Using
+	// m_dwUploadTime for them underflows REST/UI wait-time reporting and hides
+	// the real queue age while upload-capacity tuning relies on that signal.
+	return ullWaitEnd >= ullWaitStart ? ullWaitEnd - ullWaitStart : 0;
+}
+
 void CUpDownClient::SetWaitStartTime()
 {
 	if (credits != NULL)
