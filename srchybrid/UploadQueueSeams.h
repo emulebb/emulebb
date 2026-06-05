@@ -353,12 +353,10 @@ inline bool ShouldAttemptUploadRetryCooldownClearOnQueuedRequest(
 
 inline bool ShouldAllowNoRequestCooldownClear(
 	bool bNoRequestCooldownTracked,
-	bool bQueuedRequestClearAlreadyUsed,
-	bool bProductiveNoRequestRecycle)
+	bool bQueuedRequestClearAlreadyUsed)
 {
 	return !bNoRequestCooldownTracked
-		|| !bQueuedRequestClearAlreadyUsed
-		|| bProductiveNoRequestRecycle;
+		|| !bQueuedRequestClearAlreadyUsed;
 }
 
 /**

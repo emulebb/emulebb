@@ -1212,9 +1212,9 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 			} else if (itNoRequest->second.ullCooldownUntil > curTick) {
 				bHadNoRequestCooldown = true;
 				const bool bProductiveNoRequestRecycle = itNoRequest->second.bProductiveRecycle;
-				if (!ShouldAllowNoRequestCooldownClear(true, itNoRequest->second.bQueuedRequestClearUsed, bProductiveNoRequestRecycle)) {
+				if (!ShouldAllowNoRequestCooldownClear(true, itNoRequest->second.bQueuedRequestClearUsed)) {
 					if (ppszInstrumentationReason != NULL)
-						*ppszInstrumentationReason = _T("reject-not-uploading-unproductive-no-request-clear-used");
+						*ppszInstrumentationReason = _T("reject-not-uploading-no-request-clear-used");
 					return false;
 				}
 				itNoRequest->second.bQueuedRequestClearUsed = true;
