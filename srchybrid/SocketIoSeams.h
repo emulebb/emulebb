@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <limits>
 
+#define EMULEBB_SOCKET_IO_SEAMS_HAS_BROADBAND_TCP_UPLOAD_BUFFER_HELPER 1
+
 inline constexpr std::uint32_t kBroadbandUdpReceiveBufferBytes = 1024u * 1024u;
 inline constexpr std::uint32_t kBroadbandTcpUploadSendBufferBytes = 32u * 1024u * 1024u;
 
