@@ -442,13 +442,12 @@ inline bool ShouldCacheTorznabResults(const size_t uResultCount)
 }
 
 /**
- * @brief Reports whether an Arr app is probing an indexer's configured category
- * without a real title query.
+ * @brief Reports whether an Arr app is probing the indexer without a real
+ * title query.
  */
 inline bool IsArrIndexerValidationProbe(const STorznabRequest &rRequest)
 {
 	return rRequest.strQuery.empty()
-		&& !rRequest.strCategories.empty()
 		&& rRequest.uOffset == 0
 		&& rRequest.eFamily != ETorznabFamily::Unknown;
 }
