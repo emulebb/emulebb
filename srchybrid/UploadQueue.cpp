@@ -78,6 +78,12 @@ namespace
 			theApp.emuledlg->transferwnd->QueueDisplayRefresh(DISPLAY_REFRESH_UPLOAD_LIST);
 	}
 
+	void QueueWaitingListDisplayRefresh()
+	{
+		if (theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
+			theApp.emuledlg->transferwnd->QueueDisplayRefresh(DISPLAY_REFRESH_QUEUE_LIST);
+	}
+
 	bool IsLiveUploadQueueClient(const CUpDownClient *client)
 	{
 		return client != NULL
@@ -1689,7 +1695,9 @@ void CUploadQueue::AddClientToQueue(CUpDownClient *client, bool bIgnoreTimelimit
 		m_bStatisticsWaitingListDirty = true;
 		waitinglist.AddTail(client);
 		client->SetUploadState(US_ONUPLOADQUEUE);
-		theApp.emuledlg->transferwnd->GetQueueList()->AddClient(client, true);
+		client->SetWaitStartTime();
+		client->SetAskedCount(1);
+		QueueWaitingListDisplayRefresh();
 		theApp.emuledlg->transferwnd->ShowQueueCount(waitinglist.GetCount());
 		client->SendRankingInfo();
 		return;
@@ -1710,7 +1718,9 @@ void CUploadQueue::AddClientToQueue(CUpDownClient *client, bool bIgnoreTimelimit
 		m_bStatisticsWaitingListDirty = true;
 		waitinglist.AddTail(client);
 		client->SetUploadState(US_ONUPLOADQUEUE);
-		theApp.emuledlg->transferwnd->GetQueueList()->AddClient(client, true);
+		client->SetWaitStartTime();
+		client->SetAskedCount(1);
+		QueueWaitingListDisplayRefresh();
 		theApp.emuledlg->transferwnd->ShowQueueCount(waitinglist.GetCount());
 		client->SendRankingInfo();
 	}
@@ -1963,7 +1973,7 @@ void CUploadQueue::RemoveFromWaitingQueue(POSITION pos, bool updatewindow)
 	CUpDownClient *todelete = waitinglist.GetAt(pos);
 	waitinglist.RemoveAt(pos);
 	if (updatewindow) {
-		theApp.emuledlg->transferwnd->GetQueueList()->RemoveClient(todelete);
+		QueueWaitingListDisplayRefresh();
 		theApp.emuledlg->transferwnd->ShowQueueCount(waitinglist.GetCount());
 	}
 	if (IsLiveUploadQueueClient(todelete))
@@ -1979,7 +1989,7 @@ void CUploadQueue::RemoveStaleWaitingClient(POSITION pos)
 	m_bStatisticsWaitingListDirty = true;
 	CUpDownClient *staleClient = waitinglist.GetAt(pos);
 	waitinglist.RemoveAt(pos);
-	theApp.emuledlg->transferwnd->GetQueueList()->RemoveClient(staleClient);
+	QueueWaitingListDisplayRefresh();
 	theApp.emuledlg->transferwnd->ShowQueueCount(waitinglist.GetCount());
 }
 

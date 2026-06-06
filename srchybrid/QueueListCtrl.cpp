@@ -249,6 +249,32 @@ bool CQueueListCtrl::PruneStaleClientItems()
 	return bRemoved;
 }
 
+bool CQueueListCtrl::SyncLiveClientItems()
+{
+	const bool bPruned = PruneStaleClientItems();
+	bool bAdded = false;
+	if (thePrefs.IsQueueListDisabled() || theApp.uploadqueue == NULL)
+		return bPruned;
+
+	for (CUpDownClient *client = NULL; (client = theApp.uploadqueue->GetNextClient(client)) != NULL;) {
+		if (!IsLiveClient(client))
+			continue;
+
+		LVFINDINFO find;
+		find.flags = LVFI_PARAM;
+		find.lParam = reinterpret_cast<LPARAM>(client);
+		if (FindItem(&find) >= 0)
+			continue;
+
+		InsertItem(LVIF_TEXT | LVIF_PARAM, GetItemCount(), LPSTR_TEXTCALLBACK, 0, 0, 0, reinterpret_cast<LPARAM>(client));
+		bAdded = true;
+	}
+
+	if (bAdded)
+		theApp.emuledlg->transferwnd->UpdateListCount(CTransferWnd::wnd2OnQueue);
+	return bPruned || bAdded;
+}
+
 CObject* CQueueListCtrl::WalkToLiveClientItem(int iDirection)
 {
 	const int iItemCount = GetItemCount();
@@ -950,6 +976,8 @@ void CQueueListCtrl::RefreshVisibleItems()
 {
 	if (theApp.IsClosing() || !IsWindowVisible())
 		return;
+
+	SyncLiveClientItems();
 
 	const int iItemCount = GetItemCount();
 	const int iFirst = max(0, GetTopIndex());
