@@ -380,6 +380,23 @@ void AppendResultsFromJson(const json &rResultPayload, const WebServerArrCompatS
 	}
 }
 
+std::vector<SArrCompatResult> BuildValidationProbeResults(const WebServerArrCompatSeams::STorznabRequest &rRequest)
+{
+	std::vector<SArrCompatResult> results;
+	SArrCompatResult item;
+	item.strHash = "00000000000000000000000000000001";
+	item.strName = "eMuleBB Arr indexer validation probe.txt";
+	item.ullSize = 1;
+	item.ullSeeders = 1;
+	item.ullPeers = 1;
+	item.ullGrabs = 0;
+	item.eFamily = rRequest.eFamily;
+	item.strDownloadLink = WebServerArrCompatSeams::BuildEd2kDownloadLink(item.strHash, item.strName, item.ullSize);
+	if (!item.strDownloadLink.empty())
+		results.push_back(item);
+	return results;
+}
+
 void DeleteNativeSearch(const std::string &rSearchId)
 {
 	if (rSearchId.empty())
@@ -548,6 +565,13 @@ void WebServerArrCompat::ProcessRequest(const ThreadData &rData)
 	std::vector<SArrCompatResult> results;
 	if (request.eFamily == WebServerArrCompatSeams::ETorznabFamily::Unknown) {
 		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, results));
+		return;
+	}
+	if (WebServerArrCompatSeams::IsArrIndexerValidationProbe(request)) {
+		// WHY: Radarr/Sonarr refuse to persist an otherwise valid Torznab
+		// indexer when their category-only validation probe returns zero rows.
+		// Real searches still require a title query and run through native eMule.
+		SendXmlResponse(rData.pSocket, 200, "OK", BuildFeedXml(request, BuildValidationProbeResults(request)));
 		return;
 	}
 

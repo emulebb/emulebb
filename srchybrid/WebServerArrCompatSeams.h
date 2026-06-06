@@ -422,6 +422,18 @@ inline bool ShouldCacheTorznabResults(const size_t uResultCount)
 }
 
 /**
+ * @brief Reports whether an Arr app is probing an indexer's configured category
+ * without a real title query.
+ */
+inline bool IsArrIndexerValidationProbe(const STorznabRequest &rRequest)
+{
+	return rRequest.strQuery.empty()
+		&& !rRequest.strCategories.empty()
+		&& rRequest.uOffset == 0
+		&& rRequest.eFamily != ETorznabFamily::Unknown;
+}
+
+/**
  * @brief Converts a Torznab media family to the REST search type token passed
  * through the native command bridge.
  */
