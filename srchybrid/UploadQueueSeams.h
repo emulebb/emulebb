@@ -331,7 +331,7 @@ inline bool ShouldUseBroadbandBigSendBuffer(
 
 inline std::uint32_t GetBroadbandUnderfillMarginBytesPerSec(
 	std::uint32_t uBudgetBytesPerSec,
-	std::uint32_t uTargetFillPercent = 90u,
+	std::uint32_t uTargetFillPercent = 98u,
 	std::uint32_t uMinimumMarginBytesPerSec = 1024u)
 {
 	if (uBudgetBytesPerSec == 0)
