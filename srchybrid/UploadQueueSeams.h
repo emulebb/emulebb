@@ -122,8 +122,9 @@ inline bool ShouldAttemptUploadSlotAdmission(bool bAllowEmptyWaitingQueue, bool 
  */
 inline bool ShouldProbeUploadCooldownCandidate(bool bSustainedUnderfill, std::int64_t iUploadSlots, std::int64_t iSoftMaxUploadSlots)
 {
-	return bSustainedUnderfill
-		&& iUploadSlots < iSoftMaxUploadSlots;
+	(void)iUploadSlots;
+	(void)iSoftMaxUploadSlots;
+	return bSustainedUnderfill;
 }
 
 /**
@@ -514,10 +515,11 @@ inline bool ShouldClearActiveNoRequestCooldownOnQueuedRequest(
 	std::int64_t iUploadSlots,
 	std::int64_t iSoftMaxUploadSlots)
 {
+	(void)iUploadSlots;
+	(void)iSoftMaxUploadSlots;
 	return bHadNoRequestCooldown
 		&& !bClearedProductiveNoRequestCooldown
-		&& bSustainedUnderfill
-		&& iUploadSlots < iSoftMaxUploadSlots;
+		&& bSustainedUnderfill;
 }
 
 /**
