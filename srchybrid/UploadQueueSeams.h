@@ -219,7 +219,7 @@ inline std::uint32_t GetSlowUploadRetryCooldownSecondsForBudget(
 	std::uint32_t uBudgetBytesPerSec,
 	std::uint32_t uBroadbandMaxCooldownSeconds = kBroadbandSlowUploadRetryCooldownMaxSeconds)
 {
-	if (!ShouldUseBroadbandAggressiveUploadPolicy(uBudgetBytesPerSec))
+	if (uBudgetBytesPerSec < kBroadbandAggressiveUploadPolicyBudgetBytesPerSec)
 		return uConfiguredCooldownSeconds;
 	return uConfiguredCooldownSeconds < uBroadbandMaxCooldownSeconds
 		? uConfiguredCooldownSeconds
