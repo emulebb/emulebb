@@ -168,7 +168,7 @@ void CQueueListCtrl::Localize()
 	{
 		IDS_QL_USERNAME, IDS_FILE, IDS_FILEPRIO, IDS_BASE_SCORE, IDS_EFFECTIVE_SCORE
 		, IDS_SCORE_MODIFIERS, IDS_ASKED, IDS_LASTSEEN, IDS_ENTERQUEUE, IDS_BANNED
-		, IDS_ALL_TIME_RATIO, IDS_SESSION_RATIO, IDS_COOLDOWN, IDS_UPSTATUS, IDS_GEOLOCATION
+		, IDS_ALL_TIME_RATIO, IDS_SESSION_RATIO, IDS_COOLDOWN, IDS_DL_PROGRESS, IDS_GEOLOCATION
 		, IDS_CD_CSOFT, IDS_CLIENT_UPLOADED, IDS_IP, IDS_IDLOW, IDS_CLIENT_HASH, IDS_FILE_SIZE, IDS_FOLDER, IDS_UPSTATUS
 	};
 
@@ -425,7 +425,7 @@ CString CQueueListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSub
 		sText = client->GetFriendSlot() ? _T("-") : FormatCooldown(client->GetSlowUploadCooldownRemaining());
 		break;
 	case 13:
-		sText = GetResString(IDS_UPSTATUS);
+		sText = GetResString(IDS_DL_PROGRESS);
 		break;
 	case 14:
 		if (theApp.geolocation != NULL)
