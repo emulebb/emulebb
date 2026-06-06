@@ -3662,7 +3662,7 @@ BEGIN
     IDS_WRN_TEMPFILES_RESERVED
                             "The temporary directory must not be set to an eMuleBB installation directory."
     IDS_WRN_INCTEMP_SAME    "Incoming directory and temporary directory must not be the same."
-    IDS_SHOWDWLPERCENTAGE   "Show percentage of download completion in progressbar"
+    IDS_SHOWDWLPERCENTAGE   "Show transfer percentages in progress bars"
     IDS_TBN_ONNEWDOWNLOAD   "Download added"
     IDS_ARTIST              "Artist"
 END
@@ -5016,7 +5016,7 @@ BEGIN
     IDS_PPG_DISPLAY_TT_RESETHIST           "Clears stored autocomplete history entries.\r\n\r\nThis affects saved history only and does not change active downloads or server lists."
     IDS_PPG_DISPLAY_TT_SELECT_HYPERTEXT_FONT "Opens the font chooser for server, message, and IRC text views.\r\n\r\nHold Ctrl while opening it to edit the log font instead."
     IDS_PPG_DISPLAY_TT_SHOWCATINFO         "Shows category information on transfer category tabs.\r\n\r\nUseful when you manage downloads through multiple categories."
-    IDS_PPG_DISPLAY_TT_SHOWDWLPERCENT      "Shows download progress percentages in the Transfers list.\r\n\r\nEnable it for quick progress scanning without opening file details."
+    IDS_PPG_DISPLAY_TT_SHOWDWLPERCENT      "Shows download and upload progress percentages inside transfer progress bars.\r\n\r\nDisable it to keep transfer bars text-free."
     IDS_PPG_DISPLAY_TT_SHOWTRANSTOOLBAR    "Shows the additional toolbar on the Transfers window.\r\n\r\nDisable it if you prefer more space for transfer rows."
     IDS_PPG_FILES_TT_ADDNEWFILESPAUSED     "Adds newly queued downloads in paused mode.\r\n\r\nUseful when you want to review or schedule files before they start transferring."
     IDS_PPG_FILES_TT_BROWSEV               "Browses for the external video player executable.\r\n\r\nChoose the program that should open previewed media files."
