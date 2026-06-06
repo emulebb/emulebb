@@ -6,7 +6,7 @@
 
 namespace PreferenceValidationSeams
 {
-constexpr std::uint32_t kDefaultConfiguredUploadLimitKiB = 6100u;
+constexpr std::uint32_t kDefaultConfiguredUploadLimitKiB = 6200u;
 constexpr std::uint32_t kDefaultConfiguredDownloadLimitKiB = 12207u;
 constexpr std::uint32_t kUnlimitedBandwidthSentinelKiB = UINT32_MAX;
 constexpr std::uint32_t kMaxFiniteBandwidthLimitKiB = kUnlimitedBandwidthSentinelKiB - 1u;
@@ -16,17 +16,17 @@ constexpr std::uint64_t kDefaultQueueSize = 10000u;
 constexpr std::uint64_t kMaxQueueSize = 10000u;
 constexpr std::uint64_t kMinUploadSlots = 1u;
 constexpr std::uint64_t kMaxUploadSlots = 32u;
-constexpr std::uint32_t kDefaultMaxUploadSlots = 8u;
+constexpr std::uint32_t kDefaultMaxUploadSlots = 10u;
 constexpr float kMinSlowUploadThresholdFactor = 0.10f;
 constexpr float kDefaultSlowUploadThresholdFactor = 0.70f;
 constexpr float kMaxSlowUploadThresholdFactor = 1.0f;
 constexpr std::uint32_t kMinSlowUploadGraceSeconds = 5u;
 constexpr std::uint32_t kDefaultSlowUploadGraceSeconds = 30u;
 constexpr std::uint32_t kMaxSlowUploadGraceSeconds = 300u;
-constexpr std::uint32_t kDefaultSlowUploadWarmupSeconds = 60u;
+constexpr std::uint32_t kDefaultSlowUploadWarmupSeconds = 30u;
 constexpr std::uint32_t kMaxSlowUploadWarmupSeconds = 3600u;
 constexpr std::uint32_t kMinZeroUploadRateGraceSeconds = 3u;
-constexpr std::uint32_t kDefaultZeroUploadRateGraceSeconds = 10u;
+constexpr std::uint32_t kDefaultZeroUploadRateGraceSeconds = 5u;
 constexpr std::uint32_t kMaxZeroUploadRateGraceSeconds = 120u;
 constexpr std::uint32_t kMinSlowUploadCooldownSeconds = 10u;
 constexpr std::uint32_t kDefaultSlowUploadCooldownSeconds = 60u;
