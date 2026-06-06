@@ -101,6 +101,34 @@ namespace
 		return strText;
 	}
 
+	CString FormatUploadPartProgressPercentText(const CUpDownClient *client)
+	{
+		CString strText;
+		const UINT uPartCount = client != NULL ? client->GetUpPartCount() : 0;
+		if (uPartCount > 0) {
+			const UINT uReportedAvailablePartCount = client->GetUpAvailablePartCount();
+			const UINT uAvailablePartCount = uReportedAvailablePartCount < uPartCount ? uReportedAvailablePartCount : uPartCount;
+			strText.Format(_T("%.1f%%"), static_cast<double>(uAvailablePartCount) * 100.0 / static_cast<double>(uPartCount));
+		}
+		return strText;
+	}
+
+	void DrawCenteredTransferBarPercent(CDC &dc, const CRect &rcBar, const CUpDownClient *client)
+	{
+		const CString strPercent = FormatUploadPartProgressPercentText(client);
+		if (strPercent.IsEmpty())
+			return;
+
+		COLORREF crPercent = RGB(255, 255, 255);
+		theApp.LoadSkinColor(_T("TransferBarPercentFg"), crPercent);
+		const COLORREF crOldText = dc.SetTextColor(crPercent);
+		const int iOldBkMode = dc.SetBkMode(TRANSPARENT);
+		CRect rcText(rcBar);
+		dc.DrawText(strPercent, -1, rcText, (MLC_DT_TEXT & ~DT_LEFT) | DT_CENTER);
+		dc.SetBkMode(iOldBkMode);
+		dc.SetTextColor(crOldText);
+	}
+
 	CString FormatUploadScoreColumn(const CUpDownClient *client)
 	{
 		return UploadScoreSeams::FormatUploadScoreCompact(
@@ -451,6 +479,8 @@ void CUploadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 				++rcItem.top;
 				--rcItem.bottom;
 				client->DrawUpStatusBar(dc, &rcItem, false, thePrefs.UseFlatBar());
+				if (thePrefs.GetUseDwlPercentage())
+					DrawCenteredTransferBarPercent(dc, rcItem, client);
 				++rcItem.bottom;
 				--rcItem.top;
 			}
