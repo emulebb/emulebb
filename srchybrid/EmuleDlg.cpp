@@ -5236,19 +5236,27 @@ void CemuleDlg::ApplyViewPresetCommand(UINT uCommandId)
 	for (const MuleListCtrlViewPresets::SListControlViewPresetProfile &profile : MuleListCtrlViewPresets::kProfiles)
 		PersistViewPresetProfile(profile, ePreset, eWidthMode);
 
-	CMuleListCtrl *apLiveLists[] = {
-		transferwnd != NULL ? transferwnd->GetDownloadList() : NULL,
-		transferwnd != NULL ? transferwnd->GetUploadList() : NULL,
-		transferwnd != NULL ? transferwnd->GetQueueList() : NULL,
-		transferwnd != NULL ? transferwnd->GetClientList() : NULL,
-		transferwnd != NULL ? transferwnd->GetDownloadClientsList() : NULL,
-		serverwnd != NULL ? &serverwnd->serverlistctrl : NULL,
-		searchwnd != NULL && searchwnd->m_pwndResults != NULL ? &searchwnd->m_pwndResults->searchlistctrl : NULL,
-		sharedfileswnd != NULL ? &sharedfileswnd->sharedfilesctrl : NULL,
+	struct SLivePresetList
+	{
+		CMuleListCtrl *pList;
+		LPCTSTR pszProfileName;
 	};
-	for (CMuleListCtrl *pList : apLiveLists) {
-		if (pList != NULL)
-			pList->ApplyViewPreset(ePreset, eWidthMode);
+	const SLivePresetList aLiveLists[] = {
+		{transferwnd != NULL ? transferwnd->GetDownloadList() : NULL, _T("DownloadListCtrl")},
+		{transferwnd != NULL ? transferwnd->GetUploadList() : NULL, _T("UploadListCtrl")},
+		{transferwnd != NULL ? transferwnd->GetQueueList() : NULL, _T("QueueListCtrl")},
+		{transferwnd != NULL ? transferwnd->GetClientList() : NULL, _T("ClientListCtrl")},
+		{transferwnd != NULL ? transferwnd->GetDownloadClientsList() : NULL, _T("DownloadClientsCtrl")},
+		{serverwnd != NULL ? &serverwnd->serverlistctrl : NULL, _T("ServerListCtrl")},
+		{searchwnd != NULL && searchwnd->m_pwndResults != NULL ? &searchwnd->m_pwndResults->searchlistctrl : NULL, _T("SearchListCtrl")},
+		{sharedfileswnd != NULL ? &sharedfileswnd->sharedfilesctrl : NULL, _T("SharedFilesCtrl")},
+	};
+	for (const SLivePresetList &liveList : aLiveLists) {
+		const MuleListCtrlViewPresets::SListControlViewPresetProfile *profile = MuleListCtrlViewPresets::FindProfile(liveList.pszProfileName);
+		if (liveList.pList != NULL && profile != NULL) {
+			liveList.pList->SetViewPresetProfile(*profile);
+			liveList.pList->ApplyViewPreset(ePreset, eWidthMode);
+		}
 	}
 }
 
