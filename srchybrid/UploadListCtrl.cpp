@@ -101,15 +101,22 @@ namespace
 		return strText;
 	}
 
+	double GetUploadPartProgressPercent(const CUpDownClient *client)
+	{
+		const UINT uPartCount = client != NULL ? client->GetUpPartCount() : 0;
+		if (uPartCount == 0)
+			return -1.0;
+		const UINT uReportedAvailablePartCount = client->GetUpAvailablePartCount();
+		const UINT uAvailablePartCount = uReportedAvailablePartCount < uPartCount ? uReportedAvailablePartCount : uPartCount;
+		return static_cast<double>(uAvailablePartCount) * 100.0 / static_cast<double>(uPartCount);
+	}
+
 	CString FormatUploadPartProgressPercentText(const CUpDownClient *client)
 	{
 		CString strText;
-		const UINT uPartCount = client != NULL ? client->GetUpPartCount() : 0;
-		if (uPartCount > 0) {
-			const UINT uReportedAvailablePartCount = client->GetUpAvailablePartCount();
-			const UINT uAvailablePartCount = uReportedAvailablePartCount < uPartCount ? uReportedAvailablePartCount : uPartCount;
-			strText.Format(_T("%.1f%%"), static_cast<double>(uAvailablePartCount) * 100.0 / static_cast<double>(uPartCount));
-		}
+		const double fPercent = GetUploadPartProgressPercent(client);
+		if (fPercent >= 0.0)
+			strText.Format(_T("%.1f%%"), fPercent);
 		return strText;
 	}
 
@@ -571,14 +578,9 @@ CString  CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iS
 		sText = client->HasValidHash() ? CString(md4str(client->GetUserHash())) : CString(_T("?"));
 		break;
 	case 18:
-		{
-			const CKnownFile *file = GetUploadClientFile(client);
-			const uint64 uFileSize = file != NULL ? static_cast<uint64>(file->GetFileSize()) : 0;
-			if (uFileSize > 0)
-				sText.Format(_T("%.1f%%"), static_cast<double>(client->GetSessionUp()) * 100.0 / static_cast<double>(uFileSize));
-			else
-				sText = _T("-");
-		}
+		sText = FormatUploadPartProgressPercentText(client);
+		if (sText.IsEmpty())
+			sText = _T("-");
 		break;
 	case 19:
 		{
@@ -823,17 +825,12 @@ int CALLBACK CUploadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lP
 		break;
 	case 18:
 		{
-			const CKnownFile *file1 = GetUploadClientFile(item1);
-			const CKnownFile *file2 = GetUploadClientFile(item2);
-			const uint64 uFileSize1 = file1 != NULL ? static_cast<uint64>(file1->GetFileSize()) : 0;
-			const uint64 uFileSize2 = file2 != NULL ? static_cast<uint64>(file2->GetFileSize()) : 0;
-			if (uFileSize1 > 0 && uFileSize2 > 0) {
-				const double fPct1 = static_cast<double>(item1->GetSessionUp()) * 1000.0 / static_cast<double>(uFileSize1);
-				const double fPct2 = static_cast<double>(item2->GetSessionUp()) * 1000.0 / static_cast<double>(uFileSize2);
+			const double fPct1 = GetUploadPartProgressPercent(item1);
+			const double fPct2 = GetUploadPartProgressPercent(item2);
+			if (fPct1 >= 0.0 && fPct2 >= 0.0)
 				iResult = (fPct1 < fPct2) ? -1 : static_cast<int>(fPct1 > fPct2);
-			}
 			else
-				iResult = (uFileSize1 == 0) ? 1 : -1;
+				iResult = (fPct1 < 0.0) ? 1 : -1;
 		}
 		break;
 	case 19:
