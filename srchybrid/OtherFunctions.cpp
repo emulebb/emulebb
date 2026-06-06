@@ -1806,7 +1806,7 @@ CString CleanupFilename(const CString &filename, bool bExtension)
 	sClean.Replace(_T(" }"), _T("}"));
 	sClean.Replace(_T("{}"), _T(""));
 
-	return sClean.Trim();
+	return FilenameNormalizationPolicy::CollapseFilenameWhitespace(sClean, false);
 }
 
 struct SED2KFileType
