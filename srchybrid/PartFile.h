@@ -250,6 +250,7 @@ public:
 	bool	IsStopped() const							{ return m_stopped; }
 	bool	GetCompletionError() const					{ return m_bCompletionError; }
 	EMFileSize	GetCompletedSize() const				{ return m_completedsize; }
+	UINT	GetCompletedPartCount() const;
 	CString getPartfileStatus() const;
 	int		getPartfileStatusRank() const;
 	void	SetActive(bool bActive);

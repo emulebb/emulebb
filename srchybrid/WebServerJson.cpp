@@ -684,6 +684,8 @@ json BuildSearchEvidenceJson(const CSearchFile &rSearchFile, const SFakeFileRepo
 json BuildTransferJson(const CPartFile &rPartFile)
 {
 	const time_t eta = rPartFile.getTimeRemaining();
+	const UINT uPartsObtained = rPartFile.GetCompletedPartCount();
+	const UINT uPartsTotal = rPartFile.GetPartCount();
 	return json{
 		{"hash", StdUtf8FromCString(HashToHex(rPartFile.GetFileHash()))},
 		{"name", StdUtf8FromCString(rPartFile.GetFileName())},
@@ -704,7 +706,9 @@ json BuildTransferJson(const CPartFile &rPartFile)
 		{"eta", eta >= 0 ? json(static_cast<int64_t>(eta)) : json(nullptr)},
 		{"addedAt", JsonTimeOrNull(rPartFile.GetCrFileDate())},
 		{"completedAt", JsonTimeOrNull(rPartFile.GetStatus() == PS_COMPLETE ? rPartFile.GetFileDate() : static_cast<time_t>(-1))},
-		{"partsTotal", rPartFile.GetPartCount()},
+		{"partsObtained", uPartsObtained},
+		{"partsTotal", uPartsTotal},
+		{"partsProgressText", WebApiSurfaceSeams::BuildPartProgressText(uPartsObtained, uPartsTotal)},
 		{"partsAvailable", rPartFile.GetAvailablePartCount()},
 		{"stopped", rPartFile.IsStopped()},
 		{"fakeFile", BuildFakeFileReportJson(FakeFileDetector::GetPartFileReportSnapshot(const_cast<CPartFile&>(rPartFile)))}
@@ -897,6 +901,8 @@ json BuildUploadJson(const CUpDownClient &rClient, const bool bWaitingQueue, con
 		strClientId = HashToHex(rClient.GetUserHash());
 	else
 		strClientId.Format(_T("%s:%u"), static_cast<LPCTSTR>(strAddress), rClient.GetUserPort());
+	const uint16 uRequestedPartsObtained = rClient.GetUpAvailablePartCount();
+	const uint16 uRequestedPartsTotal = rClient.GetUpPartCount();
 	json result = json{
 		{"clientId", StdUtf8FromCString(strClientId)},
 		{"userName", StdUtf8FromCString(strUserName)},
@@ -921,7 +927,10 @@ json BuildUploadJson(const CUpDownClient &rClient, const bool bWaitingQueue, con
 		{"waitingQueue", bWaitingQueue},
 		{"requestedFileHash", JsonHashOrNull(pUploadFileHash)},
 		{"requestedFileName", pUploadFile != NULL ? json(StdUtf8FromCString(pUploadFile->GetFileName())) : json(nullptr)},
-		{"requestedFileSizeBytes", pUploadFile != NULL ? json(static_cast<uint64>(pUploadFile->GetFileSize())) : json(nullptr)}
+		{"requestedFileSizeBytes", pUploadFile != NULL ? json(static_cast<uint64>(pUploadFile->GetFileSize())) : json(nullptr)},
+		{"requestedPartsObtained", uRequestedPartsObtained},
+		{"requestedPartsTotal", uRequestedPartsTotal},
+		{"requestedPartsProgressText", WebApiSurfaceSeams::BuildPartProgressText(uRequestedPartsObtained, uRequestedPartsTotal)}
 	};
 	if (bIncludeScoreBreakdown)
 		result["scoreBreakdown"] = BuildUploadScoreBreakdownJson(rClient);

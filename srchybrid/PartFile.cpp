@@ -4606,6 +4606,16 @@ void CPartFile::UpdateAvailablePartsCount()
 	availablePartsCount = availablecounter;
 }
 
+UINT CPartFile::GetCompletedPartCount() const
+{
+	UINT uCompletedParts = 0;
+	for (UINT nPart = 0; nPart < GetPartCount(); ++nPart) {
+		if (IsComplete(nPart))
+			++uCompletedParts;
+	}
+	return uCompletedParts;
+}
+
 Packet* CPartFile::CreateSrcInfoPacket(const CUpDownClient *forClient, uint8 byRequestedVersion, uint16 nRequestedOptions) const
 {
 	if (!IsPartFile() || srclist.IsEmpty())

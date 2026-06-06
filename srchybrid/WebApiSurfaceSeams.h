@@ -4,6 +4,7 @@
 #include <climits>
 #include <cstring>
 #include <cstdint>
+#include <string>
 #include "PreferenceValidationSeams.h"
 
 namespace WebApiSurfaceSeams
@@ -163,6 +164,15 @@ inline double BuildTransferProgressRatio(const uint64_t ullCompletedBytes, const
 	const long double progress = static_cast<long double>(ullCompletedBytes) / static_cast<long double>(ullTotalBytes);
 	const uint64_t ullScaled = static_cast<uint64_t>((progress * static_cast<long double>(kTransferProgressRatioScale)) + 0.5L);
 	return static_cast<double>(ullScaled) / static_cast<double>(kTransferProgressRatioScale);
+}
+
+/**
+ * Builds the compact "obtained / total" part progress text used by REST
+ * clients that want the same count users see in transfer lists.
+ */
+inline std::string BuildPartProgressText(const uint32_t uObtainedParts, const uint32_t uTotalParts)
+{
+	return std::to_string(uObtainedParts) + " / " + std::to_string(uTotalParts);
 }
 
 /**

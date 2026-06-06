@@ -252,6 +252,19 @@ void CUpDownClient::DrawUpStatusBar(CDC &dc, const CRect &rect, bool onlygreyrec
 	}
 }
 
+uint16 CUpDownClient::GetUpAvailablePartCount() const
+{
+	uint16 uAvailableParts = 0;
+	if (m_abyUpPartStatus == NULL)
+		return uAvailableParts;
+
+	for (UINT uPart = 0; uPart < m_nUpPartCount; ++uPart) {
+		if (m_abyUpPartStatus[uPart] != 0)
+			++uAvailableParts;
+	}
+	return uAvailableParts;
+}
+
 void CUpDownClient::SetUploadState(EUploadState eNewState)
 {
 	if (eNewState != m_eUploadState) {
