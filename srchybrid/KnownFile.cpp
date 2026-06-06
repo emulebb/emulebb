@@ -26,6 +26,7 @@
 #include "KnownFileList.h"
 #include "KnownFileListSeams.h"
 #include "KnownFileHashOpenSeams.h"
+#include "SharedFilePartsBarSeams.h"
 #include "SharedFileList.h"
 #include "UpDownClient.h"
 #include "ClientList.h"
@@ -196,13 +197,13 @@ CBarShader CKnownFile::s_ShareStatusBar(16);
 
 void CKnownFile::DrawShareStatusBar(CDC &dc, LPCRECT rect, bool onlygreyrect, bool  bFlat) const
 {
+	const SharedFilePartsBarSeams::Colors colors = SharedFilePartsBarSeams::BuildColors(bFlat, g_bLowColorDesktop);
 	s_ShareStatusBar.SetFileSize(GetFileSize());
 	s_ShareStatusBar.SetRect(rect);
 
 	if (!m_ClientUploadList.IsEmpty() || m_nCompleteSourcesCountHi > 1) {
 		// We have info about chunk frequency in the net, so we will color the chunks we have after perceived availability.
-		const COLORREF crMissing = RGB(255, 0, 0);
-		s_ShareStatusBar.Fill(crMissing);
+		s_ShareStatusBar.Fill(colors.crMissing);
 
 		if (!onlygreyrect) {
 			uint32 tempCompleteSources = m_nCompleteSourcesCountLo ? m_nCompleteSourcesCountLo - 1 : 0;
@@ -213,16 +214,14 @@ void CKnownFile::DrawShareStatusBar(CDC &dc, LPCRECT rect, bool onlygreyrect, bo
 					frequency = max(m_AvailPartFrequency[i], tempCompleteSources);
 
 				if (frequency > 0) {
-					COLORREF color = RGB(0, (22 * (frequency - 1) >= 210) ? 0 : 210 - (22 * (frequency - 1)), 255);
 					uint64 uBegin = PARTSIZE * i;
-					s_ShareStatusBar.FillRange(uBegin, uBegin + PARTSIZE, color);
+					s_ShareStatusBar.FillRange(uBegin, uBegin + PARTSIZE, SharedFilePartsBarSeams::AvailabilityColor(colors, frequency));
 				}
 			}
 		}
 	} else {
 		// We have no info about chunk frequency in the net, so just color the chunk we have as black.
-		COLORREF crNooneAsked = bFlat ? RGB(0, 0, 0) : RGB(104, 104, 104);
-		s_ShareStatusBar.Fill(crNooneAsked);
+		s_ShareStatusBar.Fill(colors.crUnrequested);
 	}
 
 	s_ShareStatusBar.Draw(dc, rect->left, rect->top, bFlat);

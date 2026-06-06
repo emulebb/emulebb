@@ -53,6 +53,7 @@
 #include "PartFilePersistenceSeams.h"
 #include "PartFileSourceOwnershipSeams.h"
 #include "PartFileEndgameSeams.h"
+#include "SharedFilePartsBarSeams.h"
 #include "UpDownClientDeleteSeams.h"
 #include "ProcessLaunchSeams.h"
 #include "SafeFile.h"
@@ -250,16 +251,6 @@ COLORREF BlendColor(COLORREF crColor, COLORREF crTarget, UINT uColorWeight)
 		(GetRValue(crColor) * uColorWeight + GetRValue(crTarget) * uTargetWeight) / 100U,
 		(GetGValue(crColor) * uColorWeight + GetGValue(crTarget) * uTargetWeight) / 100U,
 		(GetBValue(crColor) * uColorWeight + GetBValue(crTarget) * uTargetWeight) / 100U);
-}
-
-COLORREF InterpolateColor(COLORREF crStart, COLORREF crEnd, UINT uStep, UINT uStepCount)
-{
-	if (uStepCount == 0)
-		return crStart;
-	return RGB(
-		GetRValue(crStart) + (GetRValue(crEnd) - GetRValue(crStart)) * static_cast<int>(uStep) / static_cast<int>(uStepCount),
-		GetGValue(crStart) + (GetGValue(crEnd) - GetGValue(crStart)) * static_cast<int>(uStep) / static_cast<int>(uStepCount),
-		GetBValue(crStart) + (GetBValue(crEnd) - GetBValue(crStart)) * static_cast<int>(uStep) / static_cast<int>(uStepCount));
 }
 
 struct STransferBarColors
@@ -2529,14 +2520,12 @@ void CPartFile::DrawShareStatusBar(CDC &dc, LPCRECT rect, bool onlygreyrect, boo
 		return;
 	}
 
-	static const COLORREF crNotShared = RGB(224, 224, 224);
+	const SharedFilePartsBarSeams::Colors colors = SharedFilePartsBarSeams::BuildColors(bFlat, g_bLowColorDesktop);
 	s_ChunkBar.SetFileSize(m_nFileSize);
 	s_ChunkBar.SetRect(rect);
-	s_ChunkBar.Fill(crNotShared);
+	s_ChunkBar.Fill(colors.crNotShared);
 
 	if (!onlygreyrect) {
-		static const COLORREF crMissing = RGB(255, 0, 0);
-		const COLORREF crNooneAsked(bFlat ? RGB(0, 0, 0) : RGB(104, 104, 104));
 		for (UINT i = GetPartCount(); i-- > 0;) {
 			uint64 uBegin = PARTSIZE * i;
 			if (IsCompleteBDSafe(uBegin, uBegin + PARTSIZE - 1)) {
@@ -2552,11 +2541,11 @@ void CPartFile::DrawShareStatusBar(CDC &dc, LPCRECT rect, bool onlygreyrect, boo
 						frequency = max(m_AvailPartFrequency[i], m_nCompleteSourcesCountLo);
 
 					if (frequency > 0)
-						colour = RGB(0, (22 * frequency >= 232 ? 0 : 232 - 22 * frequency), 255);
+						colour = SharedFilePartsBarSeams::AvailabilityColor(colors, frequency);
 					else
-						colour = crMissing;
+						colour = colors.crMissing;
 				} else
-					colour = crNooneAsked;
+					colour = colors.crUnrequested;
 				s_ChunkBar.FillRange(uBegin, uBegin + PARTSIZE, colour);
 			}
 		}
@@ -2610,7 +2599,7 @@ void CPartFile::DrawStatusBar(CDC &dc, const CRect &rect, bool bFlat) /*const*/
 					COLORREF color;
 					if (i < (UINT)m_SrcPartFrequency.GetCount() && m_SrcPartFrequency[i]) {
 						uint16 freq = m_SrcPartFrequency[i] - 1;
-						color = InterpolateColor(colors.crSourceBase, colors.crSourceHot, min(freq, static_cast<uint16>(10)), 10);
+						color = SharedFilePartsBarSeams::InterpolateColor(colors.crSourceBase, colors.crSourceHot, min(freq, static_cast<uint16>(10)), 10);
 					} else
 						color = colors.crMissing;
 					s_ChunkBar.FillRange(start, end + 1, color);
