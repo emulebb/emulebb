@@ -83,6 +83,14 @@ namespace
 		return str;
 	}
 
+	CString FormatUploadPartProgressText(const CUpDownClient *client)
+	{
+		CString strText;
+		if (client != NULL && client->GetUpPartCount() > 0)
+			strText.Format(_T("%u / %u"), client->GetUpAvailablePartCount(), client->GetUpPartCount());
+		return strText;
+	}
+
 	int CompareRatio(float fLeft, float fRight)
 	{
 		if (fLeft < fRight)
@@ -143,6 +151,7 @@ void CQueueListCtrl::Init()
 	InsertColumn(19,_T(""),	LVCFMT_LEFT, 100);							//IDS_CLIENT_HASH
 	InsertColumn(20,_T(""),	LVCFMT_RIGHT, 85);							//IDS_FILE_SIZE
 	InsertColumn(21,_T(""),	LVCFMT_LEFT, DFLT_FOLDER_COL_WIDTH);		//IDS_FOLDER
+	InsertColumn(22,_T(""),	LVCFMT_RIGHT, 90);							//IDS_UPSTATUS
 
 	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("QueueListCtrl")))
 		SetViewPresetProfile(*pProfile);
@@ -155,12 +164,12 @@ void CQueueListCtrl::Init()
 
 void CQueueListCtrl::Localize()
 {
-	static const UINT uids[22] =
+	static const UINT uids[23] =
 	{
 		IDS_QL_USERNAME, IDS_FILE, IDS_FILEPRIO, IDS_BASE_SCORE, IDS_EFFECTIVE_SCORE
 		, IDS_SCORE_MODIFIERS, IDS_ASKED, IDS_LASTSEEN, IDS_ENTERQUEUE, IDS_BANNED
 		, IDS_ALL_TIME_RATIO, IDS_SESSION_RATIO, IDS_COOLDOWN, IDS_UPSTATUS, IDS_GEOLOCATION
-		, IDS_CD_CSOFT, IDS_CLIENT_UPLOADED, IDS_IP, IDS_IDLOW, IDS_CLIENT_HASH, IDS_FILE_SIZE, IDS_FOLDER
+		, IDS_CD_CSOFT, IDS_CLIENT_UPLOADED, IDS_IP, IDS_IDLOW, IDS_CLIENT_HASH, IDS_FILE_SIZE, IDS_FOLDER, IDS_UPSTATUS
 	};
 
 	LocaliseHeaderCtrl(uids, _countof(uids));
@@ -452,6 +461,9 @@ CString CQueueListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSub
 			if (file != NULL)
 				sText = file->GetPath();
 		}
+		break;
+	case 22:
+		sText = FormatUploadPartProgressText(client);
 	}
 	return sText;
 }
@@ -604,6 +616,11 @@ int CALLBACK CQueueListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lPa
 		break;
 	case 13:
 		iResult = CompareUnsigned(item1->GetUpPartCount(), item2->GetUpPartCount());
+		break;
+	case 22:
+		iResult = CompareUnsigned(item1->GetUpAvailablePartCount(), item2->GetUpAvailablePartCount());
+		if (iResult == 0)
+			iResult = CompareUnsigned(item1->GetUpPartCount(), item2->GetUpPartCount());
 		break;
 	case 14:
 		if (theApp.geolocation != NULL)

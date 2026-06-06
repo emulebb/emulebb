@@ -93,6 +93,14 @@ namespace
 		return str;
 	}
 
+	CString FormatUploadPartProgressText(const CUpDownClient *client)
+	{
+		CString strText;
+		if (client != NULL && client->GetUpPartCount() > 0)
+			strText.Format(_T("%u / %u"), client->GetUpAvailablePartCount(), client->GetUpPartCount());
+		return strText;
+	}
+
 	CString FormatUploadScoreColumn(const CUpDownClient *client)
 	{
 		return UploadScoreSeams::FormatUploadScoreCompact(
@@ -178,6 +186,7 @@ void CUploadListCtrl::Init()
 	InsertColumn(19,_T(""),	LVCFMT_RIGHT, 85);							//IDS_FILE_SIZE
 	InsertColumn(20,_T(""),	LVCFMT_RIGHT, 70);							//IDS_ETA
 	InsertColumn(21,_T(""),	LVCFMT_LEFT, 120);							//IDS_FOLDER
+	InsertColumn(22,_T(""),	LVCFMT_RIGHT, 90);							//IDS_UPSTATUS
 
 	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("UploadListCtrl")))
 		SetViewPresetProfile(*pProfile);
@@ -190,11 +199,11 @@ void CUploadListCtrl::Init()
 
 void CUploadListCtrl::Localize()
 {
-	static const UINT uids[22] =
+	static const UINT uids[23] =
 	{
 		IDS_QL_USERNAME, IDS_FILE, IDS_DL_SPEED, IDS_DL_TRANSF, IDS_WAITED
 		, IDS_UPLOADTIME, IDS_STATUS, IDS_ALL_TIME_RATIO, IDS_SESSION_RATIO, IDS_COOLDOWN, IDS_EFFECTIVE_SCORE, IDS_UPSTATUS, IDS_GEOLOCATION
-		, IDS_CD_CSOFT, IDS_CLIENT_UPLOADED, IDS_IP, IDS_IDLOW, IDS_CLIENT_HASH, IDS_UPLOAD_PCT, IDS_FILE_SIZE, IDS_ETA, IDS_FOLDER
+		, IDS_CD_CSOFT, IDS_CLIENT_UPLOADED, IDS_IP, IDS_IDLOW, IDS_CLIENT_HASH, IDS_UPLOAD_PCT, IDS_FILE_SIZE, IDS_ETA, IDS_FOLDER, IDS_UPSTATUS
 	};
 
 	LocaliseHeaderCtrl(uids, _countof(uids));
@@ -244,6 +253,33 @@ bool CUploadListCtrl::PruneStaleClientItems()
 		theApp.emuledlg->transferwnd->m_pwndTransfer->UpdateListCount(CTransferWnd::wnd2Uploading);
 
 	return bRemoved;
+}
+
+bool CUploadListCtrl::SyncLiveClientItems()
+{
+	const bool bPruned = PruneStaleClientItems();
+	bool bAdded = false;
+	if (theApp.uploadqueue == NULL)
+		return bPruned;
+
+	for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;) {
+		const CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromUploadList(pos);
+		if (!IsLiveClient(pClient))
+			continue;
+
+		LVFINDINFO find;
+		find.flags = LVFI_PARAM;
+		find.lParam = reinterpret_cast<LPARAM>(pClient);
+		if (FindItem(&find) >= 0)
+			continue;
+
+		InsertItem(LVIF_TEXT | LVIF_PARAM, GetItemCount(), LPSTR_TEXTCALLBACK, 0, 0, 0, reinterpret_cast<LPARAM>(pClient));
+		bAdded = true;
+	}
+
+	if (bAdded)
+		theApp.emuledlg->transferwnd->m_pwndTransfer->UpdateListCount(CTransferWnd::wnd2Uploading);
+	return bPruned || bAdded;
 }
 
 CObject* CUploadListCtrl::WalkToLiveClientItem(int iDirection)
@@ -546,6 +582,9 @@ CString  CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iS
 			if (file != NULL)
 				sText = file->GetPath();
 		}
+		break;
+	case 22:
+		sText = FormatUploadPartProgressText(client);
 	}
 	return sText;
 }
@@ -623,6 +662,7 @@ void CUploadListCtrl::OnLvnColumnClick(LPNMHDR pNMHDR, LRESULT *pResult)
 		case 9: // Cooldown
 		case 10: // Effective score
 		case 11: // Part Count
+		case 22: // Obtained parts text
 		case 14: // Client Uploaded
 		case 18: // Upload %
 		case 19: // File Size
@@ -720,6 +760,11 @@ int CALLBACK CUploadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lP
 		break;
 	case 11:
 		iResult = CompareUnsigned(item1->GetUpPartCount(), item2->GetUpPartCount());
+		break;
+	case 22:
+		iResult = CompareUnsigned(item1->GetUpAvailablePartCount(), item2->GetUpAvailablePartCount());
+		if (iResult == 0)
+			iResult = CompareUnsigned(item1->GetUpPartCount(), item2->GetUpPartCount());
 		break;
 	case 12:
 		if (theApp.geolocation != NULL)
@@ -1060,6 +1105,8 @@ void CUploadListCtrl::RefreshVisibleItems()
 {
 	if (theApp.IsClosing() || !IsWindowVisible())
 		return;
+
+	SyncLiveClientItems();
 
 	const int iItemCount = GetItemCount();
 	const int iFirst = max(0, GetTopIndex());

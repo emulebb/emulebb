@@ -78,6 +78,14 @@ namespace
 		return client->GetIP() != 0 ? client->GetIP() : client->GetConnectIP();
 	}
 
+	CString FormatDownloadObtainedPartsText(const CPartFile *pPartFile)
+	{
+		CString strText;
+		if (pPartFile != NULL && pPartFile->GetPartCount() > 0)
+			strText.Format(_T("%u / %u"), pPartFile->GetCompletedPartCount(), pPartFile->GetPartCount());
+		return strText;
+	}
+
 	CString WrapDownloadInfoTipLine(const CString &rstrLine)
 	{
 		if (rstrLine.GetLength() <= kDownloadInfoTipMaxLineChars
@@ -339,6 +347,7 @@ void CDownloadListCtrl::Init()
 	InsertColumn(16,	_T(""),	LVCFMT_RIGHT,	50);							//IDS_PERCENTAGE
 	InsertColumn(17,	_T(""),	LVCFMT_LEFT,	100);							//IDS_IP
 	InsertColumn(18,	_T(""),	LVCFMT_LEFT,	70);							//IDS_IDLOW
+	InsertColumn(19,	_T(""),	LVCFMT_RIGHT,	90);							//IDS_UPSTATUS
 
 	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("DownloadListCtrl")))
 		SetViewPresetProfile(*pProfile);
@@ -859,12 +868,12 @@ void CDownloadListCtrl::SetAllIcons()
 
 void CDownloadListCtrl::Localize()
 {
-	static const UINT uids[19] =
+	static const UINT uids[20] =
 	{
 		IDS_DL_FILENAME, IDS_DL_SIZE, IDS_DL_TRANSF, IDS_DL_TRANSFCOMPL, IDS_DL_SPEED
 		, IDS_DL_PROGRESS, IDS_DL_SOURCES, IDS_PRIORITY, IDS_STATUS, IDS_SEARCH_TRUST
 		, IDS_DL_REMAINS, 0/*IDS_LASTSEENCOMPL*/, 0/*IDS_FD_LASTCHANGE*/, IDS_CAT, IDS_ADDEDON
-		, IDS_GEOLOCATION, IDS_PERCENTAGE, IDS_IP, IDS_IDLOW
+		, IDS_GEOLOCATION, IDS_PERCENTAGE, IDS_IP, IDS_IDLOW, IDS_UPSTATUS
 	};
 
 	LocaliseHeaderCtrl(uids, _countof(uids));
@@ -2751,6 +2760,7 @@ void CDownloadListCtrl::SortByColumn(int iSubItem)
 		case 4: // Download rate
 		case 5: // Progress
 		case 16: // Percentage
+		case 19: // Obtained parts
 		case 6: // Sources / Client Software
 			sortAscending = false;
 			break;
@@ -2943,6 +2953,8 @@ int CDownloadListCtrl::Compare(const CPartFile *file1, const CPartFile *file2, L
 		return 0;
 	case 16: // percentage
 		return sgn(file1->GetPercentCompleted() - file2->GetPercentCompleted());
+	case 19: // obtained parts
+		return CompareUnsigned(file1->GetCompletedPartCount(), file2->GetCompletedPartCount());
 	}
 	return 0;
 }
@@ -3340,6 +3352,9 @@ CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, i
 		break;
 	case 16: // percentage
 		sText.Format(_T("%.1f%%"), lpPartFile->GetPercentCompleted());
+		break;
+	case 19: // obtained parts
+		sText = FormatDownloadObtainedPartsText(lpPartFile);
 	}
 	return sText;
 }
