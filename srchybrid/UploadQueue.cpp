@@ -446,7 +446,9 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 	ULONGLONG ullCooldownMaxMs = 0;
 	ULONGLONG ullCooldownSumMs = 0;
 	const bool bSustainedBroadbandUnderfill = HasSustainedBroadbandUnderfill(curTick);
-	const ULONGLONG ullNoRequestGraceMs = GetNoRequestUploadRecycleGraceMs(thePrefs.GetZeroUploadRateGraceSeconds());
+	const uint32 uBudgetBytesPerSec = GetConfiguredUploadBudgetBytesPerSec();
+	const ULONGLONG ullNoRequestGraceMs = GetNoRequestUploadRecycleGraceMs(GetZeroUploadGraceSecondsForBudget(thePrefs.GetZeroUploadRateGraceSeconds(), uBudgetBytesPerSec));
+	const uint32 uDrainedNoRequestRateThreshold = GetSlowUploadRateThreshold();
 	for (POSITION uploadPos = uploadinglist.GetHeadPosition(); uploadPos != NULL;) {
 		const UploadingToClient_Struct *pUploadingClient = uploadinglist.GetNext(uploadPos);
 		CUpDownClient *pActiveClient = pUploadingClient != NULL ? pUploadingClient->m_pClient : NULL;
@@ -496,29 +498,32 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 				++iActiveNoRequestSocketBacklogClients;
 			if (nPendingIOBlocks == 0 && pActiveClient->GetPayloadInBuffer() == 0 && iSocketQueue == 0) {
 				++iActiveNoRequestDrainedClients;
+				const bool bNoRequestRecycleCandidate = ShouldRecycleNoRequestBroadbandUploadSlot(
+					bSustainedBroadbandUnderfill,
+					pActiveClient->GetFriendSlot(),
+					pActiveClient->GetUploadDatarate(),
+					uDrainedNoRequestRateThreshold,
+					pActiveClient->GetPayloadInBuffer(),
+					iReqBlocks,
+					nPendingIOBlocks,
+					iSocketQueue,
+					pActiveClient->GetUpStartTimeDelay(),
+					bHasAcceptedReqBlock,
+					ullLastAcceptedReqBlockAgeMs,
+					ullNoRequestGraceMs);
 				if (pActiveClient->GetUploadDatarate() == 0) {
 					++iActiveNoRequestDrainedZeroRateClients;
-					if (ShouldRecycleNoRequestBroadbandUploadSlot(
-							bSustainedBroadbandUnderfill,
-							pActiveClient->GetFriendSlot(),
-							pActiveClient->GetUploadDatarate(),
-							pActiveClient->GetPayloadInBuffer(),
-							iReqBlocks,
-							nPendingIOBlocks,
-							iSocketQueue,
-							pActiveClient->GetUpStartTimeDelay(),
-							bHasAcceptedReqBlock,
-							ullLastAcceptedReqBlockAgeMs,
-							ullNoRequestGraceMs))
-					{
+					if (bNoRequestRecycleCandidate)
 						++iActiveNoRequestRecycleEligibleClients;
-					} else if (!bSustainedBroadbandUnderfill) {
+					else if (!bSustainedBroadbandUnderfill)
 						++iActiveNoRequestRecycleUnderfillBlockedClients;
-					} else if (!pActiveClient->GetFriendSlot()) {
+					else if (!pActiveClient->GetFriendSlot())
 						++iActiveNoRequestRecycleGraceBlockedClients;
-					}
-				} else
+				} else {
 					++iActiveNoRequestDrainedNonzeroRateClients;
+					if (bNoRequestRecycleCandidate)
+						++iActiveNoRequestRecycleEligibleClients;
+				}
 			}
 		} else
 			++iActiveQueuedRequestClients;
@@ -971,7 +976,9 @@ bool CUploadQueue::HasCompletedSlowUploadWarmup(const CUpDownClient *client) con
 
 	// Warm-up protects fresh slots from being judged on startup noise; callers
 	// reset the accumulated slow counters until this window has elapsed.
-	const UINT uWarmupSeconds = thePrefs.GetSlowUploadWarmupSeconds();
+	const UINT uWarmupSeconds = GetSlowUploadWarmupSecondsForBudget(
+		thePrefs.GetSlowUploadWarmupSeconds(),
+		GetConfiguredUploadBudgetBytesPerSec());
 	return uWarmupSeconds == 0 || client->GetUpStartTimeDelay() >= SEC2MS(uWarmupSeconds);
 }
 
@@ -1362,13 +1369,16 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 
 	CEMSocket *sock = client->GetFileUploadSocket(false);
 	const INT_PTR iSocketQueue = sock != NULL ? sock->DbgGetStdQueueCount() : -1;
-	const ULONGLONG ullZeroGraceMs = SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds());
-	const ULONGLONG ullNoRequestGraceMs = GetNoRequestUploadRecycleGraceMs(thePrefs.GetZeroUploadRateGraceSeconds());
-	const ULONGLONG ullStalledGraceMs = GetStalledUploadRecycleGraceMs(thePrefs.GetZeroUploadRateGraceSeconds());
+	const uint32 uBudgetBytesPerSec = GetConfiguredUploadBudgetBytesPerSec();
+	const UINT uEffectiveZeroGraceSeconds = GetZeroUploadGraceSecondsForBudget(thePrefs.GetZeroUploadRateGraceSeconds(), uBudgetBytesPerSec);
+	const ULONGLONG ullZeroGraceMs = SEC2MS(uEffectiveZeroGraceSeconds);
+	const ULONGLONG ullNoRequestGraceMs = GetNoRequestUploadRecycleGraceMs(uEffectiveZeroGraceSeconds);
+	const ULONGLONG ullStalledGraceMs = GetStalledUploadRecycleGraceMs(uEffectiveZeroGraceSeconds);
 	if (ShouldRecycleNoRequestBroadbandUploadSlot(
 			true,
 			false,
 			client->GetUploadDatarate(),
+			GetSlowUploadRateThreshold(),
 			client->GetPayloadInBuffer(),
 			iReqBlocks,
 			nPendingIOBlocks,
@@ -1388,7 +1398,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		if (ShouldDeferProductiveNoRequestUploadRecycle(
 				bProductiveNoRequestRecycle,
 				client->GetUpStartTimeDelay(),
-				SEC2MS(thePrefs.GetSlowUploadWarmupSeconds())))
+				SEC2MS(GetSlowUploadWarmupSecondsForBudget(thePrefs.GetSlowUploadWarmupSeconds(), uBudgetBytesPerSec))))
 		{
 			// WHY: productive peers often drain a burst before their next request
 			// arrives. Keep them through the normal broadband warmup so fast
@@ -2031,26 +2041,32 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 		client->UpdateSlowUploadTracking(curTick, GetSlowUploadRateThreshold());
 		if (!HasCompletedSlowUploadWarmup(client)) {
 			client->ResetSlowUploadTracking();
-		} else if (client->ShouldRecycleSlowUpload(SEC2MS(thePrefs.GetSlowUploadGraceSeconds()), SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()))) {
-			const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
-			client->SetSlowUploadCooldownUntil(ullCooldownUntil);
-			SetUploadRetryCooldown(client, ullCooldownUntil,
-				client->GetAccumulatedZeroUploadMs() >= SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds())
-					? uploadRetryCooldownZeroUpload
-					: uploadRetryCooldownSlowUpload);
-			if (thePrefs.GetLogUlDlEvents()) {
-				if (client->GetAccumulatedZeroUploadMs() >= SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()))
-					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled due to zero upload during broadband underfill."), client->GetUserName());
-				else
-					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled due to slow upload during broadband underfill."), client->GetUserName());
+		} else {
+			const uint32 uBudgetBytesPerSec = GetConfiguredUploadBudgetBytesPerSec();
+			const UINT uEffectiveSlowGraceSeconds = GetSlowUploadGraceSecondsForBudget(thePrefs.GetSlowUploadGraceSeconds(), uBudgetBytesPerSec);
+			const UINT uEffectiveZeroGraceSeconds = GetZeroUploadGraceSecondsForBudget(thePrefs.GetZeroUploadRateGraceSeconds(), uBudgetBytesPerSec);
+			const ULONGLONG ullEffectiveZeroGraceMs = SEC2MS(uEffectiveZeroGraceSeconds);
+			if (client->ShouldRecycleSlowUpload(SEC2MS(uEffectiveSlowGraceSeconds), ullEffectiveZeroGraceMs)) {
+				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+				client->SetSlowUploadCooldownUntil(ullCooldownUntil);
+				SetUploadRetryCooldown(client, ullCooldownUntil,
+					client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs
+						? uploadRetryCooldownZeroUpload
+						: uploadRetryCooldownSlowUpload);
+				if (thePrefs.GetLogUlDlEvents()) {
+					if (client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs)
+						AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled due to zero upload during broadband underfill."), client->GetUserName());
+					else
+						AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled due to slow upload during broadband underfill."), client->GetUserName());
+				}
+				if (pstrReason != NULL) {
+					*pstrReason = (client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs)
+						? _T("Broadband zero-rate recycle")
+						: _T("Broadband slow-rate recycle");
+				}
+				client->ResetSlowUploadTracking();
+				return true;
 			}
-			if (pstrReason != NULL) {
-				*pstrReason = (client->GetAccumulatedZeroUploadMs() >= SEC2MS(thePrefs.GetZeroUploadRateGraceSeconds()))
-					? _T("Broadband zero-rate recycle")
-					: _T("Broadband slow-rate recycle");
-			}
-			client->ResetSlowUploadTracking();
-			return true;
 		}
 	}
 	// The drained no-request recycle path above owns its own tracking/reset

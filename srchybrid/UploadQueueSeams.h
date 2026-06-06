@@ -17,9 +17,13 @@ inline constexpr std::uint32_t kProductiveNoRequestUploadCooldownMaxSeconds = 10
 inline constexpr std::uint32_t kUploadChurnRetryCooldownMaxSeconds = 120u;
 inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = 180u;
 inline constexpr std::uint32_t kBroadbandNoRequestCooldownBudgetBytesPerSec = 4u * 1024u * 1024u;
+inline constexpr std::uint32_t kBroadbandAggressiveUploadPolicyBudgetBytesPerSec = 4u * 1024u * 1024u;
 inline constexpr std::uint32_t kBroadbandNoRequestUploadCooldownMaxSeconds = 15u;
 inline constexpr std::uint32_t kBroadbandProductiveNoRequestUploadCooldownMaxSeconds = 5u;
 inline constexpr std::uint32_t kBroadbandRepeatedNoRequestUploadCooldownMaxSeconds = 45u;
+inline constexpr std::uint32_t kBroadbandSlowUploadWarmupMaxSeconds = 30u;
+inline constexpr std::uint32_t kBroadbandSlowUploadGraceMaxSeconds = 30u;
+inline constexpr std::uint32_t kBroadbandZeroUploadGraceMaxSeconds = 5u;
 inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 30000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownProbeRemainingMs = 5000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = 184320u;
@@ -240,6 +244,7 @@ inline bool ShouldRecycleNoRequestBroadbandUploadSlot(
 	bool bSustainedUnderfill,
 	bool bFriendSlot,
 	std::uint32_t uRateBytesPerSec,
+	std::uint32_t uMaxDrainedRateBytesPerSec,
 	std::uint64_t ullPayloadInBuffer,
 	std::int64_t iRequestBlocks,
 	std::int64_t iPendingIOBlocks,
@@ -251,7 +256,7 @@ inline bool ShouldRecycleNoRequestBroadbandUploadSlot(
 {
 	return bSustainedUnderfill
 		&& !bFriendSlot
-		&& uRateBytesPerSec == 0
+		&& uRateBytesPerSec <= uMaxDrainedRateBytesPerSec
 		&& ullPayloadInBuffer == 0
 		&& iRequestBlocks == 0
 		&& iPendingIOBlocks == 0
@@ -275,6 +280,41 @@ inline std::uint64_t GetStalledUploadRecycleGraceMs(
 	std::uint32_t uConfiguredGraceSeconds)
 {
 	return static_cast<std::uint64_t>(uConfiguredGraceSeconds) * 1000ui64;
+}
+
+inline bool ShouldUseBroadbandAggressiveUploadPolicy(std::uint32_t uBudgetBytesPerSec)
+{
+	return uBudgetBytesPerSec >= kBroadbandAggressiveUploadPolicyBudgetBytesPerSec;
+}
+
+inline std::uint32_t GetSlowUploadWarmupSecondsForBudget(
+	std::uint32_t uConfiguredWarmupSeconds,
+	std::uint32_t uBudgetBytesPerSec)
+{
+	return ShouldUseBroadbandAggressiveUploadPolicy(uBudgetBytesPerSec)
+		&& uConfiguredWarmupSeconds > kBroadbandSlowUploadWarmupMaxSeconds
+		? kBroadbandSlowUploadWarmupMaxSeconds
+		: uConfiguredWarmupSeconds;
+}
+
+inline std::uint32_t GetSlowUploadGraceSecondsForBudget(
+	std::uint32_t uConfiguredGraceSeconds,
+	std::uint32_t uBudgetBytesPerSec)
+{
+	return ShouldUseBroadbandAggressiveUploadPolicy(uBudgetBytesPerSec)
+		&& uConfiguredGraceSeconds > kBroadbandSlowUploadGraceMaxSeconds
+		? kBroadbandSlowUploadGraceMaxSeconds
+		: uConfiguredGraceSeconds;
+}
+
+inline std::uint32_t GetZeroUploadGraceSecondsForBudget(
+	std::uint32_t uConfiguredGraceSeconds,
+	std::uint32_t uBudgetBytesPerSec)
+{
+	return ShouldUseBroadbandAggressiveUploadPolicy(uBudgetBytesPerSec)
+		&& uConfiguredGraceSeconds > kBroadbandZeroUploadGraceMaxSeconds
+		? kBroadbandZeroUploadGraceMaxSeconds
+		: uConfiguredGraceSeconds;
 }
 
 inline bool IsProductiveNoRequestUploadRecycle(std::uint64_t ullQueueSessionPayloadBytes, std::uint64_t ullProductivePayloadBytes = kProductiveNoRequestCooldownPayloadBytes)
