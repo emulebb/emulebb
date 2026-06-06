@@ -39,6 +39,8 @@
 #include "ServerWnd.h"
 #include "TransferDlg.h"
 #include "StatisticsDlg.h"
+#include "EMSocketSendSeams.h"
+#include "SocketIoSeams.h"
 #include "Kademlia/Kademlia/Kademlia.h"
 #include "Kademlia/Kademlia/Prefs.h"
 #include "Log.h"
@@ -822,7 +824,7 @@ void CUploadQueue::Process()
 			if (ShouldUseBigSendBuffer(cur_client->GetUploadDatarate())) {
 				CEMSocket *sock = cur_client->GetFileUploadSocket();
 				if (sock)
-					sock->UseBigSendBuffer();
+					sock->UseBigSendBuffer(GetUploadSocketSendBufferBytes(), GetUploadSocketStandardQueueBytes());
 			}
 
 			// check if the file id of the topmost block request matches the current upload file, otherwise
@@ -935,8 +937,7 @@ uint32 CUploadQueue::GetTargetClientDataRateBroadband() const
 uint32 CUploadQueue::GetBroadbandUnderfillMarginBytesPerSec() const
 {
 	const uint32 uBudgetBytesPerSec = GetConfiguredUploadBudgetBytesPerSec();
-	const uint32 uTargetPerSlot = GetTargetClientDataRateBroadband();
-	return max(max(uTargetPerSlot / 2, 1024u), uBudgetBytesPerSec / 20);
+	return ::GetBroadbandUnderfillMarginBytesPerSec(uBudgetBytesPerSec);
 }
 
 /**
@@ -987,19 +988,23 @@ uint32 CUploadQueue::GetSlowUploadRateThreshold() const
 uint32 CUploadQueue::GetUploadBufferBlockCount(uint32 uClientDatarate) const
 {
 	const uint32 uTargetPerSlot = GetTargetClientDataRateBroadband();
-	if (uTargetPerSlot == 0)
-		return 1;
-	if (uClientDatarate >= uTargetPerSlot)
-		return 5;
-	if (uClientDatarate >= max(uTargetPerSlot / 2, 3u * 1024u))
-		return 3;
-	return 1;
+	return GetBroadbandUploadBufferBlockCount(uTargetPerSlot, uClientDatarate);
 }
 
 bool CUploadQueue::ShouldUseBigSendBuffer(uint32 uClientDatarate) const
 {
 	const uint32 uTargetPerSlot = GetTargetClientDataRateBroadband();
-	return uTargetPerSlot > 0 && uClientDatarate >= max(uTargetPerSlot / 2, 3u * 1024u);
+	return ShouldUseBroadbandBigSendBuffer(uTargetPerSlot, uClientDatarate);
+}
+
+uint32 CUploadQueue::GetUploadSocketSendBufferBytes() const
+{
+	return GetBroadbandTcpUploadSendBufferBytes(GetTargetClientDataRateBroadband());
+}
+
+uint64 CUploadQueue::GetUploadSocketStandardQueueBytes() const
+{
+	return GetBroadbandEMSocketQueuedStandardBytes(GetTargetClientDataRateBroadband());
 }
 
 bool CUploadQueue::ShouldTrackSlowUploadSlots() const
@@ -1130,8 +1135,14 @@ bool CUploadQueue::CanProbeUploadCooldownCandidate(CUpDownClient *client, ULONGL
 		// WHY: productive no-request peers have already contributed payload and
 		// often ask for another burst shortly after draining. Under severe
 		// broadband underfill, probe them before zero-byte peers while keeping
-		// unproductive cooldowns strict.
-		return ShouldProbeNoRequestCooldownCandidate(itNoRequest->second.bProductiveRecycle, ullCooldownRemainingMs);
+		// unproductive cooldowns strict unless open slots would otherwise sit
+		// idle behind a cooldown-only queue.
+		return ShouldProbeNoRequestCooldownCandidate(
+			itNoRequest->second.bProductiveRecycle,
+			ullCooldownRemainingMs,
+			kProductiveNoRequestCooldownProbeRemainingMs,
+			kUnproductiveNoRequestCooldownProbeRemainingMs,
+			ShouldProbeUploadCooldownCandidate(HasSustainedBroadbandUnderfill(curTick), uploadinglist.GetCount(), GetSoftMaxUploadSlots()));
 	}
 
 	return true;
@@ -1374,6 +1385,17 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		const bool bProductiveNoRequestRecycle = IsProductiveNoRequestUploadRecycle(
 			client->GetQueueSessionPayloadUp(),
 			GetProductiveNoRequestCooldownPayloadBytes(GetTargetClientDataRateBroadband()));
+		if (ShouldDeferProductiveNoRequestUploadRecycle(
+				bProductiveNoRequestRecycle,
+				client->GetUpStartTimeDelay(),
+				SEC2MS(thePrefs.GetSlowUploadWarmupSeconds())))
+		{
+			// WHY: productive peers often drain a burst before their next request
+			// arrives. Keep them through the normal broadband warmup so fast
+			// clients can keep carrying upload bandwidth instead of re-entering
+			// immediately after a premature no-request recycle.
+			return false;
+		}
 		if (ShouldCooldownNoRequestUploadRecycle(false)) {
 			// WHY: no-request sessions can make an initial burst, drain their
 			// pipeline, then immediately re-enter as 0-byte slots. Seed a short
@@ -1413,16 +1435,17 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		&& (client->GetPayloadInBuffer() > 0 || iReqBlocks > 0 || iSocketQueue > 0);
 	// WHY: under sustained broadband underfill, a zero-rate slot with either no
 	// local work or unsent queued work is not contributing capacity. Keep disk IO
-	// in flight out of this path. Stalled queued data uses a bounded broadband
-	// grace so bad peers cannot hold capacity for the full generic warmup window.
+	// in flight out of this path. Stalled queued data still waits for the normal
+	// broadband warmup so slow-but-productive peers are not churned while the
+	// scheduler is trying to stabilize around the configured slot cap.
 	if (bLocalSendPipelineIdle || bLocalSendPipelineStalled)
 		client->UpdateSlowUploadTracking(curTick, GetSlowUploadRateThreshold());
-	else
-		client->ResetSlowUploadTracking();
+	// WHY: nonzero but slow slots are evaluated by the broader slow-rate
+	// recycle path below. Resetting the shared accumulator here prevents those
+	// long-lived slow slots from ever accruing slow time under broadband
+	// underfill.
 
 	const bool bSlowUploadWarmupComplete = HasCompletedSlowUploadWarmup(client);
-	const bool bStalledRecycleWarmupComplete = bSlowUploadWarmupComplete
-		|| (bLocalSendPipelineStalled && client->GetAccumulatedZeroUploadMs() >= ullStalledGraceMs);
 	const bool bShouldRecycleIdle = ShouldRecycleIdleBroadbandUploadSlot(
 		true,
 		bSlowUploadWarmupComplete,
@@ -1436,7 +1459,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		ullZeroGraceMs);
 	const bool bShouldRecycleStalled = ShouldRecycleStalledBroadbandUploadSlot(
 		true,
-		bStalledRecycleWarmupComplete,
+		bSlowUploadWarmupComplete,
 		false,
 		HasStalledUploadReplacementPressure(!waitinglist.IsEmpty(), uploadinglist.GetCount(), GetSoftMaxUploadSlots()),
 		client->GetUploadDatarate(),

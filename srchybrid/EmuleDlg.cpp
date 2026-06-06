@@ -70,6 +70,7 @@
 #include "Exceptions.h"
 #include "FakeFileDetector.h"
 #include "BroadbandIoSeams.h"
+#include "EMSocketSendSeams.h"
 #include "SocketIoSeams.h"
 #include "SearchList.h"
 #include "HTRichEditCtrl.h"
@@ -82,6 +83,7 @@
 #include "DownloadQueue.h"
 #include "ClientUDPSocket.h"
 #include "UploadQueue.h"
+#include "UploadDiskIOThreadSeams.h"
 #include "ClientList.h"
 #include "UploadBandwidthThrottler.h"
 #include "FriendList.h"
@@ -796,6 +798,9 @@ namespace
 		}
 
 		nlohmann::json tcpSamples = nlohmann::json::array();
+		const std::uint32_t uTcpUploadTargetBytes = theApp.uploadqueue != NULL
+			? theApp.uploadqueue->GetUploadSocketSendBufferBytes()
+			: kBroadbandTcpUploadSendBufferBytes;
 		if (theApp.uploadqueue != NULL) {
 			for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;) {
 				CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromUploadList(pos);
@@ -808,7 +813,7 @@ namespace
 				if (pSocket->GetSockOpt(SO_SNDBUF, &iValue, &iValueLen)) {
 					tcpSamples.push_back(nlohmann::json{
 						{"actualBytes", iValue},
-						{"meetsTarget", iValue >= static_cast<int>(kBroadbandTcpUploadSendBufferBytes)}
+						{"meetsTarget", iValue >= static_cast<int>(uTcpUploadTargetBytes)}
 					});
 				}
 			}
@@ -817,7 +822,8 @@ namespace
 		return nlohmann::json{
 			{"udpReceive", udpReceive},
 			{"tcpUploadSend", nlohmann::json{
-				{"targetBytes", kBroadbandTcpUploadSendBufferBytes},
+				{"targetBytes", uTcpUploadTargetBytes},
+				{"maximumTargetBytes", kBroadbandTcpUploadSendBufferBytes},
 				{"activeSocketCount", tcpSamples.size()},
 				{"activeSockets", tcpSamples}
 			}}
@@ -830,15 +836,30 @@ namespace
 			? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes()
 			: thePrefs.GetFileBufferSize();
 		const UploadTimerRuntimeStats uploadTimerStats = CUploadQueue::GetUploadTimerRuntimeStats();
+		const std::uint32_t uUploadTargetPerSlotBytes = theApp.uploadqueue != NULL
+			? theApp.uploadqueue->GetTargetClientDataRateBroadband()
+			: 0u;
+		const LONG nUploadReadBlocksPerClient = UploadDiskIOThreadSeams::GetBroadbandPendingReadBlocksPerClient(uUploadTargetPerSlotBytes);
+		const INT_PTR nUploadSlotCap = theApp.uploadqueue != NULL ? theApp.uploadqueue->GetBroadbandSlotCap() : 0;
 
 		return nlohmann::json{
 			{"autoBroadbandIo", thePrefs.IsAutoBroadbandIOEnabled()},
+			{"autoBroadbandIoScope", "downloadDiskWriteBufferOnly"},
 			{"globalDownloadBufferBudgetBytes", BroadbandIoSeams::kDefaultGlobalDownloadBufferBudgetBytes},
 			{"configuredFileBufferBytes", thePrefs.GetFileBufferSize()},
 			{"effectiveFileBufferBytes", uEffectiveBufferBytes},
 			{"fileBufferTimeLimitMs", thePrefs.GetFileBufferTimeLimit()},
 			{"totalBufferedDownloadBytes", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetBufferedDownloadBytes()) : nlohmann::json(nullptr)},
 			{"activeBufferedDownloadFiles", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetBufferedDownloadFileCount()) : nlohmann::json(nullptr)},
+			{"uploadSendPipeline", nlohmann::json{
+				{"controlledByAutoBroadbandIo", false},
+				{"targetPerSlotBytesPerSec", uUploadTargetPerSlotBytes},
+				{"slotCap", nUploadSlotCap},
+				{"tcpSendBufferTargetBytes", GetBroadbandTcpUploadSendBufferBytes(uUploadTargetPerSlotBytes)},
+				{"socketStandardQueueTargetBytes", GetBroadbandEMSocketQueuedStandardBytes(uUploadTargetPerSlotBytes)},
+				{"diskPendingReadBlocksPerClient", nUploadReadBlocksPerClient},
+				{"diskPendingReadBlocksPerThread", UploadDiskIOThreadSeams::GetBroadbandPendingReadBlocksPerThread(nUploadReadBlocksPerClient, nUploadSlotCap)}
+			}},
 			{"legacyMetadataFileBuffers", nlohmann::json{
 				{"standardBytes", BroadbandIoSeams::kLegacyStandardMetadataFileBufferBytes},
 				{"largeBytes", BroadbandIoSeams::kLegacyLargeMetadataFileBufferBytes}

@@ -324,9 +324,16 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 		while (!pUploadClientStruct->m_BlockRequests_queue.IsEmpty()
 			&& (addedPayloadQueueSession <= nCurQueueSessionPayloadUp || addedPayloadQueueSession - nCurQueueSessionPayloadUp < nBufferLimit))
 		{
+			const LONG nClientPendingReadLimit = UploadDiskIOThreadSeams::GetBroadbandPendingReadBlocksPerClient(
+				theApp.uploadqueue != NULL ? theApp.uploadqueue->GetTargetClientDataRateBroadband() : 0u);
+			const INT_PTR nThreadPendingReadLimit = UploadDiskIOThreadSeams::GetBroadbandPendingReadBlocksPerThread(
+				nClientPendingReadLimit,
+				theApp.uploadqueue != NULL ? theApp.uploadqueue->GetBroadbandSlotCap() : 0);
 			if (!UploadDiskIOThreadSeams::CanIssuePendingUploadRead(
 					pUploadClientStruct->m_nPendingIOBlocks.load(),
-					m_listPendingIO.GetCount()))
+					m_listPendingIO.GetCount(),
+					nClientPendingReadLimit,
+					nThreadPendingReadLimit))
 			{
 				return;
 			}

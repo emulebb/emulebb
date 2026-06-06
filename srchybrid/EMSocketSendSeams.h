@@ -10,7 +10,8 @@
 static const size_t kMaxEMSocketQueuedControlPackets = 1024u;
 static const uint64 kMaxEMSocketQueuedControlBytes = 8ull * 1024ull * 1024ull;
 static const size_t kMaxEMSocketQueuedStandardPackets = 2048u;
-static const uint64 kMaxEMSocketQueuedStandardBytes = 16ull * 1024ull * 1024ull;
+static const uint64 kMinEMSocketQueuedStandardBytes = 16ull * 1024ull * 1024ull;
+static const uint64 kMaxEMSocketQueuedStandardBytes = 256ull * 1024ull * 1024ull;
 
 enum EMSocketQueueStateFlags
 {
@@ -95,14 +96,35 @@ inline bool CanQueueEMSocketControlPacket(const size_t nCurrentPackets, const ui
 		kMaxEMSocketQueuedControlBytes);
 }
 
-inline bool CanQueueEMSocketStandardPacket(const size_t nCurrentPackets, const uint64 nCurrentBytes, const uint32 nPacketBytes)
+/**
+ * @brief Computes the per-peer standard upload packet queue budget from the configured per-slot upload budget.
+ */
+inline uint64 GetBroadbandEMSocketQueuedStandardBytes(
+	const std::uint32_t uTargetPerSlotBytesPerSec,
+	const std::uint32_t uTargetBufferSeconds = 8u,
+	const uint64 uMinimumQueuedBytes = kMinEMSocketQueuedStandardBytes,
+	const uint64 uMaximumQueuedBytes = kMaxEMSocketQueuedStandardBytes)
+{
+	if (uTargetPerSlotBytesPerSec == 0 || uTargetBufferSeconds == 0)
+		return uMinimumQueuedBytes;
+
+	const uint64 uTargetBytes = static_cast<uint64>(uTargetPerSlotBytesPerSec) * uTargetBufferSeconds;
+	if (uTargetBytes < uMinimumQueuedBytes)
+		return uMinimumQueuedBytes;
+	if (uTargetBytes > uMaximumQueuedBytes)
+		return uMaximumQueuedBytes;
+	return uTargetBytes;
+}
+
+inline bool CanQueueEMSocketStandardPacket(const size_t nCurrentPackets, const uint64 nCurrentBytes, const uint32 nPacketBytes,
+	const uint64 nMaxBytes = kMaxEMSocketQueuedStandardBytes)
 {
 	return CanQueueEMSocketPacket(
 		nCurrentPackets,
 		nCurrentBytes,
 		nPacketBytes,
 		kMaxEMSocketQueuedStandardPackets,
-		kMaxEMSocketQueuedStandardBytes);
+		nMaxBytes);
 }
 
 /**

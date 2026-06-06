@@ -5,7 +5,27 @@
 #include <limits>
 
 inline constexpr std::uint32_t kBroadbandUdpReceiveBufferBytes = 1024u * 1024u;
-inline constexpr std::uint32_t kBroadbandTcpUploadSendBufferBytes = 1024u * 1024u;
+inline constexpr std::uint32_t kBroadbandTcpUploadSendBufferBytes = 32u * 1024u * 1024u;
+
+/**
+ * @brief Computes the TCP send-buffer target for an upload slot from the configured per-slot upload budget.
+ */
+inline std::uint32_t GetBroadbandTcpUploadSendBufferBytes(
+	std::uint32_t uTargetPerSlotBytesPerSec,
+	std::uint32_t uTargetBufferSeconds = 8u,
+	std::uint32_t uMinimumBufferBytes = 1024u * 1024u,
+	std::uint32_t uMaximumBufferBytes = kBroadbandTcpUploadSendBufferBytes)
+{
+	if (uTargetPerSlotBytesPerSec == 0 || uTargetBufferSeconds == 0)
+		return uMinimumBufferBytes;
+
+	const std::uint64_t ullTargetBytes = static_cast<std::uint64_t>(uTargetPerSlotBytesPerSec) * uTargetBufferSeconds;
+	if (ullTargetBytes < uMinimumBufferBytes)
+		return uMinimumBufferBytes;
+	if (ullTargetBytes > uMaximumBufferBytes)
+		return uMaximumBufferBytes;
+	return static_cast<std::uint32_t>(ullTargetBytes);
+}
 
 /**
  * @brief Reports whether a socket receive result fits inside the requested read buffer span.

@@ -71,6 +71,8 @@ CEMSocket::CEMSocket()
 	, m_bBusy()
 	, m_hasSent()
 	, m_bUseBigSendBuffers()
+	, m_uRequestedSendBufferBytes()
+	, m_uMaxQueuedStandardBytes(GetBroadbandEMSocketQueuedStandardBytes(0))
 	, m_bUseOverlappedSend(true)
 	, m_bPendingSendOv()
 	, m_bOverlappedSendBorrowsSendBuffer()
@@ -469,7 +471,8 @@ void CEMSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayl
 			if (!CanQueueEMSocketStandardPacket(
 					static_cast<size_t>(standardpacket_queue.GetCount()),
 					m_nQueuedStandardPacketBytes,
-					nPacketBytes)) {
+					nPacketBytes,
+					m_uMaxQueuedStandardBytes)) {
 				uQueuedPacketsAtLimit = static_cast<unsigned>(standardpacket_queue.GetCount());
 				uQueuedBytesAtLimit = m_nQueuedStandardPacketBytes;
 				bCloseForQueueLimit = true;
@@ -1290,25 +1293,45 @@ CString CEMSocket::GetFullErrorMessage(DWORD dwError) const
 // increases the send buffer to a bigger size
 bool CEMSocket::UseBigSendBuffer()
 {
-	if (!m_bUseBigSendBuffers) {
-		int val = static_cast<int>(kBroadbandTcpUploadSendBufferBytes);
+	return UseBigSendBuffer(kBroadbandTcpUploadSendBufferBytes, kMaxEMSocketQueuedStandardBytes);
+}
+
+bool CEMSocket::UseBigSendBuffer(uint32 uBufferBytes, uint64 uMaxQueuedStandardBytes)
+{
+	if (uBufferBytes == 0)
+		uBufferBytes = kBroadbandTcpUploadSendBufferBytes;
+	if (uBufferBytes > kBroadbandTcpUploadSendBufferBytes)
+		uBufferBytes = kBroadbandTcpUploadSendBufferBytes;
+	if (uMaxQueuedStandardBytes < kMinEMSocketQueuedStandardBytes)
+		uMaxQueuedStandardBytes = kMinEMSocketQueuedStandardBytes;
+	if (uMaxQueuedStandardBytes > kMaxEMSocketQueuedStandardBytes)
+		uMaxQueuedStandardBytes = kMaxEMSocketQueuedStandardBytes;
+	if (m_uMaxQueuedStandardBytes < uMaxQueuedStandardBytes)
+		m_uMaxQueuedStandardBytes = uMaxQueuedStandardBytes;
+
+	if (!m_bUseBigSendBuffers || m_uRequestedSendBufferBytes < uBufferBytes) {
+		int val = static_cast<int>(uBufferBytes);
 		int oldval;
 		int vallen = sizeof oldval;
 		if (GetSockOpt(SO_SNDBUF, &oldval, &vallen))
-			if (static_cast<int>(kBroadbandTcpUploadSendBufferBytes) > oldval) {
+			if (static_cast<int>(uBufferBytes) > oldval) {
 				SetSockOpt(SO_SNDBUF, &val, sizeof val);
 				vallen = sizeof val;
 				m_bUseBigSendBuffers = (GetSockOpt(SO_SNDBUF, &val, &vallen) && val > oldval);
+				if (m_bUseBigSendBuffers)
+					m_uRequestedSendBufferBytes = uBufferBytes;
 #ifdef _DEBUG
-				if (m_bUseBigSendBuffers && val >= static_cast<int>(kBroadbandTcpUploadSendBufferBytes))
+				if (m_bUseBigSendBuffers && val >= static_cast<int>(uBufferBytes))
 					theApp.QueueDebugLogLine(false, _T("Increased Sendbuffer for uploading socket from %u KiB to %u KiB"), oldval / 1024, val / 1024);
 				else if (m_bUseBigSendBuffers)
-					theApp.QueueDebugLogLine(false, _T("Upload send buffer requested %u KiB, Windows applied %u KiB"), kBroadbandTcpUploadSendBufferBytes / 1024, val / 1024);
+					theApp.QueueDebugLogLine(false, _T("Upload send buffer requested %u KiB, Windows applied %u KiB"), uBufferBytes / 1024, val / 1024);
 				else
 					theApp.QueueDebugLogLine(false, _T("Failed to increase Sendbuffer for uploading socket, stays at %u KiB"), oldval / 1024);
 #endif
-			} else
+			} else {
 				m_bUseBigSendBuffers = true;
+				m_uRequestedSendBufferBytes = uBufferBytes;
+			}
 	}
 	return m_bUseBigSendBuffers;
 }

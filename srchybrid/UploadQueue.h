@@ -129,6 +129,8 @@ public:
 	uint32	GetUploadBufferBlockCount(uint32 uClientDatarate) const;
 	/** Returns whether a client at the given upload rate should use the large send buffer. */
 	bool	ShouldUseBigSendBuffer(uint32 uClientDatarate) const;
+	uint32	GetUploadSocketSendBufferBytes() const;
+	uint64	GetUploadSocketStandardQueueBytes() const;
 
 	POSITION GetFirstFromUploadList() const					{ return uploadinglist.GetHeadPosition(); }
 	CUpDownClient* GetNextFromUploadList(POSITION &curpos) const;

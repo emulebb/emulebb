@@ -51,6 +51,7 @@ public:
 	virtual bool HasQueues(bool bOnlyStandardPackets = false) const;
 	virtual bool IsLowOnFileDataQueued(uint32 nMinFilePayloadBytes) const;
 	virtual bool UseBigSendBuffer();
+	bool	UseBigSendBuffer(uint32 uBufferBytes, uint64 uMaxQueuedStandardBytes);
 	INT_PTR	DbgGetStdQueueCount() const						{ return standardpacket_queue.GetCount(); }
 
 	virtual DWORD GetTimeOut() const						{ return m_uTimeOut; }
@@ -153,6 +154,8 @@ private:
 	bool	m_bBusy;
 	bool	m_hasSent;
 	bool	m_bUseBigSendBuffers;
+	uint32	m_uRequestedSendBufferBytes;
+	uint64	m_uMaxQueuedStandardBytes;
 	bool	m_bUseOverlappedSend;
 	bool	m_bPendingSendOv;
 	bool	m_bOverlappedSendBorrowsSendBuffer;

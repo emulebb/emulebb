@@ -14,8 +14,6 @@ inline constexpr std::uint64_t kRemoteCancelledUploadCooldownMaxAgeMs = 90000u;
 inline constexpr std::uint64_t kShortFailedUploadCooldownMaxPayloadBytes = 1024u * 1024u;
 inline constexpr std::uint32_t kNoRequestUploadCooldownMaxSeconds = 60u;
 inline constexpr std::uint32_t kProductiveNoRequestUploadCooldownMaxSeconds = 10u;
-inline constexpr std::uint32_t kNoRequestUploadRecycleGraceMaxSeconds = 5u;
-inline constexpr std::uint32_t kStalledUploadRecycleGraceMaxSeconds = 15u;
 inline constexpr std::uint32_t kUploadChurnRetryCooldownMaxSeconds = 120u;
 inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = 180u;
 inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 30000u;
@@ -138,8 +136,11 @@ inline bool ShouldProbeNoRequestCooldownCandidate(
 	bool bProductiveNoRequestCooldown,
 	std::uint64_t ullCooldownRemainingMs,
 	std::uint64_t ullMaxProductiveProbeRemainingMs = kProductiveNoRequestCooldownProbeRemainingMs,
-	std::uint64_t ullMaxUnproductiveProbeRemainingMs = kUnproductiveNoRequestCooldownProbeRemainingMs)
+	std::uint64_t ullMaxUnproductiveProbeRemainingMs = kUnproductiveNoRequestCooldownProbeRemainingMs,
+	bool bOpenCapUnderfill = false)
 {
+	if (bOpenCapUnderfill)
+		return true;
 	return bProductiveNoRequestCooldown
 		? ullCooldownRemainingMs <= ullMaxProductiveProbeRemainingMs
 		: ShouldProbeUnproductiveNoRequestCooldownCandidate(true, ullCooldownRemainingMs, ullMaxUnproductiveProbeRemainingMs);
@@ -261,26 +262,28 @@ inline bool ShouldCooldownNoRequestUploadRecycle(bool bFriendSlot)
 }
 
 inline std::uint64_t GetNoRequestUploadRecycleGraceMs(
-	std::uint32_t uConfiguredGraceSeconds,
-	std::uint32_t uMaxNoRequestGraceSeconds = kNoRequestUploadRecycleGraceMaxSeconds)
+	std::uint32_t uConfiguredGraceSeconds)
 {
-	return static_cast<std::uint64_t>(uConfiguredGraceSeconds < uMaxNoRequestGraceSeconds
-		? uConfiguredGraceSeconds
-		: uMaxNoRequestGraceSeconds) * 1000ui64;
+	return static_cast<std::uint64_t>(uConfiguredGraceSeconds) * 1000ui64;
 }
 
 inline std::uint64_t GetStalledUploadRecycleGraceMs(
-	std::uint32_t uConfiguredGraceSeconds,
-	std::uint32_t uMaxStalledGraceSeconds = kStalledUploadRecycleGraceMaxSeconds)
+	std::uint32_t uConfiguredGraceSeconds)
 {
-	return static_cast<std::uint64_t>(uConfiguredGraceSeconds < uMaxStalledGraceSeconds
-		? uConfiguredGraceSeconds
-		: uMaxStalledGraceSeconds) * 1000ui64;
+	return static_cast<std::uint64_t>(uConfiguredGraceSeconds) * 1000ui64;
 }
 
 inline bool IsProductiveNoRequestUploadRecycle(std::uint64_t ullQueueSessionPayloadBytes, std::uint64_t ullProductivePayloadBytes = kProductiveNoRequestCooldownPayloadBytes)
 {
 	return ullQueueSessionPayloadBytes >= ullProductivePayloadBytes;
+}
+
+inline bool ShouldDeferProductiveNoRequestUploadRecycle(
+	bool bProductiveNoRequestRecycle,
+	std::uint64_t ullSessionAgeMs,
+	std::uint64_t ullProductiveNoRequestGraceMs)
+{
+	return bProductiveNoRequestRecycle && ullSessionAgeMs < ullProductiveNoRequestGraceMs;
 }
 
 /**
@@ -293,6 +296,53 @@ inline std::uint64_t GetProductiveNoRequestCooldownPayloadBytes(
 	return uTargetPerSlotBytesPerSec > ullBasePayloadBytes
 		? uTargetPerSlotBytesPerSec
 		: ullBasePayloadBytes;
+}
+
+inline std::uint32_t GetBroadbandUploadBufferBlockCount(
+	std::uint32_t uTargetPerSlotBytesPerSec,
+	std::uint32_t uClientDatarateBytesPerSec,
+	std::uint32_t uBlockBytes = 184320u,
+	std::uint32_t uTargetBufferSeconds = 8u,
+	std::uint32_t uMaxBlocks = 768u)
+{
+	if (uTargetPerSlotBytesPerSec == 0 || uBlockBytes == 0 || uMaxBlocks == 0)
+		return 1u;
+
+	std::uint64_t ullTargetBytes = static_cast<std::uint64_t>(uTargetPerSlotBytesPerSec) * uTargetBufferSeconds;
+	std::uint32_t uBlocks = static_cast<std::uint32_t>((ullTargetBytes + uBlockBytes - 1u) / uBlockBytes);
+	if (uBlocks == 0)
+		uBlocks = 1u;
+	if (uClientDatarateBytesPerSec >= uTargetPerSlotBytesPerSec && uBlocks < 5u)
+		uBlocks = 5u;
+	else if (uClientDatarateBytesPerSec >= uTargetPerSlotBytesPerSec / 2u && uBlocks < 3u)
+		uBlocks = 3u;
+	return uBlocks > uMaxBlocks ? uMaxBlocks : uBlocks;
+}
+
+inline bool ShouldUseBroadbandBigSendBuffer(
+	std::uint32_t uTargetPerSlotBytesPerSec,
+	std::uint32_t uClientDatarateBytesPerSec,
+	std::uint32_t uHighTargetBytesPerSec = 512u * 1024u)
+{
+	return uTargetPerSlotBytesPerSec >= uHighTargetBytesPerSec
+		|| (uTargetPerSlotBytesPerSec > 0
+			&& uClientDatarateBytesPerSec >= (uTargetPerSlotBytesPerSec / 2u > 3u * 1024u ? uTargetPerSlotBytesPerSec / 2u : 3u * 1024u));
+}
+
+inline std::uint32_t GetBroadbandUnderfillMarginBytesPerSec(
+	std::uint32_t uBudgetBytesPerSec,
+	std::uint32_t uTargetFillPercent = 90u,
+	std::uint32_t uMinimumMarginBytesPerSec = 1024u)
+{
+	if (uBudgetBytesPerSec == 0)
+		return uMinimumMarginBytesPerSec;
+	if (uTargetFillPercent >= 100u)
+		return uMinimumMarginBytesPerSec;
+
+	const std::uint64_t ullMissingPercent = 100u - uTargetFillPercent;
+	const std::uint32_t uMargin = static_cast<std::uint32_t>(
+		(static_cast<std::uint64_t>(uBudgetBytesPerSec) * ullMissingPercent + 99u) / 100u);
+	return uMargin > uMinimumMarginBytesPerSec ? uMargin : uMinimumMarginBytesPerSec;
 }
 
 /**
