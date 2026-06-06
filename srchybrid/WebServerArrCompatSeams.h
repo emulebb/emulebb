@@ -28,6 +28,7 @@ static const unsigned kMaxTorznabOffset = 1000000;
 static const unsigned long long kTorznabDefaultSearchTimeoutMs = 12ULL * 1000ULL;
 static const unsigned long long kTorznabMediaSearchTimeoutMs = 45ULL * 1000ULL;
 static const char kTorznabXmlContentTypeHeader[] = "Content-Type: application/xml; charset=utf-8\r\n";
+static const char kTorznabTorrentContentMimeType[] = "application/x-bittorrent";
 
 /**
  * @brief Identifies the coarse media family used by the Torznab bridge.
@@ -369,6 +370,25 @@ inline std::string BuildEd2kDownloadLink(const std::string &rEd2kHash, const std
 		return std::string();
 	std::ostringstream link;
 	link << "ed2k://|file|" << WebServerJsonSeams::UrlEncodeUtf8(rName) << '|' << ullSize << '|' << strHash << "|/";
+	return link.str();
+}
+
+/**
+ * @brief Builds the controlled magnet URL that lets Servarr route a result
+ * through torrent-indexer code while eMuleBB converts it back to eD2K.
+ */
+inline std::string BuildEd2kMagnetDownloadLink(const std::string &rEd2kHash, const std::string &rName, const uint64_t ullSize)
+{
+	const std::string strHash(WebServerJsonSeams::ToLowerAscii(rEd2kHash));
+	if (!IsMd4HexString(strHash))
+		return std::string();
+	if (ullSize == 0)
+		return std::string();
+	std::string strError;
+	if (!WebServerJsonSeams::TryValidatePublicFileNameText(rName, "name", strError))
+		return std::string();
+	std::ostringstream link;
+	link << "magnet:?xt=urn:ed2k:" << strHash << "&dn=" << WebServerJsonSeams::UrlEncodeUtf8(rName) << "&xl=" << ullSize;
 	return link.str();
 }
 

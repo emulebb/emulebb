@@ -208,6 +208,7 @@ std::string BuildFeedXml(const WebServerArrCompatSeams::STorznabRequest &rReques
 	for (size_t uIndex = uStart; uIndex < uEnd; ++uIndex) {
 		const SArrCompatResult &rResult = rResults[uIndex];
 		const int iCategory = GetPrimaryTorznabCategory(rResult.eFamily == WebServerArrCompatSeams::ETorznabFamily::Any ? rRequest.eFamily : rResult.eFamily);
+		const std::string strMagnetDownloadLink(WebServerArrCompatSeams::BuildEd2kMagnetDownloadLink(rResult.strHash, rResult.strName, rResult.ullSize));
 		xml << "    <item>\n"
 			<< "      <title>" << WebServerArrCompatSeams::XmlEscape(rResult.strName) << "</title>\n"
 			<< "      <guid isPermaLink=\"false\">ed2k:" << WebServerArrCompatSeams::XmlEscape(rResult.strHash) << "</guid>\n"
@@ -216,8 +217,9 @@ std::string BuildFeedXml(const WebServerArrCompatSeams::STorznabRequest &rReques
 			<< "      <comments>ed2k:" << WebServerArrCompatSeams::XmlEscape(rResult.strHash) << "</comments>\n"
 			<< "      <description>" << WebServerArrCompatSeams::XmlEscape(rResult.strName) << "</description>\n"
 			<< "      <link>" << WebServerArrCompatSeams::XmlEscape(rResult.strDownloadLink) << "</link>\n"
-			<< "      <enclosure url=\"" << WebServerArrCompatSeams::XmlEscape(rResult.strDownloadLink) << "\" length=\"" << rResult.ullSize << "\" type=\"application/x-ed2k-link\" />\n"
+			<< "      <enclosure url=\"" << WebServerArrCompatSeams::XmlEscape(rResult.strDownloadLink) << "\" length=\"" << rResult.ullSize << "\" type=\"" << WebServerArrCompatSeams::kTorznabTorrentContentMimeType << "\" />\n"
 			<< "      <torznab:attr name=\"size\" value=\"" << rResult.ullSize << "\" />\n"
+			<< "      <torznab:attr name=\"magneturl\" value=\"" << WebServerArrCompatSeams::XmlEscape(strMagnetDownloadLink) << "\" />\n"
 			<< "      <torznab:attr name=\"seeders\" value=\"" << rResult.ullSeeders << "\" />\n"
 			<< "      <torznab:attr name=\"peers\" value=\"" << rResult.ullPeers << "\" />\n"
 			<< "      <torznab:attr name=\"grabs\" value=\"" << rResult.ullGrabs << "\" />\n"

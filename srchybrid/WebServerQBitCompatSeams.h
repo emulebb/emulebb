@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cctype>
+#include <cstdint>
 #include <map>
 #include <sstream>
 #include <string>
@@ -471,12 +472,76 @@ inline bool StartsWithNoCase(const std::string &rValue, const char *pszPrefix)
 	return WebServerJsonSeams::ToLowerAscii(rValue.substr(0, strPrefix.size())) == WebServerJsonSeams::ToLowerAscii(strPrefix);
 }
 
+inline std::string BuildNativeEd2kUrl(const std::string &rHash, const std::string &rName, const uint64_t ullSize)
+{
+	std::ostringstream link;
+	link << "ed2k://|file|" << WebServerJsonSeams::UrlEncodeUtf8(rName) << '|' << ullSize << '|' << rHash << "|/";
+	return link.str();
+}
+
+inline bool TryNormalizeControlledEd2kMagnetUrl(const std::string &rUrl, std::string &rNormalizedUrl, std::string &rErrorMessage)
+{
+	static const std::string strPrefix("magnet:?");
+	rNormalizedUrl.clear();
+	if (!StartsWithNoCase(rUrl, strPrefix.c_str())) {
+		rErrorMessage = "magnet URLs are not supported";
+		return false;
+	}
+
+	std::map<std::string, std::string> fields;
+	if (!WebServerJsonSeams::TryParseUrlEncodedFields(rUrl.substr(strPrefix.size()), fields, rErrorMessage, "duplicate magnet parameter: "))
+		return false;
+
+	std::map<std::string, std::string> normalized;
+	for (const auto &rField : fields) {
+		const std::string strName(WebServerJsonSeams::ToLowerAscii(rField.first));
+		if (normalized.find(strName) != normalized.end()) {
+			rErrorMessage = "duplicate magnet parameter: " + strName;
+			return false;
+		}
+		normalized[strName] = rField.second;
+	}
+
+	const auto xtIt = normalized.find("xt");
+	const auto dnIt = normalized.find("dn");
+	const auto xlIt = normalized.find("xl");
+	if (xtIt == normalized.end() || dnIt == normalized.end() || xlIt == normalized.end()) {
+		rErrorMessage = "eMuleBB ED2K magnet requires xt, dn, and xl parameters";
+		return false;
+	}
+
+	static const std::string strEd2kUrnPrefix("urn:ed2k:");
+	if (!StartsWithNoCase(xtIt->second, strEd2kUrnPrefix.c_str())) {
+		rErrorMessage = "only eMuleBB ED2K magnets are supported";
+		return false;
+	}
+	const std::string strHash(WebServerJsonSeams::ToLowerAscii(xtIt->second.substr(strEd2kUrnPrefix.size())));
+	if (!IsNativeMd4Hash(strHash)) {
+		rErrorMessage = "xt must contain a 32-character eD2K hash";
+		return false;
+	}
+
+	uint64_t ullSize = 0;
+	if (!WebServerJsonSeams::TryParseUnsignedDecimalValue(xlIt->second, ullSize) || ullSize == 0) {
+		rErrorMessage = "xl must be a positive unsigned decimal size";
+		return false;
+	}
+
+	std::string strNameError;
+	if (!WebServerJsonSeams::TryValidatePublicFileNameText(dnIt->second, "dn", strNameError)) {
+		rErrorMessage = strNameError;
+		return false;
+	}
+
+	rNormalizedUrl = BuildNativeEd2kUrl(strHash, dnIt->second, ullSize);
+	return true;
+}
+
 inline bool TryValidateAddRequestUrl(const std::string &rUrl, std::string &rNormalizedUrl, std::string &rErrorMessage)
 {
 	rNormalizedUrl.clear();
 	if (StartsWithNoCase(rUrl, "magnet:")) {
-		rErrorMessage = "magnet URLs are not supported";
-		return false;
+		return TryNormalizeControlledEd2kMagnetUrl(rUrl, rNormalizedUrl, rErrorMessage);
 	}
 	if (!StartsWithNoCase(rUrl, "ed2k://")) {
 		rErrorMessage = "only eD2K URLs are supported";
