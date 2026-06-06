@@ -6510,7 +6510,7 @@ void CemuleDlg::ApplyDesktopUiRefreshIntervalMs(UINT uIntervalMs)
 void CemuleDlg::RunDesktopPresentationTick()
 {
 	const UINT uDesktopRefreshIntervalMs = thePrefs.GetDesktopUiRefreshIntervalMs();
-	if (ShouldRefreshRoutineDesktopPresentation(theApp.IsClosing(), IsWindowVisible() != FALSE, uDesktopRefreshIntervalMs)) {
+	if (ShouldRefreshRoutineDesktopPresentation(theApp.IsClosing(), IsWindowVisible() != FALSE, IsIconic() != FALSE, uDesktopRefreshIntervalMs)) {
 		if (transferwnd != NULL) {
 			transferwnd->RefreshTransferDisplayRefreshState(false);
 			transferwnd->FlushVisibleDisplayRefreshes();

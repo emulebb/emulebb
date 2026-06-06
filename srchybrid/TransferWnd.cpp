@@ -202,22 +202,6 @@ void CTransferWnd::OnDestroy()
 	CResizableFormView::OnDestroy();
 }
 
-bool CTransferWnd::IsMainWindowForegroundOwned() const
-{
-	if (theApp.emuledlg == NULL || theApp.emuledlg->GetSafeHwnd() == NULL)
-		return false;
-
-	const HWND hMainWnd = theApp.emuledlg->GetSafeHwnd();
-	const HWND hForegroundWnd = ::GetForegroundWindow();
-	if (hForegroundWnd == NULL)
-		return false;
-	if (hForegroundWnd == hMainWnd || ::IsChild(hMainWnd, hForegroundWnd))
-		return true;
-
-	const HWND hRootOwner = ::GetAncestor(hForegroundWnd, GA_ROOTOWNER);
-	return hRootOwner == hMainWnd;
-}
-
 bool CTransferWnd::IsTransferRefreshActive() const
 {
 	if (theApp.emuledlg == NULL)
@@ -227,8 +211,7 @@ bool CTransferWnd::IsTransferRefreshActive() const
 		thePrefs.GetDesktopUiRefreshIntervalMs() == DESKTOP_UI_REFRESH_PAUSED_MS,
 		theApp.emuledlg->activewnd == theApp.emuledlg->transferwnd,
 		theApp.emuledlg->IsWindowVisible() != FALSE,
-		theApp.emuledlg->IsIconic() != FALSE,
-		IsMainWindowForegroundOwned()) == TRANSFER_DISPLAY_REFRESH_RUNNING;
+		theApp.emuledlg->IsIconic() != FALSE) == TRANSFER_DISPLAY_REFRESH_RUNNING;
 }
 
 void CTransferWnd::RefreshTransferDisplayRefreshState(bool bFlushIfRunning)

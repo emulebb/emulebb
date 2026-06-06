@@ -140,7 +140,6 @@ protected:
 	void	LocalizeToolbars();
 	void	CancelCategoryDrag(bool bResetTabSelection);
 	bool	IsTransferRefreshActive() const;
-	bool	IsMainWindowForegroundOwned() const;
 	uint32	GetVisibleDisplayRefreshMask(uint32 nMask) const;
 	void	FlushExplicitDisplayRefresh();
 	void	FlushDisplayRefreshMask(uint32 nMask);

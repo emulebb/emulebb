@@ -183,10 +183,9 @@ inline ETransferDisplayRefreshState ResolveTransferDisplayRefreshState(
 	bool bDesktopUiRefreshPaused,
 	bool bTransferWindowActive,
 	bool bMainWindowVisible,
-	bool bMainWindowMinimized,
-	bool bForegroundOwnedByMainWindow)
+	bool bMainWindowMinimized)
 {
-	if (bAppClosing || bDesktopUiRefreshPaused || !bTransferWindowActive || !bMainWindowVisible || bMainWindowMinimized || !bForegroundOwnedByMainWindow)
+	if (bAppClosing || bDesktopUiRefreshPaused || !bTransferWindowActive || !bMainWindowVisible || bMainWindowMinimized)
 		return TRANSFER_DISPLAY_REFRESH_PAUSED;
 	return TRANSFER_DISPLAY_REFRESH_RUNNING;
 }
@@ -194,10 +193,11 @@ inline ETransferDisplayRefreshState ResolveTransferDisplayRefreshState(
 /**
  * @brief Resolves whether routine desktop presentation may refresh this tick.
  */
-inline bool ShouldRefreshRoutineDesktopPresentation(bool bAppClosing, bool bMainWindowVisible, UINT uDesktopUiRefreshIntervalMs)
+inline bool ShouldRefreshRoutineDesktopPresentation(bool bAppClosing, bool bMainWindowVisible, bool bMainWindowMinimized, UINT uDesktopUiRefreshIntervalMs)
 {
 	return !bAppClosing
 		&& bMainWindowVisible
+		&& !bMainWindowMinimized
 		&& NormalizeDesktopUiRefreshIntervalMs(uDesktopUiRefreshIntervalMs) != DESKTOP_UI_REFRESH_PAUSED_MS;
 }
 
