@@ -330,7 +330,9 @@ bool CUploadQueue::AddUpNextClient(LPCTSTR pszReason, CUpDownClient *directadd)
 				// upload connection can repeatedly consume broadband slot-open
 				// attempts. Keep the suppression local and temporary by reusing
 				// the upload retry cooldown keyed by peer IP.
-				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(GetUploadChurnRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
+				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(GetUploadChurnRetryCooldownSecondsForBudget(
+					thePrefs.GetSlowUploadCooldownSeconds(),
+					GetConfiguredUploadBudgetBytesPerSec()));
 				newclient->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(newclient, ullCooldownUntil, uploadRetryCooldownFailedAdmission);
 				if (thePrefs.GetLogUlDlEvents())
@@ -810,7 +812,9 @@ void CUploadQueue::Process()
 				// removed immediately, but without a retry cooldown they can keep
 				// re-consuming broadband admission attempts while contributing no
 				// upload capacity.
-				const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetUploadChurnRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
+				const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetUploadChurnRetryCooldownSecondsForBudget(
+					thePrefs.GetSlowUploadCooldownSeconds(),
+					GetConfiguredUploadBudgetBytesPerSec()));
 				cur_client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(cur_client, ullCooldownUntil, uploadRetryCooldownNoSocket);
 				if (thePrefs.GetLogUlDlEvents())
@@ -1501,7 +1505,9 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 	if (!bShouldRecycleIdle && !bShouldRecycleStalled)
 		return false;
 
-	const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetUploadChurnRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
+	const ULONGLONG ullCooldownUntil = curTick + SEC2MS(GetUploadChurnRetryCooldownSecondsForBudget(
+		thePrefs.GetSlowUploadCooldownSeconds(),
+		GetConfiguredUploadBudgetBytesPerSec()));
 	client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 	SetUploadRetryCooldown(client, ullCooldownUntil, bShouldRecycleIdle ? uploadRetryCooldownIdle : uploadRetryCooldownStalled);
 	if (thePrefs.GetLogUlDlEvents()) {
@@ -1924,7 +1930,9 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 				// suppresses that peer's score without changing protocol messages. Remote
 				// cancels get a slightly longer low-payload window because they otherwise
 				// re-enter as bad replacements after burning most of the warmup period.
-				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(GetUploadChurnRetryCooldownSeconds(thePrefs.GetSlowUploadCooldownSeconds()));
+				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(GetUploadChurnRetryCooldownSecondsForBudget(
+					thePrefs.GetSlowUploadCooldownSeconds(),
+					GetConfiguredUploadBudgetBytesPerSec()));
 				client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(client, ullCooldownUntil, uploadRetryCooldownShortFailed);
 				if (thePrefs.GetLogUlDlEvents())
@@ -2063,7 +2071,10 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 			const UINT uEffectiveZeroGraceSeconds = GetZeroUploadGraceSecondsForBudget(thePrefs.GetZeroUploadRateGraceSeconds(), uBudgetBytesPerSec);
 			const ULONGLONG ullEffectiveZeroGraceMs = SEC2MS(uEffectiveZeroGraceSeconds);
 			if (client->ShouldRecycleSlowUpload(SEC2MS(uEffectiveSlowGraceSeconds), ullEffectiveZeroGraceMs)) {
-				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(thePrefs.GetSlowUploadCooldownSeconds());
+				const UINT uCooldownSeconds = GetSlowUploadRetryCooldownSecondsForBudget(
+					thePrefs.GetSlowUploadCooldownSeconds(),
+					GetConfiguredUploadBudgetBytesPerSec());
+				const ULONGLONG ullCooldownUntil = ::GetTickCount64() + SEC2MS(uCooldownSeconds);
 				client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(client, ullCooldownUntil,
 					client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs

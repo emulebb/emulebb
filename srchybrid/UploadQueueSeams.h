@@ -24,6 +24,7 @@ inline constexpr std::uint32_t kBroadbandRepeatedNoRequestUploadCooldownMaxSecon
 inline constexpr std::uint32_t kBroadbandSlowUploadWarmupMaxSeconds = 30u;
 inline constexpr std::uint32_t kBroadbandSlowUploadGraceMaxSeconds = 30u;
 inline constexpr std::uint32_t kBroadbandZeroUploadGraceMaxSeconds = 5u;
+inline constexpr std::uint32_t kBroadbandSlowUploadRetryCooldownMaxSeconds = 90u;
 inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 30000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownProbeRemainingMs = 5000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = 184320u;
@@ -210,6 +211,30 @@ inline std::uint32_t GetUploadChurnRetryCooldownSeconds(
 	return uConfiguredCooldownSeconds < uMaxChurnCooldownSeconds
 		? uConfiguredCooldownSeconds
 		: uMaxChurnCooldownSeconds;
+}
+
+inline std::uint32_t GetSlowUploadRetryCooldownSecondsForBudget(
+	std::uint32_t uConfiguredCooldownSeconds,
+	std::uint32_t uBudgetBytesPerSec,
+	std::uint32_t uBroadbandMaxCooldownSeconds = kBroadbandSlowUploadRetryCooldownMaxSeconds)
+{
+	if (!ShouldUseBroadbandAggressiveUploadPolicy(uBudgetBytesPerSec))
+		return uConfiguredCooldownSeconds;
+	return uConfiguredCooldownSeconds < uBroadbandMaxCooldownSeconds
+		? uConfiguredCooldownSeconds
+		: uBroadbandMaxCooldownSeconds;
+}
+
+inline std::uint32_t GetUploadChurnRetryCooldownSecondsForBudget(
+	std::uint32_t uConfiguredCooldownSeconds,
+	std::uint32_t uBudgetBytesPerSec,
+	std::uint32_t uBroadbandMaxCooldownSeconds = kBroadbandSlowUploadRetryCooldownMaxSeconds)
+{
+	return GetUploadChurnRetryCooldownSeconds(
+		GetSlowUploadRetryCooldownSecondsForBudget(
+			uConfiguredCooldownSeconds,
+			uBudgetBytesPerSec,
+			uBroadbandMaxCooldownSeconds));
 }
 
 inline bool ShouldCountSlowUploadTimerLoop(std::uint32_t uDurationMs, std::uint32_t uSlowThresholdMs = kUploadTimerSlowLoopThresholdMs)
