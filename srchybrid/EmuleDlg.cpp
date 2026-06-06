@@ -4406,6 +4406,9 @@ void CemuleDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 
 bool CemuleDlg::ShouldTrayIconBeVisible()
 {
+	if (theApp.IsClosing())
+		return false;
+
 	TrayNotificationSeams::CTrayVisibilityState state;
 	state.bAlwaysShowTrayIcon = thePrefs.IsAlwaysShowTrayIcon();
 	state.eNotifierDisplayMode = MapTrayNotifierDisplayMode(thePrefs.GetNotifierDisplayMode());
@@ -4417,6 +4420,11 @@ bool CemuleDlg::ShouldTrayIconBeVisible()
 
 void CemuleDlg::UpdateTrayVisibility()
 {
+	if (theApp.IsClosing()) {
+		TrayHide();
+		return;
+	}
+
 	if (ShouldTrayIconBeVisible()) {
 		if (!TrayIconVisible()) {
 			ShowTransferRate(true);
