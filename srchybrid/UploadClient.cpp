@@ -403,6 +403,7 @@ bool CUpDownClient::ProcessExtendedInfo(CSafeMemFile &data, CKnownFile *tempreqf
 	delete[] m_abyUpPartStatus;
 	m_abyUpPartStatus = NULL;
 	m_bUpPartStatusReported = false;
+	m_nUpPartStatusSessionUpBaseline = 0;
 	m_nUpPartCount = 0;
 	m_nUpCompleteSourcesCount = 0;
 	if (GetExtendedRequestsVersion() == 0)
@@ -423,6 +424,7 @@ bool CUpDownClient::ProcessExtendedInfo(CSafeMemFile &data, CKnownFile *tempreqf
 		m_nUpPartCount = tempreqfile->GetPartCount();
 		m_abyUpPartStatus = new uint8[m_nUpPartCount];
 		m_bUpPartStatusReported = true;
+		m_nUpPartStatusSessionUpBaseline = GetSessionUp();
 		for (UINT done = 0; done < m_nUpPartCount;) {
 			uint8 toread = data.ReadUInt8();
 			for (UINT i = 0; i < 8; ++i) {
@@ -474,6 +476,7 @@ void CUpDownClient::SetUploadFileID(CKnownFile *newreqfile)
 	delete[] m_abyUpPartStatus;
 	m_abyUpPartStatus = NULL;
 	m_bUpPartStatusReported = false;
+	m_nUpPartStatusSessionUpBaseline = 0;
 	m_nUpPartCount = 0;
 	m_nUpCompleteSourcesCount = 0;
 

@@ -35,6 +35,7 @@
 #include "ChatWnd.h"
 #include "kademlia/kademlia/Kademlia.h"
 #include "UploadQueue.h"
+#include "UploadPartProgressSeams.h"
 #include "OtherFunctions.h"
 #include "ProUserMenuCopySeams.h"
 
@@ -103,56 +104,18 @@ namespace
 		return strText;
 	}
 
-	double GetUploadPartProgressPercent(const CUpDownClient *client)
-	{
-		const UINT uPartCount = client != NULL ? client->GetUpPartCount() : 0;
-		if (uPartCount == 0 || !client->HasUpPartStatusReported())
-			return -1.0;
-		const UINT uReportedAvailablePartCount = client->GetUpAvailablePartCount();
-		const UINT uAvailablePartCount = uReportedAvailablePartCount < uPartCount ? uReportedAvailablePartCount : uPartCount;
-		return static_cast<double>(uAvailablePartCount) * 100.0 / static_cast<double>(uPartCount);
-	}
-
-	CString FormatUploadPartProgressPercentText(const CUpDownClient *client)
-	{
-	CString strText;
-	const double fPercent = GetUploadPartProgressPercent(client);
-	if (fPercent > 0.0)
-		strText.Format(_T("%.1f%%"), fPercent);
-	return strText;
-}
-
-	uint64 GetUploadClientMissingPartBytes(const CUpDownClient *client, const CKnownFile *file)
-	{
-		const uint64 uFileSize = file != NULL ? static_cast<uint64>(file->GetFileSize()) : 0;
-		const UINT uPartCount = client != NULL ? client->GetUpPartCount() : 0;
-		if (uFileSize == 0 || uPartCount == 0 || !client->HasUpPartStatusReported())
-			return 0;
-
-		uint64 uMissingBytes = 0;
-		for (UINT uPart = 0; uPart < uPartCount; ++uPart) {
-			if (client->IsUpPartAvailable(uPart))
-				continue;
-			const uint64 uPartStart = static_cast<uint64>(uPart) * PARTSIZE;
-			if (uPartStart >= uFileSize)
-				break;
-			uMissingBytes += min(static_cast<uint64>(PARTSIZE), uFileSize - uPartStart);
-		}
-		return uMissingBytes;
-	}
-
 	uint64 GetUploadClientCompletionEtaSeconds(const CUpDownClient *client, const CKnownFile *file)
 	{
-		const uint64 uMissingBytes = GetUploadClientMissingPartBytes(client, file);
+		const uint64 uMissingBytes = UploadPartProgressSeams::GetMissingBytes(client, file);
 		const uint32 uDataRate = client != NULL ? client->GetUploadDatarate() : 0;
 		if (uMissingBytes == 0 || uDataRate == 0)
 			return 0;
 		return (uMissingBytes + uDataRate - 1) / uDataRate;
 	}
 
-	void DrawCenteredTransferBarPercent(CDC &dc, const CRect &rcBar, const CUpDownClient *client)
+	void DrawCenteredTransferBarPercent(CDC &dc, const CRect &rcBar, const CUpDownClient *client, const CKnownFile *file)
 	{
-		const CString strPercent = FormatUploadPartProgressPercentText(client);
+		const CString strPercent = UploadPartProgressSeams::FormatProgressPercentText(client, file);
 		if (strPercent.IsEmpty())
 			return;
 
@@ -516,8 +479,10 @@ void CUploadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 				++rcItem.top;
 				--rcItem.bottom;
 				client->DrawUpStatusBar(dc, &rcItem, false, thePrefs.UseFlatBar());
-				if (thePrefs.GetUseDwlPercentage())
-					DrawCenteredTransferBarPercent(dc, rcItem, client);
+				if (thePrefs.GetUseDwlPercentage()) {
+					const CKnownFile *file = GetUploadClientFile(client);
+					DrawCenteredTransferBarPercent(dc, rcItem, client, file);
+				}
 				++rcItem.bottom;
 				--rcItem.top;
 			}
@@ -608,7 +573,7 @@ CString  CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iS
 		sText = client->HasValidHash() ? CString(md4str(client->GetUserHash())) : CString(_T("?"));
 		break;
 	case 18:
-		sText = FormatUploadPartProgressPercentText(client);
+		sText = UploadPartProgressSeams::FormatProgressPercentText(client, GetUploadClientFile(client));
 		if (sText.IsEmpty())
 			sText = _T("-");
 		break;
@@ -808,7 +773,7 @@ int CALLBACK CUploadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lP
 		}
 		break;
 	case 11:
-		iResult = CompareUnsigned(item1->GetUpPartCount(), item2->GetUpPartCount());
+		iResult = UploadPartProgressSeams::CompareProgressPercent(item1, GetUploadClientFile(item1), item2, GetUploadClientFile(item2));
 		break;
 	case 22:
 		iResult = CompareUnsigned(item1->GetUpAvailablePartCount(), item2->GetUpAvailablePartCount());
@@ -841,14 +806,7 @@ int CALLBACK CUploadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lP
 			iResult = item1->HasValidHash() ? -1 : 1;
 		break;
 	case 18:
-		{
-			const double fPct1 = GetUploadPartProgressPercent(item1);
-			const double fPct2 = GetUploadPartProgressPercent(item2);
-			if (fPct1 >= 0.0 && fPct2 >= 0.0)
-				iResult = (fPct1 < fPct2) ? -1 : static_cast<int>(fPct1 > fPct2);
-			else
-				iResult = (fPct1 < 0.0) ? 1 : -1;
-		}
+		iResult = UploadPartProgressSeams::CompareProgressPercent(item1, GetUploadClientFile(item1), item2, GetUploadClientFile(item2));
 		break;
 	case 19:
 		{

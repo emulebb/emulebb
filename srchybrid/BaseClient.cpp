@@ -131,6 +131,7 @@ void CUpDownClient::Init()
 	m_Friend = NULL;
 	m_abyUpPartStatus = NULL;
 	m_bUpPartStatusReported = false;
+	m_nUpPartStatusSessionUpBaseline = 0;
 	m_lastPartAsked = _UI16_MAX;
 
 	if (socket) {
@@ -2319,6 +2320,7 @@ void CUpDownClient::AssertValid() const
 	(void)m_nCurQueueSessionPayloadUp;
 	(void)m_addedPayloadQueueSession;
 	(void)m_nUpPartCount;
+	(void)m_nUpPartStatusSessionUpBaseline;
 	(void)m_nUpCompleteSourcesCount;
 	(void)s_UpStatusBar;
 	(void)requpfileid;

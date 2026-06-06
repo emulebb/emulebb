@@ -36,6 +36,7 @@
 #include "ChatWnd.h"
 #include "Kademlia/Kademlia/Kademlia.h"
 #include "Log.h"
+#include "UploadPartProgressSeams.h"
 #include "OtherFunctions.h"
 #include "ProUserMenuCopySeams.h"
 
@@ -93,22 +94,9 @@ namespace
 		return strText;
 	}
 
-	CString FormatUploadPartProgressPercentText(const CUpDownClient *client)
+	void DrawCenteredTransferBarPercent(CDC &dc, const CRect &rcBar, const CUpDownClient *client, const CKnownFile *file)
 	{
-		CString strText;
-		const UINT uPartCount = client != NULL ? client->GetUpPartCount() : 0;
-		if (uPartCount > 0 && client->HasUpPartStatusReported()) {
-		const UINT uReportedAvailablePartCount = client->GetUpAvailablePartCount();
-		const UINT uAvailablePartCount = uReportedAvailablePartCount < uPartCount ? uReportedAvailablePartCount : uPartCount;
-		if (uAvailablePartCount > 0)
-			strText.Format(_T("%.1f%%"), static_cast<double>(uAvailablePartCount) * 100.0 / static_cast<double>(uPartCount));
-	}
-	return strText;
-}
-
-	void DrawCenteredTransferBarPercent(CDC &dc, const CRect &rcBar, const CUpDownClient *client)
-	{
-		const CString strPercent = FormatUploadPartProgressPercentText(client);
+		const CString strPercent = UploadPartProgressSeams::FormatProgressPercentText(client, file);
 		if (strPercent.IsEmpty())
 			return;
 
@@ -378,8 +366,10 @@ void CQueueListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 					++rcItem.top;
 					--rcItem.bottom;
 					client->DrawUpStatusBar(dc, &rcItem, false, thePrefs.UseFlatBar());
-					if (thePrefs.GetUseDwlPercentage())
-						DrawCenteredTransferBarPercent(dc, rcItem, client);
+					if (thePrefs.GetUseDwlPercentage()) {
+						const CKnownFile *file = GetQueueClientFile(client);
+						DrawCenteredTransferBarPercent(dc, rcItem, client, file);
+					}
 					++rcItem.bottom;
 					--rcItem.top;
 				}
@@ -674,7 +664,7 @@ int CALLBACK CQueueListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lPa
 		iResult = CompareUnsigned(item1->GetSlowUploadCooldownRemaining(), item2->GetSlowUploadCooldownRemaining());
 		break;
 	case 13:
-		iResult = CompareUnsigned(item1->GetUpPartCount(), item2->GetUpPartCount());
+		iResult = UploadPartProgressSeams::CompareProgressPercent(item1, GetQueueClientFile(item1), item2, GetQueueClientFile(item2));
 		break;
 	case 22:
 		iResult = CompareUnsigned(item1->GetUpAvailablePartCount(), item2->GetUpAvailablePartCount());

@@ -740,6 +740,7 @@
     <ClInclude Include="UploadBlockRequestSeams.h" />
     <ClInclude Include="UploadDiskIOThread.h" />
     <ClInclude Include="UploadListCtrl.h" />
+    <ClInclude Include="UploadPartProgressSeams.h" />
     <ClInclude Include="UploadQueue.h" />
     <ClInclude Include="UPnPImpl.h" />
     <ClInclude Include="UPnPImplMiniLib.h" />
