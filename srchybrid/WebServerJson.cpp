@@ -1153,7 +1153,7 @@ json BuildPreferencesJson()
 		{"safeServerConnect", thePrefs.IsSafeServerConnectEnabled()},
 		{"networkKademlia", thePrefs.GetNetworkKademlia()},
 		{"networkEd2k", thePrefs.GetNetworkED2K()},
-		{"autoBroadbandIo", thePrefs.IsAutoBroadbandIOEnabled()}
+		{"downloadAutoBroadbandIo", thePrefs.IsDownloadAutoBroadbandIOEnabled()}
 	};
 }
 
@@ -1821,13 +1821,13 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 		thePrefs.SetNetworkED2K(rPrefs["networkEd2k"].get<bool>());
 	}
 
-	if (rPrefs.contains("autoBroadbandIo")) {
-		if (!rPrefs["autoBroadbandIo"].is_boolean()) {
+	if (rPrefs.contains("downloadAutoBroadbandIo")) {
+		if (!rPrefs["downloadAutoBroadbandIo"].is_boolean()) {
 			rError.strCode = "INVALID_ARGUMENT";
-			rError.strMessage = _T("autoBroadbandIo must be a boolean");
+			rError.strMessage = _T("downloadAutoBroadbandIo must be a boolean");
 			return false;
 		}
-		thePrefs.SetAutoBroadbandIOEnabled(rPrefs["autoBroadbandIo"].get<bool>());
+		thePrefs.SetDownloadAutoBroadbandIOEnabled(rPrefs["downloadAutoBroadbandIo"].get<bool>());
 	}
 
 	thePrefs.Save();

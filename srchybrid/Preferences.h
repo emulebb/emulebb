@@ -562,7 +562,7 @@ public:
 
 	static UINT		filterlevel;
 	static UINT		m_uFileBufferSize;
-	static bool		m_bAutoBroadbandIO;
+	static bool		m_bDownloadAutoBroadbandIO;
 	static INT_PTR	m_iQueueSize;
 	static UINT		m_uEd2kSearchMaxResults;
 	static UINT		m_uEd2kSearchMaxMoreRequests;
@@ -1294,8 +1294,8 @@ public:
 	static UINT		GetMaxFileBufferSizeBytes();
 	static UINT		NormalizeFileBufferSizeBytes(UINT bytes);
 	static void		SetFileBufferSize(UINT bytes)		{ m_uFileBufferSize = NormalizeFileBufferSizeBytes(bytes); }
-	static bool		IsAutoBroadbandIOEnabled()			{ return m_bAutoBroadbandIO; }
-	static void		SetAutoBroadbandIOEnabled(bool in)	{ m_bAutoBroadbandIO = in; }
+	static bool		IsDownloadAutoBroadbandIOEnabled()			{ return m_bDownloadAutoBroadbandIO; }
+	static void		SetDownloadAutoBroadbandIOEnabled(bool in)	{ m_bDownloadAutoBroadbandIO = in; }
 	static DWORD	GetFileBufferTimeLimit()			{ return m_uFileBufferTimeLimit; }
 	static INT_PTR	GetQueueSize()						{ return m_iQueueSize; }
 	static INT_PTR	GetDefaultQueueSize()				{ return static_cast<INT_PTR>(PreferenceValidationSeams::kDefaultQueueSize); }

@@ -1144,7 +1144,7 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		uKadBackoffReadyFiles,
 		GetDatarate(),
 		static_cast<uint64>(GetEffectiveFileBufferSizeBytes()),
-		static_cast<UINT>(thePrefs.IsAutoBroadbandIOEnabled()),
+		static_cast<UINT>(thePrefs.IsDownloadAutoBroadbandIOEnabled()),
 		static_cast<uint64>(GetBufferedDownloadBytes()),
 		GetBufferedDownloadFileCount(),
 		uBufferedReadyBytes,
@@ -2556,7 +2556,7 @@ void CDownloadQueue::RefreshBroadbandIoBufferSnapshot()
 uint64 CDownloadQueue::GetEffectiveFileBufferSizeBytes() const
 {
 	return BroadbandIoSeams::BuildEffectiveFileBufferSizeBytes(
-		thePrefs.IsAutoBroadbandIOEnabled(),
+		thePrefs.IsDownloadAutoBroadbandIOEnabled(),
 		thePrefs.GetFileBufferSize(),
 		BroadbandIoSeams::kDefaultGlobalDownloadBufferBudgetBytes,
 		m_uBufferedDownloadFileCountSnapshot);

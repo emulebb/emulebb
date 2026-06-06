@@ -37,7 +37,7 @@ enum class EMutablePreference : uint8_t
 	SafeServerConnect,
 	NetworkKademlia,
 	NetworkEd2K,
-	AutoBroadbandIO
+	DownloadAutoBroadbandIO
 };
 
 enum class EMutablePreferenceValueKind : uint8_t
@@ -108,7 +108,7 @@ inline bool IsUploadSlotPreferenceValue(const uint64_t ullValue)
 inline constexpr const char *kMutablePreferenceFieldListCsv =
 	"uploadLimitKiBps,downloadLimitKiBps,maxConnections,maxConnectionsPerFiveSeconds,maxSourcesPerFile,"
 	"uploadClientDataRate,maxUploadSlots,queueSize,autoConnect,newAutoUp,newAutoDown,creditSystem,"
-	"safeServerConnect,networkKademlia,networkEd2k,autoBroadbandIo";
+	"safeServerConnect,networkKademlia,networkEd2k,downloadAutoBroadbandIo";
 
 /**
  * Returns the canonical metadata for the native REST mutable preferences.
@@ -131,7 +131,7 @@ inline const std::array<SMutablePreferenceSpec, 16> &GetMutablePreferenceSpecs()
 		{"safeServerConnect", EMutablePreference::SafeServerConnect, EMutablePreferenceValueKind::Boolean, "safeServerConnect must be a boolean", NULL},
 		{"networkKademlia", EMutablePreference::NetworkKademlia, EMutablePreferenceValueKind::Boolean, "networkKademlia must be a boolean", NULL},
 		{"networkEd2k", EMutablePreference::NetworkEd2K, EMutablePreferenceValueKind::Boolean, "networkEd2k must be a boolean", NULL},
-		{"autoBroadbandIo", EMutablePreference::AutoBroadbandIO, EMutablePreferenceValueKind::Boolean, "autoBroadbandIo must be a boolean", NULL}
+		{"downloadAutoBroadbandIo", EMutablePreference::DownloadAutoBroadbandIO, EMutablePreferenceValueKind::Boolean, "downloadAutoBroadbandIo must be a boolean", NULL}
 	}};
 	return specs;
 }

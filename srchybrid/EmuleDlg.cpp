@@ -843,8 +843,8 @@ namespace
 		const INT_PTR nUploadSlotCap = theApp.uploadqueue != NULL ? theApp.uploadqueue->GetBroadbandSlotCap() : 0;
 
 		return nlohmann::json{
-			{"autoBroadbandIo", thePrefs.IsAutoBroadbandIOEnabled()},
-			{"autoBroadbandIoScope", "downloadDiskWriteBufferOnly"},
+			{"downloadAutoBroadbandIo", thePrefs.IsDownloadAutoBroadbandIOEnabled()},
+			{"downloadAutoBroadbandIoScope", "downloadDiskWriteBufferOnly"},
 			{"globalDownloadBufferBudgetBytes", BroadbandIoSeams::kDefaultGlobalDownloadBufferBudgetBytes},
 			{"configuredFileBufferBytes", thePrefs.GetFileBufferSize()},
 			{"effectiveFileBufferBytes", uEffectiveBufferBytes},
@@ -852,7 +852,7 @@ namespace
 			{"totalBufferedDownloadBytes", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetBufferedDownloadBytes()) : nlohmann::json(nullptr)},
 			{"activeBufferedDownloadFiles", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetBufferedDownloadFileCount()) : nlohmann::json(nullptr)},
 			{"uploadSendPipeline", nlohmann::json{
-				{"controlledByAutoBroadbandIo", false},
+				{"controlledByDownloadAutoBroadbandIo", false},
 				{"targetPerSlotBytesPerSec", uUploadTargetPerSlotBytes},
 				{"slotCap", nUploadSlotCap},
 				{"tcpSendBufferTargetBytes", GetBroadbandTcpUploadSendBufferBytes(uUploadTargetPerSlotBytes)},

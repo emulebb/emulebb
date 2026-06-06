@@ -76,6 +76,11 @@ namespace DisplayKeys
 inline constexpr const TCHAR* DesktopUiRefreshIntervalMs = _T("DesktopUiRefreshIntervalMs");
 }
 
+namespace DownloadIoKeys
+{
+inline constexpr const TCHAR* DownloadAutoBroadbandIO = _T("DownloadAutoBroadbandIO");
+}
+
 namespace UploadPolicyKeys
 {
 inline constexpr const TCHAR* MaxUploadClientsAllowed = _T("MaxUploadClientsAllowed");

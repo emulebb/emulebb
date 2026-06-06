@@ -190,12 +190,12 @@ namespace
 		return label;
 	}
 
-	static CString GetAutoBroadbandIOLabel()
+	static CString GetDownloadAutoBroadbandIOLabel()
 	{
-		return _T("Auto broadband I/O buffer sizing");
+		return _T("Download auto broadband I/O buffer sizing");
 	}
 
-	static CString GetAutoBroadbandIOToolTip()
+	static CString GetDownloadAutoBroadbandIOToolTip()
 	{
 		return _T("Automatically limits the effective per-file download write buffer during busy broadband sessions.\r\n\r\nWhen several files are buffering at once, eMule divides a 512 MiB global download-buffer budget across those active files and uses the smaller of that per-file budget and the manual File buffer size. Disable it if you want the manual File buffer size to be used exactly. This does not change socket buffers, transfer limits, or upload/download speed limits.");
 	}
@@ -599,7 +599,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_htiTCPErrorFlooderThreshold()
 	, m_htiRearrangeKadSearchKeywords()
 	, m_htiMessageFromValidSourcesOnly()
-	, m_htiAutoBroadbandIO()
+	, m_htiDownloadAutoBroadbandIO()
 	, m_htiFileBufferTimeLimit()
 	, m_htiFileBufferSize()
 	, m_htiQueueSize()
@@ -722,7 +722,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_bUseSystemFontForMainControls()
 	, m_bVerbose()
 	, m_bForceSpeedsToKB()
-	, m_bAutoBroadbandIO()
+	, m_bDownloadAutoBroadbandIO()
 	, m_uFileBufferTimeLimitSeconds()
 	, m_uGeoLocationCheckDays()
 	, m_iMaxUploadClients()
@@ -908,7 +908,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_ctrlTreeOptions.AddEditBox(m_htiMinFreeDiskSpaceTemp, RUNTIME_CLASS(CNumTreeOptionsEdit));
 		m_htiMinFreeDiskSpaceIncoming = m_ctrlTreeOptions.InsertItem(GetIncomingDiskSpaceLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiStoragePersistence);
 		m_ctrlTreeOptions.AddEditBox(m_htiMinFreeDiskSpaceIncoming, RUNTIME_CLASS(CNumTreeOptionsEdit));
-		m_htiAutoBroadbandIO = m_ctrlTreeOptions.InsertCheckBox(GetAutoBroadbandIOLabel(), m_htiStoragePersistence, m_bAutoBroadbandIO);
+		m_htiDownloadAutoBroadbandIO = m_ctrlTreeOptions.InsertCheckBox(GetDownloadAutoBroadbandIOLabel(), m_htiStoragePersistence, m_bDownloadAutoBroadbandIO);
 		m_htiFileBufferTimeLimit = m_ctrlTreeOptions.InsertItem(GetResString(IDS_FILEBUFFERTIMELIMIT), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiStoragePersistence);
 		m_ctrlTreeOptions.AddEditBox(m_htiFileBufferTimeLimit, RUNTIME_CLASS(CNumTreeOptionsEdit));
 		m_htiFileBufferSize = m_ctrlTreeOptions.InsertItem(GetFileBufferSizeLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiStoragePersistence);
@@ -1072,7 +1072,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiUPnPBackendModeIgdOnly, IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE_IGD_ONLY);
 		SetTreeToolTip(m_htiUPnPBackendModePcpNatPmpOnly, IDS_TWEAKS_TT_U_PN_P_BACKEND_MODE_PCP_NAT_PMP_ONLY);
 		SetTreeToolTip(m_htiPreviewCopiedArchives, IDS_TWEAKS_TT_PREVIEW_COPIED_ARCHIVES);
-		SetTreeToolTip(m_htiAutoBroadbandIO, GetAutoBroadbandIOToolTip());
+		SetTreeToolTip(m_htiDownloadAutoBroadbandIO, GetDownloadAutoBroadbandIOToolTip());
 		SetTreeToolTip(m_htiFileBufferTimeLimit, IDS_TWEAKS_TT_FILE_BUFFER_TIME_LIMIT);
 		SetTreeToolTip(m_htiFileBufferSize, IDS_TWEAKS_TT_FILE_BUFFER_SIZE);
 		SetTreeToolTip(m_htiQueueSize, IDS_TWEAKS_TT_QUEUE_SIZE);
@@ -1282,7 +1282,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 	DDV_MinMaxInt(pDX, m_iMinFreeDiskSpaceTempGB, static_cast<int>(PartFilePersistenceSeams::kMinTempDiskSpaceFloorGiB), static_cast<int>(PartFilePersistenceSeams::kMaxDiskSpaceFloorGiB));
 	DDX_Text(pDX, IDC_EXT_OPTS, m_htiMinFreeDiskSpaceIncoming, m_iMinFreeDiskSpaceIncomingGB);
 	DDV_MinMaxInt(pDX, m_iMinFreeDiskSpaceIncomingGB, static_cast<int>(PartFilePersistenceSeams::kMinIncomingDiskSpaceFloorGiB), static_cast<int>(PartFilePersistenceSeams::kMaxDiskSpaceFloorGiB));
-	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiAutoBroadbandIO, m_bAutoBroadbandIO);
+	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiDownloadAutoBroadbandIO, m_bDownloadAutoBroadbandIO);
 	DDX_TreeRadio(pDX, IDC_EXT_OPTS, m_htiCommit, m_iCommitFiles);
 	DDX_TreeRadio(pDX, IDC_EXT_OPTS, m_htiExtractMetaData, m_iExtractMetaData);
 	DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiMediaInfoDllPath, m_sMediaInfoDllPath);
@@ -1584,7 +1584,7 @@ BOOL CPPgTweaks::OnInitDialog()
 	m_bPartiallyPurgeOldKnownFiles = thePrefs.DoPartiallyPurgeOldKnownFiles();
 	m_bRearrangeKadSearchKeywords = thePrefs.GetRearrangeKadSearchKeywords();
 	m_bMessageFromValidSourcesOnly = thePrefs.MsgOnlySecure();
-	m_bAutoBroadbandIO = thePrefs.IsAutoBroadbandIOEnabled();
+	m_bDownloadAutoBroadbandIO = thePrefs.IsDownloadAutoBroadbandIOEnabled();
 	m_iQueueSize = static_cast<int>(thePrefs.GetQueueSize());
 	m_uFileBufferSizeKiB = thePrefs.GetFileBufferSize() / 1024u;
 	m_uMaxChatHistoryLines = static_cast<UINT>(thePrefs.GetMaxChatHistoryLines());
@@ -1719,7 +1719,7 @@ BOOL CPPgTweaks::OnApply()
 	thePrefs.SetFollowMajorityFilenameMinimumVotes(m_uFollowMajorityFilenameMinimumVotes);
 	thePrefs.m_bHighresTimer = m_bHighresTimer;
 	thePrefs.m_strTxtEditor = m_sTxtEditor;
-	thePrefs.SetAutoBroadbandIOEnabled(m_bAutoBroadbandIO);
+	thePrefs.SetDownloadAutoBroadbandIOEnabled(m_bDownloadAutoBroadbandIO);
 	thePrefs.SetFileBufferSize(m_uFileBufferSizeKiB * 1024u);
 	thePrefs.SetQueueSize(m_iQueueSize);
 	m_uFileBufferSizeKiB = thePrefs.GetFileBufferSize() / 1024u;
@@ -1975,7 +1975,7 @@ void CPPgTweaks::Localize()
 			m_ctrlTreeOptions.SetItemText(m_htiFullVerbose, GetFullVerboseLabel());
 		LocalizeItemText(m_htiVerboseGroup, IDS_VERBOSE);
 		m_ctrlTreeOptions.SetItemText(m_htiStoragePersistence, GetStoragePersistenceLabel());
-		m_ctrlTreeOptions.SetItemText(m_htiAutoBroadbandIO, GetAutoBroadbandIOLabel());
+		m_ctrlTreeOptions.SetItemText(m_htiDownloadAutoBroadbandIO, GetDownloadAutoBroadbandIOLabel());
 		LocalizeEditLabel(m_htiDateTimeFormat4Lists, IDS_DATETIMEFORMAT4LISTS);
 		LocalizeEditLabel(m_htiFileBufferTimeLimit, IDS_FILEBUFFERTIMELIMIT);
 		m_ctrlTreeOptions.SetEditLabel(m_htiFileBufferSize, GetFileBufferSizeLabel());
@@ -2095,7 +2095,7 @@ void CPPgTweaks::OnDestroy()
 	m_htiPartiallyPurgeOldKnownFiles = NULL;
 	m_htiRearrangeKadSearchKeywords = NULL;
 	m_htiMessageFromValidSourcesOnly = NULL;
-	m_htiAutoBroadbandIO = NULL;
+	m_htiDownloadAutoBroadbandIO = NULL;
 	m_htiFileBufferTimeLimit = NULL;
 	m_htiFileBufferSize = NULL;
 	m_htiQueueSize = NULL;

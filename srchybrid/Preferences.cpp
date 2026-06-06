@@ -1110,7 +1110,7 @@ bool	CPreferences::msgsecure;
 bool	CPreferences::m_bUseChatCaptchas;
 UINT	CPreferences::filterlevel;
 UINT	CPreferences::m_uFileBufferSize;
-bool	CPreferences::m_bAutoBroadbandIO;
+bool	CPreferences::m_bDownloadAutoBroadbandIO;
 DWORD	CPreferences::m_uFileBufferTimeLimit;
 INT_PTR	CPreferences::m_iQueueSize;
 UINT	CPreferences::m_uEd2kSearchMaxResults;
@@ -2782,7 +2782,7 @@ void CPreferences::SavePreferences()
 	ini.WriteInt(_T("StartNextFile"), m_istartnextfile);
 
 	ini.WriteInt(_T("FileBufferSize"), m_uFileBufferSize);
-	ini.WriteBool(_T("AutoBroadbandIO"), m_bAutoBroadbandIO);
+	ini.WriteBool(prefini::DownloadIoKeys::DownloadAutoBroadbandIO, m_bDownloadAutoBroadbandIO);
 
 	ini.WriteInt(_T("QueueSize"), (int)m_iQueueSize);
 
@@ -3377,7 +3377,7 @@ void CPreferences::LoadPreferences()
 
 	// Get file buffer size.
 	SetFileBufferSize(static_cast<UINT>(max(0, ini.GetInt(_T("FileBufferSize"), static_cast<int>(GetDefaultFileBufferSizeBytes())))));
-	m_bAutoBroadbandIO = ini.GetBool(_T("AutoBroadbandIO"), true);
+	m_bDownloadAutoBroadbandIO = ini.GetBool(prefini::DownloadIoKeys::DownloadAutoBroadbandIO, true);
 	SetFileBufferTimeLimitSeconds(NormalizePositivePreferenceOrDefault(ini.GetInt(_T("FileBufferTimeLimit"), 120), 120));
 
 	// Get queue size.

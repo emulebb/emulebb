@@ -151,7 +151,7 @@ protected:
 	HTREEITEM m_htiTCPErrorFlooderThreshold;
 	HTREEITEM m_htiRearrangeKadSearchKeywords;
 	HTREEITEM m_htiMessageFromValidSourcesOnly;
-	HTREEITEM m_htiAutoBroadbandIO;
+	HTREEITEM m_htiDownloadAutoBroadbandIO;
 	HTREEITEM m_htiFileBufferTimeLimit;
 	HTREEITEM m_htiFileBufferSize;
 	HTREEITEM m_htiQueueSize;
@@ -277,7 +277,7 @@ protected:
 	bool m_bUseSystemFontForMainControls;
 	bool m_bVerbose;
 	bool m_bForceSpeedsToKB;
-	bool m_bAutoBroadbandIO;
+	bool m_bDownloadAutoBroadbandIO;
 
 	UINT m_uFileBufferTimeLimitSeconds;
 	UINT m_uGeoLocationCheckDays;
