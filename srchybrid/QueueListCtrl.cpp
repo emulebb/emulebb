@@ -98,12 +98,13 @@ namespace
 		CString strText;
 		const UINT uPartCount = client != NULL ? client->GetUpPartCount() : 0;
 		if (uPartCount > 0 && client->HasUpPartStatusReported()) {
-			const UINT uReportedAvailablePartCount = client->GetUpAvailablePartCount();
-			const UINT uAvailablePartCount = uReportedAvailablePartCount < uPartCount ? uReportedAvailablePartCount : uPartCount;
+		const UINT uReportedAvailablePartCount = client->GetUpAvailablePartCount();
+		const UINT uAvailablePartCount = uReportedAvailablePartCount < uPartCount ? uReportedAvailablePartCount : uPartCount;
+		if (uAvailablePartCount > 0)
 			strText.Format(_T("%.1f%%"), static_cast<double>(uAvailablePartCount) * 100.0 / static_cast<double>(uPartCount));
-		}
-		return strText;
 	}
+	return strText;
+}
 
 	void DrawCenteredTransferBarPercent(CDC &dc, const CRect &rcBar, const CUpDownClient *client)
 	{

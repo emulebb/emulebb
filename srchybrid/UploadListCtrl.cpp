@@ -115,12 +115,12 @@ namespace
 
 	CString FormatUploadPartProgressPercentText(const CUpDownClient *client)
 	{
-		CString strText;
-		const double fPercent = GetUploadPartProgressPercent(client);
-		if (fPercent >= 0.0)
-			strText.Format(_T("%.1f%%"), fPercent);
-		return strText;
-	}
+	CString strText;
+	const double fPercent = GetUploadPartProgressPercent(client);
+	if (fPercent > 0.0)
+		strText.Format(_T("%.1f%%"), fPercent);
+	return strText;
+}
 
 	uint64 GetUploadClientMissingPartBytes(const CUpDownClient *client, const CKnownFile *file)
 	{
