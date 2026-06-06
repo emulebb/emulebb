@@ -120,6 +120,34 @@ namespace
 		return strText;
 	}
 
+	uint64 GetUploadClientMissingPartBytes(const CUpDownClient *client, const CKnownFile *file)
+	{
+		const uint64 uFileSize = file != NULL ? static_cast<uint64>(file->GetFileSize()) : 0;
+		const UINT uPartCount = client != NULL ? client->GetUpPartCount() : 0;
+		if (uFileSize == 0 || uPartCount == 0)
+			return 0;
+
+		uint64 uMissingBytes = 0;
+		for (UINT uPart = 0; uPart < uPartCount; ++uPart) {
+			if (client->IsUpPartAvailable(uPart))
+				continue;
+			const uint64 uPartStart = static_cast<uint64>(uPart) * PARTSIZE;
+			if (uPartStart >= uFileSize)
+				break;
+			uMissingBytes += min(static_cast<uint64>(PARTSIZE), uFileSize - uPartStart);
+		}
+		return uMissingBytes;
+	}
+
+	uint64 GetUploadClientCompletionEtaSeconds(const CUpDownClient *client, const CKnownFile *file)
+	{
+		const uint64 uMissingBytes = GetUploadClientMissingPartBytes(client, file);
+		const uint32 uDataRate = client != NULL ? client->GetUploadDatarate() : 0;
+		if (uMissingBytes == 0 || uDataRate == 0)
+			return 0;
+		return (uMissingBytes + uDataRate - 1) / uDataRate;
+	}
+
 	void DrawCenteredTransferBarPercent(CDC &dc, const CRect &rcBar, const CUpDownClient *client)
 	{
 		const CString strPercent = FormatUploadPartProgressPercentText(client);
@@ -591,21 +619,8 @@ CString  CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iS
 	case 20:
 		{
 			const CKnownFile *file = GetUploadClientFile(client);
-			if (file != NULL && file->GetFileSize() > client->GetSessionUp()) {
-				const uint64 uDataLeft = file->GetFileSize() - client->GetSessionUp();
-				const uint32 uDataRate = client->GetUploadDatarate();
-				if (uDataLeft > 1024 && uDataRate > 1024) {
-					const uint64 uEta = uDataLeft / uDataRate;
-					if (uEta > 0 && uEta < 60 * 60 * 10)
-						sText = CastSecondsToHM(static_cast<time_t>(uEta));
-					else
-						sText = _T("-");
-				}
-				else
-					sText = _T("-");
-			}
-			else
-				sText = _T("-");
+			const uint64 uEta = GetUploadClientCompletionEtaSeconds(client, file);
+			sText = uEta > 0 ? CastSecondsToHM(static_cast<time_t>(uEta)) : _T("-");
 		}
 		break;
 	case 21:
@@ -847,18 +862,12 @@ int CALLBACK CUploadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lP
 		{
 			const CKnownFile *file1 = GetUploadClientFile(item1);
 			const CKnownFile *file2 = GetUploadClientFile(item2);
-			if (file1 != NULL && file2 != NULL && file1->GetFileSize() > item1->GetSessionUp() && file2->GetFileSize() > item2->GetSessionUp()) {
-				const uint64 uDataLeft1 = file1->GetFileSize() - item1->GetSessionUp();
-				const uint32 uDataRate1 = item1->GetUploadDatarate();
-				const uint64 uDataLeft2 = file2->GetFileSize() - item2->GetSessionUp();
-				const uint32 uDataRate2 = item2->GetUploadDatarate();
-				if (uDataLeft1 > 1024 && uDataRate1 > 1024 && uDataLeft2 > 1024 && uDataRate2 > 1024) {
-					const uint64 uEta1 = uDataLeft1 / uDataRate1;
-					const uint64 uEta2 = uDataLeft2 / uDataRate2;
-					if (uEta1 > 0 && uEta1 < 60 * 60 * 24 && uEta2 > 0 && uEta2 < 60 * 60 * 24)
-						iResult = CompareUnsigned(uEta1, uEta2);
-				}
-			}
+			const uint64 uEta1 = GetUploadClientCompletionEtaSeconds(item1, file1);
+			const uint64 uEta2 = GetUploadClientCompletionEtaSeconds(item2, file2);
+			if (uEta1 > 0 && uEta2 > 0)
+				iResult = CompareUnsigned(uEta1, uEta2);
+			else if (uEta1 == 0 || uEta2 == 0)
+				iResult = (uEta1 == 0) ? 1 : -1;
 		}
 		break;
 	case 21:
