@@ -464,6 +464,17 @@ inline bool IsNativeMd4Hash(const std::string &rValue)
 	return rValue.size() == 32 && WebServerJsonSeams::IsLowercaseMd4HexString(rValue);
 }
 
+inline bool IsBtihHash(const std::string &rValue)
+{
+	if (rValue.size() != 40)
+		return false;
+	for (const char ch : rValue) {
+		if (!std::isxdigit(static_cast<unsigned char>(ch)))
+			return false;
+	}
+	return true;
+}
+
 inline bool StartsWithNoCase(const std::string &rValue, const char *pszPrefix)
 {
 	const std::string strPrefix(pszPrefix != NULL ? pszPrefix : "");
@@ -511,11 +522,27 @@ inline bool TryNormalizeControlledEd2kMagnetUrl(const std::string &rUrl, std::st
 	}
 
 	static const std::string strEd2kUrnPrefix("urn:ed2k:");
-	if (!StartsWithNoCase(xtIt->second, strEd2kUrnPrefix.c_str())) {
+	static const std::string strBtihUrnPrefix("urn:btih:");
+	std::string strHash;
+	if (StartsWithNoCase(xtIt->second, strEd2kUrnPrefix.c_str())) {
+		strHash = WebServerJsonSeams::ToLowerAscii(xtIt->second.substr(strEd2kUrnPrefix.size()));
+	} else if (StartsWithNoCase(xtIt->second, strBtihUrnPrefix.c_str())) {
+		const auto emulebbEd2kIt = normalized.find("x.emulebb-ed2k");
+		if (emulebbEd2kIt == normalized.end()) {
+			rErrorMessage = "eMuleBB BTIH magnets require x.emulebb-ed2k";
+			return false;
+		}
+		const std::string strBtihHash(WebServerJsonSeams::ToLowerAscii(xtIt->second.substr(strBtihUrnPrefix.size())));
+		const std::string strEd2kHash(WebServerJsonSeams::ToLowerAscii(emulebbEd2kIt->second));
+		if (!IsBtihHash(strBtihHash) || !IsNativeMd4Hash(strEd2kHash) || strBtihHash != strEd2kHash + "00000000") {
+			rErrorMessage = "eMuleBB BTIH magnet does not match its eD2K hash";
+			return false;
+		}
+		strHash = strEd2kHash;
+	} else {
 		rErrorMessage = "only eMuleBB ED2K magnets are supported";
 		return false;
 	}
-	const std::string strHash(WebServerJsonSeams::ToLowerAscii(xtIt->second.substr(strEd2kUrnPrefix.size())));
 	if (!IsNativeMd4Hash(strHash)) {
 		rErrorMessage = "xt must contain a 32-character eD2K hash";
 		return false;

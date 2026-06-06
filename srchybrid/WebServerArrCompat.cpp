@@ -208,7 +208,6 @@ std::string BuildFeedXml(const WebServerArrCompatSeams::STorznabRequest &rReques
 	for (size_t uIndex = uStart; uIndex < uEnd; ++uIndex) {
 		const SArrCompatResult &rResult = rResults[uIndex];
 		const int iCategory = GetPrimaryTorznabCategory(rResult.eFamily == WebServerArrCompatSeams::ETorznabFamily::Any ? rRequest.eFamily : rResult.eFamily);
-		const std::string strMagnetDownloadLink(WebServerArrCompatSeams::BuildEd2kMagnetDownloadLink(rResult.strHash, rResult.strName, rResult.ullSize));
 		xml << "    <item>\n"
 			<< "      <title>" << WebServerArrCompatSeams::XmlEscape(rResult.strName) << "</title>\n"
 			<< "      <guid isPermaLink=\"false\">ed2k:" << WebServerArrCompatSeams::XmlEscape(rResult.strHash) << "</guid>\n"
@@ -219,7 +218,7 @@ std::string BuildFeedXml(const WebServerArrCompatSeams::STorznabRequest &rReques
 			<< "      <link>" << WebServerArrCompatSeams::XmlEscape(rResult.strDownloadLink) << "</link>\n"
 			<< "      <enclosure url=\"" << WebServerArrCompatSeams::XmlEscape(rResult.strDownloadLink) << "\" length=\"" << rResult.ullSize << "\" type=\"" << WebServerArrCompatSeams::kTorznabTorrentContentMimeType << "\" />\n"
 			<< "      <torznab:attr name=\"size\" value=\"" << rResult.ullSize << "\" />\n"
-			<< "      <torznab:attr name=\"magneturl\" value=\"" << WebServerArrCompatSeams::XmlEscape(strMagnetDownloadLink) << "\" />\n"
+			<< "      <torznab:attr name=\"magneturl\" value=\"" << WebServerArrCompatSeams::XmlEscape(rResult.strDownloadLink) << "\" />\n"
 			<< "      <torznab:attr name=\"seeders\" value=\"" << rResult.ullSeeders << "\" />\n"
 			<< "      <torznab:attr name=\"peers\" value=\"" << rResult.ullPeers << "\" />\n"
 			<< "      <torznab:attr name=\"grabs\" value=\"" << rResult.ullGrabs << "\" />\n"
@@ -371,7 +370,7 @@ void AppendResultsFromJson(const json &rResultPayload, const WebServerArrCompatS
 		item.ullPeers = JsonUInt64Value(rResult, "sources");
 		item.ullGrabs = item.ullSeeders;
 		item.eFamily = eFamily;
-		item.strDownloadLink = WebServerArrCompatSeams::BuildEd2kDownloadLink(item.strHash, item.strName, item.ullSize);
+		item.strDownloadLink = WebServerArrCompatSeams::BuildEd2kMagnetDownloadLink(item.strHash, item.strName, item.ullSize);
 		if (item.strDownloadLink.empty())
 			continue;
 
@@ -393,7 +392,7 @@ std::vector<SArrCompatResult> BuildValidationProbeResults(const WebServerArrComp
 	item.ullPeers = 1;
 	item.ullGrabs = 0;
 	item.eFamily = rRequest.eFamily;
-	item.strDownloadLink = WebServerArrCompatSeams::BuildEd2kDownloadLink(item.strHash, item.strName, item.ullSize);
+	item.strDownloadLink = WebServerArrCompatSeams::BuildEd2kMagnetDownloadLink(item.strHash, item.strName, item.ullSize);
 	if (!item.strDownloadLink.empty())
 		results.push_back(item);
 	return results;

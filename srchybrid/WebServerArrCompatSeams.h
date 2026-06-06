@@ -374,8 +374,8 @@ inline std::string BuildEd2kDownloadLink(const std::string &rEd2kHash, const std
 }
 
 /**
- * @brief Builds the controlled magnet URL that lets Servarr route a result
- * through torrent-indexer code while eMuleBB converts it back to eD2K.
+ * @brief Builds the controlled BTIH-shaped magnet URL that lets Servarr route
+ * a result through torrent-indexer code while eMuleBB converts it back to eD2K.
  */
 inline std::string BuildEd2kMagnetDownloadLink(const std::string &rEd2kHash, const std::string &rName, const uint64_t ullSize)
 {
@@ -388,7 +388,7 @@ inline std::string BuildEd2kMagnetDownloadLink(const std::string &rEd2kHash, con
 	if (!WebServerJsonSeams::TryValidatePublicFileNameText(rName, "name", strError))
 		return std::string();
 	std::ostringstream link;
-	link << "magnet:?xt=urn:ed2k:" << strHash << "&dn=" << WebServerJsonSeams::UrlEncodeUtf8(rName) << "&xl=" << ullSize;
+	link << "magnet:?xt=urn:btih:" << strHash << "00000000&dn=" << WebServerJsonSeams::UrlEncodeUtf8(rName) << "&xl=" << ullSize << "&x.emulebb-ed2k=" << strHash;
 	return link.str();
 }
 
