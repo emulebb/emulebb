@@ -187,6 +187,38 @@ namespace
 		return s_acceptedThreads.size();
 	}
 
+	void SendBusyResponseAndClose(const SOCKET hSocket)
+	{
+		static const char szBusyResponse[] =
+			"HTTP/1.1 503 Service Unavailable\r\n"
+			"Content-Type: text/plain; charset=utf-8\r\n"
+			"Cache-Control: no-store\r\n"
+			"Retry-After: 10\r\n"
+			"Connection: close\r\n"
+			"Content-Length: 24\r\n"
+			"\r\n"
+			"eMuleBB web API is busy\n";
+		// WHY: Arr clients treat raw closes as broken indexer/download-client
+		// sockets. Keep the one-worker WebServer invariant, but report bounded
+		// HTTP backpressure so controllers can retry instead of marking eMuleBB
+		// unhealthy for a reset connection.
+		const DWORD dwSendTimeoutMs = 1000;
+		u_long ulBlockingMode = 0;
+		(void)ioctlsocket(hSocket, FIONBIO, &ulBlockingMode);
+		(void)setsockopt(hSocket, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char*>(&dwSendTimeoutMs), sizeof(dwSendTimeoutMs));
+
+		size_t uSent = 0;
+		const size_t uResponseBytes = sizeof(szBusyResponse) - 1;
+		while (uSent < uResponseBytes) {
+			const int nSent = send(hSocket, szBusyResponse + uSent, static_cast<int>(uResponseBytes - uSent), 0);
+			if (nSent <= 0)
+				break;
+			uSent += static_cast<size_t>(nSent);
+		}
+		(void)shutdown(hSocket, SD_SEND);
+		VERIFY(!closesocket(hSocket));
+	}
+
 	/**
 	 * @brief Tracks an accepted-client worker before starting it so it cannot run untracked.
 	 */
@@ -812,8 +844,8 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 							if (thePrefs.GetWSIsEnabled()) {
 								const size_t uAcceptedThreads = GetTrackedAcceptedThreadCount();
 								if (!WebSocketHttpSeams::CanStartAcceptedClientThread(uAcceptedThreads)) {
-									DebugLogWarning(_T("Web Interface rejected connection from %s because %u accepted-client thread(s) are already active"), (LPCTSTR)ipstr(their_addr.sin_addr.s_addr), static_cast<unsigned int>(uAcceptedThreads));
-									VERIFY(!closesocket(hAccepted));
+									DebugLogWarning(_T("Web Interface returned HTTP 503 to %s because %u accepted-client thread(s) are already active"), (LPCTSTR)ipstr(their_addr.sin_addr.s_addr), static_cast<unsigned int>(uAcceptedThreads));
+									SendBusyResponseAndClose(hAccepted);
 									continue;
 								}
 
