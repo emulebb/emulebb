@@ -86,8 +86,10 @@ namespace
 	CString FormatUploadPartProgressText(const CUpDownClient *client)
 	{
 		CString strText;
-		if (client != NULL && client->GetUpPartCount() > 0)
+		if (client != NULL && client->GetUpPartCount() > 0 && client->HasUpPartStatusReported())
 			strText.Format(_T("%u / %u"), client->GetUpAvailablePartCount(), client->GetUpPartCount());
+		else
+			strText = _T("-");
 		return strText;
 	}
 
@@ -95,7 +97,7 @@ namespace
 	{
 		CString strText;
 		const UINT uPartCount = client != NULL ? client->GetUpPartCount() : 0;
-		if (uPartCount > 0) {
+		if (uPartCount > 0 && client->HasUpPartStatusReported()) {
 			const UINT uReportedAvailablePartCount = client->GetUpAvailablePartCount();
 			const UINT uAvailablePartCount = uReportedAvailablePartCount < uPartCount ? uReportedAvailablePartCount : uPartCount;
 			strText.Format(_T("%.1f%%"), static_cast<double>(uAvailablePartCount) * 100.0 / static_cast<double>(uPartCount));

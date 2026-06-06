@@ -290,6 +290,7 @@ public:
 	void			DrawUpStatusBar(CDC &dc, const CRect &rect, bool onlygreyrect, bool  bFlat) const;
 	bool			IsUpPartAvailable(UINT uPart) const				{ return m_abyUpPartStatus && uPart < m_nUpPartCount && m_abyUpPartStatus[uPart];	}
 	uint8*			GetUpPartStatus() const							{ return m_abyUpPartStatus; }
+	bool			HasUpPartStatusReported() const					{ return m_bUpPartStatusReported; }
 	uint16			GetUpAvailablePartCount() const;
 	float			GetCombinedFilePrioAndCredit();
 	uint8			GetDataCompressionVersion() const				{ return m_byDataCompVer; }
@@ -470,6 +471,7 @@ public:
 	CClientCredits	*credits;
 	CFriend			*m_Friend;
 	uint8			*m_abyUpPartStatus;
+	bool		m_bUpPartStatusReported;
 	CTypedPtrList<CPtrList, CPartFile*> m_OtherRequests_list;
 	CTypedPtrList<CPtrList, CPartFile*> m_OtherNoNeeded_list;
 	uint16			m_lastPartAsked;

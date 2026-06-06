@@ -130,6 +130,7 @@ void CUpDownClient::Init()
 	credits = NULL;
 	m_Friend = NULL;
 	m_abyUpPartStatus = NULL;
+	m_bUpPartStatusReported = false;
 	m_lastPartAsked = _UI16_MAX;
 
 	if (socket) {

@@ -96,15 +96,17 @@ namespace
 	CString FormatUploadPartProgressText(const CUpDownClient *client)
 	{
 		CString strText;
-		if (client != NULL && client->GetUpPartCount() > 0)
+		if (client != NULL && client->GetUpPartCount() > 0 && client->HasUpPartStatusReported())
 			strText.Format(_T("%u / %u"), client->GetUpAvailablePartCount(), client->GetUpPartCount());
+		else
+			strText = _T("-");
 		return strText;
 	}
 
 	double GetUploadPartProgressPercent(const CUpDownClient *client)
 	{
 		const UINT uPartCount = client != NULL ? client->GetUpPartCount() : 0;
-		if (uPartCount == 0)
+		if (uPartCount == 0 || !client->HasUpPartStatusReported())
 			return -1.0;
 		const UINT uReportedAvailablePartCount = client->GetUpAvailablePartCount();
 		const UINT uAvailablePartCount = uReportedAvailablePartCount < uPartCount ? uReportedAvailablePartCount : uPartCount;
@@ -124,7 +126,7 @@ namespace
 	{
 		const uint64 uFileSize = file != NULL ? static_cast<uint64>(file->GetFileSize()) : 0;
 		const UINT uPartCount = client != NULL ? client->GetUpPartCount() : 0;
-		if (uFileSize == 0 || uPartCount == 0)
+		if (uFileSize == 0 || uPartCount == 0 || !client->HasUpPartStatusReported())
 			return 0;
 
 		uint64 uMissingBytes = 0;
