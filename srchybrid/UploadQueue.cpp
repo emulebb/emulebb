@@ -1408,7 +1408,14 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			// cooldown so persistent 0-byte peers stop consuming refill probes.
 			const UINT uConfiguredCooldownSeconds = thePrefs.GetSlowUploadCooldownSeconds();
 			const bool bRecentNoRequestRecycle = HasRecentNoRequestUploadRetryCooldown(client, curTick);
-			const UINT uCooldownSeconds = GetNoRequestUploadRetryCooldownSeconds(uConfiguredCooldownSeconds, bRecentNoRequestRecycle, bProductiveNoRequestRecycle);
+			const uint32 uBudgetBytesPerSec = GetConfiguredUploadBudgetBytesPerSec();
+			const UINT uCooldownSeconds = GetNoRequestUploadRetryCooldownSeconds(
+				uConfiguredCooldownSeconds,
+				bRecentNoRequestRecycle,
+				bProductiveNoRequestRecycle,
+				GetNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec),
+				GetProductiveNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec),
+				GetRepeatedNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec));
 			const ULONGLONG ullCooldownUntil = curTick + SEC2MS(uCooldownSeconds);
 			const ULONGLONG ullTrackUntil = curTick + SEC2MS(GetNoRequestUploadRetryTrackSeconds(uCooldownSeconds, uConfiguredCooldownSeconds));
 			client->SetSlowUploadCooldownUntil(ullCooldownUntil);

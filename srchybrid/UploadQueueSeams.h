@@ -16,6 +16,10 @@ inline constexpr std::uint32_t kNoRequestUploadCooldownMaxSeconds = 60u;
 inline constexpr std::uint32_t kProductiveNoRequestUploadCooldownMaxSeconds = 10u;
 inline constexpr std::uint32_t kUploadChurnRetryCooldownMaxSeconds = 120u;
 inline constexpr std::uint32_t kRepeatedNoRequestUploadCooldownMaxSeconds = 180u;
+inline constexpr std::uint32_t kBroadbandNoRequestCooldownBudgetBytesPerSec = 4u * 1024u * 1024u;
+inline constexpr std::uint32_t kBroadbandNoRequestUploadCooldownMaxSeconds = 15u;
+inline constexpr std::uint32_t kBroadbandProductiveNoRequestUploadCooldownMaxSeconds = 5u;
+inline constexpr std::uint32_t kBroadbandRepeatedNoRequestUploadCooldownMaxSeconds = 45u;
 inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 30000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownProbeRemainingMs = 5000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = 184320u;
@@ -296,6 +300,32 @@ inline std::uint64_t GetProductiveNoRequestCooldownPayloadBytes(
 	return uTargetPerSlotBytesPerSec > ullBasePayloadBytes
 		? uTargetPerSlotBytesPerSec
 		: ullBasePayloadBytes;
+}
+
+inline bool ShouldUseBroadbandNoRequestCooldownCaps(std::uint32_t uBudgetBytesPerSec)
+{
+	return uBudgetBytesPerSec >= kBroadbandNoRequestCooldownBudgetBytesPerSec;
+}
+
+inline std::uint32_t GetNoRequestUploadCooldownMaxSecondsForBudget(std::uint32_t uBudgetBytesPerSec)
+{
+	return ShouldUseBroadbandNoRequestCooldownCaps(uBudgetBytesPerSec)
+		? kBroadbandNoRequestUploadCooldownMaxSeconds
+		: kNoRequestUploadCooldownMaxSeconds;
+}
+
+inline std::uint32_t GetProductiveNoRequestUploadCooldownMaxSecondsForBudget(std::uint32_t uBudgetBytesPerSec)
+{
+	return ShouldUseBroadbandNoRequestCooldownCaps(uBudgetBytesPerSec)
+		? kBroadbandProductiveNoRequestUploadCooldownMaxSeconds
+		: kProductiveNoRequestUploadCooldownMaxSeconds;
+}
+
+inline std::uint32_t GetRepeatedNoRequestUploadCooldownMaxSecondsForBudget(std::uint32_t uBudgetBytesPerSec)
+{
+	return ShouldUseBroadbandNoRequestCooldownCaps(uBudgetBytesPerSec)
+		? kBroadbandRepeatedNoRequestUploadCooldownMaxSeconds
+		: kRepeatedNoRequestUploadCooldownMaxSeconds;
 }
 
 inline std::uint32_t GetBroadbandUploadBufferBlockCount(
