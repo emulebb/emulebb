@@ -78,20 +78,6 @@ namespace
 		return client->GetIP() != 0 ? client->GetIP() : client->GetConnectIP();
 	}
 
-	CString FormatDownloadPartProgressText(const CPartFile *pPartFile)
-	{
-		CString strProgress;
-		if (pPartFile == NULL)
-			return strProgress;
-
-		const UINT uPartCount = pPartFile->GetPartCount();
-		if (uPartCount > 0)
-			strProgress.Format(_T("%.1f%% (%u / %u)"), pPartFile->GetPercentCompleted(), pPartFile->GetCompletedPartCount(), uPartCount);
-		else
-			strProgress.Format(_T("%.1f%%"), pPartFile->GetPercentCompleted());
-		return strProgress;
-	}
-
 	CString WrapDownloadInfoTipLine(const CString &rstrLine)
 	{
 		if (rstrLine.GetLength() <= kDownloadInfoTipMaxLineChars
@@ -1250,8 +1236,7 @@ void CDownloadListCtrl::DrawFileItem(CDC &dc, int nColumn, LPCRECT lpRect, UINT 
 				theApp.LoadSkinColor(_T("TransferBarPercentFg"), crPercent);
 				COLORREF oldclr = dc.SetTextColor(crPercent);
 				int iOldBkMode = dc.SetBkMode(TRANSPARENT);
-				const CString strProgress(FormatDownloadPartProgressText(pPartFile));
-				dc.DrawText(strProgress, -1, rcDraw, (MLC_DT_TEXT & ~DT_LEFT) | DT_CENTER);
+				dc.DrawText(CPTR(sItem, sItem.ReverseFind(_T(' ')) + 1), -1, rcDraw, (MLC_DT_TEXT & ~DT_LEFT) | DT_CENTER);
 				dc.SetBkMode(iOldBkMode);
 				dc.SetTextColor(oldclr);
 			}
@@ -3266,7 +3251,7 @@ CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, i
 			sText = CastItoXBytes(lpPartFile->GetDatarate(), false, true);
 		break;
 	case 5: //progress
-		sText.Format(_T("%s: %s"), (LPCTSTR)GetResString(IDS_DL_PROGRESS), (LPCTSTR)FormatDownloadPartProgressText(lpPartFile));
+		sText.Format(_T("%s: %.1f%%"), (LPCTSTR)GetResString(IDS_DL_PROGRESS), lpPartFile->GetPercentCompleted());
 		break;
 	case 6: //sources
 		{

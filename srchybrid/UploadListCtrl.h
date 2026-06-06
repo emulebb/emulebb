@@ -53,7 +53,6 @@ protected:
 	const CUpDownClient* GetLiveClientByIndex(int iItem);
 	bool IsLiveClient(const CUpDownClient *client) const;
 	bool PruneStaleClientItems();
-	bool SyncLiveClientItems();
 	CObject* WalkToLiveClientItem(int iDirection);
 	void CollectSelectedCompleteFiles(std::vector<CKnownFile*> &files);
 	void DeleteSelectedCompleteFilesFromDisk();

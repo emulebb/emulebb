@@ -93,28 +93,6 @@ namespace
 		return str;
 	}
 
-	CString FormatUploadPartProgressText(const CUpDownClient *client)
-	{
-		CString strProgress;
-		if (client != NULL && client->GetUpPartCount() > 0)
-			strProgress.Format(_T("%u / %u"), client->GetUpAvailablePartCount(), client->GetUpPartCount());
-		return strProgress;
-	}
-
-	void DrawCenteredBarText(CDC &dc, const CString &strText, CRect rcText)
-	{
-		if (strText.IsEmpty())
-			return;
-
-		COLORREF crText = RGB(255, 255, 255);
-		theApp.LoadSkinColor(_T("TransferBarPercentFg"), crText);
-		const COLORREF crOldText = dc.SetTextColor(crText);
-		const int iOldBkMode = dc.SetBkMode(TRANSPARENT);
-		dc.DrawText(strText, -1, &rcText, (MLC_DT_TEXT & ~DT_LEFT) | DT_CENTER);
-		dc.SetBkMode(iOldBkMode);
-		dc.SetTextColor(crOldText);
-	}
-
 	CString FormatUploadScoreColumn(const CUpDownClient *client)
 	{
 		return UploadScoreSeams::FormatUploadScoreCompact(
@@ -266,33 +244,6 @@ bool CUploadListCtrl::PruneStaleClientItems()
 		theApp.emuledlg->transferwnd->m_pwndTransfer->UpdateListCount(CTransferWnd::wnd2Uploading);
 
 	return bRemoved;
-}
-
-bool CUploadListCtrl::SyncLiveClientItems()
-{
-	const bool bPruned = PruneStaleClientItems();
-	bool bAdded = false;
-	if (theApp.uploadqueue == NULL)
-		return bPruned;
-
-	for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;) {
-		const CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromUploadList(pos);
-		if (!IsLiveClient(pClient))
-			continue;
-
-		LVFINDINFO find;
-		find.flags = LVFI_PARAM;
-		find.lParam = reinterpret_cast<LPARAM>(pClient);
-		if (FindItem(&find) >= 0)
-			continue;
-
-		InsertItem(LVIF_TEXT | LVIF_PARAM, GetItemCount(), LPSTR_TEXTCALLBACK, 0, 0, 0, reinterpret_cast<LPARAM>(pClient));
-		bAdded = true;
-	}
-
-	if (bAdded)
-		theApp.emuledlg->transferwnd->m_pwndTransfer->UpdateListCount(CTransferWnd::wnd2Uploading);
-	return bPruned || bAdded;
 }
 
 CObject* CUploadListCtrl::WalkToLiveClientItem(int iDirection)
@@ -464,7 +415,6 @@ void CUploadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 				++rcItem.top;
 				--rcItem.bottom;
 				client->DrawUpStatusBar(dc, &rcItem, false, thePrefs.UseFlatBar());
-				DrawCenteredBarText(dc, FormatUploadPartProgressText(client), rcItem);
 				++rcItem.bottom;
 				--rcItem.top;
 			}
@@ -530,9 +480,7 @@ CString  CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iS
 		sText = FormatUploadScoreColumn(client);
 		break;
 	case 11:
-		sText = FormatUploadPartProgressText(client);
-		if (sText.IsEmpty())
-			sText = GetResString(IDS_UPSTATUS);
+		sText = GetResString(IDS_UPSTATUS);
 		break;
 	case 12:
 		if (theApp.geolocation != NULL)
@@ -1112,8 +1060,6 @@ void CUploadListCtrl::RefreshVisibleItems()
 {
 	if (theApp.IsClosing() || !IsWindowVisible())
 		return;
-
-	SyncLiveClientItems();
 
 	const int iItemCount = GetItemCount();
 	const int iFirst = max(0, GetTopIndex());

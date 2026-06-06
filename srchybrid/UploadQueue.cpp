@@ -72,12 +72,6 @@ static UINT s_uSuppressedBroadbandRetainedSlotLogs = 0;
 
 namespace
 {
-	void QueueUploadListDisplayRefresh()
-	{
-		if (theApp.emuledlg != NULL && theApp.emuledlg->transferwnd != NULL)
-			theApp.emuledlg->transferwnd->QueueDisplayRefresh(DISPLAY_REFRESH_UPLOAD_LIST);
-	}
-
 	bool IsLiveUploadQueueClient(const CUpDownClient *client)
 	{
 		return client != NULL
@@ -356,7 +350,7 @@ bool CUploadQueue::AddUpNextClient(LPCTSTR pszReason, CUpDownClient *directadd)
 	if (reqfile)
 		reqfile->statistic.AddAccepted();
 
-	QueueUploadListDisplayRefresh();
+	theApp.emuledlg->transferwnd->GetUploadList()->AddClient(newclient);
 
 	return true;
 }
@@ -1818,7 +1812,7 @@ void CUploadQueue::RetireStaleUploadClientStruct(POSITION pos, UploadingToClient
 		return;
 
 	if (pUploadClientStruct->m_pClient != NULL)
-		QueueUploadListDisplayRefresh();
+		theApp.emuledlg->transferwnd->GetUploadList()->RemoveClient(pUploadClientStruct->m_pClient);
 	const RetiredUploadClientStructContext retiredContext = RemoveUploadClientStructFromActiveList(pos, pUploadClientStruct);
 	if (retiredContext.pUploadClientStruct != NULL) {
 		InvalidateUploadClientStructWithoutClient(retiredContext.pUploadClientStruct);
@@ -1865,7 +1859,7 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 		UploadingToClient_Struct *curClientStruct = uploadinglist.GetNext(pos);
 		if (client == curClientStruct->m_pClient) {
 			if (updatewindow)
-				QueueUploadListDisplayRefresh();
+				theApp.emuledlg->transferwnd->GetUploadList()->RemoveClient(client);
 
 			if (thePrefs.GetLogUlDlEvents()) {
 				AddDebugLogLine(DLP_DEFAULT, true, _T("Removing client from upload list: %s Client: %s Transferred: %s SessionUp: %s QueueSessionPayload: %s In buffer: %s Req blocks: %i File: %s")
