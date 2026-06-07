@@ -1,0 +1,260 @@
+name: Publish release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Release version, for example 0.7.3-rc.1 or 0.7.3"
+        required: true
+        type: string
+      target_sha:
+        description: "Full app commit SHA to build, tag, and publish"
+        required: true
+        type: string
+      build_ref:
+        description: "emulebb-build ref used by the reusable workspace command"
+        required: false
+        default: main
+        type: string
+
+permissions:
+  attestations: write
+  artifact-metadata: write
+  contents: write
+  id-token: write
+
+concurrency:
+  group: emulebb-release-${{ inputs.release_version }}
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  prepare:
+    name: Prepare release metadata
+    runs-on: ubuntu-latest
+    outputs:
+      is_prerelease: ${{ steps.meta.outputs.is_prerelease }}
+      release_kind: ${{ steps.meta.outputs.release_kind }}
+      release_version: ${{ steps.meta.outputs.release_version }}
+      tag_exists: ${{ steps.meta.outputs.tag_exists }}
+      tag_name: ${{ steps.meta.outputs.tag_name }}
+      target_sha: ${{ steps.meta.outputs.target_sha }}
+    steps:
+      - name: Checkout app source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate release inputs
+        id: meta
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! "${RELEASE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(rc|beta)\.[0-9]+)?$ ]]; then
+            echo "Unsupported release version: ${RELEASE_VERSION}" >&2
+            exit 1
+          fi
+
+          if [[ ! "${TARGET_SHA}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "target_sha must be a full 40-character commit SHA." >&2
+            exit 1
+          fi
+
+          target_sha="${TARGET_SHA,,}"
+          tag_name="emulebb-v${RELEASE_VERSION}"
+          release_kind="stable"
+          is_prerelease="false"
+          if [[ "${RELEASE_VERSION}" =~ -(rc|beta)\.[0-9]+$ ]]; then
+            release_kind="prerelease"
+            is_prerelease="true"
+          fi
+
+          if gh release view "${tag_name}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "Release already exists: ${tag_name}" >&2
+            exit 1
+          fi
+
+          if ! git cat-file -e "${target_sha}^{commit}" 2>/dev/null; then
+            git fetch origin "${target_sha}"
+          fi
+          git cat-file -e "${target_sha}^{commit}"
+
+          tag_exists="false"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag_name}" >/dev/null 2>&1; then
+            git fetch origin "refs/tags/${tag_name}:refs/tags/${tag_name}"
+            tag_exists="true"
+            tag_type="$(git cat-file -t "${tag_name}")"
+            if [[ "${tag_type}" != "tag" ]]; then
+              echo "Existing tag is not annotated: ${tag_name}" >&2
+              exit 1
+            fi
+            peeled="$(git rev-parse "${tag_name}^{}")"
+            if [[ "${peeled,,}" != "${target_sha}" ]]; then
+              echo "Existing tag ${tag_name} points at ${peeled}, expected ${target_sha}." >&2
+              exit 1
+            fi
+          fi
+
+          {
+            echo "is_prerelease=${is_prerelease}"
+            echo "release_kind=${release_kind}"
+            echo "release_version=${RELEASE_VERSION}"
+            echo "tag_exists=${tag_exists}"
+            echo "tag_name=${tag_name}"
+            echo "target_sha=${target_sha}"
+          } >> "${GITHUB_OUTPUT}"
+
+  build:
+    name: Build package (${{ matrix.asset_arch }})
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: x64
+            asset_arch: x64
+          - platform: ARM64
+            asset_arch: arm64
+    uses: emulebb/emulebb-build/.github/workflows/reusable-workspace-command.yml@main
+    with:
+      app_ref: ${{ needs.prepare.outputs.target_sha }}
+      build_ref: ${{ inputs.build_ref }}
+      runs_on: windows-2022
+      timeout_minutes: 360
+      artifact_name: emulebb-${{ needs.prepare.outputs.release_version }}-${{ matrix.asset_arch }}
+      artifact_path: release-artifacts/*
+      failure_artifact_name: emulebb-release-build-logs-${{ needs.prepare.outputs.release_version }}-${{ matrix.asset_arch }}
+      failure_artifact_path: workspaces/workspace/state/build-logs/**
+      command: |
+        $packageVersion = "${{ needs.prepare.outputs.release_version }}"
+        $assetArch = "${{ matrix.asset_arch }}"
+
+        python -m emule_workspace package-release `
+          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
+          --config Release `
+          --platform "${{ matrix.platform }}" `
+          --clean `
+          --release-version $packageVersion
+
+        $releaseRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\release\emulebb-v$packageVersion"
+        $artifactRoot = Join-Path $env:GITHUB_WORKSPACE "release-artifacts"
+        New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
+
+        $requiredAssets = @(
+          "emulebb-$packageVersion-$assetArch.zip",
+          "emulebb-$packageVersion-$assetArch.manifest.json",
+          "emulebb-$packageVersion-$assetArch.sbom.spdx.json",
+          "emulebb-$packageVersion-diagnostics-$assetArch.zip",
+          "emulebb-$packageVersion-diagnostics-$assetArch.manifest.json",
+          "emulebb-$packageVersion-diagnostics-$assetArch.sbom.spdx.json"
+        )
+
+        if ($assetArch -eq "x64") {
+          $requiredAssets += @(
+            "Bootstrap-eMuleBBSuite.ps1",
+            "Bootstrap-eMuleBBSuite.ps1.sha256"
+          )
+        }
+
+        foreach ($asset in $requiredAssets) {
+          $source = Join-Path $releaseRoot $asset
+          if (-not (Test-Path -LiteralPath $source)) {
+            throw "Release asset not found: $source"
+          }
+          Copy-Item -LiteralPath $source -Destination $artifactRoot
+        }
+
+        Get-ChildItem $artifactRoot
+
+  publish:
+    name: Publish GitHub release
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: Checkout target source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.prepare.outputs.target_sha }}
+
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate artifact attestations
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/*
+
+      - name: Create annotated tag
+        if: needs.prepare.outputs.tag_exists != 'true'
+        env:
+          TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
+          TARGET_SHA: ${{ needs.prepare.outputs.target_sha }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.release_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "eMuleBB release automation"
+          git config user.email "actions@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" "${TARGET_SHA}" -m "eMuleBB ${RELEASE_VERSION}"
+          git push origin "refs/tags/${TAG_NAME}"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IS_PRERELEASE: ${{ needs.prepare.outputs.is_prerelease }}
+          RELEASE_KIND: ${{ needs.prepare.outputs.release_kind }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.release_version }}
+          TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
+          TARGET_SHA: ${{ needs.prepare.outputs.target_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "${TAG_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "Release already exists: ${TAG_NAME}" >&2
+            exit 1
+          fi
+
+          cat > notes.md <<EOF
+          eMule broadband edition ${RELEASE_VERSION}
+
+          Release type: ${RELEASE_KIND}
+          Target commit: ${TARGET_SHA}
+
+          Assets were generated by GitHub Actions from the target commit.
+          Release assets include ZIP packages, manifests, SPDX SBOMs, the suite bootstrapper, and GitHub artifact attestations.
+
+          Verify a downloaded asset with:
+
+              gh attestation verify PATH_TO_ASSET -R ${GITHUB_REPOSITORY}
+          EOF
+
+          release_args=(
+            --repo "${GITHUB_REPOSITORY}"
+            --target "${TARGET_SHA}"
+            --title "eMuleBB ${RELEASE_VERSION}"
+            --notes-file notes.md
+            --verify-tag
+          )
+
+          if [[ "${IS_PRERELEASE}" == "true" ]]; then
+            release_args+=(--prerelease --latest=false)
+          else
+            release_args+=(--latest)
+          fi
+
+          gh release create "${TAG_NAME}" dist/* "${release_args[@]}"
