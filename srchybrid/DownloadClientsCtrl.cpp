@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "DisplayRefreshSeams.h"
+#include "ClientLibraryBrowseDisplaySeams.h"
 #include "emuledlg.h"
 #include "DownloadClientsCtrl.h"
 #include "DownloadProgressBarSeams.h"
@@ -282,6 +283,7 @@ CString CDownloadClientsCtrl::GetItemDisplayText(const CUpDownClient *client, in
 			sText = client->GetUserName();
 		else
 			sText.Format(_T("(%s)"), (LPCTSTR)GetResString(IDS_UNKNOWN));
+		ClientLibraryBrowseDisplaySeams::AppendLibraryBrowseMarker(sText, client->IsEd2kClient(), client->GetViewSharedFilesSupport());
 		break;
 	case 1:
 		sText = client->DbgGetFullClientSoftVer();

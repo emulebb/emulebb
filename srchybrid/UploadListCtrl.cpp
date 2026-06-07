@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "DisplayRefreshSeams.h"
+#include "ClientLibraryBrowseDisplaySeams.h"
 #include "UploadListCtrl.h"
 #include "TransferWnd.h"
 #include "TransferDlg.h"
@@ -502,6 +503,7 @@ CString  CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iS
 			sText = client->GetUserName();
 		else
 			sText.Format(_T("(%s)"), (LPCTSTR)GetResString(IDS_UNKNOWN));
+		ClientLibraryBrowseDisplaySeams::AppendLibraryBrowseMarker(sText, client->IsEd2kClient(), client->GetViewSharedFilesSupport());
 		break;
 	case 1:
 		{

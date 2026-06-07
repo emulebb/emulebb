@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "FakeFileDetector.h"
+#include "ClientLibraryBrowseDisplaySeams.h"
 #include "DownloadProgressBarSeams.h"
 #include "DownloadListKeyboardShortcutsSeams.h"
 #include "DownloadPriorityShortcutsSeams.h"
@@ -1266,8 +1267,10 @@ CString CDownloadListCtrl::GetSourceItemDisplayText(const CtrlItem_Struct *pCtrl
 	switch (iSubItem) {
 	case 0: //icon, name, status
 		if (pClient->GetUserName())
-			return CString(pClient->GetUserName());
-		sText.Format(_T("(%s)"), (LPCTSTR)GetResString(IDS_UNKNOWN));
+			sText = pClient->GetUserName();
+		else
+			sText.Format(_T("(%s)"), (LPCTSTR)GetResString(IDS_UNKNOWN));
+		ClientLibraryBrowseDisplaySeams::AppendLibraryBrowseMarker(sText, pClient->IsEd2kClient(), pClient->GetViewSharedFilesSupport());
 		break;
 	case 1: //source from
 		{
