@@ -173,8 +173,54 @@ inline bool IsMojibakeStartMarker(const TCHAR ch)
 		|| ch == static_cast<TCHAR>(0x00C2u)
 		|| ch == static_cast<TCHAR>(0x00CCu)
 		|| ch == static_cast<TCHAR>(0x00E2u)
+		|| ch == static_cast<TCHAR>(0x00E3u)
+		|| ch == static_cast<TCHAR>(0x00E4u)
+		|| ch == static_cast<TCHAR>(0x00E5u)
+		|| ch == static_cast<TCHAR>(0x00E6u)
+		|| ch == static_cast<TCHAR>(0x00E7u)
+		|| ch == static_cast<TCHAR>(0x00E8u)
+		|| ch == static_cast<TCHAR>(0x00E9u)
 		|| ch == static_cast<TCHAR>(0x00F0u)
 		|| ch == static_cast<TCHAR>(0x00EFu);
+}
+
+inline bool IsLikelyMojibakeContinuationMarker(const TCHAR ch)
+{
+	if (ch >= static_cast<TCHAR>(0x0080u) && ch <= static_cast<TCHAR>(0x00BFu))
+		return true;
+
+	switch (ch) {
+	case static_cast<TCHAR>(0x20ACu):
+	case static_cast<TCHAR>(0x201Au):
+	case static_cast<TCHAR>(0x0192u):
+	case static_cast<TCHAR>(0x201Eu):
+	case static_cast<TCHAR>(0x2026u):
+	case static_cast<TCHAR>(0x2020u):
+	case static_cast<TCHAR>(0x2021u):
+	case static_cast<TCHAR>(0x02C6u):
+	case static_cast<TCHAR>(0x2030u):
+	case static_cast<TCHAR>(0x0160u):
+	case static_cast<TCHAR>(0x2039u):
+	case static_cast<TCHAR>(0x0152u):
+	case static_cast<TCHAR>(0x017Du):
+	case static_cast<TCHAR>(0x2018u):
+	case static_cast<TCHAR>(0x2019u):
+	case static_cast<TCHAR>(0x201Cu):
+	case static_cast<TCHAR>(0x201Du):
+	case static_cast<TCHAR>(0x2022u):
+	case static_cast<TCHAR>(0x2013u):
+	case static_cast<TCHAR>(0x2014u):
+	case static_cast<TCHAR>(0x02DCu):
+	case static_cast<TCHAR>(0x2122u):
+	case static_cast<TCHAR>(0x0161u):
+	case static_cast<TCHAR>(0x203Au):
+	case static_cast<TCHAR>(0x0153u):
+	case static_cast<TCHAR>(0x017Eu):
+	case static_cast<TCHAR>(0x0178u):
+		return true;
+	default:
+		return false;
+	}
 }
 
 inline int CountMojibakeMarkers(const CString &rstrText)
@@ -182,10 +228,14 @@ inline int CountMojibakeMarkers(const CString &rstrText)
 	int nScore = 0;
 	for (int i = 0; i < rstrText.GetLength(); ++i) {
 		const TCHAR ch = rstrText[i];
-		if (IsMojibakeStartMarker(ch))
-			++nScore;
-		else if (ch == static_cast<TCHAR>(0xFFFDu))
+		if (ch == static_cast<TCHAR>(0xFFFDu))
 			nScore += 2;
+		else if (IsMojibakeStartMarker(ch)
+			&& i + 1 < rstrText.GetLength()
+			&& IsLikelyMojibakeContinuationMarker(rstrText[i + 1]))
+		{
+			++nScore;
+		}
 	}
 	return nScore;
 }
@@ -242,29 +292,42 @@ inline bool ContainsUnsafeDecodedText(const CStringW &rwstrText)
 	return false;
 }
 
-inline bool TryDecodeWindows1252MojibakeSegment(const CString &rstrSegment, CString &rstrDecoded)
+inline bool TryBuildWindows1252MojibakeBytes(const CString &rstrSegment, const bool bTreatLowerAtildeAsUpperUtf8Lead, CStringA &rstrBytes)
 {
-	CStringA strBytes;
-	LPSTR pszBytes = strBytes.GetBuffer(rstrSegment.GetLength());
+	LPSTR pszBytes = rstrBytes.GetBuffer(rstrSegment.GetLength());
 	for (int i = 0; i < rstrSegment.GetLength(); ++i) {
 		BYTE byValue = 0;
 		if (!TryMapWindows1252WideCharToByte(static_cast<WCHAR>(rstrSegment[i]), byValue)) {
-			strBytes.ReleaseBuffer(0);
+			rstrBytes.ReleaseBuffer(0);
 			return false;
+		}
+		if (bTreatLowerAtildeAsUpperUtf8Lead && rstrSegment[i] == static_cast<TCHAR>(0x00E3u)) {
+			BYTE byNext = 0;
+			if (i + 1 < rstrSegment.GetLength()
+				&& TryMapWindows1252WideCharToByte(static_cast<WCHAR>(rstrSegment[i + 1]), byNext)
+				&& byNext >= 0x80u
+				&& byNext <= 0xBFu)
+			{
+				byValue = 0xC3u;
+			}
 		}
 		pszBytes[i] = static_cast<CHAR>(byValue);
 	}
-	strBytes.ReleaseBuffer(rstrSegment.GetLength());
+	rstrBytes.ReleaseBuffer(rstrSegment.GetLength());
+	return true;
+}
 
+inline bool TryDecodeUtf8Bytes(const CStringA &rstrBytes, CString &rstrDecoded)
+{
 	CStringW wstrDecoded;
-	LPWSTR pszDecoded = wstrDecoded.GetBuffer(rstrSegment.GetLength());
+	LPWSTR pszDecoded = wstrDecoded.GetBuffer(rstrBytes.GetLength());
 	const int nDecoded = ::MultiByteToWideChar(
 		CP_UTF8,
 		MB_ERR_INVALID_CHARS,
-		strBytes,
-		strBytes.GetLength(),
+		rstrBytes,
+		rstrBytes.GetLength(),
 		pszDecoded,
-		rstrSegment.GetLength());
+		rstrBytes.GetLength());
 	if (nDecoded <= 0) {
 		wstrDecoded.ReleaseBuffer(0);
 		return false;
@@ -275,7 +338,24 @@ inline bool TryDecodeWindows1252MojibakeSegment(const CString &rstrSegment, CStr
 		return false;
 
 	rstrDecoded = wstrDecoded;
+	return true;
+}
+
+inline bool TryDecodeWindows1252MojibakeSegmentWithMode(const CString &rstrSegment, const bool bTreatLowerAtildeAsUpperUtf8Lead, CString &rstrDecoded)
+{
+	CStringA strBytes;
+	if (!TryBuildWindows1252MojibakeBytes(rstrSegment, bTreatLowerAtildeAsUpperUtf8Lead, strBytes))
+		return false;
+	if (!TryDecodeUtf8Bytes(strBytes, rstrDecoded))
+		return false;
 	return CountMojibakeMarkers(rstrDecoded) < CountMojibakeMarkers(rstrSegment);
+}
+
+inline bool TryDecodeWindows1252MojibakeSegment(const CString &rstrSegment, CString &rstrDecoded)
+{
+	if (TryDecodeWindows1252MojibakeSegmentWithMode(rstrSegment, false, rstrDecoded))
+		return true;
+	return TryDecodeWindows1252MojibakeSegmentWithMode(rstrSegment, true, rstrDecoded);
 }
 
 inline CString RepairWindows1252Mojibake(const CString &rstrInput)
@@ -330,6 +410,79 @@ inline CString RepairWindows1252MojibakeBounded(const CString &rstrInput)
 	return strCurrent;
 }
 
+inline bool TryParseHexNibble(const TCHAR ch, BYTE &rbyValue)
+{
+	if (ch >= _T('0') && ch <= _T('9')) {
+		rbyValue = static_cast<BYTE>(ch - _T('0'));
+		return true;
+	}
+	if (ch >= _T('a') && ch <= _T('f')) {
+		rbyValue = static_cast<BYTE>(10 + ch - _T('a'));
+		return true;
+	}
+	if (ch >= _T('A') && ch <= _T('F')) {
+		rbyValue = static_cast<BYTE>(10 + ch - _T('A'));
+		return true;
+	}
+	return false;
+}
+
+inline bool TryParsePercentByteAt(const CString &rstrInput, const int iOffset, BYTE &rbyValue)
+{
+	if (iOffset + 2 >= rstrInput.GetLength() || rstrInput[iOffset] != _T('%'))
+		return false;
+
+	BYTE byHigh = 0;
+	BYTE byLow = 0;
+	if (!TryParseHexNibble(rstrInput[iOffset + 1], byHigh) || !TryParseHexNibble(rstrInput[iOffset + 2], byLow))
+		return false;
+	rbyValue = static_cast<BYTE>((byHigh << 4) | byLow);
+	return true;
+}
+
+inline bool TryDecodePercentUtf8Bytes(const CStringA &rstrBytes, CString &rstrDecoded)
+{
+	bool bHasHighByte = false;
+	for (int i = 0; i < rstrBytes.GetLength(); ++i) {
+		if (static_cast<BYTE>(rstrBytes[i]) >= 0x80u) {
+			bHasHighByte = true;
+			break;
+		}
+	}
+	if (!bHasHighByte)
+		return false;
+	return TryDecodeUtf8Bytes(rstrBytes, rstrDecoded);
+}
+
+inline CString DecodePercentEncodedUtf8Bounded(const CString &rstrInput)
+{
+	CString strOutput;
+	for (int i = 0; i < rstrInput.GetLength();) {
+		BYTE byValue = 0;
+		if (!TryParsePercentByteAt(rstrInput, i, byValue)) {
+			strOutput += rstrInput[i++];
+			continue;
+		}
+
+		CStringA strBytes;
+		int iEnd = i;
+		while (TryParsePercentByteAt(rstrInput, iEnd, byValue)) {
+			strBytes += static_cast<CHAR>(byValue);
+			iEnd += 3;
+		}
+
+		CString strDecoded;
+		if (TryDecodePercentUtf8Bytes(strBytes, strDecoded)) {
+			strOutput += strDecoded;
+			i = iEnd;
+			continue;
+		}
+
+		strOutput += rstrInput[i++];
+	}
+	return strOutput;
+}
+
 inline CString PrecomposeUnicodeText(const CString &rstrInput)
 {
 	if (rstrInput.IsEmpty())
@@ -357,6 +510,7 @@ inline CString PrecomposeUnicodeText(const CString &rstrInput)
 inline CString RepairIncomingFilenameText(const CString &rstrInput)
 {
 	CString strRepaired(DecodeHtmlEntitiesBounded(rstrInput));
+	strRepaired = DecodePercentEncodedUtf8Bounded(strRepaired);
 	strRepaired = RepairWindows1252MojibakeBounded(strRepaired);
 	return PrecomposeUnicodeText(strRepaired);
 }
