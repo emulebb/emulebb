@@ -3,7 +3,7 @@
 // written by robert rostek - tecxx@rrs.at //
 /////////////////////////////////////////////
 
-#include <vector>
+#include "SharedDirectoryOps.h"
 
 #define MP_REMOVESHARE	46900
 
@@ -52,7 +52,7 @@ private:
 
 	CImageList m_images;
 	CStringList m_lstShared;
-	std::vector<CString> m_sortedSharedDirectoryKeys;
+	SharedDirectoryOps::SharedDirectoryRuleIndex m_sharedDirectoryIndex;
 	CStringArray m_aUNCshares; //UNC "drives" (ordered array)
 	CString m_strLastRightClicked;
 

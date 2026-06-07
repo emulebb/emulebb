@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 #include "TitledMenu.h"
+#include "SharedDirectoryOps.h"
 #include <vector>
 
 enum ESpecialDirectoryItems
@@ -152,7 +153,6 @@ private:
 	bool	m_bCreatingTree;
 	bool	m_bUseIcons;
 	CMap<int, int, int, int> m_mapSystemIcons;
-	CMapStringToPtr m_mapSharedDirectoryKeys;
 	CMapStringToPtr m_mapAccessibleDirectoryCache;
-	std::vector<CString> m_aSortedSharedDirectoryKeys;
+	SharedDirectoryOps::SharedDirectoryRuleIndex m_sharedDirectoryIndex;
 };

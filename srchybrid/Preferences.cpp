@@ -503,10 +503,7 @@ void LoadServerMetAddressList(const CString &rstrFullPath, CStringList &rOutList
 
 std::wstring MakeDirectoryListLookupKey(const CString &rstrDirectory)
 {
-	CString strKey(rstrDirectory);
-	strKey = PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(strKey)));
-	strKey.MakeLower();
-	return std::wstring(strKey);
+	return SharedDirectoryOps::MakeSharedDirectoryLookupKeyW(rstrDirectory);
 }
 
 bool AreDirectoryListKeysEqual(const CString &rstrLeft, const CString &rstrRight)
@@ -527,8 +524,7 @@ bool IsStaleStartupConfigDefaultIncomingPath(const CString &rstrDirectory)
 
 bool IsDirectoryLookupKeyWithin(const std::wstring &rstrDirectoryKey, const std::wstring &rstrCandidateKey)
 {
-	return rstrCandidateKey.length() > rstrDirectoryKey.length()
-		&& rstrCandidateKey.compare(0, rstrDirectoryKey.length(), rstrDirectoryKey) == 0;
+	return SharedDirectoryOps::IsDirectoryKeyParentOfCandidate(rstrDirectoryKey, rstrCandidateKey);
 }
 
 void RebuildDirectoryLookupKeysLocked(const CStringList &rTargetList, std::unordered_set<std::wstring> &rLookupKeys)

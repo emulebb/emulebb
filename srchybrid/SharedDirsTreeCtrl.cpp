@@ -69,68 +69,32 @@ bool EnableSubMenuItem(CMenu &menu, HMENU hSubMenu, UINT state)
 
 CString BuildSharedTreePathKey(const CString &rstrPath)
 {
-	CString strKey(PathHelpers::EnsureTrailingSeparator(rstrPath));
-	strKey.MakeLower();
-	return strKey;
+	return SharedDirectoryOps::MakeSharedDirectoryLookupKey(rstrPath);
 }
 
 bool AreSharedTreePathKeysEqual(const CString &rstrLeft, const CString &rstrRight)
 {
-	return BuildSharedTreePathKey(rstrLeft) == BuildSharedTreePathKey(rstrRight);
-}
-
-bool SharedDirectoryKeyLess(const CString &rstrLeft, const CString &rstrRight)
-{
-	return rstrLeft.Compare(rstrRight) < 0;
+	return SharedDirectoryOps::AreSharedDirectoryLookupKeysEqual(rstrLeft, rstrRight);
 }
 
 bool HasSharedDirectoryKeyPrefix(const CString &rstrPrefix, const CString &rstrCandidate)
 {
-	return rstrCandidate.GetLength() > rstrPrefix.GetLength()
-		&& _tcsncmp(rstrCandidate, rstrPrefix, rstrPrefix.GetLength()) == 0;
+	return SharedDirectoryOps::IsDirectoryKeyParentOfCandidate(rstrPrefix, rstrCandidate);
 }
 
 bool ListContainsEquivalentPath(const CStringList &rList, const CString &rstrPath)
 {
-	const CString strPathKey(BuildSharedTreePathKey(rstrPath));
-	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
-		if (BuildSharedTreePathKey(rList.GetNext(pos)) == strPathKey)
-			return true;
-	}
-	return false;
+	return SharedDirectoryOps::ListContainsEquivalentPath(rList, rstrPath);
 }
 
 bool RemoveEquivalentPath(CStringList &rList, const CString &rstrPath)
 {
-	const CString strPathKey(BuildSharedTreePathKey(rstrPath));
-	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
-		const POSITION posCurrent = pos;
-		if (BuildSharedTreePathKey(rList.GetNext(pos)) != strPathKey)
-			continue;
-		rList.RemoveAt(posCurrent);
-		return true;
-	}
-	return false;
+	return SharedDirectoryOps::RemoveEquivalentPath(rList, rstrPath);
 }
 
 bool RemovePathsWithinDirectory(CStringList &rList, const CString &rstrPath, bool bIncludeRoot)
 {
-	bool bChanged = false;
-	const CString strPathKey(BuildSharedTreePathKey(rstrPath));
-	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
-		const POSITION posCurrent = pos;
-		const CString strCurrent(rList.GetNext(pos));
-		const CString strCurrentKey(BuildSharedTreePathKey(strCurrent));
-		const bool bSamePath = strCurrentKey == strPathKey;
-		if ((!bIncludeRoot && bSamePath)
-			|| (!bSamePath && !HasSharedDirectoryKeyPrefix(strPathKey, strCurrentKey)))
-		{
-			continue;
-		}
-		rList.RemoveAt(posCurrent);
-		bChanged = true;
-	}
-	return bChanged;
+	return SharedDirectoryOps::RemovePathsWithinDirectory(rList, rstrPath, bIncludeRoot);
 }
 
 bool IsAccessibleDirectoryForSharedTree(const CString &rstrDirectory)
@@ -399,37 +363,12 @@ void CSharedDirsTreeCtrl::Initialize(CSharedFilesCtrl *pSharedFilesCtrl)
 
 void CSharedDirsTreeCtrl::RebuildSharedDirectoryLookup()
 {
-	m_mapSharedDirectoryKeys.RemoveAll();
-	m_aSortedSharedDirectoryKeys.clear();
-	m_aSortedSharedDirectoryKeys.reserve(static_cast<size_t>(m_strliSharedDirs.GetCount()));
-
-	for (POSITION pos = m_strliSharedDirs.GetHeadPosition(); pos != NULL;) {
-		const CString strKey(BuildSharedTreePathKey(m_strliSharedDirs.GetNext(pos)));
-		void *pvExisting = NULL;
-		if (m_mapSharedDirectoryKeys.Lookup(strKey, pvExisting))
-			continue;
-
-		m_mapSharedDirectoryKeys.SetAt(strKey, reinterpret_cast<void*>(1));
-		m_aSortedSharedDirectoryKeys.push_back(strKey);
-	}
-
-	std::sort(m_aSortedSharedDirectoryKeys.begin(), m_aSortedSharedDirectoryKeys.end(), SharedDirectoryKeyLess);
+	m_sharedDirectoryIndex.Rebuild(m_strliSharedDirs);
 }
 
 bool CSharedDirsTreeCtrl::HasSharedDirectoryDescendant(const CString &strDir) const
 {
-	if (m_aSortedSharedDirectoryKeys.empty())
-		return false;
-
-	const CString strKey(BuildSharedTreePathKey(strDir));
-	const std::vector<CString>::const_iterator it = std::upper_bound(
-		m_aSortedSharedDirectoryKeys.begin(),
-		m_aSortedSharedDirectoryKeys.end(),
-		strKey,
-		[](const CString &rstrLeft, const CString &rstrRight) {
-			return SharedDirectoryKeyLess(rstrLeft, rstrRight);
-		});
-	return it != m_aSortedSharedDirectoryKeys.end() && HasSharedDirectoryKeyPrefix(strKey, *it);
+	return m_sharedDirectoryIndex.HasDescendant(strDir);
 }
 
 bool CSharedDirsTreeCtrl::IsSharedTreeDirectoryAccessible(const CString &strDir)
@@ -1309,8 +1248,7 @@ void CSharedDirsTreeCtrl::DeleteChildItems(CDirectoryItem *pParent)
 
 bool CSharedDirsTreeCtrl::FileSystemTreeIsShared(const CString &strDir) const
 {
-	void *pvShared = NULL;
-	return m_mapSharedDirectoryKeys.Lookup(BuildSharedTreePathKey(strDir), pvShared) != FALSE;
+	return m_sharedDirectoryIndex.ContainsExactPathKey(strDir);
 }
 
 void CSharedDirsTreeCtrl::OnTvnGetdispinfo(LPNMHDR pNMHDR, LRESULT *pResult)
@@ -1563,8 +1501,7 @@ bool CSharedDirsTreeCtrl::HasManagedSharedAncestor(const CString &strDir) const
 {
 	CString strParent(GetSharedTreeParentPath(strDir));
 	while (!strParent.IsEmpty()) {
-		void *pvShared = NULL;
-		if (m_mapSharedDirectoryKeys.Lookup(BuildSharedTreePathKey(strParent), pvShared))
+		if (m_sharedDirectoryIndex.ContainsExactPathKey(strParent))
 			return true;
 		strParent = GetSharedTreeParentPath(strParent);
 	}

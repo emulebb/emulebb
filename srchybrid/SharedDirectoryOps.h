@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
@@ -27,6 +29,17 @@ inline CString MakeSharedDirectoryLookupKey(const CString &rstrDirectory)
 	CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
 	strKey.MakeLower();
 	return strKey;
+}
+
+inline std::wstring MakeSharedDirectoryLookupKeyW(const CString &rstrDirectory)
+{
+	const CStringW strKey(MakeSharedDirectoryLookupKey(rstrDirectory));
+	return std::wstring((LPCWSTR)strKey);
+}
+
+inline bool AreSharedDirectoryLookupKeysEqual(const CString &rstrLeft, const CString &rstrRight)
+{
+	return MakeSharedDirectoryLookupKey(rstrLeft) == MakeSharedDirectoryLookupKey(rstrRight);
 }
 
 inline bool ListContainsEquivalentPath(const CStringList &rList, const CString &rstrPath)
@@ -170,6 +183,144 @@ inline bool IsDirectoryKeyParentOfCandidate(const CString &rstrDirectoryKey, con
 	return rstrCandidateKey.GetLength() > rstrDirectoryKey.GetLength()
 		&& _tcsncmp(rstrDirectoryKey, rstrCandidateKey, rstrDirectoryKey.GetLength()) == 0;
 }
+
+inline bool IsDirectoryKeyParentOfCandidate(const std::wstring &rstrDirectoryKey, const std::wstring &rstrCandidateKey)
+{
+	return rstrCandidateKey.length() > rstrDirectoryKey.length()
+		&& rstrCandidateKey.compare(0, rstrDirectoryKey.length(), rstrDirectoryKey) == 0;
+}
+
+inline bool RemoveEquivalentPath(CStringList &rList, const CString &rstrPath)
+{
+	const std::wstring strPathKey(MakeSharedDirectoryLookupKeyW(rstrPath));
+	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
+		if (MakeSharedDirectoryLookupKeyW(rList.GetNext(pos)) != strPathKey)
+			continue;
+		rList.RemoveAt(posCurrent);
+		return true;
+	}
+	return false;
+}
+
+inline bool RemovePathsWithinDirectory(CStringList &rList, const CString &rstrPath, const bool bIncludeRoot)
+{
+	bool bChanged = false;
+	const std::wstring strPathKey(MakeSharedDirectoryLookupKeyW(rstrPath));
+	for (POSITION pos = rList.GetHeadPosition(); pos != NULL;) {
+		const POSITION posCurrent = pos;
+		const std::wstring strCurrentKey(MakeSharedDirectoryLookupKeyW(rList.GetNext(pos)));
+		const bool bSamePath = strCurrentKey == strPathKey;
+		if ((!bIncludeRoot && bSamePath)
+			|| (!bSamePath && !IsDirectoryKeyParentOfCandidate(strPathKey, strCurrentKey)))
+		{
+			continue;
+		}
+		rList.RemoveAt(posCurrent);
+		bChanged = true;
+	}
+	return bChanged;
+}
+
+struct SharedDirectoryRuleEntry
+{
+	CString strDirectory;
+	std::wstring strKey;
+	bool bHasIdentity = false;
+	LongPathSeams::FileSystemObjectIdentity identity = {};
+};
+
+struct SharedDirectoryRuleIndex
+{
+	std::vector<SharedDirectoryRuleEntry> entries;
+	std::vector<std::wstring> sortedKeys;
+	std::unordered_set<std::wstring> exactKeys;
+
+	void Clear()
+	{
+		entries.clear();
+		sortedKeys.clear();
+		exactKeys.clear();
+	}
+
+	void Rebuild(const CStringList &rDirectories, const bool bResolveIdentities = false)
+	{
+		Clear();
+		entries.reserve(static_cast<size_t>(rDirectories.GetCount()));
+		sortedKeys.reserve(static_cast<size_t>(rDirectories.GetCount()));
+		exactKeys.reserve(static_cast<size_t>(rDirectories.GetCount()));
+		for (POSITION pos = rDirectories.GetHeadPosition(); pos != NULL;) {
+			SharedDirectoryRuleEntry entry;
+			entry.strDirectory = PathHelpers::CanonicalizeDirectoryPath(rDirectories.GetNext(pos));
+			entry.strKey = MakeSharedDirectoryLookupKeyW(entry.strDirectory);
+			if (entry.strKey.empty() || exactKeys.find(entry.strKey) != exactKeys.end())
+				continue;
+			if (bResolveIdentities) {
+				entry.bHasIdentity = LongPathSeams::TryGetResolvedDirectoryIdentity(entry.strDirectory, entry.identity);
+				if (entry.bHasIdentity) {
+					bool bDuplicateIdentity = false;
+					for (size_t i = 0; i < entries.size(); ++i) {
+						if (entries[i].bHasIdentity && entries[i].identity == entry.identity) {
+							bDuplicateIdentity = true;
+							break;
+						}
+					}
+					// WHY: mounted folders and equivalent Win32 spellings can name
+					// the same directory object with different text. Identity-aware
+					// rule indexes must keep stock preference semantics and collapse
+					// those duplicates before any tree or descendant lookup uses them.
+					if (bDuplicateIdentity)
+						continue;
+				}
+			}
+			exactKeys.insert(entry.strKey);
+			sortedKeys.push_back(entry.strKey);
+			entries.push_back(entry);
+		}
+		std::sort(sortedKeys.begin(), sortedKeys.end());
+		sortedKeys.erase(std::unique(sortedKeys.begin(), sortedKeys.end()), sortedKeys.end());
+	}
+
+	bool ContainsExactPathKey(const CString &rstrDirectory) const
+	{
+		return exactKeys.find(MakeSharedDirectoryLookupKeyW(rstrDirectory)) != exactKeys.end();
+	}
+
+	bool ContainsEquivalentDirectoryObject(const CString &rstrDirectory) const
+	{
+		if (ContainsExactPathKey(rstrDirectory))
+			return true;
+
+		LongPathSeams::FileSystemObjectIdentity targetIdentity = {};
+		if (!LongPathSeams::TryGetResolvedDirectoryIdentity(rstrDirectory, targetIdentity))
+			return false;
+
+		for (size_t i = 0; i < entries.size(); ++i) {
+			if (entries[i].bHasIdentity && entries[i].identity == targetIdentity)
+				return true;
+		}
+		return false;
+	}
+
+	bool HasDescendant(const CString &rstrDirectory) const
+	{
+		if (sortedKeys.empty())
+			return false;
+		const std::wstring strDirectoryKey(MakeSharedDirectoryLookupKeyW(rstrDirectory));
+		const std::vector<std::wstring>::const_iterator it = std::upper_bound(sortedKeys.begin(), sortedKeys.end(), strDirectoryKey);
+		return it != sortedKeys.end() && IsDirectoryKeyParentOfCandidate(strDirectoryKey, *it);
+	}
+
+	bool IsSameOrDescendantOfAny(const CString &rstrDirectory) const
+	{
+		const std::wstring strDirectoryKey(MakeSharedDirectoryLookupKeyW(rstrDirectory));
+		for (size_t i = 0; i < sortedKeys.size(); ++i) {
+			if (sortedKeys[i] == strDirectoryKey || IsDirectoryKeyParentOfCandidate(sortedKeys[i], strDirectoryKey))
+				return true;
+		}
+		return false;
+	}
+};
 
 inline bool HasSharedSubdirectory(const CStringList &rList, const CString &rstrDirectory)
 {

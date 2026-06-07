@@ -25,7 +25,6 @@
 #include "TitledMenu.h"
 #include "UserMsgs.h"
 
-#include <algorithm>
 #include <string>
 #include <unordered_set>
 
@@ -44,25 +43,6 @@ struct STreeItem
 {
 	CString strPath;
 };
-
-namespace
-{
-/**
- * @brief Builds a lexical lookup key for bulk-loaded shared directory paths without filesystem probes.
- */
-std::basic_string<TCHAR> MakeSharedDirectoryLoadKey(const CString &rstrDirectory)
-{
-	CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
-	strKey.MakeLower();
-	return std::basic_string<TCHAR>(static_cast<LPCTSTR>(strKey));
-}
-
-bool SharedDirectoryTreeKeyLess(const CString &rstrLeft, const CString &rstrRight)
-{
-	return rstrLeft.Compare(rstrRight) < 0;
-}
-}
-
 
 // CDirectoryTreeCtrl
 
@@ -167,14 +147,7 @@ void CDirectoryTreeCtrl::RebuildUNCShareRoots()
 
 void CDirectoryTreeCtrl::RebuildSharedDirectoryKeys()
 {
-	m_sortedSharedDirectoryKeys.clear();
-	m_sortedSharedDirectoryKeys.reserve(static_cast<size_t>(m_lstShared.GetCount()));
-	for (POSITION pos = m_lstShared.GetHeadPosition(); pos != NULL;)
-		m_sortedSharedDirectoryKeys.push_back(SharedDirectoryOps::MakeSharedDirectoryLookupKey(m_lstShared.GetNext(pos)));
-	std::sort(m_sortedSharedDirectoryKeys.begin(), m_sortedSharedDirectoryKeys.end(), SharedDirectoryTreeKeyLess);
-	m_sortedSharedDirectoryKeys.erase(
-		std::unique(m_sortedSharedDirectoryKeys.begin(), m_sortedSharedDirectoryKeys.end()),
-		m_sortedSharedDirectoryKeys.end());
+	m_sharedDirectoryIndex.Rebuild(m_lstShared);
 }
 
 void CDirectoryTreeCtrl::OnLButtonDown(UINT nFlags, CPoint point)
@@ -352,7 +325,7 @@ void CDirectoryTreeCtrl::GetSharedDirectories(CStringList &list)
 void CDirectoryTreeCtrl::SetSharedDirectories(CStringList &list)
 {
 	m_lstShared.RemoveAll();
-	std::unordered_set<std::basic_string<TCHAR> > knownDirectories;
+	std::unordered_set<std::wstring> knownDirectories;
 
 	for (POSITION pos = list.GetHeadPosition(); pos != NULL;) {
 		const CString strInput(list.GetNext(pos));
@@ -362,7 +335,7 @@ void CDirectoryTreeCtrl::SetSharedDirectories(CStringList &list)
 		const CString strDirectory(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(strInput))));
 		if (!thePrefs.IsShareableDirectory(strDirectory))
 			continue;
-		if (knownDirectories.insert(MakeSharedDirectoryLoadKey(strDirectory)).second)
+		if (knownDirectories.insert(SharedDirectoryOps::MakeSharedDirectoryLookupKeyW(strDirectory)).second)
 			m_lstShared.AddTail(strDirectory);
 	}
 	RebuildSharedDirectoryKeys();
@@ -384,17 +357,7 @@ bool CDirectoryTreeCtrl::AddUNCShare(const CString &strDir)
 
 bool CDirectoryTreeCtrl::HasSharedSubdirectory(const CString &strDir)
 {
-	if (m_sortedSharedDirectoryKeys.empty())
-		return false;
-
-	const CString strDirectoryKey(SharedDirectoryOps::MakeSharedDirectoryLookupKey(strDir));
-	const std::vector<CString>::const_iterator it = std::upper_bound(
-		m_sortedSharedDirectoryKeys.begin(),
-		m_sortedSharedDirectoryKeys.end(),
-		strDirectoryKey,
-		SharedDirectoryTreeKeyLess);
-	return it != m_sortedSharedDirectoryKeys.end()
-		&& SharedDirectoryOps::IsDirectoryKeyParentOfCandidate(strDirectoryKey, *it);
+	return m_sharedDirectoryIndex.HasDescendant(strDir);
 }
 
 void CDirectoryTreeCtrl::CheckChanged(HTREEITEM hItem, bool bChecked, bool bRecurse)
