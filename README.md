@@ -11,23 +11,21 @@ while keeping protocol compatibility explicit.
 
 ## Download And Install
 
-Choose one install path:
+RC1 is published on GitHub Releases. Choose one install path:
 
-### Basic ZIP Install
+### Option 1: Manual Standalone ZIP
 
-Use this path for normal desktop use, RC testing, and nightlies.
+Use this path when you only want the eMuleBB desktop app.
 
-1. Open <https://github.com/emulebb/emulebb/releases>.
-2. Download the intended eMuleBB ZIP. For RC1, use
-   `emulebb-0.7.3-rc.1-x64.zip` once it is published, or use the nightly asset
-   that is actually present on GitHub Releases.
+1. Open
+   <https://github.com/emulebb/emulebb/releases/tag/emulebb-v0.7.3-rc.1>.
+2. Download `emulebb-0.7.3-rc.1-x64.zip`.
 3. Extract the ZIP into a new version-specific folder, for example
    `eMuleBB-0.7.3-rc.1`.
 4. Run `emulebb.exe`.
 
-Keep each version in its own application folder. For release candidates,
-nightlies, or support testing, use a backed-up profile or launch with an
-explicit disposable profile:
+Keep each version in its own application folder. For RC testing or support
+testing, use a backed-up profile or launch with an explicit disposable profile:
 
 ```powershell
 emulebb.exe -c "$env:TEMP\eMuleBB-TestProfile"
@@ -36,41 +34,27 @@ emulebb.exe -c "$env:TEMP\eMuleBB-TestProfile"
 Use the x64 package for ordinary Windows desktop installs. Use ARM64 only for
 ARM64 Windows testing.
 
-### Full Suite PowerShell Install
+### Option 2: Full Suite PowerShell One-Liner
 
-Use this path when you want the bundled eMuleBB suite installer instead of the
-simple ZIP package.
-
-1. Open <https://github.com/emulebb/emulebb/releases>.
-2. Download `Bootstrap-eMuleBBSuite.ps1` for the release you want.
-3. Open PowerShell in the download folder.
-4. Run the bootstrapper.
-
-For the latest nightly or prerelease:
+Use this path when you want eMuleBB plus aMuTorrent, Prowlarr, Radarr, and
+Sonarr integration out of the box.
 
 ```powershell
-.\Bootstrap-eMuleBBSuite.ps1 -IncludePrerelease -Bundle Full
-```
-
-For RC1 after it is published:
-
-```powershell
-.\Bootstrap-eMuleBBSuite.ps1 -Version 0.7.3-rc.1 -IncludePrerelease
+irm https://github.com/emulebb/emulebb/releases/download/emulebb-v0.7.3-rc.1/Bootstrap-eMuleBBSuite.ps1 | iex
 ```
 
 The bootstrapper downloads and verifies the matching eMuleBB release package,
 resolves the aMuTorrent controller package from `emulebb/amutorrent/releases`,
 extracts the suite installer, and starts the install flow. Full installs also
 download pinned public Node, Prowlarr, Radarr, and Sonarr payloads by default.
-Advanced options and verification details are in the Setup guide.
 
-Nightly ZIP, manifest, SBOM, and suite bootstrapper assets are published with
-GitHub artifact attestations. After downloading a nightly asset, you can verify
-its provenance with:
+### Security And Provenance
 
-```powershell
-gh attestation verify PATH_TO_ASSET -R emulebb/emulebb
-```
+All RC1 builds and packaging happen in GitHub Actions and are published through
+GitHub Releases. The release includes ZIPs, manifests, SHA-256 evidence, SPDX
+SBOMs, diagnostics packages, the suite bootstrapper, and the bootstrapper
+SHA-256 asset. The bootstrapper verifies package hashes from the release
+manifests before installing.
 
 ## Documentation
 
