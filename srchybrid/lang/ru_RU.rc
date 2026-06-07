@@ -1169,6 +1169,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Руководство по общему доступу"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Загрузки и поиск"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Руководство по меню Инструменты"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Сочетания клавиш"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Контроллеры и REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Устранение неполадок"
     IDS_DEBUG_SOURCE_EXCHANGE "Лог обмена источниками с сервером и клиентами"

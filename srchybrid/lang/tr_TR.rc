@@ -1139,6 +1139,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Paylaşım kılavuzu"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "İndirmeler ve arama"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Araçlar menüsü kılavuzu"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Klavye kısayolları"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Denetleyiciler ve REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Sorun giderme"
     IDS_DEBUG_SOURCE_EXCHANGE

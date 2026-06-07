@@ -1126,6 +1126,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Partekatze gida"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Deskargak eta bilaketa"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Tresnen menuaren gida"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Teklatuko lasterbideak"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Kontrolatzaileak eta REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Arazoak konpontzea"
     IDS_DEBUG_SOURCE_EXCHANGE "Iturrien trukeen mezuak ikusi"

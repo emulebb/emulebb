@@ -1125,6 +1125,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Megosztási útmutató"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Letöltések és keresés"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Eszközök menü útmutató"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Billentyűparancsok"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Vezérlők és REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Hibaelhárítás"
     IDS_DEBUG_SOURCE_EXCHANGE "Forráscsere üzenetek megjelenítése"

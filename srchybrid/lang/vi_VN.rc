@@ -1170,6 +1170,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Hướng dẫn chia sẻ"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Tải xuống và tìm kiếm"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Hướng dẫn menu Công cụ"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Phím tắt bàn phím"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Bộ điều khiển và REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Khắc phục sự cố"
     IDS_DEBUG_SOURCE_EXCHANGE

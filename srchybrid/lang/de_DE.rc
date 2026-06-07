@@ -1118,6 +1118,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Freigabehandbuch"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Downloads und Suche"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Handbuch zum Tools-Menü"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Tastenkürzel"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Controller und REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Fehlerbehebung"
     IDS_DEBUG_SOURCE_EXCHANGE "Source Exchange Meldungen anzeigen"

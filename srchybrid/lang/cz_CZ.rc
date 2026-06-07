@@ -1124,6 +1124,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Průvodce sdílením"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Stahování a hledání"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Průvodce nabídkou Nástroje"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Klávesové zkratky"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Řadiče a REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Řešení potíží"
     IDS_DEBUG_SOURCE_EXCHANGE "Zobrazit zprávy o výměně zdrojů"

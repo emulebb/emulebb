@@ -1168,6 +1168,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "دليل المشاركة"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "التنزيلات والبحث"
     IDS_HM_LINK_DOC_TOOLS_MENU           "دليل قائمة الأدوات"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "اختصارات لوحة المفاتيح"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "وحدات التحكم وREST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "استكشاف الأخطاء وإصلاحها"
     IDS_DEBUG_SOURCE_EXCHANGE

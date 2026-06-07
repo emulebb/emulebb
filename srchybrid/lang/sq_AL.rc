@@ -1168,6 +1168,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Udhëzues për ndarjen"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Shkarkime dhe kërkim"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Udhëzuesi i menusë Mjete"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Shkurtore të tastierës"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Kontrolluesit dhe REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Zgjidhja e problemeve"
     IDS_DEBUG_SOURCE_EXCHANGE

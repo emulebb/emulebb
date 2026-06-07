@@ -1115,6 +1115,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Vodnik za deljenje"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Prenosi in iskanje"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Vodnik po meniju Orodja"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Bližnjice na tipkovnici"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Krmilniki in REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Odpravljanje težav"
     IDS_DEBUG_SOURCE_EXCHANGE "Prikaži sporočila ob izmenjavi virov"

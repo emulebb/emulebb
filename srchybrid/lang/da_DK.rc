@@ -1138,6 +1138,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Delingsguide"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Downloads og søgning"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Guide til menuen Værktøjer"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Tastaturgenveje"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Controllere og REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Fejlfinding"
     IDS_DEBUG_SOURCE_EXCHANGE "Vis kildeudvekslingsbeskeder"

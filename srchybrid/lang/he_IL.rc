@@ -109,6 +109,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "מדריך שיתוף"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "הורדות וחיפוש"
     IDS_HM_LINK_DOC_TOOLS_MENU           "מדריך תפריט כלים"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "קיצורי מקלדת"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "בקרים ו-REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "פתרון בעיות"
     IDS_DEBUG_SOURCE_EXCHANGE "הצג הודעת החלפת מקורות"

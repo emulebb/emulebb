@@ -3467,6 +3467,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Sharing guide"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Downloads and search"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Tools menu guide"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Keyboard shortcuts"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Controllers and REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Troubleshooting"
     IDS_DEBUG_SOURCE_EXCHANGE

@@ -1115,6 +1115,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Jagamise juhend"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Allalaadimised ja otsing"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Tööriistade menüü juhend"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Klaviatuuri otseteed"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Kontrollerid ja REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Tõrkeotsing"
     IDS_DEBUG_SOURCE_EXCHANGE "Logi allikavahetuse ja serverilt allikate küsimise päringud"

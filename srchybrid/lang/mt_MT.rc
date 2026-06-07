@@ -1169,6 +1169,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Gwida għall-qsim"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Downloads u tfittxija"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Gwida tal-menu Għodod"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Shortcuts tat-tastiera"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Kontrolluri u REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Soluzzjoni tal-problemi"
     IDS_DEBUG_SOURCE_EXCHANGE

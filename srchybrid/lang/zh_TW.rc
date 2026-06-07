@@ -1126,6 +1126,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "分享指南"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "下載和搜尋"
     IDS_HM_LINK_DOC_TOOLS_MENU           "工具選單指南"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "鍵盤快速鍵"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "控制器和 REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "疑難排解"
     IDS_DEBUG_SOURCE_EXCHANGE "記錄客戶端來源交換及伺服器來源查詢/回覆"

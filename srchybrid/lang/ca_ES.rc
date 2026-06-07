@@ -1123,6 +1123,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Guia per compartir"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Baixades i cerca"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Guia del menú Eines"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Dreceres de teclat"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Controladors i REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Resolució de problemes"
     IDS_DEBUG_SOURCE_EXCHANGE "Registre d'intercanvi de fonts i de recerques i resultats des dels servidors "

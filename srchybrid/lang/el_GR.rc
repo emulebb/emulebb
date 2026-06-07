@@ -1103,6 +1103,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Οδηγός κοινής χρήσης"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Λήψεις και αναζήτηση"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Οδηγός μενού εργαλείων"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Συντομεύσεις πληκτρολογίου"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Ελεγκτές και REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Αντιμετώπιση προβλημάτων"
     IDS_DEBUG_SOURCE_EXCHANGE "Καταγραφή διαδικασίας ανταλλαγής πηγών"

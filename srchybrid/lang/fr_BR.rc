@@ -1118,6 +1118,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Sturlevr rannañ"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Pellgargadennoù ha klask"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Sturlevr lañser Ostilhoù"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Berradennoù klavier"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Kontrolerien ha REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Diskoulmañ kudennoù"
 	IDS_DEBUG_SOURCE_EXCHANGE	"Diskouez ar gemennadennoù diwar eskemm an orinoù"

@@ -1143,6 +1143,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Ghid de partajare"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Descărcări și căutare"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Ghidul meniului Instrumente"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Comenzi rapide de la tastatură"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Controlere și REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Depanare"
     IDS_DEBUG_SOURCE_EXCHANGE

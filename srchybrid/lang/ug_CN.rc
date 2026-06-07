@@ -1187,6 +1187,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "ھەمبەھىرلەش قوللانمىسى"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "چۈشۈرۈش ۋە ئىزدەش"
     IDS_HM_LINK_DOC_TOOLS_MENU           "قوراللار تىزىملىك قوللانمىسى"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "ھەرپتاختا تېزلەتمىلىرى"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "كونتروللىغۇچلار ۋە REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "كاشىلا تۈزىتىش"
     IDS_DEBUG_SOURCE_EXCHANGE

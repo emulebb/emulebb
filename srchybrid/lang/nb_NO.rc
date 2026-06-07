@@ -1132,6 +1132,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Delingsveiledning"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Nedlastinger og søk"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Veiledning for Verktøy-menyen"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Tastatursnarveier"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Kontrollere og REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Feilsøking"
     IDS_DEBUG_SOURCE_EXCHANGE "Vis kildeutvekslingsmeldinger"

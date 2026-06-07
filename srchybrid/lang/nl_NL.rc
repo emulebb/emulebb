@@ -1123,6 +1123,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Gids voor delen"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Downloads en zoeken"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Gids voor menu Extra"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Sneltoetsen"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Controllers en REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Probleemoplossing"
     IDS_DEBUG_SOURCE_EXCHANGE "Bronuitwisselingsberichten tonen"

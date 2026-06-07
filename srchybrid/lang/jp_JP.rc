@@ -1176,6 +1176,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "共有ガイド"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "ダウンロードと検索"
     IDS_HM_LINK_DOC_TOOLS_MENU           "ツールメニューガイド"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "キーボードショートカット"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "コントローラーとREST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "トラブルシューティング"
     IDS_DEBUG_SOURCE_EXCHANGE

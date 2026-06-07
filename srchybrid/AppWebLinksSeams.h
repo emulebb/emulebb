@@ -25,6 +25,7 @@ inline const SWebLink *GetDocumentationLinks(size_t &ruCount)
 		{ MP_HM_LINK_DOC_SHARING, IDS_HM_LINK_DOC_SHARING, _T("https://emulebb.github.io/emulebb-tooling/reference/GUIDE-SHARING/") },
 		{ MP_HM_LINK_DOC_DOWNLOADS_SEARCH, IDS_HM_LINK_DOC_DOWNLOADS_SEARCH, _T("https://emulebb.github.io/emulebb-tooling/reference/GUIDE-DOWNLOADS-SEARCH/") },
 		{ MP_HM_LINK_DOC_TOOLS_MENU, IDS_HM_LINK_DOC_TOOLS_MENU, _T("https://emulebb.github.io/emulebb-tooling/reference/GUIDE-TOOLS-MENU/") },
+		{ MP_HM_LINK_DOC_KEYBOARD_SHORTCUTS, IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS, _T("https://emulebb.github.io/emulebb-tooling/reference/KEYBOARD-SHORTCUTS/") },
 		{ MP_HM_LINK_DOC_CONTROLLERS_REST, IDS_HM_LINK_DOC_CONTROLLERS_REST, _T("https://emulebb.github.io/emulebb-tooling/reference/GUIDE-CONTROLLERS-REST/") },
 		{ MP_HM_LINK_DOC_TROUBLESHOOTING, IDS_HM_LINK_DOC_TROUBLESHOOTING, _T("https://emulebb.github.io/emulebb-tooling/reference/GUIDE-TROUBLESHOOTING/") }
 	};

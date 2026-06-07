@@ -1113,6 +1113,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Delingsrettleiing"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Nedlastingar og søk"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Rettleiing for Verktøy-menyen"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Tastatursnarvegar"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Kontrollarar og REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Feilsøking"
     IDS_DEBUG_SOURCE_EXCHANGE "Syn kjeldeutvekslingsmeldingar"

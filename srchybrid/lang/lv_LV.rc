@@ -1170,6 +1170,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Koplietošanas ceļvedis"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Lejupielādes un meklēšana"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Rīku izvēlnes ceļvedis"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Tastatūras īsceļi"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Kontrolleri un REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Problēmu novēršana"
     IDS_DEBUG_SOURCE_EXCHANGE

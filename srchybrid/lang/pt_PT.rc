@@ -1123,6 +1123,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Guia de partilha"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Transferências e pesquisa"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Guia do menu Ferramentas"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Atalhos de teclado"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Controladores e REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Resolução de problemas"
     IDS_DEBUG_SOURCE_EXCHANGE

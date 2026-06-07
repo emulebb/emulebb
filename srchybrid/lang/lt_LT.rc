@@ -1123,6 +1123,7 @@ BEGIN
     IDS_HM_LINK_DOC_SHARING              "Bendrinimo vadovas"
     IDS_HM_LINK_DOC_DOWNLOADS_SEARCH     "Atsisiuntimai ir paieška"
     IDS_HM_LINK_DOC_TOOLS_MENU           "Įrankių meniu vadovas"
+    IDS_HM_LINK_DOC_KEYBOARD_SHORTCUTS   "Spartieji klavišai"
     IDS_HM_LINK_DOC_CONTROLLERS_REST     "Valdikliai ir REST"
     IDS_HM_LINK_DOC_TROUBLESHOOTING      "Trikčių šalinimas"
     IDS_DEBUG_SOURCE_EXCHANGE "Rodyti šaltinių apsikeitimo pranešimus"
