@@ -41,6 +41,7 @@ enum class ETorznabFamily
 	Tv,
 	Audio,
 	Book,
+	Adult,
 	Other
 };
 
@@ -214,6 +215,14 @@ inline bool TryResolveFamily(const std::string &rType, const std::string &rCateg
 		reFamily = ETorznabFamily::Tv;
 		return true;
 	}
+	if (strType == "music") {
+		reFamily = ETorznabFamily::Audio;
+		return true;
+	}
+	if (strType == "book") {
+		reFamily = ETorznabFamily::Book;
+		return true;
+	}
 
 	bool bSawKnown = false;
 	ETorznabFamily eFamily = ETorznabFamily::Unknown;
@@ -228,6 +237,9 @@ inline bool TryResolveFamily(const std::string &rType, const std::string &rCateg
 		} else if (IsTorznabCategoryInRange(iCategory, 3000)) {
 			bSawKnown = true;
 			eTokenFamily = ETorznabFamily::Audio;
+		} else if (IsTorznabCategoryInRange(iCategory, 6000)) {
+			bSawKnown = true;
+			eTokenFamily = ETorznabFamily::Adult;
 		} else if (IsTorznabCategoryInRange(iCategory, 7000)) {
 			bSawKnown = true;
 			eTokenFamily = ETorznabFamily::Book;
@@ -288,7 +300,7 @@ inline bool TryParseTorznabRequest(const std::string &rRequestTarget, STorznabRe
 	parsed.strType = typeIt == normalized.end() ? "search" : WebServerJsonSeams::ToLowerAscii(WebServerJsonSeams::TrimAsciiWhitespace(typeIt->second));
 	if (parsed.strType.empty())
 		parsed.strType = "search";
-	if (parsed.strType != "caps" && parsed.strType != "search" && parsed.strType != "tvsearch" && parsed.strType != "movie") {
+	if (parsed.strType != "caps" && parsed.strType != "search" && parsed.strType != "tvsearch" && parsed.strType != "movie" && parsed.strType != "music" && parsed.strType != "book") {
 		rErrorMessage = "unsupported Torznab request type";
 		return false;
 	}
@@ -424,7 +436,7 @@ inline bool DoesResultMatchFamily(const ETorznabFamily eFamily, const std::strin
 	static const char *const s_book[] = {"epub", "mobi", "azw3", "pdf", "cbz", "cbr", "txt", "rtf", "doc", "docx", "zip", "rar", "7z"};
 	const std::string strExtension(GetLowerExtension(rName));
 
-	if (eFamily == ETorznabFamily::Movie || eFamily == ETorznabFamily::Tv)
+	if (eFamily == ETorznabFamily::Movie || eFamily == ETorznabFamily::Tv || eFamily == ETorznabFamily::Adult)
 		return IsExtensionInList(strExtension, s_video, sizeof(s_video) / sizeof(s_video[0])) || (strExtension.empty() && ullSize >= 100ULL * 1024ULL * 1024ULL);
 	if (eFamily == ETorznabFamily::Audio)
 		return IsExtensionInList(strExtension, s_audio, sizeof(s_audio) / sizeof(s_audio[0]));
@@ -461,6 +473,7 @@ inline const char *GetRestSearchType(const ETorznabFamily eFamily)
 	switch (eFamily) {
 	case ETorznabFamily::Movie:
 	case ETorznabFamily::Tv:
+	case ETorznabFamily::Adult:
 		return "video";
 	case ETorznabFamily::Audio:
 		return "audio";
@@ -489,7 +502,7 @@ inline std::vector<std::string> BuildRestSearchTypeNames(const ETorznabFamily eF
  */
 inline std::vector<std::string> BuildNativeSearchMethodNames(const ETorznabFamily eFamily)
 {
-	if (eFamily == ETorznabFamily::Movie || eFamily == ETorznabFamily::Tv) {
+	if (eFamily == ETorznabFamily::Movie || eFamily == ETorznabFamily::Tv || eFamily == ETorznabFamily::Adult) {
 		std::vector<std::string> methods;
 		methods.push_back("global");
 		methods.push_back("kad");
@@ -539,7 +552,7 @@ inline std::vector<std::string> BuildAvailableNativeSearchMethodNames(
  */
 inline unsigned long long GetNativeSearchTimeoutMilliseconds(const ETorznabFamily eFamily)
 {
-	return (eFamily == ETorznabFamily::Movie || eFamily == ETorznabFamily::Tv)
+	return (eFamily == ETorznabFamily::Movie || eFamily == ETorznabFamily::Tv || eFamily == ETorznabFamily::Adult)
 		? kTorznabMediaSearchTimeoutMs
 		: kTorznabDefaultSearchTimeoutMs;
 }
@@ -550,7 +563,7 @@ inline unsigned long long GetNativeSearchTimeoutMilliseconds(const ETorznabFamil
 inline unsigned long long GetNativeSearchMethodProbeTimeoutMilliseconds(const ETorznabFamily eFamily, const size_t uMethodCount)
 {
 	const unsigned long long ullTotal = GetNativeSearchTimeoutMilliseconds(eFamily);
-	if ((eFamily != ETorznabFamily::Movie && eFamily != ETorznabFamily::Tv) || uMethodCount <= 1)
+	if ((eFamily != ETorznabFamily::Movie && eFamily != ETorznabFamily::Tv && eFamily != ETorznabFamily::Adult) || uMethodCount <= 1)
 		return ullTotal;
 	return ullTotal / static_cast<unsigned long long>(uMethodCount);
 }

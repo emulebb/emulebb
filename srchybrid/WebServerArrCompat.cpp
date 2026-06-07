@@ -117,12 +117,15 @@ std::string BuildCapsXml()
 		"    <search available=\"yes\" supportedParams=\"q,cat\" />\n"
 		"    <tv-search available=\"yes\" supportedParams=\"q,cat,season,ep\" />\n"
 		"    <movie-search available=\"yes\" supportedParams=\"q,cat,year\" />\n"
+		"    <music-search available=\"yes\" supportedParams=\"q,cat\" />\n"
+		"    <book-search available=\"yes\" supportedParams=\"q,cat\" />\n"
 		"  </searching>\n"
 		"  <categories>\n"
 		"    <category id=\"2000\" name=\"Movies\" />\n"
 		"    <category id=\"3000\" name=\"Audio\" />\n"
 		"    <category id=\"4000\" name=\"PC\" />\n"
 		"    <category id=\"5000\" name=\"TV\" />\n"
+		"    <category id=\"6000\" name=\"XXX\" />\n"
 		"    <category id=\"7000\" name=\"Books\" />\n"
 		"    <category id=\"8000\" name=\"Other\" />\n"
 		"  </categories>\n"
@@ -160,6 +163,8 @@ int GetPrimaryTorznabCategory(const WebServerArrCompatSeams::ETorznabFamily eFam
 		return 3000;
 	case WebServerArrCompatSeams::ETorznabFamily::Book:
 		return 7000;
+	case WebServerArrCompatSeams::ETorznabFamily::Adult:
+		return 6000;
 	case WebServerArrCompatSeams::ETorznabFamily::Other:
 		return 8000;
 	case WebServerArrCompatSeams::ETorznabFamily::Any:
