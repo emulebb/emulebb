@@ -7,17 +7,17 @@ namespace ClientLibraryBrowseDisplaySeams
 /**
  * @brief Returns true when the row should advertise the View Shared Files action.
  */
-inline bool ShouldShowLibraryBrowseMarker(bool bIsEd2kClient, bool bViewSharedFilesSupport)
+inline bool ShouldShowLibraryBrowseMarker(bool bHasDisplayName, bool bIsEd2kClient, bool bViewSharedFilesSupport)
 {
-	return bIsEd2kClient && bViewSharedFilesSupport;
+	return bHasDisplayName && bIsEd2kClient && bViewSharedFilesSupport;
 }
 
 /**
  * @brief Appends a compact library-browse marker to a client display name.
  */
-inline void AppendLibraryBrowseMarker(CString &rstrText, bool bIsEd2kClient, bool bViewSharedFilesSupport)
+inline void AppendLibraryBrowseMarker(CString &rstrText, bool bHasDisplayName, bool bIsEd2kClient, bool bViewSharedFilesSupport)
 {
-	if (!ShouldShowLibraryBrowseMarker(bIsEd2kClient, bViewSharedFilesSupport))
+	if (!ShouldShowLibraryBrowseMarker(bHasDisplayName, bIsEd2kClient, bViewSharedFilesSupport))
 		return;
 
 #ifdef _UNICODE

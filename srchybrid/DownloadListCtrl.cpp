@@ -1270,7 +1270,7 @@ CString CDownloadListCtrl::GetSourceItemDisplayText(const CtrlItem_Struct *pCtrl
 			sText = pClient->GetUserName();
 		else
 			sText.Format(_T("(%s)"), (LPCTSTR)GetResString(IDS_UNKNOWN));
-		ClientLibraryBrowseDisplaySeams::AppendLibraryBrowseMarker(sText, pClient->IsEd2kClient(), pClient->GetViewSharedFilesSupport());
+		ClientLibraryBrowseDisplaySeams::AppendLibraryBrowseMarker(sText, pClient->GetUserName() != NULL, pClient->IsEd2kClient(), pClient->GetViewSharedFilesSupport());
 		break;
 	case 1: //source from
 		{

@@ -274,7 +274,7 @@ CString CClientListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSu
 			sText = client->GetUserName();
 		else
 			sText.Format(_T("(%s)"), (LPCTSTR)GetResString(IDS_UNKNOWN));
-		ClientLibraryBrowseDisplaySeams::AppendLibraryBrowseMarker(sText, client->IsEd2kClient(), client->GetViewSharedFilesSupport());
+		ClientLibraryBrowseDisplaySeams::AppendLibraryBrowseMarker(sText, client->GetUserName() != NULL, client->IsEd2kClient(), client->GetViewSharedFilesSupport());
 		break;
 	case 1: //upload status
 		sText = client->GetUploadStateDisplayString();
