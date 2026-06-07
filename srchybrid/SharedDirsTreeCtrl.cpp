@@ -224,8 +224,10 @@ void BuildSharedDirectoryTree(CSharedDirsTreeCtrl *pTreeCtrl, CDirectoryItem *pR
 
 		CString strParent = GetSharedTreeParentPath(rCurrent.strPath);
 		while (!strParent.IsEmpty()) {
-			CString strParentKey(strParent);
-			strParentKey.MakeLower();
+			// WHY: shared-tree entries are indexed with the canonical shared-directory key.
+			// Parent lookup must use the same normalization so long paths, extended prefixes,
+			// and equivalent Unicode/case spellings keep the stock parent-child hierarchy.
+			const CString strParentKey(BuildSharedTreePathKey(strParent));
 
 			void *pvIndex = NULL;
 			if (mapIndexByKey.Lookup(strParentKey, pvIndex)) {
