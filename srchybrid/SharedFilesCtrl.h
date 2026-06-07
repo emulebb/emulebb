@@ -154,6 +154,17 @@ protected:
 	bool			m_bPendingFullDisplayRefresh;
 	bool			m_bPendingSelectedDetailsRefresh;
 	bool			m_bPendingFilesCountRefresh;
+	mutable bool	m_bKadSummaryCacheValid;
+	mutable uint64	m_uKadSummaryModelGeneration;
+	mutable uint64	m_uKadSummaryPublishStateGeneration;
+	mutable ULONGLONG m_ullKadSummaryCacheTick;
+	mutable time_t	m_tKadSummaryCacheBucket;
+	mutable bool	m_bKadSummaryCacheConnected;
+	mutable bool	m_bKadSummaryCacheFirewalled;
+	mutable bool	m_bKadSummaryCacheRunning;
+	mutable bool	m_bKadSummaryCacheUdpVerifiedOpen;
+	mutable uint32	m_uKadSummaryCacheBuddyIP;
+	mutable unsigned int m_uCachedPublishedKadCount;
 
 	static int CALLBACK SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	void OpenFile(const CShareableFile *file);

@@ -414,6 +414,12 @@ std::wstring MakeSharedDirectoryIndexKey(const CString &rstrPath)
 	return std::wstring((LPCWSTR)strKey);
 }
 
+std::wstring MakeSharedFileIndexKey(const CString &rstrPath)
+{
+	const CStringW strKey(MakeSharedFileLookupKey(rstrPath));
+	return std::wstring((LPCWSTR)strKey);
+}
+
 bool IsSingleFileRuleKeyWithinDirectory(const std::wstring &strDirectoryKey, const std::wstring &strFileKey)
 {
 	return strFileKey.length() > strDirectoryKey.length()
@@ -1057,6 +1063,12 @@ void CSharedFileList::CopySharedFileMap(CKnownFilesMap &Files_Map)
 		Files_Map[pair->key] = pair->value;
 }
 
+void CSharedFileList::CopyAllSharedFiles(std::vector<CKnownFile*> &rFiles)
+{
+	CSingleLock listlock(&m_mutWriteList, TRUE);
+	rFiles = m_allSharedFiles;
+}
+
 void CSharedFileList::CopySharedFilePage(std::vector<CKnownFile*> &rFiles, const size_t uOffset, const size_t uLimit, size_t *const pTotal)
 {
 	rFiles.clear();
@@ -1066,38 +1078,50 @@ void CSharedFileList::CopySharedFilePage(std::vector<CKnownFile*> &rFiles, const
 		rFiles.reserve((std::min)(uLimit, static_cast<size_t>(1000)));
 
 	CSingleLock listlock(&m_mutWriteList, TRUE);
-	size_t uSeen = 0;
-	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
-		if (pair->value == NULL)
-			continue;
-
-		if (pTotal != NULL)
-			++*pTotal;
-		if (uSeen++ < uOffset)
-			continue;
-
-		if (rFiles.size() < uLimit) {
-			rFiles.push_back(pair->value);
-			continue;
-		}
-
-		// WHY: snapshot polling does not need an exact total. Once the requested
-		// page is full, continuing to walk a huge shared map only burns UI-thread
-		// time under the shared-list lock without changing the response body.
-		if (pTotal == NULL)
-			break;
+	if (pTotal != NULL)
+		*pTotal = m_allSharedFiles.size();
+	for (size_t i = uOffset; i < m_allSharedFiles.size() && rFiles.size() < uLimit; ++i) {
+		if (m_allSharedFiles[i] != NULL)
+			rFiles.push_back(m_allSharedFiles[i]);
 	}
 }
 
 CKnownFile* CSharedFileList::GetFileByPath(const CString &strFilePath)
 {
-	const CString strFilePathKey(MakeSharedFileLookupKey(strFilePath));
 	CSingleLock listlock(&m_mutWriteList, TRUE);
-	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
-		if (pair->value != NULL && MakeSharedFileLookupKey(pair->value->GetFilePath()) == strFilePathKey)
-			return pair->value;
+	const auto it = m_filesByPathKey.find(MakeSharedFileIndexKey(strFilePath));
+	return it != m_filesByPathKey.end() ? it->second : NULL;
+}
+
+void CSharedFileList::UpdateSharedFilePath(CKnownFile *pFile, const CString &strOldFilePath, const CString &strNewFilePath)
+{
+	if (pFile == NULL)
+		return;
+
+	CSingleLock listlock(&m_mutWriteList, TRUE);
+	if (m_filePointers.find(pFile) == m_filePointers.end())
+		return;
+
+	const std::wstring strOldKey(MakeSharedFileIndexKey(strOldFilePath));
+	auto itOld = m_filesByPathKey.find(strOldKey);
+	if (itOld != m_filesByPathKey.end() && itOld->second == pFile)
+		m_filesByPathKey.erase(itOld);
+	else {
+		for (auto it = m_filesByPathKey.begin(); it != m_filesByPathKey.end();) {
+			if (it->second == pFile)
+				it = m_filesByPathKey.erase(it);
+			else
+				++it;
+		}
 	}
-	return NULL;
+
+	m_filesByPathKey[MakeSharedFileIndexKey(strNewFilePath)] = pFile;
+	// WHY: UI rename mutates CKnownFile in place. The shared-file path index is
+	// the authoritative fast path for REST remove-by-path, so the generation has
+	// to advance even though the file count and directory bucket do not change.
+	++m_uSharedFileIndexGeneration;
+	m_sharedFilesSummary.uModelGeneration = m_uSharedFileIndexGeneration;
+	m_sharedFilesSummary.uKadPublishStateGeneration = m_uKadPublishStateGeneration;
 }
 
 bool CSharedFileList::EnsureSharedHashWorkerStarted()
@@ -1769,7 +1793,7 @@ void CSharedFileList::FindSharedFiles(const bool bAllowStartupCache)
 				listlock.Lock();
 				m_Files_map.RemoveKey(key);
 				m_filePointers.erase(cur_file);
-				RemoveFileFromDirectoryIndex(cur_file);
+				RemoveFileFromSharedFileIndexes(cur_file);
 				listlock.Unlock();
 			}
 		}
@@ -1796,6 +1820,7 @@ void CSharedFileList::FindSharedFiles(const bool bAllowStartupCache)
 		CheckAndAddSingleFile(m_liSingleSharedFiles.GetNext(pos));
 
 	// khaos::kmod-
+	RebuildSharedFileIndexes();
 	if (GetHashingCount() == 0)
 		AddLogLine(false, GetResString(IDS_SHAREDFOUND), (unsigned)m_Files_map.GetCount());
 	else
@@ -1988,11 +2013,12 @@ bool CSharedFileList::AddKnownSharedFile(CKnownFile *pFile, const CString &strFo
 			} else {
 				if (pFileInMap->GetFilePath().CompareNoCase(strFoundFilePath) != 0) {
 					const CString strOldFilePath(pFileInMap->GetFilePath());
+					const bool bSingleShared = !ShouldBeShared(strFoundDirectory, NULL, false);
 					CSingleLock listlock(&m_mutWriteList, TRUE);
-					RemoveFileFromDirectoryIndex(pFileInMap);
+					RemoveFileFromSharedFileIndexes(pFileInMap);
 					pFileInMap->SetPath(strFoundDirectory);
 					pFileInMap->SetFilePath(strFoundFilePath);
-					AddFileToDirectoryIndex(pFileInMap);
+					AddFileToSharedFileIndexes(pFileInMap, bSingleShared);
 					DEBUG_ONLY(DebugLog(_T("Upgraded shared-file spelling: \"%s\" -> \"%s\""), (LPCTSTR)strOldFilePath, (LPCTSTR)strFoundFilePath));
 				}
 				DebugLog(_T("File shared twice, might have been a single shared file before - %s"), (LPCTSTR)pFileInMap->GetFilePath());
@@ -2051,11 +2077,12 @@ bool CSharedFileList::AddFile(CKnownFile *pFile)
 			&& pFileInMap->GetFilePath().CompareNoCase(pFile->GetFilePath()) != 0)
 		{
 			const CString strOldFilePath(pFileInMap->GetFilePath());
+			const bool bSingleShared = !ShouldBeShared(pFile->GetPath(), NULL, false);
 			CSingleLock listlock(&m_mutWriteList, TRUE);
-			RemoveFileFromDirectoryIndex(pFileInMap);
+			RemoveFileFromSharedFileIndexes(pFileInMap);
 			pFileInMap->SetPath(pFile->GetPath());
 			pFileInMap->SetFilePath(pFile->GetFilePath());
-			AddFileToDirectoryIndex(pFileInMap);
+			AddFileToSharedFileIndexes(pFileInMap, bSingleShared);
 			DEBUG_ONLY(DebugLog(_T("Upgraded duplicate shared-file spelling: \"%s\" -> \"%s\""), (LPCTSTR)strOldFilePath, (LPCTSTR)pFileInMap->GetFilePath()));
 		}
 		if ((!pFileInMap->IsKindOf(RUNTIME_CLASS(CPartFile)) || theApp.downloadqueue->IsPartFile(pFileInMap))
@@ -2068,10 +2095,11 @@ bool CSharedFileList::AddFile(CKnownFile *pFile)
 	}
 	m_UnsharedFiles_map.RemoveKey(CSKey(pFile->GetFileHash()));
 
+	const bool bSingleShared = !ShouldBeShared(pFile->GetSharedDirectory(), NULL, false);
 	CSingleLock listlock(&m_mutWriteList, TRUE);
 	m_Files_map[key] = pFile;
 	m_filePointers.insert(pFile);
-	AddFileToDirectoryIndex(pFile);
+	AddFileToSharedFileIndexes(pFile, bSingleShared);
 	listlock.Unlock();
 
 	bool bKeywordsNeedUpdated = true;
@@ -2201,7 +2229,7 @@ bool CSharedFileList::RemoveFile(CKnownFile *pFile, bool bDeleted)
 	bool bResult = (m_Files_map.RemoveKey(CCKey(pFile->GetFileHash())) != FALSE);
 	if (bResult) {
 		m_filePointers.erase(pFile);
-		RemoveFileFromDirectoryIndex(pFile);
+		RemoveFileFromSharedFileIndexes(pFile);
 	}
 	listlock.Unlock();
 
@@ -2217,29 +2245,90 @@ bool CSharedFileList::RemoveFile(CKnownFile *pFile, bool bDeleted)
 	return bResult;
 }
 
-void CSharedFileList::AddFileToDirectoryIndex(CKnownFile *pFile)
+void CSharedFileList::UpdateSharedFileSummaryForAdd(CKnownFile *pFile)
 {
-	if (pFile == NULL)
-		return;
-
-	m_filesBySharedDirectoryKey[MakeSharedDirectoryIndexKey(pFile->GetSharedDirectory())].push_back(pFile);
+	UpdateSharedFileSummaryForAdd(m_sharedFilesSummary, pFile);
 }
 
-void CSharedFileList::RemoveFileFromDirectoryIndex(CKnownFile *pFile)
+void CSharedFileList::UpdateSharedFileSummaryForAdd(SSharedFilesSummarySnapshot &rSummary, CKnownFile *pFile)
+{
+	if (pFile == NULL)
+		return;
+	++rSummary.uFileCount;
+	rSummary.uTotalSize += static_cast<uint64>(pFile->GetFileSize());
+	if (pFile->GetPublishedED2K())
+		++rSummary.uPublishedED2KCount;
+}
+
+void CSharedFileList::UpdateSharedFileSummaryForRemove(CKnownFile *pFile)
+{
+	UpdateSharedFileSummaryForRemove(m_sharedFilesSummary, pFile);
+}
+
+void CSharedFileList::UpdateSharedFileSummaryForRemove(SSharedFilesSummarySnapshot &rSummary, CKnownFile *pFile)
+{
+	if (pFile == NULL)
+		return;
+	if (rSummary.uFileCount > 0)
+		--rSummary.uFileCount;
+	const uint64 uFileSize = static_cast<uint64>(pFile->GetFileSize());
+	rSummary.uTotalSize = rSummary.uTotalSize >= uFileSize ? rSummary.uTotalSize - uFileSize : 0;
+	if (pFile->GetPublishedED2K() && rSummary.uPublishedED2KCount > 0)
+		--rSummary.uPublishedED2KCount;
+}
+
+void CSharedFileList::AddFileToSharedFileIndexes(CKnownFile *pFile, const bool bSingleShared)
 {
 	if (pFile == NULL)
 		return;
 
-	const std::wstring strExpectedKey(MakeSharedDirectoryIndexKey(pFile->GetSharedDirectory()));
-	auto removeFromBucket = [pFile](std::vector<CKnownFile*> &rBucket) -> bool {
-		const size_t uOldSize = rBucket.size();
-		rBucket.erase(std::remove(rBucket.begin(), rBucket.end(), pFile), rBucket.end());
-		return rBucket.size() != uOldSize;
+	m_allSharedFiles.push_back(pFile);
+	m_filesBySharedDirectoryKey[MakeSharedDirectoryIndexKey(pFile->GetSharedDirectory())].push_back(pFile);
+	m_filesByPathKey[MakeSharedFileIndexKey(pFile->GetFilePath())] = pFile;
+	if (bSingleShared)
+		m_singleSharedFiles.push_back(pFile);
+	UpdateSharedFileSummaryForAdd(pFile);
+	++m_uSharedFileIndexGeneration;
+	m_sharedFilesSummary.uModelGeneration = m_uSharedFileIndexGeneration;
+	m_sharedFilesSummary.uKadPublishStateGeneration = m_uKadPublishStateGeneration;
+}
+
+void CSharedFileList::AddFileToSharedFileIndexes(SharedFileIndexSet &rIndexes, CKnownFile *pFile, const bool bSingleShared)
+{
+	if (pFile == NULL)
+		return;
+
+	rIndexes.allSharedFiles.push_back(pFile);
+	rIndexes.filesBySharedDirectoryKey[MakeSharedDirectoryIndexKey(pFile->GetSharedDirectory())].push_back(pFile);
+	rIndexes.filesByPathKey[MakeSharedFileIndexKey(pFile->GetFilePath())] = pFile;
+	if (bSingleShared)
+		rIndexes.singleSharedFiles.push_back(pFile);
+	UpdateSharedFileSummaryForAdd(rIndexes.summary, pFile);
+}
+
+void CSharedFileList::RemoveFileFromSharedFileIndexes(CKnownFile *pFile)
+{
+	if (pFile == NULL)
+		return;
+
+	auto removeFromVector = [pFile](std::vector<CKnownFile*> &rFiles) -> bool {
+		const size_t uOldSize = rFiles.size();
+		rFiles.erase(std::remove(rFiles.begin(), rFiles.end(), pFile), rFiles.end());
+		return rFiles.size() != uOldSize;
 	};
 
+	removeFromVector(m_allSharedFiles);
+	removeFromVector(m_singleSharedFiles);
+	m_filesByPathKey.erase(MakeSharedFileIndexKey(pFile->GetFilePath()));
+	UpdateSharedFileSummaryForRemove(pFile);
+	++m_uSharedFileIndexGeneration;
+	m_sharedFilesSummary.uModelGeneration = m_uSharedFileIndexGeneration;
+	m_sharedFilesSummary.uKadPublishStateGeneration = m_uKadPublishStateGeneration;
+
+	const std::wstring strExpectedKey(MakeSharedDirectoryIndexKey(pFile->GetSharedDirectory()));
 	auto it = m_filesBySharedDirectoryKey.find(strExpectedKey);
 	if (it != m_filesBySharedDirectoryKey.end()) {
-		const bool bRemoved = removeFromBucket(it->second);
+		const bool bRemoved = removeFromVector(it->second);
 		if (it->second.empty())
 			m_filesBySharedDirectoryKey.erase(it);
 		if (bRemoved)
@@ -2247,11 +2336,77 @@ void CSharedFileList::RemoveFileFromDirectoryIndex(CKnownFile *pFile)
 	}
 
 	for (auto itBucket = m_filesBySharedDirectoryKey.begin(); itBucket != m_filesBySharedDirectoryKey.end();) {
-		removeFromBucket(itBucket->second);
+		removeFromVector(itBucket->second);
 		if (itBucket->second.empty())
 			itBucket = m_filesBySharedDirectoryKey.erase(itBucket);
 		else
 			++itBucket;
+	}
+}
+
+void CSharedFileList::RefreshSharedFilePublishedED2KSummary()
+{
+	CSingleLock listlock(&m_mutWriteList, TRUE);
+	uint32 uPublishedED2KCount = 0;
+	for (const CKnownFile *pFile : m_allSharedFiles) {
+		if (pFile != NULL && pFile->GetPublishedED2K())
+			++uPublishedED2KCount;
+	}
+	// WHY: ED2K publish batches mutate CKnownFile flags outside the shared-file
+	// index helpers. Recount from the locked file snapshot so removals, rebuilds,
+	// and publish-state changes cannot leave the cached UI summary out of sync.
+	m_sharedFilesSummary.uPublishedED2KCount = uPublishedED2KCount;
+	m_sharedFilesSummary.uModelGeneration = m_uSharedFileIndexGeneration;
+	m_sharedFilesSummary.uKadPublishStateGeneration = m_uKadPublishStateGeneration;
+}
+
+void CSharedFileList::MarkKadPublishStateChanged()
+{
+	CSingleLock listlock(&m_mutWriteList, TRUE);
+	++m_uKadPublishStateGeneration;
+	m_sharedFilesSummary.uModelGeneration = m_uSharedFileIndexGeneration;
+	m_sharedFilesSummary.uKadPublishStateGeneration = m_uKadPublishStateGeneration;
+}
+
+void CSharedFileList::RebuildSharedFileIndexes()
+{
+	for (;;) {
+		std::vector<CKnownFile*> files;
+		uint64 uObservedGeneration = 0;
+		{
+			CSingleLock listlock(&m_mutWriteList, TRUE);
+			uObservedGeneration = m_uSharedFileIndexGeneration;
+			files.reserve(static_cast<size_t>(m_Files_map.GetCount()));
+			for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair)) {
+				if (pair->value != NULL)
+					files.push_back(pair->value);
+			}
+		}
+
+		SharedFileIndexSet indexes;
+		indexes.allSharedFiles.reserve(files.size());
+		indexes.filesBySharedDirectoryKey.reserve(files.size());
+		indexes.filesByPathKey.reserve(files.size());
+		indexes.singleSharedFiles.reserve(files.size());
+		for (CKnownFile *pFile : files)
+			AddFileToSharedFileIndexes(indexes, pFile, !ShouldBeShared(pFile->GetSharedDirectory(), NULL, false));
+
+		CSingleLock listlock(&m_mutWriteList, TRUE);
+		if (uObservedGeneration != m_uSharedFileIndexGeneration)
+			continue;
+
+		// WHY: reload/rescan can run while socket, REST, and UI readers copy
+		// these indexes. Publish a complete prepared index set in one locked
+		// swap so readers never see the transient clear-and-repopulate state.
+		++m_uSharedFileIndexGeneration;
+		indexes.summary.uModelGeneration = m_uSharedFileIndexGeneration;
+		indexes.summary.uKadPublishStateGeneration = m_uKadPublishStateGeneration;
+		m_allSharedFiles.swap(indexes.allSharedFiles);
+		m_filesBySharedDirectoryKey.swap(indexes.filesBySharedDirectoryKey);
+		m_filesByPathKey.swap(indexes.filesByPathKey);
+		m_singleSharedFiles.swap(indexes.singleSharedFiles);
+		m_sharedFilesSummary = indexes.summary;
+		return;
 	}
 }
 
@@ -2265,6 +2420,19 @@ void CSharedFileList::CopySharedFilesForDirectory(const CString &strDirectory, s
 		return;
 
 	rFiles = it->second;
+}
+
+void CSharedFileList::CopySingleSharedFiles(std::vector<CKnownFile*> &rFiles)
+{
+	rFiles.clear();
+	CSingleLock listlock(&m_mutWriteList, TRUE);
+	rFiles = m_singleSharedFiles;
+}
+
+void CSharedFileList::GetSharedFilesSummarySnapshot(SSharedFilesSummarySnapshot &rSnapshot)
+{
+	CSingleLock listlock(&m_mutWriteList, TRUE);
+	rSnapshot = m_sharedFilesSummary;
 }
 
 void CSharedFileList::Reload()
@@ -2355,6 +2523,8 @@ void CSharedFileList::SendListToServer()
 		if (file->SetPublishedED2K(true, false))
 			publishedFilesChanged.push_back(file);
 	}
+	if (!publishedFilesChanged.empty())
+		RefreshSharedFilePublishedED2KSummary();
 	UpdateSharedFilesForPublishedED2KChanges(output, publishedFilesChanged);
 	Packet *packet = new Packet(files);
 	packet->opcode = OP_OFFERFILES;
@@ -2388,6 +2558,8 @@ void CSharedFileList::ClearED2KPublishInfo()
 		if (pair->value->SetPublishedED2K(false, false))
 			publishedFilesChanged.push_back(pair->value);
 	}
+	if (!publishedFilesChanged.empty())
+		RefreshSharedFilePublishedED2KSummary();
 	UpdateSharedFilesForPublishedED2KChanges(output, publishedFilesChanged);
 }
 
@@ -2395,6 +2567,7 @@ void CSharedFileList::ClearKadSourcePublishInfo()
 {
 	for (const CKnownFilesMap::CPair *pair = m_Files_map.PGetFirstAssoc(); pair != NULL; pair = m_Files_map.PGetNextAssoc(pair))
 		pair->value->SetLastPublishTimeKadSrc(0, 0);
+	MarkKadPublishStateChanged();
 }
 
 void CSharedFileList::CreateOfferedFilePacket(CKnownFile *cur_file, CSafeMemFile &files
@@ -3013,6 +3186,7 @@ void CSharedFileList::Publish()
 			if (pCurKnownFile && pCurKnownFile->PublishSrc()) {
 				if (Kademlia::CSearchManager::PrepareLookup(Kademlia::CSearch::STOREFILE, true, Kademlia::CUInt128(pCurKnownFile->GetFileHash())) == NULL)
 					pCurKnownFile->SetLastPublishTimeKadSrc(0, 0);
+				MarkKadPublishStateChanged();
 				if (output != NULL) {
 					output->QueueFileDisplayRefresh(pCurKnownFile);
 					output->QueueFilesCountRefresh();

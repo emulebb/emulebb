@@ -834,9 +834,12 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 
 			CPtrList list;
 			if (thePrefs.CanSeeShares() == vsfaEverybody || (thePrefs.CanSeeShares() == vsfaFriends && client->IsFriend())) {
-				for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair))
-					if (!pair->value->IsLargeFile() || client->SupportsLargeFiles())
-						list.AddTail((void*)pair->value);
+				std::vector<CKnownFile*> sharedFiles;
+				theApp.sharedfiles->CopyAllSharedFiles(sharedFiles);
+				for (CKnownFile *cur_file : sharedFiles) {
+					if (cur_file != NULL && (!cur_file->IsLargeFile() || client->SupportsLargeFiles()))
+						list.AddTail((void*)cur_file);
+				}
 
 				AddLogLine(true, GetResString(IDS_REQ_SHAREDFILES), (LPCTSTR)client->GetUserName(), client->GetUserIDHybrid(), (LPCTSTR)GetResString(IDS_ACCEPTED));
 			} else
@@ -908,15 +911,11 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 						strReqDir = theApp.sharedfiles->GetDirNameByPseudo(strReqDir);
 					if (!strReqDir.IsEmpty()) {
 						if (bSingleSharedFiles) {
-							// get all shared files from requested directory
-							for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair)) {
-								CKnownFile *cur_file = pair->value;
-								// all files not in shared directories have to be single shared files
-								if (!theApp.sharedfiles->ShouldBeShared(cur_file->GetSharedDirectory(), NULL, false)
-									&& (!cur_file->IsLargeFile() || client->SupportsLargeFiles()))
-								{
+							std::vector<CKnownFile*> singleSharedFiles;
+							theApp.sharedfiles->CopySingleSharedFiles(singleSharedFiles);
+							for (CKnownFile *cur_file : singleSharedFiles) {
+								if (cur_file != NULL && (!cur_file->IsLargeFile() || client->SupportsLargeFiles()))
 									list.AddTail(cur_file);
-								}
 							}
 						} else {
 							std::vector<CKnownFile*> directoryFiles;

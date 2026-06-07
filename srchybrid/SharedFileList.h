@@ -65,6 +65,17 @@ struct CSharedFileHashResult
 #endif
 };
 
+struct SSharedFilesSummarySnapshot
+{
+	uint32 uFileCount = 0;
+	uint64 uTotalSize = 0;
+	uint32 uPublishedED2KCount = 0;
+	uint32 uPublishedKadCount = 0;
+	uint64 uModelGeneration = 0;
+	uint64 uKadPublishStateGeneration = 0;
+	bool bKadCountPrepared = false;
+};
+
 class CSharedFileList
 {
 	friend class CSharedFilesCtrl;
@@ -266,6 +277,10 @@ public:
 
 	void	CopySharedFileMap(CKnownFilesMap &Files_Map);
 	/**
+	 * @brief Copies all shared files from the maintained shared-file snapshot.
+	 */
+	void	CopyAllSharedFiles(std::vector<CKnownFile*> &rFiles);
+	/**
 	 * @brief Copies only the shared-file page needed by REST list responses.
 	 *
 	 * REST and snapshot polling may ask for a small page from very large share
@@ -279,6 +294,10 @@ public:
 	 * @brief Finds one shared file by canonical full-path key without copying the shared-file map.
 	 */
 	CKnownFile*	GetFileByPath(const CString &strFilePath);
+	/**
+	 * @brief Updates maintained shared-file lookup keys after a file path changes in place.
+	 */
+	void	UpdateSharedFilePath(CKnownFile *pFile, const CString &strOldFilePath, const CString &strNewFilePath);
 
 	CKnownFile*	GetFileByID(const uchar *hash) const;
 	CKnownFile*	GetFileByIdentifier(const CFileIdentifierBase &rFileIdent, bool bStrict = false) const;
@@ -302,6 +321,14 @@ public:
 	 * @brief Copies files whose advertised shared directory matches the requested directory.
 	 */
 	void	CopySharedFilesForDirectory(const CString &strDirectory, std::vector<CKnownFile*> &rFiles);
+	/**
+	 * @brief Copies files advertised through the peer-visible !Other bucket.
+	 */
+	void	CopySingleSharedFiles(std::vector<CKnownFile*> &rFiles);
+	/**
+	 * @brief Copies maintained shared-file summary counters for UI labels.
+	 */
+	void	GetSharedFilesSummarySnapshot(SSharedFilesSummarySnapshot &rSnapshot);
 
 	uint64	GetDatasize(uint64 &pbytesLargest) const;
 	INT_PTR	GetCount()								{ return m_Files_map.GetCount(); }
@@ -338,6 +365,18 @@ private:
 	using SharedStartupCacheRecordMap = std::unordered_map<std::wstring, SharedStartupCachePolicy::DirectoryRecord>;
 	using SharedStartupCacheVolumeRecordMap = std::unordered_map<std::wstring, SharedStartupCachePolicy::VolumeRecord>;
 	using SharedDuplicatePathRecordMap = std::unordered_map<std::wstring, SharedDuplicatePathCachePolicy::PathRecord>;
+
+	/**
+	 * @brief Owns the prepared fast lookup structures derived from m_Files_map.
+	 */
+	struct SharedFileIndexSet
+	{
+		std::vector<CKnownFile*> allSharedFiles;
+		std::unordered_map<std::wstring, std::vector<CKnownFile*>> filesBySharedDirectoryKey;
+		std::unordered_map<std::wstring, CKnownFile*> filesByPathKey;
+		std::vector<CKnownFile*> singleSharedFiles;
+		SSharedFilesSummarySnapshot summary;
+	};
 
 	/**
 	 * @brief Describes one queued shared-file hash job consumed by the app-lifetime worker thread.
@@ -618,12 +657,26 @@ private:
 	void	RemoveSingleSharedFileRuleKey(const CString &strFilePath);
 	void	AddSingleExcludedFileRuleKey(const CString &strFilePath);
 	void	RemoveSingleExcludedFileRuleKey(const CString &strFilePath);
-	void	AddFileToDirectoryIndex(CKnownFile *pFile);
-	void	RemoveFileFromDirectoryIndex(CKnownFile *pFile);
+	void	RebuildSharedFileIndexes();
+	void	AddFileToSharedFileIndexes(CKnownFile *pFile, bool bSingleShared);
+	static void	AddFileToSharedFileIndexes(SharedFileIndexSet &rIndexes, CKnownFile *pFile, bool bSingleShared);
+	void	RemoveFileFromSharedFileIndexes(CKnownFile *pFile);
+	void	UpdateSharedFileSummaryForAdd(CKnownFile *pFile);
+	static void	UpdateSharedFileSummaryForAdd(SSharedFilesSummarySnapshot &rSummary, CKnownFile *pFile);
+	void	UpdateSharedFileSummaryForRemove(CKnownFile *pFile);
+	static void	UpdateSharedFileSummaryForRemove(SSharedFilesSummarySnapshot &rSummary, CKnownFile *pFile);
+	void	RefreshSharedFilePublishedED2KSummary();
+	void	MarkKadPublishStateChanged();
 
 	CKnownFilesMap m_Files_map;
 	std::unordered_set<const CKnownFile*> m_filePointers;
+	std::vector<CKnownFile*> m_allSharedFiles;
 	std::unordered_map<std::wstring, std::vector<CKnownFile*>> m_filesBySharedDirectoryKey;
+	std::unordered_map<std::wstring, CKnownFile*> m_filesByPathKey;
+	std::vector<CKnownFile*> m_singleSharedFiles;
+	SSharedFilesSummarySnapshot m_sharedFilesSummary;
+	uint64 m_uSharedFileIndexGeneration = 0;
+	uint64 m_uKadPublishStateGeneration = 0;
 	CMap<CSKey, const CSKey&, bool, bool>		 m_UnsharedFiles_map;
 	CMapStringToString m_mapPseudoDirNames;
 	CPublishKeywordList *m_keywords;

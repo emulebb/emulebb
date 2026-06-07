@@ -76,6 +76,8 @@ namespace
 	constexpr UINT_PTR kVisibleFilePruneTimerId = 0x5347;
 	constexpr UINT kVisibleFilePruneDelayMs = 250;
 	constexpr size_t kMaxPendingDisplayRefreshFiles = 4096;
+	constexpr ULONGLONG kKadSummaryCacheWindowMs = 5000;
+	constexpr time_t kKadSummaryCacheBucketSeconds = 5;
 
 	int FindSubMenuItemPosition(CMenu &menu, HMENU hSubMenu)
 	{
@@ -578,17 +580,48 @@ CString CSharedFilesCtrl::FormatFilesCountText() const
 	INT_PTR iHashingCount = nAICHHashing;
 	if (theApp.sharedfiles != NULL) {
 		iHashingCount += theApp.sharedfiles->GetHashingCount();
+		SSharedFilesSummarySnapshot summarySnapshot;
+		theApp.sharedfiles->GetSharedFilesSummarySnapshot(summarySnapshot);
+		summary.uFileCount = summarySnapshot.uFileCount;
+		summary.uTotalSize = summarySnapshot.uTotalSize;
+		summary.uPublishedED2KCount = summarySnapshot.uPublishedED2KCount;
 		const SharedFilesKadPublishContext kadContext = BuildSharedFilesKadPublishContext();
-		for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair)) {
-			const CKnownFile *file = pair->value;
-			if (file == NULL)
-				continue;
-			++summary.uFileCount;
-			summary.uTotalSize += static_cast<uint64>(file->GetFileSize());
-			if (file->GetPublishedED2K())
-				++summary.uPublishedED2KCount;
-			if (IsSharedInKadWithContext(file, kadContext))
-				++summary.uPublishedKadCount;
+		const ULONGLONG ullNowTick = ::GetTickCount64();
+		const time_t tKadCacheBucket = kadContext.tNow / kKadSummaryCacheBucketSeconds;
+		if (m_bKadSummaryCacheValid
+			&& m_uKadSummaryModelGeneration == summarySnapshot.uModelGeneration
+			&& m_uKadSummaryPublishStateGeneration == summarySnapshot.uKadPublishStateGeneration
+			&& m_tKadSummaryCacheBucket == tKadCacheBucket
+			&& m_bKadSummaryCacheConnected == kadContext.bKadConnected
+			&& m_bKadSummaryCacheFirewalled == kadContext.bKadFirewalled
+			&& m_bKadSummaryCacheRunning == kadContext.bKadRunning
+			&& m_bKadSummaryCacheUdpVerifiedOpen == kadContext.bKadUdpVerifiedOpen
+			&& m_uKadSummaryCacheBuddyIP == kadContext.uBuddyIP
+			&& ullNowTick - m_ullKadSummaryCacheTick < kKadSummaryCacheWindowMs)
+		{
+			summary.uPublishedKadCount = m_uCachedPublishedKadCount;
+		} else {
+			std::vector<CKnownFile*> sharedFiles;
+			theApp.sharedfiles->CopyAllSharedFiles(sharedFiles);
+			for (const CKnownFile *file : sharedFiles) {
+				if (IsSharedInKadWithContext(file, kadContext))
+					++summary.uPublishedKadCount;
+			}
+			// WHY: this label can refresh far more often than Kad publish state
+			// changes. Cache only against model generation, Kad publish-state
+			// generation, and a short time bucket so large shares do not rescan
+			// every UI refresh while expiry and connectivity changes still age in.
+			m_bKadSummaryCacheValid = true;
+			m_uKadSummaryModelGeneration = summarySnapshot.uModelGeneration;
+			m_uKadSummaryPublishStateGeneration = summarySnapshot.uKadPublishStateGeneration;
+			m_ullKadSummaryCacheTick = ullNowTick;
+			m_tKadSummaryCacheBucket = tKadCacheBucket;
+			m_bKadSummaryCacheConnected = kadContext.bKadConnected;
+			m_bKadSummaryCacheFirewalled = kadContext.bKadFirewalled;
+			m_bKadSummaryCacheRunning = kadContext.bKadRunning;
+			m_bKadSummaryCacheUdpVerifiedOpen = kadContext.bKadUdpVerifiedOpen;
+			m_uKadSummaryCacheBuddyIP = kadContext.uBuddyIP;
+			m_uCachedPublishedKadCount = summary.uPublishedKadCount;
 		}
 	}
 	return FormatSharedFilesSummary(summary, iHashingCount);
@@ -607,6 +640,17 @@ CSharedFilesCtrl::CSharedFilesCtrl()
 	, m_bPendingFullDisplayRefresh(false)
 	, m_bPendingSelectedDetailsRefresh(false)
 	, m_bPendingFilesCountRefresh(false)
+	, m_bKadSummaryCacheValid(false)
+	, m_uKadSummaryModelGeneration(0)
+	, m_uKadSummaryPublishStateGeneration(0)
+	, m_ullKadSummaryCacheTick(0)
+	, m_tKadSummaryCacheBucket(0)
+	, m_bKadSummaryCacheConnected(false)
+	, m_bKadSummaryCacheFirewalled(false)
+	, m_bKadSummaryCacheRunning(false)
+	, m_bKadSummaryCacheUdpVerifiedOpen(false)
+	, m_uKadSummaryCacheBuddyIP(0)
+	, m_uCachedPublishedKadCount(0)
 {
 	SetGeneralPurposeFind(true);
 	m_pToolTip = new CToolTipCtrlX;
@@ -2004,6 +2048,7 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM)
 
 					CString newpath(PathHelpers::EnsureTrailingSeparator(pKnownFile->GetPath()));
 					newpath += newname;
+					const CString oldpath(pKnownFile->GetFilePath());
 					if (!LongPathSeams::MoveFile(pKnownFile->GetFilePath(), newpath)) {
 						CString strError;
 						strError.Format(GetResString(IDS_ERR_RENAMESF), (LPCTSTR)pKnownFile->GetFilePath(), (LPCTSTR)newpath, (LPCTSTR)GetErrorMessage(::GetLastError()));
@@ -2020,6 +2065,8 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM)
 						theApp.sharedfiles->AddKeywords(pKnownFile);
 					}
 					pKnownFile->SetFilePath(newpath);
+					if (theApp.sharedfiles != NULL)
+						theApp.sharedfiles->UpdateSharedFilePath(pKnownFile, oldpath, newpath);
 					UpdateFile(pKnownFile);
 				}
 			} else
