@@ -408,6 +408,12 @@ CString MakeSharedDirectoryLookupKey(const CString &rstrPath)
 	return strKey;
 }
 
+std::wstring MakeSharedDirectoryIndexKey(const CString &rstrPath)
+{
+	const CStringW strKey(MakeSharedDirectoryLookupKey(rstrPath));
+	return std::wstring((LPCWSTR)strKey);
+}
+
 bool IsSingleFileRuleKeyWithinDirectory(const std::wstring &strDirectoryKey, const std::wstring &strFileKey)
 {
 	return strFileKey.length() > strDirectoryKey.length()
@@ -1763,6 +1769,7 @@ void CSharedFileList::FindSharedFiles(const bool bAllowStartupCache)
 				listlock.Lock();
 				m_Files_map.RemoveKey(key);
 				m_filePointers.erase(cur_file);
+				RemoveFileFromDirectoryIndex(cur_file);
 				listlock.Unlock();
 			}
 		}
@@ -1981,8 +1988,11 @@ bool CSharedFileList::AddKnownSharedFile(CKnownFile *pFile, const CString &strFo
 			} else {
 				if (pFileInMap->GetFilePath().CompareNoCase(strFoundFilePath) != 0) {
 					const CString strOldFilePath(pFileInMap->GetFilePath());
+					CSingleLock listlock(&m_mutWriteList, TRUE);
+					RemoveFileFromDirectoryIndex(pFileInMap);
 					pFileInMap->SetPath(strFoundDirectory);
 					pFileInMap->SetFilePath(strFoundFilePath);
+					AddFileToDirectoryIndex(pFileInMap);
 					DEBUG_ONLY(DebugLog(_T("Upgraded shared-file spelling: \"%s\" -> \"%s\""), (LPCTSTR)strOldFilePath, (LPCTSTR)strFoundFilePath));
 				}
 				DebugLog(_T("File shared twice, might have been a single shared file before - %s"), (LPCTSTR)pFileInMap->GetFilePath());
@@ -2041,8 +2051,11 @@ bool CSharedFileList::AddFile(CKnownFile *pFile)
 			&& pFileInMap->GetFilePath().CompareNoCase(pFile->GetFilePath()) != 0)
 		{
 			const CString strOldFilePath(pFileInMap->GetFilePath());
+			CSingleLock listlock(&m_mutWriteList, TRUE);
+			RemoveFileFromDirectoryIndex(pFileInMap);
 			pFileInMap->SetPath(pFile->GetPath());
 			pFileInMap->SetFilePath(pFile->GetFilePath());
+			AddFileToDirectoryIndex(pFileInMap);
 			DEBUG_ONLY(DebugLog(_T("Upgraded duplicate shared-file spelling: \"%s\" -> \"%s\""), (LPCTSTR)strOldFilePath, (LPCTSTR)pFileInMap->GetFilePath()));
 		}
 		if ((!pFileInMap->IsKindOf(RUNTIME_CLASS(CPartFile)) || theApp.downloadqueue->IsPartFile(pFileInMap))
@@ -2058,6 +2071,7 @@ bool CSharedFileList::AddFile(CKnownFile *pFile)
 	CSingleLock listlock(&m_mutWriteList, TRUE);
 	m_Files_map[key] = pFile;
 	m_filePointers.insert(pFile);
+	AddFileToDirectoryIndex(pFile);
 	listlock.Unlock();
 
 	bool bKeywordsNeedUpdated = true;
@@ -2185,8 +2199,10 @@ bool CSharedFileList::RemoveFile(CKnownFile *pFile, bool bDeleted)
 {
 	CSingleLock listlock(&m_mutWriteList, TRUE);
 	bool bResult = (m_Files_map.RemoveKey(CCKey(pFile->GetFileHash())) != FALSE);
-	if (bResult)
+	if (bResult) {
 		m_filePointers.erase(pFile);
+		RemoveFileFromDirectoryIndex(pFile);
+	}
 	listlock.Unlock();
 
 	output->RemoveFile(pFile, bDeleted);
@@ -2199,6 +2215,56 @@ bool CSharedFileList::RemoveFile(CKnownFile *pFile, bool bDeleted)
 		MarkStartupCacheDirty();
 	}
 	return bResult;
+}
+
+void CSharedFileList::AddFileToDirectoryIndex(CKnownFile *pFile)
+{
+	if (pFile == NULL)
+		return;
+
+	m_filesBySharedDirectoryKey[MakeSharedDirectoryIndexKey(pFile->GetSharedDirectory())].push_back(pFile);
+}
+
+void CSharedFileList::RemoveFileFromDirectoryIndex(CKnownFile *pFile)
+{
+	if (pFile == NULL)
+		return;
+
+	const std::wstring strExpectedKey(MakeSharedDirectoryIndexKey(pFile->GetSharedDirectory()));
+	auto removeFromBucket = [pFile](std::vector<CKnownFile*> &rBucket) -> bool {
+		const size_t uOldSize = rBucket.size();
+		rBucket.erase(std::remove(rBucket.begin(), rBucket.end(), pFile), rBucket.end());
+		return rBucket.size() != uOldSize;
+	};
+
+	auto it = m_filesBySharedDirectoryKey.find(strExpectedKey);
+	if (it != m_filesBySharedDirectoryKey.end()) {
+		const bool bRemoved = removeFromBucket(it->second);
+		if (it->second.empty())
+			m_filesBySharedDirectoryKey.erase(it);
+		if (bRemoved)
+			return;
+	}
+
+	for (auto itBucket = m_filesBySharedDirectoryKey.begin(); itBucket != m_filesBySharedDirectoryKey.end();) {
+		removeFromBucket(itBucket->second);
+		if (itBucket->second.empty())
+			itBucket = m_filesBySharedDirectoryKey.erase(itBucket);
+		else
+			++itBucket;
+	}
+}
+
+void CSharedFileList::CopySharedFilesForDirectory(const CString &strDirectory, std::vector<CKnownFile*> &rFiles)
+{
+	rFiles.clear();
+
+	CSingleLock listlock(&m_mutWriteList, TRUE);
+	const auto it = m_filesBySharedDirectoryKey.find(MakeSharedDirectoryIndexKey(strDirectory));
+	if (it == m_filesBySharedDirectoryKey.end())
+		return;
+
+	rFiles = it->second;
 }
 
 void CSharedFileList::Reload()

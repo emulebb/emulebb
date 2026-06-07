@@ -45,11 +45,11 @@
 #include "ClientSocketLifetimeSeams.h"
 #include "SHAHashSet.h"
 #include "Log.h"
-#include "PathHelpers.h"
 #include "PortRebindPolicySeams.h"
 #include "ProtocolGuards.h"
 
 #include <new>
+#include <vector>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -59,13 +59,6 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-CString BuildSharedBrowseDirectoryKey(const CString &rstrDirectory)
-{
-	CString strKey(PathHelpers::EnsureTrailingSeparator(PathHelpers::CanonicalizePath(PathHelpers::StripExtendedLengthPrefix(rstrDirectory))));
-	strKey.MakeLower();
-	return strKey;
-}
-
 bool RejectMalformedClientTcpPacket(LPCTSTR pszOpcodeName, uint32 uSize, CUpDownClient *pClient)
 {
 	DebugLogWarning(_T("Client TCP socket: rejected malformed %s packet from %s (payload size %u)"),
@@ -914,17 +907,23 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 					if (!bSingleSharedFiles)
 						strReqDir = theApp.sharedfiles->GetDirNameByPseudo(strReqDir);
 					if (!strReqDir.IsEmpty()) {
-						const CString strReqDirKey(bSingleSharedFiles ? CString() : BuildSharedBrowseDirectoryKey(strReqDir));
-						// get all shared files from requested directory
-						for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair)) {
-							CKnownFile *cur_file = pair->value;
-							// all files not in shared directories have to be single shared files
-							if (((!bSingleSharedFiles && BuildSharedBrowseDirectoryKey(cur_file->GetSharedDirectory()) == strReqDirKey)
-								|| (bSingleSharedFiles && !theApp.sharedfiles->ShouldBeShared(cur_file->GetSharedDirectory(), NULL, false))
-								)
-								&& (!cur_file->IsLargeFile() || client->SupportsLargeFiles()))
-							{
-								list.AddTail(cur_file);
+						if (bSingleSharedFiles) {
+							// get all shared files from requested directory
+							for (const CKnownFilesMap::CPair *pair = theApp.sharedfiles->m_Files_map.PGetFirstAssoc(); pair != NULL; pair = theApp.sharedfiles->m_Files_map.PGetNextAssoc(pair)) {
+								CKnownFile *cur_file = pair->value;
+								// all files not in shared directories have to be single shared files
+								if (!theApp.sharedfiles->ShouldBeShared(cur_file->GetSharedDirectory(), NULL, false)
+									&& (!cur_file->IsLargeFile() || client->SupportsLargeFiles()))
+								{
+									list.AddTail(cur_file);
+								}
+							}
+						} else {
+							std::vector<CKnownFile*> directoryFiles;
+							theApp.sharedfiles->CopySharedFilesForDirectory(strReqDir, directoryFiles);
+							for (CKnownFile *cur_file : directoryFiles) {
+								if (cur_file != NULL && (!cur_file->IsLargeFile() || client->SupportsLargeFiles()))
+									list.AddTail(cur_file);
 							}
 						}
 					} else

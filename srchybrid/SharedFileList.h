@@ -298,6 +298,10 @@ public:
 	 */
 	void	RecordPseudoDirName(const CString &strPseudoName, const CString &strDirectoryName) { m_mapPseudoDirNames[strPseudoName] = strDirectoryName; }
 	CString	GetDirNameByPseudo(const CString &strPseudoName) const;
+	/**
+	 * @brief Copies files whose advertised shared directory matches the requested directory.
+	 */
+	void	CopySharedFilesForDirectory(const CString &strDirectory, std::vector<CKnownFile*> &rFiles);
 
 	uint64	GetDatasize(uint64 &pbytesLargest) const;
 	INT_PTR	GetCount()								{ return m_Files_map.GetCount(); }
@@ -614,9 +618,12 @@ private:
 	void	RemoveSingleSharedFileRuleKey(const CString &strFilePath);
 	void	AddSingleExcludedFileRuleKey(const CString &strFilePath);
 	void	RemoveSingleExcludedFileRuleKey(const CString &strFilePath);
+	void	AddFileToDirectoryIndex(CKnownFile *pFile);
+	void	RemoveFileFromDirectoryIndex(CKnownFile *pFile);
 
 	CKnownFilesMap m_Files_map;
 	std::unordered_set<const CKnownFile*> m_filePointers;
+	std::unordered_map<std::wstring, std::vector<CKnownFile*>> m_filesBySharedDirectoryKey;
 	CMap<CSKey, const CSKey&, bool, bool>		 m_UnsharedFiles_map;
 	CMapStringToString m_mapPseudoDirNames;
 	CPublishKeywordList *m_keywords;
