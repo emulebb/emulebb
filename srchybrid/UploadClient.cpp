@@ -986,7 +986,7 @@ void CUpDownClient::AddRequestCount(const uchar *fileid)
 void  CUpDownClient::UnBan()
 {
 	theApp.clientlist->AddTrackClient(this);
-	theApp.clientlist->RemoveBannedClient(GetIP());
+	theApp.clientlist->RemoveBannedClient(this);
 	SetUploadState(US_NONE);
 	ClearWaitStartTime();
 	theApp.emuledlg->transferwnd->ShowQueueCount(theApp.uploadqueue->GetWaitingUserCount());
@@ -1012,7 +1012,7 @@ void CUpDownClient::Ban(LPCTSTR pszReason)
 			AddDebugLogLine(false, _T("Banned: (refreshed): %s; %s"), pszReason == NULL ? _T("Aggressive behaviour") : pszReason, (LPCTSTR)DbgGetClientInfo());
 	}
 #endif
-	theApp.clientlist->AddBannedClient(GetIP());
+	theApp.clientlist->AddBannedClient(this);
 	if (theApp.uploadqueue != NULL && theApp.uploadqueue->IsOnUploadQueue(this)) {
 		// WHY: the waiting queue stores raw CUpDownClient pointers and does not own
 		// a separate lifetime token.  If a queued peer is banned, keeping that queue

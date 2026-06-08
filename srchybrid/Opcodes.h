@@ -115,7 +115,7 @@
 #define CONNECTION_LATENCY		15000		// latency for responses
 #define MINWAIT_BEFORE_DLDISPLAY_WINDOWUPDATE   SEC2MS(1)
 #define MINWAIT_BEFORE_ULDISPLAY_WINDOWUPDATE   SEC2MS(1)
-#define CLIENTBANTIME			HR2MS(2)	// 2h
+#define CLIENTBANTIME			HR2MS(4)	// 4h
 #define TRACKED_CLEANUP_TIME	HR2MS(1)	// 1 hour
 #define KEEPTRACK_TIME			HR2MS(2)	// 2h -	how long to keep track of clients which were once in the upload queue
 #define LOCALSERVERREQUESTS		SEC2MS(20)	// only one local src request during this timespan (WHERE IS THIS USED?)

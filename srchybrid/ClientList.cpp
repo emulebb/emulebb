@@ -345,10 +345,37 @@ void CClientList::AddBannedClient(uint32 dwIP)
 	m_bannedList[dwIP] = ::GetTickCount64();
 }
 
+void CClientList::AddBannedClient(const CUpDownClient *pClient)
+{
+	if (pClient == NULL)
+		return;
+	if (pClient->HasValidHash()) {
+		m_bannedHashList[CSKey(pClient->GetUserHash())] = ::GetTickCount64();
+		return;
+	}
+	AddBannedClient(pClient->GetIP());
+}
+
 bool CClientList::IsBannedClient(uint32 dwIP) const
 {
 	ULONGLONG dwBantime;
 	return m_bannedList.Lookup(dwIP, dwBantime) && (::GetTickCount64() - dwBantime < CLIENTBANTIME);
+}
+
+bool CClientList::IsBannedClient(const CUpDownClient *pClient) const
+{
+	if (pClient == NULL)
+		return false;
+
+	ULONGLONG dwBantime;
+	if (pClient->HasValidHash()
+		&& m_bannedHashList.Lookup(CSKey(pClient->GetUserHash()), dwBantime)
+		&& (::GetTickCount64() - dwBantime < CLIENTBANTIME))
+	{
+		return true;
+	}
+
+	return IsBannedClient(pClient->GetIP());
 }
 
 void CClientList::RemoveBannedClient(uint32 dwIP)
@@ -356,9 +383,19 @@ void CClientList::RemoveBannedClient(uint32 dwIP)
 	m_bannedList.RemoveKey(dwIP);
 }
 
+void CClientList::RemoveBannedClient(const CUpDownClient *pClient)
+{
+	if (pClient == NULL)
+		return;
+	if (pClient->HasValidHash())
+		m_bannedHashList.RemoveKey(CSKey(pClient->GetUserHash()));
+	RemoveBannedClient(pClient->GetIP());
+}
+
 void CClientList::RemoveAllBannedClients()
 {
 	m_bannedList.RemoveAll();
+	m_bannedHashList.RemoveAll();
 }
 
 
@@ -495,6 +532,13 @@ void CClientList::Process()
 			m_bannedList.GetNextAssoc(pos, nKey, dwBantime);
 			if (curTick - dwBantime >= CLIENTBANTIME)
 				RemoveBannedClient(nKey);
+		}
+		for (POSITION pos = m_bannedHashList.GetStartPosition(); pos != NULL;) {
+			CSKey key;
+			ULONGLONG dwBantime;
+			m_bannedHashList.GetNextAssoc(pos, key, dwBantime);
+			if (curTick - dwBantime >= CLIENTBANTIME)
+				m_bannedHashList.RemoveKey(key);
 		}
 
 		const ULONGLONG uIntervalKeepAlive = MIN2MS(thePrefs.GetTCPErrorFlooderIntervalMinutes());

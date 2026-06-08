@@ -1410,8 +1410,8 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 			return true;
 		}
 
-		// for safety: check again whether that IP is banned
-		if (theApp.clientlist->IsBannedClient(uClientIP)) {
+		// for safety: check again whether that IP or client identity is banned
+		if (theApp.clientlist->IsBannedClient(this) || theApp.clientlist->IsBannedClient(uClientIP)) {
 			if (thePrefs.GetLogBannedClients())
 				AddDebugLogLine(false, _T("Refused to connect to banned client %s"), (LPCTSTR)DbgGetClientInfo());
 			if (Disconnected(_T("Banned IP")))
@@ -2098,7 +2098,7 @@ void CUpDownClient::ResetFileStatusInfo()
 
 bool CUpDownClient::IsBanned() const
 {
-	return theApp.clientlist->IsBannedClient(GetIP());
+	return theApp.clientlist->IsBannedClient(this);
 }
 
 void CUpDownClient::SendPreviewRequest(const CAbstractFile &rForFile)

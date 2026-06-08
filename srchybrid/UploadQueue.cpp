@@ -1229,6 +1229,53 @@ void CUploadQueue::SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGL
 	m_noRequestUploadRetryCooldownByIP[dwCooldownIP] = state;
 }
 
+CUploadQueue::NoRequestRepeatHashKey CUploadQueue::GetNoRequestRepeatHashKey(const CUpDownClient *client)
+{
+	NoRequestRepeatHashKey key = {};
+	key.aucHash.fill(0);
+	if (client != NULL && client->HasValidHash())
+		md4cpy(key.aucHash.data(), client->GetUserHash());
+	return key;
+}
+
+CUploadQueue::NoRequestRepeatPenalty CUploadQueue::TrackNoRequestRepeatOffender(CUpDownClient *client, ULONGLONG curTick, UINT uBaseCooldownSeconds)
+{
+	NoRequestRepeatPenalty penalty = {};
+	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
+	const ULONGLONG ullWindowUntil = curTick + SEC2MS(kNoRequestRepeatStrikeWindowSeconds);
+	if (client != NULL && client->HasValidHash()) {
+		penalty.bHashScoped = true;
+		const NoRequestRepeatHashKey key = GetNoRequestRepeatHashKey(client);
+		NoRequestRepeatOffenderState &state = m_noRequestRepeatOffendersByHash[key];
+		if (state.ullWindowUntil <= curTick)
+			state.uStrikes = 0;
+		state.ullWindowUntil = ullWindowUntil;
+		penalty.uStrikes = ++state.uStrikes;
+
+		if (dwCooldownIP != 0) {
+			NoRequestRepeatIPHashState &ipHashState = m_noRequestRepeatHashesByIP[dwCooldownIP];
+			if (ipHashState.ullWindowUntil <= curTick)
+				ipHashState.hashKeys.clear();
+			ipHashState.ullWindowUntil = ullWindowUntil;
+			ipHashState.hashKeys.insert(key);
+			penalty.uDistinctIPHashes = static_cast<UINT>(ipHashState.hashKeys.size());
+			penalty.bShouldIPBan = penalty.uDistinctIPHashes >= kNoRequestRepeatHashRotationBanThreshold;
+		}
+	} else if (dwCooldownIP != 0) {
+		NoRequestRepeatOffenderState &state = m_noRequestRepeatOffendersByIP[dwCooldownIP];
+		if (state.ullWindowUntil <= curTick)
+			state.uStrikes = 0;
+		state.ullWindowUntil = ullWindowUntil;
+		penalty.uStrikes = ++state.uStrikes;
+	}
+
+	penalty.bShouldBan = ShouldBanNoRequestRepeatOffender(penalty.uStrikes);
+	penalty.uCooldownSeconds = penalty.bShouldBan || penalty.bShouldIPBan
+		? 0
+		: GetNoRequestRepeatCooldownSeconds(uBaseCooldownSeconds, penalty.uStrikes);
+	return penalty;
+}
+
 bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppszInstrumentationReason)
 {
 	if (ppszInstrumentationReason != NULL)
@@ -1352,6 +1399,24 @@ void CUploadQueue::PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick)
 		else
 			++itCooldown;
 	}
+	for (std::map<NoRequestRepeatHashKey, NoRequestRepeatOffenderState>::iterator itOffender = m_noRequestRepeatOffendersByHash.begin(); itOffender != m_noRequestRepeatOffendersByHash.end();) {
+		if (itOffender->second.ullWindowUntil <= curTick)
+			itOffender = m_noRequestRepeatOffendersByHash.erase(itOffender);
+		else
+			++itOffender;
+	}
+	for (std::map<uint32, NoRequestRepeatOffenderState>::iterator itOffender = m_noRequestRepeatOffendersByIP.begin(); itOffender != m_noRequestRepeatOffendersByIP.end();) {
+		if (itOffender->second.ullWindowUntil <= curTick)
+			itOffender = m_noRequestRepeatOffendersByIP.erase(itOffender);
+		else
+			++itOffender;
+	}
+	for (std::map<uint32, NoRequestRepeatIPHashState>::iterator itIPHashes = m_noRequestRepeatHashesByIP.begin(); itIPHashes != m_noRequestRepeatHashesByIP.end();) {
+		if (itIPHashes->second.ullWindowUntil <= curTick)
+			itIPHashes = m_noRequestRepeatHashesByIP.erase(itIPHashes);
+		else
+			++itIPHashes;
+	}
 }
 
 bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG curTick, CString *pstrReason)
@@ -1438,13 +1503,56 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			const UINT uConfiguredCooldownSeconds = thePrefs.GetSlowUploadCooldownSeconds();
 			const bool bRecentNoRequestRecycle = HasRecentNoRequestUploadRetryCooldown(client, curTick);
 			const uint32 uBudgetBytesPerSec = GetConfiguredUploadBudgetBytesPerSec();
-			const UINT uCooldownSeconds = GetNoRequestUploadRetryCooldownSeconds(
+			const UINT uBaseCooldownSeconds = GetNoRequestUploadRetryCooldownSeconds(
 				uConfiguredCooldownSeconds,
 				bRecentNoRequestRecycle,
 				bProductiveNoRequestRecycle,
 				GetNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec),
 				GetProductiveNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec),
 				GetRepeatedNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec));
+			UINT uCooldownSeconds = uBaseCooldownSeconds;
+			NoRequestRepeatPenalty repeatPenalty = {};
+			if (!bProductiveNoRequestRecycle) {
+				repeatPenalty = TrackNoRequestRepeatOffender(client, curTick, uBaseCooldownSeconds);
+				if (repeatPenalty.uStrikes != 0 && !repeatPenalty.bShouldBan && !repeatPenalty.bShouldIPBan)
+					uCooldownSeconds = repeatPenalty.uCooldownSeconds;
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
+				CString strRepeatEvidence;
+				strRepeatEvidence.Format(
+					_T("{\"strikes\":%u,\"threshold\":%u,\"cooldown_seconds\":%u,\"base_cooldown_seconds\":%u,\"window_seconds\":%u,\"key_type\":\"%s\",\"distinct_ip_hashes\":%u}"),
+					repeatPenalty.uStrikes,
+					kNoRequestRepeatBanThreshold,
+					uCooldownSeconds,
+					uBaseCooldownSeconds,
+					kNoRequestRepeatStrikeWindowSeconds,
+					repeatPenalty.bHashScoped ? _T("hash") : _T("ip"),
+					repeatPenalty.uDistinctIPHashes);
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(
+					repeatPenalty.bShouldBan || repeatPenalty.bShouldIPBan ? _T("upload_no_request_repeat_ban") : _T("upload_no_request_repeat_cooldown"),
+					repeatPenalty.bShouldBan || repeatPenalty.bShouldIPBan ? _T("high") : _T("medium"),
+					client,
+					repeatPenalty.bShouldBan || repeatPenalty.bShouldIPBan ? _T("ban") : _T("cooldown"),
+					repeatPenalty.bShouldIPBan ? _T("Repeated zero-request upload slot abuse with rotating hashes") : _T("Repeated zero-request upload slot abuse"),
+					theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
+					strRepeatEvidence);
+#endif
+				if (repeatPenalty.bShouldIPBan) {
+					const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
+					if (dwCooldownIP != 0)
+						theApp.clientlist->AddBannedClient(dwCooldownIP);
+				}
+				if (repeatPenalty.bShouldBan || repeatPenalty.bShouldIPBan) {
+					client->Ban(repeatPenalty.bShouldIPBan
+						? _T("Repeated zero-request upload slot abuse with rotating hashes")
+						: _T("Repeated zero-request upload slot abuse"));
+					if (pstrReason != NULL)
+						*pstrReason = repeatPenalty.bShouldIPBan
+							? _T("Repeated zero-request upload slot abuse with rotating hashes")
+							: _T("Repeated zero-request upload slot abuse");
+					client->ResetSlowUploadTracking();
+					return true;
+				}
+			}
 			const ULONGLONG ullCooldownUntil = curTick + SEC2MS(uCooldownSeconds);
 			const ULONGLONG ullTrackUntil = curTick + SEC2MS(GetNoRequestUploadRetryTrackSeconds(uCooldownSeconds, uConfiguredCooldownSeconds));
 			client->SetSlowUploadCooldownUntil(ullCooldownUntil);
@@ -2085,8 +2193,11 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 	// underfill even when the waiting list is empty or below the normal cap.
 	const ULONGLONG curTick = ::GetTickCount64();
 	const bool bShouldTrackSlowUploadSlots = ShouldTrackSlowUploadSlots();
-	if (ShouldRecycleIdleUploadSlot(client, curTick, pstrReason))
+	if (ShouldRecycleIdleUploadSlot(client, curTick, pstrReason)) {
+		if (pbRequeue != NULL && client->IsBanned())
+			*pbRequeue = false;
 		return true;
+	}
 
 	if (waitinglist.IsEmpty())
 		return false;

@@ -15,6 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
+#include <array>
 #include <atomic>
 #include <map>
 #include <set>
@@ -182,6 +183,30 @@ private:
 		bool bQueuedRequestClearUsed;
 		bool bProductiveRecycle;
 	};
+	struct NoRequestRepeatHashKey
+	{
+		std::array<uchar, 16> aucHash;
+		bool operator<(const NoRequestRepeatHashKey &other) const	{ return aucHash < other.aucHash; }
+	};
+	struct NoRequestRepeatOffenderState
+	{
+		ULONGLONG ullWindowUntil;
+		UINT uStrikes;
+	};
+	struct NoRequestRepeatIPHashState
+	{
+		ULONGLONG ullWindowUntil;
+		std::set<NoRequestRepeatHashKey> hashKeys;
+	};
+	struct NoRequestRepeatPenalty
+	{
+		UINT uStrikes;
+		UINT uCooldownSeconds;
+		UINT uDistinctIPHashes;
+		bool bHashScoped;
+		bool bShouldBan;
+		bool bShouldIPBan;
+	};
 	enum UploadRetryCooldownReason
 	{
 		uploadRetryCooldownUnknown,
@@ -223,6 +248,8 @@ private:
 	void	SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, UploadRetryCooldownReason eReason);
 	bool	HasRecentNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick) const;
 	void	SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, ULONGLONG ullTrackUntil, bool bProductiveRecycle);
+	static NoRequestRepeatHashKey GetNoRequestRepeatHashKey(const CUpDownClient *client);
+	NoRequestRepeatPenalty TrackNoRequestRepeatOffender(CUpDownClient *client, ULONGLONG curTick, UINT uBaseCooldownSeconds);
 	void	PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick);
 	void	UpdateMaxClientScore();
 	uint32	GetMaxClientScore() const						{ return m_imaxscore; }
@@ -269,6 +296,9 @@ private:
 	float	m_fAverageCombinedFilePrioAndCredit;
 	std::map<uint32, UploadRetryCooldownState> m_uploadRetryCooldownByIP;
 	std::map<uint32, NoRequestUploadRetryCooldownState> m_noRequestUploadRetryCooldownByIP;
+	std::map<NoRequestRepeatHashKey, NoRequestRepeatOffenderState> m_noRequestRepeatOffendersByHash;
+	std::map<uint32, NoRequestRepeatOffenderState> m_noRequestRepeatOffendersByIP;
+	std::map<uint32, NoRequestRepeatIPHashState> m_noRequestRepeatHashesByIP;
 	ULONGLONG m_ullBroadbandUnderfillSince;
 	INT_PTR	m_iHighestNumberOfFullyActivatedSlotsSinceLastCall;
 	INT_PTR	m_MaxActiveClients;

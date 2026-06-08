@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 #include "DeadSourceList.h"
+#include "MapKey.h"
 
 class CClientReqSocket;
 class CPartFile;
@@ -110,9 +111,12 @@ public:
 
 	// Banned clients
 	void	AddBannedClient(uint32 dwIP);
+	void	AddBannedClient(const CUpDownClient *pClient);
 	bool	IsBannedClient(uint32 dwIP) const;
+	bool	IsBannedClient(const CUpDownClient *pClient) const;
 	void	RemoveBannedClient(uint32 dwIP);
-	INT_PTR	GetBannedCount() const						{ return m_bannedList.GetCount(); }
+	void	RemoveBannedClient(const CUpDownClient *pClient);
+	INT_PTR	GetBannedCount() const						{ return m_bannedList.GetCount() + m_bannedHashList.GetCount(); }
 	void	RemoveAllBannedClients();
 
 	// Tracked clients
@@ -164,6 +168,7 @@ private:
 	CUpDownClientPtrList list;
 	CUpDownClientPtrList m_KadList;
 	CMap<uint32, uint32, ULONGLONG, ULONGLONG> m_bannedList;
+	CMap<CSKey, const CSKey&, ULONGLONG, ULONGLONG> m_bannedHashList;
 	typedef CMap<uint32, uint32, CDeletedClient*, CDeletedClient*> CDeletedClientMap;
 	CDeletedClientMap m_trackedClientsMap;
 	typedef CMap<uint32, uint32, TCPERRORFLOODERSTATE, const TCPERRORFLOODERSTATE&> CTCPErrorFlooderMap;
