@@ -2829,6 +2829,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Kilépés a eMuleBB-ból, mert a VPN Guard kötési felület már nem érhető el."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "A VPN Guard engedélyezve van, de a futásidejű megfigyelés nincs élesítve; A P2P csatlakozási parancsok le vannak tiltva ebben a munkamenetben."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Leválasztás kérése: készlet eMule lágy leválasztással; az aktív átviteli várólisták és a figyelő socketek nincsenek visszaállítva."
+    IDS_BAN_BY_HASH                                            "Tiltás &hash alapján"
+    IDS_BAN_BY_IP                                              "Tiltás &IP alapján"
 END
 // eMuleBB managed translation block: end
 

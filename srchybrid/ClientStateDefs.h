@@ -25,6 +25,13 @@ enum EUploadState : uint8
 	US_NONE
 };
 
+enum ClientBanScope : uint8
+{
+	clientBanScopeHash,
+	clientBanScopeIP,
+	clientBanScopeBoth
+};
+
 enum EDownloadState : uint8
 {
 	DS_DOWNLOADING,

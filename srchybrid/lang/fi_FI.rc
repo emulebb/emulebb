@@ -2795,6 +2795,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Poistutaan eMuleBB:sta, koska VPN Guard -sidosliittymä ei ole enää käytettävissä."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard on käytössä, mutta ajonaikainen valvonta ei ole viritetty; P2P-yhteyskomennot on estetty tälle istunnolle."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Katkaiseminen pyydetään: käyttämällä varastossa eMule pehmeä katkaisu; aktiivisia siirtojonoja ja kuuntelijapistokkeita ei ole nollattu."
+    IDS_BAN_BY_HASH                                            "Kiellä &hashin mukaan"
+    IDS_BAN_BY_IP                                              "Kiellä &IP:n mukaan"
 END
 // eMuleBB managed translation block: end
 

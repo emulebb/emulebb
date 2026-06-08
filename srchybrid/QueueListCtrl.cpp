@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "DisplayRefreshSeams.h"
+#include "ClientBanMenuSeams.h"
 #include "QueueListCtrl.h"
 #include "UpDownClient.h"
 #include "MenuCmds.h"
@@ -759,7 +760,8 @@ void CQueueListCtrl::OnContextMenu(CWnd*, CPoint point)
 	ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && client->IsFriend()) ? MF_ENABLED : MF_GRAYED), MP_REMOVEFRIEND, GetResString(IDS_REMOVEFRIEND), _T("DELETEFRIEND"));
 	ClientMenu.AppendMenu(MF_STRING | (is_ed2k ? MF_ENABLED : MF_GRAYED), MP_MESSAGE, GetResString(IDS_SEND_MSG), _T("SENDMESSAGE"));
 	ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && client->GetViewSharedFilesSupport()) ? MF_ENABLED : MF_GRAYED), MP_SHOWLIST, GetResString(IDS_VIEWFILES), _T("VIEWFILES"));
-	ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && !client->IsBanned()) ? MF_ENABLED : MF_GRAYED), MP_BAN, GetResString(IDS_BAN));
+	ClientMenu.AppendMenu(MF_STRING | (ClientBanMenuSeams::CanBanByHash(client) ? MF_ENABLED : MF_GRAYED), MP_BAN, GetResString(IDS_BAN_BY_HASH));
+	ClientMenu.AppendMenu(MF_STRING | (ClientBanMenuSeams::CanBanByIP(client) ? MF_ENABLED : MF_GRAYED), MP_BAN_BY_IP, GetResString(IDS_BAN_BY_IP));
 	ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && client->IsBanned()) ? MF_ENABLED : MF_GRAYED), MP_UNBAN, GetResString(IDS_UNBAN));
 	if (Kademlia::CKademlia::IsRunning() && !Kademlia::CKademlia::IsConnected())
 		ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && client->GetKadPort() != 0 && client->GetKadVersion() >= KADEMLIA_VERSION2_47a) ? MF_ENABLED : MF_GRAYED), MP_BOOT, GetResString(IDS_BOOTSTRAP));
@@ -820,8 +822,14 @@ BOOL CQueueListCtrl::OnCommand(WPARAM wParam, LPARAM)
 			}
 			break;
 		case MP_BAN:
-			if (client && !client->IsBanned()) {
-				const_cast<CUpDownClient*>(client)->Ban(GetResString(IDS_BAN_ARBITRARY));
+			if (ClientBanMenuSeams::CanBanByHash(client)) {
+				ClientBanMenuSeams::BanByHash(const_cast<CUpDownClient*>(client), GetResString(IDS_BAN_BY_HASH));
+				Update(iSel);
+			}
+			break;
+		case MP_BAN_BY_IP:
+			if (ClientBanMenuSeams::CanBanByIP(client)) {
+				ClientBanMenuSeams::BanByIP(const_cast<CUpDownClient*>(client), GetResString(IDS_BAN_BY_IP));
 				Update(iSel);
 			}
 			break;

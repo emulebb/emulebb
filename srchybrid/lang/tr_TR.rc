@@ -2825,6 +2825,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "VPN Guard bağlama arayüzü artık mevcut olmadığından eMuleBB'dan çıkılıyor."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard etkinleştirildi ancak çalışma zamanı izleme etkinleştirilmedi; Bu oturum için P2P bağlantı komutları engellendi."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Bağlantının kesilmesi talep edildi: stok eMule yumuşak bağlantı kesme kullanılarak; etkin aktarım kuyrukları ve dinleyici yuvaları donanımdan sıfırlanmaz."
+    IDS_BAN_BY_HASH                                            "&Hash ile yasakla"
+    IDS_BAN_BY_IP                                              "&IP ile yasakla"
 END
 // eMuleBB managed translation block: end
 

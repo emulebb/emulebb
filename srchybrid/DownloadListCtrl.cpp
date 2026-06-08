@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "FakeFileDetector.h"
 #include "ClientLibraryBrowseDisplaySeams.h"
+#include "ClientBanMenuSeams.h"
 #include "DownloadProgressBarSeams.h"
 #include "DownloadListKeyboardShortcutsSeams.h"
 #include "DownloadPriorityShortcutsSeams.h"
@@ -2087,7 +2088,8 @@ void CDownloadListCtrl::OnContextMenu(CWnd*, CPoint point)
 			}
 			ClientMenu.AppendMenu(MF_POPUP | (client ? MF_ENABLED : MF_GRAYED), (UINT_PTR)CopyMenu.m_hMenu, GetResString(IDS_COPY));
 			ClientMenu.AppendMenu(MF_SEPARATOR);
-			ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && !client->IsBanned()) ? MF_ENABLED : MF_GRAYED), MP_BAN, GetResString(IDS_BAN));
+			ClientMenu.AppendMenu(MF_STRING | (ClientBanMenuSeams::CanBanByHash(client) ? MF_ENABLED : MF_GRAYED), MP_BAN, GetResString(IDS_BAN_BY_HASH));
+			ClientMenu.AppendMenu(MF_STRING | (ClientBanMenuSeams::CanBanByIP(client) ? MF_ENABLED : MF_GRAYED), MP_BAN_BY_IP, GetResString(IDS_BAN_BY_IP));
 			ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && client->IsBanned()) ? MF_ENABLED : MF_GRAYED), MP_UNBAN, GetResString(IDS_UNBAN));
 			ClientMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_FIND, GetResString(IDS_FIND), _T("Search"));
 
@@ -2671,8 +2673,14 @@ BOOL CDownloadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 					UpdateItem(client);
 				break;
 			case MP_BAN:
-				if (!client->IsBanned()) {
-					client->Ban(_T("Manual download-source ban"));
+				if (ClientBanMenuSeams::CanBanByHash(client)) {
+					ClientBanMenuSeams::BanByHash(client, _T("Manual download-source hash ban"));
+					UpdateItem(client);
+				}
+				break;
+			case MP_BAN_BY_IP:
+				if (ClientBanMenuSeams::CanBanByIP(client)) {
+					ClientBanMenuSeams::BanByIP(client, _T("Manual download-source IP ban"));
 					UpdateItem(client);
 				}
 				break;

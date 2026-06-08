@@ -2818,6 +2818,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Ħruġ minn eMuleBB minħabba li l-interface tal-bind tal-VPN Guard m'għadhiex disponibbli."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard huwa attivat iżda l-monitoraġġ tar-runtime mhuwiex armat; Kmandi tal-konnessjoni P2P huma mblukkati għal din is-sessjoni."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Skonnettja mitluba: bl-użu ta 'stokk eMule skonnettjar artab; kjuwijiet ta 'trasferiment attivi u sokits tas-semmiegħa mhumiex hard-reset."
+    IDS_BAN_BY_HASH                                            "Ipprojbixxi skont il-&hash"
+    IDS_BAN_BY_IP                                              "Ipprojbixxi skont l-&IP"
 END
 // eMuleBB managed translation block: end
 

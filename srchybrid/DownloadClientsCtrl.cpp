@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "DisplayRefreshSeams.h"
 #include "ClientLibraryBrowseDisplaySeams.h"
+#include "ClientBanMenuSeams.h"
 #include "emuledlg.h"
 #include "DownloadClientsCtrl.h"
 #include "DownloadProgressBarSeams.h"
@@ -502,7 +503,8 @@ void CDownloadClientsCtrl::OnContextMenu(CWnd*, CPoint point)
 	CopyMenu.AppendMenu(MF_STRING | (client ? MF_ENABLED : MF_GRAYED), MP_COPY_CLIENT_SUMMARY, GetResString(IDS_COPY_CLIENT_SUMMARY));
 	ClientMenu.AppendMenu(MF_POPUP | (client ? MF_ENABLED : MF_GRAYED), (UINT_PTR)CopyMenu.m_hMenu, GetResString(IDS_COPY));
 	ClientMenu.AppendMenu(MF_SEPARATOR);
-	ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && !client->IsBanned()) ? MF_ENABLED : MF_GRAYED), MP_BAN, GetResString(IDS_BAN));
+	ClientMenu.AppendMenu(MF_STRING | (ClientBanMenuSeams::CanBanByHash(client) ? MF_ENABLED : MF_GRAYED), MP_BAN, GetResString(IDS_BAN_BY_HASH));
+	ClientMenu.AppendMenu(MF_STRING | (ClientBanMenuSeams::CanBanByIP(client) ? MF_ENABLED : MF_GRAYED), MP_BAN_BY_IP, GetResString(IDS_BAN_BY_IP));
 	ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && client->IsBanned()) ? MF_ENABLED : MF_GRAYED), MP_UNBAN, GetResString(IDS_UNBAN));
 	ClientMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_FIND, AddMenuShortcutLabel(GetResString(IDS_FIND), _T("Ctrl+F")), _T("Search"));
 	GetPopupMenuPos(*this, point);
@@ -536,8 +538,14 @@ BOOL CDownloadClientsCtrl::OnCommand(WPARAM wParam, LPARAM)
 				Update(iSel);
 			break;
 		case MP_BAN:
-			if (client && !client->IsBanned()) {
-				const_cast<CUpDownClient*>(client)->Ban(_T("Manual download-client ban"));
+			if (ClientBanMenuSeams::CanBanByHash(client)) {
+				ClientBanMenuSeams::BanByHash(const_cast<CUpDownClient*>(client), _T("Manual download-client hash ban"));
+				Update(iSel);
+			}
+			break;
+		case MP_BAN_BY_IP:
+			if (ClientBanMenuSeams::CanBanByIP(client)) {
+				ClientBanMenuSeams::BanByIP(const_cast<CUpDownClient*>(client), _T("Manual download-client IP ban"));
 				Update(iSel);
 			}
 			break;

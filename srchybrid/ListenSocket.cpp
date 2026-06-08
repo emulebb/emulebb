@@ -411,6 +411,16 @@ bool CClientReqSocket::HasUploadDiskPacketDeliveryRefs() const
 	return ::InterlockedCompareExchange(const_cast<volatile LONG*>(&m_nUploadDiskPacketDeliveryRefs), 0, 0) > 0;
 }
 
+bool CClientReqSocket::DisconnectIfBannedAfterHello(LPCTSTR pszStage, LPCTSTR pszDisconnectReason)
+{
+	if (client == NULL || !client->IsBanned())
+		return false;
+	if (thePrefs.GetLogBannedClients())
+		AddDebugLogLine(false, _T("Refused banned client after %s %s"), pszStage, (LPCTSTR)client->DbgGetClientInfo());
+	Disconnect(pszDisconnectReason);
+	return true;
+}
+
 void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcode)
 {
 	switch (opcode) {
@@ -421,6 +431,9 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 			DebugRecv("OP_HelloAnswer", client);
 			Debug(_T("  %s\n"), (LPCTSTR)client->DbgGetClientInfo());
 		}
+
+		if (DisconnectIfBannedAfterHello(_T("hello answer"), _T("Banned client after hello answer")))
+			return;
 
 		// start secure identification, if
 		//  - we have received OP_EMULEINFO and OP_HELLOANSWER (old eMule)
@@ -476,6 +489,9 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 				ReleaseOwnedObjectIfMatched(pOwnedClient, client);
 				client->SetCommentDirty();
 			}
+
+			if (DisconnectIfBannedAfterHello(_T("hello"), _T("Banned client after hello")))
+				return;
 
 			client->QueueDisplayUpdate(DISPLAY_REFRESH_CLIENT_LIST);
 

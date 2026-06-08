@@ -249,7 +249,7 @@ public:
 	void			SendCommentInfo(/*const */CKnownFile *file);
 	void			AddRequestCount(const uchar *fileid);
 	void			UnBan();
-	void			Ban(LPCTSTR pszReason = NULL);
+	void			Ban(LPCTSTR pszReason = NULL, ClientBanScope eScope = clientBanScopeHash);
 	UINT			GetAskedCount() const							{ return m_cAsked; }
 	void			IncrementAskedCount()							{ ++m_cAsked; }
 	void			SetAskedCount(UINT m_cInAsked)					{ m_cAsked = m_cInAsked; }

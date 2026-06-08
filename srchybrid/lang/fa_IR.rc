@@ -2791,6 +2791,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "خروج از eMuleBB زیرا رابط اتصال VPN Guard دیگر در دسترس نیست."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard فعال است اما نظارت بر زمان اجرا مسلح نیست. دستورات اتصال P2P برای این جلسه مسدود شده است."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "قطع اتصال درخواستی: با استفاده از استوک eMule قطع نرم. صف های انتقال فعال و سوکت های شنونده هارد ریست نمی شوند."
+    IDS_BAN_BY_HASH                                            "ممنوع کردن بر اساس &هش"
+    IDS_BAN_BY_IP                                              "ممنوع کردن بر اساس &IP"
 END
 // eMuleBB managed translation block: end
 

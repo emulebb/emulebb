@@ -456,6 +456,7 @@
     <ClInclude Include="CatDialog.h" />
     <ClInclude Include="ChatSelector.h" />
     <ClInclude Include="ChatWnd.h" />
+    <ClInclude Include="ClientBanMenuSeams.h" />
     <ClInclude Include="ClientCredits.h" />
     <ClInclude Include="ClientDetailDialog.h" />
     <ClInclude Include="ClientList.h" />

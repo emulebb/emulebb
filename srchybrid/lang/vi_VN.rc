@@ -2820,6 +2820,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Đang thoát eMuleBB vì giao diện liên kết VPN Guard không còn khả dụng."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard được bật nhưng tính năng giám sát thời gian chạy không được trang bị; Các lệnh kết nối P2P bị chặn trong phiên này."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Yêu cầu ngắt kết nối: sử dụng ngắt kết nối mềm stock eMule; hàng đợi truyền đang hoạt động và ổ cắm trình nghe không được thiết lập lại cứng."
+    IDS_BAN_BY_HASH                                            "Cấm theo &hash"
+    IDS_BAN_BY_IP                                              "Cấm theo &IP"
 END
 // eMuleBB managed translation block: end
 

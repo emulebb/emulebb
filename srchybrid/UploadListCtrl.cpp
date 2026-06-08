@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "DisplayRefreshSeams.h"
 #include "ClientLibraryBrowseDisplaySeams.h"
+#include "ClientBanMenuSeams.h"
 #include "UploadListCtrl.h"
 #include "TransferWnd.h"
 #include "TransferDlg.h"
@@ -909,7 +910,8 @@ void CUploadListCtrl::OnContextMenu(CWnd*, CPoint point)
 	CopyMenu.AppendMenu(MF_STRING | (bCanOpenFile ? MF_ENABLED : MF_GRAYED), MP_COPY_FILE_PATH, GetResString(IDS_COPY_FILE_PATH));
 	CopyMenu.AppendMenu(MF_STRING | (bCanOpenFile ? MF_ENABLED : MF_GRAYED), MP_COPY_FOLDER_PATH, GetResString(IDS_COPY_FOLDER_PATH));
 	ClientMenu.AppendMenu(MF_POPUP | (client ? MF_ENABLED : MF_GRAYED), (UINT_PTR)CopyMenu.m_hMenu, GetResString(IDS_COPY));
-	ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && !client->IsBanned()) ? MF_ENABLED : MF_GRAYED), MP_BAN, GetResString(IDS_BAN));
+	ClientMenu.AppendMenu(MF_STRING | (ClientBanMenuSeams::CanBanByHash(client) ? MF_ENABLED : MF_GRAYED), MP_BAN, GetResString(IDS_BAN_BY_HASH));
+	ClientMenu.AppendMenu(MF_STRING | (ClientBanMenuSeams::CanBanByIP(client) ? MF_ENABLED : MF_GRAYED), MP_BAN_BY_IP, GetResString(IDS_BAN_BY_IP));
 	ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && client->IsBanned()) ? MF_ENABLED : MF_GRAYED), MP_UNBAN, GetResString(IDS_UNBAN));
 	if (Kademlia::CKademlia::IsRunning() && !Kademlia::CKademlia::IsConnected())
 		ClientMenu.AppendMenu(MF_STRING | ((is_ed2k && client->GetKadPort() && client->GetKadVersion() >= KADEMLIA_VERSION2_47a) ? MF_ENABLED : MF_GRAYED), MP_BOOT, GetResString(IDS_BOOTSTRAP));
@@ -954,8 +956,14 @@ BOOL CUploadListCtrl::OnCommand(WPARAM wParam, LPARAM)
 			}
 			break;
 		case MP_BAN:
-			if (client && !client->IsBanned()) {
-				const_cast<CUpDownClient*>(client)->Ban(GetResString(IDS_BAN_ARBITRARY));
+			if (ClientBanMenuSeams::CanBanByHash(client)) {
+				ClientBanMenuSeams::BanByHash(const_cast<CUpDownClient*>(client), GetResString(IDS_BAN_BY_HASH));
+				Update(iSel);
+			}
+			break;
+		case MP_BAN_BY_IP:
+			if (ClientBanMenuSeams::CanBanByIP(client)) {
+				ClientBanMenuSeams::BanByIP(const_cast<CUpDownClient*>(client), GetResString(IDS_BAN_BY_IP));
 				Update(iSel);
 			}
 			break;

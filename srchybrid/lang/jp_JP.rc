@@ -2829,6 +2829,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "VPN Guard バインド インターフェイスが使用できなくなったため、eMuleBB を終了します。"
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard は有効ですが、ランタイム監視は有効になっていません。 P2P 接続コマンドは、このセッションではブロックされます。"
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "切断要求: 純正 eMule ソフト切断を使用。アクティブな転送キューとリスナー ソケットはハード リセットされません。"
+    IDS_BAN_BY_HASH                                            "&ハッシュで禁止"
+    IDS_BAN_BY_IP                                              "&IPで禁止"
 END
 // eMuleBB managed translation block: end
 

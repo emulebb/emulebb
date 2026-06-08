@@ -81,6 +81,7 @@ protected:
 	void	ProcessExtPacket(const BYTE *packet, uint32 size, UINT opcode, UINT uRawSize);
 	void	PacketToDebugLogLine(LPCTSTR protocol, const uchar *packet, uint32 size, UINT opcode);
 	void	SetConState(SocketState val);
+	bool	DisconnectIfBannedAfterHello(LPCTSTR pszStage, LPCTSTR pszDisconnectReason);
 
 	ULONGLONG timeout_timer;
 	ULONGLONG deltimer;

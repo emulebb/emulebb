@@ -2790,6 +2790,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "eMuleBB دىن چېكىنىدۇ ، چۈنكى VPN قوغدىغۇچى باغلاش كۆرۈنمە يۈزى ئەمدى يوق."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard قوزغىتىلغان ، ئەمما ئىجرا ۋاقتىنى نازارەت قىلىش قوراللانمىغان. بۇ يىغىن ئۈچۈن P2P ئۇلىنىش بۇيرۇقلىرى چەكلەنگەن."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "تەلەپ قىلىنغان ئۈزۈشنى تەلەپ قىلىڭ: پاي eMule يۇمشاق دېتالنى ئۈزۈش; ئاكتىپ يۆتكەش ئۆچرەتلىرى ۋە ئۈندىدار ئېغىزى قاتتىق ئەسلىگە كەلمەيدۇ."
+    IDS_BAN_BY_HASH                                            "&Hash بويىچە چەكلە"
+    IDS_BAN_BY_IP                                              "&IP بويىچە چەكلە"
 END
 // eMuleBB managed translation block: end
 

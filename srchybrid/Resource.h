@@ -2393,6 +2393,8 @@
 #define IDS_COPY_HASH                   1699
 #define IDS_BAN                         1700
 #define IDS_BAN_ARBITRARY               1701
+#define IDS_BAN_BY_HASH                 1717
+#define IDS_BAN_BY_IP                   1718
 #define IDS_COPY_CLIENT_IP              1739
 #define IDS_COPY_USER_HASH              1740
 #define IDS_COPY_CLIENT_SUMMARY         1741

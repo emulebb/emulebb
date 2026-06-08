@@ -2817,6 +2817,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "الخروج من eMuleBB لأن واجهة ربط VPN Guard لم تعد متوفرة."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "تم تمكين VPN Guard ولكن مراقبة وقت التشغيل غير مفعلة؛ تم حظر أوامر اتصال P2P لهذه الجلسة."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "قطع الاتصال المطلوب: باستخدام قطع الاتصال الناعم eMule؛ لا تتم إعادة ضبط قوائم انتظار النقل النشطة ومآخذ المستمع."
+    IDS_BAN_BY_HASH                                            "حظر حسب ال&هاش"
+    IDS_BAN_BY_IP                                              "حظر حسب &IP"
 END
 // eMuleBB managed translation block: end
 

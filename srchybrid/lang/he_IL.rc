@@ -2819,6 +2819,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "יוצא מ-eMuleBB מכיוון שממשק VPN Guard לא זמין עוד."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard מופעל אך ניטור זמן הריצה אינו מופעל; פקודות חיבור P2P חסומות עבור הפעלה זו."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "ניתוק מבוקש: באמצעות ניתוק רך eMule במלאי; תורי העברה פעילים ושקעי מאזין אינם מאופסים קשה."
+    IDS_BAN_BY_HASH                                            "חסימה לפי &Hash"
+    IDS_BAN_BY_IP                                              "חסימה לפי &IP"
 END
 // eMuleBB managed translation block: end
 

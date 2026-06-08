@@ -2822,6 +2822,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "eMuleBB-st väljumine, kuna VPN Guard sidumisliides pole enam saadaval."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard on lubatud, kuid käitusaja jälgimine pole valves; P2P ühenduse käsud on selle seansi jaoks blokeeritud."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Ühenduse katkestamine on nõutav: varude eMule pehme lahtiühendamine; aktiivseid edastusjärjekordi ja kuulari pesasid ei lähtestata."
+    IDS_BAN_BY_HASH                                            "Keela &räsi järgi"
+    IDS_BAN_BY_IP                                              "Keela &IP järgi"
 END
 // eMuleBB managed translation block: end
 

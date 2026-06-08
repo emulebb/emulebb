@@ -196,6 +196,7 @@ private:
 	struct NoRequestRepeatIPHashState
 	{
 		ULONGLONG ullWindowUntil;
+		UINT uTotalStrikes;
 		std::set<NoRequestRepeatHashKey> hashKeys;
 	};
 	struct NoRequestRepeatPenalty
@@ -203,6 +204,7 @@ private:
 		UINT uStrikes;
 		UINT uCooldownSeconds;
 		UINT uDistinctIPHashes;
+		UINT uIPRotationStrikes;
 		bool bHashScoped;
 		bool bShouldBan;
 		bool bShouldIPBan;
@@ -299,6 +301,7 @@ private:
 	std::map<NoRequestRepeatHashKey, NoRequestRepeatOffenderState> m_noRequestRepeatOffendersByHash;
 	std::map<uint32, NoRequestRepeatOffenderState> m_noRequestRepeatOffendersByIP;
 	std::map<uint32, NoRequestRepeatIPHashState> m_noRequestRepeatHashesByIP;
+	ULONGLONG m_ullLastNoRequestRepeatCleanup;
 	ULONGLONG m_ullBroadbandUnderfillSince;
 	INT_PTR	m_iHighestNumberOfFullyActivatedSlotsSinceLastCall;
 	INT_PTR	m_MaxActiveClients;

@@ -28,7 +28,9 @@ inline constexpr std::uint32_t kBroadbandSlowUploadRetryCooldownMaxSeconds = 90u
 inline constexpr std::uint32_t kNoRequestRepeatStrikeWindowSeconds = 4u * 60u * 60u;
 inline constexpr std::uint32_t kNoRequestRepeatBanThreshold = 8u;
 inline constexpr std::uint32_t kNoRequestRepeatHashRotationBanThreshold = 3u;
+inline constexpr std::uint32_t kNoRequestRepeatHashRotationStrikeThreshold = 5u;
 inline constexpr std::uint32_t kNoRequestRepeatCooldownMaxSeconds = 60u * 60u;
+inline constexpr std::uint32_t kNoRequestRepeatCleanupIntervalSeconds = 60u;
 inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 30000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownProbeRemainingMs = 5000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = 184320u;
@@ -464,6 +466,15 @@ inline std::uint32_t GetNoRequestUploadRetryCooldownSeconds(
 		return uConfiguredCooldownSeconds < uMaxRepeatedNoRequestCooldownSeconds
 			? uConfiguredCooldownSeconds
 			: uMaxRepeatedNoRequestCooldownSeconds;
+	return uConfiguredCooldownSeconds < uMaxNoRequestCooldownSeconds
+		? uConfiguredCooldownSeconds
+		: uMaxNoRequestCooldownSeconds;
+}
+
+inline std::uint32_t GetNoRequestRepeatBaseCooldownSeconds(
+	std::uint32_t uConfiguredCooldownSeconds,
+	std::uint32_t uMaxNoRequestCooldownSeconds = kNoRequestUploadCooldownMaxSeconds)
+{
 	return uConfiguredCooldownSeconds < uMaxNoRequestCooldownSeconds
 		? uConfiguredCooldownSeconds
 		: uMaxNoRequestCooldownSeconds;

@@ -2808,6 +2808,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "退出 eMuleBB，因為 VPN Guard 綁定介面不再可用。"
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard 已啟用，但運行時監控未佈防；此會話的 P2P 連線命令被阻止。"
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "斷開請求：使用庫存 eMule 軟斷開；活動傳輸佇列和偵聽器套接字不會被硬重置。"
+    IDS_BAN_BY_HASH                                            "依&雜湊封鎖"
+    IDS_BAN_BY_IP                                              "依 &IP 封鎖"
 END
 // eMuleBB managed translation block: end
 

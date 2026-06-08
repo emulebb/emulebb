@@ -2820,6 +2820,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Notiek eMuleBB aizvēršana, jo VPN Guard saistīšanas interfeiss vairs nav pieejams."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard ir iespējots, bet izpildlaika uzraudzība nav bruņota; Šai sesijai ir bloķētas P2P savienojuma komandas."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Nepieciešams atvienot: izmantojot akciju eMule mīksto atvienošanu; aktīvās pārsūtīšanas rindas un klausītāju ligzdas netiek pilnībā atiestatītas."
+    IDS_BAN_BY_HASH                                            "Aizliegt pēc &jaucējkoda"
+    IDS_BAN_BY_IP                                              "Aizliegt pēc &IP"
 END
 // eMuleBB managed translation block: end
 

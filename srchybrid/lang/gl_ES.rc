@@ -2832,6 +2832,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Saíndo de eMuleBB porque a interface de vinculación de VPN Guard xa non está dispoñible."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard está activado pero a monitorización do tempo de execución non está armada; Os comandos de conexión P2P están bloqueados para esta sesión."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Desconexión solicitada: usando desconexión suave eMule de stock; As colas de transferencia activas e os sockets de escoita non se restablecen."
+    IDS_BAN_BY_HASH                                            "Prohibir por &hash"
+    IDS_BAN_BY_IP                                              "Prohibir por &IP"
 END
 // eMuleBB managed translation block: end
 

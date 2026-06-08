@@ -2824,6 +2824,8 @@ BEGIN
     IDS_VPN_GUARD_RUNTIME_INTERFACE_UNAVAILABLE                "Izhod iz eMuleBB, ker povezovalni vmesnik VPN Guard ni več na voljo."
     IDS_VPN_GUARD_COMMANDS_BLOCKED_MONITOR                     "VPN Guard je omogočen, vendar nadzor med izvajanjem ni vklopljen; Ukazi za povezavo P2P so blokirani za to sejo."
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Zahtevan odklop: z mehkim odklopom standardne eMule; aktivne čakalne vrste za prenos in vtičnice poslušalcev niso trdo ponastavljene."
+    IDS_BAN_BY_HASH                                            "Prepovej po &zgoščeni vrednosti"
+    IDS_BAN_BY_IP                                              "Prepovej po &IP"
 END
 // eMuleBB managed translation block: end
 

@@ -345,15 +345,18 @@ void CClientList::AddBannedClient(uint32 dwIP)
 	m_bannedList[dwIP] = ::GetTickCount64();
 }
 
-void CClientList::AddBannedClient(const CUpDownClient *pClient)
+void CClientList::AddBannedClient(const CUpDownClient *pClient, ClientBanScope eScope)
 {
 	if (pClient == NULL)
 		return;
-	if (pClient->HasValidHash()) {
+
+	const bool bBanHash = pClient->HasValidHash()
+		&& (eScope == clientBanScopeHash || eScope == clientBanScopeBoth);
+	const bool bBanIP = eScope == clientBanScopeIP || eScope == clientBanScopeBoth || !bBanHash;
+	if (bBanHash)
 		m_bannedHashList[CSKey(pClient->GetUserHash())] = ::GetTickCount64();
-		return;
-	}
-	AddBannedClient(pClient->GetIP());
+	if (bBanIP && pClient->GetIP() != 0)
+		AddBannedClient(pClient->GetIP());
 }
 
 bool CClientList::IsBannedClient(uint32 dwIP) const
@@ -368,7 +371,8 @@ bool CClientList::IsBannedClient(const CUpDownClient *pClient) const
 		return false;
 
 	ULONGLONG dwBantime;
-	if (pClient->HasValidHash()
+	if (m_bannedHashList.GetCount() != 0
+		&& pClient->HasValidHash()
 		&& m_bannedHashList.Lookup(CSKey(pClient->GetUserHash()), dwBantime)
 		&& (::GetTickCount64() - dwBantime < CLIENTBANTIME))
 	{
@@ -378,18 +382,47 @@ bool CClientList::IsBannedClient(const CUpDownClient *pClient) const
 	return IsBannedClient(pClient->GetIP());
 }
 
+bool CClientList::IsBannedClient(const CUpDownClient *pClient, ClientBanScope eScope) const
+{
+	if (pClient == NULL)
+		return false;
+
+	const bool bCheckHash = pClient->HasValidHash()
+		&& (eScope == clientBanScopeHash || eScope == clientBanScopeBoth);
+	const bool bCheckIP = eScope == clientBanScopeIP || eScope == clientBanScopeBoth || !bCheckHash;
+	const ULONGLONG curTick = ::GetTickCount64();
+	bool bHashBanned = false;
+	if (bCheckHash && m_bannedHashList.GetCount() != 0) {
+		ULONGLONG dwBantime;
+		bHashBanned = m_bannedHashList.Lookup(CSKey(pClient->GetUserHash()), dwBantime)
+			&& (curTick - dwBantime < CLIENTBANTIME);
+	}
+
+	bool bIPBanned = false;
+	if (bCheckIP && pClient->GetIP() != 0) {
+		ULONGLONG dwBantime;
+		bIPBanned = m_bannedList.Lookup(pClient->GetIP(), dwBantime)
+			&& (curTick - dwBantime < CLIENTBANTIME);
+	}
+
+	if (eScope == clientBanScopeBoth)
+		return (!bCheckHash || bHashBanned) && (!bCheckIP || bIPBanned) && (bCheckHash || bCheckIP);
+	return bHashBanned || bIPBanned;
+}
+
 void CClientList::RemoveBannedClient(uint32 dwIP)
 {
 	m_bannedList.RemoveKey(dwIP);
 }
 
-void CClientList::RemoveBannedClient(const CUpDownClient *pClient)
+void CClientList::RemoveBannedClient(const CUpDownClient *pClient, ClientBanScope eScope)
 {
 	if (pClient == NULL)
 		return;
-	if (pClient->HasValidHash())
+	if (pClient->HasValidHash() && (eScope == clientBanScopeHash || eScope == clientBanScopeBoth))
 		m_bannedHashList.RemoveKey(CSKey(pClient->GetUserHash()));
-	RemoveBannedClient(pClient->GetIP());
+	if ((eScope == clientBanScopeIP || eScope == clientBanScopeBoth) && pClient->GetIP() != 0)
+		RemoveBannedClient(pClient->GetIP());
 }
 
 void CClientList::RemoveAllBannedClients()

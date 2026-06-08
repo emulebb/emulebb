@@ -997,12 +997,13 @@ void  CUpDownClient::UnBan()
 	}
 }
 
-void CUpDownClient::Ban(LPCTSTR pszReason)
+void CUpDownClient::Ban(LPCTSTR pszReason, ClientBanScope eScope)
 {
 	SetChatState(MS_NONE);
 	theApp.clientlist->AddTrackClient(this);
+	const bool bRequestedScopeAlreadyBanned = theApp.clientlist->IsBannedClient(this, eScope);
 	EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("client_ban"), _T("high"), this, _T("ban"), pszReason == NULL ? _T("Aggressive behaviour") : pszReason);
-	if (!IsBanned()) {
+	if (!bRequestedScopeAlreadyBanned) {
 		if (thePrefs.GetLogBannedClients())
 			AddDebugLogLine(false, _T("Banned: %s; %s"), pszReason == NULL ? _T("Aggressive behaviour") : pszReason, (LPCTSTR)DbgGetClientInfo());
 	}
@@ -1012,7 +1013,7 @@ void CUpDownClient::Ban(LPCTSTR pszReason)
 			AddDebugLogLine(false, _T("Banned: (refreshed): %s; %s"), pszReason == NULL ? _T("Aggressive behaviour") : pszReason, (LPCTSTR)DbgGetClientInfo());
 	}
 #endif
-	theApp.clientlist->AddBannedClient(this);
+	theApp.clientlist->AddBannedClient(this, eScope);
 	if (theApp.uploadqueue != NULL && theApp.uploadqueue->IsOnUploadQueue(this)) {
 		// WHY: the waiting queue stores raw CUpDownClient pointers and does not own
 		// a separate lifetime token.  If a queued peer is banned, keeping that queue

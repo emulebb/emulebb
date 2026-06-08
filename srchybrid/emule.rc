@@ -3303,6 +3303,8 @@ BEGIN
     IDS_COPY_HASH           "Copy Has&h"
     IDS_BAN                 "Ban"
     IDS_BAN_ARBITRARY       "Arbitrary Ban"
+    IDS_BAN_BY_HASH         "Ban by &Hash"
+    IDS_BAN_BY_IP           "Ban by &IP"
     IDS_COPY_CLIENT_IP      "Copy Client &IP"
     IDS_COPY_USER_HASH      "Copy User &Hash"
     IDS_COPY_CLIENT_SUMMARY "Copy Client &Summary"

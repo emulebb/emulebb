@@ -15,6 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
+#include "ClientStateDefs.h"
 #include "DeadSourceList.h"
 #include "MapKey.h"
 
@@ -111,11 +112,12 @@ public:
 
 	// Banned clients
 	void	AddBannedClient(uint32 dwIP);
-	void	AddBannedClient(const CUpDownClient *pClient);
+	void	AddBannedClient(const CUpDownClient *pClient, ClientBanScope eScope = clientBanScopeHash);
 	bool	IsBannedClient(uint32 dwIP) const;
 	bool	IsBannedClient(const CUpDownClient *pClient) const;
+	bool	IsBannedClient(const CUpDownClient *pClient, ClientBanScope eScope) const;
 	void	RemoveBannedClient(uint32 dwIP);
-	void	RemoveBannedClient(const CUpDownClient *pClient);
+	void	RemoveBannedClient(const CUpDownClient *pClient, ClientBanScope eScope = clientBanScopeBoth);
 	INT_PTR	GetBannedCount() const						{ return m_bannedList.GetCount() + m_bannedHashList.GetCount(); }
 	void	RemoveAllBannedClients();
 
