@@ -195,6 +195,27 @@ ULONGLONG NextDiagnosticsEventSeq(volatile LONGLONG &rllCounter)
 	return static_cast<ULONGLONG>(::InterlockedIncrement64(&rllCounter));
 }
 
+CDiagnosticsKeyValueLineBuilder::CDiagnosticsKeyValueLineBuilder(LPCTSTR pszPrefix)
+	: m_strLine(pszPrefix != NULL ? pszPrefix : _T(""))
+{
+}
+
+void CDiagnosticsKeyValueLineBuilder::AppendFormat(LPCTSTR pszKeyValueFmt, ...)
+{
+	if (pszKeyValueFmt == NULL || pszKeyValueFmt[0] == _T('\0'))
+		return;
+
+	CString strKeyValue;
+	va_list argp;
+	va_start(argp, pszKeyValueFmt);
+	strKeyValue.FormatV(pszKeyValueFmt, argp);
+	va_end(argp);
+
+	if (!m_strLine.IsEmpty())
+		m_strLine += _T(" ");
+	m_strLine += strKeyValue;
+}
+
 bool InitializeDiagnosticsLog(CLogFile &rLog, LPCTSTR pszLogPath, UINT uMaxLogFileSize)
 {
 	if (pszLogPath == NULL || pszLogPath[0] == _T('\0'))

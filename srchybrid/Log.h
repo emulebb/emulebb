@@ -114,6 +114,21 @@ CString EscapeDiagnosticsJson(const CString &rstrValue);
 CString BuildDiagnosticsJsonStringField(LPCTSTR pszValue);
 ULONGLONG NextDiagnosticsEventSeq(volatile LONGLONG &rllCounter);
 
+/**
+ * @brief Builds one diagnostics summary log line from formatted key/value segments.
+ */
+class CDiagnosticsKeyValueLineBuilder
+{
+public:
+	explicit CDiagnosticsKeyValueLineBuilder(LPCTSTR pszPrefix);
+
+	void AppendFormat(LPCTSTR pszKeyValueFmt, ...);
+	const CString& GetLine() const						{ return m_strLine; }
+
+private:
+	CString m_strLine;
+};
+
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 extern CLogFile thePacketDiagnosticsLog;
 

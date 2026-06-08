@@ -1123,85 +1123,85 @@ void CDownloadQueue::LogDownloadSlotDiagnostics(ULONGLONG curTick) const
 		ullNextTcpSourceRequestWaitMs);
 	const ULONGLONG ullLastUdpSearchAgeMs = m_lastudpsearchtime != 0 && curTick >= m_lastudpsearchtime ? curTick - m_lastudpsearchtime : 0;
 
-	DownloadSlotDiagnosticsLogLine(
-		_T("DownloadSlotDiagnostics: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceStarvedLocalQueuedReadyFiles=%u sourceStarvedKadSearchingReadyFiles=%u sourceStarvedKadEligibleReadyFiles=%u sourceStarvedKadDueReadyFiles=%u sourceStarvedKadBackoffReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u duplicateZeroWriteSources=%u duplicateZeroWritePackets=%I64u duplicateZeroWriteBytes=%I64u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerQueuedEligibleFiles=%u localServerQueuedSourceStarvedEligibleFiles=%u localServerQueuedDueAgeMaxMs=%I64u localServerQueuedEstimatedDrainMs=%I64u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u effectiveFileBufferBytes=%I64u autoBroadbandIO=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u maxBufferedReadyBytes=%I64u maxBufferedPendingBytes=%I64u maxBufferedWrittenBytes=%I64u maxBufferedReadyItems=%u maxBufferedPendingItems=%u maxBufferedWrittenItems=%u asyncWriteFiles=%u maxAsyncWriteRefsPerFile=%ld asyncWriteRefs=%Id protectedDiskBlocked=%u"),
-		filelist.GetCount(),
-		uReadyFiles,
-		uActiveFiles,
-		uSourceStarvedReadyFiles,
-		uSourceStarvedLocalQueuedReadyFiles,
-		uSourceStarvedKadSearchingReadyFiles,
-		uSourceStarvedKadEligibleReadyFiles,
-		uSourceStarvedKadDueReadyFiles,
-		uSourceStarvedKadBackoffReadyFiles,
-		uSourceThinReadyFiles,
-		uSourceRichReadyFiles,
-		uA4AFReadyFiles,
-		uSources,
-		uValidSources,
-		uDownloadingSources,
-		uOnQueueSources,
-		uConnectedSources,
-		uConnectingSources,
-		uCallbackSources,
-		uHashsetSources,
-		uNoNeededPartSources,
-		uRemoteQueueFullSources,
-		uTooManyConnectionSources,
-		uLowToLowIPSources,
-		uBannedSources,
-		uErrorSources,
-		uIdleSources,
-		uDuplicateZeroWriteSources,
-		static_cast<uint64>(uDuplicateZeroWritePackets),
-		static_cast<uint64>(uDuplicateZeroWriteBytes),
-		m_localServerReqQueue.GetCount(),
-		uLocalServerQueueReadyFiles,
-		uLocalServerQueueEligibleFiles,
-		uLocalServerQueueSourceStarvedEligibleFiles,
-		static_cast<uint64>(ullLocalServerQueueDueAgeMaxMs),
-		static_cast<uint64>(ullLocalServerQueueEstimatedDrainMs),
-		uLocalServerQueuedReadyFiles,
-		static_cast<uint64>(ullNextTcpSourceRequestWaitMs),
-		static_cast<UINT>(cur_udpserver != NULL),
-		m_iSearchedServers,
-		m_cRequestsSentToServer,
-		m_nUDPFileReasks,
-		m_nFailedUDPFileReasks,
-		static_cast<uint64>(ullLastUdpSearchAgeMs),
-		static_cast<UINT>(Kademlia::CKademlia::IsConnected()),
-		Kademlia::CKademlia::GetTotalFile(),
-		uKadSearchingReadyFiles,
-		uKadEligibleReadyFiles,
-		uKadDueReadyFiles,
-		uKadBackoffReadyFiles,
-		GetDatarate(),
-		static_cast<uint64>(GetEffectiveFileBufferSizeBytes()),
-		static_cast<UINT>(thePrefs.IsDownloadAutoBroadbandIOEnabled()),
-		static_cast<uint64>(GetBufferedDownloadBytes()),
-		GetBufferedDownloadFileCount(),
-		uBufferedReadyBytes,
-		uBufferedPendingBytes,
-		uBufferedWrittenBytes,
-		uBufferedErrorBytes,
-		uBufferedReadyItems,
-		uBufferedPendingItems,
-		uBufferedWrittenItems,
-		uBufferedErrorItems,
-		uBufferedReadyFiles,
-		uBufferedPendingFiles,
-		uBufferedWrittenFiles,
-		uBufferedErrorFiles,
-		uMaxBufferedReadyBytes,
-		uMaxBufferedPendingBytes,
-		uMaxBufferedWrittenBytes,
-		uMaxBufferedReadyItems,
-		uMaxBufferedPendingItems,
-		uMaxBufferedWrittenItems,
-		uAsyncWriteFiles,
-		nMaxAsyncWriteRefsPerFile,
-		iAsyncWriteRefs,
-		static_cast<UINT>(IsProtectedDiskSpaceBlocked()));
+	CDiagnosticsKeyValueLineBuilder summary(_T("DownloadSlotDiagnostics: summary"));
+	summary.AppendFormat(_T("files=%Id"), filelist.GetCount());
+	summary.AppendFormat(_T("readyFiles=%u"), uReadyFiles);
+	summary.AppendFormat(_T("activeFiles=%u"), uActiveFiles);
+	summary.AppendFormat(_T("sourceStarvedReadyFiles=%u"), uSourceStarvedReadyFiles);
+	summary.AppendFormat(_T("sourceStarvedLocalQueuedReadyFiles=%u"), uSourceStarvedLocalQueuedReadyFiles);
+	summary.AppendFormat(_T("sourceStarvedKadSearchingReadyFiles=%u"), uSourceStarvedKadSearchingReadyFiles);
+	summary.AppendFormat(_T("sourceStarvedKadEligibleReadyFiles=%u"), uSourceStarvedKadEligibleReadyFiles);
+	summary.AppendFormat(_T("sourceStarvedKadDueReadyFiles=%u"), uSourceStarvedKadDueReadyFiles);
+	summary.AppendFormat(_T("sourceStarvedKadBackoffReadyFiles=%u"), uSourceStarvedKadBackoffReadyFiles);
+	summary.AppendFormat(_T("sourceThinReadyFiles=%u"), uSourceThinReadyFiles);
+	summary.AppendFormat(_T("sourceRichReadyFiles=%u"), uSourceRichReadyFiles);
+	summary.AppendFormat(_T("a4afReadyFiles=%u"), uA4AFReadyFiles);
+	summary.AppendFormat(_T("sources=%u"), uSources);
+	summary.AppendFormat(_T("validSources=%u"), uValidSources);
+	summary.AppendFormat(_T("downloadingSources=%u"), uDownloadingSources);
+	summary.AppendFormat(_T("onQueueSources=%u"), uOnQueueSources);
+	summary.AppendFormat(_T("connectedSources=%u"), uConnectedSources);
+	summary.AppendFormat(_T("connectingSources=%u"), uConnectingSources);
+	summary.AppendFormat(_T("callbackSources=%u"), uCallbackSources);
+	summary.AppendFormat(_T("hashsetSources=%u"), uHashsetSources);
+	summary.AppendFormat(_T("nnpSources=%u"), uNoNeededPartSources);
+	summary.AppendFormat(_T("remoteFullSources=%u"), uRemoteQueueFullSources);
+	summary.AppendFormat(_T("tooManyConnSources=%u"), uTooManyConnectionSources);
+	summary.AppendFormat(_T("lowToLowIPSources=%u"), uLowToLowIPSources);
+	summary.AppendFormat(_T("bannedSources=%u"), uBannedSources);
+	summary.AppendFormat(_T("errorSources=%u"), uErrorSources);
+	summary.AppendFormat(_T("idleSources=%u"), uIdleSources);
+	summary.AppendFormat(_T("duplicateZeroWriteSources=%u"), uDuplicateZeroWriteSources);
+	summary.AppendFormat(_T("duplicateZeroWritePackets=%I64u"), static_cast<uint64>(uDuplicateZeroWritePackets));
+	summary.AppendFormat(_T("duplicateZeroWriteBytes=%I64u"), static_cast<uint64>(uDuplicateZeroWriteBytes));
+	summary.AppendFormat(_T("localServerQueuedFiles=%Id"), m_localServerReqQueue.GetCount());
+	summary.AppendFormat(_T("localServerQueuedReadyFiles=%u"), uLocalServerQueueReadyFiles);
+	summary.AppendFormat(_T("localServerQueuedEligibleFiles=%u"), uLocalServerQueueEligibleFiles);
+	summary.AppendFormat(_T("localServerQueuedSourceStarvedEligibleFiles=%u"), uLocalServerQueueSourceStarvedEligibleFiles);
+	summary.AppendFormat(_T("localServerQueuedDueAgeMaxMs=%I64u"), static_cast<uint64>(ullLocalServerQueueDueAgeMaxMs));
+	summary.AppendFormat(_T("localServerQueuedEstimatedDrainMs=%I64u"), static_cast<uint64>(ullLocalServerQueueEstimatedDrainMs));
+	summary.AppendFormat(_T("localServerMarkedReadyFiles=%u"), uLocalServerQueuedReadyFiles);
+	summary.AppendFormat(_T("nextTcpSourceRequestWaitMs=%I64u"), static_cast<uint64>(ullNextTcpSourceRequestWaitMs));
+	summary.AppendFormat(_T("udpSearchActive=%u"), static_cast<UINT>(cur_udpserver != NULL));
+	summary.AppendFormat(_T("udpSearchedServers=%u"), m_iSearchedServers);
+	summary.AppendFormat(_T("udpRequestsSentToServer=%u"), m_cRequestsSentToServer);
+	summary.AppendFormat(_T("udpFileReasks=%u"), m_nUDPFileReasks);
+	summary.AppendFormat(_T("udpFailedFileReasks=%u"), m_nFailedUDPFileReasks);
+	summary.AppendFormat(_T("udpLastSearchAgeMs=%I64u"), static_cast<uint64>(ullLastUdpSearchAgeMs));
+	summary.AppendFormat(_T("kadConnected=%u"), static_cast<UINT>(Kademlia::CKademlia::IsConnected()));
+	summary.AppendFormat(_T("kadTotalFileSearches=%u"), Kademlia::CKademlia::GetTotalFile());
+	summary.AppendFormat(_T("kadSearchingReadyFiles=%u"), uKadSearchingReadyFiles);
+	summary.AppendFormat(_T("kadEligibleReadyFiles=%u"), uKadEligibleReadyFiles);
+	summary.AppendFormat(_T("kadDueReadyFiles=%u"), uKadDueReadyFiles);
+	summary.AppendFormat(_T("kadBackoffReadyFiles=%u"), uKadBackoffReadyFiles);
+	summary.AppendFormat(_T("datarateBytesPerSec=%u"), GetDatarate());
+	summary.AppendFormat(_T("effectiveFileBufferBytes=%I64u"), static_cast<uint64>(GetEffectiveFileBufferSizeBytes()));
+	summary.AppendFormat(_T("autoBroadbandIO=%u"), static_cast<UINT>(thePrefs.IsDownloadAutoBroadbandIOEnabled()));
+	summary.AppendFormat(_T("bufferedBytes=%I64u"), static_cast<uint64>(GetBufferedDownloadBytes()));
+	summary.AppendFormat(_T("bufferedFiles=%u"), GetBufferedDownloadFileCount());
+	summary.AppendFormat(_T("bufferedReadyBytes=%I64u"), uBufferedReadyBytes);
+	summary.AppendFormat(_T("bufferedPendingBytes=%I64u"), uBufferedPendingBytes);
+	summary.AppendFormat(_T("bufferedWrittenBytes=%I64u"), uBufferedWrittenBytes);
+	summary.AppendFormat(_T("bufferedErrorBytes=%I64u"), uBufferedErrorBytes);
+	summary.AppendFormat(_T("bufferedReadyItems=%u"), uBufferedReadyItems);
+	summary.AppendFormat(_T("bufferedPendingItems=%u"), uBufferedPendingItems);
+	summary.AppendFormat(_T("bufferedWrittenItems=%u"), uBufferedWrittenItems);
+	summary.AppendFormat(_T("bufferedErrorItems=%u"), uBufferedErrorItems);
+	summary.AppendFormat(_T("bufferedReadyFiles=%u"), uBufferedReadyFiles);
+	summary.AppendFormat(_T("bufferedPendingFiles=%u"), uBufferedPendingFiles);
+	summary.AppendFormat(_T("bufferedWrittenFiles=%u"), uBufferedWrittenFiles);
+	summary.AppendFormat(_T("bufferedErrorFiles=%u"), uBufferedErrorFiles);
+	summary.AppendFormat(_T("maxBufferedReadyBytes=%I64u"), uMaxBufferedReadyBytes);
+	summary.AppendFormat(_T("maxBufferedPendingBytes=%I64u"), uMaxBufferedPendingBytes);
+	summary.AppendFormat(_T("maxBufferedWrittenBytes=%I64u"), uMaxBufferedWrittenBytes);
+	summary.AppendFormat(_T("maxBufferedReadyItems=%u"), uMaxBufferedReadyItems);
+	summary.AppendFormat(_T("maxBufferedPendingItems=%u"), uMaxBufferedPendingItems);
+	summary.AppendFormat(_T("maxBufferedWrittenItems=%u"), uMaxBufferedWrittenItems);
+	summary.AppendFormat(_T("asyncWriteFiles=%u"), uAsyncWriteFiles);
+	summary.AppendFormat(_T("maxAsyncWriteRefsPerFile=%ld"), nMaxAsyncWriteRefsPerFile);
+	summary.AppendFormat(_T("asyncWriteRefs=%Id"), iAsyncWriteRefs);
+	summary.AppendFormat(_T("protectedDiskBlocked=%u"), static_cast<UINT>(IsProtectedDiskSpaceBlocked()));
+	DownloadSlotDiagnosticsLogLine(_T("%s"), (LPCTSTR)summary.GetLine());
 }
 #endif
 

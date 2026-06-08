@@ -626,72 +626,72 @@ void CUploadQueue::LogUploadSlotDiagnostics(ULONGLONG curTick) const
 	if (theApp.sharedfiles != NULL)
 		theApp.sharedfiles->GetPublishDiagnosticsSnapshot(sharedPublish);
 
-	UploadSlotDiagnosticsLogLine(
-		_T("UploadSlotDiagnostics: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id activeZeroRate=%Id activeNoRequest=%Id activeNoRequestDrained=%Id activeNoRequestDrainedZeroRate=%Id activeNoRequestDrainedNonzeroRate=%Id activeNoRequestPendingIO=%Id activeNoRequestBufferedPayload=%Id activeNoRequestSocketBacklog=%Id activeNoRequestNeverAccepted=%Id activeNoRequestRecycleEligible=%Id activeNoRequestRecycleGraceBlocked=%Id activeNoRequestRecycleUnderfillBlocked=%Id activeNoRequestAgeAvgMs=%I64u activeNoRequestAgeMaxMs=%I64u activeNoRequestLastAcceptedAgeMaxMs=%I64u activeNoRequestZeroMaxMs=%I64u activeQueuedRequests=%Id activePendingIO=%Id activeBufferedPayload=%Id activeSocketBacklog=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u sharedFiles=%Id ed2kPublishedFiles=%u ed2kPendingFiles=%u ed2kPendingLargeUnsupportedFiles=%u ed2kOfferLimit=%u kadPublishReady=%u kadSourceDueFiles=%u kadSourceBackoffFiles=%u kadSourceSearches=%u kadSourceSearchCap=%u kadKeywordSearches=%u kadKeywordSearchCap=%u kadNotesSearches=%u kadNotesSearchCap=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
-		uploadinglist.GetCount(),
-		m_retiredUploadingList.GetCount(),
-		waitinglist.GetCount(),
-		iEligibleWaitingClients,
-		iCooldownWaitingClients,
-		iRetryCooldownWaitingClients,
-		iNoRequestCooldownWaitingClients,
-		iProductiveNoRequestCooldownWaitingClients,
-		iUnproductiveNoRequestCooldownWaitingClients,
-		iClientOnlyCooldownWaitingClients,
-		iRetryNoRequestWaitingClients,
-		iRetryChurnWaitingClients,
-		iRetryStalledWaitingClients,
-		iRetrySlowWaitingClients,
-		iRetryUnknownWaitingClients,
-		iActiveZeroRateClients,
-		iActiveNoRequestClients,
-		iActiveNoRequestDrainedClients,
-		iActiveNoRequestDrainedZeroRateClients,
-		iActiveNoRequestDrainedNonzeroRateClients,
-		iActiveNoRequestPendingIOClients,
-		iActiveNoRequestBufferedPayloadClients,
-		iActiveNoRequestSocketBacklogClients,
-		iActiveNoRequestNeverAcceptedClients,
-		iActiveNoRequestRecycleEligibleClients,
-		iActiveNoRequestRecycleGraceBlockedClients,
-		iActiveNoRequestRecycleUnderfillBlockedClients,
-		static_cast<uint64>(ullActiveNoRequestAgeAvgMs),
-		static_cast<uint64>(ullActiveNoRequestAgeMaxMs),
-		static_cast<uint64>(ullActiveNoRequestLastAcceptedAgeMaxMs),
-		static_cast<uint64>(ullActiveNoRequestZeroMaxMs),
-		iActiveQueuedRequestClients,
-		iActivePendingIOClients,
-		iActiveBufferedPayloadClients,
-		iActiveSocketBacklogClients,
-		static_cast<uint64>(ullCooldownMinMs),
-		static_cast<uint64>(ullCooldownAvgMs),
-		static_cast<uint64>(ullCooldownMaxMs),
-		static_cast<UINT>(m_uploadRetryCooldownByIP.size()),
-		static_cast<UINT>(m_noRequestUploadRetryCooldownByIP.size()),
-		sharedPublish.iSharedFiles,
-		sharedPublish.uED2KPublishedFiles,
-		sharedPublish.uED2KPendingFiles,
-		sharedPublish.uED2KPendingLargeUnsupportedFiles,
-		sharedPublish.uED2KOfferLimit,
-		sharedPublish.uKadPublishReady,
-		sharedPublish.uKadSourceDueFiles,
-		sharedPublish.uKadSourceBackoffFiles,
-		sharedPublish.uKadSourceSearches,
-		sharedPublish.uKadSourceSearchCap,
-		sharedPublish.uKadKeywordSearches,
-		sharedPublish.uKadKeywordSearchCap,
-		sharedPublish.uKadNotesSearches,
-		sharedPublish.uKadNotesSearchCap,
-		iThrottlerSlots,
-		m_MaxActiveClientsShortTime,
-		GetBroadbandSlotCap(),
-		GetConfiguredUploadBudgetBytesPerSec(),
-		GetTargetClientDataRateBroadband(),
-		GetToNetworkDatarate(),
-		GetDatarate(),
-		static_cast<UINT>(IsBroadbandUploadUnderfilled()),
-		static_cast<uint64>(ullUnderfillAgeMs),
-		static_cast<UINT>(ShouldTrackSlowUploadSlots()));
+	CDiagnosticsKeyValueLineBuilder summary(_T("UploadSlotDiagnostics: summary"));
+	summary.AppendFormat(_T("uploadSlots=%Id"), uploadinglist.GetCount());
+	summary.AppendFormat(_T("retiredSlots=%Id"), m_retiredUploadingList.GetCount());
+	summary.AppendFormat(_T("waiting=%Id"), waitinglist.GetCount());
+	summary.AppendFormat(_T("waitingEligible=%Id"), iEligibleWaitingClients);
+	summary.AppendFormat(_T("waitingCooldown=%Id"), iCooldownWaitingClients);
+	summary.AppendFormat(_T("waitingRetryCooldown=%Id"), iRetryCooldownWaitingClients);
+	summary.AppendFormat(_T("waitingNoRequestCooldown=%Id"), iNoRequestCooldownWaitingClients);
+	summary.AppendFormat(_T("waitingNoRequestProductive=%Id"), iProductiveNoRequestCooldownWaitingClients);
+	summary.AppendFormat(_T("waitingNoRequestUnproductive=%Id"), iUnproductiveNoRequestCooldownWaitingClients);
+	summary.AppendFormat(_T("waitingClientOnlyCooldown=%Id"), iClientOnlyCooldownWaitingClients);
+	summary.AppendFormat(_T("waitingRetryNoRequest=%Id"), iRetryNoRequestWaitingClients);
+	summary.AppendFormat(_T("waitingRetryChurn=%Id"), iRetryChurnWaitingClients);
+	summary.AppendFormat(_T("waitingRetryStalled=%Id"), iRetryStalledWaitingClients);
+	summary.AppendFormat(_T("waitingRetrySlow=%Id"), iRetrySlowWaitingClients);
+	summary.AppendFormat(_T("waitingRetryUnknown=%Id"), iRetryUnknownWaitingClients);
+	summary.AppendFormat(_T("activeZeroRate=%Id"), iActiveZeroRateClients);
+	summary.AppendFormat(_T("activeNoRequest=%Id"), iActiveNoRequestClients);
+	summary.AppendFormat(_T("activeNoRequestDrained=%Id"), iActiveNoRequestDrainedClients);
+	summary.AppendFormat(_T("activeNoRequestDrainedZeroRate=%Id"), iActiveNoRequestDrainedZeroRateClients);
+	summary.AppendFormat(_T("activeNoRequestDrainedNonzeroRate=%Id"), iActiveNoRequestDrainedNonzeroRateClients);
+	summary.AppendFormat(_T("activeNoRequestPendingIO=%Id"), iActiveNoRequestPendingIOClients);
+	summary.AppendFormat(_T("activeNoRequestBufferedPayload=%Id"), iActiveNoRequestBufferedPayloadClients);
+	summary.AppendFormat(_T("activeNoRequestSocketBacklog=%Id"), iActiveNoRequestSocketBacklogClients);
+	summary.AppendFormat(_T("activeNoRequestNeverAccepted=%Id"), iActiveNoRequestNeverAcceptedClients);
+	summary.AppendFormat(_T("activeNoRequestRecycleEligible=%Id"), iActiveNoRequestRecycleEligibleClients);
+	summary.AppendFormat(_T("activeNoRequestRecycleGraceBlocked=%Id"), iActiveNoRequestRecycleGraceBlockedClients);
+	summary.AppendFormat(_T("activeNoRequestRecycleUnderfillBlocked=%Id"), iActiveNoRequestRecycleUnderfillBlockedClients);
+	summary.AppendFormat(_T("activeNoRequestAgeAvgMs=%I64u"), static_cast<uint64>(ullActiveNoRequestAgeAvgMs));
+	summary.AppendFormat(_T("activeNoRequestAgeMaxMs=%I64u"), static_cast<uint64>(ullActiveNoRequestAgeMaxMs));
+	summary.AppendFormat(_T("activeNoRequestLastAcceptedAgeMaxMs=%I64u"), static_cast<uint64>(ullActiveNoRequestLastAcceptedAgeMaxMs));
+	summary.AppendFormat(_T("activeNoRequestZeroMaxMs=%I64u"), static_cast<uint64>(ullActiveNoRequestZeroMaxMs));
+	summary.AppendFormat(_T("activeQueuedRequests=%Id"), iActiveQueuedRequestClients);
+	summary.AppendFormat(_T("activePendingIO=%Id"), iActivePendingIOClients);
+	summary.AppendFormat(_T("activeBufferedPayload=%Id"), iActiveBufferedPayloadClients);
+	summary.AppendFormat(_T("activeSocketBacklog=%Id"), iActiveSocketBacklogClients);
+	summary.AppendFormat(_T("waitingCooldownMinMs=%I64u"), static_cast<uint64>(ullCooldownMinMs));
+	summary.AppendFormat(_T("waitingCooldownAvgMs=%I64u"), static_cast<uint64>(ullCooldownAvgMs));
+	summary.AppendFormat(_T("waitingCooldownMaxMs=%I64u"), static_cast<uint64>(ullCooldownMaxMs));
+	summary.AppendFormat(_T("retryCooldowns=%u"), static_cast<UINT>(m_uploadRetryCooldownByIP.size()));
+	summary.AppendFormat(_T("noRequestCooldowns=%u"), static_cast<UINT>(m_noRequestUploadRetryCooldownByIP.size()));
+	summary.AppendFormat(_T("sharedFiles=%Id"), sharedPublish.iSharedFiles);
+	summary.AppendFormat(_T("ed2kPublishedFiles=%u"), sharedPublish.uED2KPublishedFiles);
+	summary.AppendFormat(_T("ed2kPendingFiles=%u"), sharedPublish.uED2KPendingFiles);
+	summary.AppendFormat(_T("ed2kPendingLargeUnsupportedFiles=%u"), sharedPublish.uED2KPendingLargeUnsupportedFiles);
+	summary.AppendFormat(_T("ed2kOfferLimit=%u"), sharedPublish.uED2KOfferLimit);
+	summary.AppendFormat(_T("kadPublishReady=%u"), sharedPublish.uKadPublishReady);
+	summary.AppendFormat(_T("kadSourceDueFiles=%u"), sharedPublish.uKadSourceDueFiles);
+	summary.AppendFormat(_T("kadSourceBackoffFiles=%u"), sharedPublish.uKadSourceBackoffFiles);
+	summary.AppendFormat(_T("kadSourceSearches=%u"), sharedPublish.uKadSourceSearches);
+	summary.AppendFormat(_T("kadSourceSearchCap=%u"), sharedPublish.uKadSourceSearchCap);
+	summary.AppendFormat(_T("kadKeywordSearches=%u"), sharedPublish.uKadKeywordSearches);
+	summary.AppendFormat(_T("kadKeywordSearchCap=%u"), sharedPublish.uKadKeywordSearchCap);
+	summary.AppendFormat(_T("kadNotesSearches=%u"), sharedPublish.uKadNotesSearches);
+	summary.AppendFormat(_T("kadNotesSearchCap=%u"), sharedPublish.uKadNotesSearchCap);
+	summary.AppendFormat(_T("throttlerSlots=%Id"), iThrottlerSlots);
+	summary.AppendFormat(_T("activeSlots=%Id"), m_MaxActiveClientsShortTime);
+	summary.AppendFormat(_T("cap=%Id"), GetBroadbandSlotCap());
+	summary.AppendFormat(_T("configuredBudgetBytesPerSec=%u"), GetConfiguredUploadBudgetBytesPerSec());
+	summary.AppendFormat(_T("targetPerSlotBytesPerSec=%u"), GetTargetClientDataRateBroadband());
+	summary.AppendFormat(_T("toNetworkBytesPerSec=%u"), GetToNetworkDatarate());
+	summary.AppendFormat(_T("datarateBytesPerSec=%u"), GetDatarate());
+	summary.AppendFormat(_T("underfilled=%u"), static_cast<UINT>(IsBroadbandUploadUnderfilled()));
+	summary.AppendFormat(_T("underfillAgeMs=%I64u"), static_cast<uint64>(ullUnderfillAgeMs));
+	summary.AppendFormat(_T("slowTracking=%u"), static_cast<UINT>(ShouldTrackSlowUploadSlots()));
+	UploadSlotDiagnosticsLogLine(_T("%s"), (LPCTSTR)summary.GetLine());
 
 	UINT uSlot = 0;
 	for (POSITION pos = uploadinglist.GetHeadPosition(); pos != NULL;) {
