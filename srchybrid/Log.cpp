@@ -190,9 +190,79 @@ CString BuildDiagnosticsJsonStringField(LPCTSTR pszValue)
 	return strField;
 }
 
+CString NormalizeDiagnosticsJsonPayload(LPCTSTR pszJsonOrText)
+{
+	CString strPayload(pszJsonOrText != NULL ? pszJsonOrText : _T(""));
+	strPayload.Trim();
+	if (strPayload.IsEmpty())
+		return CString(_T("{}"));
+
+	const TCHAR chFirst = strPayload[0];
+	const TCHAR chLast = strPayload[strPayload.GetLength() - 1];
+	if ((chFirst == _T('{') && chLast == _T('}')) || (chFirst == _T('[') && chLast == _T(']')))
+		return strPayload;
+
+	CString strJson;
+	strJson.Format(_T("{\"text\":%s}"), (LPCTSTR)BuildDiagnosticsJsonStringField(strPayload));
+	return strJson;
+}
+
 ULONGLONG NextDiagnosticsEventSeq(volatile LONGLONG &rllCounter)
 {
 	return static_cast<ULONGLONG>(::InterlockedIncrement64(&rllCounter));
+}
+
+void WriteDiagnosticsJsonEvent(
+	CLogFile &rLog,
+	CCriticalSection &rLock,
+	volatile LONGLONG &rllCounter,
+	LPCTSTR pszSchema,
+	LPCTSTR pszMarker,
+	LPCTSTR pszEvent,
+	LPCTSTR pszSeverity,
+	LPCTSTR pszPrimaryObjectKey,
+	const CString &rstrPrimaryObjectJson,
+	LPCTSTR pszSecondaryObjectKey,
+	const CString &rstrSecondaryObjectJson,
+	LPCTSTR pszAction,
+	LPCTSTR pszReason,
+	LPCTSTR pszEvidenceJson)
+{
+	if (!rLog.IsOpen())
+		return;
+
+	CString strJson;
+	strJson.Format(
+		_T("{\"schema\":%s,\"source\":\"emulebb\",\"marker\":%s,\"ts_utc\":%s,\"event_seq\":%I64u,\"event\":%s,\"severity\":%s"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszSchema),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszMarker),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagnosticsTimestampUtc()),
+		NextDiagnosticsEventSeq(rllCounter),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszEvent),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszSeverity));
+
+	if (pszPrimaryObjectKey != NULL && pszPrimaryObjectKey[0] != _T('\0')) {
+		strJson += _T(",\"");
+		strJson += EscapeDiagnosticsJson(pszPrimaryObjectKey);
+		strJson += _T("\":");
+		strJson += rstrPrimaryObjectJson.IsEmpty() ? CString(_T("null")) : rstrPrimaryObjectJson;
+	}
+	if (pszSecondaryObjectKey != NULL && pszSecondaryObjectKey[0] != _T('\0')) {
+		strJson += _T(",\"");
+		strJson += EscapeDiagnosticsJson(pszSecondaryObjectKey);
+		strJson += _T("\":");
+		strJson += rstrSecondaryObjectJson.IsEmpty() ? CString(_T("null")) : rstrSecondaryObjectJson;
+	}
+
+	strJson += _T(",\"action\":");
+	strJson += BuildDiagnosticsJsonStringField(pszAction);
+	strJson += _T(",\"reason\":");
+	strJson += BuildDiagnosticsJsonStringField(pszReason);
+	strJson += _T(",\"evidence\":");
+	strJson += NormalizeDiagnosticsJsonPayload(pszEvidenceJson);
+	strJson += _T("}\r\n");
+
+	WriteDiagnosticsLogLine(rLog, rLock, strJson);
 }
 
 CDiagnosticsKeyValueLineBuilder::CDiagnosticsKeyValueLineBuilder(LPCTSTR pszPrefix)

@@ -52,23 +52,6 @@ CString JsonString(LPCTSTR pszValue)
 	return BuildDiagnosticsJsonStringField(pszValue);
 }
 
-CString NormalizeEvidenceJson(LPCTSTR pszEvidenceJson)
-{
-	CString strEvidence(pszEvidenceJson != NULL ? pszEvidenceJson : _T(""));
-	strEvidence.Trim();
-	if (strEvidence.IsEmpty())
-		return CString(_T("{}"));
-
-	const TCHAR chFirst = strEvidence[0];
-	const TCHAR chLast = strEvidence[strEvidence.GetLength() - 1];
-	if ((chFirst == _T('{') && chLast == _T('}')) || (chFirst == _T('[') && chLast == _T(']')))
-		return strEvidence;
-
-	CString strJson;
-	strJson.Format(_T("{\"text\":%s}"), (LPCTSTR)JsonString(strEvidence));
-	return strJson;
-}
-
 CString JsonHashOrNull(const uchar *pHash)
 {
 	if (pHash == NULL || isnulmd4(pHash))
@@ -178,26 +161,21 @@ void WriteEvent(
 	LPCTSTR pszReason,
 	LPCTSTR pszEvidenceJson)
 {
-	if (!g_badPeerDiagnosticsLog.IsOpen())
-		return;
-
-	const ULONGLONG ullEventSeq = NextDiagnosticsEventSeq(g_llBadPeerDiagnosticsEventSeq);
-	const CString strEvidence(NormalizeEvidenceJson(pszEvidenceJson));
-	CString strJson;
-	strJson.Format(
-		_T("{\"schema\":\"bad_peer_event_v1\",\"source\":\"emulebb\",\"marker\":\"%s\",\"ts_utc\":%s,\"event_seq\":%I64u,\"event\":%s,\"severity\":%s,\"peer\":%s,\"file\":%s,\"action\":%s,\"reason\":%s,\"evidence\":%s}\r\n"),
+	WriteDiagnosticsJsonEvent(
+		g_badPeerDiagnosticsLog,
+		g_badPeerDiagnosticsLogLock,
+		g_llBadPeerDiagnosticsEventSeq,
+		_T("bad_peer_event_v1"),
 		BadPeerDiagnosticsSeams::kBinaryMarker,
-		(LPCTSTR)JsonString(BuildDiagnosticsTimestampUtc()),
-		ullEventSeq,
-		(LPCTSTR)JsonString(pszEvent),
-		(LPCTSTR)JsonString(pszSeverity),
-		(LPCTSTR)strPeerJson,
-		(LPCTSTR)strFileJson,
-		(LPCTSTR)JsonString(pszAction),
-		(LPCTSTR)JsonString(pszReason),
-		(LPCTSTR)strEvidence);
-
-	WriteDiagnosticsLogLine(g_badPeerDiagnosticsLog, g_badPeerDiagnosticsLogLock, strJson);
+		pszEvent,
+		pszSeverity,
+		_T("peer"),
+		strPeerJson,
+		_T("file"),
+		strFileJson,
+		pszAction,
+		pszReason,
+		pszEvidenceJson);
 }
 
 SBadPeerBehaviorLedgerState UpdateBehaviorLedger(const CString &strLedgerKey, ULONGLONG curTick)

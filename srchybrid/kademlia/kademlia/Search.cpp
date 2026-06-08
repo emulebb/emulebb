@@ -36,6 +36,7 @@ their client on the eMule forum.
 #include "emuledlg.h"
 #include "kademliawnd.h"
 #include "KadSearchListCtrl.h"
+#include "KadDiagnosticsSeams.h"
 #include "Log.h"
 #include "Packets.h"
 #include "partfile.h"
@@ -350,6 +351,18 @@ void CSearch::ProcessResponse(uint32 uFromIP, uint16 uFromPort, const ContactArr
 	// a protocol violation, but most likely a malicious answer
 	if (rlistResults.size() > GetRequestContactCount() && !(pRequestedMoreNodesContact == pFromContact && rlistResults.size() <= KADEMLIA_FIND_VALUE_MORE)) {
 		DebugLogWarning(_T("Node %s sent more contacts than requested on a routing query, ignoring response"), (LPCTSTR)ipstr(htonl(uFromIP)));
+		EMULEBB_KAD_LOG_SEARCH_RESPONSE_EVENT(
+			_T("kad_lookup_response_rejected"),
+			_T("warning"),
+			m_uSearchID,
+			m_uType,
+			uFromIP,
+			uFromPort,
+			pFromContact != NULL ? pFromContact->GetVersion() : 0,
+			static_cast<UINT>(rlistResults.size()),
+			static_cast<UINT>(GetRequestContactCount()),
+			_T("ignore-response"),
+			_T("too-many-contacts"));
 		return;
 	}
 
@@ -421,6 +434,18 @@ void CSearch::ProcessResponse(uint32 uFromIP, uint16 uFromPort, const ContactArr
 			if (mapReceivedIPs.find(pContact->GetIPAddress()) != mapReceivedIPs.end()) {
 				DebugLogWarning(_T("Multiple KadIDs pointing to same IP (%s) in KADEMLIA(2)_RES answer - ignored, sent by %s")
 					, (LPCTSTR)ipstr(pContact->GetNetIP()), (LPCTSTR)ipstr(pFromContact->GetNetIP()));
+				EMULEBB_KAD_LOG_SEARCH_RESPONSE_EVENT(
+					_T("kad_lookup_contact_rejected"),
+					_T("warning"),
+					m_uSearchID,
+					m_uType,
+					uFromIP,
+					uFromPort,
+					pFromContact->GetVersion(),
+					1,
+					static_cast<UINT>(GetRequestContactCount()),
+					_T("ignore-contact"),
+					_T("duplicate-ip-in-response"));
 				continue;
 			}
 
@@ -435,6 +460,18 @@ void CSearch::ProcessResponse(uint32 uFromIP, uint16 uFromPort, const ContactArr
 				if (it->second >= 2) {
 					DebugLogWarning(_T("More than 2 KadIDs pointing to same Subnet (%s) in KADEMLIA(2)_RES answer - ignored, sent by %s")
 						, (LPCTSTR)ipstr(htonl(subnetIP)), (LPCTSTR)ipstr(pFromContact->GetNetIP()));
+					EMULEBB_KAD_LOG_SEARCH_RESPONSE_EVENT(
+						_T("kad_lookup_contact_rejected"),
+						_T("warning"),
+						m_uSearchID,
+						m_uType,
+						uFromIP,
+						uFromPort,
+						pFromContact->GetVersion(),
+						1,
+						static_cast<UINT>(GetRequestContactCount()),
+						_T("ignore-contact"),
+						_T("subnet-crowding-in-response"));
 					continue;
 				}
 				++it->second;
@@ -1171,9 +1208,22 @@ void CSearch::ProcessResultKeyword(const CUInt128 &uAnswer, TagList &rlistInfo, 
 				DebugLog(_T("Received PublishInfoTag: %u different names, %u Publishers, %.2f Trustvalue"), byDifferentNames, byPublishersKnown, (float)wTrustValue / 100.0f);
 #endif
 */
-			} else
+			} else {
 				DebugLogWarning(_T("ProcessResultKeyword: Received special publish tag (TAG_PUBLISHINFO) from node (version %u, ip: %s) which is not aware of it, filtering")
 					, uFromKadVersion, (LPCTSTR)ipstr(htonl(uFromIP)));
+				EMULEBB_KAD_LOG_SEARCH_RESPONSE_EVENT(
+					_T("kad_keyword_result_tag_filtered"),
+					_T("warning"),
+					m_uSearchID,
+					m_uType,
+					uFromIP,
+					uFromPort,
+					uFromKadVersion,
+					1,
+					1,
+					_T("filter-tag"),
+					_T("unsupported-publish-info-tag"));
+			}
 			break;
 		case FT_KADAICHHASHRESULT:
 			if (uFromKadVersion >= KADEMLIA_VERSION9_50a && cTag.IsBsob()) {
@@ -1188,13 +1238,38 @@ void CSearch::ProcessResultKeyword(const CUInt128 &uAnswer, TagList &rlistInfo, 
 					}
 				} catch (CFileException *ex) {
 					DebugLogError(_T("ProcessResultKeyword: Corrupt or invalid TAG_KADAICHHASHRESULT received - ip: %s)"), (LPCTSTR)ipstr(htonl(uFromIP)));
+					EMULEBB_KAD_LOG_SEARCH_RESPONSE_EVENT(
+						_T("kad_keyword_result_tag_rejected"),
+						_T("warning"),
+						m_uSearchID,
+						m_uType,
+						uFromIP,
+						uFromPort,
+						uFromKadVersion,
+						1,
+						1,
+						_T("reject-tag"),
+						_T("corrupt-aich-result-tag"));
 					ex->Delete();
 					aAICHHashPopularity.RemoveAll();
 					aAICHHashes.RemoveAll();
 				}
-			} else
+			} else {
 				DebugLogWarning(_T("ProcessResultKeyword: Received special publish tag (TAG_KADAICHHASHRESULT) from node (version %u, ip: %s) which is not aware of it, filtering")
 					, uFromKadVersion, (LPCTSTR)ipstr(htonl(uFromIP)));
+				EMULEBB_KAD_LOG_SEARCH_RESPONSE_EVENT(
+					_T("kad_keyword_result_tag_filtered"),
+					_T("warning"),
+					m_uSearchID,
+					m_uType,
+					uFromIP,
+					uFromPort,
+					uFromKadVersion,
+					1,
+					1,
+					_T("filter-tag"),
+					_T("unsupported-aich-result-tag"));
+			}
 		}
 	}
 

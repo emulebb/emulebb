@@ -33,6 +33,7 @@ their client on the eMule forum.
 #include "preferences.h"
 #include "emuledlg.h"
 #include "opcodes.h"
+#include "KadDiagnosticsSeams.h"
 #include "Log.h"
 #include "EmuleMD4.h"
 #include "StringConversion.h"
@@ -339,6 +340,8 @@ void CKademlia::Process()
 
 	if (GetUDPListener() != NULL)
 		GetUDPListener()->ExpireClientSearch(); // function does only one compare in most cases, so no real need for a timer
+
+	EMULEBB_KAD_LOG_ROUTING_SUMMARY(GetRoutingZone(), s_liBootstrapList, IsConnected(), m_bootstrapping, IsFirewalled(), IsRunningInLANMode());
 }
 
 void CKademlia::AddEvent(CRoutingZone *pZone)

@@ -34,6 +34,13 @@ inline LPCTSTR BadPeerDiagnosticsLogFileName()
 }
 #endif
 
+#if EMULEBB_HAS_KAD_DIAGNOSTICS
+inline LPCTSTR KadDiagnosticsLogFileName()
+{
+	return _T("emulebb-diagnostics-kad.log");
+}
+#endif
+
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 inline LPCTSTR UploadSlotDiagnosticsLogFileName()
 {

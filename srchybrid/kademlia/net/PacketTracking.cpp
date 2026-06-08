@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "clientlist.h"
 #include "emule.h"
+#include "KadDiagnosticsSeams.h"
 #include "Log.h"
 #include "opcodes.h"
 #include "kademlia/kademlia/Kademlia.h"
@@ -204,6 +205,7 @@ int CPacketTracking::InTrackListIsAllowedPacket(uint32 uIP, uint8 byOpcode, bool
 				// this is so far above the limit that has to be an intentional flood / misuse
 				// so we take higher level of punishment and ban the IP
 				DebugLogWarning(_T("Kad: Massive request flood detected for opcode 0x%X (0x%X) from IP %s - Banning IP"), byOpcode, byDbgOrgOpcode, (LPCTSTR)ipstr(htonl(uIP)));
+				EMULEBB_KAD_LOG_PACKET_EVENT(_T("kad_request_massive_flood"), _T("error"), htonl(uIP), byOpcode, byDbgOrgOpcode, _T("ban-ip"), _T("request-token-deficit"), TrackedRequest.m_tokens);
 				theApp.clientlist->AddBannedClient(ntohl(uIP));
 				return 2; // drop the packet, remove the contact from routing
 			}
@@ -211,6 +213,7 @@ int CPacketTracking::InTrackListIsAllowedPacket(uint32 uIP, uint8 byOpcode, bool
 			if (!TrackedRequest.m_bDbgLogged) {
 				TrackedRequest.m_bDbgLogged = true;
 				DebugLog(_T("Kad: Request flood detected for opcode 0x%X (0x%X) from IP %s - Dropping packets with this opcode"), byOpcode, byDbgOrgOpcode, (LPCTSTR)ipstr(htonl(uIP)));
+				EMULEBB_KAD_LOG_PACKET_EVENT(_T("kad_request_flood"), _T("warning"), htonl(uIP), byOpcode, byDbgOrgOpcode, _T("drop-opcode"), _T("request-token-deficit"), TrackedRequest.m_tokens);
 			}
 			return 1; // drop the packet
 		}

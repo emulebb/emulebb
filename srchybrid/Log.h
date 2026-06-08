@@ -112,7 +112,23 @@ void WriteDiagnosticsLogLineF(CLogFile &rLog, CCriticalSection &rLock, LPCTSTR p
 CString BuildDiagnosticsTimestampUtc();
 CString EscapeDiagnosticsJson(const CString &rstrValue);
 CString BuildDiagnosticsJsonStringField(LPCTSTR pszValue);
+CString NormalizeDiagnosticsJsonPayload(LPCTSTR pszJsonOrText);
 ULONGLONG NextDiagnosticsEventSeq(volatile LONGLONG &rllCounter);
+void WriteDiagnosticsJsonEvent(
+	CLogFile &rLog,
+	CCriticalSection &rLock,
+	volatile LONGLONG &rllCounter,
+	LPCTSTR pszSchema,
+	LPCTSTR pszMarker,
+	LPCTSTR pszEvent,
+	LPCTSTR pszSeverity,
+	LPCTSTR pszPrimaryObjectKey,
+	const CString &rstrPrimaryObjectJson,
+	LPCTSTR pszSecondaryObjectKey,
+	const CString &rstrSecondaryObjectJson,
+	LPCTSTR pszAction,
+	LPCTSTR pszReason,
+	LPCTSTR pszEvidenceJson);
 
 /**
  * @brief Builds one diagnostics summary log line from formatted key/value segments.

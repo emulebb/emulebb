@@ -32,6 +32,7 @@
 #include "AppCommandLineSeams.h"
 #include "BadPeerDiagnosticsSeams.h"
 #include "emule.h"
+#include "KadDiagnosticsSeams.h"
 #include "resource.h"
 #include "Version.h"
 #include "opcodes.h"
@@ -1712,6 +1713,11 @@ BOOL CemuleApp::InitInstance()
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 	BadPeerDiagnosticsSeams::InitializeLog(
 		strDiagnosticsLogDir + LogArtifactNames::BadPeerDiagnosticsLogFileName(),
+		thePrefs.GetMaxLogFileSize());
+#endif
+#if EMULEBB_HAS_KAD_DIAGNOSTICS
+	KadDiagnosticsSeams::InitializeLog(
+		strDiagnosticsLogDir + LogArtifactNames::KadDiagnosticsLogFileName(),
 		thePrefs.GetMaxLogFileSize());
 #endif
 	theLog.SetMaxFileSize(thePrefs.GetMaxLogFileSize());

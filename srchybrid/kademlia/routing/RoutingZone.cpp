@@ -50,6 +50,7 @@ their client on the eMule forum.
 #include "emule.h"
 #include "emuledlg.h"
 #include "ipfilter.h"
+#include "KadDiagnosticsSeams.h"
 #include "KadContactListCtrl.h"
 #include "kademliawnd.h"
 #include "Log.h"
@@ -452,17 +453,31 @@ bool CRoutingZone::Add(const CUInt128 &uID, uint32 uIP, uint16 uUDPPort, uint16 
 {
 	uint32 uhostIP = htonl(uIP);
 	if (IsGoodIPPort(uhostIP, uUDPPort)) {
-		if (!theApp.ipfilter->IsFiltered(uhostIP) && !(uUDPPort == 53 && uVersion <= KADEMLIA_VERSION5_48a)  /*No DNS Port without encryption*/)
+		const bool bFiltered = theApp.ipfilter->IsFiltered(uhostIP);
+		const bool bLegacyDnsPort = uUDPPort == 53 && uVersion <= KADEMLIA_VERSION5_48a;
+		if (!bFiltered && !bLegacyDnsPort  /*No DNS Port without encryption*/)
 			return AddUnfiltered(uID, uIP, uUDPPort, uTCPPort, uVersion, cUDPKey, bIPVerified, bUpdate, bFromNodesDat, bFromHello);
 
+		EMULEBB_KAD_LOG_RAW_CONTACT_EVENT(
+			_T("kad_contact_rejected"),
+			_T("info"),
+			uIP,
+			uUDPPort,
+			uTCPPort,
+			uVersion,
+			_T("ignore-contact"),
+			bLegacyDnsPort ? _T("legacy-contact-on-dns-port") : _T("ip-filter"));
 		if (thePrefs.GetLogFilteredIPs())
 			if (uUDPPort != 53 || uVersion > KADEMLIA_VERSION5_48a)
 				AddDebugLogLine(false, _T("Ignored kad contact (IP=%s:%u) - IP filter (%s)"), (LPCTSTR)ipstr(uhostIP), uUDPPort, (LPCTSTR)theApp.ipfilter->GetLastHit());
 			else
 				AddDebugLogLine(false, _T("Ignored kad contact (IP=%s:%u)"), (LPCTSTR)ipstr(uhostIP), uUDPPort);
 
-	} else if (thePrefs.GetLogFilteredIPs())
-		AddDebugLogLine(false, _T("Ignored kad contact (IP=%s:%u) - Bad IP or port"), (LPCTSTR)ipstr(uhostIP), uUDPPort);
+	} else {
+		EMULEBB_KAD_LOG_RAW_CONTACT_EVENT(_T("kad_contact_rejected"), _T("info"), uIP, uUDPPort, uTCPPort, uVersion, _T("ignore-contact"), _T("bad-ip-or-port"));
+		if (thePrefs.GetLogFilteredIPs())
+			AddDebugLogLine(false, _T("Ignored kad contact (IP=%s:%u) - Bad IP or port"), (LPCTSTR)ipstr(uhostIP), uUDPPort);
+	}
 	return false;
 }
 
@@ -481,6 +496,15 @@ bool CRoutingZone::AddUnfiltered(const CUInt128 &uID, uint32 uIP, uint16 uUDPPor
 		delete pContact;
 		return bUpdate;
 	}
+	EMULEBB_KAD_LOG_RAW_CONTACT_EVENT(
+		_T("kad_contact_rejected"),
+		_T("info"),
+		uIP,
+		uUDPPort,
+		uTCPPort,
+		uVersion,
+		_T("ignore-contact"),
+		uID == uMe ? _T("self-node-id") : _T("kad1-contact"));
 	return false;
 }
 
@@ -505,6 +529,7 @@ bool CRoutingZone::Add(CContact *pContact, bool &bUpdate, bool &bOutIPVerified)
 					, (LPCTSTR)ipstr(pContact->GetNetIP())
 					, pContact->GetUDPKey().GetKeyValue(theApp.GetPublicIP()) == 0 ? _T("Yes") : _T("No")
 					, (LPCTSTR)ipstr(pContactUpdate->GetNetIP()));
+				EMULEBB_KAD_LOG_CONTACT_EVENT(_T("kad_contact_update_rejected"), _T("warning"), pContact, _T("deny-update"), _T("sender-key-mismatch"));
 				bUpdate = false;
 			} else if (pContactUpdate->GetVersion() >= KADEMLIA_VERSION1_46c && pContactUpdate->GetVersion() < KADEMLIA_VERSION6_49aBETA
 				&& pContactUpdate->GetReceivedHelloPacket())
@@ -524,6 +549,7 @@ bool CRoutingZone::Add(CContact *pContact, bool &bUpdate, bool &bOutIPVerified)
 				} else {
 					AddDebugLogLine(DLP_DEFAULT, false, _T("Rejected value update for legacy kad2 contact (%s -> %s, %u -> %u)")
 						, (LPCTSTR)ipstr(pContactUpdate->GetNetIP()), (LPCTSTR)ipstr(pContact->GetNetIP()), pContactUpdate->GetVersion(), pContact->GetVersion());
+					EMULEBB_KAD_LOG_CONTACT_EVENT(_T("kad_contact_update_rejected"), _T("warning"), pContact, _T("deny-update"), _T("legacy-contact-value-change"));
 					bUpdate = false;
 				}
 
@@ -558,6 +584,7 @@ bool CRoutingZone::Add(CContact *pContact, bool &bUpdate, bool &bOutIPVerified)
 					theApp.emuledlg->kademliawnd->ContactRef(pContactUpdate);
 					if (pContact->GetReceivedHelloPacket())
 						pContactUpdate->SetReceivedHelloPacket();
+					EMULEBB_KAD_LOG_CONTACT_EVENT(_T("kad_contact_updated"), _T("info"), pContactUpdate, _T("update-contact"), _T("accepted-update"));
 				} else
 					bUpdate = false;
 			}
@@ -572,6 +599,7 @@ bool CRoutingZone::Add(CContact *pContact, bool &bUpdate, bool &bOutIPVerified)
 			// Add was successful, add to the GUI and let the contact know it's listed in the GUI.
 			if (theApp.emuledlg->kademliawnd->ContactAdd(pContact))
 				pContact->SetGuiRefs(true);
+			EMULEBB_KAD_LOG_CONTACT_EVENT(_T("kad_contact_added"), _T("info"), pContact, _T("add-contact"), _T("bin-has-capacity"));
 			return true;
 		}
 		return false;
@@ -583,6 +611,7 @@ bool CRoutingZone::Add(CContact *pContact, bool &bUpdate, bool &bOutIPVerified)
 		return m_pSubZones[pContact->GetDistance().GetBitNumber(m_uLevel)]->Add(pContact, bUpdate, bOutIPVerified);
 	}
 	bUpdate = false;
+	EMULEBB_KAD_LOG_CONTACT_EVENT(_T("kad_contact_rejected"), _T("info"), pContact, _T("ignore-contact"), _T("bin-full-unsplittable"));
 	return false;
 }
 
@@ -821,6 +850,7 @@ void CRoutingZone::OnSmallTimer()
 		if (pContact->GetType() == 4)
 			if (((pContact->m_tExpires > 0) && (pContact->m_tExpires <= tNow))) {
 				if (!pContact->InUse()) {
+					EMULEBB_KAD_LOG_CONTACT_EVENT(_T("kad_contact_removed"), _T("info"), pContact, _T("remove-contact"), _T("expired"));
 					m_pBin->RemoveContact(pContact);
 					delete pContact;
 				}
@@ -839,6 +869,7 @@ void CRoutingZone::OnSmallTimer()
 
 	if (pContact != NULL) {
 		pContact->CheckingType();
+		EMULEBB_KAD_LOG_CONTACT_EVENT(_T("kad_contact_probe"), _T("info"), pContact, _T("send-hello"), _T("small-timer-probe"));
 		if (pContact->GetVersion() >= KADEMLIA_VERSION6_49aBETA) {
 			if (thePrefs.GetDebugClientKadUDPLevel() > 0)
 				DebugSend("KADEMLIA2_HELLO_REQ", pContact->GetIPAddress(), pContact->GetUDPPort());
@@ -930,6 +961,7 @@ bool CRoutingZone::VerifyContact(const CUInt128 &uID, uint32 uIP) const
 	else {
 		pContact->SetIpVerified(true);
 		theApp.emuledlg->kademliawnd->ContactRef(pContact);
+		EMULEBB_KAD_LOG_CONTACT_EVENT(_T("kad_contact_verified"), _T("info"), pContact, _T("mark-verified"), _T("verify-contact"));
 	}
 	return true;
 }

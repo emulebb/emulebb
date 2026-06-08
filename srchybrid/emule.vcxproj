@@ -61,6 +61,7 @@
     <UploadSlotDiagnosticsPreprocessorDefinition Condition="'$(EnableUploadSlotDiagnostics)'=='true'">EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS;</UploadSlotDiagnosticsPreprocessorDefinition>
     <DownloadSlotDiagnosticsPreprocessorDefinition Condition="'$(EnableDownloadSlotDiagnostics)'=='true'">EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS;</DownloadSlotDiagnosticsPreprocessorDefinition>
     <BadPeerDiagnosticsPreprocessorDefinition Condition="'$(EnableBadPeerDiagnostics)'=='true'">EMULEBB_ENABLE_BAD_PEER_DIAGNOSTICS;</BadPeerDiagnosticsPreprocessorDefinition>
+    <KadDiagnosticsPreprocessorDefinition Condition="'$(EnableKadDiagnostics)'=='true'">EMULEBB_ENABLE_KAD_DIAGNOSTICS;</KadDiagnosticsPreprocessorDefinition>
     <ExperimentalCoroutinePreprocessorDefinition Condition="'$(PlatformToolset)'=='v145'">_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS;</ExperimentalCoroutinePreprocessorDefinition>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
@@ -89,7 +90,7 @@
       <MultiProcessorCompilation Condition="'$(Platform)'=='ARM64'">false</MultiProcessorCompilation>
       <Optimization>Disabled</Optimization>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;$(PacketDiagnosticsPreprocessorDefinition)$(UploadSlotDiagnosticsPreprocessorDefinition)$(DownloadSlotDiagnosticsPreprocessorDefinition)$(BadPeerDiagnosticsPreprocessorDefinition)$(ExperimentalCoroutinePreprocessorDefinition)MBEDTLS_ALLOW_PRIVATE_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;$(PacketDiagnosticsPreprocessorDefinition)$(UploadSlotDiagnosticsPreprocessorDefinition)$(DownloadSlotDiagnosticsPreprocessorDefinition)$(BadPeerDiagnosticsPreprocessorDefinition)$(KadDiagnosticsPreprocessorDefinition)$(ExperimentalCoroutinePreprocessorDefinition)MBEDTLS_ALLOW_PRIVATE_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
@@ -126,7 +127,7 @@
       <Optimization>MaxSpeed</Optimization>
       <OmitFramePointers>true</OmitFramePointers>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;NDEBUG;$(StartupDiagnosticsPreprocessorDefinition)$(PacketDiagnosticsPreprocessorDefinition)$(UploadSlotDiagnosticsPreprocessorDefinition)$(DownloadSlotDiagnosticsPreprocessorDefinition)$(BadPeerDiagnosticsPreprocessorDefinition)$(ExperimentalCoroutinePreprocessorDefinition)MBEDTLS_ALLOW_PRIVATE_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;NDEBUG;$(StartupDiagnosticsPreprocessorDefinition)$(PacketDiagnosticsPreprocessorDefinition)$(UploadSlotDiagnosticsPreprocessorDefinition)$(DownloadSlotDiagnosticsPreprocessorDefinition)$(BadPeerDiagnosticsPreprocessorDefinition)$(KadDiagnosticsPreprocessorDefinition)$(ExperimentalCoroutinePreprocessorDefinition)MBEDTLS_ALLOW_PRIVATE_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -243,6 +244,7 @@
     <ClCompile Include="IrcWnd.cpp" />
     <ClCompile Include="KadContactHistogramCtrl.cpp" />
     <ClCompile Include="KadContactListCtrl.cpp" />
+    <ClCompile Include="KadDiagnosticsSeams.cpp" />
     <ClCompile Include="kademlia\io\BufferedFileIO.cpp" />
     <ClCompile Include="kademlia\io\ByteIO.cpp" />
     <ClCompile Include="kademlia\io\DataIO.cpp" />
@@ -558,6 +560,7 @@
     <ClInclude Include="IrcWnd.h" />
     <ClInclude Include="KadContactHistogramCtrl.h" />
     <ClInclude Include="KadContactListCtrl.h" />
+    <ClInclude Include="KadDiagnosticsSeams.h" />
     <ClInclude Include="kademlia\io\BufferedFileIO.h" />
     <ClInclude Include="kademlia\io\ByteIO.h" />
     <ClInclude Include="kademlia\io\DataIO.h" />
