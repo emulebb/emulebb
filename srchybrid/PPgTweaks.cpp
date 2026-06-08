@@ -197,7 +197,7 @@ namespace
 
 	static CString GetDownloadAutoBroadbandIOToolTip()
 	{
-		return _T("Automatically limits the effective per-file download write buffer during busy broadband sessions.\r\n\r\nWhen several files are buffering at once, eMule divides a 512 MiB global download-buffer budget across those active files and uses the smaller of that per-file budget and the manual File buffer size. Disable it if you want the manual File buffer size to be used exactly. This does not change socket buffers, transfer limits, or upload/download speed limits.");
+		return _T("Automatically expands download write buffering from available system RAM during broadband sessions.\r\n\r\neMule uses 25% of currently available physical RAM, clamped between 512 MiB and 4 GiB, as a global download-buffer budget. Hot files can use more of that budget while quiet files keep a small minimum share. Disable it if you want the manual File buffer size to be used exactly. This does not change socket buffers, transfer limits, or upload/download speed limits.");
 	}
 
 	static CString GetCreateCrashDumpLabel()

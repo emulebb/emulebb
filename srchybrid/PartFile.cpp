@@ -2876,7 +2876,7 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 	}
 
 	// If buffer size exceeds limit, or if not written within time limit, flush data
-	const uint64 uEffectiveFileBufferSize = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes() : thePrefs.GetFileBufferSize();
+	const uint64 uEffectiveFileBufferSize = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes(m_nTotalBufferData) : thePrefs.GetFileBufferSize();
 	const uint64 uBufferFlushTimeLimit = PartFileNumericSeams::SelectBufferedDataFlushTimeLimitMs(
 		thePrefs.IsDownloadAutoBroadbandIOEnabled(),
 		thePrefs.GetFileBufferTimeLimit(),
@@ -2899,7 +2899,9 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 		m_nLastCompletedBufferCleanupTime = curTick;
 		bFlushedBufferThisTick = true;
 	}
-	if (!bFlushedBufferThisTick && (m_nTotalBufferData > uEffectiveFileBufferSize || curTick >= m_nLastBufferFlushTime + uBufferFlushTimeLimit)) {
+	const bool bAdaptiveGlobalBudgetFlush = theApp.downloadqueue != NULL
+		&& theApp.downloadqueue->ShouldFlushFileForAdaptiveBufferBudget(m_nTotalBufferData);
+	if (!bFlushedBufferThisTick && (bAdaptiveGlobalBudgetFlush || m_nTotalBufferData > uEffectiveFileBufferSize || curTick >= m_nLastBufferFlushTime + uBufferFlushTimeLimit)) {
 		(void)ConsumeBufferedWriteCompletionsPending();
 		FlushBuffer();
 		m_nLastCompletedBufferCleanupTime = curTick;
@@ -4934,7 +4936,7 @@ uint32 CPartFile::QueueBufferWrite(uint64 transize, const BYTE *sourceData, std:
 	// log transfer information in our "blackbox"
 	m_CorruptionBlackBox.ReceivedData(start, end, client);
 
-	const uint64 uEffectiveFileBufferSize = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes() : thePrefs.GetFileBufferSize();
+	const uint64 uEffectiveFileBufferSize = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes(m_nTotalBufferData) : thePrefs.GetFileBufferSize();
 	if (!m_BufferedData_list.IsEmpty()
 		&& PartFileNumericSeams::ShouldFlushBeforeBufferedWrite(m_nTotalBufferData, static_cast<uint64>(lenData), uEffectiveFileBufferSize))
 	{
@@ -4995,8 +4997,11 @@ uint32 CPartFile::QueueBufferWrite(uint64 transize, const BYTE *sourceData, std:
 		block->transferred += lenData;
 	// We prefer to flush the buffer on timer, but if we get over our limit too far
 	// (high speed upload), flush here to save memory and time on list processing
+	const bool bAdaptiveGlobalBudgetFlush = theApp.downloadqueue != NULL
+		&& theApp.downloadqueue->ShouldFlushFileForAdaptiveBufferBudget(m_nTotalBufferData);
 	if (m_gaplist.IsEmpty()
 		|| !inSet(GetStatus(), PS_READY, PS_EMPTY) //import parts
+		|| bAdaptiveGlobalBudgetFlush
 		|| PartFileNumericSeams::ShouldFlushBufferedData(m_nTotalBufferData, uEffectiveFileBufferSize))
 	{
 		FlushBuffer();

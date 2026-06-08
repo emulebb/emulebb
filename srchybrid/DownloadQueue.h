@@ -147,7 +147,10 @@ public:
 	uint32	GetDatarate() const								{ return m_datarate; }
 	uint64	GetBufferedDownloadBytes() const					{ return m_uBufferedDownloadBytesSnapshot; }
 	UINT	GetBufferedDownloadFileCount() const				{ return m_uBufferedDownloadFileCountSnapshot; }
-	uint64	GetEffectiveFileBufferSizeBytes() const;
+	uint64	GetLargestBufferedDownloadFileBytes() const		{ return m_uLargestBufferedDownloadFileBytesSnapshot; }
+	uint64	GetAdaptiveGlobalDownloadBufferBudgetBytes() const;
+	uint64	GetEffectiveFileBufferSizeBytes(uint64 uCurrentFileBufferedBytes = 0) const;
+	bool	ShouldFlushFileForAdaptiveBufferBudget(uint64 uCurrentFileBufferedBytes) const;
 
 	void	AddUDPFileReasks()								{ ++m_nUDPFileReasks; }
 	uint32	GetUDPFileReasks() const						{ return m_nUDPFileReasks; }
@@ -298,6 +301,7 @@ private:
 	uint32	m_nFailedUDPFileReasks;
 	uint32	m_datarate;
 	uint64	m_uBufferedDownloadBytesSnapshot;
+	uint64	m_uLargestBufferedDownloadFileBytesSnapshot;
 	UINT	m_uBufferedDownloadFileCountSnapshot;
 	UINT	m_uBulkAddDownloadsDepth;
 	bool	m_bBulkAddDownloadsNeedDiskspaceCheck;

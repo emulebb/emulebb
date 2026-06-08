@@ -216,6 +216,7 @@ CDownloadQueue::CDownloadQueue()
 	, m_nFailedUDPFileReasks()
 	, m_datarate()
 	, m_uBufferedDownloadBytesSnapshot()
+	, m_uLargestBufferedDownloadFileBytesSnapshot()
 	, m_uBufferedDownloadFileCountSnapshot()
 	, m_uBulkAddDownloadsDepth()
 	, m_bBulkAddDownloadsNeedDiskspaceCheck()
@@ -1177,8 +1178,10 @@ void CDownloadQueue::LogDownloadSlotDiagnostics(ULONGLONG curTick) const
 	summary.AppendFormat(_T("datarateBytesPerSec=%u"), GetDatarate());
 	summary.AppendFormat(_T("effectiveFileBufferBytes=%I64u"), static_cast<uint64>(GetEffectiveFileBufferSizeBytes()));
 	summary.AppendFormat(_T("autoBroadbandIO=%u"), static_cast<UINT>(thePrefs.IsDownloadAutoBroadbandIOEnabled()));
+	summary.AppendFormat(_T("adaptiveGlobalDownloadBufferBudgetBytes=%I64u"), static_cast<uint64>(GetAdaptiveGlobalDownloadBufferBudgetBytes()));
 	summary.AppendFormat(_T("bufferedBytes=%I64u"), static_cast<uint64>(GetBufferedDownloadBytes()));
 	summary.AppendFormat(_T("bufferedFiles=%u"), GetBufferedDownloadFileCount());
+	summary.AppendFormat(_T("largestBufferedFileBytes=%I64u"), static_cast<uint64>(GetLargestBufferedDownloadFileBytes()));
 	summary.AppendFormat(_T("bufferedReadyBytes=%I64u"), uBufferedReadyBytes);
 	summary.AppendFormat(_T("bufferedPendingBytes=%I64u"), uBufferedPendingBytes);
 	summary.AppendFormat(_T("bufferedWrittenBytes=%I64u"), uBufferedWrittenBytes);
@@ -2573,6 +2576,7 @@ void CSourceHostnameResolver::WorkerMain(std::shared_ptr<SharedState> pState)
 void CDownloadQueue::RefreshBroadbandIoBufferSnapshot()
 {
 	uint64 uBufferedBytes = 0;
+	uint64 uLargestBufferedFileBytes = 0;
 	UINT uBufferedFiles = 0;
 	for (POSITION pos = filelist.GetHeadPosition(); pos != NULL;) {
 		const CPartFile *const pFile = filelist.GetNext(pos);
@@ -2582,19 +2586,44 @@ void CDownloadQueue::RefreshBroadbandIoBufferSnapshot()
 		if (uFileBufferedBytes == 0)
 			continue;
 		uBufferedBytes += uFileBufferedBytes;
+		if (uFileBufferedBytes > uLargestBufferedFileBytes)
+			uLargestBufferedFileBytes = uFileBufferedBytes;
 		++uBufferedFiles;
 	}
 	m_uBufferedDownloadBytesSnapshot = uBufferedBytes;
+	m_uLargestBufferedDownloadFileBytesSnapshot = uLargestBufferedFileBytes;
 	m_uBufferedDownloadFileCountSnapshot = uBufferedFiles;
 }
 
-uint64 CDownloadQueue::GetEffectiveFileBufferSizeBytes() const
+uint64 CDownloadQueue::GetAdaptiveGlobalDownloadBufferBudgetBytes() const
 {
-	return BroadbandIoSeams::BuildEffectiveFileBufferSizeBytes(
+	MEMORYSTATUSEX memory = {};
+	memory.dwLength = sizeof(memory);
+	const uint64 uAvailablePhysicalRamBytes = ::GlobalMemoryStatusEx(&memory) != FALSE
+		? static_cast<uint64>(memory.ullAvailPhys)
+		: 0u;
+	return BroadbandIoSeams::BuildAdaptiveGlobalDownloadBufferBudgetBytes(uAvailablePhysicalRamBytes);
+}
+
+uint64 CDownloadQueue::GetEffectiveFileBufferSizeBytes(uint64 uCurrentFileBufferedBytes) const
+{
+	return BroadbandIoSeams::BuildDemandBasedFileBufferSizeBytes(
 		thePrefs.IsDownloadAutoBroadbandIOEnabled(),
 		thePrefs.GetFileBufferSize(),
-		BroadbandIoSeams::kDefaultGlobalDownloadBufferBudgetBytes,
-		m_uBufferedDownloadFileCountSnapshot);
+		GetAdaptiveGlobalDownloadBufferBudgetBytes(),
+		m_uBufferedDownloadBytesSnapshot,
+		m_uBufferedDownloadFileCountSnapshot,
+		uCurrentFileBufferedBytes);
+}
+
+bool CDownloadQueue::ShouldFlushFileForAdaptiveBufferBudget(uint64 uCurrentFileBufferedBytes) const
+{
+	return BroadbandIoSeams::ShouldFlushLargestFileForAdaptiveGlobalBudget(
+		thePrefs.IsDownloadAutoBroadbandIOEnabled(),
+		GetAdaptiveGlobalDownloadBufferBudgetBytes(),
+		m_uBufferedDownloadBytesSnapshot,
+		uCurrentFileBufferedBytes,
+		m_uLargestBufferedDownloadFileBytesSnapshot);
 }
 
 bool CDownloadQueue::DoKademliaFileRequest() const

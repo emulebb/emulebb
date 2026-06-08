@@ -70,6 +70,7 @@
 #include "Exceptions.h"
 #include "FakeFileDetector.h"
 #include "BroadbandIoSeams.h"
+#include "PartFileNumericSeams.h"
 #include "EMSocketSendSeams.h"
 #include "SocketIoSeams.h"
 #include "SearchList.h"
@@ -832,6 +833,12 @@ namespace
 
 	static nlohmann::json BuildIoJson()
 	{
+		MEMORYSTATUSEX memory = {};
+		memory.dwLength = sizeof(memory);
+		const bool bHasMemory = ::GlobalMemoryStatusEx(&memory) != FALSE;
+		const uint64 uAdaptiveGlobalDownloadBufferBudgetBytes = theApp.downloadqueue != NULL
+			? theApp.downloadqueue->GetAdaptiveGlobalDownloadBufferBudgetBytes()
+			: BroadbandIoSeams::BuildAdaptiveGlobalDownloadBufferBudgetBytes(bHasMemory ? static_cast<uint64>(memory.ullAvailPhys) : 0u);
 		const uint64 uEffectiveBufferBytes = theApp.downloadqueue != NULL
 			? theApp.downloadqueue->GetEffectiveFileBufferSizeBytes()
 			: thePrefs.GetFileBufferSize();
@@ -847,12 +854,17 @@ namespace
 		return nlohmann::json{
 			{"downloadAutoBroadbandIo", thePrefs.IsDownloadAutoBroadbandIOEnabled()},
 			{"downloadAutoBroadbandIoScope", "downloadDiskWriteBufferOnly"},
-			{"globalDownloadBufferBudgetBytes", BroadbandIoSeams::kDefaultGlobalDownloadBufferBudgetBytes},
+			{"availablePhysicalRamBytesForDownloadBuffer", bHasMemory ? nlohmann::json(memory.ullAvailPhys) : nlohmann::json(nullptr)},
+			{"globalDownloadBufferBudgetBytes", uAdaptiveGlobalDownloadBufferBudgetBytes},
+			{"adaptiveGlobalDownloadBufferBudgetBytes", uAdaptiveGlobalDownloadBufferBudgetBytes},
+			{"minimumAdaptiveFileBufferShareBytes", BroadbandIoSeams::kMinimumAdaptiveFileBufferShareBytes},
 			{"configuredFileBufferBytes", thePrefs.GetFileBufferSize()},
 			{"effectiveFileBufferBytes", uEffectiveBufferBytes},
 			{"fileBufferTimeLimitMs", thePrefs.GetFileBufferTimeLimit()},
+			{"autoBroadbandFileBufferTimeLimitMs", PartFileNumericSeams::kBroadbandActiveBufferFlushTimeLimitMs},
 			{"totalBufferedDownloadBytes", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetBufferedDownloadBytes()) : nlohmann::json(nullptr)},
 			{"activeBufferedDownloadFiles", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetBufferedDownloadFileCount()) : nlohmann::json(nullptr)},
+			{"largestBufferedDownloadFileBytes", theApp.downloadqueue != NULL ? nlohmann::json(theApp.downloadqueue->GetLargestBufferedDownloadFileBytes()) : nlohmann::json(nullptr)},
 			{"uploadSendPipeline", nlohmann::json{
 				{"controlledByDownloadAutoBroadbandIo", false},
 				{"targetPerSlotBytesPerSec", uUploadTargetPerSlotBytes},

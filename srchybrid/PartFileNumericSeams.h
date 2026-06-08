@@ -10,7 +10,7 @@
 
 namespace PartFileNumericSeams
 {
-inline constexpr uint64 kBroadbandActiveBufferFlushTimeLimitMs = 10u * 1000u;
+inline constexpr uint64 kBroadbandActiveBufferFlushTimeLimitMs = 15u * 60u * 1000u;
 inline constexpr uint64 kBroadbandCompletedWriteCleanupTimeLimitMs = 2u * 1000u;
 
 /**
@@ -140,9 +140,7 @@ inline uint64 SelectBufferedDataFlushTimeLimitMs(
 	if (!bAutoBroadbandIoEnabled || nCurrentBufferedBytes == 0 || nTransferringSourceCount == 0)
 		return nConfiguredTimeLimitMs;
 
-	return nConfiguredTimeLimitMs < kBroadbandActiveBufferFlushTimeLimitMs
-		? nConfiguredTimeLimitMs
-		: kBroadbandActiveBufferFlushTimeLimitMs;
+	return kBroadbandActiveBufferFlushTimeLimitMs;
 }
 
 /**
