@@ -682,11 +682,37 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 			LogUploadReqBlockInstrumentation(this, _T("reject-duplicate-done-block"), reqblock, pUploadingClientStruct, pUploadingClientStruct->m_BlockRequests_queue.GetCount(), pUploadingClientStruct->m_DoneBlocks_list.GetCount());
 #endif
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
+			BadPeerInstrumentationSeams::LogUploadBlockRequestBehavior(
+				_T("upload_duplicate_done_block_rejected"),
+				_T("medium"),
+				this,
+				srcfile,
+				reqblock,
+				_T("reject_block_request"),
+				_T("Duplicate upload block request already completed in slot"),
+				pUploadingClientStruct->m_BlockRequests_queue.GetCount(),
+				pUploadingClientStruct->m_DoneBlocks_list.GetCount(),
+				pUploadingClientStruct->m_nPendingIOBlocks.load());
+#endif
 			return;
 		}
 		if (pUploadingClientStruct->m_BlockRequests_keys.find(requestKey) != pUploadingClientStruct->m_BlockRequests_keys.end()) {
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 			LogUploadReqBlockInstrumentation(this, _T("reject-duplicate-queued-block"), reqblock, pUploadingClientStruct, pUploadingClientStruct->m_BlockRequests_queue.GetCount(), pUploadingClientStruct->m_DoneBlocks_list.GetCount());
+#endif
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
+			BadPeerInstrumentationSeams::LogUploadBlockRequestBehavior(
+				_T("upload_duplicate_queued_block_rejected"),
+				_T("medium"),
+				this,
+				srcfile,
+				reqblock,
+				_T("reject_block_request"),
+				_T("Duplicate upload block request already queued in slot"),
+				pUploadingClientStruct->m_BlockRequests_queue.GetCount(),
+				pUploadingClientStruct->m_DoneBlocks_list.GetCount(),
+				pUploadingClientStruct->m_nPendingIOBlocks.load());
 #endif
 			return;
 		}

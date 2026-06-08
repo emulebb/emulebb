@@ -11,15 +11,41 @@
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 #include "AbstractFile.h"
 #include "Log.h"
+#include "Opcodes.h"
 #include "OtherFunctions.h"
+#include "PartFile.h"
 #include "SearchFile.h"
 #include "UpdownClient.h"
+
+#include <map>
 
 namespace
 {
 CLogFile g_badPeerInstrumentationLog;
 CCriticalSection g_badPeerInstrumentationLogLock;
+CCriticalSection g_badPeerBehaviorLedgerLock;
 volatile LONGLONG g_llBadPeerInstrumentationEventSeq = 0;
+ULONGLONG g_ullBadPeerBehaviorLedgerLastCleanup = 0;
+
+constexpr ULONGLONG kBadPeerBehaviorLedgerWindowMs = MIN2MS(60);
+constexpr ULONGLONG kBadPeerBehaviorLedgerCleanupMs = SEC2MS(60);
+
+struct SBadPeerBehaviorLedgerState
+{
+	ULONGLONG ullFirstSeen;
+	ULONGLONG ullLastSeen;
+	UINT uCount;
+};
+
+struct CStringLess
+{
+	bool operator()(const CString &strLeft, const CString &strRight) const
+	{
+		return strLeft.Compare(strRight) < 0;
+	}
+};
+
+std::map<CString, SBadPeerBehaviorLedgerState, CStringLess> g_badPeerBehaviorLedger;
 
 CString JsonString(LPCTSTR pszValue)
 {
@@ -48,6 +74,34 @@ CString JsonHashOrNull(const uchar *pHash)
 	if (pHash == NULL || isnulmd4(pHash))
 		return CString(_T("null"));
 	return JsonString(md4str(pHash));
+}
+
+CString HashOrEmpty(const uchar *pHash)
+{
+	if (pHash == NULL || isnulmd4(pHash))
+		return CString();
+	return md4str(pHash);
+}
+
+CString PeerBehaviorKey(const CUpDownClient *pClient)
+{
+	if (pClient == NULL)
+		return CString();
+	if (pClient->HasValidHash())
+		return CString(_T("hash:")) + md4str(pClient->GetUserHash());
+	const uint32 dwIP = pClient->GetIP() != 0 ? pClient->GetIP() : pClient->GetConnectIP();
+	if (dwIP == 0)
+		return CString();
+	return CString(_T("ip:")) + ipstr(dwIP);
+}
+
+CString FileBehaviorHash(const CAbstractFile *pFile, const Requested_Block_Struct *pBlock)
+{
+	if (pFile != NULL)
+		return HashOrEmpty(pFile->GetFileHash());
+	if (pBlock != NULL)
+		return HashOrEmpty(pBlock->FileID);
+	return CString();
 }
 
 CString ClientJson(const CUpDownClient *pClient)
@@ -145,6 +199,98 @@ void WriteEvent(
 
 	WriteDiagnosticsLogLine(g_badPeerInstrumentationLog, g_badPeerInstrumentationLogLock, strJson);
 }
+
+SBadPeerBehaviorLedgerState UpdateBehaviorLedger(const CString &strLedgerKey, ULONGLONG curTick)
+{
+	SBadPeerBehaviorLedgerState state = {};
+	if (strLedgerKey.IsEmpty())
+		return state;
+
+	CSingleLock lock(&g_badPeerBehaviorLedgerLock, TRUE);
+	if (curTick >= g_ullBadPeerBehaviorLedgerLastCleanup + kBadPeerBehaviorLedgerCleanupMs) {
+		g_ullBadPeerBehaviorLedgerLastCleanup = curTick;
+		for (std::map<CString, SBadPeerBehaviorLedgerState, CStringLess>::iterator itLedger = g_badPeerBehaviorLedger.begin(); itLedger != g_badPeerBehaviorLedger.end();) {
+			if (curTick >= itLedger->second.ullLastSeen + kBadPeerBehaviorLedgerWindowMs)
+				itLedger = g_badPeerBehaviorLedger.erase(itLedger);
+			else
+				++itLedger;
+		}
+	}
+
+	std::map<CString, SBadPeerBehaviorLedgerState, CStringLess>::iterator itState = g_badPeerBehaviorLedger.find(strLedgerKey);
+	if (itState == g_badPeerBehaviorLedger.end() || curTick >= itState->second.ullLastSeen + kBadPeerBehaviorLedgerWindowMs) {
+		state.ullFirstSeen = curTick;
+		state.ullLastSeen = curTick;
+		state.uCount = 1;
+		g_badPeerBehaviorLedger[strLedgerKey] = state;
+		return state;
+	}
+
+	itState->second.ullLastSeen = curTick;
+	if (itState->second.uCount < _UI32_MAX)
+		++itState->second.uCount;
+	return itState->second;
+}
+
+CString BlockRequestEvidenceJson(
+	const CUpDownClient *pClient,
+	const CAbstractFile *pFile,
+	const Requested_Block_Struct *pBlock,
+	INT_PTR iQueuedBlocks,
+	INT_PTR iDoneBlocks,
+	LONG nPendingIOBlocks,
+	const SBadPeerBehaviorLedgerState &rState,
+	ULONGLONG curTick)
+{
+	const uint64 uStartOffset = pBlock != NULL ? pBlock->StartOffset : 0;
+	const uint64 uEndOffset = pBlock != NULL ? pBlock->EndOffset : 0;
+	const uint64 uRangeBytes = uEndOffset >= uStartOffset ? uEndOffset - uStartOffset : 0;
+	CString strPartIndex;
+	if (pBlock != NULL)
+		strPartIndex.Format(_T("%I64u"), uStartOffset / PARTSIZE);
+	else
+		strPartIndex = _T("null");
+
+	CString strJson;
+	strJson.Format(
+		_T("{\"file_hash\":%s,\"start_offset\":%I64u,\"end_offset\":%I64u,\"part_index\":%s,\"range_bytes\":%I64u,\"queued_blocks\":%Id,\"done_blocks\":%Id,\"pending_io_blocks\":%ld,\"repeat_count\":%u,\"window_seconds\":%I64u,\"first_seen_age_ms\":%I64u,\"session_up\":%I64u,\"queue_session_payload\":%I64u,\"payload_in_buffer\":%I64u}"),
+		(LPCTSTR)JsonString(FileBehaviorHash(pFile, pBlock)),
+		uStartOffset,
+		uEndOffset,
+		(LPCTSTR)strPartIndex,
+		uRangeBytes,
+		iQueuedBlocks,
+		iDoneBlocks,
+		nPendingIOBlocks,
+		rState.uCount,
+		kBadPeerBehaviorLedgerWindowMs / 1000,
+		rState.ullFirstSeen != 0 && curTick >= rState.ullFirstSeen ? curTick - rState.ullFirstSeen : 0,
+		pClient != NULL ? pClient->GetSessionUp() : 0,
+		pClient != NULL ? pClient->GetQueueSessionPayloadUp() : 0,
+		pClient != NULL ? pClient->GetPayloadInBuffer() : 0);
+	return strJson;
+}
+
+CString UploadFileBehaviorEvidenceJson(
+	LPCTSTR pszBehavior,
+	const CUpDownClient *pClient,
+	const CAbstractFile *pFile,
+	const SBadPeerBehaviorLedgerState &rState,
+	ULONGLONG curTick)
+{
+	CString strJson;
+	strJson.Format(
+		_T("{\"behavior\":%s,\"file_hash\":%s,\"repeat_count\":%u,\"window_seconds\":%I64u,\"first_seen_age_ms\":%I64u,\"session_up\":%I64u,\"queue_session_payload\":%I64u,\"payload_in_buffer\":%I64u}"),
+		(LPCTSTR)JsonString(pszBehavior),
+		(LPCTSTR)JsonString(FileBehaviorHash(pFile, NULL)),
+		rState.uCount,
+		kBadPeerBehaviorLedgerWindowMs / 1000,
+		rState.ullFirstSeen != 0 && curTick >= rState.ullFirstSeen ? curTick - rState.ullFirstSeen : 0,
+		pClient != NULL ? pClient->GetSessionUp() : 0,
+		pClient != NULL ? pClient->GetQueueSessionPayloadUp() : 0,
+		pClient != NULL ? pClient->GetPayloadInBuffer() : 0);
+	return strJson;
+}
 }
 
 namespace BadPeerInstrumentationSeams
@@ -197,6 +343,79 @@ void LogSearchEvent(
 	LPCTSTR pszEvidenceJson)
 {
 	WriteEvent(pszEvent, pszSeverity, CString(_T("null")), SearchJson(pSearchFile), pszAction, pszReason, pszEvidenceJson);
+}
+
+void LogUploadBlockRequestBehavior(
+	LPCTSTR pszEvent,
+	LPCTSTR pszSeverity,
+	const CUpDownClient *pClient,
+	const CAbstractFile *pFile,
+	const Requested_Block_Struct *pBlock,
+	LPCTSTR pszAction,
+	LPCTSTR pszReason,
+	INT_PTR iQueuedBlocks,
+	INT_PTR iDoneBlocks,
+	LONG nPendingIOBlocks)
+{
+	if (pBlock == NULL)
+		return;
+
+	const ULONGLONG curTick = ::GetTickCount64();
+	const CString strPeerKey(PeerBehaviorKey(pClient));
+	const CString strFileHash(FileBehaviorHash(pFile, pBlock));
+	if (strPeerKey.IsEmpty() || strFileHash.IsEmpty())
+		return;
+
+	CString strLedgerKey;
+	strLedgerKey.Format(
+		_T("%s|block|%s|%I64u|%I64u"),
+		(LPCTSTR)strPeerKey,
+		(LPCTSTR)strFileHash,
+		pBlock->StartOffset,
+		pBlock->EndOffset);
+	const SBadPeerBehaviorLedgerState state = UpdateBehaviorLedger(strLedgerKey, curTick);
+	const CString strEvidence(BlockRequestEvidenceJson(pClient, pFile, pBlock, iQueuedBlocks, iDoneBlocks, nPendingIOBlocks, state, curTick));
+	WriteEvent(pszEvent, pszSeverity, ClientJson(pClient), FileJson(pFile), pszAction, pszReason, strEvidence);
+
+	if (state.uCount > 1) {
+		WriteEvent(
+			_T("upload_repeat_block_request_observed"),
+			_T("medium"),
+			ClientJson(pClient),
+			FileJson(pFile),
+			_T("observe"),
+			_T("Repeated same upload block request"),
+			strEvidence);
+	}
+}
+
+void TrackUploadFileBehavior(
+	LPCTSTR pszBehavior,
+	const CUpDownClient *pClient,
+	const CAbstractFile *pFile,
+	LPCTSTR pszReason)
+{
+	const CString strFileHash(FileBehaviorHash(pFile, NULL));
+	const CString strPeerKey(PeerBehaviorKey(pClient));
+	if (strFileHash.IsEmpty() || strPeerKey.IsEmpty())
+		return;
+
+	const ULONGLONG curTick = ::GetTickCount64();
+	CString strLedgerKey;
+	strLedgerKey.Format(_T("%s|file|%s"), (LPCTSTR)strPeerKey, (LPCTSTR)strFileHash);
+	const SBadPeerBehaviorLedgerState state = UpdateBehaviorLedger(strLedgerKey, curTick);
+	if (state.uCount <= 1)
+		return;
+
+	const CString strEvidence(UploadFileBehaviorEvidenceJson(pszBehavior, pClient, pFile, state, curTick));
+	WriteEvent(
+		_T("upload_repeat_file_request_observed"),
+		_T("medium"),
+		ClientJson(pClient),
+		FileJson(pFile),
+		_T("observe"),
+		pszReason != NULL && pszReason[0] != _T('\0') ? pszReason : _T("Repeated same-file upload churn"),
+		strEvidence);
 }
 
 CString EvidenceJsonString(LPCTSTR pszValue)

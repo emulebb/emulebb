@@ -9,6 +9,7 @@
 class CAbstractFile;
 class CSearchFile;
 class CUpDownClient;
+struct Requested_Block_Struct;
 
 namespace BadPeerInstrumentationSeams
 {
@@ -57,6 +58,32 @@ void LogSearchEvent(
 	LPCTSTR pszEvidenceJson = NULL);
 
 /**
+ * Writes one upload block-request event and emits a repeat observation when the
+ * same peer asks for the same file range again inside the diagnostics window.
+ */
+void LogUploadBlockRequestBehavior(
+	LPCTSTR pszEvent,
+	LPCTSTR pszSeverity,
+	const CUpDownClient *pClient,
+	const CAbstractFile *pFile,
+	const Requested_Block_Struct *pBlock,
+	LPCTSTR pszAction,
+	LPCTSTR pszReason,
+	INT_PTR iQueuedBlocks,
+	INT_PTR iDoneBlocks,
+	LONG nPendingIOBlocks);
+
+/**
+ * Tracks repeated same-file upload-slot churn. This is diagnostics-only and
+ * does not alter cooldowns, scores, or ban policy.
+ */
+void TrackUploadFileBehavior(
+	LPCTSTR pszBehavior,
+	const CUpDownClient *pClient,
+	const CAbstractFile *pFile,
+	LPCTSTR pszReason);
+
+/**
  * Escapes a value for embedding into a caller-built evidence JSON object.
  */
 CString EvidenceJsonString(LPCTSTR pszValue);
@@ -66,6 +93,8 @@ inline bool IsEnabled() { return false; }
 inline void LogClientEvent(LPCTSTR, LPCTSTR, const CUpDownClient *, LPCTSTR, LPCTSTR, const CAbstractFile * = NULL, LPCTSTR = NULL) {}
 inline void LogIpEvent(LPCTSTR, LPCTSTR, uint32, uint16, LPCTSTR, LPCTSTR, LPCTSTR = NULL) {}
 inline void LogSearchEvent(LPCTSTR, LPCTSTR, const CSearchFile *, LPCTSTR, LPCTSTR, LPCTSTR = NULL) {}
+inline void LogUploadBlockRequestBehavior(LPCTSTR, LPCTSTR, const CUpDownClient *, const CAbstractFile *, const Requested_Block_Struct *, LPCTSTR, LPCTSTR, INT_PTR, INT_PTR, LONG) {}
+inline void TrackUploadFileBehavior(LPCTSTR, const CUpDownClient *, const CAbstractFile *, LPCTSTR) {}
 #endif
 }
 

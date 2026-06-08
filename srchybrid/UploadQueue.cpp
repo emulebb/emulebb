@@ -338,6 +338,13 @@ bool CUploadQueue::AddUpNextClient(LPCTSTR pszReason, CUpDownClient *directadd)
 				newclient->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(newclient, ullCooldownUntil, uploadRetryCooldownFailedAdmission);
 				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("upload_failed_admission_cooldown"), _T("low"), newclient, _T("cooldown"), _T("Failed upload admission"), theApp.sharedfiles->GetFileByID(newclient->GetUploadFileID()));
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
+				BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+					_T("failed_admission"),
+					newclient,
+					theApp.sharedfiles->GetFileByID(newclient->GetUploadFileID()),
+					_T("Repeated same-file failed upload admission churn"));
+#endif
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after failed upload admission."), newclient->GetUserName());
 			}
@@ -821,6 +828,13 @@ void CUploadQueue::Process()
 				cur_client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(cur_client, ullCooldownUntil, uploadRetryCooldownNoSocket);
 				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("upload_no_socket_cooldown"), _T("low"), cur_client, _T("cooldown"), _T("Upload slot reached without socket"), theApp.sharedfiles->GetFileByID(cur_client->GetUploadFileID()));
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
+				BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+					_T("no_socket"),
+					cur_client,
+					theApp.sharedfiles->GetFileByID(cur_client->GetUploadFileID()),
+					_T("Repeated same-file no-socket upload churn"));
+#endif
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after no-socket upload slot removal."), cur_client->GetUserName());
 			}
@@ -1575,6 +1589,11 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			bProductiveNoRequestRecycle ? _T("Broadband productive no-request recycle") : _T("Broadband unproductive no-request recycle"),
 			theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
 			strBadPeerEvidence);
+		BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+			_T("no_request"),
+			client,
+			theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
+			_T("Repeated same-file no-request upload churn"));
 #endif
 		if (thePrefs.GetLogUlDlEvents())
 			AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled because the peer stopped requesting parts during broadband underfill (%s)."),
@@ -1657,6 +1676,11 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		bShouldRecycleIdle ? _T("Broadband idle no-request recycle") : _T("Broadband stalled zero-rate recycle"),
 		theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
 		strBadPeerEvidence);
+	BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+		bShouldRecycleIdle ? _T("idle_no_request") : _T("stalled_zero_rate"),
+		client,
+		theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
+		bShouldRecycleIdle ? _T("Repeated same-file idle no-request upload churn") : _T("Repeated same-file stalled zero-rate upload churn"));
 #endif
 	if (thePrefs.GetLogUlDlEvents()) {
 		AddDebugLogLine(DLP_LOW, false,
@@ -2091,6 +2115,11 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 					client->GetUpStartTimeDelay(),
 					earlyabort ? _T("true") : _T("false"));
 				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("upload_short_failed_slot_cooldown"), _T("medium"), client, _T("cooldown"), _T("Short failed upload slot"), theApp.sharedfiles->GetFileByID(client->GetUploadFileID()), strBadPeerEvidence);
+				BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+					_T("short_failed_slot"),
+					client,
+					theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
+					_T("Repeated same-file short failed upload slot churn"));
 #endif
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after a short failed upload slot."), client->GetUserName());
@@ -2254,6 +2283,11 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 					client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs ? _T("Broadband zero-rate recycle") : _T("Broadband slow-rate recycle"),
 					theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
 					strBadPeerEvidence);
+				BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+					client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs ? _T("zero_rate") : _T("slow_rate"),
+					client,
+					theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
+					client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs ? _T("Repeated same-file zero-rate upload churn") : _T("Repeated same-file slow-rate upload churn"));
 #endif
 				if (thePrefs.GetLogUlDlEvents()) {
 					if (client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs)
