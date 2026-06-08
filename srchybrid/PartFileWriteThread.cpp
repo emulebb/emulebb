@@ -76,7 +76,7 @@ CPartFileWriteThread::CPartFileWriteThread()
 	, m_Run(RUN_STOP)
 	, m_bNewData()
 {
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 #endif
 	CWinThread *pThread = AfxBeginThread(RunProc, (LPVOID)this, THREAD_PRIORITY_BELOW_NORMAL);
@@ -85,7 +85,7 @@ CPartFileWriteThread::CPartFileWriteThread()
 		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed to start part-file write helper thread"));
 		m_eventThreadEnded.SetEvent();
 	}
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	theApp.AppendStartupProfileLine(_T("broadband.partfile_write.launch_thread"), theApp.GetStartupProfileElapsedUs(ullPhaseStart), ullPhaseStart);
 #endif
 }
@@ -97,7 +97,7 @@ CPartFileWriteThread::~CPartFileWriteThread()
 
 UINT AFX_CDECL CPartFileWriteThread::RunProc(LPVOID pParam)
 {
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	theApp.AppendStartupProfileLine(_T("broadband.partfile_write.thread_enter"), 0);
 #endif
 	DbgSetThreadName("PartWriteThread");
@@ -126,7 +126,7 @@ void CPartFileWriteThread::EndThread()
 
 UINT CPartFileWriteThread::RunInternal()
 {
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	const ULONGLONG ullThreadStartUs = theApp.GetStartupProfileTimestampUs();
 #endif
 	DWORD dwError = ERROR_SUCCESS;
@@ -147,7 +147,7 @@ UINT CPartFileWriteThread::RunInternal()
 	ULONG_PTR completionKey = 0;
 	OverlappedWrite_Struct *pCurIO = NULL;
 	HelperThreadLaunchSeams::SetState(m_Run, RUN_IDLE);
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	theApp.AppendStartupProfileLine(_T("broadband.partfile_write.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
 #endif
 	while (HelperThreadLaunchSeams::ShouldWaitForIocpWorkerCompletion(

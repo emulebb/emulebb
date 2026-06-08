@@ -23,14 +23,28 @@ inline LPCTSTR VerboseLogFileName()
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 inline LPCTSTR PacketDiagnosticsLogFileName()
 {
-	return _T("emulebb-packet-diagnostics.log");
+	return _T("emulebb-diagnostics-packet.log");
 }
 #endif
 
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
-inline LPCTSTR BadPeerInstrumentationLogFileName()
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
+inline LPCTSTR BadPeerDiagnosticsLogFileName()
 {
-	return _T("emulebb-bad-peer-instrumentation.log");
+	return _T("emulebb-diagnostics-bad-peer.log");
+}
+#endif
+
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
+inline LPCTSTR UploadSlotDiagnosticsLogFileName()
+{
+	return _T("emulebb-diagnostics-upload-slot.log");
+}
+#endif
+
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
+inline LPCTSTR DownloadSlotDiagnosticsLogFileName()
+{
+	return _T("emulebb-diagnostics-download-slot.log");
 }
 #endif
 
@@ -42,6 +56,11 @@ inline LPCTSTR CrtDebugLogFileName()
 inline LPCTSTR StartupErrorLogFileName()
 {
 	return _T("emulebb-startup-errors.log");
+}
+
+inline LPCTSTR StartupProfileTraceFileName()
+{
+	return _T("emulebb-diagnostics-startup.trace.json");
 }
 
 inline LPCTSTR PerformanceCsvFileName()

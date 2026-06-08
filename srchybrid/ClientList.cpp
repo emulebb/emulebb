@@ -462,7 +462,7 @@ void CClientList::CheckTCPErrorFlooder(uint32 dwIP)
 			, state.m_uCount
 			, thePrefs.GetTCPErrorFlooderIntervalMinutes());
 	}
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 	CString strEvidence;
 	strEvidence.Format(_T("{\"tcp_error_events\":%u,\"interval_minutes\":%u}"), state.m_uCount, thePrefs.GetTCPErrorFlooderIntervalMinutes());
 	EMULEBB_BAD_PEER_LOG_IP_EVENT(_T("tcp_error_flood"), _T("high"), dwIP, 0, _T("ban"), _T("TCP error flooding"), strEvidence);

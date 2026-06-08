@@ -103,7 +103,7 @@ CUploadDiskIOThread::CUploadDiskIOThread()
 	, m_bSignalThrottler()
 {
 	ASSERT(theApp.uploadqueue != NULL);
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 #endif
 	CWinThread *pThread = AfxBeginThread(RunProc, (LPVOID)this);
@@ -112,7 +112,7 @@ CUploadDiskIOThread::CUploadDiskIOThread()
 		theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed to start upload disk I/O helper thread"));
 		m_eventThreadEnded.SetEvent();
 	}
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	theApp.AppendStartupProfileLine(_T("broadband.upload_disk_io.launch_thread"), theApp.GetStartupProfileElapsedUs(ullPhaseStart), ullPhaseStart);
 #endif
 }
@@ -124,7 +124,7 @@ CUploadDiskIOThread::~CUploadDiskIOThread()
 
 UINT AFX_CDECL CUploadDiskIOThread::RunProc(LPVOID pParam)
 {
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	theApp.AppendStartupProfileLine(_T("broadband.upload_disk_io.thread_enter"), 0);
 #endif
 	DbgSetThreadName("UploadDiskIOThread");
@@ -153,7 +153,7 @@ void CUploadDiskIOThread::EndThread()
 
 UINT CUploadDiskIOThread::RunInternal()
 {
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	const ULONGLONG ullThreadStartUs = theApp.GetStartupProfileTimestampUs();
 #endif
 	DWORD dwError = ERROR_SUCCESS;
@@ -174,7 +174,7 @@ UINT CUploadDiskIOThread::RunInternal()
 	ULONG_PTR completionKey = 0;
 	OverlappedRead_Struct *pCurIO = NULL;
 	HelperThreadLaunchSeams::SetState(m_Run, RUN_IDLE);
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	theApp.AppendStartupProfileLine(_T("broadband.upload_disk_io.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
 #endif
 	while (HelperThreadLaunchSeams::ShouldWaitForIocpWorkerCompletion(

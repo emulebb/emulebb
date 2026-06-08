@@ -12,9 +12,9 @@ class CUpDownClient;
 
 namespace BadPeerInstrumentationSeams
 {
-constexpr LPCTSTR kBinaryMarker = _T("BadPeerInstrumentation:");
+constexpr LPCTSTR kBinaryMarker = _T("BadPeerDiagnostics:");
 
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 /**
  * Initializes the compile-gated bad-peer JSONL artifact.
  */
@@ -69,7 +69,7 @@ inline void LogSearchEvent(LPCTSTR, LPCTSTR, const CSearchFile *, LPCTSTR, LPCTS
 #endif
 }
 
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 #define EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(...) BadPeerInstrumentationSeams::LogClientEvent(__VA_ARGS__)
 #define EMULEBB_BAD_PEER_LOG_IP_EVENT(...) BadPeerInstrumentationSeams::LogIpEvent(__VA_ARGS__)
 #define EMULEBB_BAD_PEER_LOG_SEARCH_EVENT(...) BadPeerInstrumentationSeams::LogSearchEvent(__VA_ARGS__)

@@ -153,7 +153,7 @@ void LogInvalidMultipacketSubOpcode(
 }
 #endif
 
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 void LogBadPeerInvalidMultipacketSubOpcode(
 	LPCTSTR pszPacketFamily,
 	const CUpDownClient *pClient,
@@ -1042,7 +1042,7 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 		return;
 	default:
 		theStats.AddDownDataOverheadOther(size);
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 		{
 			CString strEvidence;
 			strEvidence.Format(_T("{\"protocol\":\"eDonkey\",\"opcode\":%u,\"payload_bytes\":%u}"), opcode, size);
@@ -1149,7 +1149,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 			else
 				data_out.WriteHash16(reqfile->GetFileHash());
 			bool bAnswerFNF = false;
-#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 			int iPreviousSubOpcode = -1;
 #endif
 			while (data_in.GetLength() > data_in.GetPosition() && !bAnswerFNF) {
@@ -1172,7 +1172,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 						data_out.WriteUInt8(OP_REQFILENAMEANSWER);
 						data_out.WriteString(reqfile->GetFileName(), client->GetUnicodeSupport());
 					}
-#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 					iPreviousSubOpcode = opcode_in;
 #endif
 					break;
@@ -1186,7 +1186,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 						data_out.WriteUInt8(OP_AICHFILEHASHANS);
 						reqfile->GetFileIdentifier().GetAICHHash().Write(data_out);
 					}
-#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 					iPreviousSubOpcode = opcode_in;
 #endif
 					break;
@@ -1199,7 +1199,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 						static_cast<CPartFile*>(reqfile)->WritePartStatus(data_out);
 					else
 						data_out.WriteUInt16(0);
-#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 					iPreviousSubOpcode = opcode_in;
 #endif
 					break;
@@ -1241,13 +1241,13 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 							*/
 						}
 					}
-#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 					iPreviousSubOpcode = opcode_in;
 #endif
 					break;
 				default:
 					{
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 						LogBadPeerInvalidMultipacketSubOpcode(_T("multipacket_request"), client, opcode, size, opcode_in, data_in, iPreviousSubOpcode);
 #endif
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
@@ -1310,7 +1310,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 				throw GetResString(IDS_ERR_WRONGFILEID) + _T(" (OP_MULTIPACKETANSWER; client->GetRequestFile()==NULL)");
 			if (reqfile != client->GetRequestFile())
 				throw GetResString(IDS_ERR_WRONGFILEID) + _T(" (OP_MULTIPACKETANSWER; reqfile!=client->GetRequestFile())");
-#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 			int iPreviousSubOpcode = -1;
 #endif
 			while (data_in.GetLength() > data_in.GetPosition()) {
@@ -1321,7 +1321,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 						DebugRecv("OP_MPReqFileNameAns", client, packet);
 
 					client->ProcessFileInfo(data_in, reqfile);
-#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 					iPreviousSubOpcode = opcode_in;
 #endif
 					break;
@@ -1330,7 +1330,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 						DebugRecv("OP_MPFileStatus", client, packet);
 
 					client->ProcessFileStatus(false, data_in, reqfile);
-#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 					iPreviousSubOpcode = opcode_in;
 #endif
 					break;
@@ -1339,13 +1339,13 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 						DebugRecv("OP_MPAichFileHashAns", client);
 
 					client->ProcessAICHFileHash(&data_in, reqfile, NULL);
-#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) || EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 					iPreviousSubOpcode = opcode_in;
 #endif
 					break;
 				default:
 					{
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 						LogBadPeerInvalidMultipacketSubOpcode(_T("multipacket_answer"), client, opcode, size, opcode_in, data_in, iPreviousSubOpcode);
 #endif
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
@@ -1892,7 +1892,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 			if (Kademlia::CKademlia::IsRunning())
 				Kademlia::CKademlia::GetPrefs()->IncFirewalled();
 		} else {
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 			EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("packet_unrequested_kad_fw_ack"), _T("low"), client, _T("ignore_packet"), _T("Unrequested Kad firewall TCP check acknowledgement"));
 #endif
 			DebugLogWarning(_T("Unrequested OP_KAD_FWTCPCHECK_ACK packet from client %s"), (LPCTSTR)client->DbgGetClientInfo());
@@ -1912,7 +1912,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 		return;
 	default:
 		theStats.AddDownDataOverheadOther(uRawSize);
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 		{
 			CString strEvidence;
 			strEvidence.Format(_T("{\"protocol\":\"eMule\",\"opcode\":%u,\"payload_bytes\":%u,\"raw_bytes\":%u}"), opcode, size, uRawSize);
@@ -2034,7 +2034,7 @@ bool CClientReqSocket::PacketReceived(Packet *packet)
 				break;
 			case OP_PACKEDPROT:
 				if (!packet->UnPackPacket()) {
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 					{
 						CString strEvidence;
 						strEvidence.Format(_T("{\"protocol\":%u,\"opcode\":%u,\"payload_bytes\":%u,\"raw_bytes\":%u}"), static_cast<UINT>(packet->prot), static_cast<UINT>(packet->opcode), packet->size, uRawSize);
@@ -2059,7 +2059,7 @@ bool CClientReqSocket::PacketReceived(Packet *packet)
 				break;
 			default:
 				theStats.AddDownDataOverheadOther(uRawSize);
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 				{
 					CString strEvidence;
 					strEvidence.Format(_T("{\"protocol\":%u,\"opcode\":%u,\"payload_bytes\":%u,\"raw_bytes\":%u}"), static_cast<UINT>(packet->prot), static_cast<UINT>(packet->opcode), packet->size, uRawSize);
@@ -2113,7 +2113,7 @@ bool CClientReqSocket::PacketReceived(Packet *packet)
 			, uRawSize
 			, (LPCTSTR)DbgGetClientInfo());
 
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 	{
 		CString strEvidence;
 		strEvidence.Format(

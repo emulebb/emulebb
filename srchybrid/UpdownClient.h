@@ -343,7 +343,7 @@ public:
 	void			SendOutOfPartReqsAndAddToWaitingQueue();
 	UINT			CalculateDownloadRate();
 	uint16			GetAvailablePartCount() const;
-#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
 	void			LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iRequestBatchCount = -1, uint32 uPacketBytes = 0, uint32 uWrittenBytes = 0) const;
 	void			NoteDownloadDuplicateZeroWrite(uint64 uPayloadBytes) const;
 	ULONGLONG		GetDownloadDuplicateZeroWritePackets() const	{ return m_ullDownloadDuplicateZeroWritePackets; }
@@ -659,7 +659,7 @@ protected:
 	CRing<TransferredData> m_AverageDDR_hist;
 	UINT		m_nDownDatarate;
 	UINT		m_nDownDataRateMS;
-#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
 	ULONGLONG	m_ullDownloadBlockRequestsReserved;
 	ULONGLONG	m_ullDownloadBlockRequestsSent;
 	ULONGLONG	m_ullDownloadBlockRequestsCompleted;

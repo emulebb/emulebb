@@ -562,7 +562,7 @@ void FakeFileDetector::SaveCache()
 SFakeFileReport FakeFileDetector::AnalyzeSearchFile(const CSearchFile &rSearchFile)
 {
 	SFakeFileReport report = BuildSearchFileReport(rSearchFile, true);
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 	if (report.eSeverity == FakeFileDetectorSeams::Severity::Medium
 		|| report.eSeverity == FakeFileDetectorSeams::Severity::High
 		|| report.eSeverity == FakeFileDetectorSeams::Severity::Critical)
@@ -582,7 +582,7 @@ SFakeFileReport FakeFileDetector::AnalyzeSearchFile(const CSearchFile &rSearchFi
 SFakeFileReport FakeFileDetector::AnalyzePartFile(CPartFile &rPartFile)
 {
 	SFakeFileReport report = BuildPartFileReport(rPartFile, true, true);
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 	if (report.eSeverity == FakeFileDetectorSeams::Severity::Medium
 		|| report.eSeverity == FakeFileDetectorSeams::Severity::High
 		|| report.eSeverity == FakeFileDetectorSeams::Severity::Critical)

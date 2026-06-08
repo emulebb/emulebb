@@ -37,7 +37,7 @@ struct UploadingToClient_Struct
 		, m_ullRetiredTick()
 		, m_ullLastRetiredPendingIOLogTick()
 		, m_ullLastAcceptedReqBlockTick()
-#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 		, m_ullReqBlocksAccepted()
 		, m_ullReqBlocksDuplicateDone()
 		, m_ullReqBlocksDuplicateQueued()
@@ -62,7 +62,7 @@ struct UploadingToClient_Struct
 	ULONGLONG											m_ullRetiredTick;
 	ULONGLONG											m_ullLastRetiredPendingIOLogTick;
 	std::atomic<ULONGLONG>								m_ullLastAcceptedReqBlockTick;
-#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 	std::atomic<ULONGLONG>								m_ullReqBlocksAccepted;
 	std::atomic<ULONGLONG>								m_ullReqBlocksDuplicateDone;
 	std::atomic<ULONGLONG>								m_ullReqBlocksDuplicateQueued;
@@ -227,7 +227,7 @@ private:
 	void	UpdateMaxClientScore();
 	uint32	GetMaxClientScore() const						{ return m_imaxscore; }
 	void	UpdateActiveClientsInfo(ULONGLONG curTick);
-#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 	void	LogUploadSlotInstrumentation(ULONGLONG curTick) const;
 #endif
 	void	RetireUploadClientStruct(POSITION pos, UploadingToClient_Struct *pUploadClientStruct, CUpDownClient *pClient);

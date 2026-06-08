@@ -249,7 +249,7 @@ void CUpDownClient::Init()
 	m_nDownDatarate = 0;
 	m_nDownDataRateMS = 0;
 	m_nSumForAvgDownDataRate = 0;
-#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
 	m_ullDownloadBlockRequestsReserved = 0;
 	m_ullDownloadBlockRequestsSent = 0;
 	m_ullDownloadBlockRequestsCompleted = 0;
@@ -1175,7 +1175,7 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 
 	if (GetDownloadState() == DS_DOWNLOADING) {
 		ASSERT(m_eConnectingState == CCS_NONE);
-#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
 		LogDownloadSlotInstrumentation(_T("disconnect-downloading"));
 #endif
 		SetDownloadState(DS_ONQUEUE, CString(_T("Disconnected: ")) + pszReason);

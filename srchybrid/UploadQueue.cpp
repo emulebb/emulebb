@@ -173,11 +173,11 @@ CUploadQueue::CUploadQueue()
 	, m_bStatisticsWaitingListDirty(true)
 {
 	i1sec = i2sec = i5sec = i60sec = 0;
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
 #endif
 	VERIFY(Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(h_timer, SEC2MS(1)/10, UploadTimer));
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	theApp.AppendStartupProfileLine(_T("broadband.upload_queue.timer_ready"), theApp.GetStartupProfileElapsedUs(ullPhaseStart), ullPhaseStart);
 #endif
 	if (thePrefs.GetVerbose() && !h_timer)
@@ -412,7 +412,7 @@ void CUploadQueue::UpdateActiveClientsInfo(ULONGLONG curTick)
 	}
 }
 
-#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 {
 	static ULONGLONG s_ullLastUploadSlotInstrumentationLogTick = 0;
@@ -618,8 +618,8 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 	if (theApp.sharedfiles != NULL)
 		theApp.sharedfiles->GetPublishInstrumentationSnapshot(sharedPublish);
 
-	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("UploadSlotInstrumentation: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id activeZeroRate=%Id activeNoRequest=%Id activeNoRequestDrained=%Id activeNoRequestDrainedZeroRate=%Id activeNoRequestDrainedNonzeroRate=%Id activeNoRequestPendingIO=%Id activeNoRequestBufferedPayload=%Id activeNoRequestSocketBacklog=%Id activeNoRequestNeverAccepted=%Id activeNoRequestRecycleEligible=%Id activeNoRequestRecycleGraceBlocked=%Id activeNoRequestRecycleUnderfillBlocked=%Id activeNoRequestAgeAvgMs=%I64u activeNoRequestAgeMaxMs=%I64u activeNoRequestLastAcceptedAgeMaxMs=%I64u activeNoRequestZeroMaxMs=%I64u activeQueuedRequests=%Id activePendingIO=%Id activeBufferedPayload=%Id activeSocketBacklog=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u sharedFiles=%Id ed2kPublishedFiles=%u ed2kPendingFiles=%u ed2kPendingLargeUnsupportedFiles=%u ed2kOfferLimit=%u kadPublishReady=%u kadSourceDueFiles=%u kadSourceBackoffFiles=%u kadSourceSearches=%u kadSourceSearchCap=%u kadKeywordSearches=%u kadKeywordSearchCap=%u kadNotesSearches=%u kadNotesSearchCap=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
+	UploadSlotDiagnosticsLogLine(
+		_T("UploadSlotDiagnostics: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id activeZeroRate=%Id activeNoRequest=%Id activeNoRequestDrained=%Id activeNoRequestDrainedZeroRate=%Id activeNoRequestDrainedNonzeroRate=%Id activeNoRequestPendingIO=%Id activeNoRequestBufferedPayload=%Id activeNoRequestSocketBacklog=%Id activeNoRequestNeverAccepted=%Id activeNoRequestRecycleEligible=%Id activeNoRequestRecycleGraceBlocked=%Id activeNoRequestRecycleUnderfillBlocked=%Id activeNoRequestAgeAvgMs=%I64u activeNoRequestAgeMaxMs=%I64u activeNoRequestLastAcceptedAgeMaxMs=%I64u activeNoRequestZeroMaxMs=%I64u activeQueuedRequests=%Id activePendingIO=%Id activeBufferedPayload=%Id activeSocketBacklog=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u sharedFiles=%Id ed2kPublishedFiles=%u ed2kPendingFiles=%u ed2kPendingLargeUnsupportedFiles=%u ed2kOfferLimit=%u kadPublishReady=%u kadSourceDueFiles=%u kadSourceBackoffFiles=%u kadSourceSearches=%u kadSourceSearchCap=%u kadKeywordSearches=%u kadKeywordSearchCap=%u kadNotesSearches=%u kadNotesSearchCap=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
 		uploadinglist.GetCount(),
 		m_retiredUploadingList.GetCount(),
 		waitinglist.GetCount(),
@@ -691,8 +691,8 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		const UploadingToClient_Struct *pCurClientStruct = uploadinglist.GetNext(pos);
 		CUpDownClient *client = pCurClientStruct != NULL ? pCurClientStruct->m_pClient : NULL;
 		if (!IsLiveUploadQueueClient(client)) {
-			AddDebugLogLine(DLP_DEFAULT, false,
-				_T("UploadSlotInstrumentation: slot=%u live=0 client=%p struct=%p retired=%u pendingIO=%ld"),
+			UploadSlotDiagnosticsLogLine(
+				_T("UploadSlotDiagnostics: slot=%u live=0 client=%p struct=%p retired=%u pendingIO=%ld"),
 				uSlot,
 				static_cast<const void*>(client),
 				static_cast<const void*>(pCurClientStruct),
@@ -733,8 +733,8 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 		const bool bSocketConnected = sock != NULL && sock->IsConnected();
 		const ULONGLONG ullAgeMs = client->GetUpStartTimeDelay();
 
-		AddDebugLogLine(DLP_DEFAULT, false,
-			_T("UploadSlotInstrumentation: slot=%u live=1 client=%s state=%s socket=%p socketConnected=%u handshake=%u rateBytesPerSec=%u ageMs=%I64u sessionUp=%s queuePayload=%s queueAdded=%s payloadInBuffer=%s reqBlocks=%Id doneBlocks=%Id pendingIO=%ld socketStdQueue=%Id reqAccepted=%I64u reqDupDone=%I64u reqDupQueued=%I64u reqRejected=%I64u reqSignals=%I64u reqLastAgeMs=%I64u reqLastAcceptedAgeMs=%I64u slowMs=%I64u zeroMs=%I64u cooldownMs=%I64u fileKnown=%u"),
+		UploadSlotDiagnosticsLogLine(
+			_T("UploadSlotDiagnostics: slot=%u live=1 client=%s state=%s socket=%p socketConnected=%u handshake=%u rateBytesPerSec=%u ageMs=%I64u sessionUp=%s queuePayload=%s queueAdded=%s payloadInBuffer=%s reqBlocks=%Id doneBlocks=%Id pendingIO=%ld socketStdQueue=%Id reqAccepted=%I64u reqDupDone=%I64u reqDupQueued=%I64u reqRejected=%I64u reqSignals=%I64u reqLastAgeMs=%I64u reqLastAcceptedAgeMs=%I64u slowMs=%I64u zeroMs=%I64u cooldownMs=%I64u fileKnown=%u"),
 			uSlot,
 			(LPCTSTR)client->DbgGetClientInfo(),
 			client->DbgGetUploadState(),
@@ -779,7 +779,7 @@ void CUploadQueue::Process()
 	PurgeExpiredUploadRetryCooldowns(curTick);
 	UpdateActiveClientsInfo(curTick);
 	UpdateBroadbandUnderfillState(curTick);
-#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 	LogUploadSlotInstrumentation(curTick);
 #endif
 
@@ -1451,7 +1451,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			SetUploadRetryCooldown(client, ullCooldownUntil, uploadRetryCooldownNoRequest);
 			SetNoRequestUploadRetryCooldown(client, ullCooldownUntil, ullTrackUntil, bProductiveNoRequestRecycle);
 		}
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 		CString strBadPeerEvidence;
 		strBadPeerEvidence.Format(
 			_T("{\"productive\":%s,\"request_blocks\":%Id,\"pending_io\":%ld,\"payload_in_buffer\":%I64u,\"socket_queue\":%Id}"),
@@ -1531,7 +1531,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		GetConfiguredUploadBudgetBytesPerSec()));
 	client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 	SetUploadRetryCooldown(client, ullCooldownUntil, bShouldRecycleIdle ? uploadRetryCooldownIdle : uploadRetryCooldownStalled);
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 	CString strBadPeerEvidence;
 	strBadPeerEvidence.Format(
 		_T("{\"idle\":%s,\"stalled\":%s,\"request_blocks\":%Id,\"pending_io\":%ld,\"payload_in_buffer\":%I64u,\"socket_queue\":%Id,\"zero_ms\":%I64u}"),
@@ -1976,7 +1976,7 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 					GetConfiguredUploadBudgetBytesPerSec()));
 				client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(client, ullCooldownUntil, uploadRetryCooldownShortFailed);
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 				CString strBadPeerEvidence;
 				strBadPeerEvidence.Format(_T("{\"session_up\":%I64u,\"queue_session_payload\":%I64u,\"up_time_ms\":%I64u,\"early_abort\":%s}"),
 					client->GetSessionUp(),
@@ -2130,7 +2130,7 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 					client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs
 						? uploadRetryCooldownZeroUpload
 						: uploadRetryCooldownSlowUpload);
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 				CString strBadPeerEvidence;
 				strBadPeerEvidence.Format(_T("{\"zero_ms\":%I64u,\"zero_grace_ms\":%I64u,\"upload_rate_bytes_per_sec\":%u}"),
 					client->GetAccumulatedZeroUploadMs(),

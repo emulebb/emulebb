@@ -1165,7 +1165,7 @@ void CSearchList::DoSpamRating(CSearchFile *pSearchFile, bool bIsClientFile, boo
 		pSearchFile->SetSpamRating(bMarkAsNoSpam ? 0 : nSpamScore);
 
 	const bool bNewSpamStatus = pSearchFile->IsConsideredSpam();
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 	if (bNewSpamStatus || bOldSpamStatus != bNewSpamStatus || bMarkAsNoSpam) {
 		CString strEvidence;
 		const CString strUdpServerIp(dwFromUDPServerIP != 0 ? BadPeerInstrumentationSeams::EvidenceJsonString(ipstr(dwFromUDPServerIP)) : CString(_T("null")));

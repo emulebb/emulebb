@@ -132,7 +132,7 @@ namespace
 		return CString(strKey.c_str());
 	}
 
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 	void LogPotentialWrongDownloadSource(CUpDownClient *pSource, const CPartFile *pCurrentFile, const CPartFile *pTargetFile)
 	{
 		if (pSource == NULL || pCurrentFile == NULL || pTargetFile == NULL)
@@ -929,7 +929,7 @@ bool CDownloadQueue::IsFileExisting(const uchar *fileid, bool bLogWarnings) cons
 	return true;
 }
 
-#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
 void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 {
 	static ULONGLONG s_ullLastDownloadSlotInstrumentationLogTick = 0;
@@ -1123,8 +1123,8 @@ void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
 		ullNextTcpSourceRequestWaitMs);
 	const ULONGLONG ullLastUdpSearchAgeMs = m_lastudpsearchtime != 0 && curTick >= m_lastudpsearchtime ? curTick - m_lastudpsearchtime : 0;
 
-	AddDebugLogLine(DLP_DEFAULT, false,
-		_T("DownloadSlotInstrumentation: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceStarvedLocalQueuedReadyFiles=%u sourceStarvedKadSearchingReadyFiles=%u sourceStarvedKadEligibleReadyFiles=%u sourceStarvedKadDueReadyFiles=%u sourceStarvedKadBackoffReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u duplicateZeroWriteSources=%u duplicateZeroWritePackets=%I64u duplicateZeroWriteBytes=%I64u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerQueuedEligibleFiles=%u localServerQueuedSourceStarvedEligibleFiles=%u localServerQueuedDueAgeMaxMs=%I64u localServerQueuedEstimatedDrainMs=%I64u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u effectiveFileBufferBytes=%I64u autoBroadbandIO=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u maxBufferedReadyBytes=%I64u maxBufferedPendingBytes=%I64u maxBufferedWrittenBytes=%I64u maxBufferedReadyItems=%u maxBufferedPendingItems=%u maxBufferedWrittenItems=%u asyncWriteFiles=%u maxAsyncWriteRefsPerFile=%ld asyncWriteRefs=%Id protectedDiskBlocked=%u"),
+	DownloadSlotDiagnosticsLogLine(
+		_T("DownloadSlotDiagnostics: summary files=%Id readyFiles=%u activeFiles=%u sourceStarvedReadyFiles=%u sourceStarvedLocalQueuedReadyFiles=%u sourceStarvedKadSearchingReadyFiles=%u sourceStarvedKadEligibleReadyFiles=%u sourceStarvedKadDueReadyFiles=%u sourceStarvedKadBackoffReadyFiles=%u sourceThinReadyFiles=%u sourceRichReadyFiles=%u a4afReadyFiles=%u sources=%u validSources=%u downloadingSources=%u onQueueSources=%u connectedSources=%u connectingSources=%u callbackSources=%u hashsetSources=%u nnpSources=%u remoteFullSources=%u tooManyConnSources=%u lowToLowIPSources=%u bannedSources=%u errorSources=%u idleSources=%u duplicateZeroWriteSources=%u duplicateZeroWritePackets=%I64u duplicateZeroWriteBytes=%I64u localServerQueuedFiles=%Id localServerQueuedReadyFiles=%u localServerQueuedEligibleFiles=%u localServerQueuedSourceStarvedEligibleFiles=%u localServerQueuedDueAgeMaxMs=%I64u localServerQueuedEstimatedDrainMs=%I64u localServerMarkedReadyFiles=%u nextTcpSourceRequestWaitMs=%I64u udpSearchActive=%u udpSearchedServers=%u udpRequestsSentToServer=%u udpFileReasks=%u udpFailedFileReasks=%u udpLastSearchAgeMs=%I64u kadConnected=%u kadTotalFileSearches=%u kadSearchingReadyFiles=%u kadEligibleReadyFiles=%u kadDueReadyFiles=%u kadBackoffReadyFiles=%u datarateBytesPerSec=%u effectiveFileBufferBytes=%I64u autoBroadbandIO=%u bufferedBytes=%I64u bufferedFiles=%u bufferedReadyBytes=%I64u bufferedPendingBytes=%I64u bufferedWrittenBytes=%I64u bufferedErrorBytes=%I64u bufferedReadyItems=%u bufferedPendingItems=%u bufferedWrittenItems=%u bufferedErrorItems=%u bufferedReadyFiles=%u bufferedPendingFiles=%u bufferedWrittenFiles=%u bufferedErrorFiles=%u maxBufferedReadyBytes=%I64u maxBufferedPendingBytes=%I64u maxBufferedWrittenBytes=%I64u maxBufferedReadyItems=%u maxBufferedPendingItems=%u maxBufferedWrittenItems=%u asyncWriteFiles=%u maxAsyncWriteRefsPerFile=%ld asyncWriteRefs=%Id protectedDiskBlocked=%u"),
 		filelist.GetCount(),
 		uReadyFiles,
 		uActiveFiles,
@@ -1265,7 +1265,7 @@ void CDownloadQueue::Process()
 
 	average_dr_hist.AddTail(TransferredData{datarateX, curTick});
 	m_datarateMS += datarateX;
-#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
 	LogDownloadSlotInstrumentation(curTick);
 #endif
 

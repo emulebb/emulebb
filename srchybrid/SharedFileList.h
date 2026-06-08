@@ -43,7 +43,7 @@ struct UnknownFile_Struct
 	CString strName;
 	CString strDirectory;
 	CString strSharedDirectory;
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	ULONGLONG ullQueuedTimestampUs = 0;
 #endif
 };
@@ -60,7 +60,7 @@ struct CSharedFileHashResult
 	CString strDirectory;
 	CString strSharedDirectory;
 	CString strFilePathKey;
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	ULONGLONG ullQueuedTimestampUs = 0;
 #endif
 };
@@ -151,7 +151,7 @@ public:
 		bool bReady = true;
 	};
 
-#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 	/**
 	 * @brief Captures shared-file publish backlog and live Kad/server publish headroom for upload tuning.
 	 */
@@ -247,7 +247,7 @@ public:
 	 * @brief Copies the latest shared-files startup-cache diagnostics for REST and operator status.
 	 */
 	void	GetStartupCacheStatus(StartupCacheStatus &rStatus) const;
-#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 	void	GetPublishInstrumentationSnapshot(SharedPublishInstrumentationSnapshot &rSnapshot) const;
 #endif
 	/**
@@ -387,7 +387,7 @@ private:
 		CString strDirectory;
 		CString strSharedDirectory;
 		CString strFilePathKey;
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 		ULONGLONG ullQueuedTimestampUs = 0;
 #endif
 	};

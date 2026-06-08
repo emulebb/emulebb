@@ -8,7 +8,7 @@
 #include "stdafx.h"
 #include "BadPeerInstrumentationSeams.h"
 
-#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 #include "AbstractFile.h"
 #include "Log.h"
 #include "OtherFunctions.h"
@@ -21,55 +21,9 @@ CLogFile g_badPeerInstrumentationLog;
 CCriticalSection g_badPeerInstrumentationLogLock;
 volatile LONGLONG g_llBadPeerInstrumentationEventSeq = 0;
 
-CString BuildTimestampUtc()
-{
-	SYSTEMTIME st = {};
-	::GetSystemTime(&st);
-	CString strTimestamp;
-	strTimestamp.Format(_T("%04u-%02u-%02uT%02u:%02u:%02u.%03uZ"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-	return strTimestamp;
-}
-
-CString EscapeJson(const CString &strValue)
-{
-	CString strEscaped;
-	for (int i = 0; i < strValue.GetLength(); ++i) {
-		const TCHAR ch = strValue[i];
-		switch (ch) {
-		case _T('\\'):
-			strEscaped += _T("\\\\");
-			break;
-		case _T('"'):
-			strEscaped += _T("\\\"");
-			break;
-		case _T('\r'):
-			strEscaped += _T("\\r");
-			break;
-		case _T('\n'):
-			strEscaped += _T("\\n");
-			break;
-		case _T('\t'):
-			strEscaped += _T("\\t");
-			break;
-		default:
-			if (static_cast<unsigned int>(ch) < 0x20u) {
-				CString strCodePoint;
-				strCodePoint.Format(_T("\\u%04X"), static_cast<unsigned int>(ch));
-				strEscaped += strCodePoint;
-			} else {
-				strEscaped.AppendChar(ch);
-			}
-		}
-	}
-	return strEscaped;
-}
-
 CString JsonString(LPCTSTR pszValue)
 {
-	CString strField(_T("\""));
-	strField += EscapeJson(pszValue != NULL ? CString(pszValue) : CString());
-	strField += _T("\"");
-	return strField;
+	return BuildDiagnosticsJsonStringField(pszValue);
 }
 
 CString NormalizeEvidenceJson(LPCTSTR pszEvidenceJson)
@@ -173,13 +127,13 @@ void WriteEvent(
 	if (!g_badPeerInstrumentationLog.IsOpen())
 		return;
 
-	const ULONGLONG ullEventSeq = static_cast<ULONGLONG>(::InterlockedIncrement64(&g_llBadPeerInstrumentationEventSeq));
+	const ULONGLONG ullEventSeq = NextDiagnosticsEventSeq(g_llBadPeerInstrumentationEventSeq);
 	const CString strEvidence(NormalizeEvidenceJson(pszEvidenceJson));
 	CString strJson;
 	strJson.Format(
 		_T("{\"schema\":\"bad_peer_event_v1\",\"source\":\"emulebb\",\"marker\":\"%s\",\"ts_utc\":%s,\"event_seq\":%I64u,\"event\":%s,\"severity\":%s,\"peer\":%s,\"file\":%s,\"action\":%s,\"reason\":%s,\"evidence\":%s}\r\n"),
 		BadPeerInstrumentationSeams::kBinaryMarker,
-		(LPCTSTR)JsonString(BuildTimestampUtc()),
+		(LPCTSTR)JsonString(BuildDiagnosticsTimestampUtc()),
 		ullEventSeq,
 		(LPCTSTR)JsonString(pszEvent),
 		(LPCTSTR)JsonString(pszSeverity),
@@ -189,8 +143,7 @@ void WriteEvent(
 		(LPCTSTR)JsonString(pszReason),
 		(LPCTSTR)strEvidence);
 
-	CSingleLock lock(&g_badPeerInstrumentationLogLock, TRUE);
-	g_badPeerInstrumentationLog.Log(strJson);
+	WriteDiagnosticsLogLine(g_badPeerInstrumentationLog, g_badPeerInstrumentationLogLock, strJson);
 }
 }
 
@@ -201,12 +154,7 @@ void InitializeLog(LPCTSTR pszLogPath, UINT uMaxLogFileSize)
 	if (pszLogPath == NULL || pszLogPath[0] == _T('\0'))
 		return;
 
-	VERIFY(g_badPeerInstrumentationLog.SetFilePath(pszLogPath));
-	g_badPeerInstrumentationLog.SetMaxFileSize(uMaxLogFileSize);
-	g_badPeerInstrumentationLog.SetFileFormat(Utf8);
-	VERIFY(g_badPeerInstrumentationLog.SetFlushOnWrite(false));
-	if (g_badPeerInstrumentationLog.Open())
-		g_badPeerInstrumentationLog.Log(_T("\r\n"));
+	InitializeDiagnosticsLog(g_badPeerInstrumentationLog, pszLogPath, uMaxLogFileSize);
 }
 
 bool IsEnabled()

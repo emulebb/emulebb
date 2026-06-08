@@ -81,7 +81,7 @@ public:
 	void OnSingleFileShareStatusChanged();
 	void ShowSelectedFilesDetails(bool bForce = false);
 	void ShowDetailsPanel(bool bShow);
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	void OnStartupSharedFilesModelChanged();
 	void OnStartupProfileStartupComplete();
 #endif
@@ -117,7 +117,7 @@ private:
 	std::atomic_bool m_bWorkerUiClosing;
 	bool			m_bDetailsVisible;
 	bool			m_bSharedTreeInitialized;
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	bool			m_bStartupSharedTreePopulatedReported;
 	bool			m_bStartupSharedModelPopulatedReported;
 	bool			m_bStartupSharedFilesReadyReported;
@@ -132,7 +132,7 @@ protected:
 	void SetAllIcons();
 	void DoResize(int iDelta);
 	void EnsureSharedTreeInitialized();
-#if EMULEBB_HAS_STARTUP_PROFILING
+#if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	void ReportStartupSharedFilesReadinessIfReady();
 #endif
 	/**

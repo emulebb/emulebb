@@ -105,6 +105,13 @@ protected:
 
 extern CLogFile theLog;
 extern CLogFile theVerboseLog;
+bool InitializeDiagnosticsLog(CLogFile &rLog, LPCTSTR pszLogPath, UINT uMaxLogFileSize);
+void WriteDiagnosticsLogLine(CLogFile &rLog, CCriticalSection &rLock, const CString &rstrLine);
+CString BuildDiagnosticsTimestampUtc();
+CString EscapeDiagnosticsJson(const CString &rstrValue);
+CString BuildDiagnosticsJsonStringField(LPCTSTR pszValue);
+ULONGLONG NextDiagnosticsEventSeq(volatile LONGLONG &rllCounter);
+
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 extern CLogFile thePacketDiagnosticsLog;
 
@@ -120,4 +127,14 @@ void PacketDiagnosticsLogInvalidSubOpcode(
 	ULONGLONG ullInvalidOffset,
 	ULONGLONG ullBytesRemaining,
 	int iPreviousSubOpcode);
+#endif
+
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
+extern CLogFile theUploadSlotDiagnosticsLog;
+void UploadSlotDiagnosticsLogLine(LPCTSTR pszFmt, ...);
+#endif
+
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
+extern CLogFile theDownloadSlotDiagnosticsLog;
+void DownloadSlotDiagnosticsLogLine(LPCTSTR pszFmt, ...);
 #endif

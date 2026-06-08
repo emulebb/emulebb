@@ -204,7 +204,7 @@ protected:
 	void	ProcessLocalRequests();
 	bool	IsMaxFilesPerUDPServerPacketReached(uint32 nFiles, uint32 nIncludedLargeFiles) const;
 	bool	SendGlobGetSourcesUDPPacket(CSafeMemFile &data, bool bExt2Packet, uint32 nFiles, uint32 nIncludedLargeFiles);
-#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
 	void	LogDownloadSlotInstrumentation(ULONGLONG curTick) const;
 #endif
 
