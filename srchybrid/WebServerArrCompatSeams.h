@@ -432,14 +432,16 @@ inline bool DoesResultMatchFamily(const ETorznabFamily eFamily, const std::strin
 		return true;
 
 	static const char *const s_video[] = {"avi", "mkv", "mp4", "m4v", "mov", "mpg", "mpeg", "ts", "wmv", "webm", "iso"};
-	static const char *const s_audio[] = {"mp3", "flac", "m4a", "aac", "ogg", "opus", "wav", "wma"};
+	// WHY: Lidarr album searches treat each Torznab item as a release, so
+	// exposing loose audio tracks makes it grab one MP3 instead of an album.
+	static const char *const s_audioArchives[] = {"zip", "rar", "7z", "tar", "gz", "bz2", "xz"};
 	static const char *const s_book[] = {"epub", "mobi", "azw3", "pdf", "cbz", "cbr", "txt", "rtf", "doc", "docx", "zip", "rar", "7z"};
 	const std::string strExtension(GetLowerExtension(rName));
 
 	if (eFamily == ETorznabFamily::Movie || eFamily == ETorznabFamily::Tv || eFamily == ETorznabFamily::Adult)
 		return IsExtensionInList(strExtension, s_video, sizeof(s_video) / sizeof(s_video[0])) || (strExtension.empty() && ullSize >= 100ULL * 1024ULL * 1024ULL);
 	if (eFamily == ETorznabFamily::Audio)
-		return IsExtensionInList(strExtension, s_audio, sizeof(s_audio) / sizeof(s_audio[0]));
+		return IsExtensionInList(strExtension, s_audioArchives, sizeof(s_audioArchives) / sizeof(s_audioArchives[0]));
 	if (eFamily == ETorznabFamily::Book)
 		return IsExtensionInList(strExtension, s_book, sizeof(s_book) / sizeof(s_book[0]));
 	return false;
@@ -476,7 +478,7 @@ inline const char *GetRestSearchType(const ETorznabFamily eFamily)
 	case ETorznabFamily::Adult:
 		return "video";
 	case ETorznabFamily::Audio:
-		return "audio";
+		return "arc";
 	case ETorznabFamily::Book:
 		return "doc";
 	case ETorznabFamily::Other:
