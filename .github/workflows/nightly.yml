@@ -104,9 +104,14 @@ jobs:
 
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         $releaseRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\release\emulebb-v$packageVersion"
-        $zipPath = Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.zip"
-        if (-not (Test-Path -LiteralPath $zipPath)) {
-          throw "Release package not found: $zipPath"
+        $packageZips = @(
+          (Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.zip"),
+          (Join-Path $releaseRoot "emulebb-$packageVersion-diagnostics-${{ matrix.asset_arch }}.zip")
+        )
+        foreach ($zipPath in $packageZips) {
+          if (-not (Test-Path -LiteralPath $zipPath)) {
+            throw "Release package not found: $zipPath"
+          }
         }
 
         $expectedBaseNames = @(
@@ -120,38 +125,54 @@ jobs:
           "emulebb-phosphor-green"
         )
 
-        $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
-        try {
-          $entries = @($archive.Entries | ForEach-Object { $_.FullName })
-          foreach ($baseName in $expectedBaseNames) {
-            foreach ($suffix in @(".eMuleSkin.ini", ".eMuleToolbar.kad02.bmp")) {
-              $entryName = "eMuleBB/skins/$baseName$suffix"
-              if ($entries -notcontains $entryName) {
-                throw "Missing packaged display theme asset: $entryName"
+        foreach ($zipPath in $packageZips) {
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+          try {
+            $entries = @($archive.Entries | ForEach-Object { $_.FullName })
+            foreach ($baseName in $expectedBaseNames) {
+              foreach ($suffix in @(".eMuleSkin.ini", ".eMuleToolbar.kad02.bmp")) {
+                $entryName = "eMuleBB/skins/$baseName$suffix"
+                if ($entries -notcontains $entryName) {
+                  throw "Missing packaged display theme asset in $zipPath: $entryName"
+                }
               }
             }
-          }
 
-          $retiredTerms = @("classic", "muted", ("bor" + "land"), ("mat" + "rix"))
-          $retiredEntries = @($entries | Where-Object {
-            $entryName = $_
-            ($entryName -like "eMuleBB/skins/*") -and ($retiredTerms | Where-Object { $entryName -match $_ })
-          })
-          if ($retiredEntries.Count -gt 0) {
-            throw "Unexpected retired display theme assets in package: $($retiredEntries -join ', ')"
+            $retiredTerms = @("classic", "muted", ("bor" + "land"), ("mat" + "rix"))
+            $retiredEntries = @($entries | Where-Object {
+              $entryName = $_
+              ($entryName -like "eMuleBB/skins/*") -and ($retiredTerms | Where-Object { $entryName -match $_ })
+            })
+            if ($retiredEntries.Count -gt 0) {
+              throw "Unexpected retired display theme assets in package $zipPath: $($retiredEntries -join ', ')"
+            }
+          } finally {
+            $archive.Dispose()
           }
-        } finally {
-          $archive.Dispose()
         }
 
         $artifactRoot = Join-Path $env:GITHUB_WORKSPACE "nightly-artifacts"
         New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
-        Copy-Item -Path (Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.zip") -Destination $artifactRoot
-        Copy-Item -Path (Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.manifest.json") -Destination $artifactRoot
-        Copy-Item -Path (Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.sbom.spdx.json") -Destination $artifactRoot
+        $requiredAssets = @(
+          "emulebb-$packageVersion-${{ matrix.asset_arch }}.zip",
+          "emulebb-$packageVersion-${{ matrix.asset_arch }}.manifest.json",
+          "emulebb-$packageVersion-${{ matrix.asset_arch }}.sbom.spdx.json",
+          "emulebb-$packageVersion-diagnostics-${{ matrix.asset_arch }}.zip",
+          "emulebb-$packageVersion-diagnostics-${{ matrix.asset_arch }}.manifest.json",
+          "emulebb-$packageVersion-diagnostics-${{ matrix.asset_arch }}.sbom.spdx.json"
+        )
         if ("${{ matrix.asset_arch }}" -eq "x64") {
-          Copy-Item -Path (Join-Path $releaseRoot "Bootstrap-eMuleBBSuite.ps1") -Destination $artifactRoot
-          Copy-Item -Path (Join-Path $releaseRoot "Bootstrap-eMuleBBSuite.ps1.sha256") -Destination $artifactRoot
+          $requiredAssets += @(
+            "Bootstrap-eMuleBBSuite.ps1",
+            "Bootstrap-eMuleBBSuite.ps1.sha256"
+          )
+        }
+        foreach ($asset in $requiredAssets) {
+          $source = Join-Path $releaseRoot $asset
+          if (-not (Test-Path -LiteralPath $source)) {
+            throw "Nightly asset not found: $source"
+          }
+          Copy-Item -LiteralPath $source -Destination $artifactRoot
         }
         Get-ChildItem $artifactRoot
 
@@ -192,7 +213,7 @@ jobs:
 
           Package version: ${PACKAGE_VERSION}
 
-          Nightly ZIP, manifest, SBOM, and suite bootstrapper assets are published with GitHub artifact attestations.
+          Nightly standard and diagnostics ZIP, manifest, SBOM, and suite bootstrapper assets are published with GitHub artifact attestations.
 
           Verify a downloaded nightly asset with:
 
