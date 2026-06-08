@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "BadPeerInstrumentationSeams.h"
 #include "UploadQueue.h"
 #include "Packets.h"
 #include "PartFile.h"
@@ -335,6 +336,7 @@ bool CUploadQueue::AddUpNextClient(LPCTSTR pszReason, CUpDownClient *directadd)
 					GetConfiguredUploadBudgetBytesPerSec()));
 				newclient->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(newclient, ullCooldownUntil, uploadRetryCooldownFailedAdmission);
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("upload_failed_admission_cooldown"), _T("low"), newclient, _T("cooldown"), _T("Failed upload admission"), theApp.sharedfiles->GetFileByID(newclient->GetUploadFileID()));
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after failed upload admission."), newclient->GetUserName());
 			}
@@ -817,6 +819,7 @@ void CUploadQueue::Process()
 					GetConfiguredUploadBudgetBytesPerSec()));
 				cur_client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(cur_client, ullCooldownUntil, uploadRetryCooldownNoSocket);
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("upload_no_socket_cooldown"), _T("low"), cur_client, _T("cooldown"), _T("Upload slot reached without socket"), theApp.sharedfiles->GetFileByID(cur_client->GetUploadFileID()));
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after no-socket upload slot removal."), cur_client->GetUserName());
 			}
@@ -1448,6 +1451,24 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			SetUploadRetryCooldown(client, ullCooldownUntil, uploadRetryCooldownNoRequest);
 			SetNoRequestUploadRetryCooldown(client, ullCooldownUntil, ullTrackUntil, bProductiveNoRequestRecycle);
 		}
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+		CString strBadPeerEvidence;
+		strBadPeerEvidence.Format(
+			_T("{\"productive\":%s,\"request_blocks\":%Id,\"pending_io\":%ld,\"payload_in_buffer\":%I64u,\"socket_queue\":%Id}"),
+			bProductiveNoRequestRecycle ? _T("true") : _T("false"),
+			iReqBlocks,
+			nPendingIOBlocks,
+			client->GetPayloadInBuffer(),
+			iSocketQueue);
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(
+			_T("upload_no_request_recycle"),
+			bProductiveNoRequestRecycle ? _T("low") : _T("medium"),
+			client,
+			_T("cooldown"),
+			bProductiveNoRequestRecycle ? _T("Broadband productive no-request recycle") : _T("Broadband unproductive no-request recycle"),
+			theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
+			strBadPeerEvidence);
+#endif
 		if (thePrefs.GetLogUlDlEvents())
 			AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled because the peer stopped requesting parts during broadband underfill (%s)."),
 				client->GetUserName(),
@@ -1510,6 +1531,26 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		GetConfiguredUploadBudgetBytesPerSec()));
 	client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 	SetUploadRetryCooldown(client, ullCooldownUntil, bShouldRecycleIdle ? uploadRetryCooldownIdle : uploadRetryCooldownStalled);
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+	CString strBadPeerEvidence;
+	strBadPeerEvidence.Format(
+		_T("{\"idle\":%s,\"stalled\":%s,\"request_blocks\":%Id,\"pending_io\":%ld,\"payload_in_buffer\":%I64u,\"socket_queue\":%Id,\"zero_ms\":%I64u}"),
+		bShouldRecycleIdle ? _T("true") : _T("false"),
+		bShouldRecycleStalled ? _T("true") : _T("false"),
+		iReqBlocks,
+		nPendingIOBlocks,
+		client->GetPayloadInBuffer(),
+		iSocketQueue,
+		client->GetAccumulatedZeroUploadMs());
+	EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(
+		bShouldRecycleIdle ? _T("upload_idle_no_request_recycle") : _T("upload_stalled_zero_rate_recycle"),
+		_T("medium"),
+		client,
+		_T("cooldown"),
+		bShouldRecycleIdle ? _T("Broadband idle no-request recycle") : _T("Broadband stalled zero-rate recycle"),
+		theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
+		strBadPeerEvidence);
+#endif
 	if (thePrefs.GetLogUlDlEvents()) {
 		AddDebugLogLine(DLP_LOW, false,
 			bShouldRecycleIdle
@@ -1935,6 +1976,15 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 					GetConfiguredUploadBudgetBytesPerSec()));
 				client->SetSlowUploadCooldownUntil(ullCooldownUntil);
 				SetUploadRetryCooldown(client, ullCooldownUntil, uploadRetryCooldownShortFailed);
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+				CString strBadPeerEvidence;
+				strBadPeerEvidence.Format(_T("{\"session_up\":%I64u,\"queue_session_payload\":%I64u,\"up_time_ms\":%I64u,\"early_abort\":%s}"),
+					client->GetSessionUp(),
+					client->GetQueueSessionPayloadUp(),
+					client->GetUpStartTimeDelay(),
+					earlyabort ? _T("true") : _T("false"));
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("upload_short_failed_slot_cooldown"), _T("medium"), client, _T("cooldown"), _T("Short failed upload slot"), theApp.sharedfiles->GetFileByID(client->GetUploadFileID()), strBadPeerEvidence);
+#endif
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("%s: Upload retry cooled down after a short failed upload slot."), client->GetUserName());
 			}
@@ -2080,6 +2130,21 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 					client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs
 						? uploadRetryCooldownZeroUpload
 						: uploadRetryCooldownSlowUpload);
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+				CString strBadPeerEvidence;
+				strBadPeerEvidence.Format(_T("{\"zero_ms\":%I64u,\"zero_grace_ms\":%I64u,\"upload_rate_bytes_per_sec\":%u}"),
+					client->GetAccumulatedZeroUploadMs(),
+					static_cast<uint64>(ullEffectiveZeroGraceMs),
+					client->GetUploadDatarate());
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(
+					client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs ? _T("upload_zero_rate_recycle") : _T("upload_slow_rate_recycle"),
+					_T("medium"),
+					client,
+					_T("cooldown"),
+					client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs ? _T("Broadband zero-rate recycle") : _T("Broadband slow-rate recycle"),
+					theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
+					strBadPeerEvidence);
+#endif
 				if (thePrefs.GetLogUlDlEvents()) {
 					if (client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs)
 						AddDebugLogLine(DLP_LOW, false, _T("%s: Upload slot recycled due to zero upload during broadband underfill."), client->GetUserName());

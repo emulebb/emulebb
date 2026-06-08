@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "BadPeerInstrumentationSeams.h"
 #include "ClientList.h"
 #include "UpDownClientDeleteSeams.h"
 #include "Kademlia/Kademlia/kademlia.h"
@@ -214,6 +215,7 @@ bool CClientList::AttachToAlreadyKnown(CUpDownClient **client, CClientReqSocket 
 					// if found_client is connected and has the IS_IDENTIFIED, it's safe to say that the other one is a bad guy
 					if (thePrefs.GetLogBannedClients())
 						AddDebugLogLine(false, _T("Clients: %s (%s), Ban reason: Userhash invalid"), tocheck->GetUserName(), (LPCTSTR)ipstr(tocheck->GetConnectIP()));
+					EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("identity_userhash_invalid_collision"), _T("high"), tocheck, _T("ban"), _T("Userhash invalid"));
 					tocheck->Ban();
 				} else if (thePrefs.GetLogBannedClients()) {
 					//IDS_CLIENTCOL Warning: Found matching client, to a currently connected client: %s (%s) and %s (%s)
@@ -460,6 +462,11 @@ void CClientList::CheckTCPErrorFlooder(uint32 dwIP)
 			, state.m_uCount
 			, thePrefs.GetTCPErrorFlooderIntervalMinutes());
 	}
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+	CString strEvidence;
+	strEvidence.Format(_T("{\"tcp_error_events\":%u,\"interval_minutes\":%u}"), state.m_uCount, thePrefs.GetTCPErrorFlooderIntervalMinutes());
+	EMULEBB_BAD_PEER_LOG_IP_EVENT(_T("tcp_error_flood"), _T("high"), dwIP, 0, _T("ban"), _T("TCP error flooding"), strEvidence);
+#endif
 }
 
 void CClientList::RemoveAllTrackedClients()

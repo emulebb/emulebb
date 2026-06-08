@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "BadPeerInstrumentationSeams.h"
 #include "UpDownClient.h"
 #include "Opcodes.h"
 #include "Packets.h"
@@ -153,6 +154,28 @@ void LogUploadReqBlockInstrumentation(
 		static_cast<UINT>(reqblock != NULL && theApp.sharedfiles->GetFileByID(reqblock->FileID) != NULL));
 }
 #endif
+
+LPCTSTR GetQueuedBlockRequestAdmissionBadPeerReason(QueuedBlockRequestAdmissionResult eResult)
+{
+	switch (eResult) {
+	case queuedBlockRequestAdmitted:
+		return _T("accept-queued-request-direct-admit");
+	case queuedBlockRequestCooldownNotCleared:
+		return _T("reject-not-uploading-cooldown-not-cleared");
+	case queuedBlockRequestNotOnQueue:
+		return _T("reject-not-uploading-not-on-queue");
+	case queuedBlockRequestAlreadyUploading:
+		return _T("reject-not-uploading-already-uploading");
+	case queuedBlockRequestCapFull:
+		return _T("reject-not-uploading-cap-full");
+	case queuedBlockRequestAdmissionDeferred:
+		return _T("reject-not-uploading-admission-deferred");
+	case queuedBlockRequestDirectAddFailed:
+		return _T("reject-not-uploading-direct-add-failed");
+	default:
+		return _T("reject-not-uploading-unknown-admission-result");
+	}
+}
 
 COLORREF BlendUploadBarColor(COLORREF crColor, COLORREF crTarget, UINT uColorWeight)
 {
@@ -529,6 +552,15 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
 				LogUploadReqBlockInstrumentation(this, _T("accept-queued-request-direct-admit"), reqblock, theApp.uploadqueue->GetUploadingClientStructByClient(this), -1, -1);
 #endif
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+				CString strEvidence;
+				strEvidence.Format(
+					_T("{\"cooldown_cleared\":true,\"request_range_valid\":%s,\"start_offset\":%I64u,\"end_offset\":%I64u}"),
+					bRequestRangeValid ? _T("true") : _T("false"),
+					static_cast<uint64>(reqblock->StartOffset),
+					static_cast<uint64>(reqblock->EndOffset));
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("upload_queued_request_direct_admit"), _T("low"), this, _T("admit_upload_slot"), _T("Queued block request cleared retry cooldown and reopened upload slot"), srcfile, strEvidence);
+#endif
 			} else {
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_INSTRUMENTATION
 				LogUploadReqBlockInstrumentation(this,
@@ -536,6 +568,21 @@ void CUpDownClient::AddReqBlock(Requested_Block_Struct *reqblock, bool bSignalIO
 						? pszCooldownClearInstrumentationReason
 						: GetQueuedBlockRequestAdmissionInstrumentationReason(eQueuedRequestAdmissionResult),
 					reqblock, NULL, -1, -1);
+#endif
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+				const LPCTSTR pszAdmissionReason =
+					eQueuedRequestAdmissionResult == queuedBlockRequestCooldownNotCleared && pszCooldownClearInstrumentationReason != NULL
+						? pszCooldownClearInstrumentationReason
+						: GetQueuedBlockRequestAdmissionBadPeerReason(eQueuedRequestAdmissionResult);
+				CString strEvidence;
+				strEvidence.Format(
+					_T("{\"file_known\":%s,\"request_range_valid\":%s,\"admission_reason\":%s,\"start_offset\":%I64u,\"end_offset\":%I64u}"),
+					srcfile != NULL ? _T("true") : _T("false"),
+					bRequestRangeValid ? _T("true") : _T("false"),
+					(LPCTSTR)BadPeerInstrumentationSeams::EvidenceJsonString(pszAdmissionReason),
+					static_cast<uint64>(reqblock->StartOffset),
+					static_cast<uint64>(reqblock->EndOffset));
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("upload_queued_request_rejected"), _T("medium"), this, _T("reject_block_request"), _T("Queued block request could not reopen upload slot"), srcfile, strEvidence);
 #endif
 				if (thePrefs.GetLogUlDlEvents())
 					AddDebugLogLine(DLP_LOW, false, _T("UploadClient: Client tried to add req block when not in upload slot! Prevented req blocks from being added. %s"), (LPCTSTR)DbgGetClientInfo());
@@ -954,6 +1001,7 @@ void CUpDownClient::Ban(LPCTSTR pszReason)
 {
 	SetChatState(MS_NONE);
 	theApp.clientlist->AddTrackClient(this);
+	EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("client_ban"), _T("high"), this, _T("ban"), pszReason == NULL ? _T("Aggressive behaviour") : pszReason);
 	if (!IsBanned()) {
 		if (thePrefs.GetLogBannedClients())
 			AddDebugLogLine(false, _T("Banned: %s; %s"), pszReason == NULL ? _T("Aggressive behaviour") : pszReason, (LPCTSTR)DbgGetClientInfo());

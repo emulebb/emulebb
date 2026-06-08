@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "BadPeerInstrumentationSeams.h"
 #include "UpDownClient.h"
 #include "PartFile.h"
 #include "ListenSocket.h"
@@ -1495,6 +1496,21 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 				LogDownloadSlotInstrumentation(_T("stale-duplicate-block-packet-abort"), -1, uTransferredFileDataSize, lenWritten);
 #endif
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+				CString strEvidence;
+#ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
+				strEvidence.Format(_T("{\"packet_bytes\":%u,\"written_bytes\":%u,\"duplicate_zero_write_packets\":%I64u,\"duplicate_zero_write_bytes\":%I64u}"),
+					uTransferredFileDataSize,
+					lenWritten,
+					static_cast<uint64>(GetDownloadDuplicateZeroWritePackets()),
+					static_cast<uint64>(GetDownloadDuplicateZeroWriteBytes()));
+#else
+				strEvidence.Format(_T("{\"packet_bytes\":%u,\"written_bytes\":%u}"),
+					uTransferredFileDataSize,
+					lenWritten);
+#endif
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_stale_duplicate_block_abort"), _T("medium"), this, _T("cancel_transfer"), strReason, m_reqfile, strEvidence);
+#endif
 				// WHY: a source that repeatedly sends already-complete payload for
 				// an old reservation can hold a download slot without advancing the
 				// file. Cancelling returns it to queue using stock transfer control.
@@ -1519,6 +1535,11 @@ void CUpDownClient::ProcessBlockPacket(const uchar *packet, uint32 size, bool pa
 	if (ShouldAbortAfterStaleBlockPacket(&strReason)) {
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 		LogDownloadSlotInstrumentation(_T("stale-block-packet-abort"), -1, size);
+#endif
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+		CString strEvidence;
+		strEvidence.Format(_T("{\"packet_bytes\":%u}"), size);
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_stale_block_packet_abort"), _T("medium"), this, _T("cancel_transfer"), strReason, m_reqfile, strEvidence);
 #endif
 		// WHY: a source that keeps sending payload outside our pending request
 		// set can occupy a scarce download slot without useful progress. A
@@ -1693,6 +1714,11 @@ void CUpDownClient::CheckDownloadTimeout()
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 		LogDownloadSlotInstrumentation(_T("timeout-first-payload"));
 #endif
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+		CString strEvidence;
+		strEvidence.Format(_T("{\"idle_ms\":%I64u,\"pending_blocks\":%Id}"), static_cast<uint64>(ullIdleMs), m_PendingBlocks_list.GetCount());
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_first_payload_timeout"), _T("medium"), this, _T("cancel_transfer"), _T("First payload timeout"), m_reqfile, strEvidence);
+#endif
 		if (socket != NULL && !socket->IsRawDataMode())
 			SendCancelTransfer();
 		else
@@ -1706,6 +1732,11 @@ void CUpDownClient::CheckDownloadTimeout()
 	if (ullIdleMs >= thePrefs.GetDownloadTimeout()) {
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 		LogDownloadSlotInstrumentation(_T("timeout"));
+#endif
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+		CString strEvidence;
+		strEvidence.Format(_T("{\"idle_ms\":%I64u,\"session_payload_down\":%I64u,\"session_down\":%I64u}"), static_cast<uint64>(ullIdleMs), GetSessionPayloadDown(), GetSessionDown());
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_idle_timeout"), _T("low"), this, _T("cancel_transfer"), _T("Download idle timeout"), m_reqfile, strEvidence);
 #endif
 		if (socket != NULL && !socket->IsRawDataMode())
 			SendCancelTransfer();
@@ -2483,6 +2514,15 @@ void CUpDownClient::NoteInboundOutOfPartReqs()
 	if (!m_bOutOfPartReqsQuarantined && m_uOutOfPartReqsLongWindowCount >= kOutOfPartReqsQuarantineThreshold) {
 		m_bOutOfPartReqsQuarantined = true;
 		m_ullOutOfPartReqsCooldownUntil = 0;
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+		CString strEvidence;
+		strEvidence.Format(_T("{\"long_window_count\":%u,\"long_window_ms\":%I64u,\"short_window_count\":%u,\"cooldown_bursts\":%u}"),
+			m_uOutOfPartReqsLongWindowCount,
+			static_cast<uint64>(kOutOfPartReqsLongWindowMs),
+			m_uOutOfPartReqsShortWindowCount,
+			m_uOutOfPartReqsCooldownBurstCount);
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_out_of_part_reqs_quarantine"), _T("high"), this, _T("quarantine_source"), _T("Repeated OP_OutOfPartReqs loops"), m_reqfile, strEvidence);
+#endif
 		DebugLogWarning(_T("Quarantined download source after repeated OP_OutOfPartReqs loops. User: %s, Count: %u in %I64u ms."),
 			(LPCTSTR)DbgGetClientInfo(), m_uOutOfPartReqsLongWindowCount, kOutOfPartReqsLongWindowMs);
 		return;
@@ -2494,11 +2534,30 @@ void CUpDownClient::NoteInboundOutOfPartReqs()
 		if (m_uOutOfPartReqsCooldownBurstCount >= kOutOfPartReqsCooldownBurstQuarantineThreshold) {
 			m_bOutOfPartReqsQuarantined = true;
 			m_ullOutOfPartReqsCooldownUntil = 0;
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+			CString strEvidence;
+			strEvidence.Format(_T("{\"cooldown_bursts\":%u,\"burst_threshold\":%u,\"short_window_count\":%u,\"short_window_ms\":%I64u}"),
+				m_uOutOfPartReqsCooldownBurstCount,
+				static_cast<UINT>(kOutOfPartReqsCooldownBurstQuarantineThreshold),
+				m_uOutOfPartReqsShortWindowCount,
+				static_cast<uint64>(kOutOfPartReqsShortWindowMs));
+			EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_out_of_part_reqs_burst_quarantine"), _T("high"), this, _T("quarantine_source"), _T("Repeated OP_OutOfPartReqs cooldown bursts"), m_reqfile, strEvidence);
+#endif
 			DebugLogWarning(_T("Quarantined download source after repeated OP_OutOfPartReqs cooldown bursts. User: %s, Bursts: %u in app session."),
 				(LPCTSTR)DbgGetClientInfo(), m_uOutOfPartReqsCooldownBurstCount);
 			return;
 		}
 		m_ullOutOfPartReqsCooldownUntil = ullNow + kOutOfPartReqsCooldownMs;
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+		CString strEvidence;
+		strEvidence.Format(_T("{\"short_window_count\":%u,\"short_window_ms\":%I64u,\"cooldown_bursts\":%u,\"cooldown_ms\":%I64u,\"cooldown_until_tick\":%I64u}"),
+			m_uOutOfPartReqsShortWindowCount,
+			static_cast<uint64>(kOutOfPartReqsShortWindowMs),
+			m_uOutOfPartReqsCooldownBurstCount,
+			static_cast<uint64>(kOutOfPartReqsCooldownMs),
+			m_ullOutOfPartReqsCooldownUntil);
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_out_of_part_reqs_cooldown"), _T("medium"), this, _T("cooldown"), _T("Repeated OP_OutOfPartReqs loops"), m_reqfile, strEvidence);
+#endif
 		DebugLogWarning(_T("Cooling down download source after repeated OP_OutOfPartReqs loops. User: %s, Count: %u in %I64u ms, CooldownUntilTick: %I64u."),
 			(LPCTSTR)DbgGetClientInfo(), m_uOutOfPartReqsShortWindowCount, kOutOfPartReqsShortWindowMs, m_ullOutOfPartReqsCooldownUntil);
 	}
@@ -2516,6 +2575,13 @@ void CUpDownClient::NoteOutOfPartReqsLoopSuppression()
 	if (!m_bOutOfPartReqsQuarantined && m_uOutOfPartReqsLongWindowCount >= kOutOfPartReqsQuarantineThreshold) {
 		m_bOutOfPartReqsQuarantined = true;
 		m_ullOutOfPartReqsCooldownUntil = 0;
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+		CString strEvidence;
+		strEvidence.Format(_T("{\"suppressed_accepts\":%u,\"long_window_ms\":%I64u}"),
+			m_uOutOfPartReqsLongWindowCount,
+			static_cast<uint64>(kOutOfPartReqsLongWindowMs));
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_out_of_part_reqs_suppression_quarantine"), _T("high"), this, _T("quarantine_source"), _T("Repeated suppressed OP_AcceptUploadReq during OP_OutOfPartReqs cooldown"), m_reqfile, strEvidence);
+#endif
 		DebugLogWarning(_T("Quarantined download source after repeated suppressed OP_AcceptUploadReq during OP_OutOfPartReqs cooldown. User: %s, Count: %u in %I64u ms."),
 			(LPCTSTR)DbgGetClientInfo(), m_uOutOfPartReqsLongWindowCount, kOutOfPartReqsLongWindowMs);
 	}
@@ -2562,6 +2628,16 @@ void CUpDownClient::NoteDownloadNoDataSlotFailure(LPCTSTR pszReason)
 	const bool bCooldownActive = m_ullDownloadNoDataSlotCooldownUntil != 0 && ullNow < m_ullDownloadNoDataSlotCooldownUntil;
 	if (!bCooldownActive && m_uDownloadNoDataSlotWindowCount >= kDownloadNoDataSlotCooldownThreshold) {
 		m_ullDownloadNoDataSlotCooldownUntil = ullNow + kDownloadNoDataSlotCooldownMs;
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+		CString strEvidence;
+		strEvidence.Format(_T("{\"window_count\":%u,\"window_ms\":%I64u,\"cooldown_ms\":%I64u,\"cooldown_until_tick\":%I64u,\"reason\":%s}"),
+			m_uDownloadNoDataSlotWindowCount,
+			static_cast<uint64>(kDownloadNoDataSlotWindowMs),
+			static_cast<uint64>(kDownloadNoDataSlotCooldownMs),
+			m_ullDownloadNoDataSlotCooldownUntil,
+			(LPCTSTR)BadPeerInstrumentationSeams::EvidenceJsonString(pszReason != NULL ? pszReason : _T("Unspecified")));
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_no_data_slot_cooldown"), _T("medium"), this, _T("cooldown"), _T("Repeated no-data download slots"), m_reqfile, strEvidence);
+#endif
 		DebugLogWarning(_T("Cooling down download source after repeated no-data download slots. User: %s, Count: %u in %I64u ms, Reason: %s, CooldownUntilTick: %I64u."),
 			(LPCTSTR)DbgGetClientInfo(),
 			m_uDownloadNoDataSlotWindowCount,
@@ -2629,6 +2705,7 @@ void CUpDownClient::ProcessInboundOutOfPartReqs()
 	++m_uDownloadOutOfPartReqsEvents;
 	LogDownloadSlotInstrumentation(_T("out-of-part-reqs"));
 #endif
+	EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_out_of_part_reqs"), _T("low"), this, _T("state_on_queue"), _T("Remote sent OP_OutOfPartReqs"), m_reqfile);
 	NoteInboundOutOfPartReqs();
 	SetDownloadState(DS_ONQUEUE, _T("The remote client decided to stop/complete the transfer (got OP_OutOfPartReqs)."));
 }
@@ -2644,6 +2721,7 @@ void CUpDownClient::ProcessAcceptUpload()
 				++m_uDownloadOutOfPartReqsSuppressions;
 				LogDownloadSlotInstrumentation(_T("accept-suppressed-out-of-part-cooldown"));
 #endif
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_accept_suppressed_out_of_part_cooldown"), _T("medium"), this, _T("cancel_transfer"), strOutOfPartReqsGuardReason, m_reqfile);
 				NoteOutOfPartReqsLoopSuppression();
 				CanAcceptUploadSlotAfterOutOfPartReqs(&strOutOfPartReqsGuardReason);
 				const ULONGLONG ullNow = ::GetTickCount64();
@@ -2664,6 +2742,7 @@ void CUpDownClient::ProcessAcceptUpload()
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_INSTRUMENTATION
 				LogDownloadSlotInstrumentation(_T("accept-suppressed-no-data-cooldown"));
 #endif
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_accept_suppressed_no_data_cooldown"), _T("medium"), this, _T("cancel_transfer"), strNoDataGuardReason, m_reqfile);
 				const ULONGLONG ullNow = ::GetTickCount64();
 				if (m_ullDownloadNoDataSlotLastSuppressionLog == 0 || ullNow < m_ullDownloadNoDataSlotLastSuppressionLog
 						|| ullNow - m_ullDownloadNoDataSlotLastSuppressionLog >= kDownloadNoDataSlotSuppressionLogMs)
@@ -2719,6 +2798,7 @@ void CUpDownClient::CheckQueueRankFlood()
 					theApp.clientlist->TrackBadRequest(this, 1);
 				if (theApp.clientlist->GetBadRequests(this) == 2) {
 					theApp.clientlist->TrackBadRequest(this, -2); // reset so the client will not be re-banned right after the ban is lifted
+					EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("download_queue_rank_flood"), _T("high"), this, _T("ban"), _T("QR flood"), m_reqfile, _T("{\"unsolicited_queue_rank_messages\":3,\"tracked_bad_requests\":2}"));
 					Ban(_T("QR flood"));
 				}
 				throwCStr(thePrefs.GetLogBannedClients() ? _T("QR flood") : _T(""));

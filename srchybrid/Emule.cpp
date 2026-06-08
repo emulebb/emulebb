@@ -30,6 +30,7 @@
 #include <timeapi.h>
 #include <uxtheme.h>
 #include "AppCommandLineSeams.h"
+#include "BadPeerInstrumentationSeams.h"
 #include "emule.h"
 #include "resource.h"
 #include "Version.h"
@@ -1695,6 +1696,11 @@ BOOL CemuleApp::InitInstance()
 	VERIFY(theVerboseLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false) + LogArtifactNames::VerboseLogFileName()));
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 	VERIFY(thePacketDiagnosticsLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false) + LogArtifactNames::PacketDiagnosticsLogFileName()));
+#endif
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+	BadPeerInstrumentationSeams::InitializeLog(
+		thePrefs.GetMuleDirectory(EMULE_LOGDIR, false) + LogArtifactNames::BadPeerInstrumentationLogFileName(),
+		thePrefs.GetMaxLogFileSize());
 #endif
 	theLog.SetMaxFileSize(thePrefs.GetMaxLogFileSize());
 	theLog.SetFileFormat(thePrefs.GetLogFileFormat());

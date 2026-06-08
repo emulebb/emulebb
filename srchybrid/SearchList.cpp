@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "BadPeerInstrumentationSeams.h"
 #include "FakeFileDetector.h"
 #include "SearchFile.h"
 #include "SearchList.h"
@@ -1163,13 +1164,42 @@ void CSearchList::DoSpamRating(CSearchFile *pSearchFile, bool bIsClientFile, boo
 	} else
 		pSearchFile->SetSpamRating(bMarkAsNoSpam ? 0 : nSpamScore);
 
+	const bool bNewSpamStatus = pSearchFile->IsConsideredSpam();
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+	if (bNewSpamStatus || bOldSpamStatus != bNewSpamStatus || bMarkAsNoSpam) {
+		CString strEvidence;
+		const CString strUdpServerIp(dwFromUDPServerIP != 0 ? BadPeerInstrumentationSeams::EvidenceJsonString(ipstr(dwFromUDPServerIP)) : CString(_T("null")));
+		strEvidence.Format(
+			_T("{\"score\":%u,\"old_spam\":%s,\"new_spam\":%s,\"mark_as_no_spam\":%s,\"file_hash_hit\":%u,\"name_hit\":%u,\"size_hit\":%u,\"server_hit\":%u,\"source_hit\":%u,\"heuristic_hit\":%u,\"only_spam_server_hit\":%u,\"udp_server_ip\":%s}"),
+			bSureNegative ? 0 : nSpamScore,
+			bOldSpamStatus ? _T("true") : _T("false"),
+			bNewSpamStatus ? _T("true") : _T("false"),
+			bMarkAsNoSpam ? _T("true") : _T("false"),
+			nDbgFileHash,
+			nDbgStrings,
+			nDbgSize,
+			nDbgServer,
+			nDbgSources,
+			nDbgHeuristic,
+			nDbgOnlySpamServer,
+			(LPCTSTR)strUdpServerIp);
+		EMULEBB_BAD_PEER_LOG_SEARCH_EVENT(
+			bMarkAsNoSpam ? _T("search_spam_cleared") : (bNewSpamStatus ? _T("search_spam_detected") : _T("search_spam_status_changed")),
+			bNewSpamStatus ? _T("medium") : _T("low"),
+			pSearchFile,
+			bMarkAsNoSpam ? _T("clear_spam") : _T("mark_spam"),
+			bNewSpamStatus ? _T("Search spam score crossed threshold") : _T("Search spam status changed"),
+			strEvidence);
+	}
+#endif
+
 	// keep record about ratio of spam in UDP server results
-	if (bOldSpamStatus != pSearchFile->IsConsideredSpam()) {
+	if (bOldSpamStatus != bNewSpamStatus) {
 		const CSimpleArray<CSearchFile::SServer> &aservers = pTempFile->GetServers();
 		for (int i = 0; i < aservers.GetSize(); ++i) {
 			UDPServerRecord *pRecord;
 			if (aservers[i].m_bUDPAnswer && m_mUDPServerRecords.Lookup(aservers[i].m_nIP, pRecord) && pRecord != NULL) {
-				if (pSearchFile->IsConsideredSpam())
+				if (bNewSpamStatus)
 					++pRecord->m_nSpamResults;
 				else {
 					ASSERT(pRecord->m_nSpamResults > 0);
@@ -1177,7 +1207,7 @@ void CSearchList::DoSpamRating(CSearchFile *pSearchFile, bool bIsClientFile, boo
 				}
 			}
 		}
-	} else if (dwFromUDPServerIP != 0 && pSearchFile->IsConsideredSpam()) {
+	} else if (dwFromUDPServerIP != 0 && bNewSpamStatus) {
 		// files were a spam already, but server returned it in results - add it to server's spam stats
 		const CUDPServerRecordMap::CPair *pair = m_mUDPServerRecords.PLookup(dwFromUDPServerIP);
 		if (pair)

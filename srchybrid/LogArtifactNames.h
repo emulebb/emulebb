@@ -1,5 +1,7 @@
 #pragma once
 
+#include "BuildFeatures.h"
+
 #include <atlstr.h>
 #include <windows.h>
 
@@ -22,6 +24,13 @@ inline LPCTSTR VerboseLogFileName()
 inline LPCTSTR PacketDiagnosticsLogFileName()
 {
 	return _T("emulebb-packet-diagnostics.log");
+}
+#endif
+
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+inline LPCTSTR BadPeerInstrumentationLogFileName()
+{
+	return _T("emulebb-bad-peer-instrumentation.log");
 }
 #endif
 

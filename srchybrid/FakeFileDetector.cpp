@@ -7,6 +7,7 @@
 //version 2 of the License, or (at your option) any later version.
 #include "stdafx.h"
 #include "FakeFileDetector.h"
+#include "BadPeerInstrumentationSeams.h"
 #include "ConfigDefaultFilesSeams.h"
 #include "emule.h"
 #include "FileTypeClassifierSeams.h"
@@ -560,12 +561,42 @@ void FakeFileDetector::SaveCache()
 
 SFakeFileReport FakeFileDetector::AnalyzeSearchFile(const CSearchFile &rSearchFile)
 {
-	return BuildSearchFileReport(rSearchFile, true);
+	SFakeFileReport report = BuildSearchFileReport(rSearchFile, true);
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+	if (report.eSeverity == FakeFileDetectorSeams::Severity::Medium
+		|| report.eSeverity == FakeFileDetectorSeams::Severity::High
+		|| report.eSeverity == FakeFileDetectorSeams::Severity::Critical)
+	{
+		CString strEvidence;
+		const CString strSeverity(BadPeerInstrumentationSeams::EvidenceJsonString(CString(CA2T(SeverityToToken(report.eSeverity), CP_UTF8))));
+		strEvidence.Format(_T("{\"score\":%u,\"severity\":%s,\"reasons\":%u}"),
+			report.nScore,
+			(LPCTSTR)strSeverity,
+			static_cast<UINT>(report.astrReasons.size()));
+		EMULEBB_BAD_PEER_LOG_SEARCH_EVENT(_T("fake_file_search_detected"), _T("medium"), &rSearchFile, _T("warn"), _T("Fake-file detector flagged search result"), strEvidence);
+	}
+#endif
+	return report;
 }
 
 SFakeFileReport FakeFileDetector::AnalyzePartFile(CPartFile &rPartFile)
 {
-	return BuildPartFileReport(rPartFile, true, true);
+	SFakeFileReport report = BuildPartFileReport(rPartFile, true, true);
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+	if (report.eSeverity == FakeFileDetectorSeams::Severity::Medium
+		|| report.eSeverity == FakeFileDetectorSeams::Severity::High
+		|| report.eSeverity == FakeFileDetectorSeams::Severity::Critical)
+	{
+		CString strEvidence;
+		const CString strSeverity(BadPeerInstrumentationSeams::EvidenceJsonString(CString(CA2T(SeverityToToken(report.eSeverity), CP_UTF8))));
+		strEvidence.Format(_T("{\"score\":%u,\"severity\":%s,\"reasons\":%u}"),
+			report.nScore,
+			(LPCTSTR)strSeverity,
+			static_cast<UINT>(report.astrReasons.size()));
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("fake_file_part_detected"), _T("medium"), NULL, _T("warn"), _T("Fake-file detector flagged download"), &rPartFile, strEvidence);
+	}
+#endif
+	return report;
 }
 
 SFakeFileReport FakeFileDetector::GetSearchFileReportSnapshot(const CSearchFile &rSearchFile)

@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
+#include "BadPeerInstrumentationSeams.h"
 #include "UpDownClient.h"
 #include "DownloadQueue.h"
 #include "PartFile.h"
@@ -130,6 +131,38 @@ namespace
 			DownloadQueueDiskSpaceSeams::NormalizeRequiredFreeSpacePathCacheKey(static_cast<LPCTSTR>(strPath));
 		return CString(strKey.c_str());
 	}
+
+#if EMULEBB_HAS_BAD_PEER_INSTRUMENTATION
+	void LogPotentialWrongDownloadSource(CUpDownClient *pSource, const CPartFile *pCurrentFile, const CPartFile *pTargetFile)
+	{
+		if (pSource == NULL || pCurrentFile == NULL || pTargetFile == NULL)
+			return;
+
+		const bool bFileHashMismatch = !md4equ(pCurrentFile->GetFileHash(), pTargetFile->GetFileHash());
+		const bool bPartCountMismatch = pCurrentFile->GetPartCount() > 0 && pCurrentFile->GetPartCount() != pTargetFile->GetPartCount();
+		if (!bFileHashMismatch && !bPartCountMismatch)
+			return;
+
+		CString strEvidence;
+		strEvidence.Format(
+			_T("{\"file_hash_mismatch\":%s,\"part_count_mismatch\":%s,\"current_part_count\":%u,\"target_part_count\":%u,\"source_from\":%u}"),
+			bFileHashMismatch ? _T("true") : _T("false"),
+			bPartCountMismatch ? _T("true") : _T("false"),
+			pCurrentFile->GetPartCount(),
+			pTargetFile->GetPartCount(),
+			static_cast<UINT>(pSource->GetSourceFrom()));
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(
+			_T("download_source_file_mismatch"),
+			_T("medium"),
+			pSource,
+			_T("accept_source_with_warning"),
+			_T("Source was already tied to a different requested file"),
+			pTargetFile,
+			strEvidence);
+	}
+#else
+	void LogPotentialWrongDownloadSource(CUpDownClient *, const CPartFile *, const CPartFile *) {}
+#endif
 
 	bool ShouldSendLocalServerSourceRequest(const CPartFile *pFile, const CServer *pCurrentServer)
 	{
@@ -1363,6 +1396,7 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 	source->SetRequestFile(NULL);
 	const bool bAttachedKnownClient = theApp.clientlist->AttachToAlreadyKnown(&source, NULL);
 	if (bAttachedKnownClient) {
+		LogPotentialWrongDownloadSource(source, source->GetRequestFile(), sender);
 #ifdef _DEBUG
 		const CPartFile *srcfile = source->GetRequestFile();
 		if (thePrefs.GetVerbose() && srcfile) {
@@ -1471,6 +1505,7 @@ bool CDownloadQueue::CheckAndAddKnownSource(CPartFile *sender, CUpDownClient *so
 			AddDebugLogLine(false, _T("*** CDownloadQueue::CheckAndAddKnownSource -- added potential wrong source (%u)(diff. partcount) to file \"%s\""), source->GetUserIDHybrid(), (LPCTSTR)sender->GetFileName());
 	}
 #endif
+	LogPotentialWrongDownloadSource(source, source->GetRequestFile(), sender);
 	CPartFile *pPreviousRequestFile = source->GetRequestFile();
 	try {
 		// WHY: keep the existing client's request-file pointer consistent with

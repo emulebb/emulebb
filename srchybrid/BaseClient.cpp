@@ -28,6 +28,7 @@
 #include "Opcodes.h"
 #include "SafeFile.h"
 #include "Preferences.h"
+#include "BadPeerInstrumentationSeams.h"
 #include "BaseClientFriendBuddySeams.h"
 #include "ClientSocketLifetimeSeams.h"
 #include "Server.h"
@@ -661,6 +662,7 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile &data)
 		if (!theApp.clientlist->ComparePriorUserhash(m_dwUserIP, m_nUserPort, pFoundCredits)) {
 			if (thePrefs.GetLogBannedClients())
 				AddDebugLogLine(false, _T("Clients: %s (%s), Ban reason: Userhash changed (Found in TrackedClientsList)"), GetUserName(), (LPCTSTR)ipstr(GetConnectIP()));
+			EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("identity_userhash_changed_tracked"), _T("high"), this, _T("ban"), _T("Userhash changed (Found in TrackedClientsList)"));
 			Ban();
 		}
 	} else if (credits != pFoundCredits) {
@@ -668,6 +670,7 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile &data)
 		credits = pFoundCredits;
 		if (thePrefs.GetLogBannedClients())
 			AddDebugLogLine(false, _T("Clients: %s (%s), Ban reason: Userhash changed"), GetUserName(), (LPCTSTR)ipstr(GetConnectIP()));
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("identity_userhash_changed"), _T("high"), this, _T("ban"), _T("Userhash changed"));
 		Ban();
 	}
 
@@ -2608,6 +2611,7 @@ void CUpDownClient::CheckFailedFileIdReqs(const uchar *aucFileHash)
 				theApp.clientlist->TrackBadRequest(this, 1);
 			if (theApp.clientlist->GetBadRequests(this) == 2) {
 				theApp.clientlist->TrackBadRequest(this, -2); // reset so the client will not be re-banned right after the ban is lifted
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("file_request_flood"), _T("high"), this, _T("ban"), _T("FileReq flood"), NULL, _T("{\"failed_file_id_requests\":6,\"tracked_bad_requests\":2}"));
 				Ban(_T("FileReq flood"));
 			}
 			throwCStr(thePrefs.GetLogBannedClients() ? _T("FileReq flood") : _T(""));
@@ -2622,9 +2626,10 @@ EUTF8str CUpDownClient::GetUnicodeSupport() const
 
 void CUpDownClient::SetSpammer(bool bVal)
 {
-	if (bVal)
+	if (bVal) {
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("chat_spammer"), _T("high"), this, _T("ban"), _T("Identified as Spammer"));
 		Ban(_T("Identified as Spammer"));
-	else if (IsBanned() && m_fIsSpammer)
+	} else if (IsBanned() && m_fIsSpammer)
 		UnBan();
 	m_fIsSpammer = static_cast<int>(bVal);
 }
@@ -2682,6 +2687,7 @@ void CUpDownClient::ProcessChatMessage(CSafeMemFile &data, uint32 nLength)
 			if (thePrefs.GetVerbose())
 				AddDebugLogLine(false, _T("Filtered Message from '%s' (IP:%s)"), GetUserName(), (LPCTSTR)ipstr(GetConnectIP()));
 
+		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("chat_message_policy_filtered"), _T("low"), this, _T("filter"), _T("Message rejected by message policy"));
 		SetMessageFiltered(true);
 		return;
 	}
@@ -2697,6 +2703,7 @@ void CUpDownClient::ProcessChatMessage(CSafeMemFile &data, uint32 nLength)
 		CString sToken(thePrefs.GetMessageFilter().Tokenize(_T("|"), iPos));
 		if (!sToken.Trim().IsEmpty() && strMessageCheck.Find(sToken.MakeLower()) >= 0) {
 			if (thePrefs.IsAdvSpamfilterEnabled() && !IsFriend() && !GetMessagesSent()) {
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("chat_message_filter_hit"), _T("medium"), this, _T("ban"), _T("Message filter token in first unsolicited message"));
 				SetSpammer(true);
 				theApp.emuledlg->chatwnd->chatselector.EndSession(this);
 			}
@@ -2754,6 +2761,7 @@ void CUpDownClient::ProcessChatMessage(CSafeMemFile &data, uint32 nLength)
 			if (m_strCaptchaChallenge.CompareNoCase(strMessage.Trim().Right(min(strMessage.GetLength(), m_strCaptchaChallenge.GetLength()))) != 0) {
 				// wrong, cleanup and ignore
 				DebugLogWarning(_T("Captcha answer failed (%s)"), (LPCTSTR)DbgGetClientInfo());
+				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("chat_captcha_failed"), _T("medium"), this, _T("filter"), _T("Captcha answer failed"));
 				m_eChatCaptchaState = CA_NONE;
 				m_strCaptchaChallenge.Empty();
 				m_strCaptchaPendingMsg.Empty();
@@ -2803,6 +2811,7 @@ void CUpDownClient::ProcessChatMessage(CSafeMemFile &data, uint32 nLength)
 			}
 		}
 		if (bIsSpam) {
+			EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("chat_spam_heuristic"), _T("medium"), this, _T("ban"), _T("Advanced chat spam heuristic matched"));
 			if (IsSpammer()) {
 				if (thePrefs.GetVerbose())
 					AddDebugLogLine(false, _T("'%s' has been marked as spammer"), GetUserName());
