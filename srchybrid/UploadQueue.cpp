@@ -1161,14 +1161,12 @@ bool CUploadQueue::CanProbeUploadCooldownCandidate(CUpDownClient *client, ULONGL
 		const ULONGLONG ullCooldownRemainingMs = itNoRequest->second.ullCooldownUntil - curTick;
 		// WHY: productive no-request peers have already contributed payload and
 		// often ask for another burst shortly after draining. Under severe
-		// broadband underfill, probe them before zero-byte peers while keeping
-		// unproductive cooldowns strict unless open slots would otherwise sit
-		// idle behind a cooldown-only queue.
+		// broadband underfill, allow a near-expiry productive probe while keeping
+		// unproductive repeat no-request cooldowns as hard admission gates.
 		return ShouldProbeNoRequestCooldownCandidate(
 			itNoRequest->second.bProductiveRecycle,
 			ullCooldownRemainingMs,
 			kProductiveNoRequestCooldownProbeRemainingMs,
-			kUnproductiveNoRequestCooldownProbeRemainingMs,
 			ShouldProbeUploadCooldownCandidate(HasSustainedBroadbandUnderfill(curTick), uploadinglist.GetCount(), GetSoftMaxUploadSlots()));
 	}
 
@@ -1292,7 +1290,6 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 	bool bHadIPCooldown = false;
 	bool bHadNoRequestCooldown = false;
 	bool bClearedProductiveNoRequestCooldown = false;
-	bool bClearedUnderfilledNoRequestCooldown = false;
 	if (dwCooldownIP != 0) {
 		const ULONGLONG curTick = ::GetTickCount64();
 		std::map<uint32, NoRequestUploadRetryCooldownState>::iterator itNoRequest = m_noRequestUploadRetryCooldownByIP.find(dwCooldownIP);
@@ -1311,27 +1308,13 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 				if (bProductiveNoRequestRecycle) {
 					itNoRequest->second.ullCooldownUntil = curTick;
 					bClearedProductiveNoRequestCooldown = true;
-				} else if (ShouldClearActiveNoRequestCooldownOnQueuedRequest(
-						true,
-						false,
-						HasSustainedBroadbandUnderfill(curTick),
-						uploadinglist.GetCount(),
-						GetSoftMaxUploadSlots()))
-				{
-					// WHY: a zero-byte no-request peer is still poor evidence, but
-					// a later valid block request during open-cap underfill proves
-					// fresh demand. Allow one immediate retry per tracking window;
-					// another drained slot will re-enter the stricter repeated
-					// no-request cooldown path.
-					itNoRequest->second.ullCooldownUntil = curTick;
-					bClearedUnderfilledNoRequestCooldown = true;
 				}
 			}
 		}
-		if (ShouldBlockQueuedRequestRetryClearForActiveNoRequest(bHadNoRequestCooldown, bClearedProductiveNoRequestCooldown, bClearedUnderfilledNoRequestCooldown)) {
+		if (ShouldBlockQueuedRequestRetryClearForActiveNoRequest(bHadNoRequestCooldown, bClearedProductiveNoRequestCooldown)) {
 			// WHY: unproductive no-request slots have not proven renewed upload
-			// demand. Do not let a queued block request clear the paired generic
-			// retry cooldown and bypass the still-active no-request throttle.
+			// demand. Do not let a queued block request or open-cap underfill
+			// bypass the still-active repeat no-request throttle.
 			if (ppszInstrumentationReason != NULL)
 				*ppszInstrumentationReason = _T("reject-not-uploading-unproductive-no-request-active");
 			return false;
@@ -1354,7 +1337,7 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 	}
 	if (client != NULL)
 		client->ClearSlowUploadCooldown();
-	if (bHadClientCooldown || bHadIPCooldown || bClearedProductiveNoRequestCooldown || bClearedUnderfilledNoRequestCooldown)
+	if (bHadClientCooldown || bHadIPCooldown || bClearedProductiveNoRequestCooldown)
 		return true;
 	if (ppszInstrumentationReason != NULL)
 		*ppszInstrumentationReason = bHadNoRequestCooldown ? _T("reject-not-uploading-no-request-only-cooldown") : _T("reject-not-uploading-no-active-cooldown");

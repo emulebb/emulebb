@@ -31,7 +31,6 @@ inline constexpr std::uint32_t kNoRequestRepeatHashRotationBanThreshold = 3u;
 inline constexpr std::uint32_t kNoRequestRepeatHashRotationStrikeThreshold = 5u;
 inline constexpr std::uint32_t kNoRequestRepeatCooldownMaxSeconds = 60u * 60u;
 inline constexpr std::uint32_t kNoRequestRepeatCleanupIntervalSeconds = 60u;
-inline constexpr std::uint64_t kUnproductiveNoRequestCooldownProbeRemainingMs = 30000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownProbeRemainingMs = 5000u;
 inline constexpr std::uint64_t kProductiveNoRequestCooldownPayloadBytes = 184320u;
 
@@ -134,32 +133,17 @@ inline bool ShouldProbeUploadCooldownCandidate(bool bSustainedUnderfill, std::in
 }
 
 /**
- * @brief Reports whether a no-request peer may be probed as a last-resort underfill refill.
- */
-inline bool ShouldProbeUnproductiveNoRequestCooldownCandidate(
-	bool bUnproductiveNoRequestCooldown,
-	std::uint64_t ullCooldownRemainingMs,
-	std::uint64_t ullMaxProbeRemainingMs = kUnproductiveNoRequestCooldownProbeRemainingMs)
-{
-	return bUnproductiveNoRequestCooldown
-		&& ullCooldownRemainingMs <= ullMaxProbeRemainingMs;
-}
-
-/**
  * @brief Reports whether a drained no-request peer may be probed as a last-resort underfill refill.
  */
 inline bool ShouldProbeNoRequestCooldownCandidate(
 	bool bProductiveNoRequestCooldown,
 	std::uint64_t ullCooldownRemainingMs,
 	std::uint64_t ullMaxProductiveProbeRemainingMs = kProductiveNoRequestCooldownProbeRemainingMs,
-	std::uint64_t ullMaxUnproductiveProbeRemainingMs = kUnproductiveNoRequestCooldownProbeRemainingMs,
 	bool bOpenCapUnderfill = false)
 {
-	if (bOpenCapUnderfill)
-		return true;
 	return bProductiveNoRequestCooldown
-		? ullCooldownRemainingMs <= ullMaxProductiveProbeRemainingMs
-		: ShouldProbeUnproductiveNoRequestCooldownCandidate(true, ullCooldownRemainingMs, ullMaxUnproductiveProbeRemainingMs);
+		&& bOpenCapUnderfill
+		&& ullCooldownRemainingMs <= ullMaxProductiveProbeRemainingMs;
 }
 
 /**
@@ -542,31 +526,13 @@ inline bool ShouldAllowNoRequestCooldownClear(
 }
 
 /**
- * @brief Reports whether one valid queued request may prove renewed demand from an active no-request cooldown.
- */
-inline bool ShouldClearActiveNoRequestCooldownOnQueuedRequest(
-	bool bHadNoRequestCooldown,
-	bool bClearedProductiveNoRequestCooldown,
-	bool bSustainedUnderfill,
-	std::int64_t iUploadSlots,
-	std::int64_t iSoftMaxUploadSlots)
-{
-	(void)iUploadSlots;
-	(void)iSoftMaxUploadSlots;
-	return bHadNoRequestCooldown
-		&& !bClearedProductiveNoRequestCooldown
-		&& bSustainedUnderfill;
-}
-
-/**
  * @brief Reports whether an active no-request cooldown still blocks queued-request retry clears.
  */
 inline bool ShouldBlockQueuedRequestRetryClearForActiveNoRequest(
 	bool bHadNoRequestCooldown,
-	bool bClearedProductiveNoRequestCooldown,
-	bool bClearedUnderfilledNoRequestCooldown = false)
+	bool bClearedProductiveNoRequestCooldown)
 {
-	return bHadNoRequestCooldown && !bClearedProductiveNoRequestCooldown && !bClearedUnderfilledNoRequestCooldown;
+	return bHadNoRequestCooldown && !bClearedProductiveNoRequestCooldown;
 }
 
 inline bool ShouldAllowUploadRetryCooldownClear(bool bRetryCooldownTracked, bool bQueuedRequestClearAlreadyUsed)
