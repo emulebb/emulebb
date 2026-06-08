@@ -66,6 +66,8 @@ namespace DownloadListKeyboardShortcutsSeams
 				if (IsPriorityDownKey(wParam))
 					return MP_PRIOLOW;
 			} else {
+				if (wParam == _T('R'))
+					return MP_CLEARCOMPLETED;
 				if (IsPriorityUpKey(wParam))
 					return MP_PRIOUP;
 				if (IsPriorityDownKey(wParam))

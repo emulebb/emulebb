@@ -292,6 +292,9 @@ private:
 	static int	IndexToOrder(CHeaderCtrl *pHeader, int iIndex);
 	bool TryBuildDefaultColumnOrder(int *piColumnOrder) const;
 	bool BuildViewPresetColumnOrder(MuleListCtrlViewPresets::ETableViewPreset ePreset, std::vector<int> &rColumnOrder) const;
+	std::vector<int> BuildColumnMenuOrder() const;
+	void ShowColumnMenu(CPoint point);
+	bool ToggleColumnFromMenuCommand(WPARAM wParam);
 	bool IsPresetHiddenColumn(MuleListCtrlViewPresets::ETableViewPreset ePreset, int iColumn) const;
 	int GetDefaultColumnWidth(int iColumn) const;
 	void ResetSortState();

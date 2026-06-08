@@ -383,6 +383,74 @@ bool CMuleListCtrl::TryBuildDefaultColumnOrder(int *piColumnOrder) const
 	return true;
 }
 
+std::vector<int> CMuleListCtrl::BuildColumnMenuOrder() const
+{
+	if (m_aColumns == NULL || m_iColumnsTracked <= 1)
+		return std::vector<int>();
+
+	std::vector<int> columnLocations(static_cast<size_t>(m_iColumnsTracked), 0);
+	for (int i = 0; i < m_iColumnsTracked; ++i)
+		columnLocations[static_cast<size_t>(i)] = m_aColumns[i].iLocation;
+
+	return MuleListCtrlSeams::BuildColumnMenuOrder(columnLocations.data(), m_iColumnsTracked);
+}
+
+bool CMuleListCtrl::ToggleColumnFromMenuCommand(WPARAM wParam)
+{
+	if (wParam < MLC_IDC_MENU || m_aColumns == NULL || m_iColumnsTracked <= 0)
+		return false;
+
+	const int iToggle = static_cast<int>(wParam - MLC_IDC_MENU);
+	CHeaderCtrl *pHeaderCtrl = GetHeaderCtrl();
+	if (pHeaderCtrl == NULL || iToggle < 0 || iToggle >= m_iColumnsTracked || iToggle >= pHeaderCtrl->GetItemCount())
+		return false;
+
+	if (m_aColumns[iToggle].bHidden)
+		ShowColumn(iToggle);
+	else
+		HideColumn(iToggle);
+
+	return true;
+}
+
+void CMuleListCtrl::ShowColumnMenu(CPoint point)
+{
+	CHeaderCtrl *pHeaderCtrl = GetHeaderCtrl();
+	if (pHeaderCtrl == NULL || m_aColumns == NULL || m_iColumnsTracked <= 1)
+		return;
+
+	for (;;) {
+		CTitledMenu tmColumnMenu;
+		tmColumnMenu.CreatePopupMenu();
+
+		const std::vector<int> columnOrder = BuildColumnMenuOrder();
+		for (size_t i = 0; i < columnOrder.size(); ++i) {
+			const int iColumn = columnOrder[i];
+			HDITEM item;
+			TCHAR text[255];
+			text[0] = _T('\0');
+			item.pszText = text;
+			item.mask = HDI_TEXT;
+			item.cchTextMax = _countof(text);
+			if (!pHeaderCtrl->GetItem(iColumn, &item))
+				continue;
+
+			tmColumnMenu.AppendMenu(MF_STRING | (m_aColumns[iColumn].bHidden ? 0 : MF_CHECKED)
+				, MLC_IDC_MENU + iColumn, item.pszText);
+		}
+
+		const UINT uCommand = tmColumnMenu.TrackPopupMenu(
+			TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
+			point.x,
+			point.y,
+			this);
+		VERIFY(tmColumnMenu.DestroyMenu());
+
+		if (uCommand == 0 || !ToggleColumnFromMenuCommand(uCommand))
+			break;
+	}
+}
+
 void CMuleListCtrl::SetViewPresetProfile(const MuleListCtrlViewPresets::SListControlViewPresetProfile &profile)
 {
 	SetPrefsKey(profile.pszControlName);
@@ -811,25 +879,7 @@ BOOL CMuleListCtrl::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT
 			{
 				POINT point;
 				::GetCursorPos(&point);
-
-				CTitledMenu tmColumnMenu;
-				tmColumnMenu.CreatePopupMenu();
-
-				CHeaderCtrl *pHeaderCtrl = GetHeaderCtrl();
-				int iCount = pHeaderCtrl->GetItemCount();
-				for (int iCurrent = 1; iCurrent < iCount; ++iCurrent) {
-					HDITEM item;
-					TCHAR text[255];
-					item.pszText = text;
-					item.mask = HDI_TEXT;
-					item.cchTextMax = _countof(text);
-					pHeaderCtrl->GetItem(iCurrent, &item);
-
-					tmColumnMenu.AppendMenu(MF_STRING | (m_aColumns[iCurrent].bHidden ? 0 : MF_CHECKED)
-						, MLC_IDC_MENU + iCurrent, item.pszText);
-				}
-				tmColumnMenu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
-				VERIFY(tmColumnMenu.DestroyMenu());
+				ShowColumnMenu(point);
 			}
 			return (BOOL)(*pResult = 1);
 		case HDN_BEGINTRACKW: //forbid changing the size of anything "before" the first column
@@ -900,18 +950,8 @@ BOOL CMuleListCtrl::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT
 			UpdateLocation((int)lParam);
 			return (BOOL)(*pResult = 1);
 		}
-		if (wParam >= MLC_IDC_MENU) {
-			int iCount = GetHeaderCtrl()->GetItemCount();
-			int iToggle = (int)(wParam - MLC_IDC_MENU);
-			if (iToggle < iCount) {
-				if (m_aColumns[iToggle].bHidden)
-					ShowColumn(iToggle);
-				else
-					HideColumn(iToggle);
-
-				return (BOOL)(*pResult = 1);
-			}
-		}
+		if (ToggleColumnFromMenuCommand(wParam))
+			return (BOOL)(*pResult = 1);
 		break;
 	case LVM_DELETECOLUMN:
 		if (m_aColumns != NULL) {

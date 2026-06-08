@@ -3129,7 +3129,7 @@ void CDownloadListCtrl::CreateMenus()
 	m_BatchMenu.AppendMenu(MF_STRING, MP_PAUSE_CATEGORY, AddMenuShortcutLabel(GetResString(IDS_DL_PAUSE_CATEGORY), _T("Ctrl+Shift+P")), _T("PAUSEALL"));
 	m_BatchMenu.AppendMenu(MF_STRING, MP_STOP_CATEGORY, AddMenuShortcutLabel(GetResString(IDS_DL_STOP_CATEGORY), _T("Ctrl+Shift+T")), _T("STOPALL"));
 	m_BatchMenu.AppendMenu(MF_SEPARATOR);
-	m_BatchMenu.AppendMenu(MF_STRING, MP_CLEARCOMPLETED, GetResString(IDS_DL_CLEAR), _T("CLEARCOMPLETE"));
+	m_BatchMenu.AppendMenu(MF_STRING, MP_CLEARCOMPLETED, AddMenuShortcutLabel(GetResString(IDS_DL_CLEAR), _T("Ctrl+R")), _T("CLEARCOMPLETE"));
 	m_FileMenu.AppendMenu(MF_STRING | MF_POPUP, (UINT_PTR)m_BatchMenu.m_hMenu, GetResString(IDS_CAT), _T("CATEGORY"));
 	m_FileMenu.AppendMenu(MF_SEPARATOR);
 	m_FileMenu.AppendMenu(MF_STRING, MP_EXPAND_ALL_SOURCES, GetResString(IDS_DL_EXPAND_ALL_SOURCES), _T("EXPANDSOURCES"));
