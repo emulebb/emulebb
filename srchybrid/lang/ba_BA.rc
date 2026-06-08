@@ -2826,6 +2826,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Deskonexioa eskatuta: stock eMule deskonexio biguna erabiliz; transferentzia-ilara aktiboak eta entzule-socketak ez dira berrezartzen."
     IDS_BAN_BY_HASH                                            "Debekatu &hasharen arabera"
     IDS_BAN_BY_IP                                              "Debekatu &IParen arabera"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastični utori za učitavanje [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Privremeni procenat prekoračenja iznad maksimalnog ciljanog broja klijenata za otpremanje.\r\n\r\neMuleBB otvara elastične proreze tek nakon što upload ostane ispod 98% utilization 10 sekundi, i prestaje da ih puni kada se oporavi korištenje."
 END
 // eMuleBB managed translation block: end
 

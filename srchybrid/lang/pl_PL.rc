@@ -2801,6 +2801,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Zażądano rozłączenia: przy użyciu standardowego miękkiego rozłączenia eMule; aktywne kolejki transferu i gniazda odbiorników nie są resetowane w sposób twardy."
     IDS_BAN_BY_HASH                                            "Zbanuj według &hasha"
     IDS_BAN_BY_IP                                              "Zbanuj według &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastyczne gniazda przesyłania [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Procent tymczasowego przepełnienia powyżej maksymalnej docelowej wartości klientów przesyłających.\r\n\r\neMuleBB otwiera elastyczne przedziały dopiero wtedy, gdy przesyłanie pozostaje poniżej 98% utilization przez 10 sekund i przestaje je uzupełniać po przywróceniu wykorzystania."
 END
 // eMuleBB managed translation block: end
 

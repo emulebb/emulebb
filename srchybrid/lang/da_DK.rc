@@ -2835,6 +2835,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Frakobling anmodet: ved at bruge standard eMule blød frakobling; aktive overførselskøer og lytterstik er ikke hårdt nulstillet."
     IDS_BAN_BY_HASH                                            "Forbyd efter &hash"
     IDS_BAN_BY_IP                                              "Forbyd efter &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastiske uploadslots [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Midlertidig overløbsprocent over det maksimale mål for uploadklienter.\r\n\r\neMuleBB åbner kun elastiske slots, efter upload forbliver under 98% utilisering i 10 sekunder, og stopper med at genopfylde dem, når udnyttelsen genoprettes."
 END
 // eMuleBB managed translation block: end
 

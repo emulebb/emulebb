@@ -15,10 +15,13 @@ constexpr std::uint64_t kMinQueueSize = 2000u;
 constexpr std::uint64_t kDefaultQueueSize = 10000u;
 constexpr std::uint64_t kMaxQueueSize = 10000u;
 constexpr std::uint64_t kMinUploadSlots = 1u;
-constexpr std::uint64_t kMaxUploadSlots = 32u;
-constexpr std::uint32_t kDefaultMaxUploadSlots = 10u;
+constexpr std::uint64_t kMaxUploadSlots = 64u;
+constexpr std::uint64_t kMaxEffectiveUploadSlots = 128u;
+constexpr std::uint32_t kDefaultMaxUploadSlots = 12u;
+constexpr std::uint32_t kDefaultUploadSlotElasticPercent = 50u;
+constexpr std::uint32_t kMaxUploadSlotElasticPercent = 100u;
 constexpr float kMinSlowUploadThresholdFactor = 0.10f;
-constexpr float kDefaultSlowUploadThresholdFactor = 0.70f;
+constexpr float kDefaultSlowUploadThresholdFactor = 0.55f;
 constexpr float kMaxSlowUploadThresholdFactor = 1.0f;
 constexpr std::uint32_t kMinSlowUploadGraceSeconds = 5u;
 constexpr std::uint32_t kDefaultSlowUploadGraceSeconds = 30u;
@@ -165,6 +168,26 @@ inline std::uint32_t NormalizeUploadSlots(const std::uint32_t uValue)
 	if (uValue > kMaxUploadSlots)
 		return static_cast<std::uint32_t>(kMaxUploadSlots);
 	return uValue;
+}
+
+/**
+ * @brief Clamps the upload slot elasticity percentage to the supported range.
+ */
+inline std::uint32_t NormalizeUploadSlotElasticPercent(const std::uint32_t uValue)
+{
+	return uValue > kMaxUploadSlotElasticPercent ? kMaxUploadSlotElasticPercent : uValue;
+}
+
+/**
+ * @brief Returns the effective elastic upload slot cap for a configured base target.
+ */
+inline std::uint32_t GetElasticUploadSlotCap(const std::uint32_t uBaseSlots, const std::uint32_t uElasticPercent)
+{
+	const std::uint64_t ullBaseSlots = NormalizeUploadSlots(uBaseSlots);
+	const std::uint64_t ullElasticPercent = NormalizeUploadSlotElasticPercent(uElasticPercent);
+	const std::uint64_t ullElasticSlots = (ullBaseSlots * ullElasticPercent + 99u) / 100u;
+	const std::uint64_t ullEffectiveSlots = ullBaseSlots + ullElasticSlots;
+	return static_cast<std::uint32_t>(ullEffectiveSlots > kMaxEffectiveUploadSlots ? kMaxEffectiveUploadSlots : ullEffectiveSlots);
 }
 
 /**
@@ -330,6 +353,14 @@ inline std::uint32_t DeriveUploadSlotsForClientDataRate(const std::uint32_t uCon
 inline bool IsUploadSlotCount(const std::uint64_t ullValue)
 {
 	return ullValue >= kMinUploadSlots && ullValue <= kMaxUploadSlots;
+}
+
+/**
+ * @brief Reports whether the upload slot elasticity percentage is externally accepted.
+ */
+inline bool IsUploadSlotElasticPercent(const std::uint64_t ullValue)
+{
+	return ullValue <= kMaxUploadSlotElasticPercent;
 }
 
 /**

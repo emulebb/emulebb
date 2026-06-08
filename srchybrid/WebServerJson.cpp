@@ -1154,6 +1154,7 @@ json BuildPreferencesJson()
 		{"maxSourcesPerFile", thePrefs.GetConfiguredMaxSourcesPerFile()},
 		{"uploadClientDataRate", theApp.uploadqueue->GetTargetClientDataRateBroadband()},
 		{"maxUploadSlots", thePrefs.GetMaxUploadClientsAllowed()},
+		{"uploadSlotElasticPercent", thePrefs.GetUploadSlotElasticPercent()},
 		{"queueSize", static_cast<int64_t>(thePrefs.GetQueueSize())},
 		{"autoConnect", thePrefs.DoAutoConnect()},
 		{"newAutoUp", thePrefs.GetNewAutoUp()},
@@ -1751,10 +1752,20 @@ bool ApplyPreferencesJson(const json &rPrefs, SPipeApiError &rError)
 		uint64_t ullRequestedSlots = 0;
 		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["maxUploadSlots"], ullRequestedSlots) || !WebApiSurfaceSeams::IsUploadSlotPreferenceValue(ullRequestedSlots)) {
 			rError.strCode = "INVALID_ARGUMENT";
-			rError.strMessage = _T("maxUploadSlots must be an unsigned number in the range 1..32");
+			rError.strMessage = _T("maxUploadSlots must be an unsigned number in the range 1..64");
 			return false;
 		}
 		thePrefs.SetMaxUploadClientsAllowed(static_cast<UINT>(ullRequestedSlots));
+	}
+
+	if (rPrefs.contains("uploadSlotElasticPercent")) {
+		uint64_t ullRequestedElasticPercent = 0;
+		if (!WebApiCommandSeams::TryParseNonNegativeUInt64(rPrefs["uploadSlotElasticPercent"], ullRequestedElasticPercent) || !WebApiSurfaceSeams::IsUploadSlotElasticPercentPreferenceValue(ullRequestedElasticPercent)) {
+			rError.strCode = "INVALID_ARGUMENT";
+			rError.strMessage = _T("uploadSlotElasticPercent must be an unsigned number in the range 0..100");
+			return false;
+		}
+		thePrefs.SetUploadSlotElasticPercent(static_cast<UINT>(ullRequestedElasticPercent));
 	}
 
 	if (rPrefs.contains("queueSize")) {

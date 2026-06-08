@@ -123,7 +123,10 @@ public:
 	uint32	GetTargetClientDataRate(bool bMinDatarate) const;
 	/** Returns the configured broadband upload budget used to size the startup slot policy. */
 	uint32	GetConfiguredUploadBudgetBytesPerSec() const;
-	INT_PTR	GetBroadbandSlotCap() const						{ return GetSoftMaxUploadSlots(); }
+	INT_PTR	GetBroadbandBaseSlotTarget() const					{ return GetSoftMaxUploadSlots(); }
+	INT_PTR	GetBroadbandSlotCap() const						{ return GetElasticMaxUploadSlots(); }
+	UINT	GetBroadbandUploadSlotElasticPercent() const;
+	ULONGLONG GetBroadbandUnderfillAgeMs(ULONGLONG curTick) const;
 	/** Returns the fixed broadband per-slot target derived from the configured upload budget. */
 	uint32	GetTargetClientDataRateBroadband() const;
 	/** Returns the preferred queued block count for a client at the given upload rate. */
@@ -165,7 +168,7 @@ public:
 
 protected:
 	void		RemoveFromWaitingQueue(POSITION pos, bool updatewindow);
-	bool		AcceptNewClient(INT_PTR curUploadSlots) const;
+	bool		AcceptNewClient(INT_PTR curUploadSlots, ULONGLONG curTick) const;
 	bool		ForceNewClient(bool allowEmptyWaitingQueue = false);
 	bool		AddUpNextClient(LPCTSTR pszReason, CUpDownClient *directadd = NULL);
 
@@ -229,6 +232,7 @@ private:
 		UploadRetryCooldownReason eReason;
 	};
 	INT_PTR	GetSoftMaxUploadSlots() const;
+	INT_PTR	GetElasticMaxUploadSlots() const;
 	/** Returns the minimum headroom required before underfill may recycle a weak slot. */
 	uint32	GetBroadbandUnderfillMarginBytesPerSec() const;
 	/** Returns whether the current upload rate is materially below the configured upload budget. */
@@ -237,6 +241,8 @@ private:
 	void	UpdateBroadbandUnderfillState(ULONGLONG curTick);
 	/** Returns whether broadband underfill has persisted long enough to recycle a weak slot. */
 	bool	HasSustainedBroadbandUnderfill(ULONGLONG curTick) const;
+	/** Returns whether broadband underfill has persisted long enough to open elastic overflow slots. */
+	bool	HasSustainedElasticBroadbandUnderfill(ULONGLONG curTick) const;
 	/** Returns whether a slot has aged enough to be judged for broadband slow-slot recycling. */
 	bool	HasCompletedSlowUploadWarmup(const CUpDownClient *client) const;
 	uint32	GetSlowUploadRateThreshold() const;

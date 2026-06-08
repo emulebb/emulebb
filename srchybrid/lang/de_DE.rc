@@ -2803,6 +2803,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Trennen angefordert: eMule verwendet die normale weiche Trennung; aktive Übertragungswarteschlangen und Listener-Sockets werden nicht hart zurückgesetzt."
     IDS_BAN_BY_HASH                                            "Nach &Hash bannen"
     IDS_BAN_BY_IP                                              "Nach &IP bannen"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastische Upload-Plätze [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Temporärer Überlaufprozentsatz über dem maximalen Upload-Client-Ziel.\r\n\r\neMuleBB öffnet elastische Slots erst, wenn der Upload 10 Sekunden lang unter 98% utilization bleibt, und stoppt das Wiederauffüllen, sobald die Auslastung wiederhergestellt ist."
 END
 // eMuleBB managed translation block: end
 

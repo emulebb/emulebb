@@ -2834,6 +2834,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Desconexión solicitada: usando desconexión suave eMule de stock; As colas de transferencia activas e os sockets de escoita non se restablecen."
     IDS_BAN_BY_HASH                                            "Prohibir por &hash"
     IDS_BAN_BY_IP                                              "Prohibir por &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Ranuras de carga elásticas [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Porcentaxe de desbordamento temporal por riba do obxectivo máximo de clientes de carga.\r\n\r\neMuleBB abre espazos elásticos só despois de que a carga permanece por debaixo de 98% utilization durante 10 segundos e deixa de recargalos unha vez que se recupere a utilización."
 END
 // eMuleBB managed translation block: end
 

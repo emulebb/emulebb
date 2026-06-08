@@ -2819,6 +2819,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "قطع الاتصال المطلوب: باستخدام قطع الاتصال الناعم eMule؛ لا تتم إعادة ضبط قوائم انتظار النقل النشطة ومآخذ المستمع."
     IDS_BAN_BY_HASH                                            "حظر حسب ال&هاش"
     IDS_BAN_BY_IP                                              "حظر حسب &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "فتحات تحميل مرنة [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "نسبة التجاوز المؤقتة أعلى من الحد الأقصى المستهدف لعملاء التحميل. يفتح\r\n\r\neMuleBB فتحات مرنة فقط بعد أن يظل التحميل أقل من 98% utilization لمدة 10 ثوانٍ، ويتوقف عن إعادة تعبئتها بمجرد استعادة الاستخدام."
 END
 // eMuleBB managed translation block: end
 

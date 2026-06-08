@@ -2792,6 +2792,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "تەلەپ قىلىنغان ئۈزۈشنى تەلەپ قىلىڭ: پاي eMule يۇمشاق دېتالنى ئۈزۈش; ئاكتىپ يۆتكەش ئۆچرەتلىرى ۋە ئۈندىدار ئېغىزى قاتتىق ئەسلىگە كەلمەيدۇ."
     IDS_BAN_BY_HASH                                            "&Hash بويىچە چەكلە"
     IDS_BAN_BY_IP                                              "&IP بويىچە چەكلە"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "ئېلاستىكىلىق يۈكلەش نۇقتىلىرى [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "ئەڭ كۆپ يوللاش خېرىدارل\r\n\r\nىرىنىڭ نىشانىدىن ئېشىپ كەتكەن ۋاقىتلىق ئېقىش نىسبىتى. % u"
 END
 // eMuleBB managed translation block: end
 

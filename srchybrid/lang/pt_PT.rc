@@ -2834,6 +2834,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Desconexão solicitada: usando desconexão suave eMule padrão; filas de transferência ativas e soquetes de ouvinte não são reinicializados."
     IDS_BAN_BY_HASH                                            "Banir por &hash"
     IDS_BAN_BY_IP                                              "Banir por &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Slots de upload elástico [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Porcentagem de estouro temporário acima da meta máxima de clientes de upload.\r\n\r\neMuleBB abre slots elásticos somente depois que o upload permanece abaixo de 98% utilização por 10 segundos e para de recarregá-los quando a utilização se recupera."
 END
 // eMuleBB managed translation block: end
 

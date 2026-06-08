@@ -30,6 +30,7 @@ enum class EMutablePreference : uint8_t
 	MaxSourcesPerFile,
 	UploadClientDataRate,
 	MaxUploadSlots,
+	UploadSlotElasticPercent,
 	QueueSize,
 	AutoConnect,
 	NewAutoUp,
@@ -63,6 +64,7 @@ inline constexpr uint64_t kMutablePreferenceMinQueueSize = PreferenceValidationS
 inline constexpr uint64_t kMutablePreferenceMaxQueueSize = PreferenceValidationSeams::kMaxQueueSize;
 inline constexpr uint64_t kMutablePreferenceMinUploadSlots = PreferenceValidationSeams::kMinUploadSlots;
 inline constexpr uint64_t kMutablePreferenceMaxUploadSlots = PreferenceValidationSeams::kMaxUploadSlots;
+inline constexpr uint64_t kMutablePreferenceMaxUploadSlotElasticPercent = PreferenceValidationSeams::kMaxUploadSlotElasticPercent;
 inline constexpr uint64_t kTransferProgressRatioScale = 10000u;
 
 /**
@@ -106,24 +108,33 @@ inline bool IsUploadSlotPreferenceValue(const uint64_t ullValue)
 	return PreferenceValidationSeams::IsUploadSlotCount(ullValue);
 }
 
+/**
+ * Reports whether one REST upload-slot elasticity preference matches the broadband range.
+ */
+inline bool IsUploadSlotElasticPercentPreferenceValue(const uint64_t ullValue)
+{
+	return PreferenceValidationSeams::IsUploadSlotElasticPercent(ullValue);
+}
+
 inline constexpr const char *kMutablePreferenceFieldListCsv =
 	"uploadLimitKiBps,downloadLimitKiBps,maxConnections,maxConnectionsPerFiveSeconds,maxSourcesPerFile,"
-	"uploadClientDataRate,maxUploadSlots,queueSize,autoConnect,newAutoUp,newAutoDown,creditSystem,"
+	"uploadClientDataRate,maxUploadSlots,uploadSlotElasticPercent,queueSize,autoConnect,newAutoUp,newAutoDown,creditSystem,"
 	"safeServerConnect,networkKademlia,networkEd2k,downloadAutoBroadbandIo";
 
 /**
  * Returns the canonical metadata for the native REST mutable preferences.
  */
-inline const std::array<SMutablePreferenceSpec, 16> &GetMutablePreferenceSpecs()
+inline const std::array<SMutablePreferenceSpec, 17> &GetMutablePreferenceSpecs()
 {
-	static const std::array<SMutablePreferenceSpec, 16> specs = {{
+	static const std::array<SMutablePreferenceSpec, 17> specs = {{
 		{"uploadLimitKiBps", EMutablePreference::MaxUploadKiB, EMutablePreferenceValueKind::Unsigned, "uploadLimitKiBps must be an unsigned number in the range 1..4294967294", IsFiniteKiBpsPreferenceValue},
 		{"downloadLimitKiBps", EMutablePreference::MaxDownloadKiB, EMutablePreferenceValueKind::Unsigned, "downloadLimitKiBps must be an unsigned number in the range 1..4294967294", IsFiniteKiBpsPreferenceValue},
 		{"maxConnections", EMutablePreference::MaxConnections, EMutablePreferenceValueKind::Unsigned, "maxConnections must be an unsigned number in the range 1..2147483647", IsPositiveSignedIntPreferenceValue},
 		{"maxConnectionsPerFiveSeconds", EMutablePreference::MaxConPerFive, EMutablePreferenceValueKind::Unsigned, "maxConnectionsPerFiveSeconds must be an unsigned number in the range 1..2147483647", IsPositiveSignedIntPreferenceValue},
 		{"maxSourcesPerFile", EMutablePreference::MaxSourcesPerFile, EMutablePreferenceValueKind::Unsigned, "maxSourcesPerFile must be an unsigned number in the range 1..2147483647", IsPositiveSignedIntPreferenceValue},
 		{"uploadClientDataRate", EMutablePreference::UploadClientDataRate, EMutablePreferenceValueKind::Unsigned, "uploadClientDataRate must be an unsigned number in the range 1..4294967295", IsPositiveUInt32PreferenceValue},
-		{"maxUploadSlots", EMutablePreference::MaxUploadSlots, EMutablePreferenceValueKind::Unsigned, "maxUploadSlots must be an unsigned number in the range 1..32", IsUploadSlotPreferenceValue},
+		{"maxUploadSlots", EMutablePreference::MaxUploadSlots, EMutablePreferenceValueKind::Unsigned, "maxUploadSlots must be an unsigned number in the range 1..64", IsUploadSlotPreferenceValue},
+		{"uploadSlotElasticPercent", EMutablePreference::UploadSlotElasticPercent, EMutablePreferenceValueKind::Unsigned, "uploadSlotElasticPercent must be an unsigned number in the range 0..100", IsUploadSlotElasticPercentPreferenceValue},
 		{"queueSize", EMutablePreference::QueueSize, EMutablePreferenceValueKind::Unsigned, "queueSize must be an unsigned number in the range 2000..10000", IsQueueSizePreferenceValue},
 		{"autoConnect", EMutablePreference::AutoConnect, EMutablePreferenceValueKind::Boolean, "autoConnect must be a boolean", NULL},
 		{"newAutoUp", EMutablePreference::NewAutoUp, EMutablePreferenceValueKind::Boolean, "newAutoUp must be a boolean", NULL},

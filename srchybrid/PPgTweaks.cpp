@@ -478,6 +478,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_htiAutoTakeEd2kLinks()
 	, m_htiBroadband()
 	, m_htiMaxUploadClients()
+	, m_htiUploadSlotElasticPercent()
 	, m_htiSlowUploadThreshold()
 	, m_htiSlowUploadGrace()
 	, m_htiSlowUploadWarmup()
@@ -726,6 +727,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_uFileBufferTimeLimitSeconds()
 	, m_uGeoLocationCheckDays()
 	, m_iMaxUploadClients()
+	, m_iUploadSlotElasticPercent()
 	, m_iSlowUploadGraceSeconds()
 	, m_iSlowUploadWarmupSeconds()
 	, m_iZeroUploadRateGraceSeconds()
@@ -818,6 +820,8 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_htiBroadband = m_ctrlTreeOptions.InsertGroup(GetResString(IDS_BROADBAND), iImgDynyp, TVI_ROOT);
 		m_htiMaxUploadClients = m_ctrlTreeOptions.InsertItem(GetResString(IDS_UPLOAD_POLICY_MAX_UPLOAD_CLIENTS), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiBroadband);
 		m_ctrlTreeOptions.AddEditBox(m_htiMaxUploadClients, RUNTIME_CLASS(CNumTreeOptionsEdit));
+		m_htiUploadSlotElasticPercent = m_ctrlTreeOptions.InsertItem(GetResString(IDS_UPLOAD_POLICY_ELASTIC_PERCENT), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiBroadband);
+		m_ctrlTreeOptions.AddEditBox(m_htiUploadSlotElasticPercent, RUNTIME_CLASS(CNumTreeOptionsEdit));
 		m_htiSlowUploadThreshold = m_ctrlTreeOptions.InsertItem(GetResString(IDS_UPLOAD_POLICY_SLOW_THRESHOLD_FACTOR), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiBroadband);
 		m_ctrlTreeOptions.AddEditBox(m_htiSlowUploadThreshold, RUNTIME_CLASS(CTreeOptionsEditEx));
 		m_htiSlowUploadGrace = m_ctrlTreeOptions.InsertItem(GetResString(IDS_UPLOAD_POLICY_SLOW_GRACE_SECONDS), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiBroadband);
@@ -1120,6 +1124,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiSearchKadGroup, IDS_TWEAKS_TT_SEARCH_KAD_GROUP);
 		SetTreeToolTip(m_htiBroadband, IDS_TWEAKS_TT_BROADBAND);
 		SetTreeToolTip(m_htiMaxUploadClients, IDS_TWEAKS_TT_UPLOAD_POLICY_MAX_UPLOAD_CLIENTS);
+		SetTreeToolTip(m_htiUploadSlotElasticPercent, IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT);
 		SetTreeToolTip(m_htiSlowUploadThreshold, IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_THRESHOLD);
 		SetTreeToolTip(m_htiSlowUploadGrace, IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_GRACE);
 		SetTreeToolTip(m_htiSlowUploadWarmup, IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_WARMUP);
@@ -1203,6 +1208,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 			FailTreeValidation(pDX, AFX_IDP_PARSE_INT, m_htiSearchKadKeywordLifetime);
 	}
 	DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiMaxUploadClients, m_iMaxUploadClients);
+	DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiUploadSlotElasticPercent, m_iUploadSlotElasticPercent);
 	DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiSlowUploadThreshold, m_sSlowUploadThresholdFactor);
 	DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiSlowUploadGrace, m_iSlowUploadGraceSeconds);
 	DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiSlowUploadWarmup, m_iSlowUploadWarmupSeconds);
@@ -1218,8 +1224,10 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 	DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiSessionTimeLimit, m_iSessionTimeLimitSeconds);
 	if (pDX->m_bSaveAndValidate) {
 		float fParsedValue = 0.0f;
-		if (m_iMaxUploadClients < 1 || m_iMaxUploadClients > 32)
+		if (m_iMaxUploadClients < 1 || m_iMaxUploadClients > 64)
 			FailTreeValidation(pDX, AFX_IDP_PARSE_INT, m_htiMaxUploadClients);
+		if (m_iUploadSlotElasticPercent < 0 || m_iUploadSlotElasticPercent > 100)
+			FailTreeValidation(pDX, AFX_IDP_PARSE_INT, m_htiUploadSlotElasticPercent);
 		if (!TryParseTreeFloat(m_sSlowUploadThresholdFactor, fParsedValue) || fParsedValue < 0.10f || fParsedValue > 1.0f)
 			FailTreeValidation(pDX, AFX_IDP_PARSE_REAL, m_htiSlowUploadThreshold);
 		if (m_iSlowUploadGraceSeconds < 5 || m_iSlowUploadGraceSeconds > 300)
@@ -1542,6 +1550,7 @@ BOOL CPPgTweaks::OnInitDialog()
 	m_iTCPErrorFlooderIntervalMinutes = static_cast<int>(thePrefs.GetTCPErrorFlooderIntervalMinutes());
 	m_iTCPErrorFlooderThreshold = static_cast<int>(thePrefs.GetTCPErrorFlooderThreshold());
 	m_iMaxUploadClients = static_cast<int>(thePrefs.GetMaxUploadClientsAllowed());
+	m_iUploadSlotElasticPercent = static_cast<int>(thePrefs.GetUploadSlotElasticPercent());
 	m_sSlowUploadThresholdFactor.Format(_T("%.2f"), thePrefs.GetSlowUploadThresholdFactor());
 	m_iSlowUploadGraceSeconds = static_cast<int>(thePrefs.GetSlowUploadGraceSeconds());
 	m_iSlowUploadWarmupSeconds = static_cast<int>(thePrefs.GetSlowUploadWarmupSeconds());
@@ -1635,6 +1644,7 @@ BOOL CPPgTweaks::OnApply()
 	thePrefs.m_uTCPErrorFlooderThreshold = static_cast<UINT>(m_iTCPErrorFlooderThreshold);
 	thePrefs.m_bConditionalTCPAccept = m_bConditionalTCPAccept;
 	thePrefs.SetMaxUploadClientsAllowed(static_cast<UINT>(max(1, m_iMaxUploadClients)));
+	thePrefs.SetUploadSlotElasticPercent(static_cast<UINT>(max(0, m_iUploadSlotElasticPercent)));
 	thePrefs.SetSlowUploadThresholdFactor(static_cast<float>(_tstof(m_sSlowUploadThresholdFactor)));
 	thePrefs.SetSlowUploadGraceSeconds(static_cast<UINT>(max(1, m_iSlowUploadGraceSeconds)));
 	thePrefs.SetSlowUploadWarmupSeconds(static_cast<UINT>(max(0, m_iSlowUploadWarmupSeconds)));
@@ -1851,6 +1861,7 @@ void CPPgTweaks::Localize()
 		LocalizeEditLabel(m_htiSearchKadKeywordLifetime, IDS_KAD_SEARCH_KEYWORD_LIFETIME);
 		LocalizeItemText(m_htiBroadband, IDS_BROADBAND);
 		LocalizeEditLabel(m_htiMaxUploadClients, IDS_UPLOAD_POLICY_MAX_UPLOAD_CLIENTS);
+		LocalizeEditLabel(m_htiUploadSlotElasticPercent, IDS_UPLOAD_POLICY_ELASTIC_PERCENT);
 		LocalizeEditLabel(m_htiSlowUploadThreshold, IDS_UPLOAD_POLICY_SLOW_THRESHOLD_FACTOR);
 		LocalizeEditLabel(m_htiSlowUploadGrace, IDS_UPLOAD_POLICY_SLOW_GRACE_SECONDS);
 		LocalizeEditLabel(m_htiSlowUploadWarmup, IDS_UPLOAD_POLICY_SLOW_WARMUP_SECONDS);
@@ -2006,6 +2017,7 @@ void CPPgTweaks::OnDestroy()
 	m_htiSearchKadKeywordLifetime = NULL;
 	m_htiBroadband = NULL;
 	m_htiMaxUploadClients = NULL;
+	m_htiUploadSlotElasticPercent = NULL;
 	m_htiSlowUploadThreshold = NULL;
 	m_htiSlowUploadGrace = NULL;
 	m_htiSlowUploadWarmup = NULL;

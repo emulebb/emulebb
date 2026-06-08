@@ -2826,6 +2826,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Zahtevan odklop: z mehkim odklopom standardne eMule; aktivne čakalne vrste za prenos in vtičnice poslušalcev niso trdo ponastavljene."
     IDS_BAN_BY_HASH                                            "Prepovej po &zgoščeni vrednosti"
     IDS_BAN_BY_IP                                              "Prepovej po &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastične reže za nalaganje [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Začasni odstotek prelivanja nad največjim ciljem odjemalcev za nalaganje.\r\n\r\neMuleBB odpre elastične reže šele, ko nalaganje ostane pod 98% utilization 10 sekund, in jih preneha ponovno polniti, ko se izkoriščenost obnovi."
 END
 // eMuleBB managed translation block: end
 

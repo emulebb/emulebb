@@ -2821,6 +2821,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Kërkohet shkëputja: duke përdorur shkëputjen e butë të stokut eMule; Radhët aktive të transferimit dhe prizat e dëgjuesit nuk rivendosen me vështirësi."
     IDS_BAN_BY_HASH                                            "Ndalo sipas &hash-it"
     IDS_BAN_BY_IP                                              "Ndalo sipas &IP-së"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Vende elastike për ngarkim [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Përqindja e përkohshme e tejmbushjes mbi objektivin maksimal të klientëve të ngarkimit.\r\n\r\neMuleBB hap hapësira elastike vetëm pasi ngarkimi qëndron nën 98% utilizimin për 10 sekonda dhe ndalon rimbushjen e tyre pasi të rikuperohet përdorimi."
 END
 // eMuleBB managed translation block: end
 

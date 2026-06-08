@@ -2821,6 +2821,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "ניתוק מבוקש: באמצעות ניתוק רך eMule במלאי; תורי העברה פעילים ושקעי מאזין אינם מאופסים קשה."
     IDS_BAN_BY_HASH                                            "חסימה לפי &Hash"
     IDS_BAN_BY_IP                                              "חסימה לפי &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "חריצי העלאה אלסטיים [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "אחוז הצפה זמני מעל היעד המקסימלי של לקוחות העלאה.\r\n\r\neMuleBB פותח חריצים אלסטיים רק לאחר שהעלאה נשארת מתחת ל-98% utilization למשך 10 שניות, ומפסיק למלא אותם לאחר שהשימוש מתאושש."
 END
 // eMuleBB managed translation block: end
 

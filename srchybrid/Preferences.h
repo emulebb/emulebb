@@ -686,6 +686,7 @@ public:
 	static UINT		m_uFollowMajorityFilenameRequiredPercent;
 	static UINT		m_uFollowMajorityFilenameMinimumVotes;
 	static UINT		m_uMaxUploadClientsAllowed;
+	static UINT		m_uUploadSlotElasticPercent;
 	static float	m_fSlowUploadThresholdFactor;
 	static UINT		m_uSlowUploadGraceSeconds;
 	static UINT		m_uSlowUploadWarmupSeconds;
@@ -1555,6 +1556,9 @@ public:
 	static bool		GetDebug2Disk()						{ return m_bVerbose && debug2disk; }
 	static UINT		GetMaxUploadClientsAllowed()		{ return m_uMaxUploadClientsAllowed; }
 	static void		SetMaxUploadClientsAllowed(UINT uVal) { m_uMaxUploadClientsAllowed = PreferenceValidationSeams::NormalizeUploadSlots(uVal); }
+	static UINT		GetUploadSlotElasticPercent()		{ return m_uUploadSlotElasticPercent; }
+	static void		SetUploadSlotElasticPercent(UINT uVal) { m_uUploadSlotElasticPercent = PreferenceValidationSeams::NormalizeUploadSlotElasticPercent(uVal); }
+	static UINT		GetElasticMaxUploadClientsAllowed()	{ return PreferenceValidationSeams::GetElasticUploadSlotCap(m_uMaxUploadClientsAllowed, m_uUploadSlotElasticPercent); }
 	static float	GetSlowUploadThresholdFactor()	{ return m_fSlowUploadThresholdFactor; }
 	static void		SetSlowUploadThresholdFactor(float fVal) { m_fSlowUploadThresholdFactor = PreferenceValidationSeams::NormalizeSlowUploadThresholdFactor(fVal); }
 	static UINT		GetSlowUploadGraceSeconds()		{ return m_uSlowUploadGraceSeconds; }

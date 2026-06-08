@@ -2827,6 +2827,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Bağlantının kesilmesi talep edildi: stok eMule yumuşak bağlantı kesme kullanılarak; etkin aktarım kuyrukları ve dinleyici yuvaları donanımdan sıfırlanmaz."
     IDS_BAN_BY_HASH                                            "&Hash ile yasakla"
     IDS_BAN_BY_IP                                              "&IP ile yasakla"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Esnek yükleme yuvaları [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Maksimum yükleme istemcisi hedefinin üzerinde geçici taşma yüzdesi.\r\n\r\neMuleBB, elastik yuvaları yalnızca yükleme 10 saniye boyunca 98% utilizasyonun altında kaldıktan sonra açar ve kullanım düzeldiğinde yeniden doldurmayı durdurur."
 END
 // eMuleBB managed translation block: end
 

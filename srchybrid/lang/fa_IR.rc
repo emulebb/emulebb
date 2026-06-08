@@ -2793,6 +2793,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "قطع اتصال درخواستی: با استفاده از استوک eMule قطع نرم. صف های انتقال فعال و سوکت های شنونده هارد ریست نمی شوند."
     IDS_BAN_BY_HASH                                            "ممنوع کردن بر اساس &هش"
     IDS_BAN_BY_IP                                              "ممنوع کردن بر اساس &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "اسلات بارگذاری الاستیک [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "درصد سرریز موقتی بالاتر از حداکثر هدف مشتریان آپلود.\r\n\r\neMuleBB فقط پس از اینکه آپلود به مدت 10 ثانیه در زیر 98% uتایلیزم باقی بماند، شکاف های کشسان را باز می کند و پس از بازیابی استفاده، پر کردن مجدد آنها را متوقف می کند."
 END
 // eMuleBB managed translation block: end
 

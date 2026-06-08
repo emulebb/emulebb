@@ -84,6 +84,7 @@ inline constexpr const TCHAR* DownloadAutoBroadbandIO = _T("DownloadAutoBroadban
 namespace UploadPolicyKeys
 {
 inline constexpr const TCHAR* MaxUploadClientsAllowed = _T("MaxUploadClientsAllowed");
+inline constexpr const TCHAR* UploadSlotElasticPercent = _T("UploadSlotElasticPercent");
 inline constexpr const TCHAR* SlowUploadThresholdFactor = _T("SlowUploadThresholdFactor");
 inline constexpr const TCHAR* SlowUploadGraceSeconds = _T("SlowUploadGraceSeconds");
 inline constexpr const TCHAR* SlowUploadWarmupSeconds = _T("SlowUploadWarmupSeconds");

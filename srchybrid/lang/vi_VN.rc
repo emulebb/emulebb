@@ -2822,6 +2822,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Yêu cầu ngắt kết nối: sử dụng ngắt kết nối mềm stock eMule; hàng đợi truyền đang hoạt động và ổ cắm trình nghe không được thiết lập lại cứng."
     IDS_BAN_BY_HASH                                            "Cấm theo &hash"
     IDS_BAN_BY_IP                                              "Cấm theo &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Khe tải lên linh hoạt [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Tỷ lệ phần trăm tràn tạm thời vượt quá mục tiêu máy khách tải lên tối đa.\r\n\r\neMuleBB chỉ mở các khe linh hoạt sau khi quá trình tải lên duy trì ở mức dưới 98% utilization trong 10 giây và dừng nạp lại chúng sau khi mức sử dụng phục hồi."
 END
 // eMuleBB managed translation block: end
 

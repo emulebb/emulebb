@@ -2829,6 +2829,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Reikalingas atjungimas: naudojant atsarginį eMule minkštą atjungimą; aktyvios perdavimo eilės ir klausytojų lizdai nėra sunkiai nustatomi iš naujo."
     IDS_BAN_BY_HASH                                            "Uždrausti pagal &maišą"
     IDS_BAN_BY_IP                                              "Uždrausti pagal &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastingos įkėlimo angos [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Laikinas perpildymo procentas, viršijantis maksimalų įkėlimo klientų tikslą.\r\n\r\neMuleBB atidaro elastingus lizdus tik tada, kai įkėlimas išlieka mažesnis nei 98% u, 10 sekundžių, ir nustoja juos pildyti, kai atsigaus panaudojimas."
 END
 // eMuleBB managed translation block: end
 

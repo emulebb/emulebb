@@ -683,6 +683,9 @@ void CUploadQueue::LogUploadSlotDiagnostics(ULONGLONG curTick) const
 	summary.AppendFormat(_T("kadNotesSearchCap=%u"), sharedPublish.uKadNotesSearchCap);
 	summary.AppendFormat(_T("throttlerSlots=%Id"), iThrottlerSlots);
 	summary.AppendFormat(_T("activeSlots=%Id"), m_MaxActiveClientsShortTime);
+	summary.AppendFormat(_T("baseSlotTarget=%Id"), GetBroadbandBaseSlotTarget());
+	summary.AppendFormat(_T("elasticPercent=%u"), GetBroadbandUploadSlotElasticPercent());
+	summary.AppendFormat(_T("effectiveSlotCap=%Id"), GetBroadbandSlotCap());
 	summary.AppendFormat(_T("cap=%Id"), GetBroadbandSlotCap());
 	summary.AppendFormat(_T("configuredBudgetBytesPerSec=%u"), GetConfiguredUploadBudgetBytesPerSec());
 	summary.AppendFormat(_T("targetPerSlotBytesPerSec=%u"), GetTargetClientDataRateBroadband());
@@ -907,18 +910,21 @@ void CUploadQueue::Process()
 };
 
 // check if we can allow a new client to start downloading from us
-bool CUploadQueue::AcceptNewClient(INT_PTR curUploadSlots) const
+bool CUploadQueue::AcceptNewClient(INT_PTR curUploadSlots, ULONGLONG curTick) const
 {
-	// Broadband stabilization keeps one fixed-cap admission path:
-	// maintain at least the historic safety minimum, never exceed the absolute
-	// hard ceiling, and otherwise stop growth at the configured broadband cap.
+	// Broadband stabilization keeps the configured slot count as the base target
+	// and only opens elastic overflow after sustained underfill.
 	if (curUploadSlots < MIN_UP_CLIENTS_ALLOWED)
 		return true;
 	if (curUploadSlots >= MAX_UP_CLIENTS_ALLOWED)
 		return false;
 
 	const INT_PTR iSoftMaxSlots = GetSoftMaxUploadSlots();
-	return curUploadSlots < iSoftMaxSlots;
+	if (curUploadSlots < iSoftMaxSlots)
+		return true;
+
+	const INT_PTR iElasticMaxSlots = GetElasticMaxUploadSlots();
+	return curUploadSlots < iElasticMaxSlots && HasSustainedElasticBroadbandUnderfill(curTick);
 }
 
 uint32 CUploadQueue::GetTargetClientDataRate(bool bMinDatarate) const
@@ -942,9 +948,7 @@ bool CUploadQueue::ForceNewClient(bool allowEmptyWaitingQueue)
 	if (curTick < m_nLastStartUpload + SEC2MS(1) && datarate < 102400)
 		return false;
 
-	// Underfill no longer opens overflow slots on this branch. It only helps
-	// justify replacing an already-open weak slot elsewhere in the controller.
-	if (!AcceptNewClient(curUploadSlots))
+	if (!AcceptNewClient(curUploadSlots, curTick))
 		return false;
 
 	return true;
@@ -961,6 +965,24 @@ uint32 CUploadQueue::GetConfiguredUploadBudgetBytesPerSec() const
 INT_PTR CUploadQueue::GetSoftMaxUploadSlots() const
 {
 	return (INT_PTR)max((INT_PTR)MIN_UP_CLIENTS_ALLOWED, (INT_PTR)thePrefs.GetMaxUploadClientsAllowed());
+}
+
+INT_PTR CUploadQueue::GetElasticMaxUploadSlots() const
+{
+	const INT_PTR iElasticSlots = (INT_PTR)thePrefs.GetElasticMaxUploadClientsAllowed();
+	return min((INT_PTR)MAX_UP_CLIENTS_ALLOWED, max(GetSoftMaxUploadSlots(), iElasticSlots));
+}
+
+UINT CUploadQueue::GetBroadbandUploadSlotElasticPercent() const
+{
+	return thePrefs.GetUploadSlotElasticPercent();
+}
+
+ULONGLONG CUploadQueue::GetBroadbandUnderfillAgeMs(ULONGLONG curTick) const
+{
+	return m_ullBroadbandUnderfillSince != 0 && curTick >= m_ullBroadbandUnderfillSince
+		? curTick - m_ullBroadbandUnderfillSince
+		: 0;
 }
 
 uint32 CUploadQueue::GetTargetClientDataRateBroadband() const
@@ -1001,6 +1023,11 @@ void CUploadQueue::UpdateBroadbandUnderfillState(ULONGLONG curTick)
 bool CUploadQueue::HasSustainedBroadbandUnderfill(ULONGLONG curTick) const
 {
 	return m_ullBroadbandUnderfillSince != 0 && curTick >= m_ullBroadbandUnderfillSince + SEC2MS(2);
+}
+
+bool CUploadQueue::HasSustainedElasticBroadbandUnderfill(ULONGLONG curTick) const
+{
+	return m_ullBroadbandUnderfillSince != 0 && curTick >= m_ullBroadbandUnderfillSince + SEC2MS(10);
 }
 
 bool CUploadQueue::HasCompletedSlowUploadWarmup(const CUpDownClient *client) const
@@ -1362,7 +1389,7 @@ QueuedBlockRequestAdmissionResult CUploadQueue::TryAdmitQueuedBlockRequestClient
 {
 	const bool bOnUploadQueue = client != NULL && IsOnUploadQueue(client);
 	const bool bAlreadyUploading = client != NULL && IsDownloading(client);
-	const bool bCanOpenUploadSlot = AcceptNewClient(uploadinglist.GetCount());
+	const bool bCanOpenUploadSlot = AcceptNewClient(uploadinglist.GetCount(), ::GetTickCount64());
 	if (!ShouldAdmitQueuedBlockRequestToUploadSlot(
 			bQueuedRequestCooldownCleared,
 			bOnUploadQueue,
@@ -1519,9 +1546,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 				GetNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec),
 				GetProductiveNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec),
 				GetRepeatedNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec));
-			const UINT uBaseCooldownSeconds = GetNoRequestRepeatBaseCooldownSeconds(
-				uConfiguredCooldownSeconds,
-				GetNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec));
+			const UINT uBaseCooldownSeconds = uConfiguredCooldownSeconds;
 			const UINT uInitialCooldownSeconds = bProductiveNoRequestRecycle ? uProductiveCooldownSeconds : uBaseCooldownSeconds;
 			UINT uCooldownSeconds = uInitialCooldownSeconds;
 			NoRequestRepeatPenalty repeatPenalty = {};
@@ -1891,8 +1916,8 @@ void CUploadQueue::AddClientToQueue(CUpDownClient *client, bool bIgnoreTimelimit
 			bQueueHadNoAdmissionCandidate ? _T("Direct add behind cooldown-only queue.") : _T("Direct add with empty queue."),
 			client);
 	} else {
-		if (waitinglist.IsEmpty() && thePrefs.GetLogUlDlEvents() && !AcceptNewClient(uploadinglist.GetCount()))
-			AddDebugLogLine(DLP_LOW, false, _T("%s: Broadband direct admission denied because the fixed slot cap is full."), client->GetUserName());
+		if (waitinglist.IsEmpty() && thePrefs.GetLogUlDlEvents() && !AcceptNewClient(uploadinglist.GetCount(), ::GetTickCount64()))
+			AddDebugLogLine(DLP_LOW, false, _T("%s: Broadband direct admission denied because the upload slot cap is full."), client->GetUserName());
 		m_bStatisticsWaitingListDirty = true;
 		waitinglist.AddTail(client);
 		client->SetUploadState(US_ONUPLOADQUEUE);

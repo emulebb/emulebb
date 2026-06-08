@@ -1853,6 +1853,9 @@ BOOL CemuleApp::InitInstance()
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	AppendStartupDiagnosticsLine(_T("Construct CUploadQueue"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
 	AppendStartupDiagnosticsCounter(_T("broadband.configured_upload_budget_bytes_per_sec"), uploadqueue->GetConfiguredUploadBudgetBytesPerSec(), _T("bytes_per_sec"));
+	AppendStartupDiagnosticsCounter(_T("broadband.base_slot_target"), static_cast<ULONGLONG>(uploadqueue->GetBroadbandBaseSlotTarget()), _T("slots"));
+	AppendStartupDiagnosticsCounter(_T("broadband.upload_slot_elastic_percent"), uploadqueue->GetBroadbandUploadSlotElasticPercent(), _T("percent"));
+	AppendStartupDiagnosticsCounter(_T("broadband.effective_slot_cap"), static_cast<ULONGLONG>(uploadqueue->GetBroadbandSlotCap()), _T("slots"));
 	AppendStartupDiagnosticsCounter(_T("broadband.slot_cap"), static_cast<ULONGLONG>(uploadqueue->GetBroadbandSlotCap()), _T("slots"));
 	AppendStartupDiagnosticsCounter(_T("broadband.target_client_rate_bytes_per_sec"), uploadqueue->GetTargetClientDataRateBroadband(), _T("bytes_per_sec"));
 	ullPhaseStart = GetStartupDiagnosticsTimestampUs();

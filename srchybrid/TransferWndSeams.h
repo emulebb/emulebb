@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cwchar>
 #include <cstdint>
+#include <string>
 
 #include "Resource.h"
 
@@ -29,6 +31,55 @@ constexpr int kSecondaryPaneOnQueue = 2;
 constexpr int kSecondaryPaneClients = 3;
 
 constexpr std::uint32_t kPrimaryListSplit = IDC_DOWNLOADLIST + IDC_UPLOADLIST;
+constexpr std::uint32_t kUploadUtilizationDisplayPercentMax = 999u;
+
+/**
+ * @brief Returns a rounded upload utilization percentage for compact queue status text.
+ */
+inline std::uint32_t CalculateUploadUtilizationPercent(
+	const std::uint32_t uCurrentBytesPerSec,
+	const std::uint32_t uMaxBytesPerSec,
+	const std::uint32_t uDisplayCapPercent = kUploadUtilizationDisplayPercentMax)
+{
+	if (uMaxBytesPerSec == 0u)
+		return 0u;
+	const std::uint64_t ullPercent = (static_cast<std::uint64_t>(uCurrentBytesPerSec) * 100u + uMaxBytesPerSec / 2u) / uMaxBytesPerSec;
+	return static_cast<std::uint32_t>(ullPercent > uDisplayCapPercent ? uDisplayCapPercent : ullPercent);
+}
+
+/**
+ * @brief Formats a byte-per-second upload rate as a compact MB/s value.
+ */
+inline std::wstring FormatUploadRateMbValue(const std::uint32_t uBytesPerSec)
+{
+	wchar_t awchBuffer[32] = {};
+	const double dMiBPerSec = static_cast<double>(uBytesPerSec) / (1024.0 * 1024.0);
+	std::swprintf(awchBuffer, sizeof(awchBuffer) / sizeof(awchBuffer[0]), L"%.1f", dMiBPerSec);
+	return awchBuffer;
+}
+
+/**
+ * @brief Formats the Transfer-window queue footer with compact broadband upload state.
+ */
+inline std::wstring FormatQueueCountText(
+	const std::uint64_t ullWaitingClients,
+	const std::uint64_t ullBannedClients,
+	const std::wstring &rstrBannedLabel,
+	const std::int64_t iActiveUploadSlots,
+	const std::int64_t iBaseUploadSlots,
+	const std::int64_t iEffectiveUploadSlotCap,
+	const std::uint32_t uElasticPercent,
+	const std::uint32_t uCurrentUploadBytesPerSec,
+	const std::uint32_t uMaxUploadBytesPerSec)
+{
+	const std::uint32_t uUtilizationPercent = CalculateUploadUtilizationPercent(uCurrentUploadBytesPerSec, uMaxUploadBytesPerSec);
+	return std::to_wstring(ullWaitingClients)
+		+ L" (" + std::to_wstring(ullBannedClients) + L" " + rstrBannedLabel + L")"
+		+ L" | UL " + std::to_wstring(iActiveUploadSlots) + L"/" + std::to_wstring(iBaseUploadSlots) + L"-" + std::to_wstring(iEffectiveUploadSlotCap)
+		+ L" +" + std::to_wstring(uElasticPercent) + L"%"
+		+ L" | " + FormatUploadRateMbValue(uCurrentUploadBytesPerSec) + L"/" + FormatUploadRateMbValue(uMaxUploadBytesPerSec)
+		+ L" MB/s " + std::to_wstring(uUtilizationPercent) + L"%";
+}
 
 /**
  * @brief Reports whether a persisted or runtime secondary pane id is valid.

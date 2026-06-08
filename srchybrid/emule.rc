@@ -78,7 +78,7 @@ BEGIN
     CONTROL         "",IDC_QUEUELIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHAREIMAGELISTS | LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | NOT WS_VISIBLE | WS_BORDER | WS_TABSTOP,5,119,251,36
     CONTROL         "",IDC_UPLOADLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHAREIMAGELISTS | LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,5,119,251,36
     LTEXT           "Clients on queue:",IDC_QUEUECOUNT_LABEL,5,180,87,8
-    LTEXT           "0",IDC_QUEUECOUNT,99,180,78,8
+    LTEXT           "0",IDC_QUEUECOUNT,99,180,156,8
     PUSHBUTTON      "Refresh",IDC_QUEUE_REFRESH_BUTTON,187,179,68,11,NOT WS_VISIBLE
     CONTROL         "",IDC_DOWNLOADCLIENTS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHAREIMAGELISTS | LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | NOT WS_VISIBLE | WS_BORDER | WS_TABSTOP,5,119,251,36
 END
@@ -4426,6 +4426,7 @@ BEGIN
     IDS_COOLDOWN           "Cooldown"
     IDS_BROADBAND          "Broadband"
     IDS_UPLOAD_POLICY_MAX_UPLOAD_CLIENTS "Max upload clients"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT "Elastic upload slots [%]"
     IDS_UPLOAD_POLICY_SLOW_THRESHOLD_FACTOR "Slow threshold factor"
     IDS_UPLOAD_POLICY_SLOW_GRACE_SECONDS "Slow grace [sec.]"
     IDS_UPLOAD_POLICY_SLOW_WARMUP_SECONDS "Slow recycle warm-up [sec.]"
@@ -4782,7 +4783,8 @@ BEGIN
     IDS_TWEAKS_TT_SEARCH_ED2K_GROUP        "Server-based eD2K search limits.\r\n\r\nUse conservative values unless you deliberately want deeper server searches."
     IDS_TWEAKS_TT_SEARCH_KAD_GROUP         "Kad search breadth and lifetime controls.\r\n\r\nHigher values keep distributed searches alive longer and can find more results, but they cost more background activity."
     IDS_TWEAKS_TT_BROADBAND                "Advanced upload-slot recycling and queue-scoring policy for broadband-style upload behavior.\r\n\r\nThese settings are for deliberate tuning. Leave them at their defaults unless you are adjusting upload fairness or slot turnover."
-    IDS_TWEAKS_TT_UPLOAD_POLICY_MAX_UPLOAD_CLIENTS    "Soft cap for concurrently active upload clients under the broadband scheduler.\r\n\r\nHigher values spread bandwidth across more peers but make each slot thinner. Lower values keep fewer, stronger slots."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_MAX_UPLOAD_CLIENTS    "Normal target for concurrently active upload clients under the broadband scheduler.\r\n\r\nHigher values spread bandwidth across more peers but make each slot thinner. Lower values keep fewer, stronger slots."
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT       "Temporary overflow percentage above the max upload clients target.\r\n\r\neMuleBB opens elastic slots only after upload stays below 98% utilization for 10 seconds, and stops refilling them once utilization recovers."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_THRESHOLD        "Fraction of the target per-slot upload rate below which a slot is considered slow.\r\n\r\nLower values tolerate weaker slots longer. Higher values recycle underperforming slots more aggressively."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_GRACE            "How long a slot may remain below the slow threshold before eMuleBB considers recycling it.\r\n\r\nLonger grace is more patient with weak peers; shorter grace turns over weak slots sooner."
     IDS_TWEAKS_TT_UPLOAD_POLICY_SLOW_WARMUP           "Warm-up period for a fresh upload slot before slow-slot detection starts.\r\n\r\nThis avoids penalizing new uploads for startup noise and ramp-up time."

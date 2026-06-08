@@ -2828,6 +2828,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Ontkoppelen aangevraagd: gebruik van standaard eMule zachte ontkoppeling; actieve overdrachtswachtrijen en luisteraarsockets worden niet hard gereset."
     IDS_BAN_BY_HASH                                            "Verbannen op &hash"
     IDS_BAN_BY_IP                                              "Verbannen op &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastische uploadslots [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Tijdelijk overflowpercentage boven het maximale uploadclientdoel.\r\n\r\neMuleBB opent elastische slots alleen nadat de upload gedurende 10 seconden onder de 98% utilisatie blijft, en stopt met het opnieuw vullen ervan zodra het gebruik zich herstelt."
 END
 // eMuleBB managed translation block: end
 

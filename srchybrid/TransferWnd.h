@@ -120,6 +120,7 @@ protected:
 	void	ShowWnd2(EWnd2 uWnd2);
 	void	SetWnd2(EWnd2 uWnd2);
 	void	DoResize(int delta);
+	void	LayoutQueueFooter();
 	void	UpdateSplitterRange();
 	//	void	DoSplitResize(int delta);
 	void	SetAllIcons();

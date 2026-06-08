@@ -455,15 +455,6 @@ inline std::uint32_t GetNoRequestUploadRetryCooldownSeconds(
 		: uMaxNoRequestCooldownSeconds;
 }
 
-inline std::uint32_t GetNoRequestRepeatBaseCooldownSeconds(
-	std::uint32_t uConfiguredCooldownSeconds,
-	std::uint32_t uMaxNoRequestCooldownSeconds = kNoRequestUploadCooldownMaxSeconds)
-{
-	return uConfiguredCooldownSeconds < uMaxNoRequestCooldownSeconds
-		? uConfiguredCooldownSeconds
-		: uMaxNoRequestCooldownSeconds;
-}
-
 /**
  * @brief Returns how long a no-request recycle should remain visible for repeat detection.
  */

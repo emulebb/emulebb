@@ -2831,6 +2831,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "切断要求: 純正 eMule ソフト切断を使用。アクティブな転送キューとリスナー ソケットはハード リセットされません。"
     IDS_BAN_BY_HASH                                            "&ハッシュで禁止"
     IDS_BAN_BY_IP                                              "&IPで禁止"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "エラスティック アップロード スロット [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "最大アップロード クライアントのターゲットを超える一時的なオーバーフローの割合。\r\n\r\neMuleBB は、アップロードが 10 秒間 98% utilization を下回った後にのみエラスティック スロットを開き、使用率が回復するとスロットの補充を停止します。"
 END
 // eMuleBB managed translation block: end
 

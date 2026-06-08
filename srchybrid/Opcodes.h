@@ -105,7 +105,7 @@
 #define CONFIGFOLDER			_T("config\\")
 #define	UPLOAD_CLIENT_MAXDATARATE	(8*1024*1024) // max. target upload speed per client
 #define	MIN_UP_CLIENTS_ALLOWED	2			// min. clients allowed to download regardless of any other factors. Don't set this too high
-#define	MAX_UP_CLIENTS_ALLOWED	100			// max. clients allowed regardless of any other factors; cannot be below MIN_UP_CLIENTS_ALLOWED+3
+#define	MAX_UP_CLIENTS_ALLOWED	128			// max. clients allowed regardless of any other factors; cannot be below MIN_UP_CLIENTS_ALLOWED+3
 #define CONSERVTIMEOUT			SEC2MS(25)	// age limit for pending connection attempts
 #define RARE_FILE				50
 #define BADCLIENTBAN			4

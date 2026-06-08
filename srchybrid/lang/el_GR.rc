@@ -2780,6 +2780,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Ζητείται αποσύνδεση: με χρήση μαλακής αποσύνδεσης stock eMule. Οι ενεργές ουρές μεταφοράς και οι υποδοχές ακροατή δεν επαναφέρονται με σκληρό τρόπο."
     IDS_BAN_BY_HASH                                            "Απαγόρευση κατά &hash"
     IDS_BAN_BY_IP                                              "Απαγόρευση κατά &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Ελαστικές υποδοχές μεταφόρτωσης [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Προσωρινό ποσοστό υπερχείλισης πάνω από το μέγιστο στόχο πελατών μεταφόρτωσης. Το\r\n\r\neMuleBB ανοίγει ελαστικές υποδοχές μόνο αφού η μεταφόρτωση παραμείνει κάτω από το 98% utilization για 10 δευτερόλεπτα και σταματά την επαναπλήρωσή τους μόλις αποκατασταθεί η χρήση."
 END
 // eMuleBB managed translation block: end
 

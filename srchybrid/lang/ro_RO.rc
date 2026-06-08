@@ -2831,6 +2831,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Deconectare solicitată: folosind stoc eMule deconectare soft; Cozile de transfer active și prizele de ascultător nu sunt resetate complet."
     IDS_BAN_BY_HASH                                            "Interzice după &hash"
     IDS_BAN_BY_IP                                              "Interzice după &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Slocuri de încărcare elastice [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Procent de depășire temporară peste ținta maximă de clienți de încărcare.\r\n\r\neMuleBB deschide spații elastice numai după ce încărcarea rămâne sub 98% utilization timp de 10 secunde și nu le mai reumple odată ce utilizarea se reface."
 END
 // eMuleBB managed translation block: end
 

@@ -227,6 +227,38 @@ void CTransferWnd::RefreshTransferDisplayRefreshState(bool bFlushIfRunning)
 	}
 }
 
+void CTransferWnd::LayoutQueueFooter()
+{
+	CWnd *pLabel = GetDlgItem(IDC_QUEUECOUNT_LABEL);
+	CWnd *pCount = GetDlgItem(IDC_QUEUECOUNT);
+	CWnd *pRefresh = GetDlgItem(IDC_QUEUE_REFRESH_BUTTON);
+	if (pLabel == NULL || pCount == NULL || pRefresh == NULL || pLabel->GetSafeHwnd() == NULL || pCount->GetSafeHwnd() == NULL || pRefresh->GetSafeHwnd() == NULL)
+		return;
+
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	CRect rcLabel;
+	pLabel->GetWindowRect(&rcLabel);
+	ScreenToClient(&rcLabel);
+	CRect rcCount;
+	pCount->GetWindowRect(&rcCount);
+	ScreenToClient(&rcCount);
+
+	int iRight = rcClient.right - 5;
+	if (pRefresh->IsWindowVisible()) {
+		CRect rcRefresh;
+		pRefresh->GetWindowRect(&rcRefresh);
+		ScreenToClient(&rcRefresh);
+		iRight = rcRefresh.left - 5;
+	}
+
+	const int iLeft = rcLabel.right + 5;
+	const int iMinimumWidth = 40;
+	if (iRight < iLeft + iMinimumWidth)
+		iRight = iLeft + iMinimumWidth;
+	pCount->MoveWindow(iLeft, rcCount.top, iRight - iLeft, rcCount.Height(), TRUE);
+}
+
 uint32 CTransferWnd::GetVisibleDisplayRefreshMask(uint32 nMask) const
 {
 	return FilterVisibleTransferDisplayRefreshMask(
@@ -309,9 +341,22 @@ void CTransferWnd::FlushDisplayRefreshMask(uint32 nMask)
 
 void CTransferWnd::ShowQueueCount(INT_PTR number)
 {
-	CString buffer;
-	buffer.Format(_T("%u (%u %s)"), (unsigned)number, (unsigned)theApp.clientlist->GetBannedCount(), (LPCTSTR)GetResString(IDS_BANNED).MakeLower());
-	SetDlgItemText(IDC_QUEUECOUNT, buffer);
+	LayoutQueueFooter();
+	CString strBannedLabel(GetResString(IDS_BANNED));
+	strBannedLabel.MakeLower();
+	const CStringW strBannedLabelW(strBannedLabel);
+	const std::wstring strQueueText(TransferWndSeams::FormatQueueCountText(
+		static_cast<std::uint64_t>(number),
+		theApp.clientlist != NULL ? static_cast<std::uint64_t>(theApp.clientlist->GetBannedCount()) : 0u,
+		static_cast<LPCWSTR>(strBannedLabelW),
+		theApp.uploadqueue != NULL ? static_cast<std::int64_t>(theApp.uploadqueue->GetUploadQueueLength()) : 0,
+		theApp.uploadqueue != NULL ? static_cast<std::int64_t>(theApp.uploadqueue->GetBroadbandBaseSlotTarget()) : 0,
+		theApp.uploadqueue != NULL ? static_cast<std::int64_t>(theApp.uploadqueue->GetBroadbandSlotCap()) : 0,
+		theApp.uploadqueue != NULL ? theApp.uploadqueue->GetBroadbandUploadSlotElasticPercent() : 0u,
+		theApp.uploadqueue != NULL ? theApp.uploadqueue->GetToNetworkDatarate() : 0u,
+		theApp.uploadqueue != NULL ? theApp.uploadqueue->GetConfiguredUploadBudgetBytesPerSec() : 0u));
+	const CString strQueueTextValue(strQueueText.c_str());
+	SetDlgItemText(IDC_QUEUECOUNT, strQueueTextValue);
 }
 
 void CTransferWnd::DoDataExchange(CDataExchange *pDX)
@@ -419,7 +464,10 @@ LRESULT CTransferWnd::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 	if (message == WM_WINDOWPOSCHANGED && m_wndSplitter)
 		m_wndSplitter.Invalidate();
 
-	return CResizableFormView::DefWindowProc(message, wParam, lParam);
+	const LRESULT lResult = CResizableFormView::DefWindowProc(message, wParam, lParam);
+	if (message == WM_WINDOWPOSCHANGED)
+		LayoutQueueFooter();
+	return lResult;
 }
 
 void CTransferWnd::OnSplitterMoved(LPNMHDR pNMHDR, LRESULT* /*pResult*/)
@@ -758,6 +806,7 @@ void CTransferWnd::SwitchUploadList()
 		ShowWnd2(static_cast<EWnd2>(TransferWndSeams::NormalizeSecondaryPane(static_cast<int>(m_uWnd2))));
 		return;
 	}
+	LayoutQueueFooter();
 	UpdateListCount(m_uWnd2);
 	FlushVisibleDisplayRefreshes();
 }
@@ -1794,6 +1843,7 @@ void CTransferWnd::ShowList(uint32 dwListIDC)
 		ASSERT(0);
 	}
 	AddAnchor(dwListIDC, TOP_LEFT, BOTTOM_RIGHT);
+	LayoutQueueFooter();
 	FlushVisibleDisplayRefreshes();
 }
 
@@ -1879,6 +1929,7 @@ void CTransferWnd::ShowSplitWindow(bool bReDraw)
 
 	GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow((m_uWnd2 == wnd2OnQueue) ? SW_SHOW : SW_HIDE);
 
+	LayoutQueueFooter();
 	UpdateListCount(m_uWnd2);
 	FlushVisibleDisplayRefreshes();
 }

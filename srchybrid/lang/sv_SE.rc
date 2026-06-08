@@ -2828,6 +2828,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Koppling begärd: använder vanliga eMule mjuk urkoppling; aktiva överföringsköer och lyssnaruttag är inte hårdåterställda."
     IDS_BAN_BY_HASH                                            "Banna efter &hash"
     IDS_BAN_BY_IP                                              "Banna efter &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastiska uppladdningsplatser [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Tillfällig överflödesprocent över maxmålet för uppladdningsklienter.\r\n\r\neMuleBB öppnar elastiska fack först efter att uppladdningen stannar under 98% utiliseringen i 10 sekunder, och slutar fylla på dem när användningen återhämtar sig."
 END
 // eMuleBB managed translation block: end
 

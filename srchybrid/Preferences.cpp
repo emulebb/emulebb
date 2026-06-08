@@ -1224,6 +1224,7 @@ bool	CPreferences::m_bFollowMajorityFilenameForNewDownloads;
 UINT	CPreferences::m_uFollowMajorityFilenameRequiredPercent;
 UINT	CPreferences::m_uFollowMajorityFilenameMinimumVotes;
 UINT	CPreferences::m_uMaxUploadClientsAllowed;
+UINT	CPreferences::m_uUploadSlotElasticPercent;
 float	CPreferences::m_fSlowUploadThresholdFactor;
 UINT	CPreferences::m_uSlowUploadGraceSeconds;
 UINT	CPreferences::m_uSlowUploadWarmupSeconds;
@@ -2844,6 +2845,7 @@ void CPreferences::SavePreferences()
 	ini.WriteInt(_T("MaxMessageSessions"), maxmsgsessions);
 	ini.WriteBool(_T("RearrangeKadSearchKeywords"), m_bRearrangeKadSearchKeywords);
 	ini.WriteInt(prefini::UploadPolicyKeys::MaxUploadClientsAllowed, PreferenceValidationSeams::NormalizeUploadSlots(m_uMaxUploadClientsAllowed), prefini::Sections::UploadPolicy);
+	ini.WriteInt(prefini::UploadPolicyKeys::UploadSlotElasticPercent, PreferenceValidationSeams::NormalizeUploadSlotElasticPercent(m_uUploadSlotElasticPercent), prefini::Sections::UploadPolicy);
 	ini.WriteFloat(prefini::UploadPolicyKeys::SlowUploadThresholdFactor, PreferenceValidationSeams::NormalizeSlowUploadThresholdFactor(m_fSlowUploadThresholdFactor), prefini::Sections::UploadPolicy);
 	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadGraceSeconds, PreferenceValidationSeams::NormalizeSlowUploadGraceSeconds(m_uSlowUploadGraceSeconds), prefini::Sections::UploadPolicy);
 	ini.WriteInt(prefini::UploadPolicyKeys::SlowUploadWarmupSeconds, PreferenceValidationSeams::NormalizeSlowUploadWarmupSeconds(m_uSlowUploadWarmupSeconds), prefini::Sections::UploadPolicy);
@@ -3227,6 +3229,7 @@ void CPreferences::LoadPreferences()
 	filterserverbyip = ini.GetBool(_T("FilterServersByIP"), false);
 	filterlevel = ini.GetInt(_T("FilterLevel"), 127);
 	SetMaxUploadClientsAllowed(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::MaxUploadClientsAllowed, PreferenceValidationSeams::kDefaultMaxUploadSlots, prefini::Sections::UploadPolicy), 0));
+	SetUploadSlotElasticPercent(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::UploadSlotElasticPercent, PreferenceValidationSeams::kDefaultUploadSlotElasticPercent, prefini::Sections::UploadPolicy), 0));
 	SetSlowUploadThresholdFactor(ini.GetFloat(prefini::UploadPolicyKeys::SlowUploadThresholdFactor, PreferenceValidationSeams::kDefaultSlowUploadThresholdFactor, prefini::Sections::UploadPolicy));
 	SetSlowUploadGraceSeconds(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::SlowUploadGraceSeconds, PreferenceValidationSeams::kDefaultSlowUploadGraceSeconds, prefini::Sections::UploadPolicy), 0));
 	SetSlowUploadWarmupSeconds(NormalizeNonNegativePreference(ini.GetInt(prefini::UploadPolicyKeys::SlowUploadWarmupSeconds, PreferenceValidationSeams::kDefaultSlowUploadWarmupSeconds, prefini::Sections::UploadPolicy), 0));

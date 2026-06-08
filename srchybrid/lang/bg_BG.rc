@@ -2808,6 +2808,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Изисква се прекъсване на връзката: използване на сток eMule меко прекъсване на връзката; активните опашки за прехвърляне и слушателските гнезда не се нулират твърдо."
     IDS_BAN_BY_HASH                                            "Забрана по &хеш"
     IDS_BAN_BY_IP                                              "Забрана по &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Еластични слотове за качване [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Временен процент на препълване над максималната цел за клиенти за качване.\r\n\r\neMuleBB отваря еластични слотове само след като качването остане под 98% utilization за 10 секунди и спира да ги пълни отново, след като използването се възстанови."
 END
 // eMuleBB managed translation block: end
 

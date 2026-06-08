@@ -840,7 +840,9 @@ namespace
 			? theApp.uploadqueue->GetTargetClientDataRateBroadband()
 			: 0u;
 		const LONG nUploadReadBlocksPerClient = UploadDiskIOThreadSeams::GetBroadbandPendingReadBlocksPerClient(uUploadTargetPerSlotBytes);
+		const INT_PTR nUploadBaseSlotTarget = theApp.uploadqueue != NULL ? theApp.uploadqueue->GetBroadbandBaseSlotTarget() : 0;
 		const INT_PTR nUploadSlotCap = theApp.uploadqueue != NULL ? theApp.uploadqueue->GetBroadbandSlotCap() : 0;
+		const UINT uUploadSlotElasticPercent = theApp.uploadqueue != NULL ? theApp.uploadqueue->GetBroadbandUploadSlotElasticPercent() : 0;
 
 		return nlohmann::json{
 			{"downloadAutoBroadbandIo", thePrefs.IsDownloadAutoBroadbandIOEnabled()},
@@ -854,6 +856,9 @@ namespace
 			{"uploadSendPipeline", nlohmann::json{
 				{"controlledByDownloadAutoBroadbandIo", false},
 				{"targetPerSlotBytesPerSec", uUploadTargetPerSlotBytes},
+				{"baseSlotTarget", nUploadBaseSlotTarget},
+				{"elasticPercent", uUploadSlotElasticPercent},
+				{"effectiveSlotCap", nUploadSlotCap},
 				{"slotCap", nUploadSlotCap},
 				{"tcpSendBufferTargetBytes", GetBroadbandTcpUploadSendBufferBytes(uUploadTargetPerSlotBytes)},
 				{"socketStandardQueueTargetBytes", GetBroadbandEMSocketQueuedStandardBytes(uUploadTargetPerSlotBytes)},

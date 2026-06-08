@@ -2820,6 +2820,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Skonnettja mitluba: bl-użu ta 'stokk eMule skonnettjar artab; kjuwijiet ta 'trasferiment attivi u sokits tas-semmiegħa mhumiex hard-reset."
     IDS_BAN_BY_HASH                                            "Ipprojbixxi skont il-&hash"
     IDS_BAN_BY_IP                                              "Ipprojbixxi skont l-&IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Slots elastiċi għall-upload [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Perċentwal ta' overflow temporanju 'l fuq mill-mira tal-klijenti max upload.\r\n\r\neMuleBB tiftaħ slots elastiċi biss wara li t-tlugħ jibqa' taħt 98% utilization għal 10 sekondi, u jieqaf mili mill-ġdid ladarba l-utilizzazzjoni tirkupra."
 END
 // eMuleBB managed translation block: end
 

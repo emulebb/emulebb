@@ -30,6 +30,7 @@ protected:
 	HTREEITEM m_htiAutoTakeEd2kLinks;
 	HTREEITEM m_htiBroadband;
 	HTREEITEM m_htiMaxUploadClients;
+	HTREEITEM m_htiUploadSlotElasticPercent;
 	HTREEITEM m_htiSlowUploadThreshold;
 	HTREEITEM m_htiSlowUploadGrace;
 	HTREEITEM m_htiSlowUploadWarmup;
@@ -212,6 +213,7 @@ protected:
 	int m_iLogLevel;
 	int m_iMaxConnPerFive;
 	int m_iMaxHalfOpen;
+	int m_iUploadSlotElasticPercent;
 	int m_iShareeMule;
 	int m_iSessionTransferLimitMode;
 	int m_iStartupProgressDialogMode;

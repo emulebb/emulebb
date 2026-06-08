@@ -2822,6 +2822,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Nepieciešams atvienot: izmantojot akciju eMule mīksto atvienošanu; aktīvās pārsūtīšanas rindas un klausītāju ligzdas netiek pilnībā atiestatītas."
     IDS_BAN_BY_HASH                                            "Aizliegt pēc &jaucējkoda"
     IDS_BAN_BY_IP                                              "Aizliegt pēc &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastīgi augšupielādes sloti [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Pagaidu pārpildes procents virs maksimālās augšupielādes klientu mērķa.\r\n\r\neMuleBB atver elastīgos slotus tikai pēc tam, kad augšupielāde paliek zem 98% utilizācijas 10 sekundes, un pārtrauc to uzpildīšanu, tiklīdz tiek atjaunota izmantošana."
 END
 // eMuleBB managed translation block: end
 

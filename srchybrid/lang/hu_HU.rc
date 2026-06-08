@@ -2831,6 +2831,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Leválasztás kérése: készlet eMule lágy leválasztással; az aktív átviteli várólisták és a figyelő socketek nincsenek visszaállítva."
     IDS_BAN_BY_HASH                                            "Tiltás &hash alapján"
     IDS_BAN_BY_IP                                              "Tiltás &IP alapján"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Rugalmas feltöltési helyek [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Ideiglenes túlcsordulási százalék a maximális feltöltési kliensek célértéke felett. A\r\n\r\neMuleBB csak akkor nyitja meg a rugalmas helyeket, ha a feltöltés 10 másodpercig 98% u alatt marad, és leállítja az újratöltésüket, ha a kihasználtság helyreáll."
 END
 // eMuleBB managed translation block: end
 

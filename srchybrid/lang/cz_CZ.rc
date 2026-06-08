@@ -2826,6 +2826,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Požadováno odpojení: pomocí standardního měkkého odpojení eMule; aktivní přenosové fronty a naslouchací sokety nejsou natvrdo resetovány."
     IDS_BAN_BY_HASH                                            "Zakázat podle &hashe"
     IDS_BAN_BY_IP                                              "Zakázat podle &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastické nahrávací sloty [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Procento dočasného přetečení nad maximální cílovou hodnotu klientů pro odesílání.\r\n\r\neMuleBB otevře elastické sloty pouze poté, co nahrávání zůstane pod 98% utilizací po dobu 10 sekund, a přestane je doplňovat, jakmile se využití obnoví."
 END
 // eMuleBB managed translation block: end
 

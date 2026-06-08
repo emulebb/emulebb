@@ -2802,6 +2802,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "断开请求：使用库存 eMule 软断开；活动传输队列和侦听器套接字不会被硬重置。"
     IDS_BAN_BY_HASH                                            "按&哈希封禁"
     IDS_BAN_BY_IP                                              "按 &IP 封禁"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "弹性上传槽位[%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "临时溢出百分比高于最大上传客户端目标。\r\n\r\neMuleBB 仅在上传保持低于 98% utilization 持续 10 秒后才打开弹性插槽，并在利用率恢复后停止重新填充它们。"
 END
 // eMuleBB managed translation block: end
 

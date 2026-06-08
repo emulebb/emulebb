@@ -2797,6 +2797,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Katkaiseminen pyydetään: käyttämällä varastossa eMule pehmeä katkaisu; aktiivisia siirtojonoja ja kuuntelijapistokkeita ei ole nollattu."
     IDS_BAN_BY_HASH                                            "Kiellä &hashin mukaan"
     IDS_BAN_BY_IP                                              "Kiellä &IP:n mukaan"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastiset latauspaikat [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Väliaikainen ylivuotoprosentti korkeampi kuin latausasiakkaiden enimmäistavoite.\r\n\r\neMuleBB avaa elastiset paikat vasta, kun lataus pysyy alle 98% u-tilojen 10 sekunnin ajan, ja lopettaa niiden täyttämisen, kun käyttö palautuu."
 END
 // eMuleBB managed translation block: end
 

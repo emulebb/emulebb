@@ -2797,6 +2797,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Disconnessione richiesta: utilizzando la disconnessione morbida eMule di serie; le code di trasferimento attive e i socket di ascolto non vengono reimpostati a freddo."
     IDS_BAN_BY_HASH                                            "Bandisci per &hash"
     IDS_BAN_BY_IP                                              "Bandisci per &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Slot di caricamento elastici [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Percentuale di overflow temporaneo superiore al target massimo dei client di caricamento.\r\n\r\neMuleBB apre gli slot elastici solo dopo che il caricamento rimane al di sotto di 98% utilizzazione per 10 secondi e interrompe il loro riempimento una volta ripristinato l'utilizzo."
 END
 // eMuleBB managed translation block: end
 

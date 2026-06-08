@@ -2824,6 +2824,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Ühenduse katkestamine on nõutav: varude eMule pehme lahtiühendamine; aktiivseid edastusjärjekordi ja kuulari pesasid ei lähtestata."
     IDS_BAN_BY_HASH                                            "Keela &räsi järgi"
     IDS_BAN_BY_IP                                              "Keela &IP järgi"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastsed üleslaadimispesad [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Ajutine ületäitumise protsent üle maksimaalse üleslaadimisklientide eesmärgi.\r\n\r\neMuleBB avab elastsed pesad alles siis, kui üleslaadimine jääb 10 sekundiks alla 98% u, ja lõpetab nende uuesti täitmise, kui kasutus taastub."
 END
 // eMuleBB managed translation block: end
 

@@ -2790,6 +2790,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Frakobling forespurt: ved hjelp av standard eMule myk frakobling; aktive overføringskøer og lytterkontakter er ikke hardt tilbakestilt."
     IDS_BAN_BY_HASH                                            "Forby etter &hash"
     IDS_BAN_BY_IP                                              "Forby etter &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastiske opplastingsspor [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Midlertidig overløpsprosent over maksimal opplastingsklientmål.\r\n\r\neMuleBB åpner elastiske spor først etter at opplastingen holder seg under 98% utilisering i 10 sekunder, og slutter å fylle dem på nytt når utnyttelsen gjenoppretter seg."
 END
 // eMuleBB managed translation block: end
 

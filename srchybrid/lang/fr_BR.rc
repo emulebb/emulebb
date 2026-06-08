@@ -2796,6 +2796,8 @@ BEGIN
     IDS_DISCONNECT_SOFT_STACK_NOTICE                           "Déconnexion demandée : utilisation de la déconnexion douce standard d'eMule ; les files d'attente de transfert actives et les sockets d'écoute ne sont pas réinitialisés brutalement."
     IDS_BAN_BY_HASH                                            "Direiza dre &hash"
     IDS_BAN_BY_IP                                              "Direiza dre &IP"
+    IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Emplacements de téléchargement élastiques [%]"
+    IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Pourcentage de dépassement temporaire supérieur à la cible maximale des clients de téléchargement.\r\n\r\neMuleBB ouvre les emplacements élastiques uniquement après que le téléchargement reste inférieur à 98% utilisation pendant 10 secondes et arrête de les remplir une fois l'utilisation rétablie."
 END
 // eMuleBB managed translation block: end
 
