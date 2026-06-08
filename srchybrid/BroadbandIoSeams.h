@@ -83,12 +83,12 @@ inline std::uint64_t BuildDemandBasedFileBufferSizeBytes(
 	const std::uint64_t ullEqualShareBytes = ullGlobalBudgetBytes / uActiveBufferedFileCount;
 	const std::uint64_t ullMinimumShare = MinUInt64(ullMinimumShareBytes, ullEqualShareBytes == 0 ? 1u : ullEqualShareBytes);
 	if (ullCurrentFileBufferedBytes < ullMinimumShare)
-		return MaxUInt64(ullConfiguredFileBufferBytes, ullMinimumShare);
+		return ullMinimumShare;
 
 	const std::uint64_t ullRemainingBudget = ullGlobalBudgetBytes > ullTotalBufferedBytes
 		? ullGlobalBudgetBytes - ullTotalBufferedBytes
 		: 0u;
-	return MaxUInt64(ullConfiguredFileBufferBytes, SaturatingAddUInt64(ullCurrentFileBufferedBytes, ullRemainingBudget));
+	return SaturatingAddUInt64(ullCurrentFileBufferedBytes, ullRemainingBudget);
 }
 
 /**
