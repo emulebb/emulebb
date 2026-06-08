@@ -1534,14 +1534,16 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 					uCooldownSeconds = repeatPenalty.uCooldownSeconds;
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 				CString strRepeatEvidence;
+				LPCTSTR pszRepeatScope = repeatPenalty.bShouldIPBan || !repeatPenalty.bHashScoped ? _T("ip") : _T("hash");
 				strRepeatEvidence.Format(
-					_T("{\"strikes\":%u,\"threshold\":%u,\"cooldown_seconds\":%u,\"base_cooldown_seconds\":%u,\"window_seconds\":%u,\"key_type\":\"%s\",\"distinct_ip_hashes\":%u,\"ip_rotation_strikes\":%u,\"ip_rotation_strike_threshold\":%u}"),
+					_T("{\"strikes\":%u,\"threshold\":%u,\"cooldown_seconds\":%u,\"base_cooldown_seconds\":%u,\"window_seconds\":%u,\"key_type\":\"%s\",\"scope\":\"%s\",\"distinct_ip_hashes\":%u,\"ip_rotation_strikes\":%u,\"ip_rotation_strike_threshold\":%u}"),
 					repeatPenalty.uStrikes,
 					kNoRequestRepeatBanThreshold,
 					uCooldownSeconds,
 					uBaseCooldownSeconds,
 					kNoRequestRepeatStrikeWindowSeconds,
 					repeatPenalty.bHashScoped ? _T("hash") : _T("ip"),
+					pszRepeatScope,
 					repeatPenalty.uDistinctIPHashes,
 					repeatPenalty.uIPRotationStrikes,
 					kNoRequestRepeatHashRotationStrikeThreshold);

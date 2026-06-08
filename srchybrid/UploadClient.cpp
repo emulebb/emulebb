@@ -54,6 +54,17 @@ CBarShader CUpDownClient::s_UpStatusBar(16);
 
 namespace
 {
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
+LPCTSTR GetClientBanScopeInstrumentationToken(const CUpDownClient *pClient, ClientBanScope eScope)
+{
+	const bool bBanHash = pClient != NULL
+		&& pClient->HasValidHash()
+		&& (eScope == clientBanScopeHash || eScope == clientBanScopeBoth);
+	const bool bBanIP = eScope == clientBanScopeIP || eScope == clientBanScopeBoth || !bBanHash;
+	return bBanIP ? _T("ip") : _T("hash");
+}
+#endif
+
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 bool IsUploadReqBlockHighVolumeReason(LPCTSTR pszReason)
 {
@@ -1002,7 +1013,11 @@ void CUpDownClient::Ban(LPCTSTR pszReason, ClientBanScope eScope)
 	SetChatState(MS_NONE);
 	theApp.clientlist->AddTrackClient(this);
 	const bool bRequestedScopeAlreadyBanned = theApp.clientlist->IsBannedClient(this, eScope);
-	EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("client_ban"), _T("high"), this, _T("ban"), pszReason == NULL ? _T("Aggressive behaviour") : pszReason);
+#if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
+	CString strBanEvidence;
+	strBanEvidence.Format(_T("{\"scope\":\"%s\"}"), GetClientBanScopeInstrumentationToken(this, eScope));
+	EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("client_ban"), _T("high"), this, _T("ban"), pszReason == NULL ? _T("Aggressive behaviour") : pszReason, NULL, strBanEvidence);
+#endif
 	if (!bRequestedScopeAlreadyBanned) {
 		if (thePrefs.GetLogBannedClients())
 			AddDebugLogLine(false, _T("Banned: %s; %s"), pszReason == NULL ? _T("Aggressive behaviour") : pszReason, (LPCTSTR)DbgGetClientInfo());
