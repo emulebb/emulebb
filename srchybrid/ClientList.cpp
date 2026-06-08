@@ -16,7 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
-#include "BadPeerInstrumentationSeams.h"
+#include "BadPeerDiagnosticsSeams.h"
 #include "ClientList.h"
 #include "UpDownClientDeleteSeams.h"
 #include "Kademlia/Kademlia/kademlia.h"

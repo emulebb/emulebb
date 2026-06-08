@@ -77,7 +77,7 @@ CPartFileWriteThread::CPartFileWriteThread()
 	, m_bNewData()
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	CWinThread *pThread = AfxBeginThread(RunProc, (LPVOID)this, THREAD_PRIORITY_BELOW_NORMAL);
 	m_bThreadStarted = HelperThreadLaunchSeams::DidStartThread(pThread);
@@ -86,7 +86,7 @@ CPartFileWriteThread::CPartFileWriteThread()
 		m_eventThreadEnded.SetEvent();
 	}
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("broadband.partfile_write.launch_thread"), theApp.GetStartupProfileElapsedUs(ullPhaseStart), ullPhaseStart);
+	theApp.AppendStartupDiagnosticsLine(_T("broadband.partfile_write.launch_thread"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart), ullPhaseStart);
 #endif
 }
 
@@ -98,7 +98,7 @@ CPartFileWriteThread::~CPartFileWriteThread()
 UINT AFX_CDECL CPartFileWriteThread::RunProc(LPVOID pParam)
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("broadband.partfile_write.thread_enter"), 0);
+	theApp.AppendStartupDiagnosticsLine(_T("broadband.partfile_write.thread_enter"), 0);
 #endif
 	DbgSetThreadName("PartWriteThread");
 	InitThreadLocale();
@@ -127,7 +127,7 @@ void CPartFileWriteThread::EndThread()
 UINT CPartFileWriteThread::RunInternal()
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullThreadStartUs = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullThreadStartUs = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	DWORD dwError = ERROR_SUCCESS;
 	if (!HelperThreadLaunchSeams::TryCreateIocpPort(m_hPort, dwError)) {
@@ -148,7 +148,7 @@ UINT CPartFileWriteThread::RunInternal()
 	OverlappedWrite_Struct *pCurIO = NULL;
 	HelperThreadLaunchSeams::SetState(m_Run, RUN_IDLE);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("broadband.partfile_write.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
+	theApp.AppendStartupDiagnosticsLine(_T("broadband.partfile_write.thread_ready"), theApp.GetStartupDiagnosticsElapsedUs(ullThreadStartUs), ullThreadStartUs);
 #endif
 	while (HelperThreadLaunchSeams::ShouldWaitForIocpWorkerCompletion(
 		HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested),

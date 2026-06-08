@@ -11,7 +11,7 @@ class CSearchFile;
 class CUpDownClient;
 struct Requested_Block_Struct;
 
-namespace BadPeerInstrumentationSeams
+namespace BadPeerDiagnosticsSeams
 {
 constexpr LPCTSTR kBinaryMarker = _T("BadPeerDiagnostics:");
 
@@ -99,9 +99,9 @@ inline void TrackUploadFileBehavior(LPCTSTR, const CUpDownClient *, const CAbstr
 }
 
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
-#define EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(...) BadPeerInstrumentationSeams::LogClientEvent(__VA_ARGS__)
-#define EMULEBB_BAD_PEER_LOG_IP_EVENT(...) BadPeerInstrumentationSeams::LogIpEvent(__VA_ARGS__)
-#define EMULEBB_BAD_PEER_LOG_SEARCH_EVENT(...) BadPeerInstrumentationSeams::LogSearchEvent(__VA_ARGS__)
+#define EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(...) BadPeerDiagnosticsSeams::LogClientEvent(__VA_ARGS__)
+#define EMULEBB_BAD_PEER_LOG_IP_EVENT(...) BadPeerDiagnosticsSeams::LogIpEvent(__VA_ARGS__)
+#define EMULEBB_BAD_PEER_LOG_SEARCH_EVENT(...) BadPeerDiagnosticsSeams::LogSearchEvent(__VA_ARGS__)
 #else
 #define EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(...) ((void)0)
 #define EMULEBB_BAD_PEER_LOG_IP_EVENT(...) ((void)0)

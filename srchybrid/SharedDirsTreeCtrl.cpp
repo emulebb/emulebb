@@ -158,9 +158,9 @@ CString GetSharedTreeParentPath(const CString &rstrPath)
 void BuildSharedDirectoryTree(CSharedDirsTreeCtrl *pTreeCtrl, CDirectoryItem *pRootItem, const CStringList &rliDirs, bool &rbShowWarning)
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullStart = theApp.GetStartupProfileTimestampUs();
-	theApp.AppendStartupProfileLine(_T("BuildSharedDirectoryTree begin"), 0);
-	theApp.AppendStartupProfileCounter(_T("shared.tree.requested_entries"), static_cast<ULONGLONG>(rliDirs.GetCount()), _T("directories"));
+	const ULONGLONG ullStart = theApp.GetStartupDiagnosticsTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("BuildSharedDirectoryTree begin"), 0);
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.tree.requested_entries"), static_cast<ULONGLONG>(rliDirs.GetCount()), _T("directories"));
 #endif
 	std::vector<SSharedTreeEntry> aEntries;
 	aEntries.reserve((size_t)rliDirs.GetCount());
@@ -183,8 +183,8 @@ void BuildSharedDirectoryTree(CSharedDirsTreeCtrl *pTreeCtrl, CDirectoryItem *pR
 	{
 		CString strPhase;
 		strPhase.Format(_T("BuildSharedDirectoryTree deduped (%d entries)"), static_cast<int>(aEntries.size()));
-		theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullStart));
-		theApp.AppendStartupProfileCounter(_T("shared.tree.deduped_entries"), static_cast<ULONGLONG>(aEntries.size()), _T("directories"));
+		theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullStart));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.tree.deduped_entries"), static_cast<ULONGLONG>(aEntries.size()), _T("directories"));
 	}
 #endif
 
@@ -200,14 +200,14 @@ void BuildSharedDirectoryTree(CSharedDirsTreeCtrl *pTreeCtrl, CDirectoryItem *pR
 		return left.strPath.CompareNoCase(right.strPath) < 0;
 	});
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("BuildSharedDirectoryTree sorted"), theApp.GetStartupProfileElapsedUs(ullStart));
+	theApp.AppendStartupDiagnosticsLine(_T("BuildSharedDirectoryTree sorted"), theApp.GetStartupDiagnosticsElapsedUs(ullStart));
 #endif
 
 	CMapStringToPtr mapIndexByKey;
 	for (size_t i = 0; i < aEntries.size(); ++i)
 		mapIndexByKey.SetAt(aEntries[i].strKey, (void*)(INT_PTR)(i + 1));
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("BuildSharedDirectoryTree indexed"), theApp.GetStartupProfileElapsedUs(ullStart));
+	theApp.AppendStartupDiagnosticsLine(_T("BuildSharedDirectoryTree indexed"), theApp.GetStartupDiagnosticsElapsedUs(ullStart));
 #endif
 
 	size_t uAccessibleEntries = 0;
@@ -218,7 +218,7 @@ void BuildSharedDirectoryTree(CSharedDirsTreeCtrl *pTreeCtrl, CDirectoryItem *pR
 		{
 			CString strPhase;
 			strPhase.Format(_T("BuildSharedDirectoryTree item %d start: %s"), static_cast<int>(i), (LPCTSTR)rCurrent.strPath);
-			theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullStart));
+			theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullStart));
 		}
 #endif
 
@@ -256,16 +256,16 @@ void BuildSharedDirectoryTree(CSharedDirsTreeCtrl *pTreeCtrl, CDirectoryItem *pR
 		{
 			CString strPhase;
 			strPhase.Format(_T("BuildSharedDirectoryTree item %d accessible=%d"), static_cast<int>(i), rCurrent.bAccessible ? 1 : 0);
-			theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullStart));
+			theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullStart));
 		}
 #endif
 		rCurrent.pItem = InsertSharedDirectoryItem(pTreeCtrl, pParentItem, rCurrent.strPath, rCurrent.iParentIndex < 0, rCurrent.bAccessible, rbShowWarning);
 	}
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileCounter(_T("shared.tree.inserted_entries"), static_cast<ULONGLONG>(aEntries.size()), _T("directories"));
-	theApp.AppendStartupProfileCounter(_T("shared.tree.accessible_entries"), static_cast<ULONGLONG>(uAccessibleEntries), _T("directories"));
-	theApp.AppendStartupProfileCounter(_T("shared.tree.inaccessible_entries"), static_cast<ULONGLONG>(uInaccessibleEntries), _T("directories"));
-	theApp.AppendStartupProfileLine(_T("BuildSharedDirectoryTree done"), theApp.GetStartupProfileElapsedUs(ullStart));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.tree.inserted_entries"), static_cast<ULONGLONG>(aEntries.size()), _T("directories"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.tree.accessible_entries"), static_cast<ULONGLONG>(uAccessibleEntries), _T("directories"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.tree.inaccessible_entries"), static_cast<ULONGLONG>(uInaccessibleEntries), _T("directories"));
+	theApp.AppendStartupDiagnosticsLine(_T("BuildSharedDirectoryTree done"), theApp.GetStartupDiagnosticsElapsedUs(ullStart));
 #endif
 }
 }
@@ -345,7 +345,7 @@ CSharedDirsTreeCtrl::~CSharedDirsTreeCtrl()
 void CSharedDirsTreeCtrl::Initialize(CSharedFilesCtrl *pSharedFilesCtrl)
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullInitStart = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullInitStart = theApp.GetStartupDiagnosticsTimestampUs();
 	ULONGLONG ullPhaseStart = ullInitStart;
 #endif
 	m_pSharedFilesCtrl = pSharedFilesCtrl;
@@ -353,13 +353,13 @@ void CSharedDirsTreeCtrl::Initialize(CSharedFilesCtrl *pSharedFilesCtrl)
 	m_bUseIcons = true;
 	SetAllIcons();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::Initialize SetAllIcons"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::Initialize SetAllIcons"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	Localize();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::Initialize Localize"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::Initialize total"), theApp.GetStartupProfileElapsedUs(ullInitStart));
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::Initialize Localize"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::Initialize total"), theApp.GetStartupDiagnosticsElapsedUs(ullInitStart));
 #endif
 }
 
@@ -454,30 +454,30 @@ void CSharedDirsTreeCtrl::SetAllIcons()
 void CSharedDirsTreeCtrl::Localize()
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullStart = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullStart = theApp.GetStartupDiagnosticsTimestampUs();
 	ULONGLONG ullPhaseStart = ullStart;
 #endif
 	InitalizeStandardItems();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::Localize InitalizeStandardItems"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::Localize InitalizeStandardItems"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	FilterTreeReloadTree();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::Localize FilterTreeReloadTree"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::Localize FilterTreeReloadTree"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	CreateMenus();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::Localize CreateMenus"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::Localize total"), theApp.GetStartupProfileElapsedUs(ullStart));
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::Localize CreateMenus"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::Localize total"), theApp.GetStartupDiagnosticsElapsedUs(ullStart));
 #endif
 }
 
 void CSharedDirsTreeCtrl::InitalizeStandardItems()
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullStart = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullStart = theApp.GetStartupDiagnosticsTimestampUs();
 	ULONGLONG ullPhaseStart = ullStart;
 #endif
 	// add standard items
@@ -490,9 +490,9 @@ void CSharedDirsTreeCtrl::InitalizeStandardItems()
 	{
 		CString strPhase;
 		strPhase.Format(_T("CSharedDirsTreeCtrl::InitalizeStandardItems FetchSharedDirsList (%d shared dirs)"), static_cast<int>(m_strliSharedDirs.GetCount()));
-		theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-		theApp.AppendStartupProfileCounter(_T("shared.tree.configured_shared_dirs"), static_cast<ULONGLONG>(m_strliSharedDirs.GetCount()), _T("directories"));
-		ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+		theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.tree.configured_shared_dirs"), static_cast<ULONGLONG>(m_strliSharedDirs.GetCount()), _T("directories"));
+		ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 	}
 #endif
 
@@ -529,8 +529,8 @@ void CSharedDirsTreeCtrl::InitalizeStandardItems()
 	tvis.item.cChildren = 1; //ensure '+' symbol for the item
 	m_pRootUnsharedDirectries->m_htItem = InsertItem(&tvis);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::InitalizeStandardItems insert roots"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::InitalizeStandardItems total"), theApp.GetStartupProfileElapsedUs(ullStart));
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::InitalizeStandardItems insert roots"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::InitalizeStandardItems total"), theApp.GetStartupDiagnosticsElapsedUs(ullStart));
 #endif
 }
 
@@ -613,9 +613,9 @@ void CSharedDirsTreeCtrl::FilterTreeAddSubDirectories(CDirectoryItem *pDirectory
 void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullStart = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullStart = theApp.GetStartupDiagnosticsTimestampUs();
 	ULONGLONG ullPhaseStart = ullStart;
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree begin"), 0);
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree begin"), 0);
 #endif
 	m_bCreatingTree = true;
 	m_mapAccessibleDirectoryCache.RemoveAll();
@@ -624,8 +624,8 @@ void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 	if (GetSelectedFilter() != NULL)
 		pOldSelectedItem = GetSelectedFilter()->CloneContent();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree selection snapshot"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree selection snapshot"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 
 	// create the tree substructure of directories we want to show
@@ -637,8 +637,8 @@ void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 		{
 			CString strPhase;
 			strPhase.Format(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree branch start (%d)"), static_cast<int>(pCurrent->m_eItemType));
-			theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-			ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+			theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+			ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 		}
 #endif
 
@@ -705,8 +705,8 @@ void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 		{
 			CString strPhase;
 			strPhase.Format(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree branch done (%d)"), static_cast<int>(pCurrent->m_eItemType));
-			theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-			ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+			theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+			ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 		}
 #endif
 	}
@@ -719,21 +719,21 @@ void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 	} else if (GetSelectedItem() == NULL && !m_pRootDirectoryItem->liSubDirectories.IsEmpty())
 		Select(m_pRootDirectoryItem->liSubDirectories.GetHead()->m_htItem, TVGN_CARET);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree selection restore"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree selection restore"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 
 	delete pOldSelectedItem;
 	m_bCreatingTree = false;
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree before redraw"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree before redraw"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	{
 		CString strPhase;
 		strPhase.Format(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree total (%d shared dirs)"), static_cast<int>(m_strliSharedDirs.GetCount()));
-		theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullStart));
+		theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullStart));
 	}
 #endif
 }
@@ -1471,7 +1471,7 @@ void CSharedDirsTreeCtrl::FetchSharedDirsList()
 	{
 		CString strPhase;
 		strPhase.Format(_T("CSharedDirsTreeCtrl::FetchSharedDirsList copied (%d entries)"), static_cast<int>(m_strliSharedDirs.GetCount()));
-		theApp.AppendStartupProfileLine(strPhase, 0);
+		theApp.AppendStartupDiagnosticsLine(strPhase, 0);
 	}
 #endif
 }

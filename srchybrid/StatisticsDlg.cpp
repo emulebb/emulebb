@@ -143,7 +143,7 @@ void CStatisticsDlg::SetAllIcons()
 BOOL CStatisticsDlg::OnInitDialog()
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullInitStart = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullInitStart = theApp.GetStartupDiagnosticsTimestampUs();
 	ULONGLONG ullPhaseStart = ullInitStart;
 #endif
 	CResizableDialog::OnInitDialog();
@@ -160,8 +160,8 @@ BOOL CStatisticsDlg::OnInitDialog()
 		m_stattree.SendMessage(WM_SETFONT, NULL, FALSE);
 	CreateMyTree();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CStatisticsDlg::OnInitDialog base init"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CStatisticsDlg::OnInitDialog base init"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 
 	// Setup download-scope
@@ -173,8 +173,8 @@ BOOL CStatisticsDlg::OnInitDialog()
 	SetARange(true, thePrefs.GetMaxGraphDownloadRate());
 	m_DownloadOMeter.SetYUnits(GetResString(IDS_KBYTESPERSEC));
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CStatisticsDlg::OnInitDialog create download meter"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CStatisticsDlg::OnInitDialog create download meter"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 
 	// Setup upload-scope
@@ -189,8 +189,8 @@ BOOL CStatisticsDlg::OnInitDialog()
 	SetARange(false, thePrefs.GetMaxUpload());
 	m_UploadOMeter.SetYUnits(GetResString(IDS_KBYTESPERSEC));
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CStatisticsDlg::OnInitDialog create upload meter"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CStatisticsDlg::OnInitDialog create upload meter"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 
 	// Setup additional graph scope
@@ -210,8 +210,8 @@ BOOL CStatisticsDlg::OnInitDialog()
 	m_Statistics.SetYUnits(_T(""));
 	m_Statistics.SetXUnits(GetResString(IDS_TIME));
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CStatisticsDlg::OnInitDialog create connection meter"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CStatisticsDlg::OnInitDialog create connection meter"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 
 	RepaintMeters();
@@ -229,8 +229,8 @@ BOOL CStatisticsDlg::OnInitDialog()
 
 	EnableWindow(TRUE);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CStatisticsDlg::OnInitDialog repaint graphs"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CStatisticsDlg::OnInitDialog repaint graphs"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 
 	m_ilastMaxConnReached = 0;
@@ -293,15 +293,15 @@ BOOL CStatisticsDlg::OnInitDialog()
 	DoResize_HL(PosStatVnewY - PosStatVinitY);
 	DoResize_HR(PosStatVnewZ - PosStatVinitZ);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CStatisticsDlg::OnInitDialog splitter setup"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CStatisticsDlg::OnInitDialog splitter setup"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 
 	Localize();
 	ShowStatistics(true);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CStatisticsDlg::OnInitDialog Localize/ShowStatistics"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	theApp.AppendStartupDiagnosticsLine(_T("CStatisticsDlg::OnInitDialog Localize/ShowStatistics"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 
 	m_TimeToolTips = new CToolTipCtrl();
@@ -315,8 +315,8 @@ BOOL CStatisticsDlg::OnInitDialog()
 	m_TimeToolTips->SetDelayTime(TTDT_RESHOW, SEC2MS(30));
 	EnableToolTips(TRUE);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("CStatisticsDlg::OnInitDialog tooltips"), theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-	theApp.AppendStartupProfileLine(_T("CStatisticsDlg::OnInitDialog total"), theApp.GetStartupProfileElapsedUs(ullInitStart));
+	theApp.AppendStartupDiagnosticsLine(_T("CStatisticsDlg::OnInitDialog tooltips"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	theApp.AppendStartupDiagnosticsLine(_T("CStatisticsDlg::OnInitDialog total"), theApp.GetStartupDiagnosticsElapsedUs(ullInitStart));
 #endif
 
 	return TRUE;

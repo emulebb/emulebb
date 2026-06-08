@@ -159,7 +159,7 @@
     <ClCompile Include="AsyncProxySocketLayer.cpp" />
     <ClCompile Include="AsyncSocketEx.cpp" />
     <ClCompile Include="AsyncSocketExLayer.cpp" />
-    <ClCompile Include="BadPeerInstrumentationSeams.cpp" />
+    <ClCompile Include="BadPeerDiagnosticsSeams.cpp" />
     <ClCompile Include="BarShader.cpp" />
     <ClCompile Include="BaseClient.cpp" />
     <ClCompile Include="BuddyButton.cpp" />
@@ -448,7 +448,7 @@
     <ClInclude Include="AppCommandLineSeams.h" />
     <ClInclude Include="AppKeyboardShortcutsSeams.h" />
     <ClInclude Include="BackgroundRefreshSeams.h" />
-    <ClInclude Include="BadPeerInstrumentationSeams.h" />
+    <ClInclude Include="BadPeerDiagnosticsSeams.h" />
     <ClInclude Include="BarShader.h" />
     <ClInclude Include="BuildFeatures.h" />
     <ClInclude Include="ButtonsTabCtrl.h" />

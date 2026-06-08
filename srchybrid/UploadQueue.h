@@ -158,7 +158,7 @@ public:
 
 	CUpDownClient* FindBestClientInQueue();
 	static UploadTimerRuntimeStats GetUploadTimerRuntimeStats();
-	bool ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppszInstrumentationReason = NULL);
+	bool ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppszDiagnosticsReason = NULL);
 	QueuedBlockRequestAdmissionResult TryAdmitQueuedBlockRequestClient(CUpDownClient *client, bool bQueuedRequestCooldownCleared);
 
 	CUpDownClientPtrList waitinglist;
@@ -257,7 +257,7 @@ private:
 	uint32	GetMaxClientScore() const						{ return m_imaxscore; }
 	void	UpdateActiveClientsInfo(ULONGLONG curTick);
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
-	void	LogUploadSlotInstrumentation(ULONGLONG curTick) const;
+	void	LogUploadSlotDiagnostics(ULONGLONG curTick) const;
 #endif
 	void	RetireUploadClientStruct(POSITION pos, UploadingToClient_Struct *pUploadClientStruct, CUpDownClient *pClient);
 	void	RetireStaleUploadClientStruct(POSITION pos, UploadingToClient_Struct *pUploadClientStruct);

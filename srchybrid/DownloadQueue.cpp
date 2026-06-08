@@ -16,7 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
-#include "BadPeerInstrumentationSeams.h"
+#include "BadPeerDiagnosticsSeams.h"
 #include "UpDownClient.h"
 #include "DownloadQueue.h"
 #include "PartFile.h"
@@ -930,12 +930,12 @@ bool CDownloadQueue::IsFileExisting(const uchar *fileid, bool bLogWarnings) cons
 }
 
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
-void CDownloadQueue::LogDownloadSlotInstrumentation(ULONGLONG curTick) const
+void CDownloadQueue::LogDownloadSlotDiagnostics(ULONGLONG curTick) const
 {
-	static ULONGLONG s_ullLastDownloadSlotInstrumentationLogTick = 0;
-	if (s_ullLastDownloadSlotInstrumentationLogTick != 0 && curTick < s_ullLastDownloadSlotInstrumentationLogTick + SEC2MS(10))
+	static ULONGLONG s_ullLastDownloadSlotDiagnosticsLogTick = 0;
+	if (s_ullLastDownloadSlotDiagnosticsLogTick != 0 && curTick < s_ullLastDownloadSlotDiagnosticsLogTick + SEC2MS(10))
 		return;
-	s_ullLastDownloadSlotInstrumentationLogTick = curTick;
+	s_ullLastDownloadSlotDiagnosticsLogTick = curTick;
 
 	UINT uReadyFiles = 0;
 	UINT uActiveFiles = 0;
@@ -1266,7 +1266,7 @@ void CDownloadQueue::Process()
 	average_dr_hist.AddTail(TransferredData{datarateX, curTick});
 	m_datarateMS += datarateX;
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
-	LogDownloadSlotInstrumentation(curTick);
+	LogDownloadSlotDiagnostics(curTick);
 #endif
 
 	if (m_udcounter == 5) {

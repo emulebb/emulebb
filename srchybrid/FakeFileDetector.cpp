@@ -7,7 +7,7 @@
 //version 2 of the License, or (at your option) any later version.
 #include "stdafx.h"
 #include "FakeFileDetector.h"
-#include "BadPeerInstrumentationSeams.h"
+#include "BadPeerDiagnosticsSeams.h"
 #include "ConfigDefaultFilesSeams.h"
 #include "emule.h"
 #include "FileTypeClassifierSeams.h"
@@ -568,7 +568,7 @@ SFakeFileReport FakeFileDetector::AnalyzeSearchFile(const CSearchFile &rSearchFi
 		|| report.eSeverity == FakeFileDetectorSeams::Severity::Critical)
 	{
 		CString strEvidence;
-		const CString strSeverity(BadPeerInstrumentationSeams::EvidenceJsonString(CString(CA2T(SeverityToToken(report.eSeverity), CP_UTF8))));
+		const CString strSeverity(BadPeerDiagnosticsSeams::EvidenceJsonString(CString(CA2T(SeverityToToken(report.eSeverity), CP_UTF8))));
 		strEvidence.Format(_T("{\"score\":%u,\"severity\":%s,\"reasons\":%u}"),
 			report.nScore,
 			(LPCTSTR)strSeverity,
@@ -588,7 +588,7 @@ SFakeFileReport FakeFileDetector::AnalyzePartFile(CPartFile &rPartFile)
 		|| report.eSeverity == FakeFileDetectorSeams::Severity::Critical)
 	{
 		CString strEvidence;
-		const CString strSeverity(BadPeerInstrumentationSeams::EvidenceJsonString(CString(CA2T(SeverityToToken(report.eSeverity), CP_UTF8))));
+		const CString strSeverity(BadPeerDiagnosticsSeams::EvidenceJsonString(CString(CA2T(SeverityToToken(report.eSeverity), CP_UTF8))));
 		strEvidence.Format(_T("{\"score\":%u,\"severity\":%s,\"reasons\":%u}"),
 			report.nScore,
 			(LPCTSTR)strSeverity,

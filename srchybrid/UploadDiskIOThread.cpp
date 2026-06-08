@@ -104,7 +104,7 @@ CUploadDiskIOThread::CUploadDiskIOThread()
 {
 	ASSERT(theApp.uploadqueue != NULL);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	CWinThread *pThread = AfxBeginThread(RunProc, (LPVOID)this);
 	m_bThreadStarted = HelperThreadLaunchSeams::DidStartThread(pThread);
@@ -113,7 +113,7 @@ CUploadDiskIOThread::CUploadDiskIOThread()
 		m_eventThreadEnded.SetEvent();
 	}
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("broadband.upload_disk_io.launch_thread"), theApp.GetStartupProfileElapsedUs(ullPhaseStart), ullPhaseStart);
+	theApp.AppendStartupDiagnosticsLine(_T("broadband.upload_disk_io.launch_thread"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart), ullPhaseStart);
 #endif
 }
 
@@ -125,7 +125,7 @@ CUploadDiskIOThread::~CUploadDiskIOThread()
 UINT AFX_CDECL CUploadDiskIOThread::RunProc(LPVOID pParam)
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("broadband.upload_disk_io.thread_enter"), 0);
+	theApp.AppendStartupDiagnosticsLine(_T("broadband.upload_disk_io.thread_enter"), 0);
 #endif
 	DbgSetThreadName("UploadDiskIOThread");
 	InitThreadLocale();
@@ -154,7 +154,7 @@ void CUploadDiskIOThread::EndThread()
 UINT CUploadDiskIOThread::RunInternal()
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullThreadStartUs = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullThreadStartUs = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	DWORD dwError = ERROR_SUCCESS;
 	if (!HelperThreadLaunchSeams::TryCreateIocpPort(m_hPort, dwError)) {
@@ -175,7 +175,7 @@ UINT CUploadDiskIOThread::RunInternal()
 	OverlappedRead_Struct *pCurIO = NULL;
 	HelperThreadLaunchSeams::SetState(m_Run, RUN_IDLE);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("broadband.upload_disk_io.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
+	theApp.AppendStartupDiagnosticsLine(_T("broadband.upload_disk_io.thread_ready"), theApp.GetStartupDiagnosticsElapsedUs(ullThreadStartUs), ullThreadStartUs);
 #endif
 	while (HelperThreadLaunchSeams::ShouldWaitForIocpWorkerCompletion(
 		HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested),

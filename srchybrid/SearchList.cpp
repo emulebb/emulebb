@@ -16,7 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
-#include "BadPeerInstrumentationSeams.h"
+#include "BadPeerDiagnosticsSeams.h"
 #include "FakeFileDetector.h"
 #include "SearchFile.h"
 #include "SearchList.h"
@@ -1168,7 +1168,7 @@ void CSearchList::DoSpamRating(CSearchFile *pSearchFile, bool bIsClientFile, boo
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 	if (bNewSpamStatus || bOldSpamStatus != bNewSpamStatus || bMarkAsNoSpam) {
 		CString strEvidence;
-		const CString strUdpServerIp(dwFromUDPServerIP != 0 ? BadPeerInstrumentationSeams::EvidenceJsonString(ipstr(dwFromUDPServerIP)) : CString(_T("null")));
+		const CString strUdpServerIp(dwFromUDPServerIP != 0 ? BadPeerDiagnosticsSeams::EvidenceJsonString(ipstr(dwFromUDPServerIP)) : CString(_T("null")));
 		strEvidence.Format(
 			_T("{\"score\":%u,\"old_spam\":%s,\"new_spam\":%s,\"mark_as_no_spam\":%s,\"file_hash_hit\":%u,\"name_hit\":%u,\"size_hit\":%u,\"server_hit\":%u,\"source_hit\":%u,\"heuristic_hit\":%u,\"only_spam_server_hit\":%u,\"udp_server_ip\":%s}"),
 			bSureNegative ? 0 : nSpamScore,

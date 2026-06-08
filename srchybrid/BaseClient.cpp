@@ -28,7 +28,7 @@
 #include "Opcodes.h"
 #include "SafeFile.h"
 #include "Preferences.h"
-#include "BadPeerInstrumentationSeams.h"
+#include "BadPeerDiagnosticsSeams.h"
 #include "BaseClientFriendBuddySeams.h"
 #include "ClientSocketLifetimeSeams.h"
 #include "Server.h"
@@ -1176,7 +1176,7 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 	if (GetDownloadState() == DS_DOWNLOADING) {
 		ASSERT(m_eConnectingState == CCS_NONE);
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
-		LogDownloadSlotInstrumentation(_T("disconnect-downloading"));
+		LogDownloadSlotDiagnostics(_T("disconnect-downloading"));
 #endif
 		SetDownloadState(DS_ONQUEUE, CString(_T("Disconnected: ")) + pszReason);
 	} else {

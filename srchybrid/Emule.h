@@ -65,7 +65,7 @@ namespace AppCommandLineSeams
 /**
  * @brief One Chrome Trace Event row captured for startup profiling.
  */
-struct SStartupProfileTraceEvent
+struct SStartupDiagnosticsTraceEvent
 {
 	enum class EType : uint8
 	{
@@ -139,57 +139,57 @@ public:
 	 * @brief Reports whether the startup timer already emitted the canonical startup-complete milestone.
 	 */
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	bool HasStartupProfileReachedStartupComplete() const		{ return m_bStartupProfileStartupComplete; }
+	bool HasStartupDiagnosticsReachedStartupComplete() const		{ return m_bStartupDiagnosticsStartupComplete; }
 #else
-	bool HasStartupProfileReachedStartupComplete() const		{ return false; }
+	bool HasStartupDiagnosticsReachedStartupComplete() const		{ return false; }
 #endif
 	/**
 	 * @brief Resets the startup phase profiler output and timing baseline.
 	 */
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	void ResetStartupProfile();
+	void ResetStartupDiagnostics();
 #else
-	void ResetStartupProfile()									{}
+	void ResetStartupDiagnostics()									{}
 #endif
 	/**
-	 * @brief Returns one startup-profile timestamp in microseconds derived from QueryPerformanceCounter.
+	 * @brief Returns one startup-diagnostics timestamp in microseconds derived from QueryPerformanceCounter.
 	 */
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	ULONGLONG GetStartupProfileTimestampUs() const;
+	ULONGLONG GetStartupDiagnosticsTimestampUs() const;
 #else
-	ULONGLONG GetStartupProfileTimestampUs() const				{ return 0; }
+	ULONGLONG GetStartupDiagnosticsTimestampUs() const				{ return 0; }
 #endif
 	/**
-	 * @brief Returns one startup-profile elapsed duration in microseconds from a previously captured timestamp.
+	 * @brief Returns one startup-diagnostics elapsed duration in microseconds from a previously captured timestamp.
 	 */
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	ULONGLONG GetStartupProfileElapsedUs(ULONGLONG ullStartTimestampUs) const;
+	ULONGLONG GetStartupDiagnosticsElapsedUs(ULONGLONG ullStartTimestampUs) const;
 #else
-	ULONGLONG GetStartupProfileElapsedUs(ULONGLONG) const		{ return 0; }
+	ULONGLONG GetStartupDiagnosticsElapsedUs(ULONGLONG) const		{ return 0; }
 #endif
 	/**
 	 * @brief Appends one startup phase timing sample when profiling is enabled.
 	 */
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	void AppendStartupProfileLine(LPCTSTR pszPhase, ULONGLONG ullDurationUs, ULONGLONG ullAbsoluteUs = static_cast<ULONGLONG>(-1));
+	void AppendStartupDiagnosticsLine(LPCTSTR pszPhase, ULONGLONG ullDurationUs, ULONGLONG ullAbsoluteUs = static_cast<ULONGLONG>(-1));
 #else
-	void AppendStartupProfileLine(LPCTSTR, ULONGLONG, ULONGLONG = static_cast<ULONGLONG>(-1)) {}
+	void AppendStartupDiagnosticsLine(LPCTSTR, ULONGLONG, ULONGLONG = static_cast<ULONGLONG>(-1)) {}
 #endif
 	/**
 	 * @brief Appends one numeric startup profiling counter sample when profiling is enabled.
 	 */
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	void AppendStartupProfileCounter(LPCTSTR pszCounterName, ULONGLONG ullValue, LPCTSTR pszValueKey = _T("value"));
+	void AppendStartupDiagnosticsCounter(LPCTSTR pszCounterName, ULONGLONG ullValue, LPCTSTR pszValueKey = _T("value"));
 #else
-	void AppendStartupProfileCounter(LPCTSTR, ULONGLONG, LPCTSTR = _T("value")) {}
+	void AppendStartupDiagnosticsCounter(LPCTSTR, ULONGLONG, LPCTSTR = _T("value")) {}
 #endif
 	/**
 	 * @brief Rewrites the startup profiling trace with the samples captured so far.
 	 */
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	void FlushStartupProfileTrace();
+	void FlushStartupDiagnosticsTrace();
 #else
-	void FlushStartupProfileTrace()								{}
+	void FlushStartupDiagnosticsTrace()								{}
 #endif
 	/**
 	 * @brief Reports whether startup redirected config-backed files to an alternate base directory.
@@ -410,8 +410,8 @@ protected:
 
 private:
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	bool WriteStartupProfileTrace() const;
-	void FinalizeStartupProfileTrace();
+	bool WriteStartupDiagnosticsTrace() const;
+	void FinalizeStartupDiagnosticsTrace();
 #endif
 	static UINT AFX_CDECL SharedDirectoryMonitorThreadProc(LPVOID pParam);
 	void RunSharedDirectoryMonitorLoop();
@@ -422,13 +422,13 @@ private:
 	UINT		m_wTimerRes;
 	bool		m_bStandbyOff;
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	bool		m_bStartupProfileStartupComplete;
-	bool		m_bStartupProfileCompleted;
+	bool		m_bStartupDiagnosticsStartupComplete;
+	bool		m_bStartupDiagnosticsCompleted;
 	CCriticalSection m_startupProfileLock;
-	ULONGLONG	m_ullStartupProfileBeginQpc;
-	ULONGLONG	m_ullStartupProfileFrequency;
-	CString		m_strStartupProfilePath;
-	std::vector<SStartupProfileTraceEvent> m_aStartupProfileTraceEvents;
+	ULONGLONG	m_ullStartupDiagnosticsBeginQpc;
+	ULONGLONG	m_ullStartupDiagnosticsFrequency;
+	CString		m_strStartupDiagnosticsPath;
+	std::vector<SStartupDiagnosticsTraceEvent> m_aStartupDiagnosticsTraceEvents;
 #endif
 	CWinThread	*m_pSharedDirectoryMonitorThread;
 	HANDLE		m_hSharedDirectoryMonitorStopEvent;

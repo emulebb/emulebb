@@ -992,7 +992,7 @@ void CSharedFilesCtrl::ApplyVisibleFileCount()
 		strPhase.Format(_T("CSharedFilesCtrl::ApplyVisibleFileCount model=%d control=%d"),
 			iVisibleFileCount,
 			CListCtrl::GetItemCount());
-		theApp.AppendStartupProfileLine(strPhase, 0);
+		theApp.AppendStartupDiagnosticsLine(strPhase, 0);
 	}
 #endif
 }
@@ -1421,7 +1421,7 @@ void CSharedFilesCtrl::EnsureModelBound()
 		return;
 
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	m_bModelBound = true;
 	ReloadFileList();
@@ -1431,9 +1431,9 @@ void CSharedFilesCtrl::EnsureModelBound()
 		strPhase.Format(_T("CSharedFilesCtrl model bind (%u shared, %d visible)"),
 			static_cast<unsigned>(theApp.sharedfiles->GetCount()),
 			static_cast<int>(m_aVisibleFiles.size()));
-		theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-		theApp.AppendStartupProfileCounter(_T("shared.list.model_shared_files"), static_cast<ULONGLONG>(theApp.sharedfiles->GetCount()), _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.list.model_visible_rows"), static_cast<ULONGLONG>(m_aVisibleFiles.size()), _T("rows"));
+		theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.list.model_shared_files"), static_cast<ULONGLONG>(theApp.sharedfiles->GetCount()), _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.list.model_visible_rows"), static_cast<ULONGLONG>(m_aVisibleFiles.size()), _T("rows"));
 	}
 #endif
 	NotifyStartupSharedFilesModelChanged();
@@ -1478,7 +1478,7 @@ void CSharedFilesCtrl::ReloadFileList()
 		m_bStartupDeferredReloadPending = false;
 	}
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullReloadStart = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullReloadStart = theApp.GetStartupDiagnosticsTimestampUs();
 	ULONGLONG ullPhaseStart = ullReloadStart;
 #endif
 	SetRedraw(false);
@@ -1499,10 +1499,10 @@ void CSharedFilesCtrl::ReloadFileList()
 		strPhase.Format(_T("CSharedFilesCtrl::ReloadFileList shared map append (%u shared -> %d visible pre-extra)"),
 			static_cast<unsigned>(theApp.sharedfiles->GetCount()),
 			static_cast<int>(m_aVisibleFiles.size()));
-		theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-		theApp.AppendStartupProfileCounter(_T("shared.list.shared_map_files"), static_cast<ULONGLONG>(theApp.sharedfiles->GetCount()), _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.list.visible_rows_pre_extra"), static_cast<ULONGLONG>(m_aVisibleFiles.size()), _T("rows"));
-		ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+		theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.list.shared_map_files"), static_cast<ULONGLONG>(theApp.sharedfiles->GetCount()), _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.list.visible_rows_pre_extra"), static_cast<ULONGLONG>(m_aVisibleFiles.size()), _T("rows"));
+		ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 	}
 #endif
 
@@ -1517,10 +1517,10 @@ void CSharedFilesCtrl::ReloadFileList()
 		strPhase.Format(_T("CSharedFilesCtrl::ReloadFileList extra view append (filter=%d rows=%d)"),
 			m_pDirectoryFilter != NULL ? static_cast<int>(m_pDirectoryFilter->m_eItemType) : -1,
 			static_cast<int>(m_aVisibleFiles.size()));
-		theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-		theApp.AppendStartupProfileCounter(_T("shared.list.active_filter"), m_pDirectoryFilter != NULL ? static_cast<ULONGLONG>(static_cast<unsigned>(m_pDirectoryFilter->m_eItemType)) : 0ui64, _T("filter"));
-		theApp.AppendStartupProfileCounter(_T("shared.list.visible_rows_post_extra"), static_cast<ULONGLONG>(m_aVisibleFiles.size()), _T("rows"));
-		ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+		theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.list.active_filter"), m_pDirectoryFilter != NULL ? static_cast<ULONGLONG>(static_cast<unsigned>(m_pDirectoryFilter->m_eItemType)) : 0ui64, _T("filter"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.list.visible_rows_post_extra"), static_cast<ULONGLONG>(m_aVisibleFiles.size()), _T("rows"));
+		ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 	}
 #endif
 
@@ -1540,10 +1540,10 @@ void CSharedFilesCtrl::ReloadFileList()
 		strPhase.Format(_T("CSharedFilesCtrl::ReloadFileList sort/apply complete (%d rows)"), static_cast<int>(m_aVisibleFiles.size()));
 		const ULONGLONG ullVisibleRows = static_cast<ULONGLONG>(m_aVisibleFiles.size());
 		const ULONGLONG ullSharedFileCount = static_cast<ULONGLONG>(theApp.sharedfiles->GetCount());
-		theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullPhaseStart));
-		theApp.AppendStartupProfileCounter(_T("shared.list.visible_rows"), ullVisibleRows, _T("rows"));
-		theApp.AppendStartupProfileCounter(_T("shared.list.hidden_shared_files"), ullSharedFileCount >= ullVisibleRows ? (ullSharedFileCount - ullVisibleRows) : 0ui64, _T("files"));
-		theApp.AppendStartupProfileLine(_T("CSharedFilesCtrl::ReloadFileList total"), theApp.GetStartupProfileElapsedUs(ullReloadStart));
+		theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.list.visible_rows"), ullVisibleRows, _T("rows"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.list.hidden_shared_files"), ullSharedFileCount >= ullVisibleRows ? (ullSharedFileCount - ullVisibleRows) : 0ui64, _T("files"));
+		theApp.AppendStartupDiagnosticsLine(_T("CSharedFilesCtrl::ReloadFileList total"), theApp.GetStartupDiagnosticsElapsedUs(ullReloadStart));
 	}
 #endif
 	NotifyStartupSharedFilesModelChanged();
@@ -2572,7 +2572,7 @@ void CSharedFilesCtrl::OnLvnGetDispInfo(LPNMHDR pNMHDR, LRESULT *pResult)
 				strPhase.Format(_T("CSharedFilesCtrl::OnLvnGetDispInfo first row requested (rows=%d file=%d)"),
 					static_cast<int>(m_aVisibleFiles.size()),
 					pFile != NULL ? 1 : 0);
-				theApp.AppendStartupProfileLine(strPhase, 0);
+				theApp.AppendStartupDiagnosticsLine(strPhase, 0);
 			}
 #endif
 			if (pFile != NULL)

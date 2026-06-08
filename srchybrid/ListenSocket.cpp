@@ -47,7 +47,7 @@
 #include "Log.h"
 #include "PortRebindPolicySeams.h"
 #include "ProtocolGuards.h"
-#include "BadPeerInstrumentationSeams.h"
+#include "BadPeerDiagnosticsSeams.h"
 
 #include <new>
 #include <vector>
@@ -176,7 +176,7 @@ void LogBadPeerInvalidMultipacketSubOpcode(
 	CString strEvidence;
 	strEvidence.Format(
 		_T("{\"packet_family\":%s,\"outer_opcode\":%u,\"invalid_sub_opcode\":%u,\"payload_bytes\":%u,\"invalid_offset\":%I64u,\"bytes_remaining\":%I64u,\"previous_sub_opcode\":%s}"),
-		(LPCTSTR)BadPeerInstrumentationSeams::EvidenceJsonString(pszPacketFamily),
+		(LPCTSTR)BadPeerDiagnosticsSeams::EvidenceJsonString(pszPacketFamily),
 		uOuterOpcode,
 		static_cast<UINT>(byInvalidSubOpcode),
 		uPayloadLen,
@@ -2134,11 +2134,11 @@ bool CClientReqSocket::PacketReceived(Packet *packet)
 		CString strEvidence;
 		strEvidence.Format(
 			_T("{\"protocol\":%s,\"opcode\":%u,\"payload_bytes\":%u,\"delete_client\":%s,\"reason\":%s}"),
-			(LPCTSTR)BadPeerInstrumentationSeams::EvidenceJsonString(sProtocol),
+			(LPCTSTR)BadPeerDiagnosticsSeams::EvidenceJsonString(sProtocol),
 			static_cast<UINT>(opcode),
 			uRawSize,
 			bDelClient ? _T("true") : _T("false"),
-			(LPCTSTR)BadPeerInstrumentationSeams::EvidenceJsonString(*psErr));
+			(LPCTSTR)BadPeerDiagnosticsSeams::EvidenceJsonString(*psErr));
 		EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("packet_processing_error"), _T("medium"), client, _T("disconnect"), _T("Packet processing error"), NULL, strEvidence);
 	}
 #endif

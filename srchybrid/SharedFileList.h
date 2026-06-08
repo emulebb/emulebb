@@ -155,7 +155,7 @@ public:
 	/**
 	 * @brief Captures shared-file publish backlog and live Kad/server publish headroom for upload tuning.
 	 */
-	struct SharedPublishInstrumentationSnapshot
+	struct SharedPublishDiagnosticsSnapshot
 	{
 		INT_PTR iSharedFiles = 0;
 		UINT uED2KPublishedFiles = 0;
@@ -248,7 +248,7 @@ public:
 	 */
 	void	GetStartupCacheStatus(StartupCacheStatus &rStatus) const;
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
-	void	GetPublishInstrumentationSnapshot(SharedPublishInstrumentationSnapshot &rSnapshot) const;
+	void	GetPublishDiagnosticsSnapshot(SharedPublishDiagnosticsSnapshot &rSnapshot) const;
 #endif
 	/**
 	 * @brief Applies one worker-produced startup-cache save result on the UI thread.

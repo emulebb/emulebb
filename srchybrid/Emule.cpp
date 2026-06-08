@@ -30,7 +30,7 @@
 #include <timeapi.h>
 #include <uxtheme.h>
 #include "AppCommandLineSeams.h"
-#include "BadPeerInstrumentationSeams.h"
+#include "BadPeerDiagnosticsSeams.h"
 #include "emule.h"
 #include "resource.h"
 #include "Version.h"
@@ -930,7 +930,7 @@ SStartupTraceDescriptor DescribeStartupTracePhase(LPCTSTR pszPhase)
 	return descriptor;
 }
 
-bool ShouldFlushStartupProfileAfterCounter(LPCTSTR pszCounterName)
+bool ShouldFlushStartupDiagnosticsAfterCounter(LPCTSTR pszCounterName)
 {
 	return pszCounterName != NULL
 		&& _tcscmp(pszCounterName, _T("shared.hash.currently_hashing")) == 0;
@@ -1037,7 +1037,7 @@ void AppendTraceMetadataEvent(std::string *pstrJson, const char *pszName, DWORD 
 	*pstrJson += "\"}}";
 }
 
-std::string BuildStartupTraceEventJson(const SStartupProfileTraceEvent &rEvent, DWORD dwProcessId, DWORD dwThreadId)
+std::string BuildStartupTraceEventJson(const SStartupDiagnosticsTraceEvent &rEvent, DWORD dwProcessId, DWORD dwThreadId)
 {
 	std::string strJson("{");
 	strJson += "\"pid\":";
@@ -1052,14 +1052,14 @@ std::string BuildStartupTraceEventJson(const SStartupProfileTraceEvent &rEvent, 
 	strJson += std::to_string(rEvent.ullTimestampUs);
 
 	switch (rEvent.eType) {
-	case SStartupProfileTraceEvent::EType::Complete:
+	case SStartupDiagnosticsTraceEvent::EType::Complete:
 		strJson += ",\"ph\":\"X\",\"dur\":";
 		strJson += std::to_string(rEvent.ullDurationUs);
 		strJson += ",\"args\":{";
 		AppendTraceField(&strJson, "phase_id", rEvent.strStableId);
 		strJson += "}}";
 		break;
-	case SStartupProfileTraceEvent::EType::Counter:
+	case SStartupDiagnosticsTraceEvent::EType::Counter:
 		strJson += ",\"ph\":\"C\",\"args\":{";
 		AppendTraceField(&strJson, "counter_id", rEvent.strStableId);
 		strJson += ",\"";
@@ -1286,10 +1286,10 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	, m_pEarlyStartupProgressDlg()
 	, m_bStandbyOff()
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	, m_bStartupProfileStartupComplete()
-	, m_bStartupProfileCompleted()
-	, m_ullStartupProfileBeginQpc()
-	, m_ullStartupProfileFrequency()
+	, m_bStartupDiagnosticsStartupComplete()
+	, m_bStartupDiagnosticsCompleted()
+	, m_ullStartupDiagnosticsBeginQpc()
+	, m_ullStartupDiagnosticsFrequency()
 #endif
 	, m_pSharedDirectoryMonitorThread(NULL)
 	, m_hSharedDirectoryMonitorStopEvent(NULL)
@@ -1405,55 +1405,55 @@ void CemuleApp::WarnAboutStartupStoragePlacement()
 }
 
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-void CemuleApp::ResetStartupProfile()
+void CemuleApp::ResetStartupDiagnostics()
 {
 	CSingleLock lock(&m_startupProfileLock, TRUE);
-	m_bStartupProfileStartupComplete = false;
-	m_bStartupProfileCompleted = false;
-	m_aStartupProfileTraceEvents.clear();
-	m_ullStartupProfileFrequency = QueryPerformanceFrequencyValue();
-	m_ullStartupProfileBeginQpc = QueryPerformanceCounterValue();
-	m_strStartupProfilePath = thePrefs.GetMuleDirectory(EMULE_LOGDIR, false) + LogArtifactNames::StartupProfileTraceFileName();
-	(void)LongPathSeams::DeleteFile(m_strStartupProfilePath);
+	m_bStartupDiagnosticsStartupComplete = false;
+	m_bStartupDiagnosticsCompleted = false;
+	m_aStartupDiagnosticsTraceEvents.clear();
+	m_ullStartupDiagnosticsFrequency = QueryPerformanceFrequencyValue();
+	m_ullStartupDiagnosticsBeginQpc = QueryPerformanceCounterValue();
+	m_strStartupDiagnosticsPath = thePrefs.GetMuleDirectory(EMULE_LOGDIR, false) + LogArtifactNames::StartupDiagnosticsTraceFileName();
+	(void)LongPathSeams::DeleteFile(m_strStartupDiagnosticsPath);
 }
 
-ULONGLONG CemuleApp::GetStartupProfileTimestampUs() const
+ULONGLONG CemuleApp::GetStartupDiagnosticsTimestampUs() const
 {
-	if (m_ullStartupProfileFrequency == 0 || m_ullStartupProfileBeginQpc == 0)
+	if (m_ullStartupDiagnosticsFrequency == 0 || m_ullStartupDiagnosticsBeginQpc == 0)
 		return 0;
 
 	const ULONGLONG ullNowQpc = QueryPerformanceCounterValue();
-	if (ullNowQpc <= m_ullStartupProfileBeginQpc)
+	if (ullNowQpc <= m_ullStartupDiagnosticsBeginQpc)
 		return 0;
 
-	return ConvertQpcTicksToMicroseconds(ullNowQpc - m_ullStartupProfileBeginQpc, m_ullStartupProfileFrequency);
+	return ConvertQpcTicksToMicroseconds(ullNowQpc - m_ullStartupDiagnosticsBeginQpc, m_ullStartupDiagnosticsFrequency);
 }
 
-ULONGLONG CemuleApp::GetStartupProfileElapsedUs(const ULONGLONG ullStartTimestampUs) const
+ULONGLONG CemuleApp::GetStartupDiagnosticsElapsedUs(const ULONGLONG ullStartTimestampUs) const
 {
-	const ULONGLONG ullNowUs = GetStartupProfileTimestampUs();
+	const ULONGLONG ullNowUs = GetStartupDiagnosticsTimestampUs();
 	return (ullNowUs >= ullStartTimestampUs) ? (ullNowUs - ullStartTimestampUs) : 0;
 }
 
-void CemuleApp::FinalizeStartupProfileTrace()
+void CemuleApp::FinalizeStartupDiagnosticsTrace()
 {
 	CSingleLock lock(&m_startupProfileLock, TRUE);
-	m_bStartupProfileCompleted = true;
-	(void)WriteStartupProfileTrace();
+	m_bStartupDiagnosticsCompleted = true;
+	(void)WriteStartupDiagnosticsTrace();
 }
 
-void CemuleApp::FlushStartupProfileTrace()
+void CemuleApp::FlushStartupDiagnosticsTrace()
 {
 	CSingleLock lock(&m_startupProfileLock, TRUE);
-	(void)WriteStartupProfileTrace();
+	(void)WriteStartupDiagnosticsTrace();
 }
 
-bool CemuleApp::WriteStartupProfileTrace() const
+bool CemuleApp::WriteStartupDiagnosticsTrace() const
 {
-	if (m_strStartupProfilePath.IsEmpty())
+	if (m_strStartupDiagnosticsPath.IsEmpty())
 		return false;
 
-	FILE *fp = LongPathSeams::OpenFileStreamDenyWriteLongPath(m_strStartupProfilePath, _T("wb"));
+	FILE *fp = LongPathSeams::OpenFileStreamDenyWriteLongPath(m_strStartupDiagnosticsPath, _T("wb"));
 	if (fp == NULL)
 		return false;
 
@@ -1463,9 +1463,9 @@ bool CemuleApp::WriteStartupProfileTrace() const
 	AppendTraceMetadataEvent(&strJson, "process_name", ::GetCurrentProcessId(), ::GetCurrentThreadId(), _T("eMuleBB startup"));
 	strJson += ",\n    ";
 	AppendTraceMetadataEvent(&strJson, "thread_name", ::GetCurrentProcessId(), ::GetCurrentThreadId(), _T("main"));
-	for (size_t i = 0; i < m_aStartupProfileTraceEvents.size(); ++i) {
+	for (size_t i = 0; i < m_aStartupDiagnosticsTraceEvents.size(); ++i) {
 		strJson += ",\n    ";
-		strJson += BuildStartupTraceEventJson(m_aStartupProfileTraceEvents[i], ::GetCurrentProcessId(), ::GetCurrentThreadId());
+		strJson += BuildStartupTraceEventJson(m_aStartupDiagnosticsTraceEvents[i], ::GetCurrentProcessId(), ::GetCurrentThreadId());
 	}
 	strJson += "\n  ]\n}\n";
 
@@ -1474,52 +1474,52 @@ bool CemuleApp::WriteStartupProfileTrace() const
 	return uWritten == strJson.size();
 }
 
-void CemuleApp::AppendStartupProfileLine(LPCTSTR pszPhase, const ULONGLONG ullDurationUs, ULONGLONG ullAbsoluteUs)
+void CemuleApp::AppendStartupDiagnosticsLine(LPCTSTR pszPhase, const ULONGLONG ullDurationUs, ULONGLONG ullAbsoluteUs)
 {
 	if (pszPhase == NULL || pszPhase[0] == _T('\0'))
 		return;
 
 	const SStartupTraceDescriptor descriptor(DescribeStartupTracePhase(pszPhase));
 	if (ullAbsoluteUs == static_cast<ULONGLONG>(-1))
-		ullAbsoluteUs = GetStartupProfileTimestampUs();
+		ullAbsoluteUs = GetStartupDiagnosticsTimestampUs();
 
 	CSingleLock lock(&m_startupProfileLock, TRUE);
-	SStartupProfileTraceEvent event;
+	SStartupDiagnosticsTraceEvent event;
 	event.strName = pszPhase;
 	event.strCategory = descriptor.strCategory;
 	event.strStableId = descriptor.strStableId;
-	event.eType = (ullDurationUs == 0) ? SStartupProfileTraceEvent::EType::Instant : SStartupProfileTraceEvent::EType::Complete;
+	event.eType = (ullDurationUs == 0) ? SStartupDiagnosticsTraceEvent::EType::Instant : SStartupDiagnosticsTraceEvent::EType::Complete;
 	event.ullTimestampUs = ullAbsoluteUs;
 	event.ullDurationUs = ullDurationUs;
-	m_aStartupProfileTraceEvents.emplace_back(event);
+	m_aStartupDiagnosticsTraceEvents.emplace_back(event);
 	if (descriptor.strStableId == _T("startup.complete"))
-		m_bStartupProfileStartupComplete = true;
+		m_bStartupDiagnosticsStartupComplete = true;
 	lock.Unlock();
 
 	if (descriptor.bFinalizeTrace)
-		FinalizeStartupProfileTrace();
+		FinalizeStartupDiagnosticsTrace();
 }
 
-void CemuleApp::AppendStartupProfileCounter(LPCTSTR pszCounterName, const ULONGLONG ullValue, LPCTSTR pszValueKey)
+void CemuleApp::AppendStartupDiagnosticsCounter(LPCTSTR pszCounterName, const ULONGLONG ullValue, LPCTSTR pszValueKey)
 {
 	if (pszCounterName == NULL || pszCounterName[0] == _T('\0'))
 		return;
 
-	const bool bFlushTrace = ShouldFlushStartupProfileAfterCounter(pszCounterName);
+	const bool bFlushTrace = ShouldFlushStartupDiagnosticsAfterCounter(pszCounterName);
 	CSingleLock lock(&m_startupProfileLock, TRUE);
-	SStartupProfileTraceEvent event;
+	SStartupDiagnosticsTraceEvent event;
 	event.strName = pszCounterName;
 	event.strCategory = GetStartupCounterCategory(pszCounterName);
 	event.strStableId = pszCounterName;
 	event.strCounterValueKey = (pszValueKey != NULL && pszValueKey[0] != _T('\0')) ? pszValueKey : _T("value");
-	event.eType = SStartupProfileTraceEvent::EType::Counter;
-	event.ullTimestampUs = GetStartupProfileTimestampUs();
+	event.eType = SStartupDiagnosticsTraceEvent::EType::Counter;
+	event.ullTimestampUs = GetStartupDiagnosticsTimestampUs();
 	event.ullCounterValue = ullValue;
-	m_aStartupProfileTraceEvents.emplace_back(event);
+	m_aStartupDiagnosticsTraceEvents.emplace_back(event);
 	lock.Unlock();
 
 	if (bFlushTrace)
-		FlushStartupProfileTrace();
+		FlushStartupDiagnosticsTrace();
 }
 #endif
 
@@ -1710,7 +1710,7 @@ BOOL CemuleApp::InitInstance()
 	InitializeDiagnosticsLog(theDownloadSlotDiagnosticsLog, strDiagnosticsLogDir + LogArtifactNames::DownloadSlotDiagnosticsLogFileName(), thePrefs.GetMaxLogFileSize());
 #endif
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
-	BadPeerInstrumentationSeams::InitializeLog(
+	BadPeerDiagnosticsSeams::InitializeLog(
 		strDiagnosticsLogDir + LogArtifactNames::BadPeerDiagnosticsLogFileName(),
 		thePrefs.GetMaxLogFileSize());
 #endif
@@ -1729,8 +1729,8 @@ BOOL CemuleApp::InitInstance()
 	Log(_T("Starting %s %s"), MOD_RELEASE_PRODUCT_NAME, (LPCTSTR)m_strCurVersionLong);
 	LogStartupConfigBackupResult();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	ResetStartupProfile();
-	AppendStartupProfileLine(_T("InitInstance: logging and profile setup"), 0);
+	ResetStartupDiagnostics();
+	AppendStartupDiagnosticsLine(_T("InitInstance: logging and profile setup"), 0);
 #endif
 	if (!IsWin32LongPathsEnabled())
 		QueueLogLineEx(LOG_WARNING, _T("Windows long-path support is disabled. Enable LongPathsEnabled to avoid failures with overlong paths."));
@@ -1742,11 +1742,11 @@ BOOL CemuleApp::InitInstance()
 	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	ULONGLONG ullPhaseStart = GetStartupProfileTimestampUs();
+	ULONGLONG ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	emuledlg = new CemuleDlg;
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CemuleDlg"), GetStartupProfileElapsedUs(ullPhaseStart));
+	AppendStartupDiagnosticsLine(_T("Construct CemuleDlg"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
 #endif
 	m_pMainWnd = emuledlg;
 	// Barry - Auto-take ed2k links
@@ -1757,11 +1757,11 @@ BOOL CemuleApp::InitInstance()
 
 	// UPnP Port forwarding
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	m_pUPnPFinder = new CUPnPImplWrapper();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct UPnP wrapper"), GetStartupProfileElapsedUs(ullPhaseStart));
+	AppendStartupDiagnosticsLine(_T("Construct UPnP wrapper"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
 #endif
 
 	// Highres scheduling gives better resolution for Sleep(...) calls, and timeGetTime() calls
@@ -1786,122 +1786,122 @@ BOOL CemuleApp::InitInstance()
 	}
 
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	clientlist = new CClientList();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CClientList"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CClientList"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	friendlist = new CFriendList();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CFriendList"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CFriendList"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	searchlist = new CSearchList();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CSearchList"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CSearchList"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	knownfiles = new CKnownFileList();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CKnownFileList (known.met/cancelled.met)"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CKnownFileList (known.met/cancelled.met)"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	serverlist = new CServerList();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CServerList"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CServerList"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	serverconnect = new CServerConnect();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CServerConnect"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CServerConnect"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	sharedfiles = new CSharedFileList(serverconnect);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CSharedFileList (share cache/scan)"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CSharedFileList (share cache/scan)"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	listensocket = new CListenSocket();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CListenSocket"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CListenSocket"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	clientudp = new CClientUDPSocket();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CClientUDPSocket"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CClientUDPSocket"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	clientcredits = new CClientCreditsList();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CClientCreditsList"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CClientCreditsList"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	downloadqueue = new CDownloadQueue();	// bugfix - do this before creating the upload queue
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CDownloadQueue"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CDownloadQueue"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	uploadqueue = new CUploadQueue();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CUploadQueue"), GetStartupProfileElapsedUs(ullPhaseStart));
-	AppendStartupProfileCounter(_T("broadband.configured_upload_budget_bytes_per_sec"), uploadqueue->GetConfiguredUploadBudgetBytesPerSec(), _T("bytes_per_sec"));
-	AppendStartupProfileCounter(_T("broadband.slot_cap"), static_cast<ULONGLONG>(uploadqueue->GetBroadbandSlotCap()), _T("slots"));
-	AppendStartupProfileCounter(_T("broadband.target_client_rate_bytes_per_sec"), uploadqueue->GetTargetClientDataRateBroadband(), _T("bytes_per_sec"));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CUploadQueue"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	AppendStartupDiagnosticsCounter(_T("broadband.configured_upload_budget_bytes_per_sec"), uploadqueue->GetConfiguredUploadBudgetBytesPerSec(), _T("bytes_per_sec"));
+	AppendStartupDiagnosticsCounter(_T("broadband.slot_cap"), static_cast<ULONGLONG>(uploadqueue->GetBroadbandSlotCap()), _T("slots"));
+	AppendStartupDiagnosticsCounter(_T("broadband.target_client_rate_bytes_per_sec"), uploadqueue->GetTargetClientDataRateBroadband(), _T("bytes_per_sec"));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	ipfilter = new CIPFilter();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CIPFilter"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CIPFilter"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	ipfilterUpdater = new CIPFilterUpdater();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CIPFilterUpdater"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CIPFilterUpdater"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	webserver = new CWebServer(); // Web Server [kuchin]
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CWebServer"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CWebServer"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	scheduler = new CScheduler();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CScheduler"), GetStartupProfileElapsedUs(ullPhaseStart));
+	AppendStartupDiagnosticsLine(_T("Construct CScheduler"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
 
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	geolocation = new CGeoLocation();
 	geolocation->Load();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CGeoLocation"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CGeoLocation"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	uploadBandwidthThrottler = new UploadBandwidthThrottler();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct UploadBandwidthThrottler"), GetStartupProfileElapsedUs(ullPhaseStart));
+	AppendStartupDiagnosticsLine(_T("Construct UploadBandwidthThrottler"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
 
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	m_pUploadDiskIOThread = new CUploadDiskIOThread();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CUploadDiskIOThread"), GetStartupProfileElapsedUs(ullPhaseStart));
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("Construct CUploadDiskIOThread"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	m_pPartFileWriteThread = new CPartFileWriteThread();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("Construct CPartFileWriteThread"), GetStartupProfileElapsedUs(ullPhaseStart));
+	AppendStartupDiagnosticsLine(_T("Construct CPartFileWriteThread"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
 #endif
 
 	thePerfLog.Startup();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("PerfLog startup"), 0);
-	ullPhaseStart = GetStartupProfileTimestampUs();
+	AppendStartupDiagnosticsLine(_T("PerfLog startup"), 0);
+	ullPhaseStart = GetStartupDiagnosticsTimestampUs();
 #endif
 	emuledlg->DoModal();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	AppendStartupProfileLine(_T("CemuleDlg::DoModal lifetime"), GetStartupProfileElapsedUs(ullPhaseStart));
+	AppendStartupDiagnosticsLine(_T("CemuleDlg::DoModal lifetime"), GetStartupDiagnosticsElapsedUs(ullPhaseStart));
 #endif
 
 	DisableRTLWindowsLayout();
@@ -2470,7 +2470,7 @@ void CemuleApp::ShowEarlyStartupProgress()
 		pDialog->SetPhase(1, GetResString(IDS_STARTUP_PROGRESS_STARTING), GetResString(IDS_STARTUP_PROGRESS_PREPARING), false);
 		PumpLifecycleProgressMessages(pDialog);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-		AppendStartupProfileLine(_T("CemuleApp::ShowEarlyStartupProgress"), 0);
+		AppendStartupDiagnosticsLine(_T("CemuleApp::ShowEarlyStartupProgress"), 0);
 #endif
 	} else
 		delete pDialog;
@@ -2496,7 +2496,7 @@ void CemuleApp::DestroyEarlyStartupProgress()
 		m_pEarlyStartupProgressDlg = NULL;
 		PumpLifecycleProgressMessages(NULL);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-		AppendStartupProfileLine(_T("CemuleApp::DestroyEarlyStartupProgress"), 0);
+		AppendStartupDiagnosticsLine(_T("CemuleApp::DestroyEarlyStartupProgress"), 0);
 #endif
 	}
 }

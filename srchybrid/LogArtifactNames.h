@@ -58,7 +58,7 @@ inline LPCTSTR StartupErrorLogFileName()
 	return _T("emulebb-startup-errors.log");
 }
 
-inline LPCTSTR StartupProfileTraceFileName()
+inline LPCTSTR StartupDiagnosticsTraceFileName()
 {
 	return _T("emulebb-diagnostics-startup.trace.json");
 }

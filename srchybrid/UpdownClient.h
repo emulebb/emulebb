@@ -344,7 +344,7 @@ public:
 	UINT			CalculateDownloadRate();
 	uint16			GetAvailablePartCount() const;
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
-	void			LogDownloadSlotInstrumentation(LPCTSTR pszReason, INT_PTR iRequestBatchCount = -1, uint32 uPacketBytes = 0, uint32 uWrittenBytes = 0) const;
+	void			LogDownloadSlotDiagnostics(LPCTSTR pszReason, INT_PTR iRequestBatchCount = -1, uint32 uPacketBytes = 0, uint32 uWrittenBytes = 0) const;
 	void			NoteDownloadDuplicateZeroWrite(uint64 uPayloadBytes) const;
 	ULONGLONG		GetDownloadDuplicateZeroWritePackets() const	{ return m_ullDownloadDuplicateZeroWritePackets; }
 	ULONGLONG		GetDownloadDuplicateZeroWriteBytes() const		{ return m_ullDownloadDuplicateZeroWriteBytes; }

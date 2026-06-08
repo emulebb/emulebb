@@ -16,7 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
-#include "BadPeerInstrumentationSeams.h"
+#include "BadPeerDiagnosticsSeams.h"
 #include "UploadQueue.h"
 #include "Packets.h"
 #include "PartFile.h"
@@ -175,11 +175,11 @@ CUploadQueue::CUploadQueue()
 {
 	i1sec = i2sec = i5sec = i60sec = 0;
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	VERIFY(Win32CallbackTimerSeams::TryStartNullWindowCallbackTimer(h_timer, SEC2MS(1)/10, UploadTimer));
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("broadband.upload_queue.timer_ready"), theApp.GetStartupProfileElapsedUs(ullPhaseStart), ullPhaseStart);
+	theApp.AppendStartupDiagnosticsLine(_T("broadband.upload_queue.timer_ready"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart), ullPhaseStart);
 #endif
 	if (thePrefs.GetVerbose() && !h_timer)
 		AddDebugLogLine(true, _T("Failed to create 'upload queue' timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
@@ -339,7 +339,7 @@ bool CUploadQueue::AddUpNextClient(LPCTSTR pszReason, CUpDownClient *directadd)
 				SetUploadRetryCooldown(newclient, ullCooldownUntil, uploadRetryCooldownFailedAdmission);
 				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("upload_failed_admission_cooldown"), _T("low"), newclient, _T("cooldown"), _T("Failed upload admission"), theApp.sharedfiles->GetFileByID(newclient->GetUploadFileID()));
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
-				BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+				BadPeerDiagnosticsSeams::TrackUploadFileBehavior(
 					_T("failed_admission"),
 					newclient,
 					theApp.sharedfiles->GetFileByID(newclient->GetUploadFileID()),
@@ -421,12 +421,12 @@ void CUploadQueue::UpdateActiveClientsInfo(ULONGLONG curTick)
 }
 
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
-void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
+void CUploadQueue::LogUploadSlotDiagnostics(ULONGLONG curTick) const
 {
-	static ULONGLONG s_ullLastUploadSlotInstrumentationLogTick = 0;
-	if (s_ullLastUploadSlotInstrumentationLogTick != 0 && curTick < s_ullLastUploadSlotInstrumentationLogTick + SEC2MS(10))
+	static ULONGLONG s_ullLastUploadSlotDiagnosticsLogTick = 0;
+	if (s_ullLastUploadSlotDiagnosticsLogTick != 0 && curTick < s_ullLastUploadSlotDiagnosticsLogTick + SEC2MS(10))
 		return;
-	s_ullLastUploadSlotInstrumentationLogTick = curTick;
+	s_ullLastUploadSlotDiagnosticsLogTick = curTick;
 
 	const INT_PTR iThrottlerSlots = theApp.uploadBandwidthThrottler != NULL
 		? theApp.uploadBandwidthThrottler->GetStandardListSize()
@@ -622,9 +622,9 @@ void CUploadQueue::LogUploadSlotInstrumentation(ULONGLONG curTick) const
 	const ULONGLONG ullActiveNoRequestAgeAvgMs = iActiveNoRequestClients > 0
 		? ullActiveNoRequestAgeSumMs / static_cast<ULONGLONG>(iActiveNoRequestClients)
 		: 0;
-	CSharedFileList::SharedPublishInstrumentationSnapshot sharedPublish = {};
+	CSharedFileList::SharedPublishDiagnosticsSnapshot sharedPublish = {};
 	if (theApp.sharedfiles != NULL)
-		theApp.sharedfiles->GetPublishInstrumentationSnapshot(sharedPublish);
+		theApp.sharedfiles->GetPublishDiagnosticsSnapshot(sharedPublish);
 
 	UploadSlotDiagnosticsLogLine(
 		_T("UploadSlotDiagnostics: summary uploadSlots=%Id retiredSlots=%Id waiting=%Id waitingEligible=%Id waitingCooldown=%Id waitingRetryCooldown=%Id waitingNoRequestCooldown=%Id waitingNoRequestProductive=%Id waitingNoRequestUnproductive=%Id waitingClientOnlyCooldown=%Id waitingRetryNoRequest=%Id waitingRetryChurn=%Id waitingRetryStalled=%Id waitingRetrySlow=%Id waitingRetryUnknown=%Id activeZeroRate=%Id activeNoRequest=%Id activeNoRequestDrained=%Id activeNoRequestDrainedZeroRate=%Id activeNoRequestDrainedNonzeroRate=%Id activeNoRequestPendingIO=%Id activeNoRequestBufferedPayload=%Id activeNoRequestSocketBacklog=%Id activeNoRequestNeverAccepted=%Id activeNoRequestRecycleEligible=%Id activeNoRequestRecycleGraceBlocked=%Id activeNoRequestRecycleUnderfillBlocked=%Id activeNoRequestAgeAvgMs=%I64u activeNoRequestAgeMaxMs=%I64u activeNoRequestLastAcceptedAgeMaxMs=%I64u activeNoRequestZeroMaxMs=%I64u activeQueuedRequests=%Id activePendingIO=%Id activeBufferedPayload=%Id activeSocketBacklog=%Id waitingCooldownMinMs=%I64u waitingCooldownAvgMs=%I64u waitingCooldownMaxMs=%I64u retryCooldowns=%u noRequestCooldowns=%u sharedFiles=%Id ed2kPublishedFiles=%u ed2kPendingFiles=%u ed2kPendingLargeUnsupportedFiles=%u ed2kOfferLimit=%u kadPublishReady=%u kadSourceDueFiles=%u kadSourceBackoffFiles=%u kadSourceSearches=%u kadSourceSearchCap=%u kadKeywordSearches=%u kadKeywordSearchCap=%u kadNotesSearches=%u kadNotesSearchCap=%u throttlerSlots=%Id activeSlots=%Id cap=%Id configuredBudgetBytesPerSec=%u targetPerSlotBytesPerSec=%u toNetworkBytesPerSec=%u datarateBytesPerSec=%u underfilled=%u underfillAgeMs=%I64u slowTracking=%u"),
@@ -788,7 +788,7 @@ void CUploadQueue::Process()
 	UpdateActiveClientsInfo(curTick);
 	UpdateBroadbandUnderfillState(curTick);
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
-	LogUploadSlotInstrumentation(curTick);
+	LogUploadSlotDiagnostics(curTick);
 #endif
 
 	if (ForceNewClient())
@@ -829,7 +829,7 @@ void CUploadQueue::Process()
 				SetUploadRetryCooldown(cur_client, ullCooldownUntil, uploadRetryCooldownNoSocket);
 				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("upload_no_socket_cooldown"), _T("low"), cur_client, _T("cooldown"), _T("Upload slot reached without socket"), theApp.sharedfiles->GetFileByID(cur_client->GetUploadFileID()));
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
-				BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+				BadPeerDiagnosticsSeams::TrackUploadFileBehavior(
 					_T("no_socket"),
 					cur_client,
 					theApp.sharedfiles->GetFileByID(cur_client->GetUploadFileID()),
@@ -1294,10 +1294,10 @@ CUploadQueue::NoRequestRepeatPenalty CUploadQueue::TrackNoRequestRepeatOffender(
 	return penalty;
 }
 
-bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppszInstrumentationReason)
+bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppszDiagnosticsReason)
 {
-	if (ppszInstrumentationReason != NULL)
-		*ppszInstrumentationReason = NULL;
+	if (ppszDiagnosticsReason != NULL)
+		*ppszDiagnosticsReason = NULL;
 
 	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
 	const bool bHadClientCooldown = client != NULL && client->IsInSlowUploadCooldown();
@@ -1314,8 +1314,8 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 				bHadNoRequestCooldown = true;
 				const bool bProductiveNoRequestRecycle = itNoRequest->second.bProductiveRecycle;
 				if (!ShouldAllowNoRequestCooldownClear(true, itNoRequest->second.bQueuedRequestClearUsed)) {
-					if (ppszInstrumentationReason != NULL)
-						*ppszInstrumentationReason = _T("reject-not-uploading-no-request-clear-used");
+					if (ppszDiagnosticsReason != NULL)
+						*ppszDiagnosticsReason = _T("reject-not-uploading-no-request-clear-used");
 					return false;
 				}
 				itNoRequest->second.bQueuedRequestClearUsed = true;
@@ -1329,8 +1329,8 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 			// WHY: unproductive no-request slots have not proven renewed upload
 			// demand. Do not let a queued block request or open-cap underfill
 			// bypass the still-active repeat no-request throttle.
-			if (ppszInstrumentationReason != NULL)
-				*ppszInstrumentationReason = _T("reject-not-uploading-unproductive-no-request-active");
+			if (ppszDiagnosticsReason != NULL)
+				*ppszDiagnosticsReason = _T("reject-not-uploading-unproductive-no-request-active");
 			return false;
 		}
 		std::map<uint32, UploadRetryCooldownState>::iterator itCooldown = m_uploadRetryCooldownByIP.find(dwCooldownIP);
@@ -1339,8 +1339,8 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 				m_uploadRetryCooldownByIP.erase(itCooldown);
 			} else if (itCooldown->second.ullCooldownUntil > curTick) {
 				if (!ShouldAllowUploadRetryCooldownClear(true, itCooldown->second.bQueuedRequestClearUsed)) {
-					if (ppszInstrumentationReason != NULL)
-						*ppszInstrumentationReason = _T("reject-not-uploading-retry-clear-used");
+					if (ppszDiagnosticsReason != NULL)
+						*ppszDiagnosticsReason = _T("reject-not-uploading-retry-clear-used");
 					return false;
 				}
 				itCooldown->second.bQueuedRequestClearUsed = true;
@@ -1353,8 +1353,8 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 		client->ClearSlowUploadCooldown();
 	if (bHadClientCooldown || bHadIPCooldown || bClearedProductiveNoRequestCooldown)
 		return true;
-	if (ppszInstrumentationReason != NULL)
-		*ppszInstrumentationReason = bHadNoRequestCooldown ? _T("reject-not-uploading-no-request-only-cooldown") : _T("reject-not-uploading-no-active-cooldown");
+	if (ppszDiagnosticsReason != NULL)
+		*ppszDiagnosticsReason = bHadNoRequestCooldown ? _T("reject-not-uploading-no-request-only-cooldown") : _T("reject-not-uploading-no-active-cooldown");
 	return false;
 }
 
@@ -1589,7 +1589,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			bProductiveNoRequestRecycle ? _T("Broadband productive no-request recycle") : _T("Broadband unproductive no-request recycle"),
 			theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
 			strBadPeerEvidence);
-		BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+		BadPeerDiagnosticsSeams::TrackUploadFileBehavior(
 			_T("no_request"),
 			client,
 			theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
@@ -1676,7 +1676,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 		bShouldRecycleIdle ? _T("Broadband idle no-request recycle") : _T("Broadband stalled zero-rate recycle"),
 		theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
 		strBadPeerEvidence);
-	BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+	BadPeerDiagnosticsSeams::TrackUploadFileBehavior(
 		bShouldRecycleIdle ? _T("idle_no_request") : _T("stalled_zero_rate"),
 		client,
 		theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
@@ -2115,7 +2115,7 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 					client->GetUpStartTimeDelay(),
 					earlyabort ? _T("true") : _T("false"));
 				EMULEBB_BAD_PEER_LOG_CLIENT_EVENT(_T("upload_short_failed_slot_cooldown"), _T("medium"), client, _T("cooldown"), _T("Short failed upload slot"), theApp.sharedfiles->GetFileByID(client->GetUploadFileID()), strBadPeerEvidence);
-				BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+				BadPeerDiagnosticsSeams::TrackUploadFileBehavior(
 					_T("short_failed_slot"),
 					client,
 					theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
@@ -2283,7 +2283,7 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 					client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs ? _T("Broadband zero-rate recycle") : _T("Broadband slow-rate recycle"),
 					theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),
 					strBadPeerEvidence);
-				BadPeerInstrumentationSeams::TrackUploadFileBehavior(
+				BadPeerDiagnosticsSeams::TrackUploadFileBehavior(
 					client->GetAccumulatedZeroUploadMs() >= ullEffectiveZeroGraceMs ? _T("zero_rate") : _T("slow_rate"),
 					client,
 					theApp.sharedfiles->GetFileByID(client->GetUploadFileID()),

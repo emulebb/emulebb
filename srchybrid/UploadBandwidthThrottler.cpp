@@ -51,7 +51,7 @@ UploadBandwidthThrottler::UploadBandwidthThrottler()
 	, m_bRun(true)
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullPhaseStart = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	CWinThread *pThread = AfxBeginThread(RunProc, (LPVOID)this);
 	m_bThreadStarted = HelperThreadLaunchSeams::DidStartThread(pThread);
@@ -61,7 +61,7 @@ UploadBandwidthThrottler::UploadBandwidthThrottler()
 		m_eventThreadEnded.SetEvent();
 	}
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("broadband.throttler.launch_thread"), theApp.GetStartupProfileElapsedUs(ullPhaseStart), ullPhaseStart);
+	theApp.AppendStartupDiagnosticsLine(_T("broadband.throttler.launch_thread"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart), ullPhaseStart);
 #endif
 }
 
@@ -330,7 +330,7 @@ uint32 UploadBandwidthThrottler::CalculateChangeDelta(uint32 numberOfConsecutive
 UINT AFX_CDECL UploadBandwidthThrottler::RunProc(LPVOID pParam)
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("broadband.throttler.thread_enter"), 0);
+	theApp.AppendStartupDiagnosticsLine(_T("broadband.throttler.thread_enter"), 0);
 #endif
 	DbgSetThreadName("UploadBandwidthThrottler");
 	InitThreadLocale();
@@ -351,7 +351,7 @@ UINT AFX_CDECL UploadBandwidthThrottler::RunProc(LPVOID pParam)
 UINT UploadBandwidthThrottler::RunInternal()
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullThreadStartUs = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullThreadStartUs = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	static const bool estimateChangedLog = false;
 	static const bool lotsOfLog = false;
@@ -373,7 +373,7 @@ UINT UploadBandwidthThrottler::RunInternal()
 	// 15-16 ms on the same host; the throttler depends on that finer cadence.
 	lastTickReachedBandwidth = lastLoopTick = timeGetTime();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("broadband.throttler.thread_ready"), theApp.GetStartupProfileElapsedUs(ullThreadStartUs), ullThreadStartUs);
+	theApp.AppendStartupDiagnosticsLine(_T("broadband.throttler.thread_ready"), theApp.GetStartupDiagnosticsElapsedUs(ullThreadStartUs), ullThreadStartUs);
 #endif
 	while (HelperThreadLaunchSeams::IsFlagSet(m_bRun)) {
 //		m_eventPaused.Lock();

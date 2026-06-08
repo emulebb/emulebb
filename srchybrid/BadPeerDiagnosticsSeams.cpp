@@ -6,7 +6,7 @@
 //as published by the Free Software Foundation; either
 //version 2 of the License, or (at your option) any later version.
 #include "stdafx.h"
-#include "BadPeerInstrumentationSeams.h"
+#include "BadPeerDiagnosticsSeams.h"
 
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 #include "AbstractFile.h"
@@ -21,10 +21,10 @@
 
 namespace
 {
-CLogFile g_badPeerInstrumentationLog;
-CCriticalSection g_badPeerInstrumentationLogLock;
+CLogFile g_badPeerDiagnosticsLog;
+CCriticalSection g_badPeerDiagnosticsLogLock;
 CCriticalSection g_badPeerBehaviorLedgerLock;
-volatile LONGLONG g_llBadPeerInstrumentationEventSeq = 0;
+volatile LONGLONG g_llBadPeerDiagnosticsEventSeq = 0;
 ULONGLONG g_ullBadPeerBehaviorLedgerLastCleanup = 0;
 
 constexpr ULONGLONG kBadPeerBehaviorLedgerWindowMs = MIN2MS(60);
@@ -178,15 +178,15 @@ void WriteEvent(
 	LPCTSTR pszReason,
 	LPCTSTR pszEvidenceJson)
 {
-	if (!g_badPeerInstrumentationLog.IsOpen())
+	if (!g_badPeerDiagnosticsLog.IsOpen())
 		return;
 
-	const ULONGLONG ullEventSeq = NextDiagnosticsEventSeq(g_llBadPeerInstrumentationEventSeq);
+	const ULONGLONG ullEventSeq = NextDiagnosticsEventSeq(g_llBadPeerDiagnosticsEventSeq);
 	const CString strEvidence(NormalizeEvidenceJson(pszEvidenceJson));
 	CString strJson;
 	strJson.Format(
 		_T("{\"schema\":\"bad_peer_event_v1\",\"source\":\"emulebb\",\"marker\":\"%s\",\"ts_utc\":%s,\"event_seq\":%I64u,\"event\":%s,\"severity\":%s,\"peer\":%s,\"file\":%s,\"action\":%s,\"reason\":%s,\"evidence\":%s}\r\n"),
-		BadPeerInstrumentationSeams::kBinaryMarker,
+		BadPeerDiagnosticsSeams::kBinaryMarker,
 		(LPCTSTR)JsonString(BuildDiagnosticsTimestampUtc()),
 		ullEventSeq,
 		(LPCTSTR)JsonString(pszEvent),
@@ -197,7 +197,7 @@ void WriteEvent(
 		(LPCTSTR)JsonString(pszReason),
 		(LPCTSTR)strEvidence);
 
-	WriteDiagnosticsLogLine(g_badPeerInstrumentationLog, g_badPeerInstrumentationLogLock, strJson);
+	WriteDiagnosticsLogLine(g_badPeerDiagnosticsLog, g_badPeerDiagnosticsLogLock, strJson);
 }
 
 SBadPeerBehaviorLedgerState UpdateBehaviorLedger(const CString &strLedgerKey, ULONGLONG curTick)
@@ -293,19 +293,19 @@ CString UploadFileBehaviorEvidenceJson(
 }
 }
 
-namespace BadPeerInstrumentationSeams
+namespace BadPeerDiagnosticsSeams
 {
 void InitializeLog(LPCTSTR pszLogPath, UINT uMaxLogFileSize)
 {
 	if (pszLogPath == NULL || pszLogPath[0] == _T('\0'))
 		return;
 
-	InitializeDiagnosticsLog(g_badPeerInstrumentationLog, pszLogPath, uMaxLogFileSize);
+	InitializeDiagnosticsLog(g_badPeerDiagnosticsLog, pszLogPath, uMaxLogFileSize);
 }
 
 bool IsEnabled()
 {
-	return g_badPeerInstrumentationLog.IsOpen();
+	return g_badPeerDiagnosticsLog.IsOpen();
 }
 
 void LogClientEvent(

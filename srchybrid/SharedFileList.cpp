@@ -810,7 +810,7 @@ int CAddFileThread::Run()
 		strFilePath += _T('\\');
 	strFilePath += m_strFilename;
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullHashStartUs = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullHashStartUs = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	if (m_partfile)
 		Log(_T("%s %s \"%s\""), (LPCTSTR)GetResString(IDS_HASHINGFILE), (LPCTSTR)FormatDisplayFileName(m_partfile->GetFileName()), (LPCTSTR)strFilePath);
@@ -892,7 +892,7 @@ int CAddFileThread::Run()
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	CString strPhase;
 	strPhase.Format(_T("shared.hash.file.run (%s)"), (LPCTSTR)strFilePath);
-	theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullHashStartUs), ullHashStartUs);
+	theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullHashStartUs), ullHashStartUs);
 #endif
 
 	hashingLock.Unlock();
@@ -1013,29 +1013,29 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	m_Files_map.InitHashTable(1031);
 	m_keywords = new CPublishKeywordList;
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullSingleSharedLoadStartUs = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullSingleSharedLoadStartUs = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	LoadSingleSharedFilesList();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileCounter(_T("shared.single_file_rules.loaded"), static_cast<ULONGLONG>(m_liSingleSharedFiles.GetCount()), _T("files"));
-	theApp.AppendStartupProfileCounter(_T("shared.single_file_excludes.loaded"), static_cast<ULONGLONG>(m_liSingleExcludedFiles.GetCount()), _T("files"));
-	theApp.AppendStartupProfileLine(_T("shared.single_file_rules.load"), theApp.GetStartupProfileElapsedUs(ullSingleSharedLoadStartUs), ullSingleSharedLoadStartUs);
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.single_file_rules.loaded"), static_cast<ULONGLONG>(m_liSingleSharedFiles.GetCount()), _T("files"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.single_file_excludes.loaded"), static_cast<ULONGLONG>(m_liSingleExcludedFiles.GetCount()), _T("files"));
+	theApp.AppendStartupDiagnosticsLine(_T("shared.single_file_rules.load"), theApp.GetStartupDiagnosticsElapsedUs(ullSingleSharedLoadStartUs), ullSingleSharedLoadStartUs);
 #endif
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullStartupCacheLoadStartUs = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullStartupCacheLoadStartUs = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	(void)TryLoadStartupCache();
 	(void)TryLoadDuplicatePathCache();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("shared.startup_caches.load"), theApp.GetStartupProfileElapsedUs(ullStartupCacheLoadStartUs), ullStartupCacheLoadStartUs);
+	theApp.AppendStartupDiagnosticsLine(_T("shared.startup_caches.load"), theApp.GetStartupDiagnosticsElapsedUs(ullStartupCacheLoadStartUs), ullStartupCacheLoadStartUs);
 #endif
 	m_nLastStartupCacheSave = ::GetTickCount64();
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	const ULONGLONG ullInitialScanStartUs = theApp.GetStartupProfileTimestampUs();
+	const ULONGLONG ullInitialScanStartUs = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	FindSharedFiles(true);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileLine(_T("shared.scan.initial_total"), theApp.GetStartupProfileElapsedUs(ullInitialScanStartUs), ullInitialScanStartUs);
+	theApp.AppendStartupDiagnosticsLine(_T("shared.scan.initial_total"), theApp.GetStartupDiagnosticsElapsedUs(ullInitialScanStartUs), ullInitialScanStartUs);
 #endif
 	(void)EnsureSharedHashWorkerStarted();
 }
@@ -1166,7 +1166,7 @@ void CSharedFileList::QueueSharedFileForHash(const CString &strDirectory, const 
 	job.strSharedDirectory = strSharedDirectory;
 	job.strFilePathKey = MakeSharedHashFilePathKey(strDirectory, strName);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	job.ullQueuedTimestampUs = theApp.GetStartupProfileTimestampUs();
+	job.ullQueuedTimestampUs = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 
 	{
@@ -1211,9 +1211,9 @@ bool CSharedFileList::WaitForSharedHashJob(SharedHashJob &rJob)
 				const INT_PTR iPendingHashFiles = static_cast<INT_PTR>(m_sharedHashQueue.size() + m_sharedHashPendingCompletions.size() + 1);
 				if (ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iPendingHashFiles))
 				{
-					theApp.AppendStartupProfileCounter(_T("shared.hash.queue_depth_before_start"), static_cast<ULONGLONG>(m_sharedHashQueue.size() + 1), _T("files"));
-					theApp.AppendStartupProfileCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(m_sharedHashQueue.size()), _T("files"));
-					theApp.AppendStartupProfileCounter(_T("shared.hash.currently_hashing"), 1, _T("files"));
+					theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.queue_depth_before_start"), static_cast<ULONGLONG>(m_sharedHashQueue.size() + 1), _T("files"));
+					theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(m_sharedHashQueue.size()), _T("files"));
+					theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.currently_hashing"), 1, _T("files"));
 				}
 #endif
 				return true;
@@ -1239,15 +1239,15 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 		const bool bEmitStartupHashProfileSample = ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, GetHashingCount());
 		if (bEmitStartupHashProfileSample && rJob.ullQueuedTimestampUs != 0) {
-			const ULONGLONG ullHashStartUs = theApp.GetStartupProfileTimestampUs();
+			const ULONGLONG ullHashStartUs = theApp.GetStartupDiagnosticsTimestampUs();
 			CString strPhase;
 			strPhase.Format(_T("shared.hash.file.queue_wait (%s)"), (LPCTSTR)strFilePath);
-			theApp.AppendStartupProfileLine(
+			theApp.AppendStartupDiagnosticsLine(
 				strPhase,
 				(ullHashStartUs >= rJob.ullQueuedTimestampUs) ? (ullHashStartUs - rJob.ullQueuedTimestampUs) : 0ui64,
 				rJob.ullQueuedTimestampUs);
 		}
-		const ULONGLONG ullHashStartUs = theApp.GetStartupProfileTimestampUs();
+		const ULONGLONG ullHashStartUs = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 
 		DbgSetThreadName("Shared hashing %s", (LPCTSTR)rJob.strName);
@@ -1292,7 +1292,7 @@ void CSharedFileList::RunSharedHashJob(const SharedHashJob &rJob)
 		if (bEmitStartupHashProfileSample) {
 			CString strPhase;
 			strPhase.Format(_T("shared.hash.file.run (%s)"), (LPCTSTR)strFilePath);
-			theApp.AppendStartupProfileLine(strPhase, theApp.GetStartupProfileElapsedUs(ullHashStartUs), ullHashStartUs);
+			theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullHashStartUs), ullHashStartUs);
 		}
 #endif
 		hashingLock.Unlock();
@@ -1830,21 +1830,21 @@ void CSharedFileList::FindSharedFiles(const bool bAllowStartupCache)
 	HashNextFile();
 	LogSharedHashProgress(_T("startup-scan"), true);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
-	theApp.AppendStartupProfileCounter(_T("shared.scan.requested_directories"), m_startupScanStats.uRequestedDirectories, _T("directories"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.deduped_directories"), m_startupScanStats.uDedupedDirectories, _T("directories"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.duplicate_directories"), m_startupScanStats.uDuplicateDirectories, _T("directories"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.directories_from_cache"), m_startupScanStats.uDirectoriesFromCache, _T("directories"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.directories_rescanned"), m_startupScanStats.uDirectoriesRescanned, _T("directories"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.inaccessible_directories"), m_startupScanStats.uInaccessibleDirectories, _T("directories"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.directories_over_248_chars"), m_startupScanStats.uDirectoriesOver248Chars, _T("directories"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.paths_over_260_chars"), m_startupScanStats.uPathsOver260Chars, _T("paths"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.known_files_accepted"), m_startupScanStats.uKnownFilesAccepted, _T("files"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.duplicate_paths_reused"), m_startupScanStats.uDuplicatePathsReused, _T("files"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.files_queued_for_hash"), m_startupScanStats.uFilesQueuedForHash, _T("files"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.files_ignored"), m_startupScanStats.uFilesIgnored, _T("files"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.shared_files_after_scan"), static_cast<ULONGLONG>(m_Files_map.GetCount()), _T("files"));
-	theApp.AppendStartupProfileCounter(_T("shared.scan.pending_hashes"), static_cast<ULONGLONG>(GetHashingCount()), _T("files"));
-	theApp.AppendStartupProfileLine(_T("shared.scan.complete"), 0);
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.requested_directories"), m_startupScanStats.uRequestedDirectories, _T("directories"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.deduped_directories"), m_startupScanStats.uDedupedDirectories, _T("directories"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.duplicate_directories"), m_startupScanStats.uDuplicateDirectories, _T("directories"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.directories_from_cache"), m_startupScanStats.uDirectoriesFromCache, _T("directories"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.directories_rescanned"), m_startupScanStats.uDirectoriesRescanned, _T("directories"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.inaccessible_directories"), m_startupScanStats.uInaccessibleDirectories, _T("directories"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.directories_over_248_chars"), m_startupScanStats.uDirectoriesOver248Chars, _T("directories"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.paths_over_260_chars"), m_startupScanStats.uPathsOver260Chars, _T("paths"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.known_files_accepted"), m_startupScanStats.uKnownFilesAccepted, _T("files"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.duplicate_paths_reused"), m_startupScanStats.uDuplicatePathsReused, _T("files"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.files_queued_for_hash"), m_startupScanStats.uFilesQueuedForHash, _T("files"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.files_ignored"), m_startupScanStats.uFilesIgnored, _T("files"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.shared_files_after_scan"), static_cast<ULONGLONG>(m_Files_map.GetCount()), _T("files"));
+	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.pending_hashes"), static_cast<ULONGLONG>(GetHashingCount()), _T("files"));
+	theApp.AppendStartupDiagnosticsLine(_T("shared.scan.complete"), 0);
 #endif
 	m_bStartupDuplicateReuseActive = false;
 }
@@ -2196,10 +2196,10 @@ void CSharedFileList::FileHashingFinished(CKnownFile *file)
 	const INT_PTR iHashingCount = GetHashingCount();
 	if (ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iHashingCount))
 	{
-		theApp.AppendStartupProfileCounter(_T("shared.hash.completed_files"), m_uStartupHashCompletedFiles, _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.failed_files"), m_uStartupHashFailedFiles, _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(iHashingCount), _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.completed_files"), m_uStartupHashCompletedFiles, _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.failed_files"), m_uStartupHashFailedFiles, _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(iHashingCount), _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
 	}
 #endif
 	LogSharedHashProgress(_T("complete"));
@@ -2957,10 +2957,10 @@ void CSharedFileList::HashFailed(UnknownFile_Struct *hashed)
 	const INT_PTR iHashingCount = GetHashingCount();
 	if (ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iHashingCount))
 	{
-		theApp.AppendStartupProfileCounter(_T("shared.hash.completed_files"), m_uStartupHashCompletedFiles, _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.failed_files"), m_uStartupHashFailedFiles, _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(iHashingCount), _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.completed_files"), m_uStartupHashCompletedFiles, _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.failed_files"), m_uStartupHashFailedFiles, _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(iHashingCount), _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
 	}
 #endif
 	LogSharedHashProgress(_T("failed"));
@@ -2980,10 +2980,10 @@ void CSharedFileList::HashFailed(CSharedFileHashResult *pResult)
 	const INT_PTR iHashingCount = GetHashingCount();
 	if (ShouldEmitStartupHashProfileSample(m_uStartupHashCompletedFiles, m_uStartupHashFailedFiles, iHashingCount))
 	{
-		theApp.AppendStartupProfileCounter(_T("shared.hash.completed_files"), m_uStartupHashCompletedFiles, _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.failed_files"), m_uStartupHashFailedFiles, _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(iHashingCount), _T("files"));
-		theApp.AppendStartupProfileCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.completed_files"), m_uStartupHashCompletedFiles, _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.failed_files"), m_uStartupHashFailedFiles, _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.waiting_queue_depth"), static_cast<ULONGLONG>(iHashingCount), _T("files"));
+		theApp.AppendStartupDiagnosticsCounter(_T("shared.hash.currently_hashing"), 0, _T("files"));
 	}
 #endif
 	LogSharedHashProgress(_T("failed"));
@@ -2999,7 +2999,7 @@ void CSharedFileList::UpdateFile(const CKnownFile *toupdate)
 }
 
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
-void CSharedFileList::GetPublishInstrumentationSnapshot(SharedPublishInstrumentationSnapshot &rSnapshot) const
+void CSharedFileList::GetPublishDiagnosticsSnapshot(SharedPublishDiagnosticsSnapshot &rSnapshot) const
 {
 	rSnapshot = {};
 	rSnapshot.iSharedFiles = m_Files_map.GetCount();

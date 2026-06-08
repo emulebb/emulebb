@@ -83,7 +83,7 @@ public:
 	void ShowDetailsPanel(bool bShow);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	void OnStartupSharedFilesModelChanged();
-	void OnStartupProfileStartupComplete();
+	void OnStartupDiagnosticsStartupComplete();
 #endif
 	/**
 	 * @brief Runs any full reload deferred while the shared-file hash worker was active.
