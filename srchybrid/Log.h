@@ -107,6 +107,8 @@ extern CLogFile theLog;
 extern CLogFile theVerboseLog;
 bool InitializeDiagnosticsLog(CLogFile &rLog, LPCTSTR pszLogPath, UINT uMaxLogFileSize);
 void WriteDiagnosticsLogLine(CLogFile &rLog, CCriticalSection &rLock, const CString &rstrLine);
+void WriteDiagnosticsLogLineV(CLogFile &rLog, CCriticalSection &rLock, LPCTSTR pszFmt, va_list argp);
+void WriteDiagnosticsLogLineF(CLogFile &rLog, CCriticalSection &rLock, LPCTSTR pszFmt, ...);
 CString BuildDiagnosticsTimestampUtc();
 CString EscapeDiagnosticsJson(const CString &rstrValue);
 CString BuildDiagnosticsJsonStringField(LPCTSTR pszValue);

@@ -203,7 +203,7 @@ bool InitializeDiagnosticsLog(CLogFile &rLog, LPCTSTR pszLogPath, UINT uMaxLogFi
 	VERIFY(rLog.SetFilePath(pszLogPath));
 	rLog.SetMaxFileSize(uMaxLogFileSize);
 	rLog.SetFileFormat(Utf8);
-	VERIFY(rLog.SetFlushOnWrite(false));
+	VERIFY(rLog.SetFlushOnWrite(true));
 	if (!rLog.Open())
 		return false;
 	rLog.Log(_T("\r\n"));
@@ -223,15 +223,28 @@ void WriteDiagnosticsLogLine(CLogFile &rLog, CCriticalSection &rLock, const CStr
 	rLog.Log(strLine);
 }
 
+void WriteDiagnosticsLogLineV(CLogFile &rLog, CCriticalSection &rLock, LPCTSTR pszFmt, va_list argp)
+{
+	CString strLine;
+	strLine.FormatV(pszFmt, argp);
+	WriteDiagnosticsLogLine(rLog, rLock, strLine);
+}
+
+void WriteDiagnosticsLogLineF(CLogFile &rLog, CCriticalSection &rLock, LPCTSTR pszFmt, ...)
+{
+	va_list argp;
+	va_start(argp, pszFmt);
+	WriteDiagnosticsLogLineV(rLog, rLock, pszFmt, argp);
+	va_end(argp);
+}
+
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 void UploadSlotDiagnosticsLogLine(LPCTSTR pszFmt, ...)
 {
 	va_list argp;
 	va_start(argp, pszFmt);
-	CString strLine;
-	strLine.FormatV(pszFmt, argp);
+	WriteDiagnosticsLogLineV(theUploadSlotDiagnosticsLog, g_uploadSlotDiagnosticsLogLock, pszFmt, argp);
 	va_end(argp);
-	WriteDiagnosticsLogLine(theUploadSlotDiagnosticsLog, g_uploadSlotDiagnosticsLogLock, strLine);
 }
 #endif
 
@@ -240,10 +253,8 @@ void DownloadSlotDiagnosticsLogLine(LPCTSTR pszFmt, ...)
 {
 	va_list argp;
 	va_start(argp, pszFmt);
-	CString strLine;
-	strLine.FormatV(pszFmt, argp);
+	WriteDiagnosticsLogLineV(theDownloadSlotDiagnosticsLog, g_downloadSlotDiagnosticsLogLock, pszFmt, argp);
 	va_end(argp);
-	WriteDiagnosticsLogLine(theDownloadSlotDiagnosticsLog, g_downloadSlotDiagnosticsLogLock, strLine);
 }
 #endif
 
