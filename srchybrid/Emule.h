@@ -63,7 +63,7 @@ namespace AppCommandLineSeams
 
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 /**
- * @brief One Chrome Trace Event row captured for startup profiling.
+ * @brief One Chrome Trace Event row captured for startup diagnostics.
  */
 struct SStartupDiagnosticsTraceEvent
 {
@@ -168,7 +168,7 @@ public:
 	ULONGLONG GetStartupDiagnosticsElapsedUs(ULONGLONG) const		{ return 0; }
 #endif
 	/**
-	 * @brief Appends one startup phase timing sample when profiling is enabled.
+	 * @brief Appends one startup phase timing sample when diagnostics are enabled.
 	 */
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	void AppendStartupDiagnosticsLine(LPCTSTR pszPhase, ULONGLONG ullDurationUs, ULONGLONG ullAbsoluteUs = static_cast<ULONGLONG>(-1));
@@ -176,7 +176,7 @@ public:
 	void AppendStartupDiagnosticsLine(LPCTSTR, ULONGLONG, ULONGLONG = static_cast<ULONGLONG>(-1)) {}
 #endif
 	/**
-	 * @brief Appends one numeric startup profiling counter sample when profiling is enabled.
+	 * @brief Appends one numeric startup diagnostics counter sample when diagnostics are enabled.
 	 */
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	void AppendStartupDiagnosticsCounter(LPCTSTR pszCounterName, ULONGLONG ullValue, LPCTSTR pszValueKey = _T("value"));
@@ -184,7 +184,7 @@ public:
 	void AppendStartupDiagnosticsCounter(LPCTSTR, ULONGLONG, LPCTSTR = _T("value")) {}
 #endif
 	/**
-	 * @brief Rewrites the startup profiling trace with the samples captured so far.
+	 * @brief Rewrites the startup diagnostics trace with the samples captured so far.
 	 */
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	void FlushStartupDiagnosticsTrace();

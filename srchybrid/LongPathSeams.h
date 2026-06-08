@@ -507,7 +507,7 @@ inline void ForgetPreparedPathMemoizationEntry(LPCTSTR pszPath)
 }
 
 /**
- * @brief Returns current path-preparation memoization counters for tests and profiling.
+ * @brief Returns current path-preparation memoization counters for tests and diagnostics.
  */
 inline PreparedPathMemoStats GetPreparedPathMemoizationStats()
 {
