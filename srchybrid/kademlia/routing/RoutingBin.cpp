@@ -55,6 +55,7 @@ CMap<uint32, uint32, uint32, uint32> CRoutingBin::s_mapGlobalContactSubnets;
 
 #define MAX_CONTACTS_SUBNET			10
 #define MAX_CONTACTS_IP				1
+constexpr UINT KAD_LOCAL_QUALITY_REPLACEMENT_MARGIN = 120;
 
 CRoutingBin::CRoutingBin()
 	: m_bDontDeleteContacts()	// Init delete contact flag.
@@ -83,38 +84,13 @@ bool CRoutingBin::AddContact(CContact *pContact)
 	if (pContact == NULL)
 		return false;
 
-	const uint32 uIP = pContact->GetIPAddress();
-	uint32 uSameSubnets = 0;
-	// Check if we already have a contact with this ID in the list.
-	for (ContactList::const_iterator itContact = m_listEntries.begin(); itContact != m_listEntries.end(); ++itContact) {
-		const CContact *pExistingContact = *itContact;
-		if (pExistingContact == NULL)
-			continue;
-		if (pContact->GetClientID() == pExistingContact->m_uClientID)
-			return false;
-		uSameSubnets += static_cast<uint32>(((uIP ^ pExistingContact->GetIPAddress()) & ~0xFF) == 0);
-	}
-
-	// Several checks to make sure that we don't store multiple contacts from the same IP or too many
-	// contacts from the same subnet. This is supposed to add a bit of protection against
-	// several attacks and raise the resource needs (IPs) for a successful contact on the attacker side.
-	// Such IPs are not banned from Kad, they still can index, search, etc.,
-	// so multiple KAD clients behind one IP still work
-	if (!CheckGlobalIPLimits(uIP, pContact->GetUDPPort(), true))
+	if (!CanAcceptContactIPLimits(pContact, true))
 		return false;
-
-	// no more than 2 IPs from the same /24 block in one bin, except if it's a LAN IP
-	// (if we don't accept LAN IPs, they already have been filtered before)
-	if (uSameSubnets >= 2 && !IsLANIP(pContact->GetNetIP())) {
-		if (thePrefs.GetLogFilteredIPs())
-			AddDebugLogLine(false, _T("Ignored kad contact (IP=%s:%u) - too many contacts with the same subnet in RoutingBin"), (LPCTSTR)ipstr(pContact->GetNetIP()), pContact->GetUDPPort());
-		return false;
-	}
 
 	// If not full, add to the end of list
 	if (m_listEntries.size() < K) {
 		m_listEntries.push_back(pContact);
-		AdjustGlobalTracking(uIP, true);
+		AdjustGlobalTracking(pContact->GetIPAddress(), true);
 		return true;
 	}
 	return false;
@@ -231,6 +207,23 @@ CContact* CRoutingBin::GetOldest()
 {
 	// All new/updated entries are appended to the back.
 	return m_listEntries.empty() ? NULL : m_listEntries.front();
+}
+
+CContact* CRoutingBin::GetLowestQualityExpiredContact(time_t tNow)
+{
+	CContact *pLowestQualityContact = NULL;
+	UINT uLowestQuality = UINT_MAX;
+	for (ContactList::const_iterator itContact = m_listEntries.begin(); itContact != m_listEntries.end(); ++itContact) {
+		CContact *pContact = *itContact;
+		if (pContact == NULL || pContact->GetType() == 4 || pContact->m_tExpires == 0 || pContact->m_tExpires >= tNow)
+			continue;
+		const UINT uQuality = pContact->GetLocalQualityScore(tNow);
+		if (pLowestQualityContact == NULL || uQuality < uLowestQuality) {
+			pLowestQualityContact = pContact;
+			uLowestQuality = uQuality;
+		}
+	}
+	return pLowestQualityContact;
 }
 
 void CRoutingBin::GetClosestTo(uint32 uMaxType, const CUInt128 &uTarget, uint32 uMaxRequired, ContactMap &rmapResult, bool bEmptyFirst, bool bInUse)
@@ -411,6 +404,37 @@ CContact* CRoutingBin::GetRandomContact(uint32 nMaxType, uint32 nMinKadVersion)
 	return pLastFit;
 }
 
+bool CRoutingBin::ReplaceWeakContact(CContact *pContact, CContact *&rpRemovedContact, UINT &ruRemovedQuality, UINT &ruNewQuality)
+{
+	rpRemovedContact = NULL;
+	ruRemovedQuality = 0;
+	ruNewQuality = 0;
+
+	ASSERT(pContact != NULL);
+	if (pContact == NULL || m_listEntries.size() < K)
+		return false;
+
+	const time_t tNow = time(NULL);
+	CContact *pWeakContact = GetWeakestReplaceableContact(tNow, ruRemovedQuality);
+	if (pWeakContact == NULL)
+		return false;
+	if (!CanAcceptContactIPLimits(pContact, true, pWeakContact))
+		return false;
+
+	ruNewQuality = pContact->GetLocalQualityScore(tNow);
+	if (ruNewQuality < ruRemovedQuality + KAD_LOCAL_QUALITY_REPLACEMENT_MARGIN)
+		return false;
+
+	// WHY: full unsplittable Kad bins otherwise keep weak stale contacts until
+	// timer probing expires them. This swaps only a non-in-use weak local entry
+	// for a materially healthier contact without changing Kad wire behavior.
+	RemoveContact(pWeakContact);
+	m_listEntries.push_back(pContact);
+	AdjustGlobalTracking(pContact->GetIPAddress(), true);
+	rpRemovedContact = pWeakContact;
+	return true;
+}
+
 void CRoutingBin::SetAllContactsVerified()
 {
 	// Find contact by ID.
@@ -449,4 +473,52 @@ bool CRoutingBin::HasOnlyLANNodes() const
 			return false;
 
 	return true;
+}
+
+bool CRoutingBin::CanAcceptContactIPLimits(const CContact *pContact, bool bLog, const CContact *pIgnoredContact) const
+{
+	ASSERT(pContact != NULL);
+	if (pContact == NULL)
+		return false;
+
+	const uint32 uIP = pContact->GetIPAddress();
+	uint32 uSameSubnets = 0;
+	for (ContactList::const_iterator itContact = m_listEntries.begin(); itContact != m_listEntries.end(); ++itContact) {
+		const CContact *pExistingContact = *itContact;
+		if (pExistingContact == NULL || pExistingContact == pIgnoredContact)
+			continue;
+		if (pContact->GetClientID() == pExistingContact->m_uClientID)
+			return false;
+		uSameSubnets += static_cast<uint32>(((uIP ^ pExistingContact->GetIPAddress()) & ~0xFF) == 0);
+	}
+
+	// Several checks make sure that we don't store multiple contacts from the same IP or too many
+	// contacts from the same subnet. Such IPs are not banned from Kad, they still can index, search, etc.
+	if (!CheckGlobalIPLimits(uIP, pContact->GetUDPPort(), bLog))
+		return false;
+
+	// No more than 2 IPs from the same /24 block in one bin, except LAN IPs.
+	if (uSameSubnets >= 2 && !IsLANIP(pContact->GetNetIP())) {
+		if (bLog && thePrefs.GetLogFilteredIPs())
+			AddDebugLogLine(false, _T("Ignored kad contact (IP=%s:%u) - too many contacts with the same subnet in RoutingBin"), (LPCTSTR)ipstr(pContact->GetNetIP()), pContact->GetUDPPort());
+		return false;
+	}
+	return true;
+}
+
+CContact* CRoutingBin::GetWeakestReplaceableContact(time_t tNow, UINT &ruQuality) const
+{
+	CContact *pWeakestContact = NULL;
+	ruQuality = UINT_MAX;
+	for (ContactList::const_iterator itContact = m_listEntries.begin(); itContact != m_listEntries.end(); ++itContact) {
+		CContact *pContact = *itContact;
+		if (pContact == NULL || !pContact->IsWeakForReplacement(tNow))
+			continue;
+		const UINT uQuality = pContact->GetLocalQualityScore(tNow);
+		if (pWeakestContact == NULL || uQuality < ruQuality) {
+			pWeakestContact = pContact;
+			ruQuality = uQuality;
+		}
+	}
+	return pWeakestContact;
 }

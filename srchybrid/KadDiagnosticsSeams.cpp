@@ -73,11 +73,12 @@ CString ContactJson(const Kademlia::CContact *pContact)
 	const LONGLONG llLastSeenAgeSeconds = tNow >= tLastSeen ? static_cast<LONGLONG>(tNow - tLastSeen) : 0;
 	const LONGLONG llExpiresInSeconds = tExpires >= tNow ? static_cast<LONGLONG>(tExpires - tNow) : -static_cast<LONGLONG>(tNow - tExpires);
 	const UINT uDistanceBucket = GetKadDistanceBucket(pContact->GetDistance());
+	const UINT uLocalQualityScore = pContact->GetLocalQualityScore(tNow);
 	const bool bHasUdpKey = !pContact->GetUDPKey().IsEmpty();
 
 	CString strJson;
 	strJson.Format(
-		_T("{\"node_id\":%s,\"address\":%s,\"udp_port\":%u,\"tcp_port\":%u,\"version\":%u,\"type\":%u,\"ip_verified\":%s,\"received_hello\":%s,\"bootstrap\":%s,\"has_udp_key\":%s,\"distance_bucket\":%u,\"age_seconds\":%I64d,\"last_seen_age_seconds\":%I64d,\"expires_in_seconds\":%I64d}"),
+		_T("{\"node_id\":%s,\"address\":%s,\"udp_port\":%u,\"tcp_port\":%u,\"version\":%u,\"type\":%u,\"ip_verified\":%s,\"received_hello\":%s,\"bootstrap\":%s,\"has_udp_key\":%s,\"distance_bucket\":%u,\"local_quality_score\":%u,\"age_seconds\":%I64d,\"last_seen_age_seconds\":%I64d,\"expires_in_seconds\":%I64d}"),
 		(LPCTSTR)JsonString(pContact->GetClientID().ToHexString()),
 		(LPCTSTR)JsonString(ipstr(pContact->GetNetIP())),
 		static_cast<UINT>(pContact->GetUDPPort()),
@@ -89,6 +90,7 @@ CString ContactJson(const Kademlia::CContact *pContact)
 		BoolJson(pContact->IsBootstrapContact()),
 		BoolJson(bHasUdpKey),
 		uDistanceBucket,
+		uLocalQualityScore,
 		llAgeSeconds,
 		llLastSeenAgeSeconds,
 		llExpiresInSeconds);

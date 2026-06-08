@@ -83,6 +83,8 @@ namespace Kademlia
 		time_t	GetExpireTime() const					{ return m_tExpires; }
 		time_t	GetLastTypeSet() const					{ return m_tLastTypeSet; }
 		time_t	GetLastSeen() const;
+		UINT	GetLocalQualityScore(time_t tNow = 0) const;
+		bool	IsWeakForReplacement(time_t tNow = 0) const;
 		void	Expire();
 
 		bool	GetReceivedHelloPacket() const			{ return m_bReceivedHelloPacket; }

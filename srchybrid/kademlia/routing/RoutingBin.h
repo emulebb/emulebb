@@ -52,6 +52,7 @@ namespace Kademlia
 		CContact* GetContact(uint32 uIP, uint16 nPort, bool bTCPPort);
 		bool ContainsContactPointer(const CContact *pContact) const;
 		CContact* GetOldest();
+		CContact* GetLowestQualityExpiredContact(time_t tNow);
 		UINT GetSize() const;
 		void GetNumContacts(uint32 &nInOutContacts, uint32 &nInOutFilteredContacts, uint8 byMinVersion) const;
 		UINT GetRemaining() const;
@@ -60,6 +61,7 @@ namespace Kademlia
 		bool ChangeContactIPAddress(CContact *pContact, uint32 uNewIP);
 		void PushToBottom(CContact *pContact); // puts an existing contact from X to the end of the list
 		CContact* GetRandomContact(uint32 nMaxType, uint32 nMinKadVersion);
+		bool ReplaceWeakContact(CContact *pContact, CContact *&rpRemovedContact, UINT &ruRemovedQuality, UINT &ruNewQuality);
 		void SetAllContactsVerified();
 		static bool CheckGlobalIPLimits(uint32 uIP, uint16 uPort, bool bLog);
 		bool HasOnlyLANNodes() const;
@@ -70,6 +72,9 @@ namespace Kademlia
 		static void	AdjustGlobalTracking(uint32 uIP, bool bIncrease);
 
 	private:
+		bool CanAcceptContactIPLimits(const CContact *pContact, bool bLog, const CContact *pIgnoredContact = NULL) const;
+		CContact* GetWeakestReplaceableContact(time_t tNow, UINT &ruQuality) const;
+
 		ContactList m_listEntries;
 
 		static CMap<uint32, uint32, uint32, uint32> s_mapGlobalContactIPs;

@@ -610,6 +610,20 @@ bool CRoutingZone::Add(CContact *pContact, bool &bUpdate, bool &bOutIPVerified)
 		Split();
 		return m_pSubZones[pContact->GetDistance().GetBitNumber(m_uLevel)]->Add(pContact, bUpdate, bOutIPVerified);
 	}
+	CContact *pRemovedContact = NULL;
+	UINT uRemovedQuality = 0;
+	UINT uNewQuality = 0;
+	if (m_pBin->ReplaceWeakContact(pContact, pRemovedContact, uRemovedQuality, uNewQuality)) {
+		CString strEvidence;
+		strEvidence.Format(_T("{\"removed_quality_score\":%u,\"new_quality_score\":%u}"), uRemovedQuality, uNewQuality);
+		EMULEBB_KAD_LOG_CONTACT_EVENT(_T("kad_contact_removed"), _T("info"), pRemovedContact, _T("replace-contact"), _T("weak-local-quality"), strEvidence);
+		delete pRemovedContact;
+		if (theApp.emuledlg->kademliawnd->ContactAdd(pContact))
+			pContact->SetGuiRefs(true);
+		EMULEBB_KAD_LOG_CONTACT_EVENT(_T("kad_contact_added"), _T("info"), pContact, _T("replace-weak-contact"), _T("local-quality-score"), strEvidence);
+		bUpdate = false;
+		return true;
+	}
 	bUpdate = false;
 	EMULEBB_KAD_LOG_CONTACT_EVENT(_T("kad_contact_rejected"), _T("info"), pContact, _T("ignore-contact"), _T("bin-full-unsplittable"));
 	return false;
@@ -860,12 +874,7 @@ void CRoutingZone::OnSmallTimer()
 		if (pContact->m_tExpires == 0)
 			pContact->m_tExpires = tNow;
 	}
-	pContact = m_pBin->GetOldest();
-	if (pContact != NULL)
-		if (pContact->m_tExpires >= tNow || pContact->GetType() == 4) {
-			m_pBin->PushToBottom(pContact);
-			pContact = NULL;
-		}
+	pContact = m_pBin->GetLowestQualityExpiredContact(tNow);
 
 	if (pContact != NULL) {
 		pContact->CheckingType();

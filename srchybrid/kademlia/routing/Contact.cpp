@@ -52,6 +52,22 @@ static char THIS_FILE[] = __FILE__;
 
 using namespace Kademlia;
 
+namespace
+{
+	UINT GetKadVersionQuality(uint8 uVersion)
+	{
+		if (uVersion >= KADEMLIA_VERSION)
+			return 12;
+		if (uVersion >= KADEMLIA_VERSION9_50a)
+			return 9;
+		if (uVersion >= KADEMLIA_VERSION8_49b)
+			return 6;
+		if (uVersion >= KADEMLIA_VERSION6_49aBETA)
+			return 3;
+		return 0;
+	}
+}
+
 CContact::~CContact()
 {
 	if (m_bGuiRefs)
@@ -70,6 +86,8 @@ CContact::CContact()
 	, m_byType(3)
 	, m_bGuiRefs()
 	, m_bIPVerified()
+	, m_bReceivedHelloPacket()
+	, m_bBootstrapContact()
 {
 	InitContact();
 }
@@ -227,6 +245,70 @@ time_t CContact::GetLastSeen() const
 			return m_tExpires - HR2S(2);
 		}
 	return 0;
+}
+
+UINT CContact::GetLocalQualityScore(time_t tNow) const
+{
+	if (tNow == 0)
+		tNow = time(NULL);
+	if (m_byType >= 4)
+		return 0;
+
+	UINT uScore = 0;
+	if (m_bIPVerified)
+		uScore += 400;
+	if (m_bReceivedHelloPacket)
+		uScore += 240;
+	if (!m_cUDPKey.IsEmpty())
+		uScore += 160;
+
+	switch (m_byType) {
+	case 0:
+		uScore += 120;
+		break;
+	case 1:
+		uScore += 90;
+		break;
+	case 2:
+		uScore += 60;
+		break;
+	case 3:
+		uScore += 20;
+		break;
+	}
+
+	time_t tLastSeen = GetLastSeen();
+	if (tLastSeen == 0)
+		tLastSeen = m_tCreated;
+	const time_t tAge = tNow >= tLastSeen ? tNow - tLastSeen : 0;
+	if (tAge <= MIN2S(15))
+		uScore += 90;
+	else if (tAge <= HR2S(1))
+		uScore += 70;
+	else if (tAge <= HR2S(4))
+		uScore += 50;
+	else if (tAge <= HR2S(12))
+		uScore += 25;
+
+	if (m_bBootstrapContact)
+		uScore += 10;
+	uScore += GetKadVersionQuality(m_uVersion);
+	return uScore;
+}
+
+bool CContact::IsWeakForReplacement(time_t tNow) const
+{
+	if (tNow == 0)
+		tNow = time(NULL);
+	if (InUse())
+		return false;
+	if (m_byType >= 4)
+		return true;
+	if (m_tExpires > 0 && m_tExpires <= tNow)
+		return true;
+	if (!m_bIPVerified && !m_bReceivedHelloPacket && m_cUDPKey.IsEmpty())
+		return true;
+	return GetLocalQualityScore(tNow) < 260;
 }
 
 void Kademlia::CContact::Expire() //mark contact for removal
