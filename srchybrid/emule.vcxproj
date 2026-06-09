@@ -55,6 +55,13 @@
     <CryptoPpRoot>$(ThirdPartyRoot)emulebb-cryptopp\</CryptoPpRoot>
     <NlohmannJsonRoot>$(ThirdPartyRoot)emulebb-nlohmann-json\single_include\</NlohmannJsonRoot>
     <ZlibRoot>$(ThirdPartyRoot)emulebb-zlib\</ZlibRoot>
+    <CryptoPpLibRoot Condition="'$(CryptoPpLibRoot)'==''">$(CryptoPpRoot)$(Platform)\Output\$(Configuration)\</CryptoPpLibRoot>
+    <Id3libLibRoot Condition="'$(Id3libLibRoot)'==''">$(Id3libRoot)libprj\$(Platform)\$(Configuration)\</Id3libLibRoot>
+    <MbedTlsLibRoot Condition="'$(MbedTlsLibRoot)'==''">$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\$(Configuration)\</MbedTlsLibRoot>
+    <MbedTlsCryptoLibRoot Condition="'$(MbedTlsCryptoLibRoot)'==''">$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\</MbedTlsCryptoLibRoot>
+    <MiniUpnpLibRoot Condition="'$(MiniUpnpLibRoot)'==''">$(MiniUpnpRoot)miniupnpc\msvc\$(Platform)\$(Configuration)\</MiniUpnpLibRoot>
+    <ResizableLibLibRoot Condition="'$(ResizableLibLibRoot)'==''">$(ResizableLibRoot)ResizableLib\$(Platform)\$(Configuration)\</ResizableLibLibRoot>
+    <ZlibLibRoot Condition="'$(ZlibLibRoot)'==''">$(ZlibRoot)contrib\vstudio\vc\$(Platform)\$(Configuration)\</ZlibLibRoot>
     <EnableStartupDiagnostics Condition="'$(EnableStartupDiagnostics)'==''">false</EnableStartupDiagnostics>
     <StartupDiagnosticsPreprocessorDefinition Condition="'$(EnableStartupDiagnostics)'=='true'">EMULEBB_ENABLE_STARTUP_DIAGNOSTICS;</StartupDiagnosticsPreprocessorDefinition>
     <PacketDiagnosticsPreprocessorDefinition Condition="'$(EnablePacketDiagnostics)'=='true'">EMULEBB_ENABLE_PACKET_DIAGNOSTICS;</PacketDiagnosticsPreprocessorDefinition>
@@ -65,10 +72,10 @@
     <ExperimentalCoroutinePreprocessorDefinition Condition="'$(PlatformToolset)'=='v145'">_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS;</ExperimentalCoroutinePreprocessorDefinition>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <PcpNatPmpLibRoot Condition="'$(PcpNatPmpLibRoot)'==''">$(PcpNatPmpRoot)cmake-build-x64\lib</PcpNatPmpLibRoot>
+    <PcpNatPmpLibRoot Condition="'$(PcpNatPmpLibRoot)'==''">$(PcpNatPmpRoot)cmake-build-x64\lib\$(Configuration)\</PcpNatPmpLibRoot>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='ARM64'">
-    <PcpNatPmpLibRoot Condition="'$(PcpNatPmpLibRoot)'==''">$(PcpNatPmpRoot)cmake-build-arm64\lib</PcpNatPmpLibRoot>
+    <PcpNatPmpLibRoot Condition="'$(PcpNatPmpLibRoot)'==''">$(PcpNatPmpRoot)cmake-build-arm64\lib\$(Configuration)\</PcpNatPmpLibRoot>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
@@ -97,7 +104,7 @@
       <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;dbghelp.lib;dwmapi.lib;iphlpapi.lib;mfplat.lib;mfreadwrite.lib;mfuuid.lib;ole32.lib;propsys.lib;runtimeobject.lib;shell32.lib;shlwapi.lib;version.lib;wininet.lib;winmm.lib;ws2_32.lib;$(CryptoPpRoot)$(Platform)\Output\$(Configuration)\cryptlib.lib;$(Id3libRoot)libprj\$(Platform)\$(Configuration)\id3lib.lib;$(MbedTlsLibRoot)$(Configuration)\mbedtls.lib;$(MbedTlsLibRoot)$(Configuration)\mbedx509.lib;$(MbedTlsLibRoot)..\tf-psa-crypto\core\$(Configuration)\tfpsacrypto.lib;$(MiniUpnpRoot)miniupnpc\msvc\$(Platform)\$(Configuration)\miniupnpc.lib;$(PcpNatPmpLibRoot)\$(Configuration)\pcpnatpmp.lib;$(ResizableLibRoot)ResizableLib\$(Platform)\$(Configuration)\ResizableLib.lib;$(ZlibRoot)contrib\vstudio\vc\$(Platform)\$(Configuration)\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;dbghelp.lib;dwmapi.lib;iphlpapi.lib;mfplat.lib;mfreadwrite.lib;mfuuid.lib;ole32.lib;propsys.lib;runtimeobject.lib;shell32.lib;shlwapi.lib;version.lib;wininet.lib;winmm.lib;ws2_32.lib;$(CryptoPpLibRoot)cryptlib.lib;$(Id3libLibRoot)id3lib.lib;$(MbedTlsLibRoot)mbedtls.lib;$(MbedTlsLibRoot)mbedx509.lib;$(MbedTlsCryptoLibRoot)tfpsacrypto.lib;$(MiniUpnpLibRoot)miniupnpc.lib;$(PcpNatPmpLibRoot)pcpnatpmp.lib;$(ResizableLibLibRoot)ResizableLib.lib;$(ZlibLibRoot)zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IncrementalLink>true</IncrementalLink>
       <IgnoreSpecificDefaultLibraries>mpr.lib;rasapi32.lib;secur32.lib;sensapi.lib;vfw32.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <LinkControlFlowGuard>true</LinkControlFlowGuard>
@@ -135,7 +142,7 @@
       <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;dbghelp.lib;dwmapi.lib;iphlpapi.lib;mfplat.lib;mfreadwrite.lib;mfuuid.lib;ole32.lib;propsys.lib;runtimeobject.lib;shell32.lib;shlwapi.lib;version.lib;wininet.lib;winmm.lib;ws2_32.lib;$(CryptoPpRoot)$(Platform)\Output\$(Configuration)\cryptlib.lib;$(Id3libRoot)libprj\$(Platform)\$(Configuration)\id3lib.lib;$(MbedTlsLibRoot)$(Configuration)\mbedtls.lib;$(MbedTlsLibRoot)$(Configuration)\mbedx509.lib;$(MbedTlsLibRoot)..\tf-psa-crypto\core\$(Configuration)\tfpsacrypto.lib;$(MiniUpnpRoot)miniupnpc\msvc\$(Platform)\$(Configuration)\miniupnpc.lib;$(PcpNatPmpLibRoot)\$(Configuration)\pcpnatpmp.lib;$(ResizableLibRoot)ResizableLib\$(Platform)\$(Configuration)\ResizableLib.lib;$(ZlibRoot)contrib\vstudio\vc\$(Platform)\$(Configuration)\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;dbghelp.lib;dwmapi.lib;iphlpapi.lib;mfplat.lib;mfreadwrite.lib;mfuuid.lib;ole32.lib;propsys.lib;runtimeobject.lib;shell32.lib;shlwapi.lib;version.lib;wininet.lib;winmm.lib;ws2_32.lib;$(CryptoPpLibRoot)cryptlib.lib;$(Id3libLibRoot)id3lib.lib;$(MbedTlsLibRoot)mbedtls.lib;$(MbedTlsLibRoot)mbedx509.lib;$(MbedTlsCryptoLibRoot)tfpsacrypto.lib;$(MiniUpnpLibRoot)miniupnpc.lib;$(PcpNatPmpLibRoot)pcpnatpmp.lib;$(ResizableLibLibRoot)ResizableLib.lib;$(ZlibLibRoot)zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>mpr.lib;rasapi32.lib;secur32.lib;sensapi.lib;vfw32.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <IncrementalLink>false</IncrementalLink>
