@@ -5059,20 +5059,26 @@ void CPartFile::FlushBuffer(bool bForceICH, bool bNoAICH)
 
 		// Check free disk space against the enforced minimum.
 		if (uMinFreeDiskSpace > 0) {
-			ULONGLONG uFreeDiskSpace = GetFreeDiskSpaceX(GetTmpPath());
 			ULONGLONG uIncrease = uMinFreeDiskSpace;
+			ULONGLONG uRecentFreeSpaceDebit = 0;
 			if (IsNormalFile()) {
-				if (newsize > cursize)
+				if (newsize > cursize) {
+					uRecentFreeSpaceDebit = newsize - cursize;
 					uIncrease = PartFilePersistenceSeams::SaturatingAddBytes(uIncrease, newsize - cursize);
+				}
 			} else {
 				// Check free disk space for compressed/sparse files before possibly increasing the file size
 				// regardless whether the file is increased in size, use the amount of data which will be written
 				// Would need to use disk cluster sizes for more accuracy
+				uRecentFreeSpaceDebit = m_nTotalBufferData;
 				uIncrease = PartFilePersistenceSeams::SaturatingAddBytes(uIncrease, m_nTotalBufferData);
 			}
 			// See if increasing the file would reduce the amount of min. free space below the limit.
 			// Would need to use disk cluster sizes for more accuracy
-			if (uIncrease >= uFreeDiskSpace)
+			const bool bHasFreeDiskSpace = theApp.downloadqueue != NULL
+				? theApp.downloadqueue->HasRecentFreeDiskSpaceForPath(GetTmpPath(), uIncrease, uRecentFreeSpaceDebit)
+				: GetFreeDiskSpaceX(GetTmpPath()) > uIncrease;
+			if (!bHasFreeDiskSpace)
 				AfxThrowFileException(CFileException::diskFull, 0, m_hpartfile.GetFileName());
 		}
 		// Ensure file is big enough for asynchronous writes

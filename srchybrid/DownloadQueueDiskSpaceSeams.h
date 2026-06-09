@@ -9,8 +9,12 @@
 
 #include "PartFilePersistenceSeams.h"
 
+#define EMULEBB_TEST_HAVE_RECENT_VOLUME_FREE_SPACE_SNAPSHOT 1
+
 namespace DownloadQueueDiskSpaceSeams
 {
+inline constexpr uint64_t kRecentVolumeFreeSpaceSnapshotMaxAgeMs = 500u;
+
 enum class FileDiskSpaceStatus : uint8_t
 {
 	Active = 0,
@@ -147,6 +151,18 @@ inline bool ShouldReserveProtectedVolumeSnapshotDemand(const bool bSnapshotValid
 inline bool ShouldInvalidateRequiredFreeSpacePathCacheAfterReservation(const bool bReservedDemand)
 {
 	return bReservedDemand;
+}
+
+inline bool IsRecentVolumeFreeSpaceSnapshotFresh(const uint64_t nNowTick, const uint64_t nSnapshotTick, const uint64_t nMaxAgeMs)
+{
+	return nSnapshotTick != 0u
+		&& nNowTick >= nSnapshotTick
+		&& nNowTick - nSnapshotTick <= nMaxAgeMs;
+}
+
+inline uint64_t DiscountRecentVolumeFreeSpaceSnapshot(const uint64_t nFreeBytes, const uint64_t nReservedBytes)
+{
+	return nFreeBytes > nReservedBytes ? nFreeBytes - nReservedBytes : 0u;
 }
 
 inline bool WasProtectedVolumeSnapshotDemandFullyReserved(const bool bShouldReserveDemand, const bool bReservedTempDemand, const bool bNeedsIncomingDemand, const bool bReservedIncomingDemand)

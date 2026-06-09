@@ -191,6 +191,10 @@ public:
 	 * @brief Returns the effective required free bytes for the protected volume hosting the given path.
 	 */
 	ULONGLONG GetRequiredFreeDiskSpaceForPath(LPCTSTR pszPath) const;
+	/**
+	 * @brief Checks a short-lived volume free-space snapshot for repeated write-buffer preflights.
+	 */
+	bool	HasRecentFreeDiskSpaceForPath(LPCTSTR pszPath, ULONGLONG ullRequiredBytes, ULONGLONG ullDebitBytes, ULONGLONG *pullEffectiveFreeBytes = NULL) const;
 
 	void	ExportPartMetFilesOverview() const;
 	void	OnConnectionState(bool bConnected);
@@ -249,6 +253,17 @@ private:
 	{
 		CString Path;
 		ULONGLONG RequiredBytes;
+	};
+
+	/**
+	 * @brief Caches current free-space probes briefly by resolved Windows volume identity.
+	 */
+	struct VolumeFreeDiskSpaceCacheEntry
+	{
+		CString VolumeId;
+		ULONGLONG FreeBytes;
+		ULONGLONG ReservedBytes;
+		ULONGLONG Tick;
 	};
 	/**
 	 * @brief Tracks the next part-file number to probe for a temp directory during one bulk add.
@@ -310,6 +325,7 @@ private:
 	CString	m_strProtectedDiskSpaceBreachSignature;
 	mutable CArray<ProtectedVolumeStatus, const ProtectedVolumeStatus&> m_aProtectedVolumeStatusSnapshot;
 	mutable CArray<RequiredFreeDiskSpacePathCacheEntry, const RequiredFreeDiskSpacePathCacheEntry&> m_aRequiredFreeDiskSpacePathCache;
+	mutable CArray<VolumeFreeDiskSpaceCacheEntry, const VolumeFreeDiskSpaceCacheEntry&> m_aRecentVolumeFreeDiskSpaceCache;
 	mutable CArray<BulkPartFileNumberCacheEntry, const BulkPartFileNumberCacheEntry&> m_aBulkPartFileNumberCache;
 	mutable ULONGLONG m_ullProtectedVolumeStatusSnapshotTick;
 	mutable bool m_bProtectedVolumeStatusSnapshotValid;

@@ -225,6 +225,7 @@ CDownloadQueue::CDownloadQueue()
 	, m_strProtectedDiskSpaceBreachSignature()
 	, m_aProtectedVolumeStatusSnapshot()
 	, m_aRequiredFreeDiskSpacePathCache()
+	, m_aRecentVolumeFreeDiskSpaceCache()
 	, m_aBulkPartFileNumberCache()
 	, m_ullProtectedVolumeStatusSnapshotTick()
 	, m_bProtectedVolumeStatusSnapshotValid()
@@ -563,6 +564,59 @@ ULONGLONG CDownloadQueue::GetRequiredFreeDiskSpaceForPath(LPCTSTR pszPath) const
 		return thePrefs.GetEffectiveMinFreeDiskSpaceForPath(pszPath);
 
 	return AddRequiredBytesForVolumePath(pszPath, strVolumeId);
+}
+
+bool CDownloadQueue::HasRecentFreeDiskSpaceForPath(LPCTSTR pszPath, const ULONGLONG ullRequiredBytes, const ULONGLONG ullDebitBytes, ULONGLONG *pullEffectiveFreeBytes) const
+{
+	if (pullEffectiveFreeBytes != NULL)
+		*pullEffectiveFreeBytes = 0;
+	if (pszPath == NULL || pszPath[0] == _T('\0'))
+		return ullRequiredBytes == 0;
+
+	CString strVolumeId;
+	if (!TryGetVolumeIdentityPath(pszPath, strVolumeId) || strVolumeId.IsEmpty()) {
+		const ULONGLONG ullFreshFreeBytes = GetFreeDiskSpaceX(pszPath);
+		if (pullEffectiveFreeBytes != NULL)
+			*pullEffectiveFreeBytes = ullFreshFreeBytes;
+		return ullFreshFreeBytes > ullRequiredBytes;
+	}
+
+	const ULONGLONG ullNow = ::GetTickCount64();
+	for (INT_PTR i = 0; i < m_aRecentVolumeFreeDiskSpaceCache.GetCount(); ++i) {
+		VolumeFreeDiskSpaceCacheEntry &rEntry = m_aRecentVolumeFreeDiskSpaceCache[i];
+		if (rEntry.VolumeId != strVolumeId)
+			continue;
+
+		if (!DownloadQueueDiskSpaceSeams::IsRecentVolumeFreeSpaceSnapshotFresh(
+				ullNow,
+				rEntry.Tick,
+				DownloadQueueDiskSpaceSeams::kRecentVolumeFreeSpaceSnapshotMaxAgeMs))
+		{
+			rEntry.FreeBytes = GetFreeDiskSpaceX(pszPath);
+			rEntry.ReservedBytes = 0;
+			rEntry.Tick = ullNow;
+		}
+
+		const ULONGLONG ullEffectiveFreeBytes = DownloadQueueDiskSpaceSeams::DiscountRecentVolumeFreeSpaceSnapshot(rEntry.FreeBytes, rEntry.ReservedBytes);
+		if (pullEffectiveFreeBytes != NULL)
+			*pullEffectiveFreeBytes = ullEffectiveFreeBytes;
+		if (ullEffectiveFreeBytes <= ullRequiredBytes)
+			return false;
+		rEntry.ReservedBytes = PartFilePersistenceSeams::SaturatingAddBytes(rEntry.ReservedBytes, ullDebitBytes);
+		return true;
+	}
+
+	const ULONGLONG ullFreeBytes = GetFreeDiskSpaceX(pszPath);
+	if (pullEffectiveFreeBytes != NULL)
+		*pullEffectiveFreeBytes = ullFreeBytes;
+	if (ullFreeBytes <= ullRequiredBytes) {
+		const VolumeFreeDiskSpaceCacheEntry entry = { strVolumeId, ullFreeBytes, 0, ullNow };
+		m_aRecentVolumeFreeDiskSpaceCache.Add(entry);
+		return false;
+	}
+	const VolumeFreeDiskSpaceCacheEntry entry = { strVolumeId, ullFreeBytes, ullDebitBytes, ullNow };
+	m_aRecentVolumeFreeDiskSpaceCache.Add(entry);
+	return true;
 }
 
 void CDownloadQueue::AddPartFilesToShare()
