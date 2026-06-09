@@ -77,6 +77,40 @@ inline std::wstring FormatUploadRateMbValue(const std::uint32_t uBytesPerSec)
 }
 
 /**
+ * @brief Formats the Transfer-window download buffer status with compact technical labels.
+ */
+inline std::wstring FormatDownloadMetricsText(
+	const bool bAutoBroadbandIoEnabled,
+	const std::wstring &rstrBufferedBytes,
+	const std::wstring &rstrBudgetBytes,
+	const std::uint32_t uBufferUtilizationPercent,
+	const std::wstring &rstrFileBufferCap,
+	const std::uint64_t ullBufferedFiles,
+	const std::wstring &rstrLargestBufferedFileBytes,
+	const bool bHasMemory,
+	const std::wstring &rstrAvailableMemoryBytes,
+	const std::uint32_t uMemoryLoadPercent)
+{
+	std::wstring strMetrics = L"DL buf " + rstrBufferedBytes;
+	if (bAutoBroadbandIoEnabled) {
+		strMetrics += L"/" + rstrBudgetBytes
+			+ L" " + std::to_wstring(uBufferUtilizationPercent) + L"%";
+	} else {
+		strMetrics += L" | cap=" + rstrFileBufferCap;
+	}
+	strMetrics += L" | f=" + std::to_wstring(ullBufferedFiles)
+		+ L" lg=" + rstrLargestBufferedFileBytes
+		+ L" | RAM ";
+	if (bHasMemory) {
+		strMetrics += rstrAvailableMemoryBytes
+			+ L" free " + std::to_wstring(uMemoryLoadPercent) + L"%";
+	} else {
+		strMetrics += L"n/a";
+	}
+	return strMetrics;
+}
+
+/**
  * @brief Formats the Transfer-window queue footer with compact broadband upload state.
  */
 inline std::wstring FormatQueueCountText(

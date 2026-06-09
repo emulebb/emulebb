@@ -408,41 +408,39 @@ void CTransferWnd::UpdateDownloadMetricsText()
 	if (bAutoBroadbandIoEnabled) {
 		const uint64 ullBudgetBytes = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetAdaptiveGlobalDownloadBufferBudgetBytes() : 0u;
 		const uint32 uBufferUtilizationPercent = TransferWndSeams::CalculateDownloadBufferUtilizationPercent(ullBufferedBytes, ullBudgetBytes);
-		if (m_bLastDownloadMetricsMemoryValid) {
-			strMetrics.Format(
-				_T("Auto DL buffer %s / %s RAM budget (%u files, max %s, %u%%) | RAM %s free, %lu%% used"),
-				(LPCTSTR)CastItoXBytes(ullBufferedBytes),
-				(LPCTSTR)CastItoXBytes(ullBudgetBytes),
-				uBufferedFiles,
-				(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
-				uBufferUtilizationPercent,
-				(LPCTSTR)CastItoXBytes(m_ullLastDownloadMetricsAvailPhys),
-				static_cast<unsigned long>(m_dwLastDownloadMetricsMemoryLoad));
-		} else {
-			strMetrics.Format(
-				_T("Auto DL buffer %s / %s RAM budget (%u files, max %s, %u%%) | RAM n/a"),
-				(LPCTSTR)CastItoXBytes(ullBufferedBytes),
-				(LPCTSTR)CastItoXBytes(ullBudgetBytes),
-				uBufferedFiles,
-				(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
-				uBufferUtilizationPercent);
-		}
-	} else if (m_bLastDownloadMetricsMemoryValid) {
-		strMetrics.Format(
-			_T("DL buffer %s (%u files, max %s) | Auto buffer off, file cap %s | RAM %s free, %lu%% used"),
-			(LPCTSTR)CastItoXBytes(ullBufferedBytes),
+		const CStringW strBufferedBytes(CastItoXBytes(ullBufferedBytes));
+		const CStringW strBudgetBytes(CastItoXBytes(ullBudgetBytes));
+		const CStringW strLargestBufferedFileBytes(CastItoXBytes(ullLargestBufferedFileBytes));
+		const CStringW strAvailableMemoryBytes(CastItoXBytes(m_ullLastDownloadMetricsAvailPhys));
+		const std::wstring strMetricsValue(TransferWndSeams::FormatDownloadMetricsText(
+			true,
+			static_cast<LPCWSTR>(strBufferedBytes),
+			static_cast<LPCWSTR>(strBudgetBytes),
+			uBufferUtilizationPercent,
+			L"",
 			uBufferedFiles,
-			(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
-			(LPCTSTR)CastItoXBytes(thePrefs.GetFileBufferSize()),
-			(LPCTSTR)CastItoXBytes(m_ullLastDownloadMetricsAvailPhys),
-			static_cast<unsigned long>(m_dwLastDownloadMetricsMemoryLoad));
+			static_cast<LPCWSTR>(strLargestBufferedFileBytes),
+			m_bLastDownloadMetricsMemoryValid,
+			static_cast<LPCWSTR>(strAvailableMemoryBytes),
+			m_dwLastDownloadMetricsMemoryLoad));
+		strMetrics = strMetricsValue.c_str();
 	} else {
-		strMetrics.Format(
-			_T("DL buffer %s (%u files, max %s) | Auto buffer off, file cap %s | RAM n/a"),
-			(LPCTSTR)CastItoXBytes(ullBufferedBytes),
+		const CStringW strBufferedBytes(CastItoXBytes(ullBufferedBytes));
+		const CStringW strFileBufferCap(CastItoXBytes(thePrefs.GetFileBufferSize()));
+		const CStringW strLargestBufferedFileBytes(CastItoXBytes(ullLargestBufferedFileBytes));
+		const CStringW strAvailableMemoryBytes(CastItoXBytes(m_ullLastDownloadMetricsAvailPhys));
+		const std::wstring strMetricsValue(TransferWndSeams::FormatDownloadMetricsText(
+			false,
+			static_cast<LPCWSTR>(strBufferedBytes),
+			L"",
+			0u,
+			static_cast<LPCWSTR>(strFileBufferCap),
 			uBufferedFiles,
-			(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
-			(LPCTSTR)CastItoXBytes(thePrefs.GetFileBufferSize()));
+			static_cast<LPCWSTR>(strLargestBufferedFileBytes),
+			m_bLastDownloadMetricsMemoryValid,
+			static_cast<LPCWSTR>(strAvailableMemoryBytes),
+			m_dwLastDownloadMetricsMemoryLoad));
+		strMetrics = strMetricsValue.c_str();
 	}
 	if (strMetrics != m_strLastDownloadMetricsText) {
 		SetDlgItemText(IDC_DOWNLOAD_METRICS, strMetrics);
