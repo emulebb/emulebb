@@ -537,7 +537,7 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 
 						for (UINT r = 1; (uint64)filesize > 0 && r;) {
 							r = file.Read(buffer, SENDFILEBUFSIZE);
-							filesize -= r;
+							filesize -= (uint64)r;
 							Data.pSocket->SendData(buffer, r);
 						}
 						file.Close();

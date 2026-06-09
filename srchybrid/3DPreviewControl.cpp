@@ -42,7 +42,7 @@ void C3DPreviewControl::OnPaint()
 	static const RECT outline_rec{0, 0, 34, 18};
 	dc.FrameRect(&outline_rec, &gdiBrush);
 	dc.SelectObject(pOldBrush);						//eklmn: recover an old brush
-	s_preview.SetFileSize((EMFileSize)32u);
+	s_preview.SetFileSize((EMFileSize)32ui64);
 	s_preview.Fill(RGB(192, 192, 255));
 	s_preview.DrawPreview(dc, 1, 1, m_iSliderPos);
 }
