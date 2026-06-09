@@ -3,10 +3,19 @@
 #include <cstddef>
 
 #define EMULEBB_TEST_HAVE_PART_FILE_WRITE_DISPATCH_CAP 1
+#define EMULEBB_TEST_HAVE_PART_FILE_WRITE_CREATE_FLAGS 1
 
 namespace PartFileWriteThreadSeams
 {
 inline constexpr size_t kMaxWriteDispatchesPerWake = 128u;
+
+/**
+ * @brief Returns the file creation flags for asynchronous part-file writes.
+ */
+inline unsigned long BuildPartFileWriteCreateFlags(const unsigned long nOverlappedFlag)
+{
+	return nOverlappedFlag;
+}
 
 /**
  * @brief Reports whether the part-file write helper may submit another overlapped write in this wake.

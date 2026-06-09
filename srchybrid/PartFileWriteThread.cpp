@@ -443,7 +443,7 @@ bool CPartFileWriteThread::AddFile(CPartFile *pFile)
 	ASSERT(m_hPort && HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP);
 	if (pFile && pFile->m_hWrite == INVALID_HANDLE_VALUE) {
 		const CString sPartFile(RemoveFileExtension(pFile->GetFullName()));
-		pFile->m_hWrite = LongPathSeams::CreateFile(sPartFile, GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+		pFile->m_hWrite = LongPathSeams::CreateFile(sPartFile, GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, PartFileWriteThreadSeams::BuildPartFileWriteCreateFlags(FILE_FLAG_OVERLAPPED), NULL);
 		if (pFile->m_hWrite == INVALID_HANDLE_VALUE) {
 			theApp.QueueDebugLogLineEx(LOG_ERROR, _T("Failed to open \"%s\" for overlapped write: %s"), (LPCTSTR)sPartFile, (LPCTSTR)GetErrorMessage(::GetLastError(), 1));
 			pFile->SetStatus(PS_ERROR);
