@@ -61,6 +61,13 @@
     <ResizableLibRoot>$(ThirdPartyRoot)eMule-ResizableLib\</ResizableLibRoot>
     <CryptoPpRoot>$(ThirdPartyRoot)eMule-cryptopp\</CryptoPpRoot>
     <ZlibRoot>$(ThirdPartyRoot)eMule-zlib\</ZlibRoot>
+    <CryptoPpLibRoot Condition="'$(CryptoPpLibRoot)'==''">$(CryptoPpRoot)$(Platform)\Output\$(Configuration)\</CryptoPpLibRoot>
+    <Id3libLibRoot Condition="'$(Id3libLibRoot)'==''">$(Id3libRoot)libprj\$(Platform)\$(Configuration)\</Id3libLibRoot>
+    <MbedTlsLibRoot Condition="'$(MbedTlsLibRoot)'==''">$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\$(Configuration)\</MbedTlsLibRoot>
+    <MbedTlsCryptoLibRoot Condition="'$(MbedTlsCryptoLibRoot)'==''">$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\</MbedTlsCryptoLibRoot>
+    <MiniUpnpLibRoot Condition="'$(MiniUpnpLibRoot)'==''">$(MiniUpnpRoot)miniupnpc\msvc\$(Platform)\$(Configuration)\</MiniUpnpLibRoot>
+    <ResizableLibLibRoot Condition="'$(ResizableLibLibRoot)'==''">$(ResizableLibRoot)ResizableLib\$(Platform)\$(Configuration)\</ResizableLibLibRoot>
+    <ZlibLibRoot Condition="'$(ZlibLibRoot)'==''">$(ZlibRoot)contrib\vstudio\vc\$(Platform)\$(Configuration)\</ZlibLibRoot>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug' or '$(Configuration)'=='Release'">
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
@@ -91,7 +98,7 @@
       <WarningLevel>EnableAllWarnings</WarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;delayimp.lib;iphlpapi.lib;version.lib;winmm.lib;ws2_32.lib;$(CryptoPpRoot)$(Platform)\Output\$(Configuration)\cryptlib.lib;$(Id3libRoot)libprj\$(Platform)\$(Configuration)\id3lib.lib;$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\$(Configuration)\mbedtls.lib;$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\$(Configuration)\mbedx509.lib;$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\tfpsacrypto.lib;$(MiniUpnpRoot)miniupnpc\msvc\$(Platform)\$(Configuration)\miniupnpc.lib;$(ResizableLibRoot)ResizableLib\$(Platform)\$(Configuration)\ResizableLib.lib;$(ZlibRoot)contrib\vstudio\vc\$(Platform)\$(Configuration)\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;delayimp.lib;iphlpapi.lib;version.lib;winmm.lib;ws2_32.lib;$(CryptoPpLibRoot)cryptlib.lib;$(Id3libLibRoot)id3lib.lib;$(MbedTlsLibRoot)mbedtls.lib;$(MbedTlsLibRoot)mbedx509.lib;$(MbedTlsCryptoLibRoot)tfpsacrypto.lib;$(MiniUpnpLibRoot)miniupnpc.lib;$(ResizableLibLibRoot)ResizableLib.lib;$(ZlibLibRoot)zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IncrementalLink>true</IncrementalLink>
       <LinkControlFlowGuard>true</LinkControlFlowGuard>
       <DelayLoadDLLs>gdiplus.dll;msimg32.dll;oleacc.dll;ws2_32.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
@@ -128,7 +135,7 @@
       <WarningLevel>EnableAllWarnings</WarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;delayimp.lib;iphlpapi.lib;version.lib;winmm.lib;ws2_32.lib;$(CryptoPpRoot)$(Platform)\Output\$(Configuration)\cryptlib.lib;$(Id3libRoot)libprj\$(Platform)\$(Configuration)\id3lib.lib;$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\$(Configuration)\mbedtls.lib;$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\$(Configuration)\mbedx509.lib;$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\tfpsacrypto.lib;$(MiniUpnpRoot)miniupnpc\msvc\$(Platform)\$(Configuration)\miniupnpc.lib;$(ResizableLibRoot)ResizableLib\$(Platform)\$(Configuration)\ResizableLib.lib;$(ZlibRoot)contrib\vstudio\vc\$(Platform)\$(Configuration)\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;delayimp.lib;iphlpapi.lib;version.lib;winmm.lib;ws2_32.lib;$(CryptoPpLibRoot)cryptlib.lib;$(Id3libLibRoot)id3lib.lib;$(MbedTlsLibRoot)mbedtls.lib;$(MbedTlsLibRoot)mbedx509.lib;$(MbedTlsCryptoLibRoot)tfpsacrypto.lib;$(MiniUpnpLibRoot)miniupnpc.lib;$(ResizableLibLibRoot)ResizableLib.lib;$(ZlibLibRoot)zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IncrementalLink>false</IncrementalLink>
       <LinkControlFlowGuard>true</LinkControlFlowGuard>
       <DelayLoadDLLs>gdiplus.dll;msimg32.dll;oleacc.dll;ws2_32.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
@@ -162,7 +169,7 @@
       <WarningLevel>EnableAllWarnings</WarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;delayimp.lib;iphlpapi.lib;version.lib;winmm.lib;ws2_32.lib;$(CryptoPpRoot)$(Platform)\Output\Debug\cryptlib.lib;$(Id3libRoot)libprj\$(Platform)\Debug\id3lib.lib;$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\Debug\mbedtls.lib;$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\Debug\mbedx509.lib;$(MbedTlsRoot)visualc\VS2017-$(Platform)\library\tfpsacrypto.lib;$(MiniUpnpRoot)miniupnpc\msvc\$(Platform)\Debug\miniupnpc.lib;$(ResizableLibRoot)ResizableLib\$(Platform)\Debug\ResizableLib.lib;$(ZlibRoot)contrib\vstudio\vc\$(Platform)\Debug\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;delayimp.lib;iphlpapi.lib;version.lib;winmm.lib;ws2_32.lib;$(CryptoPpLibRoot)cryptlib.lib;$(Id3libLibRoot)id3lib.lib;$(MbedTlsLibRoot)mbedtls.lib;$(MbedTlsLibRoot)mbedx509.lib;$(MbedTlsCryptoLibRoot)tfpsacrypto.lib;$(MiniUpnpLibRoot)miniupnpc.lib;$(ResizableLibLibRoot)ResizableLib.lib;$(ZlibLibRoot)zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IncrementalLink>true</IncrementalLink>
       <DelayLoadDLLs>gdiplus.dll;msimg32.dll;oleacc.dll;ws2_32.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
       <IgnoreSpecificDefaultLibraries>mpr.lib;rasapi32.lib;secur32.lib;sensapi.lib;vfw32.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
