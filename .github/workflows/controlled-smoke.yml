@@ -63,16 +63,16 @@ jobs:
       timeout_minutes: 360
       artifact_name: emulebb-controlled-smoke-${{ needs.prepare.outputs.package_version }}-${{ matrix.runner.label }}
       artifact_path: |
-        workspaces/workspace/state/release/emulebb-v${{ needs.prepare.outputs.package_version }}/**
-        workspaces/workspace/state/test-reports/live-e2e-suite/**
-        workspaces/workspace/state/test-artifacts/live-e2e-suite/**
-        workspaces/workspace/state/build-logs/**
+        ${{ runner.temp }}\emulebb-output\release\emulebb-v${{ needs.prepare.outputs.package_version }}\**
+        ${{ runner.temp }}\emulebb-output\reports\live-e2e-suite\**
+        ${{ runner.temp }}\emulebb-output\artifacts\live-e2e-suite\**
+        ${{ runner.temp }}\emulebb-output\logs\builds\**
       failure_artifact_name: emulebb-controlled-smoke-failure-${{ needs.prepare.outputs.short_sha }}-${{ matrix.runner.label }}
       failure_artifact_path: |
-        workspaces/workspace/state/release/**
-        workspaces/workspace/state/test-reports/live-e2e-suite/**
-        workspaces/workspace/state/test-artifacts/live-e2e-suite/**
-        workspaces/workspace/state/build-logs/**
+        ${{ runner.temp }}\emulebb-output\release\**
+        ${{ runner.temp }}\emulebb-output\reports\live-e2e-suite\**
+        ${{ runner.temp }}\emulebb-output\artifacts\live-e2e-suite\**
+        ${{ runner.temp }}\emulebb-output\logs\builds\**
       command: |
         function Ensure-MfcForHostedRunner {
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -143,8 +143,8 @@ jobs:
         Ensure-MfcForHostedRunner
 
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
-        $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\ci\live-wire-inputs.ci.json"
-        $ciInstallRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\ci-suite-install-root"
+        $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci\live-wire-inputs.ci.json"
+        $ciInstallRoot = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci-suite-install-root"
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ciLiveWireInputs) | Out-Null
         $p2pBindInterface = (Get-NetAdapter |
           Where-Object { $_.Status -eq "Up" } |
@@ -163,27 +163,23 @@ jobs:
         } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $ciLiveWireInputs -Encoding utf8
 
         python -m emule_workspace package-release `
-          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
           --config Release `
           --platform x64 `
           --clean `
           --release-version $packageVersion
 
         python -m emule_workspace package-amutorrent `
-          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
           --config Release `
           --platform x64 `
           --clean `
           --release-version $packageVersion
 
         python -m emule_workspace build app `
-          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
           --config Release `
           --platform x64 `
           --variant tracing-harness
 
         python -m emule_workspace test live-e2e `
-          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
           --config Release `
           --platform x64 `
           --materialize-test-install `
@@ -195,7 +191,6 @@ jobs:
           --fail-fast
 
         python -m emule_workspace test live-e2e `
-          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
           --config Release `
           --platform x64 `
           --materialize-test-install `
@@ -216,29 +211,28 @@ jobs:
       timeout_minutes: 360
       artifact_name: emulebb-controlled-smoke-arm64-${{ needs.prepare.outputs.package_version }}
       artifact_path: |
-        workspaces/workspace/state/release/emulebb-v${{ needs.prepare.outputs.package_version }}/**
-        workspaces/workspace/state/test-reports/command-line-smoke/**
-        workspaces/workspace/state/test-artifacts/command-line-smoke/**
-        workspaces/workspace/state/build-logs/**
+        ${{ runner.temp }}\emulebb-output\release\emulebb-v${{ needs.prepare.outputs.package_version }}\**
+        ${{ runner.temp }}\emulebb-output\reports\command-line-smoke\**
+        ${{ runner.temp }}\emulebb-output\artifacts\command-line-smoke\**
+        ${{ runner.temp }}\emulebb-output\logs\builds\**
       failure_artifact_name: emulebb-controlled-smoke-arm64-failure-${{ needs.prepare.outputs.short_sha }}
       failure_artifact_path: |
-        workspaces/workspace/state/release/**
-        workspaces/workspace/state/test-reports/command-line-smoke/**
-        workspaces/workspace/state/test-artifacts/command-line-smoke/**
-        workspaces/workspace/state/build-logs/**
+        ${{ runner.temp }}\emulebb-output\release\**
+        ${{ runner.temp }}\emulebb-output\reports\command-line-smoke\**
+        ${{ runner.temp }}\emulebb-output\artifacts\command-line-smoke\**
+        ${{ runner.temp }}\emulebb-output\logs\builds\**
       command: |
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
 
         python -m emule_workspace package-release `
-          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
           --config Release `
           --platform ARM64 `
           --clean `
           --release-version $packageVersion
 
-        $releaseRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\release\emulebb-v$packageVersion"
+        $releaseRoot = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "release\emulebb-v$packageVersion"
         $packageZip = Join-Path $releaseRoot "emulebb-$packageVersion-arm64.zip"
-        $installRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\test-installs\controlled-smoke-arm64"
+        $installRoot = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\test-installs\controlled-smoke-arm64"
         if (Test-Path -LiteralPath $installRoot) {
           Remove-Item -LiteralPath $installRoot -Recurse -Force
         }

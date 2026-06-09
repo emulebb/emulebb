@@ -23,10 +23,10 @@ jobs:
       timeout_minutes: 240
       artifact_name: emulebb-vs2026-v145-probe-${{ github.sha }}
       artifact_path: |
-        workspaces/workspace/state/v145-probe/**
-        workspaces/workspace/state/build-logs/**
+        ${{ runner.temp }}\emulebb-output\reports\v145-probe\**
+        ${{ runner.temp }}\emulebb-output\logs\builds\**
       command: |
-        $probeRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\v145-probe"
+        $probeRoot = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "reports\v145-probe"
         New-Item -ItemType Directory -Force -Path $probeRoot | Out-Null
 
         $status = "success"
@@ -36,14 +36,12 @@ jobs:
 
         try {
           python -m emule_workspace build libs `
-            --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
             --config Release `
             --platform x64 `
             --clean `
             --build-output-mode ErrorsOnly
 
           python -m emule_workspace build app `
-            --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
             --config Release `
             --platform x64 `
             --variant main `

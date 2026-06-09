@@ -92,18 +92,17 @@ jobs:
       artifact_name: emulebb-${{ needs.prepare.outputs.package_version }}-${{ matrix.asset_arch }}
       artifact_path: nightly-artifacts/*
       failure_artifact_name: emulebb-nightly-build-logs-${{ matrix.asset_arch }}
-      failure_artifact_path: workspaces/workspace/state/build-logs/**
+      failure_artifact_path: ${{ runner.temp }}\emulebb-output\logs\builds\**
       command: |
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
         python -m emule_workspace package-release `
-          --workspace-root $env:EMULEBB_WORKSPACE_ROOT `
           --config Release `
           --platform "${{ matrix.platform }}" `
           --clean `
           --release-version $packageVersion
 
         Add-Type -AssemblyName System.IO.Compression.FileSystem
-        $releaseRoot = Join-Path $env:EMULEBB_WORKSPACE_ROOT "workspaces\workspace\state\release\emulebb-v$packageVersion"
+        $releaseRoot = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "release\emulebb-v$packageVersion"
         $packageZips = @(
           (Join-Path $releaseRoot "emulebb-$packageVersion-${{ matrix.asset_arch }}.zip"),
           (Join-Path $releaseRoot "emulebb-$packageVersion-diagnostics-${{ matrix.asset_arch }}.zip")
