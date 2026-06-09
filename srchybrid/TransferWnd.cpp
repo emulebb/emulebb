@@ -380,34 +380,53 @@ void CTransferWnd::FlushDisplayRefreshMask(uint32 nMask)
 void CTransferWnd::UpdateDownloadMetricsText()
 {
 	const uint64 ullBufferedBytes = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetBufferedDownloadBytes() : 0u;
-	const uint64 ullBudgetBytes = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetAdaptiveGlobalDownloadBufferBudgetBytes() : 0u;
 	const UINT uBufferedFiles = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetBufferedDownloadFileCount() : 0u;
 	const uint64 ullLargestBufferedFileBytes = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetLargestBufferedDownloadFileBytes() : 0u;
-	const uint32 uBufferUtilizationPercent = TransferWndSeams::CalculateDownloadBufferUtilizationPercent(ullBufferedBytes, ullBudgetBytes);
+	const bool bAutoBroadbandIoEnabled = thePrefs.IsDownloadAutoBroadbandIOEnabled();
 
 	MEMORYSTATUSEX memory = {};
 	memory.dwLength = sizeof(memory);
 	const bool bHasMemory = ::GlobalMemoryStatusEx(&memory) != FALSE;
 
 	CString strMetrics;
-	if (bHasMemory) {
+	if (bAutoBroadbandIoEnabled) {
+		const uint64 ullBudgetBytes = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetAdaptiveGlobalDownloadBufferBudgetBytes() : 0u;
+		const uint32 uBufferUtilizationPercent = TransferWndSeams::CalculateDownloadBufferUtilizationPercent(ullBufferedBytes, ullBudgetBytes);
+		if (bHasMemory) {
+			strMetrics.Format(
+				_T("Auto DL buffer %s / %s RAM budget (%u files, max %s, %u%%) | RAM %s free, %lu%% used"),
+				(LPCTSTR)CastItoXBytes(ullBufferedBytes),
+				(LPCTSTR)CastItoXBytes(ullBudgetBytes),
+				uBufferedFiles,
+				(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
+				uBufferUtilizationPercent,
+				(LPCTSTR)CastItoXBytes(static_cast<uint64>(memory.ullAvailPhys)),
+				static_cast<unsigned long>(memory.dwMemoryLoad));
+		} else {
+			strMetrics.Format(
+				_T("Auto DL buffer %s / %s RAM budget (%u files, max %s, %u%%) | RAM n/a"),
+				(LPCTSTR)CastItoXBytes(ullBufferedBytes),
+				(LPCTSTR)CastItoXBytes(ullBudgetBytes),
+				uBufferedFiles,
+				(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
+				uBufferUtilizationPercent);
+		}
+	} else if (bHasMemory) {
 		strMetrics.Format(
-			_T("DL buf %s / %s (%u files, max %s, %u%%) | RAM %s free, %lu%% used"),
+			_T("DL buffer %s (%u files, max %s) | Auto buffer off, file cap %s | RAM %s free, %lu%% used"),
 			(LPCTSTR)CastItoXBytes(ullBufferedBytes),
-			(LPCTSTR)CastItoXBytes(ullBudgetBytes),
 			uBufferedFiles,
 			(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
-			uBufferUtilizationPercent,
+			(LPCTSTR)CastItoXBytes(thePrefs.GetFileBufferSize()),
 			(LPCTSTR)CastItoXBytes(static_cast<uint64>(memory.ullAvailPhys)),
 			static_cast<unsigned long>(memory.dwMemoryLoad));
 	} else {
 		strMetrics.Format(
-			_T("DL buf %s / %s (%u files, max %s, %u%%) | RAM n/a"),
+			_T("DL buffer %s (%u files, max %s) | Auto buffer off, file cap %s | RAM n/a"),
 			(LPCTSTR)CastItoXBytes(ullBufferedBytes),
-			(LPCTSTR)CastItoXBytes(ullBudgetBytes),
 			uBufferedFiles,
 			(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
-			uBufferUtilizationPercent);
+			(LPCTSTR)CastItoXBytes(thePrefs.GetFileBufferSize()));
 	}
 	SetDlgItemText(IDC_DOWNLOAD_METRICS, strMetrics);
 }
