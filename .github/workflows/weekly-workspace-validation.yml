@@ -27,8 +27,8 @@ jobs:
       artifact_path: workspace-validation-summary.md
       failure_artifact_name: emulebb-weekly-workspace-validation-failure-${{ github.run_number }}
       failure_artifact_path: |
-        ${{ runner.temp }}\emulebb-output\logs\builds\**
-        ${{ runner.temp }}\emulebb-output\reports\**
+        logs/builds/**
+        reports/**
       command: |
         python -m emule_workspace validate
 

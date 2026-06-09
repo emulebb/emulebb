@@ -23,8 +23,8 @@ jobs:
       timeout_minutes: 240
       artifact_name: emulebb-vs2026-v145-probe-${{ github.sha }}
       artifact_path: |
-        ${{ runner.temp }}\emulebb-output\reports\v145-probe\**
-        ${{ runner.temp }}\emulebb-output\logs\builds\**
+        reports/v145-probe/**
+        logs/builds/**
       command: |
         $probeRoot = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "reports\v145-probe"
         New-Item -ItemType Directory -Force -Path $probeRoot | Out-Null

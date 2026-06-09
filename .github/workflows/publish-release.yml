@@ -131,7 +131,7 @@ jobs:
       artifact_name: emulebb-${{ needs.prepare.outputs.release_version }}-${{ matrix.asset_arch }}
       artifact_path: release-artifacts/*
       failure_artifact_name: emulebb-release-build-logs-${{ needs.prepare.outputs.release_version }}-${{ matrix.asset_arch }}
-      failure_artifact_path: ${{ runner.temp }}\emulebb-output\logs\builds\**
+      failure_artifact_path: logs/builds/**
       command: |
         $packageVersion = "${{ needs.prepare.outputs.release_version }}"
         $assetArch = "${{ matrix.asset_arch }}"

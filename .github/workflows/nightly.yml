@@ -92,7 +92,7 @@ jobs:
       artifact_name: emulebb-${{ needs.prepare.outputs.package_version }}-${{ matrix.asset_arch }}
       artifact_path: nightly-artifacts/*
       failure_artifact_name: emulebb-nightly-build-logs-${{ matrix.asset_arch }}
-      failure_artifact_path: ${{ runner.temp }}\emulebb-output\logs\builds\**
+      failure_artifact_path: logs/builds/**
       command: |
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
         python -m emule_workspace package-release `

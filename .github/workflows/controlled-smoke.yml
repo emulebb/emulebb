@@ -63,16 +63,16 @@ jobs:
       timeout_minutes: 360
       artifact_name: emulebb-controlled-smoke-${{ needs.prepare.outputs.package_version }}-${{ matrix.runner.label }}
       artifact_path: |
-        ${{ runner.temp }}\emulebb-output\release\emulebb-v${{ needs.prepare.outputs.package_version }}\**
-        ${{ runner.temp }}\emulebb-output\reports\live-e2e-suite\**
-        ${{ runner.temp }}\emulebb-output\artifacts\live-e2e-suite\**
-        ${{ runner.temp }}\emulebb-output\logs\builds\**
+        release/emulebb-v${{ needs.prepare.outputs.package_version }}/**
+        reports/live-e2e-suite/**
+        artifacts/live-e2e-suite/**
+        logs/builds/**
       failure_artifact_name: emulebb-controlled-smoke-failure-${{ needs.prepare.outputs.short_sha }}-${{ matrix.runner.label }}
       failure_artifact_path: |
-        ${{ runner.temp }}\emulebb-output\release\**
-        ${{ runner.temp }}\emulebb-output\reports\live-e2e-suite\**
-        ${{ runner.temp }}\emulebb-output\artifacts\live-e2e-suite\**
-        ${{ runner.temp }}\emulebb-output\logs\builds\**
+        release/**
+        reports/live-e2e-suite/**
+        artifacts/live-e2e-suite/**
+        logs/builds/**
       command: |
         function Ensure-MfcForHostedRunner {
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -211,16 +211,16 @@ jobs:
       timeout_minutes: 360
       artifact_name: emulebb-controlled-smoke-arm64-${{ needs.prepare.outputs.package_version }}
       artifact_path: |
-        ${{ runner.temp }}\emulebb-output\release\emulebb-v${{ needs.prepare.outputs.package_version }}\**
-        ${{ runner.temp }}\emulebb-output\reports\command-line-smoke\**
-        ${{ runner.temp }}\emulebb-output\artifacts\command-line-smoke\**
-        ${{ runner.temp }}\emulebb-output\logs\builds\**
+        release/emulebb-v${{ needs.prepare.outputs.package_version }}/**
+        reports/command-line-smoke/**
+        artifacts/command-line-smoke/**
+        logs/builds/**
       failure_artifact_name: emulebb-controlled-smoke-arm64-failure-${{ needs.prepare.outputs.short_sha }}
       failure_artifact_path: |
-        ${{ runner.temp }}\emulebb-output\release\**
-        ${{ runner.temp }}\emulebb-output\reports\command-line-smoke\**
-        ${{ runner.temp }}\emulebb-output\artifacts\command-line-smoke\**
-        ${{ runner.temp }}\emulebb-output\logs\builds\**
+        release/**
+        reports/command-line-smoke/**
+        artifacts/command-line-smoke/**
+        logs/builds/**
       command: |
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
 
