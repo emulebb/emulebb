@@ -242,7 +242,6 @@ jobs:
         $appRoot = Join-Path $installRoot "eMuleBB"
         $appExe = Join-Path $appRoot "emulebb.exe"
         python $env:EMULEBB_WORKSPACE_ROOT\repos\emulebb-build-tests\scripts\command-line-smoke.py `
-          --workspace-root $env:EMULEBB_WORKSPACE_ROOT\workspaces\workspace `
           --app-root $appRoot `
           --app-exe $appExe `
           --configuration Release
