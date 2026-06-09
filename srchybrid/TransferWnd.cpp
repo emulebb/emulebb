@@ -64,6 +64,8 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
+constexpr ULONGLONG DOWNLOAD_METRICS_MEMORY_SAMPLE_INTERVAL_MS = 2000;
+
 void LogInvalidTransferWndState(LPCTSTR pszContext, const UINT uValue)
 {
 	AddDebugLogLine(DLP_VERYHIGH, false, _T("*** Invalid transfer window state in %s: value=%u"), pszContext, uValue);
@@ -113,6 +115,11 @@ CTransferWnd::CTransferWnd(CWnd* /*pParent =NULL*/)
 	, m_bLayoutInited()
 	, m_eTransferDisplayRefreshState(TRANSFER_DISPLAY_REFRESH_PAUSED)
 	, m_nPendingDisplayRefreshMask()
+	, m_strLastDownloadMetricsText()
+	, m_ullLastDownloadMetricsMemorySampleTick()
+	, m_bLastDownloadMetricsMemoryValid()
+	, m_ullLastDownloadMetricsAvailPhys()
+	, m_dwLastDownloadMetricsMemoryLoad()
 {
 }
 
@@ -384,15 +391,24 @@ void CTransferWnd::UpdateDownloadMetricsText()
 	const uint64 ullLargestBufferedFileBytes = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetLargestBufferedDownloadFileBytes() : 0u;
 	const bool bAutoBroadbandIoEnabled = thePrefs.IsDownloadAutoBroadbandIOEnabled();
 
-	MEMORYSTATUSEX memory = {};
-	memory.dwLength = sizeof(memory);
-	const bool bHasMemory = ::GlobalMemoryStatusEx(&memory) != FALSE;
+	const ULONGLONG ullNow = ::GetTickCount64();
+	if (m_ullLastDownloadMetricsMemorySampleTick == 0
+		|| ullNow - m_ullLastDownloadMetricsMemorySampleTick >= DOWNLOAD_METRICS_MEMORY_SAMPLE_INTERVAL_MS) {
+		MEMORYSTATUSEX memory = {};
+		memory.dwLength = sizeof(memory);
+		m_bLastDownloadMetricsMemoryValid = ::GlobalMemoryStatusEx(&memory) != FALSE;
+		if (m_bLastDownloadMetricsMemoryValid) {
+			m_ullLastDownloadMetricsAvailPhys = static_cast<uint64>(memory.ullAvailPhys);
+			m_dwLastDownloadMetricsMemoryLoad = memory.dwMemoryLoad;
+		}
+		m_ullLastDownloadMetricsMemorySampleTick = ullNow;
+	}
 
 	CString strMetrics;
 	if (bAutoBroadbandIoEnabled) {
 		const uint64 ullBudgetBytes = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetAdaptiveGlobalDownloadBufferBudgetBytes() : 0u;
 		const uint32 uBufferUtilizationPercent = TransferWndSeams::CalculateDownloadBufferUtilizationPercent(ullBufferedBytes, ullBudgetBytes);
-		if (bHasMemory) {
+		if (m_bLastDownloadMetricsMemoryValid) {
 			strMetrics.Format(
 				_T("Auto DL buffer %s / %s RAM budget (%u files, max %s, %u%%) | RAM %s free, %lu%% used"),
 				(LPCTSTR)CastItoXBytes(ullBufferedBytes),
@@ -400,8 +416,8 @@ void CTransferWnd::UpdateDownloadMetricsText()
 				uBufferedFiles,
 				(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
 				uBufferUtilizationPercent,
-				(LPCTSTR)CastItoXBytes(static_cast<uint64>(memory.ullAvailPhys)),
-				static_cast<unsigned long>(memory.dwMemoryLoad));
+				(LPCTSTR)CastItoXBytes(m_ullLastDownloadMetricsAvailPhys),
+				static_cast<unsigned long>(m_dwLastDownloadMetricsMemoryLoad));
 		} else {
 			strMetrics.Format(
 				_T("Auto DL buffer %s / %s RAM budget (%u files, max %s, %u%%) | RAM n/a"),
@@ -411,15 +427,15 @@ void CTransferWnd::UpdateDownloadMetricsText()
 				(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
 				uBufferUtilizationPercent);
 		}
-	} else if (bHasMemory) {
+	} else if (m_bLastDownloadMetricsMemoryValid) {
 		strMetrics.Format(
 			_T("DL buffer %s (%u files, max %s) | Auto buffer off, file cap %s | RAM %s free, %lu%% used"),
 			(LPCTSTR)CastItoXBytes(ullBufferedBytes),
 			uBufferedFiles,
 			(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
 			(LPCTSTR)CastItoXBytes(thePrefs.GetFileBufferSize()),
-			(LPCTSTR)CastItoXBytes(static_cast<uint64>(memory.ullAvailPhys)),
-			static_cast<unsigned long>(memory.dwMemoryLoad));
+			(LPCTSTR)CastItoXBytes(m_ullLastDownloadMetricsAvailPhys),
+			static_cast<unsigned long>(m_dwLastDownloadMetricsMemoryLoad));
 	} else {
 		strMetrics.Format(
 			_T("DL buffer %s (%u files, max %s) | Auto buffer off, file cap %s | RAM n/a"),
@@ -428,7 +444,10 @@ void CTransferWnd::UpdateDownloadMetricsText()
 			(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
 			(LPCTSTR)CastItoXBytes(thePrefs.GetFileBufferSize()));
 	}
-	SetDlgItemText(IDC_DOWNLOAD_METRICS, strMetrics);
+	if (strMetrics != m_strLastDownloadMetricsText) {
+		SetDlgItemText(IDC_DOWNLOAD_METRICS, strMetrics);
+		m_strLastDownloadMetricsText = strMetrics;
+	}
 }
 
 void CTransferWnd::ShowQueueCount(INT_PTR number)

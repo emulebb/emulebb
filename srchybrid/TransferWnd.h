@@ -116,6 +116,11 @@ protected:
 	bool		m_bLayoutInited;
 	ETransferDisplayRefreshState m_eTransferDisplayRefreshState;
 	std::atomic<LONG> m_nPendingDisplayRefreshMask;
+	CString		m_strLastDownloadMetricsText;
+	ULONGLONG	m_ullLastDownloadMetricsMemorySampleTick;
+	bool		m_bLastDownloadMetricsMemoryValid;
+	uint64		m_ullLastDownloadMetricsAvailPhys;
+	DWORD		m_dwLastDownloadMetricsMemoryLoad;
 
 	void	ShowWnd2(EWnd2 uWnd2);
 	void	SetWnd2(EWnd2 uWnd2);
