@@ -3273,6 +3273,7 @@
 #define IDC_MINIMULE_OPENINC            3127
 #define IDC_MINIMULE_OPTIONS            3128
 #define IDC_PROGRESS_HEADER             3129
+#define IDC_DOWNLOAD_METRICS            3131
 #define IDA_ENTER                       32771
 
 // Next default values for new objects
@@ -3281,7 +3282,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        3057
 #define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         3131
+#define _APS_NEXT_CONTROL_VALUE         3132
 #define _APS_NEXT_SYMED_VALUE           3334
 #endif
 #endif

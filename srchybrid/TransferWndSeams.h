@@ -2,6 +2,7 @@
 
 #include <cwchar>
 #include <cstdint>
+#include <limits>
 #include <string>
 
 #include "Resource.h"
@@ -32,6 +33,7 @@ constexpr int kSecondaryPaneClients = 3;
 
 constexpr std::uint32_t kPrimaryListSplit = IDC_DOWNLOADLIST + IDC_UPLOADLIST;
 constexpr std::uint32_t kUploadUtilizationDisplayPercentMax = 999u;
+constexpr std::uint32_t kDownloadBufferUtilizationDisplayPercentMax = 999u;
 
 /**
  * @brief Returns a rounded upload utilization percentage for compact queue status text.
@@ -44,6 +46,22 @@ inline std::uint32_t CalculateUploadUtilizationPercent(
 	if (uMaxBytesPerSec == 0u)
 		return 0u;
 	const std::uint64_t ullPercent = (static_cast<std::uint64_t>(uCurrentBytesPerSec) * 100u + uMaxBytesPerSec / 2u) / uMaxBytesPerSec;
+	return static_cast<std::uint32_t>(ullPercent > uDisplayCapPercent ? uDisplayCapPercent : ullPercent);
+}
+
+/**
+ * @brief Returns a rounded download buffer utilization percentage for compact transfer status text.
+ */
+inline std::uint32_t CalculateDownloadBufferUtilizationPercent(
+	const std::uint64_t ullBufferedBytes,
+	const std::uint64_t ullBudgetBytes,
+	const std::uint32_t uDisplayCapPercent = kDownloadBufferUtilizationDisplayPercentMax)
+{
+	if (ullBudgetBytes == 0u)
+		return 0u;
+	if (ullBufferedBytes > ((std::numeric_limits<std::uint64_t>::max)() - ullBudgetBytes / 2u) / 100u)
+		return uDisplayCapPercent;
+	const std::uint64_t ullPercent = (ullBufferedBytes * 100u + ullBudgetBytes / 2u) / ullBudgetBytes;
 	return static_cast<std::uint32_t>(ullPercent > uDisplayCapPercent ? uDisplayCapPercent : ullPercent);
 }
 

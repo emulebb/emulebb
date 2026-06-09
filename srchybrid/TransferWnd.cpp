@@ -143,6 +143,7 @@ void CTransferWnd::OnInitialUpdate()
 	AddAnchor(IDC_QUEUECOUNT_LABEL, BOTTOM_LEFT);
 	AddAnchor(IDC_QUEUE_REFRESH_BUTTON, BOTTOM_RIGHT);
 	AddAnchor(IDC_DLTAB, TOP_RIGHT);
+	AddAnchor(IDC_DOWNLOAD_METRICS, TOP_LEFT, TOP_RIGHT);
 
 	static const uint32 uLists[6] = {
 		  IDC_DOWNLOADLIST + IDC_UPLOADLIST	//0
@@ -193,6 +194,7 @@ void CTransferWnd::OnInitialUpdate()
 	m_tooltipCats.Activate(TRUE);
 
 	VerifyCatTabSize();
+	LayoutDownloadMetrics();
 	Localize();
 	RefreshTransferDisplayRefreshState(false);
 }
@@ -257,6 +259,41 @@ void CTransferWnd::LayoutQueueFooter()
 	if (iRight < iLeft + iMinimumWidth)
 		iRight = iLeft + iMinimumWidth;
 	pCount->MoveWindow(iLeft, rcCount.top, iRight - iLeft, rcCount.Height(), TRUE);
+}
+
+void CTransferWnd::LayoutDownloadMetrics()
+{
+	CWnd *pMetrics = GetDlgItem(IDC_DOWNLOAD_METRICS);
+	if (pMetrics == NULL || pMetrics->GetSafeHwnd() == NULL || m_btnWnd1.GetSafeHwnd() == NULL || m_dlTab.GetSafeHwnd() == NULL)
+		return;
+
+	CRect rcToolbar;
+	m_btnWnd1.GetWindowRect(&rcToolbar);
+	ScreenToClient(&rcToolbar);
+	CRect rcTab;
+	m_dlTab.GetWindowRect(&rcTab);
+	ScreenToClient(&rcTab);
+
+	const int iLeft = rcToolbar.right + 5;
+	const int iRight = rcTab.left - 5;
+	const int iMinimumWidth = 50;
+	if (iRight < iLeft + iMinimumWidth) {
+		pMetrics->ShowWindow(SW_HIDE);
+		return;
+	}
+
+	CRect rcMetrics;
+	pMetrics->GetWindowRect(&rcMetrics);
+	ScreenToClient(&rcMetrics);
+	rcMetrics.left = iLeft;
+	rcMetrics.right = iRight;
+	rcMetrics.top = rcToolbar.top + max(0, (rcToolbar.Height() - rcMetrics.Height()) / 2);
+	rcMetrics.bottom = rcMetrics.top + rcMetrics.Height();
+
+	RemoveAnchor(IDC_DOWNLOAD_METRICS);
+	pMetrics->MoveWindow(&rcMetrics, TRUE);
+	AddAnchor(IDC_DOWNLOAD_METRICS, TOP_LEFT, TOP_RIGHT);
+	pMetrics->ShowWindow(SW_SHOW);
 }
 
 uint32 CTransferWnd::GetVisibleDisplayRefreshMask(uint32 nMask) const
@@ -336,7 +373,43 @@ void CTransferWnd::FlushDisplayRefreshMask(uint32 nMask)
 		if (thePrefs.ShowCatTabInfos())
 			UpdateCatTabTitles(false);
 		UpdateListCount(CTransferWnd::wnd2Uploading, -1);
+		UpdateDownloadMetricsText();
 	}
+}
+
+void CTransferWnd::UpdateDownloadMetricsText()
+{
+	const uint64 ullBufferedBytes = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetBufferedDownloadBytes() : 0u;
+	const uint64 ullBudgetBytes = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetAdaptiveGlobalDownloadBufferBudgetBytes() : 0u;
+	const UINT uBufferedFiles = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetBufferedDownloadFileCount() : 0u;
+	const uint64 ullLargestBufferedFileBytes = theApp.downloadqueue != NULL ? theApp.downloadqueue->GetLargestBufferedDownloadFileBytes() : 0u;
+	const uint32 uBufferUtilizationPercent = TransferWndSeams::CalculateDownloadBufferUtilizationPercent(ullBufferedBytes, ullBudgetBytes);
+
+	MEMORYSTATUSEX memory = {};
+	memory.dwLength = sizeof(memory);
+	const bool bHasMemory = ::GlobalMemoryStatusEx(&memory) != FALSE;
+
+	CString strMetrics;
+	if (bHasMemory) {
+		strMetrics.Format(
+			_T("DL buf %s / %s (%u files, max %s, %u%%) | RAM %s free, %lu%% used"),
+			(LPCTSTR)CastItoXBytes(ullBufferedBytes),
+			(LPCTSTR)CastItoXBytes(ullBudgetBytes),
+			uBufferedFiles,
+			(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
+			uBufferUtilizationPercent,
+			(LPCTSTR)CastItoXBytes(static_cast<uint64>(memory.ullAvailPhys)),
+			static_cast<unsigned long>(memory.dwMemoryLoad));
+	} else {
+		strMetrics.Format(
+			_T("DL buf %s / %s (%u files, max %s, %u%%) | RAM n/a"),
+			(LPCTSTR)CastItoXBytes(ullBufferedBytes),
+			(LPCTSTR)CastItoXBytes(ullBudgetBytes),
+			uBufferedFiles,
+			(LPCTSTR)CastItoXBytes(ullLargestBufferedFileBytes),
+			uBufferUtilizationPercent);
+	}
+	SetDlgItemText(IDC_DOWNLOAD_METRICS, strMetrics);
 }
 
 void CTransferWnd::ShowQueueCount(INT_PTR number)
@@ -465,8 +538,10 @@ LRESULT CTransferWnd::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 		m_wndSplitter.Invalidate();
 
 	const LRESULT lResult = CResizableFormView::DefWindowProc(message, wParam, lParam);
-	if (message == WM_WINDOWPOSCHANGED)
+	if (message == WM_WINDOWPOSCHANGED) {
+		LayoutDownloadMetrics();
 		LayoutQueueFooter();
+	}
 	return lResult;
 }
 
@@ -939,6 +1014,7 @@ void CTransferWnd::Localize()
 		ShowSplitWindow();
 	else
 		ShowList(m_dwShowListIDC);
+	UpdateDownloadMetricsText();
 	UpdateListCount(m_uWnd2);
 }
 
@@ -1710,6 +1786,7 @@ void CTransferWnd::VerifyCatTabSize()
 	RemoveAnchor(m_dlTab);
 	m_dlTab.SetWindowPlacement(&wp);
 	AddAnchor(m_dlTab, TOP_RIGHT);
+	LayoutDownloadMetrics();
 }
 
 CString CTransferWnd::GetCatTitle(int catid)
@@ -1843,6 +1920,7 @@ void CTransferWnd::ShowList(uint32 dwListIDC)
 		ASSERT(0);
 	}
 	AddAnchor(dwListIDC, TOP_LEFT, BOTTOM_RIGHT);
+	LayoutDownloadMetrics();
 	LayoutQueueFooter();
 	FlushVisibleDisplayRefreshes();
 }
@@ -1929,6 +2007,7 @@ void CTransferWnd::ShowSplitWindow(bool bReDraw)
 
 	GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow((m_uWnd2 == wnd2OnQueue) ? SW_SHOW : SW_HIDE);
 
+	LayoutDownloadMetrics();
 	LayoutQueueFooter();
 	UpdateListCount(m_uWnd2);
 	FlushVisibleDisplayRefreshes();
@@ -2223,6 +2302,7 @@ void CTransferWnd::OnPaint()
 		m_btnWnd1.SetBtnWidth(IDC_DOWNLOAD_ICO, WND1_BUTTON_WIDTH);
 	if (m_btnWnd2.m_hWnd && m_btnWnd2.GetBtnWidth(IDC_UPLOAD_ICO) != WND2_BUTTON_WIDTH)
 		m_btnWnd2.SetBtnWidth(IDC_UPLOAD_ICO, WND2_BUTTON_WIDTH);
+	LayoutDownloadMetrics();
 }
 
 void CTransferWnd::OnSysCommand(UINT nID, LPARAM lParam)
