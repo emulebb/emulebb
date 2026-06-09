@@ -18,6 +18,7 @@
 #include "MuleListCtrl.h"
 #include "ListCtrlItemWalk.h"
 #include "ToolTipCtrlX.h"
+#include <unordered_map>
 #include <vector>
 
 class CUpDownClient;
@@ -48,11 +49,18 @@ public:
 protected:
 	CToolTipCtrlX m_tooltip;
 	ULONGLONG m_ullLastRefreshSortTick;
+	std::unordered_map<const CUpDownClient*, ULONGLONG> m_pendingAutoAddTicks;
+	std::unordered_map<const CUpDownClient*, ULONGLONG> m_pendingAutoRemoveTicks;
 
 	void SetAllIcons();
+	bool IsTrackedClientPointer(const CUpDownClient *client) const;
 	const CUpDownClient* GetLiveClientByIndex(int iItem);
 	bool IsLiveClient(const CUpDownClient *client) const;
+	void ClearPendingMembershipState();
+	void ClearPendingMembershipState(const CUpDownClient *client);
+	void PrunePendingAutoAdds();
 	bool PruneStaleClientItems();
+	bool PruneStaleClientItems(bool bDebounceRemovals, ULONGLONG ullNowTick);
 	bool SyncLiveClientItems();
 	CObject* WalkToLiveClientItem(int iDirection);
 	void CollectSelectedCompleteFiles(std::vector<CKnownFile*> &files);

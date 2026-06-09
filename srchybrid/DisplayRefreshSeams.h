@@ -12,6 +12,7 @@
 #define EMULEBB_TEST_HAVE_DISPLAY_REFRESH_OWNED_POST 1
 #define EMULEBB_TEST_HAVE_DISPLAY_REFRESH_POST_REGISTRY 1
 #define EMULEBB_TEST_HAVE_UNIFIED_DESKTOP_PRESENTATION_TIMER 1
+#define EMULEBB_TEST_HAVE_TRANSFER_LIST_MEMBERSHIP_STABILIZATION 1
 
 enum EDesktopUiRefreshIntervalMs : uint32_t
 {
@@ -24,6 +25,7 @@ enum EDesktopUiRefreshIntervalMs : uint32_t
 };
 
 static constexpr UINT DESKTOP_UI_REFRESH_PAUSED_TITLE_MS = DESKTOP_UI_REFRESH_VERYSLOW_MS;
+static constexpr ULONGLONG TRANSFER_LIST_MEMBERSHIP_STABILIZATION_MS = 2000;
 
 enum EDisplayRefreshMask : uint32_t
 {
@@ -162,6 +164,15 @@ inline bool ShouldRunPreferenceAlignedDisplayRefresh(bool bForce, ULONGLONG dwCu
 	if (uNormalizedIntervalMs == DESKTOP_UI_REFRESH_PAUSED_MS)
 		return bForce;
 	return ShouldRunDisplayRefresh(bForce, dwCurrentTick, dwLastRefreshTick, uNormalizedIntervalMs, 0);
+}
+
+/**
+ * @brief Reports whether a transfer list membership change has remained stable long enough to paint.
+ */
+inline bool ShouldCommitTransferListMembershipChange(ULONGLONG ullCurrentTick, ULONGLONG ullFirstObservedTick, ULONGLONG ullMinimumStableMs = TRANSFER_LIST_MEMBERSHIP_STABILIZATION_MS)
+{
+	return ullCurrentTick >= ullFirstObservedTick
+		&& ullCurrentTick - ullFirstObservedTick >= ullMinimumStableMs;
 }
 
 /**

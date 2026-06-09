@@ -269,11 +269,65 @@ bool CUploadListCtrl::IsLiveClient(const CUpDownClient *client) const
 	return IsLiveUploadingClient(client);
 }
 
+bool CUploadListCtrl::IsTrackedClientPointer(const CUpDownClient *client) const
+{
+	return client != NULL
+		&& theApp.clientlist != NULL
+		&& theApp.clientlist->ContainsClientPointer(client);
+}
+
+void CUploadListCtrl::ClearPendingMembershipState()
+{
+	m_pendingAutoAddTicks.clear();
+	m_pendingAutoRemoveTicks.clear();
+}
+
+void CUploadListCtrl::ClearPendingMembershipState(const CUpDownClient *client)
+{
+	if (client == NULL)
+		return;
+	m_pendingAutoAddTicks.erase(client);
+	m_pendingAutoRemoveTicks.erase(client);
+}
+
+void CUploadListCtrl::PrunePendingAutoAdds()
+{
+	for (auto it = m_pendingAutoAddTicks.begin(); it != m_pendingAutoAddTicks.end();) {
+		if (!IsLiveClient(it->first))
+			it = m_pendingAutoAddTicks.erase(it);
+		else
+			++it;
+	}
+}
+
 bool CUploadListCtrl::PruneStaleClientItems()
+{
+	return PruneStaleClientItems(false, ::GetTickCount64());
+}
+
+bool CUploadListCtrl::PruneStaleClientItems(bool bDebounceRemovals, ULONGLONG ullNowTick)
 {
 	bool bRemoved = false;
 	for (int iItem = GetItemCount(); --iItem >= 0;) {
-		if (!IsLiveClient(reinterpret_cast<CUpDownClient*>(GetItemData(iItem)))) {
+		const CUpDownClient *const client = reinterpret_cast<CUpDownClient*>(GetItemData(iItem));
+		if (IsLiveClient(client)) {
+			m_pendingAutoRemoveTicks.erase(client);
+			continue;
+		}
+
+		m_pendingAutoAddTicks.erase(client);
+		bool bRemoveItem = !IsTrackedClientPointer(client) || !bDebounceRemovals;
+		if (!bRemoveItem) {
+			auto pendingIt = m_pendingAutoRemoveTicks.find(client);
+			if (pendingIt == m_pendingAutoRemoveTicks.end()) {
+				m_pendingAutoRemoveTicks.emplace(client, ullNowTick);
+				continue;
+			}
+			bRemoveItem = ShouldCommitTransferListMembershipChange(ullNowTick, pendingIt->second);
+		}
+
+		if (bRemoveItem) {
+			ClearPendingMembershipState(client);
 			DeleteItem(iItem);
 			bRemoved = true;
 		}
@@ -287,10 +341,18 @@ bool CUploadListCtrl::PruneStaleClientItems()
 
 bool CUploadListCtrl::SyncLiveClientItems()
 {
-	const bool bPruned = PruneStaleClientItems();
+	const ULONGLONG ullNowTick = ::GetTickCount64();
+	SetRedraw(false);
+	const bool bPruned = PruneStaleClientItems(true, ullNowTick);
 	bool bAdded = false;
-	if (theApp.uploadqueue == NULL)
+	PrunePendingAutoAdds();
+	if (theApp.uploadqueue == NULL) {
+		m_pendingAutoAddTicks.clear();
+		SetRedraw(true);
+		if (bPruned)
+			Invalidate(FALSE);
 		return bPruned;
+	}
 
 	for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;) {
 		const CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromUploadList(pos);
@@ -300,15 +362,29 @@ bool CUploadListCtrl::SyncLiveClientItems()
 		LVFINDINFO find;
 		find.flags = LVFI_PARAM;
 		find.lParam = reinterpret_cast<LPARAM>(pClient);
-		if (FindItem(&find) >= 0)
+		if (FindItem(&find) >= 0) {
+			ClearPendingMembershipState(pClient);
+			continue;
+		}
+
+		auto pendingIt = m_pendingAutoAddTicks.find(pClient);
+		if (pendingIt == m_pendingAutoAddTicks.end()) {
+			m_pendingAutoAddTicks.emplace(pClient, ullNowTick);
+			continue;
+		}
+		if (!ShouldCommitTransferListMembershipChange(ullNowTick, pendingIt->second))
 			continue;
 
 		InsertItem(LVIF_TEXT | LVIF_PARAM, GetItemCount(), LPSTR_TEXTCALLBACK, 0, 0, 0, reinterpret_cast<LPARAM>(pClient));
+		ClearPendingMembershipState(pClient);
 		bAdded = true;
 	}
 
 	if (bAdded)
 		theApp.emuledlg->transferwnd->m_pwndTransfer->UpdateListCount(CTransferWnd::wnd2Uploading);
+	SetRedraw(true);
+	if (bPruned || bAdded)
+		Invalidate(FALSE);
 	return bPruned || bAdded;
 }
 
@@ -426,9 +502,10 @@ void CUploadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	RECT rcClient;
 	GetClientRect(&rcClient);
 	const CUpDownClient *client = reinterpret_cast<CUpDownClient*>(lpDrawItemStruct->itemData);
-	if (!IsLiveClient(client))
+	if (!IsTrackedClientPointer(client))
 		return;
-	if (client->GetSlotNumber() > (UINT)theApp.uploadqueue->GetActiveUploadsCount())
+	const bool bLiveClient = IsLiveClient(client);
+	if (!bLiveClient || client->GetSlotNumber() > (UINT)theApp.uploadqueue->GetActiveUploadsCount())
 		dc.SetTextColor(::GetSysColor(COLOR_GRAYTEXT));
 
 	const CHeaderCtrl *pHeaderCtrl = GetHeaderCtrl();
@@ -1053,6 +1130,7 @@ void CUploadListCtrl::AddClient(const CUpDownClient *client)
 		return;
 	if (!IsLiveClient(client))
 		return;
+	ClearPendingMembershipState(client);
 	PruneStaleClientItems();
 
 	LVFINDINFO find;
@@ -1071,6 +1149,7 @@ void CUploadListCtrl::RemoveClient(const CUpDownClient *client)
 {
 	if (theApp.IsClosing())
 		return;
+	ClearPendingMembershipState(client);
 
 	LVFINDINFO find;
 	find.flags = LVFI_PARAM;
@@ -1093,7 +1172,7 @@ void CUploadListCtrl::RefreshClient(const CUpDownClient *client)
 		&& theApp.emuledlg->transferwnd->m_pwndTransfer->uploadlistctrl.IsWindowVisible()
 		&& !theApp.IsClosing())
 	{
-		if (!IsLiveClient(client)) {
+		if (!IsTrackedClientPointer(client)) {
 			RemoveClient(client);
 			return;
 		}
@@ -1104,6 +1183,8 @@ void CUploadListCtrl::RefreshClient(const CUpDownClient *client)
 		int iItem = FindItem(&find);
 		if (iItem >= 0)
 			Update(iItem);
+		else if (IsLiveClient(client))
+			theApp.emuledlg->transferwnd->QueueDisplayRefresh(DISPLAY_REFRESH_UPLOAD_LIST);
 	}
 }
 
@@ -1112,6 +1193,7 @@ void CUploadListCtrl::RefreshVisibleItems()
 	if (theApp.IsClosing() || !IsWindowVisible())
 		return;
 
+	const ULONGLONG ullNowTick = ::GetTickCount64();
 	SyncLiveClientItems();
 
 	const int iItemCount = GetItemCount();
@@ -1119,7 +1201,7 @@ void CUploadListCtrl::RefreshVisibleItems()
 	const int iLast = min(iItemCount, iFirst + max(1, GetCountPerPage()) + 1);
 	bool bPruneStaleItems = false;
 	for (int iItem = iFirst; iItem < iLast; ++iItem) {
-		if (!IsLiveClient(reinterpret_cast<CUpDownClient*>(GetItemData(iItem)))) {
+		if (!IsTrackedClientPointer(reinterpret_cast<CUpDownClient*>(GetItemData(iItem)))) {
 			bPruneStaleItems = true;
 			continue;
 		}
@@ -1127,8 +1209,8 @@ void CUploadListCtrl::RefreshVisibleItems()
 	}
 
 	if (bPruneStaleItems)
-		PruneStaleClientItems();
-	if (ShouldRunTransferRefreshSensitiveSort(TRANSFER_DISPLAY_LIST_UPLOADS, GetSortItem(), m_ullLastRefreshSortTick, ::GetTickCount64()))
+		PruneStaleClientItems(true, ullNowTick);
+	if (ShouldRunTransferRefreshSensitiveSort(TRANSFER_DISPLAY_LIST_UPLOADS, GetSortItem(), m_ullLastRefreshSortTick, ullNowTick))
 		SortItems(SortProc, MAKELONG(GetSortItem(), !GetSortAscending()));
 }
 

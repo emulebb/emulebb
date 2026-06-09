@@ -17,6 +17,7 @@
 #pragma once
 #include "MuleListCtrl.h"
 #include "ListCtrlItemWalk.h"
+#include <unordered_map>
 
 class CUpDownClient;
 
@@ -44,11 +45,18 @@ public:
 
 protected:
 	ULONGLONG m_ullLastRefreshSortTick;
+	std::unordered_map<const CUpDownClient*, ULONGLONG> m_pendingAutoAddTicks;
+	std::unordered_map<const CUpDownClient*, ULONGLONG> m_pendingAutoRemoveTicks;
 
 	void SetAllIcons();
+	bool IsTrackedClientPointer(const CUpDownClient *client) const;
 	const CUpDownClient* GetLiveClientByIndex(int iItem);
 	bool IsLiveClient(const CUpDownClient *client) const;
+	void ClearPendingMembershipState();
+	void ClearPendingMembershipState(const CUpDownClient *client);
+	void PrunePendingAutoAdds();
 	bool PruneStaleClientItems();
+	bool PruneStaleClientItems(bool bDebounceRemovals, ULONGLONG ullNowTick);
 	bool SyncLiveClientItems();
 	CObject* WalkToLiveClientItem(int iDirection);
 	CString GetItemDisplayText(const CUpDownClient *client, int iSubItem) const;
