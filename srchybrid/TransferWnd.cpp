@@ -496,28 +496,23 @@ void CTransferWnd::DoResize(int delta)
 
 	if (m_dwShowListIDC == IDC_DOWNLOADLIST + IDC_UPLOADLIST) {
 		downloadlistctrl.Invalidate();
-		downloadlistctrl.UpdateWindow();
 		CHeaderCtrl *pHeaderUpdate = NULL;
 		switch (m_uWnd2) {
 		case wnd2Uploading:
 			pHeaderUpdate = uploadlistctrl.GetHeaderCtrl();
 			uploadlistctrl.Invalidate();
-			uploadlistctrl.UpdateWindow();
 			break;
 		case wnd2OnQueue:
 			pHeaderUpdate = queuelistctrl.GetHeaderCtrl();
 			queuelistctrl.Invalidate();
-			queuelistctrl.UpdateWindow();
 			break;
 		case wnd2Clients:
 			pHeaderUpdate = clientlistctrl.GetHeaderCtrl();
 			clientlistctrl.Invalidate();
-			clientlistctrl.UpdateWindow();
 			break;
 		case wnd2Downloading:
 			pHeaderUpdate = downloadclientsctrl.GetHeaderCtrl();
 			downloadclientsctrl.Invalidate();
-			downloadclientsctrl.UpdateWindow();
 			break;
 		default:
 			if (TransferWndSeams::ShouldLogInvalidState(false))
@@ -527,10 +522,8 @@ void CTransferWnd::DoResize(int delta)
 			ShowWnd2(m_uWnd2);
 			return;
 		}
-		if (pHeaderUpdate != NULL) {
+		if (pHeaderUpdate != NULL)
 			pHeaderUpdate->Invalidate();
-			pHeaderUpdate->UpdateWindow();
-		}
 	}
 }
 
