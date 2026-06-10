@@ -2332,6 +2332,33 @@ inline int GetHttpStatusForError(const std::string &rCode)
  * @brief Validates the native REST API key without exposing whether a supplied
  * non-empty key was merely wrong.
  */
+/**
+ * @brief Compares a presented secret against the expected secret in time that
+ * does not depend on the presented value's content or length.
+ *
+ * A plain std::string comparison short-circuits on the first differing byte
+ * (and on a length mismatch), which leaks, through response timing, both the
+ * expected secret's length and the position of the first wrong byte. Because
+ * the REST port can be reachable from untrusted networks, the API-key check
+ * must not expose such a side channel. The loop always walks the full expected
+ * length and folds any length difference into the accumulator, so the running
+ * time is governed only by the (constant) configured-key length.
+ */
+inline bool ConstantTimeSecretEquals(const std::string &rExpected, const std::string &rPresented)
+{
+	if (rExpected.empty())
+		return false;
+
+	unsigned uDiff = static_cast<unsigned>(rExpected.size() ^ rPresented.size());
+	const size_t uExpectedLen = rExpected.size();
+	const size_t uPresentedLen = rPresented.size();
+	for (size_t i = 0; i < uExpectedLen; ++i) {
+		const unsigned char chPresented = (i < uPresentedLen) ? static_cast<unsigned char>(rPresented[i]) : 0u;
+		uDiff |= static_cast<unsigned>(chPresented ^ static_cast<unsigned char>(rExpected[i]));
+	}
+	return uDiff == 0;
+}
+
 inline SApiAuthResult ValidateApiKey(const std::string &rConfiguredApiKey, const std::string &rPresentedApiKey)
 {
 	SApiAuthResult result;
@@ -2341,7 +2368,7 @@ inline SApiAuthResult ValidateApiKey(const std::string &rConfiguredApiKey, const
 		return result;
 	}
 
-	if (rPresentedApiKey.empty() || rPresentedApiKey != rConfiguredApiKey) {
+	if (rPresentedApiKey.empty() || !ConstantTimeSecretEquals(rConfiguredApiKey, rPresentedApiKey)) {
 		result.strErrorCode = "UNAUTHORIZED";
 		result.strErrorMessage = "missing or invalid X-API-Key";
 		return result;
