@@ -76,6 +76,11 @@ public:
 	bool			ShowFileSystemDirectory(const CString &strDir);
 	bool			ShowSharedDirectory(const CString &strDir);
 	void			ShowAllSharedFiles();
+	/**
+	 * @brief Returns directory accessibility, cached across rebuilds and
+	 *        invalidated on volume mount/unmount (OnVolumesChanged).
+	 */
+	bool			IsSharedTreeDirectoryAccessible(const CString &strDir);
 
 protected:
 	virtual BOOL	OnCommand(WPARAM wParam, LPARAM);
@@ -101,10 +106,6 @@ protected:
 	CString			FindContainingMonitoredRoot(const CString &strDir, bool bAllowExactMatch) const;
 	bool			HasManagedSharedAncestor(const CString &strDir) const;
 	CString			BuildFileSystemTreeLabel(const CString &strDir, LPCTSTR pszBaseLabel) const;
-	/**
-	 * @brief Returns cached directory accessibility for the current shared-tree rebuild.
-	 */
-	bool			IsSharedTreeDirectoryAccessible(const CString &strDir);
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void	OnSysColorChange();

@@ -247,7 +247,7 @@ void BuildSharedDirectoryTree(CSharedDirsTreeCtrl *pTreeCtrl, CDirectoryItem *pR
 			bParentAccessible = rParent.bAccessible;
 		}
 
-		rCurrent.bAccessible = bParentAccessible ? IsAccessibleDirectoryForSharedTree(rCurrent.strPath) : false;
+		rCurrent.bAccessible = bParentAccessible ? pTreeCtrl->IsSharedTreeDirectoryAccessible(rCurrent.strPath) : false;
 		if (rCurrent.bAccessible)
 			++uAccessibleEntries;
 		else
@@ -381,7 +381,7 @@ bool CSharedDirsTreeCtrl::IsSharedTreeDirectoryAccessible(const CString &strDir)
 	if (m_mapAccessibleDirectoryCache.Lookup(strKey, pCachedValue))
 		return pCachedValue != NULL;
 
-	const bool bAccessible = LongPathSeams::PathExists(strDir);
+	const bool bAccessible = IsAccessibleDirectoryForSharedTree(strDir);
 	m_mapAccessibleDirectoryCache.SetAt(strKey, bAccessible ? reinterpret_cast<void*>(1) : NULL);
 	return bAccessible;
 }
@@ -568,7 +568,6 @@ void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 	// repaint, relayout, and sort until the tree is fully rebuilt to avoid a UI
 	// stall on large shared sets.
 	SetRedraw(FALSE);
-	m_mapAccessibleDirectoryCache.RemoveAll();
 	// store current selection
 	CDirectoryItem *pOldSelectedItem = NULL;
 	if (GetSelectedFilter() != NULL)
@@ -1657,6 +1656,9 @@ void CSharedDirsTreeCtrl::OnCancelMode()
 void CSharedDirsTreeCtrl::OnVolumesChanged()
 {
 	m_bFileSystemRootDirty = true;
+	// WHY: a mount/unmount can change directory reachability, so drop the
+	// persistent accessibility cache; entries are re-probed on the next rebuild.
+	m_mapAccessibleDirectoryCache.RemoveAll();
 }
 
 bool CSharedDirsTreeCtrl::ShowFileSystemDirectory(const CString &strDir)
