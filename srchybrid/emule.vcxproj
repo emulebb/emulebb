@@ -224,9 +224,15 @@
     <ClCompile Include="ExitBox.cpp" />
     <ClCompile Include="FakeFileDetector.cpp" />
     <ClCompile Include="FileDetailDialog.cpp" />
-    <ClCompile Include="FileDetailDialogInfo.cpp" />
+    <ClCompile Include="FileDetailDialogInfo.cpp">
+      <!-- WHY: file-detail display; intentional uint64->double/float for shown sizes/rates (C5219, display-only). -->
+      <DisableSpecificWarnings>5219;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="FileDetailDialogName.cpp" />
-    <ClCompile Include="FileDetailDlgStatistics.cpp" />
+    <ClCompile Include="FileDetailDlgStatistics.cpp">
+      <!-- WHY: file-detail statistics display; intentional uint64->double/float (C5219, display-only). -->
+      <DisableSpecificWarnings>5219;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="FileTypeClassifier.cpp" />
     <ClCompile Include="FileIdentifier.cpp" />
     <ClCompile Include="FileInfoDialog.cpp" />
@@ -280,7 +286,10 @@
     <ClCompile Include="kademlia\utils\ThreadName.cpp" />
     <ClCompile Include="kademlia\utils\UInt128.cpp" />
     <ClCompile Include="KademliaWnd.cpp" />
-    <ClCompile Include="KadLookupGraph.cpp" />
+    <ClCompile Include="KadLookupGraph.cpp">
+      <!-- WHY: Kad lookup graph rendering; intentional uint64->double/float for plot coordinates (C5219, display-only). -->
+      <DisableSpecificWarnings>5219;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="KadSearchListCtrl.cpp" />
     <ClCompile Include="KnownFile.cpp" />
     <ClCompile Include="KnownFileList.cpp" />
@@ -380,7 +389,10 @@
     <ClCompile Include="SplitterControl.cpp" />
     <ClCompile Include="StatisticFile.cpp" />
     <ClCompile Include="Statistics.cpp" />
-    <ClCompile Include="StatisticsDlg.cpp" />
+    <ClCompile Include="StatisticsDlg.cpp">
+      <!-- WHY: statistics graph/display code converts 64-bit byte counts and ticks to double/float for plotting, scaling and percentages; that narrowing (C5219) is intentional and display-only (precision matters only above ~9 PB). Disable per-file rather than annotating hundreds of render-math sites. -->
+      <DisableSpecificWarnings>5219;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="StatisticsTree.cpp" />
     <ClCompile Include="Stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
