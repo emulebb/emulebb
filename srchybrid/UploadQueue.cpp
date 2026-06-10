@@ -1538,7 +1538,6 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			// unproductive no-request recycles to the configured slow-upload
 			// cooldown so persistent 0-byte peers stop consuming refill probes.
 			const UINT uConfiguredCooldownSeconds = thePrefs.GetSlowUploadCooldownSeconds();
-			const uint32 uBudgetBytesPerSec = GetConfiguredUploadBudgetBytesPerSec();
 			const UINT uProductiveCooldownSeconds = GetNoRequestUploadRetryCooldownSeconds(
 				uConfiguredCooldownSeconds,
 				HasRecentNoRequestUploadRetryCooldown(client, curTick),
@@ -2206,7 +2205,6 @@ void CUploadQueue::RemoveStaleWaitingClient(POSITION pos)
 		return;
 
 	m_bStatisticsWaitingListDirty = true;
-	CUpDownClient *staleClient = waitinglist.GetAt(pos);
 	waitinglist.RemoveAt(pos);
 	QueueWaitingListDisplayRefresh();
 	theApp.emuledlg->transferwnd->ShowQueueCount(waitinglist.GetCount());
