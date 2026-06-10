@@ -102,7 +102,6 @@ public:
 	 */
 	void OnMiniMuleDestroyed(CMiniMuleDlg *pMiniMule);
 
-#ifdef HAVE_WIN7_SDK_H
 	void UpdateStatusBarProgress();
 	void UpdateThumbBarButtons(bool initialAddToDlg = false);
 	void OnTBBPressed(UINT id);
@@ -118,7 +117,6 @@ public:
 		TBB_PREFERENCES,
 		TBB_LAST = TBB_PREFERENCES
 	};
-#endif
 
 	// Logging
 	/**
@@ -249,14 +247,12 @@ protected:
 	HANDLE			m_hBindLossInterfaceNotification;
 	HANDLE			m_hBindLossAddressNotification;
 	CWinThread		*m_pAICHSyncThread;
-#ifdef HAVE_WIN7_SDK_H
 	CComPtr<ITaskbarList3>	m_pTaskbarList;
 	THUMBBUTTON		m_thbButtons[TBB_LAST + 1];
 
 	TBPFLAG			m_currentTBP_state;
 	float			m_prevProgress;
 	HICON			m_ovlIcon;
-#endif
 
 	// Lifecycle progress
 	void ShowStartupProgress();
@@ -389,9 +385,7 @@ protected:
 
 	afx_msg LRESULT OnAreYouEmule(WPARAM, LPARAM);
 
-#ifdef HAVE_WIN7_SDK_H
 	afx_msg LRESULT OnTaskbarBtnCreated(WPARAM, LPARAM);
-#endif
 
 	afx_msg LRESULT OnVersionCheckResponse(WPARAM wParam, LPARAM lParam);
 	//Web Interface

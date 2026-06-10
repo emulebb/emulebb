@@ -160,9 +160,7 @@ extern BOOL FirstTimeWizard();
 UINT g_uMainThreadId = 0;
 static const UINT UWM_ARE_YOU_EMULE = RegisterWindowMessage(EMULE_GUID);
 
-#ifdef HAVE_WIN7_SDK_H
 static const UINT UWM_TASK_BUTTON_CREATED = RegisterWindowMessage(_T("TaskbarButtonCreated"));
-#endif
 
 namespace
 {
@@ -1606,9 +1604,7 @@ BEGIN_MESSAGE_MAP(CemuleDlg, CTrayDialog)
 	ON_MESSAGE(TM_FILECOMPLETED, OnFileCompleted)
 	ON_MESSAGE(TM_CONSOLETHREADEVENT, OnConsoleThreadEvent)
 
-#ifdef HAVE_WIN7_SDK_H
 	ON_REGISTERED_MESSAGE(UWM_TASK_BUTTON_CREATED, OnTaskbarBtnCreated)
-#endif
 
 END_MESSAGE_MAP()
 
@@ -1769,14 +1765,12 @@ CemuleDlg::~CemuleDlg()
 	if (usericon)
 		VERIFY(::DestroyIcon(usericon));
 
-#ifdef HAVE_WIN7_SDK_H
 	if (m_pTaskbarList != NULL) {
 		m_pTaskbarList.Release();
 		ASSERT(m_bInitedCOM);
 	}
 	if (m_bInitedCOM)
 		::CoUninitialize();
-#endif
 
 	// already destroyed by windows?
 	//VERIFY(m_menuUploadCtrl.DestroyMenu());
@@ -1816,7 +1810,6 @@ BOOL CemuleDlg::OnInitDialog()
 	const ULONGLONG ullDialogInitStart = theApp.GetStartupDiagnosticsTimestampUs();
 #endif
 	theStats.starttime = ::GetTickCount64();
-#ifdef HAVE_WIN7_SDK_H
 	// allow the TaskbarButtonCreated- & (tbb-)WM_COMMAND message to be sent to our window if our app is running elevated
 	// COINIT_APARTMENTTHREADED matches what CoInitialize(NULL) selects for this
 	// STA UI thread; CoInitializeEx just makes the apartment model explicit.
@@ -1830,7 +1823,6 @@ BOOL CemuleDlg::OnInitDialog()
 		::ChangeWindowMessageFilterEx(m_hWnd, WM_COMMAND, MSGFLT_ALLOW, NULL);
 	} else
 		ASSERT(0);
-#endif
 
 	// temporary disable the 'startup minimized' option, otherwise no window will be shown at all
 	if (!thePrefs.IsFirstStart())
@@ -2339,9 +2331,7 @@ void CemuleDlg::OnStartupTimer() noexcept
 					, thePrefs.GetVpnGuardMode(), theApp.IsStartupBindBlocked(), m_bBindLossMonitorActive))
 					PostMessage(WM_COMMAND, MP_CONNECT, 0);
 
-#ifdef HAVE_WIN7_SDK_H
 				UpdateStatusBarProgress();
-#endif
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 				theApp.AppendStartupDiagnosticsLine(_T("StartupTimer stage 4: finalize running state"), theApp.GetStartupDiagnosticsElapsedUs(ullPhaseStart));
 #endif
@@ -3153,9 +3143,7 @@ void CemuleDlg::ShowConnectionState()
 	theApp.emuledlg->m_SysMenuOptions.EnableMenuItem(bCanStopOrCancel ? MP_DISCONNECT : MP_CONNECT,
 		bCanUseConnectionCommand ? MF_ENABLED : MF_GRAYED);
 	ShowUserCount();
-#ifdef HAVE_WIN7_SDK_H
 	UpdateThumbBarButtons();
-#endif
 }
 
 void CemuleDlg::ShowUserCount()
@@ -5226,11 +5214,9 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 	else if (wParam >= MP_SCHACTIONS && wParam <= MP_SCHACTIONS + 99) {
 		theApp.scheduler->ActivateSchedule(wParam - MP_SCHACTIONS);
 		theApp.scheduler->SaveOriginals(); // use the new settings as original
-#ifdef HAVE_WIN7_SDK_H
 	} else if (HIWORD(wParam) == THBN_CLICKED) {
 		OnTBBPressed(LOWORD(wParam));
 		return TRUE;
-#endif
 	}
 
 	return CTrayDialog::OnCommand(wParam, lParam);
@@ -7025,7 +7011,6 @@ LRESULT CemuleDlg::OnDisplayChange(WPARAM, LPARAM)
 //////////////////////////////////////////////////////////////////
 // Taskbar integration goodies
 
-#ifdef HAVE_WIN7_SDK_H
 // update thumbbarbutton structs and add/update the GUI thumbbar
 void CemuleDlg::UpdateThumbBarButtons(bool initialAddToDlg)
 {
@@ -7208,7 +7193,6 @@ void CemuleDlg::UpdateStatusBarProgress()
 		}
 	}
 }
-#endif
 
 void CemuleDlg::SetTaskbarIconColor()
 {

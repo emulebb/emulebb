@@ -16,8 +16,6 @@
 #define HAVE_WMSDK_H
 #endif
 
-#define HAVE_WIN7_SDK_H
-
 #if _MSC_VER < 1937 // before VS2022 17.7
 #define NOEXCEPT noexcept
 #else
