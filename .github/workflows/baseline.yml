@@ -7,6 +7,12 @@ on:
 permissions:
   contents: read
 
+# Cancel an in-flight Baseline run when a newer commit lands on the same ref,
+# so a burst of pushes does not spawn parallel full builds.
+concurrency:
+  group: baseline-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   baseline:
     uses: emulebb/emulebb-tooling/.github/workflows/reusable-baseline.yml@ci/v8
