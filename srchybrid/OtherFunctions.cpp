@@ -622,13 +622,19 @@ HINSTANCE ShellLaunch(HWND hWnd, LPCTSTR lpVerb, LPCTSTR lpTarget, LPCTSTR lpPar
 {
 	const CString strTarget(NormalizeShellExecutePath(lpTarget));
 	const CString strDirectory(NormalizeShellExecutePath(lpDirectory));
-	return ShellExecute(
-		hWnd,
-		lpVerb,
-		strTarget.IsEmpty() ? lpTarget : static_cast<LPCTSTR>(strTarget),
-		lpParameters,
-		strDirectory.IsEmpty() ? lpDirectory : static_cast<LPCTSTR>(strDirectory),
-		nShowCmd);
+	// WHY: use ShellExecuteEx over the legacy ShellExecute. hInstApp carries the
+	// same >32-on-success HINSTANCE contract ShellExecute returned, so callers
+	// and their error logging are unaffected.
+	SHELLEXECUTEINFO info = {};
+	info.cbSize = sizeof info;
+	info.hwnd = hWnd;
+	info.lpVerb = lpVerb;
+	info.lpFile = strTarget.IsEmpty() ? lpTarget : static_cast<LPCTSTR>(strTarget);
+	info.lpParameters = lpParameters;
+	info.lpDirectory = strDirectory.IsEmpty() ? lpDirectory : static_cast<LPCTSTR>(strDirectory);
+	info.nShow = nShowCmd;
+	(void)::ShellExecuteEx(&info);
+	return info.hInstApp;
 }
 
 BOOL ShellExecuteExNormalized(SHELLEXECUTEINFO &rInfo)
