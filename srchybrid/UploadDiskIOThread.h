@@ -58,6 +58,14 @@ private:
 	void		CancelPendingReads();
 	void		DrainPendingReads();
 
+	// WHY: m_listPendingIO is mutated only on the worker thread and has no lock.
+	// WakeUpCall() runs on foreground threads and must know whether any read is
+	// in flight, so route every list add/remove through these helpers to keep
+	// m_nPendingIoCount in lockstep with membership instead of reading the CList
+	// across threads.
+	void		AddPendingIo(OverlappedRead_Struct *pOvRead);
+	bool		RemovePendingIoIfPresent(OverlappedRead_Struct *pOvRead);
+
 	static void CreatePackedPackets(const OverlappedRead_Struct &OverlappedRead, CPacketList &rOutPacketList);
 	static void CreateStandardPackets(const OverlappedRead_Struct &OverlappedRead, CPacketList &rOutPacketList);
 
@@ -72,5 +80,6 @@ private:
 	volatile LONG m_bStopRequested;
 	volatile LONG m_Run; //0 - not running; 1 - idle; 2 - processing
 	volatile LONG m_bNewData;
+	volatile LONG m_nPendingIoCount; //count of m_listPendingIO entries, read cross-thread by WakeUpCall
 	bool		m_bSignalThrottler;
 };

@@ -100,6 +100,7 @@ CUploadDiskIOThread::CUploadDiskIOThread()
 	, m_bStopRequested()
 	, m_Run(RUN_STOP)
 	, m_bNewData()
+	, m_nPendingIoCount()
 	, m_bSignalThrottler()
 {
 	ASSERT(theApp.uploadqueue != NULL);
@@ -286,6 +287,24 @@ void CUploadDiskIOThread::DissociateFile(CKnownFile *pFile)
 	}
 }
 
+void CUploadDiskIOThread::AddPendingIo(OverlappedRead_Struct *pOvRead)
+{
+	// AddTail may throw before the counter moves, so increment only after it
+	// links the node; this keeps m_nPendingIoCount equal to list membership.
+	m_listPendingIO.AddTail(pOvRead);
+	::InterlockedIncrement(&m_nPendingIoCount);
+}
+
+bool CUploadDiskIOThread::RemovePendingIoIfPresent(OverlappedRead_Struct *pOvRead)
+{
+	const POSITION posPending = m_listPendingIO.Find(pOvRead);
+	if (posPending == NULL)
+		return false;
+	m_listPendingIO.RemoveAt(posPending);
+	::InterlockedDecrement(&m_nPendingIoCount);
+	return true;
+}
+
 void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *pUploadClientStruct)
 {
 	// when calling this function we already have a lock on the uploadlist
@@ -378,9 +397,7 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 				// unwind those contracts in reverse order, or the upload helper
 				// can leave stale OVERLAPPED state or pin a file indefinitely.
 				if (bPendingListLinked) {
-					POSITION posPending = m_listPendingIO.Find(pOverlappedRead);
-					if (posPending != NULL)
-						m_listPendingIO.RemoveAt(posPending);
+					RemovePendingIoIfPresent(pOverlappedRead);
 					bPendingListLinked = false;
 				}
 				if (bPendingBlockCounted) {
@@ -421,15 +438,13 @@ void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *
 				bReadReferenceAdded = true;
 				pUploadClientStruct->m_nPendingIOBlocks.fetch_add(1);
 				bPendingBlockCounted = true;
-				m_listPendingIO.AddTail(pOverlappedRead);
+				AddPendingIo(pOverlappedRead);
 				bPendingListLinked = true;
 
 				if (!::ReadFile(pFile->m_hRead, pOverlappedRead->pBuffer, (DWORD)uTogo, NULL, (LPOVERLAPPED)pOverlappedRead)) {
 					DWORD dwError = ::GetLastError();
 					if (dwError != ERROR_IO_PENDING) {
-						POSITION posPending = m_listPendingIO.Find(pOverlappedRead);
-						if (posPending != NULL)
-							m_listPendingIO.RemoveAt(posPending);
+						RemovePendingIoIfPresent(pOverlappedRead);
 						bPendingListLinked = false;
 						pUploadClientStruct->m_nPendingIOBlocks.fetch_sub(1);
 						bPendingBlockCounted = false;
@@ -501,10 +516,8 @@ void CUploadDiskIOThread::ReadCompletionRoutine(DWORD dwRead, const OverlappedRe
 	ASSERT(pStruct != NULL);
 	CPacketList packetsList;
 
-	POSITION posPending = m_listPendingIO.Find(const_cast<OverlappedRead_Struct*>(pOvRead));
-	if (posPending != NULL)
-		m_listPendingIO.RemoveAt(posPending);
-	else if (HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP)
+	if (!RemovePendingIoIfPresent(const_cast<OverlappedRead_Struct*>(pOvRead))
+		&& HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP)
 		theApp.QueueDebugLogLineEx(LOG_WARNING, _T("ReadCompletionRoutine: completed upload read was not present in the pending I/O list"));
 
 	try {
@@ -795,7 +808,10 @@ void CUploadDiskIOThread::WakeUpCall()
 	if (!HelperThreadLaunchSeams::CanPostIocpWork(m_bThreadStarted, HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested), m_hPort != NULL, HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP))
 		return;
 	//pending I/O makes posting unnecessary
-	if (HelperThreadLaunchSeams::GetState(m_Run) == RUN_IDLE && m_listPendingIO.IsEmpty())
+	// WHY: WakeUpCall runs on foreground threads; read the worker-maintained
+	// atomic count instead of the unlocked m_listPendingIO CList so this cannot
+	// race the worker's add/remove of list nodes.
+	if (HelperThreadLaunchSeams::GetState(m_Run) == RUN_IDLE && ::InterlockedCompareExchange(&m_nPendingIoCount, 0, 0) == 0)
 		PostQueuedCompletionStatus(m_hPort, 0, WAKEUP, NULL);
 	else
 		HelperThreadLaunchSeams::SetFlag(m_bNewData);
