@@ -251,6 +251,7 @@ void CEditableListCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 	switch (m_iCol) {
 	case 0:
 		m_iCol = 1; //move to column 1
+		[[fallthrough]];
 	case 1:
 		ShowEdit(); //start editing
 	}
@@ -262,6 +263,7 @@ void CEditableListCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar *pScrollBa
 		switch (nSBCode) {
 		case SB_ENDSCROLL:
 			ShowEdit();
+			[[fallthrough]];
 		case SB_LINEDOWN:
 		case SB_LINEUP:
 			break;
