@@ -12,7 +12,7 @@
 
 namespace HelperThreadLaunchSeams
 {
-	constexpr DWORD kHelperThreadShutdownWaitMs = 7000;
+	constexpr DWORD kHelperThreadShutdownWaitMs = 30000;
 
 	inline void SetFlag(volatile LONG& rnFlag);
 	inline void SetState(volatile LONG& rnState, LONG nState);
