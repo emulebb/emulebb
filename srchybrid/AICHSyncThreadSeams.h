@@ -24,7 +24,7 @@ enum class EAICHSyncThreadShutdownWaitAction
 	Failed
 };
 
-constexpr DWORD kAICHSyncThreadShutdownWaitMs = 5000u;
+constexpr DWORD kAICHSyncThreadShutdownWaitMs = 30000u;
 constexpr DWORD kAICHSyncHashingLockPollMs = 100u;
 
 /**
