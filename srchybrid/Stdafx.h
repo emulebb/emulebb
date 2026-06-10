@@ -115,54 +115,6 @@
 #include <afxpriv.h>
 
 
-#ifndef EWX_FORCEIFHUNG
-#define EWX_FORCEIFHUNG			0x00000010
-#endif
-
-#ifndef WS_EX_LAYOUTRTL
-#define WS_EX_LAYOUTRTL			0x00400000L // Right to left mirroring
-#endif
-
-#ifndef LAYOUT_RTL
-#define LAYOUT_RTL				0x00000001 // Right to left
-#endif
-
-#ifndef COLOR_HOTLIGHT
-#define COLOR_HOTLIGHT			26
-#endif
-
-#ifndef WS_EX_LAYERED
-#define WS_EX_LAYERED			0x00080000
-#endif
-
-#ifndef LWA_COLORKEY
-#define LWA_COLORKEY			0x00000001
-#endif
-
-#ifndef LWA_ALPHA
-#define LWA_ALPHA				0x00000002
-#endif
-
-#ifndef HDF_SORTUP
-#define HDF_SORTUP				0x0400
-#endif
-
-#ifndef HDF_SORTDOWN
-#define HDF_SORTDOWN			0x0200
-#endif
-
-#ifndef COLOR_GRADIENTACTIVECAPTION
-#define COLOR_GRADIENTACTIVECAPTION 27
-#endif
-
-#ifndef LVBKIF_TYPE_WATERMARK
-#define LVBKIF_TYPE_WATERMARK   0x10000000
-#endif
-
-#ifndef LVBKIF_FLAG_ALPHABLEND
-#define LVBKIF_FLAG_ALPHABLEND  0x20000000
-#endif
-
 #include "types.h"
 
 #ifdef _DEBUG
