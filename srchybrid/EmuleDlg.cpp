@@ -1818,7 +1818,9 @@ BOOL CemuleDlg::OnInitDialog()
 	theStats.starttime = ::GetTickCount64();
 #ifdef HAVE_WIN7_SDK_H
 	// allow the TaskbarButtonCreated- & (tbb-)WM_COMMAND message to be sent to our window if our app is running elevated
-	m_bInitedCOM = SUCCEEDED(::CoInitialize(NULL));
+	// COINIT_APARTMENTTHREADED matches what CoInitialize(NULL) selects for this
+	// STA UI thread; CoInitializeEx just makes the apartment model explicit.
+	m_bInitedCOM = SUCCEEDED(::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED));
 	if (m_bInitedCOM) {
 		::ChangeWindowMessageFilter(UWM_TASK_BUTTON_CREATED, MSGFLT_ADD);
 		::ChangeWindowMessageFilter(WM_COMMAND, MSGFLT_ADD);
