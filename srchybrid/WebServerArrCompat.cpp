@@ -508,11 +508,16 @@ bool HasValidTorznabApiKey(
 	if (thePrefs.GetWSApiKey().IsEmpty())
 		return false;
 
+	// Compare the presented key against the configured REST API key in constant
+	// time to avoid leaking it through response timing.
+	const std::string strConfiguredKey(WebServerJson::ToStdUtf8(thePrefs.GetWSApiKey()));
+
 	const auto apiKeyIt = rNormalizedQuery.find("apikey");
 	if (apiKeyIt != rNormalizedQuery.end())
-		return apiKeyIt->second == WebServerJson::ToStdUtf8(thePrefs.GetWSApiKey());
+		return WebServerJsonSeams::ConstantTimeSecretEquals(strConfiguredKey, apiKeyIt->second);
 
-	return !rData.strApiKey.IsEmpty() && WebServerJson::FromStdUtf8(WebServerJson::ToStdString(rData.strApiKey)) == thePrefs.GetWSApiKey();
+	return !rData.strApiKey.IsEmpty()
+		&& WebServerJsonSeams::ConstantTimeSecretEquals(strConfiguredKey, WebServerJson::ToStdString(rData.strApiKey));
 }
 }
 

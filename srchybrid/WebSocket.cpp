@@ -435,6 +435,7 @@ void CWebSocket::OnRequestReceived(const char *pHeader, DWORD dwHeaderLen, const
 	Data.strContentType = GetHttpHeaderValue(sHeader, "Content-Type");
 	Data.strApiKey = GetHttpHeaderValue(sHeader, "X-API-Key");
 	Data.strCookie = GetHttpHeaderValue(sHeader, "Cookie");
+	Data.strAuthorization = GetHttpHeaderValue(sHeader, "Authorization");
 	Data.pThis = (void*)m_pParent;
 	Data.inadr = inad;
 	Data.pSocket = this;

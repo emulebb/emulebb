@@ -247,6 +247,7 @@ typedef struct
 	CStringA		strContentType;
 	CStringA		strApiKey;
 	CStringA		strCookie;
+	CStringA		strAuthorization;
 	void			*pThis;
 	CWebSocket		*pSocket;
 	in_addr			inadr;

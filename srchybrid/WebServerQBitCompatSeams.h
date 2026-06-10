@@ -288,10 +288,54 @@ inline bool IsValidLoginForm(
 {
 	const auto usernameIt = rForm.find("username");
 	const auto passwordIt = rForm.find("password");
+	// The password is the configured REST API key; compare it in constant time
+	// to avoid leaking it through response timing. The username is the fixed,
+	// non-secret "emule" account so a plain comparison is fine.
 	return usernameIt != rForm.end()
 		&& passwordIt != rForm.end()
 		&& usernameIt->second == rExpectedUsername
-		&& passwordIt->second == rExpectedPassword;
+		&& WebServerJsonSeams::ConstantTimeSecretEquals(rExpectedPassword, passwordIt->second);
+}
+
+/**
+ * @brief Extracts the credential from a "Bearer <token>" Authorization header.
+ *
+ * The scheme name is matched case-insensitively, as permitted by RFC 7235.
+ * Returns false when the header is absent or is not a non-empty bearer
+ * credential.
+ */
+inline bool TryParseBearerToken(const std::string &rAuthorizationHeader, std::string &rToken)
+{
+	rToken.clear();
+	const std::string strHeader(WebServerJsonSeams::TrimAsciiWhitespace(rAuthorizationHeader));
+	static const char kBearerPrefix[] = "bearer ";
+	const size_t uPrefixLen = sizeof(kBearerPrefix) - 1;
+	if (strHeader.size() <= uPrefixLen)
+		return false;
+	for (size_t i = 0; i < uPrefixLen; ++i) {
+		if (static_cast<char>(std::tolower(static_cast<unsigned char>(strHeader[i]))) != kBearerPrefix[i])
+			return false;
+	}
+	rToken = WebServerJsonSeams::TrimAsciiWhitespace(strHeader.substr(uPrefixLen));
+	return !rToken.empty();
+}
+
+/**
+ * @brief Reports whether an Authorization header carries a valid bearer API key.
+ *
+ * Mirrors qBittorrent, which lets clients authenticate with
+ * "Authorization: Bearer <key>" instead of the login/cookie flow. The token is
+ * compared against the configured REST API key in constant time; an empty
+ * configured key never authorizes.
+ */
+inline bool IsAuthorizedByBearerApiKey(const std::string &rAuthorizationHeader, const std::string &rConfiguredApiKey)
+{
+	if (rConfiguredApiKey.empty())
+		return false;
+	std::string strToken;
+	if (!TryParseBearerToken(rAuthorizationHeader, strToken))
+		return false;
+	return WebServerJsonSeams::ConstantTimeSecretEquals(rConfiguredApiKey, strToken);
 }
 
 inline std::string TrimCookieToken(const std::string &rValue)

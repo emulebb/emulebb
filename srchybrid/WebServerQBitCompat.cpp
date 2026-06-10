@@ -475,7 +475,12 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 		return;
 	}
 
-	if (pRouteSpec->bRequiresAuth && !HasValidSessionCookie(rData.strCookie)) {
+	if (pRouteSpec->bRequiresAuth
+		&& !HasValidSessionCookie(rData.strCookie)
+		&& !WebServerQBitCompatSeams::IsAuthorizedByBearerApiKey(
+			WebServerJson::ToStdString(rData.strAuthorization),
+			WebServerJson::ToStdUtf8(thePrefs.GetWSApiKey())))
+	{
 		SendTextResponse(rData.pSocket, 403, "Forbidden", "Forbidden");
 		return;
 	}
