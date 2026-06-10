@@ -2415,6 +2415,43 @@ void CStatisticsDlg::ShowStatistics(bool forceUpdate)
 				cli_lastCount[3] = verCount;
 			} // End Clients -> Client Software -> aMule Section
 
+				// CLIENTS -> CLIENT SOFTWARE -> MODS SECTION (self-reported mod names seen across known clients)
+				if (forceUpdate || m_stattree.IsExpanded(hclimods)) {
+					CClientModMap clientMods;
+					theApp.clientlist->GetClientModStatistics(clientMods);
+					uint32 uModTotal = 0;
+					for (POSITION p = clientMods.GetStartPosition(); p != NULL;) {
+						CString strKey;
+						uint32 uCnt = 0;
+						clientMods.GetNextAssoc(p, strKey, uCnt);
+						uModTotal += uCnt;
+					}
+					HTREEITEM hModChild;
+					while ((hModChild = m_stattree.GetChildItem(hclimods)) != NULL)
+						m_stattree.DeleteItem(hModChild);
+					sText.Format(_T("Mods: %u"), uModTotal);
+					m_stattree.SetItemText(hclimods, sText);
+					// Top mods by repeated max selection (no STL dependency), matching this section's style.
+					for (int n = 0; n < 20 && !clientMods.IsEmpty(); ++n) {
+						CString strTopKey;
+						uint32 uTopCnt = 0;
+						for (POSITION p = clientMods.GetStartPosition(); p != NULL;) {
+							CString strKey;
+							uint32 uCnt = 0;
+							clientMods.GetNextAssoc(p, strKey, uCnt);
+							if (uCnt > uTopCnt || (uCnt == uTopCnt && (strTopKey.IsEmpty() || strKey.CompareNoCase(strTopKey) < 0))) {
+								uTopCnt = uCnt;
+								strTopKey = strKey;
+							}
+						}
+						if (uTopCnt == 0)
+							break;
+						clientMods.RemoveKey(strTopKey);
+						sText.Format(_T("%s: %u (%1.1f%%)"), (LPCTSTR)strTopKey, uTopCnt, uModTotal > 0 ? (100.0 * uTopCnt / uModTotal) : 0.0);
+						m_stattree.InsertItem(sText, hclimods);
+					}
+				}
+
 		} // - End Clients -> Client Software Section
 		// CLIENTS -> NETWORK SECTION
 		if (forceUpdate || m_stattree.IsExpanded(hclinet)) {
@@ -2880,6 +2917,7 @@ void CStatisticsDlg::CreateMyTree()
 	hclisoft = m_stattree.InsertItem(GetResString(IDS_CD_CSOFT), h_clients);				// Client Software Section
 	for (unsigned i = 0; i < 8; ++i)
 		clisoft[i] = m_stattree.InsertItem(GetResString(IDS_FSTAT_WAITING), hclisoft);
+	hclimods = m_stattree.InsertItem(_T("Mods"), hclisoft);								// Client Mods (self-reported mod names); children rebuilt on refresh
 	hclinet = m_stattree.InsertItem(GetResString(IDS_NETWORK), h_clients);					// Client Network Section
 	for (unsigned i = 0; i < 4; ++i)
 		clinet[i] = m_stattree.InsertItem(GetResString(IDS_FSTAT_WAITING), hclinet);
