@@ -2416,7 +2416,10 @@ void CStatisticsDlg::ShowStatistics(bool forceUpdate)
 			} // End Clients -> Client Software -> aMule Section
 
 				// CLIENTS -> CLIENT SOFTWARE -> MODS SECTION (self-reported mod names seen across known clients)
-				if (forceUpdate || m_stattree.IsExpanded(hclimods)) {
+				// WHY: also refresh while hclimods has no children yet. An empty tree node cannot be
+				// "expanded", so gating on IsExpanded(hclimods) alone deadlocks the first population and
+				// the node stays stuck at 0 (matches the cli_lastCount==0 escape used above).
+				if (forceUpdate || m_stattree.IsExpanded(hclimods) || m_stattree.GetChildItem(hclimods) == NULL) {
 					CClientModMap clientMods;
 					theApp.clientlist->GetClientModStatistics(clientMods);
 					uint32 uModTotal = 0;
