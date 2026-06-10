@@ -486,13 +486,16 @@ void WebServerQBitCompat::ProcessRequest(const ThreadData &rData)
 	}
 
 	if (strPath == "/api/v2/app/version") {
-		SendTextResponse(rData.pSocket, 200, "OK", "v4.6.0-emulebb");
+		// Keep the reported application version, the Web API version above, and
+		// the torrent state vocabulary aligned to one qBittorrent release:
+		// qBittorrent 5.0.0 shipped Web API 2.11.0 and the stopped* states.
+		SendTextResponse(rData.pSocket, 200, "OK", "v5.0.0-emulebb");
 		return;
 	}
 
 	if (strPath == "/api/v2/app/preferences") {
 		SendJsonResponse(rData.pSocket, 200, "OK", json{
-			{"save_path", ""},
+			{"save_path", WebServerJson::ToStdUtf8(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR))},
 			{"max_ratio_enabled", true},
 			{"max_ratio", 0},
 			{"max_seeding_time_enabled", true},

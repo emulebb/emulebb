@@ -62,9 +62,11 @@ static const size_t kMaxHashMutationCount = 100;
  */
 inline const char* GetQBitStateForNativeTransferState(const std::string &rNativeState, const bool bStopped)
 {
+	// State vocabulary matches qBittorrent 5.0 (Web API 2.11.0), which renamed
+	// the paused* states to stopped*.
 	const std::string strState(WebServerJsonSeams::ToLowerAscii(rNativeState));
 	if (strState == "completed")
-		return "pausedUP";
+		return "stoppedUP";
 	if (strState == "checking" || strState == "completing")
 		return "checkingDL";
 	if (strState == "error")
@@ -72,7 +74,7 @@ inline const char* GetQBitStateForNativeTransferState(const std::string &rNative
 	if (strState == "missingfiles")
 		return "missingFiles";
 	if (strState == "paused" || bStopped)
-		return "pausedDL";
+		return "stoppedDL";
 	if (strState == "queued")
 		return "queuedDL";
 	return "downloading";
