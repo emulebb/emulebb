@@ -288,7 +288,7 @@ void CPPgSecurity::SeedDefaultIPFilterUpdateUrls()
 	if (m_pacIPFilterURL == NULL || !m_pacIPFilterURL->IsBound() || m_pacIPFilterURL->GetItemCount() > 0)
 		return;
 
-	for (int i = 0; i < _countof(s_apszDefaultIPFilterUpdateUrls); ++i)
+	for (size_t i = 0; i < _countof(s_apszDefaultIPFilterUpdateUrls); ++i)
 		m_pacIPFilterURL->AddItem(s_apszDefaultIPFilterUpdateUrls[i], -1);
 }
 

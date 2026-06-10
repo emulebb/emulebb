@@ -696,7 +696,7 @@ bool CTransferWnd::SelectDownloadCategoryByShortcutIndex(int iCategory)
 {
 	if (iCategory < 0 || iCategory >= m_dlTab.GetItemCount())
 		return false;
-	if (m_dlTab.GetCurSel() == iCategory && downloadlistctrl.m_curTab == iCategory)
+	if (m_dlTab.GetCurSel() == iCategory && downloadlistctrl.m_curTab == static_cast<UINT>(iCategory))
 		return true;
 	m_dlTab.SetCurSel(iCategory);
 	downloadlistctrl.ChangeCategory(iCategory);
