@@ -350,6 +350,8 @@
     <ClCompile Include="SafeFile.cpp" />
     <ClCompile Include="Scanner.cpp">
       <PrecompiledHeader />
+      <!-- WHY: Scanner.cpp is flex-generated; the 'register' keyword (C5033) and the intentional /*FALLTHROUGH*/ (C5262) are inherent to the generated lexer. Suppress per-file rather than hand-editing generated code. -->
+      <DisableSpecificWarnings>5033;5262;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <ClCompile Include="Scheduler.cpp" />
     <ClCompile Include="SearchDlg.cpp" />
