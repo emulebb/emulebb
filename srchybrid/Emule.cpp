@@ -1642,7 +1642,16 @@ BOOL CemuleApp::InitInstance()
 	///////////////////////////////////////////////////////////////////////////
 	// Common Controls initialization
 	//
-	InitCommonControls();
+	// InitCommonControlsEx registers the v6 control classes explicitly (the
+	// legacy InitCommonControls only covers the ICC_WIN95_CLASSES set). The flag
+	// set is a superset of what InitCommonControls registered, so behavior is
+	// preserved while the modern/extended classes are guaranteed registered.
+	const INITCOMMONCONTROLSEX iccex = {
+		sizeof(INITCOMMONCONTROLSEX),
+		ICC_WIN95_CLASSES | ICC_STANDARD_CLASSES | ICC_BAR_CLASSES | ICC_COOL_CLASSES
+			| ICC_DATE_CLASSES | ICC_USEREX_CLASSES | ICC_LINK_CLASS | ICC_INTERNET_CLASSES
+	};
+	VERIFY(::InitCommonControlsEx(&iccex));
 	m_ullComCtrlVer = MAKEDLLVERULL(6, 16, 0, 0);
 
 	m_sizSmallSystemIcon.cx = ::GetSystemMetrics(SM_CXSMICON);
