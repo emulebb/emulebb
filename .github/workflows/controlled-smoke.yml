@@ -294,7 +294,7 @@ jobs:
           cat controlled-smoke-summary.md >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload smoke summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: emulebb-controlled-smoke-summary-${{ needs.prepare.outputs.short_sha }}
           path: controlled-smoke-summary.md
