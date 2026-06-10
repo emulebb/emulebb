@@ -564,6 +564,10 @@ void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 	theApp.AppendStartupDiagnosticsLine(_T("CSharedDirsTreeCtrl::FilterTreeReloadTree begin"), 0);
 #endif
 	m_bCreatingTree = true;
+	// WHY: the rebuild inserts every shared-directory node; suppress per-insert
+	// repaint, relayout, and sort until the tree is fully rebuilt to avoid a UI
+	// stall on large shared sets.
+	SetRedraw(FALSE);
 	m_mapAccessibleDirectoryCache.RemoveAll();
 	// store current selection
 	CDirectoryItem *pOldSelectedItem = NULL;
@@ -682,6 +686,8 @@ void CSharedDirsTreeCtrl::FilterTreeReloadTree()
 		theApp.AppendStartupDiagnosticsLine(strPhase, theApp.GetStartupDiagnosticsElapsedUs(ullStart));
 	}
 #endif
+	SetRedraw(TRUE);
+	Invalidate();
 }
 
 CDirectoryItem* CSharedDirsTreeCtrl::GetSelectedFilter() const
