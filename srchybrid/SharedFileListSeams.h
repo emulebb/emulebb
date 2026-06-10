@@ -171,7 +171,7 @@ constexpr DWORD kImportPartProgressYieldMs = 100;
 constexpr unsigned int kSharedHashPendingCompletionBacklogMax = 256u;
 constexpr ULONGLONG kStartupCacheSaveDelayIdleMs = 15000ui64;
 constexpr DWORD kSharedHashShutdownWaitMs = 5000u;
-constexpr DWORD kStartupCacheSaveShutdownWaitMs = 5000u;
+constexpr DWORD kStartupCacheSaveShutdownWaitMs = 15000u;
 constexpr DWORD kSharedShutdownPollIntervalMs = 15u;
 constexpr DWORD kSharedHashMutexShutdownPollMs = 15u;
 constexpr unsigned int kSharedHashCompletionPostRetries = 20u;
@@ -255,11 +255,19 @@ inline bool ShouldRetrySharedHashDrainPost(unsigned int uAttemptIndex, unsigned 
 }
 
 /**
- * @brief Reports whether shutdown should persist the shared startup cache at all.
+ * @brief Reports whether shutdown should start new shared startup-cache persistence.
  */
-inline bool ShouldPersistStartupCacheOnShutdown(const bool bSharedHashingWasActiveOnClose)
+inline bool ShouldStartStartupCacheSaveOnShutdown(const bool /*bSharedHashingWasActiveOnClose*/)
 {
-	return !bSharedHashingWasActiveOnClose;
+	return false;
+}
+
+/**
+ * @brief Reports whether shutdown should wait for an already-running startup-cache save.
+ */
+inline bool ShouldWaitForStartupCacheSaveOnShutdown(const bool bStartupCacheSaveRunning)
+{
+	return bStartupCacheSaveRunning;
 }
 
 /**

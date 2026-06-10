@@ -4003,8 +4003,8 @@ void CemuleDlg::CloseApp(bool bRestart)
 		}
 	}
 
-	updateShutdownPhase(18, _T("Closing eMuleBB"), _T("Starting background shared startup-cache save."));
-	if (theApp.sharedfiles != NULL && SharedFileListSeams::ShouldPersistStartupCacheOnShutdown(bSharedHashingWasActiveOnClose))
+	updateShutdownPhase(18, _T("Closing eMuleBB"), _T("Skipping new shared startup-cache save during shutdown."));
+	if (theApp.sharedfiles != NULL && SharedFileListSeams::ShouldStartStartupCacheSaveOnShutdown(bSharedHashingWasActiveOnClose))
 		(void)theApp.sharedfiles->RequestStartupCacheSave(true);
 
 	updateShutdownPhase(22, _T("Closing eMuleBB"), _T("Stopping Kad and waiting for the hashing thread to acknowledge shutdown."));
@@ -4034,13 +4034,10 @@ void CemuleDlg::CloseApp(bool bRestart)
 
 	theApp.knownfiles->Save();
 	if (theApp.sharedfiles != NULL) {
-		if (SharedFileListSeams::ShouldPersistStartupCacheOnShutdown(bSharedHashingWasActiveOnClose)) {
+		if (SharedFileListSeams::ShouldWaitForStartupCacheSaveOnShutdown(theApp.sharedfiles->IsStartupCacheSaveRunning())) {
 			const ULONGLONG ullStartupCacheSaveShutdownStartTick = ::GetTickCount64();
 			bool bStartupCacheSaveShutdownTimedOut = false;
-			while (theApp.sharedfiles->HasPendingStartupCacheSaveWork()) {
-				if (!theApp.sharedfiles->IsStartupCacheSaveRunning())
-					(void)theApp.sharedfiles->RequestStartupCacheSave(true);
-
+			while (theApp.sharedfiles->IsStartupCacheSaveRunning()) {
 				CSharedFileList::StartupCacheSaveProgress progress = {};
 				theApp.sharedfiles->GetStartupCacheSaveProgress(progress);
 				updateShutdownPhase(54, _T("Closing eMuleBB"), FormatStartupCacheShutdownDetail(progress), true);
@@ -4070,8 +4067,14 @@ void CemuleDlg::CloseApp(bool bRestart)
 			}
 			if (bStartupCacheSaveShutdownTimedOut && theApp.sharedfiles == NULL)
 				updateShutdownPhase(58, _T("Closing eMuleBB"), _T("Continuing shutdown without shared-file cleanup after startup-cache save timeout."));
+			else if (theApp.sharedfiles != NULL && theApp.sharedfiles->HasPendingStartupCacheSaveWork()) {
+				(void)theApp.sharedfiles->AbandonStartupCacheSaveForShutdown();
+				updateShutdownPhase(58, _T("Closing eMuleBB"), _T("Skipping follow-up shared startup-cache save during shutdown."), false);
+			}
 		} else {
-			updateShutdownPhase(54, _T("Closing eMuleBB"), _T("Skipping shared startup-cache save because shutdown interrupted hashing."), false);
+			if (theApp.sharedfiles->HasPendingStartupCacheSaveWork())
+				(void)theApp.sharedfiles->AbandonStartupCacheSaveForShutdown();
+			updateShutdownPhase(54, _T("Closing eMuleBB"), _T("Skipping shared startup-cache save during shutdown."), false);
 		}
 		if (theApp.sharedfiles != NULL) {
 			if (bSharedHashingWasActiveOnClose)
