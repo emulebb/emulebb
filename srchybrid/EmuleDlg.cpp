@@ -4147,7 +4147,12 @@ void CemuleDlg::CloseApp(bool bRestart)
 	delete theApp.scheduler;				theApp.scheduler = NULL;
 	delete theApp.ipfilterUpdater;			theApp.ipfilterUpdater = NULL;
 	delete theApp.ipfilter;					theApp.ipfilter = NULL;			// CIPFilter::SaveToDefaultFile
-	delete theApp.webserver;				theApp.webserver = NULL;
+	if (theApp.webserver != NULL && !theApp.webserver->StopServerForShutdown())
+		theApp.webserver = NULL;
+	else {
+		delete theApp.webserver;
+		theApp.webserver = NULL;
+	}
 	delete theApp.geolocation;				theApp.geolocation = NULL;
 	delete theApp.uploadBandwidthThrottler;	theApp.uploadBandwidthThrottler = NULL;
 	delete theApp.m_pUPnPFinder;			theApp.m_pUPnPFinder = NULL;

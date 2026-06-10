@@ -323,6 +323,7 @@ public:
 	INT_PTR UpdateSessionCount();
 	void StartServer();
 	void StopServer();
+	bool StopServerForShutdown();
 	void RestartSockets();
 	void AddStatsLine(const UpDown &line);
 	bool ReloadTemplates();

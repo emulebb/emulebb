@@ -17,6 +17,7 @@ static const uint64_t kMaxHttpContentLength = 16ui64 * 1024ui64 * 1024ui64;
 static const uint64_t kMaxHttpHeaderLength = 64ui64 * 1024ui64;
 static const uint64_t kMaxQueuedResponseBytes = 16ui64 * 1024ui64 * 1024ui64;
 static const uint32_t kAcceptedClientIoTimeoutMs = 30000u;
+static const DWORD kSocketThreadShutdownTimeoutMs = 30000u;
 static const size_t kAcceptedClientReadBufferBytes = 4u * 1024u;
 // WHY: accepted web workers still share CWebServer request/session state, most
 // visibly m_uCurIP and broad _ProcessURL access to main-thread eMule objects.
@@ -57,7 +58,7 @@ enum class ERejectedRemoteAccessIpAction
 enum class ESocketThreadShutdownFollowUp
 {
 	CompleteShutdown,
-	WaitWithoutTimeout
+	DeferShutdownCleanup
 };
 
 /**
@@ -111,14 +112,13 @@ inline ERejectedRemoteAccessIpAction GetRejectedRemoteAccessIpAction()
 }
 
 /**
- * @brief Preserves the owning WebServer lifetime after a bounded socket-thread
- * shutdown wait times out or fails.
+ * @brief Defers socket cleanup after a bounded wait times out or fails.
  */
 inline ESocketThreadShutdownFollowUp GetSocketThreadShutdownFollowUp(const bool bBoundedWaitSucceeded)
 {
 	return bBoundedWaitSucceeded
 		? ESocketThreadShutdownFollowUp::CompleteShutdown
-		: ESocketThreadShutdownFollowUp::WaitWithoutTimeout;
+		: ESocketThreadShutdownFollowUp::DeferShutdownCleanup;
 }
 
 /**

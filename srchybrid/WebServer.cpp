@@ -315,6 +315,16 @@ void CWebServer::RestartSockets()
 		StartSockets(this);
 }
 
+bool CWebServer::StopServerForShutdown()
+{
+	if (!m_bServerWorking)
+		return true;
+	const bool bStopped = StopSockets();
+	if (bStopped)
+		m_bServerWorking = false;
+	return bStopped;
+}
+
 void CWebServer::StartServer()
 {
 	const bool bShouldStart = WebServerLegacySeams::ShouldStartWebTransport(thePrefs.GetWSIsEnabled());

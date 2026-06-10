@@ -5,7 +5,7 @@
 class CWebServer;
 
 void StartSockets(CWebServer *pThis);
-void StopSockets();
+bool StopSockets();
 
 class CWebSocket
 {

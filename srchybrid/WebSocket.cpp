@@ -49,8 +49,6 @@ typedef struct
 
 namespace
 {
-	const DWORD kWebSocketThreadShutdownTimeoutMs = 10000;
-
 	bool IsTlsWant(const int nResult)
 	{
 		return nResult == MBEDTLS_ERR_SSL_WANT_READ || nResult == MBEDTLS_ERR_SSL_WANT_WRITE;
@@ -1009,11 +1007,12 @@ void StartSockets(CWebServer *pThis)
 	}
 }
 
-void StopSockets()
+bool StopSockets()
 {
 	if (s_hTerminate)
 		VERIFY(::SetEvent(s_hTerminate));
 
+	bool bDeferredShutdown = false;
 	if (s_pSocketThread) {
 		bool bListenerWaitSucceeded = true;
 		if (s_pSocketThread->m_hThread) {
@@ -1022,10 +1021,10 @@ void StopSockets()
 			// the CWinThread::m_hThread is invalid.
 			ASSERT(!s_pSocketThread->m_bAutoDelete);
 
-			DWORD dwWaitRes = ::WaitForSingleObject(s_pSocketThread->m_hThread, kWebSocketThreadShutdownTimeoutMs);
+			DWORD dwWaitRes = ::WaitForSingleObject(s_pSocketThread->m_hThread, WebSocketHttpSeams::kSocketThreadShutdownTimeoutMs);
 			if (dwWaitRes == WAIT_TIMEOUT) {
 				TRACE("*** Failed to wait for websocket thread termination - Timeout\n");
-				DebugLogError(_T("Web Interface listener thread did not exit within %lu ms"), kWebSocketThreadShutdownTimeoutMs);
+				DebugLogError(_T("Web Interface listener thread did not exit within %lu ms"), WebSocketHttpSeams::kSocketThreadShutdownTimeoutMs);
 				bListenerWaitSucceeded = false;
 			} else if (dwWaitRes == WAIT_FAILED) {
 				const DWORD dwWaitError = ::GetLastError();
@@ -1034,21 +1033,30 @@ void StopSockets()
 				bListenerWaitSucceeded = false;
 			}
 		}
-		if (WebSocketHttpSeams::GetSocketThreadShutdownFollowUp(bListenerWaitSucceeded) == WebSocketHttpSeams::ESocketThreadShutdownFollowUp::WaitWithoutTimeout) {
-			DebugLogError(_T("Web Interface listener thread is still using WebServer state; waiting without a timeout before teardown."));
-			if (s_pSocketThread->m_hThread != NULL)
-				(void)::WaitForSingleObject(s_pSocketThread->m_hThread, INFINITE);
+		if (WebSocketHttpSeams::GetSocketThreadShutdownFollowUp(bListenerWaitSucceeded) == WebSocketHttpSeams::ESocketThreadShutdownFollowUp::DeferShutdownCleanup) {
+			// WHY: listener and accepted-client workers receive CWebServer as a
+			// raw owner pointer. If a bounded shutdown wait expires, deleting the
+			// socket wrappers or SSL state would race the live worker; keep the
+			// transport state owned by the process and let the deferred reaper
+			// release it when the worker exits.
+			DebugLogError(_T("Web Interface listener thread is still using WebServer state; deferring socket teardown for process exit."));
+			bDeferredShutdown = true;
 		}
-		delete s_pSocketThread;
-		s_pSocketThread = NULL;
+		if (!bDeferredShutdown) {
+			delete s_pSocketThread;
+			s_pSocketThread = NULL;
+		}
 	}
 
-	if (!WaitForAcceptedThreadHandles(kWebSocketThreadShutdownTimeoutMs)) {
-		if (WebSocketHttpSeams::GetSocketThreadShutdownFollowUp(false) == WebSocketHttpSeams::ESocketThreadShutdownFollowUp::WaitWithoutTimeout) {
-			DebugLogError(_T("Web Interface accepted-client thread(s) are still using WebServer state; waiting without a timeout before teardown."));
-			(void)WaitForAcceptedThreadHandles(INFINITE);
+	if (!WaitForAcceptedThreadHandles(WebSocketHttpSeams::kSocketThreadShutdownTimeoutMs)) {
+		if (WebSocketHttpSeams::GetSocketThreadShutdownFollowUp(false) == WebSocketHttpSeams::ESocketThreadShutdownFollowUp::DeferShutdownCleanup) {
+			DebugLogError(_T("Web Interface accepted-client thread(s) are still using WebServer state; deferring socket teardown for process exit."));
+			bDeferredShutdown = true;
 		}
 	}
+
+	if (bDeferredShutdown)
+		return false;
 
 	if (s_hTerminate) {
 		VERIFY(::CloseHandle(s_hTerminate));
@@ -1056,4 +1064,5 @@ void StopSockets()
 		StopSSL();
 	} else
 		StopSSL();
+	return true;
 }
