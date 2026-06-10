@@ -4698,12 +4698,12 @@ BEGIN
     IDS_TWEAKS_TT_PREVIEW_SMALL_BLOCKS_FORCE "Offer preview even when the first block is missing.\r\n\r\nUse only with players that can tolerate incomplete media, such as VLC."
     IDS_TWEAKS_TT_BEEP_ON_ERROR            "Plays the system error sound when eMuleBB reports important errors.\r\n\r\nUseful for unattended troubleshooting. Disable it if audible alerts would be distracting."
     IDS_TWEAKS_TT_SHOW_COPY_ED2K_LINK_CMD  "Changes file context menus to show a direct Copy ed2k Link command instead of the standard Show ed2k Link action.\r\n\r\nEnable it if copying links is your normal workflow."
-    IDS_TWEAKS_TT_SPARSE_PART_FILES        "Uses sparse files for part files when the filesystem supports them.\r\n\r\nRecommended: enabled on NTFS to reduce upfront disk allocation. Disable only if sparse-file behavior causes a filesystem-specific problem."
+    IDS_TWEAKS_TT_SPARSE_PART_FILES        "Uses NTFS sparse files for new part files when supported.\r\n\r\nDefault: off. Sparse files reduce upfront disk allocation and can fit SSDs or tight temp volumes, but on mechanical or SMR HDDs they can increase fragmentation and seek-heavy writes/uploads. Enable only when saving temp space matters more than contiguous layout."
 END
 
 STRINGTABLE
 BEGIN
-    IDS_TWEAKS_TT_FULL_ALLOC               "Preallocates the full target file size on disk when downloads start.\r\n\r\nCan reduce fragmentation, but it reserves space immediately and costs more disk work. Leave it off unless you prefer full preallocation."
+    IDS_TWEAKS_TT_FULL_ALLOC               "Preallocates the full target file size for non-sparse part files when downloads start.\r\n\r\nDefault: off. On mechanical HDDs with enough free space, enabling this can reduce fragmentation and improve later reads/uploads. It reserves disk space immediately and adds startup disk work, so leave it off on SSDs or space-constrained volumes."
     IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_CONFIG "Minimum free space reserved on the volume hosting eMuleBB's config files.\r\n\r\nHard minimum: 1 GiB. If this volume falls below the effective limit, eMuleBB stops all downloads and immediately saves .part.met files.\r\nIf config shares a volume with temp or incoming, the largest limit on that volume wins."
     IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_TEMP "Minimum free space reserved on every volume hosting temp files.\r\n\r\nHard minimum: 5 GiB. If any protected volume falls below its effective limit, eMuleBB stops all downloads and immediately saves .part.met files.\r\nIf temp shares a volume with config or incoming, the largest limit on that volume wins."
     IDS_TWEAKS_TT_MIN_FREE_DISK_SPACE_INCOMING "Minimum free space reserved on every volume hosting incoming files, including category-specific incoming directories.\r\n\r\nHard minimum: 5 GiB. If incoming shares a volume with config or temp, the largest limit on that volume wins and all downloads are stopped when it is breached."
