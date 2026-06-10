@@ -1822,8 +1822,12 @@ BOOL CemuleDlg::OnInitDialog()
 	// STA UI thread; CoInitializeEx just makes the apartment model explicit.
 	m_bInitedCOM = SUCCEEDED(::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED));
 	if (m_bInitedCOM) {
-		::ChangeWindowMessageFilter(UWM_TASK_BUTTON_CREATED, MSGFLT_ADD);
-		::ChangeWindowMessageFilter(WM_COMMAND, MSGFLT_ADD);
+		// ChangeWindowMessageFilterEx scopes the UIPI allow to this window only,
+		// instead of the process-global ChangeWindowMessageFilter - matching the
+		// intent ("sent to our window") and not unblocking the messages for every
+		// window in the process.
+		::ChangeWindowMessageFilterEx(m_hWnd, UWM_TASK_BUTTON_CREATED, MSGFLT_ALLOW, NULL);
+		::ChangeWindowMessageFilterEx(m_hWnd, WM_COMMAND, MSGFLT_ALLOW, NULL);
 	} else
 		ASSERT(0);
 #endif
