@@ -535,27 +535,6 @@ void CSharedDirsTreeCtrl::InitalizeStandardItems()
 #endif
 }
 
-bool CSharedDirsTreeCtrl::FilterTreeIsSubDirectory(const CString &strDir, const CString &strRoot, const CStringList &liDirs)
-{
-	ASSERT(strRoot.IsEmpty() || strRoot.Right(1) == _T("\\"));
-	ASSERT(strDir.Right(1) == _T("\\"));
-	const CString strDirKey(BuildSharedTreePathKey(strDir));
-	const CString strRootKey(BuildSharedTreePathKey(strRoot));
-	for (POSITION pos = liDirs.GetHeadPosition(); pos != NULL;) {
-		const CString strCurrent(liDirs.GetNext(pos));
-		ASSERT(strCurrent.Right(1) == _T("\\"));
-		const CString strCurrentKey(BuildSharedTreePathKey(strCurrent));
-		if ((!strRoot.IsEmpty() && strCurrentKey == strRootKey) || strCurrentKey == strDirKey)
-			continue;
-		if (HasSharedDirectoryKeyPrefix(strCurrentKey, strDirKey)
-			&& (strRoot.IsEmpty() || !HasSharedDirectoryKeyPrefix(strCurrentKey, strRootKey)))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
 CString GetFolderLabel(const CString &strFolderPath, bool bTopFolder, bool bAccessible)
 {
 	CString strLabel(PathHelpers::TrimTrailingSeparatorForLeaf(strFolderPath));
@@ -575,40 +554,6 @@ CString GetFolderLabel(const CString &strFolderPath, bool bTopFolder, bool bAcce
 		strLabel.AppendFormat(_T(" [%s]"), (LPCTSTR)GetResString(IDS_NOTCONNECTED));
 
 	return strLabel;
-}
-
-void CSharedDirsTreeCtrl::FilterTreeAddSubDirectories(CDirectoryItem *pDirectory, const CStringList &liDirs
-	, int nLevel, bool &rbShowWarning, bool bParentAccessible)
-{
-	// just some sanity check against too deep shared dirs
-	// shouldn't be needed, but never trust the file system or a recursive function ;)
-	if (nLevel > 14) {
-		ASSERT(0);
-		return;
-	}
-
-	const CString &strDirectoryPath(pDirectory->m_strFullPath);
-	const CString strDirectoryKey(BuildSharedTreePathKey(strDirectoryPath));
-	for (POSITION pos = liDirs.GetHeadPosition(); pos != NULL;) { //all paths in liDirs should have a trailing backslash
-		const CString &strCurrent(liDirs.GetNext(pos));
-		const CString strCurrentKey(BuildSharedTreePathKey(strCurrent));
-		if (!strDirectoryPath.IsEmpty() && !HasSharedDirectoryKeyPrefix(strDirectoryKey, strCurrentKey))
-			continue;
-		if (strCurrentKey == strDirectoryKey)
-			continue;
-		if (!FilterTreeIsSubDirectory(strCurrent, strDirectoryPath, liDirs)) {
-			bool bAccessible = bParentAccessible ? IsSharedTreeDirectoryAccessible(strCurrent) : false;
-			const CString &strName(GetFolderLabel(strCurrent, nLevel == 0, bAccessible));
-			CDirectoryItem *pNewItem = new CDirectoryItem(strCurrent);
-			pNewItem->m_htItem = InsertItem(TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE, strName, 5, 5, 0, 0, (LPARAM)pNewItem, pDirectory->m_htItem, TVI_SORT);
-			if (!bAccessible) {
-				SetItemState(pNewItem->m_htItem, INDEXTOOVERLAYMASK(2), TVIS_OVERLAYMASK);
-				rbShowWarning = true;
-			}
-			pDirectory->liSubDirectories.AddTail(pNewItem);
-			FilterTreeAddSubDirectories(pNewItem, liDirs, nLevel + 1, rbShowWarning, bAccessible);
-		}
-	}
 }
 
 void CSharedDirsTreeCtrl::FilterTreeReloadTree()

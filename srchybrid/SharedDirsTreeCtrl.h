@@ -146,9 +146,6 @@ private:
 
 	void	FileSystemTreeUpdateShareState(const CDirectoryItem *pDir = NULL);
 	void	FileSystemTreeSetShareState(const CDirectoryItem *pDir, bool bSubDirectories);
-	//void	FilterTreeAddSharedDirectory(CDirectoryItem *pDir, bool bRefresh);
-	void	FilterTreeAddSubDirectories(CDirectoryItem *pDirectory, const CStringList &liDirs, int nLevel, bool &rbShowWarning, bool bParentAccessible);
-	bool	FilterTreeIsSubDirectory(const CString &strDir, const CString &strRoot, const CStringList &liDirs);
 	void	FilterTreeReloadTree();
 
 	bool	m_bCreatingTree;
