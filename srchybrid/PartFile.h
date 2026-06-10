@@ -352,7 +352,7 @@ public:
 	static CPartFile* GetCompletionResultFile(void *pCompletionResult);
 	static void	DiscardCompletionResult(void *pCompletionResult);
 	void	PerformFileCompleteEnd(void *pCompletionResult);
-	void	WaitForFileCompletionWorkerForShutdown();
+	bool	WaitForFileCompletionWorkerForShutdown();
 
 	void	SetFileOp(EPartFileOp eFileOp)				{ m_eFileOp = eFileOp; }
 	EPartFileOp GetFileOp() const						{ return m_eFileOp; }

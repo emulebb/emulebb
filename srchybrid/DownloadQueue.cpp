@@ -712,8 +712,8 @@ CDownloadQueue::~CDownloadQueue()
 	CPartFile::DrainDeferredUploadReadDeletesForShutdown();
 	while (!filelist.IsEmpty()) {
 		CPartFile *pPartFile = filelist.RemoveHead();
-		if (pPartFile != NULL)
-			pPartFile->WaitForFileCompletionWorkerForShutdown();
+		if (pPartFile != NULL && !pPartFile->WaitForFileCompletionWorkerForShutdown())
+			continue;
 		delete pPartFile;
 	}
 }

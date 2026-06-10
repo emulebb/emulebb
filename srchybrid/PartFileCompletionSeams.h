@@ -30,7 +30,7 @@ struct SWorkerCompletionPostResult
 	DWORD dwLastError = ERROR_SUCCESS;
 };
 
-constexpr DWORD kCompletionOwnerShutdownWaitMs = 5000u;
+constexpr DWORD kCompletionOwnerShutdownWaitMs = 120000u;
 
 /**
  * @brief Reports whether a part-file completion worker was created.

@@ -664,24 +664,25 @@ void CPartFile::DrainDeferredUploadReadDeletesForShutdown()
 	ProcessDeferredUploadReadDeletesImpl(true);
 }
 
-void CPartFile::WaitForFileCompletionWorkerForShutdown()
+bool CPartFile::WaitForFileCompletionWorkerForShutdown()
 {
 	CSingleLock lock(&m_FileCompleteMutex);
 	if (lock.Lock(0))
-		return;
+		return true;
 
 	if (PartFileCompletionSeams::GetCompletionOwnerShutdownWaitAction(false)
 		!= PartFileCompletionSeams::ECompletionOwnerShutdownWaitAction::WaitForWorker)
 	{
-		return;
+		return true;
 	}
 
 	const CString strFileName(GetFileName());
 	DebugLogWarning(_T("Waiting for part-file completion worker before deleting \"%s\" during shutdown."), (LPCTSTR)strFileName);
 	if (!lock.Lock(PartFileCompletionSeams::kCompletionOwnerShutdownWaitMs)) {
 		DebugLogError(_T("Part-file completion worker for \"%s\" exceeded shutdown wait budget; preserving owner lifetime until it exits."), (LPCTSTR)strFileName);
-		(void)lock.Lock(INFINITE);
+		return false;
 	}
+	return true;
 }
 
 bool CPartFile::HasDirtyBufferedData() const
