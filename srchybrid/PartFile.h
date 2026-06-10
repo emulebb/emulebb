@@ -353,6 +353,7 @@ public:
 	static void	DiscardCompletionResult(void *pCompletionResult);
 	void	PerformFileCompleteEnd(void *pCompletionResult);
 	bool	WaitForFileCompletionWorkerForShutdown();
+	bool	WaitForAsyncWritesForShutdown();
 
 	void	SetFileOp(EPartFileOp eFileOp)				{ m_eFileOp = eFileOp; }
 	EPartFileOp GetFileOp() const						{ return m_eFileOp; }

@@ -685,6 +685,19 @@ bool CPartFile::WaitForFileCompletionWorkerForShutdown()
 	return true;
 }
 
+bool CPartFile::WaitForAsyncWritesForShutdown()
+{
+	// WHY: ~CDownloadQueue deletes part files while the part-file write helper
+	// thread is still running (it is stopped only afterwards) and that thread
+	// holds raw CPartFile pointers in its queued ToWrite entries and pending
+	// overlapped writes. Flush this file's buffered data and wait for those
+	// references to drain within the shutdown budget. If they cannot, report
+	// failure so the caller preserves (leaks) the object instead of freeing it
+	// under the live writer, mirroring WaitForFileCompletionWorkerForShutdown.
+	const bool bFlushed = FlushBufferedDataForShutdown();
+	return bFlushed && !HasAsyncWriteReferences();
+}
+
 bool CPartFile::HasDirtyBufferedData() const
 {
 	return GetAsyncWriteCount() > 0 || m_nTotalBufferData > 0 || !m_BufferedData_list.IsEmpty();

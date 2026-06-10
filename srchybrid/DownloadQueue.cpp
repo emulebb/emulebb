@@ -712,8 +712,17 @@ CDownloadQueue::~CDownloadQueue()
 	CPartFile::DrainDeferredUploadReadDeletesForShutdown();
 	while (!filelist.IsEmpty()) {
 		CPartFile *pPartFile = filelist.RemoveHead();
-		if (pPartFile != NULL && !pPartFile->WaitForFileCompletionWorkerForShutdown())
-			continue;
+		if (pPartFile != NULL) {
+			// WHY: the part-file write helper thread is stopped only after this
+			// queue is destroyed, so it may still hold raw pointers to these part
+			// files. Preserve (leak) any object whose completion worker or async
+			// disk writes have not released it instead of freeing it under the
+			// live worker; the alternative is a shutdown use-after-free.
+			if (!pPartFile->WaitForFileCompletionWorkerForShutdown())
+				continue;
+			if (!pPartFile->WaitForAsyncWritesForShutdown())
+				continue;
+		}
 		delete pPartFile;
 	}
 }
