@@ -321,6 +321,7 @@ BEGIN_MESSAGE_MAP(CSharedDirsTreeCtrl, CTreeCtrl)
 	ON_WM_LBUTTONUP()
 	ON_WM_SYSCOLORCHANGE()
 	ON_NOTIFY_REFLECT(TVN_ITEMEXPANDING, OnTvnItemexpanding)
+	ON_NOTIFY_REFLECT(TVN_ITEMEXPANDED, OnTvnItemexpanded)
 	ON_NOTIFY_REFLECT(TVN_GETDISPINFO, OnTvnGetdispinfo)
 	ON_NOTIFY_REFLECT(TVN_BEGINDRAG, OnTvnBeginDrag)
 END_MESSAGE_MAP()
@@ -1208,34 +1209,74 @@ int CSharedDirsTreeCtrl::AddSystemIcon(HICON hIcon, int nSystemListPos)
 
 void CSharedDirsTreeCtrl::OnTvnItemexpanding(LPNMHDR pNMHDR, LRESULT *pResult)
 {
-	CWaitCursor curWait;
-	SetRedraw(FALSE);
+	*pResult = 0;
 
 	LPNMTREEVIEW pNMTreeView = reinterpret_cast<LPNMTREEVIEW>(pNMHDR);
+	// WHY: child items are freed in OnTvnItemexpanded, after the collapse has
+	// completed - not here. Deleting every child of a still-expanded node inside
+	// the TVN_ITEMEXPANDING collapse notification auto-clears the control's
+	// TVIS_EXPANDED state mid-toggle, leaving the glyph stuck at "-" and the
+	// folder unable to expand again. Only the expand direction populates here.
+	if (pNMTreeView->action == TVE_COLLAPSE || pNMTreeView->action == TVE_COLLAPSERESET)
+		return;
+
 	CDirectoryItem *pExpanded = reinterpret_cast<CDirectoryItem*>(pNMTreeView->itemNew.lParam);
-	if (pExpanded != NULL) {
-		const bool bCollapse = pNMTreeView->action == TVE_COLLAPSE || pNMTreeView->action == TVE_COLLAPSERESET;
-		if (pExpanded->m_eItemType == SDI_UNSHAREDDIRECTORY && !pExpanded->m_strFullPath.IsEmpty()) {
-			DeleteChildItems(pExpanded);
-			if (!bCollapse)
-				FileSystemTreeAddSubdirectories(pExpanded);
-
-			TVITEM tvi = {};
-			tvi.mask = TVIF_CHILDREN;
-			tvi.hItem = pExpanded->m_htItem;
-			tvi.cChildren = bCollapse ? 1 : (pExpanded->liSubDirectories.IsEmpty() ? 0 : 1);
-			SetItem(&tvi);
-		} else if (pExpanded->m_eItemType == SDI_FILESYSTEMPARENT) {
-			DeleteChildItems(pExpanded);
-			if (!bCollapse)
-				FileSystemTreeCreateTree();
-		}
-	} else
+	if (pExpanded == NULL) {
 		ASSERT(0);
+		return;
+	}
 
+	CWaitCursor curWait;
+	SetRedraw(FALSE);
+	if (pExpanded->m_eItemType == SDI_UNSHAREDDIRECTORY && !pExpanded->m_strFullPath.IsEmpty()) {
+		DeleteChildItems(pExpanded);
+		FileSystemTreeAddSubdirectories(pExpanded);
+
+		TVITEM tvi = {};
+		tvi.mask = TVIF_CHILDREN;
+		tvi.hItem = pExpanded->m_htItem;
+		tvi.cChildren = pExpanded->liSubDirectories.IsEmpty() ? 0 : 1;
+		SetItem(&tvi);
+	} else if (pExpanded->m_eItemType == SDI_FILESYSTEMPARENT) {
+		DeleteChildItems(pExpanded);
+		FileSystemTreeCreateTree();
+	}
 	SetRedraw(TRUE);
 	Invalidate();
+}
+
+void CSharedDirsTreeCtrl::OnTvnItemexpanded(LPNMHDR pNMHDR, LRESULT *pResult)
+{
 	*pResult = 0;
+
+	LPNMTREEVIEW pNMTreeView = reinterpret_cast<LPNMTREEVIEW>(pNMHDR);
+	if (pNMTreeView->action != TVE_COLLAPSE && pNMTreeView->action != TVE_COLLAPSERESET)
+		return;
+
+	CDirectoryItem *pCollapsed = reinterpret_cast<CDirectoryItem*>(pNMTreeView->itemNew.lParam);
+	if (pCollapsed == NULL)
+		return;
+
+	// WHY: free the now-hidden subtree only after the control has finished the
+	// collapse, so removing children cannot disturb the just-settled expand
+	// state. This keeps tree memory bounded on huge shared libraries; the node is
+	// repopulated lazily on the next expand. cChildren stays 1 so the '+' glyph
+	// remains and the folder can be expanded again.
+	if ((pCollapsed->m_eItemType == SDI_UNSHAREDDIRECTORY && !pCollapsed->m_strFullPath.IsEmpty())
+		|| pCollapsed->m_eItemType == SDI_FILESYSTEMPARENT)
+	{
+		CWaitCursor curWait;
+		SetRedraw(FALSE);
+		DeleteChildItems(pCollapsed);
+
+		TVITEM tvi = {};
+		tvi.mask = TVIF_CHILDREN;
+		tvi.hItem = pCollapsed->m_htItem;
+		tvi.cChildren = 1;
+		SetItem(&tvi);
+		SetRedraw(TRUE);
+		Invalidate();
+	}
 }
 
 void CSharedDirsTreeCtrl::DeleteChildItems(CDirectoryItem *pParent)

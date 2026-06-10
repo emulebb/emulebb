@@ -113,6 +113,7 @@ protected:
 	afx_msg	void	OnRButtonDown(UINT, CPoint point);
 	afx_msg	void	OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void	OnTvnItemexpanding(LPNMHDR pNMHDR, LRESULT *pResult);
+	afx_msg void	OnTvnItemexpanded(LPNMHDR pNMHDR, LRESULT *pResult);
 	afx_msg void	OnTvnGetdispinfo(LPNMHDR pNMHDR, LRESULT *pResult);
 	afx_msg void	OnTvnBeginDrag(LPNMHDR pNMHDR, LRESULT *pResult);
 	afx_msg void	OnMouseMove(UINT nFlags, CPoint point);
