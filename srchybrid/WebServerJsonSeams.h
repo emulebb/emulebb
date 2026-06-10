@@ -1105,6 +1105,45 @@ inline const SApiRouteSpec *FindRouteSpecForAnyMethod(const std::string &rApiPat
 	return NULL;
 }
 
+/**
+ * @brief Lists, in canonical order, every HTTP method registered for the route
+ * that the request target resolves to.
+ *
+ * Used to populate the RFC 7231 Allow header on 405 Method Not Allowed
+ * responses. Returns an empty string when the target does not match any
+ * registered route path.
+ */
+inline std::string CollectAllowedMethodsForRequestTarget(const std::string &rRequestTarget)
+{
+	std::string strIgnoredError;
+	std::vector<std::string> segments;
+	if (!TrySplitPathSegments(GetRequestPath(rRequestTarget), segments, strIgnoredError))
+		return std::string();
+	if (segments.size() < 2 || ToLowerAscii(segments[0]) != "api" || ToLowerAscii(segments[1]) != "v1")
+		return std::string();
+
+	const std::string strApiPath(BuildRoutePathForSpec(std::vector<std::string>(segments.begin() + 2, segments.end())));
+	const std::vector<SApiRouteSpec> &specs = GetApiRouteSpecs();
+
+	// Emit methods in a stable, canonical order regardless of registry order.
+	static const char *const kMethodOrder[] = {"GET", "POST", "PATCH", "DELETE"};
+	std::string strAllowed;
+	for (const char *pszMethod : kMethodOrder) {
+		for (size_t i = 0; i < specs.size(); ++i) {
+			if (specs[i].pszMethod != NULL
+				&& std::string(specs[i].pszMethod) == pszMethod
+				&& DoesPathMatchTemplate(strApiPath, specs[i].pszPathTemplate))
+			{
+				if (!strAllowed.empty())
+					strAllowed += ", ";
+				strAllowed += pszMethod;
+				break;
+			}
+		}
+	}
+	return strAllowed;
+}
+
 inline std::string ToUpperAscii(const std::string &rValue)
 {
 	std::string result(rValue);

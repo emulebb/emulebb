@@ -4382,10 +4382,10 @@ void SendJsonResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReas
 	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "OK", "Content-Type: application/json; charset=utf-8\r\n", strBody);
 }
 
-void SendJsonError(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, LPCSTR pszCode, const CString &strMessage)
+void SendJsonError(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, LPCSTR pszCode, const CString &strMessage, LPCSTR pszExtraHeaders = NULL)
 {
 	const CStringA strBody(WebServerJson::SerializeJsonUtf8(BuildErrorEnvelope(pszCode, strMessage)));
-	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "Error", "Content-Type: application/json; charset=utf-8\r\n", strBody);
+	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "Error", "Content-Type: application/json; charset=utf-8\r\n", strBody, pszExtraHeaders);
 }
 
 LPCSTR GetHttpReasonPhrase(const int iStatusCode)
@@ -4608,12 +4608,21 @@ void WebServerJson::ProcessRequest(const ThreadData &rData)
 		StdStringFromCStringA(rData.strContentType)))
 	{
 		const int iStatus = WebServerJsonSeams::GetHttpStatusForError(strRouteErrorCode);
+		// RFC 7231 6.5.5 requires an Allow header on 405 responses.
+		CStringA strAllowHeader;
+		if (strRouteErrorCode == "METHOD_NOT_ALLOWED") {
+			const std::string strAllowed = WebServerJsonSeams::CollectAllowedMethodsForRequestTarget(
+				StdStringFromCStringA(rData.strRequestTarget));
+			if (!strAllowed.empty())
+				strAllowHeader.Format("Allow: %s\r\n", strAllowed.c_str());
+		}
 		SendJsonError(
 			rData.pSocket,
 			iStatus,
 			GetHttpReasonPhrase(iStatus),
 			strRouteErrorCode.c_str(),
-			CStringFromStdUtf8(strRouteErrorMessage));
+			CStringFromStdUtf8(strRouteErrorMessage),
+			strAllowHeader.IsEmpty() ? NULL : static_cast<LPCSTR>(strAllowHeader));
 		return;
 	}
 
