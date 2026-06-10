@@ -78,12 +78,14 @@ void CUPnPImpl::SendResultMessage()
 
 void CUPnPImpl::ClearLastResult()
 {
+	CSingleLock lock(&m_csLastResult, TRUE);
 	m_eLastResultReason = NAT_MAPPING_RESULT_NOT_RUN;
 	m_strLastResultDetail.Empty();
 }
 
 void CUPnPImpl::SetLastResult(ENatMappingResultReason eReason, LPCTSTR pszFormat, ...)
 {
+	CSingleLock lock(&m_csLastResult, TRUE);
 	m_eLastResultReason = eReason;
 	if (pszFormat == NULL) {
 		m_strLastResultDetail.Empty();
@@ -96,8 +98,21 @@ void CUPnPImpl::SetLastResult(ENatMappingResultReason eReason, LPCTSTR pszFormat
 	va_end(args);
 }
 
+CUPnPImpl::ENatMappingResultReason CUPnPImpl::GetLastResultReason() const
+{
+	CSingleLock lock(&m_csLastResult, TRUE);
+	return m_eLastResultReason;
+}
+
+CString CUPnPImpl::GetLastResultDetail() const
+{
+	CSingleLock lock(&m_csLastResult, TRUE);
+	return m_strLastResultDetail;
+}
+
 CString CUPnPImpl::GetLastResultSummary() const
 {
+	CSingleLock lock(&m_csLastResult, TRUE);
 	if (!m_strLastResultDetail.IsEmpty())
 		return m_strLastResultDetail;
 

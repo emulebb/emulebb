@@ -90,8 +90,8 @@ public:
 	uint16 GetUsedTCPPort() const						{ return m_nTCPPort; }
 	uint16 GetUsedUDPPort() const						{ return m_nUDPPort; }
 	uint16 GetUsedTCPWebPort() const					{ return m_nTCPWebPort; }
-	ENatMappingResultReason GetLastResultReason() const	{ return m_eLastResultReason; }
-	CString GetLastResultDetail() const					{ return m_strLastResultDetail; }
+	ENatMappingResultReason GetLastResultReason() const;
+	CString GetLastResultDetail() const;
 	CString GetLastResultSummary() const;
 
 // Implementation
@@ -109,6 +109,13 @@ protected:
 	bool m_bCheckAndRefresh;
 	ENatMappingResultReason m_eLastResultReason;
 	CString m_strLastResultDetail;
+	// WHY: SetLastResult()/ClearLastResult() run on the discovery worker thread
+	// while IsReady(), StopAsyncFind(), CheckAndRefresh(), and the UI result
+	// handler read or write the same fields on the main thread. CString mutation
+	// is not atomic, so a concurrent FormatV()/Empty() on the shared member would
+	// corrupt its heap buffer. This lock serializes every access to the
+	// last-result fields; it must never be held while taking m_mutBusy.
+	mutable CCriticalSection m_csLastResult;
 };
 
 // Dummy Implementation to be used when no other implementation is available
