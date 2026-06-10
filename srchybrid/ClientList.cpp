@@ -67,6 +67,19 @@ CClientList::~CClientList()
 	RemoveAllTrackedClients();
 }
 
+void CClientList::GetClientModStatistics(CClientModMap &rmodMap)
+{
+	rmodMap.RemoveAll();
+	// WHY: same known-client walk/access pattern as GetStatistics; bucket only
+	// non-empty self-reported mod strings (vanilla clients report none).
+	for (POSITION pos = list.GetHeadPosition(); pos != NULL;) {
+		const CUpDownClient *cur_client = list.GetNext(pos);
+		const CString &strMod = cur_client->GetClientModVer();
+		if (!strMod.IsEmpty())
+			++rmodMap[strMod];
+	}
+}
+
 void CClientList::GetStatistics(uint32 &ruTotalClients
 							, int stats[NUM_CLIENTLIST_STATS]
 							, CClientVersionMap &clientVersionEDonkey

@@ -79,6 +79,7 @@ enum buddyState : uint8
 
 // ----------------------CClientList Class---------------
 typedef CMap<uint32, uint32, uint32, uint32> CClientVersionMap;
+typedef CMap<CString, LPCTSTR, uint32, uint32> CClientModMap;
 
 class CClientList
 {
@@ -97,6 +98,8 @@ public:
 						, CClientVersionMap &clientVersionEDonkeyHybrid
 						, CClientVersionMap &clientVersionEMule
 						, CClientVersionMap &clientVersionAMule);
+	// Tallies self-reported mod names (GetClientModVer) across known clients for the statistics view.
+	void	GetClientModStatistics(CClientModMap &rmodMap);
 	INT_PTR	GetClientCount()							{ return list.GetCount(); }
 	void	DeleteAll();
 	bool	AttachToAlreadyKnown(CUpDownClient **client, CClientReqSocket *sender);
