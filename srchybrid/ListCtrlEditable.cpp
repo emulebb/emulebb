@@ -8,19 +8,6 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 
-#if (_WIN32_WINNT < 0x501)
-typedef struct tagNMLVSCROLL
-{
-	NMHDR   hdr;
-	int     dx;
-	int     dy;
-} NMLVSCROLL, *LPNMLVSCROLL;
-
-#define LVN_BEGINSCROLL          (LVN_FIRST-80)
-#define LVN_ENDSCROLL            (LVN_FIRST-81)
-#endif
-
-
 #define MAX_COLS	2
 
 #define LV_EDIT_CTRL_ID		1001
