@@ -63,6 +63,14 @@ private:
 	void	ReleaseQueuedWritesForShutdown();
 	void	DrainPendingWrites();
 
+	// WHY: m_listPendingIO is mutated only on the worker thread and has no lock.
+	// WakeUpCall() runs on the foreground thread and must know whether any write
+	// is in flight, so route every list add/remove through these helpers to keep
+	// m_nPendingIoCount in lockstep with membership instead of reading the CList
+	// across threads.
+	POSITION	AddPendingIo(OverlappedWrite_Struct *pOvWrite);
+	void	RemovePendingIo(POSITION pos);
+
 	CList<ToWrite>	m_listToWrite;
 	CTypedPtrList<CPtrList, OverlappedWrite_Struct*>	m_listPendingIO;
 
@@ -72,4 +80,5 @@ private:
 	volatile LONG m_bStopRequested;
 	volatile LONG m_Run; //0 - not running; 1 - idle; 2 - processing
 	volatile LONG m_bNewData;
+	volatile LONG m_nPendingIoCount; //count of m_listPendingIO entries, read cross-thread by WakeUpCall
 };

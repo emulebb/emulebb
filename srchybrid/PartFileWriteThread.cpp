@@ -75,6 +75,7 @@ CPartFileWriteThread::CPartFileWriteThread()
 	, m_bStopRequested()
 	, m_Run(RUN_STOP)
 	, m_bNewData()
+	, m_nPendingIoCount()
 {
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	const ULONGLONG ullPhaseStart = theApp.GetStartupDiagnosticsTimestampUs();
@@ -223,6 +224,21 @@ UINT CPartFileWriteThread::RunInternal()
 	return 0;
 }
 
+POSITION CPartFileWriteThread::AddPendingIo(OverlappedWrite_Struct *pOvWrite)
+{
+	// AddTail may throw before the counter moves, so increment only after it
+	// links the node; this keeps m_nPendingIoCount equal to list membership.
+	const POSITION pos = m_listPendingIO.AddTail(pOvWrite);
+	::InterlockedIncrement(&m_nPendingIoCount);
+	return pos;
+}
+
+void CPartFileWriteThread::RemovePendingIo(POSITION pos)
+{
+	m_listPendingIO.RemoveAt(pos);
+	::InterlockedDecrement(&m_nPendingIoCount);
+}
+
 void CPartFileWriteThread::WriteBuffers()
 {
 	//process internal list
@@ -268,14 +284,14 @@ void CPartFileWriteThread::WriteBuffers()
 				// fails. Register the object and raise the file's delete guard
 				// before submission so completion, cancellation, and part-file
 				// lifetime checks all observe the same ownership state.
-				pOvWrite->pos = m_listPendingIO.AddTail(pOvWrite);
+				pOvWrite->pos = AddPendingIo(pOvWrite);
 				pFile->IncrementAsyncWriteCount();
 
 				static const BYTE zero = 0;
 				if (!::WriteFile(pFile->m_hWrite, pBuffer->data ? pBuffer->data : &zero, (DWORD)(pBuffer->end - pBuffer->start + 1), NULL, (LPOVERLAPPED)pOvWrite)) {
 					DWORD dwError = ::GetLastError();
 					if (dwError != ERROR_IO_PENDING) {
-						m_listPendingIO.RemoveAt(pOvWrite->pos);
+						RemovePendingIo(pOvWrite->pos);
 						pOvWrite->pos = NULL;
 						pFile->DecrementAsyncWriteCount();
 						delete pOvWrite;
@@ -333,7 +349,7 @@ void CPartFileWriteThread::WriteCompletionRoutine(DWORD dwBytesWritten, const Ov
 	const DWORD dwWrite = (DWORD)(pBuffer->end - pBuffer->start + 1);
 
 	if (pOvWrite->pos != NULL)
-		m_listPendingIO.RemoveAt(pOvWrite->pos);
+		RemovePendingIo(pOvWrite->pos);
 	else
 		ASSERT(HelperThreadLaunchSeams::GetState(m_Run) == RUN_STOP);
 
@@ -473,7 +489,10 @@ void CPartFileWriteThread::WakeUpCall()
 	if (!HelperThreadLaunchSeams::CanPostIocpWork(m_bThreadStarted, HelperThreadLaunchSeams::IsFlagSet(m_bStopRequested), m_hPort != NULL, HelperThreadLaunchSeams::GetState(m_Run) != RUN_STOP))
 		return;
 	//pending I/O makes posting unnecessary
-	if (HelperThreadLaunchSeams::GetState(m_Run) == RUN_IDLE && m_listPendingIO.IsEmpty())
+	// WHY: WakeUpCall runs on the foreground thread; read the worker-maintained
+	// atomic count instead of the unlocked m_listPendingIO CList so this cannot
+	// race the worker's add/remove of list nodes.
+	if (HelperThreadLaunchSeams::GetState(m_Run) == RUN_IDLE && ::InterlockedCompareExchange(&m_nPendingIoCount, 0, 0) == 0)
 		PostQueuedCompletionStatus(m_hPort, 0, WAKEUP, NULL);
 	else
 		HelperThreadLaunchSeams::SetFlag(m_bNewData);
