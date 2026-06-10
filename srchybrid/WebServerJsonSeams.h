@@ -920,6 +920,23 @@ inline void SetInvalidArgument(std::string &rErrorCode, std::string &rErrorMessa
 }
 
 /**
+ * @brief Records the offending field and its inclusive numeric bounds in the
+ * structured error details, when a details sink is provided.
+ *
+ * Kept identical to the emulebb-rust REST implementation so both stacks emit
+ * the same {"field","constraint"} payload for the same invalid input.
+ */
+inline void SetBoundedConstraintDetails(json *pErrorDetails, const char *pszField, uint64_t uMin, uint64_t uMax)
+{
+	if (pErrorDetails == NULL)
+		return;
+	*pErrorDetails = json{
+		{"field", pszField},
+		{"constraint", std::to_string(uMin) + ".." + std::to_string(uMax)}
+	};
+}
+
+/**
  * @brief Reports whether a native REST request body is declared as JSON.
  */
 inline bool IsJsonContentType(const std::string &rContentType)
@@ -2211,17 +2228,21 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 	return true;
 }
 
-inline bool ValidateQueryFields(const std::map<std::string, std::string> &rQuery, const SApiRouteSpec &rSpec, std::string &rErrorCode, std::string &rErrorMessage)
+inline bool ValidateQueryFields(const std::map<std::string, std::string> &rQuery, const SApiRouteSpec &rSpec, std::string &rErrorCode, std::string &rErrorMessage, json *pErrorDetails = NULL)
 {
 	for (std::map<std::string, std::string>::const_iterator it = rQuery.begin(); it != rQuery.end(); ++it) {
 		if (!HasToken(rSpec.pszQueryFields, it->first)) {
 			SetInvalidArgument(rErrorCode, rErrorMessage, "unknown query parameter: " + it->first);
 			return false;
 		}
-		if (it->first == "limit" && !TryParseBoundedQueryUInt(it->second, 1, 1000, "limit", rErrorCode, rErrorMessage))
+		if (it->first == "limit" && !TryParseBoundedQueryUInt(it->second, 1, 1000, "limit", rErrorCode, rErrorMessage)) {
+			SetBoundedConstraintDetails(pErrorDetails, "limit", 1, 1000);
 			return false;
-		if (it->first == "offset" && !TryParseBoundedQueryUInt(it->second, 0, static_cast<uint64_t>(INT_MAX), "offset", rErrorCode, rErrorMessage))
+		}
+		if (it->first == "offset" && !TryParseBoundedQueryUInt(it->second, 0, static_cast<uint64_t>(INT_MAX), "offset", rErrorCode, rErrorMessage)) {
+			SetBoundedConstraintDetails(pErrorDetails, "offset", 0, static_cast<uint64_t>(INT_MAX));
 			return false;
+		}
 		if (it->first == "categoryId" && !TryParseBoundedQueryUInt(it->second, 0, static_cast<uint64_t>(UINT_MAX), "categoryId", rErrorCode, rErrorMessage))
 			return false;
 		if (it->first == "state" && !IsTransferStateName(it->second)) {
@@ -2445,11 +2466,14 @@ inline bool TryBuildRoute(
 	SApiRoute &rRoute,
 	std::string &rErrorCode,
 	std::string &rErrorMessage,
-	const std::string &rContentType = "application/json")
+	const std::string &rContentType = "application/json",
+	json *pErrorDetails = NULL)
 {
 	rRoute.params = json::object();
 	rErrorCode.clear();
 	rErrorMessage.clear();
+	if (pErrorDetails != NULL)
+		*pErrorDetails = json::object();
 
 	const std::string strPath(GetRequestPath(rRequestTarget));
 	std::vector<std::string> segments;
@@ -2502,7 +2526,7 @@ inline bool TryBuildRoute(
 	rRoute.strPathTemplate = pRouteSpec->pszPathTemplate;
 	if (!ValidatePathParameters(strApiPath, *pRouteSpec, rErrorCode, rErrorMessage))
 		return false;
-	if (!ValidateQueryFields(query, *pRouteSpec, rErrorCode, rErrorMessage))
+	if (!ValidateQueryFields(query, *pRouteSpec, rErrorCode, rErrorMessage, pErrorDetails))
 		return false;
 	if (bDelete && !TrimAsciiWhitespace(rRequestBody).empty()) {
 		rErrorCode = "INVALID_ARGUMENT";

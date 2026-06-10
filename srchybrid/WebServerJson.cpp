@@ -4335,11 +4335,12 @@ json BuildSuccessEnvelope(const json &rPayload)
 	};
 }
 
-json BuildErrorEnvelope(LPCSTR pszCode, const CString &strMessage)
+json BuildErrorEnvelope(LPCSTR pszCode, const CString &strMessage, const json &rDetails = json::object())
 {
 	return WebServerJsonSeams::BuildErrorEnvelopeJson(
 		pszCode != NULL ? pszCode : "",
-		StdUtf8FromCString(strMessage));
+		StdUtf8FromCString(strMessage),
+		rDetails);
 }
 
 bool TryRejectRestCommandDuringShutdown(SPipeApiError &rError)
@@ -4382,9 +4383,9 @@ void SendJsonResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReas
 	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "OK", "Content-Type: application/json; charset=utf-8\r\n", strBody);
 }
 
-void SendJsonError(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, LPCSTR pszCode, const CString &strMessage, LPCSTR pszExtraHeaders = NULL)
+void SendJsonError(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, LPCSTR pszCode, const CString &strMessage, const json &rDetails = json::object(), LPCSTR pszExtraHeaders = NULL)
 {
-	const CStringA strBody(WebServerJson::SerializeJsonUtf8(BuildErrorEnvelope(pszCode, strMessage)));
+	const CStringA strBody(WebServerJson::SerializeJsonUtf8(BuildErrorEnvelope(pszCode, strMessage, rDetails)));
 	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "Error", "Content-Type: application/json; charset=utf-8\r\n", strBody, pszExtraHeaders);
 }
 
@@ -4598,6 +4599,7 @@ void WebServerJson::ProcessRequest(const ThreadData &rData)
 	WebServerJsonSeams::SApiRoute route;
 	std::string strRouteErrorCode;
 	std::string strRouteErrorMessage;
+	json routeErrorDetails = json::object();
 	if (!WebServerJsonSeams::TryBuildRoute(
 		StdStringFromCStringA(rData.strMethod),
 		StdStringFromCStringA(rData.strRequestTarget),
@@ -4605,7 +4607,8 @@ void WebServerJson::ProcessRequest(const ThreadData &rData)
 		route,
 		strRouteErrorCode,
 		strRouteErrorMessage,
-		StdStringFromCStringA(rData.strContentType)))
+		StdStringFromCStringA(rData.strContentType),
+		&routeErrorDetails))
 	{
 		const int iStatus = WebServerJsonSeams::GetHttpStatusForError(strRouteErrorCode);
 		// RFC 7231 6.5.5 requires an Allow header on 405 responses.
@@ -4622,6 +4625,7 @@ void WebServerJson::ProcessRequest(const ThreadData &rData)
 			GetHttpReasonPhrase(iStatus),
 			strRouteErrorCode.c_str(),
 			CStringFromStdUtf8(strRouteErrorMessage),
+			routeErrorDetails,
 			strAllowHeader.IsEmpty() ? NULL : static_cast<LPCSTR>(strAllowHeader));
 		return;
 	}
