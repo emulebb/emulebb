@@ -89,7 +89,7 @@ jobs:
       app_ref: ${{ needs.prepare.outputs.target_sha }}
       build_ref: ${{ inputs.build_ref }}
       runs_on: windows-2022
-      timeout_minutes: 360
+      timeout_minutes: 120
       artifact_name: emulebb-rc-package-proof-${{ needs.prepare.outputs.release_version }}-${{ matrix.asset_arch }}
       artifact_path: rc-package-proof-artifacts/*
       failure_artifact_name: emulebb-rc-package-proof-logs-${{ needs.prepare.outputs.release_version }}-${{ matrix.asset_arch }}

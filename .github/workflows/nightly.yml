@@ -88,7 +88,7 @@ jobs:
     with:
       app_ref: ${{ github.sha }}
       runs_on: windows-2022
-      timeout_minutes: 360
+      timeout_minutes: 60
       artifact_name: emulebb-${{ needs.prepare.outputs.package_version }}-${{ matrix.asset_arch }}
       artifact_path: nightly-artifacts/*
       failure_artifact_name: emulebb-nightly-build-logs-${{ matrix.asset_arch }}

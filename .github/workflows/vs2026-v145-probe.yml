@@ -20,7 +20,7 @@ jobs:
     with:
       app_ref: ${{ github.sha }}
       runs_on: windows-2025-vs2026
-      timeout_minutes: 240
+      timeout_minutes: 90
       artifact_name: emulebb-vs2026-v145-probe-${{ github.sha }}
       artifact_path: |
         reports/v145-probe/**
