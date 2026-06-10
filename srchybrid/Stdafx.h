@@ -13,7 +13,7 @@
 #include "BuildFeatures.h"
 
 #ifndef WINVER
-#define WINVER 0x0600			// Windows Vista or later
+#define WINVER 0x0A00			// Windows 10 or later
 #endif
 
 #ifndef _WIN32_WINNT
@@ -21,7 +21,7 @@
 #endif
 
 #ifndef _WIN32_IE
-#define _WIN32_IE 0x0700
+#define _WIN32_IE 0x0A00
 #endif
 
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS	// Makes certain CString constructors explicit, preventing any unintentional conversions
