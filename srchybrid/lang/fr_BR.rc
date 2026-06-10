@@ -2063,7 +2063,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Holl betek Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&An holl betek ar muiañ"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&En pause"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&En pause"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2798,6 +2798,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Direiza dre &IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Emplacements de téléchargement élastiques [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Pourcentage de dépassement temporaire supérieur à la cible maximale des clients de téléchargement.\r\n\r\neMuleBB ouvre les emplacements élastiques uniquement après que le téléchargement reste inférieur à 98% utilisation pendant 10 secondes et arrête de les remplir une fois l'utilisation rétablie."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Gwiriañ a ra bremañ GitHub Releases ha reiñ da c'houzout hag-eñ ez eus ur pakad eMuleBB nevesoc'h da gaout."
 END
 // eMuleBB managed translation block: end
 

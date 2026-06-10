@@ -83,6 +83,7 @@ CUPnPImplPcpNatPmp::~CUPnPImplPcpNatPmp()
 void CUPnPImplPcpNatPmp::StartDiscovery(uint16 nTCPPort, uint16 nUDPPort, uint16 nTCPWebPort)
 {
 	DebugLog(_T("Using PCP/NAT-PMP based implementation"));
+	ClearLastResult();
 	GetOldPorts();
 	m_nUDPPort = nUDPPort;
 	m_nTCPPort = nTCPPort;
@@ -95,17 +96,20 @@ void CUPnPImplPcpNatPmp::StartDiscovery(uint16 nTCPPort, uint16 nUDPPort, uint16
 
 bool CUPnPImplPcpNatPmp::CheckAndRefresh()
 {
-	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_bAbortDiscovery) || !m_bSucceededOnce || m_pContext == NULL || m_pTCPFlow == NULL || m_nTCPPort == 0) {
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_bAbortDiscovery) || !m_bSucceededOnce || m_pContext == NULL || m_nTCPPort == 0) {
+		SetLastResult(NAT_MAPPING_RESULT_NOT_READY, _T("PCP/NAT-PMP refresh skipped because no verified mapping is active"));
 		DebugLog(_T("Not refreshing PCP/NAT-PMP mappings because they don't seem to be active in the first place"));
 		return false;
 	}
 
 	if (!IsReady()) {
+		SetLastResult(NAT_MAPPING_RESULT_BUSY, _T("PCP/NAT-PMP refresh skipped because another mapping request is running"));
 		DebugLog(_T("Not refreshing PCP/NAT-PMP mappings because they are already in the process of being refreshed"));
 		return false;
 	}
 
 	DebugLog(_T("Checking and refreshing PCP/NAT-PMP mappings"));
+	ClearLastResult();
 	m_bCheckAndRefresh = true;
 	StartThread();
 	return true;
@@ -113,8 +117,15 @@ bool CUPnPImplPcpNatPmp::CheckAndRefresh()
 
 bool CUPnPImplPcpNatPmp::IsReady()
 {
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_bAbortDiscovery)) {
+		SetLastResult(NAT_MAPPING_RESULT_ABORTED, _T("PCP/NAT-PMP backend has an abort request pending"));
+		return false;
+	}
 	CSingleLock lockTest(&m_mutBusy);
-	return lockTest.Lock(0);
+	const bool bReady = lockTest.Lock(0);
+	if (!bReady)
+		SetLastResult(NAT_MAPPING_RESULT_BUSY, _T("PCP/NAT-PMP backend is already handling another mapping request"));
+	return bReady;
 }
 
 void CUPnPImplPcpNatPmp::StopAsyncFind()
@@ -128,6 +139,7 @@ void CUPnPImplPcpNatPmp::StopAsyncFind()
 		const UPnPDiscoveryThreadSeams::EStopWaitAction eAction =
 			UPnPDiscoveryThreadSeams::RequestDiscoveryThreadStop(m_pDiscoveryThread, m_bAbortDiscovery, dwLastError);
 		if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::WaitCooperatively) {
+			SetLastResult(NAT_MAPPING_RESULT_TIMEOUT, _T("PCP/NAT-PMP worker did not stop within the timeout"));
 			DebugLogError(_T("Waiting for PCP/NAT-PMP discovery thread to quit timed out; preserving owner lifetime until cooperative exit"));
 			const UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction eOwnerAction = UPnPDiscoveryThreadSeams::WaitForDiscoveryThreadOwnerLifetime(
 				m_pDiscoveryThread,
@@ -194,12 +206,15 @@ bool CUPnPImplPcpNatPmp::ResolveSourceAddress()
 		}
 
 		DebugLogWarning(_T("PCP/NAT-PMP skipped because BindAddr '%S' is not a valid IPv4/IPv6 address"), pszBindAddr);
+		SetLastResult(NAT_MAPPING_RESULT_SOURCE_ADDRESS_FAILED, _T("PCP/NAT-PMP skipped because BindAddr '%S' is not a valid source address"), pszBindAddr);
 		return false;
 	}
 
 	SOCKET hSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (hSocket == INVALID_SOCKET) {
-		DebugLogWarning(_T("PCP/NAT-PMP could not determine a source address because socket() failed: %u"), WSAGetLastError());
+		const DWORD dwError = WSAGetLastError();
+		DebugLogWarning(_T("PCP/NAT-PMP could not determine a source address because socket() failed: %u"), dwError);
+		SetLastResult(NAT_MAPPING_RESULT_SOURCE_ADDRESS_FAILED, _T("PCP/NAT-PMP could not determine a source address because socket() failed: %u"), dwError);
 		return false;
 	}
 
@@ -208,7 +223,9 @@ bool CUPnPImplPcpNatPmp::ResolveSourceAddress()
 	destination.sin_port = htons(9);
 	InetPtonA(AF_INET, "1.1.1.1", &destination.sin_addr);
 	if (connect(hSocket, reinterpret_cast<const sockaddr*>(&destination), sizeof(destination)) != 0) {
-		DebugLogWarning(_T("PCP/NAT-PMP could not determine a source address because UDP connect() failed: %u"), WSAGetLastError());
+		const DWORD dwError = WSAGetLastError();
+		DebugLogWarning(_T("PCP/NAT-PMP could not determine a source address because UDP connect() failed: %u"), dwError);
+		SetLastResult(NAT_MAPPING_RESULT_SOURCE_ADDRESS_FAILED, _T("PCP/NAT-PMP could not determine a source address because UDP connect() failed: %u"), dwError);
 		closesocket(hSocket);
 		return false;
 	}
@@ -216,7 +233,9 @@ bool CUPnPImplPcpNatPmp::ResolveSourceAddress()
 	sockaddr_in source = {};
 	int nSourceLen = sizeof(source);
 	if (getsockname(hSocket, reinterpret_cast<sockaddr*>(&source), &nSourceLen) != 0) {
-		DebugLogWarning(_T("PCP/NAT-PMP could not determine a source address because getsockname() failed: %u"), WSAGetLastError());
+		const DWORD dwError = WSAGetLastError();
+		DebugLogWarning(_T("PCP/NAT-PMP could not determine a source address because getsockname() failed: %u"), dwError);
+		SetLastResult(NAT_MAPPING_RESULT_SOURCE_ADDRESS_FAILED, _T("PCP/NAT-PMP could not determine a source address because getsockname() failed: %u"), dwError);
 		closesocket(hSocket);
 		return false;
 	}
@@ -290,7 +309,10 @@ bool CUPnPImplPcpNatPmp::EnsureMappedPort(uint16 nPort, bool bTCP, pcp_flow_t *&
 	}
 
 	if (m_pContext == NULL || m_nSourceAddressLen == 0)
+	{
+		SetLastResult(NAT_MAPPING_RESULT_BACKEND_INIT_FAILED, _T("PCP/NAT-PMP cannot map %s port %hu because the backend context is unavailable"), bTCP ? _T("TCP") : _T("UDP"), nPort);
 		return false;
+	}
 
 	sockaddr_storage source = m_sourceAddress;
 	if (source.ss_family == AF_INET) {
@@ -299,6 +321,7 @@ bool CUPnPImplPcpNatPmp::EnsureMappedPort(uint16 nPort, bool bTCP, pcp_flow_t *&
 		reinterpret_cast<sockaddr_in6*>(&source)->sin6_port = htons(nPort);
 	} else {
 		DebugLogWarning(_T("PCP/NAT-PMP cannot map %s port %hu because the source address family is unsupported"), bTCP ? _T("TCP") : _T("UDP"), nPort);
+		SetLastResult(NAT_MAPPING_RESULT_SOURCE_ADDRESS_FAILED, _T("PCP/NAT-PMP cannot map %s port %hu because the source address family is unsupported"), bTCP ? _T("TCP") : _T("UDP"), nPort);
 		return false;
 	}
 
@@ -307,6 +330,7 @@ bool CUPnPImplPcpNatPmp::EnsureMappedPort(uint16 nPort, bool bTCP, pcp_flow_t *&
 		pFlow = pcp_new_flow(m_pContext, reinterpret_cast<sockaddr*>(&source), NULL, NULL, protocol, kPcpMappingLifetimeSeconds, NULL);
 		if (pFlow == NULL) {
 			DebugLogWarning(_T("PCP/NAT-PMP failed to create a %s mapping flow for port %hu"), bTCP ? _T("TCP") : _T("UDP"), nPort);
+			SetLastResult(NAT_MAPPING_RESULT_BACKEND_INIT_FAILED, _T("PCP/NAT-PMP failed to create a %s mapping flow for port %hu"), bTCP ? _T("TCP") : _T("UDP"), nPort);
 			return false;
 		}
 	}
@@ -335,8 +359,10 @@ bool CUPnPImplPcpNatPmp::EnsureMappedPort(uint16 nPort, bool bTCP, pcp_flow_t *&
 	const CString strState(GetPcpStateText(state));
 	if (bOptional)
 		DebugLogWarning(_T("PCP/NAT-PMP could not refresh optional %s port %hu (state: %s)"), bTCP ? _T("TCP") : _T("UDP"), nPort, (LPCTSTR)strState);
-	else
+	else {
+		SetLastResult(NAT_MAPPING_RESULT_ADD_FAILED, _T("PCP/NAT-PMP failed to map %s port %hu (state: %s)"), bTCP ? _T("TCP") : _T("UDP"), nPort, (LPCTSTR)strState);
 		DebugLogWarning(_T("PCP/NAT-PMP failed to map %s port %hu (state: %s)"), bTCP ? _T("TCP") : _T("UDP"), nPort, (LPCTSTR)strState);
+	}
 	pcp_delete_flow(pFlow);
 	pFlow = NULL;
 	return false;
@@ -412,12 +438,15 @@ int CUPnPImplPcpNatPmp::CStartDiscoveryThread::Run()
 
 	CSingleLock sLock(&m_pOwner->m_mutBusy);
 	if (!sLock.Lock(0)) {
+		m_pOwner->SetLastResult(NAT_MAPPING_RESULT_BUSY, _T("PCP/NAT-PMP backend is already handling another mapping request"));
 		DebugLogWarning(_T("CUPnPImplPcpNatPmp::CStartDiscoveryThread::Run, failed to acquire Lock, another mapping try might be running already"));
 		return 0;
 	}
 
-	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery))
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery)) {
+		m_pOwner->SetLastResult(NAT_MAPPING_RESULT_ABORTED, _T("PCP/NAT-PMP mapping was aborted before discovery"));
 		return 0;
+	}
 
 	bool bSucceeded = false;
 	try {
@@ -431,6 +460,7 @@ int CUPnPImplPcpNatPmp::CStartDiscoveryThread::Run()
 		if (m_pOwner->m_pContext == NULL) {
 			m_pOwner->m_pContext = pcp_init(ENABLE_AUTODISCOVERY, NULL);
 			if (m_pOwner->m_pContext == NULL) {
+				m_pOwner->SetLastResult(NAT_MAPPING_RESULT_BACKEND_INIT_FAILED, _T("PCP/NAT-PMP failed to initialize libpcpnatpmp"));
 				DebugLogWarning(_T("PCP/NAT-PMP discovery failed to initialize libpcpnatpmp"));
 				m_pOwner->m_bUPnPPortsForwarded = TRIS_FALSE;
 				m_pOwner->SendResultMessage();
@@ -446,8 +476,10 @@ int CUPnPImplPcpNatPmp::CStartDiscoveryThread::Run()
 			m_pOwner->m_nOldTCPWebPort = 0;
 		}
 
-		if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery))
+		if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery)) {
+			m_pOwner->SetLastResult(NAT_MAPPING_RESULT_ABORTED, _T("PCP/NAT-PMP mapping was aborted before opening ports"));
 			return 0;
+		}
 
 		bSucceeded = m_pOwner->EnsureMappedPort(m_pOwner->m_nTCPPort, true, m_pOwner->m_pTCPFlow, false);
 		if (bSucceeded && m_pOwner->m_nUDPPort != 0)
@@ -455,6 +487,7 @@ int CUPnPImplPcpNatPmp::CStartDiscoveryThread::Run()
 		if (bSucceeded && m_pOwner->m_nTCPWebPort != 0)
 			m_pOwner->EnsureMappedPort(m_pOwner->m_nTCPWebPort, true, m_pOwner->m_pTCPWebFlow, true);
 	} catch (...) {
+		m_pOwner->SetLastResult(NAT_MAPPING_RESULT_EXCEPTION, _T("PCP/NAT-PMP worker raised an unknown exception"));
 		DebugLogError(_T("Unknown Exception in CUPnPImplPcpNatPmp::CStartDiscoveryThread::Run()"));
 	}
 
@@ -462,7 +495,14 @@ int CUPnPImplPcpNatPmp::CStartDiscoveryThread::Run()
 		if (bSucceeded) {
 			m_pOwner->m_bUPnPPortsForwarded = TRIS_TRUE;
 			m_pOwner->m_bSucceededOnce = true;
+			m_pOwner->SetLastResult(m_pOwner->m_bCheckAndRefresh ? NAT_MAPPING_RESULT_REFRESH_SUCCESS : NAT_MAPPING_RESULT_SUCCESS,
+				_T("PCP/NAT-PMP verified TCP %hu and UDP %hu for LAN address %s"),
+				m_pOwner->m_nTCPPort,
+				m_pOwner->m_nUDPPort,
+				m_pOwner->m_strSourceAddress.GetString());
 		} else {
+			if (m_pOwner->GetLastResultReason() == NAT_MAPPING_RESULT_NOT_RUN)
+				m_pOwner->SetLastResult(NAT_MAPPING_RESULT_ADD_FAILED, _T("PCP/NAT-PMP could not verify the requested TCP/UDP mappings"));
 			m_pOwner->m_bUPnPPortsForwarded = TRIS_FALSE;
 		}
 		m_pOwner->SendResultMessage();

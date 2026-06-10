@@ -2098,7 +2098,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Minden Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&Minden Max"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Szüneteltetve"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Szüneteltetve"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2833,6 +2833,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Tiltás &IP alapján"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Rugalmas feltöltési helyek [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Ideiglenes túlcsordulási százalék a maximális feltöltési kliensek célértéke felett. A\r\n\r\neMuleBB csak akkor nyitja meg a rugalmas helyeket, ha a feltöltés 10 másodpercig 98% u alatt marad, és leállítja az újratöltésüket, ha a kihasználtság helyreáll."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Ellenőrzi a GitHub Releases oldalt, és jelzi, hogy elérhető-e újabb eMuleBB csomag."
 END
 // eMuleBB managed translation block: end
 

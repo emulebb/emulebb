@@ -169,6 +169,8 @@ namespace
 	static const UINT_PTR kBindLossWatchdogTimerId = 0xB10D;
 	static const UINT kBindLossWatchdogIntervalMs = SEC2MS(10);
 	static const UINT_PTR kTransferRateDisplayTimerId = 0xB10E;
+	static const UINT_PTR kUPnPRefreshTimerId = 0xB10F;
+	static const UINT kUPnPRefreshIntervalMs = MIN2MS(20);
 	static const UINT kVpnGuardHttpIntervalMs = MIN2MS(5);
 
 	static bool IsKeyboardShortcutModalContext(const CWnd &wnd)
@@ -1235,6 +1237,8 @@ namespace
 			return IDS_TOOLS_STATUS_SAVE_PREFERENCES_NOW;
 		case MP_HM_UPDATE_SERVERMET_FROM_ADDRESSES:
 			return IDS_TOOLS_STATUS_UPDATE_SERVERMET_FROM_ADDRESSES;
+		case MP_HM_CHECK_FOR_UPDATES:
+			return IDS_TOOLS_STATUS_CHECK_FOR_UPDATES;
 		case MP_HM_OPEN_EMULE_LOG:
 			return IDS_TOOLS_STATUS_OPEN_EMULE_LOG;
 		case MP_HM_OPEN_VERBOSE_LOG:
@@ -1660,6 +1664,7 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_prevProgress()
 	, m_ovlIcon()
 	, m_hUPnPTimeOutTimer()
+	, m_uUPnPRefreshTimer()
 	, notifierenabled()
 {
 	g_uMainThreadId = GetCurrentThreadId();
@@ -4095,6 +4100,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 		theApp.searchlist->StoreSearches();
 
 	// close uPnP Ports
+	StopUPnPRefreshTimer();
 	theApp.m_pUPnPFinder->GetImplementation()->StopAsyncFind();
 	if (thePrefs.CloseUPnPOnExit() && !theApp.m_pUPnPFinder->GetImplementation()->MustAbandonDiscoveryOwner())
 		theApp.m_pUPnPFinder->GetImplementation()->DeletePorts();
@@ -5196,6 +5202,9 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 		thePrefs.ReloadServerMetAddressList();
 		UpdateServerMetFromConfiguredAddresses(serverwnd);
 		break;
+	case MP_HM_CHECK_FOR_UPDATES:
+		DoVersioncheck(true);
+		break;
 	case MP_HM_GEOLOCATION_DOWNLOAD:
 		if (theApp.geolocation != NULL)
 			theApp.geolocation->QueueManualRefresh();
@@ -5555,6 +5564,7 @@ void CemuleDlg::ShowToolPopupAt(bool toolsonly, CPoint pt, bool bTrayMenu)
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
 		networkUpdates.AppendMenu(MF_SEPARATOR);
+		networkUpdates.AppendMenu(MF_STRING, MP_HM_CHECK_FOR_UPDATES, GetResString(IDS_CHECK4UPDATE), _T("WEB"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_UPDATE_SERVERMET_FROM_ADDRESSES, GetResString(IDS_UPDATE_SERVERMET_FROM_ADDRESSES), _T("SERVER"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_CHECK_OPEN_PORTS, GetResString(IDS_CHECK_OPEN_PORTS), _T("WEB"));
 		networkUpdates.AppendMenu(MF_STRING, MP_HM_REPAIR_WINDOWS_FIREWALL, GetResString(IDS_REPAIR_WINDOWS_FIREWALL_RULES), _T("FIREWALL"));
@@ -6747,6 +6757,8 @@ LRESULT CemuleDlg::OnUPnPResult(WPARAM wParam, LPARAM lParam)
 	if (impl == NULL)
 		return 0;
 
+	const CString strResultDetail(nResult == CUPnPImpl::UPNP_TIMEOUT ? _T("mapping attempt timed out") : impl->GetLastResultSummary());
+
 //>>> WiZaRd - handle "UPNP_TIMEOUT" events!
 	if (!bWasRefresh && nResult != CUPnPImpl::UPNP_OK) {
 		//just to be sure, stop any running services and also delete the forwarded ports (if necessary)
@@ -6755,34 +6767,44 @@ LRESULT CemuleDlg::OnUPnPResult(WPARAM wParam, LPARAM lParam)
 			if (!impl->MustAbandonDiscoveryOwner())
 				impl->DeletePorts();
 		}
-		DebugLogWarning(_T("NAT mapping backend '%s' did not complete successfully"), impl->GetImplementationName());
+		DebugLogWarning(_T("NAT mapping backend '%s' did not complete successfully: %s"), impl->GetImplementationName(), (LPCTSTR)strResultDetail);
 		// NAT mapping failed, check if we can retry it with another backend
 		if (theApp.m_pUPnPFinder->SwitchImplentation()) {
 			// WHY: fallback is a fresh backend attempt. Reusing the expired timer
 			// from the previous backend can immediately fire another timeout, while
 			// leaving no timer at all would hide a stuck fallback discovery.
 			VERIFY(Win32CallbackTimerSeams::StopNullWindowCallbackTimer(m_hUPnPTimeOutTimer) != Win32CallbackTimerSeams::ETimerStopResult::Failed);
-			DebugLog(_T("Trying fallback NAT mapping backend '%s'"), theApp.m_pUPnPFinder->GetImplementation()->GetImplementationName());
+			DebugLog(_T("Trying fallback NAT mapping backend '%s' after failure: %s"), theApp.m_pUPnPFinder->GetImplementation()->GetImplementationName(), (LPCTSTR)strResultDetail);
 			StartUPnP(false);
 			return 0;
 		}
 
-		DebugLog(_T("No more available NAT mapping backends left"));
+		DebugLog(_T("No more available NAT mapping backends left after failure: %s"), (LPCTSTR)strResultDetail);
 	}
 
 	if (m_hUPnPTimeOutTimer != 0) {
 		VERIFY(Win32CallbackTimerSeams::StopNullWindowCallbackTimer(m_hUPnPTimeOutTimer) != Win32CallbackTimerSeams::ETimerStopResult::Failed);
 	}
-	if (!bWasRefresh)
+	if (!bWasRefresh) {
 		if (nResult == CUPnPImpl::UPNP_OK) {
 			Log(GetResString(IDS_UPNPSUCCESS), impl->GetUsedTCPPort(), impl->GetUsedUDPPort());
-		} else
+			Log(_T("NAT mapping active via %s: %s"), impl->GetImplementationName(), (LPCTSTR)strResultDetail);
+			StartUPnPRefreshTimer();
+		} else {
+			StopUPnPRefreshTimer();
 			LogWarning(GetResString(IDS_UPNPFAILED));
+			LogWarning(_T("NAT mapping diagnostic: %s"), (LPCTSTR)strResultDetail);
+		}
 
 		if (theApp.IsRunning() && m_bConnectRequestDelayedForUPnP)
 			StartConnection();
+	} else if (nResult == CUPnPImpl::UPNP_OK) {
+		DebugLog(_T("NAT mapping refresh completed in backend '%s': %s"), impl->GetImplementationName(), (LPCTSTR)strResultDetail);
+	} else {
+		DebugLogWarning(_T("NAT mapping refresh failed in backend '%s': %s"), impl->GetImplementationName(), (LPCTSTR)strResultDetail);
+	}
 
-		return 0;
+	return 0;
 }
 
 LRESULT CemuleDlg::OnPowerBroadcast(WPARAM wParam, LPARAM lParam)
@@ -6793,7 +6815,6 @@ LRESULT CemuleDlg::OnPowerBroadcast(WPARAM wParam, LPARAM lParam)
 		theApp.ResetStandbyOff();
 		if (m_bEd2kSuspendDisconnect || m_bKadSuspendDisconnect) {
 			DebugLog(_T("Reconnect after Power state change. wParam=%d lPararm=%ld"), wParam, lParam);
-			RefreshUPnP(true);
 			PostMessage(WM_SYSCOMMAND, MP_CONNECT, 0); // tell to connect. a sec later...
 		}
 		return TRUE; // message processed.
@@ -6809,11 +6830,14 @@ LRESULT CemuleDlg::OnPowerBroadcast(WPARAM wParam, LPARAM lParam)
 
 void CemuleDlg::StartUPnP(bool bReset, uint16 nForceTCPPort, uint16 nForceUDPPort)
 {
-	if (theApp.IsStartupBindBlocked())
+	if (theApp.IsStartupBindBlocked()) {
+		StopUPnPRefreshTimer();
 		return;
+	}
 
 	if (theApp.m_pUPnPFinder != NULL && (m_hUPnPTimeOutTimer == 0 || !bReset)) {
 		if (bReset) {
+			StopUPnPRefreshTimer();
 			LPCTSTR pszBackendMode = _T("Automatic");
 			switch (thePrefs.GetUPnPBackendMode()) {
 				case UPNP_BACKEND_IGD_ONLY:
@@ -6886,10 +6910,40 @@ void CemuleDlg::RefreshUPnP(bool bRequestAnswer)
 		ASSERT(0);
 }
 
+void CemuleDlg::StartUPnPRefreshTimer()
+{
+	if (theApp.IsStartupBindBlocked() || !thePrefs.IsUPnPEnabled()) {
+		StopUPnPRefreshTimer();
+		return;
+	}
+
+	if (m_uUPnPRefreshTimer != 0)
+		return;
+
+	m_uUPnPRefreshTimer = SetTimer(kUPnPRefreshTimerId, kUPnPRefreshIntervalMs, NULL);
+	if (thePrefs.GetVerbose() && m_uUPnPRefreshTimer == 0)
+		AddDebugLogLine(true, _T("Failed to create UPnP periodic refresh timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
+}
+
+void CemuleDlg::StopUPnPRefreshTimer()
+{
+	if (m_uUPnPRefreshTimer != 0) {
+		VERIFY(KillTimer(m_uUPnPRefreshTimer));
+		m_uUPnPRefreshTimer = 0;
+	}
+}
+
 void CemuleDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	CloseStartupProgressIfRunning();
 
+	if (nIDEvent == kUPnPRefreshTimerId) {
+		if (theApp.IsStartupBindBlocked() || !thePrefs.IsUPnPEnabled())
+			StopUPnPRefreshTimer();
+		else if (m_hUPnPTimeOutTimer == 0)
+			RefreshUPnP(false);
+		return;
+	}
 	if (nIDEvent == kTransferRateDisplayTimerId) {
 		RunDesktopPresentationTick();
 		return;

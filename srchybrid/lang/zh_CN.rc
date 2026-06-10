@@ -2069,7 +2069,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "全部设为最小(&M)"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "全部设为最大(&X)"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "已&暂停"
+    IDS_REFRESH_INTERVAL_PAUSED                                "已&暂停"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2804,6 +2804,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "按 &IP 封禁"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "弹性上传槽位[%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "临时溢出百分比高于最大上传客户端目标。\r\n\r\neMuleBB 仅在上传保持低于 98% utilization 持续 10 秒后才打开弹性插槽，并在利用率恢复后停止重新填充它们。"
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "立即检查 GitHub Releases，并报告是否有更新的 eMuleBB 软件包可用。"
 END
 // eMuleBB managed translation block: end
 

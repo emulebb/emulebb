@@ -1971,7 +1971,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Wszystko na &minimum"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Wszystko na ma&ksimum"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Wstrzymane"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Wstrzymane"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2803,6 +2803,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Zbanuj według &IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastyczne gniazda przesyłania [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Procent tymczasowego przepełnienia powyżej maksymalnej docelowej wartości klientów przesyłających.\r\n\r\neMuleBB otwiera elastyczne przedziały dopiero wtedy, gdy przesyłanie pozostaje poniżej 98% utilization przez 10 sekund i przestaje je uzupełniać po przywróceniu wykorzystania."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Sprawdza teraz GitHub Releases i informuje, czy jest dostępny nowszy pakiet eMuleBB."
 END
 // eMuleBB managed translation block: end
 

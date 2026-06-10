@@ -1997,7 +1997,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Tümü &minimuma"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Tümü ma&ksimuma"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Duraklatıldı"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Duraklatıldı"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2829,6 +2829,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "&IP ile yasakla"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Esnek yükleme yuvaları [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Maksimum yükleme istemcisi hedefinin üzerinde geçici taşma yüzdesi.\r\n\r\neMuleBB, elastik yuvaları yalnızca yükleme 10 saniye boyunca 98% utilizasyonun altında kaldıktan sonra açar ve kullanım düzeldiğinde yeniden doldurmayı durdurur."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "GitHub Releases'ı şimdi kontrol eder ve daha yeni bir eMuleBB paketi olup olmadığını bildirir."
 END
 // eMuleBB managed translation block: end
 

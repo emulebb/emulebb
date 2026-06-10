@@ -1998,7 +1998,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Alles naar &minimum"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Alles naar ma&ximum"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Gepauzeerd"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Gepauzeerd"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2830,6 +2830,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Verbannen op &IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastische uploadslots [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Tijdelijk overflowpercentage boven het maximale uploadclientdoel.\r\n\r\neMuleBB opent elastische slots alleen nadat de upload gedurende 10 seconden onder de 98% utilisatie blijft, en stopt met het opnieuw vullen ervan zodra het gebruik zich herstelt."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Controleert nu GitHub Releases en meldt of er een nieuwer eMuleBB-pakket beschikbaar is."
 END
 // eMuleBB managed translation block: end
 

@@ -245,6 +245,7 @@
 #define MP_HM_RESTART_APP	10461
 #define MP_HM_LINK_DOC_KEYBOARD_SHORTCUTS	10462
 #define MP_BAN_BY_IP		10463
+#define MP_HM_CHECK_FOR_UPDATES	10464
 
 
 // quick-speed changer

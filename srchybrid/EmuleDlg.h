@@ -161,6 +161,7 @@ public:
 	void SetToolTipsDelay(UINT uMilliseconds);
 	void StartUPnP(bool bReset = true, uint16 nForceTCPPort = 0, uint16 nForceUDPPort = 0);
 	void RefreshUPnP(bool bRequestAnswer = false);
+	void StopUPnPRefreshTimer();
 	/// Captures an operator-requested diagnostic dump for support triage.
 	void CaptureDiagnosticDump(bool bFullMemoryDump);
 	/// Copies a diagnostic JSON snapshot to the clipboard for local or shareable triage.
@@ -288,7 +289,9 @@ protected:
 
 	// UPnP TimeOutTimer
 	UINT_PTR m_hUPnPTimeOutTimer;
+	UINT_PTR m_uUPnPRefreshTimer;
 	static void CALLBACK UPnPTimeOutTimer(HWND hwnd, UINT uiMsg, UINT_PTR idEvent, DWORD dwTime) noexcept;
+	void StartUPnPRefreshTimer();
 
 	void StartConnection();
 	void CloseConnection();

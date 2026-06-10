@@ -2058,7 +2058,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "모두 최소로(&M)"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "모두 최대로(&X)"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&일시 중지"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&일시 중지"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2793,6 +2793,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "&IP로 차단"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "탄력적 업로드 슬롯 [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "최대 업로드 클라이언트 목표를 초과하는 임시 오버플로 비율.\r\n\r\neMuleBB는 업로드가 10초 동안 98% utilization 미만으로 유지된 후에만 탄력적 슬롯을 열고 사용률이 회복되면 리필을 중지합니다."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "지금 GitHub Releases를 확인하고 더 최신 eMuleBB 패키지가 있는지 보고합니다."
 END
 // eMuleBB managed translation block: end
 

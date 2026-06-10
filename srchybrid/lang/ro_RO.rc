@@ -2098,7 +2098,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Toate la min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&Toate la Max"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pauzat"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pauzat"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2833,6 +2833,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Interzice după &IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Slocuri de încărcare elastice [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Procent de depășire temporară peste ținta maximă de clienți de încărcare.\r\n\r\neMuleBB deschide spații elastice numai după ce încărcarea rămâne sub 98% utilization timp de 10 secunde și nu le mai reumple odată ce utilizarea se reface."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Verifică acum GitHub Releases și raportează dacă este disponibil un pachet eMuleBB mai nou."
 END
 // eMuleBB managed translation block: end
 

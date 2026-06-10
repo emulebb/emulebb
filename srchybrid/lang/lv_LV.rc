@@ -2089,7 +2089,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Visi uz &min."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Visi uz &maks."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pauzēts"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pauzēts"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2824,6 +2824,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Aizliegt pēc &IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastīgi augšupielādes sloti [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Pagaidu pārpildes procents virs maksimālās augšupielādes klientu mērķa.\r\n\r\neMuleBB atver elastīgos slotus tikai pēc tam, kad augšupielāde paliek zem 98% utilizācijas 10 sekundes, un pārtrauc to uzpildīšanu, tiklīdz tiek atjaunota izmantošana."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Tagad pārbauda GitHub Releases un ziņo, vai ir pieejama jaunāka eMuleBB pakotne."
 END
 // eMuleBB managed translation block: end
 

@@ -69,11 +69,16 @@ CUPnPImplMiniLib::~CUPnPImplMiniLib()
 
 bool CUPnPImplMiniLib::IsReady()
 {
-	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_bAbortDiscovery))
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_bAbortDiscovery)) {
+		SetLastResult(NAT_MAPPING_RESULT_ABORTED, _T("UPnP IGD backend has an abort request pending"));
 		return false;
+	}
 	// the only check we need to do is if we are already busy with some async/threaded function
 	CSingleLock lockTest(&m_mutBusy);
-	return lockTest.Lock(0);
+	const bool bReady = lockTest.Lock(0);
+	if (!bReady)
+		SetLastResult(NAT_MAPPING_RESULT_BUSY, _T("UPnP IGD backend is already handling another mapping request"));
+	return bReady;
 }
 
 void CUPnPImplMiniLib::StopAsyncFind()
@@ -87,6 +92,7 @@ void CUPnPImplMiniLib::StopAsyncFind()
 		const UPnPDiscoveryThreadSeams::EStopWaitAction eAction =
 			UPnPDiscoveryThreadSeams::RequestDiscoveryThreadStop(m_pDiscoveryThread, m_bAbortDiscovery, dwLastError);
 		if (eAction == UPnPDiscoveryThreadSeams::EStopWaitAction::WaitCooperatively) {
+			SetLastResult(NAT_MAPPING_RESULT_TIMEOUT, _T("UPnP IGD worker did not stop within the timeout"));
 			DebugLogError(_T("Waiting for UPnP StartDiscoveryThread to quit timed out; preserving owner lifetime until cooperative exit"));
 			const UPnPDiscoveryThreadSeams::EOwnerLifetimeWaitAction eOwnerAction = UPnPDiscoveryThreadSeams::WaitForDiscoveryThreadOwnerLifetime(
 				m_pDiscoveryThread,
@@ -196,6 +202,7 @@ void CUPnPImplMiniLib::StartDiscovery(uint16 nTCPPort, uint16 nUDPPort, uint16 n
 {
 	DebugLog(_T("Using MiniUPnPLib based implementation"));
 	DebugLog(_T("miniupnpc (c) 2005-2026 Thomas Bernard - http://miniupnp.free.fr/"));
+	ClearLastResult();
 	StopAsyncFind();
 	GetOldPorts();
 	m_nUDPPort = nUDPPort;
@@ -220,17 +227,20 @@ bool CUPnPImplMiniLib::CheckAndRefresh()
 	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_bAbortDiscovery) || !m_bSucceededOnce || m_pURLs == NULL || m_pIGDData == NULL
 	    || m_pURLs->controlURL == NULL || m_nTCPPort == 0)
 	{
+		SetLastResult(NAT_MAPPING_RESULT_NOT_READY, _T("UPnP IGD refresh skipped because no verified mapping is active"));
 		DebugLog(_T("Not refreshing UPnP ports because they don't seem to be forwarded in the first place"));
 		return false;
 	}
 //>>> WiZaRd
 	if (!IsReady()) {
+		SetLastResult(NAT_MAPPING_RESULT_BUSY, _T("UPnP IGD refresh skipped because another mapping request is running"));
 		DebugLog(_T("Not refreshing UPnP ports because they are already in the process of being refreshed"));
 		return false;
 	}
 //<<< WiZaRd
 
 	DebugLog(_T("Checking and refreshing UPnP ports"));
+	ClearLastResult();
 	m_bCheckAndRefresh = true;
 	StartThread();
 	return true;
@@ -259,12 +269,15 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 
 	CSingleLock sLock(&m_pOwner->m_mutBusy);
 	if (!sLock.Lock(0)) {
+		m_pOwner->SetLastResult(NAT_MAPPING_RESULT_BUSY, _T("UPnP IGD backend is already handling another mapping request"));
 		DebugLogWarning(_T("CUPnPImplMiniLib::CStartDiscoveryThread::Run, failed to acquire Lock, another Mapping try might be running already"));
 		return 0;
 	}
 
-	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery))// requesting to abort ASAP?
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery)) { // requesting to abort ASAP?
+		m_pOwner->SetLastResult(NAT_MAPPING_RESULT_ABORTED, _T("UPnP IGD mapping was aborted before discovery"));
 		return 0;
+	}
 
 	bool bSucceeded = false;
 #ifndef _DEBUG
@@ -275,6 +288,7 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 			int error = 0;
 			UPNPDev *structDeviceList = upnpDiscover(2000, thePrefs.GetBindAddrA(), NULL, 0, 0, 2, &error);
 			if (structDeviceList == NULL) {
+				m_pOwner->SetLastResult(NAT_MAPPING_RESULT_NO_GATEWAY, _T("UPnP IGD discovery found no gateway devices (error %d)"), error);
 				DebugLog(_T("UPNP: No Internet Gateway Devices found, aborting: %d"), error);
 				m_pOwner->m_bUPnPPortsForwarded = TRIS_FALSE;
 				m_pOwner->SendResultMessage();
@@ -319,6 +333,7 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 				bNotFound = true;
 			}
 			if (bNotFound || m_pOwner->m_pURLs->controlURL == NULL) {
+				m_pOwner->SetLastResult(NAT_MAPPING_RESULT_NO_GATEWAY, _T("UPnP IGD discovery did not return a usable IGD control endpoint"));
 				m_pOwner->m_bUPnPPortsForwarded = TRIS_FALSE;
 				m_pOwner->SendResultMessage();
 				return 0;
@@ -343,6 +358,7 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 		}
 #ifndef _DEBUG
 	} catch (...) {
+		m_pOwner->SetLastResult(NAT_MAPPING_RESULT_EXCEPTION, _T("UPnP IGD worker raised an unknown exception"));
 		DebugLogError(_T("Unknown Exception in CUPnPImplMiniLib::CStartDiscoveryThread::Run()"));
 #endif
 	}
@@ -350,6 +366,14 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 		if (bSucceeded) {
 			m_pOwner->m_bUPnPPortsForwarded = TRIS_TRUE;
 			m_pOwner->m_bSucceededOnce = true;
+			m_pOwner->SetLastResult(m_pOwner->m_bCheckAndRefresh ? NAT_MAPPING_RESULT_REFRESH_SUCCESS : NAT_MAPPING_RESULT_SUCCESS,
+				_T("UPnP IGD verified TCP %hu and UDP %hu for LAN address %S"),
+				m_pOwner->m_nTCPPort,
+				m_pOwner->m_nUDPPort,
+				m_pOwner->m_achLanIP);
+		} else if (m_pOwner->GetLastResultReason() == NAT_MAPPING_RESULT_NOT_RUN) {
+			m_pOwner->SetLastResult(NAT_MAPPING_RESULT_VERIFY_FAILED, _T("UPnP IGD could not verify the requested TCP/UDP mappings"));
+			m_pOwner->m_bUPnPPortsForwarded = TRIS_FALSE;
 		} else
 			m_pOwner->m_bUPnPPortsForwarded = TRIS_FALSE;
 		m_pOwner->SendResultMessage();
@@ -360,7 +384,10 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 bool CUPnPImplMiniLib::CStartDiscoveryThread::OpenPort(uint16 nPort, bool bTCP, char *pachLANIP, bool bCheckAndRefresh)
 {
 	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery))
+	{
+		m_pOwner->SetLastResult(NAT_MAPPING_RESULT_ABORTED, _T("UPnP IGD mapping was aborted before opening port %hu (%s)"), nPort, (bTCP ? sTCP : sUDP));
 		return false;
+	}
 
 	static const char achDescTCP[] = "eMule_TCP";
 	static const char achDescUDP[] = "eMule_UDP";
@@ -378,9 +405,21 @@ bool CUPnPImplMiniLib::CStartDiscoveryThread::OpenPort(uint16 nPort, bool bTCP, 
 												 , achOutIP, achOutPort
 												 , NULL, NULL, NULL);
 
-		if (nResult == UPNPCOMMAND_SUCCESS && achOutIP[0] != 0) {
-			DebugLog(_T("Checking UPnP: Mapping for port %hu (%s) on local IP %S still exists"), nPort, (bTCP ? sTCP : sUDP), achOutIP);
+		if (ShouldAcceptMiniUPnPRefreshMapping(nResult == UPNPCOMMAND_SUCCESS, achOutIP, achOutPort, pachLANIP, nPort)) {
+			DebugLog(_T("Checking UPnP: Mapping for port %hu (%s) still targets local IP %S:%S"), nPort, (bTCP ? sTCP : sUDP), achOutIP, achOutPort);
 			return true;
+		}
+		if (nResult == UPNPCOMMAND_SUCCESS && achOutIP[0] != 0) {
+			m_pOwner->SetLastResult(NAT_MAPPING_RESULT_CONFLICT,
+				_T("UPnP IGD refresh found port %hu (%s) mapped to %S:%S instead of %S:%hu"),
+				nPort,
+				(bTCP ? sTCP : sUDP),
+				achOutIP,
+				achOutPort,
+				pachLANIP,
+				nPort);
+			DebugLogWarning(_T("Checking UPnP: Mapping for port %hu (%s) targets local IP %S:%S instead of %S:%hu"), nPort, (bTCP ? sTCP : sUDP), achOutIP, achOutPort, pachLANIP, nPort);
+			return false;
 		}
 
 		DebugLogWarning(_T("Checking UPnP: Mapping for port %hu (%s) on local IP %S is gone, trying to reopen port"), nPort, (bTCP ? sTCP : sUDP), achOutIP);
@@ -408,13 +447,26 @@ bool CUPnPImplMiniLib::CStartDiscoveryThread::OpenPort(uint16 nPort, bool bTCP, 
 			DebugLog(_T("PortMapping for port %hu (%s) already targets local IP %S:%S - considering as successful"), nPort, (bTCP ? sTCP : sUDP), achOutIP, achOutPort);
 			return true;
 		}
+		if (nMappingQueryResult == UPNPCOMMAND_SUCCESS && achOutIP[0] != 0) {
+			m_pOwner->SetLastResult(NAT_MAPPING_RESULT_CONFLICT,
+				_T("UPnP IGD add failed because port %hu (%s) is already mapped to %S:%S"),
+				nPort,
+				(bTCP ? sTCP : sUDP),
+				achOutIP,
+				achOutPort);
+			DebugLogWarning(_T("Adding PortMapping failed for port %hu (%s); router already maps it to local IP %S:%S"), nPort, (bTCP ? sTCP : sUDP), achOutIP, achOutPort);
+			return false;
+		}
 
+		m_pOwner->SetLastResult(NAT_MAPPING_RESULT_ADD_FAILED, _T("UPnP IGD add failed for port %hu (%s), error code %u"), nPort, (bTCP ? sTCP : sUDP), nResult);
 		DebugLogWarning(_T("Adding PortMapping failed for port %hu (%s), Error Code %u"), nPort, (bTCP ? sTCP : sUDP), nResult);
 		return false;
 	}
 
-	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery))
+	if (UPnPDiscoveryThreadSeams::IsAbortRequested(m_pOwner->m_bAbortDiscovery)) {
+		m_pOwner->SetLastResult(NAT_MAPPING_RESULT_ABORTED, _T("UPnP IGD mapping was aborted after adding port %hu (%s)"), nPort, (bTCP ? sTCP : sUDP));
 		return false;
+	}
 
 	// make sure it really worked
 	achOutIP[0] = 0;
@@ -426,12 +478,25 @@ bool CUPnPImplMiniLib::CStartDiscoveryThread::OpenPort(uint16 nPort, bool bTCP, 
 											 , achOutIP, achOutPort
 											 , NULL, NULL, NULL);
 
-	if (nResult == UPNPCOMMAND_SUCCESS && achOutIP[0] != 0) {
-		DebugLog(_T("Successfully added mapping for port %hu (%s) on local IP %S"), nPort, (bTCP ? sTCP : sUDP), achOutIP);
+	if (DoesMiniUPnPMappingMatchRequest(achOutIP, achOutPort, pachLANIP, nPort)) {
+		DebugLog(_T("Successfully added mapping for port %hu (%s) on local IP %S:%S"), nPort, (bTCP ? sTCP : sUDP), achOutIP, achOutPort);
 		m_pOwner->MarkCreatedPortMapping(nPort, bTCP);
 		return true;
 	}
+	if (nResult == UPNPCOMMAND_SUCCESS && achOutIP[0] != 0) {
+		m_pOwner->SetLastResult(NAT_MAPPING_RESULT_CONFLICT,
+			_T("UPnP IGD verification found port %hu (%s) mapped to %S:%S instead of %S:%hu"),
+			nPort,
+			(bTCP ? sTCP : sUDP),
+			achOutIP,
+			achOutPort,
+			pachLANIP,
+			nPort);
+		DebugLogWarning(_T("Failed to verify mapping for port %hu (%s): router reports local IP %S:%S instead of %S:%hu"), nPort, (bTCP ? sTCP : sUDP), achOutIP, achOutPort, pachLANIP, nPort);
+		return false;
+	}
 
+	m_pOwner->SetLastResult(NAT_MAPPING_RESULT_VERIFY_FAILED, _T("UPnP IGD failed to verify mapping for port %hu (%s)"), nPort, (bTCP ? sTCP : sUDP));
 	DebugLogWarning(_T("Failed to verify mapping for port %hu (%s) on local IP %S - considering as failed"), nPort, (bTCP ? sTCP : sUDP), achOutIP);
 	// maybe counting this as error is a bit harsh as this may lead to false negatives, however if we would risk false positives
 	// this would mean that the fallback implementations are not tried because eMule thinks it worked out fine

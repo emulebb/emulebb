@@ -17,6 +17,7 @@
 #include "StdAfx.h"
 #include "UPnPImpl.h"
 
+#include <cstdarg>
 #include <new>
 
 #ifdef _DEBUG
@@ -36,6 +37,7 @@ CUPnPImpl::CUPnPImpl()
 	, m_nTCPWebPort()
 	, m_nUDPPort()
 	, m_bCheckAndRefresh()
+	, m_eLastResultReason(NAT_MAPPING_RESULT_NOT_RUN)
 {
 }
 
@@ -72,6 +74,66 @@ void CUPnPImpl::SendResultMessage()
 		}
 	}
 	ClearResultMessage();
+}
+
+void CUPnPImpl::ClearLastResult()
+{
+	m_eLastResultReason = NAT_MAPPING_RESULT_NOT_RUN;
+	m_strLastResultDetail.Empty();
+}
+
+void CUPnPImpl::SetLastResult(ENatMappingResultReason eReason, LPCTSTR pszFormat, ...)
+{
+	m_eLastResultReason = eReason;
+	if (pszFormat == NULL) {
+		m_strLastResultDetail.Empty();
+		return;
+	}
+
+	va_list args;
+	va_start(args, pszFormat);
+	m_strLastResultDetail.FormatV(pszFormat, args);
+	va_end(args);
+}
+
+CString CUPnPImpl::GetLastResultSummary() const
+{
+	if (!m_strLastResultDetail.IsEmpty())
+		return m_strLastResultDetail;
+
+	switch (m_eLastResultReason) {
+		case NAT_MAPPING_RESULT_SUCCESS:
+			return _T("mapping verified");
+		case NAT_MAPPING_RESULT_REFRESH_SUCCESS:
+			return _T("mapping refresh verified");
+		case NAT_MAPPING_RESULT_NO_GATEWAY:
+			return _T("no NAT gateway was found");
+		case NAT_MAPPING_RESULT_NOT_READY:
+			return _T("backend is not ready");
+		case NAT_MAPPING_RESULT_BUSY:
+			return _T("backend is already busy");
+		case NAT_MAPPING_RESULT_TIMEOUT:
+			return _T("mapping attempt timed out");
+		case NAT_MAPPING_RESULT_ADD_FAILED:
+			return _T("router rejected the mapping request");
+		case NAT_MAPPING_RESULT_VERIFY_FAILED:
+			return _T("mapping could not be verified");
+		case NAT_MAPPING_RESULT_CONFLICT:
+			return _T("router already maps the port to another LAN endpoint");
+		case NAT_MAPPING_RESULT_SOURCE_ADDRESS_FAILED:
+			return _T("local source address could not be determined");
+		case NAT_MAPPING_RESULT_BACKEND_INIT_FAILED:
+			return _T("backend initialization failed");
+		case NAT_MAPPING_RESULT_BACKEND_UNAVAILABLE:
+			return _T("backend is unavailable");
+		case NAT_MAPPING_RESULT_ABORTED:
+			return _T("mapping attempt was aborted");
+		case NAT_MAPPING_RESULT_EXCEPTION:
+			return _T("backend raised an exception");
+		case NAT_MAPPING_RESULT_NOT_RUN:
+		default:
+			return _T("no mapping result is available");
+	}
 }
 
 void CUPnPImpl::LateEnableWebServerPort(uint16 nPort)

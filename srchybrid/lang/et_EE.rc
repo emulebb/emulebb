@@ -2091,7 +2091,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Kõik &miinimumile"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Kõik &maksimumile"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Peatatud"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Peatatud"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2826,6 +2826,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Keela &IP järgi"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastsed üleslaadimispesad [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Ajutine ületäitumise protsent üle maksimaalse üleslaadimisklientide eesmärgi.\r\n\r\neMuleBB avab elastsed pesad alles siis, kui üleslaadimine jääb 10 sekundiks alla 98% u, ja lõpetab nende uuesti täitmise, kui kasutus taastub."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Kontrollib nüüd GitHub Releases ja teatab, kas uuem eMuleBB pakett on saadaval."
 END
 // eMuleBB managed translation block: end
 

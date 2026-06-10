@@ -2102,7 +2102,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Alle til &min."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Alle til &maks."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Sat på pause"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Sat på pause"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2837,6 +2837,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Forbyd efter &IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastiske uploadslots [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Midlertidig overløbsprocent over det maksimale mål for uploadklienter.\r\n\r\neMuleBB åbner kun elastiske slots, efter upload forbliver under 98% utilisering i 10 sekunder, og stopper med at genopfylde dem, når udnyttelsen genoprettes."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Kontrollerer GitHub Releases nu og rapporterer, om en nyere eMuleBB-pakke er tilgængelig."
 END
 // eMuleBB managed translation block: end
 

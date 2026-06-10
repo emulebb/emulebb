@@ -2092,7 +2092,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Denak &minimora"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Denak ma&ximora"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pauzirano"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pauzirano"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2828,6 +2828,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Debekatu &IParen arabera"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastični utori za učitavanje [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Privremeni procenat prekoračenja iznad maksimalnog ciljanog broja klijenata za otpremanje.\r\n\r\neMuleBB otvara elastične proreze tek nakon što upload ostane ispod 98% utilization 10 sekundi, i prestaje da ih puni kada se oporavi korištenje."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "GitHub Releases orain egiaztatzen du eta eMuleBB pakete berriago bat eskuragarri dagoen jakinarazten du."
 END
 // eMuleBB managed translation block: end
 

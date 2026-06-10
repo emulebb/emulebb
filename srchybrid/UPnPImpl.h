@@ -54,6 +54,24 @@ public:
 		UPNP_FAILED,
 		UPNP_TIMEOUT
 	};
+	enum ENatMappingResultReason
+	{
+		NAT_MAPPING_RESULT_NOT_RUN,
+		NAT_MAPPING_RESULT_SUCCESS,
+		NAT_MAPPING_RESULT_REFRESH_SUCCESS,
+		NAT_MAPPING_RESULT_NO_GATEWAY,
+		NAT_MAPPING_RESULT_NOT_READY,
+		NAT_MAPPING_RESULT_BUSY,
+		NAT_MAPPING_RESULT_TIMEOUT,
+		NAT_MAPPING_RESULT_ADD_FAILED,
+		NAT_MAPPING_RESULT_VERIFY_FAILED,
+		NAT_MAPPING_RESULT_CONFLICT,
+		NAT_MAPPING_RESULT_SOURCE_ADDRESS_FAILED,
+		NAT_MAPPING_RESULT_BACKEND_INIT_FAILED,
+		NAT_MAPPING_RESULT_BACKEND_UNAVAILABLE,
+		NAT_MAPPING_RESULT_ABORTED,
+		NAT_MAPPING_RESULT_EXCEPTION
+	};
 
 	virtual void StartDiscovery(uint16 nTCPPort, uint16 nUDPPort, uint16 nTCPWebPort) = 0;
 	virtual bool CheckAndRefresh() = 0;
@@ -72,10 +90,15 @@ public:
 	uint16 GetUsedTCPPort() const						{ return m_nTCPPort; }
 	uint16 GetUsedUDPPort() const						{ return m_nUDPPort; }
 	uint16 GetUsedTCPWebPort() const					{ return m_nTCPWebPort; }
+	ENatMappingResultReason GetLastResultReason() const	{ return m_eLastResultReason; }
+	CString GetLastResultDetail() const					{ return m_strLastResultDetail; }
+	CString GetLastResultSummary() const;
 
 // Implementation
 protected:
 	void SendResultMessage();
+	void ClearLastResult();
+	void SetLastResult(ENatMappingResultReason eReason, LPCTSTR pszFormat = NULL, ...);
 	volatile TRISTATE m_bUPnPPortsForwarded;
 	uint16 m_nOldTCPPort;
 	uint16 m_nOldTCPWebPort;
@@ -84,6 +107,8 @@ protected:
 	uint16 m_nTCPWebPort;
 	uint16 m_nUDPPort;
 	bool m_bCheckAndRefresh;
+	ENatMappingResultReason m_eLastResultReason;
+	CString m_strLastResultDetail;
 };
 
 // Dummy Implementation to be used when no other implementation is available

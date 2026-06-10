@@ -2089,7 +2089,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Tất cả về &tối thiểu"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Tất cả lên tối đ&a"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "Tạm &dừng"
+    IDS_REFRESH_INTERVAL_PAUSED                                "Tạm &dừng"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2824,6 +2824,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Cấm theo &IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Khe tải lên linh hoạt [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Tỷ lệ phần trăm tràn tạm thời vượt quá mục tiêu máy khách tải lên tối đa.\r\n\r\neMuleBB chỉ mở các khe linh hoạt sau khi quá trình tải lên duy trì ở mức dưới 98% utilization trong 10 giây và dừng nạp lại chúng sau khi mức sử dụng phục hồi."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Kiểm tra GitHub Releases ngay bây giờ và báo cáo liệu có gói eMuleBB mới hơn hay không."
 END
 // eMuleBB managed translation block: end
 

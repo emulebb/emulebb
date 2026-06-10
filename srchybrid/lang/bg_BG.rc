@@ -2075,7 +2075,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Всички до &минимум"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Всички до ма&ксимум"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Пауза"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Пауза"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2810,6 +2810,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Забрана по &IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Еластични слотове за качване [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Временен процент на препълване над максималната цел за клиенти за качване.\r\n\r\neMuleBB отваря еластични слотове само след като качването остане под 98% utilization за 10 секунди и спира да ги пълни отново, след като използването се възстанови."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Проверява GitHub Releases сега и съобщава дали е наличен по-нов пакет на eMuleBB."
 END
 // eMuleBB managed translation block: end
 

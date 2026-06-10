@@ -2088,7 +2088,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Të gjitha në &min."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Të gjitha në ma&ks."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Në pauzë"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Në pauzë"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2823,6 +2823,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Ndalo sipas &IP-së"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Vende elastike për ngarkim [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Përqindja e përkohshme e tejmbushjes mbi objektivin maksimal të klientëve të ngarkimit.\r\n\r\neMuleBB hap hapësira elastike vetëm pasi ngarkimi qëndron nën 98% utilizimin për 10 sekonda dhe ndalon rimbushjen e tyre pasi të rikuperohet përdorimi."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Kontrollon tani GitHub Releases dhe raporton nëse ka një paketë më të re eMuleBB."
 END
 // eMuleBB managed translation block: end
 

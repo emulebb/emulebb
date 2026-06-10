@@ -2086,7 +2086,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Kollha għall-&Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Kollha għall-Ma&ss"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Imwaqqaf temporanjament"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Imwaqqaf temporanjament"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2822,6 +2822,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Ipprojbixxi skont l-&IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Slots elastiċi għall-upload [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Perċentwal ta' overflow temporanju 'l fuq mill-mira tal-klijenti max upload.\r\n\r\neMuleBB tiftaħ slots elastiċi biss wara li t-tlugħ jibqa' taħt 98% utilization għal 10 sekondi, u jieqaf mili mill-ġdid ladarba l-utilizzazzjoni tirkupra."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Jiċċekkja GitHub Releases issa u jirrapporta jekk pakkett eMuleBB aktar ġdid huwiex disponibbli."
 END
 // eMuleBB managed translation block: end
 

@@ -2093,7 +2093,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Vše do min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Vše na ma&ximum"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pozastaveno"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pozastaveno"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2828,6 +2828,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Zakázat podle &IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastické nahrávací sloty [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Procento dočasného přetečení nad maximální cílovou hodnotu klientů pro odesílání.\r\n\r\neMuleBB otevře elastické sloty pouze poté, co nahrávání zůstane pod 98% utilizací po dobu 10 sekund, a přestane je doplňovat, jakmile se využití obnoví."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Zkontroluje GitHub Releases a oznámí, zda je k dispozici novější balíček eMuleBB."
 END
 // eMuleBB managed translation block: end
 

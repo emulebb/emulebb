@@ -604,6 +604,8 @@ BOOL CPPgConnection::OnApply()
 		thePrefs.m_bEnableUPnP = !thePrefs.m_bEnableUPnP;
 		if (thePrefs.m_bEnableUPnP)
 			theApp.emuledlg->StartUPnP();
+		else
+			theApp.emuledlg->StopUPnPRefreshTimer();
 		if (theApp.emuledlg->preferenceswnd->m_wndWebServer)
 			theApp.emuledlg->preferenceswnd->m_wndWebServer.SetUPnPState();
 	}

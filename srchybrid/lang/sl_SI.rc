@@ -2093,7 +2093,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Vse na &min."
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Vse na ma&ks."
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Začasno ustavljeno"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Začasno ustavljeno"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2828,6 +2828,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Prepovej po &IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastične reže za nalaganje [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Začasni odstotek prelivanja nad največjim ciljem odjemalcev za nalaganje.\r\n\r\neMuleBB odpre elastične reže šele, ko nalaganje ostane pod 98% utilization 10 sekund, in jih preneha ponovno polniti, ko se izkoriščenost obnovi."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Zdaj preveri GitHub Releases in sporoči, ali je na voljo novejši paket eMuleBB."
 END
 // eMuleBB managed translation block: end
 

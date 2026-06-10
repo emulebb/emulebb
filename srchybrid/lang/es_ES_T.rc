@@ -1998,7 +1998,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "Todo al &mínimo"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "Todo al má&ximo"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Pausado"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Pausado"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2830,6 +2830,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Prohibir por &IP"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Ranuras de carga elásticas [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Porcentaje de desbordamiento temporal por encima del objetivo máximo de clientes de carga.\r\n\r\neMuleBB abre ranuras elásticas solo después de que la carga permanece por debajo de 98% utilización durante 10 segundos y deja de rellenarlas una vez que se recupera la utilización."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Comprueba ahora GitHub Releases e informa si hay disponible un paquete de eMuleBB más reciente."
 END
 // eMuleBB managed translation block: end
 

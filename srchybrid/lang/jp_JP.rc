@@ -2098,7 +2098,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "すべて最小へ(&M)"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "すべて最大へ(&X)"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&一時停止"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&一時停止"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2833,6 +2833,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "&IPで禁止"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "エラスティック アップロード スロット [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "最大アップロード クライアントのターゲットを超える一時的なオーバーフローの割合。\r\n\r\neMuleBB は、アップロードが 10 秒間 98% utilization を下回った後にのみエラスティック スロットを開き、使用率が回復するとスロットの補充を停止します。"
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "GitHub Releases を今すぐ確認し、より新しい eMuleBB パッケージが利用可能かどうかを報告します。"
 END
 // eMuleBB managed translation block: end
 

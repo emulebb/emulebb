@@ -2064,7 +2064,7 @@ BEGIN
     IDS_SPEED_ACTION_ALL_TO_MIN_MNEMONIC                       "&Kaikki Min"
     IDS_SPEED_ACTION_ALL_TO_MAX_MNEMONIC                       "&Kaikki Maxille"
     IDS_TOOLS_REFRESH_INTERVAL                                 "&Refresh interval"
-    IDS_REFRESH_INTERVAL_PAUSED "&Keskeytetty"
+    IDS_REFRESH_INTERVAL_PAUSED                                "&Keskeytetty"
     IDS_REFRESH_INTERVAL_FAST                                  "&Fast (0.5s)"
     IDS_REFRESH_INTERVAL_NORMAL                                "&Normal (1s)"
     IDS_REFRESH_INTERVAL_BELOWNORMAL                           "&Below normal (2s)"
@@ -2799,6 +2799,7 @@ BEGIN
     IDS_BAN_BY_IP                                              "Kiellä &IP:n mukaan"
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastiset latauspaikat [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Väliaikainen ylivuotoprosentti korkeampi kuin latausasiakkaiden enimmäistavoite.\r\n\r\neMuleBB avaa elastiset paikat vasta, kun lataus pysyy alle 98% u-tilojen 10 sekunnin ajan, ja lopettaa niiden täyttämisen, kun käyttö palautuu."
+    IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Tarkistaa nyt GitHub Releases -julkaisut ja ilmoittaa, onko uudempi eMuleBB-paketti saatavilla."
 END
 // eMuleBB managed translation block: end
 
