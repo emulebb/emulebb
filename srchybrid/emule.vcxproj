@@ -107,6 +107,8 @@
       <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;dbghelp.lib;dwmapi.lib;iphlpapi.lib;mfplat.lib;mfreadwrite.lib;mfuuid.lib;ole32.lib;propsys.lib;runtimeobject.lib;shell32.lib;shlwapi.lib;version.lib;wininet.lib;winmm.lib;ws2_32.lib;$(CryptoPpLibRoot)cryptlib.lib;$(Id3libLibRoot)id3lib.lib;$(MbedTlsLibRoot)mbedtls.lib;$(MbedTlsLibRoot)mbedx509.lib;$(MbedTlsCryptoLibRoot)tfpsacrypto.lib;$(MiniUpnpLibRoot)miniupnpc.lib;$(PcpNatPmpLibRoot)pcpnatpmp.lib;$(ResizableLibLibRoot)ResizableLib.lib;$(ZlibLibRoot)zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IncrementalLink>true</IncrementalLink>
       <IgnoreSpecificDefaultLibraries>mpr.lib;rasapi32.lib;secur32.lib;sensapi.lib;vfw32.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <!-- WHY: third-party static libs are built /Zi, but their compiler PDBs are pruned with the repo-local dep build dirs (we deliberately do not retain third-party debug symbols). The app link then cannot find them and emits a benign LNK4099 per dep object; suppress that warning class. -->
+      <AdditionalOptions>/IGNORE:4099 %(AdditionalOptions)</AdditionalOptions>
       <LinkControlFlowGuard>true</LinkControlFlowGuard>
       <OptimizeReferences>false</OptimizeReferences>
       <SubSystem>Windows</SubSystem>
@@ -144,6 +146,8 @@
     <Link>
       <AdditionalDependencies>ADSIId.lib;bcrypt.lib;crypt32.lib;dbghelp.lib;dwmapi.lib;iphlpapi.lib;mfplat.lib;mfreadwrite.lib;mfuuid.lib;ole32.lib;propsys.lib;runtimeobject.lib;shell32.lib;shlwapi.lib;version.lib;wininet.lib;winmm.lib;ws2_32.lib;$(CryptoPpLibRoot)cryptlib.lib;$(Id3libLibRoot)id3lib.lib;$(MbedTlsLibRoot)mbedtls.lib;$(MbedTlsLibRoot)mbedx509.lib;$(MbedTlsCryptoLibRoot)tfpsacrypto.lib;$(MiniUpnpLibRoot)miniupnpc.lib;$(PcpNatPmpLibRoot)pcpnatpmp.lib;$(ResizableLibLibRoot)ResizableLib.lib;$(ZlibLibRoot)zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>mpr.lib;rasapi32.lib;secur32.lib;sensapi.lib;vfw32.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <!-- WHY: see the Debug config; suppress the benign LNK4099 emitted because pruned third-party PDBs cannot be found at app link. -->
+      <AdditionalOptions>/IGNORE:4099 %(AdditionalOptions)</AdditionalOptions>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <IncrementalLink>false</IncrementalLink>
       <LinkControlFlowGuard>true</LinkControlFlowGuard>
