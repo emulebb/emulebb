@@ -220,20 +220,20 @@ void CStatistics::UpdateConnectionStats(float uploadrate, float downloadrate)
 	if (uploadrate > 0 || downloadrate > 0) {
 		const ULONGLONG curTick = ::GetTickCount64();
 		if (start_timeTransfers)
-			time_thisTransfer = (curTick - start_timeTransfers) / SEC2MS(1);
+			time_thisTransfer = static_cast<DWORD>((curTick - start_timeTransfers) / SEC2MS(1));
 		else
 			start_timeTransfers = curTick;
 
 		if (uploadrate > 0) {
 			if (start_timeUploads)
-				time_thisUpload = (curTick - start_timeUploads) / SEC2MS(1);
+				time_thisUpload = static_cast<DWORD>((curTick - start_timeUploads) / SEC2MS(1));
 			else
 				start_timeUploads = curTick;
 		}
 
 		if (downloadrate > 0) {
 			if (start_timeDownloads)
-				time_thisDownload = (curTick - start_timeDownloads) / SEC2MS(1);
+				time_thisDownload = static_cast<DWORD>((curTick - start_timeDownloads) / SEC2MS(1));
 			else
 				start_timeDownloads = curTick;
 		}
@@ -261,7 +261,7 @@ void CStatistics::UpdateConnectionStats(float uploadrate, float downloadrate)
 	if (theStats.serverConnectTime == 0)
 		time_thisServerDuration = 0;
 	else
-		time_thisServerDuration = (::GetTickCount64() - theStats.serverConnectTime) / SEC2MS(1);
+		time_thisServerDuration = static_cast<DWORD>((::GetTickCount64() - theStats.serverConnectTime) / SEC2MS(1));
 }
 
 void CStatistics::RecordRate()
