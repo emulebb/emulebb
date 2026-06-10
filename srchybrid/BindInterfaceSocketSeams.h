@@ -26,8 +26,17 @@ namespace BindInterfaceSocketSeams
 	{
 		if (pnError != NULL)
 			*pnError = 0;
-		if (nFamily != AF_INET || !ShouldApplyIpv4UnicastInterfaceOption(bHasExplicitBindInterface, bBindAddressResolved, dwIpv4IfIndex))
+		if (!ShouldApplyIpv4UnicastInterfaceOption(bHasExplicitBindInterface, bBindAddressResolved, dwIpv4IfIndex))
 			return true;
+		if (nFamily != AF_INET) {
+			// WHY: IP_UNICAST_IF egress pinning is IPv4-only. With VPN-guard bind
+			// enforcement active, a non-IPv4 socket would leave the tunnel unpinned
+			// (an IPv6 leak), so fail closed and refuse it instead of reporting a
+			// success that never applied any interface lock.
+			if (pnError != NULL)
+				*pnError = WSAEAFNOSUPPORT;
+			return false;
+		}
 
 		const DWORD dwNetworkOrderIfIndex = htonl(dwIpv4IfIndex);
 		if (setsockopt(hSocket, IPPROTO_IP, IP_UNICAST_IF, reinterpret_cast<const char*>(&dwNetworkOrderIfIndex), sizeof dwNetworkOrderIfIndex) == 0)

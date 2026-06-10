@@ -1260,6 +1260,22 @@ BOOL CAsyncSocketEx::SetSockOpt(int nOptionName, const void *lpOptionValue, int 
 
 bool CAsyncSocketEx::ApplyConfiguredIpv4UnicastInterface()
 {
+	// WHY: the IP_UNICAST_IF pinning below is IPv4-only. When a VPN-guard bind
+	// interface is configured and resolved, an IPv6 socket would leave the tunnel
+	// unpinned (an IPv6 leak); the bind-address match below cannot catch it because
+	// an IPv6 socket is never bound to the IPv4 bind address. Fail closed so the
+	// kill-switch stays IPv4-locked. P2P sockets are AF_INET today, so this only
+	// blocks a future IPv6 P2P path while bind enforcement is active.
+	if (m_SocketData.nFamily == AF_INET6
+		&& BindInterfaceSocketSeams::ShouldApplyIpv4UnicastInterfaceOption(
+			!thePrefs.GetActiveBindInterface().IsEmpty()
+			, thePrefs.GetActiveBindAddressResolveResult() == BARR_Resolved
+			, thePrefs.GetActiveBindInterfaceIndex())) {
+		DebugLogError(_T("P2P bind interface enforcement: refusing IPv6 socket because IP_UNICAST_IF tunnel pinning is IPv4-only (interface=%s)")
+			, (LPCTSTR)thePrefs.GetActiveBindInterfaceName());
+		return false;
+	}
+
 	if (m_sSocketAddress.IsEmpty())
 		return true;
 	CString strActiveBindAddress;
