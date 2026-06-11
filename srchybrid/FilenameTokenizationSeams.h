@@ -15,6 +15,7 @@ struct CanonicalName
 {
 	std::wstring canonical;
 	std::vector<std::wstring> ignoredTokens;
+	std::vector<std::wstring> tokens; // kept content tokens (for order-independent set comparison)
 	bool hasUsableBaseName = false;
 };
 
@@ -274,6 +275,7 @@ inline CanonicalName BuildCanonicalName(std::wstring name, const CanonicalNameOp
 	result.hasUsableBaseName = !keptTokens.empty() && !IsDefaultFallbackBaseName(keptTokens);
 	if (!result.hasUsableBaseName)
 		return result;
+	result.tokens = keptTokens;
 	result.canonical = JoinTokens(keptTokens);
 	if (rOptions.includeExtensionInCanonical && !extension.empty()) {
 		if (!result.canonical.empty())

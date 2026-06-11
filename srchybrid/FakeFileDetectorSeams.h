@@ -169,6 +169,30 @@ inline void AddUnique(std::vector<std::wstring> &rValues, std::wstring value)
 	rValues.push_back(value);
 }
 
+inline std::vector<std::wstring> UniqueSortedTokens(const std::vector<std::wstring> &rTokens)
+{
+	std::vector<std::wstring> out(rTokens);
+	std::sort(out.begin(), out.end());
+	out.erase(std::unique(out.begin(), out.end()), out.end());
+	return out;
+}
+
+/**
+ * @brief True when two sorted-unique content-token sets describe the same file: the
+ * sets are equal, or the smaller one (>= 2 tokens) is fully contained in the larger.
+ * Order-independent and subset-aware, so cosmetic naming differences (token order,
+ * an extra descriptive word, a stray year/release token) are not treated as a
+ * divergent name for the same hash.
+ */
+inline bool IsSameNameContent(const std::vector<std::wstring> &rA, const std::vector<std::wstring> &rB)
+{
+	const std::vector<std::wstring> &rSmall = rA.size() <= rB.size() ? rA : rB;
+	const std::vector<std::wstring> &rLarge = rA.size() <= rB.size() ? rB : rA;
+	if (rSmall.size() < 2 && rSmall.size() != rLarge.size())
+		return false; // single-token names merge only on exact equality
+	return std::includes(rLarge.begin(), rLarge.end(), rSmall.begin(), rSmall.end());
+}
+
 inline bool IsMediaType(const EFileType eType)
 {
 	return eType == AUDIO_MPEG || eType == VIDEO_AVI || eType == VIDEO_MPG || eType == VIDEO_MP4
@@ -290,7 +314,12 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules, const st
 	report.pendingHeaderCheck = rEvidence.headerPending;
 
 	std::vector<std::wstring> uniqueNames;
-	std::vector<std::wstring> uniqueCanonicalNames;
+	struct NameContentGroup
+	{
+		std::vector<std::wstring> tokens; // sorted-unique content tokens
+		std::wstring canonical;           // representative (most descriptive) name
+	};
+	std::vector<NameContentGroup> nameGroups;
 	const FilenameTokenizationSeams::CanonicalNameOptions trustNameOptions{ true, false };
 	for (const std::wstring &rName : rEvidence.names) {
 		AddUnique(uniqueNames, rName);
@@ -299,16 +328,33 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules, const st
 		for (const std::wstring &rIgnoredToken : canonicalName.ignoredTokens)
 			AddUnique(report.ignoredNameTokens, rIgnoredToken);
 		if (canonicalName.hasUsableBaseName && !canonicalName.canonical.empty()) {
-			AddUnique(uniqueCanonicalNames, canonicalName.canonical);
 			AddUnique(report.canonicalNames, canonicalName.canonical);
+			nameGroups.push_back({ UniqueSortedTokens(canonicalName.tokens), canonicalName.canonical });
 		}
 	}
-	if (uniqueCanonicalNames.size() >= 2)
-		report.nameDivergenceGroups = uniqueCanonicalNames;
-	if (uniqueCanonicalNames.size() >= 3)
-		AddReason(report, "multiple_names", 25);
-	else if (uniqueCanonicalNames.size() == 2)
-		AddReason(report, "multiple_names", 15);
+
+	// Collapse names that describe the same content (equal or subset token sets,
+	// order-independent) to a fixpoint, keeping the most descriptive name per group.
+	for (bool bMerged = true; bMerged;) {
+		bMerged = false;
+		for (size_t i = 0; i < nameGroups.size() && !bMerged; ++i) {
+			for (size_t j = i + 1; j < nameGroups.size(); ++j) {
+				if (!IsSameNameContent(nameGroups[i].tokens, nameGroups[j].tokens))
+					continue;
+				if (nameGroups[j].tokens.size() > nameGroups[i].tokens.size())
+					nameGroups[i] = nameGroups[j];
+				nameGroups.erase(nameGroups.begin() + static_cast<std::ptrdiff_t>(j));
+				bMerged = true;
+				break;
+			}
+		}
+	}
+
+	if (nameGroups.size() >= 2) {
+		for (const NameContentGroup &rGroup : nameGroups)
+			report.nameDivergenceGroups.push_back(rGroup.canonical);
+		AddReason(report, "multiple_names", nameGroups.size() >= 3 ? 25 : 15);
+	}
 
 	bool bBadNameSignal = false;
 	bool bBadCommentSignal = false;
