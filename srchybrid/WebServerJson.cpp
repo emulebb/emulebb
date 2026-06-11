@@ -437,14 +437,22 @@ CString GetClientIpString(const CUpDownClient &rClient)
 }
 
 /**
+ * Reports the current eD2K connection without assuming teardown globals exist.
+ */
+bool IsEd2kConnected()
+{
+	return theApp.serverconnect != NULL && theApp.serverconnect->IsConnected();
+}
+
+/**
  * Serializes one server entry together with current connection flags.
  */
 json BuildServerJson(const CServer &rServer)
 {
-	const CServer *const pCurrentServer = theApp.serverconnect->GetCurrentServer();
+	const CServer *const pCurrentServer = theApp.serverconnect != NULL ? theApp.serverconnect->GetCurrentServer() : NULL;
 	const bool bIsCurrent = pCurrentServer == &rServer;
-	const bool bConnected = bIsCurrent && theApp.serverconnect->IsConnected();
-	const bool bConnecting = bIsCurrent && theApp.serverconnect->IsConnecting();
+	const bool bConnected = bIsCurrent && IsEd2kConnected();
+	const bool bConnecting = bIsCurrent && theApp.serverconnect != NULL && theApp.serverconnect->IsConnecting();
 	return json{
 		{"name", StdUtf8FromCString(rServer.GetListName())},
 		{"address", StdUtf8FromCString(rServer.GetAddress())},
@@ -472,14 +480,32 @@ json BuildServerJson(const CServer &rServer)
  */
 json BuildServerStatusJson()
 {
-	CServer *const pCurrentServer = theApp.serverconnect->GetCurrentServer();
+	CServer *const pCurrentServer = theApp.serverconnect != NULL ? theApp.serverconnect->GetCurrentServer() : NULL;
+	const bool bConnected = IsEd2kConnected();
 	return json{
-		{"connected", theApp.serverconnect->IsConnected()},
-		{"connecting", theApp.serverconnect->IsConnecting()},
-		{"lowId", theApp.serverconnect->IsConnected() ? json(theApp.serverconnect->IsLowID()) : json(nullptr)},
-		{"serverCount", static_cast<int64_t>(theApp.serverlist->GetServerCount())},
+		{"connected", bConnected},
+		{"connecting", theApp.serverconnect != NULL && theApp.serverconnect->IsConnecting()},
+		{"lowId", bConnected ? json(theApp.serverconnect->IsLowID()) : json(nullptr)},
+		{"serverCount", theApp.serverlist != NULL ? static_cast<int64_t>(theApp.serverlist->GetServerCount()) : 0},
 		{"currentServer", pCurrentServer != NULL ? BuildServerJson(*pCurrentServer) : json(nullptr)}
 	};
+}
+
+/**
+ * Serializes the server list when it is still owned by the app model.
+ */
+json BuildServersListJson()
+{
+	json result = json::array();
+	if (theApp.serverlist == NULL)
+		return result;
+
+	for (INT_PTR i = 0; i < theApp.serverlist->GetServerCount(); ++i) {
+		CServer *const pServer = theApp.serverlist->GetServerAt(i);
+		if (pServer != NULL)
+			result.push_back(BuildServerJson(*pServer));
+	}
+	return result;
 }
 
 /**
@@ -885,7 +911,7 @@ json BuildUploadJson(const CUpDownClient &rClient, const bool bWaitingQueue, con
 {
 	const CString strUserName(rClient.GetUserName() != NULL ? rClient.GetUserName() : _T(""));
 	const uchar *const pUploadFileHash = rClient.GetUploadFileID();
-	const CKnownFile *const pUploadFile = pUploadFileHash != NULL ? theApp.sharedfiles->GetFileByID(pUploadFileHash) : NULL;
+	const CKnownFile *const pUploadFile = theApp.sharedfiles != NULL && pUploadFileHash != NULL ? theApp.sharedfiles->GetFileByID(pUploadFileHash) : NULL;
 	const CString strAddress(GetClientIpString(rClient));
 	CString strClientId;
 	if (rClient.HasValidHash())
@@ -1066,20 +1092,22 @@ json BuildGlobalStatsJson()
 {
 	const INT_PTR iSharedHashingCount = GetSharedHashingCount();
 	const bool bSharedFilesReady = IsSharedFilesStartupReady();
+	const bool bEd2kConnected = IsEd2kConnected();
+	const bool bKadConnected = Kademlia::CKademlia::IsConnected();
 	return json{
-		{"connected", theApp.IsConnected()},
-		{"downloadSpeedKiBps", theApp.downloadqueue->GetDatarate() / 1024.0},
-		{"uploadSpeedKiBps", theApp.uploadqueue->GetDatarate() / 1024.0},
+		{"connected", bEd2kConnected || bKadConnected},
+		{"downloadSpeedKiBps", theApp.downloadqueue != NULL ? theApp.downloadqueue->GetDatarate() / 1024.0 : 0.0},
+		{"uploadSpeedKiBps", theApp.uploadqueue != NULL ? theApp.uploadqueue->GetDatarate() / 1024.0 : 0.0},
 		{"sessionDownloadedBytes", theStats.sessionReceivedBytes},
 		{"sessionUploadedBytes", theStats.sessionSentBytes},
-		{"activeUploads", static_cast<int64_t>(theApp.uploadqueue->GetActiveUploadsCount())},
-		{"waitingUploads", static_cast<int64_t>(theApp.uploadqueue->GetWaitingUserCount())},
-		{"downloadCount", static_cast<int64_t>(theApp.downloadqueue->GetFileCount())},
-		{"ed2kConnected", theApp.serverconnect->IsConnected()},
-		{"ed2kHighId", theApp.serverconnect->IsConnected() && !theApp.serverconnect->IsLowID()},
+		{"activeUploads", theApp.uploadqueue != NULL ? static_cast<int64_t>(theApp.uploadqueue->GetActiveUploadsCount()) : 0},
+		{"waitingUploads", theApp.uploadqueue != NULL ? static_cast<int64_t>(theApp.uploadqueue->GetWaitingUserCount()) : 0},
+		{"downloadCount", theApp.downloadqueue != NULL ? static_cast<int64_t>(theApp.downloadqueue->GetFileCount()) : 0},
+		{"ed2kConnected", bEd2kConnected},
+		{"ed2kHighId", bEd2kConnected && !theApp.serverconnect->IsLowID()},
 		{"kadRunning", Kademlia::CKademlia::IsRunning()},
-		{"kadConnected", Kademlia::CKademlia::IsConnected()},
-		{"kadFirewalled", Kademlia::CKademlia::IsConnected() ? json(Kademlia::CKademlia::IsFirewalled()) : json(nullptr)},
+		{"kadConnected", bKadConnected},
+		{"kadFirewalled", bKadConnected ? json(Kademlia::CKademlia::IsFirewalled()) : json(nullptr)},
 		{"sharedHashingCount", static_cast<int64_t>(iSharedHashingCount)},
 		{"sharedHashingActive", iSharedHashingCount > 0},
 		{"sharedFilesReady", bSharedFilesReady}
@@ -1143,7 +1171,7 @@ json BuildPreferencesJson()
 		{"maxConnections", thePrefs.GetMaxConnections()},
 		{"maxConnectionsPerFiveSeconds", thePrefs.GetMaxConperFive()},
 		{"maxSourcesPerFile", thePrefs.GetConfiguredMaxSourcesPerFile()},
-		{"uploadClientDataRate", theApp.uploadqueue->GetTargetClientDataRateBroadband()},
+		{"uploadClientDataRate", theApp.uploadqueue != NULL ? theApp.uploadqueue->GetTargetClientDataRateBroadband() : 0},
 		{"maxUploadSlots", thePrefs.GetMaxUploadClientsAllowed()},
 		{"uploadSlotElasticPercent", thePrefs.GetUploadSlotElasticPercent()},
 		{"queueSize", static_cast<int64_t>(thePrefs.GetQueueSize())},
@@ -1268,6 +1296,15 @@ json BuildSharedFilesListJson(
 	const size_t uLimit = (std::numeric_limits<size_t>::max)(),
 	size_t *const pTotal = NULL)
 {
+	if (theApp.sharedfiles == NULL) {
+		// WHY: late REST reads can still be draining while shutdown tears down
+		// shared-file state; collection reads must become empty snapshots, not
+		// dereference the retired shared-file list.
+		if (pTotal != NULL)
+			*pTotal = 0;
+		return json::array();
+	}
+
 	std::vector<CKnownFile*> sharedFiles;
 	size_t uTotal = 0;
 	theApp.sharedfiles->CopySharedFilePage(sharedFiles, uOffset, uLimit, pTotal != NULL ? &uTotal : NULL);
@@ -1357,6 +1394,15 @@ json BuildUploadsListJson(
 	const bool bIncludeScoreBreakdown = false)
 {
 	json result = json::array();
+	if (theApp.uploadqueue == NULL) {
+		// WHY: upload queues are deleted during shutdown after web transport is
+		// stopped; a late in-flight read should return an empty page rather than
+		// following a stale queue pointer.
+		if (pTotal != NULL)
+			*pTotal = 0;
+		return result;
+	}
+
 	size_t uMatched = 0;
 	if (!bWaitingQueue) {
 		for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;) {
@@ -1413,6 +1459,9 @@ json BuildFriendJson(const CFriend &rFriend)
 
 json BuildFriendsListJson()
 {
+	if (theApp.friendlist == NULL)
+		return json::array();
+
 	CArray<CFriend*, CFriend*> friends;
 	theApp.friendlist->CopyFriends(friends);
 	json result = json::array();
@@ -1428,6 +1477,12 @@ CFriend* FindFriendByHashParam(const json &rValue, SPipeApiError &rError)
 	uchar hash[MDX_DIGEST_SIZE];
 	if (!TryDecodeHash(rValue, hash, rError))
 		return NULL;
+
+	if (theApp.friendlist == NULL) {
+		rError.strCode = "EMULE_UNAVAILABLE";
+		rError.strMessage = _T("friend list is unavailable");
+		return NULL;
+	}
 
 	CFriend *const pFriend = theApp.friendlist->SearchFriend(hash, 0, 0);
 	if (pFriend == NULL) {
@@ -1500,6 +1555,15 @@ json BuildTransfersListJson(
 
 	const CString strStateFilter(CStringFromStdUtf8(request.strState));
 	json result = json::array();
+	if (theApp.downloadqueue == NULL) {
+		// WHY: download queues can be retired before late REST snapshot workers
+		// finish; return an empty transfer page instead of touching torn-down
+		// file state.
+		if (pTotal != NULL)
+			*pTotal = 0;
+		return result;
+	}
+
 	size_t uMatched = 0;
 	POSITION pos = NULL;
 	for (INT_PTR i = 0, iCount = theApp.downloadqueue->GetFileCount(); i < iCount; ++i) {
@@ -2149,6 +2213,12 @@ CKnownFile* FindSharedFileByHash(const json &rValue, SPipeApiError &rError)
 	if (!TryDecodeHash(rValue, hash, rError))
 		return NULL;
 
+	if (theApp.sharedfiles == NULL) {
+		rError.strCode = "EMULE_UNAVAILABLE";
+		rError.strMessage = _T("shared file list is unavailable");
+		return NULL;
+	}
+
 	CKnownFile *const pKnownFile = theApp.sharedfiles->GetFileByID(hash);
 	if (pKnownFile == NULL) {
 		rError.strCode = "NOT_FOUND";
@@ -2166,6 +2236,12 @@ CPartFile* FindPartFileByHash(const json &rValue, SPipeApiError &rError)
 	uchar hash[MDX_DIGEST_SIZE];
 	if (!TryDecodeHash(rValue, hash, rError))
 		return NULL;
+
+	if (theApp.downloadqueue == NULL) {
+		rError.strCode = "EMULE_UNAVAILABLE";
+		rError.strMessage = _T("download queue is unavailable");
+		return NULL;
+	}
 
 	CPartFile *pPartFile = theApp.downloadqueue->GetFileByID(hash);
 	if (pPartFile == NULL) {
@@ -2557,6 +2633,12 @@ CUpDownClient* FindTransferSourceClient(CPartFile &rPartFile, const SPipeApiClie
  */
 CUpDownClient* FindUploadClientByQueueState(const SPipeApiClientSelector &rSelector, const bool bWaitingQueue, SPipeApiError &rError)
 {
+	if (theApp.uploadqueue == NULL) {
+		rError.strCode = "EMULE_UNAVAILABLE";
+		rError.strMessage = _T("upload queue is unavailable");
+		return NULL;
+	}
+
 	if (!bWaitingQueue) {
 		for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;) {
 			CUpDownClient *const pClient = theApp.uploadqueue->GetNextFromUploadList(pos);
@@ -2615,6 +2697,9 @@ bool TryGetServerEndpoint(const json &rParams, SPipeApiServerEndpoint &rEndpoint
  */
 CServer* FindServerByEndpoint(const SPipeApiServerEndpoint &rEndpoint)
 {
+	if (theApp.serverlist == NULL)
+		return NULL;
+
 	CServer *pServer = theApp.serverlist->GetServerByAddress(rEndpoint.strAddress, rEndpoint.uPort);
 	if (pServer != NULL)
 		return pServer;
@@ -2971,12 +3056,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 
-		json servers = json::array();
-		for (INT_PTR i = 0; i < theApp.serverlist->GetServerCount(); ++i) {
-			CServer *const pServer = theApp.serverlist->GetServerAt(i);
-			if (pServer != NULL)
-				servers.push_back(BuildServerJson(*pServer));
-		}
+		json servers = BuildServersListJson();
 
 		const json status = BuildStatusJson();
 		const bool bSharedFilesReady = status["stats"].value("sharedFilesReady", true);
@@ -2995,12 +3075,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 	if (strCommand == "servers/list") {
-		json result = json::array();
-		for (INT_PTR i = 0; i < theApp.serverlist->GetServerCount(); ++i) {
-			CServer *const pServer = theApp.serverlist->GetServerAt(i);
-			if (pServer != NULL)
-				result.push_back(BuildServerJson(*pServer));
-		}
+		json result = BuildServersListJson();
 		return ItemsEnvelopeIfRequested(params, result);
 	}
 
