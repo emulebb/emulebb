@@ -67,6 +67,7 @@ namespace
 {
 constexpr int SEARCH_COLUMN_CONFIDENCE = 14;
 constexpr int SEARCH_COLUMN_AICH = 15;
+constexpr int SEARCH_COLUMN_EXTENSION = 16;
 
 SearchTrustHintSeams::ConfidenceHint BuildSearchConfidenceHint(const CSearchFile &rFile, const SFakeFileReport &rFakeReport)
 {
@@ -201,6 +202,20 @@ CSearchFile::EKnownType ResolveSearchKnownType(const CSearchFile *src)
 	if (theApp.knownfiles->IsCancelledFileByID(src->GetFileHash()))
 		return CSearchFile::Cancelled;
 	return CSearchFile::NotDetermined;
+}
+
+/**
+ * @brief Returns a result's lowercase file extension without the leading dot
+ *        (empty when the name has no extension), for the Extension column.
+ */
+CString GetSearchFileExtension(const CSearchFile *src)
+{
+	LPCTSTR pszExt = ::PathFindExtension(src->GetFileName());
+	if (*pszExt == _T('.'))
+		++pszExt;
+	CString strExt(pszExt);
+	strExt.MakeLower();
+	return strExt;
 }
 
 }
@@ -423,6 +438,7 @@ void CSearchListCtrl::Init(CSearchList *in_searchlist)
 	InsertColumn(13,	_T(""),	LVCFMT_LEFT,	50);								//IDS_KNOWN
 	InsertColumn(SEARCH_COLUMN_CONFIDENCE,	_T(""),	LVCFMT_LEFT,	110);				//IDS_CONFIDENCE
 	InsertColumn(SEARCH_COLUMN_AICH,	_T(""),	LVCFMT_LEFT,	DFLT_HASH_COL_WIDTH, -1, true);	//IDS_AICHHASH
+	InsertColumn(SEARCH_COLUMN_EXTENSION,	_T(""),	LVCFMT_LEFT,	55);						//IDS_SEARCHEXTENTION
 
 	if (const auto *pProfile = MuleListCtrlViewPresets::FindProfile(_T("SearchListCtrl")))
 		SetViewPresetProfile(*pProfile);
@@ -467,11 +483,12 @@ CSearchListCtrl::~CSearchListCtrl()
 
 void CSearchListCtrl::Localize()
 {
-	static const UINT uids[16] =
+	static const UINT uids[17] =
 	{
 		IDS_DL_FILENAME, IDS_DL_SIZE, 0/*IDS_SEARCHAVAIL*/, IDS_COMPLSOURCES, IDS_TYPE
 		, IDS_FILEID, IDS_ARTIST, IDS_ALBUM, IDS_TITLE, IDS_LENGTH
 		, IDS_BITRATE, IDS_CODEC, IDS_FOLDER, IDS_KNOWN, IDS_CONFIDENCE, IDS_AICHHASH
+		, IDS_SEARCHEXTENTION
 	};
 
 	LocaliseHeaderCtrl(uids, _countof(uids));
@@ -499,7 +516,7 @@ void CSearchListCtrl::AddResult(const CSearchFile *toshow)
 	int iItem = InsertItem(LVIF_TEXT | LVIF_PARAM, GetItemCount(), toshow->GetFileName(), 0, 0, 0, (LPARAM)toshow);
 	// Add all sub items as callbacks and restore updating with last sub item.
 	// The callbacks are only needed for 'Find' functionality, not for any drawing.
-	const int iSubItems = SEARCH_COLUMN_AICH;
+	const int iSubItems = SEARCH_COLUMN_EXTENSION;
 	for (int i = 1; i <= iSubItems; ++i) {
 		if (i == iSubItems)
 			SetUpdateMode(eCurUpdateMode);
@@ -840,6 +857,9 @@ int CSearchListCtrl::CompareChild(const CSearchFile *item1, const CSearchFile *i
 	case SEARCH_COLUMN_AICH: // AICH Hash
 		iResult = CompareAICHHash(item1->GetFileIdentifierC(), item2->GetFileIdentifierC(), true);
 		break;
+	case SEARCH_COLUMN_EXTENSION:
+		iResult = CompareLocaleStringNoCase(GetSearchFileExtension(item1), GetSearchFileExtension(item2));
+		break;
 	default: // always sort by descending availability
 		iResult = -CompareUnsigned(item1->GetSourceCount(), item2->GetSourceCount());
 	}
@@ -903,6 +923,8 @@ int CSearchListCtrl::Compare(const CSearchFile *item1, const CSearchFile *item2,
 		return SearchTrustHintSeams::CompareConfidenceHints(BuildSearchConfidenceHint(*item1), BuildSearchConfidenceHint(*item2));
 	case SEARCH_COLUMN_AICH:
 		return CompareAICHHash(item1->GetFileIdentifierC(), item2->GetFileIdentifierC(), bSortAscending);
+	case SEARCH_COLUMN_EXTENSION:
+		return CompareOptLocaleStringNoCaseUndefinedAtBottom(GetSearchFileExtension(item1), GetSearchFileExtension(item2), bSortAscending);
 	}
 	return 0;
 }
@@ -2032,6 +2054,9 @@ CString CSearchListCtrl::GetItemDisplayText(const CSearchFile *src, int iSubItem
 	case SEARCH_COLUMN_AICH: //AICH hash
 		if (src->GetFileIdentifierC().HasAICHHash())
 			sText = src->GetFileIdentifierC().GetAICHHash().GetString();
+		break;
+	case SEARCH_COLUMN_EXTENSION:
+		sText = GetSearchFileExtension(src);
 	}
 	return sText;
 }
