@@ -2825,6 +2825,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Khe tải lên linh hoạt [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Tỷ lệ phần trăm tràn tạm thời vượt quá mục tiêu máy khách tải lên tối đa.\r\n\r\neMuleBB chỉ mở các khe linh hoạt sau khi quá trình tải lên duy trì ở mức dưới 98% utilization trong 10 giây và dừng nạp lại chúng sau khi mức sử dụng phục hồi."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Kiểm tra GitHub Releases ngay bây giờ và báo cáo liệu có gói eMuleBB mới hơn hay không."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "tên tệp không phản ánh các thẻ phương tiện được nhúng"
+    IDS_CONFIDENCE                                             "Sự tự tin"
+    IDS_CONFIDENCE_GENUINE                                     "Thành thật"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Có vẻ tốt"
+    IDS_CONFIDENCE_CAUTION                                     "Thận trọng: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Nghi phạm: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Có khả năng là giả: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Thư rác"
+    IDS_CONFIDENCE_INFOTIP                                     "Sự tự tin: %s"
 END
 // eMuleBB managed translation block: end
 

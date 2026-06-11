@@ -2822,6 +2822,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "فتحات تحميل مرنة [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "نسبة التجاوز المؤقتة أعلى من الحد الأقصى المستهدف لعملاء التحميل. يفتح\r\n\r\neMuleBB فتحات مرنة فقط بعد أن يظل التحميل أقل من 98% utilization لمدة 10 ثوانٍ، ويتوقف عن إعادة تعبئتها بمجرد استعادة الاستخدام."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "يتحقق من GitHub Releases الآن ويبلغك بما إذا كانت حزمة eMuleBB أحدث متاحة."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "اسم الملف لا يعكس علامات الوسائط المضمنة"
+    IDS_CONFIDENCE                                             "ثقة"
+    IDS_CONFIDENCE_GENUINE                                     "أصيل"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "تبدو جيدة"
+    IDS_CONFIDENCE_CAUTION                                     "الحذر: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "المشتبه به: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "من المحتمل أن يكون مزيفًا: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "رسائل إلكترونية مزعجة"
+    IDS_CONFIDENCE_INFOTIP                                     "الثقة: %s"
 END
 // eMuleBB managed translation block: end
 

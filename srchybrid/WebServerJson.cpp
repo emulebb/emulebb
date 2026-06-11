@@ -613,40 +613,32 @@ json BuildFakeFileReportJson(const SFakeFileReport &rReport)
 }
 
 /**
- * Serializes decoded Kad publisher metadata without treating it as identity trust.
- */
-json BuildKadPublisherEvidenceJson(const CSearchFile &rSearchFile)
-{
-	const SearchTrustHintSeams::KadTrustHint hint(SearchTrustHintSeams::BuildKadTrustHint(rSearchFile.GetKadPublishInfo()));
-	return json{
-		{"available", rSearchFile.IsKademlia() && hint.kind != SearchTrustHintSeams::KadTrustKind::Unknown},
-		{"band", SearchTrustHintSeams::KadTrustKindToken(hint.kind)},
-		{"publishers", hint.publishers},
-		{"differentNames", hint.differentNames},
-		{"rawTrustValueCent", hint.trustValueCent},
-		{"rawTrustValue", static_cast<double>(hint.trustValueCent) / 100.0},
-		{"source", rSearchFile.IsKademlia() ? "kad_publish_info" : "not_kad"}
-	};
-}
-
-/**
  * Serializes grouped search evidence so controllers can explain WHY a row is
- * risky, weakly supported, or internally inconsistent.
+ * confidently genuine, weakly supported, or internally inconsistent. The
+ * consolidated `confidence` band folds fake-file heuristics, user ratings, and
+ * Kad publisher consistency into a single non-authoritative summary axis.
  */
 json BuildSearchEvidenceJson(const CSearchFile &rSearchFile, const SFakeFileReport &rFakeReport)
 {
-	const SearchTrustHintSeams::TrustHint riskHint(SearchTrustHintSeams::BuildTrustHint(
+	const SearchTrustHintSeams::KadTrustHint kadHint(SearchTrustHintSeams::BuildKadTrustHint(
+		rSearchFile.IsKademlia() ? rSearchFile.GetKadPublishInfo() : 0u));
+	const SearchTrustHintSeams::ConfidenceHint confidenceHint(SearchTrustHintSeams::BuildConfidenceHint(
 		thePrefs.IsSearchSpamFilterEnabled() && rSearchFile.IsConsideredSpam(),
+		rFakeReport.eSeverity,
 		rFakeReport.nScore,
-		rFakeReport.eSeverity));
+		kadHint,
+		rSearchFile.UserRating(),
+		rSearchFile.HasComment()));
 	const int iComplete = rSearchFile.IsComplete();
 	return json{
-		{"riskEvidence", json{
-			{"band", SearchTrustHintSeams::DisplayKindToken(riskHint.displayKind)},
-			{"bucket", riskHint.riskBucket},
-			{"score", rFakeReport.nScore},
+		{"confidence", json{
+			{"band", SearchTrustHintSeams::ConfidenceToken(confidenceHint.level)},
+			{"score", confidenceHint.score},
+			{"fakeScore", rFakeReport.nScore},
 			{"severity", FakeFileDetector::SeverityToToken(rFakeReport.eSeverity)},
 			{"spam", rSearchFile.IsConsideredSpam()},
+			{"userRating", rSearchFile.UserRating()},
+			{"kadBand", SearchTrustHintSeams::KadTrustKindToken(kadHint.kind)},
 			{"reasons", BuildStringArrayJson(rFakeReport.astrReasons)}
 		}},
 		{"availabilityEvidence", json{
@@ -665,7 +657,6 @@ json BuildSearchEvidenceJson(const CSearchFile &rSearchFile, const SFakeFileRepo
 			{"divergenceGroups", BuildStringArrayJson(rFakeReport.astrNameDivergenceGroups)},
 			{"divergent", !rFakeReport.astrNameDivergenceGroups.empty()}
 		}},
-		{"kadPublisherEvidence", BuildKadPublisherEvidenceJson(rSearchFile)},
 		{"integrityEvidence", json{
 			{"hasAichHash", rSearchFile.GetFileIdentifierC().HasAICHHash()},
 			{"multipleAich", rSearchFile.HasFoundMultipleAICH()},

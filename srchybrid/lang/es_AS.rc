@@ -2819,6 +2819,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Ranuras de carga elásticas [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Porcentaje de desbordamiento temporal por encima del objetivo máximo de clientes de carga.\r\n\r\neMuleBB abre ranuras elásticas solo después de que la carga permanece por debajo de 98% utilización durante 10 segundos y deja de rellenarlas una vez que se recupera la utilización."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Comprueba agora GitHub Releases y informa si hai disponible un paquete de eMuleBB más nuevu."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "El nombre del archivo no refleja las etiquetas multimedia incrustadas."
+    IDS_CONFIDENCE                                             "Confianza"
+    IDS_CONFIDENCE_GENUINE                                     "Genuino"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "se ve bien"
+    IDS_CONFIDENCE_CAUTION                                     "Precaución: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Sospechoso: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Probablemente falso: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Correo basura"
+    IDS_CONFIDENCE_INFOTIP                                     "Confianza: %s"
 END
 // eMuleBB managed translation block: end
 

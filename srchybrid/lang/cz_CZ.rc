@@ -2829,6 +2829,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastické nahrávací sloty [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Procento dočasného přetečení nad maximální cílovou hodnotu klientů pro odesílání.\r\n\r\neMuleBB otevře elastické sloty pouze poté, co nahrávání zůstane pod 98% utilizací po dobu 10 sekund, a přestane je doplňovat, jakmile se využití obnoví."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Zkontroluje GitHub Releases a oznámí, zda je k dispozici novější balíček eMuleBB."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "název_souboru neodráží vložené tagy médií"
+    IDS_CONFIDENCE                                             "Důvěra"
+    IDS_CONFIDENCE_GENUINE                                     "Originální"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Vypadá to dobře"
+    IDS_CONFIDENCE_CAUTION                                     "Upozornění: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Podezřelý: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Pravděpodobně padělek: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Spam"
+    IDS_CONFIDENCE_INFOTIP                                     "Spolehlivost: %s"
 END
 // eMuleBB managed translation block: end
 

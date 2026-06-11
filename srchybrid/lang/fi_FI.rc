@@ -2800,6 +2800,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastiset latauspaikat [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Väliaikainen ylivuotoprosentti korkeampi kuin latausasiakkaiden enimmäistavoite.\r\n\r\neMuleBB avaa elastiset paikat vasta, kun lataus pysyy alle 98% u-tilojen 10 sekunnin ajan, ja lopettaa niiden täyttämisen, kun käyttö palautuu."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Tarkistaa nyt GitHub Releases -julkaisut ja ilmoittaa, onko uudempi eMuleBB-paketti saatavilla."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "tiedostonimi ei vastaa upotettuja mediatunnisteita"
+    IDS_CONFIDENCE                                             "Luottamus"
+    IDS_CONFIDENCE_GENUINE                                     "Aito"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Näyttää hyvältä"
+    IDS_CONFIDENCE_CAUTION                                     "Varoitus: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Epäilty: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Todennäköisesti väärennös: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Roskaposti"
+    IDS_CONFIDENCE_INFOTIP                                     "Luottamus: %s"
 END
 // eMuleBB managed translation block: end
 

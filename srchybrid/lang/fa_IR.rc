@@ -2796,6 +2796,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "اسلات بارگذاری الاستیک [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "درصد سرریز موقتی بالاتر از حداکثر هدف مشتریان آپلود.\r\n\r\neMuleBB فقط پس از اینکه آپلود به مدت 10 ثانیه در زیر 98% uتایلیزم باقی بماند، شکاف های کشسان را باز می کند و پس از بازیابی استفاده، پر کردن مجدد آنها را متوقف می کند."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "اکنون GitHub Releases را بررسی می‌کند و گزارش می‌دهد آیا بسته جدیدتری از eMuleBB در دسترس است."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "نام فایل تگ های رسانه جاسازی شده را منعکس نمی کند"
+    IDS_CONFIDENCE                                             "اعتماد به نفس"
+    IDS_CONFIDENCE_GENUINE                                     "اصیل"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "خوب به نظر می رسد"
+    IDS_CONFIDENCE_CAUTION                                     "احتیاط: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "مظنون: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "احتمال تقلبی: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "هرزنامه"
+    IDS_CONFIDENCE_INFOTIP                                     "اطمینان: %s"
 END
 // eMuleBB managed translation block: end
 

@@ -2834,6 +2834,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Rugalmas feltöltési helyek [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Ideiglenes túlcsordulási százalék a maximális feltöltési kliensek célértéke felett. A\r\n\r\neMuleBB csak akkor nyitja meg a rugalmas helyeket, ha a feltöltés 10 másodpercig 98% u alatt marad, és leállítja az újratöltésüket, ha a kihasználtság helyreáll."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Ellenőrzi a GitHub Releases oldalt, és jelzi, hogy elérhető-e újabb eMuleBB csomag."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "A fájlnév nem tükrözi a beágyazott médiacímkéket"
+    IDS_CONFIDENCE                                             "Bizalom"
+    IDS_CONFIDENCE_GENUINE                                     "Valódi"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Jól néz ki"
+    IDS_CONFIDENCE_CAUTION                                     "Figyelem: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Gyanúsított: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Valószínű hamisítvány: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Spam"
+    IDS_CONFIDENCE_INFOTIP                                     "Bizalom: %s"
 END
 // eMuleBB managed translation block: end
 

@@ -2824,6 +2824,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Vende elastike për ngarkim [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Përqindja e përkohshme e tejmbushjes mbi objektivin maksimal të klientëve të ngarkimit.\r\n\r\neMuleBB hap hapësira elastike vetëm pasi ngarkimi qëndron nën 98% utilizimin për 10 sekonda dhe ndalon rimbushjen e tyre pasi të rikuperohet përdorimi."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Kontrollon tani GitHub Releases dhe raporton nëse ka një paketë më të re eMuleBB."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "emri i skedarit nuk pasqyron etiketat e integruara të mediave"
+    IDS_CONFIDENCE                                             "besimin"
+    IDS_CONFIDENCE_GENUINE                                     "E vërtetë"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Duket mirë"
+    IDS_CONFIDENCE_CAUTION                                     "Kujdes: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "I dyshuari: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "E rreme e mundshme: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Spam"
+    IDS_CONFIDENCE_INFOTIP                                     "Besimi: %s"
 END
 // eMuleBB managed translation block: end
 

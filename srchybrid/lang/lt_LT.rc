@@ -2832,6 +2832,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastingos įkėlimo angos [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Laikinas perpildymo procentas, viršijantis maksimalų įkėlimo klientų tikslą.\r\n\r\neMuleBB atidaro elastingus lizdus tik tada, kai įkėlimas išlieka mažesnis nei 98% u, 10 sekundžių, ir nustoja juos pildyti, kai atsigaus panaudojimas."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Dabar patikrina GitHub Releases ir praneša, ar yra naujesnis eMuleBB paketas."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "failo pavadinimas neatspindi įterptųjų medijos žymų"
+    IDS_CONFIDENCE                                             "Pasitikėjimas"
+    IDS_CONFIDENCE_GENUINE                                     "Tikras"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Atrodo gerai"
+    IDS_CONFIDENCE_CAUTION                                     "Atsargiai: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Įtariamasis: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Tikėtina, kad netikras: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Šlamštas"
+    IDS_CONFIDENCE_INFOTIP                                     "Pasitikėjimas: %s"
 END
 // eMuleBB managed translation block: end
 

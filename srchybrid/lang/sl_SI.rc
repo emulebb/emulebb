@@ -2829,6 +2829,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastične reže za nalaganje [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Začasni odstotek prelivanja nad največjim ciljem odjemalcev za nalaganje.\r\n\r\neMuleBB odpre elastične reže šele, ko nalaganje ostane pod 98% utilization 10 sekund, in jih preneha ponovno polniti, ko se izkoriščenost obnovi."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Zdaj preveri GitHub Releases in sporoči, ali je na voljo novejši paket eMuleBB."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "ime datoteke ne odraža vdelanih predstavnostnih oznak"
+    IDS_CONFIDENCE                                             "Zaupanje"
+    IDS_CONFIDENCE_GENUINE                                     "Pristen"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "zgleda dobro"
+    IDS_CONFIDENCE_CAUTION                                     "Pozor: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Osumljenec: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Verjetno ponaredek: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Neželena pošta"
+    IDS_CONFIDENCE_INFOTIP                                     "Zaupanje: %s"
 END
 // eMuleBB managed translation block: end
 

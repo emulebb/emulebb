@@ -2825,6 +2825,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastīgi augšupielādes sloti [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Pagaidu pārpildes procents virs maksimālās augšupielādes klientu mērķa.\r\n\r\neMuleBB atver elastīgos slotus tikai pēc tam, kad augšupielāde paliek zem 98% utilizācijas 10 sekundes, un pārtrauc to uzpildīšanu, tiklīdz tiek atjaunota izmantošana."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Tagad pārbauda GitHub Releases un ziņo, vai ir pieejama jaunāka eMuleBB pakotne."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "faila nosaukums neatspoguļo iegultos multivides tagus"
+    IDS_CONFIDENCE                                             "Pārliecība"
+    IDS_CONFIDENCE_GENUINE                                     "Īsts"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Izskatās labi"
+    IDS_CONFIDENCE_CAUTION                                     "Uzmanību: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Aizdomās turamais: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Iespējams, viltojums: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Mēstules"
+    IDS_CONFIDENCE_INFOTIP                                     "Pārliecība: %s"
 END
 // eMuleBB managed translation block: end
 

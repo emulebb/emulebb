@@ -2834,6 +2834,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Slocuri de încărcare elastice [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Procent de depășire temporară peste ținta maximă de clienți de încărcare.\r\n\r\neMuleBB deschide spații elastice numai după ce încărcarea rămâne sub 98% utilization timp de 10 secunde și nu le mai reumple odată ce utilizarea se reface."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Verifică acum GitHub Releases și raportează dacă este disponibil un pachet eMuleBB mai nou."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "numele fișierului nu reflectă etichetele media încorporate"
+    IDS_CONFIDENCE                                             "Încredere"
+    IDS_CONFIDENCE_GENUINE                                     "Autentic"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Arată bine"
+    IDS_CONFIDENCE_CAUTION                                     "Atenție: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Suspect: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Fals probabil: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Spam"
+    IDS_CONFIDENCE_INFOTIP                                     "Încredere: %s"
 END
 // eMuleBB managed translation block: end
 

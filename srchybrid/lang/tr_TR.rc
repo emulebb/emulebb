@@ -2830,6 +2830,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Esnek yükleme yuvaları [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Maksimum yükleme istemcisi hedefinin üzerinde geçici taşma yüzdesi.\r\n\r\neMuleBB, elastik yuvaları yalnızca yükleme 10 saniye boyunca 98% utilizasyonun altında kaldıktan sonra açar ve kullanım düzeldiğinde yeniden doldurmayı durdurur."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "GitHub Releases'ı şimdi kontrol eder ve daha yeni bir eMuleBB paketi olup olmadığını bildirir."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "dosya adı gömülü medya etiketlerini yansıtmıyor"
+    IDS_CONFIDENCE                                             "Kendinden emin"
+    IDS_CONFIDENCE_GENUINE                                     "Eşsiz"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "İyi görünüyor"
+    IDS_CONFIDENCE_CAUTION                                     "Dikkat: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Şüpheli: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Muhtemelen sahte: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "İstenmeyen e-posta"
+    IDS_CONFIDENCE_INFOTIP                                     "Güven: %s"
 END
 // eMuleBB managed translation block: end
 

@@ -2804,6 +2804,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastyczne gniazda przesyłania [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Procent tymczasowego przepełnienia powyżej maksymalnej docelowej wartości klientów przesyłających.\r\n\r\neMuleBB otwiera elastyczne przedziały dopiero wtedy, gdy przesyłanie pozostaje poniżej 98% utilization przez 10 sekund i przestaje je uzupełniać po przywróceniu wykorzystania."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Sprawdza teraz GitHub Releases i informuje, czy jest dostępny nowszy pakiet eMuleBB."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "nazwa pliku nie odzwierciedla osadzonych znaczników multimediów"
+    IDS_CONFIDENCE                                             "Zaufanie"
+    IDS_CONFIDENCE_GENUINE                                     "Prawdziwy"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Wygląda dobrze"
+    IDS_CONFIDENCE_CAUTION                                     "Uwaga: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Podejrzany: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Prawdopodobna podróbka: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Spam"
+    IDS_CONFIDENCE_INFOTIP                                     "Pewność: %s"
 END
 // eMuleBB managed translation block: end
 

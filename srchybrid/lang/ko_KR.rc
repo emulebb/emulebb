@@ -2794,6 +2794,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "탄력적 업로드 슬롯 [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "최대 업로드 클라이언트 목표를 초과하는 임시 오버플로 비율.\r\n\r\neMuleBB는 업로드가 10초 동안 98% utilization 미만으로 유지된 후에만 탄력적 슬롯을 열고 사용률이 회복되면 리필을 중지합니다."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "지금 GitHub Releases를 확인하고 더 최신 eMuleBB 패키지가 있는지 보고합니다."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "파일 이름은 포함된 미디어 태그를 반영하지 않습니다."
+    IDS_CONFIDENCE                                             "신뢰"
+    IDS_CONFIDENCE_GENUINE                                     "진실한"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "좋아 보인다"
+    IDS_CONFIDENCE_CAUTION                                     "주의: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "용의자: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "가짜일 가능성이 있는 항목: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "스팸"
+    IDS_CONFIDENCE_INFOTIP                                     "자신감: %s"
 END
 // eMuleBB managed translation block: end
 

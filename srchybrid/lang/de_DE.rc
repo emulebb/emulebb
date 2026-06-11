@@ -2806,6 +2806,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastische Upload-Plätze [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Temporärer Überlaufprozentsatz über dem maximalen Upload-Client-Ziel.\r\n\r\neMuleBB öffnet elastische Slots erst, wenn der Upload 10 Sekunden lang unter 98% utilization bleibt, und stoppt das Wiederauffüllen, sobald die Auslastung wiederhergestellt ist."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Prüft jetzt GitHub Releases und meldet, ob ein neueres eMuleBB-Paket verfügbar ist."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "Der Dateiname spiegelt nicht die eingebetteten Medientags wider"
+    IDS_CONFIDENCE                                             "Vertrauen"
+    IDS_CONFIDENCE_GENUINE                                     "Echt"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Sieht gut aus"
+    IDS_CONFIDENCE_CAUTION                                     "Achtung: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Verdächtiger: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Wahrscheinlich gefälscht: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Spam"
+    IDS_CONFIDENCE_INFOTIP                                     "Vertrauen: %s"
 END
 // eMuleBB managed translation block: end
 

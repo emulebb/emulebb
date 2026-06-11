@@ -415,6 +415,9 @@ void FillCommonEvidence(const CAbstractFile &rFile, FakeFileDetectorSeams::Evide
 		rEvidence.mediaBitrateAvailable = true;
 		rEvidence.mediaBitrateKbps = uMediaValue;
 	}
+	rEvidence.mediaArtist = ToWide(rFile.GetStrTagValue(FT_MEDIA_ARTIST));
+	rEvidence.mediaAlbum = ToWide(rFile.GetStrTagValue(FT_MEDIA_ALBUM));
+	rEvidence.mediaTitle = ToWide(rFile.GetStrTagValue(FT_MEDIA_TITLE));
 	if (const_cast<CAbstractFile&>(rFile).HasComment())
 		rEvidence.comments.push_back(ToWide(const_cast<CAbstractFile&>(rFile).GetFileComment()));
 	rEvidence.badRating = rEvidence.badRating || rFile.HasBadRating();
@@ -640,6 +643,9 @@ CString GetReasonDisplayText(const CString &rstrReason)
 	case SearchTrustHintSeams::ExplanationReason::MultipleNames:
 		uResourceID = IDS_FAKEFILE_REASON_MULTIPLE_NAMES;
 		break;
+	case SearchTrustHintSeams::ExplanationReason::NameMediaTagMismatch:
+		uResourceID = IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH;
+		break;
 	case SearchTrustHintSeams::ExplanationReason::BadSignalName:
 		uResourceID = IDS_FAKEFILE_REASON_BAD_SIGNAL_NAME;
 		break;
@@ -761,6 +767,33 @@ CString FakeFileDetector::FormatTrustHint(const SearchTrustHintSeams::TrustHint 
 	case SearchTrustHintSeams::DisplayKind::Ok:
 	default:
 		strText = GetResString(IDS_SEARCH_TRUST_OK);
+		break;
+	}
+	return strText;
+}
+
+CString FakeFileDetector::FormatConfidenceHint(const SearchTrustHintSeams::ConfidenceHint &rHint)
+{
+	CString strText;
+	switch (rHint.level) {
+	case SearchTrustHintSeams::ConfidenceLevel::Spam:
+		strText = GetResString(IDS_CONFIDENCE_SPAM);
+		break;
+	case SearchTrustHintSeams::ConfidenceLevel::LikelyFake:
+		strText.Format(GetResString(IDS_CONFIDENCE_LIKELY_FAKE), rHint.fakeScore);
+		break;
+	case SearchTrustHintSeams::ConfidenceLevel::Suspect:
+		strText.Format(GetResString(IDS_CONFIDENCE_SUSPECT), rHint.fakeScore);
+		break;
+	case SearchTrustHintSeams::ConfidenceLevel::Caution:
+		strText.Format(GetResString(IDS_CONFIDENCE_CAUTION), rHint.fakeScore);
+		break;
+	case SearchTrustHintSeams::ConfidenceLevel::Genuine:
+		strText = GetResString(IDS_CONFIDENCE_GENUINE);
+		break;
+	case SearchTrustHintSeams::ConfidenceLevel::LooksGood:
+	default:
+		strText = GetResString(IDS_CONFIDENCE_LOOKS_GOOD);
 		break;
 	}
 	return strText;

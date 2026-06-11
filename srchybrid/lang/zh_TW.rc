@@ -2813,6 +2813,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "彈性上傳槽位[%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "臨時溢出百分比高於最大上傳客戶端目標。\r\n\r\neMuleBB 僅在上傳保持低於 98% utilization 持續 10 秒後才開啟彈性插槽，並在利用率恢復後停止重新填充它們。"
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "立即檢查 GitHub Releases，並回報是否有較新的 eMuleBB 套件可用。"
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "檔案名稱不反映嵌入的媒體標籤"
+    IDS_CONFIDENCE                                             "信心"
+    IDS_CONFIDENCE_GENUINE                                     "真的"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "看起來不錯"
+    IDS_CONFIDENCE_CAUTION                                     "注意：%u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "嫌疑犯：%u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "可能是假貨：%u%%"
+    IDS_CONFIDENCE_SPAM                                        "垃圾郵件"
+    IDS_CONFIDENCE_INFOTIP                                     "信賴度：%s"
 END
 // eMuleBB managed translation block: end
 

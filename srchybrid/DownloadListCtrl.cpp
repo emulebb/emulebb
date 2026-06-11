@@ -68,7 +68,7 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
-	constexpr int DOWNLOAD_COLUMN_TRUST = 9;
+	constexpr int DOWNLOAD_COLUMN_CONFIDENCE = 9;
 	const UINT_PTR kVideoThumbnailTimerId = 0xE072;
 	const TCHAR kVideoThumbnailCacheFolder[] = _T("VideoThumbnails\\");
 	const int kDownloadInfoTipMaxLineChars = 240;
@@ -142,14 +142,15 @@ namespace
 		return item != NULL && (item->type == AVAILABLE_SOURCE || item->type == UNAVAILABLE_SOURCE);
 	}
 
-	SearchTrustHintSeams::TrustHint BuildDownloadTrustHint(CPartFile &, const SFakeFileReport &rFakeReport)
+	SearchTrustHintSeams::ConfidenceHint BuildDownloadConfidenceHint(CPartFile &rPartFile, const SFakeFileReport &rFakeReport)
 	{
-		return SearchTrustHintSeams::BuildTrustHint(false, rFakeReport.nScore, rFakeReport.eSeverity);
+		return SearchTrustHintSeams::BuildConfidenceHint(false, rFakeReport.eSeverity, rFakeReport.nScore,
+			SearchTrustHintSeams::BuildKadTrustHint(0u), rPartFile.UserRating(), rPartFile.HasComment());
 	}
 
-	SearchTrustHintSeams::TrustHint BuildDownloadTrustHint(CPartFile &rPartFile)
+	SearchTrustHintSeams::ConfidenceHint BuildDownloadConfidenceHint(CPartFile &rPartFile)
 	{
-		return BuildDownloadTrustHint(rPartFile, FakeFileDetector::GetPartFileReportSnapshot(rPartFile));
+		return BuildDownloadConfidenceHint(rPartFile, FakeFileDetector::GetPartFileReportSnapshot(rPartFile));
 	}
 
 	bool IsLiveKnownFilePointer(const CKnownFile *file)
@@ -339,7 +340,7 @@ void CDownloadListCtrl::Init()
 	InsertColumn(6,		_T(""),	LVCFMT_RIGHT,	60);							//IDS_DL_SOURCES
 	InsertColumn(7,		_T(""),	LVCFMT_LEFT,	DFLT_PRIORITY_COL_WIDTH);		//IDS_PRIORITY
 	InsertColumn(8,		_T(""),	LVCFMT_LEFT,	70);							//IDS_STATUS
-	InsertColumn(DOWNLOAD_COLUMN_TRUST,	_T(""),	LVCFMT_LEFT,	90);			//IDS_SEARCH_TRUST
+	InsertColumn(DOWNLOAD_COLUMN_CONFIDENCE,	_T(""),	LVCFMT_LEFT,	110);			//IDS_CONFIDENCE
 	InsertColumn(10,	_T(""),	LVCFMT_RIGHT,	110);							//IDS_DL_REMAINS
 	InsertColumn(11,	_T(""),	LVCFMT_LEFT,	150);							//IDS_LASTSEENCOMPL
 	InsertColumn(12,	_T(""),	LVCFMT_LEFT,	120);							//IDS_FD_LASTCHANGE
@@ -873,7 +874,7 @@ void CDownloadListCtrl::Localize()
 	static const UINT uids[20] =
 	{
 		IDS_DL_FILENAME, IDS_DL_SIZE, IDS_DL_TRANSF, IDS_DL_TRANSFCOMPL, IDS_DL_SPEED
-		, IDS_DL_PROGRESS, IDS_DL_SOURCES, IDS_PRIORITY, IDS_STATUS, IDS_SEARCH_TRUST
+		, IDS_DL_PROGRESS, IDS_DL_SOURCES, IDS_PRIORITY, IDS_STATUS, IDS_CONFIDENCE
 		, IDS_DL_REMAINS, 0/*IDS_LASTSEENCOMPL*/, 0/*IDS_FD_LASTCHANGE*/, IDS_CAT, IDS_ADDEDON
 		, IDS_GEOLOCATION, IDS_PERCENTAGE, IDS_IP, IDS_IDLOW, IDS_UPSTATUS
 	};
@@ -2919,10 +2920,10 @@ int CDownloadListCtrl::Compare(const CPartFile *file1, const CPartFile *file2, L
 		return CompareUnsigned(file1->GetDownPriority(), file2->GetDownPriority());
 	case 8: //Status
 		return file1->getPartfileStatusRank() - file2->getPartfileStatusRank();
-	case DOWNLOAD_COLUMN_TRUST:
-		return SearchTrustHintSeams::CompareTrustHints(
-			BuildDownloadTrustHint(*const_cast<CPartFile*>(file1)),
-			BuildDownloadTrustHint(*const_cast<CPartFile*>(file2)));
+	case DOWNLOAD_COLUMN_CONFIDENCE:
+		return SearchTrustHintSeams::CompareConfidenceHints(
+			BuildDownloadConfidenceHint(*const_cast<CPartFile*>(file1)),
+			BuildDownloadConfidenceHint(*const_cast<CPartFile*>(file2)));
 	case 10: //Remaining Time
 		{
 			//Make ascending sort so we can have the smaller remaining time on the top
@@ -3318,10 +3319,10 @@ CString CDownloadListCtrl::GetFileItemDisplayText(const CPartFile *lpPartFile, i
 	case 8: //state
 		sText = lpPartFile->getPartfileStatus();
 		break;
-	case DOWNLOAD_COLUMN_TRUST:
+	case DOWNLOAD_COLUMN_CONFIDENCE:
 		{
 			CPartFile *pPartFile = const_cast<CPartFile*>(lpPartFile);
-			sText = FakeFileDetector::FormatTrustHint(BuildDownloadTrustHint(*pPartFile));
+			sText = FakeFileDetector::FormatConfidenceHint(BuildDownloadConfidenceHint(*pPartFile));
 		}
 		break;
 	case 10: //remaining time & size
@@ -3697,9 +3698,9 @@ void CDownloadListCtrl::OnLvnGetInfoTip(LPNMHDR pNMHDR, LRESULT *pResult)
 				CPartFile *pPartFile = static_cast<CPartFile*>(content->value);
 				info = pPartFile->GetInfoSummary();
 				const SFakeFileReport fakeReport = FakeFileDetector::GetPartFileReportSnapshot(*pPartFile);
-				const CString strTrustText = FakeFileDetector::FormatTrustHint(BuildDownloadTrustHint(*pPartFile, fakeReport));
+				const CString strTrustText = FakeFileDetector::FormatConfidenceHint(BuildDownloadConfidenceHint(*pPartFile, fakeReport));
 				CString strTrustLine;
-				strTrustLine.Format(GetResString(IDS_SEARCH_TRUST_INFOTIP), (LPCTSTR)strTrustText);
+				strTrustLine.Format(GetResString(IDS_CONFIDENCE_INFOTIP), (LPCTSTR)strTrustText);
 				if (!info.IsEmpty())
 					info += _T('\n');
 				info += strTrustLine;

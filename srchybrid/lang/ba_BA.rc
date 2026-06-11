@@ -2829,6 +2829,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastični utori za učitavanje [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Privremeni procenat prekoračenja iznad maksimalnog ciljanog broja klijenata za otpremanje.\r\n\r\neMuleBB otvara elastične proreze tek nakon što upload ostane ispod 98% utilization 10 sekundi, i prestaje da ih puni kada se oporavi korištenje."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "GitHub Releases orain egiaztatzen du eta eMuleBB pakete berriago bat eskuragarri dagoen jakinarazten du."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "fitxategi-izenak ez ditu kapsulatutako multimedia etiketak islatzen"
+    IDS_CONFIDENCE                                             "Konfiantza"
+    IDS_CONFIDENCE_GENUINE                                     "Benetakoa"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Itxura ona du"
+    IDS_CONFIDENCE_CAUTION                                     "Kontuz: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Susmagarria: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Litekeena da faltsua: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Spama"
+    IDS_CONFIDENCE_INFOTIP                                     "Konfiantza: %s"
 END
 // eMuleBB managed translation block: end
 

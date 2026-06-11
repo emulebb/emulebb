@@ -31,6 +31,21 @@ enum class KadTrustKind
 };
 
 /**
+ * @brief Unified file-confidence band shown in the search/download "Confidence" column.
+ *        Higher rank = more confident. Composes fake-file severity, user ratings, and
+ *        Kad publisher confidence into a single symmetric scale.
+ */
+enum class ConfidenceLevel
+{
+	Spam,
+	LikelyFake,
+	Suspect,
+	Caution,
+	LooksGood,
+	Genuine
+};
+
+/**
  * @brief Stable categories for fake-file reason codes shown in user-facing
  * explanations.
  */
@@ -38,6 +53,7 @@ enum class ExplanationReason
 {
 	Unknown,
 	MultipleNames,
+	NameMediaTagMismatch,
 	BadSignalName,
 	BadSignalComment,
 	HeaderExtensionMismatch,
@@ -73,6 +89,18 @@ struct KadTrustHint
 	uint32_t trustValueCent = 0;
 	uint32_t publishers = 0;
 	uint32_t differentNames = 0;
+};
+
+/**
+ * @brief Composite confidence hint for the unified "Confidence" column / REST field.
+ *        score is 0-100 (higher = more confident) for stable sorting.
+ */
+struct ConfidenceHint
+{
+	ConfidenceLevel level = ConfidenceLevel::LooksGood;
+	unsigned int rank = 4;
+	uint32_t score = 70;       // composite confidence 0-100 (higher = more confident)
+	uint32_t fakeScore = 0;    // underlying fake-risk % for the cautionary/fake bands
 };
 
 /**
@@ -205,12 +233,96 @@ inline const char* KadTrustKindToken(const KadTrustKind eKind)
 }
 
 /**
+ * @brief Builds the unified Confidence hint from fake-file analysis, user ratings, and
+ *        Kad publisher confidence. Deterministic; higher score/rank = more confident.
+ */
+inline ConfidenceHint BuildConfidenceHint(const bool bSpam,
+	const FakeFileDetectorSeams::Severity eSeverity, const uint32_t uFakeScore,
+	const KadTrustHint &rKad, const uint32_t uUserRating0to5, const bool bHasComment)
+{
+	ConfidenceHint hint;
+	hint.fakeScore = uFakeScore;
+	if (bSpam) {
+		hint.level = ConfidenceLevel::Spam;
+		hint.rank = 0;
+		hint.score = 0;
+		return hint;
+	}
+
+	// Bad end: lower fake score keeps slightly more within-tier confidence (0..8).
+	const uint32_t uWithinBad = uFakeScore >= 100 ? 0u : (100u - uFakeScore) / 12u;
+	switch (eSeverity) {
+	case FakeFileDetectorSeams::Severity::Critical:
+	case FakeFileDetectorSeams::Severity::High:
+		hint.level = ConfidenceLevel::LikelyFake; hint.rank = 1; hint.score = 10u + uWithinBad; return hint;
+	case FakeFileDetectorSeams::Severity::Medium:
+		hint.level = ConfidenceLevel::Suspect; hint.rank = 2; hint.score = 30u + uWithinBad; return hint;
+	case FakeFileDetectorSeams::Severity::Low:
+		hint.level = ConfidenceLevel::Caution; hint.rank = 3; hint.score = 50u + uWithinBad; return hint;
+	case FakeFileDetectorSeams::Severity::None:
+	default:
+		break;
+	}
+
+	// Positive end: strong Kad publisher confidence and/or good user ratings.
+	const unsigned int uKadRank = KadTrustRank(rKad.kind); // 0..3
+	if (uKadRank >= 3 || uUserRating0to5 >= 4) {
+		hint.level = ConfidenceLevel::Genuine;
+		hint.rank = 5;
+		hint.score = 90u + std::min<uint32_t>(9u, uKadRank * 2u + uUserRating0to5 + (bHasComment ? 1u : 0u));
+		return hint;
+	}
+	if (uKadRank >= 2 || uUserRating0to5 >= 3) {
+		hint.level = ConfidenceLevel::LooksGood; hint.rank = 4; hint.score = 78u; return hint;
+	}
+	// Neutral: no red flags and no positive signal yet.
+	hint.level = ConfidenceLevel::LooksGood; hint.rank = 4; hint.score = 70u;
+	return hint;
+}
+
+/**
+ * @brief Compares confidence hints in ascending confidence order (callers invert for desc).
+ */
+inline int CompareConfidenceHints(const ConfidenceHint &rLeft, const ConfidenceHint &rRight)
+{
+	if (rLeft.rank != rRight.rank)
+		return rLeft.rank < rRight.rank ? -1 : 1;
+	if (rLeft.score != rRight.score)
+		return rLeft.score < rRight.score ? -1 : 1;
+	return 0;
+}
+
+/**
+ * @brief Converts a confidence band to the stable REST token.
+ */
+inline const char* ConfidenceToken(const ConfidenceLevel eLevel)
+{
+	switch (eLevel) {
+	case ConfidenceLevel::Spam:
+		return "spam";
+	case ConfidenceLevel::LikelyFake:
+		return "likely_fake";
+	case ConfidenceLevel::Suspect:
+		return "suspect";
+	case ConfidenceLevel::Caution:
+		return "caution";
+	case ConfidenceLevel::Genuine:
+		return "genuine";
+	case ConfidenceLevel::LooksGood:
+	default:
+		return "looks_good";
+	}
+}
+
+/**
  * @brief Maps stable fake-file analyzer reason codes to explanation buckets.
  */
 inline ExplanationReason ClassifyExplanationReason(const std::string &rReason)
 {
 	if (rReason == "multiple_names")
 		return ExplanationReason::MultipleNames;
+	if (rReason == "name_media_tag_mismatch")
+		return ExplanationReason::NameMediaTagMismatch;
 	if (rReason == "bad_signal_name")
 		return ExplanationReason::BadSignalName;
 	if (rReason == "bad_signal_comment")

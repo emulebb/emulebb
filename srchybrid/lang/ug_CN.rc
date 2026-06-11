@@ -2795,6 +2795,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "ئېلاستىكىلىق يۈكلەش نۇقتىلىرى [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "ئەڭ كۆپ يوللاش خېرىدارل\r\n\r\nىرىنىڭ نىشانىدىن ئېشىپ كەتكەن ۋاقىتلىق ئېقىش نىسبىتى. % u"
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "ھازىر GitHub Releases نى تەكشۈرۈپ، يېڭىراق eMuleBB بوغچىسى بار-يوقلۇقىنى دوكلات قىلىدۇ."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "ھۆججەت ئىسمى قىستۇرۇلغان مېدىيا بەلگىسىنى ئەكىس ئەتتۈرمەيدۇ"
+    IDS_CONFIDENCE                                             "ئىشەنچ"
+    IDS_CONFIDENCE_GENUINE                                     "ھەقىقىي"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "قارىماققا ياخشى"
+    IDS_CONFIDENCE_CAUTION                                     "دىققەت: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "گۇماندار: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "ساختا بولۇشى مۇمكىن: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "ئەخلەت خەت"
+    IDS_CONFIDENCE_INFOTIP                                     "ئىشەنچ: %s"
 END
 // eMuleBB managed translation block: end
 

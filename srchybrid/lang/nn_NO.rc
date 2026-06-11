@@ -2793,6 +2793,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastiske opplastingsspor [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Midlertidig overløpsprosent over maksimal opplastingsklientmål.\r\n\r\neMuleBB åpner elastiske spor først etter at opplastingen holder seg under 98% utilisering i 10 sekunder, og slutter å fylle dem på nytt når utnyttelsen gjenoppretter seg."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Sjekkar GitHub Releases no og melder om ein nyare eMuleBB-pakke er tilgjengeleg."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "filnavn gjenspeiler ikke de innebygde mediekodene"
+    IDS_CONFIDENCE                                             "Selvtillit"
+    IDS_CONFIDENCE_GENUINE                                     "Ekte"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Ser bra ut"
+    IDS_CONFIDENCE_CAUTION                                     "Forsiktig: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Mistenkt: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Sannsynlig falsk: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Spam"
+    IDS_CONFIDENCE_INFOTIP                                     "Tillit: %s"
 END
 // eMuleBB managed translation block: end
 

@@ -58,6 +58,9 @@ struct Evidence
 	uint32_t mediaBitrateKbps = 0;
 	bool mediaLengthAvailable = false;
 	bool mediaBitrateAvailable = false;
+	std::wstring mediaArtist;
+	std::wstring mediaAlbum;
+	std::wstring mediaTitle;
 };
 
 /**
@@ -370,6 +373,30 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules, const st
 		AddReason(report, "implausible_media_length", 10);
 	if (HasImplausibleMediaBitrate(rEvidence))
 		AddReason(report, "implausible_media_bitrate", 10);
+
+	// Borrowed (beba AntiFake): an audio/video file's name should reflect its own embedded
+	// media tags. When meaningful tags exist and none appear in any observed filename,
+	// contribute a soft (Low) fake signal. Self-consistency, distinct from multiple_names.
+	if (HasAudioSignal(rEvidence) || HasVideoSignal(rEvidence)) {
+		const std::wstring artist = ToLower(Trim(rEvidence.mediaArtist));
+		const std::wstring album = ToLower(Trim(rEvidence.mediaAlbum));
+		const std::wstring title = ToLower(Trim(rEvidence.mediaTitle));
+		const bool bHasMeaningfulTag = artist.size() >= 4 || album.size() >= 4 || title.size() >= 4;
+		if (bHasMeaningfulTag) {
+			bool bTagInName = false;
+			for (const std::wstring &rName : rEvidence.names) {
+				const std::wstring lname = ToLower(rName);
+				if ((artist.size() >= 4 && lname.find(artist) != std::wstring::npos)
+					|| (album.size() >= 4 && lname.find(album) != std::wstring::npos)
+					|| (title.size() >= 4 && lname.find(title) != std::wstring::npos)) {
+					bTagInName = true;
+					break;
+				}
+			}
+			if (!bTagInName)
+				AddReason(report, "name_media_tag_mismatch", 10);
+		}
+	}
 
 	report.severity = SeverityFromScore(report.score);
 	return report;

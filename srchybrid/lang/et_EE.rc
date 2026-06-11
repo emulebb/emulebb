@@ -2827,6 +2827,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Elastsed üleslaadimispesad [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Ajutine ületäitumise protsent üle maksimaalse üleslaadimisklientide eesmärgi.\r\n\r\neMuleBB avab elastsed pesad alles siis, kui üleslaadimine jääb 10 sekundiks alla 98% u, ja lõpetab nende uuesti täitmise, kui kasutus taastub."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Kontrollib nüüd GitHub Releases ja teatab, kas uuem eMuleBB pakett on saadaval."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "failinimi ei kajasta manustatud meediumisilte"
+    IDS_CONFIDENCE                                             "Usaldus"
+    IDS_CONFIDENCE_GENUINE                                     "Ehtne"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Näeb hea välja"
+    IDS_CONFIDENCE_CAUTION                                     "Ettevaatust: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Kahtlusalune: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Tõenäoliselt võltsitud: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Rämpspost"
+    IDS_CONFIDENCE_INFOTIP                                     "Usaldus: %s"
 END
 // eMuleBB managed translation block: end
 

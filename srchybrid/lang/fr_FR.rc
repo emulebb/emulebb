@@ -2830,6 +2830,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "Emplacements de téléchargement élastiques [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "Pourcentage de dépassement temporaire supérieur à la cible maximale des clients de téléchargement.\r\n\r\neMuleBB ouvre les emplacements élastiques uniquement après que le téléchargement reste inférieur à 98% utilisation pendant 10 secondes et arrête de les remplir une fois l'utilisation rétablie."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "Vérifie maintenant GitHub Releases et indique si un paquet eMuleBB plus récent est disponible."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "le nom du fichier ne reflète pas les balises multimédia intégrées"
+    IDS_CONFIDENCE                                             "Confiance"
+    IDS_CONFIDENCE_GENUINE                                     "Authentique"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "Ça a l'air bien"
+    IDS_CONFIDENCE_CAUTION                                     "Attention : %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "Suspect : %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "Probablement faux : %u%%"
+    IDS_CONFIDENCE_SPAM                                        "Courrier indésirable"
+    IDS_CONFIDENCE_INFOTIP                                     "Confiance : %s"
 END
 // eMuleBB managed translation block: end
 

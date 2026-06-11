@@ -2834,6 +2834,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "エラスティック アップロード スロット [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "最大アップロード クライアントのターゲットを超える一時的なオーバーフローの割合。\r\n\r\neMuleBB は、アップロードが 10 秒間 98% utilization を下回った後にのみエラスティック スロットを開き、使用率が回復するとスロットの補充を停止します。"
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "GitHub Releases を今すぐ確認し、より新しい eMuleBB パッケージが利用可能かどうかを報告します。"
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "ファイル名には埋め込みメディアタグが反映されていません"
+    IDS_CONFIDENCE                                             "自信"
+    IDS_CONFIDENCE_GENUINE                                     "本物"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "いいですね"
+    IDS_CONFIDENCE_CAUTION                                     "注意: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "容疑者: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "偽物の可能性が高い: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "スパム"
+    IDS_CONFIDENCE_INFOTIP                                     "信頼性: %s"
 END
 // eMuleBB managed translation block: end
 

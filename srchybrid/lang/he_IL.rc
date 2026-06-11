@@ -2824,6 +2824,15 @@ BEGIN
     IDS_UPLOAD_POLICY_ELASTIC_PERCENT                          "חריצי העלאה אלסטיים [%]"
     IDS_TWEAKS_TT_UPLOAD_POLICY_ELASTIC_PERCENT                "אחוז הצפה זמני מעל היעד המקסימלי של לקוחות העלאה.\r\n\r\neMuleBB פותח חריצים אלסטיים רק לאחר שהעלאה נשארת מתחת ל-98% utilization למשך 10 שניות, ומפסיק למלא אותם לאחר שהשימוש מתאושש."
     IDS_TOOLS_STATUS_CHECK_FOR_UPDATES                         "בודק כעת את GitHub Releases ומדווח אם חבילת eMuleBB חדשה יותר זמינה."
+    IDS_FAKEFILE_REASON_NAME_MEDIA_TAG_MISMATCH                "שם הקובץ אינו משקף את תגי המדיה המוטבעים"
+    IDS_CONFIDENCE                                             "אֵמוּן"
+    IDS_CONFIDENCE_GENUINE                                     "מקורי"
+    IDS_CONFIDENCE_LOOKS_GOOD                                  "נראה טוב"
+    IDS_CONFIDENCE_CAUTION                                     "זהירות: %u%%"
+    IDS_CONFIDENCE_SUSPECT                                     "חשוד: %u%%"
+    IDS_CONFIDENCE_LIKELY_FAKE                                 "זיוף סביר: %u%%"
+    IDS_CONFIDENCE_SPAM                                        "ספאם"
+    IDS_CONFIDENCE_INFOTIP                                     "ביטחון עצמי: %s"
 END
 // eMuleBB managed translation block: end
 

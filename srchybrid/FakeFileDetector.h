@@ -86,6 +86,11 @@ bool RefreshPartFileHeaderIfAvailable(CPartFile &rPartFile);
 CString FormatTrustHint(const SearchTrustHintSeams::TrustHint &rHint);
 
 /**
+ * @brief Formats the composite confidence hint for the unified Confidence column.
+ */
+CString FormatConfidenceHint(const SearchTrustHintSeams::ConfidenceHint &rHint);
+
+/**
  * @brief Returns a compact localized score and reason summary.
  */
 CString FormatReportSummary(const SFakeFileReport &rReport);
