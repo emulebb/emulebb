@@ -2810,6 +2810,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "Roskaposti"
     IDS_CONFIDENCE_INFOTIP                                     "Luottamus: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Piilota tuloksista"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "Ei suodatinta"
 END
 // eMuleBB managed translation block: end
 

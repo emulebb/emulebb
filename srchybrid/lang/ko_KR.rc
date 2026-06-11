@@ -2804,6 +2804,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "스팸"
     IDS_CONFIDENCE_INFOTIP                                     "자신감: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "결과에서 숨기기"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "필터 없음"
 END
 // eMuleBB managed translation block: end
 

@@ -2833,6 +2833,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "Spam"
     IDS_CONFIDENCE_INFOTIP                                     "Kunfidenza: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Aħbi mir-riżultati"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "L-ebda filtru"
 END
 // eMuleBB managed translation block: end
 

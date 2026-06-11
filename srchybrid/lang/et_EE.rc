@@ -2837,6 +2837,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "Rämpspost"
     IDS_CONFIDENCE_INFOTIP                                     "Usaldus: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Peida tulemuste eest"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "Filtrit pole"
 END
 // eMuleBB managed translation block: end
 

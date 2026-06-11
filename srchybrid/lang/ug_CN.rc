@@ -2805,6 +2805,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "ئەخلەت خەت"
     IDS_CONFIDENCE_INFOTIP                                     "ئىشەنچ: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "نەتىجىدىن يوشۇرۇش"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "سۈزگۈچ يوق"
 END
 // eMuleBB managed translation block: end
 

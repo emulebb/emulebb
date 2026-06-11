@@ -2206,29 +2206,59 @@ void CSearchResultsWnd::ReapplyActiveResultFilter()
 	}
 }
 
-// Appends the "Hide from results" submenu (checkable known-state toggles) to the
-// filter-box dropdown when CEditDelayed raises UM_FILTER_MENU_EXTEND.
+namespace
+{
+// "Known" hides every already-known state; the rest are narrower single selections.
+constexpr uint8 kHideMaskKnown = SRHIDE_SHARED | SRHIDE_DOWNLOADING | SRHIDE_DOWNLOADED | SRHIDE_CANCELLED;
+
+// Maps a "Hide from results" preset command to the preferences bitmask it applies.
+uint8 SearchHidePresetMask(UINT uId)
+{
+	switch (uId) {
+	case MP_SEARCH_HIDE_KNOWN:             return kHideMaskKnown;
+	case MP_SEARCH_HIDE_DOWNLOADED:        return SRHIDE_DOWNLOADED;
+	case MP_SEARCH_HIDE_SHARED:            return SRHIDE_SHARED;
+	case MP_SEARCH_HIDE_DOWNLOADED_SHARED: return SRHIDE_DOWNLOADED | SRHIDE_SHARED;
+	case MP_SEARCH_HIDE_NONE:
+	default:                               return 0;
+	}
+}
+
+// Returns the preset command whose mask currently matches the saved hide state.
+UINT SearchActiveHidePreset(uint8 uMask)
+{
+	if (uMask == kHideMaskKnown)
+		return MP_SEARCH_HIDE_KNOWN;
+	if (uMask == (SRHIDE_DOWNLOADED | SRHIDE_SHARED))
+		return MP_SEARCH_HIDE_DOWNLOADED_SHARED;
+	if (uMask == SRHIDE_DOWNLOADED)
+		return MP_SEARCH_HIDE_DOWNLOADED;
+	if (uMask == SRHIDE_SHARED)
+		return MP_SEARCH_HIDE_SHARED;
+	return MP_SEARCH_HIDE_NONE;
+}
+}
+
+// Appends the flat single-select "Hide from results" presets to the filter-box
+// dropdown when CEditDelayed raises UM_FILTER_MENU_EXTEND.
 LRESULT CSearchResultsWnd::OnFilterMenuExtend(WPARAM wParam, LPARAM)
 {
 	CMenu *pMenu = CMenu::FromHandle(reinterpret_cast<HMENU>(wParam));
 	if (pMenu == NULL)
 		return 0;
 
-	const uint8 uMask = thePrefs.GetSearchHideKnownStates();
-	const struct { UINT uId; uint8 uBit; UINT uLabel; } items[] = {
-		{ MP_SEARCH_HIDE_SHARED,      SRHIDE_SHARED,      IDS_SHARED },
-		{ MP_SEARCH_HIDE_DOWNLOADING, SRHIDE_DOWNLOADING, IDS_DOWNLOADING },
-		{ MP_SEARCH_HIDE_DOWNLOADED,  SRHIDE_DOWNLOADED,  IDS_DOWNLOADED },
-		{ MP_SEARCH_HIDE_CANCELLED,   SRHIDE_CANCELLED,   IDS_CANCELLED }
-	};
-
-	CMenu menuHide;
-	menuHide.CreatePopupMenu();
-	for (const auto &it : items)
-		menuHide.AppendMenu(MF_STRING | ((uMask & it.uBit) != 0 ? MF_CHECKED : MF_UNCHECKED), it.uId, GetResString(it.uLabel));
+	const CString strDownloadedShared(GetResString(IDS_DOWNLOADED) + _T('/') + GetResString(IDS_SHARED));
 
 	pMenu->AppendMenu(MF_SEPARATOR);
-	pMenu->AppendMenu(MF_POPUP, reinterpret_cast<UINT_PTR>(menuHide.Detach()), GetResString(IDS_SEARCH_HIDE_FROM_RESULTS));
+	pMenu->AppendMenu(MF_STRING | MF_DISABLED | MF_GRAYED, 0, GetResString(IDS_SEARCH_HIDE_FROM_RESULTS));
+	pMenu->AppendMenu(MF_STRING, MP_SEARCH_HIDE_KNOWN, GetResString(IDS_KNOWN));
+	pMenu->AppendMenu(MF_STRING, MP_SEARCH_HIDE_DOWNLOADED, GetResString(IDS_DOWNLOADED));
+	pMenu->AppendMenu(MF_STRING, MP_SEARCH_HIDE_SHARED, GetResString(IDS_SHARED));
+	pMenu->AppendMenu(MF_STRING, MP_SEARCH_HIDE_DOWNLOADED_SHARED, strDownloadedShared);
+	pMenu->AppendMenu(MF_STRING, MP_SEARCH_HIDE_NONE, GetResString(IDS_SEARCH_HIDE_NO_FILTER));
+
+	pMenu->CheckMenuRadioItem(MP_SEARCH_HIDE_NONE, MP_SEARCH_HIDE_DOWNLOADED_SHARED,
+		SearchActiveHidePreset(thePrefs.GetSearchHideKnownStates()), MF_BYCOMMAND);
 	return 0;
 }
 
@@ -2267,21 +2297,13 @@ BOOL CSearchResultsWnd::OnCommand(WPARAM wParam, LPARAM lParam)
 	case MP_SHOW_FILESIZE_MBYTE:
 		searchlistctrl.SetFileSizeFormat(fsizeMByte);
 		return TRUE;
-	case MP_SEARCH_HIDE_SHARED:
-	case MP_SEARCH_HIDE_DOWNLOADING:
+	case MP_SEARCH_HIDE_NONE:
+	case MP_SEARCH_HIDE_KNOWN:
 	case MP_SEARCH_HIDE_DOWNLOADED:
-	case MP_SEARCH_HIDE_CANCELLED:
-		{
-			uint8 uBit = 0;
-			switch (wParam) {
-			case MP_SEARCH_HIDE_SHARED:      uBit = SRHIDE_SHARED;      break;
-			case MP_SEARCH_HIDE_DOWNLOADING: uBit = SRHIDE_DOWNLOADING; break;
-			case MP_SEARCH_HIDE_DOWNLOADED:  uBit = SRHIDE_DOWNLOADED;  break;
-			case MP_SEARCH_HIDE_CANCELLED:   uBit = SRHIDE_CANCELLED;   break;
-			}
-			thePrefs.SetSearchHideKnownStates(thePrefs.GetSearchHideKnownStates() ^ uBit);
-			ReapplyActiveResultFilter();
-		}
+	case MP_SEARCH_HIDE_SHARED:
+	case MP_SEARCH_HIDE_DOWNLOADED_SHARED:
+		thePrefs.SetSearchHideKnownStates(SearchHidePresetMask(static_cast<UINT>(wParam)));
+		ReapplyActiveResultFilter();
 		return TRUE;
 	}
 	return CResizableFormView::OnCommand(wParam, lParam);

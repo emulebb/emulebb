@@ -2821,6 +2821,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "Спам"
     IDS_CONFIDENCE_INFOTIP                                     "Увереност: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Скриване от резултатите"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "Без филтър"
 END
 // eMuleBB managed translation block: end
 

@@ -2832,6 +2832,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "رسائل إلكترونية مزعجة"
     IDS_CONFIDENCE_INFOTIP                                     "الثقة: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "إخفاء من النتائج"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "لا يوجد مرشح"
 END
 // eMuleBB managed translation block: end
 

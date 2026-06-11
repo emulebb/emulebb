@@ -2823,6 +2823,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "垃圾郵件"
     IDS_CONFIDENCE_INFOTIP                                     "信賴度：%s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "隱藏結果"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "無濾鏡"
 END
 // eMuleBB managed translation block: end
 

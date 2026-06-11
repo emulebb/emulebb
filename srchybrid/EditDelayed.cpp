@@ -336,7 +336,9 @@ HBRUSH CEditDelayed::CtlColor(CDC *pDC, UINT)
 BOOL CEditDelayed::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	const UINT uCmd = LOWORD(wParam);
-	if (uCmd >= MP_FILTERCOLUMNS && uCmd <= MP_FILTERCOLUMNS + 50) {
+	// WHY: MP_FILTERCOLUMNS reserves exactly 50 ids (11300..11349); the old '<= +50'
+	// bound also claimed +50, swallowing an adjacent owner command instead of forwarding it.
+	if (uCmd >= MP_FILTERCOLUMNS && uCmd < MP_FILTERCOLUMNS + 50) {
 		if (m_nCurrentColumnIdx != (int)uCmd - MP_FILTERCOLUMNS) {
 			m_nCurrentColumnIdx = (int)uCmd - MP_FILTERCOLUMNS;
 			if (m_bShowsColumnText)

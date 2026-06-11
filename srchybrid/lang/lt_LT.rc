@@ -2842,6 +2842,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "Šlamštas"
     IDS_CONFIDENCE_INFOTIP                                     "Pasitikėjimas: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Slėpti nuo rezultatų"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "Nėra filtro"
 END
 // eMuleBB managed translation block: end
 

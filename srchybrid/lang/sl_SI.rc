@@ -2839,6 +2839,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "Neželena pošta"
     IDS_CONFIDENCE_INFOTIP                                     "Zaupanje: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Skrij pred rezultati"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "Brez filtra"
 END
 // eMuleBB managed translation block: end
 

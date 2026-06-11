@@ -2835,6 +2835,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "Thư rác"
     IDS_CONFIDENCE_INFOTIP                                     "Sự tự tin: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Ẩn khỏi kết quả"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "Không có bộ lọc"
 END
 // eMuleBB managed translation block: end
 

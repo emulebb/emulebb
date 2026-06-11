@@ -2793,6 +2793,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "Ανεπιθύμητη αλληλογραφία"
     IDS_CONFIDENCE_INFOTIP                                     "Εμπιστοσύνη: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Απόκρυψη από τα αποτελέσματα"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "Χωρίς φίλτρο"
 END
 // eMuleBB managed translation block: end
 

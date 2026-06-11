@@ -295,11 +295,12 @@
 #define	MP_PREVIEW_APP_MIN		11200	// reserve 50 entries for preview apps
 #define	MP_PREVIEW_APP_MAX		(MP_PREVIEW_APP_MIN + 49)
 #define MP_FILTERCOLUMNS		11300	// reserve 50 entries for filter columns
-#define MP_SEARCH_HIDE_KNOWN_BASE	11350	// reserve 8 for search "hide already-known" toggles
-#define MP_SEARCH_HIDE_SHARED		(MP_SEARCH_HIDE_KNOWN_BASE + 0)
-#define MP_SEARCH_HIDE_DOWNLOADING	(MP_SEARCH_HIDE_KNOWN_BASE + 1)
+#define MP_SEARCH_HIDE_KNOWN_BASE	11400	// reserve 8 for search "hide from results" presets (clear of the MP_FILTERCOLUMNS block)
+#define MP_SEARCH_HIDE_NONE			(MP_SEARCH_HIDE_KNOWN_BASE + 0)
+#define MP_SEARCH_HIDE_KNOWN		(MP_SEARCH_HIDE_KNOWN_BASE + 1)
 #define MP_SEARCH_HIDE_DOWNLOADED	(MP_SEARCH_HIDE_KNOWN_BASE + 2)
-#define MP_SEARCH_HIDE_CANCELLED	(MP_SEARCH_HIDE_KNOWN_BASE + 3)
+#define MP_SEARCH_HIDE_SHARED		(MP_SEARCH_HIDE_KNOWN_BASE + 3)
+#define MP_SEARCH_HIDE_DOWNLOADED_SHARED	(MP_SEARCH_HIDE_KNOWN_BASE + 4)
 
 // Frozen surface: these legacy IRC command IDs intentionally keep their stock
 // numeric values even though they overlap older MP_* ranges. IRC command

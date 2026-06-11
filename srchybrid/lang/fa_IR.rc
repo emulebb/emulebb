@@ -2806,6 +2806,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "هرزنامه"
     IDS_CONFIDENCE_INFOTIP                                     "اطمینان: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "از نتایج پنهان شوید"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "بدون فیلتر"
 END
 // eMuleBB managed translation block: end
 

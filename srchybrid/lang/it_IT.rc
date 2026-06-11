@@ -2810,6 +2810,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "Spam"
     IDS_CONFIDENCE_INFOTIP                                     "Fiducia: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Nascondi dai risultati"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "Nessun filtro"
 END
 // eMuleBB managed translation block: end
 

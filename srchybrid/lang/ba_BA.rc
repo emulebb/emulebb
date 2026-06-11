@@ -2839,6 +2839,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "Spama"
     IDS_CONFIDENCE_INFOTIP                                     "Konfiantza: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Ezkutatu emaitzetatik"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "Iragazkirik ez"
 END
 // eMuleBB managed translation block: end
 

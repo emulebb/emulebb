@@ -2815,6 +2815,7 @@ BEGIN
     IDS_CONFIDENCE_SPAM                                        "垃圾邮件"
     IDS_CONFIDENCE_INFOTIP                                     "置信度：%s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "隐藏结果"
+    IDS_SEARCH_HIDE_NO_FILTER                                  "无过滤器"
 END
 // eMuleBB managed translation block: end
 
