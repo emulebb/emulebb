@@ -67,34 +67,16 @@ CClientList::~CClientList()
 	RemoveAllTrackedClients();
 }
 
-static void TallyClientMod(CMapPtrToPtr &rSeen, CClientModMap &rmodMap, const CUpDownClient *pClient)
-{
-	if (pClient == NULL)
-		return;
-	void *pDummy;
-	if (rSeen.Lookup((void*)pClient, pDummy))	// dedup: count each distinct peer once
-		return;
-	rSeen.SetAt((void*)pClient, (void*)1);
-	const CString &strMod = pClient->GetClientModVer();
-	if (!strMod.IsEmpty())
-		++rmodMap[strMod];
-}
-
 void CClientList::GetClientModStatistics(CClientModMap &rmodMap)
 {
 	rmodMap.RemoveAll();
-	// WHY: count distinct peers across the known-client list AND the upload
-	// queue/waiting list. Many modded peers we see are upload/queue clients that
-	// eMule keeps in the upload queue without a live entry in 'list', so walking
-	// 'list' alone (as GetStatistics does) misses them. Dedup by client pointer.
-	CMapPtrToPtr seen;
-	for (POSITION pos = list.GetHeadPosition(); pos != NULL;)
-		TallyClientMod(seen, rmodMap, list.GetNext(pos));
-	if (theApp.uploadqueue != NULL) {
-		for (POSITION pos = theApp.uploadqueue->GetFirstFromUploadList(); pos != NULL;)
-			TallyClientMod(seen, rmodMap, theApp.uploadqueue->GetNextFromUploadList(pos));
-		for (POSITION pos = theApp.uploadqueue->GetFirstFromWaitingList(); pos != NULL;)
-			TallyClientMod(seen, rmodMap, theApp.uploadqueue->GetNextFromWaitingList(pos));
+	// Live snapshot of currently-known clients, matching the version breakdown in
+	// GetStatistics (both walk 'list'). Upload/queue clients are already in 'list'
+	// via their incoming hello, so no separate walk or dedup is needed.
+	for (POSITION pos = list.GetHeadPosition(); pos != NULL;) {
+		const CString &strMod = list.GetNext(pos)->GetClientModVer();
+		if (!strMod.IsEmpty())
+			++rmodMap[strMod];
 	}
 }
 
