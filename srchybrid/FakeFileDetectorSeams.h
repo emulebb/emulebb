@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cwctype>
+#include <iterator>
 #include <regex>
 #include <string>
 #include <vector>
@@ -177,20 +178,112 @@ inline std::vector<std::wstring> UniqueSortedTokens(const std::vector<std::wstri
 	return out;
 }
 
+// A hash/UUID fragment: all hex, and either a long run or a short group carrying a
+// digit (the hyphen-split pieces of an ed2k/UUID suffix often appended to names).
+inline bool IsHashLikeNameToken(const std::wstring &rToken)
+{
+	if (rToken.size() < 4)
+		return false;
+	bool bHasDigit = false;
+	for (const wchar_t ch : rToken) {
+		const bool bHex = (ch >= L'0' && ch <= L'9') || (ch >= L'a' && ch <= L'f');
+		if (!bHex)
+			return false;
+		bHasDigit = bHasDigit || (ch >= L'0' && ch <= L'9');
+	}
+	return rToken.size() >= 8 || bHasDigit;
+}
+
+inline bool IsAllDigitNameToken(const std::wstring &rToken)
+{
+	if (rToken.empty())
+		return false;
+	for (const wchar_t ch : rToken)
+		if (ch < L'0' || ch > L'9')
+			return false;
+	return true;
+}
+
+// Season/episode marker like 01x05 (the tokenizer keeps it as one token).
+inline bool IsEpisodeMarkerNameToken(const std::wstring &rToken)
+{
+	const size_t uX = rToken.find(L'x');
+	if (uX == std::wstring::npos || uX == 0 || uX + 1 >= rToken.size())
+		return false;
+	for (size_t i = 0; i < rToken.size(); ++i) {
+		if (i == uX)
+			continue;
+		if (rToken[i] < L'0' || rToken[i] > L'9')
+			return false;
+	}
+	return true;
+}
+
+// Non-identifying articles/prepositions/conjunctions across the supported release
+// languages (English, Spanish, Italian, Portuguese, German). Stripped from the
+// divergence comparison only, so connector-word differences do not split a group.
+inline bool IsNameStopword(const std::wstring &rToken)
+{
+	static constexpr const wchar_t *kStopwords[] = {
+		// English
+		L"a", L"an", L"and", L"as", L"at", L"by", L"for", L"from", L"in", L"of",
+		L"on", L"or", L"the", L"to", L"with",
+		// Spanish
+		L"al", L"con", L"de", L"del", L"el", L"en", L"la", L"las", L"los", L"para",
+		L"por", L"su", L"un", L"una", L"unas", L"unos", L"y",
+		// Italian
+		L"col", L"dei", L"della", L"delle", L"di", L"e", L"gli", L"i", L"il", L"le",
+		L"lo", L"per", L"uno",
+		// Portuguese
+		L"as", L"com", L"da", L"das", L"do", L"dos", L"em", L"na", L"nas", L"no",
+		L"nos", L"o", L"os", L"ou", L"uma", L"um",
+		// German
+		L"auf", L"aus", L"bei", L"das", L"dem", L"den", L"der", L"des", L"die",
+		L"ein", L"eine", L"einem", L"einen", L"einer", L"im", L"mit", L"oder",
+		L"und", L"von", L"zu", L"zum", L"zur",
+	};
+	for (const wchar_t *pszStop : kStopwords)
+		if (rToken == pszStop)
+			return true;
+	return false;
+}
+
 /**
- * @brief True when two sorted-unique content-token sets describe the same file: the
- * sets are equal, or the smaller one (>= 2 tokens) is fully contained in the larger.
- * Order-independent and subset-aware, so cosmetic naming differences (token order,
- * an extra descriptive word, a stray year/release token) are not treated as a
- * divergent name for the same hash.
+ * @brief Sorted-unique "significant" tokens used to decide name divergence: the
+ * canonical content tokens minus hash/UUID fragments, bare numbers, season/episode
+ * markers and common multilingual stopwords, none of which identify a title.
+ */
+inline std::vector<std::wstring> SignificantNameTokens(const std::vector<std::wstring> &rTokens)
+{
+	std::vector<std::wstring> significant;
+	for (const std::wstring &rToken : rTokens) {
+		if (IsHashLikeNameToken(rToken) || IsAllDigitNameToken(rToken)
+			|| IsEpisodeMarkerNameToken(rToken) || IsNameStopword(rToken))
+		{
+			continue;
+		}
+		significant.push_back(rToken);
+	}
+	return UniqueSortedTokens(significant);
+}
+
+/**
+ * @brief True when two sorted-unique significant-token sets describe the same file:
+ * they share a real core (>= 2 tokens) covering at least 60% of the smaller set.
+ * Order-independent and tolerant of extra descriptive words (cast/crew, genre, an
+ * episode subtitle), so naming variations of the same hash are not divergence; only
+ * largely disjoint names (genuine mislabeling) stay distinct.
  */
 inline bool IsSameNameContent(const std::vector<std::wstring> &rA, const std::vector<std::wstring> &rB)
 {
-	const std::vector<std::wstring> &rSmall = rA.size() <= rB.size() ? rA : rB;
-	const std::vector<std::wstring> &rLarge = rA.size() <= rB.size() ? rB : rA;
-	if (rSmall.size() < 2 && rSmall.size() != rLarge.size())
-		return false; // single-token names merge only on exact equality
-	return std::includes(rLarge.begin(), rLarge.end(), rSmall.begin(), rSmall.end());
+	if (rA.empty() || rB.empty())
+		return false;
+	std::vector<std::wstring> shared;
+	std::set_intersection(rA.begin(), rA.end(), rB.begin(), rB.end(), std::back_inserter(shared));
+	if (shared.size() < 2)
+		return false;
+	const size_t uSmaller = rA.size() < rB.size() ? rA.size() : rB.size();
+	return shared.size() * 5 >= uSmaller * 3; // >= 60% of the smaller significant set
 }
 
 inline bool IsMediaType(const EFileType eType)
@@ -329,11 +422,13 @@ inline Report Analyze(const Evidence &rEvidence, const RuleSet &rRules, const st
 			AddUnique(report.ignoredNameTokens, rIgnoredToken);
 		if (canonicalName.hasUsableBaseName && !canonicalName.canonical.empty()) {
 			AddUnique(report.canonicalNames, canonicalName.canonical);
-			nameGroups.push_back({ UniqueSortedTokens(canonicalName.tokens), canonicalName.canonical });
+			std::vector<std::wstring> significant = SignificantNameTokens(canonicalName.tokens);
+			if (!significant.empty())
+				nameGroups.push_back({ significant, canonicalName.canonical });
 		}
 	}
 
-	// Collapse names that describe the same content (equal or subset token sets,
+	// Collapse names that describe the same content (shared significant-token core,
 	// order-independent) to a fixpoint, keeping the most descriptive name per group.
 	for (bool bMerged = true; bMerged;) {
 		bMerged = false;
