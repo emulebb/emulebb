@@ -203,3 +203,26 @@ private:
 };
 
 bool IsValidSearchResultClientIPPort(uint32 nIP, uint16 nPort);
+
+// Preferences "hide already-known search results" bitmask flags, keyed on
+// CSearchFile::EKnownType. Shared by the search filter predicate and the results
+// filter-box dropdown toggles.
+enum ESearchKnownHideFlags : uint8
+{
+	SRHIDE_SHARED      = 1u << 0,
+	SRHIDE_DOWNLOADING = 1u << 1,
+	SRHIDE_DOWNLOADED  = 1u << 2,
+	SRHIDE_CANCELLED   = 1u << 3
+};
+
+// Maps a resolved known-type to its hide-flag bit (0 for none/NotDetermined).
+inline uint8 SearchKnownHideFlag(CSearchFile::EKnownType eType)
+{
+	switch (eType) {
+	case CSearchFile::Shared:      return SRHIDE_SHARED;
+	case CSearchFile::Downloading: return SRHIDE_DOWNLOADING;
+	case CSearchFile::Downloaded:  return SRHIDE_DOWNLOADED;
+	case CSearchFile::Cancelled:   return SRHIDE_CANCELLED;
+	default:                       return 0;
+	}
+}

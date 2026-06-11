@@ -2833,6 +2833,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Ймовірна підробка: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Спам"
     IDS_CONFIDENCE_INFOTIP                                     "Впевненість: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Приховати від результатів"
 END
 // eMuleBB managed translation block: end
 

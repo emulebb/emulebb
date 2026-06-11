@@ -2839,6 +2839,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Muhtemelen sahte: %u%%"
     IDS_CONFIDENCE_SPAM                                        "İstenmeyen e-posta"
     IDS_CONFIDENCE_INFOTIP                                     "Güven: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Sonuçlardan gizle"
 END
 // eMuleBB managed translation block: end
 

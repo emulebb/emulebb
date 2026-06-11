@@ -2836,6 +2836,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Tõenäoliselt võltsitud: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Rämpspost"
     IDS_CONFIDENCE_INFOTIP                                     "Usaldus: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Peida tulemuste eest"
 END
 // eMuleBB managed translation block: end
 

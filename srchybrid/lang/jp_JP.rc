@@ -2843,6 +2843,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "偽物の可能性が高い: %u%%"
     IDS_CONFIDENCE_SPAM                                        "スパム"
     IDS_CONFIDENCE_INFOTIP                                     "信頼性: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "結果から隠す"
 END
 // eMuleBB managed translation block: end
 

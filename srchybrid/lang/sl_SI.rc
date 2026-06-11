@@ -2838,6 +2838,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Verjetno ponaredek: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Neželena pošta"
     IDS_CONFIDENCE_INFOTIP                                     "Zaupanje: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Skrij pred rezultati"
 END
 // eMuleBB managed translation block: end
 

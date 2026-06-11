@@ -2832,6 +2832,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Falz probabbli: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Spam"
     IDS_CONFIDENCE_INFOTIP                                     "Kunfidenza: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Aħbi mir-riżultati"
 END
 // eMuleBB managed translation block: end
 

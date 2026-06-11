@@ -234,6 +234,10 @@ void CEditDelayed::OnLButtonDown(UINT nFlags, CPoint point)
 				}
 			}
 
+			// let the owner window append its own checkable items (e.g. search hide-state toggles)
+			if (m_bAllowOwnerMenuExtension)
+				GetParent()->SendMessage(UM_FILTER_MENU_EXTEND, reinterpret_cast<WPARAM>(menu.GetSafeHmenu()), 0);
+
 			// draw the menu on a fixed position so it doesn't hide the input text
 			RECT editRect;
 			GetClientRect(&editRect);
@@ -329,18 +333,22 @@ HBRUSH CEditDelayed::CtlColor(CDC *pDC, UINT)
 	return hbr;
 }
 
-BOOL CEditDelayed::OnCommand(WPARAM wParam, LPARAM)
+BOOL CEditDelayed::OnCommand(WPARAM wParam, LPARAM lParam)
 {
-	wParam = LOWORD(wParam);
-	if (wParam >= MP_FILTERCOLUMNS && wParam <= MP_FILTERCOLUMNS + 50) {
-		if (m_nCurrentColumnIdx != (int)wParam - MP_FILTERCOLUMNS) {
-			m_nCurrentColumnIdx = (int)wParam - MP_FILTERCOLUMNS;
+	const UINT uCmd = LOWORD(wParam);
+	if (uCmd >= MP_FILTERCOLUMNS && uCmd <= MP_FILTERCOLUMNS + 50) {
+		if (m_nCurrentColumnIdx != (int)uCmd - MP_FILTERCOLUMNS) {
+			m_nCurrentColumnIdx = (int)uCmd - MP_FILTERCOLUMNS;
 			if (m_bShowsColumnText)
 				ShowColumnText(true);
 			else if (GetWindowTextLength() != 0)
 				DoDelayedEvalute(true);
 		}
+		return TRUE;
 	}
+	// hand owner-added filter-menu commands (menu message: HIWORD == 0, lParam == 0) to the parent
+	if (m_bAllowOwnerMenuExtension && uCmd != 0 && HIWORD(wParam) == 0 && lParam == 0)
+		return GetParent()->SendMessage(WM_COMMAND, wParam, lParam);
 	return TRUE;
 }
 

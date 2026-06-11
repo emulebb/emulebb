@@ -2792,6 +2792,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Πιθανόν ψεύτικο: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Ανεπιθύμητη αλληλογραφία"
     IDS_CONFIDENCE_INFOTIP                                     "Εμπιστοσύνη: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Απόκρυψη από τα αποτελέσματα"
 END
 // eMuleBB managed translation block: end
 

@@ -1368,6 +1368,7 @@ bool	CPreferences::m_bCloseUPnPOnExit;
 uint8	CPreferences::m_uUPnPBackendMode;
 
 bool	CPreferences::m_bEnableSearchResultFilter;
+uint8	CPreferences::m_uSearchHideKnownStates;
 
 BOOL	CPreferences::m_bIsRunningAeroGlass;
 bool	CPreferences::m_bPreventStandby;
@@ -2902,6 +2903,7 @@ void CPreferences::SavePreferences()
 	ini.WriteInt(_T("CryptTCPPaddingLength"), m_byCryptTCPPaddingLength);
 
 	ini.WriteBool(_T("EnableSearchResultSpamFilter"), m_bEnableSearchResultFilter);
+	ini.WriteInt(_T("SearchHideKnownStates"), m_uSearchHideKnownStates);
 
 
 	///////////////////////////////////////////////////////////////////////////
@@ -3526,6 +3528,7 @@ void CPreferences::LoadPreferences()
 	m_byCryptTCPPaddingLength = (uint8)min(nTmp, 254);
 
 	m_bEnableSearchResultFilter = ini.GetBool(_T("EnableSearchResultSpamFilter"), true);
+	m_uSearchHideKnownStates = static_cast<uint8>(ini.GetInt(_T("SearchHideKnownStates"), 0));
 
 	///////////////////////////////////////////////////////////////////////////
 	// Section: "Proxy"

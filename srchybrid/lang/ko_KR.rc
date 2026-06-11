@@ -2803,6 +2803,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "가짜일 가능성이 있는 항목: %u%%"
     IDS_CONFIDENCE_SPAM                                        "스팸"
     IDS_CONFIDENCE_INFOTIP                                     "자신감: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "결과에서 숨기기"
 END
 // eMuleBB managed translation block: end
 

@@ -2843,6 +2843,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Valószínű hamisítvány: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Spam"
     IDS_CONFIDENCE_INFOTIP                                     "Bizalom: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Elrejtés az eredmények közül"
 END
 // eMuleBB managed translation block: end
 

@@ -2805,6 +2805,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "احتمال تقلبی: %u%%"
     IDS_CONFIDENCE_SPAM                                        "هرزنامه"
     IDS_CONFIDENCE_INFOTIP                                     "اطمینان: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "از نتایج پنهان شوید"
 END
 // eMuleBB managed translation block: end
 

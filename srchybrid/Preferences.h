@@ -718,6 +718,9 @@ public:
 	// Spam
 	static bool		m_bEnableSearchResultFilter;
 
+	// Search results: bitmask of already-known states hidden from results (ESearchKnownHideFlags)
+	static uint8	m_uSearchHideKnownStates;
+
 	static BOOL		m_bIsRunningAeroGlass;
 	static bool		m_bPreventStandby;
 	static bool		m_bStoreSearches;
@@ -1820,6 +1823,10 @@ public:
 
 	// Spam filter
 	static bool		IsSearchSpamFilterEnabled()			{ return m_bEnableSearchResultFilter; }
+
+	// Search results: hide already-known states (bitmask of ESearchKnownHideFlags)
+	static uint8	GetSearchHideKnownStates()			{ return m_uSearchHideKnownStates; }
+	static void		SetSearchHideKnownStates(uint8 val)	{ m_uSearchHideKnownStates = val; }
 
 	static bool		IsStoringSearchesEnabled()			{ return m_bStoreSearches; }
 	static bool		GetPreventStandby()					{ return m_bPreventStandby; }

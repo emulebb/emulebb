@@ -2838,6 +2838,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Litekeena da faltsua: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Spama"
     IDS_CONFIDENCE_INFOTIP                                     "Konfiantza: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Ezkutatu emaitzetatik"
 END
 // eMuleBB managed translation block: end
 

@@ -2838,6 +2838,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Pravděpodobně padělek: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Spam"
     IDS_CONFIDENCE_INFOTIP                                     "Spolehlivost: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Skrýt z výsledků"
 END
 // eMuleBB managed translation block: end
 

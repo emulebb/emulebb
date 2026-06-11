@@ -2804,6 +2804,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "ساختا بولۇشى مۇمكىن: %u%%"
     IDS_CONFIDENCE_SPAM                                        "ئەخلەت خەت"
     IDS_CONFIDENCE_INFOTIP                                     "ئىشەنچ: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "نەتىجىدىن يوشۇرۇش"
 END
 // eMuleBB managed translation block: end
 

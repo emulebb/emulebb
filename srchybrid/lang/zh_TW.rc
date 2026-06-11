@@ -2822,6 +2822,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "可能是假貨：%u%%"
     IDS_CONFIDENCE_SPAM                                        "垃圾郵件"
     IDS_CONFIDENCE_INFOTIP                                     "信賴度：%s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "隱藏結果"
 END
 // eMuleBB managed translation block: end
 

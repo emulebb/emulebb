@@ -3742,6 +3742,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE "Likely fake: %u%%"
     IDS_CONFIDENCE_SPAM     "Spam"
     IDS_CONFIDENCE_INFOTIP  "Confidence: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS "Hide from results"
     IDS_FAKEFILE_EVIDENCE_PENDING_HEADER "Header check: pending"
     IDS_FAKEFILE_EVIDENCE_CACHED "Header evidence: cached"
     IDS_FAKEFILE_EVIDENCE_EXTENSIONS "Observed extensions: %s"

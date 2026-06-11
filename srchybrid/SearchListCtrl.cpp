@@ -183,6 +183,26 @@ void NotifySearchDetailPages(CMetaDataDlg &rMetaData, CCommentDialogLst &rCommen
 		rComments.SendMessage(UM_DATA_CHANGED);
 }
 
+/**
+ * @brief Resolves a search result's known-state from the current download-queue,
+ *        shared-files and known-files sets. Used for row colouring and for the
+ *        "hide already-known files" filter, so it must not depend on the paint-time
+ *        m_eKnown (which is only set while drawing).
+ */
+CSearchFile::EKnownType ResolveSearchKnownType(const CSearchFile *src)
+{
+	const CKnownFile *pFile = theApp.downloadqueue->GetFileByID(src->GetFileHash());
+	if (pFile != NULL)
+		return pFile->IsPartFile() ? CSearchFile::Downloading : CSearchFile::Shared;
+	if (theApp.sharedfiles->GetFileByID(src->GetFileHash()) != NULL)
+		return CSearchFile::Shared;
+	if (theApp.knownfiles->FindKnownFileByID(src->GetFileHash()) != NULL)
+		return CSearchFile::Downloaded;
+	if (theApp.knownfiles->IsCancelledFileByID(src->GetFileHash()))
+		return CSearchFile::Cancelled;
+	return CSearchFile::NotDetermined;
+}
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -470,7 +490,7 @@ void CSearchListCtrl::AddResult(const CSearchFile *toshow)
 {
 	if (toshow->GetSearchID() != m_nResultsID)
 		return;
-	if (!theApp.emuledlg->searchwnd->m_pwndResults->m_astrFilter.IsEmpty() && IsFilteredOut(toshow))
+	if (IsFilteredOut(toshow))
 		return;
 
 	// Turn off updates
@@ -554,7 +574,7 @@ void CSearchListCtrl::UpdateTabHeader(uint32 nResultsID)
 			if (pSearchParams->dwSearchID == nResultsID) {
 				UINT iAvailResults = searchlist->GetFoundFiles(nResultsID);
 				CString strTabLabel(pSearchParams->strSearchTitle);
-				if (theApp.emuledlg->searchwnd->m_pwndResults->m_astrFilter.IsEmpty())
+				if (theApp.emuledlg->searchwnd->m_pwndResults->m_astrFilter.IsEmpty() && thePrefs.GetSearchHideKnownStates() == 0)
 					strTabLabel.AppendFormat(_T(" (%u)"), iAvailResults);
 				else
 					strTabLabel.AppendFormat(_T(" (%i/%u)"), GetItemCount(), iAvailResults);
@@ -1684,29 +1704,23 @@ void CSearchListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 COLORREF CSearchListCtrl::GetSearchItemColor(/*const*/ CSearchFile *src)
 {
-	const CKnownFile *pFile = theApp.downloadqueue->GetFileByID(src->GetFileHash());
-
-	if (pFile) {
-		if (pFile->IsPartFile()) {
-			src->SetKnownType(CSearchFile::Downloading);
-			if (static_cast<const CPartFile*>(pFile)->GetStatus() == PS_PAUSED)
+	const CSearchFile::EKnownType eKnown = ResolveSearchKnownType(src);
+	if (eKnown != CSearchFile::NotDetermined)
+		src->SetKnownType(eKnown);
+	switch (eKnown) {
+	case CSearchFile::Downloading:
+		if (const CKnownFile *pFile = theApp.downloadqueue->GetFileByID(src->GetFileHash()))
+			if (pFile->IsPartFile() && static_cast<const CPartFile*>(pFile)->GetStatus() == PS_PAUSED)
 				return m_crSearchResultDownloadStopped;
-			return m_crSearchResultDownloading;
-		}
-		src->SetKnownType(CSearchFile::Shared);
+		return m_crSearchResultDownloading;
+	case CSearchFile::Shared:
 		return m_crSearchResultSharing;
-	}
-	if (theApp.sharedfiles->GetFileByID(src->GetFileHash())) {
-		src->SetKnownType(CSearchFile::Shared);
-		return m_crSearchResultSharing;
-	}
-	if (theApp.knownfiles->FindKnownFileByID(src->GetFileHash())) {
-		src->SetKnownType(CSearchFile::Downloaded);
+	case CSearchFile::Downloaded:
 		return m_crSearchResultKnown;
-	}
-	if (theApp.knownfiles->IsCancelledFileByID(src->GetFileHash())) {
-		src->SetKnownType(CSearchFile::Cancelled);
+	case CSearchFile::Cancelled:
 		return m_crSearchResultCancelled;
+	default:
+		break;
 	}
 
 	// Spam check
@@ -2093,6 +2107,12 @@ bool CSearchListCtrl::IsFilteredOut(const CSearchFile *pSearchFile) const
 {
 	if (pSearchFile->m_flags.noshow) //do not show
 		return true;
+
+	// hide results the user already has, when the matching "hide" toggle is set
+	const uint8 uHideMask = thePrefs.GetSearchHideKnownStates();
+	if (uHideMask != 0 && (SearchKnownHideFlag(ResolveSearchKnownType(pSearchFile)) & uHideMask) != 0)
+		return true;
+
 	const CStringArray &rastrFilter = theApp.emuledlg->searchwnd->m_pwndResults->m_astrFilter;
 	if (!rastrFilter.IsEmpty()) {
 		// filtering is done by text only for all columns to keep it consistent and simple

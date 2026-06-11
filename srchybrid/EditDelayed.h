@@ -52,6 +52,11 @@ public:
 	 // when not using pColumnHeader this text will be shown when the control is empty and has no focus
 	void	SetAlternateText(const CString &rstrText)	{ m_strAlternateText = rstrText; }
 
+	// lets the owner window append items to the filter dropdown (via UM_FILTER_MENU_EXTEND)
+	// and receive any menu command the control does not own; off by default so other
+	// filter boxes are unaffected.
+	void	SetAllowOwnerMenuExtension(bool bAllow)		{ m_bAllowOwnerMenuExtension = bAllow; }
+
 protected:
 	bool		m_bShuttingDown;
 	UINT_PTR	m_uTimerResult;
@@ -67,6 +72,7 @@ protected:
 	CString		m_strAlternateText;
 	CHeaderCtrl	*m_pctrlColumnHeader;
 	CArray<int, int> m_aIgnoredColumns;
+	bool		m_bAllowOwnerMenuExtension = false;
 
 	void	DoDelayedEvalute(bool bForce = false);
 	void	SetEditRect(bool bUpdateResetButtonPos, bool bUpdateColumnButton = false);

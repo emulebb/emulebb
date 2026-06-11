@@ -2841,6 +2841,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Tikėtina, kad netikras: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Šlamštas"
     IDS_CONFIDENCE_INFOTIP                                     "Pasitikėjimas: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Slėpti nuo rezultatų"
 END
 // eMuleBB managed translation block: end
 

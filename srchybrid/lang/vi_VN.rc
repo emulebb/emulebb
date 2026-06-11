@@ -2834,6 +2834,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Có khả năng là giả: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Thư rác"
     IDS_CONFIDENCE_INFOTIP                                     "Sự tự tin: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Ẩn khỏi kết quả"
 END
 // eMuleBB managed translation block: end
 

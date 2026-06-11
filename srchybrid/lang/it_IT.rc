@@ -2809,6 +2809,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Probabile falso: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Spam"
     IDS_CONFIDENCE_INFOTIP                                     "Fiducia: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Nascondi dai risultati"
 END
 // eMuleBB managed translation block: end
 

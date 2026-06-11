@@ -173,6 +173,8 @@ protected:
 	void SetSearchProgressIndeterminate(bool bEnable);
 	bool IsBoundedSearchProgressVisible(const SSearchParams *pParams) const;
 	void ShowResults(const SSearchParams *pParams);
+	/** Re-applies the current text + hide-state filter to the active results tab. */
+	void ReapplyActiveResultFilter();
 	void SetAllIcons();
 	void SetSearchResultsIcon(uint32 uSearchID, int iImage);
 	void SetActiveSearchResultsIcon(uint32 uSearchID);
@@ -202,6 +204,7 @@ protected:
 	afx_msg void OnBnClickedOpenParamsWnd();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg LRESULT OnChangeFilter(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnFilterMenuExtend(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnSearchListMenuBtnDropDown(LPNMHDR, LRESULT*);
 	afx_msg HBRUSH OnCtlColor(CDC *pDC, CWnd *pWnd, UINT nCtlColor);
 };

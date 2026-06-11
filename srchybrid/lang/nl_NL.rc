@@ -2840,6 +2840,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Waarschijnlijk nep: %u%%"
     IDS_CONFIDENCE_SPAM                                        "Spam"
     IDS_CONFIDENCE_INFOTIP                                     "Vertrouwen: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Verbergen voor resultaten"
 END
 // eMuleBB managed translation block: end
 

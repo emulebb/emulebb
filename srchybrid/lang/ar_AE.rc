@@ -2831,6 +2831,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "من المحتمل أن يكون مزيفًا: %u%%"
     IDS_CONFIDENCE_SPAM                                        "رسائل إلكترونية مزعجة"
     IDS_CONFIDENCE_INFOTIP                                     "الثقة: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "إخفاء من النتائج"
 END
 // eMuleBB managed translation block: end
 

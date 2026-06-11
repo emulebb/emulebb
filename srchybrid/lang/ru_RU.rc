@@ -2846,6 +2846,7 @@ BEGIN
     IDS_CONFIDENCE_LIKELY_FAKE                                 "Вероятная подделка: %u%%."
     IDS_CONFIDENCE_SPAM                                        "Спам"
     IDS_CONFIDENCE_INFOTIP                                     "Уверенность: %s"
+    IDS_SEARCH_HIDE_FROM_RESULTS                               "Скрыть из результатов"
 END
 // eMuleBB managed translation block: end
 

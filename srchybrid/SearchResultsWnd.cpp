@@ -107,6 +107,7 @@ BEGIN_MESSAGE_MAP(CSearchResultsWnd, CResizableFormView)
 	ON_BN_CLICKED(IDC_OPEN_PARAMS_WND, OnBnClickedOpenParamsWnd)
 	ON_WM_SYSCOMMAND()
 	ON_MESSAGE(UM_DELAYED_EVALUATE, OnChangeFilter)
+	ON_MESSAGE(UM_FILTER_MENU_EXTEND, OnFilterMenuExtend)
 	ON_NOTIFY(TBN_DROPDOWN, IDC_SEARCHLST_ICO, OnSearchListMenuBtnDropDown)
 END_MESSAGE_MAP()
 
@@ -161,6 +162,7 @@ void CSearchResultsWnd::OnInitialUpdate()
 	m_btnSearchListMenu.RecalcLayout(true);
 
 	m_ctlFilter.OnInit(&m_ctlSearchListHeader);
+	m_ctlFilter.SetAllowOwnerMenuExtension(true);
 
 	SetAllIcons();
 	Localize();
@@ -2189,6 +2191,12 @@ LRESULT CSearchResultsWnd::OnChangeFilter(WPARAM wParam, LPARAM lParam)
 	m_astrFilter.RemoveAll();
 	m_astrFilter.Append(astrFilter);
 
+	ReapplyActiveResultFilter();
+	return 0;
+}
+
+void CSearchResultsWnd::ReapplyActiveResultFilter()
+{
 	int iCurSel = searchselect.GetCurSel();
 	if (iCurSel >= 0) {
 		TCITEM ti;
@@ -2196,6 +2204,31 @@ LRESULT CSearchResultsWnd::OnChangeFilter(WPARAM wParam, LPARAM lParam)
 		if (searchselect.GetItem(iCurSel, &ti) && ti.lParam != NULL)
 			ShowResults(reinterpret_cast<SSearchParams*>(ti.lParam));
 	}
+}
+
+// Appends the "Hide from results" submenu (checkable known-state toggles) to the
+// filter-box dropdown when CEditDelayed raises UM_FILTER_MENU_EXTEND.
+LRESULT CSearchResultsWnd::OnFilterMenuExtend(WPARAM wParam, LPARAM)
+{
+	CMenu *pMenu = CMenu::FromHandle(reinterpret_cast<HMENU>(wParam));
+	if (pMenu == NULL)
+		return 0;
+
+	const uint8 uMask = thePrefs.GetSearchHideKnownStates();
+	const struct { UINT uId; uint8 uBit; UINT uLabel; } items[] = {
+		{ MP_SEARCH_HIDE_SHARED,      SRHIDE_SHARED,      IDS_SHARED },
+		{ MP_SEARCH_HIDE_DOWNLOADING, SRHIDE_DOWNLOADING, IDS_DOWNLOADING },
+		{ MP_SEARCH_HIDE_DOWNLOADED,  SRHIDE_DOWNLOADED,  IDS_DOWNLOADED },
+		{ MP_SEARCH_HIDE_CANCELLED,   SRHIDE_CANCELLED,   IDS_CANCELLED }
+	};
+
+	CMenu menuHide;
+	menuHide.CreatePopupMenu();
+	for (const auto &it : items)
+		menuHide.AppendMenu(MF_STRING | ((uMask & it.uBit) != 0 ? MF_CHECKED : MF_UNCHECKED), it.uId, GetResString(it.uLabel));
+
+	pMenu->AppendMenu(MF_SEPARATOR);
+	pMenu->AppendMenu(MF_POPUP, reinterpret_cast<UINT_PTR>(menuHide.Detach()), GetResString(IDS_SEARCH_HIDE_FROM_RESULTS));
 	return 0;
 }
 
@@ -2233,6 +2266,22 @@ BOOL CSearchResultsWnd::OnCommand(WPARAM wParam, LPARAM lParam)
 		return TRUE;
 	case MP_SHOW_FILESIZE_MBYTE:
 		searchlistctrl.SetFileSizeFormat(fsizeMByte);
+		return TRUE;
+	case MP_SEARCH_HIDE_SHARED:
+	case MP_SEARCH_HIDE_DOWNLOADING:
+	case MP_SEARCH_HIDE_DOWNLOADED:
+	case MP_SEARCH_HIDE_CANCELLED:
+		{
+			uint8 uBit = 0;
+			switch (wParam) {
+			case MP_SEARCH_HIDE_SHARED:      uBit = SRHIDE_SHARED;      break;
+			case MP_SEARCH_HIDE_DOWNLOADING: uBit = SRHIDE_DOWNLOADING; break;
+			case MP_SEARCH_HIDE_DOWNLOADED:  uBit = SRHIDE_DOWNLOADED;  break;
+			case MP_SEARCH_HIDE_CANCELLED:   uBit = SRHIDE_CANCELLED;   break;
+			}
+			thePrefs.SetSearchHideKnownStates(thePrefs.GetSearchHideKnownStates() ^ uBit);
+			ReapplyActiveResultFilter();
+		}
 		return TRUE;
 	}
 	return CResizableFormView::OnCommand(wParam, lParam);
