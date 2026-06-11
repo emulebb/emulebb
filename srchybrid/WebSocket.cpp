@@ -9,6 +9,7 @@
 #include "Log.h"
 #include "IPv4AddressSeams.h"
 
+#include <algorithm>
 #include <vector>
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/ssl_cache.h"
@@ -185,6 +186,32 @@ namespace
 		return s_acceptedThreads.size();
 	}
 
+	DWORD WaitForThreadWithPump(HANDLE hThread, const DWORD dwTimeoutMs, WebSocketShutdownPump pPump, void *pPumpContext)
+	{
+		if (pPump == NULL)
+			return ::WaitForSingleObject(hThread, dwTimeoutMs);
+
+		const ULONGLONG ullStart = ::GetTickCount64();
+		for (;;) {
+			pPump(pPumpContext);
+
+			DWORD dwWaitMs = 50;
+			if (dwTimeoutMs != INFINITE) {
+				const ULONGLONG ullElapsed = ::GetTickCount64() - ullStart;
+				if (ullElapsed >= dwTimeoutMs)
+					return WAIT_TIMEOUT;
+				const DWORD dwRemainingMs = static_cast<DWORD>(dwTimeoutMs - ullElapsed);
+				dwWaitMs = (std::min)(dwWaitMs, dwRemainingMs);
+			}
+
+			const DWORD dwWaitResult = ::WaitForSingleObject(hThread, dwWaitMs);
+			if (dwWaitResult != WAIT_TIMEOUT)
+				return dwWaitResult;
+			if (dwTimeoutMs == INFINITE)
+				continue;
+		}
+	}
+
 	void SendBusyResponseAndClose(const SOCKET hSocket)
 	{
 		static const char szBusyResponse[] =
@@ -240,7 +267,7 @@ namespace
 		return false;
 	}
 
-	bool WaitForAcceptedThreadHandles(const DWORD dwTimeoutMs)
+	bool WaitForAcceptedThreadHandles(const DWORD dwTimeoutMs, WebSocketShutdownPump pPump, void *pPumpContext)
 	{
 		const ULONGLONG ullStart = ::GetTickCount64();
 
@@ -262,7 +289,7 @@ namespace
 					dwWaitMs = static_cast<DWORD>(dwTimeoutMs - ullElapsed);
 			}
 
-			const DWORD dwWaitResult = ::WaitForSingleObject(hThread, dwWaitMs);
+			const DWORD dwWaitResult = WaitForThreadWithPump(hThread, dwWaitMs, pPump, pPumpContext);
 			if (dwWaitResult == WAIT_TIMEOUT) {
 				CSingleLock lock(&s_acceptedThreadLock, TRUE);
 				DebugLogError(_T("Web Interface shutdown timed out with %u accepted-client thread(s) still running"), static_cast<unsigned int>(s_acceptedThreads.size()));
@@ -1008,10 +1035,12 @@ void StartSockets(CWebServer *pThis)
 	}
 }
 
-bool StopSockets()
+bool StopSockets(WebSocketShutdownPump pPump, void *pPumpContext)
 {
 	if (s_hTerminate)
 		VERIFY(::SetEvent(s_hTerminate));
+	if (pPump != NULL)
+		pPump(pPumpContext);
 
 	bool bDeferredShutdown = false;
 	if (s_pSocketThread) {
@@ -1022,7 +1051,7 @@ bool StopSockets()
 			// the CWinThread::m_hThread is invalid.
 			ASSERT(!s_pSocketThread->m_bAutoDelete);
 
-			DWORD dwWaitRes = ::WaitForSingleObject(s_pSocketThread->m_hThread, WebSocketHttpSeams::kSocketThreadShutdownTimeoutMs);
+			DWORD dwWaitRes = WaitForThreadWithPump(s_pSocketThread->m_hThread, WebSocketHttpSeams::kSocketThreadShutdownTimeoutMs, pPump, pPumpContext);
 			if (dwWaitRes == WAIT_TIMEOUT) {
 				TRACE("*** Failed to wait for websocket thread termination - Timeout\n");
 				DebugLogError(_T("Web Interface listener thread did not exit within %lu ms"), WebSocketHttpSeams::kSocketThreadShutdownTimeoutMs);
@@ -1049,7 +1078,7 @@ bool StopSockets()
 		}
 	}
 
-	if (!WaitForAcceptedThreadHandles(WebSocketHttpSeams::kSocketThreadShutdownTimeoutMs)) {
+	if (!WaitForAcceptedThreadHandles(WebSocketHttpSeams::kSocketThreadShutdownTimeoutMs, pPump, pPumpContext)) {
 		if (WebSocketHttpSeams::GetSocketThreadShutdownFollowUp(false) == WebSocketHttpSeams::ESocketThreadShutdownFollowUp::DeferShutdownCleanup) {
 			DebugLogError(_T("Web Interface accepted-client thread(s) are still using WebServer state; deferring socket teardown for process exit."));
 			bDeferredShutdown = true;

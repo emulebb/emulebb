@@ -4,8 +4,10 @@
 
 class CWebServer;
 
+typedef void (*WebSocketShutdownPump)(void *pContext);
+
 void StartSockets(CWebServer *pThis);
-bool StopSockets();
+bool StopSockets(WebSocketShutdownPump pPump = NULL, void *pPumpContext = NULL);
 
 class CWebSocket
 {

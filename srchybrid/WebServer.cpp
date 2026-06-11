@@ -315,11 +315,11 @@ void CWebServer::RestartSockets()
 		StartSockets(this);
 }
 
-bool CWebServer::StopServerForShutdown()
+bool CWebServer::StopServerForShutdown(WebSocketShutdownPump pPump, void *pPumpContext)
 {
 	if (!m_bServerWorking)
 		return true;
-	const bool bStopped = StopSockets();
+	const bool bStopped = StopSockets(pPump, pPumpContext);
 	if (bStopped)
 		m_bServerWorking = false;
 	return bStopped;
@@ -572,7 +572,11 @@ void CWebServer::_ProcessURL(const ThreadData &Data)
 				Out += _GetLoginScreen(Data);
 				Data.pSocket->SendContent(HTTPInit, Out);
 
-				SendMessage(theApp.emuledlg->m_hWnd, WM_CLOSE, 0, 0);
+				// WHY: this code runs on an accepted web worker. A synchronous
+				// WM_CLOSE would wait for the UI thread while shutdown waits for
+				// accepted workers, so post the close request after the response.
+				if (theApp.emuledlg != NULL && theApp.emuledlg->GetSafeHwnd() != NULL)
+					(void)theApp.emuledlg->PostMessage(WM_CLOSE, 0, 0);
 
 				return;
 			}

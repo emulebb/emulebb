@@ -3889,6 +3889,16 @@ void CemuleDlg::CloseApp(bool bRestart)
 	// so partial warm-cache sidecars are purged at final shared-file save.
 	const bool bSharedHashingWasActiveOnClose = (theApp.sharedfiles != NULL && theApp.sharedfiles->HasSharedHashingWork());
 	theApp.m_app_state = APP_STATE_SHUTTINGDOWN;
+	// WHY: accepted web workers read shared/download/upload globals through the
+	// CWebServer owner. Stop and join them before those globals are deleted;
+	// pump first so any already-posted REST UI command can observe shutdown and
+	// release its worker without making StopServerForShutdown wait on the UI.
+	updateShutdownPhase(3, _T("Closing eMuleBB"), _T("Stopping web transport before service teardown."), true);
+	const auto pumpWebShutdownMessages = [](void *pContext) {
+		PumpLifecycleProgressMessages(static_cast<CDialog*>(pContext));
+	};
+	while (theApp.webserver != NULL && !theApp.webserver->StopServerForShutdown(pumpWebShutdownMessages, &shutdownProgress))
+		updateShutdownPhase(3, _T("Closing eMuleBB"), _T("Waiting for web requests to release runtime state before service teardown."), true);
 	// WHY: The notification-area entry belongs to this HWND. Once shutdown is
 	// committed, remove it before long teardown work or pumped messages can
 	// leave Explorer with a stale icon after a clean close.
@@ -4150,9 +4160,7 @@ void CemuleDlg::CloseApp(bool bRestart)
 	delete theApp.scheduler;				theApp.scheduler = NULL;
 	delete theApp.ipfilterUpdater;			theApp.ipfilterUpdater = NULL;
 	delete theApp.ipfilter;					theApp.ipfilter = NULL;			// CIPFilter::SaveToDefaultFile
-	if (theApp.webserver != NULL && !theApp.webserver->StopServerForShutdown())
-		theApp.webserver = NULL;
-	else {
+	if (theApp.webserver != NULL) {
 		delete theApp.webserver;
 		theApp.webserver = NULL;
 	}

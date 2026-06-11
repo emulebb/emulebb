@@ -324,7 +324,7 @@ public:
 	INT_PTR UpdateSessionCount();
 	void StartServer();
 	void StopServer();
-	bool StopServerForShutdown();
+	bool StopServerForShutdown(WebSocketShutdownPump pPump = NULL, void *pPumpContext = NULL);
 	void RestartSockets();
 	void AddStatsLine(const UpDown &line);
 	bool ReloadTemplates();
