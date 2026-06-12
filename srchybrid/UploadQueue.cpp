@@ -1278,7 +1278,7 @@ CUploadQueue::NoRequestRepeatHashKey CUploadQueue::GetNoRequestRepeatHashKey(con
 	return key;
 }
 
-CUploadQueue::NoRequestRepeatPenalty CUploadQueue::TrackNoRequestRepeatOffender(CUpDownClient *client, ULONGLONG curTick, UINT uBaseCooldownSeconds, UINT uBanThreshold)
+CUploadQueue::NoRequestRepeatPenalty CUploadQueue::TrackNoRequestRepeatOffender(CUpDownClient *client, ULONGLONG curTick, UINT uBaseCooldownSeconds, UINT uMaxCooldownSeconds, UINT uBanThreshold)
 {
 	NoRequestRepeatPenalty penalty = {};
 	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
@@ -1317,7 +1317,7 @@ CUploadQueue::NoRequestRepeatPenalty CUploadQueue::TrackNoRequestRepeatOffender(
 	penalty.bShouldBan = ShouldBanNoRequestRepeatOffender(penalty.uStrikes, uBanThreshold);
 	penalty.uCooldownSeconds = penalty.bShouldBan || penalty.bShouldIPBan
 		? 0
-		: GetNoRequestRepeatCooldownSeconds(uBaseCooldownSeconds, penalty.uStrikes);
+		: GetNoRequestRepeatCooldownSeconds(uBaseCooldownSeconds, penalty.uStrikes, uMaxCooldownSeconds);
 	return penalty;
 }
 
@@ -1570,31 +1570,33 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			// unproductive no-request recycles to the configured slow-upload
 			// cooldown so persistent 0-byte peers stop consuming refill probes.
 			const UINT uConfiguredCooldownSeconds = thePrefs.GetSlowUploadCooldownSeconds();
+			const UINT uRepeatCooldownMaxSeconds = GetRepeatedNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec);
 			const UINT uProductiveCooldownSeconds = GetNoRequestUploadRetryCooldownSeconds(
 				uConfiguredCooldownSeconds,
 				HasRecentNoRequestUploadRetryCooldown(client, curTick),
 				true,
 				GetNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec),
 				GetProductiveNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec),
-				GetRepeatedNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec));
+				uRepeatCooldownMaxSeconds);
 			const UINT uBaseCooldownSeconds = uConfiguredCooldownSeconds;
 			const UINT uRepeatBanThreshold = GetNoRequestRepeatBanThresholdForBudget(uBudgetBytesPerSec);
 			const UINT uInitialCooldownSeconds = bProductiveNoRequestRecycle ? uProductiveCooldownSeconds : uBaseCooldownSeconds;
 			UINT uCooldownSeconds = uInitialCooldownSeconds;
 			NoRequestRepeatPenalty repeatPenalty = {};
 			if (!bProductiveNoRequestRecycle) {
-				repeatPenalty = TrackNoRequestRepeatOffender(client, curTick, uBaseCooldownSeconds, uRepeatBanThreshold);
+				repeatPenalty = TrackNoRequestRepeatOffender(client, curTick, uBaseCooldownSeconds, uRepeatCooldownMaxSeconds, uRepeatBanThreshold);
 				if (repeatPenalty.uStrikes != 0 && !repeatPenalty.bShouldBan && !repeatPenalty.bShouldIPBan)
 					uCooldownSeconds = repeatPenalty.uCooldownSeconds;
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 				CString strRepeatEvidence;
 				LPCTSTR pszRepeatScope = repeatPenalty.bShouldIPBan || !repeatPenalty.bHashScoped ? _T("ip") : _T("hash");
 				strRepeatEvidence.Format(
-					_T("{\"strikes\":%u,\"threshold\":%u,\"cooldown_seconds\":%u,\"base_cooldown_seconds\":%u,\"window_seconds\":%u,\"key_type\":\"%s\",\"scope\":\"%s\",\"distinct_ip_hashes\":%u,\"ip_rotation_strikes\":%u,\"ip_rotation_strike_threshold\":%u}"),
+					_T("{\"strikes\":%u,\"threshold\":%u,\"cooldown_seconds\":%u,\"base_cooldown_seconds\":%u,\"max_cooldown_seconds\":%u,\"window_seconds\":%u,\"key_type\":\"%s\",\"scope\":\"%s\",\"distinct_ip_hashes\":%u,\"ip_rotation_strikes\":%u,\"ip_rotation_strike_threshold\":%u}"),
 					repeatPenalty.uStrikes,
 					uRepeatBanThreshold,
 					uCooldownSeconds,
 					uBaseCooldownSeconds,
+					uRepeatCooldownMaxSeconds,
 					kNoRequestRepeatStrikeWindowSeconds,
 					repeatPenalty.bHashScoped ? _T("hash") : _T("ip"),
 					pszRepeatScope,
