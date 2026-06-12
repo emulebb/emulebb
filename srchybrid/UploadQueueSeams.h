@@ -27,6 +27,7 @@ inline constexpr std::uint32_t kBroadbandZeroUploadGraceMaxSeconds = 5u;
 inline constexpr std::uint32_t kBroadbandSlowUploadRetryCooldownMaxSeconds = 90u;
 inline constexpr std::uint32_t kNoRequestRepeatStrikeWindowSeconds = 4u * 60u * 60u;
 inline constexpr std::uint32_t kNoRequestRepeatBanThreshold = 8u;
+inline constexpr std::uint32_t kBroadbandNoRequestRepeatBanThreshold = 16u;
 inline constexpr std::uint32_t kNoRequestRepeatHashRotationBanThreshold = 3u;
 inline constexpr std::uint32_t kNoRequestRepeatHashRotationStrikeThreshold = 5u;
 inline constexpr std::uint32_t kNoRequestRepeatCooldownMaxSeconds = 60u * 60u;
@@ -153,6 +154,17 @@ inline bool ShouldProbeNoRequestCooldownCandidate(
 	(void)ullCooldownRemainingMs;
 	(void)ullMaxProductiveProbeRemainingMs;
 	return bOpenBaseSlotUnderfill;
+}
+
+/**
+ * @brief Reports whether a drained no-request slot has a concrete replacement candidate.
+ */
+inline bool HasNoRequestUploadReplacementPressure(
+	bool bWaitingListEmpty,
+	bool bHasAdmissionCandidate,
+	bool bHasCooldownProbeCandidate)
+{
+	return !bWaitingListEmpty && (bHasAdmissionCandidate || bHasCooldownProbeCandidate);
 }
 
 /**
@@ -391,6 +403,16 @@ inline std::uint32_t GetRepeatedNoRequestUploadCooldownMaxSecondsForBudget(std::
 	return ShouldUseBroadbandNoRequestCooldownCaps(uBudgetBytesPerSec)
 		? kBroadbandRepeatedNoRequestUploadCooldownMaxSeconds
 		: kRepeatedNoRequestUploadCooldownMaxSeconds;
+}
+
+/**
+ * @brief Returns the repeat-offender ban threshold for the configured upload budget.
+ */
+inline std::uint32_t GetNoRequestRepeatBanThresholdForBudget(std::uint32_t uBudgetBytesPerSec)
+{
+	return ShouldUseBroadbandNoRequestCooldownCaps(uBudgetBytesPerSec)
+		? kBroadbandNoRequestRepeatBanThreshold
+		: kNoRequestRepeatBanThreshold;
 }
 
 inline std::uint32_t GetBroadbandUploadBufferBlockCount(

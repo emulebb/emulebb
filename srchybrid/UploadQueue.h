@@ -257,7 +257,7 @@ private:
 	bool	HasRecentNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG curTick) const;
 	void	SetNoRequestUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, ULONGLONG ullTrackUntil, bool bProductiveRecycle);
 	static NoRequestRepeatHashKey GetNoRequestRepeatHashKey(const CUpDownClient *client);
-	NoRequestRepeatPenalty TrackNoRequestRepeatOffender(CUpDownClient *client, ULONGLONG curTick, UINT uBaseCooldownSeconds);
+	NoRequestRepeatPenalty TrackNoRequestRepeatOffender(CUpDownClient *client, ULONGLONG curTick, UINT uBaseCooldownSeconds, UINT uBanThreshold);
 	void	PurgeExpiredUploadRetryCooldowns(ULONGLONG curTick);
 	void	UpdateMaxClientScore();
 	uint32	GetMaxClientScore() const						{ return m_imaxscore; }

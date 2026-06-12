@@ -1278,7 +1278,7 @@ CUploadQueue::NoRequestRepeatHashKey CUploadQueue::GetNoRequestRepeatHashKey(con
 	return key;
 }
 
-CUploadQueue::NoRequestRepeatPenalty CUploadQueue::TrackNoRequestRepeatOffender(CUpDownClient *client, ULONGLONG curTick, UINT uBaseCooldownSeconds)
+CUploadQueue::NoRequestRepeatPenalty CUploadQueue::TrackNoRequestRepeatOffender(CUpDownClient *client, ULONGLONG curTick, UINT uBaseCooldownSeconds, UINT uBanThreshold)
 {
 	NoRequestRepeatPenalty penalty = {};
 	const uint32 dwCooldownIP = GetUploadRetryCooldownIP(client);
@@ -1314,7 +1314,7 @@ CUploadQueue::NoRequestRepeatPenalty CUploadQueue::TrackNoRequestRepeatOffender(
 		penalty.uStrikes = ++state.uStrikes;
 	}
 
-	penalty.bShouldBan = ShouldBanNoRequestRepeatOffender(penalty.uStrikes);
+	penalty.bShouldBan = ShouldBanNoRequestRepeatOffender(penalty.uStrikes, uBanThreshold);
 	penalty.uCooldownSeconds = penalty.bShouldBan || penalty.bShouldIPBan
 		? 0
 		: GetNoRequestRepeatCooldownSeconds(uBaseCooldownSeconds, penalty.uStrikes);
@@ -1541,6 +1541,24 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 			// immediately after a premature no-request recycle.
 			return false;
 		}
+		const bool bHasAdmissionCandidate = HasUploadAdmissionCandidate(curTick);
+		const bool bHasCooldownProbeCandidate = !bHasAdmissionCandidate && HasUploadCooldownProbeCandidate(curTick);
+		if (!HasNoRequestUploadReplacementPressure(waitinglist.IsEmpty(), bHasAdmissionCandidate, bHasCooldownProbeCandidate)) {
+			// WHY: during sparse public-network demand, recycling a drained peer
+			// with no replacement candidate shrinks the upload set and can lower
+			// bandwidth further. Keep the slot so the peer can issue a later
+			// request; cooldown and repeat-ban policy still applies once there is
+			// another waiting peer to try.
+			if (thePrefs.GetLogUlDlEvents()) {
+				UINT uSuppressedLogs = 0;
+				if (!ShouldLogBroadbandRetainedSlot(uSuppressedLogs))
+					return false;
+				AddDebugLogLine(DLP_LOW, false, _T("%s: Broadband no-request slot retained because no replacement is available. Suppressed retained-slot logs: %u."),
+					client->GetUserName(),
+					uSuppressedLogs);
+			}
+			return false;
+		}
 		if (ShouldCooldownNoRequestUploadRecycle(false)) {
 			// WHY: no-request sessions can make an initial burst, drain their
 			// pipeline, then immediately re-enter as 0-byte slots. Seed a short
@@ -1560,11 +1578,12 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 				GetProductiveNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec),
 				GetRepeatedNoRequestUploadCooldownMaxSecondsForBudget(uBudgetBytesPerSec));
 			const UINT uBaseCooldownSeconds = uConfiguredCooldownSeconds;
+			const UINT uRepeatBanThreshold = GetNoRequestRepeatBanThresholdForBudget(uBudgetBytesPerSec);
 			const UINT uInitialCooldownSeconds = bProductiveNoRequestRecycle ? uProductiveCooldownSeconds : uBaseCooldownSeconds;
 			UINT uCooldownSeconds = uInitialCooldownSeconds;
 			NoRequestRepeatPenalty repeatPenalty = {};
 			if (!bProductiveNoRequestRecycle) {
-				repeatPenalty = TrackNoRequestRepeatOffender(client, curTick, uBaseCooldownSeconds);
+				repeatPenalty = TrackNoRequestRepeatOffender(client, curTick, uBaseCooldownSeconds, uRepeatBanThreshold);
 				if (repeatPenalty.uStrikes != 0 && !repeatPenalty.bShouldBan && !repeatPenalty.bShouldIPBan)
 					uCooldownSeconds = repeatPenalty.uCooldownSeconds;
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
@@ -1573,7 +1592,7 @@ bool CUploadQueue::ShouldRecycleIdleUploadSlot(CUpDownClient *client, ULONGLONG 
 				strRepeatEvidence.Format(
 					_T("{\"strikes\":%u,\"threshold\":%u,\"cooldown_seconds\":%u,\"base_cooldown_seconds\":%u,\"window_seconds\":%u,\"key_type\":\"%s\",\"scope\":\"%s\",\"distinct_ip_hashes\":%u,\"ip_rotation_strikes\":%u,\"ip_rotation_strike_threshold\":%u}"),
 					repeatPenalty.uStrikes,
-					kNoRequestRepeatBanThreshold,
+					uRepeatBanThreshold,
 					uCooldownSeconds,
 					uBaseCooldownSeconds,
 					kNoRequestRepeatStrikeWindowSeconds,
