@@ -111,9 +111,51 @@ jobs:
             echo "target_sha=${target_sha}"
           } >> "${GITHUB_OUTPUT}"
 
+  validate-irm-iex:
+    name: Validate irm|iex install scripts
+    needs: prepare
+    runs-on: windows-2022
+    steps:
+      - name: Checkout emulebb-build release assets
+        uses: actions/checkout@v6
+        with:
+          repository: emulebb/emulebb-build
+          ref: ${{ inputs.build_ref }}
+          path: emulebb-build
+      - name: Bind bootstrapper and installer param blocks under Invoke-Expression
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $assets = 'emulebb-build/emule_workspace/release_assets/emulebb/scripts'
+          # The published one-liner runs these via `irm <url> | iex`. A [ValidateSet]
+          # parameter without a valid default (BUG-017) fails only under
+          # Invoke-Expression, never under `& script.ps1`. Bind just the param block
+          # (a sentinel throw replaces the body) so this stays side-effect free.
+          $scripts = @('Bootstrap-eMuleBBSuite.ps1', 'Install-eMuleBBSuite.ps1')
+          $signature = 'attribute cannot be added because variable|does not belong to the set|Cannot validate argument'
+          $failed = $false
+          foreach ($name in $scripts) {
+            $text = Get-Content -Raw -LiteralPath (Join-Path $assets $name)
+            $start = $text.IndexOf('param('); $depth = 0; $i = $start + 5
+            while ($i -lt $text.Length) {
+              $ch = $text[$i]
+              if ($ch -eq '(') { $depth++ } elseif ($ch -eq ')') { $depth--; if ($depth -eq 0) { break } }
+              $i++
+            }
+            $paramBlock = $text.Substring($start, $i - $start + 1)
+            $ok = $true
+            try { Invoke-Expression ($paramBlock + "`nthrow 'PARAM_BIND_OK'") }
+            catch {
+              $message = "$($_.Exception.Message)"
+              if ($message -match $signature) { $ok = $false; Write-Host "::error::$name fails under irm|iex: $message" }
+            }
+            if ($ok) { Write-Host "$name binds under irm|iex (OK)" } else { $failed = $true }
+          }
+          if ($failed) { throw 'One or more release scripts fail to bind under irm|iex (Invoke-Expression).' }
+
   build:
     name: Build package (${{ matrix.asset_arch }})
-    needs: prepare
+    needs: [prepare, validate-irm-iex]
     strategy:
       fail-fast: false
       matrix:
@@ -176,6 +218,7 @@ jobs:
     name: Publish GitHub release
     needs:
       - prepare
+      - validate-irm-iex
       - build
     runs-on: ubuntu-latest
     environment: release
