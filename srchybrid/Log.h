@@ -90,6 +90,7 @@ public:
 	bool Close();
 	bool Log(LPCTSTR pszMsg, int iLen = -1);
 	bool Logf(LPCTSTR pszFmt, ...);
+	bool FlushToDisk();
 	void StartNewLogFile();
 
 protected:

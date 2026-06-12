@@ -40,6 +40,7 @@ namespace
 {
 constexpr int kMaxFileLogLineChars = 64 * 1024;
 constexpr int kMaxRecentLogEntryChars = 4 * 1024;
+constexpr ULONGLONG kDiagnosticsDiskFlushIntervalMs = 1000;
 constexpr size_t kMaxRecentLogEntries = 200;
 CCriticalSection g_recentLogLock;
 std::deque<SRecentLogEntry> g_recentLogEntries;
@@ -83,6 +84,18 @@ void AddRecentLogEntry(UINT uFlags, LPCTSTR pszText)
 	g_recentLogEntries.push_back(SRecentLogEntry{CTime::GetCurrentTime(), uFlags, strText});
 	while (g_recentLogEntries.size() > kMaxRecentLogEntries)
 		g_recentLogEntries.pop_front();
+}
+
+void FlushDiagnosticsLogToDiskIfDue(CLogFile &rLog, ULONGLONG &rullLastFlushTick, const ULONGLONG ullNowTick)
+{
+	if (rullLastFlushTick != 0 && ullNowTick < rullLastFlushTick + kDiagnosticsDiskFlushIntervalMs)
+		return;
+
+	// WHY: diagnostics are often inspected while the process is live. The CRT
+	// flushes every line, but forcing the OS file handle periodically prevents
+	// stale zero-length or delayed tails during high-volume diagnosis.
+	rLog.FlushToDisk();
+	rullLastFlushTick = ullNowTick;
 }
 
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
@@ -305,6 +318,7 @@ void WriteDiagnosticsLogLine(CLogFile &rLog, CCriticalSection &rLock, const CStr
 {
 	if (!rLog.IsOpen())
 		return;
+	static ULONGLONG s_ullLastDiagnosticsDiskFlushTick = 0;
 
 	CString strLine(rstrLine);
 	if (strLine.Right(2) != _T("\r\n"))
@@ -312,6 +326,7 @@ void WriteDiagnosticsLogLine(CLogFile &rLog, CCriticalSection &rLock, const CStr
 
 	CSingleLock lock(&rLock, TRUE);
 	rLog.Log(strLine);
+	FlushDiagnosticsLogToDiskIfDue(rLog, s_ullLastDiagnosticsDiskFlushTick, ::GetTickCount64());
 }
 
 void WriteDiagnosticsLogLineV(CLogFile &rLog, CCriticalSection &rLock, LPCTSTR pszFmt, va_list argp)
@@ -785,6 +800,15 @@ bool CLogFile::Logf(LPCTSTR pszFmt, ...)
 	strFullMsg.Format(_T("%s: %s\r\n"), (LPCTSTR)CTime::GetCurrentTime().Format(thePrefs.GetDateTimeFormat4Log()), (LPCTSTR)strMsg);
 
 	return !strFullMsg.IsEmpty() && Log(strFullMsg, strFullMsg.GetLength());
+}
+
+bool CLogFile::FlushToDisk()
+{
+	if (m_fp == NULL)
+		return false;
+	if (fflush(m_fp) != 0)
+		return false;
+	return _commit(_fileno(m_fp)) == 0;
 }
 
 void CLogFile::StartNewLogFile()
