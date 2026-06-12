@@ -248,17 +248,40 @@ inline bool IsNameStopword(const std::wstring &rToken)
 	return false;
 }
 
+// Container/format and resolution tokens that describe encoding, not the title (so
+// two unrelated titles that merely share, say, "1080i mkv" are not treated as same).
+inline bool IsFormatNoiseNameToken(const std::wstring &rToken)
+{
+	static constexpr const wchar_t *kFormats[] = {
+		L"avi", L"flv", L"m2ts", L"m4v", L"mkv", L"mov", L"mp4", L"mpeg", L"mpeg2",
+		L"mpeg4", L"mpg", L"ogm", L"rm", L"rmvb", L"vob", L"webm", L"wmv",
+	};
+	for (const wchar_t *pszFormat : kFormats)
+		if (rToken == pszFormat)
+			return true;
+	// resolution like 480i, 576p, 720i, 1080i (720p/1080p/2160p stripped earlier)
+	if ((rToken.size() == 4 || rToken.size() == 5) && (rToken.back() == L'i' || rToken.back() == L'p')) {
+		for (size_t i = 0; i + 1 < rToken.size(); ++i)
+			if (rToken[i] < L'0' || rToken[i] > L'9')
+				return false;
+		return true;
+	}
+	return false;
+}
+
 /**
  * @brief Sorted-unique "significant" tokens used to decide name divergence: the
  * canonical content tokens minus hash/UUID fragments, bare numbers, season/episode
- * markers and common multilingual stopwords, none of which identify a title.
+ * markers, format/resolution tokens and common multilingual stopwords, none of which
+ * identify a title.
  */
 inline std::vector<std::wstring> SignificantNameTokens(const std::vector<std::wstring> &rTokens)
 {
 	std::vector<std::wstring> significant;
 	for (const std::wstring &rToken : rTokens) {
 		if (IsHashLikeNameToken(rToken) || IsAllDigitNameToken(rToken)
-			|| IsEpisodeMarkerNameToken(rToken) || IsNameStopword(rToken))
+			|| IsEpisodeMarkerNameToken(rToken) || IsFormatNoiseNameToken(rToken)
+			|| IsNameStopword(rToken))
 		{
 			continue;
 		}
@@ -268,11 +291,11 @@ inline std::vector<std::wstring> SignificantNameTokens(const std::vector<std::ws
 }
 
 /**
- * @brief True when two sorted-unique significant-token sets describe the same file:
- * they share a real core (>= 2 tokens) covering at least 60% of the smaller set.
- * Order-independent and tolerant of extra descriptive words (cast/crew, genre, an
- * episode subtitle), so naming variations of the same hash are not divergence; only
- * largely disjoint names (genuine mislabeling) stay distinct.
+ * @brief True when two sorted-unique significant-token sets describe the same file.
+ * The same hash means identical bytes, so a shared core of two or more significant
+ * title tokens means the same content regardless of how many extra descriptive words
+ * (cast/crew, genre, an episode subtitle) or how much junk either name carries.
+ * Order-independent; only near-disjoint names (genuine mislabeling) stay distinct.
  */
 inline bool IsSameNameContent(const std::vector<std::wstring> &rA, const std::vector<std::wstring> &rB)
 {
@@ -280,10 +303,7 @@ inline bool IsSameNameContent(const std::vector<std::wstring> &rA, const std::ve
 		return false;
 	std::vector<std::wstring> shared;
 	std::set_intersection(rA.begin(), rA.end(), rB.begin(), rB.end(), std::back_inserter(shared));
-	if (shared.size() < 2)
-		return false;
-	const size_t uSmaller = rA.size() < rB.size() ? rA.size() : rB.size();
-	return shared.size() * 5 >= uSmaller * 3; // >= 60% of the smaller significant set
+	return shared.size() >= 2;
 }
 
 inline bool IsMediaType(const EFileType eType)
