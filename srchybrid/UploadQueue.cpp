@@ -1200,10 +1200,10 @@ bool CUploadQueue::CanProbeUploadCooldownCandidate(CUpDownClient *client, ULONGL
 		&& itNoRequest->second.ullCooldownUntil > curTick)
 	{
 		const ULONGLONG ullCooldownRemainingMs = itNoRequest->second.ullCooldownUntil - curTick;
-		// WHY: productive no-request peers have already contributed payload and
-		// often ask for another burst shortly after draining. Under severe
-		// broadband underfill, allow a near-expiry productive probe while keeping
-		// unproductive repeat no-request cooldowns as hard admission gates.
+		// WHY: during sparse-demand broadband underfill, keeping every no-request
+		// peer behind cooldown can leave the upload line permanently starved.
+		// Probe no-request peers only while below the configured base slot target;
+		// elastic overflow still treats those cooldowns as hard gates.
 		return ShouldProbeNoRequestCooldownCandidate(
 			itNoRequest->second.bProductiveRecycle,
 			ullCooldownRemainingMs,
@@ -1211,7 +1211,7 @@ bool CUploadQueue::CanProbeUploadCooldownCandidate(CUpDownClient *client, ULONGL
 			ShouldProbeUploadCooldownCandidate(HasSustainedBroadbandUnderfill(curTick), uploadinglist.GetCount(), GetSoftMaxUploadSlots()));
 	}
 
-	return true;
+	return false;
 }
 
 void CUploadQueue::SetUploadRetryCooldown(CUpDownClient *client, ULONGLONG ullCooldownUntil, UploadRetryCooldownReason eReason)
@@ -1331,8 +1331,13 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 	bool bHadIPCooldown = false;
 	bool bHadNoRequestCooldown = false;
 	bool bClearedProductiveNoRequestCooldown = false;
+	bool bClearedUnderfilledNoRequestCooldown = false;
 	if (dwCooldownIP != 0) {
 		const ULONGLONG curTick = ::GetTickCount64();
+		const bool bOpenBaseSlotUnderfill = ShouldProbeUploadCooldownCandidate(
+			HasSustainedBroadbandUnderfill(curTick),
+			uploadinglist.GetCount(),
+			GetSoftMaxUploadSlots());
 		std::map<uint32, NoRequestUploadRetryCooldownState>::iterator itNoRequest = m_noRequestUploadRetryCooldownByIP.find(dwCooldownIP);
 		if (itNoRequest != m_noRequestUploadRetryCooldownByIP.end()) {
 			if (itNoRequest->second.ullTrackUntil <= curTick) {
@@ -1346,16 +1351,25 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 					return false;
 				}
 				itNoRequest->second.bQueuedRequestClearUsed = true;
-				if (bProductiveNoRequestRecycle) {
+				if (ShouldClearActiveNoRequestCooldownOnQueuedRequest(
+						bProductiveNoRequestRecycle,
+						bOpenBaseSlotUnderfill))
+				{
 					itNoRequest->second.ullCooldownUntil = curTick;
-					bClearedProductiveNoRequestCooldown = true;
+					if (bProductiveNoRequestRecycle)
+						bClearedProductiveNoRequestCooldown = true;
+					else
+						bClearedUnderfilledNoRequestCooldown = true;
 				}
 			}
 		}
-		if (ShouldBlockQueuedRequestRetryClearForActiveNoRequest(bHadNoRequestCooldown, bClearedProductiveNoRequestCooldown)) {
+		if (ShouldBlockQueuedRequestRetryClearForActiveNoRequest(
+				bHadNoRequestCooldown,
+				bClearedProductiveNoRequestCooldown || bClearedUnderfilledNoRequestCooldown))
+		{
 			// WHY: unproductive no-request slots have not proven renewed upload
-			// demand. Do not let a queued block request or open-cap underfill
-			// bypass the still-active repeat no-request throttle.
+			// demand. Do not let a queued block request bypass that throttle
+			// unless sustained underfill still has open base-slot capacity.
 			if (ppszDiagnosticsReason != NULL)
 				*ppszDiagnosticsReason = _T("reject-not-uploading-unproductive-no-request-active");
 			return false;
@@ -1378,7 +1392,7 @@ bool CUploadQueue::ClearUploadRetryCooldown(CUpDownClient *client, LPCTSTR *ppsz
 	}
 	if (client != NULL)
 		client->ClearSlowUploadCooldown();
-	if (bHadClientCooldown || bHadIPCooldown || bClearedProductiveNoRequestCooldown)
+	if (bHadClientCooldown || bHadIPCooldown || bClearedProductiveNoRequestCooldown || bClearedUnderfilledNoRequestCooldown)
 		return true;
 	if (ppszDiagnosticsReason != NULL)
 		*ppszDiagnosticsReason = bHadNoRequestCooldown ? _T("reject-not-uploading-no-request-only-cooldown") : _T("reject-not-uploading-no-active-cooldown");

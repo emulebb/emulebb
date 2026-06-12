@@ -123,13 +123,21 @@ inline bool ShouldAttemptUploadSlotAdmission(bool bAllowEmptyWaitingQueue, bool 
 }
 
 /**
+ * @brief Reports whether sustained underfill has spare room below the configured base upload-slot target.
+ */
+inline bool HasOpenBaseUploadSlotDuringBroadbandUnderfill(bool bSustainedUnderfill, std::int64_t iUploadSlots, std::int64_t iSoftMaxUploadSlots)
+{
+	return bSustainedUnderfill
+		&& iSoftMaxUploadSlots > 0
+		&& iUploadSlots < iSoftMaxUploadSlots;
+}
+
+/**
  * @brief Reports whether sustained underfill may probe a cooldown-only waiting queue.
  */
 inline bool ShouldProbeUploadCooldownCandidate(bool bSustainedUnderfill, std::int64_t iUploadSlots, std::int64_t iSoftMaxUploadSlots)
 {
-	(void)iUploadSlots;
-	(void)iSoftMaxUploadSlots;
-	return bSustainedUnderfill;
+	return HasOpenBaseUploadSlotDuringBroadbandUnderfill(bSustainedUnderfill, iUploadSlots, iSoftMaxUploadSlots);
 }
 
 /**
@@ -139,11 +147,12 @@ inline bool ShouldProbeNoRequestCooldownCandidate(
 	bool bProductiveNoRequestCooldown,
 	std::uint64_t ullCooldownRemainingMs,
 	std::uint64_t ullMaxProductiveProbeRemainingMs = kProductiveNoRequestCooldownProbeRemainingMs,
-	bool bOpenCapUnderfill = false)
+	bool bOpenBaseSlotUnderfill = false)
 {
-	return bProductiveNoRequestCooldown
-		&& bOpenCapUnderfill
-		&& ullCooldownRemainingMs <= ullMaxProductiveProbeRemainingMs;
+	(void)bProductiveNoRequestCooldown;
+	(void)ullCooldownRemainingMs;
+	(void)ullMaxProductiveProbeRemainingMs;
+	return bOpenBaseSlotUnderfill;
 }
 
 /**
@@ -516,14 +525,21 @@ inline bool ShouldAllowNoRequestCooldownClear(
 		|| !bQueuedRequestClearAlreadyUsed;
 }
 
+inline bool ShouldClearActiveNoRequestCooldownOnQueuedRequest(
+	bool bProductiveNoRequestCooldown,
+	bool bOpenBaseSlotUnderfill)
+{
+	return bProductiveNoRequestCooldown || bOpenBaseSlotUnderfill;
+}
+
 /**
  * @brief Reports whether an active no-request cooldown still blocks queued-request retry clears.
  */
 inline bool ShouldBlockQueuedRequestRetryClearForActiveNoRequest(
 	bool bHadNoRequestCooldown,
-	bool bClearedProductiveNoRequestCooldown)
+	bool bClearedNoRequestCooldown)
 {
-	return bHadNoRequestCooldown && !bClearedProductiveNoRequestCooldown;
+	return bHadNoRequestCooldown && !bClearedNoRequestCooldown;
 }
 
 inline bool ShouldAllowUploadRetryCooldownClear(bool bRetryCooldownTracked, bool bQueuedRequestClearAlreadyUsed)
