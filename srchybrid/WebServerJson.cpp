@@ -1226,14 +1226,24 @@ size_t GetListPageLimit(const json &rParams)
 	return static_cast<size_t>(max(1, min(1000, rParams.value("_limit", 100))));
 }
 
-json BuildPagedItemsEnvelope(const json &rItems, const size_t uTotal, const size_t uOffset, const size_t uLimit)
+/**
+ * Builds the shared pagination metadata ({total, offset, limit}) carried by
+ * every paged response so collections and the search resource stay identical.
+ */
+json BuildPageMetaJson(const size_t uTotal, const size_t uOffset, const size_t uLimit)
 {
 	return json{
-		{"items", rItems},
 		{"total", uTotal},
 		{"offset", uOffset},
 		{"limit", uLimit}
 	};
+}
+
+json BuildPagedItemsEnvelope(const json &rItems, const size_t uTotal, const size_t uOffset, const size_t uLimit)
+{
+	json envelope = BuildPageMetaJson(uTotal, uOffset, uLimit);
+	envelope["items"] = rItems;
+	return envelope;
 }
 
 /**
@@ -4153,14 +4163,14 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 
-		return json{
-			{"id", StdUtf8FromCString(FormatSearchId(pSearchParams->dwSearchID))},
-			{"query", StdUtf8FromCString(pSearchParams->strExpression)},
-			{"method", GetSearchMethodName(pSearchParams->eType)},
-			{"type", GetSearchTypeName(pSearchParams->strFileType)},
-			{"status", "running"},
-			{"results", json::array()}
-		};
+		json response = BuildPageMetaJson(0, GetListPageOffset(params), GetListPageLimit(params));
+		response["id"] = StdUtf8FromCString(FormatSearchId(pSearchParams->dwSearchID));
+		response["query"] = StdUtf8FromCString(pSearchParams->strExpression);
+		response["method"] = GetSearchMethodName(pSearchParams->eType);
+		response["type"] = GetSearchTypeName(pSearchParams->strFileType);
+		response["status"] = "running";
+		response["items"] = json::array();
+		return response;
 	}
 
 	if (strCommand == "search/list") {
@@ -4211,17 +4221,14 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 				results.push_back(BuildSearchResultJson(*pResult, pSearchParams, bIncludeEvidence));
 		}
 
-		return json{
-			{"id", StdUtf8FromCString(FormatSearchId(uSearchID))},
-			{"query", StdUtf8FromCString(pSearchParams->strExpression)},
-			{"method", GetSearchMethodName(pSearchParams->eType)},
-			{"type", GetSearchTypeName(pSearchParams->strFileType)},
-			{"status", theApp.emuledlg->searchwnd->m_pwndResults->IsSearchRunning(uSearchID) ? "running" : "complete"},
-			{"total", uTotal},
-			{"offset", uOffset},
-			{"limit", uLimit},
-			{"results", results}
-		};
+		json response = BuildPageMetaJson(uTotal, uOffset, uLimit);
+		response["id"] = StdUtf8FromCString(FormatSearchId(uSearchID));
+		response["query"] = StdUtf8FromCString(pSearchParams->strExpression);
+		response["method"] = GetSearchMethodName(pSearchParams->eType);
+		response["type"] = GetSearchTypeName(pSearchParams->strFileType);
+		response["status"] = theApp.emuledlg->searchwnd->m_pwndResults->IsSearchRunning(uSearchID) ? "running" : "complete";
+		response["items"] = results;
+		return response;
 	}
 
 	if (strCommand == "search/stop") {
