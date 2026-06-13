@@ -1054,7 +1054,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"GET", "/searches", "", ""},
 		{"POST", "/searches", "query,method,type,minSizeBytes,maxSizeBytes,minAvailability,extension", ""},
 		{"DELETE", "/searches", "", "confirm"},
-		{"GET", "/searches/{searchId}", "", "offset,limit"},
+		{"GET", "/searches/{searchId}", "", "offset,limit,includeEvidence,exactTotal"},
 		{"DELETE", "/searches/{searchId}", "", ""},
 		{"POST", "/searches/{searchId}/results/{hash}/operations/download", "categoryId,categoryName,paused", ""},
 		{"GET", "/friends", "", ""},
@@ -2259,6 +2259,16 @@ inline bool ValidateQueryFields(const std::map<std::string, std::string> &rQuery
 			if (!TryParseBooleanQueryValue(it->second, "includeScoreBreakdown", bIgnored, rErrorCode, rErrorMessage))
 				return false;
 		}
+		if (it->first == "includeEvidence") {
+			bool bIgnored = false;
+			if (!TryParseBooleanQueryValue(it->second, "includeEvidence", bIgnored, rErrorCode, rErrorMessage))
+				return false;
+		}
+		if (it->first == "exactTotal") {
+			bool bIgnored = false;
+			if (!TryParseBooleanQueryValue(it->second, "exactTotal", bIgnored, rErrorCode, rErrorMessage))
+				return false;
+		}
 	}
 	if (IsRouteSpec(rSpec, "DELETE", "/transfers/{hash}/files")
 		|| IsRouteSpec(rSpec, "DELETE", "/shared-files/{hash}/file")
@@ -2311,6 +2321,21 @@ inline void CopyUploadQueueQueryParams(const std::map<std::string, std::string> 
 	const std::map<std::string, std::string>::const_iterator itIncludeScoreBreakdown = rQuery.find("includeScoreBreakdown");
 	if (itIncludeScoreBreakdown != rQuery.end())
 		rParams["includeScoreBreakdown"] = itIncludeScoreBreakdown->second == "true";
+}
+
+/**
+ * @brief Copies the search-results paging plus payload-shaping query parameters
+ * into one command payload.
+ */
+inline void CopySearchResultsQueryParams(const std::map<std::string, std::string> &rQuery, json &rParams)
+{
+	CopyPagingQueryParams(rQuery, rParams);
+	const std::map<std::string, std::string>::const_iterator itIncludeEvidence = rQuery.find("includeEvidence");
+	if (itIncludeEvidence != rQuery.end())
+		rParams["includeEvidence"] = itIncludeEvidence->second == "true";
+	const std::map<std::string, std::string>::const_iterator itExactTotal = rQuery.find("exactTotal");
+	if (itExactTotal != rQuery.end())
+		rParams["exactTotal"] = itExactTotal->second == "true";
 }
 
 /**
@@ -3001,7 +3026,7 @@ inline bool TryBuildRoute(
 	if (route.size() == 2 && route[0] == "searches" && bGet) {
 		rRoute.strCommand = "search/results";
 		rRoute.params["searchId"] = route[1];
-		CopyPagingQueryParams(query, rRoute.params);
+		CopySearchResultsQueryParams(query, rRoute.params);
 		return true;
 	}
 	if (route.size() == 2 && route[0] == "searches" && bDelete) {

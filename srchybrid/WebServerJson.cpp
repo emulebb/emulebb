@@ -3214,7 +3214,12 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 		const bool bImported = InvokeWebGuiInteraction(WEBGUIIA_UPDATESERVERMETFROMURL, reinterpret_cast<LPARAM>(static_cast<LPCTSTR>(strURL))) != 0;
-		return json{{"ok", bImported}, {"imported", bImported}};
+		if (!bImported) {
+			rError.strCode = "EMULE_ERROR";
+			rError.strMessage = _T("failed to update server.met from URL");
+			return json();
+		}
+		return json{{"ok", true}, {"imported", true}};
 	}
 
 	if (strCommand == "servers/remove") {
@@ -3263,7 +3268,12 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 		const bool bImported = InvokeWebGuiInteraction(WEBGUIIA_UPDATENODESDATFROMURL, reinterpret_cast<LPARAM>(static_cast<LPCTSTR>(strURL))) != 0;
-		return json{{"ok", bImported}, {"imported", bImported}};
+		if (!bImported) {
+			rError.strCode = "EMULE_ERROR";
+			rError.strMessage = _T("failed to update nodes.dat from URL");
+			return json();
+		}
+		return json{{"ok", true}, {"imported", true}};
 	}
 
 	if (strCommand == "kad/bootstrap") {
