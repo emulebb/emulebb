@@ -727,6 +727,10 @@ bool CServerSocket::PacketReceived(Packet *packet)
 				Debug(_T("Received compressed server TCP packet; opcode=0x%02x  size=%u  uncompr size=%u\n"), packet->opcode, uComprSize, packet->size);
 		}
 
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+		PacketDiagnosticsLogServerPacket(_T("ed2k-server"), _T("tcp"), _T("recv"),
+			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
+#endif
 		if (packet->prot == OP_EDONKEYPROT)
 			ProcessPacket((BYTE*)packet->pBuffer, packet->size, packet->opcode);
 		else if (thePrefs.GetVerbose())
@@ -770,5 +774,10 @@ void CServerSocket::SetConnectionState(int newstate)
 void CServerSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayloadSize, bool bForceImmediateSend)
 {
 	m_dwLastTransmission = ::GetTickCount64();
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+	if (packet != NULL)
+		PacketDiagnosticsLogServerPacket(_T("ed2k-server"), _T("tcp"), _T("send"),
+			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
+#endif
 	CEMSocket::SendPacket(packet, controlpacket, actualPayloadSize, bForceImmediateSend);
 }
