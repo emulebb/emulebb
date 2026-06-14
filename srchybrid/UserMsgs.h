@@ -66,6 +66,7 @@ enum EUserWndMessages
 	, UM_MONITORED_SHARED_DIR_UPDATE
 	, UM_BIND_INTERFACE_CHANGED
 	, UM_VPN_GUARD_PROBE_RESULT
+	, UM_VPN_GUARD_STUN_PROBE_RESULT
 
 	// CEditDelayed filter dropdown: WPARAM = HMENU to append owner items to
 	, UM_FILTER_MENU_EXTEND

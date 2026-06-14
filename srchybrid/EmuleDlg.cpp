@@ -1540,6 +1540,7 @@ BEGIN_MESSAGE_MAP(CemuleDlg, CTrayDialog)
 	ON_MESSAGE(UM_IPFILTER_UPDATED, OnIPFilterUpdated)
 	ON_MESSAGE(UM_BIND_INTERFACE_CHANGED, OnBindInterfaceChanged)
 	ON_MESSAGE(UM_VPN_GUARD_PROBE_RESULT, OnVpnGuardProbeResult)
+	ON_MESSAGE(UM_VPN_GUARD_STUN_PROBE_RESULT, OnVpnGuardStunProbeResult)
 	ON_WM_SHOWWINDOW()
 	ON_WM_DESTROY()
 	ON_WM_SETTINGCHANGE()
@@ -2305,9 +2306,10 @@ void CemuleDlg::OnStartupTimer() noexcept
 						if (thePrefs.GetNotifierOnImportantError())
 							theApp.emuledlg->ShowNotifier(strError, TBN_IMPORTANTEVENT);
 					}
-					if (!thePrefs.IsVpnGuardEnabled())
+					if (!thePrefs.IsVpnGuardEnabled()) {
+						PublicIpProbe::StartBoundStunIpv4Probe();
 						PublicIpProbe::StartBoundPublicIpv4Probe();
-					else if (thePrefs.IsUPnPEnabled())
+					} else if (thePrefs.IsUPnPEnabled())
 						StartUPnP();
 				}
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
@@ -2592,7 +2594,14 @@ bool CemuleDlg::StartVpnGuardProbe(const CString& strPurpose, bool bRuntime)
 	}
 
 	const uint32 uGeneration = ++m_uVpnGuardProbeGeneration;
-	if (!PublicIpProbe::StartBoundPublicIpv4Probe(m_hWnd, UM_VPN_GUARD_PROBE_RESULT, uGeneration, strPurpose, strError)) {
+	m_bVpnGuardStartupProbePending = false;
+	m_bVpnGuardRuntimeProbePending = false;
+
+	// Gate on UDP/STUN first: it is fast, needs no HTTP Host-header handling, and
+	// covers the UDP data-plane egress. Only once STUN reports an allowed IP do we
+	// run the TCP/HTTP confirmer (HandleVpnGuardGateOutcome). Either check failing
+	// fails the cycle closed.
+	if (!PublicIpProbe::StartBoundStunIpv4Probe(m_hWnd, UM_VPN_GUARD_STUN_PROBE_RESULT, uGeneration, strPurpose, strError)) {
 		const CString strReason = FormatVpnGuardPublicIpFailure(bRuntime, PublicIpProbe::SBoundPublicIpv4ProbeResult(), strError);
 		if (bRuntime)
 			ExitForVpnGuardFailure(strReason);
@@ -2606,7 +2615,7 @@ bool CemuleDlg::StartVpnGuardProbe(const CString& strPurpose, bool bRuntime)
 	m_bVpnGuardStartupProbePending = !bRuntime;
 	m_bVpnGuardRuntimeProbePending = bRuntime;
 	LPCTSTR pszLocalBind = thePrefs.GetBindAddr() != NULL ? thePrefs.GetBindAddr() : _T("default");
-	Log(_T("VPN Guard %s public IP check pending: allowedCIDRs=%s bindInterface=%s localBind=%s"),
+	Log(_T("VPN Guard %s UDP/STUN egress gate pending: allowedCIDRs=%s bindInterface=%s localBind=%s"),
 		(LPCTSTR)strPurpose,
 		(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs(),
 		(LPCTSTR)thePrefs.GetActiveBindInterfaceName(),
@@ -2648,50 +2657,42 @@ LRESULT CemuleDlg::OnBindInterfaceChanged(WPARAM, LPARAM)
 	return 0;
 }
 
+LRESULT CemuleDlg::OnVpnGuardStunProbeResult(WPARAM wParam, LPARAM lParam)
+{
+	std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult(reinterpret_cast<PublicIpProbe::SBoundPublicIpv4ProbeResult*>(lParam));
+	HandleVpnGuardGateOutcome(wParam, std::move(pResult));
+	return 0;
+}
+
 LRESULT CemuleDlg::OnVpnGuardProbeResult(WPARAM wParam, LPARAM lParam)
 {
 	std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult(reinterpret_cast<PublicIpProbe::SBoundPublicIpv4ProbeResult*>(lParam));
-	if (m_bBindLossShutdown || pResult.get() == NULL)
-		return 0;
-	if (static_cast<uint32>(wParam) != m_uVpnGuardProbeGeneration || pResult->uGeneration != m_uVpnGuardProbeGeneration)
-		return 0;
+	HandleVpnGuardConfirmOutcome(wParam, std::move(pResult));
+	return 0;
+}
 
-	const bool bRuntime = m_bVpnGuardRuntimeProbePending;
-	const bool bStartup = m_bVpnGuardStartupProbePending;
-	m_bVpnGuardStartupProbePending = false;
-	m_bVpnGuardRuntimeProbePending = false;
-
+// Evaluates one egress probe result against the configured allowed ranges.
+// Returns true when the public IP is allowed; otherwise rstrError carries any
+// range-load error (empty when the IP simply fell outside the allowed CIDRs).
+bool CemuleDlg::IsVpnGuardProbeAllowed(const PublicIpProbe::SBoundPublicIpv4ProbeResult& result, CString& rstrError)
+{
 	std::vector<VpnGuardSeams::SAllowedPublicIpv4Range> ranges;
-	CString strError;
-	const bool bRangesLoaded = TryLoadVpnGuardAllowedRanges(ranges, strError);
+	const bool bRangesLoaded = TryLoadVpnGuardAllowedRanges(ranges, rstrError);
 	const bool bPublicIpCheckRequired = bRangesLoaded && !ranges.empty();
 	const bool bPublicIpAllowed = bPublicIpCheckRequired
-		&& VpnGuardSeams::IsPublicIpv4Allowed(pResult->uPublicAddress, ranges);
-	const bool bAllowed = bRangesLoaded
-		&& VpnGuardPolicySeams::IsProbeResultAllowed(bPublicIpCheckRequired, pResult->bSucceeded, bPublicIpAllowed);
-	if (bAllowed) {
-		if (bStartup) {
-			CString strDetail;
-			strDetail.Format(_T("provider=%s publicIp=%S allowedCIDRs=%s"),
-				(LPCTSTR)pResult->strProviderUrl,
-				pResult->strPublicAddress.GetString(),
-				(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs());
-			AddServerMessageLine(LOG_SUCCESS, FormatVpnGuardServerInfoPassed(strDetail));
-		}
-		Log(_T("VPN Guard %s public IP check passed: provider=%s publicIp=%S allowedCIDRs=%s"),
-			(LPCTSTR)pResult->strPurpose,
-			(LPCTSTR)pResult->strProviderUrl,
-			pResult->strPublicAddress.GetString(),
-			(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs());
-		if (bStartup) {
-			m_bVpnGuardStartupApproved = true;
-			m_ullLastVpnGuardRuntimeProbeTick = ::GetTickCount64();
-			VERIFY(PostMessage(UM_STARTUP_NEXT_STAGE) != 0);
-		}
-		return 0;
-	}
+		&& VpnGuardSeams::IsPublicIpv4Allowed(result.uPublicAddress, ranges);
+	return bRangesLoaded
+		&& VpnGuardPolicySeams::IsProbeResultAllowed(bPublicIpCheckRequired, result.bSucceeded, bPublicIpAllowed);
+}
 
-	const CString strReason = FormatVpnGuardPublicIpFailure(bRuntime, *pResult, strError);
+// Fails the current guard cycle closed. Bumps the generation so any later/stale
+// probe result for this cycle is dropped, then routes startup and runtime
+// failures into the shared pause-all-P2P path.
+void CemuleDlg::FailVpnGuardCycle(bool bRuntime, bool bStartup, const CString& strReason)
+{
+	m_bVpnGuardStartupProbePending = false;
+	m_bVpnGuardRuntimeProbePending = false;
+	++m_uVpnGuardProbeGeneration;
 	if (bRuntime)
 		ExitForVpnGuardFailure(strReason);
 	else {
@@ -2700,7 +2701,79 @@ LRESULT CemuleDlg::OnVpnGuardProbeResult(WPARAM wParam, LPARAM lParam)
 		if (bStartup)
 			VERIFY(PostMessage(UM_STARTUP_NEXT_STAGE) != 0);
 	}
-	return 0;
+}
+
+// STUN (UDP) gate result. On an allowed IP it starts the TCP/HTTP confirmer for
+// the same cycle; any failure fails the cycle closed.
+void CemuleDlg::HandleVpnGuardGateOutcome(WPARAM wParam, std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult)
+{
+	if (m_bBindLossShutdown || pResult.get() == NULL)
+		return;
+	if (static_cast<uint32>(wParam) != m_uVpnGuardProbeGeneration || pResult->uGeneration != m_uVpnGuardProbeGeneration)
+		return;
+
+	const bool bRuntime = m_bVpnGuardRuntimeProbePending;
+	const bool bStartup = m_bVpnGuardStartupProbePending;
+
+	CString strError;
+	if (!IsVpnGuardProbeAllowed(*pResult, strError)) {
+		FailVpnGuardCycle(bRuntime, bStartup, FormatVpnGuardPublicIpFailure(bRuntime, *pResult, strError));
+		return;
+	}
+
+	Log(_T("VPN Guard %s UDP/STUN egress gate passed: server=%s publicIp=%S allowedCIDRs=%s"),
+		(LPCTSTR)pResult->strPurpose,
+		(LPCTSTR)pResult->strProviderUrl,
+		pResult->strPublicAddress.GetString(),
+		(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs());
+
+	// Gate clean -- now confirm the TCP egress over HTTP for the same generation.
+	CString strStartError;
+	if (!PublicIpProbe::StartBoundPublicIpv4Probe(m_hWnd, UM_VPN_GUARD_PROBE_RESULT, m_uVpnGuardProbeGeneration, pResult->strPurpose, strStartError)) {
+		FailVpnGuardCycle(bRuntime, bStartup,
+			FormatVpnGuardPublicIpFailure(bRuntime, PublicIpProbe::SBoundPublicIpv4ProbeResult(), strStartError));
+		return;
+	}
+	Log(_T("VPN Guard %s TCP/HTTP egress confirmer pending: allowedCIDRs=%s"),
+		(LPCTSTR)pResult->strPurpose,
+		(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs());
+}
+
+// TCP/HTTP confirmer result, reached only after the STUN gate passed. An allowed
+// IP approves the cycle; failure fails it closed.
+void CemuleDlg::HandleVpnGuardConfirmOutcome(WPARAM wParam, std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult)
+{
+	if (m_bBindLossShutdown || pResult.get() == NULL)
+		return;
+	if (static_cast<uint32>(wParam) != m_uVpnGuardProbeGeneration || pResult->uGeneration != m_uVpnGuardProbeGeneration)
+		return;
+
+	const bool bRuntime = m_bVpnGuardRuntimeProbePending;
+	const bool bStartup = m_bVpnGuardStartupProbePending;
+
+	CString strError;
+	if (!IsVpnGuardProbeAllowed(*pResult, strError)) {
+		FailVpnGuardCycle(bRuntime, bStartup, FormatVpnGuardPublicIpFailure(bRuntime, *pResult, strError));
+		return;
+	}
+
+	m_bVpnGuardStartupProbePending = false;
+	m_bVpnGuardRuntimeProbePending = false;
+	Log(_T("VPN Guard %s public IP checks passed (STUN gate + HTTP confirm): provider=%s publicIp=%S allowedCIDRs=%s"),
+		(LPCTSTR)pResult->strPurpose,
+		(LPCTSTR)pResult->strProviderUrl,
+		pResult->strPublicAddress.GetString(),
+		(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs());
+	if (bStartup) {
+		CString strDetail;
+		strDetail.Format(_T("publicIp=%S allowedCIDRs=%s (STUN gate + HTTP confirm)"),
+			pResult->strPublicAddress.GetString(),
+			(LPCTSTR)thePrefs.GetVpnGuardAllowedPublicIpCidrs());
+		AddServerMessageLine(LOG_SUCCESS, FormatVpnGuardServerInfoPassed(strDetail));
+		m_bVpnGuardStartupApproved = true;
+		m_ullLastVpnGuardRuntimeProbeTick = ::GetTickCount64();
+		VERIFY(PostMessage(UM_STARTUP_NEXT_STAGE) != 0);
+	}
 }
 
 LRESULT CemuleDlg::OnGeoLocationUpdated(WPARAM wParam, LPARAM)

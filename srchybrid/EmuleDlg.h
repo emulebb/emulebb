@@ -53,6 +53,7 @@ class CSharedFilesWnd;
 class CStatisticsDlg;
 class CTransferDlg;
 struct Status;
+namespace PublicIpProbe { struct SBoundPublicIpv4ProbeResult; }
 
 extern UINT g_uMainThreadId;
 
@@ -279,6 +280,12 @@ protected:
 	void CheckBindLossMonitor();
 	void CheckVpnGuardHttpMonitor(bool bForce);
 	bool StartVpnGuardProbe(const CString& strPurpose, bool bRuntime);
+	// Sequential egress checks: STUN (UDP) is the gate; once it reports an allowed
+	// IP the HTTP (TCP) confirmer runs. Either failing fails the cycle closed.
+	void HandleVpnGuardGateOutcome(WPARAM wParam, std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult);
+	void HandleVpnGuardConfirmOutcome(WPARAM wParam, std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult);
+	bool IsVpnGuardProbeAllowed(const PublicIpProbe::SBoundPublicIpv4ProbeResult& result, CString& rstrError);
+	void FailVpnGuardCycle(bool bRuntime, bool bStartup, const CString& strReason);
 	void ExitForVpnGuardFailure(const CString &strReason);
 	void ExitForBindLoss(const CString &strReason);
 	bool IsBindLossMonitorConfigured() const;
@@ -341,6 +348,7 @@ protected:
 	afx_msg LRESULT OnIPFilterUpdated(WPARAM, LPARAM);
 	afx_msg LRESULT OnBindInterfaceChanged(WPARAM, LPARAM);
 	afx_msg LRESULT OnVpnGuardProbeResult(WPARAM, LPARAM);
+	afx_msg LRESULT OnVpnGuardStunProbeResult(WPARAM, LPARAM);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnBnClickedConnect();
