@@ -685,6 +685,7 @@
     <ClInclude Include="ProcessLaunchSeams.h" />
     <ClInclude Include="PublicIpProbe.h" />
     <ClInclude Include="PublicIpProbeSeams.h" />
+    <ClInclude Include="StunProbeSeams.h" />
     <ClInclude Include="PreviewDlg.h" />
     <ClInclude Include="ProgressCtrlX.h" />
     <ClInclude Include="QArray.h" />

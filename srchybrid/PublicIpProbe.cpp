@@ -19,6 +19,8 @@
 #include "Log.h"
 #include "Preferences.h"
 #include "PublicIpProbeSeams.h"
+#include "StunProbeSeams.h"
+#include "otherfunctions.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -243,6 +245,103 @@ namespace
 		return false;
 	}
 
+	bool FetchStunServer(
+		const StunProbeSeams::SStunIpv4ProbeServer& server,
+		const SProbeContext& context,
+		uint32& ruPublicAddress,
+		CString& rstrError)
+	{
+		ruPublicAddress = 0;
+		rstrError.Empty();
+
+		addrinfo hints = {};
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_protocol = IPPROTO_UDP;
+		CAddrInfoHandle addresses;
+		const int nLookup = getaddrinfo(server.pszHost, server.pszPort, &hints, addresses.Out());
+		if (nLookup != 0 || addresses.Get() == NULL) {
+			rstrError.Format(_T("getaddrinfo failed (%d)"), nLookup);
+			return false;
+		}
+
+		sockaddr_in bindAddress = {};
+		bindAddress.sin_family = AF_INET;
+		bindAddress.sin_port = 0;
+		if (inet_pton(AF_INET, context.strBindAddress, &bindAddress.sin_addr) != 1) {
+			rstrError.Format(_T("invalid bind address %S"), context.strBindAddress.GetString());
+			return false;
+		}
+
+		// Use the first resolved address only; resilience comes from racing several
+		// servers (StartBoundStunIpv4Probe), not from serial per-address retries --
+		// matching the libtorrent and rust probes.
+		addrinfo* const pAddress = addresses.Get();
+		CSocketHandle socketHandle;
+		socketHandle.Reset(socket(pAddress->ai_family, pAddress->ai_socktype, pAddress->ai_protocol));
+		if (!socketHandle) {
+			rstrError.Format(_T("socket failed (%d)"), WSAGetLastError());
+			return false;
+		}
+
+		setsockopt(socketHandle.Get(), SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&kProbeTimeoutMs), sizeof kProbeTimeoutMs);
+		setsockopt(socketHandle.Get(), SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<const char*>(&kProbeTimeoutMs), sizeof kProbeTimeoutMs);
+
+		int nBindInterfaceError = 0;
+		if (!BindInterfaceSocketSeams::ApplyIpv4UnicastInterfaceOption(
+			socketHandle.Get(),
+			AF_INET,
+			true,
+			true,
+			context.dwBindInterfaceIndex,
+			&nBindInterfaceError)) {
+			rstrError.Format(_T("IP_UNICAST_IF failed (%d)"), nBindInterfaceError);
+			return false;
+		}
+		if (bind(socketHandle.Get(), reinterpret_cast<const sockaddr*>(&bindAddress), sizeof bindAddress) == SOCKET_ERROR) {
+			rstrError.Format(_T("bind failed (%d)"), WSAGetLastError());
+			return false;
+		}
+		// WHY: connect() the UDP socket to the STUN server so the kernel drops
+		// datagrams from any other source. For a security gate this stops an
+		// off-path host from injecting a spoofed Binding response, and lets us
+		// use send()/recv() without inspecting the sender.
+		if (connect(socketHandle.Get(), pAddress->ai_addr, static_cast<int>(pAddress->ai_addrlen)) == SOCKET_ERROR) {
+			rstrError.Format(_T("connect failed (%d)"), WSAGetLastError());
+			return false;
+		}
+
+		// 96-bit random transaction id (house RNG); the response is matched
+		// against it plus the magic cookie before we trust the mapped address.
+		uint8 txid[StunProbeSeams::kStunTransactionIdLen];
+		for (size_t i = 0; i < sizeof txid; i += sizeof(uint32)) {
+			const uint32 uRandom = GetRandomUInt32();
+			memcpy(txid + i, &uRandom, sizeof uRandom);
+		}
+		uint8 request[StunProbeSeams::kStunHeaderLen];
+		StunProbeSeams::BuildStunBindingRequest(txid, request);
+
+		// Single send, no retransmit: resilience comes from racing several servers
+		// (StartBoundStunIpv4Probe), not from per-socket retries.
+		const int nSent = send(socketHandle.Get(), reinterpret_cast<const char*>(request), static_cast<int>(sizeof request), 0);
+		if (nSent != static_cast<int>(sizeof request)) {
+			rstrError.Format(_T("send failed (%d)"), WSAGetLastError());
+			return false;
+		}
+
+		uint8 response[1500];
+		const int nReceived = recv(socketHandle.Get(), reinterpret_cast<char*>(response), static_cast<int>(sizeof response), 0);
+		if (nReceived <= 0) {
+			rstrError.Format(_T("recv failed (%d)"), WSAGetLastError());
+			return false;
+		}
+		if (StunProbeSeams::TryParseStunIpv4Response(response, static_cast<size_t>(nReceived), txid, ruPublicAddress))
+			return true;
+
+		rstrError = _T("response was not a valid STUN binding success");
+		return false;
+	}
+
 	bool BuildProbeContext(SProbeContext& rContext)
 	{
 		if (thePrefs.GetActiveBindInterface().IsEmpty()
@@ -350,6 +449,74 @@ namespace
 		Release(pState);
 		return 1;
 	}
+
+	struct SStunServerProbeContext
+	{
+		SAsyncProbeState* pState = NULL;
+		StunProbeSeams::SStunIpv4ProbeServer server = {};
+	};
+
+	UINT AFX_CDECL StunServerProbeThreadProc(LPVOID pvContext)
+	{
+		std::unique_ptr<SStunServerProbeContext> pContext(static_cast<SStunServerProbeContext*>(pvContext));
+		SAsyncProbeState* pState = pContext->pState;
+
+		CStringA strPublicAddress;
+		CString strError;
+		bool bSuccess = false;
+		uint32 uAddress = 0;
+		if (FetchStunServer(pContext->server, pState->context, uAddress, strError)) {
+			bSuccess = true;
+			// Format for display/logging from the scalar (same byte order as
+			// IPv4AddressSeams::FormatIPv4Address); uPublicAddress is used as-is.
+			strPublicAddress.Format("%u.%u.%u.%u",
+				uAddress & 0xff, (uAddress >> 8) & 0xff, (uAddress >> 16) & 0xff, (uAddress >> 24) & 0xff);
+		}
+
+		if (bSuccess) {
+			if (!pState->bCompleted.exchange(true, std::memory_order_acq_rel)) {
+				std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult = CreateProbeResult(*pState);
+				pResult->bSucceeded = true;
+				pResult->strPublicAddress = strPublicAddress;
+				pResult->uPublicAddress = uAddress;
+				pResult->strProviderUrl = CString(pContext->server.pszLabel);
+				PostProbeResult(pState, std::move(pResult));
+			}
+			DebugLog(_T("VPN STUN public IPv4 probe: server=%s bindInterface=%s localBind=%S ifIndex=%lu publicIp=%S"),
+				(LPCTSTR)CString(pContext->server.pszLabel),
+				(LPCTSTR)pState->context.strBindInterfaceName,
+				pState->context.strBindAddress.GetString(),
+				pState->context.dwBindInterfaceIndex,
+				strPublicAddress.GetString());
+			Release(pState);
+			return 0;
+		}
+
+		CString strAttempt;
+		strAttempt.Format(_T("%S: %s"), pContext->server.pszLabel, (LPCTSTR)strError);
+		{
+			std::lock_guard<std::mutex> lock(pState->mutex);
+			if (!pState->strAttempts.IsEmpty())
+				pState->strAttempts.Append(_T("; "));
+			pState->strAttempts.Append(strAttempt);
+		}
+		if (pState->nRemaining.fetch_sub(1, std::memory_order_acq_rel) == 1
+			&& !pState->bCompleted.exchange(true, std::memory_order_acq_rel)) {
+			std::unique_ptr<PublicIpProbe::SBoundPublicIpv4ProbeResult> pResult = CreateProbeResult(*pState);
+			{
+				std::lock_guard<std::mutex> lock(pState->mutex);
+				pResult->strAttempts = pState->strAttempts;
+			}
+			pResult->strError = pResult->strAttempts.IsEmpty() ? CString(_T("all STUN servers failed")) : pResult->strAttempts;
+			DebugLogWarning(_T("VPN STUN public IPv4 probe failed: bindInterface=%s localBind=%S attempts=%s"),
+				(LPCTSTR)pState->context.strBindInterfaceName,
+				pState->context.strBindAddress.GetString(),
+				(LPCTSTR)pResult->strAttempts);
+			PostProbeResult(pState, std::move(pResult));
+		}
+		Release(pState);
+		return 1;
+	}
 }
 
 void PublicIpProbe::StartBoundPublicIpv4Probe()
@@ -406,6 +573,67 @@ bool PublicIpProbe::StartBoundPublicIpv4Probe(HWND hNotifyWnd, UINT uNotifyMessa
 
 	if (nStarted == 0) {
 		rstrError = pState->strAttempts.IsEmpty() ? CString(_T("could not start public IPv4 probe workers")) : pState->strAttempts;
+		Release(pState);
+		return false;
+	}
+	Release(pState);
+	return true;
+}
+
+void PublicIpProbe::StartBoundStunIpv4Probe()
+{
+	CString strError;
+	if (!StartBoundStunIpv4Probe(NULL, 0, 0, _T("log"), strError) && !strError.IsEmpty())
+		DebugLogWarning(_T("VPN STUN public IPv4 probe failed: %s"), (LPCTSTR)strError);
+}
+
+bool PublicIpProbe::StartBoundStunIpv4Probe(HWND hNotifyWnd, UINT uNotifyMessage, uint32 uGeneration, const CString& strPurpose, CString& rstrError)
+{
+	SProbeContext context;
+	if (!BuildProbeContext(context)) {
+		rstrError = _T("active bind interface is not resolved");
+		return false;
+	}
+
+	size_t nServerCount = 0;
+	const StunProbeSeams::SStunIpv4ProbeServer* pServers = StunProbeSeams::GetStunIpv4ProbeServers(nServerCount);
+	if (nServerCount == 0) {
+		rstrError = _T("no STUN servers are configured");
+		return false;
+	}
+
+	SAsyncProbeState* pState = new SAsyncProbeState;
+	pState->hNotifyWnd = hNotifyWnd;
+	pState->uNotifyMessage = uNotifyMessage;
+	pState->uGeneration = uGeneration;
+	pState->strPurpose = strPurpose;
+	pState->context = context;
+	pState->nRemaining = static_cast<long>(nServerCount);
+
+	long nStarted = 0;
+	for (size_t i = 0; i < nServerCount; ++i) {
+		std::unique_ptr<SStunServerProbeContext> pServerContext(new SStunServerProbeContext);
+		pServerContext->pState = pState;
+		pServerContext->server = pServers[i];
+		AddRef(pState);
+		CWinThread* pThread = AfxBeginThread(StunServerProbeThreadProc, pServerContext.get(), THREAD_PRIORITY_BELOW_NORMAL, 0, 0, NULL);
+		if (pThread == NULL) {
+			Release(pState);
+			pState->nRemaining.fetch_sub(1, std::memory_order_acq_rel);
+			{
+				std::lock_guard<std::mutex> lock(pState->mutex);
+				if (!pState->strAttempts.IsEmpty())
+					pState->strAttempts.Append(_T("; "));
+				pState->strAttempts.AppendFormat(_T("%S: could not start worker"), pServers[i].pszLabel);
+			}
+			continue;
+		}
+		(void)pServerContext.release();
+		++nStarted;
+	}
+
+	if (nStarted == 0) {
+		rstrError = pState->strAttempts.IsEmpty() ? CString(_T("could not start STUN probe workers")) : pState->strAttempts;
 		Release(pState);
 		return false;
 	}
