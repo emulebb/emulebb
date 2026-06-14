@@ -161,6 +161,30 @@ void PacketDiagnosticsLogInvalidSubOpcode(
 	ULONGLONG ullInvalidOffset,
 	ULONGLONG ullBytesRemaining,
 	int iPreviousSubOpcode);
+
+// Logs one ED2K *server* connection packet (TCP) in either direction. Extends the
+// packet diagnostics beyond peer/client packets so server-protocol parity work can
+// be diffed against a reference server. Compile-gated; no-op unless the log is open.
+void PacketDiagnosticsLogServerPacket(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen);
+
+// Logs one ED2K client-to-client (peer) packet (TCP) in either direction. Emits the
+// shared ed2k_packet_v1 schema with flow="client" so the trace diffs 1:1 against the
+// emulebb-rust client-to-client packet dump. Compile-gated; no-op unless the log is open.
+void PacketDiagnosticsLogClientPacket(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen);
 #endif
 
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS

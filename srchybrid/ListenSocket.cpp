@@ -2034,6 +2034,11 @@ bool CClientReqSocket::PacketReceived(Packet *packet)
 	const UINT uRawSize = packet->size;
 	const uint8 opcode = packet->opcode;
 	bool bDelClient;
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+	PacketDiagnosticsLogClientPacket(BuildPacketDiagnosticsPeerLabel(client),
+		GetPacketDiagnosticsTransportMode(client), _T("recv"),
+		packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
+#endif
 	try {
 		try {
 			switch (packet->prot) {
@@ -2190,6 +2195,12 @@ void CClientReqSocket::SendPacket(Packet *packet, bool controlpacket, uint32 act
 		return;
 	}
 	ResetTimeOutTimer();
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+	if (packet != NULL)
+		PacketDiagnosticsLogClientPacket(BuildPacketDiagnosticsPeerLabel(client),
+			GetPacketDiagnosticsTransportMode(client), _T("send"),
+			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
+#endif
 	CEMSocket::SendPacket(packet, controlpacket, actualPayloadSize, bForceImmediateSend);
 }
 

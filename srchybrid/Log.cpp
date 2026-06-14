@@ -426,6 +426,80 @@ void PacketDiagnosticsLogInvalidSubOpcode(
 
 	WriteDiagnosticsLogLine(thePacketDiagnosticsLog, g_packetDiagnosticsLogLock, strJson);
 }
+
+// Shared emitter for one ED2K TCP packet in the converged ed2k_packet_v1 schema.
+// `pszFlow` discriminates the connection family (e.g. "server", "client") so the
+// emulebb-rust and eMuleBB dumps share one shape and diff 1:1.
+static void PacketDiagnosticsLogEd2kPacket(
+	LPCTSTR pszFlow,
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen)
+{
+	if (!thePacketDiagnosticsLog.IsOpen())
+		return;
+
+	const UINT uPayloadHexLen = (pPayload != NULL) ? min(uPayloadLen, kMaxPacketDiagnosticsPayloadHexBytes) : 0;
+	const bool bPayloadHexTruncated = pPayload != NULL && uPayloadLen > uPayloadHexLen;
+	const CString strPayloadHex = BuildPacketDiagnosticsHexString(pPayload, uPayloadHexLen);
+	const LPCTSTR pszProtocolName = PacketDiagnosticsProtocolName(byProtocol);
+	const CString strProtocol = pszProtocolName != NULL ? BuildDiagnosticsJsonStringField(pszProtocolName) : CString(_T("null"));
+	const CString strOpcodeName = DbgGetClientTCPOpcode(byProtocol, byOpcode);
+	const CString strFlow(pszFlow != NULL ? pszFlow : _T("unknown"));
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	const CString strTraceKey(strFlow + _T(":") + strPeer);
+	const ULONGLONG ullEventSeq = NextDiagnosticsEventSeq(g_llPacketDiagnosticsEventSeq);
+
+	CString strJson;
+	strJson.Format(
+		_T("{\"schema\":\"ed2k_packet_v1\",\"source\":\"emulebb\",\"ts_utc\":\"%s\",\"event_seq\":%I64u,\"flow\":\"%s\",\"trace_key\":\"%s\",\"direction\":\"%s\",\"remote_addr\":\"%s\",\"transport_mode\":\"%s\",\"protocol\":%s,\"protocol_marker\":%u,\"opcode\":%u,\"opcode_name\":\"%s\",\"payload_len\":%u,\"payload_hex_truncated\":%s,\"payload_hex\":\"%s\"}\r\n"),
+		(LPCTSTR)EscapeDiagnosticsJson(BuildDiagnosticsTimestampUtc()),
+		ullEventSeq,
+		(LPCTSTR)EscapeDiagnosticsJson(strFlow),
+		(LPCTSTR)EscapeDiagnosticsJson(strTraceKey),
+		(LPCTSTR)EscapeDiagnosticsJson(pszDirection != NULL ? CString(pszDirection) : CString(_T("unknown"))),
+		(LPCTSTR)EscapeDiagnosticsJson(strPeer),
+		(LPCTSTR)EscapeDiagnosticsJson(pszTransportMode != NULL ? CString(pszTransportMode) : CString(_T("unknown"))),
+		(LPCTSTR)strProtocol,
+		static_cast<UINT>(byProtocol),
+		static_cast<UINT>(byOpcode),
+		(LPCTSTR)EscapeDiagnosticsJson(strOpcodeName),
+		uPayloadLen,
+		bPayloadHexTruncated ? _T("true") : _T("false"),
+		(LPCTSTR)strPayloadHex);
+
+	WriteDiagnosticsLogLine(thePacketDiagnosticsLog, g_packetDiagnosticsLogLock, strJson);
+}
+
+void PacketDiagnosticsLogServerPacket(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen)
+{
+	PacketDiagnosticsLogEd2kPacket(_T("server"), pszPeerLabel, pszTransportMode, pszDirection,
+		byProtocol, byOpcode, pPayload, uPayloadLen);
+}
+
+void PacketDiagnosticsLogClientPacket(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen)
+{
+	PacketDiagnosticsLogEd2kPacket(_T("client"), pszPeerLabel, pszTransportMode, pszDirection,
+		byProtocol, byOpcode, pPayload, uPayloadLen);
+}
 #endif
 
 
