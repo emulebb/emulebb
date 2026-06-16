@@ -376,6 +376,12 @@ bool CUploadQueue::AddUpNextClient(LPCTSTR pszReason, CUpDownClient *directadd)
 
 	QueueUploadListDisplayRefresh();
 
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
+	// Slot granted (OP_ACCEPTUPLOADREQ sent above or queued on connect): mirror the
+	// rust upload_queue active transition (master AddUpNextClient) for the harness.
+	DiagEventLogSchedUploadSlotOpened(newclient, newclient->GetUploadFileID());
+#endif
+
 	return true;
 }
 
@@ -2207,6 +2213,12 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 
 			m_iHighestNumberOfFullyActivatedSlotsSinceLastCall = 0;
 
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
+			// Active uploading slot torn down (the client was in uploadinglist, not
+			// merely a waiter leaving the queue): mirror the rust upload_slot_closed.
+			DiagEventLogSchedUploadSlotClosed(client, client->GetUploadFileID());
+#endif
+
 			result = true;
 		} else {
 			if (!IsLiveUploadQueueClient(curClientStruct->m_pClient)) {
@@ -2298,6 +2310,13 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient *client, CString *pstrReason, 
 	const ULONGLONG curTick = ::GetTickCount64();
 	const bool bShouldTrackSlowUploadSlots = ShouldTrackSlowUploadSlots();
 	if (ShouldRecycleIdleUploadSlot(client, curTick, pstrReason)) {
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
+		// Idle/no-request active slot reclaimed for being unproductive during
+		// broadband underfill (master activeNoRequestRecycle*): mirror the rust
+		// upload_slot_recycled. This is distinct from the upload_slot_closed the
+		// follow-up RemoveFromUploadQueue emits for the same teardown.
+		DiagEventLogSchedUploadSlotRecycled(client, client->GetUploadFileID());
+#endif
 		if (pbRequeue != NULL && client->IsBanned())
 			*pbRequeue = false;
 		return true;

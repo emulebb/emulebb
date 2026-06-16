@@ -1678,6 +1678,108 @@ CString md4str(const byte *hash)
 	return EncodeBase16(hash, MDX_DIGEST_SIZE);
 }
 
+#if EMULEBB_HAS_DIAG_EVENT_V1
+CString BuildDiagEventV1SchedKeysJson(const CUpDownClient *pClient, const byte *pFileHash)
+{
+	CString strKeys(_T("{"));
+	bool bHasField = false;
+	if (pClient != NULL) {
+		// peer = advertised "ip:port" (connect IP + advertised user TCP port), the
+		// stable identity the harness aligns slot/source events on across clients.
+		const uint32 dwIP = pClient->GetIP() != 0 ? pClient->GetIP() : pClient->GetConnectIP();
+		if (dwIP != 0) {
+			CString strPeer;
+			strPeer.Format(_T("%s:%u"), (LPCTSTR)ipstr(dwIP), static_cast<UINT>(pClient->GetUserPort()));
+			strKeys.AppendFormat(_T("\"peer\":%s"), (LPCTSTR)BuildDiagnosticsJsonStringField(strPeer));
+			bHasField = true;
+		}
+		// peerHash = LOWER-case 16-byte MD4 user hash; omitted when zero/unknown so
+		// no key is faked. md4str() is UPPER-case, so build the hex ourselves to
+		// match the emulebb-rust hex::encode(user_hash) lower-case key byte-for-byte.
+		if (pClient->HasValidHash()) {
+			if (bHasField)
+				strKeys += _T(",");
+			strKeys.AppendFormat(_T("\"peerHash\":%s"),
+				(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagEventLowerHexString(pClient->GetUserHash(), MDX_DIGEST_SIZE)));
+			bHasField = true;
+		}
+	}
+	if (pFileHash != NULL && !isnulmd4(pFileHash)) {
+		if (bHasField)
+			strKeys += _T(",");
+		strKeys.AppendFormat(_T("\"fileHash\":%s"),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagEventLowerHexString(pFileHash, MDX_DIGEST_SIZE)));
+	}
+	strKeys += _T("}");
+	return strKeys;
+}
+
+void DiagEventLogSchedUploadSlotOpened(const CUpDownClient *pClient, const byte *pFileHash)
+{
+	WriteDiagEventV1(_T("sched"), _T("upload_slot_opened"), _T("info"),
+		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"opened\"}")));
+}
+
+void DiagEventLogSchedUploadSlotClosed(const CUpDownClient *pClient, const byte *pFileHash)
+{
+	WriteDiagEventV1(_T("sched"), _T("upload_slot_closed"), _T("info"),
+		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"closed\"}")));
+}
+
+void DiagEventLogSchedUploadSlotRecycled(const CUpDownClient *pClient, const byte *pFileHash)
+{
+	// severity "low" matches the rust upload_slot_recycled emitter.
+	WriteDiagEventV1(_T("sched"), _T("upload_slot_recycled"), _T("low"),
+		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"recycled\"}")));
+}
+
+void DiagEventLogSchedQueueRank(const CUpDownClient *pClient, const byte *pFileHash, UINT uQueueRank)
+{
+	CString strBody;
+	strBody.Format(_T("{\"outcome\":\"waiting\",\"queueRank\":%u}"), uQueueRank);
+	WriteDiagEventV1(_T("sched"), _T("queue_rank"), _T("info"),
+		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), strBody);
+}
+
+void DiagEventLogSchedSourceEngaged(const CUpDownClient *pClient, const byte *pFileHash)
+{
+	WriteDiagEventV1(_T("sched"), _T("source_engaged"), _T("info"),
+		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"engaged\"}")));
+}
+
+void DiagEventLogSchedSourceDropped(const CUpDownClient *pClient, const byte *pFileHash)
+{
+	WriteDiagEventV1(_T("sched"), _T("source_dropped"), _T("info"),
+		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"dropped\"}")));
+}
+
+void DiagEventLogSchedSourceSwapped(const CUpDownClient *pClient, const byte *pCurrentFileHash, const byte *pSwapTargetFileHash)
+{
+	// keys carry the CURRENT file hash; swapTargetFileHash is the file the source is
+	// moved to. swapReason is "nnp" to match the rust swap_target_for_peer emitter.
+	CString strBody(_T("{\"outcome\":\"swapped\",\"swapReason\":\"nnp\""));
+	if (pSwapTargetFileHash != NULL && !isnulmd4(pSwapTargetFileHash))
+		strBody.AppendFormat(_T(",\"swapTargetFileHash\":%s"),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagEventLowerHexString(pSwapTargetFileHash, MDX_DIGEST_SIZE)));
+	strBody += _T("}");
+	WriteDiagEventV1(_T("sched"), _T("source_swapped"), _T("info"),
+		BuildDiagEventV1SchedKeysJson(pClient, pCurrentFileHash), strBody);
+}
+
+void DiagEventLogSchedConnBudgetDeny(LPCTSTR pszDenyReason, UINT uActiveConnections, UINT uConnectionCap)
+{
+	// conn_budget deny: no per-peer object is available at the global accept gate, so
+	// keys are emitted empty rather than faked. severity "low" matches the rust deny.
+	CString strBody;
+	strBody.Format(
+		_T("{\"outcome\":\"deny\",\"activeConnections\":%u,\"connectionCap\":%u,\"denyReason\":%s}"),
+		uActiveConnections,
+		uConnectionCap,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDenyReason != NULL ? pszDenyReason : _T("concurrent_cap")));
+	WriteDiagEventV1(_T("sched"), _T("conn_budget"), _T("low"), CString(_T("{}")), strBody);
+}
+#endif
+
 bool strmd4(const char *pszHash, byte *hash)
 {
 	for (int i = 0; i < MDX_DIGEST_SIZE; ++i) {

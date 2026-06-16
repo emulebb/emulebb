@@ -1514,6 +1514,10 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 		throw;
 	}
 	theApp.emuledlg->transferwnd->GetDownloadList()->AddSource(sender, source, false);
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+	// Source registered on the part file's srclist: mirror the rust source_engaged.
+	DiagEventLogSchedSourceEngaged(source, sender->GetFileHash());
+#endif
 	return true;
 }
 
@@ -1600,6 +1604,10 @@ bool CDownloadQueue::CheckAndAddKnownSource(CPartFile *sender, CUpDownClient *so
 #endif
 
 	theApp.emuledlg->transferwnd->GetDownloadList()->AddSource(sender, source, false);
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+	// Known source linked onto the part file's srclist: mirror the rust source_engaged.
+	DiagEventLogSchedSourceEngaged(source, sender->GetFileHash());
+#endif
 	//UpdateDisplayedInfo();
 	return true;
 }
@@ -1613,6 +1621,10 @@ bool CDownloadQueue::RemoveSource(CUpDownClient *toremove, bool bDoStatsUpdate)
 		if (pos2) {
 			cur_file->srclist.RemoveAt(pos2);
 			cur_file->RemoveSourceFileName(toremove);
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+			// Source removed from this part file's srclist: mirror the rust source_dropped.
+			DiagEventLogSchedSourceDropped(toremove, cur_file->GetFileHash());
+#endif
 			bRemovedSrcFromPartFile = true;
 			if (bDoStatsUpdate) {
 				cur_file->RemoveDownloadingSource(toremove);

@@ -969,6 +969,11 @@ void CUpDownClient::SendRankingInfo()
 	memset(packet->pBuffer + 2, 0, 10);
 	if (thePrefs.GetDebugClientTCPLevel() > 0)
 		DebugSend("OP_QueueRank", this);
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
+	// Mirror the rust queue_rank emit with the rank actually put on the wire
+	// (OP_QUEUERANKING), so the harness can align waiting-peer rank progression.
+	DiagEventLogSchedQueueRank(this, GetUploadFileID(), nRank);
+#endif
 	theStats.AddUpDataOverheadFileRequest(packet->size);
 	SendPacket(packet);
 }

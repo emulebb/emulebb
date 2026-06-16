@@ -185,6 +185,21 @@ void DiagEventLogKadUdpPacket(
 	uint16 uUDPPort,
 	const BYTE *pDecoded,
 	UINT uDecodedLen);
+
+/**
+ * @brief Emits one outbound Kad UDP packet as a diag_event_v1 family:"kad_udp"
+ *        record (direction "send"). The send hooks own the decoded protocol marker
+ *        + opcode + payload separately (before the obfuscation/encrypt layer), so
+ *        this rebuilds the [marker][opcode][payload] decoded buffer the recv emit
+ *        consumes, keeping the decodedHex wire-identity key identical per direction.
+ */
+void DiagEventLogKadUdpPacketSend(
+	uint32 uHostIP,
+	uint16 uUDPPort,
+	BYTE byProtocol,
+	BYTE byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen);
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)

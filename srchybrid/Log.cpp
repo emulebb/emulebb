@@ -29,6 +29,7 @@
 #include "StringConversion.h"
 
 #include <deque>
+#include <vector>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -385,6 +386,56 @@ void DiagEventLogKadUdpPacket(
 		static_cast<UINT>(byProtocol),
 		static_cast<UINT>(byOpcode),
 		uDecodedLen,
+		(LPCTSTR)strDecodedHex);
+
+	WriteDiagEventV1(_T("kad_udp"), _T("packet"), _T("info"), strKeys, strBody);
+}
+
+void DiagEventLogKadUdpPacketSend(
+	uint32 uHostIP,
+	uint16 uUDPPort,
+	BYTE byProtocol,
+	BYTE byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen)
+{
+	if (!theDiagEventV1Log.IsOpen())
+		return;
+
+	// Rebuild the decoded [marker][opcode][payload] buffer the recv emit consumes so
+	// both directions share the same decodedHex/decodedLen identity. The hex is
+	// capped at 4 KiB inside BuildDiagEventUpperHexString, so only cap+2 bytes need
+	// to be materialised even though decodedLen reports the full decoded length.
+	const UINT uTrueDecodedLen = 2 + uPayloadLen;
+	const UINT uHexBytes = min(uTrueDecodedLen, 4u * 1024u);
+	std::vector<BYTE> aDecoded(uHexBytes);
+	aDecoded[0] = byProtocol;
+	if (uHexBytes > 1)
+		aDecoded[1] = byOpcode;
+	if (uHexBytes > 2 && pPayload != NULL)
+		memcpy(aDecoded.data() + 2, pPayload, uHexBytes - 2);
+
+	const BYTE byProtocolMarker = aDecoded[0];
+	const BYTE byOpcodeMarker = uHexBytes > 1 ? aDecoded[1] : static_cast<BYTE>(0);
+	const CString strDecodedHex = BuildDiagEventUpperHexString(aDecoded.data(), uHexBytes);
+
+	CString strPeer;
+	strPeer.Format(_T("%s:%u"), (LPCTSTR)ipstr(htonl(uHostIP)), static_cast<UINT>(uUDPPort));
+
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		static_cast<UINT>(byOpcodeMarker),
+		static_cast<UINT>(byProtocolMarker));
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"direction\":%s,\"protocolMarker\":%u,\"opcode\":%u,\"decodedLen\":%u,\"decodedHex\":\"%s\"}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(_T("send")),
+		static_cast<UINT>(byProtocolMarker),
+		static_cast<UINT>(byOpcodeMarker),
+		uTrueDecodedLen,
 		(LPCTSTR)strDecodedHex);
 
 	WriteDiagEventV1(_T("kad_udp"), _T("packet"), _T("info"), strKeys, strBody);

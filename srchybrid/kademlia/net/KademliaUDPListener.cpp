@@ -1914,6 +1914,11 @@ void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, uint
 		ASSERT(0);
 		return;
 	}
+#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+	// Outbound Kad UDP packet at the decoded boundary (before obfuscation/encrypt):
+	// pbyData is [marker][opcode][payload], the same shape the recv emit consumes.
+	DiagEventLogKadUdpPacketSend(uDestinationHost, uDestinationPort, pbyData[0], pbyData[1], pbyData + 2, uLenData - 2);
+#endif
 	std::unique_ptr<Packet> pPacket(new Packet(OP_KADEMLIAHEADER));
 	pPacket->opcode = pbyData[1];
 	pPacket->pBuffer = new char[uLenData + 8];
@@ -1934,6 +1939,11 @@ void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, uint
 
 void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, byte byOpcode, uint32 uDestinationHost, uint16 uDestinationPort, const CKadUDPKey &targetUDPKey, const CUInt128 *uCryptTargetID)
 {
+#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+	// Outbound Kad UDP packet: pbyData is the payload only; the decoded marker is the
+	// Kad header byte and the opcode is carried separately.
+	DiagEventLogKadUdpPacketSend(uDestinationHost, uDestinationPort, OP_KADEMLIAHEADER, byOpcode, pbyData, uLenData);
+#endif
 	std::unique_ptr<Packet> pPacket(new Packet(OP_KADEMLIAHEADER));
 	pPacket->opcode = byOpcode;
 	pPacket->pBuffer = new char[uLenData];
@@ -1952,6 +1962,11 @@ void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, byte
 
 void CKademliaUDPListener::SendPacket(CSafeMemFile &pbyData, byte byOpcode, uint32 uDestinationHost, uint16 uDestinationPort, const CKadUDPKey &targetUDPKey, const CUInt128 *uCryptTargetID)
 {
+#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+	// Outbound Kad UDP packet: the CSafeMemFile holds the decoded payload; the marker
+	// is the Kad header byte and the opcode is carried separately.
+	DiagEventLogKadUdpPacketSend(uDestinationHost, uDestinationPort, OP_KADEMLIAHEADER, byOpcode, pbyData.GetBuffer(), static_cast<UINT>(pbyData.GetLength()));
+#endif
 	std::unique_ptr<Packet> pPacket(new Packet(pbyData, OP_KADEMLIAHEADER));
 	pPacket->opcode = byOpcode;
 	if (pPacket->size > 200)

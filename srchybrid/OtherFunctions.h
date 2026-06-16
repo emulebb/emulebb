@@ -16,6 +16,8 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+#include "BuildFeatures.h"
+
 class CAbstractFile;
 class CKnownFile;
 struct Requested_Block_Struct;
@@ -402,6 +404,33 @@ CString md4str(const byte *hash);
 void md4str(const byte *hash, TCHAR *pszHash);
 bool strmd4(const char *pszHash, byte *hash);
 bool strmd4(const CString &rstr, byte *hash);
+
+#if EMULEBB_HAS_DIAG_EVENT_V1
+/**
+ * @brief Builds the diag_event_v1 family:"sched" keys object ({peer,peerHash?,fileHash})
+ *        for a per-peer scheduling event, matching the emulebb-rust sched emitters
+ *        byte-for-byte: peer is the advertised "ip:port", peerHash/fileHash are
+ *        LOWER-case 16-byte MD4 hex. Optional keys are omitted (never faked) when
+ *        the peer hash is unknown or the file hash pointer is null/zero.
+ */
+CString BuildDiagEventV1SchedKeysJson(const CUpDownClient *pClient, const byte *pFileHash);
+
+/**
+ * @brief Per-decision diag_event_v1 family:"sched" emitters mirroring the
+ *        emulebb-rust sched events (download_coordinator / upload_queue / source
+ *        registry). Each builds {peer,peerHash?,fileHash} keys + the rust body and
+ *        forwards to WriteDiagEventV1. No-op when the diag log is closed, so call
+ *        sites need no extra runtime guard.
+ */
+void DiagEventLogSchedUploadSlotOpened(const CUpDownClient *pClient, const byte *pFileHash);
+void DiagEventLogSchedUploadSlotClosed(const CUpDownClient *pClient, const byte *pFileHash);
+void DiagEventLogSchedUploadSlotRecycled(const CUpDownClient *pClient, const byte *pFileHash);
+void DiagEventLogSchedQueueRank(const CUpDownClient *pClient, const byte *pFileHash, UINT uQueueRank);
+void DiagEventLogSchedSourceEngaged(const CUpDownClient *pClient, const byte *pFileHash);
+void DiagEventLogSchedSourceDropped(const CUpDownClient *pClient, const byte *pFileHash);
+void DiagEventLogSchedSourceSwapped(const CUpDownClient *pClient, const byte *pCurrentFileHash, const byte *pSwapTargetFileHash);
+void DiagEventLogSchedConnBudgetDeny(LPCTSTR pszDenyReason, UINT uActiveConnections, UINT uConnectionCap);
+#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////

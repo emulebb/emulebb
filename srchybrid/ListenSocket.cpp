@@ -45,6 +45,7 @@
 #include "ClientSocketLifetimeSeams.h"
 #include "SHAHashSet.h"
 #include "Log.h"
+#include "OtherFunctions.h"
 #include "PortRebindPolicySeams.h"
 #include "ProtocolGuards.h"
 #include "BadPeerDiagnosticsSeams.h"
@@ -2647,9 +2648,23 @@ void CListenSocket::KillAllSockets()
 
 bool CListenSocket::TooManySockets(bool bIgnoreInterval)
 {
-	return GetOpenSockets() > thePrefs.GetMaxConnections()
-		|| (static_cast<float>(m_OpenSocketsInterval) > static_cast<float>(thePrefs.GetMaxConperFive()) * GetMaxConperFiveModifier() && !bIgnoreInterval)
-		|| (m_nHalfOpen >= thePrefs.GetMaxHalfConnections() && !bIgnoreInterval);
+	const bool bConcurrentCap = GetOpenSockets() > thePrefs.GetMaxConnections();
+	const bool bWindowCap = !bIgnoreInterval
+		&& ((static_cast<float>(m_OpenSocketsInterval) > static_cast<float>(thePrefs.GetMaxConperFive()) * GetMaxConperFiveModifier())
+			|| (m_nHalfOpen >= thePrefs.GetMaxHalfConnections()));
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+	if (bConcurrentCap || bWindowCap) {
+		// Connection admit/deny gate (master TooManySockets): mirror the rust
+		// conn_budget deny. denyReason maps the concurrent-cap vs new-connection-rate
+		// reason; activeConnections/connectionCap come from the compared values. No
+		// per-peer object exists at this global gate, so keys are emitted empty.
+		DiagEventLogSchedConnBudgetDeny(
+			bConcurrentCap ? _T("concurrent_cap") : _T("window_cap"),
+			static_cast<UINT>(GetOpenSockets()),
+			static_cast<UINT>(thePrefs.GetMaxConnections()));
+	}
+#endif
+	return bConcurrentCap || bWindowCap;
 }
 
 bool CListenSocket::IsValidSocket(CClientReqSocket *totest)
