@@ -194,14 +194,22 @@ CString DiagV1KeysJson(const CUpDownClient *pClient, const CString &strFileHash)
 		if (pClient->HasValidHash()) {
 			if (bHasField)
 				strKeys += _T(",");
-			strKeys.AppendFormat(_T("\"peerHash\":%s"), (LPCTSTR)JsonString(md4str(pClient->GetUserHash())));
+			// peerHash = LOWER-case 16-byte MD4 user hash. md4str() is UPPER-case, so
+			// build the hex via BuildDiagEventLowerHexString to match the lower-case
+			// oracle convention used by the rust client + the master sched family.
+			strKeys.AppendFormat(_T("\"peerHash\":%s"),
+				(LPCTSTR)JsonString(BuildDiagEventLowerHexString(pClient->GetUserHash(), MDX_DIGEST_SIZE)));
 			bHasField = true;
 		}
 	}
 	if (!strFileHash.IsEmpty()) {
 		if (bHasField)
 			strKeys += _T(",");
-		strKeys.AppendFormat(_T("\"fileHash\":%s"), (LPCTSTR)JsonString(strFileHash));
+		// fileHash arrives as an UPPER-case md4str() hex; lower-case it so the KEYS
+		// align with the lower-case oracle convention (rust + master sched family).
+		CString strFileHashLower(strFileHash);
+		strFileHashLower.MakeLower();
+		strKeys.AppendFormat(_T("\"fileHash\":%s"), (LPCTSTR)JsonString(strFileHashLower));
 	}
 	strKeys += _T("}");
 	return strKeys;
