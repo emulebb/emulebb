@@ -178,6 +178,72 @@ void WriteEvent(
 		pszEvidenceJson);
 }
 
+#if EMULEBB_HAS_DIAG_EVENT_V1
+CString DiagV1KeysJson(const CUpDownClient *pClient, const CString &strFileHash)
+{
+	CString strKeys(_T("{"));
+	bool bHasField = false;
+	if (pClient != NULL) {
+		const uint32 dwIP = pClient->GetIP() != 0 ? pClient->GetIP() : pClient->GetConnectIP();
+		if (dwIP != 0) {
+			CString strPeer;
+			strPeer.Format(_T("%s:%u"), (LPCTSTR)ipstr(dwIP), static_cast<UINT>(pClient->GetUserPort()));
+			strKeys.AppendFormat(_T("\"peer\":%s"), (LPCTSTR)JsonString(strPeer));
+			bHasField = true;
+		}
+		if (pClient->HasValidHash()) {
+			if (bHasField)
+				strKeys += _T(",");
+			strKeys.AppendFormat(_T("\"peerHash\":%s"), (LPCTSTR)JsonString(md4str(pClient->GetUserHash())));
+			bHasField = true;
+		}
+	}
+	if (!strFileHash.IsEmpty()) {
+		if (bHasField)
+			strKeys += _T(",");
+		strKeys.AppendFormat(_T("\"fileHash\":%s"), (LPCTSTR)JsonString(strFileHash));
+	}
+	strKeys += _T("}");
+	return strKeys;
+}
+
+void ReEmitBadPeerDiagV1(
+	LPCTSTR pszEvent,
+	LPCTSTR pszSeverity,
+	LPCTSTR pszBehavior,
+	LPCTSTR pszAction,
+	LPCTSTR pszReason,
+	const CUpDownClient *pClient,
+	const CString &strFileHash,
+	const SBadPeerBehaviorLedgerState &rState,
+	const Requested_Block_Struct *pBlock)
+{
+	if (!theDiagEventV1Log.IsOpen())
+		return;
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"behavior\":%s,\"action\":%s,\"reason\":%s,\"repeatCount\":%u,\"windowSeconds\":%I64u"),
+		(LPCTSTR)JsonString(pszBehavior),
+		(LPCTSTR)JsonString(pszAction != NULL ? pszAction : _T("observe")),
+		(LPCTSTR)JsonString(pszReason != NULL ? pszReason : _T("")),
+		rState.uCount,
+		kBadPeerBehaviorLedgerWindowMs / 1000);
+	if (pBlock != NULL) {
+		strBody.AppendFormat(
+			_T(",\"startOffset\":%I64u,\"endOffset\":%I64u,\"partIndex\":%I64u"),
+			pBlock->StartOffset,
+			pBlock->EndOffset,
+			pBlock->StartOffset / PARTSIZE);
+	}
+	strBody += _T("}");
+
+	WriteDiagEventV1(_T("bad_peer"), pszEvent,
+		pszSeverity != NULL ? pszSeverity : _T("info"),
+		DiagV1KeysJson(pClient, strFileHash), strBody);
+}
+#endif
+
 SBadPeerBehaviorLedgerState UpdateBehaviorLedger(const CString &strLedgerKey, ULONGLONG curTick)
 {
 	SBadPeerBehaviorLedgerState state = {};
@@ -364,6 +430,18 @@ void LogUploadBlockRequestBehavior(
 			_T("observe"),
 			_T("Repeated same upload block request"),
 			strEvidence);
+#if EMULEBB_HAS_DIAG_EVENT_V1
+		ReEmitBadPeerDiagV1(
+			_T("repeat_block_request"),
+			_T("medium"),
+			_T("repeat_block_request"),
+			_T("observe"),
+			_T("Repeated same upload block request"),
+			pClient,
+			strFileHash,
+			state,
+			pBlock);
+#endif
 	}
 }
 
@@ -386,14 +464,27 @@ void TrackUploadFileBehavior(
 		return;
 
 	const CString strEvidence(UploadFileBehaviorEvidenceJson(pszBehavior, pClient, pFile, state, curTick));
+	const LPCTSTR pszObserveReason = pszReason != NULL && pszReason[0] != _T('\0') ? pszReason : _T("Repeated same-file upload churn");
 	WriteEvent(
 		_T("upload_repeat_file_request_observed"),
 		_T("medium"),
 		ClientJson(pClient),
 		FileJson(pFile),
 		_T("observe"),
-		pszReason != NULL && pszReason[0] != _T('\0') ? pszReason : _T("Repeated same-file upload churn"),
+		pszObserveReason,
 		strEvidence);
+#if EMULEBB_HAS_DIAG_EVENT_V1
+	ReEmitBadPeerDiagV1(
+		_T("repeat_file_request"),
+		_T("medium"),
+		pszBehavior,
+		_T("observe"),
+		pszObserveReason,
+		pClient,
+		strFileHash,
+		state,
+		NULL);
+#endif
 }
 
 CString EvidenceJsonString(LPCTSTR pszValue)

@@ -55,6 +55,10 @@ CCriticalSection g_uploadSlotDiagnosticsLogLock;
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
 CCriticalSection g_downloadSlotDiagnosticsLogLock;
 #endif
+#if EMULEBB_HAS_DIAG_EVENT_V1
+CCriticalSection g_diagEventV1LogLock;
+volatile LONGLONG g_llDiagEventV1Seq = 0;
+#endif
 
 CString TruncateLogLine(const CString &rstrLine, const int iMaxChars)
 {
@@ -278,6 +282,115 @@ void WriteDiagnosticsJsonEvent(
 	WriteDiagnosticsLogLine(rLog, rLock, strJson);
 }
 
+#if EMULEBB_HAS_DIAG_EVENT_V1
+void WriteDiagEventV1(
+	LPCTSTR pszFamily,
+	LPCTSTR pszEvent,
+	LPCTSTR pszSeverity,
+	const CString &rstrKeysJson,
+	const CString &rstrBodyJson)
+{
+	if (!theDiagEventV1Log.IsOpen())
+		return;
+
+	// WHY: an empty keys/body must still be valid JSON for the diff harness loader,
+	// which assumes every record carries object-typed keys and body fields.
+	const CString strKeys(rstrKeysJson.IsEmpty() ? CString(_T("{}")) : rstrKeysJson);
+	const CString strBody(rstrBodyJson.IsEmpty() ? CString(_T("{}")) : rstrBodyJson);
+
+	CString strJson;
+	strJson.Format(
+		_T("{\"schema\":\"diag_event_v1\",\"client\":\"mfc\",\"ts\":%s,\"seq\":%I64u,\"family\":%s,\"event\":%s,\"severity\":%s,\"keys\":%s,\"body\":%s}\r\n"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagnosticsTimestampUtc()),
+		NextDiagnosticsEventSeq(g_llDiagEventV1Seq),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszFamily),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszEvent),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszSeverity),
+		(LPCTSTR)strKeys,
+		(LPCTSTR)strBody);
+
+	WriteDiagnosticsLogLine(theDiagEventV1Log, g_diagEventV1LogLock, strJson);
+}
+
+CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen)
+{
+	if (pPayload == NULL || uPayloadLen == 0)
+		return CString();
+
+	CString strHex;
+	LPTSTR pszHex = strHex.GetBuffer(static_cast<int>(uPayloadLen * 2));
+	static const TCHAR s_szDigits[] = _T("0123456789abcdef");
+	for (UINT uIndex = 0; uIndex < uPayloadLen; ++uIndex) {
+		const BYTE byValue = pPayload[uIndex];
+		pszHex[uIndex * 2] = s_szDigits[(byValue >> 4) & 0x0F];
+		pszHex[uIndex * 2 + 1] = s_szDigits[byValue & 0x0F];
+	}
+	strHex.ReleaseBuffer(static_cast<int>(uPayloadLen * 2));
+	return strHex;
+}
+#endif
+
+#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+namespace
+{
+// Upper-case hex, capped at 4 KiB. WHY: the kad_udp wire-identity compare uses
+// UPPER hex on both clients (rust udp_packet_v1 emits UPPER), so case must match.
+CString BuildDiagEventUpperHexString(const BYTE *pPayload, UINT uPayloadLen)
+{
+	if (pPayload == NULL || uPayloadLen == 0)
+		return CString();
+
+	const UINT uCapped = min(uPayloadLen, 4u * 1024u);
+	CString strHex;
+	LPTSTR pszHex = strHex.GetBuffer(static_cast<int>(uCapped * 2));
+	static const TCHAR s_szDigits[] = _T("0123456789ABCDEF");
+	for (UINT uIndex = 0; uIndex < uCapped; ++uIndex) {
+		const BYTE byValue = pPayload[uIndex];
+		pszHex[uIndex * 2] = s_szDigits[(byValue >> 4) & 0x0F];
+		pszHex[uIndex * 2 + 1] = s_szDigits[byValue & 0x0F];
+	}
+	strHex.ReleaseBuffer(static_cast<int>(uCapped * 2));
+	return strHex;
+}
+}
+
+void DiagEventLogKadUdpPacket(
+	LPCTSTR pszDirection,
+	uint32 uHostIP,
+	uint16 uUDPPort,
+	const BYTE *pDecoded,
+	UINT uDecodedLen)
+{
+	if (!theDiagEventV1Log.IsOpen() || pDecoded == NULL || uDecodedLen < 2)
+		return;
+
+	const BYTE byProtocol = pDecoded[0];
+	const BYTE byOpcode = pDecoded[1];
+	const CString strDecodedHex = BuildDiagEventUpperHexString(pDecoded, uDecodedLen);
+
+	CString strPeer;
+	strPeer.Format(_T("%s:%u"), (LPCTSTR)ipstr(htonl(uHostIP)), static_cast<UINT>(uUDPPort));
+
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		static_cast<UINT>(byOpcode),
+		static_cast<UINT>(byProtocol));
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"direction\":%s,\"protocolMarker\":%u,\"opcode\":%u,\"decodedLen\":%u,\"decodedHex\":\"%s\"}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDirection != NULL ? pszDirection : _T("recv")),
+		static_cast<UINT>(byProtocol),
+		static_cast<UINT>(byOpcode),
+		uDecodedLen,
+		(LPCTSTR)strDecodedHex);
+
+	WriteDiagEventV1(_T("kad_udp"), _T("packet"), _T("info"), strKeys, strBody);
+}
+#endif
+
 CDiagnosticsKeyValueLineBuilder::CDiagnosticsKeyValueLineBuilder(LPCTSTR pszPrefix)
 	: m_strLine(pszPrefix != NULL ? pszPrefix : _T(""))
 {
@@ -361,6 +474,65 @@ void DownloadSlotDiagnosticsLogLine(LPCTSTR pszFmt, ...)
 	va_start(argp, pszFmt);
 	WriteDiagnosticsLogLineV(theDownloadSlotDiagnosticsLog, g_downloadSlotDiagnosticsLogLock, pszFmt, argp);
 	va_end(argp);
+}
+#endif
+
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
+void DiagEventLogUploadCapacitySnapshot(
+	UINT uBaseSlots,
+	UINT uElasticSlots,
+	UINT uEffectiveSlotCap,
+	UINT uActiveSlots,
+	UINT uWaitingSessions)
+{
+	if (!theDiagEventV1Log.IsOpen())
+		return;
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"baseSlots\":%u,\"elasticSlots\":%u,\"effectiveSlotCap\":%u,\"activeSlots\":%u,\"waitingSessions\":%u}"),
+		uBaseSlots,
+		uElasticSlots,
+		uEffectiveSlotCap,
+		uActiveSlots,
+		uWaitingSessions);
+	WriteDiagEventV1(_T("sched"), _T("capacity_snapshot"), _T("info"), CString(_T("{}")), strBody);
+}
+#endif
+
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+void DiagEventLogDownloadSourceCount(
+	UINT uSourceCount,
+	UINT uValidSourceCount,
+	UINT uNnpSourceCount,
+	UINT uA4afFileCount)
+{
+	if (!theDiagEventV1Log.IsOpen())
+		return;
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"sourceCount\":%u,\"validSourceCount\":%u,\"nnpSourceCount\":%u,\"a4afFileCount\":%u}"),
+		uSourceCount,
+		uValidSourceCount,
+		uNnpSourceCount,
+		uA4afFileCount);
+	WriteDiagEventV1(_T("sched"), _T("source_count"), _T("info"), CString(_T("{}")), strBody);
+}
+
+void DiagEventLogUdpReaskSent(UINT uReaskCount)
+{
+	if (!theDiagEventV1Log.IsOpen() || uReaskCount == 0)
+		return;
+
+	// WHY: the master computes UDP file reasks as a periodic aggregate count, not
+	// per-decision. Emit one reask_sent{transport:"udp"} carrying the count so the
+	// harness sees the same transport+outcome shape rust emits per send.
+	CString strBody;
+	strBody.Format(
+		_T("{\"outcome\":\"sent\",\"transport\":\"udp\",\"reaskCount\":%u}"),
+		uReaskCount);
+	WriteDiagEventV1(_T("sched"), _T("reask_sent"), _T("info"), CString(_T("{}")), strBody);
 }
 #endif
 
@@ -499,6 +671,77 @@ void PacketDiagnosticsLogClientPacket(
 {
 	PacketDiagnosticsLogEd2kPacket(_T("client"), pszPeerLabel, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
+	DiagEventLogEd2kTcpPacket(_T("client"), pszPeerLabel, pszTransportMode, pszDirection,
+		byProtocol, byOpcode, pPayload, uPayloadLen);
+}
+
+void DiagEventLogEd2kTcpPacket(
+	LPCTSTR pszFlow,
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen)
+{
+	if (!theDiagEventV1Log.IsOpen())
+		return;
+
+	const UINT uPayloadHexLen = (pPayload != NULL) ? min(uPayloadLen, kMaxPacketDiagnosticsPayloadHexBytes) : 0;
+	const bool bPayloadHexTruncated = pPayload != NULL && uPayloadLen > uPayloadHexLen;
+	const CString strPayloadHex = BuildDiagEventLowerHexString(pPayload, uPayloadHexLen);
+
+	// WHY: the eD2k frame is [protocol][len32 LE][opcode][payload]; rust emits the
+	// full framed rawHex/rawLen. Reconstruct the header from the parts the packet
+	// hook receives so both clients' rawHex compare keys line up byte-for-byte.
+	const UINT uRawLen = 6 + uPayloadLen;
+	BYTE aHeader[6];
+	const uint32 uFrameLen = uPayloadLen + 1; // opcode byte + payload
+	aHeader[0] = byProtocol;
+	aHeader[1] = static_cast<BYTE>(uFrameLen & 0xFF);
+	aHeader[2] = static_cast<BYTE>((uFrameLen >> 8) & 0xFF);
+	aHeader[3] = static_cast<BYTE>((uFrameLen >> 16) & 0xFF);
+	aHeader[4] = static_cast<BYTE>((uFrameLen >> 24) & 0xFF);
+	aHeader[5] = byOpcode;
+	CString strRawHex(BuildDiagEventLowerHexString(aHeader, 6));
+	const UINT uRawHexPayloadLen = (pPayload != NULL) ? min(uPayloadLen, kMaxPacketDiagnosticsPayloadHexBytes) : 0;
+	strRawHex += BuildDiagEventLowerHexString(pPayload, uRawHexPayloadLen);
+	const bool bRawHexTruncated = pPayload != NULL && uPayloadLen > uRawHexPayloadLen;
+
+	const LPCTSTR pszProtocolName = PacketDiagnosticsProtocolName(byProtocol);
+	const CString strProtocolNameField = pszProtocolName != NULL ? BuildDiagnosticsJsonStringField(pszProtocolName) : CString(_T("null"));
+	const CString strOpcodeName = DbgGetClientTCPOpcode(byProtocol, byOpcode);
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		static_cast<UINT>(byOpcode),
+		static_cast<UINT>(byProtocol));
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"direction\":%s,\"protocolMarker\":%u,\"protocolName\":%s,\"opcode\":%u,\"opcodeName\":%s,\"rawLen\":%u,\"rawHex\":\"%s\",\"payloadLen\":%u,\"payloadHex\":\"%s\",\"payloadHexTruncated\":%s,\"obfuscated\":%s,\"transportMode\":%s,\"flow\":%s}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDirection != NULL ? pszDirection : _T("unknown")),
+		static_cast<UINT>(byProtocol),
+		(LPCTSTR)strProtocolNameField,
+		static_cast<UINT>(byOpcode),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strOpcodeName),
+		uRawLen,
+		(LPCTSTR)strRawHex,
+		uPayloadLen,
+		(LPCTSTR)strPayloadHex,
+		(bPayloadHexTruncated || bRawHexTruncated) ? _T("true") : _T("false"),
+		// WHY: the master packet hook sits on the decoded packet buffer, after any
+		// eD2k obfuscation layer has been stripped; the on-wire bytes are never
+		// obfuscated at this boundary, matching rust's plaintext listener dump.
+		_T("false"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszTransportMode != NULL ? pszTransportMode : _T("unknown")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszFlow != NULL ? pszFlow : _T("unknown")));
+
+	WriteDiagEventV1(_T("ed2k_tcp"), _T("packet"), _T("info"), strKeys, strBody);
 }
 #endif
 

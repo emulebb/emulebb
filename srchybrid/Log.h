@@ -1,5 +1,7 @@
 #pragma once
 
+#include "BuildFeatures.h"
+
 #include <vector>
 
 enum EDebugLogPriority : int
@@ -130,6 +132,90 @@ void WriteDiagnosticsJsonEvent(
 	LPCTSTR pszAction,
 	LPCTSTR pszReason,
 	LPCTSTR pszEvidenceJson);
+
+#if EMULEBB_HAS_DIAG_EVENT_V1
+extern CLogFile theDiagEventV1Log;
+
+/**
+ * @brief Writes one converged diag_event_v1 record (camelCase envelope) to the
+ *        shared diagnostics log so the eMuleBB and emulebb-rust traces diff 1:1.
+ *
+ * `rstrKeysJson` and `rstrBodyJson` are caller-built JSON objects (e.g. "{...}");
+ * an empty value is emitted as "{}". The envelope owns schema/client/ts/seq.
+ */
+void WriteDiagEventV1(
+	LPCTSTR pszFamily,
+	LPCTSTR pszEvent,
+	LPCTSTR pszSeverity,
+	const CString &rstrKeysJson,
+	const CString &rstrBodyJson);
+
+/**
+ * @brief Lower-case hex of a byte buffer, capped at the shared 4 KiB hex limit.
+ *        Matches the emulebb-rust ed2k_tcp lower-case payloadHex/rawHex encoding.
+ */
+CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen);
+#endif
+
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+/**
+ * @brief Emits one eD2k TCP packet as a diag_event_v1 family:"ed2k_tcp" record.
+ *        Re-uses the same send/recv boundary as the ed2k_packet_v1 dump.
+ */
+void DiagEventLogEd2kTcpPacket(
+	LPCTSTR pszFlow,
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen);
+#endif
+
+#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+/**
+ * @brief Emits one decoded Kad UDP packet as a diag_event_v1 family:"kad_udp"
+ *        record. `pDecoded` is the post-deobfuscation packet beginning at the
+ *        protocol marker; decodedHex is the comparable wire-identity key.
+ */
+void DiagEventLogKadUdpPacket(
+	LPCTSTR pszDirection,
+	uint32 uHostIP,
+	uint16 uUDPPort,
+	const BYTE *pDecoded,
+	UINT uDecodedLen);
+#endif
+
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
+/**
+ * @brief Emits the diag_event_v1 sched:"capacity_snapshot" gauge (upload slots).
+ *        Mirrors the rust upload_queue capacity snapshot fields.
+ */
+void DiagEventLogUploadCapacitySnapshot(
+	UINT uBaseSlots,
+	UINT uElasticSlots,
+	UINT uEffectiveSlotCap,
+	UINT uActiveSlots,
+	UINT uWaitingSessions);
+#endif
+
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+/**
+ * @brief Emits the diag_event_v1 sched:"source_count" snapshot (download sources).
+ *        Maps the master download-slot summary onto the converged source fields.
+ */
+void DiagEventLogDownloadSourceCount(
+	UINT uSourceCount,
+	UINT uValidSourceCount,
+	UINT uNnpSourceCount,
+	UINT uA4afFileCount);
+
+/**
+ * @brief Emits a diag_event_v1 sched:"reask_sent" event for a UDP source reask.
+ */
+void DiagEventLogUdpReaskSent(UINT uReaskCount);
+#endif
 
 /**
  * @brief Builds one diagnostics summary log line from formatted key/value segments.

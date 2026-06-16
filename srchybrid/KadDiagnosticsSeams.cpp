@@ -214,6 +214,46 @@ void WriteEvent(
 		pszReason,
 		pszEvidenceJson);
 }
+
+#if EMULEBB_HAS_DIAG_EVENT_V1
+// Maps a master kad_event_v1 event name onto the coarse diag_event_v1 kad_event
+// bucket the harness aligns on (bootstrap/lookup/publish/firewall/buddy). The
+// full master event name is preserved as the comparable `milestone` field.
+LPCTSTR ClassifyKadEvent(LPCTSTR pszEvent)
+{
+	const CString strEvent(pszEvent != NULL ? pszEvent : _T(""));
+	if (strEvent.Find(_T("bootstrap")) >= 0)
+		return _T("bootstrap");
+	if (strEvent.Find(_T("search")) >= 0 || strEvent.Find(_T("lookup")) >= 0)
+		return _T("lookup");
+	if (strEvent.Find(_T("publish")) >= 0)
+		return _T("publish");
+	if (strEvent.Find(_T("firewall")) >= 0)
+		return _T("firewall");
+	if (strEvent.Find(_T("buddy")) >= 0)
+		return _T("buddy");
+	return _T("lookup");
+}
+
+void ReEmitKadEventDiagV1(LPCTSTR pszEvent, LPCTSTR pszSeverity, LPCTSTR pszAction, LPCTSTR pszReason, uint32 uNetworkIP)
+{
+	if (!theDiagEventV1Log.IsOpen())
+		return;
+
+	CString strKeys(_T("{}"));
+	if (uNetworkIP != 0)
+		strKeys.Format(_T("{\"peer\":%s}"), (LPCTSTR)BuildDiagnosticsJsonStringField(ipstr(uNetworkIP)));
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"milestone\":%s,\"action\":%s,\"reason\":%s}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszEvent),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszAction != NULL ? pszAction : _T("observe")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszReason != NULL ? pszReason : _T("")));
+	WriteDiagEventV1(_T("kad_event"), ClassifyKadEvent(pszEvent),
+		pszSeverity != NULL ? pszSeverity : _T("info"), strKeys, strBody);
+}
+#endif
 }
 
 namespace KadDiagnosticsSeams
@@ -273,6 +313,22 @@ void LogRoutingSummary(
 		(LPCTSTR)SummaryJson(routingSummary),
 		(LPCTSTR)SummaryJson(bootstrapSummary));
 	WriteDiagnosticsLogLine(g_kadDiagnosticsLog, g_kadDiagnosticsLogLock, strJson);
+
+#if EMULEBB_HAS_DIAG_EVENT_V1
+	if (theDiagEventV1Log.IsOpen()) {
+		CString strBody;
+		strBody.Format(
+			_T("{\"milestone\":\"routing_summary\",\"action\":\"observe\",\"connected\":%s,\"bootstrapping\":%s,\"firewalled\":%s,\"lanMode\":%s,\"contactTotal\":%u,\"contactVerified\":%u,\"contactWithUdpKey\":%u}"),
+			BoolJson(bConnected),
+			BoolJson(bBootstrapping),
+			BoolJson(bFirewalled),
+			BoolJson(bLanMode),
+			routingSummary.uTotal,
+			routingSummary.uVerified,
+			routingSummary.uWithUdpKey);
+		WriteDiagEventV1(_T("kad_event"), _T("routing_summary"), _T("info"), CString(_T("{}")), strBody);
+	}
+#endif
 }
 
 void LogContactEvent(
@@ -320,6 +376,9 @@ void LogPacketEvent(
 		static_cast<UINT>(byOriginalOpcode),
 		llTokens);
 	WriteEvent(pszEvent, pszSeverity, strContactJson, pszAction, pszReason, strEvidence);
+#if EMULEBB_HAS_DIAG_EVENT_V1
+	ReEmitKadEventDiagV1(pszEvent, pszSeverity, pszAction, pszReason, uNetworkIP);
+#endif
 }
 
 void LogSearchResponseEvent(
@@ -350,6 +409,22 @@ void LogSearchResponseEvent(
 		uResultCount,
 		uExpectedCount);
 	WriteEvent(pszEvent, pszSeverity, strContactJson, pszAction, pszReason, strEvidence);
+#if EMULEBB_HAS_DIAG_EVENT_V1
+	if (theDiagEventV1Log.IsOpen()) {
+		CString strKeys;
+		strKeys.Format(_T("{\"searchId\":%u}"), uSearchID);
+		CString strBody;
+		strBody.Format(
+			_T("{\"milestone\":%s,\"action\":%s,\"reason\":%s,\"searchType\":%u,\"resultCount\":%u,\"expectedCount\":%u}"),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(pszEvent),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(pszAction != NULL ? pszAction : _T("observe")),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(pszReason != NULL ? pszReason : _T("")),
+			uSearchType,
+			uResultCount,
+			uExpectedCount);
+		WriteDiagEventV1(_T("kad_event"), _T("lookup"), pszSeverity != NULL ? pszSeverity : _T("info"), strKeys, strBody);
+	}
+#endif
 }
 }
 #endif

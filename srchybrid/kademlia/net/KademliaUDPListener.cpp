@@ -274,6 +274,13 @@ void CKademliaUDPListener::ProcessPacket(const byte *pbyData, uint32 uLenData, u
 		return;
 	}
 
+#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+	// WHY: emit the decoded inbound Kad UDP packet (protocol marker + opcode +
+	// body) at the accepted-packet boundary so the diag_event_v1 kad_udp family
+	// diffs 1:1 against the rust udp_packet_v1 recv records (decodedHex identity).
+	DiagEventLogKadUdpPacket(_T("recv"), uIP, uUDPPort, pbyData, uLenData);
+#endif
+
 	const byte *pbyPacketData = pbyData + 2;
 	uLenData -= 2;
 	//AddDebugLogLine( false, _T("Processing UDP Packet from %s port %ld : opcode length %ld", (LPCTSTR)ipstr(senderAddress->sin_addr), ntohs(senderAddress->sin_port), uLenData);

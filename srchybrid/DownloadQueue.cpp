@@ -1268,6 +1268,14 @@ void CDownloadQueue::LogDownloadSlotDiagnostics(ULONGLONG curTick) const
 	summary.AppendFormat(_T("asyncWriteRefs=%Id"), iAsyncWriteRefs);
 	summary.AppendFormat(_T("protectedDiskBlocked=%u"), static_cast<UINT>(IsProtectedDiskSpaceBlocked()));
 	DownloadSlotDiagnosticsLogLine(_T("%s"), (LPCTSTR)summary.GetLine());
+
+#if EMULEBB_HAS_DIAG_EVENT_V1
+	// WHY: re-emit the periodic download source picture as the converged
+	// sched:"source_count" snapshot (and a reask_sent aggregate) so it diffs
+	// against the rust source registry snapshot using the spec field mapping.
+	DiagEventLogDownloadSourceCount(uSources, uValidSources, uNoNeededPartSources, uA4AFReadyFiles);
+	DiagEventLogUdpReaskSent(m_nUDPFileReasks);
+#endif
 }
 #endif
 

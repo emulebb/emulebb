@@ -696,6 +696,24 @@ void CUploadQueue::LogUploadSlotDiagnostics(ULONGLONG curTick) const
 	summary.AppendFormat(_T("slowTracking=%u"), static_cast<UINT>(ShouldTrackSlowUploadSlots()));
 	UploadSlotDiagnosticsLogLine(_T("%s"), (LPCTSTR)summary.GetLine());
 
+#if EMULEBB_HAS_DIAG_EVENT_V1
+	{
+		// WHY: the master exposes the slot capacity as a periodic key=value gauge.
+		// Re-emit it as the converged sched:"capacity_snapshot" so it diffs against
+		// the rust upload_queue snapshot. elasticSlots is the headroom above the
+		// base target (effective cap minus base), matching the rust derivation.
+		const INT_PTR iBaseSlots = GetBroadbandBaseSlotTarget();
+		const INT_PTR iEffectiveSlotCap = GetBroadbandSlotCap();
+		const INT_PTR iElasticSlots = iEffectiveSlotCap > iBaseSlots ? iEffectiveSlotCap - iBaseSlots : 0;
+		DiagEventLogUploadCapacitySnapshot(
+			static_cast<UINT>(iBaseSlots > 0 ? iBaseSlots : 0),
+			static_cast<UINT>(iElasticSlots),
+			static_cast<UINT>(iEffectiveSlotCap > 0 ? iEffectiveSlotCap : 0),
+			static_cast<UINT>(uploadinglist.GetCount()),
+			static_cast<UINT>(waitinglist.GetCount()));
+	}
+#endif
+
 	UINT uSlot = 0;
 	for (POSITION pos = uploadinglist.GetHeadPosition(); pos != NULL;) {
 		++uSlot;
