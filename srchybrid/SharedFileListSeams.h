@@ -176,6 +176,9 @@ constexpr DWORD kSharedShutdownPollIntervalMs = 15u;
 constexpr DWORD kSharedHashMutexShutdownPollMs = 15u;
 constexpr unsigned int kSharedHashCompletionPostRetries = 20u;
 constexpr DWORD kSharedHashCompletionPostRetryDelayMs = 25u;
+constexpr UINT kSharedFileAutoReloadIntervalMs = 5u * 60u * 1000u;
+constexpr size_t kSharedFileAutoReloadDirectoryChecksPerTick = 512u;
+constexpr size_t kSharedFileAutoReloadDirectoryScansPerTick = 8u;
 
 /**
  * @brief Reports whether eD2K publish-state changes should refresh the shared-files UI as one batch.

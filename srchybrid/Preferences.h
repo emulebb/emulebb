@@ -682,6 +682,7 @@ public:
 	static bool		m_bRememberCancelledFiles;
 	static bool		m_bRememberDownloadedFiles;
 	static bool		m_bPartiallyPurgeOldKnownFiles;
+	static bool		m_bAutoReloadSharedFiles;
 	static bool		m_bFollowMajorityFilenameForNewDownloads;
 	static UINT		m_uFollowMajorityFilenameRequiredPercent;
 	static UINT		m_uFollowMajorityFilenameMinimumVotes;
@@ -1712,6 +1713,7 @@ public:
 	static void		SetShowSharedFilesDetails(bool bIn)	{ m_bShowSharedFilesDetails = bIn; }
 	static bool		GetAutoShowLookups()				{ return m_bAutoShowLookups; }
 	static void		SetAutoShowLookups(bool bIn)		{ m_bAutoShowLookups = bIn; }
+	static bool		GetAutoReloadSharedFiles()			{ return m_bAutoReloadSharedFiles; }
 	static bool		GetForceSpeedsToKB()				{ return m_bForceSpeedsToKB; }
 	static bool		GetExtraPreviewWithMenu()			{ return m_bExtraPreviewWithMenu; }
 

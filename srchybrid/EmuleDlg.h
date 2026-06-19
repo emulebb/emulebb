@@ -245,6 +245,7 @@ protected:
 	ULONGLONG		m_ullLastVpnGuardRuntimeProbeTick;
 	UINT_PTR		m_uBindLossWatchdogTimer;
 	UINT_PTR		m_uTransferRateDisplayTimer;
+	UINT_PTR		m_uSharedFilesAutoReloadTimer;
 	HANDLE			m_hBindLossInterfaceNotification;
 	HANDLE			m_hBindLossAddressNotification;
 	CWinThread		*m_pAICHSyncThread;
@@ -265,6 +266,8 @@ protected:
 	void ApplyDesktopUiRefreshIntervalMs(UINT uIntervalMs);
 	void StartTransferRateDisplayTimer();
 	void StopTransferRateDisplayTimer();
+	void StartSharedFilesAutoReloadTimer();
+	void StopSharedFilesAutoReloadTimer();
 	void RunDesktopPresentationTick();
 	void DestroyMiniMule();
 	void StartAICHSyncThread();

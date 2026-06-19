@@ -1220,6 +1220,7 @@ int		CPreferences::m_byLogLevel;
 bool	CPreferences::m_bRememberCancelledFiles;
 bool	CPreferences::m_bRememberDownloadedFiles;
 bool	CPreferences::m_bPartiallyPurgeOldKnownFiles;
+bool	CPreferences::m_bAutoReloadSharedFiles;
 bool	CPreferences::m_bFollowMajorityFilenameForNewDownloads;
 UINT	CPreferences::m_uFollowMajorityFilenameRequiredPercent;
 UINT	CPreferences::m_uFollowMajorityFilenameMinimumVotes;
@@ -2882,6 +2883,7 @@ void CPreferences::SavePreferences()
 	ini.WriteInt(_T("DebugLogLevel"), m_byLogLevel);
 	ini.WriteBool(_T("RememberCancelledFiles"), m_bRememberCancelledFiles);
 	ini.WriteBool(_T("RememberDownloadedFiles"), m_bRememberDownloadedFiles);
+	ini.WriteBool(_T("AutoReloadSharedFiles"), m_bAutoReloadSharedFiles);
 
 	ini.WriteBool(_T("NotifierSendMail"), m_email.bSendMail);
 	ini.WriteInt(_T("NotifierMailAuth"), m_email.uAuth);
@@ -3505,6 +3507,7 @@ void CPreferences::LoadPreferences()
 	m_bRememberCancelledFiles = ini.GetBool(_T("RememberCancelledFiles"), true);
 	m_bRememberDownloadedFiles = ini.GetBool(_T("RememberDownloadedFiles"), true);
 	m_bPartiallyPurgeOldKnownFiles = ini.GetBool(_T("PartiallyPurgeOldKnownFiles"), true);
+	m_bAutoReloadSharedFiles = ini.GetBool(_T("AutoReloadSharedFiles"), true);
 
 	m_email.bSendMail = ini.GetBool(_T("NotifierSendMail"), false);
 	m_email.uAuth = static_cast<SMTPauth>(ini.GetInt(_T("NotifierMailAuth"), 0));

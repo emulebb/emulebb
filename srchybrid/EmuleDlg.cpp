@@ -168,6 +168,7 @@ namespace
 	static const UINT kBindLossWatchdogIntervalMs = SEC2MS(10);
 	static const UINT_PTR kTransferRateDisplayTimerId = 0xB10E;
 	static const UINT_PTR kUPnPRefreshTimerId = 0xB10F;
+	static const UINT_PTR kSharedFilesAutoReloadTimerId = 0xB110;
 	static const UINT kUPnPRefreshIntervalMs = MIN2MS(20);
 	static const UINT kVpnGuardHttpIntervalMs = MIN2MS(5);
 
@@ -1653,6 +1654,7 @@ CemuleDlg::CemuleDlg(CWnd *pParent /*=NULL*/)
 	, m_ullLastVpnGuardRuntimeProbeTick()
 	, m_uBindLossWatchdogTimer()
 	, m_uTransferRateDisplayTimer()
+	, m_uSharedFilesAutoReloadTimer()
 	, m_hBindLossInterfaceNotification()
 	, m_hBindLossAddressNotification()
 	, m_pAICHSyncThread()
@@ -2416,6 +2418,7 @@ void CemuleDlg::StopTimer()
 		theApp.ipfilterUpdater->QueueBackgroundRefresh();
 
 	theApp.StartSharedDirectoryMonitor();
+	StartSharedFilesAutoReloadTimer();
 
 	if (!theApp.m_strPendingLink.IsEmpty()) {
 		OnWMData(NULL, (LPARAM)&theApp.sendstruct);
@@ -2511,6 +2514,24 @@ void CemuleDlg::StopTransferRateDisplayTimer()
 	if (m_uTransferRateDisplayTimer != 0) {
 		VERIFY(KillTimer(m_uTransferRateDisplayTimer));
 		m_uTransferRateDisplayTimer = 0;
+	}
+}
+
+void CemuleDlg::StartSharedFilesAutoReloadTimer()
+{
+	StopSharedFilesAutoReloadTimer();
+	if (!thePrefs.GetAutoReloadSharedFiles() || theApp.sharedfiles == NULL)
+		return;
+	m_uSharedFilesAutoReloadTimer = SetTimer(kSharedFilesAutoReloadTimerId, SharedFileListSeams::kSharedFileAutoReloadIntervalMs, NULL);
+	if (thePrefs.GetVerbose() && m_uSharedFilesAutoReloadTimer == 0)
+		AddDebugLogLine(true, _T("Failed to create shared-file auto-reload timer - %s"), (LPCTSTR)GetErrorMessage(::GetLastError()));
+}
+
+void CemuleDlg::StopSharedFilesAutoReloadTimer()
+{
+	if (m_uSharedFilesAutoReloadTimer != 0) {
+		VERIFY(KillTimer(m_uSharedFilesAutoReloadTimer));
+		m_uSharedFilesAutoReloadTimer = 0;
 	}
 }
 
@@ -3825,6 +3846,7 @@ void CemuleDlg::OnDestroy()
 	AddDebugLogLine(DLP_VERYLOW, _T("%hs"), __FUNCTION__);
 	DiscardPostedDisplayRefreshRequests(GetSafeHwnd());
 	StopTransferRateDisplayTimer();
+	StopSharedFilesAutoReloadTimer();
 	StopBindLossMonitor();
 	m_wndWindowsToastNotifier.Shutdown();
 
@@ -7024,6 +7046,13 @@ void CemuleDlg::OnTimer(UINT_PTR nIDEvent)
 	if (nIDEvent == kBindLossWatchdogTimerId) {
 		CheckBindLossMonitor();
 		CheckVpnGuardHttpMonitor(false);
+		return;
+	}
+	if (nIDEvent == kSharedFilesAutoReloadTimerId) {
+		if (!thePrefs.GetAutoReloadSharedFiles() || theApp.sharedfiles == NULL)
+			StopSharedFilesAutoReloadTimer();
+		else
+			theApp.sharedfiles->RunAutoReloadSharedFilesTick();
 		return;
 	}
 	__super::OnTimer(nIDEvent);

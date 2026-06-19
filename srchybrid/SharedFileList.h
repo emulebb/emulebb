@@ -212,6 +212,10 @@ public:
 	 */
 	void	DrainDeferredSharedHashResults();
 	/**
+	 * @brief Polls configured shared directories for new one-level files in bounded batches.
+	 */
+	void	RunAutoReloadSharedFilesTick();
+	/**
 	 * @brief Reports whether shared-hash shutdown has been signaled and queued completions should be ignored.
 	 */
 	bool	IsSharedHashWorkerShuttingDown() const;
@@ -351,6 +355,7 @@ protected:
 	void	AddFilesFromDirectory(const CString &rstrDirectory);
 	void	FindSharedFiles(bool bAllowStartupCache = true);
 	bool	AddKnownSharedFile(CKnownFile *pFile, const CString &strFoundDirectory, const CString &strFoundFilePath);
+	void	ResetAutoReloadSharedDirectoryState(const CStringList &rDirectories);
 
 	void	HashNextFile();
 	bool	IsHashing(const CString &rstrDirectory, const CString &rstrName);
@@ -376,6 +381,13 @@ private:
 		std::unordered_map<std::wstring, CKnownFile*> filesByPathKey;
 		std::vector<CKnownFile*> singleSharedFiles;
 		SSharedFilesSummarySnapshot summary;
+	};
+
+	struct AutoReloadDirectoryState
+	{
+		CString strDirectory;
+		FILETIME ftLastWriteTime = {};
+		bool bHasMetadata = false;
 	};
 
 	/**
@@ -579,6 +591,9 @@ private:
 	 * @brief Reuses one remembered duplicate shared-file path during the startup scan when its canonical MD4 is still known.
 	 */
 	bool	TryReuseRememberedDuplicateSharedPath(const CString &strFilePath, LONGLONG utcFileDate, ULONGLONG ullFileSize);
+	void	CollectAutoReloadSharedDirectories(CStringList &rDirectories) const;
+	void	ReconcileAutoReloadSharedDirectories();
+	static bool	TryGetAutoReloadDirectoryMetadata(const CString &strDirectory, FILETIME &rLastWriteTime);
 	/**
 	 * @brief Creates the app-lifetime shared-file hash worker thread if it is not already running.
 	 */
@@ -718,6 +733,7 @@ private:
 	bool m_bSharedHashActive;
 	bool m_bSharedHashShutdownSignaled;
 	bool	m_bDuplicateSharedFileWarningSuppressionLogged;
+	bool	m_bAutoReloadInProgress;
 	bool	m_bStartupCacheInvalidatedByInterruptedHashing;
 	bool	m_bStartupCacheSaveShutdownAbandoned;
 	StartupScanStats m_startupScanStats;
@@ -736,6 +752,9 @@ private:
 	SharedStartupCacheRecordMap m_startupCacheRecords;
 	SharedStartupCacheVolumeRecordMap m_startupCacheVolumes;
 	SharedDuplicatePathRecordMap m_duplicateSharedPathRecords;
+	std::unordered_map<std::wstring, AutoReloadDirectoryState> m_autoReloadDirectoryStates;
+	std::vector<std::wstring> m_autoReloadDirectoryOrder;
+	size_t m_uAutoReloadDirectoryCursor = 0u;
 	std::unordered_map<std::wstring, StartupCacheVolumeValidationState> m_startupCacheVolumeValidation;
 	mutable CCriticalSection m_mutStartupCacheSave;
 	bool	m_bStartupCacheSaveRunning;

@@ -991,6 +991,7 @@ CSharedFileList::CSharedFileList(CServerConnect *in_server)
 	, m_bSharedHashActive(false)
 	, m_bSharedHashShutdownSignaled(false)
 	, m_bDuplicateSharedFileWarningSuppressionLogged(false)
+	, m_bAutoReloadInProgress(false)
 	, m_bStartupCacheInvalidatedByInterruptedHashing(false)
 	, m_bStartupCacheSaveShutdownAbandoned(false)
 	, m_bStartupCacheFilePresent(false)
@@ -1829,6 +1830,7 @@ void CSharedFileList::FindSharedFiles(const bool bAllowStartupCache)
 	MarkStartupCacheDirty();
 	HashNextFile();
 	LogSharedHashProgress(_T("startup-scan"), true);
+	ResetAutoReloadSharedDirectoryState(l_sAdded);
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.requested_directories"), m_startupScanStats.uRequestedDirectories, _T("directories"));
 	theApp.AppendStartupDiagnosticsCounter(_T("shared.scan.deduped_directories"), m_startupScanStats.uDedupedDirectories, _T("directories"));
@@ -1863,6 +1865,162 @@ void CSharedFileList::AddFilesFromDirectory(const CString &rstrDirectory)
 		++m_startupScanStats.uInaccessibleDirectories;
 		LogWarning(GetResString(IDS_ERR_SHARED_DIR), (LPCTSTR)strDirectory, (LPCTSTR)GetErrorMessage(dwError));
 	}
+}
+
+bool CSharedFileList::TryGetAutoReloadDirectoryMetadata(const CString &strDirectory, FILETIME &rLastWriteTime)
+{
+	rLastWriteTime = {};
+	WIN32_FIND_DATA findData = {};
+	if (!PathHelpers::TryGetPathEntryData(PathHelpers::TrimTrailingSeparator(strDirectory), findData))
+		return false;
+	if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+		return false;
+	rLastWriteTime = findData.ftLastWriteTime;
+	return true;
+}
+
+void CSharedFileList::ResetAutoReloadSharedDirectoryState(const CStringList &rDirectories)
+{
+	m_autoReloadDirectoryStates.clear();
+	m_autoReloadDirectoryOrder.clear();
+	m_uAutoReloadDirectoryCursor = 0u;
+
+	for (POSITION pos = rDirectories.GetHeadPosition(); pos != NULL;) {
+		const CString strDirectory(NormalizeSharedDirectoryPath(rDirectories.GetNext(pos)));
+		const std::wstring strKey(MakeSharedDirectoryIndexKey(strDirectory));
+		if (m_autoReloadDirectoryStates.find(strKey) != m_autoReloadDirectoryStates.end())
+			continue;
+		AutoReloadDirectoryState state = {};
+		state.strDirectory = strDirectory;
+		state.bHasMetadata = TryGetAutoReloadDirectoryMetadata(strDirectory, state.ftLastWriteTime);
+		m_autoReloadDirectoryStates[strKey] = state;
+		m_autoReloadDirectoryOrder.push_back(strKey);
+	}
+}
+
+void CSharedFileList::CollectAutoReloadSharedDirectories(CStringList &rDirectories) const
+{
+	rDirectories.RemoveAll();
+	std::unordered_set<std::wstring> directoryKeys;
+	const auto addUniqueDirectory = [&](const CString &strDirectory) {
+		if (strDirectory.IsEmpty())
+			return;
+		const CString strCanonicalDirectory(NormalizeSharedDirectoryPath(strDirectory));
+		const std::wstring strKey(MakeSharedDirectoryIndexKey(strCanonicalDirectory));
+		if (!directoryKeys.insert(strKey).second)
+			return;
+		rDirectories.AddTail(strCanonicalDirectory);
+	};
+
+	addUniqueDirectory(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR));
+	for (INT_PTR i = 1; i < thePrefs.GetCatCount(); ++i)
+		addUniqueDirectory(thePrefs.GetCatPath(i));
+
+	CStringList sharedDirs;
+	thePrefs.CopySharedDirectoryList(sharedDirs);
+	for (POSITION pos = sharedDirs.GetHeadPosition(); pos != NULL;)
+		addUniqueDirectory(sharedDirs.GetNext(pos));
+}
+
+void CSharedFileList::ReconcileAutoReloadSharedDirectories()
+{
+	CStringList directories;
+	CollectAutoReloadSharedDirectories(directories);
+
+	std::unordered_set<std::wstring> activeKeys;
+	std::vector<std::wstring> activeOrder;
+	for (POSITION pos = directories.GetHeadPosition(); pos != NULL;) {
+		const CString strDirectory(directories.GetNext(pos));
+		const std::wstring strKey(MakeSharedDirectoryIndexKey(strDirectory));
+		if (!activeKeys.insert(strKey).second)
+			continue;
+		activeOrder.push_back(strKey);
+		AutoReloadDirectoryState &rState = m_autoReloadDirectoryStates[strKey];
+		if (rState.strDirectory.IsEmpty()) {
+			rState.strDirectory = strDirectory;
+			rState.bHasMetadata = TryGetAutoReloadDirectoryMetadata(strDirectory, rState.ftLastWriteTime);
+		} else
+			rState.strDirectory = strDirectory;
+	}
+
+	for (auto it = m_autoReloadDirectoryStates.begin(); it != m_autoReloadDirectoryStates.end();) {
+		if (activeKeys.find(it->first) == activeKeys.end())
+			it = m_autoReloadDirectoryStates.erase(it);
+		else
+			++it;
+	}
+	m_autoReloadDirectoryOrder.swap(activeOrder);
+	if (m_uAutoReloadDirectoryCursor >= m_autoReloadDirectoryOrder.size())
+		m_uAutoReloadDirectoryCursor = 0u;
+}
+
+void CSharedFileList::RunAutoReloadSharedFilesTick()
+{
+	const SharedFileListSeams::AutoReloadScheduleState scheduleState = {
+		thePrefs.GetAutoReloadSharedFiles(),
+		HasSharedHashingWork(),
+		m_bAutoReloadInProgress,
+		true,
+		true,
+		false
+	};
+	if (!SharedFileListSeams::ShouldScheduleAutoReload(scheduleState))
+		return;
+
+	m_bAutoReloadInProgress = true;
+	ReconcileAutoReloadSharedDirectories();
+	if (m_autoReloadDirectoryOrder.empty()) {
+		m_bAutoReloadInProgress = false;
+		return;
+	}
+
+	const INT_PTR iSharedCountBefore = GetCount();
+	const INT_PTR iHashingCountBefore = GetHashingCount();
+	size_t uCheckedDirectories = 0u;
+	size_t uScannedDirectories = 0u;
+	const size_t uMaxChecks = min(SharedFileListSeams::kSharedFileAutoReloadDirectoryChecksPerTick, m_autoReloadDirectoryOrder.size());
+
+	while (uCheckedDirectories < uMaxChecks && !m_autoReloadDirectoryOrder.empty()) {
+		if (m_uAutoReloadDirectoryCursor >= m_autoReloadDirectoryOrder.size())
+			m_uAutoReloadDirectoryCursor = 0u;
+		const std::wstring strKey(m_autoReloadDirectoryOrder[m_uAutoReloadDirectoryCursor]);
+		m_uAutoReloadDirectoryCursor = (m_uAutoReloadDirectoryCursor + 1u) % m_autoReloadDirectoryOrder.size();
+		++uCheckedDirectories;
+
+		auto itState = m_autoReloadDirectoryStates.find(strKey);
+		if (itState == m_autoReloadDirectoryStates.end())
+			continue;
+
+		AutoReloadDirectoryState &rState = itState->second;
+		FILETIME ftCurrentLastWriteTime = {};
+		if (!TryGetAutoReloadDirectoryMetadata(rState.strDirectory, ftCurrentLastWriteTime)) {
+			rState.bHasMetadata = false;
+			continue;
+		}
+
+		const bool bChanged = !rState.bHasMetadata || ::CompareFileTime(&rState.ftLastWriteTime, &ftCurrentLastWriteTime) != 0;
+		if (!bChanged) {
+			rState.bHasMetadata = true;
+			rState.ftLastWriteTime = ftCurrentLastWriteTime;
+			continue;
+		}
+		if (uScannedDirectories >= SharedFileListSeams::kSharedFileAutoReloadDirectoryScansPerTick)
+			continue;
+
+		rState.bHasMetadata = true;
+		rState.ftLastWriteTime = ftCurrentLastWriteTime;
+		AddFilesFromDirectory(rState.strDirectory);
+		++uScannedDirectories;
+	}
+
+	if (uScannedDirectories > 0u) {
+		if (GetCount() != iSharedCountBefore && output != NULL)
+			output->ReloadFileList();
+		if (GetHashingCount() != iHashingCountBefore)
+			HashNextFile();
+		LogSharedHashProgress(_T("auto-reload"), true);
+	}
+	m_bAutoReloadInProgress = false;
 }
 
 bool CSharedFileList::AddSingleSharedFile(const CString &rstrFilePath, bool bNoUpdate)
