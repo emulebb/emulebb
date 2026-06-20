@@ -4,6 +4,7 @@
 #include "tabctrl.hpp"
 #include "UserMsgs.h"
 #include "emule.h"
+#include "Preferences.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -452,6 +453,21 @@ void TabControl::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 		crOldColor = CLR_NONE;
 
 	rcItem.top += bSelected ? 4 : 3;
+
+	// Optionally render the active tab title in bold (Tweaks: bold active category
+	// tab). Derive the bold font from the control font so face/size/DPI match.
+	CFont fontBold;
+	CFont *pOldFont = NULL;
+	if (bSelected && thePrefs.GetBoldActiveCategoryTab()) {
+		LOGFONT lf = {};
+		CFont *pFont = GetFont();
+		if (pFont != NULL && pFont->GetLogFont(&lf) != 0) {
+			lf.lfWeight = FW_BOLD;
+			if (fontBold.CreateFontIndirect(&lf))
+				pOldFont = pDC->SelectObject(&fontBold);
+		}
+	}
+
 	// Vista: Tab control has troubles with determining the width of a tab if the
 	// label contains one '&' character. To get around this, we use the old code which
 	// replaces one '&' character with two '&' characters and we do not specify DT_NOPREFIX
@@ -460,6 +476,9 @@ void TabControl::DrawItem(LPDRAWITEMSTRUCT lpDIS)
 	// Vista: "DrawThemeText" can not be used in case we need a certain foreground color. Thus we always us
 	// "DrawText" to always get the same font and metrics (just for safety).
 	pDC->DrawText(szLabel, -1, &rcItem, DT_SINGLELINE | DT_TOP | DT_CENTER /*| DT_NOPREFIX*/);
+
+	if (pOldFont != NULL)
+		pDC->SelectObject(pOldFont);
 
 	if (crOldColor != CLR_NONE)
 		pDC->SetTextColor(crOldColor);

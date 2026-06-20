@@ -207,6 +207,11 @@ void CTransferDlg::VerifyCatTabSize()
 	m_pwndTransfer->VerifyCatTabSize();
 }
 
+void CTransferDlg::RedrawCatTabs()
+{
+	m_pwndTransfer->RedrawCatTabs();
+}
+
 int CTransferDlg::AddCategoryInteractive()
 {
 	return m_pwndTransfer->AddCategoryInteractive();

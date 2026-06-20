@@ -1175,6 +1175,7 @@ bool	CPreferences::m_bShowDwlPercentage;
 bool	CPreferences::m_bRemoveFinishedDownloads;
 INT_PTR	CPreferences::m_iMaxChatHistory;
 bool	CPreferences::m_bShowActiveDownloadsBold;
+bool	CPreferences::m_bBoldActiveCategoryTab;
 int		CPreferences::m_iSearchMethod;
 bool	CPreferences::m_bAdvancedSpamfilter;
 bool	CPreferences::m_bUseSecureIdent;
@@ -2831,6 +2832,7 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(_T("InspectAllFileTypes"), m_bInspectAllFileTypes);
 	ini.WriteBool(_T("PreviewOnIconDblClk"), m_bPreviewOnIconDblClk);
 	ini.WriteBool(_T("ShowActiveDownloadsBold"), m_bShowActiveDownloadsBold);
+	ini.WriteBool(_T("BoldActiveCategoryTab"), m_bBoldActiveCategoryTab);
 	ini.WriteBool(_T("UseSystemFontForMainControls"), m_bUseSystemFontForMainControls);
 	ini.WriteBool(_T("ReBarToolbar"), m_bReBarToolbar);
 	ini.WriteBool(_T("ShowUpDownIconInTaskbar"), m_bShowUpDownIconInTaskbar);
@@ -3425,6 +3427,7 @@ void CPreferences::LoadPreferences()
 	m_iMaxChatHistory = PreferenceUiSeams::NormalizePositiveBounded(ini.GetInt(_T("MaxChatHistoryLines"), 100), 100, PreferenceUiSeams::kMaxChatHistoryLines);
 	SetMsgSessionsMax(PreferenceUiSeams::NormalizePositiveBounded(ini.GetInt(_T("MaxMessageSessions"), static_cast<int>(GetDefaultMsgSessionsMax())), GetDefaultMsgSessionsMax(), PreferenceUiSeams::kMaxMessageSessions));
 	m_bShowActiveDownloadsBold = ini.GetBool(_T("ShowActiveDownloadsBold"), false);
+	SetBoldActiveCategoryTab(ini.GetBool(_T("BoldActiveCategoryTab"), GetDefaultBoldActiveCategoryTab()));
 
 	m_strTxtEditor = ini.GetString(_T("TxtEditor"), _T("notepad.exe"));
 	m_strVideoPlayer = ini.GetString(_T("VideoPlayer"), _T(""));

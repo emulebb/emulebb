@@ -75,6 +75,7 @@ public:
 	void Localize();
 	void UpdateCatTabTitles(bool force = true);
 	void VerifyCatTabSize();
+	void RedrawCatTabs()	{ if (m_dlTab.GetSafeHwnd()) m_dlTab.Invalidate(); }
 	int	 AddCategory(const CString &newtitle, const CString &newincoming, const CString &newcomment, const CString &newautocat, bool addTab = true);
 	int	 AddCategoryInteractive();
 	bool EditCategoryInteractive(INT_PTR index);

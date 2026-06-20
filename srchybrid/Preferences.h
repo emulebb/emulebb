@@ -635,6 +635,7 @@ public:
 	static bool		m_bRemoveFinishedDownloads;
 	static INT_PTR	m_iMaxChatHistory;
 	static bool		m_bShowActiveDownloadsBold;
+	static bool		m_bBoldActiveCategoryTab;
 
 	static int		m_iSearchMethod;
 	static bool		m_bAdvancedSpamfilter;
@@ -1709,6 +1710,9 @@ public:
 	static bool		GetUseDwlPercentage()				{ return m_bShowDwlPercentage; }
 	static void		SetUseDwlPercentage(bool in)		{ m_bShowDwlPercentage = in; }
 	static bool		GetShowActiveDownloadsBold()		{ return m_bShowActiveDownloadsBold; }
+	static bool		GetBoldActiveCategoryTab()			{ return m_bBoldActiveCategoryTab; }
+	static bool		GetDefaultBoldActiveCategoryTab()	{ return false; }
+	static void		SetBoldActiveCategoryTab(bool bEnabled) { m_bBoldActiveCategoryTab = bEnabled; }
 	static bool		GetShowSharedFilesDetails()			{ return m_bShowSharedFilesDetails; }
 	static void		SetShowSharedFilesDetails(bool bIn)	{ m_bShowSharedFilesDetails = bIn; }
 	static bool		GetAutoShowLookups()				{ return m_bAutoShowLookups; }

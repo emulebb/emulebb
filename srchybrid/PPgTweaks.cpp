@@ -230,6 +230,16 @@ namespace
 		return _T("When crash dump creation is enabled, write a full memory dump instead of the default minidump.\r\n\r\nFull dumps are much larger and can contain private process memory. Share them only with trusted developers.");
 	}
 
+	static CString GetBoldActiveCategoryTabLabel()
+	{
+		return _T("Bold the active category tab");
+	}
+
+	static CString GetBoldActiveCategoryTabToolTip()
+	{
+		return _T("Draw the title of the currently selected transfer category tab in bold so the active category stands out.");
+	}
+
 	static CString GetMaxLogFileSizeLabel()
 	{
 		return GetResString(IDS_TWEAKS_MAX_LOG_FILE_SIZE);
@@ -585,6 +595,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_htiFollowMajorityFilenameRequiredPercent()
 	, m_htiFollowMajorityFilenameMinimumVotes()
 	, m_htiShowActiveDownloadsBold()
+	, m_htiBoldActiveCategoryTab()
 	, m_htiUseSystemFontForMainControls()
 	, m_htiReBarToolbar()
 	, m_htiShowUpDownIconInTaskbar()
@@ -715,6 +726,7 @@ CPPgTweaks::CPPgTweaks()
 	, m_bDailyConfigBackup()
 	, m_bShowedWarning()
 	, m_bShowActiveDownloadsBold()
+	, m_bBoldActiveCategoryTab()
 	, m_bShowCopyEd2kLinkCmd()
 	, m_bFollowMajorityFilenameForNewDownloads()
 	, m_bShowUpDownIconInTaskbar()
@@ -934,6 +946,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_htiDateTimeFormat4Log = m_ctrlTreeOptions.InsertItem(GetDateTimeFormat4LogLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiHiddenDisplay);
 		m_ctrlTreeOptions.AddEditBox(m_htiDateTimeFormat4Log, RUNTIME_CLASS(CTreeOptionsEditEx));
 		m_htiShowActiveDownloadsBold = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_SHOWACTIVEDOWNLOADSBOLD), m_htiHiddenDisplay, m_bShowActiveDownloadsBold);
+		m_htiBoldActiveCategoryTab = m_ctrlTreeOptions.InsertCheckBox(GetBoldActiveCategoryTabLabel(), m_htiHiddenDisplay, m_bBoldActiveCategoryTab);
 		m_htiUseSystemFontForMainControls = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_USESYSTEMFONTFORMAINCONTROLS), m_htiHiddenDisplay, m_bUseSystemFontForMainControls);
 		m_htiReBarToolbar = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_REBARTOOLBAR), m_htiHiddenDisplay, m_bReBarToolbar);
 		m_htiShowUpDownIconInTaskbar = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_SHOWUPDOWNICONINTASKBAR), m_htiHiddenDisplay, m_bShowUpDownIconInTaskbar);
@@ -1149,6 +1162,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiPreviewOnIconDblClk, IDS_TWEAKS_TT_PREVIEW_ON_ICON_DBL_CLK);
 		SetTreeToolTip(m_htiExtraPreviewWithMenu, IDS_TWEAKS_TT_EXTRA_PREVIEW_WITH_MENU);
 		SetTreeToolTip(m_htiShowActiveDownloadsBold, IDS_TWEAKS_TT_SHOW_ACTIVE_DOWNLOADS_BOLD);
+		SetTreeToolTip(m_htiBoldActiveCategoryTab, GetBoldActiveCategoryTabToolTip());
 		SetTreeToolTip(m_htiUseSystemFontForMainControls, IDS_TWEAKS_TT_USE_SYSTEM_FONT_FOR_MAIN_CONTROLS);
 		SetTreeToolTip(m_htiFilterLANIPs, IDS_TWEAKS_TT_FILTER_LANI_PS);
 		SetTreeToolTip(m_htiGeoLocationCheckDays, IDS_TWEAKS_TT_GEO_LOCATION_CHECK_DAYS);
@@ -1311,6 +1325,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 	DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiDateTimeFormat, m_sDateTimeFormat);
 	DDX_TreeEdit(pDX, IDC_EXT_OPTS, m_htiDateTimeFormat4Log, m_sDateTimeFormat4Log);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiShowActiveDownloadsBold, m_bShowActiveDownloadsBold);
+	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiBoldActiveCategoryTab, m_bBoldActiveCategoryTab);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiUseSystemFontForMainControls, m_bUseSystemFontForMainControls);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiReBarToolbar, m_bReBarToolbar);
 	DDX_TreeCheck(pDX, IDC_EXT_OPTS, m_htiShowUpDownIconInTaskbar, m_bShowUpDownIconInTaskbar);
@@ -1580,6 +1595,7 @@ BOOL CPPgTweaks::OnInitDialog()
 	m_bInspectAllFileTypes = thePrefs.GetInspectAllFileTypes();
 	m_bPreviewOnIconDblClk = thePrefs.GetPreviewOnIconDblClk();
 	m_bShowActiveDownloadsBold = thePrefs.GetShowActiveDownloadsBold();
+	m_bBoldActiveCategoryTab = thePrefs.GetBoldActiveCategoryTab();
 	m_bUseSystemFontForMainControls = thePrefs.GetUseSystemFontForMainControls();
 	m_bReBarToolbar = thePrefs.GetReBarToolbar();
 	m_bShowUpDownIconInTaskbar = thePrefs.IsShowUpDownIconInTaskbar();
@@ -1776,6 +1792,10 @@ BOOL CPPgTweaks::OnApply()
 	thePrefs.m_bInspectAllFileTypes = m_bInspectAllFileTypes;
 	thePrefs.m_bPreviewOnIconDblClk = m_bPreviewOnIconDblClk;
 	thePrefs.m_bShowActiveDownloadsBold = m_bShowActiveDownloadsBold;
+	const bool bBoldActiveCategoryTabChanged = thePrefs.GetBoldActiveCategoryTab() != m_bBoldActiveCategoryTab;
+	thePrefs.SetBoldActiveCategoryTab(m_bBoldActiveCategoryTab);
+	if (bBoldActiveCategoryTabChanged)
+		theApp.emuledlg->transferwnd->RedrawCatTabs();
 	thePrefs.m_bUseSystemFontForMainControls = m_bUseSystemFontForMainControls;
 	thePrefs.m_bReBarToolbar = m_bReBarToolbar;
 	thePrefs.m_bShowUpDownIconInTaskbar = m_bShowUpDownIconInTaskbar;
@@ -1969,6 +1989,7 @@ void CPPgTweaks::Localize()
 		LocalizeItemText(m_htiShareeMuleOldStyle, IDS_SHAREEMULEOLD);
 		LocalizeItemText(m_htiShareeMulePublicUser, IDS_SHAREEMULEPUBLIC);
 		LocalizeItemText(m_htiShowActiveDownloadsBold, IDS_SHOWACTIVEDOWNLOADSBOLD);
+		m_ctrlTreeOptions.SetItemText(m_htiBoldActiveCategoryTab, GetBoldActiveCategoryTabLabel());
 		m_ctrlTreeOptions.SetItemText(m_htiIconFlashOnNewMessage, GetIconFlashOnNewMessageLabel());
 		LocalizeItemText(m_htiShowUpDownIconInTaskbar, IDS_SHOWUPDOWNICONINTASKBAR);
 		LocalizeItemText(m_htiShowVerticalHourMarkers, IDS_SHOWVERTICALHOURMARKERS);
@@ -2095,6 +2116,7 @@ void CPPgTweaks::OnDestroy()
 	m_htiPreviewOnIconDblClk = NULL;
 	m_htiShowCopyEd2kLinkCmd = NULL;
 	m_htiShowActiveDownloadsBold = NULL;
+	m_htiBoldActiveCategoryTab = NULL;
 	m_htiUseSystemFontForMainControls = NULL;
 	m_htiReBarToolbar = NULL;
 	m_htiShowUpDownIconInTaskbar = NULL;

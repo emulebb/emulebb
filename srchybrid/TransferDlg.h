@@ -39,6 +39,7 @@ public:
 	void UpdateFilesCount(int iCount);
 	void UpdateCatTabTitles(bool force = true);
 	void VerifyCatTabSize();
+	void RedrawCatTabs();
 	int	 AddCategoryInteractive();
 	void ManageCategoriesInteractive();
 	void SwitchUploadList();

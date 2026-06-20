@@ -137,6 +137,7 @@ protected:
 	HTREEITEM m_htiFollowMajorityFilenameRequiredPercent;
 	HTREEITEM m_htiFollowMajorityFilenameMinimumVotes;
 	HTREEITEM m_htiShowActiveDownloadsBold;
+	HTREEITEM m_htiBoldActiveCategoryTab;
 	HTREEITEM m_htiUseSystemFontForMainControls;
 	HTREEITEM m_htiReBarToolbar;
 	HTREEITEM m_htiShowUpDownIconInTaskbar;
@@ -271,6 +272,7 @@ protected:
 	bool m_bDailyConfigBackup;
 	bool m_bShowedWarning;
 	bool m_bShowActiveDownloadsBold;
+	bool m_bBoldActiveCategoryTab;
 	bool m_bShowCopyEd2kLinkCmd;
 	bool m_bFollowMajorityFilenameForNewDownloads;
 	bool m_bShowUpDownIconInTaskbar;
