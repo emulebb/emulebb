@@ -1791,6 +1791,48 @@ void CTransferWnd::VerifyCatTabSize()
 	if (m_dwShowListIDC != IDC_DOWNLOADLIST && m_dwShowListIDC != IDC_UPLOADLIST + IDC_DOWNLOADLIST)
 		return;
 
+	// The active category tab is drawn bold when the "bold active category tab"
+	// tweak is enabled, but the tab control auto-measures item widths with the
+	// regular control font. Without extra room the bold label overflows its tab,
+	// so reserve enough horizontal padding to cover the widest bold-vs-regular
+	// delta across the current labels. Default padding (6) is kept when the tweak
+	// is off, so the default layout is unchanged.
+	int cxPad = 6;
+	if (thePrefs.GetBoldActiveCategoryTab()) {
+		LOGFONT lf = {};
+		CFont *pCtrlFont = m_dlTab.GetFont();
+		if (pCtrlFont != NULL && pCtrlFont->GetLogFont(&lf) != 0) {
+			CFont fontReg, fontBold;
+			lf.lfWeight = FW_NORMAL;
+			if (fontReg.CreateFontIndirect(&lf)) {
+				lf.lfWeight = FW_BOLD;
+				if (fontBold.CreateFontIndirect(&lf)) {
+					CClientDC dc(&m_dlTab);
+					int maxDelta = 0;
+					for (int i = m_dlTab.GetItemCount(); --i >= 0;) {
+						TCHAR szLabel[256] = {};
+						TCITEM ti = {};
+						ti.mask = TCIF_TEXT;
+						ti.pszText = szLabel;
+						ti.cchTextMax = _countof(szLabel);
+						if (!m_dlTab.GetItem(i, &ti))
+							continue;
+						const int nLen = (int)_tcslen(szLabel);
+						CFont *pOldFont = dc.SelectObject(&fontReg);
+						const int wReg = dc.GetTextExtent(szLabel, nLen).cx;
+						dc.SelectObject(&fontBold);
+						const int wBold = dc.GetTextExtent(szLabel, nLen).cx;
+						dc.SelectObject(pOldFont);
+						if (wBold - wReg > maxDelta)
+							maxDelta = wBold - wReg;
+					}
+					cxPad = 6 + (maxDelta + 1) / 2;
+				}
+			}
+		}
+	}
+	m_dlTab.SetPadding(CSize(cxPad, 4));
+
 	int size = 0;
 	for (int i = m_dlTab.GetItemCount(); --i >= 0;) {
 		CRect rect;
