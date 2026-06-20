@@ -2845,6 +2845,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "信頼性: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "結果から隠す"
     IDS_SEARCH_HIDE_NO_FILTER                                  "フィルターなし"
+    IDS_BOLDACTIVECATEGORYTAB                                  "アクティブなカテゴリ タブを太字で表示します"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "現在選択されているカテゴリ タブのタイトルを太字で描画します。\r\n\r\nまさにビジュアルです。アクティブなカテゴリをより明確に目立たせたい場合は、これを有効にします。"
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "クラッシュ ダンプの作成が有効になっている場合は、デフォルトのミニダンプの代わりに完全なメモリ ダンプを書き込みます。\r\n\r\n完全なダンプははるかに大きく、プライベート プロセス メモリが含まれる場合があります。信頼できる開発者とのみ共有してください。"
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "完全なメモリ ダンプをキャプチャする"
 END
 // eMuleBB managed translation block: end
 

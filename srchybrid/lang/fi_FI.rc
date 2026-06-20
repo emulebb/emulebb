@@ -2811,6 +2811,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Luottamus: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Piilota tuloksista"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Ei suodatinta"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Näytä aktiivisen luokan välilehti lihavoituna"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Piirtää tällä hetkellä valitun luokkavälilehden otsikon lihavoituna.\r\n\r\nPelkäsesti visuaalinen. Ota se käyttöön, jos haluat aktiivisen luokan erottuvan selkeämmin."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Kun kaatumisvedosten luonti on käytössä, kirjoita koko muistivedos oletusminivedoksen sijaan.\r\n\r\nTäydet vedokset ovat paljon suurempia ja voivat sisältää yksityistä prosessimuistia. Jaa ne vain luotettujen kehittäjien kanssa."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Kaappaa koko muistivedos"
 END
 // eMuleBB managed translation block: end
 

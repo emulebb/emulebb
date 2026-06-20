@@ -2805,6 +2805,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "자신감: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "결과에서 숨기기"
     IDS_SEARCH_HIDE_NO_FILTER                                  "필터 없음"
+    IDS_BOLDACTIVECATEGORYTAB                                  "활성 카테고리 탭을 굵게 표시"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "현재 선택된 카테고리 탭의 제목을 굵게 그립니다.\r\n\r\n순전히 시각적입니다. 활성 카테고리를 더욱 명확하게 표시하려면 활성화하세요."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "크래시 덤프 생성이 활성화되면 기본 미니 덤프 대신 전체 메모리 덤프를 작성합니다.\r\n\r\n전체 덤프는 훨씬 크고 개인 프로세스 메모리를 포함할 수 있습니다. 신뢰할 수 있는 개발자에게만 공유하세요."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "전체 메모리 덤프 캡처"
 END
 // eMuleBB managed translation block: end
 

@@ -2835,6 +2835,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Besimi: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Fshihu nga rezultatet"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Nuk ka filtër"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Shfaq skedën e kategorisë aktive me shkronja të zeza"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Vizaton titullin e skedës së kategorisë së zgjedhur aktualisht me shkronja të zeza.\r\n\r\nThjesht vizuale. Aktivizoni nëse dëshironi që kategoria aktive të dalë më qartë."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Kur aktivizohet krijimi i skedarit të ndërprerjes së aksidentit, shkruani një skedar të memories së plotë në vend të minidump-it të paracaktuar.\r\n\r\nNdani ato vetëm me zhvilluesit e besuar."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Regjistroni një kujtesë të plotë"
 END
 // eMuleBB managed translation block: end
 

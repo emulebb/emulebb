@@ -2845,6 +2845,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Bizalom: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Elrejtés az eredmények közül"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Nincs szűrő"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Az aktív kategória lap félkövérrel szedve"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Félkövérrel megrajzolja az aktuálisan kiválasztott kategórialap címét.\r\n\r\nTisztán vizuális. Engedélyezze, ha azt szeretné, hogy az aktív kategória tisztábban tűnjön ki."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Ha az összeomlási kiíratások létrehozása engedélyezve van, akkor az alapértelmezett minidump helyett írjon teljes memóriakiíratást.\r\n\r\nA teljes kiíratások sokkal nagyobbak, és privát folyamatmemóriát is tartalmazhatnak. Csak megbízható fejlesztőkkel ossza meg őket."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Rögzítse a teljes memória kiíratását"
 END
 // eMuleBB managed translation block: end
 

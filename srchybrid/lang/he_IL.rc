@@ -2835,6 +2835,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "ביטחון עצמי: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "הסתר מהתוצאות"
     IDS_SEARCH_HIDE_NO_FILTER                                  "אין פילטר"
+    IDS_BOLDACTIVECATEGORYTAB                                  "הצג את כרטיסיית הקטגוריה הפעילה בהדגשה"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "מצייר את הכותרת של לשונית הקטגוריה שנבחרה כעת בהדגשה.\r\n\r\nויזואלי לחלוטין. הפעל את זה אם אתה רוצה שהקטגוריה הפעילה תבלוט בצורה ברורה יותר."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "כאשר יצירת dump של קריסה מופעלת, כתוב dump זיכרון מלא במקום מיניdump ברירת המחדל.\r\n\r\nשתף אותם רק עם מפתחים מהימנים."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "צלם זיכרון מלא"
 END
 // eMuleBB managed translation block: end
 

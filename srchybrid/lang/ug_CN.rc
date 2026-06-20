@@ -2806,6 +2806,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "ئىشەنچ: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "نەتىجىدىن يوشۇرۇش"
     IDS_SEARCH_HIDE_NO_FILTER                                  "سۈزگۈچ يوق"
+    IDS_BOLDACTIVECATEGORYTAB                                  "ئاكتىپ سەھىپە بەتكۈچىنى توم ھالەتتە كۆرسىتىڭ"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "نۆۋەتتىكى تاللانغان سەھىپە بەتكۈچىنىڭ نامىنى توم قىلىپ سىزىڭ.\r\n\r\nئېنىق كۆرۈنۈش. ئەگەر ئاكتىپ كاتېگورىيەنىڭ تېخىمۇ ئېنىق بولۇشىنى ئۈمىد قىلسىڭىز ئۇنى قوزغىتىڭ."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "كاشىلا تۆكمە قىلىپ قۇرۇش قوزغىتىلغاندا ، سۈكۈتتىكى minidump نىڭ ئورنىغا تولۇق ئىچكى ساقلىغۇچ تاشلاڭ.\r\n\r\nFull ئەخلەت ساندۇقى بىر قەدەر چوڭ بولۇپ ، شەخسىي جەريان ئىچكى ساقلىغۇچنى ئۆز ئىچىگە ئالىدۇ. ئۇلارنى پەقەت ئىشەنچلىك ئاچقۇچىلار بىلەن ئورتاقلىشىڭ."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "تولۇق ئىچكى ساقلىغۇچنى تۇتۇڭ"
 END
 // eMuleBB managed translation block: end
 

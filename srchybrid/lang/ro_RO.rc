@@ -2845,6 +2845,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Încredere: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Ascundeți din rezultate"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Fără filtru"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Afișați fila categorie activă cu caractere aldine"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Desenează cu aldine titlul filei de categorie selectată în prezent.\r\n\r\nPur vizual. Activați-l dacă doriți ca categoria activă să iasă în evidență mai clar."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Când este activată crearea de descărcare în caz de accident, scrieți o descărcare completă a memoriei în loc de minidump implicit.\r\n\r\nDumpurile complete sunt mult mai mari și pot conține memorie privată de proces. Distribuiți-le doar dezvoltatorilor de încredere."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Capturați o memorie completă"
 END
 // eMuleBB managed translation block: end
 

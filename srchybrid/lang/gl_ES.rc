@@ -2848,6 +2848,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Confianza: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Ocultar dos resultados"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Sen filtro"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Mostra a pestana da categoría activa en negra"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Debuxa o título da pestana da categoría seleccionada actualmente en negrita.\r\n\r\nPuramente visual. Habilítaa se queres que a categoría activa destaque con máis claridade."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Cando se habilita a creación de volcados por falla, escribe un volcado de memoria completa en lugar do minidump predeterminado.\r\n\r\nOs volcados completos son moito máis grandes e poden conter memoria de proceso privada. Compárteos só con desenvolvedores de confianza."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Captura un volcado de memoria cheo"
 END
 // eMuleBB managed translation block: end
 

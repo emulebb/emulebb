@@ -2840,6 +2840,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Konfiantza: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Ezkutatu emaitzetatik"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Iragazkirik ez"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Erakutsi kategoria aktiboaren fitxa lodiz"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Une honetan hautatutako kategoria fitxaren izenburua lodiz marrazten du.\r\n\r\nIkusmen hutsa. Gaitu kategoria aktiboa argiago nabarmentzea nahi baduzu."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Istripu-iraulketa sortzea gaituta dagoenean, idatzi memoria-iraulketa lehenetsiaren ordez.\r\n\r\nZaurketa osoak askoz handiagoak dira eta prozesuko memoria pribatua izan dezakete. Partekatu itzazu garatzaile fidagarriekin soilik."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Harrapatu memoria-zaborketa osoa"
 END
 // eMuleBB managed translation block: end
 

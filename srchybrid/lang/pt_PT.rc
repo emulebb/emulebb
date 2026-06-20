@@ -2848,6 +2848,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Confiança: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Ocultar dos resultados"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Sem filtro"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Mostrar a guia da categoria ativa em negrito"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Desenha o título da guia da categoria atualmente selecionada em negrito.\r\n\r\nPuramente visual. Ative-o se quiser que a categoria ativa se destaque mais claramente."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Quando a criação de despejo de memória estiver habilitada, grave um despejo de memória completo em vez do minidespejo padrão.\r\n\r\nOs despejos completos são muito maiores e podem conter memória de processo privada. Compartilhe-os apenas com desenvolvedores confiáveis."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Capture um despejo de memória completo"
 END
 // eMuleBB managed translation block: end
 

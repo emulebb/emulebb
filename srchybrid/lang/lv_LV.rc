@@ -2836,6 +2836,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Pārliecība: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Slēpt no rezultātiem"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Nav filtra"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Rādīt aktīvās kategorijas cilni treknrakstā"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Uzzīmē pašlaik atlasītās kategorijas cilnes nosaukumu treknrakstā.\r\n\r\nTikai vizuāli. Iespējojiet to, ja vēlaties, lai aktīvā kategorija izceltos skaidrāk."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Ja ir iespējota avārijas izgāztuves izveide, ierakstiet pilnas atmiņas izdruku, nevis noklusējuma minidump.\r\n\r\nPilnas izgāztuves ir daudz lielākas un var saturēt privāto procesu atmiņu. Kopīgojiet tos tikai ar uzticamiem izstrādātājiem."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Uzņemiet pilnu atmiņas izgāztuvi"
 END
 // eMuleBB managed translation block: end
 

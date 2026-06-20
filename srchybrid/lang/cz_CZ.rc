@@ -2840,6 +2840,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Spolehlivost: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Skrýt z výsledků"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Žádný filtr"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Zobrazit kartu aktivní kategorie tučně"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Nakreslí nadpis aktuálně vybrané karty kategorie tučně.\r\n\r\nČistě vizuální. Aktivujte ji, pokud chcete, aby aktivní kategorie vynikla jasněji."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Je-li povoleno vytváření výpisu stavu paměti, zapište místo výchozího minidumpu úplný výpis paměti.\r\n\r\nÚplné výpisy jsou mnohem větší a mohou obsahovat paměť soukromých procesů. Sdílejte je pouze s důvěryhodnými vývojáři."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Zachyťte úplný výpis paměti"
 END
 // eMuleBB managed translation block: end
 

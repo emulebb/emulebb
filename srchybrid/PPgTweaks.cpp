@@ -220,26 +220,6 @@ namespace
 		return GetResString(IDS_TWEAKS_CRASH_DUMP_ALWAYS);
 	}
 
-	static CString GetCaptureFullCrashDumpLabel()
-	{
-		return _T("Capture Full Dump");
-	}
-
-	static CString GetCaptureFullCrashDumpToolTip()
-	{
-		return _T("When crash dump creation is enabled, write a full memory dump instead of the default minidump.\r\n\r\nFull dumps are much larger and can contain private process memory. Share them only with trusted developers.");
-	}
-
-	static CString GetBoldActiveCategoryTabLabel()
-	{
-		return _T("Bold the active category tab");
-	}
-
-	static CString GetBoldActiveCategoryTabToolTip()
-	{
-		return _T("Draw the title of the currently selected transfer category tab in bold so the active category stands out.");
-	}
-
 	static CString GetMaxLogFileSizeLabel()
 	{
 		return GetResString(IDS_TWEAKS_MAX_LOG_FILE_SIZE);
@@ -946,7 +926,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_htiDateTimeFormat4Log = m_ctrlTreeOptions.InsertItem(GetDateTimeFormat4LogLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiHiddenDisplay);
 		m_ctrlTreeOptions.AddEditBox(m_htiDateTimeFormat4Log, RUNTIME_CLASS(CTreeOptionsEditEx));
 		m_htiShowActiveDownloadsBold = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_SHOWACTIVEDOWNLOADSBOLD), m_htiHiddenDisplay, m_bShowActiveDownloadsBold);
-		m_htiBoldActiveCategoryTab = m_ctrlTreeOptions.InsertCheckBox(GetBoldActiveCategoryTabLabel(), m_htiHiddenDisplay, m_bBoldActiveCategoryTab);
+		m_htiBoldActiveCategoryTab = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_BOLDACTIVECATEGORYTAB), m_htiHiddenDisplay, m_bBoldActiveCategoryTab);
 		m_htiUseSystemFontForMainControls = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_USESYSTEMFONTFORMAINCONTROLS), m_htiHiddenDisplay, m_bUseSystemFontForMainControls);
 		m_htiReBarToolbar = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_REBARTOOLBAR), m_htiHiddenDisplay, m_bReBarToolbar);
 		m_htiShowUpDownIconInTaskbar = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_SHOWUPDOWNICONINTASKBAR), m_htiHiddenDisplay, m_bShowUpDownIconInTaskbar);
@@ -981,7 +961,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		m_htiCreateCrashDumpDisabled = m_ctrlTreeOptions.InsertRadioButton(GetCreateCrashDumpDisabledLabel(), m_htiCreateCrashDump, m_iCreateCrashDumpMode == 0);
 		m_htiCreateCrashDumpPrompt = m_ctrlTreeOptions.InsertRadioButton(GetCreateCrashDumpPromptLabel(), m_htiCreateCrashDump, m_iCreateCrashDumpMode == 1);
 		m_htiCreateCrashDumpAlways = m_ctrlTreeOptions.InsertRadioButton(GetCreateCrashDumpAlwaysLabel(), m_htiCreateCrashDump, m_iCreateCrashDumpMode == 2);
-		m_htiCaptureFullCrashDump = m_ctrlTreeOptions.InsertCheckBox(GetCaptureFullCrashDumpLabel(), m_htiLoggingGroup, m_bCaptureFullCrashDump);
+		m_htiCaptureFullCrashDump = m_ctrlTreeOptions.InsertCheckBox(GetResString(IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP), m_htiLoggingGroup, m_bCaptureFullCrashDump);
 		m_htiMaxLogFileSize = m_ctrlTreeOptions.InsertItem(GetMaxLogFileSizeLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiLoggingGroup);
 		m_ctrlTreeOptions.AddEditBox(m_htiMaxLogFileSize, RUNTIME_CLASS(CNumTreeOptionsEdit));
 		m_htiMaxLogBuffer = m_ctrlTreeOptions.InsertItem(GetMaxLogBufferLabel(), TREEOPTSCTRLIMG_EDIT, TREEOPTSCTRLIMG_EDIT, m_htiLoggingGroup);
@@ -1110,7 +1090,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiCreateCrashDumpDisabled, IDS_TWEAKS_TT_CREATE_CRASH_DUMP_DISABLED);
 		SetTreeToolTip(m_htiCreateCrashDumpPrompt, IDS_TWEAKS_TT_CREATE_CRASH_DUMP_PROMPT);
 		SetTreeToolTip(m_htiCreateCrashDumpAlways, IDS_TWEAKS_TT_CREATE_CRASH_DUMP_ALWAYS);
-		SetTreeToolTip(m_htiCaptureFullCrashDump, GetCaptureFullCrashDumpToolTip());
+		SetTreeToolTip(m_htiCaptureFullCrashDump, IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP);
 		SetTreeToolTip(m_htiMaxLogFileSize, IDS_TWEAKS_TT_MAX_LOG_FILE_SIZE);
 		SetTreeToolTip(m_htiMaxLogBuffer, IDS_TWEAKS_TT_MAX_LOG_BUFFER);
 		SetTreeToolTip(m_htiLogFileFormat, IDS_TWEAKS_TT_LOG_FILE_FORMAT);
@@ -1162,7 +1142,7 @@ void CPPgTweaks::DoDataExchange(CDataExchange *pDX)
 		SetTreeToolTip(m_htiPreviewOnIconDblClk, IDS_TWEAKS_TT_PREVIEW_ON_ICON_DBL_CLK);
 		SetTreeToolTip(m_htiExtraPreviewWithMenu, IDS_TWEAKS_TT_EXTRA_PREVIEW_WITH_MENU);
 		SetTreeToolTip(m_htiShowActiveDownloadsBold, IDS_TWEAKS_TT_SHOW_ACTIVE_DOWNLOADS_BOLD);
-		SetTreeToolTip(m_htiBoldActiveCategoryTab, GetBoldActiveCategoryTabToolTip());
+		SetTreeToolTip(m_htiBoldActiveCategoryTab, IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB);
 		SetTreeToolTip(m_htiUseSystemFontForMainControls, IDS_TWEAKS_TT_USE_SYSTEM_FONT_FOR_MAIN_CONTROLS);
 		SetTreeToolTip(m_htiFilterLANIPs, IDS_TWEAKS_TT_FILTER_LANI_PS);
 		SetTreeToolTip(m_htiGeoLocationCheckDays, IDS_TWEAKS_TT_GEO_LOCATION_CHECK_DAYS);
@@ -1954,7 +1934,7 @@ void CPPgTweaks::Localize()
 		m_ctrlTreeOptions.SetItemText(m_htiCreateCrashDumpDisabled, GetCreateCrashDumpDisabledLabel());
 		m_ctrlTreeOptions.SetItemText(m_htiCreateCrashDumpPrompt, GetCreateCrashDumpPromptLabel());
 		m_ctrlTreeOptions.SetItemText(m_htiCreateCrashDumpAlways, GetCreateCrashDumpAlwaysLabel());
-		m_ctrlTreeOptions.SetItemText(m_htiCaptureFullCrashDump, GetCaptureFullCrashDumpLabel());
+		LocalizeItemText(m_htiCaptureFullCrashDump, IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP);
 		m_ctrlTreeOptions.SetEditLabel(m_htiMaxLogFileSize, GetMaxLogFileSizeLabel());
 		m_ctrlTreeOptions.SetEditLabel(m_htiMaxLogBuffer, GetMaxLogBufferLabel());
 		m_ctrlTreeOptions.SetItemText(m_htiLogFileFormat, GetLogFileFormatLabel());
@@ -1989,7 +1969,7 @@ void CPPgTweaks::Localize()
 		LocalizeItemText(m_htiShareeMuleOldStyle, IDS_SHAREEMULEOLD);
 		LocalizeItemText(m_htiShareeMulePublicUser, IDS_SHAREEMULEPUBLIC);
 		LocalizeItemText(m_htiShowActiveDownloadsBold, IDS_SHOWACTIVEDOWNLOADSBOLD);
-		m_ctrlTreeOptions.SetItemText(m_htiBoldActiveCategoryTab, GetBoldActiveCategoryTabLabel());
+		LocalizeItemText(m_htiBoldActiveCategoryTab, IDS_BOLDACTIVECATEGORYTAB);
 		m_ctrlTreeOptions.SetItemText(m_htiIconFlashOnNewMessage, GetIconFlashOnNewMessageLabel());
 		LocalizeItemText(m_htiShowUpDownIconInTaskbar, IDS_SHOWUPDOWNICONINTASKBAR);
 		LocalizeItemText(m_htiShowVerticalHourMarkers, IDS_SHOWVERTICALHOURMARKERS);

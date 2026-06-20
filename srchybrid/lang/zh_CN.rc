@@ -2816,6 +2816,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "置信度：%s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "隐藏结果"
     IDS_SEARCH_HIDE_NO_FILTER                                  "无过滤器"
+    IDS_BOLDACTIVECATEGORYTAB                                  "以粗体显示活动类别选项卡"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "以粗体绘制当前所选类别选项卡的标题。\r\n\r\n纯视觉。如果您希望活动类别更清晰地突出，请启用它。"
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "启用故障转储创建后，写入完整内存转储而不是默认的小型转储。\r\n\r\n完整转储要大得多，并且可以包含私有进程内存。仅与值得信赖的开发人员共享它们。"
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "捕获完整内存转储"
 END
 // eMuleBB managed translation block: end
 

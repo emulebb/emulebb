@@ -2840,6 +2840,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Zaupanje: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Skrij pred rezultati"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Brez filtra"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Prikaži zavihek aktivne kategorije v krepkem tisku"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Nariše naslov trenutno izbranega zavihka kategorije v krepkem tisku.\r\n\r\nPovsem vizualno. Omogočite ga, če želite, da aktivna kategorija jasneje izstopa."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Ko je omogočeno ustvarjanje izpisa zrušitve, napišite izpis celotnega pomnilnika namesto privzetega mini izpisa.\r\n\r\nPopolni izpisi so veliko večji in lahko vsebujejo zasebni pomnilnik procesa. Delite jih samo z zaupanja vrednimi razvijalci."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Zajem celotnega izpisa pomnilnika"
 END
 // eMuleBB managed translation block: end
 

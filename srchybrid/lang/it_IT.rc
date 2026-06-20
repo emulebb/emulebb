@@ -2811,6 +2811,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Fiducia: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Nascondi dai risultati"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Nessun filtro"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Mostra la scheda della categoria attiva in grassetto"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Disegna in grassetto il titolo della scheda della categoria attualmente selezionata.\r\n\r\nPuramente visivo. Abilitalo se vuoi che la categoria attiva risalti più chiaramente."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Quando la creazione del dump di arresto anomalo del sistema è abilitata, scrivi un dump della memoria completo invece del minidump predefinito.\r\n\r\nI dump completi sono molto più grandi e possono contenere memoria di processo privata. Condividili solo con sviluppatori fidati."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Cattura un dump completo della memoria"
 END
 // eMuleBB managed translation block: end
 

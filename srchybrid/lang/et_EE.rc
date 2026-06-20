@@ -2838,6 +2838,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Usaldus: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Peida tulemuste eest"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Filtrit pole"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Näita aktiivse kategooria vahekaarti paksus kirjas"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Joonistab praegu valitud kategooria vahekaardi pealkirja paksus kirjas.\r\n\r\nPuht visuaalne. Lubage see, kui soovite, et aktiivne kategooria selgemalt silma paistaks."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Kui krahhitõmmise loomine on lubatud, kirjutage vaikimisi minitõmmise asemel täismälu tõmmis.\r\n\r\nTäisväljavõtted on palju suuremad ja võivad sisaldada privaatset protsessimälu. Jagage neid ainult usaldusväärsete arendajatega."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Jäädvustage täielik mälutõmmis"
 END
 // eMuleBB managed translation block: end
 

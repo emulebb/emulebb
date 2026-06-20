@@ -2849,6 +2849,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Tillid: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Skjul fra resultater"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Intet filter"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Vis den aktive kategorifane med fed skrift"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Tegner titlen på den aktuelt valgte kategorifane med fed skrift.\r\n\r\nRent visuelt. Aktiver det, hvis du vil have den aktive kategori til at skille sig tydeligere ud."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Når oprettelse af nedbrudsdump er aktiveret, skal du skrive en fuld hukommelsesdump i stedet for standard minidump.\r\n\r\nFulde dumps er meget større og kan indeholde privat proceshukommelse. Del dem kun med betroede udviklere."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Optag en fuld hukommelsesdump"
 END
 // eMuleBB managed translation block: end
 

@@ -2815,6 +2815,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Pewność: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Ukryj przed wynikami"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Brak filtra"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Pokaż aktywną kartę kategorii pogrubioną czcionką"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Rysuje tytuł aktualnie wybranej karty kategorii pogrubioną czcionką.\r\n\r\nCzysto wizualny. Włącz tę opcję, jeśli chcesz, aby aktywna kategoria wyróżniała się wyraźniej."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Gdy włączone jest tworzenie zrzutów awaryjnych, zapisz pełny zrzut pamięci zamiast domyślnego minizrzutu.\r\n\r\nPełne zrzuty są znacznie większe i mogą zawierać prywatną pamięć procesową. Udostępniaj je tylko zaufanym programistom."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Przechwyć pełny zrzut pamięci"
 END
 // eMuleBB managed translation block: end
 

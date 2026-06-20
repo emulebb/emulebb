@@ -2836,6 +2836,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Sự tự tin: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Ẩn khỏi kết quả"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Không có bộ lọc"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Hiển thị tab danh mục đang hoạt động được in đậm"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Vẽ tiêu đề của tab danh mục hiện được chọn bằng chữ in đậm.\r\n\r\nHoàn toàn trực quan. Hãy kích hoạt nó nếu bạn muốn danh mục đang hoạt động nổi bật hơn."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Khi bật tính năng tạo kết xuất sự cố, hãy ghi kết xuất bộ nhớ đầy đủ thay vì kết xuất nhỏ mặc định.\r\n\r\nKết xuất đầy đủ lớn hơn nhiều và có thể chứa bộ nhớ xử lý riêng tư. Chỉ chia sẻ chúng với các nhà phát triển đáng tin cậy."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Chụp toàn bộ kết xuất bộ nhớ"
 END
 // eMuleBB managed translation block: end
 

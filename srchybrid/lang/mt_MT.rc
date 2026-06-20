@@ -2834,6 +2834,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Kunfidenza: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Aħbi mir-riżultati"
     IDS_SEARCH_HIDE_NO_FILTER                                  "L-ebda filtru"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Uri t-tab tal-kategorija attiva b'tipa grassa"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Jiġbed it-titlu tat-tab tal-kategorija magħżula bħalissa b'tipa grassa.\r\n\r\nPurament viżwali. Ippermettiha jekk trid li l-kategorija attiva tispikka b'mod aktar ċar."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Meta l-ħolqien tal-crash dump ikun attivat, ikteb dump sħiħ tal-memorja minflok il-minidump default.\r\n\r\nDummps sħaħ huma ħafna akbar u jista 'jkun fihom memorja tal-proċess privat. Aqsamhom biss ma' żviluppaturi ta' fiduċja."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Aqbad dump tal-memorja sħiħa"
 END
 // eMuleBB managed translation block: end
 

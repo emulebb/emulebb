@@ -2842,6 +2842,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Självförtroende: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Dölj från resultat"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Inget filter"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Visa den aktiva kategorifliken i fetstil"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Ritar titeln på den aktuella kategorifliken med fet stil.\r\n\r\nRent visuellt. Aktivera det om du vill att den aktiva kategorin ska sticka ut tydligare."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "När skapande av kraschdumpar är aktiverat, skriv en fullständig minnesdump istället för standardminidump.\r\n\r\nFullständiga dumpar är mycket större och kan innehålla privat processminne. Dela dem endast med betrodda utvecklare."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Fånga en fullständig minnesdump"
 END
 // eMuleBB managed translation block: end
 

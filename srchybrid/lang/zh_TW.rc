@@ -2824,6 +2824,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "信賴度：%s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "隱藏結果"
     IDS_SEARCH_HIDE_NO_FILTER                                  "無濾鏡"
+    IDS_BOLDACTIVECATEGORYTAB                                  "以粗體顯示活動類別標籤"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "以粗體繪製目前所選類別標籤的標題。\r\n\r\n純視覺。如果您希望活動類別更清晰地突出，請啟用它。"
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "啟用故障轉儲建立後，寫入完整記憶體轉儲而不是預設的小型轉儲。\r\n\r\n完整轉儲要大得多，並且可以包含私有進程記憶體。僅與值得信賴的開發人員分享它們。"
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "捕獲完整記憶體轉儲"
 END
 // eMuleBB managed translation block: end
 

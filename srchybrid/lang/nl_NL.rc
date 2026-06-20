@@ -2842,6 +2842,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Vertrouwen: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Verbergen voor resultaten"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Geen filter"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Toon het actieve categorietabblad vetgedrukt"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Tekent de titel van het momenteel geselecteerde categorietabblad vetgedrukt.\r\n\r\nPuur visueel. Schakel dit in als u wilt dat de actieve categorie duidelijker opvalt."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Wanneer het maken van een crashdump is ingeschakeld, schrijft u een volledige geheugendump in plaats van de standaardminidump.\r\n\r\nVolledige dumps zijn veel groter en kunnen privéprocesgeheugen bevatten. Deel ze alleen met vertrouwde ontwikkelaars."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Leg een volledige geheugendump vast"
 END
 // eMuleBB managed translation block: end
 

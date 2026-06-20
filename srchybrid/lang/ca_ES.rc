@@ -2844,6 +2844,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Confiança: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Amaga dels resultats"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Sense filtre"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Mostra la pestanya de categoria activa en negreta"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Dibuixa el títol de la pestanya de categoria seleccionada actualment en negreta.\r\n\r\nPurament visual. Activeu-lo si voleu que la categoria activa destaqui més clarament."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Quan la creació d'abocaments d'error està habilitada, escriviu un abocament de memòria completa en lloc del minidump predeterminat.\r\n\r\nEls abocaments complets són molt més grans i poden contenir memòria de procés privada. Comparteix-los només amb desenvolupadors de confiança."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Captura un buidatge de memòria complet"
 END
 // eMuleBB managed translation block: end
 

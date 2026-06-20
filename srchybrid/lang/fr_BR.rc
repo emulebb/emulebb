@@ -2810,6 +2810,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Confiance : %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Masquer des résultats"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Pas de filtre"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Afficher l'onglet de la catégorie active en gras"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Dessine le titre de l'onglet de catégorie actuellement sélectionné en gras.\r\n\r\nPurement visuel. Activez-le si vous souhaitez que la catégorie active ressorte plus clairement."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Lorsque la création de vidage sur incident est activée, écrivez un vidage de mémoire complet au lieu du minidump par défaut.\r\n\r\nLes vidages complets sont beaucoup plus volumineux et peuvent contenir de la mémoire de processus privée. Partagez-les uniquement avec des développeurs de confiance."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Capturer un vidage de mémoire complet"
 END
 // eMuleBB managed translation block: end
 

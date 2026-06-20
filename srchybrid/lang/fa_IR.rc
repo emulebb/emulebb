@@ -2807,6 +2807,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "اطمینان: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "از نتایج پنهان شوید"
     IDS_SEARCH_HIDE_NO_FILTER                                  "بدون فیلتر"
+    IDS_BOLDACTIVECATEGORYTAB                                  "برگه دسته فعال را به صورت پررنگ نشان دهید"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "عنوان برگه دسته انتخابی فعلی را به صورت پررنگ ترسیم می کند.\r\n\r\nکاملاً بصری. اگر می‌خواهید دسته فعال با وضوح بیشتری مشخص شود، آن را فعال کنید."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "وقتی ایجاد crash dump فعال است، به جای minidump پیش‌فرض یک حافظه کامل بنویسید.\r\n\r\nآنها را فقط با توسعه دهندگان قابل اعتماد به اشتراک بگذارید."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "ضبط حافظه کامل"
 END
 // eMuleBB managed translation block: end
 

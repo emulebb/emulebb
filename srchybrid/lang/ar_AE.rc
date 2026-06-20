@@ -2833,6 +2833,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "الثقة: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "إخفاء من النتائج"
     IDS_SEARCH_HIDE_NO_FILTER                                  "لا يوجد مرشح"
+    IDS_BOLDACTIVECATEGORYTAB                                  "إظهار علامة تبويب الفئة النشطة بالخط العريض"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "يرسم عنوان علامة تبويب الفئة المحددة حاليًا بالخط العريض.\r\n\r\nمرئي تمامًا. قم بتمكينها إذا كنت تريد أن تبرز الفئة النشطة بشكل أكثر وضوحًا."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "عند تمكين إنشاء تفريغ الأعطال، قم بكتابة تفريغ ذاكرة كامل بدلاً من التفريغ الصغير الافتراضي. تعتبر عمليات تفريغ\r\n\r\nFull أكبر بكثير ويمكن أن تحتوي على ذاكرة عملية خاصة. شاركها فقط مع المطورين الموثوقين."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "التقاط تفريغ الذاكرة الكامل"
 END
 // eMuleBB managed translation block: end
 

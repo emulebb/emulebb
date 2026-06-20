@@ -2843,6 +2843,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Pasitikėjimas: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Slėpti nuo rezultatų"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Nėra filtro"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Rodyti aktyvios kategorijos skirtuką paryškintu šriftu"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Paryškina šiuo metu pasirinktos kategorijos skirtuko pavadinimą.\r\n\r\nGrynai vizualiai. Įjunkite, jei norite, kad aktyvi kategorija būtų aiškiau išsiskirta."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Kai įjungtas strigčių iškelties kūrimas, vietoj numatytosios miniatidėties rašykite pilną atminties išrašymą.\r\n\r\nVisos iškeltinės yra daug didesnės ir gali turėti privačios proceso atminties. Bendrinkite juos tik su patikimais kūrėjais."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Užfiksuokite visą atminties iškrovą"
 END
 // eMuleBB managed translation block: end
 

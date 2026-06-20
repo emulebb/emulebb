@@ -2794,6 +2794,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Εμπιστοσύνη: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Απόκρυψη από τα αποτελέσματα"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Χωρίς φίλτρο"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Εμφάνιση της καρτέλας ενεργής κατηγορίας με έντονη γραφή"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Σχεδιάζει τον τίτλο της τρέχουσας επιλεγμένης καρτέλας κατηγορίας με έντονη γραφή.\r\n\r\nΚαθαρά οπτική. Ενεργοποιήστε το εάν θέλετε η ενεργή κατηγορία να ξεχωρίζει πιο καθαρά."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Όταν είναι ενεργοποιημένη η δημιουργία ένδειξης σφάλματος, γράψτε μια ένδειξη πλήρους μνήμης αντί για την προεπιλεγμένη minidump.\r\n\r\nΜοιραστείτε τα μόνο με αξιόπιστους προγραμματιστές."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Καταγράψτε μια ένδειξη πλήρους μνήμης"
 END
 // eMuleBB managed translation block: end
 

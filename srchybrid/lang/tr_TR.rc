@@ -2841,6 +2841,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Güven: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Sonuçlardan gizle"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Filtre yok"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Aktif kategori sekmesini kalın harflerle göster"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Seçili olan kategori sekmesinin başlığını kalın harflerle çizer.\r\n\r\nTamamen görsel. Aktif kategorinin daha net bir şekilde öne çıkmasını istiyorsanız bunu etkinleştirin."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Kilitlenme dökümü oluşturma etkinleştirildiğinde, varsayılan mini döküm yerine tam bellek dökümü yazın.\r\n\r\nTam dökümler çok daha büyüktür ve özel işlem belleği içerebilir. Bunları yalnızca güvenilir geliştiricilerle paylaşın."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Tam bellek dökümü yakalama"
 END
 // eMuleBB managed translation block: end
 

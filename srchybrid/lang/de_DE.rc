@@ -2817,6 +2817,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Vertrauen: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Aus Ergebnissen ausblenden"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Kein Filter"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Zeigt die aktive Kategorie-Registerkarte in Fettschrift an"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Zeichnet den Titel der aktuell ausgewählten Kategorieregisterkarte in Fettschrift.\r\n\r\nRein visuell. Aktivieren Sie es, wenn Sie möchten, dass die aktive Kategorie deutlicher hervorgehoben wird."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Wenn die Erstellung eines Crash-Dumps aktiviert ist, schreiben Sie einen vollständigen Speicherabzug anstelle des Standard-Minidumps.\r\n\r\nVollständige Dumps sind viel größer und können privaten Prozessspeicher enthalten. Teilen Sie sie nur mit vertrauenswürdigen Entwicklern."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Erfassen Sie einen vollständigen Speicherauszug"
 END
 // eMuleBB managed translation block: end
 

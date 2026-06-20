@@ -2835,6 +2835,10 @@ BEGIN
     IDS_CONFIDENCE_INFOTIP                                     "Впевненість: %s"
     IDS_SEARCH_HIDE_FROM_RESULTS                               "Приховати від результатів"
     IDS_SEARCH_HIDE_NO_FILTER                                  "Без фільтра"
+    IDS_BOLDACTIVECATEGORYTAB                                  "Показати вкладку активної категорії жирним шрифтом"
+    IDS_TWEAKS_TT_BOLD_ACTIVE_CATEGORY_TAB                     "Виділяє заголовок вибраної вкладки категорії жирним шрифтом.\r\n\r\nЧисто візуально. Увімкніть його, якщо ви хочете, щоб активна категорія виділялася чіткіше."
+    IDS_TWEAKS_TT_CAPTURE_FULL_CRASH_DUMP                      "Якщо ввімкнено створення аварійного дампа, записуйте повний дамп пам’яті замість мінідампу за замовчуванням.\r\n\r\nПовні дампи набагато більші та можуть містити приватну пам’ять процесу. Поділіться ними лише з перевіреними розробниками."
+    IDS_TWEAKS_CAPTURE_FULL_CRASH_DUMP                         "Зробіть повний дамп пам'яті"
 END
 // eMuleBB managed translation block: end
 
