@@ -139,7 +139,9 @@ jobs:
           $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
           try {
             $entries = @($archive.Entries | ForEach-Object { $_.FullName })
-            foreach ($requiredEntry in @($expectedExe, "eMuleBB/config/preferences.ini")) {
+            # preferences.ini is intentionally NOT packaged: the app generates a
+            # default config on first run, so do not require it as a package entry.
+            foreach ($requiredEntry in @($expectedExe)) {
               if ($entries -notcontains $requiredEntry) {
                 throw "Missing required package entry in ${zipPath}: $requiredEntry"
               }
