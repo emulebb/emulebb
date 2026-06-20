@@ -553,6 +553,7 @@ BOOL CMuleToolbarCtrl::ExecuteCommand(WPARAM wParam)
 		thePrefs.SetToolbarLabelSettings(LabelsBelow);
 		thePrefs.SetToolbarIconSize(m_sizBtnBmp);
 		theApp.ApplySkin(_T(""));
+		ResetButtonsToDefault();	// also restore the default toolbar button set and order
 		break;
 	case MP_CUSTOMIZETOOLBAR:
 		Customize();
@@ -753,6 +754,11 @@ void CMuleToolbarCtrl::Refresh()
 }
 
 void CMuleToolbarCtrl::OnTbnReset(LPNMHDR, LRESULT*)
+{
+	ResetButtonsToDefault();
+}
+
+void CMuleToolbarCtrl::ResetButtonsToDefault()
 {
 	// First, get rid of the old buttons while saving their states
 	for (int i = GetButtonCount(); --i >= 0;) {

@@ -36,6 +36,7 @@ public:
 	void Init();
 	void Localize();
 	void Refresh();
+	void ResetButtonsToDefault();
 	void SaveCurHeight();
 	void UpdateBackground();
 	void PressMuleButton(int nID);
