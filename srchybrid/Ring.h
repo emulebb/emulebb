@@ -110,6 +110,8 @@ void CRing<TYPE>::SetBuffer(UINT_PTR nSize)
 	if (m_nCount)
 		if (m_pHead > m_pTail) {
 			const UINT_PTR nHeadCount = static_cast<UINT_PTR>(m_pEnd - m_pHead);
+			// Keep reallocation bounded by logical contents; the wrapped tail span
+			// is whatever remains after the head-side span, not an independent capacity slice.
 			const UINT_PTR nTailCount = m_nCount - nHeadCount;
 			memcpy(dst, m_pHead, nHeadCount * sizeof TYPE);
 			memcpy(&dst[nHeadCount], m_pData, nTailCount * sizeof TYPE);
