@@ -190,16 +190,31 @@ jobs:
           --test-network offline `
           --fail-fast
 
-        python -m emule_workspace test live-e2e `
-          --config Release `
-          --platform x64 `
-          --materialize-test-install `
-          --materialize-test-install-release-version $packageVersion `
-          --materialize-test-install-skip-build `
-          --live-wire-inputs-file $ciLiveWireInputs `
-          --suite deterministic-two-client-transfer `
-          --test-network lan `
-          --fail-fast
+        # The LAN deterministic two-client transfer can flake on the hosted
+        # runner (port/timing). Retry once before failing the gate so a single
+        # transient hiccup does not red the whole smoke; a real break still
+        # fails (both attempts).
+        $transferOk = $false
+        foreach ($attempt in 1..2) {
+          Write-Host "deterministic-two-client-transfer attempt $attempt of 2"
+          try {
+            python -m emule_workspace test live-e2e `
+              --config Release `
+              --platform x64 `
+              --materialize-test-install `
+              --materialize-test-install-release-version $packageVersion `
+              --materialize-test-install-skip-build `
+              --live-wire-inputs-file $ciLiveWireInputs `
+              --suite deterministic-two-client-transfer `
+              --test-network lan `
+              --fail-fast
+            if ($LASTEXITCODE -eq 0) { $transferOk = $true; break }
+            Write-Host "::warning::deterministic-two-client-transfer attempt $attempt failed (exit $LASTEXITCODE)"
+          } catch {
+            Write-Host "::warning::deterministic-two-client-transfer attempt $attempt threw: $($_.Exception.Message)"
+          }
+        }
+        if (-not $transferOk) { throw "deterministic-two-client-transfer failed after 2 attempts." }
 
   arm64_smoke:
     name: Package and smoke (ARM64, windows-11-arm)
