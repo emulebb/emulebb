@@ -309,7 +309,8 @@ int CUPnPImplMiniLib::CStartDiscoveryThread::Run()
 			*m_pOwner->m_achLanIP = 0;
 			*m_pOwner->m_achWanIP = 0;
 			int iResult = UPNP_GetValidIGD(structDeviceList, m_pOwner->m_pURLs, m_pOwner->m_pIGDData
-							, m_pOwner->m_achLanIP, sizeof m_pOwner->m_achLanIP);
+							, m_pOwner->m_achLanIP, sizeof m_pOwner->m_achLanIP
+							, m_pOwner->m_achWanIP, sizeof m_pOwner->m_achWanIP);
 			freeUPNPDevlist(structDeviceList);
 			if (m_pOwner->m_pURLs->controlURL != NULL)
 				UPNP_GetExternalIPAddress(m_pOwner->m_pURLs->controlURL, m_pOwner->m_pIGDData->first.servicetype, m_pOwner->m_achWanIP);
