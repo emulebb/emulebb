@@ -421,7 +421,7 @@ void CMuleToolbarCtrl::OnTbnQueryInsert(LPNMHDR, LRESULT *pResult)
 void CMuleToolbarCtrl::OnTbnGetButtonInfo(LPNMHDR pNMHDR, LRESULT *pResult)
 {
 	LPNMTOOLBAR pNMTB = reinterpret_cast<LPNMTOOLBAR>(pNMHDR);
-	*pResult = static_cast<LRESULT>((size_t)pNMTB->iItem >= _countof(TBButtons));
+	*pResult = static_cast<LRESULT>((size_t)pNMTB->iItem < _countof(TBButtons));
 	if (*pResult) {
 		CString strText(TBStrings[pNMTB->iItem]);
 		strText.Remove(_T('&'));
