@@ -49,6 +49,7 @@
 #include "SharedFilesWnd.h"
 #include "ClientList.h"
 #include "Log.h"
+#include "KadDiagnosticsSeams.h"
 #include "Collection.h"
 #include "PathHelpers.h"
 #include "kademlia/kademlia/UDPFirewallTester.h"
@@ -3235,6 +3236,12 @@ void CSharedFileList::Publish()
 
 	//We are connected to Kad. We are either open or have a buddy. And Kad is ready to start publishing.
 	time_t tNow = time(NULL);
+	// Per-round outbound-publish counters for the rollup milestone (no-op without
+	// the diag log). Mirrors the rust publish_round rollup: how many keyword sets /
+	// sources / notes we STORED to Kad this Publish() tick.
+	UINT uKeywordPublished = 0;
+	UINT uSourcePublished = 0;
+	UINT uNotesPublished = 0;
 	if (Kademlia::CKademlia::GetTotalStoreKey() < KADEMLIATOTALSTOREKEY) {
 		//We are not at the max simultaneous keyword publishes
 		if (tNow >= m_keywords->GetNextPublishTime()) {
@@ -3308,6 +3315,16 @@ void CSharedFileList::Publish()
 							pPubKw->SetNextPublishTime(tNow + KADEMLIAREPUBLISHTIMEK);
 							pPubKw->IncPublishedCount();
 							Kademlia::CSearchManager::StartSearch(pSearch);
+							// Outbound-publish observability (no-op without diag log):
+							// record that we STORED this keyword's file set to Kad. Keyed
+							// on the best-ranked file's hash; fileCount carries the keyword
+							// STORE fan-out (master-only field). Mirrors the rust
+							// diag_kad_event::publish keyword emit.
+							EMULEBB_KAD_LOG_PUBLISH(
+								KadDiagnosticsSeams::EKadPublishKind::Keyword,
+								publishCandidates[0].pFile->GetFileHash(),
+								count);
+							++uKeywordPublished;
 						} else
 							//There were no valid files to publish with this keyword.
 							delete pSearch;
@@ -3344,6 +3361,14 @@ void CSharedFileList::Publish()
 			if (pCurKnownFile && pCurKnownFile->PublishSrc()) {
 				if (Kademlia::CSearchManager::PrepareLookup(Kademlia::CSearch::STOREFILE, true, Kademlia::CUInt128(pCurKnownFile->GetFileHash())) == NULL)
 					pCurKnownFile->SetLastPublishTimeKadSrc(0, 0);
+				// Outbound-publish observability (no-op without diag log): record that
+				// we STORED this file's source to Kad. Mirrors rust
+				// diag_kad_event::publish source emit; fileCount is 1.
+				EMULEBB_KAD_LOG_PUBLISH(
+					KadDiagnosticsSeams::EKadPublishKind::Source,
+					pCurKnownFile->GetFileHash(),
+					1);
+				++uSourcePublished;
 				MarkKadPublishStateChanged();
 				if (output != NULL) {
 					output->QueueFileDisplayRefresh(pCurKnownFile);
@@ -3380,14 +3405,35 @@ void CSharedFileList::Publish()
 				}
 				++uSequence;
 			}
-			if (pCurKnownFile && pCurKnownFile->PublishNotes())
+			if (pCurKnownFile && pCurKnownFile->PublishNotes()) {
 				if (Kademlia::CSearchManager::PrepareLookup(Kademlia::CSearch::STORENOTES, true, Kademlia::CUInt128(pCurKnownFile->GetFileHash())) == NULL)
 					pCurKnownFile->SetLastPublishTimeKadNotes(0);
+				// Outbound-publish observability (no-op without diag log): record that
+				// we STORED this file's notes to Kad. Mirrors rust
+				// diag_kad_event::publish notes emit; fileCount is 1.
+				EMULEBB_KAD_LOG_PUBLISH(
+					KadDiagnosticsSeams::EKadPublishKind::Notes,
+					pCurKnownFile->GetFileHash(),
+					1);
+				++uNotesPublished;
+			}
 
 			// even if we did not publish a source, reset the timer so that this list is processed
 			// only every KADEMLIAPUBLISHTIME seconds.
 			m_lastPublishKadNotes = tNow + KADEMLIAPUBLISHTIME;
 		}
+	}
+
+	// Per-round outbound-publish rollup milestone (no-op without the diag log): one
+	// Publish() tick stored at least one item. Mirrors rust
+	// diag_kad_event::publish_round. itemCount is the shared-file count this tick
+	// considered for publishing.
+	if (uKeywordPublished > 0 || uSourcePublished > 0 || uNotesPublished > 0) {
+		EMULEBB_KAD_LOG_PUBLISH_ROUND(
+			static_cast<UINT>(GetCount()),
+			uKeywordPublished,
+			uSourcePublished,
+			uNotesPublished);
 	}
 }
 

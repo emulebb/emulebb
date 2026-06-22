@@ -88,6 +88,46 @@ void LogSearchResponseEvent(
 	UINT uExpectedCount,
 	LPCTSTR pszAction,
 	LPCTSTR pszReason);
+
+/**
+ * Which outbound Kad publish kind a milestone describes; mirrors the rust
+ * KadPublishKind so body.publishKind and the event name match byte-for-byte.
+ */
+enum class EKadPublishKind
+{
+	Keyword,
+	Source,
+	Notes
+};
+
+/**
+ * Writes an outbound-publish milestone (uniform-diagnostics-v2 §3.3): we STORE one
+ * shared file's keywords/sources/notes to Kad. Mirrors the rust
+ * diag_kad_event::publish emit. The master fires an async STORE* search here, so
+ * the per-contact reach/ack counts the rust site has are not yet known and are
+ * intentionally omitted (documented structural difference); body.fileCount carries
+ * the number of file IDs added to a keyword STORE (1 for source/notes).
+ *
+ * pFileHash is the 16-byte eD2k MD4 (lower-case hex, matching rust keys.fileHash);
+ * for a keyword STORE that covers several files it is the best-ranked file's hash.
+ */
+void LogKadPublish(
+	EKadPublishKind eKind,
+	const uchar *pFileHash,
+	UINT uFileCount);
+
+/**
+ * Writes a per-round outbound-publish rollup (uniform-diagnostics-v2 §3.3): one
+ * Publish() tick stored at least one item. Mirrors the rust
+ * diag_kad_event::publish_round emit. The master per-tick publishes at most one
+ * keyword set / one source / one notes, so the *AckedContacts fields the rust site
+ * has are not available and are intentionally omitted (documented difference).
+ */
+void LogKadPublishRound(
+	UINT uItemCount,
+	UINT uKeywordPublished,
+	UINT uSourcePublished,
+	UINT uNotesPublished);
 #else
 inline void InitializeLog(LPCTSTR, UINT) {}
 inline bool IsEnabled() { return false; }
@@ -96,6 +136,14 @@ inline void LogContactEvent(LPCTSTR, LPCTSTR, const Kademlia::CContact *, LPCTST
 inline void LogRawContactEvent(LPCTSTR, LPCTSTR, uint32, uint16, uint16, uint8, LPCTSTR, LPCTSTR, LPCTSTR = NULL) {}
 inline void LogPacketEvent(LPCTSTR, LPCTSTR, uint32, uint8, uint8, LPCTSTR, LPCTSTR, LONGLONG) {}
 inline void LogSearchResponseEvent(LPCTSTR, LPCTSTR, uint32, uint32, uint32, uint16, uint8, UINT, UINT, LPCTSTR, LPCTSTR) {}
+enum class EKadPublishKind
+{
+	Keyword,
+	Source,
+	Notes
+};
+inline void LogKadPublish(EKadPublishKind, const uchar *, UINT) {}
+inline void LogKadPublishRound(UINT, UINT, UINT, UINT) {}
 #endif
 }
 
@@ -105,10 +153,14 @@ inline void LogSearchResponseEvent(LPCTSTR, LPCTSTR, uint32, uint32, uint32, uin
 #define EMULEBB_KAD_LOG_RAW_CONTACT_EVENT(...) KadDiagnosticsSeams::LogRawContactEvent(__VA_ARGS__)
 #define EMULEBB_KAD_LOG_PACKET_EVENT(...) KadDiagnosticsSeams::LogPacketEvent(__VA_ARGS__)
 #define EMULEBB_KAD_LOG_SEARCH_RESPONSE_EVENT(...) KadDiagnosticsSeams::LogSearchResponseEvent(__VA_ARGS__)
+#define EMULEBB_KAD_LOG_PUBLISH(...) KadDiagnosticsSeams::LogKadPublish(__VA_ARGS__)
+#define EMULEBB_KAD_LOG_PUBLISH_ROUND(...) KadDiagnosticsSeams::LogKadPublishRound(__VA_ARGS__)
 #else
 #define EMULEBB_KAD_LOG_ROUTING_SUMMARY(...) ((void)0)
 #define EMULEBB_KAD_LOG_CONTACT_EVENT(...) ((void)0)
 #define EMULEBB_KAD_LOG_RAW_CONTACT_EVENT(...) ((void)0)
 #define EMULEBB_KAD_LOG_PACKET_EVENT(...) ((void)0)
 #define EMULEBB_KAD_LOG_SEARCH_RESPONSE_EVENT(...) ((void)0)
+#define EMULEBB_KAD_LOG_PUBLISH(...) ((void)0)
+#define EMULEBB_KAD_LOG_PUBLISH_ROUND(...) ((void)0)
 #endif

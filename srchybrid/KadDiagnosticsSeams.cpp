@@ -426,5 +426,97 @@ void LogSearchResponseEvent(
 	}
 #endif
 }
+
+void LogKadPublish(
+	EKadPublishKind eKind,
+	const uchar *pFileHash,
+	UINT uFileCount)
+{
+#if EMULEBB_HAS_DIAG_EVENT_V1
+	if (!theDiagEventV1Log.IsOpen())
+		return;
+
+	// Event/publishKind/milestone strings mirror the rust diag_kad_event
+	// KadPublishKind byte-for-byte so the converged diff aligns on identical
+	// field shapes.
+	LPCTSTR pszEvent = _T("kad_keyword_publish");
+	LPCTSTR pszPublishKind = _T("keyword");
+	LPCTSTR pszMilestone = _T("keyword_published");
+	switch (eKind) {
+	case EKadPublishKind::Source:
+		pszEvent = _T("kad_source_publish");
+		pszPublishKind = _T("source");
+		pszMilestone = _T("source_published");
+		break;
+	case EKadPublishKind::Notes:
+		pszEvent = _T("kad_notes_publish");
+		pszPublishKind = _T("notes");
+		pszMilestone = _T("notes_published");
+		break;
+	case EKadPublishKind::Keyword:
+	default:
+		break;
+	}
+
+	// keys.fileHash is lower-case hex of the 16-byte eD2k MD4, matching the rust
+	// keys.fileHash encoding.
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"fileHash\":%s}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagEventLowerHexString(pFileHash, 16)));
+
+	// STRUCTURAL DIFFERENCE vs rust diag_kad_event::publish: the master fires an
+	// async STORE* search here and does not know the per-contact reach/ack/timeout/
+	// fail counts at the publish-initiation site (they arrive later via search
+	// responses). Those fields (closestContactsConsidered/attemptedContacts/
+	// ackedContacts/timedOutContacts/failedContacts) are intentionally omitted
+	// rather than fabricated; body.fileCount is the master-only file fan-out of a
+	// keyword STORE (1 for source/notes).
+	CString strBody;
+	strBody.Format(
+		_T("{\"milestone\":%s,\"action\":\"publish\",\"publishKind\":%s,\"fileCount\":%u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszMilestone),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszPublishKind),
+		uFileCount);
+
+	WriteDiagEventV1(_T("kad_event"), pszEvent, _T("info"), strKeys, strBody);
+#else
+	(void)eKind;
+	(void)pFileHash;
+	(void)uFileCount;
+#endif
+}
+
+void LogKadPublishRound(
+	UINT uItemCount,
+	UINT uKeywordPublished,
+	UINT uSourcePublished,
+	UINT uNotesPublished)
+{
+#if EMULEBB_HAS_DIAG_EVENT_V1
+	if (!theDiagEventV1Log.IsOpen())
+		return;
+
+	// STRUCTURAL DIFFERENCE vs rust diag_kad_event::publish_round: the master
+	// publishes at most one keyword set / one source / one notes per Publish() tick
+	// and does not aggregate per-contact ack counts, so keywordAckedContacts/
+	// sourceAckedContacts/notesAckedContacts are intentionally omitted (the rust
+	// rollup carries them). itemCount and the *Published counts match rust.
+	CString strBody;
+	strBody.Format(
+		_T("{\"milestone\":\"publish_round\",\"action\":\"observe\",\"itemCount\":%u,\"keywordPublished\":%u,\"sourcePublished\":%u,\"notesPublished\":%u}"),
+		uItemCount,
+		uKeywordPublished,
+		uSourcePublished,
+		uNotesPublished);
+
+	WriteDiagEventV1(_T("kad_event"), _T("kad_publish_round"), _T("info"), CString(_T("{}")), strBody);
+#else
+	(void)uItemCount;
+	(void)uKeywordPublished;
+	(void)uSourcePublished;
+	(void)uNotesPublished;
+#endif
+}
 }
 #endif
