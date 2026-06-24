@@ -600,6 +600,20 @@ void CServerConnect::DestroySocket(CServerSocket *pSock)
 	POSITION pos = m_lstOpenSockets.Find(pSock);
 	if (pos != NULL)
 		m_lstOpenSockets.RemoveAt(pos);
+	// also drop any pending connection-attempt entry referencing this socket, so
+	// the map can never retain a dangling pointer after the delete below. Several
+	// destroy paths (OnClose in CS_WAITFORLOGIN, the early-out in ConnectionFailed)
+	// bypass the map cleanup done elsewhere, which left freed sockets in the map
+	// and crashed AwaitingTestFromIP/AwaitingConnectionToServer when walking it.
+	for (POSITION mapPos = connectionattempts.GetStartPosition(); mapPos != NULL;) {
+		ULONGLONG tmpkey;
+		CServerSocket *tmpsock;
+		connectionattempts.GetNextAssoc(mapPos, tmpkey, tmpsock);
+		if (tmpsock == pSock) {
+			connectionattempts.RemoveKey(tmpkey);
+			break;
+		}
+	}
 	if (pSock->m_SocketData.hSocket != INVALID_SOCKET) { // deadlake PROXYSUPPORT - changed to AsyncSocketEx
 		pSock->AsyncSelect(FD_CLOSE);
 		pSock->ShutDown(CAsyncSocket::both);
