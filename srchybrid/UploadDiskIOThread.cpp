@@ -19,6 +19,7 @@
 #include "updownclient.h"
 #include "uploaddiskiothread.h"
 #include "emule.h"
+#include "LeechMode.h"
 #include "UploadQueue.h"
 #include "sharedfilelist.h"
 #include "partfile.h"
@@ -307,6 +308,12 @@ bool CUploadDiskIOThread::RemovePendingIoIfPresent(OverlappedRead_Struct *pOvRea
 
 void CUploadDiskIOThread::StartCreateNextBlockPackage(UploadingToClient_Struct *pUploadClientStruct)
 {
+	// Leech mode never sends file data: bail before any block is read from disk
+	// or packaged into OP_SENDINGPART. This is the final guarantee behind the
+	// upload-queue gate, so no upload can ever reach the wire. See LeechMode.h.
+	if (IsLeechModeActive())
+		return;
+
 	// when calling this function we already have a lock on the uploadlist
 	// (so pUploadClientStruct is stable), but retired entries must still be treated as inert.
 

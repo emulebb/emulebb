@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "ListenSocket.h"
+#include "LeechMode.h"
 #include "opcodes.h"
 #include "UpDownClient.h"
 #include "ClientList.h"
@@ -736,6 +737,11 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 				DebugRecv("OP_RequestParts", client, (size >= 16) ? packet : NULL);
 			theStats.AddDownDataOverheadFileRequest(size);
 
+			// Leech mode never uploads: drop block requests instead of queuing them.
+			// See LeechMode.h.
+			if (IsLeechModeActive())
+				return;
+
 			CSafeMemFile data(packet, size);
 			uchar reqfilehash[MDX_DIGEST_SIZE];
 			data.ReadHash16(reqfilehash);
@@ -891,7 +897,7 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 			theStats.AddDownDataOverheadOther(size);
 
 			CPtrList list;
-			if (thePrefs.CanSeeShares() == vsfaEverybody || (thePrefs.CanSeeShares() == vsfaFriends && client->IsFriend())) {
+			if (!IsLeechModeActive() && (thePrefs.CanSeeShares() == vsfaEverybody || (thePrefs.CanSeeShares() == vsfaFriends && client->IsFriend()))) {
 				std::vector<CKnownFile*> sharedFiles;
 				theApp.sharedfiles->CopyAllSharedFiles(sharedFiles);
 				for (CKnownFile *cur_file : sharedFiles) {
@@ -929,7 +935,7 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 			DebugRecv("OP_AskSharedDirectories", client);
 		theStats.AddDownDataOverheadOther(size);
 
-		if (thePrefs.CanSeeShares() == vsfaEverybody || (thePrefs.CanSeeShares() == vsfaFriends && client->IsFriend())) {
+		if (!IsLeechModeActive() && (thePrefs.CanSeeShares() == vsfaEverybody || (thePrefs.CanSeeShares() == vsfaFriends && client->IsFriend()))) {
 			AddLogLine(true, GetResString(IDS_SHAREDREQ1), client->GetUserName(), client->GetUserIDHybrid(), (LPCTSTR)GetResString(IDS_ACCEPTED));
 			client->SendSharedDirectories();
 		} else {
@@ -950,7 +956,7 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 			Packet *replypacket;
 			CSafeMemFile data(packet, size);
 			CString strReqDir(data.ReadString(client->GetUnicodeSupport() != UTF8strNone));
-			if (thePrefs.CanSeeShares() == vsfaEverybody || (thePrefs.CanSeeShares() == vsfaFriends && client->IsFriend())) {
+			if (!IsLeechModeActive() && (thePrefs.CanSeeShares() == vsfaEverybody || (thePrefs.CanSeeShares() == vsfaFriends && client->IsFriend()))) {
 				AddLogLine(true, GetResString(IDS_SHAREDREQ2), (LPCTSTR)client->GetUserName(), client->GetUserIDHybrid(), (LPCTSTR)strReqDir, (LPCTSTR)GetResString(IDS_ACCEPTED));
 				ASSERT(data.GetPosition() == data.GetLength());
 				CTypedPtrList<CPtrList, CKnownFile*> list;
@@ -1545,7 +1551,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 		theStats.AddDownDataOverheadOther(uRawSize);
 		//client->CheckHandshakeFinished();
 
-		if (thePrefs.CanSeeShares() == vsfaEverybody || (thePrefs.CanSeeShares() == vsfaFriends && client->IsFriend())) {
+		if (!IsLeechModeActive() && (thePrefs.CanSeeShares() == vsfaEverybody || (thePrefs.CanSeeShares() == vsfaFriends && client->IsFriend()))) {
 			if (thePrefs.GetVerbose())
 				AddDebugLogLine(true, _T("Client '%s' (%s) requested Preview - accepted"), client->GetUserName(), (LPCTSTR)ipstr(client->GetConnectIP()));
 			client->ProcessPreviewReq(packet, size);
@@ -1815,6 +1821,11 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 			if (thePrefs.GetDebugClientTCPLevel() > 0)
 				DebugRecv("OP_RequestParts_I64", client, (size >= 16) ? packet : NULL);
 			theStats.AddDownDataOverheadFileRequest(size);
+
+			// Leech mode never uploads: drop block requests instead of queuing them.
+			// See LeechMode.h.
+			if (IsLeechModeActive())
+				return;
 
 			CSafeMemFile data(packet, size);
 			uchar reqfilehash[MDX_DIGEST_SIZE];

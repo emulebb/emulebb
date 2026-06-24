@@ -23,6 +23,7 @@
 #include "ComInitializationSeams.h"
 #include "KnownFileList.h"
 #include "SharedFileList.h"
+#include "LeechMode.h"
 #include "SharedFileListSeams.h"
 #include "Packets.h"
 #ifndef CRYPTOPP_ENABLE_NAMESPACE_WEAK
@@ -2625,6 +2626,10 @@ void CSharedFileList::StartDeferredHashing()
 
 void CSharedFileList::SendListToServer()
 {
+	// Leech mode never advertises its files to the server: skip the OP_OFFERFILES
+	// publish so the server cannot index this client as a source. See LeechMode.h.
+	if (IsLeechModeActive())
+		return;
 	if (m_Files_map.IsEmpty() || !server->IsConnected())
 		return;
 
@@ -3249,6 +3254,11 @@ void CSharedFileList::Process()
 
 void CSharedFileList::Publish()
 {
+	// Leech mode never publishes to Kad: no keyword sets, no file sources, and no
+	// notes are stored, so this client is never discoverable as a source through
+	// the DHT. See LeechMode.h.
+	if (IsLeechModeActive())
+		return;
 	if (!Kademlia::CKademlia::IsConnected()
 		|| (theApp.IsFirewalled()
 			&& theApp.clientlist->GetBuddyStatus() != Connected

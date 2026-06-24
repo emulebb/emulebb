@@ -31,6 +31,7 @@
 #include "BadPeerDiagnosticsSeams.h"
 #include "BaseClientFriendBuddySeams.h"
 #include "ClientSocketLifetimeSeams.h"
+#include "LeechMode.h"
 #include "Server.h"
 #include "ClientCredits.h"
 #include "IPFilter.h"
@@ -967,7 +968,10 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile &data)
 		pBuddy != NULL ? pBuddy->GetIP() : 0,
 		pBuddy != NULL ? pBuddy->GetUDPPort() : 0);
 
-	uint32 tagcount = GetHelloTagCount(buddySnapshot);
+	// Leech mode advertises a stock eMule identity and omits the CT_MOD_VERSION
+	// mod string, so the tag is neither counted nor written below.
+	const bool bAdvertiseModVersion = !IsLeechModeActive();
+	uint32 tagcount = GetHelloTagCount(buddySnapshot, bAdvertiseModVersion);
 
 	data.WriteUInt32(tagcount);
 
@@ -1081,9 +1085,14 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile &data)
 				);
 	tagMuleVersion.WriteTagToFile(data);
 
-	const CString strModIdentity(GetAdvertisedClientModIdentity());
-	CTag tagModVersion(CT_MOD_VERSION, (LPCTSTR)strModIdentity);
-	tagModVersion.WriteTagToFile(data);
+	// Stock identity in leech mode: a vanilla eMule sends no mod string, so the
+	// CT_MOD_VERSION tag is suppressed entirely (the tag count above already
+	// excludes it). See LeechMode.h.
+	if (bAdvertiseModVersion) {
+		const CString strModIdentity(GetAdvertisedClientModIdentity());
+		CTag tagModVersion(CT_MOD_VERSION, (LPCTSTR)strModIdentity);
+		tagModVersion.WriteTagToFile(data);
+	}
 
 	uint32 dwIP;
 	uint16 nPort;

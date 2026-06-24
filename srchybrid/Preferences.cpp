@@ -27,6 +27,7 @@
 #include "emule.h"
 #include "Preferences.h"
 #include "WindowPlacementSeams.h"
+#include "LeechMode.h"
 #include "Opcodes.h"
 #include "UpDownClient.h"
 #include "Ini2.h"
@@ -4068,6 +4069,15 @@ bool CPreferences::IsDefaultNick(const CString &strCheck)
 
 void CPreferences::SetUserNick(LPCTSTR pszNick)
 {
+	// Leech mode forces the genuine vanilla eMule default nickname and ignores
+	// any configured or imported value, so every wire use of the nick (CT_NAME in
+	// the peer hello, the server login username) carries the stock community
+	// identity. We deliberately do NOT use GetHomepageBaseURL() here: that returns
+	// the eMuleBB homepage, which would itself reveal the mod. See LeechMode.h.
+	if (IsLeechModeActive()) {
+		strNick = _T("http://www.emule-project.net");
+		return;
+	}
 	strNick = pszNick;
 }
 

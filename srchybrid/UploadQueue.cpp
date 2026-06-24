@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "BadPeerDiagnosticsSeams.h"
 #include "UploadQueue.h"
+#include "LeechMode.h"
 #include "Packets.h"
 #include "PartFile.h"
 #include "ListenSocket.h"
@@ -1825,6 +1826,11 @@ CUpDownClient* CUploadQueue::GetWaitingClientByIP(uint32 dwIP) const
  */
 void CUploadQueue::AddClientToQueue(CUpDownClient *client, bool bIgnoreTimelimit)
 {
+	// Leech mode never serves uploads: refuse to enqueue any requesting peer so
+	// it can never be promoted into an upload slot. The disk-IO block builder is
+	// gated as well as a final guarantee. See LeechMode.h.
+	if (IsLeechModeActive())
+		return;
 	//This is to keep users from abusing the limits we put on lowID callbacks.
 	//1)Check if we are connected to any network and that we are a lowID.
 	//  (Although this check shouldn't matter as they wouldn't have found us.

@@ -131,8 +131,12 @@ inline BuddyHelloSnapshot BuildBuddyHelloSnapshot(bool bIsFirewalled, bool bHasB
 
 /**
  * @brief Computes the hello tag count once the buddy advertisement decision is known.
+ *
+ * @param bAdvertiseModVersion whether the CT_MOD_VERSION mod-identity tag is
+ *        written. Leech mode advertises a stock identity and omits it, so the
+ *        count must drop by one to keep the wire-format tag count exact.
  */
-inline uint32 GetHelloTagCount(const BuddyHelloSnapshot &rBuddySnapshot)
+inline uint32 GetHelloTagCount(const BuddyHelloSnapshot &rBuddySnapshot, bool bAdvertiseModVersion)
 {
-	return 7u + (rBuddySnapshot.bShouldAdvertise ? 2u : 0u);
+	return 6u + (bAdvertiseModVersion ? 1u : 0u) + (rBuddySnapshot.bShouldAdvertise ? 2u : 0u);
 }

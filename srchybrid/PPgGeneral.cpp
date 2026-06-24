@@ -21,6 +21,7 @@
 #include "PreferencesDlg.h"
 #include "ppggeneral.h"
 #include "Preferences.h"
+#include "LeechMode.h"
 #include "emuledlg.h"
 #include "StatisticsDlg.h"
 #include "ServerWnd.h"
@@ -105,6 +106,13 @@ BOOL CPPgGeneral::OnInitDialog()
 	InitWindowStyles(this);
 
 	static_cast<CEdit*>(GetDlgItem(IDC_NICK))->SetLimitText(thePrefs.GetMaxUserNickLength());
+
+	if (IsLeechModeActive()) {
+		// Leech mode forces the stock nickname; show the forced value and lock the
+		// field so the user cannot change the announced identity. See LeechMode.h.
+		SetDlgItemText(IDC_NICK, thePrefs.GetUserNick());
+		GetDlgItem(IDC_NICK)->EnableWindow(FALSE);
+	}
 
 	CWordArray aLanguageIDs;
 	thePrefs.GetLanguages(aLanguageIDs);
