@@ -1016,7 +1016,13 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile &data)
 	const UINT uDataCompVer = 1;
 	const UINT uSupportSecIdent = theApp.clientcredits->CryptoAvailable() ? 3 : 0;
 	// ***
-	const UINT uDeprecatedSourceExchange1Ver = 0;
+	// Leech mode mirrors the stock community hello byte-for-byte: stock advertises
+	// the deprecated SX1 source-exchange version (4), so we advertise it too for
+	// fingerprint parity even though eMuleBB serves only SX2 (REF-002). This is
+	// safe and quiet: a (rare) inbound SX1 request hits the extended-opcode default
+	// path, which ignores it without a reply or disconnect, and we never answer it.
+	// Outside leech mode the value stays 0 as REF-002 intends. See LeechMode.h.
+	const UINT uDeprecatedSourceExchange1Ver = IsLeechModeActive() ? 4u : 0u;
 	// ***
 	const UINT uExtendedRequestsVer = 2;
 	const UINT uAcceptCommentVer = 1;
