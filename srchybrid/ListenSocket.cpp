@@ -1453,6 +1453,13 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 		return;
 	case OP_REQUESTSOURCES2:
 		{
+			// Leech mode never answers source-exchange requests: it hands no
+			// sources back to the network. We still send our own OP_REQUESTSOURCES2
+			// when downloading (a separate path); only this reply is suppressed.
+			// See LeechMode.h.
+			if (IsLeechModeActive())
+				return;
+
 			if (size < 19)
 				throw GetResString(IDS_ERR_BADSIZE);
 
