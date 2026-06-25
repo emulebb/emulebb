@@ -2529,6 +2529,14 @@ void CPreferences::ReloadServerMetAddressList()
 
 void CPreferences::CreateUserHash()
 {
+	// Leech mode draws a fresh, ephemeral userhash on every launch so a passive
+	// observer cannot correlate the monitoring client across restarts, servers, or
+	// networks by a stable identity. Any persisted hash loaded just before this
+	// call is deliberately discarded; zeroing it makes isbadhash() force a redraw
+	// below. This is safe because leech mode never uploads and so keeps no credits
+	// or durable identity worth preserving. See LeechMode.h.
+	if (IsLeechModeActive())
+		memset(userhash, 0, sizeof userhash);
 	while (isbadhash(userhash)) {
 		CryptoPP::AutoSeededRandomPool rng;
 		rng.GenerateBlock(userhash, sizeof userhash);
