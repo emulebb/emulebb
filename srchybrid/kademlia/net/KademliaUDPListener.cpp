@@ -37,6 +37,7 @@ their client on the eMule forum.
 #include "emuledlg.h"
 #include "ipfilter.h"
 #include "KadContactListCtrl.h"
+#include "LeechMode.h"
 #include "listensocket.h"
 #include "Log.h"
 #include "opcodes.h"
@@ -1091,6 +1092,12 @@ SSearchTerm* CKademliaUDPListener::CreateSearchExpressionTree(CSafeMemFile &file
 // Used in Kad2.0 only
 void CKademliaUDPListener::Process_KADEMLIA2_SEARCH_KEY_REQ(const byte *pbyPacketData, uint32 uLenPacket, uint32 uIP, uint16 uUDPPort, const CKadUDPKey &senderUDPKey)
 {
+	// Leech mode is a passive observer that never serves the Kad index: drop
+	// inbound search requests so this client returns no keyword results to other
+	// peers. Its own outbound lookups (needed to download) are unaffected.
+	// See LeechMode.h.
+	if (IsLeechModeActive())
+		return;
 	CSafeMemFile fileIO(pbyPacketData, uLenPacket);
 	CUInt128 uTarget;
 	fileIO.ReadUInt128(uTarget);
@@ -1125,6 +1132,10 @@ void CKademliaUDPListener::Process_KADEMLIA2_SEARCH_KEY_REQ(const byte *pbyPacke
 // Used in Kad2.0 only
 void CKademliaUDPListener::Process_KADEMLIA2_SEARCH_SOURCE_REQ(const byte *pbyPacketData, uint32 uLenPacket, uint32 uIP, uint16 uUDPPort, const CKadUDPKey &senderUDPKey)
 {
+	// Leech mode serves no Kad source results to other peers; drop the request.
+	// See LeechMode.h.
+	if (IsLeechModeActive())
+		return;
 	CSafeMemFile fileIO(pbyPacketData, uLenPacket);
 	CUInt128 uTarget;
 	fileIO.ReadUInt128(uTarget);
@@ -1216,6 +1227,10 @@ void CKademliaUDPListener::Process_KADEMLIA2_SEARCH_RES(const byte *pbyPacketDat
 // Used in Kad2.0 only
 void CKademliaUDPListener::Process_KADEMLIA2_PUBLISH_KEY_REQ(const byte *pbyPacketData, uint32 uLenPacket, uint32 uIP, uint16 uUDPPort, const CKadUDPKey &senderUDPKey)
 {
+	// Leech mode is never a Kad store target: drop inbound publish requests so no
+	// peer can index keywords on this client. See LeechMode.h.
+	if (IsLeechModeActive())
+		return;
 	// check if we are UDP firewalled
 	if (CUDPFirewallTester::IsFirewalledUDP(true))
 		//We are firewalled. We should not index this entry and give publisher a false report.
@@ -1317,6 +1332,10 @@ void CKademliaUDPListener::Process_KADEMLIA2_PUBLISH_KEY_REQ(const byte *pbyPack
 // Used in Kad2.0 only
 void CKademliaUDPListener::Process_KADEMLIA2_PUBLISH_SOURCE_REQ(const byte *pbyPacketData, uint32 uLenPacket, uint32 uIP, uint16 uUDPPort, const CKadUDPKey &senderUDPKey)
 {
+	// Leech mode is never a Kad store target: drop inbound publish requests so no
+	// peer can index sources on this client. See LeechMode.h.
+	if (IsLeechModeActive())
+		return;
 	// check if we are UDP firewalled
 	if (CUDPFirewallTester::IsFirewalledUDP(true))
 		//We are firewalled. We should not index this entry and give publisher a false report.
@@ -1495,6 +1514,10 @@ void CKademliaUDPListener::Process_KADEMLIA2_PUBLISH_RES(const byte *pbyPacketDa
 // Used only by Kad2.0
 void CKademliaUDPListener::Process_KADEMLIA2_SEARCH_NOTES_REQ(const byte *pbyPacketData, uint32 uLenPacket, uint32 uIP, uint16 uUDPPort, const CKadUDPKey &senderUDPKey)
 {
+	// Leech mode serves no Kad notes to other peers; drop the request.
+	// See LeechMode.h.
+	if (IsLeechModeActive())
+		return;
 	CSafeMemFile fileIO(pbyPacketData, uLenPacket);
 	CUInt128 uTarget;
 	fileIO.ReadUInt128(uTarget);
@@ -1550,6 +1573,10 @@ void CKademliaUDPListener::Process_KADEMLIA_SEARCH_NOTES_RES(const byte *pbyPack
 // Used only by Kad2.0
 void CKademliaUDPListener::Process_KADEMLIA2_PUBLISH_NOTES_REQ(const byte *pbyPacketData, uint32 uLenPacket, uint32 uIP, uint16 uUDPPort, const CKadUDPKey &senderUDPKey)
 {
+	// Leech mode is never a Kad store target: drop inbound publish requests so no
+	// peer can index notes on this client. See LeechMode.h.
+	if (IsLeechModeActive())
+		return;
 	// check if we are UDP firewalled
 	if (CUDPFirewallTester::IsFirewalledUDP(true)) {
 		//We are firewalled. We should not index this entry and give publisher a false report.
