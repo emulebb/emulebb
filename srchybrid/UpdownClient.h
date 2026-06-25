@@ -426,6 +426,8 @@ public:
 	void			DispatchQueuedDisplayUpdate(bool force = false);
 	int				GetFileListRequested() const					{ return m_iFileListRequested; }
 	void			SetFileListRequested(int iFileListRequested)	{ m_iFileListRequested = iFileListRequested; }
+	bool			HasLeechAutoBrowsed() const						{ return m_fLeechAutoBrowsed != 0; }
+	void			SetLeechAutoBrowsed()							{ m_fLeechAutoBrowsed = 1; }
 	uint32			GetSearchID() const								{ return m_uSearchID; }
 	void			SetSearchID(uint32 uID)							{ m_uSearchID = uID; }
 
@@ -734,5 +736,6 @@ protected:
 		 m_fSupportsCaptcha	  : 1,
 		 m_fDirectUDPCallback : 1,
 		 m_fSupportsFileIdent : 1; // 0 bits left
-	UINT m_fHashsetRequestingAICH : 1; // 31 bits left
+	UINT m_fHashsetRequestingAICH : 1, // 30 bits left
+		 m_fLeechAutoBrowsed : 1; // leech mode has issued an auto-browse of this client this session
 };

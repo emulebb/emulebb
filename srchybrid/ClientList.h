@@ -185,5 +185,6 @@ private:
 	ULONGLONG	m_dwLastBanCleanUp;
 	ULONGLONG	m_dwLastTrackedCleanUp;
 	ULONGLONG	m_dwLastClientCleanUp;
+	ULONGLONG	m_dwLastLeechAutoBrowse;
 	uint8	m_nBuddyStatus;
 };

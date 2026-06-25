@@ -33,6 +33,7 @@
 #include "ClientSocketLifetimeSeams.h"
 #include "ClientCredits.h"
 #include "ListenSocket.h"
+#include "LeechMode.h"
 #include "Opcodes.h"
 #include "ServerConnect.h"
 #include "emuledlg.h"
@@ -48,12 +49,20 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+// Leech mode auto-browse throttle: harvest shared-file lists from already-connected
+// clients gently. We browse at most LEECH_AUTOBROWSE_PER_PASS clients per pass and no
+// more often than every LEECH_AUTOBROWSE_INTERVAL, so this never bursts like a
+// scanner. See CClientList::Process and LeechMode.h.
+#define LEECH_AUTOBROWSE_INTERVAL	SEC2MS(30)
+#define LEECH_AUTOBROWSE_PER_PASS	3
+
 
 CClientList::CClientList()
 	: m_pBuddy()
 	, m_dwLastBanCleanUp(::GetTickCount64())
 	, m_dwLastTrackedCleanUp(m_dwLastBanCleanUp)
 	, m_dwLastClientCleanUp(m_dwLastBanCleanUp)
+	, m_dwLastLeechAutoBrowse(m_dwLastBanCleanUp)
 	, m_nBuddyStatus(Disconnected)
 {
 	m_bannedList.InitHashTable(331);
@@ -616,6 +625,33 @@ void CClientList::Process()
 		}
 		if (thePrefs.GetLogBannedClients())
 			AddDebugLogLine(false, _T("...done, %u clients left on list"), (unsigned)m_trackedClientsMap.GetCount());
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	// Leech mode: auto-browse connected clients that advertise browse capability
+	//
+	// Passive harvesting of peers' shared-file lists. To stay quiet we only ask
+	// clients we are ALREADY connected to (so no new connection is opened), each at
+	// most once per session, and only a few per pass on a throttle interval so this
+	// never bursts like an active scanner. RequestSharedFileList() reuses the open
+	// connection: TryToConnect() takes its "Already Connected" path and
+	// ConnectionEstablished() sends OP_ASKSHAREDFILES. See LeechMode.h.
+	if (IsLeechModeActive() && curTick >= m_dwLastLeechAutoBrowse + LEECH_AUTOBROWSE_INTERVAL) {
+		m_dwLastLeechAutoBrowse = curTick;
+		int iBrowseBudget = LEECH_AUTOBROWSE_PER_PASS;
+		for (POSITION pos = list.GetHeadPosition(); pos != NULL && iBrowseBudget > 0;) {
+			CUpDownClient *cur_client = list.GetNext(pos);
+			if (cur_client != NULL
+				&& cur_client->socket != NULL && cur_client->socket->IsConnected() // already connected: no new connection
+				&& cur_client->GetViewSharedFilesSupport()                          // advertises 'View Shared Files'
+				&& !cur_client->HasLeechAutoBrowsed()                               // once per session
+				&& cur_client->GetFileListRequested() == 0)                         // no browse already in flight
+			{
+				cur_client->SetLeechAutoBrowsed();
+				(void)cur_client->RequestSharedFileList();
+				--iBrowseBudget;
+			}
+		}
 	}
 
 	///////////////////////////////////////////////////////////////////////////

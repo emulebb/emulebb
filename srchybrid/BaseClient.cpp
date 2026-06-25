@@ -280,6 +280,7 @@ void CUpDownClient::Init()
 	m_fSharedDirectories = 0;
 	m_fSentCancelTransfer = 0;
 	m_fNoViewSharedFiles = 0;
+	m_fLeechAutoBrowsed = 0; // constructor-only: persists across reconnects so leech auto-browse runs once per session
 	m_fSupportsPreview = 0;
 	m_fPreviewReqPending = 0;
 	m_fPreviewAnsPending = 0;
