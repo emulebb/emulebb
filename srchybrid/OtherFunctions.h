@@ -428,6 +428,7 @@ void DiagEventLogSchedUploadSlotRecycled(const CUpDownClient *pClient, const byt
 void DiagEventLogSchedQueueRank(const CUpDownClient *pClient, const byte *pFileHash, UINT uQueueRank);
 void DiagEventLogSchedUploadRequestOutcome(const CUpDownClient *pClient, const byte *pFileHash, LPCTSTR pszOutcome, UINT uRequestedRanges, UINT uServedRanges, UINT uSkippedRanges, uint64 uRequestedBytes, uint64 uServedBytes, UINT uPayloadPackets, uint64 uThrottleDelayMs, LPCTSTR pszFirstSkipReason);
 void DiagEventLogSchedUploadPayloadAccounting(const CUpDownClient *pClient, const byte *pFileHash, uint64 uSentFileBytes, uint64 uSentPayloadBytes, uint64 uSentCompleteFileBytes, uint64 uSentPartFileBytes);
+void DiagEventLogSchedSharedPublishOfferBatch(LPCTSTR pszServer, UINT uEntriesSent, UINT uTotalEntries, UINT uPendingBefore, UINT uOfferLimit, bool bWrapped, LPCTSTR pszFileHashesJson);
 void DiagEventLogSchedSourceEngaged(const CUpDownClient *pClient, const byte *pFileHash);
 void DiagEventLogSchedSourceDropped(const CUpDownClient *pClient, const byte *pFileHash);
 void DiagEventLogSchedSourceSwapped(const CUpDownClient *pClient, const byte *pCurrentFileHash, const byte *pSwapTargetFileHash);

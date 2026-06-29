@@ -2658,6 +2658,9 @@ void CSharedFileList::SendListToServer()
 		return;
 	}
 
+	const UINT uPendingBefore = static_cast<UINT>((std::min)(offerCandidates.size(), static_cast<size_t>(_UI32_MAX)));
+	const UINT uTotalEntries = static_cast<UINT>((std::min)(static_cast<size_t>(m_Files_map.GetCount()), static_cast<size_t>(_UI32_MAX)));
+	const UINT uOfferLimit = limit;
 	if (offerCandidates.size() > static_cast<size_t>(limit))
 		std::partial_sort(offerCandidates.begin(), offerCandidates.begin() + limit, offerCandidates.end(),
 			[](const ServerOfferCandidate &left, const ServerOfferCandidate &right) {
@@ -2675,13 +2678,37 @@ void CSharedFileList::SendListToServer()
 	files.WriteUInt32(limit);
 	std::vector<CKnownFile*> publishedFilesChanged;
 	publishedFilesChanged.reserve(static_cast<size_t>(limit));
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+	CString strOfferFileHashesJson(_T("["));
+#endif
 	for (uint32 i = 0; i < limit; ++i) {
 		CKnownFile *file = offerCandidates[static_cast<size_t>(i)].pFile;
 		CreateOfferedFilePacket(file, files, pCurServer);
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+		if (i < 16) {
+			if (i != 0)
+				strOfferFileHashesJson += _T(",");
+			strOfferFileHashesJson += BuildDiagnosticsJsonStringField(BuildDiagEventLowerHexString(file->GetFileHash(), MDX_DIGEST_SIZE));
+		}
+#endif
 		file->SetED2KRepublishPending(false);
 		if (file->SetPublishedED2K(true, false))
 			publishedFilesChanged.push_back(file);
 	}
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+	strOfferFileHashesJson += _T("]");
+	CString strServerEndpoint;
+	if (pCurServer != NULL)
+		strServerEndpoint.Format(_T("%s:%u"), pCurServer->GetAddress(), static_cast<UINT>(pCurServer->GetPort()));
+	DiagEventLogSchedSharedPublishOfferBatch(
+		strServerEndpoint,
+		limit,
+		uTotalEntries,
+		uPendingBefore,
+		uOfferLimit,
+		uPendingBefore <= uOfferLimit,
+		strOfferFileHashesJson);
+#endif
 	if (!publishedFilesChanged.empty())
 		RefreshSharedFilePublishedED2KSummary();
 	UpdateSharedFilesForPublishedED2KChanges(output, publishedFilesChanged);

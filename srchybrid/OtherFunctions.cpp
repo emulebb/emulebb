@@ -1791,6 +1791,30 @@ void DiagEventLogSchedUploadPayloadAccounting(
 		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), strBody);
 }
 
+void DiagEventLogSchedSharedPublishOfferBatch(
+	LPCTSTR pszServer,
+	UINT uEntriesSent,
+	UINT uTotalEntries,
+	UINT uPendingBefore,
+	UINT uOfferLimit,
+	bool bWrapped,
+	LPCTSTR pszFileHashesJson)
+{
+	CString strKeys;
+	strKeys.Format(_T("{\"server\":%s}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszServer != NULL ? pszServer : _T("")));
+	CString strBody;
+	strBody.Format(
+		_T("{\"entriesSent\":%u,\"totalEntries\":%u,\"pendingBefore\":%u,\"offerLimit\":%u,\"wrapped\":%s,\"skippedDuplicateBatch\":false,\"fileHashes\":%s}"),
+		uEntriesSent,
+		uTotalEntries,
+		uPendingBefore,
+		uOfferLimit,
+		bWrapped ? _T("true") : _T("false"),
+		pszFileHashesJson != NULL && pszFileHashesJson[0] != _T('\0') ? pszFileHashesJson : _T("[]"));
+	WriteDiagEventV1(_T("sched"), _T("shared_publish_offer_batch"), _T("info"), strKeys, strBody);
+}
+
 void DiagEventLogSchedSourceEngaged(const CUpDownClient *pClient, const byte *pFileHash)
 {
 	WriteDiagEventV1(_T("sched"), _T("source_engaged"), _T("info"),
