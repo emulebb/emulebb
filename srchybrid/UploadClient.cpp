@@ -132,14 +132,30 @@ void LogUploadReqBlockDiagnostics(
 		return;
 
 	CountUploadReqBlockDiagnostics(pUploadingClientStruct, pszReason);
-	if (IsUploadReqBlockHighVolumeReason(pszReason))
-		return;
-
-	CEMSocket *sock = client->GetFileUploadSocket(false);
 	const uint64 uStartOffset = reqblock != NULL ? reqblock->StartOffset : 0;
 	const uint64 uEndOffset = reqblock != NULL ? reqblock->EndOffset : 0;
 	const uint64 uLength = uEndOffset > uStartOffset ? uEndOffset - uStartOffset : 0;
 
+#if EMULEBB_HAS_DIAG_EVENT_V1
+	const bool bRejected = _tcsncmp(pszReason, _T("reject-"), 7) == 0;
+	DiagEventLogSchedUploadRequestOutcome(
+		client,
+		reqblock != NULL ? reqblock->FileID : client->GetUploadFileID(),
+		pszReason,
+		reqblock != NULL ? 1U : 0U,
+		0U,
+		bRejected ? 1U : 0U,
+		uLength,
+		0,
+		0U,
+		0,
+		bRejected ? pszReason : NULL);
+#endif
+
+	if (IsUploadReqBlockHighVolumeReason(pszReason))
+		return;
+
+	CEMSocket *sock = client->GetFileUploadSocket(false);
 	UploadSlotDiagnosticsLogLine(
 		_T("UploadSlotDiagnostics: reqblock reason=%s client=%s state=%s socket=%p socketConnected=%u handshake=%u rateBytesPerSec=%u ageMs=%I64u sessionUp=%s queuePayload=%s queueAdded=%s payloadInBuffer=%s requestPresent=%u start=%I64u end=%I64u length=%I64u reqBlocks=%Id doneBlocks=%Id pendingIO=%ld socketStdQueue=%Id fileKnown=%u"),
 		pszReason,
@@ -163,6 +179,56 @@ void LogUploadReqBlockDiagnostics(
 		pUploadingClientStruct != NULL ? pUploadingClientStruct->m_nPendingIOBlocks.load() : 0L,
 		sock != NULL ? sock->DbgGetStdQueueCount() : -1,
 		static_cast<UINT>(reqblock != NULL && theApp.sharedfiles->GetFileByID(reqblock->FileID) != NULL));
+}
+
+void LogUploadPayloadOutcomeDiagnostics(
+	CUpDownClient *client,
+	uint32 sentBytesCompleteFile,
+	uint32 sentBytesPartFile,
+	uint32 sentBytesPayload,
+	CKnownFile *pCurrentUploadFile)
+{
+	ASSERT(client != NULL);
+	if (client == NULL)
+		return;
+
+	const uint32 sentBytesFile = sentBytesCompleteFile + sentBytesPartFile;
+	if (sentBytesFile == 0 && sentBytesPayload == 0)
+		return;
+
+	CEMSocket *sock = client->GetFileUploadSocket(false);
+	UploadingToClient_Struct *pUploadingClientStruct = theApp.uploadqueue->GetUploadingClientStructByClient(client);
+
+#if EMULEBB_HAS_DIAG_EVENT_V1
+	DiagEventLogSchedUploadPayloadAccounting(
+		client,
+		pCurrentUploadFile != NULL ? pCurrentUploadFile->GetFileHash() : client->GetUploadFileID(),
+		sentBytesFile,
+		sentBytesPayload,
+		sentBytesCompleteFile,
+		sentBytesPartFile);
+#endif
+
+	UploadSlotDiagnosticsLogLine(
+		_T("UploadSlotDiagnostics: payload outcome=sent client=%s state=%s socket=%p socketConnected=%u handshake=%u rateBytesPerSec=%u ageMs=%I64u sessionUp=%s queuePayload=%s queueAdded=%s payloadInBuffer=%s sentFileBytes=%u sentPayloadBytes=%u sentCompleteFileBytes=%u sentPartFileBytes=%u pendingIO=%ld socketStdQueue=%Id fileKnown=%u"),
+		(LPCTSTR)client->DbgGetClientInfo(),
+		client->DbgGetUploadState(),
+		static_cast<void*>(sock),
+		static_cast<UINT>(sock != NULL && sock->IsConnected()),
+		static_cast<UINT>(client->CheckHandshakeFinished()),
+		client->GetUploadDatarate(),
+		static_cast<uint64>(client->GetUpStartTimeDelay()),
+		(LPCTSTR)CastItoXBytes(client->GetSessionUp()),
+		(LPCTSTR)CastItoXBytes(client->GetQueueSessionPayloadUp()),
+		(LPCTSTR)CastItoXBytes(client->GetQueueSessionUploadAdded()),
+		(LPCTSTR)CastItoXBytes(client->GetPayloadInBuffer()),
+		sentBytesFile,
+		sentBytesPayload,
+		sentBytesCompleteFile,
+		sentBytesPartFile,
+		pUploadingClientStruct != NULL ? pUploadingClientStruct->m_nPendingIOBlocks.load() : 0L,
+		sock != NULL ? sock->DbgGetStdQueueCount() : -1,
+		static_cast<UINT>(pCurrentUploadFile != NULL));
 }
 #endif
 
@@ -783,6 +849,9 @@ void CUpDownClient::UpdateUploadingStatisticsData()
 		CKnownFile *pCurrentUploadFile = theApp.sharedfiles->GetFileByID(GetUploadFileID());
 		if (pCurrentUploadFile != NULL)
 			pCurrentUploadFile->statistic.AddTransferred(sentBytesPayload);
+#ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
+		LogUploadPayloadOutcomeDiagnostics(this, sentBytesCompleteFile, sentBytesPartFile, sentBytesPayload, pCurrentUploadFile);
+#endif
 		//else
 		//	ASSERT(0); //fired after deleting shared files which had uploads in the current eMule session. Closing this messagebox caused no issues.
 	} else

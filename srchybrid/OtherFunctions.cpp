@@ -1741,6 +1741,56 @@ void DiagEventLogSchedQueueRank(const CUpDownClient *pClient, const byte *pFileH
 		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), strBody);
 }
 
+void DiagEventLogSchedUploadRequestOutcome(
+	const CUpDownClient *pClient,
+	const byte *pFileHash,
+	LPCTSTR pszOutcome,
+	UINT uRequestedRanges,
+	UINT uServedRanges,
+	UINT uSkippedRanges,
+	uint64 uRequestedBytes,
+	uint64 uServedBytes,
+	UINT uPayloadPackets,
+	uint64 uThrottleDelayMs,
+	LPCTSTR pszFirstSkipReason)
+{
+	CString strBody;
+	strBody.Format(
+		_T("{\"outcome\":%s,\"requestedRanges\":%u,\"servedRanges\":%u,\"skippedRanges\":%u,\"requestedBytes\":%I64u,\"servedBytes\":%I64u,\"payloadPackets\":%u,\"throttleDelayMs\":%I64u"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszOutcome != NULL ? pszOutcome : _T("unknown")),
+		uRequestedRanges,
+		uServedRanges,
+		uSkippedRanges,
+		uRequestedBytes,
+		uServedBytes,
+		uPayloadPackets,
+		uThrottleDelayMs);
+	if (pszFirstSkipReason != NULL && pszFirstSkipReason[0] != _T('\0'))
+		strBody.AppendFormat(_T(",\"firstSkipReason\":%s"), (LPCTSTR)BuildDiagnosticsJsonStringField(pszFirstSkipReason));
+	strBody += _T("}");
+	WriteDiagEventV1(_T("sched"), _T("upload_request_outcome"), _T("info"),
+		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), strBody);
+}
+
+void DiagEventLogSchedUploadPayloadAccounting(
+	const CUpDownClient *pClient,
+	const byte *pFileHash,
+	uint64 uSentFileBytes,
+	uint64 uSentPayloadBytes,
+	uint64 uSentCompleteFileBytes,
+	uint64 uSentPartFileBytes)
+{
+	CString strBody;
+	strBody.Format(
+		_T("{\"outcome\":\"sent\",\"sentFileBytes\":%I64u,\"sentPayloadBytes\":%I64u,\"sentCompleteFileBytes\":%I64u,\"sentPartFileBytes\":%I64u}"),
+		uSentFileBytes,
+		uSentPayloadBytes,
+		uSentCompleteFileBytes,
+		uSentPartFileBytes);
+	WriteDiagEventV1(_T("sched"), _T("upload_payload_accounting"), _T("info"),
+		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), strBody);
+}
+
 void DiagEventLogSchedSourceEngaged(const CUpDownClient *pClient, const byte *pFileHash)
 {
 	WriteDiagEventV1(_T("sched"), _T("source_engaged"), _T("info"),
