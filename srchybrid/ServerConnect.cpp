@@ -524,7 +524,13 @@ void CServerConnect::CheckForTimeout()
 bool CServerConnect::Disconnect()
 {
 	if (connected && connectedsocket) {
-		theApp.sharedfiles->ClearED2KPublishInfo();
+		// WHY: CemuleDlg::CloseApp abandons shared-file state by nulling
+		// theApp.sharedfiles when a shared-hash worker fails to stop in time
+		// (EmuleDlg.cpp shutdown timeout branch), yet still calls Disconnect()
+		// afterwards. Clearing publish info is best-effort at teardown, so skip
+		// it when the owner is gone rather than write through a null this-ptr.
+		if (theApp.sharedfiles != NULL)
+			theApp.sharedfiles->ClearED2KPublishInfo();
 		connected = false;
 		CServer *pServer = theApp.serverlist->GetServerByAddress(connectedsocket->cur_server->GetAddress(), connectedsocket->cur_server->GetPort());
 		if (pServer)
