@@ -711,6 +711,32 @@ void PacketDiagnosticsLogServerPacket(
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 
+// B3 parity with the rust `should_skip_bulk_packet` sampler: the high-volume
+// payload opcodes (SENDINGPART / COMPRESSEDPART and their I64 variants) are logged
+// only for the first kBulkHead per (opcode, direction) then 1-in-kBulkEvery.
+// Without this MFC logs EVERY payload packet, which drives the ~33 MB diagnostics
+// rotations and inflates per-opcode counts far above rust's sampled dump.
+static bool ShouldSkipBulkPacketDiagnostics(uint8 byProtocol, uint8 byOpcode, bool bFromRecv)
+{
+	static const ULONGLONG kBulkHead = 64;
+	static const ULONGLONG kBulkEvery = 8192;
+	static volatile LONG64 s_counters[4][2] = { { 0 } };
+	int nSlot;
+	if (byProtocol == OP_EDONKEYPROT && byOpcode == OP_SENDINGPART)
+		nSlot = 0;
+	else if (byProtocol == OP_EMULEPROT && byOpcode == OP_COMPRESSEDPART)
+		nSlot = 1;
+	else if (byProtocol == OP_EMULEPROT && byOpcode == OP_SENDINGPART_I64)
+		nSlot = 2;
+	else if (byProtocol == OP_EMULEPROT && byOpcode == OP_COMPRESSEDPART_I64)
+		nSlot = 3;
+	else
+		return false;
+	const ULONGLONG n = static_cast<ULONGLONG>(
+		::InterlockedIncrement64(&s_counters[nSlot][bFromRecv ? 1 : 0])) - 1;
+	return !(n < kBulkHead || (n % kBulkEvery) == 0);
+}
+
 void PacketDiagnosticsLogClientPacket(
 	LPCTSTR pszPeerLabel,
 	LPCTSTR pszTransportMode,
@@ -720,6 +746,8 @@ void PacketDiagnosticsLogClientPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen)
 {
+	if (ShouldSkipBulkPacketDiagnostics(byProtocol, byOpcode, _tcsicmp(pszDirection, _T("recv")) == 0))
+		return;
 	PacketDiagnosticsLogEd2kPacket(_T("client"), pszPeerLabel, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 	DiagEventLogEd2kTcpPacket(_T("client"), pszPeerLabel, pszTransportMode, pszDirection,
