@@ -966,6 +966,9 @@ void CUpDownClient::SendOutOfPartReqsAndAddToWaitingQueue()
 	theStats.AddUpDataOverheadFileRequest(pPacket->size);
 	SendPacket(pPacket);
 	m_fSentOutOfPartReqs = 1;
+#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
+	DiagEventLogSchedOutOfPartReqs(this, GetUploadFileID());
+#endif
 	theApp.uploadqueue->AddClientToQueue(this, true);
 }
 

@@ -423,7 +423,8 @@ CString BuildDiagEventV1SchedKeysJson(const CUpDownClient *pClient, const byte *
  *        sites need no extra runtime guard.
  */
 void DiagEventLogSchedUploadSlotOpened(const CUpDownClient *pClient, const byte *pFileHash);
-void DiagEventLogSchedUploadSlotClosed(const CUpDownClient *pClient, const byte *pFileHash);
+void DiagEventLogSchedUploadSlotClosed(const CUpDownClient *pClient, const byte *pFileHash, LPCTSTR pszReason);
+void DiagEventLogSchedOutOfPartReqs(const CUpDownClient *pClient, const byte *pFileHash);
 void DiagEventLogSchedUploadSlotRecycled(const CUpDownClient *pClient, const byte *pFileHash);
 void DiagEventLogSchedQueueRank(const CUpDownClient *pClient, const byte *pFileHash, UINT uQueueRank);
 void DiagEventLogSchedUploadRequestOutcome(const CUpDownClient *pClient, const byte *pFileHash, LPCTSTR pszOutcome, UINT uRequestedRanges, UINT uServedRanges, UINT uSkippedRanges, uint64 uRequestedBytes, uint64 uServedBytes, UINT uPayloadPackets, uint64 uThrottleDelayMs, LPCTSTR pszFirstSkipReason);

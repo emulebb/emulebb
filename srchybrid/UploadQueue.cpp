@@ -2216,7 +2216,7 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient *client, LPCTSTR pszReaso
 #if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
 			// Active uploading slot torn down (the client was in uploadinglist, not
 			// merely a waiter leaving the queue): mirror the rust upload_slot_closed.
-			DiagEventLogSchedUploadSlotClosed(client, client->GetUploadFileID());
+			DiagEventLogSchedUploadSlotClosed(client, client->GetUploadFileID(), pszReason);
 #endif
 
 			result = true;

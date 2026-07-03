@@ -1720,10 +1720,43 @@ void DiagEventLogSchedUploadSlotOpened(const CUpDownClient *pClient, const byte 
 		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"opened\"}")));
 }
 
-void DiagEventLogSchedUploadSlotClosed(const CUpDownClient *pClient, const byte *pFileHash)
+// Bucket the free-text upload-removal reason into the canonical taxonomy the rust
+// client emits on upload_slot_closed, so the "why the upload peer left"
+// distribution diffs across clients. Reasons with no rust analogue (IO errors,
+// admin removal, file-not-found) fall through to removed_other.
+static LPCTSTR NormalizeUploadCloseReason(LPCTSTR pszReason)
 {
+	if (pszReason == NULL)
+		return _T("peer_disconnected");
+	CString strReason(pszReason);
+	strReason.MakeLower();
+	if (strReason.Find(_T("cancel")) >= 0)
+		return _T("peer_cancelled");
+	if (strReason.Find(_T("ended transfer")) >= 0 || strReason.Find(_T("completed")) >= 0
+		|| strReason.Find(_T("end of")) >= 0)
+		return _T("end_of_download");
+	if (strReason.Find(_T("disconnect")) >= 0)
+		return _T("peer_disconnected");
+	return _T("removed_other");
+}
+
+void DiagEventLogSchedUploadSlotClosed(const CUpDownClient *pClient, const byte *pFileHash, LPCTSTR pszReason)
+{
+	CString strBody;
+	strBody.Format(_T("{\"outcome\":\"closed\",\"reason\":%s}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(NormalizeUploadCloseReason(pszReason)));
 	WriteDiagEventV1(_T("sched"), _T("upload_slot_closed"), _T("info"),
-		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"closed\"}")));
+		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), strBody);
+}
+
+// Mirrors the rust sched/out_of_part_reqs event: a granted upload slot is recycled
+// and the downloader is told (OP_OUTOFPARTREQS) to re-queue rather than churn-
+// reconnect, so the graceful-requeue rate diffs across clients.
+void DiagEventLogSchedOutOfPartReqs(const CUpDownClient *pClient, const byte *pFileHash)
+{
+	WriteDiagEventV1(_T("sched"), _T("out_of_part_reqs"), _T("low"),
+		BuildDiagEventV1SchedKeysJson(pClient, pFileHash),
+		CString(_T("{\"action\":\"requeue\",\"signal\":\"out_of_part_reqs\"}")));
 }
 
 void DiagEventLogSchedUploadSlotRecycled(const CUpDownClient *pClient, const byte *pFileHash)
