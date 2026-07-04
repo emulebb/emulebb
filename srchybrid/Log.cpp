@@ -556,18 +556,24 @@ void DiagEventLogDownloadSourceCount(
 	UINT uSourceCount,
 	UINT uValidSourceCount,
 	UINT uNnpSourceCount,
-	UINT uA4afFileCount)
+	UINT uA4afFileCount,
+	UINT uTransferringSourceCount)
 {
 	if (!theDiagEventV1Log.IsOpen())
 		return;
 
+	// transferringSourceCount = DS_DOWNLOADING sources (GetTransferringSrcCount),
+	// the parity of rust active_download_peer_endpoints. Emitted so the converged
+	// sched:source_count diff exposes leased-but-not-transferring (the download
+	// stall signature) on both clients.
 	CString strBody;
 	strBody.Format(
-		_T("{\"sourceCount\":%u,\"validSourceCount\":%u,\"nnpSourceCount\":%u,\"a4afFileCount\":%u}"),
+		_T("{\"sourceCount\":%u,\"validSourceCount\":%u,\"nnpSourceCount\":%u,\"a4afFileCount\":%u,\"transferringSourceCount\":%u}"),
 		uSourceCount,
 		uValidSourceCount,
 		uNnpSourceCount,
-		uA4afFileCount);
+		uA4afFileCount,
+		uTransferringSourceCount);
 	WriteDiagEventV1(_T("sched"), _T("source_count"), _T("info"), CString(_T("{}")), strBody);
 }
 

@@ -224,7 +224,8 @@ void DiagEventLogDownloadSourceCount(
 	UINT uSourceCount,
 	UINT uValidSourceCount,
 	UINT uNnpSourceCount,
-	UINT uA4afFileCount);
+	UINT uA4afFileCount,
+	UINT uTransferringSourceCount);
 
 /**
  * @brief Emits a diag_event_v1 sched:"reask_sent" event for a UDP source reask.

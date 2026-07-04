@@ -1273,7 +1273,7 @@ void CDownloadQueue::LogDownloadSlotDiagnostics(ULONGLONG curTick) const
 	// WHY: re-emit the periodic download source picture as the converged
 	// sched:"source_count" snapshot (and a reask_sent aggregate) so it diffs
 	// against the rust source registry snapshot using the spec field mapping.
-	DiagEventLogDownloadSourceCount(uSources, uValidSources, uNoNeededPartSources, uA4AFReadyFiles);
+	DiagEventLogDownloadSourceCount(uSources, uValidSources, uNoNeededPartSources, uA4AFReadyFiles, uDownloadingSources);
 	DiagEventLogUdpReaskSent(m_nUDPFileReasks);
 #endif
 }
