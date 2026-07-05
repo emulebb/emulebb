@@ -11,20 +11,20 @@ while keeping protocol compatibility explicit.
 
 ## Download And Install
 
-RC3 is published on GitHub Releases. Choose one install path:
+Stable `0.7.3` is published on GitHub Releases. Choose one install path:
 
 ### Option 1: Manual Standalone ZIP
 
 Use this path when you only want the eMuleBB desktop app.
 
 1. Open
-   <https://github.com/emulebb/emulebb/releases/tag/emulebb-v0.7.3-rc.3>.
-2. Download `emulebb-0.7.3-rc.3-x64.zip`.
+   <https://github.com/emulebb/emulebb/releases/tag/emulebb-v0.7.3>.
+2. Download `emulebb-0.7.3-x64.zip`.
 3. Extract the ZIP into a new version-specific folder, for example
-   `eMuleBB-0.7.3-rc.3`.
+   `eMuleBB-0.7.3`.
 4. Run `emulebb.exe`.
 
-Keep each version in its own application folder. For RC testing or support
+Keep each version in its own application folder. For first launch or support
 testing, use a backed-up profile or launch with an explicit disposable profile:
 
 ```powershell
@@ -40,7 +40,7 @@ Use this path when you want eMuleBB plus aMuTorrent, Prowlarr, Radarr, and
 Sonarr integration out of the box.
 
 ```powershell
-irm https://github.com/emulebb/emulebb/releases/download/emulebb-v0.7.3-rc.3/Bootstrap-eMuleBBSuite.ps1 | iex
+irm https://github.com/emulebb/emulebb/releases/download/emulebb-v0.7.3/Bootstrap-eMuleBBSuite.ps1 | iex
 ```
 
 The bootstrapper downloads and verifies the matching eMuleBB release package,
@@ -50,11 +50,11 @@ download pinned public Node, Prowlarr, Radarr, and Sonarr payloads by default.
 
 ### Security And Provenance
 
-All RC3 builds and packaging happen in GitHub Actions and are published through
-GitHub Releases. The release includes ZIPs, manifests, SHA-256 evidence, SPDX
-SBOMs, diagnostics packages, the suite bootstrapper, and the bootstrapper
-SHA-256 asset. The bootstrapper verifies package hashes from the release
-manifests before installing.
+Stable release builds and packaging happen in GitHub Actions and are published
+through GitHub Releases. The `0.7.3` release includes ZIPs, manifests, SHA-256
+evidence, SPDX SBOMs, diagnostics packages, the suite bootstrapper, and the
+bootstrapper SHA-256 asset. The bootstrapper verifies package hashes from the
+release manifests before installing.
 
 ## Documentation
 
