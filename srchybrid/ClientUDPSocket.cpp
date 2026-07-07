@@ -141,8 +141,19 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 			case OP_EMULEPROT:
 				if (nPacketLen < 2)
 					strError = _T("eMule packet too short");
-				else
+				else {
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+					// Converged ed2k_packet_v1 dump of the client-to-client UDP
+					// reask family (flow "client", canonical channel "client") so
+					// it diffs 1:1 against the emulebb-rust client_udp dump. pBuffer
+					// is the decoded [marker][opcode][payload] after deobfuscation.
+					PacketDiagnosticsLogClientPacket(
+						ipstr(sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port)),
+						(nReceiverVerifyKey != 0 || nSenderVerifyKey != 0) ? _T("obfuscated") : _T("plaintext"),
+						_T("recv"), pBuffer[0], pBuffer[1], pBuffer + 2, static_cast<UINT>(nPacketLen - 2));
+#endif
 					ProcessPacket(pBuffer + 2, nPacketLen - 2, pBuffer[1], sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port));
+				}
 				break;
 			case OP_KADEMLIAPACKEDPROT:
 				theStats.AddDownDataOverheadKad(nPacketLen);
@@ -589,6 +600,17 @@ int CClientUDPSocket::SendTo(uchar *lpBuf, int nBufLen, uint32 dwIP, uint16 nPor
 bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar *pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey)
 {
 	std::unique_ptr<Packet> packetOwner(packet);
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+	// Converged ed2k_packet_v1 dump of outbound client-to-client UDP reask
+	// packets (flow "client"). Kad packets routed through this socket carry the
+	// Kad header and are dumped separately by the Kad UDP send hook, so only the
+	// eD2k (OP_EMULEPROT) reask family is emitted here.
+	if (!bKad && packet != NULL && packet->prot == OP_EMULEPROT)
+		PacketDiagnosticsLogClientPacket(
+			ipstr(dwIP, nPort), bEncrypt ? _T("obfuscated") : _T("plaintext"),
+			_T("send"), packet->prot, packet->opcode,
+			(const BYTE*)packet->pBuffer, packet->size);
+#endif
 // ZZ:UploadBandWithThrottler (UDP) -->
 	try {
 		std::unique_ptr<UDPPack, UdpPackDeleter> newpending(new UDPPack);
