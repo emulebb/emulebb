@@ -230,9 +230,20 @@ void CUDPSocket::OnReceive(int nErrorCode)
 		if (nPayLoadLen < 2) {
 			if (thePrefs.GetDebugServerUDPLevel() > 0)
 				Debug(_T("***NOTE: ServerUDPMessage from %s:%u - Packet too short (%d bytes)\n"), (LPCTSTR)ipstr(sockAddr.sin_addr), ntohs(sockAddr.sin_port) - 4, nPayLoadLen);
-		} else if (pBuffer[0] == OP_EDONKEYPROT)
+		} else if (pBuffer[0] == OP_EDONKEYPROT) {
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+			// Converged ed2k_packet_v1 dump of inbound server-UDP packets (flow
+			// "server") so the global source/search UDP traffic diffs 1:1 against
+			// the emulebb-rust server-UDP dump. pBuffer is the decoded
+			// [marker][opcode][payload]; a decrypt that shrank the length marks
+			// the obfuscated transport.
+			PacketDiagnosticsLogServerPacket(
+				ipstr(sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port)),
+				(nPayLoadLen == length) ? _T("plaintext") : _T("obfuscated"),
+				_T("recv"), pBuffer[0], pBuffer[1], pBuffer + 2, static_cast<UINT>(nPayLoadLen - 2));
+#endif
 			ProcessPacket(pBuffer + 2, nPayLoadLen - 2, pBuffer[1], sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port));
-		else if (thePrefs.GetDebugServerUDPLevel() > 0)
+		} else if (thePrefs.GetDebugServerUDPLevel() > 0)
 			Debug(_T("***NOTE: ServerUDPMessage from %s:%u - Unknown protocol 0x%02x, Encrypted: %s\n"), (LPCTSTR)ipstr(sockAddr.sin_addr), ntohs(sockAddr.sin_port) - 4, pBuffer[0], (nPayLoadLen == length) ? _T("Yes") : _T("No"));
 	} else {
 		DWORD dwError = WSAGetLastError();
@@ -872,6 +883,16 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 	if (packet != NULL) {
 		const size_t iLen = thePrefs.IsCryptLayerEnabled() && pServer->GetServerKeyUDP() && pServer->SupportsObfuscationUDP()
 			? EncryptOverheadSize(false) : 0;
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+		// Converged ed2k_packet_v1 dump of outbound server-UDP packets (flow
+		// "server"): the global GETSOURCES / search / server-status requests the
+		// emulebb-rust server-UDP dump also emits. `iLen` is non-zero exactly when
+		// the datagram is server-key obfuscated.
+		PacketDiagnosticsLogServerPacket(
+			ipstr(pServer->GetIP(), pServer->GetPort()),
+			iLen ? _T("obfuscated") : _T("plaintext"), _T("send"),
+			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
+#endif
 		size_t uAllocationSize = 0;
 		int nSocketSendSize = 0;
 		if (!UDPSocketSeams::TryGetOutgoingServerUdpPacketSize(packet->size, iLen, &uRawPacketSize, &uAllocationSize, &nSocketSendSize)) {
