@@ -121,7 +121,13 @@ CString BuildPacketDiagnosticsPeerLabel(const CUpDownClient *pClient)
 
 LPCTSTR GetPacketDiagnosticsTransportMode(const CUpDownClient *pClient)
 {
-	return (pClient != NULL && pClient->IsObfuscatedConnectionEstablished()) ? _T("user_hash") : _T("plaintext");
+	// Canonical eD2K-TCP obfuscation label shared with the rust client
+	// (Ed2kTransportMode::as_str -> "plaintext"/"obfuscated"): the axis is binary
+	// (clear vs RC4-obfuscated), so the diag diff can slice ed2k_tcp packets by
+	// obfuscation mode. eD2K TCP has no sub-mode to distinguish (the RC4 key basis
+	// is always the peer user hash), so we emit "obfuscated" rather than the
+	// former key-basis label "user_hash".
+	return (pClient != NULL && pClient->IsObfuscatedConnectionEstablished()) ? _T("obfuscated") : _T("plaintext");
 }
 
 void LogInvalidMultipacketSubOpcode(
