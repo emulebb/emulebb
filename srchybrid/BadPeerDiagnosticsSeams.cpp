@@ -229,10 +229,16 @@ void ReEmitBadPeerDiagV1(
 	if (!theDiagEventV1Log.IsOpen())
 		return;
 
-	CString strBody;
-	strBody.Format(
-		_T("{\"behavior\":%s,\"action\":%s,\"reason\":%s,\"repeatCount\":%u,\"windowSeconds\":%I64u"),
-		(LPCTSTR)JsonString(pszBehavior),
+	// The observe-only repeat_* events carry a `behavior` key; the reject events
+	// (upload_duplicate_done/queued_block_rejected) DO NOT — rust omits `behavior`
+	// on the reject path, and adding it here would fail the conformance diff (this
+	// was one cause of the RUST-FEAT-025 revert). So `behavior` is emitted only
+	// when the caller passes a non-NULL pszBehavior.
+	CString strBody(_T("{"));
+	if (pszBehavior != NULL)
+		strBody.AppendFormat(_T("\"behavior\":%s,"), (LPCTSTR)JsonString(pszBehavior));
+	strBody.AppendFormat(
+		_T("\"action\":%s,\"reason\":%s,\"repeatCount\":%u,\"windowSeconds\":%I64u"),
 		(LPCTSTR)JsonString(pszAction != NULL ? pszAction : _T("observe")),
 		(LPCTSTR)JsonString(pszReason != NULL ? pszReason : _T("")),
 		rState.uCount,
@@ -428,6 +434,26 @@ void LogUploadBlockRequestBehavior(
 	const SBadPeerBehaviorLedgerState state = UpdateBehaviorLedger(strLedgerKey, curTick);
 	const CString strEvidence(BlockRequestEvidenceJson(pClient, pFile, pBlock, iQueuedBlocks, iDoneBlocks, nPendingIOBlocks, state, curTick));
 	WriteEvent(pszEvent, pszSeverity, ClientJson(pClient), FileJson(pFile), pszAction, pszReason, strEvidence);
+
+#if EMULEBB_HAS_DIAG_EVENT_V1
+	// Symmetric with rust: emit the duplicate-reject event
+	// (upload_duplicate_done/queued_block_rejected) to the converged diag_event_v1
+	// stream too, so the bad_peer diff correlates 1:1. rust emits these on EVERY
+	// rejection (diag_bad_peer.rs upload_duplicate_*_block_rejected) with NO
+	// `behavior` key — pass pszBehavior=NULL so the body matches. This is distinct
+	// from the observe-only repeat_block_request re-emit below (uCount>1 gated,
+	// which carries a behavior key).
+	ReEmitBadPeerDiagV1(
+		pszEvent,
+		pszSeverity,
+		NULL,
+		pszAction,
+		pszReason,
+		pClient,
+		strFileHash,
+		state,
+		pBlock);
+#endif
 
 	if (state.uCount > 1) {
 		WriteEvent(
