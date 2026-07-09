@@ -353,6 +353,48 @@ CString BuildDiagEventUpperHexString(const BYTE *pPayload, UINT uPayloadLen)
 	strHex.ReleaseBuffer(static_cast<int>(uCapped * 2));
 	return strHex;
 }
+
+// Resolve a Kad UDP opcode to the SAME name string the rust client emits in its
+// udp_packet_v1 / kad_udp opcodeName field (emulebb-kad-net packet_info.rs
+// opcode_name), so the converged kad_udp/packet diff correlates by opcodeName.
+// NOTE: rust's names are not always the raw Opcodes.h macro name — e.g. 0x58 is
+// KADEMLIA2_FIREWALLED_RES (rust), 0x53 KADEMLIA2_FIREWALLED2_REQ — so this table
+// mirrors the rust strings verbatim, not the local #define identifiers. Unknown
+// opcodes return "UNKNOWN" (rust's fallthrough), never raw hex.
+LPCTSTR DiagEventKadOpcodeName(BYTE byOpcode)
+{
+	switch (byOpcode) {
+	case KADEMLIA2_BOOTSTRAP_REQ:		return _T("KADEMLIA2_BOOTSTRAP_REQ");
+	case KADEMLIA2_BOOTSTRAP_RES:		return _T("KADEMLIA2_BOOTSTRAP_RES");
+	case KADEMLIA_HELLO_REQ_DEPRECATED:	return _T("KADEMLIA_HELLO_REQ_DEPRECATED");
+	case KADEMLIA2_HELLO_REQ:		return _T("KADEMLIA2_HELLO_REQ");
+	case KADEMLIA_HELLO_RES_DEPRECATED:	return _T("KADEMLIA_HELLO_RES_DEPRECATED");
+	case KADEMLIA2_HELLO_RES:		return _T("KADEMLIA2_HELLO_RES");
+	case KADEMLIA2_HELLO_RES_ACK:		return _T("KADEMLIA2_HELLO_RES_ACK");
+	case KADEMLIA2_REQ:			return _T("KADEMLIA2_REQ");
+	case KADEMLIA2_RES:			return _T("KADEMLIA2_RES");
+	case KADEMLIA2_SEARCH_KEY_REQ:		return _T("KADEMLIA2_SEARCH_KEY_REQ");
+	case KADEMLIA2_SEARCH_SOURCE_REQ:	return _T("KADEMLIA2_SEARCH_SOURCE_REQ");
+	case KADEMLIA2_SEARCH_NOTES_REQ:	return _T("KADEMLIA2_SEARCH_NOTES_REQ");
+	case KADEMLIA2_SEARCH_RES:		return _T("KADEMLIA2_SEARCH_RES");
+	case KADEMLIA2_PUBLISH_KEY_REQ:		return _T("KADEMLIA2_PUBLISH_KEY_REQ");
+	case KADEMLIA2_PUBLISH_SOURCE_REQ:	return _T("KADEMLIA2_PUBLISH_SOURCE_REQ");
+	case KADEMLIA2_PUBLISH_NOTES_REQ:	return _T("KADEMLIA2_PUBLISH_NOTES_REQ");
+	case KADEMLIA2_PUBLISH_RES:		return _T("KADEMLIA2_PUBLISH_RES");
+	case KADEMLIA2_PUBLISH_RES_ACK:		return _T("KADEMLIA2_PUBLISH_RES_ACK");
+	case KADEMLIA_FIREWALLED_REQ:		return _T("KADEMLIA_FIREWALLED_REQ");
+	case KADEMLIA_FIREWALLED2_REQ:		return _T("KADEMLIA2_FIREWALLED2_REQ");
+	case KADEMLIA_FIREWALLED_RES:		return _T("KADEMLIA2_FIREWALLED_RES");
+	case KADEMLIA_FIREWALLED_ACK_RES:	return _T("KADEMLIA2_FIREWALLED_ACK_RES");
+	case KADEMLIA2_FIREWALLUDP:		return _T("KADEMLIA2_FIREWALLUDP");
+	case KADEMLIA_FINDBUDDY_REQ:		return _T("KADEMLIA_FINDBUDDY_REQ");
+	case KADEMLIA_FINDBUDDY_RES:		return _T("KADEMLIA_FINDBUDDY_RES");
+	case KADEMLIA_CALLBACK_REQ:		return _T("KADEMLIA_CALLBACK_REQ");
+	case KADEMLIA2_PING:			return _T("KADEMLIA2_PING");
+	case KADEMLIA2_PONG:			return _T("KADEMLIA2_PONG");
+	default:				return _T("UNKNOWN");
+	}
+}
 }
 
 void DiagEventLogKadUdpPacket(
@@ -381,10 +423,11 @@ void DiagEventLogKadUdpPacket(
 
 	CString strBody;
 	strBody.Format(
-		_T("{\"direction\":%s,\"protocolMarker\":%u,\"opcode\":%u,\"decodedLen\":%u,\"decodedHex\":\"%s\"}"),
+		_T("{\"direction\":%s,\"protocolMarker\":%u,\"opcode\":%u,\"opcodeName\":%s,\"decodedLen\":%u,\"decodedHex\":\"%s\"}"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDirection != NULL ? pszDirection : _T("recv")),
 		static_cast<UINT>(byProtocol),
 		static_cast<UINT>(byOpcode),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(DiagEventKadOpcodeName(byOpcode)),
 		uDecodedLen,
 		(LPCTSTR)strDecodedHex);
 
@@ -431,10 +474,11 @@ void DiagEventLogKadUdpPacketSend(
 
 	CString strBody;
 	strBody.Format(
-		_T("{\"direction\":%s,\"protocolMarker\":%u,\"opcode\":%u,\"decodedLen\":%u,\"decodedHex\":\"%s\"}"),
+		_T("{\"direction\":%s,\"protocolMarker\":%u,\"opcode\":%u,\"opcodeName\":%s,\"decodedLen\":%u,\"decodedHex\":\"%s\"}"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(_T("send")),
 		static_cast<UINT>(byProtocolMarker),
 		static_cast<UINT>(byOpcodeMarker),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(DiagEventKadOpcodeName(byOpcodeMarker)),
 		uTrueDecodedLen,
 		(LPCTSTR)strDecodedHex);
 
@@ -656,6 +700,48 @@ void PacketDiagnosticsLogInvalidSubOpcode(
 	WriteDiagnosticsLogLine(thePacketDiagnosticsLog, g_packetDiagnosticsLogLock, strJson);
 }
 
+// Resolve a client<->server TCP/UDP opcode to the SAME name string the rust
+// client emits in its ed2k-server dump opcode_name field (ed2k_server
+// diagnostics.rs server_opcode_name). The c2c DbgGetClientTCPOpcode table does
+// not carry the server opcodes (0x14/0x15/0x16/0x34/0x40/...), so the server flow
+// fell through to a raw "0x%02x" while rust names them; this table closes that
+// gap. Unknown opcodes return "UNKNOWN" (rust's fallthrough), matching rust
+// exactly rather than raw hex.
+static LPCTSTR DiagEventServerTCPOpcodeName(BYTE byOpcode)
+{
+	switch (byOpcode) {
+	case OP_LOGINREQUEST:		return _T("OP_LOGINREQUEST");
+	case OP_GETSERVERLIST:		return _T("OP_GETSERVERLIST");
+	case OP_OFFERFILES:		return _T("OP_OFFERFILES");
+	case OP_SEARCHREQUEST:		return _T("OP_SEARCHREQUEST");
+	case OP_GETSOURCES:		return _T("OP_GETSOURCES");
+	case OP_GETSOURCES_OBFU:	return _T("OP_GETSOURCES_OBFU");
+	case OP_QUERY_MORE_RESULT:	return _T("OP_QUERY_MORE_RESULT");
+	case OP_SERVERLIST:		return _T("OP_SERVERLIST");
+	case OP_SEARCHRESULT:		return _T("OP_SEARCHRESULT");
+	case OP_SERVERSTATUS:		return _T("OP_SERVERSTATUS");
+	case OP_CALLBACKREQUEST:	return _T("OP_CALLBACKREQUEST");
+	case OP_CALLBACKREQUESTED:	return _T("OP_CALLBACKREQUESTED");
+	case OP_CALLBACK_FAIL:		return _T("OP_CALLBACK_FAIL");
+	case OP_SERVERMESSAGE:		return _T("OP_SERVERMESSAGE");
+	case OP_IDCHANGE:		return _T("OP_IDCHANGE");
+	case OP_SERVERIDENT:		return _T("OP_SERVERIDENT");
+	case OP_FOUNDSOURCES:		return _T("OP_FOUNDSOURCES");
+	case OP_FOUNDSOURCES_OBFU:	return _T("OP_FOUNDSOURCES_OBFU");
+	case OP_GLOBSEARCHREQ:		return _T("OP_GLOBSEARCHREQ");
+	case OP_GLOBSEARCHREQ2:		return _T("OP_GLOBSEARCHREQ2");
+	case OP_GLOBSEARCHREQ3:		return _T("OP_GLOBSEARCHREQ3");
+	case OP_GLOBSEARCHRES:		return _T("OP_GLOBSEARCHRES");
+	case OP_GLOBGETSOURCES:		return _T("OP_GLOBGETSOURCES");
+	case OP_GLOBGETSOURCES2:	return _T("OP_GLOBGETSOURCES2");
+	case OP_GLOBFOUNDSOURCES:	return _T("OP_GLOBFOUNDSOURCES");
+	case OP_GLOBSERVSTATREQ:	return _T("OP_GLOBSERVSTATREQ");
+	case OP_GLOBSERVSTATRES:	return _T("OP_GLOBSERVSTATRES");
+	case OP_REJECT:			return _T("OP_REJECT");
+	default:			return _T("UNKNOWN");
+	}
+}
+
 // Shared emitter for one ED2K TCP packet in the converged ed2k_packet_v1 schema.
 // `pszFlow` discriminates the connection family (e.g. "server", "client") so the
 // emulebb-rust and eMuleBB dumps share one shape and diff 1:1.
@@ -677,8 +763,12 @@ static void PacketDiagnosticsLogEd2kPacket(
 	const CString strPayloadHex = BuildPacketDiagnosticsHexString(pPayload, uPayloadHexLen);
 	const LPCTSTR pszProtocolName = PacketDiagnosticsProtocolName(byProtocol);
 	const CString strProtocol = pszProtocolName != NULL ? BuildDiagnosticsJsonStringField(pszProtocolName) : CString(_T("null"));
-	const CString strOpcodeName = DbgGetClientTCPOpcode(byProtocol, byOpcode);
 	const CString strFlow(pszFlow != NULL ? pszFlow : _T("unknown"));
+	// Server-flow packets carry server opcodes the c2c table doesn't name; resolve
+	// them against the rust server_opcode_name set so opcode_name matches 1:1.
+	const CString strOpcodeName = (strFlow == _T("server"))
+		? CString(DiagEventServerTCPOpcodeName(byOpcode))
+		: DbgGetClientTCPOpcode(byProtocol, byOpcode);
 	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
 	const CString strTraceKey(strFlow + _T(":") + strPeer);
 	const ULONGLONG ullEventSeq = NextDiagnosticsEventSeq(g_llPacketDiagnosticsEventSeq);
@@ -754,9 +844,15 @@ void PacketDiagnosticsLogClientPacket(
 {
 	if (ShouldSkipBulkPacketDiagnostics(byProtocol, byOpcode, _tcsicmp(pszDirection, _T("recv")) == 0))
 		return;
-	PacketDiagnosticsLogEd2kPacket(_T("client"), pszPeerLabel, pszTransportMode, pszDirection,
+	// Flow token parity: rust tags client-to-client traffic with an origin-based
+	// flow — "listener" for the accepted (inbound) connection that carries served
+	// uploads. Use the same token so the upload/publish path correlates in the
+	// converged ed2k_packet_v1 / ed2k_tcp diff. (A finer "native_download" split
+	// for sockets WE dialed out to download is a documented follow-up; it needs
+	// the connection origin threaded to this call site.)
+	PacketDiagnosticsLogEd2kPacket(_T("listener"), pszPeerLabel, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
-	DiagEventLogEd2kTcpPacket(_T("client"), pszPeerLabel, pszTransportMode, pszDirection,
+	DiagEventLogEd2kTcpPacket(_T("listener"), pszPeerLabel, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 
