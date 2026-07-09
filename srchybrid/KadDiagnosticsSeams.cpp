@@ -244,6 +244,31 @@ void ReEmitKadEventDiagV1(LPCTSTR pszEvent, LPCTSTR pszSeverity, LPCTSTR pszActi
 	if (uNetworkIP != 0)
 		strKeys.Format(_T("{\"peer\":%s}"), (LPCTSTR)BuildDiagnosticsJsonStringField(ipstr(uNetworkIP)));
 
+	// Anti-flood convergence: the Kad per-bucket token limiter's flood /
+	// massive-flood milestones are an ABUSE verdict, not a routing-lookup
+	// milestone, so emit them under the shared bad_peer family with the same
+	// event/behavior/action/reason vocabulary the rust client uses
+	// (diag_event.rs bad_peer_kad_drop): anti_flood_drop (drop) / anti_flood_ban
+	// (ban), reason=request-token-deficit. This makes the anti-flood path
+	// correlate 1:1. (rust also carries repeatCount/windowSeconds from the token
+	// tracker as extra body fields; those are a tolerated rust superset here.)
+	// All other kad_event milestones stay under the kad_event family below.
+	const CString strEvent(pszEvent != NULL ? pszEvent : _T(""));
+	if (strEvent == _T("kad_request_massive_flood") || strEvent == _T("kad_request_flood")) {
+		const bool bMassive = (strEvent == _T("kad_request_massive_flood"));
+		LPCTSTR const pszBehavior = bMassive ? _T("anti_flood_ban") : _T("anti_flood_drop");
+		LPCTSTR const pszBadAction = bMassive ? _T("ban") : _T("drop");
+		LPCTSTR const pszBadSeverity = bMassive ? _T("high") : _T("medium");
+		CString strFloodBody;
+		strFloodBody.Format(
+			_T("{\"behavior\":%s,\"action\":%s,\"reason\":%s}"),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(pszBehavior),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(pszBadAction),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(pszReason != NULL ? pszReason : _T("request-token-deficit")));
+		WriteDiagEventV1(_T("bad_peer"), pszBehavior, pszBadSeverity, strKeys, strFloodBody);
+		return;
+	}
+
 	CString strBody;
 	strBody.Format(
 		_T("{\"milestone\":%s,\"action\":%s,\"reason\":%s}"),
