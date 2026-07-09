@@ -1774,6 +1774,28 @@ void DiagEventLogSchedQueueRank(const CUpDownClient *pClient, const byte *pFileH
 		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), strBody);
 }
 
+// Normalize a per-block MFC upload outcome reason to the shared outcomeClass
+// vocabulary the rust client also emits (served | partial | duplicateDone |
+// duplicateQueued | rejected | signal), so diag_event_diff.py correlates the
+// upload-request path across clients. MFC accounts per block (no request-level
+// served/partial split at this seam), so it never emits "partial" — that class
+// is rust-only; conversely "signal" (the per-packet request-complete marker) is
+// MFC-only. The fine `outcome` string stays for MFC detail.
+static LPCTSTR UploadRequestOutcomeClass(LPCTSTR pszOutcome)
+{
+	if (pszOutcome == NULL)
+		return _T("rejected");
+	if (_tcsncmp(pszOutcome, _T("accept"), 6) == 0)
+		return _T("served");
+	if (_tcscmp(pszOutcome, _T("reject-duplicate-done-block")) == 0)
+		return _T("duplicateDone");
+	if (_tcscmp(pszOutcome, _T("reject-duplicate-queued-block")) == 0)
+		return _T("duplicateQueued");
+	if (_tcsncmp(pszOutcome, _T("request-packet-complete-signal"), 30) == 0)
+		return _T("signal");
+	return _T("rejected");
+}
+
 void DiagEventLogSchedUploadRequestOutcome(
 	const CUpDownClient *pClient,
 	const byte *pFileHash,
@@ -1789,8 +1811,9 @@ void DiagEventLogSchedUploadRequestOutcome(
 {
 	CString strBody;
 	strBody.Format(
-		_T("{\"outcome\":%s,\"requestedRanges\":%u,\"servedRanges\":%u,\"skippedRanges\":%u,\"requestedBytes\":%I64u,\"servedBytes\":%I64u,\"payloadPackets\":%u,\"throttleDelayMs\":%I64u"),
+		_T("{\"outcome\":%s,\"outcomeClass\":%s,\"requestedRanges\":%u,\"servedRanges\":%u,\"skippedRanges\":%u,\"requestedBytes\":%I64u,\"servedBytes\":%I64u,\"payloadPackets\":%u,\"throttleDelayMs\":%I64u"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszOutcome != NULL ? pszOutcome : _T("unknown")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(UploadRequestOutcomeClass(pszOutcome)),
 		uRequestedRanges,
 		uServedRanges,
 		uSkippedRanges,
