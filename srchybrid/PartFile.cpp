@@ -1646,24 +1646,25 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory, LPCTSTR in_fil
 
 		if (!isnewstyle) { // not for importing
 			// check date of .part file - if it's wrong, rehash file
-			CFileStatus filestatus = {};
-			bool bHavePartFileStatus = false;
-			try {
-				m_hpartfile.GetStatus(filestatus);
-				bHavePartFileStatus = true;
-			} catch (CException *ex) {
+			// WHY: SavePartFile stores raw FILETIME-derived UTC seconds. Using
+			// CFile::GetStatus here can apply filesystem-local conversions on
+			// removable/exFAT volumes and make unchanged files look modified.
+			WIN32_FILE_ATTRIBUTE_DATA fileAttributes = {};
+			const bool bHavePartFileStatus =
+				LongPathSeams::GetFileAttributesEx(GetFilePath(), GetFileExInfoStandard, &fileAttributes)
+				&& (fileAttributes.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+			if (!bHavePartFileStatus) {
 				DebugLogWarning(_T("Failed to get file date of \"%s\" while loading part file \"%s\"%s"),
-					(LPCTSTR)m_hpartfile.GetFileName(),
+					(LPCTSTR)GetFilePath(),
 					(LPCTSTR)GetFileName(),
-					(LPCTSTR)CExceptionStrDash(*ex));
-				ex->Delete();
+					(LPCTSTR)GetErrorMessage(::GetLastError(), 1));
 			}
-			time_t fdate = bHavePartFileStatus ? (time_t)filestatus.m_mtime.GetTime() : (time_t)-1;
+			time_t fdate = bHavePartFileStatus ? (time_t)FileTimeToUnixTime(fileAttributes.ftLastWriteTime) : (time_t)-1;
 			if (fdate == 0)
 				fdate = (time_t)-1;
 			if (fdate == (time_t)-1) {
 				if (thePrefs.GetVerbose())
-					AddDebugLogLine(false, _T("Failed to get file date of \"%s\" (%s)"), (LPCTSTR)m_hpartfile.GetFileName(), (LPCTSTR)GetFileName());
+					AddDebugLogLine(false, _T("Failed to get file date of \"%s\" (%s)"), (LPCTSTR)GetFilePath(), (LPCTSTR)GetFileName());
 			}
 
 			if (m_tUtcLastModified != fdate) {
