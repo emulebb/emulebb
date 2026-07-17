@@ -71,6 +71,20 @@ bool RejectMalformedClientTcpPacket(LPCTSTR pszOpcodeName, uint32 uSize, CUpDown
 	return false;
 }
 
+void SendLeechModeFileNotFound(CClientReqSocket *pSocket, const uchar *pFileHash)
+{
+	if (pSocket == NULL || pFileHash == NULL)
+		return;
+
+	// Leech mode must not confirm possession of any file metadata. A normal FNF
+	// answer keeps the wire behavior quiet without exposing names, status,
+	// hashsets, AICH hashes, or source lists.
+	Packet *replypacket = new Packet(OP_FILEREQANSNOFIL, MDX_DIGEST_SIZE);
+	md4cpy(replypacket->pBuffer, pFileHash);
+	theStats.AddUpDataOverheadFileRequest(replypacket->size);
+	pSocket->SendPacket(replypacket);
+}
+
 CClientReqSocket *CreateClientReqSocketForAccept(SOCKET hAcceptedSocket)
 {
 	try {
@@ -539,6 +553,11 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 			uchar reqfilehash[MDX_DIGEST_SIZE];
 			data_in.ReadHash16(reqfilehash);
 
+			if (IsLeechModeActive()) {
+				SendLeechModeFileNotFound(this, reqfilehash);
+				return;
+			}
+
 			CKnownFile *reqfile = theApp.sharedfiles->GetFileByID(reqfilehash);
 			if (reqfile == NULL) {
 				reqfile = theApp.downloadqueue->GetFileByID(reqfilehash);
@@ -599,6 +618,11 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 
 			if (size != 16)
 				throw GetResString(IDS_ERR_WRONGPACKETSIZE);
+
+			if (IsLeechModeActive()) {
+				SendLeechModeFileNotFound(this, packet);
+				return;
+			}
 
 			if (!client->GetWaitStartTime())
 				client->SetWaitStartTime();
@@ -792,6 +816,10 @@ void CClientReqSocket::ProcessPacket(const BYTE *packet, uint32 size, UINT opcod
 
 		if (size != 16)
 			throw GetResString(IDS_ERR_WRONGHPACKETSIZE);
+		if (IsLeechModeActive()) {
+			SendLeechModeFileNotFound(this, packet);
+			return;
+		}
 		client->SendHashsetPacket(packet, 16, false);
 		return;
 	case OP_HASHSETANSWER:
@@ -1112,6 +1140,10 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 					return;
 				}
 				md4cpy(reqfilehash, fileIdent.GetMD4Hash()); // need this in case we want to sent a FNF
+				if (IsLeechModeActive()) {
+					SendLeechModeFileNotFound(this, reqfilehash);
+					return;
+				}
 				reqfile = theApp.sharedfiles->GetFileByID(fileIdent.GetMD4Hash());
 				if (reqfile == NULL) {
 					reqfile = theApp.downloadqueue->GetFileByID(fileIdent.GetMD4Hash());
@@ -1128,6 +1160,10 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 			} else { // no file identifier
 				data_in.ReadHash16(reqfilehash);
 				uint64 nSize = (opcode == OP_MULTIPACKET_EXT) ? data_in.ReadUInt64() : 0;
+				if (IsLeechModeActive()) {
+					SendLeechModeFileNotFound(this, reqfilehash);
+					return;
+				}
 				reqfile = theApp.sharedfiles->GetFileByID(reqfilehash);
 				if (reqfile == NULL) {
 					reqfile = theApp.downloadqueue->GetFileByID(reqfilehash);
@@ -1807,6 +1843,10 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 			CSafeMemFile data(packet, size);
 			uchar abyHash[MDX_DIGEST_SIZE];
 			data.ReadHash16(abyHash);
+			if (IsLeechModeActive()) {
+				SendLeechModeFileNotFound(this, abyHash);
+				return;
+			}
 			CKnownFile *pPartFile = theApp.sharedfiles->GetFileByID(abyHash);
 			if (pPartFile == NULL)
 				client->CheckFailedFileIdReqs(abyHash);
@@ -1943,6 +1983,14 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 		if (thePrefs.GetDebugClientTCPLevel() > 0)
 			DebugRecv("OP_HashSetReq2", client);
 		theStats.AddDownDataOverheadFileRequest(size);
+		if (IsLeechModeActive()) {
+			CSafeMemFile data(packet, size);
+			CFileIdentifierSA fileIdent;
+			if (!fileIdent.ReadIdentifier(data))
+				throw _T("Bad FileIdentifier (OP_HASHSETREQUEST2)");
+			SendLeechModeFileNotFound(this, fileIdent.GetMD4Hash());
+			return;
+		}
 		client->SendHashsetPacket(packet, size, true);
 		return;
 	case OP_HASHSETANSWER2:
