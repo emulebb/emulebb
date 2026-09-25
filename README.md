@@ -4,6 +4,11 @@ eMuleBB is eMule broadband edition: a native Windows eMule client for long
 sessions, large libraries, broadband-era transfer behavior, and trusted local
 automation.
 
+This is the MFC fork of stock/community eMule, optimized for modern Windows
+systems and networks while retaining eD2K/Kad wire compatibility. The separate
+`emulebb-rust` project is the Rust-native successor; upstream aMule is an
+independent, cross-platform eMule-family reference.
+
 The 0.7.3 release line preserves stock-compatible eD2K/Kad behavior and keeps
 selected legacy eMule features frozen for compatibility. After 0.7.3 establishes
 the first stable eMuleBB baseline, future releases can evolve more aggressively
