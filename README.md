@@ -9,10 +9,10 @@ systems and networks while retaining eD2K/Kad wire compatibility. The separate
 `emulebb-rust` project is the Rust-native successor; upstream aMule is an
 independent, cross-platform eMule-family reference.
 
-The 0.7.3 release line preserves stock-compatible eD2K/Kad behavior and keeps
-selected legacy eMule features frozen for compatibility. After 0.7.3 establishes
-the first stable eMuleBB baseline, future releases can evolve more aggressively
-while keeping protocol compatibility explicit.
+The `0.7.x` release line preserves stock-compatible eD2K/Kad behavior as a
+long-term maintenance lane. It accepts bugs and bounded low-risk UX,
+performance, compatibility, build, packaging, documentation, diagnostics, and
+release work, but no broad feature or architectural expansion.
 
 ## Download And Install
 
