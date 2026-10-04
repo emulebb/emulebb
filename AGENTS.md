@@ -2,9 +2,9 @@
 
 - Read `EMULEBB_WORKSPACE_ROOT\repos\emulebb-tooling\docs\WORKSPACE-POLICY.md`
   first; it is authoritative for workspace-wide rules.
-- Start from
-  `EMULEBB_WORKSPACE_ROOT\repos\emulebb-tooling\docs\reference\AGENT-CHECKLIST.md`
-  for the repeatable operating path.
+- For work in this app, also read the routed
+  `EMULEBB_WORKSPACE_ROOT\repos\emulebb-tooling\docs\products\emulebb-mfc\reference\AGENT-POLICY.md`
+  annex. Add the harness/live annex only for live or parity work.
 
 Everything below is this repo's local deltas only:
 
