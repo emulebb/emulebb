@@ -345,6 +345,53 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	EnableHtmlHelp();
 }
 
+static bool TryParseConfigRootArgument(int &i, CString &strValue)
+{
+	LPCTSTR pszArg = __targv[i];
+	if (pszArg[0] != _T('-') && pszArg[0] != _T('/'))
+		return false;
+	++pszArg;
+
+	if ((_tcsicmp(pszArg, _T("c")) == 0 || _tcsicmp(pszArg, _T("configdir")) == 0) && i + 1 < __argc) {
+		strValue = __targv[++i];
+	} else {
+		const CString strShortPrefix(_T("c="));
+		const CString strLongPrefix(_T("configdir="));
+		if (_tcsnicmp(pszArg, strShortPrefix, strShortPrefix.GetLength()) == 0)
+			strValue = pszArg + strShortPrefix.GetLength();
+		else if (_tcsnicmp(pszArg, strLongPrefix, strLongPrefix.GetLength()) == 0)
+			strValue = pszArg + strLongPrefix.GetLength();
+		else
+			return false;
+	}
+
+	strValue.Trim();
+	return !strValue.IsEmpty();
+}
+
+static CString NormalizeConfigRootArgument(const CString &strValue)
+{
+	CString strNormalized(strValue);
+	strNormalized.Trim();
+	strNormalized.Trim(_T("\""));
+	strNormalized.Replace(_T('/'), _T('\\'));
+	if (!strNormalized.IsEmpty() && strNormalized.Right(1) != _T("\\"))
+		strNormalized += _T("\\");
+
+	return strNormalized;
+}
+
+void CemuleApp::ProcessEarlyCommandlineOverrides()
+{
+	for (int i = 1; i < __argc; ++i) {
+		CString strConfigRoot;
+		if (TryParseConfigRootArgument(i, strConfigRoot)) {
+			m_strConfigRootOverride = NormalizeConfigRootArgument(strConfigRoot);
+			break;
+		}
+	}
+}
+
 
 CemuleApp theApp(_T("eMule"));
 
@@ -405,6 +452,7 @@ BOOL CemuleApp::InitInstance()
 	// output all ASSERT messages to debug device
 	_CrtSetReportMode(_CRT_ASSERT, _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_REPORT_MODE) | _CRTDBG_MODE_DEBUG);
 #endif
+	ProcessEarlyCommandlineOverrides();
 	free((void*)m_pszProfileName);
 	const CString &sConfDir(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
 	m_pszProfileName = _tcsdup(sConfDir + _T("preferences.ini"));
@@ -687,6 +735,11 @@ bool CemuleApp::ProcessCommandline()
 {
 	bool bIgnoreRunningInstances = (GetProfileInt(_T("eMule"), _T("IgnoreInstances"), 0) != 0);
 	for (int i = 1; i < __argc; ++i) {
+		CString strConfigRoot;
+		if (TryParseConfigRootArgument(i, strConfigRoot)) {
+			m_strConfigRootOverride = NormalizeConfigRootArgument(strConfigRoot);
+			continue;
+		}
 		LPCTSTR pszParam = __targv[i];
 		if (pszParam[0] == _T('-') || pszParam[0] == _T('/')) {
 			++pszParam;
