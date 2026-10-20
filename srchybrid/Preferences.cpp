@@ -2865,28 +2865,33 @@ CString CPreferences::GetDefaultDirectory(EDefaultDirectory eDirectory, bool bCr
 		CString strSelectedExpansionBaseDirectory(m_astrDefaultDirs[EMULE_EXECUTABLEDIR]);
 		m_nCurrentUserDirMode = 2; // To let us know which "mode" we are using in case we want to switch per options
 
-		// check if preferences.ini exists already in our default / fallback dir
-		bool bConfigAvailableExecutable = (::PathFileExists(strSelectedConfigBaseDirectory + CONFIGFOLDER _T("preferences.ini")) != FALSE);
+		if (theApp.HasConfigRootOverride()) {
+			strSelectedDataBaseDirectory = theApp.GetConfigRootOverride();
+			strSelectedConfigBaseDirectory = theApp.GetConfigRootOverride();
+			strSelectedExpansionBaseDirectory = theApp.GetConfigRootOverride();
+		} else {
+			// check if preferences.ini exists already in our default / fallback dir
+			bool bConfigAvailableExecutable = (::PathFileExists(strSelectedConfigBaseDirectory + CONFIGFOLDER _T("preferences.ini")) != FALSE);
 
-		// check if our registry setting is present which forces the single or multiuser directories
-		// and lets us ignore other defaults
-		// 0 = Multiuser, 1 = Publicuser, 2 = ExecutableDir. (on Winver < Vista 1 has the same effect as 2)
-		DWORD nRegistrySetting = _UI32_MAX;
-		CRegKey rkEMuleRegKey;
-		if (rkEMuleRegKey.Open(HKEY_CURRENT_USER, _T("Software\\eMule"), KEY_READ) == ERROR_SUCCESS) {
-			rkEMuleRegKey.QueryDWORDValue(_T("UsePublicUserDirectories"), nRegistrySetting);
-			rkEMuleRegKey.Close();
-		}
-		if (nRegistrySetting > 2)
-			nRegistrySetting = _UI32_MAX;
+			// check if our registry setting is present which forces the single or multiuser directories
+			// and lets us ignore other defaults
+			// 0 = Multiuser, 1 = Publicuser, 2 = ExecutableDir. (on Winver < Vista 1 has the same effect as 2)
+			DWORD nRegistrySetting = _UI32_MAX;
+			CRegKey rkEMuleRegKey;
+			if (rkEMuleRegKey.Open(HKEY_CURRENT_USER, _T("Software\\eMule"), KEY_READ) == ERROR_SUCCESS) {
+				rkEMuleRegKey.QueryDWORDValue(_T("UsePublicUserDirectories"), nRegistrySetting);
+				rkEMuleRegKey.Close();
+			}
+			if (nRegistrySetting > 2)
+				nRegistrySetting = _UI32_MAX;
 
-		// Do we need to get SystemFolders, or do we use our old Default anyway? (Executable Dir)
-		bool bVista = (GetWindowsVersion() >= _WINVER_VISTA_);
-		if (nRegistrySetting == 0
-			|| (nRegistrySetting == 1 && bVista)
-			|| (nRegistrySetting == _UI32_MAX && (!bConfigAvailableExecutable || bVista)))
-		{
-			if (bVista) {
+			// Do we need to get SystemFolders, or do we use our old Default anyway? (Executable Dir)
+			bool bVista = (GetWindowsVersion() >= _WINVER_VISTA_);
+			if (nRegistrySetting == 0
+				|| (nRegistrySetting == 1 && bVista)
+				|| (nRegistrySetting == _UI32_MAX && (!bConfigAvailableExecutable || bVista)))
+			{
+				if (bVista) {
 				// function unavailable before WinVista
 				HRESULT(WINAPI *pfnSHGetKnownFolderPath)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR*);
 				HMODULE hShell32 = ::GetModuleHandle(_T("shell32.dll"));
@@ -2954,7 +2959,7 @@ CString CPreferences::GetDefaultDirectory(EDefaultDirectory eDirectory, bool bCr
 					DebugLogError(_T("Unable to retrieve system folders' location with shell32.dll; using fallbacks"));
 					ASSERT(0);
 				}
-			} else { //pre-Vista
+				} else { //pre-Vista
 				const CString &strAppData(ShellGetFolderPath(CSIDL_APPDATA));
 				const CString &strPersonal(ShellGetFolderPath(CSIDL_PERSONAL));
 				if (!strAppData.IsEmpty() && !strPersonal.IsEmpty()) {
@@ -2974,6 +2979,7 @@ CString CPreferences::GetDefaultDirectory(EDefaultDirectory eDirectory, bool bCr
 							ASSERT(0);
 					} else
 						ASSERT(0);
+				}
 				}
 			}
 		}

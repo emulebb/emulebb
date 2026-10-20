@@ -200,9 +200,12 @@ public:
 	// Elandal:ThreadSafeLogging <--
 
 	bool		DidWeAutoStart() const							{ return m_bAutoStart; }
+	bool		HasConfigRootOverride() const					{ return !m_strConfigRootOverride.IsEmpty(); }
+	const CString& GetConfigRootOverride() const				{ return m_strConfigRootOverride; }
 	void		ResetStandbyOff()								{ m_bStandbyOff = false; }
 
 protected:
+	void ProcessEarlyCommandlineOverrides();
 	bool ProcessCommandline();
 	void SetTimeOnTransfer();
 	static BOOL CALLBACK SearchEmuleWindow(HWND hWnd, LPARAM lParam) noexcept;
@@ -229,6 +232,7 @@ protected:
 	uint32		m_dwPublicIP;
 	bool		m_bGuardClipboardPrompt;
 	bool		m_bAutoStart;
+	CString		m_strConfigRootOverride;
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnHelp();
