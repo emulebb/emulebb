@@ -775,9 +775,25 @@ void CServerSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actual
 {
 	m_dwLastTransmission = ::GetTickCount64();
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-	if (packet != NULL)
-		PacketDiagnosticsLogServerPacket(_T("ed2k-server"), _T("tcp"), _T("send"),
-			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
+	if (packet != NULL) {
+		bool bLoggedEmbeddedFrames = false;
+		if (packet->prot == 0 && packet->opcode == 0) {
+			const BYTE *pRawPacket = reinterpret_cast<const BYTE*>(packet->GetPacket());
+			const size_t uRawPacketSize = packet->GetRealPacketSize();
+			if (ServerSocketSeams::IsCompleteEmbeddedTcpFrameBuffer(pRawPacket, uRawPacketSize)) {
+				size_t uOffset = 0;
+				ServerSocketSeams::ServerPacketFrameView frame = {};
+				while (ServerSocketSeams::TryReadEmbeddedTcpFrame(pRawPacket, uRawPacketSize, &uOffset, &frame)) {
+					PacketDiagnosticsLogServerPacket(_T("ed2k-server"), _T("tcp"), _T("send"),
+						frame.protocol, frame.opcode, frame.payload, frame.payloadSize);
+				}
+				bLoggedEmbeddedFrames = true;
+			}
+		}
+		if (!bLoggedEmbeddedFrames)
+			PacketDiagnosticsLogServerPacket(_T("ed2k-server"), _T("tcp"), _T("send"),
+				packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
+	}
 #endif
 	CEMSocket::SendPacket(packet, controlpacket, actualPayloadSize, bForceImmediateSend);
 }
