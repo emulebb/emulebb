@@ -405,9 +405,9 @@ void md4str(const byte *hash, TCHAR *pszHash);
 bool strmd4(const char *pszHash, byte *hash);
 bool strmd4(const CString &rstr, byte *hash);
 
-#if EMULEBB_HAS_DIAG_EVENT_V1
+#if EMULEBB_HAS_DIAG_EVENT_V2
 /**
- * @brief Builds the diag_event_v1 family:"sched" keys object ({peer,peerHash?,fileHash})
+ * @brief Builds the diag_event_v2 family:"sched" keys object ({peer,peerHash?,fileHash})
  *        for a per-peer scheduling event, matching the emulebb-rust sched emitters
  *        byte-for-byte: peer is the advertised "ip:port", peerHash/fileHash are
  *        LOWER-case 16-byte MD4 hex. Optional keys are omitted (never faked) when
@@ -416,10 +416,10 @@ bool strmd4(const CString &rstr, byte *hash);
 CString BuildDiagEventV1SchedKeysJson(const CUpDownClient *pClient, const byte *pFileHash);
 
 /**
- * @brief Per-decision diag_event_v1 family:"sched" emitters mirroring the
+ * @brief Per-decision diag_event_v2 family:"sched" emitters mirroring the
  *        emulebb-rust sched events (download_coordinator / upload_queue / source
  *        registry). Each builds {peer,peerHash?,fileHash} keys + the rust body and
- *        forwards to WriteDiagEventV1. No-op when the diag log is closed, so call
+ *        forwards to WriteDiagEventV2. No-op when the diag log is closed, so call
  *        sites need no extra runtime guard.
  */
 void DiagEventLogSchedUploadSlotOpened(const CUpDownClient *pClient, const byte *pFileHash);

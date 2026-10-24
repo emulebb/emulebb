@@ -135,17 +135,17 @@ void WriteDiagnosticsJsonEvent(
 	LPCTSTR pszReason,
 	LPCTSTR pszEvidenceJson);
 
-#if EMULEBB_HAS_DIAG_EVENT_V1
-extern CLogFile theDiagEventV1Log;
+#if EMULEBB_HAS_DIAG_EVENT_V2
+extern CLogFile theDiagEventV2Log;
 
 /**
- * @brief Writes one converged diag_event_v1 record (camelCase envelope) to the
+ * @brief Writes one converged diag_event_v2 record (camelCase envelope) to the
  *        shared diagnostics log so the eMuleBB and emulebb-rust traces diff 1:1.
  *
  * `rstrKeysJson` and `rstrBodyJson` are caller-built JSON objects (e.g. "{...}");
  * an empty value is emitted as "{}". The envelope owns schema/client/ts/seq.
  */
-void WriteDiagEventV1(
+void WriteDiagEventV2(
 	LPCTSTR pszFamily,
 	LPCTSTR pszEvent,
 	LPCTSTR pszSeverity,
@@ -159,9 +159,9 @@ void WriteDiagEventV1(
 CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen);
 #endif
 
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
 /**
- * @brief Emits one eD2k TCP packet as a diag_event_v1 family:"ed2k_tcp" record.
+ * @brief Emits one eD2k TCP packet as a diag_event_v2 family:"ed2k_tcp" record.
  *        Re-uses the same send/recv boundary as the ed2k_packet_v1 dump.
  */
 void DiagEventLogEd2kTcpPacket(
@@ -175,9 +175,9 @@ void DiagEventLogEd2kTcpPacket(
 	UINT uPayloadLen);
 #endif
 
-#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
 /**
- * @brief Emits one decoded Kad UDP packet as a diag_event_v1 family:"kad_udp"
+ * @brief Emits one decoded Kad UDP packet as a diag_event_v2 family:"kad_udp"
  *        record. `pDecoded` is the post-deobfuscation packet beginning at the
  *        protocol marker; decodedHex is the comparable wire-identity key.
  */
@@ -189,7 +189,7 @@ void DiagEventLogKadUdpPacket(
 	UINT uDecodedLen);
 
 /**
- * @brief Emits one outbound Kad UDP packet as a diag_event_v1 family:"kad_udp"
+ * @brief Emits one outbound Kad UDP packet as a diag_event_v2 family:"kad_udp"
  *        record (direction "send"). The send hooks own the decoded protocol marker
  *        + opcode + payload separately (before the obfuscation/encrypt layer), so
  *        this rebuilds the [marker][opcode][payload] decoded buffer the recv emit
@@ -204,9 +204,9 @@ void DiagEventLogKadUdpPacketSend(
 	UINT uPayloadLen);
 #endif
 
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
 /**
- * @brief Emits the diag_event_v1 sched:"capacity_snapshot" gauge (upload slots).
+ * @brief Emits the diag_event_v2 sched:"capacity_snapshot" gauge (upload slots).
  *        Mirrors the rust upload_queue capacity snapshot fields.
  */
 void DiagEventLogUploadCapacitySnapshot(
@@ -217,9 +217,9 @@ void DiagEventLogUploadCapacitySnapshot(
 	UINT uWaitingSessions);
 #endif
 
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
 /**
- * @brief Emits the diag_event_v1 sched:"source_count" snapshot (download sources).
+ * @brief Emits the diag_event_v2 sched:"source_count" snapshot (download sources).
  *        Maps the master download-slot summary onto the converged source fields.
  */
 void DiagEventLogDownloadSourceCount(
@@ -230,7 +230,7 @@ void DiagEventLogDownloadSourceCount(
 	UINT uTransferringSourceCount);
 
 /**
- * @brief Emits a diag_event_v1 sched:"reask_sent" event for a UDP source reask.
+ * @brief Emits a diag_event_v2 sched:"reask_sent" event for a UDP source reask.
  */
 void DiagEventLogUdpReaskSent(UINT uReaskCount);
 #endif

@@ -2658,7 +2658,7 @@ bool CListenSocket::TooManySockets(bool bIgnoreInterval)
 	const bool bWindowCap = !bIgnoreInterval
 		&& ((static_cast<float>(m_OpenSocketsInterval) > static_cast<float>(thePrefs.GetMaxConperFive()) * GetMaxConperFiveModifier())
 			|| (m_nHalfOpen >= thePrefs.GetMaxHalfConnections()));
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
 	if (bConcurrentCap || bWindowCap) {
 		// Connection admit/deny gate (master TooManySockets): mirror the rust
 		// conn_budget deny. denyReason maps the concurrent-cap vs new-connection-rate
