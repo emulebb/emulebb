@@ -58,7 +58,18 @@ CCriticalSection g_downloadSlotDiagnosticsLogLock;
 #endif
 #if EMULEBB_HAS_DIAG_EVENT_V1
 CCriticalSection g_diagEventV1LogLock;
-volatile LONGLONG g_llDiagEventV1Seq = 0;
+ULONGLONG g_ullDiagEventV1Seq = 0;
+ULONGLONG g_ullDiagEventRotationBase = 0;
+DWORD g_dwDiagEventProcessId = 0;
+CString g_strDiagEventRunId;
+
+struct SDiagEventStreamCounter
+{
+	CString strFamily;
+	ULONGLONG ullSequence;
+};
+
+std::vector<SDiagEventStreamCounter> g_aDiagEventStreamCounters;
 #endif
 
 CString TruncateLogLine(const CString &rstrLine, const int iMaxChars)
@@ -284,6 +295,45 @@ void WriteDiagnosticsJsonEvent(
 }
 
 #if EMULEBB_HAS_DIAG_EVENT_V1
+CString BuildDiagEventRunId()
+{
+	FILETIME fileTime = {};
+	::GetSystemTimeAsFileTime(&fileTime);
+	ULARGE_INTEGER timestamp = {};
+	timestamp.LowPart = fileTime.dwLowDateTime;
+	timestamp.HighPart = fileTime.dwHighDateTime;
+
+	CString strRunId;
+	strRunId.Format(
+		_T("%016I64x-%08x-%016I64x"),
+		timestamp.QuadPart,
+		::GetCurrentProcessId(),
+		::GetTickCount64());
+	return strRunId;
+}
+
+ULONGLONG NextDiagEventStreamSeq(LPCTSTR pszFamily)
+{
+	const CString strFamily(pszFamily != NULL ? pszFamily : _T(""));
+	for (const SDiagEventStreamCounter &rCounter : g_aDiagEventStreamCounters) {
+		if (rCounter.strFamily == strFamily)
+			return rCounter.ullSequence + 1;
+	}
+	return 1;
+}
+
+void CommitDiagEventStreamSeq(LPCTSTR pszFamily, ULONGLONG ullSequence)
+{
+	const CString strFamily(pszFamily != NULL ? pszFamily : _T(""));
+	for (SDiagEventStreamCounter &rCounter : g_aDiagEventStreamCounters) {
+		if (rCounter.strFamily == strFamily) {
+			rCounter.ullSequence = ullSequence;
+			return;
+		}
+	}
+	g_aDiagEventStreamCounters.push_back(SDiagEventStreamCounter{strFamily, ullSequence});
+}
+
 void WriteDiagEventV1(
 	LPCTSTR pszFamily,
 	LPCTSTR pszEvent,
@@ -293,24 +343,49 @@ void WriteDiagEventV1(
 {
 	if (!theDiagEventV1Log.IsOpen())
 		return;
+	static ULONGLONG s_ullLastDiagEventDiskFlushTick = 0;
+	CSingleLock lock(&g_diagEventV1LogLock, TRUE);
+	if (!theDiagEventV1Log.IsOpen())
+		return;
+
+	if (g_strDiagEventRunId.IsEmpty()) {
+		g_strDiagEventRunId = BuildDiagEventRunId();
+		g_dwDiagEventProcessId = ::GetCurrentProcessId();
+		g_ullDiagEventRotationBase = theDiagEventV1Log.GetRotationCount();
+	}
 
 	// WHY: an empty keys/body must still be valid JSON for the diff harness loader,
 	// which assumes every record carries object-typed keys and body fields.
 	const CString strKeys(rstrKeysJson.IsEmpty() ? CString(_T("{}")) : rstrKeysJson);
 	const CString strBody(rstrBodyJson.IsEmpty() ? CString(_T("{}")) : rstrBodyJson);
+	const ULONGLONG ullSequence = g_ullDiagEventV1Seq + 1;
+	const ULONGLONG ullStreamSequence = NextDiagEventStreamSeq(pszFamily);
+	const ULONGLONG ullSegmentId = theDiagEventV1Log.GetRotationCount() - g_ullDiagEventRotationBase;
 
 	CString strJson;
 	strJson.Format(
-		_T("{\"schema\":\"diag_event_v1\",\"client\":\"mfc\",\"ts\":%s,\"seq\":%I64u,\"family\":%s,\"event\":%s,\"severity\":%s,\"keys\":%s,\"body\":%s}\r\n"),
+		_T("{\"schema\":\"diag_event_v2\",\"client\":\"mfc\",\"ts\":%s,\"runId\":%s,\"processId\":%u,\"segmentId\":%I64u,\"seq\":%I64u,\"streamSeq\":%I64u,\"family\":%s,\"event\":%s,\"severity\":%s,\"keys\":%s,\"body\":%s}\r\n"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagnosticsTimestampUtc()),
-		NextDiagnosticsEventSeq(g_llDiagEventV1Seq),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(g_strDiagEventRunId),
+		static_cast<UINT>(g_dwDiagEventProcessId),
+		ullSegmentId,
+		ullSequence,
+		ullStreamSequence,
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszFamily),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszEvent),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszSeverity),
 		(LPCTSTR)strKeys,
 		(LPCTSTR)strBody);
 
-	WriteDiagnosticsLogLine(theDiagEventV1Log, g_diagEventV1LogLock, strJson);
+	if (!theDiagEventV1Log.Log(strJson))
+		return;
+
+	g_ullDiagEventV1Seq = ullSequence;
+	CommitDiagEventStreamSeq(pszFamily, ullStreamSequence);
+	FlushDiagnosticsLogToDiskIfDue(
+		theDiagEventV1Log,
+		s_ullLastDiagEventDiskFlushTick,
+		::GetTickCount64());
 }
 
 CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen)
@@ -1134,6 +1209,7 @@ CLogFile::CLogFile()
 	, m_tStarted()
 	, m_uBytesWritten()
 	, m_uMaxFileSize(_UI32_MAX)
+	, m_ullRotationCount()
 	, m_bInOpenCall()
 	, m_bFlushOnWrite(true)
 	, m_eFileFormat(Unicode)
@@ -1325,5 +1401,6 @@ void CLogFile::StartNewLogFile()
 	if (!LongPathSeams::MoveFile(m_strFilePath, strLogBakFilePath))
 		VERIFY(LongPathSeams::DeleteFile(m_strFilePath) != FALSE);
 
+	++m_ullRotationCount;
 	Open();
 }
