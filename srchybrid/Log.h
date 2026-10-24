@@ -322,6 +322,17 @@ void PacketDiagnosticsLogClientPacket(
 	uint8 byOpcode,
 	const BYTE *pPayload,
 	UINT uPayloadLen);
+
+// Logs one decoded ED2K client-UDP packet to the legacy ed2k_packet_v1 stream
+// without misclassifying it as an ed2k_tcp diag_event_v2 record.
+void PacketDiagnosticsLogClientUdpPacket(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen);
 #endif
 
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS

@@ -13,6 +13,13 @@ namespace ClientUDPSocketSeams
 {
 static const size_t kMaxOutgoingClientUdpControlQueuePackets = 4096u;
 
+enum class EClientUdpPacketDisposition
+{
+	Accepted,
+	Ignored,
+	Dropped
+};
+
 /**
  * @brief Logging policy for packet failures after UDP decryption succeeds.
  */

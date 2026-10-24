@@ -17,6 +17,7 @@
 #pragma once
 #include "UploadBandwidthThrottler.h" // ZZ:UploadBandWithThrottler (UDP)
 #include "EncryptedDatagramSocket.h"
+#include "ClientUDPSocketSeams.h"
 
 class Packet;
 
@@ -48,7 +49,13 @@ public:
 	SocketSentBytes  SendControlData(uint32 maxNumberOfBytesToSend, uint32 /*minFragSize*/); // ZZ:UploadBandWithThrottler (UDP)
 
 protected:
-	bool	ProcessPacket(const BYTE *packet, UINT size, uint8 opcode, uint32 ip, uint16 port);
+	struct SProcessPacketResult
+	{
+		ClientUDPSocketSeams::EClientUdpPacketDisposition eDisposition;
+		LPCTSTR pszNote;
+	};
+
+	SProcessPacketResult ProcessPacket(const BYTE *packet, UINT size, uint8 opcode, uint32 ip, uint16 port);
 
 	virtual void	OnSend(int nErrorCode);
 	virtual void	OnReceive(int nErrorCode);
