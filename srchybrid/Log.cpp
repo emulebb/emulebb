@@ -1348,6 +1348,19 @@ void PacketDiagnosticsLogClientPacket(
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 
+void PacketDiagnosticsLogClientUdpPacket(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen)
+{
+	PacketDiagnosticsLogEd2kPacket(_T("client_udp"), pszPeerLabel, pszTransportMode, pszDirection,
+		byProtocol, byOpcode, pPayload, uPayloadLen);
+}
+
 namespace
 {
 struct SEd2kClientUdpDiagnosticState
