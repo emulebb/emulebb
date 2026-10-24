@@ -1269,7 +1269,7 @@ void CDownloadQueue::LogDownloadSlotDiagnostics(ULONGLONG curTick) const
 	summary.AppendFormat(_T("protectedDiskBlocked=%u"), static_cast<UINT>(IsProtectedDiskSpaceBlocked()));
 	DownloadSlotDiagnosticsLogLine(_T("%s"), (LPCTSTR)summary.GetLine());
 
-#if EMULEBB_HAS_DIAG_EVENT_V1
+#if EMULEBB_HAS_DIAG_EVENT_V2
 	// WHY: re-emit the periodic download source picture as the converged
 	// sched:"source_count" snapshot (and a reask_sent aggregate) so it diffs
 	// against the rust source registry snapshot using the spec field mapping.
@@ -1514,7 +1514,7 @@ bool CDownloadQueue::CheckAndAddSource(CPartFile *sender, CUpDownClient *source)
 		throw;
 	}
 	theApp.emuledlg->transferwnd->GetDownloadList()->AddSource(sender, source, false);
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
 	// Source registered on the part file's srclist: mirror the rust source_engaged.
 	DiagEventLogSchedSourceEngaged(source, sender->GetFileHash());
 #endif
@@ -1604,7 +1604,7 @@ bool CDownloadQueue::CheckAndAddKnownSource(CPartFile *sender, CUpDownClient *so
 #endif
 
 	theApp.emuledlg->transferwnd->GetDownloadList()->AddSource(sender, source, false);
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
 	// Known source linked onto the part file's srclist: mirror the rust source_engaged.
 	DiagEventLogSchedSourceEngaged(source, sender->GetFileHash());
 #endif
@@ -1621,7 +1621,7 @@ bool CDownloadQueue::RemoveSource(CUpDownClient *toremove, bool bDoStatsUpdate)
 		if (pos2) {
 			cur_file->srclist.RemoveAt(pos2);
 			cur_file->RemoveSourceFileName(toremove);
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
 			// Source removed from this part file's srclist: mirror the rust source_dropped.
 			DiagEventLogSchedSourceDropped(toremove, cur_file->GetFileHash());
 #endif

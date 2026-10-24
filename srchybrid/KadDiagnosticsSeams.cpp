@@ -215,8 +215,8 @@ void WriteEvent(
 		pszEvidenceJson);
 }
 
-#if EMULEBB_HAS_DIAG_EVENT_V1
-// Maps a master kad_event_v1 event name onto the coarse diag_event_v1 kad_event
+#if EMULEBB_HAS_DIAG_EVENT_V2
+// Maps a master kad_event_v1 event name onto the coarse diag_event_v2 kad_event
 // bucket the harness aligns on (bootstrap/lookup/publish/firewall/buddy). The
 // full master event name is preserved as the comparable `milestone` field.
 LPCTSTR ClassifyKadEvent(LPCTSTR pszEvent)
@@ -237,7 +237,7 @@ LPCTSTR ClassifyKadEvent(LPCTSTR pszEvent)
 
 void ReEmitKadEventDiagV1(LPCTSTR pszEvent, LPCTSTR pszSeverity, LPCTSTR pszAction, LPCTSTR pszReason, uint32 uNetworkIP)
 {
-	if (!theDiagEventV1Log.IsOpen())
+	if (!theDiagEventV2Log.IsOpen())
 		return;
 
 	CString strKeys(_T("{}"));
@@ -265,7 +265,7 @@ void ReEmitKadEventDiagV1(LPCTSTR pszEvent, LPCTSTR pszSeverity, LPCTSTR pszActi
 			(LPCTSTR)BuildDiagnosticsJsonStringField(pszBehavior),
 			(LPCTSTR)BuildDiagnosticsJsonStringField(pszBadAction),
 			(LPCTSTR)BuildDiagnosticsJsonStringField(pszReason != NULL ? pszReason : _T("request-token-deficit")));
-		WriteDiagEventV1(_T("bad_peer"), pszBehavior, pszBadSeverity, strKeys, strFloodBody);
+		WriteDiagEventV2(_T("bad_peer"), pszBehavior, pszBadSeverity, strKeys, strFloodBody);
 		return;
 	}
 
@@ -275,7 +275,7 @@ void ReEmitKadEventDiagV1(LPCTSTR pszEvent, LPCTSTR pszSeverity, LPCTSTR pszActi
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszEvent),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszAction != NULL ? pszAction : _T("observe")),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszReason != NULL ? pszReason : _T("")));
-	WriteDiagEventV1(_T("kad_event"), ClassifyKadEvent(pszEvent),
+	WriteDiagEventV2(_T("kad_event"), ClassifyKadEvent(pszEvent),
 		pszSeverity != NULL ? pszSeverity : _T("info"), strKeys, strBody);
 }
 #endif
@@ -339,8 +339,8 @@ void LogRoutingSummary(
 		(LPCTSTR)SummaryJson(bootstrapSummary));
 	WriteDiagnosticsLogLine(g_kadDiagnosticsLog, g_kadDiagnosticsLogLock, strJson);
 
-#if EMULEBB_HAS_DIAG_EVENT_V1
-	if (theDiagEventV1Log.IsOpen()) {
+#if EMULEBB_HAS_DIAG_EVENT_V2
+	if (theDiagEventV2Log.IsOpen()) {
 		CString strBody;
 		strBody.Format(
 			_T("{\"milestone\":\"routing_summary\",\"action\":\"observe\",\"connected\":%s,\"bootstrapping\":%s,\"firewalled\":%s,\"lanMode\":%s,\"contactTotal\":%u,\"contactVerified\":%u,\"contactWithUdpKey\":%u}"),
@@ -351,7 +351,7 @@ void LogRoutingSummary(
 			routingSummary.uTotal,
 			routingSummary.uVerified,
 			routingSummary.uWithUdpKey);
-		WriteDiagEventV1(_T("kad_event"), _T("routing_summary"), _T("info"), CString(_T("{}")), strBody);
+		WriteDiagEventV2(_T("kad_event"), _T("routing_summary"), _T("info"), CString(_T("{}")), strBody);
 	}
 #endif
 }
@@ -401,7 +401,7 @@ void LogPacketEvent(
 		static_cast<UINT>(byOriginalOpcode),
 		llTokens);
 	WriteEvent(pszEvent, pszSeverity, strContactJson, pszAction, pszReason, strEvidence);
-#if EMULEBB_HAS_DIAG_EVENT_V1
+#if EMULEBB_HAS_DIAG_EVENT_V2
 	ReEmitKadEventDiagV1(pszEvent, pszSeverity, pszAction, pszReason, uNetworkIP);
 #endif
 }
@@ -434,8 +434,8 @@ void LogSearchResponseEvent(
 		uResultCount,
 		uExpectedCount);
 	WriteEvent(pszEvent, pszSeverity, strContactJson, pszAction, pszReason, strEvidence);
-#if EMULEBB_HAS_DIAG_EVENT_V1
-	if (theDiagEventV1Log.IsOpen()) {
+#if EMULEBB_HAS_DIAG_EVENT_V2
+	if (theDiagEventV2Log.IsOpen()) {
 		CString strKeys;
 		strKeys.Format(_T("{\"searchId\":%u}"), uSearchID);
 		CString strBody;
@@ -447,7 +447,7 @@ void LogSearchResponseEvent(
 			uSearchType,
 			uResultCount,
 			uExpectedCount);
-		WriteDiagEventV1(_T("kad_event"), _T("lookup"), pszSeverity != NULL ? pszSeverity : _T("info"), strKeys, strBody);
+		WriteDiagEventV2(_T("kad_event"), _T("lookup"), pszSeverity != NULL ? pszSeverity : _T("info"), strKeys, strBody);
 	}
 #endif
 }
@@ -457,8 +457,8 @@ void LogKadPublish(
 	const uchar *pFileHash,
 	UINT uFileCount)
 {
-#if EMULEBB_HAS_DIAG_EVENT_V1
-	if (!theDiagEventV1Log.IsOpen())
+#if EMULEBB_HAS_DIAG_EVENT_V2
+	if (!theDiagEventV2Log.IsOpen())
 		return;
 
 	// Event/publishKind/milestone strings mirror the rust diag_kad_event
@@ -504,7 +504,7 @@ void LogKadPublish(
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszPublishKind),
 		uFileCount);
 
-	WriteDiagEventV1(_T("kad_event"), pszEvent, _T("info"), strKeys, strBody);
+	WriteDiagEventV2(_T("kad_event"), pszEvent, _T("info"), strKeys, strBody);
 #else
 	(void)eKind;
 	(void)pFileHash;
@@ -518,8 +518,8 @@ void LogKadPublishRound(
 	UINT uSourcePublished,
 	UINT uNotesPublished)
 {
-#if EMULEBB_HAS_DIAG_EVENT_V1
-	if (!theDiagEventV1Log.IsOpen())
+#if EMULEBB_HAS_DIAG_EVENT_V2
+	if (!theDiagEventV2Log.IsOpen())
 		return;
 
 	// STRUCTURAL DIFFERENCE vs rust diag_kad_event::publish_round: the master
@@ -535,7 +535,7 @@ void LogKadPublishRound(
 		uSourcePublished,
 		uNotesPublished);
 
-	WriteDiagEventV1(_T("kad_event"), _T("kad_publish_round"), _T("info"), CString(_T("{}")), strBody);
+	WriteDiagEventV2(_T("kad_event"), _T("kad_publish_round"), _T("info"), CString(_T("{}")), strBody);
 #else
 	(void)uItemCount;
 	(void)uKeywordPublished;

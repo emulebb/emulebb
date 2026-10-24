@@ -136,7 +136,7 @@ void LogUploadReqBlockDiagnostics(
 	const uint64 uEndOffset = reqblock != NULL ? reqblock->EndOffset : 0;
 	const uint64 uLength = uEndOffset > uStartOffset ? uEndOffset - uStartOffset : 0;
 
-#if EMULEBB_HAS_DIAG_EVENT_V1
+#if EMULEBB_HAS_DIAG_EVENT_V2
 	const bool bRejected = _tcsncmp(pszReason, _T("reject-"), 7) == 0;
 	DiagEventLogSchedUploadRequestOutcome(
 		client,
@@ -199,7 +199,7 @@ void LogUploadPayloadOutcomeDiagnostics(
 	CEMSocket *sock = client->GetFileUploadSocket(false);
 	UploadingToClient_Struct *pUploadingClientStruct = theApp.uploadqueue->GetUploadingClientStructByClient(client);
 
-#if EMULEBB_HAS_DIAG_EVENT_V1
+#if EMULEBB_HAS_DIAG_EVENT_V2
 	DiagEventLogSchedUploadPayloadAccounting(
 		client,
 		pCurrentUploadFile != NULL ? pCurrentUploadFile->GetFileHash() : client->GetUploadFileID(),
@@ -966,7 +966,7 @@ void CUpDownClient::SendOutOfPartReqsAndAddToWaitingQueue()
 	theStats.AddUpDataOverheadFileRequest(pPacket->size);
 	SendPacket(pPacket);
 	m_fSentOutOfPartReqs = 1;
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
 	DiagEventLogSchedOutOfPartReqs(this, GetUploadFileID());
 #endif
 	theApp.uploadqueue->AddClientToQueue(this, true);
@@ -1041,7 +1041,7 @@ void CUpDownClient::SendRankingInfo()
 	memset(packet->pBuffer + 2, 0, 10);
 	if (thePrefs.GetDebugClientTCPLevel() > 0)
 		DebugSend("OP_QueueRank", this);
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
 	// Mirror the rust queue_rank emit with the rank actually put on the wire
 	// (OP_QUEUERANKING), so the harness can align waiting-peer rank progression.
 	DiagEventLogSchedQueueRank(this, GetUploadFileID(), nRank);

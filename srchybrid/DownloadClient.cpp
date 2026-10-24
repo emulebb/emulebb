@@ -2278,7 +2278,7 @@ bool CUpDownClient::DoSwap(CPartFile *SwapTo, bool bRemoveCompletely, LPCTSTR re
 
 	CPartFile *pOldRequestFile = m_reqfile;
 
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
 	// WHY: capture the NoNeededParts swap classification before SetDownloadState
 	// below clears it; the rust source_swapped emit is NNP-only (swapReason "nnp").
 	const bool bNoNeededPartsSwap = GetDownloadState() == DS_NONEEDEDPARTS;
@@ -2346,7 +2346,7 @@ bool CUpDownClient::DoSwap(CPartFile *SwapTo, bool bRemoveCompletely, LPCTSTR re
 	SwapTo->UpdateSourceFileName(this);
 	theApp.emuledlg->transferwnd->GetDownloadList()->AddSource(SwapTo, this, false);
 
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
 	// A4AF/NoNeededParts move of this source to another wanted file: mirror the rust
 	// source_swapped. keys carry the file being swapped away from; swapTargetFileHash
 	// is the destination. Emitted only for NNP swaps to match the rust NNP-only path.

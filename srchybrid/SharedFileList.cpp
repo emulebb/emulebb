@@ -2678,13 +2678,13 @@ void CSharedFileList::SendListToServer()
 	files.WriteUInt32(limit);
 	std::vector<CKnownFile*> publishedFilesChanged;
 	publishedFilesChanged.reserve(static_cast<size_t>(limit));
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
 	CString strOfferFileHashesJson(_T("["));
 #endif
 	for (uint32 i = 0; i < limit; ++i) {
 		CKnownFile *file = offerCandidates[static_cast<size_t>(i)].pFile;
 		CreateOfferedFilePacket(file, files, pCurServer);
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
 		if (i < 16) {
 			if (i != 0)
 				strOfferFileHashesJson += _T(",");
@@ -2695,7 +2695,7 @@ void CSharedFileList::SendListToServer()
 		if (file->SetPublishedED2K(true, false))
 			publishedFilesChanged.push_back(file);
 	}
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
 	strOfferFileHashesJson += _T("]");
 	CString strServerEndpoint;
 	if (pCurServer != NULL)

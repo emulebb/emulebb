@@ -56,9 +56,9 @@ CCriticalSection g_uploadSlotDiagnosticsLogLock;
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
 CCriticalSection g_downloadSlotDiagnosticsLogLock;
 #endif
-#if EMULEBB_HAS_DIAG_EVENT_V1
-CCriticalSection g_diagEventV1LogLock;
-ULONGLONG g_ullDiagEventV1Seq = 0;
+#if EMULEBB_HAS_DIAG_EVENT_V2
+CCriticalSection g_diagEventV2LogLock;
+ULONGLONG g_ullDiagEventV2Seq = 0;
 ULONGLONG g_ullDiagEventRotationBase = 0;
 DWORD g_dwDiagEventProcessId = 0;
 CString g_strDiagEventRunId;
@@ -294,7 +294,7 @@ void WriteDiagnosticsJsonEvent(
 	WriteDiagnosticsLogLine(rLog, rLock, strJson);
 }
 
-#if EMULEBB_HAS_DIAG_EVENT_V1
+#if EMULEBB_HAS_DIAG_EVENT_V2
 CString BuildDiagEventRunId()
 {
 	FILETIME fileTime = {};
@@ -334,33 +334,33 @@ void CommitDiagEventStreamSeq(LPCTSTR pszFamily, ULONGLONG ullSequence)
 	g_aDiagEventStreamCounters.push_back(SDiagEventStreamCounter{strFamily, ullSequence});
 }
 
-void WriteDiagEventV1(
+void WriteDiagEventV2(
 	LPCTSTR pszFamily,
 	LPCTSTR pszEvent,
 	LPCTSTR pszSeverity,
 	const CString &rstrKeysJson,
 	const CString &rstrBodyJson)
 {
-	if (!theDiagEventV1Log.IsOpen())
+	if (!theDiagEventV2Log.IsOpen())
 		return;
 	static ULONGLONG s_ullLastDiagEventDiskFlushTick = 0;
-	CSingleLock lock(&g_diagEventV1LogLock, TRUE);
-	if (!theDiagEventV1Log.IsOpen())
+	CSingleLock lock(&g_diagEventV2LogLock, TRUE);
+	if (!theDiagEventV2Log.IsOpen())
 		return;
 
 	if (g_strDiagEventRunId.IsEmpty()) {
 		g_strDiagEventRunId = BuildDiagEventRunId();
 		g_dwDiagEventProcessId = ::GetCurrentProcessId();
-		g_ullDiagEventRotationBase = theDiagEventV1Log.GetRotationCount();
+		g_ullDiagEventRotationBase = theDiagEventV2Log.GetRotationCount();
 	}
 
 	// WHY: an empty keys/body must still be valid JSON for the diff harness loader,
 	// which assumes every record carries object-typed keys and body fields.
 	const CString strKeys(rstrKeysJson.IsEmpty() ? CString(_T("{}")) : rstrKeysJson);
 	const CString strBody(rstrBodyJson.IsEmpty() ? CString(_T("{}")) : rstrBodyJson);
-	const ULONGLONG ullSequence = g_ullDiagEventV1Seq + 1;
+	const ULONGLONG ullSequence = g_ullDiagEventV2Seq + 1;
 	const ULONGLONG ullStreamSequence = NextDiagEventStreamSeq(pszFamily);
-	const ULONGLONG ullSegmentId = theDiagEventV1Log.GetRotationCount() - g_ullDiagEventRotationBase;
+	const ULONGLONG ullSegmentId = theDiagEventV2Log.GetRotationCount() - g_ullDiagEventRotationBase;
 
 	CString strJson;
 	strJson.Format(
@@ -377,13 +377,13 @@ void WriteDiagEventV1(
 		(LPCTSTR)strKeys,
 		(LPCTSTR)strBody);
 
-	if (!theDiagEventV1Log.Log(strJson))
+	if (!theDiagEventV2Log.Log(strJson))
 		return;
 
-	g_ullDiagEventV1Seq = ullSequence;
+	g_ullDiagEventV2Seq = ullSequence;
 	CommitDiagEventStreamSeq(pszFamily, ullStreamSequence);
 	FlushDiagnosticsLogToDiskIfDue(
-		theDiagEventV1Log,
+		theDiagEventV2Log,
 		s_ullLastDiagEventDiskFlushTick,
 		::GetTickCount64());
 }
@@ -406,7 +406,7 @@ CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen)
 }
 #endif
 
-#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
 namespace
 {
 // Upper-case hex, capped at 4 KiB. WHY: the kad_udp wire-identity compare uses
@@ -479,7 +479,7 @@ void DiagEventLogKadUdpPacket(
 	const BYTE *pDecoded,
 	UINT uDecodedLen)
 {
-	if (!theDiagEventV1Log.IsOpen() || pDecoded == NULL || uDecodedLen < 2)
+	if (!theDiagEventV2Log.IsOpen() || pDecoded == NULL || uDecodedLen < 2)
 		return;
 
 	const BYTE byProtocol = pDecoded[0];
@@ -506,7 +506,7 @@ void DiagEventLogKadUdpPacket(
 		uDecodedLen,
 		(LPCTSTR)strDecodedHex);
 
-	WriteDiagEventV1(_T("kad_udp"), _T("packet"), _T("info"), strKeys, strBody);
+	WriteDiagEventV2(_T("kad_udp"), _T("packet"), _T("info"), strKeys, strBody);
 }
 
 void DiagEventLogKadUdpPacketSend(
@@ -517,7 +517,7 @@ void DiagEventLogKadUdpPacketSend(
 	const BYTE *pPayload,
 	UINT uPayloadLen)
 {
-	if (!theDiagEventV1Log.IsOpen())
+	if (!theDiagEventV2Log.IsOpen())
 		return;
 
 	// Rebuild the decoded [marker][opcode][payload] buffer the recv emit consumes so
@@ -557,7 +557,7 @@ void DiagEventLogKadUdpPacketSend(
 		uTrueDecodedLen,
 		(LPCTSTR)strDecodedHex);
 
-	WriteDiagEventV1(_T("kad_udp"), _T("packet"), _T("info"), strKeys, strBody);
+	WriteDiagEventV2(_T("kad_udp"), _T("packet"), _T("info"), strKeys, strBody);
 }
 #endif
 
@@ -647,7 +647,7 @@ void DownloadSlotDiagnosticsLogLine(LPCTSTR pszFmt, ...)
 }
 #endif
 
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)
 void DiagEventLogUploadCapacitySnapshot(
 	UINT uBaseSlots,
 	UINT uElasticSlots,
@@ -655,7 +655,7 @@ void DiagEventLogUploadCapacitySnapshot(
 	UINT uActiveSlots,
 	UINT uWaitingSessions)
 {
-	if (!theDiagEventV1Log.IsOpen())
+	if (!theDiagEventV2Log.IsOpen())
 		return;
 
 	CString strBody;
@@ -666,11 +666,11 @@ void DiagEventLogUploadCapacitySnapshot(
 		uEffectiveSlotCap,
 		uActiveSlots,
 		uWaitingSessions);
-	WriteDiagEventV1(_T("sched"), _T("capacity_snapshot"), _T("info"), CString(_T("{}")), strBody);
+	WriteDiagEventV2(_T("sched"), _T("capacity_snapshot"), _T("info"), CString(_T("{}")), strBody);
 }
 #endif
 
-#if EMULEBB_HAS_DIAG_EVENT_V1 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
 void DiagEventLogDownloadSourceCount(
 	UINT uSourceCount,
 	UINT uValidSourceCount,
@@ -678,7 +678,7 @@ void DiagEventLogDownloadSourceCount(
 	UINT uA4afFileCount,
 	UINT uTransferringSourceCount)
 {
-	if (!theDiagEventV1Log.IsOpen())
+	if (!theDiagEventV2Log.IsOpen())
 		return;
 
 	// transferringSourceCount = DS_DOWNLOADING sources (GetTransferringSrcCount),
@@ -693,12 +693,12 @@ void DiagEventLogDownloadSourceCount(
 		uNnpSourceCount,
 		uA4afFileCount,
 		uTransferringSourceCount);
-	WriteDiagEventV1(_T("sched"), _T("source_count"), _T("info"), CString(_T("{}")), strBody);
+	WriteDiagEventV2(_T("sched"), _T("source_count"), _T("info"), CString(_T("{}")), strBody);
 }
 
 void DiagEventLogUdpReaskSent(UINT uReaskCount)
 {
-	if (!theDiagEventV1Log.IsOpen() || uReaskCount == 0)
+	if (!theDiagEventV2Log.IsOpen() || uReaskCount == 0)
 		return;
 
 	// WHY: the master computes UDP file reasks as a periodic aggregate count, not
@@ -708,7 +708,7 @@ void DiagEventLogUdpReaskSent(UINT uReaskCount)
 	strBody.Format(
 		_T("{\"outcome\":\"sent\",\"transport\":\"udp\",\"reaskCount\":%u}"),
 		uReaskCount);
-	WriteDiagEventV1(_T("sched"), _T("reask_sent"), _T("info"), CString(_T("{}")), strBody);
+	WriteDiagEventV2(_T("sched"), _T("reask_sent"), _T("info"), CString(_T("{}")), strBody);
 }
 #endif
 
@@ -941,7 +941,7 @@ void DiagEventLogEd2kTcpPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen)
 {
-	if (!theDiagEventV1Log.IsOpen())
+	if (!theDiagEventV2Log.IsOpen())
 		return;
 
 	const UINT uPayloadHexLen = (pPayload != NULL) ? min(uPayloadLen, kMaxPacketDiagnosticsPayloadHexBytes) : 0;
@@ -997,7 +997,7 @@ void DiagEventLogEd2kTcpPacket(
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszTransportMode != NULL ? pszTransportMode : _T("unknown")),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszFlow != NULL ? pszFlow : _T("unknown")));
 
-	WriteDiagEventV1(_T("ed2k_tcp"), _T("packet"), _T("info"), strKeys, strBody);
+	WriteDiagEventV2(_T("ed2k_tcp"), _T("packet"), _T("info"), strKeys, strBody);
 }
 #endif
 

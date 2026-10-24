@@ -274,9 +274,9 @@ void CKademliaUDPListener::ProcessPacket(const byte *pbyData, uint32 uLenData, u
 		return;
 	}
 
-#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
 	// WHY: emit the decoded inbound Kad UDP packet (protocol marker + opcode +
-	// body) at the accepted-packet boundary so the diag_event_v1 kad_udp family
+	// body) at the accepted-packet boundary so the diag_event_v2 kad_udp family
 	// diffs 1:1 against the rust udp_packet_v1 recv records (decodedHex identity).
 	DiagEventLogKadUdpPacket(_T("recv"), uIP, uUDPPort, pbyData, uLenData);
 #endif
@@ -1914,7 +1914,7 @@ void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, uint
 		ASSERT(0);
 		return;
 	}
-#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
 	// Outbound Kad UDP packet at the decoded boundary (before obfuscation/encrypt):
 	// pbyData is [marker][opcode][payload], the same shape the recv emit consumes.
 	DiagEventLogKadUdpPacketSend(uDestinationHost, uDestinationPort, pbyData[0], pbyData[1], pbyData + 2, uLenData - 2);
@@ -1939,7 +1939,7 @@ void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, uint
 
 void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, byte byOpcode, uint32 uDestinationHost, uint16 uDestinationPort, const CKadUDPKey &targetUDPKey, const CUInt128 *uCryptTargetID)
 {
-#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
 	// Outbound Kad UDP packet: pbyData is the payload only; the decoded marker is the
 	// Kad header byte and the opcode is carried separately.
 	DiagEventLogKadUdpPacketSend(uDestinationHost, uDestinationPort, OP_KADEMLIAHEADER, byOpcode, pbyData, uLenData);
@@ -1962,7 +1962,7 @@ void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, byte
 
 void CKademliaUDPListener::SendPacket(CSafeMemFile &pbyData, byte byOpcode, uint32 uDestinationHost, uint16 uDestinationPort, const CKadUDPKey &targetUDPKey, const CUInt128 *uCryptTargetID)
 {
-#if EMULEBB_HAS_DIAG_EVENT_V1 && EMULEBB_HAS_KAD_DIAGNOSTICS
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
 	// Outbound Kad UDP packet: the CSafeMemFile holds the decoded payload; the marker
 	// is the Kad header byte and the opcode is carried separately.
 	DiagEventLogKadUdpPacketSend(uDestinationHost, uDestinationPort, OP_KADEMLIAHEADER, byOpcode, pbyData.GetBuffer(), static_cast<UINT>(pbyData.GetLength()));
