@@ -32,6 +32,10 @@ struct UDPPack
 	bool	bKad;
 	uint32	nReceiverVerifyKey;
 	uchar	pachTargetClientHashORKadID[16];
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+	ULONGLONG ullDiagSendAttemptId;
+	UINT uDiagAttemptedLen;
+#endif
 	//uint16 nPriority; We could add a priority system here to force some packets.
 };
 #pragma pack(pop)
