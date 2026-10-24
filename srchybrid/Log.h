@@ -172,6 +172,40 @@ void DiagEventLogEd2kTcpPacket(
 	uint8 byOpcode,
 	const BYTE *pPayload,
 	UINT uPayloadLen);
+
+/**
+ * @brief Emits one eD2K client-UDP packet at the actual socket boundary.
+ *
+ * `pRaw` is the complete on-wire datagram while `pPayload` is the decoded
+ * payload after the protocol marker and opcode. A non-zero send attempt ID
+ * correlates an outbound packet with its terminal `send_outcome` event.
+ */
+void DiagEventLogEd2kClientUdpPacket(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	LPCTSTR pszOutcome,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pRaw,
+	UINT uRawLen,
+	const BYTE *pPayload,
+	UINT uPayloadLen,
+	ULONGLONG ullSendAttemptId,
+	LPCTSTR pszNote);
+
+/**
+ * @brief Emits the terminal result for one outbound eD2K client-UDP attempt.
+ */
+void DiagEventLogEd2kClientUdpSendOutcome(
+	LPCTSTR pszPeerLabel,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	ULONGLONG ullSendAttemptId,
+	LPCTSTR pszOutcome,
+	bool bDeliveryKnown,
+	UINT uAttemptedLen,
+	LPCTSTR pszNote);
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS

@@ -1348,6 +1348,188 @@ void PacketDiagnosticsLogClientPacket(
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 
+namespace
+{
+struct SEd2kClientUdpDiagnosticState
+{
+	LPCTSTR pszStateId;
+	LPCTSTR pszStateLabel;
+	LPCTSTR pszPhase;
+	LPCTSTR pszSendRole;
+};
+
+SEd2kClientUdpDiagnosticState GetEd2kClientUdpDiagnosticState(uint8 byOpcode, bool bSend)
+{
+	switch (byOpcode) {
+	case OP_REASKFILEPING:
+		return { _T("client_udp.reask"), _T("reask"), _T("reask_request"), _T("reask_request") };
+	case OP_REASKACK:
+	case OP_FILENOTFOUND:
+	case OP_QUEUEFULL:
+		return { _T("client_udp.reask"), _T("reask"), bSend ? _T("reciprocity_reply") : _T("reask_reply"), _T("reciprocity_reply") };
+	case OP_REASKCALLBACKUDP:
+		return { _T("client_udp.buddy_relay"), _T("buddy_relay"), _T("buddy_relay_request"), _T("buddy_relay_request") };
+	case OP_DIRECTCALLBACKREQ:
+		return { _T("client_udp.direct_callback"), _T("direct_callback"), _T("direct_callback_request"), _T("direct_callback_request") };
+	case OP_PORTTEST:
+		return { _T("client_udp.port_test"), _T("port_test"), _T("port_test"), NULL };
+	default:
+		return { _T("client_udp.unknown"), _T("unknown"), _T("unknown"), NULL };
+	}
+}
+
+LPCTSTR GetEd2kClientUdpOpcodeName(uint8 byOpcode)
+{
+	switch (byOpcode) {
+	case OP_REASKFILEPING: return _T("OP_REASKFILEPING");
+	case OP_REASKACK: return _T("OP_REASKACK");
+	case OP_FILENOTFOUND: return _T("OP_FILENOTFOUND");
+	case OP_QUEUEFULL: return _T("OP_QUEUEFULL");
+	case OP_REASKCALLBACKUDP: return _T("OP_REASKCALLBACKUDP");
+	case OP_DIRECTCALLBACKREQ: return _T("OP_DIRECTCALLBACKREQ");
+	case OP_PORTTEST: return _T("OP_PORTTEST");
+	default: return _T("UNKNOWN");
+	}
+}
+
+LPCTSTR GetEd2kClientUdpSeverity(LPCTSTR pszOutcome)
+{
+	return pszOutcome != NULL
+		&& (_tcscmp(pszOutcome, _T("dropped")) == 0
+			|| _tcscmp(pszOutcome, _T("send_failed")) == 0
+			|| _tcscmp(pszOutcome, _T("send_cancelled")) == 0)
+		? _T("warning") : _T("info");
+}
+}
+
+void DiagEventLogEd2kClientUdpPacket(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	LPCTSTR pszOutcome,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pRaw,
+	UINT uRawLen,
+	const BYTE *pPayload,
+	UINT uPayloadLen,
+	ULONGLONG ullSendAttemptId,
+	LPCTSTR pszNote)
+{
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	const bool bSend = pszDirection != NULL && _tcscmp(pszDirection, _T("send")) == 0;
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	CString strTraceKey(_T("client_udp:"));
+	strTraceKey += strPeer;
+	const CString strRawHex = BuildDiagEventLowerHexString(pRaw, pRaw != NULL ? uRawLen : 0);
+	const CString strPayloadHex = BuildDiagEventLowerHexString(pPayload, pPayload != NULL ? uPayloadLen : 0);
+	const SEd2kClientUdpDiagnosticState state = GetEd2kClientUdpDiagnosticState(byOpcode, bSend);
+
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		static_cast<UINT>(byOpcode),
+		static_cast<UINT>(byProtocol));
+	if (ullSendAttemptId != 0)
+		strKeys.AppendFormat(_T(",\"sendAttemptId\":%I64u"), ullSendAttemptId);
+	strKeys += _T("}");
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"direction\":%s,\"outcome\":%s"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDirection != NULL ? pszDirection : _T("unknown")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszOutcome != NULL ? pszOutcome : _T("unknown")));
+	if (ullSendAttemptId != 0)
+		strBody.AppendFormat(_T(",\"sendAttemptId\":%I64u"), ullSendAttemptId);
+	if (bSend && state.pszSendRole != NULL)
+		strBody.AppendFormat(_T(",\"role\":%s"), (LPCTSTR)BuildDiagnosticsJsonStringField(state.pszSendRole));
+	strBody.AppendFormat(
+		_T(",\"stateId\":%s,\"stateLabel\":%s,\"traceKey\":%s,\"flow\":\"client_udp\",\"phase\":%s,\"transportMode\":%s"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(state.pszStateId),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(state.pszStateLabel),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTraceKey),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(state.pszPhase),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszTransportMode != NULL ? pszTransportMode : _T("unknown")));
+	if (pszTransportMode != NULL && _tcscmp(pszTransportMode, _T("obfuscated")) == 0)
+		strBody += _T(",\"obfuscated\":true");
+	else if (pszTransportMode != NULL && _tcscmp(pszTransportMode, _T("plaintext")) == 0)
+		strBody += _T(",\"obfuscated\":false");
+	strBody.AppendFormat(
+		_T(",\"protocolMarker\":%u,\"protocolName\":%s,\"opcode\":%u,\"opcodeName\":%s,\"rawLen\":%u,\"rawHex\":\"%s\""),
+		static_cast<UINT>(byProtocol),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(byProtocol == OP_EMULEPROT ? _T("emule") : _T("unknown")),
+		static_cast<UINT>(byOpcode),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(GetEd2kClientUdpOpcodeName(byOpcode)),
+		uRawLen,
+		(LPCTSTR)strRawHex);
+	if (bSend)
+		strBody.AppendFormat(_T(",\"attemptedLen\":%u"), uRawLen);
+	strBody.AppendFormat(
+		_T(",\"payloadLen\":%u,\"payloadHex\":\"%s\",\"payloadHexTruncated\":false"),
+		uPayloadLen,
+		(LPCTSTR)strPayloadHex);
+	if (pszNote != NULL && pszNote[0] != _T('\0'))
+		strBody.AppendFormat(_T(",\"note\":%s"), (LPCTSTR)BuildDiagnosticsJsonStringField(pszNote));
+	strBody += _T("}");
+
+	WriteDiagEventV2(_T("ed2k_client_udp"), _T("packet"), GetEd2kClientUdpSeverity(pszOutcome), strKeys, strBody);
+}
+
+void DiagEventLogEd2kClientUdpSendOutcome(
+	LPCTSTR pszPeerLabel,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	ULONGLONG ullSendAttemptId,
+	LPCTSTR pszOutcome,
+	bool bDeliveryKnown,
+	UINT uAttemptedLen,
+	LPCTSTR pszNote)
+{
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	CString strTraceKey(_T("client_udp:"));
+	strTraceKey += strPeer;
+	const SEd2kClientUdpDiagnosticState state = GetEd2kClientUdpDiagnosticState(byOpcode, true);
+
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u,\"sendAttemptId\":%I64u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		static_cast<UINT>(byOpcode),
+		static_cast<UINT>(byProtocol),
+		ullSendAttemptId);
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"direction\":\"send\",\"outcome\":%s,\"deliveryKnown\":%s,\"sendAttemptId\":%I64u"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszOutcome != NULL ? pszOutcome : _T("unknown")),
+		bDeliveryKnown ? _T("true") : _T("false"),
+		ullSendAttemptId);
+	if (state.pszSendRole != NULL)
+		strBody.AppendFormat(_T(",\"role\":%s"), (LPCTSTR)BuildDiagnosticsJsonStringField(state.pszSendRole));
+	strBody.AppendFormat(
+		_T(",\"stateId\":%s,\"stateLabel\":%s,\"traceKey\":%s,\"flow\":\"client_udp\",\"phase\":%s,\"protocolMarker\":%u,\"protocolName\":%s,\"opcode\":%u,\"opcodeName\":%s,\"attemptedLen\":%u"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(state.pszStateId),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(state.pszStateLabel),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTraceKey),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(state.pszPhase),
+		static_cast<UINT>(byProtocol),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(byProtocol == OP_EMULEPROT ? _T("emule") : _T("unknown")),
+		static_cast<UINT>(byOpcode),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(GetEd2kClientUdpOpcodeName(byOpcode)),
+		uAttemptedLen);
+	if (pszNote != NULL && pszNote[0] != _T('\0'))
+		strBody.AppendFormat(_T(",\"note\":%s"), (LPCTSTR)BuildDiagnosticsJsonStringField(pszNote));
+	strBody += _T("}");
+
+	WriteDiagEventV2(_T("ed2k_client_udp"), _T("send_outcome"), GetEd2kClientUdpSeverity(pszOutcome), strKeys, strBody);
+}
+
 void DiagEventLogEd2kTcpPacket(
 	LPCTSTR pszFlow,
 	LPCTSTR pszPeerLabel,
