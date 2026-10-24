@@ -20,6 +20,24 @@ enum class EClientUdpPacketDisposition
 	Dropped
 };
 
+enum class EClientUdpSocketSendResult
+{
+	Succeeded,
+	Failed,
+	Retry
+};
+
+inline EClientUdpSocketSendResult ClassifyClientUdpSocketSendResult(
+	const int nSocketResult,
+	const int nAttemptedLen)
+{
+	if (nSocketResult < 0)
+		return EClientUdpSocketSendResult::Retry;
+	return nSocketResult == nAttemptedLen
+		? EClientUdpSocketSendResult::Succeeded
+		: EClientUdpSocketSendResult::Failed;
+}
+
 /**
  * @brief Logging policy for packet failures after UDP decryption succeeds.
  */

@@ -56,11 +56,57 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+ULONGLONG NextClientUdpSendAttemptId()
+{
+	static volatile LONG64 s_ullNextAttemptId = 0;
+	return static_cast<ULONGLONG>(::InterlockedIncrement64(&s_ullNextAttemptId));
+}
+
+bool IsEd2kClientUdpDiagnosticPacket(const UDPPack *pPack)
+{
+	return pPack != NULL && !pPack->bKad && pPack->packet != NULL && pPack->packet->prot == OP_EMULEPROT;
+}
+
+void BeginClientUdpSendAttempt(UDPPack *pPack, const BYTE *pRaw, UINT uRawLen, LPCTSTR pszTransportMode)
+{
+	if (!IsEd2kClientUdpDiagnosticPacket(pPack) || pPack->ullDiagSendAttemptId != 0)
+		return;
+
+	pPack->ullDiagSendAttemptId = NextClientUdpSendAttemptId();
+	pPack->uDiagAttemptedLen = uRawLen;
+	PacketDiagnosticsLogClientUdpPacket(
+		ipstr(pPack->dwIP, pPack->nPort), pszTransportMode, _T("send"),
+		pPack->packet->prot, pPack->packet->opcode,
+		reinterpret_cast<const BYTE*>(pPack->packet->pBuffer), pPack->packet->size);
+	DiagEventLogEd2kClientUdpPacket(
+		ipstr(pPack->dwIP, pPack->nPort), pszTransportMode, _T("send"), _T("attempted"),
+		pPack->packet->prot, pPack->packet->opcode,
+		pRaw, uRawLen, reinterpret_cast<const BYTE*>(pPack->packet->pBuffer), pPack->packet->size,
+		pPack->ullDiagSendAttemptId, NULL);
+}
+
+void SettleClientUdpSendAttempt(UDPPack *pPack, LPCTSTR pszOutcome, bool bDeliveryKnown, LPCTSTR pszNote)
+{
+	if (!IsEd2kClientUdpDiagnosticPacket(pPack) || pPack->ullDiagSendAttemptId == 0)
+		return;
+
+	DiagEventLogEd2kClientUdpSendOutcome(
+		ipstr(pPack->dwIP, pPack->nPort), pPack->packet->prot, pPack->packet->opcode,
+		pPack->ullDiagSendAttemptId, pszOutcome, bDeliveryKnown, pPack->uDiagAttemptedLen, pszNote);
+	pPack->ullDiagSendAttemptId = 0;
+	pPack->uDiagAttemptedLen = 0;
+}
+#endif
+
 struct UdpPackDeleter
 {
 	void operator()(UDPPack *pPack) const
 	{
 		if (pPack != NULL) {
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+			SettleClientUdpSendAttempt(pPack, _T("send_cancelled"), false, _T("client UDP packet discarded before send completion"));
+#endif
 			delete pPack->packet;
 			delete pPack;
 		}
@@ -104,9 +150,8 @@ CClientUDPSocket::~CClientUDPSocket()
 {
 	theApp.uploadBandwidthThrottler->RemoveFromAllQueuesLocked(this); // ZZ:UploadBandWithThrottler (UDP)
 	while (!controlpacket_queue.IsEmpty()) {
-		const UDPPack *p = controlpacket_queue.RemoveHead();
-		delete p->packet;
-		delete p;
+		UDPPack *p = controlpacket_queue.RemoveHead();
+		UdpPackDeleter()(p);
 	}
 }
 
@@ -634,11 +679,28 @@ SocketSentBytes CClientUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend,
 					nLen = EncryptSendClient(sendbuffer.get(), nLen, cur_packet->pachTargetClientHashORKadID, cur_packet->bKad, cur_packet->nReceiverVerifyKey, (cur_packet->bKad ? Kademlia::CPrefs::GetUDPVerifyKey(cur_packet->dwIP) : 0u));
 					//DEBUG_ONLY(  AddDebugLogLine(DLP_VERYLOW, false, _T("Sent obfuscated UDP packet to clientIP: %s, Kad: %s, ReceiverKey: %u"), (LPCTSTR)ipstr(cur_packet->dwIP), cur_packet->bKad ? _T("Yes") : _T("No"), cur_packet->nReceiverVerifyKey) );
 				}
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+				BeginClientUdpSendAttempt(
+					cur_packet.get(), sendbuffer.get(), static_cast<UINT>(nLen),
+					iLen != 0 ? _T("obfuscated") : _T("plaintext"));
+#endif
 				const int nSentLen = SendTo(sendbuffer.get(), nLen, cur_packet->dwIP, cur_packet->nPort);
-				if (nSentLen >= 0) {
+				const ClientUDPSocketSeams::EClientUdpSocketSendResult eSendResult =
+					ClientUDPSocketSeams::ClassifyClientUdpSocketSendResult(nSentLen, nLen);
+				if (eSendResult != ClientUDPSocketSeams::EClientUdpSocketSendResult::Retry) {
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+					if (eSendResult == ClientUDPSocketSeams::EClientUdpSocketSendResult::Succeeded)
+						SettleClientUdpSendAttempt(cur_packet.get(), _T("send_succeeded"), true, NULL);
+					else
+						SettleClientUdpSendAttempt(cur_packet.get(), _T("send_failed"), true,
+							nSentLen == 0 ? _T("socket send failed") : _T("socket returned a partial datagram send"));
+#endif
 					sentBytes += nSentLen; // ZZ:UploadBandWithThrottler (UDP)
 					cur_packet.reset();
 				} else {
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+					SettleClientUdpSendAttempt(cur_packet.get(), _T("send_cancelled"), false, _T("socket would block; retry queued"));
+#endif
 					controlpacket_queue.AddHead(cur_packet.get()); //try to resend
 					(void)cur_packet.release();
 					::Sleep(20);
@@ -687,17 +749,6 @@ int CClientUDPSocket::SendTo(uchar *lpBuf, int nBufLen, uint32 dwIP, uint16 nPor
 bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar *pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey)
 {
 	std::unique_ptr<Packet> packetOwner(packet);
-#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-	// Converged ed2k_packet_v1 dump of outbound client-to-client UDP reask
-	// packets (flow "client"). Kad packets routed through this socket carry the
-	// Kad header and are dumped separately by the Kad UDP send hook, so only the
-	// eD2k (OP_EMULEPROT) reask family is emitted here.
-	if (!bKad && packet != NULL && packet->prot == OP_EMULEPROT)
-		PacketDiagnosticsLogClientPacket(
-			ipstr(dwIP, nPort), bEncrypt ? _T("obfuscated") : _T("plaintext"),
-			_T("send"), packet->prot, packet->opcode,
-			(const BYTE*)packet->pBuffer, packet->size);
-#endif
 // ZZ:UploadBandWithThrottler (UDP) -->
 	try {
 		std::unique_ptr<UDPPack, UdpPackDeleter> newpending(new UDPPack);
@@ -714,6 +765,10 @@ bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, boo
 			nReceiverVerifyKey);
 		newpending->bKad = bKad;
 		newpending->nReceiverVerifyKey = nReceiverVerifyKey;
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+		newpending->ullDiagSendAttemptId = 0;
+		newpending->uDiagAttemptedLen = 0;
+#endif
 
 #ifdef _DEBUG
 		if (newpending->packet->size > UDP_KAD_MAXFRAGMENT)
