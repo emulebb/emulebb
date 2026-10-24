@@ -235,9 +235,9 @@ LPCTSTR ClassifyKadEvent(LPCTSTR pszEvent)
 	return _T("lookup");
 }
 
-void ReEmitKadEventDiagV1(LPCTSTR pszEvent, LPCTSTR pszSeverity, LPCTSTR pszAction, LPCTSTR pszReason, uint32 uNetworkIP)
+void ReEmitKadEventDiagV2(LPCTSTR pszEvent, LPCTSTR pszSeverity, LPCTSTR pszAction, LPCTSTR pszReason, uint32 uNetworkIP)
 {
-	if (!theDiagEventV2Log.IsOpen())
+	if (!IsDiagEventV2WriterEnabled())
 		return;
 
 	CString strKeys(_T("{}"));
@@ -340,7 +340,7 @@ void LogRoutingSummary(
 	WriteDiagnosticsLogLine(g_kadDiagnosticsLog, g_kadDiagnosticsLogLock, strJson);
 
 #if EMULEBB_HAS_DIAG_EVENT_V2
-	if (theDiagEventV2Log.IsOpen()) {
+	if (IsDiagEventV2WriterEnabled()) {
 		CString strBody;
 		strBody.Format(
 			_T("{\"milestone\":\"routing_summary\",\"action\":\"observe\",\"connected\":%s,\"bootstrapping\":%s,\"firewalled\":%s,\"lanMode\":%s,\"contactTotal\":%u,\"contactVerified\":%u,\"contactWithUdpKey\":%u}"),
@@ -402,7 +402,7 @@ void LogPacketEvent(
 		llTokens);
 	WriteEvent(pszEvent, pszSeverity, strContactJson, pszAction, pszReason, strEvidence);
 #if EMULEBB_HAS_DIAG_EVENT_V2
-	ReEmitKadEventDiagV1(pszEvent, pszSeverity, pszAction, pszReason, uNetworkIP);
+		ReEmitKadEventDiagV2(pszEvent, pszSeverity, pszAction, pszReason, uNetworkIP);
 #endif
 }
 
@@ -435,7 +435,7 @@ void LogSearchResponseEvent(
 		uExpectedCount);
 	WriteEvent(pszEvent, pszSeverity, strContactJson, pszAction, pszReason, strEvidence);
 #if EMULEBB_HAS_DIAG_EVENT_V2
-	if (theDiagEventV2Log.IsOpen()) {
+	if (IsDiagEventV2WriterEnabled()) {
 		CString strKeys;
 		strKeys.Format(_T("{\"searchId\":%u}"), uSearchID);
 		CString strBody;
@@ -458,7 +458,7 @@ void LogKadPublish(
 	UINT uFileCount)
 {
 #if EMULEBB_HAS_DIAG_EVENT_V2
-	if (!theDiagEventV2Log.IsOpen())
+	if (!IsDiagEventV2WriterEnabled())
 		return;
 
 	// Event/publishKind/milestone strings mirror the rust diag_kad_event
@@ -519,7 +519,7 @@ void LogKadPublishRound(
 	UINT uNotesPublished)
 {
 #if EMULEBB_HAS_DIAG_EVENT_V2
-	if (!theDiagEventV2Log.IsOpen())
+	if (!IsDiagEventV2WriterEnabled())
 		return;
 
 	// STRUCTURAL DIFFERENCE vs rust diag_kad_event::publish_round: the master

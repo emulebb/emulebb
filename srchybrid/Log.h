@@ -82,7 +82,6 @@ public:
 
 	bool IsOpen() const								{ return m_fp != NULL; }
 	const CString& GetFilePath() const				{ return m_strFilePath; }
-	ULONGLONG GetRotationCount() const				{ return m_ullRotationCount; }
 	bool SetFilePath(LPCTSTR pszFilePath);
 	void SetMaxFileSize(UINT uMaxFileSize);
 	bool SetFileFormat(const ELogFileFormat eFileFormat);
@@ -102,7 +101,6 @@ protected:
 	CString	m_strFilePath;
 	size_t	m_uBytesWritten;
 	size_t	m_uMaxFileSize;
-	ULONGLONG m_ullRotationCount;
 	bool	m_bInOpenCall;
 	bool	m_bFlushOnWrite;
 	ELogFileFormat m_eFileFormat;
@@ -136,7 +134,8 @@ void WriteDiagnosticsJsonEvent(
 	LPCTSTR pszEvidenceJson);
 
 #if EMULEBB_HAS_DIAG_EVENT_V2
-extern CLogFile theDiagEventV2Log;
+bool InitializeDiagEventV2Writer(LPCTSTR pszLogDirectory, UINT uConfiguredSegmentBytes);
+bool IsDiagEventV2WriterEnabled();
 
 /**
  * @brief Writes one converged diag_event_v2 record (camelCase envelope) to the
@@ -153,7 +152,7 @@ void WriteDiagEventV2(
 	const CString &rstrBodyJson);
 
 /**
- * @brief Lower-case hex of a byte buffer, capped at the shared 4 KiB hex limit.
+ * @brief Lower-case hex of a complete byte buffer.
  *        Matches the emulebb-rust ed2k_tcp lower-case payloadHex/rawHex encoding.
  */
 CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen);
