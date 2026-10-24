@@ -1679,7 +1679,7 @@ CString md4str(const byte *hash)
 }
 
 #if EMULEBB_HAS_DIAG_EVENT_V2
-CString BuildDiagEventV1SchedKeysJson(const CUpDownClient *pClient, const byte *pFileHash)
+CString BuildDiagEventV2SchedKeysJson(const CUpDownClient *pClient, const byte *pFileHash)
 {
 	CString strKeys(_T("{"));
 	bool bHasField = false;
@@ -1717,7 +1717,7 @@ CString BuildDiagEventV1SchedKeysJson(const CUpDownClient *pClient, const byte *
 void DiagEventLogSchedUploadSlotOpened(const CUpDownClient *pClient, const byte *pFileHash)
 {
 	WriteDiagEventV2(_T("sched"), _T("upload_slot_opened"), _T("info"),
-		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"opened\"}")));
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"opened\"}")));
 }
 
 // Bucket the free-text upload-removal reason into the canonical taxonomy the rust
@@ -1746,7 +1746,7 @@ void DiagEventLogSchedUploadSlotClosed(const CUpDownClient *pClient, const byte 
 	strBody.Format(_T("{\"outcome\":\"closed\",\"reason\":%s}"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(NormalizeUploadCloseReason(pszReason)));
 	WriteDiagEventV2(_T("sched"), _T("upload_slot_closed"), _T("info"),
-		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), strBody);
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
 }
 
 // Mirrors the rust sched/out_of_part_reqs event: a granted upload slot is recycled
@@ -1755,7 +1755,7 @@ void DiagEventLogSchedUploadSlotClosed(const CUpDownClient *pClient, const byte 
 void DiagEventLogSchedOutOfPartReqs(const CUpDownClient *pClient, const byte *pFileHash)
 {
 	WriteDiagEventV2(_T("sched"), _T("out_of_part_reqs"), _T("low"),
-		BuildDiagEventV1SchedKeysJson(pClient, pFileHash),
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash),
 		CString(_T("{\"action\":\"requeue\",\"signal\":\"out_of_part_reqs\"}")));
 }
 
@@ -1763,7 +1763,7 @@ void DiagEventLogSchedUploadSlotRecycled(const CUpDownClient *pClient, const byt
 {
 	// severity "low" matches the rust upload_slot_recycled emitter.
 	WriteDiagEventV2(_T("sched"), _T("upload_slot_recycled"), _T("low"),
-		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"recycled\"}")));
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"recycled\"}")));
 }
 
 void DiagEventLogSchedQueueRank(const CUpDownClient *pClient, const byte *pFileHash, UINT uQueueRank)
@@ -1771,7 +1771,7 @@ void DiagEventLogSchedQueueRank(const CUpDownClient *pClient, const byte *pFileH
 	CString strBody;
 	strBody.Format(_T("{\"outcome\":\"waiting\",\"queueRank\":%u}"), uQueueRank);
 	WriteDiagEventV2(_T("sched"), _T("queue_rank"), _T("info"),
-		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), strBody);
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
 }
 
 // Normalize a per-block MFC upload outcome reason to the shared outcomeClass
@@ -1825,7 +1825,7 @@ void DiagEventLogSchedUploadRequestOutcome(
 		strBody.AppendFormat(_T(",\"firstSkipReason\":%s"), (LPCTSTR)BuildDiagnosticsJsonStringField(pszFirstSkipReason));
 	strBody += _T("}");
 	WriteDiagEventV2(_T("sched"), _T("upload_request_outcome"), _T("info"),
-		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), strBody);
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
 }
 
 void DiagEventLogSchedUploadPayloadAccounting(
@@ -1844,7 +1844,7 @@ void DiagEventLogSchedUploadPayloadAccounting(
 		uSentCompleteFileBytes,
 		uSentPartFileBytes);
 	WriteDiagEventV2(_T("sched"), _T("upload_payload_accounting"), _T("info"),
-		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), strBody);
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
 }
 
 void DiagEventLogSchedSharedPublishOfferBatch(
@@ -1874,13 +1874,13 @@ void DiagEventLogSchedSharedPublishOfferBatch(
 void DiagEventLogSchedSourceEngaged(const CUpDownClient *pClient, const byte *pFileHash)
 {
 	WriteDiagEventV2(_T("sched"), _T("source_engaged"), _T("info"),
-		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"engaged\"}")));
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"engaged\"}")));
 }
 
 void DiagEventLogSchedSourceDropped(const CUpDownClient *pClient, const byte *pFileHash)
 {
 	WriteDiagEventV2(_T("sched"), _T("source_dropped"), _T("info"),
-		BuildDiagEventV1SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"dropped\"}")));
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), CString(_T("{\"outcome\":\"dropped\"}")));
 }
 
 void DiagEventLogSchedSourceSwapped(const CUpDownClient *pClient, const byte *pCurrentFileHash, const byte *pSwapTargetFileHash)
@@ -1893,7 +1893,7 @@ void DiagEventLogSchedSourceSwapped(const CUpDownClient *pClient, const byte *pC
 			(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagEventLowerHexString(pSwapTargetFileHash, MDX_DIGEST_SIZE)));
 	strBody += _T("}");
 	WriteDiagEventV2(_T("sched"), _T("source_swapped"), _T("info"),
-		BuildDiagEventV1SchedKeysJson(pClient, pCurrentFileHash), strBody);
+		BuildDiagEventV2SchedKeysJson(pClient, pCurrentFileHash), strBody);
 }
 
 void DiagEventLogSchedConnBudgetDeny(LPCTSTR pszDenyReason, UINT uActiveConnections, UINT uConnectionCap)

@@ -1094,9 +1094,6 @@ CLogFile theUploadSlotDiagnosticsLog;
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
 CLogFile theDownloadSlotDiagnosticsLog;
 #endif
-#if EMULEBB_HAS_DIAG_EVENT_V2
-CLogFile theDiagEventV2Log;
-#endif
 bool g_bLowColorDesktop = false;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1733,7 +1730,7 @@ BOOL CemuleApp::InitInstance()
 		thePrefs.GetMaxLogFileSize());
 #endif
 #if EMULEBB_HAS_DIAG_EVENT_V2
-	InitializeDiagnosticsLog(theDiagEventV2Log, strDiagnosticsLogDir + LogArtifactNames::DiagEventV2LogFileName(), thePrefs.GetMaxLogFileSize());
+	InitializeDiagEventV2Writer(strDiagnosticsLogDir, thePrefs.GetMaxLogFileSize());
 #endif
 	theLog.SetMaxFileSize(thePrefs.GetMaxLogFileSize());
 	theLog.SetFileFormat(thePrefs.GetLogFileFormat());

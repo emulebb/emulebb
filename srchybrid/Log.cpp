@@ -18,8 +18,10 @@
 #include <io.h>
 #include <share.h>
 #include "emule.h"
+#include "DiagEventWriterSeams.h"
 #include "Log.h"
 #include "LogFileSeams.h"
+#include "PathHelpers.h"
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 #include "Opcodes.h"
 #endif
@@ -28,6 +30,7 @@
 #include "emuledlg.h"
 #include "StringConversion.h"
 
+#include <algorithm>
 #include <deque>
 #include <vector>
 
@@ -56,22 +59,6 @@ CCriticalSection g_uploadSlotDiagnosticsLogLock;
 #ifdef EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS
 CCriticalSection g_downloadSlotDiagnosticsLogLock;
 #endif
-#if EMULEBB_HAS_DIAG_EVENT_V2
-CCriticalSection g_diagEventV2LogLock;
-ULONGLONG g_ullDiagEventV2Seq = 0;
-ULONGLONG g_ullDiagEventRotationBase = 0;
-DWORD g_dwDiagEventProcessId = 0;
-CString g_strDiagEventRunId;
-
-struct SDiagEventStreamCounter
-{
-	CString strFamily;
-	ULONGLONG ullSequence;
-};
-
-std::vector<SDiagEventStreamCounter> g_aDiagEventStreamCounters;
-#endif
-
 CString TruncateLogLine(const CString &rstrLine, const int iMaxChars)
 {
 	if (iMaxChars <= 0 || rstrLine.GetLength() <= iMaxChars)
@@ -295,43 +282,517 @@ void WriteDiagnosticsJsonEvent(
 }
 
 #if EMULEBB_HAS_DIAG_EVENT_V2
-CString BuildDiagEventRunId()
+namespace
 {
-	FILETIME fileTime = {};
-	::GetSystemTimeAsFileTime(&fileTime);
-	ULARGE_INTEGER timestamp = {};
-	timestamp.LowPart = fileTime.dwLowDateTime;
-	timestamp.HighPart = fileTime.dwHighDateTime;
-
-	CString strRunId;
-	strRunId.Format(
-		_T("%016I64x-%08x-%016I64x"),
-		timestamp.QuadPart,
-		::GetCurrentProcessId(),
-		::GetTickCount64());
-	return strRunId;
-}
-
-ULONGLONG NextDiagEventStreamSeq(LPCTSTR pszFamily)
+struct SDiagEventStreamCounter
 {
-	const CString strFamily(pszFamily != NULL ? pszFamily : _T(""));
-	for (const SDiagEventStreamCounter &rCounter : g_aDiagEventStreamCounters) {
-		if (rCounter.strFamily == strFamily)
-			return rCounter.ullSequence + 1;
+	CString strFamily;
+	ULONGLONG ullSequence;
+};
+
+struct SDiagEventSegmentFile
+{
+	CString strPath;
+	ULONGLONG ullLastWriteTime;
+	bool bActive;
+};
+
+class CDiagEventV2Writer
+{
+public:
+	CDiagEventV2Writer()
+		: m_pFile(NULL)
+		, m_lConfigured()
+		, m_bInitialized(false)
+		, m_dwProcessId()
+		, m_ullSegmentId()
+		, m_ullSequence()
+		, m_ullActiveSegmentBytes()
+		, m_ullTotalBytesWritten()
+		, m_ullRecordsWritten()
+		, m_ullDroppedEvents()
+		, m_ullEncodeErrors()
+		, m_ullWriteErrors()
+		, m_ullRotations()
+		, m_ullRetentionDeletes()
+		, m_ullRetentionDeleteErrors()
+		, m_ullMaxSegmentBytes(DiagEventWriterSeams::kDefaultSegmentBytes)
+		, m_ullSegmentStartedTick()
+		, m_ullLastDiskFlushTick()
+		, m_ullLastHealthWriteTick()
+	{
 	}
-	return 1;
-}
 
-void CommitDiagEventStreamSeq(LPCTSTR pszFamily, ULONGLONG ullSequence)
-{
-	const CString strFamily(pszFamily != NULL ? pszFamily : _T(""));
-	for (SDiagEventStreamCounter &rCounter : g_aDiagEventStreamCounters) {
-		if (rCounter.strFamily == strFamily) {
-			rCounter.ullSequence = ullSequence;
+	~CDiagEventV2Writer()
+	{
+		CSingleLock lock(&m_lock, TRUE);
+		CloseActiveSegmentLocked();
+		WriteHealthLocked(true);
+	}
+
+	bool Initialize(LPCTSTR pszLogDirectory, UINT uConfiguredSegmentBytes)
+	{
+		CSingleLock lock(&m_lock, TRUE);
+		CloseActiveSegmentLocked();
+		m_strLogDirectory = pszLogDirectory != NULL ? pszLogDirectory : _T("");
+		m_strRunId = BuildRunId();
+		m_dwProcessId = ::GetCurrentProcessId();
+		m_ullSegmentId = 0;
+		m_ullSequence = 0;
+		m_ullActiveSegmentBytes = 0;
+		m_ullTotalBytesWritten = 0;
+		m_ullRecordsWritten = 0;
+		m_ullDroppedEvents = 0;
+		m_ullEncodeErrors = 0;
+		m_ullWriteErrors = 0;
+		m_ullRotations = 0;
+		m_ullRetentionDeletes = 0;
+		m_ullRetentionDeleteErrors = 0;
+		m_ullMaxSegmentBytes = DiagEventWriterSeams::NormalizeSegmentBytes(uConfiguredSegmentBytes);
+		m_ullSegmentStartedTick = ::GetTickCount64();
+		m_ullLastDiskFlushTick = 0;
+		m_ullLastHealthWriteTick = 0;
+		m_strInitializationFailure.Empty();
+		m_strActiveFileName.Empty();
+		m_strActiveFilePath.Empty();
+		m_aStreamCounters.clear();
+		m_strHealthFilePath = PathHelpers::AppendPathComponent(
+			m_strLogDirectory,
+			DiagEventWriterSeams::HealthFileName());
+		::InterlockedExchange(&m_lConfigured, 1);
+
+		m_bInitialized = OpenSegmentLocked(0, false);
+		if (!m_bInitialized) {
+			m_strInitializationFailure.Format(
+				_T("unable to create first diagnostic segment (win32=%u)"),
+				static_cast<UINT>(::GetLastError()));
+		}
+		WriteHealthLocked(true);
+		return m_bInitialized;
+	}
+
+	bool IsConfigured() const
+	{
+		return ::InterlockedCompareExchange(
+			const_cast<volatile LONG *>(&m_lConfigured),
+			0,
+			0) != 0;
+	}
+
+	void WriteEvent(
+		LPCTSTR pszFamily,
+		LPCTSTR pszEvent,
+		LPCTSTR pszSeverity,
+		const CString &rstrKeysJson,
+		const CString &rstrBodyJson)
+	{
+		CSingleLock lock(&m_lock, TRUE);
+		if (!IsConfigured())
+			return;
+
+		if (m_pFile == NULL) {
+			const bool bRecoveringInitializedWriter = m_bInitialized;
+			const ULONGLONG ullRecoverySegmentId = bRecoveringInitializedWriter
+				? m_ullSegmentId + 1
+				: m_ullSegmentId;
+			m_bInitialized = OpenSegmentLocked(ullRecoverySegmentId, bRecoveringInitializedWriter);
+			if (m_bInitialized)
+				m_strInitializationFailure.Empty();
+			else {
+				++m_ullDroppedEvents;
+				WriteHealthLocked(true);
+				return;
+			}
+		}
+
+		const CString strFamily(pszFamily != NULL ? pszFamily : _T(""));
+		const ULONGLONG ullSequence = m_ullSequence + 1;
+		const ULONGLONG ullStreamSequence = NextStreamSequenceLocked(strFamily);
+		CString strJson(BuildRecordLocked(
+			m_ullSegmentId,
+			ullSequence,
+			ullStreamSequence,
+			strFamily,
+			pszEvent,
+			pszSeverity,
+			rstrKeysJson,
+			rstrBodyJson));
+		CStringA strUtf8(EncodeUtf8(strJson));
+		if (static_cast<ULONGLONG>(strUtf8.GetLength()) > m_ullMaxSegmentBytes) {
+			++m_ullDroppedEvents;
+			++m_ullEncodeErrors;
+			WriteHealthLocked(true);
 			return;
 		}
+
+		const ULONGLONG ullNowTick = ::GetTickCount64();
+		if (DiagEventWriterSeams::ShouldRotate(
+			m_ullActiveSegmentBytes,
+			static_cast<ULONGLONG>(strUtf8.GetLength()),
+			ullNowTick - m_ullSegmentStartedTick,
+			m_ullMaxSegmentBytes,
+			DiagEventWriterSeams::kDefaultSegmentAgeMs)) {
+			if (!OpenSegmentLocked(m_ullSegmentId + 1, true)) {
+				++m_ullDroppedEvents;
+				WriteHealthLocked(true);
+				return;
+			}
+			strJson = BuildRecordLocked(
+				m_ullSegmentId,
+				ullSequence,
+				ullStreamSequence,
+				strFamily,
+				pszEvent,
+				pszSeverity,
+				rstrKeysJson,
+				rstrBodyJson);
+			strUtf8 = EncodeUtf8(strJson);
+			if (static_cast<ULONGLONG>(strUtf8.GetLength()) > m_ullMaxSegmentBytes) {
+				++m_ullDroppedEvents;
+				++m_ullEncodeErrors;
+				WriteHealthLocked(true);
+				return;
+			}
+		}
+
+		const ULONGLONG ullOffset = m_ullActiveSegmentBytes;
+		const size_t uExpectedBytes = static_cast<size_t>(strUtf8.GetLength());
+		const size_t uWritten = fwrite((LPCSTR)strUtf8, 1, uExpectedBytes, m_pFile);
+		const bool bComplete = uWritten == uExpectedBytes && !ferror(m_pFile) && fflush(m_pFile) == 0;
+		if (!bComplete) {
+			++m_ullDroppedEvents;
+			++m_ullWriteErrors;
+			RollbackPartialWriteLocked(ullOffset);
+			WriteHealthLocked(true);
+			return;
+		}
+
+		m_ullActiveSegmentBytes += uWritten;
+		m_ullTotalBytesWritten += uWritten;
+		++m_ullRecordsWritten;
+		m_ullSequence = ullSequence;
+		CommitStreamSequenceLocked(strFamily, ullStreamSequence);
+		if (m_ullLastDiskFlushTick == 0
+			|| ullNowTick >= m_ullLastDiskFlushTick + kDiagnosticsDiskFlushIntervalMs) {
+			if (_commit(_fileno(m_pFile)) != 0)
+				++m_ullWriteErrors;
+			m_ullLastDiskFlushTick = ullNowTick;
+		}
+		WriteHealthLocked(false);
 	}
-	g_aDiagEventStreamCounters.push_back(SDiagEventStreamCounter{strFamily, ullSequence});
+
+private:
+	static CString BuildRunId()
+	{
+		FILETIME fileTime = {};
+		::GetSystemTimeAsFileTime(&fileTime);
+		ULARGE_INTEGER timestamp = {};
+		timestamp.LowPart = fileTime.dwLowDateTime;
+		timestamp.HighPart = fileTime.dwHighDateTime;
+
+		CString strRunId;
+		strRunId.Format(
+			_T("%016I64x-%08x-%016I64x"),
+			timestamp.QuadPart,
+			::GetCurrentProcessId(),
+			::GetTickCount64());
+		return strRunId;
+	}
+
+	static CStringA EncodeUtf8(const CString &rstrText)
+	{
+		TUnicodeToUTF8<2048> utf8(rstrText);
+		return CStringA((LPCSTR)utf8, utf8.GetLength());
+	}
+
+	static ULONGLONG FileTimeValue(const FILETIME &rFileTime)
+	{
+		ULARGE_INTEGER value = {};
+		value.LowPart = rFileTime.dwLowDateTime;
+		value.HighPart = rFileTime.dwHighDateTime;
+		return value.QuadPart;
+	}
+
+	CString BuildRecordLocked(
+		ULONGLONG ullSegmentId,
+		ULONGLONG ullSequence,
+		ULONGLONG ullStreamSequence,
+		const CString &rstrFamily,
+		LPCTSTR pszEvent,
+		LPCTSTR pszSeverity,
+		const CString &rstrKeysJson,
+		const CString &rstrBodyJson) const
+	{
+		const CString strKeys(rstrKeysJson.IsEmpty() ? CString(_T("{}")) : rstrKeysJson);
+		const CString strBody(rstrBodyJson.IsEmpty() ? CString(_T("{}")) : rstrBodyJson);
+		CString strJson;
+		strJson.Format(
+			_T("{\"schema\":\"diag_event_v2\",\"client\":\"mfc\",\"ts\":%s,\"runId\":%s,\"processId\":%u,\"segmentId\":%I64u,\"seq\":%I64u,\"streamSeq\":%I64u,\"family\":%s,\"event\":%s,\"severity\":%s,\"keys\":%s,\"body\":%s}\r\n"),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagnosticsTimestampUtc()),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(m_strRunId),
+			static_cast<UINT>(m_dwProcessId),
+			ullSegmentId,
+			ullSequence,
+			ullStreamSequence,
+			(LPCTSTR)BuildDiagnosticsJsonStringField(rstrFamily),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(pszEvent),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(pszSeverity),
+			(LPCTSTR)strKeys,
+			(LPCTSTR)strBody);
+		return strJson;
+	}
+
+	ULONGLONG NextStreamSequenceLocked(const CString &rstrFamily) const
+	{
+		for (const SDiagEventStreamCounter &rCounter : m_aStreamCounters) {
+			if (rCounter.strFamily == rstrFamily)
+				return rCounter.ullSequence + 1;
+		}
+		return 1;
+	}
+
+	void CommitStreamSequenceLocked(const CString &rstrFamily, ULONGLONG ullSequence)
+	{
+		for (SDiagEventStreamCounter &rCounter : m_aStreamCounters) {
+			if (rCounter.strFamily == rstrFamily) {
+				rCounter.ullSequence = ullSequence;
+				return;
+			}
+		}
+		m_aStreamCounters.push_back(SDiagEventStreamCounter{rstrFamily, ullSequence});
+	}
+
+	bool OpenSegmentLocked(ULONGLONG ullSegmentId, bool bRotation)
+	{
+		CString strFileName;
+		CString strPath;
+		FILE *pNewFile = NULL;
+		ULONGLONG ullCandidateSegmentId = ullSegmentId;
+		for (;;) {
+			strFileName = DiagEventWriterSeams::BuildSegmentFileName(
+				m_dwProcessId,
+				m_strRunId,
+				ullCandidateSegmentId);
+			strPath = PathHelpers::AppendPathComponent(m_strLogDirectory, strFileName);
+			pNewFile = LongPathSeams::OpenFileStreamLongPath(
+				strPath,
+				GENERIC_WRITE,
+				FILE_SHARE_READ,
+				CREATE_NEW,
+				FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
+				_O_WRONLY | _O_BINARY,
+				"wb");
+			if (pNewFile != NULL)
+				break;
+
+			const DWORD dwOpenError = ::GetLastError();
+			const bool bExistingFile = dwOpenError == ERROR_FILE_EXISTS
+				|| dwOpenError == ERROR_ALREADY_EXISTS
+				|| LongPathSeams::GetFileAttributes(strPath) != INVALID_FILE_ATTRIBUTES;
+			if (!bExistingFile || ullCandidateSegmentId == ~0ull) {
+				if (bRotation)
+					++m_ullWriteErrors;
+				::SetLastError(dwOpenError);
+				return false;
+			}
+			++ullCandidateSegmentId;
+		}
+		(void)setvbuf(pNewFile, NULL, _IOFBF, 64 * 1024);
+		CloseActiveSegmentLocked();
+		m_pFile = pNewFile;
+		m_strActiveFileName = strFileName;
+		m_strActiveFilePath = strPath;
+		m_ullSegmentId = ullCandidateSegmentId;
+		m_ullActiveSegmentBytes = 0;
+		m_ullSegmentStartedTick = ::GetTickCount64();
+		m_ullLastDiskFlushTick = 0;
+		if (bRotation)
+			++m_ullRotations;
+		PruneSegmentsLocked();
+		return true;
+	}
+
+	void CloseActiveSegmentLocked()
+	{
+		if (m_pFile == NULL)
+			return;
+		if (fflush(m_pFile) != 0 || _commit(_fileno(m_pFile)) != 0)
+			++m_ullWriteErrors;
+		if (fclose(m_pFile) != 0)
+			++m_ullWriteErrors;
+		m_pFile = NULL;
+	}
+
+	void RollbackPartialWriteLocked(ULONGLONG ullOffset)
+	{
+		if (m_pFile == NULL)
+			return;
+		clearerr(m_pFile);
+		const int nFileDescriptor = _fileno(m_pFile);
+		if (_chsize_s(nFileDescriptor, ullOffset) == 0
+			&& _fseeki64(m_pFile, 0, SEEK_END) == 0) {
+			clearerr(m_pFile);
+			return;
+		}
+		CloseActiveSegmentLocked();
+		m_bInitialized = OpenSegmentLocked(m_ullSegmentId + 1, true);
+	}
+
+	void PruneSegmentsLocked()
+	{
+		std::vector<SDiagEventSegmentFile> files;
+		const CString strPattern(PathHelpers::AppendPathComponent(
+			m_strLogDirectory,
+			DiagEventWriterSeams::SegmentFilePattern()));
+		WIN32_FIND_DATA findData = {};
+		const HANDLE hFind = LongPathSeams::FindFirstFile(strPattern, &findData);
+		if (hFind == INVALID_HANDLE_VALUE) {
+			if (::GetLastError() != ERROR_FILE_NOT_FOUND)
+				++m_ullRetentionDeleteErrors;
+			return;
+		}
+		do {
+			if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+				continue;
+			const CString strPath(PathHelpers::AppendPathComponent(m_strLogDirectory, findData.cFileName));
+			files.push_back(SDiagEventSegmentFile{
+				strPath,
+				FileTimeValue(findData.ftLastWriteTime),
+				strPath.CompareNoCase(m_strActiveFilePath) == 0});
+		} while (::FindNextFile(hFind, &findData) != FALSE);
+		const DWORD dwEnumerationError = ::GetLastError();
+		::FindClose(hFind);
+		if (dwEnumerationError != ERROR_NO_MORE_FILES)
+			++m_ullRetentionDeleteErrors;
+
+		std::sort(files.begin(), files.end(), [](const SDiagEventSegmentFile &rLeft, const SDiagEventSegmentFile &rRight) {
+			if (rLeft.ullLastWriteTime != rRight.ullLastWriteTime)
+				return rLeft.ullLastWriteTime < rRight.ullLastWriteTime;
+			return rLeft.strPath.CompareNoCase(rRight.strPath) < 0;
+		});
+		size_t uRemaining = files.size();
+		for (const SDiagEventSegmentFile &rFile : files) {
+			if (uRemaining <= DiagEventWriterSeams::kDefaultRetainedSegments)
+				break;
+			if (rFile.bActive)
+				continue;
+			if (LongPathSeams::DeleteFile(rFile.strPath) != FALSE) {
+				--uRemaining;
+				++m_ullRetentionDeletes;
+			} else {
+				++m_ullRetentionDeleteErrors;
+			}
+		}
+	}
+
+	void WriteHealthLocked(bool bForce)
+	{
+		if (m_strHealthFilePath.IsEmpty())
+			return;
+		const ULONGLONG ullNowTick = ::GetTickCount64();
+		if (!bForce && m_ullLastHealthWriteTick != 0
+			&& ullNowTick < m_ullLastHealthWriteTick + kDiagnosticsDiskFlushIntervalMs)
+			return;
+
+		const CString strRunIdJson(m_strRunId.IsEmpty()
+			? CString(_T("null"))
+			: BuildDiagnosticsJsonStringField(m_strRunId));
+		CString strSegmentIdJson(_T("null"));
+		if (!m_strActiveFileName.IsEmpty())
+			strSegmentIdJson.Format(_T("%I64u"), m_ullSegmentId);
+		const CString strActiveFileJson(m_strActiveFileName.IsEmpty()
+			? CString(_T("null"))
+			: BuildDiagnosticsJsonStringField(m_strActiveFileName));
+		const CString strInitializationFailureJson(m_strInitializationFailure.IsEmpty()
+			? CString(_T("null"))
+			: BuildDiagnosticsJsonStringField(m_strInitializationFailure));
+
+		CString strJson;
+		strJson.Format(
+			_T("{\"schema\":\"diag_event_v2\",\"enabled\":true,\"configured\":%s,\"initialized\":%s,\"runId\":%s,\"processId\":%u,\"activeSegmentId\":%s,\"activeFileName\":%s,\"activeSegmentBytes\":%I64u,\"recordsWritten\":%I64u,\"bytesWritten\":%I64u,\"droppedEvents\":%I64u,\"encodeErrors\":%I64u,\"writeErrors\":%I64u,\"rotations\":%I64u,\"retentionDeletes\":%I64u,\"retentionDeleteErrors\":%I64u,\"maxSegmentBytes\":%I64u,\"maxSegmentSeconds\":%I64u,\"retainedSegments\":%Iu,\"initializationFailure\":%s}\r\n"),
+			IsConfigured() ? _T("true") : _T("false"),
+			m_bInitialized ? _T("true") : _T("false"),
+			(LPCTSTR)strRunIdJson,
+			static_cast<UINT>(m_dwProcessId),
+			(LPCTSTR)strSegmentIdJson,
+			(LPCTSTR)strActiveFileJson,
+			m_ullActiveSegmentBytes,
+			m_ullRecordsWritten,
+			m_ullTotalBytesWritten,
+			m_ullDroppedEvents,
+			m_ullEncodeErrors,
+			m_ullWriteErrors,
+			m_ullRotations,
+			m_ullRetentionDeletes,
+			m_ullRetentionDeleteErrors,
+			m_ullMaxSegmentBytes,
+			DiagEventWriterSeams::kDefaultSegmentAgeMs / 1000ull,
+			DiagEventWriterSeams::kDefaultRetainedSegments,
+			(LPCTSTR)strInitializationFailureJson);
+
+		CString strTemporaryPath;
+		strTemporaryPath.Format(_T("%s.tmp-%u"), (LPCTSTR)m_strHealthFilePath, static_cast<UINT>(m_dwProcessId));
+		FILE *pHealthFile = LongPathSeams::OpenFileStreamDenyWriteLongPath(strTemporaryPath, _T("wb"));
+		if (pHealthFile == NULL)
+			return;
+		const CStringA strUtf8(EncodeUtf8(strJson));
+		const size_t uExpectedBytes = static_cast<size_t>(strUtf8.GetLength());
+		const bool bWritten = fwrite((LPCSTR)strUtf8, 1, uExpectedBytes, pHealthFile) == uExpectedBytes
+			&& !ferror(pHealthFile)
+			&& fflush(pHealthFile) == 0
+			&& _commit(_fileno(pHealthFile)) == 0;
+		const bool bClosed = fclose(pHealthFile) == 0;
+		if (!bWritten || !bClosed
+			|| LongPathSeams::MoveFileEx(
+				strTemporaryPath,
+				m_strHealthFilePath,
+				MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) == FALSE) {
+			(void)LongPathSeams::DeleteFile(strTemporaryPath);
+			return;
+		}
+		m_ullLastHealthWriteTick = ullNowTick;
+	}
+
+	FILE *m_pFile;
+	volatile LONG m_lConfigured;
+	bool m_bInitialized;
+	DWORD m_dwProcessId;
+	ULONGLONG m_ullSegmentId;
+	ULONGLONG m_ullSequence;
+	ULONGLONG m_ullActiveSegmentBytes;
+	ULONGLONG m_ullTotalBytesWritten;
+	ULONGLONG m_ullRecordsWritten;
+	ULONGLONG m_ullDroppedEvents;
+	ULONGLONG m_ullEncodeErrors;
+	ULONGLONG m_ullWriteErrors;
+	ULONGLONG m_ullRotations;
+	ULONGLONG m_ullRetentionDeletes;
+	ULONGLONG m_ullRetentionDeleteErrors;
+	ULONGLONG m_ullMaxSegmentBytes;
+	ULONGLONG m_ullSegmentStartedTick;
+	ULONGLONG m_ullLastDiskFlushTick;
+	ULONGLONG m_ullLastHealthWriteTick;
+	CString m_strLogDirectory;
+	CString m_strRunId;
+	CString m_strActiveFileName;
+	CString m_strActiveFilePath;
+	CString m_strHealthFilePath;
+	CString m_strInitializationFailure;
+	std::vector<SDiagEventStreamCounter> m_aStreamCounters;
+	CCriticalSection m_lock;
+};
+
+CDiagEventV2Writer g_diagEventV2Writer;
+}
+
+bool InitializeDiagEventV2Writer(LPCTSTR pszLogDirectory, UINT uConfiguredSegmentBytes)
+{
+	return g_diagEventV2Writer.Initialize(pszLogDirectory, uConfiguredSegmentBytes);
+}
+
+bool IsDiagEventV2WriterEnabled()
+{
+	return g_diagEventV2Writer.IsConfigured();
 }
 
 void WriteDiagEventV2(
@@ -341,51 +802,12 @@ void WriteDiagEventV2(
 	const CString &rstrKeysJson,
 	const CString &rstrBodyJson)
 {
-	if (!theDiagEventV2Log.IsOpen())
-		return;
-	static ULONGLONG s_ullLastDiagEventDiskFlushTick = 0;
-	CSingleLock lock(&g_diagEventV2LogLock, TRUE);
-	if (!theDiagEventV2Log.IsOpen())
-		return;
-
-	if (g_strDiagEventRunId.IsEmpty()) {
-		g_strDiagEventRunId = BuildDiagEventRunId();
-		g_dwDiagEventProcessId = ::GetCurrentProcessId();
-		g_ullDiagEventRotationBase = theDiagEventV2Log.GetRotationCount();
-	}
-
-	// WHY: an empty keys/body must still be valid JSON for the diff harness loader,
-	// which assumes every record carries object-typed keys and body fields.
-	const CString strKeys(rstrKeysJson.IsEmpty() ? CString(_T("{}")) : rstrKeysJson);
-	const CString strBody(rstrBodyJson.IsEmpty() ? CString(_T("{}")) : rstrBodyJson);
-	const ULONGLONG ullSequence = g_ullDiagEventV2Seq + 1;
-	const ULONGLONG ullStreamSequence = NextDiagEventStreamSeq(pszFamily);
-	const ULONGLONG ullSegmentId = theDiagEventV2Log.GetRotationCount() - g_ullDiagEventRotationBase;
-
-	CString strJson;
-	strJson.Format(
-		_T("{\"schema\":\"diag_event_v2\",\"client\":\"mfc\",\"ts\":%s,\"runId\":%s,\"processId\":%u,\"segmentId\":%I64u,\"seq\":%I64u,\"streamSeq\":%I64u,\"family\":%s,\"event\":%s,\"severity\":%s,\"keys\":%s,\"body\":%s}\r\n"),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagnosticsTimestampUtc()),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(g_strDiagEventRunId),
-		static_cast<UINT>(g_dwDiagEventProcessId),
-		ullSegmentId,
-		ullSequence,
-		ullStreamSequence,
-		(LPCTSTR)BuildDiagnosticsJsonStringField(pszFamily),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(pszEvent),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(pszSeverity),
-		(LPCTSTR)strKeys,
-		(LPCTSTR)strBody);
-
-	if (!theDiagEventV2Log.Log(strJson))
-		return;
-
-	g_ullDiagEventV2Seq = ullSequence;
-	CommitDiagEventStreamSeq(pszFamily, ullStreamSequence);
-	FlushDiagnosticsLogToDiskIfDue(
-		theDiagEventV2Log,
-		s_ullLastDiagEventDiskFlushTick,
-		::GetTickCount64());
+	g_diagEventV2Writer.WriteEvent(
+		pszFamily,
+		pszEvent,
+		pszSeverity,
+		rstrKeysJson,
+		rstrBodyJson);
 }
 
 CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen)
@@ -409,23 +831,22 @@ CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen)
 #if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
 namespace
 {
-// Upper-case hex, capped at 4 KiB. WHY: the kad_udp wire-identity compare uses
-// UPPER hex on both clients (rust udp_packet_v1 emits UPPER), so case must match.
+// Upper-case hex. WHY: the kad_udp wire-identity compare uses UPPER hex on both
+// clients (rust udp_packet_v1 emits UPPER), so case must match.
 CString BuildDiagEventUpperHexString(const BYTE *pPayload, UINT uPayloadLen)
 {
 	if (pPayload == NULL || uPayloadLen == 0)
 		return CString();
 
-	const UINT uCapped = min(uPayloadLen, 4u * 1024u);
 	CString strHex;
-	LPTSTR pszHex = strHex.GetBuffer(static_cast<int>(uCapped * 2));
+	LPTSTR pszHex = strHex.GetBuffer(static_cast<int>(uPayloadLen * 2));
 	static const TCHAR s_szDigits[] = _T("0123456789ABCDEF");
-	for (UINT uIndex = 0; uIndex < uCapped; ++uIndex) {
+	for (UINT uIndex = 0; uIndex < uPayloadLen; ++uIndex) {
 		const BYTE byValue = pPayload[uIndex];
 		pszHex[uIndex * 2] = s_szDigits[(byValue >> 4) & 0x0F];
 		pszHex[uIndex * 2 + 1] = s_szDigits[byValue & 0x0F];
 	}
-	strHex.ReleaseBuffer(static_cast<int>(uCapped * 2));
+	strHex.ReleaseBuffer(static_cast<int>(uPayloadLen * 2));
 	return strHex;
 }
 
@@ -479,7 +900,7 @@ void DiagEventLogKadUdpPacket(
 	const BYTE *pDecoded,
 	UINT uDecodedLen)
 {
-	if (!theDiagEventV2Log.IsOpen() || pDecoded == NULL || uDecodedLen < 2)
+	if (!IsDiagEventV2WriterEnabled() || pDecoded == NULL || uDecodedLen < 2)
 		return;
 
 	const BYTE byProtocol = pDecoded[0];
@@ -517,25 +938,21 @@ void DiagEventLogKadUdpPacketSend(
 	const BYTE *pPayload,
 	UINT uPayloadLen)
 {
-	if (!theDiagEventV2Log.IsOpen())
+	if (!IsDiagEventV2WriterEnabled())
 		return;
 
 	// Rebuild the decoded [marker][opcode][payload] buffer the recv emit consumes so
-	// both directions share the same decodedHex/decodedLen identity. The hex is
-	// capped at 4 KiB inside BuildDiagEventUpperHexString, so only cap+2 bytes need
-	// to be materialised even though decodedLen reports the full decoded length.
+	// both directions share the same decodedHex/decodedLen identity.
 	const UINT uTrueDecodedLen = 2 + uPayloadLen;
-	const UINT uHexBytes = min(uTrueDecodedLen, 4u * 1024u);
-	std::vector<BYTE> aDecoded(uHexBytes);
+	std::vector<BYTE> aDecoded(uTrueDecodedLen);
 	aDecoded[0] = byProtocol;
-	if (uHexBytes > 1)
-		aDecoded[1] = byOpcode;
-	if (uHexBytes > 2 && pPayload != NULL)
-		memcpy(aDecoded.data() + 2, pPayload, uHexBytes - 2);
+	aDecoded[1] = byOpcode;
+	if (uPayloadLen > 0 && pPayload != NULL)
+		memcpy(aDecoded.data() + 2, pPayload, uPayloadLen);
 
 	const BYTE byProtocolMarker = aDecoded[0];
-	const BYTE byOpcodeMarker = uHexBytes > 1 ? aDecoded[1] : static_cast<BYTE>(0);
-	const CString strDecodedHex = BuildDiagEventUpperHexString(aDecoded.data(), uHexBytes);
+	const BYTE byOpcodeMarker = aDecoded[1];
+	const CString strDecodedHex = BuildDiagEventUpperHexString(aDecoded.data(), uTrueDecodedLen);
 
 	CString strPeer;
 	strPeer.Format(_T("%s:%u"), (LPCTSTR)ipstr(htonl(uHostIP)), static_cast<UINT>(uUDPPort));
@@ -655,7 +1072,7 @@ void DiagEventLogUploadCapacitySnapshot(
 	UINT uActiveSlots,
 	UINT uWaitingSessions)
 {
-	if (!theDiagEventV2Log.IsOpen())
+	if (!IsDiagEventV2WriterEnabled())
 		return;
 
 	CString strBody;
@@ -678,7 +1095,7 @@ void DiagEventLogDownloadSourceCount(
 	UINT uA4afFileCount,
 	UINT uTransferringSourceCount)
 {
-	if (!theDiagEventV2Log.IsOpen())
+	if (!IsDiagEventV2WriterEnabled())
 		return;
 
 	// transferringSourceCount = DS_DOWNLOADING sources (GetTransferringSrcCount),
@@ -698,7 +1115,7 @@ void DiagEventLogDownloadSourceCount(
 
 void DiagEventLogUdpReaskSent(UINT uReaskCount)
 {
-	if (!theDiagEventV2Log.IsOpen() || uReaskCount == 0)
+	if (!IsDiagEventV2WriterEnabled() || uReaskCount == 0)
 		return;
 
 	// WHY: the master computes UDP file reasks as a periodic aggregate count, not
@@ -941,11 +1358,10 @@ void DiagEventLogEd2kTcpPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen)
 {
-	if (!theDiagEventV2Log.IsOpen())
+	if (!IsDiagEventV2WriterEnabled())
 		return;
 
-	const UINT uPayloadHexLen = (pPayload != NULL) ? min(uPayloadLen, kMaxPacketDiagnosticsPayloadHexBytes) : 0;
-	const bool bPayloadHexTruncated = pPayload != NULL && uPayloadLen > uPayloadHexLen;
+	const UINT uPayloadHexLen = pPayload != NULL ? uPayloadLen : 0;
 	const CString strPayloadHex = BuildDiagEventLowerHexString(pPayload, uPayloadHexLen);
 
 	// WHY: the eD2k frame is [protocol][len32 LE][opcode][payload]; rust emits the
@@ -961,9 +1377,8 @@ void DiagEventLogEd2kTcpPacket(
 	aHeader[4] = static_cast<BYTE>((uFrameLen >> 24) & 0xFF);
 	aHeader[5] = byOpcode;
 	CString strRawHex(BuildDiagEventLowerHexString(aHeader, 6));
-	const UINT uRawHexPayloadLen = (pPayload != NULL) ? min(uPayloadLen, kMaxPacketDiagnosticsPayloadHexBytes) : 0;
+	const UINT uRawHexPayloadLen = pPayload != NULL ? uPayloadLen : 0;
 	strRawHex += BuildDiagEventLowerHexString(pPayload, uRawHexPayloadLen);
-	const bool bRawHexTruncated = pPayload != NULL && uPayloadLen > uRawHexPayloadLen;
 
 	const LPCTSTR pszProtocolName = PacketDiagnosticsProtocolName(byProtocol);
 	const CString strProtocolNameField = pszProtocolName != NULL ? BuildDiagnosticsJsonStringField(pszProtocolName) : CString(_T("null"));
@@ -989,7 +1404,7 @@ void DiagEventLogEd2kTcpPacket(
 		(LPCTSTR)strRawHex,
 		uPayloadLen,
 		(LPCTSTR)strPayloadHex,
-		(bPayloadHexTruncated || bRawHexTruncated) ? _T("true") : _T("false"),
+		_T("false"),
 		// WHY: the master packet hook sits on the decoded packet buffer, after any
 		// eD2k obfuscation layer has been stripped; the on-wire bytes are never
 		// obfuscated at this boundary, matching rust's plaintext listener dump.
@@ -1209,7 +1624,6 @@ CLogFile::CLogFile()
 	, m_tStarted()
 	, m_uBytesWritten()
 	, m_uMaxFileSize(_UI32_MAX)
-	, m_ullRotationCount()
 	, m_bInOpenCall()
 	, m_bFlushOnWrite(true)
 	, m_eFileFormat(Unicode)
@@ -1401,6 +1815,5 @@ void CLogFile::StartNewLogFile()
 	if (!LongPathSeams::MoveFile(m_strFilePath, strLogBakFilePath))
 		VERIFY(LongPathSeams::DeleteFile(m_strFilePath) != FALSE);
 
-	++m_ullRotationCount;
 	Open();
 }

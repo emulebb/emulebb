@@ -55,13 +55,6 @@ inline LPCTSTR DownloadSlotDiagnosticsLogFileName()
 }
 #endif
 
-#if EMULEBB_HAS_DIAG_EVENT_V2
-inline LPCTSTR DiagEventV2LogFileName()
-{
-	return _T("emulebb-diagnostics-diag.log");
-}
-#endif
-
 inline LPCTSTR CrtDebugLogFileName()
 {
 	return _T("emulebb-crt-debug.log");

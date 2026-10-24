@@ -413,7 +413,7 @@ bool strmd4(const CString &rstr, byte *hash);
  *        LOWER-case 16-byte MD4 hex. Optional keys are omitted (never faked) when
  *        the peer hash is unknown or the file hash pointer is null/zero.
  */
-CString BuildDiagEventV1SchedKeysJson(const CUpDownClient *pClient, const byte *pFileHash);
+CString BuildDiagEventV2SchedKeysJson(const CUpDownClient *pClient, const byte *pFileHash);
 
 /**
  * @brief Per-decision diag_event_v2 family:"sched" emitters mirroring the

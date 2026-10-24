@@ -179,7 +179,7 @@ void WriteEvent(
 }
 
 #if EMULEBB_HAS_DIAG_EVENT_V2
-CString DiagV1KeysJson(const CUpDownClient *pClient, const CString &strFileHash)
+CString DiagV2KeysJson(const CUpDownClient *pClient, const CString &strFileHash)
 {
 	CString strKeys(_T("{"));
 	bool bHasField = false;
@@ -215,7 +215,7 @@ CString DiagV1KeysJson(const CUpDownClient *pClient, const CString &strFileHash)
 	return strKeys;
 }
 
-void ReEmitBadPeerDiagV1(
+void ReEmitBadPeerDiagV2(
 	LPCTSTR pszEvent,
 	LPCTSTR pszSeverity,
 	LPCTSTR pszBehavior,
@@ -226,7 +226,7 @@ void ReEmitBadPeerDiagV1(
 	const SBadPeerBehaviorLedgerState &rState,
 	const Requested_Block_Struct *pBlock)
 {
-	if (!theDiagEventV2Log.IsOpen())
+	if (!IsDiagEventV2WriterEnabled())
 		return;
 
 	// The observe-only repeat_* events carry a `behavior` key; the reject events
@@ -254,7 +254,7 @@ void ReEmitBadPeerDiagV1(
 
 	WriteDiagEventV2(_T("bad_peer"), pszEvent,
 		pszSeverity != NULL ? pszSeverity : _T("info"),
-		DiagV1KeysJson(pClient, strFileHash), strBody);
+		DiagV2KeysJson(pClient, strFileHash), strBody);
 }
 #endif
 
@@ -443,7 +443,7 @@ void LogUploadBlockRequestBehavior(
 	// `behavior` key — pass pszBehavior=NULL so the body matches. This is distinct
 	// from the observe-only repeat_block_request re-emit below (uCount>1 gated,
 	// which carries a behavior key).
-	ReEmitBadPeerDiagV1(
+	ReEmitBadPeerDiagV2(
 		pszEvent,
 		pszSeverity,
 		NULL,
@@ -465,7 +465,7 @@ void LogUploadBlockRequestBehavior(
 			_T("Repeated same upload block request"),
 			strEvidence);
 #if EMULEBB_HAS_DIAG_EVENT_V2
-		ReEmitBadPeerDiagV1(
+		ReEmitBadPeerDiagV2(
 			_T("repeat_block_request"),
 			_T("medium"),
 			_T("repeat_block_request"),
@@ -508,7 +508,7 @@ void TrackUploadFileBehavior(
 		pszObserveReason,
 		strEvidence);
 #if EMULEBB_HAS_DIAG_EVENT_V2
-	ReEmitBadPeerDiagV1(
+	ReEmitBadPeerDiagV2(
 		_T("repeat_file_request"),
 		_T("medium"),
 		pszBehavior,
