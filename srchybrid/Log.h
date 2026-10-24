@@ -82,6 +82,7 @@ public:
 
 	bool IsOpen() const								{ return m_fp != NULL; }
 	const CString& GetFilePath() const				{ return m_strFilePath; }
+	ULONGLONG GetRotationCount() const				{ return m_ullRotationCount; }
 	bool SetFilePath(LPCTSTR pszFilePath);
 	void SetMaxFileSize(UINT uMaxFileSize);
 	bool SetFileFormat(const ELogFileFormat eFileFormat);
@@ -101,6 +102,7 @@ protected:
 	CString	m_strFilePath;
 	size_t	m_uBytesWritten;
 	size_t	m_uMaxFileSize;
+	ULONGLONG m_ullRotationCount;
 	bool	m_bInOpenCall;
 	bool	m_bFlushOnWrite;
 	ELogFileFormat m_eFileFormat;
