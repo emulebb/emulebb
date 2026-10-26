@@ -1396,6 +1396,7 @@ void PacketDiagnosticsLogServerUdpPacket(
 
 void PacketDiagnosticsLogClientPacket(
 	LPCTSTR pszPeerLabel,
+	LPCTSTR pszPeerHash,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
 	uint8 byProtocol,
@@ -1411,7 +1412,7 @@ void PacketDiagnosticsLogClientPacket(
 	// the connection origin threaded to this call site.)
 	PacketDiagnosticsLogEd2kPacket(_T("listener"), pszPeerLabel, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
-	DiagEventLogEd2kTcpPacket(_T("listener"), pszPeerLabel, pszTransportMode, pszDirection,
+	DiagEventLogEd2kTcpPacket(_T("listener"), pszPeerLabel, pszPeerHash, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 
@@ -1610,9 +1611,72 @@ void DiagEventLogEd2kClientUdpSendOutcome(
 	WriteDiagEventV2(_T("ed2k_client_udp"), _T("send_outcome"), GetEd2kClientUdpSeverity(pszOutcome), strKeys, strBody);
 }
 
+static int Ed2kTcpDiagnosticFileHashOffset(uint8 byProtocol, uint8 byOpcode)
+{
+	if (byProtocol == OP_EDONKEYPROT) {
+		switch (byOpcode) {
+		case OP_END_OF_DOWNLOAD:
+		case OP_FILEREQANSNOFIL:
+		case OP_FILESTATUS:
+		case OP_HASHSETANSWER:
+		case OP_HASHSETREQUEST:
+		case OP_REQFILENAMEANSWER:
+		case OP_REQUESTFILENAME:
+		case OP_REQUESTPARTS:
+		case OP_SENDINGPART:
+		case OP_SETREQFILEID:
+		case OP_STARTUPLOADREQ:
+			return 0;
+		default:
+			return -1;
+		}
+	}
+	if (byProtocol != OP_EMULEPROT)
+		return -1;
+
+	switch (byOpcode) {
+	case OP_AICHANSWER:
+	case OP_AICHFILEHASHANS:
+	case OP_AICHFILEHASHREQ:
+	case OP_AICHREQUEST:
+	case OP_ANSWERSOURCES:
+	case OP_COMPRESSEDPART:
+	case OP_COMPRESSEDPART_I64:
+	case OP_MULTIPACKET:
+	case OP_MULTIPACKETANSWER:
+	case OP_MULTIPACKET_EXT:
+	case OP_REQUESTSOURCES:
+	case OP_SENDINGPART_I64:
+		return 0;
+	case OP_ANSWERSOURCES2:
+	case OP_HASHSETANSWER2:
+	case OP_HASHSETREQUEST2:
+	case OP_MULTIPACKETANSWER_EXT2:
+	case OP_MULTIPACKET_EXT2:
+		return 1;
+	case OP_REQUESTSOURCES2:
+		return 3;
+	default:
+		return -1;
+	}
+}
+
+static CString Ed2kTcpDiagnosticFileHash(
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen)
+{
+	const int nOffset = Ed2kTcpDiagnosticFileHashOffset(byProtocol, byOpcode);
+	if (nOffset < 0 || pPayload == NULL || uPayloadLen < static_cast<UINT>(nOffset) + 16u)
+		return CString();
+	return BuildDiagEventLowerHexString(pPayload + nOffset, 16u);
+}
+
 void DiagEventLogEd2kTcpPacket(
 	LPCTSTR pszFlow,
 	LPCTSTR pszPeerLabel,
+	LPCTSTR pszPeerHash,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
 	uint8 byProtocol,
@@ -1638,41 +1702,57 @@ void DiagEventLogEd2kTcpPacket(
 	aHeader[3] = static_cast<BYTE>((uFrameLen >> 16) & 0xFF);
 	aHeader[4] = static_cast<BYTE>((uFrameLen >> 24) & 0xFF);
 	aHeader[5] = byOpcode;
-	CString strRawHex(BuildDiagEventLowerHexString(aHeader, 6));
-	const UINT uRawHexPayloadLen = pPayload != NULL ? uPayloadLen : 0;
-	strRawHex += BuildDiagEventLowerHexString(pPayload, uRawHexPayloadLen);
+	CString strClearFrameHex(BuildDiagEventLowerHexString(aHeader, 6));
+	const UINT uClearFrameHexPayloadLen = pPayload != NULL ? uPayloadLen : 0;
+	strClearFrameHex += BuildDiagEventLowerHexString(pPayload, uClearFrameHexPayloadLen);
 
 	const LPCTSTR pszProtocolName = PacketDiagnosticsProtocolName(byProtocol);
 	const CString strProtocolNameField = pszProtocolName != NULL ? BuildDiagnosticsJsonStringField(pszProtocolName) : CString(_T("null"));
 	const CString strOpcodeName = DbgGetClientTCPOpcode(byProtocol, byOpcode);
 	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	const CString strFileHash(Ed2kTcpDiagnosticFileHash(byProtocol, byOpcode, pPayload, uPayloadLen));
+	const CString strFlow(pszFlow != NULL ? pszFlow : _T("unknown"));
+	const bool bObfuscated = pszTransportMode != NULL && _tcsicmp(pszTransportMode, _T("obfuscated")) == 0;
 
 	CString strKeys;
 	strKeys.Format(
-		_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u}"),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		_T("{\"peer\":%s"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer));
+	if (pszPeerHash != NULL && pszPeerHash[0] != _T('\0'))
+		strKeys.AppendFormat(_T(",\"peerHash\":%s"), (LPCTSTR)BuildDiagnosticsJsonStringField(pszPeerHash));
+	if (!strFileHash.IsEmpty())
+		strKeys.AppendFormat(_T(",\"fileHash\":%s"), (LPCTSTR)BuildDiagnosticsJsonStringField(strFileHash));
+	strKeys.AppendFormat(
+		_T(",\"opcode\":%u,\"protocolMarker\":%u}"),
 		static_cast<UINT>(byOpcode),
 		static_cast<UINT>(byProtocol));
 
+	CString strTraceKey;
+	strTraceKey.Format(_T("%s:%s"), (LPCTSTR)strFlow, (LPCTSTR)strPeer);
+	CString strStateId;
+	strStateId.Format(_T("%s.session"), (LPCTSTR)strFlow);
+
 	CString strBody;
 	strBody.Format(
-		_T("{\"direction\":%s,\"protocolMarker\":%u,\"protocolName\":%s,\"opcode\":%u,\"opcodeName\":%s,\"rawLen\":%u,\"rawHex\":\"%s\",\"payloadLen\":%u,\"payloadHex\":\"%s\",\"payloadHexTruncated\":%s,\"obfuscated\":%s,\"transportMode\":%s,\"flow\":%s}"),
+		_T("{\"direction\":%s,\"outcome\":%s,\"protocolMarker\":%u,\"protocolName\":%s,\"opcode\":%u,\"opcodeName\":%s,\"clearFrameLen\":%u,\"clearFrameHex\":\"%s\",\"payloadLen\":%u,\"payloadHex\":\"%s\",\"payloadHexTruncated\":false,\"obfuscated\":%s,\"transportMode\":%s,\"flow\":%s,\"phase\":\"session\",\"traceKey\":%s,\"stateId\":%s,\"stateLabel\":\"session\""),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDirection != NULL ? pszDirection : _T("unknown")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDirection != NULL && _tcsicmp(pszDirection, _T("send")) == 0 ? _T("send_succeeded") : _T("accepted")),
 		static_cast<UINT>(byProtocol),
 		(LPCTSTR)strProtocolNameField,
 		static_cast<UINT>(byOpcode),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(strOpcodeName),
 		uRawLen,
-		(LPCTSTR)strRawHex,
+		(LPCTSTR)strClearFrameHex,
 		uPayloadLen,
 		(LPCTSTR)strPayloadHex,
-		_T("false"),
-		// WHY: the master packet hook sits on the decoded packet buffer, after any
-		// eD2k obfuscation layer has been stripped; the on-wire bytes are never
-		// obfuscated at this boundary, matching rust's plaintext listener dump.
-		_T("false"),
+		bObfuscated ? _T("true") : _T("false"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszTransportMode != NULL ? pszTransportMode : _T("unknown")),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(pszFlow != NULL ? pszFlow : _T("unknown")));
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strFlow),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTraceKey),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strStateId));
+	if (!bObfuscated)
+		strBody.AppendFormat(_T(",\"rawLen\":%u,\"rawHex\":\"%s\""), uRawLen, (LPCTSTR)strClearFrameHex);
+	strBody += _T("}");
 
 	WriteDiagEventV2(_T("ed2k_tcp"), _T("packet"), _T("info"), strKeys, strBody);
 }

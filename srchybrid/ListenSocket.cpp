@@ -119,6 +119,16 @@ CString BuildPacketDiagnosticsPeerLabel(const CUpDownClient *pClient)
 	return strPeer;
 }
 
+CString BuildPacketDiagnosticsPeerHash(const CUpDownClient *pClient)
+{
+	if (pClient == NULL || !pClient->HasValidHash())
+		return CString();
+
+	CString strPeerHash(md4str(pClient->GetUserHash()));
+	strPeerHash.MakeLower();
+	return strPeerHash;
+}
+
 LPCTSTR GetPacketDiagnosticsTransportMode(const CUpDownClient *pClient)
 {
 	// Canonical eD2K-TCP obfuscation label shared with the rust client
@@ -2042,7 +2052,8 @@ bool CClientReqSocket::PacketReceived(Packet *packet)
 	const uint8 opcode = packet->opcode;
 	bool bDelClient;
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-	PacketDiagnosticsLogClientPacket(BuildPacketDiagnosticsPeerLabel(client),
+	const CString strPacketDiagnosticsPeerHash(BuildPacketDiagnosticsPeerHash(client));
+	PacketDiagnosticsLogClientPacket(BuildPacketDiagnosticsPeerLabel(client), strPacketDiagnosticsPeerHash,
 		GetPacketDiagnosticsTransportMode(client), _T("recv"),
 		packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
 #endif
@@ -2203,10 +2214,12 @@ void CClientReqSocket::SendPacket(Packet *packet, bool controlpacket, uint32 act
 	}
 	ResetTimeOutTimer();
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-	if (packet != NULL)
-		PacketDiagnosticsLogClientPacket(BuildPacketDiagnosticsPeerLabel(client),
+	if (packet != NULL) {
+		const CString strPacketDiagnosticsPeerHash(BuildPacketDiagnosticsPeerHash(client));
+		PacketDiagnosticsLogClientPacket(BuildPacketDiagnosticsPeerLabel(client), strPacketDiagnosticsPeerHash,
 			GetPacketDiagnosticsTransportMode(client), _T("send"),
 			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
+	}
 #endif
 	CEMSocket::SendPacket(packet, controlpacket, actualPayloadSize, bForceImmediateSend);
 }
