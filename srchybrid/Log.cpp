@@ -294,6 +294,7 @@ struct SDiagEventSegmentFile
 {
 	CString strPath;
 	ULONGLONG ullLastWriteTime;
+	ULONGLONG ullBytes;
 	bool bActive;
 };
 
@@ -316,6 +317,21 @@ public:
 		, m_ullRotations()
 		, m_ullRetentionDeletes()
 		, m_ullRetentionDeleteErrors()
+		, m_ullRetentionScanErrors()
+		, m_ullFreeSpaceProbeErrors()
+		, m_ullRetentionPolicyErrors()
+		, m_ullStoragePolicyDrops()
+		, m_ullStorageFaultDrops()
+		, m_ullRetentionLimitDrops()
+		, m_ullAggregateLimitDrops()
+		, m_ullMinimumFreeSpaceDrops()
+		, m_ullWriterFaultDrops()
+		, m_uRetainedSegmentCount()
+		, m_ullRetainedBytes()
+		, m_ullAvailableBytes()
+		, m_bAvailableBytesKnown(false)
+		, m_bStorageAuthorityFaulted(false)
+		, m_bStoragePolicySatisfied(false)
 		, m_ullMaxSegmentBytes(DiagEventWriterSeams::kDefaultSegmentBytes)
 		, m_ullSegmentStartedTick()
 		, m_ullLastDiskFlushTick()
@@ -348,6 +364,22 @@ public:
 		m_ullRotations = 0;
 		m_ullRetentionDeletes = 0;
 		m_ullRetentionDeleteErrors = 0;
+		m_ullRetentionScanErrors = 0;
+		m_ullFreeSpaceProbeErrors = 0;
+		m_ullRetentionPolicyErrors = 0;
+		m_ullStoragePolicyDrops = 0;
+		m_ullStorageFaultDrops = 0;
+		m_ullRetentionLimitDrops = 0;
+		m_ullAggregateLimitDrops = 0;
+		m_ullMinimumFreeSpaceDrops = 0;
+		m_ullWriterFaultDrops = 0;
+		m_uRetainedSegmentCount = 0;
+		m_ullRetainedBytes = 0;
+		m_ullAvailableBytes = 0;
+		m_bAvailableBytesKnown = false;
+		m_bStorageAuthorityFaulted = false;
+		m_bStoragePolicySatisfied = false;
+		m_strStorageBlockReason.Empty();
 		m_ullMaxSegmentBytes = DiagEventWriterSeams::NormalizeSegmentBytes(uConfiguredSegmentBytes);
 		m_ullSegmentStartedTick = ::GetTickCount64();
 		m_ullLastDiskFlushTick = 0;
@@ -377,6 +409,13 @@ public:
 			const_cast<volatile LONG *>(&m_lConfigured),
 			0,
 			0) != 0;
+	}
+
+	CString BuildHealthJson()
+	{
+		CSingleLock lock(&m_lock, TRUE);
+		RefreshStorageHealthLocked();
+		return BuildHealthJsonLocked();
 	}
 
 	void WriteEvent(
@@ -513,6 +552,14 @@ private:
 		return value.QuadPart;
 	}
 
+	static ULONGLONG FileSizeValue(const WIN32_FIND_DATA &rFindData)
+	{
+		ULARGE_INTEGER value = {};
+		value.LowPart = rFindData.nFileSizeLow;
+		value.HighPart = rFindData.nFileSizeHigh;
+		return value.QuadPart;
+	}
+
 	CString BuildRecordLocked(
 		ULONGLONG ullSegmentId,
 		ULONGLONG ullSequence,
@@ -638,51 +685,205 @@ private:
 		m_bInitialized = OpenSegmentLocked(m_ullSegmentId + 1, true);
 	}
 
-	void PruneSegmentsLocked()
+	bool CollectSegmentsLocked(std::vector<SDiagEventSegmentFile> &rFiles)
 	{
-		std::vector<SDiagEventSegmentFile> files;
+		rFiles.clear();
 		const CString strPattern(PathHelpers::AppendPathComponent(
 			m_strLogDirectory,
 			DiagEventWriterSeams::SegmentFilePattern()));
 		WIN32_FIND_DATA findData = {};
 		const HANDLE hFind = LongPathSeams::FindFirstFile(strPattern, &findData);
 		if (hFind == INVALID_HANDLE_VALUE) {
-			if (::GetLastError() != ERROR_FILE_NOT_FOUND)
-				++m_ullRetentionDeleteErrors;
-			return;
+			if (::GetLastError() == ERROR_FILE_NOT_FOUND)
+				return true;
+			++m_ullRetentionScanErrors;
+			m_bStorageAuthorityFaulted = true;
+			m_strStorageBlockReason = _T("retentionScanFailure");
+			return false;
 		}
 		do {
 			if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
 				continue;
 			const CString strPath(PathHelpers::AppendPathComponent(m_strLogDirectory, findData.cFileName));
-			files.push_back(SDiagEventSegmentFile{
+			rFiles.push_back(SDiagEventSegmentFile{
 				strPath,
 				FileTimeValue(findData.ftLastWriteTime),
+				FileSizeValue(findData),
 				strPath.CompareNoCase(m_strActiveFilePath) == 0});
 		} while (::FindNextFile(hFind, &findData) != FALSE);
 		const DWORD dwEnumerationError = ::GetLastError();
 		::FindClose(hFind);
-		if (dwEnumerationError != ERROR_NO_MORE_FILES)
-			++m_ullRetentionDeleteErrors;
+		if (dwEnumerationError != ERROR_NO_MORE_FILES) {
+			++m_ullRetentionScanErrors;
+			m_bStorageAuthorityFaulted = true;
+			m_strStorageBlockReason = _T("retentionScanFailure");
+			return false;
+		}
+		return true;
+	}
+
+	void PruneSegmentsLocked()
+	{
+		std::vector<SDiagEventSegmentFile> files;
+		if (!CollectSegmentsLocked(files))
+			return;
 
 		std::sort(files.begin(), files.end(), [](const SDiagEventSegmentFile &rLeft, const SDiagEventSegmentFile &rRight) {
 			if (rLeft.ullLastWriteTime != rRight.ullLastWriteTime)
 				return rLeft.ullLastWriteTime < rRight.ullLastWriteTime;
 			return rLeft.strPath.CompareNoCase(rRight.strPath) < 0;
 		});
+		FILETIME nowFileTime = {};
+		::GetSystemTimeAsFileTime(&nowFileTime);
+		const ULONGLONG ullNowFileTime = FileTimeValue(nowFileTime);
+		const ULONGLONG ullMaximumAgeTicks =
+			DiagEventWriterSeams::kDefaultMaxRetainedSeconds * 10000000ull;
 		size_t uRemaining = files.size();
 		for (const SDiagEventSegmentFile &rFile : files) {
-			if (uRemaining <= DiagEventWriterSeams::kDefaultRetainedSegments)
-				break;
 			if (rFile.bActive)
+				continue;
+			const bool bExpired = ullNowFileTime > rFile.ullLastWriteTime
+				&& ullNowFileTime - rFile.ullLastWriteTime > ullMaximumAgeTicks;
+			if (!bExpired && uRemaining <= DiagEventWriterSeams::kDefaultRetainedSegments)
 				continue;
 			if (LongPathSeams::DeleteFile(rFile.strPath) != FALSE) {
 				--uRemaining;
 				++m_ullRetentionDeletes;
 			} else {
 				++m_ullRetentionDeleteErrors;
+				m_bStorageAuthorityFaulted = true;
+				m_strStorageBlockReason = _T("retentionDeleteFailure");
 			}
 		}
+	}
+
+	void RefreshStorageHealthLocked()
+	{
+		std::vector<SDiagEventSegmentFile> files;
+		if (CollectSegmentsLocked(files)) {
+			m_uRetainedSegmentCount = files.size();
+			m_ullRetainedBytes = 0;
+			for (const SDiagEventSegmentFile &rFile : files) {
+				m_ullRetainedBytes += rFile.bActive ? m_ullActiveSegmentBytes : rFile.ullBytes;
+			}
+		}
+
+		ULARGE_INTEGER availableBytes = {};
+		if (!m_strLogDirectory.IsEmpty()
+			&& ::GetDiskFreeSpaceEx(m_strLogDirectory, &availableBytes, NULL, NULL) != FALSE) {
+			m_ullAvailableBytes = availableBytes.QuadPart;
+			m_bAvailableBytesKnown = true;
+		} else {
+			++m_ullFreeSpaceProbeErrors;
+			m_bAvailableBytesKnown = false;
+			m_bStorageAuthorityFaulted = true;
+			m_strStorageBlockReason = _T("freeSpaceProbeFailure");
+		}
+
+		const ULONGLONG ullMaximumTotalBytes = DiagEventWriterSeams::MaximumTotalBytes(m_ullMaxSegmentBytes);
+		const bool bWithinRetentionLimit = m_uRetainedSegmentCount <= DiagEventWriterSeams::kDefaultRetainedSegments;
+		const bool bWithinAggregateLimit = m_ullRetainedBytes <= ullMaximumTotalBytes;
+		const bool bWithinFreeSpaceLimit = m_bAvailableBytesKnown
+			&& m_ullAvailableBytes >= DiagEventWriterSeams::kDefaultMinimumFreeBytes;
+		m_bStoragePolicySatisfied = !m_bStorageAuthorityFaulted
+			&& bWithinRetentionLimit
+			&& bWithinAggregateLimit
+			&& bWithinFreeSpaceLimit;
+		if (!m_bStorageAuthorityFaulted && !m_bStoragePolicySatisfied) {
+			if (!bWithinRetentionLimit)
+				m_strStorageBlockReason = _T("retainedSegmentLimit");
+			else if (!bWithinAggregateLimit)
+				m_strStorageBlockReason = _T("aggregateByteLimit");
+			else
+				m_strStorageBlockReason = _T("minimumFreeSpace");
+		} else if (m_bStoragePolicySatisfied) {
+			m_strStorageBlockReason.Empty();
+		}
+	}
+
+	CString BuildHealthJsonLocked() const
+	{
+		const CString strRunIdJson(m_strRunId.IsEmpty()
+			? CString(_T("null"))
+			: BuildDiagnosticsJsonStringField(m_strRunId));
+		CString strSegmentIdJson(_T("null"));
+		if (!m_strActiveFileName.IsEmpty())
+			strSegmentIdJson.Format(_T("%I64u"), m_ullSegmentId);
+		const CString strActiveFileJson(m_strActiveFileName.IsEmpty()
+			? CString(_T("null"))
+			: BuildDiagnosticsJsonStringField(m_strActiveFileName));
+		const CString strStorageBlockReasonJson(m_strStorageBlockReason.IsEmpty()
+			? CString(_T("null"))
+			: BuildDiagnosticsJsonStringField(m_strStorageBlockReason));
+		const CString strInitializationFailureJson(m_strInitializationFailure.IsEmpty()
+			? CString(_T("null"))
+			: BuildDiagnosticsJsonStringField(m_strInitializationFailure));
+		CString strAvailableBytesJson(_T("null"));
+		CString strMaximumGrowthBytesJson(_T("null"));
+		if (m_bAvailableBytesKnown) {
+			strAvailableBytesJson.Format(_T("%I64u"), m_ullAvailableBytes);
+			strMaximumGrowthBytesJson.Format(
+				_T("%I64u"),
+				DiagEventWriterSeams::MaximumGrowthBytes(
+					m_ullRetainedBytes,
+					m_ullAvailableBytes,
+					DiagEventWriterSeams::MaximumTotalBytes(m_ullMaxSegmentBytes),
+					DiagEventWriterSeams::kDefaultMinimumFreeBytes));
+		}
+
+		CString strJson;
+		strJson.Format(
+			_T("{\"schema\":\"diag_event_v2\",\"enabled\":true,\"configured\":%s,\"initialized\":%s,\"runId\":%s,\"processId\":%u,\"activeSegmentId\":%s,\"activeFileName\":%s"),
+			IsConfigured() ? _T("true") : _T("false"),
+			m_bInitialized ? _T("true") : _T("false"),
+			(LPCTSTR)strRunIdJson,
+			static_cast<UINT>(m_dwProcessId),
+			(LPCTSTR)strSegmentIdJson,
+			(LPCTSTR)strActiveFileJson);
+		strJson.AppendFormat(
+			_T(",\"activeSegmentBytes\":%I64u,\"recordsWritten\":%I64u,\"bytesWritten\":%I64u,\"droppedEvents\":%I64u,\"encodeErrors\":%I64u,\"writeErrors\":%I64u,\"rotations\":%I64u"),
+			m_ullActiveSegmentBytes,
+			m_ullRecordsWritten,
+			m_ullTotalBytesWritten,
+			m_ullDroppedEvents,
+			m_ullEncodeErrors,
+			m_ullWriteErrors,
+			m_ullRotations);
+		strJson.AppendFormat(
+			_T(",\"retentionDeletes\":%I64u,\"retentionDeleteErrors\":%I64u,\"retentionScanErrors\":%I64u,\"freeSpaceProbeErrors\":%I64u,\"retentionPolicyErrors\":%I64u"),
+			m_ullRetentionDeletes,
+			m_ullRetentionDeleteErrors,
+			m_ullRetentionScanErrors,
+			m_ullFreeSpaceProbeErrors,
+			m_ullRetentionPolicyErrors);
+		strJson.AppendFormat(
+			_T(",\"storagePolicyDrops\":%I64u,\"storageFaultDrops\":%I64u,\"retentionLimitDrops\":%I64u,\"aggregateLimitDrops\":%I64u,\"minimumFreeSpaceDrops\":%I64u,\"writerFaultDrops\":%I64u"),
+			m_ullStoragePolicyDrops,
+			m_ullStorageFaultDrops,
+			m_ullRetentionLimitDrops,
+			m_ullAggregateLimitDrops,
+			m_ullMinimumFreeSpaceDrops,
+			m_ullWriterFaultDrops);
+		strJson.AppendFormat(
+			_T(",\"retainedSegmentCount\":%Iu,\"retainedBytes\":%I64u,\"availableBytes\":%s,\"storageAuthorityFaulted\":%s,\"writerIoFaulted\":%s,\"storageBlockReason\":%s,\"storagePolicySatisfied\":%s,\"maximumGrowthBytes\":%s"),
+			m_uRetainedSegmentCount,
+			m_ullRetainedBytes,
+			(LPCTSTR)strAvailableBytesJson,
+			m_bStorageAuthorityFaulted ? _T("true") : _T("false"),
+			m_ullWriteErrors != 0 ? _T("true") : _T("false"),
+			(LPCTSTR)strStorageBlockReasonJson,
+			m_bStoragePolicySatisfied ? _T("true") : _T("false"),
+			(LPCTSTR)strMaximumGrowthBytesJson);
+		strJson.AppendFormat(
+			_T(",\"maxSegmentBytes\":%I64u,\"maxSegmentSeconds\":%I64u,\"retainedSegments\":%Iu,\"maxTotalBytes\":%I64u,\"maxRetainedSeconds\":%I64u,\"minimumFreeBytes\":%I64u,\"initializationFailure\":%s}"),
+			m_ullMaxSegmentBytes,
+			DiagEventWriterSeams::kDefaultSegmentAgeMs / 1000ull,
+			DiagEventWriterSeams::kDefaultRetainedSegments,
+			DiagEventWriterSeams::MaximumTotalBytes(m_ullMaxSegmentBytes),
+			DiagEventWriterSeams::kDefaultMaxRetainedSeconds,
+			DiagEventWriterSeams::kDefaultMinimumFreeBytes,
+			(LPCTSTR)strInitializationFailureJson);
+		return strJson;
 	}
 
 	void WriteHealthLocked(bool bForce)
@@ -694,41 +895,8 @@ private:
 			&& ullNowTick < m_ullLastHealthWriteTick + kDiagnosticsDiskFlushIntervalMs)
 			return;
 
-		const CString strRunIdJson(m_strRunId.IsEmpty()
-			? CString(_T("null"))
-			: BuildDiagnosticsJsonStringField(m_strRunId));
-		CString strSegmentIdJson(_T("null"));
-		if (!m_strActiveFileName.IsEmpty())
-			strSegmentIdJson.Format(_T("%I64u"), m_ullSegmentId);
-		const CString strActiveFileJson(m_strActiveFileName.IsEmpty()
-			? CString(_T("null"))
-			: BuildDiagnosticsJsonStringField(m_strActiveFileName));
-		const CString strInitializationFailureJson(m_strInitializationFailure.IsEmpty()
-			? CString(_T("null"))
-			: BuildDiagnosticsJsonStringField(m_strInitializationFailure));
-
-		CString strJson;
-		strJson.Format(
-			_T("{\"schema\":\"diag_event_v2\",\"enabled\":true,\"configured\":%s,\"initialized\":%s,\"runId\":%s,\"processId\":%u,\"activeSegmentId\":%s,\"activeFileName\":%s,\"activeSegmentBytes\":%I64u,\"recordsWritten\":%I64u,\"bytesWritten\":%I64u,\"droppedEvents\":%I64u,\"encodeErrors\":%I64u,\"writeErrors\":%I64u,\"rotations\":%I64u,\"retentionDeletes\":%I64u,\"retentionDeleteErrors\":%I64u,\"maxSegmentBytes\":%I64u,\"maxSegmentSeconds\":%I64u,\"retainedSegments\":%Iu,\"initializationFailure\":%s}\r\n"),
-			IsConfigured() ? _T("true") : _T("false"),
-			m_bInitialized ? _T("true") : _T("false"),
-			(LPCTSTR)strRunIdJson,
-			static_cast<UINT>(m_dwProcessId),
-			(LPCTSTR)strSegmentIdJson,
-			(LPCTSTR)strActiveFileJson,
-			m_ullActiveSegmentBytes,
-			m_ullRecordsWritten,
-			m_ullTotalBytesWritten,
-			m_ullDroppedEvents,
-			m_ullEncodeErrors,
-			m_ullWriteErrors,
-			m_ullRotations,
-			m_ullRetentionDeletes,
-			m_ullRetentionDeleteErrors,
-			m_ullMaxSegmentBytes,
-			DiagEventWriterSeams::kDefaultSegmentAgeMs / 1000ull,
-			DiagEventWriterSeams::kDefaultRetainedSegments,
-			(LPCTSTR)strInitializationFailureJson);
+		RefreshStorageHealthLocked();
+		const CString strJson(BuildHealthJsonLocked() + _T("\r\n"));
 
 		CString strTemporaryPath;
 		strTemporaryPath.Format(_T("%s.tmp-%u"), (LPCTSTR)m_strHealthFilePath, static_cast<UINT>(m_dwProcessId));
@@ -768,6 +936,21 @@ private:
 	ULONGLONG m_ullRotations;
 	ULONGLONG m_ullRetentionDeletes;
 	ULONGLONG m_ullRetentionDeleteErrors;
+	ULONGLONG m_ullRetentionScanErrors;
+	ULONGLONG m_ullFreeSpaceProbeErrors;
+	ULONGLONG m_ullRetentionPolicyErrors;
+	ULONGLONG m_ullStoragePolicyDrops;
+	ULONGLONG m_ullStorageFaultDrops;
+	ULONGLONG m_ullRetentionLimitDrops;
+	ULONGLONG m_ullAggregateLimitDrops;
+	ULONGLONG m_ullMinimumFreeSpaceDrops;
+	ULONGLONG m_ullWriterFaultDrops;
+	size_t m_uRetainedSegmentCount;
+	ULONGLONG m_ullRetainedBytes;
+	ULONGLONG m_ullAvailableBytes;
+	bool m_bAvailableBytesKnown;
+	bool m_bStorageAuthorityFaulted;
+	bool m_bStoragePolicySatisfied;
 	ULONGLONG m_ullMaxSegmentBytes;
 	ULONGLONG m_ullSegmentStartedTick;
 	ULONGLONG m_ullLastDiskFlushTick;
@@ -778,6 +961,7 @@ private:
 	CString m_strActiveFilePath;
 	CString m_strHealthFilePath;
 	CString m_strInitializationFailure;
+	CString m_strStorageBlockReason;
 	std::vector<SDiagEventStreamCounter> m_aStreamCounters;
 	CCriticalSection m_lock;
 };
@@ -793,6 +977,11 @@ bool InitializeDiagEventV2Writer(LPCTSTR pszLogDirectory, UINT uConfiguredSegmen
 bool IsDiagEventV2WriterEnabled()
 {
 	return g_diagEventV2Writer.IsConfigured();
+}
+
+CString BuildDiagEventV2WriterHealthJson()
+{
+	return g_diagEventV2Writer.BuildHealthJson();
 }
 
 void WriteDiagEventV2(

@@ -973,6 +973,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 {
 	static const std::vector<SApiRouteSpec> specs = {
 		{"GET", "/app", "", "", kRestRouteExecutionDirect},
+		{"GET", "/diagnostics", "", "", kRestRouteExecutionDirect},
 		{"GET", "/app/preferences", "", ""},
 		{"PATCH", "/app/preferences", WebApiSurfaceSeams::kMutablePreferenceFieldListCsv, ""},
 		{"POST", "/app/shutdown", "confirmShutdown", ""},
@@ -2593,6 +2594,10 @@ inline bool TryBuildRoute(
 	}
 	if (route.size() == 2 && route[0] == "app" && route[1] == "shutdown" && bPost) {
 		rRoute.strCommand = "app/shutdown";
+		return true;
+	}
+	if (route.size() == 1 && route[0] == "diagnostics" && bGet) {
+		rRoute.strCommand = "diagnostics/status";
 		return true;
 	}
 	if (route.size() == 2 && route[0] == "diagnostics" && route[1] == "dumps" && bPost) {

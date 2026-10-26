@@ -1147,6 +1147,62 @@ json BuildRuntimeDiagnosticsJson()
 	};
 }
 
+json BuildDiagnosticWriterHealthJson()
+{
+#if EMULEBB_HAS_DIAG_EVENT_V2
+	return json::parse(StdUtf8FromCString(BuildDiagEventV2WriterHealthJson()));
+#else
+	return json{
+		{"schema", "diag_event_v2"},
+		{"enabled", false},
+		{"configured", false},
+		{"initialized", false},
+		{"runId", nullptr},
+		{"processId", static_cast<uint32>(::GetCurrentProcessId())},
+		{"activeSegmentId", nullptr},
+		{"activeFileName", nullptr},
+		{"activeSegmentBytes", 0},
+		{"recordsWritten", 0},
+		{"bytesWritten", 0},
+		{"droppedEvents", 0},
+		{"encodeErrors", 0},
+		{"writeErrors", 0},
+		{"rotations", 0},
+		{"retentionDeletes", 0},
+		{"retentionDeleteErrors", 0},
+		{"retentionScanErrors", 0},
+		{"freeSpaceProbeErrors", 0},
+		{"retentionPolicyErrors", 0},
+		{"storagePolicyDrops", 0},
+		{"storageFaultDrops", 0},
+		{"retentionLimitDrops", 0},
+		{"aggregateLimitDrops", 0},
+		{"minimumFreeSpaceDrops", 0},
+		{"writerFaultDrops", 0},
+		{"retainedSegmentCount", 0},
+		{"retainedBytes", 0},
+		{"availableBytes", nullptr},
+		{"storageAuthorityFaulted", false},
+		{"writerIoFaulted", false},
+		{"storageBlockReason", nullptr},
+		{"storagePolicySatisfied", nullptr},
+		{"maximumGrowthBytes", nullptr},
+		{"maxSegmentBytes", nullptr},
+		{"maxSegmentSeconds", nullptr},
+		{"retainedSegments", nullptr},
+		{"maxTotalBytes", nullptr},
+		{"maxRetainedSeconds", nullptr},
+		{"minimumFreeBytes", nullptr},
+		{"initializationFailure", nullptr}
+	};
+#endif
+}
+
+json BuildDiagnosticsJson()
+{
+	return json{{"diagnosticWriter", BuildDiagnosticWriterHealthJson()}};
+}
+
 json BuildStatusJson()
 {
 	return json{
@@ -4455,6 +4511,12 @@ bool TryExecuteDirectRestCommand(const json &rRequest, json &rResult, SPipeApiEr
 	const std::string strCommand = rRequest.value("cmd", std::string());
 	if (strCommand == "app/version") {
 		rResult = BuildAppJson(GetRestBuildFlavor());
+		rError.strCode.Empty();
+		rError.strMessage.Empty();
+		return true;
+	}
+	if (strCommand == "diagnostics/status") {
+		rResult = BuildDiagnosticsJson();
 		rError.strCode.Empty();
 		rError.strMessage.Empty();
 		return true;
