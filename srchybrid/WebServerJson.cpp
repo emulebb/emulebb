@@ -4403,6 +4403,8 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 
 namespace
 {
+constexpr LPCSTR kRestContractVersionHeader = "X-Contract-Version: 2.0.0\r\n";
+
 json BuildResponseMetaJson()
 {
 	return json{
@@ -4463,13 +4465,16 @@ bool TryExecuteDirectRestCommand(const json &rRequest, json &rResult, SPipeApiEr
 void SendJsonResponse(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, const json &rPayload)
 {
 	const CStringA strBody(WebServerJson::SerializeJsonUtf8(BuildSuccessEnvelope(rPayload)));
-	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "OK", "Content-Type: application/json; charset=utf-8\r\n", strBody);
+	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "OK", "Content-Type: application/json; charset=utf-8\r\n", strBody, kRestContractVersionHeader);
 }
 
 void SendJsonError(CWebSocket *pSocket, const int iStatusCode, LPCSTR pszReason, LPCSTR pszCode, const CString &strMessage, const json &rDetails = json::object(), LPCSTR pszExtraHeaders = NULL)
 {
 	const CStringA strBody(WebServerJson::SerializeJsonUtf8(BuildErrorEnvelope(pszCode, strMessage, rDetails)));
-	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "Error", "Content-Type: application/json; charset=utf-8\r\n", strBody, pszExtraHeaders);
+	CStringA strHeaders(kRestContractVersionHeader);
+	if (pszExtraHeaders != NULL)
+		strHeaders += pszExtraHeaders;
+	WebServerHttpResponse::SendCStringA(pSocket, iStatusCode, pszReason, "Error", "Content-Type: application/json; charset=utf-8\r\n", strBody, strHeaders);
 }
 
 LPCSTR GetHttpReasonPhrase(const int iStatusCode)
