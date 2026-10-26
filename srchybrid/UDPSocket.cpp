@@ -237,7 +237,7 @@ void CUDPSocket::OnReceive(int nErrorCode)
 			// the emulebb-rust server-UDP dump. pBuffer is the decoded
 			// [marker][opcode][payload]; a decrypt that shrank the length marks
 			// the obfuscated transport.
-			PacketDiagnosticsLogServerPacket(
+			PacketDiagnosticsLogServerUdpPacket(
 				ipstr(sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port)),
 				(nPayLoadLen == length) ? _T("plaintext") : _T("obfuscated"),
 				_T("recv"), pBuffer[0], pBuffer[1], pBuffer + 2, static_cast<UINT>(nPayLoadLen - 2));
@@ -888,7 +888,7 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 		// "server"): the global GETSOURCES / search / server-status requests the
 		// emulebb-rust server-UDP dump also emits. `iLen` is non-zero exactly when
 		// the datagram is server-key obfuscated.
-		PacketDiagnosticsLogServerPacket(
+		PacketDiagnosticsLogServerUdpPacket(
 			ipstr(pServer->GetIP(), pServer->GetPort()),
 			iLen ? _T("obfuscated") : _T("plaintext"), _T("send"),
 			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);

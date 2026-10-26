@@ -299,10 +299,20 @@ void PacketDiagnosticsLogInvalidSubOpcode(
 	ULONGLONG ullBytesRemaining,
 	int iPreviousSubOpcode);
 
-// Logs one ED2K *server* connection packet (TCP) in either direction. Extends the
-// packet diagnostics beyond peer/client packets so server-protocol parity work can
-// be diffed against a reference server. Compile-gated; no-op unless the log is open.
-void PacketDiagnosticsLogServerPacket(
+// Logs one ED2K server TCP packet in both the legacy packet stream and the
+// converged diag_event_v2 stream.
+void PacketDiagnosticsLogServerTcpPacket(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen);
+
+// Logs one ED2K server UDP packet in both the legacy packet stream and the
+// converged diag_event_v2 stream.
+void PacketDiagnosticsLogServerUdpPacket(
 	LPCTSTR pszPeerLabel,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
