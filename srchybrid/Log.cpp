@@ -48,11 +48,6 @@ constexpr ULONGLONG kDiagnosticsDiskFlushIntervalMs = 1000;
 constexpr size_t kMaxRecentLogEntries = 200;
 CCriticalSection g_recentLogLock;
 std::deque<SRecentLogEntry> g_recentLogEntries;
-#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-constexpr UINT kMaxPacketDiagnosticsPayloadHexBytes = 4 * 1024;
-CCriticalSection g_packetDiagnosticsLogLock;
-volatile LONGLONG g_llPacketDiagnosticsEventSeq = 0;
-#endif
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 CCriticalSection g_uploadSlotDiagnosticsLogLock;
 #endif
@@ -102,23 +97,6 @@ void FlushDiagnosticsLogToDiskIfDue(CLogFile &rLog, ULONGLONG &rullLastFlushTick
 }
 
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-CString BuildPacketDiagnosticsHexString(const BYTE *pPayload, UINT uPayloadLen)
-{
-	if (pPayload == NULL || uPayloadLen == 0)
-		return CString();
-
-	CString strHex;
-	LPTSTR pszHex = strHex.GetBuffer(static_cast<int>(uPayloadLen * 2));
-	static const TCHAR s_szDigits[] = _T("0123456789ABCDEF");
-	for (UINT uIndex = 0; uIndex < uPayloadLen; ++uIndex) {
-		const BYTE byValue = pPayload[uIndex];
-		pszHex[uIndex * 2] = s_szDigits[(byValue >> 4) & 0x0F];
-		pszHex[uIndex * 2 + 1] = s_szDigits[byValue & 0x0F];
-	}
-	strHex.ReleaseBuffer(static_cast<int>(uPayloadLen * 2));
-	return strHex;
-}
-
 LPCTSTR PacketDiagnosticsProtocolName(uint8 byProtocol)
 {
 	switch (byProtocol) {
@@ -1327,7 +1305,7 @@ void DiagEventLogUdpReaskSent(UINT uReaskCount)
 #endif
 
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-void PacketDiagnosticsLogInvalidSubOpcode(
+void DiagEventLogInvalidSubOpcode(
 	LPCTSTR pszPacketFamily,
 	LPCTSTR pszPeerLabel,
 	LPCTSTR pszTransportMode,
@@ -1340,7 +1318,7 @@ void PacketDiagnosticsLogInvalidSubOpcode(
 	ULONGLONG ullBytesRemaining,
 	int iPreviousSubOpcode)
 {
-	if (!thePacketDiagnosticsLog.IsOpen())
+	if (!IsDiagEventV2WriterEnabled())
 		return;
 
 	const UINT uContextStart = (ullInvalidOffset > 32) ? static_cast<UINT>(ullInvalidOffset - 32) : 0;
@@ -1357,36 +1335,43 @@ void PacketDiagnosticsLogInvalidSubOpcode(
 	const LPCTSTR pszProtocolName = PacketDiagnosticsProtocolName(byProtocol);
 	const CString strProtocol = pszProtocolName != NULL ? BuildDiagnosticsJsonStringField(pszProtocolName) : CString(_T("null"));
 	const CString strOuterOpcodeName = DbgGetClientTCPOpcode(byProtocol, byOuterOpcode);
-	const UINT uPayloadHexLen = (pPayload != NULL) ? min(uPayloadLen, kMaxPacketDiagnosticsPayloadHexBytes) : 0;
-	const bool bPayloadHexTruncated = pPayload != NULL && uPayloadLen > uPayloadHexLen;
-	const CString strPayloadHex = BuildPacketDiagnosticsHexString(pPayload, uPayloadHexLen);
-	const CString strContextHex = BuildPacketDiagnosticsHexString(pPayload != NULL ? pPayload + uContextStart : NULL, uContextLen);
-	const ULONGLONG ullEventSeq = NextDiagnosticsEventSeq(g_llPacketDiagnosticsEventSeq);
+	const CString strPayloadHex = BuildDiagEventLowerHexString(pPayload, pPayload != NULL ? uPayloadLen : 0);
+	const CString strContextHex = BuildDiagEventLowerHexString(
+		pPayload != NULL ? pPayload + uContextStart : NULL,
+		uContextLen);
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	const CString strPacketFamily(pszPacketFamily != NULL ? pszPacketFamily : _T("unknown"));
+	CString strTraceKey;
+	strTraceKey.Format(_T("listener:%s"), (LPCTSTR)strPeer);
 
-	CString strJson;
-	strJson.Format(
-		_T("{\"schema\":\"ed2k_invalid_sub_opcode_v1\",\"source\":\"emulebb\",\"ts_utc\":\"%s\",\"event_seq\":%I64u,\"packet_family\":\"%s\",\"remote_addr\":\"%s\",\"transport_mode\":\"%s\",\"protocol\":%s,\"protocol_marker\":%u,\"outer_opcode\":%u,\"outer_opcode_name\":\"%s\",\"invalid_sub_opcode\":%u,\"previous_sub_opcode\":%s,\"payload_len\":%u,\"invalid_offset\":%I64u,\"bytes_remaining\":%I64u,\"context_offset\":%u,\"context_len\":%u,\"context_hex\":\"%s\",\"payload_hex_truncated\":%s,\"payload_hex\":\"%s\"}\r\n"),
-		(LPCTSTR)EscapeDiagnosticsJson(BuildDiagnosticsTimestampUtc()),
-		ullEventSeq,
-		(LPCTSTR)EscapeDiagnosticsJson(pszPacketFamily != NULL ? CString(pszPacketFamily) : CString(_T("unknown"))),
-		(LPCTSTR)EscapeDiagnosticsJson(pszPeerLabel != NULL ? CString(pszPeerLabel) : CString(_T("unknown"))),
-		(LPCTSTR)EscapeDiagnosticsJson(pszTransportMode != NULL ? CString(pszTransportMode) : CString(_T("unknown"))),
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		static_cast<UINT>(byOuterOpcode),
+		static_cast<UINT>(byProtocol));
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"direction\":\"recv\",\"outcome\":\"dropped\",\"flow\":\"listener\",\"phase\":%s,\"traceKey\":%s,\"stateId\":\"listener.invalid_sub_opcode\",\"stateLabel\":\"invalid_sub_opcode\",\"packetFamily\":%s,\"transportMode\":%s,\"protocolName\":%s,\"protocolMarker\":%u,\"opcode\":%u,\"opcodeName\":%s,\"invalidSubOpcode\":%u,\"previousSubOpcode\":%s,\"payloadLen\":%u,\"payloadHex\":\"%s\",\"payloadHexTruncated\":false,\"invalidOffset\":%I64u,\"bytesRemaining\":%I64u,\"contextOffset\":%u,\"contextLen\":%u,\"contextHex\":\"%s\"}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPacketFamily),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTraceKey),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPacketFamily),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszTransportMode != NULL ? pszTransportMode : _T("unknown")),
 		(LPCTSTR)strProtocol,
 		static_cast<UINT>(byProtocol),
 		static_cast<UINT>(byOuterOpcode),
-		(LPCTSTR)EscapeDiagnosticsJson(strOuterOpcodeName),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strOuterOpcodeName),
 		static_cast<UINT>(byInvalidSubOpcode),
 		(LPCTSTR)strPreviousSubOpcode,
 		uPayloadLen,
+		(LPCTSTR)strPayloadHex,
 		ullInvalidOffset,
 		ullBytesRemaining,
 		uContextStart,
 		uContextLen,
-		(LPCTSTR)strContextHex,
-		bPayloadHexTruncated ? _T("true") : _T("false"),
-		(LPCTSTR)strPayloadHex);
-
-	WriteDiagnosticsLogLine(thePacketDiagnosticsLog, g_packetDiagnosticsLogLock, strJson);
+		(LPCTSTR)strContextHex);
+	WriteDiagEventV2(_T("ed2k_tcp"), _T("invalid_sub_opcode"), _T("warning"), strKeys, strBody);
 }
 
 // Resolve a client<->server TCP/UDP opcode to the SAME name string the rust
@@ -1431,58 +1416,6 @@ static LPCTSTR DiagEventServerTCPOpcodeName(BYTE byOpcode)
 	case OP_REJECT:			return _T("OP_REJECT");
 	default:			return _T("UNKNOWN");
 	}
-}
-
-// Shared emitter for one ED2K TCP packet in the converged ed2k_packet_v1 schema.
-// `pszFlow` discriminates the connection family (e.g. "server", "client") so the
-// emulebb-rust and eMuleBB dumps share one shape and diff 1:1.
-static void PacketDiagnosticsLogEd2kPacket(
-	LPCTSTR pszFlow,
-	LPCTSTR pszPeerLabel,
-	LPCTSTR pszTransportMode,
-	LPCTSTR pszDirection,
-	uint8 byProtocol,
-	uint8 byOpcode,
-	const BYTE *pPayload,
-	UINT uPayloadLen)
-{
-	if (!thePacketDiagnosticsLog.IsOpen())
-		return;
-
-	const UINT uPayloadHexLen = (pPayload != NULL) ? min(uPayloadLen, kMaxPacketDiagnosticsPayloadHexBytes) : 0;
-	const bool bPayloadHexTruncated = pPayload != NULL && uPayloadLen > uPayloadHexLen;
-	const CString strPayloadHex = BuildPacketDiagnosticsHexString(pPayload, uPayloadHexLen);
-	const LPCTSTR pszProtocolName = PacketDiagnosticsProtocolName(byProtocol);
-	const CString strProtocol = pszProtocolName != NULL ? BuildDiagnosticsJsonStringField(pszProtocolName) : CString(_T("null"));
-	const CString strFlow(pszFlow != NULL ? pszFlow : _T("unknown"));
-	// Server-flow packets carry server opcodes the c2c table doesn't name; resolve
-	// them against the rust server_opcode_name set so opcode_name matches 1:1.
-	const CString strOpcodeName = (strFlow == _T("server"))
-		? CString(DiagEventServerTCPOpcodeName(byOpcode))
-		: DbgGetClientTCPOpcode(byProtocol, byOpcode);
-	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
-	const CString strTraceKey(strFlow + _T(":") + strPeer);
-	const ULONGLONG ullEventSeq = NextDiagnosticsEventSeq(g_llPacketDiagnosticsEventSeq);
-
-	CString strJson;
-	strJson.Format(
-		_T("{\"schema\":\"ed2k_packet_v1\",\"source\":\"emulebb\",\"ts_utc\":\"%s\",\"event_seq\":%I64u,\"flow\":\"%s\",\"trace_key\":\"%s\",\"direction\":\"%s\",\"remote_addr\":\"%s\",\"transport_mode\":\"%s\",\"protocol\":%s,\"protocol_marker\":%u,\"opcode\":%u,\"opcode_name\":\"%s\",\"payload_len\":%u,\"payload_hex_truncated\":%s,\"payload_hex\":\"%s\"}\r\n"),
-		(LPCTSTR)EscapeDiagnosticsJson(BuildDiagnosticsTimestampUtc()),
-		ullEventSeq,
-		(LPCTSTR)EscapeDiagnosticsJson(strFlow),
-		(LPCTSTR)EscapeDiagnosticsJson(strTraceKey),
-		(LPCTSTR)EscapeDiagnosticsJson(pszDirection != NULL ? CString(pszDirection) : CString(_T("unknown"))),
-		(LPCTSTR)EscapeDiagnosticsJson(strPeer),
-		(LPCTSTR)EscapeDiagnosticsJson(pszTransportMode != NULL ? CString(pszTransportMode) : CString(_T("unknown"))),
-		(LPCTSTR)strProtocol,
-		static_cast<UINT>(byProtocol),
-		static_cast<UINT>(byOpcode),
-		(LPCTSTR)EscapeDiagnosticsJson(strOpcodeName),
-		uPayloadLen,
-		bPayloadHexTruncated ? _T("true") : _T("false"),
-		(LPCTSTR)strPayloadHex);
-
-	WriteDiagnosticsLogLine(thePacketDiagnosticsLog, g_packetDiagnosticsLogLock, strJson);
 }
 
 static void DiagEventLogEd2kServerPacket(
@@ -1563,7 +1496,7 @@ static void DiagEventLogEd2kServerPacket(
 	WriteDiagEventV2(bUdp ? _T("ed2k_server_udp") : _T("ed2k_tcp"), _T("packet"), _T("info"), strKeys, strBody);
 }
 
-void PacketDiagnosticsLogServerTcpPacket(
+void DiagEventLogEd2kServerTcpPacket(
 	LPCTSTR pszPeerLabel,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
@@ -1572,13 +1505,11 @@ void PacketDiagnosticsLogServerTcpPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen)
 {
-	PacketDiagnosticsLogEd2kPacket(_T("server"), pszPeerLabel, pszTransportMode, pszDirection,
-		byProtocol, byOpcode, pPayload, uPayloadLen);
 	DiagEventLogEd2kServerPacket(false, pszPeerLabel, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 
-void PacketDiagnosticsLogServerUdpPacket(
+void DiagEventLogEd2kServerUdpPacket(
 	LPCTSTR pszPeerLabel,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
@@ -1587,13 +1518,11 @@ void PacketDiagnosticsLogServerUdpPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen)
 {
-	PacketDiagnosticsLogEd2kPacket(_T("server"), pszPeerLabel, pszTransportMode, pszDirection,
-		byProtocol, byOpcode, pPayload, uPayloadLen);
 	DiagEventLogEd2kServerPacket(true, pszPeerLabel, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 
-void PacketDiagnosticsLogClientPacket(
+void DiagEventLogEd2kClientTcpPacket(
 	LPCTSTR pszPeerLabel,
 	LPCTSTR pszPeerHash,
 	LPCTSTR pszTransportMode,
@@ -1606,25 +1535,10 @@ void PacketDiagnosticsLogClientPacket(
 	// Flow token parity: rust tags client-to-client traffic with an origin-based
 	// flow — "listener" for the accepted (inbound) connection that carries served
 	// uploads. Use the same token so the upload/publish path correlates in the
-	// converged ed2k_packet_v1 / ed2k_tcp diff. (A finer "native_download" split
+	// converged diag_event_v2 ed2k_tcp diff. (A finer "native_download" split
 	// for sockets WE dialed out to download is a documented follow-up; it needs
 	// the connection origin threaded to this call site.)
-	PacketDiagnosticsLogEd2kPacket(_T("listener"), pszPeerLabel, pszTransportMode, pszDirection,
-		byProtocol, byOpcode, pPayload, uPayloadLen);
 	DiagEventLogEd2kTcpPacket(_T("listener"), pszPeerLabel, pszPeerHash, pszTransportMode, pszDirection,
-		byProtocol, byOpcode, pPayload, uPayloadLen);
-}
-
-void PacketDiagnosticsLogClientUdpPacket(
-	LPCTSTR pszPeerLabel,
-	LPCTSTR pszTransportMode,
-	LPCTSTR pszDirection,
-	uint8 byProtocol,
-	uint8 byOpcode,
-	const BYTE *pPayload,
-	UINT uPayloadLen)
-{
-	PacketDiagnosticsLogEd2kPacket(_T("client_udp"), pszPeerLabel, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 

@@ -75,10 +75,6 @@ void BeginClientUdpSendAttempt(UDPPack *pPack, const BYTE *pRaw, UINT uRawLen, L
 
 	pPack->ullDiagSendAttemptId = NextClientUdpSendAttemptId();
 	pPack->uDiagAttemptedLen = uRawLen;
-	PacketDiagnosticsLogClientUdpPacket(
-		ipstr(pPack->dwIP, pPack->nPort), pszTransportMode, _T("send"),
-		pPack->packet->prot, pPack->packet->opcode,
-		reinterpret_cast<const BYTE*>(pPack->packet->pBuffer), pPack->packet->size);
 	DiagEventLogEd2kClientUdpPacket(
 		ipstr(pPack->dwIP, pPack->nPort), pszTransportMode, _T("send"), _T("attempted"),
 		pPack->packet->prot, pPack->packet->opcode,
@@ -205,12 +201,6 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 				if (nPacketLen < 2)
 					strError = _T("eMule packet too short");
 				else {
-#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-					PacketDiagnosticsLogClientUdpPacket(
-						ipstr(sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port)),
-						(nReceiverVerifyKey != 0 || nSenderVerifyKey != 0) ? _T("obfuscated") : _T("plaintext"),
-						_T("recv"), pBuffer[0], pBuffer[1], pBuffer + 2, static_cast<UINT>(nPacketLen - 2));
-#endif
 					const SProcessPacketResult processResult = ProcessPacket(
 						pBuffer + 2, nPacketLen - 2, pBuffer[1],
 						sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port));

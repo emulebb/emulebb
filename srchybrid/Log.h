@@ -162,7 +162,7 @@ CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen);
 #if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
 /**
  * @brief Emits one eD2k TCP packet as a diag_event_v2 family:"ed2k_tcp" record.
- *        Re-uses the same send/recv boundary as the ed2k_packet_v1 dump.
+ *        Re-uses the same send/recv boundary as the diag_event_v2 dump.
  */
 void DiagEventLogEd2kTcpPacket(
 	LPCTSTR pszFlow,
@@ -286,9 +286,7 @@ private:
 };
 
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-extern CLogFile thePacketDiagnosticsLog;
-
-void PacketDiagnosticsLogInvalidSubOpcode(
+void DiagEventLogInvalidSubOpcode(
 	LPCTSTR pszPacketFamily,
 	LPCTSTR pszPeerLabel,
 	LPCTSTR pszTransportMode,
@@ -301,9 +299,7 @@ void PacketDiagnosticsLogInvalidSubOpcode(
 	ULONGLONG ullBytesRemaining,
 	int iPreviousSubOpcode);
 
-// Logs one ED2K server TCP packet in both the legacy packet stream and the
-// converged diag_event_v2 stream.
-void PacketDiagnosticsLogServerTcpPacket(
+void DiagEventLogEd2kServerTcpPacket(
 	LPCTSTR pszPeerLabel,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
@@ -312,9 +308,7 @@ void PacketDiagnosticsLogServerTcpPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen);
 
-// Logs one ED2K server UDP packet in both the legacy packet stream and the
-// converged diag_event_v2 stream.
-void PacketDiagnosticsLogServerUdpPacket(
+void DiagEventLogEd2kServerUdpPacket(
 	LPCTSTR pszPeerLabel,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
@@ -323,23 +317,9 @@ void PacketDiagnosticsLogServerUdpPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen);
 
-// Logs one ED2K client-to-client (peer) packet (TCP) in either direction. Emits the
-// shared ed2k_packet_v1 schema with flow="client" so the trace diffs 1:1 against the
-// emulebb-rust client-to-client packet dump. Compile-gated; no-op unless the log is open.
-void PacketDiagnosticsLogClientPacket(
+void DiagEventLogEd2kClientTcpPacket(
 	LPCTSTR pszPeerLabel,
 	LPCTSTR pszPeerHash,
-	LPCTSTR pszTransportMode,
-	LPCTSTR pszDirection,
-	uint8 byProtocol,
-	uint8 byOpcode,
-	const BYTE *pPayload,
-	UINT uPayloadLen);
-
-// Logs one decoded ED2K client-UDP packet to the legacy ed2k_packet_v1 stream
-// without misclassifying it as an ed2k_tcp diag_event_v2 record.
-void PacketDiagnosticsLogClientUdpPacket(
-	LPCTSTR pszPeerLabel,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
 	uint8 byProtocol,

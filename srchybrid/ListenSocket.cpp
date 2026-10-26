@@ -155,7 +155,7 @@ void LogInvalidMultipacketSubOpcode(
 	const ULONGLONG ullInvalidOffset = (ullPosition > 0) ? (ullPosition - 1) : 0;
 	const ULONGLONG ullBytesRemaining = (ullLength > ullPosition) ? (ullLength - ullPosition) : 0;
 
-	PacketDiagnosticsLogInvalidSubOpcode(
+	DiagEventLogInvalidSubOpcode(
 		pszPacketFamily,
 		BuildPacketDiagnosticsPeerLabel(pClient),
 		GetPacketDiagnosticsTransportMode(pClient),
@@ -2053,7 +2053,7 @@ bool CClientReqSocket::PacketReceived(Packet *packet)
 	bool bDelClient;
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 	const CString strPacketDiagnosticsPeerHash(BuildPacketDiagnosticsPeerHash(client));
-	PacketDiagnosticsLogClientPacket(BuildPacketDiagnosticsPeerLabel(client), strPacketDiagnosticsPeerHash,
+	DiagEventLogEd2kClientTcpPacket(BuildPacketDiagnosticsPeerLabel(client), strPacketDiagnosticsPeerHash,
 		GetPacketDiagnosticsTransportMode(client), _T("recv"),
 		packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
 #endif
@@ -2216,7 +2216,7 @@ void CClientReqSocket::SendPacket(Packet *packet, bool controlpacket, uint32 act
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 	if (packet != NULL) {
 		const CString strPacketDiagnosticsPeerHash(BuildPacketDiagnosticsPeerHash(client));
-		PacketDiagnosticsLogClientPacket(BuildPacketDiagnosticsPeerLabel(client), strPacketDiagnosticsPeerHash,
+		DiagEventLogEd2kClientTcpPacket(BuildPacketDiagnosticsPeerLabel(client), strPacketDiagnosticsPeerHash,
 			GetPacketDiagnosticsTransportMode(client), _T("send"),
 			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
 	}

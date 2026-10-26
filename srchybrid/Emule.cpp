@@ -1085,9 +1085,6 @@ std::string BuildStartupTraceEventJson(const SStartupDiagnosticsTraceEvent &rEve
 
 CLogFile theLog;
 CLogFile theVerboseLog;
-#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-CLogFile thePacketDiagnosticsLog;
-#endif
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 CLogFile theUploadSlotDiagnosticsLog;
 #endif
@@ -1710,9 +1707,6 @@ BOOL CemuleApp::InitInstance()
 	VERIFY(theLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, thePrefs.GetLog2Disk()) + LogArtifactNames::MainLogFileName()));
 	VERIFY(theVerboseLog.SetFilePath(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false) + LogArtifactNames::VerboseLogFileName()));
 	const CString strDiagnosticsLogDir(thePrefs.GetMuleDirectory(EMULE_LOGDIR, false));
-#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-	InitializeDiagnosticsLog(thePacketDiagnosticsLog, strDiagnosticsLogDir + LogArtifactNames::PacketDiagnosticsLogFileName(), thePrefs.GetMaxLogFileSize());
-#endif
 #ifdef EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS
 	InitializeDiagnosticsLog(theUploadSlotDiagnosticsLog, strDiagnosticsLogDir + LogArtifactNames::UploadSlotDiagnosticsLogFileName(), thePrefs.GetMaxLogFileSize());
 #endif
