@@ -9,6 +9,29 @@ constexpr uint64_t kDefaultSegmentBytes = 64ull * 1024ull * 1024ull;
 constexpr uint64_t kMinimumSegmentBytes = 1ull * 1024ull * 1024ull;
 constexpr uint64_t kDefaultSegmentAgeMs = 60ull * 60ull * 1000ull;
 constexpr size_t kDefaultRetainedSegments = 8u;
+constexpr uint64_t kDefaultMaxRetainedSeconds =
+	(kDefaultSegmentAgeMs / 1000ull) * kDefaultRetainedSegments;
+constexpr uint64_t kDefaultMinimumFreeBytes = 0ull;
+
+inline uint64_t MaximumTotalBytes(const uint64_t ullSegmentBytes)
+{
+	return ullSegmentBytes * kDefaultRetainedSegments;
+}
+
+inline uint64_t MaximumGrowthBytes(
+	const uint64_t ullRetainedBytes,
+	const uint64_t ullAvailableBytes,
+	const uint64_t ullMaximumTotalBytes,
+	const uint64_t ullMinimumFreeBytes)
+{
+	const uint64_t ullAggregateGrowth = ullRetainedBytes < ullMaximumTotalBytes
+		? ullMaximumTotalBytes - ullRetainedBytes
+		: 0;
+	const uint64_t ullFreeSpaceGrowth = ullAvailableBytes > ullMinimumFreeBytes
+		? ullAvailableBytes - ullMinimumFreeBytes
+		: 0;
+	return ullAggregateGrowth < ullFreeSpaceGrowth ? ullAggregateGrowth : ullFreeSpaceGrowth;
+}
 
 inline uint64_t NormalizeSegmentBytes(const uint64_t ullConfiguredBytes)
 {
