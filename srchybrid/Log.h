@@ -166,6 +166,7 @@ CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen);
 void DiagEventLogEd2kTcpPacket(
 	LPCTSTR pszFlow,
 	LPCTSTR pszPeerLabel,
+	LPCTSTR pszPeerHash,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
 	uint8 byProtocol,
@@ -326,6 +327,7 @@ void PacketDiagnosticsLogServerUdpPacket(
 // emulebb-rust client-to-client packet dump. Compile-gated; no-op unless the log is open.
 void PacketDiagnosticsLogClientPacket(
 	LPCTSTR pszPeerLabel,
+	LPCTSTR pszPeerHash,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
 	uint8 byProtocol,
