@@ -728,7 +728,11 @@ bool CServerSocket::PacketReceived(Packet *packet)
 		}
 
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-		PacketDiagnosticsLogServerPacket(_T("ed2k-server"), _T("tcp"), _T("recv"),
+		CString strDiagnosticPeer;
+		if (cur_server != NULL)
+			strDiagnosticPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
+		PacketDiagnosticsLogServerTcpPacket(strDiagnosticPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strDiagnosticPeer,
+			IsObfusicating() ? _T("obfuscated") : _T("plaintext"), _T("recv"),
 			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
 #endif
 		if (packet->prot == OP_EDONKEYPROT)
@@ -776,6 +780,11 @@ void CServerSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actual
 	m_dwLastTransmission = ::GetTickCount64();
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 	if (packet != NULL) {
+		CString strDiagnosticPeer;
+		if (cur_server != NULL)
+			strDiagnosticPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
+		const LPCTSTR pszDiagnosticPeer = strDiagnosticPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strDiagnosticPeer;
+		const LPCTSTR pszDiagnosticTransport = IsObfusicating() ? _T("obfuscated") : _T("plaintext");
 		bool bLoggedEmbeddedFrames = false;
 		if (packet->prot == 0 && packet->opcode == 0) {
 			const BYTE *pRawPacket = reinterpret_cast<const BYTE*>(packet->GetPacket());
@@ -784,14 +793,14 @@ void CServerSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actual
 				size_t uOffset = 0;
 				ServerSocketSeams::ServerPacketFrameView frame = {};
 				while (ServerSocketSeams::TryReadEmbeddedTcpFrame(pRawPacket, uRawPacketSize, &uOffset, &frame)) {
-					PacketDiagnosticsLogServerPacket(_T("ed2k-server"), _T("tcp"), _T("send"),
+					PacketDiagnosticsLogServerTcpPacket(pszDiagnosticPeer, pszDiagnosticTransport, _T("send"),
 						frame.protocol, frame.opcode, frame.payload, frame.payloadSize);
 				}
 				bLoggedEmbeddedFrames = true;
 			}
 		}
 		if (!bLoggedEmbeddedFrames)
-			PacketDiagnosticsLogServerPacket(_T("ed2k-server"), _T("tcp"), _T("send"),
+			PacketDiagnosticsLogServerTcpPacket(pszDiagnosticPeer, pszDiagnosticTransport, _T("send"),
 				packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
 	}
 #endif

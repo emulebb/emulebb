@@ -1286,7 +1286,85 @@ static void PacketDiagnosticsLogEd2kPacket(
 	WriteDiagnosticsLogLine(thePacketDiagnosticsLog, g_packetDiagnosticsLogLock, strJson);
 }
 
-void PacketDiagnosticsLogServerPacket(
+static void DiagEventLogEd2kServerPacket(
+	bool bUdp,
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen)
+{
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	const UINT uHeaderLen = bUdp ? 2 : 6;
+	const UINT uClearFrameLen = uHeaderLen + uPayloadLen;
+	CString strClearFrameHex;
+	if (bUdp) {
+		const BYTE aHeader[2] = { byProtocol, byOpcode };
+		strClearFrameHex = BuildDiagEventLowerHexString(aHeader, _countof(aHeader));
+	} else {
+		const uint32 uFrameLen = uPayloadLen + 1;
+		const BYTE aHeader[6] = {
+			byProtocol,
+			static_cast<BYTE>(uFrameLen & 0xFF),
+			static_cast<BYTE>((uFrameLen >> 8) & 0xFF),
+			static_cast<BYTE>((uFrameLen >> 16) & 0xFF),
+			static_cast<BYTE>((uFrameLen >> 24) & 0xFF),
+			byOpcode
+		};
+		strClearFrameHex = BuildDiagEventLowerHexString(aHeader, _countof(aHeader));
+	}
+	strClearFrameHex += BuildDiagEventLowerHexString(pPayload, pPayload != NULL ? uPayloadLen : 0);
+
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	const CString strTransportMode(pszTransportMode != NULL ? pszTransportMode : _T("unknown"));
+	const bool bObfuscated = _tcsicmp(strTransportMode, _T("obfuscated")) == 0;
+	const CString strProtocolName = PacketDiagnosticsProtocolName(byProtocol) != NULL
+		? BuildDiagnosticsJsonStringField(PacketDiagnosticsProtocolName(byProtocol))
+		: CString(_T("null"));
+	const CString strOpcodeName(DiagEventServerTCPOpcodeName(byOpcode));
+	const CString strPayloadHex(BuildDiagEventLowerHexString(pPayload, pPayload != NULL ? uPayloadLen : 0));
+
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		static_cast<UINT>(byOpcode),
+		static_cast<UINT>(byProtocol));
+
+	CString strTraceKey;
+	strTraceKey.Format(_T("server:%s:%s"), bUdp ? _T("udp") : _T("tcp"), (LPCTSTR)strPeer);
+	CString strBody;
+	strBody.Format(
+		_T("{\"direction\":%s,\"outcome\":%s,\"protocolMarker\":%u,\"protocolName\":%s,\"opcode\":%u,\"opcodeName\":%s,\"clearFrameLen\":%u,\"clearFrameHex\":\"%s\",\"payloadLen\":%u,\"payloadHex\":\"%s\",\"payloadHexTruncated\":false,\"obfuscated\":%s,\"transportMode\":%s,\"flow\":\"server\",\"phase\":%s,\"role\":%s,\"traceKey\":%s,\"stateId\":%s,\"stateLabel\":%s"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDirection != NULL ? pszDirection : _T("unknown")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDirection != NULL && _tcsicmp(pszDirection, _T("send")) == 0 ? _T("send_succeeded") : _T("accepted")),
+		static_cast<UINT>(byProtocol),
+		(LPCTSTR)strProtocolName,
+		static_cast<UINT>(byOpcode),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strOpcodeName),
+		uClearFrameLen,
+		(LPCTSTR)strClearFrameHex,
+		uPayloadLen,
+		(LPCTSTR)strPayloadHex,
+		bObfuscated ? _T("true") : _T("false"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTransportMode),
+		bUdp ? _T("\"udp\"") : _T("\"tcp\""),
+		bUdp ? _T("\"udp\"") : _T("\"server\""),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTraceKey),
+		bUdp ? _T("\"server.udp.packet\"") : _T("\"server.tcp.packet\""),
+		bUdp ? _T("\"udp\"") : _T("\"tcp\""));
+	if (!bObfuscated)
+		strBody.AppendFormat(_T(",\"rawLen\":%u,\"rawHex\":\"%s\""), uClearFrameLen, (LPCTSTR)strClearFrameHex);
+	strBody += _T("}");
+
+	WriteDiagEventV2(bUdp ? _T("ed2k_server_udp") : _T("ed2k_tcp"), _T("packet"), _T("info"), strKeys, strBody);
+}
+
+void PacketDiagnosticsLogServerTcpPacket(
 	LPCTSTR pszPeerLabel,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
@@ -1296,6 +1374,23 @@ void PacketDiagnosticsLogServerPacket(
 	UINT uPayloadLen)
 {
 	PacketDiagnosticsLogEd2kPacket(_T("server"), pszPeerLabel, pszTransportMode, pszDirection,
+		byProtocol, byOpcode, pPayload, uPayloadLen);
+	DiagEventLogEd2kServerPacket(false, pszPeerLabel, pszTransportMode, pszDirection,
+		byProtocol, byOpcode, pPayload, uPayloadLen);
+}
+
+void PacketDiagnosticsLogServerUdpPacket(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszDirection,
+	uint8 byProtocol,
+	uint8 byOpcode,
+	const BYTE *pPayload,
+	UINT uPayloadLen)
+{
+	PacketDiagnosticsLogEd2kPacket(_T("server"), pszPeerLabel, pszTransportMode, pszDirection,
+		byProtocol, byOpcode, pPayload, uPayloadLen);
+	DiagEventLogEd2kServerPacket(true, pszPeerLabel, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 
