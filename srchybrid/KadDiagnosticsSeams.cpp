@@ -452,6 +452,37 @@ void LogSearchResponseEvent(
 #endif
 }
 
+void LogLookupLifecycle(
+	uint32 uSearchID,
+	LPCTSTR pszMilestone,
+	LPCTSTR pszSearchKind,
+	UINT uResultCount)
+{
+#if EMULEBB_HAS_DIAG_EVENT_V2
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	CString strSearchID;
+	strSearchID.Format(_T("%u"), uSearchID);
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"searchId\":%s}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strSearchID));
+	CString strBody;
+	strBody.Format(
+		_T("{\"milestone\":%s,\"action\":\"search\",\"searchKind\":%s,\"resultCount\":%u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszMilestone),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszSearchKind),
+		uResultCount);
+	WriteDiagEventV2(_T("kad_event"), _T("lookup"), _T("info"), strKeys, strBody);
+#else
+	UNREFERENCED_PARAMETER(uSearchID);
+	UNREFERENCED_PARAMETER(pszMilestone);
+	UNREFERENCED_PARAMETER(pszSearchKind);
+	UNREFERENCED_PARAMETER(uResultCount);
+#endif
+}
+
 void LogKadPublish(
 	EKadPublishKind eKind,
 	const uchar *pFileHash,
