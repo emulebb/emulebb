@@ -731,7 +731,7 @@ bool CServerSocket::PacketReceived(Packet *packet)
 		CString strDiagnosticPeer;
 		if (cur_server != NULL)
 			strDiagnosticPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
-		PacketDiagnosticsLogServerTcpPacket(strDiagnosticPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strDiagnosticPeer,
+		DiagEventLogEd2kServerTcpPacket(strDiagnosticPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strDiagnosticPeer,
 			IsObfusicating() ? _T("obfuscated") : _T("plaintext"), _T("recv"),
 			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
 #endif
@@ -793,14 +793,14 @@ void CServerSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actual
 				size_t uOffset = 0;
 				ServerSocketSeams::ServerPacketFrameView frame = {};
 				while (ServerSocketSeams::TryReadEmbeddedTcpFrame(pRawPacket, uRawPacketSize, &uOffset, &frame)) {
-					PacketDiagnosticsLogServerTcpPacket(pszDiagnosticPeer, pszDiagnosticTransport, _T("send"),
+					DiagEventLogEd2kServerTcpPacket(pszDiagnosticPeer, pszDiagnosticTransport, _T("send"),
 						frame.protocol, frame.opcode, frame.payload, frame.payloadSize);
 				}
 				bLoggedEmbeddedFrames = true;
 			}
 		}
 		if (!bLoggedEmbeddedFrames)
-			PacketDiagnosticsLogServerTcpPacket(pszDiagnosticPeer, pszDiagnosticTransport, _T("send"),
+			DiagEventLogEd2kServerTcpPacket(pszDiagnosticPeer, pszDiagnosticTransport, _T("send"),
 				packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
 	}
 #endif

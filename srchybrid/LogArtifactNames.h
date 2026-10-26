@@ -20,13 +20,6 @@ inline LPCTSTR VerboseLogFileName()
 	return _T("emulebb-verbose.log");
 }
 
-#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-inline LPCTSTR PacketDiagnosticsLogFileName()
-{
-	return _T("emulebb-diagnostics-packet.log");
-}
-#endif
-
 #if EMULEBB_HAS_BAD_PEER_DIAGNOSTICS
 inline LPCTSTR BadPeerDiagnosticsLogFileName()
 {
