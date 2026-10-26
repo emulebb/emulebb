@@ -90,6 +90,16 @@ void LogSearchResponseEvent(
 	LPCTSTR pszReason);
 
 /**
+ * Writes the normalized lifecycle for one public Kad lookup. Search IDs are
+ * serialized as strings to match the REST and rust diagnostic contracts.
+ */
+void LogLookupLifecycle(
+	uint32 uSearchID,
+	LPCTSTR pszMilestone,
+	LPCTSTR pszSearchKind,
+	UINT uResultCount);
+
+/**
  * Which outbound Kad publish kind a milestone describes; mirrors the rust
  * KadPublishKind so body.publishKind and the event name match byte-for-byte.
  */
@@ -136,6 +146,7 @@ inline void LogContactEvent(LPCTSTR, LPCTSTR, const Kademlia::CContact *, LPCTST
 inline void LogRawContactEvent(LPCTSTR, LPCTSTR, uint32, uint16, uint16, uint8, LPCTSTR, LPCTSTR, LPCTSTR = NULL) {}
 inline void LogPacketEvent(LPCTSTR, LPCTSTR, uint32, uint8, uint8, LPCTSTR, LPCTSTR, LONGLONG) {}
 inline void LogSearchResponseEvent(LPCTSTR, LPCTSTR, uint32, uint32, uint32, uint16, uint8, UINT, UINT, LPCTSTR, LPCTSTR) {}
+inline void LogLookupLifecycle(uint32, LPCTSTR, LPCTSTR, UINT) {}
 enum class EKadPublishKind
 {
 	Keyword,
@@ -153,6 +164,7 @@ inline void LogKadPublishRound(UINT, UINT, UINT, UINT) {}
 #define EMULEBB_KAD_LOG_RAW_CONTACT_EVENT(...) KadDiagnosticsSeams::LogRawContactEvent(__VA_ARGS__)
 #define EMULEBB_KAD_LOG_PACKET_EVENT(...) KadDiagnosticsSeams::LogPacketEvent(__VA_ARGS__)
 #define EMULEBB_KAD_LOG_SEARCH_RESPONSE_EVENT(...) KadDiagnosticsSeams::LogSearchResponseEvent(__VA_ARGS__)
+#define EMULEBB_KAD_LOG_LOOKUP_LIFECYCLE(...) KadDiagnosticsSeams::LogLookupLifecycle(__VA_ARGS__)
 #define EMULEBB_KAD_LOG_PUBLISH(...) KadDiagnosticsSeams::LogKadPublish(__VA_ARGS__)
 #define EMULEBB_KAD_LOG_PUBLISH_ROUND(...) KadDiagnosticsSeams::LogKadPublishRound(__VA_ARGS__)
 #else
@@ -161,6 +173,7 @@ inline void LogKadPublishRound(UINT, UINT, UINT, UINT) {}
 #define EMULEBB_KAD_LOG_RAW_CONTACT_EVENT(...) ((void)0)
 #define EMULEBB_KAD_LOG_PACKET_EVENT(...) ((void)0)
 #define EMULEBB_KAD_LOG_SEARCH_RESPONSE_EVENT(...) ((void)0)
+#define EMULEBB_KAD_LOG_LOOKUP_LIFECYCLE(...) ((void)0)
 #define EMULEBB_KAD_LOG_PUBLISH(...) ((void)0)
 #define EMULEBB_KAD_LOG_PUBLISH_ROUND(...) ((void)0)
 #endif

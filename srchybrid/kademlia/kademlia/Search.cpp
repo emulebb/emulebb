@@ -95,6 +95,14 @@ CSearch::CSearch()
 
 CSearch::~CSearch()
 {
+	if (m_uType == KEYWORD && m_uSearchID != _UI32_MAX) {
+		EMULEBB_KAD_LOG_LOOKUP_LIFECYCLE(
+			m_uSearchID,
+			_T("lookup_complete"),
+			_T("keyword"),
+			theApp.searchlist->GetFoundFiles(m_uSearchID));
+	}
+
 	// remember the closest node we found and tried to contact (if any) during this search
 	// for statistical calculations, but only if it's a certain type
 	switch (m_uType) {
@@ -173,6 +181,14 @@ CSearch::~CSearch()
 
 void CSearch::Go()
 {
+	if (m_uType == KEYWORD && m_uSearchID != _UI32_MAX) {
+		EMULEBB_KAD_LOG_LOOKUP_LIFECYCLE(
+			m_uSearchID,
+			_T("lookup_started"),
+			_T("keyword"),
+			0);
+	}
+
 	// Start with a lot of possible contacts, this is a fallback in case search stalls due to dead contacts
 	if (m_mapPossible.empty()) {
 		CUInt128 uDistance(CKademlia::GetPrefs()->GetKadID());
