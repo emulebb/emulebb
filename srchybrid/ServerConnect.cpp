@@ -503,6 +503,7 @@ void CServerConnect::CheckForTimeout()
 
 		if (curTick >= tmpkey + dwServerConnectTimeout) {
 			LogWarning(GetResString(IDS_ERR_CONTIMEOUT), (LPCTSTR)tmpsock->cur_server->GetListName(), tmpsock->cur_server->GetAddress(), tmpsock->cur_server->GetPort());
+			tmpsock->LogConnectionStateTransition(tmpsock->GetConnectionState(), CS_SERVERDEAD, WSAETIMEDOUT);
 			CServer *pRetryServer = NULL;
 			const bool bRetryWithoutObfuscation = ServerConnectSeams::ShouldRetrySingleServerWithoutObfuscation(singleconnecting, true, tmpsock->IsServerCryptEnabledConnection(), thePrefs.IsCryptLayerRequired());
 			if (bRetryWithoutObfuscation)

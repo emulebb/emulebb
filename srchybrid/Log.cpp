@@ -993,6 +993,54 @@ CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen)
 	strHex.ReleaseBuffer(static_cast<int>(uPayloadLen * 2));
 	return strHex;
 }
+
+void DiagEventLogEd2kServerConnectionState(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszPreviousState,
+	LPCTSTR pszState,
+	LPCTSTR pszOutcome,
+	LPCTSTR pszError)
+{
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	const CString strTransportMode(pszTransportMode != NULL ? pszTransportMode : _T("unknown"));
+	const bool bObfuscated = _tcsicmp(strTransportMode, _T("obfuscated")) == 0;
+	CString strTraceKey;
+	strTraceKey.Format(_T("server:tcp:%s"), (LPCTSTR)strPeer);
+
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"flow\":\"server\",\"traceId\":%I64u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		ullAttemptId);
+
+	const CString strError = pszError != NULL && pszError[0] != _T('\0')
+		? BuildDiagnosticsJsonStringField(pszError)
+		: CString(_T("null"));
+	CString strBody;
+	strBody.Format(
+		_T("{\"flow\":\"server\",\"phase\":\"connection\",\"traceKey\":%s,\"traceId\":%I64u,\"previousState\":%s,\"state\":%s,\"outcome\":%s,\"transportMode\":%s,\"obfuscated\":%s,\"error\":%s}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTraceKey),
+		ullAttemptId,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszPreviousState != NULL ? pszPreviousState : _T("unknown")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszState != NULL ? pszState : _T("unknown")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszOutcome != NULL ? pszOutcome : _T("state_changed")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTransportMode),
+		bObfuscated ? _T("true") : _T("false"),
+		(LPCTSTR)strError);
+
+	const bool bFailure = pszOutcome != NULL && _tcscmp(pszOutcome, _T("connection_failed")) == 0;
+	WriteDiagEventV2(
+		_T("ed2k_tcp"),
+		_T("connection_state"),
+		bFailure ? _T("warning") : _T("info"),
+		strKeys,
+		strBody);
+}
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS

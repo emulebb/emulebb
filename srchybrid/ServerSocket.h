@@ -43,11 +43,13 @@ protected:
 
 private:
 	bool ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode);
-	void SetConnectionState(int newstate);
+	void SetConnectionState(int newstate, int nErrorCode = 0);
+	void LogConnectionStateTransition(int previousState, int newstate, int nErrorCode) const;
 
 	CServerConnect *serverconnect;
 	CServer *cur_server; // holds a copy of a CServer from the CServerList
 	ULONGLONG m_dwLastTransmission;
+	ULONGLONG m_ullDiagnosticAttemptId;
 	int connectionstate;
 	bool m_bIsDeleting;	// true: socket is already in deletion phase, don't destroy it in ::StopConnectionTry
 	bool m_bStartNewMessageLog;

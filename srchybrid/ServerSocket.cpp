@@ -49,6 +49,40 @@ static char THIS_FILE[] = __FILE__;
 namespace
 {
 	static const uint32 MAX_SERVERIDENT_TAGS = 256;
+	__declspec(align(8)) volatile LONG64 g_nNextServerConnectionAttemptId = 0;
+
+	LPCTSTR DiagnosticServerConnectionStateLabel(int state)
+	{
+		switch (state) {
+		case CS_FATALERROR: return _T("fatal_error");
+		case CS_DISCONNECTED: return _T("disconnected");
+		case CS_SERVERDEAD: return _T("server_dead");
+		case CS_ERROR: return _T("error");
+		case CS_SERVERFULL: return _T("server_full");
+		case CS_NOTCONNECTED: return _T("not_connected");
+		case CS_CONNECTING: return _T("connecting");
+		case CS_CONNECTED: return _T("connected");
+		case CS_WAITFORLOGIN: return _T("awaiting_idchange");
+		case CS_WAITFORPROXYLISTENING: return _T("awaiting_proxy");
+		default: return _T("unknown");
+		}
+	}
+
+	LPCTSTR DiagnosticServerConnectionOutcome(int state)
+	{
+		switch (state) {
+		case CS_CONNECTING: return _T("attempt_started");
+		case CS_WAITFORLOGIN: return _T("transport_connected");
+		case CS_CONNECTED: return _T("login_accepted");
+		case CS_NOTCONNECTED:
+		case CS_DISCONNECTED: return _T("connection_closed");
+		case CS_FATALERROR:
+		case CS_SERVERDEAD:
+		case CS_ERROR:
+		case CS_SERVERFULL: return _T("connection_failed");
+		default: return _T("state_changed");
+		}
+	}
 
 	/**
 	 * Rejects impossible or hostile tag counts before entering the per-tag parsing loop.
@@ -76,6 +110,7 @@ CServerSocket::CServerSocket(CServerConnect *in_serverconnect, bool bManualSingl
 	: serverconnect(in_serverconnect)
 	, cur_server()
 	, m_dwLastTransmission()
+	, m_ullDiagnosticAttemptId(static_cast<ULONGLONG>(::InterlockedIncrement64(&g_nNextServerConnectionAttemptId)))
 	, connectionstate(CS_NOTCONNECTED)
 	, m_bIsDeleting()
 	, m_bStartNewMessageLog(true)
@@ -150,7 +185,7 @@ void CServerSocket::OnConnect(int nErrorCode)
 		state = CS_FATALERROR;
 	}
 	m_bIsDeleting = true;
-	SetConnectionState(state);
+	SetConnectionState(state, nErrorCode);
 	if (thePrefs.GetVerbose())
 		DebugLogError(_T("Failed to connect to server %s; %s"), cur_server->GetAddress(), (LPCTSTR)GetFullErrorMessage(nErrorCode));
 	serverconnect->DestroySocket(this);
@@ -697,14 +732,14 @@ void CServerSocket::ConnectTo(CServer *server, bool bNoCrypt)
 		DWORD dwError = CAsyncSocket::GetLastError();
 		if (dwError != WSAEWOULDBLOCK) {
 			LogError(GetResString(IDS_ERR_CONNECTIONERROR), (LPCTSTR)cur_server->GetListName(), cur_server->GetAddress(), nPort, (LPCTSTR)GetFullErrorMessage(dwError));
-			SetConnectionState(CS_FATALERROR);
+			SetConnectionState(CS_FATALERROR, static_cast<int>(dwError));
 		}
 	}
 }
 
 void CServerSocket::OnError(int nErrorCode)
 {
-	SetConnectionState(CS_DISCONNECTED);
+	SetConnectionState(CS_DISCONNECTED, nErrorCode);
 	if (thePrefs.GetVerbose())
 		DebugLogError(GetResString(IDS_ERR_SOCKET), (LPCTSTR)cur_server->GetListName(), cur_server->GetAddress(), cur_server->GetPort(), (LPCTSTR)GetFullErrorMessage(nErrorCode));
 }
@@ -752,27 +787,53 @@ bool CServerSocket::PacketReceived(Packet *packet)
 	return true;
 }
 
-void CServerSocket::OnClose(int /*nErrorCode*/)
+void CServerSocket::OnClose(int nErrorCode)
 {
 	CEMSocket::OnClose(0);
 	if (connectionstate == CS_WAITFORLOGIN)
-		SetConnectionState(CS_SERVERFULL);
+		SetConnectionState(CS_SERVERFULL, nErrorCode);
 	else if (connectionstate == CS_CONNECTED)
-		SetConnectionState(CS_DISCONNECTED);
+		SetConnectionState(CS_DISCONNECTED, nErrorCode);
 	else
-		SetConnectionState(CS_NOTCONNECTED);
+		SetConnectionState(CS_NOTCONNECTED, nErrorCode);
 
 	serverconnect->DestroySocket(this);
 }
 
-void CServerSocket::SetConnectionState(int newstate)
+void CServerSocket::SetConnectionState(int newstate, int nErrorCode)
 {
+	const int previousState = connectionstate;
 	connectionstate = newstate;
+	LogConnectionStateTransition(previousState, newstate, nErrorCode);
 	if (newstate < CS_CONNECTING)
 		serverconnect->ConnectionFailed(this);
 	else if (newstate == CS_CONNECTED || newstate == CS_WAITFORLOGIN)
 		if (serverconnect)
 			serverconnect->ConnectionEstablished(this);
+}
+
+void CServerSocket::LogConnectionStateTransition(int previousState, int newstate, int nErrorCode) const
+{
+#if EMULEBB_HAS_DIAG_EVENT_V2
+	if (previousState == newstate)
+		return;
+	CString strPeer;
+	if (cur_server != NULL)
+		strPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
+	const CString strError = nErrorCode != 0 ? GetFullErrorMessage(nErrorCode) : CString();
+	DiagEventLogEd2kServerConnectionState(
+		strPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strPeer,
+		m_ullDiagnosticAttemptId,
+		IsObfusicating() ? _T("obfuscated") : _T("plaintext"),
+		DiagnosticServerConnectionStateLabel(previousState),
+		DiagnosticServerConnectionStateLabel(newstate),
+		DiagnosticServerConnectionOutcome(newstate),
+		strError.IsEmpty() ? NULL : (LPCTSTR)strError);
+#else
+	UNREFERENCED_PARAMETER(previousState);
+	UNREFERENCED_PARAMETER(newstate);
+	UNREFERENCED_PARAMETER(nErrorCode);
+#endif
 }
 
 void CServerSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actualPayloadSize, bool bForceImmediateSend)
