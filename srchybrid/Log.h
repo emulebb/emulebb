@@ -157,6 +157,15 @@ void WriteDiagEventV2(
  *        Matches the emulebb-rust ed2k_tcp lower-case payloadHex/rawHex encoding.
  */
 CString BuildDiagEventLowerHexString(const BYTE *pPayload, UINT uPayloadLen);
+
+void DiagEventLogEd2kServerConnectionState(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszPreviousState,
+	LPCTSTR pszState,
+	LPCTSTR pszOutcome,
+	LPCTSTR pszError);
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
