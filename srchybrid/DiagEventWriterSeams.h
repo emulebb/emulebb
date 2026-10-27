@@ -8,9 +8,8 @@ namespace DiagEventWriterSeams
 constexpr uint64_t kDefaultSegmentBytes = 64ull * 1024ull * 1024ull;
 constexpr uint64_t kMinimumSegmentBytes = 1ull * 1024ull * 1024ull;
 constexpr uint64_t kDefaultSegmentAgeMs = 60ull * 60ull * 1000ull;
-constexpr size_t kDefaultRetainedSegments = 8u;
-constexpr uint64_t kDefaultMaxRetainedSeconds =
-	(kDefaultSegmentAgeMs / 1000ull) * kDefaultRetainedSegments;
+constexpr size_t kDefaultRetainedSegments = 128u;
+constexpr uint64_t kDefaultMaxRetainedSeconds = 7ull * 24ull * 60ull * 60ull;
 constexpr uint64_t kDefaultMinimumFreeBytes = 0ull;
 
 inline uint64_t MaximumTotalBytes(const uint64_t ullSegmentBytes)
