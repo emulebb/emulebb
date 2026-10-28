@@ -60,6 +60,7 @@ jobs:
       app_ref: ${{ github.sha }}
       runs_on: ${{ matrix.runner.label }}
       node_version: "24"
+      setup_wsl: true
       timeout_minutes: 90
       artifact_name: emulebb-controlled-smoke-${{ needs.prepare.outputs.package_version }}-${{ matrix.runner.label }}
       artifact_path: |
@@ -142,6 +143,11 @@ jobs:
         }
 
         Ensure-MfcForHostedRunner
+
+        # windows-11-arm currently provides the VS 2026 IDE with the v143
+        # compatibility toolset. Keep the release compiler baseline at v143
+        # while selecting the generator that is actually installed.
+        $env:EMULEBB_CMAKE_GENERATOR = "Visual Studio 18 2026"
 
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
         $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci\live-wire-inputs.ci.json"
@@ -362,12 +368,12 @@ jobs:
           Run: ${RUN_URL}
 
           Coverage:
-          - Hosted runner: windows-2022 with v143 ATL/MFC policy
+          - Hosted runner: windows-2022 with v143 ATL/MFC and WSL1 deterministic server policy
           - Release x64 eMuleBB package
           - Release x64 tracing harness build
           - Offline command-line smoke
           - LAN deterministic two-client transfer
-          - Hosted runner: windows-11-arm
+          - Hosted runner: windows-11-arm with VS 2026 generator and v143 ATL/MFC policy
           - Release ARM64 eMuleBB package
           - ARM64 offline command-line smoke
           EOF
@@ -432,7 +438,7 @@ jobs:
               `Package version: ${packageVersion}`,
               `Run: ${runUrl}`,
               "",
-              "This workflow covers x64 package-release, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC policy. It also covers ARM64 package-release and offline command-line smoke on the windows-11-arm hosted runner with the ARM64 v143 ATL/MFC policy.",
+              "This workflow covers x64 package-release, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC and WSL1 deterministic server policy. It also covers ARM64 package-release and offline command-line smoke on the windows-11-arm hosted runner with the VS 2026 generator and ARM64 v143 ATL/MFC policy.",
             ].join("\n");
 
             if (existing) {
