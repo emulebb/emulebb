@@ -144,11 +144,6 @@ jobs:
 
         Ensure-MfcForHostedRunner
 
-        # windows-11-arm currently provides the VS 2026 IDE with the v143
-        # compatibility toolset. Keep the release compiler baseline at v143
-        # while selecting the generator that is actually installed.
-        $env:EMULEBB_CMAKE_GENERATOR = "Visual Studio 18 2026"
-
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
         $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci\live-wire-inputs.ci.json"
         $ciInstallRoot = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci-suite-install-root"
@@ -308,6 +303,11 @@ jobs:
         }
 
         Ensure-MfcForHostedRunner
+
+        # windows-11-arm currently provides the VS 2026 IDE with the v143
+        # compatibility toolset. Keep the release compiler baseline at v143
+        # while selecting the generator that is actually installed.
+        $env:EMULEBB_CMAKE_GENERATOR = "Visual Studio 18 2026"
 
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
 
