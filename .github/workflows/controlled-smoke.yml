@@ -113,17 +113,18 @@ jobs:
           }
 
           Write-Host "v143 ATL/MFC is missing on this hosted runner. Installing Visual Studio v143 components."
-          & $installer modify `
-            --installPath $installPath `
-            --quiet `
-            --norestart `
-            --wait `
-            --add Microsoft.VisualStudio.ComponentGroup.VC.Tools.143.x86.x64 `
-            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.x86.x64 `
-            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.ATL `
-            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.MFC
-          if ($LASTEXITCODE -ne 0) {
-            throw "Visual Studio Installer failed while adding v143 ATL/MFC components: exit $LASTEXITCODE"
+          $installProcess = Start-Process -FilePath $installer -ArgumentList @(
+            "modify",
+            "--installPath", "`"$installPath`"",
+            "--quiet",
+            "--norestart",
+            "--add", "Microsoft.VisualStudio.ComponentGroup.VC.Tools.143.x86.x64",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.x86.x64",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.ATL",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.MFC"
+          ) -Wait -PassThru
+          if ($installProcess.ExitCode -ne 0) {
+            throw "Visual Studio Installer failed while adding v143 ATL/MFC components: exit $($installProcess.ExitCode)"
           }
 
           $postInstallCompiler = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter cl.exe -ErrorAction SilentlyContinue |
@@ -273,16 +274,17 @@ jobs:
           }
 
           Write-Host "ARM64 v143 ATL/MFC is missing on this hosted runner. Installing Visual Studio v143 components."
-          & $installer modify `
-            --installPath $installPath `
-            --quiet `
-            --norestart `
-            --wait `
-            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.ARM64 `
-            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.ATL.ARM64 `
-            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.MFC.ARM64
-          if ($LASTEXITCODE -ne 0) {
-            throw "Visual Studio Installer failed while adding ARM64 v143 ATL/MFC components: exit $LASTEXITCODE"
+          $installProcess = Start-Process -FilePath $installer -ArgumentList @(
+            "modify",
+            "--installPath", "`"$installPath`"",
+            "--quiet",
+            "--norestart",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.ARM64",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.ATL.ARM64",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.MFC.ARM64"
+          ) -Wait -PassThru
+          if ($installProcess.ExitCode -ne 0) {
+            throw "Visual Studio Installer failed while adding ARM64 v143 ATL/MFC components: exit $($installProcess.ExitCode)"
           }
 
           $postInstallCompiler = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter cl.exe -ErrorAction SilentlyContinue |
