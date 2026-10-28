@@ -168,12 +168,6 @@ jobs:
           --clean `
           --release-version $packageVersion
 
-        python -m emule_workspace package-amutorrent `
-          --config Release `
-          --platform x64 `
-          --clean `
-          --release-version $packageVersion
-
         python -m emule_workspace build app `
           --config Release `
           --platform x64 `
@@ -237,6 +231,76 @@ jobs:
         artifacts/command-line-smoke/**
         logs/builds/**
       command: |
+        function Ensure-MfcForHostedRunner {
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path -LiteralPath $vswhere)) {
+            throw "Visual Studio locator was not found: $vswhere"
+          }
+
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath
+          if (-not $installPath) {
+            $installPath = & $vswhere -latest -products * -property installationPath
+          }
+          if (-not $installPath) {
+            throw "Visual Studio installation was not found."
+          }
+
+          $vcToolsRoot = Join-Path $installPath "VC\Tools\MSVC"
+          $v143Compiler = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter cl.exe -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\bin\HostARM64\arm64\cl.exe" } |
+            Select-Object -First 1
+          $v143StaticMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter nafxcw.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\ARM64\nafxcw.lib" } |
+            Select-Object -First 1
+          $v143Toolset = Get-ChildItem -LiteralPath (Join-Path $installPath "MSBuild\Microsoft\VC") -Recurse -Filter Toolset.props -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\PlatformToolsets\v143\Toolset.props" } |
+            Select-Object -First 1
+          $v143DynamicMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter mfc140.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\ARM64\mfc140.lib" } |
+            Select-Object -First 1
+          if ($v143Compiler -and $v143StaticMfc -and $v143DynamicMfc -and $v143Toolset) {
+            Write-Host "Required ARM64 v143 ATL/MFC components already available."
+            Write-Host "v143 compiler: $($v143Compiler.FullName)"
+            Write-Host "v143 static MFC: $($v143StaticMfc.FullName)"
+            Write-Host "v143 dynamic MFC: $($v143DynamicMfc.FullName)"
+            Write-Host "v143 toolset: $($v143Toolset.FullName)"
+            return
+          }
+
+          $installer = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe"
+          if (-not (Test-Path -LiteralPath $installer)) {
+            throw "ARM64 ATL/MFC is missing and Visual Studio Installer was not found: $installer"
+          }
+
+          Write-Host "ARM64 v143 ATL/MFC is missing on this hosted runner. Installing Visual Studio v143 components."
+          & $installer modify `
+            --installPath $installPath `
+            --quiet `
+            --norestart `
+            --wait `
+            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.ARM64 `
+            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.ATL.ARM64 `
+            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.MFC.ARM64
+          if ($LASTEXITCODE -ne 0) {
+            throw "Visual Studio Installer failed while adding ARM64 v143 ATL/MFC components: exit $LASTEXITCODE"
+          }
+
+          $postInstallCompiler = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter cl.exe -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\bin\HostARM64\arm64\cl.exe" } |
+            Select-Object -First 1
+          $postInstallStaticMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter nafxcw.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\ARM64\nafxcw.lib" } |
+            Select-Object -First 1
+          $postInstallDynamicMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter mfc140.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\ARM64\mfc140.lib" } |
+            Select-Object -First 1
+          if (-not ($postInstallCompiler -and $postInstallStaticMfc -and $postInstallDynamicMfc)) {
+            throw "Visual Studio Installer completed but ARM64 v143 ATL/MFC files are still missing under $vcToolsRoot"
+          }
+        }
+
+        Ensure-MfcForHostedRunner
+
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
 
         python -m emule_workspace package-release `
@@ -298,7 +362,6 @@ jobs:
           Coverage:
           - Hosted runner: windows-2022 with v143 ATL/MFC policy
           - Release x64 eMuleBB package
-          - Release x64 aMuTorrent package
           - Release x64 tracing harness build
           - Offline command-line smoke
           - LAN deterministic two-client transfer
@@ -367,7 +430,7 @@ jobs:
               `Package version: ${packageVersion}`,
               `Run: ${runUrl}`,
               "",
-              "This workflow covers x64 package-release, package-amutorrent, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC policy. It also covers ARM64 package-release and offline command-line smoke on the windows-11-arm hosted runner.",
+              "This workflow covers x64 package-release, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC policy. It also covers ARM64 package-release and offline command-line smoke on the windows-11-arm hosted runner with the ARM64 v143 ATL/MFC policy.",
             ].join("\n");
 
             if (existing) {
