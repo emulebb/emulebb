@@ -111,6 +111,16 @@ jobs:
       EMULEBB_WORKSPACE_ROOT: ${{ github.workspace }}
       EMULEBB_WORKSPACE_OUTPUT_ROOT: ${{ github.workspace }}/../emulebb-output
     steps:
+      - name: Prepare workspace output root
+        id: workspace-output
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $outputRoot = [System.IO.Path]::GetFullPath($env:EMULEBB_WORKSPACE_OUTPUT_ROOT)
+          New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
+          "EMULEBB_WORKSPACE_OUTPUT_ROOT=$outputRoot" | Add-Content -LiteralPath $env:GITHUB_ENV
+          "root=$outputRoot" | Add-Content -LiteralPath $env:GITHUB_OUTPUT
+
       - name: Checkout build-test harness
         uses: actions/checkout@v6
         with:
@@ -133,24 +143,31 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: emulebb-controlled-smoke-ed2k-server-${{ github.sha }}
-          path: ${{ env.EMULEBB_WORKSPACE_OUTPUT_ROOT }}/tools/ed2k-server/bin
+          path: ${{ steps.workspace-output.outputs.root }}/tools/ed2k-server/bin
 
       - name: Run ED2K WSL readiness smoke
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $PSNativeCommandUseErrorActionPreference = $true
           $ed2kServerExe = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tools\ed2k-server\bin\ed2k-server"
           python -B $env:EMULEBB_WORKSPACE_ROOT\repos\emulebb-build-tests\scripts\ed2k-server-readiness-smoke.py `
             --ed2k-server-exe $ed2kServerExe `
             --artifacts-dir reports\ed2k-server-readiness-smoke
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -ne 0) {
+            $resultPath = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "reports\ed2k-server-readiness-smoke\ed2k-server-readiness-smoke-result.json"
+            if (Test-Path -LiteralPath $resultPath -PathType Leaf) {
+              Get-Content -LiteralPath $resultPath
+            }
+            throw "ED2K WSL readiness smoke failed with exit code $exitCode."
+          }
 
       - name: Upload ED2K readiness report
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
           name: emulebb-controlled-smoke-ed2k-readiness-${{ github.run_id }}
-          path: ${{ env.EMULEBB_WORKSPACE_OUTPUT_ROOT }}/reports/ed2k-server-readiness-smoke/**
+          path: ${{ steps.workspace-output.outputs.root }}/reports/ed2k-server-readiness-smoke/**
           if-no-files-found: warn
           retention-days: 14
 
