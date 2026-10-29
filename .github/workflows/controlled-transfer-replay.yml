@@ -1,0 +1,464 @@
+name: Controlled Transfer Replay
+
+on:
+  workflow_call:
+    inputs:
+      source_run_id:
+        description: Controlled Smoke run containing the reusable artifacts
+        required: true
+        type: string
+      x64_failure_artifact_id:
+        description: Exact x64 failure artifact ID
+        required: true
+        type: string
+      ed2k_server_run_id:
+        description: Controlled Smoke run containing the staged ED2K server
+        required: true
+        type: string
+      ed2k_server_artifact_id:
+        description: Exact staged ED2K server artifact ID
+        required: true
+        type: string
+      build_tests_sha:
+        description: Exact emulebb-build-tests commit to execute
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Controlled Smoke run containing the reusable artifacts
+        required: true
+        type: string
+      x64_failure_artifact_id:
+        description: Exact x64 failure artifact ID
+        required: true
+        type: string
+      ed2k_server_run_id:
+        description: Controlled Smoke run containing the staged ED2K server
+        required: true
+        type: string
+      ed2k_server_artifact_id:
+        description: Exact staged ED2K server artifact ID
+        required: true
+        type: string
+      build_tests_sha:
+        description: Exact emulebb-build-tests commit to execute
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: emulebb-controlled-transfer-replay
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  transfer_replay:
+    name: Replay deterministic x64 transfer
+    runs-on: windows-2022
+    timeout-minutes: 12
+    env:
+      EMULEBB_TEST_WSL_DISTRIBUTION: Debian-13
+    steps:
+      - name: Prepare workspace output root
+        id: output
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $workspaceRoot = [System.IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
+          $outputRoot = [System.IO.Path]::GetFullPath((Join-Path $workspaceRoot "..\emulebb-output"))
+          $inputsRoot = Join-Path $outputRoot "inputs\controlled-transfer-replay"
+          $evidenceRoot = Join-Path $outputRoot "artifacts\controlled-transfer-replay"
+          New-Item -ItemType Directory -Force -Path $outputRoot, $inputsRoot, $evidenceRoot | Out-Null
+          "EMULEBB_WORKSPACE_ROOT=$workspaceRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "EMULEBB_WORKSPACE_OUTPUT_ROOT=$outputRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "root=$outputRoot" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "inputs_root=$inputsRoot" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "evidence_root=$evidenceRoot" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Validate replay inputs
+        shell: pwsh
+        env:
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          X64_FAILURE_ARTIFACT_ID: ${{ inputs.x64_failure_artifact_id }}
+          ED2K_SERVER_RUN_ID: ${{ inputs.ed2k_server_run_id }}
+          ED2K_SERVER_ARTIFACT_ID: ${{ inputs.ed2k_server_artifact_id }}
+          BUILD_TESTS_SHA: ${{ inputs.build_tests_sha }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          foreach ($entry in @(
+            @{ Name = "source_run_id"; Value = $env:SOURCE_RUN_ID },
+            @{ Name = "x64_failure_artifact_id"; Value = $env:X64_FAILURE_ARTIFACT_ID },
+            @{ Name = "ed2k_server_run_id"; Value = $env:ED2K_SERVER_RUN_ID },
+            @{ Name = "ed2k_server_artifact_id"; Value = $env:ED2K_SERVER_ARTIFACT_ID }
+          )) {
+            if ($entry.Value -notmatch "^[1-9][0-9]*$") {
+              throw "$($entry.Name) must contain only decimal digits and cannot be zero."
+            }
+          }
+          if ($env:BUILD_TESTS_SHA -notmatch "^[0-9a-fA-F]{40}$") {
+            throw "build_tests_sha must be an exact 40-character hexadecimal commit SHA."
+          }
+
+      - name: Verify source run and artifacts
+        id: source
+        uses: actions/github-script@v8
+        env:
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          X64_FAILURE_ARTIFACT_ID: ${{ inputs.x64_failure_artifact_id }}
+          ED2K_SERVER_RUN_ID: ${{ inputs.ed2k_server_run_id }}
+          ED2K_SERVER_ARTIFACT_ID: ${{ inputs.ed2k_server_artifact_id }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sourceRunId = Number(process.env.SOURCE_RUN_ID);
+            const x64ArtifactId = Number(process.env.X64_FAILURE_ARTIFACT_ID);
+            const serverRunId = Number(process.env.ED2K_SERVER_RUN_ID);
+            const serverArtifactId = Number(process.env.ED2K_SERVER_ARTIFACT_ID);
+            const { data: run } = await github.rest.actions.getWorkflowRun({
+              owner,
+              repo,
+              run_id: sourceRunId,
+            });
+            const expectedRepository = `${owner}/${repo}`;
+            if (run.repository?.full_name !== expectedRepository) {
+              core.setFailed(`Source run belongs to ${run.repository?.full_name ?? "unknown"}, not ${expectedRepository}.`);
+              return;
+            }
+            if (run.path !== ".github/workflows/controlled-smoke.yml") {
+              core.setFailed(`Source run uses ${run.path}, not .github/workflows/controlled-smoke.yml.`);
+              return;
+            }
+            if (!/^[0-9a-f]{40}$/i.test(run.head_sha ?? "")) {
+              core.setFailed("Source run does not expose a valid 40-character head SHA.");
+              return;
+            }
+            const { data: serverRun } = await github.rest.actions.getWorkflowRun({
+              owner,
+              repo,
+              run_id: serverRunId,
+            });
+            if (serverRun.repository?.full_name !== expectedRepository) {
+              core.setFailed(`Server run belongs to ${serverRun.repository?.full_name ?? "unknown"}, not ${expectedRepository}.`);
+              return;
+            }
+            if (serverRun.path !== ".github/workflows/controlled-smoke.yml") {
+              core.setFailed(`Server run uses ${serverRun.path}, not .github/workflows/controlled-smoke.yml.`);
+              return;
+            }
+            if (!/^[0-9a-f]{40}$/i.test(serverRun.head_sha ?? "")) {
+              core.setFailed("Server run does not expose a valid 40-character head SHA.");
+              return;
+            }
+            const sourceArtifacts = await github.paginate(
+              github.rest.actions.listWorkflowRunArtifacts,
+              { owner, repo, run_id: sourceRunId, per_page: 100 },
+            );
+            const serverArtifacts = serverRunId === sourceRunId
+              ? sourceArtifacts
+              : await github.paginate(
+                  github.rest.actions.listWorkflowRunArtifacts,
+                  { owner, repo, run_id: serverRunId, per_page: 100 },
+                );
+            const requireArtifact = (artifacts, runId, artifactId, expectedName, label) => {
+              const matches = artifacts.filter((artifact) => artifact.id === artifactId);
+              if (matches.length !== 1) {
+                throw new Error(`${label} artifact ${artifactId} is not owned exactly once by run ${runId}.`);
+              }
+              const artifact = matches[0];
+              if (artifact.name !== expectedName) {
+                throw new Error(`${label} artifact ${artifactId} is named ${artifact.name}, expected ${expectedName}.`);
+              }
+              if (artifact.expired) {
+                throw new Error(`${label} artifact ${artifactId} is expired.`);
+              }
+              return artifact;
+            };
+            const shortSha = run.head_sha.slice(0, 7);
+            requireArtifact(
+              sourceArtifacts,
+              sourceRunId,
+              x64ArtifactId,
+              `emulebb-controlled-smoke-failure-${shortSha}-windows-2022`,
+              "x64 failure",
+            );
+            requireArtifact(
+              serverArtifacts,
+              serverRunId,
+              serverArtifactId,
+              `emulebb-controlled-smoke-ed2k-server-${serverRun.head_sha}`,
+              "ED2K server",
+            );
+            core.setOutput("head_sha", run.head_sha);
+            core.notice(`Verified x64 run ${sourceRunId} at ${run.head_sha} and server run ${serverRunId} at ${serverRun.head_sha}.`);
+
+      - name: Checkout transfer harness
+        uses: actions/checkout@v6
+        with:
+          repository: emulebb/emulebb-build-tests
+          ref: ${{ inputs.build_tests_sha }}
+          path: repos/emulebb-build-tests
+          persist-credentials: false
+
+      - name: Checkout matching REST seam sources
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ steps.source.outputs.head_sha }}
+          path: workspaces/workspace/app/emulebb-main
+          sparse-checkout: |
+            srchybrid/WebApiSurfaceSeams.h
+            srchybrid/WebServerArrCompat.cpp
+            srchybrid/WebServerArrCompatSeams.h
+            srchybrid/WebServerJson.cpp
+            srchybrid/WebServerJsonSeams.h
+            srchybrid/WebServerQBitCompatSeams.h
+            srchybrid/webinterface/eMule.tmpl
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Checkout REST OpenAPI contract
+        uses: actions/checkout@v6
+        with:
+          repository: emulebb/emulebb-tooling
+          ref: main
+          path: repos/emulebb-tooling
+          sparse-checkout: docs/rest/REST-API-OPENAPI.yaml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Windows harness dependency
+        shell: pwsh
+        run: python -m pip install jsonschema psutil pywin32 pywinauto PyYAML
+
+      - name: Set up WSL runtime
+        uses: Vampire/setup-wsl@d1da7f2c0322a5ee4f24975344f67fc0f5baf364 # v7.0.0
+        with:
+          distribution: Debian-13
+          wsl-version: 1
+
+      - name: Download x64 failure artifact
+        uses: actions/download-artifact@v7
+        with:
+          artifact-ids: ${{ inputs.x64_failure_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.source_run_id }}
+          path: ${{ steps.output.outputs.inputs_root }}/x64-failure
+
+      - name: Download staged ED2K server
+        uses: actions/download-artifact@v7
+        with:
+          artifact-ids: ${{ inputs.ed2k_server_artifact_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.ed2k_server_run_id }}
+          path: ${{ steps.output.outputs.inputs_root }}/ed2k-server
+
+      - name: Resolve replay executables
+        id: executables
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $x64Root = Join-Path "${{ steps.output.outputs.inputs_root }}" "x64-failure"
+          $serverRoot = Join-Path "${{ steps.output.outputs.inputs_root }}" "ed2k-server"
+          $appMatches = @(
+            Get-ChildItem -LiteralPath $x64Root -Recurse -File -Filter "emulebb.exe" |
+              Where-Object { $_.FullName -match "[\\/]staging[\\/]x64[\\/]standard[\\/]eMuleBB[\\/]emulebb\.exe$" }
+          )
+          if ($appMatches.Count -ne 1) {
+            throw "Expected exactly one standard x64 emulebb.exe, found $($appMatches.Count)."
+          }
+          $serverMatches = @(
+            Get-ChildItem -LiteralPath $serverRoot -Recurse -File |
+              Where-Object { $_.Name -eq "ed2k-server" }
+          )
+          if ($serverMatches.Count -ne 1) {
+            throw "Expected exactly one staged ed2k-server, found $($serverMatches.Count)."
+          }
+          "app_root=$($appMatches[0].Directory.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "app_exe=$($appMatches[0].FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "ed2k_server_exe=$($serverMatches[0].FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Prepare staged ED2K server executable
+        shell: pwsh
+        env:
+          ED2K_SERVER_EXE: ${{ steps.executables.outputs.ed2k_server_exe }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $windowsPath = [System.IO.Path]::GetFullPath($env:ED2K_SERVER_EXE).Replace("\", "/")
+          $translatedPaths = @(
+            & wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- wslpath -a -u $windowsPath
+          )
+          if ($LASTEXITCODE -ne 0 -or $translatedPaths.Count -ne 1) {
+            throw "Could not translate the staged ED2K server path into WSL."
+          }
+          $wslPath = $translatedPaths[0].Trim()
+          if ([string]::IsNullOrWhiteSpace($wslPath)) {
+            throw "WSL returned an empty staged ED2K server path."
+          }
+          & wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- chmod +x -- $wslPath
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not mark the staged ED2K server executable in WSL."
+          }
+          & wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- test -x $wslPath
+          if ($LASTEXITCODE -ne 0) {
+            throw "The staged ED2K server is not executable in WSL."
+          }
+
+      - name: Resolve active P2P adapter
+        id: network
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $candidates = @(
+            foreach ($route in Get-NetRoute -AddressFamily IPv4 -DestinationPrefix "0.0.0.0/0") {
+              $adapter = Get-NetAdapter -InterfaceIndex $route.InterfaceIndex -ErrorAction SilentlyContinue
+              $interface = Get-NetIPInterface -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+              if (-not $adapter -or -not $interface -or $adapter.Status -ne "Up" -or $interface.ConnectionState -ne "Connected") {
+                continue
+              }
+              $address = Get-NetIPAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+                Where-Object {
+                  $_.AddressState -eq "Preferred" -and
+                  $_.IPAddress -ne "127.0.0.1" -and
+                  $_.IPAddress -notlike "169.254.*"
+                } |
+                Sort-Object SkipAsSource, PrefixLength |
+                Select-Object -First 1
+              if ($address) {
+                [pscustomobject]@{
+                  Adapter = $adapter
+                  Address = $address.IPAddress
+                  InterfaceIndex = $route.InterfaceIndex
+                  TotalMetric = [int]$route.RouteMetric + [int]$interface.InterfaceMetric
+                  RouteMetric = [int]$route.RouteMetric
+                  InterfaceMetric = [int]$interface.InterfaceMetric
+                }
+              }
+            }
+          )
+          $selected = $candidates |
+            Sort-Object TotalMetric, RouteMetric, InterfaceMetric, InterfaceIndex |
+            Select-Object -First 1
+          if (-not $selected) {
+            throw "No connected IPv4 adapter with a default route and preferred address was found."
+          }
+          "adapter_name=$($selected.Adapter.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "p2p_address=$($selected.Address)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Host "Selected adapter '$($selected.Adapter.Name)' at $($selected.Address) with metric $($selected.TotalMetric)."
+
+      - name: Prove staged ED2K server readiness
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python -B repos\emulebb-build-tests\scripts\ed2k-server-readiness-smoke.py `
+            --ed2k-server-exe "${{ steps.executables.outputs.ed2k_server_exe }}" `
+            --windows-client-address "${{ steps.network.outputs.p2p_address }}" `
+            --artifacts-dir "${{ steps.output.outputs.evidence_root }}\server-readiness" `
+            --health-timeout-seconds 20
+          if ($LASTEXITCODE -ne 0) {
+            throw "Staged ED2K server readiness failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Run deterministic transfer replay
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python -B repos\emulebb-build-tests\scripts\deterministic-two-client-transfer.py `
+            --app-root "${{ steps.executables.outputs.app_root }}" `
+            --app-exe "${{ steps.executables.outputs.app_exe }}" `
+            --client2-app-exe "${{ steps.executables.outputs.app_exe }}" `
+            --client2-identity harness `
+            --ed2k-server-exe "${{ steps.executables.outputs.ed2k_server_exe }}" `
+            --lan-bind-addr "${{ steps.network.outputs.p2p_address }}" `
+            --p2p-bind-interface-address "${{ steps.network.outputs.p2p_address }}" `
+            --ed2k-server-connect-address "${{ steps.network.outputs.p2p_address }}" `
+            --artifacts-dir "${{ steps.output.outputs.evidence_root }}" `
+            --fixture-size-bytes 16777216 `
+            --rest-ready-timeout-seconds 45 `
+            --server-connect-timeout-seconds 30 `
+            --link-export-timeout-seconds 60 `
+            --server-publish-timeout-seconds 45 `
+            --transfer-completion-timeout-seconds 120
+          if ($LASTEXITCODE -ne 0) {
+            throw "Deterministic transfer replay failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Print compact replay summary
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $resultPaths = @(
+            Get-ChildItem -LiteralPath "${{ steps.output.outputs.evidence_root }}" `
+              -Recurse -File -Filter "deterministic-two-client-transfer-result.json" `
+              -ErrorAction SilentlyContinue
+          )
+          if ($resultPaths.Count -ne 1) {
+            [ordered]@{
+              status = "result_unavailable"
+              result_count = $resultPaths.Count
+            } | ConvertTo-Json -Compress | Write-Host
+            exit 0
+          }
+          $result = Get-Content -LiteralPath $resultPaths[0].FullName -Raw | ConvertFrom-Json
+          $gate = $result.checks.high_id_gate
+          $completed = $result.checks.client1_transfer_completed_file
+          $finalTransfer = $result.checks.client1_transfer_final_rest.json
+          $summary = [ordered]@{
+            status = $result.status
+            current_phase = $result.current_phase
+            error = $result.error
+            network = [ordered]@{
+              p2p_bind_interface_name = $result.network.p2p_bind_interface_name
+              p2p_bind_interface_address = $result.network.p2p_bind_interface_address
+              ed2k_server_connect_address = $result.network.ed2k_server_connect_address
+              ed2k_server_address = $result.network.ed2k_server_address
+            }
+            high_id_gate = if ($gate) {
+              [ordered]@{
+                passed = $gate.passed
+                clients = $gate.clients
+                server_highid_verification = $gate.server_highid_verification
+              }
+            } else { $null }
+            completed_file = if ($completed) {
+              [ordered]@{
+                exists = $completed.exists
+                size = $completed.size
+                sha256 = $completed.sha256
+              }
+            } else { $null }
+            final_transfer = if ($finalTransfer) {
+              [ordered]@{
+                state = $finalTransfer.state
+                sources = $finalTransfer.sources
+                partsAvailable = $finalTransfer.partsAvailable
+                completedBytes = $finalTransfer.completedBytes
+                sizeBytes = $finalTransfer.sizeBytes
+              }
+            } else { $null }
+          }
+          $summary | ConvertTo-Json -Depth 8 -Compress | Write-Host
+
+      - name: Upload replay evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: emulebb-controlled-transfer-replay-${{ github.run_id }}
+          path: ${{ steps.output.outputs.evidence_root }}/**
+          if-no-files-found: warn
+          retention-days: 14

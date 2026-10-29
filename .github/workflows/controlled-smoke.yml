@@ -4,9 +4,40 @@ on:
   schedule:
     - cron: "47 5 * * *"
   workflow_dispatch:
+    inputs:
+      scope:
+        description: Select the ED2K preflight, full smoke, or artifact-backed transfer replay
+        required: true
+        type: choice
+        default: preflight
+        options:
+          - preflight
+          - full
+          - transfer-replay
+      source_run_id:
+        description: Transfer replay source Controlled Smoke run ID
+        required: false
+        type: string
+      x64_failure_artifact_id:
+        description: Transfer replay x64 failure artifact ID
+        required: false
+        type: string
+      ed2k_server_run_id:
+        description: Transfer replay Controlled Smoke run containing the staged ED2K server
+        required: false
+        type: string
+      ed2k_server_artifact_id:
+        description: Transfer replay staged ED2K server artifact ID
+        required: false
+        type: string
+      build_tests_sha:
+        description: Transfer replay emulebb-build-tests commit SHA
+        required: false
+        type: string
 
 permissions:
   contents: read
+  actions: read
   issues: write
 
 concurrency:
@@ -18,8 +49,23 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
+  transfer_replay:
+    name: Replay deterministic x64 transfer
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.scope == 'transfer-replay' }}
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/controlled-transfer-replay.yml
+    with:
+      source_run_id: ${{ inputs.source_run_id }}
+      x64_failure_artifact_id: ${{ inputs.x64_failure_artifact_id }}
+      ed2k_server_run_id: ${{ inputs.ed2k_server_run_id }}
+      ed2k_server_artifact_id: ${{ inputs.ed2k_server_artifact_id }}
+      build_tests_sha: ${{ inputs.build_tests_sha }}
+
   prepare:
     name: Prepare smoke metadata
+    if: ${{ github.event_name == 'schedule' || inputs.scope != 'transfer-replay' }}
     runs-on: ubuntu-latest
     outputs:
       package_version: ${{ steps.meta.outputs.package_version }}
@@ -46,9 +92,184 @@ jobs:
             echo "short_sha=${short_sha}"
           } >> "${GITHUB_OUTPUT}"
 
+  ed2k_server:
+    name: Build Linux ED2K server
+    if: ${{ github.event_name == 'schedule' || inputs.scope != 'transfer-replay' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ED2K server
+        uses: actions/checkout@v6
+        with:
+          repository: emulebb/ed2k-server
+          ref: master
+          path: repos/ed2k-server
+
+      - name: Prepare output root
+        id: linux-output
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_root="${RUNNER_TEMP}/emulebb-output"
+          cargo_target_dir="${output_root}/builds/rust/target"
+          mkdir -p "${output_root}" "${cargo_target_dir}"
+          {
+            echo "EMULEBB_WORKSPACE_OUTPUT_ROOT=${output_root}"
+            echo "CARGO_TARGET_DIR=${cargo_target_dir}"
+          } >> "${GITHUB_ENV}"
+          echo "root=${output_root}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build Linux ED2K server
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo build \
+            --manifest-path repos/ed2k-server/Cargo.toml \
+            --locked \
+            --release \
+            --target x86_64-unknown-linux-gnu
+          install -D -m 0755 \
+            "${CARGO_TARGET_DIR}/x86_64-unknown-linux-gnu/release/ed2k-server" \
+            "${EMULEBB_WORKSPACE_OUTPUT_ROOT}/tools/ed2k-server/bin/ed2k-server"
+          test -x "${EMULEBB_WORKSPACE_OUTPUT_ROOT}/tools/ed2k-server/bin/ed2k-server"
+
+      - name: Upload Linux ED2K server
+        uses: actions/upload-artifact@v7
+        with:
+          name: emulebb-controlled-smoke-ed2k-server-${{ github.sha }}
+          path: ${{ steps.linux-output.outputs.root }}/tools/ed2k-server/bin/ed2k-server
+          if-no-files-found: error
+          retention-days: 1
+
+  ed2k_wsl_preflight:
+    name: Prove Linux ED2K server readiness through WSL
+    needs: ed2k_server
+    if: ${{ github.event_name == 'schedule' || inputs.scope != 'transfer-replay' }}
+    runs-on: windows-2022
+    timeout-minutes: 10
+    env:
+      EMULEBB_WORKSPACE_ROOT: ${{ github.workspace }}
+      EMULEBB_WORKSPACE_OUTPUT_ROOT: ${{ github.workspace }}/../emulebb-output
+      EMULEBB_TEST_WSL_DISTRIBUTION: Debian-13
+    steps:
+      - name: Prepare workspace output root
+        id: workspace-output
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $outputRoot = [System.IO.Path]::GetFullPath($env:EMULEBB_WORKSPACE_OUTPUT_ROOT)
+          New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
+          "EMULEBB_WORKSPACE_OUTPUT_ROOT=$outputRoot" | Add-Content -LiteralPath $env:GITHUB_ENV
+          "root=$outputRoot" | Add-Content -LiteralPath $env:GITHUB_OUTPUT
+
+      - name: Checkout build-test harness
+        uses: actions/checkout@v6
+        with:
+          repository: emulebb/emulebb-build-tests
+          ref: main
+          path: repos/emulebb-build-tests
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install ED2K readiness dependency
+        shell: pwsh
+        run: python -m pip install pywin32
+
+      - name: Set up WSL runtime
+        uses: Vampire/setup-wsl@d1da7f2c0322a5ee4f24975344f67fc0f5baf364 # v7.0.0
+        with:
+          distribution: Debian-13
+          wsl-version: 1
+
+      - name: Download Linux ED2K server
+        uses: actions/download-artifact@v7
+        with:
+          name: emulebb-controlled-smoke-ed2k-server-${{ github.sha }}
+          path: ${{ steps.workspace-output.outputs.root }}/tools/ed2k-server/bin
+
+      - name: Run ED2K WSL readiness smoke
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ed2kServerExe = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tools\ed2k-server\bin\ed2k-server"
+          $windowsServerPath = [System.IO.Path]::GetFullPath($ed2kServerExe).Replace("\", "/")
+          $translatedPaths = @(
+            & wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- wslpath -a -u $windowsServerPath
+          )
+          if ($LASTEXITCODE -ne 0 -or $translatedPaths.Count -ne 1) {
+            throw "Could not translate the staged ED2K server path into WSL."
+          }
+          $wslServerPath = $translatedPaths[0].Trim()
+          & wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- chmod +x -- $wslServerPath
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not mark the staged ED2K server executable in WSL."
+          }
+          $candidates = @(
+            foreach ($route in Get-NetRoute -AddressFamily IPv4 -DestinationPrefix "0.0.0.0/0") {
+              $adapter = Get-NetAdapter -InterfaceIndex $route.InterfaceIndex -ErrorAction SilentlyContinue
+              $interface = Get-NetIPInterface -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+              if (-not $adapter -or -not $interface -or $adapter.Status -ne "Up" -or $interface.ConnectionState -ne "Connected") {
+                continue
+              }
+              $address = Get-NetIPAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+                Where-Object {
+                  $_.AddressState -eq "Preferred" -and
+                  $_.IPAddress -ne "127.0.0.1" -and
+                  $_.IPAddress -notlike "169.254.*"
+                } |
+                Sort-Object SkipAsSource, PrefixLength |
+                Select-Object -First 1
+              if ($address) {
+                [pscustomobject]@{
+                  Adapter = $adapter
+                  Address = $address.IPAddress
+                  InterfaceIndex = $route.InterfaceIndex
+                  TotalMetric = [int]$route.RouteMetric + [int]$interface.InterfaceMetric
+                  RouteMetric = [int]$route.RouteMetric
+                  InterfaceMetric = [int]$interface.InterfaceMetric
+                }
+              }
+            }
+          )
+          $selected = $candidates |
+            Sort-Object TotalMetric, RouteMetric, InterfaceMetric, InterfaceIndex |
+            Select-Object -First 1
+          if (-not $selected) {
+            throw "No connected IPv4 adapter with a default route and preferred address was found."
+          }
+          $p2pAddress = $selected.Address
+          Write-Host "Selected adapter '$($selected.Adapter.Name)' at $p2pAddress with metric $($selected.TotalMetric)."
+          python -B $env:EMULEBB_WORKSPACE_ROOT\repos\emulebb-build-tests\scripts\ed2k-server-readiness-smoke.py `
+            --ed2k-server-exe $ed2kServerExe `
+            --windows-client-address $p2pAddress `
+            --artifacts-dir reports\ed2k-server-readiness-smoke
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -ne 0) {
+            $resultPath = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "reports\ed2k-server-readiness-smoke\ed2k-server-readiness-smoke-result.json"
+            if (Test-Path -LiteralPath $resultPath -PathType Leaf) {
+              Get-Content -LiteralPath $resultPath
+            }
+            throw "ED2K WSL readiness smoke failed with exit code $exitCode."
+          }
+
+      - name: Upload ED2K readiness report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: emulebb-controlled-smoke-ed2k-readiness-${{ github.run_id }}
+          path: ${{ steps.workspace-output.outputs.root }}/reports/ed2k-server-readiness-smoke/**
+          if-no-files-found: warn
+          retention-days: 14
+
   smoke:
     name: Package and smoke (x64, ${{ matrix.runner.label }})
-    needs: prepare
+    needs:
+      - prepare
+      - ed2k_server
+      - ed2k_wsl_preflight
+    if: ${{ needs.ed2k_wsl_preflight.result == 'success' && (github.event_name == 'schedule' || inputs.scope == 'full') }}
     strategy:
       fail-fast: false
       matrix:
@@ -60,6 +281,9 @@ jobs:
       app_ref: ${{ github.sha }}
       runs_on: ${{ matrix.runner.label }}
       node_version: "24"
+      setup_wsl: true
+      input_artifact_name: emulebb-controlled-smoke-ed2k-server-${{ github.sha }}
+      input_artifact_output_path: tools/ed2k-server/bin
       timeout_minutes: 90
       artifact_name: emulebb-controlled-smoke-${{ needs.prepare.outputs.package_version }}-${{ matrix.runner.label }}
       artifact_path: |
@@ -113,17 +337,18 @@ jobs:
           }
 
           Write-Host "v143 ATL/MFC is missing on this hosted runner. Installing Visual Studio v143 components."
-          & $installer modify `
-            --installPath $installPath `
-            --quiet `
-            --norestart `
-            --wait `
-            --add Microsoft.VisualStudio.ComponentGroup.VC.Tools.143.x86.x64 `
-            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.x86.x64 `
-            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.ATL `
-            --add Microsoft.VisualStudio.Component.VC.14.44.17.14.MFC
-          if ($LASTEXITCODE -ne 0) {
-            throw "Visual Studio Installer failed while adding v143 ATL/MFC components: exit $LASTEXITCODE"
+          $installProcess = Start-Process -FilePath $installer -ArgumentList @(
+            "modify",
+            "--installPath", "`"$installPath`"",
+            "--quiet",
+            "--norestart",
+            "--add", "Microsoft.VisualStudio.ComponentGroup.VC.Tools.143.x86.x64",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.x86.x64",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.ATL",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.MFC"
+          ) -Wait -PassThru
+          if ($installProcess.ExitCode -ne 0) {
+            throw "Visual Studio Installer failed while adding v143 ATL/MFC components: exit $($installProcess.ExitCode)"
           }
 
           $postInstallCompiler = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter cl.exe -ErrorAction SilentlyContinue |
@@ -143,6 +368,11 @@ jobs:
         Ensure-MfcForHostedRunner
 
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
+        $ed2kServerExe = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tools\ed2k-server\bin\ed2k-server"
+        if (-not (Test-Path -LiteralPath $ed2kServerExe -PathType Leaf)) {
+          throw "Downloaded Rust ED2K server was not found: $ed2kServerExe"
+        }
+        $env:EMULEBB_TEST_RUST_ED2K_SERVER_EXE = $ed2kServerExe
         $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci\live-wire-inputs.ci.json"
         $ciInstallRoot = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci-suite-install-root"
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ciLiveWireInputs) | Out-Null
@@ -163,12 +393,6 @@ jobs:
         } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $ciLiveWireInputs -Encoding utf8
 
         python -m emule_workspace package-release `
-          --config Release `
-          --platform x64 `
-          --clean `
-          --release-version $packageVersion
-
-        python -m emule_workspace package-amutorrent `
           --config Release `
           --platform x64 `
           --clean `
@@ -205,6 +429,7 @@ jobs:
               --materialize-test-install-release-version $packageVersion `
               --materialize-test-install-skip-build `
               --live-wire-inputs-file $ciLiveWireInputs `
+              --ed2k-server-exe $ed2kServerExe `
               --suite deterministic-two-client-transfer `
               --test-network lan `
               --fail-fast
@@ -218,7 +443,10 @@ jobs:
 
   arm64_smoke:
     name: Package and smoke (ARM64, windows-11-arm)
-    needs: prepare
+    needs:
+      - prepare
+      - ed2k_wsl_preflight
+    if: ${{ needs.ed2k_wsl_preflight.result == 'success' && (github.event_name == 'schedule' || inputs.scope == 'full') }}
     uses: emulebb/emulebb-build/.github/workflows/reusable-workspace-command.yml@main
     with:
       app_ref: ${{ github.sha }}
@@ -237,6 +465,82 @@ jobs:
         artifacts/command-line-smoke/**
         logs/builds/**
       command: |
+        function Ensure-MfcForHostedRunner {
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path -LiteralPath $vswhere)) {
+            throw "Visual Studio locator was not found: $vswhere"
+          }
+
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath
+          if (-not $installPath) {
+            $installPath = & $vswhere -latest -products * -property installationPath
+          }
+          if (-not $installPath) {
+            throw "Visual Studio installation was not found."
+          }
+
+          $vcToolsRoot = Join-Path $installPath "VC\Tools\MSVC"
+          $v143Compiler = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter cl.exe -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\bin\HostARM64\arm64\cl.exe" } |
+            Select-Object -First 1
+          $v143StaticMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter nafxcw.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\ARM64\nafxcw.lib" } |
+            Select-Object -First 1
+          $v143Toolset = Get-ChildItem -LiteralPath (Join-Path $installPath "MSBuild\Microsoft\VC") -Recurse -Filter Toolset.props -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\PlatformToolsets\v143\Toolset.props" } |
+            Select-Object -First 1
+          $v143DynamicMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter mfc140.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\ARM64\mfc140.lib" } |
+            Select-Object -First 1
+          if ($v143Compiler -and $v143StaticMfc -and $v143DynamicMfc -and $v143Toolset) {
+            Write-Host "Required ARM64 v143 ATL/MFC components already available."
+            Write-Host "v143 compiler: $($v143Compiler.FullName)"
+            Write-Host "v143 static MFC: $($v143StaticMfc.FullName)"
+            Write-Host "v143 dynamic MFC: $($v143DynamicMfc.FullName)"
+            Write-Host "v143 toolset: $($v143Toolset.FullName)"
+            return
+          }
+
+          $installer = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe"
+          if (-not (Test-Path -LiteralPath $installer)) {
+            throw "ARM64 ATL/MFC is missing and Visual Studio Installer was not found: $installer"
+          }
+
+          Write-Host "ARM64 v143 ATL/MFC is missing on this hosted runner. Installing Visual Studio v143 components."
+          $installProcess = Start-Process -FilePath $installer -ArgumentList @(
+            "modify",
+            "--installPath", "`"$installPath`"",
+            "--quiet",
+            "--norestart",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.ARM64",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.ATL.ARM64",
+            "--add", "Microsoft.VisualStudio.Component.VC.14.44.17.14.MFC.ARM64"
+          ) -Wait -PassThru
+          if ($installProcess.ExitCode -ne 0) {
+            throw "Visual Studio Installer failed while adding ARM64 v143 ATL/MFC components: exit $($installProcess.ExitCode)"
+          }
+
+          $postInstallCompiler = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter cl.exe -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\bin\HostARM64\arm64\cl.exe" } |
+            Select-Object -First 1
+          $postInstallStaticMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter nafxcw.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\ARM64\nafxcw.lib" } |
+            Select-Object -First 1
+          $postInstallDynamicMfc = Get-ChildItem -LiteralPath $vcToolsRoot -Recurse -Filter mfc140.lib -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like "*\14.44.*\atlmfc\lib\ARM64\mfc140.lib" } |
+            Select-Object -First 1
+          if (-not ($postInstallCompiler -and $postInstallStaticMfc -and $postInstallDynamicMfc)) {
+            throw "Visual Studio Installer completed but ARM64 v143 ATL/MFC files are still missing under $vcToolsRoot"
+          }
+        }
+
+        Ensure-MfcForHostedRunner
+
+        # windows-11-arm currently provides the VS 2026 IDE with the v143
+        # compatibility toolset. Keep the release compiler baseline at v143
+        # while selecting the generator that is actually installed.
+        $env:EMULEBB_CMAKE_GENERATOR = "Visual Studio 18 2026"
+
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
 
         python -m emule_workspace package-release `
@@ -265,47 +569,67 @@ jobs:
     name: Report controlled smoke status
     needs:
       - prepare
+      - ed2k_server
+      - ed2k_wsl_preflight
       - smoke
       - arm64_smoke
-    if: ${{ always() && needs.prepare.result == 'success' }}
+    if: ${{ always() && (github.event_name == 'schedule' || inputs.scope != 'transfer-replay') && needs.prepare.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Write smoke summary
         shell: bash
         env:
+          SMOKE_SCOPE: ${{ github.event_name == 'schedule' && 'full' || inputs.scope }}
           PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
           SHORT_SHA: ${{ needs.prepare.outputs.short_sha }}
+          ED2K_SERVER_RESULT: ${{ needs.ed2k_server.result }}
+          PREFLIGHT_RESULT: ${{ needs.ed2k_wsl_preflight.result }}
           X64_SMOKE_RESULT: ${{ needs.smoke.result }}
           ARM64_SMOKE_RESULT: ${{ needs.arm64_smoke.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          smoke_result="success"
-          if [[ "${X64_SMOKE_RESULT}" != "success" || "${ARM64_SMOKE_RESULT}" != "success" ]]; then
-            smoke_result="x64=${X64_SMOKE_RESULT}, arm64=${ARM64_SMOKE_RESULT}"
+          if [[ "${SMOKE_SCOPE}" == "full" ]]; then
+            smoke_result="success"
+            if [[ "${ED2K_SERVER_RESULT}" != "success" || "${PREFLIGHT_RESULT}" != "success" || "${X64_SMOKE_RESULT}" != "success" || "${ARM64_SMOKE_RESULT}" != "success" ]]; then
+              smoke_result="ed2k=${ED2K_SERVER_RESULT}, preflight=${PREFLIGHT_RESULT}, x64=${X64_SMOKE_RESULT}, arm64=${ARM64_SMOKE_RESULT}"
+            fi
+          else
+            smoke_result="success"
+            if [[ "${ED2K_SERVER_RESULT}" != "success" || "${PREFLIGHT_RESULT}" != "success" ]]; then
+              smoke_result="ed2k=${ED2K_SERVER_RESULT}, preflight=${PREFLIGHT_RESULT}"
+            fi
           fi
           cat > controlled-smoke-summary.md <<EOF
           # eMuleBB Controlled Smoke
 
+          Scope: ${SMOKE_SCOPE}
           Result: ${smoke_result}
-          x64 result: ${X64_SMOKE_RESULT}
-          ARM64 result: ${ARM64_SMOKE_RESULT}
+          ED2K artifact result: ${ED2K_SERVER_RESULT}
+          WSL readiness result: ${PREFLIGHT_RESULT}
           Package version: ${PACKAGE_VERSION}
           Commit: ${GITHUB_SHA}
           Short SHA: ${SHORT_SHA}
           Run: ${RUN_URL}
 
           Coverage:
-          - Hosted runner: windows-2022 with v143 ATL/MFC policy
+          - Linux ED2K server artifact build
+          - Windows 2022 WSL launch, admin readiness, PID evidence, and clean shutdown
+          EOF
+          if [[ "${SMOKE_SCOPE}" == "full" ]]; then
+            cat >> controlled-smoke-summary.md <<EOF
+          - x64 result: ${X64_SMOKE_RESULT}
+          - ARM64 result: ${ARM64_SMOKE_RESULT}
+          - Hosted runner: windows-2022 with v143 ATL/MFC and WSL1 deterministic server policy
           - Release x64 eMuleBB package
-          - Release x64 aMuTorrent package
           - Release x64 tracing harness build
           - Offline command-line smoke
           - LAN deterministic two-client transfer
-          - Hosted runner: windows-11-arm
+          - Hosted runner: windows-11-arm with VS 2026 generator and v143 ATL/MFC policy
           - Release ARM64 eMuleBB package
           - ARM64 offline command-line smoke
           EOF
+          fi
           cat controlled-smoke-summary.md >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload smoke summary
@@ -316,8 +640,10 @@ jobs:
           retention-days: 30
 
       - name: Update smoke failure issue
+        if: ${{ github.event_name == 'schedule' || inputs.scope == 'full' }}
         uses: actions/github-script@v8
         env:
+          PREFLIGHT_RESULT: ${{ needs.ed2k_wsl_preflight.result }}
           X64_SMOKE_RESULT: ${{ needs.smoke.result }}
           ARM64_SMOKE_RESULT: ${{ needs.arm64_smoke.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -333,11 +659,12 @@ jobs:
               per_page: 100,
             });
             const existing = issueList.data.find((issue) => issue.title === title);
+            const preflightResult = process.env.PREFLIGHT_RESULT;
             const x64Result = process.env.X64_SMOKE_RESULT;
             const arm64Result = process.env.ARM64_SMOKE_RESULT;
-            const result = x64Result === "success" && arm64Result === "success"
+            const result = preflightResult === "success" && x64Result === "success" && arm64Result === "success"
               ? "success"
-              : `x64=${x64Result}, arm64=${arm64Result}`;
+              : `preflight=${preflightResult}, x64=${x64Result}, arm64=${arm64Result}`;
             const runUrl = process.env.RUN_URL;
             const packageVersion = process.env.PACKAGE_VERSION;
 
@@ -367,7 +694,7 @@ jobs:
               `Package version: ${packageVersion}`,
               `Run: ${runUrl}`,
               "",
-              "This workflow covers x64 package-release, package-amutorrent, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC policy. It also covers ARM64 package-release and offline command-line smoke on the windows-11-arm hosted runner.",
+              "This workflow first proves the staged Linux ED2K server through WSL, then covers x64 package-release, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC and WSL1 deterministic server policy. It also covers ARM64 package-release and offline command-line smoke on the windows-11-arm hosted runner with the VS 2026 generator and ARM64 v143 ATL/MFC policy.",
             ].join("\n");
 
             if (existing) {
