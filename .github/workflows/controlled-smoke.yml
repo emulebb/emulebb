@@ -46,9 +46,60 @@ jobs:
             echo "short_sha=${short_sha}"
           } >> "${GITHUB_OUTPUT}"
 
+  ed2k_server:
+    name: Build Linux ED2K server
+    runs-on: ubuntu-latest
+    env:
+      EMULEBB_WORKSPACE_ROOT: ${{ github.workspace }}
+      EMULEBB_WORKSPACE_OUTPUT_ROOT: ${{ github.workspace }}/../emulebb-output
+      CARGO_TARGET_DIR: ${{ github.workspace }}/../emulebb-output/builds/rust/target
+    steps:
+      - name: Checkout build orchestration
+        uses: actions/checkout@v6
+        with:
+          repository: emulebb/emulebb-build
+          path: repos/emulebb-build
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install build orchestration dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install "click>=8.1" "pydantic>=2.0" "jinja2>=3" "jsonschema>=4" "PyYAML>=6"
+
+      - name: Materialize workspace
+        shell: bash
+        working-directory: repos/emulebb-build
+        run: |
+          set -euo pipefail
+          python -m emule_workspace materialize
+
+      - name: Build Linux ED2K server
+        shell: bash
+        working-directory: repos/emulebb-build
+        run: |
+          set -euo pipefail
+          python -m emule_workspace build ed2k-server --config Release --platform x64
+          test -x "${EMULEBB_WORKSPACE_OUTPUT_ROOT}/tools/ed2k-server/bin/ed2k-server"
+
+      - name: Upload Linux ED2K server
+        uses: actions/upload-artifact@v7
+        with:
+          name: emulebb-controlled-smoke-ed2k-server-${{ github.sha }}
+          path: ${{ env.EMULEBB_WORKSPACE_OUTPUT_ROOT }}/tools/ed2k-server/bin/ed2k-server
+          if-no-files-found: error
+          retention-days: 1
+
   smoke:
     name: Package and smoke (x64, ${{ matrix.runner.label }})
-    needs: prepare
+    needs:
+      - prepare
+      - ed2k_server
     strategy:
       fail-fast: false
       matrix:
@@ -61,6 +112,8 @@ jobs:
       runs_on: ${{ matrix.runner.label }}
       node_version: "24"
       setup_wsl: true
+      input_artifact_name: emulebb-controlled-smoke-ed2k-server-${{ github.sha }}
+      input_artifact_output_path: tools/ed2k-server/bin
       timeout_minutes: 90
       artifact_name: emulebb-controlled-smoke-${{ needs.prepare.outputs.package_version }}-${{ matrix.runner.label }}
       artifact_path: |
@@ -144,12 +197,12 @@ jobs:
 
         Ensure-MfcForHostedRunner
 
-        # The hosted x64 runner has twice lost communication while WSL Cargo
-        # saturated the machine. Keep the deterministic server build bounded.
-        $env:CARGO_BUILD_JOBS = "1"
-
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
         $ed2kServerExe = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tools\ed2k-server\bin\ed2k-server"
+        if (-not (Test-Path -LiteralPath $ed2kServerExe -PathType Leaf)) {
+          throw "Downloaded Rust ED2K server was not found: $ed2kServerExe"
+        }
+        $env:EMULEBB_TEST_RUST_ED2K_SERVER_EXE = $ed2kServerExe
         $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci\live-wire-inputs.ci.json"
         $ciInstallRoot = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci-suite-install-root"
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ciLiveWireInputs) | Out-Null
@@ -168,17 +221,6 @@ jobs:
             enable_crash_dumps = $true
           }
         } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $ciLiveWireInputs -Encoding utf8
-
-        # Build the WSL server once outside the live-suite 15-minute subprocess
-        # timeout. The explicit path prevents retries from starting overlapping
-        # orphaned Cargo builds after a timeout.
-        python -m emule_workspace build ed2k-server `
-          --config Release `
-          --platform x64
-        if (-not (Test-Path -LiteralPath $ed2kServerExe -PathType Leaf)) {
-          throw "Staged Rust ED2K server was not found: $ed2kServerExe"
-        }
-        $env:EMULEBB_TEST_RUST_ED2K_SERVER_EXE = $ed2kServerExe
 
         python -m emule_workspace package-release `
           --config Release `
