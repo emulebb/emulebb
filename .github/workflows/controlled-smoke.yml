@@ -77,6 +77,7 @@ jobs:
         working-directory: repos/emulebb-build
         run: |
           set -euo pipefail
+          mkdir -p "${EMULEBB_WORKSPACE_OUTPUT_ROOT}" "${CARGO_TARGET_DIR}"
           python -m emule_workspace materialize
 
       - name: Build Linux ED2K server
