@@ -54,6 +54,8 @@ jobs:
     name: Replay deterministic x64 transfer
     runs-on: windows-2022
     timeout-minutes: 12
+    env:
+      EMULEBB_TEST_WSL_DISTRIBUTION: Debian-13
     steps:
       - name: Prepare workspace output root
         id: output
@@ -250,6 +252,25 @@ jobs:
           "app_exe=$($appMatches[0].FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "ed2k_server_exe=$($serverMatches[0].FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
+      - name: Prepare staged ED2K server executable
+        shell: pwsh
+        env:
+          ED2K_SERVER_EXE: ${{ steps.executables.outputs.ed2k_server_exe }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $wslPath = (& wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- wslpath -a -u $env:ED2K_SERVER_EXE).Trim()
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($wslPath)) {
+            throw "Could not translate the staged ED2K server path into WSL."
+          }
+          & wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- chmod +x -- $wslPath
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not mark the staged ED2K server executable in WSL."
+          }
+          & wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- test -x $wslPath
+          if ($LASTEXITCODE -ne 0) {
+            throw "The staged ED2K server is not executable in WSL."
+          }
+
       - name: Resolve active P2P adapter
         id: network
         shell: pwsh
@@ -292,6 +313,19 @@ jobs:
           "p2p_address=$($selected.Address)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           Write-Host "Selected adapter '$($selected.Adapter.Name)' at $($selected.Address) with metric $($selected.TotalMetric)."
 
+      - name: Prove staged ED2K server readiness
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          python -B repos\emulebb-build-tests\scripts\ed2k-server-readiness-smoke.py `
+            --ed2k-server-exe "${{ steps.executables.outputs.ed2k_server_exe }}" `
+            --windows-client-address "${{ steps.network.outputs.p2p_address }}" `
+            --artifacts-dir "${{ steps.output.outputs.evidence_root }}\server-readiness" `
+            --health-timeout-seconds 20
+          if ($LASTEXITCODE -ne 0) {
+            throw "Staged ED2K server readiness failed with exit code $LASTEXITCODE."
+          }
+
       - name: Run deterministic transfer replay
         shell: pwsh
         run: |
@@ -304,6 +338,7 @@ jobs:
             --ed2k-server-exe "${{ steps.executables.outputs.ed2k_server_exe }}" `
             --lan-bind-addr "${{ steps.network.outputs.p2p_address }}" `
             --p2p-bind-interface-address "${{ steps.network.outputs.p2p_address }}" `
+            --ed2k-server-connect-address "${{ steps.network.outputs.p2p_address }}" `
             --artifacts-dir "${{ steps.output.outputs.evidence_root }}" `
             --fixture-size-bytes 16777216 `
             --rest-ready-timeout-seconds 45 `
