@@ -258,9 +258,16 @@ jobs:
           ED2K_SERVER_EXE: ${{ steps.executables.outputs.ed2k_server_exe }}
         run: |
           $ErrorActionPreference = "Stop"
-          $wslPath = (& wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- wslpath -a -u $env:ED2K_SERVER_EXE).Trim()
-          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($wslPath)) {
+          $windowsPath = [System.IO.Path]::GetFullPath($env:ED2K_SERVER_EXE).Replace("\", "/")
+          $translatedPaths = @(
+            & wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- wslpath -a -u $windowsPath
+          )
+          if ($LASTEXITCODE -ne 0 -or $translatedPaths.Count -ne 1) {
             throw "Could not translate the staged ED2K server path into WSL."
+          }
+          $wslPath = $translatedPaths[0].Trim()
+          if ([string]::IsNullOrWhiteSpace($wslPath)) {
+            throw "WSL returned an empty staged ED2K server path."
           }
           & wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- chmod +x -- $wslPath
           if ($LASTEXITCODE -ne 0) {
