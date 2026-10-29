@@ -11,6 +11,10 @@ on:
         description: Exact x64 failure artifact ID
         required: true
         type: string
+      ed2k_server_run_id:
+        description: Controlled Smoke run containing the staged ED2K server
+        required: true
+        type: string
       ed2k_server_artifact_id:
         description: Exact staged ED2K server artifact ID
         required: true
@@ -27,6 +31,10 @@ on:
         type: string
       x64_failure_artifact_id:
         description: Exact x64 failure artifact ID
+        required: true
+        type: string
+      ed2k_server_run_id:
+        description: Controlled Smoke run containing the staged ED2K server
         required: true
         type: string
       ed2k_server_artifact_id:
@@ -78,6 +86,7 @@ jobs:
         env:
           SOURCE_RUN_ID: ${{ inputs.source_run_id }}
           X64_FAILURE_ARTIFACT_ID: ${{ inputs.x64_failure_artifact_id }}
+          ED2K_SERVER_RUN_ID: ${{ inputs.ed2k_server_run_id }}
           ED2K_SERVER_ARTIFACT_ID: ${{ inputs.ed2k_server_artifact_id }}
           BUILD_TESTS_SHA: ${{ inputs.build_tests_sha }}
         run: |
@@ -85,6 +94,7 @@ jobs:
           foreach ($entry in @(
             @{ Name = "source_run_id"; Value = $env:SOURCE_RUN_ID },
             @{ Name = "x64_failure_artifact_id"; Value = $env:X64_FAILURE_ARTIFACT_ID },
+            @{ Name = "ed2k_server_run_id"; Value = $env:ED2K_SERVER_RUN_ID },
             @{ Name = "ed2k_server_artifact_id"; Value = $env:ED2K_SERVER_ARTIFACT_ID }
           )) {
             if ($entry.Value -notmatch "^[1-9][0-9]*$") {
@@ -101,6 +111,7 @@ jobs:
         env:
           SOURCE_RUN_ID: ${{ inputs.source_run_id }}
           X64_FAILURE_ARTIFACT_ID: ${{ inputs.x64_failure_artifact_id }}
+          ED2K_SERVER_RUN_ID: ${{ inputs.ed2k_server_run_id }}
           ED2K_SERVER_ARTIFACT_ID: ${{ inputs.ed2k_server_artifact_id }}
         with:
           github-token: ${{ github.token }}
@@ -109,6 +120,7 @@ jobs:
             const repo = context.repo.repo;
             const sourceRunId = Number(process.env.SOURCE_RUN_ID);
             const x64ArtifactId = Number(process.env.X64_FAILURE_ARTIFACT_ID);
+            const serverRunId = Number(process.env.ED2K_SERVER_RUN_ID);
             const serverArtifactId = Number(process.env.ED2K_SERVER_ARTIFACT_ID);
             const { data: run } = await github.rest.actions.getWorkflowRun({
               owner,
@@ -128,14 +140,37 @@ jobs:
               core.setFailed("Source run does not expose a valid 40-character head SHA.");
               return;
             }
-            const artifacts = await github.paginate(
+            const { data: serverRun } = await github.rest.actions.getWorkflowRun({
+              owner,
+              repo,
+              run_id: serverRunId,
+            });
+            if (serverRun.repository?.full_name !== expectedRepository) {
+              core.setFailed(`Server run belongs to ${serverRun.repository?.full_name ?? "unknown"}, not ${expectedRepository}.`);
+              return;
+            }
+            if (serverRun.path !== ".github/workflows/controlled-smoke.yml") {
+              core.setFailed(`Server run uses ${serverRun.path}, not .github/workflows/controlled-smoke.yml.`);
+              return;
+            }
+            if (!/^[0-9a-f]{40}$/i.test(serverRun.head_sha ?? "")) {
+              core.setFailed("Server run does not expose a valid 40-character head SHA.");
+              return;
+            }
+            const sourceArtifacts = await github.paginate(
               github.rest.actions.listWorkflowRunArtifacts,
               { owner, repo, run_id: sourceRunId, per_page: 100 },
             );
-            const requireArtifact = (artifactId, expectedName, label) => {
+            const serverArtifacts = serverRunId === sourceRunId
+              ? sourceArtifacts
+              : await github.paginate(
+                  github.rest.actions.listWorkflowRunArtifacts,
+                  { owner, repo, run_id: serverRunId, per_page: 100 },
+                );
+            const requireArtifact = (artifacts, runId, artifactId, expectedName, label) => {
               const matches = artifacts.filter((artifact) => artifact.id === artifactId);
               if (matches.length !== 1) {
-                throw new Error(`${label} artifact ${artifactId} is not owned exactly once by run ${sourceRunId}.`);
+                throw new Error(`${label} artifact ${artifactId} is not owned exactly once by run ${runId}.`);
               }
               const artifact = matches[0];
               if (artifact.name !== expectedName) {
@@ -148,17 +183,21 @@ jobs:
             };
             const shortSha = run.head_sha.slice(0, 7);
             requireArtifact(
+              sourceArtifacts,
+              sourceRunId,
               x64ArtifactId,
               `emulebb-controlled-smoke-failure-${shortSha}-windows-2022`,
               "x64 failure",
             );
             requireArtifact(
+              serverArtifacts,
+              serverRunId,
               serverArtifactId,
-              `emulebb-controlled-smoke-ed2k-server-${run.head_sha}`,
+              `emulebb-controlled-smoke-ed2k-server-${serverRun.head_sha}`,
               "ED2K server",
             );
             core.setOutput("head_sha", run.head_sha);
-            core.notice(`Verified source run ${sourceRunId} at ${run.head_sha}.`);
+            core.notice(`Verified x64 run ${sourceRunId} at ${run.head_sha} and server run ${serverRunId} at ${serverRun.head_sha}.`);
 
       - name: Checkout transfer harness
         uses: actions/checkout@v6
@@ -225,7 +264,7 @@ jobs:
           artifact-ids: ${{ inputs.ed2k_server_artifact_id }}
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
-          run-id: ${{ inputs.source_run_id }}
+          run-id: ${{ inputs.ed2k_server_run_id }}
           path: ${{ steps.output.outputs.inputs_root }}/ed2k-server
 
       - name: Resolve replay executables

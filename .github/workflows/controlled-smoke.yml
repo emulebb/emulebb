@@ -22,6 +22,10 @@ on:
         description: Transfer replay x64 failure artifact ID
         required: false
         type: string
+      ed2k_server_run_id:
+        description: Transfer replay Controlled Smoke run containing the staged ED2K server
+        required: false
+        type: string
       ed2k_server_artifact_id:
         description: Transfer replay staged ED2K server artifact ID
         required: false
@@ -55,6 +59,7 @@ jobs:
     with:
       source_run_id: ${{ inputs.source_run_id }}
       x64_failure_artifact_id: ${{ inputs.x64_failure_artifact_id }}
+      ed2k_server_run_id: ${{ inputs.ed2k_server_run_id }}
       ed2k_server_artifact_id: ${{ inputs.ed2k_server_artifact_id }}
       build_tests_sha: ${{ inputs.build_tests_sha }}
 
