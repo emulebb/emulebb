@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: "47 5 * * *"
   workflow_dispatch:
+    inputs:
+      scope:
+        description: Run only the ED2K WSL preflight or the full controlled smoke
+        required: true
+        type: choice
+        default: preflight
+        options:
+          - preflight
+          - full
 
 permissions:
   contents: read
@@ -93,11 +102,65 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  ed2k_wsl_preflight:
+    name: Prove Linux ED2K server readiness through WSL
+    needs: ed2k_server
+    runs-on: windows-2022
+    timeout-minutes: 10
+    env:
+      EMULEBB_WORKSPACE_ROOT: ${{ github.workspace }}
+      EMULEBB_WORKSPACE_OUTPUT_ROOT: ${{ runner.temp }}/emulebb-output
+    steps:
+      - name: Checkout build-test harness
+        uses: actions/checkout@v6
+        with:
+          repository: emulebb/emulebb-build-tests
+          ref: main
+          path: repos/emulebb-build-tests
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Set up WSL runtime
+        uses: Vampire/setup-wsl@d1da7f2c0322a5ee4f24975344f67fc0f5baf364 # v7.0.0
+        with:
+          distribution: Debian-13
+          wsl-version: 1
+
+      - name: Download Linux ED2K server
+        uses: actions/download-artifact@v7
+        with:
+          name: emulebb-controlled-smoke-ed2k-server-${{ github.sha }}
+          path: ${{ env.EMULEBB_WORKSPACE_OUTPUT_ROOT }}/tools/ed2k-server/bin
+
+      - name: Run ED2K WSL readiness smoke
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          $ed2kServerExe = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tools\ed2k-server\bin\ed2k-server"
+          python -B $env:EMULEBB_WORKSPACE_ROOT\repos\emulebb-build-tests\scripts\ed2k-server-readiness-smoke.py `
+            --ed2k-server-exe $ed2kServerExe `
+            --artifacts-dir reports\ed2k-server-readiness-smoke
+
+      - name: Upload ED2K readiness report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: emulebb-controlled-smoke-ed2k-readiness-${{ github.run_id }}
+          path: ${{ env.EMULEBB_WORKSPACE_OUTPUT_ROOT }}/reports/ed2k-server-readiness-smoke/**
+          if-no-files-found: warn
+          retention-days: 14
+
   smoke:
     name: Package and smoke (x64, ${{ matrix.runner.label }})
     needs:
       - prepare
       - ed2k_server
+      - ed2k_wsl_preflight
+    if: ${{ needs.ed2k_wsl_preflight.result == 'success' && (github.event_name == 'schedule' || inputs.scope == 'full') }}
     strategy:
       fail-fast: false
       matrix:
@@ -271,7 +334,10 @@ jobs:
 
   arm64_smoke:
     name: Package and smoke (ARM64, windows-11-arm)
-    needs: prepare
+    needs:
+      - prepare
+      - ed2k_wsl_preflight
+    if: ${{ needs.ed2k_wsl_preflight.result == 'success' && (github.event_name == 'schedule' || inputs.scope == 'full') }}
     uses: emulebb/emulebb-build/.github/workflows/reusable-workspace-command.yml@main
     with:
       app_ref: ${{ github.sha }}
@@ -394,6 +460,8 @@ jobs:
     name: Report controlled smoke status
     needs:
       - prepare
+      - ed2k_server
+      - ed2k_wsl_preflight
       - smoke
       - arm64_smoke
     if: ${{ always() && needs.prepare.result == 'success' }}
@@ -402,29 +470,47 @@ jobs:
       - name: Write smoke summary
         shell: bash
         env:
+          SMOKE_SCOPE: ${{ github.event_name == 'schedule' && 'full' || inputs.scope }}
           PACKAGE_VERSION: ${{ needs.prepare.outputs.package_version }}
           SHORT_SHA: ${{ needs.prepare.outputs.short_sha }}
+          ED2K_SERVER_RESULT: ${{ needs.ed2k_server.result }}
+          PREFLIGHT_RESULT: ${{ needs.ed2k_wsl_preflight.result }}
           X64_SMOKE_RESULT: ${{ needs.smoke.result }}
           ARM64_SMOKE_RESULT: ${{ needs.arm64_smoke.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          smoke_result="success"
-          if [[ "${X64_SMOKE_RESULT}" != "success" || "${ARM64_SMOKE_RESULT}" != "success" ]]; then
-            smoke_result="x64=${X64_SMOKE_RESULT}, arm64=${ARM64_SMOKE_RESULT}"
+          if [[ "${SMOKE_SCOPE}" == "full" ]]; then
+            smoke_result="success"
+            if [[ "${ED2K_SERVER_RESULT}" != "success" || "${PREFLIGHT_RESULT}" != "success" || "${X64_SMOKE_RESULT}" != "success" || "${ARM64_SMOKE_RESULT}" != "success" ]]; then
+              smoke_result="ed2k=${ED2K_SERVER_RESULT}, preflight=${PREFLIGHT_RESULT}, x64=${X64_SMOKE_RESULT}, arm64=${ARM64_SMOKE_RESULT}"
+            fi
+          else
+            smoke_result="success"
+            if [[ "${ED2K_SERVER_RESULT}" != "success" || "${PREFLIGHT_RESULT}" != "success" ]]; then
+              smoke_result="ed2k=${ED2K_SERVER_RESULT}, preflight=${PREFLIGHT_RESULT}"
+            fi
           fi
           cat > controlled-smoke-summary.md <<EOF
           # eMuleBB Controlled Smoke
 
+          Scope: ${SMOKE_SCOPE}
           Result: ${smoke_result}
-          x64 result: ${X64_SMOKE_RESULT}
-          ARM64 result: ${ARM64_SMOKE_RESULT}
+          ED2K artifact result: ${ED2K_SERVER_RESULT}
+          WSL readiness result: ${PREFLIGHT_RESULT}
           Package version: ${PACKAGE_VERSION}
           Commit: ${GITHUB_SHA}
           Short SHA: ${SHORT_SHA}
           Run: ${RUN_URL}
 
           Coverage:
+          - Linux ED2K server artifact build
+          - Windows 2022 WSL launch, admin readiness, PID evidence, and clean shutdown
+          EOF
+          if [[ "${SMOKE_SCOPE}" == "full" ]]; then
+            cat >> controlled-smoke-summary.md <<EOF
+          - x64 result: ${X64_SMOKE_RESULT}
+          - ARM64 result: ${ARM64_SMOKE_RESULT}
           - Hosted runner: windows-2022 with v143 ATL/MFC and WSL1 deterministic server policy
           - Release x64 eMuleBB package
           - Release x64 tracing harness build
@@ -434,6 +520,7 @@ jobs:
           - Release ARM64 eMuleBB package
           - ARM64 offline command-line smoke
           EOF
+          fi
           cat controlled-smoke-summary.md >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload smoke summary
@@ -444,8 +531,10 @@ jobs:
           retention-days: 30
 
       - name: Update smoke failure issue
+        if: ${{ github.event_name == 'schedule' || inputs.scope == 'full' }}
         uses: actions/github-script@v8
         env:
+          PREFLIGHT_RESULT: ${{ needs.ed2k_wsl_preflight.result }}
           X64_SMOKE_RESULT: ${{ needs.smoke.result }}
           ARM64_SMOKE_RESULT: ${{ needs.arm64_smoke.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -461,11 +550,12 @@ jobs:
               per_page: 100,
             });
             const existing = issueList.data.find((issue) => issue.title === title);
+            const preflightResult = process.env.PREFLIGHT_RESULT;
             const x64Result = process.env.X64_SMOKE_RESULT;
             const arm64Result = process.env.ARM64_SMOKE_RESULT;
-            const result = x64Result === "success" && arm64Result === "success"
+            const result = preflightResult === "success" && x64Result === "success" && arm64Result === "success"
               ? "success"
-              : `x64=${x64Result}, arm64=${arm64Result}`;
+              : `preflight=${preflightResult}, x64=${x64Result}, arm64=${arm64Result}`;
             const runUrl = process.env.RUN_URL;
             const packageVersion = process.env.PACKAGE_VERSION;
 
@@ -495,7 +585,7 @@ jobs:
               `Package version: ${packageVersion}`,
               `Run: ${runUrl}`,
               "",
-              "This workflow covers x64 package-release, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC and WSL1 deterministic server policy. It also covers ARM64 package-release and offline command-line smoke on the windows-11-arm hosted runner with the VS 2026 generator and ARM64 v143 ATL/MFC policy.",
+              "This workflow first proves the staged Linux ED2K server through WSL, then covers x64 package-release, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC and WSL1 deterministic server policy. It also covers ARM64 package-release and offline command-line smoke on the windows-11-arm hosted runner with the VS 2026 generator and ARM64 v143 ATL/MFC policy.",
             ].join("\n");
 
             if (existing) {
