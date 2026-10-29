@@ -109,7 +109,7 @@ jobs:
     timeout-minutes: 10
     env:
       EMULEBB_WORKSPACE_ROOT: ${{ github.workspace }}
-      EMULEBB_WORKSPACE_OUTPUT_ROOT: ${{ runner.temp }}/emulebb-output
+      EMULEBB_WORKSPACE_OUTPUT_ROOT: ${{ github.workspace }}/../emulebb-output
     steps:
       - name: Checkout build-test harness
         uses: actions/checkout@v6
