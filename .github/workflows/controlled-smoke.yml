@@ -50,8 +50,8 @@ jobs:
     name: Build Linux ED2K server
     runs-on: ubuntu-latest
     env:
-      EMULEBB_WORKSPACE_OUTPUT_ROOT: ${{ github.workspace }}/../emulebb-output
-      CARGO_TARGET_DIR: ${{ github.workspace }}/../emulebb-output/builds/rust/target
+      EMULEBB_WORKSPACE_OUTPUT_ROOT: ${{ runner.temp }}/emulebb-output
+      CARGO_TARGET_DIR: ${{ runner.temp }}/emulebb-output/builds/rust/target
     steps:
       - name: Checkout ED2K server
         uses: actions/checkout@v6
