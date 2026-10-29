@@ -144,6 +144,10 @@ jobs:
 
         Ensure-MfcForHostedRunner
 
+        # The hosted x64 runner has twice lost communication while WSL Cargo
+        # saturated the machine. Keep the deterministic server build bounded.
+        $env:CARGO_BUILD_JOBS = "1"
+
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
         $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci\live-wire-inputs.ci.json"
         $ciInstallRoot = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci-suite-install-root"
