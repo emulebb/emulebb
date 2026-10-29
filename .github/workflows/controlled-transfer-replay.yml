@@ -171,7 +171,7 @@ jobs:
 
       - name: Install Windows harness dependency
         shell: pwsh
-        run: python -m pip install jsonschema pywin32
+        run: python -m pip install jsonschema psutil pywin32 pywinauto PyYAML
 
       - name: Set up WSL runtime
         uses: Vampire/setup-wsl@d1da7f2c0322a5ee4f24975344f67fc0f5baf364 # v7.0.0
