@@ -149,6 +149,7 @@ jobs:
     env:
       EMULEBB_WORKSPACE_ROOT: ${{ github.workspace }}
       EMULEBB_WORKSPACE_OUTPUT_ROOT: ${{ github.workspace }}/../emulebb-output
+      EMULEBB_TEST_WSL_DISTRIBUTION: Debian-13
     steps:
       - name: Prepare workspace output root
         id: workspace-output
@@ -193,24 +194,53 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $ed2kServerExe = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tools\ed2k-server\bin\ed2k-server"
-          $p2pAdapter = Get-NetAdapter |
-            Where-Object { $_.Status -eq "Up" } |
+          $windowsServerPath = [System.IO.Path]::GetFullPath($ed2kServerExe).Replace("\", "/")
+          $translatedPaths = @(
+            & wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- wslpath -a -u $windowsServerPath
+          )
+          if ($LASTEXITCODE -ne 0 -or $translatedPaths.Count -ne 1) {
+            throw "Could not translate the staged ED2K server path into WSL."
+          }
+          $wslServerPath = $translatedPaths[0].Trim()
+          & wsl.exe -d $env:EMULEBB_TEST_WSL_DISTRIBUTION -- chmod +x -- $wslServerPath
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not mark the staged ED2K server executable in WSL."
+          }
+          $candidates = @(
+            foreach ($route in Get-NetRoute -AddressFamily IPv4 -DestinationPrefix "0.0.0.0/0") {
+              $adapter = Get-NetAdapter -InterfaceIndex $route.InterfaceIndex -ErrorAction SilentlyContinue
+              $interface = Get-NetIPInterface -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+              if (-not $adapter -or -not $interface -or $adapter.Status -ne "Up" -or $interface.ConnectionState -ne "Connected") {
+                continue
+              }
+              $address = Get-NetIPAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+                Where-Object {
+                  $_.AddressState -eq "Preferred" -and
+                  $_.IPAddress -ne "127.0.0.1" -and
+                  $_.IPAddress -notlike "169.254.*"
+                } |
+                Sort-Object SkipAsSource, PrefixLength |
+                Select-Object -First 1
+              if ($address) {
+                [pscustomobject]@{
+                  Adapter = $adapter
+                  Address = $address.IPAddress
+                  InterfaceIndex = $route.InterfaceIndex
+                  TotalMetric = [int]$route.RouteMetric + [int]$interface.InterfaceMetric
+                  RouteMetric = [int]$route.RouteMetric
+                  InterfaceMetric = [int]$interface.InterfaceMetric
+                }
+              }
+            }
+          )
+          $selected = $candidates |
+            Sort-Object TotalMetric, RouteMetric, InterfaceMetric, InterfaceIndex |
             Select-Object -First 1
-          if (-not $p2pAdapter) {
-            throw "No active Windows network adapter was found for the WSL1 ED2K readiness check."
+          if (-not $selected) {
+            throw "No connected IPv4 adapter with a default route and preferred address was found."
           }
-          $p2pAddress = Get-NetIPAddress `
-            -InterfaceIndex $p2pAdapter.ifIndex `
-            -AddressFamily IPv4 |
-            Where-Object {
-              $_.AddressState -eq "Preferred" -and
-              $_.IPAddress -ne "127.0.0.1" -and
-              $_.IPAddress -notlike "169.254.*"
-            } |
-            Select-Object -First 1 -ExpandProperty IPAddress
-          if (-not $p2pAddress) {
-            throw "No preferred IPv4 address was found for adapter '$($p2pAdapter.Name)'."
-          }
+          $p2pAddress = $selected.Address
+          Write-Host "Selected adapter '$($selected.Adapter.Name)' at $p2pAddress with metric $($selected.TotalMetric)."
           python -B $env:EMULEBB_WORKSPACE_ROOT\repos\emulebb-build-tests\scripts\ed2k-server-readiness-smoke.py `
             --ed2k-server-exe $ed2kServerExe `
             --windows-client-address $p2pAddress `
