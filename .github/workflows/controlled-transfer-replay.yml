@@ -181,6 +181,7 @@ jobs:
             srchybrid/WebServerJson.cpp
             srchybrid/WebServerJsonSeams.h
             srchybrid/WebServerQBitCompatSeams.h
+            srchybrid/webinterface/eMule.tmpl
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
