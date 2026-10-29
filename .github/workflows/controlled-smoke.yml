@@ -154,8 +154,27 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $ed2kServerExe = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tools\ed2k-server\bin\ed2k-server"
+          $p2pAdapter = Get-NetAdapter |
+            Where-Object { $_.Status -eq "Up" } |
+            Select-Object -First 1
+          if (-not $p2pAdapter) {
+            throw "No active Windows network adapter was found for the WSL1 ED2K readiness check."
+          }
+          $p2pAddress = Get-NetIPAddress `
+            -InterfaceIndex $p2pAdapter.ifIndex `
+            -AddressFamily IPv4 |
+            Where-Object {
+              $_.AddressState -eq "Preferred" -and
+              $_.IPAddress -ne "127.0.0.1" -and
+              $_.IPAddress -notlike "169.254.*"
+            } |
+            Select-Object -First 1 -ExpandProperty IPAddress
+          if (-not $p2pAddress) {
+            throw "No preferred IPv4 address was found for adapter '$($p2pAdapter.Name)'."
+          }
           python -B $env:EMULEBB_WORKSPACE_ROOT\repos\emulebb-build-tests\scripts\ed2k-server-readiness-smoke.py `
             --ed2k-server-exe $ed2kServerExe `
+            --windows-client-address $p2pAddress `
             --artifacts-dir reports\ed2k-server-readiness-smoke
           $exitCode = $LASTEXITCODE
           if ($exitCode -ne 0) {
