@@ -149,6 +149,7 @@ jobs:
         $env:CARGO_BUILD_JOBS = "1"
 
         $packageVersion = "${{ needs.prepare.outputs.package_version }}"
+        $ed2kServerExe = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tools\ed2k-server\bin\ed2k-server"
         $ciLiveWireInputs = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci\live-wire-inputs.ci.json"
         $ciInstallRoot = Join-Path $env:EMULEBB_WORKSPACE_OUTPUT_ROOT "tmp\ci-suite-install-root"
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $ciLiveWireInputs) | Out-Null
@@ -167,6 +168,17 @@ jobs:
             enable_crash_dumps = $true
           }
         } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $ciLiveWireInputs -Encoding utf8
+
+        # Build the WSL server once outside the live-suite 15-minute subprocess
+        # timeout. The explicit path prevents retries from starting overlapping
+        # orphaned Cargo builds after a timeout.
+        python -m emule_workspace build ed2k-server `
+          --config Release `
+          --platform x64
+        if (-not (Test-Path -LiteralPath $ed2kServerExe -PathType Leaf)) {
+          throw "Staged Rust ED2K server was not found: $ed2kServerExe"
+        }
+        $env:EMULEBB_TEST_RUST_ED2K_SERVER_EXE = $ed2kServerExe
 
         python -m emule_workspace package-release `
           --config Release `
