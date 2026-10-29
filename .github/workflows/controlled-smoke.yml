@@ -49,9 +49,6 @@ jobs:
   ed2k_server:
     name: Build Linux ED2K server
     runs-on: ubuntu-latest
-    env:
-      EMULEBB_WORKSPACE_OUTPUT_ROOT: ${{ runner.temp }}/emulebb-output
-      CARGO_TARGET_DIR: ${{ runner.temp }}/emulebb-output/builds/rust/target
     steps:
       - name: Checkout ED2K server
         uses: actions/checkout@v6
@@ -61,10 +58,18 @@ jobs:
           path: repos/ed2k-server
 
       - name: Prepare output root
+        id: linux-output
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "${EMULEBB_WORKSPACE_OUTPUT_ROOT}" "${CARGO_TARGET_DIR}"
+          output_root="${RUNNER_TEMP}/emulebb-output"
+          cargo_target_dir="${output_root}/builds/rust/target"
+          mkdir -p "${output_root}" "${cargo_target_dir}"
+          {
+            echo "EMULEBB_WORKSPACE_OUTPUT_ROOT=${output_root}"
+            echo "CARGO_TARGET_DIR=${cargo_target_dir}"
+          } >> "${GITHUB_ENV}"
+          echo "root=${output_root}" >> "${GITHUB_OUTPUT}"
 
       - name: Build Linux ED2K server
         shell: bash
@@ -84,7 +89,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: emulebb-controlled-smoke-ed2k-server-${{ github.sha }}
-          path: ${{ env.EMULEBB_WORKSPACE_OUTPUT_ROOT }}/tools/ed2k-server/bin/ed2k-server
+          path: ${{ steps.linux-output.outputs.root }}/tools/ed2k-server/bin/ed2k-server
           if-no-files-found: error
           retention-days: 1
 
