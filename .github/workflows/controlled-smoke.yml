@@ -50,42 +50,34 @@ jobs:
     name: Build Linux ED2K server
     runs-on: ubuntu-latest
     env:
-      EMULEBB_WORKSPACE_ROOT: ${{ github.workspace }}
       EMULEBB_WORKSPACE_OUTPUT_ROOT: ${{ github.workspace }}/../emulebb-output
       CARGO_TARGET_DIR: ${{ github.workspace }}/../emulebb-output/builds/rust/target
     steps:
-      - name: Checkout build orchestration
+      - name: Checkout ED2K server
         uses: actions/checkout@v6
         with:
-          repository: emulebb/emulebb-build
-          path: repos/emulebb-build
+          repository: emulebb/ed2k-server
+          ref: master
+          path: repos/ed2k-server
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-
-      - name: Install build orchestration dependencies
+      - name: Prepare output root
         shell: bash
-        run: |
-          set -euo pipefail
-          python -m pip install --upgrade pip
-          python -m pip install "click>=8.1" "pydantic>=2.0" "jinja2>=3" "jsonschema>=4" "PyYAML>=6"
-
-      - name: Materialize workspace
-        shell: bash
-        working-directory: repos/emulebb-build
         run: |
           set -euo pipefail
           mkdir -p "${EMULEBB_WORKSPACE_OUTPUT_ROOT}" "${CARGO_TARGET_DIR}"
-          python -m emule_workspace materialize
 
       - name: Build Linux ED2K server
         shell: bash
-        working-directory: repos/emulebb-build
         run: |
           set -euo pipefail
-          python -m emule_workspace build ed2k-server --config Release --platform x64
+          cargo build \
+            --manifest-path repos/ed2k-server/Cargo.toml \
+            --locked \
+            --release \
+            --target x86_64-unknown-linux-gnu
+          install -D -m 0755 \
+            "${CARGO_TARGET_DIR}/x86_64-unknown-linux-gnu/release/ed2k-server" \
+            "${EMULEBB_WORKSPACE_OUTPUT_ROOT}/tools/ed2k-server/bin/ed2k-server"
           test -x "${EMULEBB_WORKSPACE_OUTPUT_ROOT}/tools/ed2k-server/bin/ed2k-server"
 
       - name: Upload Linux ED2K server
