@@ -94,6 +94,7 @@ jobs:
           }
 
       - name: Verify source run and artifacts
+        id: source
         uses: actions/github-script@v8
         env:
           SOURCE_RUN_ID: ${{ inputs.source_run_id }}
@@ -154,6 +155,7 @@ jobs:
               `emulebb-controlled-smoke-ed2k-server-${run.head_sha}`,
               "ED2K server",
             );
+            core.setOutput("head_sha", run.head_sha);
             core.notice(`Verified source run ${sourceRunId} at ${run.head_sha}.`);
 
       - name: Checkout transfer harness
@@ -162,6 +164,32 @@ jobs:
           repository: emulebb/emulebb-build-tests
           ref: ${{ inputs.build_tests_sha }}
           path: repos/emulebb-build-tests
+          persist-credentials: false
+
+      - name: Checkout matching REST seam sources
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ steps.source.outputs.head_sha }}
+          path: workspaces/workspace/app/emulebb-main
+          sparse-checkout: |
+            srchybrid/WebApiSurfaceSeams.h
+            srchybrid/WebServerArrCompat.cpp
+            srchybrid/WebServerArrCompatSeams.h
+            srchybrid/WebServerJson.cpp
+            srchybrid/WebServerJsonSeams.h
+            srchybrid/WebServerQBitCompatSeams.h
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Checkout REST OpenAPI contract
+        uses: actions/checkout@v6
+        with:
+          repository: emulebb/emulebb-tooling
+          ref: main
+          path: repos/emulebb-tooling
+          sparse-checkout: docs/rest/REST-API-OPENAPI.yaml
+          sparse-checkout-cone-mode: false
           persist-credentials: false
 
       - name: Set up Python
