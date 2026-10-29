@@ -6,16 +6,34 @@ on:
   workflow_dispatch:
     inputs:
       scope:
-        description: Run only the ED2K WSL preflight or the full controlled smoke
+        description: Select the ED2K preflight, full smoke, or artifact-backed transfer replay
         required: true
         type: choice
         default: preflight
         options:
           - preflight
           - full
+          - transfer-replay
+      source_run_id:
+        description: Transfer replay source Controlled Smoke run ID
+        required: false
+        type: string
+      x64_failure_artifact_id:
+        description: Transfer replay x64 failure artifact ID
+        required: false
+        type: string
+      ed2k_server_artifact_id:
+        description: Transfer replay staged ED2K server artifact ID
+        required: false
+        type: string
+      build_tests_sha:
+        description: Transfer replay emulebb-build-tests commit SHA
+        required: false
+        type: string
 
 permissions:
   contents: read
+  actions: read
   issues: write
 
 concurrency:
@@ -27,8 +45,22 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
+  transfer_replay:
+    name: Replay deterministic x64 transfer
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.scope == 'transfer-replay' }}
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/controlled-transfer-replay.yml
+    with:
+      source_run_id: ${{ inputs.source_run_id }}
+      x64_failure_artifact_id: ${{ inputs.x64_failure_artifact_id }}
+      ed2k_server_artifact_id: ${{ inputs.ed2k_server_artifact_id }}
+      build_tests_sha: ${{ inputs.build_tests_sha }}
+
   prepare:
     name: Prepare smoke metadata
+    if: ${{ github.event_name == 'schedule' || inputs.scope != 'transfer-replay' }}
     runs-on: ubuntu-latest
     outputs:
       package_version: ${{ steps.meta.outputs.package_version }}
@@ -57,6 +89,7 @@ jobs:
 
   ed2k_server:
     name: Build Linux ED2K server
+    if: ${{ github.event_name == 'schedule' || inputs.scope != 'transfer-replay' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout ED2K server
@@ -105,6 +138,7 @@ jobs:
   ed2k_wsl_preflight:
     name: Prove Linux ED2K server readiness through WSL
     needs: ed2k_server
+    if: ${{ github.event_name == 'schedule' || inputs.scope != 'transfer-replay' }}
     runs-on: windows-2022
     timeout-minutes: 10
     env:
@@ -504,7 +538,7 @@ jobs:
       - ed2k_wsl_preflight
       - smoke
       - arm64_smoke
-    if: ${{ always() && needs.prepare.result == 'success' }}
+    if: ${{ always() && (github.event_name == 'schedule' || inputs.scope != 'transfer-replay') && needs.prepare.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Write smoke summary
