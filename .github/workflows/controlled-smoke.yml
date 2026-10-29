@@ -257,6 +257,7 @@ jobs:
               --materialize-test-install-release-version $packageVersion `
               --materialize-test-install-skip-build `
               --live-wire-inputs-file $ciLiveWireInputs `
+              --ed2k-server-exe $ed2kServerExe `
               --suite deterministic-two-client-transfer `
               --test-network lan `
               --fail-fast
