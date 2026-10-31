@@ -717,15 +717,26 @@ private:
 		const ULONGLONG ullMaximumAgeTicks =
 			DiagEventWriterSeams::kDefaultMaxRetainedSeconds * 10000000ull;
 		size_t uRemaining = files.size();
+		ULONGLONG ullRemainingBytes = 0;
+		for (const SDiagEventSegmentFile &rFile : files)
+			ullRemainingBytes += rFile.bActive ? m_ullActiveSegmentBytes : rFile.ullBytes;
+		const ULONGLONG ullMaximumTotalBytes =
+			DiagEventWriterSeams::MaximumTotalBytes(m_ullMaxSegmentBytes);
 		for (const SDiagEventSegmentFile &rFile : files) {
-			if (rFile.bActive)
-				continue;
 			const bool bExpired = ullNowFileTime > rFile.ullLastWriteTime
 				&& ullNowFileTime - rFile.ullLastWriteTime > ullMaximumAgeTicks;
-			if (!bExpired && uRemaining <= DiagEventWriterSeams::kDefaultRetainedSegments)
+			if (!DiagEventWriterSeams::ShouldPruneRetainedSegment(
+				rFile.bActive,
+				bExpired,
+				uRemaining,
+				ullRemainingBytes,
+				ullMaximumTotalBytes))
 				continue;
 			if (LongPathSeams::DeleteFile(rFile.strPath) != FALSE) {
 				--uRemaining;
+				ullRemainingBytes = rFile.ullBytes < ullRemainingBytes
+					? ullRemainingBytes - rFile.ullBytes
+					: 0;
 				++m_ullRetentionDeletes;
 			} else {
 				++m_ullRetentionDeleteErrors;

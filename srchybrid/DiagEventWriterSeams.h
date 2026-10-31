@@ -39,6 +39,19 @@ inline uint64_t NormalizeSegmentBytes(const uint64_t ullConfiguredBytes)
 	return ullConfiguredBytes < kMinimumSegmentBytes ? kMinimumSegmentBytes : ullConfiguredBytes;
 }
 
+inline bool ShouldPruneRetainedSegment(
+	const bool bActive,
+	const bool bExpired,
+	const size_t uRemainingSegments,
+	const uint64_t ullRemainingBytes,
+	const uint64_t ullMaximumTotalBytes)
+{
+	return !bActive
+		&& (bExpired
+			|| uRemainingSegments > kDefaultRetainedSegments
+			|| ullRemainingBytes > ullMaximumTotalBytes);
+}
+
 inline bool ShouldRotate(
 	const uint64_t ullCurrentBytes,
 	const uint64_t ullNextRecordBytes,
