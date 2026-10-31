@@ -1797,6 +1797,40 @@ void CUpDownClient::UDPReaskFNF()
 		DebugLogWarning(_T("UDP FNF-Answer: %s - did not remove client because of current download state"), GetUserName());
 }
 
+bool CUpDownClient::EvaluateUDPReaskSchedule(const bool bAppConnected, const ULONGLONG ullNow)
+{
+	UdpReaskDiagnosticsSeams::SUdpReaskScheduleEligibility eligibility = {};
+	eligibility.bAppConnected = bAppConnected;
+	eligibility.ullTimeUntilReaskMs = GetTimeUntilReask();
+	eligibility.ullNowTick = ullNow;
+	eligibility.ullLastTriedTick = GetLastTriedToConnectTime();
+	const UdpReaskDiagnosticsSeams::EUdpReaskScheduleDecision eDecision =
+		UdpReaskDiagnosticsSeams::EvaluateScheduleEligibility(eligibility);
+
+	const byte *pRequestFileHash = m_reqfile != NULL ? m_reqfile->GetFileHash() : NULL;
+	const bool bSameFile = pRequestFileHash != NULL
+		? md4equ(m_achLastUdpReaskScheduleFileHash, pRequestFileHash)
+		: isnulmd4(m_achLastUdpReaskScheduleFileHash);
+	if (UdpReaskDiagnosticsSeams::ShouldLogDecision(
+		m_eLastUdpReaskScheduleDecision,
+		m_ullLastUdpReaskScheduleLogTick,
+		eDecision,
+		ullNow,
+		bSameFile))
+	{
+#if EMULEBB_HAS_DIAG_EVENT_V2
+		DiagEventLogSchedUdpReaskScheduleDecision(this, pRequestFileHash, eDecision, eligibility);
+#endif
+		m_eLastUdpReaskScheduleDecision = eDecision;
+		m_ullLastUdpReaskScheduleLogTick = ullNow;
+		if (pRequestFileHash != NULL)
+			md4cpy(m_achLastUdpReaskScheduleFileHash, pRequestFileHash);
+		else
+			md4clr(m_achLastUdpReaskScheduleFileHash);
+	}
+	return UdpReaskDiagnosticsSeams::IsScheduleEligible(eDecision);
+}
+
 void CUpDownClient::UDPReaskForDownload()
 {
 	UdpReaskDiagnosticsSeams::SUdpReaskEligibility eligibility = {};

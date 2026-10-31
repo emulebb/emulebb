@@ -358,6 +358,7 @@ public:
 	ULONGLONG		GetTimeUntilReask(const CPartFile *file, const bool allowShortReaskTime, const bool useGivenNNP = false, const bool givenNNP = false) const;
 	void			UDPReaskACK(uint16 nNewQR);
 	void			UDPReaskFNF();
+	bool			EvaluateUDPReaskSchedule(bool bAppConnected, ULONGLONG ullNow);
 	void			UDPReaskForDownload();
 	bool			UDPPacketPending() const						{ return m_bUDPPending; }
 	bool			IsSourceRequestAllowed() const					{ return IsSourceRequestAllowed(m_reqfile); }
@@ -626,6 +627,7 @@ protected:
 	CAICHHash	*m_pReqFileAICHHash;
 	uint8		*m_abyPartStatus;
 	uchar		m_achLastUdpReaskDecisionFileHash[MDX_DIGEST_SIZE];
+	uchar		m_achLastUdpReaskScheduleFileHash[MDX_DIGEST_SIZE];
 	CString		m_strClientFilename;
 	uint64		m_nTransferredDown;
 	uint64		m_nCurSessionPayloadDown;
@@ -633,6 +635,7 @@ protected:
 	ULONGLONG	m_dwDownStartTime;
 	ULONGLONG	m_dwLastBlockReceived;
 	ULONGLONG	m_ullLastUdpReaskDecisionLogTick;
+	ULONGLONG	m_ullLastUdpReaskScheduleLogTick;
 	UINT		m_cDownAsked;
 	UINT		m_nTotalUDPPackets;
 	UINT		m_nFailedUDPPackets;
@@ -647,6 +650,7 @@ protected:
 	bool		m_bUDPPending;
 	bool		m_bTransferredDownMini;
 	UdpReaskDiagnosticsSeams::EUdpReaskDecision m_eLastUdpReaskDecision;
+	UdpReaskDiagnosticsSeams::EUdpReaskScheduleDecision m_eLastUdpReaskScheduleDecision;
 	bool		m_bSourceExchangeSwapped; // ZZ:DownloadManager
 
 	//////////////////////////////////////////////////////////

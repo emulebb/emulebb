@@ -1953,6 +1953,47 @@ void DiagEventLogSchedUdpReaskDecision(
 		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
 }
 
+static LPCTSTR GetUdpReaskScheduleDecisionReason(
+	const UdpReaskDiagnosticsSeams::EUdpReaskScheduleDecision eDecision)
+{
+	using UdpReaskDiagnosticsSeams::EUdpReaskScheduleDecision;
+	switch (eDecision) {
+	case EUdpReaskScheduleDecision::Eligible: return _T("eligible");
+	case EUdpReaskScheduleDecision::AppDisconnected: return _T("app_disconnected");
+	case EUdpReaskScheduleDecision::ReaskWindowNotOpen: return _T("reask_window_not_open");
+	case EUdpReaskScheduleDecision::ReaskWindowClosed: return _T("reask_window_closed");
+	case EUdpReaskScheduleDecision::ConnectCooldown: return _T("connect_cooldown");
+	default: return _T("unknown");
+	}
+}
+
+void DiagEventLogSchedUdpReaskScheduleDecision(
+	const CUpDownClient *pClient,
+	const byte *pFileHash,
+	const UdpReaskDiagnosticsSeams::EUdpReaskScheduleDecision eDecision,
+	const UdpReaskDiagnosticsSeams::SUdpReaskScheduleEligibility &rEligibility)
+{
+	const bool bEligible = UdpReaskDiagnosticsSeams::IsScheduleEligible(eDecision);
+	CString strBody;
+	strBody.Format(
+		_T("{\"outcome\":\"%s\",\"reason\":%s,\"appConnected\":%s,\"timeUntilReaskMs\":%I64u,\"windowOpenBelowMs\":%I64u,\"windowClosedAtOrBelowMs\":%I64u,\"lastTriedAgeMs\":%I64u,\"connectCooldownMs\":%I64u,\"connectCooldownRemainingMs\":%I64u}"),
+		bEligible ? _T("eligible") : _T("skipped"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(GetUdpReaskScheduleDecisionReason(eDecision)),
+		rEligibility.bAppConnected ? _T("true") : _T("false"),
+		rEligibility.ullTimeUntilReaskMs,
+		UdpReaskDiagnosticsSeams::kReaskScheduleWindowOpenMs,
+		UdpReaskDiagnosticsSeams::kReaskScheduleWindowCloseMs,
+		UdpReaskDiagnosticsSeams::LastTriedAgeMs(rEligibility),
+		UdpReaskDiagnosticsSeams::kReaskScheduleConnectCooldownMs,
+		UdpReaskDiagnosticsSeams::ConnectCooldownRemainingMs(rEligibility));
+	WriteDiagEventV2(
+		_T("sched"),
+		_T("udp_reask_schedule_decision"),
+		bEligible ? _T("info") : _T("low"),
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash),
+		strBody);
+}
+
 void DiagEventLogSchedConnBudgetDeny(LPCTSTR pszDenyReason, UINT uActiveConnections, UINT uConnectionCap)
 {
 	// conn_budget deny: no per-peer object is available at the global accept gate, so
