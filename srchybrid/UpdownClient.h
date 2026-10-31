@@ -625,12 +625,14 @@ protected:
 	CPartFile	*m_reqfile;
 	CAICHHash	*m_pReqFileAICHHash;
 	uint8		*m_abyPartStatus;
+	uchar		m_achLastUdpReaskDecisionFileHash[MDX_DIGEST_SIZE];
 	CString		m_strClientFilename;
 	uint64		m_nTransferredDown;
 	uint64		m_nCurSessionPayloadDown;
 	uint64		m_nLastBlockOffset;
 	ULONGLONG	m_dwDownStartTime;
 	ULONGLONG	m_dwLastBlockReceived;
+	ULONGLONG	m_ullLastUdpReaskDecisionLogTick;
 	UINT		m_cDownAsked;
 	UINT		m_nTotalUDPPackets;
 	UINT		m_nFailedUDPPackets;
@@ -644,6 +646,7 @@ protected:
 	bool		m_bReaskPending;
 	bool		m_bUDPPending;
 	bool		m_bTransferredDownMini;
+	UdpReaskDiagnosticsSeams::EUdpReaskDecision m_eLastUdpReaskDecision;
 	bool		m_bSourceExchangeSwapped; // ZZ:DownloadManager
 
 	//////////////////////////////////////////////////////////
