@@ -3080,7 +3080,7 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
 					}
 				}
 				//Allow up to 1 min for UDP to respond. If we are within one min of TCP re-ask, do not try.
-				if (theApp.IsConnected() && cur_src->GetTimeUntilReask() < MIN2MS(2) && cur_src->GetTimeUntilReask() > SEC2MS(1) && curTick >= cur_src->GetLastTriedToConnectTime() + MIN2MS(20)) // ZZ:DownloadManager (one re-ask timestamp for each file)
+				if (cur_src->EvaluateUDPReaskSchedule(theApp.IsConnected(), curTick))
 					cur_src->UDPReaskForDownload();
 
 				[[fallthrough]];
