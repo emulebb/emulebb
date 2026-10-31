@@ -1896,6 +1896,63 @@ void DiagEventLogSchedSourceSwapped(const CUpDownClient *pClient, const byte *pC
 		BuildDiagEventV2SchedKeysJson(pClient, pCurrentFileHash), strBody);
 }
 
+static LPCTSTR GetUdpReaskDecisionReason(const UdpReaskDiagnosticsSeams::EUdpReaskDecision eDecision)
+{
+	using UdpReaskDiagnosticsSeams::EUdpReaskDecision;
+	switch (eDecision) {
+	case EUdpReaskDecision::MissingRequestFile: return _T("missing_request_file");
+	case EUdpReaskDecision::RequestPending: return _T("udp_request_pending");
+	case EUdpReaskDecision::FailureRatioExceeded: return _T("udp_failure_ratio_exceeded");
+	case EUdpReaskDecision::RemoteUdpPortMissing: return _T("remote_udp_port_missing");
+	case EUdpReaskDecision::RemoteUdpVersionMissing: return _T("remote_udp_version_missing");
+	case EUdpReaskDecision::LocalUdpDisabled: return _T("local_udp_disabled");
+	case EUdpReaskDecision::LocalFirewalled: return _T("local_firewalled");
+	case EUdpReaskDecision::TcpConnected: return _T("tcp_connected");
+	case EUdpReaskDecision::ProxyEnabled: return _T("proxy_enabled");
+	case EUdpReaskDecision::BuddyIpMissing: return _T("buddy_ip_missing");
+	case EUdpReaskDecision::BuddyPortMissing: return _T("buddy_port_missing");
+	case EUdpReaskDecision::BuddyIdInvalid: return _T("buddy_id_invalid");
+	case EUdpReaskDecision::SourceExchangeDue: return _T("source_exchange_due");
+	case EUdpReaskDecision::SwappedToAnotherFile: return _T("swapped_to_another_file");
+	case EUdpReaskDecision::DirectReaskSent: return _T("direct_reask_sent");
+	case EUdpReaskDecision::CallbackReaskSent: return _T("callback_reask_sent");
+	default: return _T("unknown");
+	}
+}
+
+void DiagEventLogSchedUdpReaskDecision(
+	const CUpDownClient *pClient,
+	const byte *pFileHash,
+	const UdpReaskDiagnosticsSeams::EUdpReaskDecision eDecision,
+	const UdpReaskDiagnosticsSeams::SUdpReaskEligibility &rEligibility)
+{
+	const bool bSent = UdpReaskDiagnosticsSeams::IsSentDecision(eDecision);
+	const bool bTransportEligible = UdpReaskDiagnosticsSeams::IsTransportEligibleDecision(eDecision);
+	CString strBody;
+	strBody.Format(
+		_T("{\"outcome\":\"%s\",\"transportEligible\":%s,\"reason\":%s,\"path\":\"%s\",\"requestFilePresent\":%s,\"requestPendingBeforeDecision\":%s,\"remoteUdpPort\":%u,\"remoteUdpVersion\":%u,\"localUdpPort\":%u,\"localFirewalled\":%s,\"tcpConnected\":%s,\"proxyEnabled\":%s,\"lowId\":%s,\"buddyIpKnown\":%s,\"buddyPortKnown\":%s,\"buddyIdValid\":%s,\"udpPacketsTotalBeforeDecision\":%u,\"udpPacketsFailedBeforeDecision\":%u}"),
+		bSent ? _T("sent") : _T("skipped"),
+		bTransportEligible ? _T("true") : _T("false"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(GetUdpReaskDecisionReason(eDecision)),
+		rEligibility.bLowId ? _T("callback") : _T("direct"),
+		rEligibility.bHasRequestFile ? _T("true") : _T("false"),
+		rEligibility.bRequestPending ? _T("true") : _T("false"),
+		static_cast<UINT>(rEligibility.uRemoteUdpPort),
+		static_cast<UINT>(rEligibility.uRemoteUdpVersion),
+		static_cast<UINT>(rEligibility.uLocalUdpPort),
+		rEligibility.bLocalFirewalled ? _T("true") : _T("false"),
+		rEligibility.bTcpConnected ? _T("true") : _T("false"),
+		rEligibility.bProxyEnabled ? _T("true") : _T("false"),
+		rEligibility.bLowId ? _T("true") : _T("false"),
+		rEligibility.bBuddyIpKnown ? _T("true") : _T("false"),
+		rEligibility.bBuddyPortKnown ? _T("true") : _T("false"),
+		rEligibility.bBuddyIdValid ? _T("true") : _T("false"),
+		static_cast<UINT>(rEligibility.uTotalPackets),
+		static_cast<UINT>(rEligibility.uFailedPackets));
+	WriteDiagEventV2(_T("sched"), _T("udp_reask_decision"), bSent ? _T("info") : _T("low"),
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
+}
+
 void DiagEventLogSchedConnBudgetDeny(LPCTSTR pszDenyReason, UINT uActiveConnections, UINT uConnectionCap)
 {
 	// conn_budget deny: no per-peer object is available at the global accept gate, so

@@ -17,6 +17,7 @@
 #pragma once
 
 #include "BuildFeatures.h"
+#include "UdpReaskDiagnosticsSeams.h"
 
 class CAbstractFile;
 class CKnownFile;
@@ -433,6 +434,7 @@ void DiagEventLogSchedSharedPublishOfferBatch(LPCTSTR pszServer, UINT uEntriesSe
 void DiagEventLogSchedSourceEngaged(const CUpDownClient *pClient, const byte *pFileHash);
 void DiagEventLogSchedSourceDropped(const CUpDownClient *pClient, const byte *pFileHash);
 void DiagEventLogSchedSourceSwapped(const CUpDownClient *pClient, const byte *pCurrentFileHash, const byte *pSwapTargetFileHash);
+void DiagEventLogSchedUdpReaskDecision(const CUpDownClient *pClient, const byte *pFileHash, UdpReaskDiagnosticsSeams::EUdpReaskDecision eDecision, const UdpReaskDiagnosticsSeams::SUdpReaskEligibility &rEligibility);
 void DiagEventLogSchedConnBudgetDeny(LPCTSTR pszDenyReason, UINT uActiveConnections, UINT uConnectionCap);
 #endif
 

@@ -1799,69 +1799,119 @@ void CUpDownClient::UDPReaskFNF()
 
 void CUpDownClient::UDPReaskForDownload()
 {
-	ASSERT(m_reqfile);
-	if (!m_reqfile || m_bUDPPending)
-		return;
+	UdpReaskDiagnosticsSeams::SUdpReaskEligibility eligibility = {};
+	eligibility.bHasRequestFile = m_reqfile != NULL;
+	eligibility.bRequestPending = m_bUDPPending;
+	eligibility.uTotalPackets = m_nTotalUDPPackets;
+	eligibility.uFailedPackets = m_nFailedUDPPackets;
+	eligibility.uRemoteUdpPort = GetUDPPort();
+	eligibility.uRemoteUdpVersion = GetUDPVersion();
+	eligibility.uLocalUdpPort = thePrefs.GetUDPPort();
+	eligibility.bLocalFirewalled = theApp.IsFirewalled();
+	eligibility.bTcpConnected = socket != NULL && socket->IsConnected();
+	eligibility.bProxyEnabled = thePrefs.GetProxySettings().bUseProxy;
+	eligibility.bLowId = HasLowID();
+	eligibility.bBuddyIpKnown = GetBuddyIP() != 0;
+	eligibility.bBuddyPortKnown = GetBuddyPort() != 0;
+	eligibility.bBuddyIdValid = HasValidBuddyID();
 
-	//TODO: This should be changed to determine if the last 4 UDP packets failed, not the total one.
-	if (m_nTotalUDPPackets > 3 && (static_cast<double>(m_nFailedUDPPackets) / static_cast<double>(m_nTotalUDPPackets) > 0.3))
-		return;
+	byte aucRequestFileHash[MDX_DIGEST_SIZE] = {};
+	const byte *pRequestFileHash = NULL;
+	if (m_reqfile != NULL) {
+		md4cpy(aucRequestFileHash, m_reqfile->GetFileHash());
+		pRequestFileHash = aucRequestFileHash;
+	}
 
-	if (GetUDPPort() != 0 && GetUDPVersion() != 0 && thePrefs.GetUDPPort() != 0
-		&& !theApp.IsFirewalled() && !(socket && socket->IsConnected()) && !thePrefs.GetProxySettings().bUseProxy)
-	{
-		if (!HasLowID()) {
-			//don't use udp to ask for sources
-			if (IsSourceRequestAllowed())
-				return;
-
-			if (SwapToAnotherFile(_T("A4AF check before OP_ReaskFilePing. CUpDownClient::UDPReaskForDownload()"), true, false, false, NULL, true, true))
-				return; // we swapped, so need to go to TCP
-
-			m_bUDPPending = true;
-			CSafeMemFile data(128);
-			data.WriteHash16(m_reqfile->GetFileHash());
-			if (GetUDPVersion() > 2) {
-				if (GetUDPVersion() > 3)
-					if (m_reqfile->IsPartFile())
-						reinterpret_cast<CPartFile*>(m_reqfile)->WritePartStatus(data);
-					else
-						data.WriteUInt16(0);
-
-				data.WriteUInt16(m_reqfile->m_nCompleteSourcesCount);
-			}
-			if (thePrefs.GetDebugClientUDPLevel() > 0)
-				DebugSend("OP_ReaskFilePing", this, m_reqfile->GetFileHash());
-			Packet *response = new Packet(data, OP_EMULEPROT);
-			response->opcode = OP_REASKFILEPING;
-			theStats.AddUpDataOverheadFileRequest(response->size);
-			theApp.downloadqueue->AddUDPFileReasks();
-			theApp.clientudp->SendPacket(response, GetIP(), GetUDPPort(), ShouldReceiveCryptUDPPackets(), GetUserHash(), false, 0);
-			++m_nTotalUDPPackets;
-		} else if (HasLowID() && GetBuddyIP() && GetBuddyPort() && HasValidBuddyID()) {
-			m_bUDPPending = true;
-			CSafeMemFile data(128);
-			data.WriteHash16(GetBuddyID());
-			data.WriteHash16(m_reqfile->GetFileHash());
-			if (GetUDPVersion() > 2) {
-				if (GetUDPVersion() > 3)
-					if (m_reqfile->IsPartFile())
-						reinterpret_cast<CPartFile*>(m_reqfile)->WritePartStatus(data);
-					else
-						data.WriteUInt16(0);
-
-				data.WriteUInt16(m_reqfile->m_nCompleteSourcesCount);
-			}
-			if (thePrefs.GetDebugClientUDPLevel() > 0)
-				DebugSend("OP_ReaskCallbackUDP", this, m_reqfile->GetFileHash());
-			Packet *response = new Packet(data, OP_EMULEPROT);
-			response->opcode = OP_REASKCALLBACKUDP;
-			theStats.AddUpDataOverheadFileRequest(response->size);
-			theApp.downloadqueue->AddUDPFileReasks();
-			// FIXME: We don't know which kad version the buddy has, so we need to send unencrypted
-			theApp.clientudp->SendPacket(response, GetBuddyIP(), GetBuddyPort(), false, NULL, true, 0);
-			++m_nTotalUDPPackets;
+	const auto LogDecision = [this, &eligibility, pRequestFileHash](const UdpReaskDiagnosticsSeams::EUdpReaskDecision eDecision) {
+		const ULONGLONG ullNow = ::GetTickCount64();
+		const bool bSameFile = pRequestFileHash != NULL
+			? md4equ(m_achLastUdpReaskDecisionFileHash, pRequestFileHash)
+			: isnulmd4(m_achLastUdpReaskDecisionFileHash);
+		if (!UdpReaskDiagnosticsSeams::ShouldLogDecision(
+			m_eLastUdpReaskDecision,
+			m_ullLastUdpReaskDecisionLogTick,
+			eDecision,
+			ullNow,
+			bSameFile))
+		{
+			return;
 		}
+#if EMULEBB_HAS_DIAG_EVENT_V2
+		DiagEventLogSchedUdpReaskDecision(this, pRequestFileHash, eDecision, eligibility);
+#endif
+		m_eLastUdpReaskDecision = eDecision;
+		m_ullLastUdpReaskDecisionLogTick = ullNow;
+		if (pRequestFileHash != NULL)
+			md4cpy(m_achLastUdpReaskDecisionFileHash, pRequestFileHash);
+		else
+			md4clr(m_achLastUdpReaskDecisionFileHash);
+	};
+
+	const UdpReaskDiagnosticsSeams::EUdpReaskDecision eEligibilityDecision =
+		UdpReaskDiagnosticsSeams::EvaluateEligibility(eligibility);
+	if (eEligibilityDecision != UdpReaskDiagnosticsSeams::EUdpReaskDecision::DirectEligible
+		&& eEligibilityDecision != UdpReaskDiagnosticsSeams::EUdpReaskDecision::CallbackEligible)
+	{
+		LogDecision(eEligibilityDecision);
+		return;
+	}
+
+	if (eEligibilityDecision == UdpReaskDiagnosticsSeams::EUdpReaskDecision::DirectEligible) {
+		if (IsSourceRequestAllowed()) {
+			LogDecision(UdpReaskDiagnosticsSeams::EUdpReaskDecision::SourceExchangeDue);
+			return;
+		}
+
+		if (SwapToAnotherFile(_T("A4AF check before OP_ReaskFilePing. CUpDownClient::UDPReaskForDownload()"), true, false, false, NULL, true, true)) {
+			LogDecision(UdpReaskDiagnosticsSeams::EUdpReaskDecision::SwappedToAnotherFile);
+			return;
+		}
+
+		m_bUDPPending = true;
+		CSafeMemFile data(128);
+		data.WriteHash16(m_reqfile->GetFileHash());
+		if (GetUDPVersion() > 2) {
+			if (GetUDPVersion() > 3)
+				if (m_reqfile->IsPartFile())
+					reinterpret_cast<CPartFile*>(m_reqfile)->WritePartStatus(data);
+				else
+					data.WriteUInt16(0);
+
+			data.WriteUInt16(m_reqfile->m_nCompleteSourcesCount);
+		}
+		if (thePrefs.GetDebugClientUDPLevel() > 0)
+			DebugSend("OP_ReaskFilePing", this, m_reqfile->GetFileHash());
+		Packet *response = new Packet(data, OP_EMULEPROT);
+		response->opcode = OP_REASKFILEPING;
+		theStats.AddUpDataOverheadFileRequest(response->size);
+		theApp.downloadqueue->AddUDPFileReasks();
+		theApp.clientudp->SendPacket(response, GetIP(), GetUDPPort(), ShouldReceiveCryptUDPPackets(), GetUserHash(), false, 0);
+		++m_nTotalUDPPackets;
+		LogDecision(UdpReaskDiagnosticsSeams::EUdpReaskDecision::DirectReaskSent);
+	} else {
+		m_bUDPPending = true;
+		CSafeMemFile data(128);
+		data.WriteHash16(GetBuddyID());
+		data.WriteHash16(m_reqfile->GetFileHash());
+		if (GetUDPVersion() > 2) {
+			if (GetUDPVersion() > 3)
+				if (m_reqfile->IsPartFile())
+					reinterpret_cast<CPartFile*>(m_reqfile)->WritePartStatus(data);
+				else
+					data.WriteUInt16(0);
+
+			data.WriteUInt16(m_reqfile->m_nCompleteSourcesCount);
+		}
+		if (thePrefs.GetDebugClientUDPLevel() > 0)
+			DebugSend("OP_ReaskCallbackUDP", this, m_reqfile->GetFileHash());
+		Packet *response = new Packet(data, OP_EMULEPROT);
+		response->opcode = OP_REASKCALLBACKUDP;
+		theStats.AddUpDataOverheadFileRequest(response->size);
+		theApp.downloadqueue->AddUDPFileReasks();
+		// FIXME: We don't know which kad version the buddy has, so we need to send unencrypted
+		theApp.clientudp->SendPacket(response, GetBuddyIP(), GetBuddyPort(), false, NULL, true, 0);
+		++m_nTotalUDPPackets;
+		LogDecision(UdpReaskDiagnosticsSeams::EUdpReaskDecision::CallbackReaskSent);
 	}
 }
 

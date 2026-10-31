@@ -633,6 +633,7 @@
     <ClInclude Include="ListViewWalkerPropertySheet.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="DiagEventWriterSeams.h" />
+    <ClInclude Include="UdpReaskDiagnosticsSeams.h" />
     <ClInclude Include="LogArtifactNames.h" />
     <ClInclude Include="MapKey.h" />
     <ClInclude Include="EmuleMD4.h" />

@@ -225,11 +225,13 @@ void CUpDownClient::Init()
 	m_pReqFileAICHHash = NULL;
 	m_cDownAsked = 0;
 	m_abyPartStatus = NULL;
+	md4clr(m_achLastUdpReaskDecisionFileHash);
 	m_nTransferredDown = 0;
 	m_nCurSessionPayloadDown = 0;
 	m_dwDownStartTime = 0;
 	m_nLastBlockOffset = _UI64_MAX;
 	m_dwLastBlockReceived = 0;
+	m_ullLastUdpReaskDecisionLogTick = 0;
 	m_nTotalUDPPackets = 0;
 	m_nFailedUDPPackets = 0;
 	m_nRemoteQueueRank = 0;
@@ -242,6 +244,7 @@ void CUpDownClient::Init()
 	m_bReaskPending = false;
 	m_bUDPPending = false;
 	m_bTransferredDownMini = false;
+	m_eLastUdpReaskDecision = UdpReaskDiagnosticsSeams::EUdpReaskDecision::None;
 
 	m_nUpDatarate = 0;
 	m_nSumForAvgUpDataRate = 0;
