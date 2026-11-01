@@ -1090,6 +1090,51 @@ void DiagEventLogEd2kServerTransportFallback(
 
 	WriteDiagEventV2(_T("ed2k_tcp"), _T("transport_fallback"), _T("warning"), strKeys, strBody);
 }
+
+void DiagEventLogEd2kServerSearchResultApplied(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	uint32 uSearchId,
+	uint32 uWireResultCount,
+	UINT uCumulativeSourceCountBefore,
+	UINT uCumulativeSourceCountAfter,
+	UINT uDistinctFileCountBefore,
+	UINT uDistinctFileCountAfter,
+	bool bExpectedReply,
+	bool bMoreResultsAvailable)
+{
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	const UINT uProtocolMarker = 0xE3;
+	const UINT uOpcode = 0x33;
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u,\"searchId\":%u,\"traceId\":%I64u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		uOpcode,
+		uProtocolMarker,
+		uSearchId,
+		ullAttemptId);
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"flow\":\"server\",\"phase\":\"search\",\"direction\":\"recv\",\"protocolMarker\":%u,\"opcode\":%u,\"opcodeName\":\"OP_SEARCHRESULT\",\"traceId\":%I64u,\"stateId\":\"server.search.result_applied\",\"milestone\":\"result_applied\",\"wireResultCount\":%u,\"cumulativeSourceCountBefore\":%u,\"cumulativeSourceCountAfter\":%u,\"distinctFileCountBefore\":%u,\"distinctFileCountAfter\":%u,\"expectedReply\":%s,\"moreResultsAvailable\":%s,\"outcome\":%s}"),
+		uProtocolMarker,
+		uOpcode,
+		ullAttemptId,
+		uWireResultCount,
+		uCumulativeSourceCountBefore,
+		uCumulativeSourceCountAfter,
+		uDistinctFileCountBefore,
+		uDistinctFileCountAfter,
+		bExpectedReply ? _T("true") : _T("false"),
+		bMoreResultsAvailable ? _T("true") : _T("false"),
+		bExpectedReply ? _T("\"accepted\"") : _T("\"late\""));
+
+	WriteDiagEventV2(_T("ed2k_tcp"), _T("search_result_applied"), _T("info"), strKeys, strBody);
+}
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS

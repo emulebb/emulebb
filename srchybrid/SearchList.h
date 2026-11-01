@@ -71,6 +71,7 @@ public:
 	UINT	ProcessUDPSearchAnswer(CFileDataIO &packet, bool bOptUTF8, uint32 nServerIP, uint16 nServerPort);
 	UINT	GetED2KResultCount() const;
 	UINT	GetResultCount(uint32 nSearchID) const;
+	uint32	GetCurrentED2KSearchID() const				{ return m_nCurED2KSearchID; }
 	void	AddResultCount(uint32 nSearchID, const uchar *hash, UINT nCount, bool bSpam);
 
 	void	SetOutputWnd(CSearchListCtrl *in_wnd)		{ outputwnd = in_wnd; }
