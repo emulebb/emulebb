@@ -1934,7 +1934,7 @@ void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, uint
 	// reported queue failure.
 	theApp.clientudp->SendPacket(pPacket.release(), ntohl(uDestinationHost), uDestinationPort, true
 		, (uCryptTargetID != NULL) ? uCryptTargetID->GetData() : NULL
-		, true, targetUDPKey.GetKeyValue(theApp.GetPublicIP()));
+		, true, targetUDPKey.GetKeyValue(theApp.GetPublicIP()), NULL);
 }
 
 void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, byte byOpcode, uint32 uDestinationHost, uint16 uDestinationPort, const CKadUDPKey &targetUDPKey, const CUInt128 *uCryptTargetID)
@@ -1957,7 +1957,7 @@ void CKademliaUDPListener::SendPacket(const byte *pbyData, uint32 uLenData, byte
 	// client UDP send path assumes ownership as soon as it is entered.
 	theApp.clientudp->SendPacket(pPacket.release(), ntohl(uDestinationHost), uDestinationPort, true
 		, (uCryptTargetID != NULL) ? uCryptTargetID->GetData() : NULL
-		, true, targetUDPKey.GetKeyValue(theApp.GetPublicIP()));
+		, true, targetUDPKey.GetKeyValue(theApp.GetPublicIP()), NULL);
 }
 
 void CKademliaUDPListener::SendPacket(CSafeMemFile &pbyData, byte byOpcode, uint32 uDestinationHost, uint16 uDestinationPort, const CKadUDPKey &targetUDPKey, const CUInt128 *uCryptTargetID)
@@ -1977,7 +1977,7 @@ void CKademliaUDPListener::SendPacket(CSafeMemFile &pbyData, byte byOpcode, uint
 	// client UDP send path assumes ownership as soon as it is entered.
 	theApp.clientudp->SendPacket(pPacket.release(), htonl(uDestinationHost), uDestinationPort, true
 		, (uCryptTargetID != NULL) ? uCryptTargetID->GetData() : NULL
-		, true, targetUDPKey.GetKeyValue(theApp.GetPublicIP()));
+		, true, targetUDPKey.GetKeyValue(theApp.GetPublicIP()), NULL);
 }
 
 bool CKademliaUDPListener::FindNodeIDByIP(CKadClientSearcher *pRequester, uint32 dwIP, uint16 nTCPPort, uint16 nUDPPort)

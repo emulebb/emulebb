@@ -1919,7 +1919,7 @@ void CUpDownClient::UDPReaskForDownload()
 		response->opcode = OP_REASKFILEPING;
 		theStats.AddUpDataOverheadFileRequest(response->size);
 		theApp.downloadqueue->AddUDPFileReasks();
-		theApp.clientudp->SendPacket(response, GetIP(), GetUDPPort(), ShouldReceiveCryptUDPPackets(), GetUserHash(), false, 0);
+		theApp.clientudp->SendPacket(response, GetIP(), GetUDPPort(), ShouldReceiveCryptUDPPackets(), GetUserHash(), false, 0, m_reqfile->GetFileHash());
 		++m_nTotalUDPPackets;
 		LogDecision(UdpReaskDiagnosticsSeams::EUdpReaskDecision::DirectReaskSent);
 	} else {
@@ -1943,7 +1943,7 @@ void CUpDownClient::UDPReaskForDownload()
 		theStats.AddUpDataOverheadFileRequest(response->size);
 		theApp.downloadqueue->AddUDPFileReasks();
 		// FIXME: We don't know which kad version the buddy has, so we need to send unencrypted
-		theApp.clientudp->SendPacket(response, GetBuddyIP(), GetBuddyPort(), false, NULL, true, 0);
+		theApp.clientudp->SendPacket(response, GetBuddyIP(), GetBuddyPort(), false, NULL, true, 0, m_reqfile->GetFileHash());
 		++m_nTotalUDPPackets;
 		LogDecision(UdpReaskDiagnosticsSeams::EUdpReaskDecision::CallbackReaskSent);
 	}

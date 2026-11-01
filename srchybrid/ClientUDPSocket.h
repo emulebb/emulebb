@@ -35,6 +35,8 @@ struct UDPPack
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 	ULONGLONG ullDiagSendAttemptId;
 	UINT uDiagAttemptedLen;
+	bool bHasDiagFileHash;
+	uchar pachDiagFileHash[16];
 #endif
 	//uint16 nPriority; We could add a priority system here to force some packets.
 };
@@ -49,7 +51,7 @@ public:
 	bool	Create();
 	bool	Rebind();
 	uint16	GetConnectedPort()		{ return m_port; }
-	bool	SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar *pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey);
+	bool	SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar *pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey, const uchar *pachDiagnosticFileHash);
 	SocketSentBytes  SendControlData(uint32 maxNumberOfBytesToSend, uint32 /*minFragSize*/); // ZZ:UploadBandWithThrottler (UDP)
 
 protected:

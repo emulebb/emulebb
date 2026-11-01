@@ -190,6 +190,8 @@ void DiagEventLogEd2kTcpPacket(
  * `pRaw` is the complete on-wire datagram while `pPayload` is the decoded
  * payload after the protocol marker and opcode. A non-zero send attempt ID
  * correlates an outbound packet with its terminal `send_outcome` event.
+ * `pFileHash` is the logical transfer identity supplied by the request
+ * producer; the socket logger never infers it from packet bytes.
  */
 void DiagEventLogEd2kClientUdpPacket(
 	LPCTSTR pszPeerLabel,
@@ -203,6 +205,7 @@ void DiagEventLogEd2kClientUdpPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen,
 	ULONGLONG ullSendAttemptId,
+	const BYTE *pFileHash,
 	LPCTSTR pszNote);
 
 /**

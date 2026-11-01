@@ -76,6 +76,20 @@ inline bool TryGetPacketOpcodeForLog(const unsigned char *pBuffer, const int nPa
 }
 
 /**
+ * @brief Classifies queued outgoing diagnostics by their wire protocol.
+ *
+ * Buddy-relayed OP_REASKCALLBACKUDP packets use the Kad-routed send path but
+ * still carry OP_EMULEPROT on the wire, so routing flags must not classify the
+ * diagnostic family.
+ */
+inline bool IsOutgoingEd2kClientUdpDiagnosticPacket(
+	const bool bHasPacket,
+	const unsigned char byProtocolMarker)
+{
+	return bHasPacket && byProtocolMarker == 0xC5u;
+}
+
+/**
  * @brief Release 1 outgoing client UDP encryption policy.
  *
  * Client UDP obfuscation follows the global crypt-layer preference for both

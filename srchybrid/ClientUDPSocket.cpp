@@ -65,7 +65,9 @@ ULONGLONG NextClientUdpSendAttemptId()
 
 bool IsEd2kClientUdpDiagnosticPacket(const UDPPack *pPack)
 {
-	return pPack != NULL && !pPack->bKad && pPack->packet != NULL && pPack->packet->prot == OP_EMULEPROT;
+	return pPack != NULL && ClientUDPSocketSeams::IsOutgoingEd2kClientUdpDiagnosticPacket(
+		pPack->packet != NULL,
+		pPack->packet != NULL ? pPack->packet->prot : 0);
 }
 
 void BeginClientUdpSendAttempt(UDPPack *pPack, const BYTE *pRaw, UINT uRawLen, LPCTSTR pszTransportMode)
@@ -79,7 +81,9 @@ void BeginClientUdpSendAttempt(UDPPack *pPack, const BYTE *pRaw, UINT uRawLen, L
 		ipstr(pPack->dwIP, pPack->nPort), pszTransportMode, _T("send"), _T("attempted"),
 		pPack->packet->prot, pPack->packet->opcode,
 		pRaw, uRawLen, reinterpret_cast<const BYTE*>(pPack->packet->pBuffer), pPack->packet->size,
-		pPack->ullDiagSendAttemptId, NULL);
+		pPack->ullDiagSendAttemptId,
+		pPack->bHasDiagFileHash ? pPack->pachDiagFileHash : NULL,
+		NULL);
 }
 
 void SettleClientUdpSendAttempt(UDPPack *pPack, LPCTSTR pszOutcome, bool bDeliveryKnown, LPCTSTR pszNote)
@@ -210,7 +214,7 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 						(nReceiverVerifyKey != 0 || nSenderVerifyKey != 0) ? _T("obfuscated") : _T("plaintext"),
 						_T("recv"), ClientUdpPacketDispositionName(processResult.eDisposition),
 						pBuffer[0], pBuffer[1], buffer, static_cast<UINT>(nRealLen),
-						pBuffer + 2, static_cast<UINT>(nPacketLen - 2), 0, processResult.pszNote);
+						pBuffer + 2, static_cast<UINT>(nPacketLen - 2), 0, NULL, processResult.pszNote);
 					bClientUdpDiagLogged = true;
 #else
 					(void)processResult;
@@ -293,7 +297,7 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 				ipstr(sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port)),
 				(nReceiverVerifyKey != 0 || nSenderVerifyKey != 0) ? _T("obfuscated") : _T("plaintext"),
 				_T("recv"), _T("dropped"), pBuffer[0], byOpcode,
-				buffer, static_cast<UINT>(nRealLen), pPayload, uPayloadLen, 0,
+				buffer, static_cast<UINT>(nRealLen), pPayload, uPayloadLen, 0, NULL,
 				strError.IsEmpty() ? _T("packet_processing_failed") : (LPCTSTR)strError);
 		}
 #endif
@@ -390,9 +394,9 @@ CClientUDPSocket::SProcessPacketResult CClientUDPSocket::ProcessPacket(const BYT
 				Packet *response = new Packet(OP_FILENOTFOUND, 0, OP_EMULEPROT);
 				theStats.AddUpDataOverheadFileRequest(response->size);
 				if (sender != NULL)
-					SendPacket(response, ip, port, sender->ShouldReceiveCryptUDPPackets(), sender->GetUserHash(), false, 0);
+					SendPacket(response, ip, port, sender->ShouldReceiveCryptUDPPackets(), sender->GetUserHash(), false, 0, NULL);
 				else
-					SendPacket(response, ip, port, false, NULL, false, 0);
+					SendPacket(response, ip, port, false, NULL, false, 0, NULL);
 				result = { ClientUDPSocketSeams::EClientUdpPacketDisposition::Accepted, _T("file_not_found_reply") };
 				break;
 			}
@@ -439,7 +443,7 @@ CClientUDPSocket::SProcessPacketResult CClientUDPSocket::ProcessPacket(const BYT
 					Packet *response = new Packet(data_out, OP_EMULEPROT);
 					response->opcode = OP_REASKACK;
 					theStats.AddUpDataOverheadFileRequest(response->size);
-					SendPacket(response, ip, port, sender->ShouldReceiveCryptUDPPackets(), sender->GetUserHash(), false, 0);
+					SendPacket(response, ip, port, sender->ShouldReceiveCryptUDPPackets(), sender->GetUserHash(), false, 0, NULL);
 					result = { ClientUDPSocketSeams::EClientUdpPacketDisposition::Accepted, _T("answer_needed") };
 				} else {
 					DebugLogError(_T("Client UDP socket; ReaskFilePing; reqfile does not match"));
@@ -459,7 +463,7 @@ CClientUDPSocket::SProcessPacketResult CClientUDPSocket::ProcessPacket(const BYT
 						DebugSend("OP_QueueFull", NULL);
 					Packet *response = new Packet(OP_QUEUEFULL, 0, OP_EMULEPROT);
 					theStats.AddUpDataOverheadFileRequest(response->size);
-					SendPacket(response, ip, port, false, NULL, false, 0); // we cannot send encrypted answer since we don't know this client
+					SendPacket(response, ip, port, false, NULL, false, 0, NULL); // we cannot send encrypted answer since we don't know this client
 					result = { ClientUDPSocketSeams::EClientUdpPacketDisposition::Accepted, _T("queue_full_reply") };
 				} else
 					result = { ClientUDPSocketSeams::EClientUdpPacketDisposition::Accepted, _T("answered_with_silence") };
@@ -736,7 +740,7 @@ int CClientUDPSocket::SendTo(uchar *lpBuf, int nBufLen, uint32 dwIP, uint16 nPor
 	return result; //success
 }
 
-bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar *pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey)
+bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar *pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey, const uchar *pachDiagnosticFileHash)
 {
 	std::unique_ptr<Packet> packetOwner(packet);
 // ZZ:UploadBandWithThrottler (UDP) -->
@@ -758,6 +762,13 @@ bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, boo
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 		newpending->ullDiagSendAttemptId = 0;
 		newpending->uDiagAttemptedLen = 0;
+		newpending->bHasDiagFileHash = pachDiagnosticFileHash != NULL;
+		if (pachDiagnosticFileHash != NULL)
+			md4cpy(newpending->pachDiagFileHash, pachDiagnosticFileHash);
+		else
+			md4clr(newpending->pachDiagFileHash);
+#else
+		UNREFERENCED_PARAMETER(pachDiagnosticFileHash);
 #endif
 
 #ifdef _DEBUG

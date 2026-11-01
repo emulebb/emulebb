@@ -1667,6 +1667,7 @@ void DiagEventLogEd2kClientUdpPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen,
 	ULONGLONG ullSendAttemptId,
+	const BYTE *pFileHash,
 	LPCTSTR pszNote)
 {
 	if (!IsDiagEventV2WriterEnabled())
@@ -1688,6 +1689,11 @@ void DiagEventLogEd2kClientUdpPacket(
 		static_cast<UINT>(byProtocol));
 	if (ullSendAttemptId != 0)
 		strKeys.AppendFormat(_T(",\"sendAttemptId\":%I64u"), ullSendAttemptId);
+	if (pFileHash != NULL) {
+		strKeys.AppendFormat(
+			_T(",\"fileHash\":%s"),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagEventLowerHexString(pFileHash, MDX_DIGEST_SIZE)));
+	}
 	strKeys += _T("}");
 
 	CString strBody;
