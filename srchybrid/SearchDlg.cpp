@@ -184,6 +184,11 @@ void CSearchDlg::LocalEd2kSearchEnd(UINT nCount, bool bMoreResultsAvailable)
 	m_pwndResults->LocalEd2kSearchEnd(nCount, bMoreResultsAvailable);
 }
 
+bool CSearchDlg::IsSearchRunning(uint32 uSearchID) const
+{
+	return m_pwndResults != NULL && m_pwndResults->IsSearchRunning(uSearchID);
+}
+
 void CSearchDlg::CancelEd2kSearch()
 {
 	m_pwndResults->CancelEd2kSearch();

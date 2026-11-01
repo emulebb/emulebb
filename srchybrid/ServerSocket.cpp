@@ -412,8 +412,31 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 				if (thePrefs.GetDebugServerTCPLevel() > 0)
 					Debug(_T("ServerMsg - OP_SearchResult\n"));
 				CServer *cur_srv = (serverconnect) ? serverconnect->GetCurrentServer() : NULL;
+#if EMULEBB_HAS_DIAG_EVENT_V2
+				const uint32 uSearchId = theApp.searchlist->GetCurrentED2KSearchID();
+				const uint32 uWireResultCount = size >= sizeof(uint32) ? PeekUInt32(packet) : 0;
+				const UINT uCumulativeSourceCountBefore = theApp.searchlist->GetResultCount(uSearchId);
+				const UINT uDistinctFileCountBefore = theApp.searchlist->GetFoundFiles(uSearchId);
+				const bool bExpectedReply = theApp.emuledlg->searchwnd->IsSearchRunning(uSearchId);
+#endif
 				bool bMoreResultsAvailable;
 				UINT uSearchResults = theApp.searchlist->ProcessSearchAnswer(packet, size, true/*pServer ? pServer->GetUnicodeSupport() : false*/, cur_srv ? cur_srv->GetIP() : 0, cur_srv ? cur_srv->GetPort() : (uint16)0, &bMoreResultsAvailable);
+#if EMULEBB_HAS_DIAG_EVENT_V2
+				CString strDiagnosticPeer;
+				if (cur_server != NULL)
+					strDiagnosticPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
+				DiagEventLogEd2kServerSearchResultApplied(
+					strDiagnosticPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strDiagnosticPeer,
+					m_ullDiagnosticAttemptId,
+					uSearchId,
+					uWireResultCount,
+					uCumulativeSourceCountBefore,
+					theApp.searchlist->GetResultCount(uSearchId),
+					uDistinctFileCountBefore,
+					theApp.searchlist->GetFoundFiles(uSearchId),
+					bExpectedReply,
+					bMoreResultsAvailable);
+#endif
 				theApp.emuledlg->searchwnd->LocalEd2kSearchEnd(uSearchResults, bMoreResultsAvailable);
 				break;
 			}

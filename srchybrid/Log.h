@@ -177,6 +177,21 @@ void DiagEventLogEd2kServerTransportFallback(
 	LPCTSTR pszFromTransportMode,
 	LPCTSTR pszToTransportMode,
 	LPCTSTR pszError);
+
+/**
+ * @brief Records one successfully decoded and applied server search-result page.
+ */
+void DiagEventLogEd2kServerSearchResultApplied(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	uint32 uSearchId,
+	uint32 uWireResultCount,
+	UINT uCumulativeSourceCountBefore,
+	UINT uCumulativeSourceCountAfter,
+	UINT uDistinctFileCountBefore,
+	UINT uDistinctFileCountAfter,
+	bool bExpectedReply,
+	bool bMoreResultsAvailable);
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)

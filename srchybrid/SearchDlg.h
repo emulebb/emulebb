@@ -41,6 +41,7 @@ public:
 	void DeleteAllSearches();
 
 	void LocalEd2kSearchEnd(UINT nCount, bool bMoreResultsAvailable);
+	bool IsSearchRunning(uint32 uSearchID) const;
 	void AddEd2kSearchResults(UINT nCount);
 
 	bool CreateNewTab(SSearchParams *pParams, bool bActiveIcon = true);
