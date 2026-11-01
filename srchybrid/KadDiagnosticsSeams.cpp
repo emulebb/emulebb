@@ -456,7 +456,8 @@ void LogLookupLifecycle(
 	uint32 uSearchID,
 	LPCTSTR pszMilestone,
 	LPCTSTR pszSearchKind,
-	UINT uResultCount)
+	UINT uResultCount,
+	LPCTSTR pszTargetHex)
 {
 #if EMULEBB_HAS_DIAG_EVENT_V2
 	if (!IsDiagEventV2WriterEnabled())
@@ -468,18 +469,22 @@ void LogLookupLifecycle(
 	strKeys.Format(
 		_T("{\"searchId\":%s}"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(strSearchID));
+	CString strTargetHex(pszTargetHex);
+	strTargetHex.MakeLower();
 	CString strBody;
 	strBody.Format(
-		_T("{\"milestone\":%s,\"action\":\"search\",\"searchKind\":%s,\"resultCount\":%u}"),
+		_T("{\"milestone\":%s,\"action\":\"search\",\"searchKind\":%s,\"resultCount\":%u,\"targetHex\":%s}"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszMilestone),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszSearchKind),
-		uResultCount);
+		uResultCount,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTargetHex));
 	WriteDiagEventV2(_T("kad_event"), _T("lookup"), _T("info"), strKeys, strBody);
 #else
 	UNREFERENCED_PARAMETER(uSearchID);
 	UNREFERENCED_PARAMETER(pszMilestone);
 	UNREFERENCED_PARAMETER(pszSearchKind);
 	UNREFERENCED_PARAMETER(uResultCount);
+	UNREFERENCED_PARAMETER(pszTargetHex);
 #endif
 }
 
