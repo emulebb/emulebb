@@ -1950,7 +1950,9 @@ BOOL CemuleApp::InitInstance()
 int CemuleApp::ExitInstance()
 {
 	AddDebugLogLine(DLP_VERYLOW, _T("%hs"), __FUNCTION__);
+#if EMULEBB_HAS_DIAG_EVENT_V2
 	ShutdownDiagEventV2Writer();
+#endif
 	DestroyEarlyStartupProgress();
 	ReleaseStandbyPrevention();
 	StopSharedDirectoryMonitor();
