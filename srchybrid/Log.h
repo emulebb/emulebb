@@ -137,6 +137,7 @@ void WriteDiagnosticsJsonEvent(
 bool InitializeDiagEventV2Writer(LPCTSTR pszLogDirectory, UINT uConfiguredSegmentBytes);
 bool IsDiagEventV2WriterEnabled();
 CString BuildDiagEventV2WriterHealthJson();
+void ShutdownDiagEventV2Writer();
 
 /**
  * @brief Writes one converged diag_event_v2 record (camelCase envelope) to the

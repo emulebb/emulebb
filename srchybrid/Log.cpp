@@ -319,6 +319,11 @@ public:
 
 	~CDiagEventV2Writer()
 	{
+		Shutdown();
+	}
+
+	void Shutdown()
+	{
 		CSingleLock lock(&m_lock, TRUE);
 		CloseActiveSegmentLocked();
 		WriteHealthLocked(true);
@@ -971,6 +976,11 @@ bool IsDiagEventV2WriterEnabled()
 CString BuildDiagEventV2WriterHealthJson()
 {
 	return g_diagEventV2Writer.BuildHealthJson();
+}
+
+void ShutdownDiagEventV2Writer()
+{
+	g_diagEventV2Writer.Shutdown();
 }
 
 void WriteDiagEventV2(
