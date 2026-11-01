@@ -64,14 +64,23 @@ void LogServerTransportFallback(const CServer *pServer, ULONGLONG ullAttemptId, 
 }
 #endif
 
-void CServerConnect::TryAnotherConnectionRequest()
+void CServerConnect::TryAnotherConnectionRequest(const CServer *pFailedServer, ULONGLONG ullFailedAttemptId, LPCTSTR pszFailureReason)
 {
+#if !EMULEBB_HAS_DIAG_EVENT_V2
+	UNREFERENCED_PARAMETER(pFailedServer);
+	UNREFERENCED_PARAMETER(ullFailedAttemptId);
+	UNREFERENCED_PARAMETER(pszFailureReason);
+#endif
 	if (connectionattempts.GetCount() < 2 - static_cast<INT_PTR>(thePrefs.IsSafeServerConnectEnabled())) {
 		CServer *next_server = theApp.serverlist->GetNextServer(m_bTryObfuscated);
 		if (next_server == NULL) {
 			switch (ServerConnectSeams::SelectServerListExhaustionAction(!connectionattempts.IsEmpty(), m_bTryObfuscated, thePrefs.IsCryptLayerRequired())) {
 			case ServerConnectSeams::EServerListExhaustionAction::FallbackToPlain:
 				// try all servers on the non-obfuscated port next
+#if EMULEBB_HAS_DIAG_EVENT_V2
+				if (pFailedServer != NULL && ullFailedAttemptId != 0)
+					LogServerTransportFallback(pFailedServer, ullFailedAttemptId, pszFailureReason);
+#endif
 				DebugLog(_T("Server retry path: falling back to non-obfuscated server connections"));
 				m_bTryObfuscated = false;
 				ConnectToAnyServer(0, true, true, true);
@@ -475,7 +484,7 @@ void CServerConnect::ConnectionFailed(CServerSocket *sender)
 				break;
 			}
 		}
-		TryAnotherConnectionRequest();
+		TryAnotherConnectionRequest(pServer, sender->m_ullDiagnosticAttemptId, _T("connection_failed"));
 	}
 	theApp.emuledlg->ShowConnectionState();
 }
@@ -525,10 +534,12 @@ void CServerConnect::CheckForTimeout()
 		if (curTick >= tmpkey + dwServerConnectTimeout) {
 			LogWarning(GetResString(IDS_ERR_CONTIMEOUT), (LPCTSTR)tmpsock->cur_server->GetListName(), tmpsock->cur_server->GetAddress(), tmpsock->cur_server->GetPort());
 			tmpsock->LogConnectionStateTransition(tmpsock->GetConnectionState(), CS_SERVERDEAD, WSAETIMEDOUT);
+			CServer *pFailedServer = theApp.serverlist->GetServerByAddress(tmpsock->cur_server->GetAddress(), tmpsock->cur_server->GetPort());
+			const ULONGLONG ullFailedAttemptId = tmpsock->m_ullDiagnosticAttemptId;
 			CServer *pRetryServer = NULL;
 			const bool bRetryWithoutObfuscation = ServerConnectSeams::ShouldRetrySingleServerWithoutObfuscation(singleconnecting, true, tmpsock->IsServerCryptEnabledConnection(), thePrefs.IsCryptLayerRequired());
 			if (bRetryWithoutObfuscation)
-				pRetryServer = theApp.serverlist->GetServerByAddress(tmpsock->cur_server->GetAddress(), tmpsock->cur_server->GetPort());
+				pRetryServer = pFailedServer;
 #if EMULEBB_HAS_DIAG_EVENT_V2
 			if (bRetryWithoutObfuscation && pRetryServer != NULL)
 				LogServerTransportFallback(pRetryServer, tmpsock->m_ullDiagnosticAttemptId, _T("connection_timeout"));
@@ -542,7 +553,7 @@ void CServerConnect::CheckForTimeout()
 			else if (singleconnecting)
 				StopConnectionTry();
 			else
-				TryAnotherConnectionRequest();
+				TryAnotherConnectionRequest(pFailedServer, ullFailedAttemptId, _T("connection_timeout"));
 		}
 	}
 }

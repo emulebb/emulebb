@@ -67,7 +67,7 @@ public:
 	bool	IsLowID() const;
 	void	SetClientID(uint32 newid);
 	bool	IsLocalServer(uint32 dwIP, uint16 nPort) const;
-	void	TryAnotherConnectionRequest();
+	void	TryAnotherConnectionRequest(const CServer *pFailedServer = NULL, ULONGLONG ullFailedAttemptId = 0, LPCTSTR pszFailureReason = NULL);
 	bool	IsSingleConnect() const			{ return singleconnecting; }
 	void	InitLocalIP();
 	uint32	GetLocalIP() const				{ return m_nLocalIP; }
