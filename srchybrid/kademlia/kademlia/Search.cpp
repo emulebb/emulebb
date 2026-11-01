@@ -100,7 +100,8 @@ CSearch::~CSearch()
 			m_uSearchID,
 			_T("lookup_complete"),
 			_T("keyword"),
-			theApp.searchlist->GetFoundFiles(m_uSearchID));
+			theApp.searchlist->GetFoundFiles(m_uSearchID),
+			m_uTarget.ToHexString());
 	}
 
 	// remember the closest node we found and tried to contact (if any) during this search
@@ -186,7 +187,8 @@ void CSearch::Go()
 			m_uSearchID,
 			_T("lookup_started"),
 			_T("keyword"),
-			0);
+			0,
+			m_uTarget.ToHexString());
 	}
 
 	// Start with a lot of possible contacts, this is a fallback in case search stalls due to dead contacts

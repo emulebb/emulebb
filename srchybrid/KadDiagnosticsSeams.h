@@ -97,7 +97,8 @@ void LogLookupLifecycle(
 	uint32 uSearchID,
 	LPCTSTR pszMilestone,
 	LPCTSTR pszSearchKind,
-	UINT uResultCount);
+	UINT uResultCount,
+	LPCTSTR pszTargetHex);
 
 /**
  * Which outbound Kad publish kind a milestone describes; mirrors the rust
@@ -146,7 +147,7 @@ inline void LogContactEvent(LPCTSTR, LPCTSTR, const Kademlia::CContact *, LPCTST
 inline void LogRawContactEvent(LPCTSTR, LPCTSTR, uint32, uint16, uint16, uint8, LPCTSTR, LPCTSTR, LPCTSTR = NULL) {}
 inline void LogPacketEvent(LPCTSTR, LPCTSTR, uint32, uint8, uint8, LPCTSTR, LPCTSTR, LONGLONG) {}
 inline void LogSearchResponseEvent(LPCTSTR, LPCTSTR, uint32, uint32, uint32, uint16, uint8, UINT, UINT, LPCTSTR, LPCTSTR) {}
-inline void LogLookupLifecycle(uint32, LPCTSTR, LPCTSTR, UINT) {}
+inline void LogLookupLifecycle(uint32, LPCTSTR, LPCTSTR, UINT, LPCTSTR) {}
 enum class EKadPublishKind
 {
 	Keyword,
