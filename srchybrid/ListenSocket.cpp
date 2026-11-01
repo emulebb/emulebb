@@ -1709,9 +1709,9 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 				Packet *response = new Packet(OP_FILENOTFOUND, 0, OP_EMULEPROT);
 				theStats.AddUpDataOverheadFileRequest(response->size);
 				if (sender)
-					theApp.clientudp->SendPacket(response, destip, destport, sender->ShouldReceiveCryptUDPPackets(), sender->GetUserHash(), false, 0);
+					theApp.clientudp->SendPacket(response, destip, destport, sender->ShouldReceiveCryptUDPPackets(), sender->GetUserHash(), false, 0, NULL);
 				else
-					theApp.clientudp->SendPacket(response, destip, destport, false, NULL, false, 0);
+					theApp.clientudp->SendPacket(response, destip, destport, false, NULL, false, 0, NULL);
 				return;
 			}
 
@@ -1749,7 +1749,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 					Packet *response = new Packet(data_out, OP_EMULEPROT);
 					response->opcode = OP_REASKACK;
 					theStats.AddUpDataOverheadFileRequest(response->size);
-					theApp.clientudp->SendPacket(response, destip, destport, sender->ShouldReceiveCryptUDPPackets(), sender->GetUserHash(), false, 0);
+					theApp.clientudp->SendPacket(response, destip, destport, sender->ShouldReceiveCryptUDPPackets(), sender->GetUserHash(), false, 0, NULL);
 				} else {
 					DebugLogWarning(_T("Client UDP socket; OP_REASKCALLBACKTCP; reqfile does not match"));
 					TRACE(_T("reqfile:         %s\n"), (LPCTSTR)DbgGetFileInfo(reqfile->GetFileHash()));
@@ -1762,7 +1762,7 @@ void CClientReqSocket::ProcessExtPacket(const BYTE *packet, uint32 size, UINT op
 							DebugSend("OP_QueueFull", NULL);
 						Packet *response = new Packet(OP_QUEUEFULL, 0, OP_EMULEPROT);
 						theStats.AddUpDataOverheadFileRequest(response->size);
-						theApp.clientudp->SendPacket(response, destip, destport, false, NULL, false, 0);
+						theApp.clientudp->SendPacket(response, destip, destport, false, NULL, false, 0, NULL);
 					}
 				} else
 					DebugLogWarning(_T("OP_REASKCALLBACKTCP Packet received - multiple clients with the same IP but different UDP port found. Possible UDP Port mapping problem, enforcing TCP connection. IP: %s, Port: %u"), (LPCTSTR)ipstr(destip), destport);

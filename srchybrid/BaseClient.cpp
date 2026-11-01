@@ -1494,7 +1494,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 		Packet *packet = new Packet(data, OP_EMULEPROT);
 		packet->opcode = OP_DIRECTCALLBACKREQ;
 		theStats.AddUpDataOverheadOther(packet->size);
-		theApp.clientudp->SendPacket(packet, GetConnectIP(), GetKadPort(), ShouldReceiveCryptUDPPackets(), GetUserHash(), false, 0);
+		theApp.clientudp->SendPacket(packet, GetConnectIP(), GetKadPort(), ShouldReceiveCryptUDPPackets(), GetUserHash(), false, 0, NULL);
 		return true;
 	}
 	////////////////////////////////////////////////////////////
@@ -1533,7 +1533,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 			theStats.AddUpDataOverheadKad(packet->size);
 			m_eConnectingState = CCS_KADCALLBACK;
 			// FIXME: We don't know which kad version the buddy has, so we need to send unencrypted
-			theApp.clientudp->SendPacket(packet, GetBuddyIP(), GetBuddyPort(), false, NULL, true, 0);
+			theApp.clientudp->SendPacket(packet, GetBuddyIP(), GetBuddyPort(), false, NULL, true, 0, NULL);
 			SetDownloadState(DS_WAITCALLBACKKAD);
 		} else if (m_reqfile != NULL) {
 			// I don't think we should ever have a buddy without its IP (any more), but nevertheless let
