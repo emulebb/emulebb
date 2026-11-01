@@ -1135,6 +1135,92 @@ void DiagEventLogEd2kServerSearchResultApplied(
 
 	WriteDiagEventV2(_T("ed2k_tcp"), _T("search_result_applied"), _T("info"), strKeys, strBody);
 }
+
+namespace
+{
+void DiagEventLogEd2kServerMetadataApplied(
+	LPCTSTR pszEvent,
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszTransportMode,
+	UINT uOpcode,
+	LPCTSTR pszOpcodeName,
+	const CString &rstrFieldsJson)
+{
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	const UINT uProtocolMarker = 0xE3;
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	const CString strTransportMode(pszTransportMode != NULL ? pszTransportMode : _T("unknown"));
+	const bool bObfuscated = _tcsicmp(strTransportMode, _T("obfuscated")) == 0;
+	CString strTraceKey;
+	strTraceKey.Format(_T("server:tcp:%s"), (LPCTSTR)strPeer);
+
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"traceId\":%I64u,\"protocolMarker\":%u,\"opcode\":%u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		ullAttemptId,
+		uProtocolMarker,
+		uOpcode);
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"direction\":\"meta\",\"outcome\":\"applied\",\"protocolMarker\":%u,\"protocolName\":\"ed2k\",\"opcode\":%u,\"opcodeName\":%s,\"obfuscated\":%s,\"transportMode\":%s,\"flow\":\"server\",\"phase\":\"tcp\",\"role\":\"server\",\"traceId\":%I64u,\"traceKey\":%s,\"stateId\":\"server.tcp.packet\",\"stateLabel\":\"tcp\"%s}"),
+		uProtocolMarker,
+		uOpcode,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszOpcodeName != NULL ? pszOpcodeName : _T("UNKNOWN")),
+		bObfuscated ? _T("true") : _T("false"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTransportMode),
+		ullAttemptId,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTraceKey),
+		(LPCTSTR)rstrFieldsJson);
+
+	WriteDiagEventV2(_T("ed2k_tcp"), pszEvent, _T("info"), strKeys, strBody);
+}
+}
+
+void DiagEventLogEd2kServerStatusApplied(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszTransportMode,
+	uint32 uUsers,
+	uint32 uFiles)
+{
+	CString strFields;
+	strFields.Format(_T(",\"users\":%u,\"files\":%u"), uUsers, uFiles);
+	DiagEventLogEd2kServerMetadataApplied(
+		_T("server_status_applied"),
+		pszPeerLabel,
+		ullAttemptId,
+		pszTransportMode,
+		0x34,
+		_T("OP_SERVERSTATUS"),
+		strFields);
+}
+
+void DiagEventLogEd2kServerIdentApplied(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszName,
+	LPCTSTR pszDescription)
+{
+	CString strFields;
+	strFields.Format(
+		_T(",\"name\":%s,\"description\":%s"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszName != NULL ? pszName : _T("")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDescription != NULL ? pszDescription : _T("")));
+	DiagEventLogEd2kServerMetadataApplied(
+		_T("server_ident_applied"),
+		pszPeerLabel,
+		ullAttemptId,
+		pszTransportMode,
+		0x41,
+		_T("OP_SERVERIDENT"),
+		strFields);
+}
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS

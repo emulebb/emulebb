@@ -192,6 +192,26 @@ void DiagEventLogEd2kServerSearchResultApplied(
 	UINT uDistinctFileCountAfter,
 	bool bExpectedReply,
 	bool bMoreResultsAvailable);
+
+/**
+ * @brief Records one decoded OP_SERVERSTATUS after its counters are applied.
+ */
+void DiagEventLogEd2kServerStatusApplied(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszTransportMode,
+	uint32 uUsers,
+	uint32 uFiles);
+
+/**
+ * @brief Records one decoded OP_SERVERIDENT after its metadata is applied.
+ */
+void DiagEventLogEd2kServerIdentApplied(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszName,
+	LPCTSTR pszDescription);
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)

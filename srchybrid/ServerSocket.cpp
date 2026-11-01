@@ -480,6 +480,16 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 					theApp.emuledlg->ShowUserCount();
 					theApp.emuledlg->serverwnd->serverlistctrl.RefreshServer(pServer);
 					theApp.emuledlg->serverwnd->UpdateMyInfo();
+#if EMULEBB_HAS_DIAG_EVENT_V2
+					CString strDiagnosticPeer;
+					strDiagnosticPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
+					DiagEventLogEd2kServerStatusApplied(
+						(LPCTSTR)strDiagnosticPeer,
+						m_ullDiagnosticAttemptId,
+						IsServerCryptEnabledConnection() ? _T("obfuscated") : _T("plaintext"),
+						cur_user,
+						cur_files);
+#endif
 				}
 				if (thePrefs.GetDebugServerTCPLevel() > 0) {
 					if (size > 8) {
@@ -557,6 +567,16 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 						pServer->SetVersion(_T("eFarm ") + pServer->GetVersion());
 					theApp.emuledlg->ShowConnectionState();
 					theApp.emuledlg->serverwnd->serverlistctrl.RefreshServer(pServer);
+#if EMULEBB_HAS_DIAG_EVENT_V2
+					CString strDiagnosticPeer;
+					strDiagnosticPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
+					DiagEventLogEd2kServerIdentApplied(
+						(LPCTSTR)strDiagnosticPeer,
+						m_ullDiagnosticAttemptId,
+						IsServerCryptEnabledConnection() ? _T("obfuscated") : _T("plaintext"),
+						strName,
+						strDescription);
+#endif
 				}
 			}
 			break;
