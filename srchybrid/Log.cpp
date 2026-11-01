@@ -1883,7 +1883,10 @@ static void DiagEventLogEd2kServerPacket(
 	strTraceKey.Format(_T("server:%s:%s"), bUdp ? _T("udp") : _T("tcp"), (LPCTSTR)strPeer);
 	CString strBody;
 	const bool bSend = pszDirection != NULL && _tcsicmp(pszDirection, _T("send")) == 0;
-	const LPCTSTR pszPacketOutcome = bSend ? (bUdp ? _T("attempted") : _T("send_succeeded")) : _T("accepted");
+	// TCP and UDP packet diagnostics are emitted before the asynchronous socket
+	// boundary accepts or transmits the packet.  They therefore prove only the
+	// send attempt; a later correlated reply provides causal delivery evidence.
+	const LPCTSTR pszPacketOutcome = bSend ? _T("attempted") : _T("accepted");
 	strBody.Format(
 		_T("{\"direction\":%s,\"outcome\":%s,\"protocolMarker\":%u,\"protocolName\":%s,\"opcode\":%u,\"opcodeName\":%s,\"clearFrameLen\":%u,\"clearFrameHex\":\"%s\",\"payloadLen\":%u,\"payloadHex\":\"%s\",\"payloadHexTruncated\":false,\"obfuscated\":%s,\"transportMode\":%s,\"flow\":\"server\",\"phase\":%s,\"role\":%s,\"traceKey\":%s,\"stateId\":%s,\"stateLabel\":%s"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDirection != NULL ? pszDirection : _T("unknown")),
