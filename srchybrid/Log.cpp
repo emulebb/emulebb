@@ -1136,6 +1136,53 @@ void DiagEventLogEd2kServerSearchResultApplied(
 	WriteDiagEventV2(_T("ed2k_tcp"), _T("search_result_applied"), _T("info"), strKeys, strBody);
 }
 
+void DiagEventLogEd2kServerSourceResultApplied(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszTransportMode,
+	uint8 uOpcode,
+	const uchar *pFileHash,
+	UINT uWireSourceCount,
+	UINT uSourceCountBefore,
+	UINT uSourceCountAfter)
+{
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	const UINT uProtocolMarker = 0xE3;
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	const CString strTransportMode(pszTransportMode != NULL ? pszTransportMode : _T("unknown"));
+	const CString strFileHash = pFileHash != NULL
+		? BuildDiagEventLowerHexString(pFileHash, MDX_DIGEST_SIZE)
+		: CString();
+	const bool bObfuscated = uOpcode == OP_FOUNDSOURCES_OBFU;
+	const LPCTSTR pszOpcodeName = bObfuscated ? _T("OP_FOUNDSOURCES_OBFU") : _T("OP_FOUNDSOURCES");
+
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"fileHash\":%s,\"opcode\":%u,\"protocolMarker\":%u,\"traceId\":%I64u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strFileHash),
+		(UINT)uOpcode,
+		uProtocolMarker,
+		ullAttemptId);
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"flow\":\"server\",\"phase\":\"source_search\",\"direction\":\"recv\",\"protocolMarker\":%u,\"opcode\":%u,\"opcodeName\":%s,\"traceId\":%I64u,\"transportMode\":%s,\"obfuscated\":%s,\"stateId\":\"server.source.result_applied\",\"milestone\":\"result_applied\",\"wireSourceCount\":%u,\"sourceCountBefore\":%u,\"sourceCountAfter\":%u,\"outcome\":\"applied\"}"),
+		uProtocolMarker,
+		(UINT)uOpcode,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszOpcodeName),
+		ullAttemptId,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTransportMode),
+		bObfuscated ? _T("true") : _T("false"),
+		uWireSourceCount,
+		uSourceCountBefore,
+		uSourceCountAfter);
+
+	WriteDiagEventV2(_T("ed2k_tcp"), _T("source_result_applied"), _T("info"), strKeys, strBody);
+}
+
 namespace
 {
 void DiagEventLogEd2kServerMetadataApplied(

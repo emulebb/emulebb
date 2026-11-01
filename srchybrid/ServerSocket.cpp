@@ -460,8 +460,25 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 				uchar fileid[MDX_DIGEST_SIZE];
 				sources.ReadHash16(fileid);
 				CPartFile *file = theApp.downloadqueue->GetFileByID(fileid);
-				if (file)
+				if (file) {
+#if EMULEBB_HAS_DIAG_EVENT_V2
+					const UINT uSourceCountBefore = file->GetSourceCount();
+#endif
 					file->AddSources(&sources, cur_server->GetIP(), cur_server->GetPort(), (opcode == OP_FOUNDSOURCES_OBFU));
+#if EMULEBB_HAS_DIAG_EVENT_V2
+					CString strDiagnosticPeer;
+					strDiagnosticPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
+					DiagEventLogEd2kServerSourceResultApplied(
+						strDiagnosticPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strDiagnosticPeer,
+						m_ullDiagnosticAttemptId,
+						IsServerCryptEnabledConnection() ? _T("obfuscated") : _T("plaintext"),
+						opcode,
+						fileid,
+						(UINT)packet[16],
+						uSourceCountBefore,
+						file->GetSourceCount());
+#endif
+				}
 			}
 			break;
 		case OP_SERVERSTATUS:
