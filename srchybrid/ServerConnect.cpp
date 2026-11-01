@@ -46,6 +46,24 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+#if EMULEBB_HAS_DIAG_EVENT_V2
+namespace
+{
+void LogServerTransportFallback(const CServer *pServer, ULONGLONG ullAttemptId, LPCTSTR pszError)
+{
+	CString strPeer;
+	if (pServer != NULL)
+		strPeer.Format(_T("%s:%u"), pServer->GetAddress(), pServer->GetPort());
+	DiagEventLogEd2kServerTransportFallback(
+		strPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strPeer,
+		ullAttemptId,
+		_T("obfuscated"),
+		_T("plaintext"),
+		pszError);
+}
+}
+#endif
+
 void CServerConnect::TryAnotherConnectionRequest()
 {
 	if (connectionattempts.GetCount() < 2 - static_cast<INT_PTR>(thePrefs.IsSafeServerConnectEnabled())) {
@@ -437,6 +455,9 @@ void CServerConnect::ConnectionFailed(CServerSocket *sender)
 		if (singleconnecting) {
 			if (ServerConnectSeams::ShouldRetrySingleServerWithoutObfuscation(singleconnecting, pServer != NULL, sender->IsServerCryptEnabledConnection(), thePrefs.IsCryptLayerRequired())) {
 				// try reconnecting without obfuscation
+#if EMULEBB_HAS_DIAG_EVENT_V2
+				LogServerTransportFallback(pServer, sender->m_ullDiagnosticAttemptId, _T("connection_failed"));
+#endif
 				DebugLog(_T("Server retry path: retrying single server without obfuscation after connection failure"));
 				ConnectToServer(pServer, false, true);
 				break;
@@ -508,6 +529,10 @@ void CServerConnect::CheckForTimeout()
 			const bool bRetryWithoutObfuscation = ServerConnectSeams::ShouldRetrySingleServerWithoutObfuscation(singleconnecting, true, tmpsock->IsServerCryptEnabledConnection(), thePrefs.IsCryptLayerRequired());
 			if (bRetryWithoutObfuscation)
 				pRetryServer = theApp.serverlist->GetServerByAddress(tmpsock->cur_server->GetAddress(), tmpsock->cur_server->GetPort());
+#if EMULEBB_HAS_DIAG_EVENT_V2
+			if (bRetryWithoutObfuscation && pRetryServer != NULL)
+				LogServerTransportFallback(pRetryServer, tmpsock->m_ullDiagnosticAttemptId, _T("connection_timeout"));
+#endif
 			connectionattempts.RemoveKey(tmpkey);
 			DestroySocket(tmpsock);
 			if (bRetryWithoutObfuscation && pRetryServer != NULL) {

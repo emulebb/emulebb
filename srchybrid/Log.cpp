@@ -1062,6 +1062,34 @@ void DiagEventLogEd2kServerConnectionState(
 		strKeys,
 		strBody);
 }
+
+void DiagEventLogEd2kServerTransportFallback(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszFromTransportMode,
+	LPCTSTR pszToTransportMode,
+	LPCTSTR pszError)
+{
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"flow\":\"server\",\"traceId\":%I64u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		ullAttemptId);
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"flow\":\"server\",\"phase\":\"connection\",\"outcome\":\"retrying\",\"fromTransportMode\":%s,\"toTransportMode\":%s,\"error\":%s,\"traceId\":%I64u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszFromTransportMode != NULL ? pszFromTransportMode : _T("unknown")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszToTransportMode != NULL ? pszToTransportMode : _T("unknown")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszError != NULL ? pszError : _T("unknown")),
+		ullAttemptId);
+
+	WriteDiagEventV2(_T("ed2k_tcp"), _T("transport_fallback"), _T("warning"), strKeys, strBody);
+}
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
@@ -1490,6 +1518,7 @@ static LPCTSTR DiagEventServerTCPOpcodeName(BYTE byOpcode)
 static void DiagEventLogEd2kServerPacket(
 	bool bUdp,
 	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
 	uint8 byProtocol,
@@ -1530,11 +1559,20 @@ static void DiagEventLogEd2kServerPacket(
 	const CString strPayloadHex(BuildDiagEventLowerHexString(pPayload, pPayload != NULL ? uPayloadLen : 0));
 
 	CString strKeys;
-	strKeys.Format(
-		_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u}"),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
-		static_cast<UINT>(byOpcode),
-		static_cast<UINT>(byProtocol));
+	if (bUdp) {
+		strKeys.Format(
+			_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u}"),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+			static_cast<UINT>(byOpcode),
+			static_cast<UINT>(byProtocol));
+	} else {
+		strKeys.Format(
+			_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u,\"traceId\":%I64u}"),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+			static_cast<UINT>(byOpcode),
+			static_cast<UINT>(byProtocol),
+			ullAttemptId);
+	}
 
 	CString strTraceKey;
 	strTraceKey.Format(_T("server:%s:%s"), bUdp ? _T("udp") : _T("tcp"), (LPCTSTR)strPeer);
@@ -1558,6 +1596,8 @@ static void DiagEventLogEd2kServerPacket(
 		(LPCTSTR)BuildDiagnosticsJsonStringField(strTraceKey),
 		bUdp ? _T("\"server.udp.packet\"") : _T("\"server.tcp.packet\""),
 		bUdp ? _T("\"udp\"") : _T("\"tcp\""));
+	if (!bUdp)
+		strBody.AppendFormat(_T(",\"traceId\":%I64u"), ullAttemptId);
 	if (!bObfuscated)
 		strBody.AppendFormat(_T(",\"rawLen\":%u,\"rawHex\":\"%s\""), uClearFrameLen, (LPCTSTR)strClearFrameHex);
 	strBody += _T("}");
@@ -1567,6 +1607,7 @@ static void DiagEventLogEd2kServerPacket(
 
 void DiagEventLogEd2kServerTcpPacket(
 	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
 	uint8 byProtocol,
@@ -1574,7 +1615,7 @@ void DiagEventLogEd2kServerTcpPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen)
 {
-	DiagEventLogEd2kServerPacket(false, pszPeerLabel, pszTransportMode, pszDirection,
+	DiagEventLogEd2kServerPacket(false, pszPeerLabel, ullAttemptId, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 
@@ -1587,7 +1628,7 @@ void DiagEventLogEd2kServerUdpPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen)
 {
-	DiagEventLogEd2kServerPacket(true, pszPeerLabel, pszTransportMode, pszDirection,
+	DiagEventLogEd2kServerPacket(true, pszPeerLabel, 0, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 

@@ -167,6 +167,16 @@ void DiagEventLogEd2kServerConnectionState(
 	LPCTSTR pszState,
 	LPCTSTR pszOutcome,
 	LPCTSTR pszError);
+
+/**
+ * @brief Records one deliberate obfuscated-to-plaintext server retry.
+ */
+void DiagEventLogEd2kServerTransportFallback(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszFromTransportMode,
+	LPCTSTR pszToTransportMode,
+	LPCTSTR pszError);
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
@@ -314,6 +324,7 @@ void DiagEventLogInvalidSubOpcode(
 
 void DiagEventLogEd2kServerTcpPacket(
 	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
 	uint8 byProtocol,
