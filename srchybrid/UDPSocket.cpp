@@ -49,6 +49,18 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace
+{
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+__declspec(align(8)) volatile LONG64 g_nNextServerUdpTraceId = 0;
+
+ULONGLONG NextServerUdpTraceId()
+{
+	return static_cast<ULONGLONG>(::InterlockedIncrement64(&g_nNextServerUdpTraceId));
+}
+#endif
+}
+
 
 #pragma pack(push, 1)
 struct SServerUDPPacket
@@ -232,6 +244,11 @@ void CUDPSocket::OnReceive(int nErrorCode)
 				Debug(_T("***NOTE: ServerUDPMessage from %s:%u - Packet too short (%d bytes)\n"), (LPCTSTR)ipstr(sockAddr.sin_addr), ntohs(sockAddr.sin_port) - 4, nPayLoadLen);
 		} else if (pBuffer[0] == OP_EDONKEYPROT) {
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+			const ULONGLONG ullDiagnosticTraceId = NextServerUdpTraceId();
+#else
+			const ULONGLONG ullDiagnosticTraceId = 0;
+#endif
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 			// Converged diag_event_v2 dump of inbound server-UDP packets (flow
 			// "server") so the global source/search UDP traffic diffs 1:1 against
 			// the emulebb-rust server-UDP dump. pBuffer is the decoded
@@ -239,10 +256,12 @@ void CUDPSocket::OnReceive(int nErrorCode)
 			// the obfuscated transport.
 			DiagEventLogEd2kServerUdpPacket(
 				ipstr(sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port)),
+				ullDiagnosticTraceId,
 				(nPayLoadLen == length) ? _T("plaintext") : _T("obfuscated"),
 				_T("recv"), pBuffer[0], pBuffer[1], pBuffer + 2, static_cast<UINT>(nPayLoadLen - 2));
 #endif
-			ProcessPacket(pBuffer + 2, nPayLoadLen - 2, pBuffer[1], sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port));
+			ProcessPacket(pBuffer + 2, nPayLoadLen - 2, pBuffer[1], sockAddr.sin_addr.s_addr,
+				ntohs(sockAddr.sin_port), ullDiagnosticTraceId, nPayLoadLen != length);
 		} else if (thePrefs.GetDebugServerUDPLevel() > 0)
 			Debug(_T("***NOTE: ServerUDPMessage from %s:%u - Unknown protocol 0x%02x, Encrypted: %s\n"), (LPCTSTR)ipstr(sockAddr.sin_addr), ntohs(sockAddr.sin_port) - 4, pBuffer[0], (nPayLoadLen == length) ? _T("Yes") : _T("No"));
 	} else {
@@ -282,7 +301,8 @@ UINT CUDPSocket::AllocateDnsRequestId()
 	return AsyncDnsResolveSeams::AllocateNonZeroRequestId(m_uNextDNSRequestId);
 }
 
-bool CUDPSocket::ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint32 nIP, uint16 nUDPPort)
+bool CUDPSocket::ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint32 nIP, uint16 nUDPPort,
+	ULONGLONG ullDiagnosticTraceId, bool bObfuscated)
 {
 	try {
 		theStats.AddDownDataOverheadServer(size);
@@ -487,6 +507,26 @@ bool CUDPSocket::ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint3
 				pServer->SetUDPFlags(uUDPFlags);
 				pServer->SetLowIDUsers(uLowIDUsers);
 				theApp.emuledlg->serverwnd->serverlistctrl.RefreshServer(pServer);
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+				CString strDiagnosticServerEndpoint;
+				strDiagnosticServerEndpoint.Format(_T("%s:%u"), pServer->GetAddress(), pServer->GetPort());
+				DiagEventLogEd2kServerUdpStatusApplied(
+					ipstr(nIP, nUDPPort),
+					strDiagnosticServerEndpoint,
+					ullDiagnosticTraceId,
+					bObfuscated ? _T("obfuscated") : _T("plaintext"),
+					challenge,
+					cur_user,
+					cur_files,
+					cur_maxusers,
+					cur_softfiles,
+					cur_hardfiles,
+					uUDPFlags,
+					uLowIDUsers,
+					nUDPObfuscationPort,
+					nTCPObfuscationPort,
+					dwServerUDPKey);
+#endif
 
 				pServer->SetLastDescPingedCount(false);
 				if (pServer->GetLastDescPingedCount() < 2) {
@@ -521,8 +561,13 @@ bool CUDPSocket::ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint3
 				// the first two bytes of <challenge> (in network byte order) have to be an invalid <name_len> at least.
 
 				CSafeMemFile srvinfo(packet, size);
+				bool bDescriptionApplied = false;
+				uint32 uDescriptionChallenge = 0;
+				LPCTSTR pszDescriptionResponseFormat = _T("legacy");
 				if (size >= 8 && PeekUInt16(packet) == INV_SERV_DESC_LEN) {
 					if (pServer->GetDescReqChallenge() != 0 && PeekUInt32(packet) == pServer->GetDescReqChallenge()) {
+						pszDescriptionResponseFormat = _T("tagged");
+						uDescriptionChallenge = PeekUInt32(packet);
 						pServer->SetDescReqChallenge(0);
 						srvinfo.Seek(sizeof(uint32), CFile::begin); // skip challenge
 
@@ -556,6 +601,7 @@ bool CUDPSocket::ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint3
 							else if (thePrefs.GetDebugServerUDPLevel() > 0)
 								Debug(_T("***NOTE: Unknown tag in OP_ServerDescRes: %s\n"), (LPCTSTR)tag.GetFullInfo());
 						}
+						bDescriptionApplied = true;
 					} else {
 						// A server sent us a new server description packet (including a challenge) although we did not
 						// ask for it. This may happen, if there are multiple servers running on the same machine with
@@ -571,6 +617,7 @@ bool CUDPSocket::ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint3
 					const CString &strDesc(srvinfo.ReadString(true/*pServer->GetUnicodeSupport()*/));
 					pServer->SetDescription(strDesc);
 					pServer->SetListName(strName);
+					bDescriptionApplied = true;
 				}
 
 				if (thePrefs.GetDebugServerUDPLevel() > 0) {
@@ -582,6 +629,23 @@ bool CUDPSocket::ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint3
 					}
 				}
 				theApp.emuledlg->serverwnd->serverlistctrl.RefreshServer(pServer);
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+				if (bDescriptionApplied) {
+					CString strDiagnosticServerEndpoint;
+					strDiagnosticServerEndpoint.Format(_T("%s:%u"), pServer->GetAddress(), pServer->GetPort());
+					DiagEventLogEd2kServerUdpDescriptionApplied(
+						ipstr(nIP, nUDPPort),
+						strDiagnosticServerEndpoint,
+						ullDiagnosticTraceId,
+						bObfuscated ? _T("obfuscated") : _T("plaintext"),
+						uDescriptionChallenge,
+						pszDescriptionResponseFormat,
+						pServer->GetListName(),
+						pServer->GetDescription(),
+						pServer->GetDynIP(),
+						pServer->GetVersion());
+				}
+#endif
 			}
 			break;
 		default:
@@ -880,18 +944,14 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 	BYTE *pRawPacket;
 	uint32 uRawPacketSize;
 	uint16 nPort = nSpecialPort;
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+	bool bDiagnosticObfuscated = false;
+#endif
 	if (packet != NULL) {
 		const size_t iLen = thePrefs.IsCryptLayerEnabled() && pServer->GetServerKeyUDP() && pServer->SupportsObfuscationUDP()
 			? EncryptOverheadSize(false) : 0;
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
-		// Converged diag_event_v2 dump of outbound server-UDP packets (flow
-		// "server"): the global GETSOURCES / search / server-status requests the
-		// emulebb-rust server-UDP dump also emits. `iLen` is non-zero exactly when
-		// the datagram is server-key obfuscated.
-		DiagEventLogEd2kServerUdpPacket(
-			ipstr(pServer->GetIP(), pServer->GetPort()),
-			iLen ? _T("obfuscated") : _T("plaintext"), _T("send"),
-			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
+		bDiagnosticObfuscated = iLen != 0;
 #endif
 		size_t uAllocationSize = 0;
 		int nSocketSendSize = 0;
@@ -932,6 +992,23 @@ void CUDPSocket::SendPacket(Packet *packet, CServer *pServer, uint16 nSpecialPor
 	if (!nPort)
 		nPort = pServer->GetPort() + 4;
 	ASSERT(nPort);
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+	if (packet != NULL) {
+		// Record the selected UDP destination. Numeric server addresses preserve
+		// the exact socket endpoint; unresolved dynamic names remain explicit
+		// logical destinations and the packet outcome stays "attempted".
+		CString strDiagnosticPeer;
+		if (pServer->GetIP() != 0)
+			strDiagnosticPeer = ipstr(pServer->GetIP(), nPort);
+		else
+			strDiagnosticPeer.Format(_T("%s:%u"), pServer->GetAddress(), nPort);
+		DiagEventLogEd2kServerUdpPacket(
+			strDiagnosticPeer,
+			NextServerUdpTraceId(),
+			bDiagnosticObfuscated ? _T("obfuscated") : _T("plaintext"), _T("send"),
+			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
+	}
+#endif
 
 	// Do we need to resolve the DN of this server?
 	CStringA pszHostAddressA(pServer->GetAddress());
