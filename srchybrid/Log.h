@@ -194,6 +194,19 @@ void DiagEventLogEd2kServerSearchResultApplied(
 	bool bMoreResultsAvailable);
 
 /**
+ * @brief Records one decoded server source-result after applying it to the part file.
+ */
+void DiagEventLogEd2kServerSourceResultApplied(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszTransportMode,
+	uint8 uOpcode,
+	const uchar *pFileHash,
+	UINT uWireSourceCount,
+	UINT uSourceCountBefore,
+	UINT uSourceCountAfter);
+
+/**
  * @brief Records one decoded OP_SERVERSTATUS after its counters are applied.
  */
 void DiagEventLogEd2kServerStatusApplied(
