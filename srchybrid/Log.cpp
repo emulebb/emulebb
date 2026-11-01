@@ -1179,6 +1179,56 @@ void DiagEventLogEd2kServerMetadataApplied(
 
 	WriteDiagEventV2(_T("ed2k_tcp"), pszEvent, _T("info"), strKeys, strBody);
 }
+
+void DiagEventLogEd2kServerUdpMetadataApplied(
+	LPCTSTR pszEvent,
+	LPCTSTR pszStateId,
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszServerEndpoint,
+	ULONGLONG ullTraceId,
+	LPCTSTR pszTransportMode,
+	UINT uOpcode,
+	LPCTSTR pszOpcodeName,
+	uint32 uChallenge,
+	const CString &rstrFieldsJson)
+{
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	const UINT uProtocolMarker = 0xE3;
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	const CString strServerEndpoint(pszServerEndpoint != NULL ? pszServerEndpoint : _T("unknown"));
+	const CString strTransportMode(pszTransportMode != NULL ? pszTransportMode : _T("unknown"));
+	const bool bObfuscated = _tcsicmp(strTransportMode, _T("obfuscated")) == 0;
+	CString strTraceKey;
+	strTraceKey.Format(_T("server:udp:%s"), (LPCTSTR)strPeer);
+
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"traceId\":%I64u,\"protocolMarker\":%u,\"opcode\":%u,\"challenge\":%u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		ullTraceId,
+		uProtocolMarker,
+		uOpcode,
+		uChallenge);
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"direction\":\"meta\",\"outcome\":\"applied\",\"protocolMarker\":%u,\"protocolName\":\"ed2k\",\"opcode\":%u,\"opcodeName\":%s,\"challenge\":%u,\"serverEndpoint\":%s,\"obfuscated\":%s,\"transportMode\":%s,\"flow\":\"server\",\"phase\":\"udp\",\"role\":\"udp\",\"traceId\":%I64u,\"traceKey\":%s,\"stateId\":%s,\"stateLabel\":\"udp\"%s}"),
+		uProtocolMarker,
+		uOpcode,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszOpcodeName != NULL ? pszOpcodeName : _T("UNKNOWN")),
+		uChallenge,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strServerEndpoint),
+		bObfuscated ? _T("true") : _T("false"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTransportMode),
+		ullTraceId,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTraceKey),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszStateId != NULL ? pszStateId : _T("server.udp.applied")),
+		(LPCTSTR)rstrFieldsJson);
+
+	WriteDiagEventV2(_T("ed2k_server_udp"), pszEvent, _T("info"), strKeys, strBody);
+}
 }
 
 void DiagEventLogEd2kServerStatusApplied(
@@ -1219,6 +1269,82 @@ void DiagEventLogEd2kServerIdentApplied(
 		pszTransportMode,
 		0x41,
 		_T("OP_SERVERIDENT"),
+		strFields);
+}
+
+void DiagEventLogEd2kServerUdpStatusApplied(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszServerEndpoint,
+	ULONGLONG ullTraceId,
+	LPCTSTR pszTransportMode,
+	uint32 uChallenge,
+	uint32 uUsers,
+	uint32 uFiles,
+	uint32 uMaxUsers,
+	uint32 uSoftFiles,
+	uint32 uHardFiles,
+	uint32 uUdpFlags,
+	uint32 uLowIdUsers,
+	uint16 uObfuscationPortUdp,
+	uint16 uObfuscationPortTcp,
+	uint32 uUdpKey)
+{
+	CString strFields;
+	strFields.Format(
+		_T(",\"users\":%u,\"files\":%u,\"maxUsers\":%u,\"softFiles\":%u,\"hardFiles\":%u,\"udpFlags\":%u,\"lowIdUsers\":%u,\"obfuscationPortUdp\":%u,\"obfuscationPortTcp\":%u,\"udpKey\":%u"),
+		uUsers,
+		uFiles,
+		uMaxUsers,
+		uSoftFiles,
+		uHardFiles,
+		uUdpFlags,
+		uLowIdUsers,
+		static_cast<UINT>(uObfuscationPortUdp),
+		static_cast<UINT>(uObfuscationPortTcp),
+		uUdpKey);
+	DiagEventLogEd2kServerUdpMetadataApplied(
+		_T("server_status_applied"),
+		_T("server.udp.status_applied"),
+		pszPeerLabel,
+		pszServerEndpoint,
+		ullTraceId,
+		pszTransportMode,
+		0x97,
+		_T("OP_GLOBSERVSTATRES"),
+		uChallenge,
+		strFields);
+}
+
+void DiagEventLogEd2kServerUdpDescriptionApplied(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszServerEndpoint,
+	ULONGLONG ullTraceId,
+	LPCTSTR pszTransportMode,
+	uint32 uChallenge,
+	LPCTSTR pszResponseFormat,
+	LPCTSTR pszName,
+	LPCTSTR pszDescription,
+	LPCTSTR pszDynamicHost,
+	LPCTSTR pszVersion)
+{
+	CString strFields;
+	strFields.Format(
+		_T(",\"responseFormat\":%s,\"name\":%s,\"description\":%s,\"dynamicHost\":%s,\"version\":%s"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszResponseFormat != NULL ? pszResponseFormat : _T("unknown")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszName != NULL ? pszName : _T("")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDescription != NULL ? pszDescription : _T("")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDynamicHost != NULL ? pszDynamicHost : _T("")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszVersion != NULL ? pszVersion : _T("")));
+	DiagEventLogEd2kServerUdpMetadataApplied(
+		_T("server_description_applied"),
+		_T("server.udp.description_applied"),
+		pszPeerLabel,
+		pszServerEndpoint,
+		ullTraceId,
+		pszTransportMode,
+		0xA3,
+		_T("OP_SERVER_DESC_RES"),
+		uChallenge,
 		strFields);
 }
 #endif
@@ -1692,10 +1818,11 @@ static void DiagEventLogEd2kServerPacket(
 	CString strKeys;
 	if (bUdp) {
 		strKeys.Format(
-			_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u}"),
+			_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u,\"traceId\":%I64u}"),
 			(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
 			static_cast<UINT>(byOpcode),
-			static_cast<UINT>(byProtocol));
+			static_cast<UINT>(byProtocol),
+			ullAttemptId);
 	} else {
 		strKeys.Format(
 			_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u,\"traceId\":%I64u}"),
@@ -1708,10 +1835,12 @@ static void DiagEventLogEd2kServerPacket(
 	CString strTraceKey;
 	strTraceKey.Format(_T("server:%s:%s"), bUdp ? _T("udp") : _T("tcp"), (LPCTSTR)strPeer);
 	CString strBody;
+	const bool bSend = pszDirection != NULL && _tcsicmp(pszDirection, _T("send")) == 0;
+	const LPCTSTR pszPacketOutcome = bSend ? (bUdp ? _T("attempted") : _T("send_succeeded")) : _T("accepted");
 	strBody.Format(
 		_T("{\"direction\":%s,\"outcome\":%s,\"protocolMarker\":%u,\"protocolName\":%s,\"opcode\":%u,\"opcodeName\":%s,\"clearFrameLen\":%u,\"clearFrameHex\":\"%s\",\"payloadLen\":%u,\"payloadHex\":\"%s\",\"payloadHexTruncated\":false,\"obfuscated\":%s,\"transportMode\":%s,\"flow\":\"server\",\"phase\":%s,\"role\":%s,\"traceKey\":%s,\"stateId\":%s,\"stateLabel\":%s"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDirection != NULL ? pszDirection : _T("unknown")),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(pszDirection != NULL && _tcsicmp(pszDirection, _T("send")) == 0 ? _T("send_succeeded") : _T("accepted")),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszPacketOutcome),
 		static_cast<UINT>(byProtocol),
 		(LPCTSTR)strProtocolName,
 		static_cast<UINT>(byOpcode),
@@ -1727,8 +1856,7 @@ static void DiagEventLogEd2kServerPacket(
 		(LPCTSTR)BuildDiagnosticsJsonStringField(strTraceKey),
 		bUdp ? _T("\"server.udp.packet\"") : _T("\"server.tcp.packet\""),
 		bUdp ? _T("\"udp\"") : _T("\"tcp\""));
-	if (!bUdp)
-		strBody.AppendFormat(_T(",\"traceId\":%I64u"), ullAttemptId);
+	strBody.AppendFormat(_T(",\"traceId\":%I64u"), ullAttemptId);
 	if (!bObfuscated)
 		strBody.AppendFormat(_T(",\"rawLen\":%u,\"rawHex\":\"%s\""), uClearFrameLen, (LPCTSTR)strClearFrameHex);
 	strBody += _T("}");
@@ -1752,6 +1880,7 @@ void DiagEventLogEd2kServerTcpPacket(
 
 void DiagEventLogEd2kServerUdpPacket(
 	LPCTSTR pszPeerLabel,
+	ULONGLONG ullTraceId,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
 	uint8 byProtocol,
@@ -1759,7 +1888,7 @@ void DiagEventLogEd2kServerUdpPacket(
 	const BYTE *pPayload,
 	UINT uPayloadLen)
 {
-	DiagEventLogEd2kServerPacket(true, pszPeerLabel, 0, pszTransportMode, pszDirection,
+	DiagEventLogEd2kServerPacket(true, pszPeerLabel, ullTraceId, pszTransportMode, pszDirection,
 		byProtocol, byOpcode, pPayload, uPayloadLen);
 }
 

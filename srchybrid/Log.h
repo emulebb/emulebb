@@ -212,6 +212,43 @@ void DiagEventLogEd2kServerIdentApplied(
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszName,
 	LPCTSTR pszDescription);
+
+/**
+ * @brief Records one challenge-validated OP_GLOBSERVSTATRES after the
+ *        canonical server-list entry has been updated.
+ */
+void DiagEventLogEd2kServerUdpStatusApplied(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszServerEndpoint,
+	ULONGLONG ullTraceId,
+	LPCTSTR pszTransportMode,
+	uint32 uChallenge,
+	uint32 uUsers,
+	uint32 uFiles,
+	uint32 uMaxUsers,
+	uint32 uSoftFiles,
+	uint32 uHardFiles,
+	uint32 uUdpFlags,
+	uint32 uLowIdUsers,
+	uint16 uObfuscationPortUdp,
+	uint16 uObfuscationPortTcp,
+	uint32 uUdpKey);
+
+/**
+ * @brief Records one challenge-validated OP_SERVER_DESC_RES after the
+ *        canonical server-list entry has been updated.
+ */
+void DiagEventLogEd2kServerUdpDescriptionApplied(
+	LPCTSTR pszPeerLabel,
+	LPCTSTR pszServerEndpoint,
+	ULONGLONG ullTraceId,
+	LPCTSTR pszTransportMode,
+	uint32 uChallenge,
+	LPCTSTR pszResponseFormat,
+	LPCTSTR pszName,
+	LPCTSTR pszDescription,
+	LPCTSTR pszDynamicHost,
+	LPCTSTR pszVersion);
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
@@ -369,6 +406,7 @@ void DiagEventLogEd2kServerTcpPacket(
 
 void DiagEventLogEd2kServerUdpPacket(
 	LPCTSTR pszPeerLabel,
+	ULONGLONG ullTraceId,
 	LPCTSTR pszTransportMode,
 	LPCTSTR pszDirection,
 	uint8 byProtocol,
