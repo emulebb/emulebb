@@ -401,7 +401,7 @@ jobs:
         python -m emule_workspace build app `
           --config Release `
           --platform x64 `
-          --variant tracing-harness
+          --variant main
 
         python -m emule_workspace test live-e2e `
           --config Release `
@@ -694,7 +694,7 @@ jobs:
               `Package version: ${packageVersion}`,
               `Run: ${runUrl}`,
               "",
-              "This workflow first proves the staged Linux ED2K server through WSL, then covers x64 package-release, tracing-harness build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC and WSL1 deterministic server policy. It also covers ARM64 package-release and offline command-line smoke on the windows-11-arm hosted runner with the VS 2026 generator and ARM64 v143 ATL/MFC policy.",
+              "This workflow first proves the staged Linux ED2K server through WSL, then covers x64 package-release, a current MFC oracle build, offline command-line smoke, and LAN deterministic two-client transfer on the Windows 2022 hosted runner with the v143 ATL/MFC and WSL1 deterministic server policy. It also covers ARM64 package-release and offline command-line smoke on the windows-11-arm hosted runner with the VS 2026 generator and ARM64 v143 ATL/MFC policy.",
             ].join("\n");
 
             if (existing) {
