@@ -767,7 +767,7 @@ bool CServerSocket::PacketReceived(Packet *packet)
 		if (cur_server != NULL)
 			strDiagnosticPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
 		DiagEventLogEd2kServerTcpPacket(strDiagnosticPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strDiagnosticPeer,
-			IsObfusicating() ? _T("obfuscated") : _T("plaintext"), _T("recv"),
+			IsServerCryptEnabledConnection() ? _T("obfuscated") : _T("plaintext"), _T("recv"),
 			packet->prot, packet->opcode, (const BYTE*)packet->pBuffer, packet->size);
 #endif
 		if (packet->prot == OP_EDONKEYPROT)
@@ -824,7 +824,7 @@ void CServerSocket::LogConnectionStateTransition(int previousState, int newstate
 	DiagEventLogEd2kServerConnectionState(
 		strPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strPeer,
 		m_ullDiagnosticAttemptId,
-		IsObfusicating() ? _T("obfuscated") : _T("plaintext"),
+		IsServerCryptEnabledConnection() ? _T("obfuscated") : _T("plaintext"),
 		DiagnosticServerConnectionStateLabel(previousState),
 		DiagnosticServerConnectionStateLabel(newstate),
 		DiagnosticServerConnectionOutcome(newstate),
@@ -845,7 +845,7 @@ void CServerSocket::SendPacket(Packet *packet, bool controlpacket, uint32 actual
 		if (cur_server != NULL)
 			strDiagnosticPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
 		const LPCTSTR pszDiagnosticPeer = strDiagnosticPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strDiagnosticPeer;
-		const LPCTSTR pszDiagnosticTransport = IsObfusicating() ? _T("obfuscated") : _T("plaintext");
+		const LPCTSTR pszDiagnosticTransport = IsServerCryptEnabledConnection() ? _T("obfuscated") : _T("plaintext");
 		bool bLoggedEmbeddedFrames = false;
 		if (packet->prot == 0 && packet->opcode == 0) {
 			const BYTE *pRawPacket = reinterpret_cast<const BYTE*>(packet->GetPacket());
