@@ -30,6 +30,7 @@
 
 #include "ClientStateDefs.h"
 #include "ClientList.h"
+#include "ClientUDPSocket.h"
 #include "ED2KLink.h"
 #include "Emule.h"
 #include "EmuleDlg.h"
@@ -3076,6 +3077,96 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	if (strCommand == "diagnostics/protocol_fixture/client_udp_queue_pressure") {
+		if (!thePrefs.GetDiagnosticRestEndpointsEnabled()) {
+			rError.strCode = "NOT_FOUND";
+			rError.strMessage = _T("API route not found");
+			return json();
+		}
+
+		json fixture(params);
+		std::string strValidationCode;
+		std::string strValidationMessage;
+		const WebServerJsonSeams::SApiRouteSpec fixtureRoute = {
+			"POST",
+			"/diagnostics/protocol-fixtures/client-udp-queue-pressure",
+			"fileHash,sourceIp,sourceUdpPort",
+			""
+		};
+		if (!fixture.is_object()
+			|| !WebServerJsonSeams::ValidateRequestBodyFields(fixture, fixtureRoute, strValidationCode, strValidationMessage))
+		{
+			rError.strCode = "INVALID_ARGUMENT";
+			rError.strMessage = CStringFromStdUtf8(strValidationMessage.empty() ? "fixture body must be an object" : strValidationMessage);
+			return json();
+		}
+
+		if (!theApp.IsConnected()) {
+			rError.strCode = "FIXTURE_PRECONDITION_FAILED";
+			rError.strMessage = _T("eD2K runtime is not connected");
+			return json();
+		}
+		if (theApp.uploadqueue == NULL || theApp.clientudp == NULL || theApp.sharedfiles == NULL) {
+			rError.strCode = "EMULE_UNAVAILABLE";
+			rError.strMessage = _T("upload queue, client UDP socket, or shared file list is unavailable");
+			return json();
+		}
+
+		CKnownFile *const pKnownFile = FindSharedFileByHash(fixture["fileHash"], rError);
+		if (pKnownFile == NULL)
+			return json();
+
+		uint32 dwSourceIp = 0;
+		if (!TryParseProtocolFixtureIpv4(fixture["sourceIp"], "sourceIp", dwSourceIp, rError))
+			return json();
+		const uint16 uSourceUdpPort = static_cast<uint16>(fixture["sourceUdpPort"].get<uint64_t>());
+
+		bool bSenderAmbiguous = false;
+		CUpDownClient *const pSender = theApp.uploadqueue->GetWaitingClientByIP_UDP(
+			dwSourceIp,
+			uSourceUdpPort,
+			true,
+			&bSenderAmbiguous);
+		if (bSenderAmbiguous) {
+			rError.strCode = "FIXTURE_PRECONDITION_FAILED";
+			rError.strMessage = _T("source endpoint is ambiguous in the upload waiting queue");
+			return json();
+		}
+		if (pSender != NULL) {
+			rError.strCode = "FIXTURE_PRECONDITION_FAILED";
+			rError.strMessage = _T("source endpoint is still present in the upload waiting queue");
+			return json();
+		}
+
+		const uint32 uActualWaitingUserCount = static_cast<uint32>(theApp.uploadqueue->GetWaitingUserCount());
+		const uint32 uQueueSize = static_cast<uint32>(thePrefs.GetQueueSize());
+		ClientUDPSocketSeams::SClientUdpQueuePressureFixture receipt;
+		if (!theApp.clientudp->ArmClientUdpQueuePressureFixture(
+				pKnownFile->GetFileHash(),
+				dwSourceIp,
+				uSourceUdpPort,
+				uActualWaitingUserCount,
+				uQueueSize,
+				receipt))
+		{
+			rError.strCode = "EMULE_ERROR";
+			rError.strMessage = _T("client UDP queue-pressure fixture could not be armed");
+			return json();
+		}
+
+		return json{
+			{"accepted", true},
+			{"fixtureId", receipt.ullFixtureId},
+			{"fileHash", StdUtf8FromCString(HashToHex(pKnownFile->GetFileHash()))},
+			{"sourceEndpoint", StdUtf8FromCString(BuildProtocolFixtureEndpoint(dwSourceIp, uSourceUdpPort))},
+			{"actualWaitingUserCount", receipt.uActualWaitingUserCount},
+			{"effectiveWaitingUserCount", receipt.uEffectiveWaitingUserCount},
+			{"queueSize", receipt.uQueueSize},
+			{"expiresAfterMillis", ClientUDPSocketSeams::kClientUdpQueuePressureFixtureTtlMs},
+			{"state", "client-udp-queue-pressure-armed"}
+		};
+	}
+
 	if (strCommand == "diagnostics/protocol_control/queued_source_reask") {
 		if (!thePrefs.GetDiagnosticRestEndpointsEnabled()) {
 			rError.strCode = "NOT_FOUND";

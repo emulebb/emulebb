@@ -140,6 +140,7 @@ inline ERestLifecyclePolicy GetLifecyclePolicyForCommand(const std::string &rCom
 		return ERestLifecyclePolicy::DiagnosticUnsafe;
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 	if (rCommand == "diagnostics/protocol_fixture/queued_lowid_source"
+		|| rCommand == "diagnostics/protocol_fixture/client_udp_queue_pressure"
 		|| rCommand == "diagnostics/protocol_fixture/buddy_relay_eligibility"
 		|| rCommand == "diagnostics/protocol_control/queued_source_reask")
 		return ERestLifecyclePolicy::DiagnosticUnsafe;
@@ -988,6 +989,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/diagnostics/crash-tests", "confirmCrash", ""},
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 		{"POST", "/diagnostics/protocol-fixtures/queued-lowid-sources", "fileHash,sourceIp,sourceTcpPort,sourceUdpPort,sourceUserHash,sourceUdpVersion,buddyIp,buddyUdpPort,buddyId", ""},
+		{"POST", "/diagnostics/protocol-fixtures/client-udp-queue-pressure", "fileHash,sourceIp,sourceUdpPort", ""},
 		{"POST", "/diagnostics/protocol-fixtures/buddy-relay-eligibility", "", ""},
 		{"POST", "/diagnostics/protocol-controls/queued-source-reasks", "fileHash,sourceIp,sourceTcpPort,sourceUdpPort,sourceUserHash,sourceUdpVersion", ""},
 #endif
@@ -2227,6 +2229,42 @@ inline bool ValidateQueuedSourceReaskControlBody(
 	rBody["sourceUdpVersion"] = ullUdpVersion;
 	return true;
 }
+
+inline bool ValidateClientUdpQueuePressureFixtureBody(
+	json &rBody,
+	std::string &rErrorCode,
+	std::string &rErrorMessage)
+{
+	static const char *const kRequiredFields[] = {"fileHash", "sourceIp", "sourceUdpPort"};
+	for (const char *pszField : kRequiredFields) {
+		if (!rBody.contains(pszField)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, std::string("missing required JSON field: ") + pszField);
+			return false;
+		}
+	}
+
+	if (!rBody["fileHash"].is_string()
+		|| !IsLowercaseMd4HexString(rBody["fileHash"].get_ref<const std::string&>()))
+	{
+		SetInvalidArgument(rErrorCode, rErrorMessage, "fileHash must be a 32-character lowercase hex string");
+		return false;
+	}
+	if (!IsCanonicalProtocolFixtureIpv4(rBody["sourceIp"])) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "sourceIp must be a canonical, non-zero IPv4 address");
+		return false;
+	}
+
+	uint64_t ullSourceUdpPort = 0;
+	if (!TryParseJsonUInt64(rBody["sourceUdpPort"], ullSourceUdpPort)
+		|| ullSourceUdpPort == 0
+		|| ullSourceUdpPort > 0xFFFFui64)
+	{
+		SetInvalidArgument(rErrorCode, rErrorMessage, "sourceUdpPort must be an integer in the range 1..65535");
+		return false;
+	}
+	rBody["sourceUdpPort"] = ullSourceUdpPort;
+	return true;
+}
 #endif
 
 inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, std::string &rErrorCode, std::string &rErrorMessage)
@@ -2240,6 +2278,11 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 	if (IsRouteSpec(rSpec, "POST", "/diagnostics/protocol-fixtures/queued-lowid-sources")
 		&& !ValidateQueuedLowIdSourceFixtureBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (IsRouteSpec(rSpec, "POST", "/diagnostics/protocol-fixtures/client-udp-queue-pressure")
+		&& !ValidateClientUdpQueuePressureFixtureBody(rBody, rErrorCode, rErrorMessage))
 	{
 		return false;
 	}
@@ -2768,6 +2811,16 @@ inline bool TryBuildRoute(
 		&& bPost)
 	{
 		rRoute.strCommand = "diagnostics/protocol_control/queued_source_reask";
+		rRoute.params = body;
+		return true;
+	}
+	if (route.size() == 3
+		&& route[0] == "diagnostics"
+		&& route[1] == "protocol-fixtures"
+		&& route[2] == "client-udp-queue-pressure"
+		&& bPost)
+	{
+		rRoute.strCommand = "diagnostics/protocol_fixture/client_udp_queue_pressure";
 		rRoute.params = body;
 		return true;
 	}

@@ -2,6 +2,7 @@
 
 #include "BuildFeatures.h"
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+#include "ClientUDPSocketSeams.h"
 #include "WebServerJsonSeams.h"
 #endif
 
@@ -92,6 +93,125 @@ bool SelfTest()
 		{
 			return false;
 		}
+	}
+
+	static const char *const kQueuePressureRoute =
+		"/api/v1/diagnostics/protocol-fixtures/client-udp-queue-pressure";
+	static const char *const kValidQueuePressureBody =
+		"{\"fileHash\":\"00112233445566778899aabbccddeeff\","
+		"\"sourceIp\":\"127.0.0.2\",\"sourceUdpPort\":4672}";
+	SApiRoute queuePressureRoute;
+	if (!TryBuildRoute(
+			"POST",
+			kQueuePressureRoute,
+			kValidQueuePressureBody,
+			queuePressureRoute,
+			strErrorCode,
+			strErrorMessage)
+		|| queuePressureRoute.strCommand != "diagnostics/protocol_fixture/client_udp_queue_pressure"
+		|| queuePressureRoute.params.size() != 3
+		|| GetLifecyclePolicyForCommand(queuePressureRoute.strCommand) != ERestLifecyclePolicy::DiagnosticUnsafe)
+	{
+		return false;
+	}
+
+	const char *const kInvalidQueuePressureBodies[] = {
+		"{\"fileHash\":\"00112233445566778899aabbccddeeff\"}",
+		"{\"fileHash\":\"00112233445566778899AABBCCDDEEFF\",\"sourceIp\":\"127.0.0.2\",\"sourceUdpPort\":4672}",
+		"{\"fileHash\":\"00112233445566778899aabbccddeeff\",\"sourceIp\":\"127.000.0.2\",\"sourceUdpPort\":4672}",
+		"{\"fileHash\":\"00112233445566778899aabbccddeeff\",\"sourceIp\":\"127.0.0.2\",\"sourceUdpPort\":0}",
+		"{\"fileHash\":\"00112233445566778899aabbccddeeff\",\"sourceIp\":\"127.0.0.2\",\"sourceUdpPort\":4672,\"extra\":true}"
+	};
+	for (const char *pszBody : kInvalidQueuePressureBodies) {
+		SApiRoute invalidRoute;
+		if (TryBuildRoute(
+				"POST",
+				kQueuePressureRoute,
+				pszBody,
+				invalidRoute,
+				strErrorCode,
+				strErrorMessage)
+			|| strErrorCode != "INVALID_ARGUMENT")
+		{
+			return false;
+		}
+	}
+
+	const unsigned char aucQueuePressureFileHash[16] = {
+		0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+		0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff
+	};
+	ClientUDPSocketSeams::SClientUdpQueuePressureFixture queuePressureFixture;
+	ClientUDPSocketSeams::ArmClientUdpQueuePressureFixture(
+		queuePressureFixture,
+		7,
+		aucQueuePressureFileHash,
+		0x7F000002u,
+		4672,
+		3,
+		2000,
+		1000);
+	if (!queuePressureFixture.bArmed
+		|| queuePressureFixture.uEffectiveWaitingUserCount != 1951
+		|| queuePressureFixture.uEffectiveWaitingUserCount + ClientUDPSocketSeams::kClientUdpQueueFullMargin
+			!= queuePressureFixture.uQueueSize + 1)
+	{
+		return false;
+	}
+	ClientUDPSocketSeams::SClientUdpQueuePressureFixture consumedQueuePressure;
+	if (ClientUDPSocketSeams::TryConsumeClientUdpQueuePressureFixture(
+			queuePressureFixture,
+			aucQueuePressureFileHash,
+			0x7F000002u,
+			4673,
+			2000,
+			1001,
+			consumedQueuePressure)
+		|| !queuePressureFixture.bArmed)
+	{
+		return false;
+	}
+	if (!ClientUDPSocketSeams::TryConsumeClientUdpQueuePressureFixture(
+			queuePressureFixture,
+			aucQueuePressureFileHash,
+			0x7F000002u,
+			4672,
+			2000,
+			1001,
+			consumedQueuePressure)
+		|| consumedQueuePressure.ullFixtureId != 7
+		|| queuePressureFixture.bArmed
+		|| ClientUDPSocketSeams::TryConsumeClientUdpQueuePressureFixture(
+			queuePressureFixture,
+			aucQueuePressureFileHash,
+			0x7F000002u,
+			4672,
+			2000,
+			1002,
+			consumedQueuePressure))
+	{
+		return false;
+	}
+	ClientUDPSocketSeams::ArmClientUdpQueuePressureFixture(
+		queuePressureFixture,
+		8,
+		aucQueuePressureFileHash,
+		0x7F000002u,
+		4672,
+		3,
+		2000,
+		1000);
+	if (ClientUDPSocketSeams::TryConsumeClientUdpQueuePressureFixture(
+			queuePressureFixture,
+			aucQueuePressureFileHash,
+			0x7F000002u,
+			4672,
+			2000,
+			1000 + ClientUDPSocketSeams::kClientUdpQueuePressureFixtureTtlMs,
+			consumedQueuePressure)
+		|| queuePressureFixture.bArmed)
+	{
+		return false;
 	}
 
 	SApiRoute buddyRelayRoute;

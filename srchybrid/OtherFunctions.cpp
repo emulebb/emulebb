@@ -44,6 +44,7 @@
 #include "collection.h"
 #include "ComInitializationSeams.h"
 #include "AppRegistryIdentitySeams.h"
+#include "ClientUDPSocketSeams.h"
 #include "FilenameNormalizationPolicy.h"
 #include "FormatSafetySeams.h"
 #include "LongPathSeams.h"
@@ -1897,6 +1898,30 @@ void DiagEventLogSchedSourceSwapped(const CUpDownClient *pClient, const byte *pC
 }
 
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+void DiagEventLogSchedClientUdpQueuePressureFixtureConsumed(
+	const ULONGLONG ullFixtureId,
+	LPCTSTR pszPeer,
+	const byte *pFileHash,
+	const UINT uActualWaitingUserCount,
+	const UINT uEffectiveWaitingUserCount,
+	const UINT uQueueSize)
+{
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"fileHash\":%s,\"peer\":%s}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(BuildDiagEventLowerHexString(pFileHash, MDX_DIGEST_SIZE)),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszPeer != NULL ? pszPeer : _T("")));
+	CString strBody;
+	strBody.Format(
+		_T("{\"outcome\":\"consumed\",\"fixtureId\":%I64u,\"actualWaitingUserCount\":%u,\"effectiveWaitingUserCount\":%u,\"queueSize\":%u,\"queueFullMargin\":%u}"),
+		ullFixtureId,
+		uActualWaitingUserCount,
+		uEffectiveWaitingUserCount,
+		uQueueSize,
+		static_cast<UINT>(ClientUDPSocketSeams::kClientUdpQueueFullMargin));
+	WriteDiagEventV2(_T("sched"), _T("client_udp_queue_pressure_fixture_consumed"), _T("info"), strKeys, strBody);
+}
+
 void DiagEventLogSchedUdpReaskSourceRegistered(const CUpDownClient *pClient, const byte *pFileHash)
 {
 	if (pClient == NULL)
@@ -1962,11 +1987,14 @@ void DiagEventLogSchedUdpReaskReplyApplied(
 	const CString strSourceUdpEndpoint(pClient != NULL
 		? ipstr(pClient->GetIP(), pClient->GetUDPPort())
 		: CString());
+	const bool bRemoteQueueFullAfter = pClient != NULL && pClient->IsRemoteQueueFull();
+	const UINT uReplyOpcode = bRemoteQueueFullAfter ? OP_QUEUEFULL : OP_REASKACK;
 	CString strBody;
 	strBody.Format(
-		_T("{\"replyOpcode\":%u,\"queueRank\":%u,\"requestPendingAfter\":false,\"remoteQueueFullAfter\":false,\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"queueRankApplied\":true,\"partStatusIncluded\":%s,\"wirePartCount\":%s,\"partStatusApplied\":%s,\"partCountAfter\":%s,\"availablePartsAfter\":%s,\"partStatusBitsAfter\":%s,\"noNeededPartsAfter\":%s,\"outcome\":\"applied\"}"),
-		static_cast<UINT>(OP_REASKACK),
+		_T("{\"replyOpcode\":%u,\"queueRank\":%u,\"requestPendingAfter\":false,\"remoteQueueFullAfter\":%s,\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"queueRankApplied\":true,\"partStatusIncluded\":%s,\"wirePartCount\":%s,\"partStatusApplied\":%s,\"partCountAfter\":%s,\"availablePartsAfter\":%s,\"partStatusBitsAfter\":%s,\"noNeededPartsAfter\":%s,\"outcome\":\"applied\"}"),
+		uReplyOpcode,
 		static_cast<UINT>(uQueueRank),
+		bRemoteQueueFullAfter ? _T("true") : _T("false"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(strSourceUdpEndpoint),
 		pClient != NULL ? static_cast<UINT>(pClient->GetUDPVersion()) : 0,
 		bPartStatusIncluded ? _T("true") : _T("false"),

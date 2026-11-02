@@ -57,6 +57,14 @@ static char THIS_FILE[] = __FILE__;
 
 namespace
 {
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+ULONGLONG NextClientUdpQueuePressureFixtureId()
+{
+	static volatile LONG64 s_ullNextFixtureId = 0;
+	return static_cast<ULONGLONG>(::InterlockedIncrement64(&s_ullNextFixtureId));
+}
+#endif
+
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 ULONGLONG NextClientUdpSendAttemptId()
 {
@@ -155,6 +163,31 @@ CClientUDPSocket::~CClientUDPSocket()
 		UdpPackDeleter()(p);
 	}
 }
+
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+bool CClientUDPSocket::ArmClientUdpQueuePressureFixture(
+	const uchar *pFileHash,
+	const uint32 uSourceIp,
+	const uint16 uSourceUdpPort,
+	const uint32 uActualWaitingUserCount,
+	const uint32 uQueueSize,
+	ClientUDPSocketSeams::SClientUdpQueuePressureFixture &rReceipt)
+{
+	if (pFileHash == NULL || uSourceIp == 0 || uSourceUdpPort == 0 || uQueueSize == 0)
+		return false;
+	ClientUDPSocketSeams::ArmClientUdpQueuePressureFixture(
+		m_queuePressureFixture,
+		NextClientUdpQueuePressureFixtureId(),
+		pFileHash,
+		uSourceIp,
+		uSourceUdpPort,
+		uActualWaitingUserCount,
+		uQueueSize,
+		::GetTickCount64());
+	rReceipt = m_queuePressureFixture;
+	return true;
+}
+#endif
 
 void CClientUDPSocket::OnReceive(int nErrorCode)
 {
@@ -398,6 +431,31 @@ CClientUDPSocket::SProcessPacketResult CClientUDPSocket::ProcessPacket(const BYT
 
 			bool bSenderMultipleIpUnknown = false;
 			CUpDownClient *sender = theApp.uploadqueue->GetWaitingClientByIP_UDP(ip, port, true, &bSenderMultipleIpUnknown);
+			const uint32 uActualWaitingUserCount = static_cast<uint32>(theApp.uploadqueue->GetWaitingUserCount());
+			const uint32 uQueueSize = static_cast<uint32>(thePrefs.GetQueueSize());
+			uint32 uEffectiveWaitingUserCount = uActualWaitingUserCount;
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+			ClientUDPSocketSeams::SClientUdpQueuePressureFixture consumedQueuePressure;
+			if (reqfile != NULL && sender == NULL && !bSenderMultipleIpUnknown
+				&& ClientUDPSocketSeams::TryConsumeClientUdpQueuePressureFixture(
+					m_queuePressureFixture,
+					reqfilehash,
+					ip,
+					port,
+					uQueueSize,
+					::GetTickCount64(),
+					consumedQueuePressure))
+			{
+				uEffectiveWaitingUserCount = consumedQueuePressure.uEffectiveWaitingUserCount;
+				DiagEventLogSchedClientUdpQueuePressureFixtureConsumed(
+					consumedQueuePressure.ullFixtureId,
+					ipstr(ip, port),
+					reqfilehash,
+					uActualWaitingUserCount,
+					uEffectiveWaitingUserCount,
+					uQueueSize);
+			}
+#endif
 			if (!reqfile) {
 				if (thePrefs.GetDebugClientUDPLevel() > 0) {
 					DebugRecv("OP_ReaskFilePing", NULL, reqfilehash, ip);
@@ -471,7 +529,7 @@ CClientUDPSocket::SProcessPacketResult CClientUDPSocket::ProcessPacket(const BYT
 				if (bSenderMultipleIpUnknown) {
 					DebugLogWarning(_T("UDP Packet received - multiple clients with the same IP but different UDP port found. Possible UDP Port mapping problem, enforcing TCP connection. IP: %s, Port: %u"), (LPCTSTR)ipstr(ip), port);
 					result = { ClientUDPSocketSeams::EClientUdpPacketDisposition::Ignored, _T("ambiguous_sender") };
-				} else if(theApp.uploadqueue->GetWaitingUserCount() + 50 > thePrefs.GetQueueSize()) {
+				} else if (static_cast<uint64>(uEffectiveWaitingUserCount) + ClientUDPSocketSeams::kClientUdpQueueFullMargin > uQueueSize) {
 					if (thePrefs.GetDebugClientUDPLevel() > 0)
 						DebugSend("OP_QueueFull", NULL);
 					Packet *response = new Packet(OP_QUEUEFULL, 0, OP_EMULEPROT);
@@ -493,6 +551,13 @@ CClientUDPSocket::SProcessPacketResult CClientUDPSocket::ProcessPacket(const BYT
 				sender->SetRemoteQueueFull(true);
 				sender->UDPReaskACK(0);
 				result = { ClientUDPSocketSeams::EClientUdpPacketDisposition::Accepted, _T("routed_reply") };
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+				result.pUdpReaskReplyAppliedClient = sender;
+				result.uUdpReaskReplyAppliedRank = 0;
+				result.bUdpReaskReplyPartStatusIncluded = false;
+				result.uUdpReaskReplyWirePartCount = 0;
+				result.bUdpReaskReplyPartStatusApplied = false;
+#endif
 			} else {
 				if (sender != NULL)
 					DebugLogError(_T("Received UDP Packet (OP_QUEUEFULL) which was not requested (pendingflag == false); Ignored packet - %s"), (LPCTSTR)sender->DbgGetClientInfo());
