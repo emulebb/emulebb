@@ -1630,6 +1630,147 @@ void DiagEventLogKadUdpPacketSend(
 
 	WriteDiagEventV2(_T("kad_udp"), _T("packet"), _T("info"), strKeys, strBody);
 }
+
+void DiagEventLogKadBuddyRelayFixture(
+	bool bTcpFirewalled,
+	bool bUdpVerified,
+	bool bUdpOpen)
+{
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"milestone\":\"buddy_relay_eligibility_prepared\",\"action\":\"prepare\",\"outcome\":\"eligible\",\"reason\":\"diagnostic_test_control\",\"tcpFirewalled\":%s,\"udpVerified\":%s,\"udpOpen\":%s}"),
+		bTcpFirewalled ? _T("true") : _T("false"),
+		bUdpVerified ? _T("true") : _T("false"),
+		bUdpOpen ? _T("true") : _T("false"));
+	WriteDiagEventV2(_T("kad_event"), _T("buddy_fixture"), _T("info"), CString(_T("{}")), strBody);
+}
+
+void DiagEventLogKadBuddyRequest(
+	LPCTSTR pszMilestone,
+	LPCTSTR pszAction,
+	LPCTSTR pszOutcome,
+	LPCTSTR pszReason,
+	uint32 uNetworkIP,
+	uint16 uUDPPort,
+	uint16 uRequesterTCPPort,
+	uint16 uLocalTCPPort,
+	const BYTE *pBuddyID,
+	const BYTE *pClientHash,
+	bool bTcpFirewalled,
+	bool bUdpVerified,
+	bool bUdpOpen,
+	bool bRequesterHasUdpKey)
+{
+	if (!IsDiagEventV2WriterEnabled() || pBuddyID == NULL || pClientHash == NULL)
+		return;
+
+	CString strPeer;
+	strPeer.Format(_T("%s:%u"), (LPCTSTR)ipstr(uNetworkIP), static_cast<UINT>(uUDPPort));
+	const CString strBuddyID = BuildDiagEventUpperHexString(pBuddyID, 16);
+	const CString strClientHash = BuildDiagEventUpperHexString(pClientHash, 16);
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"peerHash\":\"%s\"}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		(LPCTSTR)strClientHash);
+	CString strBody;
+	strBody.Format(
+		_T("{\"milestone\":%s,\"action\":%s,\"outcome\":%s,\"reason\":%s,\"buddyId\":\"%s\",\"clientHash\":\"%s\",\"tcpFirewalled\":%s,\"udpVerified\":%s,\"udpOpen\":%s,\"requesterHasUdpKey\":%s,\"requesterTcpPort\":%u,\"localTcpPort\":%u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszMilestone),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszAction),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszOutcome),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszReason),
+		(LPCTSTR)strBuddyID,
+		(LPCTSTR)strClientHash,
+		bTcpFirewalled ? _T("true") : _T("false"),
+		bUdpVerified ? _T("true") : _T("false"),
+		bUdpOpen ? _T("true") : _T("false"),
+		bRequesterHasUdpKey ? _T("true") : _T("false"),
+		static_cast<UINT>(uRequesterTCPPort),
+		static_cast<UINT>(uLocalTCPPort));
+	WriteDiagEventV2(_T("kad_event"), _T("buddy_request"),
+		CString(pszOutcome) == _T("accepted") ? _T("info") : _T("low"), strKeys, strBody);
+}
+
+void DiagEventLogKadBuddySocketAttached(
+	uint32 uNetworkIP,
+	uint16 uTCPPort,
+	const BYTE *pBuddyID,
+	const BYTE *pClientHash)
+{
+	if (!IsDiagEventV2WriterEnabled() || pBuddyID == NULL || pClientHash == NULL)
+		return;
+
+	CString strPeer;
+	strPeer.Format(_T("%s:%u"), (LPCTSTR)ipstr(uNetworkIP), static_cast<UINT>(uTCPPort));
+	const CString strBuddyID = BuildDiagEventUpperHexString(pBuddyID, 16);
+	const CString strClientHash = BuildDiagEventUpperHexString(pClientHash, 16);
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"peerHash\":\"%s\"}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		(LPCTSTR)strClientHash);
+	CString strBody;
+	strBody.Format(
+		_T("{\"milestone\":\"buddy_socket_attached\",\"action\":\"attach\",\"outcome\":\"attached\",\"buddyId\":\"%s\",\"clientHash\":\"%s\",\"advertisedTcpPort\":%u}"),
+		(LPCTSTR)strBuddyID,
+		(LPCTSTR)strClientHash,
+		static_cast<UINT>(uTCPPort));
+	WriteDiagEventV2(_T("kad_event"), _T("buddy_socket"), _T("info"), strKeys, strBody);
+}
+
+void DiagEventLogKadBuddyCallback(
+	LPCTSTR pszMilestone,
+	LPCTSTR pszAction,
+	LPCTSTR pszOutcome,
+	LPCTSTR pszReason,
+	uint32 uRequesterNetworkIP,
+	uint16 uRequesterUDPPort,
+	uint16 uRequesterTCPPort,
+	const BYTE *pBuddyID,
+	const BYTE *pFileHash,
+	uint32 uBuddyNetworkIP,
+	uint16 uBuddyTCPPort)
+{
+	if (!IsDiagEventV2WriterEnabled() || pBuddyID == NULL || pFileHash == NULL)
+		return;
+
+	const CString strRequesterIP = ipstr(uRequesterNetworkIP);
+	CString strRequester;
+	strRequester.Format(_T("%s:%u"), (LPCTSTR)strRequesterIP, static_cast<UINT>(uRequesterUDPPort));
+	const CString strBuddyID = BuildDiagEventUpperHexString(pBuddyID, 16);
+	const CString strFileHash = BuildDiagEventUpperHexString(pFileHash, 16);
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"fileHash\":\"%s\"}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strRequester),
+		(LPCTSTR)strFileHash);
+	CString strBuddyField;
+	if (uBuddyNetworkIP != 0 && uBuddyTCPPort != 0) {
+		CString strBuddyEndpoint;
+		strBuddyEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(uBuddyNetworkIP), static_cast<UINT>(uBuddyTCPPort));
+		strBuddyField.Format(_T(",\"buddyTcpEndpoint\":%s"),
+			(LPCTSTR)BuildDiagnosticsJsonStringField(strBuddyEndpoint));
+	}
+	CString strBody;
+	strBody.Format(
+		_T("{\"milestone\":%s,\"action\":%s,\"outcome\":%s,\"reason\":%s,\"buddyId\":\"%s\",\"fileHash\":\"%s\",\"requesterIp\":%s,\"requesterUdpPort\":%u,\"requesterTcpPort\":%u%s}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszMilestone),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszAction),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszOutcome),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszReason),
+		(LPCTSTR)strBuddyID,
+		(LPCTSTR)strFileHash,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strRequesterIP),
+		static_cast<UINT>(uRequesterUDPPort),
+		static_cast<UINT>(uRequesterTCPPort),
+		(LPCTSTR)strBuddyField);
+	WriteDiagEventV2(_T("kad_event"), _T("buddy_callback"),
+		CString(pszOutcome) == _T("relayed") ? _T("info") : _T("low"), strKeys, strBody);
+}
 #endif
 
 CDiagnosticsKeyValueLineBuilder::CDiagnosticsKeyValueLineBuilder(LPCTSTR pszPrefix)

@@ -196,6 +196,19 @@ void CPrefs::IncFirewalled()
 	theApp.emuledlg->ShowConnectionState();
 }
 
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+void CPrefs::PrepareBuddyRelayEligibilityFixture()
+{
+	// Establish only the reachable prerequisite consumed by
+	// Process_KADEMLIA_FINDBUDDY_REQ. The harness still drives every buddy and
+	// callback packet through the production handlers and sockets.
+	m_uRecheckip = KADEMLIAFIREWALLCHECKS;
+	m_uFirewalled = 2;
+	m_bLastFirewallState = false;
+	theApp.emuledlg->ShowConnectionState();
+}
+#endif
+
 bool CPrefs::GetFindBuddy()
 {
 	if (m_bFindBuddy) {

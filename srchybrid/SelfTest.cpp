@@ -49,6 +49,21 @@ bool SelfTest()
 			return false;
 		}
 	}
+
+	SApiRoute buddyRelayRoute;
+	if (!TryBuildRoute(
+			"POST",
+			"/api/v1/diagnostics/protocol-fixtures/buddy-relay-eligibility",
+			"",
+			buddyRelayRoute,
+			strErrorCode,
+			strErrorMessage)
+		|| buddyRelayRoute.strCommand != "diagnostics/protocol_fixture/buddy_relay_eligibility"
+		|| !buddyRelayRoute.params.empty()
+		|| GetLifecyclePolicyForCommand(buddyRelayRoute.strCommand) != ERestLifecyclePolicy::DiagnosticUnsafe)
+	{
+		return false;
+	}
 #endif
 	return true;
 }

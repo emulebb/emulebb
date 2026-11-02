@@ -15,6 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
+#include "BuildFeatures.h"
 #include "kademlia/utils/UInt128.h"
 #include "kademlia/utils/KadUDPKey.h"
 #include "kademlia/routing/Contact.h"
@@ -36,6 +37,9 @@ namespace Kademlia
 		static void		ReCheckFirewallUDP(bool bSetUnverified);
 		static bool		IsFWCheckUDPRunning();
 		static bool		IsVerified();
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+		static void		PrepareBuddyRelayEligibilityFixture();
+#endif
 		static void		AddPossibleTestContact(const CUInt128 &uClientID, uint32 uIp, uint16 uUdpPort, uint16 uTcpPort, const CUInt128 &uTarget, uint8 uVersion, const CKadUDPKey &cUDPKey, bool bIPVerified);
 		static void		Reset(); // when stopping Kad
 		static void		Connected();

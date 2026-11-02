@@ -1603,9 +1603,11 @@ void CUpDownClient::ConnectionEstablished()
 		break;
 	case KS_CONNECTING_BUDDY:
 	case KS_INCOMING_BUDDY:
+		{
 		DEBUG_ONLY(DebugLog(_T("Set KS_CONNECTED_BUDDY for client %s"), (LPCTSTR)DbgGetClientInfo()));
 		SetKadState(KS_CONNECTED_BUDDY);
 		break;
+		}
 	case KS_CONNECTING_FWCHECK_UDP:
 		SetKadState(KS_FWCHECK_UDP);
 		DEBUG_ONLY(DebugLog(_T("Set KS_FWCHECK_UDP for client %s"), (LPCTSTR)DbgGetClientInfo()));
