@@ -692,7 +692,28 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 					}
 				}
 
-				(void)UpDownClientDeleteSeams::TryToConnectOrDelete(client, _T("CServerSocket::ProcessPacket OP_CALLBACKREQUESTED"));
+				const bool bDispatchAccepted = UpDownClientDeleteSeams::TryToConnectOrDelete(
+					client,
+					_T("CServerSocket::ProcessPacket OP_CALLBACKREQUESTED"));
+#if EMULEBB_HAS_DIAG_EVENT_V2
+				CString strDiagnosticServerPeer;
+				if (cur_server != NULL)
+					strDiagnosticServerPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
+				CString strCallbackEndpoint;
+				strCallbackEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(dwIP), nPort);
+				DiagEventLogEd2kServerCallbackApplied(
+					strDiagnosticServerPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strDiagnosticServerPeer,
+					m_ullDiagnosticAttemptId,
+					IsServerCryptEnabledConnection() ? _T("obfuscated") : _T("plaintext"),
+					strCallbackEndpoint,
+					size,
+					size >= 23,
+					size >= 23 ? packet[6] : 0,
+					size >= 23 ? packet + 7 : NULL,
+					bDispatchAccepted);
+#else
+				UNREFERENCED_PARAMETER(bDispatchAccepted);
+#endif
 			}
 			break;
 		case OP_CALLBACK_FAIL:

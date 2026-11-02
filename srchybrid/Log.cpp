@@ -1136,6 +1136,70 @@ void DiagEventLogEd2kServerSearchResultApplied(
 	WriteDiagEventV2(_T("ed2k_tcp"), _T("search_result_applied"), _T("info"), strKeys, strBody);
 }
 
+void DiagEventLogEd2kServerCallbackApplied(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszCallbackEndpoint,
+	UINT uPayloadLen,
+	bool bHasCryptProfile,
+	uint8 uConnectOptions,
+	const uchar *pUserHash,
+	bool bDispatchAccepted)
+{
+	if (!IsDiagEventV2WriterEnabled())
+		return;
+
+	const UINT uProtocolMarker = 0xE3;
+	const UINT uOpcode = 0x35;
+	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	const CString strTransportMode(pszTransportMode != NULL ? pszTransportMode : _T("unknown"));
+	const CString strCallbackEndpoint(pszCallbackEndpoint != NULL ? pszCallbackEndpoint : _T("unknown"));
+	const bool bObfuscated = _tcsicmp(strTransportMode, _T("obfuscated")) == 0;
+	CString strTraceKey;
+	strTraceKey.Format(_T("server:tcp:%s"), (LPCTSTR)strPeer);
+
+	CString strConnectOptions(_T("null"));
+	CString strUserHash(_T("null"));
+	if (bHasCryptProfile) {
+		strConnectOptions.Format(_T("%u"), (UINT)uConnectOptions);
+		strUserHash = BuildDiagnosticsJsonStringField(BuildDiagEventLowerHexString(pUserHash, MDX_DIGEST_SIZE));
+	}
+
+	CString strKeys;
+	strKeys.Format(
+		_T("{\"peer\":%s,\"opcode\":%u,\"protocolMarker\":%u,\"traceId\":%I64u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		uOpcode,
+		uProtocolMarker,
+		ullAttemptId);
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"flow\":\"server\",\"phase\":\"callback\",\"direction\":\"recv\",\"protocolMarker\":%u,\"opcode\":%u,\"opcodeName\":\"OP_CALLBACKREQUESTED\",\"traceId\":%I64u,\"traceKey\":%s,\"transportMode\":%s,\"obfuscated\":%s,\"serverEndpoint\":%s,\"callbackEndpoint\":%s,\"connectOptions\":%s,\"userHash\":%s,\"payloadLen\":%u,\"stateId\":%s,\"milestone\":\"callback_dispatch\",\"dispatchAccepted\":%s,\"outcome\":%s}"),
+		uProtocolMarker,
+		uOpcode,
+		ullAttemptId,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTraceKey),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strTransportMode),
+		bObfuscated ? _T("true") : _T("false"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strCallbackEndpoint),
+		(LPCTSTR)strConnectOptions,
+		(LPCTSTR)strUserHash,
+		uPayloadLen,
+		bDispatchAccepted ? _T("\"server.callback.request_applied\"") : _T("\"server.callback.request_rejected\""),
+		bDispatchAccepted ? _T("true") : _T("false"),
+		bDispatchAccepted ? _T("\"applied\"") : _T("\"rejected\""));
+
+	WriteDiagEventV2(
+		_T("ed2k_tcp"),
+		bDispatchAccepted ? _T("callback_request_applied") : _T("callback_request_rejected"),
+		bDispatchAccepted ? _T("info") : _T("warning"),
+		strKeys,
+		strBody);
+}
+
 void DiagEventLogEd2kServerSourceResultApplied(
 	bool bUdp,
 	LPCTSTR pszPeerLabel,

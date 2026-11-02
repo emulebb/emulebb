@@ -194,6 +194,20 @@ void DiagEventLogEd2kServerSearchResultApplied(
 	bool bMoreResultsAvailable);
 
 /**
+ * @brief Records one decoded OP_CALLBACKREQUESTED after callback connect dispatch.
+ */
+void DiagEventLogEd2kServerCallbackApplied(
+	LPCTSTR pszPeerLabel,
+	ULONGLONG ullAttemptId,
+	LPCTSTR pszTransportMode,
+	LPCTSTR pszCallbackEndpoint,
+	UINT uPayloadLen,
+	bool bHasCryptProfile,
+	uint8 uConnectOptions,
+	const uchar *pUserHash,
+	bool bDispatchAccepted);
+
+/**
  * @brief Records one decoded server source-result after applying it to the part file.
  */
 void DiagEventLogEd2kServerSourceResultApplied(
