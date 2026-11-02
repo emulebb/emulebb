@@ -29,6 +29,7 @@ their client on the eMule forum.
 */
 
 #pragma once
+#include "BuildFeatures.h"
 #include "kademlia/utils/UInt128.h"
 
 namespace Kademlia
@@ -59,6 +60,9 @@ namespace Kademlia
 		bool	GetFirewalled() const;
 		void	SetFirewalled();
 		void	IncFirewalled();
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+		void	PrepareBuddyRelayEligibilityFixture();
+#endif
 
 		uint8	GetTotalFile() const				{ return m_uTotalFile; }
 		void	SetTotalFile(uint8 uVal)			{ m_uTotalFile = uVal; }

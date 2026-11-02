@@ -73,6 +73,7 @@
 #include "DownloadQueue.h"
 #include "Opcodes.h"
 #include "kademlia/kademlia/Kademlia.h"
+#include "kademlia/kademlia/Prefs.h"
 #include "kademlia/kademlia/UDPFirewallTester.h"
 #include "kademlia/routing/RoutingZone.h"
 
@@ -3054,6 +3055,32 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	if (strCommand == "diagnostics/protocol_fixture/buddy_relay_eligibility") {
+		if (!thePrefs.GetDiagnosticRestEndpointsEnabled()) {
+			rError.strCode = "NOT_FOUND";
+			rError.strMessage = _T("API route not found");
+			return json();
+		}
+		if (!Kademlia::CKademlia::IsRunning() || Kademlia::CKademlia::GetPrefs() == NULL) {
+			rError.strCode = "FIXTURE_PRECONDITION_FAILED";
+			rError.strMessage = _T("eD2K/Kad runtime is not running");
+			return json();
+		}
+
+		Kademlia::CKademlia::GetPrefs()->PrepareBuddyRelayEligibilityFixture();
+		Kademlia::CUDPFirewallTester::PrepareBuddyRelayEligibilityFixture();
+		const bool bTcpFirewalled = Kademlia::CKademlia::GetPrefs()->GetFirewalled();
+		const bool bUdpVerified = Kademlia::CUDPFirewallTester::IsVerified();
+		const bool bUdpOpen = !Kademlia::CUDPFirewallTester::IsFirewalledUDP(true);
+		return json{
+			{"prepared", true},
+			{"tcpFirewalled", bTcpFirewalled},
+			{"udpVerified", bUdpVerified},
+			{"udpOpen", bUdpOpen},
+			{"state", "buddy-relay-eligible"}
+		};
+	}
+
 	if (strCommand == "diagnostics/protocol_fixture/queued_lowid_source") {
 		if (!thePrefs.GetDiagnosticRestEndpointsEnabled()) {
 			rError.strCode = "NOT_FOUND";

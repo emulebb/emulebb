@@ -279,3 +279,23 @@ bool CUDPFirewallTester::IsVerified()
 {
 	return m_bIsFWVerifiedUDP || CKademlia::IsRunningInLANMode();
 }
+
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+void CUDPFirewallTester::PrepareBuddyRelayEligibilityFixture()
+{
+	// Freeze the local prerequisite in verified-open state. No buddy or callback
+	// packet is synthesized here; the deterministic harness owns the real wire
+	// transcript after this control returns.
+	CancelRunningUDPFirewallCheck();
+	m_bFirewalledUDP = false;
+	m_bFirewalledLastStateUDP = false;
+	m_bIsFWVerifiedUDP = true;
+	m_bNodeSearchStarted = false;
+	m_bTimedOut = false;
+	m_byFWChecksRunningUDP = 0;
+	m_byFWChecksFinishedUDP = UDP_FIREWALLTEST_CLIENTSTOASK;
+	m_dwTestStart = 0;
+	m_dwLastSucceededTime = ::GetTickCount64();
+	m_liPossibleTestClients.RemoveAll();
+}
+#endif

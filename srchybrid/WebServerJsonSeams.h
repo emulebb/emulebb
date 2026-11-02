@@ -139,7 +139,8 @@ inline ERestLifecyclePolicy GetLifecyclePolicyForCommand(const std::string &rCom
 	if (rCommand == "app/capture_dump" || rCommand == "app/crash_test")
 		return ERestLifecyclePolicy::DiagnosticUnsafe;
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
-	if (rCommand == "diagnostics/protocol_fixture/queued_lowid_source")
+	if (rCommand == "diagnostics/protocol_fixture/queued_lowid_source"
+		|| rCommand == "diagnostics/protocol_fixture/buddy_relay_eligibility")
 		return ERestLifecyclePolicy::DiagnosticUnsafe;
 #endif
 
@@ -986,6 +987,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/diagnostics/crash-tests", "confirmCrash", ""},
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 		{"POST", "/diagnostics/protocol-fixtures/queued-lowid-sources", "fileHash,sourceIp,sourceTcpPort,sourceUdpPort,sourceUserHash,sourceUdpVersion,buddyIp,buddyUdpPort,buddyId", ""},
+		{"POST", "/diagnostics/protocol-fixtures/buddy-relay-eligibility", "", ""},
 #endif
 		{"GET", "/status", "", ""},
 		{"GET", "/stats", "", ""},
@@ -2712,6 +2714,15 @@ inline bool TryBuildRoute(
 	{
 		rRoute.strCommand = "diagnostics/protocol_fixture/queued_lowid_source";
 		rRoute.params = body;
+		return true;
+	}
+	if (route.size() == 3
+		&& route[0] == "diagnostics"
+		&& route[1] == "protocol-fixtures"
+		&& route[2] == "buddy-relay-eligibility"
+		&& bPost)
+	{
+		rRoute.strCommand = "diagnostics/protocol_fixture/buddy_relay_eligibility";
 		return true;
 	}
 #endif
