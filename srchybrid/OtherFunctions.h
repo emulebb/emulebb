@@ -439,6 +439,8 @@ void DiagEventLogSchedUdpReaskScheduleDecision(const CUpDownClient *pClient, con
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 void DiagEventLogSchedUdpReaskSourceRegistered(const CUpDownClient *pClient, const byte *pFileHash);
 void DiagEventLogSchedUdpReaskReplyApplied(const CUpDownClient *pClient, const byte *pFileHash, uint16 uQueueRank, bool bPartStatusIncluded, uint16 uWirePartCount, bool bPartStatusApplied);
+void DiagEventLogSchedUdpReaskFileNotFoundApplied(const CUpDownClient *pClient, const byte *pFileHash);
+void DiagEventLogSchedSourceDeadListed(const CUpDownClient *pClient, const byte *pFileHash, LPCTSTR pszReason, UINT uBlockSecs);
 void DiagEventLogSchedClientUdpQueuePressureFixtureConsumed(ULONGLONG ullFixtureId, LPCTSTR pszPeer, const byte *pFileHash, UINT uActualWaitingUserCount, UINT uEffectiveWaitingUserCount, UINT uQueueSize);
 #endif
 void DiagEventLogSchedConnBudgetDeny(LPCTSTR pszDenyReason, UINT uActiveConnections, UINT uConnectionCap);

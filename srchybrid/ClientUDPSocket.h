@@ -71,6 +71,7 @@ protected:
 		LPCTSTR pszNote;
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 		CUpDownClient *pUdpReaskReplyAppliedClient;
+		CUpDownClient *pUdpReaskFileNotFoundClient;
 		uint16 uUdpReaskReplyAppliedRank;
 		bool bUdpReaskReplyPartStatusIncluded;
 		uint16 uUdpReaskReplyWirePartCount;
