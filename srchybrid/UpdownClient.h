@@ -149,6 +149,9 @@ public:
 	uint8			GetUDPVersion() const							{ return m_byUDPVer; }
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 	void			ConfigureQueuedLowIdSourceFixtureUdpVersion(uint8 nUdpVersion);
+	UINT			GetTotalUdpPacketsForDiagnostics() const			{ return m_nTotalUDPPackets; }
+	UINT			GetFailedUdpPacketsForDiagnostics() const			{ return m_nFailedUDPPackets; }
+	bool			IsNextUdpReaskScheduledForDiagnostics() const	{ return GetTimeUntilReask() > 0; }
 #endif
 	bool			SupportsUDP() const								{ return GetUDPVersion() != 0 && m_nUDPPort != 0; }
 	uint16			GetKadPort() const								{ return m_nKadPort; }
