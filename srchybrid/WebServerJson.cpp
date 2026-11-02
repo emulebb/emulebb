@@ -2317,6 +2317,59 @@ CPartFile* FindPartFileByHash(const json &rValue, SPipeApiError &rError)
 	return pPartFile;
 }
 
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+bool TryParseProtocolFixtureIpv4(
+	const json &rValue,
+	const char *pszFieldName,
+	uint32 &rdwIp,
+	SPipeApiError &rError)
+{
+	if (!WebServerJsonSeams::IsCanonicalProtocolFixtureIpv4(rValue)) {
+		rError.strCode = "INVALID_ARGUMENT";
+		rError.strMessage.Format(_T("%hs must be a canonical, non-zero IPv4 address"), pszFieldName);
+		return false;
+	}
+	const std::string &strIp = rValue.get_ref<const std::string&>();
+	IN_ADDR address = {};
+	if (InetPtonA(AF_INET, strIp.c_str(), &address) != 1) {
+		rError.strCode = "INVALID_ARGUMENT";
+		rError.strMessage.Format(_T("%hs must be a valid IPv4 address"), pszFieldName);
+		return false;
+	}
+	rdwIp = address.s_addr;
+	return true;
+}
+
+CUpDownClient* FindRegisteredQueuedLowIdSourceFixture(
+	CPartFile &rPartFile,
+	const uint32 dwSourceIp,
+	const uint16 uSourceTcpPort,
+	const uint16 uSourceUdpPort,
+	const uchar *pSourceUserHash)
+{
+	for (POSITION pos = rPartFile.srclist.GetHeadPosition(); pos != NULL;) {
+		CUpDownClient *const pClient = rPartFile.srclist.GetNext(pos);
+		if (rPartFile.IsLiveSource(pClient)
+			&& pClient->GetIP() == dwSourceIp
+			&& pClient->GetUserPort() == uSourceTcpPort
+			&& pClient->GetUDPPort() == uSourceUdpPort
+			&& pClient->HasValidHash()
+			&& md4equ(pClient->GetUserHash(), pSourceUserHash))
+		{
+			return pClient;
+		}
+	}
+	return NULL;
+}
+
+CString BuildProtocolFixtureEndpoint(const uint32 dwIp, const uint16 uPort)
+{
+	CString strEndpoint;
+	strEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(dwIp), static_cast<UINT>(uPort));
+	return strEndpoint;
+}
+#endif
+
 /**
  * Parses one non-empty UTF-8 path parameter from a pipe command.
  */
@@ -2999,6 +3052,133 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			{"fullMemory", bFullMemoryDump}
 		};
 	}
+
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	if (strCommand == "diagnostics/protocol_fixture/queued_lowid_source") {
+		if (!thePrefs.GetDiagnosticRestEndpointsEnabled()) {
+			rError.strCode = "NOT_FOUND";
+			rError.strMessage = _T("API route not found");
+			return json();
+		}
+
+		json fixture(params);
+		std::string strValidationCode;
+		std::string strValidationMessage;
+		const WebServerJsonSeams::SApiRouteSpec fixtureRoute = {
+			"POST",
+			"/diagnostics/protocol-fixtures/queued-lowid-sources",
+			"fileHash,sourceIp,sourceTcpPort,sourceUdpPort,sourceUserHash,sourceUdpVersion,buddyIp,buddyUdpPort,buddyId",
+			""
+		};
+		if (!fixture.is_object()
+			|| !WebServerJsonSeams::ValidateRequestBodyFields(fixture, fixtureRoute, strValidationCode, strValidationMessage))
+		{
+			rError.strCode = "INVALID_ARGUMENT";
+			rError.strMessage = CStringFromStdUtf8(strValidationMessage.empty() ? "fixture body must be an object" : strValidationMessage);
+			return json();
+		}
+
+		if (!theApp.IsConnected()) {
+			rError.strCode = "INVALID_STATE";
+			rError.strMessage = _T("application must be connected before registering a queued LowID source fixture");
+			return json();
+		}
+		if (theApp.downloadqueue == NULL || theApp.clientlist == NULL) {
+			rError.strCode = "EMULE_UNAVAILABLE";
+			rError.strMessage = _T("download queue or client list is unavailable");
+			return json();
+		}
+
+		CPartFile *const pPartFile = FindPartFileByHash(fixture["fileHash"], rError);
+		if (pPartFile == NULL)
+			return json();
+		if (pPartFile->IsStopped() || (pPartFile->GetStatus() != PS_READY && pPartFile->GetStatus() != PS_EMPTY)) {
+			rError.strCode = "INVALID_STATE";
+			rError.strMessage = _T("fixture target must be an active, non-stopped part file");
+			return json();
+		}
+
+		uchar aucSourceUserHash[MDX_DIGEST_SIZE] = {};
+		uchar aucBuddyId[MDX_DIGEST_SIZE] = {};
+		if (!TryDecodeHash(fixture["sourceUserHash"], aucSourceUserHash, rError)
+			|| !TryDecodeHash(fixture["buddyId"], aucBuddyId, rError))
+		{
+			return json();
+		}
+		uint32 dwSourceIp = 0;
+		uint32 dwBuddyIp = 0;
+		if (!TryParseProtocolFixtureIpv4(fixture["sourceIp"], "sourceIp", dwSourceIp, rError)
+			|| !TryParseProtocolFixtureIpv4(fixture["buddyIp"], "buddyIp", dwBuddyIp, rError))
+		{
+			return json();
+		}
+
+		const uint16 uSourceTcpPort = static_cast<uint16>(fixture["sourceTcpPort"].get<uint64_t>());
+		const uint16 uSourceUdpPort = static_cast<uint16>(fixture["sourceUdpPort"].get<uint64_t>());
+		const uint8 uSourceUdpVersion = static_cast<uint8>(fixture["sourceUdpVersion"].get<uint64_t>());
+		const uint16 uBuddyUdpPort = static_cast<uint16>(fixture["buddyUdpPort"].get<uint64_t>());
+
+		if (md4equ(aucSourceUserHash, thePrefs.GetUserHash())
+			|| theApp.clientlist->FindClientByUserHash(aucSourceUserHash) != NULL
+			|| theApp.clientlist->FindClientByIP(dwSourceIp, uSourceTcpPort) != NULL
+			|| theApp.clientlist->FindClientByIP_UDP(dwSourceIp, uSourceUdpPort) != NULL)
+		{
+			rError.strCode = "INVALID_STATE";
+			rError.strMessage = _T("fixture source identity or endpoint is already registered");
+			return json();
+		}
+
+		CUpDownClient *pCandidate = new CUpDownClient(pPartFile, uSourceTcpPort, 1u, 0u, 0u, false);
+		pCandidate->SetIP(dwSourceIp);
+		pCandidate->SetUDPPort(uSourceUdpPort);
+		pCandidate->SetKadPort(uSourceUdpPort);
+		pCandidate->SetUserHash(aucSourceUserHash);
+		pCandidate->ConfigureQueuedLowIdSourceFixtureUdpVersion(uSourceUdpVersion);
+		pCandidate->SetBuddyID(aucBuddyId);
+		pCandidate->SetBuddyIP(dwBuddyIp);
+		pCandidate->SetBuddyPort(uBuddyUdpPort);
+		pCandidate->SetSourceFrom(SF_KADEMLIA);
+
+		const bool bAdded = theApp.downloadqueue->CheckAndAddSource(pPartFile, pCandidate);
+		pCandidate = NULL; // CheckAndAddSource consumes the temporary source on every outcome.
+		if (!bAdded) {
+			rError.strCode = "INVALID_STATE";
+			rError.strMessage = _T("queued LowID source fixture was rejected by source registration");
+			return json();
+		}
+
+		CUpDownClient *const pSource = FindRegisteredQueuedLowIdSourceFixture(
+			*pPartFile, dwSourceIp, uSourceTcpPort, uSourceUdpPort, aucSourceUserHash);
+		if (pSource == NULL) {
+			rError.strCode = "EMULE_ERROR";
+			rError.strMessage = _T("registered queued LowID source fixture could not be re-resolved");
+			return json();
+		}
+
+		pSource->SetDownloadState(DS_ONQUEUE, _T("Diagnostics queued LowID source fixture registered."));
+		if (pSource->GetDownloadState() != DS_ONQUEUE || pSource->GetRequestFile() != pPartFile) {
+			rError.strCode = "EMULE_ERROR";
+			rError.strMessage = _T("registered fixture did not enter the queued LowID source state");
+			return json();
+		}
+
+		DiagEventLogSchedUdpReaskSourceRegistered(pSource, pPartFile->GetFileHash());
+		if (pSource->EvaluateUDPReaskSchedule(theApp.IsConnected(), ::GetTickCount64()))
+			pSource->UDPReaskForDownload();
+
+		return json{
+			{"accepted", true},
+			{"fileHash", StdUtf8FromCString(HashToHex(pPartFile->GetFileHash()))},
+			{"sourceEndpoint", StdUtf8FromCString(BuildProtocolFixtureEndpoint(pSource->GetIP(), pSource->GetUDPPort()))},
+			{"sourceTcpPort", pSource->GetUserPort()},
+			{"sourceUserHash", StdUtf8FromCString(HashToHex(pSource->GetUserHash()))},
+			{"sourceUdpVersion", pSource->GetUDPVersion()},
+			{"buddyEndpoint", StdUtf8FromCString(BuildProtocolFixtureEndpoint(pSource->GetBuddyIP(), pSource->GetBuddyPort()))},
+			{"buddyId", StdUtf8FromCString(HashToHex(pSource->GetBuddyID()))},
+			{"state", "queued-lowid-source"}
+		};
+	}
+#endif
 
 	if (strCommand == "stats/global")
 		return BuildGlobalStatsJson();

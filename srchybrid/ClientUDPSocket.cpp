@@ -36,6 +36,7 @@
 #include "Listensocket.h"
 #include "LockScopeSeams.h"
 #include "Log.h"
+#include "OtherFunctions.h"
 #include "PortRebindPolicySeams.h"
 #include "SafeFile.h"
 #include "SocketIoSeams.h"
@@ -512,6 +513,10 @@ CClientUDPSocket::SProcessPacketResult CClientUDPSocket::ProcessPacket(const BYT
 				sender->SetRemoteQueueFull(false);
 				sender->UDPReaskACK(nRank);
 				sender->IncrementAskedCountDown();
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+				const CPartFile *const pRequestFile = sender->GetRequestFile();
+				DiagEventLogSchedUdpReaskReplyApplied(sender, pRequestFile != NULL ? pRequestFile->GetFileHash() : NULL, nRank);
+#endif
 				result = { ClientUDPSocketSeams::EClientUdpPacketDisposition::Accepted, _T("routed_reply") };
 			} else {
 				if (sender != NULL)

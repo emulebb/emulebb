@@ -147,6 +147,9 @@ public:
 	uint16			GetUDPPort() const								{ return m_nUDPPort; }
 	void			SetUDPPort(uint16 nPort)						{ m_nUDPPort = nPort; }
 	uint8			GetUDPVersion() const							{ return m_byUDPVer; }
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	void			ConfigureQueuedLowIdSourceFixtureUdpVersion(uint8 nUdpVersion);
+#endif
 	bool			SupportsUDP() const								{ return GetUDPVersion() != 0 && m_nUDPPort != 0; }
 	uint16			GetKadPort() const								{ return m_nKadPort; }
 	void			SetKadPort(uint16 nPort)						{ m_nKadPort = nPort; }
