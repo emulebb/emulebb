@@ -15,6 +15,7 @@
 #include <nlohmann/json.hpp>
 
 #include "AppStateSeams.h"
+#include "BuildFeatures.h"
 #include "WebApiSurfaceSeams.h"
 
 namespace WebServerJsonSeams
@@ -137,6 +138,10 @@ inline ERestLifecyclePolicy GetLifecyclePolicyForCommand(const std::string &rCom
 		return ERestLifecyclePolicy::Shutdown;
 	if (rCommand == "app/capture_dump" || rCommand == "app/crash_test")
 		return ERestLifecyclePolicy::DiagnosticUnsafe;
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	if (rCommand == "diagnostics/protocol_fixture/queued_lowid_source")
+		return ERestLifecyclePolicy::DiagnosticUnsafe;
+#endif
 
 	if (rCommand == "app/version"
 		|| rCommand == "app/preferences/get"
@@ -979,6 +984,9 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 		{"POST", "/app/shutdown", "confirmShutdown", ""},
 		{"POST", "/diagnostics/dumps", "confirmDump,fullMemory", ""},
 		{"POST", "/diagnostics/crash-tests", "confirmCrash", ""},
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+		{"POST", "/diagnostics/protocol-fixtures/queued-lowid-sources", "fileHash,sourceIp,sourceTcpPort,sourceUdpPort,sourceUserHash,sourceUdpVersion,buddyIp,buddyUdpPort,buddyId", ""},
+#endif
 		{"GET", "/status", "", ""},
 		{"GET", "/stats", "", ""},
 		{"GET", "/snapshot", "", "limit"},
@@ -2091,6 +2099,84 @@ inline bool ValidatePathParameters(const std::string &rApiPath, const SApiRouteS
 	return true;
 }
 
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+inline bool IsCanonicalProtocolFixtureIpv4(const json &rValue)
+{
+	if (!rValue.is_string())
+		return false;
+	const std::string &strValue = rValue.get_ref<const std::string&>();
+	size_t uStart = 0;
+	uint32_t uAddress = 0;
+	for (UINT uOctet = 0; uOctet < 4; ++uOctet) {
+		const size_t uEnd = uOctet < 3 ? strValue.find('.', uStart) : strValue.size();
+		if (uEnd == std::string::npos || uEnd == uStart || (uEnd - uStart > 1 && strValue[uStart] == '0'))
+			return false;
+		uint32_t uValue = 0;
+		for (size_t i = uStart; i < uEnd; ++i) {
+			if (strValue[i] < '0' || strValue[i] > '9')
+				return false;
+			uValue = (uValue * 10u) + static_cast<uint32_t>(strValue[i] - '0');
+			if (uValue > 255u)
+				return false;
+		}
+		uAddress = (uAddress << 8) | uValue;
+		uStart = uEnd + 1;
+	}
+	return uStart == strValue.size() + 1 && uAddress != 0 && uAddress != UINT32_MAX;
+}
+
+inline bool ValidateQueuedLowIdSourceFixtureBody(
+	json &rBody,
+	std::string &rErrorCode,
+	std::string &rErrorMessage)
+{
+	static const char *const kRequiredFields[] = {
+		"fileHash", "sourceIp", "sourceTcpPort", "sourceUdpPort", "sourceUserHash",
+		"sourceUdpVersion", "buddyIp", "buddyUdpPort", "buddyId"
+	};
+	for (const char *pszField : kRequiredFields) {
+		if (!rBody.contains(pszField)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, std::string("missing required JSON field: ") + pszField);
+			return false;
+		}
+	}
+
+	static const char *const kHashFields[] = {"fileHash", "sourceUserHash", "buddyId"};
+	for (const char *pszField : kHashFields) {
+		if (!rBody[pszField].is_string() || !IsLowercaseMd4HexString(rBody[pszField].get_ref<const std::string&>())) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszField) + " must be a 32-character lowercase hex string");
+			return false;
+		}
+	}
+
+	static const char *const kIpFields[] = {"sourceIp", "buddyIp"};
+	for (const char *pszField : kIpFields) {
+		if (!IsCanonicalProtocolFixtureIpv4(rBody[pszField])) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszField) + " must be a canonical, non-zero IPv4 address");
+			return false;
+		}
+	}
+
+	static const char *const kPortFields[] = {"sourceTcpPort", "sourceUdpPort", "buddyUdpPort"};
+	for (const char *pszField : kPortFields) {
+		uint64_t ullPort = 0;
+		if (!TryParseJsonUInt64(rBody[pszField], ullPort) || ullPort == 0 || ullPort > 0xFFFFui64) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszField) + " must be an integer in the range 1..65535");
+			return false;
+		}
+		rBody[pszField] = ullPort;
+	}
+
+	uint64_t ullUdpVersion = 0;
+	if (!TryParseJsonUInt64(rBody["sourceUdpVersion"], ullUdpVersion) || ullUdpVersion < 1 || ullUdpVersion > 4) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "sourceUdpVersion must be an integer in the range 1..4");
+		return false;
+	}
+	rBody["sourceUdpVersion"] = ullUdpVersion;
+	return true;
+}
+#endif
+
 inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, std::string &rErrorCode, std::string &rErrorMessage)
 {
 	for (json::const_iterator it = rBody.begin(); it != rBody.end(); ++it) {
@@ -2099,6 +2185,13 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 			return false;
 		}
 	}
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	if (IsRouteSpec(rSpec, "POST", "/diagnostics/protocol-fixtures/queued-lowid-sources")
+		&& !ValidateQueuedLowIdSourceFixtureBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+#endif
 	if ((rSpec.pszPathTemplate != NULL && (
 		std::string(rSpec.pszPathTemplate) == "/transfers"
 		|| std::string(rSpec.pszPathTemplate) == "/transfers/{hash}"
@@ -2610,6 +2703,18 @@ inline bool TryBuildRoute(
 		rRoute.strCommand = "app/crash_test";
 		return true;
 	}
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	if (route.size() == 3
+		&& route[0] == "diagnostics"
+		&& route[1] == "protocol-fixtures"
+		&& route[2] == "queued-lowid-sources"
+		&& bPost)
+	{
+		rRoute.strCommand = "diagnostics/protocol_fixture/queued_lowid_source";
+		rRoute.params = body;
+		return true;
+	}
+#endif
 	if (route.size() == 1 && route[0] == "status" && bGet) {
 		rRoute.strCommand = "status/get";
 		return true;

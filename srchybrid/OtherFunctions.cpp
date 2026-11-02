@@ -1896,6 +1896,44 @@ void DiagEventLogSchedSourceSwapped(const CUpDownClient *pClient, const byte *pC
 		BuildDiagEventV2SchedKeysJson(pClient, pCurrentFileHash), strBody);
 }
 
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+void DiagEventLogSchedUdpReaskSourceRegistered(const CUpDownClient *pClient, const byte *pFileHash)
+{
+	if (pClient == NULL)
+		return;
+
+	CString strSourceUdpEndpoint;
+	strSourceUdpEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(pClient->GetIP()), static_cast<UINT>(pClient->GetUDPPort()));
+	CString strBuddyEndpoint;
+	strBuddyEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(pClient->GetBuddyIP()), static_cast<UINT>(pClient->GetBuddyPort()));
+	const CString strBuddyId(BuildDiagEventLowerHexString(pClient->GetBuddyID(), MDX_DIGEST_SIZE));
+
+	CString strBody;
+	strBody.Format(
+		_T("{\"outcome\":\"accepted\",\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"lowId\":true,\"buddyEndpoint\":%s,\"buddyId\":%s}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strSourceUdpEndpoint),
+		static_cast<UINT>(pClient->GetUDPVersion()),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strBuddyEndpoint),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strBuddyId));
+	WriteDiagEventV2(_T("sched"), _T("udp_reask_source_registered"), _T("info"),
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
+}
+
+void DiagEventLogSchedUdpReaskReplyApplied(
+	const CUpDownClient *pClient,
+	const byte *pFileHash,
+	const uint16 uQueueRank)
+{
+	CString strBody;
+	strBody.Format(
+		_T("{\"replyOpcode\":%u,\"queueRank\":%u,\"requestPendingAfter\":false,\"remoteQueueFullAfter\":false,\"outcome\":\"applied\"}"),
+		static_cast<UINT>(OP_REASKACK),
+		static_cast<UINT>(uQueueRank));
+	WriteDiagEventV2(_T("sched"), _T("udp_reask_reply_applied"), _T("info"),
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
+}
+#endif
+
 static LPCTSTR GetUdpReaskDecisionReason(const UdpReaskDiagnosticsSeams::EUdpReaskDecision eDecision)
 {
 	using UdpReaskDiagnosticsSeams::EUdpReaskDecision;

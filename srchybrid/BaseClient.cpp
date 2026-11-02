@@ -1868,6 +1868,14 @@ void CUpDownClient::SetBuddyID(const uchar *pucBuddyID)
 	}
 }
 
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+void CUpDownClient::ConfigureQueuedLowIdSourceFixtureUdpVersion(const uint8 nUdpVersion)
+{
+	ASSERT(nUdpVersion >= 1 && nUdpVersion <= 4);
+	m_byUDPVer = nUdpVersion;
+}
+#endif
+
 void CUpDownClient::SendPublicKeyPacket()
 {
 	// send our public key to the client who requested it

@@ -20,6 +20,7 @@
 #include "ClientUDPSocketSeams.h"
 
 class Packet;
+class CUpDownClient;
 
 #pragma pack(push, 1)
 struct UDPPack
@@ -59,6 +60,10 @@ protected:
 	{
 		ClientUDPSocketSeams::EClientUdpPacketDisposition eDisposition;
 		LPCTSTR pszNote;
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+		CUpDownClient *pUdpReaskReplyAppliedClient;
+		uint16 uUdpReaskReplyAppliedRank;
+#endif
 	};
 
 	SProcessPacketResult ProcessPacket(const BYTE *packet, UINT size, uint8 opcode, uint32 ip, uint16 port);

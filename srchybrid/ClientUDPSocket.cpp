@@ -36,6 +36,7 @@
 #include "Listensocket.h"
 #include "LockScopeSeams.h"
 #include "Log.h"
+#include "OtherFunctions.h"
 #include "PortRebindPolicySeams.h"
 #include "SafeFile.h"
 #include "SocketIoSeams.h"
@@ -216,6 +217,15 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 						pBuffer[0], pBuffer[1], buffer, static_cast<UINT>(nRealLen),
 						pBuffer + 2, static_cast<UINT>(nPacketLen - 2), 0, NULL, processResult.pszNote);
 					bClientUdpDiagLogged = true;
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+					if (processResult.pUdpReaskReplyAppliedClient != NULL) {
+						const CPartFile *const pRequestFile = processResult.pUdpReaskReplyAppliedClient->GetRequestFile();
+						DiagEventLogSchedUdpReaskReplyApplied(
+							processResult.pUdpReaskReplyAppliedClient,
+							pRequestFile != NULL ? pRequestFile->GetFileHash() : NULL,
+							processResult.uUdpReaskReplyAppliedRank);
+					}
+#endif
 #else
 					(void)processResult;
 #endif
@@ -513,6 +523,10 @@ CClientUDPSocket::SProcessPacketResult CClientUDPSocket::ProcessPacket(const BYT
 				sender->UDPReaskACK(nRank);
 				sender->IncrementAskedCountDown();
 				result = { ClientUDPSocketSeams::EClientUdpPacketDisposition::Accepted, _T("routed_reply") };
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+				result.pUdpReaskReplyAppliedClient = sender;
+				result.uUdpReaskReplyAppliedRank = nRank;
+#endif
 			} else {
 				if (sender != NULL)
 					DebugLogError(_T("Received UDP Packet (OP_REASKACK) which was not requested (pendingflag == false); Ignored packet - %s"), (LPCTSTR)sender->DbgGetClientInfo());

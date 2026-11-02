@@ -34,6 +34,15 @@
 #define EMULEBB_HAS_KAD_DIAGNOSTICS 0
 #endif
 
+// Protocol fixture controls are deliberately narrower than either diagnostics
+// family on its own. They must not exist in a build unless packet evidence and
+// download scheduling evidence are both available for the resulting traffic.
+#if defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS) && defined(EMULEBB_ENABLE_DOWNLOAD_SLOT_DIAGNOSTICS)
+#define EMULEBB_HAS_PROTOCOL_TEST_CONTROL 1
+#else
+#define EMULEBB_HAS_PROTOCOL_TEST_CONTROL 0
+#endif
+
 // The converged diag_event_v2 writer and its shared log file exist only when at
 // least one diagnostics family is compiled in. WHY: keep release builds (no
 // diagnostics flags) byte-identical by adding no diag_event_v2 code or log
