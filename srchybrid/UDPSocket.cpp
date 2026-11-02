@@ -367,8 +367,37 @@ bool CUDPSocket::ProcessPacket(const BYTE *packet, UINT size, UINT opcode, uint3
 					if (thePrefs.GetDebugServerUDPLevel() > 0)
 						Debug(_T("ServerUDPMessage from %-21s - OP_GlobFoundSources(%u); %s\n"), (LPCTSTR)ipstr(nIP, nUDPPort - 4), iDbgPacket++, (LPCTSTR)DbgGetFileInfo(fileid));
 					CPartFile *file = theApp.downloadqueue->GetFileByID(fileid);
-					if (file)
+					if (file) {
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+						const UINT uWireSourceCount = data.ReadUInt8();
+						data.Seek(-1, CFile::current);
+						const UINT uSourceCountBefore = file->GetSourceCount();
+#endif
 						file->AddSources(&data, nIP, nUDPPort - 4, false);
+#if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_PACKET_DIAGNOSTICS)
+						CString strDiagnosticPeer = ipstr(nIP, nUDPPort);
+						CString strDiagnosticServerEndpoint;
+						if (pServer != NULL)
+							strDiagnosticServerEndpoint.Format(_T("%s:%u"), pServer->GetAddress(), pServer->GetPort());
+						else
+							strDiagnosticServerEndpoint = _T("unknown");
+						const uint8 uRequestOpcode = pServer != NULL && (pServer->GetUDPFlags() & SRV_UDPFLG_EXT_GETSOURCES2) != 0
+							? OP_GLOBGETSOURCES2
+							: OP_GLOBGETSOURCES;
+						DiagEventLogEd2kServerSourceResultApplied(
+							true,
+							strDiagnosticPeer,
+							strDiagnosticServerEndpoint,
+							ullDiagnosticTraceId,
+							bObfuscated ? _T("obfuscated") : _T("plaintext"),
+							uRequestOpcode,
+							OP_GLOBFOUNDSOURCES,
+							fileid,
+							uWireSourceCount,
+							uSourceCountBefore,
+							file->GetSourceCount());
+#endif
+					}
 					else {
 						// skip sources for that file
 						UINT count = data.ReadUInt8();

@@ -1137,10 +1137,13 @@ void DiagEventLogEd2kServerSearchResultApplied(
 }
 
 void DiagEventLogEd2kServerSourceResultApplied(
+	bool bUdp,
 	LPCTSTR pszPeerLabel,
+	LPCTSTR pszServerEndpoint,
 	ULONGLONG ullAttemptId,
 	LPCTSTR pszTransportMode,
-	uint8 uOpcode,
+	uint8 uRequestOpcode,
+	uint8 uResponseOpcode,
 	const uchar *pFileHash,
 	UINT uWireSourceCount,
 	UINT uSourceCountBefore,
@@ -1151,36 +1154,47 @@ void DiagEventLogEd2kServerSourceResultApplied(
 
 	const UINT uProtocolMarker = 0xE3;
 	const CString strPeer(pszPeerLabel != NULL ? pszPeerLabel : _T("unknown"));
+	const CString strServerEndpoint(pszServerEndpoint != NULL ? pszServerEndpoint : _T("unknown"));
 	const CString strTransportMode(pszTransportMode != NULL ? pszTransportMode : _T("unknown"));
 	const CString strFileHash = pFileHash != NULL
 		? BuildDiagEventLowerHexString(pFileHash, MDX_DIGEST_SIZE)
 		: CString();
-	const bool bObfuscated = uOpcode == OP_FOUNDSOURCES_OBFU;
-	const LPCTSTR pszOpcodeName = bObfuscated ? _T("OP_FOUNDSOURCES_OBFU") : _T("OP_FOUNDSOURCES");
+	const bool bObfuscated = _tcsicmp(strTransportMode, _T("obfuscated")) == 0;
+	const LPCTSTR pszRequestOpcodeName = uRequestOpcode == OP_GETSOURCES_OBFU
+		? _T("OP_GETSOURCES_OBFU")
+		: (uRequestOpcode == OP_GLOBGETSOURCES2 ? _T("OP_GLOBGETSOURCES2")
+			: (uRequestOpcode == OP_GLOBGETSOURCES ? _T("OP_GLOBGETSOURCES") : _T("OP_GETSOURCES")));
+	const LPCTSTR pszResponseOpcodeName = uResponseOpcode == OP_FOUNDSOURCES_OBFU
+		? _T("OP_FOUNDSOURCES_OBFU")
+		: (uResponseOpcode == OP_GLOBFOUNDSOURCES ? _T("OP_GLOBFOUNDSOURCES") : _T("OP_FOUNDSOURCES"));
 
 	CString strKeys;
 	strKeys.Format(
-		_T("{\"peer\":%s,\"fileHash\":%s,\"opcode\":%u,\"protocolMarker\":%u,\"traceId\":%I64u}"),
+		_T("{\"peer\":%s,\"fileHash\":%s,\"opcode\":%u,\"protocolMarker\":%u,\"requestOpcode\":%u,\"traceId\":%I64u}"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(strPeer),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(strFileHash),
-		(UINT)uOpcode,
+		(UINT)uResponseOpcode,
 		uProtocolMarker,
+		(UINT)uRequestOpcode,
 		ullAttemptId);
 
 	CString strBody;
 	strBody.Format(
-		_T("{\"flow\":\"server\",\"phase\":\"source_search\",\"direction\":\"recv\",\"protocolMarker\":%u,\"opcode\":%u,\"opcodeName\":%s,\"traceId\":%I64u,\"transportMode\":%s,\"obfuscated\":%s,\"stateId\":\"server.source.result_applied\",\"milestone\":\"result_applied\",\"wireSourceCount\":%u,\"sourceCountBefore\":%u,\"sourceCountAfter\":%u,\"outcome\":\"applied\"}"),
+		_T("{\"flow\":\"server\",\"phase\":\"source_search\",\"direction\":\"recv\",\"protocolMarker\":%u,\"opcode\":%u,\"opcodeName\":%s,\"requestOpcode\":%u,\"requestOpcodeName\":%s,\"traceId\":%I64u,\"transportMode\":%s,\"obfuscated\":%s,\"serverEndpoint\":%s,\"stateId\":\"server.source.result_applied\",\"milestone\":\"result_applied\",\"wireSourceCount\":%u,\"sourceCountBefore\":%u,\"sourceCountAfter\":%u,\"outcome\":\"applied\"}"),
 		uProtocolMarker,
-		(UINT)uOpcode,
-		(LPCTSTR)BuildDiagnosticsJsonStringField(pszOpcodeName),
+		(UINT)uResponseOpcode,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszResponseOpcodeName),
+		(UINT)uRequestOpcode,
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszRequestOpcodeName),
 		ullAttemptId,
 		(LPCTSTR)BuildDiagnosticsJsonStringField(strTransportMode),
 		bObfuscated ? _T("true") : _T("false"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strServerEndpoint),
 		uWireSourceCount,
 		uSourceCountBefore,
 		uSourceCountAfter);
 
-	WriteDiagEventV2(_T("ed2k_tcp"), _T("source_result_applied"), _T("info"), strKeys, strBody);
+	WriteDiagEventV2(bUdp ? _T("ed2k_server_udp") : _T("ed2k_tcp"), _T("source_result_applied"), _T("info"), strKeys, strBody);
 }
 
 namespace
