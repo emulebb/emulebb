@@ -469,9 +469,12 @@ bool CServerSocket::ProcessPacket(const BYTE *packet, uint32 size, uint8 opcode)
 					CString strDiagnosticPeer;
 					strDiagnosticPeer.Format(_T("%s:%u"), cur_server->GetAddress(), cur_server->GetPort());
 					DiagEventLogEd2kServerSourceResultApplied(
+						false,
+						strDiagnosticPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strDiagnosticPeer,
 						strDiagnosticPeer.IsEmpty() ? _T("unknown") : (LPCTSTR)strDiagnosticPeer,
 						m_ullDiagnosticAttemptId,
 						IsServerCryptEnabledConnection() ? _T("obfuscated") : _T("plaintext"),
+						(opcode == OP_FOUNDSOURCES_OBFU) ? OP_GETSOURCES_OBFU : OP_GETSOURCES,
 						opcode,
 						fileid,
 						(UINT)packet[16],

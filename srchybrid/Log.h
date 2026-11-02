@@ -197,10 +197,13 @@ void DiagEventLogEd2kServerSearchResultApplied(
  * @brief Records one decoded server source-result after applying it to the part file.
  */
 void DiagEventLogEd2kServerSourceResultApplied(
+	bool bUdp,
 	LPCTSTR pszPeerLabel,
+	LPCTSTR pszServerEndpoint,
 	ULONGLONG ullAttemptId,
 	LPCTSTR pszTransportMode,
-	uint8 uOpcode,
+	uint8 uRequestOpcode,
+	uint8 uResponseOpcode,
 	const uchar *pFileHash,
 	UINT uWireSourceCount,
 	UINT uSourceCountBefore,
