@@ -39,6 +39,7 @@
 #include "GeoLocation.h"
 #include "HelperThreadLaunchSeams.h"
 #include "KnownFileList.h"
+#include "ListenSocket.h"
 #include "Log.h"
 #include "Mdump.h"
 #include "OtherFunctions.h"
@@ -749,6 +750,7 @@ json BuildSourceJson(const CUpDownClient &rClient)
 		{"userHash", StdUtf8FromCString(HashToHex(rClient.GetUserHash()))},
 		{"clientSoftware", StdUtf8FromCString(rClient.GetClientSoftVer())},
 		{"downloadState", StdUtf8FromCString(GetDownloadStateName(rClient))},
+		{"tcpConnected", rClient.socket != NULL && rClient.socket->IsConnected()},
 		{"downloadSpeedKiBps", rClient.GetDownloadDatarate() / 1024.0},
 		{"availableParts", rClient.GetAvailablePartCount()},
 		{"partCount", rClient.GetPartCount()},
@@ -3134,6 +3136,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		if (pSource->GetRequestFile() != pPartFile
 			|| pSource->GetDownloadState() != DS_ONQUEUE
 			|| pSource->HasLowID()
+			|| (pSource->socket != NULL && pSource->socket->IsConnected())
 			|| pSource->UDPPacketPending())
 		{
 			rError.strCode = "INVALID_STATE";
