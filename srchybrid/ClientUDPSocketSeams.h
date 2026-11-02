@@ -148,6 +148,18 @@ inline bool TryGetPacketOpcodeForLog(const unsigned char *pBuffer, const int nPa
 }
 
 /**
+ * @brief Reports whether DecryptReceivedClient removed an obfuscation envelope.
+ *
+ * ED2K client-UDP obfuscation uses the peer user hash and therefore does not
+ * populate the Kad receiver/sender verify keys. The authoritative receive-side
+ * signal is the decoded frame becoming shorter than the exact wire datagram.
+ */
+inline bool IsIncomingClientUdpDatagramObfuscated(const int nWireLen, const int nDecodedLen)
+{
+	return nWireLen > 0 && nDecodedLen > 0 && nDecodedLen < nWireLen;
+}
+
+/**
  * @brief Classifies queued outgoing diagnostics by their wire protocol.
  *
  * Buddy-relayed OP_REASKCALLBACKUDP packets use the Kad-routed send path but

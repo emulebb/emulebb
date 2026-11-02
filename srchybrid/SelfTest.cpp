@@ -16,6 +16,13 @@ bool SelfTest()
 {
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 	using namespace WebServerJsonSeams;
+	if (ClientUDPSocketSeams::IsIncomingClientUdpDatagramObfuscated(23, 23)
+		|| !ClientUDPSocketSeams::IsIncomingClientUdpDatagramObfuscated(31, 23)
+		|| ClientUDPSocketSeams::IsIncomingClientUdpDatagramObfuscated(31, 0)
+		|| ClientUDPSocketSeams::IsIncomingClientUdpDatagramObfuscated(8, 9))
+	{
+		return false;
+	}
 	static const char *const kRoute = "/api/v1/diagnostics/protocol-fixtures/queued-lowid-sources";
 	static const char *const kValidBody =
 		"{\"fileHash\":\"00112233445566778899aabbccddeeff\","

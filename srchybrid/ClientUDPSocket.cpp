@@ -226,12 +226,22 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 	BYTE *pBuffer;
 	uint32 nReceiverVerifyKey;
 	uint32 nSenderVerifyKey;
+#ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
+	// DecryptReceivedClient rewrites the encrypted region in-place. Preserve the
+	// socket-visible datagram before that mutation so rawHex remains true wire
+	// evidence rather than an encrypted header joined to a clear payload.
+	const std::vector<BYTE> diagnosticWireDatagram(buffer, buffer + nRealLen);
+#endif
 	int nPacketLen = DecryptReceivedClient(buffer, nRealLen, &pBuffer, sockAddr.sin_addr.s_addr, &nReceiverVerifyKey, &nSenderVerifyKey);
 	if (nPacketLen > 0) {
 		CString strError;
 		bool bUnexpectedPacketException = false;
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 		bool bClientUdpDiagLogged = false;
+		const bool bClientUdpDiagObfuscated =
+			ClientUDPSocketSeams::IsIncomingClientUdpDatagramObfuscated(nRealLen, nPacketLen);
+		const LPCTSTR pszClientUdpDiagTransport =
+			bClientUdpDiagObfuscated ? _T("obfuscated") : _T("plaintext");
 #endif
 		try {
 			switch (pBuffer[0]) {
@@ -245,9 +255,9 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 #ifdef EMULEBB_ENABLE_PACKET_DIAGNOSTICS
 					DiagEventLogEd2kClientUdpPacket(
 						ipstr(sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port)),
-						(nReceiverVerifyKey != 0 || nSenderVerifyKey != 0) ? _T("obfuscated") : _T("plaintext"),
+						pszClientUdpDiagTransport,
 						_T("recv"), ClientUdpPacketDispositionName(processResult.eDisposition),
-						pBuffer[0], pBuffer[1], buffer, static_cast<UINT>(nRealLen),
+						pBuffer[0], pBuffer[1], diagnosticWireDatagram.data(), static_cast<UINT>(diagnosticWireDatagram.size()),
 						pBuffer + 2, static_cast<UINT>(nPacketLen - 2), 0, NULL, processResult.pszNote);
 					bClientUdpDiagLogged = true;
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
@@ -343,9 +353,9 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 			const UINT uPayloadLen = nPacketLen >= 2 ? static_cast<UINT>(nPacketLen - 2) : 0;
 			DiagEventLogEd2kClientUdpPacket(
 				ipstr(sockAddr.sin_addr.s_addr, ntohs(sockAddr.sin_port)),
-				(nReceiverVerifyKey != 0 || nSenderVerifyKey != 0) ? _T("obfuscated") : _T("plaintext"),
+				pszClientUdpDiagTransport,
 				_T("recv"), _T("dropped"), pBuffer[0], byOpcode,
-				buffer, static_cast<UINT>(nRealLen), pPayload, uPayloadLen, 0, NULL,
+				diagnosticWireDatagram.data(), static_cast<UINT>(diagnosticWireDatagram.size()), pPayload, uPayloadLen, 0, NULL,
 				strError.IsEmpty() ? _T("packet_processing_failed") : (LPCTSTR)strError);
 		}
 #endif
