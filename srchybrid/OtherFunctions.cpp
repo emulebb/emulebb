@@ -1999,7 +1999,7 @@ static LPCTSTR GetUdpReaskDecisionReason(const UdpReaskDiagnosticsSeams::EUdpRea
 	case EUdpReaskDecision::BuddyIdInvalid: return _T("buddy_id_invalid");
 	case EUdpReaskDecision::SourceExchangeDue: return _T("source_exchange_due");
 	case EUdpReaskDecision::SwappedToAnotherFile: return _T("swapped_to_another_file");
-	case EUdpReaskDecision::DirectReaskSent: return _T("direct_reask_sent");
+	case EUdpReaskDecision::DirectReaskSent: return _T("udp_reask_sent");
 	case EUdpReaskDecision::CallbackReaskSent: return _T("callback_reask_sent");
 	default: return _T("unknown");
 	}
