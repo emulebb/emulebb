@@ -54,6 +54,15 @@ public:
 	uint16	GetConnectedPort()		{ return m_port; }
 	bool	SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar *pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey, const uchar *pachDiagnosticFileHash);
 	SocketSentBytes  SendControlData(uint32 maxNumberOfBytesToSend, uint32 /*minFragSize*/); // ZZ:UploadBandWithThrottler (UDP)
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	bool ArmClientUdpQueuePressureFixture(
+		const uchar *pFileHash,
+		uint32 uSourceIp,
+		uint16 uSourceUdpPort,
+		uint32 uActualWaitingUserCount,
+		uint32 uQueueSize,
+		ClientUDPSocketSeams::SClientUdpQueuePressureFixture &rReceipt);
+#endif
 
 protected:
 	struct SProcessPacketResult
@@ -84,4 +93,7 @@ private:
 
 	uint16	m_port;
 	bool	m_bWouldBlock;
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	ClientUDPSocketSeams::SClientUdpQueuePressureFixture m_queuePressureFixture;
+#endif
 };

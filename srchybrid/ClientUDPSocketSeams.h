@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 
 #define EMULEBB_TEST_HAVE_CLIENT_UDP_SOCKET_FAILURE_SEAMS 1
@@ -12,6 +13,77 @@
 namespace ClientUDPSocketSeams
 {
 static const size_t kMaxOutgoingClientUdpControlQueuePackets = 4096u;
+static const uint32_t kClientUdpQueueFullMargin = 50u;
+static const uint64_t kClientUdpQueuePressureFixtureTtlMs = 30000u;
+
+struct SClientUdpQueuePressureFixture
+{
+	bool bArmed = false;
+	uint64_t ullFixtureId = 0;
+	unsigned char aucFileHash[16] = {};
+	uint32_t uSourceIp = 0;
+	uint16_t uSourceUdpPort = 0;
+	uint32_t uActualWaitingUserCount = 0;
+	uint32_t uEffectiveWaitingUserCount = 0;
+	uint32_t uQueueSize = 0;
+	uint64_t ullExpiresAtMs = 0;
+};
+
+inline uint32_t ClientUdpQueuePressureWaitingUserCount(const uint32_t uQueueSize)
+{
+	return (uQueueSize > kClientUdpQueueFullMargin
+		? uQueueSize - kClientUdpQueueFullMargin
+		: 0u) + 1u;
+}
+
+inline void ArmClientUdpQueuePressureFixture(
+	SClientUdpQueuePressureFixture &rFixture,
+	const uint64_t ullFixtureId,
+	const unsigned char *pFileHash,
+	const uint32_t uSourceIp,
+	const uint16_t uSourceUdpPort,
+	const uint32_t uActualWaitingUserCount,
+	const uint32_t uQueueSize,
+	const uint64_t ullNowMs)
+{
+	rFixture = SClientUdpQueuePressureFixture();
+	rFixture.bArmed = true;
+	rFixture.ullFixtureId = ullFixtureId;
+	std::memcpy(rFixture.aucFileHash, pFileHash, sizeof rFixture.aucFileHash);
+	rFixture.uSourceIp = uSourceIp;
+	rFixture.uSourceUdpPort = uSourceUdpPort;
+	rFixture.uActualWaitingUserCount = uActualWaitingUserCount;
+	rFixture.uEffectiveWaitingUserCount = ClientUdpQueuePressureWaitingUserCount(uQueueSize);
+	rFixture.uQueueSize = uQueueSize;
+	rFixture.ullExpiresAtMs = ullNowMs + kClientUdpQueuePressureFixtureTtlMs;
+}
+
+inline bool TryConsumeClientUdpQueuePressureFixture(
+	SClientUdpQueuePressureFixture &rFixture,
+	const unsigned char *pFileHash,
+	const uint32_t uSourceIp,
+	const uint16_t uSourceUdpPort,
+	const uint32_t uQueueSize,
+	const uint64_t ullNowMs,
+	SClientUdpQueuePressureFixture &rConsumed)
+{
+	if (!rFixture.bArmed)
+		return false;
+	if (ullNowMs >= rFixture.ullExpiresAtMs) {
+		rFixture = SClientUdpQueuePressureFixture();
+		return false;
+	}
+	if (rFixture.uSourceIp != uSourceIp
+		|| rFixture.uSourceUdpPort != uSourceUdpPort
+		|| rFixture.uQueueSize != uQueueSize
+		|| std::memcmp(rFixture.aucFileHash, pFileHash, sizeof rFixture.aucFileHash) != 0)
+	{
+		return false;
+	}
+	rConsumed = rFixture;
+	rFixture = SClientUdpQueuePressureFixture();
+	return true;
+}
 
 enum class EClientUdpPacketDisposition
 {
