@@ -3072,6 +3072,9 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 		const bool bTcpFirewalled = Kademlia::CKademlia::GetPrefs()->GetFirewalled();
 		const bool bUdpVerified = Kademlia::CUDPFirewallTester::IsVerified();
 		const bool bUdpOpen = !Kademlia::CUDPFirewallTester::IsFirewalledUDP(true);
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
+		DiagEventLogKadBuddyRelayFixture(bTcpFirewalled, bUdpVerified, bUdpOpen);
+#endif
 		return json{
 			{"prepared", true},
 			{"tcpFirewalled", bTcpFirewalled},

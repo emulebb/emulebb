@@ -362,6 +362,46 @@ void DiagEventLogKadUdpPacketSend(
 	BYTE byOpcode,
 	const BYTE *pPayload,
 	UINT uPayloadLen);
+
+void DiagEventLogKadBuddyRelayFixture(
+	bool bTcpFirewalled,
+	bool bUdpVerified,
+	bool bUdpOpen);
+
+void DiagEventLogKadBuddyRequest(
+	LPCTSTR pszMilestone,
+	LPCTSTR pszAction,
+	LPCTSTR pszOutcome,
+	LPCTSTR pszReason,
+	uint32 uNetworkIP,
+	uint16 uUDPPort,
+	uint16 uRequesterTCPPort,
+	uint16 uLocalTCPPort,
+	const BYTE *pBuddyID,
+	const BYTE *pClientHash,
+	bool bTcpFirewalled,
+	bool bUdpVerified,
+	bool bUdpOpen,
+	bool bRequesterHasUdpKey);
+
+void DiagEventLogKadBuddySocketAttached(
+	uint32 uNetworkIP,
+	uint16 uTCPPort,
+	const BYTE *pBuddyID,
+	const BYTE *pClientHash);
+
+void DiagEventLogKadBuddyCallback(
+	LPCTSTR pszMilestone,
+	LPCTSTR pszAction,
+	LPCTSTR pszOutcome,
+	LPCTSTR pszReason,
+	uint32 uRequesterNetworkIP,
+	uint16 uRequesterUDPPort,
+	uint16 uRequesterTCPPort,
+	const BYTE *pBuddyID,
+	const BYTE *pFileHash,
+	uint32 uBuddyNetworkIP,
+	uint16 uBuddyTCPPort);
 #endif
 
 #if EMULEBB_HAS_DIAG_EVENT_V2 && defined(EMULEBB_ENABLE_UPLOAD_SLOT_DIAGNOSTICS)

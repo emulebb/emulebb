@@ -409,7 +409,7 @@ void CKademliaUDPListener::ProcessPacket(const byte *pbyData, uint32 uLenData, u
 	case KADEMLIA_CALLBACK_REQ:
 		if (thePrefs.GetDebugClientKadUDPLevel() > 0)
 			DebugRecv("KADEMLIA_CALLBACK_REQ", uIP, uUDPPort);
-		Process_KADEMLIA_CALLBACK_REQ(pbyPacketData, uLenData, uIP, senderUDPKey);
+		Process_KADEMLIA_CALLBACK_REQ(pbyPacketData, uLenData, uIP, uUDPPort, senderUDPKey);
 		break;
 	case KADEMLIA2_PING:
 		if (thePrefs.GetDebugClientKadUDPLevel() > 0)
@@ -1728,27 +1728,57 @@ void CKademliaUDPListener::Process_KADEMLIA_FINDBUDDY_REQ(const byte *pbyPacketD
 		throw strError;
 	}
 
-	if (CKademlia::GetPrefs()->GetFirewalled() || CUDPFirewallTester::IsFirewalledUDP(true) || !CUDPFirewallTester::IsVerified())
-		//We are firewalled but somehow we still got this packet. Don't send a response.
-		return;
-	if (theApp.clientlist->GetBuddyStatus() == Connected)
-		// we already have a buddy
-		return;
-
 	CSafeMemFile fileIO(pbyPacketData, uLenPacket);
 	CUInt128 BuddyID;
 	fileIO.ReadUInt128(BuddyID);
 	CUInt128 userID;
 	fileIO.ReadUInt128(userID);
 	uint16 uTCPPort = fileIO.ReadUInt16();
+	byte aucBuddyID[16] = {};
+	byte aucClientHash[16] = {};
+	BuddyID.ToByteArray(aucBuddyID);
+	userID.ToByteArray(aucClientHash);
+	const bool bTcpFirewalled = CKademlia::GetPrefs()->GetFirewalled();
+	const bool bUdpFirewalled = CUDPFirewallTester::IsFirewalledUDP(true);
+	const bool bUdpVerified = CUDPFirewallTester::IsVerified();
+	const bool bUdpOpen = !bUdpFirewalled;
+	const bool bRequesterHasUdpKey = !senderUDPKey.IsEmpty();
+
+	if (bTcpFirewalled || bUdpFirewalled || !bUdpVerified) {
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
+		DiagEventLogKadBuddyRequest(
+			_T("buddy_request_refused"), _T("refuse"), _T("refused"), _T("self_firewalled"),
+			htonl(uIP), uUDPPort, uTCPPort, thePrefs.GetPort(), aucBuddyID, aucClientHash,
+			bTcpFirewalled, bUdpVerified, bUdpOpen, bRequesterHasUdpKey);
+#endif
+		//We are firewalled but somehow we still got this packet. Don't send a response.
+		return;
+	}
+	if (theApp.clientlist->GetBuddyStatus() == Connected) {
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
+		DiagEventLogKadBuddyRequest(
+			_T("buddy_request_refused"), _T("refuse"), _T("refused"), _T("already_serving_buddy"),
+			htonl(uIP), uUDPPort, uTCPPort, thePrefs.GetPort(), aucBuddyID, aucClientHash,
+			bTcpFirewalled, bUdpVerified, bUdpOpen, bRequesterHasUdpKey);
+#endif
+		// we already have a buddy
+		return;
+	}
 
 	CContact contact;
 	contact.SetIPAddress(uIP);
 	contact.SetTCPPort(uTCPPort);
 	contact.SetUDPPort(uUDPPort);
 	contact.SetClientID(userID);
-	if (!theApp.clientlist->IncomingBuddy(&contact, BuddyID))
+	if (!theApp.clientlist->IncomingBuddy(&contact, BuddyID)) {
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
+		DiagEventLogKadBuddyRequest(
+			_T("buddy_request_refused"), _T("refuse"), _T("refused"), _T("incoming_buddy_rejected"),
+			htonl(uIP), uUDPPort, uTCPPort, thePrefs.GetPort(), aucBuddyID, aucClientHash,
+			bTcpFirewalled, bUdpVerified, bUdpOpen, bRequesterHasUdpKey);
+#endif
 		return; // cancelled for some reason, don't send a response
+	}
 
 	CSafeMemFile fileIO2(34);
 	fileIO2.WriteUInt128(BuddyID);
@@ -1760,6 +1790,12 @@ void CKademliaUDPListener::Process_KADEMLIA_FINDBUDDY_REQ(const byte *pbyPacketD
 		DebugSend("KADEMLIA_FINDBUDDY_RES", uIP, uUDPPort);
 
 	SendPacket(fileIO2, KADEMLIA_FINDBUDDY_RES, uIP, uUDPPort, senderUDPKey, NULL);
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
+	DiagEventLogKadBuddyRequest(
+		_T("buddy_request_accepted"), _T("accept"), _T("accepted"), _T("eligible"),
+		htonl(uIP), uUDPPort, uTCPPort, thePrefs.GetPort(), aucBuddyID, aucClientHash,
+		bTcpFirewalled, bUdpVerified, bUdpOpen, bRequesterHasUdpKey);
+#endif
 }
 
 // Used by Kad1.0 and Kad2.0
@@ -1802,7 +1838,7 @@ void CKademliaUDPListener::Process_KADEMLIA_FINDBUDDY_RES(const byte *pbyPacketD
 }
 
 // Used by Kad1.0 and Kad2.0
-void CKademliaUDPListener::Process_KADEMLIA_CALLBACK_REQ(const byte *pbyPacketData, uint32 uLenPacket, uint32 uIP, const CKadUDPKey& /*senderUDPKey*/)
+void CKademliaUDPListener::Process_KADEMLIA_CALLBACK_REQ(const byte *pbyPacketData, uint32 uLenPacket, uint32 uIP, uint16 uUDPPort, const CKadUDPKey& /*senderUDPKey*/)
 {
 	// Verify packet is expected size
 	if (uLenPacket < 34) {
@@ -1811,19 +1847,30 @@ void CKademliaUDPListener::Process_KADEMLIA_CALLBACK_REQ(const byte *pbyPacketDa
 		throw strError;
 	}
 
+	CSafeMemFile fileIO(pbyPacketData, uLenPacket);
+	CUInt128 uCheck;
+	fileIO.ReadUInt128(uCheck);
+	CUInt128 uFile;
+	fileIO.ReadUInt128(uFile);
+	uint16 uTCP = fileIO.ReadUInt16();
+	byte aucBuddyID[16] = {};
+	byte aucFileHash[16] = {};
+	uCheck.ToByteArray(aucBuddyID);
+	uFile.ToByteArray(aucFileHash);
+
 	CUpDownClient *pBuddy = theApp.clientlist->GetBuddy();
 	if (pBuddy != NULL) {
-		CSafeMemFile fileIO(pbyPacketData, uLenPacket);
-		CUInt128 uCheck;
-		fileIO.ReadUInt128(uCheck);
 		//JOHNTODO: Begin filtering bad buddy ID's.
 		//CUInt128 bud(pBuddy->GetBuddyID());
-		CUInt128 uFile;
-		fileIO.ReadUInt128(uFile);
-		uint16 uTCP = fileIO.ReadUInt16();
 
-		if (pBuddy->socket == NULL)
+		if (pBuddy->socket == NULL) {
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
+			DiagEventLogKadBuddyCallback(
+				_T("buddy_callback_dropped"), _T("drop"), _T("dropped"), _T("held_socket_unavailable"),
+				htonl(uIP), uUDPPort, uTCP, aucBuddyID, aucFileHash, pBuddy->GetConnectIP(), pBuddy->GetUserPort());
+#endif
 			throw CString(__FUNCTION__ ": Buddy has no valid socket.");
+		}
 		CSafeMemFile fileIO2(uLenPacket + 6);
 		fileIO2.WriteUInt128(uCheck);
 		fileIO2.WriteUInt128(uFile);
@@ -1834,6 +1881,17 @@ void CKademliaUDPListener::Process_KADEMLIA_CALLBACK_REQ(const byte *pbyPacketDa
 			DebugSend("OP_CALLBACK", pBuddy);
 		theStats.AddUpDataOverheadFileRequest(pPacket->size);
 		pBuddy->socket->SendPacket(pPacket);
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
+		DiagEventLogKadBuddyCallback(
+			_T("buddy_callback_relayed"), _T("relay"), _T("relayed"), _T("eligible"),
+			htonl(uIP), uUDPPort, uTCP, aucBuddyID, aucFileHash, pBuddy->GetConnectIP(), pBuddy->GetUserPort());
+#endif
+	} else {
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
+		DiagEventLogKadBuddyCallback(
+			_T("buddy_callback_dropped"), _T("drop"), _T("dropped"), _T("no_served_buddy"),
+			htonl(uIP), uUDPPort, uTCP, aucBuddyID, aucFileHash, 0, 0);
+#endif
 	}
 }
 
