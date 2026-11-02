@@ -1941,9 +1941,10 @@ void DiagEventLogSchedUdpReaskSourceRegistered(const CUpDownClient *pClient, con
 
 	CString strBody;
 	strBody.Format(
-		_T("{\"outcome\":\"accepted\",\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"lowId\":%s,\"buddyEndpoint\":%s,\"buddyId\":%s}"),
+		_T("{\"outcome\":\"accepted\",\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"shouldCrypt\":%s,\"lowId\":%s,\"buddyEndpoint\":%s,\"buddyId\":%s}"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(strSourceUdpEndpoint),
 		static_cast<UINT>(pClient->GetUDPVersion()),
+		pClient->ShouldReceiveCryptUDPPackets() ? _T("true") : _T("false"),
 		pClient->HasLowID() ? _T("true") : _T("false"),
 		(LPCTSTR)strBuddyEndpoint,
 		(LPCTSTR)strBuddyId);
