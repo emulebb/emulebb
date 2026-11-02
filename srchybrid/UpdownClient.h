@@ -359,6 +359,7 @@ public:
 	ULONGLONG		GetTimeUntilReask() const;
 	ULONGLONG		GetTimeUntilReask(const CPartFile *file) const;
 	ULONGLONG		GetTimeUntilReask(const CPartFile *file, const bool allowShortReaskTime, const bool useGivenNNP = false, const bool givenNNP = false) const;
+	ULONGLONG		GetTimeUntilReaskAt(const CPartFile *file, bool allowShortReaskTime, bool useGivenNNP, bool givenNNP, ULONGLONG ullNow) const;
 	void			UDPReaskACK(uint16 nNewQR);
 	void			UDPReaskFNF();
 	bool			EvaluateUDPReaskSchedule(bool bAppConnected, ULONGLONG ullNow);

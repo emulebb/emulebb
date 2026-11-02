@@ -3162,8 +3162,18 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 
+		// A real queued source reaches the UDP scheduler shortly before its normal
+		// reask deadline. Seed that prior ask, then advance only the scheduler's
+		// supplied clock to the middle of its production eligibility window.
+		constexpr ULONGLONG kFixtureTimeUntilReaskMs = 60ull * 1000ull;
+		static_assert(kFixtureTimeUntilReaskMs > UdpReaskDiagnosticsSeams::kReaskScheduleWindowCloseMs
+			&& kFixtureTimeUntilReaskMs < UdpReaskDiagnosticsSeams::kReaskScheduleWindowOpenMs,
+			"queued LowID fixture must remain inside the production UDP reask window");
+		pSource->SetLastAskedTime();
+		const ULONGLONG ullFixtureScheduleNow = ::GetTickCount64()
+			+ static_cast<ULONGLONG>(FILEREASKTIME) - kFixtureTimeUntilReaskMs;
 		DiagEventLogSchedUdpReaskSourceRegistered(pSource, pPartFile->GetFileHash());
-		if (pSource->EvaluateUDPReaskSchedule(theApp.IsConnected(), ::GetTickCount64()))
+		if (pSource->EvaluateUDPReaskSchedule(theApp.IsConnected(), ullFixtureScheduleNow))
 			pSource->UDPReaskForDownload();
 
 		return json{

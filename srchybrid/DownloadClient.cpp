@@ -1801,7 +1801,7 @@ bool CUpDownClient::EvaluateUDPReaskSchedule(const bool bAppConnected, const ULO
 {
 	UdpReaskDiagnosticsSeams::SUdpReaskScheduleEligibility eligibility = {};
 	eligibility.bAppConnected = bAppConnected;
-	eligibility.ullTimeUntilReaskMs = GetTimeUntilReask();
+	eligibility.ullTimeUntilReaskMs = GetTimeUntilReaskAt(m_reqfile, false, false, false, ullNow);
 	eligibility.ullNowTick = ullNow;
 	eligibility.ullLastTriedTick = GetLastTriedToConnectTime();
 	const UdpReaskDiagnosticsSeams::EUdpReaskScheduleDecision eDecision =
@@ -2501,6 +2501,11 @@ bool CUpDownClient::IsSwapSuspended(const CPartFile *file, const bool allowShort
 
 ULONGLONG CUpDownClient::GetTimeUntilReask(const CPartFile *file, const bool allowShortReaskTime, const bool useGivenNNP, const bool givenNNP) const
 {
+	return GetTimeUntilReaskAt(file, allowShortReaskTime, useGivenNNP, givenNNP, ::GetTickCount64());
+}
+
+ULONGLONG CUpDownClient::GetTimeUntilReaskAt(const CPartFile *file, const bool allowShortReaskTime, const bool useGivenNNP, const bool givenNNP, const ULONGLONG ullNow) const
+{
 	const ULONGLONG lastAskedTimeTick = GetLastAskedTime(file);
 	if (lastAskedTimeTick > 0) {
 		ULONGLONG reaskTime;
@@ -2514,9 +2519,8 @@ ULONGLONG CUpDownClient::GetTimeUntilReask(const CPartFile *file, const bool all
 		} else
 			reaskTime = FILEREASKTIME;
 
-		const ULONGLONG curTick = ::GetTickCount64();
-		if (curTick < lastAskedTimeTick + reaskTime)
-			return reaskTime - (curTick - lastAskedTimeTick);
+		if (ullNow < lastAskedTimeTick + reaskTime)
+			return reaskTime - (ullNow - lastAskedTimeTick);
 	}
 	return 0;
 }
