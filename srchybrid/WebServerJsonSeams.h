@@ -140,7 +140,8 @@ inline ERestLifecyclePolicy GetLifecyclePolicyForCommand(const std::string &rCom
 		return ERestLifecyclePolicy::DiagnosticUnsafe;
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 	if (rCommand == "diagnostics/protocol_fixture/queued_lowid_source"
-		|| rCommand == "diagnostics/protocol_fixture/buddy_relay_eligibility")
+		|| rCommand == "diagnostics/protocol_fixture/buddy_relay_eligibility"
+		|| rCommand == "diagnostics/protocol_control/queued_source_reask")
 		return ERestLifecyclePolicy::DiagnosticUnsafe;
 #endif
 
@@ -988,6 +989,7 @@ inline const std::vector<SApiRouteSpec> &GetApiRouteSpecs()
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 		{"POST", "/diagnostics/protocol-fixtures/queued-lowid-sources", "fileHash,sourceIp,sourceTcpPort,sourceUdpPort,sourceUserHash,sourceUdpVersion,buddyIp,buddyUdpPort,buddyId", ""},
 		{"POST", "/diagnostics/protocol-fixtures/buddy-relay-eligibility", "", ""},
+		{"POST", "/diagnostics/protocol-controls/queued-source-reasks", "fileHash,sourceIp,sourceTcpPort,sourceUdpPort,sourceUserHash,sourceUdpVersion", ""},
 #endif
 		{"GET", "/status", "", ""},
 		{"GET", "/stats", "", ""},
@@ -2177,6 +2179,54 @@ inline bool ValidateQueuedLowIdSourceFixtureBody(
 	rBody["sourceUdpVersion"] = ullUdpVersion;
 	return true;
 }
+
+inline bool ValidateQueuedSourceReaskControlBody(
+	json &rBody,
+	std::string &rErrorCode,
+	std::string &rErrorMessage)
+{
+	static const char *const kRequiredFields[] = {
+		"fileHash", "sourceIp", "sourceTcpPort", "sourceUdpPort", "sourceUserHash",
+		"sourceUdpVersion"
+	};
+	for (const char *pszField : kRequiredFields) {
+		if (!rBody.contains(pszField)) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, std::string("missing required JSON field: ") + pszField);
+			return false;
+		}
+	}
+
+	static const char *const kHashFields[] = {"fileHash", "sourceUserHash"};
+	for (const char *pszField : kHashFields) {
+		if (!rBody[pszField].is_string() || !IsLowercaseMd4HexString(rBody[pszField].get_ref<const std::string&>())) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszField) + " must be a 32-character lowercase hex string");
+			return false;
+		}
+	}
+
+	if (!IsCanonicalProtocolFixtureIpv4(rBody["sourceIp"])) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "sourceIp must be a canonical, non-zero IPv4 address");
+		return false;
+	}
+
+	static const char *const kPortFields[] = {"sourceTcpPort", "sourceUdpPort"};
+	for (const char *pszField : kPortFields) {
+		uint64_t ullPort = 0;
+		if (!TryParseJsonUInt64(rBody[pszField], ullPort) || ullPort == 0 || ullPort > 0xFFFFui64) {
+			SetInvalidArgument(rErrorCode, rErrorMessage, std::string(pszField) + " must be an integer in the range 1..65535");
+			return false;
+		}
+		rBody[pszField] = ullPort;
+	}
+
+	uint64_t ullUdpVersion = 0;
+	if (!TryParseJsonUInt64(rBody["sourceUdpVersion"], ullUdpVersion) || ullUdpVersion < 1 || ullUdpVersion > 4) {
+		SetInvalidArgument(rErrorCode, rErrorMessage, "sourceUdpVersion must be an integer in the range 1..4");
+		return false;
+	}
+	rBody["sourceUdpVersion"] = ullUdpVersion;
+	return true;
+}
 #endif
 
 inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, std::string &rErrorCode, std::string &rErrorMessage)
@@ -2190,6 +2240,11 @@ inline bool ValidateRequestBodyFields(json &rBody, const SApiRouteSpec &rSpec, s
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 	if (IsRouteSpec(rSpec, "POST", "/diagnostics/protocol-fixtures/queued-lowid-sources")
 		&& !ValidateQueuedLowIdSourceFixtureBody(rBody, rErrorCode, rErrorMessage))
+	{
+		return false;
+	}
+	if (IsRouteSpec(rSpec, "POST", "/diagnostics/protocol-controls/queued-source-reasks")
+		&& !ValidateQueuedSourceReaskControlBody(rBody, rErrorCode, rErrorMessage))
 	{
 		return false;
 	}
@@ -2706,6 +2761,16 @@ inline bool TryBuildRoute(
 		return true;
 	}
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	if (route.size() == 3
+		&& route[0] == "diagnostics"
+		&& route[1] == "protocol-controls"
+		&& route[2] == "queued-source-reasks"
+		&& bPost)
+	{
+		rRoute.strCommand = "diagnostics/protocol_control/queued_source_reask";
+		rRoute.params = body;
+		return true;
+	}
 	if (route.size() == 3
 		&& route[0] == "diagnostics"
 		&& route[1] == "protocol-fixtures"

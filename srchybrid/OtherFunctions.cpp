@@ -1904,17 +1904,24 @@ void DiagEventLogSchedUdpReaskSourceRegistered(const CUpDownClient *pClient, con
 
 	CString strSourceUdpEndpoint;
 	strSourceUdpEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(pClient->GetIP()), static_cast<UINT>(pClient->GetUDPPort()));
-	CString strBuddyEndpoint;
-	strBuddyEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(pClient->GetBuddyIP()), static_cast<UINT>(pClient->GetBuddyPort()));
-	const CString strBuddyId(BuildDiagEventLowerHexString(pClient->GetBuddyID(), MDX_DIGEST_SIZE));
+	CString strBuddyEndpoint(_T("null"));
+	CString strBuddyId(_T("null"));
+	if (pClient->HasLowID()) {
+		CString strEndpoint;
+		strEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(pClient->GetBuddyIP()), static_cast<UINT>(pClient->GetBuddyPort()));
+		strBuddyEndpoint = BuildDiagnosticsJsonStringField(strEndpoint);
+		strBuddyId = BuildDiagnosticsJsonStringField(
+			BuildDiagEventLowerHexString(pClient->GetBuddyID(), MDX_DIGEST_SIZE));
+	}
 
 	CString strBody;
 	strBody.Format(
-		_T("{\"outcome\":\"accepted\",\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"lowId\":true,\"buddyEndpoint\":%s,\"buddyId\":%s}"),
+		_T("{\"outcome\":\"accepted\",\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"lowId\":%s,\"buddyEndpoint\":%s,\"buddyId\":%s}"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(strSourceUdpEndpoint),
 		static_cast<UINT>(pClient->GetUDPVersion()),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(strBuddyEndpoint),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(strBuddyId));
+		pClient->HasLowID() ? _T("true") : _T("false"),
+		(LPCTSTR)strBuddyEndpoint,
+		(LPCTSTR)strBuddyId);
 	WriteDiagEventV2(_T("sched"), _T("udp_reask_source_registered"), _T("info"),
 		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
 }
@@ -1922,13 +1929,53 @@ void DiagEventLogSchedUdpReaskSourceRegistered(const CUpDownClient *pClient, con
 void DiagEventLogSchedUdpReaskReplyApplied(
 	const CUpDownClient *pClient,
 	const byte *pFileHash,
-	const uint16 uQueueRank)
+	const uint16 uQueueRank,
+	const bool bPartStatusIncluded,
+	const uint16 uWirePartCount,
+	const bool bPartStatusApplied)
 {
+	CString strWirePartCount(_T("null"));
+	if (bPartStatusIncluded)
+		strWirePartCount.Format(_T("%u"), static_cast<UINT>(uWirePartCount));
+
+	CString strPartCountAfter(_T("null"));
+	CString strAvailablePartsAfter(_T("null"));
+	CString strPartStatusBitsAfter(_T("null"));
+	CString strNoNeededPartsAfter(_T("null"));
+	const bool bHasAppliedPartStatus = bPartStatusApplied
+		&& pClient != NULL
+		&& pClient->GetPartStatus() != NULL;
+	if (bHasAppliedPartStatus) {
+		const UINT uPartCount = pClient->GetPartCount();
+		strPartCountAfter.Format(_T("%u"), uPartCount);
+		strAvailablePartsAfter.Format(_T("%u"), static_cast<UINT>(pClient->GetAvailablePartCount()));
+		CString strBits;
+		const uint8 *const pPartStatus = pClient->GetPartStatus();
+		for (UINT uPart = 0; uPart < uPartCount; ++uPart)
+			strBits.AppendChar(pPartStatus[uPart] != 0 ? _T('1') : _T('0'));
+		strPartStatusBitsAfter = BuildDiagnosticsJsonStringField(strBits);
+		strNoNeededPartsAfter = pClient->GetDownloadState() == DS_NONEEDEDPARTS
+			? _T("true")
+			: _T("false");
+	}
+
+	const CString strSourceUdpEndpoint(pClient != NULL
+		? ipstr(pClient->GetIP(), pClient->GetUDPPort())
+		: CString());
 	CString strBody;
 	strBody.Format(
-		_T("{\"replyOpcode\":%u,\"queueRank\":%u,\"requestPendingAfter\":false,\"remoteQueueFullAfter\":false,\"outcome\":\"applied\"}"),
+		_T("{\"replyOpcode\":%u,\"queueRank\":%u,\"requestPendingAfter\":false,\"remoteQueueFullAfter\":false,\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"queueRankApplied\":true,\"partStatusIncluded\":%s,\"wirePartCount\":%s,\"partStatusApplied\":%s,\"partCountAfter\":%s,\"availablePartsAfter\":%s,\"partStatusBitsAfter\":%s,\"noNeededPartsAfter\":%s,\"outcome\":\"applied\"}"),
 		static_cast<UINT>(OP_REASKACK),
-		static_cast<UINT>(uQueueRank));
+		static_cast<UINT>(uQueueRank),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strSourceUdpEndpoint),
+		pClient != NULL ? static_cast<UINT>(pClient->GetUDPVersion()) : 0,
+		bPartStatusIncluded ? _T("true") : _T("false"),
+		(LPCTSTR)strWirePartCount,
+		bHasAppliedPartStatus ? _T("true") : _T("false"),
+		(LPCTSTR)strPartCountAfter,
+		(LPCTSTR)strAvailablePartsAfter,
+		(LPCTSTR)strPartStatusBitsAfter,
+		(LPCTSTR)strNoNeededPartsAfter);
 	WriteDiagEventV2(_T("sched"), _T("udp_reask_reply_applied"), _T("info"),
 		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
 }
@@ -1952,7 +1999,7 @@ static LPCTSTR GetUdpReaskDecisionReason(const UdpReaskDiagnosticsSeams::EUdpRea
 	case EUdpReaskDecision::BuddyIdInvalid: return _T("buddy_id_invalid");
 	case EUdpReaskDecision::SourceExchangeDue: return _T("source_exchange_due");
 	case EUdpReaskDecision::SwappedToAnotherFile: return _T("swapped_to_another_file");
-	case EUdpReaskDecision::DirectReaskSent: return _T("direct_reask_sent");
+	case EUdpReaskDecision::DirectReaskSent: return _T("udp_reask_sent");
 	case EUdpReaskDecision::CallbackReaskSent: return _T("callback_reask_sent");
 	default: return _T("unknown");
 	}

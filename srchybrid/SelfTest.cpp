@@ -50,6 +50,50 @@ bool SelfTest()
 		}
 	}
 
+	static const char *const kReaskControlRoute =
+		"/api/v1/diagnostics/protocol-controls/queued-source-reasks";
+	static const char *const kValidReaskControlBody =
+		"{\"fileHash\":\"00112233445566778899aabbccddeeff\","
+		"\"sourceIp\":\"127.0.0.2\",\"sourceTcpPort\":4662,\"sourceUdpPort\":4672,"
+		"\"sourceUserHash\":\"102132435465768798a9bacbdcedfe0f\","
+		"\"sourceUdpVersion\":4}";
+	SApiRoute reaskControlRoute;
+	if (!TryBuildRoute(
+			"POST",
+			kReaskControlRoute,
+			kValidReaskControlBody,
+			reaskControlRoute,
+			strErrorCode,
+			strErrorMessage)
+		|| reaskControlRoute.strCommand != "diagnostics/protocol_control/queued_source_reask"
+		|| reaskControlRoute.params.size() != 6
+		|| GetLifecyclePolicyForCommand(reaskControlRoute.strCommand) != ERestLifecyclePolicy::DiagnosticUnsafe)
+	{
+		return false;
+	}
+
+	const char *const kInvalidReaskControlBodies[] = {
+		"{\"fileHash\":\"00112233445566778899aabbccddeeff\"}",
+		"{\"fileHash\":\"00112233445566778899AABBCCDDEEFF\",\"sourceIp\":\"127.0.0.2\",\"sourceTcpPort\":4662,\"sourceUdpPort\":4672,\"sourceUserHash\":\"102132435465768798a9bacbdcedfe0f\",\"sourceUdpVersion\":4}",
+		"{\"fileHash\":\"00112233445566778899aabbccddeeff\",\"sourceIp\":\"127.0.0.2\",\"sourceTcpPort\":4662,\"sourceUdpPort\":4672,\"sourceUserHash\":\"102132435465768798a9bacbdcedfe0f\",\"sourceUdpVersion\":5}",
+		"{\"fileHash\":\"00112233445566778899aabbccddeeff\",\"sourceIp\":\"127.000.0.2\",\"sourceTcpPort\":4662,\"sourceUdpPort\":4672,\"sourceUserHash\":\"102132435465768798a9bacbdcedfe0f\",\"sourceUdpVersion\":4}",
+		"{\"fileHash\":\"00112233445566778899aabbccddeeff\",\"sourceIp\":\"127.0.0.2\",\"sourceTcpPort\":4662,\"sourceUdpPort\":4672,\"sourceUserHash\":\"102132435465768798a9bacbdcedfe0f\",\"sourceUdpVersion\":4,\"extra\":true}"
+	};
+	for (const char *pszBody : kInvalidReaskControlBodies) {
+		SApiRoute invalidRoute;
+		if (TryBuildRoute(
+				"POST",
+				kReaskControlRoute,
+				pszBody,
+				invalidRoute,
+				strErrorCode,
+				strErrorMessage)
+			|| strErrorCode != "INVALID_ARGUMENT")
+		{
+			return false;
+		}
+	}
+
 	SApiRoute buddyRelayRoute;
 	if (!TryBuildRoute(
 			"POST",

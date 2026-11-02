@@ -63,6 +63,9 @@ protected:
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 		CUpDownClient *pUdpReaskReplyAppliedClient;
 		uint16 uUdpReaskReplyAppliedRank;
+		bool bUdpReaskReplyPartStatusIncluded;
+		uint16 uUdpReaskReplyWirePartCount;
+		bool bUdpReaskReplyPartStatusApplied;
 #endif
 	};
 
