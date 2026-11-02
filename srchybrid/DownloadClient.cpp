@@ -1774,11 +1774,23 @@ void CUpDownClient::UDPReaskACK(uint16 nNewQR)
 void CUpDownClient::UDPReaskFNF()
 {
 	m_bUDPPending = false;
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	CPartFile *const pRequestFileBeforeFNF = m_reqfile;
+	const byte *const pRequestFileHashBeforeFNF = pRequestFileBeforeFNF != NULL
+		? pRequestFileBeforeFNF->GetFileHash()
+		: NULL;
+	DiagEventLogSchedUdpReaskFileNotFoundApplied(this, pRequestFileHashBeforeFNF);
+#endif
 	if (GetDownloadState() != DS_DOWNLOADING) { // avoid premature deletion of 'this' client
 		if (thePrefs.GetVerbose())
 			AddDebugLogLine(DLP_LOW, false, _T("UDP FNF-Answer: %s - %s"), (LPCTSTR)DbgGetClientInfo(), (LPCTSTR)DbgGetFileInfo(m_reqfile ? m_reqfile->GetFileHash() : NULL));
-		if (m_reqfile)
+		if (m_reqfile) {
 			m_reqfile->m_DeadSourceList.AddDeadSource(*this);
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+			if (m_reqfile->m_DeadSourceList.IsDeadSource(*this))
+				DiagEventLogSchedSourceDeadListed(this, m_reqfile->GetFileHash(), _T("udp_fnf"), 45u * 60u);
+#endif
+		}
 		switch (GetDownloadState()) {
 		case DS_ONQUEUE:
 		case DS_NONEEDEDPARTS:

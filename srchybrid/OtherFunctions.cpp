@@ -2015,6 +2015,39 @@ void DiagEventLogSchedUdpReaskReplyApplied(
 	WriteDiagEventV2(_T("sched"), _T("udp_reask_reply_applied"), _T("info"),
 		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
 }
+
+void DiagEventLogSchedUdpReaskFileNotFoundApplied(
+	const CUpDownClient *pClient,
+	const byte *pFileHash)
+{
+	const CString strSourceUdpEndpoint(pClient != NULL
+		? ipstr(pClient->GetIP(), pClient->GetUDPPort())
+		: CString());
+	CString strBody;
+	strBody.Format(
+		_T("{\"replyOpcode\":%u,\"requestPendingAfter\":false,\"remoteQueueFullAfter\":%s,\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"queueRankApplied\":false,\"partStatusIncluded\":false,\"wirePartCount\":null,\"partStatusApplied\":false,\"partCountAfter\":null,\"availablePartsAfter\":null,\"partStatusBitsAfter\":null,\"noNeededPartsAfter\":null,\"outcome\":\"applied\"}"),
+		static_cast<UINT>(OP_FILENOTFOUND),
+		pClient != NULL && pClient->IsRemoteQueueFull() ? _T("true") : _T("false"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strSourceUdpEndpoint),
+		pClient != NULL ? static_cast<UINT>(pClient->GetUDPVersion()) : 0);
+	WriteDiagEventV2(_T("sched"), _T("udp_reask_reply_applied"), _T("info"),
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
+}
+
+void DiagEventLogSchedSourceDeadListed(
+	const CUpDownClient *pClient,
+	const byte *pFileHash,
+	LPCTSTR pszReason,
+	const UINT uBlockSecs)
+{
+	CString strBody;
+	strBody.Format(
+		_T("{\"outcome\":\"dead_listed\",\"reason\":%s,\"blockSecs\":%u}"),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(pszReason != NULL ? pszReason : _T("")),
+		uBlockSecs);
+	WriteDiagEventV2(_T("sched"), _T("source_dead_listed"), _T("info"),
+		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
+}
 #endif
 
 static LPCTSTR GetUdpReaskDecisionReason(const UdpReaskDiagnosticsSeams::EUdpReaskDecision eDecision)

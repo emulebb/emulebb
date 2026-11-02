@@ -261,6 +261,8 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 							processResult.uUdpReaskReplyWirePartCount,
 							processResult.bUdpReaskReplyPartStatusApplied);
 					}
+					if (processResult.pUdpReaskFileNotFoundClient != NULL)
+						processResult.pUdpReaskFileNotFoundClient->UDPReaskFNF();
 #endif
 #else
 					(void)processResult;
@@ -629,8 +631,16 @@ CClientUDPSocket::SProcessPacketResult CClientUDPSocket::ProcessPacket(const BYT
 				DebugRecv("OP_FileNotFound", sender, NULL, ip);
 			if (sender != NULL) {
 				if (sender->UDPPacketPending()) {
+#if !EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 					sender->UDPReaskFNF(); // may delete 'sender'!
+#endif
 					result = { ClientUDPSocketSeams::EClientUdpPacketDisposition::Accepted, _T("routed_reply") };
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+					// UDPReaskFNF may delete the client. Defer it until OnReceive has
+					// recorded the accepted wire packet, then let the transition emit
+					// its application/dead-list/drop events in causal order.
+					result.pUdpReaskFileNotFoundClient = sender;
+#endif
 				} else {
 					DebugLogError(_T("Received UDP Packet (OP_FILENOTFOUND) which was not requested (pendingflag == false); Ignored packet - %s"), (LPCTSTR)sender->DbgGetClientInfo());
 					result = { ClientUDPSocketSeams::EClientUdpPacketDisposition::Ignored, _T("unsolicited_reply") };
