@@ -2341,7 +2341,7 @@ bool TryParseProtocolFixtureIpv4(
 	return true;
 }
 
-CUpDownClient* FindRegisteredQueuedLowIdSourceFixture(
+CUpDownClient* FindRegisteredSourceByIdentity(
 	CPartFile &rPartFile,
 	const uint32 dwSourceIp,
 	const uint16 uSourceTcpPort,
@@ -2368,6 +2368,25 @@ CString BuildProtocolFixtureEndpoint(const uint32 dwIp, const uint16 uPort)
 	CString strEndpoint;
 	strEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(dwIp), static_cast<UINT>(uPort));
 	return strEndpoint;
+}
+
+bool TriggerQueuedSourceReaskDiagnostic(CUpDownClient &rSource, CPartFile &rPartFile)
+{
+	// A real queued source reaches the UDP scheduler shortly before its normal
+	// reask deadline. Seed that prior ask, then advance only the scheduler's
+	// supplied clock to the middle of its production eligibility window.
+	constexpr ULONGLONG kTimeUntilReaskMs = 60ull * 1000ull;
+	static_assert(kTimeUntilReaskMs > UdpReaskDiagnosticsSeams::kReaskScheduleWindowCloseMs
+		&& kTimeUntilReaskMs < UdpReaskDiagnosticsSeams::kReaskScheduleWindowOpenMs,
+		"queued source diagnostics must remain inside the production UDP reask window");
+	rSource.SetLastAskedTime();
+	const ULONGLONG ullScheduleNow = ::GetTickCount64()
+		+ static_cast<ULONGLONG>(FILEREASKTIME) - kTimeUntilReaskMs;
+	DiagEventLogSchedUdpReaskSourceRegistered(&rSource, rPartFile.GetFileHash());
+	if (!rSource.EvaluateUDPReaskSchedule(theApp.IsConnected(), ullScheduleNow))
+		return false;
+	rSource.UDPReaskForDownload();
+	return rSource.UDPPacketPending();
 }
 #endif
 
@@ -3055,6 +3074,94 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 	}
 
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	if (strCommand == "diagnostics/protocol_control/queued_source_reask") {
+		if (!thePrefs.GetDiagnosticRestEndpointsEnabled()) {
+			rError.strCode = "NOT_FOUND";
+			rError.strMessage = _T("API route not found");
+			return json();
+		}
+
+		json control(params);
+		std::string strValidationCode;
+		std::string strValidationMessage;
+		const WebServerJsonSeams::SApiRouteSpec controlRoute = {
+			"POST",
+			"/diagnostics/protocol-controls/queued-source-reasks",
+			"fileHash,sourceIp,sourceTcpPort,sourceUdpPort,sourceUserHash,sourceUdpVersion",
+			""
+		};
+		if (!control.is_object()
+			|| !WebServerJsonSeams::ValidateRequestBodyFields(control, controlRoute, strValidationCode, strValidationMessage))
+		{
+			rError.strCode = "INVALID_ARGUMENT";
+			rError.strMessage = CStringFromStdUtf8(strValidationMessage.empty() ? "control body must be an object" : strValidationMessage);
+			return json();
+		}
+
+		if (!theApp.IsConnected()) {
+			rError.strCode = "INVALID_STATE";
+			rError.strMessage = _T("application must be connected before waking a queued source reask");
+			return json();
+		}
+		if (theApp.downloadqueue == NULL) {
+			rError.strCode = "EMULE_UNAVAILABLE";
+			rError.strMessage = _T("download queue is unavailable");
+			return json();
+		}
+
+		CPartFile *const pPartFile = FindPartFileByHash(control["fileHash"], rError);
+		if (pPartFile == NULL)
+			return json();
+
+		uchar aucSourceUserHash[MDX_DIGEST_SIZE] = {};
+		if (!TryDecodeHash(control["sourceUserHash"], aucSourceUserHash, rError))
+			return json();
+
+		uint32 dwSourceIp = 0;
+		if (!TryParseProtocolFixtureIpv4(control["sourceIp"], "sourceIp", dwSourceIp, rError))
+			return json();
+
+		const uint16 uSourceTcpPort = static_cast<uint16>(control["sourceTcpPort"].get<uint64_t>());
+		const uint16 uSourceUdpPort = static_cast<uint16>(control["sourceUdpPort"].get<uint64_t>());
+		const uint8 uSourceUdpVersion = static_cast<uint8>(control["sourceUdpVersion"].get<uint64_t>());
+		CUpDownClient *const pSource = FindRegisteredSourceByIdentity(
+			*pPartFile, dwSourceIp, uSourceTcpPort, uSourceUdpPort, aucSourceUserHash);
+		if (pSource == NULL) {
+			rError.strCode = "NOT_FOUND";
+			rError.strMessage = _T("queued source identity was not found on the requested transfer");
+			return json();
+		}
+		if (pSource->GetRequestFile() != pPartFile
+			|| pSource->GetDownloadState() != DS_ONQUEUE
+			|| pSource->HasLowID()
+			|| pSource->UDPPacketPending())
+		{
+			rError.strCode = "INVALID_STATE";
+			rError.strMessage = _T("source must be a disconnected, queued HighID source without a pending UDP request");
+			return json();
+		}
+		if (pSource->GetUDPVersion() != uSourceUdpVersion) {
+			rError.strCode = "INVALID_STATE";
+			rError.strMessage = _T("queued source UDP version does not match the requested control identity");
+			return json();
+		}
+		if (!TriggerQueuedSourceReaskDiagnostic(*pSource, *pPartFile)) {
+			rError.strCode = "INVALID_STATE";
+			rError.strMessage = _T("production UDP reask scheduler or eligibility rejected the queued source");
+			return json();
+		}
+
+		return json{
+			{"accepted", true},
+			{"fileHash", StdUtf8FromCString(HashToHex(pPartFile->GetFileHash()))},
+			{"sourceEndpoint", StdUtf8FromCString(BuildProtocolFixtureEndpoint(pSource->GetIP(), pSource->GetUDPPort()))},
+			{"sourceTcpPort", pSource->GetUserPort()},
+			{"sourceUserHash", StdUtf8FromCString(HashToHex(pSource->GetUserHash()))},
+			{"sourceUdpVersion", pSource->GetUDPVersion()},
+			{"state", "queued-source-reask-pending"}
+		};
+	}
+
 	if (strCommand == "diagnostics/protocol_fixture/buddy_relay_eligibility") {
 		if (!thePrefs.GetDiagnosticRestEndpointsEnabled()) {
 			rError.strCode = "NOT_FOUND";
@@ -3177,7 +3284,7 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 
-		CUpDownClient *const pSource = FindRegisteredQueuedLowIdSourceFixture(
+		CUpDownClient *const pSource = FindRegisteredSourceByIdentity(
 			*pPartFile, dwSourceIp, uSourceTcpPort, uSourceUdpPort, aucSourceUserHash);
 		if (pSource == NULL) {
 			rError.strCode = "EMULE_ERROR";
@@ -3192,19 +3299,11 @@ json HandleUiCommand(const json &rRequest, SPipeApiError &rError)
 			return json();
 		}
 
-		// A real queued source reaches the UDP scheduler shortly before its normal
-		// reask deadline. Seed that prior ask, then advance only the scheduler's
-		// supplied clock to the middle of its production eligibility window.
-		constexpr ULONGLONG kFixtureTimeUntilReaskMs = 60ull * 1000ull;
-		static_assert(kFixtureTimeUntilReaskMs > UdpReaskDiagnosticsSeams::kReaskScheduleWindowCloseMs
-			&& kFixtureTimeUntilReaskMs < UdpReaskDiagnosticsSeams::kReaskScheduleWindowOpenMs,
-			"queued LowID fixture must remain inside the production UDP reask window");
-		pSource->SetLastAskedTime();
-		const ULONGLONG ullFixtureScheduleNow = ::GetTickCount64()
-			+ static_cast<ULONGLONG>(FILEREASKTIME) - kFixtureTimeUntilReaskMs;
-		DiagEventLogSchedUdpReaskSourceRegistered(pSource, pPartFile->GetFileHash());
-		if (pSource->EvaluateUDPReaskSchedule(theApp.IsConnected(), ullFixtureScheduleNow))
-			pSource->UDPReaskForDownload();
+		if (!TriggerQueuedSourceReaskDiagnostic(*pSource, *pPartFile)) {
+			rError.strCode = "INVALID_STATE";
+			rError.strMessage = _T("production UDP reask scheduler or eligibility rejected the queued LowID source fixture");
+			return json();
+		}
 
 		return json{
 			{"accepted", true},

@@ -1904,17 +1904,24 @@ void DiagEventLogSchedUdpReaskSourceRegistered(const CUpDownClient *pClient, con
 
 	CString strSourceUdpEndpoint;
 	strSourceUdpEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(pClient->GetIP()), static_cast<UINT>(pClient->GetUDPPort()));
-	CString strBuddyEndpoint;
-	strBuddyEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(pClient->GetBuddyIP()), static_cast<UINT>(pClient->GetBuddyPort()));
-	const CString strBuddyId(BuildDiagEventLowerHexString(pClient->GetBuddyID(), MDX_DIGEST_SIZE));
+	CString strBuddyEndpoint(_T("null"));
+	CString strBuddyId(_T("null"));
+	if (pClient->HasLowID()) {
+		CString strEndpoint;
+		strEndpoint.Format(_T("%s:%u"), (LPCTSTR)ipstr(pClient->GetBuddyIP()), static_cast<UINT>(pClient->GetBuddyPort()));
+		strBuddyEndpoint = BuildDiagnosticsJsonStringField(strEndpoint);
+		strBuddyId = BuildDiagnosticsJsonStringField(
+			BuildDiagEventLowerHexString(pClient->GetBuddyID(), MDX_DIGEST_SIZE));
+	}
 
 	CString strBody;
 	strBody.Format(
-		_T("{\"outcome\":\"accepted\",\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"lowId\":true,\"buddyEndpoint\":%s,\"buddyId\":%s}"),
+		_T("{\"outcome\":\"accepted\",\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"lowId\":%s,\"buddyEndpoint\":%s,\"buddyId\":%s}"),
 		(LPCTSTR)BuildDiagnosticsJsonStringField(strSourceUdpEndpoint),
 		static_cast<UINT>(pClient->GetUDPVersion()),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(strBuddyEndpoint),
-		(LPCTSTR)BuildDiagnosticsJsonStringField(strBuddyId));
+		pClient->HasLowID() ? _T("true") : _T("false"),
+		(LPCTSTR)strBuddyEndpoint,
+		(LPCTSTR)strBuddyId);
 	WriteDiagEventV2(_T("sched"), _T("udp_reask_source_registered"), _T("info"),
 		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
 }
