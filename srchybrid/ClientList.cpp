@@ -717,6 +717,9 @@ void CClientList::Process()
 			if (m_nBuddyStatus != Connected) {
 				m_pBuddy = cur_client;
 				m_nBuddyStatus = Connected;
+#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
+				DiagEventLogKadBuddySocketAttached(cur_client->GetConnectIP(), cur_client->GetUserPort(), cur_client->GetBuddyID(), cur_client->GetUserHash());
+#endif
 				theApp.emuledlg->serverwnd->UpdateMyInfo();
 			}
 			if (m_pBuddy == cur_client && theApp.IsFirewalled() && cur_client->SendBuddyPingPong()) {

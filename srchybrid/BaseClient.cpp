@@ -1604,13 +1604,8 @@ void CUpDownClient::ConnectionEstablished()
 	case KS_CONNECTING_BUDDY:
 	case KS_INCOMING_BUDDY:
 		{
-		const bool bIncomingBuddy = GetKadState() == KS_INCOMING_BUDDY;
 		DEBUG_ONLY(DebugLog(_T("Set KS_CONNECTED_BUDDY for client %s"), (LPCTSTR)DbgGetClientInfo()));
 		SetKadState(KS_CONNECTED_BUDDY);
-#if EMULEBB_HAS_DIAG_EVENT_V2 && EMULEBB_HAS_KAD_DIAGNOSTICS
-		if (bIncomingBuddy)
-			DiagEventLogKadBuddySocketAttached(GetConnectIP(), GetUserPort(), GetBuddyID(), GetUserHash());
-#endif
 		break;
 		}
 	case KS_CONNECTING_FWCHECK_UDP:
