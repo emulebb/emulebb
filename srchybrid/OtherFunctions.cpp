@@ -1922,13 +1922,53 @@ void DiagEventLogSchedUdpReaskSourceRegistered(const CUpDownClient *pClient, con
 void DiagEventLogSchedUdpReaskReplyApplied(
 	const CUpDownClient *pClient,
 	const byte *pFileHash,
-	const uint16 uQueueRank)
+	const uint16 uQueueRank,
+	const bool bPartStatusIncluded,
+	const uint16 uWirePartCount,
+	const bool bPartStatusApplied)
 {
+	CString strWirePartCount(_T("null"));
+	if (bPartStatusIncluded)
+		strWirePartCount.Format(_T("%u"), static_cast<UINT>(uWirePartCount));
+
+	CString strPartCountAfter(_T("null"));
+	CString strAvailablePartsAfter(_T("null"));
+	CString strPartStatusBitsAfter(_T("null"));
+	CString strNoNeededPartsAfter(_T("null"));
+	const bool bHasAppliedPartStatus = bPartStatusApplied
+		&& pClient != NULL
+		&& pClient->GetPartStatus() != NULL;
+	if (bHasAppliedPartStatus) {
+		const UINT uPartCount = pClient->GetPartCount();
+		strPartCountAfter.Format(_T("%u"), uPartCount);
+		strAvailablePartsAfter.Format(_T("%u"), static_cast<UINT>(pClient->GetAvailablePartCount()));
+		CString strBits;
+		const uint8 *const pPartStatus = pClient->GetPartStatus();
+		for (UINT uPart = 0; uPart < uPartCount; ++uPart)
+			strBits.AppendChar(pPartStatus[uPart] != 0 ? _T('1') : _T('0'));
+		strPartStatusBitsAfter = BuildDiagnosticsJsonStringField(strBits);
+		strNoNeededPartsAfter = pClient->GetDownloadState() == DS_NONEEDEDPARTS
+			? _T("true")
+			: _T("false");
+	}
+
+	const CString strSourceUdpEndpoint(pClient != NULL
+		? ipstr(pClient->GetIP(), pClient->GetUDPPort())
+		: CString());
 	CString strBody;
 	strBody.Format(
-		_T("{\"replyOpcode\":%u,\"queueRank\":%u,\"requestPendingAfter\":false,\"remoteQueueFullAfter\":false,\"outcome\":\"applied\"}"),
+		_T("{\"replyOpcode\":%u,\"queueRank\":%u,\"requestPendingAfter\":false,\"remoteQueueFullAfter\":false,\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"queueRankApplied\":true,\"partStatusIncluded\":%s,\"wirePartCount\":%s,\"partStatusApplied\":%s,\"partCountAfter\":%s,\"availablePartsAfter\":%s,\"partStatusBitsAfter\":%s,\"noNeededPartsAfter\":%s,\"outcome\":\"applied\"}"),
 		static_cast<UINT>(OP_REASKACK),
-		static_cast<UINT>(uQueueRank));
+		static_cast<UINT>(uQueueRank),
+		(LPCTSTR)BuildDiagnosticsJsonStringField(strSourceUdpEndpoint),
+		pClient != NULL ? static_cast<UINT>(pClient->GetUDPVersion()) : 0,
+		bPartStatusIncluded ? _T("true") : _T("false"),
+		(LPCTSTR)strWirePartCount,
+		bHasAppliedPartStatus ? _T("true") : _T("false"),
+		(LPCTSTR)strPartCountAfter,
+		(LPCTSTR)strAvailablePartsAfter,
+		(LPCTSTR)strPartStatusBitsAfter,
+		(LPCTSTR)strNoNeededPartsAfter);
 	WriteDiagEventV2(_T("sched"), _T("udp_reask_reply_applied"), _T("info"),
 		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
 }

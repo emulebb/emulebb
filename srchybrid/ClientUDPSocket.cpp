@@ -223,7 +223,10 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 						DiagEventLogSchedUdpReaskReplyApplied(
 							processResult.pUdpReaskReplyAppliedClient,
 							pRequestFile != NULL ? pRequestFile->GetFileHash() : NULL,
-							processResult.uUdpReaskReplyAppliedRank);
+							processResult.uUdpReaskReplyAppliedRank,
+							processResult.bUdpReaskReplyPartStatusIncluded,
+							processResult.uUdpReaskReplyWirePartCount,
+							processResult.bUdpReaskReplyPartStatusApplied);
 					}
 #endif
 #else
@@ -510,8 +513,24 @@ CClientUDPSocket::SProcessPacketResult CClientUDPSocket::ProcessPacket(const BYT
 				DebugRecv("OP_ReaskAck", sender, NULL, ip);
 			if (sender && sender->UDPPacketPending()) {
 				CSafeMemFile data_in(packet, size);
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+				const bool bPartStatusIncluded = sender->GetUDPVersion() > 3;
+				const uint16 uWirePartCount = bPartStatusIncluded
+					? static_cast<uint16>(packet[0] | (static_cast<uint16>(packet[1]) << 8))
+					: 0;
+				CPartFile *const pRequestFile = sender->GetRequestFile();
+				const bool bPartStatusCanApply = bPartStatusIncluded
+					&& pRequestFile != NULL
+					&& pRequestFile->GetStatus() != PS_COMPLETE
+					&& pRequestFile->GetStatus() != PS_COMPLETING;
+#endif
 				if (sender->GetUDPVersion() > 3)
 					sender->ProcessFileStatus(true, data_in, sender->GetRequestFile());
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+				const bool bPartStatusApplied = bPartStatusCanApply
+					&& sender->GetPartStatus() != NULL
+					&& sender->GetPartCount() == pRequestFile->GetPartCount();
+#endif
 
 				if (!HasUdpReaskAckQueueRank(data_in.GetPosition(), data_in.GetLength())) {
 					RejectMalformedClientUdpPacket(_T("OP_REASKACK"), size, ip, port);
@@ -526,6 +545,9 @@ CClientUDPSocket::SProcessPacketResult CClientUDPSocket::ProcessPacket(const BYT
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 				result.pUdpReaskReplyAppliedClient = sender;
 				result.uUdpReaskReplyAppliedRank = nRank;
+				result.bUdpReaskReplyPartStatusIncluded = bPartStatusIncluded;
+				result.uUdpReaskReplyWirePartCount = uWirePartCount;
+				result.bUdpReaskReplyPartStatusApplied = bPartStatusApplied;
 #endif
 			} else {
 				if (sender != NULL)

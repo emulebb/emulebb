@@ -438,7 +438,7 @@ void DiagEventLogSchedUdpReaskDecision(const CUpDownClient *pClient, const byte 
 void DiagEventLogSchedUdpReaskScheduleDecision(const CUpDownClient *pClient, const byte *pFileHash, UdpReaskDiagnosticsSeams::EUdpReaskScheduleDecision eDecision, const UdpReaskDiagnosticsSeams::SUdpReaskScheduleEligibility &rEligibility);
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 void DiagEventLogSchedUdpReaskSourceRegistered(const CUpDownClient *pClient, const byte *pFileHash);
-void DiagEventLogSchedUdpReaskReplyApplied(const CUpDownClient *pClient, const byte *pFileHash, uint16 uQueueRank);
+void DiagEventLogSchedUdpReaskReplyApplied(const CUpDownClient *pClient, const byte *pFileHash, uint16 uQueueRank, bool bPartStatusIncluded, uint16 uWirePartCount, bool bPartStatusApplied);
 #endif
 void DiagEventLogSchedConnBudgetDeny(LPCTSTR pszDenyReason, UINT uActiveConnections, UINT uConnectionCap);
 #endif
