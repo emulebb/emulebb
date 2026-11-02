@@ -1991,7 +1991,7 @@ void DiagEventLogSchedUdpReaskReplyApplied(
 	const UINT uReplyOpcode = bRemoteQueueFullAfter ? OP_QUEUEFULL : OP_REASKACK;
 	CString strBody;
 	strBody.Format(
-		_T("{\"replyOpcode\":%u,\"queueRank\":%u,\"requestPendingAfter\":false,\"remoteQueueFullAfter\":%s,\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"queueRankApplied\":true,\"partStatusIncluded\":%s,\"wirePartCount\":%s,\"partStatusApplied\":%s,\"partCountAfter\":%s,\"availablePartsAfter\":%s,\"partStatusBitsAfter\":%s,\"noNeededPartsAfter\":%s,\"outcome\":\"applied\"}"),
+		_T("{\"replyOpcode\":%u,\"queueRank\":%u,\"requestPendingAfter\":false,\"remoteQueueFullAfter\":%s,\"sourceUdpEndpoint\":%s,\"sourceUdpVersion\":%u,\"queueRankApplied\":true,\"partStatusIncluded\":%s,\"wirePartCount\":%s,\"partStatusApplied\":%s,\"partCountAfter\":%s,\"availablePartsAfter\":%s,\"partStatusBitsAfter\":%s,\"noNeededPartsAfter\":%s,\"outcome\":\"applied\""),
 		uReplyOpcode,
 		static_cast<UINT>(uQueueRank),
 		bRemoteQueueFullAfter ? _T("true") : _T("false"),
@@ -2004,6 +2004,14 @@ void DiagEventLogSchedUdpReaskReplyApplied(
 		(LPCTSTR)strAvailablePartsAfter,
 		(LPCTSTR)strPartStatusBitsAfter,
 		(LPCTSTR)strNoNeededPartsAfter);
+	if (bRemoteQueueFullAfter) {
+		strBody.AppendFormat(
+			_T(",\"udpTotalAfter\":%u,\"udpFailedAfter\":%u,\"nextReaskScheduled\":%s,\"sourceRetainedAfter\":true"),
+			pClient->GetTotalUdpPacketsForDiagnostics(),
+			pClient->GetFailedUdpPacketsForDiagnostics(),
+			pClient->IsNextUdpReaskScheduledForDiagnostics() ? _T("true") : _T("false"));
+	}
+	strBody += _T("}");
 	WriteDiagEventV2(_T("sched"), _T("udp_reask_reply_applied"), _T("info"),
 		BuildDiagEventV2SchedKeysJson(pClient, pFileHash), strBody);
 }
