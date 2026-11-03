@@ -2,6 +2,7 @@
 
 #include "BuildFeatures.h"
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+#include "AppCommandLineSeams.h"
 #include "ClientUDPSocketSeams.h"
 #include "WebServerJsonSeams.h"
 #endif
@@ -16,18 +17,20 @@ bool SelfTest()
 {
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 	using namespace WebServerJsonSeams;
-	uint8 byClientUdpVersion = 0;
-	if (!ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"1", byClientUdpVersion)
-		|| byClientUdpVersion != 1
-		|| !ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"4", byClientUdpVersion)
-		|| byClientUdpVersion != ClientUDPSocketSeams::kCurrentClientUdpVersion
-		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(nullptr, byClientUdpVersion)
-		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"", byClientUdpVersion)
-		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"0", byClientUdpVersion)
-		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"5", byClientUdpVersion)
-		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"03", byClientUdpVersion)
-		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L" 3", byClientUdpVersion)
-		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"3 ", byClientUdpVersion))
+	const AppCommandLineSeams::SParseResult selectedUdpVersion =
+		AppCommandLineSeams::ParseTokens({
+			_T("emulebb-diagnostics.exe"),
+			_T("--diagnostic-client-udp-version=3")
+		});
+	const AppCommandLineSeams::SParseResult invalidUdpVersion =
+		AppCommandLineSeams::ParseTokens({
+			_T("emulebb-diagnostics.exe"),
+			_T("--diagnostic-client-udp-version=03")
+		});
+	if (selectedUdpVersion.eMode != AppCommandLineSeams::EMode::NormalStartup
+		|| !selectedUdpVersion.bHasDiagnosticClientUdpVersion
+		|| selectedUdpVersion.byDiagnosticClientUdpVersion != 3
+		|| invalidUdpVersion.eMode != AppCommandLineSeams::EMode::Invalid)
 	{
 		return false;
 	}
