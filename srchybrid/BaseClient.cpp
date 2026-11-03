@@ -1018,7 +1018,13 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile &data)
 	}
 
 	// eMule Misc. Options #1
+	// Keep the hello advertisement aligned with ET_UDPVER in
+	// SendMuleInfoPacket so peers negotiate one diagnostic protocol version.
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	const UINT uUdpVer = theApp.GetDiagnosticClientUdpVersion();
+#else
 	const UINT uUdpVer = 4;
+#endif
 	const UINT uDataCompVer = 1;
 	const UINT uSupportSecIdent = theApp.clientcredits->CryptoAvailable() ? 3 : 0;
 	// ***
