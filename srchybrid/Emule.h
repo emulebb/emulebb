@@ -117,6 +117,9 @@ public:
 	// Barry - To find out if app is running or shutting/shut down
 	bool IsRunning() const	{ return IsAppStateRunning(m_app_state); }
 	bool IsClosing() const	{ return IsAppStateClosing(m_app_state); }
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	uint8 GetDiagnosticClientUdpVersion() const					{ return m_byDiagnosticClientUdpVersion; }
+#endif
 	bool IsStartupBindBlocked() const						{ return m_bStartupBindBlocked; }
 	const CString& GetStartupBindBlockReason() const		{ return m_strStartupBindBlockReason; }
 	void BlockStartupNetworkingForSession(const CString& strReason);
@@ -421,6 +424,9 @@ private:
 	bool SaveSharedDirectoryMonitorJournalState() const;
 	UINT		m_wTimerRes;
 	bool		m_bStandbyOff;
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	uint8		m_byDiagnosticClientUdpVersion;
+#endif
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	bool		m_bStartupDiagnosticsStartupComplete;
 	bool		m_bStartupDiagnosticsCompleted;

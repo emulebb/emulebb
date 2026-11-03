@@ -1283,6 +1283,9 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	, m_bStartupErrorLogOpened()
 	, m_pEarlyStartupProgressDlg()
 	, m_bStandbyOff()
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	, m_byDiagnosticClientUdpVersion(ClientUDPSocketSeams::kCurrentClientUdpVersion)
+#endif
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	, m_bStartupDiagnosticsStartupComplete()
 	, m_bStartupDiagnosticsCompleted()
@@ -1590,6 +1593,31 @@ BOOL CemuleApp::InitInstance()
 		ReportCommandLineError(commandLine.strError, commandLine.strUsage, true);
 		::ExitProcess(2);
 	}
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	wchar_t szDiagnosticClientUdpVersion[2] = {};
+	::SetLastError(ERROR_SUCCESS);
+	const DWORD dwDiagnosticClientUdpVersionChars = ::GetEnvironmentVariableW(
+		L"EMULEBB_DIAGNOSTIC_CLIENT_UDP_VERSION",
+		szDiagnosticClientUdpVersion,
+		_countof(szDiagnosticClientUdpVersion));
+	const DWORD dwDiagnosticClientUdpVersionError = ::GetLastError();
+	if (dwDiagnosticClientUdpVersionChars != 0 || dwDiagnosticClientUdpVersionError != ERROR_ENVVAR_NOT_FOUND) {
+		uint8 byDiagnosticClientUdpVersion = 0;
+		if (dwDiagnosticClientUdpVersionChars == 0
+			|| dwDiagnosticClientUdpVersionChars >= _countof(szDiagnosticClientUdpVersion)
+			|| !ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(
+				szDiagnosticClientUdpVersion,
+				byDiagnosticClientUdpVersion))
+		{
+			ReportCommandLineError(
+				_T("EMULEBB_DIAGNOSTIC_CLIENT_UDP_VERSION must be an integer in the range 1..4"),
+				commandLine.strUsage,
+				false);
+			::ExitProcess(2);
+		}
+		m_byDiagnosticClientUdpVersion = byDiagnosticClientUdpVersion;
+	}
+#endif
 	if (commandLine.eMode == AppCommandLineSeams::EMode::RestartSidecar)
 		::ExitProcess(static_cast<UINT>(HandleRestartSidecarCommandLine(commandLine)));
 

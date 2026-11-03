@@ -764,7 +764,11 @@ void CUpDownClient::SendMuleInfoPacket(bool bAnswer)
 	data.WriteUInt32(7); // nr. of tags
 	CTag tag(ET_COMPRESSION, 1);
 	tag.WriteTagToFile(data);
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	CTag tag2(ET_UDPVER, theApp.GetDiagnosticClientUdpVersion());
+#else
 	CTag tag2(ET_UDPVER, 4);
+#endif
 	tag2.WriteTagToFile(data);
 	CTag tag3(ET_UDPPORT, thePrefs.GetUDPPort());
 	tag3.WriteTagToFile(data);

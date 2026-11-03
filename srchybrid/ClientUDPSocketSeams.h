@@ -12,9 +12,27 @@
  */
 namespace ClientUDPSocketSeams
 {
+static const uint8_t kCurrentClientUdpVersion = 4u;
 static const size_t kMaxOutgoingClientUdpControlQueuePackets = 4096u;
 static const uint32_t kClientUdpQueueFullMargin = 50u;
 static const uint64_t kClientUdpQueuePressureFixtureTtlMs = 30000u;
+
+/**
+ * @brief Parses the strict diagnostics-only advertised client-UDP version.
+ */
+inline bool TryParseDiagnosticClientUdpVersion(const wchar_t *pszValue, uint8_t &rVersion)
+{
+	if (pszValue == nullptr
+		|| pszValue[0] < L'1'
+		|| pszValue[0] > L'0' + kCurrentClientUdpVersion
+		|| pszValue[1] != L'\0')
+	{
+		return false;
+	}
+
+	rVersion = static_cast<uint8_t>(pszValue[0] - L'0');
+	return true;
+}
 
 struct SClientUdpQueuePressureFixture
 {

@@ -16,6 +16,21 @@ bool SelfTest()
 {
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 	using namespace WebServerJsonSeams;
+	uint8 byClientUdpVersion = 0;
+	if (!ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"1", byClientUdpVersion)
+		|| byClientUdpVersion != 1
+		|| !ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"4", byClientUdpVersion)
+		|| byClientUdpVersion != ClientUDPSocketSeams::kCurrentClientUdpVersion
+		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(nullptr, byClientUdpVersion)
+		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"", byClientUdpVersion)
+		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"0", byClientUdpVersion)
+		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"5", byClientUdpVersion)
+		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"03", byClientUdpVersion)
+		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L" 3", byClientUdpVersion)
+		|| ClientUDPSocketSeams::TryParseDiagnosticClientUdpVersion(L"3 ", byClientUdpVersion))
+	{
+		return false;
+	}
 	if (ClientUDPSocketSeams::IsIncomingClientUdpDatagramObfuscated(23, 23)
 		|| !ClientUDPSocketSeams::IsIncomingClientUdpDatagramObfuscated(31, 23)
 		|| ClientUDPSocketSeams::IsIncomingClientUdpDatagramObfuscated(31, 0)
