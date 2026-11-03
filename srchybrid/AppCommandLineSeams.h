@@ -31,6 +31,10 @@ namespace AppCommandLineSeams
 		bool bIgnoreInstances = false;
 		bool bAutoStart = false;
 		bool bAssertFile = false;
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+		bool bHasDiagnosticClientUdpVersion = false;
+		uint8 byDiagnosticClientUdpVersion = 4;
+#endif
 		bool bHasConfigBaseDir = false;
 		CString strConfigBaseDir;
 		CString strPositional;
@@ -65,6 +69,9 @@ namespace AppCommandLineSeams
 			_T("  --diagnose-media-metadata             Probe maintained metadata extractors and exit.\r\n")
 			_T("  --input <path>                        Media file path for metadata diagnostics.\r\n")
 			_T("  --output <path>                       Optional JSON output path for metadata diagnostics.\r\n")
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+			_T("  --diagnostic-client-udp-version <1-4> Select the diagnostics-only client UDP version.\r\n")
+#endif
 			_T("  --help, -h, /?                        Show this help text and exit.\r\n");
 	}
 
@@ -224,6 +231,9 @@ namespace AppCommandLineSeams
 			|| strName == _T("diagnose-media-metadata")
 			|| strName == _T("input")
 			|| strName == _T("output")
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+			|| strName == _T("diagnostic-client-udp-version")
+#endif
 			|| strName == _T("restart-sidecar")
 			|| strName == _T("request");
 	}
@@ -247,6 +257,9 @@ namespace AppCommandLineSeams
 		bool bSeenKey = false;
 		bool bSeenInput = false;
 		bool bSeenOutput = false;
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+		bool bSeenDiagnosticClientUdpVersion = false;
+#endif
 		bool bSeenRestartRequest = false;
 		bool bSawCertificateHost = false;
 
@@ -408,6 +421,36 @@ namespace AppCommandLineSeams
 				continue;
 			}
 
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+			if (strName == _T("diagnostic-client-udp-version")) {
+				CString strValue;
+				if (!TrySetSingleton(
+						bSeenDiagnosticClientUdpVersion,
+						_T("--diagnostic-client-udp-version"),
+						result.strError)
+					|| !TryReadOptionValue(
+						raTokens,
+						i,
+						_T("--diagnostic-client-udp-version"),
+						bHasInlineValue,
+						strInlineValue,
+						strValue,
+						result.strError))
+				{
+					result.eMode = EMode::Invalid;
+					return result;
+				}
+				if (strValue.GetLength() != 1 || strValue[0] < _T('1') || strValue[0] > _T('4')) {
+					result.eMode = EMode::Invalid;
+					result.strError = _T("The --diagnostic-client-udp-version option requires one integer in the range 1..4.");
+					return result;
+				}
+				result.bHasDiagnosticClientUdpVersion = true;
+				result.byDiagnosticClientUdpVersion = static_cast<uint8>(strValue[0] - _T('0'));
+				continue;
+			}
+#endif
+
 			if (strName == _T("request")) {
 				if (!TrySetSingleton(bSeenRestartRequest, _T("--request"), result.strError)
 					|| !TryReadOptionValue(raTokens, i, _T("--request"), bHasInlineValue, strInlineValue, result.strRestartRequestFile, result.strError)) {
@@ -444,7 +487,11 @@ namespace AppCommandLineSeams
 				result.strError = _T("The --restart-sidecar command does not accept a positional argument.");
 				return result;
 			}
-			if (bSeenConfig || bSeenIgnoreInstances || bSeenAutoStart || bSeenAssertFile) {
+			if (bSeenConfig || bSeenIgnoreInstances || bSeenAutoStart || bSeenAssertFile
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+				|| bSeenDiagnosticClientUdpVersion
+#endif
+			) {
 				result.eMode = EMode::Invalid;
 				result.strError = _T("The --restart-sidecar command does not accept normal startup options.");
 				return result;

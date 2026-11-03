@@ -2,6 +2,7 @@
 
 #include "BuildFeatures.h"
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+#include "AppCommandLineSeams.h"
 #include "ClientUDPSocketSeams.h"
 #include "WebServerJsonSeams.h"
 #endif
@@ -16,6 +17,23 @@ bool SelfTest()
 {
 #if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
 	using namespace WebServerJsonSeams;
+	const AppCommandLineSeams::SParseResult selectedUdpVersion =
+		AppCommandLineSeams::ParseTokens({
+			_T("emulebb-diagnostics.exe"),
+			_T("--diagnostic-client-udp-version=3")
+		});
+	const AppCommandLineSeams::SParseResult invalidUdpVersion =
+		AppCommandLineSeams::ParseTokens({
+			_T("emulebb-diagnostics.exe"),
+			_T("--diagnostic-client-udp-version=03")
+		});
+	if (selectedUdpVersion.eMode != AppCommandLineSeams::EMode::NormalStartup
+		|| !selectedUdpVersion.bHasDiagnosticClientUdpVersion
+		|| selectedUdpVersion.byDiagnosticClientUdpVersion != 3
+		|| invalidUdpVersion.eMode != AppCommandLineSeams::EMode::Invalid)
+	{
+		return false;
+	}
 	if (ClientUDPSocketSeams::IsIncomingClientUdpDatagramObfuscated(23, 23)
 		|| !ClientUDPSocketSeams::IsIncomingClientUdpDatagramObfuscated(31, 23)
 		|| ClientUDPSocketSeams::IsIncomingClientUdpDatagramObfuscated(31, 0)

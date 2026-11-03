@@ -1283,6 +1283,9 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	, m_bStartupErrorLogOpened()
 	, m_pEarlyStartupProgressDlg()
 	, m_bStandbyOff()
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	, m_byDiagnosticClientUdpVersion(ClientUDPSocketSeams::kCurrentClientUdpVersion)
+#endif
 #if EMULEBB_HAS_STARTUP_DIAGNOSTICS
 	, m_bStartupDiagnosticsStartupComplete()
 	, m_bStartupDiagnosticsCompleted()
@@ -1590,6 +1593,10 @@ BOOL CemuleApp::InitInstance()
 		ReportCommandLineError(commandLine.strError, commandLine.strUsage, true);
 		::ExitProcess(2);
 	}
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	if (commandLine.bHasDiagnosticClientUdpVersion)
+		m_byDiagnosticClientUdpVersion = commandLine.byDiagnosticClientUdpVersion;
+#endif
 	if (commandLine.eMode == AppCommandLineSeams::EMode::RestartSidecar)
 		::ExitProcess(static_cast<UINT>(HandleRestartSidecarCommandLine(commandLine)));
 

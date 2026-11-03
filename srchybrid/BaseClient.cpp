@@ -764,7 +764,11 @@ void CUpDownClient::SendMuleInfoPacket(bool bAnswer)
 	data.WriteUInt32(7); // nr. of tags
 	CTag tag(ET_COMPRESSION, 1);
 	tag.WriteTagToFile(data);
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	CTag tag2(ET_UDPVER, theApp.GetDiagnosticClientUdpVersion());
+#else
 	CTag tag2(ET_UDPVER, 4);
+#endif
 	tag2.WriteTagToFile(data);
 	CTag tag3(ET_UDPPORT, thePrefs.GetUDPPort());
 	tag3.WriteTagToFile(data);
@@ -1014,7 +1018,13 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile &data)
 	}
 
 	// eMule Misc. Options #1
+	// Keep the hello advertisement aligned with ET_UDPVER in
+	// SendMuleInfoPacket so peers negotiate one diagnostic protocol version.
+#if EMULEBB_HAS_PROTOCOL_TEST_CONTROL
+	const UINT uUdpVer = theApp.GetDiagnosticClientUdpVersion();
+#else
 	const UINT uUdpVer = 4;
+#endif
 	const UINT uDataCompVer = 1;
 	const UINT uSupportSecIdent = theApp.clientcredits->CryptoAvailable() ? 3 : 0;
 	// ***

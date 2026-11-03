@@ -12,6 +12,7 @@
  */
 namespace ClientUDPSocketSeams
 {
+static const uint8_t kCurrentClientUdpVersion = 4u;
 static const size_t kMaxOutgoingClientUdpControlQueuePackets = 4096u;
 static const uint32_t kClientUdpQueueFullMargin = 50u;
 static const uint64_t kClientUdpQueuePressureFixtureTtlMs = 30000u;
